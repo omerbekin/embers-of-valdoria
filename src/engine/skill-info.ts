@@ -405,6 +405,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (skill.advanceToFront) add('If you are not in the front row, you then step into the front row: the front cell of your own lane, or the nearest empty front cell if that one is taken (you stay put if the front row is full)');
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
   if (isRatioCost(skill.cost)) add(`Costs ${pct(skill.cost.ofCurrent!)} of current ${skill.cost.resource.toUpperCase()} (rounded, at least 1)${skill.cost.resource === 'hp' ? ': it can never bring you below 1 HP' : ''}`);
+  if (skill.note) add(skill.note); // serbest not (Pose Tester: oynattığı poz)
   const initialTurns = Math.min(formulas.cooldown?.maxInitial ?? 0, Math.floor(skill.initialCooldown ?? 0));
   return {
     name: skill.name,

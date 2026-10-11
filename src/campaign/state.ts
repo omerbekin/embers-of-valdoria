@@ -5,6 +5,8 @@ import { rngFor, shuffle } from './seed';
 import { emptyEquipment, SLOT_IDS } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { emptyLootState, grantLoot } from './loot';
+import { leaveMerchant } from './merchant';
+import { nodeIlvl } from './power';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -53,6 +55,8 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   if (n.treasure) steps.push('treasure');
   if (n.event) steps.push('event');
   if (n.type === 'town') steps.push('town');
+  if (n.type === 'rest') steps.push('rest');
+  if (n.type === 'merchant') steps.push('merchant');
   if (n.recruit?.when === 'leave') steps.push('volunteer');
   return steps;
 }
@@ -90,6 +94,10 @@ export function nextStep(s: CampaignState): NextStep {
         return { kind: 'event', node: n.id, event: n.event! };
       case 'town':
         return { kind: 'town', node: n.id };
+      case 'rest':
+        return { kind: 'rest', node: n.id };
+      case 'merchant':
+        return { kind: 'merchant', node: n.id };
     }
   }
   const options = outgoing(map, n.id);
@@ -184,12 +192,12 @@ export function moveHero(s: CampaignState, heroId: string, cell: number): Campai
 
 const tutorialActive = (s: CampaignState): boolean => !mapOf(s).nodes.some((n) => n.endsTutorial && isDone(s, n.id, 'farewell'));
 
-function complete(s: CampaignState, kind: StepKind): void {
+export function complete(s: CampaignState, kind: StepKind): void {
   const k = key(s.at, kind);
   if (!s.done.includes(k)) s.done.push(k);
 }
 
-function expectStep(s: CampaignState, kind: NextStep['kind']): NextStep {
+export function expectStep(s: CampaignState, kind: NextStep['kind']): NextStep {
   const step = nextStep(s);
   if (step.kind !== kind) throw new Error(`Expected step ${kind}, current step is ${step.kind}`);
   return step;
@@ -276,6 +284,41 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 't
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') grantLoot(t, t.at, 'treasure', activeHeroes(t));
   complete(t, kind);
+  return t;
+}
+
+// ---------------------------------------------------------------- dinlenme noktası (Ömer 2026-10-11)
+
+/** Düşmüş mü (can 0 ya da alive false): dinlenme noktasında altınla diriltilebilir. */
+export const isFallen = (h: Hero): boolean => !h.alive || h.hpRatio <= 0;
+
+/** Dinlenme noktasında diriltme fiyatı: base + perIlvl x düğümün item seviyesi (campaign.json > rest.reviveCost; VARSAYIM, madde 305). */
+export function reviveCost(s: CampaignState, nodeId: string = s.at): number {
+  const c = CONFIG.rest.reviveCost;
+  return Math.round(c.base + c.perIlvl * nodeIlvl(s.mapId, nodeId));
+}
+
+/** Düşmüş kahramanı altınla dirilt (yalnızca dinlenme adımında; altın yetmezse hata). reviveRatio canla kalkar. */
+export function reviveAtCamp(s: CampaignState, heroId: string): CampaignState {
+  expectStep(s, 'rest');
+  const h = heroById(s, heroId);
+  if (!h || !isFallen(h)) throw new Error('This hero has not fallen');
+  const cost = reviveCost(s);
+  if (s.gold < cost) throw new Error('Not enough gold');
+  const t = clone(s);
+  const th = heroById(t, heroId)!;
+  t.gold -= cost;
+  th.alive = true;
+  th.hpRatio = Math.round(clamp01(CONFIG.rest.reviveRatio) * 1000) / 1000;
+  return t;
+}
+
+/** Dinlen ve yola devam: ÜCRETSİZ, yaşayan herkes maks canın rest.heal oranı kadar iyileşir (düşmüşler kalkmaz: altınla diriltilir). */
+export function restAtCamp(s: CampaignState): CampaignState {
+  expectStep(s, 'rest');
+  const t = clone(s);
+  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + CONFIG.rest.heal) * 1000) / 1000;
+  complete(t, 'rest');
   return t;
 }
 
@@ -435,6 +478,10 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
     case 'event':
     case 'town':
       return completeSimple(s, step.kind);
+    case 'rest':
+      return restAtCamp(s);
+    case 'merchant':
+      return leaveMerchant(s);
     default:
       return s;
   }

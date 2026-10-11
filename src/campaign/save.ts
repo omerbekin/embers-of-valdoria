@@ -18,7 +18,11 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
 /** Kayıt dosyası sürümü. 3 (madde 278): sefer durumu v2 (kahraman level/XP/ekipman, torba, altın); 2 ve 1 okunurken taşınır. */
 /** 4: x2 stat ölçeği (Ömer 2026-10-10): 2 ve 3 okunurken item zarlarının ölçekli statları x2 (progression > migrateRollsX2). */
 /** 5: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls; hiçbir durumda çökmez). */
-export const SAVE_VERSION = 5;
+/**
+ * 6: Valdoria A1-x haritası (Ömer 2026-10-11): eski seferler YENİ haritaya taşınmaz; okunurken yuvaların kayıtları silinir, yuva (mod, zorluk)
+ * kalır ve `mapChanged` işaretlenir: arayüz "The Valdoria map has changed; this campaign must restart." uyarısını gösterir, yuvada yeni sefer başlar.
+ */
+export const SAVE_VERSION = 6;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -58,6 +62,8 @@ export interface SlotData {
   startedAt: string;
   lastPlayed: string;
   saves: SaveEntry[];
+  /** Harita değişti (sürüm < 6 kaydı): eski sefer yeniden başlamalı; yuvada yeni sefer başlayınca kalkar. */
+  mapChanged?: boolean;
 }
 
 export interface SaveFile {
@@ -208,10 +214,10 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     const counter = typeof parsed.counter === 'number' ? parsed.counter : 0;
     if (parsed.version === 1 && Array.isArray(parsed.saves)) {
       const m = migrateV1(parsed.saves, counter);
-      return { file: m.file, corrupt: m.dropped, migrated: true };
+      return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     const fromV2 = parsed.version === 2;
     // x2 stat ölçeği (sürüm 4): eski kayıttaki item zarları (STR/DEX/INT/LUCK, zırh, hız) x2
     const scaled = parsed.version !== SAVE_VERSION;
@@ -229,14 +235,20 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
         continue;
       }
       const saves = sd.saves.map((e) => cleanEntry(e, i)).filter((e): e is SaveEntry => !!e);
-      if (saves.length !== sd.saves.length) corrupt = true;
+      if (saves.length !== sd.saves.length && parsed.version === SAVE_VERSION) corrupt = true; // eski harita kayıtları zaten yeniden başlar
       file.slots[i] = { ...sd, difficulty: DIFFS.includes(sd.difficulty) ? sd.difficulty : CONFIG.defaultDifficulty, saves };
     }
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
-    return { file, corrupt, migrated: fromV2 || scaled };
+    // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
+    return { file: parsed.version !== SAVE_VERSION ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }
+}
+
+/** Eski haritanın seferleri: kayıtlar silinir, yuva (mod, zorluk, tarihler) kalır, `mapChanged` işaretlenir. */
+function restartForNewMap(file: SaveFile): SaveFile {
+  return { ...file, slots: file.slots.map((sd) => (sd ? { ...sd, saves: [], mapChanged: true } : null)) };
 }
 
 function write(kv: KV | null, file: SaveFile): boolean {
@@ -297,6 +309,7 @@ export function writeSave(kv: KV | null, s: CampaignState, kind: SaveKind, now: 
   const entry: SaveEntry = { id: `s${++file.counter}`, kind, savedAt: now, mode: s.mode, campaignId: s.campaignId, summary: summarize(s), state: clone(s) };
   slot.saves.push(entry);
   slot.lastPlayed = now;
+  delete slot.mapChanged; // yuvada yeni sefer kaydedildi: harita uyarısı kalkar
   const replaced: SaveEntry[] = [];
   while (slot.saves.length > maxFor(s.mode)) replaced.push(slot.saves.shift()!);
   file.slots[s.slot] = slot;
@@ -316,12 +329,14 @@ export interface SlotSummary {
   lastPlayed: string;
   saveCount: number;
   latest: SaveEntry | null;
+  /** Harita değişti: bu yuvanın seferi yeniden başlamalı (uyarı). */
+  mapChanged?: boolean;
 }
 
 export function slotSummaries(kv: KV | null): Array<SlotSummary | null> {
   const { file } = readSaves(kv);
   return file.slots.map((sd, slot) =>
-    sd ? { slot, campaignId: sd.campaignId, mode: sd.mode, difficulty: sd.difficulty, lastPlayed: sd.lastPlayed, saveCount: sd.saves.length, latest: sd.saves[sd.saves.length - 1] ?? null } : null,
+    sd ? { slot, campaignId: sd.campaignId, mode: sd.mode, difficulty: sd.difficulty, lastPlayed: sd.lastPlayed, saveCount: sd.saves.length, latest: sd.saves[sd.saves.length - 1] ?? null, ...(sd.mapChanged ? { mapChanged: true } : {}) } : null,
   );
 }
 

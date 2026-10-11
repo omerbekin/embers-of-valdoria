@@ -1,7 +1,9 @@
 /* Savaş HUD'ı (src/ui/battle-hud.ts): taslak battle-hud.html?v=2 "Slim bar, sheet rises". Ölçüler OYUN BİRİMİNDE (1080 yükseklik);
    kök `transform: scale()` ile görünür sahneye ölçeklenir. Tasarım kiti: Cinzel başlık, EB Garamond metin, düz rakamlı serif sayılar,
    ince altın çizgiler, kor elmaslar. Kök tıklamaları geçirir (pointer-events: none); yalnızca HUD öğeleri tıklanır. */
-.bh-root {
+.bh-root,
+.bh-kit {
+  /* tasarım belirteçleri: savaş HUD'ı ve ortak skill çubuğu (src/ui/skill-bar.ts; Gear / Character sayfası .bh-kit) */
   --gold: 217, 178, 106;
   --on: #f3d999;
   --txt: #d9c8a2;
@@ -18,6 +20,9 @@
   --num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --ease: cubic-bezier(0.33, 1, 0.68, 1);
   --panel: linear-gradient(180deg, rgb(31, 23, 15), rgb(12, 9, 6));
+}
+
+.bh-root {
   position: fixed;
   left: 0;
   top: 0;

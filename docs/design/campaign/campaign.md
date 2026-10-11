@@ -122,6 +122,8 @@ Giriş metni (New Campaign, İngilizce): *"The Ash Curse spreading from Castle M
 
 ## 3. Valdoria haritası: veri modeli
 
+> **Güncel harita (2026-10-11): Valdoria A1-x** (`valdoria-2x.md` 10.5, open-questions 305). 26 düğüm, sefer başına 21 durak, 24 rota. Yeni düğüm türleri: `rest` (Riverside Camp: ücretsiz %50 iyileşme, altınla diriltme; `campaign.json > rest`) ve `merchant` (Forward Camp: Odo; `campaign.json > merchant`). Aşağıdaki 3.1-3.4 tabloları eski 17 düğümlük haritanın kaydıdır. K1'in tek istisnası: Witch's Hut kolu (madde 305).
+
 ### 3.1 Düğümler (v2; konumlar v4)
 Konum: **yazısız arka planın** (`assets/campaign/valdoria-bg.webp`, 1672x941) oranı (x/1672, y/941), rozet merkezi. **Değişenler kalın.**
 

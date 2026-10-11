@@ -70,7 +70,7 @@ import { onStageResize, stageView, worldXY } from '../stage';
 import { backgroundPlacement, battleBackground } from '../battle-background';
 import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
-import { regenTickEvents } from '../regen-ticks';
+import { betweenTurnEvents, regenTickEvents } from '../regen-ticks';
 
 export interface BattleSceneData {
   seed: number;
@@ -2323,6 +2323,8 @@ export class BattleScene extends Phaser.Scene {
 
   /** Tur başı yenilenme tikleri (yüzen sayı yerine çubuk parıltısı; regen-ticks.ts) ve onları bulmak için son eylemden beri gelen olaylar. */
   private regenTicks = new WeakSet<object>();
+  /** Sıradaki birimin tur başına ait olaylar (savaş günlüğü bunları eylemin satırına katmaz). */
+  private betweenTurns = new WeakSet<object>();
   private sinceAction: BattleEvent[] = [];
 
   private enqueue(e: BattleEvent): void {
@@ -2333,6 +2335,7 @@ export class BattleScene extends Phaser.Scene {
         return c ? { hpRegen: c.stats.hpRegen ?? 0, mpRegen: c.stats.mpRegen + (c.itemEffects?.turnMp?.mp ?? 0) } : undefined;
       };
       for (const r of regenTickEvents(this.sinceAction, e, statsOf)) this.regenTicks.add(r);
+      for (const r of betweenTurnEvents(this.sinceAction, e)) this.betweenTurns.add(r);
     }
     if (e.type === 'skillUsed' || e.type === 'globalUsed' || e.type === 'turnStart' || e.type === 'turnSkipped') this.sinceAction = [];
     if (e.type !== 'turnStart') this.sinceAction.push(e);
@@ -2359,7 +2362,7 @@ export class BattleScene extends Phaser.Scene {
     if (!this.scene.isActive()) return;
     // Aşamalı alan skill'i: aşama olayları vfx o aşamayı açana kadar bekler (vfx aşamadan habersizse beklemez)
     if (e.stage !== undefined) await this.awaitStage(e.stage);
-    if (this.combatLog?.push(e)) this.hud?.setLog(this.combatLog.entries());
+    if (this.combatLog?.push(e, { between: this.betweenTurns.has(e), regen: this.regenTicks.has(e) })) this.hud?.setLog(this.combatLog.entries());
     switch (e.type) {
       case 'skillUsed': {
         this.abortHitGate();

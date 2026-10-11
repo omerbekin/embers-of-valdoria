@@ -461,9 +461,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     flashText = '';
     foot.replaceChildren(hint, ...bestButtons(false));
   }
+  let shownView = '';
   function renderAll(): void {
     ix.hideTips();
     const phone = phoneLayout();
+    const vk = phone ? view : 'desk';
+    if (shownView && vk !== shownView) swapIn(body);
+    shownView = vk;
     panel.classList.toggle('gr-phone', phone);
     panel.classList.toggle('show-char', phone && view === 'char');
     panel.classList.toggle('show-inv', phone && view === 'inv');
@@ -479,9 +483,33 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
 
 /** Telefonda Character / Inventory geçişi (C tuşu da geçirir). */
 export function viewTabs(view: 'char' | 'inv', set: (v: 'char' | 'inv') => void, labels: [string, string] = ['Character', 'Inventory']): HTMLElement {
+  return tabSwitch(view, [['char', labels[0]], ['inv', labels[1]]], set);
+}
+
+/**
+ * ORTAK iki (ya da daha çok) yönlü görünüm anahtarı (Ömer 2026-10-11): [ Wares | Character (C) ], telefonda [ Character | Inventory ].
+ * Etkin sekme altın yazı + ince altın alt çizgi + tek kor elması; tüm oyunda sekme geçişleri aynı görünür (gear.css .gr-tabs).
+ */
+export function tabSwitch<K extends string>(cur: K, items: Array<[K, string]>, set: (k: K) => void): HTMLElement {
   const tabs = el('div', 'gr-tabs');
-  (['char', 'inv'] as const).forEach((k, i) => tabs.append(btn(`gr-tab${view === k ? ' on' : ''}`, labels[i]!, () => set(k))));
+  tabs.setAttribute('role', 'tablist');
+  for (const [k, label] of items) {
+    const b = btn(`gr-tab${cur === k ? ' on' : ''}`, label, () => {
+      if (k !== cur) set(k);
+    });
+    b.setAttribute('role', 'tab');
+    b.setAttribute('aria-selected', String(cur === k));
+    tabs.append(b);
+  }
   return tabs;
+}
+
+/** Görünüm değişince değişen içeriğe ortak panel geçişi (kısa kayma + belirme; azaltılmış harekette yok). */
+export function swapIn(node: HTMLElement | null | undefined): void {
+  if (!node) return;
+  node.classList.remove('gr-swap-in');
+  void node.offsetWidth;
+  node.classList.add('gr-swap-in');
 }
 
 /** Telefonda Inventory ekranının solunda dar kahraman şeridi (bırakma hedefi + seçili kahraman; ayrıntı ipucunda). */

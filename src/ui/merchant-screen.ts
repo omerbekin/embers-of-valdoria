@@ -20,7 +20,7 @@ import { itemCell, renderInventory } from './inventory';
 import { itemTipNodes } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap } from './gear-drop';
-import { confirmIn, heroRail, heroTipExtra, phoneLayout, viewTabs, type GearSource } from './gear-screen';
+import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
 import { primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
@@ -177,6 +177,10 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       if (closeAsk && overlay.querySelector('.gr-confirm')) {
         closeAsk();
         closeAsk = null;
+      } else if (phoneLayout() && view === 'char') {
+        view = 'inv';
+        uiSound('tab');
+        renderAll();
       } else if (charOpen && !phoneLayout()) toggleChar(false);
       else if (sel) {
         sel = null;
@@ -291,14 +295,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   function renderHead(): void {
     const l = el('div', 'gr-head-l');
     l.append(el('div', 'gr-title', src.name));
-    if (phoneLayout())
-      l.append(
-        viewTabs(view, (k) => {
-          view = k;
-          renderAll();
-        }, ['Character', 'Wares']),
-      );
-    else l.append(el('div', 'gr-shop-sub', src.sub));
+    if (!phoneLayout()) l.append(el('div', 'gr-shop-sub', src.sub));
     const purse = el('div', 'gr-gold', `${src.gold()} gold`);
     const gi = goldIcon('gr-ui-ico');
     if (gi) {
@@ -310,11 +307,17 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   function renderLeft(): void {
     const phone = phoneLayout();
     const showChar = phone ? view === 'char' : charOpen;
+    // tezgâhın iki görünümü tek anahtarda: [ Wares | Character (C) ] (telefonda da aynı; C ve Esc de geçirir)
     const bar = el('div', 'gr-stall-bar');
-    if (!phone) {
-      bar.append(el('div', 'gr-sec', showChar ? 'Character' : 'Wares'));
-      bar.append(btn(`gr-chip${showChar ? ' on' : ''}`, showChar ? 'Wares (C)' : 'Character (C)', () => toggleChar(!charOpen)));
-    }
+    bar.append(
+      tabSwitch<'wares' | 'char'>(showChar ? 'char' : 'wares', [['wares', 'Wares'], ['char', phone ? 'Character' : 'Character (C)']], (k) => {
+        if (phone) {
+          view = k === 'char' ? 'char' : 'inv';
+          uiSound('tab');
+          renderAll();
+        } else toggleChar(k === 'char');
+      }),
+    );
     if (showChar) {
       const r = renderCharacter({
         heroes: src.heroes(),
@@ -332,7 +335,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       });
       curStats = r.stats;
       afterStats = r.after;
-      left.replaceChildren(...(phone ? [] : [bar]), r.el);
+      left.replaceChildren(bar, r.el);
       left.classList.add('char');
       if (ix.dragging()) ix.remark();
       return;
@@ -394,7 +397,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       row.append(cell);
     });
     bb.append(row);
-    left.replaceChildren(...(phone ? [] : [bar]), talk, wares, reroll, bb);
+    left.replaceChildren(bar, talk, wares, reroll, bb);
   }
   function renderRight(): void {
     const phone = phoneLayout();
@@ -454,10 +457,14 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     }
     foot.replaceChildren(hint, ...acts);
   }
+  let shownView = '';
   function renderAll(): void {
     if (closed) return;
     ix.hideTips();
     const phone = phoneLayout();
+    const vk = (phone ? view === 'char' : charOpen) ? 'char' : 'wares';
+    const swapped = shownView !== '' && vk !== shownView;
+    shownView = vk;
     panel.classList.toggle('gr-phone', phone);
     panel.classList.toggle('show-char', phone && view === 'char');
     panel.classList.toggle('show-inv', phone && view === 'inv');
@@ -465,6 +472,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     renderLeft();
     renderRight();
     renderFoot();
+    if (swapped) for (const c of [...left.children].slice(1)) swapIn(c as HTMLElement);
   }
 
   // --- karşılama (seçenek C): yarım panel kayıp çekilir, arkada tüccar hazır
@@ -502,9 +510,14 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       const p = el('div', 'mw-hl-price', `${best.price}`);
       const gi = goldIcon();
       if (gi) p.prepend(gi);
-      t.append(n, p);
+      // tüm özellikler: yüzen ipucunun aynı satırları (nadirlik / yuva / seviye, C / B / A affix'ler + aralık, Legendary etkisi)
+      const tip = itemTipNodes(best.inst);
+      const sub = tip.find((x) => x.classList.contains('it-sub'));
+      t.append(n, ...(sub ? [sub] : []), p);
       hl.append(t);
-      card.append(hl);
+      const stats = el('div', 'mw-stats');
+      stats.append(...tip.filter((x) => !x.classList.contains('it-name') && !x.classList.contains('it-sub') && !x.classList.contains('it-value')));
+      card.append(hl, stats);
     }
     card.append(btn('gr-btn primary mw-go', 'Browse wares', dismissWelcome));
     half.append(fig, card);

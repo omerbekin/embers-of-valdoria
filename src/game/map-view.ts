@@ -48,11 +48,18 @@ export function canPan(mid: { x: number; y: number }, b: Bounds, v: View): { lef
 }
 
 /**
- * Tekerlek / trackpad: Ctrl (trackpad sıkıştırması tarayıcıda Ctrl + tekerlek gelir) = yakınlaştırma; değilse kaydırma.
- * Dikeyde yer yoksa dikey tekerlek de yatay kaydırır (fare tekerleğiyle sağa-sola gezinme).
+ * Tekerlek / trackpad (Ömer 2026-10-11): fare tekerleği YAKINLAŞTIRIR (yukarı = yakın), Ctrl + tekerlek (trackpad sıkıştırması) de; yalnızca
+ * belirgin yatay hareket (trackpad iki parmak sağa-sola, Shift + tekerlek) kaydırır. Sayfa kaymaz (sahne olayı yutar).
  */
-export function wheelAction(e: { dx: number; dy: number; ctrl: boolean }, room: { vertical: boolean }): { zoom: number; panX: number; panY: number } {
-  if (e.ctrl) return { zoom: e.dy < 0 ? MAP_ZOOM.step : e.dy > 0 ? -MAP_ZOOM.step : 0, panX: 0, panY: 0 };
-  if (room.vertical) return { zoom: 0, panX: e.dx, panY: e.dy };
-  return { zoom: 0, panX: e.dx !== 0 ? e.dx : e.dy, panY: 0 };
+export function wheelAction(e: { dx: number; dy: number; ctrl: boolean }, _room: { vertical: boolean } = { vertical: false }): { zoom: number; panX: number; panY: number } {
+  if (e.ctrl || Math.abs(e.dy) >= Math.abs(e.dx)) return { zoom: e.dy < 0 ? MAP_ZOOM.step : e.dy > 0 ? -MAP_ZOOM.step : 0, panX: 0, panY: 0 };
+  return { zoom: 0, panX: e.dx, panY: 0 };
+}
+
+/**
+ * İmlece doğru yakınlaştırma: imlecin altındaki dünya noktası (`cursor`) ekranda yerinde kalır. `offset` = imlecin görünüm ortasına göre
+ * EKRAN pikseli (tuval), `camZoom` = yeni gerçek yakınlaştırma. Sonuç kamera ortası, çerçeveye kısılı (kaydırma gibi sınırda durur).
+ */
+export function zoomTowardMid(cursor: { x: number; y: number }, offset: { x: number; y: number }, camZoom: number, b: Bounds, v: View): { x: number; y: number } {
+  return clampMid({ x: cursor.x - offset.x / camZoom, y: cursor.y - offset.y / camZoom }, b, v);
 }

@@ -880,6 +880,13 @@ export interface SkillDef {
    * (ilk = hazırlık/yaklaşma, son = vuruş anı); ad bir döngü olabilir ('spin' -> spin1..3). Pozu olmayan sınıfta etkisiz.
    */
   pose?: string | string[];
+  /**
+   * Sunum: efekti, sesi ve ikonu bu (gerçek) skill'in sahibinden al (Pose Tester kopyaları; src/game/asset-versions.ts > ownerOfSkill).
+   * Motor okumaz.
+   */
+  artOf?: string;
+  /** Tooltip'e eklenen serbest not satırı (ör. Pose Tester: hangi pozu oynattığı). Kural değildir. */
+  note?: string;
   /** target 'random_enemies': kaç (farklı) rastgele düşmana gider. */
   count?: number;
   /** true: yukarıdan düşen etki her hedefe ayrı değil, seçilen alanın merkezine TEK büyük olarak düşer. */

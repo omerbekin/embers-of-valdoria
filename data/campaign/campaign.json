@@ -1,6 +1,10 @@
 {
   "_not": "Sefer kuralları (PROVİZYON sayılar; denge balance-tester'ın işi). Metinler oyun içi (İngilizce). docs/design/campaign/campaign.md v5.",
   "maps": ["valdoria"],
+  "_rest": "Dinlenme noktası (Ömer 2026-10-11; Riverside Camp): ÜCRETSİZ, takım maks canın heal oranı kadar iyileşir (kasaba gibi tam değil). Düşmüş kahraman (can 0) burada ALTINLA diriltilir (tüccar değil): reviveRatio canla kalkar; fiyat = reviveCost.base + reviveCost.perIlvl x düğümün item seviyesi. Fiyat VARSAYIM (madde 305).",
+  "rest": { "heal": 0.5, "reviveRatio": 0.5, "reviveCost": { "base": 20, "perIlvl": 6 } },
+  "_merchant": "Sefer tüccarı (Odo; Ömer 2026-10-11; Forward Camp): Endless tüccarının kuralları (alım / satım / geri alım / yenileme); stok tek nadirlik tablosundan (items.json > dropRarity), taban item'ler ve örnek seviyesi düğümün item seviyesinden; fiyat = örneğin değeri, satış = değerin yarısı.",
+  "merchant": { "size": 9, "rerollCost": 15, "buybackSize": 4 },
   "rules": {
     "carryHp": true,
     "victoryHeal": 0.2,

@@ -14,7 +14,8 @@ export const v2VfxKey = (skill: Pick<SkillDef, 'id' | 'vfx'>): string => skill.v
 /** Sahibin v2 dosyasındaki efekt (seçimden bağımsız); yoksa undefined. */
 export function v2VfxOf(owner: string, skill: Pick<SkillDef, 'id' | 'vfx'>): V2Vfx | undefined {
   const file = VFX_V2[owner];
-  return file ? (file[v2VfxKey(skill)] ?? file[skill.id]) : undefined;
+  const art = (skill as { artOf?: string }).artOf; // Pose Tester kopyası: gerçek skill'in anahtarı (vfx'siz skill'lerde id)
+  return file ? (file[v2VfxKey(skill)] ?? file[skill.id] ?? (art ? file[art] : undefined)) : undefined;
 }
 
 /** Seçili sürüme göre: v2 efekti (varsa) ya da v1'e düşüş. */

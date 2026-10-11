@@ -54,3 +54,30 @@ export function regenTickEvents(recent: readonly BattleEvent[], turnStart: Battl
   }
   return out;
 }
+
+/**
+ * Tur arası olaylar (savaş günlüğü için; Ömer 2026-10-11 hata: Smoke Bomb satırına sıradaki birimin tur başı "+6" can yenilenmesi karıştı):
+ * motor eylemin sonuçlarından hemen sonra, AYNI çağrıda sıradaki birimin (X) tur başını işler ve turnStart'ı en son yayar. turnStart gelince
+ * pencerenin sonundan geriye doğru X'e ait tur başı olayları (zemin / DoT hasarı, durum bitişi, HoT ve yenilenme şifası, MP yenilenmesi,
+ * Omen / Doom, düşme, Divine Light gibi tur başı pasifleri) toplanır; X'e ait olmayan ilk olayda durulur. Günlük bunları eylemin satırına katmaz, ayrı yazar.
+ */
+export function betweenTurnEvents(recent: readonly BattleEvent[], turnStart: BattleEvent & { type: 'turnStart' }): Set<BattleEvent> {
+  const out = new Set<BattleEvent>();
+  if (turnStart.extra) return out;
+  const x = turnStart.actor;
+  for (let i = recent.length - 1; i >= 0; i--) {
+    const e = recent[i]!;
+    if (WINDOW_STOP.has(e.type)) break;
+    const mine =
+      (e.type === 'heal' && (e.target === x || e.source === x)) ||
+      (e.type === 'passive' && e.actor === x) ||
+      (e.type === 'mpRegen' && e.actor === x) ||
+      (e.type === 'damage' && e.target === x && (e.origin === 'ground' || e.origin === 'status')) ||
+      (e.type === 'statusEnd' && e.target === x) ||
+      ((e.type === 'omen' || e.type === 'doom') && e.target === x) ||
+      (e.type === 'death' && e.target === x);
+    if (!mine) break;
+    out.add(e);
+  }
+  return out;
+}

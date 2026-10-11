@@ -58,6 +58,7 @@ const dateText = (iso: string): string => {
 };
 const modeName = (m: CampaignMode) => (m === 'ironman' ? 'Ironman' : 'Normal');
 const diffName = (d: Difficulty) => CONFIG.difficulties[d]?.name ?? d;
+const MAP_NOTE = '#e3c48f'; // harita değişti uyarısı (kehribar; onay kutusunun kırmızısından ayrı)
 const kindName = (k: SaveEntry['kind']) => (k === 'manual' ? 'Manual' : k === 'start' ? 'Start' : 'Auto');
 
 interface Confirm {
@@ -144,7 +145,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     };
     const refresh = () => {
       const s = sums[i];
-      sub.setText(s ? `${modeName(s.mode)} · ${diffName(s.difficulty)}${s.latest ? ` · Stop ${s.latest.summary.stop}` : ''}` : 'Empty');
+      sub.setText(s ? `${modeName(s.mode)} · ${diffName(s.difficulty)}${s.latest ? ` · Stop ${s.latest.summary.stop}` : ''}${s.mapChanged ? ' · Map changed' : ''}` : 'Empty');
       paint();
     };
     zone.on('pointerover', () => ((hover = true), paint()));
@@ -212,13 +213,22 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
   const slotHeader = (y: number, s: SlotSummary): number => {
     y = kicker(y, `Slot ${st.slot + 1}`);
     const l = s.latest;
-    panel.add(fitW(elText(scene, IX, y, l ? l.summary.node : 'Journey started', 36, EL.ON, { em: 0.04, upper: false }).setOrigin(0, 0), IW));
+    panel.add(fitW(elText(scene, IX, y, l ? l.summary.node : s.mapChanged ? 'Journey ended' : 'Journey started', 36, EL.ON, { em: 0.04, upper: false }).setOrigin(0, 0), IW));
     y += 54;
     panel.add(elText(scene, IX, y, `${modeName(s.mode)} · ${diffName(s.difficulty)}`, 15, s.mode === 'ironman' ? EL.BAD : EL.MUTED, { em: 0.14 }).setOrigin(0, 0));
     y += 30;
-    const meta = l ? `${l.summary.map} · Stop ${l.summary.stop} of ${l.summary.stops} · ${l.summary.victories} victories · ${s.saveCount} save${s.saveCount === 1 ? '' : 's'} · ${dateText(s.lastPlayed)}` : `Not saved yet · ${dateText(s.lastPlayed)}`;
+    const meta = l ? `${l.summary.map} · Stop ${l.summary.stop} of ${l.summary.stops} · ${l.summary.victories} victories · ${s.saveCount} save${s.saveCount === 1 ? '' : 's'} · ${dateText(s.lastPlayed)}` : `${s.mapChanged ? 'Old map' : 'Not saved yet'} · ${dateText(s.lastPlayed)}`;
     panel.add(elBody(scene, IX, y, meta, 21, EL.MUTED, true, IW).setOrigin(0, 0));
     y += 44;
+    // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferi silindi, yuva duruyor (yeni sefer kaydedilince uyarı kalkar)
+    if (s.mapChanged) {
+      const note = elBody(scene, IX + 20, y + 14, 'The Valdoria map has changed; this campaign must restart.', 22, MAP_NOTE, true, IW - 40).setOrigin(0, 0);
+      const g = scene.add.graphics();
+      g.fillStyle(0x2a1d0a, 0.55).fillRect(IX, y, IW, note.height + 28);
+      g.lineStyle(1, 0xd8b27e, 0.5).strokeRect(IX + 0.5, y + 0.5, IW - 1, note.height + 27);
+      panel.add([g, note]);
+      y += note.height + 46;
+    }
     if (l) y = faces(y, l);
     return y;
   };
@@ -254,6 +264,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     }
     y = slotHeader(y, s) + 8;
     if (st.confirm) return confirmBox(y, st.confirm);
+    if (s.mapChanged && !s.saveCount) {
+      button('Restart here', () => ((st.step = 2), render()), IX, y, true, 260); // silinecek kayıt yok: onay gerekmez
+      return y + 70;
+    }
     const l = s.latest;
     button('Overwrite this slot', () => {
       st.confirm = {

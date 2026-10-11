@@ -96,3 +96,47 @@ describe('silah görseli seçimi (aile + nadirlik)', () => {
     expect(partyWeapons(['h1', '', 'h2'], (id) => eq[id])).toEqual({ 'party-0': { id: 'woodcutters_axe', family: 'axes', rarity: 'common' } });
   });
 });
+
+describe('Pose Tester I / II (gizli debug class\'ları)', () => {
+  const ids = ['pose_tester_1', 'pose_tester_2'];
+  it('testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı; Test Mode seçicisinde var', async () => {
+    const { testClassIds } = await import('../src/game/test-mode');
+    for (const id of ids) {
+      const c = content.classes[id]!;
+      expect(c.testOnly && c.hidden, id).toBe(true);
+      expect(content.randomPool).not.toContain(id);
+      expect(content.selectableClasses).not.toContain(id);
+      expect(content.battles['random-battle']!.random!.pool).not.toContain(id);
+      expect(testClassIds()).toContain(id);
+      expect(c.skills).toHaveLength(4);
+    }
+  });
+
+  it('skill\'ler gerçek skill kopyası: sanat sahibi gerçek sınıf, bedel 0, cooldown yok, ~1 hasar, tek poz; Warrior poz kütüphanesi', async () => {
+    const { ownerOfSkill } = await import('../src/game/asset-versions');
+    const poses = new Set<string>();
+    for (const id of ids) {
+      expect(poseClass(id)).toBe(poseClass('warrior'));
+      for (const sid of content.classes[id]!.skills) {
+        const s = content.skills[sid]!;
+        const real = content.skills[s.artOf!]!;
+        expect(real, sid).toBeDefined();
+        expect(s.name).toBe(real.name);
+        expect(s.vfx).toBe(real.vfx);
+        expect(s.target).toBe(real.target);
+        expect(s.area).toEqual(real.area);
+        expect(s.cost.amount).toBe(0);
+        expect(s.cooldown ?? 0).toBe(0);
+        expect(s.initialCooldown ?? 0).toBe(0);
+        for (const e of s.effects) if ('power' in e && typeof e.power === 'number') expect(e.power).toBeLessThanOrEqual(0.05);
+        expect(ownerOfSkill(sid)).toBe(ownerOfSkill(real.id));
+        expect(s.note).toMatch(/pose/i);
+        const list = skillPoses(id, s);
+        expect(list.length, sid).toBeGreaterThan(0);
+        list.forEach((p) => poses.add(p));
+      }
+    }
+    // kütüphanedeki her eylem pozu (idle/kneel hariç) en az bir skill'le denenebilir
+    for (const p of ['slash', 'overhead', 'spin', 'step', 'raise', 'channel', 'throw', 'hit']) expect(poses, p).toContain(p);
+  });
+});

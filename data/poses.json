@@ -1,5 +1,5 @@
 {
-  "_not": "Karakter poz kütüphanesi (Ömer 2026-10-11; future-ideas 'ortak poz kütüphanesi + dinamik silah'; kod src/game/poses.ts + pose-rig.ts). classes.<sınıf>: assets/poses/<dir>/<poz>.png gövde pozları (eller boş), ortak tuval (canvas: ayak ortası footX, taban footY), figure = idle figürünün boyu (ekran ölçeği). poses.<poz>.anchor = ana el (yumruk) noktası x/y (tuval pikseli) + angle (silah açısı, derece, saat yönü, 0 = ağız yukarı); offhand = ikinci el (bilgi; çizimde yumruk yaması); flip = silahı yatay aynala (balta ağzı öne); back = silah gövdenin ARKASINDA; hidden = silah çizilmez (atış); fist = yumruk yamasının yarıçapı (yumruk kabzanın ÜSTÜNDE görünsün). canvas/figure/box/weapons.looks ölçümleri tools/make-poses.mjs yazar (el noktaları korunur); el noktası ve açı düzenleyici: node tools/pose-editor.mjs. cycles = çok kareli poz (spin = 3 kare döngü). Skill -> poz eşlemesi skills.json > pose. weapons.<aile>.length = silah boyu (gövde tuval pikseli), itemArt/familyArt = item -> silah görseli ailesi, rarityLook = nadirlik -> görünüm dizini (0 sade, 1 orta, 2 süslü), rarityGlow = silahın çevresinde ince nadirlik ışıltısı.",
+  "_not": "Karakter poz kütüphanesi (Ömer 2026-10-11; future-ideas 'ortak poz kütüphanesi + dinamik silah'; kod src/game/poses.ts + pose-rig.ts). classes.<sınıf>: assets/poses/<dir>/<poz>.png gövde pozları (eller boş), ortak tuval (canvas: ayak ortası footX, taban footY), figure = idle figürünün boyu (ekran ölçeği). poses.<poz>.anchor = ana el (yumruk) noktası x/y (tuval pikseli) + angle (silah açısı, derece, saat yönü, 0 = ağız yukarı); offhand = ikinci el (bilgi; çizimde yumruk yaması); flip = silahı yatay aynala (balta ağzı öne); back = silah gövdenin ARKASINDA; hidden = silah çizilmez (atış); fist = yumruk yamasının yarıçapı (yumruk kabzanın ÜSTÜNDE görünsün). canvas/figure/box/weapons.looks ölçümleri tools/make-poses.mjs yazar (el noktaları korunur); el noktası ve açı düzenleyici: node tools/pose-editor.mjs. cycles = çok kareli poz (spin = 3 kare döngü). Skill -> poz eşlemesi skills.json > pose. weapons.<aile>.length = silah boyu (gövde tuval pikseli), itemArt/familyArt = item -> silah görseli ailesi, rarityLook = nadirlik -> görünüm dizini (0 sade, 1 orta, 2 süslü), rarityGlow = silahın çevresinde ince nadirlik ışıltısı. classAliases = başka sınıfın kütüphanesini kullanan sınıf (Pose Tester I/II -> warrior).",
   "classes": {
     "warrior": {
       "heightFit": 0.97,
@@ -312,5 +312,9 @@
     "epic": "#b072e0",
     "legendary": "#f0a830"
   },
-  "fistRadius": 13
+  "fistRadius": 13,
+  "classAliases": {
+    "pose_tester_1": "warrior",
+    "pose_tester_2": "warrior"
+  }
 }

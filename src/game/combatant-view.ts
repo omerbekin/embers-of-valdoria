@@ -802,6 +802,10 @@ export class CombatantView {
   useSkill(skill: { pose?: string | string[]; motion?: string } | null): void {
     if (!this.rig) return;
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
+    // açık pozu olan menzilli / büyü skill'i: efekt pozu kendisi çağırmasa da (yukarıdan düşen Judgment gibi) baştan skill'in ilk pozu
+    if (skill?.pose !== undefined && skill.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
+    // skill bitti: efekt pozu boşta pozuna döndürmediyse (araya başka poz girmezse) kısa süre sonra boşta pozuna
+    if (!skill) this.returnToIdle(this.rig.token, slow(500));
   }
 
   /**

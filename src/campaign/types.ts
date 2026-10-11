@@ -2,7 +2,7 @@
  * Sefer (campaign) tipleri. Saf TypeScript: Phaser/DOM yok, Node'da test edilir (docs/design/campaign/campaign.md).
  */
 
-export type NodeType = 'battle' | 'elite' | 'boss' | 'town' | 'event' | 'treasure';
+export type NodeType = 'battle' | 'elite' | 'boss' | 'town' | 'event' | 'treasure' | 'rest' | 'merchant';
 export type EdgeStyle = 'solid' | 'dashed';
 export type CampaignMode = 'normal' | 'ironman';
 /** Genel zorluk: sefer başında seçilir, sonra değişmez. */
@@ -59,6 +59,15 @@ export interface MapNode {
   city?: boolean;
   final?: boolean;
   teaches?: string;
+  /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme + altınla diriltme (campaign.json > rest). */
+  rest?: boolean;
+  /** Tüccar (Odo; campaign.json > merchant): stok düğümün item seviyesinden. */
+  merchant?: boolean;
+  /**
+   * Bu düğümün savaşına özel rütbe çarpanı (yalnızca seferde; karşılaşma Endless ile ortaksa onu bozmadan ayar). Zorluğun enemyTier'ı
+   * gibi rütbe -> çarpan; noTierMods'a bakmaz (bilinçli düğüm ayarı). A1-x: boss'lar 21 duraklık yolda güçlenen takıma göre (madde 305).
+   */
+  enemyTierMods?: Partial<Record<UnitTier, DifficultyEnemyMods>>;
 }
 
 export interface MapEdge {
@@ -145,6 +154,10 @@ export interface CampaignConfig {
   tips: Record<string, string>;
   defaultDifficulty: Difficulty;
   difficulties: Record<Difficulty, DifficultyDef>;
+  /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme oranı; düşmüş kahramanı altınla diriltme (fiyat = base + perIlvl x düğüm item seviyesi). */
+  rest: { heal: number; reviveRatio: number; reviveCost: { base: number; perIlvl: number } };
+  /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
+  merchant: { size: number; rerollCost: number; buybackSize: number };
 }
 
 /** Kadrodaki bir karakter. hpRatio 0-1 (savaştan savaşa taşınır). */
@@ -168,7 +181,7 @@ export interface Hero {
  * Bir düğümdeki adımlar (sırayla): recruit-before -> farewell -> company -> battle -> treasure -> event -> town -> recruit-leave.
  * Hepsi bitince düğüm temizlenmiş sayılır ve yola çıkılır (move).
  */
-export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'battle' | 'treasure' | 'event' | 'town' | 'volunteer';
+export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'battle' | 'treasure' | 'event' | 'town' | 'rest' | 'merchant' | 'volunteer';
 
 /** Sefer durumunun şema sürümü (2: kahraman level/XP/ekipman, torba, altın; eski 1 okunurken tamamlanır: save.ts > normalizeState). */
 export const STATE_VERSION = 2;
@@ -212,6 +225,16 @@ export interface CampaignState {
   lootState: { rarePity: number; clears: Record<string, number>; rareMisses?: number };
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
+  /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
+  shop?: CampaignShop;
+}
+
+/** Sefer tüccarının tezgâhı (src/campaign/merchant.ts). */
+export interface CampaignShop {
+  node: string;
+  wares: Array<{ itemId: string; rolls?: ItemInstance['rolls']; price: number; sold?: boolean }>;
+  buyback: Array<{ item: ItemInstance; price: number }>;
+  rerolls: number;
 }
 
 /**
@@ -253,5 +276,7 @@ export type NextStep =
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
   | { kind: 'town'; node: string }
+  | { kind: 'rest'; node: string }
+  | { kind: 'merchant'; node: string }
   | { kind: 'move'; options: string[] }
   | { kind: 'complete' };

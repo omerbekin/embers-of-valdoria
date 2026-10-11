@@ -98,7 +98,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     for (const u of enc.def.units) {
       const diff = CONFIG.difficulties[s.difficulty];
       // noTierMods: rütbe eki (enemyTier) bu birime uygulanmaz (The Bridge Warden: fazları/telgrafları zaten zor; sim ölçümü, open-questions)
-      const mods = withDifficulty(withDifficulty(withDifficulty(u.mods, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined);
+      const own = withDifficulty(u.mods, u.tier ? n.enemyTierMods?.[u.tier] : undefined); // düğüme özel rütbe ayarı (seferde)
+      const mods = withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined);
       const setup: UnitSetup = {
         ...(mods ? { modifiers: mods } : {}),
         ...(u.name ? { displayName: u.name } : {}),

@@ -12,6 +12,7 @@ import {
   CONFIG,
   activeHeroes,
   applyBattle,
+  autoResolve,
   battlePlan,
   completeSimple,
   equipBest,
@@ -265,6 +266,11 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
           if (step.kind === 'treasure') lootCount(pre, s, at);
           break;
         }
+        case 'rest':
+        case 'merchant':
+          // Dinlenme: ücretsiz %50 (düşmüş yoksa diriltme yok); tüccar: vekil alışveriş yapmaz (Ömer 2026-10-11, madde 305)
+          s = autoResolve(s, step);
+          break;
         case 'move': {
           const next = route[s.path.length];
           s = moveTo(s, next && step.options.includes(next) ? next : step.options[0]!);

@@ -640,6 +640,7 @@ describe('skill temasına uygun stat (class verisi)', () => {
       expect(x.reason.length).toBeGreaterThan(0);
     }
     for (const def of classes) {
+      if (def.skills.every((id) => content.skills[id]!.artOf)) continue; // Pose Tester I/II: başka sınıfların skill kopyaları (debug)
       const scales = def.skills
         .filter((id) => !OFF_PRIMARY_ALLOWED.some((x) => x.skill === id))
         .flatMap((id) => content.skills[id]!.effects.flatMap((e) => ('scale' in e ? [e.scale] : [])));

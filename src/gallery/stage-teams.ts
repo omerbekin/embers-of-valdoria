@@ -9,6 +9,7 @@ const cellsOf = (ids: string[]): string[] => {
 
 /** Önizleme sahnesinin takımları (Phaser'sız): oyuncu tarafında tüm class'lar (her skill'in sahibi sahnede), düşman tarafında 6 class. */
 export function stageTeams(): { party: string[]; enemies: string[] } {
-  const all = content.arrangeTeam(Object.keys(content.classes));
+  // sanatı ödünç alan debug class'ları (Pose Tester I/II; skill'leri gerçek skill kopyası) sahneye girmez: 12 hücre gerçek sınıflara yeter
+  const all = content.arrangeTeam(Object.keys(content.classes).filter((id) => !content.classes[id]!.skills.every((s) => content.skills[s]?.artOf)));
   return { party: cellsOf(all), enemies: cellsOf(all.slice(0, 6)) };
 }

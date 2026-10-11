@@ -55,8 +55,14 @@ export class CombatLog {
     this.acted.add(uid);
   }
 
-  /** Bir olayı işler (ekranda oynatıldığı sırayla). Satır listesi değiştiyse true. */
-  push(e: BattleEvent): boolean {
+  /**
+   * Bir olayı işler (ekranda oynatıldığı sırayla). Satır listesi değiştiyse true. `flags.between`: eylem bitti, olay sıradaki birimin tur
+   * başına ait (regen-ticks.ts > betweenTurnEvents): eylemin satırına katılmaz, kendi satırını alır. `flags.regen`: tur başı düz can / MP
+   * yenilenmesi: günlüğe yazılmaz (ekranda da yüzen sayı değil).
+   */
+  push(e: BattleEvent, flags: { between?: boolean; regen?: boolean } = {}): boolean {
+    if (flags.between || flags.regen) this.close();
+    if (flags.regen) return false;
     switch (e.type) {
       case 'turnStart': {
         this.close();

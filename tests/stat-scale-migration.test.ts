@@ -34,7 +34,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
     expect(rolledAffixes(tree.a).map((a) => a.id)).toEqual(['c_armor', 'c_hp']);
   });
 
-  it('sefer kaydı v3 -> güncel: eski zarlar en yakın affix biçimine (bir kez), geri yazılınca sürüm 5', () => {
+  it('sefer kaydı v3 -> güncel: eski harita (A1-x öncesi) olduğu için kayıtlar silinir, yuva kalır; geri yazılınca sürüm 6', () => {
     const kv = memoryKV();
     let s = pickHero(newCampaign({ mode: 'normal', seed: 9, campaignId: 'm1' }), 'warrior');
     s = addItem(s, 'riveted_mail').state;
@@ -46,13 +46,11 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
     kv.setItem(SAVE_KEY, JSON.stringify(raw));
     const r = readSaves(kv);
     expect(r.migrated).toBe(true);
-    const migrated = r.file.slots[0]!.saves[0]!.state.inventory[0]!;
-    expect(migrated.rolls!.affixes.map((a) => a.id)).toEqual(['c_armor', 'c_hp']);
+    expect(r.corrupt).toBe(false); // eski zarlar göç ederken çökmez; kayıt yine de eski haritadan
+    expect(r.file.slots[0]).toMatchObject({ campaignId: 'm1', saves: [], mapChanged: true });
     expect(migrateSaves(kv)).toBe(true);
-    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(5);
-    const again = readSaves(kv);
-    expect(again.migrated).toBe(false);
-    expect(again.file.slots[0]!.saves[0]!.state.inventory[0]!.rolls).toEqual(migrated.rolls); // ikinci kez değişmez
+    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(6);
+    expect(readSaves(kv).migrated).toBe(false);
   });
 
   it('Endless koşu kaydı v1 -> güncel: zarlar x2, yarım savaş atılır; güncel sürüm aynen okunur; skor listesi sürüm 1 kalır', () => {

@@ -1332,34 +1332,34 @@ html.short .gr-slot-sub {
   transition: opacity 0.12s;
 }
 
-.item-tip .it-name {
+:is(.item-tip, .mw-stats) .it-name {
   display: block;
   font: 600 max(14px, calc(22 * var(--u))) var(--g-disp);
   letter-spacing: 0.05em;
   text-transform: uppercase;
 }
 
-.item-tip .it-sub,
-.item-tip .it-value {
+:is(.item-tip, .mw-stats) .it-sub,
+:is(.item-tip, .mw-stats) .it-value {
   font: italic max(12px, calc(17 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
-.item-tip .it-lines {
+:is(.item-tip, .mw-stats) .it-lines {
   margin: 6px 0 4px;
   display: flex;
   flex-direction: column;
   gap: 3px;
 }
 
-.item-tip .it-line {
+:is(.item-tip, .mw-stats) .it-line {
   display: flex;
   align-items: center;
   gap: 7px;
   color: #c5ecb0;
 }
 
-.item-tip .it-tier {
+:is(.item-tip, .mw-stats) .it-tier {
   flex: none;
   display: grid;
   place-items: center;
@@ -1369,18 +1369,18 @@ html.short .gr-slot-sub {
   font: 700 0.78em var(--g-disp);
 }
 
-.item-tip .it-ico {
+:is(.item-tip, .mw-stats) .it-ico {
   width: max(14px, calc(22 * var(--u)));
   height: max(14px, calc(22 * var(--u)));
 }
 
-.item-tip .it-range {
+:is(.item-tip, .mw-stats) .it-range {
   margin-left: auto;
   color: var(--g-dim);
   font-size: 0.9em;
 }
 
-.item-tip .it-effect {
+:is(.item-tip, .mw-stats) .it-effect {
   font-style: italic;
   color: #ffd99a;
   border-left: 2px solid rgba(255, 210, 122, 0.6);
@@ -1388,19 +1388,19 @@ html.short .gr-slot-sub {
   margin: 4px 0;
 }
 
-.item-tip .it-heroes {
+:is(.item-tip, .mw-stats) .it-heroes {
   margin-top: 6px;
   padding-top: 5px;
   border-top: 1px solid var(--g-line);
 }
 
-.item-tip .it-hero {
+:is(.item-tip, .mw-stats) .it-hero {
   display: flex;
   gap: 8px;
   font-size: 0.92em;
 }
 
-.item-tip .it-hero-k {
+:is(.item-tip, .mw-stats) .it-hero-k {
   flex: none;
   width: 6.2em;
   font: 600 0.82em var(--g-disp);
@@ -1409,15 +1409,15 @@ html.short .gr-slot-sub {
   color: var(--g-dim);
 }
 
-.item-tip .it-up {
+:is(.item-tip, .mw-stats) .it-up {
   color: #8fe39a;
 }
 
-.item-tip .it-down {
+:is(.item-tip, .mw-stats) .it-down {
   color: #ff8a7a;
 }
 
-.item-tip .it-no {
+:is(.item-tip, .mw-stats) .it-no {
   color: #e0907a;
 }
 
@@ -2117,4 +2117,204 @@ html.short .gr-shop.gr-gear {
 .gr-shop.gr-phone .gr-odo-line {
   font-size: 12.5px;
   padding: 4px 8px;
+}
+
+/* ===== Skill çubuğu: savaş HUD'ının bileşeni (src/ui/skill-bar.ts + battle-hud.css .bh-sk); oyun biriminde, `zoom` = --gu =====
+   Gear farkları: kısayol rozeti / seçim çizgisi yok, ad kısaltılmaz (hücre gerekirse genişler), altında anahtar sayılar + farkları. */
+.bh-kit,
+.bh-kit * {
+  box-sizing: border-box;
+}
+
+.gr-skillbar {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--txt);
+  font-family: var(--gar);
+}
+
+.gr-skillbar .bh-sk {
+  width: auto;
+  min-width: 146px;
+  cursor: help;
+}
+
+.gr-skillbar .bh-sk::after {
+  display: none;
+}
+
+.gr-skillbar .bh-sk .nm {
+  max-width: none;
+  overflow: visible;
+}
+
+.gr-skillbar .bh-sk-pasv {
+  padding-top: 14px;
+}
+
+.gr-skillbar .bh-sk-pasv .bh-medal {
+  margin-bottom: 4px;
+}
+
+.gr-sk-nums {
+  margin-top: 2px;
+  font: 15px/1.3 var(--gar);
+  color: var(--note);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gr-sk-nums i {
+  color: var(--muted);
+}
+
+.gr-sk-nums b {
+  font: 700 15px var(--num);
+  color: #f4ede1;
+}
+
+.gr-sk-nums .up {
+  color: #8fe39a;
+}
+
+.gr-sk-nums .down {
+  color: #ff8a7a;
+}
+
+.gr-skillbar .bh-sktip .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-skillbar .bh-sktip .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* son hücrenin (pasif) açıklaması sağdan taşmasın */
+.gr-skillbar .bh-sk:last-child .bh-sktip {
+  left: auto;
+  right: 0;
+  transform: translate(20%, 6px);
+}
+
+.gr-skillbar .bh-sk:last-child:hover .bh-sktip,
+.gr-skillbar .bh-sk.tip:last-child .bh-sktip {
+  transform: translate(20%, 0);
+}
+
+/* ===== Karşılama: "Today's pick" tüm özellikleriyle (ipucu satırları) + "Browse wares" sağda (birincil en sağ) ===== */
+.mw-card .mw-go {
+  align-self: flex-end;
+}
+
+.mw-hl-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mw-hl-t .it-sub {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.mw-stats {
+  font-size: max(13px, calc(19 * var(--u)));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--g-line);
+}
+
+.mw-stats .it-lines {
+  margin: 0;
+}
+
+html.short .mw-stats {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+html.short .mw-stats .it-lines {
+  gap: 1px;
+}
+
+html.short .mw-greet {
+  display: none;
+}
+
+/* ===== Ortak görünüm anahtarı (tabSwitch): [ Wares | Character (C) ], telefonda [ Character | Inventory ]; etkin sekmede ince altın alt çizgi + tek kor elması ===== */
+.gr-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--g-line);
+}
+
+.gr-tab {
+  position: relative;
+  min-height: 44px;
+  padding: 0 max(12px, calc(20 * var(--u)));
+  margin-bottom: -1px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: 600 max(12px, calc(17 * var(--u))) var(--g-disp) !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim) !important;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.gr-tab:hover:not(.on) {
+  color: var(--g-txt, #e8dcc4) !important;
+}
+
+.gr-tab.on {
+  color: var(--g-gold) !important;
+  border-bottom-color: var(--g-gold);
+  cursor: default;
+}
+
+.gr-tab.on::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 8px rgba(240, 140, 40, 0.7);
+}
+
+.gr-stall-bar .gr-tabs {
+  flex: 1;
+}
+
+/* görünüm değişince ortak panel geçişi */
+.gr-swap-in {
+  animation: gr-swap-in 0.26s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+@keyframes gr-swap-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.reduced-motion .gr-swap-in {
+  animation: none;
+}
+
+/* telefonda skill çubuğu savaşınkiyle aynı boyda; altındaki sayılar okunmaz kalır, farklar tooltip'te (dokun → aç) */
+html.short .gr-sk-nums,
+.gr-phone .gr-sk-nums {
+  display: none;
 }

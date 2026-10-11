@@ -538,7 +538,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    expect(sky.map((s) => s.id).sort()).toEqual(['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'judgment', 'meteor', 'radiance', 'root_smash']);
+    expect(sky.map((s) => s.id).sort()).toEqual(['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'judgment', 'meteor', 'pt_judgment', 'radiance', 'root_smash']);
     for (const s of sky) expect(['arrows', 'shards', 'meteor', 'void', 'light', 'fist'], s.id).toContain(s.skyFx);
     for (const s of Object.values(content.skills)) if (s.motion !== 'sky') expect(s.skyFx, s.id).toBeUndefined();
   });

@@ -13,7 +13,7 @@ import layout from '../../data/battle-layout.json';
 import { perfLite } from '../ui/perf-mode';
 import { stageView } from './stage-view';
 import { poseBodyUrl, weaponUrl } from './pose-files';
-import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, poseBounds, poseClass, poseClassIds, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
+import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;
 const weaponTex = (family: string, look: string, small: boolean) => `poseweapon:${family}:${look}${small ? ':s' : ''}`;
@@ -86,7 +86,7 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   const def = poseClass(classId);
   if (!def || typeof document === 'undefined') return null;
   const s = density(def, spriteScale);
-  const key = `pose:${classId}:${pick ? weaponKey(pick) : 'none'}:${Math.round(s * 100)}`;
+  const key = `pose:${poseOwner(classId)}:${pick ? weaponKey(pick) : 'none'}:${Math.round(s * 100)}`; // takma adlı sınıf asıl sahibin atlasını paylaşır
   const { halfW, up } = frameExtent(def, pick);
   const realW = Math.ceil(halfW * 2 * s);
   const realH = Math.ceil(up * s);

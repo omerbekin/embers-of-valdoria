@@ -470,7 +470,11 @@ export class MainMenuScene extends Phaser.Scene {
       col.add(row.root);
       this.menuRows.push(row);
     });
-    if (readSaves(storage()).corrupt) col.add(this.noteText(COL_X, H - 60, 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5));
+    const saves = readSaves(storage());
+    if (saves.corrupt) col.add(this.noteText(COL_X, H - 60, 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5));
+    // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferleri yeniden başlar; yuva kalır, yeni sefer kaydedilene kadar uyarı (campaign/save.ts)
+    if (saves.file.slots.some((sd) => sd?.mapChanged))
+      col.add(fitText(this.noteText(COL_X, saves.corrupt ? H - 96 : H - 60, 'The Valdoria map has changed; this campaign must restart.', 22, '#d8b27e').setOrigin(0, 0.5), 600));
     this.selectMain(0);
   }
 

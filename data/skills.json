@@ -1915,5 +1915,291 @@
       "timberSplinter",
       "riverBurst"
     ]
+  },
+  "pt_x_cut": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Saltire Cut kopyası; gerçek efekt/ses/hedef şekli (artOf x_cut), poz kütüphanesinde 'slash' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_x_cut",
+    "name": "Saltire Cut",
+    "icon": "saltire",
+    "target": "area_enemies",
+    "area": {
+      "shape": "x",
+      "hitsAtCenter": 2
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#ff8a1f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      }
+    ],
+    "vfx": "saltire",
+    "sfx": [
+      "shadowStep",
+      "swordWhoosh",
+      "duelCut"
+    ],
+    "pose": "slash",
+    "artOf": "x_cut",
+    "note": "Pose test: plays the Slash pose."
+  },
+  "pt_tremor_slam": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Tremor Slam kopyası; gerçek efekt/ses/hedef şekli (artOf tremor_slam), poz kütüphanesinde 'overhead' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_tremor_slam",
+    "name": "Tremor Slam",
+    "icon": "tremor2",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9db0c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      }
+    ],
+    "vfx": "tremor2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "shieldPlant",
+      "groundHeave"
+    ],
+    "pose": "overhead",
+    "artOf": "tremor_slam",
+    "note": "Pose test: plays the Overhead Strike pose."
+  },
+  "pt_whirlwind": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Whirlwind kopyası; gerçek efekt/ses/hedef şekli (artOf whirlwind), poz kütüphanesinde 'spin' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_whirlwind",
+    "name": "Whirlwind",
+    "icon": "whirlwind",
+    "target": "all_enemies",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "ignoreReachBonus": true,
+    "fx": "#ffe9b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02
+      }
+    ],
+    "vfx": "whirlwind",
+    "pose": "spin",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "whirlwind",
+    "note": "Pose test: plays the Spin (3-frame cycle) pose."
+  },
+  "pt_charge": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Charge kopyası; gerçek efekt/ses/hedef şekli (artOf charge), poz kütüphanesinde 'step -> slash' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_charge",
+    "name": "Charge",
+    "icon": "charge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "ignoreFrontRow": true,
+    "ignoreReach": true,
+    "advanceToFront": true,
+    "fx": "#ffe9b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02
+      },
+      {
+        "type": "status",
+        "status": "stun",
+        "turns": 1
+      }
+    ],
+    "vfx": "charge",
+    "pose": [
+      "step",
+      "slash"
+    ],
+    "sfx": [
+      "chargeRush",
+      "chargeSlam"
+    ],
+    "artOf": "charge",
+    "note": "Pose test: plays the Step forward, then Slash pose."
+  },
+  "pt_judgment": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Judgment kopyası; gerçek efekt/ses/hedef şekli (artOf judgment), poz kütüphanesinde 'raise' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_judgment",
+    "name": "Judgment",
+    "icon": "judgebeam",
+    "target": "area_enemies",
+    "area": {
+      "shape": "plus"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "skyCenter": true,
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "ground",
+        "ground": "holy_fire",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.02
+      }
+    ],
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "pose": "raise",
+    "artOf": "judgment",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_wail_of_the_dead": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Wail of the Dead kopyası; gerçek efekt/ses/hedef şekli (artOf wail_of_the_dead), poz kütüphanesinde 'channel' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_wail_of_the_dead",
+    "name": "Wail of the Dead",
+    "icon": "wail",
+    "target": "area_enemies",
+    "area": {
+      "shape": "plus",
+      "stages": "distance"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#b36bff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "dark"
+      },
+      {
+        "type": "ground",
+        "ground": "poison",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.02
+      }
+    ],
+    "vfx": "wail",
+    "sfx": [
+      "ghostWail",
+      "graveMoan"
+    ],
+    "pose": "channel",
+    "artOf": "wail_of_the_dead",
+    "note": "Pose test: plays the Channel (both hands forward) pose."
+  },
+  "pt_quick_shot": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Quick Shot kopyası; gerçek efekt/ses/hedef şekli (artOf quick_shot), poz kütüphanesinde 'throw' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_quick_shot",
+    "name": "Quick Shot",
+    "icon": "arrow",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      },
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2,
+        "self": true
+      }
+    ],
+    "vfx": "arrowshot",
+    "sfx": [
+      "bowTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "pose": "throw",
+    "artOf": "quick_shot",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_guard": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Guard kopyası; gerçek efekt/ses/hedef şekli (artOf guard), poz kütüphanesinde 'hit' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "id": "pt_guard",
+    "name": "Guard",
+    "icon": "guard2",
+    "target": "single_ally",
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fb8e8",
+    "effects": [
+      {
+        "type": "guard",
+        "turns": 3,
+        "share": 0.6
+      }
+    ],
+    "vfx": "guard2",
+    "sfx": [
+      "shieldBrace",
+      "chainTether"
+    ],
+    "pose": "hit",
+    "artOf": "guard",
+    "note": "Pose test: plays the Guard / Block (closest pose: braced, arms in) pose."
   }
 }

@@ -7,13 +7,10 @@
  * Kararı çağıran verir (`onDrop`); denetçi yalnızca girdiyi yönetir. Oyun içi metinler İngilizce.
  */
 import { affixTip, type AffixLine } from '../progression';
-import { content } from '../engine';
 import type { Stats } from '../engine';
 import { dropAction, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip } from './item-tip';
 import { statTip, statTipSegments } from './stat-tips';
-import { passiveTip, skillTip } from './gear-skills';
-import { skillTipNodes } from './character-panel';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -102,15 +99,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       d.append(...statTipSegments(l).map((g) => (g.dir ? el('span', `gr-tip-d ${g.dir}`, g.text) : document.createTextNode(g.text))));
       return d;
     };
-    const skillId = t.dataset['skill'];
-    if (skillId !== undefined) {
-      if (!ctx.stats || !ctx.classId) return;
-      const def = content.classes[ctx.classId];
-      const skill = content.skills[skillId];
-      const info = skillId === 'passive' && def?.passive ? passiveTip(def.passive, ctx.stats, ctx.after) : skill ? skillTip(skill, ctx.stats, ctx.after) : null;
-      if (!info) return;
-      tip.replaceChildren(...skillTipNodes(info, skill && skillId !== 'passive' ? skill : undefined, ctx.classId, line));
-    } else if (t.dataset['affix'] !== undefined) {
+    if (t.dataset['affix'] !== undefined) {
       const info = affixTip({ name: t.dataset['affix'] ?? '', desc: t.dataset['desc'] ?? '', tier: (t.dataset['tier'] ?? 'C') as AffixLine['tier'], text: t.dataset['text'] ?? '', range: t.dataset['range'] ?? '' });
       tip.replaceChildren(el('b', '', info.title), ...info.lines.map((l) => line(l)));
     } else {
@@ -133,7 +122,8 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     tip.style.top = `${Math.max(6, Math.min(H - th - 6, y))}px`;
     tipFor = t;
   };
-  const TIP_SEL = '[data-stat],[data-skill],[data-affix]';
+  // skill hücreleri savaş HUD'ının kendi tooltip'ini taşır (src/ui/skill-bar.ts): burada yalnızca stat / affix satırları
+  const TIP_SEL = '[data-stat],[data-affix]';
 
   let hoverKey = '';
   const setHover = (key: string): void => {

@@ -1,6 +1,10 @@
 {
   "_not": "Olay ve hazine metinleri (olaylar YER TUTUCU; hazine sandığı loot verir: items.md 3.1, madde 280). Oyun içi metin İngilizce. İleride seçenekli olaylar ve gerçek ödüller (docs/design/campaign/campaign.md 6.4).",
   "events": {
+    "shepherds_fold": {
+      "title": "Shepherd's Fold",
+      "text": "The sheepfold is empty, the gate swinging in the wind. Ash has settled on the troughs. Whoever kept the flock left in a hurry, heading north. Your company rests a moment and moves on. (Events with choices are coming soon.)"
+    },
     "witchs_hut": {
       "title": "Witch's Hut",
       "text": "A crooked hut leans over the black water. The old woman inside sells charms that smell of ash and promises that smell worse. She studies your company, laughs, and lets you pass. (Events with choices are coming soon.)"

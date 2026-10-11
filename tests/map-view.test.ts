@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_ZOOM, canPan, clampMid, clampZoom, midLimits, wheelAction } from '../src/game/map-view';
+import { MAP_ZOOM, canPan, clampMid, clampZoom, midLimits, wheelAction, zoomTowardMid } from '../src/game/map-view';
 
 // 21:9 harita çerçevesi (geniş görsel; eski 16:9 bölge dünyada 0-1920)
 const frame = { left: -221, right: 2462, top: 0, bottom: 1080 };
@@ -35,9 +35,29 @@ describe('sefer haritası görünümü (kaydırma / yakınlaştırma)', () => {
     expect(p.up && p.down && p.left && p.right).toBe(true);
   });
 
-  it('tekerlek: Ctrl = yakınlaştırma (trackpad sıkıştırması), değilse kaydırma; dikeyde yer yoksa dikey tekerlek yatay kaydırır', () => {
-    expect(wheelAction({ dx: 0, dy: -50, ctrl: true }, { vertical: false })).toEqual({ zoom: MAP_ZOOM.step, panX: 0, panY: 0 });
-    expect(wheelAction({ dx: 0, dy: 50, ctrl: false }, { vertical: false })).toEqual({ zoom: 0, panX: 50, panY: 0 });
-    expect(wheelAction({ dx: 30, dy: 10, ctrl: false }, { vertical: true })).toEqual({ zoom: 0, panX: 30, panY: 10 });
+  it('tekerlek (Ömer 2026-10-11): fare tekerleği ve Ctrl + tekerlek (trackpad sıkıştırması) yakınlaştırır; yalnızca belirgin yatay hareket kaydırır', () => {
+    expect(wheelAction({ dx: 0, dy: -50, ctrl: true })).toEqual({ zoom: MAP_ZOOM.step, panX: 0, panY: 0 });
+    expect(wheelAction({ dx: 0, dy: -100, ctrl: false })).toEqual({ zoom: MAP_ZOOM.step, panX: 0, panY: 0 });
+    expect(wheelAction({ dx: 0, dy: 100, ctrl: false })).toEqual({ zoom: -MAP_ZOOM.step, panX: 0, panY: 0 });
+    expect(wheelAction({ dx: 40, dy: 5, ctrl: false })).toEqual({ zoom: 0, panX: 40, panY: 0 });
+  });
+
+  it('imlece doğru yakınlaştırma: imlecin altındaki nokta yerinde kalır; sınırda çerçeveye kısılır (kaydırma gibi)', () => {
+    const z = 1.4;
+    const v = { w: 1920 / z, h: 1080 / z };
+    // ortadan uzak, çerçeve içinde: imlecin dünya noktası ekranda aynı yerde
+    const cursor = { x: 900, y: 500 };
+    const offset = { x: 200, y: -100 };
+    const mid = zoomTowardMid(cursor, offset, z, frame, v);
+    expect(mid.x + offset.x / z).toBeCloseTo(cursor.x);
+    expect(mid.y + offset.y / z).toBeCloseTo(cursor.y);
+    // çerçeve köşesine doğru: orta sınırda durur, görünüm çerçeveden taşmaz
+    const edge = zoomTowardMid({ x: -221, y: 0 }, { x: -900, y: -500 }, z, frame, v);
+    const l = midLimits(frame, v);
+    expect(edge).toEqual({ x: l.minX, y: l.minY });
+    expect(edge.x - v.w / 2).toBeGreaterThanOrEqual(frame.left - 1e-9);
+    expect(edge.y - v.h / 2).toBeGreaterThanOrEqual(frame.top - 1e-9);
+    // uzaklaşma (1,0): dikeyde yer yok, orta dikeyde sabit
+    expect(zoomTowardMid({ x: 900, y: 100 }, { x: 0, y: -400 }, 1, frame, { w: 1920, h: 1080 }).y).toBe(540);
   });
 });

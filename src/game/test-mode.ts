@@ -24,7 +24,11 @@ export interface TestModeState {
 export const DEFAULT_TEST_SIZE = 5;
 
 /** Seçilebilir class'lar (test class'ları dahil; gizli olanlar hariç). */
-export const testClassIds = (): string[] => content.selectableClasses;
+export const testClassIds = (): string[] => [
+  ...content.selectableClasses,
+  // gizli test class'ları da (Pose Tester I/II, Geometer): yalnızca debug'dan
+  ...Object.keys(content.classes).filter((id) => content.classes[id]!.testOnly && content.classes[id]!.hidden),
+];
 
 export function defaultTeam(side: TestSide): string[] {
   const ids = testClassIds();

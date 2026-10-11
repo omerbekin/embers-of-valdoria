@@ -44,7 +44,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const list = listSaves(kv, 0);
     expect(list).toHaveLength(5);
     expect(list[0]!.savedAt).toBe('2026-10-07T10:09:00Z');
-    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 12, node: 'Mill Road', classes: ['archer'] });
+    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 21, node: 'Mill Road', classes: ['archer'] });
   });
 
   it('her yuvanın kendi listesi var: bir yuvanın 5 sınırı diğerini etkilemez; Ironman yuvası tek kayıt', () => {
@@ -109,7 +109,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     expect(Object.keys(CONFIG.difficulties)).toEqual(['easy', 'medium', 'hard']);
   });
 
-  it('eski sürüm (tek liste) bozulmadan yuvalara taşınır: en yeni sefer Slot 1, zorluk Medium', () => {
+  it('eski sürüm (tek liste) yuvalara taşınır: en yeni sefer Slot 1; eski harita olduğu için kayıtlar silinir, uyarı işareti', () => {
     const kv = memoryKV();
     const old = (seed: number, id: string, savedAt: string) => {
       const st = start('normal', seed) as unknown as Record<string, unknown>;
@@ -121,14 +121,13 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const r = readSaves(kv);
     expect(r.migrated).toBe(true);
     expect(r.file.slots[0]!.campaignId).toBe('c1');
-    expect(r.file.slots[0]!.saves.map((e) => e.id)).toEqual(['s1', 's3']);
+    expect(r.file.slots[0]).toMatchObject({ difficulty: 'medium', saves: [], mapChanged: true });
     expect(r.file.slots[1]!.campaignId).toBe('c2');
-    expect(r.file.slots[0]!.saves[0]!.state).toMatchObject({ difficulty: 'medium', slot: 0 });
-    expect(r.file.slots[1]!.saves[0]!.state.slot).toBe(1);
     expect(r.file.slots[2]!.campaignId).toBe('c3'); // en eski sefer son yuvada
+    expect(r.file.slots.every((sd) => sd!.mapChanged && sd!.saves.length === 0)).toBe(true);
     expect(migrateSaves(kv)).toBe(true);
     expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(SAVE_VERSION);
-    expect(latestSave(kv)!.id).toBe('s3');
+    expect(latestSave(kv)).toBeNull();
   });
 
   it('bozuk kayıt çökertmez: okunamayan dosya boş sayılır, geçersiz tek kayıt atlanır, depolama hatası yutulur', () => {
@@ -139,7 +138,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     kv.setItem(SAVE_KEY, JSON.stringify({ version: 99, slots: [] }));
     expect(readSaves(kv).corrupt).toBe(true);
     const good = start('normal');
-    kv.setItem(SAVE_KEY, JSON.stringify({ version: 2, counter: 2, lastSlot: 0, slots: [{ campaignId: good.campaignId, mode: 'normal', difficulty: 'medium', startedAt: 'x', lastPlayed: 'x', saves: [{ id: 'x', state: { version: 1, at: 'nowhere' } }, { id: 'y', kind: 'auto', mode: 'normal', state: good, summary: {} }] }, 'junk', null] }));
+    kv.setItem(SAVE_KEY, JSON.stringify({ version: SAVE_VERSION, counter: 2, lastSlot: 0, slots: [{ campaignId: good.campaignId, mode: 'normal', difficulty: 'medium', startedAt: 'x', lastPlayed: 'x', saves: [{ id: 'x', state: { version: 1, at: 'nowhere' } }, { id: 'y', kind: 'auto', mode: 'normal', state: good, summary: {} }] }, 'junk', null] }));
     const r = readSaves(kv);
     expect(r.corrupt).toBe(true);
     expect(r.file.slots[0]!.saves.map((e) => e.id)).toEqual(['y']);

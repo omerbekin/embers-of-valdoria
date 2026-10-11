@@ -1,7 +1,7 @@
 /**
  * Debug > Characters > Poses (Ömer 2026-10-11, Warrior poz denemesi): poz kütüphanesini (src/game/poses.ts) gerçek savaşta denemek için.
- *  - "Pose test battle": test modunda (sıra yok, bedel/cooldown yok) iki tarafta Warrior'lar ("Pose Tester"; farklı silahlarla) + birkaç rakip.
- *    Ayrı bir test sınıfı YOK: motor içeriği ve kayıtlı savaşlar değişmez; adlar yalnızca `displayName`, silahlar yalnızca sunum (`weapons.picks`).
+ *  - "Pose test battle": test modunda (sıra yok) oyuncu tarafında gizli test class'ları Pose Tester I / II (data/classes/pose_tester_*.json:
+ *    başka sınıfların gerçek skill'lerinin bedelsiz, ~1 hasarlı kopyaları; her skill tek poz), düşmanda pozlu Warrior'lar + rakipler.
  *  - Poz seçici: Ctrl+tık seçili (yoksa tüm) pozlu birimlerde her pozu / döngüyü oynatır; isabet tepkisi, diz çökme, kalk.
  *  - Silah seçici (aile x görünüm + nadirlik ışıltısı) ve poz süresi / döngü hızı kaydırıcısı.
  * Warrior skill'leri (Double Strike, Whirlwind, Charge, Abyssal Cry) gerçek animasyonlarıyla Skills sekmesinden ya da savaşta normalce atılır.
@@ -64,7 +64,7 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
     tab: 'Setup',
     section: 'Test battles',
     label: 'Test Warrior poses',
-    hint: 'Start a test battle with Pose Testers (Warriors drawn with the new pose library and weapon layer, different weapons) on both sides; test mode: no turn order, no costs, no cooldowns. Pose picker: Characters tab',
+    hint: 'Start a test battle with Pose Tester I and II (hidden debug classes drawn with the Warrior pose library and weapon layer). Their skills are free copies of real skills from other classes (Saltire Cut, Tremor Slam, Whirlwind, Charge, Judgment, Wail of the Dead, Quick Shot, Guard), each playing one pose; enemies include posed Warriors with ornate weapons. Test mode: no turn order. Pose picker: Characters tab',
     run: () => host.startTestBattle(),
   });
 
@@ -73,7 +73,7 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
     tab: 'Characters',
     render: (el, refresh) => {
       el.append(debugHeading('Poses (Warrior trial)'));
-      el.append(...debugSection('Test battle', debugButton('Pose test battle', () => host.startTestBattle(), { icon: 'sword', title: 'Warriors with the pose library on both sides, test mode (no turn order, no costs, no cooldowns)' })));
+      el.append(...debugSection('Test battle', debugButton('Pose test battle', () => host.startTestBattle(), { icon: 'sword', title: 'Pose Tester I and II (one pose per skill) against posed Warriors, test mode (no turn order)' })));
       const views = host.views();
       if (!views.length) {
         const n = document.createElement('div');

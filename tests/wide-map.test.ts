@@ -24,9 +24,10 @@ describe('geniş harita görseli: bölge yapılandırması', () => {
       expect(back[1]).toBeCloseTo(n.pos[1]!, 9);
     }
   });
-  it('ölçülen noktalar: Mill Road kıyıda (geniş görselin sol kısmı), Castle Morvane kuzeydoğu dağlarda', () => {
+  it('ölçülen noktalar: Mill Road kıyıda (geniş görselin sol kısmı), eski Castle Morvane noktası kuzeydoğu dağlarda', () => {
     const mill = regionToImage(valdoria.nodes.find((n) => n.name === 'Mill Road')!.pos as [number, number], region);
-    const morvane = regionToImage(valdoria.nodes.find((n) => n.name === 'Castle Morvane')!.pos as [number, number], region);
+    // kalibrasyon noktası: eski Castle Morvane konumu (A1-x'te düğüm taşındı; ölçüm görsel üstünde sabit)
+    const morvane = regionToImage([0.924, 0.17], region);
     expect(mill[0]).toBeGreaterThan(0.15);
     expect(mill[0]).toBeLessThan(0.25);
     // eski haritadaki piksel (0,924 x 1672, 0,17 x 941) benzerlik dönüşümüyle (ölçek 0,8202, kaydırma 157,7 / 0,6) geniş görselde:

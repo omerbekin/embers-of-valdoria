@@ -62,6 +62,8 @@ export interface PosesData {
   rarityLook: Record<string, number>;
   rarityGlow: Record<string, string>;
   fistRadius: number;
+  /** Başka sınıfın poz kütüphanesini kullanan sınıflar (Pose Tester I/II -> warrior). */
+  classAliases?: Record<string, string>;
 }
 
 export const POSES = raw as unknown as PosesData;
@@ -73,11 +75,13 @@ export interface WeaponPick {
   glow?: string;
 }
 
+/** Kütüphanenin asıl sahibi (takma ad çözülür: Pose Tester -> warrior). */
+export const poseOwner = (classId: string): string => POSES.classAliases?.[classId] ?? classId;
 /** Bu sınıfın poz kütüphanesi (yoksa null: bugünkü davranış). */
-export const poseClass = (classId: string): PoseClassDef | null => POSES.classes[classId] ?? null;
-export const hasPoses = (classId: string): boolean => !!POSES.classes[classId];
+export const poseClass = (classId: string): PoseClassDef | null => POSES.classes[poseOwner(classId)] ?? null;
+export const hasPoses = (classId: string): boolean => !!poseClass(classId);
 export const poseClassIds = (): string[] => Object.keys(POSES.classes);
-export const poseNames = (classId: string): string[] => Object.keys(POSES.classes[classId]?.poses ?? {});
+export const poseNames = (classId: string): string[] => Object.keys(poseClass(classId)?.poses ?? {});
 
 /** Kimlik (ör. '<aile>.<görünüm>.<ışıltı>'): pişmiş doku anahtarı. */
 export const weaponKey = (w: WeaponPick): string => `${w.family}.${w.look}${w.glow ? `.${w.glow.replace('#', '')}` : ''}`;
@@ -251,6 +255,7 @@ export function validatePoses(data: PosesData = POSES): string[] {
     if (!(f.length > 0)) errors.push(`${fam}: length`);
     for (const l of f.order) if (!f.looks[l]) errors.push(`${fam}: look ${l} not measured`);
   }
+  for (const [alias, owner] of Object.entries(data.classAliases ?? {})) if (!data.classes[owner]) errors.push(`classAliases ${alias} -> unknown class ${owner}`);
   for (const [item, fam] of Object.entries(data.itemArt)) if (!data.weapons[fam]) errors.push(`itemArt ${item} -> unknown family ${fam}`);
   for (const [f, fam] of Object.entries(data.familyArt)) if (!data.weapons[fam]) errors.push(`familyArt ${f} -> unknown family ${fam}`);
   return errors;

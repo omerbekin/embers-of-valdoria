@@ -22,7 +22,7 @@ const W = 1920;
  * Düğüm türünün boyalı ikonu (assets/misc-icons/node/<tür>.png; harita madalyonu, düğüm kartı, lejant). Görsel yoksa null: çağıran ince
  * çizgili glifi (drawNodeGlyph) çizer. `size` ekrandaki kenar.
  */
-export function nodeGlyphImage(scene: Phaser.Scene, type: NodeType, x: number, y: number, size: number): Phaser.GameObjects.Image | null {
+export function nodeGlyphImage(scene: Phaser.Scene, type: NodeType | 'start', x: number, y: number, size: number): Phaser.GameObjects.Image | null {
   if (!hasMiscImage('node', type)) return null;
   return scene.add.image(x, y, ensureIcon(scene, miscIconName('node', type), '#e8c47e', false)).setDisplaySize(size, size);
 }
@@ -66,6 +66,16 @@ export function drawNodeGlyph(g: Phaser.GameObjects.Graphics, type: NodeType, co
       g.strokePath();
       L(2.5, 1.5, 0, 4);
       g.fillStyle(col, alpha).fillCircle(ox, oy + 8.5 * s, 1.8 * s);
+      break;
+    case 'rest': // kamp ateşi (çapraz odunlar + alev)
+      L(-9, 9, 9, 3);
+      L(9, 9, -9, 3);
+      g.strokePoints([P(0, -10), P(5, -2), P(3, 3), P(-3, 3), P(-5, -2)], true);
+      break;
+    case 'merchant': // kese
+      g.strokeCircle(ox, oy + 3 * s, 8 * s);
+      g.strokePoints([P(-4, -5), P(-6, -10), P(6, -10), P(4, -5)], false);
+      L(-2, 3, 2, 3);
       break;
   }
 }

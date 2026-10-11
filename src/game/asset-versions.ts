@@ -64,6 +64,9 @@ export function ownerOfUnit(defId: string | null | undefined): string | null {
 /** Skill'in sürüm sahibi: skill'i taşıyan class (çağrı skill'inde çağıran class). Global eylem/bilinmeyen skill'de null. */
 export function ownerOfSkill(skillId: string | null | undefined): string | null {
   if (!skillId) return null;
+  // sanatını ödünç alan kopya (Pose Tester, `artOf`): efekt/ses/ikon gerçek skill'in sahibinden
+  const art = content.skills[skillId]?.artOf;
+  if (art && art !== skillId) return ownerOfSkill(art);
   for (const c of Object.values(content.classes)) if (c.skills.includes(skillId)) return c.id;
   for (const s of Object.values(content.summons)) if (s.skills.includes(skillId)) return summonerOf(s.id);
   return null;
@@ -151,9 +154,15 @@ export function ownedArt(owner: string): OwnedArt {
   return out;
 }
 
+/** Sınıfın tüm skill'leri başka skill'lerin sanatını ödünç alıyor mu (Pose Tester: kendi sürüm dosyası yok, sürüm seçicide görünmez). */
+export const borrowsArt = (classId: string): boolean => {
+  const c = content.classes[classId];
+  return !!c && c.skills.length > 0 && c.skills.every((s) => !!content.skills[s]?.artOf);
+};
+
 /** Sürüm seçicide görünen anahtarlar: kapsamdaki tüm class'lar (veri sırasıyla) + `shared`. */
 export function versionKeys(): string[] {
-  return [...Object.keys(content.classes).filter((id) => !VERSION_EXCLUDED.includes(id)), SHARED_KEY];
+  return [...Object.keys(content.classes).filter((id) => !VERSION_EXCLUDED.includes(id) && !borrowsArt(id)), SHARED_KEY];
 }
 
 /** Bu anahtarın bu öğe türü için v2'si olabilir mi (kapsam). */

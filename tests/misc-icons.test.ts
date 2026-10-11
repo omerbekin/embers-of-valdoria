@@ -46,7 +46,7 @@ describe('Oyun ikonları: 60 boyalı görsel, eski kodla çizilen yedek korunur'
 
   it('sınıf logoları: her seçilebilir sınıfın (Geometer hariç) boyalı amblemi; çağrılar verideki logoyu korur', () => {
     for (const def of Object.values(content.classes)) {
-      if (def.id === 'aoe_tester') expect(classLogoName(def)).toBe(def.logo);
+      if (def.testOnly) expect(classLogoName(def)).toBe(def.logo); // test class'ları (Geometer, Pose Tester I/II): verideki logo
       else expect(classLogoName(def), def.id).toBe(`class:${def.id}`);
     }
     for (const def of Object.values(content.summons)) expect(classLogoName(def)).toBe(def.logo);

@@ -7,6 +7,8 @@ import globalSkillsJson from '../../data/global-skills.json';
 import firstBattle from '../../data/battles/first-battle.json';
 import randomBattle from '../../data/battles/random-battle.json';
 import aoeTester from '../../data/classes/aoe_tester.json';
+import poseTester1 from '../../data/classes/pose_tester_1.json';
+import poseTester2 from '../../data/classes/pose_tester_2.json';
 import antimage from '../../data/classes/antimage.json';
 import archer from '../../data/classes/archer.json';
 import cutthroat from '../../data/classes/cutthroat.json';
@@ -56,6 +58,8 @@ const classData: Record<string, CombatantData> = {
   cutthroat,
   hexer,
   aoe_tester: aoeTester,
+  pose_tester_1: poseTester1,
+  pose_tester_2: poseTester2,
 } as unknown as Record<string, CombatantData>;
 
 /** Oynanabilir tüm class'lar: iki taraf da aynı havuzdan çeker, görseli sınıfa bağlıdır. */

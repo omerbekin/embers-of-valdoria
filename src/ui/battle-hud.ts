@@ -1,4 +1,5 @@
 import './battle-hud.css';
+import { passiveMedalHtml, skillCellHtml } from './skill-bar';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 
@@ -465,12 +466,8 @@ export class BattleHud {
   }
 
   private renderSkills(): void {
-    const one = (s: HudModel['skills'][number], selected: boolean) => `<div class="bh-sk ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${esc(s.id)}">
-          <div class="fr">${img(s.iconUrl)}${s.wait > 0 ? `<span class="cdv">${s.wait}</span>` : ''}<span class="key">${s.key}</span></div>
-          <span class="nm">${esc(s.name)}</span>
-          <span class="cost">${s.cost.length ? s.cost.map((c) => `<span style="${c.color ? `color:${c.color}` : ''}">${img(c.iconUrl ?? '')}${esc(c.text)}</span>`).join('') : '<span class="free">Free</span>'}</span>
-          <div class="bh-sktip bh-panel bh-corners">${tipHtml(s.tip)}</div>
-        </div>`;
+    // Ortak skill hücresi (src/ui/skill-bar.ts; Gear / Character sayfası da aynısını kullanır)
+    const one = (s: HudModel['skills'][number], selected: boolean) => skillCellHtml({ ...s, selected }, tipHtml(s.tip));
     // Yalnızca seçim değiştiyse (skill'ler arasında geçiş) kutu yeniden kurulmaz: 'sel' sınıfı taşınır (zayıf telefonda gecikmenin ana nedeni)
     const key = this.model.skills.map((s) => one(s, false)).join('');
     const kids = this.skillBox.children;
@@ -499,7 +496,7 @@ export class BattleHud {
   private renderPassive(): void {
     const p = this.model.passive;
     this.put(this.pasBox, p
-      ? `<div class="bh-medal lg" ${this.reg('p:passive', p.tip)}>${img(p.iconUrl)}</div><span class="bh-pasv-n">Passive</span>${
+      ? `${passiveMedalHtml(p.iconUrl, this.reg('p:passive', p.tip))}<span class="bh-pasv-n">Passive</span>${
           p.lucky ? `<span class="bh-lucky ${uiImg('luckyEscape') ? 'ico' : ''} ${p.lucky.ready ? '' : 'used'}" ${this.reg('p:lucky', p.lucky.tip)}>${uiImg('luckyEscape') ? img(uiImg('luckyEscape')) : '<i></i>'}</span>` : ''
         }`
       : '');

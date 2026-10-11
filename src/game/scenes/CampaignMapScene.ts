@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { perfLite } from '../../ui/perf-mode';
 import { content } from '../../engine';
 import {
   CONFIG,
@@ -39,7 +40,14 @@ import {
   type NextStep,
   type NodeType,
   type NodeVis,
+  isFallen,
+  leaveMerchant,
+  openCampaignShop,
+  restAtCamp,
+  reviveAtCamp,
+  reviveCost,
 } from '../../campaign';
+import { openCampaignMerchant } from '../campaign-merchant';
 import { characterTexture, preloadAssets } from '../assets';
 import { preloadCampaignArt } from '../campaign-art';
 import { edgeFillers, mapArt } from '../map-art';
@@ -57,11 +65,13 @@ import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, diamondPts, elBadge, elBody, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
-import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, type Bounds } from '../map-view';
+import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
+import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
 import { ensureIcon } from '../icons';
 import { hasUiImage, uiIconName, type UiIconKind } from '../../ui/ui-icons';
+import { hasMiscImage } from '../../ui/misc-icons';
 
 /**
  * Sefer haritası, "War table" (Ömer 2026-10-09, taslak 2; tasarım kiti):
@@ -70,13 +80,14 @@ import { hasUiImage, uiIconName, type UiIconKind } from '../../ui/ui-icons';
  *  - Üst solda harita adı + bölge, durak, mod, zorluk, altın; sağ üstte Menu (DOM, Esc): Resume / Save / Settings / Main Menu.
  *  - Düğümler: tür başına ince glif (savaş, elit, boss, kasaba, hazine, olay); durumlar geçildi / buradasın / gidilebilir (kor parıltı) / kapalı.
  *    Gidilebilir yollar akan kor çizgi, yürünmüş yol düz altın, ötesi kesik.
- *  - Kaydırma / yakınlaştırma (src/game/map-view.ts): 21:9 harita çerçevesinden asla çıkmaz; dokunma / fare sürükleme, tekerlek ve trackpad
- *    (Ctrl + tekerlek ya da sıkıştırma = yakınlaştırma), ok tuşları, + / - tuşları, alttaki ◂ ▸ − + düğmeleri. Yakınlaştırma 1,0-1,4x.
+ *  - Kaydırma / yakınlaştırma (src/game/map-view.ts): 21:9 harita çerçevesinden asla çıkmaz; dokunma / fare sürükleme, fare tekerleği,
+ *    Ctrl + tekerlek (trackpad) ve iki parmak sıkıştırma = imlece / parmakların ortasına doğru yakınlaştırma (Ömer 2026-10-11; kısa geçiş,
+ *    Reduced motion anlık), yatay tekerlek kaydırır, ok tuşları, + / - tuşları, alttaki ◂ ▸ − + düğmeleri. Yakınlaştırma 1,0-1,4x.
  * Kurallar src/campaign/ içindedir; bu sahne yalnızca çizer ve oyuncunun seçimlerini kurallara iletir.
  * İki kamera: ana kamera haritayı, arayüz kamerası sabit katmanı gösterir (customStageCamera; gerçek yakınlaştırma = render ölçeği x harita).
  */
 
-const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', elite: 'Elite', event: 'Event', treasure: 'Treasure', boss: 'Boss' };
+const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', elite: 'Elite', event: 'Event', treasure: 'Treasure', boss: 'Boss', rest: 'Rest point', merchant: 'Merchant' };
 const NODE_R = 24;
 const WALK_SPEED = 320; // px/sn
 const FOLLOW_GAP = 55; // px
@@ -94,6 +105,8 @@ export class CampaignMapScene extends Phaser.Scene {
   readonly customStageCamera = true;
   /** Oyuncunun harita yakınlaştırması (MAP_ZOOM); kameranın gerçek yakınlaştırması bunun render ölçeğiyle çarpımı. */
   private mapZoom = 1;
+  /** Son çizimdeki telefon düzeni: değişirse (döndürme / pencere) düğüm adları yeniden çizilir (telefonda yalnızca bulunulan + sonraki). */
+  private drawnCompact = false;
   /** Harita görselinin dünyadaki kapsamı (21:9 çerçeve; kaydırma sınırı). */
   private frame: Bounds = { left: 0, right: W, top: 0, bottom: H };
   /** Harita kamerasının baktığı nokta (kısılmadan önce). */
@@ -354,6 +367,7 @@ export class CampaignMapScene extends Phaser.Scene {
   // ------------------------------------------------------------ yollar, düğümler, sis (duruma göre yeniden çizilir)
 
   private renderMap(animateFog: boolean): void {
+    this.drawnCompact = this.compact();
     this.dyn.removeAll(true);
     this.openEdges = [];
     const vis = nodeVisibility(this.map, this.s, session.revealFog);
@@ -366,8 +380,11 @@ export class CampaignMapScene extends Phaser.Scene {
       const ev = edgeVisibility(this.map, this.s, vis, e);
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
       if (ev === 'open') {
+        // parıltı altlığı ve koyu iz bir kez çizilir; her karede yalnızca üstteki akan kesik çizgi yenilenir (Ömer 2026-10-11, performans)
+        const base = this.add.graphics();
+        this.drawRoad(base, pts, 'open', 0, 'base');
         const g = this.add.graphics();
-        this.dyn.add(g);
+        this.dyn.add([base, g]);
         this.openEdges.push({ g, pts });
         continue;
       }
@@ -381,7 +398,7 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Yol: yürünmüş = düz altın; gidilebilir = akan kor (parıltı altlığıyla); görünür = kesik altın; kapalı / sis = soluk kesik. */
-  private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number): void {
+  private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number, part: 'all' | 'base' | 'dash' = 'all'): void {
     const stroke = (w: number, col: number, a: number, dashed: boolean, dash = 14, gap = 10) => {
       g.lineStyle(w, col, a);
       if (!dashed) {
@@ -396,9 +413,11 @@ export class CampaignMapScene extends Phaser.Scene {
         stroke(3, EL.GOLD, 0.85, false);
         break;
       case 'open':
-        stroke(12, EL.EMBER, 0.18, false);
-        stroke(7, 0x0c0805, 0.45, false);
-        stroke(3.5, EL.EMBER2, 1, true, 16, 10);
+        if (part !== 'dash') {
+          stroke(12, EL.EMBER, 0.18, false);
+          stroke(7, 0x0c0805, 0.45, false);
+        }
+        if (part !== 'base') stroke(3.5, EL.EMBER2, 1, true, 16, 10);
         break;
       case 'visible':
         stroke(6, 0x0c0805, 0.35, false);
@@ -430,13 +449,21 @@ export class CampaignMapScene extends Phaser.Scene {
     }
   }
 
+  private dashAcc = 0;
+
   /** Gidilebilecek yollarda akan kor çizgi. */
   private animateDashes(dt: number): void {
     if (!this.openEdges.length) return;
     this.dashT += dt * 0.035;
+    // Performans modu: akan yol çizgileri her karede değil ~15 kez/sn yeniden çizilir (Graphics yeniden çizimi haritanın boşta en büyük işi)
+    if (perfLite()) {
+      this.dashAcc += dt;
+      if (this.dashAcc < 66) return;
+      this.dashAcc = 0;
+    }
     for (const { g, pts } of this.openEdges) {
       g.clear();
-      this.drawRoad(g, pts, 'open', -this.dashT);
+      this.drawRoad(g, pts, 'open', -this.dashT, 'dash');
     }
   }
 
@@ -476,7 +503,8 @@ export class CampaignMapScene extends Phaser.Scene {
     }
     const glyphCol = here ? 0x1a0f06 : done ? 0x1e150c : goal ? 0x7d705a : closed ? 0x7d705a : option ? EL.ON_N : 0xd9c8a2;
     // boyalı düğüm ikonu (assets/misc-icons/node), yoksa ince çizgili glif; hedef (sisli siluet) koyu ve soluk
-    const art = nodeGlyphImage(this, n.type, 0, 0, r * 1.84);
+    // başlangıç düğümü boyalı 'start' ikonunu taşır (Ömer 2026-10-11); dinlenme / tüccar kendi boyalı ikonları
+    const art = nodeGlyphImage(this, n.id === this.map.start && hasMiscImage('node', 'start') ? 'start' : n.type, 0, 0, r * 1.84);
     if (art) {
       if (goal) art.setTint(0x6a5e4c).setAlpha(0.6);
       c.add(art);
@@ -490,22 +518,28 @@ export class CampaignMapScene extends Phaser.Scene {
       if (guard) c.add(guard);
       else drawNodeGlyph(gb, 'battle', 0xd9c8a2, 0.45, r * 0.8, r * 0.8);
     }
-    // Ad + alt yazı
+    // Ad + alt yazı. Telefonda (Ömer 2026-10-11, A1-x kuralı) yalnızca bulunulan ve sıradaki (gidilebilir) düğümlerin adı yazar: kalabalık olmasın
     const above = n.label === 'above';
+    const next = this.map.edges.some((e) => e.from === this.s.at && e.to === n.id); // savaş bitmeden de sıradaki duraklar
+    const named = !this.compact() || here || option || (next && !closed);
     const nameCol = closed || goal ? EL.DIM : here || option || selected ? EL.ON : EL.TXT;
     const name = elText(this, 0, 0, n.name, 15, nameCol, { em: 0.06 }).setOrigin(0.5, above ? 1 : 0).setShadow(0, 2, 'rgba(8,5,3,1)', 6, false, true);
     name.y = above ? -r - 12 : r + 10;
     // Okunurluk: yazının arkasında yumuşak koyu leke (harita üstünde)
     const back = this.add.image(0, name.y + (above ? -12 : 12), ensureGlow(this)).setTint(0x000000).setDisplaySize(name.width + 70, 54).setAlpha(closed || goal ? 0.25 : 0.55);
-    c.add([back, name]);
-    const showSub = here || option || v === 'near' || done;
+    if (named) c.add([back, name]);
+    else {
+      back.destroy();
+      name.destroy();
+    }
+    const showSub = named && (here || option || v === 'near' || done);
     if (showSub) {
       const choice = outgoing(this.map, n.id).length > 1 && !done ? '  ·  choice' : '';
       const sub = elBody(this, 0, 0, `${n.subtitle}${choice}`, 15, EL.MUTED).setOrigin(0.5, above ? 1 : 0).setShadow(0, 2, 'rgba(8,5,3,1)', 6, false, true);
       sub.y = above ? name.y - 22 : name.y + 22;
       c.add(sub);
     }
-    if (n.id === this.map.start && !here && !done) c.add(elText(this, 0, -r - (above ? 60 : 16), 'Start', 12, EL.MUTED, { em: 0.2 }).setOrigin(0.5, 1));
+    if (named && n.id === this.map.start && !here && !done) c.add(elText(this, 0, -r - (above ? 60 : 16), 'Start', 12, EL.MUTED, { em: 0.2 }).setOrigin(0.5, 1));
     if (incoming(this.map, n.id).length > 1 && !done) c.add(elText(this, -r - 14, 0, '›', 18, EL.MUTED, { em: 0 }).setOrigin(0.5));
     if (closed) c.setAlpha(0.45);
     else if (done) c.setAlpha(0.85);
@@ -642,6 +676,7 @@ export class CampaignMapScene extends Phaser.Scene {
       hint.destroy();
       this.walking = null;
       this.placeCaravan(to);
+      this.setMid(this.P(to)); // atlanınca da kamera varılan düğüme ortalı (taslak kuralı)
       done();
     };
     skip.on('pointerdown', finish);
@@ -655,14 +690,16 @@ export class CampaignMapScene extends Phaser.Scene {
       if (this.modal || this.menuOpen) return;
       const ev = p.event as WheelEvent | undefined;
       // birkaç piksellik dikey pay tekerleği yutmasın: dikey kaydırma yalnızca belirgin yer varsa
-      const a = wheelAction({ dx, dy, ctrl: !!ev?.ctrlKey }, { vertical: this.frame.bottom - this.frame.top - this.viewSize().h > 150 });
-      if (a.zoom) this.setMapZoom(this.mapZoom + a.zoom * 0.5);
+      ev?.preventDefault(); // tekerlek sayfayı kaydırmasın
+      const a = wheelAction({ dx, dy, ctrl: !!ev?.ctrlKey });
+      // Tekerlek / Ctrl + tekerlek (trackpad sıkıştırması): imlece doğru yakınlaştırma, kısa geçişle (Ömer 2026-10-11)
+      if (a.zoom) this.zoomAt(this.zoomGoal() + a.zoom * (ev?.ctrlKey ? 0.5 : 1), p.x, p.y, true);
       if (a.panX || a.panY) this.setMid({ x: this.mid.x + a.panX / this.camZoom(), y: this.mid.y + a.panY / this.camZoom() });
     });
     // Ctrl + tekerlek (trackpad sıkıştırması) tarayıcıyı yakınlaştırmasın
     const canvas = this.game.canvas;
     const stopZoom = (e: WheelEvent) => {
-      if (e.ctrlKey && this.sys.isActive()) e.preventDefault();
+      if (this.sys.isActive()) e.preventDefault(); // tekerlek ne tarayıcıyı yakınlaştırsın ne sayfayı kaydırsın
     };
     canvas.addEventListener('wheel', stopZoom, { passive: false });
     this.events.once('shutdown', () => canvas.removeEventListener('wheel', stopZoom));
@@ -677,7 +714,8 @@ export class CampaignMapScene extends Phaser.Scene {
       const b = this.input.pointer2;
       if (a.isDown && b.isDown) {
         const d = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
-        if (pinch > 0 && !this.modal) this.setMapZoom(this.mapZoom * (d / pinch), true);
+        // İki parmakla sıkıştırma: iki parmağın ortasına doğru yakınlaştırma (anlık; parmak izler)
+        if (pinch > 0 && !this.modal) this.zoomAt(this.mapZoom * (d / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2, false, true);
         pinch = d;
         this.drag.moved = true;
         this.drag.x = p.x;
@@ -729,6 +767,36 @@ export class CampaignMapScene extends Phaser.Scene {
   private panTween: Phaser.Tweens.Tween | null = null;
   private panTarget: Pt | null = null;
 
+  /** Süren yakınlaştırma geçişinin hedefi (art arda tekerlek adımları üst üste eklenir). */
+  private zoomGoal(): number {
+    return this.zoomTween?.isPlaying() && this.zoomTarget !== null ? this.zoomTarget : this.mapZoom;
+  }
+  private zoomTween: Phaser.Tweens.Tween | null = null;
+  private zoomTarget: number | null = null;
+
+  /**
+   * Ekrandaki (tuval pikseli) bir noktaya doğru yakınlaştırma: o noktanın altındaki dünya noktası yerinde kalır, orta çerçeveye kısılır
+   * (src/game/map-view.ts > zoomTowardMid). `smooth`: kısa geçiş (Reduced motion: anlık); `raw`: 0,01 adımına yuvarlamadan (sıkıştırma).
+   */
+  private zoomAt(z: number, sx: number, sy: number, smooth: boolean, raw = false): void {
+    const goal = raw ? Math.min(MAP_ZOOM.max, Math.max(MAP_ZOOM.min, z)) : clampZoom(z);
+    const cam = this.cameras.main;
+    const world = cam.getWorldPoint(sx, sy);
+    const off = { x: sx - cam.width / 2, y: sy - cam.height / 2 };
+    const apply = (zz: number) => {
+      this.mapZoom = zz;
+      cam.setZoom(this.camZoom());
+      this.mid = zoomTowardMid({ x: world.x, y: world.y }, off, this.camZoom(), this.frame, this.viewSize());
+      cam.centerOn(this.mid.x, this.mid.y);
+    };
+    this.zoomTween?.stop();
+    this.zoomTarget = goal;
+    if (!smooth || reducedMotion() || Math.abs(goal - this.mapZoom) < 0.001) return apply(goal);
+    const from = this.mapZoom;
+    const o = { t: 0 };
+    this.zoomTween = this.tweens.add({ targets: o, t: 1, duration: 140, ease: 'Sine.easeOut', onUpdate: () => apply(from + (goal - from) * o.t) });
+  }
+
   private setMapZoom(z: number, raw = false): void {
     this.mapZoom = raw ? Math.min(MAP_ZOOM.max, Math.max(MAP_ZOOM.min, z)) : clampZoom(z);
     this.cameras.main.setZoom(this.camZoom());
@@ -758,7 +826,10 @@ export class CampaignMapScene extends Phaser.Scene {
     this.uiCam.setSize(stageView.canvasW, stageView.canvasH);
     this.uiCam.setZoom(stageView.zoom);
     this.uiCam.centerOn(W / 2, H / 2);
-    if (!first) this.renderHud();
+    if (!first) {
+      if (this.compact() !== this.drawnCompact) this.renderMap(false);
+      this.renderHud();
+    }
   }
 
   private uiPoint(p: Phaser.Input.Pointer): Pt {
@@ -947,7 +1018,7 @@ export class CampaignMapScene extends Phaser.Scene {
       L.add(t);
       cy += t.height + 12;
     } else if (vis !== 'goal') {
-      const blurb = n.type === 'town' ? 'Rest, recruit and trade. Your heroes recover here.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : '';
+      const blurb = n.type === 'town' ? 'Rest, recruit and trade. Your heroes recover here.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? 'Make camp for free and recover. The fallen can be revived here for gold.' : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
       if (blurb) {
         const t = elBody(this, x, cy, blurb, 17, EL.NOTE, true, w);
         L.add(t);
@@ -1029,7 +1100,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Mevcut düğümde dokunarak açılacak bir eylem var mı (savaş, kasaba, olay, hazine, sefer sonu). */
   private actionHere(): boolean {
-    return ['battle', 'town', 'event', 'treasure', 'complete'].includes(nextStep(this.s).kind);
+    return ['battle', 'town', 'event', 'treasure', 'rest', 'merchant', 'complete'].includes(nextStep(this.s).kind);
   }
 
   /** Lejant (sağ alt, katlanabilir): 6 düğüm türü, kit paneli. */
@@ -1038,7 +1109,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const w = 300;
     const x = stageView.right - SIDE.left - w; // sağ alt (Ömer 2026-10-09; görünür DEBUG düğmesi yok)
     const open = this.legendOpen;
-    const h = open ? 156 : 48;
+    const h = open ? 188 : 48;
     const y = H - 24 - h;
     L.add(elPanel(this, x, y, w, h, { alpha: 0.88 }));
     L.add(elText(this, x + 18, y + 24, 'Legend', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
@@ -1050,7 +1121,7 @@ export class CampaignMapScene extends Phaser.Scene {
     });
     L.add(hit);
     if (!open) return;
-    const types: NodeType[] = ['battle', 'elite', 'boss', 'town', 'treasure', 'event'];
+    const types: NodeType[] = ['battle', 'elite', 'boss', 'town', 'treasure', 'event', 'rest', 'merchant'];
     types.forEach((t, i) => {
       const cx = x + 32 + (i % 2) * 140;
       const cy = y + 64 + Math.floor(i / 2) * 32;
@@ -1193,6 +1264,17 @@ export class CampaignMapScene extends Phaser.Scene {
           ],
         });
         return;
+      case 'rest':
+        return this.restModal(step.node);
+      case 'merchant': {
+        // Odo (Ömer 2026-10-11): tezgâh kurulur, ortak tüccar ekranı açılır (TEK giriş noktası: src/game/campaign-merchant.ts)
+        const root = document.getElementById('ui-root');
+        if (!root) return;
+        setState(openCampaignShop(this.s));
+        const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { onLeave: () => this.commit(leaveMerchant(this.s)) });
+        this.events.once('shutdown', closeShop); // sahne kapanırsa (Menu > Main menu) DOM tüccar ekranı da kapanır
+        return;
+      }
       case 'event': {
         const e = EVENTS[step.event] ?? { title: node(this.map, step.node).name, text: 'Nothing happens.' };
         this.modal = openModal(this, this.ui, { title: e.title, subtitle: node(this.map, step.node).subtitle, text: e.text, height: 500, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeSimple(this.s, 'event')) }] });
@@ -1220,6 +1302,37 @@ export class CampaignMapScene extends Phaser.Scene {
         this.renderHud();
         return;
     }
+  }
+
+  /**
+   * Dinlenme noktası (Ömer 2026-10-11): ücretsiz dinlenme (yaşayanlar maks canın %50'si) + düşmüş kahramanı altınla diriltme (tüccar değil).
+   * Kit diyaloğu; diriltme düğmeleri altın yetmezse soluk.
+   */
+  private restModal(nodeId: string): void {
+    const s = this.s;
+    const n = node(this.map, nodeId);
+    const fallen = s.roster.filter((h) => isFallen(h) && !h.tutorial);
+    const cost = reviveCost(s, nodeId);
+    const heal = Math.round(CONFIG.rest.heal * 100);
+    const lines = [`Your company makes camp. Resting is free: every living hero recovers ${heal}% of their max HP.`];
+    lines.push(fallen.length ? `Fallen heroes can be revived here for ${cost} gold each (they rise with ${Math.round(CONFIG.rest.reviveRatio * 100)}% HP). You have ${s.gold} gold.` : 'No one has fallen.');
+    const revive = fallen.slice(0, 3).map((h) => ({
+      label: `Revive ${content.classes[h.class]?.name ?? h.class} · ${cost}`,
+      run: () => {
+        if (this.s.gold < cost) return this.toast('Not enough gold');
+        setState(reviveAtCamp(this.s, h.id));
+        this.closeModal();
+        this.renderHud(); // altın ve kahramanın canı hemen güncellensin
+        this.restModal(nodeId);
+      },
+    }));
+    this.modal = openModal(this, this.ui, {
+      title: n.name,
+      subtitle: n.subtitle,
+      text: lines.join('\n\n'),
+      height: 500,
+      buttons: [...revive, { label: 'Gear', run: () => this.openGear() }, { label: 'Rest', primary: true, run: () => this.commit(restAtCamp(this.s)) }],
+    });
   }
 
   /** Yeni durumu kaydeder, haritayı yeniler, sonraki adıma geçer. */

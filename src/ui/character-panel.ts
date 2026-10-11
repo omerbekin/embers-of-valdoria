@@ -25,14 +25,21 @@ import {
 } from '../progression';
 import { wikiFiles } from '../wiki/files';
 import { statIconUrl } from './stat-tips';
-import { bindIcon } from './dom-icons';
 import { uiIconName } from './ui-icons';
-import { gearSkillRows, type GearSkillRow, type GearSkillTip } from './gear-skills';
+import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
 import { heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
+import { escHtml, passiveCellHtml, skillCellHtml, type SkillCellView, type SkillCostChip } from './skill-bar';
+import { tipHtml, type TipContent } from './battle-hud';
+import { iconUrl } from './dom-icons';
+import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
+import { skillMiniGrid } from './shape-diagram';
+import { passiveTip, skillTip } from './gear-skills';
+import { skillCostAmount } from '../engine/cost';
+import type { SkillDef } from '../engine';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -47,64 +54,6 @@ export const className = (id: string): string => content.classes[id]?.name ?? id
 /** Skill sayısı / tooltip satırı rengi: savaş tooltip'iyle aynı (element, kalkan, büyü kalkanı; şifa yeşil). */
 const KIND_COLOR: Record<string, string> = { ...ELEMENT_COLOR, shield: layout.colors.shield, magicShield: layout.colors.magicShield, heal: layout.colors.heal };
 export const kindColor = (k: string | undefined): string | undefined => (k && k !== 'physical' ? KIND_COLOR[k] : undefined);
-
-/** Skill / pasif ikonu (savaş HUD'ı ve Codex'le aynı kaynak; sürüme canlı bağlı: dom-icons > bindIcon). */
-function skillIcon(r: { skill?: { id: string; icon: string; fx: string }; passive?: boolean }, classId: string, cls: string): HTMLImageElement {
-  const img = el('img', cls);
-  img.alt = '';
-  img.draggable = false;
-  const p = content.classes[classId]?.passive;
-  if (r.skill) bindIcon(img, r.skill.icon, r.skill.fx, ownerOfSkill(r.skill.id));
-  else bindIcon(img, p?.icon || uiIconName('passive'), content.classes[classId]?.color ?? '#e8c47e', ownerOfUnit(classId));
-  return img;
-}
-
-/** Skill kartı: ikon + ad + bedel / bekleme, altında anahtar sayılar ("Damage 24"; karşılaştırmada "24 → 30 (+6)"). Satırlar sarılmaz (kayma yok). */
-function skillCard(r: GearSkillRow, classId: string): HTMLElement {
-  const card = el('div', `gr-skill${r.passive ? ' passive' : ''}`);
-  card.dataset['skill'] = r.id;
-  const head = el('div', 'gr-skill-head');
-  const title = el('div', 'gr-skill-title');
-  title.append(el('div', 'gr-skill-name', r.name), el('div', 'gr-skill-meta', r.passive ? 'Passive' : [r.cost, r.cooldown ? `CD ${r.cooldown.replace(' turns', '')}` : ''].filter(Boolean).join(' · ')));
-  head.append(skillIcon(r, classId, 'gr-skill-ico'), title);
-  card.append(head);
-  const nums = el('div', 'gr-skill-nums');
-  for (const n of r.numbers) {
-    const line = el('div', 'gr-skill-num');
-    const v = el('span', 'gr-skill-v', n.text);
-    const c = kindColor(n.kind);
-    if (c) v.style.color = c;
-    line.append(el('span', 'gr-skill-k', n.label), v);
-    if (n.after && n.diff) line.append(el('span', `gr-skill-a ${n.dir ?? ''}`, `→ ${n.after}`), el('span', `gr-skill-d ${n.dir ?? ''}`, `(${n.diff})`));
-    if (n.times) line.append(el('span', 'gr-skill-x', `x${n.times}`));
-    nums.append(line);
-  }
-  if (!r.numbers.length) nums.append(el('div', 'gr-skill-num none', 'No stat scaling'));
-  card.append(nums);
-  return card;
-}
-
-/** Skill tooltip'inin içeriği (savaştaki kit tooltip'iyle aynı düzen: ikon + ad (+ rozet), bedel / bekleme, etiketler, etki satırları). */
-export function skillTipNodes(t: GearSkillTip, skill: { id: string; icon: string; fx: string } | undefined, classId: string, line: (l: string, color?: string) => HTMLElement): HTMLElement[] {
-  const head = el('div', 'gr-stip-head');
-  head.append(skillIcon({ ...(skill ? { skill } : { passive: true }) }, classId, 'gr-stip-ico'), el('b', '', t.title));
-  if (!skill) head.append(el('span', 'gr-stip-badge', t.badge));
-  const out: HTMLElement[] = [head];
-  if (t.meta.length) out.push(el('div', 'gr-stip-meta', t.meta.join(' · ')));
-  const def = skill ? content.skills[skill.id] : undefined;
-  if (def) {
-    const tags = el('div', 'gr-stip-tags');
-    skillTags(def).forEach((g, i) => {
-      if (i) tags.append(document.createTextNode(' · '));
-      const s = el('span', '', g.text);
-      if (g.color) s.style.color = g.color;
-      tags.append(s);
-    });
-    out.push(tags);
-  }
-  out.push(...t.rows.map((r) => line(r.text, kindColor(r.kind))));
-  return out;
-}
 
 export interface CharacterView {
   heroes: HoverHero[];
@@ -202,14 +151,101 @@ export function renderCharacter(v: CharacterView): CharacterRender {
   }
   mid.append(el('div', 'gr-sec', 'Stats'), sg);
   root.append(mid);
-  // --- skill'ler: kahraman sütununun altından, sol kenardan başlar
+  // --- skill'ler: savaş HUD'ının skill çubuğuyla AYNI bileşen (src/ui/skill-bar.ts; Ömer 2026-10-11 "evrensel"); sol kenardan başlar
   if (stats) {
     const sk = el('div', 'gr-skills');
     sk.append(el('div', 'gr-sec', 'Skills'));
-    const grid = el('div', 'gr-skill-grid');
-    for (const r of gearSkillRows(hero.class, stats, after)) grid.append(skillCard(r, hero.class));
-    sk.append(grid);
+    sk.append(skillBar(hero.class, stats, after));
     root.append(sk);
   }
   return { el: root, stats, after };
+}
+
+/** Savaş HUD'ının ölçeği (1 oyun birimi kaç CSS pikseli: src/ui/viewport.ts > --gu): Gear'daki skill çubuğu savaştakiyle aynı boyda görünür. */
+function hudScale(): number {
+  if (typeof document === 'undefined') return 1;
+  const v = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu'));
+  return v > 0 ? v : 1;
+}
+
+const COLORS = layout.colors as unknown as { element: Record<string, string>; shield: string; magicShield: string; muted: string; text: string };
+/** Tooltip satırı rengi: savaş skill tooltip'iyle aynı (element, kalkan, büyü kalkanı). */
+const tipKindColor = (k: string | undefined): string | undefined => (k === 'shield' ? COLORS.shield : k === 'magicShield' ? COLORS.magicShield : k ? COLORS.element[k] : undefined);
+/** Fark parantezleri ("(+6)" / "(-2)") yeşil / kırmızı (stat açıklamalarıyla aynı). */
+const colorDiffs = (html: string): string => html.replace(/\(([+-])(\d+(?:\.\d+)?%?)\)/g, (_, sgn: string, n: string) => `<span class="gr-tip-d ${sgn === '+' ? 'up' : 'down'}">(${sgn}${n})</span>`);
+
+/** Skill'in bedel / cooldown çipleri (savaş HUD'ının skillCostChips'iyle aynı; savaş durumu yok: hep hazır). */
+function costChips(skill: SkillDef, stats: Stats): SkillCostChip[] {
+  const out: SkillCostChip[] = [];
+  const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
+  if (amount > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
+  else if (amount > 0) {
+    const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
+    out.push({ iconUrl: iconUrl(statIconName(kind), STAT_COLOR[kind]), text: String(amount) });
+  }
+  if ((skill.cooldown ?? 0) > 0) out.push({ iconUrl: iconUrl(uiIconName('cooldown'), UI_COLOR), text: String(skill.cooldown), color: COLORS.muted });
+  return out;
+}
+
+/** Savaş skill tooltip'inin içeriği (aynı düzen: ikon + ad, bedel / bekleme, etiketler, alan şekli, satırlar) + Gear farkları "a → b (+d)". */
+function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): TipContent {
+  const t = skillTip(skill, stats, after);
+  // meta satırı savaşla aynı: bedel (Rage / MP / HP ikonuyla ya da "Free"), cooldown (kum saati)
+  const meta: NonNullable<TipContent['meta']> = [];
+  const amount = skillCostAmount(skill.cost, { hp: stats.hp, mp: stats.mp, rage: 0 } as never);
+  if (amount > 0 && skill.cost.resource === 'rage') meta.push({ iconUrl: iconUrl(uiIconName('rage'), RAGE_COLOR), text: `RAGE ${amount}`, color: RAGE_COLOR });
+  else if (amount > 0) {
+    const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
+    meta.push({ iconUrl: iconUrl(statIconName(kind), STAT_COLOR[kind]), text: t.meta[0] ?? String(amount), color: COLORS.text });
+  } else meta.push({ text: t.meta[0] ?? 'Free', color: COLORS.muted });
+  if ((skill.cooldown ?? 0) > 0) meta.push({ iconUrl: iconUrl(uiIconName('cooldown'), UI_COLOR), text: `${skill.cooldown} turns`, color: COLORS.muted });
+  const shape = skillMiniGrid(skill, content.formulas.formation);
+  return {
+    title: t.title,
+    titleColor: COLORS.text,
+    iconUrl: iconUrl(skill.icon, skill.fx, ownerOfSkill(skill.id)),
+    meta,
+    tags: skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
+    rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}) })),
+    ...(shape ? { shape } : {}),
+  };
+}
+
+/** Anahtar sayılar (hücrenin altında): "Damage 7 → 8 (+1)"; fark yeşil / kırmızı, sıfırsa gizli. */
+function numsHtml(r: GearSkillRow): string {
+  if (!r.numbers.length) return '';
+  return `<div class="gr-sk-nums">${r.numbers
+    .map((n) => {
+      const c = kindColor(n.kind);
+      const v = `<b${c ? ` style="color:${c}"` : ''}>${escHtml(n.text)}${n.times ? ` x${n.times}` : ''}</b>`;
+      const d = n.after && n.diff ? ` <b class="${n.dir ?? ''}">→ ${escHtml(n.after)}</b> <span class="${n.dir ?? ''}">(${escHtml(n.diff)})</span>` : '';
+      return `<div><i>${escHtml(n.label)}</i> ${v}${d}</div>`;
+    })
+    .join('')}</div>`;
+}
+
+/** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
+export function skillBar(classId: string, stats: Stats, after: Stats | null): HTMLElement {
+  const bar = el('div', 'bh-kit gr-skillbar');
+  (bar.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
+  const def = content.classes[classId];
+  const rows = gearSkillRows(classId, stats, after);
+  const html = rows.map((r, i) => {
+    if (r.passive && def?.passive) {
+      const p = def.passive;
+      const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
+      return passiveCellHtml(p.name, iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), colorDiffs(tipHtml(tip)), numsHtml(r));
+    }
+    const skill = r.skill!;
+    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skill.icon, skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: i === 3 };
+    return skillCellHtml(view, colorDiffs(tipHtml(skillTipContent(skill, stats, after))), numsHtml(r));
+  });
+  bar.innerHTML = html.join('');
+  // Dokunmatik: dokunuş tooltip'i açar / kapatır (savaştaki uzun basmanın yerine; Gear'da skill seçilmez)
+  bar.addEventListener('click', (e) => {
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    bar.querySelectorAll('.bh-sk.tip').forEach((x) => x !== cell && x.classList.remove('tip'));
+    cell?.classList.toggle('tip');
+  });
+  return bar;
 }

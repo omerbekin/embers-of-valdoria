@@ -1088,33 +1088,31 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     },
   });
 
-  // ===== Characters > Poses: Warrior poz kütüphanesi denemesi (src/ui/debug-poses.ts; ayrı test sınıfı yok, yalnızca sunum) =====
+  // ===== Characters > Poses: Warrior poz kütüphanesi denemesi (src/ui/debug-poses.ts; gizli test class'ları Pose Tester I / II) =====
   registerPosesPanel(debug, {
     views: () => battle()?.debugPoseViews() ?? [],
     startTestBattle: () => {
       const seed = newSeed();
-      // oyuncu: 2 Pose Tester (kılıç / balta), düşman: 2 Pose Tester (süslü silah + ışıltı) + 2 rastgele rakip; test modu
+      // oyuncu: Pose Tester I (yakın dövüş pozları) + Pose Tester II (büyü / atış / koruma pozları); düşman: 2 pozlu Warrior (süslü
+      // silah + ışıltı) + 2 rastgele rakip; test modu (sıra yok). Skill'ler başka sınıfların gerçek skill'lerinin bedelsiz kopyaları.
       const foes = content.randomTeam(seed + 7, 6).filter((c) => c !== 'warrior').slice(0, 2);
-      const party = ['warrior', 'warrior'];
+      const party = ['pose_tester_1', 'pose_tester_2'];
       const enemies = ['warrior', 'warrior', ...foes];
       const partyCells = content.randomCells(party, seed);
       const enemyCells = content.randomCells(enemies, seed + 7);
-      // motor sırası = dolu hücrelerin sırası (uid 'party-i'); birim kurulumu anahtarı = hücre
+      // motor sırası = dolu hücrelerin sırası (uid 'party-i')
       const weaponsBySide: Record<'party' | 'enemy', WeaponPick[]> = {
         party: [{ family: 'swords', look: 'plain' }, { family: 'axes', look: 'bearded', glow: '#5f93d6' }],
         enemy: [{ family: 'swords', look: 'ornate', glow: '#f0a830' }, { family: 'axes', look: 'ornate', glow: '#b072e0' }],
       };
       const picks: Record<string, WeaponPick> = {};
       const units = { party: {} as Record<number, { displayName: string }>, enemies: {} as Record<number, { displayName: string }> };
-      for (const [side, cells, out] of [['party', partyCells, units.party], ['enemy', enemyCells, units.enemies]] as const) {
+      for (const [side, cells] of [['party', partyCells], ['enemy', enemyCells]] as const) {
         let i = 0;
         let w = 0;
-        cells.forEach((id, slot) => {
+        cells.forEach((id) => {
           if (!id) return;
-          if (id === 'warrior') {
-            out[slot] = { displayName: 'Pose Tester' };
-            picks[`${side}-${i}`] = weaponsBySide[side][w++ % 2]!;
-          }
+          if (id === 'warrior' || id.startsWith('pose_tester')) picks[`${side}-${i}`] = weaponsBySide[side][w++ % 2]!;
           i++;
         });
       }

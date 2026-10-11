@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer karşılaşmaları (docs/design/campaign/campaign.md 7.2; denge: docs/balance.md > Sefer dengesi, 2026-10-08). slot = sıra*3+şerit (0 en ön). mods = birim bazında güçlendirme/zayıflatma (motorun UnitModifiers'ı: hpMult, statMult, powerMult, spriteScale, actionsPerTurn...), name = özel ad (displayName), tier = elite | boss, lockSkills = bu savaşta kullanamayacağı skill'ler, initialCooldownBonus = cooldown'lu skill'lerin başlangıç cooldown'una ek (maxInitial'ı aşabilir). Sayılar MEDIUM zorluğa göredir; Easy/Hard farkı campaign.json > difficulties (YZ + düşman çarpanları) ile gelir. Yeni sayılar 'npm run sim:campaign' ölçümüne dayanır (oyuncu takımı rastgele, Medium YZ ile oynanır, can taşınır). Kalıplar: tutorial (w) = hpMult 0.4 / statMult 0.6 / powerMult 0.5 (Mill Road 0.6, Ravenwood 0.55 güç; 2026-10-08: tutorial normal düşmanlarında ultimate kilitli `lockSkills`, elit Bandit Chief `initialCooldownBonus` 1; güç ultimate'sız ölçümle yeniden ayarlandı); Bölge II-III sıradan düşman hpMult 0.6-0.85, powerMult 0.75-0.9 (taşınan can arttıkça daha zayıf); elit lider 1.2-1.4 can; boss: The Bridge Warden = kendi boss tanımı (data/bosses/bridge_warden.json: can, faz, telgraf; 2 Iron Mooring, docs/design/bosses/bridge-warden.md), background = karşılaşmanın savaş arka planı (assets/backgrounds/<ad>; yoksa düğüm/bölge), Lord Morvane 2.5 can / 1.2 stat. 'fallback' = motor güçlendirmeyi desteklemezse oynanacak yedek takım (motor desteği geldi: şu an kullanılmıyor). fallbackOnly = yalnızca yedek olarak kullanılır.",
+  "_not": "Sefer karşılaşmaları (docs/design/campaign/campaign.md 7.2; denge: docs/balance.md > Sefer dengesi, 2026-10-08). slot = sıra*3+şerit (0 en ön). mods = birim bazında güçlendirme/zayıflatma (motorun UnitModifiers'ı: hpMult, statMult, powerMult, spriteScale, actionsPerTurn...), name = özel ad (displayName), tier = elite | boss, lockSkills = bu savaşta kullanamayacağı skill'ler, initialCooldownBonus = cooldown'lu skill'lerin başlangıç cooldown'una ek (maxInitial'ı aşabilir). Sayılar MEDIUM zorluğa göredir; Easy/Hard farkı campaign.json > difficulties (YZ + düşman çarpanları) ile gelir. Yeni sayılar 'npm run sim:campaign' ölçümüne dayanır (oyuncu takımı rastgele, Medium YZ ile oynanır, can taşınır). Kalıplar: tutorial (w) = hpMult 0.4 / statMult 0.6 / powerMult 0.5 (Mill Road 0.6, Ravenwood 0.55 güç; 2026-10-08: tutorial normal düşmanlarında ultimate kilitli `lockSkills`, elit Bandit Chief `initialCooldownBonus` 1; güç ultimate'sız ölçümle yeniden ayarlandı); Bölge II-III sıradan düşman hpMult 0.6-0.85, powerMult 0.75-0.9 (taşınan can arttıkça daha zayıf); elit lider 1.2-1.4 can; boss: The Bridge Warden = kendi boss tanımı (data/bosses/bridge_warden.json: can, faz, telgraf; 2 Iron Mooring, docs/design/bosses/bridge-warden.md), background = karşılaşmanın savaş arka planı (assets/backgrounds/<ad>; yoksa düğüm/bölge), Lord Morvane 2.5 can / 1.2 stat. A1-x haritası (2026-10-11, 21 durak): durak sırası değişti, savaşlar sim:campaign Medium/Medium ölçümüyle yeniden ayarlandı (Windy Moor / Iron Pass / Charcoal Camp / Pilgrim Road / St. Brann's / Ember Road / Riverhead daha zayıf, Dwarven Mine / Misty Marsh / Grave Field daha güçlü; boss karşılaşmaları Endless ile ortak olduğu için değişmedi: sefer boss ayarı valdoria.json > düğüm enemyTierMods, madde 305). 'fallback' = motor güçlendirmeyi desteklemezse oynanacak yedek takım (motor desteği geldi: şu an kullanılmıyor). fallbackOnly = yalnızca yedek olarak kullanılır.",
   "mill_road_thugs": {
     "name": "Road Thugs",
     "units": [
@@ -55,34 +55,34 @@
   "bog_ambush": {
     "name": "Bog Lurkers",
     "units": [
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.75, "powerMult": 0.85 } },
-      { "class": "druid", "slot": 6, "mods": { "hpMult": 0.75, "powerMult": 0.85 } },
-      { "class": "hexer", "slot": 8, "mods": { "hpMult": 0.75, "powerMult": 0.85 } }
+      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
+      { "class": "druid", "slot": 6, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
+      { "class": "hexer", "slot": 8, "mods": { "hpMult": 0.9, "powerMult": 0.95 } }
     ]
   },
   "iron_pass_ambush": {
     "name": "Iron Pass Ambush",
     "units": [
-      { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.75, "powerMult": 0.8 } },
-      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.75, "powerMult": 0.8 } },
-      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.75, "powerMult": 0.8 } }
+      { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.6, "powerMult": 0.7 } },
+      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.6, "powerMult": 0.7 } },
+      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.6, "powerMult": 0.7 } }
     ]
   },
   "mine_wardens": {
     "name": "Mine Wardens",
     "units": [
-      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.8 } },
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.8 } },
-      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.8 } }
+      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } },
+      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } },
+      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } }
     ]
   },
   "vault_keepers": {
     "name": "Vault Keepers",
     "units": [
-      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "paladin", "slot": 6, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "antimage", "slot": 8, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "paladin", "slot": 10, "mods": { "hpMult": 0.8, "powerMult": 0.85 } }
+      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
+      { "class": "paladin", "slot": 6, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
+      { "class": "antimage", "slot": 8, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
+      { "class": "paladin", "slot": 10, "mods": { "hpMult": 0.6, "powerMult": 0.75 } }
     ]
   },
   "mercenary_camp": {
@@ -97,10 +97,10 @@
   "black_cathedral": {
     "name": "The Undying Choir",
     "units": [
-      { "class": "undead", "slot": 7, "name": "High Priest", "tier": "elite", "mods": { "hpMult": 1.4, "statMult": 1.1 } },
-      { "class": "undead", "slot": 6, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
-      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
-      { "class": "hexer", "slot": 4, "mods": { "hpMult": 0.8, "powerMult": 0.8 } }
+      { "class": "undead", "slot": 7, "name": "High Priest", "tier": "elite", "mods": { "hpMult": 1.1, "statMult": 1.1 } },
+      { "class": "undead", "slot": 6, "mods": { "hpMult": 0.65, "powerMult": 0.7 } },
+      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.65, "powerMult": 0.7 } },
+      { "class": "hexer", "slot": 4, "mods": { "hpMult": 0.65, "powerMult": 0.7 } }
     ]
   },
   "bridge_warden": {
@@ -157,6 +157,66 @@
       { "class": "defender", "slot": 1, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } },
       { "class": "paladin", "slot": 10, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } },
       { "class": "antimage", "slot": 6, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } }
+    ]
+  },
+  "windy_moor": {
+    "name": "Moor Raiders",
+    "units": [
+      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.65, "powerMult": 0.75 } },
+      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.65, "powerMult": 0.75 } },
+      { "class": "gambler", "slot": 8, "mods": { "hpMult": 0.65, "powerMult": 0.75 } }
+    ]
+  },
+  "charcoal_camp": {
+    "name": "Charcoal Burners",
+    "units": [
+      { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.55, "powerMult": 0.65 } },
+      { "class": "cutthroat", "slot": 2, "mods": { "hpMult": 0.55, "powerMult": 0.65 } },
+      { "class": "druid", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.65 } }
+    ]
+  },
+  "grave_field": {
+    "name": "Restless Dead",
+    "units": [
+      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
+      { "class": "undead", "slot": 7, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
+      { "class": "hexer", "slot": 6, "mods": { "hpMult": 0.9, "powerMult": 0.95 } }
+    ]
+  },
+  "pilgrim_road": {
+    "name": "Highwaymen",
+    "units": [
+      { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "gambler", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.55, "powerMult": 0.7 } }
+    ]
+  },
+  "ember_road": {
+    "name": "Morvane's Outriders",
+    "units": [
+      { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "cutthroat", "slot": 2, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } }
+    ]
+  },
+  "riverhead": {
+    "name": "Spring Ambush",
+    "units": [
+      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "druid", "slot": 7, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
+      { "class": "archer", "slot": 8, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } }
+    ]
+  },
+  "gate_of_cinders": {
+    "name": "Gatewardens",
+    "units": [
+      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
+      { "class": "defender", "slot": 2, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
+      { "class": "paladin", "slot": 7, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
+      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } }
     ]
   }
 }
