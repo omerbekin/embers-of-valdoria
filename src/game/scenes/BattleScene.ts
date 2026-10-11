@@ -381,7 +381,7 @@ export class BattleScene extends Phaser.Scene {
     const offVersions = onVersionsChange(() => this.onVersionsChanged());
     this.events.once('shutdown', offVersions);
     // Görsel v2 ikonu (hazır PNG) geç yüklendiyse: HUD'ın dokudan aldığı resim adresleri yenilensin
-    const offIconImages = onIconImagesLoaded(() => this.onVersionsChanged());
+    const offIconImages = onIconImagesLoaded(() => this.onVersionsChanged(true));
     this.events.once('shutdown', offIconImages);
   }
 
@@ -482,10 +482,14 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Sanat sürümü değişti (debug > Versions): rozetler, sıra çubuğu logoları ve alt çubuk (skill ikonları, pasif, logo) hemen yeniden çizilir. */
-  private onVersionsChanged(): void {
+  private onVersionsChanged(iconsOnly = false): void {
     if (!this.battle || !this.scene.isActive()) return;
     this.badgeKeys.clear();
-    this.texUrlCache.clear();
+    if (iconsOnly) {
+      // geç yüklenen ikon resmi yalnızca kodla çizilen (canvas) dokuları değiştirir: portrelerin (dosya) data URL'leri korunur; hepsini
+      // yeniden kodlamak savaşın ortasında uzun bir takılmaydı (zayıf telefonda ~0,2 sn)
+      for (const key of [...this.texUrlCache.keys()]) if (!this.avatarKeys.has(key)) this.texUrlCache.delete(key);
+    } else this.texUrlCache.clear();
     if (this.lastQueue.length || this.battle.mode === 'test') this.renderTurnBar(this.lastQueue);
     this.refreshCommands();
   }
@@ -3321,6 +3325,8 @@ export class BattleScene extends Phaser.Scene {
     );
     this.views.set(c.uid, view);
     if (this.unitSel.has(c.uid)) view.setSelected(true);
+    // parıltı dokusu açılıştan hemen sonra, birer birer pişer (ilk skill seçimi beklemesin; src/game/sprite-glow.ts)
+    this.time.delayedCall(300 + this.views.size * 60, () => view.prewarmGlow());
     return view;
   }
 
@@ -3435,8 +3441,12 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** Birimin portresi (kafa avatarı); yoksa class logosu. */
+  /** Portre dosyası dokuları (ikon resmi geç yüklenince data URL'leri korunur: onVersionsChanged). */
+  private readonly avatarKeys = new Set<string>();
+
   private avatarUrl(c: Combatant): string {
     const key = avatarTexture(this, c.spriteId);
+    if (key) this.avatarKeys.add(key);
     return key ? this.texUrl(key) : this.texUrl(ensureIcon(this, classLogoName({ id: c.defId, logo: c.logo }), c.color, false, ownerOfUnit(c.defId)));
   }
 

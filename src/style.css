@@ -894,10 +894,10 @@ html.menu-elegant .st-overlay {
   --st-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
 }
 
-/* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT): başlık ortası y 250, bölüm başlığı 56, satır 92, yazı COL_X + 34,
-   değer sağ kenarı COL_X + 754 */
+/* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT): başlık ortası y 205, bölüm başlığı 46, satır 78, yazı COL_X + 34,
+   değer sağ kenarı COL_X + 754 (Ömer 2026-10-11: Performance mode + Show FPS ile 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satırlar sık) */
 html.menu-elegant .st-col {
-  top: calc(var(--et) + 221.4 * var(--u));
+  top: calc(var(--et) + 176.4 * var(--u));
   width: max(calc(754 * var(--u)), 500px);
 }
 
@@ -918,7 +918,7 @@ html.menu-elegant .st-title {
 }
 
 html.menu-elegant .st-row {
-  height: max(44px, calc(92 * var(--u)));
+  height: max(44px, calc(78 * var(--u)));
 }
 
 html.menu-elegant .st-label {
@@ -949,6 +949,7 @@ html.menu-elegant .st-note {
 }
 
 html.menu-elegant .st-section {
+  height: calc(46 * var(--u));
   font: 600 calc(20 * var(--u)) var(--st-serif);
 }
 
@@ -1429,4 +1430,26 @@ html.compact:not(.short) .gm-row {
    Piksel ikonlar için konan `image-rendering: pixelated` boyalı resmi küçültürken tırtıklı yapar: tarayıcının yumuşak küçültmesi kullanılır. */
 img[src$='#smooth'] {
   image-rendering: auto !important;
+}
+
+/* Show FPS (Settings > Gameplay; src/ui/fps-meter.ts): üst kenarda, sol üstteki "◂ Back"in sağında (Menu sağ üstte, sıra çubuğu ortada,
+   alt çubuk altta: hiçbiriyle çakışmaz). Dokunmayı engellemez. Kit dili: ince altın kenar, koyu zemin, küçük yazı. */
+.fps-meter {
+  position: fixed;
+  left: calc(var(--el) + max(130px, calc(260 * var(--gu, 1px))));
+  top: calc(var(--et) + 6px);
+  z-index: 40;
+  padding: 2px 6px;
+  font: 600 10px/1.2 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  letter-spacing: 0.04em;
+  color: #f3d999;
+  background: rgba(12, 8, 5, 0.72);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.fps-meter[hidden] {
+  display: none;
 }

@@ -3,10 +3,12 @@
   "width": 1920,
   "height": 1080,
   "stage": {
-    "_not": "Geniş ekran (src/ui/viewport.ts > stageMetrics): mantıksal yükseklik 1080 sabit, mantıksal genişlik ekran oranına göre width (16:9) ile maxWidth (~21.5:9) arasında esner; savaş/menü koordinatları 1920x1080 merkez bölgede kalır, kamera ortalar. Tuval gerçek piksel çözünürlüğünde çizilir (render ölçeği >= 1), üst sınır maxRenderWidth genişlik ve maxRenderScale kat.",
+    "_not": "Geniş ekran (src/ui/viewport.ts > stageMetrics): mantıksal yükseklik 1080 sabit, mantıksal genişlik ekran oranına göre width (16:9) ile maxWidth (~21.5:9) arasında esner; savaş/menü koordinatları 1920x1080 merkez bölgede kalır, kamera ortalar. Tuval gerçek piksel çözünürlüğünde çizilir (render ölçeği >= 1), üst sınır maxRenderWidth genişlik ve maxRenderScale kat. Performans modunda (Settings > Gameplay) render ölçeği en çok liteRenderScale (CSS büyütür) ve kare hızı liteFps.",
     "maxWidth": 2580,
     "maxRenderWidth": 3840,
-    "maxRenderScale": 2
+    "maxRenderScale": 2,
+    "liteRenderScale": 0.67,
+    "liteFps": 30
   },
   "backgrounds": {
     "_not": "Savaş arka planı havuzları (Ömer 2026-10-08; src/game/battle-background.ts): Quick Battle 'quick', çevrimiçi savaş 'multiplayer' havuzundan savaş seed'ine göre biri (iki oyuncu aynı seed = aynı arka plan; rematch yeni seed). Sefer kendi kuralını kullanır (karşılaşma > düğüm > bölge > savaşın varsayılanı castle-hall). offsetY: arka plan başına dikey kaydırma (dünya px, + aşağı; zemin çizgisini birimlerin ayağına oturtmak için), yoksa 0.",

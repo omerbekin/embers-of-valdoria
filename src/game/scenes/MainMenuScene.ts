@@ -7,6 +7,7 @@ import { campaignArtKey, hasCampaignArt, preloadCampaignArt } from '../campaign-
 import { cardArt, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
+import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
@@ -61,7 +62,8 @@ const SHADE_W = 980; // soldan sağa açılan gölge
 const SETTINGS_DARK = 0.52;
 /** Settings sütunu yerleşimi (Ömer 2026-10-10: Sounds / Gameplay bölümleri): başlık ortası y, ilk öğenin üst kenarı, bölüm başlığı yüksekliği.
  *  DOM Settings aynı ölçülerle (style.css > html.menu-elegant .st-col / .st-section). */
-const SETTINGS_LAYOUT = { titleY: 250, top: 325, heading: 56 };
+// Ömer 2026-10-11: Gameplay'e Performance mode + Show FPS eklenince 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satır 78 / başlık 46.
+const SETTINGS_LAYOUT = { titleY: 205, top: 270, heading: 46, rowH: 78 };
 /**
  * Görünüm stili (src/ui/menu-style.ts): 'classic' bugünkü menü; 'elegant' ilk taslağın zarif stili (?menu=new önizleme). Onaylanınca
  * yalnızca DEFAULT_MENU_STYLE değişir; aşağıdaki ölçüler aynı kalır (önizleme = onaylanan görünüm).
@@ -168,6 +170,8 @@ export class MainMenuScene extends Phaser.Scene {
   private panelSel = 0;
   /** Sütunda bir sonraki öğenin üst kenarı (satır ROW_H, bölüm başlığı SETTINGS_LAYOUT.heading yer kaplar). */
   private panelTop = 0;
+  /** Sütun satır yüksekliği (Settings daha sık: SETTINGS_LAYOUT.rowH; Multiplayer ROW_H). */
+  private panelRowH = ROW_H;
   private back!: Phaser.GameObjects.Container;
   /** Sağ alttaki küçük sürüm yazısı (__APP_VERSION__). */
   private version: Phaser.GameObjects.Text | null = null;
@@ -406,8 +410,9 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   /** Kutusuz yazı satırı: elmas + yazı (+ isteğe bağlı sağ taraf) + ince ayırıcı çizgi. Dokunma alanı satırın tamamı. */
-  private makeRow(y: number, label: string, size: number, run: () => void, o: { right?: Phaser.GameObjects.GameObject[]; enabled?: boolean; onHover?: () => void; width?: number } = {}): Row {
+  private makeRow(y: number, label: string, size: number, run: () => void, o: { right?: Phaser.GameObjects.GameObject[]; enabled?: boolean; onHover?: () => void; width?: number; h?: number } = {}): Row {
     const rw = o.width ?? COL_W;
+    const rh = o.h ?? ROW_H;
     const enabled = o.enabled !== false;
     const root = this.add.container(COL_X, y);
     const glow = this.add.image(0, 0, ensureGlow(this)).setTint(0xf08c28).setBlendMode(Phaser.BlendModes.ADD).setAlpha(0);
@@ -415,8 +420,8 @@ export class MainMenuScene extends Phaser.Scene {
     glow.setDisplaySize(text.width * 1.5 + 80, size * 2.2).setPosition(text.x + text.width / 2, 0);
     const diamond = this.add.graphics();
     const line = this.add.graphics();
-    line.lineStyle(1, 0xd9b26a, 0.16).lineBetween(0, ROW_H / 2 - 2, rw, ROW_H / 2 - 2);
-    const zone = this.add.zone(rw / 2 - 20, 0, rw + 40, ROW_H).setInteractive({ useHandCursor: enabled });
+    line.lineStyle(1, 0xd9b26a, 0.16).lineBetween(0, rh / 2 - 2, rw, rh / 2 - 2);
+    const zone = this.add.zone(rw / 2 - 20, 0, rw + 40, rh).setInteractive({ useHandCursor: enabled });
     root.add([glow, line, diamond, text, ...(o.right ?? []), zone]);
     // Sağ taraftaki etkileşimli parçalar (kaydırıcı, düğme) satırın dokunma alanının üstünde kalsın
     if (o.right) for (const r of o.right) root.bringToTop(r);
@@ -810,6 +815,7 @@ export class MainMenuScene extends Phaser.Scene {
     p.add([this.shadeExtension(), this.columnShade()]);
     const settings = kind === 'settings';
     this.panelTop = settings ? SETTINGS_LAYOUT.top : LOOK.panelY0 - ROW_H / 2;
+    this.panelRowH = settings ? SETTINGS_LAYOUT.rowH : ROW_H;
     p.add(this.titleText(COL_X, settings ? SETTINGS_LAYOUT.titleY : LOOK.titleY, settings ? 'Settings' : 'Multiplayer', LOOK.titleSize, 3).setOrigin(0, 0.5));
     if (kind === 'settings') this.buildSettings(p);
     else this.buildMultiplayer(p);
@@ -827,8 +833,8 @@ export class MainMenuScene extends Phaser.Scene {
 
   private addPanelRow(p: Phaser.GameObjects.Container, label: string, run: () => void, o: { right?: Phaser.GameObjects.GameObject[]; enabled?: boolean; adjust?: (d: number) => void } = {}): Row {
     const i = this.panelRows.length;
-    const row = this.makeRow(this.panelTop + ROW_H / 2, label, LOOK.panelSize, run, { ...o, width: PANEL_W, onHover: () => this.selectPanel(i) });
-    this.panelTop += ROW_H;
+    const row = this.makeRow(this.panelTop + this.panelRowH / 2, label, LOOK.panelSize, run, { ...o, width: PANEL_W, h: this.panelRowH, onHover: () => this.selectPanel(i) });
+    this.panelTop += this.panelRowH;
     row.adjust = o.adjust;
     p.add(row.root);
     this.panelRows.push(row);
@@ -871,11 +877,11 @@ export class MainMenuScene extends Phaser.Scene {
     };
     const step = (t: string, x: number, d: number) => {
       const tx = this.valueText(x, 0, t, TXT_ON, LOOK.stepSize).setOrigin(0.5);
-      const z = this.add.zone(x, 0, 64, ROW_H - 8).setInteractive({ useHandCursor: true });
+      const z = this.add.zone(x, 0, 64, this.panelRowH - 8).setInteractive({ useHandCursor: true });
       z.on('pointerup', () => set(level + d, true));
       return [tx, z];
     };
-    const track = this.add.zone(trackX + trackW / 2, 0, trackW + 40, ROW_H - 8).setInteractive({ useHandCursor: true });
+    const track = this.add.zone(trackX + trackW / 2, 0, trackW + 40, this.panelRowH - 8).setInteractive({ useHandCursor: true });
     const fromPointer = (ptr: Phaser.Input.Pointer) => {
       const root = track.parentContainer;
       const lx = worldXY(this, ptr).x - (root?.x ?? 0) - (root?.parentContainer?.x ?? 0) - trackX;
@@ -906,7 +912,7 @@ export class MainMenuScene extends Phaser.Scene {
   }
 
   /** Ayarlar (oyun içi DOM Settings ile aynı içerik ve sıra; src/ui/settings.ts): "Sounds" (Master Volume, Music, UI sounds) ve
-   *  "Gameplay" (Reduced motion, Battle speed, Fullscreen) bölümleri; tüm kaydırıcılar 20 adım. Değerler aynı yerde saklanır. */
+   *  "Gameplay" (Reduced motion, Battle speed, Performance mode, Show FPS, Fullscreen) bölümleri; tüm kaydırıcılar 20 adım. Değerler aynı yerde saklanır. */
   private buildSettings(p: Phaser.GameObjects.Container): void {
     this.panelHeading(p, 'Sounds');
     // --- Master Volume: skill sesleri, arayüz sesleri ve müzik bununla çarpılır (setSettingsVolume -> DOM Settings applyVolume) ---
@@ -932,11 +938,22 @@ export class MainMenuScene extends Phaser.Scene {
     // --- Battle speed: 20 adım 0.25x-4x (1x çevresinde ince; src/ui/battle-speed.ts) ---
     this.levelRow(p, 'Battle speed', speedIndex(battleSpeed()), (i) => setBattleSpeed(speedAt(i)), (i) => battleSpeedLabel(speedAt(i)), (fn) => onBattleSpeedChange((v) => fn(speedIndex(v))), SPEED_STEPS);
 
+    // --- Performance mode: Auto / On / Off (src/ui/perf-mode.ts; DOM Settings ile aynı kaynak) ---
+    const perf = this.valueText(PANEL_W - 6, 0, perfSettingLabel(perfSetting()), TXT_ON).setOrigin(1, 0.5);
+    this.cleanups.push(onPerfSettingChange((v) => perf.active && perf.setText(perfSettingLabel(v))));
+    const stepPerf = (d: number): void => setPerfSetting(cyclePerfSetting(perfSetting(), d));
+    this.addPanelRow(p, 'Performance mode', () => stepPerf(1), { right: [perf], adjust: stepPerf });
+
+    // --- Show FPS: sol üstte küçük FPS göstergesi (varsayılan kapalı; src/ui/fps-meter.ts) ---
+    const fps = this.valueText(PANEL_W - 6, 0, showFps() ? 'On' : 'Off', TXT_ON).setOrigin(1, 0.5);
+    this.cleanups.push(onShowFpsChange((on) => fps.active && fps.setText(on ? 'On' : 'Off')));
+    this.addPanelRow(p, 'Show FPS', () => setShowFps(!showFps()), { right: [fps] });
+
     // --- Fullscreen (API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();
     if (support !== 'none' && !isStandalone()) {
       const state = this.valueText(PANEL_W - 6, 0, 'Enter', TXT_ON).setOrigin(1, 0.5);
-      const note = this.noteText(COL_X, this.panelTop + ROW_H + 12, '', 22, '#cdb88d').setOrigin(0, 0.5);
+      const note = this.noteText(COL_X, this.panelTop + this.panelRowH + 12, '', 22, '#cdb88d').setOrigin(0, 0.5);
       p.add(note);
       this.cleanups.push(onFullscreenChange((on) => state.active && state.setText(on ? 'Exit' : 'Enter')));
       this.addPanelRow(p, 'Fullscreen', () => {
@@ -946,7 +963,7 @@ export class MainMenuScene extends Phaser.Scene {
     }
 
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): en altta küçük, soluk "Developer tools"
-    const dev = elBody(this, COL_X, this.panelTop + 48, 'Developer tools', 21, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
+    const dev = elBody(this, COL_X, this.panelTop + 40, 'Developer tools', 21, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
     dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -14, dev.width + 20, dev.height + 28), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
     dev.on('pointerover', () => dev.setColor(EL.NOTE));
     dev.on('pointerout', () => dev.setColor('rgba(168,151,122,0.55)'));

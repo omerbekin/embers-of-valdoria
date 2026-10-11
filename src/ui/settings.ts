@@ -7,6 +7,7 @@ import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel
 import { loadMusicLevel, onMusicLevelChange, setMusicLevel, setMusicMaster } from './music';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from './fullscreen';
 import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
+import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -15,7 +16,7 @@ import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from 
  * Ölçüler oyun birimiyle (--gu: 1 mantıksal birimin CSS pikseli) ve sütun konumu ana menüyle aynı (--menu-x; src/ui/viewport.ts).
  * Klavye: yukarı/aşağı satır, sol/sağ ses, Enter seçer, Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
  * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, UI sounds;
- * "Gameplay" bölümü = Reduced motion, Battle speed, Fullscreen. TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
+ * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
  * Battle speed 0.25x-4x (src/ui/battle-speed.ts). Oyun akışı eylemleri menüdedir (`src/ui/game-menu.ts`).
  */
 export interface SettingsHooks {
@@ -139,6 +140,17 @@ export class SettingsScreen {
     bs.slider.addEventListener('input', () => applyBs(Number(bs.slider.value)));
     this.stepButtons(bs, (d) => applyBs(speedIndex(battleSpeed()) + d));
     this.addRow(col, 'Battle speed', () => undefined, bs.parts, (d) => applyBs(speedIndex(battleSpeed()) + d));
+
+    // --- Performance mode: Auto / On / Off (düşük çözünürlük, 30 fps, tam ekran FX yok; Auto zayıf cihazda açılır; src/ui/perf-mode.ts) ---
+    const perf = el('span', 'st-value', perfSettingLabel(perfSetting()));
+    onPerfSettingChange((v) => (perf.textContent = perfSettingLabel(v)));
+    const stepPerf = (d: number): void => setPerfSetting(cyclePerfSetting(perfSetting(), d));
+    this.addRow(col, 'Performance mode', () => stepPerf(1), [perf], stepPerf);
+
+    // --- Show FPS: sol üstte küçük FPS / kare süresi göstergesi (varsayılan kapalı; src/ui/fps-meter.ts) ---
+    const fps = el('span', 'st-value', showFps() ? 'On' : 'Off');
+    onShowFpsChange((on) => (fps.textContent = on ? 'On' : 'Off'));
+    this.addRow(col, 'Show FPS', () => setShowFps(!showFps()), [fps]);
 
     // --- Fullscreen (Fullscreen API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();

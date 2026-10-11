@@ -223,6 +223,12 @@ export class BattleHud {
   private queue: HudQueueCell[] | null = null;
   private testLabel = '';
   private viewW = 1920;
+  /** Son yazılan HTML (kutu başına): aynıysa DOM'a dokunulmaz (skill değiştirmek tüm alt çubuğu yeniden kurup yerleşim ölçtürüyordu). */
+  private readonly lastHtml = new WeakMap<HTMLElement, string>();
+  /** Skill kutusunun seçimden bağımsız içeriği: yalnızca seçim değiştiyse sınıf değişir. */
+  private skillsKey = '';
+  /** Global sütunun ölçülen genişliği (yalnızca içerik ya da ekran değişince yeniden ölçülür). */
+  private globW: number | null = null;
   private open = false;
   private tipEl: HTMLElement | null = null;
   private tipPinned = false;
@@ -303,6 +309,7 @@ export class BattleHud {
     r.width = `${viewW}px`;
     r.transform = `scale(${scale})`;
     r.setProperty('--bh-inv', String(1 / Math.max(0.05, scale))); // 1 gerçek px = --bh-inv oyun birimi (dokunma alanları en az 44 gerçek px)
+    this.globW = null; // ekran değişti (html.short düzeni): global sütun yeniden ölçülür
     if (viewW !== this.viewW) {
       this.viewW = viewW;
       this.place();
@@ -355,7 +362,7 @@ export class BattleHud {
         return `<span class="bh-buff" ${this.reg(`fx:${i}`, tip)} style="${e.color ? `--c:${e.color}` : ''}">${e.iconUrl ? img(e.iconUrl) : '<i class="bh-dia s"></i>'}</span>`;
       })
       .join('');
-    this.infoBox.innerHTML = `${icons ? `<div class="bh-buffs">${icons}</div>` : ''}<div class="bh-links"><span class="bh-more bh-plink ${uiImg('combatLog') ? 'ico' : ''} ${this.panel === 'log' ? 'open' : ''}" data-panel="log">${img(uiImg('combatLog'), 'bh-ico bh-pl-ico')}Combat log</span></div>`;
+    this.put(this.infoBox, `${icons ? `<div class="bh-buffs">${icons}</div>` : ''}<div class="bh-links"><span class="bh-more bh-plink ${uiImg('combatLog') ? 'ico' : ''} ${this.panel === 'log' ? 'open' : ''}" data-panel="log">${img(uiImg('combatLog'), 'bh-ico bh-pl-ico')}Combat log</span></div>`);
   }
 
   private renderLog(): void {
@@ -409,11 +416,19 @@ export class BattleHud {
     return `data-tip="${esc(key)}"`;
   }
 
+  /** innerHTML yalnızca değiştiyse yazılır (yazıldıysa true). */
+  private put(box: HTMLElement, html: string): boolean {
+    if (this.lastHtml.get(box) === html) return false;
+    this.lastHtml.set(box, html);
+    box.innerHTML = html;
+    return true;
+  }
+
   private renderActor(): void {
     const a = this.model.actor;
     const wasOpen = this.open;
     if (!a) {
-      this.actorBox.innerHTML = '';
+      this.put(this.actorBox, '');
       return;
     }
     const st = (s: HudStat) => `<div class="bh-st ${s.primary ? 'pri' : ''}" ${this.reg(`s:${s.kind}`, s.tip)} style="${s.color ? `color:${s.color}` : ''}">${img(s.iconUrl)}<span class="l">${esc(s.label)}</span><span>${esc(s.value)}</span></div>`;
@@ -427,7 +442,9 @@ export class BattleHud {
       ? `<div class="bh-sheet-sec"><div class="bh-hd"><i class="bh-dia h s"></i>Passive</div><div class="bh-pas">${img(a.passive.iconUrl, 'bh-ico bh-medal')}<div><div class="t">${esc(a.passive.name)}</div><div class="d">${esc(a.passive.text)}</div></div></div></div>`
       : '';
     const notes = a.notes.length ? `<div class="bh-sheet-notes">${a.notes.map((n) => `<div class="bh-note" style="${n.color ? `color:${n.color}` : ''}"><i class="bh-dia s"></i>${esc(n.text)}</div>`).join('')}</div>` : '';
-    this.actorBox.innerHTML = `
+    this.put(
+      this.actorBox,
+      `
       <div class="bh-sheet bh-panel bh-corners">
         <div class="bh-sheet-head"><span class="bh-n">${esc(a.name)}</span><span class="bh-m">${esc(a.sub)}</span><span class="bh-k">Character</span></div>
         <div class="bh-cols">${a.groups.map((g, gi) => `${gi ? '<div class="bh-vfade"></div>' : ''}<div class="bh-col"><div class="bh-hd"><i class="bh-dia h s"></i>${esc(g.title)}</div>${g.stats.map(srow).join('')}</div>`).join('')}</div>
@@ -442,46 +459,55 @@ export class BattleHud {
           <div class="bh-main">${a.main.map(st).join('')}</div>
           <span class="bh-more">All stats</span>
         </div>
-      </div>`;
+      </div>`,
+    );
     if (wasOpen) this.actorBox.classList.add('open');
   }
 
   private renderSkills(): void {
-    this.skillBox.innerHTML = this.model.skills
-      .map(
-        (s) => `<div class="bh-sk ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${esc(s.id)}">
+    const one = (s: HudModel['skills'][number], selected: boolean) => `<div class="bh-sk ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${esc(s.id)}">
           <div class="fr">${img(s.iconUrl)}${s.wait > 0 ? `<span class="cdv">${s.wait}</span>` : ''}<span class="key">${s.key}</span></div>
           <span class="nm">${esc(s.name)}</span>
           <span class="cost">${s.cost.length ? s.cost.map((c) => `<span style="${c.color ? `color:${c.color}` : ''}">${img(c.iconUrl ?? '')}${esc(c.text)}</span>`).join('') : '<span class="free">Free</span>'}</span>
           <div class="bh-sktip bh-panel bh-corners">${tipHtml(s.tip)}</div>
-        </div>`,
-      )
-      .join('');
+        </div>`;
+    // Yalnızca seçim değiştiyse (skill'ler arasında geçiş) kutu yeniden kurulmaz: 'sel' sınıfı taşınır (zayıf telefonda gecikmenin ana nedeni)
+    const key = this.model.skills.map((s) => one(s, false)).join('');
+    const kids = this.skillBox.children;
+    if (key === this.skillsKey && kids.length === this.model.skills.length) {
+      this.model.skills.forEach((s, i) => kids[i]!.classList.toggle('sel', !!s.selected));
+      return;
+    }
+    this.skillsKey = key;
+    const html = this.model.skills.map((s) => one(s, !!s.selected)).join('');
+    this.lastHtml.set(this.skillBox, html);
+    this.skillBox.innerHTML = html;
   }
 
   private renderGlobals(): void {
     const g = this.model.globals;
     this.globBox.classList.toggle('empty', g.length === 0);
-    this.globBox.innerHTML = g.length
+    const html = g.length
       ? `<div class="bh-vfade"></div><div class="bh-gcol">${g
           .map((x) => `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`)
           .join('')}</div>`
       : '';
+    if (this.put(this.globBox, html)) this.globW = null;
   }
 
   /** Pasif madalyonu (4 skill'in solunda) + Luck primary'de Lucky Escape elması. */
   private renderPassive(): void {
     const p = this.model.passive;
-    this.pasBox.innerHTML = p
+    this.put(this.pasBox, p
       ? `<div class="bh-medal lg" ${this.reg('p:passive', p.tip)}>${img(p.iconUrl)}</div><span class="bh-pasv-n">Passive</span>${
           p.lucky ? `<span class="bh-lucky ${uiImg('luckyEscape') ? 'ico' : ''} ${p.lucky.ready ? '' : 'used'}" ${this.reg('p:lucky', p.lucky.tip)}>${uiImg('luckyEscape') ? img(uiImg('luckyEscape')) : '<i></i>'}</span>` : ''
         }`
-      : '';
+      : '');
   }
 
   private renderTurnLabel(): void {
     const t = this.model.turnLabel;
-    this.turnLbl.innerHTML = t ? `<i class="bh-dia s"></i>${esc(t)}<i class="bh-dia s"></i>` : '';
+    this.put(this.turnLbl, t ? `<i class="bh-dia s"></i>${esc(t)}<i class="bh-dia s"></i>` : '');
   }
 
   /** Sıra çubuğu (null = gizli); test modunda hücreler yerine yazı. */
@@ -533,7 +559,9 @@ export class BattleHud {
     const gx = sx + SKW + 22;
     this.globBox.style.left = `${gx}px`;
     // Sağ alt alan global sütunun ölçülen genişliğinden sonra (telefonda globaller yatay, büyük dokunma alanlı: battle-hud.css > html.short)
-    const rx = gx + Math.max(150, this.globBox.offsetWidth) + 20;
+    // ölçüm (zorunlu yerleşim) yalnızca global sütun ya da ekran değişince
+    this.globW ??= this.globBox.offsetWidth;
+    const rx = gx + Math.max(150, this.globW) + 20;
     this.rightSlot.style.left = `${rx}px`;
     this.rightSlot.style.width = `${Math.max(0, W - rx - 28)}px`;
     this.cards.enemy.style.left = `${W - 384 - 40}px`;

@@ -103,12 +103,15 @@ const RENDER_SNAP = 0.03;
  * Kapsayıcı (CSS px) ve cihaz piksel oranından sahne ölçüleri. Render ölçeği = gerçek piksel / mantıksal birim, en az 1 (küçük ekranda tuval
  * 1920x1080 kalır ve tarayıcı küçültür: bugünkü davranış), en çok `maxRenderScale` ve tuval genişliği `maxRenderWidth` (performans sınırı).
  */
-export function stageMetrics(width: number, height: number, dpr = 1): StageMetrics {
+export function stageMetrics(width: number, height: number, dpr = 1, lite = false): StageMetrics {
   const logicalW = logicalWidthFor(width, height);
   const cssScale = fitScale(width, height, logicalW, GAME_H);
   const cap = Math.min(layout.stage.maxRenderScale, layout.stage.maxRenderWidth / logicalW);
   let render = Math.max(1, Math.min(cap, cssScale * (dpr > 0 ? dpr : 1)));
   if (render - 1 < RENDER_SNAP) render = 1;
+  // Performans modu (src/ui/perf-mode.ts): tuval mantıksal boyutun liteRenderScale katı (en çok), CSS büyütür; kamera yakınlaştırması
+  // aynı oranda küçülür, dünya / yerleşim koordinatları değişmez
+  if (lite) render = Math.min(render, layout.stage.liteRenderScale);
   const canvasH = Math.round(GAME_H * render);
   const zoom = canvasH / GAME_H;
   const canvasW = Math.round(logicalW * zoom);
@@ -132,6 +135,14 @@ export function parseRotateMode(search: string): RotateMode {
 let currentRotated = false;
 let currentMode: RotateMode = 'auto';
 let relayout: (() => void) | null = null;
+let liteRender = false;
+
+/** Performans modu: tuval düşük çözünürlükte (src/game/perf-apply.ts çağırır); yerleşim hemen yenilenir. */
+export function setLiteRender(on: boolean): void {
+  if (on === liteRender) return;
+  liteRender = on;
+  relayout?.();
+}
 
 export const isRotated = (): boolean => currentRotated;
 export const getRotateMode = (): RotateMode => currentMode;
@@ -232,7 +243,7 @@ export function installViewport(game: unknown, stage: HTMLElement, initialMode: 
     root.style.setProperty('--stage-h', `${layout.stageH}px`);
     // Geniş ekran + gerçek piksel: oyun kapsayıcısının (#game, çentik payları düşülmüş) oranından mantıksal genişlik ve tuval boyutu
     const parent = g.scale.parent;
-    const m = stageMetrics(parent?.offsetWidth ?? layout.stageW, parent?.offsetHeight ?? layout.stageH, window.devicePixelRatio || 1);
+    const m = stageMetrics(parent?.offsetWidth ?? layout.stageW, parent?.offsetHeight ?? layout.stageH, window.devicePixelRatio || 1, liteRender);
     g.scale.getParentBounds();
     if (g.scale.width !== m.canvasW || g.scale.height !== m.canvasH) g.scale.setGameSize(m.canvasW, m.canvasH);
     else g.scale.refresh();

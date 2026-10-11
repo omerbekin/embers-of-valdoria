@@ -12,6 +12,8 @@ import { SHARED_KEY } from './asset-versions';
 import { tierStyle, unitName } from './unit-label';
 import { DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-ui';
+import { SpriteGlow, bakeGlow } from './sprite-glow';
+import { perfLite } from '../ui/perf-mode';
 
 /** floatText seçenekleri: tür (tipografi) ve rakamın solundaki/sağındaki küçük ikon (piksel ikon adı). */
 export interface FloatOpts {
@@ -92,7 +94,7 @@ export class CombatantView {
   private readonly magicShieldFill: Phaser.GameObjects.Rectangle;
   private readonly statusBox: Phaser.GameObjects.Container;
   private readonly sealBox: Phaser.GameObjects.Container;
-  private glowFx?: Phaser.FX.Glow;
+  private glowFx?: SpriteGlow;
   private glowKey = '';
   /** Sırası gelen birim: adın üstünde küçük kor elmas (eski sarı ok yerine). */
   private readonly marker: Phaser.GameObjects.Graphics;
@@ -296,18 +298,24 @@ export class CombatantView {
     if (key === this.glowKey) return;
     if (this.fallen) this.container.setAlpha(kind && strong ? 0.8 : 0); // düşmüş birim: yalnızca üstüne gelinen diriltme hedefi hayalet olur (yuvada ceset işareti durur; madde 222)
     this.glowKey = key;
-    if (this.glowFx) {
-      this.scene.tweens.killTweensOf(this.glowFx);
-      this.sprite.postFX?.remove(this.glowFx);
-      this.glowFx = undefined;
-    }
-    if (!kind || !this.sprite.postFX) return;
+    this.glowFx?.destroy();
+    this.glowFx = undefined;
+    if (!kind) return;
     const hex = kind === 'good' ? GLOW.good : GLOW.bad;
     // Weak: a thin, quiet rim. Strong: the pulsing glow around the unit that will be hit.
-    const [lo, hi] = strong ? [5, 11] : [1.2, 2];
-    const fx = this.sprite.postFX.addGlow(hex, lo, 0, false, 0.1, strong ? 16 : 8);
+    // Önceden pişirilmiş hale dokusu (src/game/sprite-glow.ts): postFX Glow her karede tuval boyunda geçiş istiyordu (zayıf telefonda kare düşüşü)
+    const fx = new SpriteGlow(this.scene, this.sprite, this.container, hex, strong ? 'wide' : 'thin');
     this.glowFx = fx;
-    this.scene.tweens.add({ targets: fx, outerStrength: hi, duration: strong ? 480 : 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    const [lo, hi] = strong ? [0.55, 1] : [0.6, 0.9];
+    fx.img.setAlpha(perfLite() ? hi : lo);
+    if (!perfLite()) this.scene.tweens.add({ targets: fx.img, alpha: hi, duration: strong ? 480 : 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+  }
+
+  /** Hedefleme parıltısı dokularını önceden pişirir (ilk skill seçiminde / üstüne gelişte takılma olmasın). */
+  prewarmGlow(): void {
+    if (!this.sprite.active) return;
+    bakeGlow(this.scene, this.sprite, 'thin');
+    bakeGlow(this.scene, this.sprite, 'wide');
   }
 
   /** Ctrl+tık ile seçili birimin çerçevesi (ince, açık mavi). */
@@ -329,6 +337,7 @@ export class CombatantView {
     if (show) {
       this.footRing.setAlpha(1);
       this.marker.setY(0);
+      if (perfLite()) return; // performans modu: süs niteliğindeki boşta nefes / sallanma yok (işaret sabit durur)
       this.scene.tweens.add({ targets: this.footRing, alpha: 0.55, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
       this.scene.tweens.add({ targets: this.marker, y: -6, duration: 700, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     }

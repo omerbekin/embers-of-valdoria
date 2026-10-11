@@ -15,6 +15,8 @@ import { lockInput, onInputLockChange, unlockInput } from './ui/input-lock';
 import { createFullscreenButton } from './ui/fullscreen';
 import { installViewport, parseRotateMode } from './ui/viewport';
 import { installStage, setStageMetrics } from './game/stage';
+import { installPerfMode } from './game/perf-apply';
+import { installFpsMeter } from './ui/fps-meter';
 import { installWiki, openWiki } from './wiki/open';
 import { debugState } from './game/debug-state';
 import { menuStyle } from './ui/menu-style';
@@ -104,7 +106,12 @@ if (import.meta.env.DEV || ['localhost', '127.0.0.1'].includes(window.location.h
 
 // --- Screen layout: fills the visible area, follows the address bar, rotates the stage on upright phones ---
 installStage(game);
+// Performans modu (Settings > Gameplay; Auto zayıf cihazda açılır): düşük çözünürlük + 30 fps + tam ekran FX yok (viewport'tan önce: ilk yerleşim de uyar)
+installPerfMode(game);
 installViewport(game, document.getElementById('stage')!, parseRotateMode(window.location.search), setStageMetrics);
+
+// --- Show FPS (Settings > Gameplay) göstergesi + Auto performans modu için kare ölçümü ---
+installFpsMeter(document.getElementById('ui-root')!);
 
 // --- Debug menu (gizli girişler; menünün kodu ilk açılışta indirilir: src/ui/debug-entry.ts) ---
 installDebugEntry(game, document.getElementById('ui-root')!);
