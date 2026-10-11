@@ -38,16 +38,18 @@ const PACKS = {
   pack7: ['copper_ring', 'rabbits_foot', 'wolf_tooth', 'pilgrims_token', 'saints_medal', 'ashen_locket', null, null],
 };
 /**
- * Legendary item'lar (Ömer 2026-10-11): assets/source/legendary-icons/, her sayfa 1536x1024, 3x2 hücre (512), satır satır.
- * sheet-1/2'nin kurdeleli hücreleri (null) yerine sheet-4-redo (gerçek saydam) kullanılır; sheet-3 damalı zemin gömülü (sahte saydamlık:
- * kenardan flood-fill temizliği).
+ * Legendary item'lar (Ömer 2026-10-11, onaylı "iconic" sayfalar; renkler çeşitli): assets/source/legendary-icons/, 1536x1024 sayfalar,
+ * satır satır soldan sağa. iconic-test ve iconic-a 3x2 (512 hücre), iconic-b 4x2 (384 hücre, son hücre boş). İki sayfadaki çekiç hücreleri
+ * REDDEDİLDİ (null); Avenger's Maul tek görsel maul-alt2.png (1254x1254, gerçek saydam; maul-alt.png KULLANILMAZ).
+ * Botlar: fenerli yeşil çizme = Watchman's Boots (vigil: Ashford surlarında uzun geceler), deniz kabuklu kahverengi yol çizmesi = Pilgrim's Road Boots.
+ * Eski sheet-1..4 sayfaları (hepsi altın, Ömer beğenmedi) artık kullanılmıyor.
  */
 const LEG = 'assets/source/legendary-icons';
 const GRIDS = [
-  { label: 'legendary sheet-1', file: join(LEG, 'sheet-1.png'), ids: [null, 'mantle_of_valdren', null, 'windrunner_longbow', null, null] },
-  { label: 'legendary sheet-2', file: join(LEG, 'sheet-2.png'), ids: [null, 'crown_of_the_ashen_king', 'pilgrims_road_boots', 'heart_of_the_forge', 'iron_retort', null] },
-  { label: 'legendary sheet-3', file: join(LEG, 'sheet-3.png'), bgMin: 208, ids: ['drummers_gauntlets', 'helm_of_the_last_stand', 'flashpowder_locket', 'watchmans_boots', 'avengers_maul', 'bones_of_the_quarry'] },
-  { label: 'legendary sheet-4-redo', file: join(LEG, 'sheet-4-redo.png'), ids: ['emberbrand', 'oathkeepers_bulwark', 'whisper_of_morvane', 'staff_of_the_last_ember', 'gamblers_last_coin', 'serrated_edge'] },
+  { label: 'legendary iconic-test', file: join(LEG, 'iconic-test.png'), cols: 3, rows: 2, ids: ['drummers_gauntlets', 'helm_of_the_last_stand', 'flashpowder_locket', 'watchmans_boots', null, 'bones_of_the_quarry'] },
+  { label: 'legendary iconic-a', file: join(LEG, 'iconic-a.png'), cols: 3, rows: 2, ids: ['emberbrand', 'mantle_of_valdren', 'oathkeepers_bulwark', 'windrunner_longbow', 'whisper_of_morvane', 'staff_of_the_last_ember'] },
+  { label: 'legendary iconic-b', file: join(LEG, 'iconic-b.png'), cols: 4, rows: 2, ids: ['gamblers_last_coin', 'crown_of_the_ashen_king', 'pilgrims_road_boots', 'heart_of_the_forge', 'iron_retort', 'serrated_edge', null, null] },
+  { label: 'legendary maul-alt2', file: join(LEG, 'maul-alt2.png'), cols: 1, rows: 1, ids: ['avengers_maul'] },
 ];
 /** --only=<etiket öneki>: yalnızca o işler (ör. --only=legendary); verilmezse hepsi. */
 const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7);
@@ -308,7 +310,7 @@ async function processPack(file, ids, cols = 4, rows = 2) {
 mkdirSync(OUT, { recursive: true });
 const jobs = [
   ...Object.entries(PACKS).map(([pack, ids]) => ({ label: pack, file: join(SRC, SRC_FILE[pack] ?? `${pack}.png`), ids: ids.map((id) => (id && OVERRIDES[id] ? null : id)), cols: 4, rows: 2 })),
-  ...GRIDS.map((g) => ({ label: g.label, file: g.file, bgMin: g.bgMin, ids: g.ids.map((id) => (id && OVERRIDES[id] ? null : id)), cols: 3, rows: 2 })),
+  ...GRIDS.map((g) => ({ label: g.label, file: g.file, bgMin: g.bgMin, ids: g.ids.map((id) => (id && OVERRIDES[id] ? null : id)), cols: g.cols, rows: g.rows })),
   ...Object.entries(OVERRIDES).map(([id, file]) => ({ label: `override ${id}`, file, ids: [id], cols: 1, rows: 1 })),
 ];
 for (const id of Object.keys(OVERRIDES)) if (![...Object.values(PACKS).flat(), ...GRIDS.flatMap((g) => g.ids)].includes(id)) console.warn(`uyarı: override ${id} hiçbir pakette yok (yeni item ise items.json'da olmalı)`);
