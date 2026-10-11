@@ -11,7 +11,10 @@
   Belge: docs/design/campaign/valdoria-2x.md (bölüm "Yayılmış varyantlar"). Sayfa canlı sefer haritasını taklit eder: dünya birimi
   (eski 16:9 harita bölgesi = 1920 x 1080), sahne yüksekliği 1080 birim, yakınlaştırma 1,0-1,4 (src/game/map-view.ts), düğüm yarıçapı 24
   (boss 30), boyalı düğüm ikonları (assets/misc-icons/node), ad 15 birim Cinzel, dokunma alanı 96 birim çap, HUD sütunları / üst bant /
-  alt kontroller CampaignMapScene.renderHud ölçüleriyle. Yazı çakışmaları sayfada GERÇEK yazı genişliğiyle ölçülür (sağ üst köşe).
+  alt kontroller CampaignMapScene.renderHud ölçüleriyle. Yazı çakışmaları sayfada GERÇEK yazı genişliğiyle ölçülür (sol panel).
+  3. tur (2026-10-11): Ömer A'yı seçti; kaydırma her yakınlaştırmada açık. Varyantlar: 1 Current, 4 Spread A, A1 / A2 / A3 (A + kuzeye
+  uzanan yol, final boss dağlarda). HUD ölçümü: kamera her düğüme ortalanınca (21:9 çerçevede sınırlanarak) 1,0-1,4x'te o düğüm ve
+  seçilebilir sonraki düğümleri; 16:9, 21:9 ve telefon (844 x 390, compact HUD, 24 birim ad). Düğüme tıkla = bulunulan düğüm.
 -->
 <style>
 @font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('valdoria-map/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
@@ -39,6 +42,11 @@ html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); fo
 .coll.hudbad .lblbox, .hudbad .lblbox { fill: none; stroke: #4ab0ff; stroke-width: 2; stroke-dasharray: 5 3; }
 .lblbox { fill: none; stroke: none; }
 .phone .lbl { font-size: 24px; stroke-width: 7px; }
+.lbl.hide { display: none; }
+.mark { fill: none; stroke: none; }
+.node.opt .mark { stroke: var(--ember2); stroke-width: 2; stroke-dasharray: 5 4; }
+.node.sel .mark { fill: rgba(255,179,90,.16); stroke: var(--ember2); stroke-width: 3; stroke-dasharray: none; }
+.node.cur .mark { stroke: #fbe7b0; stroke-width: 3.5; stroke-dasharray: none; }
 .phone .startTag { font-size: 18px; }
 /* HUD taklidi (sahne birimi; JS ölçekler) */
 #hud { position: absolute; left: 0; top: 0; transform-origin: 0 0; pointer-events: none; }
@@ -77,13 +85,60 @@ html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); fo
 <div id="stats"></div>
 <div id="tip"></div>
 <script>
-const VARIANTS = {"v1":{"nodes":[{"id":"1","name":"Mill Road","type":"battle","sub":"Start · Battle","w":[280,914]},{"id":"2","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack","w":[530,785]},{"id":"3","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief","w":[651,638],"label":"above"},{"id":"4","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits","w":[795,694]},{"id":"5A","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[948,869]},{"id":"5B","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[868,537]},{"id":"6A","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[1085,924],"label":"above"},{"id":"6B","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1041,537],"label":"above"},{"id":"7","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1200,686]},{"id":"8A","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1356,491]},{"id":"8B","name":"Mercenary Camp","type":"battle","sub":"Battle · Gold","w":[1392,752],"label":"above"},{"id":"8C","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1380,880]},{"id":"9","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1555,638]},{"id":"10","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1701,545]},{"id":"11A","name":"Dragon's Spine","type":"elite","sub":"Elite · Hidden Entrance","w":[1605,343]},{"id":"11B","name":"Siege Line","type":"battle","sub":"Battle","w":[1824,478]},{"id":"12","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1774,184]}],"edges":[{"from":"1","to":"2"},{"from":"2","to":"3"},{"from":"3","to":"4"},{"from":"4","to":"5A"},{"from":"4","to":"5B"},{"from":"5A","to":"6A"},{"from":"5B","to":"6B"},{"from":"6A","to":"7"},{"from":"6B","to":"7"},{"from":"7","to":"8A"},{"from":"7","to":"8B"},{"from":"7","to":"8C"},{"from":"8A","to":"9"},{"from":"8B","to":"9"},{"from":"8C","to":"9"},{"from":"9","to":"10"},{"from":"10","to":"11A"},{"from":"10","to":"11B"},{"from":"11A","to":"12"},{"from":"11B","to":"12"}],"start":"1"},"v2":{"nodes":[{"id":"1","name":"Mill Road","type":"battle","sub":"Start · Battle","w":[280,914],"new":false},{"id":"2","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack","w":[530,785],"new":false},{"id":"3","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief","w":[651,638],"new":false},{"id":"4","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits","w":[795,694],"new":false},{"id":"5A","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[948,869],"new":false},{"id":"5B","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[868,537],"new":false},{"id":"6A","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[1085,924],"new":false},{"id":"6B","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1041,537],"new":false},{"id":"7","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1200,686],"new":false},{"id":"8A","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1356,491],"new":false},{"id":"8B","name":"Mercenary Camp","type":"battle","sub":"Battle · Gold","w":[1392,752],"new":false},{"id":"8C","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1380,880],"new":false},{"id":"9","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1555,638],"new":false},{"id":"10","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1701,545],"new":false},{"id":"11A","name":"Dragon's Spine","type":"elite","sub":"Elite · Hidden Entrance","w":[1605,343],"new":false},{"id":"11B","name":"Siege Line","type":"battle","sub":"Battle","w":[1824,478],"new":false},{"id":"12","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1774,184],"new":false},{"id":"1a","name":"Fisher's Cove","type":"event","sub":"Olay · kıyı köyü (tutorial: olayları öğretir)","w":[240,745],"new":true},{"id":"2a","name":"Woodcutter's Clearing","type":"battle","sub":"Savaş · orman haydutları (2 kişilik takım)","w":[413,664],"new":true},{"id":"4a","name":"Ashford Ford","type":"battle","sub":"Savaş · yeni bölüğün ilk savaşı (zorunlu)","w":[899,718],"new":true},{"id":"5A2","name":"Reed Ferry","type":"rest","sub":"Dinlenme noktası (çeşme) · YENİ TÜR, soru 1","w":[989,977],"new":true},{"id":"6A2","name":"Bog Hollow","type":"battle","sub":"Savaş · bataklık yaratıkları","w":[1152,805],"new":true},{"id":"5B2","name":"Shepherd's Watch","type":"event","sub":"Olay · dağ yolu","w":[954,616],"new":true},{"id":"6B2","name":"Old Quarry","type":"elite","sub":"Elit · taş ocağı ustası","w":[1123,572],"new":true},{"id":"8A2","name":"Pilgrim Road","type":"battle","sub":"Savaş · yol kesiciler","w":[1436,529],"new":true},{"id":"8B2","name":"Crossroads Market","type":"merchant","sub":"Tüccar · YENİ TÜR, soru 2","w":[1463,761],"new":true},{"id":"8C2","name":"Grave Field","type":"battle","sub":"Savaş · mezarlık","w":[1521,864],"new":true},{"id":"8M","name":"Riverside Camp","type":"rest","sub":"Dinlenme noktası (boss öncesi; madde 264'ün çözümü) · soru 1","w":[1463,648],"new":true},{"id":"9a","name":"Burned Hamlet","type":"event","sub":"Olay · köprü sonrası","w":[1622,578],"new":true},{"id":"11A2","name":"Frozen Pass","type":"battle","sub":"Savaş · donmuş geçit","w":[1440,281],"new":true},{"id":"11A3","name":"Ice Cave","type":"treasure","sub":"Hazine (korumasız sandık)","w":[1536,173],"new":true},{"id":"11B2","name":"Forward Camp","type":"merchant","sub":"Tüccar + dinlenme (son kasaba yerine) · soru 2","w":[1878,400],"new":true},{"id":"11B3","name":"Morvane's Outworks","type":"elite","sub":"Elit · kale önü tahkimatı","w":[1901,292],"new":true},{"id":"12a","name":"Gate of Cinders","type":"battle","sub":"Savaş · kale kapısı (zorunlu, finalden önce)","w":[1680,254],"new":true}],"edges":[{"from":"1","to":"1a"},{"from":"1a","to":"2"},{"from":"2","to":"2a"},{"from":"2a","to":"3"},{"from":"3","to":"4"},{"from":"4","to":"4a"},{"from":"4a","to":"5A"},{"from":"5A","to":"5A2"},{"from":"5A2","to":"6A"},{"from":"6A","to":"6A2"},{"from":"6A2","to":"7"},{"from":"4a","to":"5B"},{"from":"5B","to":"5B2"},{"from":"5B2","to":"6B"},{"from":"6B","to":"6B2"},{"from":"6B2","to":"7"},{"from":"7","to":"8A"},{"from":"8A","to":"8A2"},{"from":"8A2","to":"8M"},{"from":"7","to":"8B"},{"from":"8B","to":"8B2"},{"from":"8B2","to":"8M"},{"from":"7","to":"8C"},{"from":"8C","to":"8C2"},{"from":"8C2","to":"8M"},{"from":"8M","to":"9"},{"from":"9","to":"9a"},{"from":"9a","to":"10"},{"from":"10","to":"11A"},{"from":"11A","to":"11A2"},{"from":"11A2","to":"11A3"},{"from":"11A3","to":"12a"},{"from":"10","to":"11B"},{"from":"11B","to":"11B2"},{"from":"11B2","to":"11B3"},{"from":"11B3","to":"12a"},{"from":"12a","to":"12"}],"start":"1"},"v3":{"nodes":[{"id":"1","name":"Mill Road","type":"battle","sub":"Start · Battle · tutorial (unchanged)","w":[280,914],"tut":true},{"id":"2","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack · tutorial (unchanged)","w":[530,785],"tut":true},{"id":"3","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief · tutorial (unchanged)","w":[651,638],"tut":true,"label":"above"},{"id":"4","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits · tutorial (unchanged)","w":[795,694],"tut":true},{"id":"4a","name":"Ashford Road","type":"battle","sub":"Battle · first fight of the new company (was Ashford Ford: no ford there)","w":[960,640],"terrain":"fields"},{"id":"5A","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[850,875],"terrain":"marsh pools"},{"id":"5A2","name":"Reed Ferry","type":"rest","sub":"Rest point · ferry landing","w":[1040,824],"terrain":"river bank"},{"id":"6A","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[1110,715],"terrain":"river bank fields"},{"id":"6A2","name":"Fallow Fields","type":"battle","sub":"Battle · (was Bog Hollow: no bog there)","w":[1117,606],"terrain":"fields"},{"id":"5B","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[870,465],"terrain":"pass between the snow peaks"},{"id":"5B2","name":"Shepherd's Watch","type":"event","sub":"Event · mountain road","w":[958,320],"terrain":"hills"},{"id":"6B","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1092,260],"terrain":"mountain foot"},{"id":"6B2","name":"Old Quarry","type":"elite","sub":"Elite · quarry master","w":[1130,429],"terrain":"rocky slope"},{"id":"7","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1251,539],"terrain":"fields"},{"id":"8A","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1352,243],"terrain":"mountains"},{"id":"8A2","name":"Pilgrim Road","type":"battle","sub":"Battle · Highwaymen","w":[1470,377],"terrain":"grass under the range","label":"above"},{"id":"8B","name":"Mercenary Camp","type":"battle","sub":"Battle · Gold","w":[1320,352],"terrain":"forest clearing"},{"id":"8B2","name":"Crossroads Market","type":"merchant","sub":"Merchant","w":[1417,511],"terrain":"grass crossroads"},{"id":"8C","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1300,649],"terrain":"fields by the river"},{"id":"8C2","name":"Grave Field","type":"battle","sub":"Battle · Graveyard","w":[1430,621],"terrain":"fields"},{"id":"8M","name":"Riverside Camp","type":"rest","sub":"Rest point · before the boss","w":[1563,484],"terrain":"river bank"},{"id":"9","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1600,590],"terrain":"ON the river (the crossing)"},{"id":"9a","name":"Burned Hamlet","type":"event","sub":"Event · after the bridge","w":[1720,706],"terrain":"grass"},{"id":"10","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1860,580],"terrain":"open grass"},{"id":"11A","name":"Dragon's Spine","type":"elite","sub":"Elite · Hidden Entrance","w":[1900,300],"terrain":"mountains"},{"id":"11A2","name":"Frozen Pass","type":"battle","sub":"Battle · frozen pass","w":[2030,180],"terrain":"snow mountains"},{"id":"11A3","name":"Ice Cave","type":"treasure","sub":"Treasure · unguarded chest","w":[2157,356],"terrain":"mountains"},{"id":"11B","name":"Siege Line","type":"battle","sub":"Battle","w":[2030,470],"terrain":"grass"},{"id":"11B2","name":"Forward Camp","type":"merchant","sub":"Merchant · last supplies","w":[2200,466],"terrain":"grass"},{"id":"11B3","name":"Morvane's Outworks","type":"elite","sub":"Elite · fortifications","w":[2333,357],"terrain":"foothills"},{"id":"12a","name":"Gate of Cinders","type":"battle","sub":"Battle · castle gate","w":[2280,249],"terrain":"mountains"},{"id":"12","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[2360,140],"terrain":"high mountains"}],"edges":[{"from":"1","to":"2"},{"from":"2","to":"3"},{"from":"3","to":"4"},{"from":"4","to":"4a"},{"from":"4a","to":"5A"},{"from":"5A","to":"5A2"},{"from":"5A2","to":"6A"},{"from":"6A","to":"6A2"},{"from":"6A2","to":"7"},{"from":"4a","to":"5B"},{"from":"5B","to":"5B2"},{"from":"5B2","to":"6B"},{"from":"6B","to":"6B2"},{"from":"6B2","to":"7"},{"from":"7","to":"8A"},{"from":"8A","to":"8A2"},{"from":"8A2","to":"8M"},{"from":"7","to":"8B"},{"from":"8B","to":"8B2"},{"from":"8B2","to":"8M"},{"from":"7","to":"8C"},{"from":"8C","to":"8C2"},{"from":"8C2","to":"8M"},{"from":"8M","to":"9"},{"from":"9","to":"9a"},{"from":"9a","to":"10"},{"from":"10","to":"11A"},{"from":"11A","to":"11A2"},{"from":"11A2","to":"11A3"},{"from":"11A3","to":"12a"},{"from":"10","to":"11B"},{"from":"11B","to":"11B2"},{"from":"11B2","to":"11B3"},{"from":"11B3","to":"12a"},{"from":"12a","to":"12"}],"start":"1"},"v4":{"nodes":[{"id":"mill","name":"Mill Road","type":"battle","sub":"Start · Battle · tutorial (unchanged)","w":[280,914],"tut":true},{"id":"raven","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack · tutorial (unchanged)","w":[530,785],"tut":true},{"id":"watch","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief · tutorial (unchanged)","w":[651,638],"tut":true,"label":"above"},{"id":"ash","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits · tutorial (unchanged)","w":[795,694],"tut":true},{"id":"iron","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[870,470],"terrain":"pass between the two snow peaks"},{"id":"mine","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1040,413],"terrain":"east slope of the snow peak","label":"above"},{"id":"marsh","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[870,845],"terrain":"marsh pools"},{"id":"witch","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[975,737],"terrain":"marsh edge"},{"id":"valdren","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1050,583],"terrain":"fields by the river","label":"above"},{"id":"pilgrim","name":"Pilgrim Road","type":"battle","sub":"Battle · Highwaymen","w":[1150,435],"terrain":"road under the forest"},{"id":"abbey","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1261,254],"terrain":"mountain abbey"},{"id":"cath","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1095,692],"terrain":"fields","label":"above"},{"id":"grave","name":"Grave Field","type":"battle","sub":"Battle · Graveyard","w":[1200,571],"terrain":"fields"},{"id":"river","name":"Riverside Camp","type":"rest","sub":"Rest point · before the boss","w":[1319,550],"terrain":"river bank","label":"above"},{"id":"bridge","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1300,678],"terrain":"ON the river (the crossing)"},{"id":"ashen","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1460,790],"terrain":"open grass east of the river"},{"id":"thorn","name":"Thornwood Hollow","type":"elite","sub":"Elite · hidden lair (was Dragon's Spine)","w":[1320,880],"terrain":"south-east forest"},{"id":"cache","name":"Hermit's Cache","type":"treasure","sub":"Treasure · unguarded chest (was Ice Cave)","w":[1480,933],"terrain":"forest"},{"id":"siege","name":"Siege Line","type":"battle","sub":"Battle","w":[1620,780],"terrain":"grass"},{"id":"camp","name":"Forward Camp","type":"merchant","sub":"Merchant · last supplies","w":[1790,790],"terrain":"grass"},{"id":"gate","name":"Gate of Cinders","type":"battle","sub":"Battle · castle gate","w":[1649,905],"terrain":"forest edge"},{"id":"castle","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1801,927],"terrain":"eastern moor"}],"edges":[{"from":"mill","to":"raven"},{"from":"raven","to":"watch"},{"from":"watch","to":"ash"},{"from":"ash","to":"iron"},{"from":"iron","to":"mine"},{"from":"mine","to":"valdren"},{"from":"ash","to":"marsh"},{"from":"marsh","to":"witch"},{"from":"witch","to":"valdren"},{"from":"valdren","to":"pilgrim"},{"from":"pilgrim","to":"abbey"},{"from":"abbey","to":"river"},{"from":"valdren","to":"cath"},{"from":"cath","to":"grave"},{"from":"grave","to":"river"},{"from":"river","to":"bridge"},{"from":"bridge","to":"ashen"},{"from":"ashen","to":"thorn"},{"from":"thorn","to":"cache"},{"from":"cache","to":"gate"},{"from":"ashen","to":"siege"},{"from":"siege","to":"camp"},{"from":"camp","to":"gate"},{"from":"gate","to":"castle"}],"start":"mill"},"v5":{"nodes":[{"id":"mill","name":"Mill Road","type":"battle","sub":"Start · Battle · tutorial (unchanged)","w":[280,914],"tut":true},{"id":"raven","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack · tutorial (unchanged)","w":[530,785],"tut":true},{"id":"watch","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief · tutorial (unchanged)","w":[651,638],"tut":true,"label":"above"},{"id":"ash","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits · tutorial (unchanged)","w":[795,694],"tut":true},{"id":"iron","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[870,470],"terrain":"pass between the two snow peaks"},{"id":"marsh","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[870,845],"terrain":"marsh pools"},{"id":"valdren","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1013,640],"terrain":"fields"},{"id":"quarry","name":"Old Quarry","type":"elite","sub":"Elite · quarry master","w":[1070,450],"terrain":"east snow peak"},{"id":"market","name":"Crossroads Market","type":"merchant","sub":"Merchant","w":[1177,569],"terrain":"fields at the crossroads"},{"id":"merc","name":"Mercenary Camp","type":"battle","sub":"Battle · Gold","w":[1270,410],"terrain":"forest clearing"},{"id":"river","name":"Riverside Camp","type":"rest","sub":"Rest point · before the boss","w":[1321,547],"terrain":"river bank","label":"above"},{"id":"bridge","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1300,678],"terrain":"ON the river (the crossing)"},{"id":"hamlet","name":"Burned Hamlet","type":"event","sub":"Event · after the bridge","w":[1250,810],"terrain":"fields south of the river"},{"id":"ashen","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1460,770],"terrain":"open grass"},{"id":"siege","name":"Siege Line","type":"battle","sub":"Battle","w":[1542,880],"terrain":"forest edge"},{"id":"camp","name":"Forward Camp","type":"merchant","sub":"Merchant · last supplies","w":[1673,766],"terrain":"grass"},{"id":"thorn","name":"Thornwood Hollow","type":"elite","sub":"Elite · hidden lair (was Dragon's Spine)","w":[1663,930],"terrain":"south-east forest"},{"id":"gate","name":"Gate of Cinders","type":"battle","sub":"Battle · castle gate","w":[1807,794],"terrain":"grass"},{"id":"castle","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1821,930],"terrain":"eastern moor","label":"above"}],"edges":[{"from":"mill","to":"raven"},{"from":"raven","to":"watch"},{"from":"watch","to":"ash"},{"from":"ash","to":"iron"},{"from":"ash","to":"marsh"},{"from":"iron","to":"valdren"},{"from":"marsh","to":"valdren"},{"from":"valdren","to":"quarry"},{"from":"valdren","to":"market"},{"from":"quarry","to":"merc"},{"from":"market","to":"merc"},{"from":"merc","to":"river"},{"from":"river","to":"bridge"},{"from":"bridge","to":"hamlet"},{"from":"bridge","to":"ashen"},{"from":"hamlet","to":"siege"},{"from":"ashen","to":"siege"},{"from":"siege","to":"camp"},{"from":"siege","to":"thorn"},{"from":"camp","to":"gate"},{"from":"thorn","to":"gate"},{"from":"gate","to":"castle"}],"start":"mill"}};
+const VARIANTS = {"v1":{"nodes":[{"id":"1","name":"Mill Road","type":"battle","sub":"Start · Battle","w":[280,914]},{"id":"2","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack","w":[530,785]},{"id":"3","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief","w":[651,638],"label":"above"},{"id":"4","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits","w":[795,694]},{"id":"5A","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[948,869]},{"id":"5B","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[868,537]},{"id":"6A","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[1085,924],"label":"above"},{"id":"6B","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1041,537],"label":"above"},{"id":"7","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1200,686]},{"id":"8A","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1356,491]},{"id":"8B","name":"Mercenary Camp","type":"battle","sub":"Battle · Gold","w":[1392,752],"label":"above"},{"id":"8C","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1380,880]},{"id":"9","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1555,638]},{"id":"10","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1701,545]},{"id":"11A","name":"Dragon's Spine","type":"elite","sub":"Elite · Hidden Entrance","w":[1605,343]},{"id":"11B","name":"Siege Line","type":"battle","sub":"Battle","w":[1824,478]},{"id":"12","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1774,184]}],"edges":[{"from":"1","to":"2"},{"from":"2","to":"3"},{"from":"3","to":"4"},{"from":"4","to":"5A"},{"from":"4","to":"5B"},{"from":"5A","to":"6A"},{"from":"5B","to":"6B"},{"from":"6A","to":"7"},{"from":"6B","to":"7"},{"from":"7","to":"8A"},{"from":"7","to":"8B"},{"from":"7","to":"8C"},{"from":"8A","to":"9"},{"from":"8B","to":"9"},{"from":"8C","to":"9"},{"from":"9","to":"10"},{"from":"10","to":"11A"},{"from":"10","to":"11B"},{"from":"11A","to":"12"},{"from":"11B","to":"12"}],"start":"1"},"v4":{"nodes":[{"id":"mill","name":"Mill Road","type":"battle","sub":"Start · Battle · tutorial (unchanged)","w":[280,914],"tut":true},{"id":"raven","name":"Ravenwood","type":"battle","sub":"Battle · Outlaw Pack · tutorial (unchanged)","w":[530,785],"tut":true},{"id":"watch","name":"Ruined Watchtower","type":"elite","sub":"Elite · Bandit Chief · tutorial (unchanged)","w":[651,638],"tut":true,"label":"above"},{"id":"ash","name":"Ashford Village","type":"town","sub":"Town · Rest, Recruits · tutorial (unchanged)","w":[795,694],"tut":true},{"id":"iron","name":"Iron Pass","type":"battle","sub":"Battle · Ambush","w":[870,470],"terrain":"pass between the two snow peaks"},{"id":"mine","name":"Dwarven Mine","type":"treasure","sub":"Treasure · Guarded","w":[1040,413],"terrain":"east slope of the snow peak","label":"above"},{"id":"marsh","name":"Misty Marsh","type":"battle","sub":"Battle · Bog Ambush","w":[870,845],"terrain":"marsh pools"},{"id":"witch","name":"Witch's Hut","type":"event","sub":"Event · Cursed Merchant","w":[975,737],"terrain":"marsh edge"},{"id":"valdren","name":"Valdren Keep","type":"town","sub":"City · Rest, Recruits","w":[1050,583],"terrain":"fields by the river","label":"above"},{"id":"pilgrim","name":"Pilgrim Road","type":"battle","sub":"Battle · Highwaymen","w":[1150,435],"terrain":"road under the forest"},{"id":"abbey","name":"St. Brann's Abbey","type":"treasure","sub":"Treasure · Relic Vault","w":[1261,254],"terrain":"mountain abbey"},{"id":"cath","name":"Black Cathedral","type":"elite","sub":"Elite · The Undying","w":[1095,692],"terrain":"fields","label":"above"},{"id":"grave","name":"Grave Field","type":"battle","sub":"Battle · Graveyard","w":[1200,571],"terrain":"fields"},{"id":"river","name":"Riverside Camp","type":"rest","sub":"Rest point · before the boss","w":[1319,550],"terrain":"river bank","label":"above"},{"id":"bridge","name":"King's Bridge","type":"boss","sub":"Boss · The Bridge Warden","w":[1300,678],"terrain":"ON the river (the crossing)"},{"id":"ashen","name":"Ashen Plain","type":"battle","sub":"Battle · Cursed Ground","w":[1460,790],"terrain":"open grass east of the river"},{"id":"thorn","name":"Thornwood Hollow","type":"elite","sub":"Elite · hidden lair (was Dragon's Spine)","w":[1320,880],"terrain":"south-east forest"},{"id":"cache","name":"Hermit's Cache","type":"treasure","sub":"Treasure · unguarded chest (was Ice Cave)","w":[1480,933],"terrain":"forest"},{"id":"siege","name":"Siege Line","type":"battle","sub":"Battle","w":[1620,780],"terrain":"grass"},{"id":"camp","name":"Forward Camp","type":"merchant","sub":"Merchant · last supplies","w":[1790,790],"terrain":"grass"},{"id":"gate","name":"Gate of Cinders","type":"battle","sub":"Battle · castle gate","w":[1649,905],"terrain":"forest edge"},{"id":"castle","name":"Castle Morvane","type":"boss","sub":"Final Boss","w":[1801,927],"terrain":"eastern moor"}],"edges":[{"from":"mill","to":"raven"},{"from":"raven","to":"watch"},{"from":"watch","to":"ash"},{"from":"ash","to":"iron"},{"from":"iron","to":"mine"},{"from":"mine","to":"valdren"},{"from":"ash","to":"marsh"},{"from":"marsh","to":"witch"},{"from":"witch","to":"valdren"},{"from":"valdren","to":"pilgrim"},{"from":"pilgrim","to":"abbey"},{"from":"abbey","to":"river"},{"from":"valdren","to":"cath"},{"from":"cath","to":"grave"},{"from":"grave","to":"river"},{"from":"river","to":"bridge"},{"from":"bridge","to":"ashen"},{"from":"ashen","to":"thorn"},{"from":"thorn","to":"cache"},{"from":"cache","to":"gate"},{"from":"ashen","to":"siege"},{"from":"siege","to":"camp"},{"from":"camp","to":"gate"},{"from":"gate","to":"castle"}],"start":"mill"}};
+// ---- A1 / A2 / A3 (Ömer 2026-10-11: A tabanı; Forward Camp'tan kuzeye 3-6 yeni düğüm, final boss dağlarda; kaydırma her yakınlaştırmada açık)
+// Ortak güneydoğu: Ashen Plain -> [Siege Line | Thornwood Hollow] -> Forward Camp (birleşme). Hermit's Cache, Gate of Cinders ve
+// Castle Morvane kuzeye, dağlara taşınır; yeni düğümler "new: true" (kor çerçeve).
+(() => {
+  const A = VARIANTS.v4;
+  const keep = A.nodes.filter((n) => !['cache', 'gate', 'castle'].includes(n.id)).map((n) => ({ ...n }));
+  const thorn = keep.find((n) => n.id === 'thorn'); thorn.w = [1600, 905]; thorn.terrain = 'south-east forest (east end)';
+  const siege = keep.find((n) => n.id === 'siege'); siege.w = [1610, 745]; siege.terrain = 'grass at the forest edge';
+  const baseEdges = A.edges.filter((e) => !['thorn>cache', 'cache>gate', 'camp>gate', 'gate>castle'].includes(e.from + '>' + e.to))
+    .concat([{ from: 'thorn', to: 'camp' }]);
+  const N = (id, name, type, sub, w, terrain, extra = {}) => ({ id, name, type, sub, w, terrain, ...extra });
+  const cache = (w, terrain, extra) => N('cache', "Hermit's Cache", 'treasure', "Treasure · hermit's hoard (moved north from the forest)", w, terrain, extra);
+  const gate = (w, terrain, extra) => N('gate', 'Gate of Cinders', 'battle', 'Battle · gate of the castle road (moved north)', w, terrain, extra);
+  const castle = (w, terrain, extra) => N('castle', 'Castle Morvane', 'boss', 'Final Boss (moved into the mountains)', w, terrain, extra);
+  const E = (...pairs) => pairs.map(([from, to]) => ({ from, to }));
+  const mk = (nodes, edges) => ({ nodes: keep.concat(nodes), edges: baseEdges.concat(E(...edges)), start: 'mill' });
+  // A1: düz tırmanış (3 yeni): Forward Camp -> Ember Road -> Shepherd's Fold -> Riverhead -> Gate of Cinders -> Castle Morvane
+  // (Hermit's Cache haritadan çıkar: kolu birleşmeyle kalktı; yeri olmayan 6. düğüm telefonda sığmadı)
+  VARIANTS.a1 = mk([
+    N('road', 'Ember Road', 'battle', 'Battle · raiders on the road north', [1695, 630], 'grass, the road north from the camp', { new: true }),
+    N('fold', "Shepherd's Fold", 'event', 'Event · abandoned sheepfold', [1815, 600], 'grass by the grove', { new: true, label: 'above' }),
+    N('head', 'Riverhead', 'battle', 'Battle · ambush at the spring', [1750, 470], 'east bank just below the river spring', { new: true }),
+    gate([1815, 335], 'foot of the castle road, rocky foothills under the snow peak (path passes east of the spring)'),
+    castle([1700, 190], 'high col between the snow peaks'),
+  ], [['camp', 'road'], ['road', 'fold'], ['fold', 'head'], ['head', 'gate'], ['gate', 'castle']]);
+  // A2: çatal ve birleşme (4 yeni): Ember Road -> [Greywater Ford -> Hermit's Cache | Shepherd's Fold -> Frostfall Ridge] -> Gate -> Castle
+  VARIANTS.a2 = mk([
+    N('road', 'Ember Road', 'battle', 'Battle · raiders on the road north', [1765, 670], 'grass, the road north from the camp', { new: true }),
+    N('ford', 'Greywater Ford', 'battle', 'Battle · fight in the shallows', [1630, 555], "ON the river (the crossing, like King's Bridge)", { new: true }),
+    N('fold', "Shepherd's Fold", 'event', 'Event · abandoned sheepfold', [1815, 545], 'grass by the grove', { new: true, label: 'above' }),
+    cache([1555, 430], 'west-bank foothills, among the pines'),
+    N('frost', 'Frostfall Ridge', 'elite', 'Elite · ice wyrm on the ridge', [1815, 350], 'foothill ridge under the east peak', { new: true }),
+    gate([1635, 270], 'high pass at the edge of the snowfield (above the spring)'),
+    castle([1810, 170], 'between the eastern snow peaks'),
+  ], [['camp', 'road'], ['road', 'ford'], ['ford', 'cache'], ['road', 'fold'], ['fold', 'frost'], ['cache', 'gate'], ['frost', 'gate'], ['gate', 'castle']]);
+  // A3: iki yollu tırmanış (5 yeni): Forward Camp'ta ayrılır, yalnızca Gate of Cinders'ta birleşir
+  VARIANTS.a3 = mk([
+    N('ford', 'Greywater Ford', 'battle', 'Battle · fight in the shallows', [1615, 590], "ON the river (the crossing, like King's Bridge)", { new: true }),
+    cache([1530, 455], 'west-bank foothills, among the pines'),
+    N('stair', 'Frozen Stair', 'battle', 'Battle · icy steps up the snowfield', [1490, 325], 'foot of the western snowfield', { new: true }),
+    N('fold', "Shepherd's Fold", 'event', 'Event · abandoned sheepfold', [1815, 660], 'grass', { new: true }),
+    N('copse', 'Wolf Copse', 'elite', 'Elite · dire wolf pack', [1760, 525], 'grove on the east bank', { new: true }),
+    N('eagle', "Eagle's Rest", 'rest', 'Rest point · last fire before the gate', [1810, 410], 'rocky foothills under the east peak', { new: true }),
+    gate([1730, 285], 'valley between the snow peaks'),
+    castle([1555, 180], 'on the western snow massif'),
+  ], [['camp', 'ford'], ['ford', 'cache'], ['cache', 'stair'], ['stair', 'gate'], ['camp', 'fold'], ['fold', 'copse'], ['copse', 'eagle'], ['eagle', 'gate'], ['gate', 'castle']]);
+})();
 const META = {
-  v1: { name: 'Current', note: "Today's live Valdoria (data/campaign/valdoria.json), positions as in the game." },
-  v2: { name: 'Last proposal', note: '34-stop template from the first proposal, positions as proposed.' },
-  v3: { name: 'Spread 32 (pan)', note: 'Last proposal without the 2 tutorial insertions (tutorial = today), over the whole wide map. Needs panning: at the home view many stops sit under the HUD (trade-off example).' },
-  v4: { name: 'Spread A', note: '22 stops, 3 choices (2 / 2 / 2 branches of 2 stops), tutorial = today. Everything inside the HUD-free area at the home view, no panning needed.' },
-  v5: { name: 'Spread B', note: '19 stops, a main road with 4 small forks (two one-stop options that rejoin), tutorial = today. Everything inside the HUD-free area at the home view.' },
+  v1: { key: '1', name: 'Current', note: "Today's live Valdoria (data/campaign/valdoria.json), positions as in the game." },
+  v4: { key: '4', name: 'Spread A', note: 'Base chosen by Ömer (2026-10-11): 22 stops, 3 choices, tutorial = today, final boss on the eastern moor. For comparison.' },
+  a1: { key: 'A1', name: 'Linear climb', note: "A + 3 new stops: from Forward Camp one switchback road climbs north past the river spring to Castle Morvane in the high col. Choice 3 is now Siege Line | Thornwood Hollow, both into Forward Camp; Hermit's Cache leaves the map." },
+  a2: { key: 'A2', name: 'Fork & rejoin', note: 'A + 4 new stops: Ember Road, then west over Greywater Ford into the foothills or east past the sheepfold to Frostfall Ridge; both meet at the Gate of Cinders. Castle under the eastern snow peak.' },
+  a3: { key: 'A3', name: 'Two-path ascent', note: 'A + 5 new stops: the road splits at Forward Camp into a west climb (ford, foothills, Frozen Stair) and an east climb (sheepfold, Wolf Copse, Eagle\'s Rest rest point); they meet only at the gate. Castle on the western snow massif.' },
 };
 const TYPE = { battle: 'Battle', elite: 'Elite', boss: 'Boss', town: 'Town', treasure: 'Treasure', event: 'Event', rest: 'Rest point', merchant: 'Merchant' };
 // Dünya: eski 16:9 harita bölgesi = 0..1920 x 0..1080; geniş görsel bu bölgeye göre yerleşir (valdoria.json > backgroundWide.region)
@@ -95,7 +150,15 @@ const NODE_R = 24, HIT = 48, ZMIN = 1, ZMAX = 1.4;
 const NS = 'http://www.w3.org/2000/svg';
 const svg = document.getElementById('map');
 const el = (tag, attrs = {}, parent = svg) => { const e = document.createElementNS(NS, tag); for (const [k, v] of Object.entries(attrs)) e.setAttribute(k, v); parent.append(e); return e; };
-const state = { v: (location.hash.match(/v[1-5]/) || ['v4'])[0], z: 1, mid: { x: 960, y: 540 }, overview: false, hud: true, phone: false, hit: false, coll: true };
+const VKEYS = Object.keys(META);
+const hashV = () => { const h = location.hash.slice(1).toLowerCase(); return VKEYS.includes(h) ? h : null; };
+// cur = bulunulan düğüm (kamera ona ortalanır, canlı haritadaki gibi), sel = seçili sonraki durak
+const state = { v: hashV() || 'a1', z: 1, mid: { x: 960, y: 540 }, overview: false, hud: true, phone: false, relevant: true, hit: false, coll: true, cur: null, sel: null };
+const graph = (V) => { const out = {}, inn = {}; for (const e of V.edges) { (out[e.from] ??= []).push(e.to); (inn[e.to] ??= []).push(e.from); } return { out, inn }; };
+const byId = (V) => Object.fromEntries(V.nodes.map((n) => [n.id, n]));
+function centreOn(id) { const n = byId(VARIANTS[state.v])[id]; if (n) { state.overview = false; state.mid = { x: n.w[0], y: n.w[1] }; } }
+function resetCur() { const V = VARIANTS[state.v]; state.cur = V.start; state.sel = graph(V).out[V.start]?.[0] ?? null; centreOn(state.cur); }
+function relevantSet(V, cur = state.cur, sel = state.sel) { const s = new Set([cur, ...(graph(V).out[cur] ?? [])]); if (sel) s.add(sel); return s; }
 
 // ---------------------------------------------------------------- çizim
 let world, layer;
@@ -106,9 +169,8 @@ function draw() {
   world = el('g');
   el('image', { href: 'valdoria-map/map.webp', x: IMG.x, y: IMG.y, width: IMG.w, height: IMG.h, preserveAspectRatio: 'none' }, world);
   const V = VARIANTS[state.v];
-  const by = Object.fromEntries(V.nodes.map((n) => [n.id, n]));
-  const outN = {}, inN = {};
-  for (const e of V.edges) { (outN[e.from] ??= []).push(e.to); (inN[e.to] ??= []).push(e.from); }
+  const by = byId(V);
+  const { out: outN, inn: inN } = graph(V);
   const eg = el('g', {}, world);
   for (const e of V.edges) {
     const a = by[e.from].w, b = by[e.to].w;
@@ -117,16 +179,20 @@ function draw() {
     const bend = (h % 2 ? 1 : -1) * len * 0.1;
     const mx = (a[0] + b[0]) / 2 + (-dy / len) * bend, my = (a[1] + b[1]) / 2 + (dx / len) * bend;
     const branch = (outN[e.from]?.length ?? 0) > 1 || (inN[e.to]?.length ?? 0) > 1;
-    el('path', { d: `M${a[0]} ${a[1]} Q${mx} ${my} ${b[0]} ${b[1]}`, class: `edge${branch ? ' dash' : ''}` }, eg);
+    el('path', { d: `M${a[0]} ${a[1]} Q${mx} ${my} ${b[0]} ${b[1]}`, class: `edge${branch ? ' dash' : ''}`, 'data-e': e.from + '>' + e.to }, eg);
   }
   const stop = stops(V);
+  const rel = relevantSet(V);
+  const opts = new Set(outN[state.cur] ?? []);
   layer = el('g', {}, world);
   for (const n of V.nodes) {
     const big = n.type === 'boss';
-    const r = NODE_R * (big ? 1.25 : 1);
+    const r = rOf(n);
     const isStart = n.id === V.start;
-    const g = el('g', { class: `node${big ? ' big' : ''}${n.new ? ' new' : ''}`, transform: `translate(${n.w[0]} ${n.w[1]})` }, layer);
+    const cls = `node${big ? ' big' : ''}${n.new ? ' new' : ''}${n.id === state.cur ? ' cur' : ''}${opts.has(n.id) ? ' opt' : ''}${n.id === state.sel ? ' sel' : ''}`;
+    const g = el('g', { class: cls, transform: `translate(${n.w[0]} ${n.w[1]})` }, layer);
     el('circle', { class: 'hit', r: HIT }, g);
+    el('circle', { class: 'mark', r: r + (big ? 11 : 8) }, g);
     el('circle', { cx: 2, cy: 4, r: r + 3, fill: 'rgba(0,0,0,.4)' }, g);
     el('circle', { class: 'disc', r }, g);
     if (big) el('circle', { class: 'ring2', r: r + 6 }, g);
@@ -136,12 +202,13 @@ function draw() {
     const above = n.label === 'above';
     const fs = state.phone ? 24 : 15;
     const ly = above ? -r - 12 : r + 10 + fs * 0.82;
-    const t = el('text', { class: 'lbl', x: 0, y: ly, 'text-anchor': 'middle' }, g);
+    const hide = state.phone && state.relevant && !rel.has(n.id);
+    const t = el('text', { class: `lbl${hide ? ' hide' : ''}`, x: 0, y: ly, 'text-anchor': 'middle' }, g);
     t.textContent = n.name;
-    if (isStart) { const st = el('text', { class: 'startTag', x: 0, y: above ? -r - 14 - fs * 1.4 : -r - 10, 'text-anchor': 'middle' }, g); st.textContent = 'START'; }
+    if (isStart && !hide) { const st = el('text', { class: 'startTag', x: 0, y: above ? -r - 14 - fs * 1.4 : -r - 10, 'text-anchor': 'middle' }, g); st.textContent = 'START'; }
     g.dataset.id = n.id;
     const show = (ev) => {
-      tip.innerHTML = `<b>${n.name}</b><i>${TYPE[n.type]}${isStart ? ' · Start' : ''} · stop ${stop[n.id] ?? '?'}${n.new ? ' · NEW' : ''}${n.tut ? ' · TUTORIAL' : ''}</i><span>${n.sub || ''}</span>${n.terrain ? `<span><i>Terrain: ${n.terrain}</i></span>` : ''}`;
+      tip.innerHTML = `<b>${n.name}</b><i>${TYPE[n.type]}${isStart ? ' · Start' : ''} · stop ${stop[n.id] ?? '?'}${n.new ? ' · NEW' : ''}${n.tut ? ' · TUTORIAL' : ''}</i><span>${n.sub || ''}</span>${n.terrain ? `<span><i>Terrain: ${n.terrain}</i></span>` : ''}<span><i>Click: make it the current stop (camera centres on it). Click a ringed next stop: select it.</i></span>`;
       tip.style.display = 'block';
       const rr = tip.getBoundingClientRect();
       tip.style.left = Math.min(innerWidth - rr.width - 8, ev.clientX + 16) + 'px';
@@ -151,86 +218,171 @@ function draw() {
     g.addEventListener('pointerleave', () => (tip.style.display = 'none'));
   }
   camera();
-  requestAnimationFrame(() => { measure(); stats(); });
+  requestAnimationFrame(() => { analyse(); measure(); stats(); });
 }
 
-// Durak numarası: başlangıçtan en uzun yol (bütün rotalar eşit uzunlukta)
+// Durak numarası: başlangıçtan en uzun yol
 function stops(V) {
-  const nxt = {}; for (const e of V.edges) (nxt[e.from] ??= []).push(e.to);
+  const nxt = graph(V).out;
   const d = {}; const walk = (id, k) => { if ((d[id] ?? 0) >= k) return; d[id] = k; for (const m of nxt[id] ?? []) walk(m, k + 1); };
   walk(V.start, 1); return d;
 }
 function routes(V) {
-  const nxt = {}; for (const e of V.edges) (nxt[e.from] ??= []).push(e.to);
+  const nxt = graph(V).out;
   const lens = []; const walk = (id, k) => { if (!nxt[id]) { lens.push(k); return; } for (const m of nxt[id]) walk(m, k + 1); };
   walk(V.start, 1); return lens;
 }
 function decisions(V) { const c = {}; for (const e of V.edges) c[e.from] = (c[e.from] ?? 0) + 1; return Object.values(c).filter((x) => x > 1).length; }
+// K2: art arda en çok kaç savaş-dışı durak (battle / elite / boss = savaş)
+function k2(V) {
+  const nxt = graph(V).out, by = byId(V); let worst = 0;
+  const walk = (id, run) => { const r = ['battle', 'elite', 'boss'].includes(by[id].type) ? 0 : run + 1; worst = Math.max(worst, r); for (const m of nxt[id] ?? []) walk(m, r); };
+  walk(V.start, 0); return worst;
+}
 
-// Gerçek yazı kutularıyla çakışma (dünya biriminde; yakınlaştırma / ekran oranından bağımsız)
-let collCount = 0, minGap = 0, hudCount = { w169: 0, w219: 0 };
-// Canlı HUD dikdörtgenleri (dünya birimi), kamera "ev" konumunda (960, 540), 1,0x; W = sahne genişliği (16:9 = 1920, 21:9 = 2520)
-function hudRects(W) {
-  const L = 960 - W / 2, R = 960 + W / 2, size = 52, step = size + 12;
-  return [[L - 9999, -9999, R + 9999, 120], [L - 9999, 120, L + 488, 720], [R - 508, 120, R + 9999, 720],
-    [960 - 60 - step - size / 2 - 8, 1080 - 18 - size - 8, 960 + 60 + step + size / 2 + 8, 9999], [R - 358, 1080 - 82, R + 9999, 9999],
-    [-9999, -9999, L + 8, 9999], [R - 8, -9999, 9999, 9999], [-9999, 1074, 9999, 9999]];
-}
-function hudOverlaps(items) {
-  const inter = (a, b) => !(a[2] <= b[0] || b[2] <= a[0] || a[3] <= b[1] || b[3] <= a[1]);
-  const pts = [...svg.querySelectorAll('.edge')].map((p) => { const L = p.getTotalLength(); return Array.from({ length: 25 }, (_, i) => p.getPointAtLength((L * i) / 24)); });
-  const count = (W) => {
-    let c = 0; const H = hudRects(W);
-    for (const it of items) if (H.some((r) => inter(it.lab, r) || inter(it.disc, r))) { c++; it.g.classList.add('hudbad'); }
-    for (const ps of pts) if (H.some((r) => ps.some((q) => q.x > r[0] && q.x < r[2] && q.y > r[1] && q.y < r[3]))) c++;
-    return c;
-  };
-  for (const it of items) it.g.classList.remove('hudbad');
-  hudCount = { w169: count(1920), w219: count(2520) };
-}
-function measure() {
-  const items = [...layer.querySelectorAll('.node')].map((g) => {
-    const t = g.querySelector('.lbl'); const bb = t.getBBox();
-    const m = g.transform.baseVal.consolidate().matrix;
-    return { g, x: m.e, y: m.f, lab: [m.e + bb.x - 4, m.f + bb.y, m.e + bb.x + bb.width + 4, m.f + bb.y + bb.height], bb };
-  });
-  const hitBox = (it) => [it.x - HIT, it.y - HIT, it.x + HIT, it.y + HIT];
-  const inter = (a, b, p = 0) => !(a[2] + p <= b[0] || b[2] + p <= a[0] || a[3] + p <= b[1] || b[3] + p <= a[1]);
-  const bad = new Set();
-  collCount = 0; minGap = Infinity;
-  for (let i = 0; i < items.length; i++) for (let j = i + 1; j < items.length; j++) {
-    const A = items[i], B = items[j];
-    minGap = Math.min(minGap, Math.hypot(A.x - B.x, A.y - B.y));
-    if (inter(A.lab, B.lab, 6) || inter(A.lab, hitBox(B)) || inter(hitBox(A), B.lab) || Math.hypot(A.x - B.x, A.y - B.y) < HIT * 2) { bad.add(A.g); bad.add(B.g); collCount++; }
+// ---------------------------------------------------------------- geometri (dünya birimi; gerçek yazı genişliği)
+const inter = (a, b, p = 0) => !(a[2] + p <= b[0] || b[2] + p <= a[0] || a[3] + p <= b[1] || b[3] + p <= a[1]);
+const rOf = (n) => NODE_R * (n.type === 'boss' ? 1.25 : 1);
+const discRect = (n) => { const r = rOf(n) + (n.type === 'boss' ? 6 : 3); return [n.w[0] - r, n.w[1] - r, n.w[0] + r, n.w[1] + r]; };
+const hitRect = (n) => [n.w[0] - HIT, n.w[1] - HIT, n.w[0] + HIT, n.w[1] + HIT];
+const TB = {};
+function textBox(name, fs) {
+  const k = name + '|' + fs;
+  if (!TB[k]) {
+    const t = el('text', { class: 'lbl', x: 0, y: 0, 'text-anchor': 'middle', style: `font-size:${fs}px` });
+    t.textContent = name; const b = t.getBBox(); t.remove();
+    TB[k] = { x: b.x, y: b.y, w: b.width, h: b.height };
   }
-  for (const it of items) { const r = it.g.classList.contains('big') ? 30 : 24; it.disc = [it.x - r - 3, it.y - r - 3, it.x + r + 3, it.y + r + 3]; }
-  hudOverlaps(items);
-  for (const it of items) {
-    it.g.querySelector('.lblbox')?.remove();
-    const r = el('rect', { class: 'lblbox', x: it.bb.x - 4, y: it.bb.y, width: it.bb.width + 8, height: it.bb.height }, it.g);
-    it.g.insertBefore(r, it.g.querySelector('.lbl'));
-    it.g.classList.toggle('coll', state.coll && bad.has(it.g));
+  return TB[k];
+}
+function labRect(n, fs) {
+  const r = rOf(n), ly = n.label === 'above' ? -r - 12 : r + 10 + fs * 0.82, b = textBox(n.name, fs);
+  return [n.w[0] + b.x - 4, n.w[1] + ly + b.y, n.w[0] + b.x + b.w + 4, n.w[1] + ly + b.y + b.h];
+}
+// Yazı çakışması: yazı-yazı (6 birim pay), yazı-dokunma alanı, iki dokunma alanı iç içe
+function collisions(nodes, labelled, fs, onlyLabels = false) {
+  const bad = new Set(); let count = 0; let gap = Infinity;
+  for (let i = 0; i < nodes.length; i++) for (let j = i + 1; j < nodes.length; j++) {
+    const A = nodes[i], B = nodes[j];
+    const la = labelled.has(A.id) ? labRect(A, fs) : null, lb = labelled.has(B.id) ? labRect(B, fs) : null;
+    const d = Math.hypot(A.w[0] - B.w[0], A.w[1] - B.w[1]); gap = Math.min(gap, d);
+    const hitL = (la && lb && inter(la, lb, 6)) || (la && inter(la, hitRect(B))) || (lb && inter(hitRect(A), lb));
+    if (hitL || (!onlyLabels && d < HIT * 2)) { bad.add(A.id); bad.add(B.id); count++; }
+  }
+  return { count, bad, gap };
+}
+// HUD dikdörtgenleri SAHNE biriminde (0..W x 0..1080; CampaignMapScene.renderHud ölçüleri; compact = telefon)
+function stageHud(W, compact) {
+  const size = compact ? 92 : 52, half = 60 + size + 12 + size / 2 + 8, I = 1e5;
+  return [[-I, -I, I, 120], [-I, 120, 488, 720], [W - 508, 120, I, 720], [W / 2 - half, 1080 - 18 - size - 8, W / 2 + half, I],
+    [W - 358, 1080 - 82, I, I], [-I, -I, 8, I], [W - 8, -I, I, I], [-I, 1074, I, I]];
+}
+function clampPt(x, y, vw, vh) {
+  const cx = (FRAME.left + FRAME.right) / 2, cy = (FRAME.top + FRAME.bottom) / 2;
+  return {
+    x: vw >= FRAME.right - FRAME.left ? cx : Math.min(FRAME.right - vw / 2, Math.max(FRAME.left + vw / 2, x)),
+    y: vh >= FRAME.bottom - FRAME.top ? cy : Math.min(FRAME.bottom - vh / 2, Math.max(FRAME.top + vh / 2, y)),
+  };
+}
+const toStage = (r, m, z, W) => [(r[0] - m.x) * z + W / 2, (r[1] - m.y) * z + 540, (r[2] - m.x) * z + W / 2, (r[3] - m.y) * z + 540];
+const VIEWS = [{ k: '16:9', W: 1920, compact: false, fs: 15 }, { k: '21:9', W: 2520, compact: false, fs: 15 }, { k: 'phone', W: 1080 * 844 / 390, compact: true, fs: 24 }];
+const ZOOMS = [1, 1.1, 1.2, 1.3, 1.4];
+// Kamera her düğüme ortalanınca (kenarda sınırlanır): o düğüm + seçilebilir sonraki düğümler (disk + ad) HUD'a giriyor mu?
+let AN = {};
+function analyse() {
+  const V = VARIANTS[state.v], by = byId(V), { out } = graph(V);
+  const hud = {};
+  for (const view of VIEWS) {
+    const H = stageHud(view.W, view.compact); let bad = 0, worst = 0; const list = [];
+    for (const c of V.nodes) {
+      let cw = 0;
+      for (const z of ZOOMS) {
+        const m = clampPt(c.w[0], c.w[1], view.W / z, 1080 / z); let k = 0;
+        for (const n of [c, ...(out[c.id] ?? []).map((id) => by[id])]) {
+          if ([discRect(n), labRect(n, view.fs)].some((r) => H.some((h) => inter(toStage(r, m, z, view.W), h)))) { k++; list.push(`${c.name} @${z}x -> ${n.name}`); }
+        }
+        cw = Math.max(cw, k);
+      }
+      if (cw) bad++; worst = Math.max(worst, cw);
+    }
+    hud[view.k] = { bad, worst, list };
+  }
+  const all = new Set(V.nodes.map((n) => n.id));
+  const desk = collisions(V.nodes, all, 15);
+  const phoneAll = collisions(V.nodes, all, 24, true);
+  let phoneRel = 0, phoneRelAt = '';
+  for (const c of V.nodes) { const r = collisions(V.nodes, relevantSet(V, c.id, null), 24, true).count; if (r > phoneRel) { phoneRel = r; phoneRelAt = c.name; } }
+  // Nehir denetimi: yol eğrisi görselde mavi piksele (nehir) değiyorsa ve iki ucu da geçiş düğümü (terrain "ON the river") değilse hata
+  let wet = null;
+  if (RIVER.data) {
+    wet = [];
+    for (const p of svg.querySelectorAll('.edge')) {
+      const [f, t] = p.dataset.e.split('>');
+      if ([f, t].some((id) => /^ON the river/.test(by[id].terrain || ''))) continue;
+      const L = p.getTotalLength();
+      for (let i = 0; i <= 200; i++) { const q = p.getPointAtLength((L * i) / 200); if (RIVER.blue(q.x, q.y)) { wet.push(`${by[f].name} -> ${by[t].name}`); break; } }
+    }
+  }
+  AN = { hud, desk, phoneAll, phoneRel, phoneRelAt, k2: k2(V), wet };
+  window.__analysis = AN;
+}
+const RIVER = { data: null, blue: () => false };
+{
+  const img = new Image();
+  img.onload = () => {
+    const cv = document.createElement('canvas'); cv.width = img.naturalWidth; cv.height = img.naturalHeight;
+    const cx = cv.getContext('2d'); cx.drawImage(img, 0, 0); RIVER.data = cx.getImageData(0, 0, cv.width, cv.height).data;
+    RIVER.blue = (x, y) => {
+      const ix = Math.round(((x - IMG.x) / IMG.w) * cv.width), iy = Math.round(((y - IMG.y) / IMG.h) * cv.height);
+      if (ix < 0 || iy < 0 || ix >= cv.width || iy >= cv.height) return false;
+      const i = (iy * cv.width + ix) * 4, r = RIVER.data[i], g = RIVER.data[i + 1], b = RIVER.data[i + 2];
+      return b > 110 && b > r + 50 && b > g + 15;
+    };
+    if (layer) { analyse(); stats(); }
+  };
+  img.src = 'valdoria-map/map.webp';
+}
+// Canlı görünüm: HUD altına giren düğümler mavi kesik, çakışan adlar kırmızı çerçeve
+let liveUnder = 0;
+function measure() {
+  const V = VARIANTS[state.v], by = byId(V);
+  const fs = state.phone ? 24 : 15;
+  const rel = relevantSet(V);
+  const labelled = state.phone && state.relevant ? rel : new Set(V.nodes.map((n) => n.id));
+  const bad = collisions(V.nodes, labelled, fs, state.phone).bad;
+  const s = stageScale(), W = innerWidth / s, compact = innerHeight <= 720;
+  const H = stageHud(W, compact), z = state.z;
+  liveUnder = 0;
+  for (const g of layer.querySelectorAll('.node')) {
+    const n = by[g.dataset.id];
+    g.querySelector('.lblbox')?.remove();
+    const L = labRect(n, fs);
+    const r = el('rect', { class: 'lblbox', x: L[0] - n.w[0], y: L[1] - n.w[1], width: L[2] - L[0], height: L[3] - L[1] }, g);
+    g.insertBefore(r, g.querySelector('.lbl'));
+    g.classList.toggle('coll', state.coll && bad.has(n.id) && labelled.has(n.id));
+    let under = false;
+    if (state.hud && !state.overview) {
+      const rects = [discRect(n)]; if (labelled.has(n.id)) rects.push(L);
+      under = rects.some((q) => H.some((h) => inter(toStage(q, state.mid, z, W), h)));
+    }
+    g.classList.toggle('hudbad', under);
+    if (under && rel.has(n.id)) liveUnder++;
   }
 }
 
 // ---------------------------------------------------------------- kamera (canlı haritanın taklidi)
-function stageScale() { return innerHeight / 1080; }
+function stageScale() { return Math.max(1, innerHeight) / 1080; }
 function viewSize() {
   if (state.overview) { const k = Math.min(innerWidth / (FRAME.right - FRAME.left), innerHeight / (FRAME.bottom - FRAME.top)); return { w: innerWidth / k, h: innerHeight / k }; }
   const s = stageScale(); return { w: innerWidth / s / state.z, h: 1080 / state.z };
 }
-function clampMid() {
-  const v = viewSize();
-  const cx = (FRAME.left + FRAME.right) / 2, cy = (FRAME.top + FRAME.bottom) / 2;
-  const fx = v.w >= FRAME.right - FRAME.left, fy = v.h >= FRAME.bottom - FRAME.top;
-  state.mid.x = fx ? cx : Math.min(FRAME.right - v.w / 2, Math.max(FRAME.left + v.w / 2, state.mid.x));
-  state.mid.y = fy ? cy : Math.min(FRAME.bottom - v.h / 2, Math.max(FRAME.top + v.h / 2, state.mid.y));
-}
+function clampMid() { const v = viewSize(); if (!isFinite(state.mid.x) || !isFinite(state.mid.y)) state.mid = { x: 960, y: 540 }; state.mid = clampPt(state.mid.x, state.mid.y, Math.max(1, v.w), Math.max(1, v.h)); }
 function camera() {
   clampMid();
   const v = viewSize();
   svg.setAttribute('viewBox', `${state.mid.x - v.w / 2} ${state.mid.y - v.h / 2} ${v.w} ${v.h}`);
   layoutHud();
+  if (layer) measure();
   stats();
 }
 
@@ -245,16 +397,17 @@ function layoutHud() {
   const compact = innerHeight <= 720;
   const size = compact ? 92 : 52;
   const V = VARIANTS[state.v];
+  const st = stops(V)[state.cur] ?? 1;
   hud.innerHTML = `
     <div class="hud-shade" style="left:0;width:620px;height:1080px;background:linear-gradient(90deg,rgba(8,6,4,.92),rgba(8,6,4,.7) 70%,rgba(8,6,4,0))"></div>
     <div class="hud-shade" style="left:${W - 640}px;width:640px;height:1080px;background:linear-gradient(90deg,rgba(8,6,4,0),rgba(8,6,4,.72) 22%,rgba(8,6,4,.93))"></div>
     <div class="hud-shade" style="left:0;width:${W}px;height:120px;background:linear-gradient(180deg,rgba(8,6,4,.85),rgba(8,6,4,0))"></div>
-    <div class="hud-title">Valdoria<span>I · The Borderlands · Stop 1 / ${Math.max(...routes(V))} · Normal · Medium</span></div>
+    <div class="hud-title">Valdoria<span>I · The Borderlands · Stop ${st} / ${Math.max(...routes(V))} · Normal · Medium</span></div>
     <div class="hud-panel" style="left:48px;top:150px;width:420px;height:560px"><h5>Party</h5><p>Hero cards (live: renderParty)</p></div>
-    <div class="hud-panel" style="left:${W - 48 - 440}px;top:${compact ? 215 : 150}px;width:440px;height:470px"><h5>Node card</h5><p>Selected stop, March / Fight (live: renderNodeCard)</p></div>
+    <div class="hud-panel" style="left:${W - 48 - 440}px;top:${compact ? 215 : 150}px;width:440px;height:470px"><h5>Node card</h5><p>${byId(V)[state.sel]?.name ?? 'Selected stop'}, March / Fight (live: renderNodeCard)</p></div>
     <div class="hud-panel" style="left:${W - 48 - 300}px;top:${1080 - 24 - 48}px;width:300px;height:48px"><h5>Legend</h5></div>
     <div class="hud-menu" style="left:${W - 48 - 92}px">MENU</div>
-    <div class="hud-ctrl" style="left:${960 - 60 - (size + 12) - size / 2}px;top:${1080 - 18 - size}px">
+    <div class="hud-ctrl" style="left:${W / 2 - 60 - (size + 12) - size / 2}px;top:${1080 - 18 - size}px">
       <button data-a="l" style="width:${size}px;height:${size}px">◂</button><button data-a="r" style="width:${size}px;height:${size}px">▸</button><i>MAP</i>
       <button data-a="-" style="width:${size}px;height:${size}px">−</button><button data-a="+" style="width:${size}px;height:${size}px">+</button>
     </div>`;
@@ -270,29 +423,43 @@ function layoutHud() {
 // ---------------------------------------------------------------- köşe: durak sayısı, karışım, ölçümler
 function stats() {
   const V = VARIANTS[state.v];
+  if (!AN.hud) return;
   const cnt = (t) => V.nodes.filter((n) => n.type === t).length;
-  const r = routes(V);
+  const r = routes(V), by = byId(V), { out } = graph(V);
   const tapDesk = Math.round(HIT * 2 * stageScale() * (state.overview ? 1 : state.z));
   const phoneS = 390 / 1080;
+  const nNew = V.nodes.filter((n) => n.new).length;
+  const h = (k) => `<span class="${AN.hud[k].bad ? 'bad' : 'ok'}">${k} ${AN.hud[k].bad}</span>`;
   document.getElementById('stats').innerHTML =
-    `<b>${META[state.v].name.toUpperCase()}</b><br><small>${META[state.v].note}</small><br>` +
-    `<b>STOPS</b> ${V.nodes.length} on the map · <b>${Math.min(...r)}${Math.max(...r) !== Math.min(...r) ? '-' + Math.max(...r) : ''}</b> per run · ${r.length} routes · ${decisions(V)} choices<br>` +
+    `<b>${META[state.v].key}. ${META[state.v].name.toUpperCase()}</b><br><small>${META[state.v].note}</small><br>` +
+    `<b>STOPS</b> ${V.nodes.length} on the map${nNew ? ` (${nNew} new)` : ''} · <b>${Math.min(...r)}${Math.max(...r) !== Math.min(...r) ? '-' + Math.max(...r) : ''}</b> per run · ${r.length} routes · ${decisions(V)} choices<br>` +
     `<b>MIX</b> Battle ${cnt('battle')} · Elite ${cnt('elite')} · Boss ${cnt('boss')} · Town ${cnt('town')}<br>Event ${cnt('event')} · Treasure ${cnt('treasure')} · Rest ${cnt('rest')} · Merchant ${cnt('merchant')}<br>` +
-    `<b>HUD OVERLAP</b> (home view, 1.0x) <span class="${hudCount.w169 ? 'bad' : 'ok'}">16:9 ${hudCount.w169}</span> · <span class="${hudCount.w219 ? 'bad' : 'ok'}">21:9 ${hudCount.w219}</span><br>` +
-    `<b>LABELS</b> <span class="${collCount ? 'bad' : 'ok'}">${collCount} collision${collCount === 1 ? '' : 's'}</span> (${state.phone ? 'phone 24' : 'desktop 15'} size) · min node gap ${Math.round(minGap)} u<br>` +
-    `<b>TAP</b> here ${tapDesk} px at ${state.overview ? 'overview' : state.z.toFixed(1) + 'x'} · phone (390 px tall) ${Math.round(96 * phoneS)} px at 1.0x, ${Math.round(96 * phoneS * 1.4)} px at 1.4x`;
+    `<b>K2</b> <span class="${AN.k2 > 2 ? 'bad' : 'ok'}">max ${AN.k2} non-battle stops in a row</span> · <b>RIVER</b> ${AN.wet ? `<span class="${AN.wet.length ? 'bad' : 'ok'}">${AN.wet.length ? AN.wet.join(', ') : '0 roads over water'}</span> <small>(except at bridge / ford stops)</small>` : '<small>checking…</small>'}<br>` +
+    `<b>HUD OVERLAP</b> <small>(camera centred on each stop, 1.0-1.4x; that stop + its next stops)</small> ${h('16:9')} · ${h('21:9')} · ${h('phone')} <small>stops affected</small><br>` +
+    `<b>UNDER HUD NOW</b> current + next: <span class="${liveUnder ? 'bad' : 'ok'}">${liveUnder}</span> <small>(this view; blue dashed = any stop under the HUD)</small><br>` +
+    `<b>LABELS</b> desktop 15: <span class="${AN.desk.count ? 'bad' : 'ok'}">${AN.desk.count}</span> · phone 24 current+next only: <span class="${AN.phoneRel ? 'bad' : 'ok'}">max ${AN.phoneRel}</span> <small>(all names: ${AN.phoneAll.count})</small> · min node gap ${Math.round(AN.desk.gap)} u<br>` +
+    `<b>TAP</b> here ${tapDesk} px at ${state.overview ? 'overview' : state.z.toFixed(1) + 'x'} · phone (390 px tall) ${Math.round(96 * phoneS)} px at 1.0x, ${Math.round(96 * phoneS * 1.4)} px at 1.4x<br>` +
+    `<b>NOW</b> at ${by[state.cur]?.name ?? '-'} · next: ${(out[state.cur] ?? []).map((id) => by[id].name).join(' | ') || 'end'} · selected ${by[state.sel]?.name ?? '-'}`;
 }
 
 // ---------------------------------------------------------------- girdi
 let dragging = null;
-svg.addEventListener('pointerdown', (e) => { dragging = { x: e.clientX, y: e.clientY, mid: { ...state.mid } }; svg.classList.add('drag'); svg.setPointerCapture(e.pointerId); });
+svg.addEventListener('pointerdown', (e) => { dragging = { x: e.clientX, y: e.clientY, mid: { ...state.mid }, moved: false, node: e.target.closest?.('.node')?.dataset.id }; svg.classList.add('drag'); svg.setPointerCapture(e.pointerId); });
 svg.addEventListener('pointermove', (e) => {
   if (!dragging) return;
+  if (Math.hypot(e.clientX - dragging.x, e.clientY - dragging.y) > 6) dragging.moved = true;
+  if (!dragging.moved) return;
   const v = viewSize(); const k = v.w / innerWidth;
   state.mid.x = dragging.mid.x - (e.clientX - dragging.x) * k; state.mid.y = dragging.mid.y - (e.clientY - dragging.y) * k;
   camera();
 });
-const endDrag = () => { dragging = null; svg.classList.remove('drag'); };
+function clickNode(id) {
+  const V = VARIANTS[state.v], { out } = graph(V);
+  if ((out[state.cur] ?? []).includes(id)) state.sel = id;
+  else { state.cur = id; state.sel = out[id]?.[0] ?? null; centreOn(id); }
+  draw();
+}
+const endDrag = (e) => { const d = dragging; dragging = null; svg.classList.remove('drag'); if (e?.type === 'pointerup' && d && !d.moved && d.node) clickNode(d.node); };
 svg.addEventListener('pointerup', endDrag); svg.addEventListener('pointercancel', endDrag);
 svg.addEventListener('wheel', (e) => {
   e.preventDefault();
@@ -304,27 +471,30 @@ addEventListener('resize', () => camera());
 const tip = document.getElementById('tip');
 
 const bar = document.getElementById('bar');
-for (const k of Object.keys(META)) {
-  const b = document.createElement('button'); b.textContent = `${k.slice(1)}. ${META[k].name}`; b.dataset.v = k;
-  b.onclick = () => { state.v = k; history.replaceState(null, '', '#' + k); sync(); draw(); };
+for (const k of VKEYS) {
+  const b = document.createElement('button'); b.textContent = `${META[k].key}. ${META[k].name}`; b.dataset.v = k;
+  b.onclick = () => { state.v = k; history.replaceState(null, '', '#' + k); resetCur(); sync(); draw(); };
   bar.append(b);
 }
 const tools = document.getElementById('tools');
-const home = document.createElement('button'); home.textContent = 'Home view 1.0x';
-home.onclick = () => { state.overview = false; state.z = 1; state.mid = { x: 960, y: 540 }; sync(); camera(); };
+const tool = (label, fn) => { const b = document.createElement('button'); b.textContent = label; b.onclick = fn; tools.append(b); return b; };
+tool('Centre on current', () => { centreOn(state.cur); sync(); camera(); });
+tool('March ▸', () => { const { out } = graph(VARIANTS[state.v]); if (!state.sel) return; state.cur = state.sel; state.sel = out[state.cur]?.[0] ?? null; centreOn(state.cur); draw(); });
+tool('Restart', () => { resetCur(); state.z = 1; sync(); draw(); });
 const toggles = [
-  ['overview', 'Overview (not in game)'], ['hud', 'HUD overlay'], ['phone', 'Phone labels 24'], ['hit', 'Tap areas'], ['coll', 'Mark collisions'],
+  ['overview', 'Overview (not in game)'], ['hud', 'HUD overlay'], ['phone', 'Phone labels 24'], ['relevant', 'Phone: names of current + next only'], ['hit', 'Tap areas'], ['coll', 'Mark collisions'],
 ];
-document.getElementById('tools').append(home);
 for (const [k, label] of toggles) {
   const b = document.createElement('button'); b.textContent = label; b.dataset.k = k;
-  b.onclick = () => { state[k] = !state[k]; sync(); if (k === 'phone' || k === 'hit') draw(); else if (k === 'coll') { measure(); stats(); } else camera(); };
+  b.onclick = () => { state[k] = !state[k]; sync(); if (k === 'phone' || k === 'hit' || k === 'relevant') draw(); else camera(); };
   tools.append(b);
 }
 function sync() {
   bar.querySelectorAll('button').forEach((b) => b.classList.toggle('on', b.dataset.v === state.v));
-  tools.querySelectorAll('button').forEach((b) => b.classList.toggle('on', !!state[b.dataset.k]));
+  tools.querySelectorAll('button[data-k]').forEach((b) => b.classList.toggle('on', !!state[b.dataset.k]));
 }
+addEventListener('hashchange', () => { const h = hashV(); if (h && h !== state.v) { state.v = h; resetCur(); sync(); draw(); } });
+resetCur();
 sync();
 document.fonts.ready.then(draw);
 </script>

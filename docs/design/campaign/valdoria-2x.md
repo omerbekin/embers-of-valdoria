@@ -168,7 +168,7 @@ Alternatif (daha basit): devam eden eski seferler eski 17 duraklık haritada bit
 
 ## 10. Yayılmış varyantlar (Ömer geri bildirimi 2026-10-10: "düğümler çok sıkışık"; 2. tur: HUD'sız alan, eğitim sabit, adlar araziye uygun)
 
-**Taslak sayfa:** `public/mockups/valdoria-map.html` (yayında `/protomedi/mockups/valdoria-map.html`; `#v1` ... `#v5` doğrudan o varyantı açar). Oyun verisi DEĞİŞMEDİ. Sayfa canlı sefer haritasını taklit eder: dünya birimi = eski 16:9 harita bölgesi (1920 x 1080), sahne yüksekliği 1080 birim, yakınlaştırma 1,0-1,4, kaydırma; düğüm yarıçapı 24 (boss 30), boyalı düğüm ikonları, ad 15 birim Cinzel, dokunma alanı 96 birim çap; HUD taklidi `CampaignMapScene.renderHud` ölçüleriyle. Araçlar (oyunda yok): Home view 1.0x, Overview, HUD overlay, Phone labels 24, Tap areas, Mark collisions. Sol panelde (Party sütununun yerinde, haritayı örtmez): durak / sefer başına durak / rota / seçim, karışım ve ölçümler. **HUD overlap**, ev görünümünde ve 1,0x'te, 16:9 ve 21:9 için ayrı ölçülür; düğüm diski, ad kutusu ve yol eğrisi gerçek yazı genişliğiyle denetlenir ve HUD'a giren adlar mavi kesik çerçeveyle işaretlenir. Diğer ölçümler: yazı çakışması (kırmızı), en yakın iki düğüm, dokunma hedefi. Düğümün üstüne gelince arazi notu da görünür.
+**Taslak sayfa:** `public/mockups/valdoria-map.html` (yayında `/protomedi/mockups/valdoria-map.html`; 3. turdan beri sayfada yalnızca `#v1` Current, `#v4` Spread A, `#a1`, `#a2`, `#a3` var; v2 / v3 / v5 sayfadan kaldırıldı, tabloları aşağıda kayıt için duruyor; bkz. 10.4). Oyun verisi DEĞİŞMEDİ. Sayfa canlı sefer haritasını taklit eder: dünya birimi = eski 16:9 harita bölgesi (1920 x 1080), sahne yüksekliği 1080 birim, yakınlaştırma 1,0-1,4, kaydırma; düğüm yarıçapı 24 (boss 30), boyalı düğüm ikonları, ad 15 birim Cinzel, dokunma alanı 96 birim çap; HUD taklidi `CampaignMapScene.renderHud` ölçüleriyle. Araçlar (oyunda yok): Home view 1.0x, Overview, HUD overlay, Phone labels 24, Tap areas, Mark collisions. Sol panelde (Party sütununun yerinde, haritayı örtmez): durak / sefer başına durak / rota / seçim, karışım ve ölçümler. **HUD overlap**, ev görünümünde ve 1,0x'te, 16:9 ve 21:9 için ayrı ölçülür; düğüm diski, ad kutusu ve yol eğrisi gerçek yazı genişliğiyle denetlenir ve HUD'a giren adlar mavi kesik çerçeveyle işaretlenir. Diğer ölçümler: yazı çakışması (kırmızı), en yakın iki düğüm, dokunma hedefi. Düğümün üstüne gelince arazi notu da görünür.
 
 ### 10.1 Sert kurallar (Ömer, 2. tur) ve nasıl ölçüldü
 1. **HUD'a binme yok:** 1,0x'te 16:9 ve 21:9 masaüstünde hiçbir düğüm, ad ya da yol şunların altında değil: Party sütunu, düğüm kartı, üst bant, alt kontroller, lejant, Menu.
@@ -326,3 +326,137 @@ Alternatif (daha basit): devam eden eski seferler eski 17 duraklık haritada bit
 | 11B3 | Morvane's Outworks | elite | 19 | [1.215, 0.331] | altta | foothills | 12a |
 | 12a | Gate of Cinders | battle | 20 | [1.188, 0.231] | altta | mountains | 12 |
 | 12 | Castle Morvane | boss | 21 | [1.229, 0.130] | altta | high mountains | — |
+
+### 10.4 3. tur: A1 / A2 / A3 (Ömer kararı 2026-10-11)
+
+**Ömer'in kararları:**
+- Taban: **Spread A** (varyant 4).
+- Kamera: kaydırma HER yakınlaştırmada açık, bütün geniş harita kullanılabilir. "Ev görünümüne sığ" kuralı kalktı (10.1 madde 1 ve 10.2'deki "1,0x sabit kamera" önerisi geçersiz).
+- Yeni HUD kuralı: kamera bir düğüme (bulunulan düğüme) ortalanınca o düğüm HUD'un altında kalmaz.
+- Telefon: yalnızca bulunulan, seçilebilir ve seçili düğümün adı görünür (taslakta düğme).
+- İstek: Forward Camp'tan kuzeye 3-6 yeni düğüm, final boss dağlara; HUD'a binme yok; 3 taslak.
+
+**Değişmeyen kurallar:** eğitim (Mill Road -> Ravenwood -> Ruined Watchtower -> Ashford Village) aynı sıra ve konumda; ad = arazi; yol dağı yalnızca geçitten / vadiden, suyu yalnızca geçiş düğümünden geçer; K2 (art arda en çok 2 savaş-dışı durak); masaüstü ad boyunda yazı çakışması yok; dokunma alanı 96 birim.
+
+**Taslak sayfa değişiklikleri (`public/mockups/valdoria-map.html`):**
+- Varyant düğmeleri: 1 Current, 4 Spread A, A1, A2, A3 (v2 Last proposal, v3 Spread 32, v5 Spread B kalabalık olmasın diye kaldırıldı).
+- Düğüme tıklamak onu "bulunulan düğüm" yapar; kamera ona ortalanır (canlı harita gibi, çerçeve kenarında sınırlanır).
+  - Seçilebilir sonraki duraklar kesik kor halkalı; tıklanınca seçilir (dolu halka).
+  - "March ▸" seçiliye ilerler, "Restart" başa döner, "Centre on current" kamerayı geri getirir.
+- Yeni düğme: **"Phone: names of current + next only"** (Phone labels 24 ile birlikte; telefonda bulunulan / seçilebilir / seçili dışındaki adlar gizlenir).
+- HUD ölçümü baştan yazıldı. Her düğüm için kamera o düğüme ortalanır (16:9, 21:9 ve telefon 844 x 390 compact HUD; 1,0 / 1,1 / 1,2 / 1,3 / 1,4x).
+  - O düğümün ve seçilebilir sonraki düğümlerinin diski ve adı HUD dikdörtgenlerine giriyor mu diye bakılır (telefonda 24 birim ad).
+  - Panelde "kaç düğümde sorun var" yazar. "Under HUD now" o anki görünümü sayar; HUD altındaki her düğüm mavi kesik çerçeveyle işaretlenir.
+- Yeni otomatik denetimler:
+  - **K2:** art arda en çok kaç savaş-dışı durak.
+  - **River:** yol eğrisi görseldeki nehre (mavi piksel) değiyor mu? İki ucu da geçiş düğümü (King's Bridge, Greywater Ford) olmayan yol sayılır.
+- Alt kontroller 21:9'da ekran ortasına alındı (önceki taslakta solda kalıyordu).
+
+**Ortak değişiklik (A1, A2, A3):**
+- Seçim 3 artık Ashen Plain -> [Siege Line | Thornwood Hollow] -> Forward Camp.
+  - Forward Camp birleşme düğümü oldu (yeni düğümler oradan başlar).
+  - Siege Line ve Thornwood Hollow biraz doğuya / yukarıya kaydı. A'da iki kol 2'şer duraklıydı; kuzey yolu ancak böyle Forward Camp'tan çıkıyor.
+  - Eski hâliyle güney kolu (Hermit's Cache) kuzeye giden yolu kesiyordu.
+- Hermit's Cache, Gate of Cinders ve Castle Morvane kuzeye, dağlara taşındı. A1'de Hermit's Cache haritadan çıktı: 6. düğüm telefonda çakışmasız sığmadı.
+- Durak 1-11 Spread A ile birebir aynı (10.3'teki Spread A tablosu).
+
+#### Ölçümler (tarayıcıda, 2026-10-11)
+
+| # | Varyant | Haritada (yeni) / sefer başına | Rota / seçim | Karışım (savaş / elit / boss / kasaba / olay / hazine / dinlenme / tüccar) | HUD overlap, kamera düğüme ortalı (16:9 / 21:9 / telefon) | Yazı çakışması masaüstü 15 | Telefon 24, yalnızca bulunulan + sonraki (en kötü an) / bütün adlar | K2 | Nehir |
+|---|---|---|---|---|---|---|---|---|---|
+| 1 | Current | 17 / 12 | 12 / 3 | 7 / 3 / 2 / 2 / 1 / 2 / 0 / 0 | 1 / 1 / 1 (Siege Line'dayken 1,3-1,4x'te Castle Morvane üst bantta) | 0 | 1 / 5 | 3 | 10 yol suya değiyor (nehir / bataklık havuzu) |
+| 4 | Spread A | 22 / 16 | 8 / 3 | 9 / 3 / 2 / 2 / 1 / 3 / 1 / 1 | 0 / 0 / 0 | 0 | 3 / 12 | 2 | 0 |
+| A1 | **Linear climb** | **24 (3) / 19** | 8 / 3 | 11 / 3 / 2 / 2 / 2 / 2 / 1 / 1 | **0 / 0 / 0** | **0** | 2 / 6 | 2 | 0 |
+| A2 | **Fork & rejoin** | **26 (4) / 19** | 16 / 4 | 11 / 4 / 2 / 2 / 2 / 3 / 1 / 1 | **0 / 0 / 0** | **0** | 2 / 7 | 2 | 0 |
+| A3 | **Two-path ascent** | **27 (5) / 19** | 16 / 4 | 11 / 4 / 2 / 2 / 2 / 3 / 2 / 1 | **0 / 0 / 0** | **0** | 2 / 7 | 2 | 0 |
+
+- En yakın iki düğüm her A varyantında 112 birim (A'nın orta bölgesi).
+- Telefonda kalan 2 çakışma, Spread A'dan gelen orta bölgede: Witch's Hut / Valdren Keep / Grave Field / Black Cathedral. Yeni kuzey bölümünde telefon çakışması 0.
+- Dokunma hedefi değişmedi: telefonda 1,0x'te yaklaşık 35 px, 1,4x'te yaklaşık 49 px (madde 10.2).
+- HUD sınırı nereden çıkıyor? Kamera 21:9 çerçevenin doğu kenarında durur. Bu yüzden 1,0x'te sağ sütun (düğüm kartı) her ekran oranında dünya x 1954'ten başlar.
+  - Kuzeydoğu düğümleri adları dahil bu çizginin solunda (telefonda 24 birimlik adla).
+  - Üst bant 1,0x'te dünya y 120'nin üstünü örter. Castle Morvane her varyantta y 170-190'da (halkası 120'nin altında).
+
+**A1 Linear climb (3 yeni):**
+- Forward Camp -> Ember Road (savaş) -> Shepherd's Fold (olay) -> Riverhead (savaş, nehrin kaynağının hemen altı) -> Gate of Cinders (savaş) -> **Castle Morvane**.
+- Yol zikzakla tırmanır, kaynağın doğusundan dolaşır (suyu geçmez).
+- Gate of Cinders kar tepesinin altındaki kayalık eteklerde. Kale iki kar tepesi arasındaki yüksek boyunda.
+- En sade seçenek; sonda 5 durak seçimsiz.
+
+**A2 Fork & rejoin (4 yeni):**
+- Forward Camp -> Ember Road -> çatal:
+  - batı: Greywater Ford (savaş, nehrin üstünde; King's Bridge gibi düğümün kendisi geçit) -> Hermit's Cache (hazine, batı kıyısı etekleri);
+  - doğu: Shepherd's Fold (olay) -> Frostfall Ridge (elit, doğu tepesinin altındaki sırt).
+- İki kol karlı alanın kenarındaki Gate of Cinders'ta birleşir. Doğu kolu kaynağın kuzeyinden dolaşır.
+- Gate -> **Castle Morvane** (doğudaki iki kar tepesinin arası).
+- Seçim 4: hazine mi, elit mi.
+
+**A3 Two-path ascent (5 yeni):**
+- Yol Forward Camp'ta ikiye ayrılır, yalnızca Gate of Cinders'ta birleşir:
+  - batı: Greywater Ford (savaş, nehrin üstü) -> Hermit's Cache (hazine) -> Frozen Stair (savaş, batı kar alanının eteği);
+  - doğu: Shepherd's Fold (olay) -> Wolf Copse (elit, korulukta) -> Eagle's Rest (dinlenme, kayalık etekler).
+- Gate of Cinders kar tepeleri arasındaki vadide. **Castle Morvane** batı kar kütlesinin üstünde; son yol geri, batıya döner.
+- Bosstan önce isteğe bağlı ikinci dinlenme var.
+
+**Yeniden adlandırma / taşıma:**
+- Yeni ad yok; Spread A'daki adlar aynen.
+- Taşınanlar:
+  - Hermit's Cache: güneydoğu ormanı -> batı kıyısı etekleri (A2, A3; dağda inziva yeri, ada uyar).
+  - Gate of Cinders: orman kenarı -> dağ yolu (kalenin kapısı).
+  - Castle Morvane: doğu kırı -> dağlar.
+- Yeni geçiş düğümü **Greywater Ford** (A2, A3).
+  - King's Bridge gibi tam nehrin üstünde, yol orada nehri geçiyor. Görselde çizili sığ geçit YOK.
+  - Ömer istemezse A2/A3'ün batı kolu kaldırılmalı ya da görsele geçit çizilmeli.
+
+**Açık sorular (Ömer):**
+- A1, A2, A3'ten hangisi? (Önerim A2: seçim sayısı A ile aynı ritimde 4'e çıkar, iki kolun karakteri farklı: hazine / elit; kale görselde en "kale yeri" duran yerde.)
+- Greywater Ford (görselde çizilmemiş geçit) kabul mü?
+- Seçim 3'ün iki duraklı kollardan tek duraklıya inmesi uygun mu?
+- A3'teki ikinci dinlenme (Eagle's Rest) uygun mu? Dinlenme noktası hâlâ soru 1.
+
+#### A1 Linear climb: durak 12+ (1-11 = Spread A; pos = valdoria.json birimi)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| ashen | Ashen Plain | battle | 12 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| thorn | Thornwood Hollow | elite | 13 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| siege | Siege Line | battle | 13 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| camp | Forward Camp | merchant | 14 | [0.932, 0.731] | altta | grass | road |
+| road | Ember Road **(yeni)** | battle | 15 | [0.883, 0.583] | altta | grass, the road north from the camp | fold |
+| fold | Shepherd's Fold **(yeni)** | event | 16 | [0.945, 0.556] | üstte | grass by the grove | head |
+| head | Riverhead **(yeni)** | battle | 17 | [0.911, 0.435] | altta | east bank just below the river spring | gate |
+| gate | Gate of Cinders | battle | 18 | [0.945, 0.310] | altta | rocky foothills under the snow peak (path passes east of the spring) | castle |
+| castle | Castle Morvane | boss | 19 | [0.885, 0.176] | altta | high col between the snow peaks | — |
+
+#### A2 Fork & rejoin: durak 12+ (1-11 = Spread A)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| ashen | Ashen Plain | battle | 12 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| thorn | Thornwood Hollow | elite | 13 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| siege | Siege Line | battle | 13 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| camp | Forward Camp | merchant | 14 | [0.932, 0.731] | altta | grass | road |
+| road | Ember Road **(yeni)** | battle | 15 | [0.919, 0.620] | altta | grass, the road north from the camp | ford, fold |
+| ford | Greywater Ford **(yeni)** | battle | 16 | [0.849, 0.514] | altta | ON the river (the crossing, like King's Bridge) | cache |
+| fold | Shepherd's Fold **(yeni)** | event | 16 | [0.945, 0.505] | üstte | grass by the grove | frost |
+| cache | Hermit's Cache | treasure | 17 | [0.810, 0.398] | altta | west-bank foothills, among the pines | gate |
+| frost | Frostfall Ridge **(yeni)** | elite | 17 | [0.945, 0.324] | altta | foothill ridge under the east peak | gate |
+| gate | Gate of Cinders | battle | 18 | [0.852, 0.250] | altta | high pass at the edge of the snowfield (above the spring) | castle |
+| castle | Castle Morvane | boss | 19 | [0.943, 0.157] | altta | between the eastern snow peaks | — |
+
+#### A3 Two-path ascent: durak 12+ (1-11 = Spread A)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| ashen | Ashen Plain | battle | 12 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| thorn | Thornwood Hollow | elite | 13 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| siege | Siege Line | battle | 13 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| camp | Forward Camp | merchant | 14 | [0.932, 0.731] | altta | grass | ford, fold |
+| ford | Greywater Ford **(yeni)** | battle | 15 | [0.841, 0.546] | altta | ON the river (the crossing, like King's Bridge) | cache |
+| fold | Shepherd's Fold **(yeni)** | event | 15 | [0.945, 0.611] | altta | grass | copse |
+| cache | Hermit's Cache | treasure | 16 | [0.797, 0.421] | altta | west-bank foothills, among the pines | stair |
+| copse | Wolf Copse **(yeni)** | elite | 16 | [0.917, 0.486] | altta | grove on the east bank | eagle |
+| stair | Frozen Stair **(yeni)** | battle | 17 | [0.776, 0.301] | altta | foot of the western snowfield | gate |
+| eagle | Eagle's Rest **(yeni)** | rest | 17 | [0.943, 0.380] | altta | rocky foothills under the east peak | gate |
+| gate | Gate of Cinders | battle | 18 | [0.901, 0.264] | altta | valley between the snow peaks | castle |
+| castle | Castle Morvane | boss | 19 | [0.810, 0.167] | altta | on the western snow massif | — |
