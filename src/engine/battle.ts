@@ -2273,8 +2273,12 @@ export class Battle {
           break;
         case 'manaBurn': {
           let total = 0;
+          // Vuruşa bağlı yakım / çalma (Mana Steal; Ömer 2026-10-11): hasar veren skill'de yalnızca GERÇEKTEN isabet edilen hedefler (iska / kaçınma /
+          // Lucky Escape = yakım yok; alan skill'inde her hedef ayrı). Hasarsız yakım (Drain Field) isabet zarı atmaz, tüm hedeflere işler.
+          const burnHit = skill.effects.some((e) => e.type === 'damage');
           for (const target of ts) {
             if (target.hp <= 0) continue;
+            if (burnHit && !hit.has(target.uid)) continue;
             // Yakım: sabit `amount` ya da hedefin maks MP'sinin `pctMax` oranı (madde 260), mevcut MP'yle sınırlı
             const empties = emptyProcApplies(effect, target);
             const burned = burnAmountFor(effect, target);

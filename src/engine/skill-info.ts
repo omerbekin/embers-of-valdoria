@@ -301,7 +301,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'manaBurn') {
       // Madde 260: sabit miktar ya da hedefin maks MP'sinin yüzdesi (pctMax)
       const what = e.pctMax !== undefined ? `${pct(e.pctMax)} of each target's max MP` : `${e.amount ?? 0} MP`;
-      add(e.gainRatio ? `Steals ${what}: you gain ${pct(e.gainRatio)} of it` : `Burns ${what}`);
+      const onHit = skill.effects.some((x) => x.type === 'damage') ? ' on hit (none if the attack misses)' : '';
+      add(e.gainRatio ? `Steals ${what}${onHit}: you gain ${pct(e.gainRatio)} of it` : `Burns ${what}${onHit}`);
       const em = e.onEmpty;
       if (em) {
         const def = defs.statuses?.[em.status];
