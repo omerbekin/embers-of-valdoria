@@ -1,15 +1,22 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PATCH_NOTES, compareVersions, formatPatchDate, releaseGroups } from '../src/ui/patch-notes';
+import { displayVersionFrom, isSubVersionOf } from '../src/ui/display-version';
 
-// Patch Notes (Ömer 2026-10-11): data/patch-notes.json geçerli olmalı ve package.json'daki GÜNCEL sürümün notu bulunmalı
-// (notu yazılmamış sürüm yayınlanamaz).
+// Patch Notes (Ömer 2026-10-11): data/patch-notes.json geçerli olmalı ve en üstteki girdi package.json'daki GÜNCEL taban sürüm ya da
+// onun alt sürümü ('0.6.11.1') olmalı (notu yazılmamış sürüm yayınlanamaz). Ekrandaki sürüm o en üst girdidir.
 const pkg = JSON.parse(readFileSync(new URL('../package.json', import.meta.url), 'utf8')) as { version: string };
 
 describe('Patch Notes verisi', () => {
-  it('güncel package.json sürümünün notu var ve en üstte', () => {
-    expect(PATCH_NOTES.map((r) => r.version)).toContain(pkg.version);
-    expect(PATCH_NOTES[0]!.version).toBe(pkg.version);
+  it('en üstteki girdi package.json sürümü ya da onun .N alt sürümü; package.json 3 parçalı', () => {
+    expect(pkg.version).toMatch(/^\d+\.\d+\.\d+$/);
+    const top = PATCH_NOTES[0]!.version;
+    expect(isSubVersionOf(top, pkg.version), `en üst ${top}, package ${pkg.version}`).toBe(true);
+    expect(displayVersionFrom(top, pkg.version)).toBe(top);
+  });
+
+  it('taslak (mockup) paylaşımları not almaz', () => {
+    for (const r of PATCH_NOTES) for (const g of releaseGroups(r)) for (const line of g.items) expect(line, r.version).not.toMatch(/design preview/i);
   });
 
   it('sürümler benzersiz, en yeniden eskiye sıralı, tarihler geçerli ve azalmayan sırada değil', () => {
@@ -20,7 +27,7 @@ describe('Patch Notes verisi', () => {
       expect(PATCH_NOTES[i - 1]!.date >= PATCH_NOTES[i]!.date, `${vs[i - 1]} tarihi`).toBe(true);
     }
     for (const r of PATCH_NOTES) {
-      expect(r.version, 'sürüm biçimi').toMatch(/^\d+\.\d+\.\d+$/);
+      expect(r.version, 'sürüm biçimi (3 parça ya da alt sürüm)').toMatch(/^\d+\.\d+\.\d+(\.\d+)?$/);
       expect(r.date, `${r.version} tarih`).toMatch(/^\d{4}-\d{2}-\d{2}$/);
       expect(Number.isNaN(Date.parse(r.date)), `${r.version} tarih`).toBe(false);
     }
@@ -51,6 +58,19 @@ describe('Patch Notes verisi', () => {
     expect(compareVersions('0.6.10', '0.6.9')).toBeGreaterThan(0);
     expect(compareVersions('0.6.9', '0.6.9')).toBe(0);
     expect(compareVersions('0.5.9', '0.6.0')).toBeLessThan(0);
+    // 4 parçalı alt sürümler: 0.6.12 > 0.6.11.2 > 0.6.11.1 > 0.6.11 > 0.6.10.9
+    expect(compareVersions('0.6.11.1', '0.6.11')).toBeGreaterThan(0);
+    expect(compareVersions('0.6.11.2', '0.6.11.1')).toBeGreaterThan(0);
+    expect(compareVersions('0.6.11.10', '0.6.11.9')).toBeGreaterThan(0);
+    expect(compareVersions('0.6.12', '0.6.11.2')).toBeGreaterThan(0);
+    expect(compareVersions('0.6.11', '0.6.10.9')).toBeGreaterThan(0);
+    expect(['0.6.11', '0.6.12', '0.6.11.2', '0.6.10', '0.6.11.1'].sort((a, b) => compareVersions(b, a))).toEqual(['0.6.12', '0.6.11.2', '0.6.11.1', '0.6.11', '0.6.10']);
+    // görünen sürüm: notların en üstü taban ya da alt sürümüyse o, değilse taban
+    expect(displayVersionFrom('0.6.11.1', '0.6.11')).toBe('0.6.11.1');
+    expect(displayVersionFrom('0.6.11', '0.6.11')).toBe('0.6.11');
+    expect(displayVersionFrom('0.6.10', '0.6.11')).toBe('0.6.11');
+    expect(displayVersionFrom('0.6.111', '0.6.11')).toBe('0.6.11');
+    expect(displayVersionFrom(undefined, '0.6.11')).toBe('0.6.11');
     expect(releaseGroups({ version: '1.0.0', date: '2026-01-01', items: ['A line'] })).toEqual([{ heading: '', items: ['A line'] }]);
   });
 });

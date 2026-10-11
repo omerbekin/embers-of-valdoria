@@ -21,6 +21,7 @@ import { mp, MP_SCENE } from '../mp-client';
 import { addLogo, hasLogo, preloadLogo } from '../branding';
 import { loadVolume, setSettingsVolume } from '../../ui/settings';
 import { VOLUME_STEPS, volumeLabel } from '../../ui/volume-steps';
+import { DISPLAY_VERSION } from '../../ui/display-version';
 import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBattleSpeed, speedAt, speedIndex } from '../../ui/battle-speed';
 import { openDebugMenu } from '../../ui/debug-entry';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from '../../ui/fullscreen';
@@ -173,7 +174,7 @@ export class MainMenuScene extends Phaser.Scene {
   /** Sütun satır yüksekliği (Settings daha sık: SETTINGS_LAYOUT.rowH; Multiplayer ROW_H). */
   private panelRowH = ROW_H;
   private back!: Phaser.GameObjects.Container;
-  /** Sağ alttaki küçük sürüm yazısı (__APP_VERSION__). */
+  /** Sağ alttaki küçük sürüm yazısı (DISPLAY_VERSION). */
   private version: Phaser.GameObjects.Text | null = null;
   private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean) => void; run: () => void }> = [];
   private cardSel = 0;
@@ -551,7 +552,7 @@ export class MainMenuScene extends Phaser.Scene {
 
   /** Sağ alt köşede küçük sürüm yazısı (tasarım kiti: soluk EB Garamond italik; konum layoutStage'de, görünen alanın sağ kenarına göre). */
   private buildVersion(): void {
-    const v = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
+    const v = DISPLAY_VERSION; // patch notes'un en üst sürümü (alt sürüm olabilir: 0.6.11.1; src/ui/display-version.ts)
     if (!v) return;
     const t = (this.version = elBody(this, stageView.right - 34, H - 22, `v${v}`, 22, EL.MUTED).setOrigin(1, 1).setAlpha(0.75).setDepth(45));
     // Dokununca Patch Notes (Ömer 2026-10-11; src/ui/patch-notes.ts, data/patch-notes.json; ayrı kod parçası). Dokunma alanı yazıdan
