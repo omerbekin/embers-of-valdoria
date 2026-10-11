@@ -168,7 +168,7 @@ Alternatif (daha basit): devam eden eski seferler eski 17 duraklık haritada bit
 
 ## 10. Yayılmış varyantlar (Ömer geri bildirimi 2026-10-10: "düğümler çok sıkışık"; 2. tur: HUD'sız alan, eğitim sabit, adlar araziye uygun)
 
-**Taslak sayfa:** `public/mockups/valdoria-map.html` (yayında `/protomedi/mockups/valdoria-map.html`; 3. turdan beri sayfada yalnızca `#v1` Current, `#v4` Spread A, `#a1`, `#a2`, `#a3` var; v2 / v3 / v5 sayfadan kaldırıldı, tabloları aşağıda kayıt için duruyor; bkz. 10.4). Oyun verisi DEĞİŞMEDİ. Sayfa canlı sefer haritasını taklit eder: dünya birimi = eski 16:9 harita bölgesi (1920 x 1080), sahne yüksekliği 1080 birim, yakınlaştırma 1,0-1,4, kaydırma; düğüm yarıçapı 24 (boss 30), boyalı düğüm ikonları, ad 15 birim Cinzel, dokunma alanı 96 birim çap; HUD taklidi `CampaignMapScene.renderHud` ölçüleriyle. Araçlar (oyunda yok): Home view 1.0x, Overview, HUD overlay, Phone labels 24, Tap areas, Mark collisions. Sol panelde (Party sütununun yerinde, haritayı örtmez): durak / sefer başına durak / rota / seçim, karışım ve ölçümler. **HUD overlap**, ev görünümünde ve 1,0x'te, 16:9 ve 21:9 için ayrı ölçülür; düğüm diski, ad kutusu ve yol eğrisi gerçek yazı genişliğiyle denetlenir ve HUD'a giren adlar mavi kesik çerçeveyle işaretlenir. Diğer ölçümler: yazı çakışması (kırmızı), en yakın iki düğüm, dokunma hedefi. Düğümün üstüne gelince arazi notu da görünür.
+**Taslak sayfa:** `public/mockups/valdoria-map.html` (yayında `/protomedi/mockups/valdoria-map.html`; 4. turdan beri sayfada yalnızca `#v1` Current, `#a1`, `#a1x`, `#a1y`, `#a1z` var; v2-v5, A2, A3 sayfadan kaldırıldı, tabloları aşağıda kayıt için duruyor; bkz. 10.4 ve 10.5). Oyun verisi DEĞİŞMEDİ. Sayfa canlı sefer haritasını taklit eder: dünya birimi = eski 16:9 harita bölgesi (1920 x 1080), sahne yüksekliği 1080 birim, yakınlaştırma 1,0-1,4, kaydırma; düğüm yarıçapı 24 (boss 30), boyalı düğüm ikonları, ad 15 birim Cinzel, dokunma alanı 96 birim çap; HUD taklidi `CampaignMapScene.renderHud` ölçüleriyle. Araçlar (oyunda yok): Home view 1.0x, Overview, HUD overlay, Phone labels 24, Tap areas, Mark collisions. Sol panelde (Party sütununun yerinde, haritayı örtmez): durak / sefer başına durak / rota / seçim, karışım ve ölçümler. **HUD overlap**, ev görünümünde ve 1,0x'te, 16:9 ve 21:9 için ayrı ölçülür; düğüm diski, ad kutusu ve yol eğrisi gerçek yazı genişliğiyle denetlenir ve HUD'a giren adlar mavi kesik çerçeveyle işaretlenir. Diğer ölçümler: yazı çakışması (kırmızı), en yakın iki düğüm, dokunma hedefi. Düğümün üstüne gelince arazi notu da görünür.
 
 ### 10.1 Sert kurallar (Ömer, 2. tur) ve nasıl ölçüldü
 1. **HUD'a binme yok:** 1,0x'te 16:9 ve 21:9 masaüstünde hiçbir düğüm, ad ya da yol şunların altında değil: Party sütunu, düğüm kartı, üst bant, alt kontroller, lejant, Menu.
@@ -460,3 +460,188 @@ Alternatif (daha basit): devam eden eski seferler eski 17 duraklık haritada bit
 | eagle | Eagle's Rest **(yeni)** | rest | 17 | [0.943, 0.380] | altta | rocky foothills under the east peak | gate |
 | gate | Gate of Cinders | battle | 18 | [0.901, 0.264] | altta | valley between the snow peaks | castle |
 | castle | Castle Morvane | boss | 19 | [0.810, 0.167] | altta | on the western snow massif | — |
+
+### 10.5 4. tur: A1-x / A1-y / A1-z (Ömer kararı 2026-10-11: A1; büyük olasılıkla son tur)
+
+**Ömer'in istekleri:**
+- Eğitim, Party sütununun bittiği yerden başlayan görünümde sola / kuzeybatıya doğal biçimde tırmanır. Kullanılan boş alan: batıdaki büyük orman, ormanın üstündeki çayır ve kar tepelerinin solundaki kuzeybatı çayırları.
+- Eğitimin durakları, sayısı ve sırası aynı; yalnızca konumlar değişti.
+- King's Bridge TAM yerinde.
+- Ashford Village ile King's Bridge arası baştan tasarlandı, +2 ile +4 düğüm eklendi.
+- A1'in kuzey uzantısı (Forward Camp -> ... -> Castle Morvane) aynen kaldı.
+- Bütün kurallar geçerli. 3 taslak hazırlandı, ortaları birbirinden belirgin biçimde farklı.
+
+**Ortak (üç taslakta aynı):**
+- Eğitim:
+  - Mill Road bugünkü yerinde (kıyı tarlaları).
+  - **Ravenwood** batı ormanının içinde [0.224, 0.639].
+  - **Ruined Watchtower** ormanın kuzey kenarındaki çayır yükseltisinde [0.281, 0.407].
+  - **Ashford Village** kuzeybatının açık çayırında [0.229, 0.231].
+  - Eğitim yolu ormanın içinden yukarı, sola doğru tırmanır.
+  - Party sütunu sınırı: 1,0x'te kamera batı kenarda durur, sütun dünya x 267'ye kadar örter. Telefonda 24 birimlik adlar dahil üç düğüm de bu çizginin sağında.
+- Ashford'dan sonraki ilk durak hep **Windy Moor** (yeni, savaş): Ashford'un doğusundaki çayırlı tepeler.
+- King's Bridge'ten sonrası (Ashen Plain ... Castle Morvane) A1 ile birebir aynı.
+- Arazi engelleri (yerleşim aracında): iki kar tepesi kütlesi ve göl. Yollar tepeleri yalnızca Iron Pass'ten (iki tepe arasındaki geçit) ya da tepelerin etrafından geçer. Göl kıyısındaki Misty Marsh'a kuzeyden ulaşılır.
+- Nehir yalnızca King's Bridge'te geçilir. Otomatik denetimler:
+  - nehir: sayfada, görselin mavi pikseliyle;
+  - tepe ve göl: yerleşim aracıyla.
+- Sayfa düzeltmesi: Cinzel yazı tipi artık ölçümden önce açıkça yükleniyor. Önceden sayfa arka planda açılınca ad genişlikleri yedek yazıyla ölçülebiliyordu ve telefon HUD sayımı yanlış çıkabiliyordu.
+- Switcher'da: 1 Current, A1, A1-x, A1-y, A1-z.
+  - Kaldırılanlar: Spread A (A1 zaten içeriyor), A2, A3.
+  - Telefonda araç çubuğu (taslak düğmeleri) haritanın üst kenarını örtebilir. Oyunda yok; ölçümleri etkilemez.
+
+#### Ölçümler (tarayıcıda, 2026-10-11)
+
+| Varyant | Haritada (yeni) / sefer başına | Rota / seçim | Karışım (savaş / elit / boss / kasaba / olay / hazine / dinlenme / tüccar) | Ashford-köprü arası düğüm (A: 10) | HUD overlap, kamera düğüme ortalı 1,0-1,4x (16:9 / 21:9 / telefon) | Yazı çakışması masaüstü | Telefon (bulunulan + sonraki) / bütün adlar | K2 | Nehir |
+|---|---|---|---|---|---|---|---|---|---|
+| Current | 17 / 12 | 12 / 3 | 7 / 3 / 2 / 2 / 1 / 2 / 0 / 0 | — | 1 / 1 / 1 | 0 | 1 / 5 | 3 | 10 yol suya değiyor |
+| A1 | 24 (3) / 19 | 8 / 3 | 11 / 3 / 2 / 2 / 2 / 2 / 1 / 1 | 10 | 0 / 0 / 0 | 0 | 2 / 6 | 2 | 0 |
+| **A1-x Clear spine** | **26 (2) / 21** | 24 / 4 | 13 / 3 / 2 / 2 / 2 / 2 / 1 / 1 | 12 | **0 / 0 / 0** | **0** | **0** / 2 | 2 | 0 |
+| **A1-y Braided valleys** | **28 (4) / 20** | 16 / 5 | 13 / 4 / 2 / 2 / 3 / 2 / 1 / 1 | 14 | **0 / 0 / 0** | **0** | **0** / 1 | 2 | 0 |
+| **A1-z High road / lake road** | **26 (2) / 20** | 4 / 2 | 12 / 4 / 2 / 2 / 2 / 2 / 1 / 1 | 12 | **0 / 0 / 0** | **0** | **0** / 0 | 1 | 0 |
+
+- En yakın iki düğüm: A1-x 119, A1-y 117, A1-z 119 birim (A1'de 112).
+- A1'de telefonda kalan 2 çakışma (Witch's Hut / Valdren bölgesi) bu turda yeniden tasarlanan bölgedeydi; üç taslakta da 0.
+
+**A1-x Clear spine (+2: Windy Moor, Charcoal Camp):**
+- Tek ana yol; her çatal tek duraklık, hemen birleşir.
+- Ashford -> Windy Moor -> [Iron Pass (geçit) | Charcoal Camp (orman kenarı)] -> **Valdren Keep** (geçit vadisinin ağzı, büyük tarlaların kenarı)
+  -> [Dwarven Mine (doğu tepesinin güney eteği) | Witch's Hut (göl üstü koruluk) | Misty Marsh (göl kıyısı sazlık)]
+  -> Grave Field -> Pilgrim Road (orman altı yol)
+  -> [St. Brann's Abbey (dağ) | Black Cathedral (tarla)] -> Riverside Camp -> King's Bridge.
+- En uzun sefer (21 durak); seçimler küçük ama sık.
+
+**A1-y Braided valleys (+4: Windy Moor, Cairn Hill, Old Quarry, Charcoal Camp):**
+- Ashford'dan üç vadi açılır ve birbirine örülür:
+  - kuzey kayalıklar: Windy Moor -> Old Quarry (elit) -> Dwarven Mine (doğu tepesinin arkasındaki yüksek vadi);
+  - geçit: Windy Moor -> Iron Pass -> Witch's Hut (geçit vadisinin tarlaya açıldığı koruluk);
+  - orman kenarı: Cairn Hill (olay, dikili taşlar) -> Charcoal Camp -> Witch's Hut ya da Misty Marsh.
+- Hepsi büyük tarlaların ortasındaki **Valdren Keep**'te birleşir.
+- Sonra A'daki gibi [Pilgrim Road -> Abbey | Black Cathedral (nehir üstü tarla) -> Grave Field] -> Riverside Camp.
+- En çok seçim (5) ve en çok yeni düğüm.
+
+**A1-z High road / lake road (+2: Windy Moor, Old Quarry):**
+- Tek büyük karar Windy Moor'da; iki yol yalnızca Riverside Camp'ta birleşir.
+  - **Yüksek yol**, kuzey sıradağın üstünden: Old Quarry (elit) -> Dwarven Mine -> **Black Cathedral** (yüksek sıradağın altındaki kayalık omuz) -> St. Brann's Abbey -> Pilgrim Road. Kasaba yok; 2 elit, 2 hazine.
+  - **Göl yolu**: Iron Pass -> **Valdren Keep** (geçit vadisinin ağzı) -> Misty Marsh -> Witch's Hut -> Grave Field.
+- Takas: kasaba (iyileşme / asker) mi, ödül mü.
+
+**Yeniden adlandırma / taşıma:**
+- Yeni ad yok. Yeni düğümlerin adları araziye göre seçildi:
+  - Windy Moor: çayırlı tepe;
+  - Charcoal Camp: orman kenarı;
+  - Cairn Hill: tepe;
+  - Old Quarry: kayalık yamaç.
+- Taşınanlar:
+  - Eğitimdeki üç durak (yukarıda).
+  - Valdren Keep: x ve z'de geçit vadisinin ağzına, y'de tarlaların ortasına.
+  - Black Cathedral: x'te tarla, y'de nehir üstü tarla, z'de dağda kayalık omuz.
+  - Misty Marsh: her taslakta gölün kuzey kıyısında; ulaşım kuzeyden, su geçilmez.
+  - Dwarven Mine: x'te güney etek; y ve z'de doğu tepesinin arkasındaki vadi.
+- A1-x ve A1-y'de çıkan düğüm yok. A1-z'de de yok: Ashford-köprü arası 12 düğüm, hepsi korunur, Old Quarry eklenir.
+
+**Önerim: A1-y Braided valleys.**
+- Eğitimden sonra Ömer'in istediği "daha çok yol" hissini en iyi veren taslak bu.
+- Her vadinin karakteri ayrı: kayalık ve elit / geçit / orman ve göl.
+- Valdren Keep tarlaların ortasında, adıyla en uyumlu yerde. Sefer başına 20 durak (A1'den 1 fazla).
+- Daha sade ve okunur bir harita istenirse A1-x. Büyük ve net bir takas istenirse A1-z.
+
+**Açık sorular (Ömer):**
+- A1-x, A1-y ya da A1-z?
+- A1-z'nin yüksek yolunda kasaba yok (Valdren yalnızca göl yolunda). Bu takas uygun mu?
+- Sefer süresi: x 21, y ve z 20 durak (A1: 19).
+
+#### A1-x Clear spine: düğüm listesi (pos = valdoria.json birimi; durak 1-12 yeni yerleşim, King's Bridge ve sonrası A1 ile aynı)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| mill | Mill Road | battle | 1 | [0.146, 0.846] | altta | coastal fields (today's position) (eğitim) | raven |
+| raven | Ravenwood | battle | 2 | [0.224, 0.639] | altta | inside the great western forest (eğitim) | watch |
+| watch | Ruined Watchtower | elite | 3 | [0.281, 0.407] | altta | grassy rise on the forest's north edge (eğitim) | ash |
+| ash | Ashford Village | town | 4 | [0.229, 0.231] | altta | open grassland in the north-west (eğitim) | moor |
+| moor | Windy Moor **(yeni)** | battle | 5 | [0.336, 0.182] | üstte | grassy hills east of Ashford | iron, charcoal |
+| iron | Iron Pass | battle | 6 | [0.459, 0.380] | üstte | pass between the two snow peaks | valdren |
+| charcoal | Charcoal Camp **(yeni)** | battle | 6 | [0.336, 0.523] | altta | east edge of the great forest | valdren |
+| valdren | Valdren Keep | town | 7 | [0.448, 0.554] | üstte | mouth of the pass valley, edge of the great fields | mine, witch, marsh |
+| mine | Dwarven Mine | treasure | 8 | [0.536, 0.500] | üstte | south foot of the eastern snow peak | grave |
+| witch | Witch's Hut | event | 8 | [0.503, 0.606] | altta | grove in the fields above the lake | grave |
+| marsh | Misty Marsh | battle | 8 | [0.477, 0.731] | üstte | reeds on the lake shore | grave |
+| grave | Grave Field | battle | 9 | [0.582, 0.623] | üstte | fields above the river | pilgrim |
+| pilgrim | Pilgrim Road | battle | 10 | [0.633, 0.370] | altta | road under the forest | abbey, cath |
+| abbey | St. Brann's Abbey | treasure | 11 | [0.674, 0.259] | üstte | mountain abbey | river |
+| cath | Black Cathedral | elite | 11 | [0.636, 0.508] | altta | fields by the abbey road | river |
+| river | Riverside Camp | rest | 12 | [0.703, 0.477] | üstte | river bank | bridge |
+| bridge | King's Bridge | boss | 13 | [0.677, 0.628] | altta | ON the river (the crossing) | ashen |
+| ashen | Ashen Plain | battle | 14 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| siege | Siege Line | battle | 15 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| thorn | Thornwood Hollow | elite | 15 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| camp | Forward Camp | merchant | 16 | [0.932, 0.731] | altta | grass | road |
+| road | Ember Road | battle | 17 | [0.883, 0.583] | altta | grass, the road north from the camp | fold |
+| fold | Shepherd's Fold | event | 18 | [0.945, 0.556] | üstte | grass by the grove | head |
+| head | Riverhead | battle | 19 | [0.911, 0.435] | altta | east bank just below the river spring | gate |
+| gate | Gate of Cinders | battle | 20 | [0.945, 0.310] | altta | rocky foothills under the snow peak | castle |
+| castle | Castle Morvane | boss | 21 | [0.885, 0.176] | altta | high col between the snow peaks | — |
+
+#### A1-y Braided valleys: düğüm listesi (pos = valdoria.json birimi; durak 1-11 yeni yerleşim, King's Bridge ve sonrası A1 ile aynı)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| mill | Mill Road | battle | 1 | [0.146, 0.846] | altta | coastal fields (today's position) (eğitim) | raven |
+| raven | Ravenwood | battle | 2 | [0.224, 0.639] | altta | inside the great western forest (eğitim) | watch |
+| watch | Ruined Watchtower | elite | 3 | [0.281, 0.407] | altta | grassy rise on the forest's north edge (eğitim) | ash |
+| ash | Ashford Village | town | 4 | [0.229, 0.231] | altta | open grassland in the north-west (eğitim) | moor, cairn |
+| moor | Windy Moor **(yeni)** | battle | 5 | [0.355, 0.181] | üstte | grassy hills east of Ashford | quarry, iron |
+| cairn | Cairn Hill **(yeni)** | event | 5 | [0.336, 0.284] | altta | grass hill west of the snow peak | charcoal |
+| quarry | Old Quarry **(yeni)** | elite | 6 | [0.469, 0.253] | üstte | rocky slopes of the northern range | mine |
+| iron | Iron Pass | battle | 6 | [0.461, 0.381] | üstte | pass between the two snow peaks | witch |
+| charcoal | Charcoal Camp **(yeni)** | battle | 6 | [0.333, 0.538] | altta | east edge of the great forest | witch, marsh |
+| mine | Dwarven Mine | treasure | 7 | [0.599, 0.293] | altta | high valley behind the eastern snow peak | valdren |
+| witch | Witch's Hut | event | 7 | [0.458, 0.528] | altta | grove where the pass valley meets the fields | valdren |
+| marsh | Misty Marsh | battle | 7 | [0.457, 0.718] | üstte | reeds on the lake shore | valdren |
+| valdren | Valdren Keep | town | 8 | [0.576, 0.472] | altta | the great fields | pilgrim, cath |
+| pilgrim | Pilgrim Road | battle | 9 | [0.646, 0.418] | üstte | road under the forest | abbey |
+| cath | Black Cathedral | elite | 9 | [0.537, 0.613] | altta | fields above the river | grave |
+| abbey | St. Brann's Abbey | treasure | 10 | [0.661, 0.218] | üstte | mountain abbey | river |
+| grave | Grave Field | battle | 10 | [0.611, 0.593] | üstte | fields | river |
+| river | Riverside Camp | rest | 11 | [0.703, 0.519] | üstte | river bank | bridge |
+| bridge | King's Bridge | boss | 12 | [0.677, 0.628] | altta | ON the river (the crossing) | ashen |
+| ashen | Ashen Plain | battle | 13 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| siege | Siege Line | battle | 14 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| thorn | Thornwood Hollow | elite | 14 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| camp | Forward Camp | merchant | 15 | [0.932, 0.731] | altta | grass | road |
+| road | Ember Road | battle | 16 | [0.883, 0.583] | altta | grass, the road north from the camp | fold |
+| fold | Shepherd's Fold | event | 17 | [0.945, 0.556] | üstte | grass by the grove | head |
+| head | Riverhead | battle | 18 | [0.911, 0.435] | altta | east bank just below the river spring | gate |
+| gate | Gate of Cinders | battle | 19 | [0.945, 0.310] | altta | rocky foothills under the snow peak | castle |
+| castle | Castle Morvane | boss | 20 | [0.885, 0.176] | altta | high col between the snow peaks | — |
+
+#### A1-z High road / lake road: düğüm listesi (pos = valdoria.json birimi; durak 1-11 yeni yerleşim, King's Bridge ve sonrası A1 ile aynı)
+
+| id | Ad | Tür | Durak | pos | Yazı | Arazi | Bağlantı |
+|---|---|---|---|---|---|---|---|
+| mill | Mill Road | battle | 1 | [0.146, 0.846] | altta | coastal fields (today's position) (eğitim) | raven |
+| raven | Ravenwood | battle | 2 | [0.224, 0.639] | altta | inside the great western forest (eğitim) | watch |
+| watch | Ruined Watchtower | elite | 3 | [0.281, 0.407] | altta | grassy rise on the forest's north edge (eğitim) | ash |
+| ash | Ashford Village | town | 4 | [0.229, 0.231] | altta | open grassland in the north-west (eğitim) | moor |
+| moor | Windy Moor **(yeni)** | battle | 5 | [0.339, 0.165] | altta | grassy hills east of Ashford | quarry, iron |
+| quarry | Old Quarry **(yeni)** | elite | 6 | [0.419, 0.225] | altta | rocky slopes of the northern range | mine |
+| iron | Iron Pass | battle | 6 | [0.461, 0.380] | üstte | pass between the two snow peaks | valdren |
+| mine | Dwarven Mine | treasure | 7 | [0.531, 0.281] | üstte | high valley behind the eastern snow peak | cath |
+| valdren | Valdren Keep | town | 7 | [0.465, 0.531] | altta | mouth of the pass valley, edge of the great fields | marsh |
+| cath | Black Cathedral | elite | 8 | [0.607, 0.307] | altta | rocky shoulder under the high range | abbey |
+| marsh | Misty Marsh | battle | 8 | [0.461, 0.745] | altta | reeds on the lake shore | witch |
+| abbey | St. Brann's Abbey | treasure | 9 | [0.667, 0.221] | üstte | mountain abbey | pilgrim |
+| witch | Witch's Hut | event | 9 | [0.542, 0.676] | altta | fields above the river | grave |
+| pilgrim | Pilgrim Road | battle | 10 | [0.615, 0.435] | üstte | road under the forest | river |
+| grave | Grave Field | battle | 10 | [0.594, 0.539] | altta | fields | river |
+| river | Riverside Camp | rest | 11 | [0.691, 0.477] | altta | river bank | bridge |
+| bridge | King's Bridge | boss | 12 | [0.677, 0.628] | altta | ON the river (the crossing) | ashen |
+| ashen | Ashen Plain | battle | 13 | [0.760, 0.731] | altta | open grass east of the river | thorn, siege |
+| siege | Siege Line | battle | 14 | [0.839, 0.690] | altta | grass at the forest edge | camp |
+| thorn | Thornwood Hollow | elite | 14 | [0.833, 0.838] | altta | south-east forest (east end) | camp |
+| camp | Forward Camp | merchant | 15 | [0.932, 0.731] | altta | grass | road |
+| road | Ember Road | battle | 16 | [0.883, 0.583] | altta | grass, the road north from the camp | fold |
+| fold | Shepherd's Fold | event | 17 | [0.945, 0.556] | üstte | grass by the grove | head |
+| head | Riverhead | battle | 18 | [0.911, 0.435] | altta | east bank just below the river spring | gate |
+| gate | Gate of Cinders | battle | 19 | [0.945, 0.310] | altta | rocky foothills under the snow peak | castle |
+| castle | Castle Morvane | boss | 20 | [0.885, 0.176] | altta | high col between the snow peaks | — |
