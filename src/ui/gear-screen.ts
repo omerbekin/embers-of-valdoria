@@ -15,7 +15,9 @@ import {
   PRIMARY_BONUS_NAME,
   RARITY_IDS,
   SLOT_IDS,
-  STAT_IDS,
+  TIER_COLOR,
+  affixLines,
+  affixTip,
   canEquip,
   classWeaponFamilies,
   equipDiff,
@@ -23,17 +25,16 @@ import {
   heroPanel,
   heroStats,
   itemDef,
-  instanceLines,
+  instanceColor,
+  instanceRarity,
+  instanceSubtitle,
+  instanceSummary,
   effectLine,
-  instanceStats,
-  statRange,
-  itemSubtitle,
   itemValue,
   ITEMS,
   primaryCheck,
-  rarityDef,
   slotDef,
-  statLine,
+  type AffixLine,
   type Equipment,
   type ItemDef,
   type ItemInstance,
@@ -98,10 +99,7 @@ function slotIcon(d: ItemDef | undefined, slot: SlotId, color: string | null, si
 
 const avatarUrl = (classId: string): string | undefined => wikiFiles.avatars[`../../assets/avatars/${classId}.png`];
 const className = (id: string): string => content.classes[id]?.name ?? id;
-const rarityColor = (inst: ItemInstance | null | undefined): string => {
-  const d = inst ? itemDef(inst.id) : undefined;
-  return d ? rarityDef(d.rarity).color : '#5b4a33';
-};
+const rarityColor = (inst: ItemInstance | null | undefined): string => (inst && itemDef(inst.id) ? instanceColor(inst) : '#5b4a33');
 
 export interface GearOptions {
   get: () => CampaignState;
@@ -292,6 +290,10 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const info = skillId === 'passive' && def?.passive ? passiveTip(def.passive, curStats, afterStats) : skill ? skillTip(skill, curStats, afterStats) : null;
       if (!info) return;
       tip.replaceChildren(...skillTipNodes(info, skill && skillId !== 'passive' ? skill : undefined, hero.class, line));
+    } else if (t.dataset['affix'] !== undefined) {
+      // Stat kimliği olmayan affix satırı (element hasarı, delme, auralar...): affix açıklaması (Ömer 2026-10-11)
+      const info = affixTip({ name: t.dataset['affix'] ?? '', desc: t.dataset['desc'] ?? '', tier: (t.dataset['tier'] ?? 'C') as AffixLine['tier'], text: t.dataset['text'] ?? '', range: t.dataset['range'] ?? '' });
+      tip.replaceChildren(el('b', '', info.title), ...info.lines.map((l) => line(l)));
     } else {
       const info = curStats ? statTip(t.dataset['stat'] ?? '', curStats, t.dataset['delta'] ? afterStats : null) : null;
       if (!info) return;
@@ -314,7 +316,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     tip.style.top = `${y}px`;
     tipFor = t;
   };
-  const TIP_SEL = '[data-stat],[data-skill]';
+  const TIP_SEL = '[data-stat],[data-skill],[data-affix]';
   overlay.addEventListener('pointerover', (e) => {
     if (e.pointerType === 'touch' || tipPinned || drag) return;
     const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
@@ -611,8 +613,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (inst) cell.dataset['drag'] = `slot:${k}`;
       cell.append(slotIcon(d, k, d ? rarityColor(inst) : null, 1.3));
       const txt = el('div', 'gr-slot-text');
-      txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name), el('div', 'gr-slot-sub', d && inst ? instanceLines(inst).join(', ') : 'Empty'));
-      if (d && inst) cell.title = `${d.name}: ${instanceLines(inst).join(', ')}`;
+      txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name), el('div', 'gr-slot-sub', d && inst ? instanceSummary(inst, hero.class) : 'Empty'));
+      if (d && inst) cell.title = `${d.name}: ${instanceSummary(inst, hero.class)}`;
       cell.append(txt);
       slots.append(cell);
     }
@@ -683,7 +685,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const da = itemDef(a.id);
         const db = itemDef(b.id);
         if (!da || !db) return 0;
-        return SLOT_IDS.indexOf(da.slot) - SLOT_IDS.indexOf(db.slot) || RARITY_IDS.indexOf(db.rarity) - RARITY_IDS.indexOf(da.rarity) || db.ilvl - da.ilvl;
+        return SLOT_IDS.indexOf(da.slot) - SLOT_IDS.indexOf(db.slot) || RARITY_IDS.indexOf(instanceRarity(b)) - RARITY_IDS.indexOf(instanceRarity(a)) || db.ilvl - da.ilvl;
       });
     for (const inst of items) {
       const d = itemDef(inst.id);
@@ -707,8 +709,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       cell.dataset['drag'] = `bag:${inst.uid}`;
       cell.dataset['item'] = inst.id;
       cell.title = d.name;
-      cell.style.setProperty('--rc', rarityDef(d.rarity).color);
-      cell.append(slotIcon(d, d.slot, rarityDef(d.rarity).color));
+      cell.style.setProperty('--rc', instanceColor(inst));
+      cell.append(slotIcon(d, d.slot, instanceColor(inst)));
       grid.append(cell);
     }
     for (let i = items.length; i < src.bagSize; i++) grid.append(el('div', 'gr-item empty'));
@@ -721,21 +723,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const selDef = selInst ? itemDef(selInst.id) : undefined;
     if (selInst && selDef) {
       const name = el('div', 'gr-card-name', selDef.name);
-      name.style.color = rarityDef(selDef.rarity).color;
-      card.append(name, el('div', 'gr-card-sub', itemSubtitle(selDef)));
+      name.style.color = instanceColor(selInst);
+      card.append(name, el('div', 'gr-card-sub', instanceSubtitle(selInst)));
       const lines = el('div', 'gr-card-lines');
-      // Zarlanmış değer + aralık: "+4 Armor (3–5)" (Ömer 2026-10-10)
-      const rolled = instanceStats(selInst);
-      for (const k of STAT_IDS) {
-        const v = rolled[k];
-        if (!v) continue;
-        const line = statLineEl(k, v, 'gr-card-line gr-line', statRange(selDef, k));
-        line.dataset['stat'] = k;
-        lines.append(line);
-      }
-      const fx = effectLine(selDef); // Epic etkisi (madde 292)
+      // Affix satırları (Ömer 2026-10-11): kademe etiketi (C / B / A) + zarlanmış değer + aralık: "B  +6% Crit chance (5–7)"
+      for (const l of affixLines(selInst, hero.class)) lines.append(affixLineEl(l, 'gr-card-line gr-line'));
+      const fx = effectLine(selDef); // Legendary etkisi
       if (fx) lines.append(el('div', 'gr-card-line gr-line gr-effect', fx));
-      card.append(lines, el('div', 'gr-card-value', `Value ${itemValue(selDef)} gold`));
+      card.append(lines, el('div', 'gr-card-value', `Value ${itemValue(selInst)} gold`));
       const actions = el('div', 'gr-card-actions');
       if (sel?.kind === 'bag') {
         const cur = hero.equipment[selDef.slot];
@@ -823,7 +818,7 @@ function smallCard(root: HTMLElement, title: string, subtitle: string, items: st
   panel.append(el('div', 'gr-title', title));
   if (subtitle) panel.append(el('div', 'gr-mini-sub', subtitle));
   const list = el('div', 'gr-mini-list');
-  for (const id of items) if (itemDef(id)) list.append(itemRow(id));
+  for (const id of items) if (itemDef(id)) list.append(itemRow({ id }));
   if (items.length) panel.append(list);
   for (const x of extra) panel.append(el('div', 'gr-mini-extra', x));
   const foot = el('div', 'gr-foot');
@@ -842,9 +837,12 @@ function smallCard(root: HTMLElement, title: string, subtitle: string, items: st
  * Item stat satırı: stat ikonu + "+2 Magic Armor" (Gear kartı, Spoils / teslim kartları; ikon kaynağı savaş HUD'ıyla aynı:
  * src/ui/stat-tips.ts > statIconUrl). Phaser ekranları (Endless ödül / tüccar) `statIcon(id)` ile aynı ikonu çizer.
  */
-export function statLineEl(k: string, v: number, cls = 'gr-line', range?: [number, number]): HTMLDivElement {
+export function affixLineEl(l: AffixLine, cls = 'gr-line', withRange = true): HTMLDivElement {
   const row = el('div', cls);
-  const url = statIconUrl(k);
+  const tag = el('span', 'gr-tier', l.tier);
+  tag.style.color = TIER_COLOR[l.tier];
+  row.append(tag);
+  const url = l.stat ? statIconUrl(l.stat) : '';
   if (url) {
     const i = el('img', 'gr-sico');
     i.src = url;
@@ -852,21 +850,31 @@ export function statLineEl(k: string, v: number, cls = 'gr-line', range?: [numbe
     i.draggable = false;
     row.append(i);
   }
-  row.append(el('span', '', statLine(k as (typeof STAT_IDS)[number], v, range)));
+  row.append(el('span', '', `${l.text}${withRange && l.range ? ` (${l.range})` : ''}`));
+  // İpucu: stat kimliği olan affix stat açıklamasını, diğerleri affix açıklamasını gösterir
+  if (l.stat) row.dataset['stat'] = l.stat;
+  else {
+    row.dataset['affix'] = l.name;
+    row.dataset['desc'] = l.desc ?? '';
+    row.dataset['tier'] = l.tier;
+    row.dataset['text'] = l.text;
+    row.dataset['range'] = l.range;
+  }
   return row;
 }
 
 /** Tek item satırı (Spoils / teslim kartları). `gone`: geride kalan (soluk). */
-function itemRow(id: string, gone = false): HTMLDivElement {
-  const d = itemDef(id)!;
+function itemRow(src: Pick<ItemInstance, 'id' | 'rolls'> & { uid?: string }, gone = false): HTMLDivElement {
+  const d = itemDef(src.id)!;
+  const color = instanceColor(src);
   const row = el('div', `gr-mini-row${gone ? ' gone' : ''}`);
-  row.append(slotIcon(d, d.slot, rarityDef(d.rarity).color, 0.9, gone));
+  row.append(slotIcon(d, d.slot, color, 0.9, gone));
   const t = el('div', 'gr-mini-text');
   const n = el('div', 'gr-mini-name', d.name);
-  if (!gone) n.style.color = rarityDef(d.rarity).color;
+  if (!gone) n.style.color = color;
   const lines = el('div', 'gr-mini-lines');
-  lines.append(el('span', 'gr-mini-subt', itemSubtitle(d)));
-  for (const k of STAT_IDS) if (d.stats[k]) lines.append(statLineEl(k, d.stats[k]!, 'gr-line inline'));
+  lines.append(el('span', 'gr-mini-subt', instanceSubtitle(src)));
+  for (const l of affixLines(src)) lines.append(affixLineEl(l, 'gr-line inline', false));
   const fx = effectLine(d);
   if (fx) lines.append(el('div', 'gr-line inline gr-effect', fx));
   t.append(n, lines);
@@ -904,15 +912,17 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
     const drop = s.pendingLoot;
     panel.replaceChildren();
     if (!drop) return;
-    const ids = drop.items.map((u) => s.inventory.find((i) => i.uid === u)?.id).filter((x): x is string => !!x);
+    const insts = drop.items.map((u) => s.inventory.find((i) => i.uid === u)).filter((x): x is ItemInstance => !!x);
+    const ids = insts.map((i) => i.id);
     const left = (drop.left ?? []).filter((id) => itemDef(id));
     panel.append(el('div', 'gr-title', drop.kind === 'treasure' ? 'Treasure' : 'Spoils'));
     if (ids.length) panel.append(el('div', 'gr-mini-sub', `${ids.length} new item${ids.length > 1 ? 's' : ''} in the bag`));
     const list = el('div', 'gr-mini-list');
     // Nadir düşüş (madde 297): altın-turuncu parıltılı satır + "Rare drop" etiketi
     const rareLeft = [...(drop.rare ?? [])];
-    for (const id of ids) {
-      const row = itemRow(id);
+    for (const inst of insts) {
+      const id = inst.id;
+      const row = itemRow(inst);
       const ri = rareLeft.indexOf(id);
       if (ri >= 0) {
         rareLeft.splice(ri, 1);
@@ -928,7 +938,8 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
       panel.append(el('div', 'gr-card-warn', `Bag full: ${left.length} item${left.length > 1 ? 's' : ''} left behind. Make room to take ${left.length > 1 ? 'them' : 'it'}, or ${left.length > 1 ? 'they are' : 'it is'} lost when you continue.`));
       const lost = el('div', 'gr-mini-list');
       left.forEach((id, i) => {
-        const row = itemRow(id, true);
+        const rolls = drop.leftRolls?.[i];
+        const row = itemRow({ id, ...(rolls ? { rolls } : {}) }, true);
         const take = btn('gr-btn', 'Take', () => {
           on.set(takeLeftover(on.get(), i));
           render();
@@ -950,14 +961,14 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
           render();
         });
         cell.title = d.name;
-        cell.style.setProperty('--rc', rarityDef(d.rarity).color);
-        cell.append(slotIcon(d, d.slot, rarityDef(d.rarity).color));
+        cell.style.setProperty('--rc', instanceColor(inst));
+        cell.append(slotIcon(d, d.slot, instanceColor(inst)));
         grid.append(cell);
       }
       panel.append(grid);
       const picked = s.inventory.find((i) => i.uid === pick);
       if (picked) {
-        const row = itemRow(picked.id);
+        const row = itemRow(picked);
         row.append(discardButton(picked, confirm === picked.uid, () => {
           confirm = picked.uid;
           render();

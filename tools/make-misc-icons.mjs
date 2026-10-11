@@ -12,6 +12,8 @@
 //      (yüksek geçirgen parlaklık ~5 px'te ters, ~10 px'te aynı işaret) silinir; düz / yumuşak geçişli iç parçalar (mum, parşömen) bu sınamayı geçmez.
 //   2b) Renkli yarı saydam hale ya da kabarcık altında görünen dama: aynı imzayla bulunur, renk ve alfa geri çözülür (checkerShowThrough).
 //   3) Kenar yumuşatma: silinen alana komşu açık-gri kenar halkası saydamlaşır, sonra alfa 1 px tüylenir.
+// fix4-sheet.png (2x2, gerçek saydam; Ömer 2026-10-11): dama kalıntısı kalan element/dark, element/holy, element/arcane ve relic/ember_of_valdren
+// için temiz yeniden çizim; en son işlenir ve world-sheet'ten gelen dosyaların üzerine yazar.
 // Doğrulama: --check=<klasör> her ikonu koyu ve açık zemin üstünde (128 ve 24 px) bir kontrol sayfasına yazar (<klasör>/misc-icons-check-<sayfa>.png).
 //
 // Yeniden üretmek için: node tools/make-misc-icons.mjs [--debug] [--check=<klasör>]
@@ -62,6 +64,18 @@ const SHEETS = [
       [['class', 'antimage'], ['class', 'mage'], ['class', 'druid'], ['class', 'undead'], ['class', 'hexer']],
       [['class', 'gambler'], ['node', 'battle'], ['node', 'elite'], ['node', 'boss'], ['node', 'event']],
       [['node', 'town'], ['node', 'treasure'], ['node', 'rest'], ['node', 'merchant'], ['node', 'start']],
+    ],
+  },
+  // Dama kalıntısı kalan 4 ikonun temiz (gerçek saydam) yeniden çizimi (Ömer 2026-10-11): world-sheet hücrelerinin ÜZERİNE yazar (en son işlenir).
+  {
+    file: 'fix4-sheet.png',
+    checker: false,
+    alphaBox: 40,
+    cols: 2,
+    rows: 2,
+    grid: [
+      [['element', 'dark'], ['element', 'holy']],
+      [['element', 'arcane'], ['relic', 'ember_of_valdren']],
     ],
   },
 ];
@@ -397,6 +411,8 @@ function dropEdgeStrays(rgba, W, x0, y0, x1, y1) {
 
 const made = [];
 for (const sheet of SHEETS) {
+  const COLS_S = sheet.cols ?? COLS;
+  const ROWS_S = sheet.rows ?? ROWS;
   const src = join('assets/source/misc-icons', sheet.file);
   let rgba;
   let W;
@@ -415,20 +431,20 @@ for (const sheet of SHEETS) {
     rgba = data;
   }
   const alpha = (x, y) => rgba[(y * W + x) * 4 + 3];
-  const cy = cuts(profile(alpha, W, H, sheet.alphaBox, 'y'), H, ROWS);
-  const cxs = [...Array(ROWS).keys()].map((r) => cuts(profile(alpha, W, H, sheet.alphaBox, 'x', cy[r], cy[r + 1]), W, COLS));
+  const cy = cuts(profile(alpha, W, H, sheet.alphaBox, 'y'), H, ROWS_S);
+  const cxs = [...Array(ROWS_S).keys()].map((r) => cuts(profile(alpha, W, H, sheet.alphaBox, 'x', cy[r], cy[r + 1]), W, COLS_S));
   if (DEBUG) console.log(`${sheet.file}: rows ${cy.join(' ')} | cols ${cxs.map((c) => c.join(' ')).join(' / ')}`);
   // komşu ikondan hücreye taşan parçalar (ör. Elite miğferinin sorgucu Druid hücresinde): hücre kenarına değen, toplamın %15'inden küçük bağlı
   // bileşenler silinir (8 komşu, düşük alfa eşiğiyle hale de bileşene dahil)
   let strays = 0;
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) strays += dropEdgeStrays(rgba, W, cxs[r][c], cy[r], cxs[r][c + 1], cy[r + 1]);
+  for (let r = 0; r < ROWS_S; r++)
+    for (let c = 0; c < COLS_S; c++) strays += dropEdgeStrays(rgba, W, cxs[r][c], cy[r], cxs[r][c + 1], cy[r + 1]);
   if (DEBUG) console.log(`  taşan parça silindi: ${strays}`);
   const img = sharp(rgba, { raw: { width: W, height: H, channels: 4 } });
   const flat = await img.png().toBuffer();
   const checks = [];
-  for (let r = 0; r < ROWS; r++)
-    for (let c = 0; c < COLS; c++) {
+  for (let r = 0; r < ROWS_S; r++)
+    for (let c = 0; c < COLS_S; c++) {
       const [group, name] = sheet.grid[r][c];
       const cx = cxs[r];
       const b = bbox(alpha, sheet.alphaBox, cx[c], cy[r], cx[c + 1], cy[r + 1]);
@@ -468,8 +484,8 @@ for (const sheet of SHEETS) {
     const cellW = 128 * 2 + 24 * 2 + 40;
     const comps = [];
     checks.forEach((f, i) => {
-      const x = (i % COLS) * cellW;
-      const y = Math.floor(i / COLS) * 140;
+      const x = (i % COLS_S) * cellW;
+      const y = Math.floor(i / COLS_S) * 140;
       comps.push({ input: { create: { width: 136, height: 136, channels: 4, background: '#14100c' } }, left: x, top: y });
       comps.push({ input: { create: { width: 136, height: 136, channels: 4, background: '#e9e4d8' } }, left: x + 136, top: y });
       comps.push({ input: f, left: x + 4, top: y + 4 });
@@ -479,14 +495,14 @@ for (const sheet of SHEETS) {
     });
     const small = await Promise.all(checks.map((f) => sharp(f).resize(24, 24, { kernel: sharp.kernel.lanczos3 }).png().toBuffer()));
     small.forEach((buf, i) => {
-      const x = (i % COLS) * cellW;
-      const y = Math.floor(i / COLS) * 140;
+      const x = (i % COLS_S) * cellW;
+      const y = Math.floor(i / COLS_S) * 140;
       comps.push({ input: buf, left: x + 280, top: y + 8 });
       comps.push({ input: buf, left: x + 280, top: y + 44 });
     });
     const out = join(CHECK, `misc-icons-check-${sheet.file}`);
-    await sharp({ create: { width: cellW * COLS, height: 140 * ROWS, channels: 4, background: '#555555' } }).composite(comps).png().toFile(out);
+    await sharp({ create: { width: cellW * COLS_S, height: 140 * ROWS_S, channels: 4, background: '#555555' } }).composite(comps).png().toFile(out);
     console.log(`kontrol sayfası: ${out}`);
   }
 }
-console.log(`${made.length} icons -> ${OUT}/<group>/<name>.png (128) + small/ (64)`);
+console.log(`${new Set(made).size} icons -> ${OUT}/<group>/<name>.png (128) + small/ (64)`);

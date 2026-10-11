@@ -76,7 +76,7 @@ Karakter sprite'ları sabit (item görünüşü değiştirmez), bu yüzden kıs�
 
 Neden 5: oyuncuların okuduğu evrensel dil (gri-yeşil-mavi-mor-turuncu); 4 kademe Epic/Legendary arasındaki "özel" hissi kaybettirir, 6+ kademe küçük bütçede (4.1) birbirinden ayırt edilemez.
 
-### 1.3a Nadirlik = stat sayısı + güç, yuva ana statı, stat zarları (Ömer onayı 2026-10-10)
+### 1.3a Nadirlik = stat sayısı + güç, yuva ana statı, stat zarları (Ömer onayı 2026-10-10; 2026-10-11'den beri 1.3b geçerli)
 
 Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmının YERİNE geçer.
 
@@ -104,6 +104,60 @@ Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmı
 - **Stat zarları (görünür aralık, 2026-10-10 düzeltmesi):** her stat katalog değerinin (aralığın ortası) iki yanına **simetrik**, **en az bir adım** (`max(adım, değer x %15)`, adıma yuvarlanır) aralıkta seed'li zarla atılır; tekdüze zar + simetri => beklenen değer = katalog değeri (denge sabit). Adımlar `stats[].step`: düz statlar 1, yüzde statlar (Might, kritik, isabet, kaçınma) 0,5, MP 5, kritik hasarı 5, hız 0,5. Değer tek adımsa (+1 STR, +0,5 hız) aralık yok. Sonuç: 52 item'in 51'inde en az bir stat aralık gösterir (108 statın 82'si); örn. +2 Armor -> 1–3, +3% Crit -> 2,5–3,5. Sefer loot'u loot seed'inden (düşüş başına; deneme sayısı değiştirmez), Endless koşu seed'inden zarlanır. **Zarlar örnekte kayda yazılır** (`ItemInstance.rolls`): yeniden yükleme yeniden atmaz. Okunurken güncel aralığa sıkıştırılır (veri dengelenirse eski zar taşmaz). Kartlarda ve ipuçlarında aralık görünür: "+4 Max HP (3–5)".
 - **Eski kayıtlar:** zarı olmayan item'ler aralığın ortasını (= katalog değeri) kullanır; hiçbir şey bozulmaz. Bozuk zar alanı olan item kayıttan atılır (oyun çökmez).
 - **İçerik:** 52 item'in id'si, adı, yuvası, ailesi ve nadirliği korundu (ikonlar id'ye boyalı); statlar yeni kurallara göre yeniden yazıldı. Sığmayan birkaç Common'ın ilvl'si kaydırıldı (Padded Gambeson 2->3, Quilted Jack 5->4, Flanged Mace 3->4, Turnshoes 2->5, Hobnailed Boots 5->4): zırh / kaçınma tek statının adımı küçük bütçeye sığmıyordu.
+
+### 1.3b Affix tier sistemi (Ömer onayı 2026-10-11; 1.3a'nın YERİNE geçer)
+
+**Kural:** nadirlik = affix sayısı. Her kalite tam BİR affix daha açar; affix, kademesinin havuzundan çekilir:
+
+| Nadirlik | Affix'ler |
+|---|---|
+| Common | C |
+| Uncommon | C, C |
+| Rare | C, C, B |
+| Epic | C, C, B, A |
+| Legendary | C, C, B, A + kendi benzersiz Legendary etkisi |
+
+- D kademesi yok.
+- **Kalite statı güçlendirmez.** Eski nadirlik bütçe çarpanları (x1 / 1,4 / 1,85 / 2,3 / 2,85) kalktı. Affix değeri yalnızca item seviyesiyle büyür: `değer = (base + perIlvl x ilvl) x affixRules.power` (`data/items.json > affixDefs`; `affixRules.power` = tüm affix'lerin ortak denge düğmesi, şu an 1).
+  - Kalibrasyon (uygulama, 2026-10-11): her affix'in item seviyesindeki değeri kabaca aynı "güç" (IP) taşır: C ≈ 0,6 + 0,1 x ilvl IP, B bunun 1,2 katı, A 1,6 katı; sonra hepsi `affixRules.power` (1,5; 3.2b) ile çarpılır. Örnek ilvl 10 (power 1,5): +6 Armor, +6 Max HP, +6% Physical damage, +9,5% Crit chance, +24% Armor penetration, +7,5% Global damage, +4 ana stat (ana stat, tüm statlar, hız ve Immunity power'dan etkilenmez).
+  - Sabit olanlar: Ultimate -1 (seviye yok); Immunity tur sayısı 2 (ilvl 12'de 3, 24'te 4); Potency'nin "+1 tur"u.
+- Her örnek kendi zarını taşır (seed'li, görünür aralık ±%15, adıma yuvarlanır); aralık da seviyeye göredir.
+- **Katalog = taban item:** ad, yuva, silah ailesi, ilvl, ikon ve ilk (ana) C affix'i (`main`) katalogda. Diğer affix'ler örnek oluşurken havuzdan çekilir. Bir item'de aynı affix iki kez olmaz.
+- Legendary'lerin dört affix'i katalogda sabit; değerleri yine seviyeye göre zarlanır.
+- **Silahın ana affix'i** bir hasar türü (C), ailenin listesinden (`weaponFamilies[].mains`): balta ve hançer fiziksel ya da arcane, topuz fiziksel ya da holy, yay fiziksel, asa fire / ice / nature / dark, tılsım fiziksel ya da dark. Örnek kimin için zarlandıysa (Endless teklifi, eski kaydın takılı silahı) onun skill elementlerinden seçilir; yoksa listeden tekdüze.
+- **Kaldırılanlar:**
+  - Eski 11 Epic etkisi kalktı; Epic gücünü yalnızca A affix'inden alır.
+  - Might kalktı; "Global damage %" artık bir A affix'i.
+  - Legendary etkileri duruyor.
+- **Yuva sınırları:**
+  - Delme ve kritik affix'leri yalnızca silah ve eldivende.
+  - Auralar yalnızca zırh ve tılsımda.
+  - Kaçınma yalnızca bot ve eldivende.
+  - Geri kalan her şey her yuvada.
+- **Havuzlar (Ömer'in seçimi):**
+  - C: Armor, Max HP, Physical / Fire / Ice / Holy / Arcane / Nature / Dark damage %, Accuracy, Evasion, Max MP, HP regen, MP regen, Shield power %, DoT damage %.
+  - B: Crit chance, Crit damage, Speed, Magic armor, Damage vs elite & boss %, Armor penetration %, Magic penetration %, MP cost -%, Life leech %, Quick start, Debuff resistance (debuff'tan tamamen kaçınma şansı).
+  - A: Primary attribute (sınıfa göre), All attributes, Global damage %, Global defense (alınan hasar -%), Speed %, Max HP %, Damage aura (yan komşu dostlar), Guard aura (yan komşu dostlar), Recovery (savaş sonrası can ve MP, yalnızca takan), Ultimate initial cooldown -1 (sabit), All elemental damage %, Keenness (kritik şansı + kritik hasarı), Potency (DoT gücü + debuff'lar 1 tur uzun), Immunity (zarla seçilen TEK debuff'a savaşın ilk N turunda bağışıklık; N = 2, seviyeyle biraz artar), Mana mastery (max MP % + MP regen), Support power (verdiği şifa ve kalkan %), Summon mastery (çağrıların hasarı ve canı %), Resource mastery (Rage kazancı % + MP regen), Endurance (Lucky Escape şansı + düşük canda alınan hasar azalır).
+- **Ömer'in notları:**
+  - Kalkan gücü, takanın KAYNAK olduğu her kalkana işler (kendine ya da başkasına).
+  - Debuff resistance küçük bir "tamamen kaçınma" şansıdır; Immunity ile üst üste binmez (Immunity'nin süresinde zar atılmaz).
+- **Legendary havuzu:** 10 eski Legendary + 8 yeni; yeniler sonraki bölüm havuzlarında (minChapter 2-3, ilvl 16-21):
+  | Item (yuva) | Etki | Kim |
+  |---|---|---|
+  | Iron Retort (zırh) | Iron Retort: sana yakın dövüşle isabet ettiren 2 tur Slow | Warrior, Defender, Paladin, Anti-Mage |
+  | Serrated Edge (hançer) | Serrated Edge: kritik vuruş hedefe 2 tur Wound + Burning | hançer kullananlar |
+  | War-Drummer's Gauntlets (eldiven) | Battle Rhythm: öldürünce 2 tur Haste + maks MP'nin %20'si | herkes |
+  | Helm of the Last Stand (miğfer) | Last Stand: can %30 altına ilk inişte 2 tur Fortified + tüm debuff'lar silinir | herkes |
+  | Flashpowder Locket (tılsım) | Blinding Opener: savaştaki ilk hasar skill'inin isabet ettiği en çok 3 düşmana 1 tur Blinded | herkes |
+  | Watchman's Boots (bot) | Vigil: Rest ayrıca 2 tur Blessed + maks canın %10'u şifa | herkes |
+  | Avenger's Maul (topuz) | Vengeance: yan komşu dost düşünce 2 tur Haste + Fortified | topuz kullananlar |
+  | Bones of the Quarry (tılsım silahı) | Marked Quarry: elit / boss'a isabet 1 tur Jinxed | Gambler, Hexer |
+  - Hunter's Mark adı DEX primary bonusunda kullanıldığı için etkinin oyun içi adı **Marked Quarry** (id `huntersmark` kalır).
+  - Boss'lar isabet/kritik debuff'larına bağışık (madde 272): Marked Quarry ve Blinding Opener boss'a işlemez, elitlere işler.
+  - Heart of the Forge'un şifa oranı %10 -> %6.
+  - Blinding Opener yalnızca o vuruşun kendi alanındaki hedeflere ve en çok 3 düşmana işler.
+- **Recovery:** zaferde yalnızca takan ve sağ kalan kahramana; sefer can taşımasına (`victoryHeal` üstüne) eklenir; Endless'ta can ve MP'ye.
+- **Kayıt göçü:** eski item'ler (eski stat zarlı) en yakın yeni biçime çevrilir. Eski statlara karşılık gelen affix'ler tercih edilir, eksik affix'ler uid'den seed'li çekilir; hiçbir durumda çökmez.
 
 ### 1.4 Item seviyesi (ilvl) ve bölüm kademesi
 
@@ -294,7 +348,24 @@ IP kontrolü: `slotWeight x B(ilvl) x rarityMult` (±%10). Stat IP'leri 1.5 tabl
 - **Takım boyutuna göre ölçek** gerekçesi: item ihtiyacı kahraman sayısıyla orantılı (6 x kahraman yuva). Tutorial'da 1-2 kişiyken az item düşer; Ashford'da tutorial takımı ayrılırken **takılı item'leri torbaya bırakır, yeni karakterler onları takar** ve item takma tutorial'ı orada başlar (karar 7; kayıt tarafı aşama 0'da hazır: `farewell` item'leri torbaya taşır), yeni bölük boş başlamaz.
 - Beklenen toplam (3 bölüm, ~10 savaş/bölüm): bölüm 1 ~8-10, bölüm 2 ~13-15, bölüm 3 ~14-16 item → ~38 item; 24 yuva ~1,5 kez yenilenir. Yeterince "yeni şey" ama envanter boğulmaz.
 
-### 3.2 Nadirlik eğrisi (bölüme göre; normal savaş düşüşü, %)
+### 3.2b Düşüş nadirliği: tek tablo (Ömer onayı 2026-10-11; 3.2'deki bölüm eğrisinin YERİNE geçer)
+
+- **Tek ağırlık tablosu** (`data/items.json > dropRarity`): sefer loot'u, Endless ödül kartları ve Endless tüccar stoğu aynı tabloyu kullanır. Önce nadirlik zarlanır, sonra taban item seçilir (taban nadirlikten bağımsız; örnek nadirliğini zarında taşır).
+- Taban ağırlıklar: Common 70, Uncommon 22, Rare 6,5, Epic 1,5. Legendary bu tabloda YOK (yalnızca ortak nadir düşüş zarı, 3.6 / madde 297).
+- **Kayma (hafif, tavanlı):** kayma = 0,012 x item seviyesi + elit 0,15 / boss 0,3 / hazine 0,15, en çok 0,5. Kademe i'nin ağırlığı x(1 + kayma x i) (Common sabit).
+
+| Durum | Common | Uncommon | Rare | Epic |
+|---|---|---|---|---|
+| Başlangıç (ilvl 0-3) | %69-70 | %22 | %7 | %1,5 |
+| ilvl 10, normal | %67 | %23,5 | %7,7 | %1,9 |
+| ilvl 12, boss | %60 | %27 | %10 | %3 |
+| Tavan (kayma 0,5) | %58,5 | %27,6 | %10,9 | %3,1 |
+
+- Endless: elit / boss kartlarının eski "en az Rare / en az Epic" tabanı kalktı (yerine kayma); kart sayısı (2) ve seviye eki (+5 / +10) aynen. Zarlanan nadirlikte yükseltme yoksa bir alt nadirlik denenir.
+- Sefer: boss ve hazine ilk zaferde en az bir Rare (3.1) ve Rare pity (3.3) KORUNDU; bu yüzden seferde Rare oranı Endless'tan yüksek (bölge II-III ~%24).
+- **Denge düğmesi:** daha az yüksek nadirlik = daha az item gücü; Endless bandında kalmak için `affixRules.power` 1 -> 1,5 (iri adımlı ana stat, tüm statlar, hız ve Immunity tur sayısına işlemez: `noPower`).
+
+### 3.2 Nadirlik eğrisi (bölüme göre; normal savaş düşüşü, %) — 2026-10-11'den beri 3.2b geçerli
 
 | Bölüm | Common | Uncommon | Rare | Epic | Legendary |
 |---|---|---|---|---|---|

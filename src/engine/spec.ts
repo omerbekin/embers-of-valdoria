@@ -1,4 +1,5 @@
 import type { DamageSpec } from './formulas';
+import { outgoingDamageMult } from './stats';
 import type { BonusScale, Combatant, Formulas, SkillEffect, Stats } from './types';
 
 export type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
@@ -39,14 +40,19 @@ export function damageSpecFor(
   }
   // Opportunist (bonusVsStatus): hedefte listedeki durumlardan biri (Wound/Slow/Stun) varsa hasar x(1 + bonus); kritik ayrıca son çarpandır
   if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => pe.statuses.includes(s.kind))) passiveMult *= 1 + pe.bonus;
-  const mult = tagBonus * weak * powerMult * passiveMult;
+  // Item affix'leri (Ömer 2026-10-11): Global damage x element hasarı; yoksa çarpılmaz (bugünkü savaşlar birebir aynı)
+  const out = outgoingDamageMult(actor.stats, element);
+  const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
+  // Zırh / büyü zırhı delme (affix): skill'in kendi ignoreDefense'iyle çarpımsal birleşir
+  const pen = effect.damageType === 'physical' ? (actor.itemEffects?.armorPen ?? 0) : (actor.itemEffects?.magicPen ?? 0);
+  const ignore = pen > 0 ? 1 - (1 - (effect.ignoreDefense ?? 0)) * (1 - Math.min(1, pen)) : effect.ignoreDefense;
   const bonus = effect.bonusScale ? bonusScaleRaw(effect.bonusScale, attackerStats ?? actor.stats) * mult : 0;
   return {
     damageType: effect.damageType,
     scale: effect.scale,
     power: effect.power * mult,
     ...(bonus ? { bonus } : {}),
-    ...(effect.ignoreDefense ? { ignoreDefense: effect.ignoreDefense } : {}),
+    ...(ignore ? { ignoreDefense: ignore } : {}),
     extra,
     takenMultiplier: (target.summoned ? formulas.summon.damageTakenMultiplier : 1) * extraTaken * dealtMult, // Hunter's Mark tüm vuruşu (eklerle birlikte) çarpar
   };

@@ -41,7 +41,9 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
   const leftRolls: Array<ItemInstance['rolls']> = [];
   res.items.forEach((id, i) => {
     // Stat zarları loot seed'inden (Ömer 2026-10-10): aynı düşüş = aynı değerler; kayda yazılır, yüklemede yeniden atılmaz
-    const rolled = makeItem(id, '', rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i));
+    // Nadirlik loot zarından (tek tablo, Ömer 2026-10-11); nadir düşüş (Legendary) kendi nadirliğiyle
+    const rarity = res.rarities[i];
+    const rolled = makeItem(id, '', rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i), rarity ? { rarity } : {});
     if (t.inventory.length < BAG_SIZE) {
       const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
       t.inventory.push(inst);

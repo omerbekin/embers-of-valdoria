@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { content } from '../engine';
 import { heroById, type CampaignState, type Hero, type NodeType } from '../campaign';
-import { SLOT_IDS, fmtPanel, heroPanel, itemDef, itemLines, rarityDef, slotDef, type SlotId } from '../progression';
+import { SLOT_IDS, fmtPanel, heroPanel, instanceColor, instanceSummary, itemDef, slotDef, type SlotId } from '../progression';
 import { characterTexture } from './assets';
 import { classAvatar } from './menu-ui';
 import { EL, diamondPts, elBody, elButton, elText, fitW } from './elegant-ui';
@@ -189,7 +189,7 @@ export function openHeroPanel(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
 function slotRow(scene: Phaser.Scene, hero: Hero, slot: SlotId, x: number, y: number, w: number, h: number, left: boolean, run: () => void): Phaser.GameObjects.Container {
   const inst = hero.equipment[slot];
   const d = inst ? itemDef(inst.id) : undefined;
-  const col = d ? rarityDef(d.rarity).color : EL.DIM;
+  const col = d && inst ? instanceColor(inst) : EL.DIM;
   const colN = Phaser.Display.Color.HexStringToColor(col).color;
   const c = scene.add.container(x, y);
   const g = scene.add.graphics();
@@ -206,7 +206,7 @@ function slotRow(scene: Phaser.Scene, hero: Hero, slot: SlotId, x: number, y: nu
   drawSlotGlyph(ic, slot, d ? colN : 0x7d705a, 1, icX, h / 2);
   const tx = left ? 72 : w - 72;
   const name = fitW(elText(scene, tx, h / 2 - 11, d ? d.name : slotDef(slot).name, 15, d ? col : EL.DIM, { em: 0.05 }).setOrigin(left ? 0 : 1, 0.5), w - 90);
-  const sub = fitW(elBody(scene, tx, h / 2 + 13, d ? itemLines(d).join(' · ') : 'Empty slot', 15, EL.MUTED).setOrigin(left ? 0 : 1, 0.5), w - 90);
+  const sub = fitW(elBody(scene, tx, h / 2 + 13, d && inst ? instanceSummary(inst, hero.class) : 'Empty slot', 15, EL.MUTED).setOrigin(left ? 0 : 1, 0.5), w - 90);
   const zone = scene.add.zone(w / 2, h / 2, w, h).setInteractive({ useHandCursor: true });
   zone.on('pointerover', () => {
     hover = true;

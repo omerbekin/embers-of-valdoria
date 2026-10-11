@@ -25,6 +25,7 @@ import {
   type EndlessRun,
   type WaveKind,
 } from '../endless';
+import { RARITY_IDS, clampRarity, itemDef } from '../progression/items';
 
 export interface EndlessSimOptions {
   runs: number;
@@ -71,6 +72,8 @@ export interface RunRec {
   relics: string[];
   gearScore: number;
   waves: WaveRec[];
+  /** Teklif edilen item'ler (ödül kartları + tüccar stoğu): [temizlenen dalga, nadirlik dizini (0 = Common)] (Ömer 2026-10-11: nadirlik dağılımı raporu). */
+  drops?: Array<[number, number]>;
 }
 
 export interface EndlessSimResult {
@@ -130,6 +133,11 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
     const rng = new Rng(seed * 104729 + 3);
     let run = newRun(seed, classes, '2026-01-01T00:00:00.000Z', cfg);
     const waves: WaveRec[] = [];
+    const drops: Array<[number, number]> = [];
+    const note = (itemId: string, rolls: unknown) => {
+      const d = itemDef(itemId);
+      if (d) drops.push([run.stats.cleared, RARITY_IDS.indexOf(clampRarity(d, (rolls as { rarity?: never } | undefined)?.rarity))]);
+    };
     let capped = false;
     let guard = 0;
     while (run.phase !== 'over' && guard++ < maxWave * 10) {
@@ -162,9 +170,11 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
         if (relics === 'pick' && offer.length) run = chooseRelic(run, offer[rng.int(0, offer.length - 1)]!);
         else run = { ...run, phase: run.offer ? 'reward' : 'ready', relicOffer: undefined };
       } else if (run.phase === 'reward') {
+        for (const c of run.offer ?? []) if (c.kind === 'item') note(c.itemId, c.rolls);
         run = chooseReward(run, pickReward(run, gear), cfg);
         if (gear === 'best' && run.phase !== 'over') run = equipBestRun(run);
       } else if (run.phase === 'shop') {
+        for (const e of run.shop ?? []) note(e.itemId, e.rolls);
         if (gear === 'best') {
           for (;;) {
             const shop = run.shop ?? [];
@@ -181,7 +191,7 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
         } else run = leaveShop(run);
       } else break;
     }
-    res.runs.push({ seed, classes, reached: capped ? maxWave + 1 : run.wave, capped, relics: [...(run.relics ?? [])], gearScore: gearScore(run), waves });
+    res.runs.push({ seed, classes, reached: capped ? maxWave + 1 : run.wave, capped, relics: [...(run.relics ?? [])], gearScore: gearScore(run), waves, drops });
   }
   return res;
 }
@@ -275,6 +285,22 @@ export function keyMetrics(r: EndlessSimResult, earlyWaves = 4, cfg: EndlessConf
   const early = Array.from({ length: earlyWaves }, (_, i) => s.winRate[i + 1]!).filter((v) => !Number.isNaN(v));
   const boss = s.winRate[cfg.bossEvery];
   return { earlyMinWin: early.length ? Math.min(...early) : 0, firstBossWin: boss === undefined || Number.isNaN(boss) ? 0 : boss, mean: s.mean, median: s.p50, reach30: s.reach30 };
+}
+
+/** Dalga bandı başına teklif edilen item'lerin nadirlik dağılımı (%; Common..Legendary) ve adet. Bantlar: 1-5, 6-10, 11-20, 21+. */
+export function rarityByBand(r: EndlessSimResult): Array<{ band: string; n: number; pct: number[] }> {
+  const bands: Array<[string, number, number]> = [
+    ['1-5', 1, 5],
+    ['6-10', 6, 10],
+    ['11-20', 11, 20],
+    ['21+', 21, Infinity],
+  ];
+  return bands.map(([band, lo, hi]) => {
+    const counts = RARITY_IDS.map(() => 0);
+    for (const run of r.runs) for (const [w, ri] of run.drops ?? []) if (w >= lo && w <= hi && ri >= 0) counts[ri]!++;
+    const n = counts.reduce((a, b) => a + b, 0);
+    return { band, n, pct: counts.map((c) => (n ? (c / n) * 100 : 0)) };
+  });
 }
 
 /** Paralel parçaları birleştirir (aynı ayarlar). */

@@ -21,6 +21,7 @@ import type { ResultAction } from './result-screen';
 import type { BattleSceneData } from './scenes/BattleScene';
 import { campaignEffects } from './battle-effects';
 import { newSeed } from './seed';
+import { screenGo } from './screen-go';
 
 /**
  * Seferin tarayıcı tarafı (oturum): o anki sefer durumu, kayıt deposu (localStorage), savaşa geçiş ve savaştan dönüş.
@@ -143,7 +144,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
       battleEffects: () => campaignEffects(s),
       retreat: () => {
         retreatToMap();
-        goTo(game, MAP_SCENE);
+        screenGo(game.scene.getScene(BATTLE_SCENE) as Phaser.Scene, MAP_SCENE); // kit ekran geçişi (kararıp açılma), Menu > Retreat
       },
     },
   };

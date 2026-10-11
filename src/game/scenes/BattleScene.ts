@@ -3,7 +3,7 @@ import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wa
 import { battleSpeed } from '../../ui/battle-speed';
 import { reducedMotion } from '../../ui/motion-pref';
 import { uiSound } from '../../ui/ui-sound';
-import { solveBadgeSizes, type SideSizes } from '../badge-layout';
+import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
 import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, primaryBonusInfo, previewSkill, armorReduction } from '../../engine';
@@ -18,7 +18,7 @@ import { preloadVfxSheets } from '../vfx-sheets';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
 import { initialSeed, initialSizes, newSeed } from '../seed';
 import { clampSize } from '../team-select-model';
-import { EL, elScreenIn, elText } from '../elegant-ui';
+import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
 import { motion } from '../../ui/motion';
 import { enemiesEnter, showWaveBanner } from '../wave-banner';
 import { formatHit } from '../hit-format';
@@ -423,30 +423,31 @@ export class BattleScene extends Phaser.Scene {
     this.showResult(info.victory, false, info);
   }
 
-  private badgeMemo: { key: string; sizes: Map<string, SideSizes> } | null = null;
+  private badgeMemo: { key: string; plans: Map<string, PhoneBadgePlan> } | null = null;
 
-  /** Telefon boyutunda (html.short / html.compact) birim başına rozet boyu; masaüstünde null (bugünkü sabit düzen). Girdi değişmedikçe yeniden hesaplanmaz. */
-  private badgeSizes(units: Array<{ view: CombatantView; left: number; right: number }>): Map<string, SideSizes> | null {
+  /** Telefon boyutunda (html.short / html.compact) birim başına rozet planı (taslak B); masaüstünde null (bugünkü düzen). Girdi değişmedikçe yeniden çözülmez. */
+  private phoneBadgePlans(units: Array<{ view: CombatantView; count: number }>): Map<string, PhoneBadgePlan> | null {
     const cls = document.documentElement.classList;
     if (!cls.contains('short') && !cls.contains('compact')) return null;
     const si = layout.statusIcon;
-    const input = units.map(({ view, left, right }) => ({ id: view.combatant.uid, left, right, ...view.badgeGeometry() }));
+    const input = units.map(({ view }) => ({ id: view.combatant.uid, left: 0, right: 0, ...view.badgeGeometry() }));
+    const counts = new Map(units.map(({ view, count }) => [view.combatant.uid, count]));
     // anahtar geometriyi de içerir: yazı tipi geç yüklenip ad genişliği değişince yeniden çözülür
-    const key = JSON.stringify(input.map((u) => [u.id, u.left, u.right, u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))]));
-    if (this.badgeMemo?.key === key) return this.badgeMemo.sizes;
-    const sizes = solveBadgeSizes(input, { base: si.size, max: si.size * si.phoneScale, gapBar: si.gapBar, gapItem: si.gapItem, margin: si.margin });
-    this.badgeMemo = { key, sizes };
-    return sizes;
+    const key = JSON.stringify(input.map((u) => [u.id, counts.get(u.id), u.parts.map((p) => [p.x0, p.y0, p.x1, p.y1].map(Math.round))]));
+    if (this.badgeMemo?.key === key) return this.badgeMemo.plans;
+    const plans = solvePhoneBadges(input, counts, { size: si.phoneSize, gapBar: si.gapBar, gapItem: si.gapItem, margin: si.margin, perSide: si.phonePerSide, top: si.size / 2 });
+    this.badgeMemo = { key, plans };
+    return plans;
   }
 
   /** Per-unit badge refresh (statuses, ground effects underfoot, armor from auras): cheap, only redraws when something changed. */
   private refreshBadges(): void {
-    type BadgeList = Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>;
+    type BadgeList = Array<{ id: string; left: number; icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>;
     const lists: Array<{ view: CombatantView; c: Combatant; list: BadgeList; seals: { stacks: number; max: number; turns: number; color: string } | null }> = [];
     for (const view of this.views.values()) {
       const c = this.battle.get(view.combatant.uid);
       if (!c || c.hp <= 0) continue;
-      const list: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }> = [];
+      const list: BadgeList = [];
       let seals: { stacks: number; max: number; turns: number; color: string } | null = null;
       for (const st of c.statuses) {
         const def = content.statuses[st.kind];
@@ -458,25 +459,28 @@ export class BattleScene extends Phaser.Scene {
         if (max > 1 && st.stacks) seals = { stacks: st.stacks, max, turns: st.turns, color: def?.color ?? '#b04fa8' };
         // Yüklü durum (Abyssal Fury, madde 262): rozet kalan saldırı yükünü gösterir ("x3"; `turns` alanında tutulur, tur saymaz)
         const charged = !!def?.attackCharges;
-        list.push({ icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : charged ? `x${st.turns}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) && !charged });
+        list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : charged ? `x${st.turns}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) && !charged });
       }
       for (const g of this.battle.ground) {
         if (g.board !== c.board || !g.slots.includes(c.slot) || g.sourceSide === c.side) continue;
         const def = content.grounds[g.ground];
-        list.push({ icon: paintedOr('ground', g.ground, def?.icon ?? 'flame'), color: def?.color ?? '#ffffff', text: String(g.turns), debuff: true, turns: true });
+        list.push({ id: `ground:${g.ground}`, left: g.turns, icon: paintedOr('ground', g.ground, def?.icon ?? 'flame'), color: def?.color ?? '#ffffff', text: String(g.turns), debuff: true, turns: true });
       }
       const bonus = this.battle.effectiveStats(c).armor - c.stats.armor;
-      if (Math.round(bonus) > 0) list.push({ icon: 'shield', color: '#c9d1dc', text: `+${Math.round(bonus)}`, debuff: false, turns: false });
+      if (Math.round(bonus) > 0) list.push({ id: 'armorAura', left: 99, icon: 'shield', color: '#c9d1dc', text: `+${Math.round(bonus)}`, debuff: false, turns: false });
       lists.push({ view, c, list, seals });
     }
-    // Telefonda rozetler büyür ama hiçbir şeye binmez (src/game/badge-layout.ts; masaüstünde bugünkü düzen: sabit boy, satırda 4)
-    const sizes = this.badgeSizes(lists.map(({ view, list }) => ({ view, left: list.filter((b) => !b.debuff).length, right: list.filter((b) => b.debuff).length })));
+    // Telefon (taslak B, Ömer 2026-10-11): öncelikli rozetler + "+N" sayacı, hiçbir şeye binmez (src/game/badge-layout.ts); masaüstünde bugünkü düzen
+    const prio = layout.statusIcon.phonePriority as string[];
+    const sorted = new Map(lists.map(({ c, list }) => [c.uid, sortByPriority(list.map((b) => ({ ...b, hourglass: b.turns, turns: b.left })), prio)]));
+    const plans = this.phoneBadgePlans(lists.map(({ view, c }) => ({ view, count: sorted.get(c.uid)!.length })));
     for (const { view, c, list, seals } of lists) {
-      const size = sizes?.get(c.uid) ?? { left: layout.statusIcon.size, right: layout.statusIcon.size };
-      const key = JSON.stringify([list, seals, size, !!sizes]);
+      const plan = plans?.get(c.uid) ?? null;
+      const key = JSON.stringify([list, seals, plan]);
       if (this.badgeKeys.get(c.uid) === key) continue;
       this.badgeKeys.set(c.uid, key);
-      view.setBadges(list, size, sizes ? 99 : 4);
+      if (plan) view.setPhoneBadges(sorted.get(c.uid)!.map((b) => ({ ...b, turns: b.hourglass })), plan);
+      else view.setBadges(list);
       view.setSeals(seals);
     }
   }
@@ -956,7 +960,7 @@ export class BattleScene extends Phaser.Scene {
       for (const c of this.battle.combatants) if (c.side === side && !c.summoned && c.slot < cells.length) cells[c.slot] = c.defId;
       return cells;
     };
-    this.scene.start('TeamSelectScene', { teams: { party: ids('party'), enemies: ids('enemy') }, sizes: { party: this.partySize, enemies: this.enemySize } });
+    elGo(this, 'TeamSelectScene', { teams: { party: ids('party'), enemies: ids('enemy') }, sizes: { party: this.partySize, enemies: this.enemySize } }); // kit ekran geçişi (kararıp açılma)
   }
 
   // --- Skill selection: the first usable skill comes pre-selected; the player confirms with a tap ---

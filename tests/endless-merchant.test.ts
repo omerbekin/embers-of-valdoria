@@ -20,7 +20,8 @@ import {
   type EndlessRun,
   type KV,
 } from '../src/endless';
-import { ITEMS, itemDef, itemValue, sellValue } from '../src/progression';
+import { ITEMS, affixValues, itemDef, itemValue, sellValue, type ItemRoll } from '../src/progression';
+import { SAVE_VERSION } from '../src/endless/save';
 
 // Endless tüccarı (Odo the Peddler; Ömer 2026-10-09, taslak v1): 9 mal, satış (değerin yarısı), bu ziyaretin geri alımı, malları yenileme,
 // kayıt gidiş-dönüşü, detay panelinin hesapları.
@@ -153,14 +154,17 @@ describe('endless tüccar: kayıt', () => {
 
   it('bozuk geri alım satırları atılır, koşu bozulmaz; eski kayıt (alanlar yok) geçerli', () => {
     const run = sellItem(atShop(0), 'b1');
-    const raw = JSON.stringify({ version: 1, run: { ...run, buyback: [...run.buyback!, { item: { uid: 3 }, price: 'x' }], shopRerolls: -2 } });
+    const raw = JSON.stringify({ version: SAVE_VERSION, run: { ...run, buyback: [...run.buyback!, { item: { uid: 3 }, price: 'x' }], shopRerolls: -2 } });
     const back = parseRun(raw)!;
     expect(back.buyback).toEqual(run.buyback);
     expect(back.shopRerolls).toBeUndefined();
     const old = { ...atShop(0) };
     delete old.buyback;
     delete old.shopRerolls;
-    expect(parseRun(JSON.stringify({ version: 1, run: old }))).toEqual(old);
+    expect(parseRun(JSON.stringify({ version: SAVE_VERSION, run: old }))).toEqual(old);
+    // çok eski sürüm: zarsız item'ler en yakın affix biçimini alır (asla çökmez)
+    const v1 = parseRun(JSON.stringify({ version: 1, run: old }))!;
+    for (const it of v1.bag ?? []) expect(it.rolls?.affixes.length).toBeGreaterThan(0);
   });
 });
 
@@ -174,14 +178,18 @@ describe('endless tüccar: detay paneli hesapları', () => {
 
   it('karşılaştırma ve BEST: takılıya göre stat farkı; en büyük IP kazancı olan kahraman', () => {
     const run = atShop();
-    run.heroes[0]!.equipment = { helm: { uid: 'e1', id: 'iron_cap' } }; // warrior: +3 Max HP (item kuralları 2026-10-10: Common = 1 stat)
-    const coif = itemDef('leather_coif')!; // +2 Max HP
-    const rows = statDelta(run, run.heroes[0]!.id, coif);
-    expect(rows).toEqual([{ stat: 'hp', now: 3, next: 2, diff: -1 }]);
+    const cap: ItemRoll = { rarity: 'common', affixes: [{ id: 'c_hp', q: 0.5 }] };
+    run.heroes[0]!.equipment = { helm: { uid: 'e1', id: 'iron_cap', rolls: cap } }; // warrior: Iron Cap (ilvl 5) +3 Max HP
+    const coif = itemDef('leather_coif')!; // ilvl 2: +2 Max HP (zarsız teklif = orta değer)
+    const rows = statDelta(run, run.heroes[0]!.id, coif, undefined, { rarity: 'common', affixes: [{ id: 'c_hp', q: 0.5 }] });
+    const capHp = affixValues('c_hp', itemDef('iron_cap')!.ilvl, 0.5)[0]!;
+    const coifHp = affixValues('c_hp', coif.ilvl, 0.5)[0]!;
+    expect(coifHp).toBeLessThan(capHp);
+    expect(rows.map((r) => [r.id, r.now, r.after, r.diff])).toEqual([['c_hp', capHp, coifHp, coifHp - capHp]]);
     // boş yuvalı kahramanlar kazanır; warrior'da kazanç yok (Iron Cap daha güçlü) -> BEST ilk boş yuvalı (archer)
-    expect(bestHeroFor(run, coif)).toBe(run.heroes[1]!.id);
+    expect(bestHeroFor(run, coif, undefined, { rarity: 'common', affixes: [{ id: 'c_hp', q: 0.5 }] })).toBe(run.heroes[1]!.id);
     // kimse için yükseltme değilse BEST yok
-    for (const h of run.heroes) h.equipment = { helm: { uid: `x${h.id}`, id: 'great_helm' } };
-    expect(bestHeroFor(run, coif)).toBeNull();
+    for (const h of run.heroes) h.equipment = { helm: { uid: `x${h.id}`, id: 'great_helm', rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 1 }, { id: 'c_armor', q: 1 }, { id: 'b_marmor', q: 1 }, { id: 'a_gdef', q: 1 }] } } };
+    expect(bestHeroFor(run, coif, undefined, { rarity: 'common', affixes: [{ id: 'c_hp', q: 0.5 }] })).toBeNull();
   });
 });

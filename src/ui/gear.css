@@ -822,6 +822,18 @@ html.short .gr-slot-sub {
   margin-right: 10px;
 }
 
+/* Affix kademe etiketi (C / B / A; Ömer 2026-10-11): renk satır içinde (progression > TIER_COLOR) */
+.gr-tier {
+  flex: none;
+  min-width: 1.1em;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+  text-align: center;
+  opacity: 0.95;
+}
+
 .gr-tip-d {
   font-family: var(--el-body, 'EB Garamond', serif);
   letter-spacing: 0;

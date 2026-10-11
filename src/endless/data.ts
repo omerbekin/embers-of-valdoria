@@ -1,7 +1,7 @@
 // Endless Lite verisi ve türleri (saf; Phaser/DOM yok). Tasarım: docs/design/progression/roadmap.md bölüm 3, varsayımlar open-questions madde 281.
 import endlessJson from '../../data/endless.json';
 import encountersJson from '../../data/campaign/encounters.json';
-import type { Equipment, ItemInstance, RarityId } from '../progression/items';
+import type { Equipment, ItemInstance } from '../progression/items';
 import type { SuspendedBattle } from './replay';
 import type { RelicDef } from './relics';
 import type { ShieldHook, Status, UnitModifiers, UnitTier } from '../engine/types';
@@ -38,7 +38,6 @@ export interface EndlessConfig {
 /** Elit / boss dalgası sonrası ödül ayarları (data/endless.json > special). */
 export interface SpecialRewards {
   itemCards: number;
-  minRarity: RarityId;
   ilvlBonus: number;
   goldMult: number;
 }

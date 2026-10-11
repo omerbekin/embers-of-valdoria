@@ -6,3 +6,4 @@ export * from './loot';
 export * from './equip';
 export * from './item-text';
 export * from './rare';
+export * from './drop';

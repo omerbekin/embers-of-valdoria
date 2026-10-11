@@ -5,12 +5,17 @@ import type { Combatant, SkillCost } from './types';
  * amount + round(mevcut x ofCurrent), en az 1 (Wail of the Dead: mevcut canın %20'si). Yuvarlama: en yakın tam sayı (0,5 yukarı).
  * Kullanıcı verilmezse (tooltip/wiki: savaş dışı) sabit kısım döner. Motor (canUse, ödeme), YZ, önizleme ve maç kaydı bu fonksiyonu kullanır.
  */
-export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | 'mp' | 'rage'>): number {
+export function skillCostAmount(cost: SkillCost, user?: Pick<Combatant, 'hp' | 'mp' | 'rage'> & Partial<Pick<Combatant, 'itemEffects'>>): number {
   const ratio = cost.ofCurrent ?? 0;
-  if (ratio <= 0) return cost.amount;
-  if (!user) return cost.amount;
-  const current = cost.resource === 'hp' ? user.hp : cost.resource === 'mp' ? user.mp : (user.rage ?? 0);
-  return Math.max(1, cost.amount + Math.round(current * ratio));
+  let amount = cost.amount;
+  if (ratio > 0 && user) {
+    const current = cost.resource === 'hp' ? user.hp : cost.resource === 'mp' ? user.mp : (user.rage ?? 0);
+    amount = Math.max(1, cost.amount + Math.round(current * ratio));
+  }
+  // MP cost -% (item affix, Ömer 2026-10-11): MP bedeli indirimi, yuvarlanır, en az 1; etki yoksa bedel aynen
+  const cut = cost.resource === 'mp' ? (user?.itemEffects?.mpCostReduce ?? 0) : 0;
+  if (cut > 0 && amount > 0) amount = Math.max(1, Math.round(amount * (1 - Math.min(1, cut))));
+  return amount;
 }
 
 /** Bedelin kısa, okunur etiketi (İngilizce; tooltip başlığı, wiki): '5 MP', '50 RAGE', '20% of current HP', 'Free'. */

@@ -8,6 +8,7 @@ import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { isBackdropTap } from '../ui/backdrop';
 import { motion, MOTION } from '../ui/motion';
 import { uiSound, type UiSoundKind } from '../ui/ui-sound';
+import { screenGo } from './screen-go';
 
 /**
  * ZARİF TASARIM KİTİ (Phaser tarafı; Ömer 2026-10-09: ana menü + Quick Battle "Twin Formations" dili HER ekranda).
@@ -687,13 +688,7 @@ export function elScreenIn(scene: Phaser.Scene): void {
 
 /** Ekrandan çıkış: sahne kararır, sonra `key` sahnesi açılır (yeni sahne elScreenIn ile açılır). Azaltılmış harekette hemen. */
 export function elGo(scene: Phaser.Scene, key: string, data?: object): void {
-  const m = motion('screen');
-  const [r, g, b] = MOTION.screen.color as [number, number, number];
-  const go = () => scene.sys.isActive() && scene.scene.start(key, data);
-  if (m.outMs <= 0 || scene.cameras.main.fadeEffect.isRunning) return void go();
-  scene.input.enabled = false; // kararırken ikinci tık başka yere gitmesin
-  scene.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_COMPLETE, go);
-  scene.cameras.main.fadeOut(m.outMs, r, g, b);
+  screenGo(scene, key, data);
 }
 
 /** Pencere açılışı: kök solarak belirir, `panel` (yoksa kök) 'rise' px aşağıdan yükselir. */

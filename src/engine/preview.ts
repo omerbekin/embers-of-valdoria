@@ -7,6 +7,9 @@ import { slotOfTileUid } from './battle';
 import { attributePower, hitChance } from './stats';
 import type { Combatant, OnAbsorbSpec, Side, SkillDef, SkillEffect } from './types';
 
+/** Item affix çarpanlı güç (motorla aynı ifade): çarpan yoksa güç aynen. */
+const pw = (power: number, m: number | undefined): number => (m !== undefined && m !== 1 ? power * m : power);
+
 /**
  * Bir skill'in bir hedefe tahmini etkisi. Kalkan önce emer; değerler ortalama ve [min, max] aralığıdır
  * (kritik hariç; `critMax` kritik vuruşta ulaşılabilecek en yüksek değerdir).
@@ -222,7 +225,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         if (blocked.length > 0) e.immune = [...(e.immune ?? []), ...blocked];
         e.statuses = [...(e.statuses ?? []), `Random: ${effect.options.map((o) => battle.statusDef(o.status)?.name ?? o.status).join(' / ')}${blocked.length > 0 ? ` (immune to ${blocked.join(', ')})` : ''}`];
       } else if (effect.type === 'heal') {
-        const r = healRange(actor.stats, effect.scale, effect.power, f);
+        const r = healRange(actor.stats, effect.scale, pw(effect.power, actor.stats.healPowerMult), f);
         const missing = target.maxHp - target.hp;
         // missingHpBonus (Radiance): motorla aynı çarpan (hedefin şu anki eksik can oranı)
         const low = missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp);
@@ -238,7 +241,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const e = entry(target.uid);
         e.statuses = [...(e.statuses ?? []), `Revived: ${Math.max(1, Math.round(target.maxHp * effect.hpRatio))} HP, ${Math.round(target.maxMp * effect.mpRatio)} MP`];
       } else if (effect.type === 'hot') {
-        const perTurn = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power);
+        const perTurn = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.healPowerMult));
         entry(target.uid).hot = {
           perTurn,
           turns: effect.turns,
@@ -251,7 +254,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         }
         const recipient = effect.self ? actor : target;
         const mpLeft = skill.cost.resource === 'mp' ? actor.mp - skill.cost.amount : actor.mp;
-        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
+        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.shieldPowerMult)) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
         entry(recipient.uid).shield = { amount, magic: effect.shieldType === 'magic', ...(effect.onAbsorb ? { onAbsorb: { ...effect.onAbsorb } } : {}) };
       } else if (effect.type === 'dispel') {
         const e = entry(target.uid);
@@ -292,7 +295,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const e = entry(target.uid);
         e.statuses = [...(e.statuses ?? []), `Guard ${effect.turns} turns`];
       } else if (effect.type === 'dot') {
-        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power);
+        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.dotPowerMult));
         const old = target.statuses.find((s) => s.kind === effect.status)?.amount ?? 0;
         const perTick = battle.dotTickDamage(effect.status, Math.max(amount, old), target);
         entry(target.uid).dot = { status: effect.status, perTick, turns: effect.turns, total: perTick * effect.turns };

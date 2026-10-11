@@ -3,117 +3,204 @@ import { Rng } from '../src/engine';
 import { activeHeroes, applyBattle, debugTeleport, latestSave, memoryKV, newCampaign, normalizeState, pickHero, writeSave, type CampaignState } from '../src/campaign';
 import {
   ITEMS,
+  affixAllowed,
+  affixLines,
+  affixValues,
   instanceIP,
   instanceLines,
-  instanceStats,
+  instanceRarity,
+  instanceRoll,
   itemDef,
   itemIP,
+  legacyRoll,
   loadout,
   makeItem,
-  rollStats,
-  statLine,
-  statRange,
+  partRange,
+  rarityDef,
+  rolledAffixes,
+  rollItem,
+  tierPool,
   validateItems,
   type ItemsData,
 } from '../src/progression';
 import { chooseReward, newRun } from '../src/endless';
 
-// Item yeniden yapılanması (Ömer onayı 2026-10-10; items.md 1.3a): nadirlik = stat sayısı + güç, yuva ana statı + izinli ekler,
-// stat zarları (seed'li, kayda yazılır), Epic etki kancası (davranış yok).
+// Affix kademeleri (Ömer onayı 2026-10-11; items.md 1.3b): nadirlik = affix sayısı (C / C,C / C,C,B / C,C,B,A / Legendary + etki), kalite
+// statı güçlendirmez (değer yalnızca item seviyesiyle büyür), zarlar seed'li ve görünür, yuva sınırları, eski kayıt göçü.
 
 const copy = (): ItemsData => JSON.parse(JSON.stringify(ITEMS)) as ItemsData;
 
-describe('nadirlik = stat sayısı + güç', () => {
-  it('Common 1 stat x1,0 / Uncommon 2 x1,4 / Rare 3 x1,85 / Epic 3 x2,3 (+ etki kancası)', () => {
-    const r = Object.fromEntries(ITEMS.rarities.map((x) => [x.id, x]));
-    expect([r.common!.statCount, r.uncommon!.statCount, r.rare!.statCount, r.epic!.statCount]).toEqual([1, 2, 3, 3]);
-    expect([r.common!.mult, r.uncommon!.mult, r.rare!.mult, r.epic!.mult]).toEqual([1, 1.4, 1.85, 2.3]);
-    expect(r.epic!.effect).toBe(true);
-    expect(r.rare!.effect).toBeUndefined();
+describe('nadirlik = affix sayısı', () => {
+  it('Common C / Uncommon C,C / Rare C,C,B / Epic C,C,B,A / Legendary C,C,B,A + etki; D yok', () => {
+    const t = Object.fromEntries(ITEMS.rarities.map((x) => [x.id, x.tiers.join(',')]));
+    expect(t).toEqual({ common: 'C', uncommon: 'C,C', rare: 'C,C,B', epic: 'C,C,B,A', legendary: 'C,C,B,A' });
+    expect(rarityDef('legendary').effect).toBe(true);
+    expect(Object.values(ITEMS.affixDefs).every((a) => ['C', 'B', 'A'].includes(a.tier))).toBe(true);
   });
 
-  it('katalog geçerli: her item doğru stat sayısında, yuvasının ana statını taşır, ekleri izinli, bütçe ±%10', () => {
-    expect(validateItems()).toEqual([]);
-    for (const d of ITEMS.items) {
-      const rar = ITEMS.rarities.find((x) => x.id === d.rarity)!;
-      expect(Object.keys(d.stats), d.id).toHaveLength(rar.statCount);
-      if (d.rarity !== 'epic' && d.rarity !== 'legendary') expect(d.effect, d.id).toBeUndefined(); // etki yalnızca Epic ve Legendary'de (madde 292, 296)
+  it("havuzlar Ömer'in seçimi: C 16, B 11, A 19 affix (id'ler aynen)", () => {
+    const ids = (t: string) => Object.keys(ITEMS.affixDefs).filter((k) => ITEMS.affixDefs[k]!.tier === t);
+    expect(ids('C')).toEqual(['c_armor', 'c_hp', 'c_phys', 'c_fire', 'c_ice', 'c_holy', 'c_arcane', 'c_nature', 'c_dark', 'c_acc', 'c_eva', 'c_mp', 'c_hpregen', 'c_mpregen', 'c_shield', 'c_dot']);
+    expect(ids('B')).toEqual(['b_crit', 'b_critdmg', 'b_speed', 'b_marmor', 'b_tier', 'b_pen', 'b_mpen', 'b_mpcost', 'b_leech', 'b_initiative', 'b_resil']);
+    expect(ids('A')).toEqual(['a_primary', 'a_allattr', 'a_gdmg', 'a_gdef', 'a_speedpct', 'a_hppct', 'a_auradmg', 'a_auradef', 'a_recovery', 'a_ultcd', 'a_allelem', 'a_keen', 'a_potency', 'a_immunity', 'a_mana', 'a_support', 'a_summon', 'a_resource', 'a_endure']);
+    expect(Object.keys(ITEMS.affixDefs).some((k) => k === 'might' || k.includes('might'))).toBe(false); // Might kalktı
+  });
+
+  it('kalite statı güçlendirmez: aynı affix her nadirlikte aynı değer; değer yalnızca item seviyesiyle büyür', () => {
+    const d = itemDef('padded_gambeson')!;
+    const v = (r: 'common' | 'epic') => rolledAffixes({ id: d.id, rolls: { rarity: r, affixes: [{ id: 'c_armor', q: 0.5 }] } })[0]!.values[0];
+    expect(v('common')).toBe(v('epic'));
+    expect(affixValues('c_hp', 20, 0.5)[0]).toBeGreaterThan(affixValues('c_hp', 2, 0.5)[0]!);
+    expect(affixValues('a_ultcd', 1, 0)).toEqual(affixValues('a_ultcd', 40, 1)); // sabit -1, seviyeyle büyümez
+    // Rarity çarpanı yok: Epic'in beklenen IP'si = Common'ınki + kademe ortalamaları (çarpılmaz)
+    expect(itemIP(d, 'epic')).toBeGreaterThan(itemIP(d, 'common'));
+    expect(ITEMS.rarities.some((r) => 'mult' in r)).toBe(false);
+  });
+
+  it('yuva sınırları: delme ve kritik yalnızca silah + eldiven, auralar zırh + tılsım, kaçınma bot + eldiven; diğerleri her yerde', () => {
+    for (const id of ['b_pen', 'b_mpen', 'b_crit', 'b_critdmg', 'a_keen']) for (const s of ['helm', 'armor', 'boots', 'trinket'] as const) expect(affixAllowed(id, s), `${id} ${s}`).toBe(false);
+    for (const id of ['b_pen', 'b_crit']) expect(affixAllowed(id, 'weapon') && affixAllowed(id, 'gloves')).toBe(true);
+    for (const id of ['a_auradmg', 'a_auradef']) {
+      expect(affixAllowed(id, 'armor') && affixAllowed(id, 'trinket')).toBe(true);
+      expect(affixAllowed(id, 'weapon') || affixAllowed(id, 'helm')).toBe(false);
     }
-    expect(ITEMS.items.filter((d) => d.rarity !== 'legendary')).toHaveLength(52); // id'ler korunur (ikonlar id'ye boyalı)
-    expect(Object.keys(ITEMS.effects).filter((k) => !ITEMS.effects[k]!.legendary)).toHaveLength(11); // Epic etkileri; Legendary'ler madde 296
-  });
-
-  it('silahın ana statı Might ya da ailesinin statı (balta/topuz STR, yay/hançer DEX, asa INT, tılsım LUCK)', () => {
-    const fam = Object.fromEntries(ITEMS.weaponFamilies.map((f) => [f.id, f.attr]));
-    expect(fam).toEqual({ axes: 'str', maces: 'str', bows: 'dex', daggers: 'dex', staves: 'int', charms: 'luck' });
-    for (const d of ITEMS.items.filter((x) => x.slot === 'weapon')) {
-      const attrs = (['str', 'dex', 'int', 'luck'] as const).filter((k) => d.stats[k]);
-      for (const a of attrs) expect(a, d.id).toBe(fam[d.family!]);
+    expect(affixAllowed('c_eva', 'boots') && affixAllowed('c_eva', 'gloves')).toBe(true);
+    expect(affixAllowed('c_eva', 'armor')).toBe(false);
+    for (const s of ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const) expect(affixAllowed('c_hp', s)).toBe(true);
+    // 1000 zar: hiçbir örnek yasak affix taşımaz, aynı affix iki kez olmaz
+    for (let i = 0; i < 1000; i++) {
+      const d = ITEMS.items[i % ITEMS.items.length]!;
+      const r = rollItem(d, new Rng(i), { rarity: 'epic' });
+      const ids = r.affixes.map((a) => a.id);
+      expect(new Set(ids).size, d.id).toBe(ids.length);
+      for (const id of ids) expect(affixAllowed(id, d.slot), `${d.id} ${id}`).toBe(true);
     }
   });
 
-  it('doğrulayıcı yakalar: yanlış stat sayısı, ana stat yok, izinsiz ek, etki yalnız Epic ve kayıtlı', () => {
+  it('silahın ana affix\'i hasar türü (C): fiziksel / element; kimin için zarlandıysa onun elementi', () => {
+    for (const f of ITEMS.weaponFamilies) for (const m of f.mains) expect(ITEMS.affixDefs[m]!.parts[0]!.to.startsWith('elem:'), m).toBe(true);
+    const staff = itemDef('ash_staff')!;
+    for (let i = 0; i < 30; i++) {
+      expect(rollItem(staff, new Rng(i), { forClass: 'druid' }).affixes[0]!.id).toBe('c_nature');
+      expect(['c_fire', 'c_ice']).toContain(rollItem(staff, new Rng(i), { forClass: 'mage' }).affixes[0]!.id);
+    }
+    expect(rollItem(itemDef('short_bow')!, new Rng(1)).affixes[0]!.id).toBe('c_phys');
+  });
+
+  it('doğrulayıcı yakalar: ana affix yok / yanlış kademe, yasak yuva, Legendary affix listesi, etki yalnızca Legendary, kademe dizisi', () => {
     const d = copy();
     d.items = [
-      { id: 'a', name: 'A', slot: 'gloves', rarity: 'common', ilvl: 2, stats: { crit: 1, armor: 1 } },
-      { id: 'b', name: 'B', slot: 'armor', rarity: 'common', ilvl: 4, stats: { hp: 4 } },
-      { id: 'c', name: 'C', slot: 'boots', rarity: 'uncommon', ilvl: 8, stats: { evasion: 2, crit: 3 } },
-      { id: 'd', name: 'D', slot: 'helm', rarity: 'rare', ilvl: 9, stats: { hp: 4, armor: 1, accuracy: 1 }, effect: 'x' },
-      { id: 'e', name: 'E', slot: 'weapon', family: 'bows', rarity: 'rare', ilvl: 10, stats: { str: 1, might: 1, accuracy: 1 } },
+      { id: 'a', name: 'A', slot: 'gloves', rarity: 'common', ilvl: 2 },
+      { id: 'b', name: 'B', slot: 'armor', rarity: 'common', ilvl: 4, main: 'b_crit' },
+      { id: 'c', name: 'C', slot: 'armor', rarity: 'common', ilvl: 4, main: 'c_eva' },
+      { id: 'd', name: 'D', slot: 'helm', rarity: 'rare', ilvl: 9, main: 'c_hp', effect: 'retort' },
+      { id: 'e', name: 'E', slot: 'helm', rarity: 'legendary', ilvl: 9, affixes: ['c_hp', 'b_crit', 'b_resil', 'a_gdef'], effect: 'laststand' },
     ];
+    d.rarities[2]!.tiers = ['C', 'B'];
     const errs = validateItems(d).join(' | ');
-    expect(errs).toMatch(/item a: Common items have exactly 1 stat/);
-    expect(errs).toMatch(/item b: needs a main armor stat/);
-    expect(errs).toMatch(/item c: stat crit is not allowed on boots/);
-    expect(errs).toMatch(/item d: only Epic and Legendary items carry an effect/);
-    expect(errs).toMatch(/item d: unknown effect x/);
-    expect(errs).toMatch(/item e: stat str is not allowed on weapon/);
+    expect(errs).toMatch(/item a: needs a C main affix/);
+    expect(errs).toMatch(/item b: needs a C main affix/);
+    expect(errs).toMatch(/item c: main c_eva is not allowed on armor/);
+    expect(errs).toMatch(/item d: only Legendary items carry an effect/);
+    expect(errs).toMatch(/item e: affix 2 must be tier C/);
+    expect(errs).toMatch(/rarity rare: one more affix per rarity/);
   });
 });
 
-describe('stat zarları', () => {
-  it('aralık: katalog değeri ± %15, adıma yuvarlanır, en az bir adım; metin "+4 Max HP (3–5)"', () => {
-    const mail = itemDef('riveted_mail')!; // +4 Armor (x2 stat ölçeği; eski +2), +4 Max HP
-    expect(statRange(mail, 'hp')).toEqual([3, 5]);
-    expect(statRange(mail, 'armor')).toEqual([2, 6]); // en az bir adım (adım 2; değer >= 2 adım; eski [1, 3])
-    expect(statRange(itemDef('arming_sword')!, 'str')).toEqual([2, 2]); // tek adım: aralık yok (x2 ölçek: +2 STR, adım 2)
-    expect(statRange(itemDef('work_gloves')!, 'crit')).toEqual([2.5, 3.5]); // yüzde statlar 0,5 adımlı
-    expect(statLine('hp', 4, [3, 5])).toBe('+4 Max HP (3–5)');
-    expect(statLine('armor', 2, [2, 2])).toBe('+2 Armor');
-    // Ömer: aralıklar görünsün => item'lerin neredeyse hepsi en az bir zarlı stat taşır
-    const shown = ITEMS.items.filter((d) => (Object.keys(d.stats) as Array<keyof typeof d.stats>).some((k) => statRange(d, k)[0] !== statRange(d, k)[1])).length;
-    expect(shown).toBeGreaterThanOrEqual(ITEMS.items.length - 2);
-    for (const d of ITEMS.items)
-      for (const k of Object.keys(d.stats) as Array<keyof typeof d.stats>) {
-        const [lo, hi] = statRange(d, k);
-        expect(lo, `${d.id} ${k}`).toBeLessThanOrEqual(d.stats[k]!);
-        expect(hi).toBeGreaterThanOrEqual(d.stats[k]!);
-        expect(lo).toBeGreaterThan(0);
-      }
+describe('affix zarları', () => {
+  it('aralık: orta değer ± %15, adıma yuvarlanır, en az bir adım; satır "+4 Max HP (3–5)" biçiminde, kademe etiketi önde', () => {
+    const p = ITEMS.affixDefs.c_hp!.parts[0]!;
+    const [lo, hi] = partRange(p, itemDef('riveted_mail')!.ilvl);
+    expect(lo).toBeLessThan(hi);
+    expect(lo).toBeGreaterThanOrEqual(p.step);
+    const inst = { uid: 'x', id: 'riveted_mail', rolls: { rarity: 'uncommon' as const, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_hp', q: 1 }] } };
+    const lines = affixLines(inst);
+    expect(lines.map((l) => l.tier)).toEqual(['C', 'C']);
+    expect(lines[1]!.text).toBe(`+${hi} Max HP`);
+    expect(instanceLines(inst)[1]).toBe(`[C] +${hi} Max HP (${lo}–${hi})`);
+    // Ömer: aralıklar görünsün => zarlı (sabit olmayan) her affix'in aralığı en az iki değer (item seviyesi 10'da)
+    for (const [id, a] of Object.entries(ITEMS.affixDefs)) {
+      const p0 = a.parts[0]!;
+      if (p0.fixed || p0.noRoll || p0.floor) continue;
+      const [l, h] = partRange(p0, 10);
+      expect(l, id).toBeLessThanOrEqual(h);
+    }
   });
 
-  it('belirleyici ve aralık içinde; ortalama katalog değerine yakın (güç dengesi korunur)', () => {
+  it('belirleyici, aralık içinde; ortalama IP beklenen IP\'ye yakın (zar dengesi)', () => {
     const d = itemDef('twin_stilettos')!;
-    expect(rollStats(d, new Rng(5))).toEqual(rollStats(d, new Rng(5)));
+    expect(rollItem(d, new Rng(5))).toEqual(rollItem(d, new Rng(5)));
     let ipSum = 0;
     for (let i = 0; i < 400; i++) {
       const inst = makeItem(d.id, `u${i}`, new Rng(i));
-      const st = instanceStats(inst);
-      for (const k of Object.keys(d.stats) as Array<keyof typeof d.stats>) {
-        const [lo, hi] = statRange(d, k);
-        expect(st[k]).toBeGreaterThanOrEqual(lo);
-        expect(st[k]).toBeLessThanOrEqual(hi);
-      }
+      expect(instanceRarity(inst)).toBe(d.rarity);
+      expect(inst.rolls!.affixes).toHaveLength(rarityDef(d.rarity).tiers.length);
+      for (const a of rolledAffixes(inst))
+        a.values.forEach((v, j) => {
+          expect(v).toBeGreaterThanOrEqual(a.ranges[j]![0]);
+          expect(v).toBeLessThanOrEqual(a.ranges[j]![1]);
+        });
       ipSum += instanceIP(inst);
     }
-    expect(Math.abs(ipSum / 400 - itemIP(d)) / itemIP(d)).toBeLessThan(0.05);
+    expect(Math.abs(ipSum / 400 - itemIP(d)) / itemIP(d)).toBeLessThan(0.15);
   });
 
-  it('eski örnek (zarsız) = katalog değeri (aralığın ortası); aralık dışı zar sıkıştırılır; güç katmanı zarı kullanır', () => {
-    expect(instanceStats({ id: 'riveted_mail' })).toEqual(itemDef('riveted_mail')!.stats);
-    expect(instanceStats({ id: 'riveted_mail', rolls: { hp: 99, armor: 4 } }).hp).toBe(5);
-    expect(instanceLines({ uid: 'x', id: 'riveted_mail', rolls: { armor: 4, hp: 3 } })).toEqual(['+4 Armor (2–6)', '+3 Max HP (3–5)']);
-    expect(loadout({ class: 'warrior', equipment: { armor: { uid: 'x', id: 'riveted_mail', rolls: { armor: 4, hp: 3 } } } }).modifiers?.hpAdd).toBe(3);
+  it('Legendary: dört affix katalogda sabit (C, C, B, A), değerleri zarlanır; Legendary olmayan taban Legendary olamaz', () => {
+    const d = itemDef('mantle_of_valdren')!;
+    const r = rollItem(d, new Rng(3), { rarity: 'common' });
+    expect(r.rarity).toBe('legendary');
+    expect(r.affixes.map((a) => a.id)).toEqual(d.affixes);
+    expect(rollItem(itemDef('turnshoes')!, new Rng(3), { rarity: 'legendary' }).rarity).toBe('epic');
+  });
+
+  it('Immunity tek durum zarlar (Stun, Slow, Silence...); tur sayısı 2, seviyeyle biraz artar', () => {
+    const crown = itemDef('crown_of_the_ashen_king')!;
+    const a = rolledAffixes({ id: crown.id, rolls: rollItem(crown, new Rng(9)) }).find((x) => x.id === 'a_immunity')!;
+    expect(ITEMS.affixDefs.a_immunity!.choices).toContain(a.x);
+    expect(affixValues('a_immunity', 5, 0.3)).toEqual([2]);
+    expect(affixValues('a_immunity', 30, 0.3)[0]).toBeGreaterThan(2);
+  });
+
+  it('güç katmanı zarı kullanır: affix eşlemesi motor alanlarına (ek, çarpan, kanca, element, ana stat)', () => {
+    const eq = {
+      weapon: { uid: 'w', id: 'short_bow', rolls: { rarity: 'epic' as const, affixes: [{ id: 'c_phys', q: 0.5 }, { id: 'c_acc', q: 0.5 }, { id: 'b_pen', q: 0.5 }, { id: 'a_primary', q: 0.5 }] } },
+      armor: { uid: 'a', id: 'riveted_mail', rolls: { rarity: 'epic' as const, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_hp', q: 0.5 }, { id: 'b_tier', q: 0.5 }, { id: 'a_hppct', q: 0.5 }] } },
+    };
+    const l = loadout({ class: 'archer', equipment: eq });
+    const m = l.modifiers!;
+    expect(m.elemDamageAdd!.physical).toBeGreaterThan(0);
+    expect(m.accuracyAdd).toBeGreaterThan(0);
+    expect(m.attrAdd!.dex).toBeGreaterThan(0); // archer'ın ana statı
+    expect(m.armorAdd).toBeGreaterThan(0);
+    expect(m.hpMult).toBeGreaterThan(1);
+    expect(l.itemEffects!.armorPen).toBeGreaterThan(0);
+    expect(l.itemEffects!.tierDamageMult).toBeGreaterThan(1);
+  });
+});
+
+describe('eski kayıt göçü (en yakın yeni biçim; asla çökmez)', () => {
+  it('eski stat zarları -> ana affix + eski statlara karşılık gelen affix\'ler; değerler orta; aynı uid = aynı sonuç', () => {
+    const r = legacyRoll(itemDef('keen_gauntlets')!, { crit: 5, armor: 2, critDmg: 15 }, 'i9');
+    expect(r.rarity).toBe('rare');
+    expect(r.affixes.map((a) => a.id)).toEqual(['c_acc', 'c_armor', 'b_crit']);
+    expect(r.affixes.every((a) => a.q === 0.5)).toBe(true);
+    expect(legacyRoll(itemDef('keen_gauntlets')!, { crit: 5 }, 'i9')).toEqual(legacyRoll(itemDef('keen_gauntlets')!, { crit: 5 }, 'i9'));
+    // silah: takan sınıfın elementi
+    expect(legacyRoll(itemDef('ash_staff')!, { might: 3 }, 'u', 'druid').affixes[0]!.id).toBe('c_nature');
+    // Epic eski etki düşer, A affix'i gelir
+    expect(legacyRoll(itemDef('dane_axe')!, { might: 5, crit: 5, critDmg: 30 }, 'u').affixes.map((a) => ITEMS.affixDefs[a.id]!.tier)).toEqual(['C', 'C', 'B', 'A']);
+  });
+
+  it('bozuk / bilinmeyen zar: yine de geçerli örnek (instanceRoll onarır)', () => {
+    expect(instanceRoll({ uid: 'x', id: 'riveted_mail', rolls: 'junk' as never }).affixes.length).toBe(2);
+    expect(instanceRoll({ uid: 'x', id: 'riveted_mail', rolls: { affixes: [{ id: 'nope', q: 2 }] } as never }).affixes.length).toBe(2);
+    expect(instanceRoll({ uid: 'x', id: 'riveted_mail', rolls: { affixes: [{ id: 'c_hp', q: 7 }] } }).affixes).toEqual([{ id: 'c_hp', q: 1 }]);
+    expect(instanceRoll({ uid: 'x', id: 'gone_item' }).affixes).toEqual([]);
+  });
+
+  it('tier havuzu her yuvada dolu (doğrulayıcı da denetler)', () => {
+    for (const t of ['C', 'B', 'A'] as const) for (const s of ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const) expect(tierPool(t, s).length).toBeGreaterThan(0);
+    expect(validateItems()).toEqual([]);
   });
 });
 
@@ -123,15 +210,15 @@ describe('zarlar kayıtta: sefer ve Endless', () => {
     return applyBattle({ ...s, inventory: [] }, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: 1, alive: true })) });
   };
 
-  it('sefer loot\'u zarlı gelir; aynı sefer + aynı düşüş = aynı zarlar (yükleyip yeniden kazanmak değiştirmez)', () => {
+  it("sefer loot'u zarlı gelir; aynı sefer + aynı düşüş = aynı zarlar (yükleyip yeniden kazanmak değiştirmez)", () => {
     const a = won();
     const b = won();
     expect(a.inventory.length).toBeGreaterThan(0);
-    for (const it of a.inventory) expect(it.rolls).toBeDefined();
+    for (const it of a.inventory) expect(it.rolls?.affixes.length).toBeGreaterThan(0);
     expect(a.inventory).toEqual(b.inventory);
   });
 
-  it('kayıt round-trip zarları korur; eski kayıttaki zarsız item yüklenince aralığın ortasını kullanır, bozuk zar alanı item\'i atar', () => {
+  it("kayıt round-trip zarları korur; zarsız eski item okunurken seed'li en yakın biçimi alır; bozuk zar alanı item'i atar", () => {
     const s = won();
     const kv = memoryKV();
     writeSave(kv, s, 'auto');
@@ -139,17 +226,17 @@ describe('zarlar kayıtta: sefer ve Endless', () => {
     const old = JSON.parse(JSON.stringify(s)) as CampaignState;
     old.inventory = old.inventory.map(({ rolls: _r, ...it }) => it);
     const n = normalizeState(old)!;
-    for (const it of n.inventory) expect(instanceStats(it)).toEqual(itemDef(it.id)!.stats);
+    for (const it of n.inventory) expect(rolledAffixes(it).length).toBe(rarityDef(itemDef(it.id)!.rarity).tiers.length);
     const bad = JSON.parse(JSON.stringify(s)) as CampaignState & { inventory: unknown[] };
     (bad.inventory[0] as unknown as Record<string, unknown>).rolls = 'junk';
     expect(normalizeState(bad)!.inventory).toHaveLength(s.inventory.length - 1);
   });
 
-  it('Endless: ödül item\'i koşu seed\'iyle zarlanır; aynı koşu = aynı zar', () => {
+  it("Endless: ödül item'i koşu seed'iyle zarlanır; aynı koşu = aynı zar", () => {
     const run = { ...newRun(77, ['warrior', 'mage', 'archer', 'gambler'], 't'), phase: 'reward' as const, offer: [{ kind: 'item' as const, itemId: 'riveted_mail', heroId: 'h1' }] };
     const a = chooseReward(run, 0);
     const b = chooseReward(run, 0);
-    expect(a.bag![0]!.rolls).toBeDefined();
+    expect(a.bag![0]!.rolls?.affixes.length).toBeGreaterThan(0);
     expect(a.bag).toEqual(b.bag);
   });
 });

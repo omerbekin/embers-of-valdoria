@@ -1,7 +1,7 @@
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, stopNumber } from './state';
-import { emptyEquipment, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
+import { emptyEquipment, migrateItemRolls, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
 /**
@@ -17,7 +17,8 @@ import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 export const SAVE_KEY = 'protomedi.campaign.v1';
 /** Kayıt dosyası sürümü. 3 (madde 278): sefer durumu v2 (kahraman level/XP/ekipman, torba, altın); 2 ve 1 okunurken taşınır. */
 /** 4: x2 stat ölçeği (Ömer 2026-10-10): 2 ve 3 okunurken item zarlarının ölçekli statları x2 (progression > migrateRollsX2). */
-export const SAVE_VERSION = 4;
+/** 5: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls; hiçbir durumda çökmez). */
+export const SAVE_VERSION = 5;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -210,11 +211,13 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: m.file, corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     const fromV2 = parsed.version === 2;
     // x2 stat ölçeği (sürüm 4): eski kayıttaki item zarları (STR/DEX/INT/LUCK, zırh, hız) x2
     const scaled = parsed.version !== SAVE_VERSION;
-    if (scaled) migrateRollsX2(parsed.slots);
+    if (parsed.version === 2 || parsed.version === 3) migrateRollsX2(parsed.slots);
+    // Affix göçü (sürüm 5): eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
+    if (scaled) migrateItemRolls(parsed.slots);
     const file = empty();
     file.counter = counter;
     let corrupt = false;

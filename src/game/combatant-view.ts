@@ -512,10 +512,44 @@ export class CombatantView {
   }
 
   /**
+   * TELEFON rozetleri (Ömer 2026-10-11, taslak B; plan src/game/badge-layout.ts > solvePhoneBadges): öncelik sırasındaki ilk `plan.shown` durum
+   * planın yuvalarında, kalanı sonraki yuvada "+N" sayacı (rozetle aynı boy ve kit dili: koyu madalyon + ince altın halka; düğme değil).
+   */
+  setPhoneBadges(badges: Array<{ icon: string; owner?: string; color: string; text: string; debuff: boolean; turns: boolean }>, plan: { size: number; slots: Array<{ dir: -1 | 1; i: number }>; shown: number; more: number }): void {
+    this.statusBox.removeAll(true);
+    const { size } = plan;
+    const k = size / layout.statusIcon.size;
+    const gapBar = layout.statusIcon.gapBar;
+    const gapItem = layout.statusIcon.gapItem;
+    const hourglass = ensureIcon(this.scene, 'hourglass', '#d9c9a3', false);
+    const cy = size / 2 - layout.statusIcon.size / 2; // üst kenar masaüstü rozetinin üst kenarında, büyük rozet aşağı uzar (badge-layout.ts > slotRect)
+    const cxOf = (s: { dir: -1 | 1; i: number }) => s.dir * (hpBar.width / 2 + gapBar + size / 2 + s.i * (size + gapItem));
+    plan.slots.slice(0, plan.shown).forEach((slot, n) => {
+      const bd = badges[n];
+      if (!bd) return;
+      const cx = cxOf(slot);
+      const icon = this.scene.add.image(cx, cy, ensureIcon(this.scene, bd.icon, bd.color, false, bd.owner ?? SHARED_KEY)).setDisplaySize(size, size);
+      const label = this.scene.add.text(cx + size / 2, cy + size / 2, bd.text, numStyle(Math.round(18 * k), bd.color)).setOrigin(1, 0.5);
+      this.statusBox.add([icon, label]);
+      if (bd.turns) this.statusBox.add(this.scene.add.image(label.x - label.width - 8 * k, label.y, hourglass).setDisplaySize(15 * k, 15 * k));
+    });
+    const last = plan.slots[plan.shown];
+    if (plan.more > 0 && last) {
+      const cx = cxOf(last);
+      const r = size * 0.46;
+      const g = this.scene.add.graphics();
+      g.fillStyle(0x0c0906, 0.92).fillCircle(cx, cy, r);
+      g.lineStyle(2, 0xd9b26a, 0.8).strokeCircle(cx, cy, r);
+      const t = this.scene.add.text(cx, cy, `+${plan.more}`, { fontFamily: DISPLAY_FONT, fontSize: `${Math.round(size * 0.48)}px`, fontStyle: '700', color: '#f3d999' }).setOrigin(0.5).setResolution(2);
+      this.statusBox.add([g, t]);
+    }
+  }
+
+  /**
    * Rozet yerleşimi için geometri (sahne koordinatı, birimin DURAN konumundan; badge-layout.ts): can çubuğu ortası, çubuğun yarı genişliği, kendi
    * çubuğu (+ MP / hız çubukları), adı ve gövde çekirdeği (sprite kutusunun orta %60'ı: boyalı figürün kendisi; kutunun saydam kenarları değil).
    */
-  badgeGeometry(): { x: number; barY: number; barHalfW: number; ownBar: { x0: number; y0: number; x1: number; y1: number }; parts: Array<{ x0: number; y0: number; x1: number; y1: number }> } {
+  badgeGeometry(): { x: number; barY: number; barHalfW: number; ownBar: { x0: number; y0: number; x1: number; y1: number }; body: { x0: number; y0: number; x1: number; y1: number }; parts: Array<{ x0: number; y0: number; x1: number; y1: number }> } {
     const x = this.homeX;
     const barY = this.baseY + this.hpY;
     const ownBar = { x0: x - hpBar.width / 2 - 3, y0: barY - hpBar.height / 2 - 3, x1: x + hpBar.width / 2 + 3, y1: barY + hpBar.height / 2 + hpBar.mpHeight + hpBar.speedHeight + 9 };
@@ -525,7 +559,7 @@ export class CombatantView {
     const stroke = n.style.strokeThickness / 2;
     const name = { x0: x - n.displayWidth / 2, y0: this.baseY + n.y - n.displayHeight, x1: x + n.displayWidth / 2, y1: this.baseY + n.y - fs * 0.22 + stroke };
     const body = { x0: x - this.w * 0.3, y0: this.baseY - this.h, x1: x + this.w * 0.3, y1: this.baseY };
-    return { x, barY, barHalfW: hpBar.width / 2, ownBar, parts: [ownBar, name, body] };
+    return { x, barY, barHalfW: hpBar.width / 2, ownBar, body, parts: [ownBar, name, body] };
   }
 
   /**

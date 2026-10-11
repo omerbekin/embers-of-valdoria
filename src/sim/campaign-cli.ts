@@ -74,6 +74,15 @@ function report(results: CampaignSimResult[], secs: number) {
     });
     console.log(`  ${`${r.difficulty}/${r.player}`.padEnd(16)} ${cells.join('')}   %${fmt(pct(r.completed, r.runs)).padStart(5)}  ${fmt(r.defeats / r.runs, 2).padStart(6)}`);
   }
+  // Nadirlik dağılımı (Ömer 2026-10-11): loot zorluktan bağımsız (karar 6); tüm zorlukların düşüşleri bölgeye göre toplanır
+  const loot: Record<string, number[]> = {};
+  for (const r of results) for (const [k, v] of Object.entries(r.loot ?? {})) v.forEach((n, i) => ((loot[k] ??= [0, 0, 0, 0, 0])[i]! += n));
+  console.log('');
+  console.log("NADİRLİK  (düşen item'ler, harita bölgesine göre %; Common / Uncommon / Rare / Epic / Legendary; tüm zorluklar)");
+  for (const [k, v] of Object.entries(loot).sort()) {
+    const n = v.reduce((a, b) => a + b, 0);
+    console.log(`  Bölge ${k.padEnd(4)} n=${String(n).padStart(6)}  ${v.map((x) => fmt(pct(x, n)).padStart(5)).join(' / ')}`);
+  }
   for (const r of results) {
     console.log('');
     console.log(`---- ${r.difficulty.toUpperCase()} / oyuncu vekili ${r.player} ----`);

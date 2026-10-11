@@ -50,7 +50,7 @@ import { rewardBlockedReason, takeRareDrop,
   draftClassAt,
   type FormationDraft,
 } from '../../endless';
-import { ITEMS, SLOT_IDS, canEquip, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, statLine, type ItemDef, type ItemStatId } from '../../progression';
+import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, signedText, slotDef, type AffixLine, type ItemDef } from '../../progression';
 import type { Stats } from '../../engine/types';
 import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
@@ -71,9 +71,21 @@ import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { groupColor, sortByPrimary } from '../class-order';
 import { ENDLESS_SCENE, abandon, commit, continueRun, endless, openPause, savedRun, scores, startRun, startWave } from '../endless-session';
 
+/** Tüccar / torba kartlarında nadirlik sırası (çerçeve belirginliği; data/items.json > rarities ile aynı sıra). */
+const RARITY_RANK = ['common', 'uncommon', 'rare', 'epic', 'legendary'];
+
 /** Stat ipucundaki fark renkleri (DOM Gear ile aynı: gear.css > .gr-tip-d.up / .down). */
 const TIP_UP = '#8fe39a';
 const TIP_DOWN = '#ff8a7a';
+
+/**
+ * Örneğin nadirliğiyle görünüm tanımı (Ömer 2026-10-11: nadirlik örnekte, taban nadirlikten bağımsız): çerçeve rengi, ad rengi, alt başlık
+ * örneğin nadirliğini gösterir. Zar yoksa / aynıysa tanım aynen.
+ */
+const viewDef = (d: ItemDef | undefined, rolls?: ItemRolls): ItemDef | undefined => (d && rolls?.rarity && rolls.rarity !== d.rarity ? { ...d, rarity: clampRarity(d, rolls.rarity) } : d);
+
+/** Affix satırının yazısı (kademe etiketi ayrı çizilir): "+6% Crit chance (5–7)". */
+const chipText = (l: AffixLine): string => `${l.text}${l.range ? ` (${l.range})` : ''}`;
 
 export interface EndlessSceneData {
   /** 'title': başlık ekranıyla aç (ana menü / debug); 'pick': doğrudan takım seçimi. Yoksa bellekteki koşunun aşaması. */
@@ -886,7 +898,7 @@ export class EndlessScene extends Phaser.Scene {
     SLOT_IDS.forEach((slot, k) => {
       const y = top + 250 + k * 36;
       const inst = h.equipment[slot];
-      const d = inst ? itemDef(inst.id) : undefined;
+      const d = inst ? viewDef(itemDef(inst.id), inst.rolls) : undefined;
       this.add2(this.note(cx - w / 2 + 26, y, slotDef(slot).name, 20, C.dim));
       this.add2(fitText(this.note(cx - w / 2 + 120, y, d ? d.name : T.emptySlot, 20, d ? rarityColor(d) : C.empty), w - 150));
     });
@@ -1004,12 +1016,11 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   /**
-   * Stat satırı: stat ikonu (savaş HUD'ı / Gear ile aynı kaynak: ui/stat-tips > statIcon) + "+3% Might". `align` center: x orta; left: x sol.
+   * Affix satırı: kademe etiketi (C / B / A) + stat ikonu (savaş HUD'ı / Gear ile aynı kaynak: ui/stat-tips > statIcon) + "+6% Crit chance (5–7)". `align` center: x orta; left: x sol.
    * Dikey orta `cy`. Üstüne gelince / dokununca açıklama ipucu (describeStat; `stats` önce -> sonra). Dönen: genişlik.
    */
   private statChip(
-    sk: ItemStatId,
-    v: number,
+    line: AffixLine,
     x: number,
     cy: number,
     size: number,
@@ -1017,34 +1028,39 @@ export class EndlessScene extends Phaser.Scene {
     add: (o: Phaser.GameObjects.GameObject) => void,
     addTop: (o: Phaser.GameObjects.GameObject) => void,
     stats: () => { now: Stats; after: Stats | null } | null,
-    range?: [number, number],
   ): number {
-    // zarlanmış değer + aralık (sefer Gear kartı gibi): "+4 Max HP (3–5)"
-    const t = this.note(0, cy, statLine(sk, v, range), size, C.stat, false).setOrigin(0, 0.5);
-    const ic = statIcon(sk);
+    // Affix satırı (Ömer 2026-10-11): kademe etiketi (C / B / A) + ikon + zarlanmış değer + aralık: "B  +6% Crit chance (5–7)"
+    const tag = elText(this, 0, cy, line.tier, Math.round(size * 0.72), TIER_COLOR[line.tier], { em: 0.06, weight: '700' }).setOrigin(0, 0.5);
+    const t = this.note(0, cy, chipText(line), size, C.stat, false).setOrigin(0, 0.5);
+    const ic = line.stat ? statIcon(line.stat) : null;
     const isz = Math.round(size * 1.05);
     const gap = ic ? 8 : 0;
-    const w = (ic ? isz + gap : 0) + t.width;
+    const tw = tag.width + 10;
+    const w = tw + (ic ? isz + gap : 0) + t.width;
     const x0 = align === 'center' ? x - w / 2 : x;
-    if (ic) add(this.add.image(x0 + isz / 2, cy, ensureIcon(this, ic.kind, ic.color, false)).setDisplaySize(isz, isz));
-    t.setX(x0 + (ic ? isz + gap : 0));
+    tag.setX(x0);
+    add(tag);
+    if (ic) add(this.add.image(x0 + tw + isz / 2, cy, ensureIcon(this, ic.kind, ic.color, false)).setDisplaySize(isz, isz));
+    t.setX(x0 + tw + (ic ? isz + gap : 0));
     add(t);
-    addTop(this.tipZoneFor(sk, x0 + w / 2, cy, w + 12, size + 14, stats));
+    addTop(this.tipZoneFor(line, x0 + w / 2, cy, w + 12, size + 14, stats));
     return w;
   }
 
   /** Tüccar karşılaştırma tablosu: stat adının ipucu alanı (sol kenar x, dikey orta cy). */
-  private statTipZone(sk: ItemStatId, x: number, cy: number, w: number, h: number, stats: () => { now: Stats; after: Stats | null } | null): void {
+  private statTipZone(sk: string | AffixLine, x: number, cy: number, w: number, h: number, stats: () => { now: Stats; after: Stats | null } | null): void {
     this.add2(this.tipZoneFor(sk, x + w / 2, cy, w + 8, h, stats));
   }
 
   /** Stat ipucu alanı: üstüne gelince / dokununca describeStat açıklaması (önce -> sonra); ikinci dokunuş kapatır. */
-  private tipZoneFor(sk: ItemStatId, cx: number, cy: number, w: number, h: number, stats: () => { now: Stats; after: Stats | null } | null): Phaser.GameObjects.Zone {
-    const ic = statIcon(sk);
+  private tipZoneFor(key: string | AffixLine, cx: number, cy: number, w: number, h: number, stats: () => { now: Stats; after: Stats | null } | null): Phaser.GameObjects.Zone {
+    // Stat kimliği olan affix (Armor, Crit...) stat açıklamasını (önce -> sonra) gösterir; diğerleri (element hasarı, delme...) affix açıklamasını
+    const sk = typeof key === 'string' ? key : key.stat;
+    const ic = sk ? statIcon(sk) : null;
     const z = this.add.zone(cx, cy, w, h).setInteractive();
     const show = () => {
       const st = stats();
-      const info = st ? statTip(sk, st.now, st.after) : null;
+      const info = sk ? (st ? statTip(sk, st.now, st.after) : null) : typeof key === 'string' ? null : affixTip(key);
       if (!info) return;
       this.hideTip();
       const tip = elTip(this, { icon: ic ? ensureIcon(this, ic.kind, ic.color, false) : undefined, iconSize: 40, title: info.title, ...(info.titleDiff ? { titleSuffix: { text: info.titleDiff.text, hex: info.titleDiff.dir === 'up' ? TIP_UP : TIP_DOWN } } : {}), lines: info.lines.map((l) => ({ segs: statTipSegments(l).map((g) => ({ text: g.text, ...(g.dir ? { hex: g.dir === 'up' ? TIP_UP : TIP_DOWN } : {}) })) })), width: 440 });
@@ -1103,7 +1119,7 @@ export class EndlessScene extends Phaser.Scene {
     const rich = !!special;
     const R = LOOK.card.medal;
     const kicker = card.kind === 'item' ? T.kickerItem(special) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : T.kickerHeal(special);
-    const d = card.kind === 'item' ? itemDef(card.itemId) : undefined;
+    const d = card.kind === 'item' ? viewDef(itemDef(card.itemId), card.rolls) : undefined;
     const accent = d ? hexNum(rarityColor(d)) : card.kind === 'gold' ? 0xecc878 : card.kind === 'feast' ? 0xf0b860 : card.kind === 'revive' ? 0x9ad08a : 0xd96a5a;
     const tint = EndlessScene.TINT[card.kind];
     this.choiceCard({ index, cx, w, rich, accent, tint, kicker, take: () => this.actTakeReward(run, index), rarity: !!d, blocked: rewardBlockedReason(run, card) }, (k) => {
@@ -1138,7 +1154,7 @@ export class EndlessScene extends Phaser.Scene {
         k.add(this.note(k.cx, k.bottom - 30, T.healPreview(0, card.ratio), 20, C.accent).setOrigin(0.5, 0));
       }
       // Item kartı: sağ üst köşede satış değeri + küçük piksel sikke
-      if (d) this.sellTag(sellValue(d), k.x1 - 18, k.top + 6, k.add);
+      if (d && card.kind === 'item') this.sellTag(sellValue({ id: d.id, ...(card.rolls ? { rolls: card.rolls } : {}) }), k.x1 - 18, k.top + 6, k.add);
     });
   }
 
@@ -1186,11 +1202,11 @@ export class EndlessScene extends Phaser.Scene {
     // Stat satırları: ikon + yazı (Gear kartı gibi); üstüne gelince / dokununca açıklama, kartın önerdiği kahraman için önce -> sonra
     const hero = heroId ? heroOf(run, heroId) : undefined;
     let ly = y + 70 + 15;
-    for (const r of itemStatRows(d, rolls).slice(0, 4)) {
-      this.statChip(r.stat, r.value, k.cx, ly, 23, 'center', k.add, k.addTop, () => this.tipStats(hero, d, rolls), r.range);
+    for (const r of itemStatRows(d, rolls, run, heroId).slice(0, 4)) {
+      this.statChip(r, k.cx, ly, 23, 'center', k.add, k.addTop, () => this.tipStats(hero, d, rolls));
       ly += 31;
     }
-    // Epic etkisi (Gear kartıyla aynı metin: progression effectLine): statların altında ayrı, vurgulu tek satır; sığmazsa kısaltılır + ipucu
+    // Legendary etkisi (Gear kartıyla aynı metin: progression effectLine): statların altında ayrı, vurgulu tek satır; sığmazsa kısaltılır + ipucu
     const fx = effectLine(d);
     if (fx) this.effectNote(fx, k.cx, ly + 4, k.w - 48, 21, 'center', k.add, k.addTop);
     this.usableRow(run, d, k.cx, k.bottom - 78, k.add, { maxW: k.w - 40 });
@@ -1330,7 +1346,7 @@ export class EndlessScene extends Phaser.Scene {
       const x = SHOP.gridX + (i % S.cols) * (S.cell + S.gapX);
       const y = SHOP.gridTop + Math.floor(i / S.cols) * (S.cell + S.priceH + S.gapY);
       const e = shop[i];
-      const d = e ? itemDef(e.itemId) : undefined;
+      const d = e ? viewDef(itemDef(e.itemId), e.rolls) : undefined;
       if (!e || !d) {
         this.emptyCell(x, y, S.cell);
         continue;
@@ -1360,13 +1376,13 @@ export class EndlessScene extends Phaser.Scene {
     const top = SHOP.gridTop + 26;
     if (!bag.length) this.add2(this.note(SHOP.gridX, top + 30, T.bagEmpty, 24, C.dim, true));
     bag.slice(this.sellPage * S.perPage, (this.sellPage + 1) * S.perPage).forEach((inst, k) => {
-      const d = itemDef(inst.id);
+      const d = viewDef(itemDef(inst.id), inst.rolls);
       const x = SHOP.gridX + (k % S.cols) * (S.cell + S.gapX);
       const y = top + Math.floor(k / S.cols) * (S.cell + S.priceH + S.gapY);
       if (!d) return this.emptyCell(x, y, S.cell);
       const sel = this.shopSel?.kind === 'bag' && this.shopSel.uid === inst.uid;
       this.itemCell(run, d, x, y, S.cell, { selected: sel }, () => this.selectShop({ kind: 'bag', uid: inst.uid }, 'sell'));
-      this.priceTag(x + S.cell / 2, y + S.cell + S.priceH / 2 + 2, sellValue(d), true, 24);
+      this.priceTag(x + S.cell / 2, y + S.cell + S.priceH / 2 + 2, sellValue(inst), true, 24);
     });
     // sayfa düğmeleri
     if (pages > 1) {
@@ -1386,7 +1402,7 @@ export class EndlessScene extends Phaser.Scene {
     const list = run.buyback ?? [];
     if (!list.length) this.add2(this.note(SHOP.gridX, by + 26, T.buybackEmpty, 23, C.dim, true).setWordWrapWidth(560));
     list.forEach((e, i) => {
-      const d = itemDef(e.item.id);
+      const d = viewDef(itemDef(e.item.id), e.item.rolls);
       if (!d) return;
       const x = SHOP.gridX + i * (S.cell + S.gapX);
       const y = by + 26;
@@ -1417,20 +1433,33 @@ export class EndlessScene extends Phaser.Scene {
    * `selected`: açık altın çerçeve + üstte TEK kor elmas (ekrandaki tek elmas); `dim`: alınamıyor (soluk); `gone`: satıldı; `fits`: silahta
    * sağ üstte kullanabilenlerin küçük avatarları.
    */
-  private itemCell(run: EndlessRun, d: ItemDef, x: number, y: number, size: number, o: { selected?: boolean; dim?: boolean; gone?: boolean; fits?: boolean }, tap: () => void): void {
+  private itemCell(run: EndlessRun, d: ItemDef, x0: number, y0: number, size: number, o: { selected?: boolean; dim?: boolean; gone?: boolean; fits?: boolean }, tap: () => void): void {
+    // Kıpırdamaz (Ömer 2026-10-11): seçili kart artık 6 px yukarı kalkmıyor, üstüne gelince ikon büyümüyor; tam piksele oturur (ince çizgi
+    // titremesin). Seçim yalnızca çerçeve + elmasla gösterilir.
+    const x = Math.round(x0);
+    const y = Math.round(y0);
     const col = hexNum(rarityColor(d));
-    const c = this.add2(this.add.container(0, o.selected ? -6 : 0));
+    const c = this.add2(this.add.container(0, 0));
     const light = Phaser.Display.Color.ValueToColor(col).lighten(25).color;
-    const baseGlow = o.gone ? 0.06 : o.selected ? 0.42 : 0.22;
+    // Nadirlik biraz daha belirgin (Ömer 2026-10-11): sıra büyüdükçe çerçeve kalınlaşır, iç zemine hafif renk tonu, köşebentler uzar;
+    // Epic ve Legendary dört köşede köşebent taşır
+    const rank = Math.max(0, RARITY_RANK.indexOf(d.rarity));
+    const baseGlow = o.gone ? 0.06 : o.selected ? 0.42 : 0.18 + rank * 0.04;
     const gs = size * (o.selected ? 1.35 : 1.1);
     const glow = this.add.image(x + size / 2, y + size / 2, ensureGlow(this)).setTint(col).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(gs, gs).setAlpha(baseGlow);
     const g = this.add.graphics();
     g.fillStyle(0x0c0906, 0.92).fillRect(x, y, size, size);
-    const k = Math.round(size * 0.1);
-    g.lineStyle(1, col, o.gone ? 0.25 : 0.6).strokeRect(x + 0.5, y + 0.5, size - 1, size - 1);
+    if (!o.gone) g.fillStyle(col, 0.05 + rank * 0.025).fillRect(x, y, size, size); // iç ton
+    const k = Math.round(size * (0.1 + rank * 0.025));
+    const lw = rank >= 2 ? 2 : 1;
+    g.lineStyle(lw, col, o.gone ? 0.25 : 0.7 + rank * 0.06).strokeRect(x + lw / 2, y + lw / 2, size - lw, size - lw);
     g.lineStyle(2, light, o.gone ? 0.3 : 0.95);
     g.strokePoints([{ x, y: y + k }, { x, y }, { x: x + k, y }], false);
     g.strokePoints([{ x: x + size - k, y: y + size }, { x: x + size, y: y + size }, { x: x + size, y: y + size - k }], false);
+    if (rank >= 3) {
+      g.strokePoints([{ x: x + size - k, y }, { x: x + size, y }, { x: x + size, y: y + k }], false);
+      g.strokePoints([{ x, y: y + size - k }, { x, y: y + size }, { x: x + k, y: y + size }], false);
+    }
     const isz = size * 0.72;
     const icon = this.add.image(x + size / 2, y + size / 2, itemEmblem(this, d, rarityColor(d))).setDisplaySize(isz, isz);
     if (o.gone) icon.setAlpha(0.18).setTint(0x8a8a8a);
@@ -1458,14 +1487,11 @@ export class EndlessScene extends Phaser.Scene {
       });
     }
     const z = this.tapZone(x + size / 2, y + size / 2, size + 10, size + 10, tap);
-    // Üstüne gelince: ikon hafifçe büyür, nadirlik renginde parıltı artar
-    const base = icon.scale;
+    // Üstüne gelince: yalnızca nadirlik renginde parıltı artar (hiçbir şey yer / boy değiştirmez)
     z.on('pointerover', () => {
-      this.tweens.add({ targets: icon, scale: base * 1.07, duration: 160, ease: EL.EASE });
       if (!o.gone) this.tweens.add({ targets: glow, alpha: Math.max(baseGlow, 0.38), duration: 160, ease: EL.EASE });
     });
     z.on('pointerout', () => {
-      this.tweens.add({ targets: icon, scale: base, duration: 160, ease: EL.EASE });
       this.tweens.add({ targets: glow, alpha: baseGlow, duration: 160, ease: EL.EASE });
     });
   }
@@ -1502,17 +1528,17 @@ export class EndlessScene extends Phaser.Scene {
     let rolls: ItemRolls;
     if (sel?.kind === 'ware') {
       const e = run.shop?.[sel.index];
-      d = e ? itemDef(e.itemId) : undefined;
+      d = e ? viewDef(itemDef(e.itemId), e.rolls) : undefined;
       rolls = e?.rolls;
       if (e && d) action = e.sold ? { label: T.soldOut, enabled: false, run: () => {} } : buyAction(e.price, T.buy(e.price), () => this.actBuy(run, sel.index));
     } else if (sel?.kind === 'bag') {
       const inst = bagOf(run).find((i) => i.uid === sel.uid);
-      d = inst ? itemDef(inst.id) : undefined;
+      d = inst ? viewDef(itemDef(inst.id), inst.rolls) : undefined;
       rolls = inst?.rolls;
-      if (d) action = { label: T.sellFor(sellValue(d)), enabled: true, run: () => this.actSell(run, sel.uid) };
+      if (d && inst) action = { label: T.sellFor(sellValue(inst)), enabled: true, run: () => this.actSell(run, sel.uid) };
     } else if (sel?.kind === 'buyback') {
       const e = run.buyback?.[sel.index];
-      d = e ? itemDef(e.item.id) : undefined;
+      d = e ? viewDef(itemDef(e.item.id), e.item.rolls) : undefined;
       rolls = e?.item.rolls;
       if (e && d) action = buyAction(e.price, T.buyBack(e.price), () => this.actBuyback(run, sel.index));
     }
@@ -1546,15 +1572,15 @@ export class EndlessScene extends Phaser.Scene {
     const chipH = 38;
     let cxp = x0;
     let rows = 1;
-    for (const { stat: sk, value: v, range } of itemStatRows(item, rolls)) {
-      const probe = this.note(0, 0, statLine(sk, v, range), 28, C.stat, false);
-      const wNeed = probe.width + 38;
+    for (const r of itemStatRows(item, rolls, run, cmp?.id)) {
+      const probe = this.note(0, 0, chipText(r), 28, C.stat, false);
+      const wNeed = probe.width + 68;
       probe.destroy();
       if (cxp > x0 && cxp + wNeed > x0 + inner) {
         cxp = x0;
         rows++;
       }
-      cxp += this.statChip(sk, v, cxp, y + (rows - 1) * chipH + chipH / 2, 28, 'left', (o) => this.add2(o), (o) => this.add2(o), tipFor, range) + 30;
+      cxp += this.statChip(r, cxp, y + (rows - 1) * chipH + chipH / 2, 28, 'left', (o) => this.add2(o), (o) => this.add2(o), tipFor) + 30;
     }
     y += rows * chipH + 16;
     // Epic etkisi: statların altında vurgulu tek satır (yalnızca etkili item'de yer açar; karşılaştırma tablosu kalan yere sığar)
@@ -1612,7 +1638,7 @@ export class EndlessScene extends Phaser.Scene {
       .sort((p, q) => Math.abs(q.diff) - Math.abs(p.diff))
       .slice(0, 2);
     if (!diffs.length) this.add2(this.note(cx, ay + a / 2 + 50, T.noChange, 23, C.dim, true).setOrigin(0.5));
-    diffs.forEach((x, i) => this.add2(fitText(this.note(cx, ay + a / 2 + 52 + i * 28, statLine(x.stat, x.diff), 24, x.diff > 0 ? GOOD : C.warn, false).setOrigin(0.5), w - 4)));
+    diffs.forEach((x, i) => this.add2(fitText(this.note(cx, ay + a / 2 + 52 + i * 28, `${signedText(x.diff, x.pct)} ${x.name}`, 24, x.diff > 0 ? GOOD : C.warn, false).setOrigin(0.5), w - 4)));
     this.tapZone(cx, top + 92, w, 196, () => {
       if (this.cmpHero === h.id) return;
       this.cmpHero = h.id;
@@ -1634,16 +1660,18 @@ export class EndlessScene extends Phaser.Scene {
     y += 22;
     const rows = statDelta(run, h.id, d, undefined, rolls);
     const fit = Math.max(0, Math.floor((maxY - y) / 36));
-    const num = (k: StatDelta['stat'], v: number) => (v ? statLine(k, v).split(' ')[0]!.replace(/^\+/, '') : '—');
+    const num = (r: StatDelta, v: number) => (v ? signedText(v, r.pct).replace(/^\+/, '') : '—');
     rows.slice(0, fit).forEach((r, i) => {
       const ry = y + i * 36 + 17;
-      const ic = statIcon(r.stat);
-      if (ic) this.add2(this.add.image(x0 + 13, ry, ensureIcon(this, ic.kind, ic.color, false)).setDisplaySize(26, 26));
-      const nm = this.add2(fitText(this.note(x0 + (ic ? 36 : 0), ry, ITEMS.stats[r.stat]?.name ?? r.stat, 25, C.text, false).setOrigin(0, 0.5), cNow - x0 - 116));
-      this.statTipZone(r.stat, x0, ry, (ic ? 36 : 0) + nm.displayWidth, 34, () => this.tipStats(h, d, rolls));
-      this.add2(this.note(cNow, ry, num(r.stat, r.now), 25, C.stat, false).setOrigin(1, 0.5));
-      this.add2(this.note(cNew, ry, num(r.stat, r.next), 25, C.stat, false).setOrigin(1, 0.5));
-      this.add2(this.note(cDiff, ry, r.diff ? statLine(r.stat, r.diff).split(' ')[0]! : '=', 25, r.diff > 0 ? GOOD : r.diff < 0 ? C.warn : C.dim, false).setOrigin(1, 0.5));
+      const ic = r.stat ? statIcon(r.stat) : null;
+      const tag = this.add2(elText(this, x0, ry, r.tier, 18, TIER_COLOR[r.tier], { em: 0.06, weight: '700' }).setOrigin(0, 0.5));
+      const ix = x0 + tag.width + 8;
+      if (ic) this.add2(this.add.image(ix + 13, ry, ensureIcon(this, ic.kind, ic.color, false)).setDisplaySize(26, 26));
+      const nm = this.add2(fitText(this.note(ix + (ic ? 36 : 0), ry, r.name, 25, C.text, false).setOrigin(0, 0.5), cNow - ix - 116));
+      this.statTipZone(r.stat ?? { id: r.id, tier: r.tier, text: r.text, range: '', name: r.name, values: [r.after] }, x0, ry, ix - x0 + (ic ? 36 : 0) + nm.displayWidth, 34, () => this.tipStats(h, d, rolls));
+      this.add2(this.note(cNow, ry, num(r, r.now), 25, C.stat, false).setOrigin(1, 0.5));
+      this.add2(this.note(cNew, ry, num(r, r.after), 25, C.stat, false).setOrigin(1, 0.5));
+      this.add2(this.note(cDiff, ry, r.diff ? signedText(r.diff, r.pct) : '=', 25, r.diff > 0 ? GOOD : r.diff < 0 ? C.warn : C.dim, false).setOrigin(1, 0.5));
       const gl = this.add2(this.add.graphics());
       gl.lineStyle(1, EL.GOLD, 0.1).lineBetween(x0, ry + 18, x0 + w, ry + 18);
     });
@@ -1665,7 +1693,8 @@ export class EndlessScene extends Phaser.Scene {
 
   private actSell(run: EndlessRun, uid: string): void {
     const idx = bagOf(run).findIndex((i) => i.uid === uid);
-    const d = idx >= 0 ? itemDef(bagOf(run)[idx]!.id) : undefined;
+    const sold = idx >= 0 ? bagOf(run)[idx] : undefined;
+    const d = sold ? itemDef(sold.id) : undefined;
     const next = sellItem(run, uid);
     if (next === run || !d) return;
     commit(next);
@@ -1673,7 +1702,7 @@ export class EndlessScene extends Phaser.Scene {
     const after = bagOf(next)[Math.min(idx, bagOf(next).length - 1)];
     this.shopSel = after ? { kind: 'bag', uid: after.uid } : null;
     this.merchantLine = 'sold';
-    this.toast?.(T.toastSold(d.name, sellValue(d)), 'sell');
+    this.toast?.(T.toastSold(d.name, sellValue(sold ?? d)), 'sell');
     this.render();
   }
 

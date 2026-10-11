@@ -1,4 +1,4 @@
-import type { Attribute, Attributes, CombatantData, CombatantDef, Formulas, Stats, SummonVariants, UnitModifiers } from './types';
+import type { Attribute, Attributes, CombatantData, CombatantDef, Element, Formulas, Stats, SummonVariants, UnitModifiers } from './types';
 
 /** Primary bonusu aktif mi: primary stat, dört statın en yükseğine eşit veya üstündeyse (eşitlik dahil). */
 export function isPrimaryActive(attrs: Attributes, primary: Attribute | undefined): boolean {
@@ -115,6 +115,8 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
 const ATTRS: Attribute[] = ['str', 'int', 'dex', 'luck'];
 /** UnitModifiers'ın toplamsal ekleri (madde 280). */
 const ADDITIVE = ['hpAdd', 'mpAdd', 'spdAdd', 'critAdd', 'critMultAdd', 'accuracyAdd', 'evasionAdd', 'hpRegenAdd', 'mpRegenAdd'] as const;
+/** Affix ekleri (Ömer 2026-10-11): Stats'taki çarpanlara (1 + ek) ya da Lucky Escape şansına eklenir. */
+const AFFIX_ADD = ['surviveAdd', 'damageAdd', 'healPowerAdd', 'shieldPowerAdd', 'dotPowerAdd'] as const;
 
 /** Güçlendirmenin statları/görseli değiştiren bir alanı var mı (yoksa tanım aynen kullanılır). */
 export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
@@ -129,7 +131,11 @@ export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
     nonZero(mods.magicArmorAdd) ||
     mods.spriteScale !== undefined ||
     ADDITIVE.some((k) => nonZero(mods[k])) ||
-    ATTRS.some((k) => nonOne(mods.attrMult?.[k]) || nonZero(mods.attrAdd?.[k]))
+    ATTRS.some((k) => nonOne(mods.attrMult?.[k]) || nonZero(mods.attrAdd?.[k])) ||
+    nonOne(mods.mpMult) ||
+    nonOne(mods.spdMult) ||
+    AFFIX_ADD.some((k) => nonZero(mods[k])) ||
+    Object.values(mods.elemDamageAdd ?? {}).some((v) => nonZero(v))
   );
 }
 
@@ -183,6 +189,16 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
     magicArmor: Math.max(0, derived.magicArmor + (mods.magicArmorAdd ?? 0)),
     spellPowerMult: (derived.spellPowerMult ?? 1) * (mods.powerMult ?? 1),
   };
+  // Affix ekleri (Ömer 2026-10-11): alan verilmezse stat hiç yazılmaz (bugünkü birimler birebir aynı)
+  if (mods.mpMult !== undefined && mods.mpMult !== 1) stats.mp = Math.max(0, Math.round(stats.mp * mods.mpMult));
+  if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(statMin(formulas), r4(stats.spd * mods.spdMult));
+  if (mods.surviveAdd) stats.surviveChance = Math.min(1, r4((stats.surviveChance ?? 0) + mods.surviveAdd));
+  if (mods.damageAdd) stats.damageMult = r4(1 + mods.damageAdd);
+  if (mods.healPowerAdd) stats.healPowerMult = r4(1 + mods.healPowerAdd);
+  if (mods.shieldPowerAdd) stats.shieldPowerMult = r4(1 + mods.shieldPowerAdd);
+  if (mods.dotPowerAdd) stats.dotPowerMult = r4(1 + mods.dotPowerAdd);
+  const elem = Object.entries(mods.elemDamageAdd ?? {}).filter(([, v]) => v);
+  if (elem.length) stats.elemDamageMult = Object.fromEntries(elem.map(([k, v]) => [k, r4(1 + v!)]));
   return { ...def, attributes, stats, ...(mods.spriteScale !== undefined ? { spriteScale: mods.spriteScale } : {}) };
 }
 
@@ -204,6 +220,14 @@ export function applySummonVariant(def: CombatantDef, variant: keyof SummonVaria
   const r1 = (v: number) => (Math.round((v * mult * 10) / S) / 10) * S;
   const stats: Stats = { ...def.stats, hp: Math.max(1, Math.round(def.stats.hp * mult)), str: r1(def.stats.str), int: r1(def.stats.int), hpRegen: def.stats.hpRegen * mult };
   return { ...def, attributes: { ...def.attributes, str: stats.str, int: stats.int }, stats };
+}
+
+/**
+ * Verilen skill hasarının item çarpanı (Global damage x element hasarı; Ömer 2026-10-11). Çarpan yoksa TAM 1 (çağıran 1'de ifadeyi değiştirmez).
+ * Motor (damageSpecFor) ve skill-info aynı fonksiyonu kullanır.
+ */
+export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult'>, element: Element | undefined): number {
+  return (stats.damageMult ?? 1) * (stats.elemDamageMult?.[element ?? 'physical'] ?? 1);
 }
 
 /** Bir özelliğin skill gücü: değer x katsayı (hasar, şifa ve kalkan için). */

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { applyUnitModifiers, content } from '../src/engine';
-import { emptyEquipment, loadout, primaryBonusLost, primaryCheck } from '../src/progression';
+import { affixValues, emptyEquipment, loadout, primaryBonusLost, primaryCheck } from '../src/progression';
 
 // Primary bonusu ve item'ler (Ömer kararı, madde 278): item / level / ağaç statları SAYILIR; primary statını başka stat geçerse bonus normal kurala
 // göre kapanır. Bunu yapacak bir değişiklik ÖNCEDEN bilinir (primaryCheck / primaryBonusLost: kuşanma ekranı ve skill ağacı uyarısı).
@@ -36,6 +36,7 @@ describe('primary bonusu: normal kural + önceden uyarı', () => {
   });
 
   it('güç katmanı primary için özel bayrak vermez (QB/MP/düşman kuralıyla aynı)', () => {
-    expect(loadout({ class: 'paladin', equipment: { boots: { uid: 'i1', id: 'turnshoes' } } }).modifiers).toEqual({ evasionAdd: 0.02 });
+    const boots = { uid: 'i1', id: 'turnshoes', rolls: { rarity: 'common' as const, affixes: [{ id: 'c_eva', q: 0.5 }] } };
+    expect(loadout({ class: 'paladin', equipment: { boots } }).modifiers).toEqual({ evasionAdd: affixValues('c_eva', 5, 0.5)[0]! / 100 });
   });
 });

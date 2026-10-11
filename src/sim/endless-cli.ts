@@ -8,7 +8,7 @@ import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { content } from '../engine';
 import { ENDLESS as BASE, relicDef, type EndlessConfig } from '../endless';
-import { keyMetrics, mergeEndlessResults, simulateEndless, summarize, type EndlessSimResult } from './endless';
+import { keyMetrics, mergeEndlessResults, rarityByBand, simulateEndless, summarize, type EndlessSimResult } from './endless';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=')[1];
@@ -150,6 +150,9 @@ function report(results: EndlessSimResult[], secs: number) {
   }
   console.log('');
   console.log(`Gear Score (koşu sonu) ortalama: ${fmt(r.runs.reduce((a, x) => a + x.gearScore, 0) / Math.max(1, r.runs.length))}`);
+  console.log('');
+  console.log('NADİRLİK  (teklif edilen item\'ler: ödül kartları + tüccar stoğu; temizlenen dalga bandına göre %; Common / Uncommon / Rare / Epic / Legendary)');
+  for (const b of rarityByBand(r)) console.log(`  ${b.band.padEnd(6)} n=${String(b.n).padStart(5)}  ${b.pct.map((x) => fmt(x).padStart(5)).join(' / ')}`);
 }
 
 if (part) {

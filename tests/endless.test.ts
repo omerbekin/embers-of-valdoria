@@ -17,7 +17,6 @@ import {
   endlessView,
   itemKindLine,
   itemStatLines,
-  statLine,
   togglePick,
   combineMods,
   enemyCount,
@@ -44,7 +43,7 @@ import {
   type ScoreEntry,
   type WaveOutcome,
 } from '../src/endless';
-import { ITEMS, canEquip, itemIP, itemValue, loadoutSetup, type ItemDef } from '../src/progression';
+import { ITEMS, affixValues, canEquip, itemDef, itemIP, itemValue, loadoutSetup, type ItemDef } from '../src/progression';
 
 // Endless Lite (roadmap.md bölüm 3, open-questions madde 281): saf mantık testleri. Item kataloğu Item MVP ile değiştiği için testler
 // sabit item id'lerine değil, verilen küçük bir test kataloğuna dayanır.
@@ -54,10 +53,10 @@ const fresh = (seed = 7): EndlessRun => newRun(seed, PARTY, '2026-10-09T00:00:00
 
 /** Test kataloğu: items.json'un şemasında, motorun bugün desteklediği statlarla. */
 const CAT: ItemDef[] = [
-  { id: 't_axe', name: 'Test Axe', slot: 'weapon', family: 'axes', rarity: 'common', ilvl: 1, stats: { might: 3 } },
-  { id: 't_boots', name: 'Test Boots', slot: 'boots', rarity: 'common', ilvl: 2, stats: { armor: 1 } },
-  { id: 't_boots2', name: 'Test Boots II', slot: 'boots', rarity: 'uncommon', ilvl: 3, stats: { armor: 3 } },
-  { id: 't_far', name: 'Far Helm', slot: 'helm', rarity: 'rare', ilvl: 60, stats: { armor: 9 } },
+  { id: 't_axe', name: 'Test Axe', slot: 'weapon', family: 'axes', rarity: 'common', ilvl: 1 },
+  { id: 't_boots', name: 'Test Boots', slot: 'boots', rarity: 'common', ilvl: 2, main: 'c_armor' },
+  { id: 't_boots2', name: 'Test Boots II', slot: 'boots', rarity: 'uncommon', ilvl: 3, main: 'c_armor' },
+  { id: 't_far', name: 'Far Helm', slot: 'helm', rarity: 'rare', ilvl: 60, main: 'c_armor' },
 ];
 
 /** Zafer sonucu: herkes hayatta, verilen can oranıyla. */
@@ -382,11 +381,12 @@ describe('endless: ekran akışı ve yazılar', () => {
     expect(togglePick(p, 'archer', 4)).toEqual(['warrior', 'mage', 'druid']);
   });
 
-  it('item yazıları: stat satırı yüzde/düz, tür satırı', () => {
-    expect(statLine('might', 3)).toBe('+3% Might');
-    expect(statLine('armor', 1)).toBe('+1 Armor');
-    expect(statLine('dex', 1)).toBe('+1 DEX');
-    expect(itemStatLines(CAT[0]!)).toEqual(['+3% Might']);
+  it('item yazıları: kademe etiketli affix satırları (zar yoksa taban satırı), tür satırı örneğin nadirliğiyle', () => {
+    const turn = itemDef('turnshoes')!;
+    expect(itemStatLines(turn, { rarity: 'common', affixes: [{ id: 'c_eva', q: 0.5 }] })).toEqual([`[C] +${affixValues('c_eva', turn.ilvl, 0.5)[0]}% Evasion`]);
+    expect(itemStatLines(turn)[0]).toMatch(/^\[C\] \+[\d.]+% Evasion$/);
+    expect(itemStatLines(CAT[0]!)[0]).toBe('[C] One of: Physical damage, Arcane damage');
     expect(itemKindLine(CAT[1]!)).toBe('Boots · Common');
+    expect(itemKindLine(turn, { rarity: 'rare', affixes: [{ id: 'c_eva', q: 0.5 }] })).toBe('Boots · Rare');
   });
 });

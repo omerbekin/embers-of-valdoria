@@ -1,7 +1,9 @@
 // Endless tüccarı (Odo the Peddler; Ömer 2026-10-09, taslak v1 "Travelling cart"): satış, bu ziyaretin geri alımı, malları yenileme ve
 // detay panelinin saf hesapları (kim kullanır, en büyük yükseltme kimde, takılıyla stat farkı). Saf; her fonksiyon yeni durum döner.
 // Satın alma run.ts > buyItem, ayrılma run.ts > leaveShop. Ekran: src/game/scenes/EndlessScene.ts > drawShop. Sayılar data/endless.json > shop.
-import { ITEMS, STAT_IDS, canEquip, instanceStats, itemDef, sellValue, statRange, statsIP, type ItemDef, type ItemStats, type ItemStatId } from '../progression/items';
+import { ITEMS, canEquip, itemDef, sellValue, type ItemDef } from '../progression/items';
+import { affixDiff, affixLines, type AffixDelta, type AffixLine } from '../progression/item-text';
+import { instanceScore } from '../progression/equip';
 import { ENDLESS, type EndlessConfig, type EndlessHero, type EndlessRun, type ItemRolls } from './data';
 import { bagOf, endlessBagSize, heroOf, ilvlCap, newRun, shopStock, suspendedOf } from './run';
 import { randomTeam } from '../engine/content';
@@ -14,7 +16,7 @@ const defIn = (catalog: ItemDef[], id: string): ItemDef | undefined => catalog.f
 export function sellPriceOf(run: EndlessRun, uid: string, catalog: ItemDef[] = ITEMS.items): number {
   const inst = bagOf(run).find((i) => i.uid === uid);
   const d = inst ? defIn(catalog, inst.id) : undefined;
-  return d ? sellValue(d) : 0;
+  return inst && d ? sellValue(itemDef(inst.id) ? inst : d) : 0; // zarlarıyla (örneğin gerçek değeri)
 }
 
 /**
@@ -29,7 +31,7 @@ export function sellItem(run: EndlessRun, uid: string, catalog: ItemDef[] = ITEM
   if (!d) return run;
   const s = clone(run);
   const [item] = s.bag!.splice(idx, 1);
-  const price = sellValue(d);
+  const price = sellValue(itemDef(item!.id) ? item! : d);
   s.gold += price;
   const list = [...(s.buyback ?? []), { item: item!, price }];
   s.buyback = list.slice(Math.max(0, list.length - Math.max(1, cfg.shop.buybackSize)));
@@ -82,59 +84,31 @@ export function equippedFor(run: EndlessRun, heroId: string, d: ItemDef, catalog
   return cur ? defIn(catalog, cur.id) : undefined;
 }
 
-/** Stat farkı satırı: şimdiki (takılı), yeni ve fark. */
-export interface StatDelta {
-  stat: ItemStatId;
-  now: number;
-  next: number;
-  diff: number;
+/** Affix farkı satırı (progression > affixDiff): şimdiki (takılı), yeni ve fark; kademe ve yazıyla. */
+export type StatDelta = AffixDelta;
+
+/** Item'in affix satırları (zar sırasıyla): kademe, yazı, aralık (progression > affixLines). `heroId` verilirse {primary} o kahramanın statı. */
+export function itemStatRows(d: ItemDef, rolls?: ItemRolls, run?: EndlessRun, heroId?: string): AffixLine[] {
+  const cls = run && heroId ? heroOf(run, heroId)?.class : undefined;
+  return itemDef(d.id) ? affixLines({ id: d.id, ...(rolls ? { rolls } : {}) }, cls) : [];
 }
 
-/**
- * Örneğin gerçek statları (stat zarlarıyla; Ömer 2026-10-10): items.json'daki item'de `instanceStats` (zar yoksa katalog değeri), katalog dışı
- * (test) item'de katalog değeri.
- */
-export function rolledStats(d: ItemDef, rolls?: ItemRolls): ItemStats {
-  return itemDef(d.id) ? instanceStats({ id: d.id, rolls }) : { ...d.stats };
-}
-
-/** Stat satırı: zarlanmış değer + aralık (satır yazısı `statLine(stat, value, range)`: "+4 Max HP (3–5)"). */
-export interface StatRow {
-  stat: ItemStatId;
-  value: number;
-  range: [number, number];
-}
-
-/** Item'in stat satırları (veri sırasıyla): zarlanmış değer ve zar aralığı. */
-export function itemStatRows(d: ItemDef, rolls?: ItemRolls): StatRow[] {
-  const st = rolledStats(d, rolls);
-  return STAT_IDS.filter((k) => st[k]).map((k) => ({ stat: k, value: st[k]!, range: statRange(d, k) }));
-}
-
-/** Kahramanın o yuvadaki örneğinin statları (zarlarıyla; boş yuva: {}). */
-function equippedStats(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[]): ItemStats {
-  const inst = heroOf(run, heroId)?.equipment[d.slot];
-  const cur = equippedFor(run, heroId, d, catalog);
-  return inst && cur ? rolledStats(cur, inst.rolls) : {};
-}
-
-/** Takılıyla karşılaştırma: iki örnekte geçen her stat (veri sırasıyla; zarlanmış değerlerle). */
+/** Takılıyla karşılaştırma: iki örnekte geçen her affix (yeninin sırasıyla; zarlanmış değerlerle). */
 export function statDelta(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): StatDelta[] {
-  const curSt = equippedStats(run, heroId, d, catalog);
-  const newSt = rolledStats(d, rolls);
-  const out: StatDelta[] = [];
-  for (const k of STAT_IDS) {
-    const now = curSt[k] ?? 0;
-    const next = newSt[k] ?? 0;
-    if (!now && !next) continue;
-    out.push({ stat: k, now, next, diff: Math.round((next - now) * 100) / 100 });
-  }
-  return out;
+  const hero = heroOf(run, heroId);
+  const cur = hero?.equipment[d.slot];
+  const curOk = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? cur : null;
+  return itemDef(d.id) ? affixDiff({ id: d.id, ...(rolls ? { rolls } : {}) }, curOk, hero?.class) : [];
 }
 
-/** IP kazancı (yeni örnek IP - takılı örnek IP; boş yuva 0; zarlarıyla). */
-export const ipGain = (run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): number =>
-  statsIP(rolledStats(d, rolls)) - statsIP(equippedStats(run, heroId, d, catalog));
+/** Kazanç (yeni örneğin sınıfa değeri - takılı örneğin; boş yuva 0; zarlarıyla; progression > instanceScore). */
+export function ipGain(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): number {
+  const hero = heroOf(run, heroId);
+  if (!hero || !itemDef(d.id)) return 0;
+  const cur = hero.equipment[d.slot];
+  const now = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? instanceScore(hero.class, cur) : 0;
+  return instanceScore(hero.class, { id: d.id, ...(rolls ? { rolls } : {}) }) - now;
+}
 
 /** "BEST": item'i takabilenler içinde en büyük IP kazancı olan kahraman (kazanç yoksa null). Eşitlikte takım sırası. */
 export function bestHeroFor(run: EndlessRun, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): string | null {

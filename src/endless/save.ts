@@ -4,7 +4,7 @@ import { CELL_COUNT, classes } from '../engine/content';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateRollsX2 } from '../progression/items';
+import { migrateItemRolls, migrateRollsX2 } from '../progression/items';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -21,7 +21,11 @@ export const SCORES_KEY = 'protomedi.endless.scores.v1';
  * (`summons`). Sürüm 1-2 okunurken bu alanlar yok (= tam MP, temiz başlangıç: eski kural bir kez daha) ve yarım savaş atılır (savaş kurulumu
  * değişti: dalga arası cooldown sıfırlama; dalga baştan başlar). Ara verme (ödül / tüccar / kalıntı / kamp) aşaması aynen sürer.
  */
-export const SAVE_VERSION = 3;
+export const SAVE_VERSION = 4;
+/*
+ * 4: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls) ve yarım kalmış
+ * savaş atılır (kurulum item statlarından yeniden kurulur; dalga baştan başlar). Koşunun geri kalanı aynen sürer.
+ */
 /** Skor listesi sürümü (statsız; x2 dönüşümünden etkilenmez). */
 export const SCORES_VERSION = 1;
 
@@ -33,7 +37,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
   try {
     const data = JSON.parse(raw) as { version?: number; run?: EndlessRun };
     const r = data?.run;
-    if (![1, 2, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
+    if (![1, 2, 3, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
     if (data.version === 1) {
       migrateRollsX2(r);
       delete r.suspended;
@@ -43,6 +47,11 @@ export function parseRun(raw: string | null): EndlessRun | null {
       delete r.suspended;
       delete r.summons;
       for (const h of r.heroes ?? []) if (h) delete h.carry;
+    }
+    // 3 -> 4 (affix kademeleri): eski zarlar en yakın yeni biçime; yarım savaş atılır
+    if (data.version !== SAVE_VERSION) {
+      delete r.suspended;
+      migrateItemRolls(r); // eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
     }
     if (!isNum(r.seed) || !isNum(r.wave) || r.wave < 1 || !isNum(r.gold) || !isNum(r.nextItem)) return null;
     if (!['ready', 'relic', 'reward', 'shop', 'over'].includes(r.phase)) return null;

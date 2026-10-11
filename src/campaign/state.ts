@@ -3,6 +3,7 @@ import { CONFIG, getMap } from './data';
 import { finalNode, forwardDistances, incoming, node, outgoing } from './graph';
 import { rngFor, shuffle } from './seed';
 import { emptyEquipment, SLOT_IDS } from '../progression/items';
+import { itemRecovery } from '../progression/loadout';
 import { emptyLootState, grantLoot } from './loot';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
 
@@ -303,7 +304,7 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     const h = heroById(t, u.heroId);
     if (!h) continue;
     if (boss) h.hpRatio = rules.bossVictoryHeal;
-    else if (u.alive && u.hpRatio > 0) h.hpRatio = clamp01(u.hpRatio + rules.victoryHeal);
+    else if (u.alive && u.hpRatio > 0) h.hpRatio = clamp01(u.hpRatio + rules.victoryHeal + itemRecovery(h)); // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
     else h.hpRatio = clamp01(rules.reviveRatio);
     h.hpRatio = Math.round(clamp01(h.hpRatio) * 1000) / 1000;
     h.alive = true;

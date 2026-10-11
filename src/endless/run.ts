@@ -1,6 +1,8 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
-import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, legendaryConflict, instanceIP, itemDef, itemIP, itemValue, rollStats, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, legendaryConflict, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { itemRecovery } from '../progression/loadout';
+import { rollDropRarity } from '../progression/drop';
 import { bestMoves } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
@@ -145,15 +147,17 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
       else delete h.carry;
       continue;
     }
-    if (boss) h.hpRatio = clamp01(cfg.carry.bossVictoryHeal);
-    else h.hpRatio = u.alive ? clamp01(u.hpRatio + heal) : clamp01(cfg.carry.reviveRatio);
+    // Recovery affix'i (Ömer 2026-10-11): yalnızca takan, yalnızca sağ kalan; can ve MP'ye eklenir
+    const rec = u.alive ? itemRecovery(h) : 0;
+    if (boss) h.hpRatio = clamp01(Math.max(cfg.carry.bossVictoryHeal, u.hpRatio + rec));
+    else h.hpRatio = u.alive ? clamp01(u.hpRatio + heal + rec) : clamp01(cfg.carry.reviveRatio);
     // MP canla aynı oranla (Ömer 2026-10-10; 'full' = eski kural); buff / Rage / kalkan / cooldown yalnızca sağ kalana
     const carry: UnitCarry = u.alive ? { ...(out.carry?.heroes[u.heroId] ?? {}) } : {};
     delete carry.mpRatio;
     delete carry.corpse;
     if ((cfg.carry.cooldowns ?? 'carry') !== 'carry') delete carry.cooldowns;
     if (cfg.carry.mp !== 'full') {
-      const mp = boss ? cfg.carry.bossVictoryHeal : u.alive ? (u.mpRatio ?? 1) + heal : cfg.carry.reviveRatio;
+      const mp = boss ? Math.max(cfg.carry.bossVictoryHeal, (u.mpRatio ?? 1) + rec) : u.alive ? (u.mpRatio ?? 1) + heal + rec : cfg.carry.reviveRatio;
       if (clamp01(mp) < 1) carry.mpRatio = Math.round(clamp01(mp) * 1000) / 1000;
     }
     if (Object.keys(carry).length) h.carry = clone(carry);
@@ -174,7 +178,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
   if (rr.item) {
     // Torba doluysa nadir item BEKLER (ödül ekranında: yer açılınca alınır, alınmadan devam edilirse kaybolur); zarlar şimdi atılır
     const d = defIn(catalog, rr.item);
-    const rolls = d ? rollStats(d, rngFor(s.seed, run.wave, 'rare-roll')) : undefined;
+    const rolls = d && itemDef(d.id) ? rollItem(d, rngFor(s.seed, run.wave, 'rare-roll')) : undefined;
     if (addToBag(s, rr.item, catalog, cfg, rolls).ok) s.rareDrop = { itemId: rr.item, wave: run.wave };
     else s.rareDrop = { itemId: rr.item, wave: run.wave, pending: true, ...(rolls ? { rolls } : {}) };
   }
@@ -259,44 +263,61 @@ function slotIP(h: EndlessHero, d: ItemDef, catalog: ItemDef[]): number {
 /** Nadirlik sırası (0 = common). */
 const rarityRank = (r: RarityId): number => RARITY_IDS.indexOf(r);
 
-/** Item önerisinin ek koşulları: seviye tavanına ek (elit/boss), en az nadirlik (yoksa mevcut en yüksek nadirlik). */
+/** Item önerisinin ek koşulları: seviye tavanına ek (elit/boss), örneğin nadirliği (zarlanmış; yoksa tabanın katalog nadirliği). */
 export interface PairOptions {
   ilvlBonus?: number;
-  minRarity?: RarityId;
+  /** Önerilecek örneğin nadirliği (Ömer 2026-10-11: önce nadirlik zarlanır, sonra taban seçilir; taban nadirlikten bağımsız). */
+  rarity?: RarityId;
 }
 
 /**
- * Takım için yükseltme olan (item, kahraman) çiftleri: kahraman takabilir (silah ailesi), item o yuvadakinden güçlü (IP), seviye tavanın altında.
- * `minRarity` verilirse önce o nadirlik ve üstü; hiç yoksa mevcut en yüksek nadirlik (asla boş kalmaz). Sonra en yüksek seviyeli `window` aralığı;
- * `exclude` item id'leri atlanır.
+ * Takım için yükseltme olan (taban, kahraman) çiftleri: kahraman takabilir (silah ailesi), o nadirlikteki örneğin beklenen gücü yuvadakinden büyük
+ * (IP), taban seviye tavanının altında. Sonra en yüksek seviyeli `window` aralığı; `exclude` id'leri ve torbadakiler atlanır. Legendary tabanlar
+ * yok (yalnızca ortak nadir düşüş zarı ve tüccarın nadir malı, madde 297).
  */
 export function upgradePairs(run: EndlessRun, cleared: number, exclude: string[] = [], cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items, o: PairOptions = {}): Array<{ def: ItemDef; heroId: string }> {
   const cap = ilvlCap(cleared, cfg) + (o.ilvlBonus ?? 0);
-  let pairs: Array<{ def: ItemDef; heroId: string }> = [];
+  const pairs: Array<{ def: ItemDef; heroId: string }> = [];
   for (const d of catalog) {
     if (d.ilvl > cap || exclude.includes(d.id) || bagOf(run).some((i) => i.id === d.id)) continue;
-    if (d.rarity === 'legendary') continue; // Legendary ödül/tüccarda yok (düşüş modeli bekliyor, madde 296)
-    for (const h of run.heroes) if (canEquip(h.class, d) && itemIP(d) > slotIP(h, d, catalog)) pairs.push({ def: d, heroId: h.id });
+    if (d.rarity === 'legendary') continue;
+    const ip = itemIP(d, o.rarity);
+    for (const h of run.heroes) if (canEquip(h.class, d) && ip > slotIP(h, d, catalog)) pairs.push({ def: d, heroId: h.id });
   }
   if (!pairs.length) return pairs;
-  if (o.minRarity) {
-    const floor = rarityRank(o.minRarity);
-    const best = Math.max(...pairs.map((p) => rarityRank(p.def.rarity)));
-    const need = Math.min(floor, best);
-    pairs = pairs.filter((p) => rarityRank(p.def.rarity) >= need);
-  }
   const top = Math.max(...pairs.map((p) => p.def.ilvl));
   return pairs.filter((p) => p.def.ilvl > top - cfg.items.window);
 }
 
 const pickOne = <T>(list: T[], rng: Rng): T | undefined => (list.length ? list[rng.int(0, list.length - 1)] : undefined);
 
+/** Teklif / tezgâh zarı: önerilen kahraman için (silahın ana affix'i onun elementinden), zarlanan nadirlikte; katalog dışı (test) item'de zar yok. */
+function rollFor(run: EndlessRun, pair: { def: ItemDef; heroId: string }, rng: Rng, rarity?: RarityId): ItemRolls {
+  if (!itemDef(pair.def.id)) return undefined;
+  const cls = heroOf(run, pair.heroId)?.class;
+  return rollItem(pair.def, rng, { ...(cls ? { forClass: cls } : {}), ...(rarity ? { rarity } : {}) });
+}
+
+/**
+ * Nadirliği zarlanmış bir öneri (Ömer onayı 2026-10-11): tek ağırlık tablosu (items.json > dropRarity; dalganın item seviyesi ve elit / boss
+ * hafifçe kaydırır, tavanlı). O nadirlikte yükseltme yoksa bir alt nadirlik denenir (Common'a kadar); hiç yoksa undefined.
+ */
+function rolledPair(run: EndlessRun, cleared: number, taken: string[], cfg: EndlessConfig, catalog: ItemDef[], rng: Rng, kind: WaveKind, ilvlBonus: number): { def: ItemDef; heroId: string; rarity: RarityId } | undefined {
+  const rolled = rollDropRarity(rng, ilvlCap(cleared, cfg) + ilvlBonus, kind);
+  for (let r = rarityRank(rolled); r >= 0; r--) {
+    const rarity = RARITY_IDS[r]!;
+    const pair = pickOne(upgradePairs(run, cleared, taken, cfg, catalog, { ilvlBonus, rarity }), rng);
+    if (pair) return { ...pair, rarity };
+  }
+  return undefined;
+}
+
 /** Altın kartının miktarı (temizlenen dalgayla büyür). */
 export const goldAmount = (cleared: number, cfg: EndlessConfig = ENDLESS): number => Math.round(cfg.rewards.goldBase + cfg.rewards.goldPerWave * cleared);
 
 /**
  * Dalga arası kartlar (seed'li). Normal dalga: item (yoksa x1,5 altın), altın, iyileştirme (+%40).
- * Elit / boss dalgası (data/endless.json > special): `itemCards` farklı item kartı (en az Rare / Epic, seviye tavanı yüksek), x2 / x3 altın,
+ * Elit / boss dalgası (data/endless.json > special): `itemCards` farklı item kartı (nadirlik tablosu hafif kayar, seviye tavanı yüksek), x2 / x3 altın,
  * elitte +%60 iyileştirme, boss'ta Hero's Feast (tam can + birkaç dalga maks can bonusu). Uygun item kalmazsa item kartının yerine altın.
  */
 export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items): RewardCard[] {
@@ -308,11 +329,11 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
   const cards: RewardCard[] = [];
   const taken: string[] = [];
   for (let i = 0; i < (sp?.itemCards ?? 1); i++) {
-    const pair = pickOne(upgradePairs(run, cleared, taken, cfg, catalog, sp ? { ilvlBonus: sp.ilvlBonus, minRarity: sp.minRarity } : {}), rng);
+    const pair = rolledPair(run, cleared, taken, cfg, catalog, rng, kind, sp?.ilvlBonus ?? 0);
     if (pair) {
       taken.push(pair.def.id);
       // Zarlar teklif anında atılır (seed'li): kartta görünen değer = alınan değer
-      cards.push({ kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollStats(pair.def, rngFor(run.seed, cleared, 'offer-roll', i)) });
+      cards.push({ kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollFor(run, pair, rngFor(run.seed, cleared, 'offer-roll', i), pair.rarity) });
     } else if (!cards.some((c) => c.kind === 'gold')) cards.push({ kind: 'gold', amount: Math.round(gold * 1.5) });
   }
   cards.push({ kind: 'gold', amount: gold });
@@ -325,8 +346,8 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
 }
 
 /**
- * Dükkân stoğu: farklı item'ler, her biri takımda bir yükseltme; fiyat = item değeri. `reroll` (0 = ilk stok) yenilemenin seed'idir;
- * `avoid` id'leri (yenilemede eski mallar) önce dışarıda tutulur, yetmezse yine gelebilir (tezgâh boş kalmasın).
+ * Dükkân stoğu: farklı item'ler, her biri takımda bir yükseltme; nadirlik her mal için aynı tablodan zarlanır (normal dalga kayması); fiyat = örneğin
+ * değeri. `reroll` (0 = ilk stok) yenilemenin seed'idir; `avoid` id'leri (yenilemede eski mallar) önce dışarıda tutulur, yetmezse yine gelebilir.
  */
 export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items, reroll = 0, avoid: string[] = []): ShopEntry[] {
   const cleared = run.stats.cleared;
@@ -334,12 +355,13 @@ export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog
   const out: ShopEntry[] = [];
   const taken: string[] = [];
   for (let i = 0; i < cfg.shop.size; i++) {
-    const fresh = avoid.length ? pickOne(upgradePairs(run, cleared, [...taken, ...avoid], cfg, catalog), rng) : undefined;
-    const pair = fresh ?? pickOne(upgradePairs(run, cleared, taken, cfg, catalog), rng);
+    const fresh = avoid.length ? rolledPair(run, cleared, [...taken, ...avoid], cfg, catalog, rng, 'normal', 0) : undefined;
+    const pair = fresh ?? rolledPair(run, cleared, taken, cfg, catalog, rng, 'normal', 0);
     if (!pair) break;
     taken.push(pair.def.id);
     // Zarlar tezgâha konurken atılır (seed'li; yenileme numarasıyla): tezgâhta görünen değer = satın alınan değer
-    out.push({ itemId: pair.def.id, heroId: pair.heroId, price: itemValue(pair.def), rolls: rollStats(pair.def, rngFor(run.seed, cleared, 'ware-roll', reroll, i)) });
+    const rolls = rollFor(run, pair, rngFor(run.seed, cleared, 'ware-roll', reroll, i), pair.rarity);
+    out.push({ itemId: pair.def.id, heroId: pair.heroId, price: itemValue(rolls ? { id: pair.def.id, rolls } : pair.def), rolls });
   }
   // Nadir mal (madde 297): merchant.fromWave'den itibaren her ziyarette (yenileme dahil) ihtimalle bir Legendary, yüksek fiyatla; havuzdan tekdüze
   const rm = RARE.endless.merchant;
@@ -349,7 +371,8 @@ export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog
     if (pool.length && rr.next() < rm.chance) {
       const d = pool[rr.int(0, pool.length - 1)]!;
       const hero = run.heroes.find((h) => canEquip(h.class, d)) ?? run.heroes[0]!;
-      out.push({ itemId: d.id, heroId: hero.id, price: Math.round(itemValue(d) * rm.priceMult), rolls: rollStats(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll)) });
+      const rolls = rollItem(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll));
+      out.push({ itemId: d.id, heroId: hero.id, price: Math.round(itemValue({ id: d.id, rolls }) * rm.priceMult), rolls });
     }
   }
   return out;
@@ -397,7 +420,7 @@ function addToBag(s: EndlessRun, itemId: string, catalog: ItemDef[], cfg: Endles
   // Stat zarları koşu seed'inden (Ömer 2026-10-10): aynı koşu + aynı uid = aynı değerler; kayda yazılır
   const uid = `e${s.nextItem}`;
   // Teklifte / tezgâhta zarlanmışsa aynı değerler (görünen = alınan); yoksa (eski kayıt, debug) burada zarlanır
-  bag.push({ uid, id: d.id, rolls: rolls ? { ...rolls } : rollStats(d, rngFor(s.seed, 'roll', uid)) });
+  bag.push({ uid, id: d.id, ...(rolls ? { rolls: clone(rolls) } : itemDef(d.id) ? { rolls: rollItem(d, rngFor(s.seed, 'roll', uid)) } : {}) });
   s.nextItem += 1;
   return { ok: true };
 }
@@ -584,7 +607,7 @@ export function grantLegendariesRun(run: EndlessRun): EndlessRun {
     if (d.rarity !== 'legendary' || have.has(d.id)) continue;
     const uid = `e${s.nextItem}`;
     s.nextItem += 1;
-    bag.push({ uid, id: d.id, rolls: rollStats(d, rngFor(s.seed, 'roll', uid)) });
+    bag.push({ uid, id: d.id, rolls: rollItem(d, rngFor(s.seed, 'roll', uid)) });
   }
   return s;
 }

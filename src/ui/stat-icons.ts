@@ -23,7 +23,7 @@ export const STAT_ICON: Record<StatKind, IconKind> = {
   mpRegen: 'mpregen',
 };
 
-/** Stat ikonu alan her tür: motor statları + Might (item'lerin skill gücü eki; motorda tek stat değil). */
+/** Stat ikonu alan her tür: motor statları + 'might' (2026-10-11'den beri Global damage / DMG satırının ikonu; eski Might statı kalktı). */
 export type StatIconKind = StatKind | 'might';
 
 /**
@@ -40,7 +40,7 @@ export function statIconFallback(kind: string): string | null {
   return (STAT_ICON as Record<string, IconKind | undefined>)[kind] ?? null;
 }
 
-/** Might'ın rengi (Gear / Endless satırları). */
+/** Damage (eski Might) ikonunun rengi (Gear / Endless satırları). */
 export const MIGHT_COLOR = '#ff9f43';
 
 /** Primary statın ismi bu altın renkte yazılır. */

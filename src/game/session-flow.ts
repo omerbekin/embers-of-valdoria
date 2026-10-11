@@ -1,4 +1,5 @@
 import type Phaser from 'phaser';
+import { screenGo } from './screen-go';
 
 /**
  * Oyun akışı komutları (ayarlar menüsü ve sonuç ekranı ortak kullanır): "New Game" = rastgele yeni seed + rastgele takımlar, önceki
@@ -142,7 +143,8 @@ export function startTeamSelect(game: Phaser.Game): void {
   if (scene && scene.scene.key === 'BattleScene') scene.goToTeamSelect?.();
 }
 
+/** Ana menüye dön: tasarım kitinin ekran geçişiyle (kararıp açılma, elGo; ortak Menu'nün Main Menu / Leave satırı her ekrandan aynı). */
 export function startMainMenu(game: Phaser.Game): void {
   const scene = active(game);
-  if (scene && scene.scene.key !== 'MainMenuScene') scene.scene.start('MainMenuScene');
+  if (scene && scene.scene.key !== 'MainMenuScene') screenGo(scene, 'MainMenuScene');
 }

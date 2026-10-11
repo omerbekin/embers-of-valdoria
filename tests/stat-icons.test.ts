@@ -37,7 +37,7 @@ describe('Stat ikonları: her stat (+ Might) boyalı görselle', () => {
   it('Gear / Endless yardımcısı (stat-tips > statIcon) aynı kaynağı kullanır; renk kodlaması değişmez', () => {
     expect(statIcon('hp')).toEqual({ kind: statIconName('hp'), color: STAT_COLOR.hp });
     expect(statIcon('crit')).toEqual({ kind: statIconName('critChance'), color: STAT_COLOR.critChance });
-    expect(statIcon('power')?.kind).toBe(statIconName('might'));
+    expect(statIcon('damage')?.kind).toBe(statIconName('might')); // DMG satırı (Global damage) eski Might ikonunu kullanır (Ömer 2026-10-11)
     expect(statIcon('nope')).toBeNull();
   });
 });

@@ -122,7 +122,7 @@ describe('endless torbası', () => {
     expect(back.heroes[0]!.equipment.helm?.id).toBe(helm.id);
     // bozuk torba satırları atılır, koşu bozulmaz
     const dirty = parseRun(JSON.stringify({ version: 1, run: { ...r, bag: [{ uid: 'ok', id: helm.id }, null, { nope: 1 }] } }))!;
-    expect(dirty.bag).toEqual([{ uid: 'ok', id: helm.id }]);
+    expect(dirty.bag!.map((i) => [i.uid, i.id])).toEqual([['ok', helm.id]]); // eski sürüm: zarsız item en yakın affix biçimini alır
   });
 
   it('ödül item kartı torbaya koyar; sonra Gear ile takılır', () => {

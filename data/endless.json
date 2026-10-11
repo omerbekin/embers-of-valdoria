@@ -17,10 +17,10 @@
   "carry": { "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1, "mp": "ratio", "cooldowns": "carry", "fallen": "corpse" },
   "_rewards": "Dalga arası 3 kart: item (takımda yükseltme olan bir item, kimin takacağı kartta yazar; uygun item yoksa ikinci altın kartı), altın, takımı iyileştir. Altın = goldBase + goldPerWave x temizlenen dalga.",
   "rewards": { "healRatio": 0.4, "goldBase": 20, "goldPerWave": 5, "reviveRatio": 0.5 },
-  "_special": "Elit ve boss dalgasından sonra ödül daha değerli (Ömer 2026-10-09, madde 281 cevabı): itemCards item kartı (farklı item'ler), item en az minRarity (yoksa mevcut en yüksek nadirlik), item seviyesi tavanına ilvlBonus eklenir, altın x goldMult. Elit: iyileştirme healRatio. Boss: zafer zaten tam iyileştirir; iyileştirme kartı yerine 'Hero's Feast' (tam can + sonraki feastWaves dalga boyunca maks can x feastHpMult).",
+  "_special": "Elit ve boss dalgasından sonra ödül daha değerli (Ömer 2026-10-09, madde 281 cevabı): itemCards item kartı (farklı item'ler), nadirlik items.json > dropRarity tablosundan, elit / boss küçük bir kaymayla (2026-10-11; eski en az Rare / Epic tabanı kalktı), item seviyesi tavanına ilvlBonus eklenir, altın x goldMult. Elit: iyileştirme healRatio. Boss: zafer zaten tam iyileştirir; iyileştirme kartı yerine 'Hero's Feast' (tam can + sonraki feastWaves dalga boyunca maks can x feastHpMult).",
   "special": {
-    "elite": { "itemCards": 2, "minRarity": "rare", "ilvlBonus": 5, "goldMult": 2, "healRatio": 0.6 },
-    "boss": { "itemCards": 2, "minRarity": "epic", "ilvlBonus": 10, "goldMult": 3, "feastHpMult": 1.15, "feastWaves": 3 }
+    "elite": { "itemCards": 2, "ilvlBonus": 5, "goldMult": 2, "healRatio": 0.6 },
+    "boss": { "itemCards": 2, "ilvlBonus": 10, "goldMult": 3, "feastHpMult": 1.15, "feastWaves": 3 }
   },
   "_bag": "Endless torbası (Ömer 2026-10-09): ödül ve dükkân item'leri torbaya girer, kamp ekranında Gear ile istenen kahramana takılır. bagSize = torba kapasitesi (seferle aynı 30). Torba doluyken kazanılan item satış değerine (items.json > budget.sellRatio, progression sellValue) çevrilir.",
   "bagSize": 30,

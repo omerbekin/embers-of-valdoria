@@ -18,7 +18,7 @@ import {
   pickHero,
   type CampaignState,
 } from '../src/campaign';
-import { BAG_SIZE, ITEMS, RARITY_IDS, bestMoves, canEquip, emptyEquipment, itemDef, loadout, primaryCheck, rollLoot, validateItems } from '../src/progression';
+import { BAG_SIZE, ITEMS, RARITY_IDS, bestMoves, canEquip, emptyEquipment, instanceRarity, itemDef, loadout, primaryCheck, rollLoot, validateItems } from '../src/progression';
 
 // Item MVP (madde 280): motorun toplamsal ekleri, loot (seed'li, zorluktan bağımsız, attempt'ten bağımsız, tekrarda azalan), Equip best.
 
@@ -54,11 +54,13 @@ describe('motor: toplamsal ekler (UnitModifiers)', () => {
     expect(u.maxMp).toBe(content.classes.warrior!.stats.mp + 10);
   });
 
-  it('güç katmanı tüm item statlarını motora çevirir (yüzdeler oran)', () => {
-    const r = loadout({ class: 'gambler', equipment: { ...emptyEquipment(), gloves: { uid: 'i1', id: 'hawkeye_gloves' }, boots: { uid: 'i2', id: 'swift_sabatons' }, armor: { uid: 'i3', id: 'coat_of_plates' } } });
-    const g = itemDef('hawkeye_gloves')!.stats;
-    expect(r.unsupported).toEqual([]);
-    expect(r.modifiers).toMatchObject({ critAdd: g.crit! / 100, critMultAdd: g.critDmg! / 100, magicArmorAdd: itemDef('coat_of_plates')!.stats.magicArmor! });
+  it('güç katmanı affix değerlerini motora çevirir (yüzdeler oran)', () => {
+    const roll = { rarity: 'epic' as const, affixes: [{ id: 'c_acc', q: 0.5 }, { id: 'c_eva', q: 0.5 }, { id: 'b_crit', q: 0.5 }, { id: 'a_keen', q: 0.5 }] };
+    const inst = { uid: 'i1', id: 'hawkeye_gloves', rolls: roll };
+    const r = loadout({ class: 'gambler', equipment: { ...emptyEquipment(), gloves: inst } });
+    const v = (id: string, i = 0) => r.affixes.find((a) => a.id === id)!.values[i]!;
+    expect(r.modifiers).toMatchObject({ accuracyAdd: v('c_acc') / 100, evasionAdd: v('c_eva') / 100, critMultAdd: v('a_keen', 1) / 100 });
+    expect(r.modifiers!.critAdd).toBeCloseTo(Math.min(ITEMS.caps.crit, v('b_crit') + v('a_keen')) / 100, 6); // tavanlı
   });
 });
 
@@ -90,7 +92,7 @@ describe('loot üretimi', () => {
       for (const kind of ['boss', 'treasure'] as const) {
         const r = roll(kind, i);
         expect(r.items.length).toBeGreaterThanOrEqual(1);
-        expect(RARITY_IDS.indexOf(itemDef(r.items[0]!)!.rarity)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare'));
+        expect(RARITY_IDS.indexOf(r.rarities[0]!)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare')); // zarlanan nadirlik (taban bağımsız)
       }
       for (const id of roll('battle', i, { ilvl: 3 }).items) expect(itemDef(id)!.ilvl).toBeLessThanOrEqual(3);
     }
@@ -114,12 +116,12 @@ describe('loot üretimi', () => {
     expect(a3.n).toBeLessThan(a1.n);
     expect(a1.g / a0.g).toBeCloseTo(0.6, 2);
     expect(a3.g / a0.g).toBeCloseTo(0.25, 2);
-    for (let i = 0; i < 200; i++) for (const id of roll('elite', i, { replay: 2 }).items) expect(RARITY_IDS.indexOf(itemDef(id)!.rarity)).toBeLessThanOrEqual(RARITY_IDS.indexOf('rare'));
+    for (let i = 0; i < 200; i++) for (const r of roll('elite', i, { replay: 2 }).rarities) expect(RARITY_IDS.indexOf(r)).toBeLessThanOrEqual(RARITY_IDS.indexOf('rare'));
   });
 
   it('pity: 6 Rare\'siz düşüşten sonra Rare+ garanti', () => {
     const r = roll('battle', 3, { pity: ITEMS.loot.pity.rareAfter });
-    if (r.items.length) expect(RARITY_IDS.indexOf(itemDef(r.items[0]!)!.rarity)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare'));
+    if (r.items.length) expect(RARITY_IDS.indexOf(r.rarities[0]!)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare'));
   });
 });
 
@@ -147,8 +149,8 @@ describe('seferde loot', () => {
     let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'mage'), '6B');
     while (nextStep(s).kind !== 'treasure') s = autoResolve(s);
     const open = completeSimple(s, 'treasure');
-    const ids = open.pendingLoot!.items.map((u) => open.inventory.find((i) => i.uid === u)?.id).filter(Boolean) as string[];
-    expect(ids.some((id) => RARITY_IDS.indexOf(itemDef(id)!.rarity) >= RARITY_IDS.indexOf('rare'))).toBe(true);
+    const got = open.pendingLoot!.items.map((u) => open.inventory.find((i) => i.uid === u)).filter((x): x is NonNullable<typeof x> => !!x);
+    expect(got.some((it) => RARITY_IDS.indexOf(instanceRarity(it)) >= RARITY_IDS.indexOf('rare'))).toBe(true);
     let full: CampaignState = { ...s, inventory: [] };
     delete full.pendingLoot;
     for (let i = 0; i < BAG_SIZE; i++) full = addItem(full, 'turnshoes').state;

@@ -36,7 +36,7 @@ const atBattle = (node = '5A', seed = 42): CampaignState => {
 
 describe('güç katmanı: boş yükleme', () => {
   it('hiçbir şey takılı değilse modifiers yok', () => {
-    expect(loadout({ class: 'warrior', level: 1, equipment: emptyEquipment() })).toEqual({ stats: {}, unsupported: [], missing: [] });
+    expect(loadout({ class: 'warrior', level: 1, equipment: emptyEquipment() })).toEqual({ recovery: 0, affixes: [], missing: [] });
     expect(loadout({ class: 'warrior' }).modifiers).toBeUndefined();
   });
 
@@ -63,13 +63,23 @@ describe('güç katmanı: boş yükleme', () => {
 });
 
 describe('güç katmanı: item -> modifiers', () => {
-  it('statlar toplanır: STR/DEX/INT/LUCK -> attrAdd, Armor -> armorAdd, Might % -> powerMult, yüzdeler oran; zarsız örnek = katalog değeri, zarlı örnek = zar', () => {
-    const eq = { ...emptyEquipment(), weapon: { uid: 'i1', id: 'arming_sword' }, armor: { uid: 'i2', id: 'riveted_mail' }, gloves: { uid: 'i3', id: 'archers_bracer' } };
+  it("affix'ler toplanır (veri eşlemesi): element hasarı, ana stat, düz ekler, yüzdeler oran; aynı alan iki item'den toplanır; tavan uygulanır", () => {
+    const roll = (rarity: 'rare' | 'epic', ...ids: Array<[string, number]>) => ({ rarity, affixes: ids.map(([id, q]) => ({ id, q })) });
+    const eq = {
+      ...emptyEquipment(),
+      weapon: { uid: 'i1', id: 'arming_sword', rolls: roll('epic', ['c_phys', 0.5], ['c_hp', 0.5], ['b_crit', 0.5], ['a_primary', 0.5]) },
+      armor: { uid: 'i2', id: 'riveted_mail', rolls: roll('rare', ['c_armor', 0.5], ['c_hp', 1], ['b_marmor', 0]) },
+    };
     const r = loadout({ class: 'warrior', equipment: eq });
-    // Arming Sword +2 STR +1% Might +1% Crit; Riveted Mail +4 Armor +4 Max HP (x2 stat ölçeği: eski +1 STR, +2 Armor); Archer's Bracer +2% Accuracy +2% Crit
-    expect(r.modifiers).toEqual({ attrAdd: { str: 2 }, armorAdd: 4, powerMult: 1.01, hpAdd: 4, critAdd: 0.03, accuracyAdd: 0.02 });
-    const rolled = loadout({ class: 'warrior', equipment: { ...eq, armor: { uid: 'i2', id: 'riveted_mail', rolls: { armor: 4, hp: 5 } } } });
-    expect(rolled.modifiers?.hpAdd).toBe(5);
+    const m = r.modifiers!;
+    expect(m.elemDamageAdd!.physical).toBeGreaterThan(0);
+    expect(m.attrAdd).toEqual({ str: 4 }); // a_primary: warrior STR (item seviyesi 9: 4)
+    expect(m.hpAdd).toBe(r.affixes.filter((a) => a.id === 'c_hp').reduce((x, a) => x + a.values[0]!, 0)); // iki item'den toplanır
+    expect(m.critAdd).toBe(r.affixes.find((a) => a.id === 'b_crit')!.values[0]! / 100);
+    expect(m.magicArmorAdd).toBe(r.affixes.find((a) => a.id === 'b_marmor')!.values[0]!);
+    // tavan: 4 eldivende kritik (test için aynı yuvaya değil, farklı yuvalara zorlanmış affix'ler) %15'i aşmaz
+    const crit = loadout({ class: 'warrior', equipment: { ...emptyEquipment(), weapon: { uid: 'a', id: 'arming_sword', rolls: roll('epic', ['b_crit', 1], ['a_keen', 1]) }, gloves: { uid: 'b', id: 'keen_gauntlets', rolls: roll('epic', ['b_crit', 1], ['a_keen', 1]) } } });
+    expect(crit.modifiers!.critAdd).toBe(0.15);
   });
 
   it('veride olmayan item yok sayılır (eski kayıt çökmez)', () => {
@@ -93,8 +103,7 @@ describe('güç katmanı: item -> modifiers', () => {
     const unit = battle.combatants.find((c) => c.uid === `party-${idx}`)!;
     const want = applyUnitModifiers(content.classes[hero.class]!, plan.units.party[cell]!.modifiers, f);
     expect(unit.stats.evasion).toBe(want.stats.evasion);
-    expect(unit.stats.evasion).toBeGreaterThan(content.classes[hero.class]!.stats.evasion); // Turnshoes + Bracers kaçınma verir
-    expect(unit.stats.critChance).toBeGreaterThan(content.classes[hero.class]!.stats.critChance);
+    expect(unit.stats.evasion).toBeGreaterThan(content.classes[hero.class]!.stats.evasion); // Turnshoes + Bracers: ana affix Evasion
     expect(fightPlan(plan, 'medium').log).toEqual(fightPlan(plan, 'medium').log);
   });
 });

@@ -271,13 +271,16 @@
     "maxArmor": 40
   },
   "statusIcon": {
-    "_not": "Savaş durum rozetleri (can çubuğunun iki yanı). size = masaüstü boyu; telefonda (html.short / html.compact) phoneScale kadar büyür ama komşu birimin çubuğuna, adına, gövdesine ve rozetlerine binmeyecek kadar (src/game/badge-layout.ts), sığmazsa size'a iner. gapBar = çubukla ilk rozet arası, gapItem = rozetler arası, margin = engellerle en az boşluk.",
+    "_not": "Savaş durum rozetleri (can çubuğunun iki yanı). Masaüstü: size boyunda, buff solda / debuff sağda, satırda 4. TELEFON (html.short / html.compact; Ömer 2026-10-11, taslak B): rozetler phoneSize boyunda (844x390'da ~15 gerçek px), ÖNCELİK sırasıyla (önce debuff'lar, sonra buff'lar; grup içinde phonePriority sırası, listede olmayan sona, eşitlikte az tur önce) sağ 1, sol 1, sağ 2... yuvalarına konur; komşu birimin çubuğuna / adına / gövdesine / rozetine çarpan yuva kullanılmaz; sığmayanlar +N sayacında (sayaç da bir yuva kaplar; düğme değil, ayrıntı yan panelde). src/game/badge-layout.ts > solvePhoneBadges. gapBar = çubukla ilk rozet arası, gapItem = rozetler arası, margin = engellerle en az boşluk, phonePerSide = taraf başına en çok yuva. Zemin etkisi kimliği ground:<id>, zırh aurası armorAura.",
     "size": 28,
-    "phoneScale": 1.45,
     "gapBar": 8,
     "gapItem": 6,
-    "margin": 3
+    "margin": 3,
+    "phoneSize": 42,
+    "phonePerSide": 3,
+    "phonePriority": ["stun", "silence", "omen", "wither", "burning", "wound", "slow", "blinded", "jinxed", "staggered", "ash_brand", "overextended", "ground:burning", "ground:poison", "ground:holy_fire", "ground:flooded_planks", "abyssal_fury", "dark_bond", "shrouded", "fortify", "anchored", "blessed", "haste", "fleet", "armorAura"]
   },
+
   "teamSelect": {
     "slotWidth": 200,
     "slotHeight": 84,

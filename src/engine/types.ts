@@ -45,6 +45,20 @@ export interface Stats extends Attributes {
   spellPowerMult: number;
   /** Luck-primary bonusu: ölümcül vuruşta bu ihtimalle 1 canla kurtulur (savaş başına bir kez; 0 = yok). */
   surviveChance: number;
+  /*
+   * Item affix'lerinin skill sayılarını değiştiren çarpanları (Ömer 2026-10-11, items.md 1.3b). Yoksa 1 (birim bugünküyle birebir aynı). Motor ve
+   * skill-info AYNI çarpanı kullanır: Gear'daki skill sayısı farkları bunları gösterir.
+   */
+  /** Verilen tüm skill hasarı çarpanı (Global damage). */
+  damageMult?: number;
+  /** Element başına verilen skill hasarı çarpanı (Physical / Fire ... damage, All elemental damage). */
+  elemDamageMult?: Partial<Record<Element, number>>;
+  /** Skill şifası ve tur başı şifa (HoT) çarpanı (Support power). */
+  healPowerMult?: number;
+  /** Verdiği skill kalkanı çarpanı (Shield power, Support power). */
+  shieldPowerMult?: number;
+  /** Uyguladığı karakter üstü DoT (Wither, Burning) miktarı çarpanı (DoT damage, Potency). */
+  dotPowerMult?: number;
 }
 
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
@@ -309,6 +323,25 @@ export interface UnitModifiers {
   hpRegenAdd?: number;
   /** Tur başı MP yenilenmesine ek. */
   mpRegenAdd?: number;
+  /*
+   * Affix ekleri (Ömer 2026-10-11, items.md 1.3b; yalnızca güç katmanı verir). Yüzdeler 0-1 oran. Verilmezse birim aynı.
+   */
+  /** Maks MP çarpanı (Mana mastery; mpAdd'den sonra). */
+  mpMult?: number;
+  /** Hız çarpanı (Speed %; spdAdd'den sonra). */
+  spdMult?: number;
+  /** Lucky Escape şansına ek (Endurance; primary'den bağımsız: Luck'ı olmayan da kazanır, toplam en çok 1). */
+  surviveAdd?: number;
+  /** Verilen tüm skill hasarına ek (0,05 = +%5) -> Stats.damageMult. */
+  damageAdd?: number;
+  /** Element başına verilen skill hasarına ek -> Stats.elemDamageMult. */
+  elemDamageAdd?: Partial<Record<Element, number>>;
+  /** Skill şifası / HoT gücüne ek -> Stats.healPowerMult. */
+  healPowerAdd?: number;
+  /** Verdiği kalkan gücüne ek -> Stats.shieldPowerMult. */
+  shieldPowerAdd?: number;
+  /** Uyguladığı DoT gücüne ek -> Stats.dotPowerMult. */
+  dotPowerAdd?: number;
 }
 
 /**
@@ -361,6 +394,54 @@ export interface ItemEffects {
   moveStride?: { turnCost: number; status: string; turns: number };
   /** Heart of the Forge: kritik vuruşta en yaralı dost (canı en düşük oran) verilen can kaybının bu oranı kadar iyileşir. */
   critHealAlly?: number;
+  /*
+   * Affix kancaları (Ömer 2026-10-11, items.md 1.3b; data/items.json > affixDefs). Oranlar 0-1. Hepsi genel; verilmezse birim aynı.
+   */
+  /** Zırh delme: fiziksel vuruşta hedefin zırhının bu oranı yok sayılır (skill'in kendi ignoreDefense'iyle çarpımsal birleşir). */
+  armorPen?: number;
+  /** Büyü zırhı delme: büyü vuruşunda hedefin büyü zırhının bu oranı yok sayılır. */
+  magicPen?: number;
+  /** MP bedeli indirimi: MP bedelli skill'ler bu oran ucuz (yuvarlanır, en az 1). */
+  mpCostReduce?: number;
+  /** Can çalma: isabet eden skill vuruşunun düşürdüğü canın bu oranı kadar şifa. */
+  leech?: number;
+  /** Debuff direnci: başkasının uyguladığı debuff bu ihtimalle hiç tutmaz ('Resisted'). */
+  debuffAvoid?: number;
+  /** Potency: uyguladığı (süreli, sersemletmeyen) debuff'lar bu kadar tur uzun. */
+  potencyTurns?: number;
+  /** Hasar aurası: ekranda yan komşu dostların verdiği skill hasarı bu oran fazla (birden çok kaynakta en yükseği). */
+  auraDamage?: number;
+  /** Alınan tüm hasar bu oran az (Global defense). */
+  damageTakenReduce?: number;
+  /** Endurance: can `below` oranının altındayken alınan hasar `reduce` oranı az. */
+  lowHpReduce?: { below: number; reduce: number };
+  /** Ultimate (initialCooldown'u olan skill) başlangıç cooldown'u bu kadar kısa (en az 0). */
+  ultCdReduce?: number;
+  /** Bağışıklık: listedeki durum, birimin ilk `turns` turunda (kendi turları) ona uygulanamaz. */
+  earlyImmunity?: Array<{ status: string; turns: number }>;
+  /** Çağrı ustalığı: çağırdığı birimlerin maks canı ve skill gücü bu oran fazla. */
+  summonPower?: number;
+  /** Rage kazancı bu oran fazla (Rage'li sınıf). */
+  rageGain?: number;
+  /*
+   * Yeni Legendary etkileri (Ömer onayı 2026-10-11). Hepsi genel.
+   */
+  /** Iron Retort: yakın dövüş skill'iyle bu birime isabet ettiren saldırana `status`, `turns` tur. */
+  retortStatus?: { status: string; turns: number };
+  /** Serrated Edge: kritik vuruş hedefe listedeki durumları verir (DoT'larda miktar = vuruşun stat gücü x `power`). */
+  critStatuses?: Array<{ status: string; turns: number; power?: number }>;
+  /** Battle Rhythm: skill vuruşuyla öldürünce kendine `status` (`turns` tur) ve maks MP'nin `mpRatio` oranı MP. */
+  killRush?: { status: string; turns: number; mpRatio: number };
+  /** Last Stand: can `below` altına İLK inişte `status` (`turns` tur) ve tüm (silinebilir) debuff'lar silinir; savaşta bir kez. */
+  lastStand?: { below: number; status: string; turns: number };
+  /** Blinding Opener: savaştaki ilk hasar skill'inin isabet ettiği hedeflerden en çok `max` tanesine `status`, `turns` tur. */
+  openerStatus?: { status: string; turns: number; max: number };
+  /** Vigil: Rest kendine `status` (`turns` tur) ve maks canın `healRatio` oranı şifa verir. */
+  restBlessing?: { status: string; turns: number; healRatio: number };
+  /** Vengeance: ekranda yan komşu dost (çağrı değil) ölünce kendine listedeki durumlar, `turns` tur. */
+  vengeance?: { statuses: string[]; turns: number };
+  /** Marked Quarry: elit / boss hedefe isabet eden skill vuruşu `status`, `turns` tur verir. */
+  tierStatus?: { status: string; turns: number };
 }
 
 /** Birimin sefer rütbesi (arayüz çerçeve/rozet için; kural değiştirmez). */
@@ -1182,6 +1263,10 @@ export interface Combatant {
   rerollUsed?: boolean;
   debuffIgnored?: boolean;
   shieldRefreshed?: boolean;
+  /** Affix / yeni Legendary çalışma bayrakları (Ömer 2026-10-11): başlayan kendi tur sayısı (Immunity süresi), Last Stand kullanıldı, Blinding Opener kullanıldı. */
+  ownTurns?: number;
+  lastStandUsed?: boolean;
+  openerUsed?: boolean;
   /** Başlangıç cooldown'u eki (UnitSetup.initialCooldownBonus; cooldown'lu skill'lere). */
   initialCooldownBonus?: number;
   /** UnitSetup.skipInitialCooldown (Endless dalga arası: cooldown'lar sıfırlandı). */

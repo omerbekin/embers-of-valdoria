@@ -25,7 +25,7 @@ import {
   type ReplayAction,
   type SuspendedBattle,
 } from '../src/endless';
-import { RARITY_IDS, type ItemDef } from '../src/progression';
+import { type ItemDef } from '../src/progression';
 
 // Yarım kalan savaş (Ömer 2026-10-09, madde 281 cevabı 3): seed + eylem günlüğü saklanır, devam ederken savaş yeniden kurulup günlük oynatılır.
 // Ödüller (cevap 4): elit / boss sonrası daha değerli kartlar.
@@ -158,15 +158,14 @@ describe('endless: yarım savaş günlüğü ve devam', () => {
 
 describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
   const CAT: ItemDef[] = [
-    { id: 'c_boots', name: 'C Boots', slot: 'boots', rarity: 'common', ilvl: 3, stats: { armor: 1 } },
-    { id: 'u_helm', name: 'U Helm', slot: 'helm', rarity: 'uncommon', ilvl: 5, stats: { armor: 2 } },
-    { id: 'r_helm', name: 'R Helm', slot: 'helm', rarity: 'rare', ilvl: 10, stats: { armor: 4 } },
-    { id: 'r_armor', name: 'R Armor', slot: 'armor', rarity: 'rare', ilvl: 11, stats: { armor: 5 } },
-    { id: 'e_armor', name: 'E Armor', slot: 'armor', rarity: 'epic', ilvl: 18, stats: { armor: 9 } },
-    { id: 'e_trinket', name: 'E Trinket', slot: 'trinket', rarity: 'epic', ilvl: 19, stats: { magicArmor: 9 } },
+    { id: 'c_boots', name: 'C Boots', slot: 'boots', rarity: 'common', ilvl: 3, main: 'c_armor' },
+    { id: 'u_helm', name: 'U Helm', slot: 'helm', rarity: 'uncommon', ilvl: 5, main: 'c_armor' },
+    { id: 'r_helm', name: 'R Helm', slot: 'helm', rarity: 'rare', ilvl: 10, main: 'c_armor' },
+    { id: 'r_armor', name: 'R Armor', slot: 'armor', rarity: 'rare', ilvl: 11, main: 'c_armor' },
+    { id: 'e_armor', name: 'E Armor', slot: 'armor', rarity: 'epic', ilvl: 18, main: 'c_armor' },
+    { id: 'e_trinket', name: 'E Trinket', slot: 'trinket', rarity: 'epic', ilvl: 19, main: 'c_armor' },
   ];
   const after = (cleared: number): EndlessRun => ({ ...fresh(), wave: cleared + 1, phase: 'reward', stats: { cleared, turns: 0, kills: 0 } });
-  const rank = (id: string) => RARITY_IDS.indexOf(CAT.find((d) => d.id === id)!.rarity);
   const items = (cards: ReturnType<typeof rewardOffer>) => cards.filter((c): c is Extract<typeof c, { kind: 'item' }> => c.kind === 'item');
 
   it('normal dalga: 1 item + altın + %40 iyileştirme', () => {
@@ -174,12 +173,13 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(offer.map((c) => c.kind)).toEqual(['item', 'gold', 'heal']);
   });
 
-  it('elit (5. dalga): 2 farklı item, en az Rare; x2 altın; %60 iyileştirme', () => {
+  it('elit (5. dalga): 2 farklı item (seviye tavanı yüksek; nadirlik tek tablodan, en az Rare garantisi YOK: Ömer 2026-10-11); x2 altın; %60 iyileştirme', () => {
     const offer = rewardOffer(after(5), ENDLESS, CAT);
     const its = items(offer);
     expect(its).toHaveLength(ENDLESS.special.elite.itemCards);
     expect(new Set(its.map((c) => c.itemId)).size).toBe(its.length);
-    for (const c of its) expect(rank(c.itemId)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare'));
+    // seviye eki: normal dalgada açılmayan (ilvl 10 / 11) tabanlar elit kartında gelebilir
+    expect(Math.max(...its.map((c) => CAT.find((d) => d.id === c.itemId)!.ilvl))).toBeGreaterThan(5 + ENDLESS.items.ilvlAhead);
     const gold = offer.find((c) => c.kind === 'gold');
     const normalGold = rewardOffer(after(4), ENDLESS, CAT).find((c) => c.kind === 'gold');
     expect(gold && gold.kind === 'gold' && gold.amount).toBe(Math.round((ENDLESS.rewards.goldBase + ENDLESS.rewards.goldPerWave * 5) * ENDLESS.special.elite.goldMult));
@@ -187,16 +187,16 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(offer.find((c) => c.kind === 'heal')).toEqual({ kind: 'heal', ratio: ENDLESS.special.elite.healRatio });
   });
 
-  it("boss (10. dalga): en az Epic item'ler, x3 altın, Hero's Feast", () => {
+  it("boss (10. dalga): 2 item (nadirlik tablosu hafif kayar), x3 altın, Hero's Feast", () => {
     const offer = rewardOffer(after(10), ENDLESS, CAT);
-    for (const c of items(offer)) expect(rank(c.itemId)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('epic'));
+    expect(items(offer)).toHaveLength(ENDLESS.special.boss.itemCards);
     expect(offer.some((c) => c.kind === 'heal')).toBe(false);
     expect(offer.find((c) => c.kind === 'feast')).toEqual({ kind: 'feast', hpMult: ENDLESS.special.boss.feastHpMult, waves: ENDLESS.special.boss.feastWaves });
   });
 
-  it('istenen nadirlikte item yoksa mevcut en yüksek nadirlik gelir (kart boş kalmaz)', () => {
+  it('zarlanan nadirlikte yükseltme yoksa bir alt nadirlik denenir (kart boş kalmaz); taban nadirlikten bağımsız', () => {
     const offer = rewardOffer(after(10), ENDLESS, CAT.filter((d) => d.rarity !== 'epic'));
-    for (const c of items(offer)) expect(rank(c.itemId)).toBe(RARITY_IDS.indexOf('rare'));
+    expect(items(offer).length).toBeGreaterThan(0);
   });
 
   it("Hero's Feast: tam can, sonraki dalgalarda maks can çarpanı, her zaferde bir hak düşer", () => {

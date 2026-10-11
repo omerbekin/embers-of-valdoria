@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
 import { describePassive, describeSkill, passiveNumbers, skillNumbers } from '../src/engine/skill-info';
-import { ITEMS, SLOT_IDS, canEquip, heroStats, type Equipment, type ItemDef } from '../src/progression';
+import { ITEMS, SLOT_IDS, canEquip, heroStats, type Equipment, type ItemDef, type ItemInstance } from '../src/progression';
 import { compareNumbers, gearSkillRows, passiveTip, skillDiff, skillTip } from '../src/ui/gear-skills';
 import { diffText } from '../src/ui/stat-tips';
 
@@ -10,23 +10,27 @@ import { diffText } from '../src/ui/stat-tips';
 const f = content.formulas;
 const defs = { statuses: content.statuses, grounds: content.grounds };
 const emptyEq = (): Equipment => Object.fromEntries(SLOT_IDS.map((k) => [k, null])) as unknown as Equipment;
-const hero = (cls: string, items: ItemDef[] = []) => {
+const hero = (cls: string, items: ItemInstance[] = []) => {
   const equipment = emptyEq();
-  items.forEach((d, i) => (equipment[d.slot] = { uid: `t${i}`, id: d.id }));
+  for (const it of items) equipment[ITEMS.items.find((d) => d.id === it.id)!.slot] = it;
   return { id: 'h', class: cls, level: 1, equipment };
 };
-/** Sınıfa uyan, verilen stat'ı veren en güçlü item (yuva başına bir). */
-const strongItem = (cls: string, stat: string): ItemDef | undefined =>
-  ITEMS.items.filter((d) => canEquip(cls, d) && (d.stats as Record<string, number | undefined>)[stat]).sort((a, b) => b.ilvl - a.ilvl)[0];
+/**
+ * Sınıfa uyan en yüksek seviyeli silah, verilen affix'i zorlanmış (Ömer 2026-10-11: Might kalktı; hasar = Global damage / element affix'i,
+ * ana stat = Primary attribute affix'i). Skill sayısı farkları bu affix'lerle büyür.
+ */
+const strongItem = (cls: string, affix: 'a_gdmg' | 'a_primary'): ItemInstance | undefined => {
+  const d: ItemDef | undefined = ITEMS.items.filter((x) => x.slot === 'weapon' && x.rarity !== 'legendary' && canEquip(cls, x)).sort((a, b) => b.ilvl - a.ilvl)[0];
+  return d ? { uid: `s-${affix}`, id: d.id, rolls: { rarity: 'epic', affixes: [{ id: affix, q: 1 }] } } : undefined;
+};
 const classes = Object.values(content.classes).filter((c) => c.skills.length > 0);
 
 describe('Gear skill numbers equal skill-info output', () => {
   it('every scaled number appears in the battle tooltip line, with and without an item', () => {
     let checked = 0;
     for (const c of classes) {
-      const might = strongItem(c.id, 'might');
-      const attr = strongItem(c.id, c.primary ?? 'str');
-      const loadouts = [hero(c.id), hero(c.id, [might, attr].filter((d, i, a): d is ItemDef => !!d && a.findIndex((x) => x?.slot === d.slot) === i))];
+      const dmg = strongItem(c.id, 'a_gdmg');
+      const loadouts = [hero(c.id), hero(c.id, dmg ? [dmg] : [])];
       for (const h of loadouts) {
         const st = heroStats(h)!;
         for (const id of c.skills) {
@@ -49,7 +53,7 @@ describe('Gear skill numbers equal skill-info output', () => {
 
   it('Gear rows show the current numbers (no item) and before / after with an item, as skill-info computes them', () => {
     for (const c of classes) {
-      const item = strongItem(c.id, 'might') ?? strongItem(c.id, c.primary ?? 'str');
+      const item = strongItem(c.id, 'a_gdmg');
       if (!item) continue;
       const before = heroStats(hero(c.id))!;
       const after = heroStats(hero(c.id, [item]))!;
@@ -74,8 +78,8 @@ describe('Gear skill numbers equal skill-info output', () => {
     }
   });
 
-  it('a Might item raises a damage number and the row shows it in green', () => {
-    const item = strongItem('mage', 'might')!;
+  it('a Global damage item raises a damage number and the row shows it in green', () => {
+    const item = strongItem('mage', 'a_gdmg')!;
     const rows = gearSkillRows('mage', heroStats(hero('mage'))!, heroStats(hero('mage', [item]))!);
     const up = rows.flatMap((r) => r.numbers).filter((n) => n.dir === 'up');
     expect(up.length).toBeGreaterThan(0);
@@ -85,7 +89,7 @@ describe('Gear skill numbers equal skill-info output', () => {
   it('tooltip lines are the battle tooltip lines; with an item the changed number reads "a → b (+d)"', () => {
     const skill = content.skills[content.classes.mage!.skills[0]!]!;
     const before = heroStats(hero('mage'))!;
-    const after = heroStats(hero('mage', [strongItem('mage', 'might')!]))!;
+    const after = heroStats(hero('mage', [strongItem('mage', 'a_primary')!]))!;
     const plain = skillTip(skill, before);
     expect(plain.rows.slice(0, describeSkill(skill, before, f, content.summons, defs).lines.length).map((r) => r.text)).toEqual(describeSkill(skill, before, f, content.summons, defs).lines);
     const cmp = skillTip(skill, before, after);

@@ -13,7 +13,6 @@ import {
   legendaryIds,
   legendaryPreviewWanted,
   rollLoot,
-  targetIP,
   validateItems,
 } from '../src/progression';
 import { equipFromBag, grantLegendariesRun, newRun, upgradePairs } from '../src/endless';
@@ -34,19 +33,19 @@ type Priv = { addStatus: (t: unknown, s: unknown, emit: (e: BattleEvent) => void
 const firstSkill = (cls: string) => content.classes[cls]!.skills[0]!;
 
 describe('veri ve kurallar', () => {
-  it('10 Legendary: x2,85 bütçe (etki düşülmüş), 3 stat + benzersiz Legendary etkisi; katalog geçerli', () => {
+  it('18 Legendary (10 eski + 8 yeni, Ömer 2026-10-11): dört sabit affix (C, C, B, A) + benzersiz etki; katalog geçerli', () => {
     expect(validateItems()).toEqual([]);
     const leg = ITEMS.items.filter((d) => d.rarity === 'legendary');
-    expect(leg.map((d) => d.name)).toEqual(['Emberbrand', 'Mantle of Valdren', "Oathkeeper's Bulwark", 'Windrunner Longbow', 'Whisper of Morvane', 'Staff of the Last Ember', "The Gambler's Last Coin", 'Crown of the Ashen King', "Pilgrim's Road Boots", 'Heart of the Forge']);
-    expect(ITEMS.rarities.find((r) => r.id === 'legendary')).toMatchObject({ mult: 2.85, statCount: 3, effect: true });
+    expect(leg.slice(0, 10).map((d) => d.name)).toEqual(['Emberbrand', 'Mantle of Valdren', "Oathkeeper's Bulwark", 'Windrunner Longbow', 'Whisper of Morvane', 'Staff of the Last Ember', "The Gambler's Last Coin", 'Crown of the Ashen King', "Pilgrim's Road Boots", 'Heart of the Forge']);
+    expect(leg.slice(10).map((d) => d.effect)).toEqual(['retort', 'serrated', 'rhythm', 'laststand', 'opener', 'vigil', 'vengeance', 'huntersmark']);
+    expect(ITEMS.rarities.find((r) => r.id === 'legendary')).toMatchObject({ tiers: ['C', 'C', 'B', 'A'], effect: true });
     expect(ITEMS.rarities.find((r) => r.id === 'legendary')!.color).not.toBe(ITEMS.rarities.find((r) => r.id === 'epic')!.color);
     for (const d of leg) {
-      expect(Object.keys(d.stats), d.id).toHaveLength(3);
-      expect(ITEMS.effects[d.effect!]!.legendary, d.id).toBe(true);
+      expect(d.affixes, d.id).toHaveLength(4);
+      expect(d.affixes!.map((id) => ITEMS.affixDefs[id]!.tier), d.id).toEqual(['C', 'C', 'B', 'A']);
       expect(effectLine(d), d.id).toBeTruthy();
     }
-    const e = itemDef('emberbrand')!;
-    expect(targetIP(e)).toBeCloseTo(1.5 * (ITEMS.budget.base + ITEMS.budget.perIlvl * e.ilvl) * 2.85 - ITEMS.effects[e.effect!]!.ip, 6);
+    for (const d of leg.slice(10)) expect(d.minChapter, d.id).toBeGreaterThanOrEqual(2); // yeniler sonraki bölüm havuzlarında
     expect(ITEMS.effectRules.stack).toBe(false);
   });
 
@@ -102,23 +101,23 @@ describe('kahraman başına 1 Legendary', () => {
 });
 
 describe('önizleme ve kayıt', () => {
-  it('?legendary=1 / debug: 10 Legendary torbaya (zarlı), tekrar verince çoğalmaz; kayıt round-trip etkiyi korur', () => {
+  it("?legendary=1 / debug: tüm Legendary'ler torbaya (zarlı), tekrar verince çoğalmaz; kayıt round-trip etkiyi korur", () => {
     expect(legendaryPreviewWanted('?legendary=1')).toBe(true);
     expect(legendaryPreviewWanted('?endless=1')).toBe(false);
     let s: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 8 }), 'defender'), '5A'), inventory: [] };
     s = grantAllLegendaries(s);
     expect(s.inventory.map((i) => i.id).sort()).toEqual(legendaryIds().sort());
     for (const i of s.inventory) expect(i.rolls).toBeDefined();
-    expect(grantAllLegendaries(s).inventory).toHaveLength(10);
+    expect(grantAllLegendaries(s).inventory).toHaveLength(legendaryIds().length);
     const run = grantLegendariesRun(newRun(9, ['warrior', 'archer', 'mage', 'druid'], 't'));
-    expect(run.bag!.filter((i) => itemDef(i.id)!.rarity === 'legendary')).toHaveLength(10);
+    expect(run.bag!.filter((i) => itemDef(i.id)!.rarity === 'legendary')).toHaveLength(legendaryIds().length);
     // takılı Legendary: kayıttan sonra savaş planında etkisiyle
     const def = activeHeroes(s)[0]!; // Crown herkese uyar
     s = equipItem(s, def.id, s.inventory.find((i) => i.id === 'crown_of_the_ashen_king')!.uid);
     const kv = memoryKV();
     writeSave(kv, s, 'auto');
     const back = latestSave(kv)!.state;
-    expect(battlePlan(back).units.party[back.active.indexOf(def.id)]!.itemEffects).toEqual({ ignoreFirstDebuff: true });
+    expect(battlePlan(back).units.party[back.active.indexOf(def.id)]!.itemEffects).toMatchObject({ ignoreFirstDebuff: true }); // + affix kancaları (Debuff resistance, Immunity)
   });
 
   it('Codex: Legendary makalesi 10 item\'i etkisiyle listeler', () => {

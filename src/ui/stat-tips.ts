@@ -1,5 +1,6 @@
 // Stat açıklamaları (savaş HUD'ı ile AYNI kaynak: src/engine/stat-info.ts > describeStat, değerler formulas.json): Gear ekranının stat paneli
-// ve item kartı satırları için. Motorda karşılığı tek stat olmayan "Might" (item'lerin skill gücü eki = Stats.spellPowerMult) burada anlatılır.
+// ve item kartı satırları için. Motorda karşılığı tek stat olmayan "Damage" (Global damage affix'i = Stats.damageMult; eski Might'ın yerine,
+// Ömer 2026-10-11) burada anlatılır; ikonu eski Might ikonu.
 import { content, describeStat } from '../engine';
 import type { StatKind, Stats } from '../engine';
 import { iconUrl } from './dom-icons';
@@ -12,7 +13,7 @@ export interface StatTip {
   titleDiff?: { text: string; dir: 'up' | 'down' };
 }
 
-/** Gear paneli / item stat kimliği -> motor statı ('might' ayrı). */
+/** Gear paneli / item stat kimliği -> motor statı ('might' = Damage satırı; ikon adı eski Might ikonu). */
 const KIND: Record<string, StatKind | 'might'> = {
   hp: 'hp',
   mp: 'mp',
@@ -20,8 +21,7 @@ const KIND: Record<string, StatKind | 'might'> = {
   dex: 'dex',
   int: 'int',
   luck: 'luck',
-  power: 'might',
-  might: 'might',
+  damage: 'might',
   armor: 'armor',
   magicArmor: 'magicArmor',
   crit: 'critChance',
@@ -115,8 +115,8 @@ function statTipBase(id: string, stats: Stats): StatTip | null {
   const kind = KIND[id];
   if (!kind) return null;
   if (kind === 'might') {
-    const pct = Math.round(((stats.spellPowerMult ?? 1) - 1) * 1000) / 10;
-    return { title: `Might ${pct}%`, lines: [`Skill power: all damage, healing and shields from skills +${pct}%.`, 'Stacks additively across items.'] };
+    const pct = Math.round(((stats.damageMult ?? 1) - 1) * 1000) / 10;
+    return { title: `Damage +${pct}%`, lines: [`All damage of your skills +${pct}% (Global damage affixes).`, 'Stacks additively across items. Element damage affixes add on top for their element.'] };
   }
   const info = describeStat(kind, stats, content.formulas);
   // Gear bağlamı: item'ler kritik çarpanını artırır (loadout critMultAdd), "herkes için sabit" satırı burada yanlış olur

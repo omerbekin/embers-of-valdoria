@@ -1,9 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { bestHeroFor, buyItem, chooseReward, ipGain, itemStatRows, newRun, rerollShop, rewardOffer, rolledStats, statDelta, type EndlessRun } from '../src/endless';
-import { instanceStats, itemDef, statLine, statRange } from '../src/progression';
+import { bestHeroFor, buyItem, chooseReward, ipGain, itemStatRows, newRun, rerollShop, rewardOffer, statDelta, type EndlessRun } from '../src/endless';
+import { affixLines, itemDef, itemValue, rolledAffixes, type ItemRoll } from '../src/progression';
 
-// Endless stat zarları (Ömer 2026-10-10, item yeniden yapılanması): kartta / tezgâhta görünen zarlanmış değer = alınan örneğin değeri;
-// tüccar karşılaştırması ve BEST zarlanmış değerlerle.
+// Endless affix zarları (Ömer 2026-10-11, affix kademeleri): kartta / tezgâhta görünen zarlanmış değer = alınan örneğin değeri;
+// tüccar karşılaştırması ve BEST zarlanmış değerlerle; fiyat örneğin zarlarıyla.
 
 const PARTY = ['warrior', 'archer', 'mage', 'druid'];
 const AT = '2026-10-10T00:00:00.000Z';
@@ -20,7 +20,7 @@ describe('endless zarlar: gösterilen = alınan', () => {
     const offer = rewardOffer(run);
     const card = offer.find((c) => c.kind === 'item');
     if (!card || card.kind !== 'item') throw new Error('item card expected');
-    expect(card.rolls).toBeTruthy();
+    expect(card.rolls?.affixes.length).toBeGreaterThan(0);
     expect(rewardOffer(run)).toEqual(offer); // seed'li
     const taken = chooseReward({ ...run, offer }, offer.indexOf(card));
     const inst = taken.bag!.at(-1)!;
@@ -28,60 +28,61 @@ describe('endless zarlar: gösterilen = alınan', () => {
     expect(inst.rolls).toEqual(card.rolls);
   });
 
-  it('tezgâh malları zarlanmış; satın alınan örnek aynı zarları taşır; yenileme yeni zarlar atar', () => {
+  it('tezgâh malları zarlanmış (aralık içinde); fiyat örneğin değeri; satın alınan aynı zarları taşır; yenileme yeni zarlar atar', () => {
     const run = atShop();
     const e = run.shop![0]!;
     expect(e.rolls).toBeTruthy();
-    const d = itemDef(e.itemId)!;
-    for (const [k, v] of Object.entries(e.rolls!)) {
-      const [lo, hi] = statRange(d, k as never);
-      expect(v).toBeGreaterThanOrEqual(lo);
-      expect(v).toBeLessThanOrEqual(hi);
-    }
+    for (const a of rolledAffixes({ id: e.itemId, rolls: e.rolls })) a.values.forEach((v, j) => expect(v >= a.ranges[j]![0] && v <= a.ranges[j]![1]).toBe(true));
+    expect(e.price).toBe(itemValue({ id: e.itemId, rolls: e.rolls }));
     const bought = buyItem(run, 0);
     expect(bought.bag!.at(-1)!.rolls).toEqual(e.rolls);
     expect(rerollShop(run).shop!.every((w) => !!w.rolls)).toBe(true);
   });
 
+  it('silah teklifi önerilen kahramanın elementiyle zarlanır (asa: Druid -> Nature, Mage -> Fire / Ice)', () => {
+    for (let seed = 1; seed < 40; seed++) {
+      const run: EndlessRun = { ...newRun(seed, PARTY, AT), wave: 4, phase: 'reward', stats: { cleared: 3, turns: 0, kills: 0 } };
+      for (const c of rewardOffer(run)) {
+        if (c.kind !== 'item' || itemDef(c.itemId)?.family !== 'staves') continue;
+        const cls = run.heroes.find((h) => h.id === c.heroId)!.class;
+        const main = c.rolls!.affixes[0]!.id;
+        if (cls === 'druid') expect(main).toBe('c_nature');
+        if (cls === 'mage') expect(['c_fire', 'c_ice']).toContain(main);
+      }
+    }
+  });
+
   it('eski kayıt (kartta zar yok): alınırken zarlanır', () => {
     const run: EndlessRun = { ...newRun(4, PARTY, AT), wave: 2, phase: 'reward', stats: { cleared: 1, turns: 0, kills: 0 }, offer: [{ kind: 'item', itemId: 'leather_coif', heroId: 'h1' }] };
     const inst = chooseReward(run, 0).bag!.at(-1)!;
-    expect(inst.rolls).toBeTruthy();
+    expect(inst.rolls?.affixes.length).toBeGreaterThan(0);
   });
 });
 
 describe('endless zarlar: tüccar gösterimi', () => {
   const d = itemDef('brigandine')!;
-  const keys = Object.keys(d.stats) as Array<keyof typeof d.stats>;
-  const hi = Object.fromEntries(keys.map((k) => [k, statRange(d, k)[1]]));
+  const hi: ItemRoll = { rarity: 'rare', affixes: [{ id: 'c_armor', q: 1 }, { id: 'c_hp', q: 1 }, { id: 'b_marmor', q: 1 }] };
 
-  it('itemStatRows: zarlanmış değer + aralık; satır yazısı "+4 Max HP (3–5)" biçiminde', () => {
+  it('itemStatRows: kademe + zarlanmış değer + aralık ("+4 Max HP (3–5)")', () => {
     const rows = itemStatRows(d, hi);
-    expect(new Set(rows.map((r) => r.stat))).toEqual(new Set(keys.filter((k) => d.stats[k])));
-    for (const r of rows) {
-      expect(r.value).toBe(instanceStats({ id: d.id, rolls: hi })[r.stat]);
-      expect(r.range).toEqual(statRange(d, r.stat));
-    }
-    const r0 = rows[0]!;
-    if (r0.range[0] !== r0.range[1]) expect(statLine(r0.stat, r0.value, r0.range)).toMatch(/\(\d+(\.\d)?–\d+(\.\d)?\)$/);
-    // zar yoksa katalog değeri (orta)
-    for (const r of itemStatRows(d)) expect(r.value).toBe(rolledStats(d)[r.stat]);
+    expect(rows.map((r) => r.id)).toEqual(['c_armor', 'c_hp', 'b_marmor']);
+    expect(rows.map((r) => r.tier)).toEqual(['C', 'C', 'B']);
+    expect(rows).toEqual(affixLines({ id: d.id, rolls: hi }));
+    expect(rows[1]!.range).toMatch(/^\d+(\.\d)?–\d+(\.\d)?$/);
   });
 
   it('karşılaştırma ve BEST zarlanmış değerlerle (aynı item, daha iyi zar = yükseltme)', () => {
-    const m = itemDef('flanged_mace')!; // zar aralığı olan item (silah: takımda yalnızca warrior kullanır)
-    const mk = Object.keys(m.stats) as Array<keyof typeof m.stats>;
-    const mHi = Object.fromEntries(mk.map((k) => [k, statRange(m, k)[1]]));
-    const mLo = Object.fromEntries(mk.map((k) => [k, statRange(m, k)[0]]));
+    const m = itemDef('flanged_mace')!; // silah: takımda yalnızca warrior kullanır
+    const mHi: ItemRoll = { rarity: 'common', affixes: [{ id: 'c_phys', q: 1 }] };
+    const mLo: ItemRoll = { rarity: 'common', affixes: [{ id: 'c_phys', q: 0 }] };
     const run = atShop();
     const w = run.heroes[0]!;
     w.equipment = { weapon: { uid: 'x', id: m.id, rolls: mLo } };
     const rows = statDelta(run, w.id, m, undefined, mHi);
-    for (const r of rows) {
-      expect(r.now).toBe(instanceStats({ id: m.id, rolls: mLo })[r.stat]);
-      expect(r.next).toBe(instanceStats({ id: m.id, rolls: mHi })[r.stat]);
-      expect(r.diff).toBeGreaterThan(0);
-    }
+    expect(rows).toHaveLength(1);
+    expect(rows[0]!.now).toBe(rolledAffixes({ id: m.id, rolls: mLo })[0]!.values[0]);
+    expect(rows[0]!.after).toBe(rolledAffixes({ id: m.id, rolls: mHi })[0]!.values[0]);
+    expect(rows[0]!.diff).toBeGreaterThan(0);
     expect(ipGain(run, w.id, m, undefined, mHi)).toBeGreaterThan(0);
     expect(bestHeroFor(run, m, undefined, mHi)).toBe(w.id);
     expect(bestHeroFor(run, m, undefined, mLo)).toBeNull(); // aynı zar: yükseltme değil

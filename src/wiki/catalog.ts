@@ -10,7 +10,9 @@ import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import itemsJson from '../../data/items.json';
-import { effectLine } from '../progression/item-text';
+import { affixMidText, effectLine } from '../progression/item-text';
+import { ITEMS as ITEM_DATA, TIER_IDS, affixDef } from '../progression/items';
+import { dropChances } from '../progression/drop';
 import layout from '../../data/battle-layout.json';
 import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
@@ -734,6 +736,7 @@ export function buildMechanics(): WikiArticle[] {
         ),
       ]),
       itemsArticle(),
+      affixArticle(),
       legendaryArticle(),
     );
   }
@@ -756,8 +759,36 @@ function legendaryArticle(): WikiArticle {
   };
   const slotName = (id: string) => itemsJson.slots.find((x) => x.id === id)?.name ?? id;
   return article('legendary-items', 'Campaign', 'Legendary items', 'burst', [
-    p('Legendaries are unique, hand-made items: three stats and one effect no other item has. A hero can wear only one Legendary at a time. They do not drop yet.'),
-    list(...leg.map((d) => `${d.name} (${slotName(d.slot)}; usable by ${who(d)}${d.minChapter && d.minChapter > 1 ? `; from chapter ${d.minChapter}` : ''}): ${effectLine(d as never)?.replace(/^[^:]*: /, '') ?? ''}`)),
+    p('Legendaries are unique, hand-made items: four fixed affixes (C, C, B, A; their values still roll) and one effect no other item has. A hero can wear only one Legendary at a time. They come only from rare drops.'),
+    list(
+      ...leg.map((d) => {
+        const aff = ((d as { affixes?: string[] }).affixes ?? []).map((id) => `${affixDef(id)?.tier ?? ''} ${affixDef(id)?.name ?? id}`).join(', ');
+        return `${d.name} (${slotName(d.slot)}; usable by ${who(d)}${d.minChapter && d.minChapter > 1 ? `; from chapter ${d.minChapter}` : ''}): ${effectLine(d as never)?.replace(/^[^:]*: /, '') ?? ''}${aff ? ` Affixes: ${aff}.` : ''}`;
+      }),
+    ),
+  ]);
+}
+
+/** Affix havuzları (Ömer onayı 2026-10-11; veriden): kademe, ad, item seviyesi 10'daki orta değer, yuva sınırı. */
+function affixArticle(): WikiArticle {
+  const tierName: Record<string, string> = { C: 'C (every item)', B: 'B (Rare and better)', A: 'A (Epic and better)' };
+  const rows = TIER_IDS.flatMap((t) =>
+    Object.keys(ITEM_DATA.affixDefs)
+      .filter((id) => ITEM_DATA.affixDefs[id]!.tier === t)
+      .map((id) => {
+        const a = ITEM_DATA.affixDefs[id]!;
+        const where = a.slots ? a.slots.map((x) => itemsJson.slots.find((sl) => sl.id === x)?.name ?? x).join(', ') : 'Any slot';
+        return [t, a.name, affixMidText(id, 10), where];
+      }),
+  );
+  return article('item-affixes', 'Campaign', 'Item affixes', 'rune', [
+    p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
+    list(
+      ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
+      'Values grow with item level only (the table shows item level 10). Penetration and crit affixes appear only on weapons and gloves, auras only on armor and trinkets, evasion only on boots and gloves.',
+      'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
+    ),
+    { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },
   ]);
 }
 
@@ -765,10 +796,17 @@ function itemsArticleBody(): WikiArticle {
   const L = itemsJson.loot;
   const fams = itemsJson.weaponFamilies.map((x) => `${x.name} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
   return article('items', 'Campaign', 'Items and gear', 'helm', [
-    p(`Heroes in the campaign wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items only raise stats (STR, DEX, INT, LUCK, HP, armor, Might = skill power, crit, accuracy, evasion, speed, MP and regeneration); they never add flat damage. Quick Battle and multiplayer do not use items.`),
+    p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage. Quick Battle and multiplayer do not use items.`),
     list(
-      `Rarity sets how many stats an item has and how strong it is: ${itemsJson.rarities.map((x) => `${x.name} ${x.statCount} stat${x.statCount > 1 ? 's' : ''}`).join(', ')}. Every item carries its slot's main stat. Higher item levels carry more power; an item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
-      `Each stat is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good.`,
+      `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
+      `Rarity never makes an affix stronger: values grow only with item level. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
+      `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good.`,
+      (() => {
+        const lo = dropChances(0);
+        const hi = dropChances(999, 'boss');
+        const f = (c: Record<string, number>) => `${Math.round(c.common!)}% Common, ${Math.round(c.uncommon!)}% Uncommon, ${Math.round(c.rare!)}% Rare, ${Math.round(c.epic! * 10) / 10}% Epic`;
+        return `Drop rarity uses one table for campaign loot and Endless rewards and wares: at the start about ${f(lo)}. Higher item levels and elite or boss fights shift it slightly, never past about ${f(hi)}. Legendaries come only from rare drops.`;
+      })(),
       `Weapons come in families and each class uses only its own: ${fams}. Every other slot fits everyone.`,
       `Loot: a victory drops about ${L.perPartyMember.battle} items per hero in the fight (elites ${L.perPartyMember.elite}, bosses ${L.perPartyMember.boss} with at least one Rare), chests at least one Rare. Drops are the same on every difficulty. Winning the same battle again gives less (${L.repeat.map((x) => `${Math.round(x.items * 100)}%`).join(' / ')}).`,
       `The bag holds ${itemsJson.bag} items. When it is full, loot that does not fit waits on the Spoils card: discard something to make room and take it, or it is left behind when you continue. You can discard items in the Gear screen too (Rare and better ask first). Open Gear from the Party window or in a town; Equip best picks the strongest usable items for you.`,

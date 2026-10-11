@@ -25,9 +25,10 @@ describe('veri ve şans', () => {
 
   it('Valdoria havuzu 3 Legendary (Emberbrand, Mantle of Valdren, Pilgrim\'s Road Boots); Endless havuzu 11. dalgadan itibaren hepsi', () => {
     expect(legendaryPool({ chapter: 1 }).map((d) => d.id).sort()).toEqual(['emberbrand', 'mantle_of_valdren', 'pilgrims_road_boots']);
-    expect(legendaryPool({ chapter: 3 })).toHaveLength(10);
+    expect(legendaryPool({ chapter: 3 })).toHaveLength(18); // 10 eski + 8 yeni (Ömer 2026-10-11; yeniler bölüm 2-3)
+    expect(legendaryPool({ chapter: 2 }).length).toBeLessThan(18);
     expect(legendaryPool({ wave: 10 })).toHaveLength(0);
-    expect(legendaryPool({ wave: 11 })).toHaveLength(10);
+    expect(legendaryPool({ wave: 11 })).toHaveLength(18);
   });
 });
 
@@ -135,7 +136,7 @@ describe('sefer ve Endless bağlantısı, kayıt', () => {
     const stock = shopStock(late);
     const rare = stock.filter((e) => itemDef(e.itemId)!.rarity === 'legendary');
     expect(rare).toHaveLength(1);
-    expect(rare[0]!.price).toBe(Math.round(itemValue(itemDef(rare[0]!.itemId)!) * RARE.endless.merchant.priceMult));
+    expect(rare[0]!.price).toBe(Math.round(itemValue({ id: rare[0]!.itemId, rolls: rare[0]!.rolls }) * RARE.endless.merchant.priceMult)); // örneğin zarlarıyla
     const early = { ...run, wave: 10, stats: { ...run.stats, cleared: 9 } };
     expect(shopStock(early).some((e) => itemDef(e.itemId)!.rarity === 'legendary')).toBe(false);
     void ITEMS;

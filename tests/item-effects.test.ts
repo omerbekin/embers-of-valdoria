@@ -1,12 +1,12 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { Battle, content, previewSkill, type BattleEvent, type ItemEffects, type Teams, type UnitSetup } from '../src/engine';
 import { activeHeroes, addItem, debugTeleport, equipItem, latestSave, memoryKV, newCampaign, pickHero, writeSave, battlePlan } from '../src/campaign';
-import { ITEMS, effectLine, emptyEquipment, equipmentEffects, itemDef, itemLines, loadoutSetup, targetIP, validateItems } from '../src/progression';
+import { ITEMS, effectLine, emptyEquipment, equipmentEffects, itemDef, itemLines, loadoutSetup, validateItems } from '../src/progression';
 import { newRun, wavePlan } from '../src/endless';
 import { itemStatLines } from '../src/endless/format';
 
 
-// Epic item özel etkileri (Ömer onayı 2026-10-10, madde 292): motor kancaları, veri, metin, yığılmama, Endless yolu, kayıt.
+// Item etkileri: eski Epic etkilerinin motor kancaları (genel; veride artık kullanılmıyor, Ömer 2026-10-11) + Legendary etkileri, metin, yığılmama, Endless yolu, kayıt.
 
 const f = content.formulas;
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
@@ -18,26 +18,23 @@ const fx = (e: ItemEffects): UnitSetup => ({ itemEffects: e });
 const unit = (b: Battle, uid: string) => b.combatants.find((c) => c.uid === uid)!;
 type Priv = { addStatus: (t: unknown, s: unknown, emit: (e: BattleEvent) => void) => void; applyHit: (a: unknown, t: unknown, n: number, ty: string, crit: boolean, emit: (e: BattleEvent) => void, red: boolean, meta: unknown) => number };
 
-describe('veri: etki kaydı, Epic atamaları, bütçe', () => {
-  it('11 onaylı etki kayıtlı, reddedilenler yok; her Epic item bir etki taşır, bütçeden düşülmüş statlarla ±%10', () => {
-    expect(Object.keys(ITEMS.effects).filter((k) => !ITEMS.effects[k]!.legendary).sort()).toEqual(['bloodletter', 'ember_heart', 'giantslayer', 'iron_will', 'mana_spring', 'opening_ward', 'quick_start', 'second_wind', 'steadfast', 'thrifty', 'wardens_oath']);
+describe('veri: Epic etkileri kaldırıldı, Legendary etkileri kalır (Ömer 2026-10-11)', () => {
+  it('etki kaydı yalnızca Legendary etkileri (10 eski + 8 yeni); Epic item etki taşımaz', () => {
     expect(validateItems()).toEqual([]);
-    const epics = ITEMS.items.filter((d) => d.rarity === 'epic');
-    for (const d of epics) expect(d.effect, d.id).toBeDefined();
-    expect(ITEMS.items.filter((d) => d.rarity !== 'epic' && d.rarity !== 'legendary').every((d) => !d.effect)).toBe(true);
-    expect(ITEMS.effectRules).toEqual({ ipFromBudget: true, stack: false, endless: true });
-    const dane = itemDef('dane_axe')!;
-    const full = 1.5 * (ITEMS.budget.base + ITEMS.budget.perIlvl * dane.ilvl) * 2.3;
-    expect(targetIP(dane)).toBeCloseTo(full - ITEMS.effects[dane.effect!]!.ip, 6);
+    expect(Object.keys(ITEMS.effects)).toHaveLength(18);
+    for (const k of ['opening_ward', 'mana_spring', 'second_wind', 'quick_start', 'steadfast', 'iron_will', 'giantslayer', 'wardens_oath', 'ember_heart', 'thrifty', 'bloodletter']) expect(ITEMS.effects[k], k).toBeUndefined();
+    expect(ITEMS.items.filter((d) => d.rarity !== 'legendary').every((d) => !d.effect)).toBe(true);
+    expect(ITEMS.effectRules).toEqual({ stack: false, endless: true });
+    expect(ITEMS.effects.forge_heart!.value).toBe(0.06); // Heart of the Forge şifa oranı düşürüldü
   });
 
   it('metin: kart / ipucu satırı etki adı + tek cümle (Gear, Spoils, Endless, tüccar aynı yardımcıyı kullanır)', () => {
-    expect(effectLine(itemDef('rune_staff')!)).toBe('Thrifty: Your first skill each battle costs no MP.');
-    expect(effectLine(itemDef('dane_axe')!)).toBe('Giantslayer: Your skills deal 8% more damage to elites and bosses.');
-    expect(effectLine(itemDef('ashen_locket')!)).toBe('Ember Heart: While above 50% HP, regain 1 extra MP at the start of each turn.');
+    expect(effectLine(itemDef('emberbrand')!)).toBe('Emberbrand: Your hits set the target Burning for 2 turns (fire damage each turn).');
+    expect(effectLine(itemDef('flashpowder_locket')!)).toBe('Blinding Opener: Your first damaging skill each battle Blinds up to 3 enemies it hits for 1 turn.');
+    expect(effectLine(itemDef('serrated_edge')!)).toBe('Serrated Edge: Your critical hits leave the target Wounded and Burning for 2 turns.');
     expect(effectLine(itemDef('turnshoes')!)).toBeNull();
-    expect(itemLines(itemDef('great_helm')!).at(-1)).toMatch(/^Iron Will: .*15%.*50%/);
-    expect(itemStatLines(itemDef('hawkeye_gloves')!).at(-1)).toBe('Mana Spring: On a critical hit, gain 4 MP (once per action).');
+    expect(itemLines(itemDef('heart_of_the_forge')!).at(-1)).toMatch(/^Heart of the Forge: .*6%/);
+    expect(itemStatLines(itemDef('drummers_gauntlets')!).at(-1)).toBe('Battle Rhythm: On a kill, gain Haste for 2 turns and 20% of your max MP.');
   });
 });
 
@@ -177,37 +174,40 @@ describe('güç katmanı: etkiler, yığılmama, Endless, kayıt', () => {
     ITEMS.effectRules.endless = true;
   });
 
-  it('Epic item etkisi kuruluma girer; aynı etki iki item\'den toplanmaz (stack kapalı), açılınca toplanır', () => {
-    const eq = { ...emptyEquipment(), armor: { uid: 'a', id: 'coat_of_plates' } };
-    expect(loadoutSetup({ class: 'defender', equipment: eq }).itemEffects).toEqual({ adjacentGuard: 0.05 });
-    // aynı etki iki kaynaktan (test: aynı item'i iki yuvaya koyarak)
-    const twice = { ...eq, helm: { uid: 'b', id: 'coat_of_plates' } };
-    expect(equipmentEffects(twice)).toEqual({ adjacentGuard: 0.05 });
+  it("Legendary etkisi kuruluma girer; aynı etki iki item'den toplanmaz (stack kapalı), açılınca toplanır", () => {
+    const eq = { ...emptyEquipment(), trinket: { uid: 'a', id: 'heart_of_the_forge' } };
+    expect(loadoutSetup({ class: 'paladin', equipment: eq }).itemEffects?.critHealAlly).toBe(0.06);
+    const twice = { ...eq, helm: { uid: 'b', id: 'heart_of_the_forge' } };
+    expect(equipmentEffects(twice)).toEqual({ critHealAlly: 0.06 });
     ITEMS.effectRules.stack = true;
-    expect(equipmentEffects(twice)!.adjacentGuard).toBeCloseTo(0.1, 9);
+    expect(equipmentEffects(twice)!.critHealAlly).toBeCloseTo(0.12, 9);
     expect(loadoutSetup({ class: 'defender', equipment: emptyEquipment() }).itemEffects).toBeUndefined();
   });
 
-  it('Endless: etkiler dalga kurulumuna girer; effectRules.endless kapalıysa girmez', () => {
+  it('Endless: Legendary etkileri dalga kurulumuna girer; effectRules.endless kapalıysa girmez (affix kancaları yine girer)', () => {
     const run = newRun(5, ['warrior', 'mage', 'archer', 'defender'], 't');
-    run.heroes[0]!.equipment = { weapon: { uid: 'e1', id: 'dane_axe' } };
+    run.heroes[0]!.equipment = { weapon: { uid: 'e1', id: 'emberbrand', rolls: { rarity: 'legendary', affixes: [{ id: 'c_phys', q: 0.5 }, { id: 'c_fire', q: 0.5 }, { id: 'b_pen', q: 0.5 }, { id: 'a_primary', q: 0.5 }] } } };
     const units = () => Object.values(wavePlan(run).units.party);
-    expect(units().some((u) => u.itemEffects?.tierDamageMult === ITEMS.effects.giantslayer!.value)).toBe(true);
+    expect(units().some((u) => u.itemEffects?.onHitDot !== undefined)).toBe(true);
     ITEMS.effectRules.endless = false;
-    expect(units().some((u) => u.itemEffects)).toBe(false);
+    expect(units().some((u) => u.itemEffects?.onHitDot !== undefined)).toBe(false);
+    expect(units().some((u) => u.itemEffects?.armorPen !== undefined)).toBe(true);
   });
 
-  it('sefer: etkili item kayıt round-trip sonrası savaş planında etkisiyle gelir', () => {
+  it('sefer: affix kancalı item kayıt round-trip sonrası savaş planında kancasıyla gelir', () => {
     let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 21 }), 'archer'), '5A');
     s = { ...s, inventory: [] };
     const hero = activeHeroes(s)[0]!;
     const r = addItem(s, 'great_helm');
+    r.state.inventory = r.state.inventory.map((it) => (it.uid === r.item.uid ? { ...it, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 0.5 }, { id: 'c_armor', q: 0.5 }, { id: 'b_resil', q: 1 }, { id: 'a_gdef', q: 0 }] } } : it));
     s = equipItem(r.state, hero.id, r.item.uid);
     const kv = memoryKV();
     writeSave(kv, s, 'auto');
     const back = latestSave(kv)!.state;
     const cell = back.active.indexOf(hero.id);
-    expect(battlePlan(back).units.party[cell]!.itemEffects).toEqual({ debuffShorten: ITEMS.effects.iron_will!.value });
+    const fxs = battlePlan(back).units.party[cell]!.itemEffects!;
+    expect(fxs.debuffAvoid).toBeGreaterThan(0);
+    expect(fxs.damageTakenReduce).toBeGreaterThan(0);
   });
 
   it('Quick Battle kurulumunda etki yok (units verilmezse birim aynı)', () => {

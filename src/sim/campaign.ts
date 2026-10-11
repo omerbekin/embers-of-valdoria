@@ -33,6 +33,7 @@ import {
   type Difficulty,
 } from '../campaign';
 import { MAX_TURNS } from './simulate';
+import { RARITY_IDS, clampRarity, instanceRarity, itemDef } from '../progression/items';
 
 export type NodeCategory = 'tutorial' | 'normal' | 'elite' | 'boss';
 
@@ -140,6 +141,8 @@ export interface CampaignSimResult {
   nodes: Record<string, NodeAgg>;
   routes: Record<string, RouteAgg>;
   classes: Record<string, ClassAgg>;
+  /** Düşen item'lerin nadirlik sayıları (Common..Legendary) harita bölgesine göre (Ömer 2026-10-11: nadirlik dağılımı raporu). */
+  loot?: Record<string, number[]>;
 }
 
 const emptyNode = (): NodeAgg => ({ reached: 0, firstWins: 0, battles: 0, wins: 0, cleared: 0, attemptsToClear: 0, hpEndSum: 0, deathsOnWin: 0, hpStartSum: 0, turnsSum: 0, stuck: 0 });
@@ -161,8 +164,21 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
   const map = getMap(CONFIG.maps[0]!);
   const routes = allRoutes(map);
   const maxAttempts = o.maxAttempts ?? 10;
-  const res: CampaignSimResult = { difficulty: o.difficulty, player: o.player, runs: 0, completed: 0, defeats: 0, nodes: {}, routes: {}, classes: {} };
+  const res: CampaignSimResult = { difficulty: o.difficulty, player: o.player, runs: 0, completed: 0, defeats: 0, nodes: {}, routes: {}, classes: {}, loot: {} };
   const nodeAgg = (id: string) => (res.nodes[id] ??= emptyNode());
+  // Loot sayımı: işlemden önceki torba + geride kalanlar; sonra yeni gelenlerin nadirliği düğümün bölgesine
+  const lootCount = (before: CampaignState, after: CampaignState, nodeId: string) => {
+    const region = map.nodes.find((n) => n.id === nodeId)?.region ?? '?';
+    const row = (res.loot![region] ??= RARITY_IDS.map(() => 0));
+    const had = new Set(before.inventory.map((i) => i.uid));
+    for (const it of after.inventory) if (!had.has(it.uid) && itemDef(it.id)) row[RARITY_IDS.indexOf(instanceRarity(it))]!++;
+    const prevLeft = before.pendingLoot?.node === nodeId ? (before.pendingLoot.left?.length ?? 0) : 0;
+    const left = after.pendingLoot?.node === nodeId ? (after.pendingLoot.left ?? []) : [];
+    left.slice(prevLeft).forEach((id, k) => {
+      const d = itemDef(id);
+      if (d) row[RARITY_IDS.indexOf(clampRarity(d, after.pendingLoot!.leftRolls?.[prevLeft + k]?.rarity))]!++;
+    });
+  };
   const classAgg = (id: string) => (res.classes[id] ??= emptyClass());
 
   for (let i = 0; i < o.runs; i++) {
@@ -226,7 +242,9 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
               const out = outcomeFrom(plan, true, battleSummary(battle).units);
               agg.hpEndSum += out.units.reduce((a, u) => a + (u.alive ? u.hpRatio : 0), 0) / Math.max(1, out.units.length);
               agg.deathsOnWin += out.units.filter((u) => !u.alive).length;
+              const pre = s;
               s = applyBattle(s, out);
+              lootCount(pre, s, step.node);
             } else {
               defeats++;
             }
@@ -240,9 +258,13 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
         }
         case 'treasure':
         case 'event':
-        case 'town':
+        case 'town': {
+          const pre = s;
+          const at = s.at;
           s = completeSimple(s, step.kind);
+          if (step.kind === 'treasure') lootCount(pre, s, at);
           break;
+        }
         case 'move': {
           const next = route[s.path.length];
           s = moveTo(s, next && step.options.includes(next) ? next : step.options[0]!);
@@ -275,7 +297,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
 
 /** Paralel parçaların sonuçlarını toplar (aynı zorluk ve oyuncu vekili). */
 export function mergeCampaignResults(parts: CampaignSimResult[]): CampaignSimResult {
-  const out: CampaignSimResult = { difficulty: parts[0]!.difficulty, player: parts[0]!.player, runs: 0, completed: 0, defeats: 0, nodes: {}, routes: {}, classes: {} };
+  const out: CampaignSimResult = { difficulty: parts[0]!.difficulty, player: parts[0]!.player, runs: 0, completed: 0, defeats: 0, nodes: {}, routes: {}, classes: {}, loot: {} };
   const add = <T extends object>(into: Record<string, T>, from: Record<string, T>, empty: () => T) => {
     for (const [k, v] of Object.entries(from)) {
       const t = (into[k] ??= empty()) as Record<string, number>;
@@ -289,6 +311,10 @@ export function mergeCampaignResults(parts: CampaignSimResult[]): CampaignSimRes
     add(out.nodes, p.nodes, emptyNode);
     add(out.routes, p.routes, () => ({ runs: 0, completed: 0, defeats: 0 }));
     add(out.classes, p.classes, emptyClass);
+    for (const [k, v] of Object.entries(p.loot ?? {})) {
+      const row = (out.loot![k] ??= RARITY_IDS.map(() => 0));
+      v.forEach((n, i) => (row[i] = (row[i] ?? 0) + n));
+    }
   }
   return out;
 }

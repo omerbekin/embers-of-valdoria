@@ -1,6 +1,6 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, canEquip, itemDef, legendaryConflict, legendaryIds, loadout, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, canEquip, instanceRarity, itemDef, legendaryConflict, legendaryIds, loadout, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
 import { clone, heroById } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
@@ -70,8 +70,7 @@ export function discardItem(s: CampaignState, uid: string): CampaignState {
 
 /** Atmadan önce onay gerekir mi (Rare ve üstü; Ömer, madde 280)? */
 export function discardNeedsConfirm(item: ItemInstance): boolean {
-  const d = itemDef(item.id);
-  return !!d && RARITY_IDS.indexOf(d.rarity) >= RARITY_IDS.indexOf('rare');
+  return !!itemDef(item.id) && RARITY_IDS.indexOf(instanceRarity(item)) >= RARITY_IDS.indexOf('rare'); // örneğin nadirliği
 }
 
 /** Altın ekler/çıkarır (eksiye düşmez). */

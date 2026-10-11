@@ -1,26 +1,25 @@
 // Endless ekranının yazıları (saf; İngilizce oyun içi metin). Sahne: src/game/scenes/EndlessScene.ts.
 import { classes } from '../engine/content';
-import { ITEMS, rarityDef, slotDef, type ItemDef, type ItemStatId } from '../progression/items';
-import { effectLine } from '../progression/item-text';
+import { clampRarity, itemDef, rarityDef, slotDef, type ItemDef, type ItemRoll } from '../progression/items';
+import { affixLineText, affixLines, effectLine, itemLines } from '../progression/item-text';
 import { ENDLESS, type RewardCard } from './data';
 
-/** Item statı satırı: "+3% Might", "+1 Armor", "+1 DEX". */
-export function statLine(k: ItemStatId, v: number): string {
-  const sd = ITEMS.stats[k];
-  const num = Number.isInteger(v) ? String(v) : String(Math.round(v * 10) / 10);
-  return `+${num}${sd?.percent ? '%' : ''} ${sd?.name ?? k}`;
-}
-
-export const itemStatLines = (d: ItemDef): string[] => {
-  const lines = (Object.entries(d.stats) as Array<[ItemStatId, number]>).filter(([, v]) => v).map(([k, v]) => statLine(k, v));
-  const fx = effectLine(d); // Epic etkisi (madde 292)
+/** Item'in satırları: kademe etiketli affix'ler ("[C] +3% Physical damage") + Legendary etkisi. Zar yoksa taban satırları (orta değer). */
+export const itemStatLines = (d: ItemDef, rolls?: ItemRoll): string[] => {
+  if (!rolls || !itemDef(d.id)) return itemLines(d);
+  const lines = affixLines({ id: d.id, rolls }).map((l) => affixLineText(l, false));
+  const fx = effectLine(d);
   return fx ? [...lines, fx] : lines;
 };
 
-/** "Boots · Common" */
-export const itemKindLine = (d: ItemDef): string => `${slotDef(d.slot)?.name ?? d.slot} · ${rarityDef(d.rarity)?.name ?? d.rarity}`;
+/** Örneğin nadirliği (zarında; yoksa katalogdaki). */
+const rarityOf = (d: ItemDef, rolls?: ItemRoll) => clampRarity(d, rolls?.rarity);
 
-export const rarityColor = (d: ItemDef): string => rarityDef(d.rarity)?.color ?? '#8a8a84';
+/** "Boots · Common" */
+export const itemKindLine = (d: ItemDef, rolls?: ItemRoll): string => `${slotDef(d.slot)?.name ?? d.slot} · ${rarityDef(rarityOf(d, rolls))?.name ?? d.rarity}`;
+
+/** Nadirlik rengi (örneğin nadirliği; zar verilmezse katalogdaki). */
+export const rarityColor = (d: ItemDef, rolls?: ItemRoll): string => rarityDef(rarityOf(d, rolls))?.color ?? '#8a8a84';
 
 /** Kamp / başlık ekranındaki yarım savaş düğmesi: "Resume Battle · Wave 3, Turn 12" (tur = o ana kadar oynanan hamle + 1). */
 export const resumeLabel = (wave: number, turnsTaken: number): string => `Resume Battle · Wave ${wave}, Turn ${turnsTaken + 1}`;

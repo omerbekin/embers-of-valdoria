@@ -3,7 +3,7 @@ import { bossBlocksStatus } from './cc-immunity';
 import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { bonusScaleRaw } from './spec';
-import { applySummonVariant, attributePower } from './stats';
+import { applySummonVariant, attributePower, outgoingDamageMult } from './stats';
 import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
@@ -106,8 +106,16 @@ const pct = (v: number) => `${Math.round(v * 100)}%`;
 const scaled = (stats: Stats, scale: Attribute, power: number, formulas: Formulas): number => Math.round(attributePower(stats, scale, formulas) * power);
 type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
 /** Hasar etkisinin sayısı; hibrit ölçekte (bonusScale) ana + ek (kartın gösterdiği statlarla; savaşta aura zırhı da eklenir). */
-const damageAmount = (e: DamageEffect, stats: Stats, formulas: Formulas): number =>
-  e.bonusScale?.length ? Math.round(attributePower(stats, e.scale, formulas) * e.power + bonusScaleRaw(e.bonusScale, stats) * (stats.spellPowerMult ?? 1)) : scaled(stats, e.scale, e.power, formulas);
+const damageAmount = (e: DamageEffect, stats: Stats, formulas: Formulas): number => {
+  // Item affix'leri (Global / element hasarı; motorun damageSpecFor çarpanıyla aynı): çarpan yoksa ifade birebir eskisi
+  const out = outgoingDamageMult(stats, e.element);
+  const power = out !== 1 ? e.power * out : e.power;
+  if (!e.bonusScale?.length) return scaled(stats, e.scale, power, formulas);
+  const bonus = bonusScaleRaw(e.bonusScale, stats);
+  return Math.round(attributePower(stats, e.scale, formulas) * power + (out !== 1 ? bonus * out : bonus) * (stats.spellPowerMult ?? 1));
+};
+/** Item affix çarpanlı güç (şifa / kalkan / DoT; motorla aynı): çarpan yoksa güç aynen. */
+const withMult = (power: number, m: number | undefined): number => (m !== undefined && m !== 1 ? power * m : power);
 /** Aynı hasar etkisi art arda tekrar ediyorsa (Double Strike: iki vuruş) tek kayıt + tekrar sayısı. */
 function groupEffects(skill: SkillDef): Array<{ e: SkillEffect; times: number }> {
   const out: Array<{ e: SkillEffect; times: number }> = [];
@@ -239,7 +247,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const total = damageAmount(e, stats, formulas);
         add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} + ${parts} (${total})${times > 1 ? ` x${times}` : ''}${who}`, element);
         if (e.bonusScale.some((b) => b.stat === 'armor')) add('Uses your current armor, aura bonus included');
-      } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)})${times > 1 ? ` x${times}` : ''}${who}`, element);
+      } else add(`Damage ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${damageAmount(e, stats, formulas)})${times > 1 ? ` x${times}` : ''}${who}`, element);
       if (e.ignoreDefense) add(`Ignores ${pct(e.ignoreDefense)} of armor`);
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`x${e.bonusVsTag.multiplier} vs ${e.bonusVsTag.tag}`);
@@ -258,17 +266,17 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       }
       if (e.bonusFromShield) add(`+${pct(e.bonusFromShield.ratio)} of your shield${e.bonusFromShield.consume ? ' (consumed)' : ''}`, element);
     } else if (e.type === 'heal') {
-      add(`Heal ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)})${who}`);
+      add(`Heal ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.healPowerMult))})${who}`);
       if (e.missingHpBonus) add(`Heals more the lower the ally's health: up to +${pct(e.missingHpBonus)}`);
     } else if (e.type === 'revive') {
       add(`Choose a fallen ally, then choose an empty cell on your side: it rises there with ${pct(e.hpRatio)} HP and ${pct(e.mpRatio)} MP (even if something now stands on its corpse)`);
       add('Needs at least one empty cell on your side; the revived ally starts with an empty turn bar');
       if (e.regen && e.regen.turns > 0 && e.regen.ratio > 0) add(`Then regenerates ${pct(e.regen.ratio)} of its max HP at the start of each of its next ${e.regen.turns} turns`);
     } else if (e.type === 'hot') {
-      add(`Heal ${raw(e.scale, e.power)} per turn for ${e.turns} turns`);
+      add(`Heal ${raw(e.scale, withMult(e.power, stats.healPowerMult))} per turn for ${e.turns} turns`);
     } else if (e.type === 'shield') {
       const magic = e.shieldType === 'magic';
-      add(`${magic ? 'Magic shield' : 'Shield'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)})${e.self ? ' on you' : ''}`, magic ? 'magicShield' : 'shield');
+      add(`${magic ? 'Magic shield' : 'Shield'} ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.shieldPowerMult))})${e.self ? ' on you' : ''}`, magic ? 'magicShield' : 'shield');
       if (e.bonusPerMana) add(`+${e.bonusPerMana} per MP left after casting`, magic ? 'magicShield' : 'shield');
       const hook = e.onAbsorb;
       if (hook?.burnMana) add(`Every hit the shield absorbs burns ${hook.burnMana} MP from the attacker`, magic ? 'magicShield' : 'shield');
@@ -299,7 +307,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const def = defs.statuses?.[em.status];
         const el = em.damage.element ?? 'physical';
         if (def && bossBlocksStatus(formulas, def)) add(`Bosses are immune to ${def.name} (${immuneKind(def)}); they still take the damage`);
-        add(`Each target left with 0 MP (or already at 0) has a ${pct(em.chance)} chance (rolled separately) to be ${def?.name ?? em.status} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${def ? ` (${def.text})` : ''} and take ${pct(em.damage.power)} ${ATTRIBUTE_NAME[em.damage.scale]} (${raw(em.damage.scale, em.damage.power)}) ${el} damage; it cannot miss but can crit`, el);
+        add(`Each target left with 0 MP (or already at 0) has a ${pct(em.chance)} chance (rolled separately) to be ${def?.name ?? em.status} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${def ? ` (${def.text})` : ''} and take ${pct(em.damage.power)} ${ATTRIBUTE_NAME[em.damage.scale]} (${raw(em.damage.scale, withMult(em.damage.power, outgoingDamageMult(stats, em.damage.element)))}) ${el} damage; it cannot miss but can crit`, el);
       }
     } else if (e.type === 'taunt') {
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
@@ -360,7 +368,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
-      add(`${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
+      add(`${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.dotPowerMult))}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
     } else if (e.type === 'bond') {
       const name = defs.statuses?.dark_bond?.name ?? 'Dark Bond';
       add(`${name} for ${e.turns} of your turns: whenever you heal from life steal, the bonded ally heals ${e.ratio === 1 ? 'the same amount' : `${pct(e.ratio)} of it`} (you still heal fully; at full HP you steal nothing, so nothing is shared)`);
@@ -442,14 +450,14 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
   const raw = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   for (const { e, times } of groupEffects(skill)) {
     if (e.type === 'damage') num('Damage', damageAmount(e, stats, formulas), e.element ?? 'physical', times);
-    else if (e.type === 'heal') num('Heal', raw(e.scale, e.power), 'heal');
-    else if (e.type === 'hot') num('Heal / turn', raw(e.scale, e.power), 'heal');
-    else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, e.power), e.shieldType === 'magic' ? 'magicShield' : 'shield');
-    else if (e.type === 'manaBurn' && e.onEmpty) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, e.onEmpty.damage.power), e.onEmpty.damage.element ?? 'physical');
+    else if (e.type === 'heal') num('Heal', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
+    else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
+    else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
+    else if (e.type === 'manaBurn' && e.onEmpty) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
     else if (e.type === 'ground') num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
-      num(`${def?.name ?? e.status} / turn`, raw(e.scale, e.power), def?.dot?.element);
+      num(`${def?.name ?? e.status} / turn`, raw(e.scale, withMult(e.power, stats.dotPowerMult)), def?.dot?.element);
     } else if (e.type === 'omen') {
       const def = defs.statuses?.[e.status ?? 'omen'];
       const detonates = skill.effects.some((x) => x.type === 'detonate' && x.status === (e.status ?? 'omen'));

@@ -496,7 +496,7 @@ export function buildStatArt(): StatArtEntry[] {
   const kinds: StatIconKind[] = [...(Object.keys(STAT_ICON) as StatIconKind[]), 'might'];
   const rows: StatArtEntry[] = kinds.map((k) => ({
     stat: k,
-    label: k === 'might' ? 'Might' : STAT_LABEL[k],
+    label: k === 'might' ? 'Damage' : STAT_LABEL[k],
     color: k === 'might' ? MIGHT_COLOR : STAT_COLOR[k],
     url: STAT_IMAGE_FILES[k]?.url ?? null,
     fallback: statIconFallback(k) ?? '',

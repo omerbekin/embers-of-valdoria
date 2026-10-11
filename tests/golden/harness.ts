@@ -11,7 +11,9 @@ import { bonusScaleRaw } from '../../src/engine/spec';
 import { simulateCampaign } from '../../src/sim/campaign';
 import { simulateEndless } from '../../src/sim/endless';
 import { loadoutSetup } from '../../src/progression/loadout';
-import { ITEMS, canEquip, emptyEquipment, type Equipment } from '../../src/progression/items';
+import { ITEMS, canEquip, emptyEquipment, rollItem, type Equipment } from '../../src/progression/items';
+import { affixFit } from '../../src/progression/equip';
+import { Rng } from '../../src/engine/rng';
 import { applyUnitModifiers } from '../../src/engine/stats';
 import type { Difficulty } from '../../src/campaign';
 
@@ -189,45 +191,54 @@ export function groupEndless(): GoldenGroup {
   return { group: 'endless', battles };
 }
 
-/** Epic item etkileri (UnitSetup.itemEffects) + zarlı item statları: her Epic item bir kahramanda; Giantslayer için elit/boss düşman. */
+/**
+ * Item affix'leri ve Legendary etkileri (Ömer onayı 2026-10-11, affix kademeleri): her affix bir kahramanın item'inde (o affix'e uygun sınıf ve
+ * yuva), her Legendary kendi taşıyabilen sınıfında; elit düşman (Damage vs elites, Marked Quarry için). Savaş dışı: her taban item'in seed'li
+ * örneği her uygun sınıfta türev değerler.
+ */
 export function groupItems(): GoldenGroup {
-  // Yalnızca Epic'ler (Legendary'ler kayıttan sonra geldi, madde 296; mevcut kayıtlar birebir kalsın)
-  const epics = ITEMS.items.filter((d) => d.effect && d.rarity === 'epic');
   const classes = ['warrior', 'defender', 'archer', 'mage', 'paladin', 'gambler', 'hexer', 'druid', 'undead', 'antimage', 'cutthroat'];
   const extra: string[] = [];
+  const fight = (seed: number, cls: string, eq: Equipment) => {
+    const setup = loadoutSetup({ class: cls, equipment: eq }, { effects: true });
+    const party = cells({ 0: cls, 1: 'warrior', 6: 'mage', 7: 'paladin' });
+    const enemies = cells({ 0: 'defender', 1: 'warrior', 6: 'archer', 7: 'hexer' });
+    const units = { party: { 0: setup }, enemies: { 0: { tier: 'elite' as const, modifiers: { hpMult: 1.5, statMult: 1.1 } } } };
+    playOut(new Battle(content.battleSetup('random-battle', seed, 'turns', { party, enemies, units }, false)));
+  };
   const battles = withRecorder('items', () => {
-    epics.forEach((d, i) => {
-      const cls = classes.find((c) => canEquip(c, d))!;
-      const eq: Equipment = { ...emptyEquipment(), [d.slot]: { uid: `g${i}`, id: d.id, rolls: rollsFor(d, i) } };
-      const setup = loadoutSetup({ class: cls, equipment: eq }, { effects: true });
-      const party = cells({ 0: cls, 1: 'warrior', 6: 'mage', 7: 'paladin' });
-      const enemies = cells({ 0: 'defender', 1: 'warrior', 6: 'archer', 7: 'hexer' });
-      const units = { party: { 0: setup }, enemies: { 0: { tier: 'elite' as const, modifiers: { hpMult: 1.5, statMult: 1.1 } } } };
-      playOut(new Battle(content.battleSetup('random-battle', 300 + i, 'turns', { party, enemies, units }, false)));
+    // Affix başına bir savaş: uygun taban (affix'in izinli yuvası) + uygun sınıf; item Epic, affix'i zorlanmış (q 0,8)
+    Object.keys(ITEMS.affixDefs).forEach((id, i) => {
+      const a = ITEMS.affixDefs[id]!;
+      const base = ITEMS.items.find((d) => d.rarity !== 'legendary' && (!a.slots || a.slots.includes(d.slot)) && classes.some((c) => canEquip(c, d) && affixFit(c, { id, def: a }) === 1))!;
+      const cls = classes.find((c) => canEquip(c, base) && affixFit(c, { id, def: a }) === 1)!;
+      const roll = rollItem(base, new Rng(900 + i), { rarity: 'common', forClass: cls });
+      const x = a.choices?.[i % a.choices.length];
+      roll.rarity = 'epic';
+      roll.affixes = [...roll.affixes.filter((r) => r.id !== id), { id, q: 0.8, ...(x ? { x } : {}) }];
+      fight(300 + i, cls, { ...emptyEquipment(), [base.slot]: { uid: `g${i}`, id: base.id, rolls: roll } });
     });
+    // Legendary başına bir savaş (etkisi ve sabit affix'leri)
+    ITEMS.items
+      .filter((d) => d.rarity === 'legendary')
+      .forEach((d, i) => {
+        const cls = classes.find((c) => canEquip(c, d))!;
+        fight(500 + i, cls, { ...emptyEquipment(), [d.slot]: { uid: `l${i}`, id: d.id, rolls: rollItem(d, new Rng(700 + i)) } });
+      });
   });
-  // Savaş dışı: her item'in her uygun class'a etkisi (türev değerler; item statları dönüşümde ×2 olunca aynı kalmalı)
+  // Savaş dışı: her taban item'in seed'li örneğinin her uygun sınıfa etkisi (türev değerler)
   const b = new Battle(content.battleSetup('random-battle', 1, 'turns'));
-  for (const d of ITEMS.items.filter((x) => x.rarity !== 'legendary')) {
+  ITEMS.items.forEach((d, i) => {
     for (const cls of classes) {
       if (!canEquip(cls, d)) continue;
-      const eq: Equipment = { ...emptyEquipment(), [d.slot]: { uid: 'x', id: d.id } };
+      const eq: Equipment = { ...emptyEquipment(), [d.slot]: { uid: 'x', id: d.id, rolls: rollItem(d, new Rng(40 + i), { forClass: cls }) } };
       const mods = loadoutSetup({ class: cls, equipment: eq }).modifiers;
       const def = applyUnitModifiers(content.classes[cls]!, mods, content.formulas);
       const fake = { ...b.combatants[0]!, defId: cls, uid: `${d.id}@${cls}`, stats: def.stats, hp: def.stats.hp, maxHp: def.stats.hp, mp: def.stats.mp, maxMp: def.stats.mp, skills: def.skills, statuses: [], shield: 0, magicShield: 0, turnCounter: 0 } as Combatant;
       extra.push(invariants(b, fake));
     }
-  }
-  return { group: 'items', battles, extra };
-}
-
-/** Zarlı item: katalog değerinin çevresinde belirleyici zarlar (rolls alanı; aralık dışı olanlar zaten sıkıştırılır). */
-function rollsFor(d: { stats: Record<string, number | undefined> }, i: number): Record<string, number> {
-  const out: Record<string, number> = {};
-  Object.entries(d.stats).forEach(([k, v], j) => {
-    if (typeof v === 'number') out[k] = (i + j) % 2 === 0 ? v : Math.max(1, Math.round(v * 1.1));
   });
-  return out;
+  return { group: 'items', battles, extra };
 }
 
 export const GROUPS: Record<string, () => GoldenGroup> = { quick: groupQuick, comps: groupComps, campaign: groupCampaign, endless: groupEndless, items: groupItems };

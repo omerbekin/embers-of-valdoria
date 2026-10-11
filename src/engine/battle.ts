@@ -241,7 +241,10 @@ export class Battle {
       const sk = this.skill(id);
       // Kurulum eki (UnitSetup.initialCooldownBonus): cooldown'lu her skill'e (cooldown ya da initialCooldown > 0); maxInitial'ı aşabilir
       const bonus = (sk?.cooldown ?? 0) > 0 || (sk?.initialCooldown ?? 0) > 0 ? Math.max(0, Math.floor(c.initialCooldownBonus ?? 0)) : 0;
-      const n = Math.min(max, Math.floor(sk?.initialCooldown ?? 0)) + bonus;
+      let n = Math.min(max, Math.floor(sk?.initialCooldown ?? 0)) + bonus;
+      // Ultimate cooldown -1 (item affix, Ömer 2026-10-11): yalnızca başlangıç cooldown'u olan skill'lerde, en az 0
+      const ult = c.itemEffects?.ultCdReduce ?? 0;
+      if (ult > 0 && (sk?.initialCooldown ?? 0) > 0) n = Math.max(0, n - Math.floor(ult));
       if (n <= 0) continue;
       c.cooldowns[id] = n;
       let held = this.initialHold.get(c.uid);
@@ -313,7 +316,18 @@ export class Battle {
     // Warden's Oath (item etkisi adjacentGuard): ekranda yan komşu dostun koruması; birden çok kaynakta en yükseği
     const oath = this.adjacentGuardOf(target);
     if (oath > 0) m *= 1 - oath;
+    // Global defense / Endurance (item affix'leri, Ömer 2026-10-11): yoksa çarpılmaz
+    const fx = target.itemEffects;
+    if (fx?.damageTakenReduce) m *= 1 - Math.min(0.9, fx.damageTakenReduce);
+    if (fx?.lowHpReduce && target.hp > 0 && target.hp < fx.lowHpReduce.below * target.maxHp) m *= 1 - Math.min(0.9, fx.lowHpReduce.reduce);
     return m;
+  }
+
+  /** Saldıranın ekranda yan komşusu olan canlı dostlarından gelen en yüksek hasar aurası (item affix auraDamage; yoksa 0). */
+  private auraDamageOf(actor: Combatant): number {
+    let best = 0;
+    for (const a of this.living(actor.side)) if (a.uid !== actor.uid && (a.itemEffects?.auraDamage ?? 0) > best && this.sideAdjacent(a, actor)) best = a.itemEffects!.auraDamage!;
+    return best;
   }
 
   /** Hedefin ekranda yan komşusu olan (sideNeighbors) canlı dostlarından gelen en yüksek adjacentGuard (yoksa 0). */
@@ -418,7 +432,8 @@ export class Battle {
     const snap = this.stackSnapshot(actor, kind);
     if (!st) {
       this.addStatus(target, { kind, turns: def.duration ?? 3, source: actor.uid, stacks: Math.min(max, n), ...snap }, emit);
-      st = target.statuses.find((s) => s.kind === kind)!;
+      st = target.statuses.find((s) => s.kind === kind);
+      if (!st) return; // tutmadı (bağışıklık, Debuff resistance, Ashen Crown)
     } else {
       st.stacks = Math.min(max, before + n);
       st.source = actor.uid;
@@ -570,7 +585,10 @@ export class Battle {
    */
   dealtDamageMult(actor: Combatant, target: Combatant): number {
     const gs = actor.itemEffects?.tierDamageMult;
-    return this.hunterMarkMult(actor, target) * (gs && (target.tier !== undefined || target.boss !== undefined) ? gs : 1);
+    const m = this.hunterMarkMult(actor, target) * (gs && (target.tier !== undefined || target.boss !== undefined) ? gs : 1);
+    // Hasar aurası (item affix auraDamage): yan komşu dosttan; yoksa çarpılmaz
+    const aura = this.living(actor.side).some((a) => a.itemEffects?.auraDamage) ? this.auraDamageOf(actor) : 0;
+    return aura > 0 ? m * (1 + aura) : m;
   }
 
   /** 'everyone' hedefli skill'lerde bir etkinin bu hedefe uygulanıp uygulanmadığı (diğer skill'lerde hep evet). */
@@ -1892,6 +1910,13 @@ export class Battle {
       const gain = Math.min(def!.mp ?? 0, actor.maxMp - actor.mp);
       actor.mp += gain;
       emit({ type: 'mpRegen', actor: actor.uid, amount: gain, after: actor.mp });
+      // Vigil (item etkisi restBlessing): Rest ayrıca durum + maks canın oranı şifa
+      const rb = actor.itemEffects?.restBlessing;
+      if (rb) {
+        emit({ type: 'passive', actor: actor.uid, passive: 'vigil', name: 'Vigil' });
+        if (this.statusDef(rb.status)) this.addStatus(actor, { kind: rb.status as Status['kind'], turns: rb.turns, source: actor.uid }, emit, 'vigil');
+        if (rb.healRatio > 0) this.applyHeal(actor, actor, Math.max(1, Math.round(actor.maxHp * rb.healRatio)), false, emit, 'vigil');
+      }
     } else if (def!.kind === 'skip') {
       // Sayaç normal düşer (taşan kısım korunur); bunun yerine bir sonraki tura kadar hız +speedBonus (varsayılan %100) artar.
       const bonus = this.mode === 'turns' ? Math.max(0, def!.speedBonus ?? 1) : 0;
@@ -2165,7 +2190,8 @@ export class Battle {
         case 'heal':
           for (const target of ts) {
             if (target.hp <= 0) continue;
-            const base = rollHeal(actor.stats, effect.scale, effect.power, f, this.rng);
+            const hm = actor.stats.healPowerMult; // Support power (affix): yoksa güç aynen
+            const base = rollHeal(actor.stats, effect.scale, hm !== undefined && hm !== 1 ? effect.power * hm : effect.power, f, this.rng);
             const { crit, mult } = rollCrit(this.effectiveStats(actor), this.rng); // kritik: şifanın SON çarpanı (geçerli kritik şansı: Misfortune/Jinxed dahil)
             // missingHpBonus (Radiance): hedef başına eksik can oranıyla artar; alan yoksa ifade birebir eskisi (QB/MP determinizmi)
             const low = effect.missingHpBonus ? missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp) : 1;
@@ -2207,7 +2233,7 @@ export class Battle {
                 kind: 'regen',
                 turns: effect.turns,
                 source: actor.uid,
-                amount: Math.round(attributePower(actor.stats, effect.scale, f) * effect.power),
+                amount: Math.round(attributePower(actor.stats, effect.scale, f) * (actor.stats.healPowerMult !== undefined && actor.stats.healPowerMult !== 1 ? effect.power * actor.stats.healPowerMult : effect.power)),
                 critChance: this.effectiveStats(actor).critChance,
                 critMult: actor.stats.critMult,
               },
@@ -2218,7 +2244,8 @@ export class Battle {
         case 'shield':
           for (const target of effect.self ? [actor] : ts) {
             if (target.hp <= 0 || target.inert) continue; // sıra almayan yardımcı nesne kalkan almaz
-            const amount = shieldAmount(actor.stats, effect.scale, effect.power, f) + Math.round((effect.bonusPerMana ?? 0) * actor.mp); // kritik uygulanmaz
+            const sm = actor.stats.shieldPowerMult; // Shield / Support power (affix): kaynağı bu birim olan her kalkan; yoksa güç aynen
+            const amount = shieldAmount(actor.stats, effect.scale, sm !== undefined && sm !== 1 ? effect.power * sm : effect.power, f) + Math.round((effect.bonusPerMana ?? 0) * actor.mp); // kritik uygulanmaz
             const magic = effect.shieldType === 'magic';
             this.trimShieldHooks(target);
             if (magic) target.magicShield += amount;
@@ -2363,7 +2390,8 @@ export class Battle {
         case 'dot': {
           // Karakter üstü DoT (Wither): miktar uygulama anında sabitlenir; yeniden uygulanınca süre max(kalan, yeni), büyük miktar (ve kaynağı) kalır
           const hasDamage = skill.effects.some((e) => e.type === 'damage');
-          const amount = Math.round(attributePower(actor.stats, effect.scale, f) * effect.power);
+          const dm = actor.stats.dotPowerMult; // DoT damage / Potency (affix): yoksa güç aynen
+          const amount = Math.round(attributePower(actor.stats, effect.scale, f) * (dm !== undefined && dm !== 1 ? effect.power * dm : effect.power));
           for (const r of hasDamage ? ts.filter((c) => hit.has(c.uid)) : ts) {
             if (r.hp <= 0) continue;
             this.addStatus(r, { kind: effect.status, turns: effect.turns, source: actor.uid, amount }, emit); // en güçlü miktar addStatus'ta kalır
@@ -2393,7 +2421,10 @@ export class Battle {
               emit({ type: 'corpseConsumed', uid: corpse.uid, by: actor.uid, slot: corpse.slot, side: corpse.side });
             }
           }
-          const def = empowered === undefined ? baseDef : applySummonVariant(baseDef, empowered ? 'fed' : 'unfed', this.setup.formulas);
+          const variantDef = empowered === undefined ? baseDef : applySummonVariant(baseDef, empowered ? 'fed' : 'unfed', this.setup.formulas);
+          // Summon mastery (item affix, Ömer 2026-10-11): çağrının maks canı ve skill gücü; yoksa tanım aynen
+          const sp = actor.itemEffects?.summonPower ?? 0;
+          const def = sp > 0 ? applyUnitModifiers(variantDef, { hpMult: 1 + sp, powerMult: 1 + sp }, this.setup.formulas) : variantDef;
           const summoned = createCombatant(def, actor.side, spot, `${actor.side}-s${this.summonCount++}`);
           summoned.board = board;
           summoned.owner = actor.uid;
@@ -2440,6 +2471,26 @@ export class Battle {
         this.announceIfDead(other, emit);
       }
     }
+    // Iron Retort (retortStatus): yakın dövüş skill'iyle isabet ettirilen taşıyan, saldırana durum verir
+    if (!debug && skill.motion === 'melee' && actor.hp > 0) {
+      for (const uid of hit) {
+        const t = this.get(uid);
+        const rs = t?.itemEffects?.retortStatus;
+        if (!t || !rs || t.hp <= 0 || t.side === actor.side || !this.statusDef(rs.status) || actor.hp <= 0) continue;
+        emit({ type: 'passive', actor: t.uid, passive: 'iron_retort', name: 'Iron Retort' });
+        this.addStatus(actor, { kind: rs.status as Status['kind'], turns: rs.turns, source: t.uid }, emit, 'iron_retort');
+      }
+    }
+    // Blinding Opener (openerStatus): savaştaki ilk hasar skill'inin isabet ettiği hedeflerden en çok `max` tanesi (yalnızca o vuruşun alanı)
+    const op = actor.itemEffects?.openerStatus;
+    if (!debug && op && !actor.openerUsed && skill.effects.some((e) => e.type === 'damage') && hit.size > 0) {
+      actor.openerUsed = true;
+      const victims = targets.filter((t) => hit.has(t.uid) && t.hp > 0 && t.side !== actor.side).slice(0, Math.max(0, op.max));
+      if (victims.length && this.statusDef(op.status)) {
+        emit({ type: 'passive', actor: actor.uid, passive: 'blinding_opener', name: 'Blinding Opener' });
+        for (const v of victims) this.addStatus(v, { kind: op.status as Status['kind'], turns: op.turns, source: actor.uid }, emit, 'blinding_opener');
+      }
+    }
     if (actor.empowerMult !== undefined) delete actor.empowerMult;
     for (const s of ownAttackEnds) {
       if (!actor.statuses.includes(s)) continue;
@@ -2459,7 +2510,8 @@ export class Battle {
     // Rage kazancı: skill başına tek (en yüksek tek hedefin toplamı; perCastCap ile sınırlı), yalnızca isabet eden hasar vuruşlarından
     if (this.rageTally && this.rageTally.size > 0 && actor.maxRage !== undefined) {
       const cap = f.rage.perCastCap;
-      const gain = Math.round(Math.min(cap, Math.max(...this.rageTally.values())));
+      const rg = actor.itemEffects?.rageGain ?? 0; // Resource mastery (affix): Rage kazancı; yoksa aynen
+      const gain = Math.round(Math.min(cap, Math.max(...this.rageTally.values())) * (rg > 0 ? 1 + rg : 1));
       const after = Math.min(actor.maxRage, (actor.rage ?? 0) + gain);
       const delta = after - (actor.rage ?? 0);
       this.rageTally = null;
@@ -2602,6 +2654,7 @@ export class Battle {
     if (!next || !actor) return;
     this.speedBoost.delete(actor.uid); // Skip Turn desteği, birimin sıradaki turu başlayınca biter
     if (actor.extraTurnGranted) actor.extraTurnGranted = false; // Whisper of Morvane: tur başına en çok bir ek eylem
+    if (actor.itemEffects?.earlyImmunity) actor.ownTurns = (actor.ownTurns ?? 0) + 1; // Immunity affix'inin süresi (kendi turları)
     this.phaseCrossed.clear();
     this.telegraphedThisTurn.delete(actor.uid);
     if ((actor.actionsPerTurn ?? 1) > 1) this.actionsLeft.set(actor.uid, actor.actionsPerTurn! - 1);
@@ -2737,6 +2790,27 @@ export class Battle {
       emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) });
       emit({ type: 'passive', actor: target.uid, passive: 'ashen_crown', name: 'Ashen Crown' });
       return;
+    }
+    const isDebuff = this.statusDef(status.kind)?.type === 'debuff';
+    // Immunity (item affix, Ömer 2026-10-11): zarlanan TEK durum, birimin ilk N turunda tutmaz (Debuff resistance zarı bu sürede atılmaz)
+    const imm = target.itemEffects?.earlyImmunity?.find((e) => e.status === status.kind);
+    if (imm && status.source !== target.uid && (target.ownTurns ?? 0) <= imm.turns) {
+      emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) });
+      emit({ type: 'passive', actor: target.uid, passive: 'item_immunity', name: 'Immunity' });
+      return;
+    }
+    // Debuff resistance (item affix): başkasının debuff'ı ihtimalle hiç tutmaz; etki yoksa zar atılmaz
+    const avoid = target.itemEffects?.debuffAvoid ?? 0;
+    if (avoid > 0 && isDebuff && status.source !== target.uid && this.rng.next() < avoid) {
+      emit({ type: 'immune', target: target.uid, status: status.kind, source: status.source, ...(cause ? { cause } : {}) });
+      emit({ type: 'passive', actor: target.uid, passive: 'item_resist', name: 'Resisted' });
+      return;
+    }
+    // Potency (item affix): kaynağın uyguladığı süreli debuff'lar uzun (sersemletme, yığılan ve kuralla süren durumlar hariç)
+    const pot = status.source !== target.uid ? (this.get(status.source)?.itemEffects?.potencyTurns ?? 0) : 0;
+    if (pot > 0 && isDebuff) {
+      const d = this.statusDef(status.kind);
+      if (d && !d.skipTurn && !d.maxStacks && !d.untilResolved) status = { ...status, turns: status.turns + Math.floor(pot) };
     }
     // Kontrol bağışıklığı (madde 271): boss rütbesi CC durumlarını (statuses.json > cc: Stun, Slow, Silence) yemez; durum uygulanmaz, 'Immune' yazısı.
     // Madde 272: isabet/kritik düşüren debuff'lar (Blinded, Jinxed; ccImmunity.accuracyCrit) aynı akış.
@@ -3026,7 +3100,7 @@ export class Battle {
     // Emberbrand (onHitDot): isabet eden vuruş hedefe DoT bırakır (miktar uygulamada sabitlenir; yenisi süreyi max(kalan, yeni) yapar, büyük miktar kalır)
     const burn = actor.itemEffects?.onHitDot;
     if (burn && hpLoss > 0 && target.hp > 0 && this.statusDef(burn.status)) {
-      const amount = Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, f) * burn.power));
+      const amount = Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, f) * burn.power * (actor.stats.dotPowerMult ?? 1)));
       this.addStatus(target, { kind: burn.status as Status['kind'], turns: burn.turns, source: actor.uid, amount }, emit, 'emberbrand'); // en güçlü miktar addStatus'ta kalır
     }
     // Heart of the Forge (critHealAlly): kritik vuruşta en yaralı dost iyileşir
@@ -3057,6 +3131,7 @@ export class Battle {
       const healed = this.applyHeal(actor, actor, Math.round(hpLoss * effect.lifesteal), false, emit);
       this.bondEcho(actor, healed, emit);
     }
+    this.itemHitHooks(actor, target, effect, hpLoss, crit, emit);
     // Pasif: Soul Drain, verilen her hasarın bir kısmı kullanıcıya şifa
     // (çağrılanların verdiği hasardan da sahibi faydalanır)
     const drainer = actor.passive?.effect.type === 'soulDrain' ? actor : actor.owner ? this.get(actor.owner) : undefined;
@@ -3086,6 +3161,49 @@ export class Battle {
     this.announceIfDead(target, emit);
     if (guardian) this.announceIfDead(guardian, emit);
     return { landed: true, crit };
+  }
+
+  /**
+   * İsabet eden skill vuruşundan sonra item kancaları (Ömer 2026-10-11; affix + yeni Legendary'ler): Life leech, Serrated Edge (kritikte durumlar),
+   * Battle Rhythm (öldürünce Haste + MP), Marked Quarry (elit / boss'a durum). Etki yoksa hiçbir şey yapmaz (zar da tüketmez).
+   */
+  private itemHitHooks(actor: Combatant, target: Combatant, effect: DamageEffect, hpLoss: number, crit: boolean, emit: Emit): void {
+    const fx = actor.itemEffects;
+    if (!fx || hpLoss <= 0) return;
+    if (fx.leech && actor.hp > 0) {
+      const amount = Math.round(hpLoss * fx.leech);
+      if (amount > 0) this.applyHeal(actor, actor, amount, false, emit, 'leech');
+    }
+    if (fx.critStatuses && crit && target.hp > 0) {
+      emit({ type: 'passive', actor: actor.uid, passive: 'serrated_edge', name: 'Serrated Edge' });
+      for (const cs of fx.critStatuses) {
+        if (!this.statusDef(cs.status) || target.hp <= 0) continue;
+        const amount = cs.power ? Math.max(1, Math.round(attributePower(this.attackStats(actor), effect.scale, this.setup.formulas) * cs.power * (actor.stats.dotPowerMult ?? 1))) : undefined;
+        this.addStatus(target, { kind: cs.status as Status['kind'], turns: cs.turns, source: actor.uid, ...(amount !== undefined ? { amount } : {}) }, emit, 'serrated_edge');
+      }
+    }
+    if (fx.tierStatus && target.hp > 0 && (target.tier !== undefined || target.boss !== undefined) && this.statusDef(fx.tierStatus.status)) {
+      this.addStatus(target, { kind: fx.tierStatus.status as Status['kind'], turns: fx.tierStatus.turns, source: actor.uid }, emit, 'marked_quarry');
+    }
+    if (fx.killRush && target.hp <= 0 && actor.hp > 0) {
+      emit({ type: 'passive', actor: actor.uid, passive: 'battle_rhythm', name: 'Battle Rhythm' });
+      if (this.statusDef(fx.killRush.status)) this.addStatus(actor, { kind: fx.killRush.status as Status['kind'], turns: fx.killRush.turns, source: actor.uid }, emit, 'battle_rhythm');
+      const gain = Math.min(Math.round(actor.maxMp * fx.killRush.mpRatio), actor.maxMp - actor.mp);
+      if (gain > 0) {
+        actor.mp += gain;
+        emit({ type: 'mpRegen', actor: actor.uid, amount: gain, after: actor.mp, cause: 'battle_rhythm' });
+      }
+    }
+  }
+
+  /** Last Stand (item etkisi lastStand): can eşiğin altına İLK inişte durum + tüm silinebilir debuff'lar silinir (savaşta bir kez). */
+  private checkLastStand(target: Combatant, emit: Emit): void {
+    const ls = target.itemEffects?.lastStand;
+    if (!ls || target.lastStandUsed || target.hp <= 0 || target.hp >= ls.below * target.maxHp) return;
+    target.lastStandUsed = true;
+    emit({ type: 'passive', actor: target.uid, passive: 'last_stand', name: 'Last Stand' });
+    this.dispel(target, 'debuff', 99, target, 'last_stand', emit);
+    if (this.statusDef(ls.status)) this.addStatus(target, { kind: ls.status as Status['kind'], turns: ls.turns, source: target.uid }, emit, 'last_stand');
   }
 
   /** Hasarı kalkana (büyüyse önce büyü kalkanına) ve cana uygular; canı düşüren miktarı döndürür. */
@@ -3170,6 +3288,7 @@ export class Battle {
     if (target.boss?.phases && target.hp > 0) this.checkPhase(target, emit);
     this.checkSecondWind(target, emit);
     this.checkShieldRefresh(target, emit);
+    this.checkLastStand(target, emit);
     // Kalkan kancaları yalnızca DOĞRUDAN bir saldırganın skill vuruşunda (yer etkisi tiki / kendine hasar tetiklemez)
     if (meta.origin === 'skill' && actor.side !== target.side) for (const { hook, part } of hooked) this.absorbTrigger(hook, target, actor, part, emit);
     return rest;
@@ -3184,6 +3303,13 @@ export class Battle {
     emit({ type: 'death', target: c.uid, corpse });
     // fallAllyHealRatio (endless Last Rites): düşen kahramanın canlı dostları maks canlarının bu oranı kadar iyileşir
     if (!c.summoned && c.fallAllyHealRatio) for (const a of this.living(c.side)) if (!a.summoned && a !== c) this.applyHeal(c, a, Math.round(a.maxHp * c.fallAllyHealRatio), false, emit, 'last_rites');
+    // Vengeance (item etkisi): ekranda yan komşu dost (çağrı değil) düşünce taşıyan durumları kazanır
+    if (!c.summoned) for (const a of this.living(c.side)) {
+      const vg = a.itemEffects?.vengeance;
+      if (!vg || a === c || !this.sideAdjacent(a, c)) continue;
+      emit({ type: 'passive', actor: a.uid, passive: 'vengeance', name: 'Vengeance' });
+      for (const st of vg.statuses) if (this.statusDef(st)) this.addStatus(a, { kind: st as Status['kind'], turns: vg.turns, source: a.uid }, emit, 'vengeance');
+    }
     // Dark Bond: ölen birimin kurduğu ya da taşıdığı bağ kopar
     this.breakAllBonds(c, emit);
     // Ill Omen (Hexer pasifi): ölenin Omen'leri en yakın canlı dostuna geçer

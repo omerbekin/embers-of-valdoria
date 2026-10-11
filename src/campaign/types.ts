@@ -94,7 +94,7 @@ export interface CampaignMap {
 }
 
 import type { UnitModifiers, UnitTier } from '../engine/types';
-import type { Equipment, ItemInstance } from '../progression/items';
+import type { Equipment, ItemInstance, ItemRoll } from '../progression/items';
 
 /** Birim bazında güçlendirme/zayıflatma: motorun UnitModifiers'ı (hpMult, statMult, powerMult, spriteScale, actionsPerTurn...). */
 export type UnitMods = UnitModifiers;
@@ -227,7 +227,7 @@ export interface LootDrop {
   /** Ortak nadir düşüş zarından gelen item id'leri (Spoils kartında altın-turuncu parıltı; madde 297). */
   rare?: string[];
   /** `left` ile aynı sırada: geride kalan item'lerin düşüşte atılmış stat zarları (alınırsa bunlarla gelir). */
-  leftRolls?: Array<Partial<Record<string, number>> | undefined>;
+  leftRolls?: Array<ItemRoll | undefined>;
 }
 
 /** Teslim kaydı: kimden (ayrılan kahramanlar), hangi item'ler (torbadaki uid'ler), hangi düğümde. */

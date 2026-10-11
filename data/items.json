@@ -1,7 +1,6 @@
 {
   "_not": "Item sistemi verisi (docs/design/progression/items.md; Ömer kararları 2026-10-09, items.md bölüm 7). AŞAMA 0: yalnızca şema + test için 3 örnek item (gerçek item listesi Aşama 1'de, content-designer). Sayılar PROVİZYON (balance-tester). Doğrulama: src/progression/items.ts > validateItems, tests/items-data.test.ts.",
-  "_rules": "Ömer onayı 2026-10-10 (items.md 1.3a): nadirlik = stat sayısı + güç. rarities[].statCount (Common 1, Uncommon 2, Rare 3, Epic 3 (+1 özel etki, etkiler henüz seçilmedi)) ve mult (1,0 / 1,4 / 1,85 / 2,3; Legendary sonra). Bütçe tabanı base 0,7 + perIlvl 0,14 (eski 1 + 0,2'nin x0,7'si: Common x1,0 = eski Common x0,7 => item gücü eskisiyle aynı ölçekte). slotStats: yuvanın ana stat adayları (item en az birini taşır) ve izinli ekler; '@family' = silah ailesinin weaponFamilies[].attr statı. rolls.spread: her stat katalog değerinin ±%15'i içinde seed'li zarla atılır (adıma yuvarlanır), örnek kayda zarlarıyla yazılır. effects: Epic özel etki kaydı (BOŞ; öneri docs/design/progression/item-effects.md).",
-  "_stats": "Item statları. ip = 1 birimin Item Points değeri (1 IP ~ +%1 savaş gücü). Motor eşlemesi (src/progression/loadout.ts): str/dex/int/luck -> attrAdd, armor -> armorAdd, magicArmor -> magicArmorAdd, might % -> powerMult (toplanarak), hp -> hpAdd, mp -> mpAdd, spd -> spdAdd, crit/accuracy/evasion % -> critAdd/accuracyAdd/evasionAdd (/100), critDmg % -> critMultAdd (/100), hpRegen/mpRegen -> hpRegenAdd/mpRegenAdd (madde 280). engine:false bir stat item verisinde kullanılamaz (doğrulama hatası). slots: stat yalnızca bu yuvalarda olabilir (Ömer 2026-10-09: Might yalnızca silahta; validateItems denetler). step = zar adımı (Ömer 2026-10-10: stat aralıkları).",
+  "_rules": "Ömer onayı 2026-10-11 (items.md 1.3b, 1.3a'nın yerine): nadirlik = affix SAYISI. rarities[].tiers = örneğin taşıdığı affix kademeleri (Common C; Uncommon C,C; Rare C,C,B; Epic C,C,B,A; Legendary C,C,B,A + benzersiz etkisi). Kalite statı GÜÇLENDİRMEZ (eski bütçe çarpanları kalktı): affix değeri yalnızca item seviyesiyle büyür, affixDefs[].parts[].base + perIlvl x ilvl, x affixRules.power (denge düğmesi). rolls.spread: her örnek affix başına bir zar (q, 0-1) taşır; değer = orta x (1 ± spread), adıma yuvarlanır (aralık görünür).",
   "slots": [
     {
       "id": "weapon",
@@ -38,52 +37,56 @@
     {
       "id": "common",
       "name": "Common",
-      "mult": 1.0,
-      "affixes": 0,
       "color": "#8a8a84",
-      "statCount": 1
+      "tiers": [
+        "C"
+      ]
     },
     {
       "id": "uncommon",
       "name": "Uncommon",
-      "mult": 1.4,
-      "affixes": 1,
       "color": "#5f8f3e",
-      "statCount": 2
+      "tiers": [
+        "C",
+        "C"
+      ]
     },
     {
       "id": "rare",
       "name": "Rare",
-      "mult": 1.85,
-      "affixes": 2,
       "color": "#3f6fa8",
-      "statCount": 3
+      "tiers": [
+        "C",
+        "C",
+        "B"
+      ]
     },
     {
       "id": "epic",
       "name": "Epic",
-      "mult": 2.3,
-      "affixes": 3,
       "color": "#7a3f9a",
-      "statCount": 3,
-      "effect": true
+      "tiers": [
+        "C",
+        "C",
+        "B",
+        "A"
+      ]
     },
     {
       "id": "legendary",
       "name": "Legendary",
-      "mult": 2.85,
-      "affixes": 0,
       "color": "#f0a830",
-      "statCount": 3,
+      "tiers": [
+        "C",
+        "C",
+        "B",
+        "A"
+      ],
       "effect": true
     }
   ],
   "setColor": "#3f8f84",
   "budget": {
-    "base": 0.7,
-    "perIlvl": 0.14,
-    "endlessPerIlvl": 0.1,
-    "tolerance": 0.1,
     "goldPerIP": 10,
     "minValue": 5,
     "sellRatio": 0.5
@@ -91,187 +94,868 @@
   "rolls": {
     "spread": 0.15
   },
-  "stats": {
-    "str": {
-      "name": "STR",
-      "ip": 2.5,
-      "engine": true,
-      "integer": true,
-      "step": 2
-    },
-    "dex": {
-      "name": "DEX",
-      "ip": 2.5,
-      "engine": true,
-      "integer": true,
-      "step": 2
-    },
-    "int": {
-      "name": "INT",
-      "ip": 2.5,
-      "engine": true,
-      "integer": true,
-      "step": 2
-    },
-    "luck": {
-      "name": "LUCK",
-      "ip": 2.5,
-      "engine": true,
-      "integer": true,
-      "step": 2
-    },
-    "armor": {
-      "name": "Armor",
-      "ip": 0.4,
-      "engine": true,
-      "step": 2
-    },
-    "magicArmor": {
-      "name": "Magic Armor",
-      "ip": 0.25,
-      "engine": true,
-      "step": 2
-    },
-    "might": {
-      "name": "Might",
-      "ip": 0.5,
-      "engine": true,
-      "percent": true,
-      "slots": [
-        "weapon"
-      ],
-      "step": 0.5
-    },
-    "hp": {
-      "name": "Max HP",
-      "ip": 0.4,
-      "engine": true,
-      "step": 1
-    },
-    "crit": {
-      "name": "Crit",
-      "ip": 0.25,
-      "engine": true,
-      "percent": true,
-      "step": 0.5
-    },
-    "critDmg": {
-      "name": "Crit Damage",
-      "ip": 0.05,
-      "engine": true,
-      "percent": true,
-      "step": 5
-    },
-    "accuracy": {
-      "name": "Accuracy",
-      "ip": 0.6,
-      "engine": true,
-      "percent": true,
-      "step": 0.5
-    },
-    "evasion": {
-      "name": "Evasion",
-      "ip": 0.6,
-      "engine": true,
-      "percent": true,
-      "step": 0.5
-    },
-    "spd": {
-      "name": "Speed",
-      "ip": 2.75,
-      "engine": true,
-      "step": 1
-    },
-    "mp": {
-      "name": "Max MP",
-      "ip": 0.1,
-      "engine": true,
-      "step": 5
-    },
-    "mpRegen": {
-      "name": "MP Regen",
-      "ip": 2,
-      "engine": true,
-      "step": 1
-    },
-    "hpRegen": {
-      "name": "HP Regen",
-      "ip": 4,
-      "engine": true,
-      "step": 1
-    }
+  "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, prog:recovery), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda (delme ve kritik: silah + eldiven; auralar: zırh + tılsım; kaçınma: bot + eldiven). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon).",
+  "affixRules": {
+    "power": 1.5
   },
-  "slotStats": {
-    "weapon": {
-      "main": [
-        "might",
-        "@family"
-      ],
-      "extras": [
-        "crit",
-        "accuracy",
-        "critDmg",
-        "hp",
-        "mp",
-        "mpRegen",
-        "armor"
+  "affixDefs": {
+    "c_armor": {
+      "tier": "C",
+      "name": "Armor",
+      "text": "+{0} Armor",
+      "icon": "armor",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mod:armorAdd"
+        }
       ]
     },
-    "helm": {
-      "main": [
-        "hp",
-        "magicArmor"
+    "c_hp": {
+      "tier": "C",
+      "name": "Max HP",
+      "text": "+{0} Max HP",
+      "icon": "hp",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mod:hpAdd"
+        }
+      ]
+    },
+    "c_phys": {
+      "tier": "C",
+      "name": "Physical damage",
+      "text": "+{0}% Physical damage",
+      "desc": "Damage of your physical skills.",
+      "needs": "element:physical",
+      "icon": "element:physical",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:physical",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_fire": {
+      "tier": "C",
+      "name": "Fire damage",
+      "text": "+{0}% Fire damage",
+      "desc": "Damage of your fire skills.",
+      "needs": "element:fire",
+      "icon": "element:fire",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:fire",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_ice": {
+      "tier": "C",
+      "name": "Ice damage",
+      "text": "+{0}% Ice damage",
+      "desc": "Damage of your ice skills.",
+      "needs": "element:ice",
+      "icon": "element:ice",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:ice",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_holy": {
+      "tier": "C",
+      "name": "Holy damage",
+      "text": "+{0}% Holy damage",
+      "desc": "Damage of your holy skills.",
+      "needs": "element:holy",
+      "icon": "element:holy",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:holy",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_arcane": {
+      "tier": "C",
+      "name": "Arcane damage",
+      "text": "+{0}% Arcane damage",
+      "desc": "Damage of your arcane skills.",
+      "needs": "element:arcane",
+      "icon": "element:arcane",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:arcane",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_nature": {
+      "tier": "C",
+      "name": "Nature damage",
+      "text": "+{0}% Nature damage",
+      "desc": "Damage of your nature skills.",
+      "needs": "element:nature",
+      "icon": "element:nature",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:nature",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_dark": {
+      "tier": "C",
+      "name": "Dark damage",
+      "text": "+{0}% Dark damage",
+      "desc": "Damage of your dark skills.",
+      "needs": "element:dark",
+      "icon": "element:dark",
+      "parts": [
+        {
+          "base": 1.5,
+          "perIlvl": 0.25,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "elem:dark",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_acc": {
+      "tier": "C",
+      "name": "Accuracy",
+      "text": "+{0}% Accuracy",
+      "icon": "accuracy",
+      "parts": [
+        {
+          "base": 1.0,
+          "perIlvl": 0.17,
+          "step": 0.5,
+          "ip": 0.6,
+          "to": "mod:accuracyAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_eva": {
+      "tier": "C",
+      "name": "Evasion",
+      "text": "+{0}% Evasion",
+      "slots": [
+        "boots",
+        "gloves"
       ],
-      "extras": [
+      "icon": "evasion",
+      "parts": [
+        {
+          "base": 1.0,
+          "perIlvl": 0.17,
+          "step": 0.5,
+          "ip": 0.6,
+          "to": "mod:evasionAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_mp": {
+      "tier": "C",
+      "name": "Max MP",
+      "text": "+{0} Max MP",
+      "needs": "mp",
+      "icon": "mp",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1.0,
+          "step": 5,
+          "ip": 0.1,
+          "to": "mod:mpAdd"
+        }
+      ]
+    },
+    "c_hpregen": {
+      "tier": "C",
+      "name": "HP regen",
+      "text": "+{0} HP per turn",
+      "icon": "hpRegen",
+      "parts": [
+        {
+          "base": 0.24,
+          "perIlvl": 0.04,
+          "step": 0.5,
+          "ip": 2.5,
+          "to": "mod:hpRegenAdd"
+        }
+      ]
+    },
+    "c_mpregen": {
+      "tier": "C",
+      "name": "MP regen",
+      "text": "+{0} MP per turn",
+      "needs": "mp",
+      "icon": "mpRegen",
+      "parts": [
+        {
+          "base": 0.3,
+          "perIlvl": 0.05,
+          "step": 1,
+          "ip": 2,
+          "to": "mod:mpRegenAdd"
+        }
+      ]
+    },
+    "c_shield": {
+      "tier": "C",
+      "name": "Shield power",
+      "text": "+{0}% Shield power",
+      "desc": "Every shield you give, to yourself or an ally, is stronger.",
+      "needs": "shield",
+      "icon": "shield",
+      "parts": [
+        {
+          "base": 4,
+          "perIlvl": 0.67,
+          "step": 1,
+          "ip": 0.15,
+          "to": "mod:shieldPowerAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "c_dot": {
+      "tier": "C",
+      "name": "DoT damage",
+      "text": "+{0}% damage over time",
+      "desc": "Your Burning and Wither deal more damage each turn.",
+      "needs": "dot",
+      "icon": "dot",
+      "parts": [
+        {
+          "base": 4,
+          "perIlvl": 0.67,
+          "step": 1,
+          "ip": 0.15,
+          "to": "mod:dotPowerAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_crit": {
+      "tier": "B",
+      "name": "Crit chance",
+      "text": "+{0}% Crit chance",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "icon": "crit",
+      "parts": [
+        {
+          "base": 2.4,
+          "perIlvl": 0.4,
+          "step": 0.5,
+          "ip": 0.3,
+          "to": "mod:critAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_critdmg": {
+      "tier": "B",
+      "name": "Crit damage",
+      "text": "+{0}% Crit damage",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "icon": "critMult",
+      "parts": [
+        {
+          "base": 12,
+          "perIlvl": 2,
+          "step": 5,
+          "ip": 0.06,
+          "to": "mod:critMultAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_speed": {
+      "tier": "B",
+      "name": "Speed",
+      "text": "+{0} Speed",
+      "icon": "spd",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0.04,
+          "step": 1,
+          "ip": 2.75,
+          "to": "mod:spdAdd",
+          "noPower": true
+        }
+      ]
+    },
+    "b_marmor": {
+      "tier": "B",
+      "name": "Magic armor",
+      "text": "+{0} Magic armor",
+      "icon": "magicArmor",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "mod:magicArmorAdd"
+        }
+      ]
+    },
+    "b_tier": {
+      "tier": "B",
+      "name": "Damage vs elites",
+      "text": "+{0}% damage to elites and bosses",
+      "icon": "tier",
+      "parts": [
+        {
+          "base": 2.9,
+          "perIlvl": 0.48,
+          "step": 1,
+          "ip": 0.25,
+          "to": "fx:tierDamageMult",
+          "scale": 0.01,
+          "form": "mult"
+        }
+      ]
+    },
+    "b_pen": {
+      "tier": "B",
+      "name": "Armor penetration",
+      "text": "{0}% Armor penetration",
+      "desc": "Your physical hits ignore this share of the target's armor.",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "icon": "pen",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:armorPen",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_mpen": {
+      "tier": "B",
+      "name": "Magic penetration",
+      "text": "{0}% Magic penetration",
+      "desc": "Your magic hits ignore this share of the target's magic armor.",
+      "slots": [
+        "weapon",
+        "gloves"
+      ],
+      "icon": "mpen",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.12,
+          "to": "fx:magicPen",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_mpcost": {
+      "tier": "B",
+      "name": "MP cost",
+      "text": "-{0}% MP cost",
+      "needs": "mp",
+      "icon": "mpCost",
+      "parts": [
+        {
+          "base": 4.8,
+          "perIlvl": 0.8,
+          "step": 1,
+          "ip": 0.15,
+          "to": "fx:mpCostReduce",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_leech": {
+      "tier": "B",
+      "name": "Life leech",
+      "text": "{0}% Life leech",
+      "desc": "Heal for this share of the HP your skill hits take away.",
+      "icon": "leech",
+      "parts": [
+        {
+          "base": 1.44,
+          "perIlvl": 0.24,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "fx:leech",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_initiative": {
+      "tier": "B",
+      "name": "Quick start",
+      "text": "Start battles {0}% into your turn",
+      "icon": "initiative",
+      "parts": [
+        {
+          "base": 7.2,
+          "perIlvl": 1.2,
+          "step": 5,
+          "ip": 0.1,
+          "to": "fx:startCharge",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_resil": {
+      "tier": "B",
+      "name": "Debuff resistance",
+      "text": "{0}% chance to resist a debuff",
+      "desc": "A debuff an enemy puts on you has this chance not to land at all.",
+      "icon": "resist",
+      "parts": [
+        {
+          "base": 2.4,
+          "perIlvl": 0.4,
+          "step": 1,
+          "ip": 0.3,
+          "to": "fx:debuffAvoid",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_primary": {
+      "tier": "A",
+      "name": "Primary attribute",
+      "text": "+{0} {primary}",
+      "desc": "Adds to the wearer's primary attribute (STR, DEX, INT or LUCK).",
+      "icon": "primary",
+      "parts": [
+        {
+          "base": 2.2,
+          "perIlvl": 0.1,
+          "step": 2,
+          "ip": 0.75,
+          "to": "attr:primary",
+          "noPower": true
+        }
+      ]
+    },
+    "a_allattr": {
+      "tier": "A",
+      "name": "All attributes",
+      "text": "+{0} STR, DEX, INT and LUCK",
+      "icon": "allattr",
+      "parts": [
+        {
+          "base": 1.6,
+          "perIlvl": 0.04,
+          "step": 2,
+          "ip": 1.25,
+          "to": "attr:all",
+          "noPower": true
+        }
+      ]
+    },
+    "a_gdmg": {
+      "tier": "A",
+      "name": "Global damage",
+      "text": "+{0}% damage",
+      "desc": "All damage of your skills.",
+      "icon": "damage",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "mod:damageAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_gdef": {
+      "tier": "A",
+      "name": "Global defense",
+      "text": "-{0}% damage taken",
+      "icon": "defense",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "fx:damageTakenReduce",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_speedpct": {
+      "tier": "A",
+      "name": "Speed %",
+      "text": "+{0}% Speed",
+      "icon": "spd",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "mult:spdMult",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_hppct": {
+      "tier": "A",
+      "name": "Max HP %",
+      "text": "+{0}% Max HP",
+      "icon": "hp",
+      "parts": [
+        {
+          "base": 2.4,
+          "perIlvl": 0.4,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mult:hpMult",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_auradmg": {
+      "tier": "A",
+      "name": "Battle aura",
+      "text": "Allies beside you deal +{0}% damage",
+      "slots": [
         "armor",
-        "accuracy",
-        "mp"
+        "trinket"
+      ],
+      "icon": "auraDamage",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "fx:auraDamage",
+          "scale": 0.01
+        }
       ]
     },
-    "armor": {
-      "main": [
-        "armor"
-      ],
-      "extras": [
-        "hp",
-        "magicArmor",
-        "evasion",
-        "hpRegen"
-      ]
-    },
-    "gloves": {
-      "main": [
-        "crit",
-        "accuracy"
-      ],
-      "extras": [
+    "a_auradef": {
+      "tier": "A",
+      "name": "Guard aura",
+      "text": "Allies beside you take -{0}% damage",
+      "slots": [
         "armor",
-        "critDmg",
-        "evasion"
+        "trinket"
+      ],
+      "icon": "auraGuard",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "fx:adjacentGuard",
+          "scale": 0.01
+        }
       ]
     },
-    "boots": {
-      "main": [
-        "spd",
-        "evasion"
-      ],
-      "extras": [
-        "armor",
-        "hp",
-        "magicArmor"
+    "a_recovery": {
+      "tier": "A",
+      "name": "Recovery",
+      "text": "Recover {0}% HP and MP after each battle",
+      "desc": "Only the wearer recovers. Fallen heroes do not.",
+      "icon": "recovery",
+      "parts": [
+        {
+          "base": 3.84,
+          "perIlvl": 0.64,
+          "step": 1,
+          "ip": 0.25,
+          "to": "prog:recovery",
+          "scale": 0.01
+        }
       ]
     },
-    "trinket": {
-      "main": [
-        "mp",
-        "hpRegen",
-        "mpRegen",
-        "luck"
+    "a_ultcd": {
+      "tier": "A",
+      "name": "Swift ultimate",
+      "text": "Ultimate ready 1 turn sooner",
+      "desc": "Your ultimate's starting cooldown is 1 turn shorter. Does not grow with item level.",
+      "icon": "ultimate",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 2.5,
+          "to": "fx:ultCdReduce",
+          "fixed": true
+        }
+      ]
+    },
+    "a_allelem": {
+      "tier": "A",
+      "name": "Elemental damage",
+      "text": "+{0}% elemental damage",
+      "desc": "Fire, ice, holy, arcane, nature and dark damage of your skills.",
+      "needs": "element:magic",
+      "icon": "elements",
+      "parts": [
+        {
+          "base": 2.13,
+          "perIlvl": 0.36,
+          "step": 0.5,
+          "ip": 0.45,
+          "to": "elem:*",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_keen": {
+      "tier": "A",
+      "name": "Keenness",
+      "text": "+{0}% Crit chance, +{1}% Crit damage",
+      "slots": [
+        "weapon",
+        "gloves"
       ],
-      "extras": [
-        "crit",
-        "magicArmor",
-        "hp"
+      "icon": "crit",
+      "parts": [
+        {
+          "base": 1.92,
+          "perIlvl": 0.32,
+          "step": 0.5,
+          "ip": 0.25,
+          "to": "mod:critAdd",
+          "scale": 0.01
+        },
+        {
+          "base": 9.6,
+          "perIlvl": 1.6,
+          "step": 5,
+          "ip": 0.05,
+          "to": "mod:critMultAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_potency": {
+      "tier": "A",
+      "name": "Potency",
+      "text": "+{0}% damage over time, your debuffs last {1} turn longer",
+      "desc": "Stuns do not last longer.",
+      "needs": "debuff",
+      "icon": "dot",
+      "parts": [
+        {
+          "base": 4,
+          "perIlvl": 0.6,
+          "step": 1,
+          "ip": 0.12,
+          "to": "mod:dotPowerAdd",
+          "scale": 0.01
+        },
+        {
+          "base": 1,
+          "perIlvl": 0,
+          "step": 1,
+          "ip": 1,
+          "to": "fx:potencyTurns",
+          "fixed": true
+        }
+      ]
+    },
+    "a_immunity": {
+      "tier": "A",
+      "name": "Immunity",
+      "text": "Immune to {x} for your first {0} turns",
+      "desc": "One debuff, rolled on the item, cannot land on you in your first turns of each battle.",
+      "icon": "immunity",
+      "choices": [
+        "stun",
+        "slow",
+        "silence",
+        "blinded",
+        "wound",
+        "jinxed",
+        "staggered"
+      ],
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.0834,
+          "step": 1,
+          "ip": 1,
+          "to": "fx:earlyImmunity",
+          "floor": true,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "a_mana": {
+      "tier": "A",
+      "name": "Mana mastery",
+      "text": "+{0}% Max MP, +{1} MP per turn",
+      "needs": "mp",
+      "icon": "mp",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 0.8,
+          "step": 1,
+          "ip": 0.06,
+          "to": "mult:mpMult",
+          "scale": 0.01
+        },
+        {
+          "base": 0.9,
+          "perIlvl": 0.03,
+          "step": 1,
+          "ip": 2,
+          "to": "mod:mpRegenAdd"
+        }
+      ]
+    },
+    "a_support": {
+      "tier": "A",
+      "name": "Support power",
+      "text": "+{0}% healing and shields given",
+      "needs": "support",
+      "icon": "heal",
+      "parts": [
+        {
+          "base": 4,
+          "perIlvl": 0.6,
+          "step": 1,
+          "ip": 0.08,
+          "to": "mod:healPowerAdd",
+          "scale": 0.01
+        },
+        {
+          "base": 4,
+          "perIlvl": 0.6,
+          "step": 1,
+          "ip": 0.08,
+          "to": "mod:shieldPowerAdd",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_summon": {
+      "tier": "A",
+      "name": "Summon mastery",
+      "text": "Your summons get +{0}% HP and power",
+      "needs": "summon",
+      "icon": "summon",
+      "parts": [
+        {
+          "base": 4.8,
+          "perIlvl": 0.8,
+          "step": 1,
+          "ip": 0.2,
+          "to": "fx:summonPower",
+          "scale": 0.01
+        }
+      ]
+    },
+    "a_resource": {
+      "tier": "A",
+      "name": "Resource mastery",
+      "text": "+{0}% Rage gained, +{1} MP per turn",
+      "icon": "rage",
+      "parts": [
+        {
+          "base": 6,
+          "perIlvl": 1,
+          "step": 1,
+          "ip": 0.1,
+          "to": "fx:rageGain",
+          "scale": 0.01
+        },
+        {
+          "base": 0.9,
+          "perIlvl": 0.03,
+          "step": 1,
+          "ip": 2,
+          "to": "mod:mpRegenAdd"
+        }
+      ]
+    },
+    "a_endure": {
+      "tier": "A",
+      "name": "Endurance",
+      "text": "+{0}% Lucky Escape chance, -{1}% damage taken below 30% HP",
+      "desc": "Lucky Escape: once per battle, a lethal hit may miss you entirely.",
+      "icon": "luck",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.2,
+          "step": 1,
+          "ip": 0.15,
+          "to": "mod:surviveAdd",
+          "scale": 0.01
+        },
+        {
+          "base": 4,
+          "perIlvl": 0.4,
+          "step": 1,
+          "ip": 0.1,
+          "to": "fx:lowHpReduce",
+          "scale": 0.01,
+          "below": 0.3
+        }
       ]
     }
   },
@@ -279,8 +963,7 @@
     "crit": 15,
     "accuracy": 10,
     "evasion": 10,
-    "spd": 3,
-    "spdPerItem": 1
+    "spd": 3
   },
   "weaponFamilies": [
     {
@@ -290,7 +973,10 @@
         "warrior",
         "antimage"
       ],
-      "attr": "str"
+      "mains": [
+        "c_phys",
+        "c_arcane"
+      ]
     },
     {
       "id": "maces",
@@ -300,7 +986,10 @@
         "paladin",
         "warrior"
       ],
-      "attr": "str"
+      "mains": [
+        "c_phys",
+        "c_holy"
+      ]
     },
     {
       "id": "bows",
@@ -308,7 +997,9 @@
       "classes": [
         "archer"
       ],
-      "attr": "dex"
+      "mains": [
+        "c_phys"
+      ]
     },
     {
       "id": "daggers",
@@ -317,7 +1008,10 @@
         "cutthroat",
         "antimage"
       ],
-      "attr": "dex"
+      "mains": [
+        "c_phys",
+        "c_arcane"
+      ]
     },
     {
       "id": "staves",
@@ -327,7 +1021,12 @@
         "druid",
         "undead"
       ],
-      "attr": "int"
+      "mains": [
+        "c_fire",
+        "c_ice",
+        "c_nature",
+        "c_dark"
+      ]
     },
     {
       "id": "charms",
@@ -336,11 +1035,14 @@
         "gambler",
         "hexer"
       ],
-      "attr": "luck"
+      "mains": [
+        "c_phys",
+        "c_dark"
+      ]
     }
   ],
   "bag": 30,
-  "_items": "Sabit (el yapımı) item'ler: Valdoria (bölüm 1, ilvl 1-10) MVP kataloğu + 1 bölüm 2 örneği (bracers_of_the_fox). Silahta family zorunlu, diğer yuvalarda yok. stats = gerçek değerler (STR/DEX/INT/LUCK tam sayı; might/crit/accuracy/evasion/critDmg yüzde). IP bütçesi: slot.weight x (budget.base + budget.perIlvl x ilvl) x rarity.mult, ± budget.tolerance. Değerler tools'suz üretildi (bütçeye en yakın tam sayılar); denge balance-tester.",
+  "_items": "Katalog = taban item'ler (Ömer onayı 2026-10-11, items.md 1.3b): ad, yuva, silah ailesi, ilvl, ikon, varsayılan nadirlik ve ana C affix'i (main; silahta weaponFamilies[].mains listesinden örnek oluşurken seçilir). Diğer affix'ler örnek oluşurken kademesinin havuzundan çekilir. Legendary'nin dört affix'i (affixes) ve etkisi katalogda sabit; değerleri yine seviyeye göre zarlanır.",
   "items": [
     {
       "id": "woodcutters_axe",
@@ -348,10 +1050,7 @@
       "slot": "weapon",
       "family": "axes",
       "rarity": "common",
-      "ilvl": 2,
-      "stats": {
-        "might": 3
-      }
+      "ilvl": 2
     },
     {
       "id": "bearded_axe",
@@ -359,11 +1058,7 @@
       "slot": "weapon",
       "family": "axes",
       "rarity": "uncommon",
-      "ilvl": 6,
-      "stats": {
-        "might": 4,
-        "hp": 3
-      }
+      "ilvl": 6
     },
     {
       "id": "arming_sword",
@@ -372,12 +1067,7 @@
       "slot": "weapon",
       "family": "axes",
       "rarity": "rare",
-      "ilvl": 9,
-      "stats": {
-        "str": 2,
-        "might": 1,
-        "crit": 1
-      }
+      "ilvl": 9
     },
     {
       "id": "dane_axe",
@@ -385,13 +1075,7 @@
       "slot": "weapon",
       "family": "axes",
       "rarity": "epic",
-      "ilvl": 10,
-      "stats": {
-        "might": 5,
-        "crit": 5,
-        "critDmg": 30
-      },
-      "effect": "giantslayer"
+      "ilvl": 10
     },
     {
       "id": "flanged_mace",
@@ -399,10 +1083,7 @@
       "slot": "weapon",
       "family": "maces",
       "rarity": "common",
-      "ilvl": 4,
-      "stats": {
-        "might": 4
-      }
+      "ilvl": 4
     },
     {
       "id": "oak_shield",
@@ -411,11 +1092,7 @@
       "slot": "weapon",
       "family": "maces",
       "rarity": "uncommon",
-      "ilvl": 6,
-      "stats": {
-        "might": 5,
-        "armor": 2
-      }
+      "ilvl": 6
     },
     {
       "id": "morning_star",
@@ -423,12 +1100,7 @@
       "slot": "weapon",
       "family": "maces",
       "rarity": "rare",
-      "ilvl": 10,
-      "stats": {
-        "might": 6,
-        "armor": 4,
-        "hp": 3
-      }
+      "ilvl": 10
     },
     {
       "id": "short_bow",
@@ -436,10 +1108,7 @@
       "slot": "weapon",
       "family": "bows",
       "rarity": "common",
-      "ilvl": 2,
-      "stats": {
-        "might": 3
-      }
+      "ilvl": 2
     },
     {
       "id": "hunting_bow",
@@ -447,11 +1116,7 @@
       "slot": "weapon",
       "family": "bows",
       "rarity": "uncommon",
-      "ilvl": 6,
-      "stats": {
-        "might": 4,
-        "accuracy": 2
-      }
+      "ilvl": 6
     },
     {
       "id": "yew_longbow",
@@ -459,12 +1124,7 @@
       "slot": "weapon",
       "family": "bows",
       "rarity": "rare",
-      "ilvl": 10,
-      "stats": {
-        "dex": 2,
-        "might": 1,
-        "accuracy": 1
-      }
+      "ilvl": 10
     },
     {
       "id": "rondel_dagger",
@@ -472,10 +1132,7 @@
       "slot": "weapon",
       "family": "daggers",
       "rarity": "common",
-      "ilvl": 2,
-      "stats": {
-        "might": 3
-      }
+      "ilvl": 2
     },
     {
       "id": "misericorde",
@@ -483,11 +1140,7 @@
       "slot": "weapon",
       "family": "daggers",
       "rarity": "uncommon",
-      "ilvl": 7,
-      "stats": {
-        "might": 3,
-        "crit": 8
-      }
+      "ilvl": 7
     },
     {
       "id": "twin_stilettos",
@@ -495,12 +1148,7 @@
       "slot": "weapon",
       "family": "daggers",
       "rarity": "rare",
-      "ilvl": 10,
-      "stats": {
-        "might": 6,
-        "crit": 9,
-        "accuracy": 1
-      }
+      "ilvl": 10
     },
     {
       "id": "ash_staff",
@@ -508,10 +1156,7 @@
       "slot": "weapon",
       "family": "staves",
       "rarity": "common",
-      "ilvl": 2,
-      "stats": {
-        "might": 3
-      }
+      "ilvl": 2
     },
     {
       "id": "oak_staff",
@@ -519,11 +1164,7 @@
       "slot": "weapon",
       "family": "staves",
       "rarity": "uncommon",
-      "ilvl": 7,
-      "stats": {
-        "might": 3,
-        "mpRegen": 1
-      }
+      "ilvl": 7
     },
     {
       "id": "bone_staff",
@@ -531,12 +1172,7 @@
       "slot": "weapon",
       "family": "staves",
       "rarity": "rare",
-      "ilvl": 10,
-      "stats": {
-        "int": 2,
-        "might": 1,
-        "mp": 5
-      }
+      "ilvl": 10
     },
     {
       "id": "rune_staff",
@@ -544,13 +1180,7 @@
       "slot": "weapon",
       "family": "staves",
       "rarity": "epic",
-      "ilvl": 10,
-      "stats": {
-        "might": 4,
-        "mpRegen": 1,
-        "mp": 10
-      },
-      "effect": "thrifty"
+      "ilvl": 10
     },
     {
       "id": "worn_deck",
@@ -558,10 +1188,7 @@
       "slot": "weapon",
       "family": "charms",
       "rarity": "common",
-      "ilvl": 2,
-      "stats": {
-        "might": 3
-      }
+      "ilvl": 2
     },
     {
       "id": "loaded_bones",
@@ -569,11 +1196,7 @@
       "slot": "weapon",
       "family": "charms",
       "rarity": "uncommon",
-      "ilvl": 6,
-      "stats": {
-        "might": 3,
-        "crit": 7
-      }
+      "ilvl": 6
     },
     {
       "id": "hex_doll",
@@ -581,12 +1204,7 @@
       "slot": "weapon",
       "family": "charms",
       "rarity": "rare",
-      "ilvl": 10,
-      "stats": {
-        "luck": 2,
-        "might": 1,
-        "crit": 1
-      }
+      "ilvl": 10
     },
     {
       "id": "padded_gambeson",
@@ -594,9 +1212,7 @@
       "slot": "armor",
       "rarity": "common",
       "ilvl": 3,
-      "stats": {
-        "armor": 4
-      }
+      "main": "c_armor"
     },
     {
       "id": "quilted_jack",
@@ -604,9 +1220,7 @@
       "slot": "armor",
       "rarity": "common",
       "ilvl": 4,
-      "stats": {
-        "armor": 4
-      }
+      "main": "c_armor"
     },
     {
       "id": "leather_jerkin",
@@ -614,10 +1228,7 @@
       "slot": "armor",
       "rarity": "uncommon",
       "ilvl": 4,
-      "stats": {
-        "armor": 4,
-        "evasion": 1
-      }
+      "main": "c_armor"
     },
     {
       "id": "riveted_mail",
@@ -625,10 +1236,7 @@
       "slot": "armor",
       "rarity": "uncommon",
       "ilvl": 8,
-      "stats": {
-        "armor": 4,
-        "hp": 4
-      }
+      "main": "c_armor"
     },
     {
       "id": "brigandine",
@@ -636,11 +1244,7 @@
       "slot": "armor",
       "rarity": "rare",
       "ilvl": 10,
-      "stats": {
-        "armor": 6,
-        "hp": 2,
-        "evasion": 3
-      }
+      "main": "c_armor"
     },
     {
       "id": "warded_hauberk",
@@ -648,11 +1252,7 @@
       "slot": "armor",
       "rarity": "rare",
       "ilvl": 9,
-      "stats": {
-        "armor": 6,
-        "magicArmor": 6,
-        "hp": 2
-      }
+      "main": "c_armor"
     },
     {
       "id": "coat_of_plates",
@@ -660,12 +1260,7 @@
       "slot": "armor",
       "rarity": "epic",
       "ilvl": 10,
-      "stats": {
-        "armor": 4,
-        "hp": 3,
-        "magicArmor": 2
-      },
-      "effect": "wardens_oath"
+      "main": "c_armor"
     },
     {
       "id": "leather_coif",
@@ -673,9 +1268,7 @@
       "slot": "helm",
       "rarity": "common",
       "ilvl": 2,
-      "stats": {
-        "hp": 2
-      }
+      "main": "c_hp"
     },
     {
       "id": "iron_cap",
@@ -683,9 +1276,7 @@
       "slot": "helm",
       "rarity": "common",
       "ilvl": 5,
-      "stats": {
-        "hp": 3
-      }
+      "main": "c_hp"
     },
     {
       "id": "padded_hood",
@@ -693,10 +1284,7 @@
       "slot": "helm",
       "rarity": "uncommon",
       "ilvl": 5,
-      "stats": {
-        "magicArmor": 4,
-        "mp": 5
-      }
+      "main": "c_mp"
     },
     {
       "id": "nasal_helm",
@@ -704,10 +1292,7 @@
       "slot": "helm",
       "rarity": "uncommon",
       "ilvl": 8,
-      "stats": {
-        "hp": 3,
-        "armor": 2
-      }
+      "main": "c_hp"
     },
     {
       "id": "kettle_hat",
@@ -715,11 +1300,7 @@
       "slot": "helm",
       "rarity": "rare",
       "ilvl": 9,
-      "stats": {
-        "hp": 4,
-        "armor": 2,
-        "accuracy": 1
-      }
+      "main": "c_hp"
     },
     {
       "id": "great_helm",
@@ -727,12 +1308,7 @@
       "slot": "helm",
       "rarity": "epic",
       "ilvl": 10,
-      "stats": {
-        "hp": 1,
-        "armor": 2,
-        "magicArmor": 2
-      },
-      "effect": "iron_will"
+      "main": "c_hp"
     },
     {
       "id": "work_gloves",
@@ -740,9 +1316,7 @@
       "slot": "gloves",
       "rarity": "common",
       "ilvl": 2,
-      "stats": {
-        "crit": 3
-      }
+      "main": "c_acc"
     },
     {
       "id": "leather_gloves",
@@ -750,9 +1324,7 @@
       "slot": "gloves",
       "rarity": "common",
       "ilvl": 5,
-      "stats": {
-        "accuracy": 2
-      }
+      "main": "c_acc"
     },
     {
       "id": "archers_bracer",
@@ -760,10 +1332,7 @@
       "slot": "gloves",
       "rarity": "uncommon",
       "ilvl": 6,
-      "stats": {
-        "accuracy": 2,
-        "crit": 2
-      }
+      "main": "c_acc"
     },
     {
       "id": "studded_gauntlets",
@@ -771,10 +1340,7 @@
       "slot": "gloves",
       "rarity": "uncommon",
       "ilvl": 8,
-      "stats": {
-        "crit": 5,
-        "armor": 2
-      }
+      "main": "c_armor"
     },
     {
       "id": "keen_gauntlets",
@@ -782,11 +1348,7 @@
       "slot": "gloves",
       "rarity": "rare",
       "ilvl": 9,
-      "stats": {
-        "crit": 5,
-        "armor": 2,
-        "critDmg": 15
-      }
+      "main": "c_acc"
     },
     {
       "id": "hawkeye_gloves",
@@ -794,12 +1356,7 @@
       "slot": "gloves",
       "rarity": "epic",
       "ilvl": 10,
-      "stats": {
-        "crit": 3,
-        "accuracy": 1,
-        "critDmg": 10
-      },
-      "effect": "mana_spring"
+      "main": "c_acc"
     },
     {
       "id": "turnshoes",
@@ -807,9 +1364,7 @@
       "slot": "boots",
       "rarity": "common",
       "ilvl": 5,
-      "stats": {
-        "evasion": 2
-      }
+      "main": "c_eva"
     },
     {
       "id": "soft_boots",
@@ -817,9 +1372,7 @@
       "slot": "boots",
       "rarity": "common",
       "ilvl": 5,
-      "stats": {
-        "evasion": 2
-      }
+      "main": "c_eva"
     },
     {
       "id": "hobnailed_boots",
@@ -827,10 +1380,7 @@
       "slot": "boots",
       "rarity": "uncommon",
       "ilvl": 4,
-      "stats": {
-        "evasion": 1,
-        "armor": 2
-      }
+      "main": "c_armor"
     },
     {
       "id": "riding_boots",
@@ -838,10 +1388,7 @@
       "slot": "boots",
       "rarity": "uncommon",
       "ilvl": 8,
-      "stats": {
-        "evasion": 2,
-        "hp": 2
-      }
+      "main": "c_eva"
     },
     {
       "id": "ranger_boots",
@@ -849,11 +1396,7 @@
       "slot": "boots",
       "rarity": "rare",
       "ilvl": 9,
-      "stats": {
-        "evasion": 3,
-        "armor": 2,
-        "hp": 1
-      }
+      "main": "c_eva"
     },
     {
       "id": "swift_sabatons",
@@ -861,12 +1404,7 @@
       "slot": "boots",
       "rarity": "epic",
       "ilvl": 10,
-      "stats": {
-        "evasion": 2,
-        "armor": 2,
-        "hp": 1
-      },
-      "effect": "quick_start"
+      "main": "c_eva"
     },
     {
       "id": "copper_ring",
@@ -875,9 +1413,7 @@
       "slot": "trinket",
       "rarity": "common",
       "ilvl": 4,
-      "stats": {
-        "mp": 10
-      }
+      "main": "c_mp"
     },
     {
       "id": "rabbits_foot",
@@ -885,9 +1421,7 @@
       "slot": "trinket",
       "rarity": "common",
       "ilvl": 4,
-      "stats": {
-        "mp": 10
-      }
+      "main": "c_mp"
     },
     {
       "id": "wolf_tooth",
@@ -895,10 +1429,7 @@
       "slot": "trinket",
       "rarity": "uncommon",
       "ilvl": 5,
-      "stats": {
-        "mp": 10,
-        "crit": 2
-      }
+      "main": "c_mp"
     },
     {
       "id": "pilgrims_token",
@@ -906,10 +1437,7 @@
       "slot": "trinket",
       "rarity": "uncommon",
       "ilvl": 8,
-      "stats": {
-        "mp": 10,
-        "magicArmor": 4
-      }
+      "main": "c_mpregen"
     },
     {
       "id": "saints_medal",
@@ -917,11 +1445,7 @@
       "slot": "trinket",
       "rarity": "rare",
       "ilvl": 9,
-      "stats": {
-        "mpRegen": 1,
-        "magicArmor": 2,
-        "hp": 1
-      }
+      "main": "c_mpregen"
     },
     {
       "id": "ashen_locket",
@@ -929,12 +1453,7 @@
       "slot": "trinket",
       "rarity": "epic",
       "ilvl": 10,
-      "stats": {
-        "mp": 10,
-        "hp": 1,
-        "magicArmor": 2
-      },
-      "effect": "ember_heart"
+      "main": "c_hpregen"
     },
     {
       "id": "bracers_of_the_fox",
@@ -942,11 +1461,7 @@
       "slot": "gloves",
       "rarity": "rare",
       "ilvl": 20,
-      "stats": {
-        "accuracy": 4,
-        "crit": 4,
-        "evasion": 3
-      }
+      "main": "c_eva"
     },
     {
       "id": "emberbrand",
@@ -956,11 +1471,12 @@
       "rarity": "legendary",
       "ilvl": 10,
       "minChapter": 1,
-      "stats": {
-        "str": 2,
-        "might": 1,
-        "crit": 2
-      },
+      "affixes": [
+        "c_phys",
+        "c_fire",
+        "b_crit",
+        "a_primary"
+      ],
       "effect": "ember_burn",
       "flavor": "A blade forged in the last fire of Old Valdoria. It never quite cools."
     },
@@ -971,11 +1487,12 @@
       "rarity": "legendary",
       "ilvl": 10,
       "minChapter": 1,
-      "stats": {
-        "armor": 4,
-        "hp": 3,
-        "magicArmor": 4
-      },
+      "affixes": [
+        "c_armor",
+        "c_hp",
+        "b_marmor",
+        "a_auradef"
+      ],
       "effect": "valdren_mantle",
       "usableBy": [
         "warrior",
@@ -993,11 +1510,12 @@
       "rarity": "legendary",
       "ilvl": 15,
       "minChapter": 2,
-      "stats": {
-        "might": 10,
-        "armor": 2,
-        "hp": 8
-      },
+      "affixes": [
+        "c_phys",
+        "c_hp",
+        "b_marmor",
+        "a_gdef"
+      ],
       "effect": "oath_intercept",
       "usableBy": [
         "defender",
@@ -1013,11 +1531,12 @@
       "rarity": "legendary",
       "ilvl": 16,
       "minChapter": 2,
-      "stats": {
-        "dex": 2,
-        "might": 3,
-        "accuracy": 6
-      },
+      "affixes": [
+        "c_phys",
+        "c_acc",
+        "b_pen",
+        "a_speedpct"
+      ],
       "effect": "windrunner_echo",
       "flavor": "Its arrows find a second mark on the wind."
     },
@@ -1029,11 +1548,12 @@
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 2,
-      "stats": {
-        "dex": 2,
-        "might": 7,
-        "crit": 9
-      },
+      "affixes": [
+        "c_phys",
+        "c_dark",
+        "b_crit",
+        "a_keen"
+      ],
       "effect": "morvane_whisper",
       "flavor": "The curse speaks through it; it is never satisfied with one."
     },
@@ -1045,11 +1565,12 @@
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 2,
-      "stats": {
-        "int": 2,
-        "might": 4,
-        "mpRegen": 2
-      },
+      "affixes": [
+        "c_fire",
+        "c_mpregen",
+        "b_mpcost",
+        "a_mana"
+      ],
       "effect": "last_ember",
       "flavor": "An ember the old kings kept burning through the long night."
     },
@@ -1061,11 +1582,12 @@
       "rarity": "legendary",
       "ilvl": 16,
       "minChapter": 2,
-      "stats": {
-        "luck": 2,
-        "might": 6,
-        "crit": 10
-      },
+      "affixes": [
+        "c_phys",
+        "c_acc",
+        "b_critdmg",
+        "a_primary"
+      ],
       "effect": "last_coin",
       "flavor": "Heads, you live. Tails, you flip again."
     },
@@ -1076,11 +1598,12 @@
       "rarity": "legendary",
       "ilvl": 22,
       "minChapter": 3,
-      "stats": {
-        "hp": 7,
-        "magicArmor": 12,
-        "armor": 2
-      },
+      "affixes": [
+        "c_hp",
+        "c_mp",
+        "b_resil",
+        "a_immunity"
+      ],
       "effect": "ashen_crown",
       "flavor": "Cold as the curse that wore it."
     },
@@ -1091,11 +1614,12 @@
       "rarity": "legendary",
       "ilvl": 10,
       "minChapter": 1,
-      "stats": {
-        "evasion": 1,
-        "armor": 2,
-        "hp": 1
-      },
+      "affixes": [
+        "c_eva",
+        "c_hp",
+        "b_speed",
+        "a_recovery"
+      ],
       "effect": "pilgrims_stride",
       "flavor": "They have walked every road in Valdoria, and know the short ones."
     },
@@ -1106,11 +1630,12 @@
       "rarity": "legendary",
       "ilvl": 22,
       "minChapter": 3,
-      "stats": {
-        "mpRegen": 2,
-        "hp": 4,
-        "magicArmor": 2
-      },
+      "affixes": [
+        "c_mpregen",
+        "c_hp",
+        "b_mpcost",
+        "a_support"
+      ],
       "effect": "forge_heart",
       "usableBy": [
         "druid",
@@ -1119,99 +1644,147 @@
         "hexer"
       ],
       "flavor": "A coal from the dwarven forge, still warm, still giving."
+    },
+    {
+      "id": "iron_retort",
+      "name": "Iron Retort",
+      "slot": "armor",
+      "rarity": "legendary",
+      "ilvl": 16,
+      "minChapter": 2,
+      "affixes": [
+        "c_armor",
+        "c_hp",
+        "b_marmor",
+        "a_hppct"
+      ],
+      "effect": "retort",
+      "usableBy": [
+        "warrior",
+        "defender",
+        "paladin",
+        "antimage"
+      ],
+      "flavor": "Every rivet was hammered by a smith who had been struck first."
+    },
+    {
+      "id": "serrated_edge",
+      "name": "Serrated Edge",
+      "slot": "weapon",
+      "family": "daggers",
+      "rarity": "legendary",
+      "ilvl": 17,
+      "minChapter": 2,
+      "affixes": [
+        "c_phys",
+        "c_dot",
+        "b_critdmg",
+        "a_keen"
+      ],
+      "effect": "serrated",
+      "flavor": "It does not cut clean, and it was never meant to."
+    },
+    {
+      "id": "drummers_gauntlets",
+      "name": "War-Drummer's Gauntlets",
+      "slot": "gloves",
+      "rarity": "legendary",
+      "ilvl": 18,
+      "minChapter": 2,
+      "affixes": [
+        "c_acc",
+        "c_mp",
+        "b_crit",
+        "a_gdmg"
+      ],
+      "effect": "rhythm",
+      "flavor": "They still keep the beat of a march no one else remembers."
+    },
+    {
+      "id": "helm_of_the_last_stand",
+      "name": "Helm of the Last Stand",
+      "slot": "helm",
+      "rarity": "legendary",
+      "ilvl": 20,
+      "minChapter": 3,
+      "affixes": [
+        "c_hp",
+        "c_armor",
+        "b_resil",
+        "a_endure"
+      ],
+      "effect": "laststand",
+      "flavor": "Found on the bridge, on the last of the wardens, still standing."
+    },
+    {
+      "id": "flashpowder_locket",
+      "name": "Flashpowder Locket",
+      "slot": "trinket",
+      "rarity": "legendary",
+      "ilvl": 17,
+      "minChapter": 2,
+      "affixes": [
+        "c_mp",
+        "c_acc",
+        "b_initiative",
+        "a_speedpct"
+      ],
+      "effect": "opener",
+      "flavor": "Open it once, and only once, at the right moment."
+    },
+    {
+      "id": "watchmans_boots",
+      "name": "Watchman's Boots",
+      "slot": "boots",
+      "rarity": "legendary",
+      "ilvl": 19,
+      "minChapter": 3,
+      "affixes": [
+        "c_eva",
+        "c_hpregen",
+        "b_resil",
+        "a_support"
+      ],
+      "effect": "vigil",
+      "flavor": "Worn through a hundred long nights on the walls of Ashford."
+    },
+    {
+      "id": "avengers_maul",
+      "name": "Avenger's Maul",
+      "slot": "weapon",
+      "family": "maces",
+      "rarity": "legendary",
+      "ilvl": 21,
+      "minChapter": 3,
+      "affixes": [
+        "c_phys",
+        "c_holy",
+        "b_tier",
+        "a_gdmg"
+      ],
+      "effect": "vengeance",
+      "flavor": "Heavier for every name carved into its haft."
+    },
+    {
+      "id": "bones_of_the_quarry",
+      "name": "Bones of the Quarry",
+      "slot": "weapon",
+      "family": "charms",
+      "rarity": "legendary",
+      "ilvl": 18,
+      "minChapter": 3,
+      "affixes": [
+        "c_dark",
+        "c_acc",
+        "b_tier",
+        "a_primary"
+      ],
+      "effect": "huntersmark",
+      "flavor": "Cast them at the strongest foe, and they always land on its name."
     }
   ],
-  "_effects": "Epic özel etkileri (Ömer onayı 2026-10-10, madde 292; item-effects.md). hook = motor kancası (UnitSetup.itemEffects alanı, src/engine/types.ts > ItemEffects), value = sayılar (metindeki {pct}/{value}/{below}... bunlardan doldurulur), ip = etkinin Item Points değeri. effectRules (sabahleyin tek tıkla çevrilebilir, varsayılanlar en güvenli olan): ipFromBudget = etki IP'si Epic bütçesinin İÇİNDEN (statlar o kadar küçük; güç sabit); stack = aynı etki iki item'den toplanmaz (en yükseği; false); endless = etkiler Endless'ta da aynı.",
+  "_effects": "Legendary etkileri (madde 296 + Ömer onayı 2026-10-11: 8 yeni). Eski 11 Epic etkisi kaldırıldı (Epic gücünü A affix'inden alır). hook = motor kancası (src/engine/types.ts > ItemEffects), value = sayılar (metindeki {turns}/{below}... bunlardan), ip = etkinin Item Points değeri. effectRules: stack = aynı etki iki item'den toplanmaz; endless = etkiler Endless'ta da aynı.",
   "effects": {
-    "opening_ward": {
-      "name": "Opening Ward",
-      "text": "Begin each battle with a shield of {pct} of your max HP.",
-      "ip": 3,
-      "hook": "startShieldRatio",
-      "value": 0.08
-    },
-    "mana_spring": {
-      "name": "Mana Spring",
-      "text": "On a critical hit, gain {value} MP (once per action).",
-      "ip": 2,
-      "hook": "critMp",
-      "value": 4
-    },
-    "second_wind": {
-      "name": "Second Wind",
-      "text": "Once per battle, when you drop below {below}, heal {heal} of your max HP.",
-      "ip": 3,
-      "hook": "secondWind",
-      "value": {
-        "below": 0.3,
-        "heal": 0.12
-      }
-    },
-    "quick_start": {
-      "name": "Quick Start",
-      "text": "Start each battle with {pct} of a turn already charged.",
-      "ip": 1.5,
-      "hook": "startCharge",
-      "value": 0.2
-    },
-    "steadfast": {
-      "name": "Steadfast",
-      "text": "Cannot be pulled or pushed.",
-      "ip": 2,
-      "hook": "steadfast",
-      "value": true
-    },
-    "iron_will": {
-      "name": "Iron Will",
-      "text": "Debuffs on you have a {pct} chance to last 1 turn less (adds to Resilience, up to {cap}).",
-      "ip": 2,
-      "hook": "debuffShorten",
-      "value": {
-        "chance": 0.15,
-        "cap": 0.5
-      }
-    },
-    "giantslayer": {
-      "name": "Giantslayer",
-      "text": "Your skills deal {pct} more damage to elites and bosses.",
-      "ip": 2,
-      "hook": "tierDamageMult",
-      "value": 1.08
-    },
-    "wardens_oath": {
-      "name": "Warden's Oath",
-      "text": "Allies right beside you take {pct} less damage.",
-      "ip": 3,
-      "hook": "adjacentGuard",
-      "value": 0.05
-    },
-    "ember_heart": {
-      "name": "Ember Heart",
-      "text": "While above {above} HP, regain {mp} extra MP at the start of each turn.",
-      "ip": 2,
-      "hook": "turnMp",
-      "value": {
-        "mp": 1,
-        "above": 0.5
-      }
-    },
-    "thrifty": {
-      "name": "Thrifty",
-      "text": "Your first skill each battle costs no MP.",
-      "ip": 2,
-      "hook": "firstSkillFree",
-      "value": true
-    },
-    "bloodletter": {
-      "name": "Bloodletter",
-      "text": "Hits on enemies below {below} HP heal you for {ratio} of the damage dealt.",
-      "ip": 2,
-      "hook": "executeLifesteal",
-      "value": {
-        "below": 0.3,
-        "ratio": 0.15
-      }
-    },
     "ember_burn": {
       "name": "Emberbrand",
       "text": "Your hits set the target Burning for {turns} turns (fire damage each turn).",
@@ -1221,32 +1794,28 @@
         "status": "burning",
         "turns": 2,
         "power": 0.15
-      },
-      "legendary": true
+      }
     },
     "oath_intercept": {
       "name": "Oathkeeper's Vow",
       "text": "Once per battle, you take a lethal hit meant for an ally right beside you.",
       "ip": 3,
       "hook": "interceptLethal",
-      "value": true,
-      "legendary": true
+      "value": true
     },
     "windrunner_echo": {
       "name": "Windrunner",
       "text": "Your first attack each battle also hits a random second enemy for {pct} power.",
       "ip": 2.5,
       "hook": "firstAttackEcho",
-      "value": 0.5,
-      "legendary": true
+      "value": 0.5
     },
     "morvane_whisper": {
       "name": "Whisper of Morvane",
       "text": "On a kill, {pct} chance to act again at once (once per turn).",
       "ip": 3,
       "hook": "killExtraTurn",
-      "value": 0.5,
-      "legendary": true
+      "value": 0.5
     },
     "last_ember": {
       "name": "The Last Ember",
@@ -1256,24 +1825,21 @@
       "value": {
         "every": 3,
         "power": 1.25
-      },
-      "legendary": true
+      }
     },
     "last_coin": {
       "name": "The Last Coin",
       "text": "Once per battle, a missed attack is rolled again.",
       "ip": 2,
       "hook": "rerollMiss",
-      "value": true,
-      "legendary": true
+      "value": true
     },
     "ashen_crown": {
       "name": "Ashen Crown",
       "text": "Ignore the first debuff applied to you each battle.",
       "ip": 2,
       "hook": "ignoreFirstDebuff",
-      "value": true,
-      "legendary": true
+      "value": true
     },
     "valdren_mantle": {
       "name": "Mantle of Valdren",
@@ -1284,8 +1850,7 @@
         "start": 0.15,
         "below": 0.3,
         "ratio": 0.15
-      },
-      "legendary": true
+      }
     },
     "pilgrims_stride": {
       "name": "Pilgrim's Stride",
@@ -1296,24 +1861,131 @@
         "turnCost": 0.5,
         "status": "fleet",
         "turns": 3
-      },
-      "legendary": true
+      }
     },
     "forge_heart": {
       "name": "Heart of the Forge",
       "text": "On a critical hit, heal the most wounded ally for {pct} of the damage dealt.",
       "ip": 2.5,
       "hook": "critHealAlly",
-      "value": 0.1,
-      "legendary": true
+      "value": 0.06
+    },
+    "retort": {
+      "name": "Iron Retort",
+      "text": "Enemies who hit you in melee are Slowed for {turns} turns.",
+      "ip": 2.5,
+      "hook": "retortStatus",
+      "value": {
+        "status": "slow",
+        "turns": 2
+      }
+    },
+    "serrated": {
+      "name": "Serrated Edge",
+      "text": "Your critical hits leave the target Wounded and Burning for {turns} turns.",
+      "ip": 3,
+      "hook": "critStatuses",
+      "value": [
+        {
+          "status": "wound",
+          "turns": 2
+        },
+        {
+          "status": "burning",
+          "turns": 2,
+          "power": 0.15
+        }
+      ]
+    },
+    "rhythm": {
+      "name": "Battle Rhythm",
+      "text": "On a kill, gain Haste for {turns} turns and {mpRatio} of your max MP.",
+      "ip": 3,
+      "hook": "killRush",
+      "value": {
+        "status": "haste",
+        "turns": 2,
+        "mpRatio": 0.2
+      }
+    },
+    "laststand": {
+      "name": "Last Stand",
+      "text": "The first time you drop below {below} HP, you are Fortified for {turns} turns and all your debuffs are removed.",
+      "ip": 3,
+      "hook": "lastStand",
+      "value": {
+        "below": 0.3,
+        "status": "fortify",
+        "turns": 2
+      }
+    },
+    "opener": {
+      "name": "Blinding Opener",
+      "text": "Your first damaging skill each battle Blinds up to {max} enemies it hits for {turns} turn.",
+      "ip": 2.5,
+      "hook": "openerStatus",
+      "value": {
+        "status": "blinded",
+        "turns": 1,
+        "max": 3
+      }
+    },
+    "vigil": {
+      "name": "Vigil",
+      "text": "Rest also makes you Blessed for {turns} turns and heals you for {healRatio} of your max HP.",
+      "ip": 2.5,
+      "hook": "restBlessing",
+      "value": {
+        "status": "blessed",
+        "turns": 2,
+        "healRatio": 0.1
+      }
+    },
+    "vengeance": {
+      "name": "Vengeance",
+      "text": "When an ally beside you falls, gain Haste and Fortified for {turns} turns.",
+      "ip": 2.5,
+      "hook": "vengeance",
+      "value": {
+        "statuses": [
+          "haste",
+          "fortify"
+        ],
+        "turns": 2
+      }
+    },
+    "huntersmark": {
+      "name": "Marked Quarry",
+      "text": "Your hits on elites and bosses Jinx them for {turns} turn.",
+      "ip": 2.5,
+      "hook": "tierStatus",
+      "value": {
+        "status": "jinxed",
+        "turns": 1
+      }
     }
   },
   "effectRules": {
-    "ipFromBudget": true,
     "stack": false,
     "endless": true
   },
-  "_loot": "Loot (items.md 3.1-3.4; Ömer kararları: düşen item SAYISI ve nadirlik her zorlukta AYNI (karar 6); boss/hazine düşüşleri otomatik, seçim ekranı yok (karar 8)). perPartyMember: zafer başına beklenen item = değer x aktif takım boyutu (kesir seed'li yuvarlanır). treasure: sandık = treasureBase + treasurePerMember x takım. minRarity: o kaynağın en az bir item'i bu nadirlikte ya da üstünde. eliteShift: elit zarı bu kadar kademe yukarı. rarityByChapter: Common..Legendary yüzdeleri. pity.rareAfter: art arda bu kadar Rare'siz düşüşten sonra garanti Rare+. repeat: aynı düğümün N. kez kazanılışında item/altın çarpanı ve nadirlik tavanı (tekrar oynama, roadmap 2.3 A; bugünkü tek yönlü seferde yalnızca ilk zafer). gold: ilvl başına altın. Torba doluyken sığmayan item'ler Spoils kartında 'geride kalan' olarak bekler; oyuncu kartı kapatmadan yer açıp alabilir, kapatınca kaybolur (Ömer, madde 280).",
+  "_dropRarity": "Düşüş nadirliği (Ömer onayı 2026-10-11): TEK ağırlık tablosu, sefer loot'u, Endless ödül kartları ve tüccar stoğu aynı tabloyu kullanır. weights = Common / Uncommon / Rare / Epic taban ağırlıkları (Legendary yok: yalnızca ortak nadir düşüş zarı, rareDrop). shift = kayma: perIlvl x item seviyesi + elite / boss / treasure eki, en çok max. Kayma kademe i'nin ağırlığını x(1 + kayma x i) yapar (Common sabit): kaymanın tavanında (0,5) bile Common ~%58, Uncommon ~%28, Rare ~%11, Epic ~%3. Taban (item) nadirlikten bağımsız; nadirlik önce zarlanır, sonra taban seçilir.",
+  "dropRarity": {
+    "weights": {
+      "common": 70,
+      "uncommon": 22,
+      "rare": 6.5,
+      "epic": 1.5
+    },
+    "shift": {
+      "perIlvl": 0.012,
+      "elite": 0.15,
+      "boss": 0.3,
+      "treasure": 0.15,
+      "max": 0.5
+    }
+  },
+  "_loot": "Loot (items.md 3.1-3.4; Ömer kararları: düşen item SAYISI ve nadirlik her zorlukta AYNI (karar 6); boss/hazine düşüşleri otomatik, seçim ekranı yok (karar 8)). perPartyMember: zafer başına beklenen item = değer x aktif takım boyutu (kesir seed'li yuvarlanır). treasure: sandık = treasureBase + treasurePerMember x takım. minRarity: o kaynağın en az bir item'i bu nadirlikte ya da üstünde. Nadirlik: dropRarity tablosu (2026-10-11; eski rarityByChapter / eliteShift kalktı). pity.rareAfter: art arda bu kadar Rare'siz düşüşten sonra garanti Rare+. repeat: aynı düğümün N. kez kazanılışında item/altın çarpanı ve nadirlik tavanı (tekrar oynama, roadmap 2.3 A; bugünkü tek yönlü seferde yalnızca ilk zafer). gold: ilvl başına altın. Torba doluyken sığmayan item'ler Spoils kartında 'geride kalan' olarak bekler; oyuncu kartı kapatmadan yer açıp alabilir, kapatınca kaybolur (Ömer, madde 280).",
   "loot": {
     "perPartyMember": {
       "battle": 0.5,
@@ -1332,30 +2004,6 @@
     },
     "treasureBase": 2,
     "treasurePerMember": 0.5,
-    "eliteShift": 1,
-    "rarityByChapter": {
-      "1": [
-        60,
-        32,
-        7,
-        1,
-        0
-      ],
-      "2": [
-        35,
-        40,
-        20,
-        4.5,
-        0
-      ],
-      "3": [
-        15,
-        40,
-        32,
-        11,
-        0
-      ]
-    },
     "pity": {
       "rareAfter": 6
     },
@@ -1397,7 +2045,7 @@
   "uniques": [],
   "sets": [],
   "traits": {},
-  "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, 3 stat + 1 benzersiz etki (effects[].legendary), bütçe Common x2,85 (etki IP'si bütçeden düşer). Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",
+  "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",
   "_rareDrop": "Ortak nadir düşüş (Ömer onayı 2026-10-10, madde 297): her kazanılan savaşta BİR zar (sefer ve Endless; karşılaşmaya bağlı değil). chance = savaş türüne göre taban (normal %1, elit %3, boss %6) + pityPerMiss x düşüşsüz zafer sayısı (+%0,5; düşüşte sıfırlanır; sayaç kayıtta) + Endless'ta perWave x dalga. İsabette split: set parçası %75 (set item'leri YOK: setsEnabled false iken bu dal hiçbir şey vermez, sayaç sıfırlanmaz) / Legendary %25 (chapterLegendaryMult ile; Valdoria x0,5). Havuz: minChapter <= bölüm (Valdoria: Emberbrand, Mantle of Valdren, Pilgrim's Road Boots); Endless'ta legendaryFromWave'den (11) itibaren hepsi. Akıllı loot YOK: tekdüze seçim, sınıf ağırlığı yok, sahip olunan tekrar düşebilir. Endless tüccarı: merchant.fromWave'den itibaren her ziyarette merchant.chance ihtimalle bir nadir mal, fiyat değer x priceMult. Torba dolu: özel koruma yok (normal akış).",
   "rareDrop": {
     "chance": {

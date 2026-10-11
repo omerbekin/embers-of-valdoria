@@ -1,15 +1,17 @@
 // Loot üretimi (saf, seed'li; Phaser/DOM yok). Tasarım: docs/design/progression/items.md 3.1-3.4; Ömer kararları: düşen item sayısı ve
 // nadirlik her zorlukta AYNI (karar 6), boss/hazine düşüşleri otomatik (karar 8), tekrar oynamada azalan ödül (roadmap 2.3 A).
-// Sefer (src/campaign/loot.ts) ve endless aynı fonksiyonu kullanabilir; rastgelelik yalnızca verilen Rng'den.
+// Nadirlik (Ömer onayı 2026-10-11): tek ağırlık tablosu (drop.ts; item seviyesi ve elit / boss / hazine hafif kaydırır), sonra taban item seçilir
+// (taban nadirlikten bağımsız). Sefer (src/campaign/loot.ts) bunu kullanır; rastgelelik yalnızca verilen Rng'den.
 import type { Rng } from '../engine/rng';
+import { rollDropRarity, type DropKind } from './drop';
 import { classWeaponFamilies, ITEMS, RARITY_IDS, SLOT_IDS, instanceIP, itemDef, type Equipment, type ItemDef, type LootKind, type RarityId, type SlotId } from './items';
 
 export interface LootInput {
   rng: Rng;
   kind: LootKind;
-  /** Bölüm (1..3): nadirlik eğrisi. */
+  /** Bölüm (1..3): bilgi (nadirlik artık item seviyesine göre kayar). */
   chapter: number;
-  /** Düğümün item seviyesi: bu seviyeye kadar olan item'ler düşer. */
+  /** Düğümün item seviyesi: bu seviyeye kadar olan taban item'ler düşer; nadirlik tablosunu hafifçe kaydırır. */
   ilvl: number;
   /** Aktif takım (sınıf + takılı item'ler): takım boyutu, "akıllı" yuva ve kullanılabilir silah ailesi için. */
   party: Array<{ class: string; equipment?: Partial<Equipment> }>;
@@ -20,8 +22,10 @@ export interface LootInput {
 }
 
 export interface LootResult {
-  /** Düşen item id'leri (sırayla). */
+  /** Düşen taban item id'leri (sırayla). */
   items: string[];
+  /** Her item'in zarlanan nadirliği (items ile aynı sırada; örnek bu nadirlikle oluşturulur). */
+  rarities: RarityId[];
   gold: number;
   /** Güncel pity sayacı. */
   pity: number;
@@ -35,17 +39,8 @@ function roundChance(rng: Rng, v: number): number {
   return base + (rng.next() < v - base ? 1 : 0);
 }
 
-/** Bölüm eğrisinden nadirlik zarı. */
-function rollRarity(rng: Rng, chapter: number): number {
-  const curve = ITEMS.loot.rarityByChapter[String(chapter)] ?? ITEMS.loot.rarityByChapter['1']!;
-  const total = curve.reduce((a, b) => a + b, 0);
-  let r = rng.next() * total;
-  for (let i = 0; i < curve.length; i++) {
-    r -= curve[i]!;
-    if (r < 0) return i;
-  }
-  return 0;
-}
+/** Loot türü -> nadirlik kayması türü. */
+const dropKind = (k: LootKind): DropKind => (k === 'battle' ? 'normal' : k);
 
 /** Takımdaki en zayıf yuva (boş = 0 IP); eşitlikte seed'li seçim. */
 function weakestSlot(rng: Rng, party: LootInput['party']): SlotId {
@@ -64,24 +59,19 @@ function weakestSlot(rng: Rng, party: LootInput['party']): SlotId {
 }
 
 /**
- * Bir item seç: yuva (+ silahta aile), nadirlik, ilvl <= düğüm ilvl'si. Uygun yoksa önce aile/yuva gevşer, sonra nadirlik bir kademe iner;
- * `floor` (garanti nadirlik) altına inilmez: o kademede ilvl gevşer (en düşük ilvl'li o nadirlikte item).
+ * Taban item seç (Legendary hariç; nadirlikten bağımsız): yuva (+ silahta aile), ilvl <= düğüm ilvl'si. Uygun yoksa önce aile/yuva gevşer,
+ * sonra seviye (en düşük ilvl'li tabanlar).
  */
-function pickItem(rng: Rng, slot: SlotId, family: string | undefined, rarity: number, ilvl: number, floor: number): ItemDef | undefined {
-  const fit = (r: number, useSlot: boolean, capIlvl: boolean) =>
-    ITEMS.items.filter((d) => rIdx(d.rarity) === r && (!useSlot || (d.slot === slot && (slot !== 'weapon' || !family || d.family === family))) && (!capIlvl || d.ilvl <= ilvl));
+function pickBase(rng: Rng, slot: SlotId, family: string | undefined, ilvl: number): ItemDef | undefined {
+  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary');
+  const fit = (useSlot: boolean, capIlvl: boolean) => bases.filter((d) => (!useSlot || (d.slot === slot && (slot !== 'weapon' || !family || d.family === family))) && (!capIlvl || d.ilvl <= ilvl));
   const choose = (pool: ItemDef[]) => pool[rng.int(0, pool.length - 1)];
-  for (let r = rarity; r >= floor; r--) {
-    for (const useSlot of [true, false]) {
-      const pool = fit(r, useSlot, true);
-      if (pool.length) return choose(pool);
-    }
-    if (r === floor && floor > 0) {
-      const pool = fit(r, false, false).sort((a, b) => a.ilvl - b.ilvl);
-      if (pool.length) return choose(pool.filter((d) => d.ilvl === pool[0]!.ilvl));
-    }
+  for (const useSlot of [true, false]) {
+    const pool = fit(useSlot, true);
+    if (pool.length) return choose(pool);
   }
-  return undefined;
+  const all = fit(false, false).sort((a, b) => a.ilvl - b.ilvl);
+  return all.length ? choose(all.filter((d) => d.ilvl === all[0]!.ilvl)) : undefined;
 }
 
 /** Bir zaferin / sandığın loot'u (items.md 3.1-3.4). Aynı Rng durumu + aynı girdi = aynı sonuç. */
@@ -100,16 +90,14 @@ export function rollLoot(o: LootInput): LootResult {
   const cap = rIdx(rep.maxRarity);
   let pity = o.pity ?? 0;
   const items: string[] = [];
+  const rarities: RarityId[] = [];
   for (let i = 0; i < count; i++) {
-    let r = rollRarity(rng, o.chapter);
-    if (o.kind === 'elite') r += L.eliteShift;
+    let r = rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind)));
     let floor = 0;
     if (i === 0 && minR) floor = rIdx(minR);
     if (first && pity >= L.pity.rareAfter) floor = Math.max(floor, rIdx('rare'));
-    // Legendary düşüş tablosuna bağlı değil (madde 296): legendaryChance 0 iken en çok Epic
-    const top = (L.legendaryChance ?? 0) > 0 ? RARITY_IDS.length - 1 : RARITY_IDS.indexOf('epic');
-    r = Math.min(Math.max(r, floor), cap, top);
-    floor = Math.min(floor, r);
+    // Legendary bu tablodan çıkmaz (madde 296/297: yalnızca ortak nadir düşüş zarı): en çok Epic
+    r = Math.min(Math.max(r, floor), cap, rIdx('epic'));
     const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, o.party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
     let family: string | undefined;
     if (slot === 'weapon') {
@@ -117,11 +105,12 @@ export function rollLoot(o: LootInput): LootResult {
       const usable = families.length && rng.next() < L.usableWeaponChance ? families : all;
       family = usable[rng.int(0, usable.length - 1)];
     }
-    const d = pickItem(rng, slot, family, r, o.ilvl, floor);
+    const d = pickBase(rng, slot, family, o.ilvl);
     if (!d) continue;
     items.push(d.id);
-    if (first) pity = rIdx(d.rarity) >= rIdx('rare') ? 0 : pity + 1;
+    rarities.push(RARITY_IDS[r]!);
+    if (first) pity = r >= rIdx('rare') ? 0 : pity + 1;
   }
   const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold);
-  return { items, gold, pity };
+  return { items, rarities, gold, pity };
 }
