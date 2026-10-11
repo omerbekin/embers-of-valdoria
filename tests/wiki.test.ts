@@ -135,6 +135,22 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(wiki.gettingStarted.flatMap((a) => a.blocks.flatMap(blockText)).join(' ')).toContain(`${content.formulas.attributes.mpBase} base MP`);
   });
 
+  it('son sistemler Codex\'te yazılıdır: Endless, nadir düşüş + kötü şans koruması, nadirlik zarı, Battle speed, yenilenme, item kaynaklı durumlar', () => {
+    const text = (id: string) => [...wiki.mechanics, ...wiki.gettingStarted].find((a) => a.id === id)!.blocks.flatMap(blockText).join(' ');
+    const endless = text('endless');
+    for (const w of ['Revive card', 'corpse', 'Odo', 'buy back', 'Reroll', 'Relics', 'same share of their MP', 'Cooldowns']) expect(endless, w).toContain(w);
+    const items = text('items');
+    expect(items).toContain('Rare drops');
+    expect(items).toContain('bad-luck protection');
+    expect(items).toContain('in its top');
+    expect(items).toContain('+15% crit chance');
+    expect(items).not.toMatch(/Might/);
+    expect(text('turns')).toContain('Battle speed');
+    expect(text('mana')).toContain('"+2 MP"');
+    const st = (id: string) => wiki.statuses.find((s) => s.id === id)!;
+    for (const id of ['burning', 'fleet']) if (content.statuses[id]) expect(st(id).usedByItems.length, id).toBeGreaterThan(0);
+  });
+
   it('bahis (gamble) skilleri Mechanics içinde yazılıdır', () => {
     const gamble = wiki.mechanics.find((a) => a.id === 'gamble')!;
     const text = gamble.blocks.flatMap(blockText).join('\n');

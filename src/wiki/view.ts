@@ -25,6 +25,7 @@ import { assetSections, setNavigator, skillArt, unitArt } from './assets/section
 import type { AssetSection } from './assets/sections';
 import { wikiFiles } from './files';
 import { familyGlyph, slotGlyph } from './slot-glyphs';
+import { itemDefIcon } from '../ui/item-icon-dom';
 import { applyVariantFiles } from '../game/sprite-variants';
 import './wiki.css';
 
@@ -477,7 +478,10 @@ export class WikiPanel {
           heading('Rarity'),
           h('div', { class: 'cx-rarities' }, ...a.gear.rarities.map((r) => h('div', { class: 'cx-rarity', style: { '--c': r.color } }, h('span', { class: 'cx-slotbox' }, slotGlyph('trinket', r.color)), h('span', { text: r.name })))))
       : null;
-    return h('div', {}, articleHead(pic(a.icon, a.accent, 'cx-ico head', undefined, true), a.title, a.group), gear, ...this.blocks(a.blocks), shapes);
+    const legend = a.legendaries?.length
+      ? h('div', { class: 'cx-slots cx-legend' }, ...a.legendaries.map((d) => h('div', { class: 'cx-rarity cx-legend-item', style: { '--c': d.color }, title: d.name }, h('span', { class: 'cx-slotbox' }, itemDefIcon(d, d.slot, d.color, 'cx-slot-svg')), h('span', { text: d.name }))))
+      : null;
+    return h('div', {}, articleHead(pic(a.icon, a.accent, 'cx-ico head', undefined, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
   }
 
   private skillBody(s: WikiSkill, withName: boolean): HTMLElement {
@@ -536,7 +540,10 @@ export class WikiPanel {
       articleHead(statusPic(s.id, s.icon, s.color, 'cx-ico head', true), s.name, h('span', { class: `cx-kind ${s.type}`, text: s.type === 'buff' ? 'Buff' : 'Debuff' }), ' · Status'),
       h('p', { text: s.text }),
       heading('Applied by'),
-      s.usedBySkills.length ? h('div', { class: 'cx-refs' }, ...s.usedBySkills.map((r) => this.skillRef(r))) : h('p', { class: 'cx-dim', text: 'No skill applies it directly (it comes from a passive or a special rule).' }));
+      s.usedBySkills.length
+        ? h('div', { class: 'cx-refs' }, ...s.usedBySkills.map((r) => this.skillRef(r)))
+        : s.usedByItems.length ? null : h('p', { class: 'cx-dim', text: 'No skill applies it directly (it comes from a passive or a special rule).' }),
+      s.usedByItems.length ? h('ul', { class: 'cx-ul' }, ...s.usedByItems.map((t) => h('li', { text: t }))) : null);
   }
 
   private groundArticle(g: WikiGround): HTMLElement {

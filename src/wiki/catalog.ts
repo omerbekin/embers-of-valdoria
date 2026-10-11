@@ -13,6 +13,9 @@ import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, affixDef } from '../progression/items';
 import { dropChances } from '../progression/drop';
+import { RARE } from '../progression/rare';
+import endlessJson from '../../data/endless.json';
+import { BATTLE_SPEEDS } from '../ui/battle-speed';
 import layout from '../../data/battle-layout.json';
 import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
@@ -50,6 +53,8 @@ export interface WikiArticle {
   shapes?: Array<{ label: string; shape: MiniShape }>;
   /** Items and gear makalesi: yuvalar (Codex yuva siluetleri) ve nadirlik renkleri (data/items.json). */
   gear?: { slots: Array<{ id: string; name: string }>; rarities: Array<{ id: string; name: string; color: string }>; families?: Array<{ id: string; name: string }> };
+  /** Legendary items makalesi: boyalı ikon ızgarası (assets/items/<id>.webp; Ömer 2026-10-11). */
+  legendaries?: Array<{ id: string; name: string; slot: string; color: string }>;
   search: string;
 }
 
@@ -149,6 +154,8 @@ export interface WikiStatus {
   usedBy: string[];
   /** Bu durumu uygulayan skill'ler (ikon + sahibi; skill tarafındaki `statuses` ile aynı kural: skillStatusIds). */
   usedBySkills: WikiSkillRef[];
+  /** Bu durumu uygulayan item'ler (Legendary etkileri; ör. Burning, Fleet). */
+  usedByItems: string[];
   search: string;
 }
 
@@ -383,6 +390,7 @@ export function buildGettingStarted(): WikiArticle[] {
       p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Slow).`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
+      p(turnTimingText()),
     ]),
     article('formation', 'Basics', 'Formation and rows', 'team', [
       p(`Each side stands on a ${rows} x ${lanes} grid: ${rows} rows deep and ${lanes} lanes wide (${rows * lanes} cells). A normal team of ${teamSize()} leaves cells empty; a side of ${rows * lanes} fills the whole grid. Empty cells matter: a unit can step onto one with the Move action (see Actions in the Mechanics section).`),
@@ -393,6 +401,7 @@ export function buildGettingStarted(): WikiArticle[] {
     ]),
     article('mana', 'Basics', 'MP and cooldowns', statIconName('mp'), [
       p(`Skills cost MP. Every unit has ${a.mpBase} base MP (the same for all classes) plus ${a.mpPerInt} per point of Intelligence. At the start of its own turn, every unit regains MP equal to Intelligence x ${num(a.mpRegenPerInt)} (rounded; 0 Intelligence regains nothing) and HP equal to Strength x ${num(a.hpRegenPerStr)}. The Rest action restores extra MP on demand.`),
+      p('This regeneration shows on the bars, not as floating numbers: the HP or MP bar flashes briefly and a small faint "+1" or "+2 MP" appears next to it. The combat log lists it on its own line.'),
       p('Strong skills also have a cooldown: after you use one, you cannot use it again for that many of your own turns. The skill button shows the turns left.'),
       p(`Some powerful skills (usually the fourth one) start the battle on cooldown: they are not ready until the unit has taken up to ${f.cooldown.maxInitial} turns. The skill description says "Opens on cooldown" for these. Summoned units do not have this delay.`),
     ]),
@@ -400,7 +409,7 @@ export function buildGettingStarted(): WikiArticle[] {
       list(
         'Hover a unit to see its stats; hover a skill to see its description and cost.',
         'Keys 1-4 pick the acting unit\'s skills.',
-        'The settings button (gear) controls the volume; this wiki (book) pauses the battle while it is open. On a phone, the corner-arrows button switches to full screen (on iPhone use Add to Home Screen); held upright, the game turns sideways to fill the screen.',
+        'Menu (top right, or Esc) opens the Codex and Settings; the battle pauses while the Codex is open. On a phone, the corner-arrows button switches to full screen (on iPhone use Add to Home Screen); held upright, the game turns sideways to fill the screen.',
       ),
     ]),
   ];
@@ -450,7 +459,7 @@ function betLines(): Array<{ skill: WikiSkill; text: string }> {
 }
 
 function skillsWith(pred: (e: SkillDef['effects'][number]) => boolean): string[] {
-  return allSkills().filter((s) => s.effects.some(pred)).map((s) => s.name);
+  return [...new Set(allSkills().filter((s) => s.effects.some(pred)).map((s) => s.name))];
 }
 
 /**
@@ -492,8 +501,17 @@ function multiplayerArticle(): WikiArticle {
 
 /** Debuff'ların yığılmaması (Ömer 2026-10-10): kural statuses.json > stack'ten; yığılan istisnalar (Omen) adıyla sayılır. */
 function debuffStackingText(): string {
-  const stacking = Object.values(content.statuses).filter((d) => d.type === 'debuff' && statusStackMode(d) === 'stack').map((d) => d.name);
-  return `The same debuff never stacks: a unit carries at most one of each. Applying it again sets its duration to the longer of what is left and the new duration, and keeps only the strongest one (for damage over time, the bigger amount).${stacking.length ? ` Exception: ${stacking.join(', ')} stacks on purpose.` : ''}`;
+  const debuffs = Object.values(content.statuses).filter((d) => d.type === 'debuff');
+  const stacking = debuffs.filter((d) => statusStackMode(d) === 'stack').map((d) => d.name);
+  const replacing = debuffs.filter((d) => statusStackMode(d) === 'replace').map((d) => d.name);
+  return `The same debuff never stacks: a unit carries at most one of each. Applying it again sets its duration to the longer of what is left and the new duration, and keeps only the strongest one (for damage over time, the bigger amount).${stacking.length ? ` Exception: ${stacking.join(', ')} stacks on purpose (see Curses).` : ''}${replacing.length ? ` ${replacing.join(', ')} is simply replaced by the new one.` : ''}`;
+}
+
+/** Turlar arası görsel bekleme ve Battle speed ayarı (battle-layout.json > animation.turnWait, src/ui/battle-speed.ts). */
+function turnTimingText(): string {
+  const w = layout.animation.turnWait;
+  const lo = BATTLE_SPEEDS[0], hi = BATTLE_SPEEDS[BATTLE_SPEEDS.length - 1];
+  return `Between turns the game shows time passing: every unit's speed bar fills at its own pace until the next one is full (a unit with ${w.refSpd} SPD fills from empty in ${num(w.fullMs / 1000)} seconds; one wait never takes longer than ${num(w.maxMs / 1000)} seconds). The unit whose turn it is glows and steps forward. Tap to skip the wait. Time never passes while you are choosing a move. Settings > Gameplay > Battle speed (${lo}x to ${hi}x) makes these waits shorter or longer; it changes only how fast the battle is shown, never the turn order.`;
 }
 
 /**
@@ -511,7 +529,8 @@ function curseArticles(): WikiArticle[] {
   const detonators = allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'detonate' }> => e.type === 'detonate' && e.status === omenId).map((e) => `${s.name} (x${num(e.mult)})`));
   const noTransfer = allSkills().filter((s) => s.effects.some((e) => e.type === 'detonate' && e.status === omenId && e.noTransferOnKill)).map((s) => s.name);
   const critDoomers = allSkills().filter((s) => s.effects.some((e) => e.type === 'omen' && (e.status ?? 'omen') === omenId && e.critDoomOnCrit)).map((s) => s.name);
-  const dots = Object.values(content.statuses).filter((d) => d.dot);
+  // Yalnızca skill'lerin uyguladığı lanet DoT'ları (Withering); item kaynaklı Burning bu makaleye girmez
+  const dots = Object.entries(content.statuses).filter(([id, d]) => d.dot && allSkills().some((s) => s.effects.some((e) => e.type === 'dot' && e.status === id))).map(([, d]) => d);
   const jinx = Object.values(content.statuses).filter((d) => d.endsOnOwnAttack);
   const passives = Object.values(content.classes).filter((c) => c.passive?.effect.type === 'omenTransfer');
   const cursers = allSkills().filter((s) => s.effects.some((e) => e.type === 'omen')).map((s) => s.name);
@@ -714,6 +733,7 @@ export function buildMechanics(): WikiArticle[] {
       p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself). Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
+      p(`A mana burn that is part of an attack only works if the attack hits: on a miss or a dodge no MP is burned or stolen${allSkills().some((s) => s.name === 'Mana Steal') ? ' (Mana Steal gains nothing)' : ''}.`),
     ]),
     silenceArticle(),
     multiplayerArticle(),
@@ -728,7 +748,7 @@ export function buildMechanics(): WikiArticle[] {
         list(
           'Roads: a solid line is the only way on; a dashed line is a branching route. At a choice point (gold ring) you pick one road and the others close for this journey. Roads meet again further on.',
           `Fog: you see the next stop in full (name, type, enemies) and the stop after it by type and name only; anything further is under fog. The final castle is always visible as your goal.`,
-          'Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop) and Town (rest and recruits).',
+          `Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop), Town (rest and recruits), Rest (a free camp: living heroes regain ${Math.round(campaignConfig.rest.heal * 100)}% of their maximum HP; a fallen hero can be revived there for gold: it rises with ${Math.round(campaignConfig.rest.reviveRatio * 100)}% HP, and the price is ${campaignConfig.rest.reviveCost.base} gold plus ${campaignConfig.rest.reviveCost.perIlvl} per item level of the region) and Merchant (Odo sells gear for the region's item level, buys your spare items and lets you buy them back).`,
           'Your party: you start alone, a companion joins in the forest, and at the first village the escort stays behind and you form a new company of three from every class. The first hero you pick leads; the leader walks in front on the map. Another hero joins when you leave the city.',
           `Health carries over between battles. After a victory survivors regain ${Math.round(r.victoryHeal * 100)}% of their maximum HP and fallen heroes get up with ${Math.round(r.reviveRatio * 100)}%; after a boss everyone is fully healed; towns heal everyone. Mana starts full in every battle.`,
           `Saving: there are ${r.slots} campaign slots, one journey each, and every journey keeps its own saves. Normal saves after every victory and whenever you press Save on the map (up to ${r.maxSaves.normal} saves per journey; the oldest is replaced). Ironman keeps a single save, written only after a victory. If you are defeated, you go back to your last save.`,
@@ -738,6 +758,7 @@ export function buildMechanics(): WikiArticle[] {
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
+      endlessArticle(),
     );
   }
   out.push(...bossArticles());
@@ -758,8 +779,9 @@ function legendaryArticle(): WikiArticle {
     return cls ? cls.map((c) => content.classes[c]?.name ?? c).join(', ') : 'everyone';
   };
   const slotName = (id: string) => itemsJson.slots.find((x) => x.id === id)?.name ?? id;
-  return article('legendary-items', 'Campaign', 'Legendary items', 'burst', [
-    p('Legendaries are unique, hand-made items: four fixed affixes (C, C, B, A; their values still roll) and one effect no other item has. A hero can wear only one Legendary at a time. They come only from rare drops.'),
+  const legColor = itemsJson.rarities.find((r) => r.id === 'legendary')?.color ?? GOLD;
+  const art = article('legendary-items', 'Campaign', 'Legendary items', 'burst', [
+    p('Legendaries are unique, hand-made items: four fixed affixes (C, C, B, A; their values still roll) and one effect no other item has. A hero can wear only one Legendary at a time. They never come from normal loot: only from the rare-drop roll after a won battle (see Items and gear) and, in Endless, sometimes from Odo\'s cart. Their effects work the same in the campaign and in Endless, and the same effect never adds up from two items.'),
     list(
       ...leg.map((d) => {
         const aff = ((d as { affixes?: string[] }).affixes ?? []).map((id) => `${affixDef(id)?.tier ?? ''} ${affixDef(id)?.name ?? id}`).join(', ');
@@ -767,6 +789,7 @@ function legendaryArticle(): WikiArticle {
       }),
     ),
   ]);
+  return { ...art, legendaries: leg.map((d) => ({ id: d.id, name: d.name, slot: d.slot, color: legColor })) };
 }
 
 /** Affix havuzları (Ömer onayı 2026-10-11; veriden): kademe, ad, item seviyesi 10'daki orta değer, yuva sınırı. */
@@ -785,11 +808,51 @@ function affixArticle(): WikiArticle {
     p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
     list(
       ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
-      'Values grow with item level only (the table shows item level 10). Penetration and crit affixes appear only on weapons and gloves, auras only on armor and trinkets, evasion only on boots and gloves.',
+      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Penetration and crit affixes appear only on weapons and gloves, auras only on armor and trinkets, evasion only on boots and gloves.',
       'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
     ),
     { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },
   ]);
+}
+
+/** Endless makalesi (data/endless.json; sürekli akış, ödül kartları, ceset + Revive kartı, tüccar, torba). Sayılar veriden. */
+function endlessArticle(): WikiArticle {
+  const E = endlessJson;
+  const c = E.carry;
+  const counts = E.enemyCount.map((x, i) => (i === 0 ? `${x.count} enemies` : `${x.count} from wave ${x.fromWave}`)).join(', ');
+  const sp = E.special;
+  const relics = E.relics.list.map((r) => r.name).join(', ');
+  return article('endless', 'Endless', 'Endless', 'skull', [
+    p(`Endless is a run of waves with a party of ${E.partySize}: fight wave after wave until your party falls. Your score is the wave you reached; the best ${E.highScores} runs are kept. A normal wave has ${counts}; every ${E.eliteEvery}th wave is an elite and every ${E.bossEvery}th a boss, and enemies grow a little stronger with every wave.`),
+    list(
+      `One long fight: what you have carries into the next wave. After a victory every survivor regains ${pct(c.victoryHeal)} of their maximum HP and the same share of their MP${c.bossVictoryHeal >= 1 ? '; a boss victory fully heals the survivors' : ''}. Buffs, Rage, shields, summons and positions carry over; every debuff is removed. Cooldowns ${c.cooldowns === 'carry' ? 'keep running from where they were (they do not reset, and skills do not start on cooldown again)' : 'reset between waves'}. Once-per-battle effects (such as Lucky Escape) are ready again.`,
+      `A fallen hero stays on the field as a corpse in the next wave: a revive skill can bring it back as usual (not if its corpse was consumed). Between waves a Revive card lets it rise with ${pct(E.rewards.reviveRatio)} of its HP and MP; healing cards and the boss heal never raise the dead.`,
+      `Rewards: after each wave pick one of three cards: an item (the card says who it suits), gold (${E.rewards.goldBase} + ${E.rewards.goldPerWave} per wave cleared) or healing (${pct(E.rewards.healRatio)} HP to the living). After an elite you get ${sp.elite.itemCards} item cards of a higher item level, ${num(sp.elite.goldMult)}x gold and ${pct(sp.elite.healRatio)} healing; after a boss ${sp.boss.itemCards} item cards, ${num(sp.boss.goldMult)}x gold and a Hero's Feast (full HP and +${pct(sp.boss.feastHpMult - 1)} max HP for ${sp.boss.feastWaves} waves). Item rarity uses the same drop table as the campaign.`,
+      `Relics: after every boss, choose one of ${E.relics.offer} relics; it helps the whole party for the rest of the run (${relics}).`,
+      `Merchant: every ${E.shop.every} waves Odo the Peddler sets up his cart after the reward. He offers ${E.shop.size} wares for your party, buys items from your bag for half their value and lets you buy back the last ${E.shop.buybackSize} items you sold on this visit at the same price (the list is gone once you leave). Reroll wares costs ${E.shop.rerollCost} gold and brings a new set.`,
+      `Bag: items you win or buy go to a bag of ${E.bagSize}; equip them between waves in Gear. With a full bag you cannot take an item card or buy until you discard or sell something; a rare drop waits on its card until you make room, or is left behind.`,
+    ),
+  ], '#c9a0ff');
+}
+
+/** Nadirliğe göre zar tabanı (items.json > affixRules.rollFloorByRarity): "Common anywhere in the range, Uncommon in its top 75%..." */
+function rollFloorText(): string {
+  const floors = (itemsJson.affixRules as { rollFloorByRarity?: Record<string, number> }).rollFloorByRarity ?? {};
+  return itemsJson.rarities
+    .map((r) => {
+      const fl = floors[r.id] ?? 0;
+      return fl > 0 ? `${r.name} in its top ${num(Math.round((1 - fl) * 1000) / 10)}%` : `${r.name} anywhere in the range`;
+    })
+    .join(', ');
+}
+
+/** Ortak nadir düşüş zarı (items.json > rareDrop; madde 297): taban şans, kötü şans koruması, Endless dalga eki, Legendary payı. */
+function rareDropText(): string {
+  const c = RARE.chance;
+  const leg = RARE.split.legendary;
+  const ch1 = RARE.chapterLegendaryMult['1'] ?? 1;
+  const e = RARE.endless;
+  return `Rare drops: every won battle, in the campaign and in Endless, rolls once more for a rare find: ${pct(c.battle, 1)} after a normal fight, ${pct(c.elite, 1)} after an elite and ${pct(c.boss, 1)} after a boss. Every win without one adds ${pct(RARE.pityPerMiss, 1)} (bad-luck protection; it resets when a rare item drops), and in Endless every wave adds ${pct(e.perWave, 1)}. For now ${pct(leg)} of rare finds are Legendaries${ch1 !== 1 ? ` (${pct(leg * ch1, 1)} in ${campaignMap.title.charAt(0)}${campaignMap.title.slice(1).toLowerCase()})` : ''}; the rest is kept for set items, which are not in the game yet. In Endless, Legendaries can drop from wave ${e.legendaryFromWave}, and from then on Odo has a ${pct(e.merchant.chance)} chance per visit to offer one at ${num(e.merchant.priceMult)}x its value.`;
 }
 
 function itemsArticleBody(): WikiArticle {
@@ -799,14 +862,15 @@ function itemsArticleBody(): WikiArticle {
     p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage. Quick Battle and multiplayer do not use items.`),
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
-      `Rarity never makes an affix stronger: values grow only with item level. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
-      `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good.`,
+      `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good. The range itself grows only with item level, but rarity decides how high the roll lands: ${rollFloorText()}. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
+      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD; anything above that is lost.`,
       (() => {
         const lo = dropChances(0);
         const hi = dropChances(999, 'boss');
         const f = (c: Record<string, number>) => `${Math.round(c.common!)}% Common, ${Math.round(c.uncommon!)}% Uncommon, ${Math.round(c.rare!)}% Rare, ${Math.round(c.epic! * 10) / 10}% Epic`;
-        return `Drop rarity uses one table for campaign loot and Endless rewards and wares: at the start about ${f(lo)}. Higher item levels and elite or boss fights shift it slightly, never past about ${f(hi)}. Legendaries come only from rare drops.`;
+        return `Drop rarity uses one table for campaign loot and Endless rewards and wares: at the start about ${f(lo)}. Higher item levels and elite or boss fights shift it slightly, never past about ${f(hi)}. Legendaries are never in this table: they come only from rare drops.`;
       })(),
+      rareDropText(),
       `Weapons come in families and each class uses only its own: ${fams}. Every other slot fits everyone.`,
       `Loot: a victory drops about ${L.perPartyMember.battle} items per hero in the fight (elites ${L.perPartyMember.elite}, bosses ${L.perPartyMember.boss}), chests at least one item; their rarity comes from the drop table only. Drops are the same on every difficulty. Winning the same battle again gives less (${L.repeat.map((x) => `${Math.round(x.items * 100)}%`).join(' / ')}).`,
       `The bag holds ${itemsJson.bag} items. When it is full, loot that does not fit waits on the Spoils card: discard something to make room and take it, or it is left behind when you continue. You can discard items in the Gear screen too (Rare and better ask first). Open Gear from the Party window or in a town; Equip best picks the strongest usable items for you.`,
@@ -873,11 +937,23 @@ function difficultyText(): string {
 
 // ---------------------------------------------------------------- durumlar, zeminler, elementler
 
+/** Durumu uygulayan item etkileri (items.json > effects[].value.status ya da dizi) -> o etkiyi taşıyan item'lerin adları ("Emberbrand (Legendary)"). */
+export function statusItemSources(statusId: string): string[] {
+  const effects = itemsJson.effects as Record<string, { name: string; value?: unknown }>;
+  const hits = Object.entries(effects).filter(([, e]) => {
+    const vals = Array.isArray(e.value) ? e.value : [e.value];
+    return vals.some((v) => !!v && typeof v === 'object' && (v as { status?: string }).status === statusId);
+  }).map(([id]) => id);
+  const items = (itemsJson.items as Array<{ name: string; rarity: string; effect?: string }>).filter((d) => d.effect && hits.includes(d.effect));
+  return items.map((d) => `${d.name} (${cap(d.rarity)} item)`);
+}
+
 export function buildWikiStatuses(): WikiStatus[] {
   const skills = allSkills();
   return buildStatuses().map((s: StatusEntry) => {
     const usedBySkills = skills.filter((k) => skillStatusIds(k).includes(s.id)).map(skillRefOf);
-    return { id: s.id, name: s.name, type: s.type, icon: s.icon, color: s.color, text: s.text, usedBy: s.usedBy.map((u) => u.name), usedBySkills, search: searchText(s.name, s.type, s.text, ...s.usedBy.map((u) => u.name), ...usedBySkills.map((u) => u.name)) };
+    const usedByItems = statusItemSources(s.id);
+    return { id: s.id, name: s.name, type: s.type, icon: s.icon, color: s.color, text: s.text, usedBy: s.usedBy.map((u) => u.name), usedBySkills, usedByItems, search: searchText(s.name, s.type, s.text, ...s.usedBy.map((u) => u.name), ...usedBySkills.map((u) => u.name), ...usedByItems) };
   });
 }
 

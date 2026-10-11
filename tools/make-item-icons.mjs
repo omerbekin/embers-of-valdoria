@@ -13,7 +13,7 @@
 //  - TEK ITEM DEĞİŞTİRME: assets/source/item-icons/overrides/<item-id>.(png|webp) varsa sayfadaki hücrenin yerine o kullanılır
 //    (tek nesneli görsel; gerçek saydamlık ya da sahte damalı zemin, aynı temizlik uygulanır). Örn. yeni bir Archer's Bracer çizimi.
 //
-// Yeniden üretmek için: node tools/make-item-icons.mjs   (isteğe bağlı: --debug = hücre başına kaldırılan adacık / kırıntı raporu)
+// Yeniden üretmek için: node tools/make-item-icons.mjs   (isteğe bağlı: --only=legendary yalnızca o sayfalar; --debug = hücre başına kaldırılan adacık / kırıntı raporu)
 import { existsSync, mkdirSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
@@ -37,6 +37,20 @@ const PACKS = {
   pack6: ['turnshoes', 'soft_boots', 'hobnailed_boots', 'riding_boots', 'ranger_boots', 'swift_sabatons', null, null],
   pack7: ['copper_ring', 'rabbits_foot', 'wolf_tooth', 'pilgrims_token', 'saints_medal', 'ashen_locket', null, null],
 };
+/**
+ * Legendary item'lar (Ömer 2026-10-11): assets/source/legendary-icons/, her sayfa 1536x1024, 3x2 hücre (512), satır satır.
+ * sheet-1/2'nin kurdeleli hücreleri (null) yerine sheet-4-redo (gerçek saydam) kullanılır; sheet-3 damalı zemin gömülü (sahte saydamlık:
+ * kenardan flood-fill temizliği).
+ */
+const LEG = 'assets/source/legendary-icons';
+const GRIDS = [
+  { label: 'legendary sheet-1', file: join(LEG, 'sheet-1.png'), ids: [null, 'mantle_of_valdren', null, 'windrunner_longbow', null, null] },
+  { label: 'legendary sheet-2', file: join(LEG, 'sheet-2.png'), ids: [null, 'crown_of_the_ashen_king', 'pilgrims_road_boots', 'heart_of_the_forge', 'iron_retort', null] },
+  { label: 'legendary sheet-3', file: join(LEG, 'sheet-3.png'), bgMin: 208, ids: ['drummers_gauntlets', 'helm_of_the_last_stand', 'flashpowder_locket', 'watchmans_boots', 'avengers_maul', 'bones_of_the_quarry'] },
+  { label: 'legendary sheet-4-redo', file: join(LEG, 'sheet-4-redo.png'), ids: ['emberbrand', 'oathkeepers_bulwark', 'whisper_of_morvane', 'staff_of_the_last_ember', 'gamblers_last_coin', 'serrated_edge'] },
+];
+/** --only=<etiket öneki>: yalnızca o işler (ör. --only=legendary); verilmezse hepsi. */
+const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7);
 /** Kaynak dosya adı (uzantı). */
 const SRC_FILE = { pack6: 'pack6.webp', pack7: 'pack7.webp' };
 /** Tek item değiştirme dosyaları: item id -> dosya yolu. */
@@ -46,9 +60,11 @@ const OVERRIDES = Object.fromEntries(
 );
 
 /** Kenardan yayılan zemin: açık ve nötr (damalı karelerin iki tonu ~233-255). */
-const isBg = (r, g, b) => Math.min(r, g, b) >= 222 && Math.max(r, g, b) - Math.min(r, g, b) <= 10;
+// bgMin: koyu dama tonunun alt sınırı (legendary sheet-3'ün koyu karesi ~212-226: işinde 208)
+let bgMin = 222;
+const isBg = (r, g, b) => Math.min(r, g, b) >= bgMin && Math.max(r, g, b) - Math.min(r, g, b) <= 10;
 /** Kapalı adacık adayı: daha sıkı (tam nötr). */
-const isStrictBg = (r, g, b) => Math.min(r, g, b) >= 226 && Math.max(r, g, b) - Math.min(r, g, b) <= 4;
+const isStrictBg = (r, g, b) => Math.min(r, g, b) >= bgMin + 4 && Math.max(r, g, b) - Math.min(r, g, b) <= 4;
 
 const N8 = [-1, 0, 1, 0, 0, -1, 0, 1, -1, -1, 1, -1, -1, 1, 1, 1];
 
@@ -292,11 +308,14 @@ async function processPack(file, ids, cols = 4, rows = 2) {
 mkdirSync(OUT, { recursive: true });
 const jobs = [
   ...Object.entries(PACKS).map(([pack, ids]) => ({ label: pack, file: join(SRC, SRC_FILE[pack] ?? `${pack}.png`), ids: ids.map((id) => (id && OVERRIDES[id] ? null : id)), cols: 4, rows: 2 })),
+  ...GRIDS.map((g) => ({ label: g.label, file: g.file, bgMin: g.bgMin, ids: g.ids.map((id) => (id && OVERRIDES[id] ? null : id)), cols: 3, rows: 2 })),
   ...Object.entries(OVERRIDES).map(([id, file]) => ({ label: `override ${id}`, file, ids: [id], cols: 1, rows: 1 })),
 ];
-for (const id of Object.keys(OVERRIDES)) if (!Object.values(PACKS).flat().includes(id)) console.warn(`uyarı: override ${id} hiçbir pakette yok (yeni item ise items.json'da olmalı)`);
+for (const id of Object.keys(OVERRIDES)) if (![...Object.values(PACKS).flat(), ...GRIDS.flatMap((g) => g.ids)].includes(id)) console.warn(`uyarı: override ${id} hiçbir pakette yok (yeni item ise items.json'da olmalı)`);
 for (const job of jobs) {
   if (!job.ids.some(Boolean)) continue;
+  if (ONLY && !job.label.startsWith(ONLY)) continue;
+  bgMin = job.bgMin ?? 222;
   const { results, report } = await processPack(job.file, job.ids, job.cols, job.rows);
   const pack = job.label;
   if (DEBUG && report.length) console.log(`${pack}:\n${report.join('\n')}`);

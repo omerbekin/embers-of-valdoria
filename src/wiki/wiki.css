@@ -1069,6 +1069,28 @@
   height: 70%;
 }
 
+/* Legendary items makalesi: boyalı ikon ızgarası (ad iki satıra sarar, renk filtresi ikona değil yalnız yazıya) */
+.cx-legend {
+  margin-bottom: max(12px, calc(18 * var(--u)));
+}
+
+.cx-legend-item {
+  filter: none;
+  max-width: max(80px, calc(118 * var(--u)));
+  text-align: center;
+  line-height: 1.25;
+}
+
+.cx-legend-item > span:last-child {
+  filter: brightness(1.35);
+}
+
+.cx-legend-item .cx-slot-svg {
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
 /* Piksel art item ikonları (src/game/item-icons.ts) */
 .cx-px {
   width: 82%;
