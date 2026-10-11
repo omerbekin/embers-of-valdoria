@@ -136,8 +136,12 @@ export class GameMenu {
   sync(): void {
     const ctx = this.hooks.context();
     const has = !!menuItems(ctx, this.hooks.mapMenu?.());
-    this.toggle.hidden = !has;
-    if (has) placeMenuToggle(this.root, this.toggle);
+    // 250 ms'de bir çalışır: yalnızca değişince DOM'a yazılır ve stil ölçülür (her seferinde hidden yazmak + getComputedStyle boşta
+    // sürekli stil hesabı demekti; Ömer 2026-10-11 performans denetimi)
+    if (this.toggle.hidden !== !has) {
+      this.toggle.hidden = !has;
+      if (has) placeMenuToggle(this.root, this.toggle);
+    }
     const sceneChanged = this.lastCtx !== null && sceneOf(this.lastCtx) !== sceneOf(ctx);
     this.lastCtx = ctx;
     if (this.open && (!has || sceneChanged)) this.setOpen(false);

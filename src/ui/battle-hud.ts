@@ -626,20 +626,17 @@ export class BattleHud {
     for (const side of ['party', 'enemy'] as const) {
       const el = this.cards[side];
       const card = this.hover[side] ?? this.pins[side];
+      // yalnızca değişen öznitelik / içerik yazılır (kartlar birkaç karede bir yenilenir; kapalı kart boşta her seferinde DOM'a yazılıyordu)
       if (!card || this.hidden) {
-        el.classList.remove('on', 'pin');
-        el.dataset['uid'] = '';
+        if (el.classList.contains('on') || el.classList.contains('pin')) el.classList.remove('on', 'pin');
+        if (el.dataset['uid']) el.dataset['uid'] = '';
         continue;
       }
       const pinned = this.pins[side]?.uid === card.uid;
-      const html = this.cardHtml(card, pinned);
-      if (el.dataset['html'] !== html) {
-        el.innerHTML = html;
-        el.dataset['html'] = html;
-      }
-      el.dataset['uid'] = card.uid;
-      el.classList.add('on');
-      el.classList.toggle('pin', pinned);
+      this.put(el, this.cardHtml(card, pinned));
+      if (el.dataset['uid'] !== card.uid) el.dataset['uid'] = card.uid;
+      if (!el.classList.contains('on')) el.classList.add('on');
+      if (el.classList.contains('pin') !== pinned) el.classList.toggle('pin', pinned);
     }
   }
 

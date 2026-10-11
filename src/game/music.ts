@@ -438,6 +438,18 @@ export function reverbImpulse(sampleRate: number, seconds: number, decay: number
 
 // ---------------------------------------------------------------- çalıcı (WebAudio)
 
+// Hesaplanmış örnek verisi önbelleği (Ömer 2026-10-11, performans): yankı dürtüsü (3,2 sn stereo, örnek başına Math.pow) ve enstrüman
+// örnekleri her motor kuruluşunda (her ana menüye dönüşte) yeniden hesaplanıyordu: masaüstünde ~30-60 ms, zayıf telefonda ~0,2-0,3 sn
+// ana iş parçacığı takılması. Veri seed'li ve belirleyici: önbellekten gelen birebir aynıdır. Anahtar: ayar nesnesi + örnekleme hızı + ad.
+const dataCache = new WeakMap<object, Map<string, Float32Array | [Float32Array, Float32Array]>>();
+function cachedData<T extends Float32Array | [Float32Array, Float32Array]>(cfg: object, key: string, make: () => T): T {
+  let m = dataCache.get(cfg);
+  if (!m) dataCache.set(cfg, (m = new Map()));
+  let v = m.get(key) as T | undefined;
+  if (!v) m.set(key, (v = make()));
+  return v;
+}
+
 const toBuffer = (ctx: BaseAudioContext, data: Float32Array): AudioBuffer => {
   const b = ctx.createBuffer(1, data.length, ctx.sampleRate);
   b.getChannelData(0).set(data);
@@ -483,7 +495,7 @@ export class MusicEngine {
     const wet = ctx.createGain();
     wet.gain.value = cfg.reverb.wet;
     const conv = ctx.createConvolver();
-    const [l, r] = reverbImpulse(ctx.sampleRate, cfg.reverb.seconds, cfg.reverb.decay, cfg.reverb.damp);
+    const [l, r] = cachedData(cfg, `ir|${ctx.sampleRate}`, () => reverbImpulse(ctx.sampleRate, cfg.reverb.seconds, cfg.reverb.decay, cfg.reverb.damp));
     const ir = ctx.createBuffer(2, l.length, ctx.sampleRate);
     ir.getChannelData(0).set(l);
     ir.getChannelData(1).set(r);
@@ -577,7 +589,7 @@ export class MusicEngine {
   private buf(key: string, make: () => Float32Array): AudioBuffer {
     let b = this.bufs.get(key);
     if (!b) {
-      b = toBuffer(this.ctx, make());
+      b = toBuffer(this.ctx, cachedData(this.cfg, `buf|${this.ctx.sampleRate}|${key}`, make));
       this.bufs.set(key, b);
     }
     return b;

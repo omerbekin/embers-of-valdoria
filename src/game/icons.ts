@@ -46,13 +46,22 @@ export function ensureIcon(scene: Phaser.Scene, kind: string, hex: string, frame
   const tex = scene.textures.createCanvas(key, size * UNIT, size * UNIT);
   if (!tex) return key;
   const ctx = tex.getContext();
-  const px = (x: number, y: number, color: string, alpha = 1) => {
-    ctx.globalAlpha = alpha;
-    ctx.fillStyle = color;
-    ctx.fillRect(x * UNIT, y * UNIT, UNIT, UNIT);
+  // Pikseller tek ImageData'ya yazılır (eskiden piksel başına fillRect: savaş açılışında ~100 ikon x 4-16 bin çağrı, ilk kullanımda takılma;
+  // Ömer 2026-10-11 performans denetimi). Her piksel son haliyle bir kez yazılır: plaka (kenar opak, iç %92) ve üstüne opak ikon pikseli;
+  // %92 = 235/255, tuvalin fillRect + globalAlpha ile sakladığıyla aynı.
+  const W = size * UNIT;
+  const img = ctx.createImageData(W, W);
+  const d = img.data;
+  const px = (x: number, y: number, rgb: number, alpha = 255) => {
+    if (x < 0 || y < 0 || x >= W || y >= W) return;
+    const i = (y * W + x) * 4;
+    d[i] = (rgb >> 16) & 255;
+    d[i + 1] = (rgb >> 8) & 255;
+    d[i + 2] = rgb & 255;
+    d[i + 3] = alpha;
   };
   if (framed) {
-    const accent = css(pal.a!);
+    const accent = pal.a!;
     const cut = Math.round(6 * q); // köşe kesiği
     const border = Math.round(3 * q);
     for (let y = 0; y < frameGrid; y++)
@@ -61,7 +70,7 @@ export function ensureIcon(scene: Phaser.Scene, kind: string, hex: string, frame
         const dy = Math.min(y, frameGrid - 1 - y);
         if (dx + dy < cut) continue;
         if (dx < border || dy < border) px(x, y, accent);
-        else px(x, y, '#1a1410', 0.92);
+        else px(x, y, 0x1a1410, 235);
       }
   }
   const off = framed ? frame : 0;
@@ -69,10 +78,10 @@ export function ensureIcon(scene: Phaser.Scene, kind: string, hex: string, frame
     row.forEach((cell, x) => {
       if (cell.t === '.') return;
       const v = pal[cell.t];
-      px(x + off, y + off, v === undefined ? '#ff00ff' : css(shadeColor(v, cell.s)));
+      px(x + off, y + off, v === undefined ? 0xff00ff : shadeColor(v, cell.s));
     });
   });
-  ctx.globalAlpha = 1;
+  ctx.putImageData(img, 0, 0);
   tex.refresh();
   tex.setFilter(Phaser.Textures.FilterMode.NEAREST);
   return key;

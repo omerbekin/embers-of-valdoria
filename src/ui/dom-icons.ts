@@ -23,14 +23,24 @@ export function iconUrl(name: string, accent = '#ffffff', owner?: string | null)
   const ctx = canvas.getContext('2d');
   if (!cells || !ctx) return '';
   const pal = INTERNAL_TOKEN_VALUES(accent);
+  // Pikseller tek ImageData'ya yazılır (eskiden piksel başına fillRect: 128x128 ikonda 16 bin çağrı; Codex > Assets sayfaları saniyelerce
+  // donuyordu). Renkler opak, her piksel bir kez yazılır: sonuç birebir aynı (Ömer 2026-10-11 performans denetimi).
+  const W = art.size;
+  const data = ctx.createImageData(W, W);
+  const d = data.data;
   cells.forEach((row, y) =>
     row.forEach((c, x) => {
-      if (c.t === '.') return;
+      if (c.t === '.' || x >= W || y >= W) return;
       const v = pal[c.t];
-      ctx.fillStyle = v === undefined ? '#ff00ff' : `#${shadeColor(v, c.s).toString(16).padStart(6, '0')}`;
-      ctx.fillRect(x, y, 1, 1);
+      const rgb = v === undefined ? 0xff00ff : shadeColor(v, c.s);
+      const i = (y * W + x) * 4;
+      d[i] = (rgb >> 16) & 255;
+      d[i + 1] = (rgb >> 8) & 255;
+      d[i + 2] = rgb & 255;
+      d[i + 3] = 255;
     }),
   );
+  ctx.putImageData(data, 0, 0);
   const url = canvas.toDataURL('image/png');
   cache.set(key, url);
   return url;
