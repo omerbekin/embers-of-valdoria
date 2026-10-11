@@ -110,7 +110,7 @@ describe('nadirlik = affix sayısı', () => {
 describe('affix zarları', () => {
   it('aralık: orta değer ± %15, adıma yuvarlanır, en az bir adım; satır "+4 Max HP (3–5)" biçiminde, kademe etiketi önde', () => {
     const p = ITEMS.affixDefs.c_hp!.parts[0]!;
-    const [lo, hi] = partRange(p, itemDef('riveted_mail')!.ilvl);
+    const [lo, hi] = partRange(p, itemDef('riveted_mail')!.ilvl, ITEMS.affixRules.rollFloorByRarity!.uncommon); // Uncommon: aralığın üst kısmı
     expect(lo).toBeLessThan(hi);
     expect(lo).toBeGreaterThanOrEqual(p.step);
     const inst = { uid: 'x', id: 'riveted_mail', rolls: { rarity: 'uncommon' as const, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_hp', q: 1 }] } };
@@ -238,5 +238,24 @@ describe('zarlar kayıtta: sefer ve Endless', () => {
     const b = chooseReward(run, 0);
     expect(a.bag![0]!.rolls?.affixes.length).toBeGreaterThan(0);
     expect(a.bag).toEqual(b.bag);
+  });
+});
+
+describe('nadirliğe göre zar tabanı (Ömer 2026-10-11)', () => {
+  it('yüksek nadirlik aralığın üst kısmından zarlar; tavan aynı; aralık nadirliğe göre; eski zar korunur', () => {
+    const floors = ITEMS.affixRules.rollFloorByRarity!;
+    expect(floors).toEqual({ common: 0, uncommon: 0.25, rare: 0.375, epic: 0.5, legendary: 0.625 });
+    const d = itemDef('riveted_mail')!;
+    for (const r of ['common', 'uncommon', 'rare', 'epic'] as const)
+      for (let i = 0; i < 200; i++) for (const a of rollItem(d, new Rng(i), { rarity: r }).affixes) expect(a.q).toBeGreaterThanOrEqual(floors[r]!);
+    // Epic aralığı: alt uç = q 0,5 değeri, üst uç Common'la aynı
+    const p = ITEMS.affixDefs.c_hp!.parts[0]!;
+    const epic = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 1 }] } })[0]!;
+    const common = rolledAffixes({ id: d.id, rolls: { rarity: 'common', affixes: [{ id: 'c_hp', q: 1 }] } })[0]!;
+    expect(epic.ranges[0]).toEqual([partRange(p, d.ilvl, 0.5)[0], common.ranges[0]![1]]);
+    // kayıtlı eski zar (taban altında) değerini korur, aralık onu da gösterir
+    const old = rolledAffixes({ id: d.id, rolls: { rarity: 'epic', affixes: [{ id: 'c_hp', q: 0 }] } })[0]!;
+    expect(old.values[0]).toBe(partRange(p, d.ilvl)[0]);
+    expect(old.ranges[0]![0]).toBe(old.values[0]);
   });
 });

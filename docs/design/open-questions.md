@@ -1411,3 +1411,5 @@ Kural özeti: `docs/design/combat.md` > Cesetler ve "Defender, Gambler, Archer a
 - **Denge düğmesi:** daha az yüksek nadirlik Endless'ı bant altına itti (ilk boss %48,5, ortalama dalga 11,8); `items.json > affixRules.power` 1 -> 1,5 ile yeniden bantta. Power iri adımlı affix'lere (ana stat, tüm statlar, hız, Immunity tur sayısı) işlemez (`noPower`).
 - **Soru (seçenek):** Endless'ta örneğin item seviyesi dalganın seviyesi olabilir (katalog ~22'de bitiyor, 20. dalgadan sonra item'ler büyümüyor). Şimdilik taban seviyesi kullanılıyor.
 - Sefer kolay / iyi oyuncu boss ilk deneme %79 (bant 57-77; önce %75-76); Medium ve Hard bantta.
+
+- **CEVAPLANDI (Ömer 2026-10-11, madde 302 / 303):** rastgele C affix'i sınıfa hafif ağırlıklı (2 kat, `affixRules.classFit`); seferin Rare pity'si ve boss / hazine "en az Rare" kuralı KALDIRILDI; boss'ların Jinxed / Blinded bağışıklığı kalır, Legendary delmez; "Marked Quarry" adı tamam; Endless'ta item seviyesi dalganın seviyesi; Vigil / Immunity turları / Recovery varsayımları onaylandı. Yüksek nadirlik aralığın üst kısmından zarlar (`affixRules.rollFloorByRarity`).

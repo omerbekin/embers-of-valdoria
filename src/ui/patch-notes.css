@@ -1,0 +1,173 @@
+/* Patch Notes penceresi (src/ui/patch-notes.ts; Ömer 2026-10-11). Kit Diyalog çerçevesi (.el-dialog > .el-panel) üzerine: liste kendi
+   içinde kayar, sürüm başlıkları açılır/kapanır. Telefonda (html.short) panel ekranın neredeyse tamamını kullanır, yazı okunur boyda kalır. */
+.pn-overlay {
+  z-index: 20;
+}
+
+.el-dialog > .el-panel.pn-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(720px, 100%);
+  max-height: 100%;
+  padding: 24px 28px 22px;
+  box-sizing: border-box;
+  text-align: left;
+}
+
+.pn-title {
+  flex: none;
+  margin-bottom: 14px;
+}
+
+.pn-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.pn-rel {
+  border-bottom: 1px solid var(--el-line1);
+}
+
+.pn-head {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  width: 100%;
+  min-height: 48px;
+  padding: 6px 4px;
+  color: var(--el-txt);
+  background: none;
+  border: 0;
+  cursor: pointer;
+  text-align: left;
+  transition: color 0.15s;
+}
+
+.pn-head .el-dia {
+  margin: 0 3px;
+}
+
+.pn-ver {
+  font: 600 21px var(--el-display);
+  letter-spacing: 0.06em;
+  text-shadow: var(--el-sh);
+}
+
+.pn-date {
+  flex: 1;
+  font: italic 18px var(--el-body);
+  color: var(--el-muted);
+}
+
+.pn-chev {
+  font-size: 16px;
+  color: var(--el-muted);
+  transform: rotate(-90deg);
+  transition: transform 0.18s var(--el-ease);
+}
+
+.pn-rel.open .pn-chev {
+  transform: none;
+}
+
+.pn-head:hover,
+.pn-rel.open .pn-head {
+  color: var(--el-on);
+}
+
+.pn-head:focus-visible {
+  outline: 1px solid var(--el-line3);
+  outline-offset: -2px;
+}
+
+.pn-body {
+  padding: 2px 6px 16px 34px;
+}
+
+.pn-heading {
+  margin: 10px 0 6px;
+  font-size: 13px;
+}
+
+.pn-items {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.pn-items li {
+  position: relative;
+  padding: 3px 0 3px 18px;
+  font: 19px/1.32 var(--el-body);
+  color: var(--el-txt);
+  text-shadow: var(--el-sh);
+}
+
+.pn-items li::before {
+  content: '';
+  position: absolute;
+  left: 2px;
+  top: 0.72em;
+  width: 5px;
+  height: 5px;
+  transform: rotate(45deg);
+  background: rgba(217, 178, 106, 0.55);
+}
+
+.pn-row {
+  flex: none;
+  margin-top: 16px !important;
+}
+
+/* Telefon (yatay, kısa sahne): panel neredeyse tam ekran, daha sıkı başlık; satırlar okunur boyda */
+html.short .el-dialog.pn-overlay {
+  padding: calc(8px + var(--et, 0px)) calc(10px + var(--er, 0px)) calc(8px + var(--eb, 0px)) calc(10px + var(--el, 0px));
+}
+
+html.short .el-dialog > .el-panel.pn-panel {
+  padding: 10px 16px 10px;
+}
+
+html.short .pn-title {
+  margin-bottom: 4px;
+  font-size: 22px;
+}
+
+html.short .pn-head {
+  min-height: 44px;
+  padding: 2px 4px;
+}
+
+html.short .pn-ver {
+  font-size: 17px;
+}
+
+html.short .pn-date {
+  font-size: 15px;
+}
+
+html.short .pn-body {
+  padding: 0 4px 10px 26px;
+}
+
+html.short .pn-items li {
+  font-size: 16px;
+  line-height: 1.28;
+}
+
+html.short .pn-row {
+  margin-top: 8px !important;
+}
+
+/* Telefonda Close daha alçak (liste için yer; dokunma alanı yine 44 px) */
+html.short .pn-row .el-btn {
+  height: 44px;
+  min-height: 44px;
+  font-size: 17px;
+  padding: 0 34px;
+}

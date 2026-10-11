@@ -178,7 +178,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
   if (rr.item) {
     // Torba doluysa nadir item BEKLER (ödül ekranında: yer açılınca alınır, alınmadan devam edilirse kaybolur); zarlar şimdi atılır
     const d = defIn(catalog, rr.item);
-    const rolls = d && itemDef(d.id) ? rollItem(d, rngFor(s.seed, run.wave, 'rare-roll')) : undefined;
+    const rolls = d && itemDef(d.id) ? rollItem(d, rngFor(s.seed, run.wave, 'rare-roll'), { ilvl: Math.max(d.ilvl, ilvlCap(run.wave, cfg)) }) : undefined; // dalganın seviyesi (Ömer 2026-10-11)
     if (addToBag(s, rr.item, catalog, cfg, rolls).ok) s.rareDrop = { itemId: rr.item, wave: run.wave };
     else s.rareDrop = { itemId: rr.item, wave: run.wave, pending: true, ...(rolls ? { rolls } : {}) };
   }
@@ -268,6 +268,8 @@ export interface PairOptions {
   ilvlBonus?: number;
   /** Önerilecek örneğin nadirliği (Ömer 2026-10-11: önce nadirlik zarlanır, sonra taban seçilir; taban nadirlikten bağımsız). */
   rarity?: RarityId;
+  /** Önerilecek örneğin item seviyesi (Ömer 2026-10-11: Endless'ta dalganın seviyesi; yoksa tabanınki). */
+  ilvl?: number;
 }
 
 /**
@@ -281,7 +283,7 @@ export function upgradePairs(run: EndlessRun, cleared: number, exclude: string[]
   for (const d of catalog) {
     if (d.ilvl > cap || exclude.includes(d.id) || bagOf(run).some((i) => i.id === d.id)) continue;
     if (d.rarity === 'legendary') continue;
-    const ip = itemIP(d, o.rarity);
+    const ip = itemIP(d, o.rarity, o.ilvl ?? d.ilvl);
     for (const h of run.heroes) if (canEquip(h.class, d) && ip > slotIP(h, d, catalog)) pairs.push({ def: d, heroId: h.id });
   }
   if (!pairs.length) return pairs;
@@ -292,22 +294,24 @@ export function upgradePairs(run: EndlessRun, cleared: number, exclude: string[]
 const pickOne = <T>(list: T[], rng: Rng): T | undefined => (list.length ? list[rng.int(0, list.length - 1)] : undefined);
 
 /** Teklif / tezgâh zarı: önerilen kahraman için (silahın ana affix'i onun elementinden), zarlanan nadirlikte; katalog dışı (test) item'de zar yok. */
-function rollFor(run: EndlessRun, pair: { def: ItemDef; heroId: string }, rng: Rng, rarity?: RarityId): ItemRolls {
+function rollFor(run: EndlessRun, pair: { def: ItemDef; heroId: string }, rng: Rng, rarity?: RarityId, ilvl?: number): ItemRolls {
   if (!itemDef(pair.def.id)) return undefined;
   const cls = heroOf(run, pair.heroId)?.class;
-  return rollItem(pair.def, rng, { ...(cls ? { forClass: cls } : {}), ...(rarity ? { rarity } : {}) });
+  return rollItem(pair.def, rng, { ...(cls ? { forClass: cls } : {}), ...(rarity ? { rarity } : {}), ...(ilvl !== undefined ? { ilvl: Math.max(pair.def.ilvl, ilvl) } : {}) });
 }
 
 /**
  * Nadirliği zarlanmış bir öneri (Ömer onayı 2026-10-11): tek ağırlık tablosu (items.json > dropRarity; dalganın item seviyesi ve elit / boss
  * hafifçe kaydırır, tavanlı). O nadirlikte yükseltme yoksa bir alt nadirlik denenir (Common'a kadar); hiç yoksa undefined.
  */
-function rolledPair(run: EndlessRun, cleared: number, taken: string[], cfg: EndlessConfig, catalog: ItemDef[], rng: Rng, kind: WaveKind, ilvlBonus: number): { def: ItemDef; heroId: string; rarity: RarityId } | undefined {
-  const rolled = rollDropRarity(rng, ilvlCap(cleared, cfg) + ilvlBonus, kind);
+function rolledPair(run: EndlessRun, cleared: number, taken: string[], cfg: EndlessConfig, catalog: ItemDef[], rng: Rng, kind: WaveKind, ilvlBonus: number): { def: ItemDef; heroId: string; rarity: RarityId; ilvl: number } | undefined {
+  // Örneğin item seviyesi = dalganın seviyesi (+ elit / boss eki; Ömer 2026-10-11): katalog tavanını aşar, item'ler büyümeye devam eder
+  const ilvl = ilvlCap(cleared, cfg) + ilvlBonus;
+  const rolled = rollDropRarity(rng, ilvl, kind);
   for (let r = rarityRank(rolled); r >= 0; r--) {
     const rarity = RARITY_IDS[r]!;
-    const pair = pickOne(upgradePairs(run, cleared, taken, cfg, catalog, { ilvlBonus, rarity }), rng);
-    if (pair) return { ...pair, rarity };
+    const pair = pickOne(upgradePairs(run, cleared, taken, cfg, catalog, { ilvlBonus, rarity, ilvl }), rng);
+    if (pair) return { ...pair, rarity, ilvl };
   }
   return undefined;
 }
@@ -333,7 +337,7 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
     if (pair) {
       taken.push(pair.def.id);
       // Zarlar teklif anında atılır (seed'li): kartta görünen değer = alınan değer
-      cards.push({ kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollFor(run, pair, rngFor(run.seed, cleared, 'offer-roll', i), pair.rarity) });
+      cards.push({ kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollFor(run, pair, rngFor(run.seed, cleared, 'offer-roll', i), pair.rarity, pair.ilvl) });
     } else if (!cards.some((c) => c.kind === 'gold')) cards.push({ kind: 'gold', amount: Math.round(gold * 1.5) });
   }
   cards.push({ kind: 'gold', amount: gold });
@@ -360,7 +364,7 @@ export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog
     if (!pair) break;
     taken.push(pair.def.id);
     // Zarlar tezgâha konurken atılır (seed'li; yenileme numarasıyla): tezgâhta görünen değer = satın alınan değer
-    const rolls = rollFor(run, pair, rngFor(run.seed, cleared, 'ware-roll', reroll, i), pair.rarity);
+    const rolls = rollFor(run, pair, rngFor(run.seed, cleared, 'ware-roll', reroll, i), pair.rarity, pair.ilvl);
     out.push({ itemId: pair.def.id, heroId: pair.heroId, price: itemValue(rolls ? { id: pair.def.id, rolls } : pair.def), rolls });
   }
   // Nadir mal (madde 297): merchant.fromWave'den itibaren her ziyarette (yenileme dahil) ihtimalle bir Legendary, yüksek fiyatla; havuzdan tekdüze
@@ -371,7 +375,7 @@ export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog
     if (pool.length && rr.next() < rm.chance) {
       const d = pool[rr.int(0, pool.length - 1)]!;
       const hero = run.heroes.find((h) => canEquip(h.class, d)) ?? run.heroes[0]!;
-      const rolls = rollItem(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll));
+      const rolls = rollItem(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll), { ilvl: Math.max(d.ilvl, ilvlCap(cleared, cfg)) });
       out.push({ itemId: d.id, heroId: hero.id, price: Math.round(itemValue({ id: d.id, rolls }) * rm.priceMult), rolls });
     }
   }

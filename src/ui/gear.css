@@ -1094,3 +1094,1027 @@ html.short .gr-slot-sub {
   flex: none;
   color: var(--g-dim);
 }
+
+/* ===================== Character / Inventory ayrımı (Ömer 2026-10-11, g1) =====================
+   Gear = CHARACTER sayfası (kahramanlar | yuvalar + statlar, altta sol kenardan skill'ler) + yalnızca INVENTORY (torba). Item kartı yok:
+   item ipucu imlecin yanında yüzer (.item-tip), "Usable by" kahraman kartlarının alt satırında. Pencere bir miktar küçüldü; torba 6 sütun.
+   Telefonda (html.short) Character ve Inventory ayrı tam ekran (üstte geçiş). */
+.gr-panel.gr-gear {
+  width: min(100%, calc(1580 * var(--u)));
+  height: min(100%, calc(920 * var(--u)));
+  max-height: none;
+}
+
+.gr-gear .gr-head-l {
+  display: flex;
+  align-items: center;
+  gap: calc(22 * var(--u));
+  min-width: 0;
+}
+
+.gr-gear .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, calc(560 * var(--u)));
+  grid-template-rows: minmax(0, 1fr);
+  gap: calc(26 * var(--u));
+}
+
+.gr-charwrap {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.gr-char {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(150px, calc(270 * var(--u))) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: "heroes mid" "skills skills";
+  gap: calc(14 * var(--u)) calc(22 * var(--u));
+}
+
+.gr-char > .gr-heroes {
+  grid-area: heroes;
+}
+
+.gr-char > .gr-mid {
+  grid-area: mid;
+}
+
+.gr-char > .gr-skills {
+  grid-area: skills;
+  margin-top: 0;
+  padding-top: calc(10 * var(--u));
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-char .gr-skill-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gr-char .gr-stats {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* kahraman kartının alt satırı: olağan "Level 1 · 4/6 items" ya da üstüne gelinen item'in etkisi */
+.gr-hero-sub.tone-up,
+.gr-hero-sub.tone-down,
+.gr-hero-sub.tone-mixed {
+  color: var(--g-text);
+  font-style: normal;
+}
+
+.gr-hero-sub.tone-no {
+  color: #e0907a;
+}
+
+.gr-hero-sub.tone-none {
+  color: var(--g-dim);
+}
+
+.gr-hero-sub .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-hero-sub .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* Inventory */
+.gr-gear .gr-right {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  min-height: 0;
+}
+
+.gr-inv {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.gr-overlay .gr-inv .gr-bag {
+  flex: 1 1 0;
+  grid-template-columns: repeat(var(--bag-cols, 6), minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.gr-inv .gr-card-empty {
+  margin-top: calc(8 * var(--u));
+}
+
+/* nadirlik çerçevesi (tüccar kartlarıyla aynı dil): sıra büyüdükçe kalın çerçeve + iç ton + köşebent; Epic / Legendary dört köşede */
+.gr-item {
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc, #5b4a33) 16%, transparent), rgba(8, 6, 4, 0.7) 72%);
+}
+
+.gr-item.k2,
+.gr-item.k3,
+.gr-item.k4 {
+  border-width: 2px;
+}
+
+.gr-item:not(.empty)::before,
+.gr-item:not(.empty)::after,
+.gr-item .gr-c2,
+.gr-item .gr-c3 {
+  content: '';
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--rc, #f3d999) 70%, white);
+  border-style: solid;
+  border-width: 0;
+}
+
+.gr-item:not(.empty)::before {
+  left: -1px;
+  top: -1px;
+  border-left-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item:not(.empty)::after {
+  right: -1px;
+  bottom: -1px;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item .gr-c2 {
+  right: -1px;
+  top: -1px;
+  border-right-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item .gr-c3 {
+  left: -1px;
+  bottom: -1px;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item.k4 {
+  box-shadow: 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc) 55%, transparent);
+}
+
+/* seçili: ekrandaki TEK kor elmas */
+.gr-dia {
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.9);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* fiyat etiketi (tüccar satış fiyatı) */
+.gr-cellw {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.gr-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 1.3em;
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+}
+
+.gr-price.bad {
+  color: #ff8a7a;
+}
+
+.gr-price-ico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+/* yüzen item ipucu (imlecin yanında) */
+.item-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 7;
+  width: max(250px, calc(400 * var(--u)));
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s, visibility 0s 0.12s;
+  font-size: max(13px, calc(19 * var(--u)));
+}
+
+.item-tip.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.12s;
+}
+
+.item-tip .it-name {
+  display: block;
+  font: 600 max(14px, calc(22 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.item-tip .it-sub,
+.item-tip .it-value {
+  font: italic max(12px, calc(17 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.item-tip .it-lines {
+  margin: 6px 0 4px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.item-tip .it-line {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #c5ecb0;
+}
+
+.item-tip .it-tier {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border: 1px solid;
+  font: 700 0.78em var(--g-disp);
+}
+
+.item-tip .it-ico {
+  width: max(14px, calc(22 * var(--u)));
+  height: max(14px, calc(22 * var(--u)));
+}
+
+.item-tip .it-range {
+  margin-left: auto;
+  color: var(--g-dim);
+  font-size: 0.9em;
+}
+
+.item-tip .it-effect {
+  font-style: italic;
+  color: #ffd99a;
+  border-left: 2px solid rgba(255, 210, 122, 0.6);
+  padding-left: 8px;
+  margin: 4px 0;
+}
+
+.item-tip .it-heroes {
+  margin-top: 6px;
+  padding-top: 5px;
+  border-top: 1px solid var(--g-line);
+}
+
+.item-tip .it-hero {
+  display: flex;
+  gap: 8px;
+  font-size: 0.92em;
+}
+
+.item-tip .it-hero-k {
+  flex: none;
+  width: 6.2em;
+  font: 600 0.82em var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.item-tip .it-up {
+  color: #8fe39a;
+}
+
+.item-tip .it-down {
+  color: #ff8a7a;
+}
+
+.item-tip .it-no {
+  color: #e0907a;
+}
+
+/* çöp kutusu: yalnızca torbadan sürüklerken sağ altta */
+.gr-trash {
+  position: absolute;
+  right: max(14px, calc(30 * var(--u)));
+  bottom: max(14px, calc(30 * var(--u)));
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  min-height: 64px;
+  padding: 0 calc(18 * var(--u));
+  border: 1px dashed rgba(255, 138, 122, 0.55);
+  background: rgba(20, 8, 6, 0.92);
+  color: #ff9a88;
+  font: 600 max(12px, calc(17 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.16s, transform 0.16s;
+}
+
+.gr-trash svg {
+  width: max(22px, calc(34 * var(--u)));
+  height: max(22px, calc(34 * var(--u)));
+}
+
+.gr-trash-on .gr-trash {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.gr-dragging .gr-trash.drop-ok:hover {
+  border-style: solid;
+  background: rgba(60, 14, 10, 0.95);
+  box-shadow: 0 0 18px rgba(255, 120, 100, 0.45);
+}
+
+/* onay kutusu (Rare+ atma, primary bonusu kaybı) */
+.gr-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 3, 2, 0.55);
+}
+
+.gr-confirm-card {
+  max-width: min(92%, calc(640 * var(--u)));
+  padding: calc(22 * var(--u)) calc(28 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98));
+  border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+.gr-confirm-text {
+  font-size: max(14px, calc(22 * var(--u)));
+  margin-bottom: calc(16 * var(--u));
+}
+
+.gr-confirm-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(20 * var(--u));
+}
+
+/* alt satır: solda ipucu / uyarı */
+.gr-foot-hint {
+  margin-right: auto;
+  align-self: center;
+  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-foot-hint.warn {
+  color: #f0a060;
+  font-style: normal;
+}
+
+/* telefon: geçiş düğmeleri + iki ayrı tam ekran */
+.gr-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.gr-tab {
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: 600 13px var(--g-disp) !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim) !important;
+}
+
+.gr-tab.on {
+  color: var(--g-gold) !important;
+  border-bottom-color: var(--g-gold);
+}
+
+.gr-gear.gr-phone .gr-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gr-gear.gr-phone.show-inv .gr-charwrap,
+.gr-gear.gr-phone.show-char .gr-right {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-right {
+  flex-direction: row;
+}
+
+.gr-rail {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.gr-rail .gr-hero {
+  padding: 2px;
+  min-height: 44px;
+}
+
+.gr-rail .gr-face {
+  width: 46px;
+  height: 46px;
+}
+
+.gr-gear.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 10;
+}
+
+.gr-gear.gr-phone .gr-char {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
+}
+
+.gr-gear.gr-phone .gr-char .gr-skill-nums,
+.gr-gear.gr-phone .gr-char .gr-skill-meta {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-foot .gr-btn:not(.primary) {
+  padding: 0 12px;
+}
+
+.gr-panel.gr-gear.gr-phone {
+  width: 100%;
+  height: 100%;
+}
+
+.gr-gear.gr-phone .gr-foot {
+  flex-wrap: nowrap;
+  gap: 14px;
+}
+
+.gr-gear.gr-phone .gr-foot-hint {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char {
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 6px 10px;
+}
+
+.gr-gear.gr-phone .gr-char .gr-hero {
+  padding: 2px;
+  justify-content: center;
+}
+
+.gr-gear.gr-phone .gr-char .gr-hero-meta {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char .gr-face {
+  width: 48px;
+  height: 48px;
+}
+
+.gr-overlay .gr-gear.gr-phone .gr-slots {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-gear.gr-phone .gr-foot {
+  display: none;
+}
+
+.gr-head-acts {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.gr-head-acts .gr-btn.sm {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 12px !important;
+}
+
+.gr-gear.gr-phone .gr-head {
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+.gr-gear.gr-phone .gr-title {
+  font-size: 20px;
+}
+
+/* ===================== Tüccar (Ömer 2026-10-11, g1): solda tezgâh, sağda ortak Inventory ===================== */
+.gr-shop .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, calc(600 * var(--u)));
+}
+
+.gr-shop-sub {
+  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-stall {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(14 * var(--u));
+  overflow-y: auto;
+  padding: 2px calc(6 * var(--u)) 2px 2px;
+  border: 1px solid transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-stall.char {
+  overflow: hidden;
+}
+
+.gr-stall.char > .gr-char {
+  flex: 1;
+  min-height: 0;
+}
+
+.gr-dragging .gr-stall.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 25%, transparent);
+}
+
+.gr-stall-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gr-stall-bar .gr-sec {
+  flex: 1;
+  margin: 0;
+}
+
+.gr-odo {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+}
+
+.gr-odo .gr-face {
+  width: max(44px, calc(84 * var(--u)));
+  height: max(44px, calc(84 * var(--u)));
+}
+
+.gr-odo-line {
+  flex: 1;
+  padding: calc(10 * var(--u)) calc(16 * var(--u));
+  background: rgba(8, 6, 4, 0.6);
+  border: 1px solid var(--g-line2);
+  font: italic max(13px, calc(22 * var(--u))) var(--g-body);
+  color: var(--g-text);
+}
+
+.gr-wares {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, calc(112 * var(--u))));
+  gap: calc(10 * var(--u)) calc(18 * var(--u));
+}
+
+.gr-wares .gr-item,
+.gr-bb-row .gr-item {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+}
+
+.gr-item.sold {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.gr-reroll {
+  align-self: flex-start;
+}
+
+.gr-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  color: var(--g-gold);
+}
+
+.gr-btn.sm {
+  min-height: 44px;
+  padding: 0 calc(18 * var(--u));
+  font-size: max(12px, calc(16 * var(--u))) !important;
+}
+
+.gr-bb-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, calc(96 * var(--u))));
+  gap: calc(10 * var(--u));
+}
+
+.gr-bb-row .gr-card-empty {
+  grid-column: 1 / -1;
+}
+
+/* fiyat etiketli torba: satırlar biraz daha yüksek */
+.gr-bag.priced {
+  row-gap: calc(4 * var(--u));
+}
+
+/* telefon: Character / Wares geçişi (tezgâh = Wares ekranı, torba onun yanında) */
+.gr-shop.gr-phone .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.gr-shop.gr-phone .gr-charwrap {
+  display: none;
+}
+
+.gr-shop.gr-phone.show-char .gr-right,
+.gr-shop.gr-phone.show-inv .gr-right {
+  display: flex;
+}
+
+.gr-shop.gr-phone .gr-foot {
+  display: flex;
+}
+
+.gr-shop.gr-phone .gr-odo .gr-face {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-wares {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.gr-shop.gr-phone .gr-buyback {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 6;
+}
+
+/* --- karşılama (seçenek C): soldaki yarım panel (Odo tam boy + selam), "Browse wares" ile sola kayıp çekilir --- */
+.mw-welcome {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.gr-shop-overlay.mw-on .gr-panel {
+  filter: brightness(0.38) saturate(0.6);
+}
+
+.gr-shop-overlay .gr-panel {
+  transition: filter var(--motion-panel-ms, 0.5s) ease;
+}
+
+.mw-half {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 62%;
+  pointer-events: auto;
+  background: linear-gradient(90deg, rgba(14, 9, 6, 0.98) 62%, rgba(14, 9, 6, 0.9));
+  border-right: 1px solid var(--g-edge);
+  box-shadow: 24px 0 50px rgba(0, 0, 0, 0.7);
+  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.55s;
+  animation: mw-in 0.6s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+@keyframes mw-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.mw-welcome.gone .mw-half {
+  transform: translateX(-104%);
+  opacity: 0.2;
+}
+
+html.reduced-motion .mw-half {
+  animation: none;
+  transition: none;
+}
+
+.mw-odo {
+  position: absolute;
+  left: 2%;
+  bottom: 0;
+  height: 92%;
+  max-width: 44%;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.7));
+}
+
+.mw-card {
+  position: absolute;
+  right: 4%;
+  top: 14%;
+  width: 52%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(16 * var(--u));
+  padding: calc(26 * var(--u));
+  background: rgba(10, 7, 5, 0.82);
+  border: 1px solid var(--g-line2);
+}
+
+.mw-kick {
+  font: 600 max(11px, calc(18 * var(--u))) var(--g-disp);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.mw-name {
+  font: 600 max(20px, calc(46 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.mw-greet {
+  font: italic max(14px, calc(27 * var(--u))) var(--g-body);
+  color: var(--g-text);
+}
+
+.mw-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 max(12px, calc(19 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-ember2);
+}
+
+.mw-notice::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.8);
+}
+
+.mw-hl {
+  display: flex;
+  align-items: center;
+  gap: calc(16 * var(--u));
+}
+
+.mw-hl .gr-item {
+  width: max(52px, calc(96 * var(--u)));
+  height: max(52px, calc(96 * var(--u)));
+  flex: none;
+}
+
+.mw-hl-name {
+  font: 600 max(14px, calc(25 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mw-hl-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 max(13px, calc(22 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+}
+
+.mw-go {
+  align-self: flex-start;
+}
+
+html.short .mw-half {
+  width: 72%;
+}
+
+html.short .mw-card {
+  top: 4%;
+  width: 56%;
+  gap: 6px;
+  padding: 10px;
+}
+
+/* ===================== Ödül torbası (Ömer 2026-10-11, g1): kartlar küçük ikonlar olarak solda, Inventory sağda ===================== */
+.rb-overlay {
+  background: rgba(5, 3, 2, 0.5);
+}
+
+.rb-panel .gr-body.rb-body {
+  grid-template-columns: minmax(130px, calc(300 * var(--u))) minmax(0, 1fr);
+}
+
+.rb-panel .gr-inv .gr-bag {
+  --bag-cols: 9;
+}
+
+.rb-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: calc(16 * var(--u));
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rb-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  min-height: 44px;
+  padding: calc(10 * var(--u)) 6px;
+  background: rgba(8, 6, 4, 0.5);
+  border: 1px solid var(--g-line2);
+  animation: rb-tile-in 0.46s cubic-bezier(0.33, 1, 0.68, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition: border-color 0.18s;
+}
+
+.rb-tile:hover {
+  border-color: var(--g-gold);
+}
+
+.rb-tile.blocked {
+  opacity: 0.55;
+}
+
+.rb-medal {
+  display: grid;
+  place-items: center;
+  width: max(48px, calc(104 * var(--u)));
+  height: max(48px, calc(104 * var(--u)));
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--rc, #e8c47e) 80%, white);
+  background: radial-gradient(circle, color-mix(in srgb, var(--rc, #e8c47e) 28%, #120c08), #0b0806 70%);
+  box-shadow: 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--rc, #e8c47e) 45%, transparent);
+}
+
+.rb-medal .gr-svg,
+.rb-emblem {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.rb-label {
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--g-gold);
+}
+
+/* açılış: ikonlar kartların yerinden (sağdan, büyükten) sola süzülür; torba sağdan kayar */
+@keyframes rb-tile-in {
+  from {
+    transform: translateX(calc(600 * var(--u))) scale(2.4);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes rb-inv-in {
+  from {
+    transform: translateX(calc(120 * var(--u)));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.rb-panel .gr-right {
+  animation: rb-inv-in 0.46s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+.rb-overlay.out .rb-tile {
+  transform: translateX(calc(600 * var(--u))) scale(2.4);
+  opacity: 0;
+  transition: transform 0.4s, opacity 0.3s;
+}
+
+.rb-overlay.out .rb-panel .gr-right {
+  transform: translateX(calc(120 * var(--u)));
+  opacity: 0;
+  transition: transform 0.4s, opacity 0.3s;
+}
+
+html.reduced-motion .rb-tile,
+html.reduced-motion .rb-panel .gr-right {
+  animation: none;
+  transition: none;
+}
+
+html.short .rb-panel .gr-body.rb-body {
+  grid-template-columns: 92px minmax(0, 1fr);
+}
+
+html.short .rb-panel .gr-inv .gr-bag {
+  --bag-cols: 8;
+}
+
+html.short .rb-medal {
+  width: 46px;
+  height: 46px;
+}
+
+.item-tip .it-no {
+  color: #e0907a;
+  font-style: italic;
+}
+
+html.short .rb-panel.gr-gear,
+html.short .gr-shop.gr-gear {
+  width: 100%;
+  height: 100%;
+}
+
+/* Spoils "yer aç": ortak Inventory küçük boyda */
+.gr-inv-mini {
+  flex: none;
+}
+
+.gr-inv-mini .gr-bag {
+  --bag-cols: 10;
+  max-height: calc(300 * var(--u));
+}
+
+.gr-overlay .gr-inv-mini .gr-bag {
+  flex: none;
+  --bag-cols: 10;
+}
+
+.gr-shop.gr-phone .gr-wares {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gr-overlay .gr-shop.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 7;
+}
+
+.gr-shop.gr-phone .gr-odo-line {
+  font-size: 12.5px;
+  padding: 4px 8px;
+}

@@ -84,7 +84,7 @@ describe('loot üretimi', () => {
     expect(roll('battle', 7)).toEqual(roll('battle', 7));
   });
 
-  it("beklenen sayı: savaş 0,5 x takım, boss en az 1 ve ilk item'i Rare+, hazine en az 1 Rare+; ilvl sınırı", () => {
+  it("beklenen sayı: savaş 0,5 x takım, boss / hazine en az 1 item (nadirlik garantisi yok: Ömer 2026-10-11); ilvl sınırı", () => {
     let battleItems = 0;
     for (let i = 0; i < 400; i++) battleItems += roll('battle', i).items.length;
     expect(battleItems / 400).toBeCloseTo(ITEMS.loot.perPartyMember.battle * 4, 0);
@@ -92,7 +92,6 @@ describe('loot üretimi', () => {
       for (const kind of ['boss', 'treasure'] as const) {
         const r = roll(kind, i);
         expect(r.items.length).toBeGreaterThanOrEqual(1);
-        expect(RARITY_IDS.indexOf(r.rarities[0]!)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare')); // zarlanan nadirlik (taban bağımsız)
       }
       for (const id of roll('battle', i, { ilvl: 3 }).items) expect(itemDef(id)!.ilvl).toBeLessThanOrEqual(3);
     }
@@ -119,9 +118,10 @@ describe('loot üretimi', () => {
     for (let i = 0; i < 200; i++) for (const r of roll('elite', i, { replay: 2 }).rarities) expect(RARITY_IDS.indexOf(r)).toBeLessThanOrEqual(RARITY_IDS.indexOf('rare'));
   });
 
-  it('pity: 6 Rare\'siz düşüşten sonra Rare+ garanti', () => {
-    const r = roll('battle', 3, { pity: ITEMS.loot.pity.rareAfter });
-    if (r.items.length) expect(RARITY_IDS.indexOf(r.rarities[0]!)).toBeGreaterThanOrEqual(RARITY_IDS.indexOf('rare'));
+  it('Rare pity yok (Ömer 2026-10-11): sayaç ne olursa olsun nadirlik yalnızca tablodan; aynı zar aynı sonuç', () => {
+    expect(roll('battle', 3, { pity: 99 }).rarities).toEqual(roll('battle', 3, { pity: 0 }).rarities);
+    expect((ITEMS.loot as unknown as Record<string, unknown>).pity).toBeUndefined();
+    expect((ITEMS.loot as unknown as Record<string, unknown>).minRarity).toBeUndefined();
   });
 });
 
@@ -145,12 +145,13 @@ describe('seferde loot', () => {
     expect(acknowledgeLoot(after).pendingLoot).toBeUndefined();
   });
 
-  it('hazine sandığı: en az 1 Rare+; torba doluysa sığmayan altına ÇEVRİLMEZ, kartta bekler; yer açılıp alınabilir, kart kapanınca kaybolur', () => {
+  it('hazine sandığı: en az 1 item; torba doluysa sığmayan altına ÇEVRİLMEZ, kartta bekler; yer açılıp alınabilir, kart kapanınca kaybolur', () => {
     let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'mage'), '6B');
     while (nextStep(s).kind !== 'treasure') s = autoResolve(s);
     const open = completeSimple(s, 'treasure');
     const got = open.pendingLoot!.items.map((u) => open.inventory.find((i) => i.uid === u)).filter((x): x is NonNullable<typeof x> => !!x);
-    expect(got.some((it) => RARITY_IDS.indexOf(instanceRarity(it)) >= RARITY_IDS.indexOf('rare'))).toBe(true);
+    expect(got.length).toBeGreaterThan(0);
+    for (const it of got) expect(RARITY_IDS).toContain(instanceRarity(it));
     let full: CampaignState = { ...s, inventory: [] };
     delete full.pendingLoot;
     for (let i = 0; i < BAG_SIZE; i++) full = addItem(full, 'turnshoes').state;

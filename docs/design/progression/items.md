@@ -362,7 +362,10 @@ IP kontrolü: `slotWeight x B(ilvl) x rarityMult` (±%10). Stat IP'leri 1.5 tabl
 | Tavan (kayma 0,5) | %58,5 | %27,6 | %10,9 | %3,1 |
 
 - Endless: elit / boss kartlarının eski "en az Rare / en az Epic" tabanı kalktı (yerine kayma); kart sayısı (2) ve seviye eki (+5 / +10) aynen. Zarlanan nadirlikte yükseltme yoksa bir alt nadirlik denenir.
-- Sefer: boss ve hazine ilk zaferde en az bir Rare (3.1) ve Rare pity (3.3) KORUNDU; bu yüzden seferde Rare oranı Endless'tan yüksek (bölge II-III ~%24).
+- Sefer: boss / hazine "en az bir Rare" ve Rare pity (3.3) KALDIRILDI (Ömer 2026-10-11); nadirliği yalnızca tablo belirler.
+- Endless: örneğin item seviyesi dalganın seviyesi (+ elit / boss eki; Ömer 2026-10-11): katalog tavanını aşar, affix değerleri doğrusal büyümeye devam eder. Legendary nadir düşüşü de en az dalga seviyesinde.
+- Rastgele C affix'i, item kimin için zarlandıysa ona yarayanlara hafif ağırlıklı (`affixRules.classFit`: 2 kat; dışlayıcı değil; Ömer 2026-10-11). Seferde silah düşüşü ailesini kullanan takım üyesi için zarlanır.
+- Nadirliğe göre zar tabanı (`affixRules.rollFloorByRarity`, Ömer 2026-10-11): yüksek nadirlik aralığın üst kısmından zarlar, tavan aynı.
 - **Denge düğmesi:** daha az yüksek nadirlik = daha az item gücü; Endless bandında kalmak için `affixRules.power` 1 -> 1,5 (iri adımlı ana stat, tüm statlar, hız ve Immunity tur sayısına işlemez: `noPower`).
 
 ### 3.2 Nadirlik eğrisi (bölüme göre; normal savaş düşüşü, %) — 2026-10-11'den beri 3.2b geçerli

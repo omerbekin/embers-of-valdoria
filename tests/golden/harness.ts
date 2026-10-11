@@ -12,7 +12,7 @@ import { simulateCampaign } from '../../src/sim/campaign';
 import { simulateEndless } from '../../src/sim/endless';
 import { loadoutSetup } from '../../src/progression/loadout';
 import { ITEMS, canEquip, emptyEquipment, rollItem, type Equipment } from '../../src/progression/items';
-import { affixFit } from '../../src/progression/equip';
+import { affixFit } from '../../src/progression/affix-fit';
 import { Rng } from '../../src/engine/rng';
 import { applyUnitModifiers } from '../../src/engine/stats';
 import type { Difficulty } from '../../src/campaign';

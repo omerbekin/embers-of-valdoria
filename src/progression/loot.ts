@@ -17,7 +17,7 @@ export interface LootInput {
   party: Array<{ class: string; equipment?: Partial<Equipment> }>;
   /** Kaçıncı zafer (0 = ilk). Tekrarda azalan ödül, nadirlik tavanı; garanti/pity yalnızca ilk zaferde. */
   replay?: number;
-  /** Art arda Rare'siz düşüş sayacı (pity). */
+  /** Eski Rare pity sayacı: 2026-10-11'den beri kullanılmaz (Ömer: pity ve "en az bir Rare" kalktı, nadirliği tablo belirler); aynen döner. */
   pity?: number;
 }
 
@@ -26,6 +26,8 @@ export interface LootResult {
   items: string[];
   /** Her item'in zarlanan nadirliği (items ile aynı sırada; örnek bu nadirlikle oluşturulur). */
   rarities: RarityId[];
+  /** Her item kimin için zarlansın (silahta ailesini kullanan takım üyesi; affix ağırlığı ve ana affix için); yoksa undefined. */
+  forClass: Array<string | undefined>;
   gold: number;
   /** Güncel pity sayacı. */
   pity: number;
@@ -86,18 +88,13 @@ export function rollLoot(o: LootInput): LootResult {
   let count = roundChance(rng, expected * rep.items);
   if (first) count = Math.max(count, L.minItems[o.kind] ?? 0);
   const families = [...new Set(o.party.flatMap((h) => classWeaponFamilies(h.class)))];
-  const minR = first ? L.minRarity[o.kind] : undefined;
   const cap = rIdx(rep.maxRarity);
-  let pity = o.pity ?? 0;
   const items: string[] = [];
   const rarities: RarityId[] = [];
+  const forClass: Array<string | undefined> = [];
   for (let i = 0; i < count; i++) {
-    let r = rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind)));
-    let floor = 0;
-    if (i === 0 && minR) floor = rIdx(minR);
-    if (first && pity >= L.pity.rareAfter) floor = Math.max(floor, rIdx('rare'));
-    // Legendary bu tablodan çıkmaz (madde 296/297: yalnızca ortak nadir düşüş zarı): en çok Epic
-    r = Math.min(Math.max(r, floor), cap, rIdx('epic'));
+    // Nadirliği yalnızca tablo belirler (Ömer 2026-10-11: boss / hazine "en az Rare" ve Rare pity kalktı); Legendary bu tablodan çıkmaz: en çok Epic
+    const r = Math.min(rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind))), cap, rIdx('epic'));
     const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, o.party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
     let family: string | undefined;
     if (slot === 'weapon') {
@@ -109,8 +106,8 @@ export function rollLoot(o: LootInput): LootResult {
     if (!d) continue;
     items.push(d.id);
     rarities.push(RARITY_IDS[r]!);
-    if (first) pity = r >= rIdx('rare') ? 0 : pity + 1;
+    forClass.push(d.slot === 'weapon' ? o.party.find((h) => classWeaponFamilies(h.class).includes(d.family ?? ''))?.class : undefined);
   }
   const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold);
-  return { items, rarities, gold, pity };
+  return { items, rarities, forClass, gold, pity: o.pity ?? 0 };
 }

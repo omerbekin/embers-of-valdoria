@@ -1,7 +1,8 @@
 // Item verisi ve kuralları (saf TypeScript; Phaser/DOM yok). Tasarım: docs/design/progression/items.md (affix kademeleri: 1.3b, Ömer onayı 2026-10-11).
 // Katalog = taban item'ler; nadirlik = affix sayısı (C / C,C / C,C,B / C,C,B,A / Legendary C,C,B,A + etki); affix değeri yalnızca item seviyesiyle büyür.
 import itemsJson from '../../data/items.json';
-import { classes, randomPool, skills as skillDefs, statuses as statusDefs } from '../engine/content';
+import { classes, randomPool, statuses as statusDefs } from '../engine/content';
+import { affixFit, classElements } from './affix-fit';
 import { Rng } from '../engine/rng';
 import type { Element } from '../engine/types';
 
@@ -134,7 +135,8 @@ export interface ItemsData {
   /** Affix zarı (Ömer 2026-10-10): değer = orta x (1 ± spread), adıma yuvarlanır. */
   rolls: { spread: number };
   /** power = tüm affix değerlerinin ortak çarpanı (denge düğmesi). */
-  affixRules: { power: number };
+  /** power = tüm affix değerlerinin ortak çarpanı (denge düğmesi); rollFloorByRarity = nadirliğe göre zarın aralıktaki alt sınırı (0-1). */
+  affixRules: { power: number; rollFloorByRarity?: Partial<Record<RarityId, number>>; classFit?: { weight: number; tiers: AffixTier[] } };
   affixDefs: Record<string, AffixDef>;
   effects: Record<string, EffectDef>;
   effectRules: { stack: boolean; endless: boolean };
@@ -157,10 +159,8 @@ export type LootKind = 'battle' | 'elite' | 'boss' | 'treasure';
 export interface LootConfig {
   perPartyMember: Record<'battle' | 'elite' | 'boss', number>;
   minItems: Record<LootKind, number>;
-  minRarity: Partial<Record<LootKind, RarityId>>;
   treasureBase: number;
   treasurePerMember: number;
-  pity: { rareAfter: number };
   smartSlotChance: number;
   usableWeaponChance: number;
   repeat: Array<{ items: number; gold: number; maxRarity: RarityId }>;
@@ -231,7 +231,13 @@ export function partValue(p: AffixPart, ilvl: number, q: number): number {
 }
 
 /** Parçanın görünür aralığı [en az, en çok] (zarsızda iki uç aynı). */
-export const partRange = (p: AffixPart, ilvl: number): [number, number] => [partValue(p, ilvl, 0), partValue(p, ilvl, 1)];
+export const partRange = (p: AffixPart, ilvl: number, floor = 0): [number, number] => [partValue(p, ilvl, floor), partValue(p, ilvl, 1)];
+
+/**
+ * Nadirliğin zar tabanı (Ömer 2026-10-11): yüksek nadirlik aralığın ÜST kısmından zarlar (tavan aynı). items.json > affixRules.rollFloorByRarity,
+ * aralığın oranı (0 = tüm aralık). Yalnızca yeni zarlar; kayıtlı örneklerin q'su (aralıktaki yeri) değişmez.
+ */
+export const rollFloor = (r: RarityId | undefined): number => Math.min(1, Math.max(0, (r ? ITEMS.affixRules?.rollFloorByRarity?.[r] : 0) ?? 0));
 
 /** Affix'in değerleri (parça sırasıyla). Bilinmeyen affix: boş. */
 export function affixValues(id: string, ilvl: number, q: number): number[] {
@@ -256,20 +262,6 @@ export const affixAllowed = (id: string, slot: SlotId): boolean => {
 export const tierPool = (tier: AffixTier, slot: SlotId): string[] => Object.keys(ITEMS.affixDefs).filter((id) => ITEMS.affixDefs[id]!.tier === tier && affixAllowed(id, slot));
 
 // ------------------------------------------------------------ sınıf ipuçları (ana affix seçimi, Equip best)
-
-const classElementCache = new Map<string, Set<Element>>();
-
-/** Sınıfın skill'lerinin hasar elementleri (data/classes + skills.json). */
-export function classElements(classId: string): Set<Element> {
-  let set = classElementCache.get(classId);
-  if (set) return set;
-  set = new Set<Element>();
-  for (const sid of classes[classId]?.skills ?? []) {
-    for (const e of skillDefs[sid]?.effects ?? []) if (e.type === 'damage') set.add(e.element ?? 'physical');
-  }
-  classElementCache.set(classId, set);
-  return set;
-}
 
 /** Ana affix'in elementi (elem:<x> hedefli tek parçalı C affix'i), yoksa undefined. */
 const affixElement = (id: string): Element | undefined => {
@@ -303,7 +295,7 @@ export function clampRarity(d: ItemDef, r: RarityId | undefined): RarityId {
   return want === 'legendary' ? 'epic' : want;
 }
 
-const rollQ = (rng: IntRng): number => rng.int(0, 100) / 100;
+const rollQ = (rng: IntRng, floor = 0): number => Math.round((floor + (rng.int(0, 100) / 100) * (1 - floor)) * 100) / 100;
 
 function rollChoice(id: string, rng: IntRng): string | undefined {
   const ch = affixDef(id)?.choices;
@@ -319,7 +311,7 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
   const affixes: AffixRoll[] = [];
   const push = (id: string) => {
     const x = rollChoice(id, rng);
-    affixes.push({ id, q: rollQ(rng), ...(x ? { x } : {}) });
+    affixes.push({ id, q: rollQ(rng, rollFloor(rarity)), ...(x ? { x } : {}) });
   };
   if (rarity === 'legendary' && d.affixes?.length) {
     for (const id of d.affixes) push(id);
@@ -338,13 +330,30 @@ export function rollItem(d: ItemDef, rng: IntRng, o: RollOptions = {}): ItemRoll
       if (!id) {
         const pool = tierPool(tier, d.slot).filter((a) => !used.has(a));
         if (!pool.length) return;
-        id = pool[rng.int(0, pool.length - 1)]!;
+        id = pickFitWeighted(pool, tier, o.forClass, rng);
       }
       used.add(id);
       push(id);
     });
   }
   return { rarity, ...(o.ilvl !== undefined && o.ilvl !== d.ilvl ? { ilvl: Math.max(1, Math.round(o.ilvl)) } : {}), affixes };
+}
+
+/**
+ * Rastgele affix seçimi (Ömer 2026-10-11): kimin için zarlandıysa ona yarayan affix'ler HAFİF ağırlıklı (items.json > affixRules.classFit:
+ * `weight` kat, yalnızca `tiers` kademelerinde; ör. C'de 2 kat). Dışlayıcı değil; sınıf yoksa tekdüze (tek rng.int).
+ */
+function pickFitWeighted(pool: string[], tier: AffixTier, forClass: string | undefined, rng: IntRng): string {
+  const cf = ITEMS.affixRules?.classFit;
+  const w = cf && forClass && cf.tiers.includes(tier) ? Math.max(1, Math.round(cf.weight)) : 1;
+  if (w === 1) return pool[rng.int(0, pool.length - 1)]!;
+  const weights = pool.map((id) => (affixFit(forClass!, { id, def: affixDef(id)! }) >= 1 ? w : 1));
+  let x = rng.int(0, weights.reduce((a, b) => a + b, 0) - 1);
+  for (let i = 0; i < pool.length; i++) {
+    x -= weights[i]!;
+    if (x < 0) return pool[i]!;
+  }
+  return pool[pool.length - 1]!;
 }
 
 /** Geriye dönük ad (eski API): örnek zarları. */
@@ -484,7 +493,13 @@ export function rolledAffixes(inst: Pick<ItemInstance, 'id'> & { uid?: string; r
   for (const a of roll.affixes) {
     const def = affixDef(a.id);
     if (!def) continue;
-    out.push({ id: a.id, def, tier: def.tier, values: def.parts.map((p) => partValue(p, ilvl, a.q)), ranges: def.parts.map((p) => partRange(p, ilvl)), ...(a.x ? { x: a.x } : {}) });
+    // Aralık örneğin nadirliğine göre (zar tabanı); eski zar tabanın altındaysa alt uç kendi değeri
+    const floor = rollFloor(roll.rarity);
+    const ranges = def.parts.map((p): [number, number] => {
+      const [lo, hi] = partRange(p, ilvl, floor);
+      return [Math.min(lo, partValue(p, ilvl, a.q)), hi];
+    });
+    out.push({ id: a.id, def, tier: def.tier, values: def.parts.map((p) => partValue(p, ilvl, a.q)), ranges, ...(a.x ? { x: a.x } : {}) });
   }
   return out;
 }

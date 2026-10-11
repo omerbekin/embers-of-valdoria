@@ -762,7 +762,7 @@ body {
   font: bold calc(20 * var(--u)) var(--st-serif);
   letter-spacing: 0.16em;
   text-transform: uppercase;
-  color: #a8977a;
+  color: #e0904a; /* bölüm başlığı satırlardan ayrışsın (Ömer 2026-10-11): kor tonu */
   text-shadow: 0 2px 3px #0c0805;
 }
 
@@ -771,7 +771,7 @@ body {
   flex: 1;
   height: 1px;
   margin-bottom: 0.45em;
-  background: linear-gradient(90deg, rgba(217, 178, 106, 0.3), rgba(217, 178, 106, 0));
+  background: linear-gradient(90deg, rgba(224, 144, 74, 0.55), rgba(224, 144, 74, 0));
 }
 
 .st-control {

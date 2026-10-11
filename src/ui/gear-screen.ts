@@ -9,69 +9,37 @@ import { closeDom } from './motion';
 import { uiSound } from './ui-sound';
 import './gear.css';
 import { activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
-import { content } from '../engine';
 import {
   BAG_SIZE,
   PRIMARY_BONUS_NAME,
-  RARITY_IDS,
   SLOT_IDS,
   TIER_COLOR,
   affixLines,
-  affixTip,
   canEquip,
-  classWeaponFamilies,
-  equipDiff,
-  fmtPanel,
-  heroPanel,
-  heroStats,
   itemDef,
   instanceColor,
-  instanceRarity,
   instanceSubtitle,
-  instanceSummary,
   effectLine,
-  itemValue,
   ITEMS,
   primaryCheck,
-  slotDef,
   type AffixLine,
   type Equipment,
   type ItemDef,
   type ItemInstance,
   type SlotId,
 } from '../progression';
-import { wikiFiles } from '../wiki/files';
 import { lockInput, unlockInput } from './input-lock';
 import { itemDefIcon } from './item-icon-dom';
-import { statIconUrl, statTip, statTipSegments } from './stat-tips';
-import { dropAction, isDoubleTap, type DragSource, type DropTarget } from './gear-drop';
+import { statIconUrl } from './stat-tips';
 import { dismissOnBackdrop } from './backdrop';
-import { bindIcon, iconUrl } from './dom-icons';
+import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 import type { Stats } from '../engine';
-import { gearSkillRows, passiveTip, skillTip, type GearSkillRow, type GearSkillTip } from './gear-skills';
-import { ELEMENT_COLOR, skillTags } from './skill-tags';
-import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
-import layout from '../../data/battle-layout.json';
-
-/** Düğümün `anc` içindeki konumu (offset zinciri; döndürülmüş sahnede de doğru, kaydırmalar düşülür). */
-function offsetIn(node: HTMLElement, anc: HTMLElement): { x: number; y: number } {
-  let x = 0;
-  let y = 0;
-  let n: HTMLElement | null = node;
-  while (n && n !== anc) {
-    x += n.offsetLeft;
-    y += n.offsetTop;
-    const parent = n.offsetParent as HTMLElement | null;
-    for (let q: HTMLElement | null = n.parentElement; q && q !== anc; q = q.parentElement) {
-      x -= q.scrollLeft;
-      y -= q.scrollTop;
-      if (q === parent) break;
-    }
-    n = parent;
-  }
-  return { x, y };
-}
+import { avatarUrl, className, renderCharacter } from './character-panel';
+import { renderInventory } from './inventory';
+import { itemTipNodes, type ItemTipLine } from './item-tip';
+import { attachItemInteractions } from './item-drag';
+import { heroItemLine } from './gear-hover';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -97,9 +65,6 @@ function slotIcon(d: ItemDef | undefined, slot: SlotId, color: string | null, si
   return img;
 }
 
-const avatarUrl = (classId: string): string | undefined => wikiFiles.avatars[`../../assets/avatars/${classId}.png`];
-const className = (id: string): string => content.classes[id]?.name ?? id;
-const rarityColor = (inst: ItemInstance | null | undefined): string => (inst && itemDef(inst.id) ? instanceColor(inst) : '#5b4a33');
 
 export interface GearOptions {
   get: () => CampaignState;
@@ -169,175 +134,127 @@ function withUiIcon(e: HTMLElement, k: UiIconKind): void {
   e.prepend(img);
 }
 
-/** Skill sayısı / tooltip satırı rengi: savaş tooltip'iyle aynı (element, kalkan, büyü kalkanı; şifa yeşil). */
-const KIND_COLOR: Record<string, string> = { ...ELEMENT_COLOR, shield: layout.colors.shield, magicShield: layout.colors.magicShield, heal: layout.colors.heal };
-const kindColor = (k: string | undefined): string | undefined => (k && k !== 'physical' ? KIND_COLOR[k] : undefined);
-
-/** Skill / pasif ikonu (savaş HUD'ı ve Codex'le aynı kaynak; sürüme canlı bağlı: dom-icons > bindIcon). */
-function skillIcon(r: { skill?: { id: string; icon: string; fx: string }; passive?: boolean }, classId: string, cls: string): HTMLImageElement {
-  const img = el('img', cls);
-  img.alt = '';
-  img.draggable = false;
-  const p = content.classes[classId]?.passive;
-  if (r.skill) bindIcon(img, r.skill.icon, r.skill.fx, ownerOfSkill(r.skill.id));
-  else bindIcon(img, p?.icon || uiIconName('passive'), content.classes[classId]?.color ?? '#e8c47e', ownerOfUnit(classId));
-  return img;
-}
-
-/**
- * Gear ekranındaki skill kartı: ikon + ad + bedel / bekleme, altında anahtar sayılar ("Damage 24"; karşılaştırmada "24 → 30 (+6)",
- * artış yeşil, azalış kırmızı, fark 0 ise gizli). Her sayı kendi satırında: fark görünse de kartın yüksekliği değişmez.
- */
-function skillCard(r: GearSkillRow, classId: string): HTMLElement {
-  const card = el('div', `gr-skill${r.passive ? ' passive' : ''}`);
-  card.dataset['skill'] = r.id;
-  const head = el('div', 'gr-skill-head');
-  const name = el('div', 'gr-skill-name', r.name);
-  const meta = el('div', 'gr-skill-meta', r.passive ? 'Passive' : [r.cost, r.cooldown ? `CD ${r.cooldown.replace(' turns', '')}` : ''].filter(Boolean).join(' · '));
-  const title = el('div', 'gr-skill-title');
-  title.append(name, meta);
-  head.append(skillIcon(r, classId, 'gr-skill-ico'), title);
-  card.append(head);
-  const nums = el('div', 'gr-skill-nums');
-  for (const n of r.numbers) {
-    const line = el('div', 'gr-skill-num');
-    const v = el('span', 'gr-skill-v', n.text);
-    const c = kindColor(n.kind);
-    if (c) v.style.color = c;
-    line.append(el('span', 'gr-skill-k', n.label), v);
-    if (n.after && n.diff) line.append(el('span', `gr-skill-a ${n.dir ?? ''}`, `→ ${n.after}`), el('span', `gr-skill-d ${n.dir ?? ''}`, `(${n.diff})`));
-    if (n.times) line.append(el('span', 'gr-skill-x', `x${n.times}`)); // art arda vuruş (Double Strike): tooltip'teki gibi sayının ardından
-    nums.append(line);
-  }
-  if (!r.numbers.length) nums.append(el('div', 'gr-skill-num none', 'No stat scaling'));
-  card.append(nums);
-  return card;
-}
-
-/** Skill tooltip'inin içeriği (savaştaki kit tooltip'iyle aynı düzen: ikon + ad (+ rozet), bedel / bekleme, etiketler, etki satırları). */
-function skillTipNodes(t: GearSkillTip, skill: { id: string; icon: string; fx: string } | undefined, classId: string, line: (l: string, color?: string) => HTMLElement): HTMLElement[] {
-  const head = el('div', 'gr-stip-head');
-  head.append(skillIcon({ ...(skill ? { skill } : { passive: true }) }, classId, 'gr-stip-ico'), el('b', '', t.title));
-  if (!skill) head.append(el('span', 'gr-stip-badge', t.badge));
-  const out: HTMLElement[] = [head];
-  if (t.meta.length) out.push(el('div', 'gr-stip-meta', t.meta.join(' · ')));
-  const def = skill ? content.skills[skill.id] : undefined;
-  if (def) {
-    const tags = el('div', 'gr-stip-tags');
-    skillTags(def).forEach((g, i) => {
-      if (i) tags.append(document.createTextNode(' · '));
-      const s = el('span', '', g.text);
-      if (g.color) s.style.color = g.color;
-      tags.append(s);
-    });
-    out.push(tags);
-  }
-  out.push(...t.rows.map((r) => line(r.text, kindColor(r.kind))));
-  return out;
-}
-
-type Selection = { kind: 'bag'; uid: string } | { kind: 'slot'; slot: SlotId } | null;
-
 /** Sefer Gear ekranı (eski giriş; kaynak CampaignState). */
 export function openGearScreen(root: HTMLElement, o: GearOptions): () => void {
   const s0 = o.get();
   return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose });
 }
 
-/** Gear ekranı: sol kahramanlar, orta 6 yuva + statlar, sağ torba + seçilen item kartı. Kaynaktan beslenir (sefer / endless). */
+/** Telefon mu (kısa sahne; src/ui/viewport.ts html.short): Character ve Inventory ayrı tam ekran + geçiş düğmesi. */
+export const phoneLayout = (): boolean => document.documentElement.classList.contains('short');
+
+/** Item ipucunun telefondaki ek satırları: her kahramana etkisi (masaüstünde kahraman kartlarında görünür). */
+export function heroTipExtra(heroes: GearHero[], inst: ItemInstance, always = false): Array<{ label: string; parts: ItemTipLine[] }> {
+  if (!always && !phoneLayout()) return [];
+  return heroes.map((h) => {
+    const l = heroItemLine(h, inst);
+    return { label: className(h.class), parts: l.parts.map((p) => ({ text: p.text, ...(p.dir ? { dir: p.dir } : l.tone === 'no' ? { dir: 'no' as const } : {}) })) };
+  });
+}
+
+/** Onay kutusu (Rare+ atma, primary bonusu kaybı): pencerenin içinde; Cancel / zemin = iptal. Dönen: kapat. */
+export function confirmIn(host: HTMLElement, text: string, ok: string, run: () => void, danger = false): () => void {
+  const box = el('div', 'gr-confirm');
+  const card = el('div', 'gr-confirm-card');
+  const close = (): void => box.remove();
+  card.append(el('div', 'gr-confirm-text', text));
+  const row = el('div', 'gr-confirm-row');
+  row.append(
+    btn('gr-btn', 'Cancel', close),
+    btn(`gr-btn primary${danger ? ' danger' : ''}`, ok, () => {
+      close();
+      run();
+    }),
+  );
+  card.append(row);
+  box.append(card);
+  box.addEventListener('pointerdown', (e) => {
+    if (e.target === box) close();
+  });
+  host.append(box);
+  return close;
+}
+
+/**
+ * Gear ekranı (Ömer 2026-10-11, g1): solda CHARACTER sayfası (kahramanlar | yuvalar + statlar, altta skill'ler), sağda yalnızca INVENTORY
+ * (torba). Item kartı / "Usable by" bloğu yok: torba item'inin üstüne gelince imlecin yanında item ipucu (dokunmatikte uzun basış) ve
+ * kahraman kartlarının alt satırı o item'in her kahramana etkisi. Kuşanma: yuvaya / kahramana sürükle-bırak ya da çift tıklama (seçili
+ * kahramana); çıkarma: yuvayı torbaya sürükle ya da yuvaya çift tıkla; atma: sürüklerken sağ altta beliren çöp kutusu (Rare+ onaylı).
+ * Telefonda Character ve Inventory ayrı tam ekran (üstte geçiş; C tuşu). Kaynaktan beslenir (sefer / endless).
+ */
 export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void } = {}): () => void {
   const overlay = el('div', 'gr-overlay el-modal'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Gear');
-  const panel = el('div', 'gr-panel el-modal-panel');
+  const panel = el('div', 'gr-panel gr-gear el-modal-panel');
   overlay.append(panel);
   root.append(overlay);
   uiSound('open');
   lockInput('gear');
   let heroId = o.hero ?? src.heroes()[0]?.id ?? '';
-  let sel: Selection = null;
+  /** Seçili torba item'i (tek kor elmas; karşılaştırma odağı). */
+  let sel = '';
+  /** Fareyle üstüne gelinen torba item'i (karşılaştırma odağı, seçimden önce gelir). */
+  let hoverUid = '';
+  /** Sürüklenen torba item'i (en öncelikli odak). */
+  let dragUid = '';
   let usableOnly = false;
-  /** Rare+ atma onayı bekleyen item (uid). */
-  let confirmDiscard = '';
-  // Stat açıklamaları (savaş HUD'ıyla aynı metin: src/ui/stat-tips.ts): fareyle üstüne gelince; dokunmatikte dokununca açılır / kapanır
+  let view: 'char' | 'inv' = 'inv';
+  let shakeUid = '';
+  let flashText = '';
   let curStats: Stats | null = null;
-  /** Seçili torba item'i bu kahramana takılırsa statlar (yoksa null): açıklamada "önce → sonra". */
   let afterStats: Stats | null = null;
-  const tip = el('div', 'el-tip gr-tip');
-  overlay.append(tip);
-  let tipFor: HTMLElement | null = null;
-  let tipPinned = false;
-  const hideTip = (): void => {
-    tip.classList.remove('on');
-    tipFor = null;
-    tipPinned = false;
+  let closeAsk: (() => void) | null = null;
+  const heroOf = (id: string) => src.heroes().find((h) => h.id === id);
+  const curHero = () => heroOf(heroId) ?? src.heroes()[0];
+  const bagInst = (uid: string) => src.bag().find((i) => i.uid === uid);
+  const ask = (text: string, ok: string, run: () => void, danger = false): void => {
+    closeAsk?.();
+    closeAsk = confirmIn(overlay, text, ok, () => {
+      closeAsk = null;
+      run();
+    }, danger);
   };
-  const showTip = (t: HTMLElement): void => {
-    // türetilen değer satırları: fark parantezi başlık farkıyla aynı renkte (artış yeşil, azalış kırmızı)
-    const line = (l: string, color?: string): HTMLElement => {
-      const d = el('div', 'gr-tip-l');
-      if (color) d.style.color = color;
-      d.append(...statTipSegments(l).map((g) => (g.dir ? el('span', `gr-tip-d ${g.dir}`, g.text) : document.createTextNode(g.text))));
-      return d;
-    };
-    const skillId = t.dataset['skill'];
-    if (skillId !== undefined) {
-      // Skill / pasif açıklaması: savaştaki skill tooltip'iyle aynı satırlar (skill-info), item seçiliyse değişen sayılar "24 → 30 (+6)"
-      const hero = src.heroes().find((h) => h.id === heroId);
-      if (!hero || !curStats) return;
-      const def = content.classes[hero.class];
-      const skill = content.skills[skillId];
-      const info = skillId === 'passive' && def?.passive ? passiveTip(def.passive, curStats, afterStats) : skill ? skillTip(skill, curStats, afterStats) : null;
-      if (!info) return;
-      tip.replaceChildren(...skillTipNodes(info, skill && skillId !== 'passive' ? skill : undefined, hero.class, line));
-    } else if (t.dataset['affix'] !== undefined) {
-      // Stat kimliği olmayan affix satırı (element hasarı, delme, auralar...): affix açıklaması (Ömer 2026-10-11)
-      const info = affixTip({ name: t.dataset['affix'] ?? '', desc: t.dataset['desc'] ?? '', tier: (t.dataset['tier'] ?? 'C') as AffixLine['tier'], text: t.dataset['text'] ?? '', range: t.dataset['range'] ?? '' });
-      tip.replaceChildren(el('b', '', info.title), ...info.lines.map((l) => line(l)));
-    } else {
-      const info = curStats ? statTip(t.dataset['stat'] ?? '', curStats, t.dataset['delta'] ? afterStats : null) : null;
-      if (!info) return;
-      const head = el('b', '', info.title);
-      if (t.dataset['delta']) head.append(el('span', `gr-tip-d ${t.dataset['dir'] ?? ''}`, ` (${t.dataset['delta']})`));
-      tip.replaceChildren(head, ...info.lines.map((l) => line(l)));
-    }
-    tip.classList.add('on');
-    const o = offsetIn(t, overlay);
-    const W = overlay.clientWidth;
-    const H = overlay.clientHeight;
-    const tw = tip.offsetWidth;
-    const th = tip.offsetHeight;
-    let x = o.x + t.offsetWidth / 2 - tw / 2;
-    let y = o.y - th - 8;
-    if (y < 6) y = o.y + t.offsetHeight + 8;
-    x = Math.max(6, Math.min(W - tw - 6, x));
-    y = Math.max(6, Math.min(H - th - 6, y));
-    tip.style.left = `${x}px`;
-    tip.style.top = `${y}px`;
-    tipFor = t;
-  };
-  const TIP_SEL = '[data-stat],[data-skill],[data-affix]';
-  overlay.addEventListener('pointerover', (e) => {
-    if (e.pointerType === 'touch' || tipPinned || drag) return;
-    const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
-    if (t && t !== tipFor) showTip(t);
-  });
-  overlay.addEventListener('pointerout', (e) => {
-    if (e.pointerType === 'touch' || tipPinned) return;
-    const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
-    if (t && !(e.relatedTarget instanceof Node && t.contains(e.relatedTarget))) hideTip();
-  });
-  overlay.addEventListener('click', (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
-    if (!t) {
-      if (tipPinned) hideTip();
-      return;
-    }
-    if (tipFor === t && tipPinned) hideTip();
-    else {
-      showTip(t);
-      tipPinned = true;
-    }
+
+  const ix = attachItemInteractions({
+    overlay,
+    panel,
+    trash: true,
+    sourceOf: (v, t) => (v.startsWith('bag:') ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : null),
+    targetOf: (v) => (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
+    classOf: (id) => heroOf(id)?.class,
+    tipNodes: (key) => {
+      const hero = curHero();
+      const i = key.indexOf(':');
+      const kind = key.slice(0, i);
+      const id = key.slice(i + 1);
+      const inst = kind === 'bag' ? bagInst(id) : kind === 'slot' && hero ? hero.equipment[id as SlotId] : undefined;
+      if (!inst) return [];
+      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : []);
+    },
+    // Odak değişince yalnızca Character sayfası yeniden çizilir (torba DOM'u yerinde kalır: üstüne gelme bozulmaz)
+    onHover: (key) => {
+      const uid = key.startsWith('bag:') ? key.slice(4) : '';
+      if (uid === hoverUid) return;
+      hoverUid = uid;
+      renderChar();
+    },
+    onDragStart: (s) => {
+      dragUid = s.kind === 'bag' ? s.uid : '';
+      if (dragUid) renderChar(); // sürüklenen item'e göre farklar ve kahraman satırları
+    },
+    onDrop: (s, tg, act) => {
+      const hadFocus = !!dragUid;
+      dragUid = '';
+      if (act?.kind === 'equip') tryEquip(act.heroId, act.uid);
+      else if (act?.kind === 'unequip') {
+        uiSound('equip');
+        apply(() => src.unequip(act.heroId, act.slot));
+      } else if (act?.kind === 'discard') tryDiscard(act.uid);
+      else if (act?.kind === 'none' && act.reason === 'Cannot use' && s.kind === 'bag' && tg && (tg.kind === 'slot' || tg.kind === 'hero')) tryEquip(tg.heroId, s.uid);
+      else if (hadFocus) renderChar();
+    },
+    stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
   });
 
   let closing = false;
@@ -346,10 +263,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     closing = true;
     closeDom(overlay, () => overlay.remove());
     document.removeEventListener('keydown', onKey, true);
-    document.removeEventListener('pointermove', onMove);
-    document.removeEventListener('pointerup', onUp);
-    document.removeEventListener('pointercancel', onCancel);
-    document.removeEventListener('touchmove', onTouchMove);
+    ix.destroy();
     unlockInput('gear');
     o.onClose?.();
   };
@@ -357,10 +271,17 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (e.key === 'Escape') {
       e.stopPropagation();
       e.preventDefault();
-      if (sel) {
-        sel = null;
-        render();
+      if (closeAsk && overlay.querySelector('.gr-confirm')) {
+        closeAsk();
+        closeAsk = null;
+      } else if (sel) {
+        sel = '';
+        renderAll();
       } else close();
+    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && phoneLayout()) {
+      e.stopPropagation();
+      view = view === 'char' ? 'inv' : 'char';
+      renderAll();
     }
   };
   document.addEventListener('keydown', onKey, true);
@@ -371,437 +292,212 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     try {
       fn();
     } catch (err) {
-      flash(err instanceof Error ? err.message : String(err));
+      flashText = err instanceof Error ? err.message : String(err);
+      uiSound('error');
     }
-    render();
+    renderAll();
   };
-  let flashText = '';
-  const flash = (t: string): void => {
-    flashText = t;
-  };
-  /** Kuşanılamayan item'e çift tıklama / bırakma: hücre kısa sallanır (bir sonraki çizimde). */
-  let shakeUid = '';
 
-  /**
-   * Çift tıklama / sürükle-bırak ile kuşanma (Equip düğmesiyle aynı kurallar): silah ailesi uymuyorsa uyarı + sallanma, hiçbir şey olmaz;
-   * primary bonusu düşecekse item o kahramanda seçili kalır ve kartta "Equip anyway" onayı görünür.
-   */
+  /** Kuşanma (sürükle-bırak / çift tıklama): silah ailesi uymuyorsa uyarı + sallanma; primary bonusu düşecekse onay ("Equip anyway"). */
   const tryEquip = (targetHero: string, uid: string): void => {
-    const h = src.heroes().find((x) => x.id === targetHero);
-    const inst = src.bag().find((i) => i.uid === uid);
+    const h = heroOf(targetHero);
+    const inst = bagInst(uid);
     const d = inst ? itemDef(inst.id) : undefined;
     if (!h || !inst || !d) return;
     heroId = targetHero;
-    confirmDiscard = '';
     if (!canEquip(h.class, d)) {
       const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
-      sel = { kind: 'bag', uid };
       shakeUid = uid;
       uiSound('error');
-      flash(`${className(h.class)} cannot use ${fam?.name ?? 'this weapon'}.`);
-      render();
+      flashText = `${className(h.class)} cannot use ${fam?.name ?? 'this weapon'}.`;
+      renderAll();
       return;
     }
-    if (primaryCheck(h, { equip: inst }).lost) {
-      sel = { kind: 'bag', uid };
-      flash('Confirm with Equip anyway.');
-      render();
-      return;
-    }
-    sel = null;
-    uiSound('equip');
-    apply(() => src.equip(targetHero, uid));
-  };
-  let lastTap: { key: string; at: number } | null = null;
-
-  // Sürükle-bırak: fare 6 px kaydırınca, dokunmatikte uzun basınca (380 ms) başlar; ikonun hayaleti imleci izler, geçerli hedefler parlar.
-  // Bırakılan yer geçersizse hiçbir şey olmaz (ikon yerinde). Sürükleme zemine dokunma sayılmaz (basış panelin içinde başlar).
-  let drag: { src: DragSource; ghost: HTMLElement; rc: string } | null = null;
-  let press: { src: DragSource; x: number; y: number; touch: boolean; timer: number; icon: HTMLElement; rc: string } | null = null;
-  let dragJustEnded = false;
-  /** Sürükleme önizlemesi: seçili kahramana kuşanılabilecek bir hedefin üstünde tutulan torba item'i (uid; yoksa ''). */
-  let dragPreview = '';
-  const targetOf = (node: Element | null): DropTarget | null => {
-    const t = node?.closest<HTMLElement>('[data-drop]');
-    const v = t?.dataset['drop'] ?? '';
-    if (v === 'bag') return { kind: 'bag' };
-    if (v.startsWith('slot:')) return { kind: 'slot', heroId, slot: v.slice(5) as SlotId };
-    if (v.startsWith('hero:')) return { kind: 'hero', heroId: v.slice(5) };
-    return null;
-  };
-  const classOf = (id: string) => src.heroes().find((h) => h.id === id)?.class;
-  const markTargets = (on: boolean): void => {
-    overlay.classList.toggle('gr-dragging', on);
-    panel.querySelectorAll<HTMLElement>('[data-drop]').forEach((t) => {
-      t.classList.remove('drop-ok', 'drop-no');
-      if (!on || !drag) return;
-      const tg = targetOf(t);
-      const ok = !!tg && dropAction(drag.src, tg, classOf).kind !== 'none';
-      t.classList.add(ok ? 'drop-ok' : 'drop-no');
-    });
-    if (on && drag) overlay.style.setProperty('--drag-rc', drag.rc);
-  };
-  const moveGhost = (x: number, y: number): void => {
-    if (!drag) return;
-    const r = overlay.getBoundingClientRect();
-    const s = r.width / Math.max(1, overlay.offsetWidth);
-    drag.ghost.style.left = `${(x - r.left) / s}px`;
-    drag.ghost.style.top = `${(y - r.top) / s}px`;
-  };
-  const startDrag = (x: number, y: number): void => {
-    if (!press) return;
-    const ghost = el('div', 'gr-ghost');
-    ghost.style.setProperty('--rc', press.rc);
-    ghost.append(press.icon.cloneNode(true));
-    overlay.append(ghost);
-    drag = { src: press.src, ghost, rc: press.rc };
-    hideTip();
-    markTargets(true);
-    moveGhost(x, y);
-  };
-  const endDrag = (x: number, y: number, drop: boolean): void => {
-    const d = drag;
-    drag = null;
-    if (press) window.clearTimeout(press.timer);
-    press = null;
-    if (!d) return;
-    d.ghost.remove();
-    markTargets(false);
-    dragJustEnded = true;
-    window.setTimeout(() => (dragJustEnded = false), 0);
-    // sürükleme önizlemesi biter: bırakma bir işlem yapmazsa seçili item'in farkına dönülür
-    const hadPreview = !!dragPreview;
-    dragPreview = '';
-    const tg = drop ? targetOf(document.elementFromPoint(x, y)) : null;
-    const act = tg ? dropAction(d.src, tg, classOf) : null;
-    if (hadPreview && (!act || act.kind === 'none')) render();
-    if (!tg || !act) return;
-    if (act.kind === 'equip') tryEquip(act.heroId, act.uid);
-    else if (act.kind === 'unequip') {
-      sel = null;
+    const doEquip = (): void => {
+      if (sel === uid) sel = '';
+      if (hoverUid === uid) hoverUid = '';
       uiSound('equip');
-      apply(() => src.unequip(act.heroId, act.slot));
-    } else if (d.src.kind === 'bag' && act.reason === 'Cannot use' && tg.kind !== 'bag') tryEquip(tg.heroId, d.src.uid);
-  };
-  panel.addEventListener('pointerdown', (e) => {
-    const t = (e.target as HTMLElement).closest<HTMLElement>('[data-drag]');
-    if (!t || e.button > 0) return;
-    const v = t.dataset['drag'] ?? '';
-    const srcD: DragSource | null = v.startsWith('bag:')
-      ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' }
-      : v.startsWith('slot:')
-        ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId }
-        : null;
-    if (!srcD) return;
-    const touch = e.pointerType === 'touch';
-    const icon = t.querySelector<HTMLElement>('.gr-svg') ?? t;
-    press = { src: srcD, x: e.clientX, y: e.clientY, touch, icon, rc: t.style.getPropertyValue('--rc') || '#f3d999', timer: 0 };
-    if (touch) press.timer = window.setTimeout(() => press && startDrag(press.x, press.y), 380);
-  });
-  /**
-   * Sürüklenen torba item'i seçili kahramanın uygun yuvasının / kartının üstündeyse karşılaştırma onunla yapılır (stat farkları ve skill
-   * sayıları "önce → sonra"); hedeften çıkınca seçili item'in farkına döner. Yalnızca hedef değişince yeniden çizilir.
-   */
-  const updateDragPreview = (x: number, y: number): void => {
-    if (!drag || drag.src.kind !== 'bag') return;
-    const tg = targetOf(document.elementFromPoint(x, y));
-    const act = tg && tg.kind !== 'bag' && tg.heroId === heroId ? dropAction(drag.src, tg, classOf) : null;
-    const uid = act?.kind === 'equip' ? act.uid : '';
-    if (uid === dragPreview) return;
-    dragPreview = uid;
-    render();
-    markTargets(true);
-  };
-  const onMove = (e: PointerEvent): void => {
-    if (drag) {
-      moveGhost(e.clientX, e.clientY);
-      updateDragPreview(e.clientX, e.clientY);
+      apply(() => src.equip(targetHero, uid));
+    };
+    const pc = primaryCheck(h, { equip: inst });
+    if (pc.lost && pc.primary) {
+      const over = pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ');
+      ask(`${over} would exceed ${pc.primary.toUpperCase()} on the ${className(h.class)}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`, 'Equip anyway', doEquip);
       return;
     }
-    if (!press) return;
-    const dist = Math.hypot(e.clientX - press.x, e.clientY - press.y);
-    if (press.touch) {
-      if (dist > 10) {
-        window.clearTimeout(press.timer); // parmak kaydı: kaydırma, sürükleme değil
-        press = null;
-      }
-    } else if (dist > 6) startDrag(e.clientX, e.clientY);
+    doEquip();
   };
-  const onUp = (e: PointerEvent): void => endDrag(e.clientX, e.clientY, true);
-  const onCancel = (e: PointerEvent): void => endDrag(e.clientX, e.clientY, false);
-  // Sürükleme sürerken dokunmatik kaydırma olmasın
-  const onTouchMove = (e: TouchEvent): void => {
-    if (drag) e.preventDefault();
+  /** Atma (çöp kutusuna bırakma): Rare ve üstü onay ister (madde 280). */
+  const tryDiscard = (uid: string): void => {
+    const inst = bagInst(uid);
+    const d = inst ? itemDef(inst.id) : undefined;
+    if (!inst || !d) return;
+    const run = (): void => {
+      if (sel === uid) sel = '';
+      hoverUid = '';
+      uiSound('confirm');
+      apply(() => src.discard(uid));
+    };
+    if (discardNeedsConfirm(inst)) ask(`Discard ${d.name}? It is gone for good.`, 'Discard', run, true);
+    else run();
   };
-  document.addEventListener('pointermove', onMove);
-  document.addEventListener('pointerup', onUp);
-  document.addEventListener('pointercancel', onCancel);
-  document.addEventListener('touchmove', onTouchMove, { passive: false });
-  // Sürüklemeden sonra gelen tıklama (bırakılan yerdeki düğme) yok sayılır
-  panel.addEventListener('click', (e) => {
-    if (dragJustEnded) {
-      e.stopPropagation();
-      e.preventDefault();
-    }
-  }, true);
-  panel.addEventListener('contextmenu', (e) => (e.target as HTMLElement).closest('[data-drag]') && e.preventDefault());
 
-  function render(): void {
-    const list = src.heroes();
-    const bag = src.bag();
-    const hero = list.find((h) => h.id === heroId) ?? list[0];
-    hideTip();
-    curStats = hero ? heroStats(hero) : null;
-    // Yeniden çizim kaydırma konumlarını korur (tıklamada torba / sütunlar başa sıçramasın)
-    const scrolls = ['.gr-heroes', '.gr-mid', '.gr-bag', '.gr-card'].map((q) => [q, panel.querySelector<HTMLElement>(q)?.scrollTop ?? 0] as const);
-    queueMicrotask(() => {
-      for (const [q, top] of scrolls) {
-        const e = panel.querySelector<HTMLElement>(q);
-        if (e && q !== '.gr-card') e.scrollTop = top;
-      }
-    });
-    panel.replaceChildren();
-    // Başlık
-    const head = el('div', 'gr-head');
-    const gold = el('div', 'gr-gold', `${src.gold()} gold`);
-    withUiIcon(gold, 'gold');
-    head.append(el('div', 'gr-title', 'Gear'), gold);
-    panel.append(head);
-    if (o.tutorial)
-      panel.append(el('div', 'gr-hint', 'Your escort left their gear for the new company. Tap an item in the bag, then Equip, or let Equip best choose.'));
-    const body = el('div', 'gr-body');
-    panel.append(body);
-
-    // --- Sol: kahramanlar
-    const heroes = el('div', 'gr-heroes');
-    for (const h of list) {
-      const card = btn(`gr-hero${hero && h.id === hero.id ? ' on' : ''}`, '', () => {
-        heroId = h.id;
-        // Torbadan seçili item kahraman değişince seçili kalır (aynı item'i farklı kahramanlarda dene: fark, uyarılar yeni kahramana göre);
-        // önceki kahramanın kuşanılmış yuvası seçiliyse seçim kalkar (o yuva yeni kahramanda başka item'dir)
-        if (sel?.kind === 'slot') sel = null;
-        confirmDiscard = '';
-        render();
-      });
-      card.dataset['drop'] = `hero:${h.id}`;
-      const url = avatarUrl(h.class);
-      const face = el('div', 'gr-face');
-      if (url) face.style.backgroundImage = `url("${url}")`;
-      const meta = el('div', 'gr-hero-meta');
-      const count = SLOT_IDS.filter((k) => h.equipment[k]).length;
-      meta.append(el('div', 'gr-hero-name', className(h.class)), el('div', 'gr-hero-sub', `Level ${h.level} · ${count}/6 items`));
-      card.append(face, meta);
-      heroes.append(card);
-    }
-    body.append(heroes);
-    if (!hero) return;
-
-    // --- Orta: yuvalar + statlar
-    const mid = el('div', 'gr-mid');
-    mid.append(el('div', 'gr-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`));
-    const slots = el('div', 'gr-slots');
-    for (const k of SLOT_IDS) {
-      const inst = hero.equipment[k];
-      const d = inst ? itemDef(inst.id) : undefined;
-      const on = sel?.kind === 'slot' && sel.slot === k;
-      const cell = btn(`gr-slot${on ? ' on' : ''}${inst ? '' : ' empty'}`, '', () => {
-        sel = inst ? { kind: 'slot', slot: k } : null;
-        render();
-      });
-      cell.style.setProperty('--rc', rarityColor(inst));
-      cell.dataset['drop'] = `slot:${k}`;
-      if (inst) cell.dataset['drag'] = `slot:${k}`;
-      cell.append(slotIcon(d, k, d ? rarityColor(inst) : null, 1.3));
-      const txt = el('div', 'gr-slot-text');
-      txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name), el('div', 'gr-slot-sub', d && inst ? instanceSummary(inst, hero.class) : 'Empty'));
-      if (d && inst) cell.title = `${d.name}: ${instanceSummary(inst, hero.class)}`;
-      cell.append(txt);
-      slots.append(cell);
-    }
-    mid.append(slots);
-    // Stat paneli (seçili torba item'i için fark)
-    // Seçili item torbadan çıktıysa (kuşanıldı, atıldı) seçim kalkar
-    if (sel?.kind === 'bag') {
-      const uid = sel.uid;
-      if (!bag.some((i) => i.uid === uid)) sel = null;
-    }
-    const bagUid = sel?.kind === 'bag' ? sel.uid : '';
-    const candidate = bagUid ? bag.find((i) => i.uid === bagUid) : undefined;
-    const usableCandidate = candidate && itemDef(candidate.id) && canEquip(hero.class, itemDef(candidate.id)!) ? candidate : undefined;
-    // Karşılaştırılan item: sürüklenip uygun hedefin üstünde tutulan, yoksa seçili torba item'i
-    const compared = (dragPreview ? bag.find((i) => i.uid === dragPreview) : undefined) ?? usableCandidate;
-    const diff = new Map((compared ? equipDiff(hero, compared) : []).map((x) => [x.id, x.delta]));
-    const cd = compared ? itemDef(compared.id) : undefined;
-    afterStats = cd ? heroStats({ ...hero, equipment: { ...hero.equipment, [cd.slot]: compared } }) : null;
-    const stats = el('div', 'gr-stats');
-    for (const p of heroPanel(hero)) {
-      const row = el('div', 'gr-stat');
-      row.dataset['stat'] = p.id;
-      const dv = diff.get(p.id);
-      // ikon + etiket + değer (+ fark), HUD karakter sayfası gibi hizalı; ikon kaynağı ortak (stat-tips > statIconUrl)
-      const ico = el('img', 'gr-sico');
-      ico.src = statIconUrl(p.id);
-      ico.alt = '';
-      ico.draggable = false;
-      row.append(ico, el('span', 'gr-stat-k', p.label), el('span', 'gr-stat-v', fmtPanel(p)));
-      const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
-      row.append(el('span', `gr-stat-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText));
-      if (dv) {
-        row.dataset['delta'] = dText;
-        row.dataset['dir'] = dv > 0 ? 'up' : 'down';
-      }
-      stats.append(row);
-    }
-    mid.append(stats);
-    // Skills: 4 skill + pasif, o anki statlarla (savaş tooltip'iyle aynı sayılar); karşılaştırmada değişen sayılar "24 → 30 (+6)"
-    if (curStats) {
-      const skills = el('div', 'gr-skills');
-      skills.append(el('div', 'gr-sec', 'Skills'));
-      const grid = el('div', 'gr-skill-grid');
-      for (const r of gearSkillRows(hero.class, curStats, afterStats)) grid.append(skillCard(r, hero.class));
-      skills.append(grid);
-      mid.append(skills);
-    }
-    body.append(mid);
-
-    // --- Sağ: torba
-    const right = el('div', 'gr-right');
-    const bagHead = el('div', 'gr-bag-head');
-    const bagSec = el('div', 'gr-sec', `Bag ${bag.length} / ${src.bagSize}`);
-    withUiIcon(bagSec, 'bag');
-    bagHead.append(
-      bagSec,
-      btn(`gr-chip${usableOnly ? ' on' : ''}`, usableOnly ? `Usable by ${className(hero.class)}` : 'All items', () => {
-        usableOnly = !usableOnly;
-        render();
-      }),
-    );
-    right.append(bagHead);
-    const grid = el('div', 'gr-bag');
-    grid.dataset['drop'] = 'bag';
-    // Filtre yerleşimi değiştirmez: tüm yuvalar hep çizilir, kullanılamayan item'ler yerinde söner (Ömer 2026-10-09: tıklamada boyut değişmesin)
-    const items = [...bag]
-      .sort((a, b) => {
-        const da = itemDef(a.id);
-        const db = itemDef(b.id);
-        if (!da || !db) return 0;
-        return SLOT_IDS.indexOf(da.slot) - SLOT_IDS.indexOf(db.slot) || RARITY_IDS.indexOf(instanceRarity(b)) - RARITY_IDS.indexOf(instanceRarity(a)) || db.ilvl - da.ilvl;
-      });
-    for (const inst of items) {
-      const d = itemDef(inst.id);
-      if (!d) continue;
-      const usable = canEquip(hero.class, d);
-      const on = sel?.kind === 'bag' && sel.uid === inst.uid;
-      const cell = btn(`gr-item${on ? ' on' : ''}${usable ? '' : ' no'}${usableOnly && !usable ? ' filtered' : ''}${shakeUid === inst.uid ? ' shake' : ''}`, '', () => {
-        // Çift tıklama / çift dokunma: bu kahramana kuşan
-        const now = performance.now();
-        if (isDoubleTap(lastTap, inst.uid, now)) {
-          lastTap = null;
-          tryEquip(hero.id, inst.uid);
-          return;
-        }
-        lastTap = { key: inst.uid, at: now };
-        // Aynı item'e yeniden dokunmak seçimi kaldırır
-        sel = sel?.kind === 'bag' && sel.uid === inst.uid ? null : { kind: 'bag', uid: inst.uid };
-        confirmDiscard = '';
-        render();
-      });
-      cell.dataset['drag'] = `bag:${inst.uid}`;
-      cell.dataset['item'] = inst.id;
-      cell.title = d.name;
-      cell.style.setProperty('--rc', instanceColor(inst));
-      cell.append(slotIcon(d, d.slot, instanceColor(inst)));
-      grid.append(cell);
-    }
-    for (let i = items.length; i < src.bagSize; i++) grid.append(el('div', 'gr-item empty'));
-    shakeUid = '';
-    right.append(grid);
-
-    // Seçilen item kartı
-    const card = el('div', 'gr-card');
-    const selInst = sel?.kind === 'bag' ? candidate : sel?.kind === 'slot' ? hero.equipment[sel.slot] : undefined;
-    const selDef = selInst ? itemDef(selInst.id) : undefined;
-    if (selInst && selDef) {
-      const name = el('div', 'gr-card-name', selDef.name);
-      name.style.color = instanceColor(selInst);
-      card.append(name, el('div', 'gr-card-sub', instanceSubtitle(selInst)));
-      const lines = el('div', 'gr-card-lines');
-      // Affix satırları (Ömer 2026-10-11): kademe etiketi (C / B / A) + zarlanmış değer + aralık: "B  +6% Crit chance (5–7)"
-      for (const l of affixLines(selInst, hero.class)) lines.append(affixLineEl(l, 'gr-card-line gr-line'));
-      const fx = effectLine(selDef); // Legendary etkisi
-      if (fx) lines.append(el('div', 'gr-card-line gr-line gr-effect', fx));
-      card.append(lines, el('div', 'gr-card-value', `Value ${itemValue(selInst)} gold`));
-      const actions = el('div', 'gr-card-actions');
-      if (sel?.kind === 'bag') {
-        const cur = hero.equipment[selDef.slot];
-        const curDef = cur ? itemDef(cur.id) : undefined;
-        if (curDef) card.append(el('div', 'gr-card-note', `Replaces ${curDef.name}`));
-        if (!canEquip(hero.class, selDef)) {
-          const fam = ITEMS.weaponFamilies.find((f) => f.id === selDef.family);
-          card.append(el('div', 'gr-card-warn', `${className(hero.class)} cannot use ${fam?.name ?? 'this weapon'}.`));
-        } else {
-          const pc = primaryCheck(hero, { equip: selInst });
-          if (pc.lost && pc.primary) {
-            const over = pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ');
-            card.append(el('div', 'gr-card-warn', `Warning: ${over} would exceed ${pc.primary.toUpperCase()}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`));
-          }
-          // Uyarı görünürken düğme "Equip anyway" olur (Ömer, madde 278: uyar, engelleme)
-          actions.append(
-            btn('gr-btn primary', pc.lost ? 'Equip anyway' : 'Equip', () => {
-              sel = null;
-              uiSound('equip');
-              apply(() => src.equip(hero.id, selInst.uid));
-            }),
-          );
-        }
-        actions.append(
-          discardButton(selInst, confirmDiscard === selInst.uid, () => {
-            confirmDiscard = selInst.uid;
-            render();
-          }, () => {
-            sel = null;
-            confirmDiscard = '';
-            apply(() => src.discard(selInst.uid));
-          }),
-        );
-        if (discardNeedsConfirm(selInst) && confirmDiscard === selInst.uid) card.append(el('div', 'gr-card-warn', `Discard ${selDef.name}? It is gone for good.`));
-      } else if (sel?.kind === 'slot') {
-        actions.append(
-          btn('gr-btn', 'Unequip', () => {
-            const slot = sel?.kind === 'slot' ? sel.slot : undefined;
-            if (!slot) return;
-            sel = null;
-            uiSound('equip');
-            apply(() => src.unequip(hero.id, slot));
-          }),
-        );
-      }
-      card.append(actions);
-    } else card.append(el('div', 'gr-card-empty', bag.length ? 'Tap an item to see it here.' : (src.emptyText ?? 'The bag is empty.')));
-    if (flashText) {
-      card.append(el('div', 'gr-card-warn', flashText));
-      flashText = '';
-    }
-    right.append(card);
-    body.append(right);
-
-    // Alt satır
-    const foot = el('div', 'gr-foot');
-    foot.append(
-      btn('gr-btn', `Equip best: ${className(hero.class)}`, () => {
-        sel = null;
-        apply(() => src.equipBest([hero.id]));
-      }),
-      btn('gr-btn', 'Equip best: all', () => {
-        sel = null;
+  // --- çizim: başlık, gövde (Character | Inventory), alt satır
+  const head = el('div', 'gr-head');
+  const body = el('div', 'gr-body');
+  const charWrap = el('div', 'gr-charwrap');
+  const invWrap = el('div', 'gr-right');
+  const foot = el('div', 'gr-foot');
+  body.append(charWrap, invWrap);
+  panel.append(head, body, foot);
+  const focusInst = (): ItemInstance | null => {
+    const uid = dragUid || hoverUid || sel;
+    return uid ? (bagInst(uid) ?? null) : null;
+  };
+  const bestButtons = (short: boolean): HTMLElement[] => {
+    const hero = curHero();
+    const out: HTMLElement[] = [];
+    if (hero)
+      out.push(
+        btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: ${className(hero.class)}`, () => {
+          sel = '';
+          apply(() => src.equipBest([hero.id]));
+        }),
+      );
+    out.push(
+      btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: all`, () => {
+        sel = '';
         apply(() => src.equipBest());
       }),
-      btn('gr-btn primary', 'Done', close),
+      btn(`gr-btn${short ? ' sm' : ''} primary`, 'Done', close),
     );
-    panel.append(foot);
+    return out;
+  };
+  function renderHead(): void {
+    const left = el('div', 'gr-head-l');
+    left.append(el('div', 'gr-title', 'Gear'));
+    if (phoneLayout()) {
+      // telefonda iki ayrı tam ekran: Character / Inventory (C tuşu da geçirir); alt satır yok, düğmeler başlığın sağında
+      left.append(viewTabs(view, (k) => {
+        view = k;
+        renderAll();
+      }));
+      const acts = el('div', 'gr-head-acts');
+      acts.append(...bestButtons(true));
+      head.replaceChildren(left, acts);
+      return;
+    }
+    const gold = el('div', 'gr-gold', `${src.gold()} gold`);
+    withUiIcon(gold, 'gold');
+    head.replaceChildren(left, gold);
   }
-  render();
+  function renderChar(): void {
+    const scroll = ['.gr-heroes', '.gr-mid'].map((q) => [q, charWrap.querySelector<HTMLElement>(q)?.scrollTop ?? 0] as const);
+    const r = renderCharacter({
+      heroes: src.heroes(),
+      heroId,
+      focus: focusInst(),
+      ...(o.tutorial ? { hint: 'Your escort left their gear for the new company. Drag an item from the bag onto a hero or a slot, or let Equip best choose.' } : {}),
+      compact: phoneLayout(),
+      onHero: (id) => {
+        heroId = id;
+        renderAll();
+      },
+      onSlotDouble: (slot) => {
+        const h = curHero();
+        if (!h) return;
+        uiSound('equip');
+        apply(() => src.unequip(h.id, slot));
+      },
+    });
+    curStats = r.stats;
+    afterStats = r.after;
+    charWrap.replaceChildren(r.el);
+    for (const [q, top] of scroll) {
+      const e = charWrap.querySelector<HTMLElement>(q);
+      if (e) e.scrollTop = top;
+    }
+    if (ix.dragging()) ix.remark();
+  }
+  function renderInv(): void {
+    const hero = curHero();
+    const bag = src.bag();
+    if (sel && !bag.some((i) => i.uid === sel)) sel = '';
+    const scroll = invWrap.querySelector<HTMLElement>('.gr-bag')?.scrollTop ?? 0;
+    const inv = renderInventory({
+      items: bag,
+      size: src.bagSize,
+      ...(hero ? { usableClass: hero.class } : {}),
+      filter: {
+        on: usableOnly,
+        label: usableOnly && hero ? `Usable by ${className(hero.class)}` : 'All items',
+        toggle: () => {
+          usableOnly = !usableOnly;
+          renderInv();
+        },
+      },
+      selected: sel,
+      shake: shakeUid,
+      onTap: (uid) => {
+        sel = sel === uid ? '' : uid;
+        renderAll();
+      },
+      onDouble: (uid) => {
+        const h = curHero();
+        if (h) tryEquip(h.id, uid);
+      },
+    });
+    shakeUid = '';
+    if (!bag.length) inv.append(el('div', 'gr-card-empty', src.emptyText ?? 'The bag is empty.'));
+    invWrap.replaceChildren(...(phoneLayout() ? [heroRail(src.heroes(), heroId, (id) => {
+      heroId = id;
+      renderAll();
+    }), inv] : [inv]));
+    const g = invWrap.querySelector<HTMLElement>('.gr-bag');
+    if (g) g.scrollTop = scroll;
+  }
+  function renderFoot(): void {
+    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || 'Drag onto a hero or slot, or double-click to equip');
+    flashText = '';
+    foot.replaceChildren(hint, ...bestButtons(false));
+  }
+  function renderAll(): void {
+    ix.hideTips();
+    const phone = phoneLayout();
+    panel.classList.toggle('gr-phone', phone);
+    panel.classList.toggle('show-char', phone && view === 'char');
+    panel.classList.toggle('show-inv', phone && view === 'inv');
+    renderHead();
+    renderChar();
+    renderInv();
+    if (phone && flashText) ix.tip.hide();
+    renderFoot();
+  }
+  renderAll();
   return close;
+}
+
+/** Telefonda Character / Inventory geçişi (C tuşu da geçirir). */
+export function viewTabs(view: 'char' | 'inv', set: (v: 'char' | 'inv') => void, labels: [string, string] = ['Character', 'Inventory']): HTMLElement {
+  const tabs = el('div', 'gr-tabs');
+  (['char', 'inv'] as const).forEach((k, i) => tabs.append(btn(`gr-tab${view === k ? ' on' : ''}`, labels[i]!, () => set(k))));
+  return tabs;
+}
+
+/** Telefonda Inventory ekranının solunda dar kahraman şeridi (bırakma hedefi + seçili kahraman; ayrıntı ipucunda). */
+export function heroRail(heroes: GearHero[], heroId: string, pick: (id: string) => void): HTMLElement {
+  const rail = el('div', 'gr-rail');
+  for (const h of heroes) {
+    const b = btn(`gr-hero${h.id === heroId ? ' on' : ''}`, '', () => pick(h.id));
+    b.dataset['drop'] = `hero:${h.id}`;
+    b.setAttribute('aria-label', className(h.class));
+    const face = el('div', 'gr-face');
+    const url = avatarUrl(h.class);
+    if (url) face.style.backgroundImage = `url("${url}")`;
+    b.append(face);
+    rail.append(b);
+  }
+  return rail;
 }
 
 /** Ortak küçük kart (Spoils / teslim). */
@@ -949,23 +645,20 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
         lost.append(row);
       });
       panel.append(lost);
-      // Yer aç: torbadan seç + at (Rare ve üstü onaylı)
-      panel.append(el('div', 'gr-sec', `Make room · Bag ${s.inventory.length} / ${BAG_SIZE}`));
-      const grid = el('div', 'gr-bag');
-      for (const inst of s.inventory) {
-        const d = itemDef(inst.id);
-        if (!d) continue;
-        const cell = btn(`gr-item${pick === inst.uid ? ' on' : ''}`, '', () => {
-          pick = pick === inst.uid ? '' : inst.uid;
+      // Yer aç: ortak Inventory bileşeni (Gear / tüccar / ödül torbasıyla aynı ızgara ve hücre); seç + at (Rare ve üstü onaylı)
+      const inv = renderInventory({
+        items: s.inventory,
+        size: BAG_SIZE,
+        title: 'Make room · Bag',
+        selected: pick,
+        onTap: (uid) => {
+          pick = pick === uid ? '' : uid;
           confirm = '';
           render();
-        });
-        cell.title = d.name;
-        cell.style.setProperty('--rc', instanceColor(inst));
-        cell.append(slotIcon(d, d.slot, instanceColor(inst)));
-        grid.append(cell);
-      }
-      panel.append(grid);
+        },
+      });
+      inv.classList.add('gr-inv-mini');
+      panel.append(inv);
       const picked = s.inventory.find((i) => i.uid === pick);
       if (picked) {
         const row = itemRow(picked);

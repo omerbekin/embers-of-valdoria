@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/engine';
-import { DROP, DROP_RARITIES, ITEMS, dropChances, dropShift, instanceRarity, itemDef, rollDropRarity, rollLoot, validateDropRarity } from '../src/progression';
-import { newRun, rewardOffer, shopStock, type EndlessRun } from '../src/endless';
+import { DROP, DROP_RARITIES, ITEMS, dropChances, dropShift, instanceIlvl, instanceRarity, itemDef, rollDropRarity, rollItem, rollLoot, validateDropRarity } from '../src/progression';
+import { ENDLESS, newRun, rewardOffer, shopStock, type EndlessRun } from '../src/endless';
 
 // Düşüş nadirliği (Ömer onayı 2026-10-11): tek ağırlık tablosu; Common norm, Uncommon güzel bulgu, Rare dikkat çekici, Epic her dalgada gerçekten
 // özel. Dalga / item seviyesi ve elit / boss yalnızca hafif kaydırır, sert tavanlı. Taban item nadirlikten bağımsız. Legendary bu tablodan çıkmaz.
@@ -40,7 +40,7 @@ describe('tek nadirlik tablosu', () => {
 describe('sefer loot\'u', () => {
   const party = ['warrior', 'mage', 'archer', 'gambler'].map((c) => ({ class: c }));
 
-  it('nadirlik tablodan, taban nadirlikten bağımsız; Legendary yok; boss / hazine ilk zaferde en az Rare (karar korunur)', () => {
+  it('nadirlik tablodan, taban nadirlikten bağımsız; Legendary yok; boss / hazine garantisi ve pity yok (Ömer 2026-10-11)', () => {
     let epic = 0;
     let total = 0;
     let commonBaseRare = 0;
@@ -55,7 +55,7 @@ describe('sefer loot\'u', () => {
         if (r.rarities[k] === 'epic') epic++;
         total++;
       });
-      for (const kind of ['boss', 'treasure'] as const) expect(['rare', 'epic']).toContain(rollLoot({ rng: new Rng(i), kind, chapter: 1, ilvl: 10, party }).rarities[0]);
+      for (const kind of ['boss', 'treasure'] as const) expect(rollLoot({ rng: new Rng(i), kind, chapter: 1, ilvl: 10, party }).items.length).toBeGreaterThan(0);
     }
     expect(commonBaseRare).toBeGreaterThan(0); // taban nadirlikten bağımsız
     expect(epic / total).toBeLessThan(0.06); // Epic gerçekten özel
@@ -87,5 +87,33 @@ describe('Endless: ödül kartları ve tüccar', () => {
     for (let seed = 1; seed <= 60; seed++) for (const c of rewardOffer(after(10, seed))) if (c.kind === 'item') rar.add(c.rolls!.rarity!);
     expect(rar.has('common') || rar.has('uncommon')).toBe(true);
     expect(ITEMS.items.some((d) => d.rarity === 'epic')).toBe(true);
+  });
+});
+
+describe('Ömer 2026-10-11 cevapları: affix ağırlığı ve Endless item seviyesi', () => {
+  it('rastgele C affix: kimin için zarlandıysa ona yarayanlar hafif ağırlıklı (dışlayıcı değil)', () => {
+    const d = itemDef('padded_gambeson')!;
+    const count = (cls?: string) => {
+      let fire = 0;
+      let nature = 0;
+      for (let i = 0; i < 3000; i++) {
+        const a = rollItem(d, new Rng(i), { rarity: 'uncommon', ...(cls ? { forClass: cls } : {}) }).affixes[1]!.id;
+        if (a === 'c_fire') fire++;
+        if (a === 'c_nature') nature++;
+      }
+      return { fire, nature };
+    };
+    const mage = count('mage');
+    expect(mage.fire).toBeGreaterThan(mage.nature * 1.5); // Mage ateş kullanır
+    expect(mage.nature).toBeGreaterThan(0); // dışlayıcı değil
+    const plain = count();
+    expect(Math.abs(plain.fire - plain.nature)).toBeLessThan(plain.fire * 0.35);
+  });
+
+  it('Endless teklifi dalganın item seviyesinde (katalog tavanını aşar)', () => {
+    const run: EndlessRun = { ...newRun(4, ['warrior', 'archer', 'mage', 'druid'], 't'), wave: 31, phase: 'reward', stats: { cleared: 30, turns: 0, kills: 0 } };
+    const card = rewardOffer(run).find((c) => c.kind === 'item');
+    if (!card || card.kind !== 'item') throw new Error('item card expected');
+    expect(instanceIlvl({ id: card.itemId, rolls: card.rolls })).toBe(30 * ENDLESS.items.ilvlPerWave + ENDLESS.items.ilvlAhead + ENDLESS.special.boss.ilvlBonus);
   });
 });

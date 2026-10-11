@@ -553,7 +553,16 @@ export class MainMenuScene extends Phaser.Scene {
   private buildVersion(): void {
     const v = typeof __APP_VERSION__ === 'string' ? __APP_VERSION__ : '';
     if (!v) return;
-    this.version = elBody(this, stageView.right - 34, H - 22, `v${v}`, 22, EL.MUTED).setOrigin(1, 1).setAlpha(0.75).setDepth(45);
+    const t = (this.version = elBody(this, stageView.right - 34, H - 22, `v${v}`, 22, EL.MUTED).setOrigin(1, 1).setAlpha(0.75).setDepth(45));
+    // Dokununca Patch Notes (Ömer 2026-10-11; src/ui/patch-notes.ts, data/patch-notes.json; ayrı kod parçası). Dokunma alanı yazıdan
+    // geniş (telefonda en az ~44 px), köşeye doğru taşar.
+    t.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-70, -60, t.width + 104, t.height + 82), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
+    t.on('pointerover', () => t.setColor(EL.ON).setAlpha(1));
+    t.on('pointerout', () => t.setColor(EL.MUTED).setAlpha(0.75));
+    t.on('pointerup', () => {
+      if (!this.ready()) return;
+      void trackChunkLoad(import('../../ui/patch-notes')).then((m) => this.sys.isActive() && m.openPatchNotes());
+    });
   }
 
   /** Quick Battle kartının altındaki "Endless mode" anahtarı (açıkken kart Endless'ı açar); seçim tarayıcıda saklanır. */
@@ -844,10 +853,10 @@ export class MainMenuScene extends Phaser.Scene {
   /** Bölüm başlığı (Sounds / Gameplay): küçük soluk Cinzel büyük harf + sağa sönen ince altın çizgi (DOM .st-section ile aynı). */
   private panelHeading(p: Phaser.GameObjects.Container, label: string): void {
     const base = this.panelTop + SETTINGS_LAYOUT.heading - 10;
-    const t = elText(this, COL_X + 34, base, label, 20, EL.MUTED, { em: 0.16 }).setOrigin(0, 1);
+    const t = elText(this, COL_X + 34, base, label, 20, '#e0904a', { em: 0.16 }).setOrigin(0, 1); // bölüm başlığı kor tonunda (DOM .st-section ile aynı)
     const x0 = t.x + t.width + 16;
     const line = this.add.graphics();
-    line.fillGradientStyle(0xd9b26a, 0xd9b26a, 0xd9b26a, 0xd9b26a, 0.3, 0, 0.3, 0).fillRect(x0, base - 9, Math.max(0, PANEL_W - x0), 1);
+    line.fillGradientStyle(0xe0904a, 0xe0904a, 0xe0904a, 0xe0904a, 0.55, 0, 0.55, 0).fillRect(x0, base - 9, Math.max(0, PANEL_W - x0), 1);
     p.add([line, t]);
     this.panelTop += SETTINGS_LAYOUT.heading;
   }

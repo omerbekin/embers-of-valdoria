@@ -6,6 +6,7 @@ import type { Stats } from '../engine/types';
 import {
   ITEMS,
   affixDef,
+  instanceIlvl,
   instanceRarity,
   itemDef,
   partMid,
@@ -166,7 +167,7 @@ export function itemSubtitle(d: ItemDef, rarity: RarityId = d.rarity, ilvl: numb
 /** Örneğin alt başlığı (nadirliği zarından). */
 export const instanceSubtitle = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): string => {
   const d = itemDef(inst.id);
-  return d ? itemSubtitle(d, instanceRarity(inst)) : '';
+  return d ? itemSubtitle(d, instanceRarity(inst), instanceIlvl(inst)) : '';
 };
 
 /** Örneğin nadirlik rengi. */
