@@ -6,7 +6,7 @@ import type { Combatant, TargetPreview } from '../engine';
 import { animKey, characterTexture, type AnimName } from './assets';
 import { debugState } from './debug-state';
 import { formatHit, hitColor } from './hit-format';
-import { type DamageTags, FLOAT_ICON_TINT, damagePaintedIcon, floatStyle, floatTimes, placeFloat, rowLayout, type FloatKind } from './float-text';
+import { type DamageTags, FLOAT_ICON_TINT, damagePaintedIcon, floatStyle, floatTimes, placeFloatClear, rowLayout, type FloatKind } from './float-text';
 import { ensureIcon } from './icons';
 import { SHARED_KEY } from './asset-versions';
 import { tierStyle, unitName } from './unit-label';
@@ -14,6 +14,28 @@ import { DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
+import { cycleFrames, keyFrame, poseClass, skillPoses, statePose, weaponScale, POSES, type PoseClassDef, type WeaponPick } from './poses';
+import { bakePoseTexture, poseDisplayScale } from './pose-rig';
+
+/**
+ * Poz kütüphanesi bağlantısı (src/game/poses.ts): pozlu sınıfta gövde + silah pişmiş atlası, şu anki poz ve skill bağlamı.
+ * Yoksa (pozsuz sınıf / dosya yüklenmedi) görünüm bugünkü tek sprite davranışındadır.
+ */
+interface PoseRig {
+  def: PoseClassDef;
+  key: string;
+  /** Sprite ölçeği (pişmiş doku pikseli -> oyun birimi). */
+  scale: number;
+  /** Ekran ölçeği (gövde tuvali pikseli -> oyun birimi). */
+  display: number;
+  weapon: WeaponPick | null;
+  /** Şu anki poz adı (null = bugünkü idle sprite'ı: idleSprite açık sınıfta). */
+  pose: string | null;
+  /** Her poz değişiminde artar: bekleyen "idle'a dön" çağrıları eskidiyse atlanır. */
+  token: number;
+  /** Oynanan skill'in poz dizisi (BattleScene.useSkill). */
+  skill: string[];
+}
 
 /** floatText seçenekleri: tür (tipografi) ve rakamın solundaki/sağındaki küçük ikon (piksel ikon adı). */
 export interface FloatOpts {
@@ -112,14 +134,21 @@ export class CombatantView {
   /** Ad, can / MP / hız çubukları, durum ikonları, işaretler: sonuç ekranında birlikte söner (`setOverlayHidden`). */
   private overlayParts: Array<Phaser.GameObjects.GameObject & Phaser.GameObjects.Components.Alpha> = [];
   private overlayAlpha: number[] | null = null;
-  /** Yüzen yazı şeritleri: her şeridi tutan yazının punto değeri (float-text.ts > placeFloat). */
-  private lanes: Array<number | undefined> = [];
+  /** Yaşayan yüzen yazılar (çakışmasız yığınlama, float-text.ts > placeFloatClear): doğuş ofseti, punto, doğuş anı (gerçek ms). */
+  private floats: Array<{ offset: number; px: number; born: number }> = [];
+
+  /** Poz kütüphanesi (pozlu sınıf ve dosyaları yüklüyse); yoksa null = bugünkü davranış. */
+  private rig: PoseRig | null = null;
+  /** Bugünkü (idle.png) doku ve ölçeği: idleSprite açık pozlu sınıfta boşta buna döner. */
+  private baseTex = '';
+  private baseScale = 1;
 
   constructor(
     private readonly scene: Phaser.Scene,
     readonly combatant: Combatant,
     x: number,
     y: number,
+    opts: { weapon?: WeaponPick | null } = {},
   ) {
     this.homeX = x;
     this.baseY = y;
@@ -131,12 +160,24 @@ export class CombatantView {
     if (tex.real && scene.textures.get(tex.key).has('0')) this.sprite.setFrame(0);
     const scale = Math.min(box.width / this.sprite.frame.width, box.height / this.sprite.frame.height) * (combatant.spriteScale ?? 1);
     this.sprite.setScale(scale);
-    this.w = this.sprite.frame.width * scale;
-    this.h = this.sprite.frame.height * scale;
-    // Küçültülen illüstrasyon yumuşak, büyütülen pixel art/placeholder keskin görünür
-    scene.textures
-      .get(tex.key)
-      .setFilter(scale < 1 ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
+    this.baseTex = tex.key;
+    this.baseScale = scale;
+    // Poz kütüphanesi: pozlu sınıfta gövde + silah pişmiş atlası (dosyalar yüklü değilse bugünkü sprite kalır)
+    const def = tex.real ? poseClass(combatant.defId) : null;
+    const baked = def ? bakePoseTexture(scene, combatant.defId, opts.weapon ?? { ...def.defaultWeapon }, combatant.spriteScale ?? 1) : null;
+    if (def && baked) {
+      const display = poseDisplayScale(def, combatant.spriteScale ?? 1);
+      this.rig = { def, key: baked.key, scale: display / baked.density, display, weapon: opts.weapon ?? { ...def.defaultWeapon }, pose: null, token: 0, skill: [] };
+      this.w = def.figure.w * display;
+      this.h = def.figure.h * display;
+    } else {
+      this.w = this.sprite.frame.width * scale;
+      this.h = this.sprite.frame.height * scale;
+      // Küçültülen illüstrasyon yumuşak, büyütülen pixel art/placeholder keskin görünür
+      scene.textures
+        .get(tex.key)
+        .setFilter(scale < 1 ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
+    }
     if (combatant.side === 'enemy') this.sprite.setFlipX(true);
 
     // Gerçek sprite'ların altına yer gölgesi (placeholder dokusunda zaten var)
@@ -459,12 +500,16 @@ export class CombatantView {
   stepForward(ms: number, px: number): Promise<void> {
     if (!this.alive || ms <= 0) return Promise.resolve();
     const dir = this.combatant.side === 'enemy' ? -1 : 1;
+    // pozlu sınıf: adım pozu (yerine dönünce boşta pozu)
+    const step = this.rig ? this.showPose(statePose(this.rig.def, 'step')) : null;
+    const token = this.rig?.token ?? 0;
     const glow = this.scene.add.image(0, -this.h * 0.5, ensureGlow(this.scene)).setTint(KIT.ember).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(this.w * 1.3, this.h * 1.1).setAlpha(0);
     this.container.addAt(glow, 0);
     this.scene.tweens.add({ targets: glow, alpha: 0.45, duration: ms / 2, yoyo: true, onComplete: () => glow.destroy() });
     return new Promise((resolve) => {
       this.scene.tweens.add({ targets: this.sprite, x: dir * px, duration: ms / 2, ease: 'Sine.easeOut', yoyo: true, onComplete: () => {
         this.sprite.setX(0);
+        if (step && this.rig?.token === token) this.showPose(null);
         resolve();
       } });
     });
@@ -713,8 +758,159 @@ export class CombatantView {
 
   play(anim: AnimName): void {
     if (!this.realSprite) return;
+    if (this.rig) {
+      // pozlu sınıf: genel durum -> poz; attack/cast oynanan skill'in vuruş pozu (skills.json > pose), yoksa sınıfın varsayılanı
+      const skill = anim === 'attack' || anim === 'cast' ? this.rig.skill[this.rig.skill.length - 1] : undefined;
+      this.showPose(skill ?? (anim === 'death' ? statePose(this.rig.def, 'death') : statePose(this.rig.def, anim)));
+      if (anim === 'hit') this.returnToIdle(this.rig.token, slow(timing.hitFlashMs) * 3 + slow(260));
+      return;
+    }
     const key = animKey(this.combatant.spriteId, anim, this.scene);
     if (key && this.scene.anims.exists(key)) this.sprite.play(key);
+  }
+
+  // --- Poz kütüphanesi (src/game/poses.ts; pozsuz sınıfta hepsi etkisiz) ---
+
+  /** Bu birim poz kütüphanesiyle mi çiziliyor. */
+  get posed(): boolean {
+    return !!this.rig;
+  }
+
+  /** Şu anki poz adı (pozsuz ya da idle sprite'ında null). */
+  get currentPose(): string | null {
+    return this.rig?.pose ?? null;
+  }
+
+  /** Pozlu sınıfın poz adları (debug poz seçici). */
+  poseList(): string[] {
+    return this.rig ? Object.keys(this.rig.def.poses) : [];
+  }
+
+  /** Pozlu sınıfın döngüleri (ör. spin -> spin1..3). */
+  poseCycles(): Record<string, string[]> {
+    return this.rig ? this.rig.def.cycles : {};
+  }
+
+  /** Çizilen silah (pozsuz: null). */
+  get poseWeapon(): WeaponPick | null {
+    return this.rig?.weapon ?? null;
+  }
+
+  /**
+   * BattleScene: bu birim şimdi bu skill'i oynuyor (null = bitti). attack/cast durumları ve `skillPose()` skill'in poz dizisini kullanır.
+   */
+  useSkill(skill: { pose?: string | string[]; motion?: string } | null): void {
+    if (!this.rig) return;
+    this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
+  }
+
+  /**
+   * Oynanan skill'in i'nci anahtar pozu (negatif = sondan; varsayılan son = vuruş anı). Ad döngüyse (spin) anahtar karesi. Dönen: gösterilen poz.
+   */
+  skillPose(i = -1): string | null {
+    if (!this.rig || !this.rig.skill.length) return null;
+    const list = this.rig.skill;
+    const name = list[i < 0 ? Math.max(0, list.length + i) : Math.min(i, list.length - 1)]!;
+    return this.showPose(name);
+  }
+
+  /** Oynanan skill'de döngü pozu var mı (ör. Whirlwind -> spin): adı, yoksa null. */
+  skillCycle(): string | null {
+    if (!this.rig) return null;
+    return this.rig.skill.find((p) => (this.rig!.def.cycles[p]?.length ?? 0) > 1) ?? null;
+  }
+
+  /** Döngü pozunun `phase` (tur, 0..1 bir tam döngü) anındaki karesi; Reduced motion'da daima anahtar kare (kare döngüsü yok). */
+  cycleFrame(name: string, phase: number): void {
+    if (!this.rig) return;
+    const frames = cycleFrames(this.rig.def, name);
+    if (!frames.length) return;
+    if (reducedMotion()) {
+      this.showPose(keyFrame(this.rig.def, name), false);
+      return;
+    }
+    const i = ((Math.floor(phase * frames.length) % frames.length) + frames.length) % frames.length;
+    this.showPose(frames[i]!, false);
+  }
+
+  /**
+   * Pozu gösterir (null = boşta: idle pozu ya da idleSprite sınıfında bugünkü idle.png). Ad döngüyse anahtar karesi. Değişimde önceki kare
+   * kısa bir hayalet olarak söner (pozlar arası yumuşak geçiş; Reduced motion / Performance mode'da yok). Dönen: gösterilen poz.
+   */
+  showPose(name: string | null, fade = true): string | null {
+    const rig = this.rig;
+    if (!rig) return null;
+    let pose = name ? (rig.def.poses[name] ? name : keyFrame(rig.def, name)) : statePose(rig.def, 'idle');
+    if (pose === statePose(rig.def, 'idle') && rig.def.idleSprite) pose = null;
+    rig.token++;
+    if (pose === rig.pose && this.sprite.texture.key !== '__MISSING') return pose;
+    const prevKey = this.sprite.texture.key;
+    const prevFrame = this.sprite.frame.name;
+    if (fade && !reducedMotion() && !perfLite() && this.sprite.visible && this.container.alpha > 0.05) {
+      const g = this.scene.add
+        .image(this.sprite.x, this.sprite.y, prevKey, prevFrame)
+        .setOrigin(0.5, 1)
+        .setScale(this.sprite.scaleX, this.sprite.scaleY)
+        .setAngle(this.sprite.angle)
+        .setFlipX(this.sprite.flipX);
+      this.container.addAt(g, this.container.getIndex(this.sprite) + 1);
+      this.scene.tweens.add({ targets: g, alpha: 0, duration: 110, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+    }
+    // sprite'ın ölçeği tween'de olabilir (Whirlwind, kükreme): oranı koruyarak yeni dokunun ölçeğine geçer
+    const from = pose ? rig.scale : this.baseScale;
+    const was = rig.pose === null && prevKey === this.baseTex ? this.baseScale : rig.scale;
+    const kx = this.sprite.scaleX / was;
+    const ky = this.sprite.scaleY / was;
+    this.sprite.anims?.stop();
+    if (pose) this.sprite.setTexture(rig.key, pose);
+    else this.sprite.setTexture(this.baseTex, this.scene.textures.get(this.baseTex).has('0') ? 0 : undefined);
+    this.sprite.setScale(from * kx, from * ky);
+    rig.pose = pose;
+    return pose;
+  }
+
+  /** `token` hâlâ geçerliyse (araya başka poz girmediyse) `ms` sonra boşta pozuna döner. */
+  private returnToIdle(token: number, ms: number): void {
+    this.scene.time.delayedCall(ms, () => {
+      if (this.rig && this.rig.token === token && this.alive && !this.fallen) this.showPose(null);
+    });
+  }
+
+  /** Debug / önizleme: silahı değiştirir (atlas yeniden pişer; aynı silah önbellekten). */
+  setPoseWeapon(pick: WeaponPick): void {
+    const rig = this.rig;
+    if (!rig) return;
+    const baked = bakePoseTexture(this.scene, this.combatant.defId, pick, this.combatant.spriteScale ?? 1);
+    if (!baked) return;
+    rig.key = baked.key;
+    rig.scale = rig.display / baked.density;
+    rig.weapon = pick;
+    const pose = rig.pose;
+    rig.pose = '__';
+    this.showPose(pose, false);
+  }
+
+  /**
+   * Silahın dünyadaki çizgisi (efektler için: öfke izi, savuruş): kabza noktası, açı (vfx kuralı: 0 = ileri yüzdüğü yöne, negatif = yukarı)
+   * ve kabzadan uca boy. Pozsuz ya da silahsız pozda null.
+   */
+  weaponLine(): { x: number; y: number; ang: number; len: number } | null {
+    const rig = this.rig;
+    if (!rig || !rig.pose || !rig.weapon) return null;
+    const p = rig.def.poses[rig.pose];
+    const fam = POSES.weapons[rig.weapon.family];
+    const look = fam?.looks[rig.weapon.look];
+    if (!p || p.hidden || !fam || !look) return null;
+    const flip = this.sprite.flipX ? -1 : 1;
+    const k = this.sprite.scaleY / rig.scale; // tween'deki ölçek oranı
+    const ox = flip * (p.anchor.x - rig.def.canvas.footX) * rig.display * k;
+    const oy = (p.anchor.y - rig.def.canvas.footY) * rig.display * k;
+    // gövde eğilmesi (sprite açısı, ayak noktası çevresinde) el noktasını ve silah açısını birlikte döndürür
+    const r = this.sprite.rotation;
+    const x = this.container.x + this.sprite.x + ox * Math.cos(r) - oy * Math.sin(r);
+    const y = this.container.y + this.sprite.y + ox * Math.sin(r) + oy * Math.cos(r);
+    const a = ((p.anchor.angle - 90) * Math.PI) / 180 + r * flip;
+    return { x, y, ang: a, len: look.grip.y * weaponScale(fam, look) * rig.display * k };
   }
 
   /** Hedefe doğru atılıp geri döner. Vuruş anında onHit çağrılır. */
@@ -772,7 +968,8 @@ export class CombatantView {
 
   /** Hızla (x, y) noktasına koşar; `ghost` doluysa arkasında bu renkte hayalet izler bırakır. Varışta çözülür. */
   approach(x: number, y: number, ms: number, ghost?: number): Promise<void> {
-    this.play('attack');
+    if (this.rig) this.showPose(this.rig.skill.length > 1 ? this.rig.skill[0]! : statePose(this.rig.def, 'step')); // pozlu: koşarken adım (ya da skill'in ilk) pozu
+    else this.play('attack');
     this.container.setDepth(3500);
     let next = 0;
     return new Promise((resolve) => {
@@ -920,7 +1117,8 @@ export class CombatantView {
     this.baseY = y;
     if (dx !== 0) this.sprite.setFlipX(dx < 0); // yürüdüğü yöne bakar
     this.container.setDepth(Math.max(y, this.container.y) + 2);
-    this.play('attack');
+    if (this.rig) this.showPose(statePose(this.rig.def, 'step'));
+    else this.play('attack');
     const hops = Math.max(2, Math.round(ms / 170));
     this.scene.tweens.add({ targets: this.sprite, y: { from: 0, to: -16 }, duration: slow(ms) / (hops * 2), yoyo: true, repeat: hops - 1, ease: 'Sine.easeOut' });
     let next = 0;
@@ -970,8 +1168,13 @@ export class CombatantView {
    */
   floatText(text: string, hex: string, px = 64, pop = false, opts: FloatOpts = {}): void {
     if (debugState.hideNumbers) return; // debug: numbers and texts above units hidden
-    const { lane, offset } = placeFloat(this.lanes);
-    this.lanes[lane] = px;
+    // Yeni yazı, ömrü boyunca yaşayan hiçbir yazıyla çakışmayan en alçak yere (yaş tween zamanıyla: Battle speed / duraklatma)
+    const now = this.scene.time.now;
+    const ts = this.scene.tweens.timeScale;
+    const offset = placeFloatClear(this.floats.map((f) => ({ offset: f.offset, px: f.px, age: (now - f.born) * ts })), px, { life: timing.damageNumberMs, rise: timing.damageNumberRise });
+    const lane = this.floats.length;
+    const slot = { offset, px, born: now };
+    this.floats.push(slot);
     const startY = this.container.y - this.h - 60 - offset;
     const style = floatStyle(opts.kind ?? 'info', px, hex);
     const t = this.scene.add.text(0, 0, text, style).setOrigin(0.5);
@@ -1018,8 +1221,7 @@ export class CombatantView {
       duration: times.fade,
       onComplete: () => {
         box.destroy();
-        this.lanes[lane] = undefined;
-        while (this.lanes.length > 0 && this.lanes[this.lanes.length - 1] === undefined) this.lanes.pop();
+        this.floats = this.floats.filter((f) => f !== slot);
       },
     });
   }
@@ -1130,8 +1332,9 @@ export class CombatantView {
       this.scene.tweens.add({
         targets: this.container,
         alpha: 0,
-        y: this.container.y + 20,
+        y: this.container.y + (this.rig ? 6 : 20),
         duration: timing.deathFadeMs,
+        ...(this.rig ? { ease: 'Quad.easeIn' } : {}), // pozlu: diz çökme pozu sönmeden önce okunur (süre aynı)
         onComplete: () => {
           this.fallen = true;
           resolve();

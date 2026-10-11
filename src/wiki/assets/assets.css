@@ -1248,3 +1248,14 @@
   font: 16px 'EB Garamond', Georgia, serif;
   border-radius: 0;
 }
+
+/* POSES (poz kütüphanesi; src/wiki/assets/poses.ts) */
+.wk-assets .poses-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.wk-assets .pose-card { margin: 0; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.wk-assets .pose-card figcaption { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.wk-assets .pose-canvas { max-width: 100%; height: auto; background: radial-gradient(ellipse at 50% 92%, rgba(0, 0, 0, 0.35), transparent 60%); }
+.wk-assets .poses-matrix { overflow-x: auto; padding: 8px 0; }
+.wk-assets .poses-row { display: flex; align-items: flex-end; gap: 6px; }
+.wk-assets .poses-rowlabel { flex: 0 0 72px; align-self: center; }
+.wk-assets .poses-collabel { flex: 0 0 auto; width: 110px; text-align: center; }
+.wk-assets .pose-mini { width: 110px; height: auto; }

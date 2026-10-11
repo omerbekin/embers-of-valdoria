@@ -34,6 +34,7 @@ const BATTLE_SCENE = 'BattleScene';
 
 export { storage } from './kv-storage';
 import { storage } from './kv-storage';
+import { partyWeapons } from './pose-weapons';
 
 export const session = {
   state: null as CampaignState | null,
@@ -137,6 +138,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     enemySize: plan.enemies.filter(Boolean).length,
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
     difficulty: plan.difficulty,
+    // Poz kütüphanesi (yalnızca sunum): kahramanların takılı silahı ekranda çizilen silahı seçer (src/game/poses.ts)
+    weapons: { items: partyWeapons(plan.heroOrder, (id) => s.roster.find((h) => h.id === id)?.equipment.weapon) },
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     campaign: {

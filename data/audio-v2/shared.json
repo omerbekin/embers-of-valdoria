@@ -1,5 +1,5 @@
 {
-  "_not": "Shared (global) - SÜRÜM 2 SESLERİ: Rest = derin nefes al-ver (ağızdan hava: bant geçiren gürültü, formant yok), Skip Turn = pelerin/kumaş savrulması + kum saatinde akan kum hışırtısı, Move = üç adım: deri çizme gümlemesi + zincir zırh şıkırtısı. Çan/sinüs çınlaması YOK. Kılavuz: docs/design/art-v2.md",
+  "_not": "Shared (global) - SÜRÜM 2 SESLERİ: Rest = derin nefes al-ver (ağızdan hava: bant geçiren gürültü, formant yok), Skip Turn = pelerin/kumaş savrulması + kum saatinde akan kum hışırtısı, Move = üç adım: deri çizme gümlemesi + zincir zırh şıkırtısı. Çan/sinüs çınlaması YOK. Kılavuz: docs/design/art-v2.md. Lucky Escape (luckyCoin, 2026-10-11): ölümcül darbe sıyrılır (kısa yüksek geçiren sürtünme), başparmakla fırlatılan madeni para tıkı, dar bant metal tınısı (yüksek Q gürültü bantları, oranları tam sayı olmayan üç kısmi: gerçek para gibi, saf sinüs değil) ve avuca düşüş.",
   "sfx": {
     "gasp": {
       "gain": 1.79,
@@ -28,6 +28,18 @@
         { "type": "tone", "wave": "sine", "f0": 110, "f1": 55, "attack": 0.002, "decay": 0.07, "gain": 0.55, "at": 0.32 },
         { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 300, "q": 0.7, "attack": 0.002, "decay": 0.06, "gain": 0.5, "at": 0.32 },
         { "type": "noise", "filter": "bandpass", "f0": 2700, "f1": 2300, "q": 6, "attack": 0.002, "decay": 0.1, "gain": 0.15, "at": 0.335, "tremHz": 45, "tremDepth": 0.9 }
+      ]
+    },
+    "luckyCoin": {
+      "gain": 1.6,
+      "layers": [
+        { "type": "noise", "filter": "highpass", "f0": 2600, "f1": 5200, "q": 0.8, "attack": 0.002, "decay": 0.11, "gain": 0.35 },
+        { "type": "noise", "filter": "bandpass", "f0": 3200, "f1": 3000, "q": 4, "attack": 0.001, "decay": 0.012, "gain": 0.5, "at": 0.03 },
+        { "type": "noise", "filter": "bandpass", "f0": 4180, "f1": 4150, "q": 45, "attack": 0.002, "decay": 0.42, "gain": 0.9, "at": 0.032 },
+        { "type": "noise", "filter": "bandpass", "f0": 6870, "f1": 6840, "q": 45, "attack": 0.002, "decay": 0.3, "gain": 0.55, "at": 0.032 },
+        { "type": "noise", "filter": "bandpass", "f0": 9730, "f1": 9700, "q": 40, "attack": 0.002, "decay": 0.18, "gain": 0.35, "at": 0.032 },
+        { "type": "noise", "filter": "lowpass", "f0": 1400, "f1": 500, "q": 0.7, "attack": 0.001, "decay": 0.04, "gain": 0.45, "at": 0.62 },
+        { "type": "noise", "filter": "bandpass", "f0": 4300, "f1": 4100, "q": 20, "attack": 0.001, "decay": 0.06, "gain": 0.3, "at": 0.625 }
       ]
     }
   }

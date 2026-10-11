@@ -875,6 +875,11 @@ export interface SkillDef {
   sfx?: string[];
   /** Skill efekti (animasyon) adı: src/ui/vfx-kinds.ts; yoksa `motion`/`skyFx` genel animasyonu oynar. */
   vfx?: string;
+  /**
+   * Poz kütüphanesi (yalnızca sunum, motor okumaz; src/game/poses.ts, data/poses.json): skill'in anahtar pozu ya da sıralı pozları
+   * (ilk = hazırlık/yaklaşma, son = vuruş anı); ad bir döngü olabilir ('spin' -> spin1..3). Pozu olmayan sınıfta etkisiz.
+   */
+  pose?: string | string[];
   /** target 'random_enemies': kaç (farklı) rastgele düşmana gider. */
   count?: number;
   /** true: yukarıdan düşen etki her hedefe ayrı değil, seçilen alanın merkezine TEK büyük olarak düşer. */

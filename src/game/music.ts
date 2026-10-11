@@ -42,6 +42,8 @@ export interface MusicConfig {
   master: number;
   defaultLevel: number;
   fadeInMs: number;
+  /** Açılışta sesin başladığı oran (0-1); fadeInMs boyunca 1'e çıkar (Ömer 2026-10-11: kısık başlayıp yavaşça yükselsin). */
+  fadeInFrom?: number;
   fadeOutMs: number;
   humanize: { timingMs: number; velocity: number };
   reverb: { seconds: number; decay: number; damp: number; wet: number; dry: number };
@@ -524,7 +526,7 @@ export class MusicEngine {
   }
 
   /** `at` bağlam saatinde `fromSong` şarkı konumundan başlar; `fadeSec` boyunca yükselir. */
-  start(at: number, fromSong = 0, fadeSec = 0): void {
+  start(at: number, fromSong = 0, fadeSec = 0, fromGain = 0): void {
     const L = cycleSec(this.cfg);
     this.offset = at - fromSong;
     this.cycle = Math.floor(fromSong / L);
@@ -535,7 +537,7 @@ export class MusicEngine {
     const g = this.fade.gain;
     g.cancelScheduledValues(at);
     // doğrusal yükseliş: üstel rampa (0.0001'den) ilk yarısında neredeyse sessiz kalıyordu ("geç başlıyor", Ömer 2026-10-10)
-    g.setValueAtTime(fadeSec > 0 ? 0 : 1, at);
+    g.setValueAtTime(fadeSec > 0 ? Math.max(0, Math.min(1, fromGain)) : 1, at);
     if (fadeSec > 0) g.linearRampToValueAtTime(1, at + fadeSec);
     this.startDrone(at);
   }

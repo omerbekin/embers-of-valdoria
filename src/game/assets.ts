@@ -72,8 +72,57 @@ const pick = (want: boolean | string[] | undefined, id: string): boolean => (wan
  * arka planda gelir (`loadRestInBackground`), bir sahne hazır olmayan dosyaya girerse preload'u eksikleri yükler (kısa yükleyici).
  */
 export function preloadAssets(scene: Phaser.Scene, o: PreloadOptions = {}): void {
-  queueAssets(scene, o);
+  const backgrounds = o.backgrounds ?? SCENE_BACKGROUNDS[scene.sys.settings.key];
+  const opts = backgrounds === undefined ? o : { ...o, backgrounds };
+  queueAssets(scene, opts);
+  if (Array.isArray(backgrounds)) releaseUnusedBackgrounds(scene, backgrounds);
   if (o.track !== false) trackSceneLoad(scene.load);
+}
+
+// ---------------------------------------------------------------- arka plan belleği (Ömer 2026-10-11, performans)
+//
+// Savaş arka planları 2000x667-729 (her biri ~5 MB doku); eskiden her sahne ve menünün arka plan yüklemesi 8'ini birden yükleyip hep
+// bellekte tutuyordu (~42 MB). Artık her sahne yalnızca gösterdiğini ister (savaş: kendi seçtiği arka plan; preloadAssets > backgrounds)
+// ve sahne açılırken hiçbir açık sahnenin kullanmadığı arka planlar bellekten atılır. Liste vermeyen sahnelerin ihtiyacı burada.
+
+/** preloadAssets'e `backgrounds` verilmezse sahnenin ihtiyacı; burada olmayan sahne eskisi gibi hepsini yükler. */
+const SCENE_BACKGROUNDS: Record<string, string[]> = {
+  // Endless başlık / kamp ekranı arka planı (EndlessScene > LOOK.bg ile aynı tutulmalı)
+  EndlessScene: ['proving-grounds-sunset'],
+  // Sefer haritası savaş arka planı göstermez (savaş kendi arka planını yükler)
+  CampaignMapScene: [],
+};
+
+const BACKGROUND_IDS = new Set(Object.keys(backgroundFiles).map((p) => fileStem(p)[1]!));
+
+/** Arka plan DOSYASI var mı (dokusu yüklü olmasa da). Savaş seçimi buna göre yapılır: yüklü dokulara göre değişmesin. */
+export const backgroundExists = (id: string): boolean => BACKGROUND_IDS.has(id);
+
+/** Açık (etkin / duraklatılmış / uyuyan) sahnelerin görüntü listelerinde kullanılan doku anahtarları. */
+function texturesInUse(game: Phaser.Game): Set<string> {
+  const used = new Set<string>();
+  const walk = (list: Phaser.GameObjects.GameObject[]): void => {
+    for (const o of list) {
+      const t = (o as { texture?: { key?: string } }).texture?.key;
+      if (t) used.add(t);
+      if (o instanceof Phaser.GameObjects.Container) walk(o.list);
+    }
+  };
+  for (const s of game.scene.scenes) if (s.sys.isActive() || s.sys.isPaused() || s.sys.isSleeping()) walk(s.sys.displayList.list);
+  return used;
+}
+
+/** `keep` dışındaki ve hiçbir açık sahnenin kullanmadığı arka plan dokularını atar (gerekince preload yeniden yükler). */
+export function releaseUnusedBackgrounds(scene: Phaser.Scene, keep: readonly string[]): number {
+  const used = texturesInUse(scene.game);
+  let n = 0;
+  for (const id of BACKGROUND_IDS) {
+    const key = backgroundKey(id);
+    if (keep.includes(id) || used.has(key) || !scene.textures.exists(key)) continue;
+    scene.textures.remove(key);
+    n++;
+  }
+  return n;
 }
 
 function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
@@ -101,9 +150,10 @@ function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
   return n;
 }
 
-/** Menü görününce: kalan sprite ve arka planları sessizce arka planda yükler (çalışan sahnenin yükleyicisiyle; yükleme ekranı yok). */
+/** Menü görününce: kalan sprite, avatar ve item görsellerini sessizce arka planda yükler (çalışan sahnenin yükleyicisiyle; yükleme ekranı yok). */
 export function loadRestInBackground(scene: Phaser.Scene): void {
-  if (queueAssets(scene, {}) > 0) scene.load.start();
+  // arka planlar burada yüklenmez (her sahne kendi arka planını ister; ~42 MB'ı boşuna bellekte tutmasın)
+  if (queueAssets(scene, { backgrounds: false }) > 0) scene.load.start();
 }
 
 /** Kafa avatarının doku anahtarı; avatar dosyası yoksa null (çağıran eski kırpmaya/silüete döner). Kare, sağa bakar. */

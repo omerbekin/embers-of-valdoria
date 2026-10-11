@@ -8,6 +8,7 @@ export const ASSET_NAV = [
   { id: 'animations', title: 'ANIMATIONS', icon: 'wand', sub: true },
   { id: 'icons', title: 'ICONS', icon: 'frame', sub: true },
   { id: 'art', title: 'CHARACTER ART', icon: 'helm', sub: true },
+  { id: 'poses', title: 'POSES', icon: 'sword', sub: true },
   { id: 'palette', title: 'PALETTE & UI', icon: 'drop', sub: true },
   { id: 'versions', title: 'VERSIONS', icon: 'swap', sub: true },
   { id: 'legacy', title: 'LEGACY', icon: 'skull', sub: true },
@@ -19,4 +20,4 @@ const META = new Map<string, (typeof ASSET_NAV)[number]>(ASSET_NAV.map((n) => [n
 export const assetNav = (id: AssetSectionId): (typeof ASSET_NAV)[number] => META.get(id)!;
 
 /** `?wiki=` için eş anlamlılar. */
-export const WIKI_ALIASES: Record<string, string> = { gallery: 'assets', characters: 'art', 'character-art': 'art', ui: 'palette' };
+export const WIKI_ALIASES: Record<string, string> = { gallery: 'assets', characters: 'art', 'character-art': 'art', ui: 'palette', pose: 'poses' };

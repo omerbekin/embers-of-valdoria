@@ -1,0 +1,202 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pose Anchor Editor</title>
+<style>
+  :root { color-scheme: dark; --ink: #f1e7d0; --gold: #d9b26a; --bg: #15100c; --panel: #1f1812; }
+  body { margin: 0; background: var(--bg); color: var(--ink); font: 14px/1.4 Georgia, serif; }
+  header { padding: 10px 16px; border-bottom: 1px solid #d9b26a44; display: flex; gap: 14px; align-items: center; flex-wrap: wrap; }
+  h1 { font-size: 16px; letter-spacing: 2px; text-transform: uppercase; margin: 0; color: var(--gold); }
+  select, button, input { background: var(--panel); color: var(--ink); border: 1px solid #d9b26a66; padding: 4px 8px; font: inherit; }
+  button.on { background: #5a3a14; }
+  main { display: flex; gap: 16px; padding: 12px 16px; flex-wrap: wrap; }
+  #poses { display: flex; flex-direction: column; gap: 4px; }
+  #poses button { text-align: left; min-width: 120px; }
+  #poses button.sel { background: #6b4a1c; }
+  #stage { background: repeating-conic-gradient(#2a2420 0 25%, #221c18 0 50%) 0 0 / 24px 24px; cursor: crosshair; image-rendering: auto; }
+  #info { min-width: 260px; white-space: pre; font: 12px/1.5 Consolas, monospace; }
+  #sheet { display: grid; grid-template-columns: repeat(6, auto); gap: 6px; padding: 12px 16px; }
+  #sheet canvas { background: #241d18; }
+  .hint { opacity: 0.7; font-style: italic; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Pose Anchor Editor</h1>
+  <label>Class <select id="cls"></select></label>
+  <label>Weapon <select id="weapon"></select></label>
+  <label>Glow <select id="glow"><option value="">none</option><option>rare</option><option>epic</option><option>legendary</option></select></label>
+  <label>Zoom <input id="zoom" type="range" min="1" max="3" step="0.25" value="1.5" /></label>
+  <button id="mirror">Mirror (enemy)</button>
+  <button id="save">Save</button>
+  <span id="status" class="hint">click = hand, Shift+click = off hand, Q/E angle, arrows nudge, F flip, B behind, H hide, [ ] fist</span>
+</header>
+<main>
+  <div id="poses"></div>
+  <canvas id="stage"></canvas>
+  <div id="info"></div>
+</main>
+<div style="padding: 0 16px"><button id="sheetBtn">Contact sheet: all poses x all weapons</button></div>
+<div id="sheet"></div>
+<script>
+const $ = (id) => document.getElementById(id);
+let data = null;
+let cls = 'warrior';
+let pose = 'idle';
+let weapon = 'swords/plain';
+let mirror = false;
+const imgs = new Map();
+const loadImg = (src) => {
+  if (imgs.has(src)) return imgs.get(src);
+  const p = new Promise((res, rej) => { const i = new Image(); i.onload = () => res(i); i.onerror = rej; i.src = src; });
+  imgs.set(src, p);
+  return p;
+};
+const def = () => data.classes[cls];
+const P = () => def().poses[pose];
+
+/** Oyundaki birleştirmeyle aynı (src/game/poses.ts > drawPoseComposite). */
+function composite(ctx, body, p, wimg, look, length, glowHex, fistR) {
+  const a = p.anchor;
+  const k = length / look.h;
+  const drawW = () => {
+    ctx.save();
+    ctx.translate(a.x, a.y);
+    ctx.rotate((a.angle * Math.PI) / 180);
+    ctx.scale(p.flip ? -k : k, k);
+    if (glowHex) { ctx.shadowColor = glowHex; ctx.shadowBlur = 10 / k; }
+    ctx.drawImage(wimg, -look.grip.x, -look.grip.y);
+    ctx.restore();
+  };
+  if (!p.hidden && p.back) drawW();
+  ctx.drawImage(body, 0, 0);
+  if (!p.hidden && !p.back) {
+    drawW();
+    // yumruk yaması: el(ler)in gövde pikselleri kabzanın üstüne yeniden çizilir
+    const r = p.fist ?? fistR;
+    for (const h of [a, p.offhand].filter(Boolean)) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(h.x, h.y, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(body, 0, 0);
+      ctx.restore();
+    }
+  }
+}
+
+async function render() {
+  const d = def();
+  const z = Number($('zoom').value);
+  const c = $('stage');
+  c.width = d.canvas.w * z;
+  c.height = d.canvas.h * z;
+  const ctx = c.getContext('2d');
+  ctx.save();
+  if (mirror) { ctx.translate(c.width, 0); ctx.scale(-1, 1); }
+  ctx.scale(z, z);
+  const [fam, look] = weapon.split('/');
+  const body = await loadImg(`/assets/poses/${d.dir}/${pose}.png`);
+  const wimg = await loadImg(`/assets/weapons/${fam}/${look}.png`);
+  const lk = data.weapons[fam].looks[look];
+  composite(ctx, body, P(), wimg, lk, data.weapons[fam].length, data.rarityGlow[$('glow').value], data.fistRadius);
+  // işaretler
+  const p = P();
+  const mark = (h, col) => { ctx.strokeStyle = col; ctx.lineWidth = 1.5 / z; ctx.beginPath(); ctx.arc(h.x, h.y, (p.fist ?? data.fistRadius), 0, Math.PI * 2); ctx.stroke(); ctx.beginPath(); ctx.moveTo(h.x - 4, h.y); ctx.lineTo(h.x + 4, h.y); ctx.moveTo(h.x, h.y - 4); ctx.lineTo(h.x, h.y + 4); ctx.stroke(); };
+  mark(p.anchor, '#4dff88');
+  if (p.offhand) mark(p.offhand, '#4dc3ff');
+  ctx.strokeStyle = '#ffffff55';
+  ctx.beginPath(); ctx.moveTo(0, d.canvas.footY); ctx.lineTo(d.canvas.w, d.canvas.footY); ctx.stroke();
+  ctx.restore();
+  $('info').textContent = `${pose}\n${JSON.stringify({ anchor: p.anchor, offhand: p.offhand, flip: !!p.flip, back: !!p.back, hidden: !!p.hidden, fist: p.fist }, null, 1)}`;
+  [...$('poses').children].forEach((b) => b.classList.toggle('sel', b.dataset.pose === pose));
+}
+
+async function sheet() {
+  const d = def();
+  const s = $('sheet');
+  s.innerHTML = '';
+  const looks = Object.entries(data.weapons).flatMap(([f, w]) => w.order.map((l) => `${f}/${l}`));
+  s.style.gridTemplateColumns = `repeat(${looks.length}, auto)`;
+  for (const name of Object.keys(d.poses))
+    for (const wl of looks) {
+      const [fam, look] = wl.split('/');
+      const c = document.createElement('canvas');
+      const k = 0.5;
+      c.width = d.canvas.w * k;
+      c.height = d.canvas.h * k;
+      c.title = `${name} / ${wl}`;
+      const ctx = c.getContext('2d');
+      ctx.scale(k, k);
+      const body = await loadImg(`/assets/poses/${d.dir}/${name}.png`);
+      const wimg = await loadImg(`/assets/weapons/${fam}/${look}.png`);
+      composite(ctx, body, d.poses[name], wimg, data.weapons[fam].looks[look], data.weapons[fam].length, null, data.fistRadius);
+      c.onclick = () => { pose = name; weapon = wl; $('weapon').value = wl; render(); window.scrollTo(0, 0); };
+      s.appendChild(c);
+    }
+}
+
+async function init() {
+  data = await (await fetch('/data')).json();
+  $('cls').innerHTML = Object.keys(data.classes).map((c) => `<option>${c}</option>`).join('');
+  $('weapon').innerHTML = Object.entries(data.weapons).flatMap(([f, w]) => w.order.map((l) => `<option>${f}/${l}</option>`)).join('');
+  const list = () => {
+    $('poses').innerHTML = '';
+    for (const name of Object.keys(def().poses)) {
+      const b = document.createElement('button');
+      b.textContent = name;
+      b.dataset.pose = name;
+      b.onclick = () => { pose = name; render(); };
+      $('poses').appendChild(b);
+    }
+  };
+  list();
+  $('cls').onchange = (e) => { cls = e.target.value; pose = Object.keys(def().poses)[0]; list(); render(); };
+  $('weapon').onchange = (e) => { weapon = e.target.value; render(); };
+  $('glow').onchange = render;
+  $('zoom').oninput = render;
+  $('mirror').onclick = () => { mirror = !mirror; $('mirror').classList.toggle('on', mirror); render(); };
+  $('sheetBtn').onclick = sheet;
+  $('stage').addEventListener('click', (e) => {
+    const z = Number($('zoom').value);
+    const r = $('stage').getBoundingClientRect();
+    let x = Math.round((e.clientX - r.left) / z);
+    const y = Math.round((e.clientY - r.top) / z);
+    if (mirror) x = def().canvas.w - x;
+    const p = P();
+    if (e.shiftKey) p.offhand = { x, y };
+    else p.anchor = { ...p.anchor, x, y };
+    render();
+  });
+  window.addEventListener('keydown', (e) => {
+    const p = P();
+    const step = e.shiftKey ? 1 : 5;
+    const k = e.key.toLowerCase();
+    if (k === 'q') p.anchor.angle -= step;
+    else if (k === 'e') p.anchor.angle += step;
+    else if (e.key === 'ArrowLeft') p.anchor.x -= 1;
+    else if (e.key === 'ArrowRight') p.anchor.x += 1;
+    else if (e.key === 'ArrowUp') p.anchor.y -= 1;
+    else if (e.key === 'ArrowDown') p.anchor.y += 1;
+    else if (k === 'f') p.flip = !p.flip;
+    else if (k === 'b') p.back = !p.back;
+    else if (k === 'h') p.hidden = !p.hidden;
+    else if (k === '[') p.fist = Math.max(4, (p.fist ?? data.fistRadius) - 1);
+    else if (k === ']') p.fist = (p.fist ?? data.fistRadius) + 1;
+    else return;
+    e.preventDefault();
+    render();
+  });
+  $('save').onclick = async () => {
+    const out = { classes: { [cls]: Object.fromEntries(Object.entries(def().poses).map(([n, p]) => [n, { anchor: p.anchor, offhand: p.offhand, flip: p.flip, back: p.back, hidden: p.hidden, fist: p.fist }])) } };
+    const r = await fetch('/save', { method: 'POST', body: JSON.stringify(out) });
+    $('status').textContent = r.ok ? 'Saved to data/poses.json' : `Save failed: ${await r.text()}`;
+  };
+  render();
+}
+init();
+</script>
+</body>
+</html>

@@ -33,6 +33,7 @@ import type { ResultAction } from './result-screen';
 import type { BattleScene, BattleSceneData, CampaignBattleHooks } from './scenes/BattleScene';
 import { endlessEffects } from './battle-effects';
 import { newSeed } from './seed';
+import { partyWeapons } from './pose-weapons';
 
 /**
  * Endless'ın tarayıcı tarafı (oturum): o anki koşu, localStorage, savaşa geçiş ve savaştan dönüş. Kurallar src/endless/ içinde (saf).
@@ -153,6 +154,8 @@ function battleData(game: Phaser.Game, plan: WavePlan, run: EndlessRun, hooks: C
     enemySize: plan.enemies.filter(Boolean).length,
     difficulty: plan.difficulty,
     ...(background ? { background } : {}),
+    // Poz kütüphanesi (yalnızca sunum): kahramanın takılı silahı ekrandaki silahı seçer (src/game/poses.ts)
+    weapons: { items: partyWeapons(plan.heroOrder, (id) => run.heroes.find((h) => h.id === id)?.equipment.weapon) },
     campaign: { retreatLabel: 'Retreat to Camp', battleEffects: () => endlessEffects(run), ...hooks },
   };
 }

@@ -14,6 +14,8 @@ import { assetNav, type AssetSectionId } from './nav';
 import { buildLegacy, legacyOfSprite, type LegacyCatalog } from './legacy-catalog';
 import { mountLegacy } from './legacy';
 import { mountPalette } from './palette';
+import { mountPoses } from './poses';
+import { POSES } from '../../game/poses';
 import { createPlayer, type Player } from './player';
 import { mountSounds, playSound } from './sounds';
 import { mountVersions } from './versions';
@@ -153,6 +155,7 @@ function overview(sections: AssetSection[]): AssetSection {
     animations: 'Every skill animation on a real battle stage, plus the list of effect kinds.',
     icons: 'All pixel icons, zoomable, with where each one is used.',
     art: 'Full-body sprite, head avatar and logo of every class and summon (hidden developer classes too).',
+    poses: 'The shared pose library (Warrior trial): every body pose with every weapon look, rarity glow and the mirrored enemy side.',
     palette: 'Interface, element, stat and class colors, plus the fonts.',
     versions: 'Art and sound versions per class: v1 (old) and v2 (redesign, default) side by side; pick which one the game uses.',
     legacy: 'Old, spare and unused things: old sprites, concept art, spare icons, effects and sounds, each with why it is legacy.',
@@ -175,6 +178,7 @@ export function assetSections(): AssetSection[] {
     lazySection('animations', cat.animations.length, () => mountAnimations(cat)),
     lazySection('icons', cat.icons.length, () => mountIcons(cat)),
     lazySection('art', cat.characters.length, () => mountCharacters(cat)),
+    lazySection('poses', Object.values(POSES.classes).reduce((n, c) => n + Object.keys(c.poses).length, 0), () => mountPoses()),
     lazySection('palette', paletteTotal, () => mountPalette(cat)),
     lazySection('versions', versionKeys().length, () => mountVersions(cat)),
     lazySection('legacy', legacy.total, () => mountLegacy(cat, legacy)),

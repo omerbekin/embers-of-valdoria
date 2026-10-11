@@ -1413,3 +1413,29 @@ Kural özeti: `docs/design/combat.md` > Cesetler ve "Defender, Gambler, Archer a
 - Sefer kolay / iyi oyuncu boss ilk deneme %79 (bant 57-77; önce %75-76); Medium ve Hard bantta.
 
 - **CEVAPLANDI (Ömer 2026-10-11, madde 302 / 303):** rastgele C affix'i sınıfa hafif ağırlıklı (2 kat, `affixRules.classFit`); seferin Rare pity'si ve boss / hazine "en az Rare" kuralı KALDIRILDI; boss'ların Jinxed / Blinded bağışıklığı kalır, Legendary delmez; "Marked Quarry" adı tamam; Endless'ta item seviyesi dalganın seviyesi; Vigil / Immunity turları / Recovery varsayımları onaylandı. Yüksek nadirlik aralığın üst kısmından zarlar (`affixRules.rollFloorByRarity`).
+
+## 304. Karakter poz kütüphanesi + dinamik silah: Warrior denemesi (anim-dev; araç + veri + kod + test; Ömer onayı 2026-10-11, future-ideas)
+- Yapılan: `tools/make-poses.mjs` (gövde/silah sayfası kesimi, ortak taban, kabza ölçümü, `--preview`), `tools/pose-editor.mjs` (el noktası düzenleyici, http://localhost:5181), `data/poses.json`, `src/game/poses.ts` + `pose-rig.ts` (pişmiş atlas) + `pose-files.ts` + `pose-weapons.ts`, CombatantView pozları, Warrior v2 efektleri pozlu, Codex > Assets > Poses, debug > Characters > Poses + Setup > Test Warrior poses. Motor yalnızca yeni isteğe bağlı `SkillDef.pose` alanını taşır (okumaz).
+- **Varsayım:** Double Strike = overhead -> slash (iki vuruş da hazırlık + kesik), Abyssal Cry = raise -> channel (kükreme, sonra öfkeyi öne salma); Charge = step -> slash, Whirlwind = spin döngüsü (Ömer'in eşlemesi).
+- **Varsayım:** boşta bugünkü idle.png yerine idle POZU kullanılıyor (silah katmanı her pozda aynı görünsün; `poses.json > idleSprite: true` eskisine döner). Avatar değişmedi.
+- **Varsayım:** "Axes & Swords" ailesinde kılıç görseli item eşlemesiyle (`itemArt`: Arming Sword, Emberbrand); Warrior'ın takabildiği gürzlerin (maces) görseli yok -> varsayılan sade kılıç.
+- **Soru:** Overhead pozunda kalkık silah ad plakası / can çubuğunun arkasından geçiyor (çubuklar figürün idle boyuna göre); sorun mu?
+- **Soru:** Raise (kükreme) pozunda silah aşağı sarkıyor; Abyssal Cry'ın kızıl öfke izi bu yüzden kılıç boyunca aşağı uzanıyor. İstenirse kükreme pozunda silah gizlenebilir ya da yukarı kaldırılabilir (ama o zaman yüzü örtüyor).
+
+## 305. Valdoria A1-x oyunda + Dinlenme / Tüccar düğümleri + harita yakınlaştırma (campaign-dev; veri + kod + kayıt + arayüz + test + altın kayıt; Ömer kararı 2026-10-11)
+- Yapılan: `data/campaign/valdoria.json` A1-x (26 düğüm / 30 yol, sefer başına 21 durak, 24 rota, 4 seçim). Eğitim aynı sırada yeni konumlarında; King's Bridge yerinde. Eski düğüm kimlikleri korundu (1-12, 5A/5B, 6A/6B, 8A/8C, 11B); 8B Mercenary Camp ve 11A Dragon's Spine çıktı. Yeni: Windy Moor, Charcoal Camp, Grave Field, Pilgrim Road, Riverside Camp (dinlenme), Thornwood Hollow (elit), Forward Camp (tüccar), Ember Road, Shepherd's Fold (olay), Riverhead, Gate of Cinders. Tek yollu bağlantılar düz, seçimli olanlar kesik çizgi.
+- **Dinlenme (Riverside Camp):** ücretsiz, yaşayanlar maks canın %50'si kadar iyileşir. Düşmüş kahraman ALTINLA diriltilir (%50 canla). Sayılar `campaign.json > rest`. Küçük kit paneli: Revive düğmeleri, Gear, Rest.
+  - **Varsayım:** fiyat = 20 + 6 x düğümün item seviyesi (Riverside Camp item seviyesi 6: 56 altın).
+  - **Not / soru:** seferde kahramanlar zaten her zaferden sonra %20 canla kalkıyor (kural 5.1). Dinlenme noktasına düşmüş biriyle varmak bu yüzden pek olmuyor; paralı diriltme çoğu seferde görünmeyecek. Düşenlerin zaferde kalkmaması mı istenir, yoksa böyle mi kalsın?
+- **Tüccar (Forward Camp):** Endless'taki Odo, aynı ekran ve kurallar (al / sat / geri al / yenile). Stok: tek nadirlik tablosu + düğümün item seviyesine kadar taban item'ler, takımdan birinin sınıfına göre zarlanır. Sayılar `campaign.json > merchant`: 9 mal, yenileme 15 altın, geri alım 4. Ekran TEK giriş noktasıyla açılıyor (`src/game/campaign-merchant.ts`).
+  - **Varsayım:** tüccarda Legendary yok (Endless tüccarıyla aynı).
+- **Eski kayıtlar:** kayıt sürümü 6. Eski haritanın seferleri silinir; yuva (mod, zorluk) kalır. Ana menüde ve yuva ekranında "The Valdoria map has changed; this campaign must restart." yazar. Uyarı, o yuvaya yeni sefer kaydedilince kalkar.
+- **Harita:**
+  - Telefonda yalnızca bulunulan ve seçilebilir düğümlerin adı görünür.
+  - Fare tekerleği imlecin olduğu yere doğru 1,0-1,4x yakınlaştırır; dokunmatikte iki parmak, trackpad'de ctrl+tekerlek. Kısa geçişle, Reduced motion'da anında. Kenarlar kaydırmadaki gibi sınırlı.
+  - Dinlenme / tüccar / başlangıç için boyalı ikonlar.
+- **K1 istisnası (soru):** A1-x'te Valdren Keep'ten çıkan Witch's Hut kolu tek duraklık bir olay; o dalda savaş yok, yani K1 kuralı (her dalda en az bir savaş) bir dalda çiğneniyor. K2 korunuyor (en çok 2 savaşsız durak art arda). Test bu tek istisnayı açıkça kabul ediyor. Witch's Hut korunan bir olay mı olsun, yoksa istisna kalsın mı?
+- **Denge (veri):** durak sırası değiştiği için savaşlar `sim:campaign` Medium / Medium ölçümüyle yeniden ayarlandı (`encounters.json`). Windy Moor, Iron Pass, Charcoal Camp, Pilgrim Road, St. Brann's, Black Cathedral, Ember Road ve Riverhead hafifledi; Dwarven Mine, Misty Marsh ve Grave Field güçlendi.
+  - Boss karşılaşmaları Endless ile ortak (Lord Morvane, Bridge Warden), o yüzden onlara dokunulmadı. Seferde boss'lar 21 duraklık yolda güçlenen takıma karşı kolaylaşmıştı. Bunun için yeni veri alanı eklendi: düğüm `enemyTierMods`, yalnızca o düğümün savaşında rütbe çarpanı. King's Bridge'te boss canı x1,3; Castle Morvane'de can x1,28 ve stat x1,125.
+- **Sim notu:** oyuncu vekili dinlenir ama tüccardan alışveriş yapmaz ve parayla diriltmez. Gerçek oyuncu biraz daha güçlü olur.
+- Altın kayıt: `tests/fixtures/golden/campaign.json` yeniden yazıldı (21 durak, sefer başına daha çok savaş, yeniden ayarlanan karşılaşmalar). Endless ve item kayıtları değişmedi.

@@ -12,9 +12,11 @@ import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
 import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
 import { globalIconName, uiIconName } from '../../ui/ui-icons';
-import { avatarTexture, backgroundKey, characterTexture, hasBackground, preloadAssets } from '../assets';
+import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, preloadAssets } from '../assets';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
+import { preloadPoses } from '../pose-rig';
+import { weaponFor, type WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
 import { initialSeed, initialSizes, newSeed } from '../seed';
 import { clampSize } from '../team-select-model';
@@ -65,7 +67,10 @@ import type { MpBattleHooks, MpResultInfo } from '../mp-hooks';
 import { isGameMenuOpen, toggleGameMenu } from '../../ui/game-menu';
 import { isSettingsOpen } from '../../ui/settings';
 import { onStageResize, stageView, worldXY } from '../stage';
-import { backgroundOffsetY, battleBackground } from '../battle-background';
+import { backgroundPlacement, battleBackground } from '../battle-background';
+import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
+import { playRegenTick } from '../regen-fx';
+import { regenTickEvents } from '../regen-ticks';
 
 export interface BattleSceneData {
   seed: number;
@@ -85,6 +90,11 @@ export interface BattleSceneData {
   background?: string;
   /** Multiplayer savaşı (src/game/mp-client.ts): savaş lockstep'ten gelir, yalnızca yerel taraf oynanır, YZ yok. */
   mp?: MpBattleHooks;
+  /**
+   * Poz kütüphanesi (yalnızca sunum; src/game/poses.ts): birim uid'i ('party-0'...) -> takılı silah item'i (sefer / Endless gerçek donanım).
+   * Verilmeyen pozlu birim sınıfının varsayılan silahını taşır (Quick Battle). `picks` doğrudan çizilecek silah (debug poz deneme savaşı).
+   */
+  weapons?: { items?: Record<string, { id: string; family?: string; rarity?: string }>; picks?: Record<string, WeaponPick> };
 }
 
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
@@ -161,6 +171,8 @@ export class BattleScene extends Phaser.Scene {
   backgroundId = '';
   /** Multiplayer kancaları (yoksa tek oyunculu). */
   mp: MpBattleHooks | undefined = undefined;
+  /** Poz kütüphanesi silahları (BattleSceneData.weapons; yalnızca sunum). */
+  weapons: BattleSceneData['weapons'] = undefined;
   /** Bu ekranda oynayan insanın tarafı: tek oyunculuda daima 'party'; multiplayer'da katılan 'enemy' (sağ). */
   localSide: 'party' | 'enemy' = 'party';
   private mpOff: Array<() => void> = [];
@@ -257,6 +269,7 @@ export class BattleScene extends Phaser.Scene {
     this.difficulty = data.difficulty;
     this.background = data.background;
     this.mp = data.mp;
+    this.weapons = data.weapons;
     this.localSide = data.mp?.localSide ?? 'party';
     for (const off of this.mpOff) off();
     this.mpOff = [];
@@ -308,24 +321,28 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this);
+    preloadAssets(this, { backgrounds: [this.backgroundChoice()] }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
+    // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
+    const cells = this.teams ? [...this.teams.party, ...this.teams.enemies].filter((c): c is string => !!c) : undefined;
+    preloadPoses(this, cells);
     preloadVfxSheets(this); // v2 sprite sheet efektleri (assets/vfx; Defender)
+  }
+
+  /** Savaşın arka planı (preload yalnızca bunu yükler; seçim dosyalara göre, yüklü dokulara göre değil: iki çevrimiçi oyuncuda aynı). */
+  private backgroundChoice(): string {
+    return battleBackground({
+      explicit: this.background,
+      pool: this.campaign ? null : this.mp ? 'multiplayer' : 'quick',
+      seed: this.mp ? this.mp.battle.seed : this.seed,
+      fallback: content.battles[this.battleId]?.background ?? '',
+      exists: backgroundExists,
+    });
   }
 
   create(): void {
     if (!this.campaign?.seamless) elScreenIn(this); // ortak ekran geçişi (data/ui-motion.json > screen; Reduced motion = anında); endless dalgaları kesintisiz
-    const def = content.battles[this.battleId];
-    // Sefer arka planı (varsa ve dosyası yüklüyse), yoksa savaşın varsayılanı (castle-hall)
     // Sefer: kendi arka planı (yoksa savaşın varsayılanı); Quick Battle / multiplayer: havuzdan seed'e göre (iki oyuncu aynı arka planı görür)
-    this.drawBackground(
-      battleBackground({
-        explicit: this.background,
-        pool: this.campaign ? null : this.mp ? 'multiplayer' : 'quick',
-        seed: this.mp ? this.mp.battle.seed : this.seed,
-        fallback: def?.background ?? '',
-        exists: (id) => hasBackground(this, id),
-      }),
-    );
+    this.drawBackground(this.backgroundChoice());
     this.drawSlots();
 
     // Multiplayer: savaş iki istemcide aynı kurulan lockstep savaşıdır (src/net/lockstep.ts)
@@ -772,6 +789,13 @@ export class BattleScene extends Phaser.Scene {
     if (picked.length > 0) return picked;
     const one = this.debugUnit;
     return one ? [one] : [];
+  }
+
+  /** Debug > Characters > Poses: poz kütüphanesiyle çizilen canlı birimler (Ctrl+tık seçiliyse yalnızca seçililer). */
+  debugPoseViews(): CombatantView[] {
+    const posed = [...this.views.values()].filter((v) => v.posed && v.alive);
+    const sel = posed.filter((v) => this.unitSel.has(v.combatant.uid));
+    return sel.length ? sel : posed;
   }
 
   /** The unit whose command panel is shown. */
@@ -2297,8 +2321,21 @@ export class BattleScene extends Phaser.Scene {
   private skillResults = new WeakMap<object, { bet?: 'win' | 'lose'; doubleHit?: boolean }>();
   private lastSkillUsed: object | null = null;
 
+  /** Tur başı yenilenme tikleri (yüzen sayı yerine çubuk parıltısı; regen-ticks.ts) ve onları bulmak için son eylemden beri gelen olaylar. */
+  private regenTicks = new WeakSet<object>();
+  private sinceAction: BattleEvent[] = [];
+
   private enqueue(e: BattleEvent): void {
     this.usageRec.push(e);
+    if (e.type === 'turnStart') {
+      const statsOf = (uid: string) => {
+        const c = this.battle.get(uid);
+        return c ? { hpRegen: c.stats.hpRegen ?? 0, mpRegen: c.stats.mpRegen + (c.itemEffects?.turnMp?.mp ?? 0) } : undefined;
+      };
+      for (const r of regenTickEvents(this.sinceAction, e, statsOf)) this.regenTicks.add(r);
+    }
+    if (e.type === 'skillUsed' || e.type === 'globalUsed' || e.type === 'turnStart' || e.type === 'turnSkipped') this.sinceAction = [];
+    if (e.type !== 'turnStart') this.sinceAction.push(e);
     if (e.type === 'turnStart') this.noteTurnStart(e);
     if (e.type === 'skillUsed') this.lastSkillUsed = e;
     else if (e.type === 'passive' && this.lastSkillUsed) {
@@ -2366,8 +2403,8 @@ export class BattleScene extends Phaser.Scene {
           // The bigger the hit relative to max HP, the stronger the reaction (shake, flash, number size, bar drain)
           const ratio = e.amount / target.combatant.maxHp;
           if (e.luckyEscape) {
-            // Lucky Escape: the killing blow is ignored completely (no HP change); no "0" here, the passive event that follows names it
-            target.ring(colors.primaryGroup?.luck ?? '#2fcfa0');
+            // Lucky Escape: the killing blow is ignored completely (no HP change); glance + golden horseshoe + text (lucky-escape-fx.ts)
+            await playLuckyEscape(this, target, this.views.get(e.source));
           } else if (e.amount === 0 && e.absorbed > 0) {
             target.ring(e.magicShieldAfter > 0 || e.shieldAfter === 0 ? colors.magicShield : colors.shield);
             target.floatText('Blocked', colors.shield, 46, false, { kind: 'shield' });
@@ -2439,6 +2476,12 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'heal': {
         const target = this.views.get(e.target);
+        if (this.regenTicks.has(e)) {
+          // Turn-start regen never floats: the bar pulses and a small muted "+N" sits beside it (regen-fx.ts)
+          if (target) playRegenTick(this, target, 'hp', e.amount);
+          target?.setHp(e.hpAfter);
+          return;
+        }
         if (e.crit) target?.floatText(`+${e.amount}`, colors.crit, 70, true, { kind: 'crit', leftIcon: 'burst' });
         else target?.floatText(`+${e.amount}`, colors.heal, 64, false, { kind: 'heal' });
         target?.ring(colors.heal);
@@ -2611,6 +2654,7 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'passive': {
         const view = this.views.get(e.actor);
+        if (e.passive === 'primary_luck') return; // Lucky Escape: its own moment already named it (lucky-escape-fx.ts)
         view?.floatText(e.name, colors.targetHighlight, 34);
         view?.ring(colors.targetHighlight, 0.9);
         await this.wait(120);
@@ -2619,6 +2663,10 @@ export class BattleScene extends Phaser.Scene {
       case 'mpRegen': {
         const view = this.views.get(e.actor);
         view?.setMp(e.after);
+        if (this.regenTicks.has(e)) {
+          if (view) playRegenTick(this, view, 'mp', e.amount);
+          return;
+        }
         view?.floatText(`+${e.amount} MP`, colors.mpFill, 40, false, { kind: 'resource' });
         return;
       }
@@ -2744,9 +2792,12 @@ export class BattleScene extends Phaser.Scene {
     const flashes = groups.map((cells) => this.beginShapeFlash(board, cells));
     const staged = !!stages && stages.length > 1;
     const release = staged ? this.openStageGate((i) => flashes.forEach((f, k) => k <= i && f?.hit())) : undefined;
+    const actorView = this.views.get(actorUid);
+    actorView?.useSkill(content.skills[skillId] ?? null); // poz kütüphanesi: skill'in pozları (skills.json > pose)
     try {
       await this.playSkillMotionCore(actorUid, skillId, targetUids, center, result, eventCells, stages, release, board);
     } finally {
+      actorView?.useSkill(null);
       // Aşamadan habersiz efekt (kapıyı sahiplenmedi): tüm plakalar vuruş anında parlar; sahiplendiyse yalnızca ilk aşama (diğerleri releaseStage ile)
       if (!staged || !this.stageGate?.claimed) flashes.forEach((f) => f?.hit());
       else flashes[0]?.hit();
@@ -3207,6 +3258,21 @@ export class BattleScene extends Phaser.Scene {
 
   // --- Drawing ---
 
+  /**
+   * Debug (Rolls > Lucky Escape): Lucky Escape anını oynatır, kural ve can değişmez. Hedef: Ctrl ile seçili birim, yoksa ilk canlı Luck
+   * primary birim, o da yoksa ilk canlı birim; saldıran: karşı taraftan en yakın canlı birim.
+   */
+  debugLuckyEscape(): string {
+    const living = [...this.views.values()].filter((v) => v.combatant.hp > 0);
+    const target =
+      living.find((v) => this.unitSel.has(v.combatant.uid)) ?? living.find((v) => (v.combatant.stats.surviveChance ?? 0) > 0) ?? living[0];
+    if (!target) return 'No unit';
+    const foes = living.filter((v) => v.combatant.side !== target.combatant.side);
+    const attacker = foes.sort((a, b) => Math.abs(a.container.x - target.container.x) - Math.abs(b.container.x - target.container.x))[0];
+    void playLuckyEscape(this, target, attacker);
+    return unitName(target.combatant);
+  }
+
   /** Debug: arka planı değiştir (savaş sürer). */
   debugSetBackground(id: string): void {
     this.bgImage?.destroy();
@@ -3219,9 +3285,10 @@ export class BattleScene extends Phaser.Scene {
 
   private drawBackground(id: string): void {
     if (hasBackground(this, id)) {
-      const img = (this.bgImage = this.add.image(W / 2, H / 2 + backgroundOffsetY(id), backgroundKey(id)));
-      // Cover the 16:9 screen by height (all battle backgrounds are >= 2.7:1, so at 1080 high they also fill the widest stage, 2580)
-      img.setScale(Math.max(W / img.width, H / img.height));
+      const img = (this.bgImage = this.add.image(W / 2, H / 2, backgroundKey(id)));
+      // Cover the screen by height; the floor line is lifted above the back row's feet per background (battle-layout.json > backgrounds.floor)
+      const place = backgroundPlacement(id, img.width, img.height, W, H);
+      img.setY(place.y).setScale(place.scale);
       this.backgroundId = id;
     } else {
       this.cameras.main.setBackgroundColor(colors.fallbackBackground);
@@ -3319,7 +3386,8 @@ export class BattleScene extends Phaser.Scene {
     const slots = c.board === 'party' ? layout.partySlots : layout.enemySlots; // units summoned onto the enemy board stand there
     const slot = slots[c.slot];
     if (!slot) return undefined;
-    const view = new CombatantView(this, c, slot.x, slot.y);
+    const pick = this.weapons?.picks?.[c.uid] ?? weaponFor(c.defId, c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined);
+    const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick });
     view.makeTappable(
       (p?: Phaser.Input.Pointer) => {
         if (!p || !this.isSelectGesture(p)) this.onCombatantTap(view);
@@ -3331,6 +3399,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.unitSel.has(c.uid)) view.setSelected(true);
     // parıltı dokusu açılıştan hemen sonra, birer birer pişer (ilk skill seçimi beklemesin; src/game/sprite-glow.ts)
     this.time.delayedCall(300 + this.views.size * 60, () => view.prewarmGlow());
+    if ((c.stats.surviveChance ?? 0) > 0) prewarmLuckyEscape(this); // Luck primary: nal dokusu Lucky Escape anından önce hazır olsun
     return view;
   }
 

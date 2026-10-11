@@ -14,6 +14,11 @@
  *                                                   kolları kızıl öfkeyle dolar, gövdesinin çevresinde 3 öfke koru (3 saldırı yükü)
  *                                                   belirir; kılıcı öne indirince ucundan ileri kızıl iz uzanır (menzil +1). Bedel/hasar yok.
  *
+ * POZ KÜTÜPHANESİ (Ömer 2026-10-11, src/game/poses.ts): aktör pozlu çiziliyorsa (`a.posed`, Warrior denemesi) kılıç zaten gövde pozunun
+ * elindeki silah katmanıdır: efektin kendi kılıç sprite'ı çizilmez, gövde skill'in pozlarına geçer (skills.json > pose: Double Strike
+ * overhead -> slash, Whirlwind spin 3 kare döngü, Charge step -> slash, Abyssal Cry raise -> channel); savuruş izleri, öfke izi pozdaki
+ * silahın çizgisinden (`a.weaponLine()`). Pozsuz aktörde her şey eskisi gibi.
+ *
  * Abyssal Fury (madde 262) yüklü saldırılar: Double Strike / Whirlwind / Charge'ta saldıranın yükü bu kullanımda harcandıysa
  * (`furious(c)`: c.usage'daki abyssal_fury yük olayları) kılıç izi ve savuruş kızıl tonlu, iz biraz daha uzun.
  */
@@ -63,6 +68,7 @@ function makeBlade(c: VfxCtx, k: VfxKit, dir: number, len: number, depth: number
   // blade sprite'ı: 256 kare, mantıksal 64; kılıç x=4..61 (topuz 4, kabza ~9-13) -> origin kabzanın ortası
   const size = len / (57 / 64);
   const img = k.v2Sprite(c, 'blade', '#ffe9b0', 0, 0, size, depth).setOrigin(11 / 64, 0.5);
+  if (c.actor.posed) img.setVisible(false); // pozlu aktör: silah gövde pozunun elinde (poz kütüphanesi)
   const set = (p: Pt, ang: number, sx = 1) => {
     img.setPosition(k.snap(p.x), k.snap(p.y));
     img.setRotation(dir > 0 ? ang : Math.PI - ang);
@@ -193,6 +199,7 @@ const doublestrike: V2Vfx = async (c, k) => {
   footfalls(c, k, 190, dir);
   await a.approach(stand.x, stand.y, 190);
   const hit = (second: boolean) => {
+    a.skillPose(); // pozlu: vuruş anı (slash)
     const p = k.spot(t);
     c.sfx('axeChop');
     cutMark(c, k, p, second ? (dir > 0 ? -0.85 : Math.PI + 0.85) : dir > 0 ? 0.85 : Math.PI - 0.85, t.h * (fury ? 0.95 : 0.75));
@@ -208,6 +215,7 @@ const doublestrike: V2Vfx = async (c, k) => {
     }
   };
   // 1) tepeden çapraz iniş: kılıç başının arkasından (-2.5 rad) öne-aşağı (0.9)
+  a.skillPose(0); // pozlu: hazırlık (overhead)
   lean(c, k, -dir * 6, 80);
   c.sfx('axeSwing');
   await k.wait(c.scene, k.slow(40));
@@ -221,6 +229,7 @@ const doublestrike: V2Vfx = async (c, k) => {
     1,
     async () => {
       // 2) ters kesik: aşağıdan yukarı
+      a.skillPose(0);
       lean(c, k, -dir * 4, 70);
       c.sfx('axeSwing');
       c.scene.tweens.add({ targets: a.container, x: stand.x + dir * 24, duration: k.slow(80), yoyo: true });
@@ -260,6 +269,7 @@ const whirlwind: V2Vfx = async (c, k) => {
   const smearCols: Array<[number, number]> = fury ? [[1.12, 0x8e1f2c], [0.92, 0xe5463b], [0.66, 0xffb4a2]] : [[1.0, 0xfff3d6], [0.82, 0xffffff], [0.6, 0xd7dce6]];
   const smear = c.scene.add.graphics().setDepth(k.DEPTH + 10);
   const back = c.scene.add.graphics().setDepth(a.container.depth - 2);
+  const spin = a.skillCycle();
   const baseSx = a.sprite.scaleX;
   const TURNS = 3;
   const SPIN = 560;
@@ -270,8 +280,9 @@ const whirlwind: V2Vfx = async (c, k) => {
     const e = u * u * 0.4 + u * 0.6; // hızlanan dönüş
     const ph = e * TURNS * Math.PI * 2;
     const p = center();
-    // gövde döner: sprite yatayda cos ile daralır/aynalanır
-    a.sprite.setScale(baseSx * (Math.abs(Math.cos(ph)) < 0.18 ? 0.18 * Math.sign(Math.cos(ph) || 1) : Math.cos(ph)), a.sprite.scaleY);
+    // gövde döner: pozlu aktörde dönme kareleri (spin1..3; Reduced motion: anahtar kare), değilse sprite yatayda cos ile daralır/aynalanır
+    if (spin) a.cycleFrame(spin, ph / (Math.PI * 2));
+    else a.sprite.setScale(baseSx * (Math.abs(Math.cos(ph)) < 0.18 ? 0.18 * Math.sign(Math.cos(ph) || 1) : Math.cos(ph)), a.sprite.scaleY);
     // kılıç: yatay düzlemde döner -> ekranda ileri/geri uzunluğu cos, derinliği sin
     const cx = Math.cos(ph * 1 + Math.PI * 0.15);
     const sy = Math.sin(ph * 1 + Math.PI * 0.15);
@@ -303,7 +314,8 @@ const whirlwind: V2Vfx = async (c, k) => {
       k.burst(c.scene, f.x, f.y - 8, { colors: k.colors.DUST, n: 6, speed: [80, 240], angle: [Math.PI * 1.05, Math.PI * 1.95], gravity: 160, life: [260, 480], size: [10, 20] });
     }
   });
-  a.sprite.setScale(baseSx, a.sprite.scaleY);
+  if (!spin) a.sprite.setScale(baseSx, a.sprite.scaleY);
+  else a.skillPose(); // dönüşün son karesi (rüzgâr halkası kopar)
   smear.destroy();
   back.destroy();
   c.scene.tweens.add({ targets: blade.img, alpha: 0, duration: k.slow(160), onComplete: () => blade.img.destroy() });
@@ -367,6 +379,7 @@ const charge: V2Vfx = async (c, k) => {
   const dir = stand.dir;
   // hazırlık: öne eğilir, ayağının dibinde toz
   c.sfx('chargeRush');
+  a.skillPose(0); // pozlu: atılma (step)
   lean(c, k, dir * 14, 70);
   k.burst(c.scene, a.container.x - dir * 20, a.container.y - 6, { colors: k.colors.DUST, n: 8, speed: [80, 260], angle: dir > 0 ? [Math.PI * 1.05, Math.PI * 1.35] : [Math.PI * 1.65, Math.PI * 1.95], gravity: 200, life: [300, 520], size: [12, 22] });
   await k.wait(c.scene, k.slow(70));
@@ -392,9 +405,10 @@ const charge: V2Vfx = async (c, k) => {
     delay: 16,
     loop: true,
     callback: () => {
-      const h = hands(a, dir);
+      const l = a.weaponLine();
+      const h = l ?? hands(a, dir);
       blade.set(h, 0.12);
-      if (furyTrail) drawFuryLance(furyTrail, k, h, dir, 0.12, len, len * 0.45, 0.9);
+      if (furyTrail) drawFuryLance(furyTrail, k, h, dir, l?.ang ?? 0.12, l?.len ?? len, (l?.len ?? len) * 0.45, 0.9);
     },
   });
   blade.set(hands(a, dir), 0.12);
@@ -406,6 +420,7 @@ const charge: V2Vfx = async (c, k) => {
   blade.set(hands(a, dir), 0.12);
   if (furyTrail) c.scene.tweens.add({ targets: furyTrail, alpha: 0, duration: k.slow(220), onComplete: () => furyTrail.destroy() });
   // çarpma
+  a.skillPose(); // pozlu: vuruş (slash)
   c.sfx('chargeSlam');
   const p = k.spot(t);
   const star = k.v2Sprite(c, 'impact', '#ffe9b0', p.x - dir * t.w * 0.2, p.y, Math.round(t.h * 0.9), k.DEPTH + 40);
@@ -513,7 +528,11 @@ const warcry: V2Vfx = async (c, k) => {
       k.ring(c.scene, mouth.x, mouth.y, { r: 260 + i * 60, flat: 0.75, n: 16, colors: i % 2 ? ['#8e1f2c', '#2a0a10'] : ['#e5463b', '#ff7a6a', '#ffffff'], dur: 520, size: 13, startR: 40, arc: [facing - 0.7, facing + 0.7] }),
     );
   void k.ring(c.scene, f.x, f.y - 4, { r: 200, flat: 0.3, n: 28, colors: ['#c0203a', '#8e1f2c', '#2a0a10'], dur: 600, size: 12, startR: 30 });
-  const pivot = () => hands(a, dir);
+  a.skillPose(0); // pozlu: kükreme (raise)
+  // pozlu aktör: kılıç pozun elinde; öfke izi o silahın çizgisi boyunca (açı ve boy pozdan)
+  const pivot = () => a.weaponLine() ?? hands(a, dir);
+  const angOf = (fallback: number) => a.weaponLine()?.ang ?? fallback;
+  const lenOf = () => a.weaponLine()?.len ?? len;
   const blade = makeBlade(c, k, dir, len, k.DEPTH + 12);
   const aura = c.scene.add.graphics().setDepth(k.DEPTH + 11);
   const vein = c.scene.add.graphics().setDepth(k.DEPTH + 13);
@@ -538,7 +557,7 @@ const warcry: V2Vfx = async (c, k) => {
   await k.counter(c.scene, k.slow(380), (u) => {
     const h = pivot();
     blade.set(h, ang);
-    drawFuryLance(aura, k, h, dir, ang, len, 0, 0.55 + 0.45 * u, len * (0.25 + 0.8 * u), vein);
+    drawFuryLance(aura, k, h, dir, angOf(ang), lenOf(), 0, 0.55 + 0.45 * u, lenOf() * (0.25 + 0.8 * u), vein);
   });
 
   // 4) üç öfke koru (yük) gövdenin çevresinde sırayla belirir ve döner
@@ -554,7 +573,7 @@ const warcry: V2Vfx = async (c, k) => {
     });
   };
   const orbit = c.scene.time.addEvent({ delay: 16, loop: true, callback: placeCores });
-  const glowTick = c.scene.time.addEvent({ delay: 16, loop: true, callback: () => drawFuryLance(aura, k, pivot(), dir, ang, len, 0, 0.8 + 0.2 * Math.sin(c.scene.time.now * 0.03), undefined, vein) });
+  const glowTick = c.scene.time.addEvent({ delay: 16, loop: true, callback: () => drawFuryLance(aura, k, pivot(), dir, angOf(ang), lenOf(), 0, 0.8 + 0.2 * Math.sin(c.scene.time.now * 0.03), undefined, vein) });
   placeCores();
   for (let i = 0; i < 3; i++) {
     if (i) await k.wait(c.scene, k.slow(110));
@@ -569,10 +588,11 @@ const warcry: V2Vfx = async (c, k) => {
     await k.wait(c.scene, k.slow(120));
     glowTick.remove();
     lean(c, k, dir * 6, 120);
+    a.skillPose(); // pozlu: öfkeyi öne salar (channel)
     const a0 = ang;
     await k.counter(c.scene, k.slow(140), (u) => {
       ang = a0 + (0.04 - a0) * (u * u);
-      drawFuryLance(aura, k, pivot(), dir, ang, len, 0, 1, undefined, vein);
+      drawFuryLance(aura, k, pivot(), dir, angOf(ang), lenOf(), 0, 1, undefined, vein);
       blade.set(pivot(), ang);
     });
     c.sfx('axeSwing');
@@ -582,12 +602,12 @@ const warcry: V2Vfx = async (c, k) => {
       k.slow(240),
       (u) => {
         blade.set(pivot(), ang);
-        drawFuryLance(aura, k, pivot(), dir, ang, len, reach * u, 1, undefined, vein);
+        drawFuryLance(aura, k, pivot(), dir, angOf(ang), lenOf(), reach * u, 1, undefined, vein);
       },
       'Quad.easeOut',
     );
     const h = pivot();
-    const tip = { x: h.x + dir * Math.cos(ang) * (len + reach), y: h.y + Math.sin(ang) * (len + reach) };
+    const tip = { x: h.x + dir * Math.cos(angOf(ang)) * (lenOf() + reach), y: h.y + Math.sin(angOf(ang)) * (lenOf() + reach) };
     k.burst(c.scene, tip.x, tip.y, { colors: ['#ffb4a2', '#e5463b', '#8e1f2c'], n: 9, speed: [80, 260], angle: dir > 0 ? [-0.7, 0.7] : [Math.PI - 0.7, Math.PI + 0.7], gravity: 200, life: [240, 440], size: [5, 10] });
     // korlar gövdeye çekilir
     orbit.remove();

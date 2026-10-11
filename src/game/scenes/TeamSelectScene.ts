@@ -5,7 +5,7 @@ import layout from '../../../data/battle-layout.json';
 import { skillTags } from '../../ui/skill-tags';
 import { content, describePassive, describeSkill, describeStat, primaryBonusInfo } from '../../engine';
 import type { CombatantDef, Teams } from '../../engine';
-import { backgroundKey, hasBackground, preloadAssets } from '../assets';
+import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
 import { PRIMARY_GOLD, STAT_COLOR, STAT_LABEL, statIconName } from '../../ui/stat-icons';
@@ -144,6 +144,12 @@ interface SideView {
   cover?: Phaser.GameObjects.Container;
 }
 
+/** Takım seçimi arka planı: Proving Grounds (öğleden sonra), dosyası yoksa varsayılan savaşın arka planı. */
+const TEAM_SELECT_BACKGROUNDS = (): string[] => {
+  const first = 'proving-grounds-sunny-afternoon';
+  return backgroundExists(first) ? [first] : [content.battles[content.DEFAULT_BATTLE]?.background ?? ''].filter(Boolean);
+};
+
 /**
  * Hızlı savaş takım seçimi: "Twin Formations" (Ömer 2026-10-09 taslak 1; kutusuz zarif menü dili: Cinzel + EB Garamond, ince altın çizgiler, kor elmas).
  * - Solda Player, sağda Enemy dizilimi (4 sıra x 3 şerit; ön sıra ortaya bakar), başlıkta takım boyutu seçici (1-12), altında Random · Clear.
@@ -242,7 +248,7 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this);
+    preloadAssets(this, { backgrounds: TEAM_SELECT_BACKGROUNDS() }); // yalnızca gösterilen arka plan (src/game/assets.ts > arka plan belleği)
   }
 
   create(): void {
@@ -429,8 +435,7 @@ export class TeamSelectScene extends Phaser.Scene {
   // --- Scenery ---
 
   private buildBackground(): void {
-    const want = ['proving-grounds-sunny-afternoon', content.battles[content.DEFAULT_BATTLE]?.background ?? ''];
-    const id = want.find((b) => b && hasBackground(this, b));
+    const id = TEAM_SELECT_BACKGROUNDS().find((b) => hasBackground(this, b));
     const img = id ? this.add.image(W / 2, H / 2, backgroundKey(id)).setDepth(0) : undefined;
     this.bg = { img };
     // Taslaktaki koyulaştırma: linear-gradient(180deg, .82 0%, .66 30%, .72 60%, .94 70%, .97 100%)

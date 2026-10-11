@@ -1,6 +1,7 @@
 import Phaser from 'phaser';
 import cfg from '../../data/menu-scene.json';
 import { worldXY } from './stage';
+import { trackSceneLoad } from '../ui/boot-loader';
 
 /**
  * Ana menünün katmanlı, canlı arka planı (Ömer 2026-10-10): alacakaranlıkta Valdoria; sağda yanan kale, ortada yıkık gözcü kulesi ve
@@ -21,10 +22,22 @@ const IMG_W = 2580;
 const IMG_H = 1080;
 
 export function preloadMenuLayers(scene: Phaser.Scene): void {
+  const before = scene.load.list.size;
   for (const [path, url] of Object.entries(FILES)) {
     const name = (path.split('/').pop() ?? '').replace(/\.[^.]+$/, '');
     if (!scene.textures.exists(key(name))) scene.load.image(key(name), url);
   }
+  // Ana menüye dönüşte katmanlar yeniden yüklenir (releaseMenuLayers): kuyruk başka dosya yüzünden izlenmiyorsa kısa yükleyici
+  // (src/ui/boot-loader.ts; 150 ms'den uzun sürerse görünür) bu yüklemeyi göstersin; sahne açılışı zaten kararıp açılır (elScreenIn)
+  if (before === 0 && scene.load.list.size > 0) trackSceneLoad(scene.load);
+}
+
+/**
+ * Ana menüden çıkınca katman görselleri bellekten atılır (Ömer 2026-10-11, performans: 4 x 2580x1080 + efekt sayfası ≈ 44 MB doku;
+ * savaşta / haritada telefon belleğini boşuna tutuyordu). Menüye dönüşte preload tarayıcı önbelleğinden yeniden yükler.
+ */
+export function releaseMenuLayers(scene: Phaser.Scene): void {
+  for (const n of [...cfg.layers, 'fx']) if (scene.textures.exists(key(n))) scene.textures.remove(key(n));
 }
 
 /** Dört katman ve efekt sayfası yüklü mü (değilse menü eski harita arka planına düşer). */
@@ -137,6 +150,9 @@ export class MenuBackdrop {
     scene.events.once('shutdown', () => {
       scene.input.off('pointermove', onMove);
       scene.events.off('update', this.update, this);
+      // önce katmanları kullanan görseller yok edilir, sonra dokular atılır (menüye dönüşte yeniden yüklenir)
+      this.root.destroy();
+      releaseMenuLayers(scene);
     });
     this.nextCrow = rand(cfg.crows.everyMs[0]! * 0.4, cfg.crows.everyMs[1]! * 0.6);
     for (const m of this.motes) this.spawn(m, true);

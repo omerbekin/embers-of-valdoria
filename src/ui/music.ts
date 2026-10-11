@@ -150,7 +150,7 @@ function update(): void {
     const bar = mod.barSec();
     const from = Math.ceil(songPos / bar - 1e-6) * bar; // bir sonraki ölçü başından
     engine = new mod.MusicEngine(c, c.destination, gain);
-    engine.start(c.currentTime + 0.12, from, FADE_IN);
+    engine.start(c.currentTime + 0.12, from, FADE_IN, musicData.fadeInFrom ?? 0);
     engine.pump(c.currentTime + LOOKAHEAD);
     startPump();
   } catch {

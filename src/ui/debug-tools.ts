@@ -36,6 +36,8 @@ import { getRotateMode, setRotateMode } from './viewport';
 import { stageView } from '../game/stage-view';
 import { backgroundPool } from '../game/battle-background';
 import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
+import { registerPosesPanel } from './debug-poses';
+import type { WeaponPick } from '../game/poses';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
 export const DEBUG_TABS = [QUICK_TAB, 'Battle', 'Unit', 'Skills', 'Rolls', 'Speed & View', 'Setup', 'Campaign', 'Test Mode', 'Characters', VERSIONS_TAB, 'Data'];
@@ -855,6 +857,19 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     },
   });
 
+  debug.register({
+    id: 'tweak.lucky-escape',
+    icon: 'clover',
+    tab: 'Rolls',
+    section: 'Preview',
+    label: 'Lucky Escape',
+    hint: 'Play the Lucky Escape moment (glance, golden horseshoe, text, coin sound) on the Ctrl-selected unit, or the first Luck-primary unit; rules and HP do not change. For a real one, set Damage to Kill and attack a Gambler or Hexer that still has its Lucky Escape',
+    run: () => {
+      const b = battle();
+      if (b) b.debugLuckyEscape();
+    },
+  });
+
   // ===== Tools: shortcuts to the tab / page that holds each tool =====
   const shortcut = (id: string, order: number, icon: string, short: string, tab: string, hint: string): void =>
     debug.register({ id, dockOnly: true, tab, section: 'Tools', dock: { group: 'Tools', order, icon, short }, label: short, hint, run: () => debug.openTab(tab) });
@@ -1070,6 +1085,51 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       const note = noteLineText('Saved in this browser. Applies from the next battle or Team Select screen (use Restart battle); the wiki updates after the page is reloaded.');
       note.classList.add('dim');
       el.append(note);
+    },
+  });
+
+  // ===== Characters > Poses: Warrior poz kütüphanesi denemesi (src/ui/debug-poses.ts; ayrı test sınıfı yok, yalnızca sunum) =====
+  registerPosesPanel(debug, {
+    views: () => battle()?.debugPoseViews() ?? [],
+    startTestBattle: () => {
+      const seed = newSeed();
+      // oyuncu: 2 Pose Tester (kılıç / balta), düşman: 2 Pose Tester (süslü silah + ışıltı) + 2 rastgele rakip; test modu
+      const foes = content.randomTeam(seed + 7, 6).filter((c) => c !== 'warrior').slice(0, 2);
+      const party = ['warrior', 'warrior'];
+      const enemies = ['warrior', 'warrior', ...foes];
+      const partyCells = content.randomCells(party, seed);
+      const enemyCells = content.randomCells(enemies, seed + 7);
+      // motor sırası = dolu hücrelerin sırası (uid 'party-i'); birim kurulumu anahtarı = hücre
+      const weaponsBySide: Record<'party' | 'enemy', WeaponPick[]> = {
+        party: [{ family: 'swords', look: 'plain' }, { family: 'axes', look: 'bearded', glow: '#5f93d6' }],
+        enemy: [{ family: 'swords', look: 'ornate', glow: '#f0a830' }, { family: 'axes', look: 'ornate', glow: '#b072e0' }],
+      };
+      const picks: Record<string, WeaponPick> = {};
+      const units = { party: {} as Record<number, { displayName: string }>, enemies: {} as Record<number, { displayName: string }> };
+      for (const [side, cells, out] of [['party', partyCells, units.party], ['enemy', enemyCells, units.enemies]] as const) {
+        let i = 0;
+        let w = 0;
+        cells.forEach((id, slot) => {
+          if (!id) return;
+          if (id === 'warrior') {
+            out[slot] = { displayName: 'Pose Tester' };
+            picks[`${side}-${i}`] = weaponsBySide[side][w++ % 2]!;
+          }
+          i++;
+        });
+      }
+      const data = {
+        seed,
+        mode: 'test' as const,
+        teams: { party: partyCells, enemies: enemyCells, units },
+        partySize: party.length,
+        enemySize: enemies.length,
+        weapons: { picks },
+      };
+      setTestSwitches(true);
+      const b = battle();
+      if (b) b.scene.restart(data);
+      else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
     },
   });
 

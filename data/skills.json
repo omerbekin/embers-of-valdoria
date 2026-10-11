@@ -26,6 +26,7 @@
       }
     ],
     "vfx": "doublestrike",
+    "pose": ["overhead", "slash"],
     "sfx": [
       "armorRun",
       "axeSwing",
@@ -54,6 +55,7 @@
       }
     ],
     "vfx": "whirlwind",
+    "pose": "spin",
     "sfx": [
       "armorRun",
       "axeSwing",
@@ -989,6 +991,7 @@
       }
     ],
     "vfx": "charge",
+    "pose": ["step", "slash"],
     "sfx": [
       "chargeRush",
       "chargeSlam"
@@ -1015,6 +1018,7 @@
       }
     ],
     "vfx": "warcry",
+    "pose": ["raise", "channel"],
     "sfx": [
       "scream"
     ]

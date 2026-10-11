@@ -93,6 +93,39 @@ export function placeFloat(lanes: Array<number | undefined>, defaultPx = 56, spa
   return { lane, offset };
 }
 
+/** Ekranda yaşayan bir yüzen yazı: doğuş ofseti, punto ve şu anki yaşı (tween ms). */
+export interface LiveFloat {
+  offset: number;
+  px: number;
+  age: number;
+}
+
+/** Yüzen yazının yükselmesi (Cubic.easeOut, combatant-view'daki tween ile aynı): yaşa göre kat edilen yol. */
+export const floatRiseAt = (age: number, life: number, rise: number): number => rise * (1 - Math.pow(1 - Math.min(1, Math.max(0, age) / life), 3));
+
+/**
+ * Çakışmasız yığınlama (Ömer 2026-10-11, taslak A ile birlikte): yeni yazı, TÜM ömrü boyunca (step ms örnekle) yaşayan hiçbir yazıyla
+ * dikeyde çakışmayan en küçük ofsete konur. placeFloat yükselmeyi hesaba katmadığı için geç gelen sayı, çoktan yükselmiş eski sayının içine
+ * doğuyordu. Adaylar: 0 ve her yaşayan yazının şu anki tepesi; hiçbiri sığmazsa en yükseği.
+ */
+export function placeFloatClear(live: LiveFloat[], px: number, o: { life: number; rise: number; spacing?: number; step?: number }): number {
+  const spacing = o.spacing ?? 0.95;
+  const step = o.step ?? 50;
+  const h = (p: number) => p * spacing;
+  const alive = live.filter((j) => j.age < o.life);
+  const fits = (off: number) =>
+    alive.every((j) => {
+      for (let s = 0; s <= o.life - j.age; s += step) {
+        const a = off + floatRiseAt(s, o.life, o.rise);
+        const b = j.offset + floatRiseAt(j.age + s, o.life, o.rise);
+        if (a < b + h(j.px) && b < a + h(px)) return false;
+      }
+      return true;
+    });
+  const cands = [0, ...alive.map((j) => j.offset + floatRiseAt(j.age, o.life, o.rise) + h(j.px))].sort((x, y) => x - y);
+  return cands.find(fits) ?? cands[cands.length - 1]!;
+}
+
 /** Parçaları (ikon, sayı, ikon...) yan yana ortalar: her parçanın sol x'i (toplam genişlik ortada 0'a göre) ve toplam. */
 export function rowLayout(widths: number[], gap: number): { lefts: number[]; total: number } {
   const total = widths.reduce((a, b) => a + b, 0) + Math.max(0, widths.length - 1) * gap;

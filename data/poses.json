@@ -1,0 +1,316 @@
+{
+  "_not": "Karakter poz kütüphanesi (Ömer 2026-10-11; future-ideas 'ortak poz kütüphanesi + dinamik silah'; kod src/game/poses.ts + pose-rig.ts). classes.<sınıf>: assets/poses/<dir>/<poz>.png gövde pozları (eller boş), ortak tuval (canvas: ayak ortası footX, taban footY), figure = idle figürünün boyu (ekran ölçeği). poses.<poz>.anchor = ana el (yumruk) noktası x/y (tuval pikseli) + angle (silah açısı, derece, saat yönü, 0 = ağız yukarı); offhand = ikinci el (bilgi; çizimde yumruk yaması); flip = silahı yatay aynala (balta ağzı öne); back = silah gövdenin ARKASINDA; hidden = silah çizilmez (atış); fist = yumruk yamasının yarıçapı (yumruk kabzanın ÜSTÜNDE görünsün). canvas/figure/box/weapons.looks ölçümleri tools/make-poses.mjs yazar (el noktaları korunur); el noktası ve açı düzenleyici: node tools/pose-editor.mjs. cycles = çok kareli poz (spin = 3 kare döngü). Skill -> poz eşlemesi skills.json > pose. weapons.<aile>.length = silah boyu (gövde tuval pikseli), itemArt/familyArt = item -> silah görseli ailesi, rarityLook = nadirlik -> görünüm dizini (0 sade, 1 orta, 2 süslü), rarityGlow = silahın çevresinde ince nadirlik ışıltısı.",
+  "classes": {
+    "warrior": {
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "cycles": {
+        "spin": [
+          "spin1",
+          "spin2",
+          "spin3"
+        ]
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "hit"
+      },
+      "poses": {
+        "idle": {
+          "box": {
+            "x": 80,
+            "y": 85,
+            "w": 247,
+            "h": 406
+          },
+          "anchor": {
+            "x": 226,
+            "y": 286,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 171,
+            "y": 286
+          }
+        },
+        "step": {
+          "box": {
+            "x": 105,
+            "y": 107,
+            "w": 229,
+            "h": 384
+          },
+          "anchor": {
+            "x": 238,
+            "y": 258,
+            "angle": 70
+          },
+          "offhand": {
+            "x": 218,
+            "y": 252
+          }
+        },
+        "slash": {
+          "box": {
+            "x": 66,
+            "y": 124,
+            "w": 281,
+            "h": 367
+          },
+          "anchor": {
+            "x": 107,
+            "y": 186,
+            "angle": -95
+          },
+          "offhand": {
+            "x": 118,
+            "y": 184
+          }
+        },
+        "overhead": {
+          "box": {
+            "x": 89,
+            "y": 32,
+            "w": 228,
+            "h": 459
+          },
+          "anchor": {
+            "x": 186,
+            "y": 56,
+            "angle": -20
+          },
+          "offhand": {
+            "x": 186,
+            "y": 56
+          }
+        },
+        "spin1": {
+          "box": {
+            "x": 64,
+            "y": 105,
+            "w": 284,
+            "h": 386
+          },
+          "anchor": {
+            "x": 304,
+            "y": 162,
+            "angle": 85
+          }
+        },
+        "spin2": {
+          "box": {
+            "x": 36,
+            "y": 118,
+            "w": 316,
+            "h": 373
+          },
+          "anchor": {
+            "x": 316,
+            "y": 193,
+            "angle": 80
+          }
+        },
+        "spin3": {
+          "box": {
+            "x": 91,
+            "y": 106,
+            "w": 253,
+            "h": 385
+          },
+          "anchor": {
+            "x": 319,
+            "y": 228,
+            "angle": 95
+          }
+        },
+        "raise": {
+          "box": {
+            "x": 88,
+            "y": 6,
+            "w": 231,
+            "h": 485
+          },
+          "anchor": {
+            "x": 146,
+            "y": 282,
+            "angle": 160
+          }
+        },
+        "channel": {
+          "box": {
+            "x": 61,
+            "y": 138,
+            "w": 289,
+            "h": 353
+          },
+          "anchor": {
+            "x": 320,
+            "y": 194,
+            "angle": 75
+          },
+          "offhand": {
+            "x": 297,
+            "y": 196
+          }
+        },
+        "throw": {
+          "box": {
+            "x": 68,
+            "y": 140,
+            "w": 333,
+            "h": 351
+          },
+          "anchor": {
+            "x": 372,
+            "y": 171,
+            "angle": 80
+          }
+        },
+        "hit": {
+          "box": {
+            "x": 69,
+            "y": 138,
+            "w": 240,
+            "h": 353
+          },
+          "anchor": {
+            "x": 203,
+            "y": 253,
+            "angle": -45
+          },
+          "offhand": {
+            "x": 177,
+            "y": 227
+          }
+        },
+        "kneel": {
+          "box": {
+            "x": 122,
+            "y": 227,
+            "w": 241,
+            "h": 264
+          },
+          "anchor": {
+            "x": 307,
+            "y": 432,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 272,
+            "y": 430
+          }
+        }
+      },
+      "dir": "warrior",
+      "canvas": {
+        "w": 406,
+        "h": 497,
+        "footX": 203,
+        "footY": 491
+      },
+      "figure": {
+        "w": 247,
+        "h": 406
+      }
+    }
+  },
+  "weapons": {
+    "swords": {
+      "length": 250,
+      "looks": {
+        "plain": {
+          "w": 145,
+          "h": 477,
+          "grip": {
+            "x": 72,
+            "y": 391
+          }
+        },
+        "engraved": {
+          "w": 167,
+          "h": 481,
+          "grip": {
+            "x": 83,
+            "y": 396
+          }
+        },
+        "ornate": {
+          "w": 178,
+          "h": 491,
+          "grip": {
+            "x": 89,
+            "y": 403
+          }
+        }
+      },
+      "order": [
+        "plain",
+        "engraved",
+        "ornate"
+      ]
+    },
+    "axes": {
+      "length": 230,
+      "looks": {
+        "plain": {
+          "w": 155,
+          "h": 434,
+          "grip": {
+            "x": 44,
+            "y": 326
+          }
+        },
+        "bearded": {
+          "w": 249,
+          "h": 455,
+          "grip": {
+            "x": 113,
+            "y": 362
+          }
+        },
+        "ornate": {
+          "w": 267,
+          "h": 466,
+          "grip": {
+            "x": 145,
+            "y": 376
+          }
+        }
+      },
+      "order": [
+        "plain",
+        "bearded",
+        "ornate"
+      ]
+    }
+  },
+  "itemArt": {
+    "arming_sword": "swords",
+    "emberbrand": "swords"
+  },
+  "familyArt": {
+    "axes": "axes"
+  },
+  "rarityLook": {
+    "common": 0,
+    "uncommon": 0,
+    "rare": 1,
+    "epic": 2,
+    "legendary": 2
+  },
+  "rarityGlow": {
+    "rare": "#5f93d6",
+    "epic": "#b072e0",
+    "legendary": "#f0a830"
+  },
+  "fistRadius": 13
+}
