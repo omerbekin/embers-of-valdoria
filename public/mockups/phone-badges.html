@@ -1,0 +1,196 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<title>Phone status badges</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=EB+Garamond:ital,wght@0,400;1,400&display=swap" rel="stylesheet" />
+<style>
+  /* Taslak (Ömer 2026-10-11): telefonda durum rozetleri. Seçilen B'nin son hâli (üst öncelikli rozetler + "+N" sayacı, açılır pencere YOK), gerçek savaş görselleriyle, telefon ekran
+     boyutunda (844x390 ve 740x360). Sahne oyun birimiyle (1920x1080 taban, telefonda yanlara açılır) çizilir ve gerçek piksele ölçeklenir.
+     Konumlar data/battle-layout.json ile aynı (yuvalar, can çubuğu 104x16, sprite kutusu 140x190). Rozetler 44 birim = 740x360'ta ~14,7 px. */
+  :root { color-scheme: dark; --gold: 217,178,106; --on: #f3d999; --txt: #d9c8a2; --muted: #a8977a; --dim: #7d705a; --ember: #e0702a; --ember2: #ffb35a; --page: #0b0806; }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--page); color: var(--txt); font-family: 'EB Garamond', Georgia, serif; }
+  header { display: flex; flex-wrap: wrap; align-items: center; gap: 14px 22px; padding: 16px 20px 6px; }
+  h1 { margin: 0; font: 600 20px Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: var(--on); }
+  .pick { display: flex; flex-wrap: wrap; gap: 8px; }
+  .pick a { font: 600 13px Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: var(--muted); text-decoration: none; padding: 8px 12px; border: 1px solid rgba(var(--gold), .3); cursor: pointer; }
+  .pick a.on { color: var(--on); border-color: rgba(243,217,153,.8); box-shadow: 0 0 12px rgba(240,140,40,.25); }
+  .cap { padding: 0 20px 6px; font: italic 17px 'EB Garamond', serif; color: var(--muted); max-width: 1100px; }
+  .rec { margin: 4px 20px 10px; padding: 10px 14px; border-left: 2px solid var(--ember); font: 17px 'EB Garamond', serif; color: var(--txt); max-width: 1100px; }
+  .shots { display: flex; flex-wrap: wrap; gap: 22px; padding: 8px 20px 30px; }
+  .shot h2 { margin: 6px 0 8px; font: 600 12px Cinzel, serif; letter-spacing: .2em; text-transform: uppercase; color: rgba(217,178,106,.85); }
+  .frame { position: relative; overflow: hidden; border: 1px solid rgba(var(--gold), .3); background: #000; }
+  .stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .bg { position: absolute; top: 0; height: 1080px; background: url('phone-badges/bg.webp') center / cover; }
+  .unit { position: absolute; }
+  .spr { position: absolute; bottom: 0; left: 50%; height: 190px; transform: translateX(-50%); }
+  .spr.flip { transform: translateX(-50%) scaleX(-1); }
+  .shadow { position: absolute; bottom: -6px; left: 50%; width: 110px; height: 22px; margin-left: -55px; border-radius: 50%; background: rgba(0,0,0,.35); }
+  .bar { position: absolute; left: 50%; width: 104px; margin-left: -52px; height: 16px; background: #1b130c; border: 1px solid rgba(var(--gold), .6); }
+  .bar i { position: absolute; left: 0; top: 0; bottom: 0; background: #5fb15a; }
+  .bar.en i { background: #c8483c; }
+  .mp { position: absolute; left: 50%; width: 104px; margin-left: -52px; height: 8px; background: #1b130c; border: 1px solid rgba(var(--gold), .4); }
+  .mp i { position: absolute; left: 0; top: 0; bottom: 0; width: 70%; background: #4f8cff; }
+  .name { position: absolute; left: 50%; transform: translateX(-50%); white-space: nowrap; font: 600 26px Cinzel, serif; color: #f4ead2; letter-spacing: .02em;
+    text-shadow: 0 0 2px #120a05, 0 0 2px #120a05, 0 2px 4px rgba(0,0,0,.85); }
+  .badge { position: absolute; width: 42px; height: 42px; }
+  .badge img { width: 42px; height: 42px; display: block; filter: drop-shadow(0 2px 2px rgba(0,0,0,.85)); }
+  .badge b { position: absolute; right: -2px; bottom: -6px; font: 700 20px Georgia, serif; color: #f3e6c4; text-shadow: 0 0 3px #000, 0 0 3px #000; }
+  .badge.debuff b { color: #ffb0a0; }
+  .more { position: absolute; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font: 700 20px Cinzel, serif; color: var(--on);
+    background: radial-gradient(#2a1d12, #0c0906); box-shadow: inset 0 0 0 2px rgba(var(--gold), .75), 0 2px 4px #000; }
+  .pop { position: absolute; padding: 14px 18px 12px; min-width: 330px; background: rgba(16,11,7,.96); border: 1px solid rgba(var(--gold), .55); box-shadow: 0 8px 24px rgba(0,0,0,.7); }
+  .pop .t { font: 600 22px Cinzel, serif; color: var(--on); letter-spacing: .08em; margin-bottom: 8px; }
+  .pop .r { display: flex; align-items: center; gap: 12px; font: 24px 'EB Garamond', serif; color: var(--txt); height: 52px; }
+  .pop .r img { width: 44px; height: 44px; }
+  .pop .r span { margin-left: auto; color: var(--muted); }
+  .pip { position: absolute; width: 14px; height: 14px; transform: rotate(45deg); box-shadow: 0 0 0 2px rgba(10,7,5,.85); }
+  .pip.b { background: #8fe39a; } .pip.d { background: #ff8a7a; }
+  .float { position: absolute; left: 50%; transform: translateX(-50%); font: 700 60px Georgia, serif; color: #ffd23f; text-shadow: 0 0 4px #000, 0 3px 0 #5a2a00; white-space: nowrap; }
+  .guide { position: absolute; left: 50%; border-top: 2px dashed rgba(255,179,90,.55); }
+  .hud { position: absolute; bottom: 0; height: 170px; background: linear-gradient(180deg, rgba(10,7,5,.85), rgba(10,7,5,.97)); border-top: 1px solid rgba(var(--gold), .3); }
+  .hud .portrait { position: absolute; left: 30px; top: 22px; width: 126px; height: 126px; border: 1px solid rgba(var(--gold), .6); background: #120c08 center / 280% no-repeat; background-position: 50% 8%; }
+  .hud .nm { position: absolute; left: 176px; top: 22px; font: 600 30px Cinzel, serif; color: var(--on); }
+  .hud .shelf { position: absolute; left: 176px; top: 70px; display: flex; gap: 14px; }
+  .hud .shelf .badge { position: relative; width: 64px; height: 64px; }
+  .hud .shelf .badge img { width: 64px; height: 64px; }
+  .hud .shelf .badge b { font-size: 26px; }
+  .tag { position: absolute; font: 600 18px Cinzel, serif; letter-spacing: .14em; color: var(--ember2); text-transform: uppercase; text-shadow: 0 0 3px #000; }
+</style>
+</head>
+<body>
+<header>
+  <h1>Phone status badges</h1>
+  <div class="pick" id="pickV"></div>
+  <div class="pick" id="pickS"></div>
+</header>
+<div class="cap" id="cap"></div>
+<div class="rec"><b>Decision: B (final behaviour).</b> Options A (row above the head) and C (pips + HUD shelf) were dropped. In the game the exact number of badges per unit comes from the no-overlap solver (src/game/badge-layout.ts); this page shows the typical result of 2 badges + counter.</div>
+<div class="shots" id="shots"></div>
+<script>
+  // Dense 4v4: front two ranks on both sides (data/battle-layout.json slots 0, 1, 3, 4). Statuses 3-4 per unit.
+  const P = [{ x: 784, y: 745 }, { x: 725, y: 802 }, { x: 599, y: 745 }, { x: 540, y: 802 }];
+  const E = [{ x: 1136, y: 745 }, { x: 1195, y: 802 }, { x: 1321, y: 745 }, { x: 1380, y: 802 }];
+  const UNITS = [
+    { side: 'p', at: P[0], cls: 'defender', name: 'Defender', hp: 0.8, st: [['fortify', 2, 0], ['blessed', 3, 0], ['slow', 2, 1], ['wound', 1, 1]] },
+    { side: 'p', at: P[1], cls: 'warrior', name: 'Warrior', hp: 0.6, st: [['haste', 2, 0], ['stun', 1, 1], ['wither', 3, 1]] },
+    { side: 'p', at: P[2], cls: 'mage', name: 'Mage', hp: 0.9, st: [['dark_bond', 3, 0], ['silence', 2, 1], ['omen', 2, 1], ['jinxed', 1, 1]] },
+    { side: 'p', at: P[3], cls: 'archer', name: 'Archer', hp: 0.45, st: [['haste', 1, 0], ['blinded', 2, 1], ['anchored', 2, 1]] },
+    { side: 'e', at: E[0], cls: 'paladin', name: 'Paladin', hp: 0.7, st: [['blessed', 2, 0], ['fortify', 1, 0], ['omen', 3, 1], ['slow', 1, 1]] },
+    { side: 'e', at: E[1], cls: 'hexer', name: 'Hexer', hp: 0.55, st: [['shrouded', 2, 0], ['wound', 2, 1], ['silence', 1, 1]] },
+    { side: 'e', at: E[2], cls: 'druid', name: 'Druid', hp: 1, st: [['haste', 2, 0], ['dark_bond', 2, 0], ['jinxed', 1, 1], ['wither', 2, 1]] },
+    { side: 'e', at: E[3], cls: 'gambler', name: 'Gambler', hp: 0.3, st: [['blessed', 1, 0], ['stun', 1, 1], ['blinded', 2, 1]] },
+  ];
+  const NAMES = { slow: 'Slow', haste: 'Haste', wound: 'Wound', stun: 'Stun', fortify: 'Fortified', blessed: 'Blessed', blinded: 'Blinded', omen: 'Bad Omen', wither: 'Withering', jinxed: 'Jinxed', silence: 'Silenced', dark_bond: 'Dark Bond', shrouded: 'Shrouded', anchored: 'Anchored' };
+  const VARIANTS = {
+    b: { label: 'B · Final: top statuses + counter', cap: 'Chosen (Ömer 2026-10-11): on a phone each unit shows its most important statuses (debuffs first, then buffs, by the priority list in data/battle-layout.json) as 42-unit badges (~15 px on 844x390), as many as fit without touching a neighbour, then a "+N" counter in the same style. The counter is NOT a button and nothing pops up over the unit: tapping a unit already shows every status in the side panel. Desktop is unchanged.' },
+  };
+  const SIZES = { s844: { w: 844, h: 390, label: '844 x 390' }, s740: { w: 740, h: 360, label: '740 x 360' } };
+  const q = new URLSearchParams(location.search);
+  let v = 'b';
+  let sz = SIZES[q.get('s')] ? q.get('s') : 's844';
+
+  const el = (cls, html = '') => { const d = document.createElement('div'); d.className = cls; d.innerHTML = html; return d; };
+  const at = (n, x, y, w) => { n.style.left = `${x}px`; n.style.top = `${y}px`; if (w) n.style.width = `${w}px`; return n; };
+  const badge = ([id, turns, deb], x, y) => at(el(`badge${deb ? ' debuff' : ''}`, `<img src="phone-badges/${id}.png" alt=""><b>${turns}</b>`), x, y);
+
+  function drawUnit(stage, u, mode, opts) {
+    const barY = u.at.y - 190 - 24;
+    const box = el('unit');
+    const spr = document.createElement('img');
+    spr.className = `spr${u.side === 'e' ? ' flip' : ''}`;
+    spr.src = `phone-badges/${u.cls}.webp`;
+    stage.append(at(el('shadow'), u.at.x, u.at.y));
+    const s = at(document.createElement('div'), u.at.x, u.at.y);
+    s.style.position = 'absolute';
+    s.append(spr);
+    stage.append(s);
+    const bar = at(el(`bar${u.side === 'e' ? ' en' : ''}`, `<i style="width:${u.hp * 100}%"></i>`), u.at.x, barY - 8);
+    stage.append(bar, at(el('mp', '<i></i>'), u.at.x, barY + 11));
+    const name = at(el('name', u.name), u.at.x, barY - 46);
+    stage.append(name);
+    const buffs = u.st.filter((s) => !s[2]);
+    const debs = u.st.filter((s) => s[2]);
+    if (mode === 'a') {
+      const n = u.st.length;
+      const w = n * 44 + (n - 1) * 6;
+      u.st.forEach((s, i) => stage.append(badge(s, u.at.x - w / 2 + i * 50, barY - 100)));
+      if (opts.guide) stage.append(at(el('guide'), u.at.x - 70, barY - 108, 140));
+    } else if (mode === 'b') {
+      const top = [...debs].sort((a, b) => a[1] - b[1]).concat([...buffs].sort((a, b) => a[1] - b[1])).slice(0, 2);
+      top.forEach((s, i) => stage.append(badge(s, u.at.x + 60 + i * 50, barY - 22)));
+      const more = u.st.length - top.length;
+      if (more > 0) stage.append(at(el('more', `+${more}`), u.at.x + 60 + top.length * 50, barY - 20));
+      if (opts.expand) {
+        const pop = at(el('pop'), u.at.x - 120, barY - 330);
+        pop.append(el('t', u.name));
+        for (const [id, t, d] of u.st) pop.append(el('r', `<img src="phone-badges/${id}.png" alt=""><span style="margin-left:0;color:${d ? '#ffb0a0' : '#8fe39a'}">${NAMES[id]}</span><span>${t} turn${t > 1 ? 's' : ''}</span>`));
+        stage.append(pop);
+      }
+    } else {
+      // pips: buffs from the left, debuffs from the right, under the MP bar, within the bar width
+      buffs.forEach((_, i) => stage.append(at(el('pip b'), u.at.x - 46 + i * 20, barY + 26)));
+      debs.forEach((_, i) => stage.append(at(el('pip d'), u.at.x + 32 - i * 20, barY + 26)));
+    }
+  }
+
+  function render() {
+    document.getElementById('pickV').innerHTML = Object.entries(VARIANTS).map(([k, d]) => `<a data-v="${k}" class="${k === v ? 'on' : ''}">${d.label}</a>`).join('');
+    document.getElementById('pickS').innerHTML = Object.entries(SIZES).map(([k, d]) => `<a data-s="${k}" class="${k === sz ? 'on' : ''}">${d.label}</a>`).join('');
+    document.querySelectorAll('[data-v]').forEach((a) => (a.onclick = () => { v = a.dataset.v; render(); }));
+    document.querySelectorAll('[data-s]').forEach((a) => (a.onclick = () => { sz = a.dataset.s; render(); }));
+    document.getElementById('cap').textContent = VARIANTS[v].cap;
+    const shots = document.getElementById('shots');
+    shots.innerHTML = '';
+    const S = SIZES[sz];
+    for (const mode of [v]) {
+      const shot = el('shot', `<h2>${VARIANTS[mode].label} · ${S.label}</h2>`);
+      const frame = el('frame');
+      frame.style.width = `${S.w}px`;
+      frame.style.height = `${S.h}px`;
+      // telefonda sahne: yükseklik 1080 birim, genişlik ekran oranında (16:9 tabanın iki yanı açılır), kamera (960, 540) ortada
+      const scale = S.h / 1080;
+      const logicalW = S.w / scale;
+      const ox = (logicalW - 1920) / 2;
+      const stage = el('stage');
+      stage.style.width = `${logicalW}px`;
+      stage.style.height = '1080px';
+      stage.style.transform = `scale(${scale})`;
+      const bg = at(el('bg'), 0, 0, logicalW);
+      stage.append(bg);
+      const field = el('');
+      field.style.cssText = `position:absolute;left:${ox}px;top:0;width:1920px;height:1080px`;
+      stage.append(field);
+      for (const u of UNITS) drawUnit(field, u, mode, { guide: false, expand: false });
+      if (mode === 'a') {
+        const f = at(el('float', '128'), 725, 802 - 190 - 24 - 175);
+        field.append(f);
+      }
+      // alt HUD bandı (gerçek oyunda 170 birim); C'de oynayan birimin rozet rafı
+      const hud = at(el('hud'), -ox, 1080 - 170, logicalW);
+      field.append(hud);
+      if (mode === 'c') {
+        const mage = UNITS.find((u) => u.cls === 'mage');
+        const por = el('portrait');
+        por.style.backgroundImage = 'url(phone-badges/mage.webp)';
+        hud.append(por, el('nm', 'Mage'));
+        const shelf = el('shelf');
+        mage.st.forEach((s) => { const b = badge(s, 0, 0); b.style.left = ''; b.style.top = ''; shelf.append(b); });
+        hud.append(shelf);
+        field.append(at(el('tag', 'acting'), mage.at.x - 40, mage.at.y + 10));
+      }
+      frame.append(stage);
+      shot.append(frame);
+      shots.append(shot);
+    }
+    history.replaceState(null, '', `?v=${v}&s=${sz}`);
+  }
+  render();
+</script>
+</body>
+</html>

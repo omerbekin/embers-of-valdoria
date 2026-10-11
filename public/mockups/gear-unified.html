@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Gear Unified Mockups</title>
+<!--
+  Gear + torba BİRLEŞTİRME taslakları (ui-dev, 2026-10-11; Ömer seçimi için). Oyun kodu DEĞİL, oyun verisine dokunmaz.
+  Varyantlar: #g1 ... #g5; ek seçenekler adreste "&" ile: phone (844x390), merchant / reward (bağlam), tip (item ipucu), drag (sürükleme anı).
+  Örnek: gear-unified.html#g4&phone&merchant
+  Sahne masaüstünde 1920x1080, telefonda 844x390 CSS pikseli; pencereye sığacak kadar ölçeklenir (yazı boyları gerçek boydur).
+  Görseller oyunun boyalı asset'leri (assets/items, stat-icons, misc-icons, ui-icons, avatars, icons-v2/defender) -> gear-unified/.
+  Sayılar Defender (Level 1) için oyunun Gear ekranından; affix'ler yeni item sistemine göre (items.md 1.3b: Common C, Uncommon C C,
+  Rare C C B, Epic C C B A, Legendary + benzersiz etki). Legendary item'lerin henüz görseli yok: taslakta en yakın taban görseli kullanıldı.
+-->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('gear-unified/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('gear-unified/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400 800; font-display: block; src: url('gear-unified/fonts/EBGaramond-italic-latin.woff2') format('woff2'); }
+:root {
+  color-scheme: dark;
+  --gold: 217, 178, 106;
+  --on: #f6dea0;      /* başlık / seçili */
+  --txt: #efe3c6;     /* ana metin: oyundakinden daha açık (okunurluk) */
+  --sub: #d6c49c;     /* ikincil */
+  --muted: #b8a682;   /* soluk ama okunur */
+  --dim: #8f8068;
+  --ember: #e0702a; --ember2: #ffb35a;
+  --up: #9be37a; --down: #ff8f78;
+  --ink: #0b0806;
+  --cin: Cinzel, Georgia, serif; --gar: 'EB Garamond', Georgia, serif;
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); font-family: var(--gar); overflow: hidden; }
+button { font: inherit; color: inherit; }
+
+/* --- üst çubuk (taslak kontrolü; oyunda yok) --- */
+#bar { position: fixed; left: 0; right: 0; top: 0; height: 56px; z-index: 50; display: flex; align-items: center; gap: 18px; padding: 0 16px;
+  background: #0d0a07; border-bottom: 1px solid rgba(var(--gold), .3); font: 600 15px var(--cin); letter-spacing: .08em; }
+#bar .grp { display: flex; gap: 4px; align-items: center; }
+#bar .grp > span { color: var(--muted); margin-right: 6px; font-size: 12px; letter-spacing: .2em; }
+#bar button { background: transparent; border: 1px solid rgba(var(--gold), .25); padding: 7px 11px; cursor: pointer; text-transform: uppercase; letter-spacing: .08em; }
+#bar button.on { border-color: var(--on); color: var(--on); background: rgba(224,112,42,.12); }
+#bar .desc { flex: 1; font: italic 16px var(--gar); letter-spacing: 0; color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: right; }
+#wrap { position: fixed; left: 0; right: 0; top: 56px; bottom: 0; display: grid; place-items: center; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; transform-origin: 0 0; overflow: hidden; background: #070504; }
+
+/* --- ölçü belirteçleri: masaüstü (1920x1080) / telefon (844x390, gerçek CSS pikseli) --- */
+#stage.desk { width: 1920px; height: 1080px; --t0: 16px; --t1: 19px; --t2: 22px; --t3: 25px; --t4: 30px; --th: 46px; --g: 18px; --g2: 10px; --cell: 84px; --pad: 30px; --ico: 26px; --btnh: 54px; }
+#stage.phone { width: 844px; height: 390px; --t0: 11.5px; --t1: 13px; --t2: 14px; --t3: 15px; --t4: 17px; --th: 20px; --g: 7px; --g2: 4px; --cell: 44px; --pad: 9px; --ico: 16px; --btnh: 44px; }
+
+/* --- ortak çerçeve: çalışma paneli (başlık sol üst, bağlam sağ üst) --- */
+.scr { position: absolute; inset: 0; display: flex; flex-direction: column; padding: var(--pad); gap: var(--g);
+  background: radial-gradient(ellipse at 30% 0%, rgba(60,40,22,.55), transparent 60%), linear-gradient(180deg, #1c140d, #0c0906); }
+.head { display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(var(--gold), .2); padding-bottom: var(--g2); flex: none; }
+.title { font: 600 var(--th) var(--cin); letter-spacing: .12em; text-transform: uppercase; background: linear-gradient(180deg, #fff0c4, #e8c47e 55%, #c0924a); -webkit-background-clip: text; background-clip: text; color: transparent; }
+.title small { font-size: .5em; letter-spacing: .2em; color: var(--muted); -webkit-text-fill-color: var(--muted); margin-left: .8em; }
+.ctxr { display: flex; align-items: center; gap: var(--g); font: 600 var(--t3) var(--cin); color: var(--on); letter-spacing: .06em; }
+.ctxr img { width: calc(var(--ico) * 1.3); height: calc(var(--ico) * 1.3); }
+.sec { font: 600 var(--t1) var(--cin); letter-spacing: .2em; text-transform: uppercase; color: rgba(236,200,130,.95); padding-bottom: 4px; border-bottom: 1px solid rgba(var(--gold), .2); margin-bottom: var(--g2); display: flex; align-items: center; gap: 8px; white-space: nowrap; }
+.sec .cnt { margin-left: auto; letter-spacing: .06em; color: var(--sub); }
+.sec img { width: var(--ico); height: var(--ico); }
+.foot { display: flex; justify-content: flex-end; gap: calc(var(--g) * 1.4); border-top: 1px solid rgba(var(--gold), .2); padding-top: var(--g2); flex: none; }
+.hint { font: italic var(--t1) var(--gar); color: var(--sub); margin-right: auto; align-self: center; }
+
+/* kit düğmesi: ikinciller solda, birincil en sağda (kor elmas yalnızca birincilde) */
+.btn { position: relative; min-height: var(--btnh); padding: 0 calc(var(--g) * 1.4); display: inline-flex; align-items: center; justify-content: center; gap: 8px;
+  background: linear-gradient(180deg, rgba(34,25,16,.9), rgba(12,9,6,.92)); border: 1px solid rgba(var(--gold), .38); font: 600 var(--t1) var(--cin);
+  letter-spacing: .1em; text-transform: uppercase; color: var(--txt); white-space: nowrap; }
+.btn.primary { border: 2px solid #d9b26a; color: var(--on); }
+.btn.primary::before, .btn.primary::after { content: ''; position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 10px rgba(240,140,40,.8); }
+.btn.primary::before { left: -6px; } .btn.primary::after { right: -6px; }
+.btn.danger { border-color: rgba(255,143,120,.55); color: var(--down); }
+.btn.sm { min-height: calc(var(--btnh) * .82); font-size: var(--t0); padding: 0 var(--g); }
+.btn img { width: var(--ico); height: var(--ico); }
+.chip { min-height: calc(var(--btnh) * .74); padding: 0 calc(var(--g) * .8); border: 1px solid rgba(var(--gold), .3); background: rgba(8,6,4,.6); font: 600 var(--t0) var(--cin); letter-spacing: .08em; text-transform: uppercase; display: inline-flex; align-items: center; gap: 6px; color: var(--sub); white-space: nowrap; }
+.chip.on { border-color: var(--on); color: var(--on); }
+.chip img { width: calc(var(--ico) * .9); height: calc(var(--ico) * .9); }
+
+/* --- item hücresi (TEK bileşen: Gear torbası, yuvalar, tüccar tezgâhı, satış/geri alım, ödül torbası) ---
+   Nadirlik çerçevesi tüccar kartları gibi: sıra büyüdükçe kalın çerçeve + iç ton + köşebent; Epic / Legendary dört köşede. */
+.r-common { --rc: #8a8a84; --rl: #c9c6ba; --rt: #cfccc0; }
+.r-uncommon { --rc: #5f8f3e; --rl: #9ad46e; --rt: #a6de7c; }
+.r-rare { --rc: #3f6fa8; --rl: #7fb2f0; --rt: #8ebcf4; }
+.r-epic { --rc: #7a3f9a; --rl: #c48ae6; --rt: #cf9cf0; }
+.r-legendary { --rc: #f0a830; --rl: #ffd27a; --rt: #ffcf70; }
+.it { position: relative; width: var(--cell); height: var(--cell); flex: none; display: grid; place-items: center; background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc) 18%, transparent), rgba(10,7,5,.95) 72%);
+  border: 1px solid color-mix(in srgb, var(--rc) 80%, transparent); cursor: grab; }
+.it.k2, .it.k3, .it.k4 { border-width: 2px; }
+.it img.art { width: 82%; height: 82%; object-fit: contain; filter: drop-shadow(0 2px 2px #000); }
+.it::before, .it::after, .it .c2, .it .c3 { content: ''; position: absolute; width: 26%; height: 26%; pointer-events: none; }
+.it::before { left: -1px; top: -1px; border-left: 2px solid var(--rl); border-top: 2px solid var(--rl); }
+.it::after { right: -1px; bottom: -1px; border-right: 2px solid var(--rl); border-bottom: 2px solid var(--rl); }
+.it .c2 { right: -1px; top: -1px; border-right: 2px solid var(--rl); border-top: 2px solid var(--rl); }
+.it .c3 { left: -1px; bottom: -1px; border-left: 2px solid var(--rl); border-bottom: 2px solid var(--rl); }
+.it.k4 { box-shadow: 0 0 calc(var(--cell) * .22) color-mix(in srgb, var(--rc) 55%, transparent); }
+.it.no img.art { filter: grayscale(1) brightness(.6); opacity: .55; }
+.it.no::after { border-color: rgba(255,143,120,.7); }
+.it.empty { border: 1px dashed rgba(var(--gold), .2); background: rgba(8,6,4,.35); cursor: default; }
+.it.empty::before, .it.empty::after { display: none; }
+.it.empty img.slotico { width: 56%; height: 56%; opacity: .22; filter: grayscale(1); }
+/* seçili: nadirlik renginde parlak çerçeve + EKRANDAKİ TEK kor elmas */
+.it.sel { outline: 3px solid var(--rl); outline-offset: 3px; box-shadow: 0 0 calc(var(--cell) * .35) color-mix(in srgb, var(--rl) 60%, transparent); }
+.it.sel .dia { position: absolute; left: 50%; top: -12px; width: 15px; height: 15px; margin-left: -7.5px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 10px rgba(240,140,40,.9); z-index: 2; }
+.it.drop-ok { outline: 2px dashed var(--up); outline-offset: 3px; box-shadow: 0 0 calc(var(--cell) * .3) rgba(155,227,122,.5); }
+.it .lvl { position: absolute; right: 3px; bottom: 1px; font: 600 var(--t0) var(--cin); color: var(--sub); text-shadow: 0 1px 2px #000, 0 0 4px #000; }
+.it .fit { position: absolute; left: 2px; top: 2px; display: flex; gap: 1px; }
+.it .fit img { width: calc(var(--cell) * .26); height: calc(var(--cell) * .26); border: 1px solid rgba(var(--gold), .5); background: #120c08; }
+.it .new { position: absolute; left: -4px; top: -6px; font: 700 calc(var(--t0) * .85) var(--cin); letter-spacing: .08em; background: var(--ember2); color: #1a0f06; padding: 0 4px; }
+.price { display: flex; align-items: center; justify-content: center; gap: 4px; font: 600 var(--t1) var(--cin); color: var(--on); margin-top: 3px; }
+.price img { width: calc(var(--ico) * .85); height: calc(var(--ico) * .85); }
+.price.bad { color: var(--down); }
+.price.sold { color: var(--dim); letter-spacing: .14em; font-size: var(--t0); }
+.cellw { display: flex; flex-direction: column; align-items: center; min-width: 0; }
+.bag .it, .bag .cellw { width: 100%; }
+.bag .it { height: auto; aspect-ratio: 1; }
+
+/* torba ızgarası */
+.bag { display: grid; grid-template-columns: repeat(var(--cols, 6), minmax(0, var(--cell))); gap: var(--g2); align-content: start; justify-content: start; }
+.bagwrap { display: flex; flex-direction: column; min-height: 0; }
+.baghead { display: flex; align-items: center; gap: var(--g2); margin-bottom: var(--g2); flex-wrap: nowrap; }
+.baghead .sec { margin: 0; border: 0; padding: 0; flex: 1; }
+
+/* --- item kartı / ipucu (aynı içerik: ad, nadirlik + yuva + ilvl, affix'ler ve kademeleri, Legendary etkisi, değer) --- */
+.card { background: rgba(10,7,5,.82); border: 1px solid rgba(var(--gold), .3); padding: var(--g); display: flex; flex-direction: column; gap: calc(var(--g2) * .8); min-height: 0; }
+.card .nm { display: flex; align-items: center; gap: var(--g2); }
+.card .nm .it { --cell: calc(var(--cellbase, 74px) * .9); cursor: default; }
+.card .nm b { font: 600 var(--t3) var(--cin); letter-spacing: .05em; text-transform: uppercase; color: var(--rt); display: block; line-height: 1.1; }
+.card .nm em { font: italic var(--t1) var(--gar); color: var(--sub); display: block; }
+.afx { display: grid; grid-template-columns: auto auto 1fr auto; align-items: center; column-gap: 8px; row-gap: 3px; font-size: var(--t2); }
+.afx .tier { font: 700 var(--t0) var(--cin); width: 1.65em; height: 1.65em; display: grid; place-items: center; border: 1px solid; letter-spacing: 0; }
+.tC { color: #e6d6ae; border-color: rgba(230,214,174,.55); background: rgba(230,214,174,.07); }
+.tB { color: #9cc6ff; border-color: rgba(156,198,255,.6); background: rgba(80,130,200,.14); }
+.tA { color: #e2acff; border-color: rgba(226,172,255,.6); background: rgba(150,80,200,.16); }
+.tU { color: #ffd27a; border-color: rgba(255,210,122,.7); background: rgba(240,168,48,.16); }
+.afx img { width: var(--ico); height: var(--ico); }
+.afx .v { color: #c5ecb0; }
+.afx .rng { color: var(--muted); font-size: var(--t1); }
+.uniq { font: italic var(--t2) var(--gar); color: #ffd99a; border-left: 2px solid rgba(255,210,122,.6); padding-left: 8px; }
+.uniq b { font: 600 var(--t1) var(--cin); font-style: normal; letter-spacing: .06em; color: #ffcf70; }
+.meta { display: flex; justify-content: space-between; font: italic var(--t1) var(--gar); color: var(--sub); }
+.warn { font-size: var(--t1); color: #ffb088; }
+.note { font: italic var(--t1) var(--gar); color: var(--sub); }
+.acts { display: flex; gap: calc(var(--g) * 1.2); justify-content: flex-end; margin-top: auto; padding-top: var(--g2); }
+
+/* ipucu (fareyle üstüne gelince / dokununca): kartın kısa hâli */
+.tip { position: absolute; z-index: 20; width: calc(var(--cell) * 5.6); background: linear-gradient(180deg, rgba(28,20,13,.98), rgba(10,7,5,.98)); border: 1px solid rgba(var(--gold), .55);
+  box-shadow: 0 0 0 3px rgba(5,3,2,.8), 0 14px 30px rgba(0,0,0,.6); padding: calc(var(--g) * .8); display: flex; flex-direction: column; gap: 5px; pointer-events: none; }
+.tip .nm b { font: 600 var(--t2) var(--cin); color: var(--rt); text-transform: uppercase; letter-spacing: .05em; }
+.tip .nm em { font: italic var(--t0) var(--gar); color: var(--sub); display: block; }
+.tip .afx { font-size: var(--t1); }
+.tip .cmpline { font: italic var(--t0) var(--gar); color: var(--sub); border-top: 1px solid rgba(var(--gold), .2); padding-top: 4px; }
+#stage.phone .tip { width: 250px; }
+
+/* --- kahraman seçici --- */
+.heroes { display: flex; flex-direction: column; gap: var(--g2); }
+.hero { display: flex; align-items: center; gap: var(--g2); padding: calc(var(--g2) * .8); border: 1px solid rgba(var(--gold), .28); background: rgba(8,6,4,.5); min-height: 44px; position: relative; }
+.hero img { width: calc(var(--cell) * .95); height: calc(var(--cell) * .95); border: 1px solid rgba(var(--gold), .55); background: #120c08; flex: none; }
+.hero b { font: 600 var(--t2) var(--cin); letter-spacing: .05em; text-transform: uppercase; display: block; }
+.hero em { font: italic var(--t1) var(--gar); color: var(--sub); display: block; }
+.hero.on { border-color: var(--on); background: linear-gradient(90deg, rgba(224,112,42,.18), rgba(8,6,4,.5) 80%); }
+.hero.drop-ok { outline: 2px dashed var(--up); outline-offset: 2px; }
+.hero .best { position: absolute; right: 4px; top: 4px; font: 700 var(--t0) var(--cin); letter-spacing: .08em; background: var(--ember2); color: #1a0f06; padding: 0 5px; }
+
+/* --- yuvalar --- */
+.slots { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: var(--g2); }
+.slot { display: flex; align-items: center; gap: var(--g2); padding: calc(var(--g2) * .7); border: 1px solid rgba(var(--gold), .16); background: rgba(8,6,4,.4); min-width: 0; }
+.slot .tx { min-width: 0; }
+.slot b { font: 600 var(--t1) var(--cin); letter-spacing: .04em; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--rt, var(--muted)); }
+.slot em { font: italic var(--t0) var(--gar); color: var(--sub); display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.slot.drop { border-color: rgba(155,227,122,.6); }
+
+/* --- statlar (fark sütunu ayrılmış: seçimde kayma yok) --- */
+.stats { display: grid; grid-template-columns: repeat(var(--scols, 4), minmax(0, 1fr)); gap: 3px var(--g); }
+.st { display: flex; align-items: center; gap: 6px; font-size: var(--t2); white-space: nowrap; min-width: 0; }
+.st img { width: var(--ico); height: var(--ico); flex: none; }
+.st .k { font: 600 calc(var(--t0) * .95) var(--cin); letter-spacing: .12em; color: var(--muted); }
+.st .v { font: 600 var(--t2) var(--cin); }
+.st .d { min-width: 2.6em; font-size: var(--t1); }
+.up { color: var(--up); } .down { color: var(--down); }
+
+/* --- skill'ler --- */
+.skills { display: grid; grid-template-columns: repeat(var(--kcols, 3), minmax(0, 1fr)); gap: var(--g2); }
+.sk { border: 1px solid rgba(var(--gold), .26); background: rgba(8,6,4,.45); padding: calc(var(--g2) * .8) var(--g2); min-width: 0; }
+.sk.passive { border-style: dashed; }
+.sk .h { display: flex; align-items: center; gap: 8px; }
+.sk .h img { width: calc(var(--ico) * 1.35); height: calc(var(--ico) * 1.35); flex: none; image-rendering: pixelated; }
+.sk .h b { font: 600 var(--t1) var(--cin); letter-spacing: .04em; text-transform: uppercase; display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.sk .h em { font: italic var(--t0) var(--gar); color: var(--sub); display: block; white-space: nowrap; }
+.sk .n { font-size: var(--t1); white-space: nowrap; display: flex; gap: 6px; }
+.sk .n i { color: var(--sub); }
+.sk .n .nv { font: 600 var(--t1) var(--cin); }
+
+/* karşılaştırma tablosu (Now / New / fark) */
+.cmp { display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto auto; column-gap: var(--g); row-gap: 2px; align-items: center; font-size: var(--t2); }
+.cmp .hd { font: 600 var(--t0) var(--cin); letter-spacing: .16em; color: var(--muted); }
+.cmp img { width: var(--ico); height: var(--ico); }
+.cmp .num { font: 600 var(--t1) var(--cin); text-align: right; }
+.party { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--g2); }
+.pc { border: 1px solid rgba(var(--gold), .22); padding: 4px; text-align: center; position: relative; background: rgba(8,6,4,.4); }
+.pc img { width: calc(var(--cell) * .8); height: calc(var(--cell) * .8); border: 1px solid rgba(var(--gold), .4); }
+.pc b { display: block; font: 600 var(--t0) var(--cin); letter-spacing: .06em; }
+.pc span { display: block; font-size: var(--t1); white-space: nowrap; }
+.pc.on { border-color: var(--on); }
+.pc.no { opacity: .5; }
+.pc .best { position: absolute; right: 2px; top: 2px; font: 700 calc(var(--t0) * .85) var(--cin); background: var(--ember2); color: #1a0f06; padding: 0 4px; }
+
+/* sürükleme hayaleti */
+.ghost { position: absolute; z-index: 25; pointer-events: none; transform: translate(-30%, -30%) rotate(-4deg); filter: drop-shadow(0 12px 14px rgba(0,0,0,.7)); opacity: .92; }
+.ghost .it { outline: 2px solid var(--rl); }
+.dragcap { position: absolute; z-index: 26; font: italic var(--t1) var(--gar); color: var(--up); background: rgba(5,3,2,.85); padding: 2px 8px; border: 1px solid rgba(155,227,122,.4); white-space: nowrap; }
+.scroll { overflow: hidden auto; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(var(--gold), .4) transparent; }
+.tabs { display: flex; gap: 2px; border-bottom: 1px solid rgba(var(--gold), .25); }
+.tabs span { font: 600 var(--t1) var(--cin); letter-spacing: .14em; text-transform: uppercase; padding: 4px var(--g); color: var(--muted); border-bottom: 2px solid transparent; }
+.tabs span.on { color: var(--on); border-bottom-color: var(--on); }
+
+/* tüccar */
+.odo { display: flex; gap: var(--g2); align-items: flex-start; }
+.odo img { width: calc(var(--cell) * 1.3); height: calc(var(--cell) * 1.3); border: 1px solid rgba(var(--gold), .5); flex: none; }
+.odo .bub { font: italic var(--t2) var(--gar); color: var(--sub); background: rgba(8,6,4,.6); border: 1px solid rgba(var(--gold), .25); padding: 6px 10px; }
+.wares { display: grid; grid-template-columns: repeat(var(--wcols, 3), var(--cell)); gap: var(--g2) var(--g); }
+/* ödül kartı */
+.rw { min-height: 62%; justify-content: flex-start; border: 1px solid color-mix(in srgb, var(--rc) 70%, transparent); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 12%, rgba(16,11,7,.95)), rgba(10,7,5,.95)); padding: var(--g2); display: flex; flex-direction: column; gap: 4px; align-items: center; text-align: center; position: relative; }
+.rw b, .rw em { display: block; }
+.rw b { font: 600 var(--t2) var(--cin); color: var(--rt); text-transform: uppercase; letter-spacing: .05em; }
+.rw em { font: italic var(--t0) var(--gar); color: var(--sub); }
+.rw .afx { font-size: var(--t1); text-align: left; }
+.rw.gold { --rc: #c9a050; --rl: #f3d999; --rt: #f3d999; }
+.rw .blocked { font: italic var(--t1) var(--gar); color: #ffb088; }
+
+/* ============ VARYANTLAR ============ */
+/* g1: sade mevcut (kahramanlar | yuvalar + statlar + skill'ler | torba + kart) */
+.g1 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: 300px minmax(0, 1fr) minmax(0, 1.05fr); gap: calc(var(--g) * 1.4); }
+.g1 .mid { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g1 .right { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g1 .right .card { flex: 1; }
+.desk .g1 .slot .it, .desk .g2 .slot .it { --cell: 62px; }
+.desk .g1 .mid { gap: 12px; }
+.phone .g1 .body { grid-template-columns: 62px minmax(0, 1fr) minmax(0, 1.05fr); gap: 8px; }
+.phone .g1 .hero b, .phone .g1 .hero em { display: none; }
+.phone .g1 .hero { padding: 2px; justify-content: center; }
+.phone .g1 .hero img { width: 50px; height: 50px; }
+.phone .g1 .slots { grid-template-columns: 1fr 1fr; }
+
+
+/* g2: kâğıt bebek (ortada portre, çevresinde 6 yuva; sağda torba) */
+.g2 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1.15fr) minmax(0, 1fr); gap: calc(var(--g) * 1.6); }
+.g2 .left { display: grid; grid-template-rows: auto minmax(0, 1fr) auto; gap: var(--g); min-height: 0; }
+.g2 .htabs { display: flex; gap: var(--g2); }
+.g2 .htabs .hero { flex: 1; }
+.g2 .doll { display: grid; grid-template-columns: auto 1fr auto 1.1fr; gap: var(--g); align-items: center; min-height: 0; }
+.g2 .col { display: flex; flex-direction: column; gap: calc(var(--g) * 1.1); }
+.g2 .col .slot { border: 0; background: none; padding: 0; flex-direction: column; text-align: center; gap: 3px; }
+.g2 .col .slot .tx { max-width: calc(var(--cell) * 1.9); }
+.g2 .fig { position: relative; display: grid; place-items: center; height: 100%; min-height: 0; }
+.g2 .fig img { width: 100%; max-width: 330px; aspect-ratio: 1; object-fit: cover; border: 1px solid rgba(var(--gold), .45); box-shadow: 0 0 40px rgba(224,112,42,.15); mask-image: radial-gradient(circle, #000 60%, transparent 72%); }
+.g2 .fig b { position: absolute; bottom: 0; font: 600 var(--t3) var(--cin); letter-spacing: .1em; color: var(--on); }
+.g2 .statcol { display: flex; flex-direction: column; gap: var(--g2); --scols: 2; align-self: stretch; min-height: 0; }
+.g2 .left > * { min-height: 0; }
+.g2 .doll { overflow: hidden; }
+.g2 .right { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g2 .right .card { flex: 1; }
+.g2 .skillrow { --kcols: 5; }
+.phone .g2 .body { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 8px; }
+.phone .g2 .htabs .hero b, .phone .g2 .htabs .hero em { display: none; }
+.phone .g2 .htabs .hero { justify-content: center; padding: 1px; }
+.phone .g2 .htabs .hero img { width: 30px; height: 30px; }
+.phone .g2 .doll { grid-template-columns: auto 0.8fr auto 1.25fr; gap: 6px; }
+.phone .g2 .col { gap: 6px; }
+.phone .g2 .col .slot .tx { display: none; }
+.phone .g2 .fig b { font-size: 12px; }
+.phone .g2 .skillrow { display: none; }
+
+/* g3: kayıt defteri (üstte kahraman şeridi; yuva defteri | stat tablosu + açılır skill'ler | torba) */
+.g3 .hrow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: var(--g); flex: none; }
+.g3 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.05fr); gap: calc(var(--g) * 1.4); }
+.g3 .ledger { display: flex; flex-direction: column; gap: 0; }
+.g3 .lrow { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: var(--g2); align-items: center; padding: calc(var(--g2) * .6) 0; border-bottom: 1px solid rgba(var(--gold), .14); }
+.g3 .lrow .it { --cell: calc(var(--cellbase, 74px) * .82); }
+.g3 .lrow b { font: 600 var(--t1) var(--cin); text-transform: uppercase; letter-spacing: .04em; color: var(--rt, var(--muted)); }
+.g3 .lrow b small { font: 600 var(--t0) var(--cin); color: var(--muted); letter-spacing: .16em; margin-right: 8px; }
+.g3 .lrow .afl { font-size: var(--t1); color: var(--sub); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.g3 .lrow .afl .tier { display: inline-grid; width: 1.4em; height: 1.4em; font-size: calc(var(--t0) * .85); vertical-align: 1px; margin-right: 4px; }
+.g3 .center { display: flex; flex-direction: column; gap: var(--g); min-height: 0; padding-right: 12px; }
+.g3 .fold { display: flex; align-items: center; gap: 8px; cursor: pointer; }
+.g3 .fold::after { content: '▾'; margin-left: auto; color: var(--on); }
+.g3 .right { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g3 .right .card { flex: 1; }
+.phone .g3 .hrow { grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 4px; }
+.phone .g3 .hrow .hero img { width: 26px; height: 26px; }
+.phone .g3 .hrow .hero em { display: none; }
+.phone .g3 .hrow .hero b { font-size: 12px; }
+.phone .g3 .body { grid-template-columns: 100px minmax(0, 1fr) minmax(0, 1.1fr); gap: 8px; }
+.phone .g3 .ledger { display: grid; grid-template-columns: 1fr 1fr; gap: 4px; align-content: start; }
+.phone .g3 .ledger .sec { grid-column: 1 / -1; }
+.phone .g3 .lrow { display: block; border: 0; padding: 0; }
+.phone .g3 .lrow > div:last-child { display: none; }
+.phone .g3 .lrow .it { --cell: 44px; }
+
+/* g4: torba önce (sol: kayan kahraman paneli; orta: büyük torba + yuva filtreleri; sağ: item ayrıntısı + takım karşılaştırması) */
+.g4 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: 96px minmax(0, 1fr) 560px; gap: calc(var(--g) * 1.2); position: relative; }
+.g4 .rail { display: flex; flex-direction: column; gap: var(--g2); }
+.g4 .rail .hero { padding: 3px; justify-content: center; }
+.g4 .rail .hero b, .g4 .rail .hero em { display: none; }
+.g4 .rail .hero img { width: 82px; height: 82px; }
+.g4 .main { display: flex; flex-direction: column; gap: var(--g2); min-height: 0; }
+.g4 .main .bag { --cols: 10; }
+.g4 .side { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g4 .side .card { flex: 1; }
+.g4 .drawer { background: linear-gradient(90deg, rgba(26,19,12,.98), rgba(14,10,7,.98)); border: 1px solid rgba(var(--gold), .45); box-shadow: 14px 0 30px rgba(0,0,0,.55); padding: var(--g); display: flex; flex-direction: column; gap: var(--g2); position: relative; min-height: 0; }
+.g4 .drawer > .sec:first-of-type { padding-right: 90px; }
+.g4 .drawer .x { position: absolute; right: 12px; top: 10px; font: 600 var(--t0) var(--cin); color: var(--sub); letter-spacing: .12em; }
+.g4 .drawer .slot .it { --cell: 66px; }
+.g4 .drawer .stats { --scols: 4; }
+.g4 .drawer .skills { --kcols: 3; }
+.g4 .body.open { grid-template-columns: 96px 610px minmax(0, 1fr) 540px; }
+.g4.closed .drawer { display: none; }
+.phone .g4 .body { grid-template-columns: 50px minmax(0, 1fr) 300px; gap: 6px; }
+.phone .g4 .rail .hero img { width: 40px; height: 40px; }
+.phone .g4 .main .bag { --cols: 6; }
+.phone .g4 .body.open { grid-template-columns: 50px minmax(0, 1fr) 300px; }
+.phone .g4 .body.open .main { display: none; }
+.phone .g4 .drawer .slot .it { --cell: 36px; }
+.phone .g4 .drawer .slot em { display: none; }
+.phone .g4 .drawer .stats { --scols: 3; }
+.phone .g4 .drawer .skills { --kcols: 2; }
+
+/* g5: savaş masası (masa görseli; kahraman kartları; item'ler masaya dizilmiş kartlar; parşömen ayrıntı) */
+.scr.g5 { background: linear-gradient(180deg, rgba(8,5,3,.55), rgba(8,5,3,.7)), url('gear-unified/table.webp') center / cover; }
+.g5 .parch .sec { color: #5a3d16; border-color: rgba(90,60,20,.4); }
+.g5 .head { background: linear-gradient(90deg, rgba(8,5,3,.75), transparent); }
+.g5 .body { flex: 1; min-height: 0; display: grid; grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.25fr) 470px; gap: calc(var(--g) * 1.4); }
+.g5 .deck { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g5 .hcards { display: flex; gap: var(--g2); }
+.g5 .hcard { flex: 1; border: 1px solid rgba(var(--gold), .4); background: linear-gradient(180deg, #2a1d12, #120c08); padding: 5px; text-align: center; transform: rotate(-2deg); box-shadow: 0 8px 14px rgba(0,0,0,.6); }
+.g5 .hcard:nth-child(2) { transform: rotate(1.5deg); } .g5 .hcard:nth-child(3) { transform: rotate(-1deg); } .g5 .hcard:nth-child(4) { transform: rotate(2deg); }
+.g5 .hcard img { width: 100%; aspect-ratio: 1; object-fit: cover; border: 1px solid rgba(var(--gold), .3); }
+.g5 .hcard b { font: 600 var(--t0) var(--cin); letter-spacing: .08em; }
+.g5 .hcard.on { border-color: var(--on); transform: translateY(-8px) rotate(0); box-shadow: 0 0 22px rgba(224,112,42,.35), 0 10px 16px rgba(0,0,0,.6); }
+.g5 .board { flex: 1; border: 1px solid rgba(var(--gold), .35); background: rgba(14,9,6,.6); padding: var(--g); display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: var(--g); align-content: start; box-shadow: inset 0 0 40px rgba(0,0,0,.6); }
+.g5 .socket { display: flex; flex-direction: column; align-items: center; gap: 4px; text-align: center; }
+.g5 .socket b { font: 600 var(--t0) var(--cin); letter-spacing: .1em; color: var(--muted); text-transform: uppercase; }
+.g5 .socket em { font: italic var(--t0) var(--gar); color: var(--rt, var(--sub)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 100%; }
+.g5 .spread { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g5 .cloth { border: 1px solid rgba(var(--gold), .35); background: radial-gradient(ellipse at 50% 30%, rgba(70,30,22,.5), rgba(20,10,8,.85)); padding: var(--g); flex: 1; min-height: 0; box-shadow: inset 0 0 50px rgba(0,0,0,.7); }
+.g5 .cloth .bag { --cols: 7; gap: var(--g); }
+.g5 .parch { background: linear-gradient(180deg, #e8d6ae, #cdb486); color: #2a1a0c; border: 1px solid #8a6a3a; box-shadow: 0 10px 22px rgba(0,0,0,.6); }
+.g5 .parch .nm b { color: color-mix(in srgb, var(--rc) 70%, #000); }
+.g5 .parch .nm em, .g5 .parch .meta, .g5 .parch .note, .g5 .parch .afx .rng { color: #5a4326; }
+.g5 .parch .afx .v { color: #234d12; }
+.g5 .parch .tC { color: #6a4a1a; border-color: #8a6a3a; } .g5 .parch .tB { color: #1d4f8f; border-color: #3f6fa8; } .g5 .parch .tA { color: #6a2a8a; border-color: #7a3f9a; } .g5 .parch .tU { color: #8a5a00; border-color: #b07a10; }
+.g5 .parch .up { color: #2d6e12; } .g5 .parch .down { color: #a3301a; }
+.g5 .parch .cmp .hd, .g5 .parch .cmp { color: #3a2814; }
+.g5 .parch .uniq { color: #6a4300; }
+.g5 .side { display: flex; flex-direction: column; gap: var(--g); min-height: 0; }
+.g5 .side .card { flex: 1; }
+.g5 .strip { border: 1px solid rgba(var(--gold), .3); background: rgba(10,7,5,.8); padding: var(--g2) var(--g); }
+.phone .g5 .body { grid-template-columns: minmax(0, 0.95fr) minmax(0, 1.05fr) 260px; gap: 6px; }
+.phone .g5 .hcard b { display: none; }
+.phone .g5 .board { padding: 5px; gap: 4px; }
+.phone .g5 .socket em, .phone .g5 .socket b { display: none; }
+.phone .g5 .cloth { padding: 5px; }
+.phone .g5 .cloth .bag { --cols: 5; gap: 4px; }
+.phone .g5 .strip.sk5 { display: none; }
+.phone .g5 .deck > .strip { max-height: 104px; }
+.g5 .parch .acts { background: transparent; }
+.phone .g5 .side .card { flex: none; }
+
+/* sağ sütun: torba kalan yeri doldurur ve kendi içinde kayar; kart içerik boyunda (düğmeler hep görünür) */
+.right > .bagwrap, .main > .bagwrap, .cloth > .bagwrap { flex: 1 1 auto; min-height: 0; }
+.right > .card, .g1 .right .card, .g2 .right .card, .g3 .right .card { flex: none; }
+.bagwrap > .bag { flex: 1 1 auto; }
+/* gövde satırı ekrana sığar; sütunlar kendi içinde kayar */
+.body { grid-template-rows: minmax(0, 1fr); }
+.body > * { min-height: 0; }
+.phone .right > .card { max-height: 50%; overflow: hidden auto; }
+.phone .card .nm .it { --cell: 36px; }
+.phone .acts { padding-top: 2px; position: sticky; bottom: -6px; background: rgba(10,7,5,.96); margin-top: 0; }
+.phone .card .meta, .phone .card .note { display: none; }
+.phone .acts .btn { min-height: 34px; }
+/* bağlam düzenleri (tüccar / ödül) */
+.g4 .rw { min-height: 0; flex-direction: row; text-align: left; align-items: center; gap: var(--g); }
+.g4 .rw > div:not(.it) { min-width: 0; }
+.rw > img { width: calc(var(--cell) * .8); height: calc(var(--cell) * .8); }
+.mk .body { flex: 1; min-height: 0; display: grid; gap: calc(var(--g) * 1.4); }
+.phone .afx { column-gap: 5px; }
+.phone .sec { letter-spacing: .12em; }
+.phone .card { padding: 6px; }
+.phone .it .lvl { font-size: 10px; }
+.phone .it.sel .dia { top: -7px; width: 9px; height: 9px; margin-left: -4.5px; }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="grp" id="gv"><span>VARIANT</span></div>
+  <div class="grp" id="gs"><span>SIZE</span></div>
+  <div class="grp" id="gc"><span>CONTEXT</span></div>
+  <div class="grp" id="gt"><span>STATE</span></div>
+  <div class="desc" id="desc"></div>
+</div>
+<div id="wrap"><div id="stage"></div></div>
+<script>
+// ===== veri (Defender, Level 1; sayılar oyunun Gear ekranından; affix'ler yeni sistem 1.3b) =====
+const A = 'gear-unified/';
+const RANK = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 };
+const RNAME = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
+const SLOTNAME = { weapon: 'Weapon', helm: 'Helm', armor: 'Armor', gloves: 'Gloves', boots: 'Boots', trinket: 'Trinket' };
+const SLOTS = ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'];
+const SLOTART = { weapon: 'flanged_mace', helm: 'kettle_hat', armor: 'padded_gambeson', gloves: 'leather_gloves', boots: 'hobnailed_boots', trinket: 'copper_ring' };
+const HEROES = [
+  { id: 'defender', name: 'Defender', fam: 'Maces & Shields', items: 4 },
+  { id: 'mage', name: 'Mage', fam: 'Staves', items: 3 },
+  { id: 'archer', name: 'Archer', fam: 'Bows', items: 5 },
+  { id: 'hexer', name: 'Hexer', fam: 'Charms', items: 2 },
+];
+const ic = (k) => ({ armor: 'stats/armor', hp: 'stats/hp', marm: 'stats/magicArmor', crit: 'stats/critChance', cdmg: 'stats/critMult', acc: 'stats/accuracy', eva: 'stats/evasion', spd: 'stats/spd', mp: 'stats/mp', hpr: 'stats/hpRegen', mpr: 'stats/mpRegen', str: 'stats/str', dex: 'stats/dex', int: 'stats/int', luck: 'stats/luck', fire: 'el/fire', ice: 'el/ice', holy: 'el/holy', arcane: 'el/arcane', phys: 'stats/str' }[k]);
+// item: id (görsel), ad, nadirlik, yuva, ilvl, affix [kademe, ikon, yazı, aralık], fiyat / satış
+const ITEMS = {
+  riveted_mail: { art: 'riveted_mail', name: 'Riveted Mail', r: 'rare', slot: 'armor', ilvl: 12, afx: [['C', 'armor', '+7 Armor', '6–8'], ['C', 'hp', '+6 Max HP', '5–7'], ['B', 'marm', '+4 Magic armor', '3–5']], price: 45, sell: 12 },
+  padded_gambeson: { art: 'padded_gambeson', name: 'Padded Gambeson', r: 'uncommon', slot: 'armor', ilvl: 6, afx: [['C', 'armor', '+3 Armor', '2–4'], ['C', 'hp', '+8 Max HP', '7–9']], sell: 5 },
+  flanged_mace: { art: 'flanged_mace', name: 'Flanged Mace', r: 'uncommon', slot: 'weapon', ilvl: 7, afx: [['C', 'phys', '+4% Physical damage', '3.5–4.5'], ['C', 'acc', '+2% Accuracy', '1.5–2.5']], sell: 6 },
+  kettle_hat: { art: 'kettle_hat', name: 'Kettle Hat', r: 'common', slot: 'helm', ilvl: 4, afx: [['C', 'armor', '+2 Armor', '2–3']], sell: 3 },
+  hobnailed_boots: { art: 'hobnailed_boots', name: 'Hobnailed Boots', r: 'common', slot: 'boots', ilvl: 5, afx: [['C', 'eva', '+1.5% Evasion', '1–2']], sell: 3 },
+  crown: { art: 'great_helm', name: 'Crown of the Ashen King', r: 'legendary', slot: 'helm', ilvl: 14, afx: [['C', 'hp', '+9 Max HP', '8–10'], ['C', 'armor', '+4 Armor', '3–5'], ['B', 'cdmg', '+12% Crit damage', '10–14'], ['A', 'str', '+3 STR (primary)', '2–4']], uniq: ['Ashen Crown', 'At the start of each battle, enemies in your lane are Slowed for 1 turn.'], sell: 40 },
+  warded_hauberk: { art: 'warded_hauberk', name: 'Warded Hauberk', r: 'epic', slot: 'armor', ilvl: 13, afx: [['C', 'armor', '+6 Armor', '5–7'], ['C', 'hpr', '+1 HP regen', '1'], ['B', 'marm', '+5 Magic armor', '4–6'], ['A', 'hp', '+6% Max HP', '5–7']], price: 88, sell: 22 },
+  morning_star: { art: 'morning_star', name: 'Morning Star', r: 'rare', slot: 'weapon', ilvl: 10, afx: [['C', 'phys', '+6% Physical damage', '5–7'], ['C', 'hp', '+5 Max HP', '4–6'], ['B', 'crit', '+3% Crit chance', '2.5–3.5']], sell: 10 },
+  oak_shield: { art: 'oak_shield', name: 'Oak Tower Shield', r: 'uncommon', slot: 'weapon', ilvl: 6, afx: [['C', 'phys', '+3.5% Physical damage', '3–4'], ['C', 'armor', '+2 Armor', '2–3']], sell: 5 },
+  studded_gauntlets: { art: 'studded_gauntlets', name: 'Studded Gauntlets', r: 'rare', slot: 'gloves', ilvl: 9, afx: [['C', 'armor', '+3 Armor', '2–4'], ['C', 'acc', '+2.5% Accuracy', '2–3'], ['B', 'crit', '+2.5% Crit chance', '2–3']], price: 38, sell: 9 },
+  keen_gauntlets: { art: 'keen_gauntlets', name: 'Keen Gauntlets', r: 'epic', slot: 'gloves', ilvl: 12, afx: [['C', 'acc', '+3% Accuracy', '2.5–3.5'], ['C', 'phys', '+5% Physical damage', '4–6'], ['B', 'crit', '+3% Crit chance', '2.5–3.5'], ['A', 'cdmg', 'Keenness: +2% Crit, +10% Crit damage', '']], sell: 20 },
+  swift_sabatons: { art: 'swift_sabatons', name: 'Swift Sabatons', r: 'epic', slot: 'boots', ilvl: 12, afx: [['C', 'eva', '+2% Evasion', '1.5–2.5'], ['C', 'armor', '+3 Armor', '2–4'], ['B', 'spd', '+0.5 Speed', '0.5'], ['A', 'spd', '+3% Speed', '2–4']], price: 92, sell: 21 },
+  ranger_boots: { art: 'ranger_boots', name: 'Ranger Boots', r: 'uncommon', slot: 'boots', ilvl: 7, afx: [['C', 'eva', '+2% Evasion', '1.5–2.5'], ['C', 'hp', '+5 Max HP', '4–6']], sell: 5 },
+  saints_medal: { art: 'saints_medal', name: "Saint's Medal", r: 'rare', slot: 'trinket', ilvl: 10, afx: [['C', 'holy', '+5% Holy damage', '4–6'], ['C', 'mp', '+8 Max MP', '7–9'], ['B', 'mpr', '-6% MP cost', '5–7']], price: 40, sell: 10 },
+  wolf_tooth: { art: 'wolf_tooth', name: 'Wolf-Tooth Charm', r: 'uncommon', slot: 'trinket', ilvl: 5, afx: [['C', 'crit', '+1.5% Crit', '1–2'], ['C', 'mp', '+5 Max MP', '5–6']], price: 15, sell: 4 },
+  rune_staff: { art: 'rune_staff', name: 'Rune Staff', r: 'rare', slot: 'weapon', ilvl: 11, afx: [['C', 'arcane', '+6% Arcane damage', '5–7'], ['C', 'mp', '+8 Max MP', '7–9'], ['B', 'crit', '+3% Crit chance', '2.5–3.5']], sell: 11 },
+  hunting_bow: { art: 'hunting_bow', name: 'Hunting Bow', r: 'common', slot: 'weapon', ilvl: 4, afx: [['C', 'phys', '+3% Physical damage', '2.5–3.5']], price: 12, sell: 3 },
+  yew_longbow: { art: 'yew_longbow', name: 'Yew Longbow', r: 'epic', slot: 'weapon', ilvl: 13, afx: [['C', 'phys', '+7% Physical damage', '6–8'], ['C', 'acc', '+3% Accuracy', '2.5–3.5'], ['B', 'crit', '+3.5% Crit chance', '3–4'], ['A', 'dex', '+3 DEX (primary)', '2–4']], sell: 24 },
+  hex_doll: { art: 'hex_doll', name: 'Hex Doll', r: 'uncommon', slot: 'weapon', ilvl: 6, afx: [['C', 'arcane', '+4% Dark damage', '3.5–4.5'], ['C', 'luck', '+4 Max MP', '3–5']], sell: 5 },
+  nasal_helm: { art: 'nasal_helm', name: 'Nasal Helm', r: 'uncommon', slot: 'helm', ilvl: 7, afx: [['C', 'armor', '+3 Armor', '2–4'], ['C', 'acc', '+2% Accuracy', '1.5–2.5']], price: 18, sell: 5 },
+  brigandine: { art: 'brigandine', name: 'Brigandine', r: 'common', slot: 'armor', ilvl: 5, afx: [['C', 'armor', '+4 Armor', '3–5']], sell: 3 },
+  rondel_dagger: { art: 'rondel_dagger', name: 'Rondel Dagger', r: 'common', slot: 'weapon', ilvl: 3, afx: [['C', 'phys', '+2.5% Physical damage', '2–3']], sell: 3 },
+  ashen_locket: { art: 'ashen_locket', name: 'Ashen Locket', r: 'rare', slot: 'trinket', ilvl: 11, afx: [['C', 'fire', '+5% Fire damage', '4–6'], ['C', 'hpr', '+1 HP regen', '1'], ['B', 'cdmg', '+10% Crit damage', '8–12']], sell: 11 },
+  coat_of_plates: { art: 'coat_of_plates', name: 'Coat of Plates', r: 'rare', slot: 'armor', ilvl: 11, afx: [['C', 'armor', '+7 Armor', '6–8'], ['C', 'eva', '+1% Evasion', '1'], ['B', 'spd', '+0.5 Speed', '0.5']], price: 48, sell: 12 },
+  dane_axe: { art: 'dane_axe', name: 'Dane Axe', r: 'rare', slot: 'weapon', ilvl: 10, afx: [['C', 'phys', '+6% Physical damage', '5–7'], ['C', 'armor', '+2 Armor', '2–3'], ['B', 'crit', '+3% Crit chance', '2.5–3.5']], price: 46, sell: 11 },
+  pilgrims_token: { art: 'pilgrims_token', name: "Pilgrim's Token", r: 'common', slot: 'trinket', ilvl: 4, afx: [['C', 'hpr', '+1 HP regen', '1']], sell: 3 },
+};
+// Defender'ın kuşandıkları; kullanabilir mi (Defender: Maces & Shields)
+const EQUIP = { weapon: 'flanged_mace', helm: 'kettle_hat', armor: 'padded_gambeson', gloves: null, boots: 'hobnailed_boots', trinket: null };
+const DEF_FAM = new Set(['flanged_mace', 'morning_star', 'oak_shield']);
+const usable = (id) => ITEMS[id].slot !== 'weapon' || DEF_FAM.has(id);
+const BAG = ['riveted_mail', 'crown', 'warded_hauberk', 'morning_star', 'keen_gauntlets', 'studded_gauntlets', 'saints_medal', 'ashen_locket', 'oak_shield', 'ranger_boots', 'rune_staff', 'yew_longbow', 'hex_doll', 'brigandine', 'rondel_dagger', 'pilgrims_token', 'wolf_tooth', 'nasal_helm'];
+const BAG_MAX = 30;
+const SEL = 'riveted_mail';
+// karşılaştırma: Padded Gambeson -> Riveted Mail (Defender)
+const STATS = [
+  ['hp', 'HP', '145', '143'], ['mp', 'MP', '50'], ['str', 'STR', '30'], ['dex', 'DEX', '6'], ['int', 'INT', '20'], ['luck', 'LUCK', '4'],
+  ['armor', 'ARM', '38', '42'], ['magicArmor', 'M.ARM', '0', '4'], ['critChance', 'CRIT', '6%'], ['critMult', 'CDMG', '1.5'], ['accuracy', 'ACC', '82%'],
+  ['evasion', 'EVA', '0%'], ['spd', 'SPD', '16'], ['hpRegen', 'HP+/t', '3.8'], ['mpRegen', 'MP+/t', '3'],
+];
+const SKILLS = [
+  { ic: 'tremor2', name: 'Tremor Slam', meta: 'Free', n: [['Damage', '7'], ['Slow', '2 turns']] },
+  { ic: 'taunt2', name: 'Taunt', meta: '8 MP · CD 4', n: [['Taunt', '2 turns']] },
+  { ic: 'guard2', name: 'Guard', meta: '2 MP · CD 4', n: [['Guard', '3 turns']] },
+  { ic: 'fistcrush2', name: 'Fist Crush', meta: '14 MP · CD 4', n: [['Damage', '23']] },
+  { ic: 'aura', name: 'Bulwark Aura', meta: 'Passive', passive: true, n: [['Armor aura', '15', '16']] },
+];
+// takım karşılaştırması (Usable by): her kahramanın en büyük iki farkı
+const PARTY = [
+  { id: 'defender', d: [['+4 ARM', 'up'], ['-2 HP', 'down']], best: true },
+  { id: 'mage', d: [['+7 ARM', 'up'], ['+6 HP', 'up']] },
+  { id: 'archer', d: [['+3 ARM', 'up'], ['+4 M.ARM', 'up']] },
+  { id: 'hexer', d: [['+7 ARM', 'up'], ['+4 M.ARM', 'up']] },
+];
+const DESC = {
+  g1: 'Refined current: hero list | slots + stats + skills | bag + item card. One bag component in Gear, merchant and reward.',
+  g2: 'Paper doll: the hero in the centre with the 6 slots around them; stats beside; bag + card on the right.',
+  g3: 'Ledger: hero strip on top; slots as ledger rows with affixes; Now / New / Δ table; collapsible skills; bag on the right.',
+  g4: 'Bag first (recommended): big bag in the middle; item detail + party compare on the right; hero panel slides in from the left.',
+  g5: 'War table: hero cards and item cards laid out on the map table; parchment item card.',
+};
+
+// ===== durum =====
+const st = { v: 'g1', phone: false, ctx: 'gear', tip: false, drag: false, drawer: true };
+function readHash() {
+  const p = location.hash.replace('#', '').split('&');
+  st.v = /^g[1-5]$/.test(p[0]) ? p[0] : 'g1';
+  st.phone = p.includes('phone');
+  st.ctx = p.includes('merchant') ? 'merchant' : p.includes('reward') ? 'reward' : 'gear';
+  st.tip = p.includes('tip');
+  st.drag = p.includes('drag');
+  st.drawer = !p.includes('closed');
+}
+function writeHash() {
+  const p = [st.v];
+  if (st.phone) p.push('phone');
+  if (st.ctx !== 'gear') p.push(st.ctx);
+  if (st.tip) p.push('tip');
+  if (st.drag) p.push('drag');
+  if (!st.drawer) p.push('closed');
+  history.replaceState(null, '', '#' + p.join('&'));
+}
+
+// ===== bileşenler (HTML) =====
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const img = (src, cls = '') => `<img class="${cls}" src="${A}${src}.png" alt="" draggable="false">`;
+const art = (id) => `<img class="art" src="${A}items/${ITEMS[id].art}.webp" alt="" draggable="false">`;
+/** Item hücresi: nadirlik çerçevesi; o.sel = seçili (tek kor elmas), o.no = bu kahraman kullanamaz, o.price / o.sell = fiyat etiketi. */
+function cell(id, o = {}) {
+  if (!id) return `<div class="it empty" ${o.data || ''}>${o.slot ? `<img class="slotico" src="${A}items/${SLOTART[o.slot]}.webp" alt="">` : ''}</div>`;
+  const it = ITEMS[id];
+  const k = RANK[it.r];
+  const cls = `it r-${it.r} k${k}${o.sel ? ' sel' : ''}${o.no ? ' no' : ''}${o.drop ? ' drop-ok' : ''}`;
+  const corners = k >= 3 ? '<i class="c2"></i><i class="c3"></i>' : '';
+  const c = `<div class="${cls}" data-item="${id}" ${o.data || ''}>${art(id)}${corners}${o.sel ? '<i class="dia"></i>' : ''}${o.lvl ? `<span class="lvl">${it.ilvl}</span>` : ''}${o.isNew ? '<span class="new">NEW</span>' : ''}</div>`;
+  if (o.price === undefined) return c;
+  const p = o.price === null ? '<div class="price sold">SOLD</div>' : `<div class="price${o.bad ? ' bad' : ''}">${img('ui/gold')}${o.price}</div>`;
+  return `<div class="cellw">${c}${p}</div>`;
+}
+const tierCls = (t) => `tier t${t}`;
+function affixes(id) {
+  const it = ITEMS[id];
+  return `<div class="afx">${it.afx.map(([t, k, txt, rng]) => `<span class="${tierCls(t)}">${t}</span>${img(ic(k))}<span class="v">${esc(txt)}</span><span class="rng">${rng ? '(' + rng + ')' : ''}</span>`).join('')}</div>${it.uniq ? `<div class="uniq"><b>${esc(it.uniq[0])}</b> · ${esc(it.uniq[1])}</div>` : ''}`;
+}
+function nameRow(id) {
+  const it = ITEMS[id];
+  return `<div class="nm r-${it.r}">${cell(id)}<div><b>${esc(it.name)}</b><em>${RNAME[it.r]} ${SLOTNAME[it.slot]} · Item level ${it.ilvl}</em></div></div>`;
+}
+/** Item kartı (Gear / tüccar / ödül aynı); ctx eylemleri değiştirir. */
+function itemCard(id, ctx, o = {}) {
+  const it = ITEMS[id];
+  const cur = EQUIP[it.slot];
+  let acts = '';
+  let extra = '';
+  if (ctx === 'gear') {
+    extra = cur ? `<div class="note">Replaces ${esc(ITEMS[cur].name)} · drag onto the Armor slot or a hero</div>` : '';
+    acts = `<span class="btn sm">Discard</span><span class="btn primary">Equip</span>`;
+  } else if (ctx === 'buy') {
+    acts = `<span class="btn primary">${img('ui/gold')}Buy · ${it.price ?? 45}</span>`;
+  } else if (ctx === 'sell') {
+    acts = `<span class="btn primary">${img('ui/gold')}Sell for ${it.sell}</span>`;
+  } else if (ctx === 'reward') {
+    extra = `<div class="warn">Bag full (30 / 30): discard or sell one to take the Epic reward.</div>`;
+    acts = `<span class="btn sm danger">Confirm discard</span>`;
+  }
+  return `<div class="card${o.parch ? ' parch' : ''}">${nameRow(id)}${affixes(id)}<div class="meta"><span>Value ${it.sell * 4} gold</span><span>Sell ${it.sell}</span></div>${o.compare ? compareBlock(o.compare) : ''}${extra}<div class="acts">${acts}</div></div>`;
+}
+/** İpucu: kartın kısa hâli + tek satır karşılaştırma. */
+function tipHtml(id) {
+  const it = ITEMS[id];
+  return `<div class="tip r-${it.r}" id="tip"><div class="nm"><b>${esc(it.name)}</b><em>${RNAME[it.r]} ${SLOTNAME[it.slot]} · Item level ${it.ilvl}</em></div>${affixes(id)}<div class="cmpline">vs Padded Gambeson: <span class="up">ARM +4</span> · <span class="up">M.ARM +4</span> · <span class="down">HP -2</span></div></div>`;
+}
+function heroes(o = {}) {
+  return `<div class="heroes">${HEROES.map((h, i) => `<div class="hero${i === 0 ? ' on' : ''}${o.dropOn === i ? ' drop-ok' : ''}" data-drop="hero">${img('av/' + h.id)}<div><b>${h.name}</b><em>Level 1 · ${h.items}/6 items</em></div></div>`).join('')}</div>`;
+}
+function slotCells(o = {}) {
+  return SLOTS.map((s) => {
+    const id = EQUIP[s];
+    const drop = st.drag && s === 'armor';
+    const it = id ? ITEMS[id] : null;
+    return `<div class="slot${drop ? ' drop' : ''} ${it ? 'r-' + it.r : ''}" data-slot="${s}">${cell(id, { slot: s, drop, data: s === 'armor' ? 'id="slot-armor"' : '' })}<div class="tx"><b>${it ? esc(it.name) : SLOTNAME[s]}</b><em>${it ? it.afx.map((a) => a[2]).join(', ') : 'Empty'}</em></div></div>`;
+  }).join('');
+}
+function statsHtml(cols = 4, compare = true) {
+  return `<div class="stats" style="--scols:${cols}">${STATS.map(([k, l, v, n]) => {
+    const d = compare && n ? diff(v, n) : '';
+    return `<div class="st">${img('stats/' + k)}<span class="k">${l}</span><span class="v">${v}</span><span class="d ${d.startsWith('+') ? 'up' : 'down'}">${d}</span></div>`;
+  }).join('')}</div>`;
+}
+const diff = (a, b) => { const x = parseFloat(a), y = parseFloat(b); const d = Math.round((y - x) * 10) / 10; return d ? (d > 0 ? '+' : '-') + Math.abs(d) : ''; };
+function skillsHtml(cols = 3, compare = true) {
+  return `<div class="skills" style="--kcols:${cols}">${SKILLS.map((s) => `<div class="sk${s.passive ? ' passive' : ''}"><div class="h">${img('skills/' + s.ic)}<div style="min-width:0"><b>${s.name}</b><em>${s.meta}</em></div></div>${s.n.map(([l, v, n]) => {
+    const d = compare && n ? diff(v, n) : '';
+    return `<div class="n"><i>${l}</i><span class="nv">${v}</span>${d ? `<span class="nv ${d[0] === '+' ? 'up' : 'down'}">→ ${n}</span><span class="${d[0] === '+' ? 'up' : 'down'}">(${d})</span>` : ''}</div>`;
+  }).join('')}</div>`).join('')}</div>`;
+}
+function bagHtml(o = {}) {
+  const cols = o.cols ?? 6;
+  const list = o.items ?? BAG;
+  const max = o.max ?? BAG_MAX;
+  let selDone = false;
+  const cells = list.map((id) => cell(id, { sel: id === (o.sel ?? SEL) && !o.noSel && !selDone && (selDone = true), no: o.ctx === 'gear' && !usable(id), lvl: true, price: o.prices ? ITEMS[id].sell : undefined, isNew: o.newId === id, data: id === (o.sel ?? SEL) ? 'id="selcell"' : (id === 'crown' ? 'id="tipcell"' : '') }));
+  for (let i = list.length; i < max; i++) cells.push(o.prices ? '<div class="cellw">' + cell(null) + '<div class="price">&nbsp;</div></div>' : cell(null));
+  const chips = o.chips === false ? '' : `<span class="chip on">All items</span><span class="chip">Usable</span>`;
+  return `<div class="bagwrap"><div class="baghead"><div class="sec">${img('ui/bag')}${o.title ?? 'Bag'} <span class="cnt">${list.length} / ${max}</span></div>${chips}</div><div class="bag scroll" style="--cols:${cols}">${cells.join('')}</div></div>`;
+}
+function compareBlock(kind) {
+  const party = `<div class="sec" style="margin-top:4px">Usable by</div><div class="party">${PARTY.map((p, i) => `<div class="pc${i === 0 ? ' on' : ''}">${img('av/' + p.id)}${p.best ? '<span class="best">BEST</span>' : ''}<b>${HEROES[i].name.toUpperCase()}</b>${p.d.map(([t, c]) => `<span class="${c}">${t}</span>`).join('')}</div>`).join('')}</div>`;
+  const table = `<div class="sec" style="margin-top:4px">Compared with Defender</div><div class="note">Now: Padded Gambeson</div><div class="cmp"><span></span><span class="hd">STAT</span><span class="hd">NOW</span><span class="hd">NEW</span><span class="hd"></span>${[['armor', 'Armor', '38', '42'], ['hp', 'Max HP', '145', '143'], ['magicArmor', 'Magic armor', '0', '4']].map(([k, l, a, b]) => { const d = diff(a, b); return `${img('stats/' + k)}<span>${l}</span><span class="num">${a}</span><span class="num">${b}</span><span class="num ${d[0] === '+' ? 'up' : 'down'}">${d}</span>`; }).join('')}<span>${img('skills/aura')}</span><span>Bulwark Aura</span><span class="num">15</span><span class="num">16</span><span class="num up">+1</span></div>`;
+  if (kind === 'party') return party + table;
+  if (kind === 'table') return table;
+  return party;
+}
+function wares(o = {}) {
+  const W = [['riveted_mail', 45], ['warded_hauberk', 210, true], ['swift_sabatons', 92], ['coat_of_plates', 48], ['studded_gauntlets', 38], ['saints_medal', 40], ['dane_axe', 46], ['nasal_helm', 18, false, true], ['wolf_tooth', 15]];
+  return `<div class="wares" style="--wcols:${o.cols ?? 3}">${W.map(([id, p, bad, sold]) => cell(id, { price: sold ? null : p, bad, lvl: true, sel: o.sel === id, data: o.sel === id ? 'id="selcell"' : '' })).join('')}</div>`;
+}
+function odo() {
+  return `<div class="odo">${img('av/merchant')}<div class="bub">"Steel, leather and a lucky charm or two. Honest prices. Well, honest enough."</div></div>`;
+}
+function rewardCards(o = {}) {
+  const R = [['warded_hauberk'], ['gold'], ['saints_medal']];
+  return R.map(([id]) => id === 'gold'
+    ? `<div class="rw gold"><b>Purse of gold</b>${img('ui/gold', '')}<em>+60 gold</em></div>`
+    : `<div class="rw r-${ITEMS[id].r}">${cell(id, { lvl: true })}<b>${esc(ITEMS[id].name)}</b><em>${RNAME[ITEMS[id].r]} ${SLOTNAME[ITEMS[id].slot]} · ilvl ${ITEMS[id].ilvl}</em>${o.short ? '' : affixes(id)}${id === 'warded_hauberk' ? '<div class="blocked">Bag full: make room to take it</div>' : ''}</div>`).join('');
+}
+function rewardRows() {
+  return ['warded_hauberk', 'gold', 'saints_medal'].map((id) => id === 'gold'
+    ? `<div class="rw gold">${img('ui/gold')}<div><b>Purse of gold</b><em>+60 gold</em></div></div>`
+    : `<div class="rw r-${ITEMS[id].r}">${cell(id, { lvl: true })}<div><b>${esc(ITEMS[id].name)}</b><em>${RNAME[ITEMS[id].r]} ${SLOTNAME[ITEMS[id].slot]} · ${ITEMS[id].afx.length} affixes</em>${id === 'warded_hauberk' ? '<div class="blocked">Bag full: make room to take it</div>' : ''}</div></div>`).join('');
+}
+const gold = (n = 185) => `<div class="ctxr">${img('ui/gold')}${n} gold</div>`;
+const foot = (hint, btns) => `<div class="foot">${hint ? `<span class="hint">${hint}</span>` : ''}${btns}</div>`;
+const gearFoot = () => foot('Tap an item, then Equip, or drag it onto a slot or a hero.', '<span class="btn">Equip best: Defender</span><span class="btn">Equip best: all</span><span class="btn">Done</span>');
+
+// ===== varyant düzenleri =====
+const P = () => st.phone;
+const V = {
+  g1: {
+    gear: () => `<div class="scr g1"><div class="head"><div class="title">Gear</div>${gold()}</div><div class="body">
+      <div class="scroll">${heroes({ dropOn: st.drag ? 0 : -1 })}</div>
+      <div class="mid scroll"><div class="sec">Defender · Maces &amp; Shields</div><div class="slots">${slotCells()}</div><div class="sec">Stats</div>${statsHtml(P() ? 3 : 4)}<div class="sec">Skills</div>${skillsHtml(P() ? 2 : 3)}</div>
+      <div class="right">${bagHtml({ ctx: 'gear', cols: P() ? 6 : 8 })}${itemCard(SEL, 'gear')}</div>
+    </div>${gearFoot()}</div>`,
+    merchant: () => `<div class="scr g1 mk"><div class="head"><div class="title">Odo the Peddler <small>Travelling merchant</small></div>${gold()}</div><div class="body" style="grid-template-columns:${P() ? '150px minmax(0,1fr) minmax(0,1.1fr)' : '360px minmax(0,1fr) minmax(0,1.05fr)'}">
+      <div class="scroll" style="display:flex;flex-direction:column;gap:var(--g)"><div class="tabs"><span class="on">Buy</span><span>Sell</span></div>${P() ? '' : odo()}${wares({ cols: P() ? 2 : 3, sel: 'riveted_mail' })}${P() ? '' : '<span class="btn sm">Reroll wares · 15</span>'}</div>
+      <div class="right">${bagHtml({ ctx: 'merchant', title: 'Your bag', cols: P() ? 5 : 6, prices: true, noSel: true, chips: false })}${P() ? '' : `<div class="sec">Buy back</div><div style="display:flex;gap:var(--g2)">${cell('brigandine', { price: 3 })}${cell('rondel_dagger', { price: 3 })}</div>`}</div>
+      <div class="scroll">${itemCard('riveted_mail', 'buy', { compare: P() ? 'party' : 'party' })}</div>
+    </div>${foot('Bag items show their sell price; tap one and Sell. Same cells and card as Gear.', '<span class="btn">Move on</span>')}</div>`,
+    reward: () => `<div class="scr g1 mk"><div class="head"><div class="title">Choose your reward <small>Wave 6 cleared</small></div>${gold()}</div><div class="body" style="grid-template-columns:minmax(0,1.5fr) minmax(0,1fr) minmax(0,.8fr)">
+      <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:var(--g);align-content:start">${rewardCards({ short: P() })}</div>
+      <div class="right">${bagHtml({ ctx: 'reward', items: [...BAG, 'kettle_hat', 'ranger_boots', 'morning_star', 'brigandine', 'pilgrims_token', 'wolf_tooth', 'hex_doll', 'nasal_helm', 'rondel_dagger', 'oak_shield', 'hunting_bow', 'rune_staff'].slice(0, 30), sel: 'pilgrims_token', chips: !P(), cols: P() ? 5 : 6 })}</div>
+      <div class="scroll">${itemCard('pilgrims_token', 'reward')}</div>
+    </div>${foot('The bag opens right here: discard to make room, then tap the reward.', '<span class="btn">Gear</span>')}</div>`,
+  },
+  g2: {
+    gear: () => {
+      const L = ['weapon', 'gloves', 'trinket'], R = ['helm', 'armor', 'boots'];
+      const sc = (s) => { const id = EQUIP[s]; const it = id ? ITEMS[id] : null; const drop = st.drag && s === 'armor'; return `<div class="slot ${it ? 'r-' + it.r : ''}">${cell(id, { slot: s, drop, data: s === 'armor' ? 'id="slot-armor"' : '' })}<div class="tx"><b>${it ? esc(it.name) : SLOTNAME[s]}</b><em>${it ? it.afx[0][2] : 'Empty'}</em></div></div>`; };
+      return `<div class="scr g2"><div class="head"><div class="title">Gear</div>${gold()}</div><div class="body">
+      <div class="left"><div class="htabs">${HEROES.map((h, i) => `<div class="hero${i === 0 ? ' on' : ''}">${img('av/' + h.id)}<div><b>${h.name}</b><em>${h.items}/6</em></div></div>`).join('')}</div>
+        <div class="doll"><div class="col">${L.map(sc).join('')}</div><div class="fig">${img('av/defender')}<b>DEFENDER</b></div><div class="col">${R.map(sc).join('')}</div><div class="statcol scroll"><div class="sec">Stats</div>${statsHtml(2)}${P() ? `<div class="sec">Skills</div>${skillsHtml(1)}` : ''}</div></div>
+        <div class="skillrow"><div class="sec">Skills</div>${skillsHtml(5)}</div></div>
+      <div class="right">${bagHtml({ ctx: 'gear', cols: P() ? 6 : 7 })}${itemCard(SEL, 'gear')}</div>
+    </div>${gearFoot()}</div>`;
+    },
+  },
+  g3: {
+    gear: () => `<div class="scr g3"><div class="head"><div class="title">Gear</div>${gold()}</div>
+      <div class="hrow">${HEROES.map((h, i) => `<div class="hero${i === 0 ? ' on' : ''}">${img('av/' + h.id)}<div><b>${h.name}</b><em>Level 1 · ${h.fam} · ${h.items}/6</em></div></div>`).join('')}</div>
+      <div class="body">
+        <div class="ledger scroll"><div class="sec">Equipped</div>${SLOTS.map((s) => { const id = EQUIP[s]; const it = id ? ITEMS[id] : null; const drop = st.drag && s === 'armor'; return `<div class="lrow ${it ? 'r-' + it.r : ''}">${cell(id, { slot: s, drop, data: s === 'armor' ? 'id="slot-armor"' : '' })}<div style="min-width:0"><b><small>${SLOTNAME[s]}</small>${it ? esc(it.name) : '—'}</b><div class="afl">${it ? it.afx.map((a) => `<span class="${tierCls(a[0])}">${a[0]}</span>${esc(a[2])}`).join(' &nbsp;') : 'Empty: drop an item here'}</div></div></div>`; }).join('')}</div>
+        <div class="center scroll"><div class="sec">Stats <span class="cnt">Now → New</span></div>${ledgerStats()}<div class="sec fold">Skills</div>${skillsHtml(P() ? 1 : 2)}</div>
+        <div class="right">${bagHtml({ ctx: 'gear', cols: P() ? 5 : 7 })}${itemCard(SEL, 'gear')}</div>
+      </div>${gearFoot()}</div>`,
+  },
+  g4: {
+    gear: () => `<div class="scr g4${st.drawer ? '' : ' closed'}"><div class="head"><div class="title">Gear</div>${gold()}</div><div class="body${st.drawer ? ' open' : ''}">
+      <div class="rail">${HEROES.map((h, i) => `<div class="hero${i === 0 ? ' on' : ''}${st.drag && i === 0 ? ' drop-ok' : ''}">${img('av/' + h.id)}</div>`).join('')}</div>
+      ${st.drawer ? drawer() : ''}
+      <div class="main">${slotTabs(st.drawer)}${bagHtml({ ctx: 'gear', chips: false, cols: P() ? (st.drawer ? 5 : 7) : (st.drawer ? 6 : 10) })}</div>
+      <div class="side scroll">${itemCard(SEL, 'gear', { compare: 'party' })}</div>
+    </div>${gearFoot()}</div>`,
+    merchant: () => `<div class="scr g4 closed"><div class="head"><div class="title">Odo the Peddler <small>Travelling merchant</small></div>${gold()}</div><div class="body" style="grid-template-columns:${P() ? '170px minmax(0,1fr) 300px' : '380px minmax(0,1fr) 560px'}">
+      <div class="scroll" style="display:flex;flex-direction:column;gap:var(--g)">${P() ? '' : odo()}<div class="sec">Wares</div>${wares({ cols: 3, sel: 'riveted_mail' })}${P() ? '' : '<div class="sec">Buy back</div><div style="display:flex;gap:var(--g2)">' + cell('brigandine', { price: 3 }) + cell('rondel_dagger', { price: 3 }) + '</div>'}</div>
+      <div class="main">${slotTabs(true)}${bagHtml({ ctx: 'merchant', chips: false, title: 'Your bag', cols: P() ? 5 : 8, prices: true, noSel: true })}</div>
+      <div class="side scroll">${itemCard('riveted_mail', 'buy', { compare: 'party' })}</div>
+    </div>${foot('Same bag, same detail column; only the left panel changes (wares instead of heroes).', '<span class="btn">Move on</span>')}</div>`,
+    reward: () => `<div class="scr g4 closed"><div class="head"><div class="title">Choose your reward <small>Wave 6 cleared</small></div>${gold()}</div><div class="body" style="grid-template-columns:${P() ? '170px minmax(0,1fr) 300px' : '380px minmax(0,1fr) 560px'}">
+      <div class="scroll" style="display:flex;flex-direction:column;gap:var(--g)"><div class="sec">Rewards <span class="cnt">pick one</span></div>${rewardRows()}</div>
+      <div class="main">${slotTabs(true)}${bagHtml({ ctx: 'reward', items: [...BAG, 'kettle_hat', 'ranger_boots', 'morning_star', 'brigandine', 'pilgrims_token', 'wolf_tooth', 'hex_doll', 'nasal_helm', 'rondel_dagger', 'oak_shield', 'hunting_bow', 'rune_staff'].slice(0, 30), sel: 'pilgrims_token', chips: false, cols: P() ? 5 : 8 })}</div>
+      <div class="side scroll">${itemCard('pilgrims_token', 'reward')}</div>
+    </div>${foot('Bag full: discard here, then tap the reward. No separate screen.', '<span class="btn">Skip reward</span>')}</div>`,
+  },
+  g5: {
+    gear: () => `<div class="scr g5"><div class="head"><div class="title">Gear</div>${gold()}</div><div class="body">
+      <div class="deck"><div class="hcards">${HEROES.map((h, i) => `<div class="hcard${i === 0 ? ' on' : ''}">${img('av/' + h.id)}<b>${h.name.toUpperCase()}</b></div>`).join('')}</div>
+        <div class="board">${SLOTS.map((s) => { const id = EQUIP[s]; const it = id ? ITEMS[id] : null; const drop = st.drag && s === 'armor'; return `<div class="socket ${it ? 'r-' + it.r : ''}"><b>${SLOTNAME[s]}</b>${cell(id, { slot: s, drop, data: s === 'armor' ? 'id="slot-armor"' : '' })}<em>${it ? esc(it.name) : 'Empty'}</em></div>`; }).join('')}</div>
+        <div class="strip scroll">${statsHtml(P() ? 2 : 3)}</div></div>
+      <div class="spread"><div class="cloth scroll">${bagHtml({ ctx: 'gear', cols: P() ? 5 : 7, chips: !P() })}</div><div class="strip sk5">${skillsHtml(P() ? 2 : 3)}</div></div>
+      <div class="side">${itemCard(SEL, 'gear', { parch: true, compare: P() ? undefined : 'table' })}${P() ? `<div class="strip scroll" style="flex:1">${skillsHtml(1)}</div>` : ''}</div>
+    </div>${gearFoot()}</div>`,
+  },
+};
+function slotTabs(compact = false) {
+  const c = compact || P();
+  return `<div style="display:flex;gap:var(--g2);flex-wrap:nowrap">${['All', ...SLOTS.map((s) => SLOTNAME[s])].map((t, i) => `<span class="chip${i === 0 ? ' on' : ''}" title="${t}">${i ? `<img src="${A}items/${SLOTART[SLOTS[i - 1]]}.webp" alt="">` : ''}${c && i ? '' : t}</span>`).join('')}<span class="chip" style="margin-left:auto">${c ? 'Usable' : 'Usable by Defender'}</span></div>`;
+}
+function drawer() {
+  return `<div class="drawer scroll"><span class="x">◂ HIDE</span><div class="sec">Defender · Maces &amp; Shields</div><div class="slots">${slotCells()}</div><div class="sec">Stats</div>${statsHtml(P() ? 3 : 4)}<div class="sec">Skills</div>${skillsHtml(P() ? 2 : 3)}</div>`;
+}
+function ledgerStats() {
+  const rows = STATS.filter(([, , , n]) => n).concat(STATS.filter(([, , , n]) => !n).slice(0, P() ? 3 : 12));
+  return `<div class="cmp"><span></span><span class="hd">STAT</span><span class="hd">NOW</span><span class="hd">NEW</span><span class="hd">Δ</span>${rows.map(([k, l, v, n]) => { const d = n ? diff(v, n) : ''; return `${img('stats/' + k)}<span>${l}</span><span class="num">${v}</span><span class="num">${n ?? v}</span><span class="num ${d[0] === '+' ? 'up' : d ? 'down' : ''}">${d || '·'}</span>`; }).join('')}</div>`;
+}
+
+// ===== çizim + ölçek =====
+const stage = document.getElementById('stage');
+function offsetIn(node, anc) { let x = 0, y = 0, n = node; while (n && n !== anc) { x += n.offsetLeft; y += n.offsetTop; let q = n.parentElement; while (q && q !== n.offsetParent && q !== anc) { x -= q.scrollLeft; y -= q.scrollTop; q = q.parentElement; } if (q && q !== anc) { x -= q.scrollLeft; y -= q.scrollTop; } n = n.offsetParent; } return { x, y }; }
+function render() {
+  const lay = V[st.v][st.ctx] ?? V[st.v].gear;
+  const ctxOk = !!V[st.v][st.ctx];
+  stage.className = st.phone ? 'phone' : 'desk';
+  stage.style.setProperty('--cellbase', st.phone ? '44px' : '84px');
+  stage.innerHTML = lay() + (ctxOk ? '' : `<div class="dragcap" style="left:50%;top:6px;transform:translateX(-50%);color:var(--ember2);border-color:rgba(255,179,90,.5)">This variant shows the Gear context only; see g1 / g4 for merchant and reward.</div>`);
+  // ipucu: Legendary taç üstüne gelinmiş gibi
+  if (st.tip) {
+    const c = stage.querySelector('#tipcell') ?? stage.querySelector('#selcell');
+    if (c) {
+      stage.insertAdjacentHTML('beforeend', tipHtml(c.dataset.item));
+      const t = stage.querySelector('#tip');
+      const o = offsetIn(c, stage);
+      const W = stage.offsetWidth, H = stage.offsetHeight;
+      let x = o.x - t.offsetWidth - 12, y = o.y - 10;
+      if (x < 6) x = o.x + c.offsetWidth + 12;
+      y = Math.max(6, Math.min(H - t.offsetHeight - 6, y));
+      t.style.left = x + 'px'; t.style.top = y + 'px';
+    }
+  }
+  // sürükleme anı: seçili item'in hayaleti Armor yuvasının üstünde
+  if (st.drag && st.ctx === 'gear') {
+    const s = stage.querySelector('#slot-armor');
+    if (s) {
+      const o = offsetIn(s, stage);
+      stage.insertAdjacentHTML('beforeend', `<div class="ghost" style="left:${o.x + s.offsetWidth * .55}px;top:${o.y + s.offsetHeight * .45}px">${cell(SEL)}</div><div class="dragcap" style="left:${o.x}px;top:${o.y + s.offsetHeight + 8}px">Release to equip on Defender</div>`);
+    }
+  }
+  fit();
+  document.getElementById('desc').textContent = DESC[st.v];
+  syncBar();
+}
+function fit() {
+  const w = document.getElementById('wrap');
+  const W = st.phone ? 844 : 1920, H = st.phone ? 390 : 1080;
+  const s = Math.min(w.clientWidth / W, w.clientHeight / H, st.phone ? 1.6 : 1);
+  stage.style.transform = `scale(${s})`;
+  stage.style.left = (w.clientWidth - W * s) / 2 + 'px';
+  stage.style.top = (w.clientHeight - H * s) / 2 + 'px';
+}
+// üst çubuk
+function mk(gid, items) {
+  const g = document.getElementById(gid);
+  for (const [label, on, act] of items) {
+    const b = document.createElement('button');
+    b.textContent = label;
+    b.dataset.k = label;
+    b.addEventListener('click', () => { act(); writeHash(); render(); });
+    b._on = on;
+    g.append(b);
+  }
+}
+mk('gv', ['g1', 'g2', 'g3', 'g4', 'g5'].map((v) => [v, () => st.v === v, () => (st.v = v)]));
+mk('gs', [['Desktop', () => !st.phone, () => (st.phone = false)], ['Phone', () => st.phone, () => (st.phone = true)]]);
+mk('gc', [['Gear', () => st.ctx === 'gear', () => (st.ctx = 'gear')], ['Merchant', () => st.ctx === 'merchant', () => (st.ctx = 'merchant')], ['Reward', () => st.ctx === 'reward', () => (st.ctx = 'reward')]]);
+mk('gt', [['Tooltip', () => st.tip, () => (st.tip = !st.tip)], ['Drag', () => st.drag, () => (st.drag = !st.drag)], ['Hero panel', () => st.drawer, () => (st.drawer = !st.drawer)]]);
+function syncBar() { document.querySelectorAll('#bar button').forEach((b) => b.classList.toggle('on', b._on())); }
+window.addEventListener('hashchange', () => { readHash(); render(); });
+window.addEventListener('resize', fit);
+readHash();
+document.fonts.ready.then(render);
+render();
+</script>
+</body>
+</html>
