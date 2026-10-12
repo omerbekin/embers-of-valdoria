@@ -14,7 +14,7 @@ import { DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
-import { cycleFrames, keyFrame, poseClass, skillPoses, statePose, weaponScale, POSES, type PoseClassDef, type WeaponPick } from './poses';
+import { cycleFrames, gripFrames, keyFrame, poseClass, resolvePose, skillPoses, statePose, weaponScale, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, poseDisplayScale } from './pose-rig';
 
 /**
@@ -757,7 +757,7 @@ export class CombatantView {
     if (this.rig) {
       // pozlu sınıf: genel durum -> poz; attack/cast oynanan skill'in vuruş pozu (skills.json > pose), yoksa sınıfın varsayılanı
       const skill = anim === 'attack' || anim === 'cast' ? this.rig.skill[this.rig.skill.length - 1] : undefined;
-      this.showPose(skill ?? (anim === 'death' ? statePose(this.rig.def, 'death') : statePose(this.rig.def, anim)));
+      this.showPose(skill ?? statePose(this.rig.def, anim, this.grip));
       if (anim === 'hit') this.returnToIdle(this.rig.token, slow(timing.hitFlashMs) * 3 + slow(260));
       return;
     }
@@ -777,14 +777,21 @@ export class CombatantView {
     return this.rig?.pose ?? null;
   }
 
-  /** Pozlu sınıfın poz adları (debug poz seçici). */
-  poseList(): string[] {
-    return this.rig ? Object.keys(this.rig.def.poses) : [];
+  /** Çizilen silahın tutuşu (poz takımını seçer: tek el / çift el). */
+  private get grip(): Grip | undefined {
+    return this.rig?.weapon?.grip;
   }
 
-  /** Pozlu sınıfın döngüleri (ör. spin -> spin1..3). */
+  /** Pozlu sınıfın bu tutuştaki poz kareleri (debug poz seçici). */
+  poseList(): string[] {
+    return this.rig ? gripFrames(this.rig.def, this.grip) : [];
+  }
+
+  /** Pozlu sınıfın bu tutuştaki döngüleri (ör. spin1 -> spin1a..c). */
   poseCycles(): Record<string, string[]> {
-    return this.rig ? this.rig.def.cycles : {};
+    if (!this.rig) return {};
+    const frames = new Set(gripFrames(this.rig.def, this.grip));
+    return Object.fromEntries(Object.entries(this.rig.def.cycles).filter(([, f]) => f.every((x) => frames.has(x))));
   }
 
   /** Çizilen silah (pozsuz: null). */
@@ -828,16 +835,16 @@ export class CombatantView {
   /** Oynanan skill'de döngü pozu var mı (ör. Whirlwind -> spin): adı, yoksa null. */
   skillCycle(): string | null {
     if (!this.rig) return null;
-    return this.rig.skill.find((p) => (this.rig!.def.cycles[p]?.length ?? 0) > 1) ?? null;
+    return this.rig.skill.find((p) => (this.rig!.def.cycles[resolvePose(this.rig!.def, p, this.grip)]?.length ?? 0) > 1) ?? null;
   }
 
   /** Döngü pozunun `phase` (tur, 0..1 bir tam döngü) anındaki karesi; Reduced motion'da daima anahtar kare (kare döngüsü yok). */
   cycleFrame(name: string, phase: number): void {
     if (!this.rig) return;
-    const frames = cycleFrames(this.rig.def, name);
+    const frames = cycleFrames(this.rig.def, name, this.grip);
     if (!frames.length) return;
     if (reducedMotion()) {
-      this.showPose(keyFrame(this.rig.def, name), false);
+      this.showPose(keyFrame(this.rig.def, name, this.grip), false);
       return;
     }
     const i = ((Math.floor(phase * frames.length) % frames.length) + frames.length) % frames.length;
@@ -851,8 +858,11 @@ export class CombatantView {
   showPose(name: string | null, fade = true): string | null {
     const rig = this.rig;
     if (!rig) return null;
-    let pose = name ? (rig.def.poses[name] ? name : keyFrame(rig.def, name)) : statePose(rig.def, 'idle');
-    if (pose === statePose(rig.def, 'idle') && rig.def.idleSprite) pose = null;
+    // mantıksal ad (slash, spin, idle...) tutuşun karesine çözülür; doğrudan kare adı (debug) olduğu gibi
+    const frames = gripFrames(rig.def, this.grip);
+    let pose = name ? (frames.includes(name) ? name : keyFrame(rig.def, name, this.grip)) : statePose(rig.def, 'idle', this.grip);
+    if (pose && !frames.includes(pose)) pose = statePose(rig.def, 'idle', this.grip); // başka tutuşun karesi bu atlasta yok
+    if (pose === statePose(rig.def, 'idle', this.grip) && rig.def.idleSprite) pose = null;
     rig.token++;
     if (pose === rig.pose && this.sprite.texture.key !== '__MISSING') return pose;
     const prevKey = this.sprite.texture.key;
@@ -921,7 +931,7 @@ export class CombatantView {
     const x = this.container.x + this.sprite.x + ox * Math.cos(r) - oy * Math.sin(r);
     const y = this.container.y + this.sprite.y + ox * Math.sin(r) + oy * Math.cos(r);
     const a = ((p.anchor.angle - 90) * Math.PI) / 180 + r * flip;
-    return { x, y, ang: a, len: look.grip.y * weaponScale(fam, look) * rig.display * k };
+    return { x, y, ang: a, len: look.grip.y * weaponScale(fam, look, rig.def) * rig.display * k };
   }
 
   /** Hedefe doğru atılıp geri döner. Vuruş anında onHit çağrılır. */
@@ -979,7 +989,7 @@ export class CombatantView {
 
   /** Hızla (x, y) noktasına koşar; `ghost` doluysa arkasında bu renkte hayalet izler bırakır. Varışta çözülür. */
   approach(x: number, y: number, ms: number, ghost?: number): Promise<void> {
-    if (this.rig) this.showPose(this.rig.skill.length > 1 ? this.rig.skill[0]! : statePose(this.rig.def, 'step')); // pozlu: koşarken adım (ya da skill'in ilk) pozu
+    if (this.rig) this.showPose(this.rig.skill.length > 1 ? this.rig.skill[0]! : statePose(this.rig.def, 'step', this.grip)); // pozlu: koşarken adım (ya da skill'in ilk) pozu
     else this.play('attack');
     this.container.setDepth(3500);
     let next = 0;
@@ -1136,7 +1146,7 @@ export class CombatantView {
     this.baseY = y;
     if (dx !== 0) this.sprite.setFlipX(dx < 0); // yürüdüğü yöne bakar
     this.container.setDepth(Math.max(y, this.container.y) + 2);
-    if (this.rig) this.showPose(statePose(this.rig.def, 'step'));
+    if (this.rig) this.showPose(statePose(this.rig.def, 'step', this.grip));
     else this.play('attack');
     const hops = Math.max(2, Math.round(ms / 170));
     this.scene.tweens.add({ targets: this.sprite, y: { from: 0, to: -16 }, duration: slow(ms) / (hops * 2), yoyo: true, repeat: hops - 1, ease: 'Sine.easeOut' });

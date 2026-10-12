@@ -9,6 +9,15 @@ import randomBattle from '../../data/battles/random-battle.json';
 import aoeTester from '../../data/classes/aoe_tester.json';
 import poseTester1 from '../../data/classes/pose_tester_1.json';
 import poseTester2 from '../../data/classes/pose_tester_2.json';
+import poseTester3 from '../../data/classes/pose_tester_3.json';
+import poseTester4 from '../../data/classes/pose_tester_4.json';
+import poseTester5 from '../../data/classes/pose_tester_5.json';
+import poseTester6 from '../../data/classes/pose_tester_6.json';
+import poseTester7 from '../../data/classes/pose_tester_7.json';
+import poseTester8 from '../../data/classes/pose_tester_8.json';
+import poseTester9 from '../../data/classes/pose_tester_9.json';
+import poseTester10 from '../../data/classes/pose_tester_10.json';
+import poseTester11 from '../../data/classes/pose_tester_11.json';
 import antimage from '../../data/classes/antimage.json';
 import archer from '../../data/classes/archer.json';
 import cutthroat from '../../data/classes/cutthroat.json';
@@ -73,6 +82,15 @@ const classData: Record<string, CombatantData> = {
   aoe_tester: aoeTester,
   pose_tester_1: poseTester1,
   pose_tester_2: poseTester2,
+  pose_tester_3: poseTester3,
+  pose_tester_4: poseTester4,
+  pose_tester_5: poseTester5,
+  pose_tester_6: poseTester6,
+  pose_tester_7: poseTester7,
+  pose_tester_8: poseTester8,
+  pose_tester_9: poseTester9,
+  pose_tester_10: poseTester10,
+  pose_tester_11: poseTester11,
 } as unknown as Record<string, CombatantData>;
 
 /** Oynanabilir tüm class'lar: iki taraf da aynı havuzdan çeker, görseli sınıfa bağlıdır. */

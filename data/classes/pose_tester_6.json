@@ -1,0 +1,38 @@
+{
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mage skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
+  "id": "pose_tester_6",
+  "name": "Pose Tester VI (Mage)",
+  "spriteId": "warrior",
+  "color": "#3d7be0",
+  "logo": "fireball",
+  "role": "Pose Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 1,
+  "attributes": {
+    "str": 30,
+    "int": 16,
+    "dex": 8,
+    "luck": 6
+  },
+  "primary": "str",
+  "armor": 18,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "pt_fire_bolt",
+    "pt_blizzard",
+    "pt_mana_barrier",
+    "pt_meteor"
+  ],
+  "passive": {
+    "id": "pose_test_rig",
+    "name": "Pose Rig",
+    "icon": "helm",
+    "text": "Test passive with no effect: this class only exists to try the pose library in a real battle.",
+    "effect": {
+      "type": "spellEcho",
+      "chance": 0
+    }
+  }
+}

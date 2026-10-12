@@ -82,7 +82,7 @@ describe('heal.missingHpBonus (Radiance: canı düşük dosta daha fazla şifa)'
     const pal = content.classes.paladin!;
     const text = describeSkill(radiance, pal.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }).lines.join('\n');
     expect(text).toContain("Heals more the lower the ally's health: up to +50%");
-    const others = Object.values(content.skills).filter((s) => s.id !== 'radiance' && s.effects.some((e) => e.type === 'heal'));
+    const others = Object.values(content.skills).filter((s) => s.id !== 'radiance' && s.id !== 'pt_radiance' && s.effects.some((e) => e.type === 'heal')); // pt_radiance: Pose Tester kopyası
     for (const s of others) {
       expect(s.effects.some((e) => e.type === 'heal' && !!e.missingHpBonus)).toBe(false);
       expect(describeSkill(s, pal.stats, content.formulas, content.summons, {}).lines.join('\n')).not.toContain('lower the ally');

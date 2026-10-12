@@ -1,10 +1,10 @@
 {
-  "_not": "Debug test class (Ömer 2026-10-11): Warrior poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). Skill'leri diğer sınıfların GERÇEK skill'lerinin kopyası (artOf: efekt/ses/ikon sahibinden), her biri tek bir pozu oynatır; bedel 0, cooldown yok, hasar ~1. testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı; Debug > Setup > Test Warrior poses ve Test Mode class seçicisinden gelir.",
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Warrior skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
   "id": "pose_tester_1",
-  "name": "Pose Tester I",
+  "name": "Pose Tester I (Warrior)",
   "spriteId": "warrior",
   "color": "#c8553d",
-  "logo": "charge",
+  "logo": "sword",
   "role": "Pose Test",
   "testOnly": true,
   "hidden": true,
@@ -19,7 +19,12 @@
   "armor": 18,
   "magicArmor": 0,
   "ai": "aggressive",
-  "skills": ["pt_x_cut", "pt_tremor_slam", "pt_whirlwind", "pt_charge"],
+  "skills": [
+    "pt_melee_attack",
+    "pt_whirlwind",
+    "pt_charge",
+    "pt_abyssal_cry"
+  ],
   "passive": {
     "id": "pose_test_rig",
     "name": "Pose Rig",

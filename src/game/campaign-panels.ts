@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { content } from '../engine';
 import { heroById, type CampaignState, type Hero, type NodeType } from '../campaign';
-import { SLOT_IDS, fmtPanel, heroPanel, instanceColor, instanceSummary, itemDef, slotDef, type SlotId } from '../progression';
+import { SLOT_IDS, fmtPanel, gripOf, heroPanel, instanceColor, instanceSummary, itemDef, offhandBlocker, slotDef, type SlotId } from '../progression';
 import { characterTexture } from './assets';
 import { classAvatar } from './menu-ui';
 import { EL, diamondPts, elBody, elButton, elText, fitW } from './elegant-ui';
@@ -224,6 +224,28 @@ function slotRow(scene: Phaser.Scene, hero: Hero, slot: SlotId, x: number, y: nu
   const colN = Phaser.Display.Color.HexStringToColor(col).color;
   const c = scene.add.container(x, y);
   const g = scene.add.graphics();
+  // İkinci el kapalı (çift el / yay / tılsım; Ömer 2026-10-12): yuva etkisiz (tıklanmaz)
+  const blocker = slot === 'offhand' && !inst ? offhandBlocker(hero.equipment) : undefined;
+  if (blocker) {
+    g.fillStyle(EL.INK, 0.4).fillRect(0, 0, w, h);
+    g.lineStyle(1, EL.GOLD, EL.LINE.a1).strokeRect(0.5, 0.5, w - 1, h - 1);
+    const icX = left ? 36 : w - 36;
+    const ic = scene.add.graphics();
+    ic.lineStyle(1, EL.GOLD, EL.LINE.a1).strokeRect(icX - 25, h / 2 - 25, 50, 50);
+    // Gölge yalnızca çift el silahta; yay / tılsım: düz kapalı boş yuva + "Hands full"
+    const two = gripOf(blocker) === 'two';
+    const glyph = scene.add.graphics();
+    drawSlotGlyph(glyph, two ? 'weapon' : slot, two ? 0x8a8478 : 0x7d705a, 1, icX, h / 2);
+    if (two) glyph.setAlpha(0.3);
+    const tx = left ? 72 : w - 72;
+    const name = elText(scene, tx, h / 2 - 11, slotDef(slot).name, 15, EL.DIM, { em: 0.05 }).setOrigin(left ? 0 : 1, 0.5);
+    const sub = two
+      ? elText(scene, tx, h / 2 + 13, '2H', 12, EL.MUTED, { em: 0.14 }).setOrigin(left ? 0 : 1, 0.5)
+      : elBody(scene, tx, h / 2 + 13, 'Hands full', 15, EL.MUTED).setOrigin(left ? 0 : 1, 0.5);
+    c.add([g, ic, glyph, name, sub]);
+    c.setAlpha(0.8);
+    return c;
+  }
   let hover = false;
   const draw = () => {
     g.clear();

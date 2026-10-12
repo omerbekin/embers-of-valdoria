@@ -1,5 +1,5 @@
 {
-  "_not": "Karakter poz kütüphanesi (Ömer 2026-10-11; future-ideas 'ortak poz kütüphanesi + dinamik silah'; kod src/game/poses.ts + pose-rig.ts). classes.<sınıf>: assets/poses/<dir>/<poz>.png gövde pozları (eller boş), ortak tuval (canvas: ayak ortası footX, taban footY), figure = idle figürünün boyu (ekran ölçeği). poses.<poz>.anchor = ana el (yumruk) noktası x/y (tuval pikseli) + angle (silah açısı, derece, saat yönü, 0 = ağız yukarı); offhand = ikinci el (bilgi; çizimde yumruk yaması); flip = silahı yatay aynala (balta ağzı öne); back = silah gövdenin ARKASINDA; hidden = silah çizilmez (atış); fist = yumruk yamasının yarıçapı (yumruk kabzanın ÜSTÜNDE görünsün). canvas/figure/box/weapons.looks ölçümleri tools/make-poses.mjs yazar (el noktaları korunur); el noktası ve açı düzenleyici: node tools/pose-editor.mjs. cycles = çok kareli poz (spin = 3 kare döngü). Skill -> poz eşlemesi skills.json > pose. weapons.<aile>.length = silah boyu (gövde tuval pikseli), itemArt/familyArt = item -> silah görseli ailesi, rarityLook = nadirlik -> görünüm dizini (0 sade, 1 orta, 2 süslü), rarityGlow = silahın çevresinde ince nadirlik ışıltısı. classAliases = başka sınıfın kütüphanesini kullanan sınıf (Pose Tester I/II -> warrior). states.hit = idle + hitRecoil (Ömer 2026-10-11: hit görseli arkadan vurulmuş gibi okunuyordu; önden darbe pozu gelene dek kodla geri eğilme + çökme). braceSkills = başlarken küçük savunma hareketi (Guard).",
+  "_not": "Karakter poz kütüphanesi (Ömer 2026-10-11; future-ideas 'ortak poz kütüphanesi + dinamik silah'; kod src/game/poses.ts + pose-rig.ts). classes.<sınıf>: assets/poses/<dir>/<poz>.png gövde pozları (eller boş), ortak tuval (canvas: ayak ortası footX, taban footY), figure = idle figürünün boyu (ekran ölçeği). poses.<poz>.anchor = ana el (yumruk) noktası x/y (tuval pikseli) + angle (silah açısı, derece, saat yönü, 0 = ağız yukarı); offhand = ikinci el (bilgi; çizimde yumruk yaması); flip = silahı yatay aynala (balta ağzı öne); back = silah gövdenin ARKASINDA; hidden = silah çizilmez (atış); fist = yumruk yamasının yarıçapı (yumruk kabzanın ÜSTÜNDE görünsün). canvas/figure/box/weapons.looks ölçümleri tools/make-poses.mjs yazar (el noktaları korunur); el noktası ve açı düzenleyici: node tools/pose-editor.mjs. cycles = çok kareli poz (spin = 3 kare döngü). Skill -> poz eşlemesi skills.json > pose. weapons.<aile>.length = silah boyu (gövde tuval pikseli), itemArt/familyArt = item -> silah görseli ailesi, rarityLook = nadirlik -> görünüm dizini (0 sade, 1 orta, 2 süslü), rarityGlow = silahın çevresinde ince nadirlik ışıltısı. classAliases = başka sınıfın kütüphanesini kullanan sınıf (Pose Tester I-XI -> warrior_v2). states.hit = idle + hitRecoil (Ömer 2026-10-11: hit görseli arkadan vurulmuş gibi okunuyordu; önden darbe pozu gelene dek kodla geri eğilme + çökme). braceSkills = başlarken küçük savunma hareketi (Guard). v2 (Ömer 2026-10-12; tools/make-poses-v2.mjs): classes.warrior_v2 = 13 ortak poz, silah pozları tek el (idle1...) ve çift el (idle2...) takımı; grips.<tutuş> mantıksal ad -> kare, gripFallback (bow/charm -> one), gripWeapon (görseli olmayan çift el silahın yerine), weaponScale (silah boyu çarpanı), offhand.angle (kalkan / ikinci hançer). weapons.<aile>.hold = ailenin tutuşu, upright = el açısından bağımsız dik (kalkan, yay), looks.<g>.length = görünüme özel boy; gripArt = tutuşa göre aile (two.axes -> greataxes, two.maces -> mauls), itemLook = item'e özel görünüm (tılsımlar, Dane Axe, kalkanlar). Gerçek Warrior v1'de kalır (tek takım; ikinci el çizmez).",
   "classes": {
     "warrior": {
       "heightFit": 0.97,
@@ -225,6 +225,516 @@
         "leanDeg": 7,
         "crouch": 0.05
       }
+    },
+    "warrior_v2": {
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2"
+        }
+      },
+      "gripFallback": {
+        "bow": "one",
+        "charm": "one"
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "dir": "warrior-v2",
+      "canvas": {
+        "w": 354,
+        "h": 482,
+        "footX": 177,
+        "footY": 476
+      },
+      "figure": {
+        "w": 250,
+        "h": 387
+      },
+      "poses": {
+        "idle1": {
+          "box": {
+            "x": 52,
+            "y": 89,
+            "w": 250,
+            "h": 387
+          },
+          "anchor": {
+            "x": 234,
+            "y": 209,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 119,
+            "y": 267,
+            "angle": 10
+          }
+        },
+        "step1": {
+          "box": {
+            "x": 66,
+            "y": 99,
+            "w": 262,
+            "h": 377
+          },
+          "anchor": {
+            "x": 293,
+            "y": 220,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 80,
+            "y": 192,
+            "angle": -20
+          }
+        },
+        "slash1": {
+          "box": {
+            "x": 45,
+            "y": 104,
+            "w": 268,
+            "h": 372
+          },
+          "anchor": {
+            "x": 79,
+            "y": 143,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 226,
+            "y": 205,
+            "angle": 20
+          }
+        },
+        "overhead1": {
+          "box": {
+            "x": 59,
+            "y": 37,
+            "w": 236,
+            "h": 439
+          },
+          "anchor": {
+            "x": 169,
+            "y": 49,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 264,
+            "y": 222,
+            "angle": 20
+          }
+        },
+        "thrust1": {
+          "box": {
+            "x": 23,
+            "y": 124,
+            "w": 309,
+            "h": 352
+          },
+          "anchor": {
+            "x": 312,
+            "y": 198,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 123,
+            "y": 211,
+            "angle": -10
+          }
+        },
+        "spin1a": {
+          "box": {
+            "x": 81,
+            "y": 96,
+            "w": 242,
+            "h": 380
+          },
+          "anchor": {
+            "x": 111,
+            "y": 156,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 250,
+            "y": 223,
+            "angle": 10
+          }
+        },
+        "spin1b": {
+          "box": {
+            "x": 35,
+            "y": 106,
+            "w": 285,
+            "h": 370
+          },
+          "anchor": {
+            "x": 300,
+            "y": 184,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 78,
+            "y": 199,
+            "angle": -10
+          },
+          "back": true
+        },
+        "spin1c": {
+          "box": {
+            "x": 61,
+            "y": 102,
+            "w": 232,
+            "h": 374
+          },
+          "anchor": {
+            "x": 274,
+            "y": 167,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 83,
+            "y": 223,
+            "angle": 10
+          }
+        },
+        "guard1": {
+          "box": {
+            "x": 52,
+            "y": 136,
+            "w": 251,
+            "h": 340
+          },
+          "anchor": {
+            "x": 104,
+            "y": 223,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 244,
+            "y": 194,
+            "angle": 0
+          }
+        },
+        "raise": {
+          "box": {
+            "x": 67,
+            "y": 6,
+            "w": 220,
+            "h": 470
+          },
+          "anchor": {
+            "x": 136,
+            "y": 20,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 251,
+            "y": 190,
+            "angle": 20
+          }
+        },
+        "channel": {
+          "box": {
+            "x": 49,
+            "y": 97,
+            "w": 256,
+            "h": 379
+          },
+          "anchor": {
+            "x": 281,
+            "y": 170,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 211,
+            "y": 175,
+            "angle": 80
+          }
+        },
+        "point": {
+          "box": {
+            "x": 43,
+            "y": 99,
+            "w": 276,
+            "h": 377
+          },
+          "anchor": {
+            "x": 102,
+            "y": 217,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 295,
+            "y": 155,
+            "angle": 80
+          }
+        },
+        "idle2": {
+          "box": {
+            "x": 51,
+            "y": 85,
+            "w": 253,
+            "h": 391
+          },
+          "anchor": {
+            "x": 165,
+            "y": 266,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 160,
+            "y": 223,
+            "angle": 165
+          }
+        },
+        "step2": {
+          "box": {
+            "x": 90,
+            "y": 89,
+            "w": 225,
+            "h": 387
+          },
+          "anchor": {
+            "x": 173,
+            "y": 126,
+            "angle": -30
+          },
+          "offhand": {
+            "x": 173,
+            "y": 126,
+            "angle": -30
+          }
+        },
+        "slash2": {
+          "box": {
+            "x": 40,
+            "y": 109,
+            "w": 275,
+            "h": 367
+          },
+          "anchor": {
+            "x": 77,
+            "y": 169,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 85,
+            "y": 172,
+            "angle": -100
+          }
+        },
+        "overhead2": {
+          "box": {
+            "x": 60,
+            "y": 21,
+            "w": 234,
+            "h": 455
+          },
+          "anchor": {
+            "x": 168,
+            "y": 37,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 168,
+            "y": 37,
+            "angle": -10
+          }
+        },
+        "thrust2": {
+          "box": {
+            "x": 23,
+            "y": 128,
+            "w": 309,
+            "h": 348
+          },
+          "anchor": {
+            "x": 308,
+            "y": 199,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 308,
+            "y": 199,
+            "angle": 90
+          }
+        },
+        "spin2a": {
+          "box": {
+            "x": 98,
+            "y": 98,
+            "w": 251,
+            "h": 378
+          },
+          "anchor": {
+            "x": 117,
+            "y": 174,
+            "angle": -90
+          },
+          "offhand": {
+            "x": 117,
+            "y": 174,
+            "angle": -90
+          }
+        },
+        "spin2b": {
+          "box": {
+            "x": 28,
+            "y": 103,
+            "w": 299,
+            "h": 373
+          },
+          "anchor": {
+            "x": 306,
+            "y": 183,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 306,
+            "y": 183,
+            "angle": 90
+          }
+        },
+        "spin2c": {
+          "box": {
+            "x": 61,
+            "y": 101,
+            "w": 232,
+            "h": 375
+          },
+          "anchor": {
+            "x": 265,
+            "y": 175,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 265,
+            "y": 175,
+            "angle": 90
+          }
+        },
+        "guard2": {
+          "box": {
+            "x": 48,
+            "y": 102,
+            "w": 258,
+            "h": 374
+          },
+          "anchor": {
+            "x": 250,
+            "y": 156,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 91,
+            "y": 157,
+            "angle": 90
+          }
+        },
+        "throw": {
+          "box": {
+            "x": 44,
+            "y": 100,
+            "w": 294,
+            "h": 376
+          },
+          "anchor": {
+            "x": 58,
+            "y": 250,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 308,
+            "y": 120,
+            "angle": 60
+          }
+        },
+        "hit": {
+          "box": {
+            "x": 61,
+            "y": 134,
+            "w": 242,
+            "h": 342
+          },
+          "anchor": {
+            "x": 215,
+            "y": 276,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 185,
+            "y": 276,
+            "angle": 150
+          }
+        },
+        "kneel": {
+          "box": {
+            "x": 48,
+            "y": 207,
+            "w": 257,
+            "h": 269
+          },
+          "anchor": {
+            "x": 209,
+            "y": 413,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 209,
+            "y": 413,
+            "angle": 100
+          }
+        }
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      }
     }
   },
   "weapons": {
@@ -295,6 +805,290 @@
         "bearded",
         "ornate"
       ]
+    },
+    "maces": {
+      "length": 205,
+      "looks": {
+        "flanged": {
+          "w": 172,
+          "h": 467,
+          "grip": {
+            "x": 84,
+            "y": 374
+          }
+        },
+        "morningstar": {
+          "w": 207,
+          "h": 478,
+          "grip": {
+            "x": 99,
+            "y": 382
+          }
+        },
+        "ornate": {
+          "w": 213,
+          "h": 479,
+          "grip": {
+            "x": 104,
+            "y": 383
+          }
+        }
+      },
+      "order": [
+        "flanged",
+        "morningstar",
+        "ornate"
+      ]
+    },
+    "daggers": {
+      "length": 125,
+      "looks": {
+        "plain": {
+          "w": 138,
+          "h": 407,
+          "grip": {
+            "x": 68,
+            "y": 297
+          }
+        },
+        "rondel": {
+          "w": 135,
+          "h": 419,
+          "grip": {
+            "x": 69,
+            "y": 306
+          }
+        },
+        "curved": {
+          "w": 180,
+          "h": 443,
+          "grip": {
+            "x": 98,
+            "y": 323
+          }
+        }
+      },
+      "order": [
+        "plain",
+        "rondel",
+        "curved"
+      ]
+    },
+    "staves": {
+      "length": 400,
+      "looks": {
+        "ash": {
+          "w": 89,
+          "h": 490,
+          "grip": {
+            "x": 48,
+            "y": 294
+          }
+        },
+        "oak": {
+          "w": 114,
+          "h": 489,
+          "grip": {
+            "x": 53,
+            "y": 293
+          }
+        },
+        "rune": {
+          "w": 124,
+          "h": 493,
+          "grip": {
+            "x": 62,
+            "y": 296
+          }
+        }
+      },
+      "order": [
+        "ash",
+        "oak",
+        "rune"
+      ],
+      "hold": "two"
+    },
+    "bows": {
+      "length": 330,
+      "looks": {
+        "short": {
+          "w": 105,
+          "h": 456,
+          "grip": {
+            "x": 74,
+            "y": 228
+          }
+        },
+        "hunting": {
+          "w": 117,
+          "h": 465,
+          "grip": {
+            "x": 73,
+            "y": 233
+          }
+        },
+        "longbow": {
+          "w": 133,
+          "h": 494,
+          "grip": {
+            "x": 93,
+            "y": 247
+          }
+        }
+      },
+      "order": [
+        "short",
+        "hunting",
+        "longbow"
+      ],
+      "hold": "bow",
+      "upright": true
+    },
+    "shields": {
+      "length": 165,
+      "upright": true,
+      "looks": {
+        "round": {
+          "w": 385,
+          "h": 384,
+          "grip": {
+            "x": 193,
+            "y": 211
+          },
+          "length": 145
+        },
+        "heater": {
+          "w": 341,
+          "h": 476,
+          "grip": {
+            "x": 171,
+            "y": 262
+          }
+        },
+        "tower": {
+          "w": 298,
+          "h": 530,
+          "grip": {
+            "x": 149,
+            "y": 292
+          },
+          "length": 200
+        }
+      },
+      "order": [
+        "round",
+        "heater",
+        "tower"
+      ],
+      "hold": "offhand"
+    },
+    "charms": {
+      "length": 70,
+      "looks": {
+        "cards": {
+          "w": 463,
+          "h": 391,
+          "grip": {
+            "x": 232,
+            "y": 215
+          }
+        },
+        "dice": {
+          "w": 438,
+          "h": 431,
+          "grip": {
+            "x": 219,
+            "y": 237
+          }
+        },
+        "doll": {
+          "w": 337,
+          "h": 425,
+          "grip": {
+            "x": 169,
+            "y": 234
+          },
+          "length": 80
+        },
+        "coin": {
+          "w": 364,
+          "h": 441,
+          "grip": {
+            "x": 182,
+            "y": 243
+          },
+          "length": 60
+        }
+      },
+      "order": [
+        "cards",
+        "dice",
+        "doll",
+        "coin"
+      ],
+      "hold": "charm"
+    },
+    "greataxes": {
+      "length": 330,
+      "looks": {
+        "dane": {
+          "w": 210,
+          "h": 468,
+          "grip": {
+            "x": 121,
+            "y": 356
+          }
+        },
+        "bearded": {
+          "w": 244,
+          "h": 475,
+          "grip": {
+            "x": 141,
+            "y": 361
+          }
+        },
+        "double": {
+          "w": 287,
+          "h": 485,
+          "grip": {
+            "x": 144,
+            "y": 369
+          }
+        }
+      },
+      "order": [
+        "dane",
+        "bearded",
+        "double"
+      ],
+      "hold": "two"
+    },
+    "mauls": {
+      "length": 320,
+      "looks": {
+        "maul": {
+          "w": 237,
+          "h": 489,
+          "grip": {
+            "x": 120,
+            "y": 381
+          }
+        },
+        "hammer": {
+          "w": 249,
+          "h": 502,
+          "grip": {
+            "x": 120,
+            "y": 392
+          }
+        }
+      },
+      "order": [
+        "maul",
+        "hammer"
+      ],
+      "hold": "two"
     }
   },
   "itemArt": {
@@ -302,7 +1096,13 @@
     "emberbrand": "swords"
   },
   "familyArt": {
-    "axes": "axes"
+    "axes": "axes",
+    "maces": "maces",
+    "daggers": "daggers",
+    "staves": "staves",
+    "bows": "bows",
+    "charms": "charms",
+    "shield": "shields"
   },
   "rarityLook": {
     "common": 0,
@@ -318,10 +1118,33 @@
   },
   "fistRadius": 13,
   "classAliases": {
-    "pose_tester_1": "warrior",
-    "pose_tester_2": "warrior"
+    "pose_tester_1": "warrior_v2",
+    "pose_tester_2": "warrior_v2",
+    "pose_tester_3": "warrior_v2",
+    "pose_tester_4": "warrior_v2",
+    "pose_tester_5": "warrior_v2",
+    "pose_tester_6": "warrior_v2",
+    "pose_tester_7": "warrior_v2",
+    "pose_tester_8": "warrior_v2",
+    "pose_tester_9": "warrior_v2",
+    "pose_tester_10": "warrior_v2",
+    "pose_tester_11": "warrior_v2"
   },
-  "braceSkills": [
-    "pt_guard"
-  ]
+  "braceSkills": [],
+  "gripArt": {
+    "two": {
+      "axes": "greataxes",
+      "maces": "mauls"
+    }
+  },
+  "itemLook": {
+    "dane_axe": "dane",
+    "oak_shield": "tower",
+    "oathkeepers_bulwark": "heater",
+    "worn_deck": "cards",
+    "loaded_bones": "dice",
+    "bones_of_the_quarry": "dice",
+    "hex_doll": "doll",
+    "gamblers_last_coin": "coin"
+  }
 }

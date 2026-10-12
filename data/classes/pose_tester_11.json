@@ -1,0 +1,38 @@
+{
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Hexer skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
+  "id": "pose_tester_11",
+  "name": "Pose Tester XI (Hexer)",
+  "spriteId": "warrior",
+  "color": "#6a2f5f",
+  "logo": "eye",
+  "role": "Pose Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 1,
+  "attributes": {
+    "str": 30,
+    "int": 16,
+    "dex": 8,
+    "luck": 6
+  },
+  "primary": "str",
+  "armor": 18,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "pt_evil_eye",
+    "pt_withering_curse",
+    "pt_jinx",
+    "pt_doom_mark"
+  ],
+  "passive": {
+    "id": "pose_test_rig",
+    "name": "Pose Rig",
+    "icon": "helm",
+    "text": "Test passive with no effect: this class only exists to try the pose library in a real battle.",
+    "effect": {
+      "type": "spellEcho",
+      "chance": 0
+    }
+  }
+}

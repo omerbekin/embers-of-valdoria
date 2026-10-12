@@ -423,6 +423,7 @@ describe('güç sınırları (kalkan ve çağrı çok güçlü olmasın)', () =>
 
   it('kalkan skill\'lerinin cooldown\'u var, çağrının cooldown\'u en az 5 tur', () => {
     for (const [id, s] of Object.entries(content.skills)) {
+      if (id.startsWith('pt_')) continue; // Pose Tester kopyaları (gizli debug; bedelsiz, cooldown'suz, ~1 güç)
       if (s.effects.some((e) => e.type === 'shield' && !e.self)) expect(s.cooldown ?? 0, id).toBeGreaterThanOrEqual(3);
       if (s.effects.some((e) => e.type === 'summon')) expect(s.cooldown ?? 0, id).toBeGreaterThanOrEqual(5);
     }
@@ -522,7 +523,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it('her skill piksel art efektine (vfx) sahip; yalnızca Radiance genel hareketi kullanır', () => {
     for (const [id, s] of Object.entries(content.skills)) {
-      if (id === 'radiance') {
+      if (id === 'radiance' || id === 'pt_radiance') {
         expect(s.vfx, id).toBeUndefined();
         continue;
       }
@@ -538,7 +539,11 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    expect(sky.map((s) => s.id).sort()).toEqual(['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'pt_judgment', 'radiance', 'root_smash'].sort());
+    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash'];
+    // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
+    const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
+    expect(copies.length).toBeGreaterThan(0);
+    expect(sky.map((s) => s.id).sort()).toEqual([...base, ...copies].sort());
     for (const s of sky) expect(['arrows', 'shards', 'meteor', 'void', 'light', 'fist'], s.id).toContain(s.skyFx);
     for (const s of Object.values(content.skills)) if (s.motion !== 'sky') expect(s.skyFx, s.id).toBeUndefined();
   });

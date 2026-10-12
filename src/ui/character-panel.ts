@@ -121,6 +121,26 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     const cell = el('button', `gr-slot${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');
+    if (blocked) {
+      // Çift el / yay / tılsım (Ömer 2026-10-12): ikinci el yuvası tamamen etkisizdir
+      // (ipucu yok, tık / çift tık / dokunma yok, bırakma hedefi değil: data-drop / data-tip / data-drag taşımaz -> bırakılan item yerine döner)
+      cell.disabled = true;
+      cell.tabIndex = -1;
+      cell.setAttribute('aria-disabled', 'true');
+      // Gölge YALNIZCA çift el silahta; yay / tılsım: düz kapalı boş yuva + "Hands full" (ileride sadak vb. ikinci el eşyası gelecek)
+      const two = gripOf(blocker!) === 'two';
+      if (two) {
+        const ghost = itemIcon(hero.equipment.weapon, 'weapon', 1.3);
+        ghost.classList.add('gr-silhouette');
+        ghost.style.removeProperty('--glow');
+        cell.append(ghost);
+      } else cell.append(itemIcon(undefined, k, 1.3));
+      const txt = el('div', 'gr-slot-text');
+      txt.append(el('div', 'gr-slot-name', slotDef(k).name), el('div', `gr-slot-sub${two ? ' gr-hands-hint' : ''}`, two ? '2H' : 'Hands full'));
+      cell.append(txt);
+      slots.append(cell);
+      continue;
+    }
     cell.dataset['drop'] = `slot:${k}`;
     if (inst) {
       cell.dataset['drag'] = `slot:${k}`;
@@ -131,7 +151,7 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     const txt = el('div', 'gr-slot-text');
     // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
     txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
-    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', blocked ? `${gripOf(blocker!) === 'two' ? 'Two-handed' : gripOf(blocker!) === 'bow' ? 'Bow' : 'Charm'}: both hands` : k === 'offhand' && !classUsesOffhand(hero.class) ? 'No shield or dagger' : 'Empty'));
+    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', k === 'offhand' && !classUsesOffhand(hero.class) ? 'No shield or dagger' : 'Empty'));
     cell.append(txt);
     slots.append(cell);
   }

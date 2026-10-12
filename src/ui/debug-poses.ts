@@ -1,15 +1,35 @@
 /**
- * Debug > Characters > Poses (Ömer 2026-10-11, Warrior poz denemesi): poz kütüphanesini (src/game/poses.ts) gerçek savaşta denemek için.
- *  - "Pose test battle": test modunda (sıra yok) oyuncu tarafında gizli test class'ları Pose Tester I / II (data/classes/pose_tester_*.json:
- *    başka sınıfların gerçek skill'lerinin bedelsiz, ~1 hasarlı kopyaları; her skill tek poz), düşmanda pozlu Warrior'lar + rakipler.
+ * Debug > Characters > Poses (Ömer 2026-10-11; v2 2026-10-12): poz kütüphanesini (src/game/poses.ts) gerçek savaşta denemek için.
+ *  - "Pose test battle": test modunda (sıra yok) oyuncu tarafında 11 gizli test sınıfı Pose Tester I (Warrior) ... XI (Hexer)
+ *    (data/classes/pose_tester_*.json, tools/make-pose-testers.mjs: her sınıfın 4 gerçek skill'inin bedelsiz, ~1 hasarlı pt_* kopyası; v2 poz
+ *    takımı, sınıfının silahıyla), düşmanda iki pozlu (v1) Warrior.
  *  - Poz seçici: Ctrl+tık seçili (yoksa tüm) pozlu birimlerde her pozu / döngüyü oynatır; isabet tepkisi, diz çökme, kalk.
- *  - Silah seçici (aile x görünüm + nadirlik ışıltısı) ve poz süresi / döngü hızı kaydırıcısı.
- * Warrior skill'leri (Double Strike, Whirlwind, Charge, Abyssal Cry) gerçek animasyonlarıyla Skills sekmesinden ya da savaşta normalce atılır.
+ *  - Gerçek item ile donatma (tutuş item'den: Dane Axe / Avenger's Maul çift el takımı; kalkan / hançer ikinci ele), silah görseli
+ *    seçici (aile x görünüm), tek el / çift el takımını zorlama, nadirlik ışıltısı, poz süresi / döngü hızı.
  * Sahneye yalnızca verilen host üzerinden dokunur.
  */
 import type { CombatantView } from '../game/combatant-view';
-import { POSES, allWeapons, type WeaponPick } from '../game/poses';
+import { POSES, allWeapons, weaponFor, type Grip, type WeaponPick } from '../game/poses';
+import { offhandItem, weaponItem } from '../game/pose-weapons';
+export { POSE_TESTER_GEAR } from '../game/pose-weapons';
+import { itemDef } from '../progression/items';
 import { debugButton, debugHeading, debugSection, type DebugMenu } from './debug-menu';
+
+/** Debug donatma düğmeleri: [item id, ikinci el mi, etiket]. */
+const DEBUG_ITEMS: readonly (readonly [string, boolean, string])[] = [
+  ['arming_sword', false, 'Arming Sword'],
+  ['woodcutters_axe', false, "Woodcutter's Axe"],
+  ['flanged_mace', false, 'Flanged Mace'],
+  ['rondel_dagger', false, 'Rondel Dagger'],
+  ['dane_axe', false, 'Dane Axe (2H)'],
+  ['avengers_maul', false, "Avenger's Maul (2H)"],
+  ['rune_staff', false, 'Rune Staff (2H)'],
+  ['hunting_bow', false, 'Hunting Bow'],
+  ['hex_doll', false, 'Hex Doll'],
+  ['oak_shield', true, 'Off: Oak Shield'],
+  ['oathkeepers_bulwark', true, 'Off: Bulwark'],
+  ['misericorde', true, 'Off: Dagger'],
+];
 
 export interface PosesHost {
   /** Açık savaşın pozlu birimleri (seçili olanlar ya da hepsi); savaş yoksa boş. */
@@ -19,7 +39,7 @@ export interface PosesHost {
 }
 
 /** Oturumluk ayarlar (menü yenilense de kalsın). */
-const state = { hold: false, speed: 1, glow: '' as string, last: '' };
+const state = { hold: false, speed: 1, glow: '' as string, last: '', main: null as string | null, off: null as string | null };
 
 const timers = new Set<ReturnType<typeof setTimeout>>();
 const later = (ms: number, fn: () => void) => {
@@ -63,8 +83,8 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
     icon: 'sword',
     tab: 'Setup',
     section: 'Test battles',
-    label: 'Test Warrior poses',
-    hint: 'Start a test battle with Pose Tester I and II (hidden debug classes drawn with the Warrior pose library and weapon layer). Their skills are free copies of real skills from other classes (Saltire Cut, Tremor Slam, Whirlwind, Charge, Judgment, Wail of the Dead, Quick Shot, Guard), each playing one pose; enemies include posed Warriors with ornate weapons. Test mode: no turn order. Pose picker: Characters tab',
+    label: 'Test poses (v2)',
+    hint: 'Start a test battle with the 11 Pose Testers (hidden debug classes, one per class: Pose Tester I (Warrior) ... XI (Hexer)). Each holds free copies of the 4 real skills of its class, drawn with the new (v2) pose set, and its class weapon (Warrior: Dane Axe two-handed, Defender: mace + shield...). Test mode: no turn order. Pose picker and weapon / grip switches: Characters tab',
     run: () => host.startTestBattle(),
   });
 
@@ -72,8 +92,8 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
     id: 'panel.poses',
     tab: 'Characters',
     render: (el, refresh) => {
-      el.append(debugHeading('Poses (Warrior trial)'));
-      el.append(...debugSection('Test battle', debugButton('Pose test battle', () => host.startTestBattle(), { icon: 'sword', title: 'Pose Tester I and II (one pose per skill) against posed Warriors, test mode (no turn order)' })));
+      el.append(debugHeading('Poses (v2 trial: Pose Testers)'));
+      el.append(...debugSection('Test battle', debugButton('Pose test battle', () => host.startTestBattle(), { icon: 'sword', title: 'All 11 Pose Testers (every class skill with the v2 poses) against two Warriors, test mode (no turn order)' })));
       const views = host.views();
       if (!views.length) {
         const n = document.createElement('div');
@@ -124,21 +144,61 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
         ),
       );
 
-      // silah seçici
+      // gerçek item ile donat (tutuş item'den: Dane Axe / Avenger's Maul çift el takımını açar; kalkan / hançer ikinci ele)
       const cur = first.poseWeapon;
-      const weaponBtns = allWeapons().map((w) =>
-        debugButton(`${w.family === 'swords' ? 'Sword' : w.family === 'axes' ? 'Axe' : w.family} ${w.look}`, () => {
-          const pick: WeaponPick = { ...w, ...(state.glow ? { glow: state.glow } : {}) };
-          host.views().forEach((v) => v.setPoseWeapon(pick));
-          refresh();
-        }, { icon: w.family === 'axes' ? 'charge' : 'sword', on: !!cur && cur.family === w.family && cur.look === w.look, title: `Draw the ${w.look} ${w.family.replace(/s$/, '')}` }),
+      const equip = (main: string | null, off: string | null) => {
+        for (const v of host.views()) {
+          const w = weaponItem(main ? { uid: 'debug', id: main } : null);
+          const o = offhandItem(off ? { uid: 'debug-off', id: off } : null);
+          const pick = weaponFor(v.combatant.defId, w, o);
+          if (pick) v.setPoseWeapon(pick);
+        }
+        refresh();
+      };
+      // ana el ve ikinci el ayrı hatırlanır (biri değişince öteki kalır; çift el silah ikinci eli çizmez)
+      const itemBtns = DEBUG_ITEMS.map(([id, off, label]) =>
+        debugButton(label, () => {
+          if (off) state.off = id;
+          else state.main = id;
+          equip(state.main, state.off);
+        }, { icon: off ? 'guard2' : 'sword', on: off ? state.off === id : state.main === id, title: `${off ? 'Off-hand' : 'Main hand'}: ${itemDef(id)?.name ?? id} (grip from the item)` }),
       );
-      el.append(...debugSection('Weapon', ...weaponBtns));
+      itemBtns.push(debugButton('No off-hand', () => {
+        state.off = null;
+        equip(state.main, null);
+      }, { icon: 'boot', title: 'Remove the off-hand item' }));
+      el.append(...debugSection('Equip item', ...itemBtns));
+
+      // görsel seçici: aile x görünüm (tutuş ailenin hold'u: büyük balta / gürz / asa çift el, yay, tılsım; kalkan yalnızca ikinci el)
+      const weaponBtns = allWeapons()
+        .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand')
+        .map((w) => {
+          const hold = POSES.weapons[w.family]?.hold as Grip | undefined;
+          return debugButton(`${w.family} ${w.look}`, () => {
+            const pick: WeaponPick = { ...w, ...(state.glow ? { glow: state.glow } : {}), ...(hold && hold !== 'one' ? { grip: hold } : {}) };
+            const offNow = host.views()[0]?.poseWeapon?.offhand;
+            if (offNow && !hold) pick.offhand = offNow;
+            host.views().forEach((v) => v.setPoseWeapon(pick));
+            refresh();
+          }, { icon: hold === 'two' ? 'charge' : 'sword', on: !!cur && cur.family === w.family && cur.look === w.look, title: `Draw the ${w.look} ${w.family} (${hold ?? 'one'}-handed set)` });
+        });
+      el.append(...debugSection('Weapon art', ...weaponBtns));
+      const gripBtns = (['one', 'two'] as const).map((g) =>
+        debugButton(g === 'one' ? 'One-handed set' : 'Two-handed set', () => {
+          const w = host.views()[0]?.poseWeapon;
+          if (w) host.views().forEach((v) => v.setPoseWeapon({ ...w, ...(g === 'two' ? { grip: 'two' as const } : { grip: undefined }) }));
+          refresh();
+        }, { icon: g === 'two' ? 'charge' : 'sword', on: (cur?.grip ?? 'one') === g, title: `Force the ${g === 'one' ? 'one' : 'two'}-handed pose set with the current weapon art (compare)` }),
+      );
+      el.append(...debugSection('Pose set', ...gripBtns));
       const glowBtns = [['', 'No glow'], ...Object.keys(POSES.rarityGlow).map((r) => [POSES.rarityGlow[r]!, r.charAt(0).toUpperCase() + r.slice(1)])].map(([hex, label]) =>
         debugButton(label!, () => {
           state.glow = hex!;
           const w = host.views()[0]?.poseWeapon;
-          if (w) host.views().forEach((v) => v.setPoseWeapon({ family: w.family, look: w.look, ...(hex ? { glow: hex } : {}) }));
+          if (w) {
+            const { glow: _g, ...rest } = w;
+            host.views().forEach((v) => v.setPoseWeapon({ ...rest, ...(hex ? { glow: hex } : {}) }));
+          }
           refresh();
         }, { icon: 'radiance', on: (cur?.glow ?? '') === hex, title: hex ? `Rarity glow: ${label}` : 'No rarity glow (Common / Uncommon)' }),
       );

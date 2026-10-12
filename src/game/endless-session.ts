@@ -155,7 +155,7 @@ function battleData(game: Phaser.Game, plan: WavePlan, run: EndlessRun, hooks: C
     difficulty: plan.difficulty,
     ...(background ? { background } : {}),
     // Poz kütüphanesi (yalnızca sunum): kahramanın takılı silahı ekrandaki silahı seçer (src/game/poses.ts)
-    weapons: { items: partyWeapons(plan.heroOrder, (id) => run.heroes.find((h) => h.id === id)?.equipment.weapon) },
+    weapons: { items: partyWeapons(plan.heroOrder, (id) => run.heroes.find((h) => h.id === id)?.equipment.weapon, (id) => run.heroes.find((h) => h.id === id)?.equipment.offhand) },
     campaign: { retreatLabel: 'Retreat to Camp', battleEffects: () => endlessEffects(run), ...hooks },
   };
 }

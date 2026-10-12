@@ -1916,55 +1916,18 @@
       "riverBurst"
     ]
   },
-  "pt_x_cut": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Saltire Cut kopyası; gerçek efekt/ses/hedef şekli (artOf x_cut), poz kütüphanesinde 'slash' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
-    "id": "pt_x_cut",
-    "name": "Saltire Cut",
-    "icon": "saltire",
-    "target": "area_enemies",
-    "area": {
-      "shape": "x",
-      "hitsAtCenter": 2
-    },
-    "cost": {
-      "resource": "mp",
-      "amount": 0
-    },
-    "motion": "ranged",
-    "fx": "#ff8a1f",
-    "effects": [
-      {
-        "type": "damage",
-        "damageType": "physical",
-        "scale": "dex",
-        "power": 0.02
-      }
-    ],
-    "vfx": "saltire",
-    "sfx": [
-      "shadowStep",
-      "swordWhoosh",
-      "duelCut"
-    ],
-    "pose": "slash",
-    "artOf": "x_cut",
-    "note": "Pose test: plays the Slash pose."
-  },
-  "pt_tremor_slam": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Tremor Slam kopyası; gerçek efekt/ses/hedef şekli (artOf tremor_slam), poz kütüphanesinde 'overhead' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
-    "id": "pt_tremor_slam",
-    "name": "Tremor Slam",
-    "icon": "tremor2",
-    "target": "area_enemies",
-    "area": {
-      "shape": "row"
-    },
+  "pt_melee_attack": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Double Strike kopyası; gerçek efekt/ses/hedef (artOf melee_attack), v2 poz takımında 'overhead -> slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_melee_attack",
+    "name": "Double Strike",
+    "icon": "sword",
+    "target": "single_enemy",
     "cost": {
       "resource": "mp",
       "amount": 0
     },
     "motion": "melee",
-    "fx": "#9db0c8",
+    "fx": "#ffe9b0",
     "effects": [
       {
         "type": "damage",
@@ -1973,24 +1936,27 @@
         "power": 0.02
       },
       {
-        "type": "status",
-        "status": "slow",
-        "turns": 2
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02
       }
     ],
-    "vfx": "tremor2",
+    "vfx": "doublestrike",
     "sfx": [
-      "plateCreak",
-      "heaveGrunt",
-      "shieldPlant",
-      "groundHeave"
+      "armorRun",
+      "axeSwing",
+      "axeChop"
     ],
-    "pose": "overhead",
-    "artOf": "tremor_slam",
-    "note": "Pose test: plays the Overhead Strike pose."
+    "pose": [
+      "overhead",
+      "slash"
+    ],
+    "artOf": "melee_attack",
+    "note": "Pose test: plays the Overhead Strike, then Slash pose."
   },
   "pt_whirlwind": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Whirlwind kopyası; gerçek efekt/ses/hedef şekli (artOf whirlwind), poz kütüphanesinde 'spin' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Whirlwind kopyası; gerçek efekt/ses/hedef (artOf whirlwind), v2 poz takımında 'spin'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_whirlwind",
     "name": "Whirlwind",
     "icon": "whirlwind",
@@ -2011,17 +1977,17 @@
       }
     ],
     "vfx": "whirlwind",
-    "pose": "spin",
     "sfx": [
       "armorRun",
       "axeSwing",
       "axeChop"
     ],
+    "pose": "spin",
     "artOf": "whirlwind",
     "note": "Pose test: plays the Spin (3-frame cycle) pose."
   },
   "pt_charge": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Charge kopyası; gerçek efekt/ses/hedef şekli (artOf charge), poz kütüphanesinde 'step -> slash' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Charge kopyası; gerçek efekt/ses/hedef (artOf charge), v2 poz takımında 'step -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_charge",
     "name": "Charge",
     "icon": "charge",
@@ -2049,19 +2015,259 @@
       }
     ],
     "vfx": "charge",
-    "pose": [
-      "step",
-      "slash"
-    ],
     "sfx": [
       "chargeRush",
       "chargeSlam"
     ],
+    "pose": [
+      "step",
+      "thrust"
+    ],
     "artOf": "charge",
-    "note": "Pose test: plays the Step forward, then Slash pose."
+    "note": "Pose test: plays the Step, then Thrust pose."
+  },
+  "pt_abyssal_cry": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Abyssal Cry kopyası; gerçek efekt/ses/hedef (artOf abyssal_cry), v2 poz takımında 'raise -> channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_abyssal_cry",
+    "name": "Abyssal Cry",
+    "icon": "warcry",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#c0203a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "abyssal_fury",
+        "turns": 3,
+        "self": true
+      }
+    ],
+    "vfx": "warcry",
+    "sfx": [
+      "scream"
+    ],
+    "pose": [
+      "raise",
+      "channel"
+    ],
+    "artOf": "abyssal_cry",
+    "note": "Pose test: plays the Raise Hand, then Channel pose."
+  },
+  "pt_tremor_slam": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Tremor Slam kopyası; gerçek efekt/ses/hedef (artOf tremor_slam), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_tremor_slam",
+    "name": "Tremor Slam",
+    "icon": "tremor2",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9db0c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.05
+          }
+        ]
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      }
+    ],
+    "vfx": "tremor2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "shieldPlant",
+      "groundHeave"
+    ],
+    "pose": "overhead",
+    "artOf": "tremor_slam",
+    "note": "Pose test: plays the Overhead Strike pose."
+  },
+  "pt_taunt": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Taunt kopyası; gerçek efekt/ses/hedef (artOf taunt), v2 poz takımında 'guard'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_taunt",
+    "name": "Taunt",
+    "icon": "taunt2",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#b9c8dc",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2,
+        "breakRatio": 0.25,
+        "allyDamageMult": 0.9
+      }
+    ],
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "pose": "guard",
+    "artOf": "taunt",
+    "note": "Pose test: plays the Guard pose."
+  },
+  "pt_guard": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Guard kopyası; gerçek efekt/ses/hedef (artOf guard), v2 poz takımında 'guard'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_guard",
+    "name": "Guard",
+    "icon": "guard2",
+    "target": "single_ally",
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fb8e8",
+    "effects": [
+      {
+        "type": "guard",
+        "turns": 3,
+        "share": 0.6
+      }
+    ],
+    "vfx": "guard2",
+    "sfx": [
+      "shieldBrace",
+      "chainTether"
+    ],
+    "pose": "guard",
+    "artOf": "guard",
+    "note": "Pose test: plays the Guard pose."
+  },
+  "pt_fist_crush": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Fist Crush kopyası; gerçek efekt/ses/hedef (artOf fist_crush), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_fist_crush",
+    "name": "Fist Crush",
+    "icon": "fistcrush2",
+    "target": "random_enemies",
+    "count": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "fist",
+    "fx": "#86a8d4",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.02,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.05
+          }
+        ]
+      }
+    ],
+    "vfx": "fistcrush2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "gauntletDrop",
+      "gauntletCrush"
+    ],
+    "ai": {
+      "reserveMp": 2
+    },
+    "pose": "raise",
+    "artOf": "fist_crush",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_holy_strike": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Holy Strike kopyası; gerçek efekt/ses/hedef (artOf holy_strike), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_holy_strike",
+    "name": "Holy Strike",
+    "icon": "judgehammer",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "holy"
+      }
+    ],
+    "skyFx": "light",
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ],
+    "pose": "raise",
+    "artOf": "holy_strike",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_resurrection": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Resurrection kopyası; gerçek efekt/ses/hedef (artOf resurrection), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_resurrection",
+    "name": "Resurrection",
+    "icon": "ankh",
+    "target": "dead_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "revive",
+        "hpRatio": 0.3,
+        "mpRatio": 0.3,
+        "regen": {
+          "turns": 2,
+          "ratio": 0.1
+        }
+      }
+    ],
+    "vfx": "resurrect",
+    "sfx": [
+      "heartbeat",
+      "gasp",
+      "choirAh"
+    ],
+    "pose": "channel",
+    "artOf": "resurrection",
+    "note": "Pose test: plays the Channel pose."
   },
   "pt_judgment": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Judgment kopyası; gerçek efekt/ses/hedef şekli (artOf judgment), poz kütüphanesinde 'raise' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Judgment kopyası; gerçek efekt/ses/hedef (artOf judgment), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_judgment",
     "name": "Judgment",
     "icon": "judgebeam",
@@ -2096,8 +2302,664 @@
     "artOf": "judgment",
     "note": "Pose test: plays the Raise Hand pose."
   },
+  "pt_radiance": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Radiance kopyası; gerçek efekt/ses/hedef (artOf radiance), v2 poz takımında 'raise -> channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_radiance",
+    "name": "Radiance",
+    "icon": "radiance",
+    "target": "everyone",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "fx": "#fff0a0",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "int",
+        "power": 0.02,
+        "missingHpBonus": 0.5
+      },
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "holy"
+      }
+    ],
+    "skyFx": "light",
+    "skyStagger": 130,
+    "sfx": [
+      "lightSwell",
+      "choirAh"
+    ],
+    "pose": [
+      "raise",
+      "channel"
+    ],
+    "artOf": "radiance",
+    "note": "Pose test: plays the Raise Hand, then Channel pose."
+  },
+  "pt_quick_shot": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Quick Shot kopyası; gerçek efekt/ses/hedef (artOf quick_shot), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_quick_shot",
+    "name": "Quick Shot",
+    "icon": "arrow",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      },
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2,
+        "self": true
+      }
+    ],
+    "vfx": "arrowshot",
+    "sfx": [
+      "bowTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "pose": "throw",
+    "artOf": "quick_shot",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_piercing_arrow": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Piercing Arrow kopyası; gerçek efekt/ses/hedef (artOf piercing_arrow), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_piercing_arrow",
+    "name": "Piercing Arrow",
+    "icon": "pierce",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02,
+        "falloff": 0.7
+      }
+    ],
+    "vfx": "pierce",
+    "sfx": [
+      "heavyTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "pose": "throw",
+    "artOf": "piercing_arrow",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_arrow_rain": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Arrow Rain kopyası; gerçek efekt/ses/hedef (artOf arrow_rain), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_arrow_rain",
+    "name": "Arrow Rain",
+    "icon": "arrows",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 3,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "arrows",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      }
+    ],
+    "vfx": "arrowrain",
+    "sfx": [
+      "bowTwang",
+      "arrowShower",
+      "arrowThunk"
+    ],
+    "pose": "raise",
+    "artOf": "arrow_rain",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_aimed_shot": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Aimed Shot kopyası; gerçek efekt/ses/hedef (artOf aimed_shot), v2 poz takımında 'point -> throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_aimed_shot",
+    "name": "Aimed Shot",
+    "icon": "aimedshot",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#ffd166",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02,
+        "ignoreDefense": 0.5
+      }
+    ],
+    "vfx": "aimed",
+    "sfx": [
+      "bowDraw",
+      "heavyTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "ai": {
+      "reserveMp": 2
+    },
+    "pose": [
+      "point",
+      "throw"
+    ],
+    "artOf": "aimed_shot",
+    "note": "Pose test: plays the Point, then Throw pose."
+  },
+  "pt_venom_edge": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Venom Edge kopyası; gerçek efekt/ses/hedef (artOf venom_edge), v2 poz takımında 'slash -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_venom_edge",
+    "name": "Venom Edge",
+    "icon": "venomedge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#7fbf3f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "pose": [
+      "slash",
+      "thrust"
+    ],
+    "artOf": "venom_edge",
+    "note": "Pose test: plays the Slash, then Thrust pose."
+  },
+  "pt_x_cut": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Saltire Cut kopyası; gerçek efekt/ses/hedef (artOf x_cut), v2 poz takımında 'slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_x_cut",
+    "name": "Saltire Cut",
+    "icon": "saltire",
+    "target": "area_enemies",
+    "area": {
+      "shape": "x",
+      "hitsAtCenter": 2
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#ff8a1f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02
+      }
+    ],
+    "vfx": "saltire",
+    "sfx": [
+      "shadowStep",
+      "swordWhoosh",
+      "duelCut"
+    ],
+    "pose": "slash",
+    "artOf": "x_cut",
+    "note": "Pose test: plays the Slash pose."
+  },
+  "pt_smoke_bomb": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Smoke Bomb kopyası; gerçek efekt/ses/hedef (artOf smoke_bomb), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_smoke_bomb",
+    "name": "Smoke Bomb",
+    "icon": "smokebomb",
+    "target": "area_any",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#9aa3ad",
+    "effects": [
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 2,
+        "side": "enemies"
+      },
+      {
+        "type": "status",
+        "status": "shrouded",
+        "turns": 2,
+        "side": "allies"
+      }
+    ],
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "pose": "throw",
+    "artOf": "smoke_bomb",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_backstab": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Backstab kopyası; gerçek efekt/ses/hedef (artOf backstab), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_backstab",
+    "name": "Backstab",
+    "icon": "backstab",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "ignoreFrontRow": true,
+    "ignoreReach": true,
+    "requiresOpenBehind": true,
+    "fx": "#c0203a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.02,
+        "guaranteedCrit": true
+      }
+    ],
+    "vfx": "backstab",
+    "sfx": [
+      "shadowStep",
+      "backstabThud",
+      "bloodSplat"
+    ],
+    "pose": "thrust",
+    "artOf": "backstab",
+    "note": "Pose test: plays the Thrust pose."
+  },
+  "pt_fire_bolt": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Fire Bolt kopyası; gerçek efekt/ses/hedef (artOf fire_bolt), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_fire_bolt",
+    "name": "Fire Bolt",
+    "icon": "fireball",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "fire"
+      }
+    ],
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "pose": "point",
+    "artOf": "fire_bolt",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_blizzard": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Blizzard kopyası; gerçek efekt/ses/hedef (artOf blizzard), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_blizzard",
+    "name": "Blizzard",
+    "icon": "blizzard",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 3,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "shards",
+    "fx": "#8fd8ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "ice"
+      }
+    ],
+    "vfx": "blizzard",
+    "sfx": [
+      "windHowl",
+      "hailPatter",
+      "iceCrack"
+    ],
+    "pose": "raise",
+    "artOf": "blizzard",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_mana_barrier": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Barrier kopyası; gerçek efekt/ses/hedef (artOf mana_barrier), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_mana_barrier",
+    "name": "Mana Barrier",
+    "icon": "manabarrier",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#6ec1ff",
+    "effects": [
+      {
+        "type": "dispel",
+        "status": "debuff"
+      },
+      {
+        "type": "shield",
+        "scale": "int",
+        "power": 0.02,
+        "onAbsorb": {
+          "giveMana": 3
+        }
+      }
+    ],
+    "vfx": "barrier",
+    "sfx": [
+      "magicHum"
+    ],
+    "pose": "point",
+    "artOf": "mana_barrier",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_meteor": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Meteor kopyası; gerçek efekt/ses/hedef (artOf meteor), v2 poz takımında 'channel -> raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_meteor",
+    "name": "Meteor",
+    "icon": "meteor",
+    "target": "area_enemies",
+    "area": {
+      "shape": "plus"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "meteor",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.02
+      }
+    ],
+    "skyCenter": true,
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "ai": {
+      "reserveMp": 2
+    },
+    "pose": [
+      "channel",
+      "raise"
+    ],
+    "artOf": "meteor",
+    "note": "Pose test: plays the Channel, then Raise Hand pose."
+  },
+  "pt_thorn_whip": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Thorn Whip kopyası; gerçek efekt/ses/hedef (artOf thorn_whip), v2 poz takımında 'slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_thorn_whip",
+    "name": "Thorn Whip",
+    "icon": "thornwhip",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "whip",
+    "fx": "#7ed957",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "nature"
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "vfx": "thornwhip",
+    "sfx": [
+      "whipWind",
+      "whipCrack",
+      "leafRustle"
+    ],
+    "pose": "slash",
+    "artOf": "thorn_whip",
+    "note": "Pose test: plays the Slash pose."
+  },
+  "pt_natures_wrath": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Nature's Wrath kopyası; gerçek efekt/ses/hedef (artOf natures_wrath), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_natures_wrath",
+    "name": "Nature's Wrath",
+    "icon": "roots",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7ed957",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "nature"
+      }
+    ],
+    "vfx": "vines",
+    "sfx": [
+      "rootsRumble",
+      "leafRustle",
+      "thud"
+    ],
+    "pose": "overhead",
+    "artOf": "natures_wrath",
+    "note": "Pose test: plays the Overhead Strike pose."
+  },
+  "pt_rejuvenate": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Rejuvenate kopyası; gerçek efekt/ses/hedef (artOf rejuvenate), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_rejuvenate",
+    "name": "Rejuvenate",
+    "icon": "rejuvenate",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7dff9b",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "int",
+        "power": 0.02
+      },
+      {
+        "type": "hot",
+        "scale": "int",
+        "power": 0.02,
+        "turns": 3
+      }
+    ],
+    "vfx": "rejuvenate",
+    "sfx": [
+      "chimeHeal",
+      "leafRustle"
+    ],
+    "pose": "point",
+    "artOf": "rejuvenate",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_summon_treant": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Summon Treant kopyası; gerçek efekt/ses/hedef (artOf summon_treant), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_summon_treant",
+    "name": "Summon Treant",
+    "icon": "treant",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7ed957",
+    "effects": [
+      {
+        "type": "summon",
+        "unit": "treant",
+        "lifespan": 3
+      }
+    ],
+    "vfx": "summonroots",
+    "sfx": [
+      "woodCreak",
+      "rootsRumble",
+      "thud"
+    ],
+    "pose": "channel",
+    "artOf": "summon_treant",
+    "note": "Pose test: plays the Channel pose."
+  },
+  "pt_bone_throw": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Bone Throw kopyası; gerçek efekt/ses/hedef (artOf bone_throw), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_bone_throw",
+    "name": "Bone Throw",
+    "icon": "bonethrow",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#d9d4c0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "dark"
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      }
+    ],
+    "vfx": "bonethrow",
+    "sfx": [
+      "boneSpin",
+      "boneImpact"
+    ],
+    "pose": "throw",
+    "artOf": "bone_throw",
+    "note": "Pose test: plays the Throw pose."
+  },
   "pt_wail_of_the_dead": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Wail of the Dead kopyası; gerçek efekt/ses/hedef şekli (artOf wail_of_the_dead), poz kütüphanesinde 'channel' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Wail of the Dead kopyası; gerçek efekt/ses/hedef (artOf wail_of_the_dead), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_wail_of_the_dead",
     "name": "Wail of the Dead",
     "icon": "wail",
@@ -2135,49 +2997,13 @@
     ],
     "pose": "channel",
     "artOf": "wail_of_the_dead",
-    "note": "Pose test: plays the Channel (both hands forward) pose."
+    "note": "Pose test: plays the Channel pose."
   },
-  "pt_quick_shot": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Quick Shot kopyası; gerçek efekt/ses/hedef şekli (artOf quick_shot), poz kütüphanesinde 'throw' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
-    "id": "pt_quick_shot",
-    "name": "Quick Shot",
-    "icon": "arrow",
-    "target": "single_enemy",
-    "cost": {
-      "resource": "mp",
-      "amount": 0
-    },
-    "motion": "ranged",
-    "fx": "#d9c9a3",
-    "effects": [
-      {
-        "type": "damage",
-        "damageType": "physical",
-        "scale": "dex",
-        "power": 0.02
-      },
-      {
-        "type": "status",
-        "status": "haste",
-        "turns": 2,
-        "self": true
-      }
-    ],
-    "vfx": "arrowshot",
-    "sfx": [
-      "bowTwang",
-      "arrowWhoosh",
-      "arrowThunk"
-    ],
-    "pose": "throw",
-    "artOf": "quick_shot",
-    "note": "Pose test: plays the Throw pose."
-  },
-  "pt_guard": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Guard kopyası; gerçek efekt/ses/hedef şekli (artOf guard), poz kütüphanesinde 'step' pozu + küçük savunma hareketiyle oynar (koruma pozu gelene dek). Bedel 0, cooldown yok, hasar ~1.",
-    "id": "pt_guard",
-    "name": "Guard",
-    "icon": "guard2",
+  "pt_dark_bond": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Dark Bond kopyası; gerçek efekt/ses/hedef (artOf dark_bond), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_dark_bond",
+    "name": "Dark Bond",
+    "icon": "darkbond",
     "target": "single_ally",
     "excludeSelf": true,
     "cost": {
@@ -2185,22 +3011,531 @@
       "amount": 0
     },
     "motion": "cast",
-    "fx": "#7fb8e8",
+    "fx": "#8a1f3d",
     "effects": [
       {
-        "type": "guard",
+        "type": "bond",
         "turns": 3,
-        "share": 0.6
+        "ratio": 1.5
       }
     ],
-    "vfx": "guard2",
+    "vfx": "guardlink",
     "sfx": [
-      "shieldBrace",
+      "darkChant",
       "chainTether"
     ],
-    "pose": "step",
-    "artOf": "guard",
-    "note": "Pose test: braced step pose with a small defensive motion (stand-in until a guard pose exists)."
+    "pose": "point",
+    "artOf": "dark_bond",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_raise_dead": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Raise Dead kopyası; gerçek efekt/ses/hedef (artOf raise_dead), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_raise_dead",
+    "name": "Raise Dead",
+    "icon": "raise",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#b36bff",
+    "effects": [
+      {
+        "type": "summon",
+        "unit": "skeleton",
+        "lifespan": 4,
+        "consumeCorpse": true
+      }
+    ],
+    "vfx": "raise",
+    "sfx": [
+      "graveMoan",
+      "earthCrack",
+      "boneClatter",
+      "thud",
+      "soulDrain"
+    ],
+    "pose": "raise",
+    "artOf": "raise_dead",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_mana_burn": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Steal kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_mana_burn",
+    "name": "Mana Steal",
+    "icon": "manaburn",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9b59d0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "element": "arcane"
+      },
+      {
+        "type": "manaBurn",
+        "amount": 10,
+        "gainRatio": 0.5
+      }
+    ],
+    "vfx": "manasteal",
+    "sfx": [
+      "manaSizzle",
+      "energySlurp"
+    ],
+    "pose": "slash",
+    "artOf": "mana_burn",
+    "note": "Pose test: plays the Slash pose."
+  },
+  "pt_drain_field": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Drain Field kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_drain_field",
+    "name": "Drain Field",
+    "icon": "drainfield",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 3,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "fx": "#9b59d0",
+    "effects": [
+      {
+        "type": "manaBurn",
+        "pctMax": 0.55,
+        "onEmpty": {
+          "chance": 0.5,
+          "status": "silence",
+          "turns": 1,
+          "damage": {
+            "damageType": "magic",
+            "element": "arcane",
+            "scale": "int",
+            "power": 0.725
+          }
+        }
+      }
+    ],
+    "skyFx": "void",
+    "vfx": "drainfield",
+    "sfx": [
+      "voidSuction",
+      "voidPulse",
+      "energySlurp"
+    ],
+    "pose": "raise",
+    "artOf": "drain_field",
+    "note": "Pose test: plays the Raise Hand pose."
+  },
+  "pt_spell_ward": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Spell Ward kopyası; gerçek efekt/ses/hedef (artOf spell_ward), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_spell_ward",
+    "name": "Spell Ward",
+    "icon": "spellward",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#b36bff",
+    "effects": [
+      {
+        "type": "shield",
+        "scale": "int",
+        "power": 0.02,
+        "shieldType": "magic",
+        "bonusPerMana": 0.6,
+        "onAbsorb": {
+          "burnMana": 8,
+          "dispelChance": 0.25
+        }
+      }
+    ],
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "pose": "point",
+    "artOf": "spell_ward",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_void_strike": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_void_strike",
+    "name": "Void Strike",
+    "icon": "voidstrike",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7d3fb0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.02,
+        "bonusPerMissingMana": 1,
+        "element": "arcane"
+      }
+    ],
+    "vfx": "voidstrike",
+    "sfx": [
+      "voidPulse",
+      "implode"
+    ],
+    "ai": {
+      "reserveMp": 2
+    },
+    "pose": "point",
+    "artOf": "void_strike",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_loaded_dice": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Loaded Dice kopyası; gerçek efekt/ses/hedef (artOf loaded_dice), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_loaded_dice",
+    "name": "Loaded Dice",
+    "icon": "loadeddice",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#e8d9a8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "luck",
+        "power": 0.02,
+        "repeatChance": 0.25
+      }
+    ],
+    "vfx": "loadeddice",
+    "sfx": [
+      "diceShake",
+      "diceTable"
+    ],
+    "pose": "throw",
+    "artOf": "loaded_dice",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_high_stakes": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): High Stakes kopyası; gerçek efekt/ses/hedef (artOf high_stakes), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_high_stakes",
+    "name": "High Stakes",
+    "icon": "highstakes",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#c0203a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "luck",
+        "power": 0.02,
+        "bet": {
+          "resource": "hp",
+          "ratio": 0.15,
+          "winChance": 0.5,
+          "winMult": 2,
+          "loseMult": 0.6
+        }
+      }
+    ],
+    "vfx": "duelbet",
+    "sfx": [
+      "duelDraw",
+      "duelCut"
+    ],
+    "pose": "point",
+    "artOf": "high_stakes",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_card_trick": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Card Trick kopyası; gerçek efekt/ses/hedef (artOf card_trick), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_card_trick",
+    "name": "Card Trick",
+    "icon": "cardtrick",
+    "target": "random_enemies",
+    "count": 2,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#f2f2f2",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "luck",
+        "power": 0.02
+      },
+      {
+        "type": "randomStatus",
+        "options": [
+          {
+            "status": "slow",
+            "turns": 2,
+            "weight": 2
+          },
+          {
+            "status": "wound",
+            "turns": 2,
+            "weight": 2
+          },
+          {
+            "status": "stun",
+            "turns": 1,
+            "weight": 1
+          }
+        ]
+      }
+    ],
+    "vfx": "cardfan",
+    "sfx": [
+      "cardFlick",
+      "cardSlice"
+    ],
+    "pose": "throw",
+    "artOf": "card_trick",
+    "note": "Pose test: plays the Throw pose."
+  },
+  "pt_all_in": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): All In kopyası; gerçek efekt/ses/hedef (artOf all_in), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_all_in",
+    "name": "All In",
+    "icon": "allin",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ffd166",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "luck",
+        "power": 0.02,
+        "bet": {
+          "resource": "mp",
+          "ratio": 1,
+          "winChance": 0.75,
+          "winMult": 1.8,
+          "loseMult": 0.6,
+          "perStake": 0.0667
+        }
+      }
+    ],
+    "vfx": "allin",
+    "sfx": [
+      "heartbeatRise",
+      "diceRoll",
+      "allInSlam",
+      "coinSpill"
+    ],
+    "ai": {
+      "reserveMp": 2,
+      "reserveMinMpRatio": 0.6
+    },
+    "pose": "overhead",
+    "artOf": "all_in",
+    "note": "Pose test: plays the Overhead Strike pose."
+  },
+  "pt_evil_eye": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Evil Eye kopyası; gerçek efekt/ses/hedef (artOf evil_eye), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_evil_eye",
+    "name": "Evil Eye",
+    "icon": "eye",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#b04fa8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.02
+      },
+      {
+        "type": "omen",
+        "stacks": 1,
+        "critStacks": 2
+      }
+    ],
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "pose": "point",
+    "artOf": "evil_eye",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_withering_curse": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Withering Curse kopyası; gerçek efekt/ses/hedef (artOf withering_curse), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_withering_curse",
+    "name": "Withering Curse",
+    "icon": "drainfield",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#9cab3c",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.02
+      },
+      {
+        "type": "dot",
+        "status": "wither",
+        "scale": "luck",
+        "power": 0.02,
+        "turns": 3
+      },
+      {
+        "type": "omen",
+        "stacks": 1,
+        "critStacks": 2
+      }
+    ],
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "pose": "channel",
+    "artOf": "withering_curse",
+    "note": "Pose test: plays the Channel pose."
+  },
+  "pt_jinx": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Jinx kopyası; gerçek efekt/ses/hedef (artOf jinx), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_jinx",
+    "name": "Jinx",
+    "icon": "clover",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#c0203a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.02,
+        "critBonus": 0.25
+      },
+      {
+        "type": "status",
+        "status": "jinxed",
+        "turns": 2
+      },
+      {
+        "type": "omen",
+        "stacks": 1,
+        "critStacks": 2,
+        "critDoomOnCrit": true
+      }
+    ],
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "pose": "point",
+    "artOf": "jinx",
+    "note": "Pose test: plays the Point pose."
+  },
+  "pt_doom_mark": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Doom Mark kopyası; gerçek efekt/ses/hedef (artOf doom_mark), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_doom_mark",
+    "name": "Doom Mark",
+    "icon": "voidstrike",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#6a2f5f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.02
+      },
+      {
+        "type": "omen",
+        "stacks": 1,
+        "critStacks": 2
+      },
+      {
+        "type": "detonate",
+        "status": "omen",
+        "mult": 1.5,
+        "noTransferOnKill": true
+      }
+    ],
+    "ai": {
+      "reserveMp": 2
+    },
+    "vfx": "voidstrike",
+    "sfx": [
+      "voidPulse",
+      "implode"
+    ],
+    "pose": "channel",
+    "artOf": "doom_mark",
+    "note": "Pose test: plays the Channel pose."
   },
   "cudgel": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Bandits temel saldırısı (Road Thug, Moor Raider), şablon Bone Strike. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",

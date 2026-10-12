@@ -49,7 +49,13 @@ export function mountPoses(): SectionApi {
   const root = h('section', { class: 'section', attrs: { id: 'poses' } });
   const countEl = h('span', { class: 'count' });
   const ids = poseClassIds();
-  const weapons = allWeapons();
+  // ana el görselleri (kalkan yalnızca ikinci el), ailenin tutuşuyla (büyük balta / gürz / asa çift el takımını çizer)
+  const weapons = allWeapons()
+    .filter((w) => POSES.weapons[w.family]?.hold !== 'offhand')
+    .map((w): WeaponPick => {
+      const hold = POSES.weapons[w.family]?.hold;
+      return hold && hold !== 'one' && hold !== 'offhand' ? { ...w, grip: hold } : w;
+    });
   let weapon: WeaponPick = weapons[0]!;
   let glow = '';
   let mirror = false;
@@ -110,7 +116,7 @@ export function mountPoses(): SectionApi {
 
   root.append(
     h('div', { class: 'section-head' }, h('h2', { text: 'Poses' }), countEl),
-    h('p', { class: 'muted', text: 'The shared pose library (trial: Warrior). Each skill shows one or more key poses; the equipped weapon (family + rarity) is drawn in the hand. Classes without poses keep their single sprite.' }),
+    h('p', { class: 'muted', text: 'The shared pose library (Warrior v1; warrior_v2 = the new one-handed + two-handed set used by the Pose Testers). Each skill shows one or more key poses; the equipped weapon (family + rarity) is drawn in the hand. Classes without poses keep their single sprite.' }),
     toolbar,
     ...blocks,
   );

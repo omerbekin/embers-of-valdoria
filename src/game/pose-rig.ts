@@ -13,7 +13,7 @@ import layout from '../../data/battle-layout.json';
 import { perfLite } from '../ui/perf-mode';
 import { stageView } from './stage-view';
 import { poseBodyUrl, weaponUrl } from './pose-files';
-import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
+import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;
 const weaponTex = (family: string, look: string, small: boolean) => `poseweapon:${family}:${look}${small ? ':s' : ''}`;
@@ -52,21 +52,22 @@ export function preloadPoses(scene: Phaser.Scene, classIds: readonly string[] = 
 }
 
 /** Bu sınıfın tüm gövde pozları ve verilen silahın görseli yüklü mü (değilse görünüm bugünkü tek sprite'a düşer). */
-function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null } | null {
+function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null; off: CanvasImageSource | null } | null {
   const small = useSmall(def);
   const find = (big: string, sm: string) => (scene.textures.exists(small ? sm : big) ? (small ? sm : big) : scene.textures.exists(small ? big : sm) ? (small ? big : sm) : null);
   const keys: Record<string, string> = {};
-  for (const pose of Object.keys(def.poses)) {
+  for (const pose of gripFrames(def, pick?.grip)) {
     const k = find(bodyKey(def.dir, pose, false), bodyKey(def.dir, pose, true));
     if (!k) return null;
     keys[pose] = k;
   }
-  let weapon: CanvasImageSource | null = null;
-  if (pick) {
-    const wk = find(weaponTex(pick.family, pick.look, false), weaponTex(pick.family, pick.look, true));
-    if (wk) weapon = scene.textures.get(wk).getSourceImage() as CanvasImageSource;
-  }
-  return { body: (pose) => scene.textures.get(keys[pose]!).getSourceImage() as CanvasImageSource, weapon };
+  const tex = (family: string, look: string): CanvasImageSource | null => {
+    const wk = find(weaponTex(family, look, false), weaponTex(family, look, true));
+    return wk ? (scene.textures.get(wk).getSourceImage() as CanvasImageSource) : null;
+  };
+  const weapon = pick ? tex(pick.family, pick.look) : null;
+  const off = pick?.offhand ? tex(pick.offhand.family, pick.offhand.look) : null; // ikinci el (kalkan / hançer)
+  return { body: (pose) => scene.textures.get(keys[pose]!).getSourceImage() as CanvasImageSource, weapon, off };
 }
 
 export interface PoseTexture {
@@ -96,7 +97,7 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   const fx0 = def.canvas.footX - halfW;
   const fy0 = def.canvas.footY - up;
   // kareler: her poz kendi kutusunda (gerçek karenin içine kırpılmış), raf (shelf) yerleşimi
-  const items = Object.keys(def.poses).map((name) => {
+  const items = gripFrames(def, pick?.grip).map((name) => {
     const b = poseBounds(def, name, pick);
     const x0 = Math.max(fx0, Math.floor(b.x0));
     const y0 = Math.max(fy0, Math.floor(b.y0));
@@ -135,7 +136,7 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
     ctx.rect(it.px, it.py, it.w, it.h);
     ctx.clip();
     ctx.setTransform(s, 0, 0, s, it.px - it.x0 * s, it.py - it.y0 * s);
-    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick } : null, glowPx);
+    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off } : null, glowPx);
     ctx.restore();
   }
   const tex = scene.textures.addCanvas(key, canvas);

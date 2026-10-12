@@ -424,30 +424,14 @@
   gap: 4px 16px;
 }
 
-.bh-rage {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 320px;
+.bh-hpmp-row.three {
+  /* üç kaynak (HP / MP / Rage): aynı ızgara, üç eşit sütun; toplam genişlik 4 ana stat satırını (bh-main) aşmaz */
+  grid-template-columns: repeat(3, 108px);
+  column-gap: 14px;
 }
 
-.bh-rage .bh-ico {
-  width: 18px;
-  height: 18px;
-}
-
-.bh-rage .bh-bar {
-  flex: 1;
-  height: 14px;
-}
-
-.bh-rage .bh-bar span {
-  position: relative;
-  display: block;
-  text-align: center;
-  font: 700 12px/14px var(--num);
-  color: #fff3dc;
-  text-shadow: 0 1px 2px #000;
+.bh-hpmp.rage .bh-num {
+  color: #ffb35a;
 }
 
 .bh-main {

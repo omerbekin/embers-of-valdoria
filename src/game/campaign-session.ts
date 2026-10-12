@@ -139,7 +139,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
     difficulty: plan.difficulty,
     // Poz kütüphanesi (yalnızca sunum): kahramanların takılı silahı ekranda çizilen silahı seçer (src/game/poses.ts)
-    weapons: { items: partyWeapons(plan.heroOrder, (id) => s.roster.find((h) => h.id === id)?.equipment.weapon) },
+    weapons: { items: partyWeapons(plan.heroOrder, (id) => s.roster.find((h) => h.id === id)?.equipment.weapon, (id) => s.roster.find((h) => h.id === id)?.equipment.offhand) },
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     campaign: {

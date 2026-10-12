@@ -689,7 +689,7 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
   it('diziliş: yakın dövüşçüler önde (kendi aralarında öncelik sırasıyla), menzilliler arkada', () => {
     expect(content.arrangeTeam(['mage', 'archer', 'warrior', 'defender'])).toEqual(['defender', 'warrior', 'mage', 'archer']); // Archer her zaman en arkada
     expect(content.arrangeTeam(['druid', 'undead', 'antimage', 'paladin'])).toEqual(['antimage', 'paladin', 'undead', 'druid']);
-    const all = content.arrangeTeam(Object.keys(content.classes));
+    const all = content.arrangeTeam(Object.keys(content.classes).filter((id) => !id.startsWith('pose_tester_'))); // Pose Tester'lar: gizli debug kopyaları
     const melee = all.filter((id) => content.isMeleeClass(id));
     expect(all.slice(0, melee.length)).toEqual(melee); // melee grubu en önde
     expect(new Set(melee)).toEqual(new Set(['defender', 'warrior', 'antimage', 'cutthroat'])); // Cutthroat: Venom Edge yakın dövüş

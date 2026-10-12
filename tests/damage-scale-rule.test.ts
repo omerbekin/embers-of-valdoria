@@ -13,7 +13,8 @@ const SCALE_EXCEPTIONS: { skill: string; effect: string; reason: string }[] = [
 // Ölçek alanı taşıması gereken hasar türü etkiler; ölçeksiz hasar benzerleri istisna listesinde olmalı.
 // Hexer: 'dot' (Wither, kendi scale'i), 'omen' ve 'detonate' (Doom: ölçeği durum tanımındaki doom.scale) de ölçekli hasar sayılır.
 const DAMAGE_LIKE = new Set(['damage', 'ground', 'selfDamage', 'manaBurn', 'dot', 'omen', 'detonate']);
-const isException = (skill: string, type: string) => SCALE_EXCEPTIONS.some((x) => x.skill === skill && x.effect === type);
+// Pose Tester kopyası (pt_<id>) gerçek skill'in istisnasını paylaşır
+const isException = (skill: string, type: string) => SCALE_EXCEPTIONS.some((x) => (x.skill === skill || `pt_${x.skill}` === skill) && x.effect === type);
 const scaleOf = (e: unknown): Attribute | undefined => {
   const x = e as { type: string; scale?: Attribute; status?: string };
   // Doom (yığın patlaması): ölçek statı skill etkisinde değil, durum tanımında (statuses.json > omen.doom.scale)

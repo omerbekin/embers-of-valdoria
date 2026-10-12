@@ -288,7 +288,7 @@ const doomMark: V2Vfx = async (c, k) => {
 };
 
 /** 'voidstrike' adı Evil Eye ve Doom Mark'ta ortak (v1 yer tutucu): skill'e göre ayrılır. */
-const voidstrike: V2Vfx = (c, k) => (c.skill.id === 'doom_mark' ? doomMark(c, k) : evilEye(c, k));
+const voidstrike: V2Vfx = (c, k) => (((c.skill as { artOf?: string }).artOf ?? c.skill.id) === 'doom_mark' ? doomMark(c, k) : evilEye(c, k));
 
 /** Bir hücre içinde dallanan çürük damarları (graphics), girişten (from) içeri. */
 function veinsIn(c: VfxCtx, k: VfxKit, g: Phaser.GameObjects.Graphics, q: Pt[], from: Pt, ms: number): Promise<void> {

@@ -1,0 +1,38 @@
+{
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Cutthroat skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
+  "id": "pose_tester_5",
+  "name": "Pose Tester V (Cutthroat)",
+  "spriteId": "warrior",
+  "color": "#5b4a6b",
+  "logo": "venomedge",
+  "role": "Pose Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 1,
+  "attributes": {
+    "str": 30,
+    "int": 16,
+    "dex": 8,
+    "luck": 6
+  },
+  "primary": "str",
+  "armor": 18,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "pt_venom_edge",
+    "pt_x_cut",
+    "pt_smoke_bomb",
+    "pt_backstab"
+  ],
+  "passive": {
+    "id": "pose_test_rig",
+    "name": "Pose Rig",
+    "icon": "helm",
+    "text": "Test passive with no effect: this class only exists to try the pose library in a real battle.",
+    "effect": {
+      "type": "spellEcho",
+      "chance": 0
+    }
+  }
+}

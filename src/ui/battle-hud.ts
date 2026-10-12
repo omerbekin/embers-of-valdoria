@@ -406,10 +406,10 @@ export class BattleHud {
     const r = this.model.actor?.rage;
     if (!r) return;
     r.value = value;
-    const fill = this.actorBox.querySelector<HTMLElement>('.bh-rage i');
-    const lab = this.actorBox.querySelector<HTMLElement>('.bh-rage span');
+    const fill = this.actorBox.querySelector<HTMLElement>('.bh-hpmp.rage .bh-bar i');
+    const lab = this.actorBox.querySelector<HTMLElement>('.bh-hpmp.rage .bh-num .v');
     if (fill) fill.style.width = pct(value, r.max);
-    if (lab) lab.textContent = `${Math.round(value)} / ${r.max}`;
+    if (lab) lab.textContent = String(Math.round(value));
   }
 
   private reg(key: string, t: TipContent): string {
@@ -436,9 +436,12 @@ export class BattleHud {
     const srow = (s: HudStat) => `<div class="bh-srow ${s.primary ? 'pri' : ''}" ${this.reg(`s:${s.kind}`, s.tip)}>${img(s.iconUrl)}<span class="l">${esc(s.name)}${s.primary ? '<i class="bh-pd"></i>' : ''}</span><span class="v" style="${s.color ? `color:${s.color}` : ''}">${esc(s.value)}</span></div>`;
     const bar = (kind: 'hp' | 'mp', b: HudBar) =>
       `<div class="bh-hpmp ${kind}" ${this.reg(`b:${kind}`, b.tip)}><div class="bh-num">${img(b.iconUrl ?? '')}${b.value}<span class="of">/ ${b.max}</span></div><div class="bh-bar ${kind}${a.enemy && kind === 'hp' ? ' en' : ''}"><i style="width:${pct(b.value, b.max)}"></i></div></div>`;
+    // Üçüncü kaynak (Warrior'ın Rage'i): HP/MP ile AYNI hücre (ikon + "0 / 50" + ince çubuk), aynı ızgarada üçüncü sütun;
+    // ayrı geniş satır yok (Ömer 2026-10-12: satır taşıyor, stat satırını itiyordu)
     const rage = a.rage
-      ? `<div class="bh-rage" ${this.reg('b:rage', a.rage.tip)}>${img(a.rage.iconUrl)}<div class="bh-bar rage"><i style="width:${pct(a.rage.value, a.rage.max)}"></i><span>${Math.round(a.rage.value)} / ${a.rage.max}</span></div></div>`
+      ? `<div class="bh-hpmp rage" ${this.reg('b:rage', a.rage.tip)}><div class="bh-num">${img(a.rage.iconUrl)}<span class="v">${Math.round(a.rage.value)}</span><span class="of">/ ${a.rage.max}</span></div><div class="bh-bar rage"><i style="width:${pct(a.rage.value, a.rage.max)}"></i></div></div>`
       : '';
+    const resCount = 1 + (a.mp ? 1 : 0) + (a.rage ? 1 : 0);
     const passive = a.passive
       ? `<div class="bh-sheet-sec"><div class="bh-hd"><i class="bh-dia h s"></i>Passive</div><div class="bh-pas">${img(a.passive.iconUrl, 'bh-ico bh-medal')}<div><div class="t">${esc(a.passive.name)}</div><div class="d">${esc(a.passive.text)}</div></div></div></div>`
       : '';
@@ -455,8 +458,7 @@ export class BattleHud {
         <div class="bh-pframe${a.enemy ? ' en' : ''}">${img(a.portraitUrl, 'bh-portrait', a.flip ? 'style="transform:scaleX(-1)"' : '')}</div>
         <div class="bh-actor-info">
           <div class="bh-name"><span class="bh-n" style="${a.nameColor ? `color:${a.nameColor}` : ''}">${esc(a.name)}</span><span class="bh-m">${esc(a.sub)}</span></div>
-          <div class="bh-hpmp-row">${bar('hp', a.hp)}${a.mp ? bar('mp', a.mp) : ''}</div>
-          ${rage}
+          <div class="bh-hpmp-row${resCount > 2 ? ' three' : ''}">${bar('hp', a.hp)}${a.mp ? bar('mp', a.mp) : ''}${rage}</div>
           <div class="bh-main">${a.main.map(st).join('')}</div>
           <span class="bh-more">All stats</span>
         </div>

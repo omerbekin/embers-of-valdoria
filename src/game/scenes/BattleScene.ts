@@ -16,6 +16,7 @@ import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBa
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
 import { preloadPoses } from '../pose-rig';
+import type { WeaponItem } from '../pose-weapons';
 import { weaponFor, type WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
 import { initialSeed, initialSizes, newSeed } from '../seed';
@@ -94,7 +95,7 @@ export interface BattleSceneData {
    * Poz kütüphanesi (yalnızca sunum; src/game/poses.ts): birim uid'i ('party-0'...) -> takılı silah item'i (sefer / Endless gerçek donanım).
    * Verilmeyen pozlu birim sınıfının varsayılan silahını taşır (Quick Battle). `picks` doğrudan çizilecek silah (debug poz deneme savaşı).
    */
-  weapons?: { items?: Record<string, { id: string; family?: string; rarity?: string }>; picks?: Record<string, WeaponPick> };
+  weapons?: { items?: Record<string, WeaponItem>; picks?: Record<string, WeaponPick> };
 }
 
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
@@ -242,6 +243,15 @@ export class BattleScene extends Phaser.Scene {
   /** The pre-selected / chosen skill of the acting player unit (waits for a target tap or confirmation). */
   private selected: { actor: string; skill: string } | null = null;
   private eventQueue: Promise<void> = Promise.resolve();
+  /**
+   * Gösterilen durumlar (rozetler, Omen mühürleri, pus): motor bir eylemi tek seferde çözer, ama durumlar ekranda ancak ilgili olay OYNADIĞINDA
+   * (vuruş anı / aşama kapısı / hit gate) görünmeli. Olay kuyruğu doluyken her olayın ardından alınan anlık görüntü (statusSnaps) o olay
+   * oynayınca `shownStatuses`e geçer; kuyruk boşalınca null (canlı durum).
+   */
+  private shownStatuses: Map<string, Combatant['statuses']> | null = null;
+  private statusSnaps = new WeakMap<BattleEvent, Map<string, Combatant['statuses']>>();
+  private idleStatuses: Map<string, Combatant['statuses']> | null = null;
+  private pendingEvents = 0;
   private stats!: BattleStats;
   /** Maç kaydı (hamleler + AI gerekçeleri; Debug > Copy match data ve sonuç ekranı kullanır). */
   private matchLog?: MatchLog;
@@ -385,6 +395,9 @@ export class BattleScene extends Phaser.Scene {
       : undefined;
     this.resultScreen = undefined;
     this.hudHidden = null;
+    this.shownStatuses = null;
+    this.idleStatuses = null;
+    this.pendingEvents = 0;
     this.battle.on((e) => {
       this.stats.record(e);
       this.enqueue(e);
@@ -468,7 +481,7 @@ export class BattleScene extends Phaser.Scene {
       if (!c || c.hp <= 0) continue;
       const list: BadgeList = [];
       let seals: { stacks: number; max: number; turns: number; color: string } | null = null;
-      for (const st of c.statuses) {
+      for (const st of this.statusesShown(c)) {
         const def = content.statuses[st.kind];
         const fallback = { taunt: ['finger', '#ff9f43'], guard: ['guardian', '#6ec1ff'], regen: ['leaf', '#7dff9b'] }[st.kind as 'taunt' | 'guard' | 'regen'] ?? ['roar', '#ffffff'];
         // Rozet sürümü: sınıfa özgü durum sahibinin v2 badge_<id> çizimini izler, ortak durum Shared (art-registry > statusBadge)
@@ -666,6 +679,8 @@ export class BattleScene extends Phaser.Scene {
   }
 
   update(): void {
+    // Kuyruk boşken ekrandaki durumlar canlı durumdur: bir sonraki eylemin "öncesi" olarak saklanır (motor ilk olaydan önce de durum değiştirebilir)
+    if (this.battle) this.idleStatuses = this.pendingEvents === 0 ? this.snapStatuses() : this.idleStatuses;
     this.refreshBadges();
     this.refreshLingerHaze();
     this.refreshSpeedBars();
@@ -2352,7 +2367,36 @@ export class BattleScene extends Phaser.Scene {
     }
     // If the scene restarts, queued events of the old battle must not touch the new characters
     const battle = this.battle;
-    this.eventQueue = this.eventQueue.then(() => (battle === this.battle ? this.playEvent(e) : undefined));
+    // Durum gösterimi: kuyruk boşken gelen ilk olay, ekranda o an görünen (eylem öncesi) durumları dondurur; her olay kendi anlık görüntüsünü taşır
+    if (this.pendingEvents === 0) this.shownStatuses = this.idleStatuses ?? this.snapStatuses();
+    this.pendingEvents++;
+    this.statusSnaps.set(e, this.snapStatuses());
+    this.eventQueue = this.eventQueue.then(async () => {
+      try {
+        if (battle === this.battle) await this.playEvent(e);
+      } finally {
+        if (battle === this.battle && --this.pendingEvents <= 0) {
+          this.pendingEvents = 0;
+          this.shownStatuses = null;
+        }
+      }
+    });
+  }
+
+  /** Tüm birimlerin durumlarının kopyası (motor durumları yerinde değiştirir: tur, yığın). */
+  private snapStatuses(): Map<string, Combatant['statuses']> {
+    return new Map(this.battle.combatants.map((c) => [c.uid, c.statuses.map((st) => ({ ...st }))]));
+  }
+
+  /** Bu olayın oynadığı an: olay anındaki durumlar ekrana geçer (statüler skill'in vuruş anında, döküm başında değil). */
+  private presentStatuses(e: BattleEvent): void {
+    const snap = this.statusSnaps.get(e);
+    if (snap && this.shownStatuses) for (const [uid, list] of snap) this.shownStatuses.set(uid, list);
+  }
+
+  /** Ekranda gösterilecek durumlar: olaylar oynarken gösterilen anlık görüntü, yoksa canlı durum. */
+  private statusesShown(c: Combatant): Combatant['statuses'] {
+    return this.shownStatuses?.get(c.uid) ?? c.statuses;
   }
 
   /** Extra damage tags for the floating number (engine fields, all optional): element, origin (skill/ground/status/self), ground type. */
@@ -2364,6 +2408,8 @@ export class BattleScene extends Phaser.Scene {
     if (!this.scene.isActive()) return;
     // Aşamalı alan skill'i: aşama olayları vfx o aşamayı açana kadar bekler (vfx aşamadan habersizse beklemez)
     if (e.stage !== undefined) await this.awaitStage(e.stage);
+    // Vuruşa bağlı olaylar (hasar, dodge, miss) durumlarını hit gate geçilince gösterir; diğerleri hemen
+    if (e.type !== 'damage' && e.type !== 'dodge' && e.type !== 'miss') this.presentStatuses(e);
     if (this.combatLog?.push(e, { between: this.betweenTurns.has(e), regen: this.regenTicks.has(e) })) this.hud?.setLog(this.combatLog.entries());
     switch (e.type) {
       case 'skillUsed': {
@@ -2390,6 +2436,7 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'damage': {
         await this.passHitGate();
+        this.presentStatuses(e);
         const target = this.views.get(e.target);
         // Wither tiki (durum hasarı, taşıyanın tur başı): v2'de Hexer'ın 'withertick' efekti, v1'de ayak dibinde kısa çürük buharı; rakam küçük
         const witherTick = e.origin === 'status' && e.status === 'wither';
@@ -2431,12 +2478,14 @@ export class BattleScene extends Phaser.Scene {
       case 'dodge':
         // Evasion: the TARGET slips away ("Dodge" above the target); no hit reaction, no number
         await this.passHitGate();
+        this.presentStatuses(e);
         this.views.get(e.target)?.dodge();
         await this.wait(slow(90));
         return;
       case 'miss':
         // Accuracy: the ATTACKER misses (pale "MISS" above the attacker); the target does not react
         await this.passHitGate();
+        this.presentStatuses(e);
         this.views.get(e.source)?.missText();
         await this.wait(slow(90));
         return;
@@ -3146,7 +3195,7 @@ export class BattleScene extends Phaser.Scene {
   private refreshLingerHaze(): void {
     const ended = this.hazes.reconcile((uid, statuses) => {
       const c = this.battle.get(uid);
-      return !!c && c.hp > 0 && c.statuses.some((st) => statuses.includes(st.kind));
+      return !!c && c.hp > 0 && this.statusesShown(c).some((st) => statuses.includes(st.kind));
     }, this.time.now);
     for (const id of ended) {
       this.hazeViews.get(id)?.fadeOut();
@@ -3391,7 +3440,8 @@ export class BattleScene extends Phaser.Scene {
     const slots = c.board === 'party' ? layout.partySlots : layout.enemySlots; // units summoned onto the enemy board stand there
     const slot = slots[c.slot];
     if (!slot) return undefined;
-    const pick = this.weapons?.picks?.[c.uid] ?? weaponFor(c.defId, c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined);
+    const item = c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined;
+    const pick = this.weapons?.picks?.[c.uid] ?? weaponFor(c.defId, item?.id ? item : null, item?.offhand);
     const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick });
     view.makeTappable(
       (p?: Phaser.Input.Pointer) => {

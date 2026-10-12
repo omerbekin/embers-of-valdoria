@@ -1,0 +1,38 @@
+{
+  "_not": "Debug test sınıfı (Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Undead skill'lerinin pt_* kopyaları, Warrior v2 poz kütüphanesi + silah katmanıyla çizilir (data/poses.json > classAliases). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı.",
+  "id": "pose_tester_8",
+  "name": "Pose Tester VIII (Undead)",
+  "spriteId": "warrior",
+  "color": "#7d8a73",
+  "logo": "bonethrow",
+  "role": "Pose Test",
+  "testOnly": true,
+  "hidden": true,
+  "frontPriority": 1,
+  "attributes": {
+    "str": 30,
+    "int": 16,
+    "dex": 8,
+    "luck": 6
+  },
+  "primary": "str",
+  "armor": 18,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "pt_bone_throw",
+    "pt_wail_of_the_dead",
+    "pt_dark_bond",
+    "pt_raise_dead"
+  ],
+  "passive": {
+    "id": "pose_test_rig",
+    "name": "Pose Rig",
+    "icon": "helm",
+    "text": "Test passive with no effect: this class only exists to try the pose library in a real battle.",
+    "effect": {
+      "type": "spellEcho",
+      "chance": 0
+    }
+  }
+}

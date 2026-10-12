@@ -310,6 +310,24 @@
   filter: grayscale(1) brightness(0.8);
 }
 
+/* İkinci el yuvası kapalıyken (Ömer 2026-10-12): çift elde silahın soluk, renksiz gölgesi (yay / tılsım: düz boş yuva); yuva her durumda etkisiz */
+.gr-px.gr-silhouette {
+  opacity: 0.38;
+  filter: grayscale(1) brightness(0.75) drop-shadow(0 1px 1px #000);
+}
+
+.gr-slot.blocked {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.gr-slot.blocked .gr-hands-hint {
+  font: 600 max(10px, calc(14 * var(--u))) var(--g-disp);
+  font-style: normal;
+  letter-spacing: 0.14em;
+}
+
 .gr-item.empty {
   border: 1px solid var(--g-line);
   background: rgba(8, 6, 4, 0.3);

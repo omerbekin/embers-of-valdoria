@@ -36,8 +36,9 @@ import { getRotateMode, setRotateMode } from './viewport';
 import { stageView } from '../game/stage-view';
 import { backgroundPool } from '../game/battle-background';
 import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
-import { registerPosesPanel } from './debug-poses';
-import type { WeaponPick } from '../game/poses';
+import { POSE_TESTER_GEAR, registerPosesPanel } from './debug-poses';
+import { weaponFor, type WeaponPick } from '../game/poses';
+import { offhandItem, weaponItem } from '../game/pose-weapons';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
 export const DEBUG_TABS = [QUICK_TAB, 'Battle', 'Unit', 'Skills', 'Rolls', 'Speed & View', 'Setup', 'Campaign', 'Test Mode', 'Characters', VERSIONS_TAB, 'Data'];
@@ -1088,23 +1089,20 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     },
   });
 
-  // ===== Characters > Poses: Warrior poz kütüphanesi denemesi (src/ui/debug-poses.ts; gizli test class'ları Pose Tester I / II) =====
+  // ===== Characters > Poses: v2 poz denemesi (src/ui/debug-poses.ts; gizli test sınıfları Pose Tester I (Warrior) ... XI (Hexer)) =====
   registerPosesPanel(debug, {
     views: () => battle()?.debugPoseViews() ?? [],
     startTestBattle: () => {
       const seed = newSeed();
-      // oyuncu: Pose Tester I (yakın dövüş pozları) + Pose Tester II (büyü / atış / koruma pozları); düşman: 2 pozlu Warrior (süslü
-      // silah + ışıltı) + 2 rastgele rakip; test modu (sıra yok). Skill'ler başka sınıfların gerçek skill'lerinin bedelsiz kopyaları.
+      // oyuncu: 11 Pose Tester (sınıf başına bir; o sınıfın 4 skill'inin bedelsiz kopyaları, v2 pozları), her biri sınıfının silahıyla
+      // (gerçek item: tutuş ve ikinci el item'den); düşman: 2 pozlu (v1) Warrior (süslü silah + ışıltı) + 2 rastgele rakip; test modu.
       const foes = content.randomTeam(seed + 7, 6).filter((c) => c !== 'warrior').slice(0, 2);
-      const party = ['pose_tester_1', 'pose_tester_2'];
+      const party = Object.keys(POSE_TESTER_GEAR);
       const enemies = ['warrior', 'warrior', ...foes];
       const partyCells = content.randomCells(party, seed);
       const enemyCells = content.randomCells(enemies, seed + 7);
       // motor sırası = dolu hücrelerin sırası (uid 'party-i')
-      const weaponsBySide: Record<'party' | 'enemy', WeaponPick[]> = {
-        party: [{ family: 'swords', look: 'plain' }, { family: 'axes', look: 'bearded', glow: '#5f93d6' }],
-        enemy: [{ family: 'swords', look: 'ornate', glow: '#f0a830' }, { family: 'axes', look: 'ornate', glow: '#b072e0' }],
-      };
+      const enemyWeapons: WeaponPick[] = [{ family: 'swords', look: 'ornate', glow: '#f0a830' }, { family: 'axes', look: 'ornate', glow: '#b072e0' }];
       const picks: Record<string, WeaponPick> = {};
       const units = { party: {} as Record<number, { displayName: string }>, enemies: {} as Record<number, { displayName: string }> };
       for (const [side, cells] of [['party', partyCells], ['enemy', enemyCells]] as const) {
@@ -1112,7 +1110,9 @@ export function registerDebugTools({ game, debug }: Ctx): void {
         let w = 0;
         cells.forEach((id) => {
           if (!id) return;
-          if (id === 'warrior' || id.startsWith('pose_tester')) picks[`${side}-${i}`] = weaponsBySide[side][w++ % 2]!;
+          const gear = POSE_TESTER_GEAR[id];
+          const pick = gear ? weaponFor(id, weaponItem({ uid: 'pt', id: gear[0] }), offhandItem(gear[1] ? { uid: 'pt-off', id: gear[1] } : null)) : id === 'warrior' ? enemyWeapons[w++ % 2]! : null;
+          if (pick) picks[`${side}-${i}`] = pick;
           i++;
         });
       }
