@@ -158,7 +158,7 @@ export interface CampaignConfig {
    * Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı dengesi): her zorlukta aynı, zorluk ekinden ÖNCE (zorluklar arası fark korunur).
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
-  enemyScale?: { all?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı bölgeler (eğitim: I). */ skipRegions?: string[] };
+  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı bölgeler (eğitim: I). */ skipRegions?: string[] };
   /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme oranı; düşmüş kahramanı altınla diriltme (fiyat = base + perIlvl x düğüm item seviyesi). */
   rest: { heal: number; reviveRatio: number; reviveCost: { base: number; perIlvl: number } };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
