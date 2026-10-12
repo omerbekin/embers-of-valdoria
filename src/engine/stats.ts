@@ -98,6 +98,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     ...(data.primary ? { primary: data.primary } : {}),
     ...(data.testOnly ? { testOnly: true } : {}),
     ...(data.hidden ? { hidden: true } : {}),
+    ...(data.family ? { family: data.family } : {}),
     stats: deriveStats(data, formulas),
     ...(data.resource === 'rage' ? { maxRage: formulas.rage.max } : {}),
     skills: [...data.skills],

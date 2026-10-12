@@ -1,0 +1,34 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'undead' ödünç; gerçek çizim (new base sprite) assets/sprites/ghoul/idle.png + assets/avatars/ghoul.png gelince spriteId 'ghoul' yapılır (tek satır).",
+  "id": "ghoul",
+  "name": "Ghoul",
+  "family": "undead",
+  "spriteId": "undead",
+  "color": "#7f8577",
+  "logo": "skull",
+  "frontPriority": 2,
+  "role": "Undead · Brute",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 8,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "gnaw",
+    "feast"
+  ],
+  "passive": {
+    "id": "vampiric_bite",
+    "name": "Vampiric Bite",
+    "icon": "soul",
+    "text": "",
+    "effect": {
+      "type": "soulDrain",
+      "ratio": 0.35
+    }
+  }
+}

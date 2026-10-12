@@ -1,0 +1,40 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'archer' ödünç; gerçek çizim (new base sprite) assets/sprites/bandit_crossbowman/idle.png + assets/avatars/bandit_crossbowman.png gelince spriteId 'bandit_crossbowman' yapılır (tek satır).",
+  "id": "bandit_crossbowman",
+  "name": "Bandit Crossbowman",
+  "family": "bandits",
+  "spriteId": "archer",
+  "color": "#7a6a4a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "role": "Bandit · Ranged",
+  "attributes": {
+    "str": 10,
+    "int": 6,
+    "dex": 26,
+    "luck": 6
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "crossbow_bolt",
+    "snare_shot"
+  ],
+  "passive": {
+    "id": "opportunist",
+    "name": "Opportunist",
+    "icon": "opportunist",
+    "text": "",
+    "effect": {
+      "type": "bonusVsStatus",
+      "statuses": [
+        "wound",
+        "slow",
+        "stun",
+        "wither"
+      ],
+      "bonus": 0.25
+    }
+  }
+}

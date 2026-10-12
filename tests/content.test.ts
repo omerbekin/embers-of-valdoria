@@ -18,7 +18,7 @@ const HEX = /^#[0-9a-fA-F]{6}$/;
 const PLACEHOLDER_SPRITE_CLASSES: string[] = [];
 /** Kendi görseli henüz çizilmemiş, başka bir class'ın sprite'ını GEÇİCİ kullanan class'lar (class id -> ödünç spriteId). Görsel gelince listeden çıkar. */
 const BORROWED_SPRITE_CLASSES: Record<string, string> = {}; // başka class'ın görselini ödünç alan class'lar (şu an yok: Cutthroat'ın kendi görseli var)
-const everyone = { ...content.classes, ...content.summons, ...content.bosses }; // boss tanımları (data/bosses) da şemaya tabi
+const everyone = { ...content.classes, ...content.summons, ...content.bosses, ...content.mobs }; // boss (data/bosses) ve mob (data/mobs) tanımları da şemaya tabi
 
 describe('skill verisi', () => {
   const all = Object.entries(content.skills);
@@ -538,7 +538,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    expect(sky.map((s) => s.id).sort()).toEqual(['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'judgment', 'meteor', 'pt_judgment', 'radiance', 'root_smash']);
+    expect(sky.map((s) => s.id).sort()).toEqual(['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'pt_judgment', 'radiance', 'root_smash'].sort());
     for (const s of sky) expect(['arrows', 'shards', 'meteor', 'void', 'light', 'fist'], s.id).toContain(s.skyFx);
     for (const s of Object.values(content.skills)) if (s.motion !== 'sky') expect(s.skyFx, s.id).toBeUndefined();
   });

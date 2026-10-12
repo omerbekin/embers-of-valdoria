@@ -1,0 +1,40 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'warrior' ödünç; gerçek çizim (palette variant of road_thug) assets/sprites/moor_raider/idle.png + assets/avatars/moor_raider.png gelince spriteId 'moor_raider' yapılır (tek satır).",
+  "id": "moor_raider",
+  "name": "Moor Raider",
+  "family": "bandits",
+  "spriteId": "warrior",
+  "color": "#5f6f8f",
+  "logo": "helm",
+  "frontPriority": 1,
+  "role": "Bandit · Brute",
+  "attributes": {
+    "str": 28,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 14,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "cudgel",
+    "hamstring"
+  ],
+  "passive": {
+    "id": "opportunist",
+    "name": "Opportunist",
+    "icon": "opportunist",
+    "text": "",
+    "effect": {
+      "type": "bonusVsStatus",
+      "statuses": [
+        "wound",
+        "slow",
+        "stun",
+        "wither"
+      ],
+      "bonus": 0.25
+    }
+  }
+}

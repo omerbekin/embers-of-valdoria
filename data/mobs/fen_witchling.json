@@ -1,0 +1,24 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'hexer' ödünç; gerçek çizim (new base sprite) assets/sprites/fen_witchling/idle.png + assets/avatars/fen_witchling.png gelince spriteId 'fen_witchling' yapılır (tek satır).",
+  "id": "fen_witchling",
+  "name": "Fen Witchling",
+  "family": "hexes",
+  "spriteId": "hexer",
+  "color": "#5d7a3a",
+  "logo": "rune",
+  "frontPriority": 7,
+  "role": "Hex · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 26
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "hexer",
+  "skills": [
+    "hex_bolt",
+    "bog_curse"
+  ]
+}

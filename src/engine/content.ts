@@ -24,6 +24,19 @@ import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
+import mobRoadThug from '../../data/mobs/road_thug.json';
+import mobMoorRaider from '../../data/mobs/moor_raider.json';
+import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
+import mobEmberAcolyte from '../../data/mobs/ember_acolyte.json';
+import mobCharcoalBurner from '../../data/mobs/charcoal_burner.json';
+import mobShieldwarden from '../../data/mobs/shieldwarden.json';
+import mobStoneboundWarden from '../../data/mobs/stonebound_warden.json';
+import mobThaneOfTheDeep from '../../data/mobs/thane_of_the_deep.json';
+import mobFenWitchling from '../../data/mobs/fen_witchling.json';
+import mobHedgeWitchMorwen from '../../data/mobs/hedge_witch_morwen.json';
+import mobWillOWisp from '../../data/mobs/will_o_wisp.json';
+import mobGhoul from '../../data/mobs/ghoul.json';
+import mobDrowned from '../../data/mobs/drowned.json';
 import groundsJson from '../../data/grounds.json';
 import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
@@ -89,6 +102,32 @@ export const bosses: Record<string, CombatantDef> = {
   bridge_warden: buildDef(bridgeWarden as unknown as CombatantData, formulas),
   iron_mooring: buildDef(ironMooring as unknown as CombatantData, formulas),
 };
+
+const mobData: CombatantData[] = [
+  mobRoadThug,
+  mobMoorRaider,
+  mobBanditCrossbowman,
+  mobEmberAcolyte,
+  mobCharcoalBurner,
+  mobShieldwarden,
+  mobStoneboundWarden,
+  mobThaneOfTheDeep,
+  mobFenWitchling,
+  mobHedgeWitchMorwen,
+  mobWillOWisp,
+  mobGhoul,
+  mobDrowned,
+] as unknown as CombatantData[];
+
+/**
+ * Sefer mobları (data/mobs; N1, docs/design/campaign/fill-plan.md 2): boss'lar gibi GİZLİ birimler. Takım seçiminde, rastgele/hızlı savaşta,
+ * Endless havuzunda ve sınıf denge sim'inde YOK; yalnızca sefer karşılaşmaları (encounters.json `class`) kullanır. Class kuralları ("tam 4 skill",
+ * stat toplamı) uygulanmaz: mobun 1 temel saldırısı + 1 imza skill'i vardır (birkaçında 3. skill). Yeni mob = data/mobs/<id>.json + yukarıya bir satır.
+ */
+export const mobs: Record<string, CombatantDef> = Object.fromEntries(mobData.map((d) => [d.id, buildDef(d, formulas)]));
+
+/** Karşılaşmalarda kullanılabilen class olmayan gizli birimler (boss + mob). */
+export const encounterUnit = (id: string): CombatantDef | undefined => bosses[id] ?? mobs[id];
 
 // "_not" gibi açıklama alanlarını ayıkla; geriye yalnızca skill tanımları kalır.
 export const skills = Object.fromEntries(
@@ -335,7 +374,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
   const party = build(teams?.party, rolled?.party, 0x1111);
   const enemies = build(teams?.enemies, rolled?.enemies, 0x2222);
   // Sınıf ya da (hazır çağrı olarak) data/summons birimi
-  const unitDef = (id: string): CombatantDef => classes[id] ?? bosses[id] ?? lookup(summons, id, 'Class');
+  const unitDef = (id: string): CombatantDef => classes[id] ?? bosses[id] ?? mobs[id] ?? lookup(summons, id, 'Class');
   // Birim kurulumları: verilen kurulum + çağrı id'leri için summoned bayrağı. Hiçbir birimde kurulum yoksa alan hiç yazılmaz (eski davranış).
   const unitsFor = (b: Built, given: TeamUnits['party']): (UnitSetup | undefined)[] | undefined => {
     const out = b.ids.map((id, i) => {
@@ -362,7 +401,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     statuses,
     grounds,
     formulas,
-    units: { ...classes, ...summons, ...bosses },
+    units: { ...classes, ...summons, ...bosses, ...mobs },
     maxSlots: def.slots,
   };
 }

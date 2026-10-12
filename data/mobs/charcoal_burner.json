@@ -1,0 +1,24 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'mage' ödünç; gerçek çizim (palette variant of ember_acolyte) assets/sprites/charcoal_burner/idle.png + assets/avatars/charcoal_burner.png gelince spriteId 'charcoal_burner' yapılır (tek satır).",
+  "id": "charcoal_burner",
+  "name": "Charcoal Burner",
+  "family": "ember_cult",
+  "spriteId": "mage",
+  "color": "#4a3f3a",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "role": "Ember Cult · Caster",
+  "attributes": {
+    "str": 10,
+    "int": 30,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "ember_toss",
+    "burn_the_ground"
+  ]
+}

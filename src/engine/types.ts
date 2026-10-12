@@ -118,6 +118,8 @@ export interface CombatantData {
   primary?: Attribute;
   /** true: oyuncuya görünmez (takım seçimi ve wiki dışı; debug ve galeri yine erişir). */
   hidden?: boolean;
+  /** Sefer mobu ailesi (data/mobs; docs/design/campaign/fill-plan.md 2.2): bandits, ember_cult, guardians, hexes, undead... Class'larda yok. */
+  family?: string;
   /** true: test amaçlı class (AOE şekil test karakteri): rastgele takım havuzundan ve denge simülasyonundan HARİÇ; takım seçiminde/debug'da seçilebilir, wiki/galeride görünür. */
   testOnly?: boolean;
   /** Sınıfın özel kaynağı: 'rage' ise birim Rage barıyla (0-formulas.rage.max) savaşa başlar; yoksa Rage yoktur. */
@@ -245,6 +247,8 @@ export interface CombatantDef {
   testOnly?: boolean;
   /** true: oyuncuya görünmez (takım seçimi ve wiki dışı). */
   hidden?: boolean;
+  /** Sefer mobu ailesi (data/mobs). */
+  family?: string;
   stats: Stats;
   /** Rage'li class: Rage barının üst sınırı (formulas.json > rage.max); Rage'siz class'ta tanımsız. */
   maxRage?: number;

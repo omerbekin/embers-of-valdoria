@@ -1,13 +1,86 @@
 {
-  "_not": "Olay ve hazine metinleri (olaylar YER TUTUCU; hazine sandığı loot verir: items.md 3.1, madde 280). Oyun içi metin İngilizce. İleride seçenekli olaylar ve gerçek ödüller (docs/design/campaign/campaign.md 6.4).",
+  "_not": "Olay, hazine ve kasaba sahnesi metinleri (oyun içi metin İngilizce). Seçenekli olaylar (N2, fill-plan 4.2): choices[] = id, label, hint, result + sonuçlar (cost, gold, hpLoss, heal, chest, restHeal, battle[], win); şema src/campaign/data.ts > EventChoice. battle listesinde ilk VAR OLAN karşılaşma oynanır, hiçbiri yoksa seçenek gizlenir (morwen_duel / fold_flock mob işiyle gelir). stories = kasaba sahneleri (T5; düz metin ya da diyalog: dialogue[] adımları + cevaplarda likes, likeThreshold, gift, liked / disliked; şema data.ts > StoryDef; sis açma YOK, Ömer reddetti). Hazine sandığı loot verir (items.md 3.1).",
   "events": {
     "shepherds_fold": {
-      "title": "Shepherd's Fold",
-      "text": "The sheepfold is empty, the gate swinging in the wind. Ash has settled on the troughs. Whoever kept the flock left in a hurry, heading north. Your company rests a moment and moves on. (Events with choices are coming soon.)"
+      "title": "The Scattered Flock",
+      "text": "Shepherds huddle around a dying fire. Their flock scattered when the ash-hounds came down from the road. \"Lord Morvane's beasts,\" the eldest mutters. \"And his gate is worse.\"\n\nYour company will make camp here whatever you choose.",
+      "choices": [
+        {
+          "id": "search",
+          "label": "Search for the flock",
+          "hint": "Fight the ash-hounds. Win: gold and the shepherds' gift. Then rest.",
+          "battle": [
+            "fold_flock"
+          ],
+          "win": {
+            "gold": 30,
+            "chest": true
+          },
+          "result": "You drive off the hounds and bring the sheep home. The shepherds press a bundle into your hands."
+        },
+        {
+          "id": "castle",
+          "label": "Ask about the castle",
+          "hint": "Hear what the shepherds know. Then rest.",
+          "result": "\"The gate tower never sleeps,\" the eldest says. \"Knights in black plate stand on the wall, cracks of fire in their armour. Cinder Knights, we call them. They shield the witches behind them, and the witches set the ground alight. Strike the ones in the back first, if you can reach them.\""
+        },
+        {
+          "id": "bread",
+          "label": "Share your bread",
+          "hint": "Pay 40 gold. Tonight's rest heals fully.",
+          "cost": 40,
+          "restHeal": 1,
+          "result": "You share your supplies with the shepherds. Bellies full and spirits lifted, your company sleeps soundly by the fire."
+        },
+        {
+          "id": "rest",
+          "label": "Just rest",
+          "hint": "Make camp as usual.",
+          "result": "You nod to the shepherds and make camp beside them."
+        }
+      ]
     },
     "witchs_hut": {
-      "title": "Witch's Hut",
-      "text": "A crooked hut leans over the black water. The old woman inside sells charms that smell of ash and promises that smell worse. Her guardians lie in the reeds; she studies your company, laughs, and lets you pass. (Events with choices are coming soon.)"
+      "title": "The Hedge Witch's Bargain",
+      "text": "\"Your thralls are mud again,\" the witch says, not looking up from the pot. \"No matter. Travellers always want something. So do I.\"\n\nBeside the cauldron stands an iron-bound chest.",
+      "choices": [
+        {
+          "id": "pay",
+          "label": "Pay her price",
+          "hint": "Pay 60 gold. She opens her chest for you.",
+          "cost": 60,
+          "chest": true,
+          "result": "The witch weighs the coins, grins, and kicks the chest open."
+        },
+        {
+          "id": "blood",
+          "label": "Pay in blood",
+          "hint": "Every hero loses 20% of their current HP (no one dies). She opens her chest for you.",
+          "hpLoss": 0.2,
+          "chest": true,
+          "result": "A silver needle, a drop from each of you into the pot. The brew hisses. \"Fair,\" she says, and opens the chest."
+        },
+        {
+          "id": "steal",
+          "label": "Steal her ingredients",
+          "hint": "Fight the witch. Win: her chest and some gold.",
+          "battle": [
+            "morwen_duel",
+            "witchs_hut_guard"
+          ],
+          "win": {
+            "gold": 25,
+            "chest": true
+          },
+          "result": "The witch lies still among her broken jars. Her chest is yours."
+        },
+        {
+          "id": "leave",
+          "label": "Leave",
+          "hint": "Walk away with nothing.",
+          "result": "You leave the witch to her pot. Her laughter follows you into the reeds."
+        }
+      ]
     }
   },
   "treasures": {
@@ -20,6 +93,65 @@
       "title": "St. Brann's Abbey",
       "text": "Beyond the vault keepers lies the abbey's relic vault, untouched for a hundred years.",
       "reward": "Open the vault to claim its gear and gold."
+    }
+  },
+  "stories": {
+    "ash_on_the_wind": {
+      "title": "Ash on the Wind",
+      "speaker": "Charcoal Burner",
+      "text": "In the village square a charcoal burner sits wrapped in a blanket, his hands still black with soot. He flinches as your company approaches.",
+      "dialogue": [
+        {
+          "text": "\"No masks. Good... Forgive me. I came out of Charwood two nights ago, and I haven't slept since.\"",
+          "choices": [
+            {
+              "label": "\"You're safe here. Tell us what happened.\"",
+              "likes": true
+            },
+            {
+              "label": "\"Spare us the sob story. What do you want?\""
+            }
+          ]
+        },
+        {
+          "text": "\"Men in ash masks walked into the forest with torches. They set it burning, tree by tree, and they sang while they did it.\"",
+          "choices": [
+            {
+              "label": "\"What were they singing?\"",
+              "likes": true
+            },
+            {
+              "label": "\"Did anyone else get out?\"",
+              "likes": true
+            },
+            {
+              "label": "\"Forests burn. You of all people should know.\""
+            }
+          ]
+        },
+        {
+          "text": "\"'Praise to the Ash Lord. The embers will rise.' Over and over. They're coming this way, past the moor. What will you do?\"",
+          "choices": [
+            {
+              "label": "\"Stop them. That's why we're on this road.\"",
+              "likes": true
+            },
+            {
+              "label": "\"Not our problem. We have our own war.\""
+            }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": {
+        "rarity": "common"
+      },
+      "liked": "\"You listened, and you didn't laugh. Here, take this. I won't need it where I'm going. May it serve you better than it served me.\"",
+      "disliked": "\"Aye. Well. Mind the smoke on the road.\" He pulls the blanket tighter and turns away."
+    },
+    "the_wardens_oath": {
+      "title": "The Warden's Oath",
+      "text": "The keep's commander meets you on the wall and points south, past the marsh.\n\n\"King's Bridge,\" she says. \"A warden swore to hold it until the king returned. The king never did, and the warden never left. Whatever stands there now does not let anyone cross.\"\n\n\"And the marsh is no better. The drowned have started to walk. Rest here tonight. You will want your strength.\""
     }
   }
 }

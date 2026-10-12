@@ -1,4 +1,4 @@
-import { bosses, CELL_COUNT, classes, randomPool } from '../engine/content';
+import { CELL_COUNT, classes, encounterUnit, randomPool } from '../engine/content';
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
@@ -79,8 +79,10 @@ export function withDifficulty(mods: UnitMods | undefined, diff: DifficultyEnemy
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
   const map = getMap(s.mapId);
   const n = node(map, s.at);
-  if (!n.encounter) throw new Error(`No battle at ${n.id}`);
-  const enc = resolveEncounter(n.encounter, caps);
+  // Seçenekli olayın savaşı (N2) düğümün kendi karşılaşmasının yerine geçer
+  const encId = s.eventChoice?.node === n.id && s.eventChoice.battle ? s.eventChoice.battle : n.encounter;
+  if (!encId) throw new Error(`No battle at ${n.id}`);
+  const enc = resolveEncounter(encId, caps);
   const party: Record<number, UnitSetup> = {};
   const enemies: Record<number, UnitSetup> = {};
   s.active.forEach((id, cell) => {
@@ -160,10 +162,10 @@ export function validateEncounters(): string[] {
     const slots = def.units.map((u) => u.slot);
     if (new Set(slots).size !== slots.length) errors.push(`${id}: duplicate slots`);
     for (const u of def.units) {
-      // Boss tanımları (data/bosses: The Bridge Warden, Iron Mooring) istisna: oynanabilir class değiller ama karşılaşmada kullanılır
-      if (!randomPool.includes(u.class) && !bosses[u.class]) errors.push(`${id}: class ${u.class} is not a playable class`);
+      // Boss (data/bosses) ve mob (data/mobs) tanımları istisna: oynanabilir class değiller ama karşılaşmada kullanılır
+      if (!randomPool.includes(u.class) && !encounterUnit(u.class)) errors.push(`${id}: class ${u.class} is not a playable class`);
       if (!Number.isInteger(u.slot) || u.slot < 0 || u.slot >= CELL_COUNT) errors.push(`${id}: slot ${u.slot} out of range`);
-      for (const sk of u.lockSkills ?? []) if (!classes[u.class]?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
+      for (const sk of u.lockSkills ?? []) if (!(classes[u.class] ?? encounterUnit(u.class))?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
       if (u.initialCooldownBonus !== undefined && (!Number.isInteger(u.initialCooldownBonus) || u.initialCooldownBonus < 0)) errors.push(`${id}: bad initialCooldownBonus`);
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
@@ -171,9 +173,9 @@ export function validateEncounters(): string[] {
   return errors;
 }
 
-/** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss adı > id. */
+/** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss/mob adı > id. */
 function unitDisplayName(u: { class: string; name?: string }): string {
-  return u.name ?? classes[u.class]?.name ?? bosses[u.class]?.name ?? u.class;
+  return u.name ?? classes[u.class]?.name ?? encounterUnit(u.class)?.name ?? u.class;
 }
 
 /**

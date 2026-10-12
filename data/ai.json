@@ -193,6 +193,23 @@
       "minHpRatioForHpCost": 0.5,
       "guardBelowRatio": 0.8
     },
+    "mob_tank": {
+      "_not": "Sefer mobu tankı (data/mobs: Shieldwarden, Stonebound Warden): tank profili, Guard'sız (mobun yalnızca Taunt'ı var).",
+      "priorities": [
+        "kill",
+        "taunt",
+        "tactic",
+        "damage"
+      ],
+      "focus": "lowest_ratio",
+      "aoeMinTargets": 3,
+      "healBelowRatio": 0,
+      "shieldBelowRatio": 0,
+      "maxSummons": 0,
+      "mpCostWeight": 0.5,
+      "hpCostWeight": 1,
+      "minHpRatioForHpCost": 0.5
+    },
     "antimage": {
       "priorities": [
         "kill",

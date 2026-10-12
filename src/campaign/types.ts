@@ -63,6 +63,10 @@ export interface MapNode {
   rest?: boolean;
   /** Tüccar (Odo; campaign.json > merchant): stok düğümün item seviyesinden. */
   merchant?: boolean;
+  /** Tüccar stok boyutu (yoksa campaign.json > merchant.size). Kasabalar (T1): Ashford küçük, Valdren Keep büyük. */
+  merchantSize?: number;
+  /** Kasabaya girişte bir kez oynayan hikâye sahnesi (events.json > stories; T5, yalnızca metin). */
+  story?: string;
   /**
    * Bu düğümün savaşına özel rütbe çarpanı (yalnızca seferde; karşılaşma Endless ile ortaksa onu bozmadan ayar). Zorluğun enemyTier'ı
    * gibi rütbe -> çarpan; noTierMods'a bakmaz (bilinçli düğüm ayarı). A1-x: boss'lar 21 duraklık yolda güçlenen takıma göre (madde 305).
@@ -186,7 +190,7 @@ export interface Hero {
  * Bir düğümdeki adımlar (sırayla): recruit-before -> farewell -> company -> battle -> treasure -> event -> town -> recruit-leave.
  * Hepsi bitince düğüm temizlenmiş sayılır ve yola çıkılır (move).
  */
-export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'battle' | 'treasure' | 'event' | 'town' | 'rest' | 'merchant' | 'volunteer';
+export type StepKind = 'hero' | 'recruit' | 'farewell' | 'company' | 'battle' | 'treasure' | 'event' | 'story' | 'town' | 'rest' | 'merchant' | 'volunteer';
 
 /** Sefer durumunun şema sürümü (2: kahraman level/XP/ekipman, torba, altın; eski 1 okunurken tamamlanır: save.ts > normalizeState). */
 export const STATE_VERSION = 2;
@@ -232,6 +236,11 @@ export interface CampaignState {
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
   shop?: CampaignShop;
+  /**
+   * Seçenekli olayda seçilen seçenek (N2): `battle` = olay savaşı bekliyor (kazanılınca olay biter), `restHeal` = bu düğümün dinlenmesi bu oranla
+   * (Shepherd's Fold "Share your bread"). Düğümden ayrılınca silinir. Eski kayıtlarda yok (isteğe bağlı alan; sürüm değişmez).
+   */
+  eventChoice?: { node: string; choice: string; battle?: string; restHeal?: number };
 }
 
 /** Sefer tüccarının tezgâhı (src/campaign/merchant.ts). */
@@ -280,6 +289,7 @@ export type NextStep =
   | { kind: 'battle'; node: string; encounter: string }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
+  | { kind: 'story'; node: string; story: string }
   | { kind: 'town'; node: string }
   | { kind: 'rest'; node: string }
   | { kind: 'merchant'; node: string }

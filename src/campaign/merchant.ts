@@ -6,7 +6,8 @@ import { BAG_SIZE, ITEMS, canEquip, itemDef, itemValue, rollDropRarity, rollItem
 import { CONFIG } from './data';
 import { nodeIlvl } from './power';
 import { rngFor } from './seed';
-import { activeHeroes, clone, complete, expectStep } from './state';
+import { activeHeroes, clone, complete, expectStep, mapOf, nextStep } from './state';
+import { node } from './graph';
 import type { CampaignShop, CampaignState } from './types';
 
 /** Tezgâh stoğu (seed'li: aynı sefer + düğüm + yenileme sayısı = aynı mallar). */
@@ -17,7 +18,8 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (d.slot !== 'weapon' || team.some((h) => canEquip(h.class, d))));
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
-  for (let i = 0; i < CONFIG.merchant.size; i++) {
+  const size = node(mapOf(s), nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  for (let i = 0; i < size; i++) {
     const rarity = rollDropRarity(rng, ilvl, 'normal');
     const pool = bases.filter((d) => !used.has(d.id));
     if (!pool.length) break;
@@ -31,9 +33,15 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   return out;
 }
 
-/** Tüccara varış: tezgâh kurulur (yalnızca tüccar adımında; zaten açıksa durum aynen). */
+/** Burada tüccar açılabilir mi: tüccar adımı ya da tüccarlı kasabanın kasaba adımı (T1; kasaba Leave'i tezgâhı kapatır). */
+export function merchantHere(s: CampaignState): boolean {
+  const step = nextStep(s);
+  return step.kind === 'merchant' || (step.kind === 'town' && !!node(mapOf(s), s.at).merchant);
+}
+
+/** Tüccara varış: tezgâh kurulur (tüccar adımında ya da tüccarlı kasabada; zaten açıksa durum aynen). */
 export function openCampaignShop(s: CampaignState): CampaignState {
-  expectStep(s, 'merchant');
+  if (!merchantHere(s)) throw new Error('The merchant is not here');
   if (s.shop?.node === s.at) return s;
   const t = clone(s);
   t.shop = { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0 };

@@ -53,7 +53,7 @@ export function mountCharacters(cat: Catalog): SectionApi {
         h('div', { class: 'char-info' },
           h('div', { class: 'row' },
             h('h3', { class: 'char-name', text: c.name, style: { color: c.color } }),
-            h('span', { class: 'badge', text: c.kind === 'summon' ? 'summon' : 'class' }),
+            h('span', { class: 'badge', text: c.kind === 'summon' ? 'summon' : c.kind === 'mob' ? 'mob' : 'class' }),
             c.testOnly ? h('span', { class: 'badge bad', text: 'TEST', title: 'Test class: left out of random teams' }) : null,
             c.hidden ? h('span', { class: 'badge bad', text: 'Hidden', title: 'Hidden developer class: not in the wiki class list or team selection; kept as an animation reference' }) : null,
             ...c.missing.map((m) => h('span', { class: 'badge bad', text: `no ${m} (placeholder)` })),

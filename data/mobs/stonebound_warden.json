@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'defender' ödünç; gerçek çizim (palette variant of shieldwarden) assets/sprites/stonebound_warden/idle.png + assets/avatars/stonebound_warden.png gelince spriteId 'stonebound_warden' yapılır (tek satır).",
+  "id": "stonebound_warden",
+  "name": "Stonebound Warden",
+  "family": "guardians",
+  "spriteId": "defender",
+  "color": "#8c8f8a",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "role": "Guardian · Tank",
+  "attributes": {
+    "str": 26,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 30,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 130
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "shield_bash",
+    "hold_the_line"
+  ],
+  "passive": {
+    "id": "bulwark_aura",
+    "name": "Bulwark Aura",
+    "icon": "aura",
+    "text": "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor.",
+    "effect": {
+      "type": "armorAura",
+      "pct": 0.4,
+      "maxStacks": 2
+    }
+  }
+}

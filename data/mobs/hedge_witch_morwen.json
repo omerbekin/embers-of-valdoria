@@ -1,0 +1,28 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'hexer' ödünç; gerçek çizim (palette variant of fen_witchling) assets/sprites/hedge_witch_morwen/idle.png + assets/avatars/hedge_witch_morwen.png gelince spriteId 'hedge_witch_morwen' yapılır (tek satır).",
+  "id": "hedge_witch_morwen",
+  "name": "Hedge Witch Morwen",
+  "family": "hexes",
+  "spriteId": "hexer",
+  "color": "#4f6a2f",
+  "logo": "rune",
+  "frontPriority": 7,
+  "role": "Hex · Leader",
+  "attributes": {
+    "str": 10,
+    "int": 8,
+    "dex": 6,
+    "luck": 28
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 90
+  },
+  "ai": "hexer",
+  "skills": [
+    "hex_bolt",
+    "bog_curse",
+    "lure_light"
+  ]
+}

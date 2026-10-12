@@ -1,10 +1,10 @@
 import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
-import { CONFIG, getMap } from './data';
+import { CONFIG, ENCOUNTERS, EVENTS, STORIES, getMap, type EventChoice } from './data';
 import { finalNode, forwardDistances, incoming, node, outgoing } from './graph';
 import { rngFor, shuffle } from './seed';
 import { emptyEquipment, SLOT_IDS } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
-import { emptyLootState, grantLoot } from './loot';
+import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
 import { nodeIlvl } from './power';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
@@ -54,6 +54,7 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   if (n.encounter) steps.push('battle');
   if (n.treasure) steps.push('treasure');
   if (n.event) steps.push('event');
+  if (n.story) steps.push('story'); // kasaba hikâye sahnesi (T5): kasaba eylemlerinden önce, bir kez
   if (n.type === 'town') steps.push('town');
   if (n.type === 'rest' || n.rest) steps.push('rest'); // dinlenme noktası ya da olaydan sonra dinlenme (Shepherd's Fold; Ömer 2026-10-11)
   if (n.type === 'merchant') steps.push('merchant');
@@ -61,7 +62,9 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   return steps;
 }
 
-export const isDone = (s: CampaignState, nodeId: string, kind: StepKind): boolean => s.done.includes(key(nodeId, kind));
+/** Adım bitti mi? Sahne (story), kasaba adımı bitmişse de bitmiş sayılır (sahneden önceki kayıtlar onu yeniden göstermez). */
+export const isDone = (s: CampaignState, nodeId: string, kind: StepKind): boolean =>
+  s.done.includes(key(nodeId, kind)) || (kind === 'story' && s.done.includes(key(nodeId, 'town')));
 
 /** Düğümün tüm adımları bitti mi? */
 export function nodeCleared(s: CampaignState, nodeId: string): boolean {
@@ -91,7 +94,11 @@ export function nextStep(s: CampaignState): NextStep {
       case 'treasure':
         return { kind: 'treasure', node: n.id, treasure: n.treasure! };
       case 'event':
+        // Seçenekli olayda savaş seçildiyse olay adımı o savaştır (kazanılınca olay biter)
+        if (s.eventChoice?.node === n.id && s.eventChoice.battle) return { kind: 'battle', node: n.id, encounter: s.eventChoice.battle };
         return { kind: 'event', node: n.id, event: n.event! };
+      case 'story':
+        return { kind: 'story', node: n.id, story: n.story! };
       case 'town':
         return { kind: 'town', node: n.id };
       case 'rest':
@@ -277,14 +284,95 @@ export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0):
   return arranged;
 }
 
-/** Tek tıkla biten adımlar: olay, hazine, kasaba (Leave). */
-export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 'town'): CampaignState {
+/** Tek tıkla biten adımlar: olay (seçenekli olayda "hiçbir şey yapmadan geç"), hazine, kasaba sahnesi, kasaba (Leave). */
+export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 'story' | 'town'): CampaignState {
   expectStep(s, kind);
   const t = clone(s);
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  if (kind === 'town') delete t.shop; // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1)
   complete(t, kind);
   return t;
+}
+
+// ---------------------------------------------------------------- kasaba sahnesi (T5) ve diyalog
+
+/** Diyalog cevaplarından hoşa gidenlerin sayısı (gizli sayaç). Geçersiz cevap hata. */
+export function storyLikes(storyId: string, answers: number[]): number {
+  const steps = STORIES[storyId]?.dialogue ?? [];
+  if (answers.length !== steps.length) throw new Error(`Answer all ${steps.length} questions`);
+  return steps.reduce((n, st, i) => {
+    const c = st.choices[answers[i]!];
+    if (!c) throw new Error(`Invalid answer at step ${i}`);
+    return n + (c.likes ? 1 : 0);
+  }, 0);
+}
+
+/** NPC takımı sevdi mi (hoşa giden cevap >= likeThreshold)? */
+export const storyLiked = (storyId: string, answers: number[]): boolean => storyLikes(storyId, answers) >= (STORIES[storyId]?.likeThreshold ?? 2);
+
+/**
+ * Kasaba sahnesini bitirir. Diyalog sahnesinde `answers` (adım başına seçilen cevabın sırası): NPC sevdiyse hediye item (torba ya da Spoils'ta
+ * geride kalan). Düz metin sahnede ya da cevapsız (otomatik çözüm) yalnızca biter.
+ */
+export function completeStory(s: CampaignState, answers?: number[]): CampaignState {
+  const step = expectStep(s, 'story') as Extract<NextStep, { kind: 'story' }>;
+  const def = STORIES[step.story];
+  const liked = !!(def?.dialogue?.length && answers && storyLiked(step.story, answers));
+  const t = completeSimple(s, 'story');
+  if (liked && def?.gift) grantGift(t, t.at, activeHeroes(t), step.story, def.gift.rarity);
+  return t;
+}
+
+// ---------------------------------------------------------------- seçenekli olaylar (N2)
+
+/** Seçeneğin oynanacak karşılaşması: listedeki ilk VAR OLAN (yoksa undefined). */
+export const choiceBattle = (c: EventChoice): string | undefined => c.battle?.find((id) => !!ENCOUNTERS[id]);
+
+/** Olayın şu an sunulabilen seçenekleri (savaşı olup karşılaşması henüz olmayanlar gizli). Seçenek yoksa boş. */
+export function eventChoices(eventId: string): EventChoice[] {
+  return (EVENTS[eventId]?.choices ?? []).filter((c) => !c.battle || !!choiceBattle(c));
+}
+
+/** Seçenek seçilebilir mi (altın yetiyor mu)? null = evet, yoksa sebep. */
+export function choiceBlocked(s: CampaignState, c: EventChoice): string | null {
+  return c.cost && s.gold < c.cost ? 'Not enough gold' : null;
+}
+
+/**
+ * Olay seçeneğini uygular. Savaşlı seçenek: olay savaşı bekler (nextStep 'battle'; applyBattle kazanınca `win` ödülünü verip olayı bitirir).
+ * Diğerleri anında biter. "Pay in blood" (hpLoss): yaşayan herkes mevcut canının o oranını kaybeder, kimse ölmez (Ömer 2026-10-12).
+ */
+export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
+  const step = expectStep(s, 'event') as Extract<NextStep, { kind: 'event' }>;
+  const c = eventChoices(step.event).find((x) => x.id === choiceId);
+  if (!c) throw new Error(`No such choice: ${choiceId}`);
+  const blocked = choiceBlocked(s, c);
+  if (blocked) throw new Error(blocked);
+  const t = clone(s);
+  t.gold -= c.cost ?? 0;
+  for (const h of t.roster) {
+    if (isFallen(h)) continue;
+    if (c.hpLoss) h.hpRatio = Math.max(0.001, Math.round(h.hpRatio * (1 - clamp01(c.hpLoss)) * 1000) / 1000);
+    if (c.heal) h.hpRatio = Math.round(clamp01(h.hpRatio + c.heal) * 1000) / 1000;
+  }
+  t.gold += c.gold ?? 0;
+  if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  const battle = choiceBattle(c);
+  t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
+  if (!battle) complete(t, 'event');
+  return t;
+}
+
+/** Olay savaşı kazanıldı: seçeneğin `win` ödülü (olağan savaş loot'u yerine), olay biter. `t` klonlanmış olmalı. */
+function winEventBattle(t: CampaignState): void {
+  const ec = t.eventChoice!;
+  const n = node(mapOf(t), t.at);
+  const c = EVENTS[n.event ?? '']?.choices?.find((x) => x.id === ec.choice);
+  if (c?.win?.gold) t.gold += c.win.gold;
+  if (c?.win?.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  delete ec.battle;
+  complete(t, 'event');
 }
 
 // ---------------------------------------------------------------- dinlenme noktası (Ömer 2026-10-11)
@@ -313,11 +401,15 @@ export function reviveAtCamp(s: CampaignState, heroId: string): CampaignState {
   return t;
 }
 
-/** Dinlen ve yola devam: ÜCRETSİZ, yaşayan herkes maks canın rest.heal oranı kadar iyileşir (düşmüşler kalkmaz: altınla diriltilir). */
+/** Bu düğümün dinlenme oranı: rest.heal, ya da olay seçeneğinin `restHeal`'ı (Shepherd's Fold "Share your bread": 1 = tam). */
+export const restHealOf = (s: CampaignState): number => (s.eventChoice?.node === s.at && s.eventChoice.restHeal !== undefined ? s.eventChoice.restHeal : CONFIG.rest.heal);
+
+/** Dinlen ve yola devam: ÜCRETSİZ, yaşayan herkes maks canın restHealOf oranı kadar iyileşir (düşmüşler kalkmaz: altınla diriltilir). */
 export function restAtCamp(s: CampaignState): CampaignState {
   expectStep(s, 'rest');
   const t = clone(s);
-  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + CONFIG.rest.heal) * 1000) / 1000;
+  const heal = restHealOf(t);
+  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(clamp01(h.hpRatio + heal) * 1000) / 1000;
   complete(t, 'rest');
   return t;
 }
@@ -359,6 +451,10 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     h.alive = true;
   }
   t.stats.victories++;
+  if (t.eventChoice?.node === t.at && t.eventChoice.battle) {
+    winEventBattle(t); // olay savaşı: düğümün savaş adımı zaten bitti
+    return t;
+  }
   // Zafer loot'u (items.md 3.1; zorluktan bağımsız, karar 6). Savaşa giren takım = bu sonuçtaki kahramanlar
   const fought = outcome.units.map((u) => heroById(t, u.heroId)).filter((h): h is Hero => !!h);
   const type = node(mapOf(t), t.at).type;
@@ -384,6 +480,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   const t = clone(s);
   t.at = to;
   t.path.push(to);
+  delete t.eventChoice;
   const n = node(mapOf(t), to);
   if (n.heal) healAll(t, n.heal);
   return t;
@@ -483,6 +580,7 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
       return applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
     case 'treasure':
     case 'event':
+    case 'story':
     case 'town':
       return completeSimple(s, step.kind);
     case 'rest': {

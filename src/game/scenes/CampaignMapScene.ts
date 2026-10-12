@@ -4,6 +4,14 @@ import { content } from '../../engine';
 import {
   CONFIG,
   EVENTS,
+  STORIES,
+  chooseEvent,
+  choiceBlocked,
+  completeStory,
+  eventChoices,
+  restHealOf,
+  storyLiked,
+  type EventChoice,
   TREASURES,
   acknowledgeHandover,
   grantAllLegendaries,
@@ -54,7 +62,7 @@ import { edgeFillers, mapArt } from '../map-art';
 import { placeArt } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
-import { H, W, classCard, crown, hpBar, openModal, type Modal } from '../campaign-ui';
+import { H, W, bodyText, classCard, crown, hpBar, openModal, type Modal } from '../campaign-ui';
 import { MAP_SCENE, MENU_SCENE, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
 import { classAvatar, classLogoBadge, ensureGlow } from '../menu-ui';
 import { sortByPrimary } from '../class-order';
@@ -64,7 +72,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, diamondPts, elBadge, elBody, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, diamondPts, elBadge, elBody, elButton, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
@@ -1106,7 +1114,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Mevcut düğümde dokunarak açılacak bir eylem var mı (savaş, kasaba, olay, hazine, sefer sonu). */
   private actionHere(): boolean {
-    return ['battle', 'town', 'event', 'treasure', 'rest', 'merchant', 'complete'].includes(nextStep(this.s).kind);
+    return ['battle', 'town', 'story', 'event', 'treasure', 'rest', 'merchant', 'complete'].includes(nextStep(this.s).kind);
   }
 
   /** Lejant (sağ alt, katlanabilir): 6 düğüm türü, kit paneli. */
@@ -1257,19 +1265,25 @@ export class CampaignMapScene extends Phaser.Scene {
         return;
       case 'company':
         return this.companyModal(step.size);
-      case 'town':
+      case 'town': {
+        // Kasaba (T1): ücretsiz tam şifa + diriltme (varışta) ve Odo'nun tezgâhı (tüccarlı kasabada; Leave tezgâhı kapatır)
+        const tn = node(this.map, step.node);
         this.modal = openModal(this, this.ui, {
-          title: node(this.map, step.node).name,
-          subtitle: node(this.map, step.node).subtitle,
-          text: CONFIG.texts.townRest,
-          height: 460,
+          title: tn.name,
+          subtitle: tn.subtitle,
+          text: tn.merchant ? `${CONFIG.texts.townRest}\n\nOdo the Peddler has set up his stall in the square.` : CONFIG.texts.townRest,
+          height: tn.merchant ? 500 : 460,
           buttons: [
             { label: 'Formation', run: () => this.openFormation() },
             { label: 'Gear', run: () => this.openGear() },
+            ...(tn.merchant ? [{ label: 'Trade', run: () => this.openTownMerchant(tn) }] : []),
             { label: 'Leave', primary: true, run: () => this.commit(completeSimple(this.s, 'town')) },
           ],
         });
         return;
+      }
+      case 'story':
+        return this.storyScene(step.story, step.node);
       case 'rest':
         return this.restModal(step.node);
       case 'merchant': {
@@ -1283,6 +1297,8 @@ export class CampaignMapScene extends Phaser.Scene {
       }
       case 'event': {
         const e = EVENTS[step.event] ?? { title: node(this.map, step.node).name, text: 'Nothing happens.' };
+        const choices = eventChoices(step.event);
+        if (choices.length) return this.choiceEvent(step.event, step.node, choices);
         this.modal = openModal(this, this.ui, { title: e.title, subtitle: node(this.map, step.node).subtitle, text: e.text, height: 500, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeSimple(this.s, 'event')) }] });
         return;
       }
@@ -1319,7 +1335,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const n = node(this.map, nodeId);
     const fallen = s.roster.filter((h) => isFallen(h) && !h.tutorial);
     const cost = reviveCost(s, nodeId);
-    const heal = Math.round(CONFIG.rest.heal * 100);
+    const heal = Math.round(restHealOf(s) * 100);
     const lines = [`Your company makes camp. Resting is free: every living hero recovers ${heal}% of their max HP.`];
     lines.push(fallen.length ? `Fallen heroes can be revived here for ${cost} gold each (they rise with ${Math.round(CONFIG.rest.reviveRatio * 100)}% HP). You have ${s.gold} gold.` : 'No one has fallen.');
     const revive = fallen.slice(0, 3).map((h) => ({
@@ -1339,6 +1355,105 @@ export class CampaignMapScene extends Phaser.Scene {
       height: 500,
       buttons: [...revive, { label: 'Gear', run: () => this.openGear() }, { label: 'Rest', primary: true, run: () => this.commit(restAtCamp(this.s)) }],
     });
+  }
+
+  /** Kasabada Odo'nun tezgâhı (T1): ortak tüccar ekranı; ayrılınca kasaba penceresine dönülür (tezgâh kasabadan çıkınca kapanır). */
+  private openTownMerchant(n: MapNode): void {
+    const root = document.getElementById('ui-root');
+    if (!root) return;
+    this.closeModal();
+    setState(openCampaignShop(this.s));
+    const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { sub: `Odo's stall · ${n.name}`, onLeave: () => this.advance() });
+    this.events.once('shutdown', closeShop);
+  }
+
+  /**
+   * Seçenek penceresi (olay ve diyalog ortak): metin + alt alta seçenek satırları (kit secondary düğme + sağında açıklama). Zorunlu seçim:
+   * zemine dokunmak kapatmaz.
+   */
+  private choiceModal(o: { title: string; subtitle?: string; text: string; rows: Array<{ label: string; hint?: string; dim?: boolean; run: () => void }> }): void {
+    // Telefonda (html.short / compact) daha geniş pencere, daha büyük satırlar (dokunma hedefi) ve okunur açıklama
+    const phone = this.compact();
+    const w = phone ? 1500 : 1240;
+    const probe = bodyText(this, 0, 0, o.text, w - 140);
+    const textH = probe.height;
+    probe.destroy();
+    const anyHint = o.rows.some((r) => r.hint);
+    const rowH = phone ? 100 : 80;
+    const h = Math.min(H - 20, 96 + (o.subtitle ? 40 : 0) + textH + 40 + o.rows.length * rowH + 30);
+    this.modal = openModal(this, this.ui, { title: o.title, ...(o.subtitle ? { subtitle: o.subtitle } : {}), text: o.text, width: w, height: h });
+    const a = this.modal.area;
+    const bw = anyHint ? (phone ? 560 : 470) : phone ? 1100 : 820;
+    const bx = anyHint ? a.x + 40 + bw / 2 : W / 2;
+    o.rows.forEach((r, i) => {
+      const y = a.y + 6 + i * rowH + rowH / 2;
+      const b = elButton(this, r.label, r.run, { kind: 'secondary', w: bw, h: phone ? 84 : 62, size: phone ? 24 : 19, ready: !r.dim });
+      b.root.setPosition(bx, y);
+      if (r.dim) b.root.setAlpha(0.5);
+      this.modal!.root.add(b.root);
+      if (r.hint) this.modal!.root.add(elBody(this, a.x + 40 + bw + 34, y, r.hint, phone ? 26 : 21, EL.NOTE, true, a.w - bw - 110).setOrigin(0, 0.5));
+    });
+  }
+
+  /** Seçenekli olay (N2): seçim -> sonuç metni (Continue ile kaydedilir) ya da olay savaşı. */
+  private choiceEvent(eventId: string, nodeId: string, choices: EventChoice[]): void {
+    const e = EVENTS[eventId]!;
+    const n = node(this.map, nodeId);
+    this.choiceModal({
+      title: e.title,
+      subtitle: n.name,
+      text: e.text,
+      rows: choices.map((c) => {
+        const blocked = choiceBlocked(this.s, c);
+        return {
+          label: c.label,
+          hint: `${c.hint ?? ''}${blocked ? ` (you have ${this.s.gold} gold)` : ''}`,
+          dim: !!blocked,
+          run: () => {
+            if (blocked) return this.toast(blocked);
+            const next = chooseEvent(this.s, c.id);
+            if (next.eventChoice?.battle) return this.commit(next); // olay savaşı: harita savaş adımına geçer
+            this.closeModal();
+            this.modal = openModal(this, this.ui, { title: e.title, subtitle: c.label, text: c.result ?? '', height: 480, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(next) }] });
+          },
+        };
+      }),
+    });
+  }
+
+  /** Kasaba hikâye sahnesi (T5): düz metin ya da diyalog (sorular, gizli beğeni sayacı, sevdiyse hediye item). Sis açma yok. */
+  private storyScene(storyId: string, nodeId: string): void {
+    const n = node(this.map, nodeId);
+    const def = STORIES[storyId] ?? { title: n.name, text: '' };
+    const dialogue = def.dialogue ?? [];
+    if (!dialogue.length) {
+      this.modal = openModal(this, this.ui, { title: def.title, subtitle: n.name, text: def.text, height: 600, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeStory(this.s)) }] });
+      return;
+    }
+    const answers: number[] = [];
+    const ask = (i: number): void => {
+      this.closeModal();
+      if (i >= dialogue.length) {
+        const liked = storyLiked(storyId, answers);
+        const text = liked ? `${def.liked ?? ''}${def.gift ? '\n\nHe presses a small bundle into your hands.' : ''}` : (def.disliked ?? '');
+        this.modal = openModal(this, this.ui, { title: def.title, subtitle: def.speaker ?? n.name, text, height: 460, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeStory(this.s, answers)) }] });
+        return;
+      }
+      const st = dialogue[i]!;
+      this.choiceModal({
+        title: def.title,
+        subtitle: def.speaker ?? n.name,
+        text: i === 0 ? `${def.text}\n\n${st.text}` : st.text,
+        rows: st.choices.map((c, k) => ({
+          label: c.label,
+          run: () => {
+            answers.push(k);
+            ask(i + 1);
+          },
+        })),
+      });
+    };
+    ask(0);
   }
 
   /** Yeni durumu kaydeder, haritayı yeniler, sonraki adıma geçer. */

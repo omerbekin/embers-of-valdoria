@@ -187,7 +187,7 @@ export interface WikiFiles {
 // ---------------------------------------------------------------- skill'ler
 
 const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id }));
-const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses });
+const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses, ...content.mobs });
 const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds });
 
 /** Skill'in sahibine ait stat (açıklamadaki "(123)" gibi hesaplanmış sayılar için); sahibi yoksa ilk class. */
@@ -351,7 +351,7 @@ function wikiMiniGrid(skill: SkillDef): MiniShape | null {
 function areaSkillTable(): { head: string[]; rows: string[][] } {
   const waves: Record<string, string> = { row: 'row by row', column: 'lane by lane', distance: 'outward from the anchor' };
   const rows = allSkills()
-    .filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && s.area && !content.classes[skillOwner(s.id).id]?.testOnly)
+    .filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && s.area && !content.classes[skillOwner(s.id).id]?.testOnly && skillOwner(s.id).kind !== 'mob') // mob skill'leri Enemies makalelerinde
     .map((s) => {
       const info = describeSkill(s, statsFor(s), f, unitDefs(), effectDefs());
       const w = s.area!.stages ? `${waves[s.area!.stages]}${s.area!.reverse ? ' (reversed)' : ''}` : '-';
@@ -761,7 +761,7 @@ export function buildMechanics(): WikiArticle[] {
       endlessArticle(),
     );
   }
-  out.push(...bossArticles());
+  out.push(...bossArticles(), ...mobArticles());
   return out;
 }
 
@@ -920,6 +920,36 @@ function bossArticles(): WikiArticle[] {
     );
   }
   return out;
+}
+
+/** Mob ailesi görünen adları (docs/design/campaign/fill-plan.md 2.2). */
+const MOB_FAMILY: Record<string, string> = { bandits: 'Bandits', beasts: 'Beasts', ember_cult: 'Ember Cult', guardians: 'Guardians', hexes: 'Hexes', undead: 'Undead', fanatics: 'Fanatics', morvane_army: "Morvane's Army" };
+
+/** Sefer mobları (data/mobs; N1): aile başına bir makale (Enemies). Sayılar veriden (zorluk öncesi can; skill açıklamaları skill-info'dan). */
+function mobArticles(): WikiArticle[] {
+  const byFamily = new Map<string, CombatantDef[]>();
+  for (const def of Object.values(content.mobs)) {
+    const fam = def.family ?? 'other';
+    byFamily.set(fam, [...(byFamily.get(fam) ?? []), def]);
+  }
+  return [...byFamily].map(([fam, defs]) => {
+    const famName = MOB_FAMILY[fam] ?? fam;
+    return article(`enemies-${fam}`, 'Enemies', famName, defs[0]!.logo, [
+      p(`Campaign enemies of the ${famName} family. HP is before campaign and difficulty scaling.`),
+      ...defs.map((def) =>
+        list(
+          `${def.name} (${def.role ?? 'Enemy'}): ${def.stats.hp} HP, ${def.stats.armor} armor, speed ${def.stats.spd}.`,
+          ...def.skills.flatMap((id) => {
+            const sk = content.skills[id];
+            if (!sk) return [];
+            const info = describeSkill(sk, def.stats, f, unitDefs(), effectDefs());
+            return [`${sk.name} [${skillRange(sk)}]:${info.lines.join('; ')}${sk.cooldown ? `; cooldown ${sk.cooldown}` : ''}`];
+          }),
+          ...(def.passive ? [`${def.passive.name} (passive)${def.passive.text ? `: ${def.passive.text}` : ''}`] : []),
+        ),
+      ),
+    ]);
+  });
 }
 
 /** Sefer zorluk satırı (campaign.json > difficulties): her zorluğun metni + düşman güçlendirmesi yüzde olarak. */

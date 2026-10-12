@@ -245,10 +245,14 @@ describe('tutorial takım akışı', () => {
     expect(leaderOf(s)!.class).toBe('druid');
     expect(s.roster.some((h) => h.tutorial)).toBe(false);
     expect(activeHeroes(s)).toHaveLength(3);
+    expect(nextStep(s)).toEqual({ kind: 'story', node: '4', story: 'ash_on_the_wind' }); // kasaba sahnesi (T5), sonra kasaba
+    s = completeSimple(s, 'story');
     expect(nextStep(s)).toEqual({ kind: 'town', node: '4' });
     s = completeSimple(s, 'town');
     expect(partyCap(s)).toBe(3);
     s = playTo(s, '7');
+    expect(nextStep(s).kind).toBe('story');
+    s = completeSimple(s, 'story');
     expect(nextStep(s).kind).toBe('town');
     s = completeSimple(s, 'town');
     const vol = nextStep(s);

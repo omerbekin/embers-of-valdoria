@@ -1,6 +1,6 @@
 // Seferde loot'un duruma yazılması (saf; durumu YERİNDE değiştirir, çağıran klonlamış olmalı: state.ts > applyBattle / completeSimple).
 // Zar: hash(seed, harita, düğüm, 'loot', tür, oynama sayısı): yenilgi/deneme sayısı ve Retreat loot'u DEĞİŞTİRMEZ (save-scum yok, items.md 3.4).
-import { BAG_SIZE, itemDef, makeItem, rollLoot, rollRareDrop, type ItemInstance, type LootKind } from '../progression';
+import { BAG_SIZE, ITEMS, canEquip, itemDef, makeItem, rollLoot, rollRareDrop, type ItemInstance, type LootKind, type RarityId } from '../progression';
 import { chapterOf, nodeIlvl } from './power';
 import { rngFor } from './seed';
 import type { CampaignState, Hero, LootDrop } from './types';
@@ -103,4 +103,31 @@ export function acknowledgeLoot(s: CampaignState): CampaignState {
   const t = JSON.parse(JSON.stringify(s)) as CampaignState;
   delete t.pendingLoot;
   return t;
+}
+
+/**
+ * Hediye item'i (kasaba diyalog sahnesi; Ömer 2026-10-12): düğümün item seviyesine kadar bir taban, `rarity` nadirliğinde (Common), takımdan biri
+ * için zarlanır (seed'li: aynı sefer + düğüm + etiket = aynı item). Torbaya; torba doluysa Spoils kartında "geride kalan". `t` klonlanmış olmalı.
+ */
+export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: string, rarity: RarityId = 'common'): LootDrop | null {
+  const ilvl = Math.max(1, nodeIlvl(t.mapId, nodeId));
+  const rng = rngFor(t.seed, t.mapId, nodeId, 'gift', tag);
+  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (d.slot !== 'weapon' || party.some((h) => canEquip(h.class, d))));
+  if (!bases.length) return null;
+  const d = bases[rng.int(0, bases.length - 1)]!;
+  const fits = party.filter((h) => canEquip(h.class, d));
+  const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
+  const rolled = makeItem(d.id, '', rngFor(t.seed, t.mapId, nodeId, 'gift-roll', tag), { rarity, ilvl, ...(forClass ? { forClass } : {}) });
+  let drop: LootDrop;
+  if (t.inventory.length < BAG_SIZE) {
+    const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
+    t.inventory.push(inst);
+    drop = { node: nodeId, kind: 'treasure', items: [inst.uid], gold: 0 };
+  } else drop = { node: nodeId, kind: 'treasure', items: [], gold: 0, left: [d.id], leftRolls: [rolled.rolls] };
+  const prev = t.pendingLoot;
+  t.pendingLoot =
+    prev && prev.node === nodeId
+      ? { ...prev, items: [...prev.items, ...drop.items], ...(drop.left ? { left: [...(prev.left ?? []), ...drop.left], leftRolls: [...(prev.left ?? []).map((_, i) => prev.leftRolls?.[i]), ...drop.leftRolls!] } : {}) }
+      : drop;
+  return drop;
 }

@@ -9,7 +9,7 @@ import { openMerchant, type MerchantSource } from '../ui/merchant-screen';
  * seferin saf tüccar kurallarıyla (src/campaign/merchant.ts) açar. Ekran değişirse yalnızca bu dosya uyarlanır. Kuşanma Gear kaynağıyla aynı.
  * İşlem sonuç vermezse (altın / yer yok) kurallar Error fırlatır: ekran uyarır.
  */
-export function campaignMerchantSource(get: () => CampaignState, set: (s: CampaignState) => void): MerchantSource {
+export function campaignMerchantSource(get: () => CampaignState, set: (s: CampaignState) => void, sub = 'Travelling merchant · Forward Camp'): MerchantSource {
   const gear = campaignGearSource(get, set);
   const apply = (fn: (s: CampaignState) => CampaignState): void => set(fn(get()));
   return {
@@ -24,12 +24,12 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
     reroll: () => apply((s) => rerollCampaignShop(s)),
     lines: T.merchantLines,
     name: T.merchantName,
-    sub: 'Travelling merchant · Forward Camp',
+    sub,
   };
 }
 
 /** Sefer tüccarını açar (varışta karşılama). `onLeave`: oyuncu ayrılınca (sahne düğüm adımını tamamlar). */
-export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { onLeave: () => void }): () => void {
+export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { onLeave: () => void; sub?: string }): () => void {
   // Ekran kendini kapatmaz (Endless'ta da çağıran kapatır): Move on önce ekranı kapatır, sonra sahne adımı tamamlar (tek sefer)
   let close: (() => void) | null = null;
   const leave = (): void => {
@@ -39,7 +39,7 @@ export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState
     c();
     o.onLeave();
   };
-  close = openMerchant(root, campaignMerchantSource(get, set), { welcome: true, onLeave: leave });
+  close = openMerchant(root, campaignMerchantSource(get, set, o.sub), { welcome: true, onLeave: leave });
   return () => {
     const c = close;
     close = null;

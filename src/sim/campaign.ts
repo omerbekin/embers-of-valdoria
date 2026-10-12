@@ -259,6 +259,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
         }
         case 'treasure':
         case 'event':
+        case 'story':
         case 'town': {
           const pre = s;
           const at = s.at;

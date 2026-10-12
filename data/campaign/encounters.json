@@ -55,25 +55,25 @@
   "bog_ambush": {
     "name": "Bog Lurkers",
     "units": [
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
-      { "class": "druid", "slot": 6, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
-      { "class": "hexer", "slot": 8, "mods": { "hpMult": 0.9, "powerMult": 0.95 } }
+      { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.2, "powerMult": 1.1 } }
     ]
   },
   "iron_pass_ambush": {
     "name": "Iron Pass Ambush",
     "units": [
-      { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.6, "powerMult": 0.7 } },
-      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.6, "powerMult": 0.7 } },
-      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.6, "powerMult": 0.7 } }
+      { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.9 } },
+      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.9, "powerMult": 0.9 } },
+      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 0.9, "powerMult": 0.9 } }
     ]
   },
   "mine_wardens": {
     "name": "Mine Wardens",
     "units": [
-      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } },
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } },
-      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.85, "statMult": 1.0, "powerMult": 0.9 } }
+      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.15, "powerMult": 1.05 } },
+      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 1.15, "powerMult": 1.05 } },
+      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 1.15, "powerMult": 1.05 } }
     ]
   },
   "vault_keepers": {
@@ -162,25 +162,25 @@
   "windy_moor": {
     "name": "Moor Raiders",
     "units": [
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.65, "powerMult": 0.75 } },
-      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.65, "powerMult": 0.75 } },
-      { "class": "gambler", "slot": 8, "mods": { "hpMult": 0.65, "powerMult": 0.75 } }
+      { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.95, "powerMult": 0.95 } }
     ]
   },
   "witchs_hut_guard": {
     "name": "Hut Guardians",
     "units": [
-      { "class": "undead", "slot": 1, "name": "Bog Thrall", "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "druid", "slot": 6, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "hexer", "slot": 7, "name": "Hedge Witch", "mods": { "hpMult": 0.8, "powerMult": 0.85 } }
+      { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.1, "powerMult": 1 } },
+      { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.1, "powerMult": 1 } },
+      { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.1, "powerMult": 1 } }
     ]
   },
   "charcoal_camp": {
     "name": "Charcoal Burners",
     "units": [
-      { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.55, "powerMult": 0.65 } },
-      { "class": "cutthroat", "slot": 2, "mods": { "hpMult": 0.55, "powerMult": 0.65 } },
-      { "class": "druid", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.65 } }
+      { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
+      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
+      { "class": "charcoal_burner", "slot": 8, "mods": { "hpMult": 0.85, "powerMult": 0.85 } }
     ]
   },
   "grave_field": {

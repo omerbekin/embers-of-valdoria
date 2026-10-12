@@ -1,0 +1,24 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'druid' ödünç; gerçek çizim (new base sprite) assets/sprites/will_o_wisp/idle.png + assets/avatars/will_o_wisp.png gelince spriteId 'will_o_wisp' yapılır (tek satır).",
+  "id": "will_o_wisp",
+  "name": "Will-o'-Wisp",
+  "family": "hexes",
+  "spriteId": "druid",
+  "color": "#6fc9b8",
+  "logo": "leaf",
+  "frontPriority": 8,
+  "role": "Hex · Support",
+  "attributes": {
+    "str": 6,
+    "int": 22,
+    "dex": 12,
+    "luck": 18
+  },
+  "armor": 4,
+  "magicArmor": 0,
+  "ai": "healer",
+  "skills": [
+    "wisp_spark",
+    "marsh_glow"
+  ]
+}
