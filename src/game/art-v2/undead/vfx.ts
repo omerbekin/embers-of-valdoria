@@ -60,7 +60,8 @@ const facing = (v: CombatantView): number => (v.combatant.side === 'party' ? 1 :
 /** Sprite'ın ekrandaki genişliği (birim kutusu w daha geniş olabilir). */
 const spriteW = (v: CombatantView): number => Math.abs(v.sprite.displayWidth * v.container.scaleX) || v.w * 0.6;
 /** Lich'in ruh ateşli avucu (sprite'ta öndeki el: idle.png'de genişliğin ~%40'ı önde, boyun ~2/3'ü). */
-const handOf = (v: CombatantView): Pt => ({ x: v.container.x + facing(v) * spriteW(v) * 0.4, y: v.container.y - v.h * 0.64 });
+// v2 pozlu birim (Pose Tester): silahın ucu / tılsımlı el (CombatantView.castPoint), yoksa sprite oranı
+const handOf = (v: CombatantView): Pt => v.castPoint() ?? { x: v.container.x + facing(v) * spriteW(v) * 0.4, y: v.container.y - v.h * 0.64 };
 /** Lich asasının kristali (arkadaki el, tepede). */
 const staffOf = (v: CombatantView): Pt => ({ x: v.container.x - facing(v) * spriteW(v) * 0.4, y: v.container.y - v.h * 0.92 });
 /** Göğüs (bağ / ruh çıkışı). */

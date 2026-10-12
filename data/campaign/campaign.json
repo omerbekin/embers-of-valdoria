@@ -5,6 +5,8 @@
   "rest": { "heal": 0.5, "reviveRatio": 0.5, "reviveCost": { "base": 20, "perIlvl": 6 } },
   "_merchant": "Sefer tüccarı (Odo; Ömer 2026-10-11; Forward Camp): Endless tüccarının kuralları (alım / satım / geri alım / yenileme); stok tek nadirlik tablosundan (items.json > dropRarity), taban item'ler ve örnek seviyesi düğümün item seviyesinden; fiyat = örneğin değeri, satış = değerin yarısı.",
   "merchant": { "size": 9, "rerollCost": 15, "buybackSize": 4 },
+  "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
+  "townScreen": { "heroHeight": 250, "feetY": 0.9, "feetYPhone": 0.86, "gap": 230, "labelSize": 21, "labelSizePhone": 34 },
   "rules": {
     "carryHp": true,
     "victoryHeal": 0.25,
@@ -36,6 +38,8 @@
     "volunteer": "A volunteer catches up with you at the city gate.",
     "recruitBefore": "A wanderer on the road offers to join you. Choose one companion.",
     "townRest": "Your company rests by the fire. Everyone is back to full health, and the fallen are back on their feet.",
+    "townRested": "Your company has rested: everyone healed and revived.",
+    "townRecruit": "Fighters at the barracks offer their swords. Choose one companion, or come back before you leave.",
     "complete": "The Ash Curse is broken. Valdoria is free again."
   },
   "tips": {

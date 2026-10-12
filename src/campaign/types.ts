@@ -67,11 +67,33 @@ export interface MapNode {
   merchantSize?: number;
   /** Kasabaya girişte bir kez oynayan hikâye sahnesi (events.json > stories; T5, yalnızca metin). */
   story?: string;
+  /** Kasaba ekranı (Ömer 2026-10-12): tam ekran arka plan + tıklanabilir yerler (src/campaign/town.ts, src/game/town-screen.ts). */
+  scene?: TownSceneDef;
   /**
    * Bu düğümün savaşına özel rütbe çarpanı (yalnızca seferde; karşılaşma Endless ile ortaksa onu bozmadan ayar). Zorluğun enemyTier'ı
    * gibi rütbe -> çarpan; noTierMods'a bakmaz (bilinçli düğüm ayarı). A1-x: boss'lar 21 duraklık yolda güçlenen takıma göre (madde 305).
    */
   enemyTierMods?: Partial<Record<UnitTier, DifficultyEnemyMods>>;
+}
+
+/** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
+export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave';
+
+/** Kasaba ekranında tıklanabilir yer. `rect` = arka plan görselinin oranı [x0, y0, x1, y1] (0-1); görsel ölçeklenince birlikte ölçeklenir. */
+export interface TownHotspot {
+  id: string;
+  action: TownAction;
+  label: string;
+  rect: [number, number, number, number];
+  /** Eylem bir şey sunmadığında gösterilen metin (ör. adayı olmayan kasabanın ilan panosu). */
+  note?: string;
+}
+
+/** Kasaba ekranı: arka plan (assets/towns/<background>.webp), dikey odak (kırpılırken korunacak satır, 0-1) ve yerler. */
+export interface TownSceneDef {
+  background: string;
+  focusY?: number;
+  hotspots: TownHotspot[];
 }
 
 export interface MapEdge {
@@ -167,6 +189,8 @@ export interface CampaignConfig {
   rest: { heal: number; reviveRatio: number; reviveCost: { base: number; perIlvl: number } };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
   merchant: { size: number; rerollCost: number; buybackSize: number };
+  /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
+  townScreen: { heroHeight: number; feetY: number; feetYPhone: number; gap: number; labelSize: number; labelSizePhone: number };
 }
 
 /** Kadrodaki bir karakter. hpRatio 0-1 (savaştan savaşa taşınır). */

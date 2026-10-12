@@ -28,7 +28,10 @@ type Img = Phaser.GameObjects.Image;
 /** Karakterin baktığı yön: oyuncu sağa (+1), düşman sola (-1). */
 const face = (v: CombatantView): number => (v.combatant.side === 'party' ? 1 : -1);
 /** Mage'in avucu (mavi alevli el) ve asasının kristali (sprite oranlarından). */
-const handOf = (v: CombatantView): Pt => ({ x: v.container.x + face(v) * v.w * 0.38, y: v.container.y - v.h * 0.71 });
+// v2 pozlu birim (Pose Tester): silahın ucu / tılsımlı el (CombatantView.castPoint), yoksa sprite oranı
+const handOf = (v: CombatantView): Pt => v.castPoint() ?? { x: v.container.x + face(v) * v.w * 0.38, y: v.container.y - v.h * 0.71 };
+/** Mührün / okun avuçtan uzaklığı (asa ucunda neredeyse sıfır). */
+const lead = (v: CombatantView): number => (v.castPoint() ? 12 : 44);
 const staffOf = (v: CombatantView): Pt => ({ x: v.container.x - face(v) * v.w * 0.43, y: v.container.y - v.h * 0.92 });
 
 // =====================================================================================================================
@@ -591,13 +594,13 @@ const fireBolt: V2Vfx = async (c, k) => {
   c.actor.play('cast');
   c.sfx('flameIgnite');
   palmFlare(c, k, hand, 240);
-  runeSigil(c, k, hand.x + f * 44, hand.y, 92, 1, { open: 200, hold: 200, flatX: 0.3, tint: 0xe8b860, alpha: 0.75 });
+  runeSigil(c, k, hand.x + f * lead(c.actor), hand.y, 92, 1, { open: 200, hold: 200, flatX: 0.3, tint: 0xe8b860, alpha: 0.75 });
   await k.wait(c.scene, k.slow(270));
   c.actor.play('idle');
   await Promise.all(
     c.targets.map(async (t) => {
       c.sfx('flameRoar');
-      const from = { x: hand.x + f * 44, y: hand.y };
+      const from = { x: hand.x + f * lead(c.actor), y: hand.y };
       const to = k.spot(t);
       const dir = to.x >= from.x ? 1 : -1;
       const arc = Math.min(50, Math.abs(to.x - from.x) * 0.05);

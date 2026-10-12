@@ -11,3 +11,4 @@ export * from './power';
 export * from './gear';
 export * from './loot';
 export * from './merchant';
+export * from './town';

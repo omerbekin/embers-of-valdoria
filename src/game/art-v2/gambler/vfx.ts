@@ -43,8 +43,9 @@ function facing(c: VfxCtx): number {
   return c.actor.combatant.side === 'party' ? 1 : -1;
 }
 /** Kart eli (önde, yukarıda) ve zar eli (arkada, bel hizasında): idle.png'ye göre. */
-const cardHand = (c: VfxCtx, d: number): Pt => ({ x: c.actor.container.x + d * c.actor.w * 0.3, y: c.actor.container.y - c.actor.h * 0.78 });
-const diceHand = (c: VfxCtx, d: number): Pt => ({ x: c.actor.container.x - d * c.actor.w * 0.3, y: c.actor.container.y - c.actor.h * 0.5 });
+// v2 pozlu birim (Pose Tester): silahın ucu / tılsımlı el (CombatantView.castPoint), yoksa sprite oranı
+const cardHand = (c: VfxCtx, d: number): Pt => c.actor.castPoint() ?? { x: c.actor.container.x + d * c.actor.w * 0.3, y: c.actor.container.y - c.actor.h * 0.78 };
+const diceHand = (c: VfxCtx, d: number): Pt => c.actor.castPoint() ?? { x: c.actor.container.x - d * c.actor.w * 0.3, y: c.actor.container.y - c.actor.h * 0.5 };
 const chest = (t: CombatantView): Pt => ({ x: t.container.x, y: t.container.y - t.h * 0.55 });
 const feetOf = (t: CombatantView): Pt => ({ x: t.container.x, y: t.container.y - 6 });
 

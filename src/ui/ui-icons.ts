@@ -34,7 +34,7 @@ export const UI_ICON_FALLBACK: Record<UiIconKind, IconKind | null> = {
 export const UI_ICON_LABEL: Record<UiIconKind, string> = {
   rest: 'Rest (battle HUD global action)',
   skip: 'Skip Turn (battle HUD global action)',
-  move: 'Move (battle HUD global action)',
+  move: 'Move (battle HUD global action); in-game Menu > Retreat',
   cooldown: 'Cooldown (skill buttons, tooltips)',
   rage: 'Rage (Warrior resource, skill costs)',
   luckyEscape: 'Lucky Escape pip (Luck primary)',
@@ -43,11 +43,11 @@ export const UI_ICON_LABEL: Record<UiIconKind, string> = {
   gold: 'Gold (Gear, campaign map, Endless camp / merchant)',
   bag: 'Bag counter (Gear, Endless camp / merchant)',
   gear: 'Gear button (campaign map, Endless camp)',
-  formation: 'Formation button (campaign map)',
-  codex: 'Codex (not used yet: menus are text-only)',
-  settings: 'Settings (not used yet: menus are text-only)',
+  formation: 'Formation button (campaign map); in-game Menu > Leave (back to team select)',
+  codex: 'Codex (in-game Menu)',
+  settings: 'Settings (in-game Menu)',
   fullscreen: 'Fullscreen (not used: top-right keeps the thin line icon)',
-  menu: 'Menu (not used: top-right keeps the text button)',
+  menu: 'Main Menu (in-game Menu; the top-right Menu stays a text button)',
 };
 
 export const UI_ICON_PREFIX = 'ui:';

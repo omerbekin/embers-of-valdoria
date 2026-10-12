@@ -510,7 +510,8 @@
             "x": 295,
             "y": 155,
             "angle": 80
-          }
+          },
+          "open": "off"
         },
         "idle2": {
           "box": {
@@ -690,7 +691,8 @@
             "x": 308,
             "y": 120,
             "angle": 60
-          }
+          },
+          "open": "off"
         },
         "hit": {
           "box": {
@@ -733,6 +735,99 @@
         "two": {
           "family": "greataxes",
           "look": "dane"
+        }
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 30,
+            "dy": 40
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 38
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 38
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
         }
       }
     }
@@ -973,7 +1068,7 @@
             "x": 149,
             "y": 292
           },
-          "length": 200
+          "length": 160
         }
       },
       "order": [
@@ -1009,7 +1104,7 @@
             "x": 169,
             "y": 234
           },
-          "length": 80
+          "length": 115
         },
         "coin": {
           "w": 364,

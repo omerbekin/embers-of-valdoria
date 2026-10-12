@@ -112,6 +112,12 @@ export class GameMenu {
         if (!this.open || isSettingsOpen()) return;
         if (e.key === '`' || e.key === 'F2') return; // debug menüsü kısayolu çalışmaya devam eder
         e.stopImmediatePropagation(); // diğer kısayollar (1-4, Enter...) menü açıkken oyuna gitmez
+        if (e.key === 'ArrowDown' || e.key === 'ArrowUp') {
+          // ↑ / ↓ satırlar (ya da onay düğmeleri) arasında dolaşır; Enter / Space odaktaki satırı seçer (düğmenin kendi davranışı)
+          e.preventDefault();
+          this.moveFocus(e.key === 'ArrowDown' ? 1 : -1);
+          return;
+        }
         if (e.key !== 'Escape') return;
         e.preventDefault();
         if (!this.confirmBox.hidden) this.hideConfirm();
@@ -176,15 +182,40 @@ export class GameMenu {
 
   private build(spec: NonNullable<ReturnType<typeof menuItems>>): void {
     this.list.replaceChildren();
+    const icons: Array<[MenuItemId, HTMLImageElement]> = [];
     for (const id of spec.items) {
-      // Kutusuz satır (ana menü sütunu dili); Yes / No onay düğmeleri kit düğmesi kalır
+      // Kutusuz, ortalı satır (Ömer 2026-10-12): ikon + yazı birlikte ortada, ince ayırıcı; Yes / No onay düğmeleri kit düğmesi kalır
       const b = el('button', `gm-row${id === 'resume' ? ' primary' : ''}`);
       b.type = 'button';
-      b.append(el('span', '', (id === 'retreat' ? this.hooks.retreatLabel?.() : undefined) ?? spec.labels?.[id] ?? MENU_LABELS[id]));
+      const icon = el('img', 'gm-icon');
+      icon.alt = '';
+      icon.draggable = false;
+      icons.push([id, icon]);
+      b.append(icon, el('span', '', (id === 'retreat' ? this.hooks.retreatLabel?.() : undefined) ?? spec.labels?.[id] ?? MENU_LABELS[id]));
       b.dataset.item = id;
       b.addEventListener('click', () => this.pick(id, spec.confirm[id]));
       this.list.append(b);
     }
+    // İkonlar tembel yüklenir (src/ui/menu-icons.ts: ikon motoru ana menünün ilk indirmesine girmesin); yer önceden ayrılı, satır kaymaz
+    void import('./menu-icons').then(({ menuIconUrl }) => {
+      for (const [id, img] of icons) {
+        const url = menuIconUrl(id);
+        if (url) img.src = url;
+        else img.classList.add('empty');
+      }
+    });
+  }
+
+  /** Klavye odağını görünen satırlar (ya da onay düğmeleri) arasında bir adım taşır (sonda başa döner). */
+  private moveFocus(step: number): void {
+    const host = this.confirmBox.hidden ? this.list : this.confirmBox;
+    const items = [...host.querySelectorAll<HTMLButtonElement>('button')];
+    if (!items.length) return;
+    // Odak yoksa başlangıç seçili satırdır (Resume, vurgulu); ilk ↓ ondan sonrakine geçer
+    const focused = items.indexOf(document.activeElement as HTMLButtonElement);
+    const at = focused >= 0 ? focused : items.findIndex((b) => b.classList.contains('primary'));
+    const next = at < 0 ? (step > 0 ? 0 : items.length - 1) : (at + step + items.length) % items.length;
+    items[next]!.focus({ preventScroll: true });
   }
 
   private pick(id: MenuItemId, confirm: string | undefined): void {

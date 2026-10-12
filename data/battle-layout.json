@@ -25,7 +25,17 @@
       "proving-grounds-rain": 0.653,
       "duelling-ring-moon": 0.574,
       "duelling-ring-storm": 0.574,
-      "duelling-ring-snow": 0.574
+      "duelling-ring-snow": 0.574,
+      "_zones": "2026-10-12 sefer bölge arka planları (tools/make-zone-backgrounds.mjs): kaynakta ölçülen çit / duvar dibi kırpmada 0,65'e oturtulur (1080 yükseklikte ekran y 702, kaydırma yok).",
+      "border-road": 0.65,
+      "windy-moor": 0.65,
+      "iron-pass": 0.65,
+      "misty-marsh": 0.65,
+      "grave-field": 0.65,
+      "pilgrim-road": 0.65,
+      "ashen-plain": 0.65,
+      "thornwood-hollow": 0.65,
+      "ember-road": 0.65
     },
     "cardFocus": {
       "_not": "Play kartı görsellerinin odak noktası [x, y] (görselin kesri): kartın tam ortasına gelir, kart boşluksuz dolar (gerekirse yakınlaşır; src/game/wide-map.ts > focusCrop). Ölçüm 2026-10-09: Quick Battle kalenin parmaklıklı kapısı, Multiplayer büyük taş kemerin açıklığı. 2026-10-09 (Ömer: hafif zoom out): Multiplayer odağı dikeyde ortada (y 0,5 = yakınlaşma yok, kart tam yükseklikte kaplar; eskiden ~1,7x) ve yatayda kemerli kalıntı ile ay arasında: kalıntı kartın ortasında-solunda, ay sağ üstte görünür.",

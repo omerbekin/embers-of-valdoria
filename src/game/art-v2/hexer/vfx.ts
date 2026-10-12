@@ -42,9 +42,10 @@ function facing(c: VfxCtx): number {
   return c.actor.combatant.side === 'party' ? 1 : -1;
 }
 /** idle.png (kapüşonsuz): asa ucu arkada-yukarıda, pullar asanın üst kısmında, kandil önde bel hizasında. */
-const staffTip = (c: VfxCtx, d: number): Pt => ({ x: c.actor.container.x - d * c.actor.w * 0.24, y: c.actor.container.y - c.actor.h * 0.86 });
-const charmsAt = (c: VfxCtx, d: number): Pt => ({ x: c.actor.container.x - d * c.actor.w * 0.2, y: c.actor.container.y - c.actor.h * 0.7 });
-const lantern = (c: VfxCtx, d: number): Pt => ({ x: c.actor.container.x + d * c.actor.w * 0.27, y: c.actor.container.y - c.actor.h * 0.46 });
+// v2 pozlu birim (Pose Tester): göz / kandil = bebeği tutan el (CombatantView.castPoint), pullar = öteki el; yoksa sprite oranı
+const staffTip = (c: VfxCtx, d: number): Pt => c.actor.castPoint() ?? { x: c.actor.container.x - d * c.actor.w * 0.24, y: c.actor.container.y - c.actor.h * 0.86 };
+const charmsAt = (c: VfxCtx, d: number): Pt => c.actor.handPoint('off') ?? { x: c.actor.container.x - d * c.actor.w * 0.2, y: c.actor.container.y - c.actor.h * 0.7 };
+const lantern = (c: VfxCtx, d: number): Pt => c.actor.castPoint() ?? { x: c.actor.container.x + d * c.actor.w * 0.27, y: c.actor.container.y - c.actor.h * 0.46 };
 const chest = (t: CombatantView): Pt => ({ x: t.container.x, y: t.container.y - t.h * 0.55 });
 const headTop = (t: CombatantView): Pt => ({ x: t.container.x, y: t.container.y - t.h - 18 });
 const feetOf = (v: CombatantView): Pt => ({ x: v.container.x, y: v.container.y - 4 });

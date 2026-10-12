@@ -557,9 +557,9 @@ body {
 .gm-box {
   display: flex;
   flex-direction: column;
-  width: min(380px, 100%);
+  width: min(330px, 100%); /* ortalı maddeler (Ömer 2026-10-12): eski 380 px'ten biraz dar */
   max-height: 100%;
-  padding: 22px 30px 20px;
+  padding: 22px 28px 20px;
   overflow: hidden auto;
   zoom: 1.15; /* oyun içi Menu %15 büyük (Ömer 2026-10-11); telefonda html.short kuralı %10 küçültür */
 }
@@ -568,8 +568,9 @@ body {
   font-size: 30px;
 }
 
-/* Menü maddeleri (Ömer 2026-10-09): ana menünün sol sütun dili. Kutusuz satır: içi boş elmas + Cinzel yazı + ince ayırıcı;
-   üstüne gelince / seçiliyken kor elmas, açık altın yazı, parıltı ve 6 px sağa. Resume ilk satır, kor elmaslı. */
+/* Menü maddeleri (Ömer 2026-10-12, ortak ortalı menü): kutusuz satır, ikon + Cinzel yazı birlikte ortada, ince ayırıcı. İkon yazının
+   büyük harf yüksekliğinde (src/ui/menu-icons.ts: oyunun aynı işlev için kullandığı ikon); bekleyen ikon sıcak soluk altın tonda, üstüne
+   gelince / klavye odağında / seçili satırda (Resume) ikon ve yazı kor turuncusu + yumuşak parıltı (eski ◆ vurgusu gibi). */
 .gm-list {
   display: flex;
   flex-direction: column;
@@ -582,7 +583,8 @@ body {
   position: relative;
   display: flex;
   align-items: center;
-  gap: 14px;
+  justify-content: center;
+  gap: 0.6em;
   min-height: 52px;
   padding: 0 10px;
   font: 600 18px Cinzel, Georgia, 'Palatino Linotype', serif;
@@ -600,41 +602,46 @@ body {
   border-bottom: 0;
 }
 
-.gm-row::before {
-  content: '';
+.gm-icon {
   flex: none;
-  width: 8px;
-  height: 8px;
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.45);
-  transition: background 0.18s, box-shadow 0.18s;
+  width: 0.95em; /* görünen çizim ≈ büyük harf yüksekliği (ikon kutusunda kenar boşluğu var) */
+  height: 0.95em;
+  margin-top: -0.08em; /* Cinzel büyük harflerinin optik ortasına */
+  object-fit: contain;
+  image-rendering: auto; /* 64-128 px ikon küçültülür: yumuşak küçültme */
+  filter: sepia(0.55) saturate(0.85) brightness(0.88) drop-shadow(0 1px 1.5px rgba(12, 8, 5, 0.95));
+  transition: filter 0.18s;
+  pointer-events: none;
 }
 
-.gm-row span {
-  transition: transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+.gm-icon:not([src]),
+.gm-icon.empty {
+  visibility: hidden;
 }
 
 .gm-row:hover,
 .gm-row:focus-visible,
 .gm-row.primary {
-  color: #f3d999;
-}
-
-.gm-row:hover,
-.gm-row:focus-visible {
+  color: #ffb35a;
   text-shadow: 0 0 14px rgba(240, 140, 40, 0.75), 0 2px 4px rgba(12, 8, 5, 0.95);
 }
 
-.gm-row:hover span,
-.gm-row:focus-visible span {
-  transform: translateX(6px);
+.gm-row:hover .gm-icon,
+.gm-row:focus-visible .gm-icon,
+.gm-row.primary .gm-icon {
+  filter: sepia(1) saturate(3.2) hue-rotate(-12deg) brightness(1.08) drop-shadow(0 0 4px rgba(240, 140, 40, 0.85));
 }
 
-.gm-row:hover::before,
-.gm-row:focus-visible::before,
-.gm-row.primary::before {
-  background: #e0702a;
-  box-shadow: 0 0 0 1px #ffb35a, 0 0 8px rgba(240, 140, 40, 0.6);
+/* Tek seçili satır: başka satırın üstüne gelinince / klavyeyle başka satıra geçilince Resume'un varsayılan vurgusu söner */
+.gm-list:hover .gm-row.primary:not(:hover),
+.gm-list:has(.gm-row:focus-visible) .gm-row.primary:not(:focus-visible) {
+  color: #d9c8a2;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gm-list:hover .gm-row.primary:not(:hover) .gm-icon,
+.gm-list:has(.gm-row:focus-visible) .gm-row.primary:not(:focus-visible) .gm-icon {
+  filter: sepia(0.55) saturate(0.85) brightness(0.88) drop-shadow(0 1px 1.5px rgba(12, 8, 5, 0.95));
 }
 
 .gm-btn {
@@ -985,7 +992,7 @@ html.short .gm-overlay {
 
 html.short .gm-box {
   zoom: 1;
-  width: min(306px, 100%);
+  width: min(270px, 100%);
   padding: 11px 22px 9px;
 }
 

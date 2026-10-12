@@ -52,9 +52,10 @@ function useEvents(c: VfxCtx): { used: Record<string, unknown> | null; after: Ar
 const facing = (v: CombatantView): number => (v.combatant.side === 'party' ? 1 : -1);
 const spriteW = (v: CombatantView): number => Math.abs(v.sprite.displayWidth * v.container.scaleX) || v.w * 0.6;
 /** Druid asasının tepesi (arkadaki el; meyve-küre). */
-const staffTop = (v: CombatantView): Pt => ({ x: v.container.x - facing(v) * spriteW(v) * 0.36, y: v.container.y - v.h * 0.94 });
+// v2 pozlu birim (Pose Tester): silahın ucu / tılsımlı el (CombatantView.castPoint), yoksa sprite oranı
+const staffTop = (v: CombatantView): Pt => v.castPoint() ?? { x: v.container.x - facing(v) * spriteW(v) * 0.36, y: v.container.y - v.h * 0.94 };
 /** Druid'in yaprak tutan öndeki avucu. */
-const leafHand = (v: CombatantView): Pt => ({ x: v.container.x + facing(v) * spriteW(v) * 0.38, y: v.container.y - v.h * 0.64 });
+const leafHand = (v: CombatantView): Pt => v.castPoint() ?? { x: v.container.x + facing(v) * spriteW(v) * 0.38, y: v.container.y - v.h * 0.64 };
 
 /** Yumuşak yeşil ışıma dokusu (ADD). */
 const greenGlowTex = (c: VfxCtx, k: VfxKit): string =>

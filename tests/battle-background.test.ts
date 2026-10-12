@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { existsSync } from 'node:fs';
+import valdoria from '../data/campaign/valdoria.json';
 import { backgroundFloor, backgroundOffsetY, backgroundPlacement, backgroundPool, floorLineMaxY, battleBackground, pickBackground, poolIndex } from '../src/game/battle-background';
+
+/** Sefer bölge arka planları (2026-10-12, tools/make-zone-backgrounds.mjs; docs/design/campaign/fill-plan.md 3). */
+const ZONES = ['border-road', 'windy-moor', 'iron-pass', 'misty-marsh', 'grave-field', 'pilgrim-road', 'ashen-plain', 'thornwood-hollow', 'ember-road'];
 
 const has = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/backgrounds/${id}.${e}`));
 
@@ -32,6 +36,7 @@ describe('savaş arka planı havuzları', () => {
       'castle-hall': [2000, 729], 'kings-bridge': [2000, 729],
       'duelling-ring-moon': [2000, 667], 'duelling-ring-storm': [2000, 667], 'duelling-ring-snow': [2000, 667],
       'proving-grounds-sunny-afternoon': [2000, 667], 'proving-grounds-sunset': [2000, 667], 'proving-grounds-rain': [2000, 667],
+      ...Object.fromEntries(ZONES.map((id) => [id, [2000, 729] as [number, number]])),
     };
     for (const [id, [w, h]] of Object.entries(sizes)) {
       const f = backgroundFloor(id);
@@ -51,5 +56,20 @@ describe('savaş arka planı havuzları', () => {
     const ch = backgroundPlacement('castle-hall', 2000, 729, 1920, 1080);
     expect(ch.y).toBeLessThan(540);
     expect(ch.scale / (1080 / 729)).toBeLessThan(1.25);
+  });
+
+  // 2026-10-12: her sefer savaşı kendi bölgesinin arka planında (fill-plan 3); bölge yedekleri de gerçek dosya
+  it('sefer düğüm ve bölge arka planlarının dosyası var ve zemini ölçülmüş', () => {
+    const ids = [...valdoria.regions.map((r) => r.battleBackground), ...valdoria.nodes.map((n) => (n as { battleBackground?: string }).battleBackground).filter(Boolean)];
+    for (const id of ids) {
+      expect(has(id!), id).toBe(true);
+      expect(backgroundFloor(id!), id).not.toBeNull();
+    }
+    for (const id of ZONES) expect(ids, id).toContain(id);
+    const bg = (id: string) => (valdoria.nodes.find((n) => n.id === id) as { battleBackground?: string }).battleBackground;
+    expect(bg('9')).toBe('kings-bridge');
+    expect(bg('12')).toBe('castle-hall');
+    expect(bg('6A')).toBe('misty-marsh');
+    expect(bg('gate')).toBe('ember-road');
   });
 });

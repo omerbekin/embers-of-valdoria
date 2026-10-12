@@ -343,6 +343,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     return y;
   };
 
+  // Panelin giriş hareketi yalnızca görünüm gerçekten değişince (ilk açılış, adım I <-> II, onay kutusu) oynar. Seçenek kartına (mod /
+  // zorluk) ya da yuva satırına tıklamak yalnızca seçimi günceller: panel yeniden kurulur ama sönüp yükselmez (Ömer 2026-10-12: her
+  // tıklamada tüm kutu baştan yükleniyormuş gibi görünüyordu).
+  let lastView: string | null = null;
   const render = () => {
     if (closed) return;
     drawSteps();
@@ -351,6 +355,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     const y1 = (o.flow === 'new' ? newPanel : loadPanel)(PANEL_Y + PAD - 4);
     const ph = Math.min(H - 40 - PANEL_Y, y1 - PANEL_Y + PAD);
     panel.addAt(elPanel(scene, PANEL_X, PANEL_Y, PW, ph, { corners: true, alpha: 0.95 }), 0);
+    const view = `${st.step}|${st.confirm ? 'confirm' : ''}`;
+    if (view === lastView) return;
+    lastView = view;
+    scene.tweens.killTweensOf(panel);
     panel.setAlpha(0).setY(14);
     scene.tweens.add({ targets: panel, alpha: 1, y: 0, duration: 260, ease: EL.EASE });
   };

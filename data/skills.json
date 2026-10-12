@@ -2343,7 +2343,7 @@
     "note": "Pose test: plays the Raise Hand, then Channel pose."
   },
   "pt_quick_shot": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Quick Shot kopyası; gerçek efekt/ses/hedef (artOf quick_shot), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Quick Shot kopyası; gerçek efekt/ses/hedef (artOf quick_shot), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_quick_shot",
     "name": "Quick Shot",
     "icon": "arrow",
@@ -2374,12 +2374,12 @@
       "arrowWhoosh",
       "arrowThunk"
     ],
-    "pose": "throw",
+    "pose": "thrust",
     "artOf": "quick_shot",
-    "note": "Pose test: plays the Throw pose."
+    "note": "Pose test: plays the Thrust pose."
   },
   "pt_piercing_arrow": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Piercing Arrow kopyası; gerçek efekt/ses/hedef (artOf piercing_arrow), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Piercing Arrow kopyası; gerçek efekt/ses/hedef (artOf piercing_arrow), v2 poz takımında 'channel -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_piercing_arrow",
     "name": "Piercing Arrow",
     "icon": "pierce",
@@ -2409,9 +2409,12 @@
       "arrowWhoosh",
       "arrowThunk"
     ],
-    "pose": "throw",
+    "pose": [
+      "channel",
+      "thrust"
+    ],
     "artOf": "piercing_arrow",
-    "note": "Pose test: plays the Throw pose."
+    "note": "Pose test: plays the Channel, then Thrust pose."
   },
   "pt_arrow_rain": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Arrow Rain kopyası; gerçek efekt/ses/hedef (artOf arrow_rain), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -2451,7 +2454,7 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_aimed_shot": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Aimed Shot kopyası; gerçek efekt/ses/hedef (artOf aimed_shot), v2 poz takımında 'point -> throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Aimed Shot kopyası; gerçek efekt/ses/hedef (artOf aimed_shot), v2 poz takımında 'channel -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_aimed_shot",
     "name": "Aimed Shot",
     "icon": "aimedshot",
@@ -2482,11 +2485,11 @@
       "reserveMp": 2
     },
     "pose": [
-      "point",
-      "throw"
+      "channel",
+      "thrust"
     ],
     "artOf": "aimed_shot",
-    "note": "Pose test: plays the Point, then Throw pose."
+    "note": "Pose test: plays the Channel, then Thrust pose."
   },
   "pt_venom_edge": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Venom Edge kopyası; gerçek efekt/ses/hedef (artOf venom_edge), v2 poz takımında 'slash -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -2635,7 +2638,7 @@
     "note": "Pose test: plays the Thrust pose."
   },
   "pt_fire_bolt": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Fire Bolt kopyası; gerçek efekt/ses/hedef (artOf fire_bolt), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Fire Bolt kopyası; gerçek efekt/ses/hedef (artOf fire_bolt), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_fire_bolt",
     "name": "Fire Bolt",
     "icon": "fireball",
@@ -2661,9 +2664,9 @@
       "flameRoar",
       "fireBlast"
     ],
-    "pose": "point",
+    "pose": "thrust",
     "artOf": "fire_bolt",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Thrust pose."
   },
   "pt_blizzard": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Blizzard kopyası; gerçek efekt/ses/hedef (artOf blizzard), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -2704,7 +2707,7 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_mana_barrier": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Barrier kopyası; gerçek efekt/ses/hedef (artOf mana_barrier), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Barrier kopyası; gerçek efekt/ses/hedef (artOf mana_barrier), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_mana_barrier",
     "name": "Mana Barrier",
     "icon": "manabarrier",
@@ -2733,9 +2736,9 @@
     "sfx": [
       "magicHum"
     ],
-    "pose": "point",
+    "pose": "channel",
     "artOf": "mana_barrier",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Channel pose."
   },
   "pt_meteor": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Meteor kopyası; gerçek efekt/ses/hedef (artOf meteor), v2 poz takımında 'channel -> raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -2787,7 +2790,7 @@
     "note": "Pose test: plays the Channel, then Raise Hand pose."
   },
   "pt_thorn_whip": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Thorn Whip kopyası; gerçek efekt/ses/hedef (artOf thorn_whip), v2 poz takımında 'slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Thorn Whip kopyası; gerçek efekt/ses/hedef (artOf thorn_whip), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_thorn_whip",
     "name": "Thorn Whip",
     "icon": "thornwhip",
@@ -2818,9 +2821,9 @@
       "whipCrack",
       "leafRustle"
     ],
-    "pose": "slash",
+    "pose": "thrust",
     "artOf": "thorn_whip",
-    "note": "Pose test: plays the Slash pose."
+    "note": "Pose test: plays the Thrust pose."
   },
   "pt_natures_wrath": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Nature's Wrath kopyası; gerçek efekt/ses/hedef (artOf natures_wrath), v2 poz takımında 'overhead'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -2861,7 +2864,7 @@
     "note": "Pose test: plays the Overhead Strike pose."
   },
   "pt_rejuvenate": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Rejuvenate kopyası; gerçek efekt/ses/hedef (artOf rejuvenate), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Rejuvenate kopyası; gerçek efekt/ses/hedef (artOf rejuvenate), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_rejuvenate",
     "name": "Rejuvenate",
     "icon": "rejuvenate",
@@ -2890,12 +2893,12 @@
       "chimeHeal",
       "leafRustle"
     ],
-    "pose": "point",
+    "pose": "channel",
     "artOf": "rejuvenate",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Channel pose."
   },
   "pt_summon_treant": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Summon Treant kopyası; gerçek efekt/ses/hedef (artOf summon_treant), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Summon Treant kopyası; gerçek efekt/ses/hedef (artOf summon_treant), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_summon_treant",
     "name": "Summon Treant",
     "icon": "treant",
@@ -2919,9 +2922,9 @@
       "rootsRumble",
       "thud"
     ],
-    "pose": "channel",
+    "pose": "raise",
     "artOf": "summon_treant",
-    "note": "Pose test: plays the Channel pose."
+    "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_bone_throw": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Bone Throw kopyası; gerçek efekt/ses/hedef (artOf bone_throw), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3000,7 +3003,7 @@
     "note": "Pose test: plays the Channel pose."
   },
   "pt_dark_bond": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Dark Bond kopyası; gerçek efekt/ses/hedef (artOf dark_bond), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Dark Bond kopyası; gerçek efekt/ses/hedef (artOf dark_bond), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_dark_bond",
     "name": "Dark Bond",
     "icon": "darkbond",
@@ -3024,9 +3027,9 @@
       "darkChant",
       "chainTether"
     ],
-    "pose": "point",
+    "pose": "channel",
     "artOf": "dark_bond",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Channel pose."
   },
   "pt_raise_dead": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Raise Dead kopyası; gerçek efekt/ses/hedef (artOf raise_dead), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3142,7 +3145,7 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_spell_ward": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Spell Ward kopyası; gerçek efekt/ses/hedef (artOf spell_ward), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Spell Ward kopyası; gerçek efekt/ses/hedef (artOf spell_ward), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_spell_ward",
     "name": "Spell Ward",
     "icon": "spellward",
@@ -3170,12 +3173,12 @@
     "sfx": [
       "wardHum"
     ],
-    "pose": "point",
+    "pose": "channel",
     "artOf": "spell_ward",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Channel pose."
   },
   "pt_void_strike": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_void_strike",
     "name": "Void Strike",
     "icon": "voidstrike",
@@ -3204,9 +3207,9 @@
     "ai": {
       "reserveMp": 2
     },
-    "pose": "point",
+    "pose": "thrust",
     "artOf": "void_strike",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Thrust pose."
   },
   "pt_loaded_dice": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Loaded Dice kopyası; gerçek efekt/ses/hedef (artOf loaded_dice), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3403,7 +3406,7 @@
     "note": "Pose test: plays the Point pose."
   },
   "pt_withering_curse": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Withering Curse kopyası; gerçek efekt/ses/hedef (artOf withering_curse), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Withering Curse kopyası; gerçek efekt/ses/hedef (artOf withering_curse), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_withering_curse",
     "name": "Withering Curse",
     "icon": "drainfield",
@@ -3447,12 +3450,12 @@
       "graveMoan",
       "voidSuction"
     ],
-    "pose": "channel",
+    "pose": "raise",
     "artOf": "withering_curse",
-    "note": "Pose test: plays the Channel pose."
+    "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_jinx": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Jinx kopyası; gerçek efekt/ses/hedef (artOf jinx), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Jinx kopyası; gerçek efekt/ses/hedef (artOf jinx), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_jinx",
     "name": "Jinx",
     "icon": "clover",
@@ -3489,9 +3492,9 @@
       "chainTether",
       "boneImpact"
     ],
-    "pose": "point",
+    "pose": "thrust",
     "artOf": "jinx",
-    "note": "Pose test: plays the Point pose."
+    "note": "Pose test: plays the Thrust pose."
   },
   "pt_doom_mark": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Doom Mark kopyası; gerçek efekt/ses/hedef (artOf doom_mark), v2 poz takımında 'channel'. Bedel 0, cooldown yok, güç 0.02 (~1).",

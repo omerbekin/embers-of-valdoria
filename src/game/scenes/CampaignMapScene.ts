@@ -54,7 +54,12 @@ import {
   restAtCamp,
   reviveAtCamp,
   reviveCost,
+  recruitInTown,
+  townRecruitOffer,
+  townScreenNode,
+  type TownHotspot,
 } from '../../campaign';
+import { TownScreen } from '../town-screen';
 import { openCampaignMerchant } from '../campaign-merchant';
 import { characterTexture, preloadAssets } from '../assets';
 import { preloadCampaignArt } from '../campaign-art';
@@ -149,6 +154,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private sel = '';
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
+  /** Kasaba ekranı (Ömer 2026-10-12): kasaba düğümünde tam ekran kasaba; açıkken harita girdisi kilitli, harita kamerası gizli. */
+  private town: TownScreen | null = null;
 
   constructor() {
     super(CampaignMapScene.KEY);
@@ -176,6 +183,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.toastFn = null;
     this.panTween = null;
     this.panTarget = null;
+    this.town = null;
   }
 
   preload(): void {
@@ -302,8 +310,9 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.menuOpen) return this.closeMenu();
     if (this.walking) return this.walking.finish();
     const step = nextStep(this.s).kind;
-    // zorunlu seçim pencereleri (kahraman, aday, veda, yeni takım) Esc ile kapanmaz: menü üstlerine açılır
-    if (this.modal && !FORCED.includes(step)) {
+    // zorunlu seçim pencereleri (kahraman, aday, veda, yeni takım) Esc ile kapanmaz: menü üstlerine açılır. Kasaba ekranında ilk giriş akışı
+    // (hikâye sahnesi) da kapanmaz: kasabanın arkasındaki harita düğümüne dokunup yeniden açmak mümkün değil
+    if (this.modal && !FORCED.includes(step) && !(this.town && step !== 'town')) {
       this.closeModal();
       this.renderHud();
       return;
@@ -314,7 +323,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Ok tuşları = kaydırma, + / - = yakınlaştırma (pencere / menü açıkken değil). */
   private onKey(e: KeyboardEvent): void {
-    if (this.modal || this.menuOpen || debugState.uiPaused || isSettingsOpen()) return;
+    if (this.modal || this.menuOpen || this.town || debugState.uiPaused || isSettingsOpen()) return;
     if (e.key === 'ArrowLeft') this.panBy(-PAN_STEP, 0);
     else if (e.key === 'ArrowRight') this.panBy(PAN_STEP, 0);
     else if (e.key === 'ArrowUp') this.panBy(0, -PAN_STEP * 0.6);
@@ -704,7 +713,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   private bindCamera(): void {
     this.input.on('wheel', (p: Phaser.Input.Pointer, _o: unknown, dx: number, dy: number) => {
-      if (this.modal || this.menuOpen) return;
+      if (this.modal || this.menuOpen || this.town) return;
       const ev = p.event as WheelEvent | undefined;
       // birkaç piksellik dikey pay tekerleği yutmasın: dikey kaydırma yalnızca belirgin yer varsa
       ev?.preventDefault(); // tekerlek sayfayı kaydırmasın
@@ -727,7 +736,7 @@ export class CampaignMapScene extends Phaser.Scene {
         this.drag.moved = true;
         return;
       }
-      this.drag = { down: !this.modal && !this.menuOpen, moved: false, x: p.x, y: p.y };
+      this.drag = { down: !this.modal && !this.menuOpen && !this.town, moved: false, x: p.x, y: p.y };
     });
     // İki parmakla sıkıştırma = yakınlaştırma
     this.input.addPointer(1);
@@ -738,7 +747,7 @@ export class CampaignMapScene extends Phaser.Scene {
       if (a.isDown && b.isDown) {
         const d = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
         // İki parmakla sıkıştırma: iki parmağın ortasına doğru yakınlaştırma (anlık; parmak izler)
-        if (pinch > 0 && !this.modal) this.zoomAt(this.mapZoom * (d / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2, false, true);
+        if (pinch > 0 && !this.modal && !this.town) this.zoomAt(this.mapZoom * (d / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2, false, true);
         pinch = d;
         this.drag.moved = true;
         this.drag.x = p.x;
@@ -854,6 +863,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!first) {
       if (this.compact() !== this.drawnCompact) this.renderMap(false);
       this.renderHud();
+      this.town?.render();
     }
   }
 
@@ -1230,6 +1240,7 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Sıradaki adıma göre ekranı kurar (pencere ya da sağdaki düğüm kartı). */
   advance(): void {
     this.closeModal();
+    this.syncTown();
     if (this.showPendingCards()) return;
     const s = this.s;
     const step = nextStep(s);
@@ -1266,15 +1277,16 @@ export class CampaignMapScene extends Phaser.Scene {
       case 'company':
         return this.companyModal(step.size);
       case 'town': {
-        // Kasaba (T1): ücretsiz tam şifa + diriltme (varışta) ve Odo'nun tezgâhı (tüccarlı kasabada; Leave tezgâhı kapatır)
+        // Kasaba ekranı (Ömer 2026-10-12): syncTown tam ekran kasabayı kurdu; eylemler resimdeki yerlerden (onTownHotspot). Verisi olmayan
+        // kasaba (scene yok) için yedek pencere: Gear / Trade / Leave (ücretsiz şifa varışta).
+        if (this.town) return this.renderHud();
         const tn = node(this.map, step.node);
         this.modal = openModal(this, this.ui, {
           title: tn.name,
           subtitle: tn.subtitle,
-          text: tn.merchant ? `${CONFIG.texts.townRest}\n\nOdo the Peddler has set up his stall in the square.` : CONFIG.texts.townRest,
-          height: tn.merchant ? 500 : 460,
+          text: CONFIG.texts.townRest,
+          height: 460,
           buttons: [
-            { label: 'Formation', run: () => this.openFormation() },
             { label: 'Gear', run: () => this.openGear() },
             ...(tn.merchant ? [{ label: 'Trade', run: () => this.openTownMerchant(tn) }] : []),
             { label: 'Leave', primary: true, run: () => this.commit(completeSimple(this.s, 'town')) },
@@ -1324,6 +1336,103 @@ export class CampaignMapScene extends Phaser.Scene {
         this.renderHud();
         return;
     }
+  }
+
+  /**
+   * Kasaba ekranını adıma göre kurar / kaldırır (src/campaign/town.ts > townScreenNode): kasaba düğümünde veda, yeni bölük, hikâye sahnesi ve
+   * kasaba adımı boyunca açık; ilk giriş akışı (pencereler) onun üstünde oynar. Açıkken harita kamerası ve takım sütunu gizlenir.
+   */
+  private syncTown(): void {
+    const want = townScreenNode(this.s);
+    if (this.town && this.town.nodeId !== want) {
+      this.town.destroy();
+      this.town = null;
+    }
+    if (want && !this.town) {
+      // Arayüz katmanında takım sütununun hemen üstü: bildirim (toast), ipucu ve pencereler kasabanın üstünde kalır
+      this.town = new TownScreen(this, this.ui, node(this.map, want), {
+        state: () => this.s,
+        busy: () => !!this.modal || this.menuOpen || !!this.slotBrowser || !!this.walking || isSettingsOpen() || !!document.querySelector('#ui-root .gr-overlay'),
+        hotspot: (h) => this.onTownHotspot(h),
+        hero: (id) => this.openGear(id, false, () => this.town?.render()),
+        compact: () => this.compact(),
+      }, this.ui.getIndex(this.hud) + 1);
+    } else this.town?.render();
+    this.cameras.main.setVisible(!this.town);
+    this.hud.setVisible(!this.town);
+  }
+
+  /** Kasaba ekranında bir yere dokunuldu (valdoria.json > scene.hotspots[].action). */
+  private onTownHotspot(h: TownHotspot): void {
+    if (nextStep(this.s).kind !== 'town') return;
+    const tn = node(this.map, this.s.at);
+    switch (h.action) {
+      case 'trade':
+        if (tn.merchant) this.openTownMerchant(tn);
+        return;
+      case 'recruit': {
+        const offer = townRecruitOffer(this.s);
+        if (offer.length) return this.townRecruitModal(h, offer);
+        return this.townNote(h.label, h.note ?? 'No one here seeks to join you.');
+      }
+      case 'story':
+        if (tn.story) this.storyScene(tn.story, tn.id, true);
+        return;
+      case 'rest':
+        return this.townNote(h.label, CONFIG.texts.townRested ?? CONFIG.texts.townRest ?? '');
+      case 'leave':
+        return this.commit(completeSimple(this.s, 'town'));
+    }
+  }
+
+  /** Kasaba ekranında kısa bilgi penceresi (ateş, adayı olmayan ilan panosu): Close, Esc ya da zemine dokunma kapatır. */
+  private townNote(title: string, text: string): void {
+    this.closeModal();
+    this.modal = openModal(this, this.ui, {
+      title,
+      subtitle: node(this.map, this.s.at).name,
+      text,
+      fit: true,
+      width: this.compact() ? 1300 : 980,
+      buttons: [{ label: 'Close', primary: true, run: () => this.closeModal() }],
+      onDismiss: () => this.closeModal(),
+    });
+  }
+
+  /**
+   * Kışla / ilan panosundan aday (Ömer 2026-10-12): ayrılırken gelecek gönüllü kasabadayken seçilebilir (zorunlu değil: Not now, Esc, zemin).
+   * Seçilmezse kasabadan ayrılırken eskisi gibi sorulur.
+   */
+  private townRecruitModal(h: TownHotspot, offer: string[]): void {
+    this.closeModal();
+    let chosen = '';
+    const m = openModal(this, this.ui, {
+      title: h.label,
+      text: CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? '',
+      width: 1100,
+      height: 660,
+      buttons: [
+        { label: 'Not now', run: () => this.closeModal() },
+        {
+          label: 'Join us',
+          primary: true,
+          run: () => {
+            if (!chosen) return this.toast('Pick one companion first.');
+            setState(recruitInTown(this.s, chosen));
+            this.closeModal();
+            this.town?.render();
+            this.renderHud();
+            this.toast(`${content.classes[chosen]?.name ?? chosen} joins your company`);
+          },
+        },
+      ],
+      onDismiss: () => this.closeModal(),
+    });
+    this.modal = m;
+    const cards = this.classGrid(offer, m.area, (id) => {
+      chosen = id;
+      cards.forEach((c, k) => c.setSelected(k === id));
+    }, m.root);
   }
 
   /**
@@ -1422,12 +1531,15 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Kasaba hikâye sahnesi (T5): düz metin ya da diyalog (sorular, gizli beğeni sayacı, sevdiyse hediye item). Sis açma yok. */
-  private storyScene(storyId: string, nodeId: string): void {
+  private storyScene(storyId: string, nodeId: string, replay = false): void {
     const n = node(this.map, nodeId);
     const def = STORIES[storyId] ?? { title: n.name, text: '' };
     const dialogue = def.dialogue ?? [];
+    // Kasaba ekranındaki NPC (Ömer 2026-10-12): sahne yeniden okunabilir; ödül (hediye) yalnızca ilk girişte, tekrar ilerlemeyi değiştirmez
+    const finish = (answers?: number[]) => (replay ? this.closeModal() : this.commit(completeStory(this.s, answers)));
+    const dismiss = replay ? { onDismiss: () => this.closeModal() } : {};
     if (!dialogue.length) {
-      this.modal = openModal(this, this.ui, { title: def.title, subtitle: n.name, text: def.text, height: 600, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeStory(this.s)) }] });
+      this.modal = openModal(this, this.ui, { title: def.title, subtitle: n.name, text: def.text, height: 600, buttons: [{ label: 'Continue', primary: true, run: () => finish() }], ...dismiss });
       return;
     }
     const answers: number[] = [];
@@ -1435,8 +1547,8 @@ export class CampaignMapScene extends Phaser.Scene {
       this.closeModal();
       if (i >= dialogue.length) {
         const liked = storyLiked(storyId, answers);
-        const text = liked ? `${def.liked ?? ''}${def.gift ? '\n\nHe presses a small bundle into your hands.' : ''}` : (def.disliked ?? '');
-        this.modal = openModal(this, this.ui, { title: def.title, subtitle: def.speaker ?? n.name, text, height: 460, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeStory(this.s, answers)) }] });
+        const text = liked ? `${def.liked ?? ''}${def.gift && !replay ? '\n\nHe presses a small bundle into your hands.' : ''}` : (def.disliked ?? '');
+        this.modal = openModal(this, this.ui, { title: def.title, subtitle: def.speaker ?? n.name, text, height: 460, buttons: [{ label: 'Continue', primary: true, run: () => finish(answers) }], ...dismiss });
         return;
       }
       const st = dialogue[i]!;

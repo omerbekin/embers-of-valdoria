@@ -23,7 +23,8 @@ const ACCENT = '#9b59d0';
 
 const face = (v: CombatantView): number => (v.combatant.side === 'party' ? 1 : -1);
 /** Kaldırılmış eldiven (tabletlerin döndüğü el) ve kılıcın ortası. */
-const handOf = (v: CombatantView): Pt => ({ x: v.container.x + face(v) * v.w * 0.36, y: v.container.y - v.h * 0.72 });
+// v2 pozlu birim (Pose Tester): silahın ucu / tılsımlı el (CombatantView.castPoint), yoksa sprite oranı
+const handOf = (v: CombatantView): Pt => v.castPoint() ?? { x: v.container.x + face(v) * v.w * 0.36, y: v.container.y - v.h * 0.72 };
 
 const dotTex = (k: VfxKit, s: Phaser.Scene): string =>
   k.softTexture(s, 'v2am:dot', 48, 48, (x, y) => {

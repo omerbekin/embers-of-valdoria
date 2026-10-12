@@ -214,3 +214,91 @@ That is 2-4 extra poses in total across 11 classes. Everything else rides on the
 - **Can reuse the shared list (humanoids):** Bandits (Road Thug, Moor Raider; cudgel = maces family), Ember Cult (Ember Acolyte, Charcoal Burner), Guardians (Shieldwarden, Stonebound Warden, Thane; shield layer + thrust for Shield Bash), Hexes witches (Fen Witchling, Hedge Witch Morwen; point + channel), Drowned, Ghoul (own hunched drawings, weapon hidden, thrust + overhead), and the Skeleton summon. Cost-saver idea: humanoid mobs of one family could share one generic body set with an outfit/palette swap, because the weapon is a separate layer anyway.
 - **Mob extras:** the Bandit Crossbowman needs **crossbow_aim** (a crossbow is not a bow). Drowned's Drag Under (and the boss's Chain Hook) would read better with a **yank** pose; throw is the fallback.
 - **Cannot reuse (own art):** Will-o'-Wisp (no body), Treant (tree), Bridge Warden (huge, unique silhouette and anchor weapon), Iron Mooring (static object, 2 frames).
+
+---
+
+## v2 eşleşme (2026-10-12)
+
+Ömer'in testinden sonra (okçu atışları fırlatma pozuyla saçma, Fire Bolt açık elle işaret ve asa öteki elde, Mage / Anti-Mage büyü pozları çok hızlı sönüyor) 44 `pt_*` skill'in v2 pozu yeniden seçildi. **Kural: yeni poz çizilmedi**; yalnızca mevcut 24 kare + kod / veri ayarı (silahın yeri, açısı, eli, gizlenmesi, zamanlama). Eşleşme `tools/make-pose-testers.mjs > POSE` içinde (yeniden üretince korunur); silah yerleşimi `data/poses.json > classes.warrior_v2.itemPoses`.
+
+Silah sütunu Pose Tester'ın gerçek silahı (`src/game/pose-weapons.ts > POSE_TESTER_GEAR`). Tek el (…1) / çift el (…2) karesi silahın tutuşundan seçilir; yay ve tılsım tek el takımını kullanır.
+
+| # | Sınıf (silah) | Skill | Poz (önce -> bırakış) | Kare | Neden |
+|---|---|---|---|---|---|
+| 1 | Warrior (Dane Axe, çift el) | Double Strike | overhead -> slash | overhead2 -> slash2 | Baltayı kaldırıp indirir; iki kare tek savuruş gibi okunur |
+| 2 | Warrior | Whirlwind | spin | spin2a-c | Dönüş döngüsü, balta açık |
+| 3 | Warrior | Charge | step -> thrust | step2 -> thrust2 | Koşu, sonra balta hedefe uzanmış darbe |
+| 4 | Warrior | Abyssal Cry | raise -> channel | raise -> channel | Balta havada kükreme, sonra öfkeyi öne salar (yumruklar dolu) |
+| 5 | Defender (gürz + kule kalkanı) | Tremor Slam | overhead | overhead1 | Gürz başın üstünde, yere vuruş |
+| 6 | Defender | Taunt | guard | guard1 | Kalkan önde meydan okuma |
+| 7 | Defender | Guard | guard | guard1 | Gerçek koruma pozu, kalkan yukarıda |
+| 8 | Defender | Fist Crush | raise | raise | Gürzlü yumruk göğe; gökten yumruklar iner |
+| 9 | Paladin (gürz + heater) | Holy Strike | raise | raise | Gürz göğe, gökten çekiç |
+| 10 | Paladin | Resurrection | channel | channel | İki yumruk öne, dirilen dosta güç akar |
+| 11 | Paladin | Judgment | raise | raise | Gökten ışık |
+| 12 | Paladin | Radiance | raise -> channel | raise / channel | Yüceltme, sonra herkese yayılan ışık |
+| 13 | Archer (yay) | Quick Shot | thrust | thrust1 | Yay uzanmış yumrukta DİK, öteki el omuzda = kiriş çekişi; ok yaydan çıkar |
+| 14 | Archer | Piercing Arrow | channel -> thrust | channel -> thrust1 | Ok takma (iki el göğüste), sonra tam çekiş |
+| 15 | Archer | Arrow Rain | raise | raise | Yay başın üstünde göğe EĞİK (-40°), oklar yukarı |
+| 16 | Archer | Aimed Shot | channel -> thrust | channel -> thrust1 | Uzun nişan: takma, tam çekiş; poz atış bitene dek tutulur |
+| 17 | Cutthroat (iki hançer) | Venom Edge | slash -> thrust | slash1 -> thrust1 | Kesik + saplama |
+| 18 | Cutthroat | Saltire Cut | slash | slash1 | X kesiği alanda belirir; tek savuruş |
+| 19 | Cutthroat | Smoke Bomb | throw | throw | Bomba açık elden çıkar; hançer arka yumrukta, ikinci hançer gizli |
+| 20 | Cutthroat | Backstab | thrust | thrust1 | Arkadan saplama |
+| 21 | Mage (Rune Staff, çift el) | Fire Bolt | thrust | thrust2 | Asa iki yumrukla hedefe uzanır, ateş oku ASANIN UCUNDAN çıkar (point'teki açık el / öteki eldeki asa sorunu yok) |
+| 22 | Mage | Blizzard | raise | raise | Asa göğe, fırtına yukarıdan |
+| 23 | Mage | Mana Barrier | channel | channel | Asa öne, dosta kalkan |
+| 24 | Mage | Meteor | channel -> raise | channel -> raise | Toplanma, sonra asa göğe |
+| 25 | Druid (Oak Staff) | Thorn Whip | thrust | thrust2 | Diken kırbacı asanın ucundan hedefe uzanır (slash2'de asa geriye bakıyordu, kırbaç gövdeden geçiyordu) |
+| 26 | Druid | Nature's Wrath | overhead | overhead2 | Asa yukarıda, yere vuruşla kökler |
+| 27 | Druid | Rejuvenate | channel | channel | Asa öne, dosta şifa (eski: point, açık el) |
+| 28 | Druid | Summon Treant | raise | raise | Asa göğe, çağrı |
+| 29 | Undead (Bone Staff) | Bone Throw | throw | throw | Kemik açık elden fırlar; asa arka yumrukta, başı yukarı |
+| 30 | Undead | Wail of the Dead | channel | channel | Asa öne, çığlık alanı |
+| 31 | Undead | Dark Bond | channel | channel | Asa dosta uzanır, bağ (eski: point) |
+| 32 | Undead | Raise Dead | raise | raise | Asa göğe, ölüyü kaldırır |
+| 33 | Anti-Mage (kılıç + hançer) | Mana Steal | slash | slash1 | Yakın vuruş |
+| 34 | Anti-Mage | Drain Field | raise | raise | Kılıç göğe, alan |
+| 35 | Anti-Mage | Spell Ward | channel | channel | Kılıç öne, dosta koruma (eski: point) |
+| 36 | Anti-Mage | Void Strike | thrust | thrust1 | Kılıçla öne saplama, büyü kılıcın ucundan (eski: point) |
+| 37 | Gambler (iskambil) | Loaded Dice | throw | throw | Zar açık elden çıkar, tılsım elde çizilmez (fırlatıldı) |
+| 38 | Gambler | High Stakes | point | point | Kartlar açık elin parmaklarında hedefe uzatılır |
+| 39 | Gambler | Card Trick | throw | throw | Kart fırlatma, kartlar elden çıkmış |
+| 40 | Gambler | All In | overhead | overhead1 | Kartlar başın üstünde, masaya vuruş |
+| 41 | Hexer (bez bebek) | Evil Eye | point | point | Bebek açık avuçta hedefe tutulur, göz bebeğin üstünde açılır |
+| 42 | Hexer | Withering Curse | raise | raise | Bebek başın üstünde, çürüme yere damlar |
+| 43 | Hexer | Jinx | thrust | thrust1 | Bebek uzanmış yumrukta, iplik arka elden bebeğe gerilir ve fırlar |
+| 44 | Hexer | Doom Mark | channel | channel | İki yumruk bebeği önde tutar (doll_stab çizilene dek en yakını) |
+
+Genel durumlar (değişmedi): idle = idle1/idle2, adım = step, isabet = hit, yere düşme = kneel, attack = slash, cast = raise, defend = guard.
+
+### Silah yerleşimi (aile x poz, `itemPoses`)
+
+| Aile | Poz | Ayar | Neden |
+|---|---|---|---|
+| staves | idle2 | açı 30°, 40 px aşağı | Baş yukarı, öne yaslı; eski 165° başı yere gömüyordu |
+| staves | point / throw / hit | -15° / -25° / -30° + arkada | Arka yumrukta başı yukarı (yere gömülmez), isabette gövdenin arkasında |
+| greataxes, mauls | idle2 | 38° | Baş omuz önünde; eski 165° yere gömülüyordu, 15° yüzü kapatıyordu |
+| greataxes, mauls | point / throw / hit | -20° / -25° / -35° + arkada | Aynı neden |
+| bows | raise | -40° | Arrow Rain: yay göğe eğik |
+| charms | point | ikinci el (açık el) | Kart / bebek açık elde gösterilir |
+| charms | throw | gizli | Tılsım fırlatıldı |
+| shields | point / throw | önkola kaydırıldı | Kalkan açık elin üstünde değil |
+| shields | hit / kneel | gövdenin arkasında | Kalkan elleri / dizleri kapatmıyor |
+| daggers, swords (ikinci el) | point / throw | gizli | İkinci silah açık elde çizilmez |
+| shields.tower | boy 200 -> 160 | | Kule kalkanı gövdeyi kapatıyordu |
+| charms.doll | boy 80 -> 115 | | Bebek okunmayacak kadar küçüktü |
+
+### Kod
+
+- `src/game/poses.ts > itemPlacement / poseItems / placementPoint`: çizim, sınır ve efekt noktası tek yerleşimden (poz + aile ayarı). Gerçek Warrior v1'de ayar yok, birebir aynı.
+- `CombatantView.castPoint()`: efekt çıkış noktası = asanın / kılıcın ucu, yayın kavrama yeri, tılsımın ortası; açık el pozunda (point / throw, `poses.<poz>.open`) açık el. `handPoint('off')`, `bowPoints()` (yayın gerçek uçları + kirişi çeken el). Mage, Anti-Mage, Undead, Druid, Gambler, Hexer, Archer v2 efektleri ve Smoke Bomb bunu kullanır (yalnızca v2 pozlu birimde; gerçek sınıflar eski el noktasında).
+- Zamanlama (yalnızca v2): skill sürerken efektin `play('idle')` isteği pozu bozmaz; melee olmayan skill'de poz hazırlık, bırakış ve vuruş anı boyunca tutulur, skill başından en az 750 ms (battle speed ve skill yavaşlatmasıyla ölçekli, `slow()`), sonra 280 ms bekleyip 200 ms'lik yumuşak geçişle idle. Melee'de poz en az 260 ms görünür.
+
+### Hâlâ çizim isteyen (kodla çözülmeyen)
+
+- slash1 / slash2 kolu GERİYE savrulmuş çizili: ikinci vuruş anında silah hedefin tersine bakıyor (Double Strike, Mana Steal, Venom Edge'in ilk karesi). İki kare savuruş gibi okunuyor ama gerçek vuruş anı karesi yok.
+- Okçu: thrust1'de arka el omuzda, yanağa çekilmiş değil; kiriş efektle çiziliyor. Arrow Rain için gerçek "göğe çekiş" pozu yok (raise + eğik yay).
+- Hexer Doom Mark için bebeğe iğne (doll_stab) pozu yok (channel).
+- Açık el pozlarında (point / throw) kalkan önkola kaydırıldı; kalkanlı sınıflar bu pozları kullanmıyor, gerekirse yeni çizim ister. hit / kneel'da kalkan gövdenin arkasında, büyük kısmı görünmüyor.
+- Tılsımlar küçük (kart 70, bebek 115 gövde tuvali pikseli): ekranda ancak seçiliyor.

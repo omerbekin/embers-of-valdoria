@@ -6,6 +6,7 @@
 | `backgrounds/kings-bridge.webp` | Ömer tarafından sağlandı (2026-10-08): King's Bridge savaş arka planı (2000x729; `encounters.json > bridge_warden.background`) | Ömer'e sorulacak |
 | `backgrounds/proving-grounds-sunny-afternoon.webp`, `proving-grounds-sunset.webp`, `proving-grounds-rain.webp` | Ömer tarafından sağlandı (2026-10-08, ChatGPT): Quick Battle arka planları (2000x667, 3:1); savaş seed'ine göre biri (`data/battle-layout.json > backgrounds.quick`); öğleden sonra sürümü Play > Quick Battle kartında | Ömer'e ait |
 | `backgrounds/duelling-ring-moon.webp`, `duelling-ring-storm.webp`, `duelling-ring-snow.webp` | Ömer tarafından sağlandı (2026-10-08, ChatGPT): çevrimiçi savaş arka planları (2000x667, 3:1; `backgrounds.multiplayer`, iki oyuncu aynı seed = aynı arka plan); ay ışığı sürümü Play > Multiplayer kartında | Ömer'e ait |
+| `backgrounds/border-road.webp`, `windy-moor.webp`, `iron-pass.webp`, `misty-marsh.webp`, `grave-field.webp`, `pilgrim-road.webp`, `ashen-plain.webp`, `thornwood-hollow.webp`, `ember-road.webp` | Ömer tarafından sağlandı (2026-10-12, ChatGPT): sefer bölge savaş arka planları (asılları `source/backgrounds-v2/`, 1536x1024; 2000x729 kırpma + lanczos büyütme `node tools/make-zone-backgrounds.mjs`; düğüm/bölge `valdoria.json > battleBackground`) | Ömer'e ait |
 | `source/treant.webp` | Ömer tarafından sağlandı (2026-10-04): yosunlu, mor rünlü ağaç golemi (ilk Treant görseli; yerini v2 aldı) | Ömer'e sorulacak |
 
 ## Eski karakter sanatı

@@ -10,51 +10,66 @@ import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
 const ROMAN = ['I', 'II', 'III', 'IV', 'V', 'VI', 'VII', 'VIII', 'IX', 'X', 'XI'];
 const CLASSES = ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'mage', 'druid', 'undead', 'antimage', 'gambler', 'hexer'];
 
-/** Skill -> v2 mantıksal poz (tek ad ya da sıra; son = vuruş anı). Tutuşa göre karesi CombatantView'da seçilir. */
+/**
+ * Skill -> v2 mantıksal poz (tek ad ya da sıra; ilk = hazırlık, son = bırakış / vuruş anı). Tutuşa göre karesi CombatantView'da seçilir.
+ * Eşleşme 2026-10-12 poz denetimi (docs/design/pose-coverage.md > "v2 eşleşme (2026-10-12)"): yeni çizim yok, 24 kare; silahın yeri
+ * data/poses.json > classes.warrior_v2.itemPoses (aile x poz), büyü / ok çıkışı silahın ucundan (CombatantView.castPoint).
+ */
 const POSE = {
+  // Warrior (Dane Axe, çift el)
   melee_attack: ['overhead', 'slash'],
   whirlwind: 'spin',
   charge: ['step', 'thrust'],
   abyssal_cry: ['raise', 'channel'],
+  // Defender (gürz + kule kalkanı)
   tremor_slam: 'overhead',
   taunt: 'guard',
   guard: 'guard',
   fist_crush: 'raise',
+  // Paladin (gürz + heater kalkanı)
   holy_strike: 'raise',
   resurrection: 'channel',
   judgment: 'raise',
   radiance: ['raise', 'channel'],
-  quick_shot: 'throw',
-  piercing_arrow: 'throw',
+  // Archer (yay): thrust1 = yay öne uzanmış dik, öteki el omuzda (kiriş çekişi); channel = ok takma; raise = göğe eğik yay
+  quick_shot: 'thrust',
+  piercing_arrow: ['channel', 'thrust'],
   arrow_rain: 'raise',
-  aimed_shot: ['point', 'throw'],
+  aimed_shot: ['channel', 'thrust'],
+  // Cutthroat (iki hançer)
   venom_edge: ['slash', 'thrust'],
   x_cut: 'slash',
   smoke_bomb: 'throw',
   backstab: 'thrust',
-  fire_bolt: 'point',
+  // Mage (asa, çift el): ok asanın ucundan
+  fire_bolt: 'thrust',
   blizzard: 'raise',
-  mana_barrier: 'point',
+  mana_barrier: 'channel',
   meteor: ['channel', 'raise'],
-  thorn_whip: 'slash',
+  // Druid (asa)
+  thorn_whip: 'thrust',
   natures_wrath: 'overhead',
-  rejuvenate: 'point',
-  summon_treant: 'channel',
+  rejuvenate: 'channel',
+  summon_treant: 'raise',
+  // Undead (asa)
   bone_throw: 'throw',
   wail_of_the_dead: 'channel',
-  dark_bond: 'point',
+  dark_bond: 'channel',
   raise_dead: 'raise',
+  // Anti-Mage (kılıç + hançer)
   mana_burn: 'slash',
   drain_field: 'raise',
-  spell_ward: 'point',
-  void_strike: 'point',
+  spell_ward: 'channel',
+  void_strike: 'thrust',
+  // Gambler (iskambil: tılsım fırlatışta elden çıkar, point'te açık elin parmaklarında)
   loaded_dice: 'throw',
   high_stakes: 'point',
   card_trick: 'throw',
   all_in: 'overhead',
+  // Hexer (bez bebek)
   evil_eye: 'point',
-  withering_curse: 'channel',
-  jinx: 'point',
+  withering_curse: 'raise',
+  jinx: 'thrust',
   doom_mark: 'channel',
 };
 const LABEL = {

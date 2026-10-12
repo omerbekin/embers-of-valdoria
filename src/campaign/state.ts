@@ -232,6 +232,28 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
 }
 
 /**
+ * Kasaba ekranında kışla / ilan panosu (Ömer 2026-10-12): ayrılırken gelen gönüllü (recruit.when 'leave') kasabadayken de seçilebilir.
+ * Sunulan adaylar (gönüllü adımıyla aynı seed'li liste) ya da yoksa boş: kasaba adımında değilse, kasabanın adayı yoksa ya da zaten seçildiyse.
+ */
+export function townRecruitOffer(s: CampaignState): string[] {
+  if (nextStep(s).kind !== 'town') return [];
+  const n = node(mapOf(s), s.at);
+  if (n.recruit?.when !== 'leave' || isDone(s, n.id, 'volunteer')) return [];
+  return recruitOffer(s, n.id);
+}
+
+/** Kasaba ekranında aday seçimi: gönüllü adımını şimdiden bitirir (kasabadan ayrılınca ikinci kez sorulmaz). */
+export function recruitInTown(s: CampaignState, classId: string): CampaignState {
+  const offer = townRecruitOffer(s);
+  if (!offer.length) throw new Error('No recruits in this town');
+  if (!offer.includes(classId)) throw new Error(`${classId} is not on offer`);
+  const t = clone(s);
+  addHero(t, classId, { tutorial: tutorialActive(t) });
+  complete(t, 'volunteer');
+  return t;
+}
+
+/**
  * Ashford: tutorial takımı veda eder (kadrodan çıkar). Takılı item'leri torbaya düşer: yeni bölük onları takar, item takma tutorial'ı burada
  * başlar (items.md karar 7). Torba sınırı burada uygulanmaz (hiçbir item kaybolmaz; Ömer, madde 278). Teslim anı için `pendingHandover` yazılır.
  */

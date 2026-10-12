@@ -455,8 +455,8 @@ const WEAPON_SPEC = {
   daggers: { length: 125, grip: { frac: 0.73 } },
   staves: { length: 400, grip: { frac: 0.6 }, hold: 'two' },
   bows: { length: 330, grip: { frac: 0.5, last: true }, hold: 'bow', upright: true, mirror: true },
-  shields: { length: 165, lengths: { round: 145, tower: 200 }, grip: 'center', upright: true, hold: 'offhand' },
-  charms: { length: 70, lengths: { doll: 80, coin: 60 }, grip: 'center', hold: 'charm' },
+  shields: { length: 165, lengths: { round: 145, tower: 160 }, grip: 'center', upright: true, hold: 'offhand' },
+  charms: { length: 70, lengths: { doll: 115, coin: 60 }, grip: 'center', hold: 'charm' },
   greataxes: { length: 330, grip: { frac: 0.76 }, hold: 'two' },
   mauls: { length: 320, grip: { frac: 0.78 }, hold: 'two' },
 };

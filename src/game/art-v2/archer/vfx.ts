@@ -42,8 +42,17 @@ function facing(c: VfxCtx): number {
 }
 
 /** Yayın sprite üzerindeki yeri (idle.png: kavrama genişliğin ~%30 önünde, boyun ~%49'u yukarıda; uçlar %90 ve %12). */
-function bowGeom(c: VfxCtx, d: number): { grip: Pt; top: Pt; bot: Pt; rest: number } {
+function bowGeom(c: VfxCtx, d: number): { grip: Pt; top: Pt; bot: Pt; rest: number; pull?: number } {
   const v = c.actor;
+  // v2 pozlu birim (Pose Tester): poz çizimindeki yayın gerçek uçları, kiriş çeken el omuzda (CombatantView.bowPoints)
+  const bp = v.bowPoints();
+  if (bp) {
+    const rest = (bp.top.x + bp.bot.x) / 2;
+    const gy = (bp.top.y + bp.bot.y) / 2;
+    // kirişi çeken el yay hizasındaysa (thrust: omuzda) çekiş o ele kadar; değilse (raise: göğe eğik yay) kısa çekiş
+    const pull = Math.abs(bp.draw.y - gy) < 60 ? Math.max(20, Math.abs(rest - bp.draw.x)) : v.w * 0.25;
+    return { grip: { x: bp.grip.x, y: gy }, top: bp.top, bot: bp.bot, rest, pull };
+  }
   const x = v.container.x;
   const y = v.container.y;
   return {
@@ -62,7 +71,7 @@ async function drawBow(c: VfxCtx, k: VfxKit, d: number, o: { ms: number; pull: n
   const b = bowGeom(c, d);
   const g = c.scene.add.graphics().setDepth(c.actor.container.depth + 2);
   const size = o.size ?? 88;
-  const maxPull = c.actor.w * 0.42 * o.pull;
+  const maxPull = (b.pull ?? c.actor.w * 0.42) * o.pull;
   const arrow = k.v2Sprite(c, o.arrow, '#d9c9a3', b.grip.x, b.grip.y, size, c.actor.container.depth + 3).setAlpha(0);
   let nock: Pt = { x: b.rest, y: b.grip.y };
   const drawString = (px: number, wob = 0) => {

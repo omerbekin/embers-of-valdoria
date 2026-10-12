@@ -14,7 +14,7 @@ import { DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
-import { cycleFrames, gripFrames, keyFrame, poseClass, resolvePose, skillPoses, statePose, weaponScale, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
+import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, poseDisplayScale } from './pose-rig';
 
 /**
@@ -35,7 +35,22 @@ interface PoseRig {
   token: number;
   /** Oynanan skill'in poz dizisi (BattleScene.useSkill). */
   skill: string[];
+  /** Oynanan skill'in hareketi (melee / ranged / cast / sky ...): v2'de büyü / atış pozu skill bitene dek tutulur. */
+  motion?: string;
+  /** Şu anki pozun gösterildiği an (sahne zamanı): melee pozunun en kısa tutuluşu. */
+  shownAt: number;
+  /** Oynanan skill'in başladığı an (sahne zamanı): büyü / atış pozunun en kısa tutuluşu. */
+  startedAt: number;
+  /** v2: bu ana dek (sahne zamanı) idle isteği ertelenir (büyü pozunun en kısa tutuluşu, skill bittikten sonra da). */
+  holdUntil: number;
 }
+
+/** v2 poz takımı (tutuş takımlı sınıf: Pose Tester'lar): skill pozu tutma ve efekt çıkış noktası yalnızca burada (gerçek Warrior v1 aynen). */
+const isV2 = (def: PoseClassDef): boolean => !!def.grips;
+/** Melee skill pozunun idle'a dönmeden önce en az görünme süresi (ms, slow() ile). */
+const MELEE_POSE_MIN_MS = 260;
+/** Büyü / atış skill pozunun skill başından itibaren en az görünme süresi (ms, slow() ile). */
+const CAST_POSE_MIN_MS = 750;
 
 /** floatText seçenekleri: tür (tipografi) ve rakamın solundaki/sağındaki küçük ikon (piksel ikon adı). */
 export interface FloatOpts {
@@ -167,7 +182,7 @@ export class CombatantView {
     const baked = def ? bakePoseTexture(scene, combatant.defId, opts.weapon ?? { ...def.defaultWeapon }, combatant.spriteScale ?? 1) : null;
     if (def && baked) {
       const display = poseDisplayScale(def, combatant.spriteScale ?? 1);
-      this.rig = { def, key: baked.key, scale: display / baked.density, display, weapon: opts.weapon ?? { ...def.defaultWeapon }, pose: null, token: 0, skill: [] };
+      this.rig = { def, key: baked.key, scale: display / baked.density, display, weapon: opts.weapon ?? { ...def.defaultWeapon }, pose: null, token: 0, skill: [], shownAt: 0, startedAt: 0, holdUntil: 0 };
       this.w = def.figure.w * display;
       this.h = def.figure.h * display;
     } else {
@@ -755,6 +770,7 @@ export class CombatantView {
   play(anim: AnimName): void {
     if (!this.realSprite) return;
     if (this.rig) {
+      if (anim === 'idle' && this.holdSkillPose()) return;
       // pozlu sınıf: genel durum -> poz; attack/cast oynanan skill'in vuruş pozu (skills.json > pose), yoksa sınıfın varsayılanı
       const skill = anim === 'attack' || anim === 'cast' ? this.rig.skill[this.rig.skill.length - 1] : undefined;
       this.showPose(skill ?? statePose(this.rig.def, anim, this.grip));
@@ -766,6 +782,28 @@ export class CombatantView {
   }
 
   // --- Poz kütüphanesi (src/game/poses.ts; pozsuz sınıfta hepsi etkisiz) ---
+
+  /**
+   * v2 poz takımı (Ömer 2026-10-12 poz denetimi: büyü / atış pozları çok hızlı sönüyordu): skill sürerken efektin `play('idle')` isteği
+   * pozu bozmaz. Melee olmayan skill'de (büyü, atış, gökten) poz skill bitene dek (hazırlık, bırakış, vuruş anı) tutulur; `useSkill(null)`
+   * kısa süre sonra yumuşak geçişle idle'a döndürür. Melee'de poz en az MELEE_POSE_MIN_MS görünür, sonra idle. true = istek ele alındı.
+   */
+  private holdSkillPose(): boolean {
+    const rig = this.rig;
+    if (!rig || !isV2(rig.def) || !this.alive) return false;
+    // skill bitti ama büyü pozunun en kısa süresi dolmadı: idle o ana ertelenir (sonradan gelen idle istekleri de)
+    const wait = rig.holdUntil - this.scene.time.now;
+    if (!rig.skill.length) {
+      if (wait <= 0) return false;
+      this.returnToIdle(rig.token, wait);
+      return true;
+    }
+    if (rig.motion !== 'melee') return true;
+    const left = slow(MELEE_POSE_MIN_MS) - (this.scene.time.now - rig.shownAt);
+    if (left <= 0) return false;
+    this.returnToIdle(rig.token, left);
+    return true;
+  }
 
   /** Bu birim poz kütüphanesiyle mi çiziliyor. */
   get posed(): boolean {
@@ -805,6 +843,8 @@ export class CombatantView {
   useSkill(skill: { pose?: string | string[]; motion?: string } | null): void {
     if (!this.rig) return;
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
+    this.rig.motion = skill?.motion;
+    if (skill) this.rig.startedAt = this.scene.time.now;
     // açık pozu olan menzilli / büyü skill'i: efekt pozu kendisi çağırmasa da (yukarıdan düşen Judgment gibi) baştan skill'in ilk pozu
     if (skill?.pose !== undefined && skill.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
     // küçük savunma hareketi (Guard; gerçek koruma pozu üretilene dek): geriye yaslanıp çöker, sonra toparlanır (data/poses.json > braceSkills)
@@ -819,7 +859,14 @@ export class CombatantView {
       } });
     }
     // skill bitti: efekt pozu boşta pozuna döndürmediyse (araya başka poz girmezse) kısa süre sonra boşta pozuna
-    if (!skill) this.returnToIdle(this.rig.token, slow(500));
+    if (!skill) {
+      // v2: büyü / atış pozu en az CAST_POSE_MIN_MS görünür (çok kısa efektte de poz okunsun), sonra yumuşak dönüş
+      const v2 = isV2(this.rig.def);
+      const left = v2 && this.rig.motion !== 'melee' ? slow(CAST_POSE_MIN_MS) - (this.scene.time.now - this.rig.startedAt) : 0;
+      const ms = Math.max(slow(v2 ? 280 : 500), left);
+      this.rig.holdUntil = v2 && left > 0 ? this.scene.time.now + left : 0;
+      this.returnToIdle(this.rig.token, ms);
+    }
   }
 
   /**
@@ -875,7 +922,9 @@ export class CombatantView {
         .setAngle(this.sprite.angle)
         .setFlipX(this.sprite.flipX);
       this.container.addAt(g, this.container.getIndex(this.sprite) + 1);
-      this.scene.tweens.add({ targets: g, alpha: 0, duration: 110, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
+      // idle'a dönüş biraz daha yumuşak (v2: tutulan büyü pozundan çıkış)
+      const toIdle = isV2(rig.def) && (!pose || pose === statePose(rig.def, 'idle', this.grip));
+      this.scene.tweens.add({ targets: g, alpha: 0, duration: toIdle ? 200 : 110, ease: 'Quad.easeOut', onComplete: () => g.destroy() });
     }
     // sprite'ın ölçeği tween'de olabilir (Whirlwind, kükreme): oranı koruyarak yeni dokunun ölçeğine geçer
     const from = pose ? rig.scale : this.baseScale;
@@ -887,6 +936,7 @@ export class CombatantView {
     else this.sprite.setTexture(this.baseTex, this.scene.textures.get(this.baseTex).has('0') ? 0 : undefined);
     this.sprite.setScale(from * kx, from * ky);
     rig.pose = pose;
+    rig.shownAt = this.scene.time.now;
     return pose;
   }
 
@@ -918,20 +968,85 @@ export class CombatantView {
   weaponLine(): { x: number; y: number; ang: number; len: number } | null {
     const rig = this.rig;
     if (!rig || !rig.pose || !rig.weapon) return null;
-    const p = rig.def.poses[rig.pose];
-    const fam = POSES.weapons[rig.weapon.family];
-    const look = fam?.looks[rig.weapon.look];
-    if (!p || p.hidden || !fam || !look) return null;
-    const flip = this.sprite.flipX ? -1 : 1;
+    // yerleşim (poz + aile ayarı, src/game/poses.ts > itemPlacement): v1 Warrior'da ayar yok, el noktası ve açı aynen
+    const pl = itemPlacement(rig.def, rig.pose, rig.weapon, 'main');
+    if (!pl) return null;
     const k = this.sprite.scaleY / rig.scale; // tween'deki ölçek oranı
-    const ox = flip * (p.anchor.x - rig.def.canvas.footX) * rig.display * k;
-    const oy = (p.anchor.y - rig.def.canvas.footY) * rig.display * k;
+    const flip = this.sprite.flipX ? -1 : 1;
     // gövde eğilmesi (sprite açısı, ayak noktası çevresinde) el noktasını ve silah açısını birlikte döndürür
+    const { x, y } = this.poseToWorld(pl.x, pl.y);
+    const a = ((pl.angle - 90) * Math.PI) / 180 + this.sprite.rotation * flip;
+    return { x, y, ang: a, len: pl.grip.y * pl.k * rig.display * k };
+  }
+
+  /** Gövde tuvali noktası -> dünya (sprite aynası, tween ölçeği ve ayak çevresindeki eğilme dahil). */
+  private poseToWorld(px: number, py: number): { x: number; y: number } {
+    const rig = this.rig;
+    if (!rig) return { x: this.container.x, y: this.container.y };
+    const flip = this.sprite.flipX ? -1 : 1;
+    const k = this.sprite.scaleY / rig.scale;
+    const ox = flip * (px - rig.def.canvas.footX) * rig.display * k;
+    const oy = (py - rig.def.canvas.footY) * rig.display * k;
     const r = this.sprite.rotation;
-    const x = this.container.x + this.sprite.x + ox * Math.cos(r) - oy * Math.sin(r);
-    const y = this.container.y + this.sprite.y + ox * Math.sin(r) + oy * Math.cos(r);
-    const a = ((p.anchor.angle - 90) * Math.PI) / 180 + r * flip;
-    return { x, y, ang: a, len: look.grip.y * weaponScale(fam, look, rig.def) * rig.display * k };
+    return { x: this.container.x + this.sprite.x + ox * Math.cos(r) - oy * Math.sin(r), y: this.container.y + this.sprite.y + ox * Math.sin(r) + oy * Math.cos(r) };
+  }
+
+  /**
+   * Büyü / atış ÇIKIŞ NOKTASI (yalnızca v2 poz takımı, Pose Tester'lar; Ömer 2026-10-12 poz denetimi): şu anki pozda asanın / kılıcın
+   * UCU, yayın kavrama noktası, tılsımın ortası; açık el pozunda (point / throw) ya da eşya çizilmiyorsa (fırlatılan tılsım) açık el.
+   * v1 / pozsuz birimde null: efekt eski el noktasını kullanır.
+   */
+  castPoint(): { x: number; y: number } | null {
+    const rig = this.rig;
+    if (!rig || !isV2(rig.def) || !this.alive) return null;
+    // skill sürerken bırakış pozu (skill'in son pozu; efekt çoğu zaman noktayı pozdan önce okur), değilse şu anki poz
+    const last = rig.skill[rig.skill.length - 1];
+    const pose = last ? keyFrame(rig.def, last, this.grip) : rig.pose;
+    const p = pose ? rig.def.poses[pose] : undefined;
+    if (!pose || !p) return null;
+    const pl = rig.weapon ? itemPlacement(rig.def, pose, rig.weapon, 'main') : null;
+    // açık el pozu (point / throw: data/poses.json > open): büyü / fırlatılan şey açık elden çıkar (eşya o elde değilse)
+    const open = p.open === 'off' ? p.offhand : p.open === 'main' ? p.anchor : undefined;
+    if (!pl || (open && pl.hand !== p.open)) {
+      const h = open ?? p.offhand ?? p.anchor;
+      return this.poseToWorld(h.x, h.y);
+    }
+    const hold = POSES.weapons[pl.family]?.hold;
+    const q = hold === 'bow' ? { x: pl.x, y: pl.y } : hold === 'charm' ? placementPoint(pl, pl.w / 2, pl.h / 2) : placementPoint(pl, pl.grip.x, 0);
+    return this.poseToWorld(q.x, q.y);
+  }
+
+  /**
+   * v2 bırakış pozunda (skill'in son pozu; yoksa şu anki) bir elin dünyadaki noktası: 'main' ana el, 'off' ikinci el. v1 / pozsuz: null.
+   */
+  handPoint(which: 'main' | 'off'): { x: number; y: number } | null {
+    const rig = this.rig;
+    if (!rig || !isV2(rig.def) || !this.alive) return null;
+    const last = rig.skill[rig.skill.length - 1];
+    const pose = last ? keyFrame(rig.def, last, this.grip) : rig.pose;
+    const p = pose ? rig.def.poses[pose] : undefined;
+    if (!p) return null;
+    const h = which === 'off' ? (p.offhand ?? p.anchor) : p.anchor;
+    return this.poseToWorld(h.x, h.y);
+  }
+
+  /**
+   * Yayın dünyadaki noktaları (v2, ana elde yay çizilen pozda): kavrama, üst ve alt uç (kiriş uçları), kirişi çeken el (ikinci el
+   * noktası). Archer efekti kirişi buraya çizer. Yoksa null.
+   */
+  bowPoints(): { grip: { x: number; y: number }; top: { x: number; y: number }; bot: { x: number; y: number }; draw: { x: number; y: number } } | null {
+    const rig = this.rig;
+    if (!rig || !isV2(rig.def) || !rig.pose || !rig.weapon || POSES.weapons[rig.weapon.family]?.hold !== 'bow' || !this.alive) return null;
+    const last = rig.skill[rig.skill.length - 1];
+    const pose = (last ? keyFrame(rig.def, last, this.grip) : null) ?? rig.pose;
+    const pl = itemPlacement(rig.def, pose, rig.weapon, 'main');
+    const p = rig.def.poses[pose];
+    if (!pl || !p) return null;
+    const sx = pl.w * 0.12; // kiriş görselin sol kenarına yakın (yay kesimde aynalandı: kiriş gövdeye dönük)
+    const top = placementPoint(pl, sx, pl.h * 0.02);
+    const bot = placementPoint(pl, sx, pl.h * 0.98);
+    const off = p.offhand ?? p.anchor;
+    return { grip: this.poseToWorld(pl.x, pl.y), top: this.poseToWorld(top.x, top.y), bot: this.poseToWorld(bot.x, bot.y), draw: this.poseToWorld(off.x, off.y) };
   }
 
   /** Hedefe doğru atılıp geri döner. Vuruş anında onHit çağrılır. */

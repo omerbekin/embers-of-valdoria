@@ -29,6 +29,8 @@ export interface PoseDef {
   hidden?: boolean;
   /** Yumruk yamasının yarıçapı (0 = yama yok). */
   fist?: number;
+  /** Açık (avucu açık) el: point / throw. Büyü / fırlatılan şeyin çıkış noktası (CombatantView.castPoint), eşya o elde değilse. */
+  open?: 'main' | 'off';
 }
 export interface PoseClassDef {
   dir: string;
@@ -56,6 +58,29 @@ export interface PoseClassDef {
   /** Pozlu birimin isabet tepkisi (kod): saldırandan geriye eğilme (derece) + çökme oranı. */
   hitRecoil?: { leanDeg: number; crouch: number };
   poses: Record<string, PoseDef>;
+  /**
+   * Aile x poz yerleşim ayarı (v2, 2026-10-12 poz denetimi): `itemPoses[aile][poz]` (`'*'` = ailenin tüm pozları, poza özel olan üstüne
+   * yazar; `'off:<poz>'` / `'main:<poz>'` yalnızca o eldeki eşyaya, ör. ikinci el hançeri). Aynı 24 kare her silah ailesinde doğru dursun diye: açı, kaydırma, boy, gizleme, el değiştirme, arkada çizme.
+   */
+  itemPoses?: Record<string, Record<string, ItemOverride>>;
+}
+/** Bir eşyanın pozdaki yerleşim ayarı (`PoseClassDef.itemPoses`). */
+export interface ItemOverride {
+  /** Mutlak açı (derece, saat yönü, 0 = baş yukarı); dik ailede (yay, kalkan) de uygulanır. */
+  angle?: number;
+  /** Kabzanın el noktasından kayması (gövde tuvali pikseli). */
+  dx?: number;
+  dy?: number;
+  /** Boy çarpanı. */
+  scale?: number;
+  /** Bu pozda çizilmez (ör. fırlatılan tılsım). */
+  hidden?: boolean;
+  /** Hangi el noktasında: 'main' (pozun ana eli) ya da 'off' (ikinci el); yoksa eşyanın kendi eli. */
+  hand?: 'main' | 'off';
+  /** Gövdenin arkasında çizilir. */
+  back?: boolean;
+  /** Yatay ayna (yoksa pozun `flip`'i, yalnızca ana el). */
+  flip?: boolean;
 }
 export interface WeaponLook {
   w: number;
@@ -236,45 +261,14 @@ export interface Box {
 /** Silah ışıltısı için kenar payı (gövde tuvali pikseli). */
 export const GLOW_PAD = 12;
 
-/** Bir pozun birleşik sınırı (gövde kutusu + döndürülmüş silah dörtgeni), gövde tuvali koordinatı; alt sınır taban çizgisinde kırpılır. */
+/** Bir pozun birleşik sınırı (gövde kutusu + döndürülmüş silah dörtgenleri), gövde tuvali koordinatı; alt sınır taban çizgisinde kırpılır. */
 export function poseBounds(def: PoseClassDef, name: string, w: WeaponPick | null): Box {
-  const box = itemBounds(def, name, w, false);
-  if (w?.offhand && !gripBlocksOffhand(w.grip)) {
-    const o = itemBounds(def, name, { ...w.offhand, ...(w.glow ? { glow: w.glow } : {}) }, true);
-    box.x0 = Math.min(box.x0, o.x0);
-    box.x1 = Math.max(box.x1, o.x1);
-    box.y0 = Math.min(box.y0, o.y0);
-    box.y1 = Math.min(Math.max(box.y1, o.y1), def.canvas.footY);
-  }
-  return box;
-}
-
-/** El noktası + açısı: ana el ya da ikinci el (açısı yoksa ana elin; dik aile = 0). Yoksa null. */
-function handOf(p: PoseDef, offhand: boolean, fam: WeaponFamilyArt): PoseAnchor | null {
-  const h = offhand ? (p.offhand ? { x: p.offhand.x, y: p.offhand.y, angle: p.offhand.angle ?? p.anchor.angle } : null) : p.anchor;
-  return h && fam.upright ? { ...h, angle: 0 } : h;
-}
-
-/** Gövde kutusu + bir eldeki eşyanın döndürülmüş dörtgeni (ana el ya da `offhand`). */
-function itemBounds(def: PoseClassDef, name: string, w: WeaponPick | null, offhand: boolean): Box {
   const p = def.poses[name]!;
   const b = p.box ?? { x: 0, y: 0, w: def.canvas.w, h: def.canvas.h };
   const box: Box = { x0: b.x, y0: b.y, x1: b.x + b.w, y1: b.y + b.h };
-  const fam = w ? POSES.weapons[w.family] : undefined;
-  const look = fam && w ? fam.looks[w.look] : undefined;
-  const hand = fam ? handOf(p, offhand, fam) : null;
-  if (fam && look && hand && !p.hidden) {
-    const k = weaponScale(fam, look, def);
-    const a = (hand.angle * Math.PI) / 180;
-    const c = Math.cos(a);
-    const s = Math.sin(a);
-    const pad = w?.glow ? GLOW_PAD : 2;
-    for (const [px, py] of [[0, 0], [look.w, 0], [0, look.h], [look.w, look.h]] as const) {
-      let lx = (px - look.grip.x) * k;
-      const ly = (py - look.grip.y) * k;
-      if (p.flip && !offhand) lx = -lx;
-      const x = hand.x + lx * c - ly * s;
-      const y = hand.y + lx * s + ly * c;
+  const pad = w?.glow ? GLOW_PAD : 2;
+  for (const pl of poseItems(def, name, w)) {
+    for (const [x, y] of placementCorners(pl)) {
       box.x0 = Math.min(box.x0, x - pad);
       box.x1 = Math.max(box.x1, x + pad);
       box.y0 = Math.min(box.y0, y - pad);
@@ -284,6 +278,98 @@ function itemBounds(def: PoseClassDef, name: string, w: WeaponPick | null, offha
   box.y1 = Math.min(box.y1, def.canvas.footY);
   return box;
 }
+
+/**
+ * Bir eldeki eşyanın çözülmüş yerleşimi (gövde tuvali koordinatı): kabza noktası (x, y), açı (derece, saat yönü, 0 = baş yukarı), ölçek,
+ * ayna, gövdenin arkasında mı ve hangi el noktasında. Poz + aile ayarı (`itemPoses`) birlikte uygulanmış hâli; çizim, sınır ve efekt
+ * çıkış noktası (CombatantView.weaponPoint) hep bunu kullanır.
+ */
+export interface ItemPlacement {
+  family: string;
+  look: string;
+  slot: 'main' | 'off';
+  hand: 'main' | 'off';
+  x: number;
+  y: number;
+  /** Elin noktası (yumruk yaması burada; kabza `dx/dy` ile kaydırılmış olabilir). */
+  hx: number;
+  hy: number;
+  angle: number;
+  k: number;
+  flip: boolean;
+  back: boolean;
+  w: number;
+  h: number;
+  grip: { x: number; y: number };
+}
+
+/** Aile x poz ayarı: `itemPoses[aile]['*']`, üstüne `[poz]`, üstüne yalnızca o eldeki eşya için `['off:<poz>']` / `['main:<poz>']`. */
+export const itemOverride = (def: PoseClassDef, family: string, pose: string, slot: 'main' | 'off' = 'main'): ItemOverride => {
+  const f = def.itemPoses?.[family];
+  return { ...f?.['*'], ...f?.[pose], ...f?.[`${slot}:${pose}`] };
+};
+
+/**
+ * Bir eşyanın bu pozdaki yerleşimi (`slot` = ana el silahı ya da ikinci el eşyası); çizilmiyorsa (pozun `hidden`'ı, ayarın `hidden`'ı,
+ * el noktası yok, görsel ölçüsü yok) null.
+ */
+export function itemPlacement(def: PoseClassDef, name: string, item: { family: string; look: string }, slot: 'main' | 'off'): ItemPlacement | null {
+  const p = def.poses[name];
+  const fam = POSES.weapons[item.family];
+  const look = fam?.looks[item.look];
+  if (!p || !fam || !look || p.hidden) return null;
+  const o = itemOverride(def, item.family, name, slot);
+  if (o.hidden) return null;
+  const hand = o.hand ?? slot;
+  const h = hand === 'main' ? p.anchor : p.offhand ? { x: p.offhand.x, y: p.offhand.y, angle: p.offhand.angle ?? p.anchor.angle } : null;
+  if (!h) return null;
+  const angle = o.angle ?? (fam.upright ? 0 : h.angle);
+  return {
+    family: item.family,
+    look: item.look,
+    slot,
+    hand,
+    x: h.x + (o.dx ?? 0),
+    y: h.y + (o.dy ?? 0),
+    hx: h.x,
+    hy: h.y,
+    angle,
+    k: weaponScale(fam, look, def) * (o.scale ?? 1),
+    flip: o.flip ?? (slot === 'main' ? !!p.flip : false),
+    back: o.back ?? (slot === 'main' ? !!p.back : false),
+    w: look.w,
+    h: look.h,
+    grip: look.grip,
+  };
+}
+
+/** Pozda çizilen eşyalar: ana el silahı ve (tek el tutuşta) ikinci el eşyası, çözülmüş yerleşimleriyle. */
+export function poseItems(def: PoseClassDef, name: string, w: WeaponPick | null): ItemPlacement[] {
+  if (!w) return [];
+  const out: ItemPlacement[] = [];
+  const main = itemPlacement(def, name, w, 'main');
+  if (main) out.push(main);
+  if (w.offhand && !gripBlocksOffhand(w.grip)) {
+    const off = itemPlacement(def, name, w.offhand, 'off');
+    if (off) out.push(off);
+  }
+  return out;
+}
+
+/** Görsel üzerindeki bir noktanın (görünüm pikseli) gövde tuvali koordinatı. */
+export function placementPoint(pl: ItemPlacement, px: number, py: number): { x: number; y: number } {
+  const a = (pl.angle * Math.PI) / 180;
+  let lx = (px - pl.grip.x) * pl.k;
+  const ly = (py - pl.grip.y) * pl.k;
+  if (pl.flip) lx = -lx;
+  return { x: pl.x + lx * Math.cos(a) - ly * Math.sin(a), y: pl.y + lx * Math.sin(a) + ly * Math.cos(a) };
+}
+
+const placementCorners = (pl: ItemPlacement): Array<[number, number]> =>
+  ([[0, 0], [pl.w, 0], [0, pl.h], [pl.w, pl.h]] as const).map(([px, py]) => {
+    const q = placementPoint(pl, px, py);
+    return [q.x, q.y] as [number, number];
+  });
 
 /**
  * Tüm pozları kapsayan ORTAK kare (ayak ortası tam ortada, taban en altta): sprite kökeni (0.5, 1) her karede ayakları aynı yere koyar.
@@ -304,9 +390,10 @@ export function frameExtent(def: PoseClassDef, w: WeaponPick | null): { halfW: n
 type Src = CanvasImageSource;
 
 /**
- * Bir pozu gövde tuvali koordinatında çizer (çağıran dönüşümü önceden kurar). Sıra: (arkadaysa silah) gövde (öndeyse silah + yumruk
- * yaması: el çevresindeki gövde pikselleri kabzanın üstüne yeniden çizilir, yumruk kabzayı SARAR). `glowPx` ışıltı bulanıklığı (cihaz pikseli).
- * tools/pose-editor.html ve tools/make-poses.mjs --preview aynı kuralı uygular.
+ * Bir pozu gövde tuvali koordinatında çizer (çağıran dönüşümü önceden kurar). Sıra: arkadaki eşyalar (`back`), gövde, öndeki eşyalar,
+ * yumruk yaması (el çevresindeki gövde pikselleri kabzanın üstüne yeniden çizilir, yumruk kabzayı SARAR), en üstte önde duran kalkan.
+ * `glowPx` ışıltı bulanıklığı (cihaz pikseli). Yerleşim `itemPlacement` (poz + `itemPoses` aile ayarı).
+ * tools/pose-editor.html ve tools/make-poses.mjs --preview aynı kuralı (ayarsız) uygular.
  */
 export function drawPoseComposite(
   ctx: CanvasRenderingContext2D,
@@ -319,39 +406,28 @@ export function drawPoseComposite(
   const p = def.poses[name];
   if (!p) return;
   const { w: CW, h: CH } = def.canvas;
-  /** Bir eldeki eşya (ana el ya da ikinci el); görseli / ölçüsü yoksa çizmez. */
-  const drawItem = (img: Src | null | undefined, family: string | undefined, lookId: string | undefined, offhand: boolean) => {
-    const fam = family ? POSES.weapons[family] : undefined;
-    const look = fam && lookId ? fam.looks[lookId] : undefined;
-    const hand = fam ? handOf(p, offhand, fam) : null;
-    if (!img || !fam || !look || !hand || p.hidden) return;
-    const k = weaponScale(fam, look, def);
+  const items = weapon ? poseItems(def, name, weapon.pick) : [];
+  const draw = (pl: ItemPlacement) => {
+    const img = pl.slot === 'main' ? weapon?.img : weapon?.offImg;
+    if (!img) return;
     ctx.save();
-    ctx.translate(hand.x, hand.y);
-    ctx.rotate((hand.angle * Math.PI) / 180);
-    ctx.scale(p.flip && !offhand ? -k : k, k);
+    ctx.translate(pl.x, pl.y);
+    ctx.rotate((pl.angle * Math.PI) / 180);
+    ctx.scale(pl.flip ? -pl.k : pl.k, pl.k);
     if (weapon?.pick.glow && glowPx > 0) {
       ctx.shadowColor = weapon.pick.glow;
       ctx.shadowBlur = glowPx;
     }
-    ctx.drawImage(img, -look.grip.x, -look.grip.y, look.w, look.h);
+    ctx.drawImage(img, -pl.grip.x, -pl.grip.y, pl.w, pl.h);
     ctx.restore();
   };
-  const main = () => drawItem(weapon?.img, weapon?.pick.family, weapon?.pick.look, false);
-  // ikinci el: yalnızca tek el tutuşta (kalkan / ikinci hançer; görseli yoksa hiçbir şey çizilmez)
-  const off = weapon?.pick.offhand && !gripBlocksOffhand(weapon.pick.grip) ? weapon.pick.offhand : null;
-  const second = () => off && drawItem(weapon?.offImg, off.family, off.look, true);
-  const shieldOnTop = !!off && !!POSES.weapons[off.family]?.upright;
-  if (p.back) main();
+  for (const pl of items) if (pl.back) draw(pl);
   ctx.drawImage(body, 0, 0, CW, CH);
-  if (p.hidden || !weapon) return;
-  if (!p.back) main();
-  if (!shieldOnTop) second();
+  for (const pl of items) if (!pl.back && !topShield(pl)) draw(pl);
   const r = p.fist ?? POSES.fistRadius;
-  // yumruk yaması: el çevresindeki gövde pikselleri kabzanın üstüne (yumruk sarar); kalkan bunun da üstünde (kol kalkanın arkasında)
-  if (r > 0)
-    for (const h of [p.back ? null : p.anchor, off ? p.offhand : p.back ? null : p.offhand]) {
-      if (!h) continue;
+  // yumruk yaması: eşyayı tutan elin (tek eşyada öteki elin de: çift elde sap üstündeki el) gövde pikselleri kabzanın üstüne
+  for (const h of fistPoints(p, items))
+    if (r > 0) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(h.x, h.y, r, 0, Math.PI * 2);
@@ -359,7 +435,19 @@ export function drawPoseComposite(
       ctx.drawImage(body, 0, 0, CW, CH);
       ctx.restore();
     }
-  if (shieldOnTop) second();
+  for (const pl of items) if (topShield(pl)) draw(pl);
+}
+
+/** Önde, her şeyin üstünde çizilen ikinci el kalkanı (kol kalkanın arkasında). */
+const topShield = (pl: ItemPlacement) => pl.slot === 'off' && !pl.back && !!POSES.weapons[pl.family]?.upright;
+
+/** Yumruk yaması noktaları: önde çizilen eşyaların elleri; tek eşya ana eldeyse ikinci el de (çift elde sapı saran el). */
+export function fistPoints(p: PoseDef, items: ItemPlacement[]): Array<{ x: number; y: number }> {
+  const front = items.filter((pl) => !pl.back);
+  const pts = front.map((pl) => ({ x: pl.hx, y: pl.hy }));
+  const main = front.find((pl) => pl.slot === 'main');
+  if (main && main.hand === 'main' && !items.some((pl) => pl.slot === 'off') && p.offhand) pts.push({ x: p.offhand.x, y: p.offhand.y });
+  return pts;
 }
 
 /** Veri denetimi (tests/poses.test.ts): her sınıfın durumları, döngüleri ve el noktaları geçerli mi; silah görünümleri tam mı. */
@@ -375,6 +463,13 @@ export function validatePoses(data: PosesData = POSES): string[] {
     for (const [name, p] of Object.entries(def.poses)) {
       if (!p.anchor || !Number.isFinite(p.anchor.x) || !Number.isFinite(p.anchor.y) || !Number.isFinite(p.anchor.angle)) errors.push(`${id}/${name}: anchor missing`);
       else if (def.canvas && (p.anchor.x < 0 || p.anchor.y < 0 || p.anchor.x > def.canvas.w || p.anchor.y > def.canvas.h)) errors.push(`${id}/${name}: anchor outside canvas`);
+    }
+    for (const [fam, m] of Object.entries(def.itemPoses ?? {})) {
+      if (!data.weapons[fam]) errors.push(`${id}: itemPoses ${fam} -> unknown weapon family`);
+      for (const key of Object.keys(m)) {
+        const pose = key.replace(/^(main|off):/, '');
+        if (pose !== '*' && !def.poses[pose]) errors.push(`${id}: itemPoses ${fam}.${key} -> unknown pose`);
+      }
     }
     const dw = def.defaultWeapon;
     if (!data.weapons[dw.family]?.looks[dw.look]) errors.push(`${id}: default weapon ${dw.family}/${dw.look} has no art`);

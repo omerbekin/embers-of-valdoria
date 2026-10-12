@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { POSES, cycleFrames, frameExtent, gripFrames, keyFrame, poseBounds, poseClass, poseGrip, resolvePose, skillPoses, statePose, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
+import { POSES, cycleFrames, frameExtent, gripFrames, itemPlacement, keyFrame, placementPoint, poseBounds, poseClass, poseGrip, poseItems, resolvePose, skillPoses, statePose, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
 import { POSE_TESTER_GEAR, offhandItem, partyWeapons, weaponItem } from '../src/game/pose-weapons';
 
 // Poz kütüphanesi (Ömer 2026-10-11, Warrior denemesi; v2 tek el + çift el takımı 2026-10-12, yalnızca Pose Tester'lar; src/game/poses.ts,
@@ -234,8 +234,58 @@ describe('Pose Tester I ... XI (gizli debug class\'ları, v2 pozlar)', () => {
     // v2'nin her eylem pozu en az bir skill'le denenebilir (idle/hit/kneel: durumlar ve debug tepkileri)
     for (const p of ['slash', 'overhead', 'thrust', 'spin', 'step', 'guard', 'raise', 'channel', 'point', 'throw']) expect(poses, p).toContain(p);
     expect(skillPoses('pose_tester_5', content.skills['pt_backstab'])).toEqual(['thrust']);
-    expect(skillPoses('pose_tester_6', content.skills['pt_fire_bolt'])).toEqual(['point']);
+    expect(skillPoses('pose_tester_6', content.skills['pt_fire_bolt'])).toEqual(['thrust']); // asa öne uzanır, ok asanın ucundan (2026-10-12 denetim)
+    expect(skillPoses('pose_tester_4', content.skills['pt_quick_shot'])).toEqual(['thrust']); // yay atışı artık fırlatma değil
     expect(skillPoses('pose_tester_2', content.skills['pt_guard'])).toEqual(['guard']); // gerçek koruma pozu (eski kodla savunma hareketi yok)
     expect(POSES.braceSkills ?? []).not.toContain('pt_guard');
+  });
+});
+
+describe('v2 aile x poz yerleşimi (itemPoses; 2026-10-12 poz denetimi, yeni çizim yok)', () => {
+  const def = POSES.classes['warrior_v2']!;
+  const lowest = (pose: string, family: string, look: string) => {
+    const pl = itemPlacement(def, pose, { family, look }, 'main')!;
+    return Math.max(...[[0, 0], [pl.w, 0], [0, pl.h], [pl.w, pl.h]].map(([x, y]) => placementPoint(pl, x!, y!).y));
+  };
+  const dist = (a: { x: number; y: number }, b: { x: number; y: number }) => Math.hypot(a.x - b.x, a.y - b.y);
+
+  it('gerçek Warrior (v1) ayarsız: yerleşim el noktası + açı aynen', () => {
+    const v1 = POSES.classes['warrior']!;
+    expect(v1.itemPoses).toBeUndefined();
+    for (const pose of Object.keys(v1.poses)) {
+      const pl = itemPlacement(v1, pose, v1.defaultWeapon, 'main');
+      if (!pl) continue;
+      expect([pl.x, pl.y, pl.angle]).toEqual([v1.poses[pose]!.anchor.x, v1.poses[pose]!.anchor.y, v1.poses[pose]!.anchor.angle]);
+    }
+  });
+
+  it('uzun çift el silahlar idle2 / fırlatma / isabette yere gömülmez (alt uç taban çizgisinde ya da üstünde)', () => {
+    for (const [family, look] of [['staves', 'rune'], ['greataxes', 'dane'], ['mauls', 'maul']] as const)
+      for (const pose of ['idle2', 'throw', 'point', 'hit']) expect(lowest(pose, family, look), `${family} ${pose}`).toBeLessThanOrEqual(def.canvas.footY + 2);
+  });
+
+  it("açık el (point / throw): tılsım fırlatışta elden çıkar, point'te açık elde; silah öteki yumrukta; ikinci el hançeri / kılıcı açık elde çizilmez", () => {
+    expect(def.poses['point']!.open).toBe('off');
+    expect(def.poses['throw']!.open).toBe('off');
+    expect(itemPlacement(def, 'throw', { family: 'charms', look: 'cards' }, 'main')).toBeNull();
+    expect(itemPlacement(def, 'point', { family: 'charms', look: 'doll' }, 'main')!.hand).toBe('off');
+    const duo = { family: 'daggers', look: 'rondel', offhand: { family: 'daggers', look: 'plain' } };
+    for (const pose of ['point', 'throw']) expect(poseItems(def, pose, duo).map((p) => p.slot), pose).toEqual(['main']);
+    expect(poseItems(def, 'channel', duo).map((p) => p.slot)).toEqual(['main', 'off']);
+  });
+
+  it("kalkan: point / throw'da açık elin üstünde değil (önkolda), isabet ve diz çökmede gövdenin arkasında; kule kalkanı küçüldü", () => {
+    const pick = { family: 'maces', look: 'flanged', offhand: { family: 'shields', look: 'tower' } };
+    for (const pose of ['point', 'throw']) {
+      const sh = poseItems(def, pose, pick).find((p) => p.slot === 'off')!;
+      expect(dist(sh, def.poses[pose]!.offhand!), pose).toBeGreaterThan(50);
+    }
+    for (const pose of ['hit', 'kneel']) expect(poseItems(def, pose, pick).find((p) => p.slot === 'off')!.back, pose).toBe(true);
+    expect(POSES.weapons['shields']!.looks['tower']!.length).toBeLessThanOrEqual(165);
+  });
+
+  it("yay: thrust1 öne uzanmış elde dik (kiriş çekişi), raise'de göğe eğik", () => {
+    expect(itemPlacement(def, 'thrust1', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBe(0);
+    expect(itemPlacement(def, 'raise', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBeLessThan(-20);
   });
 });

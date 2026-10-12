@@ -4771,7 +4771,8 @@ const smokebomb = (c: VfxCtx) => playUntilHit(async (hit) => {
   c.scene.tweens.add({ targets: a.container, x: a.container.x - dir * 14, duration: slow(90), yoyo: true });
   await wait(c.scene, slow(90));
   // bomba: elden alanın ortasına yay çizerek uçar; fitilinden kıvılcım ve ince duman izi
-  const hand = { x: a.container.x + dir * a.w * 0.3, y: a.container.y - a.h * 0.7 };
+  // v2 pozlu birim (Pose Tester): bomba fırlatan açık elden (CombatantView.castPoint); gerçek sınıfta eskisi gibi
+  const hand = a.castPoint() ?? { x: a.container.x + dir * a.w * 0.3, y: a.container.y - a.h * 0.7 };
   const bomb = sprite(c.scene, 'claybomb', '#8c5a2b', hand.x, hand.y, 56, DEPTH + 45);
   const dist = Math.hypot(aim.x - hand.x, aim.y - hand.y);
   await travel(c.scene, bomb, { x: aim.x, y: aim.y - 14 }, Math.max(380, Math.min(560, dist * 0.6)), {
