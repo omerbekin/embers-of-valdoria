@@ -2174,7 +2174,7 @@
     "note": "Pose test: plays the Throw pose."
   },
   "pt_guard": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-11): Guard kopyası; gerçek efekt/ses/hedef şekli (artOf guard), poz kütüphanesinde 'hit' pozuyla oynar. Bedel 0, cooldown yok, hasar ~1.",
+    "_not": "Pose Tester (debug, Ömer 2026-10-11): Guard kopyası; gerçek efekt/ses/hedef şekli (artOf guard), poz kütüphanesinde 'step' pozu + küçük savunma hareketiyle oynar (koruma pozu gelene dek). Bedel 0, cooldown yok, hasar ~1.",
     "id": "pt_guard",
     "name": "Guard",
     "icon": "guard2",
@@ -2198,8 +2198,8 @@
       "shieldBrace",
       "chainTether"
     ],
-    "pose": "hit",
+    "pose": "step",
     "artOf": "guard",
-    "note": "Pose test: plays the Guard / Block (closest pose: braced, arms in) pose."
+    "note": "Pose test: braced step pose with a small defensive motion (stand-in until a guard pose exists)."
   }
 }

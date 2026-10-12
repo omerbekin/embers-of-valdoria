@@ -27,6 +27,23 @@ export function nodeGlyphImage(scene: Phaser.Scene, type: NodeType | 'start', x:
   return scene.add.image(x, y, ensureIcon(scene, miscIconName('node', type), '#e8c47e', false)).setDisplaySize(size, size);
 }
 
+/** Düşmüş kahraman mezar işareti (Ömer 2026-10-11): boyalı `fx:corpse` (savaştaki ceset işaretiyle aynı), yoksa ince çizgili mezar taşı. */
+export function graveMark(scene: Phaser.Scene, x: number, y: number, size: number): Phaser.GameObjects.GameObject {
+  if (hasMiscImage('fx', 'corpse')) return scene.add.image(x, y, ensureIcon(scene, miscIconName('fx', 'corpse'), '#e8c47e', false)).setDisplaySize(size, size);
+  const g = scene.add.graphics();
+  const w = size * 0.5, h = size * 0.62;
+  g.fillStyle(0x2a2420, 0.95).lineStyle(2, 0xbfae8a, 0.9);
+  g.beginPath();
+  g.moveTo(x - w / 2, y + h / 2);
+  g.lineTo(x - w / 2, y - h / 2 + w / 2);
+  g.arc(x, y - h / 2 + w / 2, w / 2, Math.PI, 0, false);
+  g.lineTo(x + w / 2, y + h / 2);
+  g.closePath();
+  g.fillPath().strokePath();
+  g.lineBetween(x, y - h * 0.18, x, y + h * 0.18).lineBetween(x - w * 0.22, y - h * 0.05, x + w * 0.22, y - h * 0.05);
+  return g;
+}
+
 /** Düğüm türünün ince çizgili glifi (merkez ox, oy; s = ölçek, ~24 px kutu). Boyalı ikon yoksa yedek (nodeGlyphImage). */
 export function drawNodeGlyph(g: Phaser.GameObjects.Graphics, type: NodeType, col: number, s: number, ox = 0, oy = 0, alpha = 1): void {
   const P = (x: number, y: number) => ({ x: ox + x * s, y: oy + y * s });

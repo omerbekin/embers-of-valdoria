@@ -705,11 +705,10 @@ CH = 576
 bg = (52, 58, 84, 255)
 parts = []
 for label, path in (('MEVCUT', os.path.join(ASSETS, 'sprites', 'paladin', 'idle.png')),
-                    ('ESKI (kopek)', os.path.join(ASSETS, 'concepts', 'paladin', 'idle.png')),
                     ('YENI v2 (insan)', os.path.join(HERE, 'idle.png'))):
     im = Image.open(path).convert('RGBA')
     sc = CH / im.height
-    rs = Image.NEAREST if 'v2' in label or 'ESKI' in label else Image.LANCZOS
+    rs = Image.NEAREST if 'v2' in label else Image.LANCZOS
     im = im.resize((max(1, round(im.width * sc)), CH), rs)
     parts.append((label, im))
 total_w = sum(p[1].width for p in parts) + 20 * (len(parts) + 1)

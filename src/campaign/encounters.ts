@@ -89,7 +89,9 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h) : {};
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
-    if (CONFIG.rules.carryHp && caps.startHp && h.hpRatio < 1) setup.startHpRatio = h.hpRatio;
+    // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
+    if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
+    else if (CONFIG.rules.carryHp && caps.startHp && h.hpRatio < 1) setup.startHpRatio = h.hpRatio;
     if (Object.keys(setup).length) party[cell] = setup;
   });
   // Bölüm ölçeği (data/campaign/power-budget.json): açık ilerleme sistemi yokken 1 => düşmanlar bugünküyle aynı
@@ -98,7 +100,9 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     for (const u of enc.def.units) {
       const diff = CONFIG.difficulties[s.difficulty];
       // noTierMods: rütbe eki (enemyTier) bu birime uygulanmaz (The Bridge Warden: fazları/telgrafları zaten zor; sim ölçümü, open-questions)
-      const own = withDifficulty(u.mods, u.tier ? n.enemyTierMods?.[u.tier] : undefined); // düğüme özel rütbe ayarı (seferde)
+      const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipRegions?.includes(n.region) ? CONFIG.enemyScale : undefined;
+      const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : es?.all; // seferin genel düşman ölçeği (eğitim bölgesi hariç)
+      const own = withDifficulty(withDifficulty(u.mods, scale), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
       const mods = withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined);
       const setup: UnitSetup = {
         ...(mods ? { modifiers: mods } : {}),

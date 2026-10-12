@@ -17,7 +17,6 @@ import {
   heroPanel,
   heroStats,
   instanceColor,
-  instanceSummary,
   itemDef,
   slotDef,
   type ItemInstance,
@@ -121,7 +120,9 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     }
     cell.append(itemIcon(inst, k, 1.3));
     const txt = el('div', 'gr-slot-text');
-    txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name), el('div', 'gr-slot-sub', d && inst ? instanceSummary(inst, hero.class) : 'Empty'));
+    // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
+    txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
+    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', 'Empty'));
     cell.append(txt);
     slots.append(cell);
   }

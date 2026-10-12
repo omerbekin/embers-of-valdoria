@@ -100,6 +100,8 @@ export interface BattleSceneData {
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
 export interface CampaignBattleHooks {
   resultActions(victory: boolean, battle: Battle): ResultAction[];
+  /** Sonuç ekranının alt yazısı (sefer: zaferde düşen kahraman notu); yoksa varsayılan. */
+  resultSubtitle?(victory: boolean, battle: Battle): string | undefined;
   /** Savaş menüsü > Retreat to Map: savaş sayılmaz, haritaya aynı düğüme dönülür (campaign-session.retreatToMap). */
   retreat?(): void;
   /**
@@ -3830,6 +3832,7 @@ export class BattleScene extends Phaser.Scene {
       preview,
       onClose: () => this.sys.isActive() && this.setBattleHudHidden(false),
       ...(mp ? {} : { actions: this.campaign && !preview ? this.campaign.resultActions(victory, this.battle) : undefined }),
+      ...(!mp && this.campaign && !preview && this.campaign.resultSubtitle?.(victory, this.battle) ? { subtitle: this.campaign.resultSubtitle(victory, this.battle) } : {}),
     });
   }
 }

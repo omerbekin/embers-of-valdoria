@@ -55,6 +55,20 @@ describe('dinlenme noktası (Riverside Camp)', () => {
     expect(() => reviveAtCamp(at('10'), fallen)).toThrow(); // dinlenme adımı dışında yok
   });
 
+  it('vekil (sim) altın yettikçe düşmüşleri diriltir, sonra dinlenir; yetmeyen düşmüş kalır', () => {
+    const base = at('river');
+    const cost = reviveCost(base);
+    const [x, y] = [base.roster[0]!.id, base.roster[1]!.id];
+    const s = { ...base, gold: cost + 5, roster: base.roster.map((h) => (h.id === x || h.id === y ? { ...h, hpRatio: 0, alive: false } : h)) };
+    const r = autoResolve(s, nextStep(s));
+    expect(r.gold).toBe(5);
+    const fallen = r.roster.filter((h) => isFallen(h));
+    expect(fallen).toHaveLength(1);
+    const up = r.roster.find((h) => (h.id === x || h.id === y) && !isFallen(h))!;
+    expect(up.hpRatio).toBe(Math.min(1, CONFIG.rest.reviveRatio + CONFIG.rest.heal));
+    expect(nextStep(r).kind).toBe('move');
+  });
+
   it('otomatik çözüm (sim) dinlenir: ücretsiz iyileşme, altın harcanmaz', () => {
     const s = { ...at('river'), gold: 99 };
     const r = autoResolve(s, nextStep(s));

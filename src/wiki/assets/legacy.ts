@@ -4,7 +4,7 @@ import { iconUrl } from '../../ui/dom-icons';
 import type { LegacyCatalog, LegacyItem } from './legacy-catalog';
 import { playSound } from './sounds';
 
-/** LEGACY: kullanılmayan / yedek / eski her şey (sprites_old, konseptler, yedek ikon-animasyon-ses) ve neden legacy olduğu. Katalog: legacy-catalog.ts. */
+/** LEGACY: kullanılmayan / yedek / eski her şey (bağlantısız sprite/avatar, yedek ikon-animasyon-ses) ve neden legacy olduğu. Katalog: legacy-catalog.ts. */
 export function mountLegacy(_cat: Catalog, legacy: LegacyCatalog): SectionApi {
   const root = h('section', { class: 'section', attrs: { id: 'legacy' } });
   const countEl = h('span', { class: 'count' });

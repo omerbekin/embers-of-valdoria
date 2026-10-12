@@ -1,17 +1,17 @@
 /**
- * Wiki > ASSETS ve LEGACY bölümleri + wiki'nin class/skill kartlarına eklenen "Art & sounds", "Old versions" ve "Play animation"
+ * Wiki > ASSETS ve LEGACY bölümleri + wiki'nin class/skill kartlarına eklenen "Art & sounds" ve "Play animation"
  * parçaları. Eski Asset Gallery buraya taşındı (gallery.html artık yalnızca gömülü animasyon sahnesi + yönlendirme).
  * Katalog saftır ve gallery ile ORTAKTIR (src/gallery/catalog.ts, src/wiki/assets/legacy-catalog.ts): her şey veriden/dizinlerden
  * türetilir. Ağır DOM (ses kartları, ikon ızgarası, animasyon sahnesi) bölüme girilince tembel kurulur.
  */
 import { buildCatalog, type Catalog } from '../../gallery/catalog';
-import { h, openLightbox, type SectionApi } from '../../gallery/dom';
+import { h, type SectionApi } from '../../gallery/dom';
 import { mountAnimations } from './animations';
 import { mountCharacters } from './characters';
 import { legacyFiles } from './files';
 import { mountIcons } from './icons';
 import { assetNav, type AssetSectionId } from './nav';
-import { buildLegacy, legacyOfSprite, type LegacyCatalog } from './legacy-catalog';
+import { buildLegacy, type LegacyCatalog } from './legacy-catalog';
 import { mountLegacy } from './legacy';
 import { mountPalette } from './palette';
 import { mountPoses } from './poses';
@@ -71,14 +71,13 @@ export function skillArt(skillId: string): HTMLElement | null {
     slot);
 }
 
-/** Class/çağrı kartının altı: 'Art & sounds' (dosyalar, sesler, Assets bağlantıları) ve varsa 'Old versions' (yalnızca bu class'a ait eski çizimler). */
+/** Class/çağrı kartının altı: 'Art & sounds' (dosyalar, sesler, Assets bağlantıları). */
 export function unitArt(unitId: string): HTMLElement | null {
   const cat = assetCatalog();
   const c = cat.characters.find((x) => x.id === unitId);
   if (!c) return null;
   const skillIds = new Set(c.skills.map((s) => s.id));
   const soundIds = [...new Set(cat.animations.filter((a) => skillIds.has(a.skillId)).flatMap((a) => a.sfx))];
-  const old = legacyOfSprite(legacyCatalog(), c.spriteId);
 
   const art = h('details', { class: 'wk-fold' }, h('summary', { text: `Art & sounds (${soundIds.length} sounds)` }));
   let built = false;
@@ -96,18 +95,7 @@ export function unitArt(unitId: string): HTMLElement | null {
         h('div', { class: 'wk-art-line' }, go('All its sounds', 'sounds'), go('All its animations', 'animations'), go('Art sheet', 'art'))));
   });
 
-  const folds: HTMLElement[] = [art];
-  if (old.length) {
-    const oldFold = h('details', { class: 'wk-fold' }, h('summary', { text: `Old versions (${old.length})` }));
-    let oldBuilt = false;
-    oldFold.addEventListener('toggle', () => {
-      if (!oldFold.open || oldBuilt) return;
-      oldBuilt = true;
-      oldFold.append(h('div', { class: 'wk-fold-body wk-old' }, ...old.map((i) => h('figure', {}, i.url ? h('img', { class: 'legacy-img', attrs: { src: i.url, alt: i.label, loading: 'lazy' }, title: `${i.label} (click to enlarge)`, on: { click: () => openLightbox(i.url!, i.label) } }) : null, h('figcaption', { class: 'muted small', text: i.why })))));
-    });
-    folds.push(oldFold);
-  }
-  return h('div', { class: 'wk-folds wk-assets' }, ...folds);
+  return h('div', { class: 'wk-folds wk-assets' }, art);
 }
 
 // ---------------------------------------------------------------- bölümler

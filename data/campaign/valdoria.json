@@ -29,7 +29,7 @@
     { "id": "charcoal", "type": "battle", "name": "Charcoal Camp", "subtitle": "Battle · Charcoal Burners", "region": "II", "pos": [0.336, 0.523], "encounter": "charcoal_camp" },
     { "id": "7", "type": "town", "name": "Valdren Keep", "subtitle": "City · Rest, Recruits", "region": "II", "label": "above", "pos": [0.448, 0.554], "recruit": { "offer": 3, "pick": 1, "when": "leave" }, "partyCap": 4, "heal": 1.0, "city": true },
     { "id": "6B", "type": "treasure", "name": "Dwarven Mine", "subtitle": "Treasure · Guarded", "region": "II", "label": "above", "pos": [0.536, 0.5], "encounter": "mine_wardens", "treasure": "dwarven_mine" },
-    { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Cursed Merchant", "region": "II", "pos": [0.503, 0.606], "event": "witchs_hut" },
+    { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Guarded", "region": "II", "pos": [0.503, 0.606], "encounter": "witchs_hut_guard", "event": "witchs_hut" },
     { "id": "5A", "type": "battle", "name": "Misty Marsh", "subtitle": "Battle · Bog Ambush", "region": "II", "label": "above", "pos": [0.477, 0.731], "encounter": "bog_ambush" },
     { "id": "grave", "type": "battle", "name": "Grave Field", "subtitle": "Battle · Restless Dead", "region": "II", "label": "above", "pos": [0.582, 0.623], "encounter": "grave_field" },
     { "id": "pilgrim", "type": "battle", "name": "Pilgrim Road", "subtitle": "Battle · Highwaymen", "region": "II", "pos": [0.633, 0.37], "encounter": "pilgrim_road" },
@@ -42,7 +42,7 @@
     { "id": "thorn", "type": "elite", "name": "Thornwood Hollow", "subtitle": "Elite · Hidden Lair", "region": "III", "pos": [0.833, 0.838], "encounter": "dragons_spine" },
     { "id": "camp", "type": "merchant", "name": "Forward Camp", "subtitle": "Merchant · Last Supplies", "region": "III", "pos": [0.932, 0.731], "merchant": true },
     { "id": "road", "type": "battle", "name": "Ember Road", "subtitle": "Battle · Outriders", "region": "III", "pos": [0.883, 0.583], "encounter": "ember_road" },
-    { "id": "fold", "type": "event", "name": "Shepherd's Fold", "subtitle": "Event · Abandoned Fold", "region": "III", "label": "above", "pos": [0.945, 0.556], "event": "shepherds_fold" },
+    { "id": "fold", "type": "event", "name": "Shepherd's Fold", "subtitle": "Event · Rest", "region": "III", "label": "above", "pos": [0.945, 0.556], "event": "shepherds_fold", "rest": true },
     { "id": "head", "type": "battle", "name": "Riverhead", "subtitle": "Battle · Spring Ambush", "region": "III", "pos": [0.911, 0.435], "encounter": "riverhead" },
     { "id": "gate", "type": "battle", "name": "Gate of Cinders", "subtitle": "Battle · Gatewardens", "region": "III", "pos": [0.945, 0.31], "encounter": "gate_of_cinders" },
     { "id": "12", "type": "boss", "name": "Castle Morvane", "subtitle": "Final Boss", "region": "III", "pos": [0.885, 0.176], "encounter": "lord_morvane", "final": true, "enemyTierMods": { "boss": { "hpMult": 1.28, "statMult": 1.125 } } }

@@ -144,6 +144,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     ...(plan.background ? { background: plan.background } : {}),
     campaign: {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
+      resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
       battleEffects: () => campaignEffects(s),
       retreat: () => {
         retreatToMap();
@@ -156,6 +157,14 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
 }
 
 const goTo = (game: Phaser.Game, key: string, data?: object) => (game.scene.getScene(BATTLE_SCENE) as Phaser.Scene).scene.start(key, data);
+
+/** Zaferde düşen kahramanlar (Ömer 2026-10-11): kendiliğinden kalkmazlar; sonuç ekranında not. */
+export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): string | undefined {
+  if (!victory) return undefined;
+  const down = outcomeFrom(plan, true, battleSummary(battle).units).units.filter((u) => !u.alive).length;
+  if (!down) return undefined;
+  return down === 1 ? 'One hero has fallen: they stay down until revived at a town or Rest camp' : `${down} heroes have fallen: they stay down until revived at a town or Rest camp`;
+}
 
 /** Sefer savaşının sonuç ekranı düğmeleri. */
 export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: boolean, battle: Battle): ResultAction[] {

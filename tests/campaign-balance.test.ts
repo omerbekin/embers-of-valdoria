@@ -19,10 +19,15 @@ describe(`sefer zorluk eğrisi (Medium, ${T.runs} sefer, seed ${T.firstSeed})`, 
     });
   }
 
-  it('eğri iner: tutorial > normal > elit > boss', () => {
+  it('eğri iner: tutorial > normal > elit (boss düğümleri dinlenmeden sonra gelir; Ömer 2026-10-11 denge paketi)', () => {
     expect(cat.tutorial).toBeGreaterThan(cat.normal);
     expect(cat.normal).toBeGreaterThan(cat.elite);
-    expect(cat.elite).toBeGreaterThan(cat.boss);
+  });
+
+  it(`sefer bitirme oranı hedefte (Medium %${campaignBalance.finish.medium[0]}-${campaignBalance.finish.medium[1]} ± ${T.tolerance})`, () => {
+    const finish = (100 * result.completed) / result.runs;
+    expect(finish, `bitirme %${finish.toFixed(1)}`).toBeGreaterThanOrEqual(campaignBalance.finish.medium[0]! - T.tolerance);
+    expect(finish, `bitirme %${finish.toFixed(1)}`).toBeLessThanOrEqual(campaignBalance.finish.medium[1]! + T.tolerance);
   });
 
   it('12 rotanın hepsi oynandı ve her savaşlı düğüm ölçüldü', () => {

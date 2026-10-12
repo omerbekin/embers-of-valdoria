@@ -178,7 +178,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
   if (rr.item) {
     // Torba doluysa nadir item BEKLER (ödül ekranında: yer açılınca alınır, alınmadan devam edilirse kaybolur); zarlar şimdi atılır
     const d = defIn(catalog, rr.item);
-    const rolls = d && itemDef(d.id) ? rollItem(d, rngFor(s.seed, run.wave, 'rare-roll'), { ilvl: Math.max(d.ilvl, ilvlCap(run.wave, cfg)) }) : undefined; // dalganın seviyesi (Ömer 2026-10-11)
+    const rolls = d && itemDef(d.id) ? rollItem(d, rngFor(s.seed, run.wave, 'rare-roll'), { ilvl: ilvlCap(run.wave, cfg) }) : undefined; // dalganın seviyesi, taban seviyesiz (Ömer 2026-10-12: Legendary düştüğü seviyede)
     if (addToBag(s, rr.item, catalog, cfg, rolls).ok) s.rareDrop = { itemId: rr.item, wave: run.wave };
     else s.rareDrop = { itemId: rr.item, wave: run.wave, pending: true, ...(rolls ? { rolls } : {}) };
   }
@@ -375,7 +375,7 @@ export function shopStock(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog
     if (pool.length && rr.next() < rm.chance) {
       const d = pool[rr.int(0, pool.length - 1)]!;
       const hero = run.heroes.find((h) => canEquip(h.class, d)) ?? run.heroes[0]!;
-      const rolls = rollItem(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll), { ilvl: Math.max(d.ilvl, ilvlCap(cleared, cfg)) });
+      const rolls = rollItem(d, rngFor(run.seed, cleared, 'shop-rare-roll', reroll), { ilvl: ilvlCap(cleared, cfg) }); // dalganın seviyesi, taban seviyesiz (Ömer 2026-10-12)
       out.push({ itemId: d.id, heroId: hero.id, price: Math.round(itemValue({ id: d.id, rolls }) * rm.priceMult), rolls });
     }
   }

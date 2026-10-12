@@ -232,6 +232,25 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (!inst) return [];
       return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : []);
     },
+    // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
+    tipActions: (key) => {
+      const hero = curHero();
+      if (!hero) return [];
+      if (key.startsWith('bag:')) {
+        const uid = key.slice(4);
+        const d = itemDef(bagInst(uid)?.id ?? '');
+        const ok = !!d && canEquip(hero.class, d);
+        return [{ label: ok ? `Equip · ${className(hero.class)}` : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid) }];
+      }
+      if (key.startsWith('slot:')) {
+        const slot = key.slice(5) as SlotId;
+        return hero.equipment[slot] ? [{ label: 'Unequip', run: () => {
+          uiSound('equip');
+          apply(() => src.unequip(hero.id, slot));
+        } }] : [];
+      }
+      return [];
+    },
     // Odak değişince yalnızca Character sayfası yeniden çizilir (torba DOM'u yerinde kalır: üstüne gelme bozulmaz)
     onHover: (key) => {
       const uid = key.startsWith('bag:') ? key.slice(4) : '';

@@ -1,9 +1,8 @@
 """Ömer'in ChatGPT ile ürettirdiği karakter görsellerini (2026-10-07) oyuna aktarır.
 Kullanım (game/ klasöründen):  python tools/import-characters-v2.py [--avatars-only] [--only <id>]  (yalnızca avatarlar: sprite'lara dokunmaz)
  1. Orijinal 1254px dosyaları assets/source/characters-v2/ altına kopyalar.
- 2. Eski sprite'ı assets/sprites_old/<id>/idle.png altına yedekler (varsa, üzerine yazmaz).
- 3. İçerik sınırlarına göre kırpıp (küçük pay) yükseklik SPRITE_H'ye küçültür -> assets/sprites/<id>/idle.png
- 4. Kafa avatarını kırpıp -> assets/avatars/<id>.png (256x256). Kırpma koordinatları HEADS içinde (kırpılmış içerik kutusuna göre px).
+ 2. İçerik sınırlarına göre kırpıp (küçük pay) yükseklik SPRITE_H'ye küçültür -> assets/sprites/<id>/idle.png
+ 3. Kafa avatarını kırpıp -> assets/avatars/<id>.png (256x256). Kırpma koordinatları HEADS içinde (kırpılmış içerik kutusuna göre px).
 Kaynak klasör: assets/_import_new/Karakterler/ (yoksa source/characters-v2 kullanılır)."""
 import os, shutil, sys
 from PIL import Image
@@ -83,12 +82,8 @@ def main():
             if cid in FLIP_SPRITE:
                 sp = sp.transpose(Image.FLIP_LEFT_RIGHT)
             d = os.path.join(ROOT, 'assets', 'sprites', cid)
-            old = os.path.join(ROOT, 'assets', 'sprites_old', cid)
             os.makedirs(d, exist_ok=True)
             cur = os.path.join(d, ('idle' if v is None else 'idle-' + v) + '.png')
-            if v is None and os.path.exists(cur) and not os.path.exists(os.path.join(old, 'idle.png')):
-                os.makedirs(old, exist_ok=True)
-                shutil.copy2(cur, os.path.join(old, 'idle.png'))
             sp.save(cur, optimize=True)
             print(cid + suffix, sp.size)
 

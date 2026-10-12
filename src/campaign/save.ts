@@ -137,6 +137,8 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   const v = (s as unknown as { version: unknown }).version;
   if (v !== 1 && v !== 2) return null;
   upgradeState(s);
+  // Düşmüş kahraman (Ömer 2026-10-11): can 0 ya da alive false = ceset; ikisi tutarlı tutulur (eski kayıtlarda herkes ayaktaydı)
+  if (Array.isArray(s.roster)) s.roster = s.roster.map((h) => (h && typeof h.hpRatio === 'number' && (h.hpRatio <= 0 || h.alive === false) ? { ...h, hpRatio: 0, alive: false } : h));
   if (!DIFFS.includes(s.difficulty)) s.difficulty = CONFIG.defaultDifficulty;
   if (slot !== undefined) s.slot = slot;
   else if (typeof s.slot !== 'number' || s.slot < 0 || s.slot >= SLOT_COUNT) s.slot = 0;

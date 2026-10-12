@@ -359,10 +359,10 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 
 ### 5.1 Can taşıma (Ömer: taşınır)
 - Her karakterin can oranı (0-1) savaştan savaşa taşınır. MP her savaşta dolu başlar (öneri). Rage, cooldown, statü, çağrılar taşınmaz.
-- Savaşta düşen karakter: zaferden sonra can maks'ının **%20**'siyle kalkar (provizyon `reviveRatio`).
+- ~~Savaşta düşen karakter: zaferden sonra can maks'ının %20'siyle kalkar.~~ **Ömer 2026-10-11 (madde 305), Endless gibi:** düşen kahraman zaferde KALKMAZ; ceset olarak taşınır, sonraki savaşlara cesedi girer (motor `startDead`). Savaştaki Resurrection, kasaba ya da dinlenme noktasında altınla kalkar (`campaign.json > rest`; Shepherd's Fold'da olaydan sonra da dinlenme var). Bütün takım düşerse yenilgi (aynı).
 - **Zafer sonrası toparlanma (Ömer kararı v3):** her zaferden sonra hayatta kalanlar can maks'ının **%20**'sini geri alır (`victoryHeal 0.2`). Zorluğa göre değiştirme altyapısı var (`campaign.json > difficulties.<x>.rules`, madde 264) ama kullanılmıyor: oranlar her zorlukta aynı. Sefer simülasyonu bu kuralın boss'larda bir "can sarmalı" yarattığını gösterdi (açık soru, madde 264).
-- **Büyük boss zaferi** (`type: boss`: King's Bridge; Castle Morvane haritayı bitirir): **tam iyileşme** (Ömer kararı v3, `bossVictoryHeal 1.0`). Elitlerden sonra tam iyileşme yok.
-- Kasaba (4, 7): tam iyileşme.
+- **Büyük boss zaferi** (`type: boss`: King's Bridge; Castle Morvane haritayı bitirir): **tam iyileşme** (Ömer kararı v3, `bossVictoryHeal 1.0`). **Varsayım (2026-10-11, Endless ile aynı):** yalnızca yaşayanlar; düşenler kalkmaz. Elitlerden sonra tam iyileşme yok.
+- Kasaba (4, 7): ücretsiz, herkes tam can ve düşenler de kalkar (Ömer 2026-10-11 denge paketi). Zafer şifası %35; seferin genel düşman ölçeği `campaign.json > enemyScale` (madde 305).
 - **İleri iş (Ömer):** eşyalar / skill ağacıyla savaş öncesi iyileşme (iksir, kamp, "Field Medic" yeteneği). Şimdi değil.
 - Motor "eksik canla başla" desteği gerekir (engine-dev). Destek gelene kadar ilk sürümde her savaş tam canla başlar, can taşıma bayrağı kapalı.
 

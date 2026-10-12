@@ -388,7 +388,7 @@ describe('ilerleme ve wiki karşılaştırması', () => {
   });
 
   it('v2 seçmek Legacy yi değiştirmez: v1 öğeleri kullanılmayan/legacy e düşmez', () => {
-    const files = { sprites: {}, avatars: {}, spritesOld: {}, concepts: {}, pool: {} };
+    const files = { sprites: {}, avatars: {} };
     const pick = () => buildLegacy(buildCatalog(files), files).groups.filter((x) => ['icon', 'vfx', 'sound'].includes(x.kind)).map((x) => [x.kind, x.items.map((i) => i.id).sort()] as const);
     const before = pick();
     const ds = content.skills.melee_attack!;

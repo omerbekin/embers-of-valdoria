@@ -500,16 +500,12 @@ export class CombatantView {
   stepForward(ms: number, px: number): Promise<void> {
     if (!this.alive || ms <= 0) return Promise.resolve();
     const dir = this.combatant.side === 'enemy' ? -1 : 1;
-    // pozlu sınıf: adım pozu (yerine dönünce boşta pozu)
-    const step = this.rig ? this.showPose(statePose(this.rig.def, 'step')) : null;
-    const token = this.rig?.token ?? 0;
     const glow = this.scene.add.image(0, -this.h * 0.5, ensureGlow(this.scene)).setTint(KIT.ember).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(this.w * 1.3, this.h * 1.1).setAlpha(0);
     this.container.addAt(glow, 0);
     this.scene.tweens.add({ targets: glow, alpha: 0.45, duration: ms / 2, yoyo: true, onComplete: () => glow.destroy() });
     return new Promise((resolve) => {
       this.scene.tweens.add({ targets: this.sprite, x: dir * px, duration: ms / 2, ease: 'Sine.easeOut', yoyo: true, onComplete: () => {
         this.sprite.setX(0);
-        if (step && this.rig?.token === token) this.showPose(null);
         resolve();
       } });
     });
@@ -804,6 +800,17 @@ export class CombatantView {
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
     // açık pozu olan menzilli / büyü skill'i: efekt pozu kendisi çağırmasa da (yukarıdan düşen Judgment gibi) baştan skill'in ilk pozu
     if (skill?.pose !== undefined && skill.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
+    // küçük savunma hareketi (Guard; gerçek koruma pozu üretilene dek): geriye yaslanıp çöker, sonra toparlanır (data/poses.json > braceSkills)
+    if (skill && 'id' in skill && POSES.braceSkills?.includes(String((skill as { id: string }).id)) && !reducedMotion()) {
+      const dir = this.combatant.side === 'enemy' ? 1 : -1;
+      const sy = this.sprite.scaleY;
+      const braced = this.rig.pose;
+      this.scene.tweens.add({ targets: this.sprite, angle: dir * 5, scaleY: sy * 0.95, duration: slow(160), yoyo: true, hold: slow(320), ease: 'Quad.easeOut', onComplete: () => {
+        this.sprite.setScale(this.sprite.scaleX, sy);
+        // savunma hareketi bitti: hâlâ skill'in pozundaysa boşta pozuna (efekt kendisi döndürmüyor: Guard bağı sürer)
+        if (this.rig && this.rig.pose === braced && this.alive) this.showPose(null);
+      } });
+    }
     // skill bitti: efekt pozu boşta pozuna döndürmediyse (araya başka poz girmezse) kısa süre sonra boşta pozuna
     if (!skill) this.returnToIdle(this.rig.token, slow(500));
   }
@@ -1095,6 +1102,14 @@ export class CombatantView {
     });
     if (level > 0.45) {
       this.scene.tweens.add({ targets: this.container, x: this.homeX + dir * 46 * level, duration: slow(110), yoyo: true, ease: 'Quad.easeOut' });
+    }
+    if (this.rig) {
+      // pozlu sınıf (Ömer 2026-10-11): önden darbe okunsun diye boşta pozu saldırandan GERİYE eğilip hafifçe çöker (hit görseli arkadan
+      // vurulmuş gibi okunuyordu; önden darbe pozu üretilene dek). Ölçüler data/poses.json > hitRecoil.
+      const r = this.rig.def.hitRecoil ?? { leanDeg: 7, crouch: 0.05 };
+      const sy = this.sprite.scaleY;
+      this.scene.tweens.add({ targets: this.sprite, angle: { from: dir * r.leanDeg * (0.6 + 0.6 * level), to: 0 }, duration: slow(220 + 260 * level), ease: 'Quad.easeOut' });
+      this.scene.tweens.add({ targets: this.sprite, scaleY: { from: sy * (1 - r.crouch * (0.6 + 0.6 * level)), to: sy }, duration: slow(200 + 200 * level), ease: 'Quad.easeOut' });
     }
     if (ratio >= timing.cameraShakeRatio) this.scene.cameras.main.shake(140 + 160 * level, 0.0015 + 0.005 * level);
   }

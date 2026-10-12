@@ -37,7 +37,8 @@ describe('poz kütüphanesi verisi', () => {
     expect(keyFrame(def, 'spin')).toBe('spin2'); // Reduced motion: tek anahtar kare
     expect(statePose(def, 'idle')).toBe('idle');
     expect(statePose(def, 'step')).toBe('step');
-    expect(statePose(def, 'hit')).toBe('hit');
+    expect(statePose(def, 'hit')).toBe('idle'); // isabet: boşta pozu + kodla geri eğilme (hit görseli arkadan darbe gibi okunuyordu)
+    expect(def.hitRecoil?.leanDeg).toBeGreaterThan(0);
     expect(statePose(def, 'death')).toBe('kneel');
   });
 
@@ -137,6 +138,8 @@ describe('Pose Tester I / II (gizli debug class\'ları)', () => {
       }
     }
     // kütüphanedeki her eylem pozu (idle/kneel hariç) en az bir skill'le denenebilir
-    for (const p of ['slash', 'overhead', 'spin', 'step', 'raise', 'channel', 'throw', 'hit']) expect(poses, p).toContain(p);
+    for (const p of ['slash', 'overhead', 'spin', 'step', 'raise', 'channel', 'throw']) expect(poses, p).toContain(p);
+    expect(skillPoses('pose_tester_2', content.skills['pt_guard'])).not.toContain('hit'); // Guard: hit pozu DEĞİL (Ömer)
+    expect(POSES.braceSkills).toContain('pt_guard');
   });
 });

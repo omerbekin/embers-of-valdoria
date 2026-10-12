@@ -41,6 +41,8 @@ export interface PoseClassDef {
   cycles: Record<string, string[]>;
   /** Genel durumlar (idle, step, hit, death, attack, cast, defend) -> poz. */
   states: Record<string, string>;
+  /** Pozlu birimin isabet tepkisi (kod): saldırandan geriye eğilme (derece) + çökme oranı. */
+  hitRecoil?: { leanDeg: number; crouch: number };
   poses: Record<string, PoseDef>;
 }
 export interface WeaponLook {
@@ -62,6 +64,8 @@ export interface PosesData {
   rarityLook: Record<string, number>;
   rarityGlow: Record<string, string>;
   fistRadius: number;
+  /** Başlarken küçük savunma hareketi yapan skill'ler (Guard kopyası; gerçek koruma pozu gelene dek). */
+  braceSkills?: string[];
   /** Başka sınıfın poz kütüphanesini kullanan sınıflar (Pose Tester I/II -> warrior). */
   classAliases?: Record<string, string>;
 }

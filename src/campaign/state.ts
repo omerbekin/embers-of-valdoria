@@ -55,7 +55,7 @@ export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   if (n.treasure) steps.push('treasure');
   if (n.event) steps.push('event');
   if (n.type === 'town') steps.push('town');
-  if (n.type === 'rest') steps.push('rest');
+  if (n.type === 'rest' || n.rest) steps.push('rest'); // dinlenme noktası ya da olaydan sonra dinlenme (Shepherd's Fold; Ömer 2026-10-11)
   if (n.type === 'merchant') steps.push('merchant');
   if (n.recruit?.when === 'leave') steps.push('volunteer');
   return steps;
@@ -327,8 +327,9 @@ export function restAtCamp(s: CampaignState): CampaignState {
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /**
- * Savaş sonucu (campaign.md 5.1): zaferde hayatta kalanlar maks canın `victoryHeal` kadarını geri alır, düşenler `reviveRatio` ile kalkar;
- * boss zaferinde (type boss) herkes tam can. Savaşa girmeyenler değişmez. Yenilgide durum yalnızca sayaç olarak değişir (çağıran son kaydı yükler).
+ * Savaş sonucu (campaign.md 5.1; Ömer 2026-10-11, Endless gibi): zaferde hayatta kalanlar maks canın `victoryHeal` kadarını geri alır;
+ * düşenler KALKMAZ: ceset olarak taşınır (sonraki savaşa ceset girer; savaş içi Resurrection ya da dinlenme noktasında altınla diriltme).
+ * Boss zaferinde yaşayanlar `bossVictoryHeal` (tam) can; düşmüşler yine düşmüş. Savaşa girmeyenler değişmez. Yenilgide durum yalnızca sayaç olarak değişir.
  */
 /** Seferin zorluğuna göre geçerli kurallar: campaign.json > rules + difficulties[x].rules üstüne yazımları. */
 export function rulesFor(s: Pick<CampaignState, 'difficulty'>): CampaignRules {
@@ -346,9 +347,14 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   for (const u of outcome.units) {
     const h = heroById(t, u.heroId);
     if (!h) continue;
-    if (boss) h.hpRatio = rules.bossVictoryHeal;
-    else if (u.alive && u.hpRatio > 0) h.hpRatio = clamp01(u.hpRatio + rules.victoryHeal + itemRecovery(h)); // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
-    else h.hpRatio = clamp01(rules.reviveRatio);
+    if (!u.alive || u.hpRatio <= 0) {
+      // düşmüş (ya da ceset olarak girip diriltilmemiş): ceset kalır
+      h.hpRatio = 0;
+      h.alive = false;
+      continue;
+    }
+    if (boss) h.hpRatio = Math.max(u.hpRatio, rules.bossVictoryHeal);
+    else h.hpRatio = clamp01(u.hpRatio + rules.victoryHeal + itemRecovery(h)); // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
     h.hpRatio = Math.round(clamp01(h.hpRatio) * 1000) / 1000;
     h.alive = true;
   }
@@ -361,9 +367,10 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   return t;
 }
 
+/** Kasaba şifası (Ömer 2026-10-11, denge paketi): ücretsiz, herkes `ratio` (tam) cana; düşmüşler de kalkar. */
 function healAll(s: CampaignState, ratio: number): void {
   for (const h of s.roster) {
-    h.hpRatio = Math.max(h.hpRatio, clamp01(ratio));
+    h.hpRatio = Math.max(isFallen(h) ? 0 : h.hpRatio, clamp01(ratio));
     h.alive = true;
   }
 }
@@ -473,13 +480,18 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
     case 'company':
       return formCompany(s, shuffle(CONFIG.companyPool, rngFor(s.seed, 'auto-company')).slice(0, step.size));
     case 'battle':
-      return applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: true })) });
+      return applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
     case 'treasure':
     case 'event':
     case 'town':
       return completeSimple(s, step.kind);
-    case 'rest':
-      return restAtCamp(s);
+    case 'rest': {
+      // Vekil (sim / otomatik): altın yettikçe düşmüşleri diriltir (önce aktif takım), sonra ücretsiz dinlenir
+      let t = s;
+      const order = [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))];
+      for (const h of order) if (isFallen(h) && !h.tutorial && t.gold >= reviveCost(t)) t = reviveAtCamp(t, h.id);
+      return restAtCamp(t);
+    }
     case 'merchant':
       return leaveMerchant(s);
     default:

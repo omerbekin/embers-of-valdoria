@@ -2318,3 +2318,183 @@ html.short .gr-sk-nums,
 .gr-phone .gr-sk-nums {
   display: none;
 }
+
+/* ===== Character orta paneli kaydırmasız (Ömer 2026-10-11): kuşanılmış yuva yalnızca ikon + ad (nadirlik renginde), satırlar alçak;
+   6 yuva + STATS masaüstünde ve yatay telefonda kaydırma çubuğu olmadan sığar. Ayrıntı ipucunda (üstüne gel / dokun). ===== */
+.gr-slots {
+  grid-auto-rows: max(44px, calc(60 * var(--u)));
+  gap: calc(6 * var(--u)) calc(8 * var(--u));
+}
+
+.gr-slot {
+  padding: calc(4 * var(--u)) calc(10 * var(--u));
+}
+
+.gr-slot:not(.empty) .gr-slot-name {
+  color: var(--rc);
+}
+
+.gr-char .gr-mid .gr-stats {
+  margin-top: calc(6 * var(--u));
+}
+
+html.short .gr-slots {
+  grid-auto-rows: 44px;
+  gap: 4px 6px;
+}
+
+html.short .gr-slot {
+  padding: 2px 8px;
+}
+
+/* statlar Character sayfasında her zaman 4 sütun (16 stat = 4 satır), satır kırılmaz: fark (+N) değerin yanında, uzun etiket "…" */
+.gr-char .gr-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(2 * var(--u)) calc(8 * var(--u));
+}
+
+.gr-char .gr-stat {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+/* yatay telefon: yuvalar 3 sütun x 2 satır, statlar geniş satırda (2 satır), "Stats" başlığı yerine ince çizgi: kaydırmasız sığar */
+.gr-overlay .gr-gear.gr-phone .gr-char .gr-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gr-gear.gr-phone .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-gear.gr-phone .gr-char .gr-mid > .gr-sec:not(:first-child) {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char .gr-skills > .gr-sec {
+  display: none;
+}
+
+/* ad kesilmesin: gerekirse iki satıra iner (yuva yüksekliği aynı) */
+.gr-slot:not(.empty) .gr-slot-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  line-height: 1.1;
+}
+
+/* 4 sütunlu stat satırı sıkı: kısa etiket (DEX, CDMG, HP+/t...) kesilmeden sığar */
+.gr-char .gr-stat {
+  gap: 4px;
+}
+
+.gr-char .gr-stat-k {
+  letter-spacing: 0.04em;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.gr-char .gr-stat-d {
+  font-size: 0.85em;
+}
+
+/* fark (+N) gelince yer açılır: önce etiket kısalır, değer ve fark daima görünür */
+.gr-char .gr-stat-v,
+.gr-char .gr-stat-d {
+  flex: none;
+}
+
+.gr-char .gr-stat-d:empty {
+  display: none;
+}
+
+/* tüccarın Character sekmesi: üstte sekme anahtarı olduğu için daha az yer; kaydırmasız sığsın diye skill başlığı ve skill altı sayıları
+   gizli (farklar skill ipucunda), telefonda skill satırı da gizli (karşılaştırma için yuvalar + statlar yeterli) */
+.gr-stall .gr-char .gr-skills > .gr-sec,
+.gr-stall .gr-char .gr-sk-nums {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-skills,
+.gr-shop.gr-phone .gr-stall .gr-char .gr-mid > .gr-sec {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-slots {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
+/* telefonda tüccar: kahraman seçimi sağdaki şeritte; Character sekmesinin kendi kahraman sütunu gizli, yuvalar + statlar tam genişlik */
+.gr-shop.gr-phone .gr-stall .gr-char {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "mid" "skills";
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char > .gr-heroes {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 0 6px;
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  line-height: 13px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stat {
+  height: 14px;
+  align-items: center;
+}
+
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-slots {
+  gap: 3px 6px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+/* Dokunmatik: tek dokunuşla item'in yanına sabitlenen ipucu (Ömer 2026-10-12): dokunulabilir, altta eylem düğmeleri (Equip / Unequip / Buy / Sell / Take) */
+.item-tip.pinned {
+  pointer-events: auto;
+  z-index: 9;
+}
+
+.item-tip .it-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.item-tip .it-acts .gr-btn {
+  min-height: 44px;
+  padding: 0 calc(20 * var(--u));
+}

@@ -21,7 +21,7 @@ export interface DifficultyDef {
   /** Rütbeli birimlere (elit lider / boss) `enemy`'nin ÜSTÜNE eklenen güçlendirme (aynı birleşme kuralı). */
   enemyTier?: Partial<Record<UnitTier, DifficultyEnemyMods>>;
   /** Bu zorlukta sefer kurallarının üstüne yazılanlar (ör. zafer sonrası toparlanma `victoryHeal`). Yoksa campaign.json > rules. */
-  rules?: Partial<Pick<CampaignRules, 'victoryHeal' | 'reviveRatio' | 'bossVictoryHeal'>>;
+  rules?: Partial<Pick<CampaignRules, 'victoryHeal' | 'bossVictoryHeal'>>;
 }
 
 export type DifficultyEnemyMods = Pick<UnitModifiers, 'hpMult' | 'statMult' | 'powerMult' | 'armorAdd' | 'magicArmorAdd'>;
@@ -59,7 +59,7 @@ export interface MapNode {
   city?: boolean;
   final?: boolean;
   teaches?: string;
-  /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme + altınla diriltme (campaign.json > rest). */
+  /** Dinlenme (Ömer 2026-10-11): ücretsiz iyileşme + altınla diriltme (campaign.json > rest). Dinlenme düğümünde ya da başka bir düğümün adımlarından sonra (Shepherd's Fold: olaydan sonra). */
   rest?: boolean;
   /** Tüccar (Odo; campaign.json > merchant): stok düğümün item seviyesinden. */
   merchant?: boolean;
@@ -137,7 +137,7 @@ export interface EncounterDef {
 export interface CampaignRules {
   carryHp: boolean;
   victoryHeal: number;
-  reviveRatio: number;
+  /** Boss zaferi: YAŞAYANLAR bu orana iyileşir (düşenler kalkmaz; Ömer 2026-10-11, Endless ile aynı). */
   bossVictoryHeal: number;
   maxSaves: { normal: number; ironman: number };
   /** Sefer yuvası sayısı (3). */
@@ -154,6 +154,11 @@ export interface CampaignConfig {
   tips: Record<string, string>;
   defaultDifficulty: Difficulty;
   difficulties: Record<Difficulty, DifficultyDef>;
+  /**
+   * Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı dengesi): her zorlukta aynı, zorluk ekinden ÖNCE (zorluklar arası fark korunur).
+   * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
+   */
+  enemyScale?: { all?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı bölgeler (eğitim: I). */ skipRegions?: string[] };
   /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme oranı; düşmüş kahramanı altınla diriltme (fiyat = base + perIlvl x düğüm item seviyesi). */
   rest: { heal: number; reviveRatio: number; reviveCost: { base: number; perIlvl: number } };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */

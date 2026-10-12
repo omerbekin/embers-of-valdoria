@@ -1,10 +1,12 @@
 {
   "_not": "Sefer dengesi hedefleri (docs/balance.md > Sefer dengesi; open-questions.md). Düğüm kategorisi başına ILK DENEMEDE kazanma oranı (%), oyuncu tarafı Medium YZ ('iyi oyuncu' vekili), taşınan canla. Kategoriler: tutorial = Ashford öncesi savaşlar (1, 2, 3), elite / boss = düğüm türü, normal = kalan savaşlar (korunan hazine dahil). Hedefler ÖNERİ (Ömer onayı bekliyor). npm run sim:campaign raporu ve tests/campaign-balance.test.ts buradan okur.",
   "targets": {
-    "easy": { "tutorial": [93, 100], "normal": [85, 97], "elite": [72, 87], "boss": [57, 77] },
-    "medium": { "tutorial": [88, 97], "normal": [75, 85], "elite": [60, 70], "boss": [45, 60] },
-    "hard": { "tutorial": [75, 92], "normal": [57, 70], "elite": [42, 55], "boss": [25, 40] }
+    "easy": { "tutorial": [93, 100], "normal": [89, 99], "elite": [79, 90], "boss": [85, 95] },
+    "medium": { "tutorial": [88, 97], "normal": [80, 91], "elite": [63, 74], "boss": [72, 84] },
+    "hard": { "tutorial": [75, 92], "normal": [73, 84], "elite": [38, 49], "boss": [42, 54] }
   },
+  "_finish": "Son denge kararı (Ömer 2026-10-12, sabit değerler, ayar yok): düşman ölçeği rütbesiz + elit x0,75, boss ZAYIFLATILMAZ (x1,0), zafer şifası %25. Kategori bantları ve Medium / Medium BİTİRME bandı bu paketin tek ölçümüne göre çizildi (sim:campaign 240 sefer, seed 1: Medium bitirme %47,9; normal 85,7 / elit 68,3 / boss 78,1). Bant = ölçüm ± ~5-6 puan; test ayrıca ± tolerance (küçük örnek). Eğri testi tutorial > normal > elit.",
+  "finish": { "medium": [42, 54] },
   "test": {
     "_not": "Test: Medium zorluk, Medium vekil, seed'li küçük örnek; bant = hedef ± tolerans (örnek küçük olduğu için). Zorluk sıralaması: her kategoride Easy > Medium > Hard. orderRuns 48 -> 96 (balance-tester 2026-10-10): 48 seferde kategori başına ~40 elit / ~96 boss savaşı var, iki zorluk farkının standart hatası ~7-8 puan; 480 seferlik ölçümde gerçek farklar 13-20 puan iken 48 seferlik örnek boss farkını 1 puan ölçebiliyordu (gürültü). 96 seferde hata payı yarıya iner.",
     "runs": 120,

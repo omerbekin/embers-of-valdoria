@@ -41,7 +41,6 @@ describe('sprite görünüm varyantları', () => {
     const f = {
       sprites: { '../../assets/sprites/mage/idle.png': '/m.png', '../../assets/sprites/mage/idle-hood.png': '/mh.png', '../../assets/sprites/nobody/idle-hood.png': '/n.png' },
       avatars: { '../../assets/avatars/mage.png': '/ma.png', '../../assets/avatars/mage-hood.png': '/mha.png', '../../assets/avatars/mage-dark.png': '/x.png' },
-      spritesOld: {},
     };
     const o = orphanAssets(f);
     expect(o.avatars).toEqual(['mage-dark']); // idle-dark.png yok: sahipsiz

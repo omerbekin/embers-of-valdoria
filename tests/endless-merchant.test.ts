@@ -193,3 +193,23 @@ describe('endless tüccar: detay paneli hesapları', () => {
     expect(bestHeroFor(run, coif, undefined, { rarity: 'common', affixes: [{ id: 'c_hp', q: 0.5 }] })).toBeNull();
   });
 });
+
+describe('tüccarın nadir malı (Legendary) dalganın seviyesinde', () => {
+  it('taban seviyesiz: rolls ilvl = ilvlCap(temizlenen dalga), tabanın altında ya da üstünde (Ömer 2026-10-12)', async () => {
+    const { ilvlCap } = await import('../src/endless/run');
+    const run: EndlessRun = { ...newRun(5, PARTY, '2026-10-09T00:00:00.000Z'), wave: 11, phase: 'shop', stats: { cleared: 10, turns: 0, kills: 0 } };
+    const cap = ilvlCap(10);
+    const seen = { below: false, above: false };
+    for (let reroll = 0; reroll < 400 && !(seen.below && seen.above); reroll++) {
+      for (const w of shopStock(run, ENDLESS, ITEMS.items, reroll)) {
+        const d = itemDef(w.itemId)!;
+        if (d.rarity !== 'legendary') continue;
+        const ilvl = w.rolls?.ilvl ?? d.ilvl;
+        expect(ilvl, d.id).toBe(cap);
+        if (d.ilvl > cap) seen.below = true;
+        if (d.ilvl < cap) seen.above = true;
+      }
+    }
+    expect(seen.below, 'tabanı dalga seviyesinin üstünde olan bir Legendary dalga seviyesinde geldi').toBe(true);
+  });
+});

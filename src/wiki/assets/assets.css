@@ -774,20 +774,6 @@
   padding: 6px 2px 4px;
 }
 
-.wk-overlay .wk-old {
-  flex-direction: row;
-  flex-wrap: wrap;
-}
-
-.wk-overlay .wk-old figure {
-  margin: 0;
-  max-width: 220px;
-}
-
-.wk-overlay .wk-old .legacy-img {
-  max-height: 180px;
-}
-
 .wk-overlay .wk-hubcard {
   display: flex;
   flex-direction: column;

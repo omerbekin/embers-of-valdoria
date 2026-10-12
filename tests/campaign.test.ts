@@ -5,6 +5,7 @@ import {
   allRoutes,
   applyBattle,
   autoResolve,
+  battlePlan,
   choicePoints,
   closedNodes,
   completeSimple,
@@ -89,7 +90,7 @@ describe('sefer haritası: graf', () => {
     }
   });
 
-  it("24 rota, hepsi 21 durak ve finale ulaşır; Witch's Hut kolu 15, diğerleri 16 savaşlı durak", () => {
+  it('24 rota, hepsi 21 durak ve finale ulaşır; her rotada 16 savaşlı durak', () => {
     const routes = allRoutes(map);
     expect(routes).toHaveLength(24);
     for (const r of routes) {
@@ -97,12 +98,12 @@ describe('sefer haritası: graf', () => {
       expect(r[0]).toBe('1');
       expect(r[r.length - 1]).toBe('12');
       const battles = r.filter((id) => isBattleNode(node(map, id))).length;
-      expect(battles, r.join('-')).toBe(r.includes('6A') ? 15 : 16);
+      expect(battles, r.join('-')).toBe(16);
     }
   });
 
-  it("K1: her dalda en az bir savaş (A1-x istisnası: tek duraklık Witch's Hut kolu, madde 305); K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
-    expect(k1Violations(map)).toEqual(['7 -> 6A']);
+  it("K1: her dalda en az bir savaş (Witch's Hut korunan olay, Ömer 2026-10-11); K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
+    expect(k1Violations(map)).toEqual([]);
     for (const r of allRoutes(map)) expect(longestPeacefulRun(map, r), r.join('-')).toBeLessThanOrEqual(2);
   });
 });
@@ -153,7 +154,7 @@ describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
     expect(done.stats.victories).toBe(16); // varsayılan seçimler ilk kolları izler (5B, 6B, 8A, Thornwood): 16 savaşlı durak
   });
 
-  it('olay ve korunan hazine: hazine önce savaş, sonra sandık; olay savaşsız', () => {
+  it("olay ve korunan hazine: hazine önce savaş, sonra sandık; Witch's Hut önce savaş, sonra olay", () => {
     let s = playTo(fresh(), '6B', (o) => (o.includes('6B') ? '6B' : o[0]!));
     expect(nextStep(s).kind).toBe('battle');
     s = autoResolve(s);
@@ -161,6 +162,8 @@ describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
     s = completeSimple(s, 'treasure');
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['grave'] });
     let a = playTo(fresh(), '6A', (o) => (o.includes('6A') ? '6A' : o[0]!));
+    expect(nextStep(a)).toEqual({ kind: 'battle', node: '6A', encounter: 'witchs_hut_guard' });
+    a = autoResolve(a);
     expect(nextStep(a)).toEqual({ kind: 'event', node: '6A', event: 'witchs_hut' });
     a = completeSimple(a, 'event');
     expect(nextStep(a).kind).toBe('move');
@@ -284,30 +287,35 @@ describe('tutorial takım akışı', () => {
 });
 
 describe('can taşıma', () => {
-  it('zaferde hayatta kalanlar +%20, düşenler %20 ile kalkar, savaşa girmeyen değişmez', () => {
+  it('zaferde hayatta kalanlar +%35 (victoryHeal), düşenler KALKMAZ (ceset; Ömer 2026-10-11), savaşa girmeyen değişmez', () => {
     let s = playTo(fresh(9), '3');
     const [a, b] = s.roster;
     s = applyBattle(s, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
-    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.7);
-    expect(s.roster[1]!.hpRatio).toBeCloseTo(CONFIG.rules.reviveRatio);
-    expect(s.roster[1]!.alive).toBe(true);
+    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.victoryHeal);
+    expect(s.roster[1]!.hpRatio).toBe(0);
+    expect(s.roster[1]!.alive).toBe(false);
+    expect(battlePlan(s).units.party[s.active.indexOf(b!.id)]?.startDead).toBe('revivable'); // sonraki savaşa ceset olarak girer
     let t = playTo(fresh(9), '3');
     t = applyBattle(t, { victory: true, units: [{ heroId: t.roster[0]!.id, hpRatio: 0.95, alive: true }] });
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
 
-  it('boss zaferi tam iyileştirir; kasaba varışta tam iyileştirir; yenilgi yalnızca sayaç', () => {
+  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen kalkmaz); kasaba varışta herkesi tam iyileştirir ve düşenleri kaldırır; yenilgi yalnızca sayaç', () => {
     let s = playTo(fresh(11), '9');
-    s = applyBattle(s, { victory: true, units: s.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
-    expect(s.roster.every((h) => h.hpRatio === 1)).toBe(true);
+    const team = activeHeroes(s);
+    s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
+    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: 0, alive: false });
+    expect(team.slice(1).every((h) => s.roster.find((x) => x.id === h.id)!.hpRatio === 1)).toBe(true);
     let t = playTo(fresh(11), '3');
     t = applyBattle(t, { victory: true, units: t.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
-    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.3);
+    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.victoryHeal);
     const lost = applyBattle(t, { victory: false, units: [] });
     expect(lost.stats.defeats).toBe(1);
     expect(lost.roster).toEqual(t.roster);
+    const down = t.roster[1]!.id;
+    t = { ...t, roster: t.roster.map((h) => (h.id === down ? { ...h, hpRatio: 0, alive: false } : h)) };
     t = moveTo(t, '4');
-    expect(t.roster.every((h) => h.hpRatio === 1)).toBe(true);
+    expect(t.roster.every((h) => h.hpRatio === 1 && h.alive)).toBe(true); // kasaba düşeni de kaldırır (Ömer 2026-10-11 denge paketi)
   });
 });
 

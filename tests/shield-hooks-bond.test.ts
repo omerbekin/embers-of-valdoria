@@ -604,7 +604,7 @@ describe('wiki ve Legacy (madde 240)', () => {
   it('kaldırılan Blood Rite\'ın ikonu, animasyonu ve sesi Legacy\'ye düşer', async () => {
     const { buildCatalog } = await import('../src/gallery/catalog');
     const { buildLegacy } = await import('../src/wiki/assets/legacy-catalog');
-    const files = { sprites: {}, avatars: {}, spritesOld: {}, concepts: {}, pool: {} };
+    const files = { sprites: {}, avatars: {} };
     const items = buildLegacy(buildCatalog(files), files).groups.flatMap((g) => g.items);
     expect(items.some((i) => i.kind === 'icon' && i.id === 'bloodrite')).toBe(true);
     expect(items.some((i) => i.kind === 'vfx' && i.id === 'bloodhands')).toBe(true);

@@ -9,5 +9,4 @@ const glob = (m: Record<string, unknown>): Record<string, string> => m as Record
 export const assetFiles: AssetFiles = {
   sprites: glob(import.meta.glob('../../assets/sprites/*/*.png', { eager: true, query: '?url', import: 'default' })),
   avatars: glob(import.meta.glob('../../assets/avatars/*.png', { eager: true, query: '?url', import: 'default' })),
-  spritesOld: glob(import.meta.glob('../../assets/sprites_old/*/*.png', { eager: true, query: '?url', import: 'default' })),
 };

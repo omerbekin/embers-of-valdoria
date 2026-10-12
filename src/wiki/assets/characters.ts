@@ -81,7 +81,7 @@ export function mountCharacters(cat: Catalog): SectionApi {
   };
 
   root.append(
-    h('div', { class: 'section-head' }, h('h2', { text: 'Character art' }), countEl, h('span', { class: 'muted small', text: 'Full-body sprite, head avatar and logo of every class and summon. Old versions are in Legacy.' })),
+    h('div', { class: 'section-head' }, h('h2', { text: 'Character art' }), countEl, h('span', { class: 'muted small', text: 'Full-body sprite, head avatar and logo of every class and summon.' })),
     chips,
     grid,
   );

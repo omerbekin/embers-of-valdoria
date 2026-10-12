@@ -1,6 +1,8 @@
 /**
  * Ortak item etkileşim denetçisi (Ömer 2026-10-11, g1): Gear, tüccar ve ödül torbası aynı davranışı paylaşır.
- *  - `data-tip` taşıyan hücrenin üstüne gelince imlecin yanında item ipucu (src/ui/item-tip.ts); dokunmatikte uzun basış;
+ *  - `data-tip` taşıyan hücrenin üstüne gelince imlecin yanında item ipucu (src/ui/item-tip.ts); dokunmatikte TEK DOKUNUŞ ipucunu hücrenin
+ *    yanına sabitler (altında `tipActions` düğmeleri: Equip / Unequip / Buy / Sell ...), başka item'e dokunmak ipucunu ona geçirir, aynı item'e
+ *    yeniden dokunmak ya da boşluğa dokunmak kapatır; dokunuşun click'i yutulur (ekranın seç / çift dokunma / al eylemi çalışmaz; Ömer 2026-10-12);
  *  - `data-drag` taşıyan hücre sürüklenir (fare 6 px; dokunmatikte uzun basıştan sonra kaydırınca: gear-drop.ts > pressStep); hayalet ikon
  *    imleci izler, `data-drop` hedefleri kurala göre parlar / söner (gear-drop.ts > dropAction); torbadan sürüklerken çöp kutusu görünür;
  *  - stat / skill / affix satırlarının açıklaması (`data-stat`, `data-skill`, `data-affix`; savaş HUD'ıyla aynı metin).
@@ -9,7 +11,7 @@
 import { affixTip, type AffixLine } from '../progression';
 import type { Stats } from '../engine';
 import { dropAction, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
-import { ItemTip } from './item-tip';
+import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
 import { statTip, statTipSegments } from './stat-tips';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -19,24 +21,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: stri
   return e;
 };
 
-/** Düğümün `anc` içindeki konumu (offset zinciri; döndürülmüş sahnede de doğru, kaydırmalar düşülür). */
-export function offsetIn(node: HTMLElement, anc: HTMLElement): { x: number; y: number } {
-  let x = 0;
-  let y = 0;
-  let n: HTMLElement | null = node;
-  while (n && n !== anc) {
-    x += n.offsetLeft;
-    y += n.offsetTop;
-    const parent = n.offsetParent as HTMLElement | null;
-    for (let q: HTMLElement | null = n.parentElement; q && q !== anc; q = q.parentElement) {
-      x -= q.scrollLeft;
-      y -= q.scrollTop;
-      if (q === parent) break;
-    }
-    n = parent;
-  }
-  return { x, y };
-}
+export { offsetIn };
 
 const TRASH_SVG =
   '<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>';
@@ -53,6 +38,8 @@ export interface ItemInteractionHost {
   classOf(heroId: string): string | undefined;
   /** `data-tip` anahtarının ipucu içeriği (boş = ipucu yok). */
   tipNodes(key: string): HTMLElement[];
+  /** Dokunmatikte sabitlenen ipucunun eylem düğmeleri (yoksa düğmesiz). */
+  tipActions?(key: string): ItemTipAction[];
   /** Üstüne gelinen ipucu anahtarı (yoksa ''): karşılaştırma odağı. */
   onHover?(key: string): void;
   onDragStart?(src: DragSource): void;
@@ -71,7 +58,7 @@ export interface ItemInteractions {
   /** Yeniden çizimden sonra bırakma hedeflerini yeniden işaretle (sürüklerken). */
   remark(): void;
   hideTips(): void;
-  /** Kısa süre önce sürükleme / uzun basış bitti: o kalkışın tıklaması yok sayılmalı. */
+  /** Kısa süre önce sürükleme / uzun basış / ipucu dokunuşu bitti: o kalkışın tıklaması yok sayılmalı. */
   justEnded(): boolean;
   destroy(): void;
 }
@@ -186,6 +173,15 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     ended = true;
     window.setTimeout(() => (ended = false), 0);
   };
+  // dokunmatik ipucu dokunuşu: kalkıştan sonra gelen (ayrı görevde de gelebilen) click / dblclick yutulur
+  let swallowUntil = 0;
+  let lastTouchAt = 0;
+  let tap: { el: HTMLElement; key: string; x: number; y: number } | null = null;
+  const pinTip = (key: string, anchor: HTMLElement): void => {
+    if (!key) return;
+    itip.pin(key, h.tipNodes(key), anchor, h.tipActions?.(key) ?? []);
+    setHover(itip.shownKey);
+  };
   const trash = el('div', 'gr-trash');
   trash.dataset['drop'] = 'trash';
   trash.innerHTML = `${TRASH_SVG}<span>Discard</span>`;
@@ -242,9 +238,15 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     h.onDrop(d.src, tg, tg ? dropAction(d.src, tg, h.classOf) : null);
   };
   const onDown = (e: PointerEvent): void => {
-    if (e.pointerType === 'touch' && itip.shownKey && !(e.target as HTMLElement).closest('[data-tip]')) {
-      itip.hide();
-      setHover('');
+    tap = null;
+    if (e.pointerType === 'touch') {
+      lastTouchAt = performance.now();
+      const tipEl = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
+      if (!tipEl && itip.shownKey) {
+        itip.hide();
+        setHover('');
+      }
+      if (tipEl && panel.contains(tipEl)) tap = { el: tipEl, key: tipEl.dataset['tip'] ?? '', x: e.clientX, y: e.clientY };
     }
     const t = (e.target as HTMLElement).closest<HTMLElement>('[data-drag]');
     if (!t || e.button > 0 || !panel.contains(t)) return;
@@ -253,20 +255,18 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const touch = e.pointerType === 'touch';
     const icon = t.querySelector<HTMLElement>('.gr-svg') ?? t;
     const tipKey = t.dataset['tip'] ?? '';
-    if (touch) itip.hide();
     press = { src: srcD, x: e.clientX, y: e.clientY, touch, t0: performance.now(), tipShown: false, icon, rc: t.style.getPropertyValue('--rc') || '#f3d999', timer: 0, tipKey };
     if (touch)
       press.timer = window.setTimeout(() => {
         if (!press || drag) return;
-        // uzun basış: önce ipucu (parmağın üstünde); parmak kayarsa sürükleme başlar
+        // uzun basış: ipucu sabitlenir (tek dokunuşla aynı); parmak kayarsa sürükleme başlar
         press.tipShown = true;
-        if (press.tipKey) {
-          itip.show(press.tipKey, h.tipNodes(press.tipKey), press.x, press.y - 40);
-          setHover(press.tipKey);
-        }
+        tap = null;
+        pinTip(press.tipKey, t);
       }, 380);
   };
   const onMove = (e: PointerEvent): void => {
+    if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null;
     if (drag) {
       moveGhost(e.clientX, e.clientY);
       return;
@@ -275,11 +275,29 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const step = pressStep({ touch: press.touch, heldMs: performance.now() - press.t0, dist: Math.hypot(e.clientX - press.x, e.clientY - press.y), tipShown: press.tipShown });
     if (step === 'drag') startDrag(e.clientX, e.clientY);
     else if (step === 'cancel') {
+      // parmak kaydı (kaydırma): sabitlenmiş ipucu eski yerinde kalmasın
       window.clearTimeout(press.timer);
       press = null;
+      if (itip.pinned) {
+        itip.hide();
+        setHover('');
+      }
     }
   };
   const onUp = (e: PointerEvent): void => {
+    const tp = tap;
+    tap = null;
+    if (!drag && tp && e.pointerType === 'touch' && !press?.tipShown) {
+      // tek dokunuş: ipucunu bu item'e sabitle (aynı item yeniden = kapat); ekranın click eylemi çalışmaz
+      if (press) window.clearTimeout(press.timer);
+      press = null;
+      if (itip.pinned && itip.shownKey === tp.key) {
+        itip.hide();
+        setHover('');
+      } else pinTip(tp.key, tp.el);
+      swallowUntil = performance.now() + 700;
+      return;
+    }
     if (!drag && press?.touch && press.tipShown) {
       // uzun basıştan sonra parmak kalktı: ipucu açık kalır (bir sonraki dokunuşta kapanır)
       window.clearTimeout(press.timer);
@@ -294,7 +312,16 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     if (drag || press?.tipShown) e.preventDefault();
   };
   const onClickCapture = (e: MouseEvent): void => {
-    if (ended) {
+    const swallow = performance.now() < swallowUntil;
+    if (ended || swallow) {
+      swallowUntil = 0;
+      e.stopPropagation();
+      e.preventDefault();
+    }
+  };
+  const onDblCapture = (e: MouseEvent): void => {
+    // dokunmatikte çift dokunuş kuşanmaz / satmaz (eylem ipucunun düğmesinde)
+    if (performance.now() - lastTouchAt < 800) {
       e.stopPropagation();
       e.preventDefault();
     }
@@ -308,6 +335,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   document.addEventListener('pointercancel', onCancel);
   document.addEventListener('touchmove', onTouchMove, { passive: false });
   panel.addEventListener('click', onClickCapture, true);
+  panel.addEventListener('dblclick', onDblCapture, true);
   panel.addEventListener('contextmenu', onContext);
   return {
     tip: itip,
@@ -317,7 +345,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       hideTip();
       itip.hide();
     },
-    justEnded: () => ended,
+    justEnded: () => ended || performance.now() < swallowUntil,
     destroy: () => {
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);

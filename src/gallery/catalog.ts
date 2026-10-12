@@ -221,8 +221,6 @@ export interface AssetFiles {
   sprites: Record<string, string>;
   /** assets/avatars/<id>.png */
   avatars: Record<string, string>;
-  /** assets/sprites_old/<id>/<anim>.png */
-  spritesOld: Record<string, string>;
 }
 
 const parts = (path: string): string[] => path.replace(/\\/g, '/').split('/');
@@ -273,14 +271,11 @@ export interface CharacterEntry {
   avatarUrl: string | null;
   /** Alternatif görünümler (assets/sprites/<id>/idle-<varyant>.png + assets/avatars/<id>-<varyant>.png; debug > Characters ile seçilir). */
   variants: Array<{ variant: string; idleUrl: string; avatarUrl: string | null }>;
-  /** assets/sprites_old altındaki eski sürümler. */
-  oldSprites: Array<{ anim: string; url: string }>;
   missing: Array<'sprite' | 'avatar'>;
 }
 
 const toEntry = (kind: CharacterEntry['kind'], def: CombatantDef, files: AssetFiles): CharacterEntry => {
   const sprites = groupByDir(files.sprites)[def.spriteId] ?? [];
-  const old = groupByDir(files.spritesOld)[def.spriteId] ?? [];
   const avatar = avatarMap(files.avatars)[def.spriteId] ?? null;
   const idle = sprites.find((s) => s.anim === 'idle')?.url ?? null;
   const avatars = avatarMap(files.avatars);
@@ -305,7 +300,6 @@ const toEntry = (kind: CharacterEntry['kind'], def: CombatantDef, files: AssetFi
     idleUrl: idle,
     avatarUrl: avatar,
     variants,
-    oldSprites: old,
     missing: [...(idle ? [] : (['sprite'] as const)), ...(avatar ? [] : (['avatar'] as const))],
   };
 };
@@ -315,13 +309,13 @@ export function buildCharacters(files: AssetFiles): CharacterEntry[] {
 }
 
 /** Hiçbir class/çağrıya bağlı olmayan sprite klasörleri ve avatar dosyaları (id listesi). */
-export function orphanAssets(files: AssetFiles): { sprites: string[]; avatars: string[]; old: string[] } {
+export function orphanAssets(files: AssetFiles): { sprites: string[]; avatars: string[] } {
   const known = new Set([...Object.values(content.classes), ...Object.values(content.summons), ...Object.values(content.bosses)].map((d) => d.spriteId));
   const outside = (ids: string[]) => ids.filter((id) => !known.has(id)).sort();
   // Varyant avatarı (<id>-<varyant>.png) bağlıdır: sahibi biliniyorsa ve idle-<varyant>.png varsa
   const sprites = groupByDir(files.sprites);
   const isVariantAvatar = (id: string): boolean => [...known].some((base) => id.startsWith(`${base}-`) && !!sprites[base]?.some((s) => s.anim === `idle-${id.slice(base.length + 1)}`));
-  return { sprites: outside(Object.keys(sprites)), avatars: outside(Object.keys(avatarMap(files.avatars))).filter((id) => !isVariantAvatar(id)), old: outside(Object.keys(groupByDir(files.spritesOld))) };
+  return { sprites: outside(Object.keys(sprites)), avatars: outside(Object.keys(avatarMap(files.avatars))).filter((id) => !isVariantAvatar(id)) };
 }
 
 // ---------------------------------------------------------------- ikonlar

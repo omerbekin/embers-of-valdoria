@@ -167,6 +167,14 @@
       { "class": "gambler", "slot": 8, "mods": { "hpMult": 0.65, "powerMult": 0.75 } }
     ]
   },
+  "witchs_hut_guard": {
+    "name": "Hut Guardians",
+    "units": [
+      { "class": "undead", "slot": 1, "name": "Bog Thrall", "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
+      { "class": "druid", "slot": 6, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
+      { "class": "hexer", "slot": 7, "name": "Hedge Witch", "mods": { "hpMult": 0.8, "powerMult": 0.85 } }
+    ]
+  },
   "charcoal_camp": {
     "name": "Charcoal Burners",
     "units": [

@@ -1,19 +1,20 @@
 {
   "_not": "Sefer kuralları (PROVİZYON sayılar; denge balance-tester'ın işi). Metinler oyun içi (İngilizce). docs/design/campaign/campaign.md v5.",
   "maps": ["valdoria"],
-  "_rest": "Dinlenme noktası (Ömer 2026-10-11; Riverside Camp): ÜCRETSİZ, takım maks canın heal oranı kadar iyileşir (kasaba gibi tam değil). Düşmüş kahraman (can 0) burada ALTINLA diriltilir (tüccar değil): reviveRatio canla kalkar; fiyat = reviveCost.base + reviveCost.perIlvl x düğümün item seviyesi. Fiyat VARSAYIM (madde 305).",
+  "_rest": "Düşen kahraman zaferde KALKMAZ (Ömer 2026-10-11, Endless gibi): ceset olarak taşınır, sonraki savaşa ceset girer; yalnızca savaştaki Resurrection ya da burada altınla kalkar. Boss zaferinin tam şifası yalnızca yaşayanlara; kasaba (ücretsiz) herkesi tam cana getirir ve düşenleri de kaldırır (denge paketi). Zafer şifası %25 (Ömer 2026-10-12). Dinlenme noktası (Ömer 2026-10-11; Riverside Camp): ÜCRETSİZ, takım maks canın heal oranı kadar iyileşir (kasaba gibi tam değil). Düşmüş kahraman (can 0) burada ALTINLA diriltilir (tüccar değil): reviveRatio canla kalkar; fiyat = reviveCost.base + reviveCost.perIlvl x düğümün item seviyesi. Fiyat VARSAYIM (madde 305).",
   "rest": { "heal": 0.5, "reviveRatio": 0.5, "reviveCost": { "base": 20, "perIlvl": 6 } },
   "_merchant": "Sefer tüccarı (Odo; Ömer 2026-10-11; Forward Camp): Endless tüccarının kuralları (alım / satım / geri alım / yenileme); stok tek nadirlik tablosundan (items.json > dropRarity), taban item'ler ve örnek seviyesi düğümün item seviyesinden; fiyat = örneğin değeri, satış = değerin yarısı.",
   "merchant": { "size": 9, "rerollCost": 15, "buybackSize": 4 },
   "rules": {
     "carryHp": true,
-    "victoryHeal": 0.2,
-    "reviveRatio": 0.2,
+    "victoryHeal": 0.25,
     "bossVictoryHeal": 1.0,
     "maxSaves": { "normal": 5, "ironman": 1 },
     "slots": 3
   },
-  "_difficulty": "Genel zorluk (Ömer kararı, madde 256): sefer başında seçilir, sonra DEĞİŞMEZ (kayıtta saklanır). ai = düşman yapay zekası (ai.json > difficulty). enemy = seferdeki TÜM düşmanlara eklenen güçlendirme (karşılaşmanın kendi mods'u ile birleşir: çarpanlar çarpılır, düz ekler toplanır; alanlar hpMult, statMult, powerMult, armorAdd, magicArmorAdd). enemyTier = rütbeli birimlere (elite / boss) enemy'nin üstüne ek. rules = bu zorlukta sefer kurallarının üstüne yazılanlar (victoryHeal, reviveRatio, bossVictoryHeal). Karşılaşmalar Medium'a göre ayarlıdır (enemy yok). Elit rütbe eki (balance-tester 2026-10-10, sim:campaign 480 sefer): motor statları tam sayıya yuvarlayınca ve item düşman telafisi açılınca Medium elit ilk deneme %55'e (bant 60-70), Hard %42'ye (bant 42-55) düştü; Medium elit lideri can x0,85 / güç x0,9, Hard elit lideri can x0,95 aldı (tutorial'daki Bandit Chief noTierMods ile hariç). Sefer dengesi 2026-10-08 (docs/balance.md > Sefer dengesi): Easy = yalnızca hata yapan YZ (ek zayıflatma gerekmedi), Hard = Hard YZ + düşmanlar %12 can / %5 güç, boss'lar ayrıca %10 can / %10 güç. İleride loot vb. alanlar buraya eklenir.",
+  "_difficulty": "Genel zorluk (Ömer kararı, madde 256): sefer başında seçilir, sonra DEĞİŞMEZ (kayıtta saklanır). ai = düşman yapay zekası (ai.json > difficulty). enemy = seferdeki TÜM düşmanlara eklenen güçlendirme (karşılaşmanın kendi mods'u ile birleşir: çarpanlar çarpılır, düz ekler toplanır; alanlar hpMult, statMult, powerMult, armorAdd, magicArmorAdd). enemyTier = rütbeli birimlere (elite / boss) enemy'nin üstüne ek. rules = bu zorlukta sefer kurallarının üstüne yazılanlar (victoryHeal, bossVictoryHeal). Karşılaşmalar Medium'a göre ayarlıdır (enemy yok). Elit rütbe eki (balance-tester 2026-10-10, sim:campaign 480 sefer): motor statları tam sayıya yuvarlayınca ve item düşman telafisi açılınca Medium elit ilk deneme %55'e (bant 60-70), Hard %42'ye (bant 42-55) düştü; Medium elit lideri can x0,85 / güç x0,9, Hard elit lideri can x0,95 aldı (tutorial'daki Bandit Chief noTierMods ile hariç). Sefer dengesi 2026-10-08 (docs/balance.md > Sefer dengesi): Easy = yalnızca hata yapan YZ (ek zayıflatma gerekmedi), Hard = Hard YZ + düşmanlar %22 can / %12 güç (2026-10-11 denge paketi: genel %20 kesintiden sonra Medium-Hard aralığı 5 puanın altına düşmüştü, önce %12 / %5), boss'lar ayrıca %10 can / %10 güç. İleride loot vb. alanlar buraya eklenir.",
+  "_enemyScale": "Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı denge paketi): her zorlukta aynı, karşılaşma mods ile çarpılır, zorluk ekinden önce (Easy / Medium / Hard aralığı korunur). all = rütbesiz + elit, boss = boss rütbeliler. SON KARAR (Ömer 2026-10-12, sabit değerler): rütbesiz + elit can/güç x0,75, boss ZAYIFLATILMAZ (x1,0; Ömer 2026-10-12, x0,88 denendi: Easy-Medium boss farkı kapandı), zafer şifası %25 (önceki ara ayar x0,80 / boss x1,0 / şifa %35 yerine). Eğitim bölgesi (I) hariç: eğitim zaten bantta ve ceset kuralından etkilenmiyordu. Endless etkilenmez.",
+  "enemyScale": { "all": { "hpMult": 0.75, "powerMult": 0.75 }, "boss": { "hpMult": 1, "powerMult": 1 }, "skipRegions": ["I"] },
   "defaultDifficulty": "medium",
   "difficulties": {
     "easy": { "name": "Easy", "ai": "easy", "text": "Enemies make more mistakes." },
@@ -22,7 +23,7 @@
       "name": "Hard",
       "ai": "hard",
       "text": "Enemies play their best and are tougher.",
-      "enemy": { "hpMult": 1.12, "powerMult": 1.05 },
+      "enemy": { "hpMult": 1.22, "powerMult": 1.12 },
       "enemyTier": { "elite": { "hpMult": 0.95 }, "boss": { "hpMult": 1.1, "powerMult": 1.1 } }
     }
   },
@@ -34,7 +35,7 @@
     "farewell": "Your escort has brought word of the Ash Curse to Ashford. They stay behind to hold the village. A new company must carry the fight north.",
     "volunteer": "A volunteer catches up with you at the city gate.",
     "recruitBefore": "A wanderer on the road offers to join you. Choose one companion.",
-    "townRest": "Your company rests by the fire. Everyone is back to full health.",
+    "townRest": "Your company rests by the fire. Everyone is back to full health, and the fallen are back on their feet.",
     "complete": "The Ash Curse is broken. Valdoria is free again."
   },
   "tips": {

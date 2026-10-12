@@ -28,10 +28,12 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
   t.lootState.clears[key] = replay + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her savaşta bir zar (sandık değil); düşüşsüz zafer sayacı kayıtta
   const rare: string[] = [];
+  let rareIndex = -1; // nadir düşüşün res.items içindeki sırası (düğümün item seviyesinde zarlanır)
   if (kind !== 'treasure') {
     const rr = rollRareDrop({ rng: rngFor(t.seed, t.mapId, nodeId, 'rare', kind, replay), kind, misses: t.lootState.rareMisses ?? 0, chapter: chapterOf(t.mapId).chapter });
     t.lootState.rareMisses = rr.misses;
     if (rr.item) {
+      rareIndex = res.items.length;
       res.items.push(rr.item);
       rare.push(rr.item);
     }
@@ -44,7 +46,9 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     // Nadirlik loot zarından (tek tablo, Ömer 2026-10-11); nadir düşüş (Legendary) kendi nadirliğiyle
     const rarity = res.rarities[i];
     const cls = res.forClass[i];
-    const rolled = makeItem(id, '', rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i), { ...(rarity ? { rarity } : {}), ...(cls ? { forClass: cls } : {}) });
+    // Nadir düşüş (Legendary) TABAN SEVİYESİZ: düştüğü düğümün item seviyesinde zarlanır, Endless'taki dalga seviyesi gibi (Ömer 2026-10-12)
+    const ilvl = i === rareIndex && itemDef(id) ? nodeIlvl(t.mapId, nodeId) : undefined;
+    const rolled = makeItem(id, '', rngFor(t.seed, t.mapId, nodeId, 'roll', kind, replay, i), { ...(rarity ? { rarity } : {}), ...(cls ? { forClass: cls } : {}), ...(ilvl !== undefined ? { ilvl } : {}) });
     if (t.inventory.length < BAG_SIZE) {
       const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
       t.inventory.push(inst);

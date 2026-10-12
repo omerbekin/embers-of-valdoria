@@ -5,7 +5,7 @@ import audio from '../data/audio.json';
 import { content } from '../src/engine';
 import { buildCatalog } from '../src/gallery/catalog';
 import { ASSET_NAV, WIKI_ALIASES } from '../src/wiki/assets/nav';
-import { buildLegacy, legacyOfSprite, type LegacyFiles } from '../src/wiki/assets/legacy-catalog';
+import { buildLegacy, type LegacyFiles } from '../src/wiki/assets/legacy-catalog';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { BACKUP_VFX, VFX_KINDS } from '../src/ui/vfx-kinds';
 import { buildWiki } from '../src/wiki/catalog';
@@ -29,9 +29,6 @@ function scan(dir: string, depth: 1 | 2): Record<string, string> {
 const files: LegacyFiles = {
   sprites: scan('sprites', 2),
   avatars: scan('avatars', 1),
-  spritesOld: scan('sprites_old', 2),
-  concepts: scan('concepts', 2),
-  pool: scan('characters-pool', 1),
 };
 const catalog = buildCatalog(files);
 const legacy = buildLegacy(catalog, files);
@@ -133,33 +130,22 @@ describe('Wiki > Legacy: kullanılmayan / eski her şey OTOMATİK türetilir', (
     for (const k of BACKUP_VFX) if (!used.has(k)) expect(legacyItems.find((i) => i.kind === 'vfx' && i.id === k)?.why, k).toMatch(/^Backup/);
   });
 
-  it('assets/sprites_old, assets/concepts, assets/characters-pool altındaki her .png Legacy de listelenir', () => {
-    expect(Object.keys(files.spritesOld).length).toBeGreaterThan(0);
-    expect(Object.keys(files.concepts).length).toBeGreaterThan(0);
-    expect(ofKind('oldSprite').sort()).toEqual(Object.keys(files.spritesOld).sort());
-    expect(ofKind('concept').sort()).toEqual(Object.keys(files.concepts).sort());
-    expect(ofKind('pool').sort()).toEqual(Object.keys(files.pool).sort());
-  });
-
   it('diskte class/çağrıya bağlı olmayan sprite/avatar dosyası listelenir; her görsel ya karakterde ya Legacy de', () => {
     const shown = new Set(catalog.characters.flatMap((c) => [...c.sprites.map((s) => s.url), ...(c.avatarUrl ? [c.avatarUrl] : []), ...c.variants.flatMap((v) => (v.avatarUrl ? [v.avatarUrl] : []))]));
     const orphanPaths = new Set(ofKind('orphan'));
     for (const [path, url] of [...Object.entries(files.sprites), ...Object.entries(files.avatars)]) expect(shown.has(url) || orphanPaths.has(path), `${path} bağlantısız`).toBe(true);
   });
 
-  it('her Legacy öğesi neden legacy etiketi taşır (Replaced by / Unused / Backup / Early concept)', () => {
-    expect(legacy.total).toBe(legacyItems.length);
-    for (const i of legacyItems) {
-      expect(i.why, i.id).toMatch(/^(Replaced by|Unused|Backup|Early concept)/);
-      expect(i.label, i.id).not.toBe('');
-    }
+  it('eski hayvan başlı karakter sanatı (2026-10-12 kaldırıldı) diske ve Legacy ye geri dönmez', () => {
+    for (const dir of ['characters-pool', 'concepts/paladin']) expect(existsSync(join(__dirname, '..', 'assets', dir)), dir).toBe(false);
+    expect(legacy.groups.map((g) => g.kind).every((k) => ['orphan', 'icon', 'vfx', 'sound'].includes(k))).toBe(true);
   });
 
-  it('eski sprite sürümü olan class için Old versions kendi eski dosyalarını bulur (başka sprite ın değil; Geometer Mage ile aynı sprite ı paylaşır)', () => {
-    for (const c of catalog.characters.filter((x) => x.oldSprites.length > 0)) {
-      const mine = legacyOfSprite(legacy, c.spriteId);
-      expect(mine.length, c.id).toBeGreaterThanOrEqual(c.oldSprites.length);
-      for (const i of mine) expect(i.spriteId).toBe(c.spriteId);
+  it('her Legacy öğesi neden legacy etiketi taşır (Replaced by / Unused / Backup)', () => {
+    expect(legacy.total).toBe(legacyItems.length);
+    for (const i of legacyItems) {
+      expect(i.why, i.id).toMatch(/^(Replaced by|Unused|Backup)/);
+      expect(i.label, i.id).not.toBe('');
     }
   });
 });

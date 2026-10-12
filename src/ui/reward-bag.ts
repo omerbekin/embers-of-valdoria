@@ -88,6 +88,20 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
     onDrop: (_s, _tg, act) => {
       if (act?.kind === 'discard') tryDiscard(act.uid);
     },
+    // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; ödül "Take" ile alınır, torba item'i çöpe sürüklenir ya da "Discard")
+    tipActions: (key) => {
+      if (key.startsWith('rw:')) {
+        const i = Number(key.slice(3));
+        const t = h.tiles()[i];
+        if (!t) return [];
+        return [{ label: 'Take', disabled: !!t.blocked, run: () => takeTile(i) }];
+      }
+      if (key.startsWith('bag:')) {
+        const uid = key.slice(4);
+        return [{ label: 'Discard', primary: false, run: () => tryDiscard(uid) }];
+      }
+      return [];
+    },
   });
 
   let closed = false;
@@ -137,6 +151,21 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
     else go();
   };
 
+  /** Ödülü al (masaüstünde tıklama, dokunmatikte ipucundaki "Take"); engelliyse uyarı. */
+  const takeTile = (i: number): void => {
+    const t = h.tiles()[i];
+    if (!t || closed) return;
+    if (t.blocked) {
+      flashText = t.blocked;
+      uiSound('error');
+      render();
+      return;
+    }
+    finish();
+    overlay.remove();
+    h.take(i);
+  };
+
   const head = el('div', 'gr-head');
   const body = el('div', 'gr-body rb-body');
   const left = el('div', 'rb-tiles');
@@ -173,15 +202,7 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
       tile.append(medal, lab);
       tile.addEventListener('click', () => {
         if (ix.justEnded()) return;
-        if (t.blocked) {
-          flashText = t.blocked;
-          uiSound('error');
-          render();
-          return;
-        }
-        finish();
-        overlay.remove();
-        h.take(i);
+        takeTile(i);
       });
       left.append(tile);
     });
@@ -195,7 +216,7 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
       },
     });
     right.replaceChildren(inv);
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || 'Tap a reward to take it. Drag an item to the trash to make room.');
+    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || (window.matchMedia?.('(pointer: coarse)').matches ? 'Tap a reward, then Take. Drag an item to the trash to make room.' : 'Click a reward to take it. Drag an item to the trash to make room.'));
     flashText = '';
     foot.replaceChildren(hint, btn('gr-btn primary', 'Close bag', close));
   }

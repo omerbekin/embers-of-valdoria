@@ -17,7 +17,7 @@ import { hasUiImage, uiIconName } from './ui-icons';
 import type { Stats } from '../engine';
 import { avatarUrl, className, renderCharacter } from './character-panel';
 import { itemCell, renderInventory } from './inventory';
-import { itemTipNodes } from './item-tip';
+import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap } from './gear-drop';
 import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
@@ -130,6 +130,39 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       if (!inst) return [];
       // Character sayfası kapalıyken her kahramana etkisi ipucunda (açıkken kahraman kartlarında)
       return itemTipNodes(inst, curHero()?.class, key.startsWith('slot:') ? [] : heroTipExtra(src.heroes(), inst, !charOpen || phoneLayout()));
+    },
+    // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; alım / satım / kuşanma buradan ya da sürükle-bırakla)
+    tipActions: (key) => {
+      const i = key.indexOf(':');
+      const kind = key.slice(0, i);
+      const id = key.slice(i + 1);
+      const hero = curHero();
+      if (kind === 'ware') {
+        const index = Number(id);
+        const w = src.wares()[index];
+        if (!w || w.sold) return [];
+        const short = w.price - src.gold();
+        const full = src.bag().length >= src.bagSize;
+        return [{ label: short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, disabled: short > 0 || full, run: () => doBuy(index) }];
+      }
+      if (kind === 'bb') {
+        const index = Number(id);
+        const e = src.buyback()[index];
+        if (!e) return [];
+        const short = e.price - src.gold();
+        return [{ label: short > 0 ? `Need ${short} more` : `Buy back · ${e.price}`, disabled: short > 0, run: () => doBuyBack(index) }];
+      }
+      if (kind === 'bag') {
+        const inst = src.bag().find((x) => x.uid === id);
+        if (!inst) return [];
+        const out: ItemTipAction[] = [];
+        const d = itemDef(inst.id);
+        if (hero && d && (charOpen || (phoneLayout() && view === 'char')) && canEquip(hero.class, d)) out.push({ label: 'Equip', primary: false, run: () => tryEquip(hero.id, id) });
+        out.push({ label: `Sell · ${src.sellPrice(inst)}`, run: () => doSell(id) });
+        return out;
+      }
+      if (kind === 'slot' && hero?.equipment[id as SlotId]) return [{ label: 'Unequip', run: () => run(() => src.unequip(hero.id, id as SlotId), 'equip') }];
+      return [];
     },
     onHover: (key) => {
       const k = key.startsWith('slot:') ? '' : key;
