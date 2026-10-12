@@ -47,18 +47,22 @@
         {
           "id": "pay",
           "label": "Pay her price",
-          "hint": "Pay 60 gold. She opens her chest for you.",
+          "hint": "Pay 60 gold. She gives you one item from her chest and a few coins.",
           "cost": 60,
           "chest": true,
-          "result": "The witch weighs the coins, grins, and kicks the chest open."
+          "chestItems": 1,
+          "gold": 25,
+          "result": "The witch weighs the coins, grins, and rummages in the chest. She tosses you one piece and a few coppers. \"That's what your gold buys.\""
         },
         {
           "id": "blood",
           "label": "Pay in blood",
-          "hint": "Every hero loses 20% of their current HP (no one dies). She opens her chest for you.",
+          "hint": "Every hero loses 20% of their current HP (no one dies). She gives you one item from her chest and a few coins.",
           "hpLoss": 0.2,
           "chest": true,
-          "result": "A silver needle, a drop from each of you into the pot. The brew hisses. \"Fair,\" she says, and opens the chest."
+          "chestItems": 1,
+          "gold": 25,
+          "result": "A silver needle, a drop from each of you into the pot. The brew hisses. \"Fair,\" she says, and hands you one piece from the chest and a few coins."
         },
         {
           "id": "steal",
@@ -151,7 +155,35 @@
     },
     "the_wardens_oath": {
       "title": "The Warden's Oath",
-      "text": "The keep's commander meets you on the wall and points south, past the marsh.\n\n\"King's Bridge,\" she says. \"A warden swore to hold it until the king returned. The king never did, and the warden never left. Whatever stands there now does not let anyone cross.\"\n\n\"And the marsh is no better. The drowned have started to walk. Rest here tonight. You will want your strength.\""
+      "speaker": "Keep Commander",
+      "text": "The keep's commander meets you on the wall, arms folded, and blocks the stair down to the south road.",
+      "dialogue": [
+        {
+          "text": "\"King's Bridge? No. A warden swore to hold it until the king returned. The king never did, and the warden never left. I have buried enough brave fools this year.\"",
+          "choices": [
+            { "label": "\"Then let us be the last ones you have to bury. Someone must cross.\"", "likes": true },
+            { "label": "\"We don't need your permission, commander.\"" }
+          ]
+        },
+        {
+          "text": "\"Whatever stands there now does not tire and does not bleed. Why should I send you to it?\"",
+          "choices": [
+            { "label": "\"Because the Ash Lord's men will cross it if we don't.\"", "likes": true },
+            { "label": "\"Every guardian has a weakness. Tell us what you've seen.\"", "likes": true },
+            { "label": "\"For the gold, mostly.\"" }
+          ]
+        },
+        {
+          "text": "\"And if you fall on that bridge, who carries word back to me?\"",
+          "choices": [
+            { "label": "\"We won't fall. But if we do, the marsh will tell you.\"", "likes": true },
+            { "label": "\"That's your problem, not ours.\"" }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "liked": "He is quiet a long moment, then steps aside. \"Listen, then. Iron chains moor it to the bridge, and they feed its armour. Break a chain and it reels and loses its swing, and a rising span dies with it.\"\n\n\"Hold something back for the end. When the bridge starts to fall, so does its guard. It strikes three times a turn, but its plate is half what it was. Rest here tonight.\"",
+      "disliked": "\"Then go, and the river can have you.\" He turns back to the wall. \"Rest here tonight, at least. You will want your strength.\""
     }
   }
 }

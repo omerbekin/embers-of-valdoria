@@ -1,7 +1,7 @@
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, stopNumber } from './state';
-import { emptyEquipment, migrateItemRolls, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
+import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
 /**
@@ -94,12 +94,15 @@ const isItem = (it: unknown): it is ItemInstance =>
 function upgradeState(s: CampaignState): void {
   const raw = s as unknown as Record<string, unknown>;
   if (raw.version === 1) raw.version = 2;
+  const overflow: ItemInstance[] = []; // ikinci el taşıması: ikinci el doluysa oradaki item torbaya
   if (Array.isArray(s.roster))
     s.roster = s.roster.map((h) => {
       if (!h || typeof h !== 'object') return h;
       const eq = emptyEquipment();
       const old = (h as Partial<Hero>).equipment as Record<string, unknown> | undefined;
       if (old && typeof old === 'object') for (const k of SLOT_IDS) if (isItem(old[k])) eq[k] = old[k] as ItemInstance;
+      // 2026-10-12 ikinci el yuvası: silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; her okumada çalışır, idempotent)
+      migrateOffhand(eq, overflow);
       return {
         ...h,
         level: Number.isInteger(h.level) && h.level >= 1 ? h.level : 1,
@@ -107,7 +110,7 @@ function upgradeState(s: CampaignState): void {
         equipment: eq,
       };
     });
-  s.inventory = Array.isArray(s.inventory) ? s.inventory.filter(isItem) : [];
+  s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
   if (ho !== undefined && !(ho && typeof ho.node === 'string' && Array.isArray(ho.items) && ho.items.every((u) => typeof u === 'string') && Array.isArray(ho.from)))

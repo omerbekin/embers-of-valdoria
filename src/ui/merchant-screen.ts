@@ -21,7 +21,7 @@ import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap } from './gear-drop';
 import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
-import { primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS } from '../progression';
+import { primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -78,7 +78,7 @@ type ShopSel = { kind: 'ware'; index: number } | { kind: 'bag'; uid: string } | 
 const GREETING = 'Ah, the heroes of the hour! Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.';
 
 /** Tüccar ekranını açar; `welcome` = varış karşılaması (seçenek C). Dönen: kapat (görünüm değişince çağıran kapatır). */
-export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcome?: boolean; onLeave: () => void }): () => void {
+export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcome?: boolean; onLeave: () => void; leaveLabel?: string }): () => void {
   const overlay = el('div', 'gr-overlay gr-shop-overlay');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', src.name);
@@ -178,7 +178,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       dragKey = '';
       if (act?.kind === 'buy') doBuy(act.index);
       else if (act?.kind === 'sell') doSell(act.uid);
-      else if (act?.kind === 'equip') tryEquip(act.heroId, act.uid);
+      else if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
       else if (act?.kind === 'unequip') run(() => src.unequip(act.heroId, act.slot), 'equip');
       else if (charOpen) renderLeft();
       void s;
@@ -283,7 +283,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     sel = null;
     run(() => src.buyBack(index), 'buy', 'buyback');
   };
-  const tryEquip = (target: string, uid: string): void => {
+  const tryEquip = (target: string, uid: string, slot?: SlotId): void => {
     const h = heroOf(target);
     const inst = src.bag().find((x) => x.uid === uid);
     const d = inst ? itemDef(inst.id) : undefined;
@@ -296,8 +296,16 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       renderAll();
       return;
     }
-    const go = (): void => void run(() => src.equip(target, uid), 'equip');
-    const pc = primaryCheck(h, { equip: inst });
+    // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj (Gear ekranıyla aynı kural: planEquip)
+    const plan = planEquip(h.class, h.equipment, inst, slot);
+    if (isPlanError(plan)) {
+      flashText = plan.error;
+      uiSound('error');
+      renderAll();
+      return;
+    }
+    const go = (): void => void run(() => src.equip(target, uid, plan.slot), 'equip');
+    const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
     if (pc.lost && pc.primary) {
       closeAsk = confirmIn(overlay, `${pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ')} would exceed ${pc.primary.toUpperCase()} on the ${className(h.class)}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`, 'Equip anyway', go);
       return;
@@ -419,7 +427,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     const list = src.buyback();
     bb.append(el('div', 'gr-sec', 'Buy back · this visit'));
     const row = el('div', 'gr-bb-row');
-    if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? Buy it back here until you move on.'));
+    if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? Buy it back here until you leave.'));
     list.forEach((e, i) => {
       const cell = itemCell(e.inst, { selected: sel?.kind === 'bb' && sel.index === i, tip: `bb:${i}`, price: e.price, priceBad: src.gold() < e.price });
       cell.querySelector('button')!.addEventListener('click', () => {
@@ -463,7 +471,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   function renderFoot(): void {
     const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || src.note || 'Drag a ware into your bag to buy it; drag a bag item onto the stall to sell it.');
     flashText = '';
-    const acts: HTMLElement[] = [btn('gr-btn', 'Move on', () => o.onLeave())];
+    const acts: HTMLElement[] = [btn('gr-btn', o.leaveLabel ?? 'Move on', () => o.onLeave())];
     // seçimin eylemi (birincil, en sağda)
     if (sel?.kind === 'ware') {
       const w = src.wares()[sel.index];

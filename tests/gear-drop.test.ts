@@ -8,7 +8,7 @@ const helm = { kind: 'bag' as const, uid: 'u2', itemId: 'leather_coif' };
 
 describe('Gear sürükle-bırak / çift tıklama kararları', () => {
   it('torbadaki item uygun yuvaya ya da kahramana bırakılınca kuşanılır', () => {
-    expect(dropAction(axe, { kind: 'slot', heroId: 'w', slot: 'weapon' }, classOf)).toEqual({ kind: 'equip', heroId: 'w', uid: 'u1' });
+    expect(dropAction(axe, { kind: 'slot', heroId: 'w', slot: 'weapon' }, classOf)).toEqual({ kind: 'equip', heroId: 'w', uid: 'u1', slot: 'weapon' });
     expect(dropAction(helm, { kind: 'hero', heroId: 'a' }, classOf)).toEqual({ kind: 'equip', heroId: 'a', uid: 'u2' });
   });
   it('yanlış yuva, silah ailesi uymayan kahraman ve torbaya bırakmak geçersiz', () => {

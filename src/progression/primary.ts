@@ -4,12 +4,14 @@
 import { classes, formulas } from '../engine/content';
 import { applyUnitModifiers, isPrimaryActive } from '../engine/stats';
 import type { Attribute, Attributes, UnitModifiers } from '../engine/types';
-import { itemDef, type Equipment, type ItemInstance } from './items';
+import { defaultEquipSlot, equipInto, itemDef, type Equipment, type ItemInstance, type SlotId } from './items';
 import { loadout, type LoadoutSource } from './loadout';
 
 /** Denenen değişiklik: bir item takmak (yuvasındakinin yerine) ve/veya düz stat puanı (level / ağaç). */
 export interface PrimaryChange {
   equip?: ItemInstance;
+  /** Takılacağı yuva (yoksa torbadan takılırken gideceği yuva; hançer ikinci ele de girer). */
+  slot?: SlotId;
   attrDelta?: Partial<Attributes>;
 }
 
@@ -42,7 +44,7 @@ export function primaryCheck(src: LoadoutSource, change: PrimaryChange): Primary
   let equipment: Partial<Equipment> | undefined = src.equipment;
   if (change.equip) {
     const d = itemDef(change.equip.id);
-    if (d) equipment = { ...(src.equipment ?? {}), [d.slot]: change.equip };
+    if (d) equipment = equipInto(src.equipment ?? {}, change.equip, change.slot ?? defaultEquipSlot(src.equipment ?? {}, d)).equipment as Partial<Equipment>;
   }
   const mods: UnitModifiers = { ...(loadout({ ...src, equipment }).modifiers ?? {}) };
   if (change.attrDelta) {

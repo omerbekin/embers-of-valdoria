@@ -38,6 +38,8 @@ export interface EventChoice {
   hpLoss?: number;
   heal?: number;
   chest?: boolean;
+  /** Küçük sandık: sandık zarından yalnızca bu kadar item; o zaman `gold` sandığın altını olarak Spoils kartında görünür (cadının bedelli seçenekleri). */
+  chestItems?: number;
   restHeal?: number;
   battle?: string[];
   win?: { gold?: number; chest?: boolean };

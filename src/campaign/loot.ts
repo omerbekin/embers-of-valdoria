@@ -12,7 +12,7 @@ export const emptyLootState = (): CampaignState['lootState'] => ({ rarePity: 0, 
  * Düğümün loot'unu verir: item'ler torbaya (doluysa sığmayanlar kartta `left`: oyuncu yer açıp alabilir), altın kesesine; `pendingLoot` haritada gösterilecek
  * "Spoils" kartıdır (arayüz onaylayınca `acknowledgeLoot`). Aynı düğümün kaçıncı zaferi olduğu `lootState.clears`'ta sayılır.
  */
-export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[]): LootDrop {
+export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; gold?: number }): LootDrop {
   const key = `${nodeId}:${kind === 'treasure' ? 'treasure' : 'battle'}`;
   const replay = t.lootState.clears[key] ?? 0;
   const res = rollLoot({
@@ -24,6 +24,13 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     replay,
     pity: t.lootState.rarePity,
   });
+  // Küçük sandık (cadının bedelli seçenekleri, Ömer 2026-10-12): aynı zardan yalnızca ilk N item + sabit altın
+  if (opts?.maxItems !== undefined) {
+    res.items.length = Math.min(res.items.length, opts.maxItems);
+    res.rarities.length = Math.min(res.rarities.length, opts.maxItems);
+    res.forClass.length = Math.min(res.forClass.length, opts.maxItems);
+  }
+  if (opts?.gold !== undefined) res.gold = opts.gold;
   t.lootState.rarePity = res.pity;
   t.lootState.clears[key] = replay + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her savaşta bir zar (sandık değil); düşüşsüz zafer sayacı kayıtta
@@ -112,7 +119,7 @@ export function acknowledgeLoot(s: CampaignState): CampaignState {
 export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: string, rarity: RarityId = 'common'): LootDrop | null {
   const ilvl = Math.max(1, nodeIlvl(t.mapId, nodeId));
   const rng = rngFor(t.seed, t.mapId, nodeId, 'gift', tag);
-  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (d.slot !== 'weapon' || party.some((h) => canEquip(h.class, d))));
+  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || party.some((h) => canEquip(h.class, d))));
   if (!bases.length) return null;
   const d = bases[rng.int(0, bases.length - 1)]!;
   const fits = party.filter((h) => canEquip(h.class, d));
@@ -122,8 +129,8 @@ export function grantGift(t: CampaignState, nodeId: string, party: Hero[], tag: 
   if (t.inventory.length < BAG_SIZE) {
     const inst: ItemInstance = { ...rolled, uid: `i${t.nextItemId++}` };
     t.inventory.push(inst);
-    drop = { node: nodeId, kind: 'treasure', items: [inst.uid], gold: 0 };
-  } else drop = { node: nodeId, kind: 'treasure', items: [], gold: 0, left: [d.id], leftRolls: [rolled.rolls] };
+    drop = { node: nodeId, kind: 'treasure', items: [inst.uid], gold: 0, gift: true };
+  } else drop = { node: nodeId, kind: 'treasure', items: [], gold: 0, gift: true, left: [d.id], leftRolls: [rolled.rolls] };
   const prev = t.pendingLoot;
   t.pendingLoot =
     prev && prev.node === nodeId

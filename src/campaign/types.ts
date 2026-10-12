@@ -265,6 +265,8 @@ export interface LootDrop {
   rare?: string[];
   /** `left` ile aynı sırada: geride kalan item'lerin düşüşte atılmış stat zarları (alınırsa bunlarla gelir). */
   leftRolls?: Array<ItemRoll | undefined>;
+  /** Kasaba diyaloğu hediyesi (Spoils kartı başlığı "Gift", altın satırı yok). */
+  gift?: boolean;
 }
 
 /** Teslim kaydı: kimden (ayrılan kahramanlar), hangi item'ler (torbadaki uid'ler), hangi düğümde. */

@@ -4,7 +4,7 @@
 // (taban nadirlikten bağımsız). Sefer (src/campaign/loot.ts) bunu kullanır; rastgelelik yalnızca verilen Rng'den.
 import type { Rng } from '../engine/rng';
 import { rollDropRarity, type DropKind } from './drop';
-import { classWeaponFamilies, ITEMS, RARITY_IDS, SLOT_IDS, instanceIP, itemDef, type Equipment, type ItemDef, type LootKind, type RarityId, type SlotId } from './items';
+import { classUsesOffhand, classWeaponFamilies, fitsSlot, ITEMS, offhandBlocker, RARITY_IDS, SLOT_IDS, instanceIP, itemDef, type Equipment, type ItemDef, type LootKind, type RarityId, type SlotId } from './items';
 
 export interface LootInput {
   rng: Rng;
@@ -50,6 +50,8 @@ function weakestSlot(rng: Rng, party: LootInput['party']): SlotId {
   let slots: SlotId[] = [];
   for (const h of party)
     for (const k of SLOT_IDS) {
+      // İkinci el: sınıf kullanamıyorsa ya da çift el silah kapatıyorsa "boş yuva" sayılmaz
+      if (k === 'offhand' && (!classUsesOffhand(h.class) || offhandBlocker(h.equipment ?? {}))) continue;
       const inst = h.equipment?.[k];
       const ip = inst && itemDef(inst.id) ? instanceIP(inst) : 0;
       if (ip < best) {
@@ -66,7 +68,8 @@ function weakestSlot(rng: Rng, party: LootInput['party']): SlotId {
  */
 function pickBase(rng: Rng, slot: SlotId, family: string | undefined, ilvl: number): ItemDef | undefined {
   const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary');
-  const fit = (useSlot: boolean, capIlvl: boolean) => bases.filter((d) => (!useSlot || (d.slot === slot && (slot !== 'weapon' || !family || d.family === family))) && (!capIlvl || d.ilvl <= ilvl));
+  const fit = (useSlot: boolean, capIlvl: boolean) =>
+    bases.filter((d) => (!useSlot || (fitsSlot(d, slot) && ((slot !== 'weapon' && slot !== 'offhand') || !family || d.family === family))) && (!capIlvl || d.ilvl <= ilvl));
   const choose = (pool: ItemDef[]) => pool[rng.int(0, pool.length - 1)];
   for (const useSlot of [true, false]) {
     const pool = fit(useSlot, true);
@@ -97,16 +100,18 @@ export function rollLoot(o: LootInput): LootResult {
     const r = Math.min(rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind))), cap, rIdx('epic'));
     const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, o.party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
     let family: string | undefined;
-    if (slot === 'weapon') {
-      const all = ITEMS.weaponFamilies.map((f) => f.id);
-      const usable = families.length && rng.next() < L.usableWeaponChance ? families : all;
+    if (slot === 'weapon' || slot === 'offhand') {
+      // İkinci el (2026-10-12): yalnızca ikinci el item'i olan aileler (kalkan: Maces & Shields, hançer)
+      const all = ITEMS.weaponFamilies.map((f) => f.id).filter((f) => slot === 'weapon' || ITEMS.items.some((d) => d.family === f && d.rarity !== 'legendary' && fitsSlot(d, 'offhand')));
+      const fams = families.filter((f) => all.includes(f));
+      const usable = fams.length && rng.next() < L.usableWeaponChance ? fams : all;
       family = usable[rng.int(0, usable.length - 1)];
     }
     const d = pickBase(rng, slot, family, o.ilvl);
     if (!d) continue;
     items.push(d.id);
     rarities.push(RARITY_IDS[r]!);
-    forClass.push(d.slot === 'weapon' ? o.party.find((h) => classWeaponFamilies(h.class).includes(d.family ?? ''))?.class : undefined);
+    forClass.push(d.family ? o.party.find((h) => classWeaponFamilies(h.class).includes(d.family ?? ''))?.class : undefined);
   }
   const gold = Math.round((L.gold[o.kind] ?? 0) * Math.max(1, o.ilvl) * rep.gold);
   return { items, rarities, forClass, gold, pity: o.pity ?? 0 };

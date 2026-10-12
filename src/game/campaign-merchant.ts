@@ -29,7 +29,7 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
 }
 
 /** Sefer tüccarını açar (varışta karşılama). `onLeave`: oyuncu ayrılınca (sahne düğüm adımını tamamlar). */
-export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { onLeave: () => void; sub?: string }): () => void {
+export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { onLeave: () => void; sub?: string; leaveLabel?: string }): () => void {
   // Ekran kendini kapatmaz (Endless'ta da çağıran kapatır): Move on önce ekranı kapatır, sonra sahne adımı tamamlar (tek sefer)
   let close: (() => void) | null = null;
   const leave = (): void => {
@@ -39,7 +39,7 @@ export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState
     c();
     o.onLeave();
   };
-  close = openMerchant(root, campaignMerchantSource(get, set, o.sub), { welcome: true, onLeave: leave });
+  close = openMerchant(root, campaignMerchantSource(get, set, o.sub), { welcome: true, onLeave: leave, ...(o.leaveLabel ? { leaveLabel: o.leaveLabel } : {}) });
   return () => {
     const c = close;
     close = null;

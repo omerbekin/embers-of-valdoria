@@ -1,5 +1,5 @@
 /**
- * CHARACTER sayfası (Ömer 2026-10-11, g1): kahraman listesi | 6 yuva + statlar, altta sol kenardan başlayan skill satırı. Gear'da Inventory'nin
+ * CHARACTER sayfası (Ömer 2026-10-11, g1): kahraman listesi | 7 yuva (Weapon yanında Off-hand) + statlar, altta sol kenardan başlayan skill satırı. Gear'da Inventory'nin
  * yanında, tüccarda "Character" (C) ile malların üstünde açılır. "Usable by" ayrı blok değil: üstüne gelinen / seçili / sürüklenen item varken
  * her kahraman kartının alt satırı o kahramana etkisini gösterir (src/ui/gear-hover.ts); statlar ve skill sayıları seçili kahraman için
  * "önce → sonra" (src/ui/gear-skills.ts, skill-info ile aynı sayılar). Yalnızca çizer; dokunuşlar geri çağrılarla, sürükleme / ipuçları ekranın
@@ -10,7 +10,13 @@ import type { Stats } from '../engine';
 import {
   ITEMS,
   SLOT_IDS,
-  canEquip,
+  classUsesOffhand,
+  defaultEquipSlot,
+  equipInto,
+  gripOf,
+  isPlanError,
+  offhandBlocker,
+  planEquip,
   classWeaponFamilies,
   equipDiff,
   fmtPanel,
@@ -106,10 +112,13 @@ export function renderCharacter(v: CharacterView): CharacterRender {
   if (v.hint) mid.append(el('div', 'gr-hint', v.hint));
   mid.append(el('div', 'gr-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`));
   const slots = el('div', 'gr-slots');
+  const blocker = offhandBlocker(hero.equipment);
   for (const k of SLOT_IDS) {
     const inst = hero.equipment[k];
     const d = inst ? itemDef(inst.id) : undefined;
-    const cell = el('button', `gr-slot${inst ? '' : ' empty'}`);
+    // İkinci el (2026-10-12): çift el / yay / tılsım takılıyken kapalı görünür (bırakılırsa planEquip açık mesaj verir)
+    const blocked = k === 'offhand' && !inst && !!blocker;
+    const cell = el('button', `gr-slot${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');
     cell.dataset['drop'] = `slot:${k}`;
@@ -122,16 +131,17 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     const txt = el('div', 'gr-slot-text');
     // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
     txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
-    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', 'Empty'));
+    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', blocked ? `${gripOf(blocker!) === 'two' ? 'Two-handed' : gripOf(blocker!) === 'bow' ? 'Bow' : 'Charm'}: both hands` : k === 'offhand' && !classUsesOffhand(hero.class) ? 'No shield or dagger' : 'Empty'));
     cell.append(txt);
     slots.append(cell);
   }
   mid.append(slots);
   const stats = heroStats(hero);
   const fd = v.focus ? itemDef(v.focus.id) : undefined;
-  const usableFocus = v.focus && fd && canEquip(hero.class, fd) && hero.equipment[fd.slot]?.uid !== v.focus.uid ? v.focus : null;
-  const diff = new Map((usableFocus ? equipDiff(hero, usableFocus) : []).map((x) => [x.id, x.delta]));
-  const after = usableFocus && fd ? heroStats({ ...hero, equipment: { ...hero.equipment, [fd.slot]: usableFocus } }) : null;
+  const focusSlot = fd ? defaultEquipSlot(hero.equipment, fd) : undefined;
+  const usableFocus = v.focus && fd && focusSlot && !isPlanError(planEquip(hero.class, hero.equipment, v.focus, focusSlot)) && hero.equipment[focusSlot]?.uid !== v.focus.uid ? v.focus : null;
+  const diff = new Map((usableFocus ? equipDiff(hero, usableFocus, focusSlot) : []).map((x) => [x.id, x.delta]));
+  const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
   const sg = el('div', 'gr-stats');
   for (const p of heroPanel(hero)) {
     const row = el('div', 'gr-stat');

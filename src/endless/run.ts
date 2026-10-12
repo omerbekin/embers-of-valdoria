@@ -1,6 +1,6 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
-import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, legendaryConflict, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves } from '../progression/equip';
@@ -252,12 +252,17 @@ export const ilvlCap = (cleared: number, cfg: EndlessConfig = ENDLESS): number =
 /** Item tanımı: önce verilen katalogda (testler / ileride affix'li örnekler), yoksa items.json'da. */
 const defIn = (catalog: ItemDef[], id: string): ItemDef | undefined => catalog.find((d) => d.id === id) ?? itemDef(id);
 
-/** Kahramanın o yuvadaki item'inin IP'si (boş = 0). */
+/** Kahramanın o yuvadaki item'inin IP'si (boş = 0). Hançer iki yuvaya da girer: zayıf olanı; ikinci el kapalıysa (çift el) kalkan önerilmez (Infinity). */
 function slotIP(h: EndlessHero, d: ItemDef, catalog: ItemDef[]): number {
-  const cur = h.equipment[d.slot];
-  const cd = cur ? defIn(catalog, cur.id) : undefined;
-  if (!cur || !cd) return 0;
-  return itemDef(cur.id) ? instanceIP(cur) : itemIP(cd);
+  const ipOf = (k: SlotId): number => {
+    if (k === 'offhand' && offhandBlocker(h.equipment)) return Infinity;
+    const cur = h.equipment[k];
+    const cd = cur ? defIn(catalog, cur.id) : undefined;
+    if (!cur || !cd) return 0;
+    return itemDef(cur.id) ? instanceIP(cur) : itemIP(cd);
+  };
+  const slots = itemDef(d.id) ? slotsFor(d) : [d.slot];
+  return Math.min(...slots.map(ipOf));
 }
 
 /** Nadirlik sırası (0 = common). */
@@ -464,7 +469,7 @@ const lockCheck = (run: EndlessRun): void => {
 };
 
 /** Torbadaki item'i kahramana takar; yuvadaki item torbaya döner (sefer `equipItem` ile aynı kural). Hata: Error (Gear ekranı mesajı). */
-export function equipFromBag(run: EndlessRun, heroId: string, uid: string): EndlessRun {
+export function equipFromBag(run: EndlessRun, heroId: string, uid: string, slot?: SlotId, cfg: EndlessConfig = ENDLESS): EndlessRun {
   lockCheck(run);
   const hero = heroOf(run, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
@@ -473,17 +478,20 @@ export function equipFromBag(run: EndlessRun, heroId: string, uid: string): Endl
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const d = itemDef(bag[idx]!.id);
   if (!d) throw new Error(`Unknown item: ${bag[idx]!.id}`);
-  if (!canEquip(hero.class, d)) throw new Error(`${hero.class} cannot use ${d.family ?? d.slot}`);
-  const leg = legendaryConflict(hero.equipment, d); // kahraman başına 1 Legendary (madde 296)
-  if (leg) throw new Error(leg);
+  const plan = planEquip(hero.class, hero.equipment, bag[idx]!, slot);
+  if (isPlanError(plan)) throw new Error(plan.error);
+  if (plan.displaced.length && bag.length - 1 + (plan.replaced ? 1 : 0) + plan.displaced.length > endlessBagSize(cfg))
+    throw new Error(`Bag is full: no room for ${plan.displaced.map((x) => itemDef(x.id)?.name ?? x.id).join(', ')}`);
   const s = clone(run);
   const h = heroOf(s, heroId)!;
   const nb = [...bagOf(s)];
   const item = nb[idx]!;
-  const old = h.equipment[d.slot];
   nb.splice(idx, 1);
-  if (old) nb.splice(idx, 0, old);
-  h.equipment = { ...h.equipment, [d.slot]: { ...item } };
+  if (plan.replaced) nb.splice(idx, 0, plan.replaced);
+  nb.push(...plan.displaced);
+  const eq = { ...h.equipment, [plan.slot]: { ...item } };
+  if (plan.displaced.length) delete eq.offhand;
+  h.equipment = eq;
   s.bag = nb;
   return s;
 }
@@ -520,12 +528,18 @@ export function equipBestRun(run: EndlessRun, heroIds?: string[]): EndlessRun {
   for (const id of heroIds ?? run.heroes.map((h) => h.id)) {
     const h = heroOf(s, id);
     if (!h) continue;
-    for (const m of bestMoves({ class: h.class, equipment: { ...emptyEquipment(), ...h.equipment } }, bagOf(s))) s = equipFromBag(s, id, m.uid);
+    for (const m of bestMoves({ class: h.class, equipment: { ...emptyEquipment(), ...h.equipment } }, bagOf(s))) {
+      try {
+        s = equipFromBag(s, id, m.uid, m.slot);
+      } catch {
+        /* torba dolu (ikinci el çıkamıyor): bu değişim atlanır */
+      }
+    }
   }
   return s;
 }
 
-/** Kahramanın 6 yuvalı tam ekipmanı (Gear ekranı / stat paneli; boş yuva null). */
+/** Kahramanın 7 yuvalı tam ekipmanı (Gear ekranı / stat paneli; boş yuva null). */
 export const fullEquipment = (h: EndlessHero) => ({ ...emptyEquipment(), ...h.equipment });
 
 
@@ -576,7 +590,7 @@ export function leaveShop(run: EndlessRun): EndlessRun {
 export function replacedItem(run: EndlessRun, heroId: string, itemId: string, catalog: ItemDef[] = ITEMS.items): ItemDef | undefined {
   const h = heroOf(run, heroId);
   const d = defIn(catalog, itemId);
-  const cur = h && d ? h.equipment[d.slot] : null;
+  const cur = h && d ? h.equipment[itemDef(d.id) ? defaultEquipSlot(h.equipment, d) : d.slot] : null;
   return cur ? defIn(catalog, cur.id) : undefined;
 }
 

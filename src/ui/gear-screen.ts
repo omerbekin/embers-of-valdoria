@@ -10,6 +10,10 @@ import { uiSound } from './ui-sound';
 import './gear.css';
 import { activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
 import {
+  fitsSlot,
+  isPlanError,
+  offhandBlocker,
+  planEquip,
   BAG_SIZE,
   PRIMARY_BONUS_NAME,
   SLOT_IDS,
@@ -94,7 +98,8 @@ export interface GearSource {
   bag(): ItemInstance[];
   bagSize: number;
   gold(): number;
-  equip(heroId: string, uid: string): void;
+  /** `slot`: hedef yuva (sürükle-bırak; yoksa varsayılan yuva: progression > defaultEquipSlot). */
+  equip(heroId: string, uid: string, slot?: SlotId): void;
   unequip(heroId: string, slot: SlotId): void;
   discard(uid: string): void;
   /** "Equip best": verilen kahramanlar (yoksa tüm takım). */
@@ -114,7 +119,7 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
     bag: () => get().inventory,
     bagSize: BAG_SIZE,
     gold: () => get().gold,
-    equip: (heroId, uid) => apply((x) => equipItem(x, heroId, uid)),
+    equip: (heroId, uid, slot) => apply((x) => equipItem(x, heroId, uid, slot)),
     unequip: (heroId, slot) => apply((x) => unequipItem(x, heroId, slot)),
     discard: (uid) => apply((x) => discardItem(x, uid)),
     equipBest: (ids) => apply((x) => equipBest(x, ids)),
@@ -240,7 +245,10 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const uid = key.slice(4);
         const d = itemDef(bagInst(uid)?.id ?? '');
         const ok = !!d && canEquip(hero.class, d);
-        return [{ label: ok ? `Equip · ${className(hero.class)}` : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid) }];
+        const acts = [{ label: ok ? `Equip · ${className(hero.class)}` : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
+        // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
+        if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand')) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
+        return acts;
       }
       if (key.startsWith('slot:')) {
         const slot = key.slice(5) as SlotId;
@@ -265,7 +273,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     onDrop: (s, tg, act) => {
       const hadFocus = !!dragUid;
       dragUid = '';
-      if (act?.kind === 'equip') tryEquip(act.heroId, act.uid);
+      if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
       else if (act?.kind === 'unequip') {
         uiSound('equip');
         apply(() => src.unequip(act.heroId, act.slot));
@@ -318,7 +326,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
 
   /** Kuşanma (sürükle-bırak / çift tıklama): silah ailesi uymuyorsa uyarı + sallanma; primary bonusu düşecekse onay ("Equip anyway"). */
-  const tryEquip = (targetHero: string, uid: string): void => {
+  const tryEquip = (targetHero: string, uid: string, slot?: SlotId): void => {
     const h = heroOf(targetHero);
     const inst = bagInst(uid);
     const d = inst ? itemDef(inst.id) : undefined;
@@ -332,13 +340,22 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       renderAll();
       return;
     }
+    // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj + sallanma (torba dolu ise işlem hatası mesajı)
+    const plan = planEquip(h.class, h.equipment, inst, slot);
+    if (isPlanError(plan)) {
+      shakeUid = uid;
+      uiSound('error');
+      flashText = plan.error;
+      renderAll();
+      return;
+    }
     const doEquip = (): void => {
       if (sel === uid) sel = '';
       if (hoverUid === uid) hoverUid = '';
       uiSound('equip');
-      apply(() => src.equip(targetHero, uid));
+      apply(() => src.equip(targetHero, uid, plan.slot));
     };
-    const pc = primaryCheck(h, { equip: inst });
+    const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
     if (pc.lost && pc.primary) {
       const over = pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ');
       ask(`${over} would exceed ${pc.primary.toUpperCase()} on the ${className(h.class)}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`, 'Equip anyway', doEquip);
@@ -658,7 +675,7 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
     const insts = drop.items.map((u) => s.inventory.find((i) => i.uid === u)).filter((x): x is ItemInstance => !!x);
     const ids = insts.map((i) => i.id);
     const left = (drop.left ?? []).filter((id) => itemDef(id));
-    panel.append(el('div', 'gr-title', drop.kind === 'treasure' ? 'Treasure' : 'Spoils'));
+    panel.append(el('div', 'gr-title', drop.gift ? 'Gift' : drop.kind === 'treasure' ? 'Treasure' : 'Spoils'));
     if (ids.length) panel.append(el('div', 'gr-mini-sub', `${ids.length} new item${ids.length > 1 ? 's' : ''} in the bag`));
     const list = el('div', 'gr-mini-list');
     // Nadir düşüş (madde 297): altın-turuncu parıltılı satır + "Rare drop" etiketi
@@ -675,7 +692,11 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
       list.append(row);
     }
     if (ids.length) panel.append(list);
-    panel.append(el('div', 'gr-mini-extra', ids.length || left.length ? `+${drop.gold} gold` : `No gear this time. +${drop.gold} gold`));
+    // Altın 0 ise (ör. hediye) altın satırı yok
+    const goldTxt = drop.gold ? `+${drop.gold} gold` : '';
+    if (ids.length || left.length) {
+      if (goldTxt) panel.append(el('div', 'gr-mini-extra', goldTxt));
+    } else panel.append(el('div', 'gr-mini-extra', `No gear this time.${goldTxt ? ` ${goldTxt}` : ''}`));
     if (left.length) {
       const room = s.inventory.length < BAG_SIZE;
       panel.append(el('div', 'gr-card-warn', `Bag full: ${left.length} item${left.length > 1 ? 's' : ''} left behind. Make room to take ${left.length > 1 ? 'them' : 'it'}, or ${left.length > 1 ? 'they are' : 'it is'} lost when you continue.`));

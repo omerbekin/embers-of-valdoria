@@ -6,7 +6,11 @@ import type { Stats } from '../engine/types';
 import {
   ITEMS,
   affixDef,
+  defaultEquipSlot,
+  equipInto,
+  gripOf,
   instanceIlvl,
+  offhandWeapon,
   instanceRarity,
   itemDef,
   partMid,
@@ -20,6 +24,7 @@ import {
   type ItemInstance,
   type RarityId,
   type RolledAffix,
+  type SlotId,
 } from './items';
 import { loadout, type LoadoutSource } from './loadout';
 
@@ -147,7 +152,7 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   if (d.rarity === 'legendary' && d.affixes) for (const id of d.affixes) out.push(mid(id) ?? id);
   else {
     const tiers = rarityDef(rarity === 'legendary' ? 'epic' : rarity).tiers;
-    const mains = d.slot === 'weapon' ? (ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? []) : d.main ? [d.main] : [];
+    const mains = d.family ? (ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? []) : d.main ? [d.main] : [];
     tiers.forEach((t, i) => {
       if (i === 0 && mains.length === 1) out.push(mid(mains[0]!) ?? mains[0]!);
       else if (i === 0 && mains.length > 1) out.push(`[C] One of: ${mains.map((m) => affixDef(m)?.name ?? m).join(', ')}`);
@@ -158,10 +163,20 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   return fx ? [...out, fx] : out;
 }
 
-/** Alt başlık: "Rare Gloves · Item level 9" (silahta aile adı). Örneğin nadirliği / seviyesi verilebilir. */
+/** Tutuş notu (2026-10-12): "One-handed · Off-hand too" / "Two-handed" / kalkanda "Off-hand"; yay ve tılsımda boş (adı zaten söyler). */
+export function gripNote(d: ItemDef): string {
+  if (d.slot === 'offhand') return 'Off-hand';
+  const g = gripOf(d);
+  if (g === 'one') return offhandWeapon(d) ? 'One-handed · Off-hand too' : 'One-handed';
+  if (g === 'two') return 'Two-handed';
+  return '';
+}
+
+/** Alt başlık: "Rare Gloves · Item level 9" (silahta aile adı + tutuş; kalkanda "Shield · Off-hand"). Örneğin nadirliği / seviyesi verilebilir. */
 export function itemSubtitle(d: ItemDef, rarity: RarityId = d.rarity, ilvl: number = d.ilvl): string {
-  const fam = d.family ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
-  return `${rarityDef(rarity).name} ${fam ?? slotDef(d.slot).name} · Item level ${ilvl}`;
+  const fam = d.slot === 'offhand' ? 'Shield' : d.family ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
+  const grip = gripNote(d);
+  return `${rarityDef(rarity).name} ${fam ?? slotDef(d.slot).name}${grip ? ` · ${grip}` : ''} · Item level ${ilvl}`;
 }
 
 /** Örneğin alt başlığı (nadirliği zarından). */
@@ -219,11 +234,11 @@ export function fmtPanel(s: Pick<HeroPanelStat, 'value' | 'fmt'>): string {
 }
 
 /** Bu item takılırsa panelde değişen statlar (fark: + / -). */
-export function equipDiff(src: LoadoutSource & { equipment: Equipment }, inst: ItemInstance): Array<HeroPanelStat & { delta: number }> {
+export function equipDiff(src: LoadoutSource & { equipment: Equipment }, inst: ItemInstance, slot?: SlotId): Array<HeroPanelStat & { delta: number }> {
   const d = itemDef(inst.id);
   if (!d) return [];
   const now = heroPanel(src);
-  const after = heroPanel({ ...src, equipment: { ...src.equipment, [d.slot]: inst } });
+  const after = heroPanel({ ...src, equipment: equipInto(src.equipment, inst, slot ?? defaultEquipSlot(src.equipment, d)).equipment as Equipment });
   return after
     .map((a, i) => ({ ...a, delta: Math.round((a.value - now[i]!.value) * 10000) / 10000 }))
     .filter((x) => x.delta !== 0);

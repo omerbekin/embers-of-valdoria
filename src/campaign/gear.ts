@@ -1,6 +1,6 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, canEquip, instanceRarity, itemDef, legendaryConflict, legendaryIds, loadout, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
 import { clone, heroById } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
@@ -20,30 +20,32 @@ export function addItem(s: CampaignState, itemId: string): { state: CampaignStat
   return { state: t, item };
 }
 
-/** Kahraman bu item'i takabilir mi (yuva ve silah ailesi)? Hata nedeni ya da null. */
-export function equipError(hero: Hero, item: ItemInstance): string | null {
-  const d = itemDef(item.id);
-  if (!d) return `Unknown item: ${item.id}`;
-  if (!canEquip(hero.class, d)) return d.usableBy && !d.usableBy.includes(hero.class) ? `${d.name} can only be used by ${d.usableBy.join(', ')}` : `${hero.class} cannot use ${d.family ?? d.slot}`;
-  return legendaryConflict(hero.equipment, d);
+/** Kahraman bu item'i (verilen yuvaya; yoksa varsayılan yuvaya) takabilir mi (yuva, silah ailesi, ikinci el, Legendary)? Hata nedeni ya da null. */
+export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId): string | null {
+  const p = planEquip(hero.class, hero.equipment, item, slot);
+  return isPlanError(p) ? p.error : null;
 }
 
-/** Torbadaki item'i kahramana takar; yuvada item varsa torbaya geri döner (yer değiştirme: torba boyutu değişmez). */
-export function equipItem(s: CampaignState, heroId: string, uid: string): CampaignState {
+/**
+ * Torbadaki item'i kahramana takar; yuvada item varsa torbaya geri döner (yer değiştirme: torba boyutu değişmez). `slot`: hedef yuva (hançer
+ * ikinci ele de girer; yoksa varsayılan yuva). Çift el / yay / tılsım takılınca ikinci eldeki item da torbaya döner; yer yoksa hata.
+ */
+export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: SlotId): CampaignState {
   const hero = heroById(s, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
   const idx = s.inventory.findIndex((it) => it.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const item = s.inventory[idx]!;
-  const err = equipError(hero, item);
-  if (err) throw new Error(err);
-  const slot = itemDef(item.id)!.slot;
+  const plan = planEquip(hero.class, hero.equipment, item, slot);
+  if (isPlanError(plan)) throw new Error(plan.error);
+  if (plan.displaced.length && s.inventory.length - 1 + (plan.replaced ? 1 : 0) + plan.displaced.length > BAG_SIZE)
+    throw new Error(`Bag is full: no room for ${plan.displaced.map((x) => itemDef(x.id)?.name ?? x.id).join(', ')}`);
   const t = clone(s);
   const h = heroById(t, heroId)!;
-  const old = h.equipment[slot];
   t.inventory.splice(idx, 1);
-  if (old) t.inventory.splice(idx, 0, old);
-  h.equipment[slot] = { ...item };
+  if (plan.replaced) t.inventory.splice(idx, 0, plan.replaced);
+  t.inventory.push(...plan.displaced);
+  h.equipment = { ...h.equipment, ...plan.equipment, [plan.slot]: { ...item } } as Hero['equipment'];
   return t;
 }
 
@@ -96,7 +98,13 @@ export function equipBest(s: CampaignState, heroIds?: string[]): CampaignState {
   for (const id of ids) {
     const h = heroById(t, id);
     if (!h) continue;
-    for (const m of bestMoves(h, t.inventory)) t = equipItem(t, id, m.uid);
+    for (const m of bestMoves(h, t.inventory)) {
+      try {
+        t = equipItem(t, id, m.uid, m.slot);
+      } catch {
+        /* torba dolu (ikinci el çıkamıyor): bu değişim atlanır */
+      }
+    }
   }
   return t;
 }

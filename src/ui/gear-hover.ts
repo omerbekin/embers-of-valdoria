@@ -8,7 +8,11 @@ import {
   equipDiff,
   fmtPanel,
   itemDef,
-  legendaryConflict,
+  LEGENDARY_LIMIT_MSG,
+  defaultEquipSlot,
+  isPlanError,
+  offhandBlocker,
+  planEquip,
   signedText,
   SLOT_IDS,
   type Equipment,
@@ -37,7 +41,7 @@ export interface HeroLine {
 /** Olağan satır: "Level 1 · 4/6 items". */
 export function idleHeroLine(h: HoverHero): HeroLine {
   const count = SLOT_IDS.filter((k) => h.equipment[k]).length;
-  const text = `Level ${h.level} · ${count}/6 items`;
+  const text = `Level ${h.level} · ${count}/${SLOT_IDS.length} items`;
   return { text, tone: 'idle', parts: [{ text }] };
 }
 
@@ -53,15 +57,20 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
   const d = itemDef(inst.id);
   if (!d) return idleHeroLine(h);
   if (!canEquip(h.class, d)) {
-    const fam = d.slot === 'weapon' ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
+    const fam = d.family ? ITEMS.weaponFamilies.find((f) => f.id === d.family)?.name : undefined;
     const text = fam ? `Can't use ${fam}` : "Can't use";
     return { text, tone: 'no', parts: [{ text }] };
   }
-  const leg = legendaryConflict(h.equipment, d);
-  if (leg) return { text: leg, tone: 'no', parts: [{ text: leg }] };
   // Aynı item zaten takılı (yuvadaki örneğin kendisi): fark yok
-  if (h.equipment[d.slot]?.uid === inst.uid) return { text: 'Equipped', tone: 'none', parts: [{ text: 'Equipped' }] };
-  const diffs = equipDiff(h, inst)
+  if (SLOT_IDS.some((k) => h.equipment[k]?.uid === inst.uid)) return { text: 'Equipped', tone: 'none', parts: [{ text: 'Equipped' }] };
+  // Legendary sınırı / ikinci el kapalı (çift el silah): kısa neden
+  const slot = defaultEquipSlot(h.equipment, d);
+  const plan = planEquip(h.class, h.equipment, inst, slot);
+  if (isPlanError(plan)) {
+    const text = plan.error === LEGENDARY_LIMIT_MSG ? plan.error : offhandBlocker(h.equipment) && slot === 'offhand' ? 'Hands full' : plan.error;
+    return { text, tone: 'no', parts: [{ text }] };
+  }
+  const diffs = equipDiff(h, inst, slot)
     .map((x) => ({ x, weight: Math.abs(x.delta) / Math.max(Math.abs(x.value - x.delta), x.fmt === 'pct' ? 0.05 : 1) }))
     .sort((a, b) => b.weight - a.weight)
     .slice(0, MAX_PARTS)
@@ -71,7 +80,7 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
     parts = diffs.map((x) => ({ text: `${x.delta > 0 ? '+' : '-'}${fmtPanel({ value: Math.abs(x.delta), fmt: x.fmt })} ${x.label}`, dir: x.delta > 0 ? 'up' : 'down' }));
   } else {
     // Panelde görünmeyen affix'ler (element hasarı %, delme, auralar...): takılıyla affix farkı
-    const ad = affixDiff(inst, h.equipment[d.slot], h.class).filter((a) => !a.stat && a.diff !== 0).slice(0, MAX_PARTS);
+    const ad = affixDiff(inst, h.equipment[slot], h.class).filter((a) => !a.stat && a.diff !== 0).slice(0, MAX_PARTS);
     parts = ad.map((a) => ({ text: `${signedText(a.diff, a.pct)} ${a.name}`, dir: a.diff > 0 ? 'up' : 'down' }));
   }
   if (!parts.length) return { text: 'No stat change', tone: 'none', parts: [{ text: 'No stat change' }] };

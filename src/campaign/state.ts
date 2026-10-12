@@ -356,8 +356,9 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
     if (c.hpLoss) h.hpRatio = Math.max(0.001, Math.round(h.hpRatio * (1 - clamp01(c.hpLoss)) * 1000) / 1000);
     if (c.heal) h.hpRatio = Math.round(clamp01(h.hpRatio + c.heal) * 1000) / 1000;
   }
-  t.gold += c.gold ?? 0;
-  if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  const small = !!c.chest && c.chestItems !== undefined; // küçük sandık: altın sandığın kartında
+  if (!small) t.gold += c.gold ?? 0;
+  if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
   const battle = choiceBattle(c);
   t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
   if (!battle) complete(t, 'event');

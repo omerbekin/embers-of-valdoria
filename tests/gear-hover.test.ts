@@ -42,9 +42,9 @@ describe('drag controller rules', () => {
 describe('hero card line while an item is hovered', () => {
   const hero = (cls: string, eq = emptyEquipment()) => ({ id: cls, class: cls, level: 1, equipment: eq });
   const inst = (id: string, uid = 'x1'): ItemInstance => ({ uid, id });
-  it('no item: the usual "Level 1 · 0/6 items"', () => {
+  it('no item: the usual "Level 1 · 0/7 items"', () => {
     expect(heroItemLine(hero('warrior'), null)).toEqual(idleHeroLine(hero('warrior')));
-    expect(idleHeroLine(hero('warrior')).text).toBe('Level 1 · 0/6 items');
+    expect(idleHeroLine(hero('warrior')).text).toBe('Level 1 · 0/7 items');
   });
   it("a weapon of a foreign family: \"Can't use <family>\"", () => {
     const l = heroItemLine(hero('mage'), inst('woodcutters_axe'));

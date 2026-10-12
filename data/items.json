@@ -8,6 +8,11 @@
       "weight": 1.5
     },
     {
+      "id": "offhand",
+      "name": "Off-hand",
+      "weight": 0.8
+    },
+    {
       "id": "helm",
       "name": "Helm",
       "weight": 0.8
@@ -1017,6 +1022,7 @@
     {
       "id": "daggers",
       "name": "Daggers",
+      "offhand": true,
       "classes": [
         "cutthroat",
         "antimage"
@@ -1055,6 +1061,7 @@
     }
   ],
   "bag": 30,
+  "_grip": "Tutuş (Ömer onayı 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): her silahın grip alanı one (tek el) | two (çift el) | bow (yay) | charm (tılsım). Tek el silahla (ya da silahsız) ikinci el yuvasına (offhand) KALKAN (slot offhand, Maces & Shields ailesi: defender, paladin, warrior) ya da ailesi offhand: true olan tek el silah (hançer: cutthroat, antimage) takılır. two / bow / charm ikinci eli kapatır: takılınca ikinci eldeki item torbaya döner (torba doluysa engellenir). Twin Stilettos artık sıradan tek el hançer (çift hançer = ikinci el yuvası). Kural kodu: src/progression/items.ts > gripOf / fitsSlot / planEquip.",
   "_items": "Katalog = taban item'ler (Ömer onayı 2026-10-11, items.md 1.3b): ad, yuva, silah ailesi, ilvl, ikon, varsayılan nadirlik ve ana C affix'i (main; silahta weaponFamilies[].mains listesinden örnek oluşurken seçilir). Diğer affix'ler örnek oluşurken kademesinin havuzundan çekilir. Legendary'nin dört affix'i (affixes) ve etkisi katalogda sabit; değerleri yine seviyeye göre zarlanır.",
   "items": [
     {
@@ -1062,6 +1069,7 @@
       "name": "Woodcutter's Axe",
       "slot": "weapon",
       "family": "axes",
+      "grip": "one",
       "rarity": "common",
       "ilvl": 2
     },
@@ -1070,6 +1078,7 @@
       "name": "Bearded Axe",
       "slot": "weapon",
       "family": "axes",
+      "grip": "one",
       "rarity": "uncommon",
       "ilvl": 6
     },
@@ -1079,6 +1088,7 @@
       "icon": "sword",
       "slot": "weapon",
       "family": "axes",
+      "grip": "one",
       "rarity": "rare",
       "ilvl": 9
     },
@@ -1087,6 +1097,7 @@
       "name": "Dane Axe of the Bear",
       "slot": "weapon",
       "family": "axes",
+      "grip": "two",
       "rarity": "epic",
       "ilvl": 10
     },
@@ -1095,6 +1106,7 @@
       "name": "Flanged Mace",
       "slot": "weapon",
       "family": "maces",
+      "grip": "one",
       "rarity": "common",
       "ilvl": 4
     },
@@ -1102,7 +1114,7 @@
       "id": "oak_shield",
       "name": "Oak Tower Shield",
       "icon": "shield",
-      "slot": "weapon",
+      "slot": "offhand",
       "family": "maces",
       "rarity": "uncommon",
       "ilvl": 6
@@ -1112,6 +1124,7 @@
       "name": "Morning Star",
       "slot": "weapon",
       "family": "maces",
+      "grip": "one",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -1120,6 +1133,7 @@
       "name": "Short Bow",
       "slot": "weapon",
       "family": "bows",
+      "grip": "bow",
       "rarity": "common",
       "ilvl": 2
     },
@@ -1128,6 +1142,7 @@
       "name": "Hunting Bow",
       "slot": "weapon",
       "family": "bows",
+      "grip": "bow",
       "rarity": "uncommon",
       "ilvl": 6
     },
@@ -1136,6 +1151,7 @@
       "name": "Yew Longbow of the Fox",
       "slot": "weapon",
       "family": "bows",
+      "grip": "bow",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -1144,6 +1160,7 @@
       "name": "Rondel Dagger",
       "slot": "weapon",
       "family": "daggers",
+      "grip": "one",
       "rarity": "common",
       "ilvl": 2
     },
@@ -1152,6 +1169,7 @@
       "name": "Keen Misericorde",
       "slot": "weapon",
       "family": "daggers",
+      "grip": "one",
       "rarity": "uncommon",
       "ilvl": 7
     },
@@ -1160,6 +1178,7 @@
       "name": "Twin Stilettos",
       "slot": "weapon",
       "family": "daggers",
+      "grip": "one",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -1168,6 +1187,7 @@
       "name": "Ash Staff",
       "slot": "weapon",
       "family": "staves",
+      "grip": "two",
       "rarity": "common",
       "ilvl": 2
     },
@@ -1176,6 +1196,7 @@
       "name": "Pilgrim's Oak Staff",
       "slot": "weapon",
       "family": "staves",
+      "grip": "two",
       "rarity": "uncommon",
       "ilvl": 7
     },
@@ -1184,6 +1205,7 @@
       "name": "Bone Staff of the Owl",
       "slot": "weapon",
       "family": "staves",
+      "grip": "two",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -1192,6 +1214,7 @@
       "name": "Rune Staff",
       "slot": "weapon",
       "family": "staves",
+      "grip": "two",
       "rarity": "epic",
       "ilvl": 10
     },
@@ -1200,6 +1223,7 @@
       "name": "Worn Deck",
       "slot": "weapon",
       "family": "charms",
+      "grip": "charm",
       "rarity": "common",
       "ilvl": 2
     },
@@ -1208,6 +1232,7 @@
       "name": "Loaded Bones",
       "slot": "weapon",
       "family": "charms",
+      "grip": "charm",
       "rarity": "uncommon",
       "ilvl": 6
     },
@@ -1216,6 +1241,7 @@
       "name": "Hex Doll of the Crow",
       "slot": "weapon",
       "family": "charms",
+      "grip": "charm",
       "rarity": "rare",
       "ilvl": 10
     },
@@ -1481,6 +1507,7 @@
       "name": "Emberbrand",
       "slot": "weapon",
       "family": "axes",
+      "grip": "one",
       "rarity": "legendary",
       "ilvl": 10,
       "minChapter": 1,
@@ -1518,7 +1545,7 @@
     {
       "id": "oathkeepers_bulwark",
       "name": "Oathkeeper's Bulwark",
-      "slot": "weapon",
+      "slot": "offhand",
       "family": "maces",
       "rarity": "legendary",
       "ilvl": 15,
@@ -1541,6 +1568,7 @@
       "name": "Windrunner Longbow",
       "slot": "weapon",
       "family": "bows",
+      "grip": "bow",
       "rarity": "legendary",
       "ilvl": 16,
       "minChapter": 2,
@@ -1558,6 +1586,7 @@
       "name": "Whisper of Morvane",
       "slot": "weapon",
       "family": "daggers",
+      "grip": "one",
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 2,
@@ -1575,6 +1604,7 @@
       "name": "Staff of the Last Ember",
       "slot": "weapon",
       "family": "staves",
+      "grip": "two",
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 2,
@@ -1592,6 +1622,7 @@
       "name": "The Gambler's Last Coin",
       "slot": "weapon",
       "family": "charms",
+      "grip": "charm",
       "rarity": "legendary",
       "ilvl": 16,
       "minChapter": 2,
@@ -1685,6 +1716,7 @@
       "name": "Serrated Edge",
       "slot": "weapon",
       "family": "daggers",
+      "grip": "one",
       "rarity": "legendary",
       "ilvl": 17,
       "minChapter": 2,
@@ -1766,6 +1798,7 @@
       "name": "Avenger's Maul",
       "slot": "weapon",
       "family": "maces",
+      "grip": "two",
       "rarity": "legendary",
       "ilvl": 21,
       "minChapter": 3,
@@ -1783,6 +1816,7 @@
       "name": "Bones of the Quarry",
       "slot": "weapon",
       "family": "charms",
+      "grip": "charm",
       "rarity": "legendary",
       "ilvl": 18,
       "minChapter": 3,

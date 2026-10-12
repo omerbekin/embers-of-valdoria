@@ -142,7 +142,7 @@ describe('Gear ekranı kaynağı (adaptör)', () => {
     const src = endlessGearSource(() => run, (r) => (run = r));
     expect(src.bagSize).toBe(30);
     expect(src.heroes()).toHaveLength(4);
-    expect(Object.keys(src.heroes()[0]!.equipment).sort()).toEqual(['armor', 'boots', 'gloves', 'helm', 'trinket', 'weapon']);
+    expect(Object.keys(src.heroes()[0]!.equipment).sort()).toEqual(['armor', 'boots', 'gloves', 'helm', 'offhand', 'trinket', 'weapon']);
     src.equip('h2', 'b0');
     expect(run.heroes[1]!.equipment.helm?.id).toBe(helm.id);
     src.unequip('h2', 'helm');

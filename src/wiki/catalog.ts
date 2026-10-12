@@ -11,7 +11,7 @@ import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
-import { ITEMS as ITEM_DATA, TIER_IDS, affixDef } from '../progression/items';
+import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
 import endlessJson from '../../data/endless.json';
@@ -785,7 +785,8 @@ function legendaryArticle(): WikiArticle {
     list(
       ...leg.map((d) => {
         const aff = ((d as { affixes?: string[] }).affixes ?? []).map((id) => `${affixDef(id)?.tier ?? ''} ${affixDef(id)?.name ?? id}`).join(', ');
-        return `${d.name} (${slotName(d.slot)}; usable by ${who(d)}${d.minChapter && d.minChapter > 1 ? `; from chapter ${d.minChapter}` : ''}): ${effectLine(d as never)?.replace(/^[^:]*: /, '') ?? ''}${aff ? ` Affixes: ${aff}.` : ''}`;
+        const g = gripOf(d as never);
+        return `${d.name} (${slotName(d.slot)}${g ? `, ${GRIP_NAME[g].toLowerCase()}` : ''}; usable by ${who(d)}${d.minChapter && d.minChapter > 1 ? `; from chapter ${d.minChapter}` : ''}): ${effectLine(d as never)?.replace(/^[^:]*: /, '') ?? ''}${aff ? ` Affixes: ${aff}.` : ''}`;
       }),
     ),
   ]);
@@ -855,6 +856,15 @@ function rareDropText(): string {
   return `Rare drops: every won battle, in the campaign and in Endless, rolls once more for a rare find: ${pct(c.battle, 1)} after a normal fight, ${pct(c.elite, 1)} after an elite and ${pct(c.boss, 1)} after a boss. Every win without one adds ${pct(RARE.pityPerMiss, 1)} (bad-luck protection; it resets when a rare item drops), and in Endless every wave adds ${pct(e.perWave, 1)}. For now ${pct(leg)} of rare finds are Legendaries${ch1 !== 1 ? ` (${pct(leg * ch1, 1)} in ${campaignMap.title.charAt(0)}${campaignMap.title.slice(1).toLowerCase()})` : ''}; the rest is kept for set items, which are not in the game yet. In Endless, Legendaries can drop from wave ${e.legendaryFromWave}, and from then on Odo has a ${pct(e.merchant.chance)} chance per visit to offer one at ${num(e.merchant.priceMult)}x its value.`;
 }
 
+/** Tutuş ve ikinci el (Ömer 2026-10-12; veriden): hangi silah tek el / çift el / yay / tılsım, ikinci ele ne takılır. */
+function gripText(): string {
+  const names = (g: Grip) => ITEM_DATA.items.filter((d) => d.slot === 'weapon' && gripOf(d) === g).map((d) => d.name).join(', ');
+  const shields = ITEM_DATA.items.filter((d) => d.slot === 'offhand');
+  const who = (fam: string | undefined) => (ITEM_DATA.weaponFamilies.find((f) => f.id === fam)?.classes ?? []).map((c) => content.classes[c]?.name ?? c).join(', ');
+  const offFams = ITEM_DATA.weaponFamilies.filter((f) => f.offhand);
+  return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => f.name.toLowerCase().replace(/s$/, '')).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
+}
+
 function itemsArticleBody(): WikiArticle {
   const L = itemsJson.loot;
   const fams = itemsJson.weaponFamilies.map((x) => `${x.name} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
@@ -872,6 +882,7 @@ function itemsArticleBody(): WikiArticle {
       })(),
       rareDropText(),
       `Weapons come in families and each class uses only its own: ${fams}. Every other slot fits everyone.`,
+      gripText(),
       `Loot: a victory drops about ${L.perPartyMember.battle} items per hero in the fight (elites ${L.perPartyMember.elite}, bosses ${L.perPartyMember.boss}), chests at least one item; their rarity comes from the drop table only. Drops are the same on every difficulty. Winning the same battle again gives less (${L.repeat.map((x) => `${Math.round(x.items * 100)}%`).join(' / ')}).`,
       `The bag holds ${itemsJson.bag} items. When it is full, loot that does not fit waits on the Spoils card: discard something to make room and take it, or it is left behind when you continue. You can discard items in the Gear screen too (Rare and better ask first). Open Gear from the Party window or in a town; Equip best picks the strongest usable items for you.`,
       "Primary bonus: if an item would raise another stat above a hero's primary stat, the primary bonus (Resilience, Hunter's Mark, Mana Echo or Lucky Escape) switches off. The Gear screen warns you before you equip it.",

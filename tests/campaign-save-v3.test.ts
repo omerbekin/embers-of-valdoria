@@ -41,7 +41,7 @@ describe('kayıt v3: kahraman kaydı ve geçiş', () => {
     expect(s.version).toBe(2);
     expect(SAVE_VERSION).toBe(6); // 4: x2 stat ölçeği (item zarları göçü); 5: affix kademeleri; 6: Valdoria A1-x haritası (2026-10-11)
     expect(s.roster[0]).toMatchObject({ level: 1, xp: 0, equipment: emptyEquipment() });
-    expect(Object.keys(s.roster[0]!.equipment)).toEqual(['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket']);
+    expect(Object.keys(s.roster[0]!.equipment)).toEqual(['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket']);
     expect([s.inventory, s.gold, s.nextItemId]).toEqual([[], 0, 1]);
   });
 

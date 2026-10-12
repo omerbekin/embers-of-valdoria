@@ -7,7 +7,7 @@ import { Rng } from '../engine/rng';
 import type { Element } from '../engine/types';
 
 /** 6 yuva (karar 1). Sıra veridekiyle aynı. */
-export const SLOT_IDS = ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const;
+export const SLOT_IDS = ['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const;
 export type SlotId = (typeof SLOT_IDS)[number];
 
 export const RARITY_IDS = ['common', 'uncommon', 'rare', 'epic', 'legendary'] as const;
@@ -99,15 +99,23 @@ export interface WeaponFamilyDef {
   classes: string[];
   /** Silahın ana affix adayları (hasar türü; Ömer 2026-10-11): örnek oluşurken biri seçilir (kimin için zarlandıysa onun elementi önce). */
   mains: string[];
+  /** Ailenin TEK EL silahları ikinci el yuvasına da takılabilir (hançer; Ömer 2026-10-12). */
+  offhand?: boolean;
 }
+
+/** Silah tutuşu (Ömer 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): tek el, çift el, yay, tılsım. */
+export const GRIP_IDS = ['one', 'two', 'bow', 'charm'] as const;
+export type Grip = (typeof GRIP_IDS)[number];
 
 /** Katalog item'i (taban): ad, yuva, aile, seviye, varsayılan nadirlik, ana affix. */
 export interface ItemDef {
   id: string;
   name: string;
   slot: SlotId;
-  /** Yalnızca silahta (karar 2: silah aileleri). */
+  /** Silah ve kalkanda (karar 2: silah aileleri; kalkan = Maces & Shields, ikinci el yuvası). */
   family?: string;
+  /** Silah tutuşu (yalnızca silahta, zorunlu): one | two | bow | charm. two / bow / charm ikinci eli kapatır. */
+  grip?: Grip;
   /** Varsayılan nadirlik (örnek kendi nadirliğini taşır: ItemRoll.rarity). Legendary taban yalnızca Legendary olur. */
   rarity: RarityId;
   ilvl: number;
@@ -271,7 +279,7 @@ const affixElement = (id: string): Element | undefined => {
 
 /** Taban item'in ana affix adayları: silahta ailenin listesi, diğerlerinde `main`. */
 export function mainCandidates(d: ItemDef): string[] {
-  if (d.slot === 'weapon') return ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? ['c_phys'];
+  if (d.family) return ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? ['c_phys'];
   return d.main ? [d.main] : [];
 }
 
@@ -565,25 +573,132 @@ export const sellValue = (x: ValueSource): number => Math.max(1, Math.round(item
 /** Sınıfın kullanabildiği silah aileleri (karar 2). */
 export const classWeaponFamilies = (classId: string): string[] => ITEMS.weaponFamilies.filter((f) => f.classes.includes(classId)).map((f) => f.id);
 
-/** Bu sınıf bu item'i takabilir mi? Silah değilse herkes; silahsa ailesi sınıfa izinli olmalı. */
+/** Bu sınıf bu item'i takabilir mi? Ailesi olan item (silah, kalkan) yalnızca o aileyi kullanan sınıfa; diğerleri herkese. */
 export function canEquip(classId: string, d: ItemDef): boolean {
   if (d.usableBy && !d.usableBy.includes(classId)) return false;
-  if (d.slot !== 'weapon') return true;
-  return !!d.family && classWeaponFamilies(classId).includes(d.family);
+  if (!d.family) return true;
+  return classWeaponFamilies(classId).includes(d.family);
+}
+
+/** Silahın tutuşu (silah değilse undefined; veride eksikse tek el). */
+export const gripOf = (d: Pick<ItemDef, 'slot' | 'grip'>): Grip | undefined => (d.slot === 'weapon' ? (d.grip ?? 'one') : undefined);
+
+/** Tutuşun okunur adı (Codex / ipucu). */
+export const GRIP_NAME: Record<Grip, string> = { one: 'One-handed', two: 'Two-handed', bow: 'Bow (both hands)', charm: 'Charm (both hands)' };
+
+/** Bu silah ikinci eli kapatır mı (çift el, yay, tılsım)? */
+export const blocksOffhand = (d: Pick<ItemDef, 'slot' | 'grip'>): boolean => d.slot === 'weapon' && gripOf(d) !== 'one';
+
+/** Bu item ikinci el yuvasına takılabilen bir silah mı (ailesi `offhand` olan tek el silah: hançer)? */
+export const offhandWeapon = (d: Pick<ItemDef, 'slot' | 'grip' | 'family'>): boolean =>
+  d.slot === 'weapon' && gripOf(d) === 'one' && !!ITEMS.weaponFamilies.find((f) => f.id === d.family)?.offhand;
+
+/** Item bu yuvaya girer mi (kendi yuvası; tek el hançer ikinci ele de)? Sınıf kuralı ayrı: canEquip. */
+export const fitsSlot = (d: Pick<ItemDef, 'slot' | 'grip' | 'family'>, slot: SlotId): boolean => d.slot === slot || (slot === 'offhand' && offhandWeapon(d));
+
+/** Item'in girebildiği yuvalar (SLOT_IDS sırasıyla). */
+export const slotsFor = (d: Pick<ItemDef, 'slot' | 'grip' | 'family'>): SlotId[] => SLOT_IDS.filter((k) => fitsSlot(d, k));
+
+type EquipMap = Partial<Record<SlotId, ItemInstance | null | undefined>>;
+
+/** Ana eldeki silah ikinci eli kapatıyor mu? Kapatıyorsa silahın tanımı, değilse undefined. */
+export function offhandBlocker(equipment: EquipMap): ItemDef | undefined {
+  const w = equipment.weapon;
+  const d = w ? itemDef(w.id) : undefined;
+  return d && blocksOffhand(d) ? d : undefined;
+}
+
+/** Sınıf ikinci el yuvasını hiç kullanabilir mi (kalkan ya da ikinci el silahı olan bir ailesi var mı)? */
+export const classUsesOffhand = (classId: string): boolean => ITEMS.items.some((d) => (d.slot === 'offhand' || offhandWeapon(d)) && canEquip(classId, d));
+
+/** İkinci el kapalıyken gösterilen mesaj. */
+export const offhandBlockedMsg = (w: Pick<ItemDef, 'name' | 'slot' | 'grip'>): string =>
+  `${w.name} is ${gripOf(w) === 'two' ? 'two-handed' : gripOf(w) === 'bow' ? 'a bow' : 'a charm'}: no hand free for an off-hand item`;
+
+/**
+ * Torbadan takılırken varsayılan yuva (tıklama / çift dokunma / "Equip"): kendi yuvası; tek el hançer ana el boşsa ana ele, ana elde tek el silah
+ * varken ikinci el boşsa ikinci ele, yoksa ana elin yerine.
+ */
+export function defaultEquipSlot(equipment: EquipMap, d: ItemDef): SlotId {
+  if (!offhandWeapon(d)) return d.slot;
+  if (!equipment.weapon) return 'weapon';
+  if (!equipment.offhand && !offhandBlocker(equipment)) return 'offhand';
+  return 'weapon';
+}
+
+/** Takmanın sonucu (saf): yeni ekipman, yuvadan çıkan item (yer değiştirme) ve ayrıca torbaya dönecekler (çift elin kapattığı ikinci el). */
+export interface EquipPlan {
+  slot: SlotId;
+  equipment: EquipMap;
+  replaced: ItemInstance | null;
+  displaced: ItemInstance[];
+}
+
+/** `inst`i `slot`a koyar (doğrulama yok): ana ele ikinci eli kapatan silah gelirse ikinci eldeki item çıkar. */
+export function equipInto(equipment: EquipMap, inst: ItemInstance, slot: SlotId): EquipPlan {
+  const d = itemDef(inst.id);
+  const eq: EquipMap = { ...equipment, [slot]: inst };
+  const displaced: ItemInstance[] = [];
+  if (slot === 'weapon' && d && blocksOffhand(d) && equipment.offhand) {
+    displaced.push(equipment.offhand);
+    eq.offhand = null;
+  }
+  return { slot, equipment: eq, replaced: equipment[slot] ?? null, displaced };
 }
 
 /**
- * Kahraman başına en fazla 1 Legendary (madde 296): `d` `slot`a takılırsa BAŞKA bir yuvada Legendary kalıyor mu? (Aynı yuvadaki Legendary'nin
- * yerine geçmek serbest.) Hata mesajı ya da null. Legendary yalnızca Legendary tabandan olur (katalog nadirliği yeter).
+ * Takma planı + kurallar (sefer, Endless, Gear sürükle-bırak): sınıf / aile, yuva uyumu, ikinci el kapalı mı, kahraman başına 1 Legendary
+ * (çıkacak item'ler sayılmaz). `slot` verilmezse defaultEquipSlot. Hata mesajı ya da plan. Torba yeri çağıranın işidir (displaced torbaya döner).
  */
-export function legendaryConflict(equipment: Partial<Record<SlotId, ItemInstance | null | undefined>>, d: ItemDef): string | null {
+export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstance, slot?: SlotId): EquipPlan | { error: string } {
+  const d = itemDef(inst.id);
+  if (!d) return { error: `Unknown item: ${inst.id}` };
+  if (!canEquip(classId, d)) return { error: d.usableBy && !d.usableBy.includes(classId) ? `${d.name} can only be used by ${d.usableBy.join(', ')}` : `${classId} cannot use ${d.family ?? d.slot}` };
+  const at = slot ?? defaultEquipSlot(equipment, d);
+  if (!fitsSlot(d, at)) return { error: `${d.name} does not go in the ${slotDef(at)?.name ?? at} slot` };
+  if (at === 'offhand') {
+    const w = offhandBlocker(equipment);
+    if (w) return { error: offhandBlockedMsg(w) };
+  }
+  const plan = equipInto(equipment, inst, at);
+  const legend = SLOT_IDS.filter((k) => {
+    const x = plan.equipment[k];
+    return !!x && itemDef(x.id)?.rarity === 'legendary';
+  });
+  if (legend.length > 1) return { error: LEGENDARY_LIMIT_MSG };
+  return plan;
+}
+
+export const isPlanError = (p: EquipPlan | { error: string }): p is { error: string } => 'error' in p;
+
+/**
+ * Kahraman başına en fazla 1 Legendary (madde 296): `d` `slot`a (varsayılan: torbadan takılırken gideceği yuva) takılırsa BAŞKA bir yuvada
+ * Legendary kalıyor mu? (Aynı yuvadaki Legendary'nin yerine geçmek serbest; çift elin kapattığı ikinci el de çıkacağı için sayılmaz.)
+ */
+export function legendaryConflict(equipment: EquipMap, d: ItemDef, slot: SlotId = defaultEquipSlot(equipment, d)): string | null {
   if (d.rarity !== 'legendary') return null;
   for (const k of SLOT_IDS) {
-    if (k === d.slot) continue;
+    if (k === slot) continue;
+    if (k === 'offhand' && slot === 'weapon' && blocksOffhand(d)) continue;
     const inst = equipment[k];
     if (inst && itemDef(inst.id)?.rarity === 'legendary') return LEGENDARY_LIMIT_MSG;
   }
   return null;
+}
+
+/**
+ * Kayıt taşıma (2026-10-12, ikinci el yuvası): eski kayıtta silah yuvasındaki kalkan ikinci ele geçer (ikinci el doluysa oradaki item
+ * `overflow`a eklenir, çağıran torbaya koyar). Ekipmanı yerinde değiştirir; taşınan item sayısı. Her okumada çalışabilir (idempotent).
+ */
+export function migrateOffhand(equipment: EquipMap | null | undefined, overflow?: ItemInstance[]): number {
+  if (!equipment || typeof equipment !== 'object') return 0;
+  const w = equipment.weapon;
+  const d = w && typeof w === 'object' && typeof w.id === 'string' ? itemDef(w.id) : undefined;
+  if (!w || !d || d.slot !== 'offhand') return 0;
+  if (equipment.offhand && overflow) overflow.push(equipment.offhand);
+  equipment.offhand = w;
+  equipment.weapon = null;
+  return 1;
 }
 
 // ------------------------------------------------------------ doğrulama
@@ -644,7 +759,10 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (!(RARITY_IDS as readonly string[]).includes(d.rarity)) errors.push(`${at}: unknown rarity ${d.rarity}`);
     if (!Number.isInteger(d.ilvl) || d.ilvl < 1) errors.push(`${at}: ilvl must be a positive integer`);
     if (d.slot === 'weapon' && !famIds.includes(d.family ?? '')) errors.push(`${at}: weapon needs a known family`);
-    if (d.slot !== 'weapon' && d.family !== undefined) errors.push(`${at}: only weapons have a family`);
+    if (d.slot === 'offhand' && !famIds.includes(d.family ?? '')) errors.push(`${at}: an off-hand item (shield) needs a known family`);
+    if (d.slot !== 'weapon' && d.slot !== 'offhand' && d.family !== undefined) errors.push(`${at}: only weapons and shields have a family`);
+    if (d.slot === 'weapon' && !(GRIP_IDS as readonly string[]).includes(d.grip ?? '')) errors.push(`${at}: weapon needs a grip (${GRIP_IDS.join(' | ')})`);
+    if (d.slot !== 'weapon' && d.grip !== undefined) errors.push(`${at}: only weapons have a grip`);
     if (d.rarity === 'legendary') {
       if (!d.effect || !data.effects?.[d.effect]) errors.push(`${at}: a Legendary needs its unique effect`);
       const tiers = data.rarities.find((r) => r.id === 'legendary')?.tiers ?? [];
@@ -660,11 +778,11 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     } else {
       if (d.effect !== undefined) errors.push(`${at}: only Legendary items carry an effect`);
       if (d.affixes !== undefined) errors.push(`${at}: only Legendary items list fixed affixes`);
-      if (d.slot !== 'weapon') {
+      if (!d.family) {
         const m = d.main ? data.affixDefs[d.main] : undefined;
         if (!m || m.tier !== 'C') errors.push(`${at}: needs a C main affix`);
         else if (m.slots && !m.slots.includes(d.slot)) errors.push(`${at}: main ${d.main} is not allowed on ${d.slot}`);
-      } else if (d.main !== undefined) errors.push(`${at}: a weapon's main affix comes from its family`);
+      } else if (d.main !== undefined) errors.push(`${at}: a weapon's / shield's main affix comes from its family`);
     }
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);

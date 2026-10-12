@@ -1363,7 +1363,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root) return;
     this.closeModal();
     setState(openCampaignShop(this.s));
-    const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { sub: `Odo's stall · ${n.name}`, onLeave: () => this.advance() });
+    const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { sub: `Odo's stall · ${n.name}`, leaveLabel: 'Back to town', onLeave: () => this.advance() });
     this.events.once('shutdown', closeShop);
   }
 

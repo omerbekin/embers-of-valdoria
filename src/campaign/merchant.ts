@@ -15,7 +15,7 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
   const ilvl = Math.max(1, nodeIlvl(s.mapId, nodeId));
   const rng = rngFor(s.seed, s.mapId, nodeId, 'shop', reroll);
   const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
-  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (d.slot !== 'weapon' || team.some((h) => canEquip(h.class, d))));
+  const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || team.some((h) => canEquip(h.class, d))));
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
   const size = node(mapOf(s), nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok

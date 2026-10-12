@@ -2358,9 +2358,9 @@ html.short .gr-slot {
   overflow: hidden;
 }
 
-/* yatay telefon: yuvalar 3 sütun x 2 satır, statlar geniş satırda (2 satır), "Stats" başlığı yerine ince çizgi: kaydırmasız sığar */
+/* yatay telefon: yuvalar 4 sütun x 2 satır (7 yuva, ikinci el 2026-10-12), statlar geniş satırda (2 satır), "Stats" başlığı yerine ince çizgi: kaydırmasız sığar */
 .gr-overlay .gr-gear.gr-phone .gr-char .gr-slots {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .gr-gear.gr-phone .gr-char .gr-stats {
@@ -2426,7 +2426,7 @@ html.short .gr-slot {
 }
 
 .gr-shop.gr-phone .gr-stall .gr-char .gr-slots {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
@@ -2497,4 +2497,14 @@ html.short .gr-slot {
 .item-tip .it-acts .gr-btn {
   min-height: 44px;
   padding: 0 calc(20 * var(--u));
+}
+
+/* Yatay telefon, 4 sütun yuva (7 yuva, ikinci el 2026-10-12): ad sığsın diye harf aralığı ve iç boşluk dar */
+.gr-phone .gr-char .gr-slot {
+  gap: 5px;
+  padding: 2px 5px;
+}
+
+.gr-phone .gr-char .gr-slot-name {
+  letter-spacing: 0;
 }

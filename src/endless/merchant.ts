@@ -1,7 +1,7 @@
 // Endless tüccarı (Odo the Peddler; Ömer 2026-10-09, taslak v1 "Travelling cart"): satış, bu ziyaretin geri alımı, malları yenileme ve
 // detay panelinin saf hesapları (kim kullanır, en büyük yükseltme kimde, takılıyla stat farkı). Saf; her fonksiyon yeni durum döner.
 // Satın alma run.ts > buyItem, ayrılma run.ts > leaveShop. Ekran: src/game/scenes/EndlessScene.ts > drawShop. Sayılar data/endless.json > shop.
-import { ITEMS, canEquip, itemDef, sellValue, type ItemDef } from '../progression/items';
+import { ITEMS, canEquip, defaultEquipSlot, itemDef, offhandBlocker, sellValue, type ItemDef, type SlotId } from '../progression/items';
 import { affixDiff, affixLines, type AffixDelta, type AffixLine } from '../progression/item-text';
 import { instanceScore } from '../progression/equip';
 import { ENDLESS, type EndlessConfig, type EndlessHero, type EndlessRun, type ItemRolls } from './data';
@@ -75,12 +75,16 @@ export function openShop(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog:
   return s;
 }
 
+/** Torbadan takılırken gideceği yuva (hançer: boş ikinci ele de; katalog dışı test item'inde kendi yuvası). */
+const slotFor = (eq: EndlessHero['equipment'] | undefined, d: ItemDef): SlotId => (eq && itemDef(d.id) ? defaultEquipSlot(eq, d) : d.slot);
+
 /** Bu item'i takabilen kahramanlar (silah aileleri; silah değilse herkes). */
 export const usableHeroes = (run: EndlessRun, d: ItemDef): EndlessHero[] => run.heroes.filter((h) => canEquip(h.class, d));
 
 /** Kahramanın o yuvadaki item'i (boş: undefined). */
 export function equippedFor(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items): ItemDef | undefined {
-  const cur = heroOf(run, heroId)?.equipment[d.slot];
+  const h = heroOf(run, heroId);
+  const cur = h?.equipment[slotFor(h?.equipment, d)];
   return cur ? defIn(catalog, cur.id) : undefined;
 }
 
@@ -96,7 +100,7 @@ export function itemStatRows(d: ItemDef, rolls?: ItemRolls, run?: EndlessRun, he
 /** Takılıyla karşılaştırma: iki örnekte geçen her affix (yeninin sırasıyla; zarlanmış değerlerle). */
 export function statDelta(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): StatDelta[] {
   const hero = heroOf(run, heroId);
-  const cur = hero?.equipment[d.slot];
+  const cur = hero?.equipment[slotFor(hero?.equipment, d)];
   const curOk = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? cur : null;
   return itemDef(d.id) ? affixDiff({ id: d.id, ...(rolls ? { rolls } : {}) }, curOk, hero?.class) : [];
 }
@@ -105,7 +109,9 @@ export function statDelta(run: EndlessRun, heroId: string, d: ItemDef, catalog: 
 export function ipGain(run: EndlessRun, heroId: string, d: ItemDef, catalog: ItemDef[] = ITEMS.items, rolls?: ItemRolls): number {
   const hero = heroOf(run, heroId);
   if (!hero || !itemDef(d.id)) return 0;
-  const cur = hero.equipment[d.slot];
+  const slot = slotFor(hero.equipment, d);
+  if (slot === 'offhand' && offhandBlocker(hero.equipment)) return 0; // çift el silah ikinci eli kapatıyor
+  const cur = hero.equipment[slot];
   const now = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? instanceScore(hero.class, cur) : 0;
   return instanceScore(hero.class, { id: d.id, ...(rolls ? { rolls } : {}) }) - now;
 }

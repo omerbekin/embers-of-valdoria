@@ -40,7 +40,7 @@ import { rewardBlockedReason, takeRareDrop,
   draftClassAt,
   type FormationDraft,
 } from '../../endless';
-import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, type AffixLine, type ItemDef } from '../../progression';
+import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, defaultEquipSlot, equipInto, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, type AffixLine, type ItemDef } from '../../progression';
 import type { Stats } from '../../engine/types';
 import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
@@ -854,7 +854,7 @@ export class EndlessScene extends Phaser.Scene {
     const cell = run ? heroSlots(run.heroes)[run.heroes.filter((x) => content.classes[x.class]).indexOf(h)] : undefined;
     this.add2(this.note(cx, top + 206, cell !== undefined ? `${T.heroHealth(h.hpRatio)}  ·  ${T.heroRow(cell)}` : T.heroHealth(h.hpRatio), 20, C.dim).setOrigin(0.5, 0));
     SLOT_IDS.forEach((slot, k) => {
-      const y = top + 250 + k * 36;
+      const y = top + 250 + k * 32; // 7 yuva (ikinci el 2026-10-12) 480'lik panele sığar
       const inst = h.equipment[slot];
       const d = inst ? viewDef(itemDef(inst.id), inst.rolls) : undefined;
       this.add2(this.note(cx - w / 2 + 26, y, slotDef(slot).name, 20, C.dim));
@@ -1032,7 +1032,8 @@ export class EndlessScene extends Phaser.Scene {
   private tipStats(hero: EndlessHero | undefined, d: ItemDef, rolls?: ItemRolls): { now: Stats; after: Stats | null } | null {
     const now = hero ? heroStats(hero) : null;
     if (!hero || !now) return null;
-    const after = canEquip(hero.class, d) ? heroStats({ ...hero, equipment: { ...hero.equipment, [d.slot]: { uid: '_preview', id: d.id, ...(rolls ? { rolls } : {}) } } }) : null;
+    const prev = { uid: '_preview', id: d.id, ...(rolls ? { rolls } : {}) };
+    const after = canEquip(hero.class, d) ? heroStats({ ...hero, equipment: itemDef(d.id) ? (equipInto(hero.equipment, prev, defaultEquipSlot(hero.equipment, d)).equipment as typeof hero.equipment) : { ...hero.equipment, [d.slot]: prev } }) : null;
     return { now, after };
   }
 

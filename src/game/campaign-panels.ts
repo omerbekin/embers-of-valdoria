@@ -106,6 +106,10 @@ export function drawSlotGlyph(g: Phaser.GameObjects.Graphics, slot: SlotId, col:
       g.strokePoints([P(-10, 10), P(6, -6), P(10, -10), P(8, -4), P(-8, 12)], true);
       g.lineBetween(ox - 6 * s, oy + 4 * s, ox - 2 * s, oy + 8 * s);
       break;
+    case 'offhand':
+      g.strokePoints([P(-9, -10), P(9, -10), P(9, 0), P(0, 11), P(-9, 0)], true);
+      g.lineBetween(ox, oy - 10 * s, ox, oy + 11 * s);
+      break;
     case 'helm':
       g.beginPath();
       g.arc(ox, oy + 2 * s, 9 * s, Math.PI, 0, false);
@@ -178,13 +182,13 @@ export function openHeroPanel(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
   m.root.add(fig);
   m.root.add(hpBar(scene, cx - 90, figY + 28, 180, 7, hero.hpRatio));
   m.root.add(elBody(scene, cx, figY + 52, `${Math.round(hero.hpRatio * 100)}% health`, 17, EL.MUTED).setOrigin(0.5));
-  // 6 yuva: sol 3, sağ 3
+  // 7 yuva (ikinci el 2026-10-12): sol 4 (Weapon, Off-hand, Helm, Armor), sağ 3
   const sw = 330;
   const sh = 72;
   SLOT_IDS.forEach((slot, k) => {
-    const left = k < 3;
+    const left = k < 4;
     const x = left ? cx - 190 - sw : cx + 190;
-    const y = a.y + 70 + (k % 3) * (sh + 16);
+    const y = a.y + 70 + (left ? k : k - 4) * (sh + 16);
     m.root.add(slotRow(scene, hero, slot, x, y, sw, sh, left, () => on.gear(heroId)));
   });
   // Statlar (4 sütun)

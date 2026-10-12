@@ -49,8 +49,13 @@ describe("Witch's Hut choice event", () => {
     expect(() => chooseEvent({ ...s, gold: 10 }, 'pay')).toThrow(/gold/);
     const rich = { ...s, gold: 500, pendingLoot: undefined };
     const t = chooseEvent(rich, 'pay');
-    expect(t.inventory.length).toBeGreaterThan(rich.inventory.length);
+    // Küçük sandık (Ömer 2026-10-12): tek item + 20-30 altın, kartta görünür
+    expect(t.inventory.length).toBe(rich.inventory.length + 1);
     expect(t.pendingLoot?.kind).toBe('treasure');
+    expect(t.pendingLoot?.items.length).toBe(1);
+    expect(t.pendingLoot?.gold).toBeGreaterThanOrEqual(20);
+    expect(t.pendingLoot?.gold).toBeLessThanOrEqual(30);
+    expect(t.gold).toBe(rich.gold - 60 + t.pendingLoot!.gold);
     expect(nextStep(t).kind).toBe('move');
   });
 
@@ -59,6 +64,9 @@ describe("Witch's Hut choice event", () => {
     s = { ...s, pendingLoot: undefined, roster: s.roster.map((h, i) => ({ ...h, hpRatio: i === 0 ? 0.001 : 0.5 })) };
     const t = chooseEvent(s, 'blood');
     expect(t.gold - (t.pendingLoot?.gold ?? 0)).toBe(s.gold);
+    expect(t.pendingLoot?.items.length).toBe(1);
+    expect(t.pendingLoot?.gold).toBeGreaterThanOrEqual(20);
+    expect(t.pendingLoot?.gold).toBeLessThanOrEqual(30);
     t.roster.forEach((h, i) => {
       expect(isFallen(h)).toBe(false);
       expect(h.hpRatio).toBeCloseTo(i === 0 ? 0.001 : 0.4, 3);
@@ -198,6 +206,32 @@ describe('Town story scenes (T5)', () => {
     expect(cold.inventory.length).toBe(s.inventory.length);
     expect(cold.pendingLoot).toBeUndefined();
     expect(nextStep(cold).kind).toBe('town');
+  });
+
+  it('Valdren Keep is a persuasion dialogue: 2 of 3 convincing answers earn a Bridge Warden hint, no item', () => {
+    const d = STORIES.the_wardens_oath!;
+    expect(d.dialogue!.length).toBe(3);
+    expect(d.gift).toBeUndefined();
+    expect(d.liked).toMatch(/chain/i);
+    const yes = d.dialogue!.map((st) => st.choices.findIndex((c) => c.likes));
+    const no = d.dialogue!.map((st) => st.choices.findIndex((c) => !c.likes));
+    expect(storyLikes('the_wardens_oath', yes)).toBe(3);
+    expect(storyLikes('the_wardens_oath', no)).toBe(0);
+    expect(storyLiked('the_wardens_oath', [no[0]!, yes[1]!, yes[2]!])).toBe(true); // 2/3
+    expect(storyLiked('the_wardens_oath', [yes[0]!, no[1]!, no[2]!])).toBe(false); // 1/3
+    const s = { ...at('7', 'story'), pendingLoot: undefined };
+    const t = completeStory(s, yes);
+    expect(t.inventory.length).toBe(s.inventory.length);
+    expect(t.pendingLoot).toBeUndefined();
+    expect(nextStep(t).kind).toBe('town');
+  });
+
+  it('liked: the gift is labelled as a gift on the Spoils card (no gold)', () => {
+    const s = { ...at('4', 'story'), pendingLoot: undefined };
+    const kind = STORIES.ash_on_the_wind!.dialogue!.map((st) => st.choices.findIndex((c) => c.likes));
+    const t = completeStory(s, kind);
+    expect(t.pendingLoot?.gift).toBe(true);
+    expect(t.pendingLoot?.gold).toBe(0);
   });
 
   it('liked with a full bag: the gift waits on the Spoils card as left behind', () => {

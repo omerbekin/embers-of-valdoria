@@ -1,11 +1,11 @@
 // Gear / tüccar / ödül torbasında sürükle-bırak ve çift tıklama kararları (saf; DOM'suz, testli: tests/gear-drop.test.ts).
 // Ortak Inventory bileşeninin (Ömer 2026-10-11, g1) TEK kural kaynağı:
-//  - torbadaki item: aynı türdeki yuvaya ya da soldaki bir kahramana bırakılınca kuşanılır (silah ailesi uymalı); çöp kutusuna bırakılınca atılır
+//  - torbadaki item: aynı türdeki yuvaya (tek el hançer ikinci el yuvasına da) ya da soldaki bir kahramana bırakılınca kuşanılır (silah ailesi uymalı); çöp kutusuna bırakılınca atılır
 //    (Rare+ onayı ekranda); tüccarda tezgâha bırakılınca satılır;
 //  - kuşanılmış yuvadaki item torbaya bırakılınca çıkarılır (çöpe / tezgâha doğrudan gitmez: önce çıkar);
 //  - tüccar malı torbaya bırakılınca satın alınır.
 // Geri kalan her şey geçersiz (ikon yerine döner).
-import { canEquip, itemDef, type SlotId } from '../progression';
+import { canEquip, fitsSlot, itemDef, type SlotId } from '../progression';
 
 export type DragSource =
   | { kind: 'bag'; uid: string; itemId: string }
@@ -18,7 +18,7 @@ export type DropTarget =
   | { kind: 'trash' }
   | { kind: 'wares' };
 export type DropAction =
-  | { kind: 'equip'; heroId: string; uid: string }
+  | { kind: 'equip'; heroId: string; uid: string; slot?: SlotId }
   | { kind: 'unequip'; heroId: string; slot: SlotId }
   | { kind: 'discard'; uid: string }
   | { kind: 'buy'; index: number }
@@ -39,9 +39,10 @@ export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId
   const d = itemDef(src.itemId);
   const cls = classOf(target.heroId);
   if (!d || !cls) return { kind: 'none' };
-  if (target.kind === 'slot' && target.slot !== d.slot) return { kind: 'none', reason: 'Wrong slot' };
+  if (target.kind === 'slot' && !fitsSlot(d, target.slot)) return { kind: 'none', reason: 'Wrong slot' };
   if (!canEquip(cls, d)) return { kind: 'none', reason: 'Cannot use' };
-  return { kind: 'equip', heroId: target.heroId, uid: src.uid };
+  // Yuvaya bırakılınca o yuva (hançer ikinci ele de); kahramana bırakılınca varsayılan yuva (ekran planEquip ile seçer)
+  return { kind: 'equip', heroId: target.heroId, uid: src.uid, ...(target.kind === 'slot' ? { slot: target.slot } : {}) };
 }
 
 /** Çöp kutusu yalnızca torbadan sürüklenen item'de görünür (kuşanılmış item önce çıkarılır). */

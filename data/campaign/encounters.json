@@ -63,9 +63,9 @@
   "iron_pass_ambush": {
     "name": "Iron Pass Ambush",
     "units": [
-      { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.9 } },
-      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.9, "powerMult": 0.9 } },
-      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 0.9, "powerMult": 0.9 } }
+      { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.93, "powerMult": 0.93 } },
+      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.93, "powerMult": 0.93 } },
+      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 0.93, "powerMult": 0.93 } }
     ]
   },
   "mine_wardens": {
@@ -162,9 +162,9 @@
   "windy_moor": {
     "name": "Moor Raiders",
     "units": [
-      { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
-      { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
-      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.95, "powerMult": 0.95 } }
+      { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 1.2, "powerMult": 1.2 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 1.2, "powerMult": 1.2 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 1.2, "powerMult": 1.2 } }
     ]
   },
   "witchs_hut_guard": {
@@ -178,9 +178,9 @@
   "charcoal_camp": {
     "name": "Charcoal Burners",
     "units": [
-      { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
-      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
-      { "class": "charcoal_burner", "slot": 8, "mods": { "hpMult": 0.85, "powerMult": 0.85 } }
+      { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "charcoal_burner", "slot": 8, "mods": { "hpMult": 0.95, "powerMult": 0.95 } }
     ]
   },
   "grave_field": {

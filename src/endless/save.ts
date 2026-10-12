@@ -4,7 +4,7 @@ import { CELL_COUNT, classes } from '../engine/content';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateItemRolls, migrateRollsX2 } from '../progression/items';
+import { migrateItemRolls, migrateOffhand, migrateRollsX2 } from '../progression/items';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -73,6 +73,10 @@ export function parseRun(raw: string | null): EndlessRun | null {
       if (!Array.isArray(r.bag)) return null;
       r.bag = r.bag.filter((i) => i && typeof i.uid === 'string' && typeof i.id === 'string');
     }
+    // İkinci el yuvası (2026-10-12): silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; idempotent); ikinci el doluysa oradaki torbaya
+    const overflow: NonNullable<EndlessRun['bag']> = [];
+    for (const h of r.heroes) if (migrateOffhand(h.equipment, overflow) && !h.equipment.weapon) delete h.equipment.weapon;
+    if (overflow.length) r.bag = [...(r.bag ?? []), ...overflow];
     // Nadir düşüş (madde 297): sayaç sayı değilse 0; bozuk duyuru atılır
     if (r.rarePity !== undefined && (!isNum(r.rarePity) || r.rarePity < 0)) r.rarePity = 0;
     if (r.rareDrop !== undefined && (typeof r.rareDrop?.itemId !== 'string' || !isNum(r.rareDrop?.wave))) delete r.rareDrop;

@@ -12,7 +12,7 @@ export function endlessGearSource(get: () => EndlessRun, set: (r: EndlessRun) =>
     bag: () => bagOf(get()),
     bagSize: endlessBagSize(),
     gold: () => get().gold,
-    equip: (heroId, uid) => apply((r) => equipFromBag(r, heroId, uid)),
+    equip: (heroId, uid, slot) => apply((r) => equipFromBag(r, heroId, uid, slot)),
     unequip: (heroId, slot) => apply((r) => unequipToBag(r, heroId, slot)),
     discard: (uid) => apply((r) => discardFromBag(r, uid)),
     equipBest: (ids) => apply((r) => equipBestRun(r, ids)),
