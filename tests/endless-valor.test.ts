@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { applyOutcome, battleFor, newRun, parseRun, rewardBlockedReason, reviveWithValor, valorReviveBlocked, wavePlan, type EndlessRun, type WaveOutcome } from '../src/endless';
+import { applyOutcome, battleFor, newRun, parseRun, reviveWithValor, valorReviveBlocked, wavePlan, type EndlessRun, type WaveOutcome } from '../src/endless';
 
 /** Endless Valor (Ömer 2026-10-13): ilk dalgadan açık; dalga zaferinde kazanç, savaşta oyuncu tarafına verilir, savaş dışı diriltme outsideCost. */
 const R = content.valorRules;
@@ -37,7 +37,7 @@ describe('Endless Valor', () => {
     expect(applyOutcome(atWave(10, R.cap - 1), { wave: 10 }, win(atWave(10, R.cap - 1))).valor).toBe(R.cap);
   });
 
-  it('savaş dışında Valor ile diriltme: outsideCost Valor, %50 can (+%50 MP taşınır); yetmezse / yarım savaş varken olmaz; Revive kartı artık gereksiz', () => {
+  it('savaş dışında Valor ile diriltme: outsideCost Valor, %50 can (+%50 MP taşınır); yetmezse / yarım savaş varken olmaz; Revive kartı yok', () => {
     const won = applyOutcome(atWave(1, OUT), { wave: 1 }, win(atWave(1, OUT), { dead: ['h2'], flawless: false }));
     expect(won.phase).toBe('reward');
     expect(won.valor).toBe(OUT + 1);
@@ -47,9 +47,7 @@ describe('Endless Valor', () => {
     expect(valorReviveBlocked(t, 'h2')).toBe('This hero has not fallen');
     expect(valorReviveBlocked({ ...won, valor: OUT - 1 }, 'h2')).toBe(`Needs ${OUT} Valor (you have ${OUT - 1})`);
     expect(valorReviveBlocked({ ...won, suspended: { wave: 2, seed: 1, turn: 1, hash: 'x', actions: [] } }, 'h2')).toBe('Finish the battle first');
-    const card = t.offer!.find((c) => c.kind === 'revive');
-    expect(card).toBeDefined();
-    expect(rewardBlockedReason(t, card!)).toBe('Already back on their feet (Valor)');
+    expect(t.offer!.some((c) => c.kind === 'revive')).toBe(false); // Revive kartı kaldırıldı (Ömer 2026-10-14)
   });
 
   it('eski kayıt (Valor alanı yok) 0 ile yüklenir; bozuk değer kırpılır', () => {

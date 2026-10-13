@@ -64,7 +64,7 @@ describe('Endless sürekli akış: dalga arası taşıma', () => {
     expect(m2.mp).toBe(Math.round(m2.maxMp * hm.carry!.mpRatio!));
   });
 
-  it('düşen kahraman CESET olarak kalır; Revive kartı %50 can + MP ile kaldırır; boss şifası kaldırmaz; ceset sonraki savaşta geçerli', () => {
+  it('düşen kahraman CESET olarak kalır; Revive kartı yok (Ömer 2026-10-14); boss şifası kaldırmaz; ceset sonraki savaşta geçerli', () => {
     const { run, battle, plan } = wonWave1();
     const a = unitOf(battle, 'archer');
     a.hp = 0;
@@ -73,20 +73,14 @@ describe('Endless sürekli akış: dalga arası taşıma', () => {
     const ha = next.heroes.find((h) => h.class === 'archer')!;
     expect(ha.hpRatio).toBe(0);
     expect(ha.carry).toBeUndefined();
-    const idx = next.offer!.findIndex((c) => c.kind === 'revive');
-    expect(next.offer![idx]).toEqual({ kind: 'revive', heroId: ha.id, ratio: ENDLESS.rewards.reviveRatio });
-    // Revive alınmazsa: sonraki savaşta ceset (can 0, diriltilebilir), sırası yok
+    expect(next.offer!.some((c) => c.kind === 'revive')).toBe(false); // rewards.reviveCard false
+    // sonraki savaşta ceset (can 0, diriltilebilir), sırası yok
     const ready = { ...next, phase: 'ready' as const, offer: undefined };
     const b2 = battleFor(wavePlan(ready));
     const a2 = unitOf(b2, 'archer');
     expect(a2.hp).toBe(0);
     expect(b2.corpseOf(a2.uid)?.state).toBe('revivable');
     expect(b2.currentUid).not.toBe(a2.uid);
-    // Revive alınırsa: %50 can ve MP
-    const rev = chooseReward(next, idx);
-    const hr = rev.heroes.find((h) => h.class === 'archer')!;
-    expect(hr.hpRatio).toBe(ENDLESS.rewards.reviveRatio);
-    expect(hr.carry?.mpRatio).toBe(ENDLESS.rewards.reviveRatio);
     // Şifa kartı ceseti kaldırmaz
     const healIdx = next.offer!.findIndex((c) => c.kind === 'heal');
     expect(chooseReward(next, healIdx).heroes.find((h) => h.class === 'archer')!.hpRatio).toBe(0);

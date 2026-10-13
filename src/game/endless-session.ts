@@ -157,7 +157,7 @@ function battleData(game: Phaser.Game, plan: WavePlan, run: EndlessRun, hooks: C
     ...(background ? { background } : {}),
     // Poz kütüphanesi (yalnızca sunum): kahramanın takılı silahı ekrandaki silahı seçer (src/game/poses.ts)
     weapons: { items: partyWeapons(plan.heroOrder, (id) => run.heroes.find((h) => h.id === id)?.equipment.weapon, (id) => run.heroes.find((h) => h.id === id)?.equipment.offhand) },
-    campaign: { retreatLabel: 'Retreat to Camp', battleEffects: () => endlessEffects(run), ...hooks },
+    campaign: { retreatLabel: 'Retreat to Camp', retreatConfirm: 'Retreat to camp? The battle stays paused and resumes where you left it.', battleEffects: () => endlessEffects(run), ...hooks },
   };
 }
 
@@ -256,7 +256,7 @@ function startRecording(battle: Battle, plan: WavePlan, actions: ReplayAction[])
   };
 }
 
-/** Yarım savaşı sil (geri çekilme: savaş sayılmaz). */
+/** Yarım savaşı sil (doğrulanamayan / eski kayıt; geri çekilme artık silmez). */
 function dropSuspended(): void {
   const run = endless.run;
   if (run?.suspended) commit(withSuspended(run, undefined));
@@ -291,10 +291,10 @@ export function startWave(scene: Phaser.Scene, resume = false): WavePlan | null 
     onVictory: (battle) => onVictory(game, plan, battle),
     onPause: (bs) => openOverlay(bs, plan.heroOrder),
     retreat: () => {
+      // Ömer 2026-10-14: geri çekilme dalgayı SIFIRLAMAZ (yoksa kaybedilen savaş baştan oynanabilirdi); yarım savaş kaydı kalır,
+      // kamp "Resume Battle" ile aynı tura döner (oyunu kapatıp açmakla aynı kural). Kamp/tüccar/Gear yarım savaş bitene dek kilitli.
       stopRecording();
-      dropSuspended();
-      endless.notice = 'You retreated. The battle did not count.';
-      // Savaş sayılmaz: savaş alanı dalga başı haliyle ara vermeye döner (paneller üstte)
+      endless.notice = 'The battle is paused. It resumes where you left it.';
       const bs = game.scene.getScene(BATTLE_SCENE) as Phaser.Scene;
       if (!openPause(bs)) goTo(game, ENDLESS_SCENE);
     },

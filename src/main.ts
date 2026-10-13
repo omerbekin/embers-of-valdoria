@@ -178,6 +178,7 @@ new GameMenu(document.getElementById('ui-root')!, {
   codex: () => openWiki(),
   retreat: () => battleNow()?.campaign?.retreat?.(),
   retreatLabel: () => battleNow()?.campaign?.retreatLabel,
+  retreatConfirm: () => battleNow()?.campaign?.retreatConfirm,
   // Sefer haritası Menu'sü (aynı bileşen; Ömer 2026-10-10): sahnenin durumu ve Save / Load
   mapMenu: () => mapNow()?.menuState() ?? null,
   save: () => mapNow()?.menuSave(),

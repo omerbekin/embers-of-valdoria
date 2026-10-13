@@ -101,7 +101,7 @@ describe('endless: dalga kuralları', () => {
     expect([0, 1, 2, 3, 4].map((b) => bossMult(b))).toEqual(list.slice(0, 5));
     expect(bossMult(list.length + 3)).toBe(list[list.length - 1]);
     // 10. dalga: dalga güçlenmesi aynen; 20. dalga: bossMult[1] can ve güce çarpılır, stat değil; boss olmayan dalgaya eklenmez
-    expect(waveMods(10)).toEqual({ hpMult: 1.113, statMult: 1.113, powerMult: 1.104 });
+    expect(waveMods(10)).toEqual({ hpMult: 1.09, statMult: 1.09, powerMult: 1.083 });
     const plain = (w: number) => ({ hp: 1 + ENDLESS.scaling.hpPerWave * (w - 1), pw: 1 + ENDLESS.scaling.powerPerWave * (w - 1) });
     expect(waveMods(20)!.hpMult).toBeCloseTo(plain(20).hp * list[1]!, 3);
     expect(waveMods(20)!.powerMult).toBeCloseTo(plain(20).pw * list[1]!, 3);
@@ -109,10 +109,10 @@ describe('endless: dalga kuralları', () => {
     expect(waveMods(21)!.hpMult).toBeCloseTo(plain(21).hp, 3);
   });
 
-  it('dalga güçlenmesi: 1. dalga yok, sonra dalga başına can/stat +%1,25, güç +%1,15 (balance-tester 2026-10-10)', () => {
+  it('dalga güçlenmesi: 1. dalga yok, sonra dalga başına can/stat +%1, güç +%0,92 (Ömer 2026-10-14: Revive kartı kalkınca %20 yumuşadı)', () => {
     expect(waveMods(1)).toBeUndefined();
-    expect(waveMods(2)).toEqual({ hpMult: 1.013, statMult: 1.013, powerMult: 1.012 }); // r3(1,0125) / r3(1,0115)
-    expect(waveMods(11)).toEqual({ hpMult: 1.125, statMult: 1.125, powerMult: 1.115 });
+    expect(waveMods(2)).toEqual({ hpMult: 1.01, statMult: 1.01, powerMult: 1.009 }); // r3(1,01) / r3(1,0092)
+    expect(waveMods(11)).toEqual({ hpMult: 1.1, statMult: 1.1, powerMult: 1.092 });
     expect(combineMods({ hpMult: 2, spriteScale: 1.4 }, { hpMult: 1.5, powerMult: 1.1 })).toEqual({ hpMult: 3, spriteScale: 1.4, powerMult: 1.1 });
   });
 
@@ -180,7 +180,7 @@ describe('endless: dalga planı -> savaş', () => {
 });
 
 describe('endless: savaş sonucu ve can taşıma', () => {
-  it('zafer: canlılar +%20, düşen ceset olarak kalır (Revive kartı), dalga +1, ödül kartları açılır', () => {
+  it('zafer: canlılar +%20, düşen ceset olarak kalır (Revive kartı yok), dalga +1, ödül kartları açılır', () => {
     const run = fresh();
     const plan = wavePlan(run);
     const next = applyOutcome(run, plan, win(run, 0.5, ['h2']));
@@ -189,8 +189,8 @@ describe('endless: savaş sonucu ve can taşıma', () => {
     expect(next.stats).toEqual({ cleared: 1, turns: 20, kills: 3 });
     expect(heroOf(next, 'h1')!.hpRatio).toBeCloseTo(0.7);
     expect(heroOf(next, 'h2')!.hpRatio).toBe(0);
-    expect(next.offer).toHaveLength(4);
-    expect(next.offer![3]).toEqual({ kind: 'revive', heroId: 'h2', ratio: ENDLESS.rewards.reviveRatio });
+    expect(next.offer).toHaveLength(3);
+    expect(next.offer!.some((c) => c.kind === 'revive')).toBe(false);
     // aynı sonuç ikinci kez yazılmaz (sonuç ekranı tekrar kurulsa da)
     expect(applyOutcome(next, plan, win(run))).toBe(next);
     expect(run.wave).toBe(1); // girdi değişmez

@@ -51,6 +51,8 @@ export interface GameMenuHooks {
   load?: () => void;
   /** Geri çekilme düğmesinin yazısı (endless: 'Retreat to Camp'); yoksa MENU_LABELS.retreat. */
   retreatLabel?: () => string | undefined;
+  /** Geri çekilme onay sorusu (endless: savaş duraklar); yoksa spec.confirm.retreat. */
+  retreatConfirm?: () => string | undefined;
   /** Menü (ya da üstündeki ayarlar ekranı) açıldı / kapandı: savaşı durdur / sürdür. */
   onOpen?: () => void;
   onClose?: () => void;
@@ -194,7 +196,7 @@ export class GameMenu {
       icons.push([id, icon]);
       b.append(icon, el('span', '', (id === 'retreat' ? this.hooks.retreatLabel?.() : undefined) ?? spec.labels?.[id] ?? MENU_LABELS[id]));
       b.dataset.item = id;
-      b.addEventListener('click', () => this.pick(id, spec.confirm[id]));
+      b.addEventListener('click', () => this.pick(id, id === 'retreat' && spec.confirm[id] ? this.hooks.retreatConfirm?.() ?? spec.confirm[id] : spec.confirm[id]));
       this.list.append(b);
     }
     // İkonlar tembel yüklenir (src/ui/menu-icons.ts: ikon motoru ana menünün ilk indirmesine girmesin); yer önceden ayrılı, satır kaymaz

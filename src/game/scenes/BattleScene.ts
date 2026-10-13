@@ -120,6 +120,8 @@ export interface CampaignBattleHooks {
   prepareBattle?(battle: Battle): void;
   /** Menüdeki geri çekilme yazısı (yoksa 'Retreat to Map'); endless 'Retreat to Camp' verir (src/game/endless-session.ts). */
   retreatLabel?: string;
+  /** Geri çekilme onay sorusu (yoksa session-flow RETREAT_CONFIRM); endless: savaş duraklar, sayılmaz değil. */
+  retreatConfirm?: string;
   /** Koşu boyu etkiler (HUD > Battle info > Effects): Endless kalıntıları, sefer zorluk / bölüm ölçeği; ileride başka sistemler (src/game/battle-effects.ts). */
   battleEffects?(): BattleEffect[];
   /*

@@ -20,7 +20,7 @@ export interface EndlessConfig {
   /** Dalga arası taşıma (sürekli akış, madde 300): mp 'ratio' = canla aynı oran ('full' = her dalga tam), cooldowns 'clear' | 'initial'. */
   carry: { victoryHeal: number; reviveRatio: number; bossVictoryHeal: number; mp?: 'ratio' | 'full'; cooldowns?: 'carry' | 'clear' | 'initial'; fallen?: 'corpse' | 'rise' };
   /** reviveRatio: ödül ekranındaki 'Revive <kahraman>' kartının can (ve MP) oranı (carry.fallen 'corpse'). */
-  rewards: { healRatio: number; goldBase: number; goldPerWave: number; reviveRatio?: number };
+  rewards: { healRatio: number; goldBase: number; goldPerWave: number; reviveRatio?: number; reviveCard?: boolean };
   special: {
     elite: SpecialRewards & { healRatio: number };
     boss: SpecialRewards & { feastHpMult: number; feastWaves: number };

@@ -362,7 +362,8 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
   else cards.push({ kind: 'heal', ratio: kind === 'elite' ? cfg.special.elite.healRatio : cfg.rewards.healRatio });
   // Ceset varken ek kart: "Revive <kahraman>" (Ömer 2026-10-10 takip; ekranda en çok bir tane: kahraman sırasında ilk düşen)
   const fallen = (cfg.carry.fallen ?? 'corpse') === 'corpse' ? run.heroes.find((h) => h.hpRatio <= 0) : undefined;
-  if (fallen) cards.push({ kind: 'revive', heroId: fallen.id, ratio: cfg.rewards.reviveRatio ?? 0.5 });
+  // rewards.reviveCard false (Ömer 2026-10-14): kart yok; düşen kahraman yalnızca Valor / Resurrection / Raise Dead ile döner
+  if (fallen && cfg.rewards.reviveCard !== false) cards.push({ kind: 'revive', heroId: fallen.id, ratio: cfg.rewards.reviveRatio ?? 0.5 });
   return cards;
 }
 
