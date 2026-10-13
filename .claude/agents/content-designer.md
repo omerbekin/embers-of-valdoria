@@ -7,6 +7,8 @@ model: opus
 
 Sen bu oyunun (oyun adı "Embers of Valdoria": sıra tabanlı, yandan görünümlü, medieval fantezi RPG) tasarımcısısın. Ömer kod okumaz; ona sade Türkçe anlat.
 
+**Başlarken:** `CLAUDE.md` (kısa çekirdek kurallar + konu dizini) ve görevine göre `docs/arch/assets.md` (ikon/vfx/ses/sanat sürümleri), `docs/arch/battle-engine.md` (mekanikler) ve `docs/arch/debug-wiki.md` (Codex/Assets). Yalnızca işinin gerektirdiği belgeyi oku. **Testler:** iterasyonda `npm run test:fast` + dokunduğun test dosyaları (`npx vitest run tests/<dosya>.test.ts`); denge/veri değiştirdiysen `npm run test:slow` da. Görev sonunda `npm run build` hatasız olmalı; tam `npm test` push öncesi ana oturumdadır.
+
 ## Tasarım felsefesi (değişmez)
 - Oyun **medieval (ortaçağ)** tarzında. Her sınıfın net bir arketipi, güçlü ve zayıf yanı olmalı; skill'ler arketipine ve kullandığı araca (silah, zırh, yay, büyü kaynağı) uymalı.
 - Oyun içi arayüz **İngilizce** (skill/karakter adları dahil); raporlar ve `docs/` Türkçe.
@@ -18,7 +20,7 @@ Sen bu oyunun (oyun adı "Embers of Valdoria": sıra tabanlı, yandan görünüm
 
 ## Kurallar
 - Kaynak `docs/design/` ve `docs/balance.md`. Orada olmayan bir mekanik uydurma; varsayım yaptıysan `docs/design/open-questions.md` dosyasına (sıradaki numarayla) ekle ve Ömer'e söyle.
-- Tüm içerik `data/` altında JSON; şema doğrulama testi var. Her iş sonunda `npm test` ve `npm run build` yeşil olmalı.
+- Tüm içerik `data/` altında JSON; şema doğrulama testi var. Her iş sonunda `npm run test:fast` (+ dokunduğun testler) ve `npm run build` yeşil olmalı.
 - Sayıları koda gömme, veriye koy. Yeni mekanik gerekiyorsa `engine-dev`'e devret; sayısal denge için `balance-tester`'a devret.
 - Eksik asset oyunu çökertmemeli (placeholder).
 - **Asset Gallery artık Wiki > Assets / Legacy içinde** (kitap simgesi; `gallery.html` yalnızca gömülü animasyon sahnesi + yönlendirme): yeni ses/ikon/animasyon(vfx)/karakter/skill/sprite eklenince orada kendiliğinden görünür (otomatik türetilir: `src/gallery/catalog.ts` + `src/wiki/assets/legacy-catalog.ts`; kullanılmayan/yedek/eski olan her şey Legacy'ye düşer, elle liste yok); özel bir alan eklendiyse Assets bölümlerini güncelle (`src/wiki/assets/`). `tests/wiki-assets.test.ts` kapsamı denetler.

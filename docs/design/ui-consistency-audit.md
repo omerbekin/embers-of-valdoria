@@ -5,7 +5,7 @@
 Bu belge üç bölümden oluşuyor:
 
 1. Ekran ekran denetim (değişiklikten ÖNCEKİ durum ve yapılan düzeltme).
-2. Tanımlanan ortak yapı. Kısa özeti CLAUDE.md > Tasarım kiti altında.
+2. Tanımlanan ortak yapı. Kısa özeti CLAUDE.md > Tasarım kiti altında; tam metin `docs/arch/ui-and-stage.md` > Tasarım kiti.
 3. Ömer'in onayını bekleyen büyük öneriler.
 
 İşaretler:
@@ -82,7 +82,7 @@ Hiçbir menü ekranında arayüz sesi yok; bu, tutarlı ve ✓ kabul edildi.
 | Toast (elToast) | Kendi süreleri ✓ → artık ortak ön ayar (veri) | Yatay bant | – |
 | Tooltip | Phaser elTip, DOM el-tip, HUD bh-tt: aynı kit dili ✓ | – | – |
 
-## 2. Ortak yapı (CLAUDE.md > Tasarım kiti > "Ortak ekran yapısı")
+## 2. Ortak yapı (`docs/arch/ui-and-stage.md` > Tasarım kiti > "Ortak ekran yapısı"; özeti CLAUDE.md > Tasarım kiti)
 
 ### 2.1 Hareket ön ayarları
 

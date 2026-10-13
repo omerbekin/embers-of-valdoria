@@ -3,6 +3,7 @@ import { fileURLToPath } from 'node:url';
 import { execSync } from 'node:child_process';
 import { readFileSync } from 'node:fs';
 import { defineConfig } from 'vite';
+import { SLOW_TESTS } from './vitest.slow-list';
 
 /** Kısa git commit kimliği (depoda commit yoksa ya da git yoksa boş): maç kaydı başlığında görünür. */
 function gitCommit(): string {
@@ -52,8 +53,16 @@ export default defineConfig({
     },
   },
   test: {
-    include: ['tests/**/*.test.ts'],
     environment: 'node',
     testTimeout: 30000, // ağır AI savaş testleri (yük altında 5 sn varsayılanı aşabiliyor)
+    // Worker thread havuzu (2026-10-14 ölçüm: hızlı set forks ~15,5 sn -> threads ~12,8 sn; kapsam aynı).
+    // isolate: false denendi ve REDDEDİLDİ (dosyalar arası paylaşılan durum testleri kırıyor).
+    pool: 'threads',
+    // İki proje (2026-10-14): `npm test` ikisini de koşar; `npm run test:fast` = --project fast, `npm run test:slow` = --project slow.
+    // Yavaş liste TEK yerde: vitest.slow-list.ts. `include` kökte DEĞİL: extends dizileri birleştirir, slow projesi her şeyi alırdı.
+    projects: [
+      { extends: true, test: { name: 'fast', include: ['tests/**/*.test.ts'], exclude: [...SLOW_TESTS] } },
+      { extends: true, test: { name: 'slow', include: [...SLOW_TESTS] } },
+    ],
   },
 });

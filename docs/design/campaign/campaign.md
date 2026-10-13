@@ -55,7 +55,7 @@ Oyun içi metinler İngilizce, açıklamalar Türkçe. Sayılar (düşman sayıs
 - Motor: `content.battleSetup(battleId, seed, mode, teams, arrange)` -> `new Battle(...)`. Sınıflar yalnızca `content.classes` içinden; çağrılar (`data/summons/`) doğrudan takıma konamaz.
 - Savaş sonu: motor `battleEnd {winner}` olayı; `BattleScene.showResult(victory)` sonuç ekranı (`src/game/result-screen.ts`), düğmeler yalnızca `onNewGame` / `onTeamSelect`. Dışarıya sonuç bildiren geri çağırma YOK.
 - Ayarlar New Game / Team Select: `src/game/session-flow.ts` (`src/ui/` değil).
-- Debug sekmeleri (CLAUDE.md güncel): Battle / Unit / Skills / Rolls / Speed & View / Setup / Characters / Data; dock bölümleri `DOCK_GROUPS`.
+- Debug sekmeleri (güncel liste `docs/arch/debug-wiki.md`): Battle / Unit / Skills / Rolls / Speed & View / Setup / Characters / Data; dock bölümleri `DOCK_GROUPS`.
 - Sınıflar: Warrior, Defender (STR); Archer, Cutthroat (DEX); Mage, Druid, Paladin, Undead, Anti-Mage (INT); Gambler, Hexer (LUCK; Hexer rastgele havuzda 11. sınıf, madde 245); Geometer (`hidden` + `testOnly`: sefer düşmanı/adayı OLAMAZ). Hexer karşılaşmalara da uygun (Witch's Hut, Black Cathedral). Çağrılar: Skeleton, Treant.
 - Motorda birim bazında güçlendirme/zayıflatma (can/stat çarpanı, özel ad) YOK (yalnızca çağrı varyantları ve `spriteScale`). "Eksik canla başla" YOK. Tur başına ek eylem YOK. Bunlar engine-dev işi (bkz. 7).
 - Savaş arka planı veriden (`battles/*.json > background`); şu an tek: `castle-hall`.

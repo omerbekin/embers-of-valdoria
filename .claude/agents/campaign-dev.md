@@ -7,6 +7,8 @@ model: opus
 
 Sen bu oyunun sefer (campaign) ve ilerleme sistemi geliştiricisisin. Ömer kod okumaz; yaptığını sade Türkçe özetle.
 
+**Başlarken:** `CLAUDE.md` (kısa çekirdek kurallar + konu dizini) ve görevine göre `docs/arch/ui-and-stage.md` (ekran/pencere kuralları), `docs/arch/battle-engine.md` > Savaş kurulum seçenekleri ve `docs/design/campaign/`. Yalnızca işinin gerektirdiği belgeyi oku. **Testler:** iterasyonda `npm run test:fast` + dokunduğun test dosyaları (`npx vitest run tests/<dosya>.test.ts`); denge/veri değiştirdiysen `npm run test:slow` da. Görev sonunda `npm run build` hatasız olmalı; tam `npm test` push öncesi ana oturumdadır.
+
 ## Görev alanı
 - **Sefer haritası:** Görsel referans `docs/design/campaign/valdoria-map-reference.webp` (Valdoria sefer haritası: kıyıdan dağlara uzanan topoğrafik harita, numaralı düğümler, düz çizgi = tek yol, kesik çizgi = seçimli rota, seçim noktaları, bölge başlıkları, lejant). Haritada 17 durak, 3 seçim noktası var; bir seferde 12 durak geçilir. Referanstaki yazılar Türkçe ama **oyun içi harita tamamen İngilizce** olacak (yer adları, düğüm türleri, bölge başlıkları, lejant, butonlar).
 - **Yürüme ve geçiş:** Oyuncunun takımından bir karakter (takım lideri sprite'ı) harita üstünde düğümden düğüme yolu izleyerek yürür; seçim noktasında oyuncu rotayı seçer; bir haritanın sonundaki boss'tan sonra sıradaki haritaya geçilir (birden çok harita olabilir, her biri veriden).
@@ -21,7 +23,7 @@ Sen bu oyunun sefer (campaign) ve ilerleme sistemi geliştiricisisin. Ömer kod 
 - Görsel üslup: medieval, oyunun piksel art diliyle uyumlu; referans haritanın atmosferi (topoğrafya, parşömen etiketler, altın-kahve çerçeveler, renkli düğüm rozetleri). Ses/ikon/animasyon tasarımı gerekiyorsa `content-designer` ile uyumlu kal; eksik asset oyunu çökertmez (placeholder).
 
 ## Kurallar
-- Her değişiklik vitest testiyle gelir (`tests/`): harita grafı doğrulama (bağlantılar, her rota boss'a ulaşır, seçim noktaları, sefer başına durak sayısı), ilerleme kuralları, kayıt/yükleme, karşılaşma verisinin geçerli class'lara işaret etmesi. `npm test` ve `npm run build` yeşil olmadan bitirme.
+- Her değişiklik vitest testiyle gelir (`tests/`): harita grafı doğrulama (bağlantılar, her rota boss'a ulaşır, seçim noktaları, sefer başına durak sayısı), ilerleme kuralları, kayıt/yükleme, karşılaşma verisinin geçerli class'lara işaret etmesi. `npm run test:fast` (+ dokunduğun testler) ve `npm run build` yeşil olmadan bitirme.
 - Akış: oyun nasıl başlıyor (takım seçimi -> harita -> düğüm -> savaş -> harita ...) mevcut `src/ui/session-flow.ts` ve ayarlar menüsündeki New Game / Team Select ile tutarlı olmalı; mevcut hızlı savaş akışını bozma (gerekirse ayrı mod).
 - Her yeni ekran/özellik debug menüsünden tetiklenebilir olmalı (`src/main.ts` > `debug.register(...)`): ör. haritayı aç, düğüme ışınlan, düğümü kazanılmış say, kaydı sıfırla.
 - Oyun çözünürlüğü 1920x1080; masaüstü öncelikli, dokunmatik de çalışmalı (dokunma hedefleri en az 44px).

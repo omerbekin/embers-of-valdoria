@@ -8,6 +8,8 @@
     "build": "tsc --noEmit && vite build",
     "preview": "vite preview --host",
     "test": "vitest run",
+    "test:fast": "vitest run --project fast",
+    "test:slow": "vitest run --project slow",
     "test:watch": "vitest",
     "sim": "tsx src/sim/cli.ts",
     "sim:campaign": "tsx src/sim/campaign-cli.ts",

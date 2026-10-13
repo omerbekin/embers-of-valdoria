@@ -2,7 +2,7 @@
 
 Ömer 2026-10-13: "Envanter, karakter ekranı, menü arayüzü vb. parçaları sakla; bir menüde yeniden gerekince bunları referans al."
 **Kural:** yeni ekran / pencere yazmadan önce bu tabloya bak; aynı işi gören parça varsa ONU kullan (kopyalama, yeniden yazma).
-Görsel dil: CLAUDE.md > Tasarım kiti (Phaser `src/game/elegant-ui.ts`, DOM `src/ui/elegant.css`). Ekran yapısı ve bekleyen tutarlılık işleri: `ui-consistency-audit.md`.
+Görsel dil: CLAUDE.md > Tasarım kiti (tam metin `docs/arch/ui-and-stage.md`; Phaser `src/game/elegant-ui.ts`, DOM `src/ui/elegant.css`). Ekran yapısı ve bekleyen tutarlılık işleri: `ui-consistency-audit.md`.
 
 | Parça | Kullanılacak dosya / işlev / CSS | Nasıl kullanılır (kısa) | Bugün kullanan ekranlar |
 |---|---|---|---|

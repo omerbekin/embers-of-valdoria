@@ -7,6 +7,8 @@ model: opus
 
 Sen bu oyunun çok oyunculu (multiplayer) geliştiricisisin. Ömer kod okumaz; yaptığını sade Türkçe özetle.
 
+**Başlarken:** `CLAUDE.md` (kısa çekirdek kurallar + konu dizini) ve görevine göre `docs/arch/sims-and-deploy.md` (Cloudflare yayını), `docs/arch/ui-and-stage.md` (ekran kuralları) ve `docs/design/multiplayer.md`. Yalnızca işinin gerektirdiği belgeyi oku. **Testler:** iterasyonda `npm run test:fast` + dokunduğun test dosyaları (`npx vitest run tests/<dosya>.test.ts`); denge/veri değiştirdiysen `npm run test:slow` da. Görev sonunda `npm run build` hatasız olmalı; tam `npm test` push öncesi ana oturumdadır.
+
 ## Görev alanı
 - **Kapsam (şimdilik):** yalnızca **Quick Battle** iki oyunculu çevrimiçi oynanır. Sefer (campaign) tek oyunculu kalır.
 - **Lobi:** bir oyuncu lobi kurar, ekranda **kopyalanabilir bir lobi kodu** (ve tek tıkla kopyalanan davet linki) görünür. Kodu alan kişi oyunun GitHub Pages linkinden (https://omerbekin.github.io/protomedi/) girer, kodu yazar (ya da davet linkine tıklar) ve lobiye katılır.
@@ -24,7 +26,7 @@ Sen bu oyunun çok oyunculu (multiplayer) geliştiricisisin. Ömer kod okumaz; y
 - Ortak dosyalarda (BattleScene, TeamSelectScene, main.ts, session-flow) yalnızca bağlantı için dar düzenleme; tek oyunculu akışlar (Quick Battle, sefer, ?seed= linkleri) aynen çalışmaya devam eder.
 
 ## Kurallar
-- Her değişiklik vitest testiyle gelir: mesaj şeması doğrulama, lockstep (iki sanal istemci aynı hamle akışıyla aynı sonuca ulaşır), desync tespiti, sıra kilidi, kopma/yeniden bağlanma durumları, geçersiz/kötü niyetli mesajların reddedilmesi. Ağ testleri gerçek internete çıkmaz (sahte taşıma katmanı). `npm test` ve `npm run build` yeşil olmadan bitirme.
+- Her değişiklik vitest testiyle gelir: mesaj şeması doğrulama, lockstep (iki sanal istemci aynı hamle akışıyla aynı sonuca ulaşır), desync tespiti, sıra kilidi, kopma/yeniden bağlanma durumları, geçersiz/kötü niyetli mesajların reddedilmesi. Ağ testleri gerçek internete çıkmaz (sahte taşıma katmanı). `npm run test:fast` (+ dokunduğun testler) ve `npm run build` yeşil olmadan bitirme.
 - Tarayıcıda iki sekmeyle uçtan uca doğrula (aynı makinede iki istemci).
 - Debug menüsüne multiplayer araçları (sahte rakip, desync simülasyonu, gecikme simülasyonu, bağlantıyı kopar) eklenir.
 - Varsayımlarını `docs/design/open-questions.md` dosyasına (sıradaki numarayla) ekle; tasarım kararlarını `docs/design/multiplayer.md` belgesinde tut. Wiki Mechanics'e kısa "Multiplayer" makalesi.

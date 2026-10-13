@@ -6,6 +6,8 @@ tools: Read, Write, Edit, Glob, Grep, Bash
 
 Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 
+**Başlarken:** `CLAUDE.md` (kısa çekirdek kurallar + konu dizini) ve görevine göre `docs/arch/ui-and-stage.md` (sahne, tasarım kiti tam metni, Geri/Menu, HUD, performans), gerekirse `docs/arch/assets.md` ve `docs/arch/debug-wiki.md`. Yalnızca işinin gerektirdiği belgeyi oku. **Testler:** iterasyonda `npm run test:fast` + dokunduğun test dosyaları (`npx vitest run tests/<dosya>.test.ts`); denge/veri değiştirdiysen `npm run test:slow` da. Görev sonunda `npm run build` hatasız olmalı; tam `npm test` push öncesi ana oturumdadır.
+
 ## Kurallar
 - Oyun çözünürlüğü 1920x1080 (HD) taban; geniş ekranda mantıksal genişlik 2580'e kadar esner, tuval gerçek pikselde (CLAUDE.md, `src/game/stage.ts`): yeni sahnede kenara yaslanan öğeler `stageView.left/right` + `onStageResize`, tam ekran örtüler `FULL_X0/FULL_W`, işaretçi `worldXY(scene, pointer)`. Yatay ekran öncelikli; döndürme uyarısı YOK (dikey dokunmatikte sahne CSS ile döner, `src/ui/viewport.ts`; tam ekran düğmesi `src/ui/fullscreen.ts`). Kısa ekran CSS'i `html.short/compact` sınıflarıyla (@media döndürülmüş sahnede yanıltır); yeni DOM katmanı `#ui-root` içine eklenir (document.body'ye değil). Masaüstü öncelikli, dokunmatik de çalışmalı; dokunma hedefleri en az 44px gerçek piksel.
 - Motoru yalnızca **olay akışı** üzerinden dinle; oyun kuralı UI'a yazılmaz. Oyun içi metinler İngilizce.
@@ -13,7 +15,7 @@ Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 - Sprite/ses yoksa placeholder/sessizlik; eksik asset oyunu çökertmemeli. Ayarlar (ayrı ekran, `src/ui/settings.ts`; dişli YOK, yalnızca menülerden açılır: ana menü (MainMenuScene: Play · Settings · Codex; Play kartlara geçer (Campaign · Quick Battle · Multiplayer), Settings/Multiplayer aynı sol sütunda açılır; oyun içi Settings de aynı sol sütun görünümünde, `src/game/main-menu-flow.ts`), sefer/savaş/takım seçimi > sağ üst Menu (Esc) > Settings; oyun içi Menu `src/ui/game-menu.ts`; DOM katmanı açıkken sahne girişi kilitli `src/ui/input-lock.ts`) ve debug menüsü (sağ alt; sekmeler + her sekmede ikonlu düğmeler, ilk sekme Quick, ayrıca Test Mode sekmesi) DOM'dadır (`src/ui/`).
 - Her yeni ekran/özellik debug menüsünden tetiklenebilir olmalı (Ömer arayüzden test edecek): `src/main.ts` içinde `debug.register(...)`.
 - Efektleri tarayıcıda doğrularken sekme gizliyse Phaser döngüsü yavaşlayabilir: `game.loop.tick()` ile elle ilerlet; ses seviyeleri `OfflineAudioContext` ile ölçülür.
-- `npm test` ve `npm run build` hatasız olmalı.
+- `npm run test:fast` (+ dokunduğun testler) ve `npm run build` hatasız olmalı.
 - **Asset Gallery artık Wiki > Assets / Legacy içinde** (kitap simgesi; `gallery.html` yalnızca gömülü animasyon sahnesi + yönlendirme): yeni ses/ikon/animasyon(vfx)/karakter/skill/sprite eklenince orada kendiliğinden görünür (otomatik türetilir: `src/gallery/catalog.ts` + `src/wiki/assets/legacy-catalog.ts`; kullanılmayan/yedek/eski olan her şey Legacy'ye düşer, elle liste yok); özel bir alan eklendiyse Assets bölümlerini güncelle (`src/wiki/assets/`). `tests/wiki-assets.test.ts` kapsamı denetler.
 - **Wiki (sağ üst kitap simgesi, `src/wiki`):** içerik veriden türetilir; yeni mekanik/özel kural/pasif eklenince wiki'nin Mechanics bölümündeki metin güncel mi kontrol et.
 
