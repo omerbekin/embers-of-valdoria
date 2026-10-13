@@ -16,6 +16,7 @@ import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, poseDisplayScale } from './pose-rig';
+import { HIT_REACTION, hitReaction, type HitReaction } from './hit-reaction';
 import { POSE_TIMING, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
 
 /**
@@ -776,7 +777,8 @@ export class CombatantView {
     this.scene.tweens.add({ targets: bar, width, duration: 250, ease: 'Quad.easeOut' });
   }
 
-  play(anim: AnimName): void {
+  /** `hitPoseMs`: darbe pozunun toplam süresi (ham ms; hit-reaction kademesi), verilmezse hitFlashMs x 3 + hitHoldMs. */
+  play(anim: AnimName, hitPoseMs?: number): void {
     if (!this.realSprite) return;
     if (this.rig) {
       if (anim === 'idle' && this.holdSkillPose()) return;
@@ -794,7 +796,7 @@ export class CombatantView {
         const cap = anim === 'attack' && isV2(rig.def) ? throwHoldDelay(PT, { motion: rig.motion, skillId: rig.skillId }, SLOW) : null;
         if (cap !== null) this.returnToIdle(rig.token, cap);
       } else if (act) this.returnToIdle(rig.token, slow(PT.lateHoldMs)); // skill dışında (geç istek, olay efekti): kendi dönüşü yok
-      if (anim === 'hit') this.returnToIdle(rig.token, slow(timing.hitFlashMs) * 3 + slow(PT.hitHoldMs));
+      if (anim === 'hit') this.returnToIdle(rig.token, hitPoseMs !== undefined ? slow(hitPoseMs) : slow(timing.hitFlashMs) * 3 + slow(PT.hitHoldMs));
       return;
     }
     const key = animKey(this.combatant.spriteId, anim, this.scene);
@@ -1262,39 +1264,58 @@ export class CombatantView {
   }
 
   /**
-   * Vuruş tepkisi. `ratio` = hasar / maks can: küçük vuruşta hafif titreme, büyük vuruşta uzun beyaz/kırmızı
-   * yanıp sönme, geri savrulma ve ekran sarsıntısı.
+   * Vuruş tepkisi, 3 kademe (Ömer 2026-10-14; src/game/hit-reaction.ts, sayılar battle-layout.json > animation.hitReaction):
+   * light = poz değişmez, birkaç px geri tepme + kısa parlama; medium = darbe pozu + normal geri tepme; heavy = güçlü savrulma, eğilme,
+   * uzun poz, kırmızı iz (+ en ağırında ekran sarsıntısı). Sayı verilirse (eski çağrı) oran olarak kademelenir.
+   * Tek görselli mob / çağrılarda da geri tepme, parlama ve eğilme aynı kademeyle ölçeklenir.
    */
-  hit(ratio = 0.1): void {
-    const level = hitLevel(ratio);
-    this.play('hit');
-    const flash = slow(timing.hitFlashMs) * (1 + 2.5 * level);
-    this.sprite.setTintFill(0xffffff);
+  private crouchTween?: Phaser.Tweens.Tween;
+  private crouchBaseY = 1;
+
+  hit(input: number | HitReaction = 0.1): void {
+    const r = typeof input === 'number' ? hitReaction(HIT_REACTION, { amount: input * 1000, maxHp: 1000, calm: reducedMotion() || perfLite() }) : input;
+    if (r.pose) this.play('hit', r.poseMs);
+    const flash = slow(r.flashMs);
+    this.sprite.setTintFill(color(r.flash));
     this.scene.time.delayedCall(flash, () => {
-      if (level > 0.6) {
-        this.sprite.setTint(0xff6a6a);
-        this.scene.time.delayedCall(260, () => this.sprite.clearTint());
+      if (r.tint) {
+        this.sprite.setTint(color(r.tint));
+        this.scene.time.delayedCall(r.tintMs, () => this.sprite.clearTint());
       } else this.sprite.clearTint();
     });
     const dir = this.combatant.side === 'enemy' ? 1 : -1;
     this.scene.tweens.add({
       targets: this.sprite,
-      x: { from: (10 + 44 * level) * dir, to: 0 },
-      duration: slow(160 + 260 * level),
-      ease: 'Bounce.easeOut',
+      x: { from: r.recoilPx * dir, to: 0 },
+      duration: slow(r.recoilMs),
+      ease: r.tier === 'light' ? 'Quad.easeOut' : 'Bounce.easeOut',
     });
-    if (level > 0.45) {
-      this.scene.tweens.add({ targets: this.container, x: this.homeX + dir * 46 * level, duration: slow(110), yoyo: true, ease: 'Quad.easeOut' });
+    if (r.knockPx > 0) {
+      // evden (homeX) savrulup eve döner: üst üste darbede birim kaymasın
+      this.scene.tweens.add({ targets: this.container, x: { from: this.homeX, to: this.homeX + dir * r.knockPx }, duration: slow(r.knockMs), yoyo: true, ease: 'Quad.easeOut' });
     }
-    if (this.rig) {
-      // pozlu sınıf (Ömer 2026-10-11): önden darbe okunsun diye boşta pozu saldırandan GERİYE eğilip hafifçe çöker (hit görseli arkadan
-      // vurulmuş gibi okunuyordu; önden darbe pozu üretilene dek). Ölçüler data/poses.json > hitRecoil.
-      const r = this.rig.def.hitRecoil ?? { leanDeg: 7, crouch: 0.05 };
+    // pozlu sınıf (Ömer 2026-10-11): önden darbe okunsun diye saldırandan GERİYE eğilip hafifçe çöker (ölçüler data/poses.json > hitRecoil);
+    // tek görselli mob / çağrı: yalnızca hafif eğilme (singleLeanDeg)
+    const rec = this.rig ? (this.rig.def.hitRecoil ?? { leanDeg: 7, crouch: 0.05 }) : { leanDeg: HIT_REACTION.singleLeanDeg, crouch: 0 };
+    const lean = rec.leanDeg * r.leanMult;
+    const back = slow(r.recoilMs + (r.tier === 'heavy' ? 120 : 0));
+    if (lean > 0) this.scene.tweens.add({ targets: this.sprite, angle: { from: dir * lean, to: 0 }, duration: back, ease: 'Quad.easeOut' });
+    if (rec.crouch > 0) {
+      // üst üste darbe: önceki çökme durdurulur ve ölçek tabana döner (ölçek kaymasın)
+      if (this.crouchTween) {
+        this.crouchTween.stop();
+        this.sprite.scaleY = this.crouchBaseY;
+      }
       const sy = this.sprite.scaleY;
-      this.scene.tweens.add({ targets: this.sprite, angle: { from: dir * r.leanDeg * (0.6 + 0.6 * level), to: 0 }, duration: slow(220 + 260 * level), ease: 'Quad.easeOut' });
-      this.scene.tweens.add({ targets: this.sprite, scaleY: { from: sy * (1 - r.crouch * (0.6 + 0.6 * level)), to: sy }, duration: slow(200 + 200 * level), ease: 'Quad.easeOut' });
+      this.crouchBaseY = sy;
+      const tw = this.scene.tweens.add({ targets: this.sprite, scaleY: { from: sy * (1 - rec.crouch * r.crouchMult), to: sy }, duration: back, ease: 'Quad.easeOut' });
+      const done = () => {
+        if (this.crouchTween === tw) this.crouchTween = undefined;
+      };
+      tw.on('complete', done).on('stop', done);
+      this.crouchTween = tw;
     }
-    if (ratio >= timing.cameraShakeRatio) this.scene.cameras.main.shake(140 + 160 * level, 0.0015 + 0.005 * level);
+    if (r.shake) this.scene.cameras.main.shake(r.shake.ms, r.shake.intensity);
   }
 
   /** Fiziksel saldırıdan kaçınma: yana kayıp geri döner. */

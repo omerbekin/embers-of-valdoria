@@ -28,7 +28,7 @@ describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek 
     expect(UI_ICON_FALLBACK.rage).toBe('flame');
     expect(UI_ICON_FALLBACK.cooldown).toBe('hourglass');
     for (const g of Object.values(content.globalSkills).filter((x) => x.kind !== 'valor')) expect(uiIconFallback(g.kind === 'skip' ? 'skip' : g.kind), g.id).toBe(g.icon);
-    // Valor diriltmesi (valor_revive): HUD'da kendi mangal çizimi (src/ui/valor-braziers.ts), boyalı arayüz ikonu yok
+    // Valor diriltmesi (valor_revive): HUD'da boyalı mangal karesi (assets/valor, src/ui/valor-braziers.ts > brazierIconUrl), arayüz ikonu yok
     // bilinmeyen ad: görsel yok, yedek yok -> çökmez, yer tutucu
     expect(resolveSprite('ui:nope').image).toBeUndefined();
   });

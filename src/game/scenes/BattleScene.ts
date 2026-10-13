@@ -44,6 +44,8 @@ import { CODE_SFX, SHARED_KEY, onVersionsChange, ownerOfSkill, ownerOfUnit, stat
 import { statusBadge } from '../art-registry';
 import { EVENT_FX, eventContextSkill, selectEventFx } from '../event-fx';
 import { UsageRecorder, type SkillUsage } from '../skill-usage';
+import { HIT_REACTION, hitOrder, hitReaction, type HitReaction } from '../hit-reaction';
+import { perfLite } from '../../ui/perf-mode';
 import type { VfxCtx } from '../vfx';
 import { HazeTracker, hazeStatuses } from '../linger-haze';
 import { smokeHaze, type HazeView } from '../linger-haze-view';
@@ -1876,7 +1878,7 @@ export class BattleScene extends Phaser.Scene {
       // Multiplayer: hamle lockstep'ten geçer (sınanır, uygulanır, rakibe gider)
       if (!this.mp.submit({ skillId: skill, ...(target ? { targetUid: target } : {}), ...(slot !== undefined ? { slot } : {}), ...(board ? { board } : {}), ...(corpseUid ? { corpseUid } : {}) })) return;
     } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid).ok) return;
-    this.tut?.onPerformed();
+    this.tut?.onPerformed(skill);
     this.busy = true;
     this.refreshCommands();
     this.settle();
@@ -1913,6 +1915,7 @@ export class BattleScene extends Phaser.Scene {
       this.refreshCommands();
       return;
     }
+    this.tut?.onGlobal(id); // tutorial: durum dersinin önerdiği eylem (Rest / Skip / Move) yapıldı mı
     this.busy = true;
     this.refreshCommands();
     this.settle();
@@ -2509,6 +2512,31 @@ export class BattleScene extends Phaser.Scene {
     return { ...(e.element ? { element: e.element } : {}), ...(e.origin ? { origin: e.origin } : {}), ...(e.ground ? { ground: e.ground } : {}), ...(e.status ? { statusId: e.status } : {}) };
   }
 
+  /** Bu kullanımda ekran sarsıntısı oldu mu (skillUsed olayı; sarsıntı kullanım başına en çok bir kez). */
+  private shookFor: object | undefined;
+
+  /**
+   * Darbe tepkisi kademesi (src/game/hit-reaction.ts): oran + kritik + çok vuruş (aynı hedefe gelen son darbe dışındakiler en çok medium)
+   * + durum / zemin tiki tavanı; Reduced motion / Performance mode'da sarsıntı ve toz yok.
+   */
+  private hitReactionFor(e: BattleEvent & { type: 'damage' }, target: CombatantView): HitReaction {
+    const usage = this.currentUsage;
+    const inUsage = !!usage && usage.events.includes(e);
+    const order = inUsage ? hitOrder(usage.events, e) : { hitIndex: 0, hitCount: 1 };
+    const r = hitReaction(HIT_REACTION, {
+      amount: e.amount,
+      absorbed: e.absorbed,
+      maxHp: target.combatant.maxHp,
+      crit: e.crit,
+      ...order,
+      tick: e.origin === 'status' || e.origin === 'ground',
+      shakeUsed: inUsage && this.shookFor === usage.used,
+      calm: reducedMotion() || perfLite(),
+    });
+    if (r.shake && inUsage) this.shookFor = usage.used;
+    return r;
+  }
+
   private async playEvent(e: BattleEvent): Promise<void> {
     if (!this.scene.isActive()) return;
     // Aşamalı alan skill'i: aşama olayları vfx o aşamayı açana kadar bekler (vfx aşamadan habersizse beklemez)
@@ -2552,7 +2580,7 @@ export class BattleScene extends Phaser.Scene {
         }
         if (target && witherTick && e.amount > 0) {
           const ratio = e.amount / target.combatant.maxHp;
-          target.hit(ratio * 0.5);
+          target.hit(this.hitReactionFor(e, target));
           target.floatText(String(e.amount), content.statuses['wither']?.color ?? '#9cab3c', 38, false, { kind: 'damage', rightIcon: 'poison' });
           target.setHp(e.hpAfter, true, ratio);
           target.setShield(e.shieldAfter, e.magicShieldAfter);
@@ -2563,10 +2591,15 @@ export class BattleScene extends Phaser.Scene {
             // Lucky Escape: the killing blow is ignored completely (no HP change); glance + golden horseshoe + text (lucky-escape-fx.ts)
             await playLuckyEscape(this, target, this.views.get(e.source));
           } else if (e.amount === 0 && e.absorbed > 0) {
+            // kalkan hepsini emdi: hafif kademe (küçük geri tepme + kısa parlama; hit-reaction.ts)
+            target.hit(this.hitReactionFor(e, target));
             target.ring(e.magicShieldAfter > 0 || e.shieldAfter === 0 ? colors.magicShield : colors.shield);
             target.floatText('Blocked', colors.shield, 46, false, { kind: 'shield' });
           } else {
-            target.hit(ratio);
+            const react = this.hitReactionFor(e, target);
+            target.hit(react);
+            // ağır darbe: ayak dibinde kısa toz (Reduced motion / Performance mode'da yok)
+            if (react.dust) VFX_KIT.dustCloud(this, target.container.x, target.container.y, { n: 2, spread: 40, rise: 24, size: [30, 52], life: 600, tint: 0x8a8a84 });
             target.damageText(e.amount, ratio, e.crit, this.damageTags(e));
           }
           if (e.redirected) {

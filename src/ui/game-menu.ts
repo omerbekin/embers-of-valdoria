@@ -5,34 +5,35 @@ import { dismissOnBackdrop } from './backdrop';
 import { isSettingsOpen, setSettingsOpen } from './settings';
 import { lockInput, unlockInput } from './input-lock';
 import './elegant.css';
+import { navSvg } from './nav-icons';
 
 /**
- * Oyun içi Menu (Ömer 2026-10-08): sağ üstte "Menu" düğmesi (tam ekran ve wiki simgelerinin solunda, aynı sıra) + Esc.
+ * Oyun içi Menu (Ömer 2026-10-08): sağ üstte Menu ikon düğmesi (sıranın en sağı; tam ekran solunda) + Esc.
  * Savaş (hızlı / sefer / multiplayer), takım seçimi ve multiplayer ekranlarında görünür; ana menüde yok, sefer haritası kendi menüsünü
  * kullanır (aynı düğme: `mountMenuToggle`). İçerik `menuItems(ctx)` (saf, `src/game/session-flow.ts`): Resume / Codex / Settings / Leave / Main Menu
  * (bağlama göre); devam eden savaştan çıkış onay ister. Menü açıkken savaş durur (wiki gibi).
  */
 
-/** Sağ üst simge sırasındaki "Menu" düğmesi (wiki ve tam ekranın solunda). */
+/**
+ * Sağ üst "Menu" ikon düğmesi (Ömer 2026-10-14, ikon taslağı D): üç ince altın çizgi, ortadakinde küçük kor elmas; tam ekranla AYNI kare
+ * (src/ui/nav-icons.ts). Sıranın en sağında; görünürken tam ekran bir adım sola kayar (`html.menu-btn-on`, style.css).
+ */
 export function mountMenuToggle(root: HTMLElement, onClick: () => void, cls = ''): HTMLButtonElement {
   const b = document.createElement('button');
   b.type = 'button';
-  b.className = `settings-toggle menu-toggle ${cls}`.trim();
-  b.textContent = 'Menu';
+  b.className = `nav-btn settings-toggle menu-toggle ${cls}`.trim();
+  b.innerHTML = navSvg('menu');
   b.title = 'Menu (Esc)';
-  b.setAttribute('aria-label', 'Menu');
+  b.setAttribute('aria-label', 'Menu (Esc)');
   b.addEventListener('click', onClick);
   b.addEventListener('mouseup', (e) => e.preventDefault()); // bırakma alttaki Phaser sahnesine gitmesin
-  placeMenuToggle(root, b);
   root.append(b);
   return b;
 }
 
-/** Tam ekran düğmesi yoksa (iPhone ana ekran / API yok) Menu bir adım sağa kayar. */
-function placeMenuToggle(root: HTMLElement, b: HTMLElement): void {
-  const fs = root.querySelector<HTMLElement>('.fullscreen-toggle');
-  const fsShown = !!fs && !fs.hidden && getComputedStyle(fs).display !== 'none';
-  b.classList.toggle('no-fs', !fsShown);
+/** Menu düğmesi görünür mü: tam ekran düğmesi onun soluna geçer (style.css > html.menu-btn-on). */
+function markMenuShown(on: boolean): void {
+  document.documentElement.classList.toggle('menu-btn-on', on);
 }
 
 export interface GameMenuHooks {
@@ -73,7 +74,7 @@ export class GameMenu {
   private lastCtx: FlowContext | null = null;
 
   constructor(
-    private readonly root: HTMLElement,
+    root: HTMLElement,
     private readonly hooks: GameMenuHooks,
   ) {
     this.toggle = mountMenuToggle(root, () => this.setOpen(!this.open), 'game-menu-toggle');
@@ -146,7 +147,7 @@ export class GameMenu {
     // sürekli stil hesabı demekti; Ömer 2026-10-11 performans denetimi)
     if (this.toggle.hidden !== !has) {
       this.toggle.hidden = !has;
-      if (has) placeMenuToggle(this.root, this.toggle);
+      markMenuShown(has);
     }
     const sceneChanged = this.lastCtx !== null && sceneOf(this.lastCtx) !== sceneOf(ctx);
     this.lastCtx = ctx;

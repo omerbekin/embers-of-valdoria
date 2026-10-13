@@ -9,6 +9,7 @@ import { isBackdropTap } from '../ui/backdrop';
 import { motion, MOTION } from '../ui/motion';
 import { uiSound, type UiSoundKind } from '../ui/ui-sound';
 import { screenGo } from './screen-go';
+import { backPlacement, NAV_BTN, NAV_COLOR, NAV_STROKE } from '../ui/nav-icons';
 
 /**
  * ZARİF TASARIM KİTİ (Phaser tarafı; Ömer 2026-10-09: ana menü + Quick Battle "Twin Formations" dili HER ekranda).
@@ -19,7 +20,7 @@ import { screenGo } from './screen-go';
  *  - elText / elBody / elGlow           yazılar (Cinzel / Garamond; parıltı = kor yazı gölgesi)
  *  - elDiamond, diamondPts, fadeLine, vGradient, hGradient   çizim parçaları
  *  - elLink                             kutusuz yazı düğmesi (Random, Clear, ◂ Back...)
- *  - elBack                             sol üst "◂ Back" (stageView'e yaslı; Esc'i çağıran bağlar)
+ *  - elBack                             sol üst geri ikonu "‹" (tam ekran / Menu ile aynı kare; stageView'e yaslı; Esc'i çağıran bağlar)
  *  - elButton  (primary | secondary)    çerçeveli düğme: primary = START (hazırken nefes alan kor), secondary = Random both
  *  - elIconButton                       küçük kare ikon (+ isteğe bağlı yazı) düğmesi
  *  - elPanel                            ince çerçeveli koyu panel / kart (köşe elmasları isteğe bağlı)
@@ -213,17 +214,90 @@ export function elLink(
   };
 }
 
+export interface ElNavButton {
+  /** Kök: (x, y) = 44 px dokunma alanının sol kenarı, dikey orta. Ölçeği her ekran boyutunda 1 CSS pikseline göre ayarlanır. */
+  root: Phaser.GameObjects.Container;
+  /** Dokunma alanı genişliği (oyun birimi; ekran boyutu değişince güncellenir). */
+  width: number;
+  setEnabled(on: boolean): void;
+  /** Yeni yere taşı (sol kenar = `left`, oyun birimi); verilmezse stageView.left. Kendi sahnesinin onStageResize'ında da çağrılır. */
+  place(left?: number): void;
+}
+
+const hex = (c: string): number => parseInt(c.slice(1), 16);
+
 /**
- * Sol üst "◂ Back" (ya da "◂ Menu"): kurulum ekranlarının ortak geri düğmesi. Sahnenin sol kenarına yaslanır (geniş ekranda da).
- * Esc tuşunu çağıran sahne bağlar (aynı `run`). CLAUDE.md > "Geri / Menu kuralı".
+ * Sol üst geri düğmesi (Ömer 2026-10-14, ikon taslağı D): yazısız ince altın "‹" çerçeveli kare ikon; sağ üstteki tam ekran ve Menu
+ * düğmeleriyle AYNI boy ve çerçeve (ölçüler `src/ui/nav-icons.ts > NAV_BTN`, CSS piksel; DOM eşi `.el-back`). Konum kuralı aynı:
+ * sağ üst Menu / tam ekranın aynası: üst ve sol kenardan NAV_BTN.edge px (`backPlacement`, global hiza kuralı). Esc tuşunu çağıran sahne bağlar (aynı `run`). CLAUDE.md > "Geri / Menu kuralı".
+ * `left` verilirse (kendi kamerasını kuran sahne) sol kenar odur.
  */
-export function elBack(scene: Phaser.Scene, run: () => void, o: { label?: string; isBusy?: () => boolean; depth?: number } = {}): ElLink {
-  const l = elLink(scene, `◂ ${o.label ?? 'Back'}`, run, { isBusy: o.isBusy, sound: 'back' });
-  l.root.setDepth(o.depth ?? 40).setY(56);
-  const place = () => l.root.setX(stageView.left + 48);
-  place();
-  onStageResize(scene, place);
-  return l;
+export function elBack(scene: Phaser.Scene, run: () => void, o: { isBusy?: () => boolean; depth?: number; left?: () => number; /** sahne her boyut değişiminde düğmeyi yeniden kuruyorsa true (dinleyici eklenmez) */ manual?: boolean } = {}): ElNavButton {
+  const root = scene.add.container(0, 0).setDepth(o.depth ?? 40);
+  const body = scene.add.container(0, 0);
+  root.add(body);
+  const { hit, frame, icon } = NAV_BTN;
+  const g = scene.add.graphics();
+  const zone = scene.add.zone(hit / 2, 0, hit, hit).setInteractive({ useHandCursor: true });
+  body.add([g, zone]);
+  let enabled = true;
+  let on = false;
+  const k = icon / 24;
+  const pt = (x: number, y: number) => ({ x: hit / 2 + (x - 12) * k, y: (y - 12) * k });
+  const [p0, p1, p2] = [pt(15, 4), pt(7, 12), pt(15, 20)]; // BACK_PATH (24x24)
+  const draw = () => {
+    g.clear();
+    const half = frame / 2;
+    // hafif gölge (DOM'daki drop-shadow karşılığı)
+    g.fillStyle(0x0c0805, 0.35).fillRect(hit / 2 - half, -half + 1, frame, frame + 2);
+    g.fillStyle(0x0c0906, 0.45).fillRect(hit / 2 - half, -half, frame, frame);
+    g.lineStyle(1, on ? hex(NAV_COLOR.hover) : 0xd9b26a, on ? 1 : 0.42).strokeRect(hit / 2 - half + 0.5, -half + 0.5, frame - 1, frame - 1);
+    const lw = NAV_STROKE * k;
+    const col = hex(on ? NAV_COLOR.hover : NAV_COLOR.line);
+    g.lineStyle(lw, col, enabled ? 1 : 0.45);
+    g.beginPath();
+    g.moveTo(p0.x, p0.y);
+    g.lineTo(p1.x, p1.y);
+    g.lineTo(p2.x, p2.y);
+    g.strokePath();
+    // yuvarlak uçlar ve köşe
+    g.fillStyle(col, enabled ? 1 : 0.45);
+    for (const p of [p0, p1, p2]) g.fillCircle(p.x, p.y, lw / 2);
+  };
+  draw();
+  zone.on('pointerover', () => {
+    if (o.isBusy?.() || !enabled) return;
+    on = true;
+    draw();
+    uiSound('hover');
+  });
+  zone.on('pointerout', () => {
+    on = false;
+    draw();
+  });
+  zone.on('pointerup', () => {
+    if (o.isBusy?.() || !enabled) return;
+    uiSound('back');
+    run();
+  });
+  const api: ElNavButton = {
+    root,
+    width: hit,
+    setEnabled(v: boolean) {
+      enabled = v;
+      on = false;
+      draw();
+    },
+    place(left?: number) {
+      const p = backPlacement(left ?? o.left?.() ?? stageView.left, stageView.cssScale);
+      body.setScale(p.scale);
+      root.setPosition(p.x, p.y);
+      api.width = hit * p.scale;
+    },
+  };
+  api.place();
+  if (!o.manual) onStageResize(scene, () => root.active && api.place());
+  return api;
 }
 
 export interface ElButton {

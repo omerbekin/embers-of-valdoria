@@ -1,38 +1,45 @@
 /* Mentor kutusu (sefer tutorial'ı; src/ui/lesson-box.ts). Kit dili: el-panel corners + Cinzel başlık + EB Garamond italik metin.
-   Oyun alanının üst ortasında (sıra çubuğunun altında), zemin yok: yalnızca kutu dokunulabilir. Ölçüler oyun birimiyle (--gu),
-   telefonda okunur alt sınırlarla. Vurgu (.tut-focus): gösterilen öğe nabız gibi atan altın çerçeve alır. */
+   Ömer 2026-10-14 (telefon geri bildirimi): kutu KÜÇÜK ve kenarda durur: oyun alanının sol üstünde, sıra çubuğunun altında ve solunda bir
+   şerit (savaşanların ve sıra çubuğunun üstüne binmez). Tek satır düzen: portre | başlık + metin | düğme (dikey yer yemesin). Düğme
+   diğer kit düğmeleriyle aynı boyda (secondary el-btn, 44 px dokunma hedefi; primary'nin büyük elmasları yok). Ölçüler oyun birimiyle (--gu);
+   telefon (html.short / html.compact, döndürülmüş sahnede @media yanlış ölçer) daha sıkı. Vurgu (.tut-focus): gösterilen öğe nabız gibi atan
+   altın çerçeve alır. */
 .tut-wrap {
   --u: var(--gu, 1px);
   position: fixed;
-  left: var(--el, 0px);
-  right: var(--er, 0px);
-  top: calc(var(--et, 0px) + max(64px, calc(168 * var(--u))));
+  left: calc(var(--el, 0px) + max(10px, calc(28 * var(--u))));
+  top: calc(var(--et, 0px) + max(56px, calc(176 * var(--u))));
   display: flex;
-  justify-content: center;
-  padding: 0 16px;
+  justify-content: flex-start;
   pointer-events: none;
   z-index: 26;
 }
 
+/* Gear: torbayı ve stat panelini kapatmasın: alt ortada (pencerenin düğme sırasının üstünde) */
 .tut-wrap.bottom {
+  left: var(--el, 0px);
+  right: var(--er, 0px);
   top: auto;
-  bottom: calc(var(--eb, 0px) + max(56px, calc(150 * var(--u))));
+  bottom: calc(var(--eb, 0px) + max(64px, calc(150 * var(--u))));
+  justify-content: center;
 }
 
 .tut-box {
   display: flex;
-  gap: max(10px, calc(20 * var(--u)));
-  align-items: flex-start;
-  width: min(100%, max(320px, calc(820 * var(--u))));
-  padding: max(10px, calc(18 * var(--u))) max(12px, calc(24 * var(--u)));
+  gap: max(8px, calc(16 * var(--u)));
+  align-items: center;
+  width: max(340px, calc(760 * var(--u)));
+  max-width: calc(1800 * var(--u)); /* sahne genişliğinden dar (vw döndürülmüş sahnede yanlış ölçer) */
+  padding: max(8px, calc(14 * var(--u))) max(10px, calc(18 * var(--u)));
   pointer-events: auto;
   animation: el-m-rise var(--m-modal-in, 200ms) var(--m-ease, ease-out) both;
 }
 
 .tut-face {
   flex: none;
-  width: max(52px, calc(112 * var(--u)));
-  height: max(52px, calc(112 * var(--u)));
+  align-self: flex-start;
+  width: max(40px, calc(84 * var(--u)));
+  height: max(40px, calc(84 * var(--u)));
   border: 1px solid rgba(217, 178, 106, 0.55);
   box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8);
   background: #140e09;
@@ -51,62 +58,126 @@
   min-width: 0;
 }
 
-.tut-who {
-  font: italic max(12px, calc(19 * var(--u))) / 1.2 var(--el-body);
-  color: var(--el-muted);
+.tut-head {
+  display: flex;
+  align-items: baseline;
+  gap: max(8px, calc(14 * var(--u)));
 }
 
 .tut-title {
-  margin-top: 2px;
-  font: 600 max(14px, calc(25 * var(--u))) / 1.2 var(--el-display);
+  flex: 1 1 auto;
+  min-width: 0;
+  font: 600 max(13px, calc(22 * var(--u))) / 1.2 var(--el-display);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   color: var(--el-on);
 }
 
+.tut-who {
+  margin-left: 0.6em;
+  font: italic max(11px, calc(17 * var(--u))) / 1.2 var(--el-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--el-muted);
+}
+
 .tut-text {
-  margin-top: max(4px, calc(8 * var(--u)));
-  font: italic max(15px, calc(26 * var(--u))) / 1.3 var(--el-body);
+  margin-top: max(2px, calc(5 * var(--u)));
+  font: italic max(13px, calc(23 * var(--u))) / 1.3 var(--el-body);
   color: var(--el-txt);
 }
 
-.tut-row {
+/* Sağ sütun: tek düğme (ya da zorunlu adımın bekleme yazısı) ve sayfa sayacı */
+.tut-side {
+  flex: none;
   display: flex;
-  align-items: center;
-  justify-content: flex-end;
-  gap: max(10px, calc(22 * var(--u)));
-  margin-top: max(8px, calc(14 * var(--u)));
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 2px;
 }
 
-.tut-off {
-  margin-right: auto;
-  min-height: 44px;
-  font: italic max(13px, calc(19 * var(--u))) var(--el-body);
+/* "Don't show again": sağ sütunun altında küçük yazı düğmesi; dokunma alanı 44 px (görünmez dolgu, satırı büyütmez) */
+.tut-off.el-link {
+  flex: none;
+  position: relative;
+  min-height: 0;
+  margin-top: 2px;
+  padding: 0;
+  font: italic max(11px, calc(17 * var(--u))) var(--el-body);
+  white-space: nowrap;
   color: var(--el-dim);
   background: none;
   border: 0;
   cursor: pointer;
 }
 
-.tut-off:hover {
+.tut-off::after {
+  content: '';
+  position: absolute;
+  inset: -14px -8px -6px;
+}
+
+.tut-off.el-link:hover {
   color: var(--el-note);
 }
 
 .tut-page {
   white-space: nowrap;
-  font: max(12px, calc(18 * var(--u))) var(--el-num);
+  font: max(11px, calc(16 * var(--u))) var(--el-num);
   color: var(--el-muted);
 }
 
 .tut-await {
-  font: italic max(13px, calc(20 * var(--u))) var(--el-body);
+  max-width: max(110px, calc(220 * var(--u)));
+  text-align: right;
+  font: italic max(12px, calc(19 * var(--u))) / 1.25 var(--el-body);
   color: var(--el-ember2);
   animation: tut-breathe 1.6s ease-in-out infinite;
 }
 
-.tut-ok {
-  min-width: max(96px, calc(170 * var(--u)));
+/* Kit secondary düğmesi (el-btn), diğer pencerelerle aynı dil; yalnızca dar */
+.tut-ok.el-btn {
+  min-width: max(84px, calc(150 * var(--u)));
   min-height: 44px;
+  height: 44px;
+  padding: 0 max(16px, calc(26 * var(--u))) 0 calc(max(16px, calc(26 * var(--u))) + 0.1em);
+  font-size: max(14px, calc(19 * var(--u)));
+}
+
+/* Telefon (kısa sahne): portre küçük, mentor adı gizli, daha dar dolgu */
+html.compact .tut-who,
+html.short .tut-who {
+  display: none;
+}
+
+html.short .tut-wrap:not(.bottom) {
+  top: calc(var(--et, 0px) + 50px);
+}
+
+html.short .tut-box,
+html.compact .tut-box {
+  width: min(400px, calc(1800 * var(--u)));
+  gap: 8px;
+  padding: 6px 10px 6px 8px;
+}
+
+html.short .tut-face,
+html.compact .tut-face {
+  width: 36px;
+  height: 36px;
+}
+
+html.short .tut-text,
+html.compact .tut-text {
+  font-size: 13px;
+  line-height: 1.25;
+}
+
+html.short .tut-ok.el-btn,
+html.compact .tut-ok.el-btn {
+  min-width: 72px;
+  font-size: 13px;
+  padding: 0 14px 0 calc(14px + 0.1em);
 }
 
 .tut-focus {

@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { installLoopGuard } from './ui/loop-guard';
 import layout from '../data/battle-layout.json';
 import type { BattleScene } from './game/scenes/BattleScene';
 import { MainMenuScene } from './game/scenes/MainMenuScene';
@@ -95,6 +96,8 @@ const game = new Phaser.Game({
   loader: { maxParallelDownloads: 64 },
   scene: sceneList(firstScene, MainMenuScene),
 });
+// Bir karedeki tek bir hata Phaser döngüsünü kalıcı durdurmasın (0.7.7 Ashford donması; src/ui/loop-guard.ts). Döngü başlamadan sarılır.
+installLoopGuard(game.loop as unknown as Parameters<typeof installLoopGuard>[0]);
 
 mp.attachGame(game);
 

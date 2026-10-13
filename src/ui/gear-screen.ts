@@ -41,7 +41,7 @@ import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 import type { Stats } from '../engine';
 import { avatarUrl, className, renderCharacter } from './character-panel';
-import { renderInventory } from './inventory';
+import { renderInventory, snapBagRows } from './inventory';
 import { itemTipNodes, type ItemTipLine } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { heroItemLine } from './gear-hover';
@@ -499,7 +499,10 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       renderAll();
     }), inv] : [inv]));
     const g = invWrap.querySelector<HTMLElement>('.gr-bag');
-    if (g) g.scrollTop = scroll;
+    if (g) {
+      snapBagRows(g);
+      g.scrollTop = scroll;
+    }
   }
   function renderFoot(): void {
     const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText);

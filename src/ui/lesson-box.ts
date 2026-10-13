@@ -32,6 +32,8 @@ export interface LessonHandle {
 
 interface Pending {
   card: LessonCard;
+  /** Kartın dersi (dismissLesson için). */
+  lesson?: string;
   onClose?: () => void;
   handle: { closed: boolean; done: () => void };
 }
@@ -69,10 +71,11 @@ function render(p: Pending): void {
     face.append(img);
   }
   const main = el('div', 'tut-main');
-  const who = el('div', 'tut-who', `${MENTOR.name} · ${MENTOR.title}`);
+  // Başlık (+ masaüstünde mentor adı), altında 1-2 satır metin; sağ sütunda tek düğme (ya da bekleme yazısı), sayfa sayacı, "Don't show again"
+  const head = el('div', 'tut-head');
   const title = el('div', 'tut-title', p.card.title);
+  title.append(el('span', 'tut-who', `${MENTOR.name} · ${MENTOR.title}`));
   const text = el('div', 'tut-text', p.card.text);
-  const row = el('div', 'tut-row');
   const off = el('button', 'el-link tut-off', "Don't show again");
   off.type = 'button';
   off.addEventListener('click', () => {
@@ -80,20 +83,22 @@ function render(p: Pending): void {
     closeAllLessons();
     for (const fn of offListeners) fn();
   });
-  row.append(off);
-  if (p.card.page) row.append(el('span', 'tut-page', p.card.page));
-  if (p.card.awaitText) row.append(el('span', 'tut-await', p.card.awaitText));
+  head.append(title);
+  const side = el('div', 'tut-side');
+  if (p.card.awaitText) side.append(el('span', 'tut-await', p.card.awaitText));
   else {
-    const ok = el('button', 'el-btn primary tut-ok', p.card.more ? 'Next' : 'Got it');
+    const ok = el('button', 'el-btn tut-ok', p.card.more ? 'Next' : 'Got it');
     ok.type = 'button';
     ok.addEventListener('click', () => {
       uiSound('select');
       p.handle.done();
     });
-    row.append(ok);
+    side.append(ok);
   }
-  main.append(who, title, text, row);
-  box.append(face, main);
+  if (p.card.page) side.append(el('span', 'tut-page', p.card.page));
+  side.append(off);
+  main.append(head, text);
+  box.append(face, main, side);
   wrap.append(box);
   // Fare bırakması alttaki Phaser sahnesine gitmesin (Phaser window mouseup'ı dinler, defaultPrevented olanı yok sayar)
   box.addEventListener('mouseup', (e) => e.preventDefault());
@@ -131,7 +136,7 @@ function pump(): void {
 }
 
 /** Kartı kuyruğa koyar (açık kutu yoksa hemen açılır). */
-export function showCard(card: LessonCard, onClose?: () => void): LessonHandle {
+export function showCard(card: LessonCard, onClose?: () => void, lesson?: string): LessonHandle {
   const handle = {
     closed: false,
     done: () => {
@@ -147,7 +152,7 @@ export function showCard(card: LessonCard, onClose?: () => void): LessonHandle {
       }
     },
   };
-  const p: Pending = { card, ...(onClose ? { onClose } : {}), handle };
+  const p: Pending = { card, ...(onClose ? { onClose } : {}), ...(lesson ? { lesson } : {}), handle };
   queue.push(p);
   pump();
   return handle;
@@ -157,7 +162,7 @@ export function showCard(card: LessonCard, onClose?: () => void): LessonHandle {
  * Serbest dersi gösterir (ayar açık ve daha görülmediyse): görüldü olarak işaretlenir (Codex > Lessons), sayfaları sırayla kuyruğa girer.
  * Gösterildiyse true. `force`: görülmüş olsa da göster (debug "Trigger lesson").
  */
-export function showLesson(id: string, o: { force?: boolean; onClose?: () => void } = {}): boolean {
+export function showLesson(id: string, o: { force?: boolean; onClose?: () => void; skill?: string } = {}): boolean {
   const l = lessonById(id);
   if (!l || (!o.force && (!tutorialsOn() || isLessonSeen(id)))) return false;
   markLessonSeen(id);
@@ -167,14 +172,34 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
       {
         title: pg.title ?? l.title,
         text: pg.text,
-        ...(pg.focus ? { focus: pg.focus } : {}),
+        ...(pg.focus ? { focus: focusFor(pg.focus, o.skill) } : {}),
         ...(l.place === 'bottom' ? { bottom: true } : {}),
         ...(pages.length > 1 ? { page: `${i + 1} / ${pages.length}`, more: i < pages.length - 1 } : {}),
       },
       i === pages.length - 1 ? o.onClose : undefined,
+      id,
     ),
   );
   return true;
+}
+
+/** Odak seçicisindeki {skill}: durumun skill'i (yoksa skill çubuğunun tamamı; debug "Trigger a lesson"). */
+function focusFor(focus: string, skill?: string): string {
+  if (!focus.includes('{skill}')) return focus;
+  return skill && /^[\w-]+$/.test(skill) ? focus.replace('{skill}', skill) : '.bh-skills';
+}
+
+/** Dersin açık / kuyruktaki kartlarını kapatır (oyuncu önerilen eylemi yaptı ya da karar geçti). Kapanış geri çağrıları çalışmaz. */
+export function dismissLesson(id: string): void {
+  for (let i = queue.length - 1; i >= 0; i--) if (queue[i]!.lesson === id) queue.splice(i, 1);
+  if (current?.p.lesson === id) {
+    current.p.handle.closed = true;
+    window.clearInterval(current.timer);
+    clearFocus();
+    current.root.remove();
+    current = null;
+    pump();
+  }
 }
 
 /** Dersi olmayan mentor sözü (açılış, yenilgi ipucu): ayar kapalıysa gösterilmez. */

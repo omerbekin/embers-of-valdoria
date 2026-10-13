@@ -31,6 +31,7 @@ import { applyVariantFiles } from '../game/sprite-variants';
 import './wiki.css';
 import { seenLessons } from '../tutorial/store';
 import { lessonEntryId } from './catalog';
+import { navSvg } from '../ui/nav-icons';
 
 export interface WikiHooks {
   /** Codex açıldı: oyun duraklatılır. */
@@ -210,7 +211,8 @@ export class WikiPanel {
     this.articleCol = h('article', { class: 'el-panel corners cx-article', attrs: { 'aria-live': 'polite' } });
     this.wideCol = h('div', { class: 'el-panel cx-wide', attrs: { hidden: '' } }, ...this.nav.flatMap((n) => (n.kind === 'asset' ? [n.asset.root] : [])));
 
-    const back = h('button', { class: 'el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back (Esc)' }, on: { click: () => this.setOpen(false) } }, h('span', { text: '◂ Back' }));
+    const back = h('button', { class: 'nav-btn el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back', title: 'Back' }, on: { click: () => this.setOpen(false) } });
+    back.innerHTML = navSvg('back'); // ortak geri ikonu (src/ui/nav-icons.ts)
     const body = h('div', { class: 'cx-body' }, h('aside', { class: 'cx-side' }, searchBox, navEl), this.listCol, this.articleCol, this.wideCol);
     this.overlay = h('div', { class: 'wk-overlay cx', attrs: { hidden: '', role: 'dialog', 'aria-label': 'Codex' } },
       h('div', { class: 'cx-bg', style: { 'background-image': `url("${castleHall}")` } }),

@@ -4,7 +4,7 @@
      .el-btn [.primary [.ready]]   çerçeveli düğme (secondary varsayılan; primary = START dili: altın çerçeve + kor elmaslar, :disabled soluk,
                                    .ready = nefes alan kor parıltısı)
      .el-link                       kutusuz yazı düğmesi (hover: önde kor elmas + parıltı + 4px sağa)
-     .el-back                       sol üst "◂ Back" (oyun alanının köşesi: --el / --et)
+     .el-back                       sol üst geri ikonu "‹" (+ .nav-btn; oyun alanının köşesi: --el / --et)
      .el-icon-btn                   küçük kare ikon / kısa yazı düğmesi
      .el-panel [.corners]           ince çerçeveli koyu panel / kart
      .el-title                      altın degradeli başlık (iki yanda süs çizgisi)
@@ -175,8 +175,7 @@
 }
 
 /* --- Kutusuz yazı düğmesi --- */
-.el-link,
-.el-back {
+.el-link {
   display: inline-flex;
   align-items: center;
   gap: 12px;
@@ -194,8 +193,7 @@
   transition: color 0.18s, text-shadow 0.18s;
 }
 
-.el-link::before,
-.el-back::before {
+.el-link::before {
   content: '';
   flex: none;
   width: 10px;
@@ -207,26 +205,22 @@
   transition: opacity 0.18s, transform 0.18s var(--el-ease);
 }
 
-.el-link > span,
-.el-back > span {
+.el-link > span {
   display: inline-block;
   transition: transform 0.18s var(--el-ease);
 }
 
-.el-link:hover:not(:disabled),
-.el-back:hover {
+.el-link:hover:not(:disabled) {
   color: var(--el-on);
   text-shadow: var(--el-glow);
 }
 
-.el-link:hover:not(:disabled)::before,
-.el-back:hover::before {
+.el-link:hover:not(:disabled)::before {
   opacity: 1;
   transform: rotate(45deg) scale(1);
 }
 
-.el-link:hover:not(:disabled) > span,
-.el-back:hover > span {
+.el-link:hover:not(:disabled) > span {
   transform: translateX(4px);
 }
 
@@ -244,20 +238,13 @@
 }
 
 .el-back {
-  /* Geri standardı: Phaser'daki elBack ile aynı yer ve ölçü (oyun birimi --gu: sol kenardan 48, dikey orta 56; Cinzel 21) */
+  /* Geri standardı (Ömer 2026-10-14, ikon taslağı D): yazısız "‹" ikonu, sağ üst tam ekran / Menu ile aynı kare (görünüm: style.css > .nav-btn;
+     düğmeye iki sınıf birden verilir: "nav-btn el-back"). Konum Phaser elBack ile aynı kural (src/ui/nav-icons.ts > backPlacement):
+     sol kenardan 48, dikey orta 56 oyun birimi (--gu), ama kenara en az 6 px. */
   position: absolute;
-  left: calc(var(--el, 0px) + 48 * var(--gu, 1px));
-  top: calc(var(--et, 0px) + 56 * var(--gu, 1px) - max(22px, 36 * var(--gu, 1px)));
-  min-height: max(44px, calc(72 * var(--gu, 1px)));
-  gap: calc(12 * var(--gu, 1px));
-  padding: 0 calc(14 * var(--gu, 1px)) 0 calc(6 * var(--gu, 1px));
-  font-size: max(11px, calc(21 * var(--gu, 1px)));
+  left: calc(var(--el, 0px) + var(--nav-edge, 6px));
+  top: calc(var(--et, 0px) + var(--nav-edge, 6px)); /* sağ üst Menu / tam ekranla aynı hiza (global kural, nav-icons.ts) */
   z-index: 2;
-}
-
-.el-back::before {
-  width: calc(10 * var(--gu, 1px));
-  height: calc(10 * var(--gu, 1px));
 }
 
 /* --- Küçük ikon / yazı düğmesi --- */

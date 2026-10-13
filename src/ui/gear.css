@@ -2569,3 +2569,60 @@ html.short .gr-slot {
 .gr-phone .gr-char .gr-slot-name {
   letter-spacing: 0;
 }
+
+/* ===== Yatay telefon düzeltmesi (Ömer 2026-10-14, tüccar CHARACTER ekran görüntüsü): kahraman şeridi ile yuvalar birbirine girmesin, stat
+   etiketleri kesilmesin, torbanın son satırı ortadan kesik görünmesin. Yalnızca html.short / .gr-phone (döndürülmüş sahnede de doğru). ===== */
+
+/* kaydırmalı torba tam satıra yuvarlanır (inventory.ts > snapBagRows); kaydırma satır başına yapışır */
+.gr-bag.snapped {
+  scroll-snap-type: y proximity;
+}
+
+.gr-bag.snapped > * {
+  scroll-snap-align: start;
+}
+
+/* tüccar, Character sekmesi: sağ sütun (kahraman şeridi + torba) sabit dar genişlikte, ince altın çizgiyle ayrık; torba 4 sütun (hücre >= 44 px) */
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1fr) clamp(272px, 33%, 330px);
+  column-gap: 14px;
+}
+
+.gr-shop.gr-phone.show-char .gr-right {
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--g-line, rgba(217, 178, 106, 0.16));
+}
+
+.gr-overlay .gr-shop.gr-phone.show-char .gr-inv .gr-bag {
+  --bag-cols: 4;
+}
+
+/* stats: 4 sütun x 4 satır, kısa etiketler TAM (DMG, M.ARM, CRIT, CDMG, ACC, HP+/t...), değer ve fark sağda */
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats,
+.gr-gear.gr-phone .gr-char .gr-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px 12px;
+}
+
+.gr-phone .gr-char .gr-stat {
+  overflow: visible;
+}
+
+.gr-phone .gr-char .gr-stat-k {
+  flex: 1 1 auto;
+  overflow: visible;
+  text-overflow: clip;
+  letter-spacing: 0.02em;
+}
+
+/* yuva kartları: ikon küçük, ad tek satır sığar */
+.gr-phone .gr-char .gr-slot .gr-silhouette,
+.gr-phone .gr-char .gr-slot > img {
+  flex: none;
+}
+
+/* tüccar, Wares sekmesi: torba 8 sütun, telefonda 3 tam satır sığar (7 sütunda 2,6 satır kalıyordu) */
+.gr-overlay .gr-shop.gr-phone.show-inv .gr-inv .gr-bag {
+  --bag-cols: 8;
+}

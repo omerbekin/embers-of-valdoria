@@ -6,7 +6,6 @@ import { ENDLESS } from './data';
 const pct = (r: number) => `${Math.round(r * 100)}%`;
 
 export const UI_TEXT = {
-  back: '◂  BACK',
   yes: 'Yes',
   no: 'No',
   mainMenu: 'Main Menu',

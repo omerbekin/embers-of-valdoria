@@ -1,5 +1,7 @@
+import { navSvg } from './nav-icons';
+
 /**
- * Tam ekran: sağ üstte düğme (ayar ve wiki düğmelerinin yanında), ayarlar menüsünde satır, debug menüsünde eylem.
+ * Tam ekran: sağ üstte düğme (her cihazda; Menu'nün solunda), ayarlar menüsünde satır, debug menüsünde eylem.
  * Fullscreen API (webkit önekli sürüm dahil) varsa kullanılır ve mümkünse yatay yön kilitlenir. iPhone Safari'de sayfa elementleri için
  * Fullscreen API yoktur: düğme yerine kısa bir ipucu ("Add to Home Screen for full screen") gösterilir. Desteklenmeyen yerde sessizce geçilir.
  */
@@ -138,34 +140,24 @@ export const IOS_HINT = 'Add to Home Screen for full screen';
 export const TOUCH_HINT = 'Tap the corner arrows for full screen';
 
 /**
- * Sağ üst tam ekran düğmesi. Destek 'none' ise eklenmez; 'ios' ise düğme ipucu gösterir ("Add to Home Screen for full screen");
- * ana ekrandan (standalone) açıldıysa hiç eklenmez. İlk açılışta dokunmatik cihazda kapatılabilir küçük bir ipucu çıkar (bir kez).
+ * Sağ üst tam ekran düğmesi (Ömer 2026-10-14: HER cihazda, masaüstünde de; sağ üst sırada Menu'nün hemen solunda, Menu yoksa köşede).
+ * Destek 'none' ise eklenmez; 'ios' ise düğme ipucu gösterir ("Add to Home Screen for full screen"); ana ekrandan (standalone) açıldıysa
+ * hiç eklenmez. İlk açılışta dokunmatik cihazda kapatılabilir küçük bir ipucu çıkar (bir kez). Görünüm: `nav-icons.ts` ortak ikon karesi.
  */
-/** Sağ üst tam ekran düğmesi yalnızca dokunmatik cihazda (Ömer 2026-10-09; masaüstünde Settings satırı ve debug girişi yeter). */
-export function wantsFullscreenButton(env: { coarse: boolean; maxTouchPoints: number }): boolean {
-  return env.coarse || env.maxTouchPoints > 0;
-}
-
-const svg = (d: string): string =>
-  `<svg viewBox="0 0 24 24" width="22" height="22" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square">${d}</svg>`;
-const FS_ENTER_SVG = svg('<path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6"/>');
-const FS_EXIT_SVG = svg('<path d="M9 3v6H3M21 9h-6V3M15 21v-6h6M3 15h6v6"/>');
-
 export function createFullscreenButton(root: HTMLElement): { setHint: (text: string) => void; support: FullscreenSupport } {
   const support = currentSupport();
   const noop = { setHint: () => {}, support };
   if (support === 'none' || isStandalone()) return noop;
-  if (!wantsFullscreenButton({ coarse: !!window.matchMedia?.('(pointer: coarse)').matches, maxTouchPoints: navigator.maxTouchPoints ?? 0 })) return noop;
 
   const btn = document.createElement('button');
-  btn.className = 'settings-toggle fullscreen-toggle';
+  btn.className = 'nav-btn settings-toggle fullscreen-toggle';
   btn.type = 'button';
   const label = support === 'ios' ? IOS_HINT : 'Fullscreen';
   btn.title = label;
   btn.setAttribute('aria-label', 'Fullscreen');
-  // Tasarım kiti (Ömer 2026-10-09): ince çizgili köşe simgesi (eski piksel ikonu yerine); girince içe dönük köşeler
+  // Tasarım kiti: ince çizgili köşe simgesi (src/ui/nav-icons.ts); girince içe dönük köşeler
   const paintIcon = (on: boolean): void => {
-    btn.innerHTML = on ? FS_EXIT_SVG : FS_ENTER_SVG;
+    btn.innerHTML = navSvg(on ? 'fs-exit' : 'fs-enter');
   };
   paintIcon(false);
 

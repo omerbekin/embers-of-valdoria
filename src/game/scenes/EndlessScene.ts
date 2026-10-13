@@ -50,7 +50,7 @@ import type { Stats } from '../../engine/types';
 import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { classAvatar, fitText } from '../menu-ui';
-import { EL, diamondPts, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elLink, elPanel, elScreenIn, elText, elTip, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
+import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elTip, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
 import { motion, MOTION } from '../../ui/motion';
 import { SlotDrag, makeDragGhost } from '../slot-drag';
 import { ensureGlow } from '../menu-ui';
@@ -492,7 +492,6 @@ export class EndlessScene extends Phaser.Scene {
       const k = Math.max(stageView.viewW / this.bg.width, H / this.bg.height);
       this.bg.setScale(k).setPosition(CX, H / 2);
     }
-    this.backBtn?.setX(stageView.left + 48);
   }
 
   private go(view: EndlessView): void {
@@ -585,8 +584,8 @@ export class EndlessScene extends Phaser.Scene {
     if (!this.valorMeter) {
       const root = document.getElementById('ui-root');
       if (!root) return;
-      const m = new ValorMeter({ scale: 3, label: true, where: 'camp', selfTip: true, onClick: () => this.openValor() });
-      m.el.classList.add('vl-corner', 'vl-low'); // sol üstteki ◂ Back'in altında
+      const m = new ValorMeter({ label: true, where: 'camp', selfTip: true, onClick: () => this.openValor() });
+      m.el.classList.add('vl-corner'); // sol üst bant, ◂ Back'in sağında (valor.css)
       root.append(m.el);
       this.valorMeter = m;
       const prev = rememberShown('valor', v);
@@ -1395,9 +1394,9 @@ export class EndlessScene extends Phaser.Scene {
 
   // ============================================================ çizim yardımcıları
 
-  /** Sol üst "◂ Back" (tasarım kiti; geri / menu kuralı CLAUDE.md). */
+  /** Sol üst geri ikonu (tasarım kiti: elBack; geri / menu kuralı CLAUDE.md). */
   private drawBack(): void {
-    this.backBtn = elLink(this, `◂ ${T.back.replace(/^[◂<\s]+/, '')}`, () => !this.confirm && this.back()).root.setDepth(20).setY(56);
+    this.backBtn = elBack(this, () => !this.confirm && this.back(), { depth: 20 }).root;
   }
 
   private add2<O extends Phaser.GameObjects.GameObject>(o: O): O {

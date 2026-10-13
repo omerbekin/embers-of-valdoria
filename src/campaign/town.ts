@@ -82,3 +82,13 @@ export function hotspotOffered(n: MapNode, h: TownHotspot): boolean {
 export function partySpots(n: number, o: { cx: number; feetY: number; gap: number }): Array<{ x: number; y: number }> {
   return Array.from({ length: n }, (_, i) => ({ x: o.cx + (i - (n - 1) / 2) * o.gap, y: o.feetY }));
 }
+
+/**
+ * Kasabadaki i. kahramanın bekleme animasyonu hangi kareden başlasın (yan yana duranlar aynı anda kıpırdamasın). Kare sayısını AŞMAZ:
+ * çoğu sınıfın bekleme görseli TEK karedir; eskiden `i % 2` verilirdi ve ikinci kahramanda Phaser var olmayan 2. kareyi okuyup hata
+ * fırlatıyordu (0.7.7 Ashford donması: hata oyun döngüsünü durdurdu; yeniden açılışta kasaba yarım çizildi, Farewell penceresi ve Menu yoktu).
+ */
+export function idleStartFrame(index: number, totalFrames: number): number {
+  const n = Math.floor(totalFrames);
+  return n > 1 ? Math.abs(Math.floor(index)) % n : 0;
+}

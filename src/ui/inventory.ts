@@ -165,3 +165,44 @@ export function renderInventory(v: InventoryView): HTMLElement {
   root.append(grid);
   return root;
 }
+
+/**
+ * Kaydırmalı torbanın görünür yüksekliğini TAM satıra yuvarlar (Ömer 2026-10-14, telefon: son satır ortadan kesik görünmesin): ızgaraya ayrılan
+ * yükseklikte kaç satır tam sığıyorsa o kadar gösterir, kalanı kaydırma ile gelir (satır başına yapışır, `.gr-bag.snapped`). Hepsi sığıyorsa dokunmaz.
+ * Ölçüm `offset*` ile (döndürülmüş sahnede de doğru). Ekran torbayı her çizdiğinde çağırır.
+ */
+export function snapBagRows(grid: HTMLElement): void {
+  grid.style.maxHeight = '';
+  grid.classList.remove('snapped');
+  if (!grid.isConnected) return;
+  watchSnap(grid);
+  const cells = [...grid.children] as HTMLElement[];
+  const first = cells[0];
+  if (!first || grid.scrollHeight <= grid.clientHeight + 1) return;
+  const next = cells.find((c) => c.offsetTop > first.offsetTop + 1);
+  if (!next) return;
+  const cs = getComputedStyle(grid);
+  const gap = parseFloat(cs.rowGap) || 0;
+  const pad = (parseFloat(cs.paddingTop) || 0) + (parseFloat(cs.paddingBottom) || 0);
+  const pitch = next.offsetTop - first.offsetTop;
+  const rows = Math.max(1, Math.floor((grid.clientHeight - pad + gap + 0.5) / pitch));
+  // alt dolgu kaydırma kabında içerikle örtüşür (sonraki satır görünür): yükseklik = üst dolgu + tam satırlar
+  grid.style.maxHeight = `${Math.floor((parseFloat(cs.paddingTop) || 0) + rows * pitch - gap)}px`;
+  grid.classList.add('snapped');
+}
+
+/** Ekran boyutu değişince (adres çubuğu, döndürme) yeniden yuvarlar: torbanın kabı (.gr-inv) izlenir; torba yeniden çizilince eski izleyici düşer. */
+const snapWatch = new WeakSet<HTMLElement>();
+function watchSnap(grid: HTMLElement): void {
+  const box = grid.parentElement;
+  if (!box || typeof ResizeObserver === 'undefined' || snapWatch.has(grid)) return;
+  snapWatch.add(grid);
+  let h = box.offsetHeight;
+  const ro = new ResizeObserver(() => {
+    if (!grid.isConnected) return ro.disconnect();
+    if (box.offsetHeight === h) return;
+    h = box.offsetHeight;
+    snapBagRows(grid);
+  });
+  ro.observe(box);
+}

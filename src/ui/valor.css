@@ -1,10 +1,12 @@
 /* Valor göstergesi ve savaş dışı diriltme penceresi (src/ui/valor-braziers.ts; Ömer 2026-10-13). Kit dili: koyu demir + kor, Cinzel etiket,
-   ince altın çizgi. Mangallar piksel art: tuval NEAREST büyütülür. */
+   ince altın çizgi. Mangallar boyalı görsel (assets/valor, Ömer 2026-10-14), yumuşak ölçek. Boyut TEK değişkende: --vl-h = kâse yüksekliği
+   (genişlik kare oranından; alevli kare kâsenin üstüne taşar, yerleşimi büyütmez). Görsel değişse de yerleşim aynı kalır. */
 .vl-meter {
+  --vl-h: 40px;
   display: inline-flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  gap: 2px;
+  gap: calc(var(--vl-h) * 0.22);
   padding: 0;
   margin: 0;
   background: none;
@@ -14,22 +16,100 @@
   line-height: 1;
 }
 
-.vl-meter .vl-cv {
-  display: block;
-  image-rendering: pixelated;
-  image-rendering: crisp-edges;
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+.vl-brs {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--vl-h) * 0.08);
 }
 
-.vl-meter.vl-ready .vl-cv {
-  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 6px rgba(255, 140, 50, 0.45));
+.vl-br {
+  position: relative;
+  display: block;
+  flex: none;
+  width: calc(var(--vl-h) * 1.055);
+  height: var(--vl-h);
+}
+
+.vl-br > img {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: auto;
+}
+
+.vl-br > .vl-img {
+  height: 100%;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+  transition: filter 0.2s;
+}
+
+/* alevli kare (diriltme hazır): kâseyle aynı taban ve genişlik, yalnızca yukarı uzar */
+.vl-br > .vl-flame {
+  height: auto;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  transition: opacity 0.25s;
+  filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.55));
+}
+
+.vl-br.on > .vl-flame {
+  opacity: 1;
+  animation: vl-flicker 1.6s ease-in-out infinite alternate;
+}
+
+.vl-br.on > .vl-img {
+  opacity: 0;
+}
+
+/* yeni tutuşan korun mangalı kısa parlar */
+.vl-br.vl-flash > .vl-img {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75)) brightness(1.7) drop-shadow(0 0 6px rgba(255, 179, 90, 0.8));
+  transition: none;
+}
+
+@keyframes vl-flicker {
+  0% {
+    transform: scale(1, 1);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.16) rgba(255, 140, 50, 0.5)) brightness(1);
+  }
+  50% {
+    transform: scale(1.015, 1.035);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.22) rgba(255, 150, 60, 0.6)) brightness(1.08);
+  }
+  100% {
+    transform: scale(0.995, 0.99);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.5)) brightness(0.97);
+  }
+}
+
+html.reduced-motion .vl-br.on > .vl-flame {
+  animation: none;
+}
+
+/* savaş bedeli çentiği: bedel korunun mangalının altında küçük altın çizgi; eşik dolunca kor rengi */
+.vl-notch {
+  position: absolute;
+  bottom: calc(var(--vl-h) * -0.1);
+  width: 2px;
+  height: calc(var(--vl-h) * 0.16);
+  margin-left: -1px;
+  background: #e8c47e;
+  box-shadow: 0 0 0 1px rgba(16, 11, 7, 0.9);
+}
+
+.vl-meter.vl-ready .vl-notch {
+  background: var(--el-ember2, #ffb35a);
 }
 
 .vl-meter .vl-lbl {
-  font: 600 13px var(--el-display, serif);
-  letter-spacing: 0.22em;
+  font: 600 11px var(--el-display, serif);
+  letter-spacing: 0.2em;
   text-transform: uppercase;
   color: var(--el-muted, #a8977a);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
 }
 
 .vl-meter.vl-ready .vl-lbl {
@@ -57,34 +137,31 @@
   margin-top: 4px;
 }
 
-/* Haritada ve Endless'ta sol üst köşe (oyun alanı kenarı); Back düğmesinin sağında değil, altında */
+/* ===== Savaş dışı yerleşim (Ömer 2026-10-14): TEK kural, her ekranda aynı. Sol üst bant, ◂ Back'in (ya da haritada o köşenin) hemen sağında,
+   Back ile aynı dikey ortada; küçük, kutusuz ince şerit + yanında küçük "VALOR". Başlıklar ortada, kartlar/paneller bandın altında başlar:
+   hiçbir karta binmez. Kâse ~40 px masaüstü, ~26 px yatay telefon. ===== */
 .vl-corner {
+  --vl-h: max(30px, calc(44 * var(--gu, 1px)));
   position: absolute;
-  left: calc(22px + var(--el, 0px));
-  top: calc(14px + var(--et, 0px));
+  left: calc(var(--el, 0px) + max(64px, 112 * var(--gu, 1px)));
+  top: calc(var(--et, 0px) + 56 * var(--gu, 1px));
+  transform: translateY(-50%);
   z-index: 6;
-  padding: 8px 12px 6px;
-  background: linear-gradient(180deg, rgba(20, 14, 9, 0.82), rgba(10, 7, 5, 0.72));
-  border: 1px solid rgba(217, 178, 106, 0.3);
-  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.5);
-}
-
-.vl-corner.vl-low {
-  top: calc(96px + var(--et, 0px));
+  padding: 4px 12px 4px 8px;
+  background: linear-gradient(90deg, rgba(12, 9, 6, 0.62), rgba(12, 9, 6, 0.38) 70%, rgba(12, 9, 6, 0));
+  border-left: 1px solid rgba(217, 178, 106, 0.3);
 }
 
 html.short .vl-corner {
-  left: calc(8px + var(--el, 0px));
-  top: calc(6px + var(--et, 0px));
-  padding: 4px 6px 3px;
-}
-
-html.short .vl-corner.vl-low {
-  top: calc(52px + var(--et, 0px));
+  --vl-h: 30px;
+  left: calc(var(--el, 0px) + 60px);
+  top: calc(var(--et, 0px) + 22px);
+  padding: 2px 8px 2px 6px;
 }
 
 html.short .vl-corner .vl-lbl {
-  font-size: 10px;
+  font-size: 9px;
+  letter-spacing: 0.16em;
 }
 
 /* --- Savaş dışı diriltme penceresi (kit Diyalog) --- */
@@ -176,30 +253,37 @@ html.short .vl-note {
   margin-bottom: 6px;
 }
 
-/* Sefer haritası: sağ üstte, Menu düğmesinin altında */
-.vl-corner.vl-right {
-  left: auto;
-  right: calc(14px + var(--er, 0px));
-  top: calc(60px + var(--et, 0px));
-}
-
-html.short .vl-corner.vl-right {
-  right: calc(6px + var(--er, 0px));
-  top: calc(44px + var(--et, 0px));
-}
-
 .vl-meter[hidden] {
   display: none !important;
 }
 
-/* Kasaba ekranı (haritanın içinde): sağ üstte kale kapısı etiketi var, mangallar sol üste geçer */
-.vl-corner.vl-right.vl-town {
-  right: auto;
-  left: calc(14px + var(--el, 0px));
-  top: calc(14px + var(--et, 0px));
+/* Savaş HUD'ı (src/ui/battle-hud.ts > .bh-valor; oyun biriminde): mangallar üstte, küçük "VALOR" altta, alt çubukta dikey ortalı */
+.vl-meter.vl-stack {
+  flex-direction: column;
+  gap: 6px;
 }
 
-html.short .vl-corner.vl-right.vl-town {
-  left: calc(6px + var(--el, 0px));
-  top: calc(6px + var(--et, 0px));
+.vl-meter.vl-stack .vl-lbl {
+  font-size: 15px;
+}
+
+.bh-valor .vl-meter {
+  --vl-h: 60px;
+}
+
+/* telefonda HUD küçülür: mangal ve yazı oyun biriminde büyür (~30 px kâse, ~9 px yazı) */
+html.short .bh-valor .vl-meter {
+  --vl-h: 82px;
+  gap: 4px;
+}
+
+html.short .bh-valor .vl-meter .vl-lbl {
+  font-size: 24px;
+  letter-spacing: 0.14em;
+}
+
+/* Revive düğmesi / ipucu başlığı: alevli mangal karesi kare değil (uzun), ezilmeden sığar */
+.bh-gl .bh-ico,
+.bh-tt-ico {
+  object-fit: contain;
 }

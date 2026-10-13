@@ -416,114 +416,75 @@ body {
   border-color: #e39a88;
 }
 
-/* --- Sağ üst kontroller (Ömer 2026-10-09, tasarım kiti): kutusuz. Menu = "◂ Back" gibi hafif Cinzel yazı + kor elmas + ince altın alt çizgi;
-   tam ekran (yalnızca dokunmatik) = küçük ince çerçeveli köşe simgesi. Dokunma alanı en az 44 px. --- */
-.settings-toggle {
-  position: fixed;
-  top: calc(6px + var(--et));
-  right: calc(6px + var(--er));
+/* --- Gezinme ikon düğmeleri (Ömer 2026-10-14, ikon taslağı D): sol üst Back (.el-back), sağ üst tam ekran ve Menu AYNI kare.
+   Ölçüler TEK yerde: src/ui/nav-icons.ts > NAV_BTN (Phaser elBack da oradan okur; tests/nav-icons.test.ts bu sayıları denetler).
+   44 px dokunma alanı içinde 30 px ince altın çerçeve + ince çizgi simge. --- */
+:root {
+  --nav-hit: 44px;
+  --nav-frame: 30px;
+  --nav-icon: 18px;
+  --nav-edge: 6px;
+  --nav-gap: 4px;
+}
+
+.nav-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 44px;
-  height: 44px;
+  width: var(--nav-hit);
+  height: var(--nav-hit);
+  min-width: 0;
+  min-height: 0;
   padding: 0;
   color: #d9c8a2;
   background: transparent;
   border: 0;
   border-radius: 0;
   cursor: pointer;
-  transition: color 0.18s, text-shadow 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
-  z-index: 30;
+  filter: drop-shadow(0 1px 3px rgba(12, 8, 5, 0.9));
+  transition: color 0.18s;
   -webkit-tap-highlight-color: transparent;
 }
 
-.settings-toggle:hover,
-.settings-toggle:focus-visible {
-  color: #f3d999;
-}
-
-.settings-toggle[hidden] {
-  display: none;
-}
-
-.settings-toggle img {
-  width: 26px;
-  height: 26px;
-  image-rendering: pixelated;
-}
-
-/* Tam ekran: 30 px'lik ince altın çerçeve içinde çizgi simge (düğmenin dokunma alanı 44 px) */
-.settings-toggle.fullscreen-toggle {
-  right: calc(6px + var(--er));
-  filter: drop-shadow(0 1px 3px rgba(12, 8, 5, 0.9));
-}
-
-.settings-toggle.fullscreen-toggle::before {
+.nav-btn::before {
   content: '';
   position: absolute;
-  inset: 7px;
+  inset: calc((var(--nav-hit) - var(--nav-frame)) / 2);
   border: 1px solid rgba(217, 178, 106, 0.42);
   background: rgba(12, 9, 6, 0.45);
   transition: border-color 0.18s;
 }
 
-.settings-toggle.fullscreen-toggle:hover::before {
+.nav-btn:hover,
+.nav-btn:focus-visible {
+  color: #f3d999;
+}
+
+.nav-btn:hover::before,
+.nav-btn:focus-visible::before {
   border-color: #f3d999;
 }
 
-.settings-toggle.fullscreen-toggle svg {
+.nav-btn svg {
   position: relative;
-  width: 16px;
-  height: 16px;
+  width: var(--nav-icon);
+  height: var(--nav-icon);
 }
 
-/* Menu: kutusuz Cinzel yazı, önünde içi boş elmas (üstüne gelince kor), altında iki yana sönen ince altın çizgi */
-.settings-toggle.menu-toggle {
-  right: calc(54px + var(--er));
-  width: auto;
-  min-width: 44px;
-  gap: 10px;
-  padding: 0 12px 0 10px;
-  font: 600 15px Cinzel, Georgia, 'Palatino Linotype', serif;
-  letter-spacing: 0.16em;
-  text-transform: uppercase;
-  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95), 0 0 10px rgba(12, 8, 5, 0.7);
+.nav-btn[hidden] {
+  display: none;
 }
 
-.settings-toggle.menu-toggle::before {
-  content: '';
-  width: 7px;
-  height: 7px;
-  transform: rotate(45deg);
-  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.6);
-  background: rgba(12, 9, 6, 0.6);
-  transition: background 0.18s, box-shadow 0.18s;
+/* Sağ üst sıra (sağdan sola): Menu (yalnızca oyun içinde), tam ekran. Menu görünmüyorsa tam ekran köşeye oturur. */
+.settings-toggle {
+  position: fixed;
+  top: calc(var(--nav-edge) + var(--et));
+  right: calc(var(--nav-edge) + var(--er));
+  z-index: 30;
 }
 
-.settings-toggle.menu-toggle::after {
-  content: '';
-  position: absolute;
-  left: 6px;
-  right: 6px;
-  bottom: 8px;
-  height: 1px;
-  background: linear-gradient(90deg, rgba(217, 178, 106, 0), rgba(217, 178, 106, 0.55) 30%, rgba(217, 178, 106, 0.55) 70%, rgba(217, 178, 106, 0));
-}
-
-.settings-toggle.menu-toggle.no-fs {
-  right: calc(6px + var(--er));
-}
-
-.settings-toggle.menu-toggle:hover,
-.settings-toggle.menu-toggle:focus-visible {
-  text-shadow: 0 0 14px rgba(240, 140, 40, 0.85), 0 2px 4px rgba(12, 8, 5, 0.95);
-}
-
-.settings-toggle.menu-toggle:hover::before,
-.settings-toggle.menu-toggle:focus-visible::before {
-  background: #e0702a;
-  box-shadow: 0 0 0 1px #ffb35a, 0 0 8px rgba(240, 140, 40, 0.7);
+html.menu-btn-on .settings-toggle.fullscreen-toggle {
+  right: calc(var(--nav-edge) + var(--nav-hit) + var(--nav-gap) + var(--er));
 }
 
 /* --- Menü ve ayarlar ekranı: ana menü / sefer menüsüyle aynı görsel dil (koyu deri panel, altın çerçeve, serif, bronz düğmeler).
@@ -891,7 +852,7 @@ html.settings-open .gm-overlay {
   visibility: hidden;
 }
 
-/* Sol üst "◂ Back": görünüm ve konum tasarım kitinden (src/ui/elegant.css > .el-back); burada yalnızca katman */
+/* Sol üst geri ikonu: görünüm ve konum tasarım kitinden (src/ui/elegant.css > .el-back); burada yalnızca katman */
 .st-back {
   z-index: 3;
 }
@@ -1441,7 +1402,7 @@ img[src$='#smooth'] {
   image-rendering: auto !important;
 }
 
-/* Show FPS (Settings > Gameplay; src/ui/fps-meter.ts): üst kenarda, sol üstteki "◂ Back"in sağında (Menu sağ üstte, sıra çubuğu ortada,
+/* Show FPS (Settings > Gameplay; src/ui/fps-meter.ts): üst kenarda, sol üstteki geri ikonunun sağında (Menu sağ üstte, sıra çubuğu ortada,
    alt çubuk altta: hiçbiriyle çakışmaz). Dokunmayı engellemez. Kit dili: ince altın kenar, koyu zemin, küçük yazı. */
 .fps-meter {
   position: fixed;

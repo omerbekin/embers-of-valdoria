@@ -35,7 +35,7 @@ import { openWiki } from '../../wiki/open';
 import { BODY_FONT, DISPLAY_FONT, menuStyle } from '../../ui/menu-style';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { markBootReady, setBootProgress } from '../../ui/boot-loader';
-import { EL, elButton, elDiamond, elGlow, elGo, elLink, elScreenIn, elText, elBody } from '../elegant-ui';
+import { EL, elBack, elButton, elDiamond, elGlow, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
 import { trackChunkLoad } from '../../ui/boot-loader';
 import type { LazySceneKey } from '../lazy-scenes';
 import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, initialView, moveSelection, type MenuItemKey, type MenuView } from '../main-menu-flow';
@@ -322,7 +322,6 @@ export class MainMenuScene extends Phaser.Scene {
     this.colX = menuColumnShift(left); // sütun ekranın soluna yaklaşır ama kenara yapışmaz (16:9'da 0)
     if (!this.tweens.isTweening(this.menuCol)) this.menuCol.setX(this.view === 'menu' ? this.colX : this.hiddenColX());
     if (this.panel && !this.tweens.isTweening(this.panel)) this.panel.setX(this.colX);
-    this.back.setX(left + 48);
     this.version?.setPosition(right - 34, H - 22);
     this.applyLook();
   }
@@ -552,10 +551,9 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweens.add({ targets: this.back, alpha: shown ? 1 : 0, duration: shown ? 400 : 200, delay: shown ? 500 : 0, onComplete: () => this.back.setVisible(shown) });
   }
 
-  /** Sol üst "◂ Back" (tasarım kiti: src/game/elegant-ui.ts > elLink; geri / menu kuralı CLAUDE.md). */
+  /** Sol üst geri ikonu (tasarım kiti: src/game/elegant-ui.ts > elBack; geri / menu kuralı CLAUDE.md). */
   private buildBack(): void {
-    const l = elLink(this, '◂ Back', () => this.ready() && this.goBack());
-    this.back = l.root.setPosition(stageView.left + 48, 56).setDepth(40).setAlpha(0).setVisible(false);
+    this.back = elBack(this, () => this.ready() && this.goBack()).root.setAlpha(0).setVisible(false);
   }
 
   /** Sağ alt köşede küçük sürüm yazısı (tasarım kiti: soluk EB Garamond italik; konum layoutStage'de, görünen alanın sağ kenarına göre). */

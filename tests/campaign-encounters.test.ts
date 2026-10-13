@@ -55,10 +55,11 @@ describe('sefer karşılaşmaları', () => {
     const w = at('3');
     const chief = battleSummary(w.battle).units.find((u) => u.side === 'enemy' && u.displayName === 'Bandit Chief')!;
     expect(chief.tier).toBe('elite');
-    expect(chief.maxHp).toBeGreaterThan(content.classes.warrior!.stats.hp);
     const m = at('1');
     const thug = battleSummary(m.battle).units.find((u) => u.side === 'enemy' && u.classId === 'warrior')!;
     expect(thug.maxHp).toBeLessThan(content.classes.warrior!.stats.hp);
+    // Watchtower şefi (tutorial kopyası, 2026-10-14 zayıflatıldı) yine de sıradan tutorial düşmanından sağlam
+    expect(chief.maxHp).toBeGreaterThan(thug.maxHp);
     // Arka plan önceliği: karşılaşma > düğüm > bölge; King's Bridge kendi arka planını kullanır, dosyası diskte var
     expect(at('9').plan.background).toBe('kings-bridge');
     expect(existsSync(join(__dirname, '..', 'assets', 'backgrounds', 'kings-bridge.webp'))).toBe(true);
@@ -111,7 +112,7 @@ describe('sefer karşılaşmaları', () => {
 describe('tutorial düşmanlarında ultimate yok (lockSkills), Bandit Chief ultimate\'ı geç gelir (initialCooldownBonus)', () => {
   const ULTS: Record<string, string> = Object.fromEntries(['warrior', 'cutthroat', 'archer'].map((c) => [c, content.classes[c]!.skills[3]!]));
   it('Mill Road, Ravenwood, Watchtower: normal düşmanların 4. yuva skill\'i kilitli; elit lider kilitsiz ama +1 başlangıç cooldown\'u; motora gider', () => {
-    for (const [node, enc] of [['1', 'mill_road_thugs'], ['2', 'ravenwood_pack'], ['3', 'watchtower_chief']] as const) {
+    for (const [node, enc] of [['1', 'mill_road_thugs'], ['2', 'ravenwood_pack'], ['3', 'watchtower_tutorial']] as const) {
       for (const u of ENCOUNTERS[enc]!.units) {
         if (u.tier) {
           expect(u.lockSkills, enc).toBeUndefined();

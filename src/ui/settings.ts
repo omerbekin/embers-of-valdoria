@@ -10,11 +10,12 @@ import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFulls
 import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
 import { onTutorialChange, setTutorialsOn, tutorialsOn } from '../tutorial/store';
+import { navSvg } from './nav-icons';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
  * SÜTUN görünümüyle aynı (MainMenuScene > Settings): arkadaki sahne kararıp bulanıklaşır, soldan sağa açılan gölge, altın "Settings" başlığı,
- * kutusuz serif satırlar (seçili satırın önünde kor rengi elmas + hafif parıltı), sağda değer/denetim, sol üstte "◂ Back".
+ * kutusuz serif satırlar (seçili satırın önünde kor rengi elmas + hafif parıltı), sağda değer/denetim, sol üstte geri ikonu.
  * Ölçüler oyun birimiyle (--gu: 1 mantıksal birimin CSS pikseli) ve sütun konumu ana menüyle aynı (--menu-x; src/ui/viewport.ts).
  * Klavye: yukarı/aşağı satır, sol/sağ ses, Enter seçer, Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
  * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, Sound Effects (savaş/skill sesleri; 2026-10-13), UI sounds;
@@ -194,9 +195,11 @@ export class SettingsScreen {
     });
     col.append(dev);
 
-    // Geri standardı (CLAUDE.md > Geri / Menu kuralı): her yerde aynı sol üst "◂ Back" (src/ui/elegant.css > .el-back)
-    const back = el('button', 'el-back st-back');
-    back.append(el('span', '', '◂ Back'));
+    // Geri standardı (CLAUDE.md > Geri / Menu kuralı): her yerde aynı sol üst geri ikonu (src/ui/elegant.css > .el-back, nav-icons.ts)
+    const back = el('button', 'nav-btn el-back st-back');
+    back.innerHTML = navSvg('back');
+    back.title = 'Back';
+    back.setAttribute('aria-label', 'Back');
     back.type = 'button';
     back.addEventListener('click', () => this.setOpen(false));
     this.overlay.append(col, back);

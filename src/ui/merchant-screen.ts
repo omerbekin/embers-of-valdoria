@@ -16,7 +16,7 @@ import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import type { Stats } from '../engine';
 import { avatarUrl, className, renderCharacter } from './character-panel';
-import { itemCell, renderInventory } from './inventory';
+import { itemCell, renderInventory, snapBagRows } from './inventory';
 import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap } from './gear-drop';
@@ -469,7 +469,10 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       renderAll();
     }), inv] : [inv]));
     const g = right.querySelector<HTMLElement>('.gr-bag');
-    if (g) g.scrollTop = scroll;
+    if (g) {
+      snapBagRows(g);
+      g.scrollTop = scroll;
+    }
   }
   function renderFoot(): void {
     const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || src.note || 'Drag a ware into your bag to buy it; drag a bag item onto the stall to sell it.');

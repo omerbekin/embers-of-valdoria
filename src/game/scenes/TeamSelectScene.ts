@@ -1112,7 +1112,6 @@ export class TeamSelectScene extends Phaser.Scene {
     if (!this.built) return;
     this.hideTip(true);
     this.layoutBackground();
-    this.menuLink?.setX(stageView.left + 48);
     for (const side of SIDES) this.sides[side].root.setX(this.sideX(side));
     const ax = stageView.right - START.right - (this.startUi?.w ?? 0) / 2;
     this.startUi?.root.setX(ax);

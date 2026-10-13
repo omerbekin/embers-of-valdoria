@@ -194,6 +194,19 @@
       "lateHoldMs": 250,
       "hitHoldMs": 260
     },
+    "hitReaction": {
+      "_not": "Darbe tepkisi 3 kademe (Ömer 2026-10-14: '1 hasar ile 50 hasar aynı animasyon'; yalnızca sunum, motor aynı; saf hesap src/game/hit-reaction.ts, testler tests/hit-reaction.test.ts). Oran = hasar / hedefin maks canı. light: oran < lightBelow ya da hasarın tamamını kalkan emdi; medium: lightBelow..heavyAbove; heavy: oran > heavyAbove. Kritik bir kademe yükseltir (critBump). Çok vuruşlu skill'de (aynı hedefe birden çok darbe: Double Strike, hitsAtCenter) son darbe dışındakiler en çok multiHitCap; durum / zemin tiki (Wither, zemin) en çok tickCap. Kademe alanları (ms ham, skillSlowdown ile çarpılır): pose = v2 poz gövdesinde darbe pozu (false = poz değişmez, yalnızca geri tepme + parlama), poseMs = darbe pozunun toplam görünme süresi, flash = ilk parlama rengi, flashMs süresi, tint = parlamadan sonra kısa kırmızı (null = yok) ve tintMs, recoilPx / recoilMs = görselin saldırandan geriye itilip yaylanması, knockPx / knockMs = tüm birimin (çubuklar dahil) geri savrulup dönmesi (0 = yok), leanMult / crouchMult = poses.json > hitRecoil eğilme / çökme çarpanı (tek görselli mob ve çağrılarda leanDeg varsayılanı singleLeanDeg), dust = ayak dibinde toz. shake = ekran sarsıntısı yalnızca heavy kademede ve oran >= minRatio iken, skill kullanımı başına en çok bir kez; Reduced motion ve Performance mode'da sarsıntı ve toz yok.",
+      "lightBelow": 0.08,
+      "heavyAbove": 0.25,
+      "critBump": 1,
+      "multiHitCap": "medium",
+      "tickCap": "medium",
+      "singleLeanDeg": 4,
+      "light": { "pose": false, "poseMs": 0, "flash": "#ffe0d8", "flashMs": 60, "tint": null, "tintMs": 0, "recoilPx": 4, "recoilMs": 140, "knockPx": 0, "knockMs": 0, "leanMult": 0.3, "crouchMult": 0.25, "dust": false },
+      "medium": { "pose": true, "poseMs": 530, "flash": "#ffffff", "flashMs": 110, "tint": null, "tintMs": 0, "recoilPx": 22, "recoilMs": 280, "knockPx": 0, "knockMs": 0, "leanMult": 0.9, "crouchMult": 0.9, "dust": false },
+      "heavy": { "pose": true, "poseMs": 880, "flash": "#ffffff", "flashMs": 190, "tint": "#ff6a6a", "tintMs": 260, "recoilPx": 50, "recoilMs": 440, "knockPx": 40, "knockMs": 130, "leanMult": 1.8, "crouchMult": 1.6, "dust": true },
+      "shake": { "minRatio": 0.35, "ms": 220, "intensity": 0.0045 }
+    },
     "attackLungeDistance": 220,
     "attackDurationMs": 180,
     "hitFlashMs": 90,

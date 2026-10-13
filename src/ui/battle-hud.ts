@@ -506,7 +506,8 @@ export class BattleHud {
     }
     if (!this.valorMeter) {
       // Savaşta diriltme bedeli battleCost: alev/ışıma yalnızca o eşikte, mangalda bedel çentiği (Ömer 2026-10-13 form valor2)
-      this.valorMeter = new ValorMeter({ scale: 3, label: true, readyAt: valorRules.revive.battleCost, marker: valorRules.revive.battleCost });
+      this.valorMeter = new ValorMeter({ label: true, readyAt: valorRules.revive.battleCost, marker: valorRules.revive.battleCost });
+      this.valorMeter.el.classList.add('vl-stack');
       this.valorBox.append(this.valorMeter.el);
     }
     if (tip) {

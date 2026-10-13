@@ -6,7 +6,14 @@
 import data from '../../data/tutorial.json';
 
 export type ForcedAwait = 'next' | 'skill' | 'target';
-export type BattleWhen = 'start' | 'turn' | 'skill' | 'status' | 'ground' | 'boss';
+/**
+ * Savaş dersinin tetik durumu (Ömer 2026-10-14: Mill Road'dan sonra her ders DURUMLA tetiklenir; saf tespit src/tutorial/situations.ts).
+ * start = yalnızca ilk savaşın zorunlu adımları. Karar başı (sırası gelen kahraman için): rest, move, skip, ultimate, spent, status, ground,
+ * telegraph. Skill seçilince: reach, area.
+ */
+export type BattleWhen = 'start' | 'rest' | 'move' | 'skip' | 'ultimate' | 'spent' | 'status' | 'ground' | 'telegraph' | 'reach' | 'area';
+/** Eylem dersini tamamlayan oyuncu eylemi (yoksa ders bilgi dersidir: bir kez gösterilince biter). */
+export type LessonAction = 'rest' | 'move' | 'skip' | 'ultimate';
 export type LessonScreen = 'town' | 'merchant' | 'company' | 'map' | 'event' | 'gear' | 'endless' | 'valor';
 
 export interface LessonPage {
@@ -17,12 +24,9 @@ export interface LessonPage {
 }
 
 export interface BattleTrigger {
+  /** Yalnızca zorunlu adımlar: ilk savaşın düğümü. */
   node?: string[];
-  region?: string[];
   when: BattleWhen;
-  turn?: number;
-  skill?: 'melee' | 'area';
-  fallbackTurn?: number;
 }
 
 export interface ScreenTrigger {
@@ -42,6 +46,8 @@ export interface Lesson {
   focus?: string;
   pages?: LessonPage[];
   forced?: ForcedAwait;
+  /** Eylem dersi: oyuncu bu eylemi yapınca tamamlanır (yapmazsa durum yeniden oluşunca, en çok actionRepeats savaşta, yeniden çıkar). */
+  done?: LessonAction;
   /** Kutunun yeri: üst orta (varsayılan) ya da alt (Gear: torbayı kapatmasın). */
   place?: 'top' | 'bottom';
   trigger: { battle?: BattleTrigger; screen?: LessonScreen; node?: string[]; after?: string; minParty?: number };
@@ -54,6 +60,8 @@ export interface TutorialData {
   groups: string[];
   lessons: Lesson[];
   defeatHints: { regions: string[]; minDefeats: number; byEncounter: Record<string, string>; default: string };
+  /** Eylem dersi tamamlanmadan en çok kaç savaşta gösterilir. */
+  actionRepeats: number;
 }
 
 export const TUTORIAL = data as unknown as TutorialData;
@@ -86,49 +94,49 @@ export interface BattleLessonCtx {
   defeats: number;
 }
 
-/** O anki savaş durumu (BattleScene her oyuncu kararında ve skill seçiminde doldurur). */
-export interface BattleMoment {
-  /** Bu savaşta kaçıncı oyuncu kararı (1'den). */
-  turn: number;
-  /** Oyuncu az önce bir skill seçti (yalnızca seçim anında). */
-  skill?: { melee: boolean; area: boolean };
-  hasStatus: boolean;
-  hasGround: boolean;
-  hasBoss: boolean;
+/** Şu an oluşan bir durum (saf tespit: src/tutorial/situations.ts). `skill`: dersin göstereceği skill (odak seçicisindeki {skill}). */
+export interface Situation {
+  when: BattleWhen;
+  skill?: string;
 }
 
-const placeMatches = (t: BattleTrigger, ctx: BattleLessonCtx): boolean =>
-  (!t.node || t.node.includes(ctx.node)) && (!t.region || t.region.includes(ctx.region)) && (!!t.node || !!t.region);
-
-function whenMatches(t: BattleTrigger, m: BattleMoment): boolean {
-  if (t.fallbackTurn !== undefined && !m.skill && m.turn >= t.fallbackTurn) return true;
-  switch (t.when) {
-    case 'start':
-      return !m.skill && m.turn >= 1;
-    case 'turn':
-      return !m.skill && m.turn >= (t.turn ?? 1);
-    case 'skill':
-      return !!m.skill && (t.skill === 'melee' ? m.skill.melee : t.skill === 'area' ? m.skill.area : true);
-    case 'status':
-      return !m.skill && m.hasStatus;
-    case 'ground':
-      return !m.skill && m.hasGround;
-    case 'boss':
-      return !m.skill && m.hasBoss;
-  }
+/** Ders ilerlemesi: görülen (Codex), tamamlanan eylem dersleri, eylem dersinin gösterildiği savaş sayısı, bu savaşta gösterilenler. */
+export interface LessonProgress {
+  seen: ReadonlySet<string>;
+  done: ReadonlySet<string>;
+  shows: (id: string) => number;
+  thisBattle: ReadonlySet<string>;
 }
 
-/** Şimdi gösterilecek serbest (zorunlu olmayan) dersler, veri sırasıyla. Görülenler ve zorunlu adımlar hariç. */
-export function dueBattleLessons(ctx: BattleLessonCtx, m: BattleMoment, seen: ReadonlySet<string>): Lesson[] {
-  return LESSONS.filter((l) => {
+/** Ders bitti mi: bilgi dersi bir kez görülünce; eylem dersi eylem yapılınca ya da actionRepeats savaşta gösterilince. */
+export function lessonComplete(l: Lesson, p: Pick<LessonProgress, 'seen' | 'done' | 'shows'>): boolean {
+  if (!l.done) return p.seen.has(l.id);
+  return p.done.has(l.id) || p.shows(l.id) >= TUTORIAL.actionRepeats;
+}
+
+/** Ders tetiklenen (durum dersi) bir savaşta mı: ilk savaş (açılış düğümü) adım adım senaryodur, orada durum dersi çıkmaz. */
+export function situationLessonsIn(ctx: BattleLessonCtx): boolean {
+  return ctx.node !== TUTORIAL.opening.node;
+}
+
+/**
+ * Şimdi gösterilecek TEK durum dersi (veri sırası = öncelik) ve göstereceği skill; yoksa null. Bitmiş, bu savaşta zaten gösterilmiş,
+ * zorunlu ya da durumu oluşmamış dersler atlanır. Aynı anda birden çok durum varsa yalnızca ilki: oyuncu her kararda en çok bir yeni şey okur.
+ */
+export function dueBattleLesson(ctx: BattleLessonCtx, found: readonly Situation[], p: LessonProgress): { lesson: Lesson; skill?: string } | null {
+  if (!situationLessonsIn(ctx) || !found.length) return null;
+  for (const l of LESSONS) {
     const t = l.trigger.battle;
-    return !!t && !l.forced && !seen.has(l.id) && placeMatches(t, ctx) && whenMatches(t, m);
-  });
+    if (!t || l.forced || p.thisBattle.has(l.id) || lessonComplete(l, p)) continue;
+    const hit = found.find((f) => f.when === t.when);
+    if (hit) return { lesson: l, ...(hit.skill ? { skill: hit.skill } : {}) };
+  }
+  return null;
 }
 
 /** İlk savaşın zorunlu adımları (sırayla; görülmüş olanlar dahil değil). */
 export function forcedSteps(ctx: BattleLessonCtx, seen: ReadonlySet<string>): Lesson[] {
-  return LESSONS.filter((l) => !!l.forced && !!l.trigger.battle && placeMatches(l.trigger.battle, ctx) && !seen.has(l.id));
+  return LESSONS.filter((l) => !!l.forced && !!l.trigger.battle?.node?.includes(ctx.node) && !seen.has(l.id));
 }
 
 /** Açılış sözü (hikâye ile birleşik ilk savaş): yalnızca açılış düğümünde, zorunlu adımlar daha görülmemişse. */

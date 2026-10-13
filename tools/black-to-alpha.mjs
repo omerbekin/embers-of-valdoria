@@ -12,8 +12,8 @@ const NOISE = 6; // bunun altı siyah gürültü: tam saydam (kırpma kenarı te
 const SOFT = 70; // parlaklık alfası: (max kanal - NOISE) / (SOFT - NOISE)
 const DEPTH = 7; // zeminden bu kadar piksel içerisi tam opak
 
-/** Ham görsel yolu -> kırpılmış saydam PNG tamponu. */
-export async function blackToAlpha(file) {
+/** Ham görsel yolu (ya da tampon) -> kırpılmış saydam PNG tamponu. `trim: false` = kırpmadan (kareleri ortak kutuya hizalamak için; tools/make-valor-icons.mjs). */
+export async function blackToAlpha(file, { trim = true } = {}) {
   const { data, info } = await sharp(file).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const n = w * h;
@@ -69,5 +69,6 @@ export async function blackToAlpha(file) {
     out[i * 4 + 3] = Math.round(a * 255);
   }
   const png = await sharp(out, { raw: { width: w, height: h, channels: 4 } }).png().toBuffer();
+  if (!trim) return png;
   return sharp(png).trim({ background: { r: 0, g: 0, b: 0, alpha: 0 }, threshold: 1 }).png().toBuffer();
 }

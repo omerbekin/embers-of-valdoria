@@ -66,7 +66,7 @@ import {
 } from '../../campaign';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
 import { markLessonSeen, seenLessons } from '../../tutorial/store';
-import { closeAllLessons, showLesson } from '../../ui/lesson-box';
+import { closeAllLessons, dismissLesson, showLesson } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
@@ -87,7 +87,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, elBack, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
@@ -973,10 +973,8 @@ export class CampaignMapScene extends Phaser.Scene {
       [1, 0.8],
     ]);
     L.add(shade);
-    // Sol üst: ◂ Back (ana menüye; Menu > Main Menu ile aynı yer). Esc haritada Menu'yü açar: Back'in yanında "Esc" yazmaz.
-    const back = elLink(this, '◂ Back', () => this.leaveMap(), { size: this.compact() ? 26 : 21, sound: 'back', isBusy: () => this.inputBusy() });
-    back.root.setPosition(left + SIDE.left, 56);
-    if (this.compact()) this.growHit(back, 124);
+    // Sol üst: geri ikonu (ana menüye; Menu > Main Menu ile aynı yer). Esc haritada Menu'yü açar. renderHud her boyut değişiminde yeniden kurar.
+    const back = elBack(this, () => this.leaveMap(), { isBusy: () => this.inputBusy(), left: () => left, manual: true });
     L.add(back.root);
     // Üst orta: harita adı (Ömer 2026-10-12)
     L.add(elText(this, (left + right) / 2, 52, this.map.title, 34, '#ffffff', { em: 0.16 }).setOrigin(0.5, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f));
@@ -1324,7 +1322,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private valorMeter: ValorMeter | null = null;
 
   /**
-   * Valor mangalları sağ üstte (Menu'nün altında; Valdren Keep'ten sonra). Haritaya dönüşte (zafer sonrası) artış varsa korlar tek tek tutuşur.
+   * Valor mangalları sol üst bantta (her ekranda aynı yer; Valdren Keep'ten sonra). Haritaya dönüşte (zafer sonrası) artış varsa korlar tek tek tutuşur.
    * Dokununca savaş dışı diriltme penceresi.
    */
   private syncValor(): void {
@@ -1337,8 +1335,8 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!this.valorMeter) {
       const root = document.getElementById('ui-root');
       if (!root) return;
-      const m = new ValorMeter({ scale: 3, label: true, where: 'map', selfTip: true, onClick: () => this.openValor() });
-      m.el.classList.add('vl-corner', 'vl-right');
+      const m = new ValorMeter({ label: true, where: 'map', selfTip: true, onClick: () => this.openValor() });
+      m.el.classList.add('vl-corner'); // her ekranda aynı yer: sol üst bant (valor.css > .vl-corner)
       root.append(m.el);
       this.valorMeter = m;
       this.events.once('shutdown', () => {
@@ -1403,6 +1401,7 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(hero ? { hero } : {}),
       tutorial,
       onClose: () => {
+        dismissLesson('gear'); // Gear dersi Gear ekranıyla kapanır (haritada kalıp Farewell'in Continue düğmesini örtüyordu)
         this.renderHud();
         after?.();
       },

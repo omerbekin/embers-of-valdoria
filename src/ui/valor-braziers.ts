@@ -1,8 +1,10 @@
 // VALOR göstergesi (Ömer 2026-10-13, form valor/main): düz sayı DEĞİL. Prince of Persia'nın "Sands of Time" tankları gibi ama ortaçağ kor temasında:
 // yan yana iki demir mangal, her birinde perBrazier kor (data/valor.json > perBrazier); Valor arttıkça korlar tek tek yanar. Alev + ışıma = diriltme HAZIR:
-// yalnızca Valor >= o yerin bedeli iken (savaşta battleCost, savaş dışında outsideCost; Ömer 2026-10-13 form valor2: perBrazier 4 / savaş bedeli 6 iken
-// "dolu mangal = hazır" yanıltıyordu). Savaşta mangallarda bedel korunun altında küçük altın çentik (marker). Reduced motion = titreşim yok. Kodla çizilen piksel art (canvas, NEAREST büyütme), kit diline uygun koyu demir + kor.
-// Kullananlar: savaş HUD'ı (global sütunun üstü), sefer haritası (sol üst), Endless kamp / ödül / tüccar (sol üst) + savaş dışı diriltme penceresi.
+// yalnızca Valor >= o yerin bedeli iken (savaşta battleCost, savaş dışında outsideCost; Ömer 2026-10-13 form valor2: "dolu mangal = hazır" yanıltıyordu).
+// Savaşta bedel korunun mangalının altında küçük altın çentik (marker). Reduced motion = titreşim yok.
+// Görseller boyalı (Ömer 2026-10-14): assets/valor/brazier-0..4.webp (yanan kor sayısı) + brazier-ready.webp (alevli; kâse kutusunun üstüne taşar),
+// kesim `node tools/make-valor-icons.mjs` (asıl assets/source/valor/brazier-sheet.png). Yumuşak ölçek; boyut CSS'te (--vl-h = kâse yüksekliği).
+// Kullananlar: savaş HUD'ı (global sütunun sağı), sefer haritası ve Endless kamp / ödül / tüccar (üst bant, `.vl-corner`) + savaş dışı diriltme penceresi.
 import type { ValorRules } from '../engine/types';
 import { brazierFill } from '../engine/valor';
 import { valorRules } from '../engine/content';
@@ -13,216 +15,39 @@ import { reducedMotion } from './motion-pref';
 import { uiSound, worldSound } from './ui-sound';
 import './valor.css';
 
-/** Tek mangalın piksel ızgarası (genişlik x yükseklik) ve iki mangal arası boşluk. */
-const BW = 21;
-const BH = 31;
-const GAP = 5;
+const FILES = import.meta.glob('../../assets/valor/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const fileUrl = (name: string): string => FILES[`../../assets/valor/${name}.webp`] ?? '';
 
-const PAL = {
-  ironDark: '#17120e',
-  iron: '#2c241d',
-  ironMid: '#463a2f',
-  ironHi: '#7a6754',
-  rivet: '#a58c6c',
-  coalDark: '#1f1814',
-  coal: '#3a2c24',
-  coalHi: '#55443a',
-  emberDeep: '#9c2e12',
-  ember: '#e0602a',
-  emberHi: '#ffb35a',
-  emberCore: '#ffe6a0',
-  flameOut: '#d9481a',
-  flameMid: '#ff9a30',
-  flameIn: '#ffd774',
-  flameCore: '#fff6d2',
-};
+/** Mangal kareleri: kor sayısı (0..4) -> görsel adı; alevli (diriltme hazır) kare ayrı. */
+export const BRAZIER_FRAMES = ['brazier-0', 'brazier-1', 'brazier-2', 'brazier-3', 'brazier-4'] as const;
+export const BRAZIER_READY = 'brazier-ready';
 
-/** Korların mangal içindeki yerleri (sol üst piksel; 3x2): altta 3, üstte 2 (yığın). Sıra = yanma sırası. */
-const EMBER_SPOTS: Array<[number, number]> = [
-  [4, 15],
-  [9, 15],
-  [14, 15],
-  [6, 13],
-  [12, 13],
-  [9, 11],
-];
-
-function px(c: CanvasRenderingContext2D, x: number, y: number, w: number, h: number, col: string): void {
-  c.fillStyle = col;
-  c.fillRect(x, y, w, h);
+/** Görsel adresi (yoksa boş: gösterge yine çalışır, mangal yeri boş kalır). */
+export function brazierUrl(name: string): string {
+  return fileUrl(name);
 }
 
-/** Demir mangal: kâse (kenar, perçinler), ayak, üç bacak. */
-function drawBowl(c: CanvasRenderingContext2D, ox: number): void {
-  // kâse kenarı (rim)
-  px(c, ox + 1, 17, BW - 2, 1, PAL.ironHi);
-  px(c, ox + 0, 18, BW, 2, PAL.ironMid);
-  px(c, ox + 0, 18, 1, 2, PAL.ironDark);
-  px(c, ox + BW - 1, 18, 1, 2, PAL.ironDark);
-  // kâse gövdesi: daralan
-  const rows: Array<[number, number]> = [
-    [1, BW - 2],
-    [2, BW - 4],
-    [3, BW - 6],
-    [5, BW - 10],
-  ];
-  rows.forEach(([x, w], i) => {
-    px(c, ox + x, 20 + i, w, 1, PAL.iron);
-    px(c, ox + x, 20 + i, 1, 1, PAL.ironDark);
-    px(c, ox + x + w - 1, 20 + i, 1, 1, PAL.ironDark);
-  });
-  px(c, ox + 2, 20, BW - 4, 1, PAL.ironMid);
-  // perçinler
-  for (const rx of [4, 10, 16]) px(c, ox + rx, 21, 1, 1, PAL.rivet);
-  // ayak (stem) ve halka
-  px(c, ox + 9, 24, 3, 2, PAL.iron);
-  px(c, ox + 8, 26, 5, 1, PAL.ironMid);
-  // üç bacak (tripod)
-  const legs: Array<Array<[number, number]>> = [
-    [
-      [8, 27],
-      [7, 28],
-      [6, 29],
-      [5, 30],
-    ],
-    [
-      [10, 27],
-      [10, 28],
-      [10, 29],
-      [10, 30],
-    ],
-    [
-      [12, 27],
-      [13, 28],
-      [14, 29],
-      [15, 30],
-    ],
-  ];
-  for (const leg of legs) for (const [x, y] of leg) px(c, ox + x, y, 1, 1, y === 30 ? PAL.ironHi : PAL.iron);
-  px(c, ox + 4, 30, 2, 1, PAL.ironMid);
-  px(c, ox + 15, 30, 2, 1, PAL.ironMid);
+/** Bir mangalın görünümü: kor sayısına göre kare (perBrazier 4'ten farklıysa orana çevrilir), alev yalnızca hazırken. */
+export interface BrazierLook {
+  frame: (typeof BRAZIER_FRAMES)[number];
+  lit: number;
+  ready: boolean;
 }
 
-/** Tek kor (3x2 + üst ışık pikseli): yanmamış = kömür; yanan = kor; `flash` = yeni tutuşan (beyaz-sarı). */
-function drawEmber(c: CanvasRenderingContext2D, x: number, y: number, state: 'off' | 'on' | 'flash', shimmer: number): void {
-  if (state === 'off') {
-    px(c, x, y, 3, 2, PAL.coal);
-    px(c, x, y + 1, 3, 1, PAL.coalDark);
-    px(c, x + 1, y, 1, 1, PAL.coalHi);
-    return;
-  }
-  if (state === 'flash') {
-    px(c, x, y, 3, 2, PAL.emberHi);
-    px(c, x + 1, y, 1, 1, PAL.flameCore);
-    px(c, x, y + 1, 1, 1, PAL.emberCore);
-    px(c, x + 2, y + 1, 1, 1, PAL.emberCore);
-    return;
-  }
-  px(c, x, y, 3, 2, PAL.ember);
-  px(c, x, y + 1, 3, 1, PAL.emberDeep);
-  px(c, x + (shimmer % 3), y, 1, 1, PAL.emberHi);
-}
-
-/** Dolu mangalın alevi: üç dil, `f` karesine göre hafif oynar (f sabit = durağan). */
-function drawFlame(c: CanvasRenderingContext2D, ox: number, f: number): void {
-  const sway = [0, 1, 0, -1][f % 4]!;
-  const tall = [0, 1, 2, 1][f % 4]!;
-  const tongue = (cx: number, top: number, w: number, s: number): void => {
-    for (let y = top; y < 13; y++) {
-      const k = (y - top) / Math.max(1, 13 - top);
-      const half = Math.max(0, Math.round((w / 2) * Math.min(1, k * 1.4)));
-      const x = cx + (y < top + 3 ? s : 0);
-      px(c, ox + x - half, y, half * 2 + 1, 1, PAL.flameOut);
-      if (half >= 1) px(c, ox + x - half + 1, y, Math.max(1, half * 2 - 1), 1, PAL.flameMid);
-      if (half >= 2 && y > top + 2) px(c, ox + x - half + 2, y, Math.max(1, half * 2 - 3), 1, PAL.flameIn);
-    }
-    px(c, ox + cx + s, top, 1, 1, PAL.flameIn);
-  };
-  tongue(10, 2 - tall, 6, sway);
-  tongue(6, 6 + (f % 2), 4, -sway);
-  tongue(14, 6 + ((f + 1) % 2), 4, sway);
-  px(c, ox + 10, 10, 1, 2, PAL.flameCore);
-}
-
-/** Dolu mangalın piksel halesi (iki halka; kit paletinde sıcak kor). */
-function drawGlow(c: CanvasRenderingContext2D, ox: number, strength: number): void {
-  const a = Math.max(0, Math.min(1, strength));
-  c.save();
-  c.globalAlpha = 0.16 * a;
-  c.fillStyle = PAL.ember;
-  c.fillRect(ox - 1, 1, BW + 2, 20);
-  c.globalAlpha = 0.14 * a;
-  c.fillRect(ox + 2, -1, BW - 4, 24);
-  c.restore();
-}
-
-export interface PaintOpts {
-  /** Alev / kor titreşim karesi (sabit = durağan). */
-  frame?: number;
-  /** Yeni tutuşan kor (genel kor sırası 0..cap-1): beyaz-sarı parlar. */
-  flash?: number;
-  /** Dolu mangal ışıması (0-1). */
-  glow?: number;
-  /** Diriltme eşiği: Valor >= readyAt iken dolu mangallar alev alır ve ışır (yoksa perBrazier = her dolu mangal). */
-  readyAt?: number;
-  /** Bu kor sayısında (1..cap) mangalın gövdesine küçük çentik (savaşta battleCost); yoksa çentik yok. */
-  marker?: number;
-}
-
-/** Bedel çentiği: korun altında, kâse gövdesinde dikey altın çizgi (koyu kenarlı); eşik dolunca kor rengine döner. */
-function drawMarker(c: CanvasRenderingContext2D, x: number, lit: boolean): void {
-  px(c, x - 1, 20, 3, 4, PAL.ironDark);
-  px(c, x, 20, 1, 4, lit ? PAL.emberHi : '#e8c47e');
-  px(c, x, 20, 1, 1, lit ? PAL.flameCore : '#fff0c0');
-}
-
-/** Tuval boyutu (piksel ızgarası): mangal sayısı = ceil(cap / perBrazier). */
-export function canvasSize(rules: ValorRules = valorRules): { w: number; h: number; braziers: number } {
-  const n = brazierFill(rules, 0).embers.length;
-  return { w: n * BW + (n - 1) * GAP, h: BH, braziers: n };
-}
-
-/** Mangalları çizer (tuval canvasSize boyunda, piksel ızgarası 1:1; büyütme CSS'te NEAREST). */
-export function paintBraziers(c: CanvasRenderingContext2D, valor: number, rules: ValorRules = valorRules, o: PaintOpts = {}): void {
-  const { w, h } = canvasSize(rules);
-  c.clearRect(0, 0, w, h);
-  const fill = brazierFill(rules, valor);
+/** Saf: Valor -> mangal başına görünüm (`readyAt` = diriltme eşiği; dolu mangal alevi yalnızca Valor >= readyAt iken). */
+export function brazierLooks(valor: number, rules: ValorRules = valorRules, readyAt: number = rules.perBrazier): BrazierLook[] {
   const per = Math.max(1, rules.perBrazier);
-  const spots = EMBER_SPOTS.slice(0, per);
-  const f = o.frame ?? 0;
-  const ready = valor >= (o.readyAt ?? per);
-  const mk = o.marker !== undefined && o.marker >= 1 && o.marker <= rules.cap ? o.marker - 1 : -1;
-  fill.embers.forEach((lit, i) => {
-    const ox = i * (BW + GAP);
-    const full = lit >= per && ready;
-    if (full) drawGlow(c, ox, o.glow ?? 1);
-    drawBowl(c, ox);
-    if (mk >= 0 && Math.floor(mk / per) === i) drawMarker(c, ox + spots[mk % per]![0] + 1, ready);
-    spots.forEach(([x, y], k) => {
-      const idx = i * per + k;
-      drawEmber(c, ox + x, y + 1, o.flash === idx ? 'flash' : k < lit ? 'on' : 'off', f + k);
-    });
-    if (full) drawFlame(c, ox, f);
+  const max = BRAZIER_FRAMES.length - 1;
+  const ready = valor >= readyAt;
+  return brazierFill(rules, valor).embers.map((lit) => {
+    const k = per === max ? lit : lit >= per ? max : Math.min(max - 1, Math.ceil((lit / per) * max));
+    return { frame: BRAZIER_FRAMES[Math.max(0, Math.min(max, k))]!, lit, ready: lit >= per && ready };
   });
 }
 
-/** Tek dolu mangal ikonu (savaş HUD'ındaki Revive düğmesi; durağan kare). `lit` = alevli (diriltme hazır), değilse yalnızca korlar. Önbellekli data URL. */
-const iconCache = new Map<boolean, string>();
+/** Tek dolu mangal ikonu (savaş HUD'ındaki Revive düğmesi, ipucu başlığı). `lit` = alevli (diriltme hazır), değilse dolu kor karesi. */
 export function brazierIconUrl(lit = true): string {
-  const hit = iconCache.get(lit);
-  if (hit) return hit;
-  if (typeof document === 'undefined') return '';
-  const cv = document.createElement('canvas');
-  cv.width = BW + 4;
-  cv.height = BH + 2;
-  const c = cv.getContext('2d');
-  if (!c) return '';
-  c.translate(2, 2);
-  const one: ValorRules = { ...valorRules, cap: valorRules.perBrazier };
-  paintBraziers(c, one.cap, one, { frame: 0, readyAt: lit ? one.cap : one.cap + 1 });
-  const url = cv.toDataURL();
-  iconCache.set(lit, url);
-  return url;
+  return fileUrl(lit ? BRAZIER_READY : BRAZIER_FRAMES[BRAZIER_FRAMES.length - 1]!);
 }
 
 /** Ekrana göre kısa açıklama (İngilizce, sade). */
@@ -240,9 +65,9 @@ export function valorTip(valor: number, where: 'battle' | 'map' | 'camp', rules:
 }
 
 export interface MeterOptions {
-  /** Piksel büyütmesi (CSS px / ızgara pikseli). */
-  scale?: number;
-  /** Altında küçük "VALOR" yazısı. */
+  /** Kâse yüksekliği (CSS px); verilmezse yerleşim sınıfının boyu (valor.css > --vl-h). */
+  size?: number;
+  /** Küçük "VALOR" yazısı (mangalların yanında). */
   label?: boolean;
   /** Tıklanınca (savaş dışı diriltme penceresi); yoksa yalnızca ipucu. */
   onClick?: () => void;
@@ -251,43 +76,61 @@ export interface MeterOptions {
   selfTip?: boolean;
   /** Diriltme eşiği (alev + ışıma + VALOR yazısı kor rengi): savaşta battleCost; varsayılan savaş dışı outsideCost. */
   readyAt?: number;
-  /** Bedel çentiği (kor sayısı; savaş HUD'ı battleCost verir). */
+  /** Bedel çentiği (kor sayısı; savaş HUD'ı battleCost verir): o korun mangalının altında küçük altın çentik. */
   marker?: number;
 }
 
 /**
- * Valor göstergesi (DOM): tuval + isteğe bağlı etiket. `set(v, animate)`: animate = önceki değerden korlar tek tek tutuşur (kazanç) ya da söner
- * (harcama). Titreşim yalnızca dolu mangal varken ~8 kare/sn (Reduced motion: hiç).
+ * Valor göstergesi (DOM): iki boyalı mangal + isteğe bağlı etiket. `set(v, animate)`: animate = önceki değerden korlar tek tek tutuşur (kazanç)
+ * ya da söner (harcama); yeni tutuşan korun mangalı kısa parlar. Alev titreşimi CSS'te (Reduced motion: yok).
  */
 export class ValorMeter {
   readonly el: HTMLElement;
-  private readonly cv: HTMLCanvasElement;
-  private readonly ctx: CanvasRenderingContext2D | null;
+  private readonly cells: Array<{ box: HTMLElement; img: HTMLImageElement; frame: string }> = [];
   private value = 0;
   private shown = 0;
   private flash: number | undefined;
-  private frame = 0;
   private raf = 0;
-  private last = 0;
   private queue: number[] = [];
   private stepAt = 0;
   private tipEl: HTMLElement | null = null;
   private destroyed = false;
 
   constructor(private readonly o: MeterOptions = {}) {
-    const { w, h } = canvasSize();
-    const s = o.scale ?? 3;
     this.el = document.createElement(o.onClick ? 'button' : 'div');
     this.el.className = `vl-meter${o.onClick ? ' vl-click' : ''}`;
+    if (o.size) this.el.style.setProperty('--vl-h', `${o.size}px`);
     if (o.onClick) (this.el as HTMLButtonElement).type = 'button';
-    this.cv = document.createElement('canvas');
-    this.cv.className = 'vl-cv';
-    this.cv.width = w;
-    this.cv.height = h;
-    this.cv.style.width = `${w * s}px`;
-    this.cv.style.height = `${h * s}px`;
-    this.ctx = this.cv.getContext('2d');
-    this.el.append(this.cv);
+    const row = document.createElement('span');
+    row.className = 'vl-brs';
+    const n = brazierFill(valorRules, 0).embers.length;
+    const per = Math.max(1, valorRules.perBrazier);
+    const mk = o.marker !== undefined && o.marker >= 1 && o.marker <= valorRules.cap ? o.marker - 1 : -1;
+    const img = (cls: string, src = ''): HTMLImageElement => {
+      const e = document.createElement('img');
+      e.className = cls;
+      e.alt = '';
+      e.draggable = false;
+      if (src) e.src = src;
+      return e;
+    };
+    for (let i = 0; i < n; i++) {
+      const box = document.createElement('span');
+      box.className = 'vl-br';
+      const base = img('vl-img');
+      // alevli kare hep yerinde (önceden yüklü), yalnızca hazırken görünür: kâseyle aynı taban, yukarı taşar
+      box.append(base, img('vl-flame', fileUrl(BRAZIER_READY)));
+      if (mk >= 0 && Math.floor(mk / per) === i) {
+        // bedel çentiği: o korun mangal içindeki sırası kadar soldan (kâse genişliğinin orta %60'ında)
+        const notch = document.createElement('i');
+        notch.className = 'vl-notch';
+        notch.style.left = `${20 + (60 * ((mk % per) + 0.5)) / per}%`;
+        box.append(notch);
+      }
+      row.append(box);
+      this.cells.push({ box, img: base, frame: '' });
+    }
+    this.el.append(row);
     if (o.label) {
       const l = document.createElement('span');
       l.className = 'vl-lbl';
@@ -326,7 +169,6 @@ export class ValorMeter {
       this.flash = undefined;
       this.shown = to;
       this.paint();
-      this.tick();
       return;
     }
     const dir = to > from ? 1 : -1;
@@ -369,13 +211,17 @@ export class ValorMeter {
   }
 
   private paint(): void {
-    if (!this.ctx) return;
-    paintBraziers(this.ctx, this.shown, valorRules, {
-      frame: reducedMotion() ? 0 : this.frame,
-      ...(this.flash !== undefined ? { flash: this.flash } : {}),
-      glow: reducedMotion() ? 0.9 : 0.75 + 0.25 * Math.abs(Math.sin(this.frame * 0.7)),
-      readyAt: this.readyAt,
-      ...(this.o.marker !== undefined ? { marker: this.o.marker } : {}),
+    const per = Math.max(1, valorRules.perBrazier);
+    brazierLooks(this.shown, valorRules, this.readyAt).forEach((look, i) => {
+      const c = this.cells[i];
+      if (!c) return;
+      if (c.frame !== look.frame) {
+        c.frame = look.frame;
+        const url = fileUrl(look.frame);
+        if (url) c.img.src = url;
+      }
+      c.box.classList.toggle('on', look.ready);
+      c.box.classList.toggle('vl-flash', this.flash !== undefined && Math.floor(this.flash / per) === i);
     });
     this.el.classList.toggle('vl-ready', this.isReady());
   }
@@ -384,17 +230,16 @@ export class ValorMeter {
     return this.o.readyAt ?? valorRules.revive.outsideCost;
   }
 
-  /** Diriltme hazır görünümü (alev + titreşim): gösterilen Valor eşikte ve en az bir mangal dolu. */
+  /** Diriltme hazır görünümü (alev + ışıma): gösterilen Valor eşikte ve en az bir mangal dolu. */
   private isReady(): boolean {
     return this.shown >= this.readyAt && brazierFill(valorRules, this.shown).ready > 0;
   }
 
-  /** Kare döngüsü: kuyruk varken her ~180 ms bir kor; dolu mangal varken ~8 kare/sn titreşim; ikisi de yoksa durur. */
+  /** Kare döngüsü: kuyruk varken her ~200 ms bir kor (tutuşan korun mangalı kısa parlar); kuyruk bitince durur. */
   private tick = (): void => {
     cancelAnimationFrame(this.raf);
     if (this.destroyed) return;
-    const flicker = !reducedMotion() && this.isReady();
-    if (!this.queue.length && !flicker && this.flash === undefined) return;
+    if (!this.queue.length && this.flash === undefined) return;
     this.raf = requestAnimationFrame((now) => {
       if (this.destroyed) return;
       let dirty = false;
@@ -408,13 +253,8 @@ export class ValorMeter {
         this.stepAt = now + 200;
         if (up) worldSound('ember_ignite'); // kor tutuşur: çakmak sürtmesi + alev + çıtırtı (data/audio-world.json)
         dirty = true;
-      } else if (this.flash !== undefined && now >= this.stepAt - 90) {
+      } else if (this.flash !== undefined && now >= this.stepAt - 60) {
         this.flash = undefined;
-        dirty = true;
-      }
-      if (flicker && now - this.last > 120) {
-        this.last = now;
-        this.frame = (this.frame + 1) % 12;
         dirty = true;
       }
       if (dirty) this.paint();
@@ -461,7 +301,7 @@ export function openValorRevive(o: ValorReviveOptions): void {
   overlay.setAttribute('aria-label', 'Valor');
   const panel = el('div', 'el-panel corners el-modal-panel vl-panel');
   const title = el('h2', 'el-title vl-title', 'Valor');
-  const meter = new ValorMeter({ scale: 4 });
+  const meter = new ValorMeter({ size: 64 });
   meter.set(o.valor());
   const note = el('p', 'vl-note');
   const list = el('div', 'vl-list');

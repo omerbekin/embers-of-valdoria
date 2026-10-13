@@ -7,14 +7,16 @@ import {
   TUTORIAL,
   codexLessons,
   defeatHint,
-  dueBattleLessons,
+  dueBattleLesson,
   dueScreenLessons,
+  lessonComplete,
   forcedSteps,
   lessonById,
   lessonPages,
   openingLine,
   type BattleLessonCtx,
-  type BattleMoment,
+  type LessonProgress,
+  type Situation,
 } from '../src/tutorial/lessons';
 import { _resetTutorialMemory, isLessonSeen, markLessonSeen, resetTutorials, seenLessons, setTutorialsOn, tutorialsOn } from '../src/tutorial/store';
 import { buildLessons } from '../src/wiki/catalog';
@@ -23,7 +25,8 @@ import { buildLessons } from '../src/wiki/catalog';
 
 const map = getMap('valdoria');
 const ctx = (node: string, o: Partial<BattleLessonCtx> = {}): BattleLessonCtx => ({ node, region: map.nodes.find((n) => n.id === node)!.region, encounter: map.nodes.find((n) => n.id === node)!.encounter ?? '', defeats: 0, ...o });
-const moment = (o: Partial<BattleMoment> = {}): BattleMoment => ({ turn: 1, hasStatus: false, hasGround: false, hasBoss: false, ...o });
+const prog = (o: Partial<LessonProgress> = {}): LessonProgress => ({ seen: new Set(), done: new Set(), shows: () => 0, thisBattle: new Set(), ...o });
+const due = (node: string, found: Situation[], p: LessonProgress = prog()) => dueBattleLesson(ctx(node), found, p)?.lesson.id ?? null;
 const none = new Set<string>();
 const ids = (ls: ReadonlyArray<{ id: string }>) => ls.map((l) => l.id);
 const sentences = (t: string) => (t.match(/[.!?](\s|$)/g) ?? []).length;
@@ -44,16 +47,21 @@ describe('tutorial verisi', () => {
     expect(sentences(TUTORIAL.opening.text)).toBeLessThanOrEqual(3);
   });
 
-  it('tetiklerdeki düğüm, bölge ve karşılaşmalar haritada var; zorunlu adımlar yalnızca ilk savaşta', () => {
+  it('tetiklerdeki düğüm ve karşılaşmalar haritada var; zorunlu adımlar yalnızca ilk savaşta, diğer savaş dersleri yalnızca durumla', () => {
     const nodes = new Set(map.nodes.map((n) => n.id));
-    const regions = new Set(map.nodes.map((n) => n.region));
     for (const l of LESSONS) {
       const b = l.trigger.battle;
       for (const n of [...(b?.node ?? []), ...(l.trigger.node ?? []), ...(l.trigger.after ? [l.trigger.after] : [])]) expect(nodes.has(n), `${l.id} -> ${n}`).toBe(true);
-      for (const r of b?.region ?? []) expect(regions.has(r), `${l.id} -> ${r}`).toBe(true);
       expect(!!b !== !!l.trigger.screen, `${l.id}: tek tür tetik`).toBe(true);
-      if (l.forced) expect(b?.node, l.id).toEqual([map.start]);
+      if (l.forced) expect(b, l.id).toEqual({ node: [map.start], when: 'start' });
+      else if (b) {
+        expect(b.node, `${l.id}: durum dersi düğüme bağlı değil`).toBeUndefined();
+        expect(b.when, l.id).not.toBe('start');
+      }
+      // eylem dersi gösterdiği düğmeye odaklanır
+      if (l.done && l.done !== 'ultimate') expect(l.focus, l.id).toMatch(/data-global=/);
     }
+    expect(TUTORIAL.actionRepeats).toBeGreaterThanOrEqual(1);
     expect(TUTORIAL.opening.node).toBe(map.start);
     for (const enc of Object.keys(TUTORIAL.defeatHints.byEncounter)) expect(ENCOUNTERS[enc], enc).toBeDefined();
     // ipucu verilen karşılaşmalar gerçekten ipucu bölgesinde
@@ -63,10 +71,6 @@ describe('tutorial verisi', () => {
     }
   });
 
-  it('Bölüm III ders vermez (yalnızca yenilgi ipucu)', () => {
-    for (const l of LESSONS) expect(l.trigger.battle?.region ?? [], l.id).not.toContain('III');
-    for (const n of map.nodes.filter((x) => x.region === 'III')) expect(ids(LESSONS.filter((l) => l.trigger.battle?.node?.includes(n.id))), n.id).toEqual([]);
-  });
 });
 
 describe('savaş içi tetikler', () => {
@@ -76,34 +80,39 @@ describe('savaş içi tetikler', () => {
     // görülen adım atlanır; hepsi görüldüyse açılış sözü de yok
     expect(ids(forcedSteps(ctx('1'), new Set(['turn_bar'])))).toEqual(['attack', 'target']);
     expect(openingLine(ctx('1'), new Set(['turn_bar', 'attack', 'target']))).toBeNull();
-    // zorunlu adımlar serbest ders listesinde çıkmaz; başka düğümde zorunlu adım yok
-    expect(ids(dueBattleLessons(ctx('1'), moment(), none))).toEqual([]);
+    // ilk savaşta durum dersi yok (senaryo), başka düğümde zorunlu adım yok
+    expect(due('1', [{ when: 'rest' }, { when: 'ultimate', skill: 'x' }])).toBeNull();
     expect(forcedSteps(ctx('2'), none)).toEqual([]);
     expect(openingLine(ctx('2'), none)).toBeNull();
   });
 
-  it('Ravenwood: başta skill/MP, melee seçince ya da 2. kararda menzil', () => {
-    expect(ids(dueBattleLessons(ctx('2'), moment(), none))).toEqual(['skills_mp']);
-    expect(ids(dueBattleLessons(ctx('2'), moment({ skill: { melee: false, area: false } }), none))).toEqual([]);
-    expect(ids(dueBattleLessons(ctx('2'), moment({ skill: { melee: true, area: false } }), none))).toEqual(['rows_reach']);
-    expect(ids(dueBattleLessons(ctx('2'), moment({ turn: 2 }), new Set(['skills_mp'])))).toEqual(['rows_reach']);
+  it('durum dersi: yalnızca durum oluşunca, her bölgede; kararda tek ders (veri sırası öncelik), skill odağa taşınır', () => {
+    expect(due('2', [])).toBeNull();
+    expect(due('2', [{ when: 'rest', skill: 'fireball' }])).toBe('rest');
+    expect(due('moor', [{ when: 'move' }])).toBe('move');
+    expect(due('10', [{ when: 'skip' }])).toBe('skip');
+    expect(due('2', [{ when: 'spent', skill: 'a' }, { when: 'rest' }])).toBe('rest');
+    expect(due('3', [{ when: 'status' }, { when: 'ultimate', skill: 'u' }])).toBe('ultimate');
+    expect(dueBattleLesson(ctx('3'), [{ when: 'ultimate', skill: 'u' }], prog())?.skill).toBe('u');
+    expect(due('2', [{ when: 'reach', skill: 'm' }])).toBe('rows_reach');
+    expect(due('2', [{ when: 'area', skill: 'm' }])).toBe('area_shapes');
+    expect(due('9', [{ when: 'telegraph' }])).toBe('boss');
+    expect(due('moor', [{ when: 'ground' }])).toBe('burning_ground');
+    // bu savaşta gösterilen atlanır, sıradaki duruma geçilir
+    expect(due('2', [{ when: 'rest' }, { when: 'spent' }], prog({ thisBattle: new Set(['rest']) }))).toBe('skills_mp');
   });
 
-  it('Watchtower: başta ultimate, 2. kararda Rest / Skip / Move', () => {
-    expect(ids(dueBattleLessons(ctx('3'), moment(), none))).toEqual(['ultimate']);
-    expect(ids(dueBattleLessons(ctx('3'), moment({ turn: 2 }), new Set(['ultimate'])))).toEqual(['actions']);
-  });
-
-  it('Bölüm II: durum, alan skill seçimi, zemin, boss; durum oluşmadan çıkmaz', () => {
-    const moor = ctx('moor');
-    expect(ids(dueBattleLessons(moor, moment(), none))).toEqual([]);
-    expect(ids(dueBattleLessons(moor, moment({ hasStatus: true }), none))).toEqual(['statuses']);
-    expect(ids(dueBattleLessons(moor, moment({ hasGround: true }), none))).toEqual(['burning_ground']);
-    expect(ids(dueBattleLessons(moor, moment({ skill: { melee: false, area: true } }), none))).toEqual(['area_shapes']);
-    expect(ids(dueBattleLessons(ctx('9'), moment({ hasBoss: true }), none))).toEqual(['boss']);
-    // Bölüm I'de bölge II dersleri yok, Bölüm III'te hiç ders yok
-    expect(ids(dueBattleLessons(ctx('2'), moment({ hasStatus: true, hasGround: true, hasBoss: true }), new Set(['skills_mp'])))).toEqual([]);
-    expect(dueBattleLessons(ctx('10'), moment({ turn: 3, hasStatus: true, hasGround: true, hasBoss: true }), none)).toEqual([]);
+  it('bilgi dersi bir kez görülünce biter; eylem dersi eylem yapılınca ya da actionRepeats savaştan sonra', () => {
+    const info = lessonById('skills_mp')!;
+    const act = lessonById('rest')!;
+    expect(info.done).toBeUndefined();
+    expect(act.done).toBe('rest');
+    expect(lessonComplete(info, prog({ seen: new Set(['skills_mp']) }))).toBe(true);
+    expect(lessonComplete(act, prog({ seen: new Set(['rest']) }))).toBe(false); // görüldü ama Rest yapılmadı: durum yeniden oluşunca çıkar
+    expect(due('2', [{ when: 'rest' }], prog({ seen: new Set(['rest']), shows: () => 1 }))).toBe('rest');
+    expect(lessonComplete(act, prog({ done: new Set(['rest']) }))).toBe(true);
+    expect(lessonComplete(act, prog({ shows: () => TUTORIAL.actionRepeats }))).toBe(true);
+    expect(due('2', [{ when: 'rest' }], prog({ done: new Set(['rest']) }))).toBeNull();
   });
 
   it('Bölüm III yenilgi ipucu: aynı savaş 2 kez kaybedilince, duruma özel', () => {
@@ -130,6 +139,7 @@ describe('ekran tetikleri ve Codex', () => {
   it('Codex > Lessons yalnızca görülen dersleri grup sırasıyla gösterir; katalog tüm dersleri taşır', () => {
     expect(codexLessons(none)).toEqual([]);
     const got = codexLessons(new Set(['endless', 'statuses', 'turn_bar']));
+    expect(TUTORIAL.groups.indexOf(lessonById('turn_bar')!.group)).toBeLessThan(TUTORIAL.groups.indexOf(lessonById('statuses')!.group));
     expect(got.map((l) => l.id)).toEqual(['turn_bar', 'statuses', 'endless']);
     expect(got[2]!.paragraphs).toHaveLength(3);
     expect(codexLessons(new Set(['attack']))[0]!.paragraphs).toEqual([lessonById('attack')!.codex]);
@@ -213,5 +223,29 @@ describe('ilk savaş kaybedilemez (UnitSetup.undying)', () => {
     expect(Object.keys(mill.units.party).length).toBeGreaterThan(0);
     const raven = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), '2'));
     expect(Object.values(raven.units.party).some((u) => u.undying)).toBe(false);
+  });
+
+  it('Mill Road iki kahramanla: planda iki kahraman da ölemez; ağır hasarda ikisi de ayakta kalır, savaş kaybedilmez', () => {
+    // Ravenwood'dan sonra iki kahramanlı takım Mill Road'daymış gibi (debug / ileride 2 kişilik açılış)
+    let s = debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), '3');
+    expect(s.active.filter(Boolean)).toHaveLength(2);
+    s = { ...s, at: '1', done: s.done.filter((d) => !d.startsWith('1:battle')) };
+    const plan = battlePlan(s);
+    expect(plan.encounterId).toBe('mill_road_thugs');
+    const party = Object.values(plan.units.party);
+    expect(party.length).toBe(2);
+    expect(party.every((u) => u.undying)).toBe(true);
+    const teams: Teams = { party: cells({ 1: 'mage', 4: 'archer' }), enemies: cells({ 0: 'warrior', 1: 'warrior', 2: 'cutthroat' }), units: { party: { 1: { undying: true }, 4: { undying: true } } } };
+    for (const seed of [1, 2]) {
+      const b = new Battle(content.battleSetup('random-battle', seed, 'turns', teams, false));
+      b.debug.damageMult = 6;
+      for (let n = 0; n < 800 && !b.winner; n++) {
+        const uid = b.currentActor?.uid;
+        if (!uid) break;
+        b.applyChoice(uid, chooseAction(b, uid, content.aiConfig));
+        for (const c of b.combatants.filter((x) => x.side === 'party' && !x.summoned)) expect(c.hp, `seed ${seed}`).toBeGreaterThanOrEqual(1);
+      }
+      expect(b.winner, `seed ${seed}`).not.toBe('enemy');
+    }
   });
 });

@@ -10,6 +10,10 @@ interface TutorialSave {
   v: number;
   on: boolean;
   seen: string[];
+  /** Eylem dersleri (Rest, Move, Skip, Ultimate...): oyuncu önerilen eylemi yaptı ya da ders tekrar sınırına ulaştı (data/tutorial.json > actionRepeats). */
+  done?: string[];
+  /** Eylem dersi kaç savaşta gösterildi (tamamlanmadan). */
+  shows?: Record<string, number>;
 }
 
 let mem: TutorialSave | null = null;
@@ -22,7 +26,14 @@ function load(): TutorialSave {
     const raw = globalThis.localStorage?.getItem(KEY);
     if (raw) {
       const p = JSON.parse(raw) as Partial<TutorialSave>;
-      if (p && p.v === VERSION) s = { v: VERSION, on: p.on !== false, seen: Array.isArray(p.seen) ? p.seen.filter((x): x is string => typeof x === 'string') : [] };
+      const strs = (a: unknown): string[] => (Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : []);
+      if (p && p.v === VERSION) {
+        s = { v: VERSION, on: p.on !== false, seen: strs(p.seen) };
+        const done = strs(p.done);
+        if (done.length) s.done = done;
+        const shows = Object.entries(p.shows && typeof p.shows === 'object' ? p.shows : {}).filter(([, n]) => typeof n === 'number' && n > 0);
+        if (shows.length) s.shows = Object.fromEntries(shows);
+      }
     }
   } catch {
     /* bozuk / erişilemez kayıt: varsayılan */
@@ -68,6 +79,29 @@ export function markLessonSeen(id: string): void {
   const s = load();
   if (s.seen.includes(id)) return;
   save({ ...s, seen: [...s.seen, id] });
+}
+
+/** Eylem dersi tamamlandı mı (önerilen eylem yapıldı ya da tekrar sınırı doldu). */
+export function lessonDoneIds(): ReadonlySet<string> {
+  return new Set(load().done ?? []);
+}
+
+/** Eylem dersi tamamlandı (oyuncu önerilen eylemi yaptı). */
+export function markLessonDone(id: string): void {
+  const s = load();
+  if (s.done?.includes(id)) return;
+  save({ ...s, done: [...(s.done ?? []), id] });
+}
+
+/** Eylem dersinin kaç savaşta gösterildiği. */
+export function lessonShows(id: string): number {
+  return load().shows?.[id] ?? 0;
+}
+
+/** Eylem dersi bir savaşta daha gösterildi. */
+export function noteLessonShown(id: string): void {
+  const s = load();
+  save({ ...s, shows: { ...(s.shows ?? {}), [id]: (s.shows?.[id] ?? 0) + 1 } });
 }
 
 /** Debug: tüm dersler yeniden görünür (ayar açılır). */

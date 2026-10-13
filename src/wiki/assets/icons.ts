@@ -2,6 +2,7 @@ import { iconUrl } from '../../ui/dom-icons';
 import { statIconName, type StatIconKind } from '../../ui/stat-icons';
 import { uiIconName, type UiIconKind } from '../../ui/ui-icons';
 import { itemIconUrl } from '../../ui/item-icon-dom';
+import { BRAZIER_FRAMES, BRAZIER_READY, brazierUrl } from '../../ui/valor-braziers';
 import itemsJson from '../../../data/items.json';
 import type { Catalog, IconEntry } from '../../gallery/catalog';
 import { applyFilter, chipBar, h, isolateKeys, openLightbox, searchable, type SectionApi } from '../../gallery/dom';
@@ -170,6 +171,26 @@ export function mountIcons(cat: Catalog): SectionApi {
     );
   }
 
+  // Valor mangalları (assets/valor): kor sayısına göre 5 kare + alevli (diriltme hazır) kare
+  const valor = h('div', { class: 'cards icons' });
+  const valorLabel = (n: string): string => (n === BRAZIER_READY ? 'Full + flame: revive ready' : `${n.replace('brazier-', '')} of 4 embers lit`);
+  for (const n of [...BRAZIER_FRAMES, BRAZIER_READY]) {
+    const url = brazierUrl(n);
+    valor.append(
+      searchable(
+        h(
+          'article',
+          { class: 'card icon-card' },
+          url ? h('img', { class: 'bigicon', attrs: { src: url, alt: n, loading: 'lazy' }, title: 'Click to enlarge', on: { click: () => openLightbox(url, n, false) } }) : h('div', { class: 'bigicon' }),
+          h('div', { class: 'card-title mono', text: n }),
+          h('div', { class: 'tags' }, h('span', { class: url ? 'badge ok' : 'badge', text: url ? 'Valor art' : 'Missing' })),
+          h('div', { class: 'small muted', text: valorLabel(n) }),
+        ),
+        `valor brazier ${n} ${valorLabel(n)}`,
+      ),
+    );
+  }
+
   // Nadirlik: aynı nesne, yalnızca taş / kenar ayrıntısı nadirlik renginde
   const tints = h('div', { class: 'cards icons' });
   for (const name of ['amulet', 'sword', 'mail']) {
@@ -187,6 +208,7 @@ export function mountIcons(cat: Catalog): SectionApi {
     applyFilter(stats, query);
     applyFilter(uis, query);
     applyFilter(misc, query);
+    applyFilter(valor, query);
     applyFilter(tints, query);
     countEl.textContent = `${n} / ${cat.icons.length}`;
     return n;
@@ -209,6 +231,9 @@ export function mountIcons(cat: Catalog): SectionApi {
     h('h3', { class: 'sub', text: `Game icons (${cat.miscArt.filter((a) => a.url && !a.unlinked).length})` }),
     h('p', { class: 'note', text: 'Painted game icons (assets/misc-icons, cut by tools/make-misc-icons.mjs from assets/source/misc-icons; the checkerboard ChatGPT baked into two sheets is removed there). Status badges, element and ground icons, Endless relics and reward emblems, class logos, campaign map nodes, the corpse marker and the crit burst use these; without an image they fall back to the pixel icon.' }),
     misc,
+    h('h3', { class: 'sub', text: `Valor braziers (${BRAZIER_FRAMES.length + 1})` }),
+    h('p', { class: 'note', text: 'Painted Valor braziers (assets/valor, cut by tools/make-valor-icons.mjs from assets/source/valor/brazier-sheet.png). Each brazier shows the frame for its lit embers; the flame frame appears only when the Valor is enough for a revive there. Used on the map, in Endless, in the battle HUD and the Revive button.' }),
+    valor,
     h('h3', { class: 'sub', text: `Item art (${cat.itemArt.art.length})` }),
     h('p', { class: 'note', text: `Painted item icons (assets/items, cut by tools/make-item-icons.mjs from assets/source/item-icons). An item with art shows it everywhere; the rest fall back to the pixel icons above${cat.itemArt.missing.length ? ` (still pixel: ${cat.itemArt.missing.join(', ')})` : ''}.` }),
     art,

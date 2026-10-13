@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import { content } from '../engine';
-import { CONFIG, activeHeroes, hotspotOffered, hotspotRect, leaderOf, partySpots, townCover, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
+import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, leaderOf, partySpots, townCover, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
 import { animKey, characterTexture } from './assets';
 import { H, W, crown } from './campaign-ui';
 import { EL, elBody, elGlow, elText, fadeLine, vGradient } from './elegant-ui';
@@ -188,7 +188,7 @@ export class TownScreen {
       const spr = s.add.sprite(p.x, p.y, tex.key, frame).setOrigin(0.5, 1);
       spr.setScale(cfg.heroHeight / spr.height);
       const anim = tex.real ? animKey(def.spriteId, 'idle', s) : null;
-      if (anim && s.anims.exists(anim) && !reducedMotion()) spr.play({ key: anim, startFrame: i % 2 });
+      if (anim && s.anims.exists(anim) && !reducedMotion()) spr.play({ key: anim, startFrame: idleStartFrame(i, s.anims.get(anim).getTotalFrames()) }); // tek kareli görselde 0 (0.7.7 Ashford donması)
       this.root.add(spr);
       const size = this.hooks.compact() ? 28 : 19;
       const name = elText(s, p.x, p.y + 10, def.name, size, EL.TXT, { em: 0.1 }).setOrigin(0.5, 0);
