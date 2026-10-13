@@ -55,6 +55,13 @@
       #boot.boot-rm .boot-ring { animation-duration: 6s; }
       @keyframes boot-spin { to { transform: rotate(360deg); } }
       #boot .boot-bar, #boot .boot-meta { display: none; }
+      /* dikey tutulan dokunmatik cihazda oyun sahnesi gibi 90° döndürülür (src/style.css html.rotated #stage ile aynı yön); JS'ten önce, @media burada doğru:
+         #boot döndürülmüş sahnenin dışında, fiziksel ekranı ölçer */
+      @media (orientation: portrait) and (pointer: coarse) {
+        html:not(.no-rotate) #boot { inset: auto; top: 0; left: 0; width: 100vh; height: 100vw; transform-origin: 0 0; transform: translateX(100vw) rotate(90deg); }
+        @supports (height: 100dvh) { html:not(.no-rotate) #boot { width: 100dvh; } }
+        html:not(.no-rotate) #boot .boot-badge { width: clamp(96px, 19.5vmin, 170px); right: clamp(28px, 6.5vh, 90px); bottom: clamp(28px, 9vw, 80px); }
+      }
     </style>
   </head>
   <body>
@@ -71,6 +78,7 @@
       (function () {
         var b = document.getElementById('boot');
         if (!b) return;
+        if (/[?&]rotate=off/.test(location.search)) document.documentElement.classList.add('no-rotate'); // ?rotate=off: yükleme ekranı da dönmez
         var rm = false;
         try {
           var v = localStorage.getItem('proto.reducedMotion');
