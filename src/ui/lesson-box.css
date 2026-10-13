@@ -1,0 +1,144 @@
+/* Mentor kutusu (sefer tutorial'ı; src/ui/lesson-box.ts). Kit dili: el-panel corners + Cinzel başlık + EB Garamond italik metin.
+   Oyun alanının üst ortasında (sıra çubuğunun altında), zemin yok: yalnızca kutu dokunulabilir. Ölçüler oyun birimiyle (--gu),
+   telefonda okunur alt sınırlarla. Vurgu (.tut-focus): gösterilen öğe nabız gibi atan altın çerçeve alır. */
+.tut-wrap {
+  --u: var(--gu, 1px);
+  position: fixed;
+  left: var(--el, 0px);
+  right: var(--er, 0px);
+  top: calc(var(--et, 0px) + max(64px, calc(168 * var(--u))));
+  display: flex;
+  justify-content: center;
+  padding: 0 16px;
+  pointer-events: none;
+  z-index: 26;
+}
+
+.tut-wrap.bottom {
+  top: auto;
+  bottom: calc(var(--eb, 0px) + max(56px, calc(150 * var(--u))));
+}
+
+.tut-box {
+  display: flex;
+  gap: max(10px, calc(20 * var(--u)));
+  align-items: flex-start;
+  width: min(100%, max(320px, calc(820 * var(--u))));
+  padding: max(10px, calc(18 * var(--u))) max(12px, calc(24 * var(--u)));
+  pointer-events: auto;
+  animation: el-m-rise var(--m-modal-in, 200ms) var(--m-ease, ease-out) both;
+}
+
+.tut-face {
+  flex: none;
+  width: max(52px, calc(112 * var(--u)));
+  height: max(52px, calc(112 * var(--u)));
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8);
+  background: #140e09;
+  overflow: hidden;
+}
+
+.tut-face img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.tut-main {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.tut-who {
+  font: italic max(12px, calc(19 * var(--u))) / 1.2 var(--el-body);
+  color: var(--el-muted);
+}
+
+.tut-title {
+  margin-top: 2px;
+  font: 600 max(14px, calc(25 * var(--u))) / 1.2 var(--el-display);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--el-on);
+}
+
+.tut-text {
+  margin-top: max(4px, calc(8 * var(--u)));
+  font: italic max(15px, calc(26 * var(--u))) / 1.3 var(--el-body);
+  color: var(--el-txt);
+}
+
+.tut-row {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: max(10px, calc(22 * var(--u)));
+  margin-top: max(8px, calc(14 * var(--u)));
+}
+
+.tut-off {
+  margin-right: auto;
+  min-height: 44px;
+  font: italic max(13px, calc(19 * var(--u))) var(--el-body);
+  color: var(--el-dim);
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.tut-off:hover {
+  color: var(--el-note);
+}
+
+.tut-page {
+  white-space: nowrap;
+  font: max(12px, calc(18 * var(--u))) var(--el-num);
+  color: var(--el-muted);
+}
+
+.tut-await {
+  font: italic max(13px, calc(20 * var(--u))) var(--el-body);
+  color: var(--el-ember2);
+  animation: tut-breathe 1.6s ease-in-out infinite;
+}
+
+.tut-ok {
+  min-width: max(96px, calc(170 * var(--u)));
+  min-height: 44px;
+}
+
+.tut-focus {
+  outline: max(2px, calc(4 * var(--gu, 1px))) solid rgba(255, 215, 106, 0.95) !important;
+  outline-offset: max(2px, calc(6 * var(--gu, 1px)));
+  box-shadow: 0 0 18px 4px rgba(240, 140, 40, 0.5);
+  animation: tut-pulse 1.2s ease-in-out infinite;
+}
+
+@keyframes tut-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(240, 140, 40, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 18px 6px rgba(240, 140, 40, 0.55);
+  }
+}
+
+@keyframes tut-breathe {
+  0%,
+  100% {
+    opacity: 0.65;
+  }
+  50% {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tut-focus,
+  .tut-await {
+    animation: none;
+  }
+}

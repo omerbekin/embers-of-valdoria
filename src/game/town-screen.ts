@@ -114,8 +114,6 @@ export class TownScreen {
     this.root.add(elBody(s, W / 2, 104, this.node.subtitle, this.hooks.compact() ? 28 : 21, EL.MUTED).setOrigin(0.5));
     if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h)) this.addHotspot(h, cover);
     this.addParty();
-    const hint = 'Tap a hero for their gear  ·  tap a place to visit it';
-    this.root.add(elBody(s, W / 2, H - 26, hint, this.hooks.compact() ? 26 : 18, EL.DIM).setOrigin(0.5, 1));
     // Seçim yeniden çizimden sonra korunur (ör. ekran döndürülünce)
     if (this.selected) this.painters.get(this.selected)?.(true);
   }

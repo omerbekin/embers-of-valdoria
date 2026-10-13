@@ -891,7 +891,7 @@ html.settings-open .gm-overlay {
   visibility: hidden;
 }
 
-/* Sol üst "◂ Back  Esc": görünüm ve konum tasarım kitinden (src/ui/elegant.css > .el-back); burada yalnızca katman */
+/* Sol üst "◂ Back": görünüm ve konum tasarım kitinden (src/ui/elegant.css > .el-back); burada yalnızca katman */
 .st-back {
   z-index: 3;
 }
@@ -926,7 +926,7 @@ html.menu-elegant .st-title {
 }
 
 html.menu-elegant .st-row {
-  height: max(44px, calc(78 * var(--u)));
+  height: max(44px, calc(66 * var(--u))); /* 2026-10-13: Tutorials satırıyla 10 satır 1080'e sığsın (ana menü SETTINGS_LAYOUT.rowH ile aynı) */
 }
 
 html.menu-elegant .st-label {

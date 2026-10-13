@@ -1,6 +1,7 @@
-// Açılış yükleme ekranının arka planı (Ömer 2026-10-10): assets/source/loading/loading-bg.png (ChatGPT, 1536x1024 savaş masası; ortası başlık ve
-// çubuk için karanlık) -> public/loading/loading-bg.webp (1600 genişlik, web için sıkıştırılmış; public: JS paketinden ÖNCE iner).
-// Ayrıca 32x21'lik bulanık yer tutucu üretip index.html'deki `/*boot-ph*/url(...)/*boot-ph*/` işaretlerinin arasına base64 olarak yazar:
+// Açılış yükleme ekranının arka planı (Ömer 2026-10-13, v2 "minimal"): assets/source/loading/loading-bg.png (1672x941 koyu duman + kor
+// kıvılcımları, ortada sıcak ışıma; ham: loading-bg-v2-raw.png, eski savaş masası: loading-bg-v1-old.png) -> public/loading/loading-bg.webp
+// (1600 genişlik, web için sıkıştırılmış; public: JS paketinden ÖNCE iner). Sağ alttaki taç amblemi ayrı: public/loading/emblem.webp (assets/source/branding/emblem.png'den).
+// Ayrıca 32x18'lik bulanık yer tutucu üretip index.html'deki `/*boot-ph*/url(...)/*boot-ph*/` işaretlerinin arasına base64 olarak yazar:
 // kutu ilk karede bu bulanık görüntüyle açılır, asıl resim yüklenince üstüne solar (src/ui/boot-loader.ts, index.html).
 //
 // Yeniden üretmek için: node tools/make-loading-bg.mjs
@@ -18,7 +19,7 @@ await sharp(SRC).resize(WIDTH, null, { kernel: sharp.kernel.lanczos3 }).webp({ q
 const size = statSync(OUT).size;
 if (size > LIMIT) throw new Error(`${OUT} ${Math.round(size / 1024)} KB (sınır ${LIMIT / 1024} KB): QUALITY düşür`);
 
-const ph = await sharp(SRC).resize(32, 21).blur(0.6).webp({ quality: 40 }).toBuffer();
+const ph = await sharp(SRC).resize(32, 18).blur(0.6).webp({ quality: 40 }).toBuffer();
 const url = `url(data:image/webp;base64,${ph.toString('base64')})`;
 const html = readFileSync('index.html', 'utf8');
 const re = /\/\*boot-ph\*\/.*?\/\*boot-ph\*\//s;

@@ -27,6 +27,14 @@
 //     bayraklar da: "hidden": true = eşya kareye BOYALI, oyun silah / tılsım çizmez, büyü çıkışı ikinci el noktası; ör. Hexer doll_stab).
 //     Kare tüm tutuş takımlarında ortaktır; skill'e bağlamak pt_* kopyasının pozuyla (tools/make-pose-testers.mjs > POSE).
 //     Önizleme: --preview=<klasör> --set=extra [--weapons=daggers:rondel --off=daggers:rondel] --marks
+//     DAR DURUŞ (Ömer 2026-10-13, "çok geniş duruyorlar"): assets/source/poses/<id>-v2/narrow.png (Warrior: warrior-v2-narrow/narrow.png),
+//     3 x 3: idle1 idle2 guard1 / guard2 raise channel / point throw hit (sağa bakan, koyu düz zemin). Ana sayfalardan SONRA, override /
+//     extra'dan ÖNCE uygulanır; bu 9 karenin override-<kare>.png dosyaları YOK SAYILIR (dar sayfa onların yerine geçer). Ölçek: Warrior'da
+//     eski karelerin boyu x NARROW_SCALE (dar duruş daha uzun; kafa boyu eşit kalsın), diğer sınıflarda Warrior v2'nin dar kareleri (medyan).
+//     El tohumları config.json > "narrowSeeds".<kare> (narrow.png koordinatı); yoksa Warrior v2'deki orandan tahmin.
+//     EL KURALI (Ömer 2026-10-13, "eller yer değiştirmesin"): main = karakterin SAĞ eli (silah), off = SOL eli (kalkan / ikinci hançer /
+//     bebek), HER karede. 3/4 önden sağa bakan gövdede sağ kol arka (resimde soldaki) omuzdan çıkar; point'te işaret eden el sol eldir (off).
+//     Yay kareleri istisna: yay (main) öndeki elde.
 //     Sonra npm test (tests/poses-v2-classes.test.ts). Silah sayfaları yalnızca Warrior çalıştırmasında (ya da --weapons-only) yeniden kesilir.
 // ========================================================================================================================================
 //
@@ -86,6 +94,15 @@ const FRAMES = [...ONE.flat(), ...TWO.flat(), ...BOW.flat()];
 const CLASS_EXTRAS = {
   warrior: [{ file: `${SRCROOT}/warrior-v2-extra/extra.png`, names: [['idle2', 'slash1', 'slash2'], ['spin2a', 'bow_shot', 'bow_sky']] }],
 };
+/** Dar duruş sayfası (narrow.png, 3 x 3): bu 9 kare ana sayfalardaki (ve override'lardaki) karelerin yerine geçer. */
+const NARROW = [
+  ['idle1', 'idle2', 'guard1'],
+  ['guard2', 'raise', 'channel'],
+  ['point', 'throw', 'hit'],
+];
+const NARROW_FILE = IS_REF ? `${SRCROOT}/warrior-v2-narrow/narrow.png` : join(SRC, 'narrow.png');
+/** Warrior dar sayfasının ölçek çarpanı (eski karelerin boyuna göre; dar duruş daha dik = daha uzun, kafa boyu eşit kalsın). */
+const NARROW_SCALE = 1.0;
 /** Warrior ana sayfalarında sola bakan hücreler (kaynak hatası). */
 const REF_MIRROR = new Set(['thrust1', 'thrust2']);
 
@@ -98,13 +115,14 @@ const CONFIG = existsSync(join(SRC, 'config.json')) ? JSON.parse(readFileSync(jo
  */
 const SEEDS = {
   idle1: { main: [185, 213], off: [75, 277], angle: 35, offAngle: 10 },
-  step1: { main: [490, 230], off: [275, 205], angle: 60, offAngle: -20 },
+  // 2026-10-13 el kuralı: geriye uzanan kol SAĞ kol (silah), göğüsteki yumruk sol (kalkan); hazır tutuş: ağız yukarı-öne
+  step1: { main: [275, 205], off: [490, 230], angle: 35, offAngle: 10 },
   slash1: { main: [548, 152], off: [700, 222], angle: -100, offAngle: 20 },
   overhead1: { main: [893, 62], off: [990, 225], angle: 10, offAngle: 20 },
   thrust1: { main: [27, 668], off: [215, 680], angle: -90, offAngle: 10 },
   spin1a: { main: [300, 650], off: [440, 700], angle: -80, offAngle: 10 },
   spin1b: { main: [772, 660], off: [535, 670], angle: 90, offAngle: -10, back: true },
-  spin1c: { main: [1002, 655], off: [810, 708], angle: 90, offAngle: 10 },
+  spin1c: { main: [810, 708], off: [1002, 655], angle: 90, offAngle: 90 }, // önden görünüm: sağ el resimde solda (göğüste)
   guard1: { main: [60, 1190], off: [208, 1150], angle: 30, offAngle: 0 },
   raise: { main: [327, 990], off: [452, 1158], angle: 0, offAngle: 20 },
   channel: { main: [715, 1140], off: [645, 1140], angle: 80, offAngle: 80 },
@@ -121,6 +139,21 @@ const SEEDS = {
   throw: { main: [280, 1220], off: [530, 1090], angle: 190, offAngle: 60 },
   hit: { main: [680, 1240], off: [650, 1240], angle: 150 },
   kneel: { main: [925, 1375], off: [925, 1375], angle: 100 },
+};
+/**
+ * Warrior dar sayfası (warrior-v2-narrow/narrow.png, 1536 x 1024) tohumları. main = SAĞ el (resimde arkadaki / soldaki kol). Hazır tutuş
+ * (Ömer 2026-10-13, "tek elli kılıç böyle mi tutulur"): idle1 / guard1 tek el silahı yumrukta ağzı YUKARI ve hafif ÖNE (30-35°).
+ */
+const NARROW_SEEDS = {
+  idle1: { main: [283, 157], off: [380, 127], angle: 22, offAngle: 10 }, // yumruk kalçada: 22° ağız yüzün önünden geçmez
+  idle2: { main: [712, 186], off: [712, 186], angle: 40 },
+  guard1: { main: [1125, 135], off: [1267, 73], angle: 30, offAngle: 0 },
+  guard2: { main: [390, 404], off: [390, 404], angle: 15 },
+  raise: { main: [745, 352], off: [830, 477], angle: 0, offAngle: 20 },
+  channel: { main: [1303, 453], off: [1273, 453], angle: 80, offAngle: 80 },
+  point: { main: [255, 800], off: [465, 740], angle: 30, offAngle: 80 }, // işaret eden (açık) el SOL el = off
+  throw: { main: [727, 690], off: [890, 817], angle: 190, offAngle: 60 },
+  hit: { main: [1207, 808], off: [1207, 808], angle: 150 },
 };
 /** Warrior ek sayfası (extra.png, 1536 x 1024) tohumları. */
 const EXTRA_SEEDS = {
@@ -373,11 +406,18 @@ function sheetsFor() {
   if (existsSync(join(SRC, 'bow.png'))) list.push({ file: join(SRC, 'bow.png'), names: BOW, seeds: null });
   for (const e of CLASS_EXTRAS[CLS] ?? []) list.push({ ...e, seeds: IS_REF ? EXTRA_SEEDS : null, extra: true });
   for (const e of CONFIG.extras ?? []) list.push({ file: join(SRC, e.file), names: e.names, seeds: null, extra: true });
+  // dar duruş sayfası (narrow.png): ana / ek sayfalardan sonra, override'lardan önce
+  const narrow = existsSync(NARROW_FILE);
+  if (narrow) list.push({ file: NARROW_FILE, names: NARROW, seeds: IS_REF ? NARROW_SEEDS : null, extra: true, narrow: true });
   // tek kare yerine geçenler: override-<kare>.png (tek figür, koyu düz zemin; en son gelir, her şeyi ezer)
   for (const f of existsSync(SRC) ? readdirSync(SRC).sort() : []) {
     const m = /^override-(.+)\.png$/.exec(f);
     if (!m) continue;
     if (!FRAMES.includes(m[1])) throw new Error(`${f}: bilinmeyen kare ${m[1]}`);
+    if (narrow && NARROW.flat().includes(m[1])) {
+      console.log(`${f}: YOK SAYILDI (narrow.png ${m[1]} karesinin yerine geçer)`);
+      continue;
+    }
     list.push({ file: join(SRC, f), names: [[m[1]]], seeds: null, extra: true, override: true });
   }
   // sınıfa özel ek poz: extra-<poz>.png (ortak listede OLMAYAN ad; override gibi tek figür, ölçeği extraRef karesine göre)
@@ -477,7 +517,15 @@ async function bodies(data) {
     // sayfa ölçeği: Warrior ana sayfaları 1; Warrior ek sayfası = eski karelerin boyu / yeni boy (medyan); diğer sınıflar Warrior v2'ye
     let scale = 1;
     const ratios = [];
-    if (sheet.override) {
+    if (sheet.narrow) {
+      // dar sayfa: Warrior'da eski karelerin boyu x NARROW_SCALE; diğer sınıflarda Warrior v2'nin aynı (dar) kareleri (ana sayfa kuralı)
+      for (const [n, g] of got) {
+        if (IS_REF) {
+          if (baseH.has(n)) ratios.push((baseH.get(n) / g.h) * NARROW_SCALE);
+        } else if (refDef.poses[n]?.box) ratios.push(refDef.poses[n].box.h / g.h);
+      }
+      if (!IS_REF && CONFIG.narrowScale) ratios.splice(0, ratios.length, ...ratios.map((r) => r * CONFIG.narrowScale));
+    } else if (sheet.override) {
       // tek kare: yerine geçtiği karenin (ölçeklenmiş) boyuna eşitlenir (Warrior extra.png ile aynı kural; sınıfın ortak boyu korunur)
       // config.overrideScale.<kare>: ek çarpan (yeni poz eskisinden kısa/uzunsa, ör. kambur isabet karesi; kafa boyu diğer karelere denk gelsin)
       // ek poz (extra-<poz>.png): eşi yok, boyu extraRef karesine (yoksa idle1) eşitlenir
@@ -573,7 +621,8 @@ async function bodies(data) {
     // eski veride src yok: ana sayfa sayılır
     const oldSrc = p.src ?? relative(SRCROOT, join(SRC, ONE.flat().includes(name) ? 'one-handed.png' : TWO.flat().includes(name) ? 'two-handed.png' : 'bow.png')).replaceAll('\\', '/');
     const box = { x: left, y: top, w, h };
-    const cfgSeed = CONFIG.seeds?.[name];
+    // dar sayfadan gelen karenin tohumu narrow.png koordinatıdır (config.narrowSeeds); seeds.<kare> ana sayfa koordinatı (kullanılmaz)
+    const cfgSeed = m.sheet.narrow ? CONFIG.narrowSeeds?.[name] : CONFIG.seeds?.[name];
     if (!REDETECT && !cfgSeed && p.anchor && p.box && oldSrc === src) {
       // aynı kaynak: el noktaları korunur; tuval / ölçek değiştiyse kutuyla birlikte taşınır
       const mv = (q) => q && { ...q, x: Math.round(box.x + ((q.x - p.box.x) * box.w) / p.box.w), y: Math.round(box.y + ((q.y - p.box.y) * box.h) / p.box.h) };
@@ -662,11 +711,15 @@ async function composite(all, def, name, family, look, marks, offPick = null) {
     let wimg = sharp(join(WOUT, fam0, `${look0}.png`)).resize(ww, wh);
     let gx = lk.grip.x * k;
     const gy = lk.grip.y * k;
-    if (o.flip ?? (slot === 'main' ? !!p.flip : false)) {
+    const ang = o.angle ?? (fam.upright ? 0 : hand.angle);
+    // poses.ts > edgeFlip: ağzı olan görünüm (fam.edge) ağzı öne bakacak şekilde aynalanır (sarkarken öteki yan)
+    const na = ((((ang + 180) % 360) + 360) % 360) - 180;
+    const edge = fam.edge?.[look0];
+    const eflip = !!edge && !!def.grips && (edge === 'left') !== (na > 140 || na < -150);
+    if (o.flip ?? (slot === 'main' && !!p.flip) !== eflip) {
       wimg = wimg.flop();
       gx = ww - gx;
     }
-    const ang = o.angle ?? (fam.upright ? 0 : hand.angle);
     const rot = await sharp(await wimg.png().toBuffer()).rotate(ang, { background: { r: 0, g: 0, b: 0, alpha: 0 } }).png().toBuffer({ resolveWithObject: true });
     const a = (ang * Math.PI) / 180;
     const dx = gx - ww / 2;
@@ -698,6 +751,12 @@ async function composite(all, def, name, family, look, marks, offPick = null) {
     ...(fistPatch ? [{ input: fistPatch }] : []),
     ...items.filter((i) => !i.back && i.top).map((i) => ({ input: i.buf })),
   ];
+  // poses.ts: kalkan varsa sağ eldeki silah + yumruğu kalkanın da üstünde
+  const mainTop = items.some((i) => !i.back && i.top) ? items.find((i) => i.slot === 'main' && !i.back && i.hand === 'main') : null;
+  if (mainTop) {
+    layers.push({ input: mainTop.buf });
+    if (r > 0) layers.push({ input: await sharp(body).composite([{ input: Buffer.from(`<svg width="${W}" height="${H}" xmlns="http://www.w3.org/2000/svg"><circle cx="${mainTop.hx}" cy="${mainTop.hy}" r="${r}" fill="#fff"/></svg>`), blend: 'dest-in' }]).png().toBuffer() });
+  }
   if (marks) {
     const hands = [p.anchor, p.offhand].filter(Boolean);
     const mk = hands.map((h, i) => `<path d="M${h.x - 8} ${h.y}H${h.x + 8}M${h.x} ${h.y - 8}V${h.y + 8}" stroke="${i ? '#4dc3ff' : '#4dff88'}" stroke-width="2"/>`).join('');

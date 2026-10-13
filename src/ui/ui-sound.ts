@@ -5,6 +5,7 @@
 // Kurallar: ilk kullanıcı hareketinden (tık/dokunma/tuş) önce ses YOK (tarayıcı autoplay kuralı); aynı tür ses `throttleMs`'ten sık çalmaz,
 // hover tık/açılıştan hemen sonra susar; seviye = Settings > UI sounds (0-20 adım = %0-100, 0 = kapalı) x Master Volume. Hata oyunu durdurmaz.
 import uiData from '../../data/audio-ui.json';
+import worldData from '../../data/audio-world.json';
 import type { SfxDef } from '../game/audio';
 import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
@@ -28,6 +29,63 @@ export const UI_AUDIO = {
   hoverQuietMs: uiData.hoverQuietMs,
   vary: uiData.vary,
 };
+
+// ---------------------------------------------------------------- dünya / anlatı sesleri (data/audio-world.json; 2026-10-13)
+// Harita açma/kapama (parşömen), Codex (kitap), olay/diyalog (tüy kalem, mühür), tüccar (sikke), kasaba (kapı, ocak), Valor korları, ganimet
+// sandığı, item malzemesi (kumaş/deri/çelik/ahşap/takı), yürüyüş adımı + araba, savaş başı borusu, zafer/yenilgi stingeri. Kısalık kuralı
+// (40-250 ms) yalnızca menü seslerine (audio-ui.json) uygulanır; bunlar daha uzun olabilir. bus 'ui' = UI sounds kaydırıcısı, 'sfx' = Sound Effects.
+
+export type WorldSoundKind =
+  | 'map_unroll'
+  | 'map_roll'
+  | 'book_open'
+  | 'book_close'
+  | 'quill'
+  | 'seal'
+  | 'coin_count'
+  | 'door'
+  | 'hearth'
+  | 'ember_ignite'
+  | 'loot_reveal'
+  | 'item_cloth'
+  | 'item_leather'
+  | 'item_metal'
+  | 'item_wood'
+  | 'item_jewel'
+  | 'march_step'
+  | 'wagon_creak'
+  | 'battle_horn'
+  | 'boss_horn'
+  | 'victory'
+  | 'defeat';
+export const WORLD_SOUND_KINDS = Object.keys(worldData.sfx) as WorldSoundKind[];
+
+export interface WorldSfxDef extends UiSfxDef {
+  /** Hangi kaydırıcı: 'ui' (UI sounds) ya da 'sfx' (Sound Effects). */
+  bus: 'ui' | 'sfx';
+}
+export const WORLD_SFX = worldData.sfx as unknown as Record<WorldSoundKind, WorldSfxDef>;
+export const WORLD_AUDIO = {
+  master: worldData.master,
+  throttleMs: worldData.throttleMs as Record<string, number> & { default: number },
+  /** Haritada yürüyüş adımlarının temposu (CampaignMapScene.walk). */
+  march: worldData.march as { stepMs: number; stepGain: number[]; wagonEvery: number; wagonGain: number },
+  /** Item kaldırma (sürükleme başı) sesi, kuşanmaya göre kısık. */
+  itemPickupGain: worldData.itemPickupGain,
+};
+
+/** Item malzemesi -> ses (saf; testli): silah ailesi / yuva. Kalkan, balta, gürz, hançer, miğfer = çelik; yay, asa = ahşap; tılsım = kumaş; zırh/eldiven/çizme = deri; takı = zincir. */
+export function itemSoundKind(d: { slot: string; family?: string | undefined } | null | undefined): WorldSoundKind {
+  if (!d) return 'item_leather';
+  if (d.slot === 'trinket') return 'item_jewel';
+  if (d.slot === 'weapon' || d.slot === 'offhand') {
+    if (d.family === 'bows' || d.family === 'staves') return 'item_wood';
+    if (d.family === 'charms') return 'item_cloth';
+    return 'item_metal';
+  }
+  if (d.slot === 'helm') return 'item_metal';
+  return 'item_leather';
+}
 
 // ---------------------------------------------------------------- seviye (Settings > UI sounds)
 
@@ -169,6 +227,56 @@ export function previewUiSound(kind: UiSoundKind, on?: AudioContext, audition = 
   const c = on ?? ctx;
   if (!c) return;
   void (synth ? Promise.resolve(synth) : loadSynth()).then((m) => playOn(c, m, kind, false, audition && level <= 0 ? UI_AUDIO.defaultLevel : level)).catch(() => undefined);
+}
+
+// ---------------------------------------------------------------- dünya seslerini çalma
+
+const worldLast = new Map<string, number>();
+let worldPlayer: ((kind: WorldSoundKind, gainMul: number) => void) | null = null;
+
+/** Dünya sesinin toplam kazancı (saf): master x Master Volume x (UI sounds seviyesi | Sound Effects oranı) x gainMul. */
+export function worldGain(bus: 'ui' | 'sfx', uiLevel: number, volume: number, sfx: number, gainMul = 1): number {
+  return WORLD_AUDIO.master * volume * (bus === 'ui' ? stepFraction(uiLevel) : sfx) * gainMul;
+}
+
+function playWorldOn(c: AudioContext, m: AudioModule, kind: WorldSoundKind, vary: boolean, gainMul: number, uiLvl = level): void {
+  const def = WORLD_SFX[kind];
+  if (!def || !m.audioSettings.enabled) return;
+  const g = worldGain(def.bus, uiLvl, m.audioSettings.volume, m.audioSettings.sfx, gainMul);
+  if (g <= 0) return;
+  if (c.state !== 'running') void c.resume();
+  const out = c.createGain();
+  out.gain.value = g;
+  out.connect(c.destination);
+  m.synthSfx(c, out, vary ? varySfx(def, Math.random) : def);
+}
+
+/** Dünya / anlatı olayı: ilk kullanıcı hareketinden sonra, seyreltmeden geçerse çalar (`gainMul`: ör. item kaldırma = 0.6). Hata oyunu durdurmaz. */
+export function worldSound(kind: WorldSoundKind, gainMul = 1): void {
+  try {
+    if (worldPlayer) return worldPlayer(kind, gainMul);
+    if (!unlocked || !ctx || !synth) return;
+    const now = performance.now();
+    const gap = WORLD_AUDIO.throttleMs[kind] ?? WORLD_AUDIO.throttleMs.default;
+    if (now - (worldLast.get(kind) ?? -Infinity) < gap) return;
+    worldLast.set(kind, now);
+    playWorldOn(ctx, synth, kind, true, gainMul);
+  } catch {
+    /* ses hatası oyunu bozmasın */
+  }
+}
+
+/** Codex deneme çalışı: seyreltme/sapma yok; UI sesleri kapalı (0) olsa da varsayılan seviyede dinletir. */
+export function previewWorldSound(kind: WorldSoundKind, on?: AudioContext): void {
+  onGesture();
+  const c = on ?? ctx;
+  if (!c) return;
+  void (synth ? Promise.resolve(synth) : loadSynth()).then((m) => playWorldOn(c, m, kind, false, 1, level <= 0 ? UI_AUDIO.defaultLevel : level)).catch(() => undefined);
+}
+
+/** Dünya sesi çalıcısını değiştirir (null = yerleşik sentez; test için). */
+export function setWorldSoundPlayer(fn: ((kind: WorldSoundKind, gainMul: number) => void) | null): void {
+  worldPlayer = fn;
 }
 
 /** Çalıcıyı değiştirir (null = yerleşik sentez). Test ya da özel kullanım için. */

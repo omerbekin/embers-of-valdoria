@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { menuMusic } from '../../ui/music';
 import { formatLobbyCode, normalizeLobbyCode } from '../../net/lobby-code';
 import { sanitizeName } from '../../net/protocol';
 import { copyText, promptCode, promptName, toast } from '../../ui/mp-overlay';
@@ -29,6 +30,7 @@ export class MultiplayerScene extends Phaser.Scene {
   }
 
   create(): void {
+    menuMusic(true); // kurulum ekranı: ana menü müziği sürer (savaştan dönüşte yumuşak geçişle)
     elScreenIn(this); // ortak ekran geçişi (data/ui-motion.json > screen; Reduced motion = anında)
     const art = mapArt(this, getMap('valdoria')); // geniş harita görseli varsa o (eski 16:9 bölgesi eski yerinde)
     buildBackdrop(this, W, H, art?.key ?? null, art?.region);

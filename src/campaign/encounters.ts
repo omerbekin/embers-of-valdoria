@@ -96,6 +96,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
     else if (CONFIG.rules.carryHp && caps.startHp && h.hpRatio < 1) setup.startHpRatio = h.hpRatio;
+    if (enc.def.partyUndying && caps.unitMods) setup.undying = true; // açılış savaşı kaybedilemez (tutorial)
     if (Object.keys(setup).length) party[cell] = setup;
   });
   // Bölüm ölçeği (data/campaign/power-budget.json): açık ilerleme sistemi yokken 1 => düşmanlar bugünküyle aynı

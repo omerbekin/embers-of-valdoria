@@ -1,0 +1,318 @@
+{
+  "_not": "DÜNYA / ANLATI SESLERİ (2026-10-13): harita, kasaba, olay, tüccar, item, Valor, ganimet, yürüyüş, savaş başı borusu, zafer / yenilgi stingeri. data/audio.json ile AYNI katman dili (tone/noise/pluck/voice; src/game/audio.ts synthSfx), WebAudio sentezi, dosya yok. Ses felsefesi (CLAUDE.md): gerçek karşılığından kurulur, çan / saf sinüs çınlaması YOK: parşömen = filtreli gürültü patlamaları + kırışma tıkırtıları; sikke = kısa, dar bantlı metalik gürültü tıkları (çınlamayan); deri = titreşimli dar bant gıcırtı; ahşap = boğuk tık + alçak gövde; boru = alçak geçirenli testere (pirinç) + nefes gürültüsü; davul = alçak sinüs gövde + boğuk gürültü. bus: 'ui' = Settings > UI sounds kaydırıcısı (menü / sayfa / item sesleri), 'sfx' = Settings > Sound Effects kaydırıcısı (dünyadaki sesler: yürüyüş, boru, stinger); ikisi de Master Volume ile çarpılır. master = bu dosyanın genel kısıklığı. throttleMs = aynı sesin en kısa tekrar aralığı. Çalma: src/ui/ui-sound.ts > worldSound(kind, gainMul?). Codex > Assets > Sounds > 'World & stingers'. Sayılar kulakla ayarlanır.",
+  "master": 0.75,
+  "throttleMs": {
+    "default": 80,
+    "march_step": 120,
+    "ember_ignite": 160
+  },
+  "march": {
+    "_not": "Haritada yürüyüş: her stepMs'de bir adım (sol/sağ ayak kazancı dönüşümlü); ilk adımda ve sonra her wagonEvery adımda bir araba gıcırtısı.",
+    "stepMs": 380,
+    "stepGain": [0.75, 0.55],
+    "wagonEvery": 5,
+    "wagonGain": 0.8
+  },
+  "itemPickupGain": 0.55,
+  "sfx": {
+    "map_unroll": {
+      "label": "Map unrolled",
+      "desc": "Campaign map opened: a stiff parchment map unrolled across a war table. Crinkly paper ticks over a long dry swish, ending in a soft flop on wood.",
+      "bus": "ui",
+      "gain": 0.85,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 900, "f1": 2600, "q": 0.7, "attack": 0.12, "decay": 0.32, "gain": 0.32, "tremHz": 24, "tremDepth": 0.6 },
+        { "type": "noise", "filter": "bandpass", "f0": 3400, "f1": 3000, "q": 1.6, "attack": 0.002, "decay": 0.025, "gain": 0.42 },
+        { "type": "noise", "filter": "bandpass", "f0": 4300, "f1": 3800, "q": 1.8, "attack": 0.002, "decay": 0.02, "gain": 0.36, "at": 0.06 },
+        { "type": "noise", "filter": "bandpass", "f0": 2800, "f1": 2500, "q": 1.5, "attack": 0.002, "decay": 0.03, "gain": 0.4, "at": 0.13 },
+        { "type": "noise", "filter": "bandpass", "f0": 3900, "f1": 3400, "q": 1.8, "attack": 0.002, "decay": 0.022, "gain": 0.34, "at": 0.21 },
+        { "type": "noise", "filter": "bandpass", "f0": 3100, "f1": 2700, "q": 1.6, "attack": 0.002, "decay": 0.028, "gain": 0.3, "at": 0.29 },
+        { "type": "noise", "filter": "bandpass", "f0": 4600, "f1": 4000, "q": 2, "attack": 0.002, "decay": 0.018, "gain": 0.26, "at": 0.36 },
+        { "type": "noise", "filter": "lowpass", "f0": 800, "f1": 260, "q": 0.7, "attack": 0.004, "decay": 0.09, "gain": 0.36, "at": 0.44 },
+        { "type": "tone", "wave": "sine", "f0": 100, "f1": 62, "attack": 0.003, "decay": 0.07, "gain": 0.18, "at": 0.44 }
+      ]
+    },
+    "map_roll": {
+      "label": "Map rolled up",
+      "desc": "Campaign map closed: the parchment rolled back up, a falling swish with a few crinkles, then the leather tie drawn tight.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 2600, "f1": 900, "q": 0.7, "attack": 0.05, "decay": 0.28, "gain": 0.32, "tremHz": 30, "tremDepth": 0.65 },
+        { "type": "noise", "filter": "bandpass", "f0": 3600, "f1": 3200, "q": 1.6, "attack": 0.002, "decay": 0.022, "gain": 0.34, "at": 0.04 },
+        { "type": "noise", "filter": "bandpass", "f0": 2900, "f1": 2600, "q": 1.6, "attack": 0.002, "decay": 0.026, "gain": 0.32, "at": 0.12 },
+        { "type": "noise", "filter": "bandpass", "f0": 4100, "f1": 3600, "q": 1.8, "attack": 0.002, "decay": 0.02, "gain": 0.26, "at": 0.2 },
+        { "type": "noise", "filter": "bandpass", "f0": 520, "f1": 640, "q": 7, "attack": 0.015, "decay": 0.08, "gain": 0.3, "tremHz": 55, "tremDepth": 0.8, "at": 0.3 },
+        { "type": "tone", "wave": "sine", "f0": 130, "f1": 85, "attack": 0.003, "decay": 0.05, "gain": 0.14, "at": 0.36 }
+      ]
+    },
+    "book_open": {
+      "label": "Tome opened",
+      "desc": "Codex opened: a heavy leather-bound tome. The cover creaks, lands on the table with a dull thump, and the pages fan open.",
+      "bus": "ui",
+      "gain": 0.85,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 360, "f1": 470, "q": 6, "attack": 0.03, "decay": 0.13, "gain": 0.32, "tremHz": 48, "tremDepth": 0.8 },
+        { "type": "tone", "wave": "sine", "f0": 95, "f1": 52, "attack": 0.003, "decay": 0.1, "gain": 0.4, "at": 0.15 },
+        { "type": "noise", "filter": "lowpass", "f0": 700, "f1": 200, "q": 0.7, "attack": 0.002, "decay": 0.08, "gain": 0.38, "at": 0.15 },
+        { "type": "noise", "filter": "bandpass", "f0": 2200, "f1": 3600, "q": 0.8, "attack": 0.04, "decay": 0.2, "gain": 0.26, "tremHz": 42, "tremDepth": 0.75, "at": 0.19 }
+      ]
+    },
+    "book_close": {
+      "label": "Tome closed",
+      "desc": "Codex closed: the last pages flutter and the heavy cover shuts with a deep book thump.",
+      "bus": "ui",
+      "gain": 0.85,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 3200, "f1": 1800, "q": 0.8, "attack": 0.02, "decay": 0.1, "gain": 0.24, "tremHz": 40, "tremDepth": 0.7 },
+        { "type": "tone", "wave": "sine", "f0": 85, "f1": 45, "attack": 0.003, "decay": 0.13, "gain": 0.5, "at": 0.1 },
+        { "type": "noise", "filter": "lowpass", "f0": 650, "f1": 150, "q": 0.7, "attack": 0.002, "decay": 0.1, "gain": 0.42, "at": 0.1 }
+      ]
+    },
+    "quill": {
+      "label": "Quill on parchment",
+      "desc": "Choice / dialogue opened: three quick scratches of a goose quill across rough parchment.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 4200, "f1": 5600, "q": 2.2, "attack": 0.02, "decay": 0.08, "gain": 0.43, "tremHz": 75, "tremDepth": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 5200, "f1": 4000, "q": 2.2, "attack": 0.015, "decay": 0.07, "gain": 0.38, "tremHz": 82, "tremDepth": 0.9, "at": 0.13 },
+        { "type": "noise", "filter": "bandpass", "f0": 4600, "f1": 6000, "q": 2.4, "attack": 0.012, "decay": 0.1, "gain": 0.36, "tremHz": 70, "tremDepth": 0.9, "at": 0.25 },
+        { "type": "noise", "filter": "bandpass", "f0": 1500, "f1": 1300, "q": 3.0, "attack": 0.001, "decay": 0.02, "gain": 0.24, "at": 0.37 }
+      ]
+    },
+    "seal": {
+      "label": "Wax seal",
+      "desc": "Choice made: a wax seal pressed into warm wax, a soft squash with a tiny crackle and a dull press on the desk.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "lowpass", "f0": 700, "f1": 220, "q": 0.8, "attack": 0.012, "decay": 0.11, "gain": 0.42 },
+        { "type": "tone", "wave": "sine", "f0": 120, "f1": 70, "attack": 0.004, "decay": 0.08, "gain": 0.3 },
+        { "type": "noise", "filter": "bandpass", "f0": 2600, "f1": 2300, "q": 3, "attack": 0.001, "decay": 0.025, "gain": 0.22, "at": 0.07 },
+        { "type": "noise", "filter": "bandpass", "f0": 3100, "f1": 2900, "q": 3, "attack": 0.001, "decay": 0.02, "gain": 0.16, "at": 0.11 }
+      ]
+    },
+    "coin_count": {
+      "label": "Coins counted",
+      "desc": "Merchant opened: silver coins counted out onto a wooden counter. Short dull metal clicks on oak, no ringing.",
+      "bus": "ui",
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 4300, "f1": 4100, "q": 5.9, "attack": 0.001, "decay": 0.035, "gain": 0.95 },
+        { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 400, "q": 0.7, "attack": 0.001, "decay": 0.025, "gain": 0.22 },
+        { "type": "noise", "filter": "bandpass", "f0": 5200, "f1": 5000, "q": 6.5, "attack": 0.001, "decay": 0.03, "gain": 0.84, "at": 0.08 },
+        { "type": "noise", "filter": "bandpass", "f0": 3800, "f1": 3700, "q": 5.9, "attack": 0.001, "decay": 0.04, "gain": 0.92, "at": 0.15 },
+        { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 400, "q": 0.7, "attack": 0.001, "decay": 0.025, "gain": 0.2, "at": 0.15 },
+        { "type": "noise", "filter": "bandpass", "f0": 4800, "f1": 4600, "q": 6.5, "attack": 0.001, "decay": 0.03, "gain": 0.76, "at": 0.21 },
+        { "type": "noise", "filter": "bandpass", "f0": 6100, "f1": 5900, "q": 7.2, "attack": 0.001, "decay": 0.025, "gain": 0.6, "at": 0.24 },
+        { "type": "noise", "filter": "bandpass", "f0": 4100, "f1": 3900, "q": 5.9, "attack": 0.001, "decay": 0.045, "gain": 0.88, "at": 0.33 },
+        { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 350, "q": 0.7, "attack": 0.001, "decay": 0.03, "gain": 0.24, "at": 0.33 }
+      ]
+    },
+    "door": {
+      "label": "Wooden door",
+      "desc": "Town building entered: an iron latch lifts and a heavy oak door swings on a dry hinge.",
+      "bus": "ui",
+      "gain": 0.9,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1700, "f1": 1500, "q": 4.0, "attack": 0.001, "decay": 0.03, "gain": 0.6 },
+        { "type": "noise", "filter": "bandpass", "f0": 2600, "f1": 2400, "q": 5.0, "attack": 0.001, "decay": 0.02, "gain": 0.34, "at": 0.04 },
+        { "type": "noise", "filter": "bandpass", "f0": 560, "f1": 820, "q": 12.0, "attack": 0.08, "decay": 0.32, "gain": 0.41, "tremHz": 42, "tremDepth": 0.9, "at": 0.06 },
+        { "type": "tone", "wave": "sine", "f0": 110, "f1": 70, "attack": 0.004, "decay": 0.08, "gain": 0.16, "at": 0.06 }
+      ]
+    },
+    "hearth": {
+      "label": "Hearth fire",
+      "desc": "Town campfire / rest: logs settle into a fire with a soft whoomp and a few real wood crackles.",
+      "bus": "ui",
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "lowpass", "f0": 200, "f1": 700, "q": 0.7, "attack": 0.15, "decay": 0.45, "gain": 0.5 },
+        { "type": "noise", "filter": "bandpass", "f0": 2600, "f1": 2400, "q": 1.9, "attack": 0.001, "decay": 0.018, "gain": 0.8, "at": 0.08 },
+        { "type": "noise", "filter": "bandpass", "f0": 3400, "f1": 3100, "q": 1.9, "attack": 0.001, "decay": 0.014, "gain": 0.64, "at": 0.19 },
+        { "type": "noise", "filter": "bandpass", "f0": 2100, "f1": 1900, "q": 1.7, "attack": 0.001, "decay": 0.022, "gain": 0.76, "at": 0.27 },
+        { "type": "noise", "filter": "bandpass", "f0": 3800, "f1": 3500, "q": 2.1, "attack": 0.001, "decay": 0.012, "gain": 0.52, "at": 0.36 },
+        { "type": "noise", "filter": "bandpass", "f0": 2900, "f1": 2700, "q": 1.9, "attack": 0.001, "decay": 0.016, "gain": 0.6, "at": 0.5 }
+      ]
+    },
+    "ember_ignite": {
+      "label": "Valor ember ignites",
+      "desc": "A Valor ember catches: a striker's scrape, a small flame blooming with a breathy whoomp, and two crackles.",
+      "bus": "ui",
+      "gain": 0.9,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 2200, "f1": 900, "q": 1.4, "attack": 0.004, "decay": 0.06, "gain": 0.54 },
+        { "type": "noise", "filter": "lowpass", "f0": 220, "f1": 1100, "q": 0.9, "attack": 0.09, "decay": 0.22, "gain": 0.4, "at": 0.03 },
+        { "type": "noise", "filter": "bandpass", "f0": 3200, "f1": 3000, "q": 2.6, "attack": 0.001, "decay": 0.016, "gain": 0.45, "at": 0.12 },
+        { "type": "noise", "filter": "bandpass", "f0": 2500, "f1": 2300, "q": 2.4, "attack": 0.001, "decay": 0.02, "gain": 0.39, "at": 0.22 },
+        { "type": "tone", "wave": "sine", "f0": 90, "f1": 60, "attack": 0.02, "decay": 0.12, "gain": 0.14, "at": 0.04 }
+      ]
+    },
+    "loot_reveal": {
+      "label": "Chest opened",
+      "desc": "Spoils / treasure revealed: an iron-banded chest lid creaks open and drops back on its hinges; coins shift inside.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 470, "f1": 700, "q": 10, "attack": 0.06, "decay": 0.26, "gain": 0.34, "tremHz": 36, "tremDepth": 0.9 },
+        { "type": "tone", "wave": "sine", "f0": 88, "f1": 50, "attack": 0.003, "decay": 0.11, "gain": 0.42, "at": 0.3 },
+        { "type": "noise", "filter": "lowpass", "f0": 800, "f1": 220, "q": 0.7, "attack": 0.002, "decay": 0.08, "gain": 0.4, "at": 0.3 },
+        { "type": "noise", "filter": "bandpass", "f0": 2000, "f1": 1800, "q": 5, "attack": 0.001, "decay": 0.03, "gain": 0.3, "at": 0.3 },
+        { "type": "noise", "filter": "bandpass", "f0": 4600, "f1": 4400, "q": 9, "attack": 0.001, "decay": 0.035, "gain": 0.34, "at": 0.4 },
+        { "type": "noise", "filter": "bandpass", "f0": 5600, "f1": 5400, "q": 10, "attack": 0.001, "decay": 0.028, "gain": 0.28, "at": 0.46 },
+        { "type": "noise", "filter": "bandpass", "f0": 4000, "f1": 3800, "q": 9, "attack": 0.001, "decay": 0.04, "gain": 0.3, "at": 0.55 }
+      ]
+    },
+    "item_cloth": {
+      "label": "Item: cloth",
+      "desc": "Cloth or wrapped charm picked up / equipped: a soft fabric swish and a light pat.",
+      "bus": "ui",
+      "gain": 0.75,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1100, "f1": 2300, "q": 0.7, "attack": 0.035, "decay": 0.11, "gain": 0.46 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 250, "q": 0.7, "attack": 0.004, "decay": 0.05, "gain": 0.26, "at": 0.1 }
+      ]
+    },
+    "item_leather": {
+      "label": "Item: leather",
+      "desc": "Leather armour, gloves or boots: a stiff leather creak and a strap settling against the body.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 420, "f1": 600, "q": 6, "attack": 0.02, "decay": 0.12, "gain": 0.42, "tremHz": 58, "tremDepth": 0.85 },
+        { "type": "noise", "filter": "lowpass", "f0": 600, "f1": 260, "q": 0.7, "attack": 0.003, "decay": 0.05, "gain": 0.3, "at": 0.11 },
+        { "type": "tone", "wave": "sine", "f0": 140, "f1": 85, "attack": 0.003, "decay": 0.05, "gain": 0.2, "at": 0.11 }
+      ]
+    },
+    "item_metal": {
+      "label": "Item: steel",
+      "desc": "Blades, maces, helms and shields: a short dull steel clink of plates touching, inharmonic and quickly damped (no bell).",
+      "bus": "ui",
+      "gain": 0.75,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 3150, "f1": 3050, "q": 14, "attack": 0.001, "decay": 0.055, "gain": 0.5 },
+        { "type": "noise", "filter": "bandpass", "f0": 5070, "f1": 4950, "q": 16, "attack": 0.001, "decay": 0.04, "gain": 0.34 },
+        { "type": "noise", "filter": "bandpass", "f0": 2330, "f1": 2250, "q": 12, "attack": 0.001, "decay": 0.045, "gain": 0.32, "at": 0.035 },
+        { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 300, "q": 0.7, "attack": 0.001, "decay": 0.04, "gain": 0.3 },
+        { "type": "tone", "wave": "sine", "f0": 160, "f1": 100, "attack": 0.002, "decay": 0.04, "gain": 0.14 }
+      ]
+    },
+    "item_wood": {
+      "label": "Item: wood",
+      "desc": "Bows and staves: a hollow wooden knock as the shaft is set against the table.",
+      "bus": "ui",
+      "gain": 0.8,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 950, "f1": 800, "q": 5, "attack": 0.001, "decay": 0.04, "gain": 0.5 },
+        { "type": "tone", "wave": "triangle", "f0": 270, "f1": 210, "attack": 0.001, "decay": 0.05, "gain": 0.2, "filter": { "type": "lowpass", "f": 900, "q": 0.7 } },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 220, "q": 0.7, "attack": 0.001, "decay": 0.04, "gain": 0.26 },
+        { "type": "noise", "filter": "bandpass", "f0": 1300, "f1": 1150, "q": 5, "attack": 0.001, "decay": 0.03, "gain": 0.24, "at": 0.07 }
+      ]
+    },
+    "item_jewel": {
+      "label": "Item: trinket",
+      "desc": "Rings, amulets and trinkets: a fine chain slipping through the fingers, tiny dry metal ticks.",
+      "bus": "ui",
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 6200, "f1": 6000, "q": 7.2, "attack": 0.001, "decay": 0.022, "gain": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 7100, "f1": 6900, "q": 7.2, "attack": 0.001, "decay": 0.018, "gain": 0.64, "at": 0.04 },
+        { "type": "noise", "filter": "bandpass", "f0": 5600, "f1": 5400, "q": 6.6, "attack": 0.001, "decay": 0.024, "gain": 0.68, "at": 0.075 },
+        { "type": "noise", "filter": "bandpass", "f0": 6600, "f1": 6400, "q": 7.2, "attack": 0.001, "decay": 0.02, "gain": 0.52, "at": 0.11 },
+        { "type": "noise", "filter": "lowpass", "f0": 700, "f1": 300, "q": 0.7, "attack": 0.002, "decay": 0.03, "gain": 0.14, "at": 0.12 }
+      ]
+    },
+    "march_step": {
+      "label": "March step",
+      "desc": "Party marching on the map: a boot landing on a packed dirt road with a little gravel scuff.",
+      "bus": "sfx",
+      "gain": 0.6,
+      "layers": [
+        { "type": "noise", "filter": "lowpass", "f0": 650, "f1": 220, "q": 0.8, "attack": 0.004, "decay": 0.07, "gain": 0.5 },
+        { "type": "tone", "wave": "sine", "f0": 95, "f1": 60, "attack": 0.003, "decay": 0.05, "gain": 0.22 },
+        { "type": "noise", "filter": "bandpass", "f0": 1900, "f1": 1500, "q": 1.2, "attack": 0.006, "decay": 0.05, "gain": 0.14, "at": 0.015 }
+      ]
+    },
+    "wagon_creak": {
+      "label": "Wagon creak",
+      "desc": "Supply cart on the march: a dry wooden axle creak and a wheel knocking over a rut.",
+      "bus": "sfx",
+      "gain": 0.55,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 680, "f1": 820, "q": 14, "attack": 0.1, "decay": 0.3, "gain": 0.32, "tremHz": 31, "tremDepth": 0.9 },
+        { "type": "tone", "wave": "sine", "f0": 105, "f1": 70, "attack": 0.003, "decay": 0.09, "gain": 0.26, "at": 0.34 },
+        { "type": "noise", "filter": "bandpass", "f0": 1000, "f1": 850, "q": 4, "attack": 0.001, "decay": 0.04, "gain": 0.3, "at": 0.34 }
+      ]
+    },
+    "battle_horn": {
+      "label": "Battle horn",
+      "desc": "Battle starts: a war horn call (brassy filtered reed with breath and lip wobble), answered by two war-drum blows.",
+      "bus": "sfx",
+      "gain": 0.55,
+      "layers": [
+        { "type": "tone", "wave": "sawtooth", "f0": 96, "f1": 98, "attack": 0.16, "decay": 0.5, "gain": 0.36, "filter": { "type": "lowpass", "f": 900, "q": 1.2}, "tremHz": 5.5, "tremDepth": 0.08 },
+        { "type": "tone", "wave": "sawtooth", "f0": 98, "f1": 98, "attack": 0.25, "decay": 0.55, "gain": 0.34, "filter": { "type": "lowpass", "f": 1100, "q": 1.2}, "tremHz": 5.2, "tremDepth": 0.1, "at": 0.3 },
+        { "type": "tone", "wave": "sawtooth", "f0": 98, "f1": 92, "attack": 0.18, "decay": 0.75, "gain": 0.3, "filter": { "type": "lowpass", "f": 800, "q": 1}, "tremHz": 5, "tremDepth": 0.1, "at": 0.62 },
+        { "type": "tone", "wave": "sawtooth", "f0": 196, "f1": 194, "attack": 0.3, "decay": 0.9, "gain": 0.1, "filter": { "type": "lowpass", "f": 1400, "q": 0.8 } },
+        { "type": "noise", "filter": "bandpass", "f0": 900, "f1": 700, "q": 1, "attack": 0.1, "decay": 0.9, "gain": 0.07 },
+        { "type": "tone", "wave": "sine", "f0": 75, "f1": 42, "attack": 0.003, "decay": 0.4, "gain": 0.55, "at": 1.25 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 120, "q": 0.7, "attack": 0.002, "decay": 0.16, "gain": 0.5, "at": 1.25 },
+        { "type": "tone", "wave": "sine", "f0": 75, "f1": 42, "attack": 0.003, "decay": 0.45, "gain": 0.6, "at": 1.6 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 120, "q": 0.7, "attack": 0.002, "decay": 0.18, "gain": 0.55, "at": 1.6 }
+      ]
+    },
+    "boss_horn": {
+      "label": "Boss horn",
+      "desc": "Boss battle starts: a lower, longer horn that sags a semitone, over three heavy drum blows.",
+      "bus": "sfx",
+      "gain": 0.6,
+      "layers": [
+        { "type": "tone", "wave": "sawtooth", "f0": 73, "f1": 74, "attack": 0.22, "decay": 0.6, "gain": 0.4, "filter": { "type": "lowpass", "f": 700, "q": 1.4}, "tremHz": 4.6, "tremDepth": 0.1 },
+        { "type": "tone", "wave": "sawtooth", "f0": 74, "f1": 70, "attack": 0.3, "decay": 1.0, "gain": 0.38, "filter": { "type": "lowpass", "f": 650, "q": 1.4}, "tremHz": 4.4, "tremDepth": 0.12, "at": 0.4 },
+        { "type": "tone", "wave": "sawtooth", "f0": 110, "f1": 105, "attack": 0.4, "decay": 1.1, "gain": 0.12, "filter": { "type": "lowpass", "f": 900, "q": 0.8 } },
+        { "type": "noise", "filter": "bandpass", "f0": 700, "f1": 500, "q": 1, "attack": 0.15, "decay": 1.1, "gain": 0.08 },
+        { "type": "tone", "wave": "sine", "f0": 68, "f1": 36, "attack": 0.003, "decay": 0.5, "gain": 0.6, "at": 1.5 },
+        { "type": "noise", "filter": "lowpass", "f0": 450, "f1": 100, "q": 0.7, "attack": 0.002, "decay": 0.2, "gain": 0.55, "at": 1.5 },
+        { "type": "tone", "wave": "sine", "f0": 68, "f1": 36, "attack": 0.003, "decay": 0.5, "gain": 0.6, "at": 1.9 },
+        { "type": "noise", "filter": "lowpass", "f0": 450, "f1": 100, "q": 0.7, "attack": 0.002, "decay": 0.2, "gain": 0.55, "at": 1.9 },
+        { "type": "tone", "wave": "sine", "f0": 68, "f1": 34, "attack": 0.003, "decay": 0.6, "gain": 0.68, "at": 2.3 },
+        { "type": "noise", "filter": "lowpass", "f0": 450, "f1": 100, "q": 0.7, "attack": 0.002, "decay": 0.22, "gain": 0.6, "at": 2.3 }
+      ]
+    },
+    "victory": {
+      "label": "Victory",
+      "desc": "Victory stinger: a rising horn call (root, fifth, octave) over a drum roll and a distant cheer of the troops.",
+      "bus": "sfx",
+      "gain": 0.55,
+      "layers": [
+        { "type": "tone", "wave": "sawtooth", "f0": 98, "f1": 98, "attack": 0.06, "decay": 0.25, "gain": 0.32, "filter": { "type": "lowpass", "f": 1000, "q": 1.2 } },
+        { "type": "tone", "wave": "sawtooth", "f0": 147, "f1": 147, "attack": 0.06, "decay": 0.25, "gain": 0.3, "filter": { "type": "lowpass", "f": 1200, "q": 1.2}, "at": 0.24 },
+        { "type": "tone", "wave": "sawtooth", "f0": 196, "f1": 196, "attack": 0.12, "decay": 0.5, "gain": 0.3, "filter": { "type": "lowpass", "f": 1400, "q": 1.2}, "tremHz": 5.4, "tremDepth": 0.08, "at": 0.48 },
+        { "type": "tone", "wave": "sawtooth", "f0": 196, "f1": 194, "attack": 0.2, "decay": 0.9, "gain": 0.24, "filter": { "type": "lowpass", "f": 1200, "q": 1}, "tremHz": 5.2, "tremDepth": 0.1, "at": 0.8 },
+        { "type": "tone", "wave": "sawtooth", "f0": 98, "f1": 98, "attack": 0.25, "decay": 1.0, "gain": 0.12, "filter": { "type": "lowpass", "f": 700, "q": 0.8}, "at": 0.5 },
+        { "type": "noise", "filter": "bandpass", "f0": 1000, "f1": 800, "q": 1, "attack": 0.08, "decay": 1.2, "gain": 0.06 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 260, "q": 0.8, "attack": 0.02, "decay": 0.6, "gain": 0.3, "tremHz": 14, "tremDepth": 0.85 },
+        { "type": "tone", "wave": "sine", "f0": 80, "f1": 44, "attack": 0.003, "decay": 0.45, "gain": 0.55, "at": 0.48 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 120, "q": 0.7, "attack": 0.002, "decay": 0.16, "gain": 0.45, "at": 0.48 },
+        { "type": "noise", "filter": "bandpass", "f0": 1200, "f1": 1500, "q": 0.6, "attack": 0.35, "decay": 1.1, "gain": 0.12, "tremHz": 9, "tremDepth": 0.5, "at": 0.6 }
+      ]
+    },
+    "defeat": {
+      "label": "Defeat",
+      "desc": "Defeat stinger: a low horn sinking a whole tone, two slow muffled drum blows and a cold wind over the field.",
+      "bus": "sfx",
+      "gain": 0.55,
+      "layers": [
+        { "type": "tone", "wave": "sawtooth", "f0": 110, "f1": 98, "attack": 0.3, "decay": 1.1, "gain": 0.32, "filter": { "type": "lowpass", "f": 600, "q": 1.2}, "tremHz": 4.2, "tremDepth": 0.1 },
+        { "type": "tone", "wave": "sawtooth", "f0": 98, "f1": 82, "attack": 0.3, "decay": 1.2, "gain": 0.3, "filter": { "type": "lowpass", "f": 520, "q": 1.2}, "tremHz": 4, "tremDepth": 0.12, "at": 0.7 },
+        { "type": "noise", "filter": "bandpass", "f0": 700, "f1": 500, "q": 1, "attack": 0.2, "decay": 1.2, "gain": 0.06 },
+        { "type": "tone", "wave": "sine", "f0": 62, "f1": 36, "attack": 0.004, "decay": 0.55, "gain": 0.5, "at": 0.15 },
+        { "type": "noise", "filter": "lowpass", "f0": 400, "f1": 100, "q": 0.7, "attack": 0.003, "decay": 0.2, "gain": 0.4, "at": 0.15 },
+        { "type": "tone", "wave": "sine", "f0": 58, "f1": 34, "attack": 0.004, "decay": 0.6, "gain": 0.5, "at": 1.15 },
+        { "type": "noise", "filter": "lowpass", "f0": 400, "f1": 100, "q": 0.7, "attack": 0.003, "decay": 0.22, "gain": 0.4, "at": 1.15 },
+        { "type": "noise", "filter": "bandpass", "f0": 420, "f1": 650, "q": 0.9, "attack": 0.7, "decay": 1.4, "gain": 0.14, "tremHz": 0.8, "tremDepth": 0.5, "at": 0.4 }
+      ]
+    }
+  }
+}

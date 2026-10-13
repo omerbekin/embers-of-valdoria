@@ -1,14 +1,14 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=cutthroat: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. cross_cut = extra-cross_cut.png (ek poz, Saltire Cut): main = alttaki yumruk, off = üstteki; açılar X boyunca.",
+  "_not": "tools/make-poses-v2.mjs --class=cutthroat: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. cross_cut = extra-cross_cut.png (ek poz, Saltire Cut): main = alttaki yumruk, off = üstteki; açılar X boyunca. EL KURALI 2026-10-13: main = SAĞ el (3/4 önden sağa bakan gövdede arkadaki / resimde soldaki kol), off = SOL el, her karede (step1, spin1c, idle1 düzeltildi). narrowSeeds = narrow.png koordinatı.",
   "seeds": {
-    "idle1": { "main": [262, 125], "off": [170, 165] },
-    "step1": { "main": [665, 150], "off": [470, 130] },
+    "idle1": { "main": [170, 165], "off": [262, 125] },
+    "step1": { "main": [470, 130], "off": [665, 150] },
     "slash1": { "main": [1105, 115], "off": [905, 135] },
     "overhead1": { "main": [1315, 20], "off": [1385, 150] },
     "thrust1": { "main": [425, 445], "off": [190, 465] },
     "spin1a": { "main": [535, 445], "off": [650, 465] },
     "spin1b": { "main": [1105, 432], "off": [875, 455] },
-    "spin1c": { "main": [1395, 440], "off": [1300, 445] },
+    "spin1c": { "main": [1300, 445], "off": [1395, 440] },
     "guard1": { "main": [210, 745], "off": [265, 742] },
     "raise": { "main": [515, 665], "off": [625, 785] },
     "channel": { "main": [1065, 758], "off": [1018, 760] },
@@ -26,5 +26,16 @@
     "hit": { "main": [985, 840], "off": [985, 840] },
     "kneel": { "main": [1455, 965], "off": [1455, 965] },
     "cross_cut": { "main": [712, 664], "off": [440, 362], "angle": 55, "offAngle": -65 }
+  },
+  "narrowSeeds": {
+    "idle1": { "main": [268, 160], "off": [372, 115] },
+    "idle2": { "main": [730, 180], "off": [730, 180] },
+    "guard1": { "main": [1162, 142], "off": [1293, 68] },
+    "guard2": { "main": [380, 415], "off": [380, 415] },
+    "raise": { "main": [738, 348], "off": [818, 462] },
+    "channel": { "main": [1338, 438], "off": [1305, 440] },
+    "point": { "main": [275, 790], "off": [492, 736] },
+    "throw": { "main": [733, 682], "off": [900, 817] },
+    "hit": { "main": [1222, 805], "off": [1222, 805] }
   }
 }

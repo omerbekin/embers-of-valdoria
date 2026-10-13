@@ -408,3 +408,80 @@ describe('gerçek sınıflar v2 gövdeyle (Ömer 2026-10-13; debug > Characters 
     });
   });
 });
+
+describe('balta ağzı / çekiç yüzü öne bakar (Ömer 2026-10-13 "Warrior baltayı ters tutuyor"; weapons.<aile>.edge)', () => {
+  // ağız noktası - sap noktası (baş hizasında), gövde tuvalinde: karakter sağa (düşmana) bakar
+  const edgeDir = (pl: NonNullable<ReturnType<typeof itemPlacement>>, side: 'left' | 'right') => {
+    const y = pl.h * 0.12;
+    const a = placementPoint(pl, side === 'left' ? 0 : pl.w, y);
+    const b = placementPoint(pl, pl.grip.x, y);
+    const d = Math.hypot(a.x - b.x, a.y - b.y) || 1;
+    return { x: (a.x - b.x) / d, y: (a.y - b.y) / d };
+  };
+  const v2 = Object.keys(POSES.classes).filter((id) => POSES.classes[id]!.grips);
+
+  it('ağzı olan her görünümde ağız tarafı tanımlı ve görünüm var', () => {
+    expect(Object.keys(POSES.weapons['axes']!.edge ?? {}).sort()).toEqual([...POSES.weapons['axes']!.order].sort());
+    for (const l of ['dane', 'bearded']) expect(POSES.weapons['greataxes']!.edge?.[l]).toBe('left');
+    expect(validatePoses()).toEqual([]);
+  });
+
+  it('tüm v2 gövdelerde, tüm pozlarda: baş yukarıdayken ve elde sarkarken ağız öne (düşmana) bakar', () => {
+    for (const id of v2) {
+      const def = POSES.classes[id]!;
+      for (const [family, grip] of [['axes', 'one'], ['greataxes', 'two'], ['mauls', 'two']] as const) {
+        const fam = POSES.weapons[family]!;
+        for (const [look, side] of Object.entries(fam.edge ?? {}))
+          for (const pose of gripFrames(def, grip)) {
+            const pl = itemPlacement(def, pose, { family, look }, 'main');
+            if (!pl) continue;
+            const a = (pl.angle * Math.PI) / 180;
+            const up = Math.cos(a) > 0.3; // baş elin üstünde
+            const hangs = Math.cos(a) < -0.77; // baş aşağı sarkıyor (hangsDown)
+            if (!up && !hangs) continue; // yatay savuruş / spin: ağız aşağı ya da yukarı, ikisi de doğru
+            expect(edgeDir(pl, side as 'left' | 'right').x, `${id} ${pose} ${family}/${look} (açı ${pl.angle})`).toBeGreaterThan(0.2);
+          }
+      }
+    }
+  });
+
+  it('v1 Warrior (debug karşılaştırması) ayrı: ayna yok', () => {
+    const v1 = POSES.classes['warrior']!;
+    for (const pose of Object.keys(v1.poses)) expect(itemPlacement(v1, pose, { family: 'axes', look: 'bearded' }, 'main')?.flip ?? false).toBe(false);
+  });
+});
+
+describe('hazır tutuş: ağızlı silah YUKARI ve hafif öne (Ömer 2026-10-13 "tek elli kılıç böyle mi tutulur"; hançer istisna: ucu öne)', () => {
+  const v2 = Object.entries(POSES.classes).filter(([, d]) => d.grips);
+  it('tek el: axes / swords / maces idle1, step1, guard1 açısı 15..50 (yukarı-öne); daggers 40..90 (ucu öne-yukarı)', () => {
+    for (const [id, def] of v2)
+      for (const family of ['axes', 'swords', 'maces', 'daggers'])
+        for (const pose of ['idle1', 'step1', 'guard1']) {
+          const look = POSES.weapons[family]!.order[0]!;
+          const pl = itemPlacement(def, pose, { family, look }, 'main')!;
+          const [lo, hi] = family === 'daggers' ? [40, 90] : [15, 50];
+          expect(pl.angle, `${id} ${family} ${pose}`).toBeGreaterThanOrEqual(lo);
+          expect(pl.angle, `${id} ${family} ${pose}`).toBeLessThanOrEqual(hi);
+        }
+  });
+  it('çift el: greataxes / mauls / staves idle2 ve guard2 başı yukarıda (-10..60)', () => {
+    for (const [id, def] of v2)
+      for (const family of ['greataxes', 'mauls', 'staves'])
+        for (const pose of ['idle2', 'guard2']) {
+          const look = POSES.weapons[family]!.order[0]!;
+          const pl = itemPlacement(def, pose, { family, look }, 'main')!;
+          expect(pl.angle, `${id} ${family} ${pose}`).toBeGreaterThanOrEqual(-10);
+          expect(pl.angle, `${id} ${family} ${pose}`).toBeLessThanOrEqual(60);
+        }
+  });
+});
+
+describe('eller yer değiştirmez: main = SAĞ el (arkadaki kol, resimde solda), off = SOL el (Ömer 2026-10-13)', () => {
+  it('tüm v2 gövdelerde ayakta / adım / koruma / büyü / atış karelerinde ana el ikinci elin solunda (arkasında)', () => {
+    for (const [id, def] of Object.entries(POSES.classes).filter(([, d]) => d.grips))
+      for (const pose of ['idle1', 'step1', 'guard1', 'raise', 'point', 'throw', 'spin1a', 'spin1c']) {
+        const p = def.poses[pose]!;
+        expect(p.anchor.x, `${id} ${pose}`).toBeLessThan(p.offhand!.x);
+      }
+  });
+});

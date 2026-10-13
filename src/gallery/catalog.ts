@@ -10,7 +10,8 @@ import { content, TARGET_TEXT } from '../engine';
 import type { Attributes, CombatantDef, PassiveDef, SkillDef } from '../engine';
 import type { Layer, SfxDef } from '../game/audio';
 import { SFX } from '../game/audio';
-import { UI_SFX, UI_SOUND_KINDS } from '../ui/ui-sound';
+import { UI_SFX, UI_SOUND_KINDS, WORLD_SFX, WORLD_SOUND_KINDS } from '../ui/ui-sound';
+import musicTracksData from '../../data/audio-music-tracks.json';
 import { PIXEL_FX } from '../game/pixel-fx';
 import { FAMILY_ICON, ITEM_ICON_LABEL, ITEM_ICON_NAMES, REWARD_ICON, SLOT_ICON, itemIconName } from '../game/item-icons';
 import itemsJson from '../../data/items.json';
@@ -172,11 +173,45 @@ export function buildUiSounds(): SoundEntry[] {
   });
 }
 
-/** Müzik / ambiyans kayıtları: data/audio.json'da `music` (ya da `soundtracks`) anahtarı olursa listelenir; yoksa boş. */
-export function buildSoundtracks(): string[] {
-  const raw = audioData as unknown as Record<string, unknown>;
-  const tracks = raw['music'] ?? raw['soundtracks'];
-  return tracks && typeof tracks === 'object' ? Object.keys(tracks as Record<string, unknown>).filter((k) => !k.startsWith('_')) : [];
+/** Dünya / anlatı sesleri grubu adı (Codex > Sounds). */
+export const WORLD_SOUND_GROUP = 'World & stingers';
+
+/** Dünya / anlatı sesleri (data/audio-world.json; src/ui/ui-sound.ts > worldSound): harita, kitap, olay, tüccar, item, yürüyüş, boru, stinger. */
+export function buildWorldSounds(): SoundEntry[] {
+  return WORLD_SOUND_KINDS.map((id) => {
+    const def = WORLD_SFX[id];
+    const counts = new Map<string, number>();
+    for (const l of def.layers) counts.set(l.type, (counts.get(l.type) ?? 0) + 1);
+    return {
+      id,
+      label: def.label,
+      gain: def.gain,
+      duration: sfxDuration(def),
+      layerCount: def.layers.length,
+      layers: def.layers.map(describeLayer),
+      summary: [...counts].map(([t, n]) => `${n} ${t}`).join(', '),
+      usedBy: [],
+      group: WORLD_SOUND_GROUP,
+      def,
+      desc: `${def.desc} (${def.bus === 'ui' ? 'UI sounds' : 'Sound Effects'} slider)`,
+    };
+  });
+}
+
+export interface SoundtrackEntry {
+  /** src/ui/music.ts > MusicTrack. */
+  id: string;
+  label: string;
+  desc: string;
+}
+
+/** Müzik parçaları: ana menü (data/audio-music.json) + sahne müzikleri (data/audio-music-tracks.json). */
+export function buildSoundtracks(): SoundtrackEntry[] {
+  const tracks = (musicTracksData as unknown as { tracks: Record<string, { label: string; desc: string }> }).tracks;
+  return [
+    { id: 'menu', label: 'Embers of Valdoria', desc: 'Main menu: D dorian 3/4, lute arpeggios, recorder tune, drone and frame drum.' },
+    ...Object.entries(tracks).map(([id, t]) => ({ id, label: t.label, desc: t.desc })),
+  ];
 }
 
 // ---------------------------------------------------------------- animasyonlar (VFX)
@@ -569,7 +604,9 @@ export interface Catalog {
   sounds: SoundEntry[];
   /** Menü / arayüz sesleri (data/audio-ui.json). */
   uiSounds: SoundEntry[];
-  soundtracks: string[];
+  /** Dünya / anlatı sesleri (data/audio-world.json). */
+  worldSounds: SoundEntry[];
+  soundtracks: SoundtrackEntry[];
   animations: AnimEntry[];
   vfxKinds: VfxKindEntry[];
   characters: CharacterEntry[];
@@ -592,6 +629,7 @@ export function buildCatalog(files: AssetFiles): Catalog {
   return {
     sounds: buildSounds(),
     uiSounds: buildUiSounds(),
+    worldSounds: buildWorldSounds(),
     soundtracks: buildSoundtracks(),
     animations: buildAnimations(),
     vfxKinds: buildVfxKinds(),

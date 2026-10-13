@@ -495,6 +495,11 @@ export interface UnitSetup {
   initialCooldownBonus?: number;
   /** Bu savaşta kullanamayacağı skill id'leri (ör. tutorial düşmanında ultimate yok). Skill listede kalır; canUse 'Locked'; YZ seçmez. İki modda. */
   lockSkills?: string[];
+  /**
+   * true: birim bu savaşta ölemez (sefer açılış savaşı, Mill Road: 'kaybedilemez' tutorial; docs/design/tutorial.md). Canı en az 1'de durur
+   * (skill, zemin, DoT hasarı); diğer her kural aynı. Verilmezse birim bugünküyle aynı.
+   */
+  undying?: boolean;
   /*
    * Endless sürekli akış (Ömer 2026-10-10): önceki dalgadan TAŞINAN durum (genel; verilmezse birim aynı; QB / MP / sefer vermez). uid içeren
    * alanlar (durum kaynağı, Dark Bond ortağı, kalkan kancası sahibi, çağrı sahibi) BU savaşın uid'leridir (çağıran yeniden eşler).
@@ -1263,6 +1268,8 @@ export interface Combatant {
   actionsPerTurn?: number;
   /** Bu savaşta kullanılamayan skill'ler (UnitSetup.lockSkills; canUse 'Locked'). Skill listede kalır. */
   lockedSkills?: string[];
+  /** Ölemez (UnitSetup.undying): hasar canı 1'in altına indiremez. */
+  undying?: boolean;
   /** Epic item özel etkileri (UnitSetup.itemEffects; madde 292). */
   itemEffects?: ItemEffects;
   /** Second Wind bu savaşta kullanıldı. */

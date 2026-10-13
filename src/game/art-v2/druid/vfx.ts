@@ -412,7 +412,7 @@ const vines: V2Vfx = (c, k) =>
     a.play('idle');
     for (const fd of fades) fd(500);
     await k.wait(c.scene, k.slow(300));
-  });
+  }, c.actor);
 
 // ---------------------------------------------------------------------------------------------------------------- REJUVENATE
 
@@ -1106,7 +1106,7 @@ const vinesnare: V2Vfx = (c, k) =>
     hit();
     a.play('idle');
     await k.wait(c.scene, k.slow(500));
-  });
+  }, c.actor);
 
 export const VFX: Record<string, V2Vfx> = {
   thornwhip,

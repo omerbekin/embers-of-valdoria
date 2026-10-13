@@ -15,7 +15,7 @@ import { onStageResize, stageView } from './stage';
  *  - New: adım I (yuva: dolu yuvada "Overwrite this slot" -> panel içi onay "Accept" / "Cancel"; boşta "Choose"), adım II (mod + zorluk
  *    seçenek kartları, Back / "Begin the journey"). Yuva silme Accept'te değil başlangıçta olur (startNewCampaign yuvayı yeniden kurar).
  *  - Load: yuvanın kayıtları (Load / Delete, silme panel içinde onaylanır) + "Delete slot". Haritadan açılınca (`onlySlot`) yalnızca o yuva.
- * Sol üstte kit "◂ Back  Esc" (Geri / Menu kuralı). Esc = `back()`: önce onay, sonra adım II -> I, sonra kapanır.
+ * Sol üstte kit "◂ Back" (Geri / Menu kuralı). Esc = `back()`: önce onay, sonra adım II -> I, sonra kapanır.
  */
 
 export interface SlotBrowserOptions {

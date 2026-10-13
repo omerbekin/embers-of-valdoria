@@ -28,7 +28,7 @@ export const UI_TEXT = {
   // Takım seçimi
   pickTitle: 'Choose Your Company',
   pickSub: (n: number) => `Drag ${n} heroes onto the field. They start at level 1 with no gear, and keep their places all run.`,
-  pickHint: 'Drag a hero onto a cell, or tap to add or remove. The front row faces the enemy.',
+  pickHint: 'The front row faces the enemy.',
   pickRoster: 'Heroes',
   pickCompany: (n: number, size: number) => `Your company  ${n} / ${size}`,
   pickFront: 'Front ▸',
@@ -60,7 +60,6 @@ export const UI_TEXT = {
   rewardSub: (cleared: number, special: 'elite' | 'boss' | null) =>
     `Wave ${cleared} cleared${special === 'boss' ? ': the boss has fallen' : special === 'elite' ? ': the elite has fallen' : ''}. Choose one reward.`,
   take: 'Take',
-  cardHint: 'Tap a card to claim it.',
   usableBy: 'USABLE BY',
   anyHero: 'Any hero',
   noOneCanWield: 'No one in your party can wield this',

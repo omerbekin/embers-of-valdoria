@@ -381,7 +381,7 @@ const wail: V2Vfx = (c, k) =>
     a.play('idle');
     vampiricEcho(c, k, stages.flatMap((s) => s.targets));
     await k.wait(c.scene, k.slow(400));
-  });
+  }, c.actor);
 
 // ---------------------------------------------------------------------------------------------------------------- DARK BOND
 
@@ -458,7 +458,7 @@ const guardlink: V2Vfx = (c, k) =>
     }
     c.scene.tweens.add({ targets: fl, alpha: 0, duration: k.slow(200), onComplete: () => fl.destroy() });
     a.play('idle');
-  });
+  }, c.actor);
 
 /**
  * Yarım tur göstergesi (turnCost < 1): lich'in başının yanında kum saati belirir, kumun yalnızca bir kısmı (turnCost oranı) akar, saat yarım

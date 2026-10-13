@@ -25,8 +25,9 @@ const icons = new Set<string>(ICON_KINDS);
 
 describe('Codex düzeni (sol menü + liste + madde)', () => {
   it('her bölüm katalogdaki tüm maddeleri taşır; kimlikler bölüm içinde tekil', () => {
-    expect(CODEX_SECTIONS.map((s) => s.id)).toEqual(['start', 'classes', 'skills', 'mechanics', 'statuses', 'elements']);
+    expect(CODEX_SECTIONS.map((s) => s.id)).toEqual(['start', 'lessons', 'classes', 'skills', 'mechanics', 'statuses', 'elements']);
     expect(entries.start).toHaveLength(wiki.gettingStarted.length);
+    expect(entries.lessons).toHaveLength(wiki.lessons.length); // tüm dersler; Codex ekranı yalnızca görülenleri listeler
     expect(entries.classes).toHaveLength(wiki.classes.length + wiki.summons.length);
     expect(entries.skills).toHaveLength(wiki.skills.length);
     expect(entries.mechanics).toHaveLength(wiki.mechanics.length);

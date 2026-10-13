@@ -363,13 +363,19 @@ function fillCells(g: Phaser.GameObjects.Graphics, board: 'party' | 'enemy', slo
 }
 /**
  * Efekti arka planda oynatır; dönen Promise `hit()` çağrıldığı an (ilk vuruş: hasar rakamları akmaya başlar) ya da efekt bitince çözülür.
+ * `actor` (efekti oynatan birim) verilirse pozu efekt bitene dek tutulur.
  * Aşamalı skill'ler böyle kurulur: ilk aşamada releaseStage(0) + hit(), sonraki aşamalar efekt sürerken kendi anlarında releaseStage(i).
  */
-function playUntilHit(run: (hit: () => void) => Promise<void>): Promise<void> {
+function playUntilHit(run: (hit: () => void) => Promise<void>, actor?: CombatantView): Promise<void> {
   const d = deferred();
+  // efektin sahibi: skill vuruş anında bitse de (useSkill(null)) büyü / atış pozu efekt bitene dek tutulur (CombatantView.fxBegin/fxEnd)
+  actor?.fxBegin();
   void run(d.resolve)
     .catch((err: unknown) => console.error('vfx', err))
-    .finally(d.resolve);
+    .finally(() => {
+      actor?.fxEnd();
+      d.resolve();
+    });
   return d.promise;
 }
 
@@ -1597,7 +1603,7 @@ const wail = (c: VfxCtx) => playUntilHit(async (hit) => {
     if (si < stages.length - 1) await wait(c.scene, slow(200));
   }
   await wait(c.scene, slow(300));
-});
+}, c.actor);
 
 const raise = async (c: VfxCtx) => {
   c.sfx('graveMoan');
@@ -1808,7 +1814,7 @@ const pierce = (c: VfxCtx) => playUntilHit(async (hit1) => {
   c.scene.tweens.add({ targets: arrow, alpha: 0, duration: slow(120), onComplete: () => arrow.destroy() });
   c.scene.tweens.add({ targets: trail, alpha: 0, duration: slow(260), onComplete: () => trail.destroy() });
   c.actor.play('idle');
-});
+}, c.actor);
 
 /**
  * Arrow Rain (rect 3x3): Archer göğe doğru hızlı bir ok yaylımı atar (oklar ekranın üstünden çıkar); kısa bir an sonra ok yağmuru YALNIZCA
@@ -2204,7 +2210,7 @@ const vines = (c: VfxCtx) => playUntilHit(async (hit) => {
   }
   c.actor.play('idle');
   for (const f of fades) f(500);
-});
+}, c.actor);
 
 const rejuvenate = async (c: VfxCtx) => {
   c.sfx('chimeHeal');
@@ -2497,7 +2503,7 @@ const vinesnare = (c: VfxCtx) => playUntilHit(async (hit) => {
   hit();
   a.play('idle');
   await wait(c.scene, slow(500));
-});
+}, c.actor);
 
 // ---------------------------------------------------------------------------------------------------------------------
 // DEFENDER
@@ -4751,7 +4757,7 @@ const saltire = (c: VfxCtx) => playUntilHit(async (release0) => {
   );
   await slash('A', release0);
   aDone.resolve();
-});
+}, c.actor);
 
 /**
  * Smoke Bomb (rect 2x2, area_any: iki tahtaya atılabilir; ctx.board): Cutthroat fitili yanan kil bombayı yay çizerek alanın ortasına atar;
@@ -4842,7 +4848,7 @@ const smokebomb = (c: VfxCtx) => playUntilHit(async (hit) => {
   }
   hit();
   await wait(c.scene, slow(600));
-});
+}, c.actor);
 
 /**
  * Backstab (garantili kritik): Cutthroat dumana dönüşüp kaybolur (kapüşonlu siluet çözülür), hedefin ARKASINDAKİ hücrede (ctx.behind)

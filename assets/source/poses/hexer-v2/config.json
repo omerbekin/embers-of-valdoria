@@ -1,15 +1,15 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=hexer: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. doll_stab = extra-doll_stab.png (ek poz, Doom Mark): main = iğneli sağ yumruk, off = bebeği tutan sol el; bebek ve iğne kareye boyalı (hidden).",
+  "_not": "tools/make-poses-v2.mjs --class=hexer: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. doll_stab = extra-doll_stab.png (ek poz, Doom Mark): main = iğneli sağ yumruk, off = bebeği tutan sol el; bebek ve iğne kareye boyalı (hidden). EL KURALI 2026-10-13: main = SAĞ el (3/4 önden sağa bakan gövdede arkadaki / resimde soldaki kol), off = SOL el, her karede (step1, spin1c, idle1 düzeltildi). narrowSeeds = narrow.png koordinatı.",
   "overrideScale": { "hit": 1.14 },
   "seeds": {
-    "idle1": { "main": [262, 132], "off": [195, 150] },
-    "step1": { "main": [665, 145], "off": [470, 128] },
+    "idle1": { "main": [195, 150], "off": [262, 132] },
+    "step1": { "main": [470, 128], "off": [665, 145] },
     "slash1": { "main": [1112, 112], "off": [920, 135] },
     "overhead1": { "main": [1328, 18], "off": [1393, 160] },
     "thrust1": { "main": [425, 442], "off": [220, 460] },
     "spin1a": { "main": [528, 425], "off": [630, 470] },
     "spin1b": { "main": [1095, 438], "off": [880, 460] },
-    "spin1c": { "main": [1405, 455], "off": [1305, 455] },
+    "spin1c": { "main": [1305, 455], "off": [1405, 455] },
     "guard1": { "main": [198, 748], "off": [232, 740] },
     "raise": { "main": [525, 665], "off": [630, 775] },
     "channel": { "main": [1062, 762], "off": [1025, 768] },
@@ -27,5 +27,16 @@
     "hit": { "main": [600, 650], "off": [610, 725] },
     "kneel": { "main": [1440, 970], "off": [1440, 970] },
     "doll_stab": { "main": [812, 312], "off": [838, 470], "angle": 190, "offAngle": 0, "hidden": true }
+  },
+  "narrowSeeds": {
+    "idle1": { "main": [285, 145], "off": [372, 108] },
+    "idle2": { "main": [742, 180], "off": [742, 180] },
+    "guard1": { "main": [1135, 140], "off": [1270, 78] },
+    "guard2": { "main": [385, 425], "off": [385, 425] },
+    "raise": { "main": [742, 350], "off": [820, 462] },
+    "channel": { "main": [1303, 446], "off": [1275, 447] },
+    "point": { "main": [290, 790], "off": [478, 737] },
+    "throw": { "main": [728, 688], "off": [888, 815] },
+    "hit": { "main": [1212, 815], "off": [1212, 815] }
   }
 }

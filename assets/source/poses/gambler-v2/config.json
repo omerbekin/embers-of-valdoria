@@ -1,15 +1,15 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=gambler: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "_not": "tools/make-poses-v2.mjs --class=gambler: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. EL KURALI 2026-10-13: main = SAĞ el (3/4 önden sağa bakan gövdede arkadaki / resimde soldaki kol), off = SOL el, her karede (step1, spin1c, idle1 düzeltildi). narrowSeeds = narrow.png koordinatı.",
   "overrideScale": { "hit": 1.08 },
   "seeds": {
-    "idle1": { "main": [262, 150], "off": [190, 155] },
-    "step1": { "main": [660, 155], "off": [475, 128] },
+    "idle1": { "main": [190, 155], "off": [262, 150] },
+    "step1": { "main": [475, 128], "off": [660, 155] },
     "slash1": { "main": [1110, 115], "off": [920, 135] },
     "overhead1": { "main": [1318, 18], "off": [1385, 155] },
     "thrust1": { "main": [410, 438], "off": [175, 450] },
     "spin1a": { "main": [535, 420], "off": [640, 470] },
     "spin1b": { "main": [1105, 438], "off": [880, 455] },
-    "spin1c": { "main": [1395, 455], "off": [1255, 465] },
+    "spin1c": { "main": [1255, 465], "off": [1395, 455] },
     "guard1": { "main": [190, 745], "off": [250, 745] },
     "raise": { "main": [520, 668], "off": [635, 795] },
     "channel": { "main": [1065, 752], "off": [1030, 760] },
@@ -26,5 +26,16 @@
     "throw": { "main": [465, 700], "off": [710, 795] },
     "hit": { "main": [480, 640], "off": [425, 710] },
     "kneel": { "main": [1435, 960], "off": [1435, 960] }
+  },
+  "narrowSeeds": {
+    "idle1": { "main": [290, 145], "off": [375, 120] },
+    "idle2": { "main": [720, 182], "off": [720, 182] },
+    "guard1": { "main": [1132, 128], "off": [1283, 75] },
+    "guard2": { "main": [380, 428], "off": [380, 428] },
+    "raise": { "main": [742, 352], "off": [828, 478] },
+    "channel": { "main": [1350, 442], "off": [1310, 444] },
+    "point": { "main": [255, 790], "off": [465, 745] },
+    "throw": { "main": [732, 688], "off": [908, 820] },
+    "hit": { "main": [1215, 810], "off": [1215, 810] }
   }
 }

@@ -12,7 +12,7 @@ export function preloadLogo(scene: Phaser.Scene): void {
 
 export const hasLogo = (scene: Phaser.Scene): boolean => scene.textures.exists(LOGO_KEY);
 
-/** Logoyu oranı korunarak maxW x maxH kutusuna sığdırır. Kaynak yüksek çözünürlüklü (1872x502) ve küçültülerek
+/** Logoyu oranı korunarak maxW x maxH kutusuna sığdırır. Kaynak yüksek çözünürlüklü (v3: ~1529x978, tools/make-logo.mjs) ve küçültülerek
  * gösterildiği için LINEAR filtre (NEAREST küçültmede pikselleri yırtar). */
 export function addLogo(scene: Phaser.Scene, x: number, y: number, maxW: number, maxH: number): Phaser.GameObjects.Image {
   scene.textures.get(LOGO_KEY).setFilter(0 /* Phaser.Textures.FilterMode.LINEAR */);

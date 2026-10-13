@@ -1,9 +1,10 @@
 /**
  * Yükleme ekranı (Ömer 2026-10-09): ilk açılışta index.html'deki düz HTML/CSS kutusu (#boot; Phaser ve fontlardan önce görünür) ve
- * sonradan bir sahne eksik dosyalarını yüklerken aynı kutu (kısa yükleyici). Tasarım kiti dili: başlık, ince altın çubuk, yüzde.
+ * sonradan bir sahne eksik dosyalarını yüklerken aynı kutu (kısa yükleyici). Tasarım kiti dili: ortada logo (2026-10-13), ince altın çubuk, yüzde.
  * İlerleme: modüller yüklendi -> ana menünün dosyaları (Phaser yükleyicisi) -> fontlar -> menü hazır (kutu solarak kapanır).
  * Ölçüm: menü hazır olunca performance mark 'menu-ready' (açılış süresi).
- * Arka plan (Ömer 2026-10-10): savaş masası resmi (public/loading/loading-bg.webp, tools/make-loading-bg.mjs); index.html'deki satır içi betik
+ * Arka plan (Ömer 2026-10-13, "Dusk"): gün batımında uzak kale (public/loading/loading-bg.webp, tools/make-loading-bg.mjs), sağ altta taç amblemi
+ * public/loading/emblem.webp (sağ altta dönen alevli taç amblemi); index.html'deki satır içi betik
  * bulanık yer tutucunun üstüne solarak açar (`bg-ready`). Kısa yükleyici aynı kutuyu açtığı için aynı arka planı taşır.
  */
 

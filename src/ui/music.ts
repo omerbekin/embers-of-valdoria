@@ -4,7 +4,12 @@
 // sekme gizlenince durur (bağlam askıya alınır). Seviye = Settings > Music (0-20 adım = %0-100, 0 = tamamen kapalı: motor ve düğümler
 // bırakılır) x Settings > Master Volume x data/audio-music.json > master. Hızlı başlangıç (Ömer 2026-10-10): main.ts ana menüyle açılışta
 // menuMusic(true) der ve motor modülü hemen indirilir; böylece yükleme ekranındaki ilk tık bile müziği başlatır. Hata oyunu durdurmaz.
+// Sahne müzikleri (2026-10-13): aynı denetim sahne parçalarını da çalar (data/audio-music-tracks.json): harita, kasaba, savaş, boss savaşı, Endless
+// kampı. Her sahne create'inde `sceneMusic(parça)` der; parça değişince eski motor crossfadeMs içinde söner, yenisi aynı sürede yükselir
+// (yumuşak geçiş; geçiş anında en çok iki motor). Her parçanın konumu ayrı saklanır (dönünce bir sonraki ölçü başından). Codex önizlemesi
+// `previewMusic(parça)` sahneninkini geçici olarak bastırır.
 import musicData from '../../data/audio-music.json';
+import tracksData from '../../data/audio-music-tracks.json';
 import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
 type MusicModule = typeof import('../game/music');
@@ -12,8 +17,10 @@ type Engine = InstanceType<MusicModule['MusicEngine']>;
 
 const KEY = 'proto.music.v1';
 export const DEFAULT_MUSIC_LEVEL: number = musicData.defaultLevel;
-const FADE_IN = musicData.fadeInMs / 1000;
 const FADE_OUT = musicData.fadeOutMs / 1000;
+const XFADE = tracksData.crossfadeMs / 1000;
+
+export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp';
 /** İleriye bakan zamanlayıcı: her PUMP_MS'de LOOKAHEAD sn ilerisi zamanlanır. */
 const PUMP_MS = 200;
 const LOOKAHEAD = 0.9;
@@ -30,13 +37,18 @@ export function loadMusicLevel(): number {
 let level = loadMusicLevel();
 /** Ana ses seviyesi 0..20 adım (Settings > Master Volume; src/ui/settings.ts bildirir). */
 let master = 14;
-let wanted = false;
+/** Sahnenin istediği parça (null = sessiz). */
+let wanted: MusicTrack | null = null;
+/** Codex önizlemesi: varsa sahnenin parçasının yerine çalar. */
+let preview: MusicTrack | null = null;
+/** Çalan motorun parçası. */
+let engineTrack: MusicTrack | null = null;
+const positions = new Map<MusicTrack, number>();
 let unlocked = false;
 let ctx: AudioContext | null = null;
 let mod: MusicModule | null = null;
 let loading: Promise<MusicModule | null> | null = null;
 let engine: Engine | null = null;
-let songPos = 0;
 let timer: ReturnType<typeof setInterval> | null = null;
 let suspendTimer: ReturnType<typeof setTimeout> | null = null;
 const listeners = new Set<(level: number) => void>();
@@ -73,12 +85,27 @@ export function setMusicMaster(v: number): void {
   update();
 }
 
-/** Ana menü açıldı (true) / kapanıyor (false). */
+/** Ana menü açıldı (true) / kapanıyor (false). Kapanış yalnızca menü parçası çalıyorsa susturur (sonraki sahne kendi parçasını seçmiş olabilir). */
 export function menuMusic(on: boolean): void {
-  wanted = on;
-  if (on && level > 0) void loadModule(); // motor ilk harekete hazır olsun (bekleme olmasın)
+  if (on) sceneMusic('menu');
+  else if (wanted === 'menu') sceneMusic(null);
+}
+
+/** Sahnenin müziği (null = sessiz; ör. savaş sonucu stingeri). Aynı parça yeniden istenirse bir şey değişmez. */
+export function sceneMusic(track: MusicTrack | null): void {
+  wanted = track;
+  if (track && level > 0) void loadModule(); // motor ilk harekete hazır olsun (bekleme olmasın)
   update();
 }
+
+/** Codex > Sounds > Soundtracks önizlemesi (null = bitir, sahnenin parçasına dön). */
+export function previewMusic(track: MusicTrack | null): void {
+  preview = track;
+  if (track) void loadModule();
+  update();
+}
+
+export const musicPreviewing = (): MusicTrack | null => preview;
 
 const hidden = (): boolean => typeof document !== 'undefined' && document.hidden;
 
@@ -119,25 +146,33 @@ function stopPump(): void {
   timer = null;
 }
 
-/** Durumu uygular: çalmalı mı (menüde, kilit açık, seviye > 0, sekme görünür)? */
+/** Durumu uygular: hangi parça çalmalı (önizleme > sahne), kilit açık mı, seviye > 0 mı? Parça değişince yumuşak geçiş. */
 function update(): void {
   try {
     const gain = musicGain(level, master);
-    const should = wanted && unlocked && gain > 0;
-    if (engine) {
+    const target = preview ?? wanted;
+    const should = !!target && unlocked && gain > 0;
+    let crossfade = false;
+    if (engine && (!should || engineTrack !== target)) {
+      // sön ve bırak; konum saklanır (dönünce kaldığı yerden). Başka parçaya geçiliyorsa crossfade süresinde
+      crossfade = should;
+      if (engineTrack) positions.set(engineTrack, engine.stop(crossfade ? XFADE : FADE_OUT));
+      engine = null;
+      engineTrack = null;
       if (!should) {
-        // sön ve bırak; konum saklanır (menüye dönünce kaldığı yerden)
-        songPos = engine.stop(FADE_OUT);
-        engine = null;
         stopPump();
         if (suspendTimer) clearTimeout(suspendTimer);
         suspendTimer = setTimeout(() => {
           if (!engine && ctx && ctx.state === 'running') void ctx.suspend().catch(() => undefined);
         }, (FADE_OUT + 0.4) * 1000);
-      } else engine.setLevel(gain);
+        return;
+      }
+    }
+    if (engine) {
+      engine.setLevel(gain);
       return;
     }
-    if (!should) return;
+    if (!should || !target) return;
     const c = makeContext();
     if (!c) return;
     if (!mod) {
@@ -147,14 +182,18 @@ function update(): void {
     if (suspendTimer) clearTimeout(suspendTimer);
     suspendTimer = null;
     if (c.state !== 'running' && !hidden()) void c.resume().catch(() => undefined);
-    const bar = mod.barSec();
-    const from = Math.ceil(songPos / bar - 1e-6) * bar; // bir sonraki ölçü başından
-    engine = new mod.MusicEngine(c, c.destination, gain);
-    engine.start(c.currentTime + 0.12, from, FADE_IN, musicData.fadeInFrom ?? 0);
+    const cfg = mod.trackConfig(target);
+    const bar = mod.barSec(cfg);
+    const from = Math.ceil((positions.get(target) ?? 0) / bar - 1e-6) * bar; // bir sonraki ölçü başından
+    engine = new mod.MusicEngine(c, c.destination, gain, cfg);
+    engineTrack = target;
+    // ana menü ilk açılışta kısık başlayıp yavaşça yükselir; sahne parçaları kendi fadeIn'iyle (geçişte en az crossfade süresi)
+    const fadeIn = Math.max(cfg.fadeInMs / 1000, crossfade ? XFADE : 0);
+    engine.start(c.currentTime + 0.12, from, fadeIn, target === 'menu' ? (musicData.fadeInFrom ?? 0) : (cfg.fadeInFrom ?? 0));
     engine.pump(c.currentTime + LOOKAHEAD);
     startPump();
   } catch {
-    /* ses hatası menüyü bozmasın */
+    /* ses hatası oyunu bozmasın */
   }
 }
 
@@ -165,7 +204,7 @@ function onGesture(): void {
   const first = !unlocked;
   unlocked = true;
   const c = makeContext();
-  if (c && c.state !== 'running' && !hidden() && (engine || (wanted && level > 0))) void c.resume().catch(() => undefined);
+  if (c && c.state !== 'running' && !hidden() && (engine || ((preview ?? wanted) && level > 0))) void c.resume().catch(() => undefined);
   if (first) {
     void loadModule();
     update();
@@ -184,6 +223,6 @@ if (typeof window !== 'undefined' && typeof window.addEventListener === 'functio
 }
 
 /** Durum (debug / tarayıcı denetimi). */
-export function musicState(): { level: number; master: number; wanted: boolean; unlocked: boolean; playing: boolean; ctx: string; songPos: number } {
-  return { level, master, wanted, unlocked, playing: !!engine, ctx: ctx?.state ?? 'none', songPos: engine ? engine.songPos() : songPos };
+export function musicState(): { level: number; master: number; wanted: boolean; track: MusicTrack | null; preview: MusicTrack | null; playing: MusicTrack | null; unlocked: boolean; ctx: string; songPos: number } {
+  return { level, master, wanted: !!wanted, track: wanted, preview, playing: engine ? engineTrack : null, unlocked, ctx: ctx?.state ?? 'none', songPos: engine ? engine.songPos() : wanted ? (positions.get(wanted) ?? 0) : 0 };
 }

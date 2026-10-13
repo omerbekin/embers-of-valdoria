@@ -27,6 +27,7 @@ import { buildGrounds, buildStatuses, isTestSkill, skillOwner, searchText, avata
 import type { GroundEntry, Owner, StatusEntry } from '../gallery/catalog';
 import { STAT_COLOR, STAT_LABEL, statIconName } from '../ui/stat-icons';
 import { shapeMiniGrid, skillMiniGrid } from '../ui/shape-diagram';
+import { LESSONS, lessonCodexText } from '../tutorial/lessons';
 import type { MiniShape } from '../ui/shape-diagram';
 
 const f: Formulas = content.formulas;
@@ -168,6 +169,8 @@ export interface WikiGround extends Omit<GroundEntry, 'usedBy'> {
 
 export interface WikiCatalog {
   gettingStarted: WikiArticle[];
+  /** Mentor dersleri (sefer tutorial'ı; TÜMÜ: Codex yalnızca görülenleri gösterir, src/wiki/view.ts). */
+  lessons: WikiArticle[];
   classes: WikiUnit[];
   summons: WikiUnit[];
   skills: WikiSkill[];
@@ -1049,9 +1052,29 @@ export function buildElementTable(): { head: string[]; rows: string[][] } {
 
 // ---------------------------------------------------------------- hepsi
 
+/** Codex > Lessons maddesinin kimliği (makale kimlikleriyle çakışmasın). */
+export const lessonEntryId = (id: string): string => `lesson:${id}`;
+
+/** Mentor dersleri (data/tutorial.json): her ders bir makale; Codex yalnızca görülenleri listeler. */
+export function buildLessons(): WikiArticle[] {
+  return LESSONS.map((l) => {
+    const paras = lessonCodexText(l);
+    return {
+      id: lessonEntryId(l.id),
+      title: l.title,
+      group: l.group,
+      icon: 'book',
+      accent: '#d9b26a',
+      blocks: paras.map((text) => ({ kind: 'p' as const, text })),
+      search: `${l.title} ${l.group} ${paras.join(' ')} lesson tutorial`.toLowerCase(),
+    };
+  });
+}
+
 export function buildWiki(files: WikiFiles): WikiCatalog {
   return {
     gettingStarted: buildGettingStarted(),
+    lessons: buildLessons(),
     classes: buildClasses(files),
     summons: buildSummons(files),
     skills: buildSkills(),

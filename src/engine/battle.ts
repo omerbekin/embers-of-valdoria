@@ -3327,7 +3327,7 @@ export class Battle {
     // yok sayılır: can ve kalkan değişmez, kalkan kancaları/taunt sayacı/lifesteal gibi yan etkiler işlemez (seed'li RNG; zar yalnızca ölümcülse atılır).
     const wouldAbsorb = Math.min(type === 'magic' ? target.magicShield : 0, amount);
     const wouldRest = amount - wouldAbsorb - Math.min(target.shield, amount - wouldAbsorb);
-    if (wouldRest >= target.hp && target.hp > 0 && (target.stats.surviveChance ?? 0) > 0 && !this.luckySaved.has(target.uid) && this.rng.next() < target.stats.surviveChance) {
+    if (wouldRest >= target.hp && target.hp > 0 && !target.undying && (target.stats.surviveChance ?? 0) > 0 && !this.luckySaved.has(target.uid) && this.rng.next() < target.stats.surviveChance) {
       this.luckySaved.add(target.uid);
       this.lastHitLucky = true;
       emit({
@@ -3372,6 +3372,8 @@ export class Battle {
     if (hooked.length > 0) this.trimShieldHooks(target);
     // Boss faz kilidi (Ember Heart): tek eylem en fazla bir eşik geçer; fazla hasar eşiğin 1 altında durur
     if (target.boss?.phases && rest > 0) rest = Math.max(0, Math.min(rest, target.hp - this.phaseFloor(target)));
+    // Ölemez birim (UnitSetup.undying; Mill Road açılış savaşı): can 1'de durur
+    if (target.undying && rest > 0) rest = Math.max(0, Math.min(rest, target.hp - 1));
     target.hp = Math.max(0, target.hp - rest);
     const taunt = target.statuses.find((s) => s.kind === 'taunt' && s.breakAt !== undefined);
     if (taunt && rest > 0) {
@@ -3678,6 +3680,7 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
   // Hazır çağrı (ör. düşman Skeleton): çağrı kuralları, sahipsiz ve süresiz
   if (unit.summoned) c.summoned = true;
   if (unit.lockSkills && unit.lockSkills.length > 0) c.lockedSkills = [...unit.lockSkills];
+  if (unit.undying) c.undying = true;
   if (finite(unit.initialCooldownBonus) && unit.initialCooldownBonus > 0) c.initialCooldownBonus = Math.floor(unit.initialCooldownBonus);
   // Endless sürekli akış: taşınan durum (Rage, buff'lar, kalkan, çağrı sahibi/ömrü); verilmezse birim aynı
   if (finite(unit.startRage) && c.maxRage !== undefined) c.rage = Math.max(0, Math.min(c.maxRage, Math.round(unit.startRage)));

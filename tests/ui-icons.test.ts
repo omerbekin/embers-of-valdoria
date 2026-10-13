@@ -51,4 +51,14 @@ describe('Yükleme ekranı arka planı (public/loading)', () => {
     expect(html).toContain('rel="preload" as="image" type="image/webp" href="./loading/loading-bg.webp"');
     expect(html).toContain("new URL('loading/loading-bg.webp', document.baseURI)");
   });
+  it('sağ altta taç amblemi (public/loading/emblem.webp, ön yüklemeli, alt yazılı) + dönen alev halkası; eski yazı başlık yok', () => {
+    const f = 'public/loading/emblem.webp';
+    expect(existsSync(f)).toBe(true);
+    expect(statSync(f).size).toBeLessThan(120 * 1024);
+    const html = readFileSync('index.html', 'utf8');
+    expect(html).toContain('rel="preload" as="image" type="image/webp" href="./loading/emblem.webp"');
+    expect(html).toMatch(/<img class="boot-emblem" src="\.\/loading\/emblem\.webp"[^>]*alt="Embers of Valdoria"/);
+    expect(html).toContain('class="boot-ring"');
+    expect(html).not.toContain('class="boot-title"');
+  });
 });

@@ -4,7 +4,7 @@
      .el-btn [.primary [.ready]]   çerçeveli düğme (secondary varsayılan; primary = START dili: altın çerçeve + kor elmaslar, :disabled soluk,
                                    .ready = nefes alan kor parıltısı)
      .el-link                       kutusuz yazı düğmesi (hover: önde kor elmas + parıltı + 4px sağa)
-     .el-back                       sol üst "◂ Back  Esc" (oyun alanının köşesi: --el / --et)
+     .el-back                       sol üst "◂ Back" (oyun alanının köşesi: --el / --et)
      .el-icon-btn                   küçük kare ikon / kısa yazı düğmesi
      .el-panel [.corners]           ince çerçeveli koyu panel / kart
      .el-title                      altın degradeli başlık (iki yanda süs çizgisi)
@@ -235,8 +235,7 @@
   cursor: default;
 }
 
-.el-link small,
-.el-back small {
+.el-link small {
   margin-left: 4px;
   font: italic 16px var(--el-body);
   letter-spacing: 0;
@@ -245,7 +244,7 @@
 }
 
 .el-back {
-  /* Geri standardı: Phaser'daki elBack ile aynı yer ve ölçü (oyun birimi --gu: sol kenardan 48, dikey orta 56; Cinzel 21 / Esc 17) */
+  /* Geri standardı: Phaser'daki elBack ile aynı yer ve ölçü (oyun birimi --gu: sol kenardan 48, dikey orta 56; Cinzel 21) */
   position: absolute;
   left: calc(var(--el, 0px) + 48 * var(--gu, 1px));
   top: calc(var(--et, 0px) + 56 * var(--gu, 1px) - max(22px, 36 * var(--gu, 1px)));
@@ -254,10 +253,6 @@
   padding: 0 calc(14 * var(--gu, 1px)) 0 calc(6 * var(--gu, 1px));
   font-size: max(11px, calc(21 * var(--gu, 1px)));
   z-index: 2;
-}
-
-.el-back small {
-  font-size: max(10px, calc(17 * var(--gu, 1px)));
 }
 
 .el-back::before {

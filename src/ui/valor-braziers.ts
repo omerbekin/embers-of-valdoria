@@ -10,7 +10,7 @@ import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { closeDom } from './motion';
 import { reducedMotion } from './motion-pref';
-import { uiSound } from './ui-sound';
+import { uiSound, worldSound } from './ui-sound';
 import './valor.css';
 
 /** Tek mangalın piksel ızgarası (genişlik x yükseklik) ve iki mangal arası boşluk. */
@@ -406,7 +406,7 @@ export class ValorMeter {
         this.flash = up ? next - 1 : undefined;
         this.shown = next;
         this.stepAt = now + 200;
-        if (up) uiSound('tab');
+        if (up) worldSound('ember_ignite'); // kor tutuşur: çakmak sürtmesi + alev + çıtırtı (data/audio-world.json)
         dirty = true;
       } else if (this.flash !== undefined && now >= this.stepAt - 90) {
         this.flash = undefined;

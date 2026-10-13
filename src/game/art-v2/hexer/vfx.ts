@@ -399,7 +399,7 @@ const witheringCurse: V2Vfx = (c, k) =>
     firstHit();
     c.actor.play('idle');
     c.scene.tweens.add({ targets: [floor, veinG], alpha: 0, delay: k.slow(250), duration: k.slow(500), onComplete: () => { floor.destroy(); veinG.destroy(); } });
-  });
+  }, c.actor);
 
 /**
  * Jinx: Hexer kırmızı ipliği iki eli (asa ve kandil) arasında gerer, ortada seramik boncuk (0,18 sn, iplik gıcırtısı). İpliği fırlatır:

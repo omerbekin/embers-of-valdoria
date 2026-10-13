@@ -69,6 +69,22 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
     }
   });
 
+  it('data/audio-world.json içindeki TÜM dünya sesleri (harita, kitap, item, yürüyüş, boru, stinger) Sounds sayfasında listelenir', async () => {
+    const world = (await import('../data/audio-world.json')).default as { sfx: Record<string, unknown> };
+    expect(catalog.worldSounds.map((s) => s.id).sort()).toEqual(Object.keys(world.sfx).sort());
+    for (const s of catalog.worldSounds) {
+      expect(s.group).toBe('World & stingers');
+      expect(s.duration, s.id).toBeGreaterThan(0);
+      expect(s.desc?.length, s.id).toBeGreaterThan(10);
+    }
+  });
+
+  it('Soundtracks: ana menü + tüm sahne müzikleri (data/audio-music-tracks.json) listelenir', async () => {
+    const tracks = (await import('../data/audio-music-tracks.json')).default as { tracks: Record<string, unknown> };
+    expect(catalog.soundtracks.map((t) => t.id)).toEqual(['menu', ...Object.keys(tracks.tracks)]);
+    for (const t of catalog.soundtracks) expect(t.label.length * t.desc.length, t.id).toBeGreaterThan(0);
+  });
+
   it("her (test olmayan) skill için animasyon satırı vardır; her vfx türü listelenir (yalnızca test skill'lerininki hariç)", () => {
     expect(catalog.animations.map((a) => a.skillId).sort()).toEqual(realSkills.map((s) => s.id).sort());
     for (const a of catalog.animations) expect(a.vfxMissing, `${a.skillId} vfx tanımsız`).toBe(false);

@@ -321,7 +321,7 @@ const pierce: V2Vfx = (c, k) =>
     stickGround(c, k, beyond, ang, 92);
     c.scene.tweens.add({ targets: trail, alpha: 0, duration: k.slow(260), onComplete: () => trail.destroy() });
     c.actor.play('idle');
-  });
+  }, c.actor);
 
 /**
  * Arrow Rain (3x3): Archer göğe art arda üç ok atar (oklar ekrandan çıkar). Islık başlar, hedef bloğun hücrelerine dağınık ok gölgeleri

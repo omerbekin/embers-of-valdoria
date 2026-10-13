@@ -1,5 +1,7 @@
+import { closeAllLessons, showLesson } from '../../ui/lesson-box';
 import Phaser from 'phaser';
 import { uiSound, type UiSoundKind } from '../../ui/ui-sound';
+import { sceneMusic } from '../../ui/music';
 import layout from '../../../data/battle-layout.json';
 import { content } from '../../engine';
 import type { CombatantDef } from '../../engine/types';
@@ -221,6 +223,7 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   create(): void {
+    sceneMusic('camp'); // Endless başlığı / kamp / ödül / tüccar: gece kamp müziği (dalga başlayınca BattleScene savaş müziğine geçer)
     // Sürekli akış: koşu ara vermedeyse (kamp / ödül / tüccar / kalıntı) paneller savaş alanının üstünde açılır (BattleScene + overlay)
     if (!this.overlay && !this.requested) {
       if (!endless.run) continueRun();
@@ -277,6 +280,7 @@ export class EndlessScene extends Phaser.Scene {
     this.view = endlessView(endless.run, this.requested);
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.events.once('shutdown', () => {
+      closeAllLessons();
       this.closeShopDom();
       this.rewardBag?.();
       this.rewardBag = null;
@@ -640,6 +644,8 @@ export class EndlessScene extends Phaser.Scene {
     this.panel(CX - 60, 300, 720, 600, 0.8);
     this.scoreList(CX - 20, 330, 640, scores());
     this.add2(this.note(CX + 300, 960, T.rules, 22, C.dim, true).setOrigin(0.5));
+    // İlk girişte 3 kartlık kısa tanıtım (dalga, kamp, kalıntı; data/tutorial.json > endless; ayar kapalıysa / görüldüyse yok)
+    showLesson('endless');
   }
 
   private drawPick(): void {
@@ -890,7 +896,6 @@ export class EndlessScene extends Phaser.Scene {
         k.add(this.note(k.cx, y, d.text, 22, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 60).setAlign('center'));
       });
     });
-    this.add2(this.note(CX, LOOK.card.top + LOOK.card.h + 26, T.cardHint, 19, C.dim, true).setOrigin(0.5, 0));
     if (run.relics?.length) this.relicRow(run.relics, CX, 1010);
   }
 
@@ -927,7 +932,6 @@ export class EndlessScene extends Phaser.Scene {
     const n = run.offer.length;
     const w = Math.min(LOOK.card.maxW, (1760 - (n - 1) * LOOK.card.gap) / n);
     run.offer.forEach((card, i) => this.rewardCard(run, card, i, CX + (i - (n - 1) / 2) * (w + LOOK.card.gap), w, special));
-    this.add2(this.note(CX, LOOK.card.top + LOOK.card.h + 26, T.cardHint, 19, C.dim, true).setOrigin(0.5, 0));
     // Nadir düşüş duyurusu (madde 297): altın-turuncu parlayan satır. Torba doluyken düştüyse BEKLER: yer açılınca "Take", alınmadan devam = kaybolur
     const rd = run.rareDrop && run.rareDrop.wave === run.stats.cleared ? run.rareDrop : undefined;
     const rare = rd ? itemDef(rd.itemId) : undefined;
@@ -1391,9 +1395,9 @@ export class EndlessScene extends Phaser.Scene {
 
   // ============================================================ çizim yardımcıları
 
-  /** Sol üst "◂ Back  Esc" (tasarım kiti; geri / menu kuralı CLAUDE.md). */
+  /** Sol üst "◂ Back" (tasarım kiti; geri / menu kuralı CLAUDE.md). */
   private drawBack(): void {
-    this.backBtn = elLink(this, `◂ ${T.back.replace(/^[◂<\s]+/, '')}`, () => !this.confirm && this.back(), { small: 'Esc' }).root.setDepth(20).setY(56);
+    this.backBtn = elLink(this, `◂ ${T.back.replace(/^[◂<\s]+/, '')}`, () => !this.confirm && this.back()).root.setDepth(20).setY(56);
   }
 
   private add2<O extends Phaser.GameObjects.GameObject>(o: O): O {

@@ -1,5 +1,7 @@
 // Sefer bölge savaş arka planları + kings-bridge + castle-hall: assets/source/backgrounds-v3/<id>.png (1536x1024) -> assets/backgrounds/<id>.webp.
-// 2026-10-13 (Ömer onayı, v3 yeniden çizim): kaynak backgrounds-v3; *-rejected* dosyalar kullanılmaz. proving-grounds / duelling-ring dokunulmaz.
+// 2026-10-13 (Ömer onayı, v3 yeniden çizim): kaynak backgrounds-v3; *-rejected* dosyalar kullanılmaz.
+// 2026-10-13: Quick Battle (proving-grounds-*) ve multiplayer (duelling-ring-*) arenaları da v3; bölgeler gibi zemin hedefe oturur
+// (birimler çite / duvara yakın), alt kenar biraz kırpılır.
 // 2026-10-12 (Ömer, v2 yeniden çizim): ÖN KIRPMA YOK, büyütme yok. Eskiden 2000x729 şeride kırpılıp lanczos ile büyütülüyordu
 // (görselin ~%45'i gidiyor, oyun yanlardan bir daha kırpıp büyütünce kaba/pikselli görünüyordu). Artık asıl boyut korunur; savaş
 // görseli görünür sahneye "cover" ile tek seferde ölçekler ve ölçülen zemin çizgisini arka sıranın ayağının üstüne oturtur
@@ -29,6 +31,13 @@ const FLOOR_SRC_Y = {
   'thornwood-hollow': 600,
   'kings-bridge': 625, // köprü korkuluğunun dibi (birimler güvertede, korkuluğun önünde)
   'castle-hall': 615, // sütun kaidelerinin dibi (birimler kaidelerin önünde)
+  // Quick Battle / multiplayer arenaları (v3): çit direklerinin dibi / taş duvar basamağının dibi (ortada)
+  'proving-grounds-sunny-afternoon': 540,
+  'proving-grounds-sunset': 540,
+  'proving-grounds-rain': 540,
+  'duelling-ring-moon': 562,
+  'duelling-ring-snow': 562,
+  'duelling-ring-storm': 562,
 };
 
 const floors = {};

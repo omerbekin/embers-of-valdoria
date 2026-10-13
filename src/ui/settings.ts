@@ -3,12 +3,13 @@ import { SPEED_STEPS, battleSpeed, battleSpeedLabel, onBattleSpeedChange, setBat
 import './motion';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from './motion-pref';
 import { openDebugMenu } from './debug-entry';
-import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel } from './ui-sound';
+import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel, uiSound } from './ui-sound';
 import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from './sfx-volume';
 import { loadMusicLevel, onMusicLevelChange, setMusicLevel, setMusicMaster } from './music';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from './fullscreen';
 import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
+import { onTutorialChange, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -17,7 +18,7 @@ import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, pe
  * Ölçüler oyun birimiyle (--gu: 1 mantıksal birimin CSS pikseli) ve sütun konumu ana menüyle aynı (--menu-x; src/ui/viewport.ts).
  * Klavye: yukarı/aşağı satır, sol/sağ ses, Enter seçer, Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
  * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, Sound Effects (savaş/skill sesleri; 2026-10-13), UI sounds;
- * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
+ * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Tutorials (mentor dersleri; 2026-10-13), Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
  * Battle speed 0.25x-4x (src/ui/battle-speed.ts). Oyun akışı eylemleri menüdedir (`src/ui/game-menu.ts`).
  */
 export interface SettingsHooks {
@@ -166,6 +167,11 @@ export class SettingsScreen {
     onShowFpsChange((on) => (fps.textContent = on ? 'On' : 'Off'));
     this.addRow(col, 'Show FPS', () => setShowFps(!showFps()), [fps]);
 
+    // --- Tutorials: mentor dersleri açık / kapalı (sefer + Endless; src/tutorial/store.ts, docs/design/tutorial.md) ---
+    const tut = el('span', 'st-value', tutorialsOn() ? 'On' : 'Off');
+    onTutorialChange(() => (tut.textContent = tutorialsOn() ? 'On' : 'Off'));
+    this.addRow(col, 'Tutorials', () => setTutorialsOn(!tutorialsOn()), [tut]);
+
     // --- Fullscreen (Fullscreen API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();
     if (support !== 'none' && !isStandalone()) {
@@ -188,9 +194,9 @@ export class SettingsScreen {
     });
     col.append(dev);
 
-    // Geri standardı (CLAUDE.md > Geri / Menu kuralı): her yerde aynı sol üst "◂ Back  Esc" (src/ui/elegant.css > .el-back)
+    // Geri standardı (CLAUDE.md > Geri / Menu kuralı): her yerde aynı sol üst "◂ Back" (src/ui/elegant.css > .el-back)
     const back = el('button', 'el-back st-back');
-    back.append(el('span', '', '◂ Back'), el('small', '', 'Esc'));
+    back.append(el('span', '', '◂ Back'));
     back.type = 'button';
     back.addEventListener('click', () => this.setOpen(false));
     this.overlay.append(col, back);
@@ -287,6 +293,7 @@ export class SettingsScreen {
     this.open = open;
     this.overlay.hidden = !open;
     if (open && !was) this.select(0);
+    if (open !== was) uiSound(open ? 'open' : 'close'); // parşömen açılır / dürülür (data/audio-ui.json)
     document.documentElement.classList.toggle('settings-open', open);
     if (open) lockInput('settings');
     else if (was) unlockInput('settings');

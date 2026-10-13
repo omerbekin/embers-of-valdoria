@@ -1,0 +1,207 @@
+{
+  "_not": "SAHNE MÜZİKLERİ (2026-10-13). Ana menü müziğiyle (data/audio-music.json) AYNI motor ve dil (src/game/music.ts): her parça ana menü ayarının ÜSTÜNE yazılan bir fark kaydıdır (trackConfig: üst düzey anahtar değişir; voices / harpPatterns / drumPatterns / themes ad ad birleşir). Ortaçağ rengi: drone (açık beşli) + lavta/arp (Karplus-Strong) + çerçeve davul + yer yer blok flüt. Ölçü 4/4 olan parçalarda arp kalıbı 16, davul kalıbı 8 sekizlik; tema ölçüleri beatsPerBar vuruş. voices.harp.shift = arp/bas transpozu (yarım ses; -12 = bir oktav alçak, savaşta boğuk ostinato). Sahne geçişleri crossfadeMs ile yumuşak (src/ui/music.ts > sceneMusic); seviye = Settings > Music x Master Volume x parçanın master'ı. CPU hafif: kısa yankı, az nota; aynı anda en çok iki motor (geçiş sırasında).",
+  "crossfadeMs": 2400,
+  "tracks": {
+    "map": {
+      "label": "The Long Road",
+      "desc": "Campaign map: calm travel. G mixolydian walking 4/4, lute steps over a G-D drone, soft frame drum, low recorder.",
+      "bpm": 84,
+      "beatsPerBar": 4,
+      "tonic": "G",
+      "mode": "mixolydian",
+      "master": 0.8,
+      "fadeInMs": 3000,
+      "fadeInFrom": 0,
+      "reverb": { "seconds": 2.4, "decay": 3.2, "damp": 0.55, "wet": 0.3, "dry": 0.82 },
+      "voices": {
+        "harp": { "gain": 0.46, "decay": 2.0, "bassDecay": 3.0, "bassGain": 0.4, "bright": 0.5, "pick": 0.2, "pan": -0.2 },
+        "flute": { "gain": 0.17 },
+        "pad": { "gain": 0.018, "cutoff": 760 },
+        "drone": { "gain": 0.024, "notes": ["G2", "D3"], "cutoff": 360 },
+        "drum": { "gain": 0.34 }
+      },
+      "harpPatterns": {
+        "walk": [0, 2, 1, 3, 0, 2, 4, 3, 0, 2, 1, 3, 0, 4, 5, 4],
+        "wander": [0, null, 3, 4, 1, null, 4, 3, 0, null, 3, 5, 1, null, 4, null]
+      },
+      "drumPatterns": {
+        "step": [0.62, 0, 0.24, 0, 0.5, 0, 0.24, 0],
+        "stepEnd": [0.7, 0, 0.3, 0.22, 0.55, 0.3, 0.4, 0.3]
+      },
+      "themes": {
+        "road": ["G4:1 B4:1 D5:1.5 C5:0.5", "C5:1 A4:1 F4:2", "E5:1 D5:1 C5:1 G4:1", "B4:2 G4:2", "G4:1 B4:1 D5:1 E5:1", "F5:1.5 E5:0.5 D5:1 C5:1", "D5:1 F5:1 A4:2", "G4:4"]
+      },
+      "melodyRange": { "high": ["G4", "G5"], "low": ["D4", "D5"] },
+      "rhythms": {
+        "high": [[1, 1, 1, 1], [2, 1, 1], [1.5, 0.5, 2], [2, 2], [1, 1, 2]],
+        "low": [[4], [2, 2], [3, 1]],
+        "cadence": [[4], [2, 2]]
+      },
+      "sections": {
+        "road": { "chords": ["G", "F", "C", "G", "G", "F", "Dm", "G"], "harp": "walk", "bass": true, "pad": 1, "drum": "step", "drumLast": "stepEnd", "melody": "theme:road" },
+        "vista": { "chords": ["C", "G", "Am", "Em", "F", "C", "Dm", "G"], "harp": "wander", "bass": true, "pad": 1, "drum": null, "melody": "gen:low" },
+        "dusk": { "chords": ["Em", "F", "G", "G", "Am", "F", "C", "G"], "harp": "walk", "bass": true, "pad": 0.9, "drum": "step", "melody": null }
+      },
+      "form": ["road", "vista", "dusk"],
+      "cycles": [
+        {},
+        { "road": { "ornament": 0.35 }, "dusk": { "melody": "gen:high" } },
+        { "vista": { "drum": "step", "melody": "gen:high" }, "dusk": { "harp": "wander" } }
+      ]
+    },
+    "town": {
+      "label": "Hearth and Ale",
+      "desc": "Town screen: warm tavern lilt. F major 3/4 jig, bright lute, recorder tune, light bodhran.",
+      "bpm": 100,
+      "beatsPerBar": 3,
+      "tonic": "F",
+      "mode": "ionian",
+      "master": 0.8,
+      "fadeInMs": 2500,
+      "fadeInFrom": 0,
+      "reverb": { "seconds": 1.8, "decay": 3.6, "damp": 0.6, "wet": 0.26, "dry": 0.85 },
+      "voices": {
+        "harp": { "gain": 0.48, "decay": 1.8, "bassDecay": 2.6, "bassGain": 0.38, "bright": 0.6, "pick": 0.16, "pan": -0.18 },
+        "flute": { "gain": 0.19 },
+        "pad": { "gain": 0.016, "cutoff": 900 },
+        "drone": { "gain": 0.02, "notes": ["F2", "C3"], "cutoff": 400 },
+        "drum": { "gain": 0.36 }
+      },
+      "drumPatterns": {
+        "jig": [0.8, 0, 0.3, 0.6, 0, 0.3],
+        "jigEnd": [0.85, 0.3, 0.4, 0.65, 0.4, 0.5]
+      },
+      "themes": {
+        "ale": ["F4:1 A4:1 C5:1", "E5:1.5 D5:0.5 C5:1", "D5:1 F5:1 A4:1", "Bb4:2 D5:1", "C5:1 A4:1 F4:1", "G4:1 C5:1 E5:1", "D5:1 Bb4:1 F4:1", "G4:2 E4:1"]
+      },
+      "melodyRange": { "high": ["F4", "F5"], "low": ["C4", "C5"] },
+      "sections": {
+        "hall": { "chords": ["F", "C", "Dm", "Bb", "F", "C", "Bb", "C"], "harp": "flow", "bass": true, "pad": 1, "drum": "jig", "drumLast": "jigEnd", "melody": "theme:ale" },
+        "ale": { "chords": ["Dm", "Bb", "F", "C", "Gm", "Dm", "Bb", "C"], "harp": "climb", "bass": true, "pad": 1, "drum": "jig", "melody": "gen:high" },
+        "home": { "chords": ["F", "C", "Dm", "Bb", "F", "C", "Bb", "C"], "harp": "flow", "bass": true, "pad": 0.9, "drum": "heart", "melody": "theme:ale", "ornament": 0.4 }
+      },
+      "form": ["hall", "ale", "home"],
+      "cycles": [
+        {},
+        { "ale": { "melody": "gen:low", "harp": "flow" }, "home": { "ornament": 0.6 } },
+        { "hall": { "ornament": 0.3 }, "ale": { "drum": "heart" } }
+      ]
+    },
+    "battle": {
+      "label": "Steel at Dawn",
+      "desc": "Battle: tense and low. A minor 4/4, low lute ostinato an octave down, A-E drone, war drum; kept quiet under the skill sounds.",
+      "bpm": 108,
+      "beatsPerBar": 4,
+      "tonic": "A",
+      "mode": "aeolian",
+      "master": 0.62,
+      "fadeInMs": 2000,
+      "fadeInFrom": 0,
+      "reverb": { "seconds": 1.6, "decay": 3.8, "damp": 0.7, "wet": 0.2, "dry": 0.9 },
+      "voices": {
+        "harp": { "gain": 0.5, "decay": 1.2, "bassDecay": 2.2, "bassGain": 0.5, "bright": 0.42, "pick": 0.22, "pan": -0.12, "shift": -12 },
+        "flute": { "gain": 0.13, "lowGain": 0.9 },
+        "pad": { "gain": 0.02, "cutoff": 560, "octave": 3 },
+        "drone": { "gain": 0.032, "notes": ["A1", "E2"], "cutoff": 320 },
+        "drum": { "gain": 0.5 }
+      },
+      "harpPatterns": {
+        "ostinato": [0, 0, 2, 0, 1, 0, 2, 1, 0, 0, 2, 0, 1, 2, 1, 0],
+        "pulse": [0, null, 0, 1, 0, null, 2, null, 0, null, 0, 1, 2, 1, 0, null]
+      },
+      "drumPatterns": {
+        "war": [1, 0, 0.35, 0.5, 0.8, 0, 0.4, 0.3],
+        "warRoll": [1, 0.3, 0.45, 0.35, 0.8, 0.5, 0.65, 0.75]
+      },
+      "melodyRange": { "high": ["E4", "E5"], "low": ["A3", "A4"] },
+      "rhythms": {
+        "high": [[2, 1, 1], [1.5, 0.5, 2], [2, 2], [1, 1, 2]],
+        "low": [[4], [2, 2], [3, 1]],
+        "cadence": [[4], [2, 2]]
+      },
+      "sections": {
+        "clash": { "chords": ["Am", "Am", "F", "G", "Am", "Am", "Dm", "E"], "harp": "ostinato", "bass": true, "pad": 1, "drum": "war", "drumLast": "warRoll", "melody": null },
+        "press": { "chords": ["F", "G", "Am", "Am", "F", "G", "E", "E"], "harp": "pulse", "bass": true, "pad": 1.1, "drum": "war", "drumLast": "warRoll", "melody": "gen:low" }
+      },
+      "form": ["clash", "press"],
+      "cycles": [
+        {},
+        { "clash": { "harp": "pulse" }, "press": { "harp": "ostinato", "melody": null } },
+        { "press": { "melody": "gen:high" } }
+      ]
+    },
+    "boss": {
+      "label": "The Warden's Wrath",
+      "desc": "Boss battle: heavier. D phrygian 4/4, slower and darker, low lute ostinato, thick drone, heavy drum with rolls.",
+      "bpm": 96,
+      "beatsPerBar": 4,
+      "tonic": "D",
+      "mode": "phrygian",
+      "master": 0.66,
+      "fadeInMs": 1600,
+      "fadeInFrom": 0,
+      "reverb": { "seconds": 2.2, "decay": 3.0, "damp": 0.72, "wet": 0.26, "dry": 0.86 },
+      "voices": {
+        "harp": { "gain": 0.52, "decay": 1.4, "bassDecay": 2.6, "bassGain": 0.56, "bright": 0.38, "pick": 0.24, "pan": -0.1, "shift": -12 },
+        "flute": { "gain": 0.12, "lowGain": 0.9 },
+        "pad": { "gain": 0.026, "cutoff": 520, "octave": 3 },
+        "drone": { "gain": 0.04, "notes": ["D2", "A2"], "cutoff": 300, "lfoHz": 0.11, "lfoDepth": 120 },
+        "drum": { "gain": 0.6 }
+      },
+      "harpPatterns": {
+        "doom": [0, 0, 0, 1, 0, 0, 2, 0, 0, 0, 0, 1, 2, 1, 0, 0],
+        "grind": [0, 1, 0, 2, 0, 1, 0, 3, 0, 1, 0, 2, 3, 2, 1, 0]
+      },
+      "drumPatterns": {
+        "doom": [1, 0, 0.6, 0, 1, 0, 0.6, 0.45],
+        "doomRoll": [1, 0.45, 0.6, 0.5, 1, 0.6, 0.75, 0.9]
+      },
+      "melodyRange": { "high": ["D4", "D5"], "low": ["A3", "A4"] },
+      "rhythms": {
+        "high": [[2, 1, 1], [2, 2], [3, 1]],
+        "low": [[4], [2, 2], [3, 1]],
+        "cadence": [[4], [2, 2]]
+      },
+      "sections": {
+        "doom": { "chords": ["Dm", "Eb", "Dm", "Eb", "Dm", "Cm", "Bb", "A"], "harp": "doom", "bass": true, "pad": 1, "drum": "doom", "drumLast": "doomRoll", "melody": null },
+        "wrath": { "chords": ["Gm", "Eb", "Dm", "Dm", "Gm", "Bb", "Eb", "A"], "harp": "grind", "bass": true, "pad": 1.15, "drum": "doom", "drumLast": "doomRoll", "melody": "gen:low" }
+      },
+      "form": ["doom", "wrath"],
+      "cycles": [
+        {},
+        { "doom": { "harp": "grind" }, "wrath": { "harp": "doom" } },
+        { "wrath": { "melody": null }, "doom": { "melody": "gen:low" } }
+      ]
+    },
+    "camp": {
+      "label": "Embers at Night",
+      "desc": "Endless camp: quiet night by the fire. E dorian slow 3/4, sparse lute, low recorder, E-B drone, a rare soft heartbeat drum.",
+      "bpm": 66,
+      "beatsPerBar": 3,
+      "tonic": "E",
+      "mode": "dorian",
+      "master": 0.78,
+      "fadeInMs": 3000,
+      "fadeInFrom": 0,
+      "reverb": { "seconds": 2.8, "decay": 3.0, "damp": 0.6, "wet": 0.36, "dry": 0.78 },
+      "voices": {
+        "harp": { "gain": 0.46, "decay": 2.6, "bassDecay": 3.4, "bassGain": 0.36, "bright": 0.48, "pick": 0.18, "pan": -0.2 },
+        "flute": { "gain": 0.16 },
+        "pad": { "gain": 0.02, "cutoff": 700 },
+        "drone": { "gain": 0.026, "notes": ["E2", "B2"], "cutoff": 340 },
+        "drum": { "gain": 0.3 }
+      },
+      "melodyRange": { "high": ["B4", "B5"], "low": ["E4", "E5"] },
+      "sections": {
+        "fire": { "chords": ["Em", "D", "Em", "A", "G", "D", "A", "Em"], "harp": "sparse", "bass": true, "pad": 1, "drum": null, "melody": null },
+        "stars": { "chords": ["G", "D", "Em", "Bm", "G", "A", "D", "Em"], "harp": "flow", "bass": true, "pad": 0.9, "drum": "heart", "melody": "gen:low" }
+      },
+      "form": ["fire", "stars"],
+      "cycles": [
+        {},
+        { "fire": { "melody": "gen:high" }, "stars": { "harp": "sparse", "drum": null } },
+        { "fire": { "drum": "heart" }, "stars": { "melody": "gen:high" } }
+      ]
+    }
+  }
+}

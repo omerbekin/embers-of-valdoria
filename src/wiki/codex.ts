@@ -7,7 +7,7 @@
 import { paintedOr } from '../ui/misc-icons';
 import type { WikiArticle, WikiCatalog, WikiUnit } from './catalog';
 
-export type CodexSectionId = 'start' | 'classes' | 'skills' | 'mechanics' | 'statuses' | 'elements';
+export type CodexSectionId = 'start' | 'lessons' | 'classes' | 'skills' | 'mechanics' | 'statuses' | 'elements';
 
 /** Maddenin küçük resmi. `portrait`: avatar -> tam boy sprite -> class logosu sırasıyla ilk bulunan (boş portre yok). */
 export type CodexThumb =
@@ -39,6 +39,8 @@ export interface CodexSectionDef {
 
 export const CODEX_SECTIONS: readonly CodexSectionDef[] = [
   { id: 'start', title: 'Getting Started', icon: 'sword', layout: 'list' },
+  // Mentor dersleri (sefer tutorial'ı): yalnızca görülenler (src/wiki/view.ts süzer; docs/design/tutorial.md)
+  { id: 'lessons', title: 'Lessons', icon: 'book', layout: 'list' },
   { id: 'classes', title: 'Classes', icon: 'helm', layout: 'tiles' },
   { id: 'skills', title: 'Skills', icon: 'fireball', layout: 'list' },
   { id: 'mechanics', title: 'Stats & Mechanics', icon: 'muscle', layout: 'list' },
@@ -81,6 +83,7 @@ const unitEntry = (u: WikiUnit, group: string): CodexEntry => ({
 export function codexEntries(cat: WikiCatalog): Record<CodexSectionId, CodexEntry[]> {
   return {
     start: cat.gettingStarted.map((a) => articleEntry('start', a)),
+    lessons: cat.lessons.map((a) => articleEntry('lessons', a)),
     classes: [...cat.classes.map((u) => unitEntry(u, 'Classes')), ...cat.summons.map((u) => unitEntry(u, 'Summons'))],
     skills: cat.skills.map((s) => ({
       section: 'skills',

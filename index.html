@@ -15,10 +15,12 @@
     <title>Embers of Valdoria</title>
     <!-- Yükleme ekranı arka planı (public/loading, tools/make-loading-bg.mjs): JS paketinden önce inmeye başlasın -->
     <link rel="preload" as="image" type="image/webp" href="./loading/loading-bg.webp" fetchpriority="high" />
+    <link rel="preload" as="image" type="image/webp" href="./loading/emblem.webp" fetchpriority="high" />
     <!-- Açılış yükleme ekranı (src/ui/boot-loader.ts): Phaser ve fontlardan önce görünsün diye düz HTML/CSS, satır içi. Tasarım kiti dili.
-         Arka plan (Ömer 2026-10-10): savaş masası resmi. İlk karede satır içi bulanık yer tutucu (32x21 webp, base64; tools/make-loading-bg.mjs yazar),
-         asıl resim (public/loading/loading-bg.webp) yüklenince üstüne solar; cover ile 16:9-21:9 arası kırpılır, kenar karartması + ortada başlık
-         ve çubuk için koyu alan. Reduced motion: solma ve elmas ışıması yok. -->
+         "Dusk" (Ömer 2026-10-13): gün batımında uzak kale arka planı (asıl assets/source/loading/loading-bg.png, tools/make-loading-bg.mjs), sağ altta
+         taç amblemi (public/loading/emblem.webp; asıl assets/source/branding/emblem.png) altın halka içinde, etrafında saat yönünde dönen alev şeridi.
+         Yüzde ve çubuk GÖRÜNMEZ (öğeler boot-loader.ts için durur). Arka planın ilk karesi satır içi bulanık yer tutucu, asıl resim yüklenince solar;
+         cover ile 16:9-21:9 arası kırpılır. Reduced motion: solma yok, halka yavaş döner. -->
     <style>
       html, body { margin: 0; background: #0d0a07; }
       #boot { position: fixed; inset: 0; z-index: 100; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; overflow: hidden;
@@ -29,42 +31,37 @@
       #boot > .boot-bg { z-index: 0; }
       #boot > .boot-vig { z-index: 1; }
       #boot .boot-bg::before, #boot .boot-bg::after { content: ''; position: absolute; background-position: 50% 50%; background-size: cover; background-repeat: no-repeat; }
-      #boot .boot-bg::before { inset: -30px; background-image: /*boot-ph*/url(data:image/webp;base64,UklGRogAAABXRUJQVlA4IHwAAADwBACdASogABUAPuVgpU2pJaOiN/VYASAciWIAqScvwh3d8SZQT+w0T1VaFB27hgAA/vBc9jHO2o0mrS/1EwvXBg8GNHcT4w1Z8nTQ4r13PNqXVI+tkBFCAhEaCf65KtaaETL8ReRPk7ukfZeOKl1wFQOpkPA5/sUOYAAA)/*boot-ph*/; filter: blur(16px) brightness(0.8); }
+      #boot .boot-bg::before { inset: -30px; background-image: /*boot-ph*/url(data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAQBACdASogABIAPu1iqE2ppaOiMAgBMB2JYgDE2CHHh0BN+JHC2p0GAAD+7om1Njh+AlbbK7D+Yv53wDjhec65nQd+bM9ZW8G+Hn4iIYmZZAn9G09BuzFYo36eYCcDzZVPAAAA)/*boot-ph*/; filter: blur(16px) brightness(0.8); }
       #boot .boot-bg::after { inset: 0; background-image: var(--boot-img, none); opacity: 0; transition: opacity 0.8s ease; }
       #boot.bg-ready .boot-bg::after { opacity: 1; }
-      /* kenar karartması (21:9'da yanlar, 16:9'da üst/alt) + ortada başlık / çubuk için koyu alan */
+      /* kenar karartması + amblemin durduğu sağ alt köşede hafif gölge */
       #boot .boot-vig { background:
-          radial-gradient(ellipse 34% 30% at 50% 50%, rgba(8, 6, 4, 0.62) 0%, rgba(8, 6, 4, 0.38) 60%, rgba(8, 6, 4, 0) 100%),
-          radial-gradient(ellipse 75% 70% at 50% 50%, rgba(5, 4, 3, 0) 45%, rgba(5, 4, 3, 0.55) 80%, rgba(3, 2, 1, 0.9) 100%),
-          linear-gradient(180deg, rgba(5, 4, 3, 0.55) 0%, rgba(5, 4, 3, 0) 18%, rgba(5, 4, 3, 0) 82%, rgba(5, 4, 3, 0.6) 100%); }
+          radial-gradient(ellipse 60% 60% at 85% 85%, rgba(0, 0, 0, 0.45), rgba(0, 0, 0, 0) 70%),
+          radial-gradient(ellipse 80% 75% at 50% 50%, rgba(5, 4, 3, 0) 60%, rgba(5, 4, 3, 0.35) 88%, rgba(3, 2, 1, 0.65) 100%); }
       #boot.boot-rm, #boot.boot-rm .boot-bg::after { transition: none; }
-      #boot.boot-rm .boot-dia { animation: none; }
       #boot.boot-off { opacity: 0; pointer-events: none; }
       #boot.boot-hidden { display: none; }
-      #boot .boot-dia { width: 12px; height: 12px; transform: rotate(45deg); background: #e0702a; box-shadow: 0 0 0 1px #ffb35a, 0 0 14px rgba(240, 140, 40, 0.7);
-        animation: boot-glow 1.6s ease-in-out infinite; }
-      #boot .boot-title { font-size: clamp(22px, 5.2vmin, 46px); font-weight: 600; letter-spacing: 0.16em; text-transform: uppercase; text-align: center;
-        background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; padding: 0 16px;
-        filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.95)) drop-shadow(0 0 18px rgba(0, 0, 0, 0.8)); }
-      #boot .boot-line { display: flex; align-items: center; gap: 10px; }
-      #boot .boot-line i { display: block; width: clamp(40px, 12vmin, 110px); height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.6)); }
-      #boot .boot-line i:last-child { background: linear-gradient(270deg, transparent, rgba(217, 178, 106, 0.6)); }
-      #boot .boot-line b { width: 7px; height: 7px; transform: rotate(45deg); border: 1px solid rgba(217, 178, 106, 0.8); }
-      #boot .boot-bar { position: relative; width: clamp(180px, 42vmin, 360px); height: 2px; background: rgba(217, 178, 106, 0.22); margin-top: 6px; box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.55); }
-      #boot .boot-fill { position: absolute; left: 0; top: 0; bottom: 0; width: 0; background: linear-gradient(90deg, rgba(224, 112, 42, 0.8), #f3d999); transition: width 0.25s ease;
-        box-shadow: 0 0 8px rgba(240, 140, 40, 0.6); }
-      #boot .boot-meta { display: flex; gap: 14px; font-style: italic; font-size: clamp(13px, 2.6vmin, 18px); color: #b8a684; text-shadow: 0 1px 3px #000, 0 0 10px #000; }
-      #boot .boot-pct { color: #f3d999; font-style: normal; letter-spacing: 0.08em; }
-      @keyframes boot-glow { 50% { box-shadow: 0 0 0 1px #ffb35a, 0 0 26px rgba(240, 140, 40, 0.9); } }
+      #boot .boot-badge { position: absolute; z-index: 2; aspect-ratio: 1; width: clamp(114px, 19.5vmin, 195px);
+        right: calc(clamp(40px, 6.5vw, 120px) + env(safe-area-inset-right, 0px)); bottom: calc(clamp(40px, 9vh, 110px) + env(safe-area-inset-bottom, 0px)); }
+      #boot .boot-badge::before { content: ''; position: absolute; inset: 13%; border-radius: 50%; z-index: 2; border: 2px solid rgba(217, 178, 106, 0.75);
+        box-shadow: inset 0 0 0 1px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(0, 0, 0, 0.6), inset 0 0 18px rgba(0, 0, 0, 0.8);
+        background: radial-gradient(circle, rgba(40, 20, 10, 0.85) 0%, rgba(10, 6, 4, 0.92) 70%); }
+      #boot .boot-badge img { position: absolute; inset: 15%; width: 70%; height: 70%; object-fit: contain; z-index: 3; color: #e6c27a; font-size: 12px; }
+      #boot .boot-ring { position: absolute; inset: 0; border-radius: 50%; z-index: 1;
+        background: conic-gradient(from 0deg, rgba(255, 90, 20, 0) 0deg, rgba(255, 90, 20, 0) 200deg, rgba(255, 110, 30, 0.55) 290deg, #ffb347 340deg, #fff2c0 358deg, rgba(255, 90, 20, 0) 360deg);
+        -webkit-mask: radial-gradient(circle, transparent 60%, #000 62%, #000 71%, transparent 74%); mask: radial-gradient(circle, transparent 60%, #000 62%, #000 71%, transparent 74%);
+        animation: boot-spin 1.8s linear infinite; }
+      #boot .boot-ring.glow { filter: blur(6px); opacity: 0.9; z-index: 0; }
+      #boot.boot-rm .boot-ring { animation-duration: 6s; }
+      @keyframes boot-spin { to { transform: rotate(360deg); } }
+      #boot .boot-bar, #boot .boot-meta { display: none; }
     </style>
   </head>
   <body>
     <div id="boot" role="status" aria-live="polite">
       <div class="boot-bg" aria-hidden="true"></div>
       <div class="boot-vig" aria-hidden="true"></div>
-      <div class="boot-dia"></div>
-      <div class="boot-title">Embers of Valdoria</div>
-      <div class="boot-line"><i></i><b></b><i></i></div>
+      <div class="boot-badge" aria-hidden="false"><div class="boot-ring glow"></div><div class="boot-ring"></div><img class="boot-emblem" src="./loading/emblem.webp" width="320" height="320" alt="Embers of Valdoria" decoding="async" fetchpriority="high" /></div>
       <div class="boot-bar"><div class="boot-fill"></div></div>
       <div class="boot-meta"><span class="boot-label">Loading</span><span class="boot-pct">0%</span></div>
     </div>

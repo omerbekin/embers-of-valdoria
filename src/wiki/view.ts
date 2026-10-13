@@ -2,13 +2,14 @@
  * CODEX (oyun içi wiki) görünümü (DOM). Ömer 2026-10-09 taslak 1 "Codex": tam ekran bilgi ekranı, tasarım kiti dilinde
  * (src/ui/elegant.css: el-back, el-title, el-heading, el-panel, el-dia). Sol sütun: arama + bölüm menüsü; orta sütun: madde listesi
  * (class'lar portre ızgarası, diğerleri ikonlu satırlar); sağda madde paneli. Assets / Legacy bölümleri orta+sağ alanı birlikte kullanır.
- * Geri kuralı: yalnızca sol üstte "◂ Back  Esc" (onay sormaz); oyun içi Menu yok. Açıkken savaş duraklar (kapanınca devam).
+ * Geri kuralı: yalnızca sol üstte "◂ Back" (onay sormaz); oyun içi Menu yok. Açıkken savaş duraklar (kapanınca devam).
  * İçerik src/wiki/catalog.ts (veriden türetilir), sütun düzeni ve küçük resim seçimi src/wiki/codex.ts (saf, testli).
  * İkonlar oyunun kendi ikonlarıdır: skill ikonları sahibinin seçili sürümüyle (v2 varsayılan), durum rozetleri art-registry > statusBadge,
  * element ikonları yüzen hasar yazısındakiyle aynı, statlar alt bar / tooltip ikonları (stat-icons.ts), item yuvaları Gear ekranı siluetleri.
  */
 import { classLogoName, paintedOr } from '../ui/misc-icons';
-import { uiSound } from '../ui/ui-sound';
+import { uiSound, worldSound } from '../ui/ui-sound';
+import { previewMusic } from '../ui/music';
 import layout from '../../data/battle-layout.json';
 import castleHall from '../../assets/backgrounds/castle-hall.webp?url';
 import { h, isolateKeys, openLightbox } from '../gallery/dom';
@@ -28,6 +29,8 @@ import { familyGlyph, slotGlyph } from './slot-glyphs';
 import { itemDefIcon } from '../ui/item-icon-dom';
 import { applyVariantFiles } from '../game/sprite-variants';
 import './wiki.css';
+import { seenLessons } from '../tutorial/store';
+import { lessonEntryId } from './catalog';
 
 export interface WikiHooks {
   /** Codex açıldı: oyun duraklatılır. */
@@ -140,6 +143,8 @@ export class WikiPanel {
   private readonly nav: NavItem[] = [];
   private readonly cat: WikiCatalog;
   private readonly entries: Record<CodexSectionId, CodexEntry[]>;
+  /** Tüm mentor dersleri; `entries.lessons` yalnızca görülenler (Codex açılınca yenilenir). */
+  private allLessons: CodexEntry[] = [];
   private readonly lists = new Map<CodexSectionId, ListView>();
   private readonly selected = new Map<CodexSectionId, string | null>();
   private readonly skillFilter = { owner: '', target: '', element: '' };
@@ -166,7 +171,9 @@ export class WikiPanel {
     for (const s of this.cat.statuses) this.statuses.set(s.id, s);
     for (const g of this.cat.grounds) this.grounds.set(groundEntryId(g.id), g);
     for (const e of this.cat.elements) this.elements.set(e.id, e);
-    for (const a of [...this.cat.gettingStarted, ...this.cat.mechanics]) this.articles.set(a.id, a);
+    for (const a of [...this.cat.gettingStarted, ...this.cat.mechanics, ...this.cat.lessons]) this.articles.set(a.id, a);
+    this.allLessons = this.entries.lessons;
+    this.entries.lessons = this.seenLessonEntries();
 
     // --- sol sütun: arama + bölüm menüsü ---
     this.search = h('input', { class: 'cx-search-input', attrs: { type: 'search', placeholder: 'Search the Codex…', 'aria-label': 'Search the Codex', autocomplete: 'off', spellcheck: 'false' } });
@@ -203,7 +210,7 @@ export class WikiPanel {
     this.articleCol = h('article', { class: 'el-panel corners cx-article', attrs: { 'aria-live': 'polite' } });
     this.wideCol = h('div', { class: 'el-panel cx-wide', attrs: { hidden: '' } }, ...this.nav.flatMap((n) => (n.kind === 'asset' ? [n.asset.root] : [])));
 
-    const back = h('button', { class: 'el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back (Esc)' }, on: { click: () => this.setOpen(false) } }, h('span', { text: '◂ Back' }), h('small', { text: 'Esc' }));
+    const back = h('button', { class: 'el-back cx-back', attrs: { type: 'button', 'aria-label': 'Back (Esc)' }, on: { click: () => this.setOpen(false) } }, h('span', { text: '◂ Back' }));
     const body = h('div', { class: 'cx-body' }, h('aside', { class: 'cx-side' }, searchBox, navEl), this.listCol, this.articleCol, this.wideCol);
     this.overlay = h('div', { class: 'wk-overlay cx', attrs: { hidden: '', role: 'dialog', 'aria-label': 'Codex' } },
       h('div', { class: 'cx-bg', style: { 'background-image': `url("${castleHall}")` } }),
@@ -236,8 +243,29 @@ export class WikiPanel {
     if (open === this.opened) return;
     this.opened = open;
     this.overlay.hidden = !open;
+    worldSound(open ? 'book_open' : 'book_close'); // ağır deri cilt açılır / kapanır (data/audio-world.json)
+    if (!open) previewMusic(null); // Soundtracks önizlemesi biter, sahnenin müziğine dönülür
+    if (open) this.syncLessons();
     if (open) this.hooks.onOpen();
     else this.hooks.onClose();
+  }
+
+  /** Görülen dersler (data sırasıyla). */
+  private seenLessonEntries(): CodexEntry[] {
+    const seen = seenLessons();
+    return this.allLessons.filter((e) => [...seen].some((id) => lessonEntryId(id) === e.id));
+  }
+
+  /** Codex > Lessons: açılışta görülen derslere göre liste ve sayaç yenilenir. */
+  private syncLessons(): void {
+    const next = this.seenLessonEntries();
+    if (next.length === this.entries.lessons.length && next.every((e, i) => e.id === this.entries.lessons[i]?.id)) return;
+    this.entries.lessons = next;
+    this.lists.delete('lessons');
+    const n = this.nav.find((x) => x.id === 'lessons');
+    if (n) n.total = next.length;
+    this.refresh();
+    if (this.active === 'lessons') this.renderList('lessons', true);
   }
 
   /**
@@ -405,7 +433,8 @@ export class WikiPanel {
     this.articleCol.dataset['key'] = `${sec}:${id}`;
     this.articleCol.scrollTop = 0;
     if (!id) {
-      this.articleCol.replaceChildren(h('div', { class: 'cx-empty' }, h('i', { class: 'el-dia hollow' }), h('span', { text: this.query ? `Nothing in this section matches "${this.query}".` : 'Nothing here yet.' })));
+      const none = sec === 'lessons' ? 'Lessons from your mentor appear here once you have seen them in the campaign.' : 'Nothing here yet.';
+      this.articleCol.replaceChildren(h('div', { class: 'cx-empty' }, h('i', { class: 'el-dia hollow' }), h('span', { text: this.query ? `Nothing in this section matches "${this.query}".` : none })));
       return;
     }
     let body: HTMLElement | null = null;

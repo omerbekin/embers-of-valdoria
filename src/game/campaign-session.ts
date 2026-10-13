@@ -4,6 +4,8 @@ import type { Battle } from '../engine';
 import {
   applyBattle,
   battlePlan,
+  getMap,
+  node,
   claimSlot,
   latestSave,
   markPlayed,
@@ -142,6 +144,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     weapons: { items: partyWeapons(plan.heroOrder, (id) => s.roster.find((h) => h.id === id)?.equipment.weapon, (id) => s.roster.find((h) => h.id === id)?.equipment.offhand) },
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
+    // Tutorial bağlamı (docs/design/tutorial.md): düğüm / bölge dersleri, Bölüm III yenilgi ipucu (bu düğümdeki yenilgi sayısı)
+    tutorial: { node: plan.nodeId, region: node(getMap(s.mapId), plan.nodeId).region, encounter: plan.encounterId, defeats: session.attempts.get(s.at) ?? 0 },
     campaign: {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),

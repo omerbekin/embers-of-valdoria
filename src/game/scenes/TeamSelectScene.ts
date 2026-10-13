@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { menuMusic } from '../../ui/music';
 import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
@@ -87,7 +88,7 @@ export interface TeamSelectData {
 }
 
 // --- Taslak paleti (qb-mockups.html taslak 1 'Twin Formations', Ömer 2026-10-09; taslak uygulandıktan sonra silindi) ---
-const { TXT, ON, MUTED, DIM, NOTE, PRI, EMBER, GOLD: GOLDC, ON_N: ONC, INK, PAD, LINE, HIT, EASE: easeOut } = EL;
+const { TXT, ON, MUTED, NOTE, PRI, EMBER, GOLD: GOLDC, ON_N: ONC, INK, PAD, LINE, HIT, EASE: easeOut } = EL;
 const PRI_SMALL = '#e9c062';
 
 // --- Yerleşim (1080 mantıksal yükseklik; kenara yaslananlar stageView.left/right'a göre) ---
@@ -253,6 +254,7 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   create(): void {
+    menuMusic(true); // kurulum ekranı: ana menü müziği sürer (savaştan dönüşte yumuşak geçişle)
     this.cameras.main.setBackgroundColor('#0d0a07');
     // Yazılar Cinzel / EB Garamond ile çizilir: fontlar hazır olmadan çizilen yazı yedek fontla kalırdı (src/ui/menu-fonts.ts)
     if (!menuFontsReady()) {
@@ -747,21 +749,6 @@ export class TeamSelectScene extends Phaser.Scene {
       root.add(box);
       x += 48 + 10;
     });
-    // İpucu (sağa yaslı, iki satır; etkin takımın adı vurgulu)
-    const right = x0 + w - 12;
-    if (right - x > 260) {
-      const l1 = this.mp
-        ? ([['Click to add to ', DIM, true], ['your', ON, false], [' team, or drag onto a slot.', DIM, true]] as const)
-        : ([['Click to add to the ', DIM, true], [NAME[this.active], ON, false], [' team, or drag onto a slot.', DIM, true]] as const);
-      let rx = right;
-      for (let k = l1.length - 1; k >= 0; k--) {
-        const [s, col, it] = l1[k]!;
-        const t = this.gar(rx, -11, s, 19, col, it).setOrigin(1, 0.5);
-        root.add(t);
-        rx -= t.width;
-      }
-      root.add(this.gar(right, 12, 'Click a placed hero to remove it.', 19, DIM).setOrigin(1, 0.5));
-    }
   }
 
   /** Bilgi satırındaki class'ı değiştirir (fare çekilince geri dönmez). */

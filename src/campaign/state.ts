@@ -255,6 +255,38 @@ export function expectStep(s: CampaignState, kind: NextStep['kind']): NextStep {
   return step;
 }
 
+/** Tezgâhı kapatır (Leave): bu düğümde yeniden açılırsa aynı mallar dönsün diye saklanır (geri alım listesi ziyarete özel, boşalır). */
+export function closeShop(t: CampaignState): void {
+  if (t.shop?.node === t.at) t.closedShop = { ...t.shop, buyback: [] };
+  delete t.shop;
+}
+
+/**
+ * Bulunulan düğüme yeniden girilebilir mi (Ömer 2026-10-13, "Ashford'a giremiyorum"): adımları bitmiş, yola çıkmayı bekleyen düğümde
+ * kasaba ekranı, tüccar ya da kamp (dinlenme noktası) yeniden açılır. Yoksa null.
+ */
+export function revisitKind(s: CampaignState): 'town' | 'merchant' | 'rest' | null {
+  if (nextStep(s).kind !== 'move') return null;
+  const map = mapOf(s);
+  const steps = nodeSteps(map, node(map, s.at));
+  for (const k of ['town', 'merchant', 'rest'] as const) if (steps.includes(k) && isDone(s, s.at, k)) return k;
+  return null;
+}
+
+/**
+ * Kasabaya / tüccara yeniden gir: o adım yeniden açılır (Leave yine bitirir). Kasabanın hikâye sahnesi yeniden oynamaz, gönüllü yeniden sorulmaz.
+ * Kamp yeniden açılmaz (ücretsiz dinlenme ikinci kez iyileştirmesin): kampta yalnızca diriltme (reviveAtCamp) açık kalır; durum aynen döner.
+ */
+export function revisitNode(s: CampaignState): CampaignState {
+  const k = revisitKind(s);
+  if (k !== 'town' && k !== 'merchant') return s;
+  const t = clone(s);
+  const map = mapOf(t);
+  if (k === 'town' && node(map, t.at).story && !t.done.includes(key(t.at, 'story'))) t.done.push(key(t.at, 'story'));
+  t.done = t.done.filter((d) => d !== key(t.at, k));
+  return t;
+}
+
 /** "Choose your hero": tutorial kahramanı (lider). */
 export function pickHero(s: CampaignState, classId: string): CampaignState {
   expectStep(s, 'hero');
@@ -357,7 +389,7 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 's
   const t = clone(s);
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') grantLoot(t, t.at, 'treasure', activeHeroes(t));
-  if (kind === 'town') delete t.shop; // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1)
+  if (kind === 'town') closeShop(t); // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1); yeniden girilirse aynı tezgâh döner
   complete(t, kind);
   return t;
 }
@@ -454,9 +486,9 @@ export function reviveCost(s: CampaignState, nodeId: string = s.at): number {
   return Math.round(c.base + c.perIlvl * nodeIlvl(s.mapId, nodeId));
 }
 
-/** Düşmüş kahramanı altınla dirilt (yalnızca dinlenme adımında; altın yetmezse hata). reviveRatio canla kalkar. */
+/** Düşmüş kahramanı altınla dirilt (dinlenme adımında ya da dinlenilmiş kampa yeniden girince; altın yetmezse hata). reviveRatio canla kalkar. */
 export function reviveAtCamp(s: CampaignState, heroId: string): CampaignState {
-  expectStep(s, 'rest');
+  if (revisitKind(s) !== 'rest') expectStep(s, 'rest'); // dinlenme adımında ya da kampa yeniden girince
   const h = heroById(s, heroId);
   if (!h || !isFallen(h)) throw new Error('This hero has not fallen');
   const cost = reviveCost(s);
@@ -555,6 +587,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   t.at = to;
   t.path.push(to);
   delete t.eventChoice;
+  delete t.closedShop;
   const n = node(mapOf(t), to);
   if (n.heal) healAll(t, n.heal);
   return t;

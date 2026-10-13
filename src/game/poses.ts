@@ -98,6 +98,12 @@ export interface WeaponFamilyArt {
   hold?: Grip | 'offhand';
   /** El açısından bağımsız DİK çizilir (kalkan: önden görünüm). */
   upright?: boolean;
+  /**
+   * Ağzı olan görünümlerde ağzın (balta ağzı, çekiç yüzü) görseldeki yanı: v2 gövdelerde (tutuş takımlı sınıf) eşya gerektiğinde AYNALANIR,
+   * ağız saat yönündeki savuruşun önüne, yani düşmana bakar; elde baş aşağı sarkarken (`hangsDown`) de öne (Ömer 2026-10-13 "balta ters").
+   * Pozun `flip`'i bunu tersine çevirir; `itemPoses.flip` mutlak. Görünüm başına (aynı ailede iki yönde çizilmiş görünüm var: axes).
+   */
+  edge?: Record<string, 'left' | 'right'>;
   looks: Record<string, WeaponLook>;
   order: string[];
 }
@@ -357,13 +363,28 @@ export function itemPlacement(def: PoseClassDef, name: string, item: { family: s
     hy: h.y,
     angle,
     k: weaponScale(fam, look, def) * (o.scale ?? 1),
-    flip: o.flip ?? (slot === 'main' ? !!p.flip : false),
+    flip: o.flip ?? (slot === 'main' && !!p.flip) !== edgeFlip(def, fam, item.look, angle),
     back: o.back ?? (slot === 'main' ? !!p.back : false),
     w: look.w,
     h: look.h,
     grip: look.grip,
   };
 }
+
+/** Ağzı öne çevirmek için ayna gerekir mi (`WeaponFamilyArt.edge`; yalnızca v2 gövdeler). */
+export const edgeFlip = (def: PoseClassDef, fam: WeaponFamilyArt, look: string, angle: number): boolean => {
+  const e = fam.edge?.[look];
+  return !!e && !!def.grips && (e === 'left') !== hangsDown(angle);
+};
+
+/**
+ * Eşya baş aşağı mı sarkıyor (açı 140..210 derece: elde sarkan balta, isabette düşen kol). Sarkan eşyada ağız
+ * görselin öteki yanına gelir (`edgeFlip`).
+ */
+export const hangsDown = (angle: number): boolean => {
+  const a = ((((angle + 180) % 360) + 360) % 360) - 180;
+  return a > 140 || a < -150;
+};
 
 /** Pozda çizilen eşyalar: ana el silahı ve (tek el tutuşta) ikinci el eşyası, çözülmüş yerleşimleriyle. */
 export function poseItems(def: PoseClassDef, name: string, w: WeaponPick | null): ItemPlacement[] {
@@ -413,7 +434,8 @@ type Src = CanvasImageSource;
 
 /**
  * Bir pozu gövde tuvali koordinatında çizer (çağıran dönüşümü önceden kurar). Sıra: arkadaki eşyalar (`back`), gövde, öndeki eşyalar,
- * yumruk yaması (el çevresindeki gövde pikselleri kabzanın üstüne yeniden çizilir, yumruk kabzayı SARAR), en üstte önde duran kalkan.
+ * yumruk yaması (el çevresindeki gövde pikselleri kabzanın üstüne yeniden çizilir, yumruk kabzayı SARAR), önde duran kalkan, en üstte
+ * (kalkan varsa) sağ eldeki silah + yumruğu.
  * `glowPx` ışıltı bulanıklığı (cihaz pikseli). Yerleşim `itemPlacement` (poz + `itemPoses` aile ayarı).
  * tools/pose-editor.html ve tools/make-poses.mjs --preview aynı kuralı (ayarsız) uygular.
  */
@@ -457,7 +479,22 @@ export function drawPoseComposite(
       ctx.drawImage(body, 0, 0, CW, CH);
       ctx.restore();
     }
-  for (const pl of items) if (topShield(pl)) draw(pl);
+  // kalkan önde (kolun önünde); SAĞ eldeki silah ve onu tutan yumruk kalkanın da üstünde (3/4 önden sağa bakan gövdede sağ yan
+  // izleyiciye yakın; Ömer 2026-10-13 hazır tutuşta silah kalkanın arkasında kaybolmasın)
+  const shields = items.filter(topShield);
+  for (const pl of shields) draw(pl);
+  const main = shields.length ? items.find((pl) => pl.slot === 'main' && !pl.back && pl.hand === 'main') : undefined;
+  if (main) {
+    draw(main);
+    if (r > 0) {
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(main.hx, main.hy, r, 0, Math.PI * 2);
+      ctx.clip();
+      ctx.drawImage(body, 0, 0, CW, CH);
+      ctx.restore();
+    }
+  }
 }
 
 /** Önde, her şeyin üstünde çizilen ikinci el kalkanı (kol kalkanın arkasında). */
@@ -499,6 +536,7 @@ export function validatePoses(data: PosesData = POSES): string[] {
   for (const [fam, f] of Object.entries(data.weapons)) {
     if (!(f.length > 0)) errors.push(`${fam}: length`);
     for (const l of f.order) if (!f.looks[l]) errors.push(`${fam}: look ${l} not measured`);
+    for (const l of Object.keys(f.edge ?? {})) if (!f.looks[l]) errors.push(`${fam}: edge of unknown look ${l}`);
   }
   for (const [alias, owner] of Object.entries(data.classAliases ?? {})) if (!data.classes[owner]) errors.push(`classAliases ${alias} -> unknown class ${owner}`);
   for (const [item, fam] of Object.entries(data.itemArt)) if (!data.weapons[fam]) errors.push(`itemArt ${item} -> unknown family ${fam}`);

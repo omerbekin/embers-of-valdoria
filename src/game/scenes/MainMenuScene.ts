@@ -9,6 +9,7 @@ import { cardArt, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
+import { onTutorialChange, setTutorialsOn, tutorialsOn } from '../../tutorial/store';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
@@ -60,12 +61,14 @@ const COL_X = MENU_COL_X; // sol sütunun yazı başlangıcı (ayarlar ekranı D
 const COL_W = 560; // ana menü yazı satırlarının genişliği
 const PANEL_W = 760; // Settings / Multiplayer satırlarının genişliği (sağda değer/denetim)
 const SHADE_W = 980; // soldan sağa açılan gölge
+/** Ana menü logosunun kutusu (orta x/y, en fazla genişlik/yükseklik; oran korunur). */
+const LOGO_BOX = { x: COL_X + 153, y: 372, w: 408, h: 263 }; // Ömer 2026-10-13: taç logosu (680x440'tan %30, %20 küçük, sonra %7 büyük); sol kenarı satırların elmasıyla hizalı, alt kenarı ile Play arasında ~70 birim
 /** Settings açıkken sahnenin genel koyuluğu (settings-backdrop v2; DOM .st-overlay ile aynı). */
 const SETTINGS_DARK = 0.52;
 /** Settings sütunu yerleşimi (Ömer 2026-10-10: Sounds / Gameplay bölümleri): başlık ortası y, ilk öğenin üst kenarı, bölüm başlığı yüksekliği.
  *  DOM Settings aynı ölçülerle (style.css > html.menu-elegant .st-col / .st-section). */
 // Ömer 2026-10-11: Gameplay'e Performance mode + Show FPS eklenince 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satır 78 / başlık 46.
-const SETTINGS_LAYOUT = { titleY: 192, top: 255, heading: 46, rowH: 72 }; // 2026-10-13: Sound Effects satırı eklendi, 9 satır 1080e sığsın
+const SETTINGS_LAYOUT = { titleY: 192, top: 255, heading: 46, rowH: 66 }; // 2026-10-13: Sound Effects + Tutorials satırları eklendi, 10 satır 1080e sığsın
 /**
  * Görünüm stili (src/ui/menu-style.ts): 'classic' bugünkü menü; 'elegant' ilk taslağın zarif stili (?menu=new önizleme). Onaylanınca
  * yalnızca DEFAULT_MENU_STYLE değişir; aşağıdaki ölçüler aynı kalır (önizleme = onaylanan görünüm).
@@ -74,7 +77,7 @@ const ELEGANT = menuStyle === 'elegant';
 const LOOK = ELEGANT
   ? {
       rowH: 92, // ince satırlar (dokunma alanı satırın tamamı)
-      itemY0: 486,
+      itemY0: 600, // logo v3 (2026-10-13) ~1,56:1 ve uzun: satırlar logonun altına iner
       mainSize: 30, // Cinzel 600, büyük harf, harf aralığı 0,05em
       panelSize: 28,
       panelY0: 470,
@@ -86,7 +89,7 @@ const LOOK = ELEGANT
       cardTitle: 40,
       cardLine: 26,
     }
-  : { rowH: 112, itemY0: 486, mainSize: 50, panelSize: 38, panelY0: 470, titleY: 330, titleSize: 66, valueSize: 32, stepSize: 40, backSize: 36, cardTitle: 50, cardLine: 24 };
+  : { rowH: 112, itemY0: 600, mainSize: 50, panelSize: 38, panelY0: 470, titleY: 330, titleSize: 66, valueSize: 32, stepSize: 40, backSize: 36, cardTitle: 50, cardLine: 24 };
 const ROW_H = LOOK.rowH; // satır aralığı = dokunma alanı yüksekliği (telefonda ~40-44 gerçek px)
 const ITEM_Y0 = LOOK.itemY0;
 /** Zarif stilde satır yazısının iç boşluğu (parıltı gölgesi kesilmesin); yazı x'i bu kadar sola alınır. */
@@ -248,11 +251,10 @@ export class MainMenuScene extends Phaser.Scene {
       if (this.scene.isActive() && (mp.state !== 'idle' || mp.active)) this.scene.start(MP_SCENE);
     });
     this.cleanups.push(offMp);
-    // Ana menü müziği (src/ui/music.ts): ilk kullanıcı hareketinden sonra yükselir; ekran kararmaya başlayınca (savaş / sefer / Endless) söner
+    // Ana menü müziği (src/ui/music.ts): ilk kullanıcı hareketinden sonra yükselir. Çıkışta durdurulmaz: sonraki sahne kendi parçasını seçer
+    // (sceneMusic: harita / kasaba / kamp / savaş) ve yumuşak geçişle (crossfade) ona geçilir; takım seçimi ve multiplayer menü müziğinde kalır.
     menuMusic(true);
-    this.cameras.main.once(Phaser.Cameras.Scene2D.Events.FADE_OUT_START, () => menuMusic(false));
     this.events.once('shutdown', () => {
-      menuMusic(false);
       for (const fn of this.cleanups) fn();
       this.cleanups = [];
       if (this.promptOpen) unlockInput('main-menu-prompt');
@@ -464,8 +466,9 @@ export class MainMenuScene extends Phaser.Scene {
   private buildMenuColumn(): void {
     const col = (this.menuCol = this.add.container(0, 0).setDepth(20));
     col.add([this.shadeExtension(), this.columnShade()]);
-    if (hasLogo(this)) col.add(addLogo(this, COL_X + 300, 290, 600, 210)); // assets/branding/logo.webp (kaynak PNG: assets/source/branding)
-    else col.add(fitText(this.titleText(COL_X + 300, 290, 'EMBERS OF VALDORIA', 64, 4).setOrigin(0.5), 600));
+    // Logo v3 (Ömer 2026-10-13; kale + ateş halkası + başlık, ~1,56:1): sütunun üst yarısında büyük; satırlar altında (ITEM_Y0)
+    if (hasLogo(this)) col.add(addLogo(this, LOGO_BOX.x, LOGO_BOX.y, LOGO_BOX.w, LOGO_BOX.h)); // assets/branding/logo.webp (asıl PNG ve üretici: tools/make-logo.mjs)
+    else col.add(fitText(this.titleText(LOGO_BOX.x, LOGO_BOX.y, 'EMBERS OF VALDORIA', 64, 4).setOrigin(0.5), 600));
     MAIN_ITEMS.forEach((it, i) => {
       const row = this.makeRow(ITEM_Y0 + i * ROW_H, it.label, LOOK.mainSize, () => this.pickMain(it.key), { onHover: () => this.selectMain(i) });
       col.add(row.root);
@@ -549,9 +552,9 @@ export class MainMenuScene extends Phaser.Scene {
     this.tweens.add({ targets: this.back, alpha: shown ? 1 : 0, duration: shown ? 400 : 200, delay: shown ? 500 : 0, onComplete: () => this.back.setVisible(shown) });
   }
 
-  /** Sol üst "◂ Back  Esc" (tasarım kiti: src/game/elegant-ui.ts > elLink; geri / menu kuralı CLAUDE.md). */
+  /** Sol üst "◂ Back" (tasarım kiti: src/game/elegant-ui.ts > elLink; geri / menu kuralı CLAUDE.md). */
   private buildBack(): void {
-    const l = elLink(this, '◂ Back', () => this.ready() && this.goBack(), { small: 'Esc' });
+    const l = elLink(this, '◂ Back', () => this.ready() && this.goBack());
     this.back = l.root.setPosition(stageView.left + 48, 56).setDepth(40).setAlpha(0).setVisible(false);
   }
 
@@ -724,7 +727,9 @@ export class MainMenuScene extends Phaser.Scene {
       drawFrame(false);
       c.add(frame);
       c.add(this.titleText(0, hh - (s.buttons ? 130 : 112), s.name, LOOK.cardTitle, 2, '700').setOrigin(0.5));
-      const zone = this.add.zone(0, 0, CARD_W, CARD_H).setInteractive({ useHandCursor: !s.buttons });
+      // Kartın kendisi (görsel) birincil eylemi açar; Campaign'de kayıt varsa Continue, yoksa New (Ömer 2026-10-13). Düğmeler kendi
+      // tıklarını alır (düğme şeridi aşağıda ayrıca dışlanır).
+      const zone = this.add.zone(0, 0, CARD_W, CARD_H).setInteractive({ useHandCursor: true });
       c.add(zone);
       let lineText: Phaser.GameObjects.Text | null = null;
       if (s.line) c.add((lineText = (ELEGANT ? this.noteText(0, hh - 52, s.line, LOOK.cardLine - 2, '#cdb88d') : serif(this, 0, hh - 50, s.line, 24, '#cdb88d', { bold: false, stroke: 3 })).setOrigin(0.5)));
@@ -783,7 +788,13 @@ export class MainMenuScene extends Phaser.Scene {
         });
       };
       zone.on('pointerover', () => this.focusCard(i));
-      if (!s.buttons) zone.on('pointerup', () => this.ready() && s.run());
+      // Düğmeli kartta (Campaign) düğme şeridi görsel tıkı sayılmaz (düğmeler arasındaki boşluğa / kenarına basış yanlışlıkla Continue
+      // açmasın); şerit = düğme sırasının dokunma yüksekliği + pay.
+      const btnStrip = s.buttons ? CARD_H - 100 : Infinity;
+      zone.on('pointerup', (_p: Phaser.Input.Pointer, _lx: number, ly: number) => {
+        if (ly >= btnStrip) return;
+        if (this.ready()) s.run();
+      });
       this.cards.push({ c: outer, focus, run: s.run });
     });
   }
@@ -969,6 +980,11 @@ export class MainMenuScene extends Phaser.Scene {
     const fps = this.valueText(PANEL_W - 6, 0, showFps() ? 'On' : 'Off', TXT_ON).setOrigin(1, 0.5);
     this.cleanups.push(onShowFpsChange((on) => fps.active && fps.setText(on ? 'On' : 'Off')));
     this.addPanelRow(p, 'Show FPS', () => setShowFps(!showFps()), { right: [fps] });
+
+    // --- Tutorials: mentor dersleri açık / kapalı (src/tutorial/store.ts; DOM Settings ile aynı kaynak) ---
+    const tut = this.valueText(PANEL_W - 6, 0, tutorialsOn() ? 'On' : 'Off', TXT_ON).setOrigin(1, 0.5);
+    this.cleanups.push(onTutorialChange(() => tut.active && tut.setText(tutorialsOn() ? 'On' : 'Off')));
+    this.addPanelRow(p, 'Tutorials', () => setTutorialsOn(!tutorialsOn()), { right: [tut] });
 
     // --- Fullscreen (API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();

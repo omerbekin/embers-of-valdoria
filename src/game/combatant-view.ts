@@ -16,6 +16,7 @@ import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, poseDisplayScale } from './pose-rig';
+import { POSE_TIMING, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
 
 /**
  * Poz kütüphanesi bağlantısı (src/game/poses.ts): pozlu sınıfta gövde + silah pişmiş atlası, şu anki poz ve skill bağlamı.
@@ -39,23 +40,26 @@ interface PoseRig {
   motion?: string;
   /** Şu anki pozun gösterildiği an (sahne zamanı): melee pozunun en kısa tutuluşu. */
   shownAt: number;
-  /** Oynanan skill'in başladığı an (sahne zamanı): büyü / atış pozunun en kısa tutuluşu. */
-  startedAt: number;
-  /** v2: bu ana dek (sahne zamanı) idle isteği ertelenir (büyü pozunun en kısa tutuluşu, skill bittikten sonra da). */
+  /** Oynanan skill'in son poz isteğinin anı (skill başı, attack / cast isteği; sahne zamanı): büyü / atış pozunun en kısa tutuluşu. */
+  lastReqAt: number;
+  /** Oynanan skill'in id'si (kanallı skill: src/game/pose-timing.ts > holdSkills). */
+  skillId?: string;
+  /** v2: bu ana dek (sahne zamanı) idle isteği ertelenir (skill bittikten sonra pozun dönüş anı). */
   holdUntil: number;
   /** Biten skill'in poz dizisi ve bittiği an: vuruş anında dönen efekt (playUntilHit) sonradan 'attack' isterse skill'in pozu (Saltire Cut). */
   lastSkill?: string[];
   endedAt?: number;
+  /**
+   * v2: kanallı skill (pose-timing > holdSkills: ok şerit boyunca uçan Piercing Arrow) bitti ama efekti (playUntilHit) hâlâ sürüyor: poz
+   * efekt bitene dek tutulur (`fxEnd` idle'a döndürür; 2026-10-13 denetim: "Piercing Arrow idle'da kaldı"). Kanallı olmayan skill'de efektin
+   * kuyruğu (duman, sönen ışık) beklenmez: el vuruştan kısa süre sonra iner (Ömer 2026-10-13: "eli 1-2 sn havada kalıyor").
+   */
+  awaitFx?: boolean;
 }
-/** Skill bittikten sonra geç gelen 'attack' isteğinin hâlâ o skill'in pozunu alacağı süre (ms, slow() ile). */
-const LATE_ATTACK_MS = 1200;
-
 /** v2 poz takımı (tutuş takımlı sınıf: gerçek sınıflar ve Pose Tester'lar): skill pozu tutma ve efekt çıkış noktası yalnızca burada (debug v1 çiziminde Warrior v1 aynen). */
 const isV2 = (def: PoseClassDef): boolean => !!def.grips;
-/** Melee skill pozunun idle'a dönmeden önce en az görünme süresi (ms, slow() ile). */
-const MELEE_POSE_MIN_MS = 260;
-/** Büyü / atış skill pozunun skill başından itibaren en az görünme süresi (ms, slow() ile). */
-const CAST_POSE_MIN_MS = 750;
+/** Poz dönüş zamanları (data/battle-layout.json > animation.pose; saf hesap src/game/pose-timing.ts). */
+const PT = POSE_TIMING;
 
 /** floatText seçenekleri: tür (tipografi) ve rakamın solundaki/sağındaki küçük ikon (piksel ikon adı). */
 export interface FloatOpts {
@@ -187,7 +191,7 @@ export class CombatantView {
     const baked = def ? bakePoseTexture(scene, combatant.defId, opts.weapon ?? { ...def.defaultWeapon }, combatant.spriteScale ?? 1) : null;
     if (def && baked) {
       const display = poseDisplayScale(def, combatant.spriteScale ?? 1);
-      this.rig = { def, key: baked.key, scale: display / baked.density, display, weapon: opts.weapon ?? { ...def.defaultWeapon }, pose: null, token: 0, skill: [], shownAt: 0, startedAt: 0, holdUntil: 0 };
+      this.rig = { def, key: baked.key, scale: display / baked.density, display, weapon: opts.weapon ?? { ...def.defaultWeapon }, pose: null, token: 0, skill: [], shownAt: 0, lastReqAt: 0, holdUntil: 0 };
       this.w = def.figure.w * display;
       this.h = def.figure.h * display;
     } else {
@@ -776,13 +780,21 @@ export class CombatantView {
     if (!this.realSprite) return;
     if (this.rig) {
       if (anim === 'idle' && this.holdSkillPose()) return;
+      const rig = this.rig;
+      const now = this.scene.time.now;
+      const act = anim === 'attack' || anim === 'cast';
       // pozlu sınıf: genel durum -> poz; attack/cast oynanan skill'in vuruş pozu (skills.json > pose), yoksa sınıfın varsayılanı
-      const late = anim === 'attack' && !this.rig.skill.length && this.scene.time.now - (this.rig.endedAt ?? -1e9) < slow(LATE_ATTACK_MS) ? this.rig.lastSkill : undefined;
-      const list = late ?? this.rig.skill;
-      const skill = anim === 'attack' || anim === 'cast' ? list[list.length - 1] : undefined;
-      this.showPose(skill ?? statePose(this.rig.def, anim, this.grip));
-      if (late) this.returnToIdle(this.rig.token, slow(600)); // geç istek: skill zaten bitti, kendi dönüşü yok
-      if (anim === 'hit') this.returnToIdle(this.rig.token, slow(timing.hitFlashMs) * 3 + slow(260));
+      const late = anim === 'attack' && !rig.skill.length && now - (rig.endedAt ?? -1e9) < slow(PT.lateWindowMs) ? rig.lastSkill : undefined;
+      const list = late ?? rig.skill;
+      const skill = act ? list[list.length - 1] : undefined;
+      this.showPose(skill ?? statePose(rig.def, anim, this.grip));
+      if (act && rig.skill.length) {
+        rig.lastReqAt = now;
+        // büyü / atış skill'inde fırlatış (attack) pozu en çok throwHoldMs: zar / bomba havadayken el iner (kanallı skill hariç)
+        const cap = anim === 'attack' && isV2(rig.def) ? throwHoldDelay(PT, { motion: rig.motion, skillId: rig.skillId }, SLOW) : null;
+        if (cap !== null) this.returnToIdle(rig.token, cap);
+      } else if (act) this.returnToIdle(rig.token, slow(PT.lateHoldMs)); // skill dışında (geç istek, olay efekti): kendi dönüşü yok
+      if (anim === 'hit') this.returnToIdle(rig.token, slow(timing.hitFlashMs) * 3 + slow(PT.hitHoldMs));
       return;
     }
     const key = animKey(this.combatant.spriteId, anim, this.scene);
@@ -792,25 +804,32 @@ export class CombatantView {
   // --- Poz kütüphanesi (src/game/poses.ts; pozsuz sınıfta hepsi etkisiz) ---
 
   /**
-   * v2 poz takımı (Ömer 2026-10-12 poz denetimi: büyü / atış pozları çok hızlı sönüyordu): skill sürerken efektin `play('idle')` isteği
-   * pozu bozmaz. Melee olmayan skill'de (büyü, atış, gökten) poz skill bitene dek (hazırlık, bırakış, vuruş anı) tutulur; `useSkill(null)`
-   * kısa süre sonra yumuşak geçişle idle'a döndürür. Melee'de poz en az MELEE_POSE_MIN_MS görünür, sonra idle. true = istek ele alındı.
+   * v2 poz takımı: skill sürerken efektin `play('idle')` isteği (Ömer 2026-10-12: büyü / atış pozları çok hızlı sönüyordu; 2026-10-13: el
+   * 1-2 sn havada kalıyordu) en kısa görünme süresi dolunca uygulanır (src/game/pose-timing.ts > idleRequestDelay): büyü / atış pozu son
+   * poz isteğinden itibaren en az castMinMs, melee pozu en az meleeMinMs; kanallı skill'de skill bitene dek tutulur. true = istek ele alındı.
    */
   private holdSkillPose(): boolean {
     const rig = this.rig;
     if (!rig || !isV2(rig.def) || !this.alive) return false;
-    // skill bitti ama büyü pozunun en kısa süresi dolmadı: idle o ana ertelenir (sonradan gelen idle istekleri de)
-    const wait = rig.holdUntil - this.scene.time.now;
+    const now = this.scene.time.now;
     if (!rig.skill.length) {
+      if (rig.awaitFx && this.fxRuns > 0) return true; // kanallı skill'in efekti sürüyor: poz efektin sonunda (fxEnd) bırakılır
+      // skill bitti, pozun dönüş anı gelmedi: idle o ana ertelenir (sonradan gelen idle istekleri de)
+      const wait = rig.holdUntil - now;
       if (wait <= 0) return false;
       this.returnToIdle(rig.token, wait);
       return true;
     }
-    if (rig.motion !== 'melee') return true;
-    const left = slow(MELEE_POSE_MIN_MS) - (this.scene.time.now - rig.shownAt);
-    if (left <= 0) return false;
-    this.returnToIdle(rig.token, left);
+    const wait = idleRequestDelay(PT, this.poseHold(now), SLOW);
+    if (wait === null) return true;
+    if (wait <= 0) return false;
+    this.returnToIdle(rig.token, wait);
     return true;
+  }
+
+  /** Pozun tutulduğu skill bağlamı (pose-timing hesapları için). */
+  private poseHold(now: number, motion = this.rig?.motion, skillId = this.rig?.skillId): PoseHold {
+    return { now, motion, skillId, lastRequestAt: this.rig?.lastReqAt ?? now, shownAt: this.rig?.shownAt ?? now };
   }
 
   /** Bu birim poz kütüphanesiyle mi çiziliyor. */
@@ -853,9 +872,15 @@ export class CombatantView {
     // v2 gövdeli gerçek sınıf: Pose Tester kopyasının (pt_<id>) pozu (aynı eşleme; poses.ts > poseSkill)
     const skill = skill0 ? poseSkill(this.combatant.defId, skill0, (id) => content.skills[id]) : null;
     if (!skill && this.rig.skill.length) this.rig.lastSkill = this.rig.skill;
+    const prev = { motion: this.rig.motion, skillId: this.rig.skillId };
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
     this.rig.motion = skill?.motion;
-    if (skill) this.rig.startedAt = this.scene.time.now;
+    this.rig.awaitFx = false;
+    if (skill) {
+      this.rig.lastReqAt = this.scene.time.now;
+      this.rig.skillId = skill.id;
+      this.rig.holdUntil = 0;
+    }
     // açık pozu olan menzilli / büyü skill'i: efekt pozu kendisi çağırmasa da (yukarıdan düşen Judgment gibi) baştan skill'in ilk pozu
     if (skill?.pose !== undefined && skill.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
     // küçük savunma hareketi (Guard; gerçek koruma pozu üretilene dek): geriye yaslanıp çöker, sonra toparlanır (data/poses.json > braceSkills)
@@ -871,13 +896,17 @@ export class CombatantView {
     }
     // skill bitti: efekt pozu boşta pozuna döndürmediyse (araya başka poz girmezse) kısa süre sonra boşta pozuna
     if (!skill) {
-      this.rig.endedAt = this.scene.time.now;
-      // v2: büyü / atış pozu en az CAST_POSE_MIN_MS görünür (çok kısa efektte de poz okunsun), sonra yumuşak dönüş
+      const now = this.scene.time.now;
+      this.rig.endedAt = now;
+      // v2: vuruş anından releaseMs sonra idle (büyü / atış pozu son poz isteğinden itibaren en az castMinMs görünür; pose-timing > endDelay)
       const v2 = isV2(this.rig.def);
-      const left = v2 && this.rig.motion !== 'melee' ? slow(CAST_POSE_MIN_MS) - (this.scene.time.now - this.rig.startedAt) : 0;
-      const ms = Math.max(slow(v2 ? 280 : 500), left);
-      this.rig.holdUntil = v2 && left > 0 ? this.scene.time.now + left : 0;
-      this.returnToIdle(this.rig.token, ms);
+      const cast = v2 && prev.motion !== 'melee';
+      const ms = v2 ? endDelay(PT, this.poseHold(now, prev.motion, prev.skillId), SLOW) : slow(500);
+      this.rig.holdUntil = cast ? now + ms : 0;
+      // kanallı skill'in efekti vuruş anından sonra da sürüyor (ok şerit boyunca uçar): poz efekt bitince (fxEnd) bırakılır; diğerlerinde
+      // efektin kuyruğu (duman, sönen ışık) beklenmez
+      if (cast && this.fxRuns > 0 && isHoldSkill(PT, prev.skillId)) this.rig.awaitFx = true;
+      else this.returnToIdle(this.rig.token, ms);
     }
   }
 
@@ -950,6 +979,23 @@ export class CombatantView {
     rig.pose = pose;
     rig.shownAt = this.scene.time.now;
     return pose;
+  }
+
+  /** Bu birimin şu an süren arka plan efektleri (vfx playUntilHit: vuruş anında çözülür, efekt sürer). */
+  private fxRuns = 0;
+
+  /** vfx playUntilHit başladı (efektin sahibi bu birim). */
+  fxBegin(): void {
+    this.fxRuns++;
+  }
+
+  /** vfx playUntilHit bitti: skill çoktan bittiyse ve kanallı skill'in pozu efekti bekliyorsa (awaitFx) kısa süre sonra idle'a döner. */
+  fxEnd(): void {
+    this.fxRuns = Math.max(0, this.fxRuns - 1);
+    const rig = this.rig;
+    if (this.fxRuns > 0 || !rig?.awaitFx || rig.skill.length) return;
+    rig.awaitFx = false;
+    this.returnToIdle(rig.token, holdEndDelay(PT, rig.holdUntil, this.scene.time.now, SLOW));
   }
 
   /** `token` hâlâ geçerliyse (araya başka poz girmediyse) `ms` sonra boşta pozuna döner. */

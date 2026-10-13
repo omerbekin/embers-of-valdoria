@@ -332,7 +332,7 @@ describe('determinizm ve debug', () => {
     expect(offers.size).toBeGreaterThan(1);
   });
 
-  it('ışınlanma: yol kurulur, önceki adımlar bitmiş, kadro dolu; ipucu tek seferlik', () => {
+  it('ışınlanma: yol kurulur, önceki adımlar bitmiş, kadro dolu; ipucu yok (dersler data/tutorial.json)', () => {
     const s = debugTeleport(fresh(3), 'thorn');
     expect(s.at).toBe('thorn');
     expect(s.path).toEqual(['1', '2', '3', '4', 'moor', '5B', '7', '6B', 'grave', 'pilgrim', '8A', 'river', '9', '10', 'thorn']);
@@ -340,7 +340,8 @@ describe('determinizm ve debug', () => {
     expect(nextStep(s).kind).toBe('battle');
     const t = debugTeleport(fresh(3), '1');
     expect(t.roster).toHaveLength(1);
-    expect(pendingTip(t)).toMatch(/turn bar/);
+    // eski Tip kartı içeriği mentor derslerine taşındı (data/tutorial.json): harita ipucu artık yok
+    expect(pendingTip(t)).toBeNull();
     expect(pendingTip(markTipSeen(t))).toBeNull();
   });
 

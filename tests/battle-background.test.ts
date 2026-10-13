@@ -5,8 +5,10 @@ import { backgroundFloor, backgroundOffsetY, backgroundPlacement, backgroundPool
 
 /** Sefer bölge arka planları (2026-10-12, tools/make-zone-backgrounds.mjs; docs/design/campaign/fill-plan.md 3). */
 const ZONES = ['border-road', 'windy-moor', 'iron-pass', 'misty-marsh', 'grave-field', 'pilgrim-road', 'ashen-plain', 'thornwood-hollow', 'ember-road'];
-/** Uzun 1536x1024 görseller (2026-10-13 v3: bölgeler + kings-bridge + castle-hall). */
-const TALL = [...ZONES, 'kings-bridge', 'castle-hall'];
+/** Quick Battle / multiplayer arenaları (v3, 2026-10-13): bölgelerle aynı yerleşim (zemin hedefte, birimler çite / duvara yakın). */
+const ARENAS = ['proving-grounds-sunny-afternoon', 'proving-grounds-sunset', 'proving-grounds-rain', 'duelling-ring-moon', 'duelling-ring-snow', 'duelling-ring-storm'];
+/** Uzun 1536x1024 görseller (2026-10-13 v3: bölgeler + kings-bridge + castle-hall + arenalar). */
+const TALL = [...ZONES, 'kings-bridge', 'castle-hall', ...ARENAS];
 
 const has = (id: string) => ['webp', 'png', 'jpg'].some((e) => existsSync(`assets/backgrounds/${id}.${e}`));
 
@@ -35,8 +37,6 @@ describe('savaş arka planı havuzları', () => {
   // Ömer 2026-10-11: castle-hall'da birimler duvarda süzülüyordu. Zemin çizgisi arka sıranın ayağının üstünde kalmalı, ekran boşluksuz kaplanmalı.
   it('her savaş arka planında zemin çizgisi arka sıranın ayağının üstünde ve ekran kaplı', () => {
     const sizes: Record<string, [number, number]> = {
-      'duelling-ring-moon': [2000, 667], 'duelling-ring-storm': [2000, 667], 'duelling-ring-snow': [2000, 667],
-      'proving-grounds-sunny-afternoon': [2000, 667], 'proving-grounds-sunset': [2000, 667], 'proving-grounds-rain': [2000, 667],
       ...Object.fromEntries(TALL.map((id) => [id, [1536, 1024] as [number, number]])),
     };
     for (const [id, [w, h]] of Object.entries(sizes)) {
@@ -51,8 +51,6 @@ describe('savaş arka planı havuzları', () => {
         expect(w * p.scale, id).toBeGreaterThanOrEqual(stageW);
       }
     }
-    // Zemini zaten yüksek olan arka planlar dokunulmaz (kaplama ölçeği, ortada)
-    expect(backgroundPlacement('duelling-ring-moon', 2000, 667, 1920, 1080)).toEqual({ y: 540, scale: 1080 / 667 });
     // 2026-10-13 v3: castle-hall ve kings-bridge de uzun (1536x1024) görsel; zemini hedefe oturtmak için yukarı kaydırılır, fazladan yakınlaşmaz
     for (const id of ['castle-hall', 'kings-bridge']) {
       const p = backgroundPlacement(id, 1536, 1024, 1920, 1080);
@@ -67,8 +65,9 @@ describe('savaş arka planı havuzları', () => {
     for (const id of TALL) {
       const f = backgroundFloor(id)!;
       const p = backgroundPlacement(id, 1536, 1024, 1920, 1080);
-      expect(p.scale, id).toBeCloseTo(1.25, 5);
-      expect(1080 / (1024 * p.scale), id).toBeGreaterThan(0.8);
+      // ölçek = kaplama; zemini üst yarıda olan arenalarda zemin hedefe insin diye biraz fazlası (2026-10-13)
+      expect(p.scale, id).toBeCloseTo(Math.max(1.25, floorLineMaxY() / (f * 1024)), 5);
+      expect(1080 / (1024 * p.scale), id).toBeGreaterThan(0.78);
       expect(p.y + (f - 0.5) * 1024 * p.scale, id).toBeGreaterThan(floorLineMaxY() - 10); // hedefte (üst kenar ekrana değiyorsa birkaç px yukarıda)
       expect(p.y + (f - 0.5) * 1024 * p.scale, id).toBeLessThanOrEqual(floorLineMaxY() + 0.01);
       const phone = backgroundPlacement(id, 1536, 1024, 2337, 1080);

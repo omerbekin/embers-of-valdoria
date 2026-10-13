@@ -1,0 +1,191 @@
+{
+  "_not": "Sefer tutorial'ı (Ömer 2026-10-13 onayı; tasarım docs/design/tutorial.md). Her düğümde TEK yeni şey, ders o anki savaşta / ekranda çıkar. Metinler oyun içi (İngilizce), her ders en çok 1-2 cümle. Mentor kutusu src/ui/lesson-box.ts, kurallar (saf) src/tutorial/lessons.ts, görülenler localStorage proto.tutorial.v1 (src/tutorial/store.ts). trigger.battle: savaş içi (node = düğüm id'leri, region = bölge; when: start = ilk oyuncu kararı, turn = N. oyuncu kararı, skill = melee/area skill seçilince, status = canlı bir birimde durum varken, ground = zemin etkisi varken, boss = boss rütbeli düşman varken; fallbackTurn: koşul hiç oluşmazsa bu karardan itibaren). trigger.screen: ekran dersleri (town, merchant, company, map, event, gear, endless). forced: yalnızca ilk savaş (Mill Road) adım adım zorunlu; await = next (düğme) | skill (temel saldırı düğmesi) | target (hedef seçilip saldırı yapılınca). codex: Codex > Lessons'ta görünen metin (yoksa text). place: bottom = kutu altta (Gear: torbayı kapatmasın). defeatHints: Bölüm III'te aynı savaş 2 kez kaybedilince savaş başında mentor ipucu (Codex'e girmez).",
+  "version": 1,
+  "mentor": {
+    "name": "Garrick",
+    "title": "Old Border Commander",
+    "_avatar": "YER TUTUCU portre (assets/avatars/<ad>.png); gerçek mentor portresi gelince assets/avatars/mentor.png konur ve burası 'mentor' olur.",
+    "avatar": "shieldwarden"
+  },
+  "opening": {
+    "node": "1",
+    "text": "Thugs on the mill road, and only you between them and the village. Steady now. I'll talk you through it."
+  },
+  "groups": ["The Borderlands", "Valdren Vale", "Endless"],
+  "lessons": [
+    {
+      "id": "turn_bar",
+      "group": "The Borderlands",
+      "title": "The Turn Bar",
+      "text": "The bar at the top shows who acts next. Faster fighters act more often.",
+      "focus": ".bh-turn",
+      "forced": "next",
+      "trigger": { "battle": { "node": ["1"], "when": "start" } }
+    },
+    {
+      "id": "attack",
+      "group": "The Borderlands",
+      "title": "Attacking",
+      "text": "This is your attack. Press it.",
+      "codex": "Your first skill is your basic attack. It costs nothing: pick it, then pick a target.",
+      "focus": ".bh-skills [data-skill]:first-child",
+      "forced": "skill",
+      "trigger": { "battle": { "node": ["1"], "when": "start" } }
+    },
+    {
+      "id": "target",
+      "group": "The Borderlands",
+      "title": "Choosing a Target",
+      "text": "Now tap a glowing enemy to strike. Hover one first to preview the damage.",
+      "codex": "After you pick a skill, the enemies it can reach glow. Hover one to preview the damage, tap it to strike.",
+      "forced": "target",
+      "trigger": { "battle": { "node": ["1"], "when": "start" } }
+    },
+    {
+      "id": "skills_mp",
+      "group": "The Borderlands",
+      "title": "Skills and MP",
+      "text": "Stronger skills cost MP, which refills a little every turn. A skill with a cooldown rests for a few turns after use.",
+      "focus": ".bh-skills",
+      "trigger": { "battle": { "node": ["2"], "when": "start" } }
+    },
+    {
+      "id": "rows_reach",
+      "group": "The Borderlands",
+      "title": "Rows and Reach",
+      "text": "Melee attacks reach only the enemy's front row. Ranged attacks and spells hit any row.",
+      "trigger": { "battle": { "node": ["2"], "when": "skill", "skill": "melee", "fallbackTurn": 2 } }
+    },
+    {
+      "id": "ultimate",
+      "group": "The Borderlands",
+      "title": "The Ultimate",
+      "text": "Your fourth skill is your ultimate. It wakes only after your first turns, so plan for the moment it is ready.",
+      "focus": ".bh-skills [data-skill]:nth-child(4)",
+      "trigger": { "battle": { "node": ["3"], "when": "start" } }
+    },
+    {
+      "id": "actions",
+      "group": "The Borderlands",
+      "title": "Rest, Skip and Move",
+      "text": "Rest refills MP, Skip brings your next turn sooner, Move steps to an empty cell. Each uses your turn.",
+      "focus": ".bh-globs",
+      "trigger": { "battle": { "node": ["3"], "when": "turn", "turn": 2 } }
+    },
+    {
+      "id": "gear",
+      "group": "The Borderlands",
+      "title": "Gear",
+      "place": "bottom",
+      "pages": [
+        { "text": "Drag an item from the bag onto a hero or one of their slots to equip it.", "focus": ".gr-bag .gr-item:not(.empty)" },
+        { "text": "Hover or select an item: the stats show how that hero would change before you commit.", "focus": ".gr-stats" },
+        { "text": "In a hurry? Equip best picks the strongest items for the whole company.", "focus": "[data-tut=best]" }
+      ],
+      "trigger": { "screen": "gear" }
+    },
+    {
+      "id": "town",
+      "group": "The Borderlands",
+      "title": "Towns",
+      "text": "Towns heal your company and raise the fallen. Tap a place in the village to use it; the road out moves on.",
+      "trigger": { "screen": "town", "node": ["4"] }
+    },
+    {
+      "id": "company",
+      "group": "The Borderlands",
+      "title": "Your Company",
+      "text": "Choose the heroes who carry the fight north. The first one you pick leads the company and always fights.",
+      "trigger": { "screen": "company" }
+    },
+    {
+      "id": "merchant",
+      "group": "The Borderlands",
+      "title": "The Merchant",
+      "text": "Odo buys and sells gear. Selling what you will not use frees room in the bag.",
+      "trigger": { "screen": "merchant" }
+    },
+    {
+      "id": "formation",
+      "group": "The Borderlands",
+      "title": "Formation",
+      "text": "Open Formation to place your heroes. The front row takes the melee blows; keep the frail ones behind.",
+      "trigger": { "screen": "map", "after": "4", "minParty": 3 }
+    },
+    {
+      "id": "roads",
+      "group": "The Borderlands",
+      "title": "Roads",
+      "text": "You can see two stops ahead. Choose your road: the others will close.",
+      "trigger": { "screen": "map", "after": "4" }
+    },
+    {
+      "id": "statuses",
+      "group": "Valdren Vale",
+      "title": "Statuses",
+      "text": "Icons beside a health bar are statuses, like Slow or Wound. Hover or tap the unit to read what they do.",
+      "trigger": { "battle": { "region": ["II"], "when": "status" } }
+    },
+    {
+      "id": "area_shapes",
+      "group": "Valdren Vale",
+      "title": "Area Shapes",
+      "text": "Area skills hit a fixed shape of cells. The lit cells show exactly who gets caught.",
+      "trigger": { "battle": { "region": ["II"], "when": "skill", "skill": "area" } }
+    },
+    {
+      "id": "burning_ground",
+      "group": "Valdren Vale",
+      "title": "Burning Ground",
+      "text": "Burning ground hurts whoever stands on it when their turn begins. Step off it with Move.",
+      "trigger": { "battle": { "region": ["II"], "when": "ground" } }
+    },
+    {
+      "id": "valor",
+      "group": "Valdren Vale",
+      "title": "Valor",
+      "text": "Victories earn Valor. Spend it to raise a fallen hero, in battle or on the map.",
+      "trigger": { "screen": "valor" }
+    },
+    {
+      "id": "choice_event",
+      "group": "Valdren Vale",
+      "title": "Choices",
+      "text": "Every choice here has a price: gold, health or a fight. The line under each option says exactly what it does.",
+      "trigger": { "screen": "event" }
+    },
+    {
+      "id": "boss",
+      "group": "Valdren Vale",
+      "title": "Bosses",
+      "text": "Bosses mark the cells they will strike next: step out before the blow lands. Stuns and slows do not work on them.",
+      "trigger": { "battle": { "region": ["II"], "when": "boss" } }
+    },
+    {
+      "id": "endless",
+      "group": "Endless",
+      "title": "Endless",
+      "pages": [
+        { "title": "Waves", "text": "Endless is wave after wave, each one harder. Wounds carry over from one wave to the next." },
+        { "title": "Camp", "text": "After each victory you choose one reward, then rest at camp: gear up and fight the next wave when ready." },
+        { "title": "Relics", "text": "Every boss leaves a relic. Its power stays with your company for the whole run." }
+      ],
+      "trigger": { "screen": "endless" }
+    }
+  ],
+  "defeatHints": {
+    "_not": "Bölüm III: aynı savaş minDefeats kez kaybedilince savaş başında mentor ipucu (karşılaşma id'sine göre; yoksa default).",
+    "regions": ["III"],
+    "minDefeats": 2,
+    "byEncounter": {
+      "ashen_plain": "Their Undead raises and feeds on the fallen. Bring it down first, before the bodies pile up.",
+      "siege_line": "Two Defenders wall the front. Use spells or ranged attacks on the Archer behind them.",
+      "dragons_spine": "The Drake Priest is the real danger. Spread your heroes across lanes and focus him down.",
+      "ember_road": "Their Cutthroat crits anyone with an empty cell behind them. Keep someone at your casters' backs.",
+      "riverhead": "The Druid keeps the others standing. Kill the Druid first, then the Archers.",
+      "gate_of_cinders": "The Paladin heals the wall in front. Reach the Paladin and the Mage before the Defenders.",
+      "lord_morvane": "Morvane shrugs off stuns and slows. Clear his Paladin first, then save your ultimates for him."
+    },
+    "default": "Change the plan: put your sturdiest hero in front, keep healers behind, and strike the enemy's healer first."
+  }
+}

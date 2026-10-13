@@ -311,7 +311,7 @@ export interface FormationHooks {
 export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Container, on: FormationHooks): Modal {
   const m = openModal(scene, layer, {
     title: 'Formation',
-    subtitle: on.subtitle ?? 'Drag a hero onto another cell, or tap a hero and then a cell. The front row faces the enemy.',
+    subtitle: on.subtitle ?? 'The front row faces the enemy.',
     width: 1360,
     height: 820,
     y: 120,

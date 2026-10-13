@@ -1,4 +1,5 @@
 import musicData from '../../data/audio-music.json';
+import tracksData from '../../data/audio-music-tracks.json';
 
 /**
  * Ana menü müziği (Ömer 2026-10-10): dosya yok, WebAudio ile kodla bestelenir ve çalınır. Ayrı kod parçasındadır (src/ui/music.ts
@@ -14,7 +15,8 @@ import musicData from '../../data/audio-music.json';
 // ---------------------------------------------------------------- veri
 
 export interface MusicVoices {
-  harp: { gain: number; decay: number; bassDecay: number; bassGain: number; bright: number; pick: number; pan: number };
+  /** `shift`: arp + bas transpozu (yarım ses; -12 = bir oktav alçak; sahne müziklerinde savaş ostinatosu). */
+  harp: { gain: number; decay: number; bassDecay: number; bassGain: number; bright: number; pick: number; pan: number; shift?: number };
   flute: { gain: number; attack: number; release: number; vibratoHz: number; vibratoCents: number; vibratoDelay: number; h2: number; h3: number; breath: number; chiff: number; pan: number; lowGain: number };
   pad: { gain: number; attack: number; release: number; detuneCents: number; cutoff: number; octave: number };
   drone: { gain: number; notes: string[]; cutoff: number; lfoHz: number; lfoDepth: number; attack: number };
@@ -38,7 +40,7 @@ export interface MusicConfig {
   bpm: number;
   beatsPerBar: number;
   tonic: string;
-  mode: 'dorian' | 'aeolian';
+  mode: 'dorian' | 'aeolian' | 'ionian' | 'mixolydian' | 'phrygian';
   master: number;
   defaultLevel: number;
   fadeInMs: number;
@@ -61,10 +63,58 @@ export interface MusicConfig {
 
 export const MUSIC = musicData as unknown as MusicConfig;
 
+// ---------------------------------------------------------------- sahne müzikleri (data/audio-music-tracks.json; 2026-10-13)
+
+/** Çalınabilir parçalar: ana menü + sahne müzikleri (src/ui/music.ts > sceneMusic). */
+export type MusicTrackId = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp';
+export const MUSIC_TRACK_IDS: readonly MusicTrackId[] = ['menu', 'map', 'town', 'battle', 'boss', 'camp'];
+type TrackOverride = Partial<Omit<MusicConfig, 'voices'>> & { label: string; desc: string; voices?: { [K in keyof MusicVoices]?: Partial<MusicVoices[K]> } };
+const TRACKS = (tracksData as unknown as { tracks: Record<Exclude<MusicTrackId, 'menu'>, TrackOverride> }).tracks;
+/** Sahneler arası yumuşak geçiş (ms). */
+export const MUSIC_CROSSFADE_MS: number = (tracksData as unknown as { crossfadeMs: number }).crossfadeMs;
+
+const trackCache = new Map<MusicTrackId, MusicConfig>();
+/**
+ * Parçanın tam ayarı (saf, önbellekli: aynı nesne döner, örnek önbelleği nesneye bağlı): ana menü ayarı + parçanın farkları. Üst düzey anahtar
+ * değişir; voices çalgı çalgı, harpPatterns / drumPatterns / themes ad ad birleşir. Bilinmeyen id = ana menü.
+ */
+export function trackConfig(id: MusicTrackId): MusicConfig {
+  const hit = trackCache.get(id);
+  if (hit) return hit;
+  const o = id === 'menu' ? undefined : TRACKS[id];
+  let cfg: MusicConfig = MUSIC;
+  if (o) {
+    const { label: _l, desc: _d, voices, harpPatterns, drumPatterns, themes, ...rest } = o;
+    const v = MUSIC.voices;
+    cfg = {
+      ...MUSIC,
+      ...rest,
+      voices: {
+        harp: { ...v.harp, ...voices?.harp },
+        flute: { ...v.flute, ...voices?.flute },
+        pad: { ...v.pad, ...voices?.pad },
+        drone: { ...v.drone, ...voices?.drone },
+        drum: { ...v.drum, ...voices?.drum },
+      },
+      harpPatterns: { ...MUSIC.harpPatterns, ...harpPatterns },
+      drumPatterns: { ...MUSIC.drumPatterns, ...drumPatterns },
+      themes: { ...MUSIC.themes, ...themes },
+    };
+  }
+  trackCache.set(id, cfg);
+  return cfg;
+}
+
 // ---------------------------------------------------------------- nota / akor yardımcıları (saf)
 
 const PC: Record<string, number> = { C: 0, D: 2, E: 4, F: 5, G: 7, A: 9, B: 11 };
-const MODES: Record<MusicConfig['mode'], number[]> = { dorian: [0, 2, 3, 5, 7, 9, 10], aeolian: [0, 2, 3, 5, 7, 8, 10] };
+const MODES: Record<MusicConfig['mode'], number[]> = {
+  dorian: [0, 2, 3, 5, 7, 9, 10],
+  aeolian: [0, 2, 3, 5, 7, 8, 10],
+  ionian: [0, 2, 4, 5, 7, 9, 11],
+  mixolydian: [0, 2, 4, 5, 7, 9, 10],
+  phrygian: [0, 1, 3, 5, 7, 8, 10],
+};
 
 /** 'C#5' / 'Bb4' -> MIDI numarası. */
 export function noteMidi(name: string): number {
@@ -252,7 +302,8 @@ export function composeCycle(k: number, cfg: MusicConfig = MUSIC): MusicEvent[] 
     }
     sec.chords.forEach((chord, i) => {
       const tb = t0 + i * bar;
-      const voicing = harpVoicing(chord);
+      const shift = cfg.voices.harp.shift ?? 0;
+      const voicing = harpVoicing(chord).map((m) => m + shift);
       // ped: akor notaları (oktav 4 çevresinde), bir sonraki ölçüye taşar (yumuşak geçiş)
       if (sec.pad) {
         const base = 12 * (cfg.voices.pad.octave + 1);
@@ -711,9 +762,9 @@ export interface MusicCheck {
  * Müziğin bir parçasını çevrimdışı çizer ve ölçer (dinlenemediği için sayısal denetim: sessiz değil, tepe < 1, NaN yok).
  * Seviye en yüksek (Music %100 x Master Volume %100). Tarayıcı konsolu: `(await import('/src/game/music.ts')).renderMusicCheck(20)`.
  */
-export async function renderMusicCheck(seconds = 20, fromSong = 0, sampleRate = 44100): Promise<MusicCheck> {
+export async function renderMusicCheck(seconds = 20, fromSong = 0, sampleRate = 44100, track: MusicTrackId = 'menu'): Promise<MusicCheck> {
   const ctx = new OfflineAudioContext(2, Math.round(sampleRate * seconds), sampleRate);
-  const eng = new MusicEngine(ctx, ctx.destination, 1);
+  const eng = new MusicEngine(ctx, ctx.destination, 1, trackConfig(track));
   eng.start(0, fromSong, 0);
   eng.pump(seconds + 1);
   const buf = await ctx.startRendering();

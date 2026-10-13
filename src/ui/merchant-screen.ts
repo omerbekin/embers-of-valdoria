@@ -8,7 +8,7 @@
  */
 import { closeDom } from './motion';
 import { reducedMotion } from './motion-pref';
-import { uiSound } from './ui-sound';
+import { uiSound, worldSound } from './ui-sound';
 import './gear.css';
 import { instanceColor, instanceRarity, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { lockInput, unlockInput } from './input-lock';
@@ -85,6 +85,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   const panel = el('div', 'gr-panel gr-gear gr-shop');
   overlay.append(panel);
   root.append(overlay);
+  worldSound('coin_count'); // tezgâh açılır: sikkeler meşe tezgâha sayılır
   lockInput('merchant');
   let heroId = src.heroes()[0]?.id ?? '';
   let sel: ShopSel = null;

@@ -19,7 +19,7 @@ import { screenGo } from './screen-go';
  *  - elText / elBody / elGlow           yazılar (Cinzel / Garamond; parıltı = kor yazı gölgesi)
  *  - elDiamond, diamondPts, fadeLine, vGradient, hGradient   çizim parçaları
  *  - elLink                             kutusuz yazı düğmesi (Random, Clear, ◂ Back...)
- *  - elBack                             sol üst "◂ Back  Esc" (stageView'e yaslı; Esc'i çağıran bağlar)
+ *  - elBack                             sol üst "◂ Back" (stageView'e yaslı; Esc'i çağıran bağlar)
  *  - elButton  (primary | secondary)    çerçeveli düğme: primary = START (hazırken nefes alan kor), secondary = Random both
  *  - elIconButton                       küçük kare ikon (+ isteğe bağlı yazı) düğmesi
  *  - elPanel                            ince çerçeveli koyu panel / kart (köşe elmasları isteğe bağlı)
@@ -214,11 +214,11 @@ export function elLink(
 }
 
 /**
- * Sol üst "◂ Back  Esc" (ya da "◂ Menu"): kurulum ekranlarının ortak geri düğmesi. Sahnenin sol kenarına yaslanır (geniş ekranda da).
+ * Sol üst "◂ Back" (ya da "◂ Menu"): kurulum ekranlarının ortak geri düğmesi. Sahnenin sol kenarına yaslanır (geniş ekranda da).
  * Esc tuşunu çağıran sahne bağlar (aynı `run`). CLAUDE.md > "Geri / Menu kuralı".
  */
 export function elBack(scene: Phaser.Scene, run: () => void, o: { label?: string; isBusy?: () => boolean; depth?: number } = {}): ElLink {
-  const l = elLink(scene, `◂ ${o.label ?? 'Back'}`, run, { small: 'Esc', isBusy: o.isBusy, sound: 'back' });
+  const l = elLink(scene, `◂ ${o.label ?? 'Back'}`, run, { isBusy: o.isBusy, sound: 'back' });
   l.root.setDepth(o.depth ?? 40).setY(56);
   const place = () => l.root.setX(stageView.left + 48);
   place();

@@ -2,7 +2,8 @@ import Phaser from 'phaser';
 import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wait';
 import { battleSpeed } from '../../ui/battle-speed';
 import { reducedMotion } from '../../ui/motion-pref';
-import { uiSound } from '../../ui/ui-sound';
+import { uiSound, worldSound } from '../../ui/ui-sound';
+import { sceneMusic } from '../../ui/music';
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
@@ -73,6 +74,8 @@ import { backgroundPlacement, battleBackground } from '../battle-background';
 import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
 import { betweenTurnEvents, regenTickEvents } from '../regen-ticks';
+import { BattleTutorial } from '../battle-tutorial';
+import type { BattleLessonCtx } from '../../tutorial/lessons';
 
 export interface BattleSceneData {
   seed: number;
@@ -97,6 +100,8 @@ export interface BattleSceneData {
    * Verilmeyen pozlu birim sınıfının varsayılan silahını taşır (Quick Battle). `picks` doğrudan çizilecek silah (debug poz deneme savaşı).
    */
   weapons?: { items?: Record<string, WeaponItem>; picks?: Record<string, WeaponPick> };
+  /** Sefer tutorial bağlamı (src/game/battle-tutorial.ts, docs/design/tutorial.md): düğüm dersleri, ilk savaşın zorunlu adımları, yenilgi ipucu. */
+  tutorial?: BattleLessonCtx;
 }
 
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
@@ -167,6 +172,9 @@ export class BattleScene extends Phaser.Scene {
   teams: Teams | undefined = undefined;
   /** Sefer savaşı bağlamı (yalnızca sefer haritasından başlatılınca; her başlatmada verilmezse temizlenir). */
   campaign: CampaignBattleHooks | undefined = undefined;
+  /** Sefer tutorial'ı (yalnızca sefer savaşı; yoksa null). */
+  tut: BattleTutorial | null = null;
+  private tutCtx: BattleLessonCtx | undefined;
   /** Sefer genel zorluğu (yalnızca sefer savaşında; bkz. BattleSceneData.difficulty). */
   difficulty: 'easy' | 'medium' | 'hard' | undefined = undefined;
   /** Sefer savaş arka planı (BattleSceneData.background). */
@@ -280,6 +288,7 @@ export class BattleScene extends Phaser.Scene {
     this.mode = data.mode ?? this.mode;
     if ('teams' in data) this.teams = data.teams;
     this.campaign = data.campaign;
+    this.tutCtx = data.tutorial;
     this.difficulty = data.difficulty;
     this.background = data.background;
     this.mp = data.mp;
@@ -381,6 +390,13 @@ export class BattleScene extends Phaser.Scene {
     this.syncLoadedEffects();
     this.uiActor = this.battle.currentUid;
     this.mountHud();
+    // Sefer tutorial'ı (docs/design/tutorial.md): ders kutuları DOM'da; sahne kapanınca kapanır
+    this.tut?.destroy();
+    this.tut = this.tutCtx && !this.mp ? new BattleTutorial(this.tutCtx, () => this.battle) : null;
+    this.events.once('shutdown', () => {
+      this.tut?.destroy();
+      this.tut = null;
+    });
     this.renderTurnBar(this.battle.turnQueue());
     this.stats = new BattleStats(this.battle);
     this.matchLog?.stop();
@@ -409,6 +425,7 @@ export class BattleScene extends Phaser.Scene {
     this.hint.setStroke('#120a05', 4);
 
     this.drawCommandPanel();
+    this.startBattleAudio();
     if (this.mp) this.bindMultiplayer(this.mp);
     if (!this.endlessStart()) this.settle(); // the first unit may be an enemy: let the AI start
     // Sanat sürümü değişince (debug > Versions) ikonlar, logolar ve durum rozetleri hemen yeni sürümle çizilir
@@ -452,6 +469,7 @@ export class BattleScene extends Phaser.Scene {
 
   private showMpResult(info: MpResultInfo): void {
     if (!this.scene.isActive()) return;
+    sceneMusic(null);
     this.clearSelection();
     this.refreshCommands();
     this.showResult(info.victory, false, info);
@@ -1829,6 +1847,7 @@ export class BattleScene extends Phaser.Scene {
   private onSkillClick(skillId: string): void {
     const actor = this.activeActor;
     if (!actor || !this.playerCanAct || !this.battle.canUse(actor.uid, skillId).ok) return;
+    if (this.tut && !this.tut.allowSkill(skillId)) return; // ilk savaşın zorunlu adımı başka düğme beklemiyor
     this.cancelMoveQuiet();
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && this.battle.needsSlotChoice(skillId)) return;
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && !this.battle.needsTargetChoice(skillId)) {
@@ -1839,12 +1858,14 @@ export class BattleScene extends Phaser.Scene {
     this.applySelection(actor.uid, skillId);
     if (this.battle.mode === 'test') this.lastSkill.set(actor.uid, skillId);
     this.refreshCommands();
+    this.tut?.onSkillSelected(skillId);
   }
 
   /** Test modu: her karakterin son kullandığı/seçtiği skill (kullanınca seçim sıfırlanmasın). */
   private lastSkill = new Map<string, string>();
 
   private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string): void {
+    if (this.tut && !this.tut.allowPerform(skill)) return; // ilk savaşın zorunlu adımı
     this.suppressAutoSelect = null;
     if (this.battle.mode === 'test') this.lastSkill.set(actor, skill);
     this.cancelMoveQuiet();
@@ -1855,6 +1876,7 @@ export class BattleScene extends Phaser.Scene {
       // Multiplayer: hamle lockstep'ten geçer (sınanır, uygulanır, rakibe gider)
       if (!this.mp.submit({ skillId: skill, ...(target ? { targetUid: target } : {}), ...(slot !== undefined ? { slot } : {}), ...(board ? { board } : {}), ...(corpseUid ? { corpseUid } : {}) })) return;
     } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid).ok) return;
+    this.tut?.onPerformed();
     this.busy = true;
     this.refreshCommands();
     this.settle();
@@ -1867,6 +1889,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     const def = this.battle.globalDef(id);
     if (!actor || !def || !this.playerCanAct || !this.battle.canUseGlobal(actor.uid, id).ok) return;
+    if (this.tut && !this.tut.allowGlobal()) return; // ilk savaşın zorunlu adımı
     if (def.kind === 'move' || def.kind === 'valor') {
       const same = this.moveMode?.id === id;
       if (this.moveMode) this.cancelMove();
@@ -1880,6 +1903,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private performGlobal(actor: string, id: string, slot?: number, targetUid?: string): void {
+    if (this.tut && !this.tut.allowGlobal()) return;
     this.cancelMoveQuiet();
     this.clearSelection();
     this.hideInfoTip();
@@ -2356,6 +2380,7 @@ export class BattleScene extends Phaser.Scene {
       this.closeStageGate();
       this.busy = false;
       this.refreshCommands();
+      if (battle.winner) this.tut?.end();
       if (battle.mode !== 'turns' || battle.winner) return;
       const actor = battle.currentActor;
       if (!actor) return;
@@ -2372,7 +2397,10 @@ export class BattleScene extends Phaser.Scene {
       }
       const idle = actor.side === 'enemy' && debugState.enemyAiOff && !this.autoPlay; // debug: enemies do nothing
       const aiTurn = actor.side === 'enemy' || this.autoPlay;
-      if (!aiTurn && (actor.summoned ? battle.hasUsableSkill(actor.uid) : battle.legalActions(actor.uid).length > 0)) return; // the player's move (class skills or Rest / Skip / Move)
+      if (!aiTurn && (actor.summoned ? battle.hasUsableSkill(actor.uid) : battle.legalActions(actor.uid).length > 0)) {
+        this.tut?.onPlayerTurn(actor); // tutorial: oyuncu kararının başı (ders kutuları)
+        return; // the player's move (class skills or Rest / Skip / Move)
+      }
       this.busy = true;
       this.refreshCommands();
       await this.wait(layout.animation.aiThinkMs);
@@ -2881,6 +2909,7 @@ export class BattleScene extends Phaser.Scene {
       }
       case 'battleEnd':
         if (this.endlessPaused) return; // endless ara verme: savaş alanı yalnızca görüntü (debug ile düşman ölse de sonuç ekranı yok)
+        this.endBattleAudio(e.winner === this.localSide);
         if (e.winner === this.localSide && this.campaign?.onVictory?.(this.battle)) return; // endless: toparlanma + ara verme (sonuç ekranı yok)
         this.showResult(e.winner === this.localSide);
         return;
@@ -3855,6 +3884,28 @@ export class BattleScene extends Phaser.Scene {
   /** Endless ara verme: savaş alanı durur, HUD gizli, girdi kapalı (paneller üstteki EndlessScene'de). */
   private endlessPaused = false;
 
+  /** Boss savaşı mı (boss rütbeli ya da data/bosses tanımlı düşman)? Müzik ve boru seçimi. */
+  private isBossBattle(): boolean {
+    return this.battle.combatants.some((c) => c.side !== this.localSide && (c.tier === 'boss' || c.boss !== undefined));
+  }
+
+  /**
+   * Savaş sesi (2026-10-13): savaş / boss müziği (yumuşak geçişle) + savaş borusu ve davul. Endless ara vermesinde (kamp) değil: kamp müziğini
+   * EndlessScene seçer. Data: data/audio-music-tracks.json, data/audio-world.json.
+   */
+  private startBattleAudio(): void {
+    if (this.campaign?.intermission) return;
+    const boss = this.isBossBattle();
+    sceneMusic(boss ? 'boss' : 'battle');
+    worldSound(boss ? 'boss_horn' : 'battle_horn');
+  }
+
+  /** Savaş bitti: zafer / yenilgi stingeri; müzik söner (Endless zaferinde kamp müziğine geçilir: enterEndlessPause). */
+  private endBattleAudio(victory: boolean): void {
+    worldSound(victory ? 'victory' : 'defeat');
+    if (!(victory && this.campaign?.onVictory)) sceneMusic(null);
+  }
+
   /** create sonu: dalga girişi ya da ara verme kurulduysa true (savaş henüz başlamaz). */
   private endlessStart(): boolean {
     const hooks = this.campaign;
@@ -3883,6 +3934,7 @@ export class BattleScene extends Phaser.Scene {
   /** Ara vermeye geç (zafer toparlanmasından sonra ya da kayıttan devamda): girdi kapanır, üstteki paneller açılır. */
   enterEndlessPause(): void {
     this.endlessPaused = true;
+    sceneMusic('camp'); // Endless kampı: gece ateş başı müziği
     this.busy = true;
     this.clearSelection();
     this.setBattleHudHidden(true);

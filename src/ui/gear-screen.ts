@@ -6,7 +6,7 @@
  * Oyun içi metinler İngilizce.
  */
 import { closeDom } from './motion';
-import { uiSound } from './ui-sound';
+import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
 import { activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
 import {
@@ -214,6 +214,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const heroOf = (id: string) => src.heroes().find((h) => h.id === id);
   const curHero = () => heroOf(heroId) ?? src.heroes()[0];
   const bagInst = (uid: string) => src.bag().find((i) => i.uid === uid);
+  // Malzeme sesi (2026-10-13): kumaş / deri / çelik / ahşap / takı (data/audio-world.json); kaldırma kısık, kuşanma / çıkarma tam
+  const itemSound = (id: string | undefined, gain = 1): void => worldSound(itemSoundKind(itemDef(id ?? '')), gain);
+  const heroSlotItem = (heroId: string, slot: SlotId): string | undefined => src.heroes().find((x) => x.id === heroId)?.equipment[slot]?.id;
   const ask = (text: string, ok: string, run: () => void, danger = false): void => {
     closeAsk?.();
     closeAsk = confirmIn(overlay, text, ok, () => {
@@ -256,7 +259,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (key.startsWith('slot:')) {
         const slot = key.slice(5) as SlotId;
         return hero.equipment[slot] ? [{ label: 'Unequip', run: () => {
-          uiSound('equip');
+          itemSound(hero.equipment[slot]?.id);
           apply(() => src.unequip(hero.id, slot));
         } }] : [];
       }
@@ -270,6 +273,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       renderChar();
     },
     onDragStart: (s) => {
+      itemSound(s.kind === 'slot' ? heroSlotItem(s.heroId, s.slot) : s.itemId, WORLD_AUDIO.itemPickupGain);
       dragUid = s.kind === 'bag' ? s.uid : '';
       if (dragUid) renderChar(); // sürüklenen item'e göre farklar ve kahraman satırları
     },
@@ -278,7 +282,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       dragUid = '';
       if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
       else if (act?.kind === 'unequip') {
-        uiSound('equip');
+        itemSound(heroSlotItem(act.heroId, act.slot));
         apply(() => src.unequip(act.heroId, act.slot));
       } else if (act?.kind === 'discard') tryDiscard(act.uid);
       else if (act?.kind === 'none' && act.reason === 'Cannot use' && s.kind === 'bag' && tg && (tg.kind === 'slot' || tg.kind === 'hero')) tryEquip(tg.heroId, s.uid);
@@ -355,7 +359,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const doEquip = (): void => {
       if (sel === uid) sel = '';
       if (hoverUid === uid) hoverUid = '';
-      uiSound('equip');
+      itemSound(inst.id);
       apply(() => src.equip(targetHero, uid, plan.slot));
     };
     const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
@@ -403,11 +407,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
           apply(() => src.equipBest([hero.id]));
         }),
       );
+    const all = btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: all`, () => {
+      sel = '';
+      apply(() => src.equipBest());
+    });
+    all.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
     out.push(
-      btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: all`, () => {
-        sel = '';
-        apply(() => src.equipBest());
-      }),
+      all,
       btn(`gr-btn${short ? ' sm' : ''} primary`, 'Done', close),
     );
     return out;
@@ -445,7 +451,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       onSlotDouble: (slot) => {
         const h = curHero();
         if (!h) return;
-        uiSound('equip');
+        itemSound(h.equipment[slot]?.id);
         apply(() => src.unequip(h.id, slot));
       },
     });
@@ -496,7 +502,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (g) g.scrollTop = scroll;
   }
   function renderFoot(): void {
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || 'Drag onto a hero or slot, or double-click to equip');
+    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText);
     flashText = '';
     foot.replaceChildren(hint, ...bestButtons(false));
   }
@@ -663,6 +669,7 @@ export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
   const panel = el('div', 'gr-panel gr-mini el-modal-panel');
   overlay.append(panel);
   root.append(overlay);
+  worldSound('loot_reveal'); // ganimet / hazine: sandık kapağı gıcırdar, içinde sikkeler kayar
   lockInput('gear-card');
   let pick = '';
   let confirm = '';

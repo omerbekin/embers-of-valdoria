@@ -1,14 +1,14 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=druid: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "_not": "tools/make-poses-v2.mjs --class=druid: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. EL KURALI 2026-10-13: main = SAĞ el (3/4 önden sağa bakan gövdede arkadaki / resimde soldaki kol), off = SOL el, her karede (step1, spin1c, idle1 düzeltildi). narrowSeeds = narrow.png koordinatı.",
   "seeds": {
-    "idle1": { "main": [262, 130], "off": [185, 140] },
-    "step1": { "main": [655, 145], "off": [472, 125] },
+    "idle1": { "main": [185, 140], "off": [262, 130] },
+    "step1": { "main": [472, 125], "off": [655, 145] },
     "slash1": { "main": [1120, 115], "off": [900, 140] },
     "overhead1": { "main": [1330, 18], "off": [1390, 155] },
     "thrust1": { "main": [425, 442], "off": [230, 455] },
     "spin1a": { "main": [530, 412], "off": [630, 470] },
     "spin1b": { "main": [1115, 430], "off": [875, 455] },
-    "spin1c": { "main": [1395, 438], "off": [1290, 455] },
+    "spin1c": { "main": [1290, 455], "off": [1395, 438] },
     "guard1": { "main": [180, 815], "off": [262, 742] },
     "raise": { "main": [515, 660], "off": [628, 782] },
     "channel": { "main": [1062, 755], "off": [1020, 760] },
@@ -25,5 +25,16 @@
     "throw": { "main": [458, 705], "off": [720, 795] },
     "hit": { "main": [1015, 855], "off": [1015, 855] },
     "kneel": { "main": [1450, 975], "off": [1450, 975] }
+  },
+  "narrowSeeds": {
+    "idle1": { "main": [295, 150], "off": [382, 112] },
+    "idle2": { "main": [718, 185], "off": [718, 185] },
+    "guard1": { "main": [1132, 140], "off": [1288, 70] },
+    "guard2": { "main": [398, 410], "off": [398, 410] },
+    "raise": { "main": [745, 350], "off": [822, 462] },
+    "channel": { "main": [1335, 445], "off": [1300, 445] },
+    "point": { "main": [265, 800], "off": [472, 732] },
+    "throw": { "main": [723, 688], "off": [905, 812] },
+    "hit": { "main": [1205, 825], "off": [1205, 825] }
   }
 }

@@ -53,6 +53,8 @@ import {
   leaveMerchant,
   openCampaignShop,
   restAtCamp,
+  revisitKind,
+  revisitNode,
   reviveAtCamp,
   reviveCost,
   recruitInTown,
@@ -62,6 +64,9 @@ import {
   reviveWithValor,
   valorReviveBlocked,
 } from '../../campaign';
+import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
+import { markLessonSeen, seenLessons } from '../../tutorial/store';
+import { closeAllLessons, showLesson } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
@@ -82,7 +87,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, elBadge, elBody, elButton, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
@@ -90,6 +95,8 @@ import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
 import { ensureIcon } from '../icons';
 import { hasUiImage, uiIconName, type UiIconKind } from '../../ui/ui-icons';
 import { hasMiscImage } from '../../ui/misc-icons';
+import { WORLD_AUDIO, worldSound } from '../../ui/ui-sound';
+import { sceneMusic } from '../../ui/music';
 
 /**
  * Sefer haritası, "War table" (Ömer 2026-10-09, taslak 2; tasarım kiti):
@@ -215,6 +222,7 @@ export class CampaignMapScene extends Phaser.Scene {
       setState(newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) }));
     }
     this.map = getMap(this.s.mapId);
+    this.events.once('shutdown', () => closeAllLessons()); // mentor kutuları sahneyle kapanır (docs/design/tutorial.md)
     this.cameras.main.setBackgroundColor('#0b0705');
     this.world = this.add.container(0, 0);
     this.ui = this.add.container(0, 0).setDepth(1000);
@@ -245,6 +253,9 @@ export class CampaignMapScene extends Phaser.Scene {
       this.syncOverlays();
     });
     this.events.once('shutdown', () => setSettingsOpen(false));
+    // Ses (2026-10-13): harita parşömeni açılır / dürülür; müzik advance > syncTown'da (harita yolculuğu ya da kasaba)
+    worldSound('map_unroll');
+    this.events.once('shutdown', () => worldSound('map_roll'));
     this.input.keyboard?.on('keydown-ESC', () => this.onEscape());
     this.input.keyboard?.on('keydown', (e: KeyboardEvent) => this.onKey(e));
     this.advance();
@@ -740,6 +751,17 @@ export class CampaignMapScene extends Phaser.Scene {
       if (lead) this.setMid({ x: lead.x, y: lead.y });
     };
     const tween = this.tweens.add({ targets: state, d: len, duration, ease: 'Sine.easeInOut', onUpdate: place, onComplete: () => finish() });
+    // yürüyüş sesi: toprak yolda adımlar (sol/sağ dönüşümlü), arada araba gıcırtısı (data/audio-world.json > march)
+    const march = WORLD_AUDIO.march;
+    let steps = 0;
+    const stepper = this.time.addEvent({
+      delay: march.stepMs,
+      loop: true,
+      callback: () => {
+        worldSound('march_step', march.stepGain[steps % march.stepGain.length] ?? 1);
+        if (steps++ % march.wagonEvery === 0) worldSound('wagon_creak', march.wagonGain); // ilk adımda ve her wagonEvery adımda
+      },
+    });
     const skip = this.add.zone(FULL_X0, 0, FULL_W, H).setOrigin(0, 0).setInteractive();
     this.ui.add(skip);
     const hint = elBody(this, W / 2, 1030, 'Tap to skip', 20, EL.NOTE).setOrigin(0.5).setAlpha(0.85);
@@ -748,6 +770,7 @@ export class CampaignMapScene extends Phaser.Scene {
       if (finished) return;
       finished = true;
       tween.stop();
+      stepper.remove();
       skip.destroy();
       hint.destroy();
       this.walking = null;
@@ -1096,23 +1119,20 @@ export class CampaignMapScene extends Phaser.Scene {
       this.growHit(g, pitch, 300);
       L.add([f.root, g.root]);
       const end = y0 + pitch + pitch / 2;
-      // Telefonda yer dar: ipucu satırı yok (düğüm bilgisi takım panelinin altına sığsın)
-      if (c) return end - 10;
-      L.add(elBody(this, x, end + 8, 'Tap a hero for level, gear and stats.', 16, EL.DIM).setOrigin(0, 0.5));
-      return end + 20;
+      // İpucu satırı yok (Ömer 2026-10-13: bariz yönerge yazıları kaldırıldı)
+      return c ? end - 10 : end + 4;
     }
     return ly;
   }
 
   /**
    * Bulunulan düğümün kompakt bilgisi (Ömer 2026-10-12: tek dokunuşla yürüme geldi, "Selected road" kalktı; diğer düğümlerin bilgisi
-   * hover kartında / savaş onayında): başlık "You are here" + ince çizgi, 64 px glif karosu, ad, tür, ipucu satırı.
+   * hover kartında / savaş onayında): başlık "You are here" + ince çizgi, 64 px glif karosu, ad, tür.
    * `maxY` (sol alt bilgi bloğunun üstü) aşılacaksa blok çizilmez (telefonda 4 kahramanlı takım).
    */
   private renderNodeCard(x: number, y: number, w: number, maxY: number): void {
     if (y + 34 + 64 > maxY) return;
     const s = this.s;
-    const step = nextStep(s);
     const L = this.hud;
     const n = node(this.map, s.at);
     L.add(elText(this, x, y, 'You are here', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
@@ -1132,17 +1152,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const tw = w - T - 20;
     L.add(fitW(elText(this, tx, cy + 10, n.name, 19, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), tw));
     L.add(fitW(elBody(this, tx, cy + 34, n.subtitle || TYPE_LABEL[n.type], 16, EL.NOTE).setOrigin(0, 0.5), tw));
-    // İpucu: tek dokunuş = eylem
-    let hint = '';
-    if (step.kind === 'move') hint = this.compact() ? 'Tap a glowing node to march' : 'Click a glowing node to march';
-    else if (step.kind === 'battle') hint = 'Tap your node to fight';
-    else if (this.actionHere()) hint = step.kind === 'complete' ? 'Tap your node to finish' : 'Tap your node to enter';
-    if (hint) {
-      L.add(elDiamond(this, 4).setPosition(tx + 4, cy + 58));
-      const ht = fitW(elText(this, tx + 16, cy + 58, hint, 14, EL.ON, { em: 0.12 }).setOrigin(0, 0.5), tw - 16);
-      ht.setShadow(0, 0, EL.SH_GLOW, 10, false, true);
-      L.add(ht);
-    }
+    // Yönerge satırı yok (Ömer 2026-10-13: "Click a glowing node to march" vb. bariz ipuçları kaldırıldı)
   }
 
   /** Düğüm bilgi satırları (hover kartı ve savaş onayı ortak): tür · durum, düşmanlar, sonraki duraklar. */
@@ -1373,6 +1383,11 @@ export class CampaignMapScene extends Phaser.Scene {
     this.sideOpen = false;
   }
 
+  /** Bu ekranın görülmemiş mentor dersleri (src/tutorial/lessons.ts; ayar kapalıysa hiçbiri). */
+  private lessons(screen: LessonScreen): void {
+    for (const l of dueScreenLessons(screen, { node: this.s.at, path: this.s.path, partySize: activeHeroes(this.s).length }, seenLessons())) showLesson(l.id);
+  }
+
   private update2(s: CampaignState): void {
     setState(s);
   }
@@ -1392,6 +1407,7 @@ export class CampaignMapScene extends Phaser.Scene {
         after?.();
       },
     });
+    if (this.s.inventory.length) this.lessons('gear'); // ilk loot (Watchtower sonrası): sürükle / karşılaştır / Equip best
   }
 
   /**
@@ -1443,6 +1459,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const step = nextStep(s);
     // İpucu kartı yalnızca pencere açılmayan adımlarda (savaş / yol seçimi); diğerlerinde pencere kapanınca gelir
     if (step.kind === 'battle' || step.kind === 'move') this.showTip();
+    if (step.kind === 'move') this.lessons('map'); // Formation / yollar dersleri (Ashford'dan sonra)
     else {
       this.tip?.destroy(true);
       this.tip = null;
@@ -1472,10 +1489,13 @@ export class CampaignMapScene extends Phaser.Scene {
         this.addFarewellFaces();
         return;
       case 'company':
-        return this.companyModal(step.size);
+        this.companyModal(step.size);
+        this.lessons('company');
+        return;
       case 'town': {
         // Kasaba ekranı (Ömer 2026-10-12): syncTown tam ekran kasabayı kurdu; eylemler resimdeki yerlerden (onTownHotspot). Verisi olmayan
         // kasaba (scene yok) için yedek pencere: Gear / Trade / Leave (ücretsiz şifa varışta).
+        this.lessons('town');
         if (this.town) return this.renderHud();
         const tn = node(this.map, step.node);
         this.modal = openModal(this, this.ui, {
@@ -1501,6 +1521,7 @@ export class CampaignMapScene extends Phaser.Scene {
         if (!root) return;
         setState(openCampaignShop(this.s));
         const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { onLeave: () => this.commit(leaveMerchant(this.s)) });
+        this.lessons('merchant');
         this.events.once('shutdown', closeShop); // sahne kapanırsa (Menu > Main menu) DOM tüccar ekranı da kapanır
         return;
       }
@@ -1558,12 +1579,16 @@ export class CampaignMapScene extends Phaser.Scene {
     } else this.town?.render();
     this.cameras.main.setVisible(!this.town);
     this.hud.setVisible(!this.town);
+    sceneMusic(this.town ? 'town' : 'map'); // kasaba ekranı: sıcak kasaba müziği; haritaya dönünce yolculuk müziği (yumuşak geçiş)
   }
 
   /** Kasaba ekranında bir yere dokunuldu (valdoria.json > scene.hotspots[].action). */
   private onTownHotspot(h: TownHotspot): void {
     if (nextStep(this.s).kind !== 'town') return;
     const tn = node(this.map, this.s.at);
+    // kasaba yerinin sesi: binaya girerken meşe kapı, ocak başında ateş (çıkışta yürüyüş adımları kendiliğinden)
+    if (h.action === 'rest') worldSound('hearth');
+    else if (h.action !== 'leave') worldSound('door');
     switch (h.action) {
       case 'trade':
         if (tn.merchant) this.openTownMerchant(tn);
@@ -1637,13 +1662,14 @@ export class CampaignMapScene extends Phaser.Scene {
    * Dinlenme noktası (Ömer 2026-10-11): ücretsiz dinlenme (yaşayanlar maks canın %50'si) + düşmüş kahramanı altınla diriltme (tüccar değil).
    * Kit diyaloğu; diriltme düğmeleri altın yetmezse soluk.
    */
-  private restModal(nodeId: string): void {
+  private restModal(nodeId: string, revisit = false): void {
     const s = this.s;
     const n = node(this.map, nodeId);
     const fallen = s.roster.filter((h) => isFallen(h) && !h.tutorial);
     const cost = reviveCost(s, nodeId);
     const heal = Math.round(restHealOf(s) * 100);
-    const lines = [`Your company makes camp. Resting is free: every living hero recovers ${heal}% of their max HP.`];
+    // Yeniden giriş: dinlenme bir kez (ikinci kez iyileştirmez); diriltme ve Gear açık, Leave pencereyi kapatır
+    const lines = [revisit ? 'Your company has already rested here.' : `Your company makes camp. Resting is free: every living hero recovers ${heal}% of their max HP.`];
     lines.push(fallen.length ? `Fallen heroes can be revived here for ${cost} gold each (they rise with ${Math.round(CONFIG.rest.reviveRatio * 100)}% HP). You have ${s.gold} gold.` : 'No one has fallen.');
     const revive = fallen.slice(0, 3).map((h) => ({
       label: `Revive ${content.classes[h.class]?.name ?? h.class} · ${cost}`,
@@ -1652,7 +1678,7 @@ export class CampaignMapScene extends Phaser.Scene {
         setState(reviveAtCamp(this.s, h.id));
         this.closeModal();
         this.renderHud(); // altın ve kahramanın canı hemen güncellensin
-        this.restModal(nodeId);
+        this.restModal(nodeId, revisit);
       },
     }));
     this.modal = openModal(this, this.ui, {
@@ -1660,7 +1686,12 @@ export class CampaignMapScene extends Phaser.Scene {
       subtitle: n.subtitle,
       text: lines.join('\n\n'),
       height: 500,
-      buttons: [...revive, { label: 'Gear', run: () => this.openGear() }, { label: 'Rest', primary: true, run: () => this.commit(restAtCamp(this.s)) }],
+      buttons: [
+        ...revive,
+        { label: 'Gear', run: () => this.openGear() },
+        revisit ? { label: 'Leave', primary: true, run: () => this.closeModal() } : { label: 'Rest', primary: true, run: () => this.commit(restAtCamp(this.s)) },
+      ],
+      ...(revisit ? { onDismiss: () => this.closeModal() } : {}),
     });
   }
 
@@ -1672,6 +1703,7 @@ export class CampaignMapScene extends Phaser.Scene {
     setState(openCampaignShop(this.s));
     const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { sub: `Odo's stall · ${n.name}`, leaveLabel: 'Back to town', onLeave: () => this.advance() });
     this.events.once('shutdown', closeShop);
+    this.lessons('merchant');
   }
 
   /**
@@ -1689,12 +1721,17 @@ export class CampaignMapScene extends Phaser.Scene {
     const rowH = phone ? 100 : 80;
     const h = Math.min(H - 20, 96 + (o.subtitle ? 40 : 0) + textH + 40 + o.rows.length * rowH + 30);
     this.modal = openModal(this, this.ui, { title: o.title, ...(o.subtitle ? { subtitle: o.subtitle } : {}), text: o.text, width: w, height: h });
+    worldSound('quill'); // olay / diyalog: tüy kalem parşömende
     const a = this.modal.area;
     const bw = anyHint ? (phone ? 560 : 470) : phone ? 1100 : 820;
     const bx = anyHint ? a.x + 40 + bw / 2 : W / 2;
     o.rows.forEach((r, i) => {
       const y = a.y + 6 + i * rowH + rowH / 2;
-      const b = elButton(this, r.label, r.run, { kind: 'secondary', w: bw, h: phone ? 84 : 62, size: phone ? 24 : 19, ready: !r.dim });
+      const run = (): void => {
+        if (!r.dim) worldSound('seal'); // seçim mühürlenir
+        r.run();
+      };
+      const b = elButton(this, r.label, run, { kind: 'secondary', w: bw, h: phone ? 84 : 62, size: phone ? 24 : 19, ready: !r.dim });
       b.root.setPosition(bx, y);
       if (r.dim) b.root.setAlpha(0.5);
       this.modal!.root.add(b.root);
@@ -1706,6 +1743,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private choiceEvent(eventId: string, nodeId: string, choices: EventChoice[]): void {
     const e = EVENTS[eventId]!;
     const n = node(this.map, nodeId);
+    this.lessons('event');
     this.choiceModal({
       title: e.title,
       subtitle: n.name,
@@ -1751,6 +1789,7 @@ export class CampaignMapScene extends Phaser.Scene {
             primary: true,
             run: () => {
               if (!replay && this.s.valor === undefined) rememberShown('valor', 0);
+              markLessonSeen('valor'); // Valor dersi (komutanın anlatımı; ayrı kutu yok): Codex > Lessons'a girer
               done(answers);
             },
           },
@@ -1838,6 +1877,12 @@ export class CampaignMapScene extends Phaser.Scene {
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle') return this.confirmBattle(id, false, () => void startCampaignBattle(this));
     if (id === this.s.at && this.actionHere()) return this.advance();
+    // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
+    if (id === this.s.at && step.kind === 'move') {
+      const k = revisitKind(this.s);
+      if (k === 'rest') return this.restModal(id, true);
+      if (k) return this.commit(revisitNode(this.s));
+    }
     const p = this.input.activePointer;
     if (p.wasTouch) {
       this.showNodeTip(id, p);

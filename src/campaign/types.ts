@@ -156,6 +156,8 @@ export interface EncounterDef {
   units: EncounterUnit[];
   /** Savaş arka planı (assets/backgrounds/<ad>.webp|png|jpg); öncelik: karşılaşma > düğüm > bölge > varsayılan. */
   background?: string;
+  /** true: oyuncu kahramanları bu savaşta ölemez (motor UnitSetup.undying; Mill Road açılış savaşı kaybedilemez, docs/design/tutorial.md). */
+  partyUndying?: boolean;
   fallback?: string;
   fallbackOnly?: boolean;
 }
@@ -260,6 +262,11 @@ export interface CampaignState {
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
   shop?: CampaignShop;
+  /**
+   * Kapanan tezgâh (Ömer 2026-10-13, "Ashford'a giremiyorum"): kasaba / tüccar düğümünden ayrılmadan (Leave) kapanan tezgâh burada saklanır;
+   * aynı düğüme yeniden girilince (revisitNode) aynı mallar, satılanlar ve yenileme sayısı geri gelir (satılan mal yeniden dolmaz). Yola çıkınca silinir.
+   */
+  closedShop?: CampaignShop;
   /**
    * Seçenekli olayda seçilen seçenek (N2): `battle` = olay savaşı bekliyor (kazanılınca olay biter), `restHeal` = bu düğümün dinlenmesi bu oranla
    * (Shepherd's Fold "Share your bread"). Düğümden ayrılınca silinir. Eski kayıtlarda yok (isteğe bağlı alan; sürüm değişmez).

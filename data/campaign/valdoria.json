@@ -50,7 +50,7 @@
     { "id": "8A", "type": "treasure", "name": "St. Brann's Abbey", "subtitle": "Treasure · Relic Vault", "region": "II", "label": "above", "pos": [0.674, 0.259], "encounter": "vault_keepers", "treasure": "relic_vault", "battleBackground": "pilgrim-road" },
     { "id": "8C", "type": "elite", "name": "Black Cathedral", "subtitle": "Elite · The Undying", "region": "II", "pos": [0.636, 0.508], "encounter": "black_cathedral", "battleBackground": "grave-field" },
     { "id": "river", "type": "rest", "name": "Riverside Camp", "subtitle": "Rest · Camp, Revive", "region": "II", "label": "above", "pos": [0.703, 0.477], "rest": true },
-    { "id": "9", "type": "boss", "name": "King's Bridge", "subtitle": "Boss · The Bridge Warden", "region": "II", "pos": [0.677, 0.628], "encounter": "bridge_warden", "enemyTierMods": { "boss": { "hpMult": 1.3 } }, "battleBackground": "kings-bridge" },
+    { "id": "9", "type": "boss", "name": "King's Bridge", "subtitle": "Boss · The Bridge Warden", "region": "II", "pos": [0.677, 0.628], "encounter": "bridge_warden", "enemyTierMods": { "boss": { "hpMult": 0.98 } }, "battleBackground": "kings-bridge" },
     { "id": "10", "type": "battle", "name": "Ashen Plain", "subtitle": "Battle · Cursed Ground", "region": "III", "pos": [0.76, 0.731], "encounter": "ashen_plain", "battleBackground": "ashen-plain" },
     { "id": "11B", "type": "battle", "name": "Siege Line", "subtitle": "Battle", "region": "III", "pos": [0.839, 0.69], "encounter": "siege_line", "battleBackground": "ashen-plain" },
     { "id": "thorn", "type": "elite", "name": "Thornwood Hollow", "subtitle": "Elite · Hidden Lair", "region": "III", "pos": [0.833, 0.838], "encounter": "dragons_spine", "battleBackground": "thornwood-hollow" },
@@ -59,7 +59,7 @@
     { "id": "fold", "type": "event", "name": "Shepherd's Fold", "subtitle": "Event · Rest", "region": "III", "label": "above", "pos": [0.945, 0.556], "event": "shepherds_fold", "rest": true, "battleBackground": "ember-road" },
     { "id": "head", "type": "battle", "name": "Riverhead", "subtitle": "Battle · Spring Ambush", "region": "III", "pos": [0.911, 0.435], "encounter": "riverhead", "battleBackground": "ember-road" },
     { "id": "gate", "type": "battle", "name": "Gate of Cinders", "subtitle": "Battle · Gatewardens", "region": "III", "pos": [0.945, 0.31], "encounter": "gate_of_cinders", "battleBackground": "ember-road" },
-    { "id": "12", "type": "boss", "name": "Castle Morvane", "subtitle": "Final Boss", "region": "III", "pos": [0.885, 0.176], "encounter": "lord_morvane", "final": true, "enemyTierMods": { "boss": { "hpMult": 1.28, "statMult": 1.125 } }, "battleBackground": "castle-hall" }
+    { "id": "12", "type": "boss", "name": "Castle Morvane", "subtitle": "Final Boss", "region": "III", "pos": [0.885, 0.176], "encounter": "lord_morvane", "final": true, "enemyTierMods": { "boss": { "hpMult": 2.0, "statMult": 1.125, "powerMult": 1.33 } }, "battleBackground": "castle-hall" }
   ],
   "edges": [
     { "from": "1", "to": "2", "style": "solid" },

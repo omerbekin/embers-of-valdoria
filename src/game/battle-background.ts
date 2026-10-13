@@ -53,7 +53,8 @@ export const backgroundFloor = (id: string): number | null => {
  * Görünür sahneyi (stageW x stageH) "cover" ile kaplar; zemin çizgisi ölçülmüşse görsel dikeyde zemin çizgisi `floorLineMaxY()`'ye
  * oturacak şekilde konur (yalnızca sığmayan kısım kırpılır; üst / alt kenar ekranın dışında kalır, boşluk açılmaz).
  * Uzun (1536x1024 gibi) görsellerde 16:9'da az, geniş ekranda (telefon yatay) daha çok dikey kırpılır; kırpma zemin çevresine göre.
- * Kaplama ölçeğinde zemin hâlâ arka sıranın ayağına çok yakınsa (eski dar şerit görseller, castle-hall) alt kenar korunarak o kadar
+ * Kaplama ölçeğinde zemin üst kenar ekrana değdiği halde target'a inemiyorsa (zemini görselin üst yarısında olan arenalar) o kadar
+ * yakınlaştırılır (zemin hep aynı yerde: birimler arka duvarın / çitin hemen önünde). Kaplama ölçeğinde zemin hâlâ arka sıranın ayağına çok yakınsa (eski dar şerit görseller, castle-hall) alt kenar korunarak o kadar
  * yakınlaştırılır. Ölçülmemiş ya da `offsetY` verilmiş arka plan eskisi gibi ortalanır. Tahtaya dokunmaz.
  */
 export function backgroundPlacement(id: string, imgW: number, imgH: number, stageW: number, stageH: number): { y: number; scale: number } {
@@ -63,7 +64,9 @@ export function backgroundPlacement(id: string, imgW: number, imgH: number, stag
   if (f === null || dy !== 0 || f >= 1) return { y: stageH / 2 + dy, scale: Math.max(cover, (stageH + 2 * Math.abs(dy)) / imgH) };
   const target = floorLineMaxY();
   // Alt kenar ekranın altında kalırken zeminin target'a inebilmesi için gereken en küçük ölçek: target + (1 - f)*imgH*s >= stageH
-  const scale = Math.max(cover, (stageH - target) / ((1 - f) * imgH));
+  // ... ve zemini görselin üst kısmında olan görselde (arenalar, Ömer 2026-10-13: birimler çite / duvara yakın dursun) üst kenar ekranın
+  // üstündeyken zeminin target'a inebilmesi için gereken en küçük ölçek: f*imgH*s >= target (alt kenar biraz daha kırpılır)
+  const scale = Math.max(cover, (stageH - target) / ((1 - f) * imgH), target / (f * imgH));
   const h = imgH * scale;
   const want = target - (f - 0.5) * h; // zemin tam target'ta
   const y = Math.min(h / 2, Math.max(stageH - h / 2, want)); // üst <= 0, alt >= stageH

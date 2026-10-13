@@ -8,6 +8,8 @@ import { BAG_SIZE, ITEMS, RARITY_IDS } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
+import { LESSONS, TUTORIAL } from '../tutorial/lessons';
+import { isLessonSeen, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 
 export const CAMPAIGN_TAB = 'Campaign';
 
@@ -230,6 +232,40 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Wipe all saves',
     hint: 'Delete every campaign save in this browser (the loaded campaign stays open)',
     run: () => wipeSaves(storage()),
+  });
+  // --- Tutorial (mentor dersleri; data/tutorial.json, docs/design/tutorial.md)
+  debug.register({
+    id: 'campaign.tutorials',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'book',
+    on: () => tutorialsOn(),
+    label: () => (tutorialsOn() ? 'Tutorials: on' : 'Tutorials: off'),
+    hint: 'Turn the mentor lessons on or off (same as Settings > Gameplay > Tutorials)',
+    run: () => setTutorialsOn(!tutorialsOn()),
+  });
+  debug.register({
+    id: 'campaign.tutorials-reset',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'restart',
+    label: 'Reset tutorials',
+    hint: 'Forget every seen lesson and turn tutorials on: lessons show again (Mill Road is step by step again). Codex > Lessons empties.',
+    run: () => resetTutorials(),
+  });
+  debug.registerPanel({
+    id: 'campaign.lessons',
+    tab: CAMPAIGN_TAB,
+    render: (el) => {
+      el.append(debugHeading('Trigger a lesson'));
+      const grid = document.createElement('div');
+      grid.className = 'debug-grid';
+      const box = () => import('./lesson-box');
+      for (const l of LESSONS)
+        grid.append(debugButton(`${isLessonSeen(l.id) ? '✓ ' : ''}${l.title}`, () => void box().then((m) => m.showLesson(l.id, { force: true })), { title: `${l.group}: show this lesson now (marks it seen; forced Mill Road steps show as plain cards here)` }));
+      grid.append(debugButton('Defeat hint', () => void box().then((m) => m.showMentorLine('A word of advice', TUTORIAL.defeatHints.default)), { title: 'Show a Region III defeat hint box (after two losses at the same battle)' }));
+      el.append(grid);
+    },
   });
   debug.registerPanel({
     id: 'campaign.teleport',

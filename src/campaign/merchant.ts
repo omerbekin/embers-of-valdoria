@@ -6,7 +6,7 @@ import { BAG_SIZE, ITEMS, canEquip, itemDef, itemValue, rollDropRarity, rollItem
 import { CONFIG } from './data';
 import { nodeIlvl } from './power';
 import { rngFor } from './seed';
-import { activeHeroes, clone, complete, expectStep, mapOf, nextStep } from './state';
+import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep } from './state';
 import { node } from './graph';
 import type { CampaignShop, CampaignState } from './types';
 
@@ -44,7 +44,8 @@ export function openCampaignShop(s: CampaignState): CampaignState {
   if (!merchantHere(s)) throw new Error('The merchant is not here');
   if (s.shop?.node === s.at) return s;
   const t = clone(s);
-  t.shop = { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0 };
+  t.shop = t.closedShop?.node === t.at ? t.closedShop : { node: t.at, wares: campaignStock(t), buyback: [], rerolls: 0 };
+  delete t.closedShop;
   return t;
 }
 
@@ -109,7 +110,7 @@ export function rerollCampaignShop(s: CampaignState): CampaignState {
 export function leaveMerchant(s: CampaignState): CampaignState {
   expectStep(s, 'merchant');
   const t = clone(s);
-  delete t.shop;
+  closeShop(t);
   complete(t, 'merchant');
   return t;
 }

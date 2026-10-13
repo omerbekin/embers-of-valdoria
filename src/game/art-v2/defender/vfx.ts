@@ -165,15 +165,18 @@ const tremor2: V2Vfx = async (c, k) => {
   const impact = { x: stand.x + dir * (a.w * 0.5 + 24), y: head.y + 6 };
   const shH = Math.max(120, a.h * 0.72);
   const shSize = (256 * shH) / GEO.tower.h;
-  const shield = k.sheet(c.scene, SH.tower, impact.x, impact.y - 150, { size: shSize, origin: GEO.tower.origin, frame: 0, depth: impact.y + 2, flipX: dir < 0, alpha: 0 });
+  // v2 poz gövdesi (Ömer 2026-10-13): Defender kalkanı zaten kendi elinde çiziliyor; efektin ayrı kule kalkanı İKİNCİ bir kalkan gibi
+  // yanında süzülüyordu. Pozlu birimde efekt kalkanı yok: gürzü başının üstüne kaldırır (overhead) ve çakar; yarık / toz aynı.
+  const shield = a.posed ? null : k.sheet(c.scene, SH.tower, impact.x, impact.y - 150, { size: shSize, origin: GEO.tower.origin, frame: 0, depth: impact.y + 2, flipX: dir < 0, alpha: 0 });
   if (shield) c.scene.tweens.add({ targets: shield, alpha: 1, y: impact.y - 170, duration: k.slow(220), ease: 'Quad.easeOut' });
   c.scene.tweens.add({ targets: a.container, scaleY: 1.04, duration: k.slow(220), ease: 'Quad.easeOut' });
   await k.wait(c.scene, k.slow(140));
   c.sfx('heaveGrunt');
   await k.wait(c.scene, k.slow(SLAM_RAISE - 140));
 
-  // 2) çakış: kalkan sivri ucuyla toprağa
-  a.play('attack');
+  // 2) çakış: kalkan sivri ucuyla toprağa (pozlu birim: gürzü yere indirir, savuruş pozu)
+  if (a.posed) a.showPose('slash');
+  else a.play('attack');
   c.scene.tweens.add({ targets: a.container, y: stand.y, scaleY: 0.93, duration: k.slow(90), ease: 'Quad.easeIn', onComplete: () => c.scene.tweens.add({ targets: a.container, scaleY: 1, duration: k.slow(160) }) });
   if (shield) await new Promise<void>((r) => c.scene.tweens.add({ targets: shield, y: impact.y + 12, duration: k.slow(SLAM_DROP), ease: 'Quad.easeIn', onComplete: () => r() }));
   else await k.wait(c.scene, k.slow(SLAM_DROP));
