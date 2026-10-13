@@ -1,13 +1,12 @@
 {
   "_not": "Endless Lite (roadmap.md bölüm 3, aşama 1E; open-questions madde 281). Art arda dalgalar, dalga arası 3 karttan 1 ödül, her 5 dalgada küçük dükkân, skor = ulaşılan dalga. Bütün sayılar PROVİZYON (balance-tester). Mantık: src/endless/ (saf), ekran: src/game/scenes/EndlessScene.ts.",
   "partySize": 4,
-  "_enemyCount": "Dalga numarasına göre normal dalganın düşman sayısı: fromWave'den itibaren count. Denge (balance-tester 2026-10-09, npm run sim:endless): 4 kişilik takıma karşı eşit güçte 4 düşman ~%50, 3 düşman bile 3. dalgada taşınan canla ~%80'e düşüyordu; zorluk artık sayıdan değil dalga güçlenmesinden gelir: 30. dalgaya kadar 2 düşman, sonra 3.",
+  "_enemyCount": "Dalga numarasına göre normal dalganın düşman sayısı: fromWave'den itibaren count. Denge (balance-tester 2026-10-09, npm run sim:endless): 4 kişilik takıma karşı eşit güçte 4 düşman ~%50, 3 düşman bile 3. dalgada taşınan canla ~%80'e düşüyordu; zorluk artık sayıdan değil dalga güçlenmesinden gelir: her dalgada 2 düşman (Ömer 2026-10-13 form valor2: 31. dalgadan sonra 3 düşmana geçiş bir duvardı, normal dalgalar ~%55 kazanılıyordu ve 40. dalgaya neredeyse kimse ulaşmıyordu; kaldırıldı, zorluk boss basamağından gelir).",
   "enemyCount": [
-    { "fromWave": 1, "count": 2 },
-    { "fromWave": 31, "count": 3 }
+    { "fromWave": 1, "count": 2 }
   ],
-  "_scaling": "Dalga başına düşman güçlenmesi (doğrusal; 1. dalga x1): can ve dört stat +%1,25, skill gücü +%1,15 (balance-tester 2026-10-10: sürekli akış + MP oranı + cooldown taşıma + ceset kuralları sonrası +%1,7 / +%1,6 ile ilk boss ~%43-49, ortalama dalga ~10,5 idi; tek ayarla bantlara döndü, 4 seed grubunda boss %57-59, ortalama 12,4-13,1). Elit/boss karşılaşmasının kendi çarpanlarıyla çarpılır. Çok hassas: +%0,5 fark ilk boss kazanmasını ~6 puan oynatır (eski +%5 / +%3 ile 4. dalga geçilmiyordu).",
-  "scaling": { "hpPerWave": 0.0125, "statPerWave": 0.0125, "powerPerWave": 0.0115 },
+  "_scaling": "Dalga başına düşman güçlenmesi (doğrusal; 1. dalga x1): can ve dört stat +%1,25, skill gücü +%1,15 (balance-tester 2026-10-10: sürekli akış + MP oranı + cooldown taşıma + ceset kuralları sonrası +%1,7 / +%1,6 ile ilk boss ~%43-49, ortalama dalga ~10,5 idi; tek ayarla bantlara döndü, 4 seed grubunda boss %57-59, ortalama 12,4-13,1). Elit/boss karşılaşmasının kendi çarpanlarıyla çarpılır. bossMult (Ömer 2026-10-13, form valor2: her boss bir öncekinden ~10 puan zor): b. boss dalgasının (10, 20, 30, 40, 50) can ve güç ek çarpanı, dalga güçlenmesinin üstüne; liste bitince son değerde kalır. Yalnızca dalga numarasına bağlı. Boss'a ulaşan koşular seçilmiş güçlü koşular olduğu için basamak geç boss'larda büyür (sim:endless 6000 koşu: 10. %66, 20. %53, 30. %44, 40. %39, 50. %24). Çok hassas: +%0,5 fark ilk boss kazanmasını ~6 puan oynatır (eski +%5 / +%3 ile 4. dalga geçilmiyordu).",
+  "scaling": { "hpPerWave": 0.0125, "statPerWave": 0.0125, "powerPerWave": 0.0115, "bossMult": [1, 1.03, 1.07, 1.22, 1.6] },
   "eliteEvery": 5,
   "bossEvery": 10,
   "_encounters": "Özel dalgalar data/campaign/encounters.json karşılaşmalarını kullanır (birimler, yuvalar, özel adlar, rütbe, çarpanlar). Sefer tutorial'ına özgü lockSkills / initialCooldownBonus endless'ta UYGULANMAZ. Elit listesi (balance-tester 2026-10-09): elit rütbeli birimi olan karşılaşmalardan (tests/endless.test.ts kuralı) dragons_spine (5. dalgada ~%78, 15.'de ~%30) ve watchtower_chief (her dalgada ~%100); black_cathedral 5. dalgada ~%40 kazanıldığı için (koşu katili) çıkarıldı. Endless'a özel orta zorlukta elit karşılaşma yok (açık soru). Boss'lar sırayla döner (10, 20, 30 ...): Lord Morvane iki kez, sonra Bridge Warden (2 eylemli dev; 10. dalgada ~%20 kazanılıyordu, artık 30. dalganın duvarı).",
@@ -44,9 +43,9 @@
   },
   "difficulty": "medium",
   "highScores": 10,
-  "_balance": "Endless denge hedefleri (Ömer onayı 2026-10-09): ilk 4 dalga iyi oyuncu için neredeyse kayıpsız, ilk boss (10. dalga) ciddi sınav, ortalama koşu 12-18. dalgada biter, 30. dalgaya yalnızca çok güçlü koşular ulaşır. Ölçü: npm run sim:endless (oyuncu vekili Medium YZ = iyi oyuncu). targets: earlyMinWin = ilk 4 dalganın her birinde en düşük kazanma %, firstBossWin = 10. dalga kazanma %, mean = ortalama ulaşılan dalga (koşunun bittiği dalga), reach30 = 30. dalgaya ulaşan koşu %. test: tests/endless-balance.test.ts seed'li küçük örnek, bant = hedef ± tolerans (örnek küçük).",
+  "_balance": "Endless denge hedefleri (Ömer onayı 2026-10-09; boss eğrisi Ömer 2026-10-13 form valor2): ilk 4 dalga iyi oyuncu için neredeyse kayıpsız; boss başına kazanma (o boss'a ULAŞAN koşular içinde): 10. dalga %60-70, 20. %50-60, 30. %40-50, 40. %30-40, 50. %20-30; sonrası ölçülemeyecek kadar az koşu (taban ~%10-20, bossMult son değerde kalır). Endless sonsuz (50. dalga son değil). Ölçü: npm run sim:endless -- 6000 (oyuncu vekili Medium YZ = iyi oyuncu; geç boss'lar için çok koşu gerekir). targets: earlyMinWin = ilk 4 dalganın her birinde en düşük kazanma %, bossWin = boss dalgası -> kazanma % bandı, mean = ortalama ulaşılan dalga (koşunun bittiği dalga). test: tests/endless-balance.test.ts seed'li küçük örnek, bant = hedef ± tolerans (örnek küçük).",
   "balance": {
-    "targets": { "earlyMinWin": [90, 100], "firstBossWin": [50, 60], "mean": [12, 18], "reach30": [0, 5] },
-    "test": { "runs": 48, "firstSeed": 1, "tolerance": { "earlyMinWin": 8, "firstBossWin": 18, "mean": 2.5, "reach30": 5 } }
+    "targets": { "earlyMinWin": [90, 100], "bossWin": { "10": [60, 70], "20": [50, 60], "30": [40, 50], "40": [30, 40], "50": [20, 30] }, "mean": [13, 19] },
+    "test": { "runs": 48, "firstSeed": 1, "maxWave": 32, "tolerance": { "earlyMinWin": 8, "bossWin": 18, "mean": 2.5 } }
   }
 }

@@ -1132,6 +1132,35 @@
   opacity: 0.4;
 }
 
+/* Valor Revive hazır (Valor >= savaş bedeli): mangal ikonu ve yazı kor ışıması */
+.bh-gl.ready {
+  color: var(--ember2);
+}
+
+.bh-gl.ready .bh-ico {
+  filter: drop-shadow(0 0 5px rgba(255, 140, 50, 0.7));
+}
+
+/* 4 global (Valor'lu savaş: Rest / Skip / Move / Revive): sütun aynı yükseklikte kalır, satırlar sıkışır */
+html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4),
+html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
+  height: 29px;
+}
+
+/* Valor mangalları (src/ui/valor-braziers.ts): global sütunun sağında, alt çubukta dikey ortalı */
+.bh-valor {
+  position: absolute;
+  top: 932px;
+  height: 122px;
+  display: flex;
+  align-items: center;
+  pointer-events: auto;
+}
+
+.bh-valor[hidden] {
+  display: none;
+}
+
 /* sağ alt kanca alanı (şimdilik boş) */
 .bh-right {
   position: absolute;

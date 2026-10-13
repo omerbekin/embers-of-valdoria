@@ -2,6 +2,7 @@
 // Kullanım: npm run sim:campaign -- [sefer sayısı] [ilk seed] [zorluk: easy|medium|hard|all] [oyuncu vekili: medium|easy|both] [--jobs=N] [--attempts=N] [--gear=best|none] [--json=dosya]
 //   Varsayılan: 240 sefer (12 rotanın her biri 20 kez), seed 1, tüm zorluklar, oyuncu vekili Medium ("iyi oyuncu") ve Easy ("ortalama oyuncu"),
 //   iş sayısı = çekirdek sayısı - 1 (en fazla 12). Her (zorluk, vekil) çifti ayrı ölçülür.
+import { valorMode } from './valor-mode';
 import { spawn } from 'node:child_process';
 import { cpus } from 'node:os';
 import { writeFileSync } from 'node:fs';
@@ -42,7 +43,7 @@ async function main() {
   const t0 = Date.now();
   let results: CampaignSimResult[];
   if (jobs <= 1 || runs < 24) {
-    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear })));
+    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear, valor: valorMode() })));
   } else {
     const n = Math.min(jobs, runs);
     const bounds = Array.from({ length: n }, (_, k) => [Math.floor((runs * k) / n), Math.floor((runs * (k + 1)) / n)] as const);
@@ -121,7 +122,7 @@ function report(results: CampaignSimResult[], secs: number) {
 if (part) {
   const [start, end] = part.split(':').map(Number) as [number, number];
   const out = diffs.flatMap((difficulty) =>
-    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear })),
+    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode() })),
   );
   process.stdout.write(JSON.stringify(out));
 } else {

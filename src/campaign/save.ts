@@ -2,6 +2,8 @@ import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, stopNumber } from './state';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
+import { valorRules } from '../engine/content';
+import { clampValor } from '../engine/valor';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
 /**
@@ -22,7 +24,11 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
  * 6: Valdoria A1-x haritası (Ömer 2026-10-11): eski seferler YENİ haritaya taşınmaz; okunurken yuvaların kayıtları silinir, yuva (mod, zorluk)
  * kalır ve `mapChanged` işaretlenir: arayüz "The Valdoria map has changed; this campaign must restart." uyarısını gösterir, yuvada yeni sefer başlar.
  */
-export const SAVE_VERSION = 6;
+/**
+ * 7: Valor (Ömer 2026-10-13): sefer durumuna isteğe bağlı `valor` alanı. Sürüm 6 kayıtları aynen okunur (harita aynı); Valdren Keep'i (Valor'un
+ * tanıtıldığı kasaba) çoktan geçmiş eski kayıt Valor'u hediye miktarıyla açılmış olarak alır, geçmemiş kayıt kapalı kalır (normalizeState).
+ */
+export const SAVE_VERSION = 7;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -126,6 +132,10 @@ function upgradeState(s: CampaignState): void {
   if (pl !== undefined && !(pl && typeof pl.node === 'string' && Array.isArray(pl.items) && typeof pl.gold === 'number' && (pl.left === undefined || (Array.isArray(pl.left) && pl.left.every((x) => typeof x === 'string')))))
     delete (s as { pendingLoot?: unknown }).pendingLoot;
   s.gold = typeof s.gold === 'number' && Number.isFinite(s.gold) && s.gold >= 0 ? s.gold : 0;
+  // Valor (sürüm 7): bozuk değer kırpılır; alanı olmayan eski kayıt Valdren Keep'in hikâyesini / kasabasını bitirmişse hediye ile açılır
+  const intro = valorRules.campaign.introNode;
+  if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
+  else if (Array.isArray(s.done) && (s.done.includes(`${intro}:story`) || s.done.includes(`${intro}:town`))) s.valor = clampValor(valorRules, valorRules.campaign.gift);
   // uid çakışmasın: sıradaki numara mevcut en büyük 'i<n>'den büyük
   const equipped = Array.isArray(s.roster) ? s.roster.flatMap((h) => (h?.equipment ? SLOT_IDS.map((k) => h.equipment[k]) : [])) : [];
   const used = [...s.inventory, ...equipped].filter(isItem).map((it) => Number(/^i(\d+)$/.exec(it.uid)?.[1] ?? 0));
@@ -222,10 +232,10 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     const fromV2 = parsed.version === 2;
     // x2 stat ölçeği (sürüm 4): eski kayıttaki item zarları (STR/DEX/INT/LUCK, zırh, hız) x2
-    const scaled = parsed.version !== SAVE_VERSION;
+    const scaled = parsed.version < 6;
     if (parsed.version === 2 || parsed.version === 3) migrateRollsX2(parsed.slots);
     // Affix göçü (sürüm 5): eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
     if (scaled) migrateItemRolls(parsed.slots);
@@ -240,12 +250,13 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
         continue;
       }
       const saves = sd.saves.map((e) => cleanEntry(e, i)).filter((e): e is SaveEntry => !!e);
-      if (saves.length !== sd.saves.length && parsed.version === SAVE_VERSION) corrupt = true; // eski harita kayıtları zaten yeniden başlar
+      if (saves.length !== sd.saves.length && parsed.version >= 6) corrupt = true; // eski harita kayıtları zaten yeniden başlar
       file.slots[i] = { ...sd, difficulty: DIFFS.includes(sd.difficulty) ? sd.difficulty : CONFIG.defaultDifficulty, saves };
     }
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
-    return { file: parsed.version !== SAVE_VERSION ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled };
+    // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

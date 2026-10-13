@@ -183,7 +183,12 @@
       ],
       "likeThreshold": 2,
       "liked": "He is quiet a long moment, then steps aside. \"Listen, then. Iron chains moor it to the bridge, and they feed its armour. Break a chain and it reels and loses its swing, and a rising span dies with it.\"\n\n\"Hold something back for the end. When the bridge starts to fall, so does its guard. It strikes three times a turn, but its plate is half what it was. Rest here tonight.\"",
-      "disliked": "\"Then go, and the river can have you.\" He turns back to the wall. \"Rest here tonight, at least. You will want your strength.\""
+      "disliked": "\"Then go, and the river can have you.\" He turns back to the wall. \"Rest here tonight, at least. You will want your strength.\"",
+      "_epilogue": "Valor tanıtımı (Ömer 2026-10-13): beğenilse de beğenilmese de son sayfa; Valor burada açılır ve 5 hediye (bir mangal) verilir (data/valor.json > campaign).",
+      "epilogue": {
+        "title": "The Commander's Embers",
+        "text": "At the foot of the wall he stops by the great brazier and lifts two iron urns from the coals. \"Every company that leaves this keep carries these. Hold a line and live, and we light an ember. Win without losing a soul, and we light two.\"\n\n\"When an urn burns full, that is Valor enough to drag a fallen friend back to their feet, even with steel still swinging. By a quiet fire on the road it takes less.\" He sets the first urn in your hands, already burning to the brim. \"One life. Spend it well.\""
+      }
     }
   }
 }

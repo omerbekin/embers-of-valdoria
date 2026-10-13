@@ -15,6 +15,8 @@ import type { Rng } from '../engine/rng';
 import { battleSummary, type Battle } from '../engine';
 import { snapshotCarry, type WaveCarry } from './carry';
 import type { UnitCarry } from './data';
+import { valorRules } from '../engine/content';
+import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -39,6 +41,7 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
     stats: { cleared: 0, turns: 0, kills: 0 },
     nextItem: 1,
     startedAt,
+    valor: addValor(valorRules, 0, valorRules.endless.start),
   };
 }
 
@@ -62,6 +65,9 @@ export interface WaveOutcome {
   turns: number;
   /** Sürekli akış (madde 300): taşınan buff / Rage / kalkan / çağrılar (outcomeFromBattle verir; yoksa yalnızca can, MP ve hücre taşınır). */
   carry?: WaveCarry;
+  /** Savaş sonunda kalan Valor ve kusursuz zafer (outcomeFromBattle; yoksa koşunun Valor'u ve kahraman sonuçlarından). */
+  valorLeft?: number;
+  flawless?: boolean;
 }
 
 /** Motor özetinin (battleSummary) birim görünümü. */
@@ -95,7 +101,7 @@ export function outcomeFromSummary(plan: Pick<WavePlan, 'heroOrder'>, victory: b
 /** Bitmiş savaş -> dalga sonucu (can, MP, hücre + taşınan durum). Endless'ın tek doğru kapısı (sahne, sim, auto). */
 export function outcomeFromBattle(plan: Pick<WavePlan, 'heroOrder'>, battle: Battle): WaveOutcome {
   const sum = battleSummary(battle);
-  const out = outcomeFromSummary(plan, battle.winner === 'party', sum.units, sum.turnsTaken);
+  const out = { ...outcomeFromSummary(plan, battle.winner === 'party', sum.units, sum.turnsTaken), ...(sum.valor ? { valorLeft: sum.valor.left, flawless: sum.valor.flawless } : {}) };
   return out.victory ? { ...out, carry: snapshotCarry(battle, plan.heroOrder) } : out;
 }
 
@@ -167,6 +173,12 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
   if (s.blessing) {
     s.blessing.waves -= 1;
     if (s.blessing.waves <= 0) delete s.blessing;
+  }
+  // Valor (Ömer 2026-10-13): savaşta harcanan düşülür; normal +1, elit +2, boss +3 (+1 kusursuz), üst sınır cap
+  {
+    const kind = waveKind(run.wave, cfg);
+    const flawless = out.flawless ?? out.units.every((u) => u.alive);
+    s.valor = addValor(valorRules, out.valorLeft ?? run.valor ?? 0, valorEarned(valorRules, kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'normal', flawless));
   }
   s.stats.cleared = run.wave;
   s.wave = run.wave + 1;
@@ -415,7 +427,11 @@ export const bagHasRoomRun = (run: EndlessRun, cfg: EndlessConfig = ENDLESS): bo
 
 /** Torba dolu iken item ödülü kartının ipucu (yoksa null). */
 export const rewardBlockedReason = (run: EndlessRun, card: RewardCard, cfg: EndlessConfig = ENDLESS): string | null =>
-  card.kind === 'item' && !bagHasRoomRun(run, cfg) ? 'Bag full: discard an item first' : null;
+  card.kind === 'item' && !bagHasRoomRun(run, cfg)
+    ? 'Bag full: discard an item first'
+    : card.kind === 'revive' && (heroOf(run, card.heroId)?.hpRatio ?? 0) > 0
+      ? 'Already back on their feet (Valor)'
+      : null;
 
 /**
  * Item'i torbaya koyar (yeni örnek uid'i). Torba doluysa ALINMAZ (ok false; Ömer 2026-10-10: otomatik altına çevirme kaldırıldı, oyuncu önce
@@ -542,6 +558,38 @@ export function equipBestRun(run: EndlessRun, heroIds?: string[]): EndlessRun {
 /** Kahramanın 7 yuvalı tam ekipmanı (Gear ekranı / stat paneli; boş yuva null). */
 export const fullEquipment = (h: EndlessHero) => ({ ...emptyEquipment(), ...h.equipment });
 
+
+/**
+ * Valor ile savaş dışında diriltme (Ömer 2026-10-13): kamp / ödül / tüccar / kalıntı ekranında (yarım savaş yokken), düşmüş kahraman outsideCost
+ * Valor'la revive.hpRatio can ve aynı oranda MP ile kalkar. Engel varsa nedeni (yoksa null).
+ */
+export function valorReviveBlocked(run: EndlessRun, heroId: string): string | null {
+  if (run.phase === 'over') return 'The run is over';
+  if (run.suspended) return 'Finish the battle first';
+  const h = heroOf(run, heroId);
+  if (!h || h.hpRatio > 0) return 'This hero has not fallen';
+  if (!canReviveOutside(valorRules, run.valor ?? 0)) return `Needs ${valorRules.revive.outsideCost} Valor (you have ${run.valor ?? 0})`;
+  return null;
+}
+
+export function reviveWithValor(run: EndlessRun, heroId: string, cfg: EndlessConfig = ENDLESS): EndlessRun {
+  if (valorReviveBlocked(run, heroId)) return run;
+  const s = clone(run);
+  const h = heroOf(s, heroId)!;
+  s.valor = addValor(valorRules, (s.valor ?? 0) - valorRules.revive.outsideCost, 0);
+  const r = clamp01(valorRules.revive.hpRatio);
+  h.hpRatio = r;
+  if (r < 1 && cfg.carry.mp !== 'full') h.carry = { mpRatio: Math.round(clamp01(valorRules.revive.mpRatio) * 1000) / 1000 };
+  else delete h.carry;
+  return s;
+}
+
+/** Oyuncu vekili (sim): Valor yettikçe düşmüşleri savaş dışında diriltir (kahraman sırasıyla). */
+export function autoValorRevive(run: EndlessRun, cfg: EndlessConfig = ENDLESS): EndlessRun {
+  let s = run;
+  for (const h of run.heroes) if (!valorReviveBlocked(s, h.id)) s = reviveWithValor(s, h.id, cfg);
+  return s;
+}
 
 /** Kartı seç (yalnızca 'reward' aşamasında). */
 export function chooseReward(run: EndlessRun, index: number, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items): EndlessRun {

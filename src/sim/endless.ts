@@ -5,6 +5,7 @@
 // Oyuncu vekili ("iyi oyuncu"): takım seed'li rastgele 4 farklı sınıf; savaşta Medium YZ; ödülde canı düşükse iyileştirme, değilse item kartı ile altın kartını tartar (altın > item değeri ise altın; Ömer 2026-10-12);
 // dükkânda parası yeten en pahalı item'leri alır; her ödül / dükkândan sonra "Equip best"; kalıntıyı seed'li rastgele seçer (kalıntı başına etki ölçülsün).
 // Karşılaştırma için item'siz (`gear: 'none'`) ve kalıntısız (`relics: 'none'`) koşular da oynanabilir (aynı seed'ler).
+import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
 import { battleSummary, content, Rng, type AiDifficulty } from '../engine';
 import {
   ENDLESS,
@@ -18,6 +19,7 @@ import {
   leaveShop,
   newRun,
   outcomeFromBattle,
+  autoValorRevive,
   specialEncounter,
   waveKind,
   wavePlan,
@@ -44,6 +46,8 @@ export interface EndlessSimOptions {
    * (applyOutcome; koşu başı otomatik dizilim); false = her dalga otomatik dizilim (eski davranış; karşılaştırma için).
    */
   carryFormation?: boolean;
+  /** Valor (Ömer 2026-10-13): false = savaşta kullanılmaz, savaş dışı diriltme yok (Valor öncesi karşılaştırma; CLI VALOR=off). */
+  valor?: ValorSimMode;
 }
 
 /** Tek dalganın kaydı (kısa alan adları: yüzlerce koşu JSON ile süreçler arası taşınır). */
@@ -165,7 +169,7 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
         if (o.carryFormation === false) run = { ...run, heroes: run.heroes.map(({ slot: _slot, ...h }) => h) };
         const plan = wavePlan(run, cfg);
         const hs = avg(run.heroes.map((h) => h.hpRatio));
-        const battle = fightWave(plan, player);
+        const battle = fightWave(plan, player, valorInBattle(o.valor));
         const sum = battleSummary(battle);
         const win = battle.winner === 'party';
         const out = outcomeFromBattle(plan, battle);
@@ -188,6 +192,8 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
       } else if (run.phase === 'reward') {
         for (const c of run.offer ?? []) if (c.kind === 'item') note(c.itemId, c.rolls);
         run = chooseReward(run, pickReward(run, gear), cfg);
+        // Oyuncu vekili: ödülden sonra (Revive kartı önce, bedava) Valor yettikçe düşmüşleri savaş dışında diriltir
+        if (valorOutside(o.valor)) run = autoValorRevive(run, cfg);
         if (gear === 'best' && run.phase !== 'over') run = equipBestRun(run);
       } else if (run.phase === 'shop') {
         for (const e of run.shop ?? []) note(e.itemId, e.rolls);
@@ -287,10 +293,12 @@ export function summarize(r: EndlessSimResult): EndlessSummary {
   };
 }
 
-/** Hedef kontrolü için ana ölçüler: ilk N dalganın en düşük kazanma oranı, ilk boss kazanma oranı, medyan / ortalama ulaşılan dalga, 30. dalgaya ulaşma. */
+/** Hedef kontrolü için ana ölçüler: ilk N dalganın en düşük kazanma oranı, ilk boss kazanma oranı, boss dalgası başına ulaşma / kazanma, medyan / ortalama ulaşılan dalga, 30. dalgaya ulaşma. */
 export interface EndlessKeyMetrics {
   earlyMinWin: number;
   firstBossWin: number;
+  /** Boss dalgası (10, 20, ... tavana kadar) -> kazanma % (oynayan yoksa NaN) ve ulaşan %; n = oynayan koşu. */
+  bosses: Array<{ wave: number; win: number; reach: number; n: number }>;
   mean: number;
   median: number;
   reach30: number;
@@ -300,7 +308,9 @@ export function keyMetrics(r: EndlessSimResult, earlyWaves = 4, cfg: EndlessConf
   const s = summarize(r);
   const early = Array.from({ length: earlyWaves }, (_, i) => s.winRate[i + 1]!).filter((v) => !Number.isNaN(v));
   const boss = s.winRate[cfg.bossEvery];
-  return { earlyMinWin: early.length ? Math.min(...early) : 0, firstBossWin: boss === undefined || Number.isNaN(boss) ? 0 : boss, mean: s.mean, median: s.p50, reach30: s.reach30 };
+  const bosses: EndlessKeyMetrics['bosses'] = [];
+  for (let w = cfg.bossEvery; cfg.bossEvery > 0 && w <= r.maxWave; w += cfg.bossEvery) bosses.push({ wave: w, win: s.winRate[w] ?? NaN, reach: s.survival[w] ?? 0, n: s.fought[w] ?? 0 });
+  return { earlyMinWin: early.length ? Math.min(...early) : 0, firstBossWin: boss === undefined || Number.isNaN(boss) ? 0 : boss, bosses, mean: s.mean, median: s.p50, reach30: s.reach30 };
 }
 
 /** Dalga bandı başına teklif edilen item'lerin nadirlik dağılımı (%; Common..Legendary) ve adet. Bantlar: 1-5, 6-10, 11-20, 21+. */

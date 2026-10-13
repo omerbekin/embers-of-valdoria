@@ -3,6 +3,9 @@ import { uiSound, type UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
 import { content } from '../../engine';
 import type { CombatantDef } from '../../engine/types';
+import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
+import { avatarUrl } from '../../ui/character-panel';
+import { reviveWithValor, valorReviveBlocked } from '../../endless';
 import { rewardBlockedReason, takeRareDrop,
   ENDLESS,
   UI_TEXT as T,
@@ -277,6 +280,14 @@ export class EndlessScene extends Phaser.Scene {
       this.closeShopDom();
       this.rewardBag?.();
       this.rewardBag = null;
+      this.valorMeter?.destroy();
+      this.valorMeter = null;
+    });
+    // Valor mangalları: Gear / torba / pencere açıkken gizli
+    this.events.on('update', () => {
+      if (!this.valorMeter) return;
+      const hide = this.gearOpen || !!this.rewardBag || isValorReviveOpen() || otherDialogOpen();
+      if (this.valorMeter.el.hidden !== hide) this.valorMeter.el.hidden = hide;
     });
     onStageResize(this, () => this.layoutStage());
     this.renderNow();
@@ -536,6 +547,7 @@ export class EndlessScene extends Phaser.Scene {
     // Tüccar önizlemesi (?merchant=1): kaydedilmeyen, skora girmeyen koşu olduğu üstte açıkça yazar
     if (endless.run?.preview && this.view !== 'title' && this.view !== 'pick') this.add2(elText(this, CX, 22, T.previewRun, 16, C.warn, { em: 0.16 }).setOrigin(0.5));
     if (endlessBack(this.view)) this.drawBack();
+    this.syncValor();
     this.layoutStage();
     // Görünüm değişince ortak panel geçişi (data/ui-motion.json > panel); aynı görünümün yeniden çizimi (seçim, satın alma) anında
     if (this.view !== this.shownView) {
@@ -547,6 +559,63 @@ export class EndlessScene extends Phaser.Scene {
         this.tweens.add({ targets: this.root, alpha: 1, y: 0, duration: m.ms, ease: MOTION.ease.phaser });
       }
     }
+  }
+
+  // ============================================================ Valor (Ömer 2026-10-13)
+
+  private valorMeter: ValorMeter | null = null;
+
+  /**
+   * Valor mangalları sol üstte (kamp, ödül, kalıntı ekranı; koşu sürerken). Zafer sonrası ödül ekranında artış korlar tek tek tutuşarak görünür.
+   * Dokununca savaş dışı diriltme penceresi.
+   */
+  private syncValor(): void {
+    const run = endless.run;
+    const show = !!run && run.phase !== 'over' && (this.view === 'camp' || this.view === 'reward' || this.view === 'relic');
+    if (!show) {
+      this.valorMeter?.destroy();
+      this.valorMeter = null;
+      return;
+    }
+    const v = run!.valor ?? 0;
+    if (!this.valorMeter) {
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      const m = new ValorMeter({ scale: 3, label: true, where: 'camp', selfTip: true, onClick: () => this.openValor() });
+      m.el.classList.add('vl-corner', 'vl-low'); // sol üstteki ◂ Back'in altında
+      root.append(m.el);
+      this.valorMeter = m;
+      const prev = rememberShown('valor', v);
+      if (prev !== undefined && prev < v) {
+        m.set(prev);
+        m.set(v, true);
+        return;
+      }
+    }
+    rememberShown('valor', v);
+    this.valorMeter.set(v);
+  }
+
+  private openValor(): void {
+    if (!endless.run) return;
+    openValorRevive({
+      where: 'camp',
+      valor: () => endless.run?.valor ?? 0,
+      fallen: () =>
+        (endless.run?.heroes ?? [])
+          .filter((h) => h.hpRatio <= 0)
+          .map((h) => ({ id: h.id, name: content.classes[h.class]?.name ?? h.class, sub: 'Fallen', ...(avatarUrl(h.class) ? { portraitUrl: avatarUrl(h.class)! } : {}) })),
+      revive: (id) => {
+        const run = endless.run;
+        if (!run) return 'No run';
+        const why = valorReviveBlocked(run, id);
+        if (why) return why;
+        commit(reviveWithValor(run, id));
+        rememberShown('valor', endless.run?.valor ?? 0);
+        return null;
+      },
+      onClose: () => this.render(),
+    });
   }
 
   /** Son çizilen görünüm (görünüm geçişi yalnızca değişince oynar). */

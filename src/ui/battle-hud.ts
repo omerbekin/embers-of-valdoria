@@ -2,6 +2,8 @@ import './battle-hud.css';
 import { passiveMedalHtml, skillCellHtml } from './skill-bar';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
+import { ValorMeter } from './valor-braziers';
+import { valorRules } from '../engine/content';
 
 /**
  * SAVAŞ HUD'ı (Ömer 2026-10-09, taslak public/mockups/battle-hud.html?v=2 "Slim bar, sheet rises"): DOM katmanı, oyun biriminde çizilir ve
@@ -78,6 +80,8 @@ export interface HudGlobal {
   iconUrl: string;
   enabled: boolean;
   active: boolean;
+  /** Hazır vurgusu (Valor Revive: Valor >= battleCost ve kullanılabilir; kor ışıması). */
+  ready?: boolean;
   tip: TipContent;
 }
 export interface HudBar {
@@ -238,6 +242,9 @@ export class BattleHud {
   private pins: Partial<Record<Side, UnitCard>> = {};
   private readonly offDoc: () => void;
   private hidden = false;
+  /** Valor mangalları (sefer / Endless; global sütunun hemen sağında, alt çubukta). Yoksa gizli. */
+  private readonly valorBox: HTMLElement;
+  private valorMeter: ValorMeter | null = null;
 
   constructor(parent: HTMLElement, private readonly cb: HudCallbacks) {
     const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string): HTMLElementTagNameMap[K] => {
@@ -255,13 +262,15 @@ export class BattleHud {
     this.globBox = el('div', 'bh-globs');
     this.rightSlot = el('div', 'bh-right');
     this.pasBox = el('div', 'bh-pasv');
+    this.valorBox = el('div', 'bh-valor');
+    this.valorBox.hidden = true;
     this.infoBox = el('div', 'bh-binfo');
     this.logPanel = el('div', 'bh-logp bh-panel bh-corners');
     this.rightSlot.append(this.infoBox, this.logPanel);
     this.ftip = el('div', 'bh-ftip bh-panel');
     this.ctip = el('div', 'bh-ctip bh-panel bh-corners');
     this.cards = { party: el('div', 'bh-card bh-panel bh-corners party'), enemy: el('div', 'bh-card bh-panel bh-corners enemy') };
-    this.root.append(this.band, this.turn, this.turnLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
+    this.root.append(this.band, this.turn, this.turnLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
     parent.append(this.root);
 
     // Fare bırakması alttaki Phaser sahnesine gitmesin (Phaser window mouseup'ı dinler, defaultPrevented olanı yok sayar)
@@ -299,6 +308,7 @@ export class BattleHud {
 
   destroy(): void {
     this.offDoc();
+    this.valorMeter?.destroy();
     this.root.remove();
   }
 
@@ -483,12 +493,39 @@ export class BattleHud {
     this.skillBox.innerHTML = html;
   }
 
+  /**
+   * Valor mangalları (null = bu savaşta Valor yok: gizli). `animate`: korlar tek tek değişir (harcama / kazanç). İpucu HUD'ın ortak ipucu kutusuyla.
+   */
+  setValor(v: number | null, tip?: TipContent, animate = false): void {
+    if (v === null) {
+      if (!this.valorBox.hidden) {
+        this.valorBox.hidden = true;
+        this.place();
+      }
+      return;
+    }
+    if (!this.valorMeter) {
+      // Savaşta diriltme bedeli battleCost: alev/ışıma yalnızca o eşikte, mangalda bedel çentiği (Ömer 2026-10-13 form valor2)
+      this.valorMeter = new ValorMeter({ scale: 3, label: true, readyAt: valorRules.revive.battleCost, marker: valorRules.revive.battleCost });
+      this.valorBox.append(this.valorMeter.el);
+    }
+    if (tip) {
+      this.valorMeter.el.setAttribute('data-tip', 'v:valor');
+      this.tips.set('v:valor', tip);
+    }
+    this.valorMeter.set(v, animate);
+    if (this.valorBox.hidden) {
+      this.valorBox.hidden = false;
+      this.place();
+    }
+  }
+
   private renderGlobals(): void {
     const g = this.model.globals;
     this.globBox.classList.toggle('empty', g.length === 0);
     const html = g.length
       ? `<div class="bh-vfade"></div><div class="bh-gcol">${g
-          .map((x) => `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`)
+          .map((x) => `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`)
           .join('')}</div>`
       : '';
     if (this.put(this.globBox, html)) this.globW = null;
@@ -560,7 +597,12 @@ export class BattleHud {
     // Sağ alt alan global sütunun ölçülen genişliğinden sonra (telefonda globaller yatay, büyük dokunma alanlı: battle-hud.css > html.short)
     // ölçüm (zorunlu yerleşim) yalnızca global sütun ya da ekran değişince
     this.globW ??= this.globBox.offsetWidth;
-    const rx = gx + Math.max(150, this.globW) + 20;
+    // Valor mangalları global sütunun hemen sağında (yalnızca sefer / Endless); sağ alan onlardan sonra başlar
+    let rx = gx + Math.max(150, this.globW) + 20;
+    if (!this.valorBox.hidden) {
+      this.valorBox.style.left = `${rx}px`;
+      rx += this.valorBox.offsetWidth + 24;
+    }
     this.rightSlot.style.left = `${rx}px`;
     this.rightSlot.style.width = `${Math.max(0, W - rx - 28)}px`;
     this.cards.enemy.style.left = `${W - 384 - 40}px`;

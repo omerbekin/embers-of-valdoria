@@ -12,7 +12,7 @@ import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundStat, statMin } from './stats';
 import type { Attribute, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
-import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup } from './types';
+import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules } from './types';
 
 export interface BattleSetup {
   seed: number;
@@ -41,6 +41,13 @@ export interface BattleSetup {
    */
   partyUnits?: (UnitSetup | undefined)[];
   enemyUnits?: (UnitSetup | undefined)[];
+  /** Valor kuralları (data/valor.json); yoksa Valor eylemi hiç kullanılamaz. */
+  valorRules?: ValorRules;
+  /**
+   * Taraf başına savaş başı Valor'u (Ömer 2026-10-13): yalnızca verilen tarafta global 'valor' eylemi (valor_revive) vardır. Sefer ve Endless yalnızca
+   * party verir (düşmanların Valor'u yok); hızlı savaş / multiplayer hiç vermez (eylem görünmez, savaş birebir eskisi).
+   */
+  valor?: Partial<Record<Side, number>>;
 }
 
 /** Debug: hasar çarpanı ve kritik/kaçınma zorlaması (varsayılan: 1, auto, auto = oyun kuralı aynen). */
@@ -78,7 +85,7 @@ interface HitMeta {
 }
 
 /** Global skill'in oyun içi sonucu için birim başına son eylem türü (yapay zeka salınımı önlemek için okur). */
-export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'pass';
+export type LastActionKind = 'skill' | 'rest' | 'skip' | 'move' | 'valor' | 'pass';
 
 export type ActionResult = { ok: true; events: BattleEvent[] } | { ok: false; reason: string };
 export type CanUse = { ok: true } | { ok: false; reason: string };
@@ -194,6 +201,10 @@ export class Battle {
   private readonly phaseCrossed = new Set<string>();
   /** Faz girişinde yardımcılar kopuyor: kırılma Stagger / iptal vermez. */
   private snappingAnchors = false;
+  /** Valor (taraf başına kalan; yalnızca setup.valor'da verilen taraflar). Ömer 2026-10-13, data/valor.json. */
+  private readonly valorPool = new Map<Side, number>();
+  /** Bu savaşta düşen (çağrı olmayan, savaşa ceset olarak GİRMEMİŞ) birimler: kusursuz zafer (flawless Valor) bunlara bakar. */
+  private readonly fellInBattle = new Set<string>();
 
   constructor(setup: BattleSetup) {
     this.setup = setup;
@@ -218,6 +229,11 @@ export class Battle {
       this.leaveCorpse(c);
       if (dead === 'consumed') this.corpseState.set(c.uid, 'consumed');
     });
+    // Valor: yalnızca verilen tarafta (0..cap)
+    if (setup.valorRules) for (const side of ['party', 'enemy'] as const) {
+      const v = setup.valor?.[side];
+      if (v !== undefined) this.valorPool.set(side, Math.max(0, Math.min(setup.valorRules.cap, Math.floor(v))));
+    }
     // Başlangıç cooldown'u (initialCooldown): yalnızca turns modunda ve class birimlerinde; test modunda cooldown zaten yok
     if (this.mode === 'turns') for (const c of this.combatants) this.applyInitialCooldowns(c);
     // Boss: faz 1 ve bağlı yardımcı sayısı rozeti (Anchored); boss yoksa hiçbir şey değişmez
@@ -1538,12 +1554,10 @@ export class Battle {
    * yakın boş hücre (sıra farkı + şerit farkı; eşitlikte öndeki, sonra küçük yuva). Boş hücre yoksa null.
    */
   reviveSlotFor(actorUid: string, skillId: string, targetUid: string): number | null {
-    const free = this.reviveSlots(actorUid, skillId);
+    const actor = this.get(actorUid);
     const t = this.get(targetUid);
-    if (free.length === 0 || !t) return null;
-    if (free.includes(t.slot)) return t.slot;
-    const dist = (s: number) => Math.abs(this.rowOf(s) - this.rowOf(t.slot)) + Math.abs(this.laneOf(s) - this.laneOf(t.slot));
-    return [...free].sort((a, b) => dist(a) - dist(b) || this.rowOf(a) - this.rowOf(b) || a - b)[0]!;
+    if (!actor || !t || !this.isReviveSkill(skillId)) return null;
+    return this.nearestFreeSlot(actor.side, t.slot);
   }
 
   /** Ceset kaydı: çağrı olmayan birim öldüğünde (revivable). */
@@ -1762,13 +1776,13 @@ export class Battle {
    * hiç ceset yokken verilirse yok sayılır. Çağrıda `slot` summonSlots'tan biri olmalı (verilmezse varsayılan yuva).
    */
   useSkill(actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string): ActionResult {
-    if (this.globalDef(skillId)) return this.useGlobal(actorUid, skillId, slot ?? slotOfTileUid(targetUid));
+    if (this.globalDef(skillId)) return this.useGlobal(actorUid, skillId, slot ?? slotOfTileUid(targetUid), slotOfTileUid(targetUid) === undefined ? targetUid : undefined);
     return this.cast(actorUid, skillId, targetUid, slot, false, board, corpseUid);
   }
 
   /** Tek giriş noktası: class skill'i ya da global skill ({kind:'global', id, slot?}). */
   act(actorUid: string, action: BattleAction): ActionResult {
-    return action.kind === 'global' ? this.useGlobal(actorUid, action.id, action.slot ?? slotOfTileUid(action.targetUid)) : this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid);
+    return action.kind === 'global' ? this.useGlobal(actorUid, action.id, action.slot ?? slotOfTileUid(action.targetUid), slotOfTileUid(action.targetUid) === undefined ? action.targetUid : undefined) : this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid);
   }
 
   /** Yapay zeka seçimini uygular; seçim yoksa (null) turu pas geçer (skipTurn). */
@@ -1782,9 +1796,64 @@ export class Battle {
     return this.setup.globalSkills?.[id];
   }
 
-  /** Bu savaşta tanımlı global skill id'leri (rest, skip_turn, move_tile). */
-  globalSkillIds(): string[] {
-    return Object.keys(this.setup.globalSkills ?? {});
+  /**
+   * Bu savaşta tanımlı global skill id'leri (rest, skip_turn, move_tile, valor_revive). `side` verilirse o tarafın kullanamayacağı türler (Valor'u
+   * olmayan tarafta 'valor') çıkarılır: HUD düğmeleri ve listActions bunu kullanır.
+   */
+  globalSkillIds(side?: Side): string[] {
+    const ids = Object.keys(this.setup.globalSkills ?? {});
+    return side ? ids.filter((id) => this.globalDef(id)?.kind !== 'valor' || this.valorOf(side) !== null) : ids;
+  }
+
+  // ---------------------------------------------------------------- Valor (Ömer 2026-10-13)
+
+  /** Tarafın kalan Valor'u; o tarafta Valor yoksa (hızlı savaş, düşmanlar) null. */
+  valorOf(side: Side): number | null {
+    return this.valorPool.has(side) ? this.valorPool.get(side)! : null;
+  }
+
+  /** Valor kuralları (data/valor.json); savaşta Valor yoksa da kurallar okunabilir (arayüz metni). */
+  get valorRules(): ValorRules | undefined {
+    return this.setup.valorRules;
+  }
+
+  /** Debug: tarafın Valor'unu ayarlar (0..cap; o tarafta Valor yoksa açar). */
+  debugSetValor(side: Side, v: number): void {
+    const cap = this.setup.valorRules?.cap ?? 8;
+    this.valorPool.set(side, Math.max(0, Math.min(cap, Math.floor(v))));
+  }
+
+  /** Bu savaşta düşen birim var mı (taraf; çağrılar ve savaşa ceset olarak girenler sayılmaz). Kusursuz zafer = false. */
+  anyFell(side: Side): boolean {
+    for (const uid of this.fellInBattle) if (this.get(uid)?.side === side) return true;
+    return false;
+  }
+
+  /**
+   * Valor ile diriltilebilecek düşmüş dostlar: aktörün tarafında, çağrı değil, cesedi TÜKETİLMEMİŞ ve kendi tahtasında (sızıp düşman tahtasında ölen
+   * diriltilmez). Boş hücre yoksa hiçbiri (sıra: ölüm sırası).
+   */
+  valorTargets(actorUid: string): Combatant[] {
+    const actor = this.get(actorUid);
+    if (!actor || this.freeSlots(actor.side).length === 0) return [];
+    return this.combatants
+      .filter((c) => c.side === actor.side && c.hp <= 0 && !c.summoned && !c.inert && c.board === c.side && this.corpseState.get(c.uid) === 'revivable')
+      .sort((a, b) => (this.corpseOrder.get(a.uid) ?? 0) - (this.corpseOrder.get(b.uid) ?? 0));
+  }
+
+  /** Valor ile dirilen dostun hücresi: cesedinin hücresi boşsa o, değilse Resurrection'ın kuralıyla en yakın boş hücre (sıra + şerit farkı). */
+  valorSlotFor(targetUid: string): number | null {
+    const t = this.get(targetUid);
+    if (!t) return null;
+    return this.nearestFreeSlot(t.side, t.slot);
+  }
+
+  private nearestFreeSlot(side: Side, near: number): number | null {
+    const free = this.freeSlots(side);
+    if (free.length === 0) return null;
+    if (free.includes(near)) return near;
+    const dist = (s: number) => Math.abs(this.rowOf(s) - this.rowOf(near)) + Math.abs(this.laneOf(s) - this.laneOf(near));
+    return [...free].sort((a, b) => dist(a) - dist(b) || this.rowOf(a) - this.rowOf(b) || a - b)[0]!;
   }
 
   /**
@@ -1861,7 +1930,7 @@ export class Battle {
   }
 
   /** Global skill şu an kullanılabilir mi (sıra, mod, MP dolu mu, üst üste skip sınırı, boş yuva)? `slot`: Move Tile hedefi (verilirse geçerli olmalı). */
-  canUseGlobal(actorUid: string, id: string, slot?: number): CanUse {
+  canUseGlobal(actorUid: string, id: string, slot?: number, targetUid?: string): CanUse {
     const def = this.globalDef(id);
     if (!def) return { ok: false, reason: 'Unknown action' };
     if (this.winner) return { ok: false, reason: 'Battle is over' };
@@ -1876,6 +1945,15 @@ export class Battle {
       if (actor.mp >= actor.maxMp) return { ok: false, reason: 'MP is full' };
     } else if (def.kind === 'skip') {
       if (this.skipStreakOf(actorUid) >= (def.maxConsecutive ?? 1)) return { ok: false, reason: 'Cannot skip again' };
+    } else if (def.kind === 'valor') {
+      const have = this.valorOf(actor.side);
+      const rules = this.setup.valorRules;
+      if (have === null || !rules) return { ok: false, reason: 'No Valor in this battle' };
+      if (have < rules.revive.battleCost) return { ok: false, reason: `Needs ${rules.revive.battleCost} Valor (you have ${have})` };
+      const targets = this.valorTargets(actorUid);
+      if (targets.length === 0) return { ok: false, reason: this.freeSlots(actor.side).length === 0 ? 'No free cell' : 'No fallen ally to revive' };
+      if (targetUid !== undefined && !targets.some((t) => t.uid === targetUid)) return { ok: false, reason: 'Not a fallen ally' };
+      if (slot !== undefined && !this.freeSlots(actor.side).includes(slot)) return { ok: false, reason: 'That cell is not free' };
     } else {
       if (actor.board !== actor.side) return { ok: false, reason: 'Cannot move here' };
       const free = this.freeTiles(actorUid);
@@ -1892,11 +1970,12 @@ export class Battle {
    * move: kendi tarafındaki boş `slot` yuvasına geçer (olay moved {actor, from, to}); sıra, ön sıra kuralı, aura/yan komşuluk, taunt/guard yeni yuvaya göre kendiliğinden güncellenir
    * (hepsi yuvadan hesaplanır). Olay akışı her zaman 'globalUsed' ile başlar.
    */
-  useGlobal(actorUid: string, id: string, slot?: number): ActionResult {
+  useGlobal(actorUid: string, id: string, slot?: number, targetUid?: string): ActionResult {
     const def = this.globalDef(id);
-    const can = this.canUseGlobal(actorUid, id, slot);
+    const can = this.canUseGlobal(actorUid, id, slot, targetUid);
     if (!can.ok) return can;
     if (def!.kind === 'move' && slot === undefined) return { ok: false, reason: 'Pick an empty cell' };
+    if (def!.kind === 'valor' && targetUid === undefined) return { ok: false, reason: 'Pick a fallen ally' };
     const actor = this.get(actorUid)!;
     const events: BattleEvent[] = [];
     const emit: Emit = (e) => {
@@ -1905,7 +1984,7 @@ export class Battle {
     };
     this.phaseCrossed.clear();
     if (this.mode === 'test') this.resolveTelegraphsOf(actor, emit);
-    this.observer?.before?.({ kind: 'global', actorUid, id, ...(slot !== undefined ? { center: slot } : {}) });
+    this.observer?.before?.({ kind: 'global', actorUid, id, ...(slot !== undefined ? { center: slot } : {}), ...(targetUid !== undefined ? { targetUids: [targetUid] } : {}) });
     emit({ type: 'globalUsed', actor: actor.uid, id });
     if (def!.kind === 'rest') {
       const gain = Math.min(def!.mp ?? 0, actor.maxMp - actor.mp);
@@ -1923,6 +2002,8 @@ export class Battle {
       const bonus = this.mode === 'turns' ? Math.max(0, def!.speedBonus ?? 1) : 0;
       if (bonus > 0) this.speedBoost.set(actor.uid, bonus);
       emit({ type: 'turnSkipped', actor: actor.uid, voluntary: true, ...(bonus > 0 ? { speedBoost: bonus } : {}) });
+    } else if (def!.kind === 'valor') {
+      this.valorRevive(actor, this.get(targetUid!)!, slot, emit);
     } else {
       const from = actor.slot;
       actor.slot = slot!;
@@ -1934,9 +2015,37 @@ export class Battle {
       emit({ type: 'passive', actor: actor.uid, passive: 'pilgrims_stride', name: "Pilgrim's Stride" });
       this.addStatus(actor, { kind: stride.status as Status['kind'], turns: stride.turns, source: actor.uid }, emit);
     }
-    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : 'move');
+    this.noteAction(actor.uid, def!.kind === 'rest' ? 'rest' : def!.kind === 'skip' ? 'skip' : def!.kind === 'valor' ? 'valor' : 'move');
     this.finishAction(actor, emit, stride ? stride.turnCost : 1);
     return { ok: true, events };
+  }
+
+  /**
+   * Valor ile diriltme (global 'valor'): tarafın Valor'undan battleCost düşer, hedef cesedinin hücresinde (doluysa `slot` ya da en yakın boş hücre)
+   * revive.hpRatio canla / mpRatio MP'yle kalkar; Resurrection'ın dirilişiyle aynı temizlik (durumlar, kalkan, Rage, sayaç sıfır), yenilenme yok.
+   * Olaylar: valor {side, spent, after} + revive {source, target, slot, from, cause 'valor'}. Rastgelelik yok.
+   */
+  private valorRevive(actor: Combatant, target: Combatant, slot: number | undefined, emit: Emit): void {
+    const rules = this.setup.valorRules!;
+    const free = this.freeSlots(actor.side);
+    const to = slot !== undefined && free.includes(slot) ? slot : this.valorSlotFor(target.uid)!;
+    const after = (this.valorOf(actor.side) ?? 0) - rules.revive.battleCost;
+    this.valorPool.set(actor.side, after);
+    emit({ type: 'valor', side: actor.side, spent: rules.revive.battleCost, after });
+    const from = target.slot;
+    target.board = target.side;
+    target.slot = to;
+    target.hp = Math.max(1, Math.round(target.maxHp * rules.revive.hpRatio));
+    target.mp = Math.round(target.maxMp * rules.revive.mpRatio);
+    target.shield = 0;
+    target.magicShield = 0;
+    delete target.shieldHooks;
+    target.statuses = [];
+    target.turnCounter = 0;
+    if (target.maxRage !== undefined) target.rage = 0;
+    this.announcedDead.delete(target.uid);
+    this.clearCorpse(target.uid);
+    emit({ type: 'revive', source: actor.uid, target: target.uid, hpAfter: target.hp, mpAfter: target.mp, slot: to, from, cause: 'valor' });
   }
 
   /** Aktörün şu an yapabileceği tüm eylemler: class skill'leri ve global skill'ler (ok: kullanılabilir mi, reason: neden değil, slots: Move Tile yuvaları). */
@@ -1947,9 +2056,9 @@ export class Battle {
       const c = this.canUse(actorUid, id);
       return { kind: 'skill', id, ok: c.ok, ...(c.ok ? {} : { reason: c.reason }) };
     });
-    for (const id of this.globalSkillIds()) {
+    for (const id of this.globalSkillIds(actor.side)) {
       const c = this.canUseGlobal(actorUid, id);
-      out.push({ kind: 'global', id, ok: c.ok, ...(c.ok ? {} : { reason: c.reason }), ...(this.globalDef(id)?.kind === 'move' && c.ok ? { slots: this.freeTiles(actorUid) } : {}) });
+      out.push({ kind: 'global', id, ok: c.ok, ...(c.ok ? {} : { reason: c.reason }), ...(this.globalDef(id)?.kind === 'move' && c.ok ? { slots: this.freeTiles(actorUid) } : {}), ...(this.globalDef(id)?.kind === 'valor' && c.ok ? { targets: this.valorTargets(actorUid).map((t) => t.uid) } : {}) });
     }
     return out;
   }
@@ -3305,6 +3414,7 @@ export class Battle {
     this.announcedDead.add(c.uid);
     // Çağrı olmayan birim yuvasında ceset bırakır (revivable); çağrının ölümü (sahibiyle birlikte ölmesi dahil) ceset bırakmaz
     const corpse = this.leaveCorpse(c);
+    if (!c.summoned && !c.inert) this.fellInBattle.add(c.uid);
     emit({ type: 'death', target: c.uid, corpse });
     // fallAllyHealRatio (endless Last Rites): düşen kahramanın canlı dostları maks canlarının bu oranı kadar iyileşir
     if (!c.summoned && c.fallAllyHealRatio) for (const a of this.living(c.side)) if (!a.summoned && a !== c) this.applyHeal(c, a, Math.round(a.maxHp * c.fallAllyHealRatio), false, emit, 'last_rites');

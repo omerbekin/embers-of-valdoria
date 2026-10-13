@@ -12,6 +12,7 @@ export type { TurnSlot } from './turn-order';
 export { damageRange, healRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, rollHit, rollHitOutcome, shieldAmount } from './formulas';
 export type { DamageSpec, Range } from './formulas';
 export { battleSummary } from './battle-summary';
+export { addValor, brazierFill, canReviveOutside, clampValor, valorEarned, type ValorTier } from './valor';
 export { accuracyOf, applySummonVariant, applyUnitModifiers, hasUnitModifiers, armorReduction, attributePower, buildDef, deriveStats, evasionOf, hitChance, hitOutcome, roundStat, statMin, variantMult } from './stats';
 export type { HitOutcome } from './stats';
 export { damageSpecFor } from './spec';

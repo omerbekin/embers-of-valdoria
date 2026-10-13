@@ -3,6 +3,7 @@
  *  - "Pose test battle": test modunda (sıra yok) oyuncu tarafında 11 gizli test sınıfı Pose Tester I (Warrior) ... XI (Hexer)
  *    (data/classes/pose_tester_*.json, tools/make-pose-testers.mjs: her sınıfın 4 gerçek skill'inin bedelsiz, ~1 hasarlı pt_* kopyası; v2 poz
  *    takımı, sınıfının silahıyla), düşmanda iki pozlu (v1) Warrior.
+ *  - Gerçek sınıfların çizimi (Ömer 2026-10-13): v2 poz gövdeleri (varsayılan) ya da karşılaştırma için eski v1 çizimi (tek idle görseli).
  *  - Poz seçici: Ctrl+tık seçili (yoksa tüm) pozlu birimlerde her pozu / döngüyü oynatır; isabet tepkisi, diz çökme, kalk.
  *  - Gerçek item ile donatma (tutuş item'den: Dane Axe / Avenger's Maul çift el takımı; kalkan / hançer ikinci ele), silah görseli
  *    seçici (aile x görünüm), tek el / çift el takımını zorlama, nadirlik ışıltısı, poz süresi / döngü hızı.
@@ -11,6 +12,7 @@
 import type { CombatantView } from '../game/combatant-view';
 import { POSES, allWeapons, weaponFor, type Grip, type WeaponPick } from '../game/poses';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
+import { poseRender, setPoseRender } from '../game/pose-mode';
 export { POSE_TESTER_GEAR } from '../game/pose-weapons';
 import { itemDef } from '../progression/items';
 import { debugButton, debugHeading, debugSection, type DebugMenu } from './debug-menu';
@@ -92,19 +94,38 @@ export function registerPosesPanel(debug: Pick<DebugMenu, 'registerPanel' | 'reg
     id: 'panel.poses',
     tab: 'Characters',
     render: (el, refresh) => {
-      el.append(debugHeading('Poses (v2 trial: Pose Testers)'));
+      el.append(debugHeading('Poses (v2)'));
+      // gerçek sınıflar: v2 gövde + takılı silah (varsayılan) ya da eski tek görsel (karşılaştırma); bir sonraki savaştan geçerli
+      const mode = poseRender();
+      el.append(
+        ...debugSection(
+          'Real classes',
+          debugButton('v2 poses', () => {
+            setPoseRender('v2');
+            refresh();
+          }, { icon: 'team', on: mode === 'v2', title: 'Default: every playable class is drawn with its own v2 pose body and its equipped weapon (Quick Battle: the class default weapon)' }),
+          debugButton('v1 render', () => {
+            setPoseRender('v1');
+            refresh();
+          }, { icon: 'restart', on: mode === 'v1', title: 'Compare: the old look (one idle illustration + code motion; Warrior: its v1 poses). Mobs and summons are unchanged either way' }),
+        ),
+      );
+      const applies = document.createElement('div');
+      applies.className = 'debug-note dim';
+      applies.textContent = 'Saved in this browser. Applies from the next battle (use Restart battle).';
+      el.append(applies);
       el.append(...debugSection('Test battle', debugButton('Pose test battle', () => host.startTestBattle(), { icon: 'sword', title: 'All 11 Pose Testers (every class skill with the v2 poses) against two Warriors, test mode (no turn order)' })));
       const views = host.views();
       if (!views.length) {
         const n = document.createElement('div');
         n.className = 'debug-note dim';
-        n.textContent = 'No unit uses the pose library in this battle. Start the Pose test battle, or a battle with a Warrior.';
+        n.textContent = 'No unit uses the pose library in this battle. Start the Pose test battle, or any battle with a playable class (v2 poses).';
         el.append(n);
         return;
       }
       const note = document.createElement('div');
       note.className = 'debug-note dim';
-      note.textContent = `Acting on ${views.length} unit${views.length > 1 ? 's' : ''} (Ctrl + click a unit to pick only that one). Real skill animations: cast Double Strike / Whirlwind / Charge / Abyssal Cry from the Skills tab.`;
+      note.textContent = `Acting on ${views.length} unit${views.length > 1 ? 's' : ''} (Ctrl + click a unit to pick only that one). Real skill animations: cast any skill from the Skills tab.`;
       el.append(note);
 
       const first = views[0]!;

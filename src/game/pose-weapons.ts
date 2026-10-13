@@ -4,6 +4,7 @@
  * görselini bundan seçer (`weaponFor`); boş yuvalı kahraman sınıfın varsayılan silahını taşır. Saf (Phaser yok).
  */
 import { itemDef, type ItemInstance } from '../progression/items';
+import { POSES, poseClass, realPosesV2, weaponFor, type WeaponPick } from './poses';
 
 export interface WeaponItem {
   id: string;
@@ -67,3 +68,28 @@ export const POSE_TESTER_GEAR: Readonly<Record<string, readonly [string, string?
   pose_tester_10: ['worn_deck'],
   pose_tester_11: ['hex_doll'],
 };
+
+/**
+ * Sınıfın VARSAYILAN silahı (gerçek sınıf v2 çiziminde, Ömer 2026-10-13): Pose Tester'ının sınıf silahı (POSE_TESTER_GEAR; Warrior Dane Axe,
+ * Defender gürz + kule kalkanı...). Pose Tester'ın kendisi doğrudan. Yoksa null (sınıfın poses.json > defaultWeapon'ı).
+ */
+export function classDefaultGear(classId: string): readonly [string, string?] | null {
+  if (POSE_TESTER_GEAR[classId]) return POSE_TESTER_GEAR[classId]!;
+  if (!realPosesV2()) return null;
+  const owner = `${classId}_v2`;
+  const pt = Object.entries(POSES.classAliases ?? {}).find(([, o]) => o === owner)?.[0];
+  return (pt && POSE_TESTER_GEAR[pt]) || null;
+}
+
+/**
+ * Birimin çizilecek silahı (BattleScene): takılı item varsa o (+ ikinci el), yoksa sınıfın varsayılan donanımı. `gear` = bu birimin gerçek
+ * donanımı biliniyor (sefer / Endless kahramanı): boş silah yuvasında yalnızca varsayılan ANA el, ikinci el yalnızca takılıysa. Değilse
+ * (Quick Battle, düşman, multiplayer) varsayılan ana el + ikinci el. Pozsuz sınıf: null. Yalnızca sınıf ve item'e bağlı (belirleyici).
+ */
+export function unitWeaponPick(classId: string, item: WeaponItem | null | undefined, gear = false): WeaponPick | null {
+  if (!poseClass(classId)) return null;
+  const dflt = classDefaultGear(classId);
+  if (item?.id || !dflt) return weaponFor(classId, item?.id ? item : null, item?.offhand);
+  const off = item?.offhand ?? (gear || !dflt[1] ? null : offhandItem({ uid: 'default-off', id: dflt[1] }));
+  return weaponFor(classId, weaponItem({ uid: 'default', id: dflt[0] }), off);
+}

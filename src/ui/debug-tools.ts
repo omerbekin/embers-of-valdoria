@@ -30,6 +30,9 @@ import { DEFAULT_TEST_SIZE, buildTestBattleData, clampTeam, placeClass, removeSl
 import { copyMatchData } from './match-copy';
 import { isFullscreen, toggleFullscreen } from './fullscreen';
 import { registerCampaignDebug } from './debug-campaign';
+import { debugSetValor as campaignSetValor } from '../campaign';
+import { current as campaignState, setState as setCampaignState, MAP_SCENE } from '../game/campaign-session';
+import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
 import { registerMultiplayerDebug } from './debug-mp';
 import { registerEndlessDebug } from './debug-endless';
 import { getRotateMode, setRotateMode } from './viewport';
@@ -441,6 +444,53 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       s.battle.debugFill('party');
       s.debugAfterChange();
     },
+  });
+  // Valor (Ömer 2026-10-13): savaşta oyuncu tarafının Valor'u; savaş dışında sefer (harita) ya da Endless koşusu
+  const setValor = (next: (v: number) => number): void => {
+    const cap = content.valorRules.cap;
+    const s = battle();
+    if (s && s.battle.valorOf('party') !== null) {
+      s.battle.debugSetValor('party', Math.max(0, Math.min(cap, next(s.battle.valorOf('party') ?? 0))));
+      s.debugAfterChange();
+      return;
+    }
+    if (game.scene.isActive(ENDLESS_SCENE) && endless.run) {
+      commitRun({ ...endless.run, valor: Math.max(0, Math.min(cap, next(endless.run.valor ?? 0))) });
+      (game.scene.getScene(ENDLESS_SCENE) as Phaser.Scene).scene.restart();
+      return;
+    }
+    const cs = campaignState();
+    if (cs) {
+      setCampaignState(campaignSetValor(cs, next(cs.valor ?? 0)));
+      if (game.scene.isActive(MAP_SCENE)) (game.scene.getScene(MAP_SCENE) as Phaser.Scene).scene.restart();
+    }
+  };
+  debug.register({
+    id: 'valor.give',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'flame',
+    label: 'Give Valor +5',
+    hint: 'Add 5 Valor (one full brazier): in a campaign / Endless battle to your side, otherwise to the loaded campaign or Endless run (unlocks it in the campaign)',
+    run: () => setValor((v) => v + 5),
+  });
+  debug.register({
+    id: 'valor.fill',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'flame',
+    label: 'Fill Valor',
+    hint: 'Set Valor to the maximum (both braziers full)',
+    run: () => setValor(() => content.valorRules.cap),
+  });
+  debug.register({
+    id: 'valor.clear',
+    tab: 'Battle',
+    section: 'Team',
+    icon: 'restart',
+    label: 'Clear Valor',
+    hint: 'Set Valor to 0 (the campaign keeps it unlocked)',
+    run: () => setValor(() => 0),
   });
   debug.register({
     id: 'unit.kill-enemies',

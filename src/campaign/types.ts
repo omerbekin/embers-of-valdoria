@@ -265,6 +265,11 @@ export interface CampaignState {
    * (Shepherd's Fold "Share your bread"). Düğümden ayrılınca silinir. Eski kayıtlarda yok (isteğe bağlı alan; sürüm değişmez).
    */
   eventChoice?: { node: string; choice: string; battle?: string; restHeal?: number };
+  /**
+   * Valor (Ömer 2026-10-13, data/valor.json): takımın diriltme kaynağı. YOKSA gizli ve birikmez (Valdren Keep hikâyesinden önce); Valdren'in hikâyesi
+   * (ya da kasabası) bitince açılır ve hediye ile başlar. Kayıt sürümü 7 (src/campaign/save.ts) eski kayıtları taşır.
+   */
+  valor?: number;
 }
 
 /** Sefer tüccarının tezgâhı (src/campaign/merchant.ts). */
@@ -304,6 +309,10 @@ export interface Handover {
 export interface BattleOutcome {
   victory: boolean;
   units: Array<{ heroId: string; hpRatio: number; alive: boolean }>;
+  /** Savaş sonunda kalan Valor (savaşta harcandıysa azalmış); yoksa durumdaki Valor aynen. */
+  valorLeft?: number;
+  /** Kusursuz zafer: bu savaşta hiçbir kahraman düşmedi (diriltilse bile düştü sayılır). Yoksa `units`ten: herkes ayakta. */
+  flawless?: boolean;
 }
 
 export type NextStep =

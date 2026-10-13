@@ -37,6 +37,7 @@ import {
   upgradePairs,
   waveKind,
   waveMods,
+  bossMult,
   wavePlan,
   type EndlessRun,
   type KV,
@@ -89,8 +90,23 @@ describe('endless: dalga kuralları', () => {
     expect(waveKind(20)).toBe('boss');
   });
 
-  it('düşman sayısı: 30. dalgaya kadar 2, sonra 3 (balance-tester 2026-10-09, data/endless.json > enemyCount)', () => {
-    expect([1, 2, 3, 4, 9, 30, 31, 40].map((w) => enemyCount(w))).toEqual([2, 2, 2, 2, 2, 2, 3, 3]);
+  it('düşman sayısı: her dalgada 2 (Ömer 2026-10-13 form valor2: 31+ dalgadaki 3 düşman duvarı kaldırıldı; data/endless.json > enemyCount)', () => {
+    expect([1, 2, 3, 4, 9, 30, 31, 40, 50].map((w) => enemyCount(w))).toEqual([2, 2, 2, 2, 2, 2, 2, 2, 2]);
+  });
+
+  it('boss basamağı: her boss bir öncekinden güçlü (scaling.bossMult), yalnızca dalga numarasına bağlı; liste bitince son değer', () => {
+    const list = ENDLESS.scaling.bossMult!;
+    expect(list[0]).toBe(1);
+    for (let i = 1; i < list.length; i++) expect(list[i]!).toBeGreaterThan(list[i - 1]!);
+    expect([0, 1, 2, 3, 4].map((b) => bossMult(b))).toEqual(list.slice(0, 5));
+    expect(bossMult(list.length + 3)).toBe(list[list.length - 1]);
+    // 10. dalga: dalga güçlenmesi aynen; 20. dalga: bossMult[1] can ve güce çarpılır, stat değil; boss olmayan dalgaya eklenmez
+    expect(waveMods(10)).toEqual({ hpMult: 1.113, statMult: 1.113, powerMult: 1.104 });
+    const plain = (w: number) => ({ hp: 1 + ENDLESS.scaling.hpPerWave * (w - 1), pw: 1 + ENDLESS.scaling.powerPerWave * (w - 1) });
+    expect(waveMods(20)!.hpMult).toBeCloseTo(plain(20).hp * list[1]!, 3);
+    expect(waveMods(20)!.powerMult).toBeCloseTo(plain(20).pw * list[1]!, 3);
+    expect(waveMods(20)!.statMult).toBeCloseTo(1 + ENDLESS.scaling.statPerWave * 19, 3);
+    expect(waveMods(21)!.hpMult).toBeCloseTo(plain(21).hp, 3);
   });
 
   it('dalga güçlenmesi: 1. dalga yok, sonra dalga başına can/stat +%1,25, güç +%1,15 (balance-tester 2026-10-10)', () => {

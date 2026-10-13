@@ -332,6 +332,11 @@
       "retreatHpRatio": 0.35,
       "minFrontGainShare": 0.3,
       "minAuraGain": 5
+    },
+    "_valor": "VALOR DİRİLTMESİ (Ömer 2026-10-13; yalnızca Valor'u olan taraf: sefer/Endless oyuncu vekili): değer = Resurrection'ın revive terimi x valueShare (Valor savaşlar arası kıt kaynak); net = değer - şimdiki class hamlesi, net en az değer x minNetShare olmalı (açıkça değer). Savaş belliyse 0.",
+    "valor": {
+      "valueShare": 0.8,
+      "minNetShare": 0.3
     }
   },
   "_telegraph": "TELGRAF (boss: The Bridge Warden, docs/design/bosses/bridge-warden.md 5 ve M11/M12; src/engine/ai.ts > telegraphOptions / telegraphDodge / anchorValue): hitShare = telgrafı atanın beklenen isabet payı (oyuncu kaçar), denyShare = kaçmak zorunda kalan her hedefin kaybedeceği turun değer payı, hookCombo = Chain Hook hedefi bekleyen çökmeye çekerse eklenen değer çarpanı (Easy 0), dodgeOpportunityShare = oyuncu vekilinin telgraftan kaçmak için Move bedeli (şimdiki hamle x pay), anchorShare = Iron Mooring kırmanın değer çarpanı. Sayılar PROVİZYON (sim:campaign ile).",

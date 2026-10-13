@@ -2,8 +2,8 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { POSES, cycleFrames, frameExtent, gripFrames, itemPlacement, keyFrame, placementPoint, poseBounds, poseClass, poseGrip, poseItems, resolvePose, skillPoses, statePose, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
-import { POSE_TESTER_GEAR, offhandItem, partyWeapons, weaponItem } from '../src/game/pose-weapons';
+import { POSES, cycleFrames, frameExtent, gripFrames, itemPlacement, keyFrame, placementPoint, poseBounds, poseClass, poseGrip, poseItems, poseSkill, realPosesV2, resolvePose, setRealPosesV2, skillPoses, statePose, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
+import { POSE_TESTER_GEAR, classDefaultGear, offhandItem, partyWeapons, unitWeaponPick, weaponItem } from '../src/game/pose-weapons';
 
 // Poz kütüphanesi (Ömer 2026-10-11, Warrior denemesi; v2 tek el + çift el takımı 2026-10-12, yalnızca Pose Tester'lar; src/game/poses.ts,
 // data/poses.json, tools/make-poses.mjs + tools/make-poses-v2.mjs). Yalnızca sunum: motor `pose` alanını okumaz (golden kayıtlar aynı).
@@ -11,6 +11,15 @@ import { POSE_TESTER_GEAR, offhandItem, partyWeapons, weaponItem } from '../src/
 const root = join(__dirname, '..');
 const pngs = (dir: string): string[] => (existsSync(dir) ? readdirSync(dir).filter((f) => f.endsWith('.png')).map((f) => f.replace(/\.png$/, '')).sort() : []);
 const inst = (id: string) => ({ uid: id, id });
+/** Debug karşılaştırması: gerçek sınıflar eski (v1) çizimde (Warrior v1 pozları, diğerleri pozsuz). */
+const v1 = (fn: () => void) => {
+  setRealPosesV2(false);
+  try {
+    fn();
+  } finally {
+    setRealPosesV2(true);
+  }
+};
 
 describe('poz kütüphanesi verisi', () => {
   it('veri geçerli (durumlar, döngüler, tutuş takımları, el noktaları, varsayılan silah, item eşlemeleri)', () => {
@@ -32,7 +41,7 @@ describe('poz kütüphanesi verisi', () => {
   });
 
   it('Warrior (v1, değişmedi): 12 poz, spin 3 karelik döngü; genel durumlar (idle, step, hit, death) pozlara bağlı', () => {
-    const def = poseClass('warrior')!;
+    const def = POSES.classes['warrior']!;
     expect(def.grips).toBeUndefined();
     expect(Object.keys(def.poses)).toHaveLength(12);
     expect(cycleFrames(def, 'spin')).toEqual(['spin1', 'spin2', 'spin3']);
@@ -46,7 +55,7 @@ describe('poz kütüphanesi verisi', () => {
     expect(statePose(def, 'idle', 'two')).toBe('idle');
   });
 
-  it('Warrior skill -> poz eşlemesi skills.json > pose alanından (her poz adı bir sınıfta çözülüyor)', () => {
+  it('Warrior skill -> poz eşlemesi skills.json > pose alanından (her poz adı bir sınıfta çözülüyor)', () => v1(() => {
     const s = content.skills;
     expect(skillPoses('warrior', s['melee_attack'])).toEqual(['overhead', 'slash']);
     expect(skillPoses('warrior', s['whirlwind'])).toEqual(['spin']);
@@ -63,7 +72,7 @@ describe('poz kütüphanesi verisi', () => {
     // pozu olmayan sınıf: boş (bugünkü davranış)
     expect(skillPoses('mage', s['melee_attack'])).toEqual([]);
     expect(poseClass('mage')).toBeNull();
-  });
+  }));
 
   it('ortak kare her pozun sınırını (gövde + silah + ikinci el) kapsar; ayaklar alt-ortada', () => {
     const picks = [null, { family: 'swords', look: 'ornate', glow: '#fff' }, { family: 'axes', look: 'ornate' }, { family: 'maces', look: 'flanged', offhand: { family: 'shields', look: 'tower' } }, { family: 'greataxes', look: 'double', grip: 'two' as const }, { family: 'staves', look: 'rune', grip: 'two' as const }];
@@ -139,7 +148,7 @@ describe('v2 poz takımı: tutuşa göre seçim (warrior_v2, Pose Tester\'lar)',
 });
 
 describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => {
-  it('Common/Uncommon sade, Rare orta + ışıltı, Epic/Legendary süslü + ışıltı; item eşlemesi aileden önce gelir', () => {
+  it('Common/Uncommon sade, Rare orta + ışıltı, Epic/Legendary süslü + ışıltı; item eşlemesi aileden önce gelir (v1 Warrior)', () => v1(() => {
     expect(weaponFor('warrior', { id: 'woodcutters_axe', family: 'axes', rarity: 'common' })).toEqual({ family: 'axes', look: 'plain' });
     expect(weaponFor('warrior', { id: 'bearded_axe', family: 'axes', rarity: 'uncommon' })).toEqual({ family: 'axes', look: 'plain' });
     expect(weaponFor('warrior', { id: 'bearded_axe', family: 'axes', rarity: 'rare' })).toEqual({ family: 'axes', look: 'bearded', glow: POSES.rarityGlow['rare'] });
@@ -148,13 +157,14 @@ describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => 
     // 'Axes & Swords' ailesindeki kılıçlar kılıç görseli alır
     expect(weaponFor('warrior', { id: 'arming_sword', family: 'axes', rarity: 'rare' })).toEqual({ family: 'swords', look: 'engraved', glow: POSES.rarityGlow['rare'] });
     expect(weaponFor('warrior', { id: 'emberbrand', family: 'axes', rarity: 'legendary' })).toEqual({ family: 'swords', look: 'ornate', glow: POSES.rarityGlow['legendary'] });
-  });
+  }));
 
-  it('silahsız: sınıfın varsayılan silahı; gürzler artık kendi görseli; pozsuz sınıf: null', () => {
+  it('silahsız: sınıfın varsayılan silahı; gürzler artık kendi görseli; pozsuz sınıf: null (v1 çizimi)', () => v1(() => {
     expect(weaponFor('warrior', null)).toEqual(POSES.classes['warrior']!.defaultWeapon);
     expect(weaponFor('warrior', { id: 'flanged_mace', family: 'maces', rarity: 'common' })).toEqual({ family: 'maces', look: 'flanged' });
     expect(weaponFor('mage', { id: 'ash_staff', family: 'staves', rarity: 'common' })).toBeNull();
-  });
+    expect(weaponFor('skeleton', null)).toBeNull();
+  }));
 
   it('v2 (Pose Tester): çift el item çift el takımı + çift el görseli (Dane Axe, Avenger\'s Maul, asalar)', () => {
     const pt = 'pose_tester_1';
@@ -181,7 +191,7 @@ describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => 
     expect(weaponFor(pt, null, offhandItem(inst('oak_shield')))?.offhand).toEqual({ family: 'shields', look: 'tower' }); // silahsız + kalkan
     expect(weaponKey(shield)).not.toBe(weaponKey({ family: 'maces', look: 'flanged' }));
     // v1 Warrior ikinci eli çizmez (eski görünüm)
-    expect(weaponFor('warrior', mace, offhandItem(inst('oak_shield')))?.offhand).toBeUndefined();
+    v1(() => expect(weaponFor('warrior', mace, offhandItem(inst('oak_shield')))?.offhand).toBeUndefined());
   });
 
   it('sefer / Endless donanımı: party-i = heroOrder[i]; örneğin kendi nadirliği katalogdan önce; tutuş ve ikinci el taşınır', () => {
@@ -308,5 +318,93 @@ describe('v2 aile x poz yerleşimi (itemPoses; 2026-10-12 poz denetimi, yeni çi
   it("yay: thrust1 öne uzanmış elde dik (kiriş çekişi), raise'de göğe eğik", () => {
     expect(itemPlacement(def, 'thrust1', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBe(0);
     expect(itemPlacement(def, 'raise', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBeLessThan(-20);
+  });
+});
+
+describe('gerçek sınıflar v2 gövdeyle (Ömer 2026-10-13; debug > Characters > Poses ile v1 karşılaştırması)', () => {
+  const real = ['warrior', 'defender', 'paladin', 'archer', 'cutthroat', 'mage', 'druid', 'undead', 'antimage', 'gambler', 'hexer'];
+
+  it('varsayılan v2: her oynanabilir sınıf kendi <id>_v2 gövdesi; çağrılar pozsuz; v1 seçiliyken eski görünüm', () => {
+    expect(realPosesV2()).toBe(true);
+    for (const id of real) expect(poseClass(id), id).toBe(POSES.classes[`${id}_v2`]);
+    for (const id of Object.keys(content.summons)) expect(poseClass(id), id).toBeNull();
+    v1(() => {
+      expect(poseClass('warrior')).toBe(POSES.classes['warrior']);
+      for (const id of real.filter((c) => c !== 'warrior')) expect(poseClass(id), id).toBeNull();
+    });
+  });
+
+  it("skill -> poz: gerçek skill Pose Tester kopyasının (pt_<id>) pozunu kullanır; her sınıf skill'i bir poza çözülür", () => {
+    const look = (id: string) => content.skills[id];
+    for (const cls of real)
+      for (const sid of content.classes[cls]!.skills) {
+        const s = poseSkill(cls, content.skills[sid]!, look);
+        expect(s.pose, sid).toEqual(content.skills[`pt_${sid}`]!.pose);
+        expect(skillPoses(cls, s).length, sid).toBeGreaterThan(0);
+      }
+    expect(skillPoses('warrior', poseSkill('warrior', content.skills['charge']!, look))).toEqual(['step', 'thrust']);
+    expect(skillPoses('archer', poseSkill('archer', content.skills['arrow_rain']!, look))).toEqual(['sky']);
+    // kopyası olmayan skill aynen; v1 çiziminde gerçek skill'in kendi pozu
+    const rest = { id: 'rest', motion: 'self' };
+    expect(poseSkill('mage', rest, look)).toBe(rest);
+    v1(() => expect(poseSkill('warrior', content.skills['charge']!, look).pose).toEqual(['step', 'slash']));
+  });
+
+  it('Cutthroat Saltire Cut -> cross_cut (sınıfa özel ek poz: iki kol X, iki hançer); başka gövdede yok -> attack (slash)', () => {
+    const look = (id: string) => content.skills[id];
+    expect(content.skills['pt_x_cut']!.pose).toBe('cross_cut');
+    expect(skillPoses('cutthroat', poseSkill('cutthroat', content.skills['x_cut']!, look))).toEqual(['cross_cut']);
+    expect(skillPoses('pose_tester_5', content.skills['pt_x_cut'])).toEqual(['cross_cut']);
+    const def = POSES.classes['cutthroat_v2']!;
+    expect((def.poses['cross_cut'] as { src?: string }).src).toBe('cutthroat-v2/extra-cross_cut.png');
+    for (const g of ['one', 'two'] as const) expect(gripFrames(def, g), g).toContain('cross_cut');
+    // iki hançer: ana el alttaki yumrukta, ikinci el üstteki; ikisi de çizilir, X boyunca farklı yönlere
+    const duo = { family: 'daggers', look: 'rondel', offhand: { family: 'daggers', look: 'plain' } };
+    const items = poseItems(def, 'cross_cut', duo);
+    expect(items.map((p) => p.slot)).toEqual(['main', 'off']);
+    expect(def.poses['cross_cut']!.anchor.y).toBeGreaterThan(def.poses['cross_cut']!.offhand!.y);
+    expect(items[0]!.angle).toBeGreaterThan(0);
+    expect(items[1]!.angle).toBeLessThan(0);
+    // diğer gövdeler: bilinmeyen poz -> sınıfın attack durumu
+    expect(skillPoses('warrior', { pose: 'cross_cut', motion: 'ranged' })).toEqual(['slash']);
+  });
+
+  it('Hexer Doom Mark -> doll_stab (bebek + iğne kareye boyalı: tılsım / silah katmanı çizilmez; efekt çıkışı bebeği tutan sol el)', () => {
+    const look = (id: string) => content.skills[id];
+    expect(content.skills['pt_doom_mark']!.pose).toBe('doll_stab');
+    expect(skillPoses('hexer', poseSkill('hexer', content.skills['doom_mark']!, look))).toEqual(['doll_stab']);
+    expect(skillPoses('pose_tester_11', content.skills['pt_doom_mark'])).toEqual(['doll_stab']);
+    const def = POSES.classes['hexer_v2']!;
+    const p = def.poses['doll_stab']!;
+    expect(p.hidden).toBe(true);
+    expect(poseItems(def, 'doll_stab', { family: 'charms', look: 'doll', grip: 'charm' })).toEqual([]);
+    expect(poseItems(def, 'doll_stab', { family: 'maces', look: 'flanged', offhand: { family: 'shields', look: 'round' } })).toEqual([]);
+    // iğneli sağ yumruk bebeğin üstünde
+    expect(p.anchor.y).toBeLessThan(p.offhand!.y);
+    expect(skillPoses('warrior', { pose: 'doll_stab', motion: 'cast' })).toEqual(['raise']);
+  });
+
+  it('varsayılan donanım: Quick Battle / düşman = Pose Tester silahı; sefer / Endless kahramanı gerçek donanım (boş yuva: yalnızca ana el)', () => {
+    real.forEach((cls, i) => {
+      const gear = POSE_TESTER_GEAR[`pose_tester_${i + 1}`]!;
+      expect(classDefaultGear(cls), cls).toEqual(gear);
+      expect(unitWeaponPick(cls, undefined), cls).toEqual(weaponFor(cls, weaponItem(inst(gear[0])), offhandItem(gear[1] ? inst(gear[1]) : null)));
+    });
+    expect(unitWeaponPick('warrior', undefined)).toMatchObject({ family: 'greataxes', grip: 'two' });
+    expect(unitWeaponPick('defender', undefined)?.offhand).toMatchObject({ family: 'shields' });
+    // sefer: boş silah yuvası -> varsayılan ana el, kalkan yalnızca takılıysa
+    expect(unitWeaponPick('defender', undefined, true)?.offhand).toBeUndefined();
+    expect(unitWeaponPick('defender', { id: '', offhand: offhandItem(inst('oak_shield'))! }, true)?.offhand).toMatchObject({ family: 'shields' });
+    // takılı item her zaman önce; çift el ikinci eli kapatır
+    const maul = { ...weaponItem(inst('avengers_maul'))!, offhand: offhandItem(inst('oak_shield'))! };
+    expect(unitWeaponPick('paladin', maul, true)).toMatchObject({ family: 'mauls', grip: 'two' });
+    expect(unitWeaponPick('paladin', maul, true)?.offhand).toBeUndefined();
+    expect(unitWeaponPick('skeleton', undefined)).toBeNull();
+    // v1 çiziminde eski davranış birebir
+    v1(() => {
+      expect(classDefaultGear('warrior')).toBeNull();
+      expect(unitWeaponPick('warrior', undefined)).toEqual(POSES.classes['warrior']!.defaultWeapon);
+      expect(unitWeaponPick('mage', undefined)).toBeNull();
+    });
   });
 });

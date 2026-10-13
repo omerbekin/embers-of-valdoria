@@ -11,6 +11,8 @@ const BASE = [
   'idle2', 'step2', 'slash2', 'overhead2', 'thrust2', 'spin2a', 'spin2b', 'spin2c', 'guard2', 'throw', 'hit', 'kneel',
 ];
 const BOW = ['bow_shot', 'bow_sky'];
+/** Sınıfa özel ek pozlar (assets/source/poses/<id>-v2/extra-<poz>.png; tools/make-poses-v2.mjs). */
+const EXTRA: Record<string, string[]> = { cutthroat_v2: ['cross_cut'], hexer_v2: ['doll_stab'] };
 const v2 = Object.entries(POSES.classes).filter(([id]) => id.endsWith('_v2'));
 
 describe('v2 sınıf gövdeleri (classes.*_v2)', () => {
@@ -25,8 +27,8 @@ describe('v2 sınıf gövdeleri (classes.*_v2)', () => {
   for (const [id, def] of v2)
     describe(id, () => {
       const bow = !!def.grips?.bow;
-      it(`tüm kareler (${bow ? 26 : 24}) ve her karede ana el + ikinci el noktası, kutu tuvalin içinde`, () => {
-        expect(Object.keys(def.poses).sort()).toEqual([...BASE, ...(bow ? BOW : [])].sort());
+      it(`tüm kareler (${bow ? 26 : 24}${EXTRA[id] ? ` + ${EXTRA[id]!.join(', ')}` : ''}) ve her karede ana el + ikinci el noktası, kutu tuvalin içinde`, () => {
+        expect(Object.keys(def.poses).sort()).toEqual([...BASE, ...(bow ? BOW : []), ...(EXTRA[id] ?? [])].sort());
         for (const [n, p] of Object.entries(def.poses)) {
           for (const h of [p.anchor, p.offhand]) {
             expect(h, `${id}/${n}`).toBeDefined();

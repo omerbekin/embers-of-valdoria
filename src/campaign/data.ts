@@ -67,6 +67,11 @@ export interface StoryDef extends EventText {
   gift?: { rarity: RarityId };
   liked?: string;
   disliked?: string;
+  /**
+   * Sonsöz sayfası (beğenilse de beğenilmese de, son sayfadan sonra; tekrar okumada da). Valdren Keep'te komutan Valor'u anlatır (Ömer 2026-10-13);
+   * Valor'un açılması ve hediyesi kural tarafında (state.ts > complete, data/valor.json > campaign).
+   */
+  epilogue?: { title?: string; text: string };
 }
 
 /** Kasaba hikâye sahneleri (T5; sis açma YOK; düğümün `story` alanı). */

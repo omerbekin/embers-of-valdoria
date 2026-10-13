@@ -2,6 +2,7 @@
 // Kullanım: npm run sim:endless -- [koşu sayısı] [ilk seed] [--compare] [--gear=best|none] [--relics=pick|none] [--max=40] [--jobs=N] [--json=dosya]
 //   Varsayılan: 300 koşu, seed 1, item + kalıntı açık, oyuncu vekili Medium ("iyi oyuncu"), iş sayısı = çekirdek - 1 (en fazla 12).
 //   --compare: aynı seed'lerle item'siz ve kalıntısız koşuları da oynar ve karşılaştırır.
+import { valorMode } from './valor-mode';
 import { spawn } from 'node:child_process';
 import { cpus } from 'node:os';
 import { readFileSync, writeFileSync } from 'node:fs';
@@ -16,7 +17,7 @@ const has = (name: string) => args.includes(`--${name}`);
 const pos = args.filter((a) => !a.startsWith('--'));
 const runs = Number(pos[0] ?? 300);
 const firstSeed = Number(pos[1] ?? 1);
-const maxWave = Number(flag('max') ?? 40);
+const maxWave = Number(flag('max') ?? 55);
 // --cfg=dosya.json: data/endless.json üstüne yazılan deneme ayarları (yalnızca simde; ayar denemeleri için, veri dosyası değişmez)
 const cfgFile = flag('cfg');
 const ENDLESS: EndlessConfig = cfgFile ? { ...BASE, ...(JSON.parse(readFileSync(cfgFile, 'utf8')) as Partial<EndlessConfig>) } : BASE;
@@ -43,7 +44,7 @@ function runPart(start: number, end: number, v: Variant): Promise<EndlessSimResu
 }
 
 async function runVariant(v: Variant): Promise<EndlessSimResult> {
-  if (jobs <= 1 || runs < 12) return simulateEndless({ runs, firstSeed, gear: v.gear, relics: v.relics, maxWave, cfg: ENDLESS });
+  if (jobs <= 1 || runs < 12) return simulateEndless({ runs, firstSeed, gear: v.gear, relics: v.relics, maxWave, cfg: ENDLESS, valor: valorMode() });
   const n = Math.min(jobs, runs);
   const bounds = Array.from({ length: n }, (_, k) => [Math.floor((runs * k) / n), Math.floor((runs * (k + 1)) / n)] as const);
   return mergeEndlessResults(await Promise.all(bounds.map(([a, b]) => runPart(a, b, v))));
@@ -74,9 +75,13 @@ function report(results: EndlessSimResult[], secs: number) {
   console.log('');
   console.log('HEDEFLER (data/endless.json > balance)');
   console.log(`  İlk 4 dalganın en düşük kazanma oranı  %${fmt(k.earlyMinWin)}${band('earlyMinWin', k.earlyMinWin)}`);
-  console.log(`  İlk boss (dalga ${ENDLESS.bossEvery}) kazanma           %${fmt(k.firstBossWin)}${band('firstBossWin', k.firstBossWin)}`);
   console.log(`  Ulaşılan dalga ortalama / medyan       ${fmt(k.mean)} / ${k.median}${band('mean', k.mean)}${band('median', k.median)}`);
-  console.log(`  30. dalgaya ulaşan                     %${fmt(k.reach30)}${band('reach30', k.reach30)}`);
+  const bossT = (ENDLESS as unknown as { balance?: { targets: { bossWin?: Record<string, [number, number]> } } }).balance?.targets.bossWin ?? {};
+  for (const b of k.bosses) {
+    const t = bossT[String(b.wave)];
+    const bad = t && !Number.isNaN(b.win) && (b.win < t[0] || b.win > t[1]);
+    console.log(`  Boss dalga ${String(b.wave).padStart(2)}: ulaşan %${fmt(b.reach).padStart(5)}  kazanma %${fmt(b.win).padStart(5)}  (n=${b.n})${t ? ` (hedef ${t[0]}-${t[1]})${bad ? ' !' : ''}` : ''}`);
+  }
   console.log(`  Dağılım p10 / p50 / p90: ${s.p10} / ${s.p50} / ${s.p90}; tavana ulaşan %${fmt(s.cappedPct)}`);
   console.log('');
   console.log('DALGALAR  (ulaşan %, oynayan, kazanma %, giriş canı %, zafer sonu can %, zaferde düşen, tur)');
@@ -159,7 +164,7 @@ if (part) {
   const [a, b, g, rl] = part.split(':') as [string, string, 'best' | 'none', 'pick' | 'none'];
   const start = Number(a);
   const end = Number(b);
-  process.stdout.write(JSON.stringify(simulateEndless({ runs: end - start, firstSeed: firstSeed + start, gear: g, relics: rl, maxWave, cfg: ENDLESS })));
+  process.stdout.write(JSON.stringify(simulateEndless({ runs: end - start, firstSeed: firstSeed + start, gear: g, relics: rl, maxWave, cfg: ENDLESS, valor: valorMode() })));
 } else {
   void main();
 }

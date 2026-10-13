@@ -1054,7 +1054,7 @@
             "angle": -40
           },
           "bow_sky": {
-            "angle": -38
+            "angle": -45
           }
         },
         "charms": {
@@ -1589,22 +1589,22 @@
         },
         "bow_sky": {
           "anchor": {
-            "x": 429,
+            "x": 380,
             "y": 29,
             "angle": -40
           },
           "offhand": {
-            "x": 229,
-            "y": 114,
+            "x": 251,
+            "y": 145,
             "angle": 0
           },
           "box": {
-            "x": 132,
+            "x": 158,
             "y": 14,
-            "w": 334,
+            "w": 279,
             "h": 432
           },
-          "src": "archer-v2/bow.png"
+          "src": "archer-v2/override-bow_sky.png"
         }
       }
     },
@@ -4161,6 +4161,25 @@
             "h": 268
           },
           "src": "cutthroat-v2/two-handed.png"
+        },
+        "cross_cut": {
+          "anchor": {
+            "x": 346,
+            "y": 205,
+            "angle": 55
+          },
+          "offhand": {
+            "x": 248,
+            "y": 96,
+            "angle": -65
+          },
+          "box": {
+            "x": 107,
+            "y": 38,
+            "w": 343,
+            "h": 408
+          },
+          "src": "cutthroat-v2/extra-cross_cut.png"
         }
       }
     },
@@ -5439,6 +5458,26 @@
             "h": 263
           },
           "src": "hexer-v2/two-handed.png"
+        },
+        "doll_stab": {
+          "anchor": {
+            "x": 385,
+            "y": 82,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 394,
+            "y": 134,
+            "angle": 0
+          },
+          "hidden": true,
+          "box": {
+            "x": 125,
+            "y": 27,
+            "w": 319,
+            "h": 417
+          },
+          "src": "hexer-v2/extra-doll_stab.png"
         }
       }
     },

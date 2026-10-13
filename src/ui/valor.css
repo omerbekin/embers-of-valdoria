@@ -1,0 +1,205 @@
+/* Valor göstergesi ve savaş dışı diriltme penceresi (src/ui/valor-braziers.ts; Ömer 2026-10-13). Kit dili: koyu demir + kor, Cinzel etiket,
+   ince altın çizgi. Mangallar piksel art: tuval NEAREST büyütülür. */
+.vl-meter {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.vl-meter .vl-cv {
+  display: block;
+  image-rendering: pixelated;
+  image-rendering: crisp-edges;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7));
+}
+
+.vl-meter.vl-ready .vl-cv {
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.7)) drop-shadow(0 0 6px rgba(255, 140, 50, 0.45));
+}
+
+.vl-meter .vl-lbl {
+  font: 600 13px var(--el-display, serif);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--el-muted, #a8977a);
+}
+
+.vl-meter.vl-ready .vl-lbl {
+  color: var(--el-ember2, #ffb35a);
+}
+
+.vl-click {
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.vl-click:hover .vl-lbl,
+.vl-click:focus-visible .vl-lbl {
+  color: var(--el-on, #f3d999);
+}
+
+.vl-tip {
+  position: fixed;
+  z-index: 40;
+  max-width: 360px;
+}
+
+.vl-tip div + div {
+  margin-top: 4px;
+}
+
+/* Haritada ve Endless'ta sol üst köşe (oyun alanı kenarı); Back düğmesinin sağında değil, altında */
+.vl-corner {
+  position: absolute;
+  left: calc(22px + var(--el, 0px));
+  top: calc(14px + var(--et, 0px));
+  z-index: 6;
+  padding: 8px 12px 6px;
+  background: linear-gradient(180deg, rgba(20, 14, 9, 0.82), rgba(10, 7, 5, 0.72));
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.5);
+}
+
+.vl-corner.vl-low {
+  top: calc(96px + var(--et, 0px));
+}
+
+html.short .vl-corner {
+  left: calc(8px + var(--el, 0px));
+  top: calc(6px + var(--et, 0px));
+  padding: 4px 6px 3px;
+}
+
+html.short .vl-corner.vl-low {
+  top: calc(52px + var(--et, 0px));
+}
+
+html.short .vl-corner .vl-lbl {
+  font-size: 10px;
+}
+
+/* --- Savaş dışı diriltme penceresi (kit Diyalog) --- */
+.vl-overlay {
+  z-index: 20;
+}
+
+.el-dialog > .el-panel.vl-panel {
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.vl-meter-box {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 6px;
+}
+
+.vl-note {
+  margin: 6px 0 12px;
+  font: italic 18px/1.3 var(--el-body, serif);
+  color: var(--el-note, #cdb88d);
+}
+
+.vl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.vl-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--el-line1, rgba(217, 178, 106, 0.16));
+}
+
+.vl-face {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: grayscale(0.85) brightness(0.75);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.vl-who {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vl-name {
+  font: 600 18px var(--el-display, serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--el-txt, #d9c8a2);
+}
+
+.vl-sub {
+  font: italic 16px var(--el-body, serif);
+  color: var(--el-bad, #e8806a);
+}
+
+.vl-go {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.vl-msg {
+  min-height: 1.3em;
+  margin: 10px 0 0;
+  font: italic 17px var(--el-body, serif);
+  color: var(--el-ember2, #ffb35a);
+}
+
+html.short .el-dialog > .el-panel.vl-panel {
+  padding: 14px 18px 14px;
+}
+
+html.short .vl-note {
+  font-size: 15px;
+  margin-bottom: 6px;
+}
+
+/* Sefer haritası: sağ üstte, Menu düğmesinin altında */
+.vl-corner.vl-right {
+  left: auto;
+  right: calc(14px + var(--er, 0px));
+  top: calc(60px + var(--et, 0px));
+}
+
+html.short .vl-corner.vl-right {
+  right: calc(6px + var(--er, 0px));
+  top: calc(44px + var(--et, 0px));
+}
+
+.vl-meter[hidden] {
+  display: none !important;
+}
+
+/* Kasaba ekranı (haritanın içinde): sağ üstte kale kapısı etiketi var, mangallar sol üste geçer */
+.vl-corner.vl-right.vl-town {
+  right: auto;
+  left: calc(14px + var(--el, 0px));
+  top: calc(14px + var(--et, 0px));
+}
+
+html.short .vl-corner.vl-right.vl-town {
+  left: calc(6px + var(--el, 0px));
+  top: calc(6px + var(--et, 0px));
+}

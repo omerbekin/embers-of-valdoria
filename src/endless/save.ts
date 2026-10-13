@@ -1,6 +1,7 @@
 // Endless kaydı (saf; depo dışarıdan verilir): tek koşu yuvası (her dalga sonrası otomatik, Ironman gibi; yenilgide yükleme yok) + yerel
 // en iyi skor listesi. Sürümlü; bozuk / tanınmayan kayıt oyunu çökertmez (yok sayılır). Anahtarlar `protomedi.*` kalıbında (CLAUDE.md).
-import { CELL_COUNT, classes } from '../engine/content';
+import { CELL_COUNT, classes, valorRules } from '../engine/content';
+import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
@@ -64,6 +65,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     if (r.phase === 'shop' && !Array.isArray(r.shop)) return null;
     // Tüccar (2026-10-09): yenileme sayacı ve bu ziyaretin geri alım listesi; eski kayıtta yok; bozuk geri alım satırları atılır
     if (r.shopRerolls !== undefined && (!isNum(r.shopRerolls) || r.shopRerolls < 0)) delete r.shopRerolls;
+    // Valor (2026-10-13): eski kayıtta yok = 0 (Endless'ta ilk dalgadan açık); bozuk değer 0..cap aralığına
+    r.valor = clampValor(valorRules, isNum(r.valor) ? r.valor : 0);
     if (r.buyback !== undefined) {
       if (!Array.isArray(r.buyback)) delete r.buyback;
       else r.buyback = r.buyback.filter((e) => e && isNum(e.price) && e.price >= 0 && e.item && typeof e.item.uid === 'string' && typeof e.item.id === 'string');

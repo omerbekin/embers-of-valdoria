@@ -98,6 +98,12 @@ export interface AiGlobalConfig {
     /** Aura komşuluğu: kazanılan beklenen hasar azalması (can-eşdeğer) en az bu kadar olmalı. */
     minAuraGain: number;
   };
+  /**
+   * Valor diriltmesi (Ömer 2026-10-13, yalnızca Valor'u olan taraf = oyuncu vekili): diriltmenin terazi değeri (Resurrection'ın revive terimiyle aynı:
+   * dirilenin ufuktaki tur değeri + reviveHpShare x can) x valueShare (Valor savaşlar arası kıt kaynak), şimdiki class hamlesini en az
+   * minNetShare payı kadar AŞMALI ("açıkça değer"). Savaş belliyse (kazanılmış / dirilenle bile kaybediliyor) değer 0. Yoksa hiç denenmez.
+   */
+  valor?: { valueShare: number; minNetShare: number };
 }
 
 export interface AiConfig {
@@ -182,6 +188,9 @@ export interface GlobalTrace {
   moveBlocked?: string;
   restGain?: number;
   restBlocked?: string;
+  /** Valor diriltmesi: en iyi aday (değer, net) ya da neden yok. */
+  valor?: { target: string; slot: number; value: number; net: number } | null;
+  valorBlocked?: string;
   skipChecks?: Array<{ skill: string; futureValue: number; nowValue: number; needBelow: number; hit: boolean }>;
   skipNote?: string;
   outcome?: string;
@@ -1813,6 +1822,42 @@ function telegraphDodge(battle: Battle, actor: Combatant, free: number[], vNow: 
 }
 
 /**
+ * Valor diriltmesi planı (global 'valor'): diriltilebilecek her düşmüş dost için Resurrection'ın terazisiyle aynı değer (ufuktaki tur değeri x hücrede
+ * işe yararlık + reviveHpShare x can); savaş belliyse 0. Net = değer x valueShare - şimdiki hamle; net >= değer x minNetShare değilse aday yok.
+ */
+function valorPlan(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): { id?: string; plan: { target: string; slot: number; value: number; net: number } | null; blocked?: string } {
+  const id = battle.globalSkillIds(actor.side).find((x) => battle.globalDef(x)?.kind === 'valor');
+  if (!id) return { plan: null, blocked: 'no Valor in this battle' };
+  if (!g.valor) return { id, plan: null, blocked: 'ai.json > global.valor missing' };
+  const can = battle.canUseGlobal(actor.uid, id);
+  if (!can.ok) return { id, plan: null, blocked: can.reason };
+  const ctx = activeCtx;
+  const rules = battle.valorRules;
+  if (!ctx || !rules) return { id, plan: null, blocked: 'no value context' };
+  let best: { target: string; slot: number; value: number; net: number } | null = null;
+  const notes: string[] = [];
+  for (const d of battle.valorTargets(actor.uid)) {
+    const slot = battle.valorSlotFor(d.uid);
+    if (slot === null) continue;
+    const hp = Math.max(1, Math.round(d.maxHp * rules.revive.hpRatio));
+    const future = ctx.turnValue(d) * ctx.turnsWithin(d, 0) * Math.max(0, ctx.usefulAt(d, d.side, slot));
+    const decided = ctx.outcome({ dmg: future, hp });
+    if (decided) {
+      notes.push(`${unitLabel(d)}: battle ${decided === 'win' ? 'already won' : 'lost anyway'}`);
+      continue;
+    }
+    const value = ctx.vc.reviveWeight * (future + ctx.vc.reviveHpShare * hp) * g.valor.valueShare;
+    const net = value - vNow;
+    if (net < value * g.valor.minNetShare) {
+      notes.push(`${unitLabel(d)}: value ${r2(value)} vs class move ${r2(vNow)}`);
+      continue;
+    }
+    if (!best || net > best.net + 1e-9) best = { target: d.uid, slot, value, net };
+  }
+  return best ? { id, plan: best } : { id, plan: null, blocked: `no revive clearly beats the class move (${notes.join('; ') || 'no target'})` };
+}
+
+/**
  * Global skill kararı (Rest / Skip Turn / Move Tile); null = class hamlesi (ya da pas) kalır.
  * Madde 258 (Faz 3): sabit kapı yok; kazançlar class hamlesinin terazi puanıyla (öldürme, kurtarma, şifa terimleri dahil) kıyaslanır.
  * Tehlikede (can düşük ve gelen hasar büyük) dinlenme/bekleme denenmez; yalnızca geri çekilme (Move) olabilir.
@@ -1844,7 +1889,14 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
     else if (danger) trace.restBlocked = 'danger: low HP and high incoming damage';
     else if (rest <= 0) trace.restBlocked = 'no skill becomes affordable with extra MP (or gain below minGainShare)';
   }
+  // Valor diriltmesi (yalnızca Valor'u olan taraf): tehlikede de denenir (diriltme aktörün kendi canına bağlı değil)
+  const valor = valorPlan(battle, actor, g, vNow);
+  if (trace) {
+    trace.valor = valor.plan;
+    if (valor.blocked) trace.valorBlocked = valor.blocked;
+  }
   const best = [
+    ...(valor.plan && valor.plan.net > 0 ? [{ net: valor.plan.net, choice: { skillId: valor.id!, targetUid: valor.plan.target, slot: valor.plan.slot, reason: 'heal' } as AiChoice }] : []),
     ...(move && move.net > 0 ? [{ net: move.net, choice: { skillId: 'move_tile', slot: move.slot, targetUid: tileUid(move.slot), reason: 'move' } as AiChoice }] : []),
     ...(rest > 0 ? [{ net: rest, choice: { skillId: 'rest', reason: 'rest' } as AiChoice }] : []),
   ].sort((a, b) => b.net - a.net)[0];

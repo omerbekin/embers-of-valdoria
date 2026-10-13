@@ -13,6 +13,7 @@ import layout from '../../data/battle-layout.json';
 import { perfLite } from '../ui/perf-mode';
 import { stageView } from './stage-view';
 import { poseBodyUrl, weaponUrl } from './pose-files';
+import './pose-mode'; // gerçek sınıfların çizimi (v2 / debug v1): kayıtlı seçim pozlu birimler kurulmadan uygulanır
 import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;

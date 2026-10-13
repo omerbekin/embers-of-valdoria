@@ -6,6 +6,8 @@
  *  - Silah AYRI katman: her pozun el noktası (anchor x/y + açı) var; takılı silahın görseli (aile + nadirlik -> görünüm) oraya çizilir.
  *  - Çalışma anında (src/game/pose-rig.ts) gövde + silah her poz için TEK kareye pişirilir; CombatantView bu kareler arasında geçer.
  *  - Pozu olmayan sınıf bugünkü gibi (tek sprite + kod tweenleri). Motor / oyun kuralı DEĞİŞMEZ: yalnızca sunum.
+ *  - GERÇEK sınıflar (Ömer 2026-10-13) kendi v2 gövdesiyle (classes.<id>_v2) çizilir; skill -> poz eşlemesi Pose Tester kopyasından
+ *    (pt_<id>.pose, `poseSkill`). Debug > Characters > Poses "Real classes: v1 render" eski görünüme döndürür (`setRealPosesV2`).
  * Veri: data/poses.json (ölçümler tools/make-poses.mjs, el noktaları tools/pose-editor.mjs), skill eşlemesi skills.json > pose.
  */
 import raw from '../../data/poses.json';
@@ -134,8 +136,18 @@ export interface WeaponPick {
   offhand?: { family: string; look: string };
 }
 
-/** Kütüphanenin asıl sahibi (takma ad çözülür: Pose Tester -> warrior). */
-export const poseOwner = (classId: string): string => POSES.classAliases?.[classId] ?? classId;
+/** Gerçek sınıflar v2 gövdesiyle mi (varsayılan: evet). Kapalıyken eski görünüm: tek idle görseli + kod hareketi (Warrior v1 pozları). */
+let realV2 = true;
+/** Debug karşılaştırması (src/game/pose-mode.ts kalıcı tutar): false = gerçek sınıflar v1 çizimi. */
+export const setRealPosesV2 = (on: boolean): void => {
+  realV2 = on;
+};
+export const realPosesV2 = (): boolean => realV2;
+/** Sınıfın kendi v2 gövdesi (classes.<id>_v2; gerçek oynanabilir sınıflar), yoksa null. */
+export const v2BodyOf = (classId: string): string | null => (POSES.classes[`${classId}_v2`] ? `${classId}_v2` : null);
+
+/** Kütüphanenin asıl sahibi: takma ad (Pose Tester -> <sınıf>_v2), gerçek sınıfta kendi v2 gövdesi (v1 çizimi seçiliyse kendisi). */
+export const poseOwner = (classId: string): string => POSES.classAliases?.[classId] ?? (realV2 ? v2BodyOf(classId) : null) ?? classId;
 /** Bu sınıfın poz kütüphanesi (yoksa null: bugünkü davranış). */
 export const poseClass = (classId: string): PoseClassDef | null => POSES.classes[poseOwner(classId)] ?? null;
 export const hasPoses = (classId: string): boolean => !!poseClass(classId);
@@ -228,6 +240,16 @@ export function skillPoses(classId: string, skill: { pose?: string | string[]; m
   const state = skill.motion === 'cast' || skill.motion === 'self' ? 'cast' : 'attack';
   const p = def.states[state];
   return p ? [p] : [];
+}
+
+/**
+ * v2 gövdeli gerçek sınıfın skill'i -> Pose Tester kopyasının (pt_<id>) pozu: gerçek sınıf ve Pose Tester AYNI eşlemeyi kullanır
+ * (tools/make-pose-testers.mjs > POSE, docs/design/pose-coverage.md). v1 / pozsuz sınıf, pt_ skill'i ya da kopyası olmayan skill aynen.
+ */
+export function poseSkill<T extends { id?: string; pose?: string | string[]; motion?: string }>(classId: string, skill: T, lookup: (id: string) => { pose?: string | string[] } | undefined): T {
+  if (!skill.id || skill.id.startsWith('pt_') || !poseClass(classId)?.grips) return skill;
+  const pose = lookup(`pt_${skill.id}`)?.pose;
+  return pose === undefined ? skill : { ...skill, pose };
 }
 
 /** Ad döngüyse kareleri, tek pozsa kendisi (mantıksal ad tutuşla çözülür: spin -> spin1 / spin2). */

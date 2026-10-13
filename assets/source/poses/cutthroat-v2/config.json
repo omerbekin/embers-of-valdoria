@@ -1,5 +1,5 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=cutthroat: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "_not": "tools/make-poses-v2.mjs --class=cutthroat: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. cross_cut = extra-cross_cut.png (ek poz, Saltire Cut): main = alttaki yumruk, off = üstteki; açılar X boyunca.",
   "seeds": {
     "idle1": { "main": [262, 125], "off": [170, 165] },
     "step1": { "main": [665, 150], "off": [470, 130] },
@@ -24,6 +24,7 @@
     "guard2": { "main": [245, 740], "off": [215, 745] },
     "throw": { "main": [478, 685], "off": [740, 770] },
     "hit": { "main": [985, 840], "off": [985, 840] },
-    "kneel": { "main": [1455, 965], "off": [1455, 965] }
+    "kneel": { "main": [1455, 965], "off": [1455, 965] },
+    "cross_cut": { "main": [712, 664], "off": [440, 362], "angle": 55, "offAngle": -65 }
   }
 }

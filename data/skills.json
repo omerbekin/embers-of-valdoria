@@ -164,7 +164,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 3
+      "amount": 4
     },
     "motion": "cast",
     "fx": "#ff7a1a",
@@ -597,7 +597,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 15
     },
     "cooldown": 3,
     "motion": "cast",
@@ -753,7 +753,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 16
+      "amount": 17
     },
     "cooldown": 3,
     "initialCooldown": 2,
@@ -2558,9 +2558,9 @@
       "swordWhoosh",
       "duelCut"
     ],
-    "pose": "slash",
+    "pose": "cross_cut",
     "artOf": "x_cut",
-    "note": "Pose test: plays the Slash pose."
+    "note": "Pose test: plays the Cross Cut (Cutthroat only) pose."
   },
   "pt_smoke_bomb": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Smoke Bomb kopyası; gerçek efekt/ses/hedef (artOf smoke_bomb), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3536,9 +3536,9 @@
       "voidPulse",
       "implode"
     ],
-    "pose": "channel",
+    "pose": "doll_stab",
     "artOf": "doom_mark",
-    "note": "Pose test: plays the Channel pose."
+    "note": "Pose test: plays the Doll Stab (Hexer only) pose."
   },
   "cudgel": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Bandits temel saldırısı (Road Thug, Moor Raider), şablon Bone Strike. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",

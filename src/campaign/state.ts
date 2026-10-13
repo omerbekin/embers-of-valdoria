@@ -7,6 +7,8 @@ import { itemRecovery } from '../progression/loadout';
 import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
 import { nodeIlvl } from './power';
+import { valorRules } from '../engine/content';
+import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -202,6 +204,49 @@ const tutorialActive = (s: CampaignState): boolean => !mapOf(s).nodes.some((n) =
 export function complete(s: CampaignState, kind: StepKind): void {
   const k = key(s.at, kind);
   if (!s.done.includes(k)) s.done.push(k);
+  // Valor (Ömer 2026-10-13): Valdren Keep'in hikâyesi (komutan Valor'u anlatır) ya da kasabası bitince açılır, hediye ile başlar
+  if ((kind === 'story' || kind === 'town') && s.at === valorRules.campaign.introNode && s.valor === undefined) s.valor = addValor(valorRules, 0, valorRules.campaign.gift);
+}
+
+// ---------------------------------------------------------------- Valor (Ömer 2026-10-13; data/valor.json)
+
+/** Valor açık mı (Valdren Keep'ten sonra)? Kapalıyken arayüz göstermez ve savaş kazancı birikmez. */
+export const valorUnlocked = (s: CampaignState): boolean => s.valor !== undefined;
+
+/** Savaş dışı diriltme yapılabilir mi (açık, yeterli Valor, düşmüş kahraman)? Değilse nedeni. */
+export function valorReviveBlocked(s: CampaignState, heroId: string): string | null {
+  if (!valorUnlocked(s)) return 'Valor is not known yet';
+  const h = heroById(s, heroId);
+  if (!h || !isFallen(h)) return 'This hero has not fallen';
+  if (!canReviveOutside(valorRules, s.valor!)) return `Needs ${valorRules.revive.outsideCost} Valor (you have ${s.valor})`;
+  return null;
+}
+
+/** Savaş dışında (harita) Valor ile dirilt: outsideCost Valor, kahraman revive.hpRatio canla kalkar. */
+export function reviveWithValor(s: CampaignState, heroId: string): CampaignState {
+  const why = valorReviveBlocked(s, heroId);
+  if (why) throw new Error(why);
+  const t = clone(s);
+  const h = heroById(t, heroId)!;
+  t.valor = addValor(valorRules, t.valor! - valorRules.revive.outsideCost, 0);
+  h.alive = true;
+  h.hpRatio = Math.round(clamp01(valorRules.revive.hpRatio) * 1000) / 1000;
+  return t;
+}
+
+/** Oyuncu vekili (sim / otomatik): Valor yettikçe düşmüşleri savaş dışında diriltir (önce aktif takım; tutorial kahramanı hariç). */
+export function autoValorRevive(s: CampaignState): CampaignState {
+  let t = s;
+  for (const h of [...activeHeroes(s), ...s.roster.filter((x) => !s.active.includes(x.id))]) if (!h.tutorial && !valorReviveBlocked(t, h.id)) t = reviveWithValor(t, h.id);
+  return t;
+}
+
+/** Debug: Valor'u ayarla (açar; null = kapat / gizle). */
+export function debugSetValor(s: CampaignState, v: number | null): CampaignState {
+  const t = clone(s);
+  if (v === null) delete t.valor;
+  else t.valor = addValor(valorRules, 0, v);
+  return t;
 }
 
 export function expectStep(s: CampaignState, kind: NextStep['kind']): NextStep {
@@ -474,6 +519,12 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     h.alive = true;
   }
   t.stats.victories++;
+  // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1
+  if (t.valor !== undefined) {
+    const type = node(mapOf(t), t.at).type;
+    const flawless = outcome.flawless ?? outcome.units.every((u) => u.alive && u.hpRatio > 0);
+    t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, valorEarned(valorRules, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'normal', flawless));
+  }
   if (t.eventChoice?.node === t.at && t.eventChoice.battle) {
     winEventBattle(t); // olay savaşı: düğümün savaş adımı zaten bitti
     return t;

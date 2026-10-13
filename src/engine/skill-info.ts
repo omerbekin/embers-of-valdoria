@@ -4,7 +4,7 @@ import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { bonusScaleRaw } from './spec';
 import { applySummonVariant, attributePower, outgoingDamageMult } from './stats';
-import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef } from './types';
+import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
 export interface SkillInfo {
@@ -183,8 +183,18 @@ export interface GlobalSkillInfo {
   turnsOnly: boolean;
 }
 
-export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas): GlobalSkillInfo {
+export function describeGlobalSkill(def: GlobalSkillDef, _formulas?: Formulas, valor?: ValorRules): GlobalSkillInfo {
   const lines: string[] = [];
+  if (def.kind === 'valor') {
+    const r = valor?.revive;
+    lines.push(
+      `Costs ${r?.battleCost ?? 0} Valor`,
+      `A fallen ally rises with ${pct(r?.hpRatio ?? 0.5)} HP${r && r.mpRatio > 0 ? ` and ${pct(r.mpRatio)} MP` : ''}, on the cell where they fell (or the nearest empty cell)`,
+      'Uses your turn',
+      `Valor is earned by winning battles; outside battle a revive costs only ${r?.outsideCost ?? 0}`,
+    );
+    return { id: def.id, name: def.name, icon: def.icon, target: TARGET_TEXT.dead_ally, targetBadge: TARGET_BADGE.dead_ally, cost: `${r?.battleCost ?? 0} Valor`, summary: def.text, lines, turnsOnly: false };
+  }
   if (def.kind === 'rest') {
     lines.push(`Restores ${def.mp ?? 0} MP (never above your maximum)`, 'Ends your turn');
   } else if (def.kind === 'skip') {

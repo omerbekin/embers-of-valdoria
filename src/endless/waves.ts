@@ -49,7 +49,17 @@ const r3 = (v: number) => Math.round(v * 1000) / 1000;
 export function waveMods(wave: number, cfg: EndlessConfig = ENDLESS): UnitModifiers | undefined {
   const k = Math.max(0, wave - 1);
   if (!k) return undefined;
-  return { hpMult: r3(1 + cfg.scaling.hpPerWave * k), statMult: r3(1 + cfg.scaling.statPerWave * k), powerMult: r3(1 + cfg.scaling.powerPerWave * k) };
+  // Boss basamağı (Ömer 2026-10-13, form valor2: her boss bir öncekinden ~10 puan zor): b. boss'un can/güç ek çarpanı scaling.bossMult[b];
+  // liste bitince son değerde kalır (dalga güçlenmesi sürer). Yalnızca dalga numarasına bağlı (oyuncu gücüne değil).
+  const step = waveKind(wave, cfg) === 'boss' ? bossMult(Math.floor(wave / cfg.bossEvery) - 1, cfg) : 1;
+  return { hpMult: r3((1 + cfg.scaling.hpPerWave * k) * step), statMult: r3(1 + cfg.scaling.statPerWave * k), powerMult: r3((1 + cfg.scaling.powerPerWave * k) * step) };
+}
+
+/** b. boss'un (0 = 10. dalga) ek can/güç çarpanı: scaling.bossMult listesi, liste bitince son değer (liste yoksa 1). */
+export function bossMult(b: number, cfg: EndlessConfig = ENDLESS): number {
+  const list = cfg.scaling.bossMult ?? [];
+  if (b < 0 || !list.length) return 1;
+  return list[Math.min(b, list.length - 1)]!;
 }
 
 /** İki güçlendirmenin birleşimi: çarpanlar çarpılır, kalan alanlar (spriteScale, actionsPerTurn, ekler) karşılaşmadan gelir. */
@@ -89,6 +99,8 @@ export interface WavePlan {
   background?: string;
   /** Düşman önizlemesi (ön sıradan arkaya; özel ad > class adı). */
   enemyNames: string[];
+  /** Savaş başı Valor'u (koşunun Valor'u; motora teams.valor.party). */
+  valor: number;
 }
 
 const unitName = (cls: string, name?: string) => name ?? classes[cls]?.name ?? bosses[cls]?.name ?? cls;
@@ -206,5 +218,6 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     difficulty: cfg.difficulty,
     ...(background ? { background } : {}),
     enemyNames,
+    valor: run.valor ?? 0,
   };
 }

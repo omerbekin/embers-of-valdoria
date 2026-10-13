@@ -4,6 +4,7 @@ import aiJson from '../../data/ai.json';
 import formulasJson from '../../data/formulas.json';
 import skillsJson from '../../data/skills.json';
 import globalSkillsJson from '../../data/global-skills.json';
+import valorJson from '../../data/valor.json';
 import firstBattle from '../../data/battles/first-battle.json';
 import randomBattle from '../../data/battles/random-battle.json';
 import aoeTester from '../../data/classes/aoe_tester.json';
@@ -52,7 +53,7 @@ import type { AiConfig } from './ai';
 import type { BattleSetup } from './battle';
 import { Rng } from './rng';
 import { buildDef } from './stats';
-import type { BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, SkillDef, StatusDef, UnitSetup } from './types';
+import type { BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules } from './types';
 
 export interface BattleDef {
   id: string;
@@ -162,6 +163,9 @@ export const globalSkills = stripNotes<GlobalSkillDef>(globalSkillsJson);
 /** Yerde kalan etki tanımları (data/grounds.json). */
 export const grounds = stripNotes<GroundDef>(groundsJson);
 
+/** Valor kuralları (data/valor.json; src/engine/valor.ts). */
+export const valorRules = valorJson as unknown as ValorRules;
+
 export const aiConfig = aiJson as unknown as AiConfig;
 
 export const battles: Record<string, BattleDef> = {
@@ -177,6 +181,8 @@ export interface Teams {
   enemies: string[];
   /** Opsiyonel birim kurulumları (güçlendirme, özel ad, başlangıç canı...); bkz. TeamUnits. Yoksa savaş birebir eskisi gibidir. */
   units?: TeamUnits;
+  /** Valor (taraf başına, savaş başı miktarı; yoksa o tarafta Valor yok ve valor_revive görünmez). Sefer/Endless yalnızca party verir. */
+  valor?: Partial<Record<Side, number>>;
 }
 
 /**
@@ -414,8 +420,10 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     enemySlots: enemies.slots,
     ...(partyUnits ? { partyUnits } : {}),
     ...(enemyUnits ? { enemyUnits } : {}),
+    ...(teams?.valor ? { valor: { ...teams.valor } } : {}),
     skills,
     globalSkills,
+    valorRules,
     statuses,
     grounds,
     formulas,

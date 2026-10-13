@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import { reducedMotion } from '../ui/motion-pref';
 import { paintedOr } from '../ui/misc-icons';
 import layout from '../../data/battle-layout.json';
-import type { Combatant, TargetPreview } from '../engine';
+import { content, type Combatant, type TargetPreview } from '../engine';
 import { animKey, characterTexture, type AnimName } from './assets';
 import { debugState } from './debug-state';
 import { formatHit, hitColor } from './hit-format';
@@ -14,7 +14,7 @@ import { DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
-import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
+import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, poseDisplayScale } from './pose-rig';
 
 /**
@@ -43,9 +43,14 @@ interface PoseRig {
   startedAt: number;
   /** v2: bu ana dek (sahne zamanı) idle isteği ertelenir (büyü pozunun en kısa tutuluşu, skill bittikten sonra da). */
   holdUntil: number;
+  /** Biten skill'in poz dizisi ve bittiği an: vuruş anında dönen efekt (playUntilHit) sonradan 'attack' isterse skill'in pozu (Saltire Cut). */
+  lastSkill?: string[];
+  endedAt?: number;
 }
+/** Skill bittikten sonra geç gelen 'attack' isteğinin hâlâ o skill'in pozunu alacağı süre (ms, slow() ile). */
+const LATE_ATTACK_MS = 1200;
 
-/** v2 poz takımı (tutuş takımlı sınıf: Pose Tester'lar): skill pozu tutma ve efekt çıkış noktası yalnızca burada (gerçek Warrior v1 aynen). */
+/** v2 poz takımı (tutuş takımlı sınıf: gerçek sınıflar ve Pose Tester'lar): skill pozu tutma ve efekt çıkış noktası yalnızca burada (debug v1 çiziminde Warrior v1 aynen). */
 const isV2 = (def: PoseClassDef): boolean => !!def.grips;
 /** Melee skill pozunun idle'a dönmeden önce en az görünme süresi (ms, slow() ile). */
 const MELEE_POSE_MIN_MS = 260;
@@ -772,8 +777,11 @@ export class CombatantView {
     if (this.rig) {
       if (anim === 'idle' && this.holdSkillPose()) return;
       // pozlu sınıf: genel durum -> poz; attack/cast oynanan skill'in vuruş pozu (skills.json > pose), yoksa sınıfın varsayılanı
-      const skill = anim === 'attack' || anim === 'cast' ? this.rig.skill[this.rig.skill.length - 1] : undefined;
+      const late = anim === 'attack' && !this.rig.skill.length && this.scene.time.now - (this.rig.endedAt ?? -1e9) < slow(LATE_ATTACK_MS) ? this.rig.lastSkill : undefined;
+      const list = late ?? this.rig.skill;
+      const skill = anim === 'attack' || anim === 'cast' ? list[list.length - 1] : undefined;
       this.showPose(skill ?? statePose(this.rig.def, anim, this.grip));
+      if (late) this.returnToIdle(this.rig.token, slow(600)); // geç istek: skill zaten bitti, kendi dönüşü yok
       if (anim === 'hit') this.returnToIdle(this.rig.token, slow(timing.hitFlashMs) * 3 + slow(260));
       return;
     }
@@ -840,8 +848,11 @@ export class CombatantView {
   /**
    * BattleScene: bu birim şimdi bu skill'i oynuyor (null = bitti). attack/cast durumları ve `skillPose()` skill'in poz dizisini kullanır.
    */
-  useSkill(skill: { pose?: string | string[]; motion?: string } | null): void {
+  useSkill(skill0: { id?: string; pose?: string | string[]; motion?: string } | null): void {
     if (!this.rig) return;
+    // v2 gövdeli gerçek sınıf: Pose Tester kopyasının (pt_<id>) pozu (aynı eşleme; poses.ts > poseSkill)
+    const skill = skill0 ? poseSkill(this.combatant.defId, skill0, (id) => content.skills[id]) : null;
+    if (!skill && this.rig.skill.length) this.rig.lastSkill = this.rig.skill;
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
     this.rig.motion = skill?.motion;
     if (skill) this.rig.startedAt = this.scene.time.now;
@@ -860,6 +871,7 @@ export class CombatantView {
     }
     // skill bitti: efekt pozu boşta pozuna döndürmediyse (araya başka poz girmezse) kısa süre sonra boşta pozuna
     if (!skill) {
+      this.rig.endedAt = this.scene.time.now;
       // v2: büyü / atış pozu en az CAST_POSE_MIN_MS görünür (çok kısa efektte de poz okunsun), sonra yumuşak dönüş
       const v2 = isV2(this.rig.def);
       const left = v2 && this.rig.motion !== 'melee' ? slow(CAST_POSE_MIN_MS) - (this.scene.time.now - this.rig.startedAt) : 0;

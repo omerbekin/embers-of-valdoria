@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { SAVE_KEY, addItem, memoryKV, migrateSaves, newCampaign, pickHero, readSaves, writeSave } from '../src/campaign';
+import { SAVE_KEY, SAVE_VERSION, addItem, memoryKV, migrateSaves, newCampaign, pickHero, readSaves, writeSave } from '../src/campaign';
 import { content } from '../src/engine';
 import { newRun, parseRun, saveRun, SAVE_VERSION as ENDLESS_SAVE_VERSION, SCORES_VERSION, loadScores, RUN_KEY, SCORES_KEY } from '../src/endless';
 import { migrateItemRolls, migrateRollsX2, rolledAffixes, SCALED_ITEM_STATS } from '../src/progression/items';
@@ -49,7 +49,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
     expect(r.corrupt).toBe(false); // eski zarlar göç ederken çökmez; kayıt yine de eski haritadan
     expect(r.file.slots[0]).toMatchObject({ campaignId: 'm1', saves: [], mapChanged: true });
     expect(migrateSaves(kv)).toBe(true);
-    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(6);
+    expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(SAVE_VERSION);
     expect(readSaves(kv).migrated).toBe(false);
   });
 

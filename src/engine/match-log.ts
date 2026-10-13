@@ -154,8 +154,10 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.by)} consumes the corpse of ${L(e.uid)} (cell ${e.slot}): it can no longer be revived`;
     case 'despawn':
       return `${L(e.target)} despawns`;
+    case 'valor':
+      return `${e.side} spends ${e.spent} Valor (now ${e.after})`;
     case 'revive':
-      return `${L(e.source)} revives ${L(e.target)} (hp ${e.hpAfter}, mp ${e.mpAfter}${e.slot !== undefined ? `, cell ${e.slot}${e.from !== undefined && e.from !== e.slot ? `; corpse was on cell ${e.from}` : ''}` : ''})`;
+      return `${e.cause === 'valor' ? '[Valor] ' : ''}${L(e.source)} revives ${L(e.target)} (hp ${e.hpAfter}, mp ${e.mpAfter}${e.slot !== undefined ? `, cell ${e.slot}${e.from !== undefined && e.from !== e.slot ? `; corpse was on cell ${e.from}` : ''}` : ''})`;
     case 'mpRegen':
       return `${L(e.actor)} +${e.amount} MP (now ${e.after})${e.cause ? ` [${e.cause}]` : ''}`;
     case 'immune':

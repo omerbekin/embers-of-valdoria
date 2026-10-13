@@ -84,7 +84,7 @@ export class CombatLog {
       case 'globalUsed': {
         this.close();
         const kind = this.names.globalKind(e.id);
-        const verb = kind === 'rest' ? ' rested' : kind === 'skip' ? ' skipped the turn' : kind === 'move' ? ' moved' : ` used ${e.id}`;
+        const verb = kind === 'rest' ? ' rested' : kind === 'skip' ? ' skipped the turn' : kind === 'move' ? ' moved' : kind === 'valor' ? ' spent Valor' : ` used ${e.id}`;
         this.cur = { round: this.round, actor: e.actor, verb: [{ t: verb }], hits: [], notes: [] };
         this.done.push(this.cur);
         return true;

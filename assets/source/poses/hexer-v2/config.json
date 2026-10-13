@@ -1,5 +1,5 @@
 {
-  "_not": "tools/make-poses-v2.mjs --class=hexer: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "_not": "tools/make-poses-v2.mjs --class=hexer: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13. doll_stab = extra-doll_stab.png (ek poz, Doom Mark): main = iğneli sağ yumruk, off = bebeği tutan sol el; bebek ve iğne kareye boyalı (hidden).",
   "overrideScale": { "hit": 1.14 },
   "seeds": {
     "idle1": { "main": [262, 132], "off": [195, 150] },
@@ -25,6 +25,7 @@
     "guard2": { "main": [215, 745], "off": [185, 745] },
     "throw": { "main": [520, 690], "off": [725, 790] },
     "hit": { "main": [600, 650], "off": [610, 725] },
-    "kneel": { "main": [1440, 970], "off": [1440, 970] }
+    "kneel": { "main": [1440, 970], "off": [1440, 970] },
+    "doll_stab": { "main": [812, 312], "off": [838, 470], "angle": 190, "offAngle": 0, "hidden": true }
   }
 }

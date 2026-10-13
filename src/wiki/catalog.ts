@@ -640,13 +640,14 @@ export function buildMechanics(): WikiArticle[] {
       { kind: 'table', ...areaSkillTable() },
     ], '#c9a0ff', shapeExamples()),
     article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'boot', [
-      p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn.'),
-      list(...Object.values(content.globalSkills).map((d) => {
+      p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn. In the campaign and in Endless your heroes have a fourth, Revive, paid with Valor (see Valor).'),
+      list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor').map((d) => {
         const info = describeGlobalSkill(d, f);
         return `${info.name}: ${[info.summary, ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
       })),
       p('The enemy team uses these actions too: it rests when a strong skill is out of MP, waits when nothing useful can be done, and moves fragile units out of melee reach.'),
     ], '#9ec5e8'),
+    valorArticle(),
     article('backstab', 'Special rules', 'Strikes from behind and sure crits', 'backstab', [
       p('Some assassin skills slip behind the target, stab it in the back and return. They ignore the melee row rules (any row can be targeted), but only a target with an empty cell right behind it can be chosen: the next row back, same lane, must hold no living unit. A corpse or a cell kept for a fallen ally does not block it; a target in the back row can never be chosen ("No room behind the target"), and one with a living unit behind it is "shielded from behind". Moving units (or a unit falling) can open the way. The caster is drawn there only for the strike: the formation does not change.'),
       p(`Some hits are always critical: no crit roll is made and the crit multiplier (x${num(a.critMult)}) always applies. The hit roll still happens, so they can still miss or be dodged.`),
@@ -815,6 +816,24 @@ function affixArticle(): WikiArticle {
     ),
     { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },
   ]);
+}
+
+/** Valor makalesi (data/valor.json; Ömer 2026-10-13): kazanç, iki mangal, savaşta / savaş dışında diriltme, sefer kilidi. Sayılar veriden. */
+function valorArticle(): WikiArticle {
+  const V = content.valorRules;
+  const r = V.revive;
+  const intro = (campaignMap.nodes as Array<{ id: string; name: string }>).find((n) => n.id === V.campaign.introNode)?.name ?? 'a town';
+  return article('valor', 'Special rules', 'Valor', 'ankh', [
+    p(`Valor is your company's courage, kept as embers in two iron braziers of ${V.perBrazier} embers each (${V.cap} at most). It is spent only to bring a fallen hero back.`),
+    list(
+      `Earning: every battle you win lights ${V.earn.win} ember; an elite battle ${V.earn.elite} and a boss ${V.earn.boss} instead. If no hero fell during the battle, you light ${V.earn.flawless} more (a hero raised again still counts as fallen).`,
+      `In battle: when a brazier is full (${r.battleCost} embers), any of your heroes can use Revive next to Rest, Skip Turn and Move. Pick a fallen ally whose body lies on your side: they rise with ${pct(r.hpRatio)} of their HP${r.mpRatio > 0 ? ` and ${pct(r.mpRatio)} of their MP` : ''} on the cell where they fell (or the nearest empty cell if someone stands there). It uses that hero's turn. A body consumed by Raise Dead cannot be raised.`,
+      `Outside battle a revive is cheaper: ${r.outsideCost} embers. Tap the braziers on the campaign map or between Endless waves and choose a fallen hero; they rise with ${pct(r.hpRatio)} of their HP.`,
+      `Campaign: Valor is unknown until ${intro}, where the commander explains it and gives you a first full brazier (${V.campaign.gift} embers). It is saved with your journey.`,
+      `Endless: Valor is there from the first wave (you start with ${V.endless.start}). The Revive reward card still works as before and costs nothing.`,
+      'Only your side has Valor: enemies never use it.',
+    ),
+  ], '#ffb35a');
 }
 
 /** Endless makalesi (data/endless.json; sürekli akış, ödül kartları, ceset + Revive kartı, tüccar, torba). Sayılar veriden. */

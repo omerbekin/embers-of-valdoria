@@ -59,7 +59,7 @@ export function attachRecorder(battle: Battle, onAction: (action: ReplayAction) 
       }
     };
   battle.useSkill = wrap(orig.useSkill, (a: string, s: string, t?: string, slot?: number, b?: Side, c?: string) => useAction(a, s, t, slot, b, c));
-  battle.useGlobal = wrap(orig.useGlobal, (a: string, s: string, slot?: number) => useAction(a, s, undefined, slot));
+  battle.useGlobal = wrap(orig.useGlobal, (a: string, s: string, slot?: number, t?: string) => useAction(a, s, t, slot));
   battle.skipTurn = wrap(orig.skipTurn, () => ({ k: 'skip' }));
   battle.applyChoice = wrap(orig.applyChoice, (a, choice) => (choice ? useAction(a, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid) : { k: 'skip' }));
   return () => {

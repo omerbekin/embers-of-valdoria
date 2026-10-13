@@ -547,6 +547,8 @@ export interface BattleSummary {
   winner: Side | null;
   turnsTaken: number;
   units: UnitSummary[];
+  /** Oyuncu tarafında Valor varsa: kalan Valor ve kusursuz zafer (bu savaşta hiçbir dost düşmedi; savaşa ceset girenler sayılmaz). */
+  valor?: { left: number; flawless: boolean };
 }
 
 /** Çağrı varyantı: `mult` can (maks can) ve hasar statlarına (str, int; Str'den gelen düz can yenilenmesi dahil) uygulanan çarpan. */
@@ -1421,7 +1423,9 @@ type BattleEventBody =
    * Düşmüş bir birim dirildi. `slot`: dirildiği hücre (madde 257: Resurrection'da oyuncunun seçtiği BOŞ hücre; cesedin hücresi dolu olabilir), `from`:
    * cesedin hücresi (aynıysa yerinde dirildi). Combatant.slot da güncellenir. Eski kayıtlarda ikisi de yok (yerinde).
    */
-  | { type: 'revive'; source: string; target: string; hpAfter: number; mpAfter: number; slot?: number; from?: number }
+  | { type: 'revive'; source: string; target: string; hpAfter: number; mpAfter: number; slot?: number; from?: number; /** 'valor': global Valor diriltmesi (skill değil). */ cause?: 'valor' }
+  /** Valor harcandı (global valor_revive): taraf, harcanan, kalan. */
+  | { type: 'valor'; side: Side; spent: number; after: number }
   /** `cause`: kalkan kancası (ör. 'mana_barrier') verdiyse skill id'si; yoksa tur başı yenilenme / Rest / pasif. */
   | { type: 'mpRegen'; actor: string; amount: number; after: number; cause?: string }
   /** Rage değişimi (yalnızca Rage'li birim): delta + = kazanç (skill hasar verince), - = bedel (Abyssal Cry); after = yeni değer, max = üst sınır. */
@@ -1474,9 +1478,10 @@ export interface GlobalSkillDef {
   name: string;
   /** İkon türü (src/ui/icon-kinds.ts). */
   icon: string;
-  kind: 'rest' | 'skip' | 'move';
+  /** valor: takımın Valor'unu (data/valor.json) harcayıp kendi tahtasında cesedi olan düşmüş dostu diriltir (yalnızca savaşta Valor'u olan taraf). */
+  kind: 'rest' | 'skip' | 'move' | 'valor';
   /** self: hedef yok; empty_tile: kendi tarafındaki boş (canlı olmayan) bir yuva seçilir. */
-  target: 'self' | 'empty_tile';
+  target: 'self' | 'empty_tile' | 'dead_ally';
   /** rest: kazanılan MP (maks MP'yi aşmaz). */
   mp?: number;
   /** skip: bir sonraki tura kadar hız desteği (1 = +%100: sayaç iki kat hızlı dolar; Haste/Slow ile toplamsal). */
@@ -1487,6 +1492,19 @@ export interface GlobalSkillDef {
   turnsOnly?: boolean;
   /** Oyuncuya gösterilen kısa açıklama (İngilizce); sayılar skill-info tarafından veriden eklenir. */
   text: string;
+}
+
+/**
+ * Valor kuralları (data/valor.json; Ömer 2026-10-13): takım kaynağı, yalnızca diriltmeye harcanır. Saf hesaplar src/engine/valor.ts.
+ */
+export interface ValorRules {
+  cap: number;
+  /** Bir mangaldaki kor sayısı (gösterim; iki mangal = cap). */
+  perBrazier: number;
+  earn: { win: number; elite: number; boss: number; flawless: number };
+  revive: { battleCost: number; outsideCost: number; hpRatio: number; mpRatio: number };
+  campaign: { introNode: string; gift: number };
+  endless: { start: number };
 }
 
 /** Bir birimin yapabileceği tek bir eylem (battle.act girdisi; yapay zeka seçimi de bu şekle çevrilir). */
@@ -1502,4 +1520,6 @@ export interface ActionInfo {
   reason?: string;
   /** Yalnızca Move Tile: seçilebilecek boş yuvalar (küçükten büyüğe). */
   slots?: number[];
+  /** Yalnızca Valor diriltmesi: diriltilebilecek düşmüş dostların uid'leri. */
+  targets?: string[];
 }

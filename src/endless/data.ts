@@ -11,7 +11,8 @@ export interface EndlessConfig {
   /** Torba kapasitesi (yoksa seferin items.json > bag değeri). */
   bagSize?: number;
   enemyCount: Array<{ fromWave: number; count: number }>;
-  scaling: { hpPerWave: number; statPerWave: number; powerPerWave: number };
+  /** bossMult: b. boss dalgasının (0 = ilk boss) can ve güç ek çarpanı; liste bitince son değerde kalır (src/endless/waves.ts > bossMult). */
+  scaling: { hpPerWave: number; statPerWave: number; powerPerWave: number; bossMult?: number[] };
   eliteEvery: number;
   bossEvery: number;
   elites: string[];
@@ -197,6 +198,8 @@ export interface EndlessRun {
   summons?: CarriedSummon[];
   /** Yarıda bırakılan savaş (seed + eylem günlüğü; src/endless/replay.ts). Yalnızca 'ready' aşamasında ve aynı dalga için geçerli. */
   suspended?: SuspendedBattle;
+  /** Valor (Ömer 2026-10-13, data/valor.json): ilk dalgadan itibaren birikir, düşmüş kahramanı diriltmeye harcanır. Eski kayıtta yok = 0. */
+  valor?: number;
 }
 
 /** Yerel en iyi skor listesinin bir satırı. Skor = ulaşılan dalga (eşitlikte daha az tur önde). */

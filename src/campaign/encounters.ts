@@ -61,6 +61,8 @@ export interface BattlePlan {
   difficulty: Difficulty;
   /** Region battle background id (content-designer: border-road, valley-field, ashen-heights; yoksa varsayılan arka plan). */
   background?: string;
+  /** Savaş başı Valor'u (açıksa; motora teams.valor.party olarak gider). */
+  valor?: number;
 }
 
 /**
@@ -129,6 +131,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     difficulty: CONFIG.difficulties[s.difficulty]?.ai ?? CONFIG.defaultDifficulty,
     // Arka plan önceliği: karşılaşma > düğüm > bölge (dosya yoksa sahne varsayılan arka plana düşer)
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
+    ...(s.valor !== undefined ? { valor: s.valor } : {}),
   };
 }
 
@@ -142,7 +145,9 @@ export interface CombatantLike {
 }
 
 /** Savaş sonu özeti: 'party-i' birimi heroOrder[i] karakteridir. Çağrılar sayılmaz. */
-export function outcomeFrom(plan: Pick<BattlePlan, 'heroOrder'>, victory: boolean, combatants: CombatantLike[]): BattleOutcome {
+export function outcomeFrom(plan: Pick<BattlePlan, 'heroOrder'>, victory: boolean, summary: CombatantLike[] | { units: CombatantLike[]; valor?: { left: number; flawless: boolean } }): BattleOutcome {
+  const combatants = Array.isArray(summary) ? summary : summary.units;
+  const valor = Array.isArray(summary) ? undefined : summary.valor;
   const units = combatants
     .filter((c) => c.side === 'party' && !c.summoned && /^party-\d+$/.test(c.uid))
     .map((c) => {
@@ -150,7 +155,7 @@ export function outcomeFrom(plan: Pick<BattlePlan, 'heroOrder'>, victory: boolea
       return { heroId: plan.heroOrder[i] ?? '', hpRatio: Math.max(0, Math.min(1, c.hp / Math.max(1, c.maxHp))), alive: c.hp > 0 };
     })
     .filter((u) => u.heroId);
-  return { victory, units };
+  return { victory, units, ...(valor ? { valorLeft: valor.left, flawless: valor.flawless } : {}) };
 }
 
 /** Karşılaşma verisinin doğrulaması: sınıflar rastgele havuzda (test class'ı yok), yuvalar 0..11 ve tekrarsız, yedek geçerli, kilitli skill'ler sınıfın skill'i. */

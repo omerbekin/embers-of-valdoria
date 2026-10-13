@@ -21,6 +21,12 @@
 //     sayfalardan ALIR; boyu yerine geçtiği karenin boyuna eşitlenir (taban/ayak ortası aynı kural). Tohumu config.json > seeds.<kare>
 //     içinde O DOSYANIN koordinatıyla verilir. Yeni poz eskisinden belirgin kısa/uzunsa (kambur isabet) config.json > "overrideScale":
 //     { "hit": 1.2 } ek çarpanı kafa boyunu diğer karelere eşitler.
+//     Sınıfa özel EK poz (ortak 26 karede olmayan, ör. Cutthroat cross_cut): assets/source/poses/<id>-v2/extra-<poz>.png (tek figür, koyu
+//     düz #121212 zemin, ör. 1024x1536). override gibi normalize edilir: boyu config.json > "extraRef".<poz> karesinin (yoksa idle1) boyuna
+//     eşitlenir (+ overrideScale.<poz> çarpanı); el tohumu ZORUNLU: config.json > seeds.<poz> (o dosyanın koordinatı, angle / offAngle ile;
+//     bayraklar da: "hidden": true = eşya kareye BOYALI, oyun silah / tılsım çizmez, büyü çıkışı ikinci el noktası; ör. Hexer doll_stab).
+//     Kare tüm tutuş takımlarında ortaktır; skill'e bağlamak pt_* kopyasının pozuyla (tools/make-pose-testers.mjs > POSE).
+//     Önizleme: --preview=<klasör> --set=extra [--weapons=daggers:rondel --off=daggers:rondel] --marks
 //     Sonra npm test (tests/poses-v2-classes.test.ts). Silah sayfaları yalnızca Warrior çalıştırmasında (ya da --weapons-only) yeniden kesilir.
 // ========================================================================================================================================
 //
@@ -39,7 +45,7 @@
 // olmadan data/poses.json'daki mevcut el noktaları KORUNUR (kaynağı aynı kalan karede; tuval değişirse kutuyla birlikte taşınır).
 //
 //   node tools/make-poses-v2.mjs [--class=<id>] [--redetect] [--debug] [--bodies-only | --weapons-only]
-//   node tools/make-poses-v2.mjs [--class=<id>] --preview=<klasör> [--marks] [--scale=0.5] [--set=one|two|bow] [--frames=idle2,slash2] [--weapons=bows:hunting]
+//   node tools/make-poses-v2.mjs [--class=<id>] --preview=<klasör> [--marks] [--scale=0.5] [--set=one|two|bow|extra] [--frames=idle2,slash2] [--weapons=bows:hunting]
 import { existsSync, mkdirSync, readdirSync, readFileSync, writeFileSync } from 'node:fs';
 import { join, relative } from 'node:path';
 import sharp from 'sharp';
@@ -374,6 +380,13 @@ function sheetsFor() {
     if (!FRAMES.includes(m[1])) throw new Error(`${f}: bilinmeyen kare ${m[1]}`);
     list.push({ file: join(SRC, f), names: [[m[1]]], seeds: null, extra: true, override: true });
   }
+  // sınıfa özel ek poz: extra-<poz>.png (ortak listede OLMAYAN ad; override gibi tek figür, ölçeği extraRef karesine göre)
+  for (const f of existsSync(SRC) ? readdirSync(SRC).sort() : []) {
+    const m = /^extra-(.+)\.png$/.exec(f);
+    if (!m) continue;
+    if (FRAMES.includes(m[1])) throw new Error(`${f}: ${m[1]} ortak bir kare (override-${m[1]}.png kullan)`);
+    list.push({ file: join(SRC, f), names: [[m[1]]], seeds: null, extra: true, override: true, extraPose: m[1] });
+  }
   for (const s of list) if (!existsSync(s.file)) throw new Error(`${s.file} yok (how-to: dosyanın başı)`);
   return list;
 }
@@ -467,7 +480,11 @@ async function bodies(data) {
     if (sheet.override) {
       // tek kare: yerine geçtiği karenin (ölçeklenmiş) boyuna eşitlenir (Warrior extra.png ile aynı kural; sınıfın ortak boyu korunur)
       // config.overrideScale.<kare>: ek çarpan (yeni poz eskisinden kısa/uzunsa, ör. kambur isabet karesi; kafa boyu diğer karelere denk gelsin)
-      for (const [n, g] of got) if (raw.has(n)) ratios.push(((raw.get(n).h * raw.get(n).scale) / g.h) * (CONFIG.overrideScale?.[n] ?? 1));
+      // ek poz (extra-<poz>.png): eşi yok, boyu extraRef karesine (yoksa idle1) eşitlenir
+      for (const [n, g] of got) {
+        const ref = sheet.extraPose ? (CONFIG.extraRef?.[n] ?? 'idle1') : n;
+        if (raw.has(ref)) ratios.push(((raw.get(ref).h * raw.get(ref).scale) / g.h) * (CONFIG.overrideScale?.[n] ?? 1));
+      }
     } else if (IS_REF) {
       if (sheet.extra) for (const [n, g] of got) if (baseH.has(n)) ratios.push(baseH.get(n) / g.h);
     } else for (const [n, g] of got) if (refDef.poses[n]?.box) ratios.push(refDef.poses[n].box.h / g.h);
@@ -481,7 +498,8 @@ async function bodies(data) {
   }
   // yay kareleri İSTEĞE BAĞLI (yalnızca yay kullanan sınıf: bow.png); yoksa 24 kare, yay tutuşu tek el takımına düşer
   const hasBow = BOW.flat().every((n) => raw.has(n));
-  const list = hasBow ? FRAMES : FRAMES.filter((n) => !BOW.flat().includes(n));
+  const extraPoses = sheets.filter((x) => x.extraPose).map((x) => x.extraPose);
+  const list = [...(hasBow ? FRAMES : FRAMES.filter((n) => !BOW.flat().includes(n))), ...extraPoses];
   for (const n of list) if (!raw.has(n)) throw new Error(`${n}: hiçbir sayfada yok`);
 
   const frames = new Map();
@@ -576,8 +594,10 @@ async function bodies(data) {
           if (seed[k] !== undefined) p[k] = seed[k];
           else delete p[k];
         }
-        else if (rp) for (const k of ['back', 'flip', 'hidden', 'fist', 'open']) {
-          if (rp[k] !== undefined) p[k] = rp[k];
+        else for (const k of ['back', 'flip', 'hidden', 'fist', 'open']) {
+          // config tohumundaki bayrak önce (ör. ek pozda "hidden": true = eşya kareye boyalı), yoksa Warrior v2'nin aynı karesi
+          if (cfgSeed?.[k] !== undefined) p[k] = cfgSeed[k];
+          else if (rp?.[k] !== undefined) p[k] = rp[k];
           else delete p[k];
         }
       } else if (rp?.anchor && rp.box) {
@@ -591,7 +611,7 @@ async function bodies(data) {
           if (rp[k] !== undefined) p[k] = rp[k];
           else delete p[k];
         }
-      } else throw new Error(`${name}: el tohumu yok`);
+      } else throw new Error(`${name}: el tohumu yok${extraPoses.includes(name) ? ` (ek poz: config.json > seeds.${name} zorunlu)` : ''}`);
     }
     p.box = box;
     p.src = src;
@@ -820,8 +840,8 @@ if (PREVIEW) {
   mkdirSync(PREVIEW, { recursive: true });
   const S = Number(argOf('scale') ?? 0.5);
   const marks = process.argv.includes('--marks');
-  const sets = { one: ONE.flat(), two: TWO.flat(), bow: BOW.flat() };
-  const defaults = { one: 'swords:plain', two: 'greataxes:dane', bow: 'bows:hunting' };
+  const sets = { one: ONE.flat(), two: TWO.flat(), bow: BOW.flat(), extra: Object.keys(def.poses).filter((n) => !FRAMES.includes(n)) };
+  const defaults = { one: 'swords:plain', two: 'greataxes:dane', bow: 'bows:hunting', extra: 'swords:plain' };
   const only = argOf('set');
   const offArg = argOf('off')?.split(':') ?? null;
   const pick = argOf('frames')?.split(',');
@@ -835,16 +855,16 @@ if (PREVIEW) {
       const chh = Math.round((def.canvas.h + 140) * S);
       const tiles = [];
       for (let i = 0; i < list.length; i++) {
-        const img = await composite(all, def, list[i], family, look, marks, set === 'one' ? offArg : null);
+        const img = await composite(all, def, list[i], family, look, marks, set === 'one' || set === 'extra' ? offArg : null);
         tiles.push({ input: await sharp(img).resize(cw, chh).png().toBuffer(), left: (i % cols) * cw, top: Math.floor(i / cols) * chh });
       }
       await sharp({ create: { width: cw * Math.min(cols, list.length), height: chh * Math.ceil(list.length / cols), channels: 4, background: { r: 44, g: 38, b: 34, alpha: 1 } } })
         .composite(tiles)
         .png()
-        .toFile(join(PREVIEW, `${CLS}-${set}-${family}-${look}${offArg && set === 'one' ? `+${offArg.join('-')}` : ''}.png`));
+        .toFile(join(PREVIEW, `${CLS}-${set}-${family}-${look}${offArg && (set === 'one' || set === 'extra') ? `+${offArg.join('-')}` : ''}.png`));
     }
   }
-  console.log(`preview -> ${PREVIEW}/${CLS}-<one|two|bow>-<family>-<look>.png`);
+  console.log(`preview -> ${PREVIEW}/${CLS}-<one|two|bow|extra>-<family>-<look>.png`);
 } else {
   const data = readData();
   if (!process.argv.includes('--weapons-only')) await bodies(data);

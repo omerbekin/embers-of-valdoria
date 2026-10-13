@@ -16,8 +16,8 @@ import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBa
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
 import { preloadPoses } from '../pose-rig';
-import type { WeaponItem } from '../pose-weapons';
-import { weaponFor, type WeaponPick } from '../poses';
+import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
+import type { WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
 import { initialSeed, initialSizes, newSeed } from '../seed';
 import { clampSize } from '../team-select-model';
@@ -61,6 +61,7 @@ import type { CorpseState } from '../corpse-marks';
 import { createCorpseMarker } from '../corpse-marker';
 import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, reviveCorpseTip, reviveFlowHint, reviveSlotTip, slotHoverTip, startRaiseFlow } from '../raise-dead-flow';
 import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
+import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
 import { isDeltaStat, previewStatusText, statDir, statSources } from '../stat-delta';
 import { areaBoards, areaHoverSpecs, areaTone, blockedTargets } from '../target-cells';
@@ -257,7 +258,8 @@ export class BattleScene extends Phaser.Scene {
   private matchLog?: MatchLog;
   private resultScreen?: ResultScreen;
   /** Move Tile seçimi açık mı (altın hücre vurguları gösteriliyor)? */
-  private moveMode: { actor: string } | null = null;
+  /** Move (boş hücre) ya da Valor diriltmesi (düşmüş dost) seçimi açık: aktör + global id. */
+  private moveMode: { actor: string; id: string } | null = null;
   /** Rage barının ekranda gösterilen değeri (olaylar oynatıldıkça animasyonla güncellenir; motor değerinin gerisinde kalabilir). */
   private rageShown = new Map<string, number>();
   /** Ceset işaretleri (madde 222): ekrandaki ankh + kuru kafa işaretleri (uid -> işaret). */
@@ -1011,7 +1013,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     if (this.moveMode) {
       // Move Tile seçimi açıkken skill ön seçimi yapılmaz; geçersizleştiyse (sıra değişti, hamle bitti) kapanır
-      if (actor && actor.uid === this.moveMode.actor && this.playerCanAct && this.battle.canUseGlobal(actor.uid, 'move_tile').ok) return;
+      if (actor && actor.uid === this.moveMode.actor && this.playerCanAct && this.battle.canUseGlobal(actor.uid, this.moveMode.id).ok) return;
       this.cancelMoveQuiet();
     }
     if (!actor || !this.playerCanAct) {
@@ -1865,20 +1867,24 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     const def = this.battle.globalDef(id);
     if (!actor || !def || !this.playerCanAct || !this.battle.canUseGlobal(actor.uid, id).ok) return;
-    if (def.kind === 'move') {
+    if (def.kind === 'move' || def.kind === 'valor') {
+      const same = this.moveMode?.id === id;
       if (this.moveMode) this.cancelMove();
-      else this.startMove(actor);
+      if (!same) {
+        if (def.kind === 'move') this.startMove(actor);
+        else this.startValor(actor, id);
+      }
       return;
     }
     this.performGlobal(actor.uid, id);
   }
 
-  private performGlobal(actor: string, id: string, slot?: number): void {
+  private performGlobal(actor: string, id: string, slot?: number, targetUid?: string): void {
     this.cancelMoveQuiet();
     this.clearSelection();
     this.hideInfoTip();
     this.hideUnitTip();
-    const ok = this.mp ? this.mp.submit({ skillId: id, ...(slot !== undefined ? { slot } : {}) }) : this.battle.useGlobal(actor, id, slot).ok;
+    const ok = this.mp ? this.mp.submit({ skillId: id, ...(slot !== undefined ? { slot } : {}) }) : this.battle.useGlobal(actor, id, slot, targetUid).ok;
     if (!ok) {
       this.refreshCommands();
       return;
@@ -1890,9 +1896,75 @@ export class BattleScene extends Phaser.Scene {
 
   private startMove(actor: Combatant): void {
     this.clearSelection();
-    this.moveMode = { actor: actor.uid };
+    this.moveMode = { actor: actor.uid, id: 'move_tile' };
     this.refreshCommands();
     this.showMoveMarkers(actor);
+  }
+
+  /**
+   * Valor diriltmesi (Ömer 2026-10-13): düşmüş dostların ceset hücreleri dost tonlu plakalar; üstüne gelince kim, kaç canla ve hangi hücrede kalkacağı;
+   * dokununca diriltir (tur harcanır). Tek adım: hücre kuralı motorda (ceset hücresi, doluysa en yakın boş hücre). Tekrar basmak ya da Esc iptal.
+   */
+  private startValor(actor: Combatant, id: string): void {
+    this.clearSelection();
+    this.moveMode = { actor: actor.uid, id };
+    this.refreshCommands();
+    const targets = this.battle.valorTargets(actor.uid);
+    const own = actor.side;
+    const rules = this.battle.valorRules;
+    this.showBasePlates([{ board: own, specs: targets.map((c) => ({ slot: c.slot, state: 'selectable' as const, tone: 'ally' as const })) }]);
+    const at = (slot: number | null) => (slot === null ? undefined : targets.find((c) => c.slot === slot));
+    this.bindCellZones([own], {
+      twoTap: false,
+      canPick: (_b, slot) => !!at(slot),
+      onHover: (b, slot) => {
+        const c = at(slot);
+        if (!c) {
+          this.clearAreaMarker();
+          this.hideInfoTip();
+          return;
+        }
+        this.showPlates(b, [{ slot: c.slot, state: 'ally' }]);
+        const to = this.battle.valorSlotFor(c.uid);
+        const hp = rules ? Math.max(1, Math.round(c.maxHp * rules.revive.hpRatio)) : 0;
+        const rows: Array<[string, string?]> = [
+          [`Rises with ${hp} HP${rules && rules.revive.mpRatio > 0 ? ` and ${Math.round(c.maxMp * rules.revive.mpRatio)} MP` : ''}`, colors.heal],
+          [to === c.slot ? 'On the cell where they fell' : `Someone stands on the corpse: rises on row ${this.battle.rowOf(to ?? c.slot) + 1}`, colors.text],
+          [`Spends ${rules?.revive.battleCost ?? 0} Valor and your turn`, colors.muted],
+        ];
+        this.hideInfoTip();
+        this.placeInfoTip(this.makeInfo(unitName(c), colors.text, this.valorIconKey(), rows, 'Revive'));
+      },
+      onPick: (_b, slot) => {
+        const c = at(slot);
+        if (c) this.performGlobal(actor.uid, id, undefined, c.uid);
+      },
+    });
+    this.drawFlowStrip({ step: 'corpse', twoStep: false } as unknown as RaiseFlow, '', { step: 'Valor', text: 'Choose a fallen ally to raise (Esc cancels)' });
+  }
+
+  /** Valor mangalı ikonunun Phaser dokusu (ipucu başlığı). */
+  private valorIconKey(): string {
+    const key = 'ui:valor-brazier';
+    if (!this.textures.exists(key)) {
+      const url = brazierIconUrl();
+      if (url) {
+        const img = new Image();
+        img.src = url;
+        if (img.complete) this.textures.addImage(key, img);
+        else img.onload = () => !this.textures.exists(key) && this.textures.addImage(key, img);
+      }
+    }
+    return this.textures.exists(key) ? key : ensureIcon(this, 'ankh', '#ffb35a', true);
+  }
+
+  /** Valor mangalları (HUD): bu savaşta oyuncu tarafının Valor'u varsa gösterilir; `animate` harcamada korlar söner. */
+  private refreshValor(animate = false): void {
+    const v = this.battle.valorOf(this.localSide);
+    if (v === null) return this.hud?.setValor(null);
+    rememberShown('valor', v);
+    const t = valorTip(v, 'battle', this.battle.valorRules);
+    this.hud?.setValor(v, { title: t.title, rows: t.rows.map((r, i) => ({ text: r, ...(i === 0 ? { color: colors.text } : { color: colors.muted }) })) }, animate);
   }
 
   /** Leaves Move selection (no redraw): used right before something else takes over. */
@@ -1901,6 +1973,8 @@ export class BattleScene extends Phaser.Scene {
     this.moveMode = null;
     this.clearSlotMarkers();
     this.clearAreaMarker();
+    this.flowStrip?.destroy(true);
+    this.flowStrip = undefined;
   }
 
   private cancelMove(): void {
@@ -1951,14 +2025,17 @@ export class BattleScene extends Phaser.Scene {
   /** Global eylem (Rest / Skip / Move) açıklaması: sütundaki öğenin hemen üstünde açılır. */
   private globalTip(actor: Combatant, id: string): TipContent {
     const def = this.battle.globalDef(id)!;
-    const info = describeGlobalSkill(def, content.formulas);
+    const info = describeGlobalSkill(def, content.formulas, this.battle.valorRules);
     const detail = info.lines.filter((l) => !(def.kind === 'skip' && l.includes('speed meter')) && !(def.kind === 'move' && l.startsWith('Move to an empty')));
     const rows: Array<[string, string?]> = [[info.summary, colors.text], ...(def.kind === 'skip' ? [['Next turn arrives in half the time', colors.heal] as [string, string]] : []), ...detail.map((l): [string, string?] => [l, colors.muted])];
     const can = this.battle.canUseGlobal(actor.uid, id);
     const reason = !can.ok ? can.reason : !this.playerCanAct ? 'Not your turn' : '';
     if (reason) rows.push([reason, colors.lethal]);
     else if (def.kind === 'move') rows.push(['Click, then pick an empty cell (Esc cancels)', colors.targetHighlight]);
-    return this.makeInfo(info.name, colors.text, ensureIcon(this, globalIconName(def), GLOBAL_ACCENT[def.kind === 'skip' ? 'skip' : def.kind] ?? '#e8c47e', true, SHARED_KEY), rows, info.targetBadge, [{ text: info.cost, hex: colors.muted }]);
+    else if (def.kind === 'valor') rows.push(['Click, then pick a fallen ally (Esc cancels)', colors.targetHighlight]);
+    if (def.kind === 'valor') rows.splice(1, 0, [`Valor now: ${this.battle.valorOf(actor.side) ?? 0} of ${this.battle.valorRules?.cap ?? 0}`, '#ffb35a']);
+    const icon = def.kind === 'valor' ? this.valorIconKey() : ensureIcon(this, globalIconName(def), GLOBAL_ACCENT[def.kind === 'skip' ? 'skip' : def.kind] ?? '#e8c47e', true, SHARED_KEY);
+    return this.makeInfo(info.name, colors.text, icon, rows, info.targetBadge, [{ text: info.cost, hex: colors.muted }]);
   }
 
   /** Çok vuruşlu skill'in sıradaki vuruş animasyonu (VfxCtx.gate): ilgili hasar olayından hemen önce oynar. */
@@ -2502,7 +2579,7 @@ export class BattleScene extends Phaser.Scene {
         const def = this.battle.globalDef(e.id);
         if (actor && def) {
           const who = `${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)}`;
-          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : `${who} moves`);
+          this.announce(def.kind === 'rest' ? `${who} uses Rest` : def.kind === 'skip' ? `${who} skips the turn` : def.kind === 'valor' ? `${who} spends Valor` : `${who} moves`);
         }
         if (def?.kind === 'rest') {
           playSfx(this, 'gasp', SHARED_KEY);
@@ -2664,6 +2741,12 @@ export class BattleScene extends Phaser.Scene {
         }
         return;
       }
+      case 'valor':
+        if (e.side === this.localSide) {
+          this.refreshValor(true);
+          playSfx(this, 'gasp', SHARED_KEY);
+        }
+        return;
       case 'revive':
         this.uiCorpses.delete(e.target); // revived: its corpse mark is gone
         this.refreshCorpseMarks();
@@ -3447,7 +3530,8 @@ export class BattleScene extends Phaser.Scene {
     const slot = slots[c.slot];
     if (!slot) return undefined;
     const item = c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined;
-    const pick = this.weapons?.picks?.[c.uid] ?? weaponFor(c.defId, item?.id ? item : null, item?.offhand);
+    // takılı item, yoksa sınıfın varsayılan donanımı (Pose Tester silahı; sefer / Endless kahramanında boş yuva = yalnızca ana el)
+    const pick = this.weapons?.picks?.[c.uid] ?? unitWeaponPick(c.defId, item, c.side === 'party' && !!this.weapons?.items && !c.summoned);
     const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick });
     view.makeTappable(
       (p?: Phaser.Input.Pointer) => {
@@ -3480,6 +3564,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     for (const v of this.views.values()) v.setActive(v.combatant.uid === actor?.uid && !this.battle.winner);
     this.hud?.setModel(this.buildHudModel(actor));
+    this.refreshValor();
   }
 
   /** DOM HUD'ı kurar; görünür sahneye hizalar (tuvalin konumu ve ölçeği), sahne kapanınca kaldırır. */
@@ -3661,15 +3746,18 @@ export class BattleScene extends Phaser.Scene {
     });
     const globals: HudGlobal[] = actor.summoned
       ? [] // summons never use global actions
-      : this.battle.globalSkillIds().map((id) => {
+      : this.battle.globalSkillIds(actor.side).map((id) => {
           const g = this.battle.globalDef(id)!;
           const accent = GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e';
           return {
             id,
             name: g.kind === 'skip' ? 'Skip' : describeGlobalSkill(g, f).name,
-            iconUrl: this.texUrl(ensureIcon(this, globalIconName(g), accent, false, SHARED_KEY)),
+            // Valor diriltmesi: kendi mangal çizimi (src/ui/valor-braziers.ts)
+            // savaşta bedel battleCost (6) > mangal (4): alevli ikon ve hazır ışıması yalnızca Valor >= battleCost iken (Ömer 2026-10-13 form valor2)
+            iconUrl: g.kind === 'valor' ? brazierIconUrl((this.battle.valorOf(actor.side) ?? 0) >= (this.battle.valorRules?.revive.battleCost ?? Infinity)) : this.texUrl(ensureIcon(this, globalIconName(g), accent, false, SHARED_KEY)),
             enabled: this.playerCanAct && this.battle.canUseGlobal(actor.uid, id).ok,
-            active: g.kind === 'move' && this.moveMode?.actor === actor.uid,
+            ready: g.kind === 'valor' && this.playerCanAct && this.battle.canUseGlobal(actor.uid, id).ok,
+            active: (g.kind === 'move' || g.kind === 'valor') && this.moveMode?.actor === actor.uid && this.moveMode.id === id,
             tip: this.globalTip(actor, id),
           };
         });

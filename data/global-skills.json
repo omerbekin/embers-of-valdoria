@@ -27,5 +27,13 @@
     "kind": "move",
     "target": "empty_tile",
     "text": "Step onto an empty cell of your own side and end your turn."
+  },
+  "valor_revive": {
+    "id": "valor_revive",
+    "name": "Revive",
+    "icon": "ankh",
+    "kind": "valor",
+    "target": "dead_ally",
+    "text": "Spend a full brazier of Valor to raise a fallen ally where they fell, and end your turn."
   }
 }

@@ -7,6 +7,7 @@ import campaignBalance from '../data/campaign/balance.json';
 // Bant = data/campaign/balance.json > targets.medium ± test.tolerance (örnek küçük). Tam ölçüm: npm run sim:campaign.
 const T = campaignBalance.test;
 const target = campaignBalance.targets.medium as unknown as Record<NodeCategory, [number, number]>;
+// Valor açık (gerçek oyun; Ömer 2026-10-13 form valor2: düşmanlar Valor'lu oyuna göre güçlendirildi, bantlar Valor'lu ölçülür).
 const result = simulateCampaign({ difficulty: 'medium', player: 'medium', runs: T.runs, firstSeed: T.firstSeed });
 const cat = categoryFirstWin(result);
 

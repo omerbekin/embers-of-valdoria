@@ -40,7 +40,7 @@ const POSE = {
   aimed_shot: ['channel', 'shot'],
   // Cutthroat (iki hançer)
   venom_edge: ['slash', 'thrust'],
-  x_cut: 'slash',
+  x_cut: 'cross_cut', // Cutthroat'a özel ek poz (extra-cross_cut.png: iki kol X, iki hançer); başka gövdede yok -> attack (slash)
   smoke_bomb: 'throw',
   backstab: 'thrust',
   // Mage (asa, çift el): ok asanın ucundan
@@ -72,7 +72,7 @@ const POSE = {
   evil_eye: 'point',
   withering_curse: 'raise',
   jinx: 'thrust',
-  doom_mark: 'channel',
+  doom_mark: 'doll_stab', // Hexer'e özel ek poz (extra-doll_stab.png: bebek + iğne kareye boyalı, tılsım çizilmez; efekt bebekten); başka gövdede yok -> cast (raise)
 };
 const LABEL = {
   idle: 'Idle',
@@ -88,6 +88,8 @@ const LABEL = {
   throw: 'Throw',
   shot: 'Bow Shot',
   sky: 'Sky Shot',
+  cross_cut: 'Cross Cut (Cutthroat only)',
+  doll_stab: 'Doll Stab (Hexer only)',
 };
 
 // skills.json elle biçimli (CRLF, satır içi diziler): yalnızca pt_* bloğu metin olarak değiştirilir, dosyanın geri kalanına dokunulmaz

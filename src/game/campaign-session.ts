@@ -133,7 +133,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     seed: plan.seed,
     mode: 'turns',
     battleId: content.DEFAULT_BATTLE,
-    teams: { party: plan.party, enemies: plan.enemies, units: plan.units },
+    teams: { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.valor !== undefined ? { valor: { party: plan.valor } } : {}) },
     partySize: plan.party.filter(Boolean).length,
     enemySize: plan.enemies.filter(Boolean).length,
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
@@ -161,9 +161,10 @@ const goTo = (game: Phaser.Game, key: string, data?: object) => (game.scene.getS
 /** Zaferde düşen kahramanlar (Ömer 2026-10-11): kendiliğinden kalkmazlar; sonuç ekranında not. */
 export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): string | undefined {
   if (!victory) return undefined;
-  const down = outcomeFrom(plan, true, battleSummary(battle).units).units.filter((u) => !u.alive).length;
+  const down = outcomeFrom(plan, true, battleSummary(battle)).units.filter((u) => !u.alive).length;
   if (!down) return undefined;
-  return down === 1 ? 'One hero has fallen: they stay down until revived at a town or Rest camp' : `${down} heroes have fallen: they stay down until revived at a town or Rest camp`;
+  const where = session.state?.valor !== undefined ? 'at a town, a Rest camp or with Valor' : 'at a town or Rest camp';
+  return down === 1 ? `One hero has fallen: they stay down until revived ${where}` : `${down} heroes have fallen: they stay down until revived ${where}`;
 }
 
 /** Sefer savaşının sonuç ekranı düğmeleri. */
@@ -176,7 +177,7 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
         run: () => {
           const s = session.state;
           if (s && s.at === plan.nodeId) {
-            session.state = applyBattle(s, outcomeFrom(plan, true, battleSummary(battle).units));
+            session.state = applyBattle(s, outcomeFrom(plan, true, battleSummary(battle)));
             save('auto');
           }
           goTo(game, MAP_SCENE);

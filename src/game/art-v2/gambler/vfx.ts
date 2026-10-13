@@ -235,7 +235,7 @@ const cardfan: V2Vfx = async (c, k) => {
   c.actor.play('attack');
   c.sfx('cardFan');
   // 1) yelpaze
-  const fan = (['card_d', 'card_s', 'card_h'] as const).map((n, i) => k.v2Sprite(c, n, '#ffffff', h.x, h.y, 48, k.DEPTH + 30 + i).setOrigin(0.5, 0.9).setAlpha(0));
+  const fan = (['card_d', 'card_s', 'card_h'] as const).map((n, i) => k.v2Sprite(c, n, '#ffffff', h.x, h.y, 30, k.DEPTH + 30 + i).setOrigin(0.5, 0.9).setAlpha(0));
   await k.counter(c.scene, k.slow(180), (u) => {
     fan.forEach((s, i) => s.setAlpha(1).setRotation((i - 1) * 0.45 * u * d));
   });
@@ -247,7 +247,7 @@ const cardfan: V2Vfx = async (c, k) => {
       c.sfx('cardFlick');
       if (fan[2 - i]) fan[2 - i]!.setAlpha(0);
       const p = chest(t);
-      const card = k.v2Sprite(c, 'card_back', '#ffffff', h.x, h.y, 46, k.DEPTH + 34);
+      const card = k.v2Sprite(c, 'card_back', '#ffffff', h.x, h.y, 29, k.DEPTH + 34);
       const base = card.scaleX;
       const from = { x: h.x, y: h.y };
       const arc = i % 2 ? -50 : 70;

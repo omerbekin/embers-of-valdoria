@@ -59,7 +59,11 @@ import {
   townRecruitOffer,
   townScreenNode,
   type TownHotspot,
+  reviveWithValor,
+  valorReviveBlocked,
 } from '../../campaign';
+import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
+import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
 import { openCampaignMerchant } from '../campaign-merchant';
 import { characterTexture, preloadAssets } from '../assets';
@@ -227,6 +231,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.ui.add(this.hud);
     this.toastFn = elToast(this, 150, this.ui); // bildirim arayüz katmanında
     this.renderHud();
+    this.syncValor();
     this.bindCamera();
     const compact = document.documentElement.classList.contains('compact') || document.documentElement.classList.contains('short');
     if (compact) this.mapZoom = 1.2;
@@ -283,6 +288,12 @@ export class CampaignMapScene extends Phaser.Scene {
   private syncOverlays(): void {
     const gear = !!document.querySelector('#ui-root .gr-overlay');
     const cover = !!this.slotBrowser || this.sideOpen || gear;
+    // Valor mangalları: pencere / menü / Gear açıkken gizli (DOM, Phaser pencerelerinin üstünde kalmasın)
+    if (this.valorMeter) {
+      const hide = cover || this.menuOpen || !!this.modal || isValorReviveOpen() || otherDialogOpen();
+      if (this.valorMeter.el.hidden !== hide) this.valorMeter.el.hidden = hide;
+      this.valorMeter.el.classList.toggle('vl-town', !!this.town);
+    }
     if (this.tip) {
       const show = !cover && !this.menuOpen && !this.modal;
       if (this.tip.visible !== show) this.tip.setVisible(show);
@@ -1048,7 +1059,7 @@ export class CampaignMapScene extends Phaser.Scene {
       // Düşmüş kahraman (Ömer 2026-10-11): soluk portre + mezar işareti; ceset olarak taşınır, dinlenme noktasında altınla kalkar
       const fallen = isFallen(h);
       const name = fitW(elText(this, 112, 18, def.name, 19, fallen ? EL.DIM : EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - 120);
-      const roleText = fallen ? 'Fallen · revive at a town or Rest camp' : `${def.role ?? ''}${lead?.id === h.id ? ' · Leader' : ''}`;
+      const roleText = fallen ? (this.s.valor !== undefined ? 'Fallen · revive at a town, a Rest camp or with Valor' : 'Fallen · revive at a town or Rest camp') : `${def.role ?? ''}${lead?.id === h.id ? ' · Leader' : ''}`;
       const role = fitW(elBody(this, 112, 44, roleText, 16, fallen ? '#d88a7e' : EL.MUTED).setOrigin(0, 0.5), w - 120);
       const bar = hpBar(this, 112, 64, w - 130, 6, h.hpRatio);
       const hp = elBody(this, 112, 82, session.showHp && !fallen ? `${Math.round(h.hpRatio * 100)}% health` : '', 14, EL.DIM).setOrigin(0, 0.5);
@@ -1295,6 +1306,65 @@ export class CampaignMapScene extends Phaser.Scene {
   private refresh(animateFog = true): void {
     this.renderMap(animateFog);
     this.renderHud();
+    this.syncValor();
+  }
+
+  // ------------------------------------------------------------ Valor (Ömer 2026-10-13)
+
+  private valorMeter: ValorMeter | null = null;
+
+  /**
+   * Valor mangalları sağ üstte (Menu'nün altında; Valdren Keep'ten sonra). Haritaya dönüşte (zafer sonrası) artış varsa korlar tek tek tutuşur.
+   * Dokununca savaş dışı diriltme penceresi.
+   */
+  private syncValor(): void {
+    const v = this.s.valor;
+    if (v === undefined) {
+      this.valorMeter?.destroy();
+      this.valorMeter = null;
+      return;
+    }
+    if (!this.valorMeter) {
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      const m = new ValorMeter({ scale: 3, label: true, where: 'map', selfTip: true, onClick: () => this.openValor() });
+      m.el.classList.add('vl-corner', 'vl-right');
+      root.append(m.el);
+      this.valorMeter = m;
+      this.events.once('shutdown', () => {
+        m.destroy();
+        if (this.valorMeter === m) this.valorMeter = null;
+      });
+      const prev = rememberShown('valor', v);
+      if (prev !== undefined && prev < v) {
+        m.set(prev);
+        m.set(v, true); // zafer sonrası kazanç: korlar tek tek tutuşur
+        return;
+      }
+    }
+    rememberShown('valor', v);
+    this.valorMeter.set(v);
+  }
+
+  /** Savaş dışı Valor diriltmesi penceresi (DOM, kit Diyalog): düşmüş kahramanlar, "Revive · 4". */
+  openValor(): void {
+    if (this.s.valor === undefined) return;
+    openValorRevive({
+      where: 'map',
+      valor: () => this.s.valor ?? 0,
+      fallen: () =>
+        this.s.roster
+          .filter((h) => isFallen(h))
+          .map((h) => ({ id: h.id, name: content.classes[h.class]?.name ?? h.class, sub: this.s.active.includes(h.id) ? 'Fallen · in your party' : 'Fallen', ...(avatarUrl(h.class) ? { portraitUrl: avatarUrl(h.class)! } : {}) })),
+      revive: (id) => {
+        const why = valorReviveBlocked(this.s, id);
+        if (why) return why;
+        this.update2(reviveWithValor(this.s, id));
+        rememberShown('valor', this.s.valor ?? 0);
+        return null;
+      },
+      onClose: () => this.refresh(false),
+    });
   }
 
   private closeModal(): void {
@@ -1664,7 +1734,30 @@ export class CampaignMapScene extends Phaser.Scene {
     const def = STORIES[storyId] ?? { title: n.name, text: '' };
     const dialogue = def.dialogue ?? [];
     // Kasaba ekranındaki NPC (Ömer 2026-10-12): sahne yeniden okunabilir; ödül (hediye) yalnızca ilk girişte, tekrar ilerlemeyi değiştirmez
-    const finish = (answers?: number[]) => (replay ? this.closeModal() : this.commit(completeStory(this.s, answers)));
+    const done = (answers?: number[]) => (replay ? this.closeModal() : this.commit(completeStory(this.s, answers)));
+    // Sonsöz sayfası (Valdren Keep: komutan Valor'u anlatır; Ömer 2026-10-13): hikâyenin son sayfasından sonra; ilk girişte korlar 0'dan tutuşur
+    const finish = (answers?: number[]): void => {
+      const ep = def.epilogue;
+      if (!ep) return done(answers);
+      this.closeModal();
+      this.modal = openModal(this, this.ui, {
+        title: ep.title ?? def.title,
+        subtitle: def.speaker ?? n.name,
+        text: ep.text,
+        height: 520,
+        buttons: [
+          {
+            label: 'Continue',
+            primary: true,
+            run: () => {
+              if (!replay && this.s.valor === undefined) rememberShown('valor', 0);
+              done(answers);
+            },
+          },
+        ],
+        ...dismiss,
+      });
+    };
     const dismiss = replay ? { onDismiss: () => this.closeModal() } : {};
     if (!dialogue.length) {
       this.modal = openModal(this, this.ui, { title: def.title, subtitle: n.name, text: def.text, height: 600, buttons: [{ label: 'Continue', primary: true, run: () => finish() }], ...dismiss });

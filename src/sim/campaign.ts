@@ -7,12 +7,14 @@
 // Yenilgide "son kayda dönüş" = aynı düğümün savaşı aynı durumla yeniden denenir (oyunda kayıt zaferden sonra alınır; dönüşte kasaba
 // iyileşmesi vb. yeniden yaşanır, yani savaşa giren takım birebir aynıdır), yeni denemede savaş seed'i değişir (attempt sayacı).
 // `maxAttempts` aşılırsa sefer o düğümde "takıldı" sayılır.
+import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
 import { Battle, battleSummary, chooseAction, content, type AiDifficulty } from '../engine';
 import {
   CONFIG,
   activeHeroes,
   applyBattle,
   autoResolve,
+  autoValorRevive,
   battlePlan,
   completeSimple,
   equipBest,
@@ -77,6 +79,8 @@ export interface CampaignSimOptions {
   difficulty: Difficulty;
   /** Oyuncu tarafının vekili: Medium = "iyi oyuncu", Easy = "ortalama oyuncu". */
   player: AiDifficulty;
+  /** Valor (Ömer 2026-10-13): false = savaşta kullanılmaz ve savaş dışı diriltme yok (Valor öncesi karşılaştırma; CLI VALOR=off). */
+  valor?: ValorSimMode;
   runs: number;
   firstSeed?: number;
   /** Bir düğümde en fazla deneme (aşılırsa sefer takıldı). Varsayılan 10. */
@@ -150,8 +154,8 @@ const emptyNode = (): NodeAgg => ({ reached: 0, firstWins: 0, battles: 0, wins: 
 const emptyClass = (): ClassAgg => ({ runs: 0, completed: 0, defeats: 0, heroRuns: 0, heroFirstWins: 0 });
 
 /** Tek savaşı yapay zeka ile oynatır: oyuncu tarafı `player`, düşman tarafı zorluğun YZ'si. */
-export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty): Battle {
-  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
+export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty, valor = true): Battle {
+  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
   while (!battle.winner && battle.turnsTaken < MAX_TURNS) {
     const actor = battle.currentActor;
     if (!actor) break;
@@ -229,7 +233,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
           let won = false;
           for (let attempt = 0; attempt < maxAttempts && !won; attempt++) {
             const plan = battlePlan(s, attempt);
-            const battle = fightPlan(plan, o.player);
+            const battle = fightPlan(plan, o.player, valorInBattle(o.valor));
             const victory = battle.winner === 'party';
             agg.battles++;
             agg.turnsSum += battle.turnsTaken;
@@ -240,11 +244,12 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
               if (attempt === 0) agg.firstWins++;
               agg.cleared++;
               agg.attemptsToClear += attempt + 1;
-              const out = outcomeFrom(plan, true, battleSummary(battle).units);
+              const out = outcomeFrom(plan, true, battleSummary(battle));
               agg.hpEndSum += out.units.reduce((a, u) => a + (u.alive ? u.hpRatio : 0), 0) / Math.max(1, out.units.length);
               agg.deathsOnWin += out.units.filter((u) => !u.alive).length;
               const pre = s;
               s = applyBattle(s, out);
+              if (valorOutside(o.valor)) s = autoValorRevive(s);
               lootCount(pre, s, step.node);
             } else {
               defeats++;

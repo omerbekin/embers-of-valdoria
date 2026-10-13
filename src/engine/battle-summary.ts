@@ -28,5 +28,7 @@ export function battleSummary(battle: Battle): BattleSummary {
       ...(corpse ? { corpse } : {}),
     };
   });
-  return { winner: battle.winner, turnsTaken: battle.turnsTaken, units };
+  // Valor (yalnızca oyuncu tarafında Valor varsa): kalan miktar ve kusursuz zafer (bu savaşta hiçbir dost düşmedi)
+  const valor = battle.valorOf('party');
+  return { winner: battle.winner, turnsTaken: battle.turnsTaken, units, ...(valor !== null ? { valor: { left: valor, flawless: !battle.anyFell('party') } } : {}) };
 }
