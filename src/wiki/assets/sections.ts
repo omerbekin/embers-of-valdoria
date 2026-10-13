@@ -142,7 +142,7 @@ function overview(sections: AssetSection[]): AssetSection {
     sounds: 'Every sound effect, menu sounds included: play it, see its length, layers and which skills use it. Peak level check.',
     animations: 'Every skill animation on a real battle stage, plus the list of effect kinds.',
     icons: 'All pixel icons, zoomable, with where each one is used.',
-    art: 'Full-body sprite, head avatar and logo of every class and summon (hidden developer classes too).',
+    art: 'Full-body sprite, head avatar and logo of every class and summon. Test classes (Geometer, Pose Testers) are left out: they live only in the debug menu.',
     poses: 'The shared pose library (Warrior trial): every body pose with every weapon look, rarity glow and the mirrored enemy side.',
     palette: 'Interface, element, stat and class colors, plus the fonts.',
     versions: 'Art and sound versions per class: v1 (old) and v2 (redesign, default) side by side; pick which one the game uses.',

@@ -2,7 +2,8 @@
 // için sınıf başına bir test sınıfı: "Pose Tester I (Warrior)" ... "Pose Tester XI (Hexer)". Her biri o sınıfın 4 gerçek skill'inin
 // pt_<id> kopyasını taşır: aynı efekt / hedef / alan / ses / ikon (artOf), bedel 0, cooldown yok, gücü ~1 hasar (0.02), en uygun v2 pozu
 // (docs/design/pose-coverage.md). testOnly + hidden: rastgele havuz, sim, takım seçimi, sefer ve Endless dışı; Debug > Setup > Test
-// poses (v2) ve Test Mode sınıf seçicisinden gelir. Gövde: Warrior v2 (classAliases), statlar gerçek sınıftan.
+// poses (v2) ve Test Mode sınıf seçicisinden gelir. Gövde: sınıfın kendi v2 gövdesi (classes.<sınıf>_v2) varsa o, yoksa Warrior v2
+// (data/poses.json > classAliases, burada yazılır); statlar sabit test değerleri.
 //
 //   node tools/make-pose-testers.mjs      -> data/classes/pose_tester_<n>.json + data/skills.json > pt_* (yeniden yazar)
 import { readdirSync, readFileSync, writeFileSync } from 'node:fs';
@@ -31,11 +32,12 @@ const POSE = {
   resurrection: 'channel',
   judgment: 'raise',
   radiance: ['raise', 'channel'],
-  // Archer (yay): thrust1 = yay öne uzanmış dik, öteki el omuzda (kiriş çekişi); channel = ok takma; raise = göğe eğik yay
-  quick_shot: 'thrust',
-  piercing_arrow: ['channel', 'thrust'],
-  arrow_rain: 'raise',
-  aimed_shot: ['channel', 'thrust'],
+  // Archer (yay): shot = yay tutuşunda bow_shot (yay öne uzanmış dik, kiriş eli yanakta), sky = bow_sky (göğe çekiş); başka tutuşta
+  // shot -> thrust, sky -> raise (data/poses.json > grips). channel = ok takma
+  quick_shot: 'shot',
+  piercing_arrow: ['channel', 'shot'],
+  arrow_rain: 'sky',
+  aimed_shot: ['channel', 'shot'],
   // Cutthroat (iki hançer)
   venom_edge: ['slash', 'thrust'],
   x_cut: 'slash',
@@ -84,6 +86,8 @@ const LABEL = {
   channel: 'Channel',
   point: 'Point',
   throw: 'Throw',
+  shot: 'Bow Shot',
+  sky: 'Sky Shot',
 };
 
 // skills.json elle biçimli (CRLF, satır içi diziler): yalnızca pt_* bloğu metin olarak değiştirilir, dosyanın geri kalanına dokunulmaz
@@ -159,4 +163,8 @@ CLASSES.forEach((cls, i) => {
 const block = made.map((c) => `  "${c.id}": ${JSON.stringify(c, null, 2).split('\n').join('\n  ')},`).join('\n').split('\n');
 lines.splice(first, end - first, ...block);
 writeFileSync('data/skills.json', lines.join(EOL));
+// gövde: sınıfın kendi v2 gövdesi varsa (data/poses.json > classes.<sınıf>_v2, tools/make-poses-v2.mjs --class=<sınıf>) o, yoksa warrior_v2
+const poses = JSON.parse(readFileSync('data/poses.json', 'utf8'));
+poses.classAliases = Object.fromEntries(CLASSES.map((cls, i) => [`pose_tester_${i + 1}`, poses.classes[`${cls}_v2`] ? `${cls}_v2` : 'warrior_v2']));
+writeFileSync('data/poses.json', `${JSON.stringify(poses, null, 2)}\n`);
 console.log(`${CLASSES.length} pose testers, ${CLASSES.length * 4} pt_* skills`);

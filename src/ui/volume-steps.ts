@@ -1,4 +1,4 @@
-// Ses seviyesi kaydırıcılarının ortak ölçeği (Ömer 2026-10-10): Settings'teki TÜM ses kaydırıcıları (Master Volume, Music, UI sounds)
+// Ses seviyesi kaydırıcılarının ortak ölçeği (Ömer 2026-10-10): Settings'teki TÜM ses kaydırıcıları (Master Volume, Music, Sound Effects, UI sounds)
 // 0-100% arası %5'lik 20 adım; 0 = kapalı ("Off"). Kayıtlar `{ <alan>: 0..20, steps: 20 }`; `steps` alanı olmayan eski kayıtlar 0-10
 // ölçeğindedir ve en yakın yeni adıma (x2) taşınır. Saf; testli (tests/settings-steps.test.ts).
 

@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'warrior' ödünç; gerçek çizim (new base sprite) assets/sprites/road_thug/idle.png + assets/avatars/road_thug.png gelince spriteId 'road_thug' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'road_thug' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "road_thug",
   "name": "Road Thug",
   "family": "bandits",
-  "spriteId": "warrior",
+  "spriteId": "road_thug",
   "color": "#8a5a3c",
   "logo": "helm",
   "frontPriority": 1,

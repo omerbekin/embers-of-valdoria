@@ -123,6 +123,8 @@ export interface ItemDef {
   main?: string;
   /** Legendary: dört sabit affix (C, C, B, A). */
   affixes?: string[];
+  /** Legendary: sabit affix'lerden birinin değer çarpanı (affix id -> çarpan, 1-3; Ömer 2026-10-12, zayıf Legendary'lerin en zayıf statı). */
+  boost?: Record<string, number>;
   /** İsteğe bağlı ikon adı (src/game/item-icons.ts > ITEM_ICONS); yoksa silah ailesinin / yuvanın ikonu. */
   icon?: string;
   /** Legendary etkisi (items.json > effects). */
@@ -149,7 +151,7 @@ export interface ItemsData {
   effects: Record<string, EffectDef>;
   effectRules: { stack: boolean; endless: boolean };
   /** Toplam tavanlar (yüzde ya da düz): kritik, isabet, kaçınma, hız; MP bedeli indirimi, debuff direnci. */
-  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number };
+  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number };
   weaponFamilies: WeaponFamilyDef[];
   bag: number;
   items: ItemDef[];
@@ -231,15 +233,18 @@ export function partMid(p: AffixPart, ilvl: number): number {
 }
 
 /** Parçanın değeri: orta x (1 + spread x (2q - 1)), adıma yuvarlanır, en az bir adım (zarsız parçada orta değer). */
-export function partValue(p: AffixPart, ilvl: number, q: number): number {
-  const mid = partMid(p, ilvl);
+export function partValue(p: AffixPart, ilvl: number, q: number, mult = 1): number {
+  const mid = partMid(p, ilvl) * mult;
   if (p.fixed || p.noRoll || p.floor) return Math.max(p.step, snap(mid, p.step));
   const qq = Math.min(1, Math.max(0, Number.isFinite(q) ? q : 0.5));
   return Math.max(p.step, snap(mid * (1 + ITEMS.rolls.spread * (2 * qq - 1)), p.step));
 }
 
 /** Parçanın görünür aralığı [en az, en çok] (zarsızda iki uç aynı). */
-export const partRange = (p: AffixPart, ilvl: number, floor = 0): [number, number] => [partValue(p, ilvl, floor), partValue(p, ilvl, 1)];
+export const partRange = (p: AffixPart, ilvl: number, floor = 0, mult = 1): [number, number] => [partValue(p, ilvl, floor, mult), partValue(p, ilvl, 1, mult)];
+
+/** Legendary'nin sabit affix çarpanı (items.json > items[].boost; yoksa 1). */
+export const affixBoost = (d: Pick<ItemDef, 'rarity' | 'boost'> | undefined, id: string): number => (d?.rarity === 'legendary' ? (d.boost?.[id] ?? 1) : 1);
 
 /**
  * Nadirliğin zar tabanı (Ömer 2026-10-11): yüksek nadirlik aralığın ÜST kısmından zarlar (tavan aynı). items.json > affixRules.rollFloorByRarity,
@@ -260,7 +265,7 @@ export function affixIP(id: string, values: number[]): number {
   return Math.round(a.parts.reduce((s, p, i) => s + (values[i] ?? 0) * p.ip, 0) * 1000) / 1000;
 }
 
-/** Bu affix bu yuvada olabilir mi (yuva sınırları: delme/kritik silah + eldiven, auralar zırh + tılsım, kaçınma bot + eldiven). */
+/** Bu affix bu yuvada RASTGELE çekilebilir mi (yuva kimliği, Ömer 2026-10-13 itemfix: her stat 2-3 yuvada; items.json > affixDefs[].slots). */
 export const affixAllowed = (id: string, slot: SlotId): boolean => {
   const a = affixDef(id);
   return !!a && (!a.slots || a.slots.includes(slot));
@@ -277,10 +282,11 @@ const affixElement = (id: string): Element | undefined => {
   return to.startsWith('elem:') && to !== 'elem:*' ? (to.slice(5) as Element) : undefined;
 };
 
-/** Taban item'in ana affix adayları: silahta ailenin listesi, diğerlerinde `main`. */
+/** Taban item'in ana affix adayları: `main` varsa o (kalkanlar: Armor; itemfix 2026-10-13), yoksa silahta ailenin listesi. */
 export function mainCandidates(d: ItemDef): string[] {
+  if (d.main) return [d.main];
   if (d.family) return ITEMS.weaponFamilies.find((f) => f.id === d.family)?.mains ?? ['c_phys'];
-  return d.main ? [d.main] : [];
+  return [];
 }
 
 // ------------------------------------------------------------ zar (örnek oluşturma)
@@ -503,11 +509,12 @@ export function rolledAffixes(inst: Pick<ItemInstance, 'id'> & { uid?: string; r
     if (!def) continue;
     // Aralık örneğin nadirliğine göre (zar tabanı); eski zar tabanın altındaysa alt uç kendi değeri
     const floor = rollFloor(roll.rarity);
+    const m = affixBoost(d, a.id);
     const ranges = def.parts.map((p): [number, number] => {
-      const [lo, hi] = partRange(p, ilvl, floor);
-      return [Math.min(lo, partValue(p, ilvl, a.q)), hi];
+      const [lo, hi] = partRange(p, ilvl, floor, m);
+      return [Math.min(lo, partValue(p, ilvl, a.q, m)), hi];
     });
-    out.push({ id: a.id, def, tier: def.tier, values: def.parts.map((p) => partValue(p, ilvl, a.q)), ranges, ...(a.x ? { x: a.x } : {}) });
+    out.push({ id: a.id, def, tier: def.tier, values: def.parts.map((p) => partValue(p, ilvl, a.q, m)), ranges, ...(a.x ? { x: a.x } : {}) });
   }
   return out;
 }
@@ -526,9 +533,9 @@ export const instanceIP = (inst: Pick<ItemInstance, 'id'> & { uid?: string; roll
 };
 
 /** Bir affix'in seviyedeki ORTA IP'si. */
-const midIP = (id: string, ilvl: number): number => {
+const midIP = (id: string, ilvl: number, mult = 1): number => {
   const a = affixDef(id);
-  return a ? a.parts.reduce((s, p) => s + partValue(p, ilvl, 0.5) * p.ip, 0) : 0;
+  return a ? a.parts.reduce((s, p) => s + partValue(p, ilvl, 0.5, mult) * p.ip, 0) : 0;
 };
 
 /** Kademenin bu yuvadaki ortalama orta IP'si (zarlanacak affix'in beklenen değeri). */
@@ -544,7 +551,7 @@ const tierMeanIP = (tier: AffixTier, slot: SlotId, ilvl: number): number => {
 export function itemIP(d: ItemDef, rarity?: RarityId, ilvl: number = d.ilvl): number {
   const r = clampRarity(d, rarity);
   let ip = 0;
-  if (r === 'legendary' && d.affixes?.length) ip = d.affixes.reduce((s, id) => s + midIP(id, ilvl), 0);
+  if (r === 'legendary' && d.affixes?.length) ip = d.affixes.reduce((s, id) => s + midIP(id, ilvl, affixBoost(d, id)), 0);
   else {
     const mains = mainCandidates(d).filter((id) => affixDef(id));
     rarityDef(r).tiers.forEach((tier, i) => {
@@ -736,6 +743,10 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     if (a.parts?.length && !a.parts[0]!.fixed && !a.text.includes('{0}')) errors.push(`${at}: text must show its value ({0})`);
   }
   for (const t of TIER_IDS) for (const s of SLOT_IDS) if (!tierPool(t, s).length) errors.push(`tier ${t}: no affix allowed on ${s}`);
+  // Zar hiç boş kalmasın (itemfix): her taban, ana affix'i dışında en az bir C daha çekebilmeli (Uncommon+; taban nadirlikten bağımsız Epic olabilir)
+  for (const d of data.items)
+    if (d.rarity !== 'legendary' && !Object.entries(data.affixDefs).some(([id, a]) => a.tier === 'C' && (!a.slots || a.slots.includes(d.slot)) && !(d.main ? [d.main] : (data.weaponFamilies.find((f) => f.id === d.family)?.mains ?? [])).includes(id)))
+      errors.push(`item ${d.id}: its slot pool has no second C affix`);
   if (!Number.isInteger(data.bag) || data.bag <= 0) errors.push('bag: must be a positive integer');
   // Silah aileleri: sınıflar var olmalı, her oynanabilir sınıfın en az bir ailesi olmalı; ana affix'ler C kademesinde
   const famIds = data.weaponFamilies.map((f) => f.id);
@@ -772,17 +783,20 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
           const a = data.affixDefs[id];
           if (!a) errors.push(`${at}: unknown affix ${id}`);
           else if (a.tier !== tiers[i]) errors.push(`${at}: affix ${i + 1} must be tier ${tiers[i]}`);
-          else if (a.slots && !a.slots.includes(d.slot)) errors.push(`${at}: affix ${id} is not allowed on ${d.slot}`);
+          // Yuva havuzu (slots) yalnızca rastgele zarı yönetir; Legendary'nin el seçimi affix'leri ondan muaf (itemfix 2026-10-13)
         });
       if (d.affixes && new Set(d.affixes).size !== d.affixes.length) errors.push(`${at}: duplicate affix`);
+      for (const [id, m] of Object.entries(d.boost ?? {}))
+        if (!d.affixes?.includes(id) || !(typeof m === 'number' && m >= 1 && m <= 3)) errors.push(`${at}: boost ${id} must name one of its affixes with a multiplier 1-3`);
     } else {
+      if (d.boost !== undefined) errors.push(`${at}: only Legendary items carry a boost`);
       if (d.effect !== undefined) errors.push(`${at}: only Legendary items carry an effect`);
       if (d.affixes !== undefined) errors.push(`${at}: only Legendary items list fixed affixes`);
-      if (!d.family) {
+      // Ana affix tabanın örtük statıdır (yuva havuzundan muaf: Studded Gauntlets / Hobnailed Boots Armor taşır). Kalkan `main` taşıyabilir (Armor).
+      if (!d.family || d.slot === 'offhand') {
         const m = d.main ? data.affixDefs[d.main] : undefined;
-        if (!m || m.tier !== 'C') errors.push(`${at}: needs a C main affix`);
-        else if (m.slots && !m.slots.includes(d.slot)) errors.push(`${at}: main ${d.main} is not allowed on ${d.slot}`);
-      } else if (d.main !== undefined) errors.push(`${at}: a weapon's / shield's main affix comes from its family`);
+        if (d.main !== undefined || !d.family) if (!m || m.tier !== 'C') errors.push(`${at}: needs a C main affix`);
+      } else if (d.main !== undefined) errors.push(`${at}: a weapon's main affix comes from its family`);
     }
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);

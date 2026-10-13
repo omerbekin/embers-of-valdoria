@@ -2,7 +2,7 @@
 // npm run sim:endless (rapor: src/sim/endless-cli.ts) ve tests/endless-balance.test.ts bunu kullanır. Hedefler: data/endless.json > balance.
 //
 // Akış gerçek oyunun saf endless mantığıyla aynıdır (src/endless): newRun -> [dalga savaşı -> (boss sonrası kalıntı) -> ödül kartı -> (dükkân)] ...
-// Oyuncu vekili ("iyi oyuncu"): takım seed'li rastgele 4 farklı sınıf; savaşta Medium YZ; ödülde canı düşükse iyileştirme, değilse item, yoksa altın;
+// Oyuncu vekili ("iyi oyuncu"): takım seed'li rastgele 4 farklı sınıf; savaşta Medium YZ; ödülde canı düşükse iyileştirme, değilse item kartı ile altın kartını tartar (altın > item değeri ise altın; Ömer 2026-10-12);
 // dükkânda parası yeten en pahalı item'leri alır; her ödül / dükkândan sonra "Equip best"; kalıntıyı seed'li rastgele seçer (kalıntı başına etki ölçülsün).
 // Karşılaştırma için item'siz (`gear: 'none'`) ve kalıntısız (`relics: 'none'`) koşular da oynanabilir (aynı seed'ler).
 import { battleSummary, content, Rng, type AiDifficulty } from '../engine';
@@ -25,7 +25,7 @@ import {
   type EndlessRun,
   type WaveKind,
 } from '../endless';
-import { RARITY_IDS, clampRarity, itemDef } from '../progression/items';
+import { RARITY_IDS, clampRarity, itemDef, itemValue } from '../progression/items';
 
 export interface EndlessSimOptions {
   runs: number;
@@ -100,8 +100,11 @@ export function simTeam(seed: number, size: number): string[] {
 /** Oyuncu vekilinin iyileştirme eşiği: takımın ortalama canı bunun altındaysa iyileştirme kartı alınır. */
 export const HEAL_BELOW = 0.7;
 
+/** Altın kartı, en değerli item kartının değerinin bu katını geçerse oyuncu vekili altını seçer (1 = eşit değerde item). */
+export const GOLD_OVER_ITEM = 1;
+
 /**
- * Oyuncu vekilinin ödül seçimi (kart dizini). Can düşükse iyileştirme; değilse item (item'siz koşuda item kartı yok sayılır), yoksa altın.
+ * Oyuncu vekilinin ödül seçimi (kart dizini). Can düşükse iyileştirme; değilse item ile altını tartar (altın > en değerli item kartının değeri ise altın, tüccarda harcanır; item'siz koşuda item kartı yok sayılır), yoksa altın.
  * Boss sonrası: item varsa item, yoksa Hero's Feast. Ceset varsa (Revive kartı) her zaman önce o. Item'li ve item'siz koşu aynı iyileştirme eşiğini kullanır (fark yalnızca item).
  */
 export function pickReward(run: EndlessRun, gear: 'best' | 'none'): number {
@@ -113,7 +116,20 @@ export function pickReward(run: EndlessRun, gear: 'best' | 'none'): number {
   // Ceset varsa önce Revive (takımın dörtte biri; şifa / item onu geri getirmez)
   if (idx('revive') >= 0) return idx('revive');
   if (heal >= 0 && (hp < HEAL_BELOW || (low <= 0.25 && hp < HEAL_BELOW + 0.15))) return heal;
-  if (gear === 'best' && idx('item') >= 0) return idx('item');
+  if (gear === 'best' && idx('item') >= 0) {
+    // Altın mı item mı (Ömer 2026-10-12, p6): altın kartı en değerli item kartının tüccar fiyatından (değeri) fazlaysa altın alınır, tüccarda harcanır
+    let bestItem = -1;
+    let bestValue = -1;
+    cards.forEach((c, j) => {
+      if (c.kind !== 'item') return;
+      const v = itemValue({ id: c.itemId, rolls: c.rolls });
+      if (v > bestValue) [bestItem, bestValue] = [j, v];
+    });
+    const g = cards.findIndex((c) => c.kind === 'gold');
+    const gc = cards[g];
+    if (gc?.kind === 'gold' && gc.amount > bestValue * GOLD_OVER_ITEM) return g;
+    return bestItem;
+  }
   if (gear === 'none' && idx('feast') >= 0) return idx('feast');
   if (idx('gold') >= 0) return idx('gold');
   if (idx('feast') >= 0) return idx('feast');

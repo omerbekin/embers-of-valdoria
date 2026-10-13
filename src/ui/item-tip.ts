@@ -3,7 +3,7 @@
  * (dokunmatikte TEK DOKUNUŞ: item'in yanına sabitlenir, altta eylem düğmeleri; boşluğa dokununca kapanır, Ömer 2026-10-12). İçerik: ad (nadirlik rengi), nadirlik + yuva + item seviyesi, affix satırları (C / B / A kademe etiketi + ikon +
  * değer + zar aralığı), Legendary etkisi, değer. Gear, tüccar ve ödül torbası aynı bileşeni kullanır. Oyun içi metinler İngilizce.
  */
-import { TIER_COLOR, affixLines, effectLine, instanceColor, instanceSubtitle, itemDef, itemValue, type ItemInstance } from '../progression';
+import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceColor, instanceSubtitle, itemDef, itemValue, type CapKey, type ItemInstance } from '../progression';
 import { statIconUrl } from './stat-tips';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -45,16 +45,26 @@ export interface ItemTipLine {
   dir?: 'up' | 'down' | 'no';
 }
 
+/** Kahraman bağlamı (progression > affixContext): etkisiz affix sıraları + tavanı dolu statlar (Ömer 2026-10-13, itemcaps). */
+export interface ItemTipState {
+  inactive?: Set<number>;
+  capped?: Set<CapKey>;
+}
+
+/** Tavan etiketi: "max 25%" (hız düz: "max 3"). */
+export const capLabel = (k: CapKey): string => `max ${capOf(k) ?? ''}${k === 'spd' ? '' : '%'}`;
+
 /** İpucunun içeriği (DOM). `classId`: takan sınıf ({primary} yazısı); `extra`: alttaki ek satırlar (telefonda kahraman başına özet). */
-export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId?: string, extra: Array<{ label: string; parts: ItemTipLine[] }> = []): HTMLElement[] {
+export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId?: string, extra: Array<{ label: string; parts: ItemTipLine[] }> = [], state?: ItemTipState): HTMLElement[] {
   const d = itemDef(inst.id);
   if (!d) return [];
   const name = el('b', 'it-name', d.name);
   name.style.color = instanceColor(inst);
   const out: HTMLElement[] = [name, el('div', 'it-sub', instanceSubtitle(inst))];
   const lines = el('div', 'it-lines');
-  for (const l of affixLines(inst, classId)) {
-    const row = el('div', 'it-line');
+  affixLines(inst, classId).forEach((l, i) => {
+    const off = !!state?.inactive?.has(i);
+    const row = el('div', `it-line${off ? ' off' : ''}`);
     const tag = el('span', 'it-tier', l.tier);
     tag.style.color = TIER_COLOR[l.tier];
     tag.style.borderColor = TIER_COLOR[l.tier];
@@ -67,9 +77,13 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
       row.append(i);
     }
     row.append(el('span', 'it-text', l.text));
+    // tavan dolu (fazlası kaybolur) ya da A affix sınırı (aynı A affix'i en çok 2 item'de sayılır)
+    const capKey = off ? undefined : affixCapKeys(affixDef(l.id) ?? { parts: [] }).find((k) => state?.capped?.has(k));
+    if (capKey) row.append(el('span', 'it-cap', capLabel(capKey)));
     if (l.range) row.append(el('span', 'it-range', `(${l.range})`));
     lines.append(row);
-  }
+    if (off) lines.append(el('div', 'it-off-note', `Inactive: only ${ITEMS.caps.aAffixCopies ?? 2} of this affix count`));
+  });
   out.push(lines);
   const fx = effectLine(d);
   if (fx) out.push(el('div', 'it-effect', fx));

@@ -162,7 +162,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Deal +${pct(e.bonus)} damage to targets suffering from ${list} (every hit, crits included).`;
     }
     case 'omenTransfer':
-      return `When an enemy carrying your Omens dies, its Omens pass to the nearest enemy (at most ${e.maxOnArrival} arrive; if Doom killed it, ${e.onDoomKill} passes; a kill by a skill that detonates Omens passes none). Passed Omens keep the time they had left and never trigger Doom. Works only while you live.`;
+      return `When an enemy carrying your Omens dies, its Omens pass to the nearest enemy (at most ${e.maxOnArrival} arrive; ${e.onDoomKill > 0 ? `if Doom killed it, ${e.onDoomKill} passes; a kill by a skill that detonates Omens passes none` : "if Doom or a skill that detonates Omens killed it, it passes none"}). Passed Omens keep the time they had left and never trigger Doom. Works only while you live.`;
   }
 }
 

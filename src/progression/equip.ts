@@ -2,7 +2,8 @@
 // aynı fonksiyonu kullanır (items.md 4.4, 5.4). Puan = affix IP'lerinin toplamı, sınıfa uymayan affix'ler (başka element, Rage'li sınıfta MP,
 // çağrısı olmayan sınıfta Summon mastery...) düşük ağırlıklı; primary bonusunu kapatacak item seçilmez.
 import { affixFit } from './affix-fit';
-import { affixIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, itemDef, itemIP, legendaryConflict, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type SlotId } from './items';
+import { affixIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, itemDef, itemIP, legendaryConflict, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { inactivePenalty } from './loadout';
 import { primaryCheck } from './primary';
 
 /** Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi. */
@@ -16,6 +17,16 @@ export function instanceScore(classId: string, inst: Pick<ItemInstance, 'id'> & 
 
 /** Taban item'in sınıfa beklenen değeri (zarsız; Endless önerisi). Şimdilik beklenen IP (sınıf uyumu örnekte ölçülür). */
 export const itemScore = (_classId: string, d: ItemDef): number => itemIP(d);
+
+/**
+ * Örneğin kahramanın `slot`undaki değeri: instanceScore, eksi aynı A affix'i 2'den fazla item'deyse etkisiz kalan örneklerin değeri
+ * (Ömer 2026-10-13, itemcaps m2; Equip best ve Endless tüccar kazancı). Boş / bilinmeyen: 0.
+ */
+export function slotScore(classId: string, equipment: Partial<Equipment>, inst: (Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }) | null | undefined, slot: SlotId): number {
+  if (!inst || !itemDef(inst.id)) return 0;
+  const fitIP = (a: RolledAffix) => affixIP(a.id, a.values) * affixFit(classId, a);
+  return Math.round((instanceScore(classId, inst) - inactivePenalty(classId, equipment, inst as ItemInstance, slot, fitIP)) * 1000) / 1000;
+}
 
 export interface EquipMove {
   slot: SlotId;
@@ -31,14 +42,14 @@ export interface EquipMove {
 export function bestMoves(hero: { class: string; equipment: Equipment }, bag: ItemInstance[], taken: Set<string> = new Set()): EquipMove[] {
   const moves: EquipMove[] = [];
   let equipment = { ...hero.equipment };
-  const score = (inst: ItemInstance | null | undefined) => (inst && itemDef(inst.id) ? instanceScore(hero.class, inst) : 0);
+  const score = (inst: ItemInstance | null | undefined, slot: SlotId = 'weapon', eq: Equipment = equipment) => slotScore(hero.class, eq, inst, slot);
   /** İkinci el için ulaşılabilir en iyi puan (eldeki ya da torbadaki; `skip` uid'i hariç). */
   const bestOffhand = (eq: Equipment, skip?: string): number => {
-    let best = score(eq.offhand);
+    let best = score(eq.offhand, 'offhand', eq);
     for (const inst of bag) {
       if (taken.has(inst.uid) || inst.uid === skip) continue;
       const d = itemDef(inst.id);
-      if (d && fitsSlot(d, 'offhand') && canEquip(hero.class, d)) best = Math.max(best, score(inst));
+      if (d && fitsSlot(d, 'offhand') && canEquip(hero.class, d)) best = Math.max(best, score(inst, 'offhand', eq));
     }
     return best;
   };
@@ -48,7 +59,7 @@ export function bestMoves(hero: { class: string; equipment: Equipment }, bag: It
     /** Yuvanın değeri: ana elde, silah + açık kalan ikinci elin ulaşılabilir değeri. */
     const value = (inst: ItemInstance | null | undefined): number => {
       const d = inst ? itemDef(inst.id) : undefined;
-      return score(inst) + (slot === 'weapon' && !(d && blocksOffhand(d)) ? bestOffhand(equipment, inst?.uid) : 0);
+      return score(inst, slot) + (slot === 'weapon' && !(d && blocksOffhand(d)) ? bestOffhand(equipment, inst?.uid) : 0);
     };
     let best: { inst: ItemInstance; score: number } | undefined;
     for (const inst of bag) {

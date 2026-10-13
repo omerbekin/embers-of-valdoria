@@ -6,7 +6,7 @@
  */
 import { content } from '../engine';
 import { screenCellOf, shapeStages } from '../engine/area-shape';
-import { skillOwner } from './catalog';
+import { isTestSkill, skillOwner } from './catalog';
 import { h } from './dom';
 import { Preview } from './preview';
 import { stageTeams } from './stage-teams';
@@ -26,6 +26,7 @@ export function mountEmbed(params: URLSearchParams): void {
   const select = h('select', { class: 'skill-select', attrs: { 'aria-label': 'Skill' } });
   const groups = new Map<string, HTMLOptGroupElement>();
   for (const [id, s] of Object.entries(content.skills)) {
+    if (isTestSkill(id)) continue; // test skill'leri (Geometer, Pose Tester) Codex'te yok
     const owner = skillOwner(id);
     let g = groups.get(owner.name);
     if (!g) {

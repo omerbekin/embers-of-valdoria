@@ -246,6 +246,25 @@
   color: #e0785e;
 }
 
+/* Tavanı dolu stat (Ömer 2026-10-13, itemcaps): değer altın, yanında küçük "MAX" (fazlası kaybolur) */
+.gr-stat.capped .gr-stat-v {
+  color: #f0c46a;
+}
+
+.gr-stat-cap {
+  font: 600 0.56em var(--g-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f0b04a;
+  opacity: 0.85;
+}
+
+.gr-cap-note {
+  margin-top: calc(8 * var(--u));
+  font: italic max(11px, calc(16 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
 /* Torba */
 .gr-bag-head {
   display: flex;
@@ -1396,6 +1415,30 @@ html.short .gr-slot-sub {
   margin-left: auto;
   color: var(--g-dim);
   font-size: 0.9em;
+}
+
+:is(.item-tip, .mw-stats) .it-cap {
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0b04a;
+  border: 1px solid rgba(240, 176, 74, 0.45);
+  padding: 0 4px;
+}
+
+/* A affix sınırı: etkisiz örnek soluk + üstü çizili, altında kısa not */
+:is(.item-tip, .mw-stats) .it-line.off {
+  opacity: 0.45;
+}
+
+:is(.item-tip, .mw-stats) .it-line.off .it-text {
+  text-decoration: line-through;
+}
+
+:is(.item-tip, .mw-stats) .it-off-note {
+  margin: -1px 0 2px 2.1em;
+  font: italic 0.86em var(--g-body);
+  color: var(--g-dim);
 }
 
 :is(.item-tip, .mw-stats) .it-effect {

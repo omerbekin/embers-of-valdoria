@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'defender' ödünç; gerçek çizim (new base sprite) assets/sprites/shieldwarden/idle.png + assets/avatars/shieldwarden.png gelince spriteId 'shieldwarden' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'shieldwarden' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "shieldwarden",
   "name": "Shieldwarden",
   "family": "guardians",
-  "spriteId": "defender",
+  "spriteId": "shieldwarden",
   "color": "#7d8796",
   "logo": "bulwark",
   "frontPriority": 0,

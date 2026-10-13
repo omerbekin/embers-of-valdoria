@@ -21,7 +21,7 @@ import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap } from './gear-drop';
 import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
-import { primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip } from '../progression';
+import { affixContext, primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -129,7 +129,9 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       const inst = instOf(key);
       if (!inst) return [];
       // Character sayfası kapalıyken her kahramana etkisi ipucunda (açıkken kahraman kartlarında)
-      return itemTipNodes(inst, curHero()?.class, key.startsWith('slot:') ? [] : heroTipExtra(src.heroes(), inst, !charOpen || phoneLayout()));
+      const hero = curHero();
+      const state = hero ? (affixContext(hero, inst, key.startsWith('slot:') ? (key.slice(5) as SlotId) : undefined) ?? undefined) : undefined;
+      return itemTipNodes(inst, hero?.class, key.startsWith('slot:') ? [] : heroTipExtra(src.heroes(), inst, !charOpen || phoneLayout()), state);
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; alım / satım / kuşanma buradan ya da sürükle-bırakla)
     tipActions: (key) => {

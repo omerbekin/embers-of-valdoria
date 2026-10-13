@@ -254,7 +254,9 @@
           "overhead": "overhead1",
           "thrust": "thrust1",
           "spin": "spin1",
-          "guard": "guard1"
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
         },
         "two": {
           "idle": "idle2",
@@ -263,11 +265,24 @@
           "overhead": "overhead2",
           "thrust": "thrust2",
           "spin": "spin2",
-          "guard": "guard2"
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        },
+        "bow": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "bow_shot",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "bow_shot",
+          "sky": "bow_sky",
+          "raise": "raise"
         }
       },
       "gripFallback": {
-        "bow": "one",
         "charm": "one"
       },
       "states": {
@@ -285,9 +300,9 @@
       },
       "dir": "warrior-v2",
       "canvas": {
-        "w": 354,
+        "w": 496,
         "h": 482,
-        "footX": 177,
+        "footX": 248,
         "footY": 476
       },
       "figure": {
@@ -297,438 +312,500 @@
       "poses": {
         "idle1": {
           "box": {
-            "x": 52,
+            "x": 123,
             "y": 89,
             "w": 250,
             "h": 387
           },
           "anchor": {
-            "x": 234,
+            "x": 305,
             "y": 209,
             "angle": 35
           },
           "offhand": {
-            "x": 119,
+            "x": 190,
             "y": 267,
             "angle": 10
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "step1": {
           "box": {
-            "x": 66,
+            "x": 137,
             "y": 99,
             "w": 262,
             "h": 377
           },
           "anchor": {
-            "x": 293,
+            "x": 364,
             "y": 220,
             "angle": 60
           },
           "offhand": {
-            "x": 80,
+            "x": 151,
             "y": 192,
             "angle": -20
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "slash1": {
           "box": {
-            "x": 45,
-            "y": 104,
-            "w": 268,
-            "h": 372
+            "x": 95,
+            "y": 100,
+            "w": 395,
+            "h": 376
           },
           "anchor": {
-            "x": 79,
-            "y": 143,
-            "angle": -100
+            "x": 473,
+            "y": 184,
+            "angle": 80
           },
           "offhand": {
-            "x": 226,
-            "y": 205,
+            "x": 157,
+            "y": 227,
             "angle": 20
-          }
+          },
+          "src": "warrior-v2-extra/extra.png"
         },
         "overhead1": {
           "box": {
-            "x": 59,
+            "x": 130,
             "y": 37,
             "w": 236,
             "h": 439
           },
           "anchor": {
-            "x": 169,
+            "x": 240,
             "y": 49,
             "angle": 10
           },
           "offhand": {
-            "x": 264,
+            "x": 335,
             "y": 222,
             "angle": 20
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "thrust1": {
           "box": {
-            "x": 23,
+            "x": 94,
             "y": 124,
             "w": 309,
             "h": 352
           },
           "anchor": {
-            "x": 312,
+            "x": 383,
             "y": 198,
             "angle": 90
           },
           "offhand": {
-            "x": 123,
+            "x": 194,
             "y": 211,
             "angle": -10
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "spin1a": {
           "box": {
-            "x": 81,
+            "x": 152,
             "y": 96,
             "w": 242,
             "h": 380
           },
           "anchor": {
-            "x": 111,
+            "x": 182,
             "y": 156,
             "angle": -80
           },
           "offhand": {
-            "x": 250,
+            "x": 321,
             "y": 223,
             "angle": 10
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "spin1b": {
           "box": {
-            "x": 35,
+            "x": 106,
             "y": 106,
             "w": 285,
             "h": 370
           },
           "anchor": {
-            "x": 300,
+            "x": 371,
             "y": 184,
             "angle": 90
           },
           "offhand": {
-            "x": 78,
+            "x": 149,
             "y": 199,
             "angle": -10
           },
-          "back": true
+          "back": true,
+          "src": "warrior-v2/one-handed.png"
         },
         "spin1c": {
           "box": {
-            "x": 61,
+            "x": 132,
             "y": 102,
             "w": 232,
             "h": 374
           },
           "anchor": {
-            "x": 274,
+            "x": 345,
             "y": 167,
             "angle": 90
           },
           "offhand": {
-            "x": 83,
+            "x": 154,
             "y": 223,
             "angle": 10
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "guard1": {
           "box": {
-            "x": 52,
+            "x": 123,
             "y": 136,
             "w": 251,
             "h": 340
           },
           "anchor": {
-            "x": 104,
+            "x": 175,
             "y": 223,
             "angle": 30
           },
           "offhand": {
-            "x": 244,
+            "x": 315,
             "y": 194,
             "angle": 0
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "raise": {
           "box": {
-            "x": 67,
+            "x": 138,
             "y": 6,
             "w": 220,
             "h": 470
           },
           "anchor": {
-            "x": 136,
+            "x": 207,
             "y": 20,
             "angle": 0
           },
           "offhand": {
-            "x": 251,
+            "x": 322,
             "y": 190,
             "angle": 20
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "channel": {
           "box": {
-            "x": 49,
+            "x": 120,
             "y": 97,
             "w": 256,
             "h": 379
           },
           "anchor": {
-            "x": 281,
+            "x": 352,
             "y": 170,
             "angle": 80
           },
           "offhand": {
-            "x": 211,
+            "x": 282,
             "y": 175,
             "angle": 80
-          }
+          },
+          "src": "warrior-v2/one-handed.png"
         },
         "point": {
           "box": {
-            "x": 43,
+            "x": 114,
             "y": 99,
             "w": 276,
             "h": 377
           },
           "anchor": {
-            "x": 102,
+            "x": 173,
             "y": 217,
             "angle": 160
           },
           "offhand": {
-            "x": 295,
+            "x": 366,
             "y": 155,
             "angle": 80
           },
-          "open": "off"
+          "open": "off",
+          "src": "warrior-v2/one-handed.png"
         },
         "idle2": {
           "box": {
-            "x": 51,
-            "y": 85,
-            "w": 253,
-            "h": 391
+            "x": 93,
+            "y": 89,
+            "w": 311,
+            "h": 387
           },
           "anchor": {
-            "x": 165,
-            "y": 266,
+            "x": 222,
+            "y": 286,
             "angle": 165
           },
           "offhand": {
-            "x": 160,
-            "y": 223,
+            "x": 208,
+            "y": 276,
             "angle": 165
-          }
+          },
+          "src": "warrior-v2-extra/extra.png"
         },
         "step2": {
           "box": {
-            "x": 90,
+            "x": 161,
             "y": 89,
             "w": 225,
             "h": 387
           },
           "anchor": {
-            "x": 173,
+            "x": 244,
             "y": 126,
             "angle": -30
           },
           "offhand": {
-            "x": 173,
+            "x": 244,
             "y": 126,
             "angle": -30
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "slash2": {
           "box": {
-            "x": 40,
-            "y": 109,
-            "w": 275,
-            "h": 367
+            "x": 51,
+            "y": 138,
+            "w": 394,
+            "h": 338
           },
           "anchor": {
-            "x": 77,
-            "y": 169,
-            "angle": -100
+            "x": 358,
+            "y": 309,
+            "angle": 125
           },
           "offhand": {
-            "x": 85,
-            "y": 172,
-            "angle": -100
-          }
+            "x": 345,
+            "y": 297,
+            "angle": 125
+          },
+          "src": "warrior-v2-extra/extra.png"
         },
         "overhead2": {
           "box": {
-            "x": 60,
+            "x": 131,
             "y": 21,
             "w": 234,
             "h": 455
           },
           "anchor": {
-            "x": 168,
+            "x": 239,
             "y": 37,
             "angle": -10
           },
           "offhand": {
-            "x": 168,
+            "x": 239,
             "y": 37,
             "angle": -10
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "thrust2": {
           "box": {
-            "x": 23,
+            "x": 94,
             "y": 128,
             "w": 309,
             "h": 348
           },
           "anchor": {
-            "x": 308,
+            "x": 379,
             "y": 199,
             "angle": 90
           },
           "offhand": {
-            "x": 308,
+            "x": 379,
             "y": 199,
             "angle": 90
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "spin2a": {
           "box": {
-            "x": 98,
-            "y": 98,
-            "w": 251,
-            "h": 378
+            "x": 62,
+            "y": 83,
+            "w": 372,
+            "h": 393
           },
           "anchor": {
-            "x": 117,
-            "y": 174,
-            "angle": -90
+            "x": 126,
+            "y": 251,
+            "angle": -100
           },
           "offhand": {
-            "x": 117,
-            "y": 174,
-            "angle": -90
-          }
+            "x": 138,
+            "y": 242,
+            "angle": -100
+          },
+          "src": "warrior-v2-extra/extra.png"
         },
         "spin2b": {
           "box": {
-            "x": 28,
+            "x": 99,
             "y": 103,
             "w": 299,
             "h": 373
           },
           "anchor": {
-            "x": 306,
+            "x": 377,
             "y": 183,
             "angle": 90
           },
           "offhand": {
-            "x": 306,
+            "x": 377,
             "y": 183,
             "angle": 90
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "spin2c": {
           "box": {
-            "x": 61,
+            "x": 132,
             "y": 101,
             "w": 232,
             "h": 375
           },
           "anchor": {
-            "x": 265,
+            "x": 336,
             "y": 175,
             "angle": 90
           },
           "offhand": {
-            "x": 265,
+            "x": 336,
             "y": 175,
             "angle": 90
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "guard2": {
           "box": {
-            "x": 48,
+            "x": 119,
             "y": 102,
             "w": 258,
             "h": 374
           },
           "anchor": {
-            "x": 250,
+            "x": 321,
             "y": 156,
             "angle": 90
           },
           "offhand": {
-            "x": 91,
+            "x": 162,
             "y": 157,
             "angle": 90
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "throw": {
           "box": {
-            "x": 44,
+            "x": 115,
             "y": 100,
             "w": 294,
             "h": 376
           },
           "anchor": {
-            "x": 58,
+            "x": 129,
             "y": 250,
             "angle": 190
           },
           "offhand": {
-            "x": 308,
+            "x": 379,
             "y": 120,
             "angle": 60
           },
-          "open": "off"
+          "open": "off",
+          "src": "warrior-v2/two-handed.png"
         },
         "hit": {
           "box": {
-            "x": 61,
+            "x": 132,
             "y": 134,
             "w": 242,
             "h": 342
           },
           "anchor": {
-            "x": 215,
+            "x": 286,
             "y": 276,
             "angle": 150
           },
           "offhand": {
-            "x": 185,
+            "x": 256,
             "y": 276,
             "angle": 150
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
         },
         "kneel": {
           "box": {
-            "x": 48,
+            "x": 119,
             "y": 207,
             "w": 257,
             "h": 269
           },
           "anchor": {
-            "x": 209,
+            "x": 280,
             "y": 413,
             "angle": 100
           },
           "offhand": {
-            "x": 209,
+            "x": 280,
             "y": 413,
             "angle": 100
-          }
+          },
+          "src": "warrior-v2/two-handed.png"
+        },
+        "bow_shot": {
+          "anchor": {
+            "x": 443,
+            "y": 142,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 198,
+            "y": 130,
+            "angle": 0
+          },
+          "box": {
+            "x": 75,
+            "y": 73,
+            "w": 385,
+            "h": 403
+          },
+          "src": "warrior-v2-extra/extra.png"
+        },
+        "bow_sky": {
+          "anchor": {
+            "x": 393,
+            "y": 68,
+            "angle": -40
+          },
+          "offhand": {
+            "x": 170,
+            "y": 151,
+            "angle": 0
+          },
+          "box": {
+            "x": 61,
+            "y": 53,
+            "w": 374,
+            "h": 423
+          },
+          "src": "warrior-v2-extra/extra.png"
         }
       },
       "gripWeapon": {
@@ -740,8 +817,8 @@
       "itemPoses": {
         "staves": {
           "idle2": {
-            "angle": 30,
-            "dy": 40
+            "angle": 40,
+            "dy": 20
           },
           "point": {
             "angle": -15
@@ -756,7 +833,7 @@
         },
         "greataxes": {
           "idle2": {
-            "angle": 38
+            "angle": 48
           },
           "point": {
             "angle": -20
@@ -767,11 +844,14 @@
           "hit": {
             "angle": -35,
             "back": true
+          },
+          "slash2": {
+            "angle": 110
           }
         },
         "mauls": {
           "idle2": {
-            "angle": 38
+            "angle": 48
           },
           "point": {
             "angle": -20
@@ -782,6 +862,871 @@
           "hit": {
             "angle": -35,
             "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          },
+          "bow_sky": {
+            "angle": -38
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      }
+    },
+    "archer_v2": {
+      "dir": "archer-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        },
+        "bow": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "bow_shot",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "bow_shot",
+          "sky": "bow_sky",
+          "raise": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          },
+          "bow_sky": {
+            "angle": -38
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 594,
+        "h": 452,
+        "footX": 297,
+        "footY": 446
+      },
+      "figure": {
+        "w": 330,
+        "h": 397
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 357,
+            "y": 177,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 243,
+            "y": 240,
+            "angle": 10
+          },
+          "box": {
+            "x": 133,
+            "y": 49,
+            "w": 330,
+            "h": 397
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 441,
+            "y": 209,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 194,
+            "y": 167,
+            "angle": -20
+          },
+          "box": {
+            "x": 174,
+            "y": 58,
+            "w": 299,
+            "h": 388
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 535,
+            "y": 157,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 294,
+            "y": 245,
+            "angle": 20
+          },
+          "box": {
+            "x": 102,
+            "y": 77,
+            "w": 454,
+            "h": 369
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 260,
+            "y": 40,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 361,
+            "y": 202,
+            "angle": 20
+          },
+          "box": {
+            "x": 126,
+            "y": 20,
+            "w": 342,
+            "h": 426
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 566,
+            "y": 180,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 277,
+            "y": 199,
+            "angle": -10
+          },
+          "box": {
+            "x": 76,
+            "y": 103,
+            "w": 512,
+            "h": 343
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 263,
+            "y": 143,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 408,
+            "y": 210,
+            "angle": 10
+          },
+          "box": {
+            "x": 206,
+            "y": 77,
+            "w": 305,
+            "h": 369
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 474,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 189,
+            "y": 203,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 103,
+            "y": 74,
+            "w": 388,
+            "h": 372
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 362,
+            "y": 169,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 242,
+            "y": 192,
+            "angle": 10
+          },
+          "box": {
+            "x": 115,
+            "y": 74,
+            "w": 364,
+            "h": 372
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 250,
+            "y": 226,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 364,
+            "y": 125,
+            "angle": 0
+          },
+          "box": {
+            "x": 111,
+            "y": 50,
+            "w": 373,
+            "h": 396
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 219,
+            "y": 26,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 377,
+            "y": 197,
+            "angle": 20
+          },
+          "box": {
+            "x": 119,
+            "y": 6,
+            "w": 358,
+            "h": 440
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 445,
+            "y": 149,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 394,
+            "y": 149,
+            "angle": 80
+          },
+          "box": {
+            "x": 108,
+            "y": 64,
+            "w": 378,
+            "h": 382
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 210,
+            "y": 235,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 463,
+            "y": 119,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 102,
+            "y": 52,
+            "w": 390,
+            "h": 394
+          },
+          "src": "archer-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 313,
+            "y": 266,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 303,
+            "y": 250,
+            "angle": 165
+          },
+          "box": {
+            "x": 129,
+            "y": 41,
+            "w": 336,
+            "h": 405
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 409,
+            "y": 217,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 409,
+            "y": 217,
+            "angle": 40
+          },
+          "box": {
+            "x": 197,
+            "y": 41,
+            "w": 255,
+            "h": 405
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 476,
+            "y": 278,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 476,
+            "y": 278,
+            "angle": 125
+          },
+          "box": {
+            "x": 60,
+            "y": 97,
+            "w": 473,
+            "h": 349
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 302,
+            "y": 23,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 302,
+            "y": 23,
+            "angle": -10
+          },
+          "box": {
+            "x": 112,
+            "y": 7,
+            "w": 371,
+            "h": 439
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 550,
+            "y": 200,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 550,
+            "y": 200,
+            "angle": 90
+          },
+          "box": {
+            "x": 72,
+            "y": 124,
+            "w": 498,
+            "h": 322
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 212,
+            "y": 250,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 212,
+            "y": 250,
+            "angle": -100
+          },
+          "box": {
+            "x": 111,
+            "y": 70,
+            "w": 373,
+            "h": 376
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 448,
+            "y": 162,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 448,
+            "y": 162,
+            "angle": 90
+          },
+          "box": {
+            "x": 99,
+            "y": 71,
+            "w": 398,
+            "h": 375
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 334,
+            "y": 262,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 334,
+            "y": 262,
+            "angle": 90
+          },
+          "box": {
+            "x": 93,
+            "y": 74,
+            "w": 409,
+            "h": 372
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 337,
+            "y": 130,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 269,
+            "y": 130,
+            "angle": 90
+          },
+          "box": {
+            "x": 109,
+            "y": 67,
+            "w": 377,
+            "h": 379
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 448,
+            "y": 88,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 130,
+            "y": 193,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 93,
+            "y": 71,
+            "w": 411,
+            "h": 375
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 295,
+            "y": 270,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 295,
+            "y": 270,
+            "angle": 150
+          },
+          "box": {
+            "x": 113,
+            "y": 107,
+            "w": 362,
+            "h": 339
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 450,
+            "y": 409,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 450,
+            "y": 409,
+            "angle": 100
+          },
+          "box": {
+            "x": 111,
+            "y": 159,
+            "w": 384,
+            "h": 287
+          },
+          "src": "archer-v2/two-handed.png"
+        },
+        "bow_shot": {
+          "anchor": {
+            "x": 490,
+            "y": 119,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 250,
+            "y": 108,
+            "angle": 0
+          },
+          "box": {
+            "x": 130,
+            "y": 52,
+            "w": 377,
+            "h": 394
+          },
+          "src": "archer-v2/bow.png"
+        },
+        "bow_sky": {
+          "anchor": {
+            "x": 429,
+            "y": 29,
+            "angle": -40
+          },
+          "offhand": {
+            "x": 229,
+            "y": 114,
+            "angle": 0
+          },
+          "box": {
+            "x": 132,
+            "y": 14,
+            "w": 334,
+            "h": 432
+          },
+          "src": "archer-v2/bow.png"
+        }
+      }
+    },
+    "mage_v2": {
+      "dir": "mage-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
           }
         },
         "bows": {
@@ -828,6 +1773,5589 @@
           "off:throw": {
             "hidden": true
           }
+        }
+      },
+      "canvas": {
+        "w": 596,
+        "h": 456,
+        "footX": 298,
+        "footY": 450
+      },
+      "figure": {
+        "w": 357,
+        "h": 402
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 353,
+            "y": 179,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 248,
+            "y": 189,
+            "angle": 10
+          },
+          "box": {
+            "x": 107,
+            "y": 48,
+            "w": 357,
+            "h": 402
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 423,
+            "y": 197,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 200,
+            "y": 158,
+            "angle": -20
+          },
+          "box": {
+            "x": 156,
+            "y": 56,
+            "w": 321,
+            "h": 394
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 533,
+            "y": 149,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 271,
+            "y": 177,
+            "angle": 20
+          },
+          "box": {
+            "x": 97,
+            "y": 75,
+            "w": 459,
+            "h": 375
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 277,
+            "y": 29,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 366,
+            "y": 204,
+            "angle": 20
+          },
+          "box": {
+            "x": 118,
+            "y": 15,
+            "w": 362,
+            "h": 435
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 568,
+            "y": 179,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 315,
+            "y": 194,
+            "angle": -10
+          },
+          "box": {
+            "x": 73,
+            "y": 103,
+            "w": 517,
+            "h": 347
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 270,
+            "y": 144,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 417,
+            "y": 212,
+            "angle": 10
+          },
+          "box": {
+            "x": 202,
+            "y": 76,
+            "w": 346,
+            "h": 374
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 467,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 185,
+            "y": 204,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 101,
+            "y": 81,
+            "w": 395,
+            "h": 369
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 358,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 243,
+            "y": 185,
+            "angle": 10
+          },
+          "box": {
+            "x": 103,
+            "y": 75,
+            "w": 388,
+            "h": 375
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 258,
+            "y": 138,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 360,
+            "y": 129,
+            "angle": 0
+          },
+          "box": {
+            "x": 95,
+            "y": 52,
+            "w": 395,
+            "h": 398
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 210,
+            "y": 21,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 354,
+            "y": 172,
+            "angle": 20
+          },
+          "box": {
+            "x": 88,
+            "y": 6,
+            "w": 402,
+            "h": 444
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 446,
+            "y": 140,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 401,
+            "y": 149,
+            "angle": 80
+          },
+          "box": {
+            "x": 84,
+            "y": 61,
+            "w": 407,
+            "h": 389
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 201,
+            "y": 203,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 472,
+            "y": 127,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 97,
+            "y": 55,
+            "w": 402,
+            "h": 395
+          },
+          "src": "mage-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 313,
+            "y": 263,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 303,
+            "y": 254,
+            "angle": 165
+          },
+          "box": {
+            "x": 130,
+            "y": 38,
+            "w": 335,
+            "h": 412
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 425,
+            "y": 227,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 425,
+            "y": 227,
+            "angle": 40
+          },
+          "box": {
+            "x": 183,
+            "y": 46,
+            "w": 288,
+            "h": 404
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 457,
+            "y": 282,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 457,
+            "y": 282,
+            "angle": 125
+          },
+          "box": {
+            "x": 66,
+            "y": 101,
+            "w": 466,
+            "h": 349
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 295,
+            "y": 24,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 295,
+            "y": 24,
+            "angle": -10
+          },
+          "box": {
+            "x": 109,
+            "y": 10,
+            "w": 380,
+            "h": 440
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 537,
+            "y": 191,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 537,
+            "y": 191,
+            "angle": 90
+          },
+          "box": {
+            "x": 73,
+            "y": 111,
+            "w": 480,
+            "h": 339
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 215,
+            "y": 250,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 215,
+            "y": 250,
+            "angle": -100
+          },
+          "box": {
+            "x": 104,
+            "y": 69,
+            "w": 383,
+            "h": 381
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 463,
+            "y": 158,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 463,
+            "y": 158,
+            "angle": 90
+          },
+          "box": {
+            "x": 98,
+            "y": 73,
+            "w": 401,
+            "h": 377
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 334,
+            "y": 259,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 334,
+            "y": 259,
+            "angle": 90
+          },
+          "box": {
+            "x": 94,
+            "y": 81,
+            "w": 409,
+            "h": 369
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 311,
+            "y": 142,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 267,
+            "y": 139,
+            "angle": 90
+          },
+          "box": {
+            "x": 114,
+            "y": 73,
+            "w": 370,
+            "h": 377
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 159,
+            "y": 93,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 476,
+            "y": 198,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 96,
+            "y": 77,
+            "w": 403,
+            "h": 373
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 386,
+            "y": 277,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 386,
+            "y": 277,
+            "angle": 150
+          },
+          "box": {
+            "x": 111,
+            "y": 135,
+            "w": 373,
+            "h": 315
+          },
+          "src": "mage-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 446,
+            "y": 420,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 446,
+            "y": 420,
+            "angle": 100
+          },
+          "box": {
+            "x": 98,
+            "y": 179,
+            "w": 399,
+            "h": 271
+          },
+          "src": "mage-v2/two-handed.png"
+        }
+      }
+    },
+    "druid_v2": {
+      "dir": "druid-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 582,
+        "h": 455,
+        "footX": 291,
+        "footY": 449
+      },
+      "figure": {
+        "w": 350,
+        "h": 400
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 343,
+            "y": 179,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 245,
+            "y": 191,
+            "angle": 10
+          },
+          "box": {
+            "x": 109,
+            "y": 49,
+            "w": 350,
+            "h": 400
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 422,
+            "y": 195,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 189,
+            "y": 170,
+            "angle": -20
+          },
+          "box": {
+            "x": 155,
+            "y": 52,
+            "w": 314,
+            "h": 397
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 531,
+            "y": 159,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 252,
+            "y": 191,
+            "angle": 20
+          },
+          "box": {
+            "x": 78,
+            "y": 78,
+            "w": 469,
+            "h": 371
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 288,
+            "y": 35,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 364,
+            "y": 209,
+            "angle": 20
+          },
+          "box": {
+            "x": 114,
+            "y": 22,
+            "w": 353,
+            "h": 427
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 561,
+            "y": 187,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 314,
+            "y": 203,
+            "angle": -10
+          },
+          "box": {
+            "x": 66,
+            "y": 104,
+            "w": 510,
+            "h": 345
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 254,
+            "y": 144,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 381,
+            "y": 217,
+            "angle": 10
+          },
+          "box": {
+            "x": 193,
+            "y": 79,
+            "w": 331,
+            "h": 370
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 481,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 176,
+            "y": 200,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 92,
+            "y": 83,
+            "w": 405,
+            "h": 366
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 365,
+            "y": 169,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 232,
+            "y": 190,
+            "angle": 10
+          },
+          "box": {
+            "x": 101,
+            "y": 71,
+            "w": 382,
+            "h": 378
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 244,
+            "y": 219,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 348,
+            "y": 126,
+            "angle": 0
+          },
+          "box": {
+            "x": 94,
+            "y": 50,
+            "w": 387,
+            "h": 399
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 209,
+            "y": 23,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 352,
+            "y": 177,
+            "angle": 20
+          },
+          "box": {
+            "x": 102,
+            "y": 6,
+            "w": 375,
+            "h": 443
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 440,
+            "y": 143,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 387,
+            "y": 149,
+            "angle": 80
+          },
+          "box": {
+            "x": 97,
+            "y": 63,
+            "w": 387,
+            "h": 386
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 191,
+            "y": 197,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 481,
+            "y": 118,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 87,
+            "y": 52,
+            "w": 411,
+            "h": 397
+          },
+          "src": "druid-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 306,
+            "y": 264,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 296,
+            "y": 254,
+            "angle": 165
+          },
+          "box": {
+            "x": 122,
+            "y": 38,
+            "w": 338,
+            "h": 411
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 437,
+            "y": 221,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 437,
+            "y": 221,
+            "angle": 40
+          },
+          "box": {
+            "x": 193,
+            "y": 35,
+            "w": 291,
+            "h": 414
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 471,
+            "y": 281,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 471,
+            "y": 281,
+            "angle": 125
+          },
+          "box": {
+            "x": 57,
+            "y": 100,
+            "w": 470,
+            "h": 349
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 291,
+            "y": 23,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 291,
+            "y": 23,
+            "angle": -10
+          },
+          "box": {
+            "x": 106,
+            "y": 11,
+            "w": 371,
+            "h": 438
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 548,
+            "y": 192,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 548,
+            "y": 192,
+            "angle": 90
+          },
+          "box": {
+            "x": 65,
+            "y": 118,
+            "w": 501,
+            "h": 331
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 210,
+            "y": 248,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 210,
+            "y": 248,
+            "angle": -100
+          },
+          "box": {
+            "x": 106,
+            "y": 71,
+            "w": 371,
+            "h": 378
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 463,
+            "y": 160,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 463,
+            "y": 160,
+            "angle": 90
+          },
+          "box": {
+            "x": 96,
+            "y": 78,
+            "w": 390,
+            "h": 371
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 335,
+            "y": 264,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 335,
+            "y": 264,
+            "angle": 90
+          },
+          "box": {
+            "x": 91,
+            "y": 76,
+            "w": 401,
+            "h": 373
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 271,
+            "y": 127,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 296,
+            "y": 131,
+            "angle": 90
+          },
+          "box": {
+            "x": 102,
+            "y": 67,
+            "w": 379,
+            "h": 382
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 441,
+            "y": 81,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 119,
+            "y": 191,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 85,
+            "y": 71,
+            "w": 413,
+            "h": 378
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 376,
+            "y": 265,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 376,
+            "y": 265,
+            "angle": 150
+          },
+          "box": {
+            "x": 101,
+            "y": 123,
+            "w": 380,
+            "h": 326
+          },
+          "src": "druid-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 451,
+            "y": 411,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 451,
+            "y": 411,
+            "angle": 100
+          },
+          "box": {
+            "x": 105,
+            "y": 168,
+            "w": 384,
+            "h": 281
+          },
+          "src": "druid-v2/two-handed.png"
+        }
+      }
+    },
+    "paladin_v2": {
+      "dir": "paladin-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 620,
+        "h": 465,
+        "footX": 310,
+        "footY": 459
+      },
+      "figure": {
+        "w": 351,
+        "h": 404
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 395,
+            "y": 192,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 277,
+            "y": 235,
+            "angle": 10
+          },
+          "box": {
+            "x": 135,
+            "y": 55,
+            "w": 351,
+            "h": 404
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 429,
+            "y": 206,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 218,
+            "y": 206,
+            "angle": -20
+          },
+          "box": {
+            "x": 185,
+            "y": 52,
+            "w": 300,
+            "h": 407
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 556,
+            "y": 160,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 294,
+            "y": 190,
+            "angle": 20
+          },
+          "box": {
+            "x": 96,
+            "y": 93,
+            "w": 486,
+            "h": 366
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 284,
+            "y": 44,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 358,
+            "y": 194,
+            "angle": 20
+          },
+          "box": {
+            "x": 131,
+            "y": 24,
+            "w": 358,
+            "h": 435
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 592,
+            "y": 180,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 318,
+            "y": 195,
+            "angle": -10
+          },
+          "box": {
+            "x": 88,
+            "y": 108,
+            "w": 526,
+            "h": 351
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 220,
+            "y": 180,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 304,
+            "y": 248,
+            "angle": 10
+          },
+          "box": {
+            "x": 136,
+            "y": 89,
+            "w": 316,
+            "h": 370
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 485,
+            "y": 179,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 191,
+            "y": 211,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 115,
+            "y": 95,
+            "w": 389,
+            "h": 364
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 387,
+            "y": 188,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 263,
+            "y": 195,
+            "angle": 10
+          },
+          "box": {
+            "x": 130,
+            "y": 84,
+            "w": 362,
+            "h": 375
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 295,
+            "y": 177,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 344,
+            "y": 138,
+            "angle": 0
+          },
+          "box": {
+            "x": 113,
+            "y": 58,
+            "w": 394,
+            "h": 401
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 202,
+            "y": 26,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 368,
+            "y": 202,
+            "angle": 20
+          },
+          "box": {
+            "x": 117,
+            "y": 6,
+            "w": 388,
+            "h": 453
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 464,
+            "y": 139,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 412,
+            "y": 146,
+            "angle": 80
+          },
+          "box": {
+            "x": 104,
+            "y": 66,
+            "w": 414,
+            "h": 393
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 214,
+            "y": 230,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 515,
+            "y": 133,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 110,
+            "y": 62,
+            "w": 426,
+            "h": 397
+          },
+          "src": "paladin-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 331,
+            "y": 275,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 324,
+            "y": 264,
+            "angle": 165
+          },
+          "box": {
+            "x": 130,
+            "y": 45,
+            "w": 360,
+            "h": 414
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 436,
+            "y": 229,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 436,
+            "y": 229,
+            "angle": 40
+          },
+          "box": {
+            "x": 191,
+            "y": 48,
+            "w": 273,
+            "h": 411
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 475,
+            "y": 306,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 475,
+            "y": 306,
+            "angle": 125
+          },
+          "box": {
+            "x": 75,
+            "y": 115,
+            "w": 471,
+            "h": 344
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 285,
+            "y": 63,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 285,
+            "y": 63,
+            "angle": -10
+          },
+          "box": {
+            "x": 117,
+            "y": 18,
+            "w": 386,
+            "h": 441
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 586,
+            "y": 190,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 586,
+            "y": 190,
+            "angle": 90
+          },
+          "box": {
+            "x": 87,
+            "y": 117,
+            "w": 515,
+            "h": 342
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 243,
+            "y": 264,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 243,
+            "y": 264,
+            "angle": -100
+          },
+          "box": {
+            "x": 128,
+            "y": 96,
+            "w": 365,
+            "h": 363
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 471,
+            "y": 186,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 471,
+            "y": 186,
+            "angle": 90
+          },
+          "box": {
+            "x": 106,
+            "y": 98,
+            "w": 408,
+            "h": 361
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 267,
+            "y": 293,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 267,
+            "y": 293,
+            "angle": 90
+          },
+          "box": {
+            "x": 109,
+            "y": 97,
+            "w": 406,
+            "h": 362
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 298,
+            "y": 126,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 336,
+            "y": 126,
+            "angle": 90
+          },
+          "box": {
+            "x": 114,
+            "y": 76,
+            "w": 395,
+            "h": 383
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 456,
+            "y": 82,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 132,
+            "y": 199,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 98,
+            "y": 56,
+            "w": 425,
+            "h": 403
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 478,
+            "y": 257,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 478,
+            "y": 257,
+            "angle": 150
+          },
+          "box": {
+            "x": 103,
+            "y": 126,
+            "w": 413,
+            "h": 333
+          },
+          "src": "paladin-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 464,
+            "y": 430,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 464,
+            "y": 430,
+            "angle": 100
+          },
+          "box": {
+            "x": 115,
+            "y": 185,
+            "w": 389,
+            "h": 274
+          },
+          "src": "paladin-v2/two-handed.png"
+        }
+      }
+    },
+    "cutthroat_v2": {
+      "dir": "cutthroat-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 584,
+        "h": 452,
+        "footX": 292,
+        "footY": 446
+      },
+      "figure": {
+        "w": 359,
+        "h": 408
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 348,
+            "y": 167,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 230,
+            "y": 218,
+            "angle": 10
+          },
+          "box": {
+            "x": 100,
+            "y": 38,
+            "w": 359,
+            "h": 408
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 436,
+            "y": 196,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 185,
+            "y": 171,
+            "angle": -20
+          },
+          "box": {
+            "x": 150,
+            "y": 42,
+            "w": 315,
+            "h": 404
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 533,
+            "y": 157,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 275,
+            "y": 182,
+            "angle": 20
+          },
+          "box": {
+            "x": 94,
+            "y": 78,
+            "w": 463,
+            "h": 368
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 274,
+            "y": 31,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 365,
+            "y": 198,
+            "angle": 20
+          },
+          "box": {
+            "x": 120,
+            "y": 14,
+            "w": 345,
+            "h": 432
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 564,
+            "y": 186,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 261,
+            "y": 212,
+            "angle": -10
+          },
+          "box": {
+            "x": 67,
+            "y": 100,
+            "w": 511,
+            "h": 346
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 141,
+            "y": 182,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 289,
+            "y": 208,
+            "angle": 10
+          },
+          "box": {
+            "x": 77,
+            "y": 70,
+            "w": 359,
+            "h": 376
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 466,
+            "y": 164,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 170,
+            "y": 193,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 89,
+            "y": 75,
+            "w": 399,
+            "h": 371
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 366,
+            "y": 166,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 244,
+            "y": 172,
+            "angle": 10
+          },
+          "box": {
+            "x": 101,
+            "y": 73,
+            "w": 375,
+            "h": 373
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 285,
+            "y": 124,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 356,
+            "y": 121,
+            "angle": 0
+          },
+          "box": {
+            "x": 96,
+            "y": 42,
+            "w": 384,
+            "h": 404
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 214,
+            "y": 21,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 355,
+            "y": 175,
+            "angle": 20
+          },
+          "box": {
+            "x": 107,
+            "y": 8,
+            "w": 372,
+            "h": 438
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 452,
+            "y": 140,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 392,
+            "y": 142,
+            "angle": 80
+          },
+          "box": {
+            "x": 92,
+            "y": 56,
+            "w": 393,
+            "h": 390
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 185,
+            "y": 229,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 481,
+            "y": 111,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 94,
+            "y": 48,
+            "w": 409,
+            "h": 398
+          },
+          "src": "cutthroat-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 301,
+            "y": 276,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 291,
+            "y": 267,
+            "angle": 165
+          },
+          "box": {
+            "x": 107,
+            "y": 41,
+            "w": 357,
+            "h": 405
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 396,
+            "y": 241,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 396,
+            "y": 241,
+            "angle": 40
+          },
+          "box": {
+            "x": 139,
+            "y": 45,
+            "w": 301,
+            "h": 401
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 492,
+            "y": 291,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 492,
+            "y": 291,
+            "angle": 125
+          },
+          "box": {
+            "x": 62,
+            "y": 107,
+            "w": 460,
+            "h": 339
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 278,
+            "y": 24,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 278,
+            "y": 24,
+            "angle": -10
+          },
+          "box": {
+            "x": 98,
+            "y": 6,
+            "w": 389,
+            "h": 440
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 558,
+            "y": 198,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 558,
+            "y": 198,
+            "angle": 90
+          },
+          "box": {
+            "x": 61,
+            "y": 118,
+            "w": 512,
+            "h": 328
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 354,
+            "y": 259,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 354,
+            "y": 259,
+            "angle": -100
+          },
+          "box": {
+            "x": 105,
+            "y": 79,
+            "w": 377,
+            "h": 367
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 451,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 451,
+            "y": 168,
+            "angle": 90
+          },
+          "box": {
+            "x": 85,
+            "y": 84,
+            "w": 401,
+            "h": 362
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 332,
+            "y": 268,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 332,
+            "y": 268,
+            "angle": 90
+          },
+          "box": {
+            "x": 92,
+            "y": 81,
+            "w": 401,
+            "h": 365
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 338,
+            "y": 147,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 301,
+            "y": 153,
+            "angle": 90
+          },
+          "box": {
+            "x": 92,
+            "y": 70,
+            "w": 392,
+            "h": 376
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 169,
+            "y": 80,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 498,
+            "y": 187,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 92,
+            "y": 64,
+            "w": 426,
+            "h": 382
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 343,
+            "y": 274,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 343,
+            "y": 274,
+            "angle": 150
+          },
+          "box": {
+            "x": 92,
+            "y": 100,
+            "w": 401,
+            "h": 346
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 452,
+            "y": 432,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 452,
+            "y": 432,
+            "angle": 100
+          },
+          "box": {
+            "x": 106,
+            "y": 178,
+            "w": 372,
+            "h": 268
+          },
+          "src": "cutthroat-v2/two-handed.png"
+        }
+      }
+    },
+    "gambler_v2": {
+      "dir": "gambler-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 572,
+        "h": 442,
+        "footX": 286,
+        "footY": 436
+      },
+      "figure": {
+        "w": 328,
+        "h": 389
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 337,
+            "y": 193,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 245,
+            "y": 200,
+            "angle": 10
+          },
+          "box": {
+            "x": 122,
+            "y": 47,
+            "w": 328,
+            "h": 389
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 436,
+            "y": 198,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 201,
+            "y": 164,
+            "angle": -20
+          },
+          "box": {
+            "x": 178,
+            "y": 42,
+            "w": 286,
+            "h": 394
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 519,
+            "y": 147,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 278,
+            "y": 173,
+            "angle": 20
+          },
+          "box": {
+            "x": 97,
+            "y": 57,
+            "w": 448,
+            "h": 379
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 263,
+            "y": 21,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 348,
+            "y": 196,
+            "angle": 20
+          },
+          "box": {
+            "x": 114,
+            "y": 10,
+            "w": 343,
+            "h": 426
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 544,
+            "y": 168,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 245,
+            "y": 183,
+            "angle": -10
+          },
+          "box": {
+            "x": 80,
+            "y": 88,
+            "w": 483,
+            "h": 348
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 173,
+            "y": 143,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 307,
+            "y": 207,
+            "angle": 10
+          },
+          "box": {
+            "x": 112,
+            "y": 67,
+            "w": 348,
+            "h": 369
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 465,
+            "y": 166,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 178,
+            "y": 188,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 97,
+            "y": 67,
+            "w": 387,
+            "h": 369
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 365,
+            "y": 177,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 186,
+            "y": 190,
+            "angle": 10
+          },
+          "box": {
+            "x": 100,
+            "y": 63,
+            "w": 373,
+            "h": 373
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 269,
+            "y": 121,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 346,
+            "y": 121,
+            "angle": 0
+          },
+          "box": {
+            "x": 109,
+            "y": 38,
+            "w": 355,
+            "h": 398
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 219,
+            "y": 21,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 365,
+            "y": 183,
+            "angle": 20
+          },
+          "box": {
+            "x": 108,
+            "y": 6,
+            "w": 357,
+            "h": 430
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 448,
+            "y": 127,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 403,
+            "y": 137,
+            "angle": 80
+          },
+          "box": {
+            "x": 103,
+            "y": 56,
+            "w": 368,
+            "h": 380
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 227,
+            "y": 194,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 471,
+            "y": 121,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 97,
+            "y": 46,
+            "w": 392,
+            "h": 390
+          },
+          "src": "gambler-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 291,
+            "y": 264,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 284,
+            "y": 255,
+            "angle": 165
+          },
+          "box": {
+            "x": 117,
+            "y": 44,
+            "w": 340,
+            "h": 392
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 407,
+            "y": 231,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 407,
+            "y": 231,
+            "angle": 40
+          },
+          "box": {
+            "x": 176,
+            "y": 44,
+            "w": 263,
+            "h": 392
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 466,
+            "y": 281,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 466,
+            "y": 281,
+            "angle": 125
+          },
+          "box": {
+            "x": 62,
+            "y": 97,
+            "w": 447,
+            "h": 339
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 276,
+            "y": 26,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 276,
+            "y": 26,
+            "angle": -10
+          },
+          "box": {
+            "x": 98,
+            "y": 6,
+            "w": 377,
+            "h": 430
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 546,
+            "y": 175,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 546,
+            "y": 175,
+            "angle": 90
+          },
+          "box": {
+            "x": 76,
+            "y": 102,
+            "w": 490,
+            "h": 334
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 190,
+            "y": 241,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 190,
+            "y": 241,
+            "angle": -100
+          },
+          "box": {
+            "x": 99,
+            "y": 70,
+            "w": 374,
+            "h": 366
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 454,
+            "y": 163,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 454,
+            "y": 163,
+            "angle": 90
+          },
+          "box": {
+            "x": 91,
+            "y": 85,
+            "w": 390,
+            "h": 351
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 314,
+            "y": 264,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 314,
+            "y": 264,
+            "angle": 90
+          },
+          "box": {
+            "x": 84,
+            "y": 76,
+            "w": 404,
+            "h": 360
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 268,
+            "y": 133,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 300,
+            "y": 133,
+            "angle": 90
+          },
+          "box": {
+            "x": 100,
+            "y": 53,
+            "w": 374,
+            "h": 383
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 157,
+            "y": 76,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 467,
+            "y": 196,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 89,
+            "y": 61,
+            "w": 396,
+            "h": 375
+          },
+          "src": "gambler-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 247,
+            "y": 197,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 229,
+            "y": 219,
+            "angle": 150
+          },
+          "box": {
+            "x": 132,
+            "y": 50,
+            "w": 281,
+            "h": 386
+          },
+          "src": "gambler-v2/override-hit.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 443,
+            "y": 410,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 443,
+            "y": 410,
+            "angle": 100
+          },
+          "box": {
+            "x": 90,
+            "y": 152,
+            "w": 384,
+            "h": 284
+          },
+          "src": "gambler-v2/two-handed.png"
+        }
+      }
+    },
+    "hexer_v2": {
+      "dir": "hexer-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 602,
+        "h": 450,
+        "footX": 301,
+        "footY": 444
+      },
+      "figure": {
+        "w": 354,
+        "h": 417
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 353,
+            "y": 173,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 266,
+            "y": 197,
+            "angle": 10
+          },
+          "box": {
+            "x": 109,
+            "y": 27,
+            "w": 354,
+            "h": 417
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 452,
+            "y": 190,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 199,
+            "y": 167,
+            "angle": -20
+          },
+          "box": {
+            "x": 142,
+            "y": 34,
+            "w": 337,
+            "h": 410
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 536,
+            "y": 147,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 287,
+            "y": 177,
+            "angle": 20
+          },
+          "box": {
+            "x": 99,
+            "y": 59,
+            "w": 458,
+            "h": 385
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 289,
+            "y": 23,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 373,
+            "y": 207,
+            "angle": 20
+          },
+          "box": {
+            "x": 109,
+            "y": 10,
+            "w": 369,
+            "h": 434
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 579,
+            "y": 178,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 314,
+            "y": 202,
+            "angle": -10
+          },
+          "box": {
+            "x": 79,
+            "y": 94,
+            "w": 517,
+            "h": 350
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 182,
+            "y": 151,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 314,
+            "y": 209,
+            "angle": 10
+          },
+          "box": {
+            "x": 112,
+            "y": 69,
+            "w": 378,
+            "h": 375
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 467,
+            "y": 165,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 188,
+            "y": 194,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 104,
+            "y": 76,
+            "w": 407,
+            "h": 368
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 387,
+            "y": 189,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 257,
+            "y": 189,
+            "angle": 10
+          },
+          "box": {
+            "x": 120,
+            "y": 71,
+            "w": 356,
+            "h": 373
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 281,
+            "y": 132,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 325,
+            "y": 122,
+            "angle": 0
+          },
+          "box": {
+            "x": 107,
+            "y": 40,
+            "w": 381,
+            "h": 404
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 227,
+            "y": 22,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 364,
+            "y": 164,
+            "angle": 20
+          },
+          "box": {
+            "x": 103,
+            "y": 6,
+            "w": 388,
+            "h": 438
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 455,
+            "y": 146,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 407,
+            "y": 153,
+            "angle": 80
+          },
+          "box": {
+            "x": 88,
+            "y": 64,
+            "w": 407,
+            "h": 380
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 258,
+            "y": 237,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 504,
+            "y": 131,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 92,
+            "y": 66,
+            "w": 425,
+            "h": 378
+          },
+          "src": "hexer-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 316,
+            "y": 277,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 306,
+            "y": 268,
+            "angle": 165
+          },
+          "box": {
+            "x": 130,
+            "y": 39,
+            "w": 342,
+            "h": 405
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 385,
+            "y": 226,
+            "angle": -30
+          },
+          "offhand": {
+            "x": 385,
+            "y": 226,
+            "angle": -30
+          },
+          "box": {
+            "x": 119,
+            "y": 43,
+            "w": 345,
+            "h": 401
+          },
+          "src": "hexer-v2/override-step2.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 482,
+            "y": 292,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 482,
+            "y": 292,
+            "angle": 125
+          },
+          "box": {
+            "x": 78,
+            "y": 106,
+            "w": 446,
+            "h": 338
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 296,
+            "y": 37,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 296,
+            "y": 37,
+            "angle": -10
+          },
+          "box": {
+            "x": 119,
+            "y": 26,
+            "w": 365,
+            "h": 418
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 564,
+            "y": 183,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 564,
+            "y": 183,
+            "angle": 90
+          },
+          "box": {
+            "x": 81,
+            "y": 108,
+            "w": 500,
+            "h": 336
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 236,
+            "y": 244,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 236,
+            "y": 244,
+            "angle": -100
+          },
+          "box": {
+            "x": 111,
+            "y": 72,
+            "w": 382,
+            "h": 372
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 466,
+            "y": 151,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 466,
+            "y": 151,
+            "angle": 90
+          },
+          "box": {
+            "x": 113,
+            "y": 70,
+            "w": 397,
+            "h": 374
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 332,
+            "y": 270,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 332,
+            "y": 270,
+            "angle": 90
+          },
+          "box": {
+            "x": 108,
+            "y": 76,
+            "w": 387,
+            "h": 368
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 308,
+            "y": 139,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 272,
+            "y": 139,
+            "angle": 90
+          },
+          "box": {
+            "x": 112,
+            "y": 70,
+            "w": 372,
+            "h": 374
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 232,
+            "y": 73,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 481,
+            "y": 195,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 113,
+            "y": 60,
+            "w": 384,
+            "h": 384
+          },
+          "src": "hexer-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 306,
+            "y": 198,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 309,
+            "y": 223,
+            "angle": 150
+          },
+          "box": {
+            "x": 129,
+            "y": 53,
+            "w": 303,
+            "h": 391
+          },
+          "src": "hexer-v2/override-hit.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 445,
+            "y": 416,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 445,
+            "y": 416,
+            "angle": 100
+          },
+          "box": {
+            "x": 120,
+            "y": 181,
+            "w": 359,
+            "h": 263
+          },
+          "src": "hexer-v2/two-handed.png"
+        }
+      }
+    },
+    "antimage_v2": {
+      "dir": "antimage-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 598,
+        "h": 458,
+        "footX": 299,
+        "footY": 452
+      },
+      "figure": {
+        "w": 352,
+        "h": 402
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 352,
+            "y": 179,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 252,
+            "y": 224,
+            "angle": 10
+          },
+          "box": {
+            "x": 113,
+            "y": 50,
+            "w": 352,
+            "h": 402
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 430,
+            "y": 198,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 200,
+            "y": 176,
+            "angle": -20
+          },
+          "box": {
+            "x": 160,
+            "y": 59,
+            "w": 311,
+            "h": 393
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 528,
+            "y": 163,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 261,
+            "y": 192,
+            "angle": 20
+          },
+          "box": {
+            "x": 96,
+            "y": 79,
+            "w": 452,
+            "h": 373
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 305,
+            "y": 34,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 370,
+            "y": 209,
+            "angle": 20
+          },
+          "box": {
+            "x": 117,
+            "y": 18,
+            "w": 365,
+            "h": 434
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 565,
+            "y": 187,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 301,
+            "y": 200,
+            "angle": -10
+          },
+          "box": {
+            "x": 75,
+            "y": 106,
+            "w": 507,
+            "h": 346
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 141,
+            "y": 140,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 287,
+            "y": 186,
+            "angle": 10
+          },
+          "box": {
+            "x": 83,
+            "y": 79,
+            "w": 357,
+            "h": 373
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 487,
+            "y": 175,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 208,
+            "y": 216,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 104,
+            "y": 89,
+            "w": 403,
+            "h": 363
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 366,
+            "y": 189,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 262,
+            "y": 189,
+            "angle": 10
+          },
+          "box": {
+            "x": 111,
+            "y": 75,
+            "w": 377,
+            "h": 377
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 293,
+            "y": 132,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 351,
+            "y": 132,
+            "angle": 0
+          },
+          "box": {
+            "x": 111,
+            "y": 53,
+            "w": 378,
+            "h": 399
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 221,
+            "y": 20,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 361,
+            "y": 189,
+            "angle": 20
+          },
+          "box": {
+            "x": 105,
+            "y": 6,
+            "w": 383,
+            "h": 446
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 460,
+            "y": 146,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 408,
+            "y": 151,
+            "angle": 80
+          },
+          "box": {
+            "x": 100,
+            "y": 63,
+            "w": 398,
+            "h": 389
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 198,
+            "y": 231,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 494,
+            "y": 127,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 107,
+            "y": 59,
+            "w": 402,
+            "h": 393
+          },
+          "src": "antimage-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 305,
+            "y": 279,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 295,
+            "y": 269,
+            "angle": 165
+          },
+          "box": {
+            "x": 125,
+            "y": 55,
+            "w": 341,
+            "h": 397
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 404,
+            "y": 240,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 404,
+            "y": 240,
+            "angle": 40
+          },
+          "box": {
+            "x": 149,
+            "y": 65,
+            "w": 293,
+            "h": 387
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 488,
+            "y": 302,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 488,
+            "y": 302,
+            "angle": 125
+          },
+          "box": {
+            "x": 80,
+            "y": 112,
+            "w": 440,
+            "h": 340
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 296,
+            "y": 42,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 296,
+            "y": 42,
+            "angle": -10
+          },
+          "box": {
+            "x": 106,
+            "y": 20,
+            "w": 387,
+            "h": 432
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 576,
+            "y": 195,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 576,
+            "y": 195,
+            "angle": 90
+          },
+          "box": {
+            "x": 67,
+            "y": 120,
+            "w": 525,
+            "h": 332
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 209,
+            "y": 261,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 209,
+            "y": 261,
+            "angle": -100
+          },
+          "box": {
+            "x": 115,
+            "y": 89,
+            "w": 369,
+            "h": 363
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 467,
+            "y": 170,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 467,
+            "y": 170,
+            "angle": 90
+          },
+          "box": {
+            "x": 102,
+            "y": 93,
+            "w": 394,
+            "h": 359
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 253,
+            "y": 277,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 253,
+            "y": 277,
+            "angle": 90
+          },
+          "box": {
+            "x": 96,
+            "y": 85,
+            "w": 408,
+            "h": 367
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 321,
+            "y": 139,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 296,
+            "y": 145,
+            "angle": 90
+          },
+          "box": {
+            "x": 102,
+            "y": 78,
+            "w": 394,
+            "h": 374
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 157,
+            "y": 64,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 491,
+            "y": 201,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 91,
+            "y": 51,
+            "w": 416,
+            "h": 401
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 375,
+            "y": 272,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 375,
+            "y": 272,
+            "angle": 150
+          },
+          "box": {
+            "x": 99,
+            "y": 107,
+            "w": 401,
+            "h": 345
+          },
+          "src": "antimage-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 456,
+            "y": 432,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 456,
+            "y": 432,
+            "angle": 100
+          },
+          "box": {
+            "x": 110,
+            "y": 172,
+            "w": 383,
+            "h": 280
+          },
+          "src": "antimage-v2/two-handed.png"
+        }
+      }
+    },
+    "undead_v2": {
+      "dir": "undead-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 578,
+        "h": 457,
+        "footX": 289,
+        "footY": 451
+      },
+      "figure": {
+        "w": 347,
+        "h": 395
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 339,
+            "y": 198,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 247,
+            "y": 217,
+            "angle": 10
+          },
+          "box": {
+            "x": 108,
+            "y": 56,
+            "w": 347,
+            "h": 395
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 435,
+            "y": 201,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 205,
+            "y": 164,
+            "angle": -20
+          },
+          "box": {
+            "x": 155,
+            "y": 55,
+            "w": 333,
+            "h": 396
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 552,
+            "y": 150,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 276,
+            "y": 187,
+            "angle": 20
+          },
+          "box": {
+            "x": 91,
+            "y": 70,
+            "w": 476,
+            "h": 381
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 281,
+            "y": 27,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 369,
+            "y": 211,
+            "angle": 20
+          },
+          "box": {
+            "x": 109,
+            "y": 14,
+            "w": 361,
+            "h": 437
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 555,
+            "y": 178,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 273,
+            "y": 200,
+            "angle": -10
+          },
+          "box": {
+            "x": 67,
+            "y": 103,
+            "w": 505,
+            "h": 348
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 172,
+            "y": 152,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 330,
+            "y": 220,
+            "angle": 10
+          },
+          "box": {
+            "x": 92,
+            "y": 85,
+            "w": 366,
+            "h": 366
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 468,
+            "y": 163,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 153,
+            "y": 200,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 99,
+            "y": 91,
+            "w": 386,
+            "h": 360
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 352,
+            "y": 167,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 227,
+            "y": 198,
+            "angle": 10
+          },
+          "box": {
+            "x": 101,
+            "y": 82,
+            "w": 375,
+            "h": 369
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 286,
+            "y": 139,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 351,
+            "y": 129,
+            "angle": 0
+          },
+          "box": {
+            "x": 107,
+            "y": 55,
+            "w": 366,
+            "h": 396
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 196,
+            "y": 20,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 348,
+            "y": 188,
+            "angle": 20
+          },
+          "box": {
+            "x": 101,
+            "y": 6,
+            "w": 369,
+            "h": 445
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 451,
+            "y": 147,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 399,
+            "y": 154,
+            "angle": 80
+          },
+          "box": {
+            "x": 101,
+            "y": 70,
+            "w": 375,
+            "h": 381
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 226,
+            "y": 247,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 480,
+            "y": 133,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 88,
+            "y": 62,
+            "w": 410,
+            "h": 389
+          },
+          "src": "undead-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 308,
+            "y": 273,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 298,
+            "y": 264,
+            "angle": 165
+          },
+          "box": {
+            "x": 111,
+            "y": 42,
+            "w": 357,
+            "h": 409
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 404,
+            "y": 239,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 404,
+            "y": 239,
+            "angle": 40
+          },
+          "box": {
+            "x": 153,
+            "y": 47,
+            "w": 296,
+            "h": 404
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 482,
+            "y": 292,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 482,
+            "y": 292,
+            "angle": 125
+          },
+          "box": {
+            "x": 46,
+            "y": 97,
+            "w": 466,
+            "h": 354
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 287,
+            "y": 28,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 287,
+            "y": 28,
+            "angle": -10
+          },
+          "box": {
+            "x": 91,
+            "y": 15,
+            "w": 397,
+            "h": 436
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 536,
+            "y": 196,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 536,
+            "y": 196,
+            "angle": 90
+          },
+          "box": {
+            "x": 52,
+            "y": 116,
+            "w": 505,
+            "h": 335
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 231,
+            "y": 258,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 231,
+            "y": 258,
+            "angle": -100
+          },
+          "box": {
+            "x": 96,
+            "y": 76,
+            "w": 387,
+            "h": 375
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 463,
+            "y": 164,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 463,
+            "y": 164,
+            "angle": 90
+          },
+          "box": {
+            "x": 87,
+            "y": 88,
+            "w": 405,
+            "h": 363
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 249,
+            "y": 274,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 249,
+            "y": 274,
+            "angle": 90
+          },
+          "box": {
+            "x": 87,
+            "y": 78,
+            "w": 407,
+            "h": 373
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 314,
+            "y": 136,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 276,
+            "y": 142,
+            "angle": 90
+          },
+          "box": {
+            "x": 94,
+            "y": 75,
+            "w": 389,
+            "h": 376
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 152,
+            "y": 79,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 475,
+            "y": 193,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 88,
+            "y": 63,
+            "w": 409,
+            "h": 388
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 370,
+            "y": 250,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 370,
+            "y": 250,
+            "angle": 150
+          },
+          "box": {
+            "x": 78,
+            "y": 114,
+            "w": 422,
+            "h": 337
+          },
+          "src": "undead-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 452,
+            "y": 423,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 452,
+            "y": 423,
+            "angle": 100
+          },
+          "box": {
+            "x": 83,
+            "y": 168,
+            "w": 411,
+            "h": 283
+          },
+          "src": "undead-v2/two-handed.png"
+        }
+      }
+    },
+    "defender_v2": {
+      "dir": "defender-v2",
+      "heightFit": 0.97,
+      "idleSprite": false,
+      "defaultWeapon": {
+        "family": "swords",
+        "look": "plain"
+      },
+      "weaponScale": 0.953,
+      "cycles": {
+        "spin1": [
+          "spin1a",
+          "spin1b",
+          "spin1c"
+        ],
+        "spin2": [
+          "spin2a",
+          "spin2b",
+          "spin2c"
+        ]
+      },
+      "grips": {
+        "one": {
+          "idle": "idle1",
+          "step": "step1",
+          "slash": "slash1",
+          "overhead": "overhead1",
+          "thrust": "thrust1",
+          "spin": "spin1",
+          "guard": "guard1",
+          "shot": "thrust1",
+          "sky": "raise"
+        },
+        "two": {
+          "idle": "idle2",
+          "step": "step2",
+          "slash": "slash2",
+          "overhead": "overhead2",
+          "thrust": "thrust2",
+          "spin": "spin2",
+          "guard": "guard2",
+          "shot": "thrust2",
+          "sky": "raise"
+        }
+      },
+      "gripFallback": {
+        "charm": "one",
+        "bow": "one"
+      },
+      "gripWeapon": {
+        "two": {
+          "family": "greataxes",
+          "look": "dane"
+        }
+      },
+      "states": {
+        "idle": "idle",
+        "step": "step",
+        "hit": "hit",
+        "death": "kneel",
+        "attack": "slash",
+        "cast": "raise",
+        "defend": "guard"
+      },
+      "hitRecoil": {
+        "leanDeg": 4,
+        "crouch": 0.03
+      },
+      "itemPoses": {
+        "staves": {
+          "idle2": {
+            "angle": 40,
+            "dy": 20
+          },
+          "point": {
+            "angle": -15
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -30,
+            "back": true
+          }
+        },
+        "greataxes": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "mauls": {
+          "idle2": {
+            "angle": 48
+          },
+          "point": {
+            "angle": -20
+          },
+          "throw": {
+            "angle": -25
+          },
+          "hit": {
+            "angle": -35,
+            "back": true
+          },
+          "slash2": {
+            "angle": 110
+          }
+        },
+        "bows": {
+          "raise": {
+            "angle": -40
+          }
+        },
+        "charms": {
+          "point": {
+            "hand": "off"
+          },
+          "throw": {
+            "hidden": true
+          }
+        },
+        "shields": {
+          "point": {
+            "dx": -72,
+            "dy": 22
+          },
+          "throw": {
+            "dx": -66,
+            "dy": 44
+          },
+          "hit": {
+            "back": true
+          },
+          "kneel": {
+            "back": true
+          }
+        },
+        "daggers": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        },
+        "swords": {
+          "off:point": {
+            "hidden": true
+          },
+          "off:throw": {
+            "hidden": true
+          }
+        }
+      },
+      "canvas": {
+        "w": 574,
+        "h": 446,
+        "footX": 287,
+        "footY": 440
+      },
+      "figure": {
+        "w": 320,
+        "h": 414
+      },
+      "poses": {
+        "idle1": {
+          "anchor": {
+            "x": 368,
+            "y": 137,
+            "angle": 35
+          },
+          "offhand": {
+            "x": 245,
+            "y": 207,
+            "angle": 10
+          },
+          "box": {
+            "x": 127,
+            "y": 26,
+            "w": 320,
+            "h": 414
+          },
+          "src": "defender-v2/override-idle1.png"
+        },
+        "step1": {
+          "anchor": {
+            "x": 418,
+            "y": 161,
+            "angle": 60
+          },
+          "offhand": {
+            "x": 201,
+            "y": 154,
+            "angle": -20
+          },
+          "box": {
+            "x": 178,
+            "y": 26,
+            "w": 308,
+            "h": 414
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "slash1": {
+          "anchor": {
+            "x": 521,
+            "y": 138,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 250,
+            "y": 172,
+            "angle": 20
+          },
+          "box": {
+            "x": 83,
+            "y": 51,
+            "w": 460,
+            "h": 389
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "overhead1": {
+          "anchor": {
+            "x": 272,
+            "y": 24,
+            "angle": 10
+          },
+          "offhand": {
+            "x": 344,
+            "y": 200,
+            "angle": 20
+          },
+          "box": {
+            "x": 105,
+            "y": 11,
+            "w": 365,
+            "h": 429
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "thrust1": {
+          "anchor": {
+            "x": 543,
+            "y": 171,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 285,
+            "y": 183,
+            "angle": -10
+          },
+          "box": {
+            "x": 61,
+            "y": 85,
+            "w": 501,
+            "h": 355
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "spin1a": {
+          "anchor": {
+            "x": 149,
+            "y": 151,
+            "angle": -80
+          },
+          "offhand": {
+            "x": 288,
+            "y": 208,
+            "angle": 10
+          },
+          "box": {
+            "x": 101,
+            "y": 78,
+            "w": 346,
+            "h": 362
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "spin1b": {
+          "anchor": {
+            "x": 470,
+            "y": 159,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 174,
+            "y": 188,
+            "angle": -10
+          },
+          "back": true,
+          "box": {
+            "x": 91,
+            "y": 75,
+            "w": 397,
+            "h": 365
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "spin1c": {
+          "anchor": {
+            "x": 361,
+            "y": 163,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 223,
+            "y": 182,
+            "angle": 10
+          },
+          "box": {
+            "x": 102,
+            "y": 76,
+            "w": 370,
+            "h": 364
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "guard1": {
+          "anchor": {
+            "x": 283,
+            "y": 132,
+            "angle": 30
+          },
+          "offhand": {
+            "x": 361,
+            "y": 119,
+            "angle": 0
+          },
+          "box": {
+            "x": 97,
+            "y": 45,
+            "w": 381,
+            "h": 395
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "raise": {
+          "anchor": {
+            "x": 197,
+            "y": 20,
+            "angle": 0
+          },
+          "offhand": {
+            "x": 351,
+            "y": 183,
+            "angle": 20
+          },
+          "box": {
+            "x": 96,
+            "y": 6,
+            "w": 384,
+            "h": 434
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "channel": {
+          "anchor": {
+            "x": 443,
+            "y": 141,
+            "angle": 80
+          },
+          "offhand": {
+            "x": 392,
+            "y": 147,
+            "angle": 80
+          },
+          "box": {
+            "x": 93,
+            "y": 64,
+            "w": 389,
+            "h": 376
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "point": {
+          "anchor": {
+            "x": 185,
+            "y": 226,
+            "angle": 160
+          },
+          "offhand": {
+            "x": 462,
+            "y": 119,
+            "angle": 80
+          },
+          "open": "off",
+          "box": {
+            "x": 97,
+            "y": 51,
+            "w": 385,
+            "h": 389
+          },
+          "src": "defender-v2/one-handed.png"
+        },
+        "idle2": {
+          "anchor": {
+            "x": 307,
+            "y": 245,
+            "angle": 165
+          },
+          "offhand": {
+            "x": 300,
+            "y": 240,
+            "angle": 165
+          },
+          "box": {
+            "x": 106,
+            "y": 39,
+            "w": 364,
+            "h": 401
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "step2": {
+          "anchor": {
+            "x": 403,
+            "y": 221,
+            "angle": 40
+          },
+          "offhand": {
+            "x": 403,
+            "y": 221,
+            "angle": 40
+          },
+          "box": {
+            "x": 164,
+            "y": 37,
+            "w": 268,
+            "h": 403
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "slash2": {
+          "anchor": {
+            "x": 475,
+            "y": 288,
+            "angle": 125
+          },
+          "offhand": {
+            "x": 475,
+            "y": 288,
+            "angle": 125
+          },
+          "box": {
+            "x": 51,
+            "y": 107,
+            "w": 473,
+            "h": 333
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "overhead2": {
+          "anchor": {
+            "x": 286,
+            "y": 44,
+            "angle": -10
+          },
+          "offhand": {
+            "x": 286,
+            "y": 44,
+            "angle": -10
+          },
+          "box": {
+            "x": 98,
+            "y": 16,
+            "w": 378,
+            "h": 424
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "thrust2": {
+          "anchor": {
+            "x": 553,
+            "y": 175,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 553,
+            "y": 175,
+            "angle": 90
+          },
+          "box": {
+            "x": 54,
+            "y": 99,
+            "w": 514,
+            "h": 341
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "spin2a": {
+          "anchor": {
+            "x": 237,
+            "y": 258,
+            "angle": -100
+          },
+          "offhand": {
+            "x": 237,
+            "y": 258,
+            "angle": -100
+          },
+          "box": {
+            "x": 98,
+            "y": 84,
+            "w": 378,
+            "h": 356
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "spin2b": {
+          "anchor": {
+            "x": 465,
+            "y": 161,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 465,
+            "y": 161,
+            "angle": 90
+          },
+          "box": {
+            "x": 84,
+            "y": 85,
+            "w": 406,
+            "h": 355
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "spin2c": {
+          "anchor": {
+            "x": 335,
+            "y": 263,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 335,
+            "y": 263,
+            "angle": 90
+          },
+          "box": {
+            "x": 89,
+            "y": 77,
+            "w": 396,
+            "h": 363
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "guard2": {
+          "anchor": {
+            "x": 328,
+            "y": 141,
+            "angle": 90
+          },
+          "offhand": {
+            "x": 278,
+            "y": 141,
+            "angle": 90
+          },
+          "box": {
+            "x": 89,
+            "y": 60,
+            "w": 395,
+            "h": 380
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "throw": {
+          "anchor": {
+            "x": 401,
+            "y": 58,
+            "angle": 190
+          },
+          "offhand": {
+            "x": 101,
+            "y": 195,
+            "angle": 60
+          },
+          "open": "off",
+          "box": {
+            "x": 76,
+            "y": 44,
+            "w": 424,
+            "h": 396
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "hit": {
+          "anchor": {
+            "x": 433,
+            "y": 163,
+            "angle": 150
+          },
+          "offhand": {
+            "x": 433,
+            "y": 163,
+            "angle": 150
+          },
+          "box": {
+            "x": 87,
+            "y": 82,
+            "w": 400,
+            "h": 358
+          },
+          "src": "defender-v2/two-handed.png"
+        },
+        "kneel": {
+          "anchor": {
+            "x": 436,
+            "y": 424,
+            "angle": 100
+          },
+          "offhand": {
+            "x": 436,
+            "y": 424,
+            "angle": 100
+          },
+          "box": {
+            "x": 88,
+            "y": 164,
+            "w": 398,
+            "h": 276
+          },
+          "src": "defender-v2/two-handed.png"
         }
       }
     }
@@ -1214,16 +7742,16 @@
   "fistRadius": 13,
   "classAliases": {
     "pose_tester_1": "warrior_v2",
-    "pose_tester_2": "warrior_v2",
-    "pose_tester_3": "warrior_v2",
-    "pose_tester_4": "warrior_v2",
-    "pose_tester_5": "warrior_v2",
-    "pose_tester_6": "warrior_v2",
-    "pose_tester_7": "warrior_v2",
-    "pose_tester_8": "warrior_v2",
-    "pose_tester_9": "warrior_v2",
-    "pose_tester_10": "warrior_v2",
-    "pose_tester_11": "warrior_v2"
+    "pose_tester_2": "defender_v2",
+    "pose_tester_3": "paladin_v2",
+    "pose_tester_4": "archer_v2",
+    "pose_tester_5": "cutthroat_v2",
+    "pose_tester_6": "mage_v2",
+    "pose_tester_7": "druid_v2",
+    "pose_tester_8": "undead_v2",
+    "pose_tester_9": "antimage_v2",
+    "pose_tester_10": "gambler_v2",
+    "pose_tester_11": "hexer_v2"
   },
   "braceSkills": [],
   "gripArt": {

@@ -24,23 +24,23 @@
     { "id": "2", "type": "battle", "name": "Ravenwood", "subtitle": "Battle · Outlaw Pack", "region": "I", "pos": [0.224, 0.639], "encounter": "ravenwood_pack", "recruit": { "offer": 3, "pick": 1, "when": "before", "requireArea": true }, "teaches": "area_attacks", "partyCap": 2, "battleBackground": "border-road" },
     { "id": "3", "type": "elite", "name": "Ruined Watchtower", "subtitle": "Elite · Bandit Chief", "region": "I", "pos": [0.281, 0.407], "encounter": "watchtower_chief", "teaches": "elites_and_choices", "battleBackground": "border-road" },
     { "id": "4", "type": "town", "name": "Ashford Village", "subtitle": "Town · Rest, Recruits, Trade", "region": "I", "pos": [0.229, 0.231], "teaches": "fog_and_roads", "partyCap": 3, "heal": 1.0, "merchant": true, "merchantSize": 5, "story": "ash_on_the_wind", "endsTutorial": true, "newCompany": { "size": 3, "leader": "firstPick" },
-      "scene": { "background": "town-ashford", "focusY": 0.5, "hotspots": [
+      "scene": { "background": "town-ashford", "focusY": 0.58, "hotspots": [
         { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0.0, 0.3, 0.262, 0.62] },
         { "id": "burner", "action": "story", "label": "Charcoal Burner", "rect": [0.29, 0.47, 0.385, 0.63] },
         { "id": "campfire", "action": "rest", "label": "Campfire", "rect": [0.385, 0.42, 0.57, 0.63] },
-        { "id": "board", "action": "recruit", "label": "Notice Board", "rect": [0.574, 0.385, 0.668, 0.565], "note": "Notices of burned farms and missing travellers. No one here seeks to join a company. Recruits gather in the cities." },
-        { "id": "road", "action": "leave", "label": "Road Out", "rect": [0.885, 0.4, 1.0, 0.64] }
+        { "id": "board", "action": "recruit", "label": "Notice Board", "rect": [0.585, 0.405, 0.67, 0.58], "note": "Notices of burned farms and missing travellers. No one here seeks to join a company. Recruits gather in the cities." },
+        { "id": "road", "action": "leave", "label": "Road Out", "rect": [0.9, 0.34, 1.0, 0.6] }
       ] } },
     { "id": "moor", "type": "battle", "name": "Windy Moor", "subtitle": "Battle · Moor Raiders", "region": "II", "label": "above", "pos": [0.336, 0.182], "encounter": "windy_moor", "battleBackground": "windy-moor" },
     { "id": "5B", "type": "battle", "name": "Iron Pass", "subtitle": "Battle · Ambush", "region": "II", "label": "above", "pos": [0.459, 0.38], "encounter": "iron_pass_ambush", "battleBackground": "iron-pass" },
     { "id": "charcoal", "type": "battle", "name": "Charcoal Camp", "subtitle": "Battle · Charcoal Burners", "region": "II", "pos": [0.336, 0.523], "encounter": "charcoal_camp", "battleBackground": "windy-moor" },
     { "id": "7", "type": "town", "name": "Valdren Keep", "subtitle": "City · Rest, Recruits, Trade", "region": "II", "label": "above", "pos": [0.448, 0.554], "recruit": { "offer": 3, "pick": 1, "when": "leave" }, "partyCap": 4, "heal": 1.0, "city": true, "merchant": true, "merchantSize": 9, "story": "the_wardens_oath",
       "scene": { "background": "town-valdren", "focusY": 0.5, "hotspots": [
-        { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0.0, 0.14, 0.3, 0.56] },
-        { "id": "commander", "action": "story", "label": "Keep Commander", "rect": [0.355, 0.24, 0.43, 0.45] },
-        { "id": "brazier", "action": "rest", "label": "Brazier", "rect": [0.43, 0.3, 0.585, 0.565] },
-        { "id": "barracks", "action": "recruit", "label": "Barracks", "rect": [0.588, 0.27, 0.775, 0.52], "note": "The barracks are quiet. Every sword here has already sworn to someone." },
-        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.84, 0.2, 0.99, 0.54] }
+        { "id": "stall", "action": "trade", "label": "Odo's Stall", "rect": [0.0, 0.26, 0.325, 0.6] },
+        { "id": "commander", "action": "story", "label": "Keep Commander", "rect": [0.465, 0.32, 0.545, 0.43] },
+        { "id": "brazier", "action": "rest", "label": "Brazier", "rect": [0.415, 0.43, 0.545, 0.6] },
+        { "id": "barracks", "action": "recruit", "label": "Barracks", "rect": [0.55, 0.27, 0.815, 0.58], "note": "The barracks are quiet. Every sword here has already sworn to someone." },
+        { "id": "gate", "action": "leave", "label": "Castle Gate", "rect": [0.885, 0.2, 1.0, 0.56] }
       ] } },
     { "id": "6B", "type": "treasure", "name": "Dwarven Mine", "subtitle": "Treasure · Guarded", "region": "II", "label": "above", "pos": [0.536, 0.5], "encounter": "mine_wardens", "treasure": "dwarven_mine", "battleBackground": "iron-pass" },
     { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Guarded", "region": "II", "pos": [0.503, 0.606], "encounter": "witchs_hut_guard", "event": "witchs_hut", "battleBackground": "misty-marsh" },

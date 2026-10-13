@@ -60,3 +60,26 @@ describe('items.json şeması', () => {
         for (const id of rollLoot({ rng: new Rng(i), kind, chapter: 1, ilvl: 10, party }).items) expect(itemDef(id), id).toBeDefined();
   });
 });
+
+describe('Legendary boost (Ömer 2026-10-12, Endless item dengesi p5)', () => {
+  it('boost sabit affix değerini çarpar, IP artar; yalnızca Legendary ve kendi affix\'i için geçerli', () => {
+    const crown = itemDef('crown_of_the_ashen_king')!;
+    expect(crown.boost).toEqual({ a_immunity: 2 });
+    const plain = { ...crown, boost: undefined };
+    expect(itemIP(crown, 'legendary', 20)).toBeGreaterThan(itemIP(plain, 'legendary', 20));
+    // zayıf beşi aynı seviyedeki en iyi Epic'in üstünde (20 ve 40)
+    for (const id of ['crown_of_the_ashen_king', 'gamblers_last_coin', 'bones_of_the_quarry', 'watchmans_boots', 'helm_of_the_last_stand']) {
+      const d = itemDef(id)!;
+      for (const L of [20, 40]) {
+        const epic = Math.max(...ITEMS.items.filter((x) => x.slot === d.slot && x.rarity !== 'legendary').map((x) => itemIP(x, 'epic', L)));
+        expect(itemIP(d, 'legendary', L), `${id} L${L}`).toBeGreaterThan(epic * 1.05);
+      }
+    }
+    const bad = structuredClone(ITEMS) as ItemsData;
+    bad.items.find((x) => x.id === 'crown_of_the_ashen_king')!.boost = { c_phys: 2 };
+    bad.items.find((x) => x.rarity !== 'legendary')!.boost = { c_hp: 2 };
+    const errs = validateItems(bad).join('\n');
+    expect(errs).toMatch(/boost c_phys/);
+    expect(errs).toMatch(/only Legendary items carry a boost/);
+  });
+});

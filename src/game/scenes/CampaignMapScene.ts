@@ -25,6 +25,7 @@ import {
   farewell,
   formCompany,
   getMap,
+  hasUnsavedProgress,
   incoming,
   isAreaClass,
   leaderOf,
@@ -77,7 +78,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, diamondPts, elBadge, elBody, elButton, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, elBadge, elBody, elButton, elDiamond, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
@@ -89,8 +90,12 @@ import { hasMiscImage } from '../../ui/misc-icons';
 /**
  * Sefer haritası, "War table" (Ömer 2026-10-09, taslak 2; tasarım kiti):
  *  - Harita tam ekran; solda takım sütunu (portre + seviye + can; dokununca kahraman paneli: seviye / XP, 6 yuva, statlar -> Gear),
- *    altında Formation / Gear, onun altında seçili düğümün kompakt bilgisi (ad, tür, düşmanlar, sonraki duraklar; düğme yok: seçili düğüme ikinci dokunuş = yürü / savaş / gir).
- *  - Üst solda harita adı + bölge, durak, mod, zorluk, altın; sağ üstte Menu (DOM, Esc): Resume / Save / Settings / Main Menu.
+ *    altında ALT ALTA Formation / Gear (büyük ikon, telefonda >= 44 px dokunma alanı), onun altında bulunulan düğümün kompakt bilgisi.
+ *  - Düğüme TEK dokunuş = eylem (Ömer 2026-10-12): gidilebilir düğüme yürür; savaş düğümünde önce "Start battle?" onayı (Cancel / Fight;
+ *    düşmanlar ve sonraki duraklar onayda); kasaba / dinlenme / tüccar / olay yürüyüşten sonra doğrudan açılır. Sürükleme / sıkıştırma yürütmez.
+ *    Fareyle düğümün üstüne gelince bilgi kartı (ad, tür, düşmanlar, sonraki duraklar); dokunmatikte uzun basış aynı kartı gösterir.
+ *  - Sol üstte ◂ Back (ana menüye; Normal modda kaydedilmemiş ilerleme varsa onay), üst ortada harita adı, sol altta bölge, durak, mod,
+ *    zorluk, altın; sağ üstte Menu (DOM, Esc): Resume / Save / Settings / Main Menu.
  *  - Düğümler: tür başına ince glif (savaş, elit, boss, kasaba, hazine, olay); durumlar geçildi / buradasın / gidilebilir (kor parıltı) / kapalı.
  *    Gidilebilir yollar akan kor çizgi, yürünmüş yol düz altın, ötesi kesik.
  *  - Kaydırma / yakınlaştırma (src/game/map-view.ts): 21:9 harita çerçevesinden asla çıkmaz; dokunma / fare sürükleme, fare tekerleği,
@@ -107,6 +112,8 @@ const FOLLOW_GAP = 55; // px
 const PAN_STEP = 340;
 /** Sütun genişlikleri (Ömer 2026-10-09: 16:9'da daralmasın): sol takım sütunu ve sağ düğüm sütunu aynı dilde, aynı genişlikte. */
 const SIDE = { left: 48, top: 150, partyW: 420 };
+/** Dokunmatikte düğüm bilgi kartı için uzun basış süresi (ms). */
+const LONG_PRESS_MS = 420;
 /** Zorunlu seçim pencereleri (Esc ile kapanmaz; Party / Formation bunların üstünde açılmaz). */
 const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company'];
 
@@ -147,11 +154,14 @@ export class CampaignMapScene extends Phaser.Scene {
   private drag = { down: false, moved: false, x: 0, y: 0 };
   /** Basışın başladığı düğüm (dokunuş = aynı düğümde basıp bırakmak). */
   private tapNode: string | null = null;
-  /** Oyuncunun dokunarak seçtiği düğüm (ipucu metni: "Tap again" yalnızca gerçekten dokunulduysa). */
-  private tappedSel: string | null = null;
+  /** Düğüm bilgi kartı (fare hover / dokunmatik uzun basış). */
+  private nodeTip: Phaser.GameObjects.Container | null = null;
+  /** Dokunmatik uzun basış zamanlayıcısı; `longPressed` = bu basış kart gösterdi (bırakınca yürümez). */
+  private pressTimer: Phaser.Time.TimerEvent | null = null;
+  private longPressed = false;
+  /** Onaylanmış ("Fight") ama araya giren adım yüzünden henüz başlamamış savaş: düğüm + başlatma gecikmesi (ms). */
+  private pendingFight: { node: string; delay: number } | null = null;
   private legendOpen = true;
-  /** Sağdaki kartta gösterilen düğüm. */
-  private sel = '';
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
   /** Kasaba ekranı (Ömer 2026-10-12): kasaba düğümünde tam ekran kasaba; açıkken harita girdisi kilitli, harita kamerası gizli. */
@@ -178,12 +188,15 @@ export class CampaignMapScene extends Phaser.Scene {
     this.mapZoom = 1;
     this.frame = { left: 0, right: W, top: 0, bottom: H };
     this.mid = { x: W / 2, y: H / 2 };
-    this.sel = '';
     this.panBtns = {};
     this.toastFn = null;
     this.panTween = null;
     this.panTarget = null;
     this.town = null;
+    this.nodeTip = null;
+    this.pressTimer = null;
+    this.longPressed = false;
+    this.pendingFight = null;
   }
 
   preload(): void {
@@ -393,7 +406,6 @@ export class CampaignMapScene extends Phaser.Scene {
     this.openEdges = [];
     const vis = nodeVisibility(this.map, this.s, session.revealFog);
     const step = nextStep(this.s);
-    this.ensureSelection(step); // seçim halkası sol alttaki bilgi bloğuyla aynı düğümde
     const options = step.kind === 'move' ? step.options : [];
     // 1) yollar (altta koyu iz: harita üstünde okunur kalsın), gidilebilenler ayrı katmanda akar
     const lines = this.add.graphics();
@@ -504,7 +516,6 @@ export class CampaignMapScene extends Phaser.Scene {
     const done = v === 'cleared';
     const goal = v === 'goal';
     const closed = v === 'closed';
-    const selected = this.sel === n.id;
     const actionable = option || (here && this.actionHere());
     if (actionable) {
       const glow = this.add.image(0, 0, ensureGlow(this)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(r * 5.5, r * 5.5).setAlpha(0.5);
@@ -519,10 +530,6 @@ export class CampaignMapScene extends Phaser.Scene {
     const ring = here ? EL.EMBER2 : option ? EL.ON_N : EL.GOLD;
     g.lineStyle(here || option ? 2 : 1.5, ring, goal ? 0.35 : here || option ? 1 : done ? 0.6 : 0.7).strokeCircle(0, 0, r);
     if (big && !goal) g.lineStyle(1, EL.EMBER2, 0.7).strokeCircle(0, 0, r + 6);
-    if (selected) {
-      g.lineStyle(1, EL.ON_N, 0.9).strokeCircle(0, 0, r + 10);
-      for (const a of [0, Math.PI / 2, Math.PI, Math.PI * 1.5]) g.fillStyle(EL.ON_N, 1).fillPoints(diamondPts(Math.cos(a) * (r + 10), Math.sin(a) * (r + 10), 3.5), true);
-    }
     const glyphCol = here ? 0x1a0f06 : done ? 0x1e150c : goal ? 0x7d705a : closed ? 0x7d705a : option ? EL.ON_N : 0xd9c8a2;
     // boyalı düğüm ikonu (assets/misc-icons/node), yoksa ince çizgili glif; hedef (sisli siluet) koyu ve soluk
     // başlangıç düğümü boyalı 'start' ikonunu taşır (Ömer 2026-10-11); dinlenme / tüccar kendi boyalı ikonları
@@ -544,7 +551,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const above = n.label === 'above';
     const next = this.map.edges.some((e) => e.from === this.s.at && e.to === n.id); // savaş bitmeden de sıradaki duraklar
     const named = !this.compact() || here || option || (next && !closed);
-    const nameCol = closed || goal ? EL.DIM : here || option || selected ? EL.ON : EL.TXT;
+    const nameCol = closed || goal ? EL.DIM : here || option ? EL.ON : EL.TXT;
     const name = elText(this, 0, 0, n.name, 15, nameCol, { em: 0.06 }).setOrigin(0.5, above ? 1 : 0).setShadow(0, 2, 'rgba(8,5,3,1)', 6, false, true);
     name.y = above ? -r - 12 : r + 10;
     // Okunurluk: yazının arkasında yumuşak koyu leke (harita üstünde)
@@ -568,13 +575,45 @@ export class CampaignMapScene extends Phaser.Scene {
     else if (goal) c.setAlpha(0.75);
     if (here && this.actionHere()) this.tweens.add({ targets: g, scale: { from: 1, to: 1.08 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     const zone = this.add.zone(0, 0, 96, 96).setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Circle(48, 48, 48), hitAreaCallback: Phaser.Geom.Circle.Contains });
-    // Dokunuş = basış ve bırakış AYNI düğümde, arada sürükleme / sıkıştırma yok (sürükleme ya da başka yerden kayan parmak sayılmaz)
-    zone.on('pointerdown', () => (this.tapNode = n.id));
+    // Dokunuş = basış ve bırakış AYNI düğümde, arada sürükleme / sıkıştırma yok (sürükleme ya da başka yerden kayan parmak sayılmaz).
+    // Dokunmatikte uzun basış (yürümeden) bilgi kartını gösterir; fareyle üstüne gelmek de aynı kartı gösterir.
+    const busy = () => !!this.walking || !!this.modal || this.menuOpen || !!this.town;
+    zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      this.tapNode = n.id;
+      this.longPressed = false;
+      this.pressTimer?.remove();
+      this.pressTimer = null;
+      if (!p.wasTouch || busy()) return;
+      this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
+        this.pressTimer = null;
+        if (this.tapNode !== n.id || this.drag.moved || busy()) return;
+        this.longPressed = true;
+        this.showNodeTip(n.id, p);
+      });
+    });
     zone.on('pointerup', () => {
       const same = this.tapNode === n.id;
+      const long = this.longPressed;
       this.tapNode = null;
-      if (!same || this.drag.moved || this.walking || this.modal || this.menuOpen) return;
+      this.longPressed = false;
+      this.pressTimer?.remove();
+      this.pressTimer = null;
+      if (long) return this.hideNodeTip();
+      if (!same || this.drag.moved || busy()) return;
+      this.hideNodeTip();
       this.onNodeTap(n.id, v);
+    });
+    zone.on('pointerover', (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch || p.isDown || busy()) return;
+      this.showNodeTip(n.id, p);
+    });
+    zone.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (!p.wasTouch && this.nodeTip && !p.isDown) this.placeNodeTip(p);
+    });
+    zone.on('pointerout', () => {
+      this.pressTimer?.remove();
+      this.pressTimer = null;
+      if (!this.longPressed) this.hideNodeTip();
     });
     c.add(zone);
   }
@@ -717,6 +756,7 @@ export class CampaignMapScene extends Phaser.Scene {
       const ev = p.event as WheelEvent | undefined;
       // birkaç piksellik dikey pay tekerleği yutmasın: dikey kaydırma yalnızca belirgin yer varsa
       ev?.preventDefault(); // tekerlek sayfayı kaydırmasın
+      this.hideNodeTip();
       const a = wheelAction({ dx, dy, ctrl: !!ev?.ctrlKey });
       // Tekerlek / Ctrl + tekerlek (trackpad sıkıştırması): imlece doğru yakınlaştırma, kısa geçişle (Ömer 2026-10-11)
       if (a.zoom) this.zoomAt(this.zoomGoal() + a.zoom * (ev?.ctrlKey ? 0.5 : 1), p.x, p.y, true);
@@ -749,6 +789,7 @@ export class CampaignMapScene extends Phaser.Scene {
         // İki parmakla sıkıştırma: iki parmağın ortasına doğru yakınlaştırma (anlık; parmak izler)
         if (pinch > 0 && !this.modal && !this.town) this.zoomAt(this.mapZoom * (d / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2, false, true);
         pinch = d;
+        if (!this.drag.moved) this.hideNodeTip();
         this.drag.moved = true;
         this.drag.x = p.x;
         this.drag.y = p.y;
@@ -759,6 +800,7 @@ export class CampaignMapScene extends Phaser.Scene {
       const dx = p.x - this.drag.x;
       const dy = p.y - this.drag.y;
       if (!this.drag.moved && Math.hypot(dx, dy) < 10) return;
+      if (!this.drag.moved) this.hideNodeTip(); // sürükleme başladı: kart kapanır, yürüyüş tetiklenmez
       this.drag.moved = true;
       this.setMid({ x: this.mid.x - dx / this.camZoom(), y: this.mid.y - dy / this.camZoom() });
       this.drag.x = p.x;
@@ -877,7 +919,6 @@ export class CampaignMapScene extends Phaser.Scene {
   private renderHud(): void {
     this.hud.removeAll(true);
     this.panBtns = {};
-    const s = this.s;
     const L = this.hud;
     const left = stageView.left;
     const right = stageView.right;
@@ -892,27 +933,69 @@ export class CampaignMapScene extends Phaser.Scene {
       [0, 0.85],
       [1, 0],
     ]);
+    // Sol alt: bölge / durak / mod / zorluk / altın bloğunun altı okunur kalsın
+    vGradient(shade, left, H - 190, 820, 190, 0x080604, [
+      [0, 0],
+      [1, 0.8],
+    ]);
     L.add(shade);
-    // Üst sol: harita adı + bölge, durak, mod, zorluk, altın (Menu sağ üstte DOM)
-    const title = elText(this, left + SIDE.left, 40, this.map.title, 30, '#ffffff', { em: 0.12 }).setOrigin(0, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f);
-    L.add(title);
-    const region = this.map.regions.find((r) => r.id === node(this.map, s.at).region);
-    const diff = CONFIG.difficulties[s.difficulty]?.name ?? s.difficulty;
-    const info = `${region ? region.title : ''}  ·  Stop ${stopNumber(s)} / ${this.map.stopsPerRun}  ·  ${s.mode === 'ironman' ? 'Ironman' : 'Normal'}  ·  ${diff}`;
-    L.add(elBody(this, title.x + title.width + 4, 42, info, 19, s.mode === 'ironman' ? EL.BAD : EL.MUTED).setOrigin(0, 0.5));
-    // Altın
-    L.add(this.coin(left + SIDE.left + 8, 86)); // boyalı altın yığını (assets/ui-icons/gold.png), yoksa kodla çizilen sikke
-    L.add(elText(this, left + SIDE.left + 24, 86, `${s.gold}`, 19, EL.ON, { em: 0.04 }).setOrigin(0, 0.5));
-    L.add(elBody(this, left + SIDE.left + 24 + String(s.gold).length * 14 + 12, 87, 'gold', 16, EL.MUTED).setOrigin(0, 0.5));
-    // Seçili düğüm bilgisi sol sütunda, takım panelinin hemen altında (sağ panel yok: harita yer kazanır)
+    // Sol üst: ◂ Back (ana menüye; Menu > Main Menu ile aynı yer). Esc haritada Menu'yü açar: Back'in yanında "Esc" yazmaz.
+    const back = elLink(this, '◂ Back', () => this.leaveMap(), { size: this.compact() ? 26 : 21, sound: 'back', isBusy: () => this.inputBusy() });
+    back.root.setPosition(left + SIDE.left, 56);
+    if (this.compact()) this.growHit(back, 124);
+    L.add(back.root);
+    // Üst orta: harita adı (Ömer 2026-10-12)
+    L.add(elText(this, (left + right) / 2, 52, this.map.title, 34, '#ffffff', { em: 0.16 }).setOrigin(0.5, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f));
+    // Bulunulan düğümün bilgisi sol sütunda, takım panelinin hemen altında (yalnızca sol alttaki bilgi bloğuna yer kalırsa)
+    const infoTop = this.renderInfo(left + SIDE.left);
     const partyEnd = this.renderParty(left + SIDE.left, SIDE.top);
-    this.renderNodeCard(left + SIDE.left, partyEnd + 24, SIDE.partyW);
+    this.renderNodeCard(left + SIDE.left, partyEnd + 24, SIDE.partyW, infoTop - 16);
     this.renderControls();
     this.renderLegend();
     if (session.notice) {
       this.toast(session.notice);
       session.notice = '';
     }
+  }
+
+  /**
+   * Sol alt bilgi bloğu (Ömer 2026-10-12): 1. satır bölge · Stop x / 21, 2. satır mod · zorluk · altın. Bloğun üst kenarını döndürür
+   * (üstteki düğüm bilgisi oraya kadar iner). Alt orta harita düğmelerinin solunda kalır.
+   */
+  private renderInfo(x: number): number {
+    const L = this.hud;
+    const s = this.s;
+    const c = this.compact();
+    const big = c ? 28 : 21;
+    const small = c ? 26 : 19;
+    const gap = c ? 44 : 34;
+    const y2 = H - (c ? 40 : 34);
+    const y1 = y2 - gap;
+    const region = this.map.regions.find((r) => r.id === node(this.map, s.at).region);
+    const r = elText(this, x, y1, region ? region.title : this.map.title, big, EL.ON, { em: 0.06 }).setOrigin(0, 0.5);
+    L.add(r);
+    L.add(elBody(this, x + r.width + 10, y1 + 1, `·  Stop ${stopNumber(s)} / ${this.map.stopsPerRun}`, small, EL.MUTED).setOrigin(0, 0.5));
+    const diff = CONFIG.difficulties[s.difficulty]?.name ?? s.difficulty;
+    const mode = elBody(this, x, y2, s.mode === 'ironman' ? 'Ironman' : 'Normal', small, s.mode === 'ironman' ? EL.BAD : EL.MUTED).setOrigin(0, 0.5);
+    const d = elBody(this, mode.x + mode.width + 8, y2, `·  ${diff}  ·`, small, EL.MUTED).setOrigin(0, 0.5);
+    const cx = d.x + d.width + 14;
+    const coin = this.coin(cx + 6, y2, c ? 34 : 26); // boyalı altın yığını (assets/ui-icons/gold.png), yoksa kodla çizilen sikke
+    const g = elText(this, cx + (c ? 30 : 24), y2, `${s.gold}`, big, EL.ON, { em: 0.04 }).setOrigin(0, 0.5);
+    L.add([mode, d, coin, g, elBody(this, g.x + g.width + 6, y2 + 1, 'gold', small, EL.MUTED).setOrigin(0, 0.5)]);
+    return y1 - big;
+  }
+
+  /** Harita girdisi meşgul mü (yürüyüş, pencere, menü, kasaba, ayarlar). */
+  private inputBusy(): boolean {
+    return !!this.walking || !!this.modal || this.menuOpen || !!this.town || !!this.slotBrowser || isSettingsOpen();
+  }
+
+  /** Yazı düğmesinin dokunma alanını büyütür (telefonda >= 44 gerçek px: 1080 birimlik sahne 390 px'e iner, 124 birim ~ 45 px). */
+  private growHit(l: { root: Phaser.GameObjects.Container; width: number }, h: number, minW = 0): void {
+    const zone = l.root.list.find((o): o is Phaser.GameObjects.Zone => o instanceof Phaser.GameObjects.Zone);
+    if (!zone) return;
+    const w = Math.max(l.width, minW);
+    zone.setPosition(w / 2, 0).setSize(w, h);
   }
 
   /** Kısa / dar ekran (telefon yatay): dokunma hedefleri büyür, kart DOM simgelerinin altına iner. */
@@ -926,8 +1009,8 @@ export class CampaignMapScene extends Phaser.Scene {
     return hasUiImage(k) ? { icon: ensureIcon(this, uiIconName(k), '#e8c47e', false) } : {};
   }
 
-  private coin(x: number, y: number): Phaser.GameObjects.GameObject {
-    if (hasUiImage('gold')) return this.add.image(x + 2, y, ensureIcon(this, uiIconName('gold'), '#e8c47e', false)).setDisplaySize(26, 26);
+  private coin(x: number, y: number, size = 26): Phaser.GameObjects.GameObject {
+    if (hasUiImage('gold')) return this.add.image(x + 2, y, ensureIcon(this, uiIconName('gold'), '#e8c47e', false)).setDisplaySize(size, size);
     const g = this.add.graphics();
     g.fillStyle(0x3a2a10, 1).fillCircle(x, y, 8);
     g.fillStyle(0xc8902e, 1).fillCircle(x, y, 7);
@@ -988,43 +1071,44 @@ export class CampaignMapScene extends Phaser.Scene {
     });
     const ly = y + 44 + team.length * 112 + 16;
     if (team.length) {
-      const f = elLink(this, 'Formation', () => this.openFormationFromHud(), { size: 19, ...this.linkIcon('formation') });
-      f.root.setPosition(x - 6, ly);
-      const sep = elText(this, x - 6 + f.width + 8, ly, '◆', 12, 'rgba(217,178,106,0.35)', { em: 0 }).setOrigin(0.5);
-      const g = elLink(this, 'Gear', () => this.canOpenSide() && this.openGear(), { size: 19, ...this.linkIcon('gear') });
-      g.root.setPosition(x - 6 + f.width + 16, ly);
-      L.add([f.root, sep, g.root]);
-      // Telefonda yer dar: ipucu satırı yok (seçili düğüm bloğu takım panelinin altına sığsın)
-      if (this.compact()) return ly + 22;
-      L.add(elBody(this, x, ly + 40, 'Tap a hero for level, gear and stats.', 16, EL.DIM).setOrigin(0, 0.5));
-      return ly + 52;
+      // Formation / Gear ALT ALTA, ikonlar büyük (Ömer 2026-10-12). Telefonda satır aralığı = dokunma alanı (124 birim ~ 45 gerçek px)
+      const c = this.compact();
+      const pitch = c ? 124 : 64;
+      const size = c ? 28 : 21;
+      const iconSize = c ? 64 : 42;
+      const y0 = ly + pitch / 2 - (c ? 14 : 8);
+      const f = elLink(this, 'Formation', () => this.openFormationFromHud(), { size, iconSize, ...this.linkIcon('formation') });
+      f.root.setPosition(x - 6, y0);
+      const g = elLink(this, 'Gear', () => this.canOpenSide() && this.openGear(), { size, iconSize, ...this.linkIcon('gear') });
+      g.root.setPosition(x - 6, y0 + pitch);
+      this.growHit(f, pitch, 300);
+      this.growHit(g, pitch, 300);
+      L.add([f.root, g.root]);
+      const end = y0 + pitch + pitch / 2;
+      // Telefonda yer dar: ipucu satırı yok (düğüm bilgisi takım panelinin altına sığsın)
+      if (c) return end - 10;
+      L.add(elBody(this, x, end + 8, 'Tap a hero for level, gear and stats.', 16, EL.DIM).setOrigin(0, 0.5));
+      return end + 20;
     }
     return ly;
   }
 
   /**
-   * Seçili düğüm bilgisi (Ömer 2026-10-11: sağ panel kaldırıldı, harita yer kazandı): sol sütunda takım panelinin hemen altında kompakt blok:
-   * başlık ("You are here" / "Selected road") + ince çizgi, düğüm satırı (64 px glif karosu, ad, tür, durum), düşman portreleri + adlar, "Then".
-   * Düğme YOK: gidilebilir düğüme ilk dokunuş seçer, seçili düğüme ikinci dokunuş yürür (savaş / eylem bekleyen mevcut düğüm de aynı);
-   * ipucu satırı bunu söyler. Formation takım panelindeki Formation · Gear bağlantısında. Taşma olursa (kısa ekranda) alttan kırpılmaz:
-   * blok yukarı kaymaz, düşman adları / Then en son satırlardır.
+   * Bulunulan düğümün kompakt bilgisi (Ömer 2026-10-12: tek dokunuşla yürüme geldi, "Selected road" kalktı; diğer düğümlerin bilgisi
+   * hover kartında / savaş onayında): başlık "You are here" + ince çizgi, 64 px glif karosu, ad, tür, ipucu satırı.
+   * `maxY` (sol alt bilgi bloğunun üstü) aşılacaksa blok çizilmez (telefonda 4 kahramanlı takım).
    */
-  private renderNodeCard(x: number, y: number, w: number): void {
-    const L = this.hud;
+  private renderNodeCard(x: number, y: number, w: number, maxY: number): void {
+    if (y + 34 + 64 > maxY) return;
     const s = this.s;
     const step = nextStep(s);
-    this.ensureSelection(step);
-    const id = this.sel;
-    L.add(elText(this, x, y, id === s.at ? 'You are here' : 'Selected road', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
+    const L = this.hud;
+    const n = node(this.map, s.at);
+    L.add(elText(this, x, y, 'You are here', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
     const ln = this.add.graphics();
     fadeLine(ln, x, x + w, y + 18, EL.GOLD, 0.45, 'out');
     L.add(ln);
-    if (!id) return;
-    const n = node(this.map, id);
-    const vis = nodeVisibility(this.map, s, session.revealFog)[id];
-    const option = step.kind === 'move' && step.options.includes(id);
-    // Düğüm satırı: 64 px karo + ad / tür · durum / ipucu
-    let cy = y + 34;
+    const cy = y + 34;
     const T = 64;
     const tile = this.add.graphics();
     tile.fillStyle(0x120c08, 1).fillRect(x, cy, T, T).lineStyle(1, EL.GOLD, EL.LINE.a3).strokeRect(x + 0.5, cy + 0.5, T - 1, T - 1);
@@ -1036,70 +1120,113 @@ export class CampaignMapScene extends Phaser.Scene {
     const tx = x + T + 16;
     const tw = w - T - 20;
     L.add(fitW(elText(this, tx, cy + 10, n.name, 19, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), tw));
-    const state = id === s.at ? 'You are here' : vis === 'cleared' ? 'Cleared' : option ? 'Reachable' : vis === 'closed' ? 'Road closed' : vis === 'goal' ? 'Your goal' : 'Ahead';
-    L.add(fitW(elBody(this, tx, cy + 34, `${n.subtitle || TYPE_LABEL[n.type]}  ·  ${state}`, 16, id === s.at || option ? EL.NOTE : EL.MUTED).setOrigin(0, 0.5), tw));
-    // İpucu: seçili düğüme ikinci dokunuş = eylem (March / Fight / Enter düğmelerinin yerine)
+    L.add(fitW(elBody(this, tx, cy + 34, n.subtitle || TYPE_LABEL[n.type], 16, EL.NOTE).setOrigin(0, 0.5), tw));
+    // İpucu: tek dokunuş = eylem
     let hint = '';
-    // Otomatik seçilmiş (henüz dokunulmamış) düğümde de tek dokunuş yürür: ipucu buna göre
-    if (option) hint = this.tappedSel === id ? 'Tap again to march' : 'Tap it on the map to march';
-    else if (id === s.at && step.kind === 'battle') hint = 'Tap your node to fight';
-    else if (id === s.at && this.actionHere()) hint = step.kind === 'complete' ? 'Tap your node to finish' : 'Tap your node to enter';
+    if (step.kind === 'move') hint = this.compact() ? 'Tap a glowing node to march' : 'Click a glowing node to march';
+    else if (step.kind === 'battle') hint = 'Tap your node to fight';
+    else if (this.actionHere()) hint = step.kind === 'complete' ? 'Tap your node to finish' : 'Tap your node to enter';
     if (hint) {
       L.add(elDiamond(this, 4).setPosition(tx + 4, cy + 58));
       const ht = fitW(elText(this, tx + 16, cy + 58, hint, 14, EL.ON, { em: 0.12 }).setOrigin(0, 0.5), tw - 16);
       ht.setShadow(0, 0, EL.SH_GLOW, 10, false, true);
       L.add(ht);
     }
-    cy += T + 14;
-    // Düşmanlar: "Foes" + küçük portre sırası, altında adlar
-    if (n.encounter && vis !== 'goal') {
-      const p = enemyPreview(n.encounter);
-      const faces = p.classes.map((c) => content.classes[c]).filter((d): d is NonNullable<typeof d> => !!d).slice(0, 6);
-      if (faces.length) {
-        L.add(elText(this, x, cy + 21, 'Foes', 13, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5));
-        faces.forEach((d, i) => {
-          const fx = x + 64 + i * 50;
-          const fr = this.add.graphics();
-          fr.fillStyle(0x120c08, 1).fillRect(fx, cy, 42, 42).lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(fx + 0.5, cy + 0.5, 41, 41);
-          L.add(fr);
-          L.add(classAvatar(this, d, fx + 21, cy + 21, 40, true));
-        });
-        cy += 50;
-      }
-      const leader = p.leader && !p.names.includes(p.leader) ? `  (led by ${p.leader})` : '';
-      const t = elBody(this, x, cy, `${p.names.join(', ')}${leader}`, 16, EL.NOTE, true, w);
-      L.add(t);
-      cy += t.height + 8;
-    } else if (vis !== 'goal') {
-      const blurb = n.type === 'town' ? 'Rest, recruit and trade. Your heroes recover here.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? 'Make camp for free and recover. The fallen can be revived here for gold.' : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
-      if (blurb) {
-        const t = elBody(this, x, cy, blurb, 16, EL.NOTE, true, w);
-        L.add(t);
-        cy += t.height + 8;
-      }
-    }
-    // Sonraki duraklar
-    const after = outgoing(this.map, id).map((a) => node(this.map, a));
-    if (after.length && vis !== 'goal') {
-      L.add(elText(this, x, cy + 11, 'Then', 13, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5));
-      L.add(elBody(this, x + 64, cy, after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or '), 16, EL.TXT, true, w - 64));
-    }
   }
 
-  /** Kartta gösterilecek düğüm: geçerli seçim korunur; yoksa (mevcut düğümde eylem varsa) mevcut düğüm, yoksa ilk gidilebilir yol. */
-  private ensureSelection(step: NextStep): void {
-    const vis = nodeVisibility(this.map, this.s, session.revealFog);
-    if (this.sel && vis[this.sel] && vis[this.sel] !== 'fog') {
-      const stale = this.sel !== this.s.at && step.kind !== 'move' && vis[this.sel] !== 'cleared' && vis[this.sel] !== 'goal';
-      // Yol seçimi beklerken mevcut düğümde kalan seçim ilk gidilebilir yola geçer (düğme yok: ipucu satırı orada görünür)
-      if (step.kind === 'move' && this.sel === this.s.at && this.tappedSel !== this.s.at && step.options.length) {
-        this.sel = step.options[0]!;
-        return;
-      }
-      if (!stale) return;
+  /** Düğüm bilgi satırları (hover kartı ve savaş onayı ortak): tür · durum, düşmanlar, sonraki duraklar. */
+  private nodeFacts(id: string): { kind: string; foes: string; then: string; blurb: string; faces: string[] } {
+    const s = this.s;
+    const n = node(this.map, id);
+    const step = nextStep(s);
+    const vis = nodeVisibility(this.map, s, session.revealFog)[id];
+    const option = step.kind === 'move' && step.options.includes(id);
+    const state = id === s.at ? 'You are here' : vis === 'cleared' ? 'Cleared' : option ? 'Reachable' : vis === 'closed' ? 'Road closed' : vis === 'goal' ? 'Your goal' : 'Ahead';
+    const kind = `${n.subtitle || TYPE_LABEL[n.type]}  ·  ${state}`;
+    let foes = '';
+    let faces: string[] = [];
+    let blurb = '';
+    if (n.encounter && vis !== 'goal') {
+      const p = enemyPreview(n.encounter);
+      const leader = p.leader && !p.names.includes(p.leader) ? `  (led by ${p.leader})` : '';
+      foes = `${p.names.join(', ')}${leader}`;
+      faces = p.classes.filter((c) => !!content.classes[c]).slice(0, 6);
+    } else if (vis !== 'goal')
+      blurb = n.type === 'town' ? 'Rest, recruit and trade. Your heroes recover here.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? 'Make camp for free and recover. The fallen can be revived here for gold.' : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
+    const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
+    const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
+    return { kind, foes, then, blurb, faces };
+  }
+
+  /** Düğüm bilgi kartı (fare hover / dokunmatik uzun basış): ad, tür · durum, düşman portreleri + adlar, "Then". İmlecin yanında. */
+  private showNodeTip(id: string, p: Phaser.Input.Pointer): void {
+    this.hideNodeTip();
+    if (nodeVisibility(this.map, this.s, session.revealFog)[id] === 'fog') return;
+    const n = node(this.map, id);
+    const f = this.nodeFacts(id);
+    const c = this.compact();
+    const w = c ? 600 : 420;
+    const k = c ? 1.35 : 1;
+    const pad = 20;
+    const parts: Phaser.GameObjects.GameObject[] = [];
+    let y = pad;
+    const title = fitW(elText(this, pad, y + 12 * k, n.name, Math.round(21 * k), EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - pad * 2);
+    parts.push(title);
+    y += 28 * k;
+    const kind = elBody(this, pad, y, f.kind, Math.round(16 * k), EL.NOTE, true, w - pad * 2);
+    parts.push(kind);
+    y += kind.height + 10;
+    if (f.faces.length) {
+      const fs = Math.round(40 * k);
+      f.faces.forEach((cid, i) => {
+        const fx = pad + i * (fs + 8);
+        const fr = this.add.graphics();
+        fr.fillStyle(0x120c08, 1).fillRect(fx, y, fs, fs).lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(fx + 0.5, y + 0.5, fs - 1, fs - 1);
+        parts.push(fr, classAvatar(this, content.classes[cid]!, fx + fs / 2, y + fs / 2, fs - 2, true));
+      });
+      y += fs + 8;
     }
-    if (step.kind === 'move') this.sel = step.options[0] ?? this.s.at;
-    else this.sel = this.s.at;
+    const line = (label: string, text: string) => {
+      if (!text) return;
+      const lab = elText(this, pad, y + 10 * k, label, Math.round(13 * k), 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5);
+      const off = Math.round(64 * k);
+      const t = elBody(this, pad + off, y, text, Math.round(16 * k), EL.TXT, true, w - pad * 2 - off);
+      parts.push(lab, t);
+      y += t.height + 6;
+    };
+    line('Foes', f.foes);
+    if (f.blurb) {
+      const t = elBody(this, pad, y, f.blurb, Math.round(16 * k), EL.NOTE, true, w - pad * 2);
+      parts.push(t);
+      y += t.height + 6;
+    }
+    line('Then', f.then);
+    const h = y + pad - 6;
+    const root = this.add.container(0, 0).setDepth(1500);
+    root.add([elPanel(this, 0, 0, w, h, { alpha: 0.94 }), ...parts]);
+    root.setData('size', { w, h });
+    this.ui.add(root);
+    this.nodeTip = root;
+    this.placeNodeTip(p);
+  }
+
+  /** Kartı imlecin sağ altına koyar; görünür alandan taşacaksa sola / yukarı döner. */
+  private placeNodeTip(p: Phaser.Input.Pointer): void {
+    const t = this.nodeTip;
+    if (!t) return;
+    const { w, h } = t.getData('size') as { w: number; h: number };
+    const u = this.uiPoint(p);
+    const off = this.compact() ? 60 : 26;
+    let x = u.x + off;
+    let y = u.y + off;
+    if (x + w > stageView.right - 16) x = u.x - off - w;
+    if (y + h > H - 16) y = u.y - off - h;
+    t.setPosition(Math.round(Math.max(stageView.left + 16, x)), Math.round(Math.max(16, y)));
+  }
+
+  private hideNodeTip(): void {
+    this.nodeTip?.destroy(true);
+    this.nodeTip = null;
   }
 
   /** Alt orta: ◂ ▸ (kaydır) − + (yakınlaştır); dokunma alanı >= 56 px. */
@@ -1332,8 +1459,9 @@ export class CampaignMapScene extends Phaser.Scene {
         });
         return;
       default:
-        // battle / move: sol alttaki düğüm bilgisi (ikinci dokunuş ipucu) ve nabız atan düğüm
+        // battle / move: sol alttaki düğüm bilgisi (ipucu satırı) ve nabız atan düğüm
         this.renderHud();
+        if (step.kind === 'battle' && this.pendingFight?.node === s.at) this.startPendingFight();
         return;
     }
   }
@@ -1608,31 +1736,43 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Düğüme dokunma: sol alttaki bilgi bloğunda gösterilir. Seçili gidilebilir düğüme ya da eylem bekleyen mevcut düğüme ikinci dokunuş =
-   * eylem (yürü / savaş / gir; Ömer 2026-10-11: March / Fight / Formation düğmeleri kaldırıldı). Sisli düğüm yok sayılır.
+   * Düğüme TEK dokunuş = eylem (Ömer 2026-10-12; eskiden seç + ikinci dokunuş): gidilebilir düğüme yürür (savaş düğümünde önce onay),
+   * eylem bekleyen mevcut düğüm açılır (savaşta onay). Başka bir düğüme dokunmak (telefonda) bilgi kartını kısa süre gösterir.
    */
   private onNodeTap(id: string, v: NodeVis): void {
     if (v === 'fog') return;
     const step = nextStep(this.s);
-    const again = this.sel === id;
-    this.sel = id;
-    this.tappedSel = id;
-    this.renderMap(false);
-    this.renderHud();
-    if (!again) return;
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
-    if (id === this.s.at && step.kind === 'battle') return void startCampaignBattle(this);
+    if (id === this.s.at && step.kind === 'battle') return this.confirmBattle(id, false, () => void startCampaignBattle(this));
     if (id === this.s.at && this.actionHere()) return this.advance();
+    const p = this.input.activePointer;
+    if (p.wasTouch) {
+      this.showNodeTip(id, p);
+      const tip = this.nodeTip;
+      this.time.delayedCall(2600, () => tip === this.nodeTip && this.hideNodeTip());
+    }
   }
 
-  /** Yol seçimi: tek yol ise doğrudan yürür; seçim noktasında onay sorar (diğer yollar kapanır). */
+  /** Düğümde varışta savaş başlayacak mı (karşılaşması olan, henüz geçilmemiş düğüm; korumalı hazine dahil). */
+  private fightsAt(id: string): boolean {
+    return !!node(this.map, id).encounter && nodeVisibility(this.map, this.s, session.revealFog)[id] !== 'cleared';
+  }
+
+  /**
+   * Yol seçimi: savaş düğümünde "Start battle?" onayı (Fight = yürü + savaşı başlat); seçim noktasında (diğer yollar kapanacak) savaşsız
+   * düğüm için "Take this road?"; tek yol ve savaş yoksa doğrudan yürür (kasaba / dinlenme / tüccar / olay varışta açılır).
+   */
   private chooseRoad(id: string): void {
     const step = nextStep(this.s);
     if (step.kind !== 'move' || !step.options.includes(id)) return;
-    if (step.options.length === 1) return this.march(id);
+    const fork = step.options.length > 1;
+    if (this.fightsAt(id)) return this.confirmBattle(id, fork, () => this.march(id, true));
+    if (!fork) return this.march(id);
+    const f = this.nodeFacts(id);
     this.modal = openModal(this, this.ui, {
       title: 'Take this road?',
-      text: `${node(this.map, id).name}. The other roads will close for this journey.`,
+      subtitle: `${node(this.map, id).name}  ·  ${f.kind}`,
+      text: `${f.blurb ? `${f.blurb}\n` : ''}The other roads will close for this journey.`,
       fit: true,
       buttons: [
         { label: 'No', run: () => this.closeModal() },
@@ -1642,20 +1782,89 @@ export class CampaignMapScene extends Phaser.Scene {
     });
   }
 
-  private march(to: string): void {
+  /** "Start battle?" onayı (oyunun pencere dili; Cancel solda, Fight sağda; zemin / Esc = Cancel): düğüm, düşmanlar, sonraki duraklar. */
+  private confirmBattle(id: string, fork: boolean, fight: () => void): void {
+    const n = node(this.map, id);
+    const f = this.nodeFacts(id);
+    const lines = [f.foes ? `Foes: ${f.foes}` : '', f.then ? `Then: ${f.then}` : '', fork ? 'The other roads will close for this journey.' : ''].filter(Boolean);
+    this.modal = openModal(this, this.ui, {
+      title: 'Start battle?',
+      subtitle: `${n.name}  ·  ${n.subtitle || TYPE_LABEL[n.type]}`,
+      text: lines.join('\n'),
+      fit: true,
+      buttons: [
+        { label: 'Cancel', run: () => this.closeModal() },
+        {
+          label: 'Fight',
+          primary: true,
+          run: () => {
+            this.closeModal();
+            fight();
+          },
+        },
+      ],
+      onDismiss: () => this.closeModal(),
+    });
+  }
+
+  /** Yürüyüş. `fight`: varınca (onaylanmış) savaş kendiliğinden başlar; araya bekleyen kart / hikâye girerse oyuncu düğüme dokunur. */
+  private march(to: string, fight = false): void {
     this.closeModal();
+    this.hideNodeTip();
     const from = this.s.at;
     const before = node(this.map, from).region;
     this.update2(moveTo(this.s, to));
     this.tip?.destroy(true);
     this.tip = null;
-    this.sel = to;
-    this.tappedSel = null;
     this.walk(from, to, () => {
       this.refresh(true);
       const region = node(this.map, to).region;
-      if (region !== before) this.regionBanner(region);
+      const banner = region !== before;
+      if (banner) this.regionBanner(region);
+      // Onaylanmış savaş: varışta (ya da araya giren kart / aday / hikâye penceresi kapanınca) advance kendiliğinden başlatır
+      this.pendingFight = fight ? { node: to, delay: banner ? 1400 : 250 } : null;
       this.advance();
+    });
+  }
+
+  /**
+   * "Start battle?" onayından sonra yürünen düğümde savaşı başlatır (bölge afişi görünsün diye kısa bekleme). O arada pencere / menü /
+   * Gear / ayarlar açıldıysa başlamaz; oyuncu düğüme dokunup yeniden onaylar.
+   */
+  private startPendingFight(): void {
+    const f = this.pendingFight;
+    if (!f) return;
+    this.pendingFight = null;
+    this.time.delayedCall(f.delay, () => {
+      const ready = this.s.at === f.node && nextStep(this.s).kind === 'battle' && !this.modal && !this.menuOpen && !this.slotBrowser && !isSettingsOpen() && !document.querySelector('#ui-root .gr-overlay');
+      if (ready) startCampaignBattle(this);
+    });
+  }
+
+  /**
+   * Sol üst ◂ Back (Ömer 2026-10-12): ana menüye (Menu > Main Menu ile aynı yer). Normal modda son kayıttan beri ilerleme varsa onay
+   * sorar; Ironman her adımda kendiliğinden kaydettiği için sormaz.
+   */
+  private leaveMap(): void {
+    if (this.inputBusy()) return;
+    const go = () => elGo(this, MENU_SCENE);
+    if (!hasUnsavedProgress(storage(), this.s)) return go();
+    this.modal = openModal(this, this.ui, {
+      title: 'Leave the map?',
+      text: 'Unsaved progress will be lost. Leave?',
+      fit: true,
+      buttons: [
+        { label: 'Stay', run: () => this.closeModal() },
+        {
+          label: 'Leave',
+          primary: true,
+          run: () => {
+            this.closeModal();
+            go();
+          },
+        },
+      ],
+      onDismiss: () => this.closeModal(),
     });
   }
 

@@ -6,6 +6,7 @@ import { pickSideNeighbors } from './formation';
 import { betMultipliers, betStake } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
 import { Rng } from './rng';
+import { ITEM_HOOK_CAPS } from './item-caps';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundStat, statMin } from './stats';
@@ -318,8 +319,8 @@ export class Battle {
     if (oath > 0) m *= 1 - oath;
     // Global defense / Endurance (item affix'leri, Ömer 2026-10-11): yoksa çarpılmaz
     const fx = target.itemEffects;
-    if (fx?.damageTakenReduce) m *= 1 - Math.min(0.9, fx.damageTakenReduce);
-    if (fx?.lowHpReduce && target.hp > 0 && target.hp < fx.lowHpReduce.below * target.maxHp) m *= 1 - Math.min(0.9, fx.lowHpReduce.reduce);
+    if (fx?.damageTakenReduce) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, fx.damageTakenReduce);
+    if (fx?.lowHpReduce && target.hp > 0 && target.hp < fx.lowHpReduce.below * target.maxHp) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, fx.lowHpReduce.reduce);
     return m;
   }
 
@@ -3561,7 +3562,7 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
   if (ie && Object.keys(ie).length > 0) {
     c.itemEffects = JSON.parse(JSON.stringify(ie)) as ItemEffects;
     if (finite(ie.startShieldRatio) && ie.startShieldRatio > 0) c.shield += Math.round(c.maxHp * ie.startShieldRatio);
-    if (finite(ie.startCharge) && ie.startCharge > 0) c.turnCounter = roundStat(formulas.turn.threshold * Math.min(0.99, ie.startCharge), formulas);
+    if (finite(ie.startCharge) && ie.startCharge > 0) c.turnCounter = roundStat(formulas.turn.threshold * Math.min(ITEM_HOOK_CAPS.initiative, ie.startCharge), formulas);
     if (ie.shieldRefresh && ie.shieldRefresh.start > 0) c.shield += Math.round(c.maxHp * ie.shieldRefresh.start); // Mantle of Valdren
   }
   // Hazır çağrı (ör. düşman Skeleton): çağrı kuralları, sahipsiz ve süresiz

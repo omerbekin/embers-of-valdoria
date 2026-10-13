@@ -3,7 +3,8 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import audio from '../data/audio.json';
 import { content } from '../src/engine';
-import { buildCatalog } from '../src/gallery/catalog';
+import { buildCatalog, isTestSkill } from '../src/gallery/catalog';
+import { stageTeams } from '../src/gallery/stage-teams';
 import { ASSET_NAV, WIKI_ALIASES } from '../src/wiki/assets/nav';
 import { buildLegacy, type LegacyFiles } from '../src/wiki/assets/legacy-catalog';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
@@ -34,17 +35,28 @@ const catalog = buildCatalog(files);
 const legacy = buildLegacy(catalog, files);
 const legacyItems = legacy.groups.flatMap((g) => g.items);
 const wiki = buildWiki({ sprites: files.sprites, avatars: files.avatars });
+// test içeriği (testOnly class'lar: Geometer, Pose Tester'lar; skill'leri) Codex'te yok, yalnızca debug menüsünde (Ömer 2026-10-13)
+const testClasses = Object.values(content.classes).filter((c) => c.testOnly);
+const realSkills = Object.values(content.skills).filter((s) => !isTestSkill(s.id));
+const testSkills = Object.values(content.skills).filter((s) => isTestSkill(s.id));
+/** Yalnızca test skill'lerinin kullandığı anahtarlar (gerçek kullanıcısı yok). */
+const testOnlyKeys = (keysOf: (s: (typeof realSkills)[number]) => Array<string | undefined>): string[] => {
+  const real = new Set(realSkills.flatMap(keysOf));
+  return [...new Set(testSkills.flatMap(keysOf).filter((k): k is string => !!k && !real.has(k)))];
+};
+const testSfx = testOnlyKeys((s) => s.sfx ?? []);
+const testVfx = testOnlyKeys((s) => [s.vfx]);
 
 describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
-  it('data/audio.json içindeki TÜM sesler listelenir (süre ve katman özetiyle)', () => {
-    const ids = Object.keys(audio.sfx).sort();
+  it("data/audio.json içindeki TÜM sesler listelenir (süre ve katman özetiyle; yalnızca test class'larının sesleri hariç)", () => {
+    const ids = Object.keys(audio.sfx).filter((id) => !testSfx.includes(id)).sort();
     expect(catalog.sounds.map((s) => s.id).sort()).toEqual(ids);
     for (const s of catalog.sounds) {
       expect(s.duration, s.id).toBeGreaterThan(0);
       expect(s.layers.length, s.id).toBe(s.layerCount);
     }
     // skill'lerin sfx listesi 'kullanan skill' olarak görünür
-    for (const sk of Object.values(content.skills))
+    for (const sk of realSkills)
       for (const k of sk.sfx ?? []) expect(catalog.sounds.find((s) => s.id === k)?.usedBy.map((u) => u.id), `${sk.id} -> ${k}`).toContain(sk.id);
   });
 
@@ -57,14 +69,14 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
     }
   });
 
-  it('her skill için animasyon satırı vardır; her vfx türü listelenir', () => {
-    expect(catalog.animations.map((a) => a.skillId).sort()).toEqual(Object.keys(content.skills).sort());
+  it("her (test olmayan) skill için animasyon satırı vardır; her vfx türü listelenir (yalnızca test skill'lerininki hariç)", () => {
+    expect(catalog.animations.map((a) => a.skillId).sort()).toEqual(realSkills.map((s) => s.id).sort());
     for (const a of catalog.animations) expect(a.vfxMissing, `${a.skillId} vfx tanımsız`).toBe(false);
-    expect(catalog.vfxKinds.map((v) => v.kind)).toEqual([...VFX_KINDS]);
+    expect(catalog.vfxKinds.map((v) => v.kind)).toEqual(VFX_KINDS.filter((k) => !testVfx.includes(k)));
   });
 
-  it('her class ve çağrının sprite ve avatar dosyası katalogda bulunur (gizli class dahil)', () => {
-    const defs = [...Object.values(content.classes), ...Object.values(content.summons), ...Object.values(content.bosses), ...Object.values(content.mobs)]; // boss (data/bosses) ve mob (data/mobs) tanımları da
+  it('her (test olmayan) class ve çağrının sprite ve avatar dosyası katalogda bulunur', () => {
+    const defs = [...Object.values(content.classes).filter((c) => !c.testOnly), ...Object.values(content.summons), ...Object.values(content.bosses), ...Object.values(content.mobs)]; // boss (data/bosses) ve mob (data/mobs) tanımları da
     expect(catalog.characters.map((c) => c.id).sort()).toEqual(defs.map((d) => d.id).sort());
     for (const c of catalog.characters) {
       expect(c.idleUrl, `${c.id}: assets/sprites/${c.spriteId}/idle.png yok`).not.toBeNull();
@@ -74,25 +86,42 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
     }
   });
 
-  it('gizli (hidden) class wiki class listesinde YOK ama Assets katalogunda (karakter + animasyon) hidden etiketiyle var', () => {
-    const hidden = Object.values(content.classes).filter((c) => c.hidden);
-    expect(hidden.length).toBeGreaterThan(0);
-    for (const c of hidden) {
+  it("test içeriği (Geometer, Pose Tester'lar ve skill'leri) Codex'te HİÇBİR yerde yok; yalnızca onların kullandığı ses / efekt / ikon Legacy'ye de düşmez", () => {
+    expect(testClasses.map((c) => c.id)).toEqual(expect.arrayContaining(['aoe_tester', 'pose_tester_1', 'pose_tester_11']));
+    const legacyIds = new Set(legacyItems.map((i) => i.id));
+    const testNames = testClasses.map((c) => c.name);
+    for (const c of testClasses) {
       expect(wiki.classes.some((u) => u.id === c.id), `${c.id} wiki class listesinde`).toBe(false);
-      expect(catalog.characters.find((x) => x.id === c.id)?.hidden, `${c.id} karakter satırı`).toBe(true);
-      for (const sk of c.skills) expect(catalog.animations.find((a) => a.skillId === sk)?.hidden, `${sk} animasyon satırı`).toBe(true);
+      expect(catalog.characters.some((x) => x.id === c.id), `${c.id} Character art`).toBe(false);
+      expect(stageTeams().party, `${c.id} animasyon sahnesinde`).not.toContain(c.id);
     }
-    for (const c of catalog.characters.filter((x) => !content.classes[x.id]?.hidden)) expect(c.hidden, c.id).toBe(false);
+    for (const sk of testSkills) {
+      expect(catalog.animations.some((a) => a.skillId === sk.id), `${sk.id} Animations`).toBe(false);
+      expect(wiki.skills.some((x) => x.id === sk.id), `${sk.id} Skills`).toBe(false);
+      for (const x of [...catalog.sounds, ...catalog.statuses, ...catalog.grounds]) expect(x.usedBy.some((u) => u.id === sk.id), `${sk.id} kullanan olarak`).toBe(false);
+    }
+    for (const i of catalog.icons) for (const u of i.uses) expect(testNames.some((n) => u.label.includes(n)), `${i.name}: ${u.label}`).toBe(false);
+    // Geometer'in kendi sesleri / efektleri / logosu: listede de Legacy'de de yok
+    expect(testSfx.length + testVfx.length).toBeGreaterThan(0);
+    for (const k of testSfx) expect(catalog.sounds.some((x) => x.id === k) || legacyIds.has(k), `ses ${k}`).toBe(false);
+    for (const k of testVfx) expect(catalog.vfxKinds.some((x) => x.kind === k) || legacyIds.has(k), `efekt ${k}`).toBe(false);
+    const geoLogo = content.classes['aoe_tester']!.logo;
+    expect(catalog.icons.some((i) => i.name === geoLogo) || legacyIds.has(geoLogo), `logo ${geoLogo}`).toBe(false);
+    for (const c of catalog.characters) expect(c.testOnly, c.id).toBe(false);
   });
 
   it('tüm piksel ikonlar listelenir; kullanan skill/class/stat/durum ikon satırında yazar', () => {
-    expect(catalog.icons.map((i) => i.name)).toEqual([...ICON_KINDS]);
-    for (const sk of Object.values(content.skills)) {
+    const listed = new Set(catalog.icons.map((i) => i.name));
+    expect(catalog.icons.map((i) => i.name)).toEqual(ICON_KINDS.filter((n) => listed.has(n)));
+    // listede olmayan ikon yalnızca test class'larının gösterdiği ikondur
+    const testIcons = new Set<string>([...testSkills.map((s) => s.icon), ...testClasses.flatMap((c) => [c.logo, c.passive?.icon ?? ''])]);
+    for (const n of ICON_KINDS) if (!listed.has(n)) expect(testIcons.has(n), `${n} listede yok`).toBe(true);
+    for (const sk of realSkills) {
       const entry = catalog.icons.find((i) => i.name === sk.icon);
       expect(entry, `${sk.id} ikonu ${sk.icon}`).toBeDefined();
       expect(entry!.uses.some((u) => u.kind === 'skill'), `${sk.icon} skill kullanımı`).toBe(true);
     }
-    for (const def of [...Object.values(content.classes), ...Object.values(content.summons)]) expect(catalog.icons.find((i) => i.name === def.logo)?.uses.some((u) => u.kind === 'logo'), def.id).toBe(true);
+    for (const def of [...Object.values(content.classes).filter((c) => !c.testOnly), ...Object.values(content.summons)]) expect(catalog.icons.find((i) => i.name === def.logo)?.uses.some((u) => u.kind === 'logo'), def.id).toBe(true);
     for (const st of Object.values(content.statuses)) expect(catalog.icons.find((i) => i.name === st.icon), st.icon).toBeDefined();
   });
 

@@ -1,5 +1,6 @@
 import type { DamageSpec } from './formulas';
 import { outgoingDamageMult } from './stats';
+import { ITEM_HOOK_CAPS } from './item-caps';
 import type { BonusScale, Combatant, Formulas, SkillEffect, Stats } from './types';
 
 export type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
@@ -44,8 +45,10 @@ export function damageSpecFor(
   const out = outgoingDamageMult(actor.stats, element);
   const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
   // Zırh / büyü zırhı delme (affix): skill'in kendi ignoreDefense'iyle çarpımsal birleşir
-  const pen = effect.damageType === 'physical' ? (actor.itemEffects?.armorPen ?? 0) : (actor.itemEffects?.magicPen ?? 0);
-  const ignore = pen > 0 ? 1 - (1 - (effect.ignoreDefense ?? 0)) * (1 - Math.min(1, pen)) : effect.ignoreDefense;
+  const phys = effect.damageType === 'physical';
+  const pen = phys ? (actor.itemEffects?.armorPen ?? 0) : (actor.itemEffects?.magicPen ?? 0);
+  const penCap = phys ? ITEM_HOOK_CAPS.armorPen : ITEM_HOOK_CAPS.magicPen;
+  const ignore = pen > 0 ? 1 - (1 - (effect.ignoreDefense ?? 0)) * (1 - Math.min(penCap, pen)) : effect.ignoreDefense;
   const bonus = effect.bonusScale ? bonusScaleRaw(effect.bonusScale, attackerStats ?? actor.stats) * mult : 0;
   return {
     damageType: effect.damageType,

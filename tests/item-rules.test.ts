@@ -19,6 +19,7 @@ import {
   rarityDef,
   rolledAffixes,
   rollItem,
+  SLOT_IDS,
   tierPool,
   validateItems,
   type ItemsData,
@@ -57,24 +58,39 @@ describe('nadirlik = affix sayısı', () => {
     expect(ITEMS.rarities.some((r) => 'mult' in r)).toBe(false);
   });
 
-  it('yuva sınırları: delme ve kritik yalnızca silah + eldiven, auralar zırh + tılsım, kaçınma bot + eldiven; diğerleri her yerde', () => {
-    for (const id of ['b_pen', 'b_mpen', 'b_crit', 'b_critdmg', 'a_keen']) for (const s of ['helm', 'armor', 'boots', 'trinket'] as const) expect(affixAllowed(id, s), `${id} ${s}`).toBe(false);
-    for (const id of ['b_pen', 'b_crit']) expect(affixAllowed(id, 'weapon') && affixAllowed(id, 'gloves')).toBe(true);
-    for (const id of ['a_auradmg', 'a_auradef']) {
-      expect(affixAllowed(id, 'armor') && affixAllowed(id, 'trinket')).toBe(true);
-      expect(affixAllowed(id, 'weapon') || affixAllowed(id, 'helm')).toBe(false);
-    }
-    expect(affixAllowed('c_eva', 'boots') && affixAllowed('c_eva', 'gloves')).toBe(true);
-    expect(affixAllowed('c_eva', 'armor')).toBe(false);
-    for (const s of ['weapon', 'helm', 'armor', 'gloves', 'boots', 'trinket'] as const) expect(affixAllowed('c_hp', s)).toBe(true);
-    // 1000 zar: hiçbir örnek yasak affix taşımaz, aynı affix iki kez olmaz
+  it('yuva kimliği (Ömer 2026-10-13, itemfix): her stat 2-3 yuvada; genel A affix\'leri her yerde; zarlar havuz dışına çıkmaz', () => {
+    const only = (id: string, slots: string[]) => {
+      for (const s of SLOT_IDS) expect(affixAllowed(id, s), `${id} ${s}`).toBe(slots.includes(s));
+    };
+    for (const id of ['c_phys', 'c_fire', 'c_holy', 'b_critdmg', 'b_pen', 'b_mpen', 'b_tier']) only(id, ['weapon']);
+    only('b_crit', ['gloves']);
+    only('b_leech', ['gloves']);
+    only('a_keen', ['weapon', 'gloves']);
+    only('c_acc', ['gloves', 'weapon']);
+    only('c_eva', ['boots', 'gloves']);
+    only('c_shield', ['offhand', 'trinket']);
+    only('b_speed', ['boots', 'trinket']);
+    only('b_initiative', ['boots', 'trinket']);
+    for (const id of ['a_auradmg', 'a_auradef']) only(id, ['armor', 'offhand']);
+    for (const id of ['a_primary', 'a_allattr', 'a_recovery', 'a_ultcd', 'a_immunity', 'a_endure']) only(id, [...SLOT_IDS]);
+    // rastgele affix'ler en çok 3 yuvada (genel A affix'leri hariç)
+    for (const [id, a] of Object.entries(ITEMS.affixDefs)) if (a.slots) expect(a.slots.length, id).toBeLessThanOrEqual(3);
+    // her yuvada her kademe için seçenek var; zar hiç boş kalmaz
+    for (const s of SLOT_IDS) for (const t of ['C', 'B', 'A'] as const) expect(tierPool(t, s).length, `${t} ${s}`).toBeGreaterThanOrEqual(t === 'C' ? 3 : 2);
+    // 1000 zar: rastgele affix'ler yuva havuzunda (ana affix tabanın örtük statı, havuzdan muaf), aynı affix iki kez olmaz, Epic hep 4 affix
+    const pool = ITEMS.items.filter((d) => d.rarity !== 'legendary');
     for (let i = 0; i < 1000; i++) {
-      const d = ITEMS.items[i % ITEMS.items.length]!;
+      const d = pool[i % pool.length]!;
       const r = rollItem(d, new Rng(i), { rarity: 'epic' });
       const ids = r.affixes.map((a) => a.id);
+      expect(ids.length, d.id).toBe(4);
       expect(new Set(ids).size, d.id).toBe(ids.length);
-      for (const id of ids) expect(affixAllowed(id, d.slot), `${d.id} ${id}`).toBe(true);
+      for (const id of ids.slice(1)) expect(affixAllowed(id, d.slot), `${d.id} ${id}`).toBe(true);
     }
+    // kalkanların ana affix'i Armor; Common / Uncommon / Rare / Epic kalkan tabanı var
+    const shields = ITEMS.items.filter((d) => d.slot === 'offhand' && d.rarity !== 'legendary');
+    expect(new Set(shields.map((d) => d.rarity))).toEqual(new Set(['common', 'uncommon', 'rare', 'epic']));
+    for (const d of shields) expect(rollItem(d, new Rng(1)).affixes[0]!.id, d.id).toBe('c_armor');
   });
 
   it('silahın ana affix\'i hasar türü (C): fiziksel / element; kimin için zarlandıysa onun elementi', () => {
@@ -97,10 +113,15 @@ describe('nadirlik = affix sayısı', () => {
       { id: 'e', name: 'E', slot: 'helm', rarity: 'legendary', ilvl: 9, affixes: ['c_hp', 'b_crit', 'b_resil', 'a_gdef'], effect: 'laststand' },
     ];
     d.rarities[2]!.tiers = ['C', 'B'];
+    // yuvanın havuzunda ana affix dışında C kalmazsa zar boş kalırdı: yakalanır
+    d.items.push({ id: 'f', name: 'F', slot: 'gloves', rarity: 'common', ilvl: 2, main: 'c_acc' });
+    d.affixDefs = { ...d.affixDefs, c_eva: { ...d.affixDefs.c_eva!, slots: ['boots'] }, c_mpregen: { ...d.affixDefs.c_mpregen!, slots: ['trinket'] } };
     const errs = validateItems(d).join(' | ');
+    expect(errs).toMatch(/item f: its slot pool has no second C affix/);
     expect(errs).toMatch(/item a: needs a C main affix/);
     expect(errs).toMatch(/item b: needs a C main affix/);
-    expect(errs).toMatch(/item c: main c_eva is not allowed on armor/);
+    expect(errs).not.toMatch(/item c:/); // ana affix tabanın örtük statı: yuva havuzundan muaf (itemfix)
+    expect(errs).not.toMatch(/item e: affix .* is not allowed/); // Legendary'nin sabit affix'leri de muaf
     expect(errs).toMatch(/item d: only Legendary items carry an effect/);
     expect(errs).toMatch(/item e: affix 2 must be tier C/);
     expect(errs).toMatch(/rarity rare: one more affix per rarity/);
@@ -180,9 +201,9 @@ describe('affix zarları', () => {
 
 describe('eski kayıt göçü (en yakın yeni biçim; asla çökmez)', () => {
   it('eski stat zarları -> ana affix + eski statlara karşılık gelen affix\'ler; değerler orta; aynı uid = aynı sonuç', () => {
-    const r = legacyRoll(itemDef('keen_gauntlets')!, { crit: 5, armor: 2, critDmg: 15 }, 'i9');
+    const r = legacyRoll(itemDef('keen_gauntlets')!, { crit: 5, evasion: 2, critDmg: 15 }, 'i9');
     expect(r.rarity).toBe('rare');
-    expect(r.affixes.map((a) => a.id)).toEqual(['c_acc', 'c_armor', 'b_crit']);
+    expect(r.affixes.map((a) => a.id)).toEqual(['c_acc', 'c_eva', 'b_crit']);
     expect(r.affixes.every((a) => a.q === 0.5)).toBe(true);
     expect(legacyRoll(itemDef('keen_gauntlets')!, { crit: 5 }, 'i9')).toEqual(legacyRoll(itemDef('keen_gauntlets')!, { crit: 5 }, 'i9'));
     // silah: takan sınıfın elementi

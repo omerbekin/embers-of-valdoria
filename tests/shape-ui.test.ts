@@ -159,7 +159,9 @@ describe('wiki: şekil şeması ve TEST rozeti verisi', () => {
   const wiki = buildWiki({ sprites: {}, avatars: {} });
 
   it('şekil skill\'lerinde shape şeması var, diğerlerinde yok', () => {
-    const areaIds = Object.values(content.skills).filter((s) => s.target === 'area_enemies' || s.target === 'area_any').map((s) => s.id).sort();
+    // test class'larının (Geometer, Pose Tester'lar) skill'leri Codex'te yok
+    const testOf = new Set(Object.values(content.classes).filter((c) => c.testOnly).flatMap((c) => c.skills));
+    const areaIds = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !testOf.has(s.id)).map((s) => s.id).sort();
     expect(wiki.skills.filter((s) => s.shape).map((s) => s.id).sort()).toEqual(areaIds); // tüm alan skill'leri şekil şeması taşır
     for (const s of wiki.skills.filter((x) => !x.shape)) expect(content.skills[s.id]?.area?.shape, s.id).toBeUndefined();
   });

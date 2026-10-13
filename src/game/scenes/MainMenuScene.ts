@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from '../../ui/sfx-volume';
 import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel } from '../../ui/ui-sound';
 import { loadMusicLevel, menuMusic, onMusicLevelChange, setMusicLevel } from '../../ui/music';
 import { getMap, latestSave, migrateSaves, readSaves, slotSummaries, type SaveEntry } from '../../campaign';
@@ -64,7 +65,7 @@ const SETTINGS_DARK = 0.52;
 /** Settings sütunu yerleşimi (Ömer 2026-10-10: Sounds / Gameplay bölümleri): başlık ortası y, ilk öğenin üst kenarı, bölüm başlığı yüksekliği.
  *  DOM Settings aynı ölçülerle (style.css > html.menu-elegant .st-col / .st-section). */
 // Ömer 2026-10-11: Gameplay'e Performance mode + Show FPS eklenince 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satır 78 / başlık 46.
-const SETTINGS_LAYOUT = { titleY: 205, top: 270, heading: 46, rowH: 78 };
+const SETTINGS_LAYOUT = { titleY: 192, top: 255, heading: 46, rowH: 72 }; // 2026-10-13: Sound Effects satırı eklendi, 9 satır 1080e sığsın
 /**
  * Görünüm stili (src/ui/menu-style.ts): 'classic' bugünkü menü; 'elegant' ilk taslağın zarif stili (?menu=new önizleme). Onaylanınca
  * yalnızca DEFAULT_MENU_STYLE değişir; aşağıdaki ölçüler aynı kalır (önizleme = onaylanan görünüm).
@@ -925,7 +926,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.addPanelRow(p, label, () => undefined, { right: [g, ...step('−', trackX - 46, -1), track, ...step('+', trackX + trackW + 42, 1), value], adjust: (d) => set(level + d, true) });
   }
 
-  /** Ayarlar (oyun içi DOM Settings ile aynı içerik ve sıra; src/ui/settings.ts): "Sounds" (Master Volume, Music, UI sounds) ve
+  /** Ayarlar (oyun içi DOM Settings ile aynı içerik ve sıra; src/ui/settings.ts): "Sounds" (Master Volume, Music, Sound Effects, UI sounds) ve
    *  "Gameplay" (Reduced motion, Battle speed, Performance mode, Show FPS, Fullscreen) bölümleri; tüm kaydırıcılar 20 adım. Değerler aynı yerde saklanır. */
   private buildSettings(p: Phaser.GameObjects.Container): void {
     this.panelHeading(p, 'Sounds');
@@ -934,6 +935,12 @@ export class MainMenuScene extends Phaser.Scene {
 
     // --- Music: ana menü müziği (0 = tamamen kapalı; src/ui/music.ts). Burada canlı duyulur ---
     this.levelRow(p, 'Music', loadMusicLevel(), (n) => setMusicLevel(n), volumeLabel, onMusicLevelChange, VOLUME_STEPS);
+
+    // --- Sound Effects: savaş / skill sesleri (0 = kapalı; src/ui/sfx-volume.ts; Master ile çarpılır). Bırakınca deneme sesi ---
+    this.levelRow(p, 'Sound Effects', loadSfxLevel(), (n, preview) => {
+      setSfxLevel(n);
+      if (preview) setSettingsVolume(loadVolume(), true);
+    }, volumeLabel, onSfxLevelChange, VOLUME_STEPS);
 
     // --- UI sounds: menü sesleri (0 = kapalı; src/ui/ui-sound.ts) ---
     this.levelRow(p, 'UI sounds', loadUiSoundLevel(), (n, preview) => {

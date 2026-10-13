@@ -109,7 +109,7 @@ export interface PosesData {
   fistRadius: number;
   /** Başlarken küçük savunma hareketi yapan skill'ler (Guard kopyası; gerçek koruma pozu gelene dek). */
   braceSkills?: string[];
-  /** Başka sınıfın poz kütüphanesini kullanan sınıflar (Pose Tester'lar -> warrior_v2). */
+  /** Başka sınıfın poz kütüphanesini kullanan sınıflar (Pose Tester'lar -> kendi sınıfının <id>_v2 gövdesi, yoksa warrior_v2). */
   classAliases?: Record<string, string>;
   /** Tutuşa göre aile görseli (yalnızca tutuş takımı olan sınıfta): ör. two.axes = greataxes, two.maces = mauls. */
   gripArt?: Partial<Record<Grip, Record<string, string>>>;

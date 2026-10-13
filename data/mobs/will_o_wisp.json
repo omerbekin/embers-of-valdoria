@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'druid' ödünç; gerçek çizim (new base sprite) assets/sprites/will_o_wisp/idle.png + assets/avatars/will_o_wisp.png gelince spriteId 'will_o_wisp' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'will_o_wisp' (ChatGPT çizimi, süzülür: sprite altında boşluk var, gövde yerden yüksekte; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "will_o_wisp",
   "name": "Will-o'-Wisp",
   "family": "hexes",
-  "spriteId": "druid",
+  "spriteId": "will_o_wisp",
   "color": "#6fc9b8",
   "logo": "leaf",
   "frontPriority": 8,

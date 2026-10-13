@@ -41,6 +41,15 @@ Kaynak: Ömer'in ChatGPT ile ürettirdiği iki görsel (arka plan şeffaf; WebP'
 - Orijinaller: `source/characters-v2/bridge_warden.webp|png` (1254x1254, sağa bakar; sol kolda zincir, sağ elde çapa) ve `iron_mooring.webp|png` (1536x1024, zincir sola uzanır).
 - `sprites/bridge_warden/idle.png` (643x640) + `avatars/bridge_warden.png` (yüz ızgarası + göğüs çatlağı); `sprites/iron_mooring/idle.png` (924x640; genişlik < 1,5 x yükseklik, tek kare; yatay AYNALI: düşman tarafında çevrilince zincir önündeki Warden'a uzanır, `FLIP_SPRITE`) + `avatars/iron_mooring.png` (palamar başı + sarılı zincir). `tools/import-characters-v2.py --only bridge_warden|iron_mooring` ile üretildi (`HEADS`).
 
+## Sefer mobları (2026-10-13 import; data/mobs)
+
+Kaynak: Ömer'in ChatGPT ile ürettirdiği 7 mob görseli (1024x1536; road_thug, bandit_crossbowman, ember_acolyte, will_o_wisp gerçek saydam; fen_witchling, ghoul, shieldwarden arka plana gri/beyaz dama gömülü). Lisans: Ömer'e ait.
+- Orijinaller: `source/mobs/<id>.png` (oyuna yüklenmez).
+- `sprites/<id>/idle.png` (640 px yükseklik, sağa bakar) + `avatars/<id>.png` (256x256 kafa): `python tools/import-mobs.py [--only <id>] [--check <klasör>]` (sınıflarla aynı kırpma/ölçek; dama silme: kenardan taşma dolgusu + kapalı dama delikleri + kontura yapışık beyaz hale cepleri; road_thug'ın yarı saydam koyu halesi alfa eşiğiyle silinir; kafa kutuları `HEADS`).
+- Will-o'-Wisp süzülür: sprite'ın altı boş bırakılır (`FLOAT`), gövde yerden yüksekte, gölge yerde.
+- Palet varyantları aynı betikte taban sprite'ın HSV bölge eşlemesiyle üretilir (`VARIANTS`): `charcoal_burner` (Ember Acolyte, is kara), `drowned` (Ghoul, yosun yeşili + bataklık mavisi), `moor_raider` (Road Thug, çivit yün), `stonebound_warden` (Shieldwarden, taş gri + donuk turkuaz rün).
+- Adlı liderler kendi dosyası olmadan çizim paylaşır: Hedge Witch Morwen = `fen_witchling`, Thane of the Deep = `stonebound_warden` (`spriteScale` 1.12).
+
 ## Sefer haritası arka planı (campaign)
 Kaynak: Ömer'in ChatGPT ile ürettirdiği yazısız Valdoria haritası (`campaign/valdoria-bg.webp`, 1672x941, 16:9; referans: `docs/design/campaign/valdoria-map-reference.webp`, prompt `docs/design/campaign/campaign.md` 6.1). Lisans: Ömer'e ait. Harita sahnesi (`src/game/scenes/CampaignMapScene.ts`) ve ana menü arka planı olarak kullanılır; düğüm, yol, etiket ve sis üstüne kodla çizilir.
 

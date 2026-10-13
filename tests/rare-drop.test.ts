@@ -11,7 +11,7 @@ const cfgWith = (patch: Partial<RareDropConfig>): RareDropConfig => ({ ...JSON.p
 const always = (o: Partial<RareDropConfig> = {}) => cfgWith({ chance: { battle: 1, elite: 1, boss: 1 }, ...o });
 
 describe('veri ve şans', () => {
-  it('taban: normal %1, elit %3, boss %6; düşüşsüz her zafer +%0,5; Endless dalga başına +%0,1; set %75 / Legendary %25; Valdoria x0,5', () => {
+  it('taban: normal %1, elit %3, boss %6; düşüşsüz her zafer +%0,5; Endless 15. dalgadan sonra dalga başına +%0,2; set %75 / Legendary %25; Valdoria x0,5', () => {
     expect(RARE.chance).toEqual({ battle: 0.01, elite: 0.03, boss: 0.06 });
     expect(RARE.pityPerMiss).toBe(0.005);
     expect(RARE.split).toEqual({ set: 0.75, legendary: 0.25 });
@@ -20,7 +20,9 @@ describe('veri ve şans', () => {
     expect(RARE.endless.legendaryFromWave).toBe(11);
     expect(rareChance('battle', 0)).toBeCloseTo(0.01, 9);
     expect(rareChance('elite', 4)).toBeCloseTo(0.03 + 0.02, 9);
-    expect(rareChance('boss', 0, 20)).toBeCloseTo(0.06 + 0.02, 9);
+    expect(rareChance('boss', 0, 20)).toBeCloseTo(0.06 + 0.01, 9); // Endless eki yalnızca 15. dalgadan sonra, dalga başına +%0,2 (Ömer 2026-10-12)
+    expect(rareChance('boss', 0, 15)).toBeCloseTo(0.06, 9);
+    expect(rareChance('battle', 0, 10)).toBeCloseTo(0.01, 9);
   });
 
   it('Valdoria havuzu 3 Legendary (Emberbrand, Mantle of Valdren, Pilgrim\'s Road Boots); Endless havuzu 11. dalgadan itibaren hepsi', () => {

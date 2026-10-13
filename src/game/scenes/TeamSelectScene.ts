@@ -11,6 +11,7 @@ import { ownerOfUnit } from '../asset-versions';
 import { PRIMARY_GOLD, STAT_COLOR, STAT_LABEL, statIconName } from '../../ui/stat-icons';
 import { initialSizes, newSeed } from '../seed';
 import { classAvatar, ensureGlow } from '../menu-ui';
+import { makeDragGhost } from '../slot-drag';
 import { groupColor } from '../class-order';
 import {
   archetypeOf,
@@ -1242,16 +1243,9 @@ export class TeamSelectScene extends Phaser.Scene {
     return null;
   }
 
+  /** Sürüklenen kart: ortak hayalet (src/game/slot-drag.ts > makeDragGhost; Endless ve sefer Formation da kullanır). */
   private makeGhost(def: CombatantDef, flip: boolean, p: { x: number; y: number }): Phaser.GameObjects.Container {
-    const s = 112;
-    const glow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(s * 1.7, s * 1.7).setAlpha(0.4);
-    const g = this.add.graphics();
-    g.fillStyle(0x000000, 0.45).fillRect(-s / 2 + 4, -s / 2 + 12, s, s);
-    g.fillStyle(0x120c08, 1).fillRect(-s / 2, -s / 2, s, s);
-    const img = classAvatar(this, def, 0, 0, s, flip);
-    const f = this.add.graphics();
-    f.lineStyle(2, ONC, 1).strokeRect(-s / 2, -s / 2, s, s);
-    return this.add.container(p.x, p.y, [glow, g, img, f]).setDepth(6000);
+    return makeDragGhost(this, def, { size: 112, flip, depth: 6000 }).setPosition(p.x, p.y);
   }
 
   private onDragMove(p: { x: number; y: number }): void {

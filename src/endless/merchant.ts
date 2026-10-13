@@ -3,7 +3,7 @@
 // Satın alma run.ts > buyItem, ayrılma run.ts > leaveShop. Ekran: src/game/scenes/EndlessScene.ts > drawShop. Sayılar data/endless.json > shop.
 import { ITEMS, canEquip, defaultEquipSlot, itemDef, offhandBlocker, sellValue, type ItemDef, type SlotId } from '../progression/items';
 import { affixDiff, affixLines, type AffixDelta, type AffixLine } from '../progression/item-text';
-import { instanceScore } from '../progression/equip';
+import { slotScore } from '../progression/equip';
 import { ENDLESS, type EndlessConfig, type EndlessHero, type EndlessRun, type ItemRolls } from './data';
 import { bagOf, endlessBagSize, heroOf, ilvlCap, newRun, shopStock, suspendedOf } from './run';
 import { randomTeam } from '../engine/content';
@@ -112,8 +112,9 @@ export function ipGain(run: EndlessRun, heroId: string, d: ItemDef, catalog: Ite
   const slot = slotFor(hero.equipment, d);
   if (slot === 'offhand' && offhandBlocker(hero.equipment)) return 0; // çift el silah ikinci eli kapatıyor
   const cur = hero.equipment[slot];
-  const now = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? instanceScore(hero.class, cur) : 0;
-  return instanceScore(hero.class, { id: d.id, ...(rolls ? { rolls } : {}) }) - now;
+  // aynı A affix'i 2'den fazla item'de etkisiz kalırsa o değer sayılmaz (slotScore; Ömer 2026-10-13, itemcaps m2)
+  const now = cur && defIn(catalog, cur.id) && itemDef(cur.id) ? slotScore(hero.class, hero.equipment, cur, slot) : 0;
+  return slotScore(hero.class, hero.equipment, { id: d.id, ...(rolls ? { rolls } : {}) }, slot) - now;
 }
 
 /** "BEST": item'i takabilenler içinde en büyük IP kazancı olan kahraman (kazanç yoksa null). Eşitlikte takım sırası. */

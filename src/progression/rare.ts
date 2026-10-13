@@ -20,6 +20,8 @@ export interface RareDropConfig {
   endless: {
     /** Dalga başına şansa ek (0,001 = +%0,1). */
     perWave: number;
+    /** Endless ek şansı bu dalgadan SONRA artmaya başlar (Ömer 2026-10-12: yalnızca geç dalgalarda, yumuşak). Yoksa 0. */
+    perWaveFrom?: number;
     /** Legendary bu dalgadan itibaren uygun. */
     legendaryFromWave: number;
     /** Tüccar (Odo): bu dalgadan itibaren her ziyarette `chance` ihtimalle bir nadir mal, fiyat = değer x priceMult. */
@@ -54,7 +56,7 @@ export interface RareRollResult {
 
 /** Bu zaferin nadir düşüş şansı. */
 export function rareChance(kind: RareBattleKind, misses: number, wave?: number, cfg: RareDropConfig = RARE): number {
-  return cfg.chance[kind] + cfg.pityPerMiss * Math.max(0, misses) + (wave !== undefined ? cfg.endless.perWave * Math.max(0, wave) : 0);
+  return cfg.chance[kind] + cfg.pityPerMiss * Math.max(0, misses) + (wave !== undefined ? cfg.endless.perWave * Math.max(0, wave - (cfg.endless.perWaveFrom ?? 0)) : 0);
 }
 
 /** Uygun Legendary havuzu: sefer = minChapter <= bölüm; Endless = dalga kapısından sonra hepsi. */

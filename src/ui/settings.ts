@@ -4,6 +4,7 @@ import './motion';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from './motion-pref';
 import { openDebugMenu } from './debug-entry';
 import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel } from './ui-sound';
+import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from './sfx-volume';
 import { loadMusicLevel, onMusicLevelChange, setMusicLevel, setMusicMaster } from './music';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from './fullscreen';
 import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
@@ -15,7 +16,7 @@ import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, pe
  * kutusuz serif satırlar (seçili satırın önünde kor rengi elmas + hafif parıltı), sağda değer/denetim, sol üstte "◂ Back".
  * Ölçüler oyun birimiyle (--gu: 1 mantıksal birimin CSS pikseli) ve sütun konumu ana menüyle aynı (--menu-x; src/ui/viewport.ts).
  * Klavye: yukarı/aşağı satır, sol/sağ ses, Enter seçer, Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
- * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, UI sounds;
+ * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, Sound Effects (savaş/skill sesleri; 2026-10-13), UI sounds;
  * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
  * Battle speed 0.25x-4x (src/ui/battle-speed.ts). Oyun akışı eylemleri menüdedir (`src/ui/game-menu.ts`).
  */
@@ -110,6 +111,19 @@ export class SettingsScreen {
     music.slider.addEventListener('input', () => setMusicLevel(Number(music.slider.value)));
     this.stepButtons(music, (d) => setMusicLevel(Number(music.slider.value) + d));
     this.addRow(col, 'Music', () => undefined, music.parts, (d) => setMusicLevel(Number(music.slider.value) + d));
+
+    // --- Sound Effects: savaş / skill sesleri (src/ui/sfx-volume.ts; Master ile çarpılır). 0 = kapalı; bırakınca deneme sesi ---
+    const fx = this.slider('sound effects', VOLUME_STEPS, volumeLabel);
+    fx.paint(loadSfxLevel());
+    onSfxLevelChange(fx.paint);
+    const applyFx = (lvl: number, preview: boolean): void => {
+      setSfxLevel(lvl);
+      if (preview) hooks.preview();
+    };
+    fx.slider.addEventListener('input', () => applyFx(Number(fx.slider.value), false));
+    fx.slider.addEventListener('change', () => hooks.preview());
+    this.stepButtons(fx, (d) => applyFx(Number(fx.slider.value) + d, true));
+    this.addRow(col, 'Sound Effects', () => undefined, fx.parts, (d) => applyFx(Number(fx.slider.value) + d, true));
 
     // --- UI sounds: menü sesleri (deri, parşömen, ahşap tık; src/ui/ui-sound.ts, data/audio-ui.json). 0 = kapalı ---
     const ui = this.slider('UI sounds', VOLUME_STEPS, volumeLabel);

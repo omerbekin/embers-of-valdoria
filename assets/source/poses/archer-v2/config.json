@@ -1,0 +1,29 @@
+{
+  "_not": "tools/make-poses-v2.mjs --class=archer: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "seeds": {
+    "idle1": { "main": [270, 128], "off": [180, 178] },
+    "step1": { "main": [670, 155], "off": [475, 122] },
+    "slash1": { "main": [1105, 112], "off": [915, 182] },
+    "overhead1": { "main": [1300, 22], "off": [1380, 150] },
+    "thrust1": { "main": [428, 440], "off": [200, 455] },
+    "spin1a": { "main": [540, 412], "off": [655, 465] },
+    "spin1b": { "main": [1105, 432], "off": [880, 460] },
+    "spin1c": { "main": [1385, 440], "off": [1290, 458] },
+    "guard1": { "main": [180, 822], "off": [270, 742] },
+    "raise": { "main": [515, 665], "off": [640, 800] },
+    "channel": { "main": [1060, 762], "off": [1020, 762] },
+    "point": { "main": [1262, 832], "off": [1462, 740] },
+    "idle2": { "main": [218, 218], "off": [210, 205] },
+    "step2": { "main": [605, 185], "off": [605, 185], "angle": 40 },
+    "slash2": { "main": [1085, 228], "off": [1085, 228] },
+    "overhead2": { "main": [1345, 22], "off": [1345, 22] },
+    "thrust2": { "main": [412, 475], "off": [412, 475] },
+    "spin2a": { "main": [553, 525], "off": [553, 525] },
+    "spin2b": { "main": [1095, 458], "off": [1095, 458] },
+    "spin2c": { "main": [1375, 540], "off": [1375, 540] },
+    "guard2": { "main": [240, 748], "off": [185, 748] },
+    "throw": { "main": [460, 715], "off": [718, 800] },
+    "hit": { "main": [955, 862], "off": [955, 862] },
+    "kneel": { "main": [1445, 975], "off": [1445, 975] }
+  }
+}

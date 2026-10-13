@@ -221,7 +221,9 @@ That is 2-4 extra poses in total across 11 classes. Everything else rides on the
 
 Ömer'in testinden sonra (okçu atışları fırlatma pozuyla saçma, Fire Bolt açık elle işaret ve asa öteki elde, Mage / Anti-Mage büyü pozları çok hızlı sönüyor) 44 `pt_*` skill'in v2 pozu yeniden seçildi. **Kural: yeni poz çizilmedi**; yalnızca mevcut 24 kare + kod / veri ayarı (silahın yeri, açısı, eli, gizlenmesi, zamanlama). Eşleşme `tools/make-pose-testers.mjs > POSE` içinde (yeniden üretince korunur); silah yerleşimi `data/poses.json > classes.warrior_v2.itemPoses`.
 
-Silah sütunu Pose Tester'ın gerçek silahı (`src/game/pose-weapons.ts > POSE_TESTER_GEAR`). Tek el (…1) / çift el (…2) karesi silahın tutuşundan seçilir; yay ve tılsım tek el takımını kullanır.
+Silah sütunu Pose Tester'ın gerçek silahı (`src/game/pose-weapons.ts > POSE_TESTER_GEAR`). Tek el (…1) / çift el (…2) karesi silahın tutuşundan seçilir; tılsım tek el takımını kullanır; **yay kendi takımını** kullanır (2026-10-13: tek el takımı, ama `thrust` / `shot` -> bow_shot, `sky` -> bow_sky; başka tutuşta `shot` -> thrust1/2, `sky` -> raise; `data/poses.json > grips.bow`). Yay kullanan her silah (debug silah seçiciyle yay verilen herhangi bir Pose Tester da) yatay atışta bow_shot, göğe atışta bow_sky gösterir.
+
+**Güncelleme 2026-10-13 (Ömer onayı):** Warrior v2'ye 6 yeni kare: idle2, slash1, slash2, spin2a YENİDEN çizildi (eski kareler yerine), bow_shot ve bow_sky YENİ (26 kare). Kaynak `assets/source/poses/warrior-v2-extra/extra.png` (3 x 2), eski sayfalar duruyor; ek sayfa o hücrelerin yerine geçer (`tools/make-poses-v2.mjs > CLASS_EXTRAS`, ölçek eski karelerin boyuna göre medyan oran).
 
 | # | Sınıf (silah) | Skill | Poz (önce -> bırakış) | Kare | Neden |
 |---|---|---|---|---|---|
@@ -237,10 +239,10 @@ Silah sütunu Pose Tester'ın gerçek silahı (`src/game/pose-weapons.ts > POSE_
 | 10 | Paladin | Resurrection | channel | channel | İki yumruk öne, dirilen dosta güç akar |
 | 11 | Paladin | Judgment | raise | raise | Gökten ışık |
 | 12 | Paladin | Radiance | raise -> channel | raise / channel | Yüceltme, sonra herkese yayılan ışık |
-| 13 | Archer (yay) | Quick Shot | thrust | thrust1 | Yay uzanmış yumrukta DİK, öteki el omuzda = kiriş çekişi; ok yaydan çıkar |
-| 14 | Archer | Piercing Arrow | channel -> thrust | channel -> thrust1 | Ok takma (iki el göğüste), sonra tam çekiş |
-| 15 | Archer | Arrow Rain | raise | raise | Yay başın üstünde göğe EĞİK (-40°), oklar yukarı |
-| 16 | Archer | Aimed Shot | channel -> thrust | channel -> thrust1 | Uzun nişan: takma, tam çekiş; poz atış bitene dek tutulur |
+| 13 | Archer (yay) | Quick Shot | shot | bow_shot | Yay uzanmış yumrukta DİK, kiriş eli yanakta (gerçek atış pozu); kiriş kavrama noktasından yanaktaki ele gerilir, ok yayın kavrama yerinden çıkar |
+| 14 | Archer | Piercing Arrow | channel -> shot | channel -> bow_shot | Ok takma (iki el göğüste), sonra tam çekiş |
+| 15 | Archer | Arrow Rain | sky | bow_sky | Göğe çekiş: yay kolla birlikte göğe eğik (-38°), kiriş yanağa eğik gerilir, oklar kavrama yerinden yukarı |
+| 16 | Archer | Aimed Shot | channel -> shot | channel -> bow_shot | Uzun nişan: takma, tam çekiş; poz atış bitene dek tutulur |
 | 17 | Cutthroat (iki hançer) | Venom Edge | slash -> thrust | slash1 -> thrust1 | Kesik + saplama |
 | 18 | Cutthroat | Saltire Cut | slash | slash1 | X kesiği alanda belirir; tek savuruş |
 | 19 | Cutthroat | Smoke Bomb | throw | throw | Bomba açık elden çıkar; hançer arka yumrukta, ikinci hançer gizli |
@@ -280,7 +282,11 @@ Genel durumlar (değişmedi): idle = idle1/idle2, adım = step, isabet = hit, ye
 | staves | point / throw / hit | -15° / -25° / -30° + arkada | Arka yumrukta başı yukarı (yere gömülmez), isabette gövdenin arkasında |
 | greataxes, mauls | idle2 | 38° | Baş omuz önünde; eski 165° yere gömülüyordu, 15° yüzü kapatıyordu |
 | greataxes, mauls | point / throw / hit | -20° / -25° / -35° + arkada | Aynı neden |
-| bows | raise | -40° | Arrow Rain: yay göğe eğik |
+| bows | raise | -40° | Yayla raise (büyü / buff): yay göğe eğik |
+| bows | bow_sky | -38° | Arrow Rain: yay uzanan kola dik, göğe eğik |
+| greataxes, mauls | idle2 (yeni kare) | 48° | Yeni idle2'de eller aşağıda ortada; baş omuz önünde, yüzü kapatmıyor |
+| greataxes, mauls | slash2 (yeni kare) | 110° | Yeni slash2 aşağı-öne savuruş sonu; 125°'de baş yere gömülüyordu |
+| staves | idle2 (yeni kare) | 40°, 20 px aşağı | Baş omuz önünde |
 | charms | point | ikinci el (açık el) | Kart / bebek açık elde gösterilir |
 | charms | throw | gizli | Tılsım fırlatıldı |
 | shields | point / throw | önkola kaydırıldı | Kalkan açık elin üstünde değil |
@@ -297,8 +303,14 @@ Genel durumlar (değişmedi): idle = idle1/idle2, adım = step, isabet = hit, ye
 
 ### Hâlâ çizim isteyen (kodla çözülmeyen)
 
-- slash1 / slash2 kolu GERİYE savrulmuş çizili: ikinci vuruş anında silah hedefin tersine bakıyor (Double Strike, Mana Steal, Venom Edge'in ilk karesi). İki kare savuruş gibi okunuyor ama gerçek vuruş anı karesi yok.
-- Okçu: thrust1'de arka el omuzda, yanağa çekilmiş değil; kiriş efektle çiziliyor. Arrow Rain için gerçek "göğe çekiş" pozu yok (raise + eğik yay).
+- ~~slash1 / slash2 kolu geriye savrulmuş~~: 2026-10-13 yeni slash1 (tek el öne uzanmış vuruş sonu) ve slash2 (çift el aşağı-öne savuruş sonu) ile çözüldü.
+- ~~Okçu atış pozu yok~~: 2026-10-13 bow_shot / bow_sky ile çözüldü.
 - Hexer Doom Mark için bebeğe iğne (doll_stab) pozu yok (channel).
 - Açık el pozlarında (point / throw) kalkan önkola kaydırıldı; kalkanlı sınıflar bu pozları kullanmıyor, gerekirse yeni çizim ister. hit / kneel'da kalkan gövdenin arkasında, büyük kısmı görünmüyor.
 - Tılsımlar küçük (kart 70, bebek 115 gövde tuvali pikseli): ekranda ancak seçiliyor.
+
+## Sınıf başına v2 gövdeleri (2026-10-13)
+
+Her sınıf aynı kare listesiyle KENDİ gövdesini alabilir: `assets/source/poses/<id>-v2/one-handed.png` + `two-handed.png` (4 x 3, Warrior v2 ile aynı hücre sırası) + isteğe bağlı `bow.png` (2 x 1: bow_shot, bow_sky; yalnızca yay kullanan sınıf), sonra `node tools/make-poses-v2.mjs --class=<id>` -> `assets/poses/<id>-v2/` + `data/poses.json > classes.<id>_v2` (her sayfa Warrior v2'nin aynı karelerinin boyuna göre ölçeklenir: aynı taban ve boy; sola bakan hücre siluetle bulunup aynalanır; el noktaları Warrior v2 oranından, gerekirse `assets/source/poses/<id>-v2/config.json > seeds`). Tutuş takımları, durumlar, itemPoses Warrior v2'den kopyalanır. O sınıfın Pose Tester'ı kendi gövdesini kullanır (`classAliases`; yoksa warrior_v2). bow.png yoksa 24 kare ve yay tutuşu tek el takımına düşer. Kılavuz aracın başında; test `tests/poses-v2-classes.test.ts`.
+
+- Archer: `archer_v2` (26 kare, Pose Tester IV). bow.png figürleri 4 x 3 sayfalardan büyük çizilmişti, araç ölçekle eşitledi. El tohumları `assets/source/poses/archer-v2/config.json` (gözle).

@@ -1596,7 +1596,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.65
+        "power": 0.86
       },
       {
         "type": "omen",
@@ -1636,7 +1636,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.225
+        "power": 0.3
       },
       {
         "type": "dot",
@@ -1676,7 +1676,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.55,
+        "power": 0.73,
         "critBonus": 0.25
       },
       {
@@ -1717,7 +1717,7 @@
         "damageType": "magic",
         "element": "dark",
         "scale": "luck",
-        "power": 0.5
+        "power": 0.73
       },
       {
         "type": "omen",
@@ -1727,7 +1727,7 @@
       {
         "type": "detonate",
         "status": "omen",
-        "mult": 1.5,
+        "mult": 1.65,
         "noTransferOnKill": true
       }
     ],
@@ -2343,7 +2343,7 @@
     "note": "Pose test: plays the Raise Hand, then Channel pose."
   },
   "pt_quick_shot": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Quick Shot kopyası; gerçek efekt/ses/hedef (artOf quick_shot), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Quick Shot kopyası; gerçek efekt/ses/hedef (artOf quick_shot), v2 poz takımında 'shot'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_quick_shot",
     "name": "Quick Shot",
     "icon": "arrow",
@@ -2374,12 +2374,12 @@
       "arrowWhoosh",
       "arrowThunk"
     ],
-    "pose": "thrust",
+    "pose": "shot",
     "artOf": "quick_shot",
-    "note": "Pose test: plays the Thrust pose."
+    "note": "Pose test: plays the Bow Shot pose."
   },
   "pt_piercing_arrow": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Piercing Arrow kopyası; gerçek efekt/ses/hedef (artOf piercing_arrow), v2 poz takımında 'channel -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Piercing Arrow kopyası; gerçek efekt/ses/hedef (artOf piercing_arrow), v2 poz takımında 'channel -> shot'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_piercing_arrow",
     "name": "Piercing Arrow",
     "icon": "pierce",
@@ -2411,13 +2411,13 @@
     ],
     "pose": [
       "channel",
-      "thrust"
+      "shot"
     ],
     "artOf": "piercing_arrow",
-    "note": "Pose test: plays the Channel, then Thrust pose."
+    "note": "Pose test: plays the Channel, then Bow Shot pose."
   },
   "pt_arrow_rain": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Arrow Rain kopyası; gerçek efekt/ses/hedef (artOf arrow_rain), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Arrow Rain kopyası; gerçek efekt/ses/hedef (artOf arrow_rain), v2 poz takımında 'sky'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_arrow_rain",
     "name": "Arrow Rain",
     "icon": "arrows",
@@ -2449,12 +2449,12 @@
       "arrowShower",
       "arrowThunk"
     ],
-    "pose": "raise",
+    "pose": "sky",
     "artOf": "arrow_rain",
-    "note": "Pose test: plays the Raise Hand pose."
+    "note": "Pose test: plays the Sky Shot pose."
   },
   "pt_aimed_shot": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Aimed Shot kopyası; gerçek efekt/ses/hedef (artOf aimed_shot), v2 poz takımında 'channel -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Aimed Shot kopyası; gerçek efekt/ses/hedef (artOf aimed_shot), v2 poz takımında 'channel -> shot'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_aimed_shot",
     "name": "Aimed Shot",
     "icon": "aimedshot",
@@ -2486,10 +2486,10 @@
     },
     "pose": [
       "channel",
-      "thrust"
+      "shot"
     ],
     "artOf": "aimed_shot",
-    "note": "Pose test: plays the Channel, then Thrust pose."
+    "note": "Pose test: plays the Channel, then Bow Shot pose."
   },
   "pt_venom_edge": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Venom Edge kopyası; gerçek efekt/ses/hedef (artOf venom_edge), v2 poz takımında 'slash -> thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3524,7 +3524,7 @@
       {
         "type": "detonate",
         "status": "omen",
-        "mult": 1.5,
+        "mult": 1.65,
         "noTransferOnKill": true
       }
     ],

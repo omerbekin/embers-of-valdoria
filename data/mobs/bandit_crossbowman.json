@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'archer' ödünç; gerçek çizim (new base sprite) assets/sprites/bandit_crossbowman/idle.png + assets/avatars/bandit_crossbowman.png gelince spriteId 'bandit_crossbowman' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'bandit_crossbowman' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "bandit_crossbowman",
   "name": "Bandit Crossbowman",
   "family": "bandits",
-  "spriteId": "archer",
+  "spriteId": "bandit_crossbowman",
   "color": "#7a6a4a",
   "logo": "bow",
   "frontPriority": 8,

@@ -1,0 +1,30 @@
+{
+  "_not": "tools/make-poses-v2.mjs --class=gambler: el tohumları (sayfa koordinatı; main = silah eli, off = öteki el). Gözle okundu 2026-10-13.",
+  "overrideScale": { "hit": 1.08 },
+  "seeds": {
+    "idle1": { "main": [262, 150], "off": [190, 155] },
+    "step1": { "main": [660, 155], "off": [475, 128] },
+    "slash1": { "main": [1110, 115], "off": [920, 135] },
+    "overhead1": { "main": [1318, 18], "off": [1385, 155] },
+    "thrust1": { "main": [410, 438], "off": [175, 450] },
+    "spin1a": { "main": [535, 420], "off": [640, 470] },
+    "spin1b": { "main": [1105, 438], "off": [880, 455] },
+    "spin1c": { "main": [1395, 455], "off": [1255, 465] },
+    "guard1": { "main": [190, 745], "off": [250, 745] },
+    "raise": { "main": [520, 668], "off": [635, 795] },
+    "channel": { "main": [1065, 752], "off": [1030, 760] },
+    "point": { "main": [1278, 805], "off": [1470, 748] },
+    "idle2": { "main": [213, 212], "off": [207, 205] },
+    "step2": { "main": [610, 185], "off": [610, 185], "angle": 40 },
+    "slash2": { "main": [1080, 228], "off": [1080, 228] },
+    "overhead2": { "main": [1340, 25], "off": [1340, 25] },
+    "thrust2": { "main": [410, 448], "off": [410, 448] },
+    "spin2a": { "main": [540, 505], "off": [540, 505] },
+    "spin2b": { "main": [1095, 442], "off": [1095, 442] },
+    "spin2c": { "main": [1365, 525], "off": [1365, 525] },
+    "guard2": { "main": [215, 745], "off": [190, 745] },
+    "throw": { "main": [465, 700], "off": [710, 795] },
+    "hit": { "main": [480, 640], "off": [425, 710] },
+    "kneel": { "main": [1435, 960], "off": [1435, 960] }
+  }
+}

@@ -10,6 +10,7 @@ import { flowContext, startMainMenu, startNewGame, startTeamSelect } from './gam
 import { SettingsScreen } from './ui/settings';
 import { menuMusic } from './ui/music';
 import { stepFraction } from './ui/volume-steps';
+import { onSfxLevelChange, sfxLevel } from './ui/sfx-volume';
 import { GameMenu, isGameMenuOpen } from './ui/game-menu';
 import { lockInput, onInputLockChange, unlockInput } from './ui/input-lock';
 import { createFullscreenButton } from './ui/fullscreen';
@@ -68,12 +69,16 @@ const withAudio = () =>
   import('./game/audio').then((a) => {
     audioReady = true;
     if (volumeLevel !== null) a.audioSettings.volume = stepFraction(volumeLevel); // Master Volume 0-20 adım
+    a.audioSettings.sfx = stepFraction(sfxLevel()); // Sound Effects 0-20 adım (src/ui/sfx-volume.ts)
     return a;
   });
 if (firstScene !== 'menu') gateScene(firstScene, withAudio());
 // Ana menü müziği (src/ui/music.ts): menüyle açılışta yükleme ekranındaki ilk tık/tuş bile müziği başlatsın (motor modülü şimdi iner)
 if (firstScene === 'menu') menuMusic(true);
 whenBootReady(() => void withAudio().catch(() => undefined));
+onSfxLevelChange(() => {
+  if (audioReady) void withAudio();
+});
 
 const game = new Phaser.Game({
   type: Phaser.AUTO,

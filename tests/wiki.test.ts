@@ -79,7 +79,9 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   });
 
   it('tüm skill listelenir; ad, hedef rozeti, bedel, cooldown ve açıklaması boş değildir', () => {
-    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).sort());
+    // test class'larının (Geometer, Pose Tester'lar) skill'leri Codex'te yok: yalnızca debug menüsünde
+    const testOf = new Set(Object.values(content.classes).filter((c) => c.testOnly).flatMap((c) => c.skills));
+    expect(wiki.skills.map((s) => s.id).sort()).toEqual(Object.keys(content.skills).filter((id) => !testOf.has(id)).sort());
     for (const s of wiki.skills) {
       expect(s.name, s.id).not.toBe('');
       expect(s.targetBadge, s.id).not.toBe('');
@@ -143,7 +145,8 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(items).toContain('Rare drops');
     expect(items).toContain('bad-luck protection');
     expect(items).toContain('in its top');
-    expect(items).toContain('+15% crit chance');
+    expect(items).toContain('+25% crit chance');
+    expect(items).toContain('40% debuff resistance');
     expect(items).not.toMatch(/Might/);
     expect(text('turns')).toContain('Battle speed');
     expect(text('mana')).toContain('"+2 MP"');

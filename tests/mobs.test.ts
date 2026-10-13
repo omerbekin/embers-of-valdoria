@@ -69,10 +69,10 @@ describe('data/mobs yükleyicisi', () => {
         }
   });
 
-  it('görsel: spriteId ya mobun kendi id\'si (gerçek çizim) ya da var olan bir class görseli (GEÇİCİ); dosyası diskte', () => {
-    const classSprites = new Set(Object.values(content.classes).map((c) => c.spriteId));
+  it('görsel: spriteId ya mobun kendi id\'si (kendi çizimi) ya da kendi çizimi olan başka bir mob (adlı lider çizim paylaşır: Morwen, Thane); dosyası diskte', () => {
+    const ownArt = new Set(mobs.filter((m) => m.spriteId === m.id).map((m) => m.id));
     for (const m of mobs) {
-      expect(m.spriteId === m.id || classSprites.has(m.spriteId), `${m.id} -> ${m.spriteId}`).toBe(true);
+      expect(m.spriteId === m.id || ownArt.has(m.spriteId), `${m.id} -> ${m.spriteId}`).toBe(true);
       expect(existsSync(new URL(`../assets/sprites/${m.spriteId}/idle.png`, import.meta.url)), `${m.id} sprite ${m.spriteId}`).toBe(true);
       expect(existsSync(new URL(`../assets/avatars/${m.spriteId}.png`, import.meta.url)), `${m.id} avatar ${m.spriteId}`).toBe(true);
     }

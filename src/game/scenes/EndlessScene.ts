@@ -47,7 +47,7 @@ import { backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { classAvatar, fitText } from '../menu-ui';
 import { EL, diamondPts, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elLink, elPanel, elScreenIn, elText, elTip, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
 import { motion, MOTION } from '../../ui/motion';
-import { worldXY } from '../stage';
+import { SlotDrag, makeDragGhost } from '../slot-drag';
 import { ensureGlow } from '../menu-ui';
 import { feastEmblem, healEmblem, hexNum, itemEmblem, medallion, purseEmblem } from '../endless-emblems';
 import { openEndlessGear } from '../endless-gear';
@@ -119,6 +119,13 @@ const PICK = {
   infoY: 790,
 } as const;
 
+/** Takım seçiminde sürüklenen: class, kaynağı (hücre; -1 = kadro) ve kaynağın görseli (sürüklerken solar). */
+interface PickDrag {
+  cls: string;
+  from: number;
+  src?: Phaser.GameObjects.Image;
+}
+
 /** Seçim kartının çizim bağlamı: `add` kart içine, `addTop` kartın dokunma alanının üstüne (ipucu alanları). */
 interface CardCtx {
   cx: number;
@@ -171,10 +178,10 @@ export class EndlessScene extends Phaser.Scene {
   private toast: ((msg: string, sound?: UiSoundKind | null) => void) | null = null;
   /**
    * Takım seçimi + koşu başı dizilimi TEK ekranda (Ömer 2026-10-10; eski ayrı Formation penceresi kaldırıldı): seçilen class'lar ve hücreleri.
-   * Sürükleme durumu: sürüklenen class, kaynağı (hücre; -1 = kadro), başlangıç noktası, eşik aşıldı mı, hayalet kart ve kaynağın görseli.
+   * Sürükleme: ortak SlotDrag (src/game/slot-drag.ts), yük = PickDrag.
    */
   private draft: FormationDraft = emptyDraft();
-  private drag: { cls: string; from: number; sx: number; sy: number; moved: boolean; ghost?: Phaser.GameObjects.Container; src?: Phaser.GameObjects.Image } | null = null;
+  private drag: SlotDrag<PickDrag> | null = null;
   /** Bırakma hedefi: hücre, -2 = kadro (çıkar), -1 yok. */
   private dropHot = -1;
   /** Dokunarak taşıma: seçili ızgara kahramanı (sonra hücreye dokun). */
@@ -194,7 +201,7 @@ export class EndlessScene extends Phaser.Scene {
     this.requested = data?.view;
     this.overlay = !!data?.overlay;
     this.draft = emptyDraft();
-    this.drag = null;
+    this.drag = null; // create() kurar (sahne yeniden başlayınca eski dinleyiciler giriş eklentisiyle silinir)
     this.dropHot = -1;
     this.pickSel = '';
     this.hoverClass = null;
@@ -231,10 +238,36 @@ export class EndlessScene extends Phaser.Scene {
     if (!this.overlay && hasBackground(this, LOOK.bg)) this.bg = this.add.image(CX, H / 2, backgroundKey(LOOK.bg)).setDepth(0);
     this.shade = this.add.rectangle(FULL_X0, 0, FULL_W, H, 0x080604, LOOK.shade).setOrigin(0, 0).setDepth(1);
     this.root = this.add.container(0, 0).setDepth(10);
-    // Takım seçimi sürükle-bırak: sahne geneli hareket / bırakma (sahne kapanınca giriş eklentisi dinleyicileri siler)
-    this.input.on('pointermove', (p: Phaser.Input.Pointer) => this.onPickMove(p));
-    this.input.on('pointerup', (p: Phaser.Input.Pointer) => this.onPickUp(p));
-    this.input.on('pointerupoutside', (p: Phaser.Input.Pointer) => this.onPickUp(p));
+    // Takım seçimi sürükle-bırak: ortak yardımcı (src/game/slot-drag.ts; Quick Battle ile aynı hayalet kart + gölge). Sahne kapanınca
+    // giriş eklentisi dinleyicileri siler.
+    this.drag = new SlotDrag<PickDrag>(this, {
+      threshold: PICK.dragPx,
+      lift: PICK.ghostLift, // parmak altında kalmasın: biraz yukarıda
+      ghost: (d) => {
+        const def = content.classes[d.cls];
+        return def ? makeDragGhost(this, def, { size: PICK.grid.cell - 24, depth: 50 }) : undefined;
+      },
+      onStart: (d) => {
+        this.pickSel = '';
+        d.src?.setAlpha(0.25);
+        this.drawPickFx();
+      },
+      onMove: (_d, q) => {
+        const t = this.view === 'pick' ? this.pickTarget(q.x, q.y) : -1;
+        if (t !== this.dropHot) {
+          this.dropHot = t;
+          this.drawPickFx();
+        }
+      },
+      onEnd: (d) => {
+        this.dropHot = -1;
+        if (d.src?.active) d.src.setAlpha(d.from < 0 && this.draft.classes.includes(d.cls) ? 0.4 : 1);
+        this.drawPickFx();
+      },
+      onDrop: (d, q) => {
+        if (this.view === 'pick') this.actDrop(d.cls, d.from, this.pickTarget(q.x, q.y, d));
+      },
+    });
     this.toast = elToast(this, 1046); // alt orta: tüccarın sekmeleri ve torba başlığıyla çakışmasın
     // Bellekte koşu yoksa kayıtlıyı yükle (sayfa yenilendi / ana menüden geldi); bitmiş koşu bellekte yalnızca skor ekranı için durur
     if (!endless.run) continueRun();
@@ -635,14 +668,13 @@ export class EndlessScene extends Phaser.Scene {
   /** Dokunma (sürüklenmediyse): sürükleme yeni bittiyse dokunma sayılmaz. */
   private pickTap(run: () => void): void {
     if (this.drag?.moved || this.confirm) return;
-    this.drag = null;
+    this.drag?.cancel();
     run();
   }
 
   private beginPickDrag(cls: string, from: number, p: Phaser.Input.Pointer, src?: Phaser.GameObjects.Image): void {
     if (this.confirm) return;
-    const q = worldXY(this, p);
-    this.drag = { cls, from, sx: q.x, sy: q.y, moved: false, ...(src ? { src } : {}) };
+    this.drag?.begin({ cls, from, ...(src ? { src } : {}) }, p);
   }
 
   private pickCellAt(x: number, y: number): number {
@@ -658,61 +690,15 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   /** Bırakma hedefi: hücre; ızgaradan gelen kahraman için kadro alanı (-2); yoksa -1. */
-  private pickTarget(x: number, y: number): number {
+  private pickTarget(x: number, y: number, d = this.drag?.payload): number {
     const c = this.pickCellAt(x, y);
     if (c >= 0) return c;
-    return this.drag && this.drag.from >= 0 && this.rosterRect.contains(x, y) ? -2 : -1;
+    return d && d.from >= 0 && this.rosterRect.contains(x, y) ? -2 : -1;
   }
 
-  private onPickMove(p: Phaser.Input.Pointer): void {
-    const dr = this.drag;
-    if (!dr || this.view !== 'pick') return;
-    if (!p.isDown) return this.cancelPickDrag();
-    const q = worldXY(this, p);
-    if (!dr.moved) {
-      if (Math.hypot(q.x - dr.sx, q.y - dr.sy) < PICK.dragPx) return;
-      dr.moved = true;
-      this.pickSel = '';
-      const def = content.classes[dr.cls];
-      if (def) {
-        const s = PICK.grid.cell - 24;
-        const bg = this.add.graphics();
-        bg.fillStyle(0x120c08, 0.96).fillRect(-s / 2, -s / 2, s, s).lineStyle(2, EL.ON_N, 1).strokeRect(-s / 2, -s / 2, s, s);
-        dr.ghost = this.add.container(q.x, q.y - PICK.ghostLift, [bg, classAvatar(this, def, 0, 0, s - 8)]).setDepth(50).setAlpha(0.92);
-      }
-      dr.src?.setAlpha(0.25);
-      this.drawPickFx();
-    }
-    dr.ghost?.setPosition(q.x, q.y - PICK.ghostLift); // parmak altında kalmasın: biraz yukarıda
-    const t = this.pickTarget(q.x, q.y);
-    if (t !== this.dropHot) {
-      this.dropHot = t;
-      this.drawPickFx();
-    }
-  }
-
-  private onPickUp(p: Phaser.Input.Pointer): void {
-    const dr = this.drag;
-    if (!dr) return;
-    if (!dr.moved) {
-      this.drag = null;
-      return;
-    }
-    const q = worldXY(this, p);
-    const t = this.pickTarget(q.x, q.y);
-    this.cancelPickDrag();
-    this.actDrop(dr.cls, dr.from, t);
-  }
-
-  /** Sürüklemeyi bırak: hayalet silinir, kaynak görsel geri gelir, hedef çizimi temizlenir. */
+  /** Sürüklemeyi bırak: hayalet silinir, kaynak görsel geri gelir, hedef çizimi temizlenir (SlotDrag > onEnd). */
   private cancelPickDrag(): void {
-    const dr = this.drag;
-    this.drag = null;
-    this.dropHot = -1;
-    if (!dr) return;
-    dr.ghost?.destroy();
-    if (dr.src?.active) dr.src.setAlpha(dr.from < 0 && this.draft.classes.includes(dr.cls) ? 0.4 : 1);
-    this.drawPickFx();
+    this.drag?.cancel();
   }
 
   /** Hedef vurgusu: sürüklerken ızgara çevresi kor rengi ince çizgi, hedef hücre kor çerçeve + dolgu; ızgaradan gelende kadro alanı da hedef. */
@@ -720,9 +706,9 @@ export class EndlessScene extends Phaser.Scene {
     const g = this.pickFx;
     if (!g?.active) return;
     g.clear();
-    const dr = this.drag;
-    this.pickRemoveText?.setVisible(!!dr?.moved && dr.from >= 0);
-    if (!dr?.moved) return;
+    const dr = this.drag?.payload;
+    this.pickRemoveText?.setVisible(!!dr && dr.from >= 0);
+    if (!dr) return;
     const G = PICK.grid;
     const gw = 4 * G.cell + 3 * G.gap;
     const gh = 3 * G.cell + 2 * G.gap;

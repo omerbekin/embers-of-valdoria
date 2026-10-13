@@ -116,7 +116,7 @@ export function mountPoses(): SectionApi {
 
   root.append(
     h('div', { class: 'section-head' }, h('h2', { text: 'Poses' }), countEl),
-    h('p', { class: 'muted', text: 'The shared pose library (Warrior v1; warrior_v2 = the new one-handed + two-handed set used by the Pose Testers). Each skill shows one or more key poses; the equipped weapon (family + rarity) is drawn in the hand. Classes without poses keep their single sprite.' }),
+    h('p', { class: 'muted', text: 'The shared pose library (Warrior v1; <class>_v2 = the new per-class sets: one-handed + two-handed, plus bow shots for bow users). Each skill shows one or more key poses; the equipped weapon (family + rarity) is drawn in the hand. Classes without poses keep their single sprite.' }),
     toolbar,
     ...blocks,
   );

@@ -50,7 +50,9 @@ export interface VersionRow {
 }
 
 export function buildVersions(): VersionRow[] {
-  return versionKeys().map((key) => {
+  return versionKeys()
+    .filter((key) => !content.classes[key]?.testOnly) // test class'ları (Geometer) Codex'te yok: yalnızca debug > Versions
+    .map((key) => {
     const def = content.classes[key];
     const own = ownedArt(key);
     const progress = v2Progress(key);

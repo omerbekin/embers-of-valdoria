@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'hexer' ödünç; gerçek çizim (palette variant of fen_witchling) assets/sprites/hedge_witch_morwen/idle.png + assets/avatars/hedge_witch_morwen.png gelince spriteId 'hedge_witch_morwen' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'fen_witchling' (ChatGPT çizimi, adlı lider: Fen Witchling çizimini paylaşır (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "hedge_witch_morwen",
   "name": "Hedge Witch Morwen",
   "family": "hexes",
-  "spriteId": "hexer",
+  "spriteId": "fen_witchling",
   "color": "#4f6a2f",
   "logo": "rune",
   "frontPriority": 7,

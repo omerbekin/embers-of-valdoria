@@ -99,9 +99,11 @@
   "rolls": {
     "spread": 0.15
   },
-  "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, prog:recovery), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda (delme ve kritik: silah + eldiven; auralar: zırh + tılsım; kaçınma: bot + eldiven). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
+  "_affixes": "Affix tanımları (Ömer onayı 2026-10-11, items.md 1.3b). tier C/B/A; text: {0}/{1} = parça değerleri, {x} = zarlanan seçim, {primary} = sınıfın ana statı. parts[]: base + perIlvl x ilvl (x affixRules.power), step = yuvarlama adımı, ip = 1 birimin Item Points değeri (değer/fiyat/Equip best), to = motor eşlemesi (mod:<UnitModifiers alanı> toplanır, mult:<alan> 1 + toplam, fx:<ItemEffects alanı>, elem:<element|*>, attr:primary|all, prog:recovery), scale = yüzde -> oran (0,01). fixed = zar ve seviye yok; floor = aşağı yuvarlanır; noRoll = zar yok; noPower = affixRules.power işlemez (iri adımlı: ana stat, tüm statlar, hız, Immunity). slots = yalnızca bu yuvalarda rastgele çekilir (yuva kimliği, Ömer 2026-10-13 itemfix: bkz. _itemfix; slots yoksa her yuvada). needs = Equip best'in sınıf uyumu ipucu (element:<x>, element:magic, mp, shield, dot, debuff, support, summon). affixRules.rollFloorByRarity (Ömer 2026-10-11): nadirliğe göre zarın aralıktaki alt sınırı (oran; tavan aynı): Common tüm aralık, Uncommon üst %75, Rare %62,5, Epic %50, Legendary %37,5. Yalnızca yeni zarlar. affixRules.classFit (Ömer 2026-10-11): rastgele affix çekilirken item kimin için zarlandıysa ona yarayan affix'ler (needs uyumu) `weight` kat ağırlıklı, yalnızca `tiers` kademelerinde (C).",
+  "_itemfix": "Ömer 2026-10-13 (form itemfix): (1) YUVA KİMLİĞİ: her stat yalnızca 2-3 yuvada rastgele çıkar (affixDefs[].slots). Weapon = element/fiziksel hasar, kritik hasarı, delme, elit/boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon); Off-hand kalkan = Armor, Shield power, Magic armor (+ HP regen, resist, auralar, Global defense, Max HP %, Support); Helm = HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana/Resource mastery); Armor = Armor, HP, Magic armor, auralar (+ HP regen, resist); Gloves = isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, hasar, hız %); Boots = hız, kaçınma, Quick start (+ HP, MP, hız %); Trinket = HP/MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, hasar, Elemental, Potency, Mana/Resource). Genel A affix'leri (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) her yuvada. Hançer ikinci elde silah havuzunu kullanır. Ana affix (main) tabanın örtük statıdır, havuzdan muaftır; Legendary'nin sabit affix'leri de muaf. Kalkanların ana affix'i Armor (main), yeni tabanlar Iron Buckler (Common), Kite Shield of the Stag (Rare), Warden's Pavise (Epic). (2) TEK ITEM TAVANI DOLDURMAZ: c_acc 1/0,17 -> 0,6/0,1 (adım 0,25), b_crit 2,4/0,4 -> 1,5/0,25, a_keen kritik 1,92/0,32 -> 1,2/0,2, b_speed 1/0,04 -> 0,7/0,03 (adım 0,25), b_mpcost 4,8/0,8 -> 3/0,5, a_recovery 3,84/0,64 -> 1,6/0,27: tavan artık 2-3 kaynakla dolar. (3) DEĞERLEME (yalnızca ip): c_shield ve c_dot 0,15 -> 0,2, a_allattr 1,25 -> 3, a_support 0,08 -> 0,12 (her parça), a_potency tur 1 -> 3. (7) DENGE: yuva kimliği boşa giden zarları azalttığı için item'ler Endless'ta güçlendi (ilk boss %58 -> %63); telafi için affixRules.power 1,5 -> 1,4 (tüm affix değerleri ~%7 düşük, Endless hedefleri yeniden bantta). (6) Sıfır aralık: adımlar küçüldü (c_mp 5 -> 2, c_hpregen 0,5 -> 0,25, c_mpregen 1 -> 0,25, a_primary 2 -> 1, a_allattr 2 -> 0,5, a_mana / a_resource MP regen 1 -> 0,5). Ayrıntı: docs/design/open-questions.md madde (itemfix).",
+  "_affixBalance": "Ömer 2026-10-12 (Endless item dengesi p4): a_primary ip 0,75 -> 2 (1 ana stat puanı gerçekte ~2 IP; Equip best ve fiyat artık doğru tartar), b_speed ip 2,75 -> 4 (hız çok değerli), a_speedpct perIlvl 0,32 -> 0,2 (yüksek seviyede hız % çok hızlı büyüyordu). Güç değişen tek affix a_speedpct; diğer ikisi yalnızca değerleme.",
   "affixRules": {
-    "power": 1.5,
+    "power": 1.4,
     "rollFloorByRarity": {
       "common": 0,
       "uncommon": 0.25,
@@ -121,6 +123,11 @@
       "tier": "C",
       "name": "Armor",
       "text": "+{0} Armor",
+      "slots": [
+        "armor",
+        "offhand",
+        "helm"
+      ],
       "icon": "armor",
       "parts": [
         {
@@ -136,6 +143,11 @@
       "tier": "C",
       "name": "Max HP",
       "text": "+{0} Max HP",
+      "slots": [
+        "helm",
+        "armor",
+        "boots"
+      ],
       "icon": "hp",
       "parts": [
         {
@@ -151,6 +163,9 @@
       "tier": "C",
       "name": "Physical damage",
       "text": "+{0}% Physical damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your physical skills.",
       "needs": "element:physical",
       "icon": "element:physical",
@@ -169,6 +184,9 @@
       "tier": "C",
       "name": "Fire damage",
       "text": "+{0}% Fire damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your fire skills.",
       "needs": "element:fire",
       "icon": "element:fire",
@@ -187,6 +205,9 @@
       "tier": "C",
       "name": "Ice damage",
       "text": "+{0}% Ice damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your ice skills.",
       "needs": "element:ice",
       "icon": "element:ice",
@@ -205,6 +226,9 @@
       "tier": "C",
       "name": "Holy damage",
       "text": "+{0}% Holy damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your holy skills.",
       "needs": "element:holy",
       "icon": "element:holy",
@@ -223,6 +247,9 @@
       "tier": "C",
       "name": "Arcane damage",
       "text": "+{0}% Arcane damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your arcane skills.",
       "needs": "element:arcane",
       "icon": "element:arcane",
@@ -241,6 +268,9 @@
       "tier": "C",
       "name": "Nature damage",
       "text": "+{0}% Nature damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your nature skills.",
       "needs": "element:nature",
       "icon": "element:nature",
@@ -259,6 +289,9 @@
       "tier": "C",
       "name": "Dark damage",
       "text": "+{0}% Dark damage",
+      "slots": [
+        "weapon"
+      ],
       "desc": "Damage of your dark skills.",
       "needs": "element:dark",
       "icon": "element:dark",
@@ -277,12 +310,16 @@
       "tier": "C",
       "name": "Accuracy",
       "text": "+{0}% Accuracy",
+      "slots": [
+        "gloves",
+        "weapon"
+      ],
       "icon": "accuracy",
       "parts": [
         {
-          "base": 1.0,
-          "perIlvl": 0.17,
-          "step": 0.5,
+          "base": 0.6,
+          "perIlvl": 0.1,
+          "step": 0.25,
           "ip": 0.6,
           "to": "mod:accuracyAdd",
           "scale": 0.01
@@ -313,13 +350,18 @@
       "tier": "C",
       "name": "Max MP",
       "text": "+{0} Max MP",
+      "slots": [
+        "helm",
+        "trinket",
+        "boots"
+      ],
       "needs": "mp",
       "icon": "mp",
       "parts": [
         {
           "base": 6,
           "perIlvl": 1.0,
-          "step": 5,
+          "step": 2,
           "ip": 0.1,
           "to": "mod:mpAdd"
         }
@@ -329,12 +371,17 @@
       "tier": "C",
       "name": "HP regen",
       "text": "+{0} HP per turn",
+      "slots": [
+        "trinket",
+        "armor",
+        "offhand"
+      ],
       "icon": "hpRegen",
       "parts": [
         {
           "base": 0.24,
           "perIlvl": 0.04,
-          "step": 0.5,
+          "step": 0.25,
           "ip": 2.5,
           "to": "mod:hpRegenAdd"
         }
@@ -344,13 +391,17 @@
       "tier": "C",
       "name": "MP regen",
       "text": "+{0} MP per turn",
+      "slots": [
+        "trinket",
+        "gloves"
+      ],
       "needs": "mp",
       "icon": "mpRegen",
       "parts": [
         {
           "base": 0.3,
           "perIlvl": 0.05,
-          "step": 1,
+          "step": 0.25,
           "ip": 2,
           "to": "mod:mpRegenAdd"
         }
@@ -360,6 +411,10 @@
       "tier": "C",
       "name": "Shield power",
       "text": "+{0}% Shield power",
+      "slots": [
+        "offhand",
+        "trinket"
+      ],
       "desc": "Every shield you give, to yourself or an ally, is stronger.",
       "needs": "shield",
       "icon": "shield",
@@ -368,7 +423,7 @@
           "base": 4,
           "perIlvl": 0.67,
           "step": 1,
-          "ip": 0.15,
+          "ip": 0.2,
           "to": "mod:shieldPowerAdd",
           "scale": 0.01
         }
@@ -378,6 +433,10 @@
       "tier": "C",
       "name": "DoT damage",
       "text": "+{0}% damage over time",
+      "slots": [
+        "trinket",
+        "weapon"
+      ],
       "desc": "Your Burning and Wither deal more damage each turn.",
       "needs": "dot",
       "icon": "dot",
@@ -386,7 +445,7 @@
           "base": 4,
           "perIlvl": 0.67,
           "step": 1,
-          "ip": 0.15,
+          "ip": 0.2,
           "to": "mod:dotPowerAdd",
           "scale": 0.01
         }
@@ -397,14 +456,13 @@
       "name": "Crit chance",
       "text": "+{0}% Crit chance",
       "slots": [
-        "weapon",
         "gloves"
       ],
       "icon": "crit",
       "parts": [
         {
-          "base": 2.4,
-          "perIlvl": 0.4,
+          "base": 1.5,
+          "perIlvl": 0.25,
           "step": 0.5,
           "ip": 0.3,
           "to": "mod:critAdd",
@@ -417,8 +475,7 @@
       "name": "Crit damage",
       "text": "+{0}% Crit damage",
       "slots": [
-        "weapon",
-        "gloves"
+        "weapon"
       ],
       "icon": "critMult",
       "parts": [
@@ -436,13 +493,17 @@
       "tier": "B",
       "name": "Speed",
       "text": "+{0} Speed",
+      "slots": [
+        "boots",
+        "trinket"
+      ],
       "icon": "spd",
       "parts": [
         {
-          "base": 1,
-          "perIlvl": 0.04,
-          "step": 1,
-          "ip": 2.75,
+          "base": 0.7,
+          "perIlvl": 0.03,
+          "step": 0.25,
+          "ip": 4,
           "to": "mod:spdAdd",
           "noPower": true
         }
@@ -452,6 +513,11 @@
       "tier": "B",
       "name": "Magic armor",
       "text": "+{0} Magic armor",
+      "slots": [
+        "armor",
+        "offhand",
+        "helm"
+      ],
       "icon": "magicArmor",
       "parts": [
         {
@@ -467,6 +533,9 @@
       "tier": "B",
       "name": "Damage vs elites",
       "text": "+{0}% damage to elites and bosses",
+      "slots": [
+        "weapon"
+      ],
       "icon": "tier",
       "parts": [
         {
@@ -486,8 +555,7 @@
       "text": "{0}% Armor penetration",
       "desc": "Your physical hits ignore this share of the target's armor.",
       "slots": [
-        "weapon",
-        "gloves"
+        "weapon"
       ],
       "icon": "pen",
       "parts": [
@@ -507,8 +575,7 @@
       "text": "{0}% Magic penetration",
       "desc": "Your magic hits ignore this share of the target's magic armor.",
       "slots": [
-        "weapon",
-        "gloves"
+        "weapon"
       ],
       "icon": "mpen",
       "parts": [
@@ -526,12 +593,16 @@
       "tier": "B",
       "name": "MP cost",
       "text": "-{0}% MP cost",
+      "slots": [
+        "helm",
+        "trinket"
+      ],
       "needs": "mp",
       "icon": "mpCost",
       "parts": [
         {
-          "base": 4.8,
-          "perIlvl": 0.8,
+          "base": 3,
+          "perIlvl": 0.5,
           "step": 1,
           "ip": 0.15,
           "to": "fx:mpCostReduce",
@@ -543,6 +614,9 @@
       "tier": "B",
       "name": "Life leech",
       "text": "{0}% Life leech",
+      "slots": [
+        "gloves"
+      ],
       "desc": "Heal for this share of the HP your skill hits take away.",
       "icon": "leech",
       "parts": [
@@ -560,6 +634,10 @@
       "tier": "B",
       "name": "Quick start",
       "text": "Start battles {0}% into your turn",
+      "slots": [
+        "boots",
+        "trinket"
+      ],
       "icon": "initiative",
       "parts": [
         {
@@ -576,6 +654,11 @@
       "tier": "B",
       "name": "Debuff resistance",
       "text": "{0}% chance to resist a debuff",
+      "slots": [
+        "helm",
+        "offhand",
+        "armor"
+      ],
       "desc": "A debuff an enemy puts on you has this chance not to land at all.",
       "icon": "resist",
       "parts": [
@@ -599,8 +682,8 @@
         {
           "base": 2.2,
           "perIlvl": 0.1,
-          "step": 2,
-          "ip": 0.75,
+          "step": 1,
+          "ip": 2,
           "to": "attr:primary",
           "noPower": true
         }
@@ -615,8 +698,8 @@
         {
           "base": 1.6,
           "perIlvl": 0.04,
-          "step": 2,
-          "ip": 1.25,
+          "step": 0.5,
+          "ip": 3,
           "to": "attr:all",
           "noPower": true
         }
@@ -626,6 +709,11 @@
       "tier": "A",
       "name": "Global damage",
       "text": "+{0}% damage",
+      "slots": [
+        "weapon",
+        "gloves",
+        "trinket"
+      ],
       "desc": "All damage of your skills.",
       "icon": "damage",
       "parts": [
@@ -643,6 +731,11 @@
       "tier": "A",
       "name": "Global defense",
       "text": "-{0}% damage taken",
+      "slots": [
+        "armor",
+        "offhand",
+        "helm"
+      ],
       "icon": "defense",
       "parts": [
         {
@@ -659,11 +752,16 @@
       "tier": "A",
       "name": "Speed %",
       "text": "+{0}% Speed",
+      "slots": [
+        "boots",
+        "gloves",
+        "trinket"
+      ],
       "icon": "spd",
       "parts": [
         {
           "base": 1.92,
-          "perIlvl": 0.32,
+          "perIlvl": 0.2,
           "step": 0.5,
           "ip": 0.5,
           "to": "mult:spdMult",
@@ -675,6 +773,11 @@
       "tier": "A",
       "name": "Max HP %",
       "text": "+{0}% Max HP",
+      "slots": [
+        "armor",
+        "helm",
+        "offhand"
+      ],
       "icon": "hp",
       "parts": [
         {
@@ -693,7 +796,7 @@
       "text": "Allies beside you deal +{0}% damage",
       "slots": [
         "armor",
-        "trinket"
+        "offhand"
       ],
       "icon": "auraDamage",
       "parts": [
@@ -713,7 +816,7 @@
       "text": "Allies beside you take -{0}% damage",
       "slots": [
         "armor",
-        "trinket"
+        "offhand"
       ],
       "icon": "auraGuard",
       "parts": [
@@ -735,8 +838,8 @@
       "icon": "recovery",
       "parts": [
         {
-          "base": 3.84,
-          "perIlvl": 0.64,
+          "base": 1.6,
+          "perIlvl": 0.27,
           "step": 1,
           "ip": 0.25,
           "to": "prog:recovery",
@@ -765,6 +868,10 @@
       "tier": "A",
       "name": "Elemental damage",
       "text": "+{0}% elemental damage",
+      "slots": [
+        "weapon",
+        "trinket"
+      ],
       "desc": "Fire, ice, holy, arcane, nature and dark damage of your skills.",
       "needs": "element:magic",
       "icon": "elements",
@@ -790,8 +897,8 @@
       "icon": "crit",
       "parts": [
         {
-          "base": 1.92,
-          "perIlvl": 0.32,
+          "base": 1.2,
+          "perIlvl": 0.2,
           "step": 0.5,
           "ip": 0.25,
           "to": "mod:critAdd",
@@ -811,6 +918,10 @@
       "tier": "A",
       "name": "Potency",
       "text": "+{0}% damage over time, your debuffs last {1} turn longer",
+      "slots": [
+        "weapon",
+        "trinket"
+      ],
       "desc": "Stuns do not last longer.",
       "needs": "debuff",
       "icon": "dot",
@@ -827,7 +938,7 @@
           "base": 1,
           "perIlvl": 0,
           "step": 1,
-          "ip": 1,
+          "ip": 3,
           "to": "fx:potencyTurns",
           "fixed": true
         }
@@ -865,6 +976,10 @@
       "tier": "A",
       "name": "Mana mastery",
       "text": "+{0}% Max MP, +{1} MP per turn",
+      "slots": [
+        "helm",
+        "trinket"
+      ],
       "needs": "mp",
       "icon": "mp",
       "parts": [
@@ -879,7 +994,7 @@
         {
           "base": 0.9,
           "perIlvl": 0.03,
-          "step": 1,
+          "step": 0.5,
           "ip": 2,
           "to": "mod:mpRegenAdd"
         }
@@ -889,6 +1004,10 @@
       "tier": "A",
       "name": "Support power",
       "text": "+{0}% healing and shields given",
+      "slots": [
+        "trinket",
+        "offhand"
+      ],
       "needs": "support",
       "icon": "heal",
       "parts": [
@@ -896,7 +1015,7 @@
           "base": 4,
           "perIlvl": 0.6,
           "step": 1,
-          "ip": 0.08,
+          "ip": 0.12,
           "to": "mod:healPowerAdd",
           "scale": 0.01
         },
@@ -904,7 +1023,7 @@
           "base": 4,
           "perIlvl": 0.6,
           "step": 1,
-          "ip": 0.08,
+          "ip": 0.12,
           "to": "mod:shieldPowerAdd",
           "scale": 0.01
         }
@@ -914,6 +1033,10 @@
       "tier": "A",
       "name": "Summon mastery",
       "text": "Your summons get +{0}% HP and power",
+      "slots": [
+        "trinket",
+        "weapon"
+      ],
       "needs": "summon",
       "icon": "summon",
       "parts": [
@@ -931,6 +1054,10 @@
       "tier": "A",
       "name": "Resource mastery",
       "text": "+{0}% Rage gained, +{1} MP per turn",
+      "slots": [
+        "helm",
+        "trinket"
+      ],
       "icon": "rage",
       "parts": [
         {
@@ -944,7 +1071,7 @@
         {
           "base": 0.9,
           "perIlvl": 0.03,
-          "step": 1,
+          "step": 0.5,
           "ip": 2,
           "to": "mod:mpRegenAdd"
         }
@@ -977,11 +1104,20 @@
       ]
     }
   },
+  "_caps": "Kahramanın tüm ekipmanından gelen toplam tavanlar (src/progression/loadout.ts kırpar; fazlası kaybolur): crit / accuracy / evasion = yüzde puan, spd = düz hız, mpCost = MP bedeli indirimi %, resist = debuff direnci %. Ömer 2026-10-12 (Endless item dengesi p4): crit 15 -> 25, evasion 10 -> 15, mpCost 50 ve resist 40 eklendi. Ömer 2026-10-13 (itemcaps): recovery = savaş sonrası toparlanma toplamı % (tavan 20); aAffixCopies = aynı A kademe affix'i bir kahramanda en çok kaç item'de sayılır (2; fazlasında en güçlü 2 örnek işler, gerisi etkisiz ve ipucunda soluk). Tavanlar dolunca arayüz statı \"max\" olarak gösterir. Tavansız statlar (can çalma, kritik hasarı, hasar, hız %, Lucky Escape, DoT gücü) tavansız kalır. Ömer 2026-10-13 (itemfix m4): motorun gizli sınırları da buraya taşındı (aynı değerler, motor buradan okur: src/engine/item-caps.ts): initiative = Quick start en çok %99, armorPen / magicPen = delme en çok %100, damageTaken = alınan hasar azaltma (Global defense, düşük can azaltması) en çok %90; arayüz bunlarda da \"max\" gösterir.",
   "caps": {
-    "crit": 15,
+    "crit": 25,
     "accuracy": 10,
-    "evasion": 10,
-    "spd": 3
+    "evasion": 15,
+    "spd": 3,
+    "mpCost": 50,
+    "resist": 40,
+    "recovery": 20,
+    "initiative": 99,
+    "armorPen": 100,
+    "magicPen": 100,
+    "damageTaken": 90,
+    "aAffixCopies": 2
   },
   "weaponFamilies": [
     {
@@ -1111,13 +1247,44 @@
       "ilvl": 4
     },
     {
+      "id": "iron_buckler",
+      "name": "Iron Buckler",
+      "icon": "shield",
+      "slot": "offhand",
+      "family": "maces",
+      "rarity": "common",
+      "ilvl": 2,
+      "main": "c_armor"
+    },
+    {
       "id": "oak_shield",
       "name": "Oak Tower Shield",
       "icon": "shield",
       "slot": "offhand",
       "family": "maces",
       "rarity": "uncommon",
-      "ilvl": 6
+      "ilvl": 6,
+      "main": "c_armor"
+    },
+    {
+      "id": "kite_shield",
+      "name": "Kite Shield of the Stag",
+      "icon": "shield",
+      "slot": "offhand",
+      "family": "maces",
+      "rarity": "rare",
+      "ilvl": 9,
+      "main": "c_armor"
+    },
+    {
+      "id": "wardens_pavise",
+      "name": "Warden's Pavise",
+      "icon": "shield",
+      "slot": "offhand",
+      "family": "maces",
+      "rarity": "epic",
+      "ilvl": 10,
+      "main": "c_armor"
     },
     {
       "id": "morning_star",
@@ -1632,6 +1799,7 @@
         "b_critdmg",
         "a_primary"
       ],
+      "boost": { "c_acc": 1.25 },
       "effect": "last_coin",
       "flavor": "Heads, you live. Tails, you flip again."
     },
@@ -1648,6 +1816,7 @@
         "b_resil",
         "a_immunity"
       ],
+      "boost": { "a_immunity": 2 },
       "effect": "ashen_crown",
       "flavor": "Cold as the curse that wore it."
     },
@@ -1758,6 +1927,7 @@
         "b_resil",
         "a_endure"
       ],
+      "boost": { "a_endure": 1.75 },
       "effect": "laststand",
       "flavor": "Found on the bridge, on the last of the wardens, still standing."
     },
@@ -1790,6 +1960,7 @@
         "b_resil",
         "a_support"
       ],
+      "boost": { "a_support": 1.75 },
       "effect": "vigil",
       "flavor": "Worn through a hundred long nights on the walls of Ashford."
     },
@@ -1826,6 +1997,7 @@
         "b_tier",
         "a_primary"
       ],
+      "boost": { "c_acc": 1.25 },
       "effect": "huntersmark",
       "flavor": "Cast them at the strongest foe, and they always land on its name."
     }
@@ -2016,7 +2188,7 @@
     "stack": false,
     "endless": true
   },
-  "_dropRarity": "Düşüş nadirliği (Ömer onayı 2026-10-11): TEK ağırlık tablosu, sefer loot'u, Endless ödül kartları ve tüccar stoğu aynı tabloyu kullanır. weights = Common / Uncommon / Rare / Epic taban ağırlıkları (Legendary yok: yalnızca ortak nadir düşüş zarı, rareDrop). shift = kayma: perIlvl x item seviyesi + elite / boss / treasure eki, en çok max. Kayma kademe i'nin ağırlığını x(1 + kayma x i) yapar (Common sabit): kaymanın tavanında (0,5) bile Common ~%58, Uncommon ~%28, Rare ~%11, Epic ~%3. Taban (item) nadirlikten bağımsız; nadirlik önce zarlanır, sonra taban seçilir.",
+  "_dropRarity": "Düşüş nadirliği (Ömer onayı 2026-10-11): TEK ağırlık tablosu, sefer loot'u, Endless ödül kartları ve tüccar stoğu aynı tabloyu kullanır. weights = Common / Uncommon / Rare / Epic taban ağırlıkları (Legendary yok: yalnızca ortak nadir düşüş zarı, rareDrop). shift = kayma: perIlvl x item seviyesi + elite / boss / treasure eki, en çok max. Kayma kademe i'nin ağırlığını x(1 + kayma x i) yapar (Common sabit): kaymanın tavanında (0,5) bile Common ~%58, Uncommon ~%28, Rare ~%11, Epic ~%3. Ömer 2026-10-12 (p3, çok az): perIlvl 0,012 -> 0,015 (tavan 0,5 aynı; artık ilvl ~33'te dolar, eskiden ~42); ilvl 20'de Common %63,9 -> %62,6, ilvl 30'da %61,3 -> %59,4. Sefer de bu tabloyu kullanır (aynı küçük kayma). Taban (item) nadirlikten bağımsız; nadirlik önce zarlanır, sonra taban seçilir.",
   "dropRarity": {
     "weights": {
       "common": 70,
@@ -2025,7 +2197,7 @@
       "epic": 1.5
     },
     "shift": {
-      "perIlvl": 0.012,
+      "perIlvl": 0.015,
       "elite": 0.15,
       "boss": 0.3,
       "treasure": 0.15,
@@ -2085,8 +2257,8 @@
   "uniques": [],
   "sets": [],
   "traits": {},
-  "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",
-  "_rareDrop": "Ortak nadir düşüş (Ömer onayı 2026-10-10, madde 297): her kazanılan savaşta BİR zar (sefer ve Endless; karşılaşmaya bağlı değil). chance = savaş türüne göre taban (normal %1, elit %3, boss %6) + pityPerMiss x düşüşsüz zafer sayısı (+%0,5; düşüşte sıfırlanır; sayaç kayıtta) + Endless'ta perWave x dalga. İsabette split: set parçası %75 (set item'leri YOK: setsEnabled false iken bu dal hiçbir şey vermez, sayaç sıfırlanmaz) / Legendary %25 (chapterLegendaryMult ile; Valdoria x0,5). Havuz: minChapter <= bölüm (Valdoria: Emberbrand, Mantle of Valdren, Pilgrim's Road Boots); Endless'ta legendaryFromWave'den (11) itibaren hepsi. Akıllı loot YOK: tekdüze seçim, sınıf ağırlığı yok, sahip olunan tekrar düşebilir. Düşen Legendary düştüğü yerin item seviyesinde zarlanır, taban seviyesi alt sınır değildir (sefer düğüm ilvl'si, Endless ilvlCap; Ömer 2026-10-12). Endless tüccarı: merchant.fromWave'den itibaren her ziyarette merchant.chance ihtimalle bir nadir mal, fiyat değer x priceMult. Torba dolu: özel koruma yok (normal akış).",
+  "_legendary": "Legendary (Ömer onayı 2026-10-10, madde 296): el yapımı benzersiz item, dört sabit affix (C, C, B, A; 2026-10-11) + 1 benzersiz etki. Kahraman başına EN FAZLA 1 Legendary (Gear: 'Only one Legendary per hero'). boost = sabit bir affix'in değer çarpanı (Ömer 2026-10-12, p5: zayıf beş Legendary'nin en zayıf statı; aynı seviyedeki Epic'in ~%10-35 üstü): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, The Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi yükseltti). usableBy = yalnızca bu sınıflar takabilir (silah ailesine ek). minChapter = hangi bölümde ortaya çıkabilir (Valdoria = 1: Emberbrand, Mantle of Valdren ve Pilgrim's Road Boots; Ömer 2026-10-10). Normal loot zarı Legendary vermez (loot.legendaryChance = 0); Legendary YALNIZCA ortak nadir düşüş zarından (rareDrop, madde 297) ve Endless tüccarının nadir malından gelir. Seviye (Ömer 2026-10-12): Legendary'nin TABAN SEVİYESİ YOK; düştüğü yerin item seviyesinde zarlanır (sefer: düğümün item seviyesi; Endless: dalganın seviye tavanı ilvlCap, nadir düşüş ve tüccarın nadir malı). Kataloğdaki ilvl yalnızca önizleme / debug değeridir, nerede çıkabileceğini belirlemez (uygunluk yalnızca minChapter ve legendaryFromWave). Önizleme: ?legendary=1 ya da debug > Give all Legendaries.",
+  "_rareDrop": "Ortak nadir düşüş (Ömer onayı 2026-10-10, madde 297): her kazanılan savaşta BİR zar (sefer ve Endless; karşılaşmaya bağlı değil). chance = savaş türüne göre taban (normal %1, elit %3, boss %6) + pityPerMiss x düşüşsüz zafer sayısı (+%0,5; düşüşte sıfırlanır; sayaç kayıtta) + Endless'ta perWave x max(0, dalga - perWaveFrom) (Ömer 2026-10-12, p5: artış yalnızca geç dalgalarda, 15. dalgadan sonra dalga başına +%0,2; 20. dalga +%1, 30. +%3, 40. +%5; eskiden her dalga +%0,1). İsabette split: set parçası %75 (set item'leri YOK: setsEnabled false iken bu dal hiçbir şey vermez, sayaç sıfırlanmaz) / Legendary %25 (chapterLegendaryMult ile; Valdoria x0,5). Havuz: minChapter <= bölüm (Valdoria: Emberbrand, Mantle of Valdren, Pilgrim's Road Boots); Endless'ta legendaryFromWave'den (11) itibaren hepsi. Akıllı loot YOK: tekdüze seçim, sınıf ağırlığı yok, sahip olunan tekrar düşebilir. Düşen Legendary düştüğü yerin item seviyesinde zarlanır, taban seviyesi alt sınır değildir (sefer düğüm ilvl'si, Endless ilvlCap; Ömer 2026-10-12). Endless tüccarı: merchant.fromWave'den itibaren her ziyarette merchant.chance ihtimalle bir nadir mal, fiyat değer x priceMult. Torba dolu: özel koruma yok (normal akış).",
   "rareDrop": {
     "chance": {
       "battle": 0.01,
@@ -2103,7 +2275,8 @@
       "1": 0.5
     },
     "endless": {
-      "perWave": 0.001,
+      "perWave": 0.002,
+      "perWaveFrom": 15,
       "legendaryFromWave": 11,
       "merchant": {
         "fromWave": 11,

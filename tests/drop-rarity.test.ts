@@ -92,7 +92,7 @@ describe('Endless: ödül kartları ve tüccar', () => {
 
 describe('Ömer 2026-10-11 cevapları: affix ağırlığı ve Endless item seviyesi', () => {
   it('rastgele C affix: kimin için zarlandıysa ona yarayanlar hafif ağırlıklı (dışlayıcı değil)', () => {
-    const d = itemDef('padded_gambeson')!;
+    const d = itemDef('woodcutters_axe')!; // element C'leri yalnızca silahta (yuva kimliği, itemfix 2026-10-13)
     const count = (cls?: string) => {
       let fire = 0;
       let nature = 0;

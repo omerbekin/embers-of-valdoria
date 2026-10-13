@@ -241,7 +241,9 @@ describe('Str primary: Resilience savaşta', () => {
     for (const kind of debuffs) {
       const { b, victim } = mkRes(1, 'test', 1); // şans 1: her debuff kısalır
       b.debugAddStatus(victim.uid, kind, 3);
-      expect(turnsOf(victim, kind), kind).toBe(2);
+      const def = content.statuses[kind] as { maxStacks?: number; duration?: number };
+      const base = def.maxStacks ? (def.duration ?? 3) : 3; // yığılan durum (Omen) kendi süresiyle başlar
+      expect(turnsOf(victim, kind), kind).toBe(base - 1);
     }
     for (const kind of buffs) {
       const { b, victim } = mkRes(1, 'test', 1);

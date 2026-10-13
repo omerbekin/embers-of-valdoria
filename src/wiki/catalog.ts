@@ -23,7 +23,7 @@ import { isAccuracyCritDebuff } from '../engine/cc-immunity';
 import { statusStackMode } from '../engine/status-stack';
 import type { Attribute, CombatantDef, Element, Formulas, SkillDef, StatKind, Stats } from '../engine';
 import { primaryBonusInfo, primaryBonusLines } from '../engine/stat-info';
-import { buildGrounds, buildStatuses, skillOwner, searchText, avatarMap, groupByDir } from '../gallery/catalog';
+import { buildGrounds, buildStatuses, isTestSkill, skillOwner, searchText, avatarMap, groupByDir } from '../gallery/catalog';
 import type { GroundEntry, Owner, StatusEntry } from '../gallery/catalog';
 import { STAT_COLOR, STAT_LABEL, statIconName } from '../ui/stat-icons';
 import { shapeMiniGrid, skillMiniGrid } from '../ui/shape-diagram';
@@ -186,7 +186,8 @@ export interface WikiFiles {
 
 // ---------------------------------------------------------------- skill'ler
 
-const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id }));
+// test skill'leri (Geometer shape_*, Pose Tester pt_*) Codex'te yok: yalnızca debug menüsünde (src/gallery/catalog.ts > isTestSkill)
+const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id })).filter((s) => !isTestSkill(s.id));
 const unitDefs = (): Record<string, CombatantDef> => ({ ...content.classes, ...content.summons, ...content.bosses, ...content.mobs });
 const effectDefs = () => ({ statuses: content.statuses, grounds: content.grounds });
 
@@ -809,7 +810,7 @@ function affixArticle(): WikiArticle {
     p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
     list(
       ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
-      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Penetration and crit affixes appear only on weapons and gloves, auras only on armor and trinkets, evasion only on boots and gloves.',
+      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Every slot has its own identity (see the Slots column): weapons roll elemental and physical damage, crit damage, penetration and damage to elites; shields roll armor, shield power and magic armor; helms roll HP, MP and debuff resistance; body armor rolls armor, HP, magic armor and auras; gloves roll accuracy, crit chance and life leech; boots roll speed, evasion and quick start; trinkets roll HP and MP regeneration, healing and shield power, damage over time and summon power. Some general affixes (primary attribute, all attributes, recovery, swift ultimate, immunity, endurance) can appear anywhere. The first affix of an item comes from its base and can be outside the pool of its slot (Studded Gauntlets carry Armor).',
       'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
     ),
     { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },
@@ -853,7 +854,7 @@ function rareDropText(): string {
   const leg = RARE.split.legendary;
   const ch1 = RARE.chapterLegendaryMult['1'] ?? 1;
   const e = RARE.endless;
-  return `Rare drops: every won battle, in the campaign and in Endless, rolls once more for a rare find: ${pct(c.battle, 1)} after a normal fight, ${pct(c.elite, 1)} after an elite and ${pct(c.boss, 1)} after a boss. Every win without one adds ${pct(RARE.pityPerMiss, 1)} (bad-luck protection; it resets when a rare item drops), and in Endless every wave adds ${pct(e.perWave, 1)}. For now ${pct(leg)} of rare finds are Legendaries${ch1 !== 1 ? ` (${pct(leg * ch1, 1)} in ${campaignMap.title.charAt(0)}${campaignMap.title.slice(1).toLowerCase()})` : ''}; the rest is kept for set items, which are not in the game yet. In Endless, Legendaries can drop from wave ${e.legendaryFromWave}, and from then on Odo has a ${pct(e.merchant.chance)} chance per visit to offer one at ${num(e.merchant.priceMult)}x its value.`;
+  return `Rare drops: every won battle, in the campaign and in Endless, rolls once more for a rare find: ${pct(c.battle, 1)} after a normal fight, ${pct(c.elite, 1)} after an elite and ${pct(c.boss, 1)} after a boss. Every win without one adds ${pct(RARE.pityPerMiss, 1)} (bad-luck protection; it resets when a rare item drops), and in Endless every wave${e.perWaveFrom ? ` after wave ${e.perWaveFrom}` : ''} adds ${pct(e.perWave, 1)}. For now ${pct(leg)} of rare finds are Legendaries${ch1 !== 1 ? ` (${pct(leg * ch1, 1)} in ${campaignMap.title.charAt(0)}${campaignMap.title.slice(1).toLowerCase()})` : ''}; the rest is kept for set items, which are not in the game yet. In Endless, Legendaries can drop from wave ${e.legendaryFromWave}, and from then on Odo has a ${pct(e.merchant.chance)} chance per visit to offer one at ${num(e.merchant.priceMult)}x its value.`;
 }
 
 /** Tutuş ve ikinci el (Ömer 2026-10-12; veriden): hangi silah tek el / çift el / yay / tılsım, ikinci ele ne takılır. */
@@ -873,7 +874,7 @@ function itemsArticleBody(): WikiArticle {
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
       `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good. The range itself grows only with item level, but rarity decides how high the roll lands: ${rollFloorText()}. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
-      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD; anything above that is lost.`,
+      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD${itemsJson.caps.mpCost !== undefined ? `, at most -${itemsJson.caps.mpCost}% MP cost` : ''}${itemsJson.caps.resist !== undefined ? ` and at most ${itemsJson.caps.resist}% debuff resistance` : ''}; anything above that is lost.`,
       (() => {
         const lo = dropChances(0);
         const hi = dropChances(999, 'boss');

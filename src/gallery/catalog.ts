@@ -48,7 +48,25 @@ export interface SkillRef {
 }
 
 const skillRef = (s: SkillDef): SkillRef => ({ id: s.id, name: s.name, icon: s.icon, owner: skillOwner(s.id) });
-const allSkills = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id }));
+const everySkill = (): SkillDef[] => Object.entries(content.skills).map(([id, s]) => ({ ...s, id: s.id ?? id }));
+
+/**
+ * TEST İÇERİĞİ Codex'te YOK (Ömer 2026-10-13): testOnly class'lar (Geometer, Pose Tester I-XI) ve skill'leri (shape_*, pt_*) yalnızca
+ * debug menüsünde görünür. Codex listeleri (sınıflar, skill'ler, Assets: Animations, Character art, Icons, Sounds, Legacy) onları atlar;
+ * YALNIZCA test içeriğinin kullandığı varlık (ör. Geometer'in ikon / efekt / sesleri) listeden düşer ama "kullanılmıyor" sayılıp
+ * Legacy'ye de girmez.
+ */
+export const isTestClass = (id: string): boolean => !!content.classes[id]?.testOnly;
+let testSkillMemo: Set<string> | null = null;
+export const isTestSkill = (skillId: string): boolean =>
+  (testSkillMemo ??= new Set(Object.values(content.classes).filter((d) => d.testOnly).flatMap((d) => d.skills))).has(skillId);
+/** Codex'te görünen skill'ler (test skill'leri hariç). */
+const allSkills = (): SkillDef[] => everySkill().filter((s) => !isTestSkill(s.id));
+/** Yalnızca test skill'lerinin kullandığı anahtarlar (gerçek kullanıcısı olmayan): Codex listesinden ve Legacy'den çıkar. */
+const testOnlyKeys = (keysOf: (s: SkillDef) => Array<string | undefined | null>): Set<string> => {
+  const real = new Set(allSkills().flatMap(keysOf));
+  return new Set(everySkill().filter((s) => isTestSkill(s.id)).flatMap(keysOf).filter((k): k is string => !!k && !real.has(k)));
+};
 
 /** Aranabilir metin: küçük harf, kısa kelime listesi. */
 export const searchText = (...parts: Array<string | undefined>): string => parts.filter(Boolean).join(' ').toLowerCase();
@@ -108,7 +126,8 @@ export const sfxLabelOf = (id: string): string => id.replace(/([a-z0-9])([A-Z])/
 export function buildSounds(): SoundEntry[] {
   const users = new Map<string, SkillRef[]>();
   for (const s of allSkills()) for (const k of s.sfx ?? []) users.set(k, [...(users.get(k) ?? []), skillRef(s)]);
-  return Object.entries(SFX).map(([id, def]) => {
+  const testOnly = testOnlyKeys((s) => s.sfx ?? []);
+  return Object.entries(SFX).filter(([id]) => !testOnly.has(id)).map(([id, def]) => {
     const usedBy = users.get(id) ?? [];
     const owners = [...new Set(usedBy.map((u) => u.owner.name))];
     const counts = new Map<string, number>();
@@ -211,7 +230,8 @@ export function buildAnimations(): AnimEntry[] {
 export function buildVfxKinds(): VfxKindEntry[] {
   const users = new Map<string, SkillRef[]>();
   for (const s of allSkills()) if (s.vfx) users.set(s.vfx, [...(users.get(s.vfx) ?? []), skillRef(s)]);
-  return VFX_KINDS.map((kind) => ({ kind, backup: BACKUP_VFX.includes(kind), usedBy: users.get(kind) ?? [] }));
+  const testOnly = testOnlyKeys((s) => [s.vfx]);
+  return VFX_KINDS.filter((kind) => !testOnly.has(kind)).map((kind) => ({ kind, backup: BACKUP_VFX.includes(kind), usedBy: users.get(kind) ?? [] }));
 }
 
 // ---------------------------------------------------------------- dosyalar (sprite / avatar)
@@ -262,7 +282,7 @@ export interface CharacterEntry {
   tags: string[];
   /** Test class'ı (ör. Geometer): rastgele takımlara girmez; galeride 'TEST' rozeti. */
   testOnly: boolean;
-  /** Gizli class (ör. Geometer): oyuncu seçiminde ve wiki class listesinde yok; Assets'te 'Hidden' etiketiyle görünür. */
+  /** Gizli class (ör. Geometer) ya da sefer mobu: oyuncu seçiminde ve wiki class listesinde yok; Assets'te 'Hidden' etiketiyle görünür. */
   hidden: boolean;
   skills: SkillRef[];
   passive: PassiveDef | null;
@@ -294,7 +314,8 @@ const toEntry = (kind: CharacterEntry['kind'], def: CombatantDef, files: AssetFi
     stats: { hp: st.hp, mp: st.mp, spd: st.spd, evasion: st.evasion, accuracy: st.accuracy, critChance: st.critChance, armor: st.armor, magicArmor: st.magicArmor, mpRegen: st.mpRegen, hpRegen: st.hpRegen },
     tags: def.tags ?? [],
     testOnly: !!def.testOnly,
-    hidden: !!def.hidden,
+    // sefer mobları (data/mobs) oyuncuya kapalı gizli birimlerdir: Character art'ta 'Hidden' etiketiyle
+    hidden: !!def.hidden || kind === 'mob',
     skills: def.skills.flatMap((id) => (content.skills[id] ? [skillRef({ ...content.skills[id]!, id })] : [])),
     passive: def.passive ?? null,
     sprites,
@@ -306,7 +327,7 @@ const toEntry = (kind: CharacterEntry['kind'], def: CombatantDef, files: AssetFi
 };
 
 export function buildCharacters(files: AssetFiles): CharacterEntry[] {
-  return [...Object.values(content.classes).map((d) => toEntry('class', d, files)), ...Object.values(content.summons).map((d) => toEntry('summon', d, files)), ...Object.values(content.bosses).map((d) => toEntry('boss', d, files)), ...Object.values(content.mobs).map((d) => toEntry('mob', d, files))];
+  return [...Object.values(content.classes).filter((d) => !d.testOnly).map((d) => toEntry('class', d, files)), ...Object.values(content.summons).map((d) => toEntry('summon', d, files)), ...Object.values(content.bosses).map((d) => toEntry('boss', d, files)), ...Object.values(content.mobs).map((d) => toEntry('mob', d, files))];
 }
 
 /** Hiçbir class/çağrıya bağlı olmayan sprite klasörleri ve avatar dosyaları (id listesi). */
@@ -351,7 +372,7 @@ export function buildIcons(): IconEntry[] {
   }
   // Global eylemler (Rest / Skip Turn / Move: data/global-skills.json) savaşta düğme olarak çizilir: ikonları da kullanılıyor
   for (const g of Object.values(content.globalSkills)) if (g.icon) add(g.icon, 'skill', `${g.name} (global action)`, UI_COLOR);
-  for (const def of [...Object.values(content.classes), ...Object.values(content.summons), ...Object.values(content.bosses), ...Object.values(content.mobs)]) {
+  for (const def of [...Object.values(content.classes).filter((d) => !d.testOnly), ...Object.values(content.summons), ...Object.values(content.bosses), ...Object.values(content.mobs)]) {
     add(def.logo, 'logo', `${def.name} logo`, def.color);
     if (def.passive) add(def.passive.icon, 'passive', `${def.name}: ${def.passive.name}`, def.color);
     for (const bp of def.boss?.passives ?? []) add(bp.icon, 'passive', `${def.name}: ${bp.name}`, def.color);
@@ -362,7 +383,10 @@ export function buildIcons(): IconEntry[] {
   for (const icon of UI_ICONS) add(icon, 'ui', 'UI (debug dock / settings)', UI_COLOR);
   add(UI_ICON.hourglass, 'ui', 'Cooldown badge', UI_COLOR);
   add('keystone', 'ui', "Keystone: safe cell of the Fall of King's Bridge", UI_COLOR);
-  return ICON_KINDS.map((name) => {
+  // yalnızca test class'larının gösterdiği ikonlar (skill, logo, pasif): listeden çıkar, yedek (Legacy) de sayılmaz
+  const testDefs = Object.values(content.classes).filter((d) => d.testOnly);
+  const testIcons = new Set([...everySkill().filter((s) => isTestSkill(s.id)).map((s) => s.icon), ...testDefs.flatMap((d) => [d.logo, d.passive?.icon])].filter((i): i is string => !!i && !uses.has(i)));
+  return ICON_KINDS.filter((name) => !testIcons.has(name)).map((name) => {
     const list = uses.get(name) ?? [];
     return { name, uses: list, category: list[0]?.kind ?? 'spare', accent: list.find((u) => u.accent)?.accent ?? '#e8c47e' };
   });

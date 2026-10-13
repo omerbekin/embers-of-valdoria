@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'mage' ödünç; gerçek çizim (palette variant of ember_acolyte) assets/sprites/charcoal_burner/idle.png + assets/avatars/charcoal_burner.png gelince spriteId 'charcoal_burner' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'charcoal_burner' (ChatGPT çizimi, Ember Acolyte palet varyantı (is kara); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "charcoal_burner",
   "name": "Charcoal Burner",
   "family": "ember_cult",
-  "spriteId": "mage",
+  "spriteId": "charcoal_burner",
   "color": "#4a3f3a",
   "logo": "wizhat",
   "frontPriority": 7,

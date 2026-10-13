@@ -18,6 +18,7 @@ import {
   PRIMARY_BONUS_NAME,
   SLOT_IDS,
   TIER_COLOR,
+  affixContext,
   affixLines,
   canEquip,
   itemDef,
@@ -235,7 +236,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const id = key.slice(i + 1);
       const inst = kind === 'bag' ? bagInst(id) : kind === 'slot' && hero ? hero.equipment[id as SlotId] : undefined;
       if (!inst) return [];
-      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : []);
+      // seçili kahramana göre: etkisiz A affix'leri soluk, tavanı dolu statlar "max" (Ömer 2026-10-13, itemcaps)
+      const state = hero ? (affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? undefined) : undefined;
+      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : [], state);
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
     tipActions: (key) => {

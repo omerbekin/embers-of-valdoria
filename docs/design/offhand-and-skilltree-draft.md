@@ -513,3 +513,265 @@ Endless koşusu L1 başlar, **level ve puanlar koşuya ait**, koşu bitince sili
 - Mockup: Skill Paths / Talent Grid / Specializations / Paths + Spec (WARRIOR örneği) ve aynı yolun üç filler sürümü (skill sayısı / genel stat / karışık). Dosya oturum scratchpad'inde: `skilltree-mockup.html`.
 - **Pasif yolu (Ömer kararı):** sınıf pasifine bağlı 5. yol. Set item'leri pasifin SAYISINI büyütür (Berserker +%80 -> daha fazla); pasif yolu pasifin **tetiklediği yeni davranışlar** verir (ör. düşük canda Rage kazanımı, ölümcül vuruşu bir kez 1 canla atlatma, Berserker bonusunun yarısını komşu dosta yayma). 5 yol x 10 = **50 puan**, elde 29: oyuncu yaklaşık 3 yolu doldurur. (Mockup sayaç "29 / 40"ı 4 skill yolu için gösterir, pasif yolu ayrıca eklenir.)
 - Pasif yolundaki bazı etkiler **YENİ MEKANİK**tir (ölümcül vuruşu 1 canla atlatma Gambler'ın Lucky Escape'ine yakın; komşuya pasif yaymak ve "canı %50 altında alınan hasar -%8" yeni): onay gerekir.
+
+---
+
+# BÖLÜM D: SINIF AĞAÇLARI (Cyberpunk 2077 tarzı) (ÖNERİ, 2026-10-12; revizyon 2: aşağıdan yukarı + bağ şeritleri)
+
+> Ömer düzeltmesi: PoE tarzı ORTAK ağaç iptal (Bölüm B'deki Skill Paths yapısı ve C.8'deki ağaç yapıları geçersiz; level 30, 1 puan/level, sıfırlama ücreti, Endless kuralları ve "düşmanda ağaç yok" geçerli). Her sınıfın KENDİ ağacı var; yapı Cyberpunk 2077 2.0 perk sistemine benzer. **Revizyon 2 (Ömer, mockup incelemesi):** ağaç AŞAĞIDAN YUKARI okunur (T1 altta, kapstone'lar üstte); sinerji perk'leri dağınık eğrilerle değil, iki komşu dalın ARASINDAKİ **bağ şeridinde** (joint lane) durur. Tüm sayılar PROVİZYON. **[YENİ]** = onay gereken yeni mekanik; **MEVCUT** = motorda olan mekaniğin skill'e bağlanması; **sayı** = yalnızca skill verisinde sayı farkı. ⇄ = bağ (Link) perk'i. Mockup: oturum scratchpad'inde `class-tree-mockup.html`.
+
+## D.0 Kısa özet
+
+- Sınıf başına **3 dal** + aralarında **2 bağ şeridi**: A | A⇄B | B | B⇄C | C (Warrior: Carnage | ⇄ | Vanguard | ⇄ | Fury; Hexer: Malice | ⇄ | Doom | ⇄ Blight).
+- Dalda **5 kademe**, aşağıdan yukarı: T1 (altta, açık), T2 = 3, T3 = 6, T4 = 10, Kapstone = 15 puan (o dalın alt kademelerine harcanan puan).
+- Bağ şeridinde **3 düğüm**: T3, T4 ve bağ kapstone'u. İki komşu dalın ortak düğümüdür; iki dal o düğümde birleşir.
+- Perk'ler çok kademeli (rank 1-3), rank başına 1 puan; kapstone tek rank, 3 puan.
+- 29 puan ağacın ~%36'sını doldurur: tipik "tam yapı" = 1 kapstone + ikinci dalda T4 + 1-2 bağ perk'i.
+
+## D.1 Genel yapı ve CP2077 eşlemesi
+
+| CP2077 2.0 | Bu oyun (öneri) |
+|---|---|
+| 5 attribute, her birinin perk ağacı | Sınıf başına 3 **dal** (oyun tarzı; biri pasif çizgisini taşır) |
+| Perk'ler attribute seviyesi 4 / 9 / 15 / 20'de açılır | Dal kademeleri **o dala harcanan puanla** açılır: 0 / 3 / 6 / 10 / 15, aşağıdan yukarı |
+| Çok kademeli perk'ler | Aynı; küçük perk'ler skill'in kendi sayısını değiştirir |
+| Büyük ana perk'ler | Dal başına **2 kapstone** + bağ şeridi başına **1 bağ kapstone'u** (3'er puan) |
+| Perk'ler birbirini besler | **Bağ şeridi**: iki dalın skill'lerini birbirine bağlayan perk'ler (D.2) |
+
+**Kademe kilidi için 3 seçenek (değişmedi):** (A) dal puanı ★ / (B) stat kapısı (CP2077 birebir) / (C) A + kapstone için stat eşiği. Öneri (A); stat puanları ayrı panelde (D.4).
+
+**Kurallar:**
+- Dal kademesi: **o dalın alt kademelerine harcanan puan** eşiği geçmeli (T4 için T1-T3). İade, üstteki bir perk'in eşiğini bozacaksa yapılamaz.
+- Kademe açıksa o kademedeki her perk alınabilir (dal içinde önkoşul zinciri yok).
+- Level kapısı YOK: 1 puan/level olduğu için kapstone en erken L19'da gelir.
+- **Dal içi kombolar** (aynı daldaki iki skill'i bağlayan perk, ör. Double Strike -> Whirlwind) normal dal perk'idir: kartta "DS → WW" rozeti taşır, çizgi ve şerit yok. ⇄ yalnızca **dallar arası** bağdır.
+- Pasif çizgisi bir dalın içindedir (Warrior: Fury; onaylı Scarred Hide / Blood Fuel / Grim Resolve / Shared Fury). Set item'leri pasifin SAYISINI büyütür, bu perk'ler DAVRANIŞ ekler.
+
+## D.2 Bağ şeritleri (sinerji perk'leri)
+
+- Bağ perk'i iki komşu dalın arasındaki şeritte durur. Arayüzde düğümden **sola ve sağa düz yatay çizgi** komşu dalların aynı kademe hücresine girer (iki dal o düğümde birleşir); şeritteki düğümler dikey ince bir rayla birbirine bağlıdır. Ağaç boyunca eğri çizgi YOK.
+- Şerit başına 3 düğüm: **T3**, **T4**, **bağ kapstone'u**. Kartta "tetikleyici → ödül" yazar (ör. CH → DS).
+- Bağ perk'lerine harcanan puan **hiçbir dalın eşiğine sayılmaz** (çift sayım olmasın).
+
+**Bağ düğümünün açılma kuralı (öneri ve seçenekler):**
+
+| Seçenek | Kural | Sonuç |
+|---|---|---|
+| (a) Komşulardan biri | A ya da B tek başına eşiği geçerse açılır | Uzman, hiç yatırım yapmadığı dalla "bağ" kurar: şerit fikri boşa düşer |
+| (b) Toplam | A + B >= eşik | Yine tek dal yeter (A = 10, B = 0 -> T4 bağ açık) |
+| **(c) Toplam + iki taraf en az 3** ★ | A + B >= eşik (6 / 10 / 15) **ve** A >= 3 **ve** B >= 3 | Bağ gerçekten iki dala yatırım ister; ucuz kalır (karşı dala 3 puan = T1 perk'leri) |
+
+**Öneri (c)**, `joint.minEachSide` = 3.
+
+**C ⇄ A (sarmal) şeridi: önerilmez.** Ekranda A ile C yan yana değil: çizgi ağacın üstünden geçmek zorunda kalır (Ömer'in istemediği dağınıklık); telefonda dördüncü sekme gerekir. Bunun yerine her sınıfta **ortadaki dal "göbek"** olacak şekilde dal sırası seçilir (Hexer'de Doom ortada: Omen her şeyin göbeği). A ile C arasındaki sinerji ya ortadaki dalın üstünden kurulur ya da dal içi komboya çevrilir.
+
+**Kapstone sınırı (yeni soru):** bağ kapstone'u ile 29 puanda iki kapstone mümkün olur (ör. A'da 15 + kapstone 3 + B'de 3 + bağ kapstone'u 3 = 24 puan). Öneri: **yapı başına en çok 1 kapstone** (dal ya da bağ), denge düğmesi `maxCapstones`. Mockup'ta 1/2 seçilebilir.
+
+**Çift sayımı önleyen kurallar (değişmedi):**
+1. **Bir kullanım = bir tetik.** Tekrar (Third Blow, `repeatChance`), "yeniden hazır" (Spell Echo, Double or Nothing) ve ikinci hedef yankısı (Third Eye) bağ tetiklemez, Primed tüketmez, yük vermez.
+2. **Primed üst üste binmez:** skill başına en çok 1, süre 3 kendi turu, kullanım başına en çok 1 tüketilir.
+3. **Durum bonusları tek kova,** tavan +%50; item'lerin genel "+%hasar"ı üstüne çarpılır.
+4. **Cooldown azaltma:** skill başına kendi turu başına en çok 1; taban 1 (`turnCost` < 1 skill'de 2).
+5. **Set ve ağaç kaynakları ayrı:** set çarpanları ağacın sabit Rage/MP'sine uygulanmaz; Shared Fury Berserker'in set öncesi değerini yayar.
+6. **Toplam tavanlar:** `repeatChance` %40; skill `critBonus` perk başına +%10; can çalma %25; MP iadesi tur başına skill bedeli kadar.
+7. Bağlar yalnızca kendi sınıfının skill'lerini bağlar.
+
+## D.3 Puan ekonomisi
+
+| Konu | Öneri |
+|---|---|
+| Puan | Level 2'den itibaren 1 puan/level = L30'da **29** (kararlı) |
+| Maliyet | Warrior: Carnage 24, Vanguard 22, Fury 22, bağlar 6 + 7 = **81**. Hexer: Malice 23, Doom 22, Blight 22, bağlar 7 + 7 = **81** |
+| 29 puan ne doldurur | ~%36. Örnek uzman: ana dal 15 + kapstone 3 = 18, ikinci dal 7, bağ T3 + T4 = 4 |
+| Bölüm ritmi | Bölüm 1 sonu 9 puan (bir dalda T3 ya da iki dalda T2 + ilk bağ T3), bölüm 2 sonu 19 (ilk kapstone ya da iki dal + bağ T4), bölüm 3 sonu 29 |
+| Tipik yapılar | **Uzman:** 18 + 7 + bağ 4. **Köprü:** iki dalda 10'ar + bağ şeridi tam (bağ kapstone'u dahil 6-7). **Saf:** bir dal tam (22-24) + 5-7 |
+| Endless | Aynı ağaç, puanlar koşuya ait. ~13 puanlık ortalama koşu: bir dal T3-T4 + bağ T3 |
+
+## D.4 Stat puanları (ayrı panel; değişmedi)
+
+- Level başına elle dağıtılan stat puanı; miktar TBD (önceki öneri 3/level). **Denge uyarısı:** 3/level x 29 = 87 puan, Warrior'un STR 30 tabanını ~4 katına çıkarır; öneri **2/level** ya da level bütçesinden düşülerek 3/level.
+- Sıfırlama ağaçla birlikte tek ücret (öneri).
+
+## D.5 Sıfırlama (değişmedi)
+
+- 15 + 4 x level altın; kasaba ve dinlenme duraklarında; Endless'ta tüccar dalgalarında. Kapsam önerisi: tam sıfırlama (ağaç + statlar); alternatif tek perk iadesi (puan başına 5 altın, eşik ve bağ kuralını bozmuyorsa). Onay penceresi ücreti ve iadeyi gösterir.
+
+## D.6 Arayüz
+
+- **Yer:** Gear ekranında **Gear | Skills** (Skills'in sağ panelinde Stats). Harcanmamış puan rozeti.
+- **Masaüstü:** sütunlar soldan sağa A | A⇄B | B | B⇄C | C. Satırlar **aşağıdan yukarı**: altta dal başlıkları ("kökler") ve T1, en üstte kapstone'lar. Soldaki eşik etiketleri yukarı doğru artar (open, 3, 6, 10, 15) ve ▲ ile yönü gösterir. Bağ şeridi dar sütundur: T3 / T4 / kapstone hizasında birer düğüm; düğümden iki yana düz çizgi komşu dal hücrelerine girer, düğümler dikey rayla bağlı. Kilitli bağ düğümü "A + B / eşik, her biri ≥ 3" yazar.
+- **Vurgulama:** bağ düğümünün üstüne gelince iki komşu dalın o kademe hücresi ve bağlanan perk kartları parlar, yatay çizgiler altın olur, skill şeridinde tetikleyici → ödül görünür. Eğri çizgi yok.
+- **Ayrıntı paneli:** ad, etki, rank sayıları, tür; bağ ise "Trigger → Payoff" ve açılma durumu (A x, B y). Dokunma = seç, Learn = harca.
+- **Telefon (844x390):** üstte 3 dal sekmesi; seçilen dal, **yanındaki bağ şerit(ler)iyle** birlikte görünür (Carnage: Carnage + ⇄; Vanguard: ⇄ + Vanguard + ⇄; Fury: ⇄ + Fury). Bağ, ayrı sekmeye saklanmadığı için iki dalın arasında olduğu hep görünür. Sağda ayrıntı ve stat paneli; dokunma hedefi >= 44 px.
+- **Savaşta:** tooltip ağaçla değişen sayıları gösterir; Primed skill düğmesinde kor nokta. **Codex:** ağaç salt okunur.
+
+## D.7 Denge düğmeleri
+
+1. `treeRules.power` (1,0). 2. `treeRules.thresholds` [0, 3, 6, 10, 15], `capstoneCost` 3. 3. `joint.minEachSide` 3, `joint.tiers` [T3, T4, kapstone]. 4. `maxCapstones` 1. 5. `pointsPerLevel` 1, `maxLevel` 30, `statPointsPerLevel` 2/3. 6. Bağ tavanları: `statusBonusCap` 0,5; `repeatCap` 0,4; `lifestealCap` 0,25; `primedTurns` 3; `edgeMax` 6. 7. `reset.cost` 15 + 4 x level. 8. `power-budget.json > tree` + düşman telafisi x0,8. 9. `endless.levelsPerWave` 1.
+- Ölçüm: sınıf başına 3 hazır yapı (uzman / köprü / saf) `sim:campaign`'de ayrı; aynı sınıfın yapıları arasında sefer bitirme farkı <= 3 puan; tek kapstone bölüm 3 sonunda kazanma oranını +5 puandan fazla oynatmaz. QB / MP'de ağaç yok.
+
+## D.8 WARRIOR ağacı (tüm sayılar PROVİZYON)
+
+Skill'ler: Double Strike (DS, 0 MP, 2 x STR %40), Whirlwind (WW, 8 MP, cd 3, tüm düşmanlar %69), Charge (CH, 10 MP, cd 3, %67,5 + Stun 1), Abyssal Cry (AC, 30 Rage, cd 5; Fury: sonraki 3 saldırı +1 menzil, +%50 STR). Pasif Berserker. Düzen: **Carnage | ⇄ | Vanguard | ⇄ | Fury.**
+
+### Dal 1: CARNAGE (DS + WW) — 24 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 (0) | **Honed Edge** | 3 | DS vuruş başına %40 -> %42 / %44 / %46 | sayı |
+| T1 | **Wide Arc** | 3 | WW %69 -> %72 / %75 / %78 | sayı |
+| T2 (3) | **Sunder** | 1 | DS 2. vuruşu 2 tur Wounded | MEVCUT |
+| T2 | **Light Feet** | 2 | WW 8 -> 7 / 6 MP | sayı |
+| T2 | **Open Wounds** (kombo DS → WW) | 2 | WW, Wounded hedefe +%10 / +%20 | MEVCUT |
+| T3 (6) | **Keen Follow-through** | 2 | DS +%5 / +%10 kritik | MEVCUT |
+| T3 | **Bleeding Gale** | 1 | WW vurduğu herkese 2 tur Wounded | MEVCUT |
+| T3 | **Spin Up** (kombo DS → WW) | 1 | Her DS, WW cooldown'unu 1 azaltır (tur başına 1) | **[YENİ, küçük]** |
+| T4 (10) | **Third Blow** | 2 | DS %15 / %25 ihtimalle bir kez daha | MEVCUT |
+| T4 | **Red Harvest** (kombo WW → DS) | 1 | WW öldürürse sonraki DS Primed: kesin kritik | **[YENİ]** Primed |
+| Kapstone (15) | **Maelstrom** | 3p | WW cd 3 -> 2; vurulan her düşman +2 Rage (en çok +8) | sayı + MEVCUT |
+| Kapstone | **Thousand Cuts** (kombo DS → WW) | 3p | Her DS isabeti 1 Edge (en çok 6); WW hepsini tüketir, Edge başına +%8 | **[YENİ]** yük |
+
+### Bağ şeridi A: CARNAGE ⇄ VANGUARD — 6 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T3 (toplam 6, her biri ≥ 3) | **Concussion** CH → DS | 2 | DS, Stun'lı hedefe +%15 / +%30 | MEVCUT |
+| T4 (toplam 10) | **Breach** CH → WW | 1 | WW, Stun'lı düşmana ikinci kez %50 güçle | **[YENİ, küçük]** |
+| Bağ kapstone'u (toplam 15) | **Hammer and Anvil** CH → DS | 3p | DS Stun'lı hedefi vurursa Stun 1 tur uzar (hedef başına savaşta 1; elite/boss hariç) | **[YENİ]** |
+
+### Dal 2: VANGUARD (CH + kontrol) — 22 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 | **Momentum** | 3 | CH %67,5 -> %71 / %74 / %78 | sayı |
+| T1 | **Rush** | 3 | CH 10 -> 9 / 8 / 7 MP | sayı |
+| T2 | **Shatter** | 1 | CH hedefi kendi sonraki turuna kadar Overextended (+%25 hasar alır) | MEVCUT |
+| T2 | **War Path** | 2 | CH sonrası 1 / 2 tur Haste | MEVCUT |
+| T3 | **Impact Rage** | 2 | CH isabeti +4 / +8 Rage | MEVCUT |
+| T3 | **Brace** | 1 | CH sonrası 1 tur Fortify | MEVCUT |
+| T3 | **Rattle** | 1 | CH hedefi 1 tur Blinded | MEVCUT |
+| T4 | **Juggernaut** | 1 | CH öldürürse cooldown'u sıfırlanır | MEVCUT |
+| T4 | **Iron Stance** | 2 | CH sonrası kendi sonraki turuna kadar alınan hasar -%10 / -%20 | **[YENİ, küçük]** |
+| Kapstone | **Unstoppable** | 3p | CH yarım tur harcar | MEVCUT (`turnCost`) |
+| Kapstone | **Warlord's Charge** | 3p | CH hedefin hemen yanındakilere de %50 vurur (Stun yalnızca ana hedefe) | MEVCUT (komşu hasarı) |
+
+### Bağ şeridi B: VANGUARD ⇄ FURY — 7 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T3 | **Fury Unleashed** AC → CH, WW | 2 | Fury sürerken CH ve WW MP bedeli -%50 / -%100 | **[YENİ, küçük]** |
+| T4 | **Blood Price** CH, WW → AC | 2 | Can %50 altındayken CH ve WW isabeti +3 / +6 Rage | MEVCUT |
+| Bağ kapstone'u | **Abyss Unbound** AC → CH | 3p | AC yarım tur harcar ve CH cooldown'unu sıfırlar | MEVCUT |
+
+### Dal 3: FURY (Rage, Berserker çizgisi, AC) — 22 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 | **Battle Hunger** | 3 | DS her isabet +1 / +2 / +3 Rage | MEVCUT |
+| T1 | **Deep Lungs** | 3 | Fury +%50 -> +%55 / +%60 / +%65 STR | sayı |
+| T2 | **Scarred Hide** | 1 | Can %50 altındayken alınan hasar -%8 | onaylı yeni |
+| T2 | **Blood Fuel** | 1 | Savaşta ilk kez %50 altına düşünce +15 Rage | onaylı yeni |
+| T2 | **Quick Temper** | 2 | AC 30 -> 28 / 25 Rage | sayı |
+| T3 | **Echoing Cry** | 1 | Fury 3 -> 4 saldırı | sayı |
+| T3 | **Rage Reservoir** | 2 | Maks Rage 50 -> 55 / 60 | sayı |
+| T4 | **Grim Resolve** | 1 | Can %30 altındayken Stun'lanamaz | onaylı yeni |
+| T4 | **Abyssal Hunger** | 2 | Fury sürerken %8 / %15 can çalma | MEVCUT |
+| Kapstone | **Shared Fury** | 3p | Yanındaki dostlar Berserker bonusunun (set öncesi) yarısını alır | onaylı yeni |
+| Kapstone | **Last Stand** | 3p | Savaşta bir kez ölümcül darbe Warrior'u 1 canda bırakır ve +20 Rage verir | **[YENİ]** (Lucky Escape'e yakın) |
+
+## D.9 HEXER ağacı (tüm sayılar PROVİZYON)
+
+Skill'ler: Evil Eye (EE, 0 MP, LUCK %65 + 1 Omen, kritikse 2), Withering Curse (WC, 14 MP, cd 3, 2x3, %22,5 + Wither 3 tur %10 + 1 Omen), Jinx (JX, 2 MP, cd 3, %55, +%25 kritik, Jinxed 2 tur + 1 Omen), Doom Mark (DM, 14 MP, cd 4, başlangıç cd 2; Omen patlatır x1,5). Pasif Ill Omen. Düzen: **Malice | ⇄ | Doom | ⇄ | Blight** (Doom göbek: Omen hem kritik hem çürüme yapısını besler).
+
+### Dal 1: MALICE (EE + JX) — 23 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 | **Piercing Gaze** | 3 | EE %65 -> %68 / %71 / %74 | sayı |
+| T1 | **Sharper Hex** | 2 | JX kritik bonusu +%25 -> +%30 / +%35 | sayı |
+| T2 | **Baleful Stare** | 2 | EE +%5 / +%10 kritik (kritik = 2 Omen) | MEVCUT |
+| T2 | **Twisted Thread** | 2 | JX %55 -> %58 / %61 | sayı |
+| T3 | **Hexed Sight** (kombo JX → EE) | 2 | EE, Jinxed hedefe +%10 / +%20 kritik | MEVCUT |
+| T3 | **Soul Siphon** | 1 | EE isabeti +2 MP | MEVCUT |
+| T3 | **Crooked Fate** | 1 | Jinxed isabet cezası -%20 -> -%30 | **[YENİ, küçük]** |
+| T4 | **Malign Gaze** (kombo EE → JX) | 1 | Kritik EE hedefi 1 tur Jinxed | MEVCUT |
+| T4 | **Hex Knot** | 1 | Jinxed hedefin sonraki 2 saldırısına kadar sürer | **[YENİ, küçük]** |
+| T4 | **Cruel Eye** | 2 | EE kritik hasarı +%10 / +%20 | MEVCUT (kritik hasarı) |
+| Kapstone | **Third Eye** | 3p | EE rastgele ikinci düşmana %50 (Omen dahil; bağ tetiklemez) | MEVCUT |
+| Kapstone | **Curse of Silence** | 3p | JX cd 3 -> 2; kritik JX 1 tur Silence | sayı + MEVCUT |
+
+### Bağ şeridi A: MALICE ⇄ DOOM — 7 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T3 | **Mark of Ruin** Omen → EE | 2 | EE hedefteki Omen başına +%5 / +%10 (en çok 2 Omen) | **[YENİ]** |
+| T4 | **Sealed Fate** JX → DM | 2 | DM Jinxed hedefe: patlama +%10 / +%20, Jinxed tüketilir | MEVCUT + tüketme |
+| Bağ kapstone'u | **Omen Echo** Doom → EE, JX | 3p | Hexer'in Omen'i Doom'a dönüşünce sonraki EE Primed (+1 Omen, +%15) ve JX cooldown -1 | **[YENİ]** Primed |
+
+### Dal 2: DOOM (DM + Omen, Ill Omen çizgisi) — 22 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 | **Heavy Doom** | 3 | DM patlaması x1,5 -> x1,55 / x1,6 / x1,65 | sayı |
+| T1 | **Dread** | 2 | DM 14 -> 13 / 12 MP | sayı |
+| T2 | **Patient Doom** | 1 | DM başlangıç cd 2 -> 1 | sayı |
+| T2 | **Harvest** | 2 | Patlayan Omen başına +3 / +5 MP (en çok 15) | MEVCUT |
+| T2 | **Ominous** | 1 | Omen süresi 3 -> 4 tur | sayı |
+| T3 | **Chain of Doom** | 1 | DM öldürürse Ill Omen 1 Omen aktarır | MEVCUT |
+| T3 | **Lingering Curse** | 1 | Ill Omen aktarım sınırı 2 -> 3 | sayı |
+| T3 | **Dire Portent** | 2 | Omen başına kritik cezası -%3 -> -%4 / -%5 | sayı |
+| T4 | **Omen Feast** | 1 | Patlayan Omen başına maks canın %3'ü şifa | MEVCUT |
+| T4 | **Grim Tidings** | 2 | Doğal Doom (3 yığın / süre sonu) hasarı +%10 / +%20 | sayı |
+| Kapstone | **Final Omen** | 3p | DM patlaması yanındakilere %50 | MEVCUT |
+| Kapstone | **Doom Cycle** (kombo Doom → DM) | 3p | Her Doom DM cooldown'unu 1 azaltır (tur başına 1) | **[YENİ, küçük]** |
+
+### Bağ şeridi B: DOOM ⇄ BLIGHT — 7 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T3 | **Plague Harvest** WC → Ill Omen | 2 | Wither'lı hedef ölünce kalan Wither en yakın düşmana geçer (rank 2: süre tazelenir) | **[YENİ]** |
+| T4 | **Creeping Doom** WC → Omen | 2 | Her Wither tikinde %10 / %20 ihtimalle +1 Omen | **[YENİ]** |
+| Bağ kapstone'u | **Necrotic Bloom** DM → WC | 3p | Wither'lı hedefte Doom patlarsa kalan Wither tikleri anında vurur | **[YENİ]** |
+
+### Dal 3: BLIGHT (WC + Wither) — 22 puan
+
+| Kademe | Perk | Rank | Etki | Tür |
+|---|---|---|---|---|
+| T1 | **Deeper Rot** | 3 | Wither tik %10 -> %11 / %12 / %13 | sayı |
+| T1 | **Spreading Blight** | 2 | WC 14 -> 13 / 12 MP | sayı |
+| T2 | **Grave Soil** | 2 | WC ilk vuruş %22,5 -> %25 / %27 | sayı |
+| T2 | **Long Wither** | 1 | Wither 3 -> 4 tur | sayı |
+| T2 | **Thin Blood** | 2 | Wither'lı hedef Hexer'in kritiklerinden +%10 / +%20 kritik hasar alır | **[YENİ, küçük]** |
+| T3 | **Rotting Flesh** | 1 | WC vurulanlara 2 tur Wounded | MEVCUT |
+| T3 | **Fester** | 2 | WC zaten Wither'lı hedefte Wither'ı 1 / 2 tur uzatır (en çok 5) | **[YENİ, küçük]** |
+| T4 | **Torpor** | 1 | WC vurulanlara 1 tur Slow | MEVCUT |
+| T4 | **Choking Miasma** | 2 | Wither'lı düşmanlar -%5 / -%10 hasar verir | **[YENİ, küçük]** |
+| Kapstone | **Black Plague** | 3p | WC alanı 2x3 -> 3x3 | sayı (AOE şekli) |
+| Kapstone | **Withering Grasp** | 3p | Wither tikleri Hexer'e verdiği hasarın %25'i kadar can verir | **[YENİ, küçük]** |
+
+**Not (revizyon 2):** Malice ile Blight yan yana olmadığından eski bağları (Thin Blood, Festering Gaze) dal perk'ine çevrildi; Creeping Doom ve Necrotic Bloom Blight kapstone'u olmaktan çıkıp Doom ⇄ Blight şeridine taşındı; Blight'a iki yeni kapstone geldi.
+
+## D.10 Diğer 9 sınıf: dal sırası ve birer bağ örneği (kısa, PROVİZYON)
+
+| Sınıf | Dal sırası (ortadaki = göbek) | Örnek bağ (komşu iki dal arasında) |
+|---|---|---|
+| Anti-Mage | Ward ⇄ Drain ⇄ Void | Drain ⇄ Void: Drain Field Silence'ı -> Void Strike Silenced hedefe +%20 |
+| Archer | Skirmish ⇄ Precision ⇄ Volley | Skirmish ⇄ Precision: Quick Shot Haste'i -> Haste'liyken Aimed Shot zırh delme %50 -> %70 |
+| Cutthroat | Venom ⇄ Blades ⇄ Shadow | Blades ⇄ Shadow: Smoke Bomb sonrası Backstab "arkası açık" şartını yok sayar (Primed) |
+| Defender | Bulwark ⇄ Provoke ⇄ Crush | Provoke ⇄ Crush: Taunt'ta emilen her darbe 1 Grit -> Fist Crush Grit başına +%6 |
+| Druid | Bloom ⇄ Grove ⇄ Thorn | Grove ⇄ Thorn: Treant yaşarken Thorn Whip'in Wounded'ı 3 tur |
+| Gambler | Cards ⇄ Stakes ⇄ Dice | Stakes ⇄ Dice: High Stakes kazanınca Loaded Dice tekrar şansı +%10 (tavan %40) |
+| Mage | Frost ⇄ Fire ⇄ Arcane | Frost ⇄ Fire: Blizzard Slow'u -> Fire Bolt +%25 ve Slow'u tüketir |
+| Paladin | Mercy ⇄ Zeal ⇄ Judgment | Zeal ⇄ Judgment: kutsal ateşteki hedefe Holy Strike +%20 ve 1 Zeal |
+| Undead | Bone ⇄ Wail ⇄ Grave | Wail ⇄ Grave: Raise Dead ceset tükettiyse sonraki Wail can bedeli yarıya (Primed) |
+
+## D.11 Yeni mekanikler listesi (onay gerekir)
+
+1. **Primed** genel durumu (Red Harvest, Omen Echo; diğer sınıflarda da).
+2. **Yük** sayacı (Edge; Grit, Zeal diğer sınıflarda).
+3. Tetikle **cooldown azaltma** (Spin Up, Doom Cycle, Omen Echo).
+4. **DoT uzatma / aktarma / patlatma / şifa** (Fester, Plague Harvest, Necrotic Bloom, Withering Grasp); Creeping Doom; Mark of Ruin.
+5. Küçük varyantlar: Crooked Fate, Hex Knot, Iron Stance, Breach, Hammer and Anvil, Fury Unleashed, Thin Blood, Choking Miasma; Last Stand (ölümcül darbeyi bir kez 1 canla atlatma).
+6. **Bağ şeridi kuralı:** açılma (toplam + iki taraf ≥ 3), bağ puanı dal eşiğine sayılmaz, `maxCapstones`.
+7. Bağ kural motoru: "bir kullanım = bir tetik", durum bonusu kovası, toplam tavanlar.
+8. Stat puanı paneli ve miktarı; kademe kilidi seçeneği; sıfırlama kapsamı.

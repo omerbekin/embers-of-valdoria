@@ -129,11 +129,16 @@ Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmı
   - Eski 11 Epic etkisi kalktı; Epic gücünü yalnızca A affix'inden alır.
   - Might kalktı; "Global damage %" artık bir A affix'i.
   - Legendary etkileri duruyor.
-- **Yuva sınırları:**
-  - Delme ve kritik affix'leri yalnızca silah ve eldivende.
-  - Auralar yalnızca zırh ve tılsımda.
-  - Kaçınma yalnızca bot ve eldivende.
-  - Geri kalan her şey her yuvada.
+- **Yuva kimliği (Ömer 2026-10-13, form itemfix; eski "yuva sınırları"nın yerine; open-questions madde 314):** her stat yalnızca 2-3 yuvada rastgele çıkar (`items.json > affixDefs[].slots`):
+  - Weapon: element / fiziksel hasar, kritik hasarı, zırh / büyü delme, elit-boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon, Global damage). Hançer ikinci elde silah havuzunu kullanır.
+  - Off-hand (kalkan): Armor (ana affix), Shield power, Magic armor (+ HP regen, debuff direnci, auralar, Global defense, Max HP %, Support).
+  - Helm: HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana / Resource mastery, Global defense, Max HP %).
+  - Armor: Armor, HP, Magic armor, auralar (+ HP regen, debuff direnci, Global defense, Max HP %).
+  - Gloves: isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, Global damage, Speed %).
+  - Boots: hız, kaçınma, Quick start (+ HP, MP, Speed %).
+  - Trinket: HP / MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, Global damage, Elemental, Potency, Mana / Resource).
+  - Genel A affix'leri her yuvada: Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance.
+  - Ana affix tabanın örtük statıdır, havuzdan muaf (Studded Gauntlets / Hobnailed Boots: Armor). Legendary'nin sabit affix'leri de muaf.
 - **Havuzlar (Ömer'in seçimi):**
   - C: Armor, Max HP, Physical / Fire / Ice / Holy / Arcane / Nature / Dark damage %, Accuracy, Evasion, Max MP, HP regen, MP regen, Shield power %, DoT damage %.
   - B: Crit chance, Crit damage, Speed, Magic armor, Damage vs elite & boss %, Armor penetration %, Magic penetration %, MP cost -%, Life leech %, Quick start, Debuff resistance (debuff'tan tamamen kaçınma şansı).
@@ -352,14 +357,24 @@ IP kontrolü: `slotWeight x B(ilvl) x rarityMult` (±%10). Stat IP'leri 1.5 tabl
 
 - **Tek ağırlık tablosu** (`data/items.json > dropRarity`): sefer loot'u, Endless ödül kartları ve Endless tüccar stoğu aynı tabloyu kullanır. Önce nadirlik zarlanır, sonra taban item seçilir (taban nadirlikten bağımsız; örnek nadirliğini zarında taşır).
 - Taban ağırlıklar: Common 70, Uncommon 22, Rare 6,5, Epic 1,5. Legendary bu tabloda YOK (yalnızca ortak nadir düşüş zarı, 3.6 / madde 297).
-- **Kayma (hafif, tavanlı):** kayma = 0,012 x item seviyesi + elit 0,15 / boss 0,3 / hazine 0,15, en çok 0,5. Kademe i'nin ağırlığı x(1 + kayma x i) (Common sabit).
+- **Kayma (hafif, tavanlı):** kayma = 0,015 x item seviyesi (Ömer 2026-10-12, Endless item dengesi p3: 0,012'den çok az artırıldı; sefer de etkilenir) + elit 0,15 / boss 0,3 / hazine 0,15, en çok 0,5. Kademe i'nin ağırlığı x(1 + kayma x i) (Common sabit).
 
 | Durum | Common | Uncommon | Rare | Epic |
 |---|---|---|---|---|
 | Başlangıç (ilvl 0-3) | %69-70 | %22 | %7 | %1,5 |
-| ilvl 10, normal | %67 | %23,5 | %7,7 | %1,9 |
-| ilvl 12, boss | %60 | %27 | %10 | %3 |
-| Tavan (kayma 0,5) | %58,5 | %27,6 | %10,9 | %3,1 |
+| ilvl 10, normal | %66 (eski %67) | %24 | %8 | %1,9 |
+| ilvl 12, boss | %59 (eski %60) | %27 | %11 | %3 |
+| ilvl 20, normal | %62,6 (eski %63,9) | %25,6 | %9,3 | %2,5 |
+| ilvl 30, normal | %59,4 (eski %61,3) | %27,1 | %10,5 | %3,0 |
+| Tavan (kayma 0,5; artık ilvl ~33, eski ~42) | %58,5 | %27,6 | %10,9 | %3,1 |
+
+**Endless item dengesi (Ömer onayı 2026-10-12; p1 hayır, p2-p6 evet):**
+- p1 Endless item seviyesi hızlandırma: ONAYLANMADI (`endless.json > items` aynen).
+- p2 Altın kartı ≈ item kartı: altın = 10 + 3 x temizlenen dalga (eski 20 + 5; altın kartı ~2 item ediyordu, artık ~1-1,3). Tüccarın Legendary fiyat çarpanı (x3) bilerek AYNI: Legendary nadir ve zor kalsın.
+- p3 Nadirlik kayması çok az: `dropRarity.shift.perIlvl` 0,012 -> 0,015, tavan 0,5 aynı (tablo yukarıda).
+- p4 Affix düzeltmeleri: `caps` crit 15 -> 25, evasion 10 -> 15, yeni mpCost 50 (MP bedeli indirimi %) ve resist 40 (debuff direnci %); a_primary ip 0,75 -> 2 ve b_speed ip 2,75 -> 4 (yalnızca değerleme: fiyat / Equip best / Gear Score), a_speedpct perIlvl 0,32 -> 0,2 (güç).
+- p5 Legendary: zayıf beşinin en zayıf statına çarpan (`items[].boost`): Crown of the Ashen King a_immunity x2, Helm of the Last Stand a_endure x1,75, Watchman's Boots a_support x1,75, Gambler's Last Coin ve Bones of the Quarry c_acc x1,25 (bu ikisini asıl a_primary değerlemesi kaldırdı). Hepsi aynı seviyedeki en iyi Epic'in ~%10-35 üstünde; kahraman başına 1 Legendary kuralı aynen. Endless nadir düşüş eki yalnızca 15. dalgadan sonra artar (`rareDrop.endless.perWaveFrom` 15, `perWave` 0,002: 20. dalga +%1, 30. +%3, 40. +%5; eski her dalga +%0,1).
+- p6 Sim: oyuncu vekili altın kartını en değerli item kartının değeriyle tartar; altın fazlaysa altını alır, tüccarda harcar (`src/sim/endless.ts > pickReward`, `GOLD_OVER_ITEM`).
 
 - Endless: elit / boss kartlarının eski "en az Rare / en az Epic" tabanı kalktı (yerine kayma); kart sayısı (2) ve seviye eki (+5 / +10) aynen. Zarlanan nadirlikte yükseltme yoksa bir alt nadirlik denenir.
 - Sefer: boss / hazine "en az bir Rare" ve Rare pity (3.3) KALDIRILDI (Ömer 2026-10-11); nadirliği yalnızca tablo belirler.

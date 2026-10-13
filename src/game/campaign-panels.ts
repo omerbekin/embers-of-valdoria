@@ -4,6 +4,7 @@ import { heroById, type CampaignState, type Hero, type NodeType } from '../campa
 import { SLOT_IDS, fmtPanel, gripOf, heroPanel, instanceColor, instanceSummary, itemDef, offhandBlocker, slotDef, type SlotId } from '../progression';
 import { characterTexture } from './assets';
 import { classAvatar } from './menu-ui';
+import { SlotDrag, makeDragGhost } from './slot-drag';
 import { EL, diamondPts, elBody, elButton, elText, fitW } from './elegant-ui';
 import { crown, hpBar, openModal, type Modal } from './campaign-ui';
 import { ensureIcon } from './icons';
@@ -329,7 +330,8 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
   const layerC = scene.add.container(0, 0);
   m.root.add(layerC);
   let selected = '';
-  let drag: { id: string; from: number; sx: number; sy: number; moved: boolean; ghost?: Phaser.GameObjects.Container } | null = null;
+  // Sürükle-bırak: ortak yardımcı (src/game/slot-drag.ts; Quick Battle / Endless ile aynı hayalet kart + gölge); pencere kapanınca kaldırılır
+  let drag: SlotDrag<{ id: string; from: number }>;
   const cellAt = (x: number, y: number): number => {
     for (let row = 0; row < 4; row++)
       for (let lane = 0; lane < 3; lane++) {
@@ -366,7 +368,7 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
         if (h) {
           const def = content.classes[h.class]!;
           const img = classAvatar(scene, def, x + cell / 2, y + cell / 2 - 6, cell - 18);
-          if (drag?.moved && drag.id === id) img.setAlpha(0.3);
+          if (drag?.payload?.id === id) img.setAlpha(0.3);
           layerC.add(img);
           const nm = scene.add.graphics();
           nm.fillGradientStyle(0x080604, 0x080604, 0x080604, 0x080604, 0, 0, 0.92, 0.92).fillRect(x + 1, y + cell - 42, cell - 2, 41);
@@ -377,13 +379,11 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
         }
         const z = scene.add.zone(x + cell / 2, y + cell / 2, cell, cell).setInteractive({ useHandCursor: !!h || !!selected });
         z.on('pointerdown', (p: Phaser.Input.Pointer) => {
-          if (!h) return;
-          const q = on.toUi(p);
-          drag = { id, from: slot, sx: q.x, sy: q.y, moved: false };
+          if (h) drag.begin({ id, from: slot }, p);
         });
         z.on('pointerup', () => {
-          if (drag?.moved) return;
-          drag = null;
+          if (drag.moved) return;
+          drag.cancel();
           if (!selected) selected = id;
           else if (selected === id) selected = '';
           else {
@@ -425,53 +425,37 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
       }
     }
   };
-  // Sürükleme (sahne geneli; pencere kapanınca kaldırılır)
-  const onMove = (p: Phaser.Input.Pointer) => {
-    if (!drag || !p.isDown) return;
-    const q = on.toUi(p);
-    if (!drag.moved && Math.hypot(q.x - drag.sx, q.y - drag.sy) > 10) {
-      drag.moved = true;
-      const h = rosterHero(on.get(), drag.id);
+  drag = new SlotDrag<{ id: string; from: number }>(scene, {
+    threshold: 10,
+    toPoint: (p) => on.toUi(p),
+    parent: () => m.root,
+    ghost: (d) => {
+      const h = rosterHero(on.get(), d.id);
       const def = h ? content.classes[h.class] : undefined;
-      if (def) {
-        const gg = scene.add.graphics();
-        gg.fillStyle(0x120c08, 1).fillRect(-56, -56, 112, 112).lineStyle(2, EL.ON_N, 1).strokeRect(-56, -56, 112, 112);
-        drag.ghost = scene.add.container(q.x, q.y, [gg, classAvatar(scene, def, 0, 0, 104)]);
-        m.root.add(drag.ghost);
+      return def ? makeDragGhost(scene, def, { size: 112, depth: 0 }) : undefined;
+    },
+    onStart: () => draw(),
+    onMove: (_d, q) => {
+      const c = cellAt(q.x, q.y);
+      if (c !== hot) {
+        hot = c;
+        draw();
       }
-      draw();
-    }
-    if (!drag.moved) return;
-    drag.ghost?.setPosition(q.x, q.y);
-    const c = cellAt(q.x, q.y);
-    if (c !== hot) {
-      hot = c;
-      draw();
-      if (drag.ghost) m.root.bringToTop(drag.ghost);
-    }
-  };
-  const onUp = (p: Phaser.Input.Pointer) => {
-    if (!drag) return;
-    const d = drag;
-    drag = null;
-    d.ghost?.destroy();
-    hot = -1;
-    if (d.moved) {
-      const q = on.toUi(p);
+    },
+    onEnd: (_d, moved) => {
+      hot = -1;
+      if (moved) draw(); // soluk kaynak ve hedef vurgusu geri gelsin
+    },
+    onDrop: (d, q) => {
       const c = cellAt(q.x, q.y);
       if (c >= 0 && c !== d.from) on.move(d.id, c);
       selected = '';
       draw();
-    }
-  };
-  scene.input.on('pointermove', onMove);
-  scene.input.on('pointerup', onUp);
-  scene.input.on('pointerupoutside', onUp);
+    },
+  });
   const close0 = m.close;
   m.close = () => {
-    scene.input.off('pointermove', onMove);
-    scene.input.off('pointerup', onUp);
-    scene.input.off('pointerupoutside', onUp);
+    drag.destroy();
     close0();
   };
   draw();

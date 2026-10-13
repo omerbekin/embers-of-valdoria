@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GEÇİCİ GÖRSEL: spriteId 'undead' ödünç; gerçek çizim (palette variant of ghoul) assets/sprites/drowned/idle.png + assets/avatars/drowned.png gelince spriteId 'drowned' yapılır (tek satır).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'drowned' (ChatGPT çizimi, Ghoul palet varyantı (yosun yeşili + bataklık mavisi); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
   "id": "drowned",
   "name": "Drowned",
   "family": "undead",
-  "spriteId": "undead",
+  "spriteId": "drowned",
   "color": "#4f7a6e",
   "logo": "skull",
   "frontPriority": 2,

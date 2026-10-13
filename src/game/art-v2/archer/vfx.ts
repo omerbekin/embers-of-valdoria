@@ -42,16 +42,17 @@ function facing(c: VfxCtx): number {
 }
 
 /** Yayın sprite üzerindeki yeri (idle.png: kavrama genişliğin ~%30 önünde, boyun ~%49'u yukarıda; uçlar %90 ve %12). */
-function bowGeom(c: VfxCtx, d: number): { grip: Pt; top: Pt; bot: Pt; rest: number; pull?: number } {
+function bowGeom(c: VfxCtx, d: number): { grip: Pt; top: Pt; bot: Pt; rest: number; pull?: number; restY?: number; drawTo?: Pt; hand?: Pt } {
   const v = c.actor;
-  // v2 pozlu birim (Pose Tester): poz çizimindeki yayın gerçek uçları, kiriş çeken el omuzda (CombatantView.bowPoints)
+  // v2 pozlu birim (Pose Tester): poz çizimindeki yayın gerçek uçları, kirişi çeken el (bow_shot / bow_sky: yanakta) (CombatantView.bowPoints).
+  // Kiriş dinlenme noktasından (uçların ortası) çeken ele doğru gerilir: göğe eğik yayda (bow_sky) da eğik çekiş. Ok yayın kavrama yerinden çıkar.
   const bp = v.bowPoints();
   if (bp) {
     const rest = (bp.top.x + bp.bot.x) / 2;
     const gy = (bp.top.y + bp.bot.y) / 2;
-    // kirişi çeken el yay hizasındaysa (thrust: omuzda) çekiş o ele kadar; değilse (raise: göğe eğik yay) kısa çekiş
-    const pull = Math.abs(bp.draw.y - gy) < 60 ? Math.max(20, Math.abs(rest - bp.draw.x)) : v.w * 0.25;
-    return { grip: { x: bp.grip.x, y: gy }, top: bp.top, bot: bp.bot, rest, pull };
+    const near = Math.hypot(bp.draw.x - rest, bp.draw.y - gy) < v.w * 1.4;
+    const drawTo = near ? bp.draw : { x: rest - d * v.w * 0.25, y: gy };
+    return { grip: { x: bp.grip.x, y: gy }, top: bp.top, bot: bp.bot, rest, restY: gy, drawTo, hand: bp.grip, pull: Math.hypot(drawTo.x - rest, drawTo.y - gy) };
   }
   const x = v.container.x;
   const y = v.container.y;
@@ -67,24 +68,25 @@ function bowGeom(c: VfxCtx, d: number): { grip: Pt; top: Pt; bot: Pt; rest: numb
  * Kirişi gerer: sprite'ın kirişinin üstüne gerilmiş kiriş çizilir, gezde ok bekler. `pull` 0..1 (geri çekiş oranı), `ms` süre.
  * Dönen `release()` kirişi bırakır (titreşerek geri vurur) ve okun çıkış noktasını verir.
  */
-async function drawBow(c: VfxCtx, k: VfxKit, d: number, o: { ms: number; pull: number; arrow: string; aim: Pt; size?: number }): Promise<{ nock: Pt; arrow: Img; release: () => void }> {
+async function drawBow(c: VfxCtx, k: VfxKit, d: number, o: { ms: number; pull: number; arrow: string; aim: Pt; size?: number }): Promise<{ nock: Pt; arrow: Img; release: () => void; launch: (ahead: number) => Pt }> {
   const b = bowGeom(c, d);
   const g = c.scene.add.graphics().setDepth(c.actor.container.depth + 2);
   const size = o.size ?? 88;
   const maxPull = (b.pull ?? c.actor.w * 0.42) * o.pull;
   const arrow = k.v2Sprite(c, o.arrow, '#d9c9a3', b.grip.x, b.grip.y, size, c.actor.container.depth + 3).setAlpha(0);
-  let nock: Pt = { x: b.rest, y: b.grip.y };
-  const drawString = (px: number, wob = 0) => {
+  const restY = b.restY ?? b.grip.y;
+  let nock: Pt = { x: b.rest, y: restY };
+  const drawString = (px: number, wob = 0, py = restY) => {
     g.clear();
     g.lineStyle(2, 0xd8cfb0, 0.95);
-    g.beginPath().moveTo(b.top.x, b.top.y).lineTo(px + wob, b.grip.y).lineTo(b.bot.x, b.bot.y).strokePath();
+    g.beginPath().moveTo(b.top.x, b.top.y).lineTo(px + wob, py).lineTo(b.bot.x, b.bot.y).strokePath();
   };
   c.actor.play('attack');
   await k.counter(c.scene, k.slow(o.ms), (u) => {
     const e = 1 - (1 - u) ** 2.2;
-    const px = b.rest - d * maxPull * e;
-    nock = { x: px, y: b.grip.y };
-    drawString(px);
+    // v2: dinlenme noktasından çeken ele doğru (eğik yayda eğik); eski sprite: yatay
+    nock = b.drawTo ? { x: b.rest + (b.drawTo.x - b.rest) * o.pull * e, y: restY + (b.drawTo.y - restY) * o.pull * e } : { x: b.rest - d * maxPull * e, y: b.grip.y };
+    drawString(nock.x, 0, nock.y);
     const ang = Math.atan2(o.aim.y - nock.y, o.aim.x - nock.x);
     const L = size * 0.93;
     arrow.setAlpha(Math.min(1, u * 5)).setRotation(ang).setPosition(nock.x + Math.cos(ang) * L * 0.47, nock.y + Math.sin(ang) * L * 0.47);
@@ -101,7 +103,9 @@ async function drawBow(c: VfxCtx, k: VfxKit, d: number, o: { ms: number; pull: n
     // bilekte deri/kiriş tozu
     k.burst(c.scene, b.grip.x, b.grip.y, { colors: ['#eae3c6', '#ffffff'], n: 3, speed: [40, 120], angle: d > 0 ? [Math.PI * 0.75, Math.PI * 1.25] : [-0.4, 0.4], gravity: 0, life: [140, 260], size: [6, 9] });
   };
-  return { nock, arrow, release };
+  // okun uçuşa başladığı nokta: v2'de yayın kavrama yeri (ok yaydan çıkar), eski sprite'ta gezin `ahead` önü
+  const launch = (ahead: number): Pt => (b.hand ? { ...b.hand } : { x: nock.x + d * ahead, y: nock.y });
+  return { nock, arrow, release, launch };
 }
 
 /** Balistik uçuş: kavis yüksekliği `arc`, burun teğete döner, arkada hava izi. Promise varışta (ok son noktada) çözülür. */
@@ -210,7 +214,7 @@ const arrowshot: V2Vfx = async (c, k) => {
   c.sfx('arrowWhoosh');
   bow.release();
   const dist = Math.abs(aim.x - bow.nock.x);
-  const ang = await fly(c, k, bow.arrow, { x: bow.nock.x + d * 100, y: bow.nock.y }, aim, Math.max(140, dist / 6), { arc: Math.min(130, dist * 0.1) });
+  const ang = await fly(c, k, bow.arrow, bow.launch(100), aim, Math.max(140, dist / 6), { arc: Math.min(130, dist * 0.1) });
   bow.arrow.destroy();
   c.sfx('arrowThunk');
   stickInto(c, k, { x: aim.x + d * 8, y: aim.y }, ang, t.container.depth + 1, 80);
@@ -239,9 +243,9 @@ const pierce: V2Vfx = (c, k) =>
     c.sfx('heavyTwang');
     c.sfx('arrowWhoosh');
     bow.release();
-    void k.ring(c.scene, bow.nock.x + d * 120, bow.nock.y, { r: 46, flat: 1.4, n: 14, colors: ['#ffffff', '#eae3c6'], dur: 220, size: 7, arc: d > 0 ? [-1.2, 1.2] : [Math.PI - 1.2, Math.PI + 1.2] });
+    const start = bow.launch(120);
+    void k.ring(c.scene, start.x, start.y, { r: 46, flat: 1.4, n: 14, colors: ['#ffffff', '#eae3c6'], dur: 220, size: 7, arc: d > 0 ? [-1.2, 1.2] : [Math.PI - 1.2, Math.PI + 1.2] });
     // yol: gezden ilk hücrenin bel hizasına, sonra hücre hücre (izometrik kayma), son hücreden sonra yere dalış
-    const start = { x: bow.nock.x + d * 120, y: bow.nock.y };
     const lanePts = mids.map((m) => ({ x: m.x, y: m.y - lift }));
     const last = lanePts[lanePts.length - 1] ?? aim;
     const beyond = { x: last.x + d * 230, y: last.y + lift * 0.55 };
@@ -334,7 +338,7 @@ const arrowrain: V2Vfx = async (c, k) => {
     const bow = await drawBow(c, k, d, { ms: i === 0 ? 170 : 90, pull: 0.85, arrow: 'arrow', aim: up, size: 86 });
     c.sfx('bowTwang');
     bow.release();
-    void fly(c, k, bow.arrow, { x: bow.nock.x, y: bow.nock.y }, up, 300, { arc: 0 }).then(() => bow.arrow.destroy());
+    void fly(c, k, bow.arrow, bow.launch(0), up, 300, { arc: 0 }).then(() => bow.arrow.destroy());
   }
   c.actor.play('idle');
   c.sfx('arrowShower');
@@ -452,8 +456,9 @@ const aimed: V2Vfx = async (c, k) => {
   c.sfx('heavyTwang');
   c.sfx('arrowWhoosh');
   bow.release();
-  void k.ring(c.scene, bow.nock.x + d * 130, bow.nock.y, { r: 60, flat: 1.5, n: 18, colors: ['#ffffff', '#ffd166'], dur: 240, size: 8, arc: d > 0 ? [-1.3, 1.3] : [Math.PI - 1.3, Math.PI + 1.3] });
-  const ang = await fly(c, k, bow.arrow, { x: bow.nock.x + d * 120, y: bow.nock.y }, aim, 115, { arc: Math.min(90, Math.abs(aim.x - bow.nock.x) * 0.07), trail: 5, trailA: 0.9 });
+  const from = bow.launch(120);
+  void k.ring(c.scene, from.x, from.y, { r: 60, flat: 1.5, n: 18, colors: ['#ffffff', '#ffd166'], dur: 240, size: 8, arc: d > 0 ? [-1.3, 1.3] : [Math.PI - 1.3, Math.PI + 1.3] });
+  const ang = await fly(c, k, bow.arrow, from, aim, 115, { arc: Math.min(90, Math.abs(aim.x - bow.nock.x) * 0.07), trail: 5, trailA: 0.9 });
   bow.arrow.destroy();
   sight.destroy();
   ret.destroy();

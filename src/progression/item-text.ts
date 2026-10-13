@@ -15,6 +15,7 @@ import {
   itemDef,
   partMid,
   partValue,
+  affixBoost,
   rarityDef,
   rolledAffixes,
   slotDef,
@@ -26,7 +27,7 @@ import {
   type RolledAffix,
   type SlotId,
 } from './items';
-import { loadout, type LoadoutSource } from './loadout';
+import { capOf, loadout, type LoadoutSource } from './loadout';
 
 const fmt = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 10) / 10));
 const ATTR_NAME: Record<string, string> = { str: 'STR', dex: 'DEX', int: 'INT', luck: 'LUCK' };
@@ -146,7 +147,7 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   const mid = (id: string): string | null => {
     const a = affixDef(id);
     if (!a) return null;
-    return `[${a.tier}] ${affixText({ def: a, values: a.parts.map((p) => partValue(p, d.ilvl, 0.5)) })}`;
+    return `[${a.tier}] ${affixText({ def: a, values: a.parts.map((p) => partValue(p, d.ilvl, 0.5, affixBoost(d, id))) })}`;
   };
   const out: string[] = [];
   if (d.rarity === 'legendary' && d.affixes) for (const id of d.affixes) out.push(mid(id) ?? id);
@@ -195,6 +196,8 @@ export interface HeroPanelStat {
   value: number;
   /** Gösterim: tam sayı, yüzde ya da 1 ondalık. */
   fmt: 'int' | 'pct' | 'dec';
+  /** Item toplamı tavanda (fazlası kaybolur; arayüz "max" gösterir; Ömer 2026-10-13, itemcaps m1). */
+  capped?: boolean;
 }
 
 /** Kahramanın savaşa gireceği motor statları (temel + item'ler; güç katmanıyla AYNI hesap). Class yoksa null. */
@@ -207,7 +210,8 @@ export function heroStats(src: LoadoutSource): Stats | null {
 export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
   const st = heroStats(src);
   if (!st) return [];
-  return [
+  const capped = new Set<string>(loadout(src).capped);
+  const rows: HeroPanelStat[] = [
     { id: 'hp', label: 'HP', value: st.hp, fmt: 'int' },
     { id: 'mp', label: 'MP', value: st.mp, fmt: 'int' },
     { id: 'str', label: 'STR', value: st.str, fmt: 'dec' },
@@ -225,6 +229,13 @@ export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
     { id: 'hpRegen', label: 'HP+/t', value: st.hpRegen, fmt: 'dec' },
     { id: 'mpRegen', label: 'MP+/t', value: st.mpRegen, fmt: 'int' },
   ];
+  return rows.map((r) => (capped.has(r.id) ? { ...r, capped: true } : r));
+}
+
+/** Panelde satırı olmayan, tavanı dolu statlar (MP bedeli, direnç, toparlanma): "Resist 40%" gibi kısa adlar. */
+export function cappedExtras(src: LoadoutSource): string[] {
+  const NAME: Record<string, string> = { mpCost: 'MP cost reduction', resist: 'Debuff resist', recovery: 'Recovery', initiative: 'Quick start', armorPen: 'Armor penetration', magicPen: 'Magic penetration', damageTaken: 'Damage taken reduction' };
+  return loadout(src).capped.filter((k) => NAME[k]).map((k) => `${NAME[k]} ${capOf(k)}%`);
 }
 
 export function fmtPanel(s: Pick<HeroPanelStat, 'value' | 'fmt'>): string {

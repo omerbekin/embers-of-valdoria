@@ -98,8 +98,10 @@ export const SFX_IDS = Object.keys(SFX);
 /** Genel ses ayarı (debug menüsünden açılıp kapanır). */
 export const audioSettings = {
   enabled: true,
-  /** Ana ses seviyesi 0..1 (ayarlar panelindeki 0-10 kaydırıcı / 10). */
+  /** Ana ses seviyesi 0..1 (Settings > Master Volume, 0-20 adım / 20). */
   volume: 0.7,
+  /** Savaş / skill sesleri 0..1 (Settings > Sound Effects; src/ui/sfx-volume.ts). Master ile çarpılır; arayüz seslerini etkilemez. */
+  sfx: 1,
 };
 
 const noiseBuffers = new WeakMap<BaseAudioContext, AudioBuffer>();
@@ -363,11 +365,11 @@ export function playSfxOn(ctx: AudioContext | undefined, id: string, owner?: str
 
 /** Verilen tarifi çalar (wiki'de v1 | v2 karşılaştırması: seçimden bağımsız belirli sürüm). */
 export function playSfxDef(ctx: AudioContext | undefined, def: SfxDef | undefined): void {
-  if (!audioSettings.enabled || audioSettings.volume <= 0) return;
+  if (!audioSettings.enabled || audioSettings.volume <= 0 || audioSettings.sfx <= 0) return;
   if (!def || !ctx) return;
   void ctx.resume();
   const master = ctx.createGain();
-  master.gain.value = audioData.master * audioSettings.volume;
+  master.gain.value = audioData.master * audioSettings.volume * audioSettings.sfx;
   master.connect(ctx.destination);
   synthSfx(ctx, master, def);
 }

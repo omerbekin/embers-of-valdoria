@@ -381,7 +381,7 @@ describe('ilerleme ve wiki karşılaştırması', () => {
   it('Wiki > Versions: her anahtar için satır; öğeler versioned etiketli; v2 ye özgü yeni ses ayrı listelenir', () => {
     withV2('warrior', { sfx: { testOnlyNewSound: NOISE } }, () => {
       const rows = buildVersions();
-      expect(rows.map((r) => r.key).sort()).toEqual(versionKeys().sort());
+      expect(rows.map((r) => r.key).sort()).toEqual(versionKeys().filter((k) => !content.classes[k]?.testOnly).sort()); // test class'ları Codex'te yok
       for (const r of rows) for (const i of [...r.icons, ...r.vfx, ...r.sounds]) expect(i.tag).toBe('versioned');
       expect(rows.find((r) => r.key === 'warrior')!.extraSounds).toContain('testOnlyNewSound');
     });

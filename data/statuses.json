@@ -82,18 +82,18 @@
     "color": "#b04fa8",
     "stack": "stack",
     "maxStacks": 3,
-    "duration": 3,
+    "duration": 4,
     "refreshOnStack": true,
     "burstOnExpire": true,
     "critDeltaPerStack": -0.03,
     "doom": {
       "scale": "luck",
-      "powerPerStack": 0.5,
+      "powerPerStack": 0.4,
       "damageType": "magic",
       "element": "dark",
       "expireMult": 1
     },
-    "text": "At 3 Omens, Doom strikes. Each new Omen resets the 3-turn timer; when it runs out, the Omens burst into Doom. Misfortune: crit chance -3% per Omen"
+    "text": "At 3 Omens, Doom strikes. Each new Omen resets the 4-turn timer; when it runs out, the Omens burst into Doom. Misfortune: crit chance -3% per Omen"
   },
   "wither": {
     "name": "Withering",

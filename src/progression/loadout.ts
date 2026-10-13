@@ -5,7 +5,7 @@
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes } from '../engine/content';
 import type { Attribute, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
-import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, itemDef, rolledAffixes, type EffectDef, type Equipment, type RolledAffix } from './items';
+import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 
 /** Güç katmanının girdisi: sefer kahramanı (campaign Hero) ve endless kahramanı bu şekle uyar. */
 export interface LoadoutSource {
@@ -24,8 +24,60 @@ export interface LoadoutResult {
   recovery: number;
   /** Takılı item'lerin affix'leri (yuva sırasıyla; arayüz önizlemesi için). */
   affixes: RolledAffix[];
+  /** Etkisiz affix'ler (`<yuva>:<sıra>`): aynı A kademe affix'i aCopies'ten fazla item'deyse en zayıflar (Ömer 2026-10-13, itemcaps m2). */
+  inactive: string[];
+  /** Toplamı tavana ulaşan / aşan statlar (CAP_KEYS; fazlası kaybolur; arayüz "max" gösterir). */
+  capped: CapKey[];
   /** Veride bulunamayan item id'leri (kayıt eski/yeni veriyle uyuşmuyorsa; yok sayılır, oyun çökmez). */
   missing: string[];
+}
+
+/** Tavanlı statlar (items.json > caps) ve affix eşlemesindeki hedefleri (`to`). Ömer 2026-10-13 (itemcaps m1): tavan sert, fazlası kaybolur. */
+export const CAP_TARGETS = {
+  crit: 'mod:critAdd',
+  accuracy: 'mod:accuracyAdd',
+  evasion: 'mod:evasionAdd',
+  spd: 'mod:spdAdd',
+  mpCost: 'fx:mpCostReduce',
+  resist: 'fx:debuffAvoid',
+  recovery: 'prog:recovery',
+  // Eskiden motorda gizli olan sınırlar (Ömer 2026-10-13, itemfix m4; aynı değerler, motor da data'dan okur: src/engine/item-caps.ts)
+  initiative: 'fx:startCharge',
+  armorPen: 'fx:armorPen',
+  magicPen: 'fx:magicPen',
+  damageTaken: 'fx:damageTakenReduce',
+} as const;
+export type CapKey = keyof typeof CAP_TARGETS;
+/** Tavan (oyun birimi: yüzde puan; spd düz). Tanımsızsa tavan yok. */
+export const capOf = (k: CapKey): number | undefined => (ITEMS.caps as Record<string, number | undefined>)[k];
+/** Affix'in tavanlı hedefleri. */
+export const affixCapKeys = (def: { parts: Array<{ to: string }> }): CapKey[] =>
+  (Object.keys(CAP_TARGETS) as CapKey[]).filter((k) => def.parts.some((p) => p.to === CAP_TARGETS[k]));
+
+/**
+ * Aynı A kademe affix'i bir kahramanda en çok `caps.aAffixCopies` (2) item'de sayılır (Ömer 2026-10-13, itemcaps m2): fazlasında en güçlü
+ * örnekler (affix IP'si; eşitlikte yuva sırası) işler, gerisi etkisizdir. Dönüş: etkisiz affix anahtarları `<yuva>:<affix sırası>`.
+ */
+export function inactiveAffixes(equipment: Partial<Equipment> | undefined, classId?: string): Set<string> {
+  const max = ITEMS.caps.aAffixCopies;
+  const out = new Set<string>();
+  if (!equipment || max === undefined) return out;
+  const byId = new Map<string, Array<{ key: string; ip: number }>>();
+  for (const slot of SLOT_IDS) {
+    const inst = equipment[slot];
+    if (!inst || !itemDef(inst.id)) continue;
+    rolledAffixes(inst, classId).forEach((a, i) => {
+      if (a.tier !== 'A') return;
+      const list = byId.get(a.id) ?? [];
+      list.push({ key: `${slot}:${i}`, ip: affixIP(a.id, a.values) });
+      byId.set(a.id, list);
+    });
+  }
+  for (const list of byId.values()) {
+    if (list.length <= max) continue;
+    list.map((x, n) => ({ ...x, n })).sort((a, b) => b.ip - a.ip || a.n - b.n).slice(max).forEach((x) => out.add(x.key));
+  }
+  return out;
 }
 
 const ATTRS: Attribute[] = ['str', 'dex', 'int', 'luck'];
@@ -96,6 +148,7 @@ export function loadout(src: LoadoutSource): LoadoutResult {
   const acc = { recovery: 0 };
   const all: RolledAffix[] = [];
   const primary = classes[src.class]?.primary;
+  const off = inactiveAffixes(src.equipment, src.class);
   for (const slot of SLOT_IDS) {
     const inst = src.equipment?.[slot];
     if (!inst) continue;
@@ -103,21 +156,25 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       missing.push(inst.id);
       continue;
     }
-    for (const a of rolledAffixes(inst, src.class)) {
+    for (const [ai, a] of rolledAffixes(inst, src.class).entries()) {
       all.push(a);
+      if (off.has(`${slot}:${ai}`)) continue;
       a.def.parts.forEach((p, i) => applyPart(p.to, a.values[i] ?? 0, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(a.x ? { x: a.x } : {}), ...(p.below !== undefined ? { below: p.below } : {}), ...(p.form ? { form: p.form } : {}) }));
     }
   }
-  const caps = ITEMS.caps;
-  const cap = (o: Bag, k: string, max: number | undefined) => {
-    if (max !== undefined && typeof o[k] === 'number') o[k] = Math.min(o[k] as number, max);
-  };
-  cap(mods, 'critAdd', caps.crit / 100);
-  cap(mods, 'accuracyAdd', caps.accuracy / 100);
-  cap(mods, 'evasionAdd', caps.evasion / 100);
-  cap(mods, 'spdAdd', caps.spd);
-  cap(fx, 'mpCostReduce', caps.mpCost !== undefined ? caps.mpCost / 100 : undefined);
-  cap(fx, 'debuffAvoid', caps.resist !== undefined ? caps.resist / 100 : undefined);
+  // Tavanlar (items.json > caps; sert: fazlası kaybolur). Tavana ulaşan statlar `capped` ile arayüze (Ömer 2026-10-13, itemcaps m1)
+  const capped: CapKey[] = [];
+  const bags: Record<string, Bag> = { mod: mods, fx, prog: acc as unknown as Bag };
+  for (const k of Object.keys(CAP_TARGETS) as CapKey[]) {
+    const c = capOf(k);
+    if (c === undefined) continue;
+    const max = k === 'spd' ? c : c / 100;
+    const [kind, key] = CAP_TARGETS[k].split(':') as [string, string];
+    const o = bags[kind]!;
+    if (typeof o[key] !== 'number') continue;
+    if ((o[key] as number) >= max - 1e-9) capped.push(k);
+    o[key] = Math.min(o[key] as number, max);
+  }
   tidy(mods);
   tidy(fx);
   // Legendary etkileri (madde 296)
@@ -128,8 +185,45 @@ export function loadout(src: LoadoutSource): LoadoutResult {
     ...(Object.keys(effects).length ? { itemEffects: effects } : {}),
     recovery: r4(acc.recovery),
     affixes: all,
+    inactive: [...off],
+    capped,
     missing,
   };
+}
+
+/**
+ * İpucu bağlamı (Ömer 2026-10-13, itemcaps): örnek kahramanın `slot`una takılıyken (takılı değilse takılmış varsayılır; verilmezse varsayılan
+ * yuva) hangi affix'leri etkisiz (sıra numarası) ve kahramanın hangi tavanlı statları dolu. Kahraman takamıyorsa null.
+ */
+export function affixContext(src: LoadoutSource, inst: ItemInstance, slot?: SlotId): { inactive: Set<number>; capped: Set<CapKey> } | null {
+  const d = itemDef(inst.id);
+  if (!d || !canEquip(src.class, d)) return null;
+  const eq = (src.equipment ?? {}) as Equipment;
+  const at = slot ?? (SLOT_IDS.find((k) => eq[k]?.uid !== undefined && eq[k]?.uid === inst.uid) ?? defaultEquipSlot(eq, d));
+  const equipment = eq[at]?.uid !== undefined && eq[at]?.uid === inst.uid ? eq : (equipInto(eq, inst, at).equipment as Equipment);
+  const l = loadout({ ...src, equipment });
+  const inactive = new Set(l.inactive.filter((k) => k.startsWith(`${at}:`)).map((k) => Number(k.slice(at.length + 1))));
+  return { inactive, capped: new Set(l.capped) };
+}
+
+/**
+ * Bir örneğin `slot`a takılmasının A affix sınırı yüzünden kaybettirdiği değer (Equip best / kazanç; 2'den fazla aynı A affix'te etkisiz kalan
+ * örneklerin değeri sayılmaz). `value(a)` affix başına değer (IP x sınıf uyumu). Yuva boşken ve örnekle dolu haldeki etkisiz değer farkı.
+ */
+export function inactivePenalty(classId: string, equipment: Partial<Equipment>, inst: ItemInstance | null | undefined, slot: SlotId, value: (a: RolledAffix) => number): number {
+  const sum = (eq: Partial<Equipment>): number => {
+    const off = inactiveAffixes(eq, classId);
+    if (!off.size) return 0;
+    let t = 0;
+    for (const k of SLOT_IDS) {
+      const it = eq[k];
+      if (it && itemDef(it.id)) rolledAffixes(it, classId).forEach((a, i) => off.has(`${k}:${i}`) && (t += value(a)));
+    }
+    return t;
+  };
+  const without = { ...equipment, [slot]: null } as Partial<Equipment>;
+  if (!inst) return 0;
+  return Math.round((sum({ ...without, [slot]: inst }) - sum(without)) * 1000) / 1000;
 }
 
 /** Takılı item'lerin toparlanma oranı (Recovery affix'i; sefer / Endless savaş sonrası, yalnızca takan). */

@@ -83,8 +83,8 @@ describe('poz kütüphanesi verisi', () => {
 
 describe('v2 poz takımı: tutuşa göre seçim (warrior_v2, Pose Tester\'lar)', () => {
   const def = POSES.classes['warrior_v2']!;
-  it('13 ortak poz: silah pozları tek el (…1) ve çift el (…2), ortaklar tek; 24 kare', () => {
-    expect(Object.keys(def.poses)).toHaveLength(24);
+  it('13 ortak poz: silah pozları tek el (…1) ve çift el (…2), ortaklar tek + yay (bow_shot, bow_sky); 26 kare', () => {
+    expect(Object.keys(def.poses)).toHaveLength(26);
     for (const n of ['idle', 'step', 'slash', 'overhead', 'thrust', 'guard']) {
       expect(resolvePose(def, n, 'one')).toBe(`${n}1`);
       expect(resolvePose(def, n, 'two')).toBe(`${n}2`);
@@ -94,10 +94,17 @@ describe('v2 poz takımı: tutuşa göre seçim (warrior_v2, Pose Tester\'lar)',
     for (const n of ['raise', 'channel', 'point', 'throw', 'hit', 'kneel']) for (const g of ['one', 'two'] as const) expect(resolvePose(def, n, g)).toBe(n);
   });
 
-  it('grip one / silahsız -> tek el; two -> çift el; bow ve charm -> şimdilik tek el', () => {
+  it('grip one / silahsız -> tek el; two -> çift el; bow -> yay takımı (tek el + bow_shot / bow_sky); charm -> tek el', () => {
     expect(poseGrip(def, undefined)).toBe('one');
     expect(poseGrip(def, 'two')).toBe('two');
-    expect(poseGrip(def, 'bow')).toBe('one');
+    expect(poseGrip(def, 'bow')).toBe('bow');
+    // yatay atış (shot) ve göğe atış (sky): yayda kendi kareleri, başka tutuşta thrust / raise
+    expect(resolvePose(def, 'shot', 'bow')).toBe('bow_shot');
+    expect(resolvePose(def, 'thrust', 'bow')).toBe('bow_shot');
+    expect(resolvePose(def, 'sky', 'bow')).toBe('bow_sky');
+    expect(resolvePose(def, 'shot', 'one')).toBe('thrust1');
+    expect(resolvePose(def, 'shot', 'two')).toBe('thrust2');
+    expect(resolvePose(def, 'sky', 'two')).toBe('raise');
     expect(poseGrip(def, 'charm')).toBe('one');
     expect(statePose(def, 'idle', 'two')).toBe('idle2');
     expect(statePose(def, 'idle', 'bow')).toBe('idle1');
@@ -121,6 +128,11 @@ describe('v2 poz takımı: tutuşa göre seçim (warrior_v2, Pose Tester\'lar)',
     expect(two).toContain('spin2b');
     expect(two).toContain('point');
     expect(gripFrames(def, 'charm')).toEqual(one);
+    expect(one).not.toContain('bow_shot');
+    const bow = gripFrames(def, 'bow');
+    expect(bow).toHaveLength(16); // 8 tek el karesi (thrust1 yerine bow_shot) + 2 yay + 6 ortak
+    expect(bow).toEqual(expect.arrayContaining(['bow_shot', 'bow_sky', 'idle1']));
+    expect(bow).not.toContain('thrust1');
     // her karede ikinci el noktası (kalkan / ikinci hançer / kabzadaki el)
     for (const [n, p] of Object.entries(def.poses)) expect(p.offhand, n).toBeDefined();
   });
@@ -207,7 +219,9 @@ describe('Pose Tester I ... XI (gizli debug class\'ları, v2 pozlar)', () => {
     const poses = new Set<string>();
     const covered = new Set<string>();
     for (const id of ids) {
-      expect(poseClass(id)).toBe(POSES.classes['warrior_v2']);
+      // kendi v2 gövdesi varsa o (tools/make-poses-v2.mjs --class=<sınıf>), yoksa Warrior v2
+      const own = `${realOf[ids.indexOf(id)]}_v2`;
+      expect(poseClass(id)).toBe(POSES.classes[POSES.classes[own] ? own : 'warrior_v2']);
       for (const sid of content.classes[id]!.skills) {
         const s = content.skills[sid]!;
         const real = content.skills[s.artOf!]!;
@@ -235,7 +249,8 @@ describe('Pose Tester I ... XI (gizli debug class\'ları, v2 pozlar)', () => {
     for (const p of ['slash', 'overhead', 'thrust', 'spin', 'step', 'guard', 'raise', 'channel', 'point', 'throw']) expect(poses, p).toContain(p);
     expect(skillPoses('pose_tester_5', content.skills['pt_backstab'])).toEqual(['thrust']);
     expect(skillPoses('pose_tester_6', content.skills['pt_fire_bolt'])).toEqual(['thrust']); // asa öne uzanır, ok asanın ucundan (2026-10-12 denetim)
-    expect(skillPoses('pose_tester_4', content.skills['pt_quick_shot'])).toEqual(['thrust']); // yay atışı artık fırlatma değil
+    expect(skillPoses('pose_tester_4', content.skills['pt_quick_shot'])).toEqual(['shot']); // yayda bow_shot (kiriş eli yanakta)
+    expect(skillPoses('pose_tester_4', content.skills['pt_arrow_rain'])).toEqual(['sky']); // yayda bow_sky
     expect(skillPoses('pose_tester_2', content.skills['pt_guard'])).toEqual(['guard']); // gerçek koruma pozu (eski kodla savunma hareketi yok)
     expect(POSES.braceSkills ?? []).not.toContain('pt_guard');
   });
@@ -282,6 +297,12 @@ describe('v2 aile x poz yerleşimi (itemPoses; 2026-10-12 poz denetimi, yeni çi
     }
     for (const pose of ['hit', 'kneel']) expect(poseItems(def, pose, pick).find((p) => p.slot === 'off')!.back, pose).toBe(true);
     expect(POSES.weapons['shields']!.looks['tower']!.length).toBeLessThanOrEqual(165);
+  });
+
+  it('yay: bow_shot öne uzanmış elde dik, bow_sky göğe eğik; ikinci el (kiriş eli) yanakta, kavrayan elin gerisinde', () => {
+    expect(itemPlacement(def, 'bow_shot', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBe(0);
+    expect(itemPlacement(def, 'bow_sky', { family: 'bows', look: 'hunting' }, 'main')!.angle).toBeLessThan(-20);
+    for (const pose of ['bow_shot', 'bow_sky']) expect(def.poses[pose]!.offhand!.x, pose).toBeLessThan(def.poses[pose]!.anchor.x - 100);
   });
 
   it("yay: thrust1 öne uzanmış elde dik (kiriş çekişi), raise'de göğe eğik", () => {

@@ -17,6 +17,7 @@ import {
   isPlanError,
   offhandBlocker,
   planEquip,
+  cappedExtras,
   classWeaponFamilies,
   equipDiff,
   fmtPanel,
@@ -172,6 +173,13 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     ico.alt = '';
     ico.draggable = false;
     row.append(ico, el('span', 'gr-stat-k', p.label), el('span', 'gr-stat-v', fmtPanel(p)));
+    // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
+    if (p.capped) {
+      row.classList.add('capped');
+      const cap = el('span', 'gr-stat-cap', 'max');
+      cap.title = 'Capped: extra from items is wasted';
+      row.append(cap);
+    }
     const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
     row.append(el('span', `gr-stat-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText));
     if (dv) {
@@ -181,6 +189,8 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     sg.append(row);
   }
   mid.append(el('div', 'gr-sec', 'Stats'), sg);
+  const extraCaps = cappedExtras(hero);
+  if (extraCaps.length) mid.append(el('div', 'gr-cap-note', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
   root.append(mid);
   // --- skill'ler: savaş HUD'ının skill çubuğuyla AYNI bileşen (src/ui/skill-bar.ts; Ömer 2026-10-11 "evrensel"); sol kenardan başlar
   if (stats) {

@@ -3341,8 +3341,14 @@ export class BattleScene extends Phaser.Scene {
     if (hasBackground(this, id)) {
       const img = (this.bgImage = this.add.image(W / 2, H / 2, backgroundKey(id)));
       // Cover the screen by height; the floor line is lifted above the back row's feet per background (battle-layout.json > backgrounds.floor)
-      const place = backgroundPlacement(id, img.width, img.height, W, H);
-      img.setY(place.y).setScale(place.scale);
+      // Görünür sahne genişliğine göre (geniş ekran / telefon yatay) yerleşir; boyut değişince yeniden
+      const place = () => {
+        if (this.bgImage !== img) return;
+        const p = backgroundPlacement(id, img.width, img.height, Math.max(W, stageView.right - stageView.left), H);
+        img.setPosition(W / 2, p.y).setScale(p.scale);
+      };
+      place();
+      onStageResize(this, place);
       this.backgroundId = id;
     } else {
       this.cameras.main.setBackgroundColor(colors.fallbackBackground);

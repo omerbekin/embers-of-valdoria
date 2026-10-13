@@ -360,6 +360,30 @@ export function latestSave(kv: KV | null, slot?: number): SaveEntry | null {
   return best ? pick(best.i) : null;
 }
 
+/** Anahtar sırasından bağımsız JSON (kayıttan okunan durumla bellekteki durumu karşılaştırmak için). */
+function stableJson(x: unknown): string {
+  if (Array.isArray(x)) return `[${x.map(stableJson).join(',')}]`;
+  if (x && typeof x === 'object')
+    return `{${Object.keys(x)
+      .filter((k) => (x as Record<string, unknown>)[k] !== undefined)
+      .sort()
+      .map((k) => `${JSON.stringify(k)}:${stableJson((x as Record<string, unknown>)[k])}`)
+      .join(',')}}`;
+  return JSON.stringify(x) ?? 'null';
+}
+
+/**
+ * Son kayıttan beri kaydedilmemiş ilerleme var mı (sefer haritası ◂ Back uyarısı, Ömer 2026-10-12). Ironman her adımda kendiliğinden
+ * kaydettiği için hiçbir zaman true değildir. Görülen ipuçları (`tipsSeen`) ilerleme sayılmaz. Yuvada bu seferin kaydı yoksa true.
+ */
+export function hasUnsavedProgress(kv: KV | null, s: CampaignState): boolean {
+  if (s.mode === 'ironman') return false;
+  const last = latestSave(kv, s.slot);
+  if (!last || last.campaignId !== s.campaignId) return true;
+  const strip = (x: CampaignState) => ({ ...x, tipsSeen: [] });
+  return stableJson(strip(last.state)) !== stableJson(strip(s));
+}
+
 /** Bir yuvayı "son oynanan" yapar (yükleme / Continue). */
 export function markPlayed(kv: KV | null, slot: number, now: string = new Date().toISOString()): void {
   const { file } = readSaves(kv);

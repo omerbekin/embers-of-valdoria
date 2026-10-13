@@ -36,7 +36,7 @@ const atBattle = (node = '5A', seed = 42): CampaignState => {
 
 describe('güç katmanı: boş yükleme', () => {
   it('hiçbir şey takılı değilse modifiers yok', () => {
-    expect(loadout({ class: 'warrior', level: 1, equipment: emptyEquipment() })).toEqual({ recovery: 0, affixes: [], missing: [] });
+    expect(loadout({ class: 'warrior', level: 1, equipment: emptyEquipment() })).toEqual({ recovery: 0, affixes: [], inactive: [], capped: [], missing: [] });
     expect(loadout({ class: 'warrior' }).modifiers).toBeUndefined();
   });
 
@@ -73,13 +73,13 @@ describe('güç katmanı: item -> modifiers', () => {
     const r = loadout({ class: 'warrior', equipment: eq });
     const m = r.modifiers!;
     expect(m.elemDamageAdd!.physical).toBeGreaterThan(0);
-    expect(m.attrAdd).toEqual({ str: 4 }); // a_primary: warrior STR (item seviyesi 9: 4)
+    expect(m.attrAdd).toEqual({ str: 3 }); // a_primary: warrior STR (item seviyesi 9, adım 1: 3)
     expect(m.hpAdd).toBe(r.affixes.filter((a) => a.id === 'c_hp').reduce((x, a) => x + a.values[0]!, 0)); // iki item'den toplanır
     expect(m.critAdd).toBe(r.affixes.find((a) => a.id === 'b_crit')!.values[0]! / 100);
     expect(m.magicArmorAdd).toBe(r.affixes.find((a) => a.id === 'b_marmor')!.values[0]!);
-    // tavan: 4 eldivende kritik (test için aynı yuvaya değil, farklı yuvalara zorlanmış affix'ler) %15'i aşmaz
-    const crit = loadout({ class: 'warrior', equipment: { ...emptyEquipment(), weapon: { uid: 'a', id: 'arming_sword', rolls: roll('epic', ['b_crit', 1], ['a_keen', 1]) }, gloves: { uid: 'b', id: 'keen_gauntlets', rolls: roll('epic', ['b_crit', 1], ['a_keen', 1]) } } });
-    expect(crit.modifiers!.critAdd).toBe(0.15);
+    // tavan: 4 eldivende kritik (test için aynı yuvaya değil, farklı yuvalara zorlanmış affix'ler) items.json > caps.crit'i (%25, Ömer 2026-10-12) aşmaz
+    const crit = loadout({ class: 'warrior', equipment: { ...emptyEquipment(), weapon: { uid: 'a', id: 'arming_sword', rolls: { ...roll('epic', ['b_crit', 1], ['a_keen', 1]), ilvl: 30 } }, gloves: { uid: 'b', id: 'keen_gauntlets', rolls: { ...roll('epic', ['b_crit', 1], ['a_keen', 1]), ilvl: 30 } } } });
+    expect(crit.modifiers!.critAdd).toBe(0.25);
   });
 
   it('veride olmayan item yok sayılır (eski kayıt çökmez)', () => {
