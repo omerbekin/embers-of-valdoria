@@ -57,5 +57,5 @@
 - Debug > Campaign > Tutorial: Tutorials on/off, Reset tutorials, "Trigger a lesson" (her ders + yenilgi ipucu).
 
 ## Gereken sanat
-- Mentor portresi (Garrick, yaşlı sınır komutanı; 256x256, diğer avatarlarla aynı stil): `assets/avatars/mentor.png`, sonra `data/tutorial.json > mentor.avatar = "mentor"`. Şimdilik yer tutucu `shieldwarden`.
+- Mentor portresi (Garrick, yaşlı sınır komutanı; 256x256, diğer avatarlarla aynı stil): `assets/avatars/mentor.png`, sonra `data/tutorial.json > mentor.avatar = "mentor"`. Hazır (2026-10-14): asıl `assets/source/mentor/garrick.png`, yana bakan sürüm (öne bakan ilk deneme reddedildi).
 - (İsteğe bağlı) Codex > Lessons ikonu: şimdilik piksel `book`.

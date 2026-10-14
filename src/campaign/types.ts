@@ -1,6 +1,7 @@
 /**
  * Sefer (campaign) tipleri. Saf TypeScript: Phaser/DOM yok, Node'da test edilir (docs/design/campaign/campaign.md).
  */
+import type { ReplayAction } from '../endless/replay';
 
 export type NodeType = 'battle' | 'elite' | 'boss' | 'town' | 'event' | 'treasure' | 'rest' | 'merchant';
 export type EdgeStyle = 'solid' | 'dashed';
@@ -277,6 +278,25 @@ export interface CampaignState {
    * (ya da kasabası) bitince açılır ve hediye ile başlar. Kayıt sürümü 7 (src/campaign/save.ts) eski kayıtları taşır.
    */
   valor?: number;
+  /**
+   * Duraklatılmış savaş (Ömer 2026-10-14, Endless 0.7.8.1 ile aynı kural): savaş menüsü > Retreat to Map savaşı SIFIRLAMAZ, duraklatır.
+   * Bu düğümün savaşı yeniden girilince aynı tura döner (src/campaign/suspend.ts). Varken düğümden ayrılmak, Gear / Formation / Valor
+   * diriltmesi kilitli. Zafer ya da yenilgi siler. İsteğe bağlı alan (kayıt sürümü değişmez); bozuk kayıt okunurken atılır.
+   */
+  suspended?: CampaignSuspended;
+}
+
+/** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */
+export interface CampaignSuspended {
+  node: string;
+  seed: number;
+  actions: ReplayAction[];
+  /** Kaydedildiği andaki battle.turnsTaken. */
+  turn: number;
+  /** Kaydedildiği andaki stateHash (devamda doğrulama). */
+  hash: string;
+  /** Savaş kurulumunun parmak izi (suspend.ts > resumeKey): takım/ekipman/Valor değiştiyse kayıt kullanılmaz. */
+  setup: string;
 }
 
 /** Sefer tüccarının tezgâhı (src/campaign/merchant.ts). */

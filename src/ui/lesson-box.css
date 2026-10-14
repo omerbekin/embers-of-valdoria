@@ -207,7 +207,37 @@ html.compact .tut-ok.el-btn {
   }
 }
 
+/* Zorunlu adım kilidi (ilk savaş; src/game/battle-tutorial.ts > setPhase): beklenmeyen düğmeler soluk, basılınca kutu sallanır */
+html[data-tut-lock='next'] .bh-skills [data-skill],
+html[data-tut-lock='skill'] .bh-skills [data-skill]:not(:first-child),
+html[data-tut-lock='target'] .bh-skills [data-skill]:not(:first-child),
+html[data-tut-lock] .bh-globs [data-global] {
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+.tut-box.tut-nudge {
+  animation: tut-nudge 0.42s ease-in-out;
+}
+
+@keyframes tut-nudge {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  20%,
+  60% {
+    transform: translateX(-8px);
+  }
+  40%,
+  80% {
+    transform: translateX(8px);
+  }
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .tut-box.tut-nudge,
   .tut-focus,
   .tut-await {
     animation: none;

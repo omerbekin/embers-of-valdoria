@@ -31,6 +31,9 @@ import {
   leaderOf,
   markTipSeen,
   moveHero,
+  pausedLock,
+  suspendedOf,
+  PAUSED_BROKEN,
   moveTo,
   newCampaign,
   nextStep,
@@ -78,7 +81,7 @@ import { placeArt } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { H, W, bodyText, classCard, crown, hpBar, openModal, type Modal } from '../campaign-ui';
-import { MAP_SCENE, MENU_SCENE, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
+import { MAP_SCENE, MENU_SCENE, checkPaused, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
 import { classAvatar, classLogoBadge, ensureGlow } from '../menu-ui';
 import { sortByPrimary } from '../class-order';
 import { debugState } from '../debug-state';
@@ -1150,6 +1153,9 @@ export class CampaignMapScene extends Phaser.Scene {
     const tw = w - T - 20;
     L.add(fitW(elText(this, tx, cy + 10, n.name, 19, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), tw));
     L.add(fitW(elBody(this, tx, cy + 34, n.subtitle || TYPE_LABEL[n.type], 16, EL.NOTE).setOrigin(0, 0.5), tw));
+    // Duraklatılmış savaş (Retreat to Map): düğüme dokununca aynı turdan sürer
+    const paused = suspendedOf(s);
+    if (paused) L.add(fitW(elBody(this, tx, cy + 56, `Battle paused · turn ${paused.turn + 1}`, 15, EL.BAD).setOrigin(0, 0.5), tw));
     // Yönerge satırı yok (Ömer 2026-10-13: "Click a glowing node to march" vb. bariz ipuçları kaldırıldı)
   }
 
@@ -1393,7 +1399,7 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Gear ekranını açar (kahraman paneli / takım sütunu / kasaba / Spoils / teslim kartından). Kapanınca HUD yenilenir, `after` çağrılır. */
   openGear(hero?: string, tutorial = false, after?: () => void): void {
     const root = document.getElementById('ui-root');
-    if (!root) return;
+    if (!root || this.pausedBlocks()) return;
     if (legendaryPreviewWanted()) setState(grantAllLegendaries(this.s)); // ?legendary=1 önizlemesi (madde 296)
     openGearScreen(root, {
       get: () => this.s,
@@ -1874,11 +1880,12 @@ export class CampaignMapScene extends Phaser.Scene {
     if (v === 'fog') return;
     const step = nextStep(this.s);
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
-    if (id === this.s.at && step.kind === 'battle') return this.confirmBattle(id, false, () => void startCampaignBattle(this));
+    if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, false, () => void startCampaignBattle(this));
     if (id === this.s.at && this.actionHere()) return this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
     if (id === this.s.at && step.kind === 'move') {
       const k = revisitKind(this.s);
+      if (this.pausedBlocks()) return;
       if (k === 'rest') return this.restModal(id, true);
       if (k) return this.commit(revisitNode(this.s));
     }
@@ -1900,6 +1907,7 @@ export class CampaignMapScene extends Phaser.Scene {
    * düğüm için "Take this road?"; tek yol ve savaş yoksa doğrudan yürür (kasaba / dinlenme / tüccar / olay varışta açılır).
    */
   private chooseRoad(id: string): void {
+    if (this.pausedBlocks()) return;
     const step = nextStep(this.s);
     if (step.kind !== 'move' || !step.options.includes(id)) return;
     const fork = step.options.length > 1;
@@ -1942,6 +1950,45 @@ export class CampaignMapScene extends Phaser.Scene {
       ],
       onDismiss: () => this.closeModal(),
     });
+  }
+
+  /**
+   * Duraklatılmış savaş (Ömer 2026-10-14, Retreat to Map): düğüme dokunmak "Resume battle?" sorar, savaş aynı turdan sürer. Kayıt
+   * doğrulanamazsa (veri değişti / bozuk) silinir, not gösterilir ve normal "Start battle?" onayı açılır (savaş baştan).
+   */
+  private resumeBattle(id: string): void {
+    if (!checkPaused()) {
+      this.toast(PAUSED_BROKEN);
+      this.renderHud();
+      return this.confirmBattle(id, false, () => void startCampaignBattle(this));
+    }
+    const n = node(this.map, id);
+    const turn = (suspendedOf(this.s)?.turn ?? 0) + 1;
+    this.modal = openModal(this, this.ui, {
+      title: 'Resume battle?',
+      subtitle: `${n.name}  ·  ${n.subtitle || TYPE_LABEL[n.type]}`,
+      text: `The battle is paused at turn ${turn}. It resumes where you left it.`,
+      fit: true,
+      buttons: [
+        { label: 'Cancel', run: () => this.closeModal() },
+        {
+          label: 'Resume Battle',
+          primary: true,
+          run: () => {
+            this.closeModal();
+            startCampaignBattle(this);
+          },
+        },
+      ],
+      onDismiss: () => this.closeModal(),
+    });
+  }
+
+  /** Duraklatılmış savaş varken kilitli eylem: notu gösterir, true döner (çağıran durur). */
+  private pausedBlocks(): boolean {
+    const lock = pausedLock(this.s);
+    if (lock) this.toast(lock);
+    return !!lock;
   }
 
   /** Yürüyüş. `fight`: varınca (onaylanmış) savaş kendiliğinden başlar; araya bekleyen kart / hikâye girerse oyuncu düğüme dokunur. */
@@ -2062,6 +2109,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Dizilim penceresi (sürükle ya da dokun-dokun; Auto arrange). Kapanınca harita kalır (önceki kart yeniden açılmaz). */
   private openFormation(): void {
+    if (this.pausedBlocks()) return;
     this.closeModal();
     this.sideOpen = true;
     this.modal = openFormation(this, this.ui, {

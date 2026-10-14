@@ -209,6 +209,16 @@ export function showMentorLine(title: string, text: string, onClose?: () => void
   return true;
 }
 
+/** Kilitli girdiye basıldı: açık kutu kısa sallanır + hata sesi (zorunlu adım başka eylem bekliyor). */
+export function nudgeLesson(): void {
+  const box = current?.root.querySelector<HTMLElement>('.tut-box');
+  if (!box) return;
+  box.classList.remove('tut-nudge');
+  void box.offsetWidth; // animasyon baştan başlasın
+  box.classList.add('tut-nudge');
+  uiSound('error');
+}
+
 export function lessonBoxOpen(): boolean {
   return !!current;
 }

@@ -4,8 +4,8 @@
   "mentor": {
     "name": "Garrick",
     "title": "Old Border Commander",
-    "_avatar": "YER TUTUCU portre (assets/avatars/<ad>.png); gerçek mentor portresi gelince assets/avatars/mentor.png konur ve burası 'mentor' olur.",
-    "avatar": "shieldwarden"
+    "_avatar": "Garrick portresi (2026-10-14, ChatGPT): asıl assets/source/mentor/garrick.png, kafa kırpması assets/avatars/mentor.png (256x256, saydam).",
+    "avatar": "mentor"
   },
   "opening": {
     "node": "1",

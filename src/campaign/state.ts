@@ -18,6 +18,11 @@ import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRule
  */
 
 export const clone = (s: CampaignState): CampaignState => JSON.parse(JSON.stringify(s)) as CampaignState;
+
+/** Duraklatılmış savaş (src/campaign/suspend.ts) varken haritada yasak eylemlerin notu. */
+export const PAUSED_LOCK = 'Finish the paused battle first';
+/** Duraklatılmış savaş varken yola çıkmak, Formation, Gear, Valor diriltmesi kilitli: nedeni (yoksa null). */
+export const pausedLock = (s: CampaignState | null): string | null => (s?.suspended ? PAUSED_LOCK : null);
 const key = (nodeId: string, kind: StepKind) => `${nodeId}:${kind}`;
 export const mapOf = (s: CampaignState): CampaignMap => getMap(s.mapId);
 
@@ -178,6 +183,7 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
 
 /** Tüm kadroyu otomatik dizilime göre yeniden yerleştirir. */
 export function autoFormation(s: CampaignState): CampaignState {
+  if (pausedLock(s)) return s;
   const t = clone(s);
   t.active = Array.from({ length: CELL_COUNT }, () => '');
   const slots = defaultSlots(t.roster.map((h) => h.class));
@@ -190,6 +196,7 @@ export function autoFormation(s: CampaignState): CampaignState {
 
 /** Party ekranı: bir karakteri hücreye taşır (hücre doluysa yer değiştirir). */
 export function moveHero(s: CampaignState, heroId: string, cell: number): CampaignState {
+  if (pausedLock(s)) return s;
   const t = clone(s);
   const from = t.active.indexOf(heroId);
   if (from < 0 || cell < 0 || cell >= t.active.length) return s;
@@ -216,6 +223,8 @@ export const valorUnlocked = (s: CampaignState): boolean => s.valor !== undefine
 /** Savaş dışı diriltme yapılabilir mi (açık, yeterli Valor, düşmüş kahraman)? Değilse nedeni. */
 export function valorReviveBlocked(s: CampaignState, heroId: string): string | null {
   if (!valorUnlocked(s)) return 'Valor is not known yet';
+  const lock = pausedLock(s);
+  if (lock) return lock;
   const h = heroById(s, heroId);
   if (!h || !isFallen(h)) return 'This hero has not fallen';
   if (!canReviveOutside(valorRules, s.valor!)) return `Needs ${valorRules.revive.outsideCost} Valor (you have ${s.valor})`;
@@ -278,6 +287,7 @@ export function revisitKind(s: CampaignState): 'town' | 'merchant' | 'rest' | nu
  * Kamp yeniden açılmaz (ücretsiz dinlenme ikinci kez iyileştirmesin): kampta yalnızca diriltme (reviveAtCamp) açık kalır; durum aynen döner.
  */
 export function revisitNode(s: CampaignState): CampaignState {
+  if (pausedLock(s)) return s;
   const k = revisitKind(s);
   if (k !== 'town' && k !== 'merchant') return s;
   const t = clone(s);
@@ -530,6 +540,7 @@ export function rulesFor(s: Pick<CampaignState, 'difficulty'>): CampaignRules {
 
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
+  delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
   if (!outcome.victory) {
     t.stats.defeats++;
     return t;
@@ -583,6 +594,7 @@ function healAll(s: CampaignState, ratio: number): void {
 export function moveTo(s: CampaignState, to: string): CampaignState {
   const step = nextStep(s);
   if (step.kind !== 'move' || !step.options.includes(to)) throw new Error(`Cannot move to ${to} now`);
+  if (pausedLock(s)) throw new Error(PAUSED_LOCK);
   const t = clone(s);
   t.at = to;
   t.path.push(to);

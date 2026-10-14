@@ -12,6 +12,7 @@ import { uiSound, worldSound } from './ui-sound';
 import './gear.css';
 import { instanceColor, instanceRarity, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { lockInput, unlockInput } from './input-lock';
+import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import type { Stats } from '../engine';
@@ -572,6 +573,11 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     overlay.append(w);
     overlay.classList.add('mw-on');
     welcomeEl = w;
+    // Kartın dışına (Odo, arkadaki dükkân, boş alan) dokununca karşılama kapanır = "Browse wares" (Ömer 2026-10-14, zemin kuralı)
+    const off = dismissOnBackdrop(overlay, card, () => {
+      off();
+      dismissWelcome();
+    });
   }
   renderAll();
   return close;

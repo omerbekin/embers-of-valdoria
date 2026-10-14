@@ -1,6 +1,7 @@
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, stopNumber } from './state';
+import { validCampaignSuspended } from './suspend';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { valorRules } from '../engine/content';
 import { clampValor } from '../engine/valor';
@@ -132,6 +133,8 @@ function upgradeState(s: CampaignState): void {
   if (pl !== undefined && !(pl && typeof pl.node === 'string' && Array.isArray(pl.items) && typeof pl.gold === 'number' && (pl.left === undefined || (Array.isArray(pl.left) && pl.left.every((x) => typeof x === 'string')))))
     delete (s as { pendingLoot?: unknown }).pendingLoot;
   s.gold = typeof s.gold === 'number' && Number.isFinite(s.gold) && s.gold >= 0 ? s.gold : 0;
+  // Duraklatılmış savaş (Ömer 2026-10-14; isteğe bağlı alan, sürüm değişmez): bozuksa ya da başka düğümünse atılır (savaş baştan başlar)
+  if (s.suspended !== undefined && !(validCampaignSuspended(s.suspended) && s.suspended.node === s.at)) delete (s as { suspended?: unknown }).suspended;
   // Valor (sürüm 7): bozuk değer kırpılır; alanı olmayan eski kayıt Valdren Keep'in hikâyesini / kasabasını bitirmişse hediye ile açılır
   const intro = valorRules.campaign.introNode;
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
@@ -331,6 +334,35 @@ export function writeSave(kv: KV | null, s: CampaignState, kind: SaveKind, now: 
   file.slots[s.slot] = slot;
   file.lastSlot = s.slot;
   return { entry, replaced, ok: write(kv, file) };
+}
+
+/**
+ * Duraklatma kaydı (Retreat to Map, Ömer 2026-10-14): duraklatılmış savaşlı durum otomatik kaydedilir (Normal ve Ironman; sekme kapansa da
+ * savaş aynı turdan sürer). Yuvanın en yeni kaydı aynı düğümün duraklatma kaydıysa onun YERİNE yazılır (geri çek / sürdür döngüsü Normal'in
+ * 5 kaydını eritmesin); değilse yeni 'auto' kayıt.
+ */
+export function writePauseSave(kv: KV | null, s: CampaignState, now: string = new Date().toISOString()): boolean {
+  const { file } = readSaves(kv);
+  const slot = s.slot >= 0 && s.slot < SLOT_COUNT ? file.slots[s.slot] : null;
+  const last = slot?.campaignId === s.campaignId ? slot.saves.at(-1) : undefined;
+  if (!slot || !last || last.kind !== 'auto' || !last.state.suspended || last.state.at !== s.at) return writeSave(kv, s, 'auto', now).ok;
+  slot.saves[slot.saves.length - 1] = { ...last, savedAt: now, summary: summarize(s), state: clone(s) };
+  slot.lastPlayed = now;
+  file.lastSlot = s.slot;
+  return write(kv, file);
+}
+
+/**
+ * Savaş bitti (yenilgi): yuvanın en yeni kaydındaki aynı düğümün duraklatma kaydı silinir (kayıt kalır; Continue / Load Last Save o düğümün
+ * savaşını baştan açar, kaybedilen savaş yarıdan sürdürülemez). Değişiklik yoksa false.
+ */
+export function clearPauseSave(kv: KV | null, s: Pick<CampaignState, 'slot' | 'campaignId' | 'at'>): boolean {
+  const { file } = readSaves(kv);
+  const slot = s.slot >= 0 && s.slot < SLOT_COUNT ? file.slots[s.slot] : null;
+  const last = slot?.campaignId === s.campaignId ? slot.saves.at(-1) : undefined;
+  if (!last?.state.suspended || last.state.suspended.node !== s.at) return false;
+  delete last.state.suspended;
+  return write(kv, file);
 }
 
 /** Yuvanın kayıtları en yeni üstte. */

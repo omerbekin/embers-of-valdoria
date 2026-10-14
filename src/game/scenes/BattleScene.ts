@@ -111,7 +111,7 @@ export interface CampaignBattleHooks {
   resultActions(victory: boolean, battle: Battle): ResultAction[];
   /** Sonuç ekranının alt yazısı (sefer: zaferde düşen kahraman notu); yoksa varsayılan. */
   resultSubtitle?(victory: boolean, battle: Battle): string | undefined;
-  /** Savaş menüsü > Retreat to Map: savaş sayılmaz, haritaya aynı düğüme dönülür (campaign-session.retreatToMap). */
+  /** Savaş menüsü > Retreat to Map: savaş duraklar, haritaya aynı düğüme dönülür, düğümden aynı turdan sürer (campaign-session.retreatToMap). */
   retreat?(): void;
   /**
    * Savaş kurulur kurulmaz, çizimden önce çağrılır (endless: yarım kalan savaşın eylem günlüğü burada oynatılır ve yeni eylemlerin kaydı başlar).
@@ -1851,7 +1851,7 @@ export class BattleScene extends Phaser.Scene {
   private onSkillClick(skillId: string): void {
     const actor = this.activeActor;
     if (!actor || !this.playerCanAct || !this.battle.canUse(actor.uid, skillId).ok) return;
-    if (this.tut && !this.tut.allowSkill(skillId)) return; // ilk savaşın zorunlu adımı başka düğme beklemiyor
+    if (this.tut && !this.tut.allowSkill(skillId)) return this.tut.blocked(); // ilk savaşın zorunlu adımı başka düğme beklemiyor (kutu sallanır)
     this.cancelMoveQuiet();
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && this.battle.needsSlotChoice(skillId)) return;
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && !this.battle.needsTargetChoice(skillId)) {
@@ -1869,7 +1869,7 @@ export class BattleScene extends Phaser.Scene {
   private lastSkill = new Map<string, string>();
 
   private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string): void {
-    if (this.tut && !this.tut.allowPerform(skill)) return; // ilk savaşın zorunlu adımı
+    if (this.tut && !this.tut.allowPerform(skill)) return this.tut.blocked(); // ilk savaşın zorunlu adımı
     this.suppressAutoSelect = null;
     if (this.battle.mode === 'test') this.lastSkill.set(actor, skill);
     this.cancelMoveQuiet();
@@ -1893,7 +1893,7 @@ export class BattleScene extends Phaser.Scene {
     const actor = this.activeActor;
     const def = this.battle.globalDef(id);
     if (!actor || !def || !this.playerCanAct || !this.battle.canUseGlobal(actor.uid, id).ok) return;
-    if (this.tut && !this.tut.allowGlobal()) return; // ilk savaşın zorunlu adımı
+    if (this.tut && !this.tut.allowGlobal()) return this.tut.blocked(); // ilk savaşın zorunlu adımı
     if (def.kind === 'move' || def.kind === 'valor') {
       const same = this.moveMode?.id === id;
       if (this.moveMode) this.cancelMove();

@@ -66,8 +66,8 @@ export const RETREAT_CONFIRM = 'Retreat? This battle will not count.';
  * exists only on battle screens; setup screens (team select, multiplayer lobby + multiplayer team select = 'mp-setup') use the top-left
  * "◂ Back" instead (no menu). Her bağlamda Codex, Settings'in hemen üstündedir:
  * Quick battle: Resume / Codex / Settings / Leave (= takım seçimine dön) / Main Menu;
- * campaign + endless battle (undecided): Resume / Codex / Settings / Retreat (to Map | to Camp) / Main Menu (retreat: the battle does not
- * count; `retreatToMap` in campaign-session); multiplayer: Resume / Codex / Settings / Leave (= maçı terk, ana menü).
+ * campaign + endless battle (undecided): Resume / Codex / Settings / Retreat (to Map | to Camp) / Main Menu (retreat: the battle is paused
+ * and resumes on the same turn, `retreatConfirm` hook; `retreatToMap` in campaign-session); multiplayer: Resume / Codex / Settings / Leave (= maçı terk, ana menü).
  * Leaving an undecided battle asks first. No menu (null) on the main menu. Campaign map (`map` state from the scene): Resume / Save / Load
  * (Normal) / Codex / Settings / Main Menu, the SAME shared component as battle (Ömer 2026-10-10).
  */

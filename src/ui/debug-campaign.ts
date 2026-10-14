@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, RARITY_IDS } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -99,6 +99,38 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     run: () => {
       const s = ensureState();
       setState(debugWinNode(s));
+      reload();
+    },
+  });
+  // Duraklatılmış savaş (Retreat to Map, Ömer 2026-10-14): durumu göster / sil / bozarak "could not be restored" yolunu dene
+  debug.register({
+    id: 'campaign.paused-clear',
+    tab: CAMPAIGN_TAB,
+    section: 'Progress',
+    icon: 'pause',
+    label: () => {
+      const p = current()?.suspended;
+      return p ? `Clear paused battle (stop ${p.node}, turn ${p.turn + 1})` : 'Clear paused battle (none)';
+    },
+    hint: 'Remove the paused battle (Retreat to Map) at the current stop: the locks lift and the battle starts over. Not saved until the next save',
+    run: () => {
+      const s = current();
+      if (!s?.suspended) return;
+      setState(withSuspended(s, undefined));
+      reload();
+    },
+  });
+  debug.register({
+    id: 'campaign.paused-break',
+    tab: CAMPAIGN_TAB,
+    section: 'Progress',
+    icon: 'burst',
+    label: 'Break paused battle',
+    hint: 'Corrupt the paused battle record so resuming fails: tapping the stop shows "could not be restored" and the battle starts over',
+    run: () => {
+      const s = current();
+      if (!s?.suspended) return;
+      setState(withSuspended(s, { ...s.suspended, hash: 'broken' }));
       reload();
     },
   });

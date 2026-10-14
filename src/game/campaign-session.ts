@@ -1,9 +1,19 @@
 import type Phaser from 'phaser';
 import { battleSummary, content } from '../engine';
 import type { Battle } from '../engine';
+import { attachRecorder, replayActions, type ReplayAction } from '../endless/replay';
 import {
   applyBattle,
   battlePlan,
+  canResume,
+  clearPauseSave,
+  pauseRecord,
+  resumePlan,
+  suspendedOf,
+  withSuspended,
+  writePauseSave,
+  PAUSED_CONFIRM,
+  PAUSED_NOTICE,
   getMap,
   node,
   claimSlot,
@@ -98,6 +108,7 @@ export function loadLastSave(): CampaignState | null {
   const back = entry ? (JSON.parse(JSON.stringify(entry.state)) as CampaignState) : session.fallback;
   if (!back) return null;
   back.stats.defeats = Math.max(back.stats.defeats, s.stats.defeats) + 1;
+  delete back.suspended; // yenilgi duraklatma kaydını siler (kaybedilen savaş yarıdan sürdürülemez; düğümün savaşı baştan)
   session.attempts.set(s.at, (session.attempts.get(s.at) ?? 0) + 1);
   session.state = back;
   session.notice = entry ? 'Loaded your last save' : 'Back to the start of the journey';
@@ -105,16 +116,56 @@ export function loadLastSave(): CampaignState | null {
 }
 
 /**
- * Savaştan haritaya geri çekilme (Ömer 2026-10-08; savaş menüsü > Retreat to Map, onaylı): savaş sonuçsuz biter. Sefer durumu savaş
- * boyunca değişmediği için (sonuç yalnızca zaferde `applyBattle` ile yazılır) takım savaştan ÖNCEKİ haliyle aynı düğüme döner; düğüm
- * tamamlanmamış kalır, deneme sayacı ARTMAZ (sonraki girişte aynı savaş seed'i: geri çekilip seed değiştirme hilesi yok), kayıt alınmaz
- * (Normal ve Ironman aynı), boss savaşında da geçerli.
+ * Savaştan haritaya geri çekilme (savaş menüsü > Retreat to Map, onaylı). Ömer 2026-10-14 (Endless 0.7.8.1 ile aynı kural): geri çekilme
+ * savaşı SIFIRLAMAZ (yoksa kaybedilen savaş baştan oynanabilirdi), DURAKLATIR: eylem günlüğü durumun `suspended` alanına yazılır ve otomatik
+ * kaydedilir (Normal ve Ironman; sekme kapansa da kalır). Takım aynı düğümde kalır; düğüme yeniden girilince savaş aynı turdan sürer
+ * (`startCampaignBattle`). O zamana dek yola çıkmak, Gear / Formation / Valor diriltmesi kilitli. Boss savaşında da geçerli.
  */
 export function retreatToMap(): CampaignState | null {
   const s = session.state;
   if (!s) return null;
-  session.notice = 'You retreated. The battle did not count.';
-  return s;
+  const rec = recording;
+  stopRecording();
+  if (rec && !rec.battle.winner && rec.plan.nodeId === s.at) {
+    session.state = withSuspended(s, pauseRecord(rec.plan, rec.battle, rec.log));
+    writePauseSave(storage(), session.state);
+  }
+  session.notice = PAUSED_NOTICE;
+  return session.state;
+}
+
+// ------------------------------------------------------------ duraklatılmış savaş (eylem günlüğü; src/campaign/suspend.ts)
+
+/** Kayıt tutulan savaş: eylemler bellekte birikir, geri çekilmede duruma yazılır. */
+let recording: { battle: Battle; plan: BattlePlan; log: ReplayAction[]; stop: () => void } | null = null;
+
+function stopRecording(): void {
+  recording?.stop();
+  recording = null;
+}
+
+/** Savaşa günlük tutucuyu bağlar; günlük `actions` ile (sürdürülüyorsa önceki eylemlerle) başlar. */
+function startRecording(battle: Battle, plan: BattlePlan, actions: ReplayAction[]): void {
+  stopRecording();
+  const log = [...actions];
+  const off = attachRecorder(battle, (a) => void log.push(a));
+  recording = { battle, plan, log, stop: off };
+}
+
+/** Bulunulan düğümde duraklatılmış savaş var mı (harita: "Resume battle?" ve kilitler). */
+export const pausedHere = (): boolean => !!suspendedOf(session.state);
+
+/**
+ * Duraklatılmış savaş sürdürülebilir mi; değilse kayıt silinir (kayıt dosyasındaki dahil) ve false döner: harita notu gösterir, savaş baştan.
+ * Kayıt yoksa true (yapılacak bir şey yok).
+ */
+export function checkPaused(): boolean {
+  const s = session.state;
+  if (!s?.suspended) return true;
+  if (canResume(s)) return true;
+  session.state = withSuspended(s, undefined);
+  clearPauseSave(storage(), s);
+  return false;
 }
 
 /** Sefer başı kaydı (Normal: listede görünür; Ironman: yalnızca bellekte, yenilgide dönüş noktası). */
@@ -129,7 +180,13 @@ export function markJourneyStart(): void {
 export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
   const s = session.state;
   if (!s) return null;
-  const plan = battlePlan(s, session.attempts.get(s.at) ?? 0);
+  // Duraklatılmış savaş (Ömer 2026-10-14): kayıttaki seed ile kurulur, günlük oynatılır; doğrulanamazsa savaş baştan (harita önce
+  // checkPaused ile denetleyip PAUSED_BROKEN notunu gösterir; burası yalnızca güvenlik ağı)
+  checkPaused();
+  const st = session.state!;
+  const susp = suspendedOf(st);
+  const plan = susp ? resumePlan(st, susp) : battlePlan(st, session.attempts.get(st.at) ?? 0);
+  const replay = susp?.actions ?? [];
   const game = scene.game;
   const data: Partial<BattleSceneData> = {
     seed: plan.seed,
@@ -141,15 +198,21 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
     difficulty: plan.difficulty,
     // Poz kütüphanesi (yalnızca sunum): kahramanların takılı silahı ekranda çizilen silahı seçer (src/game/poses.ts)
-    weapons: { items: partyWeapons(plan.heroOrder, (id) => s.roster.find((h) => h.id === id)?.equipment.weapon, (id) => s.roster.find((h) => h.id === id)?.equipment.offhand) },
+    weapons: { items: partyWeapons(plan.heroOrder, (id) => st.roster.find((h) => h.id === id)?.equipment.weapon, (id) => st.roster.find((h) => h.id === id)?.equipment.offhand) },
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     // Tutorial bağlamı (docs/design/tutorial.md): düğüm / bölge dersleri, Bölüm III yenilgi ipucu (bu düğümdeki yenilgi sayısı)
-    tutorial: { node: plan.nodeId, region: node(getMap(s.mapId), plan.nodeId).region, encounter: plan.encounterId, defeats: session.attempts.get(s.at) ?? 0 },
+    tutorial: { node: plan.nodeId, region: node(getMap(st.mapId), plan.nodeId).region, encounter: plan.encounterId, defeats: session.attempts.get(st.at) ?? 0 },
     campaign: {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
-      battleEffects: () => campaignEffects(s),
+      battleEffects: () => campaignEffects(st),
+      retreatConfirm: PAUSED_CONFIRM,
+      // Savaş kurulur kurulmaz (çizimden önce): sürdürülüyorsa günlük oynatılır, sonra kayıt başlar
+      prepareBattle: (battle) => {
+        if (replay.length) replayActions(battle, replay);
+        startRecording(battle, plan, replay);
+      },
       retreat: () => {
         retreatToMap();
         screenGo(game.scene.getScene(BATTLE_SCENE) as Phaser.Scene, MAP_SCENE); // kit ekran geçişi (kararıp açılma), Menu > Retreat
@@ -173,6 +236,13 @@ export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): 
 
 /** Sefer savaşının sonuç ekranı düğmeleri. */
 export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: boolean, battle: Battle): ResultAction[] {
+  if (recording?.battle === battle) stopRecording();
+  // Yenilgi duraklatma kaydını hemen siler (bellek + kayıt dosyası): sekme kapatılsa da kaybedilen savaş yarıdan sürdürülemez. Akış aynı.
+  const cur = session.state;
+  if (!victory && cur?.suspended && cur.at === plan.nodeId) {
+    session.state = withSuspended(cur, undefined);
+    clearPauseSave(storage(), cur);
+  }
   if (victory)
     return [
       {

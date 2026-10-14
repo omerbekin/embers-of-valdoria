@@ -78,8 +78,8 @@ export function replayActions(battle: Battle, actions: ReplayAction[]): { ok: tr
   return { ok: true };
 }
 
-/** Günlüğü oynatır ve kayıttaki durum özetiyle karşılaştırır: ikisi de tutarsa devam edilebilir. */
-export function restoreBattle(battle: Battle, s: SuspendedBattle): boolean {
+/** Günlüğü oynatır ve kayıttaki durum özetiyle karşılaştırır: ikisi de tutarsa devam edilebilir. Sefer de kullanır (src/campaign/suspend.ts). */
+export function restoreBattle<T extends Pick<SuspendedBattle, 'actions' | 'turn' | 'hash'>>(battle: Battle, s: T): boolean {
   if (!replayActions(battle, s.actions).ok) return false;
   return battle.turnsTaken === s.turn && battleHash(battle) === s.hash;
 }
@@ -87,6 +87,11 @@ export function restoreBattle(battle: Battle, s: SuspendedBattle): boolean {
 /** Kayıttaki yarım savaş biçimce geçerli mi (bozuk kayıt oyunu çökertmez). */
 export function validSuspended(v: unknown): v is SuspendedBattle {
   const s = v as SuspendedBattle;
-  if (!s || typeof s !== 'object' || !Number.isFinite(s.wave) || !Number.isFinite(s.seed) || !Number.isFinite(s.turn) || typeof s.hash !== 'string' || !Array.isArray(s.actions)) return false;
-  return s.actions.every((a) => a && (a.k === 'skip' || (a.k === 'use' && typeof a.a === 'string' && typeof a.s === 'string')));
+  if (!s || typeof s !== 'object' || !Number.isFinite(s.wave) || !Number.isFinite(s.seed) || !Number.isFinite(s.turn) || typeof s.hash !== 'string') return false;
+  return validReplayActions(s.actions);
+}
+
+/** Eylem günlüğü biçimce geçerli mi (Endless ve sefer kaydı ortak). */
+export function validReplayActions(v: unknown): v is ReplayAction[] {
+  return Array.isArray(v) && v.every((a: ReplayAction) => a && (a.k === 'skip' || (a.k === 'use' && typeof a.a === 'string' && typeof a.s === 'string')));
 }

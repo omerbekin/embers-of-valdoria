@@ -2,7 +2,7 @@ import type { Battle, Combatant } from '../engine';
 import { defeatHint, dueBattleLesson, forcedSteps, openingLine, type BattleLessonCtx, type ForcedAwait, type Lesson, type LessonAction, type Situation } from '../tutorial/lessons';
 import { selectSituations, turnSituations } from '../tutorial/situations';
 import { lessonDoneIds, lessonShows, markLessonDone, markLessonSeen, noteLessonShown, seenLessons, tutorialsOn } from '../tutorial/store';
-import { closeAllLessons, dismissLesson, onLessonsTurnedOff, showCard, showLesson, showMentorLine, type LessonHandle } from '../ui/lesson-box';
+import { closeAllLessons, dismissLesson, nudgeLesson, onLessonsTurnedOff, showCard, showLesson, showMentorLine, type LessonHandle } from '../ui/lesson-box';
 
 /**
  * Savaş içi tutorial yöneticisi (sefer savaşı; BattleScene çağırır, kurallar saf src/tutorial/lessons.ts, docs/design/tutorial.md).
@@ -66,7 +66,7 @@ export class BattleTutorial {
           this.basicSkill = actor.skills[0] ?? null;
           const open = openingLine(this.ctx, seenLessons());
           if (open) showCard({ title: 'Mill Road', text: open, more: true });
-          this.phase = 'next';
+          this.setPhase('next');
           this.nextStep();
           return;
         }
@@ -85,6 +85,11 @@ export class BattleTutorial {
     if (this.phase) return;
     const uid = this.battle().currentUid;
     if (uid) this.showSituation(selectSituations(this.battle(), uid, skillId));
+  }
+
+  /** Zorunlu adımda izin verilmeyen girdi: mentor kutusu sallanır (Ömer 2026-10-14: düğme neden çalışmıyor belli olsun). */
+  blocked(): void {
+    nudgeLesson();
   }
 
   allowSkill(skillId: string): boolean {
@@ -155,7 +160,7 @@ export class BattleTutorial {
   private nextStep(): void {
     const l = this.steps.shift();
     if (!l || !l.forced) {
-      this.phase = null;
+      this.setPhase(null);
       this.handle = null;
       return;
     }
@@ -163,20 +168,31 @@ export class BattleTutorial {
     const kind = l.forced;
     const text = l.text ?? '';
     if (kind === 'next') {
-      this.phase = 'next';
+      this.setPhase('next');
       this.handle = showCard({ title: l.title, text, ...(l.focus ? { focus: l.focus } : {}) }, () => {
         if (this.phase === 'next') this.nextStep();
       });
       return;
     }
-    this.phase = kind;
+    this.setPhase(kind);
     this.handle = showCard({ title: l.title, text, awaitText: AWAIT_TEXT[kind], ...(l.focus ? { focus: l.focus } : {}) });
+  }
+
+  /**
+   * Zorunlu adım kilidi: <html data-tut-lock="next|skill|target"> (lesson-box.css). Kilitli düğmeler soluk görünür; temel saldırı
+   * (skill çubuğunun ilk düğmesi) skill / target adımında açık kalır.
+   */
+  private setPhase(p: ForcedAwait | null): void {
+    this.phase = p;
+    if (typeof document === 'undefined') return;
+    if (p) document.documentElement.dataset.tutLock = p;
+    else delete document.documentElement.dataset.tutLock;
   }
 
   private finishStep(): void {
     const h = this.handle;
     this.handle = null;
-    this.phase = 'next';
+    this.setPhase('next');
     h?.done();
     this.nextStep();
   }
@@ -184,7 +200,7 @@ export class BattleTutorial {
   /** Zorunlu akış biter (ayar kapandı / savaş bitti / sahne kapandı); kutular kapanır. */
   private release(): void {
     this.open = null;
-    this.phase = null;
+    this.setPhase(null);
     this.steps = [];
     this.handle = null;
     closeAllLessons();
