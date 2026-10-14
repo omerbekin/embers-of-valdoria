@@ -9,7 +9,7 @@ import { cardArt, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
-import { onTutorialChange, setTutorialsOn, tutorialsOn } from '../../tutorial/store';
+import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../../tutorial/store';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
@@ -982,7 +982,23 @@ export class MainMenuScene extends Phaser.Scene {
     // --- Tutorials: mentor dersleri açık / kapalı (src/tutorial/store.ts; DOM Settings ile aynı kaynak) ---
     const tut = this.valueText(PANEL_W - 6, 0, tutorialsOn() ? 'On' : 'Off', TXT_ON).setOrigin(1, 0.5);
     this.cleanups.push(onTutorialChange(() => tut.active && tut.setText(tutorialsOn() ? 'On' : 'Off')));
-    this.addPanelRow(p, 'Tutorials', () => setTutorialsOn(!tutorialsOn()), { right: [tut] });
+    // Replay (Ömer 2026-10-14, b_reset; DOM Settings ile aynı): görülen dersleri unutur, dersleri açar; onay yok, kısa onay yazısı
+    const replay = this.valueText(PANEL_W - 96, 0, 'Replay', TXT).setOrigin(1, 0.5).setAlpha(0.8);
+    const replayed = this.noteText(PANEL_W - 96, 0, 'Tutorials will play again.', 24, '#cdb88d').setOrigin(1, 0.5).setVisible(false);
+    replay.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-14, -(this.panelRowH - 8) / 2 + replay.height / 2, replay.width + 28, this.panelRowH - 8), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
+    replay.on('pointerover', () => replay.setAlpha(1).setColor(TXT_ON));
+    replay.on('pointerout', () => replay.setAlpha(0.8).setColor(TXT));
+    replay.on('pointerup', () => {
+      resetTutorials();
+      replay.setVisible(false);
+      replayed.setVisible(true);
+      this.time.delayedCall(2600, () => {
+        if (!replay.active) return;
+        replayed.setVisible(false);
+        replay.setVisible(true);
+      });
+    });
+    this.addPanelRow(p, 'Tutorials', () => setTutorialsOn(!tutorialsOn()), { right: [tut, replay, replayed] });
 
     // --- Fullscreen (API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();

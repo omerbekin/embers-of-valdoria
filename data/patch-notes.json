@@ -2,6 +2,27 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.7.10",
+      "date": "2026-10-14",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "Garrick teaches more: hit chance, reading a fighter, helping allies, fallen heroes, wounds, the road, rest camps and item quality.",
+            "First battle: a second guided turn shows your stronger MP skill, and the screen dims around what the mentor points at.",
+            "Settings > Gameplay: Replay tutorials plays every lesson again."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Campaign: the first battles after Ashford are easier, so the step up from the tutorial is smoother.",
+            "Campaign: Ravenwood and the Ruined Watchtower are a little tougher again; later regular fights are slightly harder."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.7.9",
       "date": "2026-10-14",
       "groups": [

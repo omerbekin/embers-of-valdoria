@@ -13,13 +13,16 @@ import {
   forcedSteps,
   lessonById,
   lessonPages,
+  lessonCodexText,
+  LESSON_VARS,
   openingLine,
   type BattleLessonCtx,
   type LessonProgress,
   type Situation,
 } from '../src/tutorial/lessons';
-import { _resetTutorialMemory, isLessonSeen, markLessonSeen, resetTutorials, seenLessons, setTutorialsOn, tutorialsOn } from '../src/tutorial/store';
+import { _resetTutorialMemory, isLessonSeen, lessonDoneIds, lessonShows, markLessonDone, markLessonSeen, noteLessonShown, resetTutorials, seenLessons, setTutorialsOn, tutorialsOn } from '../src/tutorial/store';
 import { buildLessons } from '../src/wiki/catalog';
+import campaignJson from '../data/campaign/campaign.json';
 
 // Sefer tutorial'ı (docs/design/tutorial.md, data/tutorial.json): veri denetimi, tetik kuralları, kayıt, motorun "ölemez" kurulumu.
 
@@ -43,6 +46,9 @@ describe('tutorial verisi', () => {
         expect(/[ğüşıöçĞÜŞİÖÇ]/.test(p.text), l.id).toBe(false);
       }
       if (l.codex) expect(sentences(l.codex), l.id).toBeLessThanOrEqual(2);
+      for (const v of Object.values(l.variants ?? {})) expect(sentences(v), `${l.id}: ${v}`).toBeLessThanOrEqual(2);
+      // metinde doldurulmamış {yer tutucu} kalmaz
+      for (const t of lessonCodexText(l)) expect(t, l.id).not.toMatch(/\{\w+\}/);
     }
     expect(sentences(TUTORIAL.opening.text)).toBeLessThanOrEqual(3);
   });
@@ -76,6 +82,11 @@ describe('tutorial verisi', () => {
 describe('savaş içi tetikler', () => {
   it('ilk savaş: açılış sözü + sırayla zorunlu adımlar (sıra çubuğu, saldırı, hedef)', () => {
     expect(ids(forcedSteps(ctx('1'), none))).toEqual(['turn_bar', 'attack', 'target']);
+    // ikinci karar: en güçlü MP skill'i (f_mp_skill); açılış sözü yalnızca ilk karar adımlarına bakar
+    expect(ids(forcedSteps(ctx('1'), none, 2))).toEqual(['f_mp_skill']);
+    expect(ids(forcedSteps(ctx('1'), new Set(['f_mp_skill']), 2))).toEqual([]);
+    expect(forcedSteps(ctx('2'), none, 2)).toEqual([]);
+    expect(openingLine(ctx('1'), new Set(['turn_bar', 'attack', 'target']))).toBeNull();
     expect(openingLine(ctx('1'), none)).toBe(TUTORIAL.opening.text);
     // görülen adım atlanır; hepsi görüldüyse açılış sözü de yok
     expect(ids(forcedSteps(ctx('1'), new Set(['turn_bar'])))).toEqual(['attack', 'target']);
@@ -98,6 +109,14 @@ describe('savaş içi tetikler', () => {
     expect(due('2', [{ when: 'area', skill: 'm' }])).toBe('area_shapes');
     expect(due('9', [{ when: 'telegraph' }])).toBe('boss');
     expect(due('moor', [{ when: 'ground' }])).toBe('burning_ground');
+    // yeni durum dersleri (Ömer 2026-10-14)
+    expect(due('2', [{ when: 'first' }])).toBe('unit_card');
+    expect(due('2', [{ when: 'preview', skill: 's' }])).toBe('hit_preview');
+    expect(due('2', [{ when: 'ally', skill: 'h' }])).toBe('ally_target');
+    expect(due('2', [{ when: 'fallen' }])).toBe('fallen_battle');
+    expect(due('2', [{ when: 'preview', skill: 's' }, { when: 'reach', skill: 's' }])).toBe('hit_preview'); // önce temel bilgi
+    expect(due('2', [{ when: 'first' }, { when: 'status' }])).toBe('unit_card');
+    expect(dueBattleLesson(ctx('3'), [{ when: 'fallen', variant: 'valor' }], prog())?.variant).toBe('valor');
     // bu savaşta gösterilen atlanır, sıradaki duruma geçilir
     expect(due('2', [{ when: 'rest' }, { when: 'spent' }], prog({ thisBattle: new Set(['rest']) }))).toBe('skills_mp');
   });
@@ -130,10 +149,36 @@ describe('ekran tetikleri ve Codex', () => {
     expect(ids(dueScreenLessons('map', { path: ['1', '2', '3'], partySize: 2 }, none))).toEqual([]);
     expect(ids(dueScreenLessons('map', { path: ['1', '2', '3', '4'], partySize: 3 }, none))).toEqual(['formation', 'roads']);
     expect(ids(dueScreenLessons('map', { path: ['1', '2', '3', '4'], partySize: 2 }, none))).toEqual(['roads']);
-    expect(ids(dueScreenLessons('gear', {}, none))).toEqual(['gear']);
+    expect(ids(dueScreenLessons('gear', { bagSize: 1 }, none))).toEqual(['gear']);
+    expect(ids(dueScreenLessons('gear', {}, none))).toEqual([]); // boş torba: sürükleme dersi yok
     expect(lessonPages(lessonById('gear')!)).toHaveLength(3);
     expect(lessonPages(lessonById('endless')!)).toHaveLength(3);
-    expect(ids(dueScreenLessons('gear', {}, new Set(['gear'])))).toEqual([]);
+    expect(ids(dueScreenLessons('gear', { bagSize: 1 }, new Set(['gear'])))).toEqual([]);
+  });
+
+  it('yeni ekran dersleri: Wounds Carry Over (ilk zafer), Reading the Road (elit / boss / kamp / hazine görünür), Rest Camps, Item Quality', () => {
+    expect(ids(dueScreenLessons('map', { wins: 0 }, none))).toEqual([]);
+    expect(ids(dueScreenLessons('map', { wins: 1 }, none))).toEqual(['hp_carry']);
+    expect(ids(dueScreenLessons('map', { wins: 1, visibleTypes: ['battle', 'event'] }, new Set(['hp_carry'])))).toEqual([]);
+    expect(ids(dueScreenLessons('map', { wins: 1, visibleTypes: ['battle', 'elite'] }, new Set(['hp_carry'])))).toEqual(['node_types']);
+    expect(ids(dueScreenLessons('map', { visibleTypes: ['rest'] }, none))).toEqual(['node_types']);
+    expect(ids(dueScreenLessons('rest', {}, none))).toEqual(['rest_camp']);
+    // Gear: önce sürükleme dersi (veri sırası), Item Quality yalnızca Uncommon ya da üstü varken
+    expect(ids(dueScreenLessons('gear', { bagSize: 2, rarities: ['common', 'rare'] }, none))).toEqual(['gear', 'item_quality']);
+    expect(ids(dueScreenLessons('gear', { bagSize: 0, rarities: ['uncommon'] }, none))).toEqual(['item_quality']);
+    expect(ids(dueScreenLessons('gear', { bagSize: 3, rarities: ['common'] }, new Set(['gear'])))).toEqual([]);
+  });
+
+  it('metindeki sayılar veriden: zafer sonrası toparlanma ve dinlenme; sefer ekranı kendi değerini verebilir; Valor seçeneği', () => {
+    expect(LESSON_VARS.victoryHeal).toBe(Math.round(campaignJson.rules.victoryHeal * 100));
+    expect(LESSON_VARS.restHeal).toBe(Math.round(campaignJson.rest.heal * 100));
+    expect(lessonPages(lessonById('hp_carry')!)[0]!.text).toContain(`${LESSON_VARS.victoryHeal}%`);
+    expect(lessonPages(lessonById('hp_carry')!, { vars: { victoryHeal: 40 } })[0]!.text).toContain('40%');
+    expect(lessonPages(lessonById('rest_camp')!)[0]!.text).toContain(`${LESSON_VARS.restHeal}%`);
+    const fallen = lessonById('fallen_battle')!;
+    expect(lessonPages(fallen)[0]!.text).not.toContain('Valor');
+    expect(lessonPages(fallen, { variant: 'valor' })[0]!.text).toContain('Valor');
+    expect(lessonCodexText(fallen)[0]).not.toContain('Valor');
   });
 
   it('Codex > Lessons yalnızca görülen dersleri grup sırasıyla gösterir; katalog tüm dersleri taşır', () => {
@@ -173,6 +218,17 @@ describe('tutorial kaydı (proto.tutorial.v1)', () => {
     resetTutorials();
     expect(tutorialsOn()).toBe(true);
     expect(seenLessons().size).toBe(0);
+  });
+
+  it('Replay tutorials (Settings) = resetTutorials: görülen, tamamlanan ve gösterim sayıları silinir, dersler açılır', () => {
+    markLessonSeen('rest');
+    markLessonDone('rest');
+    noteLessonShown('move');
+    setTutorialsOn(false);
+    resetTutorials();
+    expect(JSON.parse(mem.get('proto.tutorial.v1')!)).toEqual({ v: 1, on: true, seen: [] });
+    expect(lessonDoneIds().size).toBe(0);
+    expect(lessonShows('move')).toBe(0);
   });
 
   it('bozuk ya da başka sürüm kayıt: varsayılan', () => {

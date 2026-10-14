@@ -53,6 +53,9 @@ export function turnSituations(b: Battle, uid: string): Situation[] {
   const ult = actor.skills[3];
   if (ult && ok(ult)) out.push({ when: 'ultimate', skill: ult });
 
+  // Düştü: oyuncunun bir kahramanı düşmüş (ceset); Valor açıksa metin Valor'u da sayar
+  if (b.combatants.some((c) => c.side === 'party' && !c.summoned && c.hp <= 0)) out.push({ when: 'fallen', ...(b.valorOf('party') !== null ? { variant: 'valor' } : {}) });
+
   // Harcandı: bu savaşta kullanılan bir skill beklemede ya da MP harcandı (MP'li skill kullanıldı ve MP dolu değil)
   const used = usedSkills(b, uid);
   const cooling = actor.skills.find((id) => used.has(id) && (actor.cooldowns[id] ?? 0) > 0);
@@ -72,11 +75,17 @@ export function turnSituations(b: Battle, uid: string): Situation[] {
   return out;
 }
 
-/** Skill seçilince oluşan durumlar: yakın dövüş arka sıradaki bir düşmana ulaşamıyor (reach), alan skill'i (area). */
+/**
+ * Skill seçilince oluşan durumlar: düşmana hasar veren skill (preview: hedefin üstünde hasar / isabet önizlemesi), dost seçen skill (ally),
+ * yakın dövüş arka sıradaki bir düşmana ulaşamıyor (reach), alan skill'i (area).
+ */
 export function selectSituations(b: Battle, uid: string, skillId: string): Situation[] {
   const actor = b.get(uid);
   if (!actor || actor.side !== 'party') return [];
   const out: Situation[] = [];
+  const sk = b.skill(skillId);
+  if (sk && ENEMY_TARGETS.has(sk.target) && sk.effects.some((e) => e.type === 'damage') && b.validTargets(uid, skillId).length) out.push({ when: 'preview', skill: skillId });
+  if (sk?.target === 'single_ally' && b.validTargets(uid, skillId).length) out.push({ when: 'ally', skill: skillId });
   if (b.isMelee(skillId) && ENEMY_TARGETS.has(b.skill(skillId)?.target ?? '')) {
     const valid = b.validTargets(uid, skillId);
     const deepest = Math.max(-1, ...valid.map((c) => b.rowOf(c.slot)));
@@ -85,4 +94,24 @@ export function selectSituations(b: Battle, uid: string, skillId: string): Situa
   }
   if (b.isAreaSkill(skillId) || b.isShapeSkill(skillId)) out.push({ when: 'area', skill: skillId });
   return out;
+}
+
+/**
+ * Mill Road'un ikinci zorunlu adımı (f_mp_skill): sırası gelen kahramanın şu an kullanılabilen EN GÜÇLÜ MP skill'i (en yüksek MP bedeli;
+ * eşitse skill çubuğunda önce gelen). Kullanılabilir MP skill'i yoksa null: adım sessizce atlanır.
+ */
+export function strongMpSkill(b: Battle, uid: string): string | null {
+  const actor = b.get(uid);
+  if (!actor || actor.side !== 'party') return null;
+  let best: string | null = null;
+  let bestCost = -1;
+  for (const id of actor.skills) {
+    const sk = b.skill(id);
+    if (!sk || sk.cost.resource !== 'mp' || sk.cost.amount <= 0 || actor.lockedSkills?.includes(id) || !b.canUse(uid, id).ok) continue;
+    if (sk.cost.amount > bestCost) {
+      best = id;
+      bestCost = sk.cost.amount;
+    }
+  }
+  return best;
 }

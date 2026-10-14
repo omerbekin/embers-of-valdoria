@@ -9,7 +9,7 @@ import { loadMusicLevel, onMusicLevelChange, setMusicLevel, setMusicMaster } fro
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from './fullscreen';
 import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
-import { onTutorialChange, setTutorialsOn, tutorialsOn } from '../tutorial/store';
+import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { navSvg } from './nav-icons';
 
 /**
@@ -19,7 +19,7 @@ import { navSvg } from './nav-icons';
  * Ölçüler oyun birimiyle (--gu: 1 mantıksal birimin CSS pikseli) ve sütun konumu ana menüyle aynı (--menu-x; src/ui/viewport.ts).
  * Klavye: yukarı/aşağı satır, sol/sağ ses, Enter seçer, Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
  * İçerik (Ömer 2026-10-10): "Sounds" bölümü = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, Sound Effects (savaş/skill sesleri; 2026-10-13), UI sounds;
- * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Tutorials (mentor dersleri; 2026-10-13), Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
+ * "Gameplay" bölümü = Reduced motion, Battle speed, Performance mode (Auto / On / Off), Show FPS, Tutorials (mentor dersleri; 2026-10-13; satırda Replay: dersler yeniden, 2026-10-14), Fullscreen (Ömer 2026-10-11: src/ui/perf-mode.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
  * Battle speed 0.25x-4x (src/ui/battle-speed.ts). Oyun akışı eylemleri menüdedir (`src/ui/game-menu.ts`).
  */
 export interface SettingsHooks {
@@ -171,7 +171,22 @@ export class SettingsScreen {
     // --- Tutorials: mentor dersleri açık / kapalı (sefer + Endless; src/tutorial/store.ts, docs/design/tutorial.md) ---
     const tut = el('span', 'st-value', tutorialsOn() ? 'On' : 'Off');
     onTutorialChange(() => (tut.textContent = tutorialsOn() ? 'On' : 'Off'));
-    this.addRow(col, 'Tutorials', () => setTutorialsOn(!tutorialsOn()), [tut]);
+    // Replay tutorials (Ömer 2026-10-14, b_reset): görülen dersleri unutur ve dersleri açar (debug "Reset tutorials" ile aynı); onay yok
+    // (ilerleme kaybolmaz), satırın altında kısa onay yazısı
+    const tutNote = el('div', 'st-note');
+    const replay = el('button', 'el-link st-replay', 'Replay');
+    replay.type = 'button';
+    replay.title = 'Show every lesson again';
+    replay.addEventListener('click', () => {
+      resetTutorials();
+      uiSound('select');
+      tutNote.textContent = 'Tutorials will play again.';
+    });
+    this.addRow(col, 'Tutorials', () => {
+      setTutorialsOn(!tutorialsOn());
+      tutNote.textContent = '';
+    }, [replay, tut]);
+    col.append(tutNote);
 
     // --- Fullscreen (Fullscreen API yoksa satır yok; iPhone'da ipucu) ---
     const support = currentSupport();

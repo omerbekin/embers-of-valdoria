@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer tutorial'ı (Ömer 2026-10-13 onayı; 2026-10-14 durum dersleri; tasarım docs/design/tutorial.md). Metinler oyun içi (İngilizce), her ders en çok 1-2 cümle. Mentor kutusu src/ui/lesson-box.ts, kurallar (saf) src/tutorial/lessons.ts + durum tespiti src/tutorial/situations.ts, kayıt localStorage proto.tutorial.v1 (src/tutorial/store.ts). İlk savaş (Mill Road) adım adım zorunlu: forced = next (düğme) | skill (temel saldırı düğmesi) | target (hedef seçilip saldırı yapılınca), trigger.battle {node:[1], when:start}. Sonraki TÜM savaş dersleri DURUMLA tetiklenir (trigger.battle.when; düğüm/bölge yok): durum ilk kez oluştuğunda, sırası gelen kahraman için, o an kullanılacak düğmeyi gösterir. when: rest (MP'li skill'lerin hiçbiri MP yetmediği için kullanılamıyor), move (yakın dövüş hiçbir düşmana ulaşamıyor), skip (hiçbir skill kullanılamıyor, Rest/Move çözüm değil), ultimate (4. skill hazır), spent (kullanılan skill beklemede ya da MP harcandı), status (kahramanda durum), ground (kahramanın hücresinde / yanında zararlı zemin), telegraph (boss vuruş hücrelerini işaretledi), reach (seçilen yakın dövüş skill'i arka sıradaki düşmana ulaşamıyor), area (alan skill'i seçildi). Veri sırası = öncelik; kararda en çok bir ders. done = eylem dersi (rest | move | skip | ultimate): oyuncu o eylemi yapınca tamamlanır, yapmazsa durum yeniden oluşunca (savaş başına bir kez, en çok actionRepeats savaş) yeniden çıkar; done yoksa bilgi dersi (bir kez). focus içindeki {skill} durumun skill'iyle değişir. Durum hiç oluşmazsa ders çıkmaz ve Codex > Lessons'ta da görünmez. trigger.screen: ekran dersleri (town, merchant, company, map, event, gear, endless, valor). codex: Codex > Lessons metni (yoksa text). place: bottom = kutu altta (Gear). defeatHints: Bölüm III'te aynı savaş 2 kez kaybedilince savaş başında mentor ipucu (Codex'e girmez).",
+  "_not": "Sefer tutorial'ı (Ömer 2026-10-13 onayı; 2026-10-14 durum dersleri; tasarım docs/design/tutorial.md). Metinler oyun içi (İngilizce), her ders en çok 1-2 cümle. Mentor kutusu src/ui/lesson-box.ts, kurallar (saf) src/tutorial/lessons.ts + durum tespiti src/tutorial/situations.ts, kayıt localStorage proto.tutorial.v1 (src/tutorial/store.ts). İlk savaş (Mill Road) adım adım zorunlu: forced = next (düğme) | skill (temel saldırı düğmesi) | target (hedef seçilip saldırı yapılınca), trigger.battle {node:[1], when:start}. Sonraki TÜM savaş dersleri DURUMLA tetiklenir (trigger.battle.when; düğüm/bölge yok): durum ilk kez oluştuğunda, sırası gelen kahraman için, o an kullanılacak düğmeyi gösterir. when: first (Mill Road sonrası savaşın ilk kararı), rest (MP'li skill'lerin hiçbiri MP yetmediği için kullanılamıyor), move (yakın dövüş hiçbir düşmana ulaşamıyor), skip (hiçbir skill kullanılamıyor, Rest/Move çözüm değil), ultimate (4. skill hazır), spent (kullanılan skill beklemede ya da MP harcandı), status (kahramanda durum), ground (kahramanın hücresinde / yanında zararlı zemin), telegraph (boss vuruş hücrelerini işaretledi), fallen (oyuncunun bir kahramanı düştü; Valor açıksa variants.valor metni), preview (düşmana hasar veren skill seçildi), ally (dost seçen skill seçildi), reach (seçilen yakın dövüş skill'i arka sıradaki düşmana ulaşamıyor), area (alan skill'i seçildi). Veri sırası = öncelik; kararda en çok bir ders. done = eylem dersi (rest | move | skip | ultimate): oyuncu o eylemi yapınca tamamlanır, yapmazsa durum yeniden oluşunca (savaş başına bir kez, en çok actionRepeats savaş) yeniden çıkar; done yoksa bilgi dersi (bir kez). focus içindeki {skill} durumun skill'iyle değişir. Durum hiç oluşmazsa ders çıkmaz ve Codex > Lessons'ta da görünmez. trigger.screen: ekran dersleri (town, merchant, company, map, event, gear, endless, valor, rest); ek koşullar minWins (sefer zaferi), visible (haritada görünen düğüm türü), anyRarity (torbada / takılı nadirlik), bag (torbada item). Ekranda aynı anda tek ders. Metinde {victoryHeal} / {restHeal}: data/campaign/campaign.json yüzdeleri (src/tutorial/lessons.ts > LESSON_VARS). decision: zorunlu adımın kaçıncı oyuncu kararı (f_mp_skill = 2: en güçlü MP skill). spotlight: ekran kararır, yalnızca odak aydınlık (zorunlu adımlar, Boss). codex: Codex > Lessons metni (yoksa text). place: bottom = kutu altta (Gear). defeatHints: Bölüm III'te aynı savaş 2 kez kaybedilince savaş başında mentor ipucu (Codex'e girmez).",
   "version": 1,
   "mentor": {
     "name": "Garrick",
@@ -27,7 +27,8 @@
           "node": ["1"],
           "when": "start"
         }
-      }
+      },
+      "spotlight": true
     },
     {
       "id": "attack",
@@ -42,7 +43,8 @@
           "node": ["1"],
           "when": "start"
         }
-      }
+      },
+      "spotlight": true
     },
     {
       "id": "target",
@@ -55,6 +57,34 @@
         "battle": {
           "node": ["1"],
           "when": "start"
+        }
+      }
+    },
+    {
+      "id": "f_mp_skill",
+      "group": "First Battle",
+      "title": "Stronger Skills",
+      "text": "Now your stronger skill. It costs MP and needs a few turns to return.",
+      "codex": "Stronger skills cost MP and need a few turns before you can use them again.",
+      "focus": "[data-skill='{skill}']",
+      "forced": "skill",
+      "decision": 2,
+      "spotlight": true,
+      "trigger": {
+        "battle": {
+          "node": ["1"],
+          "when": "start"
+        }
+      }
+    },
+    {
+      "id": "unit_card",
+      "group": "In Battle",
+      "title": "Reading a Fighter",
+      "text": "Tap or hover over any fighter to read their stats, passive and cooldowns.",
+      "trigger": {
+        "battle": {
+          "when": "first"
         }
       }
     },
@@ -124,6 +154,20 @@
       }
     },
     {
+      "id": "fallen_battle",
+      "group": "In Battle",
+      "title": "Fallen Heroes",
+      "text": "A fallen hero stays down after the battle. Towns and rest camps can raise them.",
+      "variants": {
+        "valor": "A fallen hero stays down after the battle. Towns, rest camps and Valor can raise them."
+      },
+      "trigger": {
+        "battle": {
+          "when": "fallen"
+        }
+      }
+    },
+    {
       "id": "skills_mp",
       "group": "In Battle",
       "title": "Skills and MP",
@@ -132,6 +176,28 @@
       "trigger": {
         "battle": {
           "when": "spent"
+        }
+      }
+    },
+    {
+      "id": "hit_preview",
+      "group": "In Battle",
+      "title": "Hit Chance",
+      "text": "Before you strike, the numbers over a target show the damage and the chance to hit.",
+      "trigger": {
+        "battle": {
+          "when": "preview"
+        }
+      }
+    },
+    {
+      "id": "ally_target",
+      "group": "In Battle",
+      "title": "Helping Allies",
+      "text": "Healing and blessings go to your own side. Tap a glowing ally.",
+      "trigger": {
+        "battle": {
+          "when": "ally"
         }
       }
     },
@@ -178,7 +244,8 @@
         "battle": {
           "when": "telegraph"
         }
-      }
+      },
+      "spotlight": true
     },
     {
       "id": "gear",
@@ -200,7 +267,19 @@
         }
       ],
       "trigger": {
-        "screen": "gear"
+        "screen": "gear",
+        "bag": true
+      }
+    },
+    {
+      "id": "item_quality",
+      "group": "On the Road",
+      "title": "Item Quality",
+      "text": "The colour shows an item’s quality. Each step up adds a line: Uncommon a second C, Rare a B, Epic an A.",
+      "place": "bottom",
+      "trigger": {
+        "screen": "gear",
+        "anyRarity": ["uncommon", "rare", "epic", "legendary"]
       }
     },
     {
@@ -229,6 +308,35 @@
       "text": "Odo buys and sells gear. Selling what you will not use frees room in the bag.",
       "trigger": {
         "screen": "merchant"
+      }
+    },
+    {
+      "id": "hp_carry",
+      "group": "On the Road",
+      "title": "Wounds Carry Over",
+      "text": "Wounds carry over between battles. A victory restores only {victoryHeal}% of each hero’s health.",
+      "trigger": {
+        "screen": "map",
+        "minWins": 1
+      }
+    },
+    {
+      "id": "node_types",
+      "group": "On the Road",
+      "title": "Reading the Road",
+      "text": "A horned helm marks an elite fight, a crowned skull a boss, a campfire a rest camp and a chest treasure. Read the road before you choose it.",
+      "trigger": {
+        "screen": "map",
+        "visible": ["elite", "boss", "rest", "treasure"]
+      }
+    },
+    {
+      "id": "rest_camp",
+      "group": "On the Road",
+      "title": "Rest Camps",
+      "text": "Resting here is free: every living hero recovers {restHeal}% of their health. The fallen can be raised here for gold.",
+      "trigger": {
+        "screen": "rest"
       }
     },
     {

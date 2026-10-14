@@ -1,5 +1,5 @@
 import './lesson-box.css';
-import { MENTOR, lessonById, lessonPages } from '../tutorial/lessons';
+import { MENTOR, lessonById, lessonPages, type LessonVars } from '../tutorial/lessons';
 import { isLessonSeen, markLessonSeen, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { uiSound } from './ui-sound';
 
@@ -23,11 +23,15 @@ export interface LessonCard {
   more?: boolean;
   /** Kutu altta (varsayılan üst orta). */
   bottom?: boolean;
+  /** Spot ışığı (zorunlu adımlar, Boss): ekran yumuşakça kararır, yalnızca vurgulanan öğe ve kutu aydınlık kalır. Girdi engellenmez. */
+  spotlight?: boolean;
 }
 
 export interface LessonHandle {
   /** Zorunlu adım tamamlandı / dışarıdan kapat (kuyruktaki sıradaki kart açılır). */
   done(): void;
+  /** Açık kartın bekleme yazısını / spot ışığını değiştirir (zorunlu adımın ikinci aşaması: skill seçildi, şimdi hedef). */
+  update(o: { awaitText?: string; spotlight?: boolean }): void;
 }
 
 interface Pending {
@@ -35,14 +39,14 @@ interface Pending {
   /** Kartın dersi (dismissLesson için). */
   lesson?: string;
   onClose?: () => void;
-  handle: { closed: boolean; done: () => void };
+  handle: { closed: boolean; done: () => void; update: (o: { awaitText?: string; spotlight?: boolean }) => void };
 }
 
 const avatars = import.meta.glob('../../assets/avatars/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.png`];
 
 const queue: Pending[] = [];
-let current: { p: Pending; root: HTMLElement; timer: number } | null = null;
+let current: { p: Pending; root: HTMLElement; timer: number; spot: HTMLElement | null } | null = null;
 const offListeners = new Set<() => void>();
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] => {
@@ -54,6 +58,51 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: s
 
 function clearFocus(): void {
   document.querySelectorAll('.tut-focus').forEach((e) => e.classList.remove('tut-focus'));
+}
+
+/**
+ * Spot ışığı deliği (#ui-root yerel koordinatı): ekran dikdörtgeni döndürülmüş sahnede (dikey telefon: #stage translateX(vw) rotate(90deg),
+ * src/ui/viewport.ts > rotatedToStage) sahne yereline çevrilir. Saf: testlenebilir.
+ */
+export function spotHole(r: { left: number; top: number; right: number; bottom: number }, rotated: boolean, viewW: number, pad: number): { x: number; y: number; w: number; h: number } {
+  const box = rotated ? { x: r.top, y: viewW - r.right, w: r.bottom - r.top, h: r.right - r.left } : { x: r.left, y: r.top, w: r.right - r.left, h: r.bottom - r.top };
+  return { x: box.x - pad, y: box.y - pad, w: box.w + pad * 2, h: box.h + pad * 2 };
+}
+
+/** Spot ışığını vurgulanan öğenin üstüne taşır (öğe yoksa gizli: karartma yalnızca gösterilecek bir şey varken). */
+function placeSpot(spot: HTMLElement, target: Element | null): void {
+  const r = target?.getBoundingClientRect();
+  if (!r || r.width <= 0 || r.height <= 0) {
+    spot.hidden = true;
+    return;
+  }
+  const rotated = document.documentElement.classList.contains('rotated');
+  const stage = document.getElementById('stage')?.getBoundingClientRect();
+  const base = !rotated && stage ? { left: r.left - stage.left, top: r.top - stage.top, right: r.right - stage.left, bottom: r.bottom - stage.top } : r;
+  const h = spotHole(base, rotated, window.visualViewport?.width ?? window.innerWidth, 6);
+  spot.hidden = false;
+  spot.style.transform = `translate(${Math.round(h.x)}px, ${Math.round(h.y)}px)`;
+  spot.style.width = `${Math.round(h.w)}px`;
+  spot.style.height = `${Math.round(h.h)}px`;
+}
+
+function setSpot(c: NonNullable<typeof current>, on: boolean): void {
+  if (on && !c.spot) {
+    c.spot = el('div', 'tut-spot');
+    c.spot.hidden = true;
+    c.spot.setAttribute('aria-hidden', 'true');
+    (document.getElementById('ui-root') ?? document.body).append(c.spot);
+  } else if (!on && c.spot) {
+    c.spot.remove();
+    c.spot = null;
+  }
+}
+
+function removeCurrent(c: NonNullable<typeof current>): void {
+  window.clearInterval(c.timer);
+  clearFocus();
+  c.spot?.remove();
+  c.root.remove();
 }
 
 function render(p: Pending): void {
@@ -112,18 +161,18 @@ function render(p: Pending): void {
       target.classList.add('tut-focus'); // aynı öğede sınıf kalır (nabız baştan başlamasın)
       target.scrollIntoView({ block: 'nearest' }); // kaydırılan panelde görünür olsun (Gear statları)
     }
+    if (current?.p === p && current.spot) placeSpot(current.spot, target);
   };
-  paint();
   const timer = window.setInterval(paint, 250);
-  current = { p, root: wrap, timer };
+  current = { p, root: wrap, timer, spot: null };
+  setSpot(current, !!p.card.spotlight && !!p.card.focus);
+  paint();
   uiSound('toast');
 }
 
 function closeCurrent(): void {
   if (!current) return;
-  window.clearInterval(current.timer);
-  clearFocus();
-  current.root.remove();
+  removeCurrent(current);
   const cb = current.p.onClose;
   current = null;
   cb?.();
@@ -151,6 +200,14 @@ export function showCard(card: LessonCard, onClose?: () => void, lesson?: string
         onClose?.();
       }
     },
+    update: (o: { awaitText?: string; spotlight?: boolean }) => {
+      if (o.awaitText !== undefined) p.card.awaitText = o.awaitText;
+      if (o.spotlight !== undefined) p.card.spotlight = o.spotlight;
+      if (current?.p !== p) return;
+      const w = current.root.querySelector('.tut-await');
+      if (w && o.awaitText !== undefined) w.textContent = o.awaitText;
+      if (o.spotlight !== undefined) setSpot(current, o.spotlight && !!p.card.focus);
+    },
   };
   const p: Pending = { card, ...(onClose ? { onClose } : {}), ...(lesson ? { lesson } : {}), handle };
   queue.push(p);
@@ -162,11 +219,11 @@ export function showCard(card: LessonCard, onClose?: () => void, lesson?: string
  * Serbest dersi gösterir (ayar açık ve daha görülmediyse): görüldü olarak işaretlenir (Codex > Lessons), sayfaları sırayla kuyruğa girer.
  * Gösterildiyse true. `force`: görülmüş olsa da göster (debug "Trigger lesson").
  */
-export function showLesson(id: string, o: { force?: boolean; onClose?: () => void; skill?: string } = {}): boolean {
+export function showLesson(id: string, o: { force?: boolean; onClose?: () => void; skill?: string; variant?: string; vars?: LessonVars } = {}): boolean {
   const l = lessonById(id);
   if (!l || (!o.force && (!tutorialsOn() || isLessonSeen(id)))) return false;
   markLessonSeen(id);
-  const pages = lessonPages(l);
+  const pages = lessonPages(l, { ...(o.variant ? { variant: o.variant } : {}), ...(o.vars ? { vars: o.vars } : {}) });
   pages.forEach((pg, i) =>
     showCard(
       {
@@ -174,6 +231,7 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
         text: pg.text,
         ...(pg.focus ? { focus: focusFor(pg.focus, o.skill) } : {}),
         ...(l.place === 'bottom' ? { bottom: true } : {}),
+        ...(l.spotlight ? { spotlight: true } : {}),
         ...(pages.length > 1 ? { page: `${i + 1} / ${pages.length}`, more: i < pages.length - 1 } : {}),
       },
       i === pages.length - 1 ? o.onClose : undefined,
@@ -184,7 +242,7 @@ export function showLesson(id: string, o: { force?: boolean; onClose?: () => voi
 }
 
 /** Odak seçicisindeki {skill}: durumun skill'i (yoksa skill çubuğunun tamamı; debug "Trigger a lesson"). */
-function focusFor(focus: string, skill?: string): string {
+export function focusFor(focus: string, skill?: string): string {
   if (!focus.includes('{skill}')) return focus;
   return skill && /^[\w-]+$/.test(skill) ? focus.replace('{skill}', skill) : '.bh-skills';
 }
@@ -194,9 +252,7 @@ export function dismissLesson(id: string): void {
   for (let i = queue.length - 1; i >= 0; i--) if (queue[i]!.lesson === id) queue.splice(i, 1);
   if (current?.p.lesson === id) {
     current.p.handle.closed = true;
-    window.clearInterval(current.timer);
-    clearFocus();
-    current.root.remove();
+    removeCurrent(current);
     current = null;
     pump();
   }
@@ -227,9 +283,7 @@ export function lessonBoxOpen(): boolean {
 export function closeAllLessons(): void {
   queue.length = 0;
   if (current) {
-    window.clearInterval(current.timer);
-    clearFocus();
-    current.root.remove();
+    removeCurrent(current);
     current = null;
   }
 }

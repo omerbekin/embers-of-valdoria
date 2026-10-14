@@ -66,7 +66,9 @@ import {
   type TownHotspot,
   reviveWithValor,
   valorReviveBlocked,
+  rulesFor,
 } from '../../campaign';
+import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
 import { markLessonSeen, seenLessons } from '../../tutorial/store';
 import { closeAllLessons, dismissLesson, showLesson } from '../../ui/lesson-box';
@@ -1387,9 +1389,23 @@ export class CampaignMapScene extends Phaser.Scene {
     this.sideOpen = false;
   }
 
-  /** Bu ekranın görülmemiş mentor dersleri (src/tutorial/lessons.ts; ayar kapalıysa hiçbiri). */
+  /**
+   * Bu ekranın görülmemiş mentor dersi (src/tutorial/lessons.ts; ayar kapalıysa hiçbiri). Bir kararda en çok BİR yeni ders (Ömer 2026-10-14):
+   * aynı anda birden çok ders hazırsa veri sırasıyla ilki, kalanlar ekran yeniden açılınca. Metindeki sayılar zorluğun geçerli kuralından.
+   */
   private lessons(screen: LessonScreen): void {
-    for (const l of dueScreenLessons(screen, { node: this.s.at, path: this.s.path, partySize: activeHeroes(this.s).length }, seenLessons())) showLesson(l.id);
+    const s = this.s;
+    const vis = screen === 'map' ? nodeVisibility(this.map, s, session.revealFog) : {};
+    const visibleTypes = Object.entries(vis)
+      .filter(([, v]) => v === 'near' || v === 'far' || v === 'current')
+      .map(([id]) => node(this.map, id).type);
+    const items = [...s.inventory, ...s.roster.flatMap((h) => Object.values(h.equipment).filter((x): x is NonNullable<typeof x> => !!x))];
+    const due = dueScreenLessons(
+      screen,
+      { node: s.at, path: s.path, partySize: activeHeroes(s).length, wins: s.stats.victories, visibleTypes, rarities: [...new Set(items.map((i) => instanceRarity(i)))], bagSize: s.inventory.length },
+      seenLessons(),
+    )[0];
+    if (due) showLesson(due.id, { vars: { victoryHeal: Math.round(rulesFor(s).victoryHeal * 100), restHeal: Math.round(restHealOf(s) * 100) } });
   }
 
   private update2(s: CampaignState): void {
@@ -1407,12 +1423,13 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(hero ? { hero } : {}),
       tutorial,
       onClose: () => {
-        dismissLesson('gear'); // Gear dersi Gear ekranıyla kapanır (haritada kalıp Farewell'in Continue düğmesini örtüyordu)
+        dismissLesson('gear'); // Gear dersleri Gear ekranıyla kapanır (haritada kalıp Farewell'in Continue düğmesini örtüyordu)
+        dismissLesson('item_quality');
         this.renderHud();
         after?.();
       },
     });
-    if (this.s.inventory.length) this.lessons('gear'); // ilk loot (Watchtower sonrası): sürükle / karşılaştır / Equip best
+    this.lessons('gear'); // ilk loot (torbada item: sürükle / karşılaştır / Equip best), sonra Item Quality (Uncommon ya da üstü)
   }
 
   /**
@@ -1698,6 +1715,7 @@ export class CampaignMapScene extends Phaser.Scene {
       ],
       ...(revisit ? { onDismiss: () => this.closeModal() } : {}),
     });
+    if (!revisit) this.lessons('rest'); // Rest Camps dersi (ilk dinlenme noktası)
   }
 
   /** Kasabada Odo'nun tezgâhı (T1): ortak tüccar ekranı; ayrılınca kasaba penceresine dönülür (tezgâh kasabadan çıkınca kapanır). */

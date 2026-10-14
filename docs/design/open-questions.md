@@ -1621,3 +1621,18 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 
 ## 324. Tüccar karşılaması zemine dokununca kapanır (Ömer 2026-10-14)
 - Karşılama kartının dışına dokunmak "Browse wares" ile aynı (zemin kuralı, `src/ui/backdrop.ts`).
+
+## 325. Tutorial 3: 11 ek ders, Mill Road MP adımı, spot ışığı, Replay tutorials (ui-dev; Ömer seçimi 2026-10-14)
+- **Seçilen:** Hit Chance, Reading a Fighter, Helping Allies, Fallen Heroes (savaş durum dersleri); Wounds Carry Over, Reading the Road, Rest Camps, Item Quality (ekran dersleri); Mill Road 2. karar MP skill adımı (`f_mp_skill`); Settings > Tutorials satırında Replay; zorunlu adımlarda ve Boss dersinde spot ışığı. Tablo `docs/design/tutorial.md`.
+- **Varsayımlar (ui-dev):**
+  1. **Hit Chance** skill SEÇİLİNCE çıkar (düşmana hasar veren skill, hedef varken), sayıların ilk göründüğü an değil: dokunmatikte tek hedefli skill dokununca hemen vurur, sayılar ancak parmak basılıyken görünür; ders vuruşla aynı anda çıkıp kapanırdı.
+  2. **Helping Allies** yalnızca dost SEÇEN skill'lerde (`single_ally`: Rejuvenate, Guard...); tüm dostlara giden skill'de seçim olmadığından çıkmaz. Dostlar Phaser'da çizildiği için odak (parlama) yok.
+  3. **Bir kararda en çok bir ders** artık gerçekten uygulanıyor: savaşta karar başında ders çıktıysa aynı kararda skill seçimi ikinci ders açmaz (önceden "Got it"ten sonra açabiliyordu); ekran derslerinde aynı anda birden çok ders hazırsa yalnızca ilki çıkar (ör. Ashford sonrası Formation, sonraki yol seçiminde Roads).
+  4. **Reading a Fighter** Mill Road'dan sonraki ilk savaşın ilk kararında; öncelik listesinde en üstte (o karar başka derse gitmesin).
+  5. **Fallen Heroes** metni seferde Valor açıksa (Valdren Keep sonrası) Valor'u da sayar; Codex Valor'suz metni gösterir. Kamp diriltmesi altınla (metin "can raise them" der, bedava demez).
+  6. **Wounds Carry Over** ilk zaferden sonraki ilk yol seçiminde; yüzde zorluğun geçerli kuralından (`rulesFor(s).victoryHeal`, şu an hepsinde 25). **Rest Camps** yüzdesi `restHealOf(s)` (şu an 50).
+  7. **Reading the Road** ikon adları gerçek boyalı ikonlardan: boynuzlu miğfer = elit, taçlı kafatası = boss, kamp ateşi = dinlenme, sandık = hazine. Ders, bu türlerden biri yolda (yakın / uzak, uzaktaki soluk hedef hariç) görününce çıkar.
+  8. **Item Quality** metni: "Uncommon a second C, Rare a B, Epic an A" (items.md 1.3b). Gear dersi artık yalnızca torbada item varken (eski kural), Item Quality torbada ya da takılı Uncommon+ varken; ikisi aynı anda hazırsa önce Gear.
+  9. **f_mp_skill:** "en güçlü" = şu an kullanılabilen en yüksek MP bedelli skill (eşitse çubukta önce gelen). Hedef aşamasında spot ışığı kalkar (düşmanlar karartılmasın), kart aynı kalır, bekleme yazısı skill türüne göre ("Tap a glowing enemy / ally", "Press it again to use it"). Adım atlanırsa ders görülmemiş kalır ve Skills and MP sonraki savaşta durumla çıkar.
+  10. **Spot ışığı** yalnızca vurgulanacak bir DOM öğesi varken (sıra çubuğu, saldırı / MP düğmesi, Boss'ta Move); hedef adımında yok. Boss dersinde karartma hafif (yarı saydam): işaretli hücreler görünür kalır.
+  11. **Replay** satırın sağında küçük yazı düğmesi (On/Off'un solunda); basınca altta / yerinde "Tutorials will play again." yazar, onay sorulmaz.

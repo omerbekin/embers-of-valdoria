@@ -828,6 +828,15 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   display: none;
 }
 
+/* Tutorials satırındaki "Replay" (kit yazı düğmesi el-link; dersleri yeniden oynatır, src/ui/settings.ts): satır boyunda, 44 px dokunma */
+.st-replay.el-link {
+  min-height: 44px;
+  height: 100%;
+  padding: 0 calc(10 * var(--u)) 0 calc(6 * var(--u));
+  font-size: max(13px, calc(22 * var(--u)));
+  color: var(--el-muted, #b9a27a);
+}
+
 /* Settings en altı: gizli debug girişinin yedeği (src/ui/debug-gesture.ts); küçük, soluk, kutusuz */
 .st-dev {
   all: unset;

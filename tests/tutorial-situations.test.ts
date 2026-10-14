@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content } from '../src/engine';
 import type { Teams } from '../src/engine';
-import { selectSituations, turnSituations } from '../src/tutorial/situations';
+import { selectSituations, strongMpSkill, turnSituations } from '../src/tutorial/situations';
 import { dueBattleLesson, type BattleLessonCtx } from '../src/tutorial/lessons';
 
 // Durum dersleri (Ömer 2026-10-14, docs/design/tutorial.md > Durum dersleri): gerçek savaş durumundan saf tespit (src/tutorial/situations.ts).
@@ -105,15 +105,47 @@ describe('karar başı durumları (sırası gelen kahraman)', () => {
 describe('skill seçimi durumları', () => {
   it('Rows and Reach: yakın dövüş arka sıradaki düşmana ulaşamıyor; tek sıralı düşmanda yok', () => {
     const deep = battleAt({ 1: 'warrior' }, { 1: 'warrior', 10: 'archer' }, 1);
-    expect(whens(selectSituations(deep.b, deep.uid, 'melee_attack'))).toEqual(['reach']);
+    expect(whens(selectSituations(deep.b, deep.uid, 'melee_attack'))).toEqual(['preview', 'reach']);
     const flat = battleAt({ 1: 'warrior' }, { 0: 'warrior', 2: 'archer' }, 1);
-    expect(selectSituations(flat.b, flat.uid, 'melee_attack')).toEqual([]);
+    expect(whens(selectSituations(flat.b, flat.uid, 'melee_attack'))).toEqual(['preview']);
   });
 
   it('Area Shapes: alan skill\'i seçilince', () => {
     const { b, uid } = battleAt({ 1: 'mage' }, { 1: 'warrior' }, 1);
     const area = b.get(uid)!.skills.find((id) => b.isAreaSkill(id) || b.isShapeSkill(id))!;
     expect(whens(selectSituations(b, uid, area))).toContain('area');
+  });
+});
+
+describe('yeni durumlar (Ömer 2026-10-14)', () => {
+  it('Hit Chance: düşmana hasar veren skill seçilince; dost skillinde yok. Helping Allies: dost seçen skill', () => {
+    const { b, uid } = battleAt({ 1: 'druid', 2: 'warrior' }, { 1: 'warrior' }, 1);
+    expect(selectSituations(b, uid, 'thorn_whip').find((x) => x.when === 'preview')?.skill).toBe('thorn_whip');
+    const heal = whens(selectSituations(b, uid, 'rejuvenate'));
+    expect(heal).toContain('ally');
+    expect(heal).not.toContain('preview');
+  });
+
+  it('Fallen Heroes: oyuncunun bir kahramanı düşünce; Valor açık savaşta metin seçeneği valor', () => {
+    const { b, uid } = battleAt({ 1: 'warrior', 2: 'mage' }, { 1: 'archer' }, 1);
+    expect(whens(turnSituations(b, uid))).not.toContain('fallen');
+    const ally = b.combatants.find((c) => c.side === 'party' && c.uid !== uid)!;
+    b.debugKill(ally.uid);
+    const f = turnSituations(b, uid).find((x) => x.when === 'fallen');
+    expect(f).toBeDefined();
+    expect(f!.variant).toBe(b.valorOf('party') !== null ? 'valor' : undefined);
+  });
+
+  it('Mill Road 2. adım: kullanılabilir en güçlü MP skilli; MP yetmiyorsa null (adım atlanır)', () => {
+    const { b, uid } = battleAt({ 1: 'mage' }, { 1: 'warrior' }, 1);
+    const me = b.get(uid)!;
+    b.debugSetResource(uid, 'mp', me.maxMp);
+    const id = strongMpSkill(b, uid)!;
+    expect(b.skill(id)?.cost.resource).toBe('mp');
+    const usable = me.skills.filter((x) => b.skill(x)?.cost.resource === 'mp' && b.canUse(uid, x).ok).map((x) => b.skill(x)!.cost.amount);
+    expect(b.skill(id)!.cost.amount).toBe(Math.max(...usable));
+    b.debugSetResource(uid, 'mp', 0);
+    expect(strongMpSkill(b, uid)).toBeNull();
   });
 });
 

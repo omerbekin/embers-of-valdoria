@@ -211,7 +211,42 @@ html.compact .tut-ok.el-btn {
 html[data-tut-lock='next'] .bh-skills [data-skill],
 html[data-tut-lock='skill'] .bh-skills [data-skill]:not(:first-child),
 html[data-tut-lock='target'] .bh-skills [data-skill]:not(:first-child),
-html[data-tut-lock] .bh-globs [data-global] {
+html[data-tut-lock] .bh-globs [data-global]:not(.tut-focus) {
+  opacity: 0.35;
+  filter: grayscale(0.85);
+  transition: opacity 0.2s, filter 0.2s;
+}
+
+/* Spot ışığı (Ömer 2026-10-14, b_spotlight): Mill Road zorunlu adımları ve Boss dersinde ekran yumuşakça kararır, vurgulanan öğenin çevresi
+   (delik) ve mentor kutusu (z-index 26) aydınlık kalır. Karartma tek öğenin dev gölgesidir: pointer-events yok, beklenen girdi (düğme,
+   düşman) engellenmez. Konum lesson-box.ts > placeSpot (döndürülmüş sahnede sahne yereline çevrilir). */
+.tut-spot {
+  position: fixed;
+  left: 0;
+  top: 0;
+  z-index: 25;
+  pointer-events: none;
+  border-radius: max(6px, calc(10 * var(--gu, 1px)));
+  box-shadow: 0 0 0 300vmax rgba(6, 4, 2, 0.5);
+  transition: transform 0.18s ease-out, width 0.18s ease-out, height 0.18s ease-out;
+  animation: tut-spot-in 0.35s ease-out both;
+}
+
+.tut-spot[hidden] {
+  display: none;
+}
+
+@keyframes tut-spot-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+/* MP skill adımı (f_mp_skill): yalnızca vurgulanan skill açık */
+html[data-tut-lock='mp'] .bh-skills [data-skill]:not(.tut-focus) {
   opacity: 0.35;
   filter: grayscale(0.85);
   transition: opacity 0.2s, filter 0.2s;
@@ -239,7 +274,12 @@ html[data-tut-lock] .bh-globs [data-global] {
 @media (prefers-reduced-motion: reduce) {
   .tut-box.tut-nudge,
   .tut-focus,
-  .tut-await {
+  .tut-await,
+  .tut-spot {
     animation: none;
+  }
+
+  .tut-spot {
+    transition: none;
   }
 }
