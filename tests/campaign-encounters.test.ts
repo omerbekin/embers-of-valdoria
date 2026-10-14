@@ -77,14 +77,16 @@ describe('sefer karşılaşmaları', () => {
     const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
     const i = plan.heroOrder.indexOf(s.roster[0]!.id);
     const c = battle.get(`party-${i}`)!;
-    expect(c.hp).toBe(Math.round(c.maxHp * 0.4));
+    // kahraman düşmandan hızlıysa ilk turunu oynamış olabilir: turn başı yenilenme (str x hpRegenPerStr) eklenebilir
+    const regen = Math.round(c.stats.hpRegen ?? 0);
+    expect([Math.round(c.maxHp * 0.4), Math.round(c.maxHp * 0.4) + regen]).toContain(c.hp);
     expect(battlePlan(s, 0, { unitMods: true, startHp: false }).units.party).toEqual({});
   });
 
   it('savaş planı mevcut savaş girişiyle kurulur; sonuç hero id ile geri okunur; seed belirleyici', () => {
-    const s = pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'paladin');
+    const s = pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'warrior');
     const plan = battlePlan(s);
-    expect(plan.party.filter(Boolean)).toEqual(['paladin']);
+    expect(plan.party.filter(Boolean)).toEqual(['warrior']);
     expect(plan.seed).toBe(battleSeed(5, 'valdoria', '1', 0));
     expect(battlePlan(s, 1).seed).not.toBe(plan.seed);
     expect(battlePlan(s).seed).toBe(plan.seed);

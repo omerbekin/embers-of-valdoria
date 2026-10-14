@@ -289,7 +289,7 @@ Sonuç (v5): **alt yol (5A-6A) 9 savaş, üst yol (5B-6B) 10 savaş.** Alt yolda
 - Seçim ve birleşme noktası veride işaretlenmez, graftan çıkar (çıkış > 1 / giriş > 1); testler sayıları (3 ve 3) doğrular.
 - Kenara isteğe bağlı `"path": [[x,y], ...]` ara noktaları; yoksa hafif kavisli eğri.
 - `partyCap` düğümde verilir ve o düğümden itibaren geçerlidir (bir sonraki `partyCap`'e kadar): Mill Road 1, Ravenwood 2, Ashford 3, Valdren Keep 4 (ayrılırken; `recruit.when`: `before` = düğüme varınca savaştan önce, `leave` = düğümden çıkarken). 5. karakterin yeri açık (Ömer); geldiğinde ilgili düğüme `recruit` + `partyCap: 5` eklenir.
-- `data/campaign/campaign.json` (provizyon): `{ "maps": ["valdoria"], "rules": { "carryHp": true, "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1.0, "maxSaves": { "normal": 5, "ironman": 1 } }, "starterPool": [11 sınıf], "companyPool": [11 sınıf], "recruitPool": [11 sınıf] }` (11 = rastgele havuzdaki oynanabilir sınıflar, Hexer dahil, Geometer hariç). `victoryHeal` ileride zorluk seviyesine göre değişebilir (`rules` zorluk başına ayrı blok olabilir).
+- `data/campaign/campaign.json` (provizyon): `{ "maps": ["valdoria"], "rules": { "carryHp": true, "victoryHeal": 0.2, "reviveRatio": 0.2, "bossVictoryHeal": 1.0, "maxSaves": { "normal": 5, "ironman": 1 } }, "starterPool": ["warrior", "archer"] (Ömer 2026-10-14), "companyPool": [11 sınıf], "recruitPool": [11 sınıf] }` (11 = rastgele havuzdaki oynanabilir sınıflar, Hexer dahil, Geometer hariç). `victoryHeal` ileride zorluk seviyesine göre değişebilir (`rules` zorluk başına ayrı blok olabilir).
 - `data/campaign/encounters.json` (bkz. 4), ileride `events.json`, `treasures.json`.
 
 ### 3.5 Görselde bulunan tutarsızlıklar (v1'den, güncel)
@@ -322,8 +322,8 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 
 ### 4.2 İki takım: tutorial takımı ve asıl takım (Ömer kararı v3: "Ashford'da tutorial takımı gidecek")
 **Tutorial takımı (Mill Road -> Ashford, 1-2 kişi):**
-- **Başlangıç:** "Choose your hero": 11 oynanabilir sınıftan biri (Hexer dahil, Geometer hariç). Haritada bu bölümde önde o yürür.
-- **Ravenwood (2):** 3 aday kart (seed'li çekiliş; adaylardan en az biri alan saldırılı sınıf, çünkü bu durak alan saldırılarını öğretir) -> 1 seç. Takım 2.
+- **Başlangıç:** "Choose your hero": yalnızca **Warrior** ya da **Archer** (Ömer 2026-10-14; `campaign.json > starterPool`; open-questions 326). Haritada bu bölümde önde o yürür.
+- **Ravenwood (2):** 3 aday kart -> 1 seç. Takım 2. Adaylar ilk kahramana göre SABİT (çekiliş yok; Ömer 2026-10-14, `recruit.byFirstHero`): Warrior -> Druid / Undead / Gambler, Archer -> Anti-Mage / Cutthroat / Undead (iki listede de alan saldırılı sınıf var; bu durak alan saldırılarını öğretir). Ashford "Form your company" ve Valdren Keep adayı 11 sınıflık havuzdan (değişmedi).
 - Tutorial'da takım değiştirme yok (2 kişi, yedek yok).
 
 **Ashford Village'da veda ve yeni takım:**

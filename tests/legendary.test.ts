@@ -104,7 +104,7 @@ describe('önizleme ve kayıt', () => {
   it("?legendary=1 / debug: tüm Legendary'ler torbaya (zarlı), tekrar verince çoğalmaz; kayıt round-trip etkiyi korur", () => {
     expect(legendaryPreviewWanted('?legendary=1')).toBe(true);
     expect(legendaryPreviewWanted('?endless=1')).toBe(false);
-    let s: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 8 }), 'defender'), '5A'), inventory: [] };
+    let s: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 8 }), 'warrior'), '5A'), inventory: [] };
     s = grantAllLegendaries(s);
     expect(s.inventory.map((i) => i.id).sort()).toEqual(legendaryIds().sort());
     for (const i of s.inventory) expect(i.rolls).toBeDefined();

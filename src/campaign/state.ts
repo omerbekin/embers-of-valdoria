@@ -131,13 +131,15 @@ export function isAreaClass(classId: string): boolean {
 
 /**
  * Aday kartları (seed'li; aynı sefer + düğüm = aynı adaylar). Kadroda olan sınıflar çıkarılır (aynı sınıftan ikinci karakter yok).
- * `requireArea`: adaylardan en az biri alan saldırılı sınıf.
+ * `requireArea`: adaylardan en az biri alan saldırılı sınıf. `byFirstHero`: ilk kahramanın sınıfına göre sabit liste (çekiliş yok).
  */
 export function recruitOffer(s: CampaignState, nodeId: string): string[] {
   const map = mapOf(s);
   const def = node(map, nodeId).recruit;
   if (!def) return [];
   const owned = new Set(s.roster.map((h) => h.class));
+  const fixed = s.roster[0] ? def.byFirstHero?.[s.roster[0].class] : undefined;
+  if (fixed) return fixed.filter((c) => !owned.has(c) && classes[c]).slice(0, def.offer);
   const pool = shuffle(CONFIG.recruitPool.filter((c) => !owned.has(c) && classes[c]), rngFor(s.seed, s.mapId, nodeId, 'recruit'));
   const offer = pool.slice(0, def.offer);
   if (def.requireArea && !offer.some(isAreaClass)) {

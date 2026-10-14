@@ -29,7 +29,7 @@
       "enemyTier": { "elite": { "hpMult": 0.82 }, "boss": { "hpMult": 1.14, "powerMult": 1.07 } }
     }
   },
-  "starterPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
+  "starterPool": ["warrior", "archer"],
   "companyPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
   "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
   "texts": {

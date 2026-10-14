@@ -179,7 +179,7 @@ describe('Endless off-hand', () => {
 
 describe('campaign off-hand save migration', () => {
   it('a shield equipped in the weapon slot moves to the off-hand; old heroes get an empty off-hand', () => {
-    const s = pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'defender');
+    const s = pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'warrior');
     const raw = JSON.parse(JSON.stringify(s)) as { roster: Array<{ equipment: Record<string, unknown> }> };
     const e = raw.roster[0]!.equipment;
     delete e.offhand; // eski kayıt: yuva yok

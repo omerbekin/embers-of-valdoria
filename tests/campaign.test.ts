@@ -113,7 +113,7 @@ describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
     let s = fresh();
     expect(nextStep(s)).toEqual({ kind: 'hero' });
     expect(() => moveTo(s, '2')).toThrow();
-    s = pickHero(s, 'mage');
+    s = pickHero(s, 'archer');
     expect(nextStep(s)).toEqual({ kind: 'battle', node: '1', encounter: 'mill_road_thugs' });
     expect(() => moveTo(s, '2')).toThrow(); // savaş bitmeden yola çıkılmaz
     s = autoResolve(s);
@@ -281,15 +281,34 @@ describe('tutorial takım akışı', () => {
     expect(s.active[before]).toBe('');
   });
 
-  it('başlangıç havuzu ve takım havuzu 11 oynanabilir sınıf (Geometer yok)', () => {
-    for (const pool of [CONFIG.starterPool, CONFIG.companyPool, CONFIG.recruitPool]) {
+  it('takım ve aday havuzu 11 oynanabilir sınıf (Geometer yok); başlangıç havuzu yalnızca Warrior + Archer (Ömer 2026-10-14)', () => {
+    expect(CONFIG.starterPool).toEqual(['warrior', 'archer']);
+    for (const pool of [CONFIG.companyPool, CONFIG.recruitPool]) {
       expect(pool).toHaveLength(11);
       expect(pool).not.toContain('aoe_tester');
       for (const c of pool) expect(randomPool).toContain(c);
     }
+    for (const c of CONFIG.starterPool) expect(randomPool).toContain(c);
+  });
+
+  it('pickHero yalnızca başlangıç havuzundaki sınıfı kabul eder', () => {
+    for (const c of CONFIG.recruitPool.filter((x) => !CONFIG.starterPool.includes(x))) expect(() => pickHero(fresh(), c), c).toThrow();
+    expect(() => pickHero(fresh(), 'aoe_tester')).toThrow();
+    expect(leaderOf(pickHero(fresh(), 'archer'))!.class).toBe('archer');
+  });
+
+  it('Ravenwood adayları ilk kahramana göre sabit (seed fark etmez): Warrior -> Druid/Undead/Gambler, Archer -> Anti-Mage/Cutthroat/Undead', () => {
+    const want: Record<string, string[]> = { warrior: ['druid', 'undead', 'gambler'], archer: ['antimage', 'cutthroat', 'undead'] };
+    for (const [hero, list] of Object.entries(want)) {
+      for (const seed of [1, 2, 3, 42, 777]) {
+        const s = moveTo(autoResolve(pickHero(fresh(seed), hero)), '2');
+        expect(recruitOffer(s, '2'), `${hero} ${seed}`).toEqual(list);
+        expect((nextStep(s) as { offer: string[] }).offer).toEqual(list);
+        expect(list.some(isAreaClass)).toBe(true); // Ravenwood alan saldırısını öğretir
+      }
+    }
   });
 });
-
 describe('can taşıma', () => {
   it('zaferde hayatta kalanlar +%35 (victoryHeal), düşenler KALKMAZ (ceset; Ömer 2026-10-11), savaşa girmeyen değişmez', () => {
     let s = playTo(fresh(9), '3');
@@ -324,12 +343,19 @@ describe('can taşıma', () => {
 });
 
 describe('determinizm ve debug', () => {
-  it('aynı seed = aynı adaylar; farklı seed çoğunlukla farklı', () => {
-    const a = moveTo(autoResolve(pickHero(fresh(42), 'mage')), '2');
-    const b = moveTo(autoResolve(pickHero(fresh(42), 'mage')), '2');
-    expect(recruitOffer(a, '2')).toEqual(recruitOffer(b, '2'));
-    const offers = new Set([1, 2, 3, 4, 5, 6].map((seed) => recruitOffer(moveTo(autoResolve(pickHero(fresh(seed), 'mage')), '2'), '2').join(',')));
+  it('Valdren Keep adayları rastgele havuzdan: aynı seed = aynı adaylar; farklı seed çoğunlukla farklı', () => {
+    const at7 = (seed: number) => debugTeleport(fresh(seed), '7');
+    expect(recruitOffer(at7(42), '7')).toEqual(recruitOffer(at7(42), '7'));
+    const offers = new Set([1, 2, 3, 4, 5, 6].map((seed) => recruitOffer(at7(seed), '7').join(',')));
     expect(offers.size).toBeGreaterThan(1);
+    for (const seed of [1, 2, 3]) {
+      const s = at7(seed);
+      const owned = s.roster.map((h) => h.class);
+      for (const c of recruitOffer(s, '7')) {
+        expect(CONFIG.recruitPool).toContain(c);
+        expect(owned).not.toContain(c);
+      }
+    }
   });
 
   it('ışınlanma: yol kurulur, önceki adımlar bitmiş, kadro dolu; ipucu yok (dersler data/tutorial.json)', () => {
@@ -348,7 +374,7 @@ describe('determinizm ve debug', () => {
   it('durum saf: işlemler girdiyi değiştirmez', () => {
     const s = fresh();
     const copy = JSON.stringify(s);
-    pickHero(s, 'mage');
+    pickHero(s, 'warrior');
     expect(JSON.stringify(s)).toBe(copy);
   });
 });

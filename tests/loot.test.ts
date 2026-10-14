@@ -146,7 +146,7 @@ describe('seferde loot', () => {
   });
 
   it('hazine sandığı: en az 1 item; torba doluysa sığmayan altına ÇEVRİLMEZ, kartta bekler; yer açılıp alınabilir, kart kapanınca kaybolur', () => {
-    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'mage'), '6B');
+    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'archer'), '6B');
     while (nextStep(s).kind !== 'treasure') s = autoResolve(s);
     const open = completeSimple(s, 'treasure');
     const got = open.pendingLoot!.items.map((u) => open.inventory.find((i) => i.uid === u)).filter((x): x is NonNullable<typeof x> => !!x);

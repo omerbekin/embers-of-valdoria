@@ -34,6 +34,11 @@ export interface RecruitDef {
   when: 'before' | 'leave';
   /** Adaylardan en az biri alan saldırılı sınıf olsun (Ravenwood: alan saldırılarını öğretir). */
   requireArea?: boolean;
+  /**
+   * Sabit aday listesi, ilk kahramanın (tutorial kahramanı) sınıfına göre (Ömer 2026-10-14: Ravenwood'da warrior -> druid / undead /
+   * gambler, archer -> antimage / cutthroat / undead). Varsa çekiliş yapılmaz; kadroda olan sınıflar çıkarılır.
+   */
+  byFirstHero?: Record<string, string[]>;
 }
 
 export interface MapNode {

@@ -2174,9 +2174,9 @@ export class CampaignMapScene extends Phaser.Scene {
     const m = openModal(this, this.ui, {
       title: 'Choose your hero',
       text: CONFIG.texts.intro,
-      width: 1500,
-      height: 900,
-      y: 90,
+      // 2 kart (Warrior / Archer; Ömer 2026-10-14): pencere aday penceresi gibi kısa; eski 1500x900 11 kart içindi
+      width: 1300,
+      height: 640,
       buttons: [
         {
           label: 'Begin the journey',

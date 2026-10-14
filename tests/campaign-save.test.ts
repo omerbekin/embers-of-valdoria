@@ -104,7 +104,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const s = start('normal', 5, 0, 'hard');
     writeSave(kv, s, 'auto');
     expect(latestSave(kv)!.state.difficulty).toBe('hard');
-    expect(battlePlan(pickHero(newCampaign({ mode: 'normal', seed: 5, difficulty: 'easy' }), 'mage')).difficulty).toBe(CONFIG.difficulties.easy.ai);
+    expect(battlePlan(pickHero(newCampaign({ mode: 'normal', seed: 5, difficulty: 'easy' }), 'archer')).difficulty).toBe(CONFIG.difficulties.easy.ai);
     expect(newCampaign({ mode: 'normal', seed: 1 }).difficulty).toBe(CONFIG.defaultDifficulty);
     expect(Object.keys(CONFIG.difficulties)).toEqual(['easy', 'medium', 'hard']);
   });
