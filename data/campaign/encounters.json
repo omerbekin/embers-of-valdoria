@@ -50,7 +50,7 @@
     "_not": "Sefer düğüm 3 (Ruined Watchtower, tutorial bölgesi): watchtower_chief'in zayıf kopyası (Ömer 2026-10-14). watchtower_chief Endless elit dalgası olarak AYNEN kalır.",
     "name": "The Bandit Chief",
     "units": [
-      { "class": "warrior", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 1.103, "statMult": 0.924, "powerMult": 0.693 }, "initialCooldownBonus": 1 },
+      { "class": "warrior", "slot": 1, "name": "Bandit Chief", "tier": "elite", "noTierMods": true, "mods": { "hpMult": 1.07, "statMult": 0.924, "powerMult": 0.672 }, "initialCooldownBonus": 1 },
       { "class": "archer", "slot": 6, "mods": { "hpMult": 0.399, "statMult": 0.609, "powerMult": 0.493 }, "lockSkills": ["aimed_shot"] },
       { "class": "archer", "slot": 8, "mods": { "hpMult": 0.399, "statMult": 0.609, "powerMult": 0.493 }, "lockSkills": ["aimed_shot"] }
     ],

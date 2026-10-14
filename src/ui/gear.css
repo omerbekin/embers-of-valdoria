@@ -1853,8 +1853,19 @@ html.short .gr-slot-sub {
   gap: 4px 8px;
 }
 
-.gr-shop.gr-phone .gr-buyback {
+/* telefon: geri alım ayrı sekmede ([ Wares | Buy back (n) | Character ]); başlık sekmede yazar, hücreler mallarla aynı ızgara */
+.gr-shop.gr-phone .gr-buyback > .gr-sec {
   display: none;
+}
+
+.gr-shop.gr-phone .gr-bb-row {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.gr-shop.gr-phone .gr-stall-bar .gr-tab {
+  padding: 0 8px;
+  letter-spacing: 0.06em;
 }
 
 .gr-shop.gr-phone .gr-inv .gr-bag {

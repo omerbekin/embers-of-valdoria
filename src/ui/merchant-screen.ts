@@ -94,6 +94,8 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   let dragKey = '';
   let charOpen = false;
   let view: 'char' | 'inv' = 'inv';
+  /** Telefonda tezgâhın mal görünümü: mallar ya da geri alım (masaüstünde ikisi alt alta; Ömer 2026-10-14 telefon geri alım hatası). */
+  let stallTab: 'wares' | 'bb' = 'wares';
   let line: MerchantLine = 'idle';
   let flashText = '';
   let curStats: Stats | null = null;
@@ -352,16 +354,19 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
   function renderLeft(): void {
     const phone = phoneLayout();
     const showChar = phone ? view === 'char' : charOpen;
-    // tezgâhın iki görünümü tek anahtarda: [ Wares | Character (C) ] (telefonda da aynı; C ve Esc de geçirir)
+    // tezgâhın görünümleri tek anahtarda: masaüstü [ Wares | Character (C) ]; telefonda geri alım da sekme olur
+    // [ Wares | Buy back (n) | Character ] (yer darlığından geri alım ayrı görünümde; C ve Esc de geçirir)
     const bar = el('div', 'gr-stall-bar');
+    const bbCount = src.buyback().length;
     bar.append(
-      tabSwitch<'wares' | 'char'>(showChar ? 'char' : 'wares', [['wares', 'Wares'], ['char', phone ? 'Character' : 'Character (C)']], (k) => {
-        if (phone) {
-          view = k === 'char' ? 'char' : 'inv';
-          uiSound('tab');
-          renderAll();
-        } else toggleChar(k === 'char');
-      }),
+      phone
+        ? tabSwitch<'wares' | 'bb' | 'char'>(showChar ? 'char' : stallTab, [['wares', 'Wares'], ['bb', `Buy back (${bbCount})`], ['char', 'Character']], (k) => {
+            view = k === 'char' ? 'char' : 'inv';
+            if (k !== 'char') stallTab = k;
+            uiSound('tab');
+            renderAll();
+          })
+        : tabSwitch<'wares' | 'char'>(showChar ? 'char' : 'wares', [['wares', 'Wares'], ['char', 'Character (C)']], (k) => toggleChar(k === 'char')),
     );
     if (showChar) {
       const r = renderCharacter({
@@ -442,7 +447,8 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       row.append(cell);
     });
     bb.append(row);
-    left.replaceChildren(bar, talk, wares, reroll, bb);
+    if (phone) left.replaceChildren(bar, talk, ...(stallTab === 'bb' ? [bb] : [wares, reroll]));
+    else left.replaceChildren(bar, talk, wares, reroll, bb);
   }
   function renderRight(): void {
     const phone = phoneLayout();
@@ -510,7 +516,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     if (closed) return;
     ix.hideTips();
     const phone = phoneLayout();
-    const vk = (phone ? view === 'char' : charOpen) ? 'char' : 'wares';
+    const vk = (phone ? view === 'char' : charOpen) ? 'char' : phone ? stallTab : 'wares';
     const swapped = shownView !== '' && vk !== shownView;
     shownView = vk;
     panel.classList.toggle('gr-phone', phone);
