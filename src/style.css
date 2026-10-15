@@ -503,7 +503,7 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   align-items: center;
   justify-content: center;
   padding: calc(64px + var(--et)) calc(16px + var(--er)) calc(16px + var(--eb)) calc(16px + var(--el));
-  background: rgba(5, 3, 2, 0.62);
+  background: rgba(5, 3, 2, 0.45); /* oyun içi Menu: sahne hafifçe görünsün (Ömer 2026-10-14) */
   color: var(--g-text);
   z-index: 18;
 }
@@ -523,6 +523,9 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   padding: 22px 28px 20px;
   overflow: hidden auto;
   zoom: 1.15; /* oyun içi Menu %15 büyük (Ömer 2026-10-11); telefonda html.short kuralı %10 küçültür */
+  /* Ömer 2026-10-14: Menu paneli hafif saydam (~%85), arkada sahne seçilir; yalnızca bu Menu (ortak .el-panel diğer pencerelerde opak kalır).
+     backdrop-filter yok (telefonda pahalı); yazı okunurluğu için koyu zemin korunur. */
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.86), rgba(12, 9, 6, 0.84));
 }
 
 .gm-title {

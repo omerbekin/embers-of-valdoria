@@ -5,7 +5,7 @@ import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
-import { migrateItemRolls, migrateOffhand, migrateRollsX2 } from '../progression/items';
+import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand } from '../progression/items';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -79,6 +79,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     // İkinci el yuvası (2026-10-12): silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; idempotent); ikinci el doluysa oradaki torbaya
     const overflow: NonNullable<EndlessRun['bag']> = [];
     for (const h of r.heroes) if (migrateOffhand(h.equipment, overflow) && !h.equipment.weapon) delete h.equipment.weapon;
+    // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
+    for (const h of r.heroes) if (promoteOffhand(h.equipment)) delete h.equipment.offhand;
     if (overflow.length) r.bag = [...(r.bag ?? []), ...overflow];
     // Nadir düşüş (madde 297): sayaç sayı değilse 0; bozuk duyuru atılır
     if (r.rarePity !== undefined && (!isNum(r.rarePity) || r.rarePity < 0)) r.rarePity = 0;

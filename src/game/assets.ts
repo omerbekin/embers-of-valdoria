@@ -99,7 +99,7 @@ const BACKGROUND_IDS = new Set(Object.keys(backgroundFiles).map((p) => fileStem(
 export const backgroundExists = (id: string): boolean => BACKGROUND_IDS.has(id);
 
 /** Açık (etkin / duraklatılmış / uyuyan) sahnelerin görüntü listelerinde kullanılan doku anahtarları. */
-function texturesInUse(game: Phaser.Game): Set<string> {
+export function texturesInUse(game: Phaser.Game): Set<string> {
   const used = new Set<string>();
   const walk = (list: Phaser.GameObjects.GameObject[]): void => {
     for (const o of list) {

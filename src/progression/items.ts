@@ -633,6 +633,20 @@ export function defaultEquipSlot(equipment: EquipMap, d: ItemDef): SlotId {
   return 'weapon';
 }
 
+/**
+ * Ana el boşken ikinci eldeki silah (hançer) ana ele geçer (Ömer 2026-10-14: silah ana el boşken ikinci elde durmaz). Ana el çıkarılınca ve
+ * kayıt okunurken çalışır; ekipmanı yerinde değiştirir (ikinci el null olur). Taşındıysa true.
+ */
+export function promoteOffhand(equipment: EquipMap | null | undefined): boolean {
+  if (!equipment || equipment.weapon) return false;
+  const o = equipment.offhand;
+  const d = o && typeof o === 'object' && typeof o.id === 'string' ? itemDef(o.id) : undefined;
+  if (!o || !d || !offhandWeapon(d)) return false;
+  equipment.weapon = o;
+  equipment.offhand = null;
+  return true;
+}
+
 /** Takmanın sonucu (saf): yeni ekipman, yuvadan çıkan item (yer değiştirme) ve ayrıca torbaya dönecekler (çift elin kapattığı ikinci el). */
 export interface EquipPlan {
   slot: SlotId;
@@ -661,7 +675,8 @@ export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstan
   const d = itemDef(inst.id);
   if (!d) return { error: `Unknown item: ${inst.id}` };
   if (!canEquip(classId, d)) return { error: d.usableBy && !d.usableBy.includes(classId) ? `${d.name} can only be used by ${d.usableBy.join(', ')}` : `${classId} cannot use ${d.family ?? d.slot}` };
-  const at = slot ?? defaultEquipSlot(equipment, d);
+  // Ana el boşken silah ikinci ele girmez (Ömer 2026-10-14): ikinci ele bırakılan / "Off-hand" ile takılan hançer de ana ele gider
+  const at = slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d));
   if (!fitsSlot(d, at)) return { error: `${d.name} does not go in the ${slotDef(at)?.name ?? at} slot` };
   if (at === 'offhand') {
     const w = offhandBlocker(equipment);

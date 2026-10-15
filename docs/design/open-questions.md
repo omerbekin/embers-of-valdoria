@@ -1641,3 +1641,8 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 - **Karar:** "Choose your hero" yalnızca Warrior ve Archer'ı sunar (Ömer "ranger" dedi = bizim Archer). Ravenwood'daki 3 aday ilk kahramana göre sabittir, seed fark etmez: Warrior -> Druid / Undead / Gambler, Archer -> Anti-Mage / Cutthroat / Undead (`valdoria.json` düğüm 2 `recruit.byFirstHero`). Ashford "Form your company" ve Valdren Keep adayı 11 sınıflık havuzda kalır.
 - **Ölçüm (sim:campaign 240 sefer, Medium vekil, seed 1 / 5001; önce -> sonra):** tutorial kategorisi Medium 96,5 / 98,3 -> 99,6 / 99,9 (bant 92-100), Hard 90,4 / 92,4 -> 96,4 / 96,9 (bant 85-97, üst sınıra yakın), Easy 99,6 / 100 -> 100 / 100; Medium/Medium bitirme %54,2 / %52,9 -> %57,5 / %51,7 (bant 48-60). Bilinen (önceden de): Hard normal seed 5001'de %72,8 (bant 74-85). Sayı ayarı yapılmadı.
 - **Varsayım:** "Choose your hero" penceresi 2 kart için küçültüldü (1500x900 -> 1300x640, aday penceresine benzer); kartlar ortada.
+
+## 327. Telefonda savaş HUD'ı sıkışık modu (ui-dev; Ömer onayı bekliyor, 2026-10-14)
+- **Sorun (Ömer, telefon):** Valor + 4 global düğme varken sağ alttaki Combat log ekran dışına taşıyordu.
+- **Çözüm:** telefonda (`html.short`) aralıklar daralır, gerekirse skill/global öbeği sola kayar; daha dar ekranda Valor "sıkışık" moda geçer: "VALOR" yazısı gizlenir, mangallar küçülür, Combat log aynı sütunda yalnızca simge (`src/ui/battle-hud.ts > place`, `battle-hud.css`).
+- **Varsayım:** sıkışık modda koşu ikonları (kalıntılar, zorluk ölçeği) gizlenir; eski 16:9 telefonlarda (640x360) hâlâ ~25 px taşma olabilir.

@@ -253,7 +253,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const ok = !!d && canEquip(hero.class, d);
         const acts = [{ label: ok ? `Equip · ${className(hero.class)}` : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
         // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
-        if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand')) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
+        // ana el boşken "Off-hand" yok (hançer zaten ana ele gider, Ömer 2026-10-14)
+        if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
         return acts;
       }
       if (key.startsWith('slot:')) {

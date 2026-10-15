@@ -14,7 +14,8 @@ import { perfLite } from '../ui/perf-mode';
 import { stageView } from './stage-view';
 import { poseBodyUrl, weaponUrl } from './pose-files';
 import './pose-mode'; // gerçek sınıfların çizimi (v2 / debug v1): kayıtlı seçim pozlu birimler kurulmadan uygulanır
-import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
+import { texturesInUse } from './assets';
+import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;
 const weaponTex = (family: string, look: string, small: boolean) => `poseweapon:${family}:${look}${small ? ':s' : ''}`;
@@ -123,11 +124,44 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   }
   const W = Math.max(...items.map((i) => i.px + i.w));
   const H = y + row;
+  let canvas = paintAtlas(W, H, items, s, def, pick, src);
+  if (!canvas) {
+    // tuval belleği dolu (telefon): ekranda olmayan hale dokularını bırakıp bir kez daha dene; yine olmazsa bugünkü sprite
+    releasePoseTextures(scene);
+    canvas = paintAtlas(W, H, items, s, def, pick, src);
+    if (!canvas) return null;
+  }
+  const tex = scene.textures.addCanvas(key, canvas);
+  if (!tex) return null;
+  for (const it of items) {
+    const f = tex.add(it.name, 0, it.px, it.py, it.w, it.h);
+    f?.setTrim(realW, realH, Math.round((it.x0 - fx0) * s), Math.round((it.y0 - fy0) * s), it.w, it.h);
+  }
+  tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
+  return { key, density: s, realW, realH };
+}
+
+interface AtlasItem {
+  name: string;
+  x0: number;
+  y0: number;
+  w: number;
+  h: number;
+  px: number;
+  py: number;
+}
+
+/** Tuvali kurar ve kareleri çizer. Bağlam alınamazsa ya da çizim boş kaldıysa (tuval bellek sınırı) tuvali bırakıp null. */
+function paintAtlas(W: number, H: number, items: readonly AtlasItem[], s: number, def: PoseClassDef, pick: WeaponPick | null, src: NonNullable<ReturnType<typeof sources>>): HTMLCanvasElement | null {
   const canvas = document.createElement('canvas');
   canvas.width = W;
   canvas.height = H;
+  const fail = (): null => {
+    freeCanvas(canvas);
+    return null;
+  };
   const ctx = canvas.getContext('2d');
-  if (!ctx) return null;
+  if (!ctx) return fail();
   ctx.imageSmoothingEnabled = true;
   ctx.imageSmoothingQuality = 'high';
   const glowPx = Math.max(2, GLOW_PAD * s * 0.6);
@@ -140,12 +174,50 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
     drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off } : null, glowPx);
     ctx.restore();
   }
-  const tex = scene.textures.addCanvas(key, canvas);
-  if (!tex) return null;
-  for (const it of items) {
-    const f = tex.add(it.name, 0, it.px, it.py, it.w, it.h);
-    f?.setTrim(realW, realH, Math.round((it.x0 - fx0) * s), Math.round((it.y0 - fy0) * s), it.w, it.h);
+  // Boş kare denetimi: tarayıcı tuval bellek sınırını aşınca bağlam verir ama çizmez (iOS Safari) -> saydam (görünmez) birim olmasın
+  const first = items[0];
+  if (first) {
+    try {
+      if (pixelsBlank(ctx.getImageData(first.px, first.py, first.w, first.h).data, 3)) return fail();
+    } catch {
+      return fail();
+    }
   }
-  tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
-  return { key, density: s, realW, realH };
+  return canvas;
+}
+
+/** Tuvalin arka belleğini hemen bırakır (iOS Safari tuval belleğini çöp toplamayı beklemeden geri alır). */
+function freeCanvas(img: unknown): void {
+  if (typeof HTMLCanvasElement !== 'undefined' && img instanceof HTMLCanvasElement) {
+    img.width = 0;
+    img.height = 0;
+  }
+}
+
+/**
+ * Hiçbir açık sahnenin göstermediği hale dokularını (`atlases` / `keepBodies` ile pişmiş atlasları / başka sınıfların gövde pozlarını da) atar ve
+ * tuvallerini bırakır. Atlaslar her (sınıf, silah) için ayrı ve oturum boyunca birikiyordu: telefonda bellek dolunca yeni pişen atlas boş
+ * kalıyordu (ayna savaşta aynı sınıfın farklı silahlı kopyası görünmezdi). Gerekince yeniden pişer / preload yeniden yükler. Dönen: atılan sayı.
+ * `atlases` / `keepBodies` yalnızca yeni savaşın preload'unda (önceki savaşın birimleri yokken): `releaseForBattle`.
+ */
+export function releasePoseTextures(scene: Phaser.Scene, opts: { atlases?: boolean; keepBodies?: ReadonlySet<string> } = {}): number {
+  const inUse = texturesInUse(scene.game);
+  let n = 0;
+  for (const key of scene.textures.getTextureKeys()) {
+    if (!isReleasablePoseTexture(key, inUse, opts)) continue;
+    const img = scene.textures.get(key).getSourceImage();
+    scene.textures.remove(key);
+    freeCanvas(img); // atlas / hale tuvali (kaynak görseller <img>: dokunulmaz)
+    n++;
+  }
+  return n;
+}
+
+/**
+ * Yeni savaşın preload'unda (preloadPoses'tan önce): önceki savaşların atlaslarını ve hale dokularını, ayrıca bu savaşta olmayan sınıfların
+ * gövde pozlarını bırakır. `classIds` verilmezse (rastgele takım) gövde pozları tutulur.
+ */
+export function releaseForBattle(scene: Phaser.Scene, classIds?: readonly string[]): number {
+  const keepBodies = classIds ? new Set(classIds.map((c) => poseClass(c)?.dir).filter((d): d is string => !!d)) : undefined;
+  return releasePoseTextures(scene, { atlases: true, keepBodies });
 }

@@ -545,3 +545,25 @@ export function validatePoses(data: PosesData = POSES): string[] {
   for (const [item, look] of Object.entries(data.itemLook ?? {})) if (!Object.values(data.weapons).some((f) => f.looks[look])) errors.push(`itemLook ${item} -> unknown look ${look}`);
   return errors;
 }
+
+/**
+ * Pişmiş atlas / kaynak dokularının bellek bırakma kuralı (src/game/pose-rig.ts > releasePoseTextures). Atlaslar (`pose:`) ve hale dokuları
+ * (`glowfx:`, src/game/sprite-glow.ts) her (sınıf, silah) birleşimi için ayrı tuval; bırakılmazsa oturum boyunca birikir ve telefonda tuval /
+ * GPU bellek sınırı aşılınca YENİ pişen atlas boş (saydam) kalır: aynı sınıfın farklı silahlı ikinci kopyası (ayna savaş) görünmez olurdu.
+ * Kullanımdaki doku hiç atılmaz. Hale her zaman; atlaslar yalnızca `atlases` (yeni savaş kurulmadan: o anda hiçbir birim atlas tutmaz; savaş
+ * içinde boşta pozu idle sprite olan birim atlasını ekranda göstermeden tutar); gövde kaynakları (`posebody:<dir>:...`) yalnızca
+ * `keepBodies` verilince ve klasörü onda değilse (bu savaşta olmayan sınıf). Silah görselleri küçük: hiç atılmaz.
+ */
+export function isReleasablePoseTexture(key: string, inUse: ReadonlySet<string>, opts: { atlases?: boolean; keepBodies?: ReadonlySet<string> } = {}): boolean {
+  if (inUse.has(key)) return false;
+  if (key.startsWith('glowfx:')) return true;
+  if (key.startsWith('pose:')) return !!opts.atlases;
+  if (key.startsWith('posebody:') && opts.keepBodies) return !opts.keepBodies.has(key.split(':')[1] ?? '');
+  return false;
+}
+
+/** RGBA piksel dizisinde hiç görünür (alfa > 8) piksel yok mu (pişen kare boş kaldıysa: tuval belleği tükenmiş). `step` = atlanan piksel. */
+export function pixelsBlank(data: ArrayLike<number>, step = 1): boolean {
+  for (let i = 3; i < data.length; i += 4 * Math.max(1, step)) if (data[i]! > 8) return false;
+  return true;
+}

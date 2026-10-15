@@ -1,6 +1,6 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
-import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves } from '../progression/equip';
@@ -525,6 +525,7 @@ export function unequipToBag(run: EndlessRun, heroId: string, slot: SlotId, cfg:
   s.bag = [...bagOf(s), h.equipment[slot]!];
   const eq = { ...h.equipment };
   delete eq[slot];
+  if (promoteOffhand(eq)) delete eq.offhand; // ana el çıkınca ikinci eldeki hançer ana ele geçer
   h.equipment = eq;
   return s;
 }

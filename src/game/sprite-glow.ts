@@ -91,6 +91,8 @@ function paint(scene: Phaser.Scene, frame: Phaser.Textures.Frame, width: GlowWid
     b.globalAlpha = 1;
     b.globalCompositeOperation = 'destination-out';
     b.drawImage(sil, 0, 0);
+    sil.width = 0; // geçici tuvalin belleği hemen bırakılır (iOS Safari tuval bellek sınırı)
+    sil.height = 0;
     if (scene.textures.exists(key)) scene.textures.remove(key);
     scene.textures.addCanvas(key, out);
     return { key, s, originY: (pad + realH * s) / h };

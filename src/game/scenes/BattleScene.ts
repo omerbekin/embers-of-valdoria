@@ -16,7 +16,7 @@ import { globalIconName, uiIconName } from '../../ui/ui-icons';
 import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, preloadAssets } from '../assets';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
-import { preloadPoses } from '../pose-rig';
+import { preloadPoses, releaseForBattle } from '../pose-rig';
 import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
@@ -351,6 +351,7 @@ export class BattleScene extends Phaser.Scene {
     preloadAssets(this, { backgrounds: [this.backgroundChoice()] }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
     // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
     const cells = this.teams ? [...this.teams.party, ...this.teams.enemies].filter((c): c is string => !!c) : undefined;
+    releaseForBattle(this, cells); // önceki savaşların pişmiş atlasları birikmesin (telefon belleği; ayna savaşta görünmez birim)
     preloadPoses(this, cells);
     preloadVfxSheets(this); // v2 sprite sheet efektleri (assets/vfx; Defender)
   }

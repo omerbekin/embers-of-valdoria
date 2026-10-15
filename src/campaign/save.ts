@@ -2,7 +2,7 @@ import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
-import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, SLOT_IDS, type ItemInstance } from '../progression/items';
+import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { valorRules } from '../engine/content';
 import { clampValor } from '../engine/valor';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
@@ -110,6 +110,7 @@ function upgradeState(s: CampaignState): void {
       if (old && typeof old === 'object') for (const k of SLOT_IDS) if (isItem(old[k])) eq[k] = old[k] as ItemInstance;
       // 2026-10-12 ikinci el yuvası: silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; her okumada çalışır, idempotent)
       migrateOffhand(eq, overflow);
+      promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
       return {
         ...h,
         level: Number.isInteger(h.level) && h.level >= 1 ? h.level : 1,

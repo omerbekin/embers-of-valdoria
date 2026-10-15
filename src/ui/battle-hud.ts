@@ -228,6 +228,8 @@ export class BattleHud {
   private queue: HudQueueCell[] | null = null;
   private testLabel = '';
   private viewW = 1920;
+  /** 1 gerçek CSS px kaç oyun birimi (layout'tan; telefonda Combat log'un 44 px alanı için). */
+  private inv = 1;
   /** Son yazılan HTML (kutu başına): aynıysa DOM'a dokunulmaz (skill değiştirmek tüm alt çubuğu yeniden kurup yerleşim ölçtürüyordu). */
   private readonly lastHtml = new WeakMap<HTMLElement, string>();
   /** Skill kutusunun seçimden bağımsız içeriği: yalnızca seçim değiştiyse sınıf değişir. */
@@ -321,10 +323,9 @@ export class BattleHud {
     r.transform = `scale(${scale})`;
     r.setProperty('--bh-inv', String(1 / Math.max(0.05, scale))); // 1 gerçek px = --bh-inv oyun birimi (dokunma alanları en az 44 gerçek px)
     this.globW = null; // ekran değişti (html.short düzeni): global sütun yeniden ölçülür
-    if (viewW !== this.viewW) {
-      this.viewW = viewW;
-      this.place();
-    }
+    this.inv = 1 / Math.max(0.05, scale);
+    this.viewW = viewW;
+    this.place();
   }
 
   setHidden(on: boolean): void {
@@ -373,7 +374,7 @@ export class BattleHud {
         return `<span class="bh-buff" ${this.reg(`fx:${i}`, tip)} style="${e.color ? `--c:${e.color}` : ''}">${e.iconUrl ? img(e.iconUrl) : '<i class="bh-dia s"></i>'}</span>`;
       })
       .join('');
-    this.put(this.infoBox, `${icons ? `<div class="bh-buffs">${icons}</div>` : ''}<div class="bh-links"><span class="bh-more bh-plink ${uiImg('combatLog') ? 'ico' : ''} ${this.panel === 'log' ? 'open' : ''}" data-panel="log">${img(uiImg('combatLog'), 'bh-ico bh-pl-ico')}Combat log</span></div>`);
+    this.put(this.infoBox, `${icons ? `<div class="bh-buffs">${icons}</div>` : ''}<div class="bh-links"><span class="bh-more bh-plink ${uiImg('combatLog') ? 'ico' : ''} ${this.panel === 'log' ? 'open' : ''}" data-panel="log">${img(uiImg('combatLog'), 'bh-ico bh-pl-ico')}<span class="bh-pl-t">Combat log</span></span></div>`);
   }
 
   private renderLog(): void {
@@ -590,22 +591,58 @@ export class BattleHud {
     // 4 skill tam ortada, global sütun hemen sağında
     const n = Math.max(1, this.model.skills.length);
     const SKW = n * 146 + (n - 1) * 12;
-    const sx = W / 2 - (4 * 146 + 3 * 12) / 2 + (4 - n) * 79; // 4'ten az skill (çağrı) yine ortalı
-    this.skillBox.style.left = `${sx}px`;
-    this.pasBox.style.left = `${sx - 100}px`;
-    const gx = sx + SKW + 22;
-    this.globBox.style.left = `${gx}px`;
-    // Sağ alt alan global sütunun ölçülen genişliğinden sonra (telefonda globaller yatay, büyük dokunma alanlı: battle-hud.css > html.short)
+    const sx0 = W / 2 - (4 * 146 + 3 * 12) / 2 + (4 - n) * 79; // 4'ten az skill (çağrı) yine ortalı
+    // Telefonda (html.short; Ömer 2026-10-14 telefon testi) aralar daralır; Valor varken sağ alttaki Combat log ekrandan taşmasın diye
+    // skill + global öbeği gerekirse sola, stat bloğuyla arasındaki boşluğa kayar (ekran içinde, en az 44 gerçek px dokunma alanıyla)
+    const phone = document.documentElement.classList.contains('short');
+    const gSk = phone ? 12 : 22;
+    const gGl = phone ? 10 : 20;
+    const gVa = phone ? 12 : 24;
+    const EDGE = 28;
+    // Sağ alan global sütunun ölçülen genişliğinden sonra (telefonda globaller yatay, büyük dokunma alanlı: battle-hud.css > html.short)
     // ölçüm (zorunlu yerleşim) yalnızca global sütun ya da ekran değişince
     this.globW ??= this.globBox.offsetWidth;
-    // Valor mangalları global sütunun hemen sağında (yalnızca sefer / Endless); sağ alan onlardan sonra başlar
-    let rx = gx + Math.max(150, this.globW) + 20;
-    if (!this.valorBox.hidden) {
-      this.valorBox.style.left = `${rx}px`;
-      rx += this.valorBox.offsetWidth + 24;
+    const hasValor = !this.valorBox.hidden;
+    if (this.valorBox.classList.contains('tight')) this.valorBox.classList.remove('tight');
+    let valorW = hasValor ? this.valorBox.offsetWidth + gVa : 0;
+    const rightOf = (sx: number) => sx + SKW + gSk + Math.max(150, this.globW!) + gGl + valorW;
+    let sx = sx0;
+    // Dar telefon ekranında (sığmıyorsa) Valor sıkışır: "VALOR" yazısı gizlenir, mangallar üstte, Combat log simgesi hemen altında (aynı sütun)
+    let tight = false;
+    if (phone) {
+      const need = Math.max(120, 52 * this.inv); // Combat log: en az 44 gerçek px + pay
+      let over = rightOf(sx0) + need + EDGE - W;
+      if (over > 0) {
+        const actorR = this.actorBox.offsetLeft + this.actorBox.offsetWidth;
+        const room = Math.max(0, sx0 - 100 - (actorR + 20)); // 100 = pasif madalyonu skill'lerin solunda
+        if (hasValor && over > room) {
+          tight = true;
+          this.valorBox.classList.add('tight');
+          valorW = this.valorBox.offsetWidth + gVa;
+          over = rightOf(sx0) + EDGE - W;
+        }
+        sx = sx0 - Math.max(0, Math.min(over, room));
+      }
     }
-    this.rightSlot.style.left = `${rx}px`;
-    this.rightSlot.style.width = `${Math.max(0, W - rx - 28)}px`;
+    this.rightSlot.classList.toggle('stacked', tight);
+    this.skillBox.style.left = `${sx}px`;
+    this.pasBox.style.left = `${sx - 100}px`;
+    const gx = sx + SKW + gSk;
+    this.globBox.style.left = `${gx}px`;
+    // Valor mangalları global sütunun hemen sağında (yalnızca sefer / Endless); sağ alan onlardan sonra başlar
+    let rx = gx + Math.max(150, this.globW) + gGl;
+    if (hasValor) {
+      this.valorBox.style.left = `${rx}px`;
+      if (tight) {
+        this.rightSlot.style.left = `${rx}px`;
+        this.rightSlot.style.width = `${valorW - gVa}px`;
+      }
+      rx += valorW;
+    }
+    if (!tight) {
+      this.rightSlot.style.left = `${rx}px`;
+      this.rightSlot.style.width = `${Math.max(0, W - rx - EDGE)}px`;
+    }
     this.cards.enemy.style.left = `${W - 384 - 40}px`;
   }
 

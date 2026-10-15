@@ -1,6 +1,6 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
 import { clone, heroById } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
@@ -59,6 +59,7 @@ export function unequipItem(s: CampaignState, heroId: string, slot: SlotId): Cam
   const h = heroById(t, heroId)!;
   t.inventory.push(h.equipment[slot]!);
   h.equipment[slot] = null;
+  promoteOffhand(h.equipment); // ana el çıkınca ikinci eldeki hançer ana ele geçer
   return t;
 }
 

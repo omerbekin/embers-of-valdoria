@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
 import { perfLite } from '../../ui/perf-mode';
+import { basePuffs, placePuffs, roadRects, type Rect } from '../fog-clouds';
 import { content } from '../../engine';
 import {
   CONFIG,
@@ -157,6 +158,10 @@ export class CampaignMapScene extends Phaser.Scene {
   private curves = new Map<string, Phaser.Curves.QuadraticBezier>();
   private openEdges: Array<{ g: Phaser.GameObjects.Graphics; pts: Pt[] }> = [];
   private clouds = new Map<string, Phaser.GameObjects.Image[]>();
+  /** Bulut yerleşiminin imzası (açık alanlar değişince bulut yeniden kurulur). */
+  private cloudSig = new Map<string, string>();
+  /** Sisin ASLA örtmeyeceği alanlar (gidilebilir düğüm + adı + yolu, bulunulan düğüm); renderMap her çizimde doldurur. */
+  private clearZones: Rect[] = [];
   private caravan: Phaser.GameObjects.Image[] = [];
   private walking: { finish: () => void } | null = null;
   private modal: Modal | null = null;
@@ -195,6 +200,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.curves = new Map();
     this.openEdges = [];
     this.clouds = new Map();
+    this.cloudSig = new Map();
     this.caravan = [];
     this.walking = null;
     this.modal = null;
@@ -431,6 +437,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.drawnCompact = this.compact();
     this.dyn.removeAll(true);
     this.openEdges = [];
+    this.clearZones = [];
     const vis = nodeVisibility(this.map, this.s, session.revealFog);
     const step = nextStep(this.s);
     const options = step.kind === 'move' ? step.options : [];
@@ -447,6 +454,7 @@ export class CampaignMapScene extends Phaser.Scene {
         const g = this.add.graphics();
         this.dyn.add([base, g]);
         this.openEdges.push({ g, pts });
+        this.clearZones.push(...roadRects(pts));
         continue;
       }
       this.drawRoad(lines, pts, ev, 0);
@@ -595,6 +603,12 @@ export class CampaignMapScene extends Phaser.Scene {
       sub.y = above ? name.y - 22 : name.y + 22;
       c.add(sub);
     }
+    // Sis kuralı (Ömer 2026-10-14): bulunulan ve sıradaki (gidilebilir) düğüm, adı ve alt yazısı bulutsuz kalır
+    if (here || option || v === 'near' || (next && !closed)) {
+      const halfW = Math.max(r + 8, (name.width + 70) / 2);
+      const textH = 12 + 22 + 30; // ad + alt yazı + leke payı
+      this.clearZones.push({ x0: p.x - halfW, x1: p.x + halfW, y0: p.y - r - 8 - (above ? textH : 0), y1: p.y + r + 8 + (above ? 0 : textH) });
+    }
     if (named && n.id === this.map.start && !here && !done) c.add(elText(this, 0, -r - (above ? 60 : 16), 'Start', 12, EL.MUTED, { em: 0.2 }).setOrigin(0.5, 1));
     if (incoming(this.map, n.id).length > 1 && !done) c.add(elText(this, -r - 14, 0, '›', 18, EL.MUTED, { em: 0 }).setOrigin(0.5));
     if (closed) c.setAlpha(0.45);
@@ -652,10 +666,19 @@ export class CampaignMapScene extends Phaser.Scene {
       if (v === 'fog' || v === 'goal') want.set(n.id, v === 'goal' ? 0.45 : 0.78);
       else if (v === 'closed') want.set(n.id, 0.3);
     }
+    // Parçalar açık alanlardan itilir (src/game/fog-clouds.ts); yerleşim değiştiyse bulut yeniden kurulur
+    const plans = new Map<string, ReturnType<typeof placePuffs>>();
+    for (const id of want.keys()) {
+      const p = this.P(id);
+      plans.set(id, placePuffs(basePuffs(id, p.x, p.y), this.clearZones));
+    }
+    const sigOf = (id: string) => JSON.stringify(plans.get(id)!.map((q) => [Math.round(q.x), Math.round(q.y), q.sx.toFixed(2)]));
     for (const [id, imgs] of this.clouds) {
-      if (want.has(id)) continue;
+      if (want.has(id) && this.cloudSig.get(id) === sigOf(id)) continue;
       this.clouds.delete(id);
+      this.cloudSig.delete(id);
       for (const im of imgs) {
+        this.tweens.killTweensOf(im);
         if (animate) this.tweens.add({ targets: im, alpha: 0, duration: 600, onComplete: () => im.destroy() });
         else im.destroy();
       }
@@ -667,16 +690,14 @@ export class CampaignMapScene extends Phaser.Scene {
         existing.forEach((im) => im.setAlpha(a));
         continue;
       }
-      const p = this.P(id);
-      let h = 0;
-      for (const ch of id) h = (h * 17 + ch.charCodeAt(0)) >>> 0;
-      const imgs = [0, 1, 2].map((k) => {
-        const im = this.add.image(p.x + ((h >> k) % 50) - 25 + (k - 1) * 40, p.y + 20 + (k - 1) * 18, tex).setAlpha(a).setScale(1.1 + k * 0.25, 0.9 + k * 0.15).setTint(0xeeeae2);
-        this.tweens.add({ targets: im, x: im.x + (k % 2 ? 26 : -26), duration: 9000 + k * 2500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+      const imgs = plans.get(id)!.map((q, k) => {
+        const im = this.add.image(q.x, q.y, tex).setAlpha(a).setScale(q.sx, q.sy).setTint(0xeeeae2);
+        this.tweens.add({ targets: im, x: im.x + q.drift * 26, duration: 9000 + k * 2500, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
         this.world.add(im);
         return im;
       });
       this.clouds.set(id, imgs);
+      this.cloudSig.set(id, sigOf(id));
     }
   }
 

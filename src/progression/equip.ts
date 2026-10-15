@@ -37,7 +37,7 @@ export interface EquipMove {
  * Bir kahramanın torbadan yapacağı en iyi değişimler (yuva başına en yüksek puanlı, kullanılabilir, primary'yi bozmayan ve takılıdan
  * iyi item). `taken`: başka kahramanlara ayrılmış uid'ler (takım için sırayla çağrılır).
  * İkinci el (2026-10-12): ana el adayının değeri = silah + (ikinci eli kapatmıyorsa) eldeki ya da torbadaki en iyi ikinci el; çift el silah
- * ikinci eldeki item'i torbaya çıkarır. İkinci el yuvası ana elden sonra, ana el kapatmıyorsa doldurulur.
+ * ikinci eldeki item'i torbaya çıkarır. İkinci el yuvası ana elden sonra, ana el kapatmıyorsa doldurulur; ana el boşsa önce o dolar.
  */
 export function bestMoves(hero: { class: string; equipment: Equipment }, bag: ItemInstance[], taken: Set<string> = new Set()): EquipMove[] {
   const moves: EquipMove[] = [];
@@ -71,7 +71,8 @@ export function bestMoves(hero: { class: string; equipment: Equipment }, bag: It
       if (primaryCheck({ class: hero.class, equipment }, { equip: inst, slot }).lost) continue;
       best = { inst, score: v };
     }
-    if (best && best.score > value(cur)) {
+    // Boş ana el her zaman doldurulur (Ömer 2026-10-14): tek hançer ikinci ele değil ana ele (boş elin "değeri" o hançeri ikinci elde sayıyordu)
+    if (best && (best.score > value(cur) || (slot === 'weapon' && !cur))) {
       moves.push({ slot, uid: best.inst.uid });
       taken.add(best.inst.uid);
       equipment = equipInto(equipment, best.inst, slot).equipment as Equipment;
