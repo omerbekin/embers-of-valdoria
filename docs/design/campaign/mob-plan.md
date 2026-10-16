@@ -612,7 +612,7 @@ Yeni sıradan mob: **2** (Morvane Halberdier, Ash Hound) + gelişmiş 3 + elit 1
 
 **Morvane's Sworn Guard** (GELİŞMİŞ Halberdier, Castle Morvane) · STR 30, zırh 24, MZ 10, `spriteScale` 1,12 · Pasif Close Ranks (aynı) · Skill'ler: Halberd Chop (aynı) + **Wall of Pikes** (Pike Thrust'ın ALAN sürümü): bir sütun (şerit) boyunca sıra sıra STR fiziksel 0,75, her sonraki hedefe x0,75; 8 MP / CD 3.
 
-**Ash Hound** (YENİ, Beasts) · ön, dalıcı, caster değil · STR 22 / DEX 18, zırh 6, MZ 4 · Pasif **Blood Scent**: canı %50'nin altındaki hedeflere +%30 hasar. Ders: yaralı kahramanı iyileştir / koru; tazıyı önce öldür.
+**Ash Hound** (YENİ, Beasts) · ön, dalıcı, caster değil · STR 22 / DEX 18, zırh 6, MZ 4 · Pasif **Blood Scent**: canı %35'in altındaki hedeflere +%30 hasar. Ders: yaralı kahramanı iyileştir / koru; tazıyı önce öldür.
 
 | Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
 |---|---|---|---|---|---|
@@ -666,7 +666,7 @@ Aynı birim kümesi yok (Bölge I-II dahil). Class kopyası: 0 (Bölge III'te ra
 | # | Ad | Tek satır kural | Kanca |
 |---|---|---|---|
 | YM20 | Close Ranks | Aynı sıradaki her diğer canlı dost için alınan tüm hasar -%12. | alınan hasar çarpanı (`passiveTakenMult`, Bone Ward ile aynı yer) |
-| YM21 | Blood Scent | Canı %50 altındaki hedefe +%30 hasar. | giden hasar çarpanı (`passiveDealtMult`, Bölge I ile aynı yer) |
+| YM21 | Blood Scent | Canı %35 altındaki hedefe +%30 hasar. | giden hasar çarpanı (`passiveDealtMult`, Bölge I ile aynı yer) |
 | YM22 | Molten Shed | Savaşta bir kez, can ilk kez %40 altına inince tüm kahramanlara sabit ateş hasarı + kendine 2 tur Fortified. | vuruş sonu (Rebuke / Flicker'ın yanı) + `passiveUsed` |
 | YM23 | Crown of Ash | Çağrı olmayan dost ölünce maks canın %10'u kalkan (3 tur, yığılır). | ölüm olayı (Shares of the Dead'in yanı) + süreli kalkan katmanı (Ward-Etcher'ınki) |
 

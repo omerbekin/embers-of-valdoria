@@ -26,10 +26,10 @@
     "id": "blood_scent",
     "name": "Blood Scent",
     "icon": "drop",
-    "text": "Deals +30% damage to targets below 50% HP.",
+    "text": "Deals +30% damage to targets below 35% HP.",
     "effect": {
       "type": "bloodScent",
-      "below": 0.5,
+      "below": 0.35,
       "bonus": 0.3
     }
   }
