@@ -267,7 +267,10 @@ export class MainMenuScene extends Phaser.Scene {
     elScreenIn(this); // ortak ekran geçişi (data/ui-motion.json > screen)
     markBootReady(); // açılış yükleme ekranı kapanır (ilk menü hazır; ölçüm: performance 'menu-ready')
     // menü görününce kalan avatar / sprite / arka planlar (sahne saati font beklemesinden sonraki yeniden kuruluşta hemen işlemeyebiliyor: tarayıcı zamanlayıcısı)
-    window.setTimeout(() => this.sys.isActive() && loadRestInBackground(this), 400);
+    // Sprite listesi (sınıflar + çağrılar + tüccar; moblar yalnızca savaşta, telefon belleği) motor içeriğine bağlı: ayrı parçadan (hızlı açılış)
+    window.setTimeout(() => {
+      void import('../sprite-needs').then((m) => this.sys.isActive() && loadRestInBackground(this, m.classSpriteIds())).catch(() => this.sys.isActive() && loadRestInBackground(this));
+    }, 400);
   }
 
   // ------------------------------------------------------------ arka plan

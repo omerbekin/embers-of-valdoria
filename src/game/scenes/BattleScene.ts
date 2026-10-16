@@ -14,11 +14,12 @@ import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-co
 import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
 import { globalIconName, uiIconName } from '../../ui/ui-icons';
 import { passiveIconName } from '../../ui/mob-icons';
-import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, preloadAssets } from '../assets';
+import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
+import { battleSpriteIds } from '../sprite-needs';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
-import { mobSheetsOf } from '../vfx-sheet-files';
-import { preloadPoses, releaseForBattle } from '../pose-rig';
+import { VFX_SHEET_FILES, mobSheetsOf } from '../vfx-sheet-files';
+import { preloadPoses, releaseForBattle, releasePoseSources } from '../pose-rig';
 import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
@@ -148,7 +149,12 @@ type HudFadeable = Phaser.GameObjects.GameObject & { visible: boolean; alpha: nu
 /** Kalkan kancası tetiklenince çalan kilit sesi (yalnızca sahibinin v2 ses dosyasında tanımlıysa çalar: Anti-Mage / Mage v2). */
 const SHIELD_LOCK_SFX: Record<string, string> = { spell_ward: 'wardLock', mana_barrier: 'domeLock' };
 /** Global eylem düğmelerinin ikon rengi. */
-const GLOBAL_ACCENT: Record<string, string> = { rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e' };
+/**
+ * Savaş preload'unda bellekten atılan doku aileleri (savaş göstermez; dönüşte ilgili sahnenin preload'u yeniden yükler): item görselleri
+ * (yalnızca Endless kampı), sefer haritası görselleri ve bulanık kopyaları, ana menü kartları / logo / katmanları / gölgesi.
+ */
+const BATTLE_DROP = ['item-img:', 'campaign:', ...MENU_ONLY_TEXTURES];
+const GLOBAL_ACCENT: Record<string, string> ={ rest: '#9cc4ff', skip: '#e8dcc0', move: '#e8c47e' };
 
 const { width: W, height: H, colors } = layout;
 
@@ -352,13 +358,21 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this, { backgrounds: [this.backgroundChoice()] }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
-    // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
     const cells = this.teams ? [...this.teams.party, ...this.teams.enemies].filter((c): c is string => !!c) : undefined;
+    // Telefon belleği (0.8.2 Grave Field çökmesi): takım belliyse yalnızca sahnedeki birimlerin (+ çağrıların) sprite / avatarları yüklenir,
+    // gerisi (başka moblar, poz sayfaları) bırakılır; harita / menü / item görselleri ve başka savaşların efektleri de savaşta tutulmaz
+    // (dönüşte o sahnenin preload'u yeniden yükler). Rastgele takımda (takım preload'da belli değil) eskisi gibi hepsi.
+    const sprites = cells ? battleSpriteIds(cells) : undefined;
+    preloadAssets(this, { backgrounds: [this.backgroundChoice()], items: false, ...(sprites ? { sprites, avatars: sprites } : {}) }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
+    releaseTextures(this, (key) => BATTLE_DROP.some((p) => key.startsWith(p)));
+    // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
     releaseForBattle(this, cells); // önceki savaşların pişmiş atlasları birikmesin (telefon belleği; ayna savaşta görünmez birim)
     preloadPoses(this, cells);
-    preloadVfxSheets(this); // v2 sprite sheet efektleri (assets/vfx; Defender)
-    if (cells) preloadVfxSheets(this, mobSheetsOf(cells)); // sefer mobu efektleri (assets/mob-vfx; yalnızca sahnedeki moblar)
+    // efekt sprite sheet'leri: v2 sınıf sheet'leri (assets/vfx; Defender) ve sefer mobu sheet'leri (assets/mob-vfx) yalnızca sahnedeki birimler
+    // için; diğerleri bırakılır (eksik kalan efekt başında tembel yüklenir: ensureVfxSheets)
+    const sheets = cells ? [...VFX_SHEET_FILES.filter((f) => cells.includes(f.owner)).map((f) => f.id), ...mobSheetsOf(cells)] : VFX_SHEET_FILES.map((f) => f.id);
+    releaseTextures(this, (key) => key.startsWith('vfxsheet:') && !sheets.includes(key.slice('vfxsheet:'.length)));
+    preloadVfxSheets(this, sheets);
   }
 
   /** Savaşın arka planı (preload yalnızca bunu yükler; seçim dosyalara göre, yüklü dokulara göre değil: iki çevrimiçi oyuncuda aynı). */
@@ -396,6 +410,7 @@ export class BattleScene extends Phaser.Scene {
     this.bindSkillHotkeys();
     this.bindUnitSelect();
     for (const c of this.battle.combatants) this.addView(c);
+    releasePoseSources(this); // atlaslar pişti: gövde / silah kaynak dokuları bellekte tutulmaz (telefon belleği; src/game/pose-rig.ts)
     this.syncCorpsesNow();
     this.syncLoadedEffects();
     this.uiActor = this.battle.currentUid;

@@ -95,7 +95,7 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   const realH = Math.ceil(up * s);
   if (scene.textures.exists(key)) return { key, density: s, realW, realH };
   const src = sources(scene, def, pick);
-  if (!src) return null;
+  if (!src) return bakedAtOtherDensity(scene, key, halfW, up); // kaynaklar bırakıldıysa (releasePoseSources) aynı atlasın başka yoğunluğu
   const fx0 = def.canvas.footX - halfW;
   const fy0 = def.canvas.footY - up;
   // kareler: her poz kendi kutusunda (gerçek karenin içine kırpılmış), raf (shelf) yerleşimi
@@ -139,6 +139,50 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
   }
   tex.setFilter(Phaser.Textures.FilterMode.LINEAR);
   return { key, density: s, realW, realH };
+}
+
+/**
+ * Aynı (sınıf, silah) atlasının başka yoğunlukta pişmiş hali (ör. ekran boyu değiştikten sonra çağrılan birim; kaynak gövdeler savaş kurulunca
+ * bırakılmıştır): yoğunluk anahtardan okunur, ölçek çağıranda `display / density` ile düzelir. Yoksa null.
+ */
+function bakedAtOtherDensity(scene: Phaser.Scene, key: string, halfW: number, up: number): PoseTexture | null {
+  const prefix = key.slice(0, key.lastIndexOf(':') + 1);
+  const other = scene.textures.getTextureKeys().find((k) => k.startsWith(prefix) && /^\d+$/.test(k.slice(prefix.length)));
+  if (!other) return null;
+  const d = Number(other.slice(prefix.length)) / 100;
+  return { key: other, density: d, realW: Math.ceil(halfW * 2 * d), realH: Math.ceil(up * d) };
+}
+
+/**
+ * Savaş kurulunca (tüm birimlerin atlası pişti): gövde pozu ve silah KAYNAK dokularını bırakır (telefon belleği; 4 pozlu sınıfta ~25-35 MB).
+ * Yalnızca pişirmede kaynak olarak kullanılırlar; sonraki savaşın preload'u yeniden yükler, bu savaşta yeniden pişirme gerekirse
+ * `ensurePoseSources` tembel yükler (debug silah değiştirme), çağrılan birim önce aynı atlasın başka yoğunluğuna düşer. Dönen: atılan sayı.
+ */
+export function releasePoseSources(scene: Phaser.Scene): number {
+  const inUse = texturesInUse(scene.game);
+  let n = 0;
+  for (const key of scene.textures.getTextureKeys()) {
+    if (inUse.has(key) || !(key.startsWith('posebody:') || key.startsWith('poseweapon:'))) continue;
+    scene.textures.remove(key);
+    n++;
+  }
+  return n;
+}
+
+/** Bu sınıfların kaynak dokuları eksikse çalışan sahnede yükler (en çok `timeout` ms bekler). */
+export function ensurePoseSources(scene: Phaser.Scene, classIds: readonly string[], timeout = 6000): Promise<void> {
+  if (preloadPoses(scene, classIds) === 0) return Promise.resolve();
+  return new Promise<void>((resolve) => {
+    let done = false;
+    const finish = () => {
+      if (done) return;
+      done = true;
+      resolve();
+    };
+    scene.load.once(Phaser.Loader.Events.COMPLETE, finish);
+    scene.time.delayedCall(timeout, finish);
+    if (!scene.load.isLoading()) scene.load.start();
+  });
 }
 
 interface AtlasItem {

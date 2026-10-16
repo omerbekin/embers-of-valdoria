@@ -52,10 +52,13 @@ function fileStem(path: string): string[] {
 }
 
 export interface PreloadOptions {
-  /** Karakter sprite'ları (varsayılan: hepsi). false = hiçbiri; liste = yalnızca bu sprite kimlikleri. */
+  /**
+   * Karakter sprite'ları (varsayılan: hepsi). false = hiçbiri; liste = yalnızca bu sprite kimlikleri (listede olmayan, hiçbir açık sahnenin
+   * göstermediği sprite dokuları bellekten atılır: telefon belleği, `src/game/sprite-needs.ts`). Avatarlar için aynı kural `avatars` listesiyle.
+   */
   sprites?: boolean | string[];
-  /** Kafa avatarları (küçük; varsayılan: hepsi). */
-  avatars?: boolean;
+  /** Kafa avatarları (küçük; varsayılan: hepsi). Liste = yalnızca bu sprite kimliklerinin avatarları (varyantları dahil). */
+  avatars?: boolean | string[];
   /** Arka planlar (varsayılan: hepsi). false = hiçbiri; liste = yalnızca bu kimlikler. */
   backgrounds?: boolean | string[];
   /** Item ikon görselleri (assets/items, src/game/item-icon-files.ts; varsayılan: hepsi). Ana menünün açılış listesi istemez. */
@@ -76,6 +79,8 @@ export function preloadAssets(scene: Phaser.Scene, o: PreloadOptions = {}): void
   const opts = backgrounds === undefined ? o : { ...o, backgrounds };
   queueAssets(scene, opts);
   if (Array.isArray(backgrounds)) releaseUnusedBackgrounds(scene, backgrounds);
+  if (Array.isArray(o.sprites)) releaseUnusedSprites(scene, o.sprites);
+  if (Array.isArray(o.avatars)) releaseUnusedAvatars(scene, o.avatars);
   if (o.track !== false) trackSceneLoad(scene.load);
 }
 
@@ -114,15 +119,53 @@ export function texturesInUse(game: Phaser.Game): Set<string> {
 
 /** `keep` dışındaki ve hiçbir açık sahnenin kullanmadığı arka plan dokularını atar (gerekince preload yeniden yükler). */
 export function releaseUnusedBackgrounds(scene: Phaser.Scene, keep: readonly string[]): number {
+  return releaseTextures(scene, (key) => key.startsWith('bg:') && BACKGROUND_IDS.has(key.slice(3)) && !keep.includes(key.slice(3)));
+}
+
+/**
+ * Bir dokuyu bellekten atar: önce o dokunun karelerini kullanan animasyonlar silinir (yoksa doku yeniden yüklendiğinde eski, yok edilmiş
+ * karelere bakan animasyon "zaten var" sayılır ve birim görünmez kalır), sonra doku (WebGL dokusu da bırakılır).
+ */
+export function removeTexture(scene: Phaser.Scene, key: string): void {
+  const anims = scene.anims as unknown as { anims?: { entries: Record<string, Phaser.Animations.Animation> } };
+  for (const [k, a] of Object.entries(anims.anims?.entries ?? {})) if (a.frames.some((f) => f.textureKey === key)) scene.anims.remove(k);
+  scene.textures.remove(key);
+}
+
+/**
+ * `drop(key)` doğru dönen ve hiçbir açık sahnenin göstermediği dokuları atar (gerekince ilgili sahnenin preload'u yeniden yükler).
+ * Telefon belleği (0.8.2 Grave Field: sekme bellek yüzünden kapanıp ana menüye düşüyordu): savaş preload'u harita / menü / başka savaşın
+ * dokularını burada bırakır (BattleScene.preload). Dönen: atılan sayı.
+ */
+export function releaseTextures(scene: Phaser.Scene, drop: (key: string) => boolean): number {
   const used = texturesInUse(scene.game);
   let n = 0;
-  for (const id of BACKGROUND_IDS) {
-    const key = backgroundKey(id);
-    if (keep.includes(id) || used.has(key) || !scene.textures.exists(key)) continue;
-    scene.textures.remove(key);
+  for (const key of scene.textures.getTextureKeys()) {
+    if (used.has(key) || !drop(key)) continue;
+    removeTexture(scene, key);
     n++;
   }
   return n;
+}
+
+/**
+ * Yalnızca ana menünün gösterdiği doku aileleri (Play kartları, logo, katmanlı arka plan, menü gölgeleri): harita ve savaş açılırken bırakılır,
+ * menüye dönüşte MainMenuScene.preload yeniden yükler (canvas dokuları yeniden çizilir).
+ */
+export const MENU_ONLY_TEXTURES = ['card:', 'branding:', 'menu:', 'mm-'] as const;
+
+/** Kimliği `keep` listesinde olmayan sprite dokularını (idle, poz sayfası, varyantlar) atar. */
+export function releaseUnusedSprites(scene: Phaser.Scene, keep: readonly string[]): number {
+  return releaseTextures(scene, (key) => key.startsWith('sprite:') && !keep.includes(key.split(':')[1]!));
+}
+
+/** Avatar dosya adı (`<id>` ya da varyantlı `<id>-<varyant>`) bu sprite listesine ait mi. */
+const avatarWanted = (want: boolean | string[] | undefined, file: string): boolean =>
+  !Array.isArray(want) ? want !== false : want.some((id) => file === id || file.startsWith(`${id}-`));
+
+/** Listede olmayan sprite'ların avatarlarını atar. */
+export function releaseUnusedAvatars(scene: Phaser.Scene, keep: readonly string[]): number {
+  return releaseTextures(scene, (key) => key.startsWith('avatar:') && !avatarWanted([...keep], key.slice(7)));
 }
 
 function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
@@ -136,7 +179,7 @@ function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
   if (o.avatars !== false)
     for (const [path, url] of Object.entries(avatarFiles)) {
       const [, id] = fileStem(path);
-      add(avatarKey(id!), url);
+      if (avatarWanted(o.avatars, id!)) add(avatarKey(id!), url);
     }
   for (const [path, url] of Object.entries(spriteFiles)) {
     const [id, anim] = fileStem(path);
@@ -151,9 +194,11 @@ function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
 }
 
 /** Menü görününce: kalan sprite, avatar ve item görsellerini sessizce arka planda yükler (çalışan sahnenin yükleyicisiyle; yükleme ekranı yok). */
-export function loadRestInBackground(scene: Phaser.Scene): void {
-  // arka planlar burada yüklenmez (her sahne kendi arka planını ister; ~42 MB'ı boşuna bellekte tutmasın)
-  if (queueAssets(scene, { backgrounds: false }) > 0) scene.load.start();
+export function loadRestInBackground(scene: Phaser.Scene, sprites?: string[]): void {
+  // arka planlar burada yüklenmez (her sahne kendi arka planını ister; ~42 MB'ı boşuna bellekte tutmasın). Sprite'lar yalnızca savaş dışı
+  // ekranların ihtiyacı (sınıflar, çağrılar, tüccar: src/game/sprite-needs.ts); mob görselleri ve item görselleri (yalnızca Endless kampı
+  // çizer, kendi preload'u ister) burada yüklenmez (telefon belleği).
+  if (queueAssets(scene, { backgrounds: false, items: false, ...(sprites ? { sprites, avatars: sprites } : {}) }) > 0) scene.load.start();
 }
 
 /** Kafa avatarının doku anahtarı; avatar dosyası yoksa null (çağıran eski kırpmaya/silüete döner). Kare, sağa bakar. */

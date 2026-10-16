@@ -25,6 +25,7 @@ import { menuStyle } from './ui/menu-style';
 import { whenMenuFontsReady } from './ui/menu-fonts';
 import './style.css';
 import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader';
+import { installContextLossNotice } from './ui/context-loss';
 
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);
@@ -100,6 +101,8 @@ const game = new Phaser.Game({
 installLoopGuard(game.loop as unknown as Parameters<typeof installLoopGuard>[0]);
 
 mp.attachGame(game);
+// Grafik bağlamı kaybı (telefon grafik belleği): sessizce donma yerine kısa not + gerekirse Reload (src/ui/context-loss.ts)
+installContextLossNotice(game);
 
 // Açılış yükleme ekranı: ana menü kendisi kapatır (fontlar hazır, menü çizildi); doğrudan başka sahneyle açılışta (?seed=, ?campaign=1,
 // ?endless=1, lobi linki) o sahnenin kodu inip sahne kurulunca kapanır (src/game/lazy-scenes.ts). Güvenlik ağı: bir şey takılırsa 25 sn sonra yine kalkar.

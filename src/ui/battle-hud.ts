@@ -318,6 +318,11 @@ export class BattleHud {
     this.root.addEventListener('pointerup', endPress);
     this.root.addEventListener('pointercancel', endPress);
     this.root.addEventListener('contextmenu', (e) => (e.target as HTMLElement).closest('.bh-sk') && e.preventDefault());
+    // Sabit birim kartı (Ömer 2026-10-16 telefon testi: kart dokunarak kaymıyordu): karttaki dokunma / fare basışı Phaser'ın window
+    // dinleyicilerine gitmesin. Gitse Phaser kartın ARKASINDAKİ birim / hücreyi basılmış sayar (kart başka birime döner ya da sabiti
+    // düşer, içerik parmağın altında yeniden yazılır, kaydırma kesilir). preventDefault YOK: tarayıcının kendi kaydırması ve click çalışır.
+    for (const card of Object.values(this.cards))
+      for (const type of ['touchstart', 'touchmove', 'touchend', 'touchcancel', 'mousedown'] as const) card.addEventListener(type, (e) => e.stopPropagation(), { passive: true });
     // Boş yere (HUD dışına, sahneye) dokunmak açık karakter sayfasını ve günlük / etki panelini kapatır
     const onDoc = (e: PointerEvent) => {
       const t = e.target as Node | null;
@@ -737,7 +742,9 @@ export class BattleHud {
       const pinned = this.pins[side]?.uid === card.uid;
       for (const k of [...this.cardTips.keys()]) if (k.startsWith(`k:${side}:`)) this.cardTips.delete(k);
       card.skills?.forEach((s, i) => this.cardTips.set(`k:${side}:${i}`, s.tip));
-      this.put(el, this.cardHtml(card, pinned));
+      // aynı birimin kartı yenilenince (can, bekleme...) iç kaydırma yerinde kalır (innerHTML yeniden yazımı başa atardı)
+      const keep = el.dataset['uid'] === card.uid ? (el.firstElementChild?.scrollTop ?? 0) : 0;
+      if (this.put(el, this.cardHtml(card, pinned)) && keep > 0 && el.firstElementChild) el.firstElementChild.scrollTop = keep;
       if (el.dataset['uid'] !== card.uid) el.dataset['uid'] = card.uid;
       if (!el.classList.contains('on')) el.classList.add('on');
       if (el.classList.contains('pin') !== pinned) el.classList.toggle('pin', pinned);

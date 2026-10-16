@@ -1426,6 +1426,9 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
   max-height: 694px;
   overflow-y: auto;
   overscroll-behavior: contain;
+  /* dokunarak dikey kaydırma (telefon; Ömer 2026-10-16): kart dokunmaları Phaser'a gitmez (battle-hud.ts) */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
   scrollbar-width: thin;
   scrollbar-color: rgba(var(--gold), 0.35) transparent;
 }
@@ -1933,6 +1936,15 @@ html.short .bh-right.stacked .bh-pl-ico {
   width: 40px;
   height: 40px;
   margin: 0;
+}
+
+/* Telefon (html.short): kart üst çubuğun (sıra çubuğu + Menu, ~140 birim) hemen altından alt bandın (910) hemen üstüne kadar; içi kayar */
+html.short .bh-card {
+  top: 150px;
+}
+
+html.short .bh-card-sc {
+  max-height: 720px;
 }
 
 /* Telefon (html.short): kart skill'leri 2 sütunlu karolar; her karo en az 44 gerçek px (dokununca skill ipucu kartın yanında açılır).

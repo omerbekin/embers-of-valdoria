@@ -78,7 +78,8 @@ import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememb
 import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
 import { openCampaignMerchant } from '../campaign-merchant';
-import { characterTexture, preloadAssets } from '../assets';
+import { characterTexture, MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
+import { classSpriteIds } from '../sprite-needs';
 import { preloadCampaignArt } from '../campaign-art';
 import { edgeFillers, mapArt } from '../map-art';
 import { placeArt } from '../wide-map';
@@ -226,7 +227,10 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this);
+    // yalnızca sınıf / çağrı / tüccar görselleri (moblar yalnızca savaşta; item görselleri yalnızca Endless): telefon belleği, src/game/sprite-needs.ts
+    const sprites = classSpriteIds();
+    preloadAssets(this, { sprites, avatars: sprites, items: false });
+    releaseTextures(this, (key) => MENU_ONLY_TEXTURES.some((p) => key.startsWith(p))); // ana menü kartları / logo haritada gösterilmez
     preloadCampaignArt(this);
   }
 

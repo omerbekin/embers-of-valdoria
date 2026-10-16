@@ -36,6 +36,7 @@ import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-ses
 import { registerMultiplayerDebug } from './debug-mp';
 import { registerEndlessDebug } from './debug-endless';
 import { getRotateMode, setRotateMode } from './viewport';
+import { simulateContextLoss } from './context-loss';
 import { stageView } from '../game/stage-view';
 import { backgroundPool } from '../game/battle-background';
 import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
@@ -955,6 +956,15 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     on: () => isFullscreen(),
     hint: 'Toggle full screen (hides the browser address bar; landscape is locked where the browser allows it)',
     run: () => void toggleFullscreen(),
+  });
+  debug.register({
+    id: 'tools.context-loss',
+    icon: 'restart',
+    tab: 'Speed & View',
+    section: 'Display',
+    label: 'Simulate graphics reset',
+    hint: 'Drop the WebGL graphics context for 2.5 s and bring it back (what a phone does when it runs out of graphics memory): the "Restoring graphics" note should appear and the screen should come back intact',
+    run: () => void simulateContextLoss(game),
   });
   shortcut('tools.seed', 3, 'clover', 'Seed & link', 'Setup', "Open the Setup tab: copy this battle's seed or link, or restart with a typed seed");
 

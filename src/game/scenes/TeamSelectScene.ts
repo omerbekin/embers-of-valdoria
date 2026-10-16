@@ -42,6 +42,7 @@ import { onStageResize, stageView, worldXY } from '../stage';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { startMainMenu } from '../session-flow';
+import { classSpriteIds } from '../sprite-needs';
 import {
   BADGE_LABEL,
   EL,
@@ -250,7 +251,9 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this, { backgrounds: TEAM_SELECT_BACKGROUNDS() }); // yalnızca gösterilen arka plan (src/game/assets.ts > arka plan belleği)
+    // yalnızca gösterilen arka plan (src/game/assets.ts > arka plan belleği) ve sınıf görselleri (src/game/sprite-needs.ts; telefon belleği)
+    const sprites = classSpriteIds();
+    preloadAssets(this, { backgrounds: TEAM_SELECT_BACKGROUNDS(), sprites, avatars: sprites, items: false });
   }
 
   create(): void {

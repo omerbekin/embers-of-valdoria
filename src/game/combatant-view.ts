@@ -16,7 +16,7 @@ import { ensureGlow } from './menu-ui';
 import { SpriteGlow, bakeGlow } from './sprite-glow';
 import { perfLite } from '../ui/perf-mode';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
-import { bakePoseTexture, poseDisplayScale } from './pose-rig';
+import { bakePoseTexture, ensurePoseSources, poseDisplayScale } from './pose-rig';
 import { HIT_REACTION, hitReaction, type HitReaction } from './hit-reaction';
 import { POSE_TIMING, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
 
@@ -1059,11 +1059,15 @@ export class CombatantView {
   }
 
   /** Debug / önizleme: silahı değiştirir (atlas yeniden pişer; aynı silah önbellekten). */
-  setPoseWeapon(pick: WeaponPick): void {
+  setPoseWeapon(pick: WeaponPick, retried = false): void {
     const rig = this.rig;
     if (!rig) return;
     const baked = bakePoseTexture(this.scene, this.combatant.defId, pick, this.combatant.spriteScale ?? 1);
-    if (!baked) return;
+    // kaynak gövdeler savaş kurulunca bırakıldı (telefon belleği, releasePoseSources): yeni silah için yeniden yükleyip bir kez daha dene
+    if (!baked) {
+      if (!retried) void ensurePoseSources(this.scene, [this.combatant.defId]).then(() => this.scene && this.setPoseWeapon(pick, true));
+      return;
+    }
     rig.key = baked.key;
     rig.scale = rig.display / baked.density;
     rig.weapon = pick;

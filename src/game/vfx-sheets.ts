@@ -2,7 +2,8 @@
  * SPRITE SHEET efektleri (Phaser tarafı): assets/vfx/<sahip>/<NN-ad>.png dosyalarını Phaser spritesheet'i olarak yükler, kare
  * animasyonlarını kaydeder ve sahneye "oynayan sprite" koyar. v2 efektleri bunu `k.sheet(...)` ile kullanır (src/game/vfx-versions.ts).
  *
- *  - Yükleme: BattleScene.preload `preloadVfxSheets` (hepsi, ~1,8 MB); yüklenmemişse `ensureVfxSheets` efekt başında tembel yükler.
+ *  - Yükleme: BattleScene.preload `preloadVfxSheets` (yalnızca sahnedeki sahiplerin sheet'leri; diğerleri bırakılır: telefon belleği);
+ *    yüklenmemişse `ensureVfxSheets` efekt başında tembel yükler.
  *  - Keskinlik: doku NEAREST filtreyle çizilir (pixel art).
  *  - Hız: sheet'in fps'i `slow()` ile skillSlowdown'a uyar (efektin geri kalanıyla aynı yavaşlık); `fps` seçeneği bunu ezer.
  *  - Kare alt kümesi: `frames: [1, 2, 3]` yalnızca o kareleri sırayla oynar; `frame: 3` animasyonsuz tek kare.

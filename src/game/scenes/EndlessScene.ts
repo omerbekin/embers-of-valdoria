@@ -49,6 +49,7 @@ import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, defaultEquipSlot, equipInto, 
 import type { Stats } from '../../engine/types';
 import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
+import { classSpriteIds } from '../sprite-needs';
 import { classAvatar, fitText } from '../menu-ui';
 import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elTip, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
 import { motion, MOTION } from '../../ui/motion';
@@ -219,7 +220,9 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   preload(): void {
-    preloadAssets(this);
+    // sınıf / çağrı / tüccar görselleri (Endless düşmanları da sınıf; moblar yalnızca sefer savaşında): telefon belleği, src/game/sprite-needs.ts
+    const sprites = classSpriteIds();
+    preloadAssets(this, { sprites, avatars: sprites });
   }
 
   create(): void {

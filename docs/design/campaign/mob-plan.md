@@ -307,6 +307,8 @@ Kaldırılan: `snare_shot` (Bandit Crossbowman'ın eski skill'i, başka sahibi y
 
 ## 7. Taslak: Bölge III ve tutorial (Bölge I)
 
+> **Ömer yönü (2026-10-16, Bölge III planlanırken uygulanacak):** Bölge III'te YENİ mob sayısı düşük tutulur; Bölge I-II'den temaya uyan moblar yeniden kullanılır (oyuncu sefer sonuna doğru düşmanlara aşinalık kazanır). Özel karşılaşmalarda farklı mob ya da aynı mobların **gelişmiş sürümü** kullanılabilir: benzer ya da yükseltilmiş skill seti (ör. aynı 2. skill'in gelişmiş sürümde alan vurması). Aşağıdaki taslak bu yöne göre yeniden yazılacak.
+
 **Bölge III** (~5 yeni sıradan mob; Ashen Plain, Siege Line, Thornwood Hollow elit, Ember Road, Riverhead, Gate of Cinders, Castle Morvane boss):
 
 | Mob | Aile | Rol | Fikir |
@@ -518,7 +520,7 @@ Onay paketleri (açılış sırasına göre): 1 Road Thug (yalnız pasif ikonu),
 ### 9.10 Yer tutucular (uygulandı 2026-10-16, engine-dev) — sanat BAĞLANDI (2026-10-16, content-designer)
 
 > **Durum: bağlandı.** ChatGPT sanatı (2026-10-16) Bölge II ile aynı yoldan içe aktarıldı (`docs/arch/assets.md` > Sefer mobu sanatı):
-> - **Çizimler bağlandı:** 5 mobun `spriteId`'si kendi id'si (`tools/import-mobs.py` HEADS; sprite + 256 avatar). Grey Wolf yatay çizim (1536x1024): idle.png üstten saydam boşlukla en/boy 1,45'e indirilir (1,5 ve üstü oyunda sprite sheet sayılır; araçta `WIDE_MAX`), `spriteScale` 1,6 ile ekranda insan boyunun ~%65'i, ayak zemin çizgisinde; avatarı kafa kırpması. Bandit Chief `spriteScale` 1,15 kalır.
+> - **Çizimler bağlandı:** 5 mobun `spriteId`'si kendi id'si (`tools/import-mobs.py` HEADS; sprite + 256 avatar). Grey Wolf yatay çizim (1536x1024): idle.png üstten saydam boşlukla en/boy 1,45'e indirilir (1,5 ve üstü oyunda sprite sheet sayılır; araçta `WIDE_MAX`), `spriteScale` 1,2 ile ekranda insan boyunun ~yarısı (bel-göğüs; 0.8.2 telefon testinde 1,6'dan indirildi), ayak zemin çizgisinde; avatarı kafa kırpması. Bandit Chief `spriteScale` 1,15 kalır.
 > - **Poz sayfası bağlandı:** Bandit Chief 4x3 (`data/mob-poses.json`; figürler ızgarayı aştığı için bileşen bazlı kesim, araçta `POSE_SPLIT`): boşta 1/2, Chief's Cleaver 3->4 (atılmadan önce kaldırma pozu, `MOB_VFX_SPECS.windMs`), Toll Sweep 5->6 (kayıtta skill'e özel `skills`), Hold the Tower 7, darbe 9 / sendeleme 10, yığılma 11 -> yerde 12; 8 = adım.
 > - **İkonlar bağlandı:** 11 skill + 6 pasif + eski **Cudgel, Hamstring, Gnaw** (5 sayfa, `ICON_SHEETS`). Veride `icon` ve `artOf` yedek olarak kalır (Bölge II gibi; boyalı ikon `mob:<id>` adıyla öne geçer).
 > - **VFX bağlandı:** 11 sheet (`MOB_VFX_SPECS`): yakın dövüş Shiv, Sand in the Eyes, Bite, Rend, Chief's Cleaver, Toll Sweep (sıradaki her hedefte); mermi Poacher's Shot, Raven's Peck; zemin Tainted Bait (hedef hücrede); alan Murder of Crows (2x2'nin ortasında tek büyük sheet); kendine Hold the Tower. Kaynak sheet'lerdeki komşu hücre kırıntıları ve Cleaver'ın soluk sisi araçta temizlenir (`CLEAN_EDGES`, `HAZE`, `ROW_SEAM`; yalnız Bölge I).
