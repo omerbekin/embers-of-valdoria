@@ -82,6 +82,8 @@ export interface HudGlobal {
   active: boolean;
   /** Hazır vurgusu (Valor Revive: Valor >= battleCost ve kullanılabilir; kor ışıması). */
   ready?: boolean;
+  /** Görünmez yer tutucu (bu birimde olmayan global eylem, ör. düşmanda Valor Revive): sütun genişliği birimden birime değişmesin. */
+  placeholder?: boolean;
   tip: TipContent;
 }
 export interface HudBar {
@@ -196,6 +198,8 @@ export interface HudCallbacks {
 
 type Side = 'party' | 'enemy';
 
+/** Savaş HUD'ında sabit skill yuvası sayısı: global sütun ve sağ alan bu genişlikten sonra durur (skill sayısı değişince kaymaz). */
+export const HUD_SKILL_SLOTS = 4;
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const pct = (a: number, b: number) => `${b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : 0}%`;
 const img = (url: string, cls = 'bh-ico', extra = '') => (url ? `<img class="${cls}" src="${url}" alt="" draggable="false" ${extra}>` : '');
@@ -554,7 +558,11 @@ export class BattleHud {
     this.globBox.classList.toggle('empty', g.length === 0);
     const html = g.length
       ? `<div class="bh-vfade"></div><div class="bh-gcol">${g
-          .map((x) => `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`)
+          .map((x) =>
+            x.placeholder
+              ? `<div class="bh-gl ph" aria-hidden="true">${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`
+              : `<div class="bh-gl ${x.enabled ? '' : 'off'} ${x.active ? 'on' : ''} ${x.ready ? 'ready' : ''}" data-global="${esc(x.id)}" ${this.reg(`g:${x.id}`, x.tip)}>${img(x.iconUrl)}<span>${esc(x.name)}</span></div>`,
+          )
           .join('')}</div>`
       : '';
     if (this.put(this.globBox, html)) this.globW = null;
@@ -615,10 +623,12 @@ export class BattleHud {
     this.turn.style.left = this.testLabel ? `${W / 2}px` : `${W / 2 - NW / 2 - past * (CW + GAP)}px`;
     this.turn.classList.toggle('test', !!this.testLabel);
     this.turnLbl.style.left = `${W / 2}px`;
-    // 4 skill tam ortada, global sütun hemen sağında
-    const n = Math.max(1, this.model.skills.length);
-    const SKW = n * 146 + (n - 1) * 12;
-    const sx0 = W / 2 - (4 * 146 + 3 * 12) / 2 + (4 - n) * 79; // 4'ten az skill (çağrı) yine ortalı
+    // Sabit skill bölgesi (Ömer 0.8.2.3 telefon testi: 2 skill'li düşmanda Rest / Skip / Move ve Combat log ortaya kayıyordu): en az 4 yuva
+    // genişliğinde, skill'ler soldan yuvalara dizilir; global sütun ve sağ alan skill sayısından bağımsız aynı yerde. 4'ten çok skill
+    // (fazladan skill'li birim) bölgeyi iki yana eşit büyütür.
+    const slots = Math.max(HUD_SKILL_SLOTS, this.model.skills.length);
+    const SKW = slots * 146 + (slots - 1) * 12;
+    const sx0 = W / 2 - (HUD_SKILL_SLOTS * 146 + (HUD_SKILL_SLOTS - 1) * 12) / 2 - (slots - HUD_SKILL_SLOTS) * 79;
     // Telefonda (html.short; Ömer 2026-10-14 telefon testi) aralar daralır; Valor varken sağ alttaki Combat log ekrandan taşmasın diye
     // skill + global öbeği gerekirse sola, stat bloğuyla arasındaki boşluğa kayar (ekran içinde, en az 44 gerçek px dokunma alanıyla)
     const phone = document.documentElement.classList.contains('short');

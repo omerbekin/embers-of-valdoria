@@ -1085,6 +1085,12 @@
   transition: color 0.18s, text-shadow 0.18s;
 }
 
+/* Yer tutucu: bu birimde olmayan global eylem (düşmanda Valor Revive, çağrıda hepsi); yer kaplar, görünmez (sütun kaymasın) */
+.bh-gl.ph {
+  visibility: hidden;
+  pointer-events: none;
+}
+
 .bh-gl::before {
   content: '';
   width: 8px;

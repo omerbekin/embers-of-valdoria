@@ -3853,9 +3853,8 @@ export class BattleScene extends Phaser.Scene {
         tip: this.skillTip(actor, skill),
       });
     });
-    const globals: HudGlobal[] = actor.summoned
-      ? [] // summons never use global actions
-      : this.battle.globalSkillIds(actor.side).map((id) => {
+    const own = actor.summoned ? [] : this.battle.globalSkillIds(actor.side); // summons never use global actions
+    const globals: HudGlobal[] = own.map((id) => {
           const g = this.battle.globalDef(id)!;
           const accent = GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e';
           return {
@@ -3870,6 +3869,15 @@ export class BattleScene extends Phaser.Scene {
             tip: this.globalTip(actor, id),
           };
         });
+    // Sabit HUD (Ömer 0.8.2.3): iki tarafın global eylemlerinden bu birimde olmayanlar görünmez yer tutucu (düşmanda Valor Revive, çağrıda
+    // hepsi): Rest / Skip / Move ve sağdaki Combat log birimden birime kaymaz
+    for (const id of new Set([...this.battle.globalSkillIds('party'), ...this.battle.globalSkillIds('enemy')])) {
+      if (own.includes(id)) continue;
+      const g = this.battle.globalDef(id);
+      if (!g) continue;
+      const iconUrl = g.kind === 'valor' ? brazierIconUrl(false) : this.texUrl(ensureIcon(this, globalIconName(g), GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e', false, SHARED_KEY));
+      globals.push({ id, name: g.kind === 'skip' ? 'Skip' : describeGlobalSkill(g, f).name, iconUrl, enabled: false, active: false, placeholder: true, tip: { title: '', rows: [] } });
+    }
     const passive: HudModel['passive'] = actor.passive
       ? {
           name: actor.passive.name,
