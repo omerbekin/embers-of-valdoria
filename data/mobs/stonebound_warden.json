@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, Shieldwarden palet varyantı (taş gri + donuk rün); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, Shieldwarden palet varyantı (taş gri + donuk rün); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit yenilendi (Gatestone Slam + Rockfall), STR 24, Bulwark Aura çıktı, pasif P4 Stone Patience (ikon yer tutucu 'bulwark'). Yeni çizim gelecek (spriteId aynı kalır, dosya değişir).",
   "id": "stonebound_warden",
   "name": "Stonebound Warden",
   "family": "guardians",
@@ -9,7 +9,7 @@
   "frontPriority": 0,
   "role": "Guardian · Tank",
   "attributes": {
-    "str": 26,
+    "str": 24,
     "int": 8,
     "dex": 4,
     "luck": 4
@@ -19,20 +19,20 @@
   "overrides": {
     "hp": 130
   },
-  "ai": "mob_tank",
+  "ai": "aggressive",
   "skills": [
-    "shield_bash",
-    "hold_the_line"
+    "gatestone_slam",
+    "rockfall"
   ],
   "passive": {
-    "id": "bulwark_aura",
-    "name": "Bulwark Aura",
-    "icon": "aura",
-    "text": "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor.",
+    "id": "stone_patience",
+    "name": "Stone Patience",
+    "icon": "bulwark",
+    "text": "At the start of its turn, if it took no damage since its last turn: +8 armor (up to +24). Any damage resets the bonus.",
     "effect": {
-      "type": "armorAura",
-      "pct": 0.4,
-      "maxStacks": 2
+      "type": "stonePatience",
+      "armor": 8,
+      "max": 24
     }
   }
 }

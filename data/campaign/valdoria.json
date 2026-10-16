@@ -46,7 +46,7 @@
     { "id": "6A", "type": "event", "name": "Witch's Hut", "subtitle": "Event · Guarded", "region": "II", "pos": [0.503, 0.606], "encounter": "witchs_hut_guard", "event": "witchs_hut", "battleBackground": "misty-marsh" },
     { "id": "5A", "type": "battle", "name": "Misty Marsh", "subtitle": "Battle · Bog Ambush", "region": "II", "label": "above", "pos": [0.477, 0.731], "encounter": "bog_ambush", "battleBackground": "misty-marsh" },
     { "id": "grave", "type": "battle", "name": "Grave Field", "subtitle": "Battle · Restless Dead", "region": "II", "label": "above", "pos": [0.582, 0.623], "encounter": "grave_field", "battleBackground": "grave-field" },
-    { "id": "pilgrim", "type": "battle", "name": "Pilgrim Road", "subtitle": "Battle · Highwaymen", "region": "II", "pos": [0.633, 0.37], "encounter": "pilgrim_road", "battleBackground": "pilgrim-road" },
+    { "id": "pilgrim", "type": "battle", "name": "Pilgrim Road", "subtitle": "Battle · Rival Company", "region": "II", "pos": [0.633, 0.37], "encounter": "pilgrim_road", "battleBackground": "pilgrim-road" },
     { "id": "8A", "type": "treasure", "name": "St. Brann's Abbey", "subtitle": "Treasure · Relic Vault", "region": "II", "label": "above", "pos": [0.674, 0.259], "encounter": "vault_keepers", "treasure": "relic_vault", "battleBackground": "pilgrim-road" },
     { "id": "8C", "type": "elite", "name": "Black Cathedral", "subtitle": "Elite · The Undying", "region": "II", "pos": [0.636, 0.508], "encounter": "black_cathedral", "battleBackground": "grave-field" },
     { "id": "river", "type": "rest", "name": "Riverside Camp", "subtitle": "Rest · Camp, Revive", "region": "II", "label": "above", "pos": [0.703, 0.477], "rest": true },

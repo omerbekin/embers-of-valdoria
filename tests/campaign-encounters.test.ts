@@ -107,7 +107,7 @@ describe('sefer karşılaşmaları', () => {
       const hero = s.roster.find((h) => h.id === id)!;
       expect(battle.get(`party-${i}`)!.defId).toBe(hero.class);
     });
-    expect(plan.enemies.filter(Boolean)).toHaveLength(4);
+    expect(plan.enemies.filter(Boolean)).toHaveLength(ENCOUNTERS[plan.encounterId]!.units.length);
   });
 });
 

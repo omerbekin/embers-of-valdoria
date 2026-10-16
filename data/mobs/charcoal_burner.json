@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'charcoal_burner' (ChatGPT çizimi, Ember Acolyte palet varyantı (is kara); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'charcoal_burner' (ChatGPT çizimi, Ember Acolyte palet varyantı (is kara); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit yenilendi (Shovel of Embers + Kiln Smoke), INT 26 / STR 14 / zırh 12, pasif P2 Last Ember.",
   "id": "charcoal_burner",
   "name": "Charcoal Burner",
   "family": "ember_cult",
@@ -9,16 +9,29 @@
   "frontPriority": 7,
   "role": "Ember Cult · Caster",
   "attributes": {
-    "str": 10,
-    "int": 30,
+    "str": 14,
+    "int": 26,
     "dex": 6,
     "luck": 4
   },
-  "armor": 8,
+  "armor": 12,
   "magicArmor": 0,
   "ai": "sniper",
   "skills": [
-    "ember_toss",
-    "burn_the_ground"
-  ]
+    "shovel_of_embers",
+    "kiln_smoke"
+  ],
+  "passive": {
+    "id": "last_ember",
+    "name": "Last Ember",
+    "icon": "flame",
+    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "effect": {
+      "type": "lastEmber",
+      "ground": "burning",
+      "turns": 2,
+      "scale": "int",
+      "power": 0.35
+    }
+  }
 }

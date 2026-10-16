@@ -1196,6 +1196,8 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
         v = tv * turns * useful + decoy;
       }
       const pe = actor.passive?.effect;
+      // Bone Ward (YM10, mob pasifi): tarafta çağrı yoksa yeni çağrı çağıranın aldığı hasarı azaltır: önlenen beklenen hasar (Fortify ile aynı ölçü)
+      if (pe?.type === 'boneWard' && unit && battle.passiveTakenMult(actor) === 1) v += pe.reduce * (ctx.round.get(actor.uid) ?? 0) * Math.min(life, vc.horizon);
       if (pe?.type === 'verdantBlessing' && unit) {
         const amount = attributePower(actor.stats, pe.scale, battle.formulas) * pe.power;
         v += sum(battle.living(actor.side).map((a) => Math.min(amount, a.maxHp - a.hp)));

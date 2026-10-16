@@ -1,0 +1,34 @@
+{
+  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: YER TUTUCU spriteId 'charcoal_burner' (kendi ChatGPT çizimi gelince spriteId 'censer_monk' olur; liste mob-plan.md 6 > Yer tutucular). Pasif ikonu yer tutucu 'hpregen'.",
+  "id": "censer_monk",
+  "name": "Censer Monk",
+  "family": "branns_order",
+  "spriteId": "charcoal_burner",
+  "color": "#c8a26a",
+  "logo": "holy",
+  "frontPriority": 7,
+  "role": "Brann's Order · Support",
+  "attributes": {
+    "str": 8,
+    "int": 28,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 14,
+  "ai": "sniper",
+  "skills": [
+    "holy_ember",
+    "consecrate"
+  ],
+  "passive": {
+    "id": "censer_smoke",
+    "name": "Censer Smoke",
+    "icon": "hpregen",
+    "text": "It and the allies in its lane (same column, every row) heal 4% of their max HP at the start of their turns (Wound reduces it).",
+    "effect": {
+      "type": "censerSmoke",
+      "ratio": 0.04
+    }
+  }
+}

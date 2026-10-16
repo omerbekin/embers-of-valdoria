@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'ember_acolyte' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'ember_acolyte' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit aynı, pasif P2 Last Ember (ikon yer tutucu 'flame').",
   "id": "ember_acolyte",
   "name": "Ember Acolyte",
   "family": "ember_cult",
@@ -20,5 +20,18 @@
   "skills": [
     "ember_toss",
     "burn_the_ground"
-  ]
+  ],
+  "passive": {
+    "id": "last_ember",
+    "name": "Last Ember",
+    "icon": "flame",
+    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "effect": {
+      "type": "lastEmber",
+      "ground": "burning",
+      "turns": 2,
+      "scale": "int",
+      "power": 0.35
+    }
+  }
 }

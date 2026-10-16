@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, adlı lider: Stonebound Warden çizimini paylaşır, spriteScale 1.12 ile biraz iri (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, adlı lider: Stonebound Warden çizimini paylaşır, spriteScale 1.12 ile biraz iri (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): elit şekilli adlı lider: Pick of the Deep + Oath of Stone + Shield Wall, STR 28 / INT 14 (44 MP), zırh 26, pasif P5 Deep Hoard (ikon yer tutucu 'mpregen'). spriteId 'stonebound_warden' YER TUTUCU (kendi çizimi gelince 'thane_of_the_deep').",
   "id": "thane_of_the_deep",
   "name": "Thane of the Deep",
   "family": "guardians",
@@ -11,30 +11,29 @@
   "role": "Guardian · Leader",
   "attributes": {
     "str": 28,
-    "int": 10,
+    "int": 14,
     "dex": 4,
     "luck": 4
   },
-  "armor": 32,
+  "armor": 26,
   "magicArmor": 0,
   "overrides": {
     "hp": 150
   },
   "ai": "tank",
   "skills": [
-    "shield_bash",
-    "hold_the_line",
+    "pick_of_the_deep",
+    "oath_of_stone",
     "shield_wall"
   ],
   "passive": {
-    "id": "bulwark_aura",
-    "name": "Bulwark Aura",
-    "icon": "aura",
-    "text": "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor.",
+    "id": "deep_hoard",
+    "name": "Deep Hoard",
+    "icon": "mpregen",
+    "text": "Bonus armor and magic armor equal to 50% of its current MP. Spending or losing MP thins it.",
     "effect": {
-      "type": "armorAura",
-      "pct": 0.4,
-      "maxStacks": 2
+      "type": "deepHoard",
+      "mpRatio": 0.5
     }
   }
 }

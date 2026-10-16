@@ -205,4 +205,17 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
     const text = wiki.mechanics.find((a) => a.id === 'area-shapes')!.blocks.flatMap(blockText).join(' ');
     for (const w of ['Row', 'Column', 'Block', 'Cross', 'bottom-left', 'slides', 'empty']) expect(text, w).toContain(w);
   });
+
+  it('Mechanics: "Enemy passives" her sefer mobu pasifini (YM1-YM13) sahipleriyle yazar; Enemies makaleleri yeni aileyi (Brann Order) ve pasifleri gösterir', () => {
+    const text = wiki.mechanics.find((a) => a.id === 'enemy-passives')!.blocks.flatMap(blockText).join(' ');
+    for (const m of Object.values(content.mobs)) if (m.passive) {
+      expect(text, m.passive.name).toContain(m.passive.name);
+      expect(text, m.name).toContain(m.name);
+    }
+    const ground = wiki.mechanics.find((a) => a.id === 'ground')!.blocks.flatMap(blockText).join(' ');
+    expect(ground).toContain('Last Ember');
+    const enemies = JSON.stringify(buildWiki(files));
+    expect(enemies).toContain("Brann's Order");
+    for (const id of ['deep_runecaller', 'grave_chanter', 'oathsworn_brother', 'censer_monk', 'high_priest_of_the_undying']) expect(enemies, id).toContain(content.mobs[id]!.name);
+  });
 });

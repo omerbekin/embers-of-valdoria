@@ -613,11 +613,16 @@ export function buildMechanics(): WikiArticle[] {
     article('ground', 'Damage', 'Ground effects', 'flame', [
       p('Some skills leave an effect on the ground of the target area (see Statuses & Grounds). Enemy units standing there take magic damage at the start of each of their own turns.'),
       p('The damage is fixed when the effect is created, cannot crit and cannot be dodged. The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
+      p("Exception: the ember a dying enemy leaves behind (Last Ember) burns under the hero who killed it; its duration counts that hero's turns and it ends if that hero falls."),
     ], '#ff7a1a'),
   );
   // Özel mekanikler
   const bets = betLines();
   out.push(
+    article('enemy-passives', 'Special rules', 'Enemy passives', 'skull', [
+      p('Campaign enemies have passives of their own: each reacts to something in the fight (a hit, a death, low HP, a summon, MP, its lane or its neighbours). Hover an enemy in battle to read its passive; the Enemies articles list them by family.'),
+      list(...mobPassiveLines()),
+    ], '#8a6a4a'),
     article('gamble', 'Special rules', 'Bets (Gambler)', 'dice', [
       p('A bet skill puts part of the caster\'s HP or MP at stake before the hit, then rolls a die. On a win the hit is multiplied (and may grow with the stake); on a loss the hit is weaker or misses, and the stake is lost. A won bet keeps the stake.'),
       list(...bets.map((b) => b.text)),
@@ -957,8 +962,20 @@ function bossArticles(): WikiArticle[] {
   return out;
 }
 
+/** Mob pasiflerinin Mechanics satırları (her pasif bir kez; sahipleri adlarıyla). Metin describePassive'ten (sayılar veriden). */
+function mobPassiveLines(): string[] {
+  const byId = new Map<string, { text: string; owners: string[] }>();
+  for (const m of Object.values(content.mobs)) {
+    if (!m.passive) continue;
+    const row = byId.get(m.passive.id) ?? { text: `${m.passive.name}: ${describePassive(m.passive, m.stats, f)}`, owners: [] };
+    row.owners.push(m.name);
+    byId.set(m.passive.id, row);
+  }
+  return [...byId.values()].map((r) => `${r.text} (${r.owners.join(', ')})`);
+}
+
 /** Mob ailesi görünen adları (docs/design/campaign/fill-plan.md 2.2). */
-const MOB_FAMILY: Record<string, string> = { bandits: 'Bandits', beasts: 'Beasts', ember_cult: 'Ember Cult', guardians: 'Guardians', hexes: 'Hexes', undead: 'Undead', fanatics: 'Fanatics', morvane_army: "Morvane's Army" };
+const MOB_FAMILY: Record<string, string> = { bandits: 'Bandits', branns_order: "Brann's Order", beasts: 'Beasts', ember_cult: 'Ember Cult', guardians: 'Guardians', hexes: 'Hexes', undead: 'Undead', fanatics: 'Fanatics', morvane_army: "Morvane's Army" };
 
 /** Sefer mobları (data/mobs; N1): aile başına bir makale (Enemies). Sayılar veriden (zorluk öncesi can; skill açıklamaları skill-info'dan). */
 function mobArticles(): WikiArticle[] {

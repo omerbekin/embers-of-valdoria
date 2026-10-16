@@ -87,7 +87,36 @@ export type PassiveEffect =
    * Varışta yığın en fazla `maxOnArrival` (maxStacks'ten küçük: geçiş asla Doom tetiklemez). Geçen yığın ölenin KALAN süresini (en az 1) ve
    * snapshot'ını taşır; alıcıda zaten yığın varsa alıcının sayacı korunur. Pasif, yığının kaynağı (son ekleyen) bu birimse ve canlıysa çalışır.
    */
-  | { type: 'omenTransfer'; status: StatusKind; maxOnArrival: number; onDoomKill: number };
+  | { type: 'omenTransfer'; status: StatusKind; maxOnArrival: number; onDoomKill: number }
+  /*
+   * Sefer mob pasifleri (YM1-YM13, Ömer onayı 2026-10-16; docs/design/campaign/mob-plan.md 2.2 ve 5). Hepsi genel kanca; sayılar data/mobs'tan.
+   */
+  /** YM1 Cut and Run: savaşta bir kez, can ilk kez `below` oranının ALTINA inince (ölmeden) `turns` tur `status` (Shrouded) + Skip Turn gibi hız desteği (`speedBoost`, bir sonraki turuna kadar). */
+  | { type: 'cutAndRun'; below: number; status: StatusKind; turns: number; speedBoost: number }
+  /** YM2 Last Ember: bu birimi bir düşman SKILL vuruşuyla öldürürse öldürenin hücresi `turns` tur `ground` olur (tik = bu birimin scale gücü x power; süre öldürenin turlarıyla). */
+  | { type: 'lastEmber'; ground: string; turns: number; scale: Attribute; power: number }
+  /** YM3 Rebuke: yakın dövüş (motion melee) skill'inin FİZİKSEL vuruşunda zırhın engellediği hasarın `ratio` kadarı saldırana fiziksel hasar olarak döner (saldıranın zırhı uygulanır). */
+  | { type: 'rebuke'; ratio: number }
+  /** YM4 Stone Patience: kendi turunun başında, son turundan beri hiç hasar almadıysa +`armor` zırh (birikir, en çok `max`); herhangi bir hasar (kalkana gelen dahil) bonusu sıfırlar. */
+  | { type: 'stonePatience'; armor: number; max: number }
+  /** YM5 Deep Hoard: mevcut MP x `mpRatio` kadar ek zırh VE büyü zırhı (anlık; yuvarlanır). */
+  | { type: 'deepHoard'; mpRatio: number }
+  /** YM6 Ward-Etcher: MP harcayan her skill'den sonra zırhı en düşük dosta (kendisi hariç; yalnızsa kendisi) harcanan MP x `perMp` büyü kalkanı, `turns` tur (taşıyanın turları). */
+  | { type: 'wardEtcher'; perMp: number; turns: number }
+  /** YM7 Mire-Bound: bu birim yaşadıkça üstünde en az 1 `status` (Omen) yığını olan DÜŞMANLARININ hızı x`speedMult` (birden çok kaynakta tek, en güçlüsü). */
+  | { type: 'mireBound'; status: StatusKind; speedMult: number }
+  /** YM8 Flicker: düşman skill vuruşu isabet edince `turns` tur `status` (Shrouded); kendi turu başına en çok bir kez. */
+  | { type: 'flicker'; status: StatusKind; turns: number }
+  /** YM9 Corpse Hunger: herhangi bir taraftaki çağrı olmayan bir birim ölünce maks canın `ratio` kadarı şifa (Wound gibi alınan şifa çarpanları uygulanır). */
+  | { type: 'corpseHunger'; ratio: number }
+  /** YM10 Bone Ward: kendi tarafında çağrılmış (summoned) canlı bir dost varken aldığı TÜM hasar x(1 - reduce) (skill, Doom, zemin ve DoT tiki). */
+  | { type: 'boneWard'; reduce: number }
+  /** YM11 Martyr's Vow: savaşta bir kez, bitişik (aynı tahtada ön/arka/sol/sağ) dosta gelen ÖLÜMCÜL skill vuruşunu kendisi alır (hasar kendi zırhına göre yeniden ölçeklenir). */
+  | { type: 'martyrsVow' }
+  /** YM12 Censer Smoke: kendisi ve aynı şeritteki (aynı tahta, tüm sıralar) dostlar kendi tur başlarında maks canın `ratio` kadarı şifa (Wound uygulanır; birden çok kaynakta tek, en güçlüsü). */
+  | { type: 'censerSmoke'; ratio: number }
+  /** YM13 Vessel of the Choir: maks MP + `mpAdd` (türev stat); bir dostu (kendisi hariç) düşman skill'inden hasar aldıkça `mpPerHit` MP. */
+  | { type: 'choirVessel'; mpAdd: number; mpPerHit: number };
 
 export interface PassiveDef {
   id: string;
@@ -792,6 +821,8 @@ export interface ShieldHook {
   magic: boolean;
   amount: number;
   onAbsorb: OnAbsorbSpec;
+  /** Süreli katman (Ward-Etcher, YM6): taşıyanın kendi tur başında 1 azalır; 0'da katmanın kalan miktarı havuzdan silinir. Yoksa süresiz. */
+  turns?: number;
 }
 
 /**
@@ -1172,6 +1203,8 @@ export interface GroundEffect {
   scale?: Attribute;
   sourceStat?: number;
   power?: number;
+  /** Süresi bu birimin turlarıyla sayılır ve etki bu birim ölünce biter (yoksa `source`). Last Ember (YM2): bırakan ölüdür, sayaç öldürenindir. */
+  tickOn?: string;
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
@@ -1302,6 +1335,14 @@ export interface Combatant {
   phase?: number;
   /** Sıra almayan yardımcı nesne (Iron Mooring; bkz. CombatantData.inert). */
   inert?: boolean;
+  /*
+   * Mob pasiflerinin çalışma bayrakları (YM1-YM13): savaşta bir kez kullanılan pasif (Cut and Run, Martyr's Vow), Stone Patience birikimi ve
+   * "son turundan beri hasar aldı" bayrağı, Flicker'ın bu tur kullanılıp kullanılmadığı.
+   */
+  passiveUsed?: boolean;
+  patience?: number;
+  patienceHurt?: boolean;
+  flickered?: boolean;
 }
 
 /** Aşamalı alan skill'inin bir aşaması (skillUsed.stages): o aşamanın hücreleri (boşlar dahil) ve vurulacak birimler. Dizin = aşama numarası. */

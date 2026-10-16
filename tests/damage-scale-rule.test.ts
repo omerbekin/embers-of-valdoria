@@ -7,6 +7,7 @@ import type { Attribute } from '../src/engine';
 // Aksi belirtilen (ölçeksiz) hasar benzeri etkiler AÇIKÇA burada gerekçeyle listelenir.
 const SCALE_EXCEPTIONS: { skill: string; effect: string; reason: string }[] = [
   { skill: 'mana_burn', effect: 'manaBurn', reason: 'Sabit MP yakma/çalma; can hasarı değil, kaynak etkisi.' },
+  { skill: 'glyph_of_breaking', effect: 'manaBurn', reason: 'Deep Runecaller (mob-plan.md 2.3): hücre başına sabit 6 MP yakma; can hasarı değil, kaynak etkisi.' },
   { skill: 'drain_field', effect: 'manaBurn', reason: 'Maks MP yüzdesi yakma; can hasarı değil, kaynak etkisi. İç onEmpty.damage ise INT ölçeklidir (tests/drain-silence.test.ts denetler).' },
 ];
 

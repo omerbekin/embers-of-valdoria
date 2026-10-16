@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'fen_witchling' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'fen_witchling' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit aynı, pasif P7 Mire-Bound (ikon yer tutucu 'hourglass').",
   "id": "fen_witchling",
   "name": "Fen Witchling",
   "family": "hexes",
@@ -20,5 +20,16 @@
   "skills": [
     "hex_bolt",
     "bog_curse"
-  ]
+  ],
+  "passive": {
+    "id": "mire_bound",
+    "name": "Mire-Bound",
+    "icon": "hourglass",
+    "text": "While this witch lives, heroes carrying at least one Omen are 20% slower (several witches do not stack).",
+    "effect": {
+      "type": "mireBound",
+      "status": "omen",
+      "speedMult": 0.8
+    }
+  }
 }

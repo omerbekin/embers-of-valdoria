@@ -62,7 +62,8 @@ export function deriveStats(data: CombatantData, formulas: Formulas): Stats {
     dex,
     luck,
     hp: Math.round(a.hpBase + a.hpPerStr * str),
-    mp: Math.round(a.mpBase + a.mpPerInt * int),
+    // Vessel of the Choir (YM13, mob pasifi choirVessel): maks MP'ye düz ek; pasif yoksa ifade aynı
+    mp: Math.round(a.mpBase + a.mpPerInt * int) + (data.passive?.effect.type === 'choirVessel' ? data.passive.effect.mpAdd : 0),
     spd: Math.max(statMin(formulas), roundStat(a.spdBase + a.spdPerDex * dex, formulas)),
     mpRegen: Math.round(a.mpRegenPerInt * int),
     hpRegen: a.hpRegenPerStr * str,
@@ -168,6 +169,7 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
       magicArmor: def.stats.magicArmor,
       ...(def.accuracyBase !== undefined ? { accuracyBase: def.accuracyBase } : {}),
       ...(def.overrides ? { overrides: def.overrides } : {}),
+      ...(def.passive ? { passive: def.passive } : {}),
       skills: def.skills,
     },
     formulas,

@@ -3629,41 +3629,6 @@
     ],
     "artOf": "quick_shot"
   },
-  "snare_shot": {
-    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Bandit Crossbowman imza skill'i: hasar + 2 tur Slow. Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
-    "id": "snare_shot",
-    "name": "Snare Shot",
-    "target": "single_enemy",
-    "cost": {
-      "resource": "mp",
-      "amount": 4
-    },
-    "cooldown": 2,
-    "motion": "ranged",
-    "fx": "#ffd166",
-    "effects": [
-      {
-        "type": "damage",
-        "damageType": "physical",
-        "scale": "dex",
-        "power": 0.8
-      },
-      {
-        "type": "status",
-        "status": "slow",
-        "turns": 2
-      }
-    ],
-    "icon": "aimedshot",
-    "vfx": "aimed",
-    "sfx": [
-      "bowDraw",
-      "heavyTwang",
-      "arrowWhoosh",
-      "arrowThunk"
-    ],
-    "artOf": "aimed_shot"
-  },
   "ember_toss": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Ember Cult temel saldırısı (Fire Bolt'un zayıfı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "ember_toss",
@@ -4097,5 +4062,782 @@
       "ironCreak"
     ],
     "artOf": "chain_hook"
+  },
+  "billhook": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Moor Raider temel saldırısı: STR fiziksel + 1 tur Jinxed. YER TUTUCU sanat: ikon/vfx/ses artOf 'jinx' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "billhook",
+    "name": "Billhook",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#8a7a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.9
+      },
+      {
+        "type": "status",
+        "status": "jinxed",
+        "turns": 1
+      }
+    ],
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "jinx"
+  },
+  "peat_smoke": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Moor Raider imza skill'i: 2x2 alana küçük STR hasarı + 2 tur Blinded. YER TUTUCU sanat: ikon/vfx/ses artOf 'smoke_bomb' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "peat_smoke",
+    "name": "Peat Smoke",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#6b5a44",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.3
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 2
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "smoke_bomb"
+  },
+  "scatter_quarrels": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Bandit Crossbowman imza skill'i (Snare Shot yerine): bir sıranın her hücresine DEX fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'piercing_arrow' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "scatter_quarrels",
+    "name": "Scatter Quarrels",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#d9c9a3",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.4
+      }
+    ],
+    "icon": "pierce",
+    "vfx": "pierce",
+    "sfx": [
+      "heavyTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "artOf": "piercing_arrow"
+  },
+  "shovel_of_embers": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Charcoal Burner temel saldırısı: INT ateş büyüsü + 1 tur Blinded. YER TUTUCU sanat: ikon/vfx/ses artOf 'fire_bolt' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "shovel_of_embers",
+    "name": "Shovel of Embers",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff8a3a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "fire"
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "fire_bolt"
+  },
+  "kiln_smoke": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Charcoal Burner imza skill'i: sütun boyunca sıra sıra INT ateş + 2 tur Burning (DoT). YER TUTUCU sanat: ikon/vfx/ses artOf 'ash_brand' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "kiln_smoke",
+    "name": "Kiln Smoke",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#5a3a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.35,
+        "element": "fire"
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.15,
+        "turns": 2
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "ash_brand"
+  },
+  "gatestone_slam": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Stonebound Warden temel saldırısı: STR fiziksel + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'tremor_slam' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "gatestone_slam",
+    "name": "Gatestone Slam",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#8c8f8a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "tremor2",
+    "vfx": "tremor2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "shieldPlant",
+      "groundHeave"
+    ],
+    "artOf": "tremor_slam"
+  },
+  "rockfall": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Stonebound Warden imza skill'i: bir sıraya STR fiziksel + 2 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'root_smash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "rockfall",
+    "name": "Rockfall",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "sky",
+    "skyFx": "fist",
+    "fx": "#9a9488",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.5
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 2
+      }
+    ],
+    "icon": "rootsmash",
+    "vfx": "rootfall",
+    "sfx": [
+      "woodCreak",
+      "woodSmash",
+      "rootsRumble",
+      "leafRustle"
+    ],
+    "artOf": "root_smash"
+  },
+  "pick_of_the_deep": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Thane of the Deep temel saldırısı: STR fiziksel + zırhın %6'sı (bonusScale armor; Deep Hoard ile MP doluyken sert). YER TUTUCU sanat: ikon/vfx/ses artOf 'anchor_smash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "pick_of_the_deep",
+    "name": "Pick of the Deep",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#6f9ad0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6,
+        "bonusScale": [
+          {
+            "stat": "armor",
+            "pct": 0.06
+          }
+        ]
+      }
+    ],
+    "icon": "anchorsmash",
+    "vfx": "anchorsmash",
+    "sfx": [
+      "chainDrag",
+      "anchorImpact"
+    ],
+    "artOf": "anchor_smash"
+  },
+  "oath_of_stone": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Thane of the Deep: kendine 2 tur taunt + 1 tur Fortified. YER TUTUCU sanat: ikon/vfx/ses artOf 'taunt' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "oath_of_stone",
+    "name": "Oath of Stone",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#9fb0c4",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "taunt"
+  },
+  "rune_spark": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Deep Runecaller temel saldırısı: INT arcane büyü. YER TUTUCU sanat: ikon/vfx/ses artOf 'void_strike' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "rune_spark",
+    "name": "Rune Spark",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fd0ff",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.8,
+        "element": "arcane"
+      }
+    ],
+    "icon": "voidstrike",
+    "vfx": "voidstrike",
+    "sfx": [
+      "voidPulse",
+      "implode"
+    ],
+    "artOf": "void_strike"
+  },
+  "glyph_of_breaking": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Deep Runecaller imza skill'i: artı şekline INT arcane + isabet eden her hedefte 6 MP yakma (Bölge II'de MP yakan TEK aktif). YER TUTUCU sanat: ikon/vfx/ses artOf 'drain_field' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "glyph_of_breaking",
+    "name": "Glyph of Breaking",
+    "target": "area_enemies",
+    "area": {
+      "shape": "plus"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "void",
+    "fx": "#5ab8e8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.45,
+        "element": "arcane"
+      },
+      {
+        "type": "manaBurn",
+        "amount": 6
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "drainfield",
+    "sfx": [
+      "voidSuction",
+      "voidPulse",
+      "energySlurp"
+    ],
+    "artOf": "drain_field"
+  },
+  "cauldron_splash": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Hedge Witch Morwen temel saldırısı: LUCK karanlık büyü + 2 tur Wither (LUCK 0,08). YER TUTUCU sanat: ikon/vfx/ses artOf 'withering_curse' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "cauldron_splash",
+    "name": "Cauldron Splash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fbf3f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "luck",
+        "power": 0.5,
+        "element": "dark"
+      },
+      {
+        "type": "dot",
+        "status": "wither",
+        "scale": "luck",
+        "power": 0.08,
+        "turns": 2
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "withering_curse"
+  },
+  "hags_mark": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Hedge Witch Morwen: tek düşmana 2 Omen + 1 tur Silenced (hasarsız). YER TUTUCU sanat: ikon/vfx/ses artOf 'doom_mark' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "hags_mark",
+    "name": "Hag's Mark",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#8a4fa8",
+    "effects": [
+      {
+        "type": "omen",
+        "stacks": 2
+      },
+      {
+        "type": "status",
+        "status": "silence",
+        "turns": 1
+      }
+    ],
+    "icon": "voidstrike",
+    "vfx": "voidstrike",
+    "sfx": [
+      "voidPulse",
+      "implode"
+    ],
+    "artOf": "doom_mark"
+  },
+  "clutch": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Drowned temel saldırısı (Gnaw yerine): STR fiziksel + 1 tur Silenced. YER TUTUCU sanat: ikon/vfx/ses artOf 'venom_edge' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "clutch",
+    "name": "Clutch",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#4f7a6e",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "status",
+        "status": "silence",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "venom_edge"
+  },
+  "dirge": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter temel saldırısı: INT karanlık büyü + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'bone_throw' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "dirge",
+    "name": "Dirge",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#8a5ad0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.6,
+        "element": "dark"
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "bonethrow",
+    "vfx": "bonethrow",
+    "sfx": [
+      "boneSpin",
+      "boneImpact"
+    ],
+    "artOf": "bone_throw"
+  },
+  "call_the_buried": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Grave Chanter imza skill'i: Risen Skeleton çağırır (ceset varsa tüketir: beslenmiş), ömür 3 tur. YER TUTUCU sanat: ikon/vfx/ses artOf 'raise_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "call_the_buried",
+    "name": "Call the Buried",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 5,
+    "motion": "cast",
+    "fx": "#b36bff",
+    "effects": [
+      {
+        "type": "summon",
+        "unit": "skeleton",
+        "lifespan": 3,
+        "consumeCorpse": true
+      }
+    ],
+    "icon": "raise",
+    "vfx": "raise",
+    "sfx": [
+      "graveMoan",
+      "earthCrack",
+      "boneClatter",
+      "thud",
+      "soulDrain"
+    ],
+    "artOf": "raise_dead"
+  },
+  "penance_flail": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Oathsworn Brother temel saldırısı: STR fiziksel 1,05; bedeli MEVCUT canın %8'i (cost.ofCurrent, asla öldürmez). YER TUTUCU sanat: ikon/vfx/ses artOf 'melee_attack' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "penance_flail",
+    "name": "Penance Flail",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "hp",
+      "amount": 0,
+      "ofCurrent": 0.08
+    },
+    "motion": "melee",
+    "fx": "#e8d48a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.05
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "melee_attack"
+  },
+  "sanctuary": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Oathsworn Brother: bir dosta (kendisi hariç) 2 tur Blessed. YER TUTUCU sanat: ikon/vfx/ses artOf 'spell_ward' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "sanctuary",
+    "name": "Sanctuary",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "excludeSelf": true,
+    "fx": "#f3e2a0",
+    "effects": [
+      {
+        "type": "status",
+        "status": "blessed",
+        "turns": 2
+      }
+    ],
+    "icon": "spellward",
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "artOf": "spell_ward"
+  },
+  "holy_ember": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Censer Monk temel saldırısı: INT kutsal büyü. YER TUTUCU sanat: ikon/vfx/ses artOf 'holy_strike' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "holy_ember",
+    "name": "Holy Ember",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#ffd23f",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "holy"
+      }
+    ],
+    "icon": "judgehammer",
+    "vfx": "hammerfall",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam"
+    ],
+    "artOf": "holy_strike"
+  },
+  "consecrate": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Censer Monk imza skill'i: 2x2 alana INT kutsal + 2 tur Holy Fire zemini (INT 0,2). YER TUTUCU sanat: ikon/vfx/ses artOf 'judgment' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "consecrate",
+    "name": "Consecrate",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyFx": "light",
+    "fx": "#ffe08a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.25,
+        "element": "holy"
+      },
+      {
+        "type": "ground",
+        "ground": "holy_fire",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "judgment"
+  },
+  "bone_rite": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): High Priest of the Undying temel saldırısı: INT karanlık büyü + 2 tur Wound. YER TUTUCU sanat: ikon/vfx/ses artOf 'evil_eye' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "bone_rite",
+    "name": "Bone Rite",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#9a6ad8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "dark"
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "evil_eye"
+  },
+  "requiem": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): High Priest of the Undying: sütun boyunca sıra sıra INT karanlık (sıra başına x0,75) + 3 tur Wither (INT 0,1). YER TUTUCU sanat: ikon/vfx/ses artOf 'withering_curse' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "requiem",
+    "name": "Requiem",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 14
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#7a4fb0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.55,
+        "element": "dark",
+        "falloff": 0.75
+      },
+      {
+        "type": "dot",
+        "status": "wither",
+        "scale": "int",
+        "power": 0.1,
+        "turns": 3
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "withering_curse"
+  },
+  "unholy_benediction": {
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): High Priest of the Undying: tek dosta INT şifa + 2 tur Blessed. YER TUTUCU sanat: ikon/vfx/ses artOf 'rejuvenate' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "unholy_benediction",
+    "name": "Unholy Benediction",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#b07ad8",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "int",
+        "power": 0.5
+      },
+      {
+        "type": "status",
+        "status": "blessed",
+        "turns": 2
+      }
+    ],
+    "icon": "rejuvenate",
+    "vfx": "rejuvenate",
+    "sfx": [
+      "chimeHeal",
+      "leafRustle"
+    ],
+    "artOf": "rejuvenate"
   }
 }

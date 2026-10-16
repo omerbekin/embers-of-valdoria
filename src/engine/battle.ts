@@ -185,6 +185,10 @@ export class Battle {
   private rageTally: Map<string, number> | null = null;
   /** Bu skill sırasında ölürse yığını Ill Omen ile GEÇMEYECEK hedefler (detonate noTransferOnKill: Doom Mark); skill bitince null. */
   private noTransferKill: Set<string> | null = null;
+  /** Şu an işlenen skill (strike'ın skill'e bakan pasifleri için: Rebuke yalnızca yakın dövüş); skill bitince null. */
+  private castingSkill: SkillDef | null = null;
+  /** Birimin aldığı son hasarın kaynağı ve türü (uid -> {source, origin}): Last Ember (YM2) öldürenin bir skill vuruşu olup olmadığına bakar. */
+  private readonly lastHitOn = new Map<string, { source: string; origin: DamageOrigin }>();
   /** Başlangıç cooldown'u olan birimler: ilk turunun başında azalmayacak skill'ler (uid -> skill id'leri). */
   private readonly initialHold = new Map<string, Set<string>>();
   private groundCount = 0;
@@ -316,7 +320,30 @@ export class Battle {
   statusMult(c: Combatant, key: 'speedMult' | 'damageTakenMult' | 'healTakenMult'): number {
     let m = 1;
     for (const s of c.statuses) m *= this.statusDef(s.kind)?.[key] ?? 1;
+    if (key === 'speedMult') m *= this.mireSpeedMult(c);
     return m;
+  }
+
+  /**
+   * Mire-Bound (YM7, mob pasifi mireBound): birimin üstünde pasifin durumundan (Omen) en az 1 yığın varken, KARŞI taraftaki canlı her taşıyan
+   * hızını x speedMult yapar; birden çok kaynakta tek (en güçlüsü). Yoksa 1.
+   */
+  mireSpeedMult(c: Combatant): number {
+    let m = 1;
+    for (const a of this.combatants) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'mireBound' || a.hp <= 0 || a.side === c.side) continue;
+      if (!c.statuses.some((s) => s.kind === e.status && (s.stacks ?? 1) > 0)) continue;
+      m = Math.min(m, e.speedMult);
+    }
+    return m;
+  }
+
+  /** Bone Ward (YM10, mob pasifi boneWard): kendi tarafında canlı bir çağrı varken alınan TÜM hasar çarpanı (1 - reduce); yoksa 1. */
+  passiveTakenMult(target: Combatant): number {
+    const e = target.passive?.effect;
+    if (e?.type !== 'boneWard') return 1;
+    return this.combatants.some((a) => a.side === target.side && a.summoned && a.hp > 0 && a.uid !== target.uid && !a.inert) ? 1 - e.reduce : 1;
   }
 
   /** Alınan hasarın toplam çarpanı: durumlar (Fortified/Blessed...) x taunt eden dostun koruması (taunt'lı olmayan dostlar). */
@@ -337,6 +364,9 @@ export class Battle {
     const fx = target.itemEffects;
     if (fx?.damageTakenReduce) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, fx.damageTakenReduce);
     if (fx?.lowHpReduce && target.hp > 0 && target.hp < fx.lowHpReduce.below * target.maxHp) m *= 1 - Math.min(ITEM_HOOK_CAPS.damageTaken, fx.lowHpReduce.reduce);
+    // Bone Ward (mob pasifi): yoksa çarpılmaz
+    const bw = this.passiveTakenMult(target);
+    if (bw !== 1) m *= bw;
     return m;
   }
 
@@ -376,7 +406,8 @@ export class Battle {
     const weak = target.tags.reduce((m, tag) => m * (f.weaknesses?.[tag]?.[element] ?? 1), 1);
     const st = this.effectiveStats(target);
     const red = armorReduction(damageType === 'magic' ? st.magicArmor : st.armor, f);
-    return Math.max(f.damage.minDamage, Math.round(amount * weak * (1 - red)));
+    const bw = this.passiveTakenMult(target); // Bone Ward: tik hasarı da azalır (yoksa 1, ifade aynı)
+    return Math.max(f.damage.minDamage, Math.round(amount * weak * (1 - red) * bw));
   }
 
   /** DoT durumunun (statuses.json > dot) bir tikte hedefe vereceği hasar (önizleme ve gerçek tik aynı). */
@@ -662,8 +693,11 @@ export class Battle {
     // Boss bağı (Anchored): canlı her yardımcı (Iron Mooring) zırh + büyü zırhı ekler
     const anchor = c.boss?.anchor;
     const anchors = anchor ? this.anchorsOf(c).length : 0;
-    const bonus = this.auraArmor(c) + anchors * (anchor?.armorAdd ?? 0);
-    const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0);
+    // Mob pasifleri: Stone Patience (birikmiş zırh) ve Deep Hoard (mevcut MP'nin oranı kadar zırh + büyü zırhı); yoksa 0
+    const pe = c.passive?.effect;
+    const hoard = pe?.type === 'deepHoard' && c.hp > 0 ? Math.round(c.mp * pe.mpRatio) : 0;
+    const bonus = this.auraArmor(c) + anchors * (anchor?.armorAdd ?? 0) + (c.patience ?? 0) + hoard;
+    const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0) + hoard;
     let acc = 0;
     let eva = 0;
     // extraCrit: vuruşun kendi kritik eki (skill hasarının critBonus'u, Jinx); durum ekleriyle birlikte toplanıp [0, 1]'e kırpılır
@@ -2236,6 +2270,7 @@ export class Battle {
 
     // Rage'li kullanıcı: bu skill'in isabet eden hasar vuruşları hedef başına toplanır (strike doldurur), skill bitince tek kazanç olarak işlenir
     this.rageTally = !debug && actor.maxRage !== undefined ? new Map() : null;
+    this.castingSkill = skill; // strike'ın skill'e bakan pasifleri (Rebuke: yakın dövüş) için
     // Doom Mark: vuruşu ya da patlaması hedefi öldürürse hedefin Omen'leri silinir, Ill Omen çalışmaz
     this.noTransferKill = skill.effects.some((e) => e.type === 'detonate' && e.noTransferOnKill) ? new Set(targets.map((c) => c.uid)) : null;
     // Aşamasız skill tek grup (tüm hedefler). Aşamalı skill: her aşama sırayla tüm etkileri uygular (aşama başına bir kez çalışması sorun olan
@@ -2262,7 +2297,7 @@ export class Battle {
           if (betMult > 0) {
             ts.forEach((target, i) => {
               const idx = base + i;
-              if (target.hp <= 0) return;
+              if (target.hp <= 0 || actor.hp <= 0) return; // Rebuke (mob pasifi) saldıranı vuruş ortasında öldürebilir
               // Şerit skill'inde her yeni hedef bir öncekinin `falloff` katı hasar alır (öndekinden arkadakine)
               const mult = (effect.falloff ? Math.pow(effect.falloff, idx) : 1) * betMult * (splashUids.has(target.uid) ? skill.splash?.mult ?? 1 : 1);
               const r = this.strike(actor, target, effect, emit, mult, idx === 0);
@@ -2636,6 +2671,11 @@ export class Battle {
     }
     this.rageTally = null;
     this.noTransferKill = null;
+    this.castingSkill = null;
+
+    // Ward-Etcher (YM6, mob pasifi): MP harcadığı skill'den sonra zırhı en düşük dosta harcanan MP x perMp süreli büyü kalkanı
+    const we = actor.passive?.effect;
+    if (!debug && we?.type === 'wardEtcher' && resource === 'mp' && cost > 0 && !this.freeMp && actor.hp > 0) this.wardEtch(actor, cost, we.perMp, we.turns, emit);
 
     // Int-primary Mana Echo: skill sonrası ihtimalle MP bedelinin yarısı (yukarı yuvarla, en az 1) geri gelir; bedelsiz skill'de zar atılmaz
     if (!debug && resource === 'mp' && cost > 0 && !this.freeMp && (actor.stats.manaEcho ?? 0) > 0 && this.rng.next() < actor.stats.manaEcho) {
@@ -2683,6 +2723,29 @@ export class Battle {
     return m.lose;
   }
 
+  /** Ward-Etcher hedefi: kendisi hariç (yalnızsa kendisi) canlı, sıra alan dostlardan geçerli zırhı en düşük olan (eşitlikte küçük yuva). */
+  wardEtchTarget(actor: Combatant): Combatant | undefined {
+    const pool = this.living(actor.side).filter((c) => !c.inert && c.uid !== actor.uid);
+    const list = pool.length > 0 ? pool : [actor];
+    return [...list].sort((a, b) => this.effectiveStats(a).armor - this.effectiveStats(b).armor || a.slot - b.slot)[0];
+  }
+
+  private wardEtch(actor: Combatant, spent: number, perMp: number, turns: number, emit: Emit): void {
+    const target = this.wardEtchTarget(actor);
+    const amount = Math.round(spent * perMp);
+    if (!target || amount <= 0) return;
+    emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+    this.trimShieldHooks(target);
+    target.magicShield += amount;
+    const hooks = (target.shieldHooks ??= []);
+    const same = hooks.find((h) => h.skill === actor.passive!.id && h.caster === actor.uid && h.magic);
+    if (same) {
+      same.amount += amount;
+      same.turns = turns;
+    } else hooks.push({ skill: actor.passive!.id, caster: actor.uid, magic: true, amount, onAbsorb: {}, turns });
+    emit({ type: 'shield', source: actor.uid, target: target.uid, amount, shieldAfter: target.shield, magicShieldAfter: target.magicShield, magic: true });
+  }
+
   /** Turns modunda: sırası gelen aktör hiçbir şey yapamıyorsa (ör. MP bitti) turunu pas geçer. */
   skipTurn(): ActionResult {
     if (this.mode !== 'turns') return { ok: false, reason: 'Turns are only used in turn mode' };
@@ -2707,6 +2770,7 @@ export class Battle {
    */
   private finishAction(actor: Combatant, emit: Emit, turnCost = 1): void {
     this.turnsTaken++;
+    if (actor.flickered) actor.flickered = false; // Flicker (YM8): kendi turu başına bir kez
     if (actor.openingDamageMult !== undefined) delete actor.openingDamageMult; // ilk eylem bitti
     // Telgraf adalet kuralı: bu birim oynadı (eylem, pas ya da sersemlik)
     for (const t of this.telegraphs) if (t.waitFor.includes(actor.uid)) t.waitFor = t.waitFor.filter((u) => u !== actor.uid);
@@ -2780,6 +2844,15 @@ export class Battle {
       actor.cooldowns[id] = Math.max(0, (actor.cooldowns[id] ?? 0) - 1);
       if (actor.cooldowns[id] === 0) delete actor.cooldowns[id];
     }
+    // Stone Patience (YM4, mob pasifi): son turundan beri hasar almadıysa birikimli zırh (zemin/DoT tiklerinden ÖNCE; o tiklerin hasarı sıfırlar)
+    const sp = actor.passive?.effect;
+    if (sp?.type === 'stonePatience' && actor.hp > 0) {
+      if (!actor.patienceHurt && (actor.patience ?? 0) < sp.max) {
+        actor.patience = Math.min(sp.max, (actor.patience ?? 0) + sp.armor);
+        emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+      }
+      actor.patienceHurt = false;
+    }
     // Sersemlemiş (skipTurn) birim bu turu oynayamaz; durum süresi aşağıda azalmadan önce okunur
     let skipThisTurn = actor.statuses.some((st) => this.statusDef(st.kind)?.skipTurn);
     // Yerdeki etkiler: bu birimin hücresinde duran (düşman) etkiler hasar verir
@@ -2789,10 +2862,10 @@ export class Battle {
       this.applyHit(src, actor, this.groundTickDamage(g.ground, g.amount, actor), 'magic', false, emit, false, { origin: 'ground', element: this.setup.grounds?.[g.ground]?.element ?? 'physical', damageType: 'magic', ground: g.ground, groundId: g.id });
       this.announceIfDead(actor, emit);
     }
-    // Bu birimin bıraktığı yer etkilerinin süresi azalır (bırakan ölmüşse etki biter)
+    // Bu birimin bıraktığı yer etkilerinin süresi azalır (bırakan ölmüşse etki biter). tickOn (Last Ember): sayaç ve ömür o birimin
     for (const g of [...this.ground]) {
-      const src = this.get(g.source);
-      if (g.source === actor.uid) g.turns--;
+      const src = this.get(g.tickOn ?? g.source);
+      if ((g.tickOn ?? g.source) === actor.uid) g.turns--;
       if (g.turns <= 0 || !src || src.hp <= 0) {
         this.ground.splice(this.ground.indexOf(g), 1);
         emit({ type: 'groundEnd', id: g.id });
@@ -2845,9 +2918,16 @@ export class Battle {
         }
       }
     }
+    // Süreli kalkan katmanları (Ward-Etcher, YM6): taşıyanın tur başında 1 azalır; biten katmanın kalanı havuzdan silinir
+    if (actor.shieldHooks?.some((h) => h.turns !== undefined)) this.tickTimedShields(actor, emit);
     // Str: tur başı düz can yenilenmesi (Str x hpRegenPerStr, yuvarlanır)
     const hpRegen = Math.round(actor.stats.hpRegen ?? 0);
     if (actor.hp > 0 && !skipThisTurn && hpRegen > 0 && actor.hp < actor.maxHp) this.applyHeal(actor, actor, hpRegen, false, emit);
+    // Censer Smoke (YM12, mob pasifi): aynı şeritteki (kendisi dahil) keşişin dumanı tur başında maks canın oranı kadar şifa (en güçlü tek kaynak)
+    if (actor.hp > 0 && actor.hp < actor.maxHp) {
+      const smoke = this.censerSourceOf(actor);
+      if (smoke) this.applyHeal(smoke.unit, actor, Math.max(1, Math.round(actor.maxHp * smoke.ratio)), false, emit, 'censer_smoke');
+    }
     // MP yenilenir (Ember Heart: can eşiğin üstündeyse ek MP; item etkisi turnMp)
     const th = actor.itemEffects?.turnMp;
     const bonusMp = th && actor.hp > th.above * actor.maxHp ? th.mp : 0;
@@ -2881,6 +2961,32 @@ export class Battle {
       this.actionsLeft.delete(actor.uid); // sersemlik tüm turu (ek eylemler dahil) yer
       this.finishAction(actor, emit);
     } else this.tryStagger(actor, emit); // Stagger: turun ilk eylemi yanar
+  }
+
+  /** Censer Smoke kaynağı: birimin şeridinde (aynı tahta) canlı, censerSmoke pasifli dost (kendisi dahil); birden çoksa en güçlüsü. Yoksa null. */
+  censerSourceOf(c: Combatant): { unit: Combatant; ratio: number } | null {
+    let best: { unit: Combatant; ratio: number } | null = null;
+    for (const a of this.combatants) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'censerSmoke' || a.hp <= 0 || a.side !== c.side || a.board !== c.board || this.laneOf(a.slot) !== this.laneOf(c.slot)) continue;
+      if (!best || e.ratio > best.ratio) best = { unit: a, ratio: e.ratio };
+    }
+    return best;
+  }
+
+  /** Süreli kalkan katmanları (ShieldHook.turns): 1 azalır; 0'da katmanın kalan miktarı havuzdan düşer (olay: shield, negatif miktar). */
+  private tickTimedShields(c: Combatant, emit: Emit): void {
+    for (const h of [...(c.shieldHooks ?? [])]) {
+      if (h.turns === undefined) continue;
+      h.turns--;
+      if (h.turns > 0) continue;
+      const cut = Math.min(h.amount, h.magic ? c.magicShield : c.shield);
+      if (h.magic) c.magicShield -= cut;
+      else c.shield -= cut;
+      c.shieldHooks = c.shieldHooks!.filter((x) => x !== h);
+      if (cut > 0) emit({ type: 'shield', source: h.caster, target: c.uid, amount: -cut, shieldAfter: c.shield, magicShieldAfter: c.magicShield, magic: h.magic });
+    }
+    if (c.shieldHooks?.length === 0) delete c.shieldHooks;
   }
 
   private turnSlots(): TurnSlot[] {
@@ -3179,6 +3285,19 @@ export class Battle {
         this.announceIfDead(keeper, emit);
         return { landed: false };
       }
+      // Martyr's Vow (YM11, mob pasifi): savaşta bir kez, bitişik (artı şekli) dostun ölümcül vuruşunu taşıyan alır; hasar kendi zırhına göre ölçeklenir
+      const martyr = this.martyrFor(target);
+      if (martyr) {
+        martyr.passiveUsed = true;
+        emit({ type: 'passive', actor: martyr.uid, passive: martyr.passive!.id, name: martyr.passive!.name });
+        const ign = spec.ignoreDefense ?? 0;
+        const armorOf = (c: Combatant) => (effect.damageType === 'physical' ? this.effectiveStats(c).armor : this.effectiveStats(c).magicArmor) * (1 - ign);
+        const keep = (c: Combatant) => 1 - armorReduction(armorOf(c), f);
+        const moved = Math.max(f.damage.minDamage, Math.round((total * keep(martyr)) / Math.max(0.0001, keep(target))));
+        this.applyHit(actor, martyr, moved, effect.damageType, crit, emit, true, meta);
+        this.announceIfDead(martyr, emit);
+        return { landed: false };
+      }
     }
     // Bloodletter (item etkisi executeLifesteal): vuruştan ÖNCE hedefin canı eşiğin altında mı
     const exe = actor.itemEffects?.executeLifesteal;
@@ -3272,9 +3391,36 @@ export class Battle {
         }
       }
     }
+    // Flicker (YM8, mob pasifi): düşman skill vuruşu isabet edince kısa süreli kaçınma buff'ı; kendi turu başına bir kez
+    const fl = target.passive?.effect;
+    if (fl?.type === 'flicker' && target.hp > 0 && !target.flickered && actor.side !== target.side) {
+      target.flickered = true;
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+      this.addStatus(target, { kind: fl.status, turns: fl.turns, source: target.uid }, emit, target.passive!.id);
+    }
+    // Rebuke (YM3, mob pasifi): yakın dövüş skill'inin fiziksel vuruşunda zırhın engellediği hasarın bir kısmı saldırana döner (saldıranın zırhı uygulanır)
+    const rb = target.passive?.effect;
+    if (rb?.type === 'rebuke' && effect.damageType === 'physical' && this.castingSkill?.motion === 'melee' && target.hp > 0 && actor.hp > 0 && actor.side !== target.side) {
+      const red = armorReduction(targetStats.armor * (1 - (spec.ignoreDefense ?? 0)), f);
+      const landedOnTarget = guard && guardian && guardian !== target && guardian.hp > 0 ? total - Math.round(total * (guard.share ?? 0.5)) : total;
+      const back = red > 0 && red < 1 ? Math.round(((landedOnTarget * red) / (1 - red)) * rb.ratio) : 0;
+      if (back > 0) {
+        emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+        this.applyHit(target, actor, this.tickDamage('physical', 'physical', back, actor), 'physical', false, emit, false, { origin: 'status', element: 'physical', damageType: 'physical' });
+        this.announceIfDead(actor, emit);
+      }
+    }
     this.announceIfDead(target, emit);
     if (guardian) this.announceIfDead(guardian, emit);
     return { landed: true, crit };
+  }
+
+  /** Martyr's Vow taşıyıcısı: hedefin aynı tahtadaki artı komşusu (ön/arka/sol/sağ), canlı, pasifi henüz kullanılmamış; yoksa undefined. */
+  martyrFor(target: Combatant): Combatant | undefined {
+    return this.combatants.find((c) => {
+      if (c.passive?.effect.type !== 'martyrsVow' || c.passiveUsed || c.hp <= 0 || c.uid === target.uid || c.side !== target.side || c.board !== target.board) return false;
+      return Math.abs(this.rowOf(c.slot) - this.rowOf(target.slot)) + Math.abs(this.laneOf(c.slot) - this.laneOf(target.slot)) === 1;
+    });
   }
 
   /**
@@ -3405,9 +3551,42 @@ export class Battle {
     this.checkSecondWind(target, emit);
     this.checkShieldRefresh(target, emit);
     this.checkLastStand(target, emit);
+    if (rest > 0 || absorbed > 0) this.damagedPassives(actor, target, meta, emit);
     // Kalkan kancaları yalnızca DOĞRUDAN bir saldırganın skill vuruşunda (yer etkisi tiki / kendine hasar tetiklemez)
     if (meta.origin === 'skill' && actor.side !== target.side) for (const { hook, part } of hooked) this.absorbTrigger(hook, target, actor, part, emit);
     return rest;
+  }
+
+  /**
+   * Hasar alınınca (can ya da kalkan) çalışan mob pasifleri (YM1, YM4, YM13) ve son vuranın kaydı (YM2 Last Ember). Pasif yoksa yalnızca kayıt yazılır
+   * (rastgele sayı tüketmez; savaş akışı aynı).
+   */
+  private damagedPassives(actor: Combatant, target: Combatant, meta: HitMeta, emit: Emit): void {
+    this.lastHitOn.set(target.uid, { source: actor.uid, origin: meta.origin });
+    const pe = target.passive?.effect;
+    // Stone Patience: herhangi bir hasar birikmiş zırhı sıfırlar
+    if (pe?.type === 'stonePatience') {
+      target.patienceHurt = true;
+      if (target.patience) target.patience = 0;
+    }
+    // Cut and Run: savaşta bir kez, can eşiğin altına ilk inişte Shrouded + hız desteği (Skip Turn gibi: sıradaki turu daha erken)
+    if (pe?.type === 'cutAndRun' && !target.passiveUsed && target.hp > 0 && target.hp < pe.below * target.maxHp) {
+      target.passiveUsed = true;
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+      this.addStatus(target, { kind: pe.status, turns: pe.turns, source: target.uid }, emit, target.passive!.id);
+      if (this.mode === 'turns' && pe.speedBoost > 0) this.speedBoost.set(target.uid, Math.max(this.speedBoostOf(target.uid), pe.speedBoost));
+    }
+    // Vessel of the Choir: bir dostu (taşıyan hariç) düşman skill'inden hasar aldıkça MP
+    if (meta.origin === 'skill' && actor.side !== target.side) {
+      for (const p of this.combatants) {
+        const e = p.passive?.effect;
+        if (e?.type !== 'choirVessel' || p.hp <= 0 || p.uid === target.uid || p.side !== target.side) continue;
+        const gain = Math.max(0, Math.min(e.mpPerHit, p.maxMp - p.mp));
+        if (gain <= 0) continue;
+        p.mp += gain;
+        emit({ type: 'mpRegen', actor: p.uid, amount: gain, after: p.mp, cause: p.passive!.id });
+      }
+    }
   }
 
   /** `doomed`: birim Doom ile öldüyse tüketilen yığın (Ill Omen yalnızca onDoomKill kadar geçirir). */
@@ -3426,6 +3605,38 @@ export class Battle {
       if (!vg || a === c || !this.sideAdjacent(a, c)) continue;
       emit({ type: 'passive', actor: a.uid, passive: 'vengeance', name: 'Vengeance' });
       for (const st of vg.statuses) if (this.statusDef(st)) this.addStatus(a, { kind: st as Status['kind'], turns: vg.turns, source: a.uid }, emit, 'vengeance');
+    }
+    // Last Ember (YM2, mob pasifi): bir düşman SKILL vuruşuyla öldüyse öldürenin hücresi süreli yanan zemin olur (zemin/DoT ile ölümde olmaz)
+    const le = c.passive?.effect;
+    const lh = this.lastHitOn.get(c.uid);
+    if (le?.type === 'lastEmber' && lh?.origin === 'skill') {
+      const killer = this.get(lh.source);
+      if (killer && killer.hp > 0 && killer.side !== c.side && !killer.inert) {
+        const g: GroundEffect = {
+          id: `g${this.groundCount++}`,
+          ground: le.ground,
+          board: killer.board,
+          slots: [killer.slot],
+          turns: le.turns,
+          source: c.uid,
+          sourceSide: c.side,
+          amount: Math.round(attributePower(c.stats, le.scale, this.setup.formulas) * le.power),
+          scale: le.scale,
+          sourceStat: c.stats[le.scale],
+          power: le.power,
+          tickOn: killer.uid,
+        };
+        this.ground.push(g);
+        emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+        emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
+      }
+    }
+    // Corpse Hunger (YM9, mob pasifi): çağrı olmayan herhangi bir birim ölünce taşıyan maks canının oranı kadar iyileşir
+    if (!c.summoned && !c.inert) for (const a of this.combatants) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'corpseHunger' || a.hp <= 0 || a === c || a.hp >= a.maxHp) continue;
+      emit({ type: 'passive', actor: a.uid, passive: a.passive!.id, name: a.passive!.name });
+      this.applyHeal(a, a, Math.max(1, Math.round(a.maxHp * e.ratio)), false, emit, a.passive!.id);
     }
     // Dark Bond: ölen birimin kurduğu ya da taşıdığı bağ kopar
     this.breakAllBonds(c, emit);

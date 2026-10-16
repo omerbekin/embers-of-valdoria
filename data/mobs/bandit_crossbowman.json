@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'bandit_crossbowman' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'bandit_crossbowman' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): Snare Shot yerine Scatter Quarrels, Opportunist çıktı, pasif P1 Cut and Run.",
   "id": "bandit_crossbowman",
   "name": "Bandit Crossbowman",
   "family": "bandits",
@@ -19,22 +19,19 @@
   "ai": "sniper",
   "skills": [
     "crossbow_bolt",
-    "snare_shot"
+    "scatter_quarrels"
   ],
   "passive": {
-    "id": "opportunist",
-    "name": "Opportunist",
-    "icon": "opportunist",
-    "text": "",
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
     "effect": {
-      "type": "bonusVsStatus",
-      "statuses": [
-        "wound",
-        "slow",
-        "stun",
-        "wither"
-      ],
-      "bonus": 0.25
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
     }
   }
 }

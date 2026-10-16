@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: YER TUTUCU spriteId 'shieldwarden' (kendi ChatGPT çizimi gelince spriteId 'oathsworn_brother' olur; liste mob-plan.md 6 > Yer tutucular). Pasif ikonu yer tutucu 'guardian'.",
+  "id": "oathsworn_brother",
+  "name": "Oathsworn Brother",
+  "family": "branns_order",
+  "spriteId": "shieldwarden",
+  "color": "#c9b27a",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "role": "Brann's Order · Guardian",
+  "attributes": {
+    "str": 26,
+    "int": 6,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 22,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 120
+  },
+  "ai": "aggressive",
+  "skills": [
+    "penance_flail",
+    "sanctuary"
+  ],
+  "passive": {
+    "id": "martyrs_vow",
+    "name": "Martyr's Vow",
+    "icon": "guardian",
+    "text": "Once per battle, takes a killing skill hit meant for an adjacent ally (front, back, left or right); the damage is recalculated against its own armor.",
+    "effect": {
+      "type": "martyrsVow"
+    }
+  }
+}

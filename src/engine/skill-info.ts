@@ -102,6 +102,10 @@ export const ATTRIBUTE_NAME: Record<Attribute, string> = { str: 'STR', int: 'INT
 const BONUS_STAT_NAME: Record<Attribute | 'armor' | 'magicArmor', string> = { ...ATTRIBUTE_NAME, armor: 'Armor', magicArmor: 'Magic armor' };
 
 const pct = (v: number) => `${Math.round(v * 100)}%`;
+/** Mob pasif metinleri için küçük yardımcılar (describePassive). */
+const turnsText = (n: number) => `${n} turn${n > 1 ? 's' : ''}`;
+const cap = (id: string) => id.charAt(0).toUpperCase() + id.slice(1).replace(/_/g, ' ');
+const groundName = (id: string) => (id === 'burning' ? 'burning ground' : id.replace(/_/g, ' '));
 /** Ölçekli sayı (statın gücü x oran, yuvarlanmış): tooltip satırlarındaki "(24)" ve `skillNumbers` AYNI hesaptan. */
 const scaled = (stats: Stats, scale: Attribute, power: number, formulas: Formulas): number => Math.round(attributePower(stats, scale, formulas) * power);
 type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
@@ -163,6 +167,33 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     }
     case 'omenTransfer':
       return `When an enemy carrying your Omens dies, its Omens pass to the nearest enemy (at most ${e.maxOnArrival} arrive; ${e.onDoomKill > 0 ? `if Doom killed it, ${e.onDoomKill} passes; a kill by a skill that detonates Omens passes none` : "if Doom or a skill that detonates Omens killed it, it passes none"}). Passed Omens keep the time they had left and never trigger Doom. Works only while you live.`;
+    // Sefer mob pasifleri (YM1-YM13; docs/design/campaign/mob-plan.md 2.2)
+    case 'cutAndRun':
+      return `Once per battle, the first time your HP drops below ${pct(e.below)}, you gain ${cap(e.status)} for ${turnsText(e.turns)} and a speed boost until your next turn (like Skip Turn).`;
+    case 'lastEmber':
+      return `If an enemy kills you with a skill, the cell it stands on becomes ${groundName(e.ground)} for ${turnsText(e.turns)} of its turns (${val(e.scale, e.power)} damage per tick). A death from ground or damage over time leaves no ember.`;
+    case 'rebuke':
+      return `When a melee skill hits you with physical damage, ${pct(e.ratio)} of the damage your armor blocked is dealt back to the attacker as physical damage.`;
+    case 'stonePatience':
+      return `At the start of your turn, if you took no damage since your last turn, gain +${e.armor} armor (up to +${e.max}). Any damage resets the bonus.`;
+    case 'deepHoard':
+      return `Gain bonus armor and magic armor equal to ${pct(e.mpRatio)} of your current MP (+${Math.round(stats.mp * e.mpRatio)} at full MP). Spending or losing MP thins it.`;
+    case 'wardEtcher':
+      return `After each skill that costs MP, the ally with the lowest armor (yourself only if alone) gains a magic shield of ${e.perMp}x the MP spent for ${turnsText(e.turns)}.`;
+    case 'mireBound':
+      return `While you live, enemies carrying at least one ${cap(e.status)} are ${pct(1 - e.speedMult)} slower (it does not stack with other such witches).`;
+    case 'flicker':
+      return `When an enemy skill hits you, gain ${cap(e.status)} for ${turnsText(e.turns)}; at most once between your turns.`;
+    case 'corpseHunger':
+      return `Whenever any unit dies (not a summon), heal ${pct(e.ratio)} of your max HP (Wound reduces it).`;
+    case 'boneWard':
+      return `While a summoned ally stands on your side, you take ${pct(e.reduce)} less damage from every source.`;
+    case 'martyrsVow':
+      return 'Once per battle, take a killing skill hit meant for an adjacent ally (front, back, left or right) yourself; the damage is recalculated against your own armor.';
+    case 'censerSmoke':
+      return `You and allies in your lane (same column, every row) heal ${pct(e.ratio)} of their max HP at the start of their turns (Wound reduces it).`;
+    case 'choirVessel':
+      return `+${e.mpAdd} max MP. Every time an ally takes damage from an enemy skill, you gain ${e.mpPerHit} MP.`;
   }
 }
 
@@ -516,6 +547,26 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed(`Team MP per ${e.threshold} blocked`, `+${e.mana}`);
     case 'omenTransfer':
       return fixed('Omens passed', `up to ${e.maxOnArrival}`);
+    case 'cutAndRun':
+      return fixed('Below', pct(e.below));
+    case 'rebuke':
+      return fixed('Reflected', pct(e.ratio));
+    case 'stonePatience':
+      return fixed('Armor per turn', `+${e.armor} (max +${e.max})`);
+    case 'deepHoard':
+      return num('Armor at full MP', Math.round(stats.mp * e.mpRatio), 'shield');
+    case 'wardEtcher':
+      return fixed('Shield per MP', `x${e.perMp}`);
+    case 'mireBound':
+      return fixed('Slow', pct(1 - e.speedMult));
+    case 'corpseHunger':
+      return fixed('Heal', pct(e.ratio));
+    case 'boneWard':
+      return fixed('Less damage', pct(e.reduce));
+    case 'censerSmoke':
+      return fixed('Heal per turn', pct(e.ratio));
+    case 'choirVessel':
+      return fixed('MP per hit', `+${e.mpPerHit}`);
     default:
       return [];
   }

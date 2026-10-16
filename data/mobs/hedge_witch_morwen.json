@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'fen_witchling' (ChatGPT çizimi, adlı lider: Fen Witchling çizimini paylaşır (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'fen_witchling' (ChatGPT çizimi, adlı lider: Fen Witchling çizimini paylaşır (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): elit şekilli adlı lider: Cauldron Splash + Lure Light + Hag's Mark, pasif P7 Mire-Bound (aile). spriteId 'fen_witchling' YER TUTUCU (kendi çizimi gelince 'hedge_witch_morwen').",
   "id": "hedge_witch_morwen",
   "name": "Hedge Witch Morwen",
   "family": "hexes",
@@ -21,8 +21,19 @@
   },
   "ai": "hexer",
   "skills": [
-    "hex_bolt",
-    "bog_curse",
-    "lure_light"
-  ]
+    "cauldron_splash",
+    "lure_light",
+    "hags_mark"
+  ],
+  "passive": {
+    "id": "mire_bound",
+    "name": "Mire-Bound",
+    "icon": "hourglass",
+    "text": "While this witch lives, heroes carrying at least one Omen are 20% slower (several witches do not stack).",
+    "effect": {
+      "type": "mireBound",
+      "status": "omen",
+      "speedMult": 0.8
+    }
+  }
 }

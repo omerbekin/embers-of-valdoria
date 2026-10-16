@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'moor_raider' (ChatGPT çizimi, Road Thug palet varyantı (çivit yün); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'moor_raider' (ChatGPT çizimi, Road Thug palet varyantı (çivit yün); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit yenilendi (Billhook + Peat Smoke), class pasifi Opportunist çıktı, pasif P1 Cut and Run (ikon yer tutucu 'shrouded').",
   "id": "moor_raider",
   "name": "Moor Raider",
   "family": "bandits",
@@ -9,32 +9,29 @@
   "frontPriority": 1,
   "role": "Bandit · Brute",
   "attributes": {
-    "str": 28,
+    "str": 26,
     "int": 4,
-    "dex": 10,
+    "dex": 14,
     "luck": 4
   },
-  "armor": 14,
+  "armor": 12,
   "magicArmor": 0,
   "ai": "aggressive",
   "skills": [
-    "cudgel",
-    "hamstring"
+    "billhook",
+    "peat_smoke"
   ],
   "passive": {
-    "id": "opportunist",
-    "name": "Opportunist",
-    "icon": "opportunist",
-    "text": "",
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
     "effect": {
-      "type": "bonusVsStatus",
-      "statuses": [
-        "wound",
-        "slow",
-        "stun",
-        "wither"
-      ],
-      "bonus": 0.25
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
     }
   }
 }

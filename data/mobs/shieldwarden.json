@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'shieldwarden' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'shieldwarden' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit aynı, class pasifi Bulwark Aura çıktı, pasif P3 Rebuke (ikon yer tutucu 'bash').",
   "id": "shieldwarden",
   "name": "Shieldwarden",
   "family": "guardians",
@@ -25,14 +25,13 @@
     "hold_the_line"
   ],
   "passive": {
-    "id": "bulwark_aura",
-    "name": "Bulwark Aura",
-    "icon": "aura",
-    "text": "You and the allies right next to you (front, back, left, right) gain bonus armor equal to 40% of your own armor.",
+    "id": "rebuke",
+    "name": "Rebuke",
+    "icon": "bash",
+    "text": "When a melee skill hits this unit with physical damage, 30% of the damage its armor blocked is dealt back to the attacker as physical damage.",
     "effect": {
-      "type": "armorAura",
-      "pct": 0.4,
-      "maxStacks": 2
+      "type": "rebuke",
+      "ratio": 0.3
     }
   }
 }

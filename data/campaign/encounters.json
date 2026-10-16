@@ -67,9 +67,9 @@
   "bog_ambush": {
     "name": "Bog Lurkers",
     "units": [
-      { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
-      { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
-      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.2, "powerMult": 1.1 } }
+      { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.6, "powerMult": 1.35 } },
+      { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.6, "powerMult": 1.35 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.6, "powerMult": 1.35 } }
     ]
   },
   "iron_pass_ambush": {
@@ -77,24 +77,23 @@
     "units": [
       { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.66, "powerMult": 0.66 } },
       { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.66, "powerMult": 0.66 } },
-      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 0.66, "powerMult": 0.66 } }
+      { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 0.66, "powerMult": 0.66 } }
     ]
   },
   "mine_wardens": {
     "name": "Mine Wardens",
     "units": [
-      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.15, "powerMult": 1.05 } },
-      { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 1.15, "powerMult": 1.05 } },
-      { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 1.15, "powerMult": 1.05 } }
+      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.7, "powerMult": 1.4 } },
+      { "class": "deep_runecaller", "slot": 6, "mods": { "hpMult": 1.7, "powerMult": 1.4 } },
+      { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 1.7, "powerMult": 1.4 } }
     ]
   },
   "vault_keepers": {
     "name": "Vault Keepers",
     "units": [
-      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
-      { "class": "paladin", "slot": 6, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
-      { "class": "antimage", "slot": 8, "mods": { "hpMult": 0.6, "powerMult": 0.75 } },
-      { "class": "paladin", "slot": 10, "mods": { "hpMult": 0.6, "powerMult": 0.75 } }
+      { "class": "oathsworn_brother", "slot": 0, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "oathsworn_brother", "slot": 1, "mods": { "hpMult": 0.95, "powerMult": 0.95 } },
+      { "class": "censer_monk", "slot": 7, "mods": { "hpMult": 0.95, "powerMult": 0.95 } }
     ]
   },
   "mercenary_camp": {
@@ -109,10 +108,10 @@
   "black_cathedral": {
     "name": "The Undying Choir",
     "units": [
-      { "class": "undead", "slot": 7, "name": "High Priest", "tier": "elite", "mods": { "hpMult": 1.1, "statMult": 1.1 } },
-      { "class": "undead", "slot": 6, "mods": { "hpMult": 0.65, "powerMult": 0.7 } },
-      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.65, "powerMult": 0.7 } },
-      { "class": "hexer", "slot": 4, "mods": { "hpMult": 0.65, "powerMult": 0.7 } }
+      { "class": "high_priest_of_the_undying", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.6, "statMult": 1.25 } },
+      { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 1.0, "powerMult": 1.0 } },
+      { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.0, "powerMult": 1.0 } },
+      { "class": "ghoul", "slot": 1, "mods": { "hpMult": 1.0, "powerMult": 1.0 } }
     ]
   },
   "bridge_warden": {
@@ -182,34 +181,46 @@
   "witchs_hut_guard": {
     "name": "Hut Guardians",
     "units": [
-      { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.1, "powerMult": 1 } },
-      { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.1, "powerMult": 1 } },
-      { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.1, "powerMult": 1 } }
+      { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.6, "powerMult": 1.35 } },
+      { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.6, "powerMult": 1.35 } },
+      { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.6, "powerMult": 1.35 } }
+    ]
+  },
+  "morwen_duel": {
+    "_not": "Witch's Hut olayının 'Steal' seçeneği (events.json > witchs_hut, battle listesinin ilki; mob-plan.md 3): lider düellosu. Sefer simi olay savaşlarını oynamaz; sayılar PROVİZYON.",
+    "name": "Hedge Witch Morwen",
+    "units": [
+      { "class": "hedge_witch_morwen", "slot": 7, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "will_o_wisp", "slot": 6, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.2, "powerMult": 1.1 } }
     ]
   },
   "charcoal_camp": {
     "name": "Charcoal Burners",
     "units": [
       { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
-      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
-      { "class": "charcoal_burner", "slot": 8, "mods": { "hpMult": 0.75, "powerMult": 0.75 } }
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.75, "powerMult": 0.75 } }
     ]
   },
   "grave_field": {
     "name": "Restless Dead",
     "units": [
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
-      { "class": "undead", "slot": 7, "mods": { "hpMult": 0.9, "powerMult": 0.95 } },
-      { "class": "hexer", "slot": 6, "mods": { "hpMult": 0.9, "powerMult": 0.95 } }
+      { "class": "ghoul", "slot": 1, "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.15, "powerMult": 1.1 } }
     ]
   },
   "pilgrim_road": {
-    "name": "Highwaymen",
+    "_not": "Rakip bölük (mob-plan.md 3, Ömer 2026-10-16): St. Brann'ın emanetinin peşindeki paralı maceracılar; Bölge II'de class kopyası kalan TEK savaş (Gambler yerine Mage).",
+    "name": "The Silver Stag Company",
     "units": [
-      { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
-      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
-      { "class": "gambler", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
-      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.55, "powerMult": 0.7 } }
+      { "class": "warrior", "slot": 0, "name": "Stag Sellsword", "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "cutthroat", "slot": 2, "name": "Stag Knife", "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "hpMult": 0.55, "powerMult": 0.7 } },
+      { "class": "mage", "slot": 8, "name": "Stag Magus", "mods": { "hpMult": 0.55, "powerMult": 0.7 } }
     ]
   },
   "ember_road": {

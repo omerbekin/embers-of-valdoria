@@ -1,4 +1,4 @@
-import { CELL_COUNT, classes, encounterUnit, randomPool } from '../engine/content';
+import { CELL_COUNT, classes, encounterUnit, randomPool, summons } from '../engine/content';
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
@@ -168,10 +168,11 @@ export function validateEncounters(): string[] {
     const slots = def.units.map((u) => u.slot);
     if (new Set(slots).size !== slots.length) errors.push(`${id}: duplicate slots`);
     for (const u of def.units) {
-      // Boss (data/bosses) ve mob (data/mobs) tanımları istisna: oynanabilir class değiller ama karşılaşmada kullanılır
-      if (!randomPool.includes(u.class) && !encounterUnit(u.class)) errors.push(`${id}: class ${u.class} is not a playable class`);
+      // Boss (data/bosses) ve mob (data/mobs) tanımları istisna: oynanabilir class değiller ama karşılaşmada kullanılır. Çağrılar (data/summons; Grave Field'ın
+      // Risen Skeleton'ları, mob-plan.md 3) hazır çağrı olarak konur (content.battleSetup summoned: true verir).
+      if (!randomPool.includes(u.class) && !encounterUnit(u.class) && !summons[u.class]) errors.push(`${id}: class ${u.class} is not a playable class`);
       if (!Number.isInteger(u.slot) || u.slot < 0 || u.slot >= CELL_COUNT) errors.push(`${id}: slot ${u.slot} out of range`);
-      for (const sk of u.lockSkills ?? []) if (!(classes[u.class] ?? encounterUnit(u.class))?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
+      for (const sk of u.lockSkills ?? []) if (!(classes[u.class] ?? encounterUnit(u.class) ?? summons[u.class])?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
       if (u.initialCooldownBonus !== undefined && (!Number.isInteger(u.initialCooldownBonus) || u.initialCooldownBonus < 0)) errors.push(`${id}: bad initialCooldownBonus`);
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
@@ -181,7 +182,7 @@ export function validateEncounters(): string[] {
 
 /** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss/mob adı > id. */
 function unitDisplayName(u: { class: string; name?: string }): string {
-  return u.name ?? classes[u.class]?.name ?? encounterUnit(u.class)?.name ?? u.class;
+  return u.name ?? classes[u.class]?.name ?? encounterUnit(u.class)?.name ?? summons[u.class]?.name ?? u.class;
 }
 
 /**

@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: YER TUTUCU spriteId 'ember_acolyte' (kendi ChatGPT çizimi gelince spriteId 'deep_runecaller' olur; liste mob-plan.md 6 > Yer tutucular). Pasif ikonu yer tutucu 'rune'.",
+  "id": "deep_runecaller",
+  "name": "Deep Runecaller",
+  "family": "guardians",
+  "spriteId": "ember_acolyte",
+  "color": "#5f86a8",
+  "logo": "rune",
+  "frontPriority": 7,
+  "role": "Guardian · Caster",
+  "attributes": {
+    "str": 8,
+    "int": 28,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 14,
+  "magicArmor": 10,
+  "ai": "sniper",
+  "skills": [
+    "rune_spark",
+    "glyph_of_breaking"
+  ],
+  "passive": {
+    "id": "ward_etcher",
+    "name": "Ward-Etcher",
+    "icon": "rune",
+    "text": "After each skill that costs MP, the ally with the lowest armor gains a magic shield of 2x the MP spent for 2 turns.",
+    "effect": {
+      "type": "wardEtcher",
+      "perMp": 2,
+      "turns": 2
+    }
+  }
+}

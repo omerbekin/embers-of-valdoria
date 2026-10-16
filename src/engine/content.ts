@@ -47,6 +47,11 @@ import mobHedgeWitchMorwen from '../../data/mobs/hedge_witch_morwen.json';
 import mobWillOWisp from '../../data/mobs/will_o_wisp.json';
 import mobGhoul from '../../data/mobs/ghoul.json';
 import mobDrowned from '../../data/mobs/drowned.json';
+import mobDeepRunecaller from '../../data/mobs/deep_runecaller.json';
+import mobGraveChanter from '../../data/mobs/grave_chanter.json';
+import mobOathswornBrother from '../../data/mobs/oathsworn_brother.json';
+import mobCenserMonk from '../../data/mobs/censer_monk.json';
+import mobHighPriest from '../../data/mobs/high_priest_of_the_undying.json';
 import groundsJson from '../../data/grounds.json';
 import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
@@ -136,6 +141,11 @@ const mobData: CombatantData[] = [
   mobWillOWisp,
   mobGhoul,
   mobDrowned,
+  mobDeepRunecaller,
+  mobGraveChanter,
+  mobOathswornBrother,
+  mobCenserMonk,
+  mobHighPriest,
 ] as unknown as CombatantData[];
 
 /**

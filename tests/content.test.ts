@@ -191,7 +191,8 @@ describe('skill verisi', () => {
             expect(def!.doom, `${key} doom`).toBeDefined();
             expect(e.stacks).toBeGreaterThan(0);
             if (e.critStacks !== undefined) expect(e.critStacks).toBeGreaterThanOrEqual(e.stacks);
-            expect(s.effects.some((x) => x.type === 'damage'), `${key}: Omen yalnızca isabet eden vuruşla`).toBe(true);
+            // İstisna: Hag's Mark (Hedge Witch Morwen, mob-plan.md 2.3, Ömer onayı 2026-10-16): hasarsız 2 Omen + Silence (isabet zarı yok)
+            if (key !== 'hags_mark') expect(s.effects.some((x) => x.type === 'damage'), `${key}: Omen yalnızca isabet eden vuruşla`).toBe(true);
             break;
           }
           case 'detonate':
@@ -539,7 +540,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash'];
+    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

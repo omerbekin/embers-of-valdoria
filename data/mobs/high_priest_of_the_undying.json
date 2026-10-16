@@ -1,0 +1,37 @@
+{
+  "_not": "Sefer mobu (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL: YER TUTUCU spriteId 'charcoal_burner' (kendi ChatGPT çizimi gelince spriteId 'high_priest_of_the_undying' olur; liste mob-plan.md 6 > Yer tutucular). Pasif ikonu yer tutucu 'wail'.",
+  "id": "high_priest_of_the_undying",
+  "name": "High Priest of the Undying",
+  "family": "undead",
+  "spriteId": "charcoal_burner",
+  "spriteScale": 1.15,
+  "color": "#5a3f7a",
+  "logo": "skull",
+  "frontPriority": 7,
+  "role": "Undead · Elite",
+  "attributes": {
+    "str": 8,
+    "int": 32,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 16,
+  "ai": "healer",
+  "skills": [
+    "bone_rite",
+    "requiem",
+    "unholy_benediction"
+  ],
+  "passive": {
+    "id": "vessel_of_the_choir",
+    "name": "Vessel of the Choir",
+    "icon": "wail",
+    "text": "+30 max MP. Every time one of its allies takes damage from a hero's skill, it gains 2 MP.",
+    "effect": {
+      "type": "choirVessel",
+      "mpAdd": 30,
+      "mpPerHit": 2
+    }
+  }
+}

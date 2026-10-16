@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'will_o_wisp' (ChatGPT çizimi, süzülür: sprite altında boşluk var, gövde yerden yüksekte; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'will_o_wisp' (ChatGPT çizimi, süzülür: sprite altında boşluk var, gövde yerden yüksekte; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): kit aynı, pasif P8 Flicker (ikon yer tutucu 'feather').",
   "id": "will_o_wisp",
   "name": "Will-o'-Wisp",
   "family": "hexes",
@@ -20,5 +20,16 @@
   "skills": [
     "wisp_spark",
     "marsh_glow"
-  ]
+  ],
+  "passive": {
+    "id": "flicker",
+    "name": "Flicker",
+    "icon": "feather",
+    "text": "When a hero's skill hits it: Shrouded for 1 turn, at most once between its turns.",
+    "effect": {
+      "type": "flicker",
+      "status": "shrouded",
+      "turns": 1
+    }
+  }
 }
