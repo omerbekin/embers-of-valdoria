@@ -46,6 +46,13 @@ Canlı kayıt izlemek: `npm --prefix cloudflare run tail`.
 - Bir maç kabaca 50-300 istek eder; günde binlerce maç bedava kotada kalır. Kota dolarsa o gün yeni lobi açılamaz (oyunun kendisi
   açılmaya devam eder); **para çekilmez** (ücretsiz planda kart yok, ücretli plana kendiliğinden geçiş yok).
 
+## Hata raporu (opt-in, /diag)
+
+Oyuncu Settings > Privacy > Error reports'u açarsa (varsayılan kapalı) anonim teknik rapor `POST /diag` ile KV `DIAG`'a yazılır, 30 gün sonra
+kendiliğinden silinir. IP okunmaz/saklanmaz; okuma ucu yoktur. **Bir kez:** `npm --prefix cloudflare exec -- wrangler kv namespace create eov-diag`,
+çıkan id'yi `wrangler.toml` > `REPLACE_WITH_DIAG_KV_ID` yerine yaz, sonra `npm run deploy:cf`. Okumak: oyun klasöründe `npm run diag:pull`.
+KV ücretsiz kotası: günde 1.000 yazma (rapor başına 2). Ayrıntı: `../docs/arch/diagnostics.md`.
+
 ## Röle yedeği
 
 İki tarayıcı doğrudan bağlanamazsa (bazı mobil operatör / şirket ağları) oyun mesajları bu sunucu üzerinden aktarılır. Yalnızca

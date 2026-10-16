@@ -35,6 +35,7 @@ import { current as campaignState, setState as setCampaignState, MAP_SCENE } fro
 import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
 import { registerMultiplayerDebug } from './debug-mp';
 import { registerEndlessDebug } from './debug-endless';
+import { registerDiagDebug } from './debug-diag';
 import { getRotateMode, setRotateMode } from './viewport';
 import { simulateContextLoss } from './context-loss';
 import { stageView } from '../game/stage-view';
@@ -91,6 +92,8 @@ export function registerDebugTools({ game, debug }: Ctx): void {
   registerMultiplayerDebug(game, debug);
   // Endless Lite: Setup > Endless bölümü
   registerEndlessDebug(game, debug);
+  // Hata raporu (opt-in): Data > Error reports (src/diag/)
+  registerDiagDebug(debug);
   /** The battle scene, only while a battle is actually running (not on the team selection screen). */
   // (yer tutucu sahne açıkken, src/game/lazy-scenes.ts, gerçek savaş yok sayılır)
   const battle = (): BattleScene | null => {

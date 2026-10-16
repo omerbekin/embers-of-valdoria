@@ -19,8 +19,8 @@ preview_urls = false
 # Yalnızca derleme çıktısı yüklenir (assets/source, voice-candidates gibi kaynak klasörler dist'e girmez)
 directory = "../dist"
 binding = "ASSETS"
-# Yalnızca /lobby yolları Worker koduna gider; geri kalan her şey doğrudan statik dosyadır (Worker isteği sayılmaz)
-run_worker_first = ["/lobby", "/lobby/*"]
+# Yalnızca /lobby yolları ve /diag (hata raporu POST) Worker koduna gider; geri kalan her şey doğrudan statik dosyadır (Worker isteği sayılmaz)
+run_worker_first = ["/lobby", "/lobby/*", "/diag"]
 # "/" -> index.html; gallery.html?embed=1 (wiki iframe'i) da çalışır
 html_handling = "auto-trailing-slash"
 not_found_handling = "none"
@@ -33,6 +33,12 @@ class_name = "Lobby"
 [[migrations]]
 tag = "v1"
 new_sqlite_classes = ["Lobby"]
+
+# Hata raporları (opt-in; docs/arch/diagnostics.md): KV, ücretsiz plan (günde 1.000 yazma; rapor başına 2 yazma), 30 gün TTL.
+# BİR KEZ: npm --prefix cloudflare exec -- wrangler kv namespace create eov-diag  -> çıkan id'yi aşağıya yaz (yazılmazsa deploy hata verir).
+[[kv_namespaces]]
+binding = "DIAG"
+id = "25eccdc0fbe74ff6b266d0050d849f3b"
 
 [vars]
 # Yalnızca bu adreslerden açılan oyun bağlanabilir (virgülle ayrılır; ":*" herhangi bir port)

@@ -26,6 +26,11 @@ import { whenMenuFontsReady } from './ui/menu-fonts';
 import './style.css';
 import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader';
 import { installContextLossNotice } from './ui/context-loss';
+import { attachDiagGame, diagNoticed, installDiag } from './diag/diag';
+import { openDiagNotice } from './diag/diag-notice';
+
+// Hata raporu (opt-in, varsayılan kapalı; src/diag/, docs/arch/diagnostics.md): iz halkası + önceki oturumun çökme denetimi en başta
+installDiag();
 
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);
@@ -101,6 +106,9 @@ const game = new Phaser.Game({
 installLoopGuard(game.loop as unknown as Parameters<typeof installLoopGuard>[0]);
 
 mp.attachGame(game);
+// Hata raporu: sahne geçişleri iz olarak (scene.start), raporda etkin sahne ve doku belleği; ilk açılışta bir kez bildirim (Send error reports, varsayılan Off)
+attachDiagGame(game);
+whenBootReady(() => window.setTimeout(() => !diagNoticed() && openDiagNotice('first'), 700));
 // Grafik bağlamı kaybı (telefon grafik belleği): sessizce donma yerine kısa not + gerekirse Reload (src/ui/context-loss.ts)
 installContextLossNotice(game);
 

@@ -878,8 +878,13 @@ html.menu-elegant .st-overlay {
 /* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT): başlık ortası y 205, bölüm başlığı 46, satır 78, yazı COL_X + 34,
    değer sağ kenarı COL_X + 754 (Ömer 2026-10-11: Performance mode + Show FPS ile 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satırlar sık) */
 html.menu-elegant .st-col {
-  top: calc(var(--et) + 176.4 * var(--u));
+  top: calc(var(--et) + 146.4 * var(--u)); /* 2026-10-16: Privacy > Error reports satırıyla sütun 30 birim yukarıda (MainMenuScene SETTINGS_LAYOUT) */
   width: max(calc(754 * var(--u)), 500px);
+  /* Sığmazsa (en alttaki Developer tools) sütun kendi içinde kayar; çubuk görünmez */
+  max-height: calc(100% - var(--et) - var(--eb) - 146.4 * var(--u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
 }
 
 html.menu-elegant .st-row {
@@ -899,7 +904,7 @@ html.menu-elegant .st-title {
 }
 
 html.menu-elegant .st-row {
-  height: max(44px, calc(66 * var(--u))); /* 2026-10-13: Tutorials satırıyla 10 satır 1080'e sığsın (ana menü SETTINGS_LAYOUT.rowH ile aynı) */
+  height: max(44px, calc(60 * var(--u))); /* 2026-10-16: Privacy bölümüyle 11 satır 1080e sığsın (ana menü SETTINGS_LAYOUT.rowH ile aynı) */
 }
 
 html.menu-elegant .st-label {
@@ -930,7 +935,7 @@ html.menu-elegant .st-note {
 }
 
 html.menu-elegant .st-section {
-  height: calc(46 * var(--u));
+  height: calc(44 * var(--u));
   font: 600 calc(20 * var(--u)) var(--st-serif);
 }
 

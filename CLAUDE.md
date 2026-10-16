@@ -89,6 +89,7 @@ tests/            vitest testleri
 | Sanat kılavuzları | `docs/design/art.md`, `docs/design/art-v2.md`, `docs/design/audio-map.md` | piksel art paleti, v2 yeniden tasarım, ses listesi |
 | Debug menüsü, Codex/Wiki | `docs/arch/debug-wiki.md` | debug aracı ekleme, Codex/Wiki içeriği, Assets/Legacy |
 | Simülatörler, build, yayın | `docs/arch/sims-and-deploy.md` | denge simi, kod bölme/yeni sahne, GitHub Pages, Cloudflare |
+| Hata raporu (opt-in tanılama) | `docs/arch/diagnostics.md` | çökme/hata izi (`logEvent`), Settings > Privacy, Worker /diag, `npm run diag:pull` |
 | Denge hedefleri | `docs/balance.md`, `data/balance.json` | sınıf/skill dengesi |
 | Sefer (campaign) | `docs/design/campaign/campaign.md`, `docs/design/campaign/fill-plan.md` | sefer haritası, düğümler, karşılaşmalar |
 | Item, ilerleme, Endless | `docs/design/progression/items.md`, `item-effects.md`, `roadmap.md` | item, ödül, Endless, ilerleme |

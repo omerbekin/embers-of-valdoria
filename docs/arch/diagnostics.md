@@ -1,0 +1,24 @@
+# Hata raporu (opt-in tanılama)
+
+> Ömer 2026-10-16 onayı. Kurallar değişmez: varsayılan KAPALI, anonim, yalnızca teknik veri, 30 gün, yalnızca ücretsiz Cloudflare. Varsayımlar: `docs/design/open-questions.md` madde 331.
+
+## Oyuncu tarafı
+- **İlk açılış:** ana menü hazır olunca BİR KEZ "Error reports" penceresi (kit Diyalog: `src/diag/diag-notice.ts`, CSS `src/diag/diag.css`): kısa gizlilik metni, "Send error reports" anahtarı (Off), Continue. Esc / zemine dokunma = Continue.
+- **Settings > Privacy > Error reports** (ana menü sütunu `MainMenuScene.buildSettings` + oyun içi DOM `src/ui/settings.ts`, aynı kaynak): On/Off, **Copy log** (izleri metin olarak panoya; onay kapalıyken de çalışır, hiçbir şey göndermez), **Info** (aynı pencere, Close).
+- Gizlilik metni TEK yerde: `diag-notice.ts > PRIVACY_LINES` (iletişim: omerbekinn@gmail.com).
+
+## İstemci (`src/diag/`)
+- `diag-core.ts` (saf, Node'da test: `tests/diag.test.ts`): iz halkası (son `maxCrumbs` = 200, localStorage `proto.diag.crumbs.v1`, her iz sekmenin oturum kimliğini taşır), onay (`proto.diag.v1`: consent, noticed, device), oturum işaretleri (`proto.diag.sessions.v1`: sekme başına temiz/canlılık), rapor kurma (32 KB sınırı: en eski izler düşer), kısıtlama, Copy Log metni.
+- `diag.ts` (tarayıcı): `installDiag()` main.ts'nin en başında; `attachDiagGame(game)` oyun kurulunca (sahne geçişleri `SceneManager.start` sarılarak iz olur: `scene <anahtar> (seed, mod, enc, node)`, sahne kurulunca `ready`). Pencere `error` / `unhandledrejection`, oyun döngüsü güvenlik ağı (`src/ui/loop-guard.ts`, yeni ileti bir kez) -> iz + rapor. Sefer: yeni / yükleme (Continue, Load Game) / yenilgi sonrası yükleme / savaş başlangıcı (karşılaşma + düğüm) `src/game/campaign-session.ts`.
+- **Dışarıdan iz eklemek:** `import { logEvent } from '../diag/diag'; logEvent('gl', 'webglcontextlost')` (tür kısa: scene, ready, battle, campaign, error, rejection, gl, hidden, visible, report, info). Ayrı rapor gerekiyorsa `report('webglcontextlost', ileti)` (onay kapalıysa göndermez).
+- **Çökme tespiti:** açılışta sekme kendi işaretini "temiz değil" yazar; görünürken 15 sn'de bir canlılık tazelenir; sayfa gizlenince / kapanınca "temiz". Temiz olmayan VE canlılığı 45 sn'den eski işaret = önceki oturum çöktü -> `previous_session_crashed` raporu (o oturumun izleriyle; açılıştan 3 sn sonra ve 47 sn sonra ikinci denetim). Sayılar `data/diag.json`.
+- **Gönderim:** yalnızca onay açıksa. `navigator.sendBeacon` (text/plain gövde: CORS ön kontrolü yok), olmazsa `fetch keepalive`. Adres: multiplayer sunucusunun kökü + `/diag` (`data/multiplayer.json > signalingUrl`, `src/net/config.ts > resolveSignalingUrl`; GitHub Pages da aynı Worker'a gider; localhost'ta `?mpserver=ws://127.0.0.1:8787` yerel Worker'a yönlendirir). Oturum başına en çok 4 rapor, aynı hata bir kez, arada 5 sn.
+- **Rapor içeriği:** sürüm, tarayıcı (UA), ekran / görünüm boyutu, devicePixelRatio, `navigator.deviceMemory`, `performance.memory` (Chromium), Phaser doku belleği (MB, yaklaşık), WebGL/Canvas, dokunmatik mi, etkin sahne, son izler, hata iletisi / yığını, rastgele cihaz + oturum kimliği. Kayıt içeriği, ad, serbest metin YOK.
+- **Debug > Data > Error reports** (`src/ui/debug-diag.ts`): Reports ON/OFF, View log, Copy log, Send test report (sunucu yanıtını yazar), Show notice, Fake error, Fake crash (yeniden yükleyince ~50 sn sonra çökme raporu).
+
+## Worker (`cloudflare/`)
+- `POST /diag` (`src/index.ts > handleDiag`, saf kurallar `src/diag-logic.ts`, test `tests/diag.test.ts`): köken izni (`ALLOWED_ORIGINS`: eov.backinn.com.tr, omerbekin.github.io, localhost), 32 KB, şema doğrulama (rapor yalnızca bilinen alanlardan yeniden kurulur, fazlası atılır), cihaz başına saatte 12 rapor (KV sayacı), anahtar `r:<sunucu ISO zamanı>:<rastgele>`, `expirationTtl` 30 gün. **IP (`CF-Connecting-IP`) ve `req.cf` okunmaz.** Okuma ucu YOK.
+- KV bağlaması `DIAG` (`wrangler.toml > [[kv_namespaces]]`), `run_worker_first` içinde `/diag`. Ücretsiz KV: günde 100.000 okuma, 1.000 yazma (rapor başına 2 yazma), 1 GB.
+- **Bir kez kurulum:** `npm --prefix cloudflare exec -- wrangler kv namespace create eov-diag` -> çıkan `id`'yi `cloudflare/wrangler.toml` içindeki `REPLACE_WITH_DIAG_KV_ID` yerine yaz -> `npm run deploy:cf`. (Yazılmazsa deploy hata verir.)
+- **Raporları okumak:** `npm run diag:pull` (en yeni 15 rapor, özet + son 12 iz), `npm run diag:pull -- --limit 50`, `-- --full` (tam JSON), `-- --kind previous_session_crashed`. Yerelde giriş yapılmış wrangler kullanır (`cloudflare/scripts/diag-pull.mjs`).
+- Yerel deneme: `cd cloudflare && npm run dev` (yerel KV), oyunu `http://localhost:5173/?mpserver=ws://127.0.0.1:8787` ile aç, Settings'te aç, Debug > Data > Send test report; `npx wrangler kv key list --binding DIAG --local`.

@@ -14,6 +14,7 @@
     "sim": "tsx src/sim/cli.ts",
     "sim:campaign": "tsx src/sim/campaign-cli.ts",
     "sim:endless": "tsx src/sim/endless-cli.ts",
+    "diag:pull": "node cloudflare/scripts/diag-pull.mjs",
     "deploy:cf": "npm run build && node cloudflare/scripts/check-assets.mjs && npm --prefix cloudflare run deploy"
   },
   "dependencies": {

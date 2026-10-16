@@ -6,15 +6,19 @@
  * Tek Worker, tek adres (https://eov.backinn.com.tr): oyunun statik dosyaları Workers Static Assets ile sunulur (wrangler.toml > [assets];
  * yalnızca /lobby ve /lobby/* bu koda gelir, run_worker_first), geri kalan istekler doğrudan dosyadır.
  * Uç nokta: GET /lobby/<KOD>?role=host|guest&id=<16 karakter> (WebSocket yükseltmesi). GET /lobby, /lobby/health -> sağlık metni.
+ * Hata raporu (opt-in, 2026-10-16): POST /diag -> KV `DIAG` (30 gün TTL; kurallar ./diag-logic.ts; IP okunmaz/saklanmaz; okuma: npm run diag:pull).
  * Oyundaki adres: data/multiplayer.json > signalingUrl = wss://eov.backinn.com.tr/lobby (istemci sonuna /<KOD> ekler).
  * Sunucu -> istemci: {t:'welcome', role, peer}, {t:'peer', present}, {t:'signal', data}, {t:'relay', d}, {t:'error', code}, {t:'pong'}.
  * İstemci -> sunucu: {t:'signal', data}, {t:'relay', d} (yalnızca WebRTC kurulamazsa), {t:'probe'}, {t:'leave'}, {t:'ping'} (ping'i Cloudflare DO'yu uyandırmadan yanıtlar).
  */
 import { DurableObject } from 'cloudflare:workers';
+import { parseReport, rateKey, rateOk, reportKey, RATE_WINDOW_SEC, RETENTION_SEC } from './diag-logic';
 import { admit, leave, LOBBY_TTL_MS, originAllowed, parseClientMessage, parseJoin, peerAlive, rateAllow, type LobbyState, type RateState, type Role } from './lobby-logic';
 
 interface Env {
   LOBBY: DurableObjectNamespace;
+  /** Hata raporları (KV, 30 gün TTL; docs/arch/diagnostics.md). Bağlı değilse /diag 503 döner. */
+  DIAG?: KVNamespace;
   ALLOWED_ORIGINS: string;
   /** Oyunun statik dosyaları (../dist). Yerel `wrangler dev` dışında her zaman vardır. */
   ASSETS?: Fetcher;
@@ -50,6 +54,8 @@ export default {
   async fetch(req: Request, env: Env): Promise<Response> {
     const url = new URL(req.url);
     const p = url.pathname;
+    // Hata raporu (opt-in): POST /diag (yalnızca yazma; okuma ucu yok)
+    if (p === '/diag' || p === '/diag/') return handleDiag(req, env);
     if (p === '/lobby' || p === '/lobby/' || p === '/lobby/health' || p === '/health') return new Response('Embers of Valdoria lobby server OK\n', { headers: { 'content-type': 'text/plain' } });
     // Lobi dışı istek (yalnızca statik dosya bulunamadığında buraya düşer): dosya sunucusuna bırakılır (404)
     if (!p.startsWith('/lobby/')) return env.ASSETS ? env.ASSETS.fetch(req) : new Response('Not found', { status: 404 });
@@ -61,6 +67,39 @@ export default {
     return stub.fetch(req);
   },
 };
+
+/** CORS başlıkları: yalnızca izinli kökene yanıt okunabilir (GitHub Pages'teki oyun başka kökendir). */
+function cors(origin: string): Record<string, string> {
+  return { 'access-control-allow-origin': origin, 'access-control-allow-methods': 'POST, OPTIONS', 'access-control-allow-headers': 'content-type', 'access-control-max-age': '86400', vary: 'Origin' };
+}
+
+/**
+ * POST /diag: anonim hata raporu (oyunda opt-in, varsayılan kapalı). Gövde text/plain JSON (sendBeacon; ön kontrol yok), en çok 32 KB.
+ * Köken izni (ALLOWED_ORIGINS), şema doğrulama (fazla alan atılır), cihaz kimliği başına hız sınırı, KV'ye 30 gün TTL ile yazım.
+ * GİZLİLİK: istemci IP'si (CF-Connecting-IP) ve req.cf konum bilgisi OKUNMAZ ve saklanmaz. Okuma ucu YOK (rapor çekme: npm run diag:pull).
+ */
+async function handleDiag(req: Request, env: Env): Promise<Response> {
+  const origin = req.headers.get('Origin');
+  if (!originAllowed(origin, env.ALLOWED_ORIGINS ?? '')) return new Response('Origin not allowed', { status: 403 });
+  const h = cors(origin!);
+  if (req.method === 'OPTIONS') return new Response(null, { status: 204, headers: h });
+  if (req.method !== 'POST') return new Response('Method not allowed', { status: 405, headers: h });
+  if (!env.DIAG) return new Response('Reports not configured', { status: 503, headers: h });
+  const len = Number(req.headers.get('content-length') ?? '0');
+  if (len > 32768) return new Response('too-large', { status: 413, headers: h });
+  const parsed = parseReport(await req.text());
+  if (!parsed.ok) return new Response(parsed.error, { status: 400, headers: h });
+  const r = parsed.report;
+  const now = Date.now();
+  const rk = rateKey(r.device, now);
+  const count = Number((await env.DIAG.get(rk)) ?? '0') || 0;
+  if (!rateOk(count)) return new Response('rate', { status: 429, headers: h });
+  const rand = Array.from(crypto.getRandomValues(new Uint8Array(4)), (b) => b.toString(16).padStart(2, '0')).join('');
+  const iso = new Date(now).toISOString();
+  await env.DIAG.put(rk, String(count + 1), { expirationTtl: RATE_WINDOW_SEC });
+  await env.DIAG.put(reportKey(iso, rand), JSON.stringify({ ...r, received: iso }), { expirationTtl: RETENTION_SEC, metadata: { kind: r.kind, app: r.app } });
+  return new Response('ok', { status: 200, headers: h });
+}
 
 export class Lobby extends DurableObject<Env> {
   constructor(ctx: DurableObjectState, env: Env) {

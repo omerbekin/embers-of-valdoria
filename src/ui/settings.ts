@@ -11,6 +11,8 @@ import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from 
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
 import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { navSvg } from './nav-icons';
+import { copyDiagLog, diagConsent, onDiagConsentChange, setDiagConsent } from '../diag/diag';
+import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -201,6 +203,30 @@ export class SettingsScreen {
       col.append(note);
     }
 
+    // ================= Privacy =================
+    // --- Error reports (Ömer 2026-10-16; src/diag/, docs/arch/diagnostics.md): opt-in, varsayılan Off. Satırda Copy log (izleri panoya;
+    // onay kapalıyken de çalışır, bir şey göndermez) ve Info (gizlilik metni + aynı anahtar: src/diag/diag-notice.ts) ---
+    col.append(el('div', 'st-section', 'Privacy'));
+    const rep = el('span', 'st-value', diagConsent() ? 'On' : 'Off');
+    onDiagConsentChange((on) => (rep.textContent = on ? 'On' : 'Off'));
+    const repNote = el('div', 'st-note');
+    const copyLog = el('button', 'el-link st-replay', 'Copy log');
+    copyLog.type = 'button';
+    copyLog.title = 'Copy the recent event log as text (nothing is sent)';
+    copyLog.addEventListener('click', () => {
+      uiSound('select');
+      void copyDiagLog().then((ok) => (repNote.textContent = ok ? 'Log copied.' : 'Could not copy the log.'));
+    });
+    const repInfo = el('button', 'el-link st-replay', 'Info');
+    repInfo.type = 'button';
+    repInfo.title = 'What is collected and why';
+    repInfo.addEventListener('click', () => openDiagNotice('info'));
+    this.addRow(col, 'Error reports', () => {
+      setDiagConsent(!diagConsent());
+      repNote.textContent = diagConsent() ? 'Anonymous crash reports on. Kept 30 days.' : '';
+    }, [copyLog, repInfo, rep]);
+    col.append(repNote);
+
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): en altta küçük, soluk "Developer tools" satırı
     const dev = el('button', 'st-dev', 'Developer tools');
     dev.type = 'button';
@@ -227,7 +253,7 @@ export class SettingsScreen {
     window.addEventListener(
       'keydown',
       (e) => {
-        if (!this.open || e.key === '`' || e.key === 'F2') return; // debug menüsü kısayolu çalışmaya devam eder
+        if (!this.open || e.key === '`' || e.key === 'F2' || isDiagNoticeOpen()) return; // debug kısayolu çalışır; üstte açık Info penceresi kendi tuşlarını alır
         e.stopImmediatePropagation();
         const k = e.key;
         const row = this.rows[this.sel];

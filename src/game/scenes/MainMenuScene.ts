@@ -37,6 +37,8 @@ import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { markBootReady, setBootProgress } from '../../ui/boot-loader';
 import { EL, elBack, elButton, elDiamond, elGlow, elGo, elScreenIn, elText, elBody } from '../elegant-ui';
 import { trackChunkLoad } from '../../ui/boot-loader';
+import { copyDiagLog, diagConsent, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
+import { openDiagNotice } from '../../diag/diag-notice';
 import type { LazySceneKey } from '../lazy-scenes';
 import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, initialView, moveSelection, type MenuItemKey, type MenuView } from '../main-menu-flow';
 
@@ -68,7 +70,8 @@ const SETTINGS_DARK = 0.52;
 /** Settings sütunu yerleşimi (Ömer 2026-10-10: Sounds / Gameplay bölümleri): başlık ortası y, ilk öğenin üst kenarı, bölüm başlığı yüksekliği.
  *  DOM Settings aynı ölçülerle (style.css > html.menu-elegant .st-col / .st-section). */
 // Ömer 2026-10-11: Gameplay'e Performance mode + Show FPS eklenince 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satır 78 / başlık 46.
-const SETTINGS_LAYOUT = { titleY: 192, top: 255, heading: 46, rowH: 66 }; // 2026-10-13: Sound Effects + Tutorials satırları eklendi, 10 satır 1080e sığsın
+// 2026-10-16: Privacy > Error reports eklendi (11 satır, 3 bölüm): sütun 30 birim yukarıda, satır 60 / başlık 44 (DOM style.css aynı)
+const SETTINGS_LAYOUT = { titleY: 162, top: 225, heading: 44, rowH: 60 }; // 2026-10-13: Sound Effects + Tutorials satırları eklendi, 10 satır 1080e sığsın
 /**
  * Görünüm stili (src/ui/menu-style.ts): 'classic' bugünkü menü; 'elegant' ilk taslağın zarif stili (?menu=new önizleme). Onaylanınca
  * yalnızca DEFAULT_MENU_STYLE değişir; aşağıdaki ölçüler aynı kalır (önizleme = onaylanan görünüm).
@@ -1007,8 +1010,6 @@ export class MainMenuScene extends Phaser.Scene {
     const support = currentSupport();
     if (support !== 'none' && !isStandalone()) {
       const state = this.valueText(PANEL_W - 6, 0, 'Enter', TXT_ON).setOrigin(1, 0.5);
-      const note = this.noteText(COL_X, this.panelTop + this.panelRowH + 12, '', 22, '#cdb88d').setOrigin(0, 0.5);
-      p.add(note);
       this.cleanups.push(onFullscreenChange((on) => state.active && state.setText(on ? 'Exit' : 'Enter')));
       this.addPanelRow(p, 'Fullscreen', () => {
         if (support === 'ios') note.setText(IOS_HINT);
@@ -1016,8 +1017,31 @@ export class MainMenuScene extends Phaser.Scene {
       }, { right: [state] });
     }
 
+    // --- Privacy > Error reports (Ömer 2026-10-16; src/diag/; DOM Settings ile aynı kaynak): opt-in, varsayılan Off. Copy log (izleri panoya;
+    // onay kapalıyken de çalışır, bir şey göndermez), Info (gizlilik metni + aynı anahtar; DOM penceresi src/diag/diag-notice.ts) ---
+    this.panelHeading(p, 'Privacy');
+    const rep = this.valueText(PANEL_W - 6, 0, diagConsent() ? 'On' : 'Off', TXT_ON).setOrigin(1, 0.5);
+    this.cleanups.push(onDiagConsentChange((on) => rep.active && rep.setText(on ? 'On' : 'Off')));
+    const link = (rightX: number, label: string, run: () => void): Phaser.GameObjects.Text => {
+      const t = this.valueText(rightX, 0, label, TXT).setOrigin(1, 0.5).setAlpha(0.8);
+      t.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-14, -(this.panelRowH - 8) / 2 + t.height / 2, t.width + 28, this.panelRowH - 8), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
+      t.on('pointerover', () => t.setAlpha(1).setColor(TXT_ON));
+      t.on('pointerout', () => t.setAlpha(0.8).setColor(TXT));
+      t.on('pointerup', run);
+      return t;
+    };
+    const info = link(PANEL_W - 96, 'Info', () => openDiagNotice('info'));
+    const copy = link(info.x - info.width - 40, 'Copy log', () => void copyDiagLog().then((ok) => note.active && note.setText(ok ? 'Log copied.' : 'Could not copy the log.')));
+    this.addPanelRow(p, 'Error reports', () => {
+      setDiagConsent(!diagConsent());
+      note.setText(diagConsent() ? 'Anonymous crash reports on. Kept 30 days.' : '');
+    }, { right: [rep, copy, info] });
+    // Satırların altında tek kısa not (iPhone tam ekran ipucu, Copy log / Error reports onayı)
+    const note = this.noteText(COL_X, this.panelTop + 12, '', 22, '#cdb88d').setOrigin(0, 0.5);
+    p.add(note);
+
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): en altta küçük, soluk "Developer tools"
-    const dev = elBody(this, COL_X, this.panelTop + 40, 'Developer tools', 21, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
+    const dev = elBody(this, COL_X, this.panelTop + 52, 'Developer tools', 21, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
     dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -14, dev.width + 20, dev.height + 28), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
     dev.on('pointerover', () => dev.setColor(EL.NOTE));
     dev.on('pointerout', () => dev.setColor('rgba(168,151,122,0.55)'));

@@ -1,0 +1,17 @@
+{
+  "_not": "Hata raporu (opt-in, varsayılan KAPALI; Ömer 2026-10-16; docs/arch/diagnostics.md). Sayılar burada: istemci src/diag/, Worker cloudflare/src/diag-logic.ts aynı sınırları kullanır (test eşitliği denetler). path: Worker'daki uç (signalingUrl'nin kökü + path). maxCrumbs: localStorage'da tutulan iz (breadcrumb) sayısı. maxReportBytes: bir raporun en büyük boyutu. maxReportsPerSession: bir oturumda en çok gönderilen rapor. retentionDays: Worker'da saklama süresi (KV expirationTtl). rate*: Worker cihaz başına hız sınırı. heartbeatMs / staleMs: açık sekme işareti bu aralıkla tazelenir; bu kadar eski ve temiz kapanmamış işaret çökme sayılır (aynı anda açık sekmeler birbirini çökmüş saymaz).",
+  "path": "/diag",
+  "maxCrumbs": 200,
+  "maxCrumbChars": 240,
+  "maxMessageChars": 500,
+  "maxStackChars": 4000,
+  "maxReportBytes": 32768,
+  "maxReportsPerSession": 4,
+  "minSendGapMs": 5000,
+  "crashCrumbs": 120,
+  "heartbeatMs": 15000,
+  "staleMs": 45000,
+  "retentionDays": 30,
+  "rateLimit": 12,
+  "rateWindowSec": 3600
+}

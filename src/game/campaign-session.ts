@@ -47,6 +47,7 @@ const BATTLE_SCENE = 'BattleScene';
 export { storage } from './kv-storage';
 import { storage } from './kv-storage';
 import { partyWeapons } from './pose-weapons';
+import { logEvent } from '../diag/diag';
 
 export const session = {
   state: null as CampaignState | null,
@@ -77,6 +78,7 @@ export function startNewCampaign(mode: CampaignMode, difficulty: Difficulty = 'm
   const seed = newSeed();
   session.state = newCampaign({ mode, seed, difficulty, slot, campaignId: `c-${seed}-${Math.floor(Date.now() / 1000) % 100000}` });
   claimSlot(storage(), session.state);
+  logEvent('campaign', `new ${mode} ${difficulty} slot ${slot}`); // hata raporu izi (src/diag)
   session.attempts = new Map();
   session.fallback = null;
   return session.state;
@@ -87,6 +89,7 @@ export function loadEntry(entry: SaveEntry): CampaignState {
   session.attempts = new Map();
   session.fallback = session.state;
   markPlayed(storage(), session.state.slot);
+  logEvent('campaign', `load slot ${session.state.slot} at ${session.state.at}`); // Continue / Load Game (hata raporu izi)
   return session.state;
 }
 
@@ -112,6 +115,7 @@ export function loadLastSave(): CampaignState | null {
   session.attempts.set(s.at, (session.attempts.get(s.at) ?? 0) + 1);
   session.state = back;
   session.notice = entry ? 'Loaded your last save' : 'Back to the start of the journey';
+  logEvent('campaign', `defeat reload at ${back.at}`);
   return back;
 }
 
@@ -187,6 +191,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
   const susp = suspendedOf(st);
   const plan = susp ? resumePlan(st, susp) : battlePlan(st, session.attempts.get(st.at) ?? 0);
   const replay = susp?.actions ?? [];
+  logEvent('battle', `campaign enc ${plan.encounterId} node ${plan.nodeId}${susp ? `, resume ${replay.length} actions` : ''}`); // hata raporu izi
   const game = scene.game;
   const data: Partial<BattleSceneData> = {
     seed: plan.seed,

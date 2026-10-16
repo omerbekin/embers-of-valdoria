@@ -5,6 +5,8 @@
  * Kök hatalar yine düzeltilir; bu ağ yalnızca bir hatanın oyunu tümden kilitlemesini önler.
  */
 
+import { captureError } from '../diag/diag';
+
 export interface GuardLog {
   /** Görülen farklı hata iletileri (en fazla `max`). */
   readonly seen: string[];
@@ -56,8 +58,14 @@ export const loopErrors = makeGuardLog();
 export function installLoopGuard(loop: LoopLike): void {
   const step = loop.step;
   const limited = loop.stepLimitFPS;
-  loop.step = guarded((t: number) => step.call(loop, t), (e) => loopErrors.add(e));
-  loop.stepLimitFPS = guarded((t: number) => limited.call(loop, t), (e) => loopErrors.add(e));
+  // Yeni (ilk kez görülen) hata ileti hata raporuna da gider (src/diag/diag.ts; onay kapalıysa yalnızca yerel iz)
+  const onError = (e: unknown): void => {
+    const n = loopErrors.seen.length;
+    loopErrors.add(e);
+    if (loopErrors.seen.length > n) captureError(e, 'frame');
+  };
+  loop.step = guarded((t: number) => step.call(loop, t), onError);
+  loop.stepLimitFPS = guarded((t: number) => limited.call(loop, t), onError);
   // Döngü zaten başladıysa (önbellekten anında açılış) çalışan geri çağrı da sarılır
   if (loop.raf?.isRunning) loop.raf.callback = loop.hasFpsLimit ? loop.stepLimitFPS : loop.step;
 }
