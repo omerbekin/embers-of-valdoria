@@ -9,15 +9,27 @@ import { lockInput, unlockInput } from '../ui/input-lock';
 import { closeDom } from '../ui/motion';
 import { uiSound } from '../ui/ui-sound';
 import { diagConsent, markDiagNoticed, onDiagConsentChange, setDiagConsent } from './diag';
+import notice from '../../data/privacy-notice.json';
 import './diag.css';
 
-/** Kısa gizlilik metni (İngilizce; Settings'teki "Info" da bunu gösterir). */
-export const PRIVACY_LINES: readonly string[] = [
-  'Error reports help us find and fix crashes. They are off unless you turn them on.',
-  'When on, the game sends a short technical report if something goes wrong: game version, browser and device type, screen size, memory hints, the current screen, recent game events (screen changes, battle starts, error messages).',
-  'No name, account, save data or typed text is sent, and IP addresses are not stored. Reports carry a random ID that is reset when you turn them off. Reports are deleted after 30 days.',
-  'Questions: omerbekinn@gmail.com',
-];
+/** Gizlilik metni (KVKK tarzı aydınlatma; Ömer 2026-10-16): TEK kaynak data/privacy-notice.json. Varsayılan İngilizce, pencerede
+ *  "Türkçe" / "English" yazı anahtarıyla Türkçe (oturum boyunca hatırlanır). Kısa giriş her zaman görünür, ayrıntılar "Details" altında. */
+export type NoticeLang = 'en' | 'tr';
+export interface NoticeText {
+  title: string;
+  intro: string[];
+  detailsLabel: string;
+  details: Array<{ heading: string; text: string }>;
+  toggle: string;
+  language: string;
+}
+export const PRIVACY_CONTACT: string = notice.contact;
+/** Dildeki metin ({contact} yerine iletişim adresi yazılmış). */
+export function noticeText(lang: NoticeLang): NoticeText {
+  const t = notice[lang] as NoticeText;
+  return { ...t, details: t.details.map((d) => ({ heading: d.heading, text: d.text.split('{contact}').join(PRIVACY_CONTACT) })) };
+}
+let lang: NoticeLang = 'en';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls: string, text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -40,16 +52,29 @@ export function openDiagNotice(mode: 'first' | 'info' = 'first', onClose?: () =>
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Error reports');
   const panel = el('div', 'el-panel corners el-modal-panel dg-panel');
-  const title = el('h2', 'el-title dg-title', 'Error reports');
+  const title = el('h2', 'el-title dg-title');
   const text = el('div', 'dg-text');
-  for (const line of PRIVACY_LINES) text.append(el('p', '', line));
+  const intro = el('div', 'dg-intro');
+  const more = el('button', 'dg-more');
+  more.type = 'button';
+  const details = el('div', 'dg-details');
+  details.hidden = true;
+  more.setAttribute('aria-expanded', 'false');
+  more.addEventListener('click', () => {
+    uiSound('tab');
+    details.hidden = !details.hidden;
+    more.setAttribute('aria-expanded', String(!details.hidden));
+    more.classList.toggle('open', !details.hidden);
+    if (!details.hidden) text.scrollTop += details.getBoundingClientRect().top - text.getBoundingClientRect().top - 8;
+  });
+  text.append(intro, more, details);
 
   // Anahtar satırı: Settings satırı dili (yazı solda, değer sağda; açıkken önde kor elmas)
   const toggle = el('button', 'dg-toggle');
   toggle.type = 'button';
   toggle.setAttribute('role', 'switch');
   const dia = el('span', 'el-dia hollow');
-  const label = el('span', 'dg-label', 'Send error reports');
+  const label = el('span', 'dg-label');
   const value = el('span', 'dg-value');
   toggle.append(dia, label, value);
   const paint = (on: boolean): void => {
@@ -65,10 +90,32 @@ export function openDiagNotice(mode: 'first' | 'info' = 'first', onClose?: () =>
     setDiagConsent(!diagConsent());
   });
 
+  // Dil anahtarı (kutusuz yazı düğmesi, solda); metin dile göre yeniden yazılır
+  const langBtn = el('button', 'el-link dg-lang');
+  langBtn.type = 'button';
+  const fill = (): void => {
+    const t = noticeText(lang);
+    overlay.setAttribute('aria-label', t.title);
+    overlay.lang = lang;
+    title.textContent = t.title;
+    intro.replaceChildren(...t.intro.map((line) => el('p', '', line)));
+    more.textContent = t.detailsLabel;
+    details.replaceChildren(...t.details.flatMap((d) => [el('h3', 'dg-h', d.heading), el('p', '', d.text)]));
+    label.textContent = t.toggle;
+    langBtn.textContent = t.language;
+    langBtn.lang = lang === 'en' ? 'tr' : 'en';
+  };
+  langBtn.addEventListener('click', () => {
+    uiSound('tab');
+    lang = lang === 'en' ? 'tr' : 'en';
+    fill();
+  });
+  fill();
+
   const row = el('div', 'el-row dg-row');
   const done = el('button', 'el-btn primary', mode === 'first' ? 'Continue' : 'Close');
   done.type = 'button';
-  row.append(done);
+  row.append(langBtn, done);
   panel.append(title, text, toggle, row);
   overlay.append(panel);
 

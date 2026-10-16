@@ -1,7 +1,7 @@
 /* Hata raporu bildirimi (src/diag/diag-notice.ts; Ömer 2026-10-16). Kit Diyalog çerçevesi (.el-dialog > .el-panel) üzerine: kısa gizlilik
    metni (EB Garamond), Settings satırı dilinde tek anahtar, ortada birincil Continue / Close. Settings'in (z 19) üstünde açılır. */
-.dg-overlay {
-  z-index: 40;
+.el-dialog.dg-overlay {
+  z-index: 40; /* Settings (19) ve oyun içi Menu'nün üstünde; .el-dialog (18) CSS sırasından bağımsız ezilsin diye çift sınıf */
 }
 
 .el-dialog > .el-panel.dg-panel {
@@ -26,6 +26,9 @@
   overscroll-behavior: contain;
   font: italic 18px var(--el-body, 'EB Garamond', Georgia, serif);
   line-height: 1.4;
+  padding-right: 6px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
   color: var(--el-note, #cdb88d);
 }
 
@@ -70,22 +73,141 @@
   text-shadow: 0 0 12px rgba(240, 140, 40, 0.45);
 }
 
-.dg-row {
+.el-dialog .dg-row {
   flex: none;
+  justify-content: space-between;
+  align-items: center;
 }
 
+/* Dil anahtarı (Türkçe / English): solda kutusuz küçük yazı düğmesi; Continue / Close (birincil) en sağda */
+.dg-lang.el-link {
+  min-height: 44px;
+  font-size: 15px;
+  color: var(--el-muted, #a8977a);
+}
+
+/* "Details / Ayrıntılar": KVKK ayrıntıları açılır; metin alanı pencerenin içinde kayar (anahtar ve düğmeler hep görünür) */
+.dg-more {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  font: 600 14px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: var(--el-txt, #d9c8a2);
+  cursor: pointer;
+}
+
+.dg-more::after {
+  content: '▾';
+  font-size: 0.85em;
+  transform: rotate(-90deg);
+  transition: transform 0.18s;
+}
+
+.dg-more.open::after {
+  transform: none;
+}
+
+.dg-more:hover,
+.dg-more:focus-visible {
+  color: var(--el-on, #f3d999);
+}
+
+.dg-details[hidden] {
+  display: none;
+}
+
+.dg-details {
+  padding: 2px 0 4px 12px;
+  border-left: 1px solid var(--el-line1, rgba(217, 178, 106, 0.16));
+}
+
+.dg-h {
+  margin: 8px 0 2px;
+  font: 600 13px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: #e0904a;
+}
+
+/* Telefon / kısa ekran (Ömer 2026-10-16: yatay telefonda başlık, metin ve düğme ekranı dolduruyordu): dar pencere, küçük başlık ve yazılar,
+   alçak düğme; dokunma alanları yine 44 px. Settings > Privacy Info aynı pencereyi kullanır. */
+html.compact .el-dialog.dg-overlay,
+html.short .el-dialog.dg-overlay {
+  padding: calc(8px + var(--et, 0px)) calc(12px + var(--er, 0px)) calc(8px + var(--eb, 0px)) calc(12px + var(--el, 0px));
+}
+
+html.compact .el-dialog > .el-panel.dg-panel,
 html.short .el-dialog > .el-panel.dg-panel {
-  padding: 12px 18px 12px;
+  width: min(480px, 100%);
+  padding: 12px 20px 10px;
 }
 
+html.compact .dg-title,
 html.short .dg-title {
+  margin-bottom: 6px;
+  font-size: 20px;
+  gap: 10px;
+}
+
+html.compact .dg-text,
+html.short .dg-text {
+  font-size: 14px;
+  line-height: 1.3;
+}
+
+html.compact .dg-text p,
+html.short .dg-text p {
   margin-bottom: 4px;
 }
 
-html.short .dg-text {
+html.compact .dg-toggle,
+html.short .dg-toggle {
+  min-height: 44px;
+  margin-top: 4px;
+}
+
+html.compact .dg-label,
+html.short .dg-label {
   font-size: 14px;
 }
 
-html.short .dg-row {
+html.compact .dg-value,
+html.short .dg-value {
+  font-size: 13px;
+}
+
+html.compact .el-dialog .dg-row,
+html.short .el-dialog .dg-row {
   margin-top: 8px;
+}
+
+html.compact .dg-row .el-btn,
+html.short .dg-row .el-btn {
+  height: 44px;
+  min-height: 44px;
+  padding: 0 28px;
+  font-size: 15px;
+}
+
+html.compact .dg-more,
+html.short .dg-more {
+  min-height: 36px;
+  font-size: 12px;
+}
+
+html.compact .dg-h,
+html.short .dg-h {
+  font-size: 11px;
+  margin-top: 6px;
+}
+
+html.compact .dg-lang.el-link,
+html.short .dg-lang.el-link {
+  font-size: 13px;
 }

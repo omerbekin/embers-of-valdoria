@@ -1675,3 +1675,10 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 - **Varsayım: onay kapalıyken çökme raporu bekletilmez;** yalnızca o oturumda sonradan açılırsa önceki çökme raporu gönderilir. Kapalıyken izler yalnızca cihazda (Copy log için) tutulur.
 - **Kısıtlar (veri: `data/diag.json`):** oturum başına en çok 4 rapor, aynı hata bir kez, raporlar arası 5 sn; Worker cihaz başına saatte 12 rapor (KV ücretsiz: günde 1.000 yazma, rapor başına 2 yazma ≈ günde 500 rapor).
 - **Settings sütunu:** 3. bölüm (Privacy) sığsın diye satır 66 -> 60, başlık 46 -> 44, sütun 30 birim yukarıda (ana menü + oyun içi DOM aynı); DOM sütunu sığmazsa kendi içinde kayar.
+- **Gizlilik metni (Ömer 2026-10-16 onayı):** KVKK tarzı tam aydınlatma `data/privacy-notice.json` (EN + TR, pencerede Türkçe / English anahtarı); iletişim privacy@backinn.com.tr (kişisel e-posta her yerden kaldırıldı). Varsayım: Türkçe seçimi yalnızca oturum boyunca hatırlanır; rapor kimliği Settings > Privacy'de kısa (8 hane) gösterilir.
+
+## 332. Settings sayfalı düzen varsayımları (ui-dev, 2026-10-16)
+- Fullscreen satırı Display sayfasında (istenen listede yoktu; önceden Gameplay'deydi).
+- Privacy: Copy log ve Info ayrı satırlar ("Copy Log" -> Copy, "Privacy Info" -> Open; 44 px dokunma alanı için), sayfanın altında kısa gizlilik satırı.
+- Satır ve kategori yüksekliği 132 birim (telefonda ~44 px); son seçilen sayfa oturumda hatırlanır, ana menü ve oyun içi Settings aynı sayfayı açar.
+- Klavye: kategori sütununda yukarı/aşağı sayfa, sağ / Enter satırlara; satırda sol (ayarsız satırda) kategorilere döner; Tab sonraki sayfa.

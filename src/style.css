@@ -650,7 +650,7 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
      Settings sütunu da aynı: MainMenuScene > SETTINGS_DARK); soldan sağa açılan gölge sütunun arkasında */
   background:
     linear-gradient(90deg, rgba(8, 6, 4, 0.85) 0, rgba(8, 6, 4, 0.85) calc(var(--el) + var(--menu-x, 140px) - 140 * var(--u)),
-      rgba(8, 6, 4, 0.55) calc(var(--el) + var(--menu-x, 140px) + 546 * var(--u)), rgba(8, 6, 4, 0) calc(var(--el) + var(--menu-x, 140px) + 840 * var(--u))),
+      rgba(8, 6, 4, 0.55) calc(var(--el) + var(--menu-x, 140px) + 840 * var(--u)), rgba(8, 6, 4, 0) calc(var(--el) + var(--menu-x, 140px) + 1260 * var(--u))),
     rgba(0, 0, 0, 0.52);
 }
 
@@ -723,27 +723,132 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805, 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.45);
 }
 
-/* Bölüm başlığı (Ömer 2026-10-10: "Sounds" / "Gameplay"): küçük soluk Cinzel büyük harf + sağa uzanan ince altın çizgi (kit .3) */
-.st-section {
+/* Sayfalı düzen (Ömer 2026-10-16; src/ui/settings.ts, liste src/ui/settings-pages.ts): solda kategori sütunu (seçili olanın önünde kor
+   elması, en altta soluk Developer tools), sağda sayfa başlığı (kor tonu + sağa sönen çizgi) ve ondan içeride biraz daha küçük, yumuşak
+   renkli satırlar. Ana menü sütunuyla aynı ölçüler (MainMenuScene > SETTINGS_LAYOUT). */
+.st-body {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(40 * var(--u));
+}
+
+.st-cats {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: max(calc(360 * var(--u)), 128px);
+}
+
+.st-cat {
+  all: unset;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: max(44px, calc(132 * var(--u)));
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+  cursor: pointer;
+}
+
+.st-cat:focus-visible {
+  outline: 1px solid rgba(217, 178, 106, 0.55);
+  outline-offset: -2px;
+}
+
+.st-cat.on .st-diamond::before {
+  content: '';
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+  min-width: 6px;
+  min-height: 6px;
+  margin-left: calc(4 * var(--u));
+  background: #e0702a;
+  border: max(1px, calc(2 * var(--u))) solid #ffb35a;
+  transform: rotate(45deg);
+}
+
+.st-cat-label {
+  white-space: nowrap;
+  font: 600 calc(30 * var(--u)) var(--st-serif);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--st-text);
+  text-shadow: 0 2px 4px #0c0805;
+  transition: transform 0.18s ease-out, color 0.18s, text-shadow 0.18s;
+}
+
+.st-cat:hover .st-cat-label {
+  color: var(--st-on);
+}
+
+.st-cat.on .st-cat-label {
+  color: var(--st-on);
+  transform: translateX(calc(12 * var(--u)));
+  text-shadow: 0 2px 4px #0c0805, 0 0 calc(16 * var(--u)) rgba(240, 140, 40, 0.55);
+}
+
+.st-pages {
+  flex: none;
+  width: max(calc(790 * var(--u)), 460px);
+}
+
+.st-page[hidden] {
+  display: none;
+}
+
+.st-page-head {
   display: flex;
   align-items: flex-end;
   gap: calc(16 * var(--u));
-  height: calc(56 * var(--u));
-  padding: 0 0 calc(10 * var(--u)) calc(34 * var(--u));
+  height: calc(90 * var(--u));
+  padding-bottom: calc(14 * var(--u));
   box-sizing: border-box;
-  font: bold calc(20 * var(--u)) var(--st-serif);
-  letter-spacing: 0.16em;
+  font: 600 calc(34 * var(--u)) var(--st-serif);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #e0904a; /* bölüm başlığı satırlardan ayrışsın (Ömer 2026-10-11): kor tonu */
+  color: #e0904a; /* sayfa başlığı satırlardan ayrışsın: kor tonu, daha büyük */
   text-shadow: 0 2px 3px #0c0805;
 }
 
-.st-section::after {
+.st-page-head::after {
   content: '';
   flex: 1;
   height: 1px;
-  margin-bottom: 0.45em;
+  margin-bottom: 0.4em;
   background: linear-gradient(90deg, rgba(224, 144, 74, 0.55), rgba(224, 144, 74, 0));
+}
+
+/* Satırlar sayfa başlığından içeride; yazı biraz daha küçük ve yumuşak renk (seçilince parlak) */
+.st-page .st-row {
+  margin-left: calc(30 * var(--u));
+}
+
+.st-page .st-label {
+  color: #c4b18b;
+}
+
+.st-page .st-row.on .st-label {
+  color: var(--st-on);
+}
+
+.st-value.st-action {
+  cursor: pointer;
+  color: var(--st-text);
+}
+
+.st-row.on .st-value.st-action {
+  color: var(--st-on);
+}
+
+/* Privacy sayfasının kısa gizlilik satırı */
+.st-line:empty {
+  display: none;
+}
+
+.st-line {
+  margin: calc(14 * var(--u)) 0 0 calc(30 * var(--u));
+  font: italic calc(24 * var(--u)) var(--st-body, Georgia, serif);
+  color: #a8977a;
+  text-shadow: 0 1px 0 #0c0805;
 }
 
 .st-control {
@@ -821,7 +926,7 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
 }
 
 .st-note {
-  margin-top: calc(10 * var(--u));
+  margin: calc(10 * var(--u)) 0 0 calc(30 * var(--u));
   font: calc(22 * var(--u)) var(--st-serif);
   color: #cdb88d;
   text-shadow: 0 1px 0 #0c0805;
@@ -846,8 +951,8 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   display: inline-flex;
   align-items: center;
   min-height: 44px;
-  margin-top: calc(30 * var(--u));
-  font: italic max(11px, calc(19 * var(--u))) 'EB Garamond', Georgia, serif;
+  margin-top: calc(24 * var(--u));
+  font: italic max(11px, calc(21 * var(--u))) 'EB Garamond', Georgia, serif;
   color: rgba(168, 151, 122, 0.55);
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -875,13 +980,13 @@ html.menu-elegant .st-overlay {
   --st-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
 }
 
-/* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT): başlık ortası y 205, bölüm başlığı 46, satır 78, yazı COL_X + 34,
-   değer sağ kenarı COL_X + 754 (Ömer 2026-10-11: Performance mode + Show FPS ile 8 satır 1080'e sığsın diye sütun 45 birim yukarıda, satırlar sık) */
+/* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT, Ömer 2026-10-16 sayfalı düzen): başlık ortası y 140, kategori ve
+   sayfa üst kenarı y 222, satır 132, kategori sütunu 360 + 40 boşluk, sayfa satırları başlıktan 30 içeride, satır genişliği 760 */
 html.menu-elegant .st-col {
-  top: calc(var(--et) + 146.4 * var(--u)); /* 2026-10-16: Privacy > Error reports satırıyla sütun 30 birim yukarıda (MainMenuScene SETTINGS_LAYOUT) */
-  width: max(calc(754 * var(--u)), 500px);
-  /* Sığmazsa (en alttaki Developer tools) sütun kendi içinde kayar; çubuk görünmez */
-  max-height: calc(100% - var(--et) - var(--eb) - 146.4 * var(--u));
+  top: calc(var(--et) + 111 * var(--u));
+  width: max(calc(1190 * var(--u)), 600px);
+  /* Sığmazsa sütun kendi içinde kayar; çubuk görünmez */
+  max-height: calc(100% - var(--et) - var(--eb) - 111 * var(--u));
   overflow-y: auto;
   overscroll-behavior: contain;
   scrollbar-width: none;
@@ -896,7 +1001,7 @@ html.menu-elegant .st-row.on .st-label {
 }
 
 html.menu-elegant .st-title {
-  margin-bottom: calc(46 * var(--u));
+  margin-bottom: calc(26 * var(--u));
   font: 600 calc(52 * var(--u)) var(--st-serif);
   letter-spacing: 0.05em;
   line-height: 1.1;
@@ -904,11 +1009,11 @@ html.menu-elegant .st-title {
 }
 
 html.menu-elegant .st-row {
-  height: max(44px, calc(60 * var(--u))); /* 2026-10-16: Privacy bölümüyle 11 satır 1080e sığsın (ana menü SETTINGS_LAYOUT.rowH ile aynı) */
+  height: max(44px, calc(132 * var(--u))); /* sayfa başına en çok 4 satır: dokunma alanı telefonda da 44 px (SETTINGS_LAYOUT.rowH) */
 }
 
 html.menu-elegant .st-label {
-  font: 600 calc(28 * var(--u)) var(--st-serif);
+  font: 600 calc(26 * var(--u)) var(--st-serif);
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-shadow: 0 2px 4px #0c0805;
@@ -925,6 +1030,7 @@ html.menu-elegant .st-step {
 
 html.menu-elegant .st-value {
   font: 600 calc(26 * var(--u)) var(--st-serif);
+  white-space: nowrap;
   letter-spacing: 0.05em;
   text-transform: uppercase;
   text-shadow: 0 2px 4px #0c0805;
@@ -934,10 +1040,6 @@ html.menu-elegant .st-note {
   font: calc(24 * var(--u)) var(--st-body);
 }
 
-html.menu-elegant .st-section {
-  height: calc(44 * var(--u));
-  font: 600 calc(20 * var(--u)) var(--st-serif);
-}
 
 /* Kısa sahne (yatay telefon): satırlar 44 px dokunma alanında kalır; sütun Back'in hemen altından başlar, sığmazsa kendi içinde kayar */
 html.short .st-col {
@@ -956,9 +1058,56 @@ html.short .st-title {
   margin-bottom: 4px;
 }
 
-html.short .st-section {
-  height: 22px;
-  padding-bottom: 3px;
+/* Telefon: yazılar okunur boyda (oyun birimi orada ~0,33 px), satır ve kategori 44 px dokunma alanı */
+html.short .st-col {
+  width: calc(100% - var(--el) - var(--menu-x, 140px) - 16px);
+}
+
+html.short .st-body {
+  gap: 14px;
+}
+
+html.short .st-pages {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 540px;
+}
+
+html.short .st-cat {
+  height: 44px;
+}
+
+html.short .st-cat-label {
+  font-size: max(12px, calc(30 * var(--u)));
+}
+
+html.short .st-page-head {
+  height: 30px;
+  padding-bottom: 4px;
+  font-size: max(13px, calc(32 * var(--u)));
+}
+
+html.short .st-row {
+  height: 44px;
+}
+
+html.short .st-label {
+  font-size: max(11px, calc(26 * var(--u)));
+}
+
+html.short .st-value {
+  min-width: 3.4em; /* kaydırıcılar alt alta hizalı kalsın (100% / 0.25x) */
+  font-size: max(11px, calc(26 * var(--u)));
+}
+
+html.short .st-line,
+html.short .st-note {
+  margin-top: 4px;
+  font-size: max(12px, calc(24 * var(--u)));
+}
+
+html.short .st-dev {
+  margin-top: 6px;
 }
 
 
@@ -1439,4 +1588,8 @@ img[src$='#smooth'] {
 
 .fps-meter[hidden] {
   display: none;
+}
+
+html.short .st-replay.el-link {
+  font-size: max(11px, calc(24 * var(--u)));
 }

@@ -2,7 +2,9 @@
 // (en yeni sürüm en üstte; sade, oyuncuya yönelik satırlar). Kit "Diyalog" çerçevesi: kararan zemin + ortada panel (src/ui/elegant.css
 // > .el-dialog / .el-panel / .el-title / .el-heading), ortak pencere hareketi (.el-modal; Reduced motion = 0 ms), kapatma = Close + Esc +
 // zemine dokunma. Liste kendi içinde kayar; en yeni sürüm açık, eskiler başlığa dokununca açılır/kapanır. Ayrı kod parçası (MainMenuScene
-// dynamic import): menü paketine yük olmaz. Saf yardımcılar (releaseGroups, formatPatchDate, compareVersions) testlidir.
+// dynamic import; menü hazır olunca boşta önceden indirilir, tıklayınca yükleme ekranı çıkmaz): menü paketine yük olmaz.
+// Sayfalama (Ömer 2026-10-16): sayfa başına en yeni PAGE_SIZE sürüm, altta Newer / "Page x / y" / Older + Close (birincil en sağda).
+// Saf yardımcılar (releaseGroups, formatPatchDate, compareVersions, patchPage) testlidir.
 import notes from '../../data/patch-notes.json';
 import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
@@ -28,6 +30,16 @@ export const PATCH_NOTES = (notes as { releases: PatchRelease[] }).releases;
 export function releaseGroups(r: PatchRelease): PatchGroup[] {
   if (r.groups?.length) return r.groups;
   return r.items?.length ? [{ heading: '', items: r.items }] : [];
+}
+
+/** Sayfa başına sürüm sayısı (Ömer 2026-10-16). */
+export const PAGE_SIZE = 5;
+
+/** Sayfa dilimi: `page` 0 tabanlı, aralığa kısılır. `start..end` (end hariç), `pages` en az 1. */
+export function patchPage(total: number, page: number, size = PAGE_SIZE): { page: number; pages: number; start: number; end: number } {
+  const pages = Math.max(1, Math.ceil(total / size));
+  const p = Math.min(pages - 1, Math.max(0, Math.floor(page)));
+  return { page: p, pages, start: p * size, end: Math.min(total, (p + 1) * size) };
 }
 
 const MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
@@ -70,11 +82,11 @@ export function openPatchNotes(onClose?: () => void): void {
   const title = el('h2', 'el-title pn-title', 'Patch Notes');
   const list = el('div', 'pn-list');
 
-  PATCH_NOTES.forEach((r, i) => {
+  const renderRelease = (r: PatchRelease, open: boolean, newest: boolean): HTMLElement => {
     const sec = el('section', 'pn-rel');
     const head = el('button', 'pn-head');
     head.type = 'button';
-    const dia = el('span', i === 0 ? 'el-dia' : 'el-dia hollow'); // kor elmas yalnızca en yeni sürümde
+    const dia = el('span', newest ? 'el-dia' : 'el-dia hollow'); // kor elmas yalnızca en yeni sürümde
     const ver = el('span', 'pn-ver', `v${r.version}`);
     const date = el('span', 'pn-date', formatPatchDate(r.date));
     const chev = el('span', 'pn-chev', '▾');
@@ -92,7 +104,7 @@ export function openPatchNotes(onClose?: () => void): void {
       head.setAttribute('aria-expanded', String(on));
       body.hidden = !on;
     };
-    setOpen(i === 0);
+    setOpen(open);
     head.addEventListener('click', () => {
       uiSound('tab');
       const on = !sec.classList.contains('open');
@@ -101,13 +113,42 @@ export function openPatchNotes(onClose?: () => void): void {
       if (on) list.scrollTop += sec.getBoundingClientRect().top - list.getBoundingClientRect().top;
     });
     sec.append(head, body);
-    list.append(sec);
-  });
+    return sec;
+  };
 
+  // Alt sıra: Newer · Page x / y · Older (ikinciller) ... Close (birincil, en sağda)
   const row = el('div', 'el-row pn-row');
+  const pager = el('div', 'pn-pager');
+  const newer = el('button', 'el-btn pn-page-btn', 'Newer');
+  newer.type = 'button';
+  const count = el('span', 'pn-count');
+  const older = el('button', 'el-btn pn-page-btn', 'Older');
+  older.type = 'button';
+  pager.append(newer, count, older);
   const close = el('button', 'el-btn primary', 'Close');
   close.type = 'button';
-  row.append(close);
+  row.append(pager, close);
+
+  let page = 0;
+  const show = (to: number): void => {
+    const pg = patchPage(PATCH_NOTES.length, to);
+    page = pg.page;
+    list.replaceChildren(...PATCH_NOTES.slice(pg.start, pg.end).map((r, k) => renderRelease(r, k === 0, pg.start + k === 0)));
+    list.scrollTop = 0;
+    count.textContent = `Page ${pg.page + 1} / ${pg.pages}`;
+    newer.disabled = pg.page === 0;
+    older.disabled = pg.page >= pg.pages - 1;
+    pager.hidden = pg.pages < 2;
+  };
+  newer.addEventListener('click', () => {
+    uiSound('tab');
+    show(page - 1);
+  });
+  older.addEventListener('click', () => {
+    uiSound('tab');
+    show(page + 1);
+  });
+  show(0);
   panel.append(title, list, row);
   overlay.append(panel);
 
@@ -130,6 +171,12 @@ export function openPatchNotes(onClose?: () => void): void {
     if (e.key === 'Escape') {
       e.preventDefault();
       finish();
+    } else if ((e.key === 'ArrowLeft' || e.key === 'PageUp') && !newer.disabled) {
+      e.preventDefault();
+      show(page - 1);
+    } else if ((e.key === 'ArrowRight' || e.key === 'PageDown') && !older.disabled) {
+      e.preventDefault();
+      show(page + 1);
     }
   };
   const offBackdrop = dismissOnBackdrop(overlay, panel, finish);

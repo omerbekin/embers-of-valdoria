@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
-import { PATCH_NOTES, compareVersions, formatPatchDate, releaseGroups } from '../src/ui/patch-notes';
+import { PAGE_SIZE, PATCH_NOTES, compareVersions, formatPatchDate, patchPage, releaseGroups } from '../src/ui/patch-notes';
 import { displayVersionFrom, isSubVersionOf } from '../src/ui/display-version';
 
 // Patch Notes (Ömer 2026-10-11): data/patch-notes.json geçerli olmalı ve en üstteki girdi package.json'daki GÜNCEL taban sürüm ya da
@@ -72,5 +72,28 @@ describe('Patch Notes verisi', () => {
     expect(displayVersionFrom('0.6.111', '0.6.11')).toBe('0.6.11');
     expect(displayVersionFrom(undefined, '0.6.11')).toBe('0.6.11');
     expect(releaseGroups({ version: '1.0.0', date: '2026-01-01', items: ['A line'] })).toEqual([{ heading: '', items: ['A line'] }]);
+  });
+});
+
+describe('Patch Notes sayfalama (Ömer 2026-10-16: sayfa başına en yeni 5 sürüm, Newer / Older)', () => {
+  it('sayfa dilimi ve kısma', () => {
+    expect(PAGE_SIZE).toBe(5);
+    expect(patchPage(38, 0)).toEqual({ page: 0, pages: 8, start: 0, end: 5 });
+    expect(patchPage(38, 7)).toEqual({ page: 7, pages: 8, start: 35, end: 38 });
+    expect(patchPage(38, 99).page).toBe(7);
+    expect(patchPage(38, -3).page).toBe(0);
+    expect(patchPage(0, 0)).toEqual({ page: 0, pages: 1, start: 0, end: 0 });
+    expect(patchPage(5, 0).pages).toBe(1);
+  });
+
+  it('tüm sürümler sayfalara tam bir kez düşer', () => {
+    const { pages } = patchPage(PATCH_NOTES.length, 0);
+    const seen: string[] = [];
+    for (let p = 0; p < pages; p++) {
+      const pg = patchPage(PATCH_NOTES.length, p);
+      expect(pg.end - pg.start).toBeLessThanOrEqual(PAGE_SIZE);
+      seen.push(...PATCH_NOTES.slice(pg.start, pg.end).map((r) => r.version));
+    }
+    expect(seen).toEqual(PATCH_NOTES.map((r) => r.version));
   });
 });

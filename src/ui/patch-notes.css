@@ -1,6 +1,6 @@
 /* Patch Notes penceresi (src/ui/patch-notes.ts; Ömer 2026-10-11). Kit Diyalog çerçevesi (.el-dialog > .el-panel) üzerine: liste kendi
    içinde kayar, sürüm başlıkları açılır/kapanır. Telefonda (html.short) panel ekranın neredeyse tamamını kullanır, yazı okunur boyda kalır. */
-.pn-overlay {
+.el-dialog.pn-overlay {
   z-index: 20;
 }
 
@@ -122,6 +122,35 @@
 .pn-row {
   flex: none;
   margin-top: 16px !important;
+  align-items: center;
+}
+
+/* Sayfalama (Ömer 2026-10-16): Newer · Page x / y · Older solda, Close (birincil) en sağda */
+.el-dialog .pn-row {
+  justify-content: space-between;
+}
+
+.pn-pager {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.pn-pager[hidden] {
+  display: none;
+}
+
+.pn-page-btn.el-btn {
+  padding: 0 20px 0 calc(20px + 0.1em);
+  font-size: 15px;
+}
+
+.pn-count {
+  min-width: 6.5em;
+  text-align: center;
+  font: italic 17px var(--el-body);
+  color: var(--el-muted);
+  white-space: nowrap;
 }
 
 /* Telefon (yatay, kısa sahne): panel neredeyse tam ekran, daha sıkı başlık; satırlar okunur boyda */
@@ -170,4 +199,18 @@ html.short .pn-row .el-btn {
   min-height: 44px;
   font-size: 17px;
   padding: 0 34px;
+}
+
+html.short .pn-row .pn-page-btn.el-btn {
+  font-size: 14px;
+  padding: 0 16px;
+}
+
+html.short .pn-pager {
+  gap: 10px;
+}
+
+html.short .pn-count {
+  min-width: 5.5em;
+  font-size: 15px;
 }

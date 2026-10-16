@@ -31,7 +31,7 @@
       #boot > .boot-bg { z-index: 0; }
       #boot > .boot-vig { z-index: 1; }
       #boot .boot-bg::before, #boot .boot-bg::after { content: ''; position: absolute; background-position: 50% 50%; background-size: cover; background-repeat: no-repeat; }
-      #boot .boot-bg::before { inset: -30px; background-image: /*boot-ph*/url(data:image/webp;base64,UklGRnAAAABXRUJQVlA4IGQAAAAQBACdASogABIAPu1iqE2ppaOiMAgBMB2JYgDE2CHHh0BN+JHC2p0GAAD+7om1Njh+AlbbK7D+Yv53wDjhec65nQd+bM9ZW8G+Hn4iIYmZZAn9G09BuzFYo36eYCcDzZVPAAAA)/*boot-ph*/; filter: blur(16px) brightness(0.8); }
+      #boot .boot-bg::before { inset: -30px; background-image: /*boot-ph*/url(data:image/webp;base64,UklGRr4BAABXRUJQVlA4ILIBAAAQDQCdASpgADYAPrFMmkmnJKIiMVsa6OAWCWQAxxVxyS8wD1Lc/+BzFcPp5sJ9JkvBZSGVG2TgiLxHkWCFEo+G1zWSvFmfWotzDsW1ZystX+NZsOmAGQVgSDd4NYpi3PvXMJ+z/lBMzpocbuOSSZpYMAD+94EtzalvsapEF/ITKn3909em8++nrQ2oX2Ovaa/HfmeFbsWXQfqpUqIQqKdbRUP/S+C9eU41PBd/D8zUz9HQxqL5tkQ8PtzDTTsmXm86GUtQ1zPBd3DyBUrA30dJNreaIqrMr7DKLJLnTQzW8MzlgiDQY+v/U07Fpk239mxA1SivIZ2orRTJeIPixayMr0h97oQwexkqkHgqkakWfXyhqqElCOuF0cXmOTjvC8lE79mD8Q9alQiUZqDoiteRV6aFjnRhhMNUtdIwcpxB5wrYHSVFWKasE1k5yC8D277BsuvztEXMCsBYsDjPmUcTi8brsXC2JjvAjzHSplI+7S0ShTbFU+fQ6UBCij/r1pkJUjnpDhGv2SYUIMWmV1MKjD70xEAn/GnCiZf1BK4mzC7Rvin1ZTCTF0JmKjTfW9AAAA==)/*boot-ph*/; filter: blur(10px); }
       #boot .boot-bg::after { inset: 0; background-image: var(--boot-img, none); opacity: 0; transition: opacity 0.8s ease; }
       #boot.bg-ready .boot-bg::after { opacity: 1; }
       /* kenar karartması + amblemin durduğu sağ alt köşede hafif gölge */
@@ -78,7 +78,7 @@
       (function () {
         var b = document.getElementById('boot');
         if (!b) return;
-        if (/[?&]rotate=off/.test(location.search)) document.documentElement.classList.add('no-rotate'); // ?rotate=off: yükleme ekranı da dönmez
+        if (/[?&]rotate=off\b/.test(location.search)) document.documentElement.classList.add('no-rotate'); // ?rotate=off: yükleme ekranı da dönmez
         var rm = false;
         try {
           var v = localStorage.getItem('proto.reducedMotion');
@@ -87,9 +87,12 @@
         if (rm) b.classList.add('boot-rm');
         var u = new URL('loading/loading-bg.webp', document.baseURI).href;
         b.style.setProperty('--boot-img', 'url("' + u + '")');
+        // decode() tamamlanınca solar (telefonda büyük resmin çözülmesi ilk boyamayı geciktirmesin); yoksa onload
         var img = new Image();
-        img.onload = function () { b.classList.add('bg-ready'); };
+        var ready = function () { b.classList.add('bg-ready'); };
         img.src = u;
+        if (img.decode) img.decode().then(ready, function () { img.complete ? ready() : (img.onload = ready); });
+        else img.onload = ready;
       })();
     </script>
     <div id="stage">

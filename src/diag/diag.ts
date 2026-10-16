@@ -102,6 +102,9 @@ export function logEvent(kind: string, message = ''): void {
 export const diagConsent = (): boolean => loadPrefs(kv()).consent;
 export const diagNoticed = (): boolean => loadPrefs(kv()).noticed;
 export const diagPrefs = (): Prefs => loadPrefs(kv());
+/** Rapor kimliğinin kısa hali (cihaz kimliğinin ilk 8 hanesi; Settings > Privacy'de gösterilir, KVKK başvurusunda raporları bulmak için).
+ *  Raporlar kapalıysa null. */
+export const diagReportId = (): string | null => loadPrefs(kv()).device?.slice(0, 8) ?? null;
 
 /** Onayı değiştirir (bildirim de görülmüş sayılır). Kapatınca cihaz kimliği silinir; açınca yeni rastgele kimlik. */
 export function setDiagConsent(on: boolean): void {
