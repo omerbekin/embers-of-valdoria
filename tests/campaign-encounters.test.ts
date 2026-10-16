@@ -53,11 +53,11 @@ describe('sefer karşılaşmaları', () => {
       return { plan, battle };
     };
     const w = at('3');
-    const chief = battleSummary(w.battle).units.find((u) => u.side === 'enemy' && u.displayName === 'Bandit Chief')!;
+    const chief = battleSummary(w.battle).units.find((u) => u.side === 'enemy' && u.classId === 'bandit_chief')!;
     expect(chief.tier).toBe('elite');
     const m = at('1');
-    const thug = battleSummary(m.battle).units.find((u) => u.side === 'enemy' && u.classId === 'warrior')!;
-    expect(thug.maxHp).toBeLessThan(content.classes.warrior!.stats.hp);
+    const thug = battleSummary(m.battle).units.find((u) => u.side === 'enemy' && u.classId === 'road_thug')!;
+    expect(thug.maxHp).toBeLessThan(content.mobs.road_thug!.stats.hp);
     // Watchtower şefi (tutorial kopyası, 2026-10-14 zayıflatıldı) yine de sıradan tutorial düşmanından sağlam
     expect(chief.maxHp).toBeGreaterThan(thug.maxHp);
     // Arka plan önceliği: karşılaşma > düğüm > bölge; King's Bridge kendi arka planını kullanır, dosyası diskte var
@@ -111,25 +111,24 @@ describe('sefer karşılaşmaları', () => {
   });
 });
 
-describe('tutorial düşmanlarında ultimate yok (lockSkills), Bandit Chief ultimate\'ı geç gelir (initialCooldownBonus)', () => {
-  const ULTS: Record<string, string> = Object.fromEntries(['warrior', 'cutthroat', 'archer'].map((c) => [c, content.classes[c]!.skills[3]!]));
-  it('Mill Road, Ravenwood, Watchtower: normal düşmanların 4. yuva skill\'i kilitli; elit lider kilitsiz ama +1 başlangıç cooldown\'u; motora gider', () => {
-    for (const [node, enc] of [['1', 'mill_road_thugs'], ['2', 'ravenwood_pack'], ['3', 'watchtower_tutorial']] as const) {
-      for (const u of ENCOUNTERS[enc]!.units) {
-        if (u.tier) {
-          expect(u.lockSkills, enc).toBeUndefined();
-          expect(u.initialCooldownBonus, enc).toBe(1);
-        } else expect(u.lockSkills, `${enc} ${u.class}`).toEqual([ULTS[u.class]]);
-      }
-      const s = debugTeleport(newCampaign({ mode: 'normal', seed: 4 }), node);
-      const plan = battlePlan(s);
-      const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
-      for (const c of battle.combatants.filter((x) => x.side === 'enemy')) {
-        if (c.tier) {
-          expect(c.lockedSkills).toBeUndefined();
-          expect(c.cooldowns[ULTS[c.defId]!]).toBeGreaterThanOrEqual(1);
-        } else expect(c.lockedSkills, `${node} ${c.defId}`).toEqual([ULTS[c.defId]]);
-      }
+describe('Bölge I mobları (mob-plan.md 9.5-9.6): class kopyası yok; Mill Road kilitli, Ravenwood ve şef geç açılır', () => {
+  it("Mill Road: düşmanlar yalnızca temel saldırı (temel dışı skill'ler kilitli); Ravenwood: kilit yok, hepsi +1 başlangıç cooldown'u; Watchtower: elit şef +1, eşlikçiler kilitsiz; motora gider", () => {
+    const plays = (enc: string) => ENCOUNTERS[enc]!.units;
+    for (const enc of ['mill_road_thugs', 'ravenwood_pack', 'watchtower_tutorial']) for (const u of plays(enc)) expect(content.mobs[u.class], `${enc} ${u.class}`).toBeDefined();
+    expect(plays('mill_road_thugs').map((u) => u.class)).toEqual(['road_thug', 'cutpurse']);
+    expect(plays('ravenwood_pack').map((u) => [u.class, u.slot])).toEqual([['grey_wolf', 0], ['grey_wolf', 1], ['grey_wolf', 2], ['ravenwood_poacher', 7], ['raven_seer', 8]]);
+    expect(plays('watchtower_tutorial').map((u) => [u.class, u.slot, u.tier])).toEqual([['bandit_chief', 1, 'elite'], ['ravenwood_poacher', 6, undefined], ['ember_acolyte', 8, undefined]]);
+    for (const u of plays('mill_road_thugs')) expect(u.lockSkills, u.class).toEqual(content.mobs[u.class]!.skills.slice(1));
+    for (const u of plays('ravenwood_pack')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, 1]);
+    for (const u of plays('watchtower_tutorial')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, u.tier ? 1 : undefined]);
+    const battleAt = (node: string) => {
+      const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 4 }), node));
+      return new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
+    };
+    for (const c of battleAt('1').combatants.filter((x) => x.side === 'enemy')) expect(c.lockedSkills, c.defId).toEqual(content.mobs[c.defId]!.skills.slice(1));
+    for (const node of ['2', '3']) for (const c of battleAt(node).combatants.filter((x) => x.side === 'enemy')) {
+      expect(c.lockedSkills, `${node} ${c.defId}`).toBeUndefined();
+      if (node === '2' || c.tier) for (const id of c.skills.slice(1)) expect(c.cooldowns[id], `${node} ${c.defId} ${id}`).toBeGreaterThanOrEqual(1);
     }
   });
 });

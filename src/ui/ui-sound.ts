@@ -9,8 +9,8 @@ import worldData from '../../data/audio-world.json';
 import type { SfxDef } from '../game/audio';
 import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
-export type UiSoundKind = 'open' | 'close' | 'confirm' | 'back' | 'hover' | 'select' | 'error' | 'toast' | 'tab' | 'equip' | 'buy' | 'sell';
-export const UI_SOUND_KINDS: readonly UiSoundKind[] = ['open', 'close', 'confirm', 'back', 'hover', 'select', 'error', 'toast', 'tab', 'equip', 'buy', 'sell'];
+export type UiSoundKind = 'open' | 'close' | 'confirm' | 'back' | 'hover' | 'select' | 'error' | 'toast' | 'tab' | 'equip' | 'snap' | 'buy' | 'sell';
+export const UI_SOUND_KINDS: readonly UiSoundKind[] = ['open', 'close', 'confirm', 'back', 'hover', 'select', 'error', 'toast', 'tab', 'equip', 'snap', 'buy', 'sell'];
 
 export interface UiSfxDef extends SfxDef {
   /** Codex'te görünen ad. */

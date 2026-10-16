@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'road_thug' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs).",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'road_thug' (ChatGPT çizimi, yeni taban çizim; içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE I (2026-10-16, mob-plan.md 9.3-9.4): class pasifi Opportunist çıktı, pasif P14 Grudge (ikon yer tutucu 'rage').",
   "id": "road_thug",
   "name": "Road Thug",
   "family": "bandits",
@@ -22,18 +22,13 @@
     "hamstring"
   ],
   "passive": {
-    "id": "opportunist",
-    "name": "Opportunist",
-    "icon": "opportunist",
-    "text": "",
+    "id": "grudge",
+    "name": "Grudge",
+    "icon": "rage",
+    "text": "Its basic attack (Cudgel) deals +25% damage to the hero who last hit it with a skill. When another hero hits it with a skill, the grudge moves to them.",
     "effect": {
-      "type": "bonusVsStatus",
-      "statuses": [
-        "wound",
-        "slow",
-        "stun",
-        "wither"
-      ],
+      "type": "grudge",
+      "skill": "cudgel",
       "bonus": 0.25
     }
   }

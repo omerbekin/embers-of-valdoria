@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1). BÖLGE I (tutorial, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GÖRSEL (ChatGPT 2026-10-16): kendi çizimi spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs); skill/pasif ikonları ve VFX assets/mob-icons + assets/mob-vfx (tools/import-mob-art.mjs, mob-plan.md 9.10). Yatay çizim: ekranda insanların ~%65'i boyunda (spriteScale). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "grey_wolf",
+  "name": "Grey Wolf",
+  "family": "beasts",
+  "spriteId": "grey_wolf",
+  "spriteScale": 1.6,
+  "color": "#8c8c8c",
+  "logo": "roar",
+  "frontPriority": 1,
+  "role": "Beast · Pack",
+  "attributes": {
+    "str": 20,
+    "int": 2,
+    "dex": 16,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "bite",
+    "rend"
+  ],
+  "passive": {
+    "id": "pack_tactics",
+    "name": "Pack Tactics",
+    "icon": "roar",
+    "text": "Deals +15% damage for every other living Grey Wolf in the same row. Kill one and the rest grow weaker.",
+    "effect": {
+      "type": "packTactics",
+      "perAlly": 0.15
+    }
+  }
+}

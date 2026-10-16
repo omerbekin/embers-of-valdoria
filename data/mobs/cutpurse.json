@@ -1,0 +1,34 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1). BÖLGE I (tutorial, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GÖRSEL (ChatGPT 2026-10-16): kendi çizimi spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs); skill/pasif ikonları ve VFX assets/mob-icons + assets/mob-vfx (tools/import-mob-art.mjs, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "cutpurse",
+  "name": "Cutpurse",
+  "family": "bandits",
+  "spriteId": "cutpurse",
+  "color": "#c9a227",
+  "logo": "helm",
+  "frontPriority": 1,
+  "role": "Bandit · Skirmisher",
+  "attributes": {
+    "str": 10,
+    "int": 4,
+    "dex": 24,
+    "luck": 6
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "shiv",
+    "sand_in_the_eyes"
+  ],
+  "passive": {
+    "id": "head_start",
+    "name": "Head Start",
+    "icon": "boot",
+    "text": "At the start of battle this unit gains a speed boost until its first turn (like Skip Turn), so it usually acts first.",
+    "effect": {
+      "type": "headStart",
+      "speedBoost": 1
+    }
+  }
+}

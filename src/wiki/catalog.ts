@@ -97,6 +97,7 @@ export interface WikiSkill {
 
 // Menzil / element etiketleri savaş HUD'ı ve takım seçimiyle ortak (src/ui/skill-tags.ts): Codex de aynı kuralı gösterir
 import { elementIcon, skillElements, skillRange, type SkillRange } from '../ui/skill-tags';
+import { passiveIconName } from '../ui/mob-icons';
 export { elementIcon, skillElements, skillRange, type SkillRange };
 
 export interface WikiStatRow {
@@ -301,7 +302,7 @@ function buildUnit(kind: WikiUnit['kind'], def: CombatantDef, files: WikiFiles):
   ];
   const primary = def.primary ?? null;
   const bonus = primary ? primaryBonusInfo(primary, f, !!st.primaryActive) : null;
-  const passive = def.passive ? { name: def.passive.name, icon: def.passive.icon, text: describePassive(def.passive, st, f) } : null;
+  const passive = def.passive ? { name: def.passive.name, icon: passiveIconName(def.passive), text: describePassive(def.passive, st, f) } : null;
   const skills = def.skills.flatMap((id) => (content.skills[id] ? [buildSkill({ ...content.skills[id]!, id })] : []));
   const bonusText = primary ? primaryBonusLines(primary, f).join(' ') : '';
   return {
@@ -620,7 +621,7 @@ export function buildMechanics(): WikiArticle[] {
   const bets = betLines();
   out.push(
     article('enemy-passives', 'Special rules', 'Enemy passives', 'skull', [
-      p('Campaign enemies have passives of their own: each reacts to something in the fight (a hit, a death, low HP, a summon, MP, its lane or its neighbours). Hover an enemy in battle to read its passive; the Enemies articles list them by family.'),
+      p('Campaign enemies have passives of their own: each reacts to something in the fight (a hit, a death, low HP, a summon, MP, its lane or its neighbours, its pack or its cover, the start of battle). Hover an enemy in battle to read its passive; the Enemies articles list them by family.'),
       list(...mobPassiveLines()),
     ], '#8a6a4a'),
     article('gamble', 'Special rules', 'Bets (Gambler)', 'dice', [

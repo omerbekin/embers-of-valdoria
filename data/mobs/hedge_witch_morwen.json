@@ -3,7 +3,7 @@
   "id": "hedge_witch_morwen",
   "name": "Hedge Witch Morwen",
   "family": "hexes",
-  "spriteId": "fen_witchling",
+  "spriteId": "hedge_witch_morwen",
   "color": "#4f6a2f",
   "logo": "rune",
   "frontPriority": 7,

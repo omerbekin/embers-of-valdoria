@@ -3,7 +3,7 @@
   "id": "grave_chanter",
   "name": "Grave Chanter",
   "family": "undead",
-  "spriteId": "ember_acolyte",
+  "spriteId": "grave_chanter",
   "color": "#6a4f8a",
   "logo": "skull",
   "frontPriority": 7,

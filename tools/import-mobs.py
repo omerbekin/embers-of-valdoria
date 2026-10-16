@@ -4,7 +4,7 @@ Kaynak: assets/source/mobs/<id>.png (oyuna yüklenmez). Çıktı (sınıflarla a
   assets/sprites/<id>/idle.png  içerik kutusuna kırpılır (küçük pay), yükseklik 640, sağa bakar (motor düşmanı aynalar)
   assets/avatars/<id>.png       kafa kırpması 256x256 (HEADS: temizlenmiş içerik kutusunun sol-üstüne göre kaynak px)
 Temizlik:
-  - Gerçek saydam kaynaklar (road_thug, bandit_crossbowman, ember_acolyte, will_o_wisp): alfa eşiği (ALPHA_CUT altı silinir; road_thug'daki
+  - Gerçek saydam kaynaklar (road_thug, bandit_crossbowman, ember_acolyte, will_o_wisp ve Bölge II'nin 8 çizimi): alfa eşiği (ALPHA_CUT altı silinir; road_thug'daki
     koyu yarı saydam hale de böyle gider), sonra kenar tüylemesi.
   - Gömülü gri/beyaz dama (fen_witchling, ghoul, shieldwarden; ChatGPT saydamlık yerine deseni boyamış, tonlar ~165 / ~245, ~8 px kare):
     1) kenardan taşma dolgusu, yalnızca renksiz-açık piksellerde (karakterin koyu konturu dolguyu durdurur);
@@ -14,7 +14,7 @@ Temizlik:
     3) silinen alana komşu açık-gri kenar halkası (2 geçiş) da silinir, sonra alfa 1 px tüylenir.
 Palet varyantları (fill-plan 2): taban sprite'ın HSV bölge eşlemesiyle yeniden boyanması (VARIANTS); sprite + avatar aynı kutuyla.
 Doğrulama: --check <klasör> her çıktıyı koyu ve açık zemin üstünde bir kontrol sayfasına yazar (<klasör>/mobs-check.png)."""
-import os, sys
+import math, os, sys
 from collections import deque
 import numpy as np
 from PIL import Image
@@ -24,6 +24,7 @@ SRC = os.path.join(ROOT, 'assets', 'source', 'mobs')
 SPRITE_H = 640
 AVATAR = 256
 MARGIN = 0.015
+WIDE_MAX = 1.45     # idle.png en/boy üst sınırı (1,5 ve üstü oyunda sprite sheet sayılır)
 ALPHA_CUT = 150      # gerçek saydam kaynaklarda bunun altı silinir (yarı saydam koyu hale)
 
 # Dama gömülü kaynaklar
@@ -38,6 +39,21 @@ HEADS = {
     'ghoul': (720, 10, 290),
     'shieldwarden': (600, 0, 240),
     'will_o_wisp': (565, 390, 350),
+    # Bölge II (ChatGPT, 2026-10-16; gerçek saydam, sağa bakar)
+    'stonebound_warden': (450, 0, 300),
+    'deep_runecaller': (610, 190, 300),
+    'thane_of_the_deep': (495, 50, 320),
+    'hedge_witch_morwen': (570, 90, 300),
+    'grave_chanter': (515, 50, 260),
+    'oathsworn_brother': (545, 0, 280),
+    'censer_monk': (545, 30, 290),
+    'high_priest_of_the_undying': (520, 20, 300),
+    # Bölge I (ChatGPT, 2026-10-16; gerçek saydam, sağa bakar). grey_wolf yatay (1536x1024): kafa sağda; ekranda boyu mob json spriteScale ile
+    'cutpurse': (620, 25, 280),
+    'ravenwood_poacher': (690, 20, 300),
+    'raven_seer': (599, 110, 300),
+    'bandit_chief': (640, 10, 260),
+    'grey_wolf': (1270, 190, 400),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
@@ -247,21 +263,10 @@ def moor_raider(h, s, v):
     return h, s, v
 
 
-def stonebound_warden(h, s, v):
-    # her şey taş griye (hafif sıcak); amblemin açık kısımları soluk, donuk rün ışıltısı (açık turkuaz)
-    # amblem (kalkan ve göğüsteki kule) krem rengi; çelik parlaklıkları renksiz/soğuk olduğu için rün maskesine girmez
-    rune = hue_in(h, 22, 65) & (s > 0.07) & (s < 0.38) & (v > 0.62)
-    s2 = np.where(rune, 0.24, s * 0.12)
-    h2 = np.where(rune, 172, 35)
-    v2 = np.where(rune, np.clip(v * 1.0, 0, 1), v * 0.92 + 0.02)
-    return h2, s2, v2
-
-
 VARIANTS = {
     'charcoal_burner': ('ember_acolyte', charcoal_burner),
     'drowned': ('ghoul', drowned),
     'moor_raider': ('road_thug', moor_raider),
-    'stonebound_warden': ('shieldwarden', stonebound_warden),
 }
 
 
@@ -277,8 +282,11 @@ def write(mid, c, head):
     m = int(max(c.size) * MARGIN)
     base = FLOAT.get(mid)
     hh = c.height + 2 * m if base is None else int(round((c.height + m) / base))
+    # Yatay çizim (Grey Wolf): oyun genişliği yüksekliğin 1,5 katını aşan idle.png'yi yatay sprite sheet sayar (assets.ts > registerSheet);
+    # üstte saydam boşlukla oran WIDE_MAX'a indirilir, figür altta (ayak zemin çizgisinde) kalır. Ekrandaki boy: mob json spriteScale.
+    hh = max(hh, int(math.ceil((c.width + 2 * m) / WIDE_MAX)))
     sp = Image.new('RGBA', (c.width + 2 * m, hh), (0, 0, 0, 0))
-    sp.paste(c, (m, m))
+    sp.paste(c, (m, hh - c.height - m if base is None else m))
     w = round(sp.width * SPRITE_H / sp.height)
     sp = sp.resize((w, SPRITE_H), Image.LANCZOS)
     d = os.path.join(ROOT, 'assets', 'sprites', mid)

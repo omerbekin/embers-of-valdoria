@@ -152,7 +152,7 @@ function overview(sections: AssetSection[]): AssetSection {
     h('h2', {}, h('span', { text: 'ASSETS' })),
     h('p', { class: 'muted', text: 'The game\'s art and sound library (this used to be the separate Asset Gallery). Everything here is generated from the game data and the asset folders, so new sounds, icons, skills and sprites show up by themselves. Class and skill cards in this wiki also have their own "Art & sounds" and "Play animation" parts.' }),
     h('div', { class: 'hub' }, ...sections.filter((s) => s.id !== 'assets').map((s) => h('button', { class: 'wk-card wk-hubcard', attrs: { type: 'button' }, on: { click: () => navigator(s.id, '') } }, h('b', { text: `${s.title} (${s.total})` }), h('span', { class: 'muted small', text: desc[s.id] ?? '' })))),
-    h('p', { class: 'muted small', text: `Status and ground icons are in STATUSES & GROUNDS; classes, summons and skills are in CLASSES and SKILLS. ${cat.sounds.length} sounds (+${cat.uiSounds.length} menu, +${cat.worldSounds.length} world sounds, ${cat.soundtracks.length} soundtracks), ${cat.animations.length} skill animations, ${cat.icons.length} icons, ${cat.characters.length} characters.` }));
+    h('p', { class: 'muted small', text: `Status and ground icons are in STATUSES & GROUNDS; classes, summons and skills are in CLASSES and SKILLS. ${cat.sounds.length} sounds (+${cat.uiSounds.length} menu, +${cat.worldSounds.length} world, +${cat.mobSounds.length} campaign enemy sounds, ${cat.soundtracks.length} soundtracks), ${cat.animations.length} skill animations, ${cat.icons.length} icons, ${cat.characters.length} characters.` }));
   return { id: 'assets', title: assetNav('assets').title, icon: assetNav('assets').icon, total: sections.filter((s) => s.id !== 'legacy' && s.id !== 'versions').reduce((n, s) => n + s.total, 0), root, setQuery: () => 0 };
 }
 
@@ -162,7 +162,7 @@ export function assetSections(): AssetSection[] {
   const legacy = legacyCatalog();
   const paletteTotal = cat.palette.ui.length + cat.palette.element.length + cat.palette.stat.length + cat.palette.classes.length;
   const subs: AssetSection[] = [
-    lazySection('sounds', cat.sounds.length + cat.uiSounds.length + cat.worldSounds.length, () => mountSounds(cat)),
+    lazySection('sounds', cat.sounds.length + cat.uiSounds.length + cat.worldSounds.length + cat.mobSounds.length, () => mountSounds(cat)),
     lazySection('animations', cat.animations.length, () => mountAnimations(cat)),
     lazySection('icons', cat.icons.length, () => mountIcons(cat)),
     lazySection('art', cat.characters.length, () => mountCharacters(cat)),

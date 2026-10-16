@@ -168,6 +168,24 @@ export interface UnitCard {
   effects: Array<{ name: string; color: string; turns: string; text: string }>;
   passive: { name: string; text: string } | null;
   preview: { iconUrl: string; skill: string; hit?: string; amount?: string; note?: string } | null;
+  /** Birimin skill'leri (Ömer 2026-10-16): ikon, ad, kısa hedef/şekil, bedel, cooldown; satıra dokununca / gelince skill tooltip'i. */
+  skills?: CardSkill[];
+}
+export interface CardSkill {
+  id: string;
+  name: string;
+  iconUrl: string;
+  /** Kısa hedef / şekil (src/ui/skill-target-label.ts). */
+  target: string;
+  cost: TipMeta | null;
+  /** Temel cooldown (0 = yok). */
+  cd: number;
+  /** Kalan cooldown (0 = hazır). */
+  wait: number;
+  /** Kum saati ikonu (skill düğmesinin cooldown çipiyle aynı). */
+  cdIconUrl?: string;
+  /** Skill tooltip'i; işlev = yalnızca açılınca üretilir (kartlar saniyede birkaç kez yenilenir). */
+  tip: TipContent | (() => TipContent);
 }
 export interface HudCallbacks {
   onSkill: (id: string) => void;
@@ -240,6 +258,8 @@ export class BattleHud {
   private tipEl: HTMLElement | null = null;
   private tipPinned = false;
   private readonly tips = new Map<string, TipContent>();
+  /** Birim kartı skill satırlarının ipuçları (setModel'in temizlediği `tips`ten ayrı: kart HTML'i değişmeden kalabilir). */
+  private readonly cardTips = new Map<string, TipContent | (() => TipContent)>();
   private hover: Partial<Record<Side, UnitCard>> = {};
   private pins: Partial<Record<Side, UnitCard>> = {};
   private readonly offDoc: () => void;
@@ -303,6 +323,8 @@ export class BattleHud {
       const t = e.target as Node | null;
       if (this.open && !(t && this.actorBox.contains(t))) this.setOpen(false);
       if (this.panel && !(t && this.rightSlot.contains(t))) this.setPanel(null);
+      // Kart skill satırına dokununca açılan sabit ipucu: başka yere dokununca kapanır
+      if (this.tipPinned && this.tipEl?.closest('.bh-card') && !(t && this.tipEl.contains(t))) this.hideTip();
     };
     document.addEventListener('pointerdown', onDoc, true);
     this.offDoc = () => document.removeEventListener('pointerdown', onDoc, true);
@@ -707,11 +729,14 @@ export class BattleHud {
       const card = this.hover[side] ?? this.pins[side];
       // yalnızca değişen öznitelik / içerik yazılır (kartlar birkaç karede bir yenilenir; kapalı kart boşta her seferinde DOM'a yazılıyordu)
       if (!card || this.hidden) {
+        if (this.tipEl && el.contains(this.tipEl)) this.hideTip();
         if (el.classList.contains('on') || el.classList.contains('pin')) el.classList.remove('on', 'pin');
         if (el.dataset['uid']) el.dataset['uid'] = '';
         continue;
       }
       const pinned = this.pins[side]?.uid === card.uid;
+      for (const k of [...this.cardTips.keys()]) if (k.startsWith(`k:${side}:`)) this.cardTips.delete(k);
+      card.skills?.forEach((s, i) => this.cardTips.set(`k:${side}:${i}`, s.tip));
       this.put(el, this.cardHtml(card, pinned));
       if (el.dataset['uid'] !== card.uid) el.dataset['uid'] = card.uid;
       if (!el.classList.contains('on')) el.classList.add('on');
@@ -728,7 +753,16 @@ export class BattleHud {
     const pv = c.preview
       ? `<div class="bh-pv">${img(c.preview.iconUrl)}<b>${esc(c.preview.skill)}</b>${c.preview.hit ? `<span class="r">${esc(c.preview.hit)}<em> to hit</em></span>` : ''}${c.preview.amount ? `<span>${esc(c.preview.amount)}</span>` : ''}${c.preview.note ? `<em class="n">${esc(c.preview.note)}</em>` : ''}</div>`
       : '';
-    return `<div class="bh-hdr"><div class="bh-cell ${c.enemy ? 'enemy' : ''}">${img(c.portraitUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}</div>
+    const side: Side = c.enemy ? 'enemy' : 'party';
+    const sks = (c.skills ?? [])
+      .map((s, i) => {
+        const cost = s.cost ? `<span class="c" style="${s.cost.color ? `color:${s.cost.color}` : ''}">${img(s.cost.iconUrl ?? '')}${esc(s.cost.text.replace(/^RAGE /, ''))}</span>` : '<span class="c"></span>';
+        const hg = img(s.cdIconUrl ?? '');
+        const cd = s.wait > 0 ? `<span class="w">${hg}${s.wait}<em>/${s.cd}</em></span>` : s.cd > 0 ? `<span class="d">${hg}${s.cd}</span>` : '<span></span>';
+        return `<div class="bh-cs${s.wait > 0 ? ' cool' : ''}" data-tip="k:${side}:${i}">${img(s.iconUrl, 'bh-ico bh-cs-ico')}<span class="n">${esc(s.name)}</span><span class="t">${esc(s.target)}</span>${cost}${cd}</div>`;
+      })
+      .join('');
+    return `<div class="bh-card-sc"><div class="bh-hdr"><div class="bh-cell ${c.enemy ? 'enemy' : ''}">${img(c.portraitUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}</div>
         <div class="bh-hdr-t"><div class="bh-n" style="${c.nameColor ? `color:${c.nameColor}` : ''}">${esc(c.name)}</div><div class="bh-m">${esc(c.sub)}</div></div>
         <span class="bh-side-tag">${c.tag ? `<b style="color:${c.tag.color}">${esc(c.tag.text)}</b> · ` : ''}${c.enemy ? 'Enemy' : 'Ally'}</span></div>
       <div class="bh-bars">${bar('hp', c.hp, '#f4ede1', c.enemy)}${c.mp ? bar('mp', c.mp, '#9cc4ff') : c.rage ? bar('rage', c.rage, '#ffb35a') : '<div></div>'}</div>
@@ -736,8 +770,9 @@ export class BattleHud {
       <div class="bh-attrs">${attr}</div>
       <div class="bh-fade"></div><div class="bh-grid">${grid}</div>
       ${fx ? `<div class="bh-sec"><div class="bh-hd"><i class="bh-dia h s"></i>Effects</div><div class="bh-eff">${fx}</div></div>` : ''}
+      ${sks ? `<div class="bh-sec bh-csk"><div class="bh-hd"><i class="bh-dia h s"></i>Skills</div><div class="bh-csl">${sks}</div></div>` : ''}
       ${c.passive ? `<div class="bh-sec"><div class="bh-hd"><i class="bh-dia h s"></i>Passive</div><div class="bh-pas-t">${esc(c.passive.name)}</div><div class="bh-pas-d">${esc(c.passive.text)}</div></div>` : ''}
-      ${pv}${pinned ? '<div class="bh-hint">Pinned · tap again or Esc to close</div>' : ''}`;
+      ${pv}${pinned ? '<div class="bh-hint">Pinned · tap again or Esc to close</div>' : ''}</div>`;
   }
 
   // ------------------------------------------------------------------ bağlam ipucu (hücre: yürü, ceset, diriltme...)
@@ -810,7 +845,9 @@ export class BattleHud {
   }
 
   private showTip(el: HTMLElement): void {
-    const t = this.tips.get(el.dataset['tip'] ?? '');
+    const key = el.dataset['tip'] ?? '';
+    const ct = this.cardTips.get(key);
+    const t = this.tips.get(key) ?? (typeof ct === 'function' ? ct() : ct);
     if (!t) return;
     this.ftip.innerHTML = tipHtml(t);
     this.ftip.classList.add('on');
@@ -824,19 +861,30 @@ export class BattleHud {
     const eh = r.height / s;
     const tw = this.ftip.offsetWidth;
     const th = this.ftip.offsetHeight;
-    const side = el.closest('.bh-sheet') ? 'right' : 'above';
+    const card = el.closest<HTMLElement>('.bh-card');
+    const side = el.closest('.bh-sheet') ? 'right' : card ? 'beside' : 'above';
     let x = side === 'right' ? ex + ew + 16 : ex + ew / 2 - tw / 2;
-    let y = side === 'right' ? ey + eh / 2 - th / 2 : ey - th - 12;
-    if (y < 10) y = ey + eh + 12;
+    let y = side === 'right' || side === 'beside' ? ey + eh / 2 - th / 2 : ey - th - 12;
+    if (card) {
+      // Birim kartının skill satırı: ipucu kartın yanında, tahtaya doğru (dost kartı solda: sağına; düşman kartı sağda: soluna)
+      const cr = card.getBoundingClientRect();
+      const cl = (cr.left - rr.left) / s;
+      const cw = cr.width / s;
+      x = card.classList.contains('enemy') ? cl - tw - 16 : cl + cw + 16;
+    }
+    if (y < 10 && side === 'above') y = ey + eh + 12;
     x = Math.max(12, Math.min(this.viewW - tw - 12, x));
     y = Math.max(10, Math.min(1080 - th - 10, y));
     this.ftip.style.left = `${x}px`;
     this.ftip.style.top = `${y}px`;
+    this.tipEl?.classList.remove('tip');
     this.tipEl = el;
+    if (card) el.classList.add('tip');
   }
 
   hideTip(): void {
     this.ftip.classList.remove('on');
+    if (this.tipEl?.classList.contains('bh-cs')) this.tipEl.classList.remove('tip');
     this.tipEl = null;
     this.tipPinned = false;
   }

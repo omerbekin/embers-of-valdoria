@@ -7,6 +7,8 @@ import { AUDIO_V2 } from './art-v2/audio-index';
 import type { V2Vfx } from './art-v2/types';
 import { VFX_V2 } from './art-v2/vfx-index';
 import { ownerOfSkill, wantsV2 } from './asset-versions';
+import { mobVfxOf } from './mob-vfx';
+import { vfxSheetFile } from './vfx-sheet-files';
 
 /** v2 anahtarı: skill'in vfx adı, yoksa skill id'si. */
 export const v2VfxKey = (skill: Pick<SkillDef, 'id' | 'vfx'>): string => skill.vfx ?? skill.id;
@@ -21,6 +23,9 @@ export function v2VfxOf(owner: string, skill: Pick<SkillDef, 'id' | 'vfx'>): V2V
 /** Seçili sürüme göre: v2 efekti (varsa) ya da v1'e düşüş. */
 export function selectSkillVfx(skill: Pick<SkillDef, 'id' | 'vfx'>): { owner: string | null; version: 'v1' | 'v2'; v2?: V2Vfx } {
   const owner = ownerOfSkill(skill.id);
+  // sefer mobu skill'i: kendi hazır sheet'i varsa sürümden bağımsız o (src/game/mob-vfx.ts); sesler mobun kendi sesleri (src/game/mob-sfx.ts), yoksa ödünç sahibin seçili sürümünden
+  const mob = mobVfxOf(skill.id, (id) => !!vfxSheetFile(id));
+  if (mob) return { owner, version: 'v2', v2: mob };
   if (owner && wantsV2(owner, 'vfx')) {
     const v2 = v2VfxOf(owner, skill);
     if (v2) return { owner, version: 'v2', v2 };

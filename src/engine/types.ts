@@ -116,7 +116,23 @@ export type PassiveEffect =
   /** YM12 Censer Smoke: kendisi ve aynı şeritteki (aynı tahta, tüm sıralar) dostlar kendi tur başlarında maks canın `ratio` kadarı şifa (Wound uygulanır; birden çok kaynakta tek, en güçlüsü). */
   | { type: 'censerSmoke'; ratio: number }
   /** YM13 Vessel of the Choir: maks MP + `mpAdd` (türev stat); bir dostu (kendisi hariç) düşman skill'inden hasar aldıkça `mpPerHit` MP. */
-  | { type: 'choirVessel'; mpAdd: number; mpPerHit: number };
+  | { type: 'choirVessel'; mpAdd: number; mpPerHit: number }
+  /*
+   * Bölge I (tutorial) mob pasifleri (YM14-YM19, Ömer onayı 2026-10-16; mob-plan.md 9.3 / 9.8). YM14 ve YM16 (ve YM19'un birikimi) ortak
+   * GİDEN hasar çarpanı kancasını paylaşır (`Battle.passiveDealtMult`, dealtDamageMult içinde).
+   */
+  /** YM14 Grudge: `skill` (temel saldırı) ile vurduğu hedef, ona EN SON skill ile vuran düşmanıysa hasar x(1 + bonus). Başka düşman skill ile vurunca kin ona geçer. */
+  | { type: 'grudge'; skill: string; bonus: number }
+  /** YM15 Head Start: savaş başında Skip Turn gibi hız desteği (`speedBoost`; ilk turuna kadar). Yalnızca turns modunda. */
+  | { type: 'headStart'; speedBoost: number }
+  /** YM16 Pack Tactics: aynı tahtada aynı SIRADAKİ (row) her diğer canlı aynı tür (defId) dost için verilen hasar +perAlly (toplamsal). */
+  | { type: 'packTactics'; perAlly: number }
+  /** YM17 Hide in the Brush: kendi şeridinde (lane) önündeki bir sırada canlı dost varken kaçınma +evasion (effectiveStats; durum değil). */
+  | { type: 'hideInBrush'; evasion: number }
+  /** YM18 Flock Shield: savaşta bir kez, ilk isabet eden düşman SKILL vuruşunun hasarı x(1 - reduce) (önizleme de gösterir; kullanılınca `passiveUsed`). */
+  | { type: 'flockShield'; reduce: number }
+  /** YM19 Shares of the Dead: çağrı olmayan bir dostu her ölünce `turns` tur `status` (Fortified) + savaş sonuna kadar verilen hasar +perDeath (yığılır). */
+  | { type: 'sharesOfDead'; status: StatusKind; turns: number; perDeath: number };
 
 export interface PassiveDef {
   id: string;
@@ -1343,6 +1359,10 @@ export interface Combatant {
   patience?: number;
   patienceHurt?: boolean;
   flickered?: boolean;
+  /** YM14 Grudge: ona en son skill ile vuran düşmanın uid'si. */
+  grudgeOn?: string;
+  /** YM19 Shares of the Dead: bu savaşta ölen dost sayısı (hasar eki yığını). */
+  shares?: number;
 }
 
 /** Aşamalı alan skill'inin bir aşaması (skillUsed.stages): o aşamanın hücreleri (boşlar dahil) ve vurulacak birimler. Dizin = aşama numarası. */

@@ -10,7 +10,7 @@
  */
 import { affixTip, type AffixLine } from '../progression';
 import type { Stats } from '../engine';
-import { dropAction, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
+import { dropAction, isDoubleTap, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
 import { statTip, statTipSegments } from './stat-tips';
 
@@ -49,6 +49,11 @@ export interface ItemInteractionHost {
   trash?: boolean;
   /** Stat / skill ipuçları için seçili kahramanın statları (yoksa stat ipucu yok). */
   stats?(): { stats: Stats | null; after: Stats | null; classId?: string };
+  /**
+   * Dokunmatikte aynı `data-tip` hücresine çift dokunuş (Ömer 2026-10-16, tüccarda torba item'i = sat). true = eylem yapıldı (ipucu kapanır);
+   * false / verilmemiş = eski davranış (ikinci dokunuş ipucunu kapatır).
+   */
+  onDoubleTap?(key: string): boolean;
 }
 
 export interface ItemInteractions {
@@ -177,6 +182,8 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   let swallowUntil = 0;
   let lastTouchAt = 0;
   let tap: { el: HTMLElement; key: string; x: number; y: number } | null = null;
+  /** Son tek dokunuş (çift dokunuş için; `onDoubleTap`). */
+  let lastTap: { key: string; at: number } | null = null;
   const pinTip = (key: string, anchor: HTMLElement): void => {
     if (!key) return;
     itip.pin(key, h.tipNodes(key), anchor, h.tipActions?.(key) ?? []);
@@ -291,6 +298,16 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       // tek dokunuş: ipucunu bu item'e sabitle (aynı item yeniden = kapat); ekranın click eylemi çalışmaz
       if (press) window.clearTimeout(press.timer);
       press = null;
+      const now = performance.now();
+      if (h.onDoubleTap && tp.key && isDoubleTap(lastTap, tp.key, now)) {
+        lastTap = null;
+        if (h.onDoubleTap(tp.key)) {
+          itip.hide();
+          setHover('');
+          swallowUntil = now + 700;
+          return;
+        }
+      } else lastTap = { key: tp.key, at: now };
       if (itip.pinned && itip.shownKey === tp.key) {
         itip.hide();
         setHover('');

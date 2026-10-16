@@ -1,0 +1,34 @@
+{
+  "_not": "Sefer mobu (data/mobs, N1). BÖLGE I (tutorial, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GÖRSEL (ChatGPT 2026-10-16): kendi çizimi spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs); skill/pasif ikonları ve VFX assets/mob-icons + assets/mob-vfx (tools/import-mob-art.mjs, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "ravenwood_poacher",
+  "name": "Ravenwood Poacher",
+  "family": "bandits",
+  "spriteId": "ravenwood_poacher",
+  "color": "#5f7a3a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "role": "Bandit · Trapper",
+  "attributes": {
+    "str": 10,
+    "int": 4,
+    "dex": 24,
+    "luck": 6
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "poachers_shot",
+    "tainted_bait"
+  ],
+  "passive": {
+    "id": "hide_in_the_brush",
+    "name": "Hide in the Brush",
+    "icon": "leaves",
+    "text": "While a living ally stands in front of it in its lane, its evasion is +20%. Clear the cover first, or hit it with an area or lane attack.",
+    "effect": {
+      "type": "hideInBrush",
+      "evasion": 0.2
+    }
+  }
+}

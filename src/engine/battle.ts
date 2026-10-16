@@ -10,7 +10,7 @@ import { ITEM_HOOK_CAPS } from './item-caps';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundStat, statMin } from './stats';
-import type { Attribute, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element } from './types';
+import type { Attribute, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules } from './types';
 
@@ -246,7 +246,14 @@ export class Battle {
       if (c.boss.phases?.length) c.phase = 1;
       this.refreshAnchored(c);
     }
+    // Head Start (YM15, mob pasifi): savaş başında Skip Turn gibi hız desteği (ilk turuna kadar); yalnızca turns modunda
+    const headStart = this.mode === 'turns' ? this.combatants.filter((c) => c.hp > 0 && c.passive?.effect.type === 'headStart') : [];
+    for (const c of headStart) {
+      const e = c.passive!.effect as Extract<PassiveEffect, { type: 'headStart' }>;
+      if (e.speedBoost > 0) this.speedBoost.set(c.uid, e.speedBoost);
+    }
     this.record({ type: 'battleStart', seed: this.seed, combatants: this.combatants.map(cloneCombatant) });
+    for (const c of headStart) this.record({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
     if (this.mode === 'turns') this.advance((e) => this.record(e));
   }
 
@@ -631,12 +638,44 @@ export class Battle {
    * Saldırının hedefe göre verdiği hasar çarpanı: Hunter's Mark x Giantslayer (item etkisi tierDamageMult: hedef elit / boss rütbeli ya da boss tanımlı).
    * Etki yoksa hunterMarkMult ile aynı. Önizleme ve yapay zeka da bunu kullanır.
    */
-  dealtDamageMult(actor: Combatant, target: Combatant): number {
+  dealtDamageMult(actor: Combatant, target: Combatant, skill?: SkillDef | null): number {
     const gs = actor.itemEffects?.tierDamageMult;
-    const m = this.hunterMarkMult(actor, target) * (gs && (target.tier !== undefined || target.boss !== undefined) ? gs : 1);
+    let m = this.hunterMarkMult(actor, target) * (gs && (target.tier !== undefined || target.boss !== undefined) ? gs : 1);
+    // Mob pasifleri (YM14 Grudge, YM16 Pack Tactics, YM19 Shares of the Dead): giden hasar çarpanı; pasif yoksa 1 (ifade aynı)
+    const pm = actor.passive ? this.passiveDealtMult(actor, target, skill) : 1;
+    if (pm !== 1) m *= pm;
     // Hasar aurası (item affix auraDamage): yan komşu dosttan; yoksa çarpılmaz
     const aura = this.living(actor.side).some((a) => a.itemEffects?.auraDamage) ? this.auraDamageOf(actor) : 0;
     return aura > 0 ? m * (1 + aura) : m;
+  }
+
+  /**
+   * Mob pasiflerinin GİDEN hasar çarpanı (YM14, YM16, YM19; Bölge I): Grudge (temel saldırı, ona en son skill ile vuran düşmana), Pack Tactics
+   * (aynı sıradaki diğer canlı aynı tür dost başına), Shares of the Dead (ölen dost başına birikim). `skill` verilmezse Grudge uygulanmaz.
+   */
+  passiveDealtMult(actor: Combatant, target: Combatant, skill?: SkillDef | null): number {
+    const e = actor.passive?.effect;
+    if (!e || actor.side === target.side) return 1;
+    if (e.type === 'grudge') return skill?.id === e.skill && actor.grudgeOn === target.uid ? 1 + e.bonus : 1;
+    if (e.type === 'packTactics') return 1 + e.perAlly * this.packMatesOf(actor);
+    if (e.type === 'sharesOfDead') return 1 + e.perDeath * (actor.shares ?? 0);
+    return 1;
+  }
+
+  /** Pack Tactics: aynı tahtada aynı sıradaki diğer canlı aynı tür (defId) dost sayısı. */
+  packMatesOf(c: Combatant): number {
+    return this.combatants.filter((a) => a.uid !== c.uid && a.hp > 0 && a.side === c.side && a.board === c.board && a.defId === c.defId && this.rowOf(a.slot) === this.rowOf(c.slot)).length;
+  }
+
+  /** Hide in the Brush: birimin şeridinde (aynı tahta) önündeki bir sırada canlı dost var mı. */
+  coveredInLane(c: Combatant): boolean {
+    return this.combatants.some((a) => a.uid !== c.uid && a.hp > 0 && a.side === c.side && a.board === c.board && !a.inert && this.laneOf(a.slot) === this.laneOf(c.slot) && this.rowOf(a.slot) < this.rowOf(c.slot));
+  }
+
+  /** Flock Shield (YM18): kullanılmamışsa ve saldıran düşmansa, skill vuruşunun alınan hasar çarpanı (1 - reduce); yoksa 1. */
+  flockMult(actor: Combatant, target: Combatant): number {
+    const e = target.passive?.effect;
+    return e?.type === 'flockShield' && !target.passiveUsed && actor.side !== target.side ? 1 - e.reduce : 1;
   }
 
   /** 'everyone' hedefli skill'lerde bir etkinin bu hedefe uygulanıp uygulanmadığı (diğer skill'lerde hep evet). */
@@ -699,7 +738,8 @@ export class Battle {
     const bonus = this.auraArmor(c) + anchors * (anchor?.armorAdd ?? 0) + (c.patience ?? 0) + hoard;
     const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0) + hoard;
     let acc = 0;
-    let eva = 0;
+    // Hide in the Brush (YM17, mob pasifi): şeridinde önünde canlı dost varken kaçınma eki; yoksa 0
+    let eva = pe?.type === 'hideInBrush' && c.hp > 0 && this.coveredInLane(c) ? pe.evasion : 0;
     // extraCrit: vuruşun kendi kritik eki (skill hasarının critBonus'u, Jinx); durum ekleriyle birlikte toplanıp [0, 1]'e kırpılır
     let crit = extraCrit;
     const noMisfortune = this.ignoresMisfortune(c); // boss: Omen'in kritik düşüşü işlemez (madde 272)
@@ -1111,7 +1151,7 @@ export class Battle {
     if (!src || src.hp <= 0) return { avg, min, max };
     for (const e of this.skill(t.skill)?.effects ?? []) {
       if (e.type !== 'damage') continue;
-      const r = damageRange(this.attackStats(src), this.effectiveStats(c), damageSpecFor(src, c, e, this.setup.formulas, 1, true, this.damageTakenMult(c), this.dealtDamageMult(src, c), e.bonusScale ? this.effectiveStats(src) : undefined), this.setup.formulas);
+      const r = damageRange(this.attackStats(src), this.effectiveStats(c), damageSpecFor(src, c, e, this.setup.formulas, 1, true, this.damageTakenMult(c), this.dealtDamageMult(src, c, this.skill(t.skill)), e.bonusScale ? this.effectiveStats(src) : undefined), this.setup.formulas);
       avg += r.avg;
       min += r.min;
       max += r.max;
@@ -2494,12 +2534,14 @@ export class Battle {
           break;
         }
         case 'ground': {
-          if (centerSlot === undefined) break;
-          const slots = group.cells ?? this.areaCells(skillId, centerSlot, opposite(actor.side), actorUid);
+          // Tek hedefli skill (D7, Tainted Bait): zemin hedefin hücresine (hedefin tahtası) konur; alan skill'inde şeklin hücreleri
+          const single = centerSlot === undefined && skill.target === 'single_enemy' ? ts[0] : undefined;
+          if (centerSlot === undefined && !single) break;
+          const slots = single ? [single.slot] : (group.cells ?? this.areaCells(skillId, centerSlot!, opposite(actor.side), actorUid));
           const g: GroundEffect = {
             id: `g${this.groundCount++}`,
             ground: effect.ground,
-            board: opposite(actor.side),
+            board: single ? single.board : opposite(actor.side),
             slots,
             turns: effect.turns,
             source: actor.uid,
@@ -3258,7 +3300,13 @@ export class Battle {
       emit({ type: outcome, source: actor.uid, target: target.uid });
       return { landed: false };
     }
-    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, this.damageTakenMult(target), this.dealtDamageMult(actor, target), effect.bonusScale ? this.effectiveStats(actor) : undefined);
+    // Flock Shield (YM18): savaşta bir kez ilk isabet eden düşman skill vuruşu azalır; yoksa 1 (ifade aynı)
+    const flock = this.flockMult(actor, target);
+    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target) * flock : this.damageTakenMult(target), this.dealtDamageMult(actor, target, this.castingSkill), effect.bonusScale ? this.effectiveStats(actor) : undefined);
+    if (flock !== 1) {
+      target.passiveUsed = true;
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+    }
     const targetStats = this.effectiveStats(target);
     const base = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng); // Abyssal Fury: bonus STR yalnızca hasarda (madde 262)
     // Garantili kritik (Backstab): kritik zarı ATILMAZ, kritik çarpanı uygulanır (debug 'never' yine kapatır; Jinxed bunu bozmaz: madde Ö5).
@@ -3564,6 +3612,8 @@ export class Battle {
   private damagedPassives(actor: Combatant, target: Combatant, meta: HitMeta, emit: Emit): void {
     this.lastHitOn.set(target.uid, { source: actor.uid, origin: meta.origin });
     const pe = target.passive?.effect;
+    // Grudge (YM14): kin, ona en son SKILL ile vuran düşmana geçer
+    if (pe?.type === 'grudge' && meta.origin === 'skill' && actor.side !== target.side) target.grudgeOn = actor.uid;
     // Stone Patience: herhangi bir hasar birikmiş zırhı sıfırlar
     if (pe?.type === 'stonePatience') {
       target.patienceHurt = true;
@@ -3630,6 +3680,14 @@ export class Battle {
         emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
         emit({ type: 'ground', id: g.id, ground: g.ground, board: g.board, slots: g.slots, turns: g.turns });
       }
+    }
+    // Shares of the Dead (YM19, mob pasifi): çağrı olmayan bir dost ölünce Fortified + kalıcı hasar eki (yığılır)
+    if (!c.summoned && !c.inert) for (const a of this.living(c.side)) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'sharesOfDead' || a === c) continue;
+      a.shares = (a.shares ?? 0) + 1;
+      emit({ type: 'passive', actor: a.uid, passive: a.passive!.id, name: a.passive!.name });
+      if (this.statusDef(e.status)) this.addStatus(a, { kind: e.status, turns: e.turns, source: a.uid }, emit, a.passive!.id);
     }
     // Corpse Hunger (YM9, mob pasifi): çağrı olmayan herhangi bir birim ölünce taşıyan maks canının oranı kadar iyileşir
     if (!c.summoned && !c.inert) for (const a of this.combatants) {

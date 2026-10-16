@@ -275,70 +275,33 @@ Ortak kancalar (engine-dev için; 13 kural 7 kancaya iner): onDamaged (YM1, YM3,
 Onay paketleri (mob başına; karakter + ikonlar + VFX): 1 Moor Raider (2 skill), 2 Bandit Crossbowman (1), 3 Charcoal Burner (2), 4 Stonebound Warden (çizim + 2), 5 Thane (çizim + 2), 6 Deep Runecaller (çizim + 2), 7 Hedge Witch Morwen (çizim + 2), 8 Drowned (1), 9 Grave Chanter (çizim + 2), 10 Oathsworn Brother (çizim + 2), 11 Censer Monk (çizim + 2), 12 High Priest (çizim + 3). Pasif ikonları ilgili paketin içinde. Sesler kodla (WebAudio), çizim gerektirmez. Korunan eski mob skill'lerinin (Cudgel, Bolt, Ember Toss...) kendi ikon/VFX'i sonraya kalır (Ömer 2026-10-16).
 Önerilen sıra (karşılaşma açılış sırasına göre): 1, 3 (Windy Moor, Charcoal Camp hazır olur) -> 4, 2, 6 (Iron Pass) -> 5 (Mine) -> 8, 7 (Marsh, Witch's Hut) -> 9 (Grave Field) -> 10, 11 (Abbey) -> 12 (Cathedral).
 
-### 6.1 Yer tutucular (uygulandı 2026-10-16, engine-dev)
+### 6.1 Yer tutucular -> sanat BAĞLANDI (2026-10-16, content-designer)
 
-Bölge II veri + motor olarak oyunda; yeni sanat henüz yok. Her şey var olan bir sanatı **ödünç** kullanıyor, eksik dosya çökertmez. Sanat gelince yalnızca aşağıdaki alanlar değişir (id'ler sabit).
+Bölge II'nin ChatGPT sanatı oyunda: 8 karakter çizimi, 23 skill ikonu + 13 pasif ikonu, 23 VFX sheet'i, High Priest poz sayfası. Aşağıdaki tüm yer tutucular **bağlandı**. Veride `artOf` / `icon` / `vfx` alanları YEDEK olarak kalır (ses hâlâ ödünç sahibinden; dosyası olmayan skill bunlara düşer; `tests/mobs.test.ts` artOf kuralı değişmedi): boyalı ikon ve efekt skill/pasif id'siyle dosyadan bulunur.
 
-**Karakter çizimi** (`data/mobs/<id>.json > spriteId`; çizim gelince `spriteId` = mobun kendi id'si, dosyalar `assets/sprites/<id>/` + `assets/avatars/<id>.png`, `tools/import-mobs.py`):
+- **Karakter çizimi:** 8 mobun `spriteId` = kendi id'si (Stonebound Warden artık yeni çizim; Shieldwarden palet varyantı kaldırıldı; Thane ve Morwen kendi çizimleri). `python tools/import-mobs.py --only <id>` (HEADS = avatar kafa kutusu).
+- **Skill ve pasif ikonları:** `assets/mob-icons/<skill ya da pasif id>.png` (128) + `small/` (64); ad `mob:<id>` (`src/ui/mob-icons.ts`, HUD / tooltip / Codex). Kesim `node tools/import-mob-art.mjs icons` (sayfa -> hücre adları aracın `ICON_SHEETS` tablosunda).
+- **VFX:** `assets/mob-vfx/<mob>/<skill>.png` + `.json` (8 kare, 256 px); oynatma `src/game/mob-vfx.ts > MOB_VFX_SPECS` (skill başına satır: melee / bolt / cells / center / self / ally, vuruş karesi, boy). Sürümden bağımsız; `node tools/import-mob-art.mjs vfx`.
+- **Pozlar (yeni):** `assets/sprites/<id>/poses.png` + `data/mob-poses.json` (hangi anda hangi kare). Şimdilik High Priest; Bandit Chief ve bosslar aynı kayıtla eklenir. `node tools/import-mob-art.mjs poses`.
 
-| Mob (id) | Şu anki yer tutucu spriteId | Son spriteId |
+| Mob (id) | Eski yer tutucu spriteId | Durum |
 |---|---|---|
-| Deep Runecaller (`deep_runecaller`) | `ember_acolyte` | `deep_runecaller` |
-| Grave Chanter (`grave_chanter`) | `ember_acolyte` | `grave_chanter` |
-| Oathsworn Brother (`oathsworn_brother`) | `shieldwarden` | `oathsworn_brother` |
-| Censer Monk (`censer_monk`) | `charcoal_burner` | `censer_monk` |
-| High Priest of the Undying (`high_priest_of_the_undying`) | `charcoal_burner` (spriteScale 1,15) | `high_priest_of_the_undying` |
-| Thane of the Deep (`thane_of_the_deep`) | `stonebound_warden` (spriteScale 1,12) | `thane_of_the_deep` |
-| Hedge Witch Morwen (`hedge_witch_morwen`) | `fen_witchling` | `hedge_witch_morwen` |
-| Stonebound Warden (`stonebound_warden`) | kendi id'si (eski palet çizimi) | aynı id, dosya yenilenir |
+| Deep Runecaller | `ember_acolyte` | bağlandı |
+| Grave Chanter | `ember_acolyte` | bağlandı |
+| Oathsworn Brother | `shieldwarden` | bağlandı |
+| Censer Monk | `charcoal_burner` | bağlandı |
+| High Priest of the Undying | `charcoal_burner` | bağlandı (+ poz sayfası; spriteScale 1,15 kaldı) |
+| Thane of the Deep | `stonebound_warden` | bağlandı (spriteScale 1,12 kaldı) |
+| Hedge Witch Morwen | `fen_witchling` | bağlandı |
+| Stonebound Warden | eski palet çizimi | bağlandı (yeni çizim) |
 
-**Skill ikonu / VFX / ses** (`data/skills.json`; şu an `artOf` sahibinin `icon` + `vfx` + `sfx`'i birebir kopya, `tests/mobs.test.ts` bunu denetler). Sanat gelince skill'in `icon`/`vfx` alanı yeni ada (öneri: skill id'si) geçer ve `artOf` silinir (o skill için mobs.test artOf kuralı gevşetilir):
+Skill ikon + VFX (23): Billhook, Peat Smoke, Scatter Quarrels, Shovel of Embers, Kiln Smoke, Gatestone Slam, Rockfall, Pick of the Deep, Oath of Stone, Rune Spark, Glyph of Breaking, Cauldron Splash, Hag's Mark, Clutch, Dirge, Call the Buried, Penance Flail, Sanctuary, Holy Ember, Consecrate, Bone Rite, Requiem, Unholy Benediction: hepsi **bağlandı** (ikon + VFX). Sesleri eskisi gibi ödünç (`sfx`, artOf sahibinin sürümü).
 
-| Skill | id | artOf (ödünç) | icon | vfx | sfx |
-|---|---|---|---|---|---|
-| Billhook | `billhook` | `jinx` | `clover` | `bonethrow` | chainTether, boneImpact |
-| Peat Smoke | `peat_smoke` | `smoke_bomb` | `smokebomb` | `smokebomb` | fistWhoosh, smokePuff |
-| Scatter Quarrels | `scatter_quarrels` | `piercing_arrow` | `pierce` | `pierce` | heavyTwang, arrowWhoosh, arrowThunk |
-| Shovel of Embers | `shovel_of_embers` | `fire_bolt` | `fireball` | `fireball` | flameIgnite, flameRoar, fireBlast |
-| Kiln Smoke | `kiln_smoke` | `ash_brand` | `ashbrand` | `ashbrand` | emberHiss |
-| Gatestone Slam | `gatestone_slam` | `tremor_slam` | `tremor2` | `tremor2` | plateCreak, heaveGrunt, shieldPlant, groundHeave |
-| Rockfall | `rockfall` | `root_smash` | `rootsmash` | `rootfall` | woodCreak, woodSmash, rootsRumble, leafRustle |
-| Pick of the Deep | `pick_of_the_deep` | `anchor_smash` | `anchorsmash` | `anchorsmash` | chainDrag, anchorImpact |
-| Oath of Stone | `oath_of_stone` | `taunt` | `taunt2` | `taunt2` | shieldBang, battleRoar |
-| Rune Spark | `rune_spark` | `void_strike` | `voidstrike` | `voidstrike` | voidPulse, implode |
-| Glyph of Breaking | `glyph_of_breaking` | `drain_field` | `drainfield` | `drainfield` | voidSuction, voidPulse, energySlurp |
-| Cauldron Splash | `cauldron_splash` | `withering_curse` | `drainfield` | `wail` | graveMoan, voidSuction |
-| Hag's Mark | `hags_mark` | `doom_mark` | `voidstrike` | `voidstrike` | voidPulse, implode |
-| Clutch | `clutch` | `venom_edge` | `venomedge` | `venomedge` | daggerDraw, twinSlice |
-| Dirge | `dirge` | `bone_throw` | `bonethrow` | `bonethrow` | boneSpin, boneImpact |
-| Call the Buried | `call_the_buried` | `raise_dead` | `raise` | `raise` | graveMoan, earthCrack, boneClatter, thud, soulDrain |
-| Penance Flail | `penance_flail` | `melee_attack` | `sword` | `doublestrike` | armorRun, axeSwing, axeChop |
-| Sanctuary | `sanctuary` | `spell_ward` | `spellward` | `spellward` | wardHum |
-| Holy Ember | `holy_ember` | `holy_strike` | `judgehammer` | `hammerfall` | hammerWhoosh, hammerSlam |
-| Consecrate | `consecrate` | `judgment` | `judgebeam` | `judgment` | hammerWhoosh, hammerSlam, fireCrackle |
-| Bone Rite | `bone_rite` | `evil_eye` | `eye` | `voidstrike` | darkChant, boneImpact |
-| Requiem | `requiem` | `withering_curse` | `drainfield` | `wail` | graveMoan, voidSuction |
-| Unholy Benediction | `unholy_benediction` | `rejuvenate` | `rejuvenate` | `rejuvenate` | chimeHeal, leafRustle |
+Pasif ikonları P1-P13 (Cut and Run, Last Ember, Rebuke, Stone Patience, Deep Hoard, Ward-Etcher, Mire-Bound, Flicker, Corpse Hunger, Bone Ward, Martyr's Vow, Censer Smoke, Vessel of the Choir): hepsi **bağlandı**.
 
-Not: Wither ve Jinxed uygulayan skill'ler (Billhook, Cauldron Splash, Requiem) Hexer sanatını ödünç alır; durum rozetinin sürüm sahibi Hexer kalır (`tests/ui-hooks-v2.test.ts`).
+Hâlâ yer tutucu: korunan eski mob skill'leri (aşağıda; Cudgel, Hamstring ve Gnaw'ın İKONU 2026-10-16'da bağlandı, efektleri ödünç). Bölge I: 9.10'da bağlandı.
 
-**Pasif ikonu** (`data/mobs/<id>.json > passive.icon`; var olan ikon türleri, `src/ui/icon-kinds.ts`). ChatGPT ikonu gelince `icon` yeni ada geçer:
-
-| # | Pasif (id) | Yer tutucu icon | Kimde |
-|---|---|---|---|
-| P1 | Cut and Run (`cut_and_run`) | `shrouded` | Moor Raider, Bandit Crossbowman |
-| P2 | Last Ember (`last_ember`) | `flame` | Ember Acolyte, Charcoal Burner |
-| P3 | Rebuke (`rebuke`) | `bash` | Shieldwarden |
-| P4 | Stone Patience (`stone_patience`) | `bulwark` | Stonebound Warden |
-| P5 | Deep Hoard (`deep_hoard`) | `mpregen` | Thane of the Deep |
-| P6 | Ward-Etcher (`ward_etcher`) | `rune` | Deep Runecaller |
-| P7 | Mire-Bound (`mire_bound`) | `hourglass` | Fen Witchling, Hedge Witch Morwen |
-| P8 | Flicker (`flicker`) | `feather` | Will-o'-Wisp |
-| P9 | Corpse Hunger (`corpse_hunger`) | `soul` | Ghoul, Drowned |
-| P10 | Bone Ward (`bone_ward`) | `bone` | Grave Chanter |
-| P11 | Martyr's Vow (`martyrs_vow`) | `guardian` | Oathsworn Brother |
-| P12 | Censer Smoke (`censer_smoke`) | `hpregen` | Censer Monk |
-| P13 | Vessel of the Choir (`vessel_of_the_choir`) | `wail` | High Priest of the Undying |
+Not: Wither ve Jinxed uygulayan skill'ler (Billhook, Cauldron Splash, Requiem) artOf ile Hexer'e bağlı kalır; durum rozetinin sürüm sahibi Hexer (`tests/ui-hooks-v2.test.ts`).
 
 Kaldırılan: `snare_shot` (Bandit Crossbowman'ın eski skill'i, başka sahibi yoktu). Korunan eski mob skill'leri (Cudgel, Hamstring, Gnaw, Feast, Drag Under, Ember Toss, Burn the Ground, Shield Bash, Hold the Line, Shield Wall, Hex Bolt, Bog Curse, Lure Light, Spark, Marsh Glow) aynen `artOf` ile kalır.
 
@@ -359,7 +322,7 @@ Kaldırılan: `snare_shot` (Bandit Crossbowman'ın eski skill'i, başka sahibi y
 
 Bölge III'te 6 savaşın tamamı bugün class kopyası; hepsi mob olur. Rakip bölük savaşı Bölge III'te yok: tek rakip bölük Pilgrim Road (Ömer 2026-10-16).
 
-**Tutorial / Bölge I** (en son yapılır): Road Thug (kit kalır, pasif P1 Cut and Run alır), Cutpurse (cutthroat kopyası -> YENİ mob), Grey Wolf (YENİ, Beasts), Ravenwood Poacher (Crossbowman paletinden kendi kitine), Bandit Chief (elit, özel çizim + pasif + 3 aktif). Tutorial'ın güç çarpanları ve ultimate kilitleri korunur. Sayım: Bölge I ~3 + Bölge II 4 + Bölge III ~5 = ~12 yeni sıradan mob tasarımı (karar ile uyumlu).
+**Tutorial / Bölge I** (en son yapılır; ayrıntılı plan 9. bölümde, bu taslağın yerine geçer): Road Thug (kit kalır, pasif P1 Cut and Run alır), Cutpurse (cutthroat kopyası -> YENİ mob), Grey Wolf (YENİ, Beasts), Ravenwood Poacher (Crossbowman paletinden kendi kitine), Bandit Chief (elit, özel çizim + pasif + 3 aktif). Tutorial'ın güç çarpanları ve ultimate kilitleri korunur. Sayım: Bölge I ~3 + Bölge II 4 + Bölge III ~5 = ~12 yeni sıradan mob tasarımı (karar ile uyumlu).
 
 ## 8. Açık sorular (Ömer): kapandı (2026-10-16)
 
@@ -371,3 +334,238 @@ Tümü önerilen seçenekle kapandı:
 5. Pasif ikonları: ChatGPT ile çizilir (13 ikon).
 6. Korunan eski mob skill'lerinin ChatGPT ikon/VFX'i: sonra.
 Ek (Ömer notu): MP ağırlıklı pasifler çeşitlendirildi (2.2, 5); yeniden onay gerekmez.
+
+## 9. Bölge I (tutorial) — ayrıntılı plan
+
+> **Durum: ONAYLANDI (Ömer 2026-10-16) ve UYGULANDI (engine-dev, 2026-10-16).** Ömer 7 birimin, 3 karşılaşmanın ve YM14-YM19'un tamamını onayladı; 9.9'daki açık sorular önerilen cevaplarla kapandı:
+> 1. Ravenwood caster'ı: yeni **Raven Seer** (Ember Acolyte değil).
+> 2. Watchtower caster'ı: **Ember Acolyte** (şefin yanındaki tarikat elçisi).
+> 3. Cutpurse'ün **Head Start**'ı Mill Road'da kalır (düşman ilk oynar; partyUndying ile tehlikesiz).
+> 4. Grey Wolf yeni aile **Beasts**'i açar; Bölge III'teki Ash Hound (sonra) bu aileye katılır.
+> 5. Road Thug **Grudge** (P14) alır (Cut and Run değil).
+> Uygulama notları ve sapmalar: 9.10 ve `open-questions.md` madde 330; denge ölçümü `data/campaign/balance.json > _regionI`.
+>
+> (Eski durum satırı: TASARIM PLANI, content designer, 2026-10-16.) 7. bölümdeki tutorial taslağının yerine geçer. Baştaki bağlayıcı kararlar aynen geçerli; ek olarak: tutorial'da rakip bölük YOK (class kopyası sıfır), Bölge I'de en çok 1 MP'ye dayanan pasif, en çok 1 caster'sız savaş (Mill Road). Zorluk hedefleri aynı (`balance.json > _tutorial3`): tutorial kategorisi Medium ~%94-97, Ruined Watchtower Medium ~%85-90, duvar yok. Çarpanlar (mods) yeni mob statlarına göre `sim:campaign` ile baştan ayarlanır; bugünkü x1,10 / x1,05 / şef -%3 ayarı class kopyalarına göreydi.
+
+### 9.1 Denetim: Bölge I bugün
+
+| Düğüm | Karşılaşma | Birimler (yuva) | Kahraman sınırı | Class kopyası | Caster? | Sorun |
+|---|---|---|---|---|---|---|
+| Mill Road | `mill_road_thugs` (partyUndying) | "Road Thug" = Warrior (1), "Cutpurse" = Cutthroat (0) | 1 | **2/2** | hayır | `data/mobs/road_thug.json` var ama hiçbir savaşta kullanılmıyor (pasifi Opportunist = class pasifi); düşmanda Rage barı, Backstab kilidi gibi class ayrıntıları |
+| Ravenwood | `ravenwood_pack` | Cutthroat (0), Warrior (1), Cutthroat (2), Archer (6), Archer (8) | 2 | **5/5** | hayır | Alan dersi için kümeli ama 3 farklı class kiti yeni oyuncuya okunmuyor; orman hikâyesi yok |
+| Ruined Watchtower (elit) | `watchtower_tutorial` | Bandit Chief = Warrior elit (1), Archer (6), Archer (8) | 2 | **3/3** | hayır | Elit lider düz Warrior; okçular Ravenwood'dakilerin aynısı |
+
+Bugün: 10 birimin 10'u class kopyası, 3 savaşın 3'ü caster'sız (kural en çok 1). Endless'ın `watchtower_chief` / `ravenwood_pack_lite` / `watchtower_chief_lite` kayıtları bu planın dışında (dokunulmaz); `mill_road_thug_solo` fallback'i Road Thug mobuna geçer.
+
+### 9.2 Mob listesi
+
+| Mob | Aile | Durum | Rol | Caster | Çizim | Savaşlar |
+|---|---|---|---|---|---|---|
+| Road Thug | Bandits | var olan mob dosyası kullanılır, pasif yenilenir | ön, melee brute | hayır | var (`road_thug`) | Mill Road |
+| **Cutpurse** | Bandits | **YENİ** (Cutthroat kopyası yerine) | ön, hızlı melee | hayır | **YENİ** | Mill Road |
+| **Grey Wolf** | Beasts (yeni aile) | **YENİ** | ön, sürü | hayır | **YENİ** | Ravenwood |
+| **Ravenwood Poacher** | Bandits | **YENİ** (kendi çizimi; Crossbowman paleti değil) | arka, menzilli tuzakçı | hayır | **YENİ** | Ravenwood, Watchtower |
+| **Raven Seer** | Bandits (orman kaçağı bilici) | **YENİ** | arka, caster | **evet** | **YENİ** | Ravenwood |
+| Ember Acolyte | Ember Cult | Bölge II mobu, değişmez (hikâye: şefin yanındaki tarikat elçisi; Ashford ilan tahtasındaki "yanan çiftlikler") | arka, caster | **evet** | var | Watchtower |
+| **Bandit Chief** | Bandits (elit) | **YENİ** kit + çizim + poz sayfası | ön, elit | hayır | **YENİ** | Watchtower |
+
+Yeni sıradan mob: **4** (Cutpurse, Grey Wolf, Ravenwood Poacher, Raven Seer) + elit Bandit Chief. Taslaktaki ~3'ten bir fazla: Ravenwood ve Watchtower'ın ikisi de caster ister (Mill Road caster'sız). Alternatif (Ömer kararı, 9.9): Raven Seer yerine Ravenwood'da da Ember Acolyte. Taslaktaki "Road Thug P1 Cut and Run alır" değişti: Cut and Run yarı canda Shrouded + hız verir, Mill Road'un zorunlu adımlarında kafa karıştırır; Road Thug kendi pasifini alır (P14).
+
+### 9.3 Pasifler (hepsi YENİ MEKANİK; 0.8.1 kancalarına oturur)
+
+MP'ye dayanan pasif: **0 / 6** (sınır 1). Hiçbiri birincil stat bonusu ya da class pasifi kopyası değil.
+
+| # | Pasif (oyun içi) | Kimde | Kural (tam) | Oyuncuya öğrettiği | Kanca |
+|---|---|---|---|---|---|
+| P14 | **Grudge** | Road Thug | Temel saldırısı (Cudgel), ona en son skill ile vuran kahramana +%25 hasar verir; başka kahraman vurunca kin ona geçer. | Kime vurduğun önemli: haydut, ona vuranı geri döver. | var olan `lastHitOn` + giden hasar çarpanı |
+| P15 | **Head Start** | Cutpurse | Savaş başında hız desteği alır (Skip Turn'deki gibi: ilk turu yarı sürede gelir). | Sıra çubuğu: hızlı düşman önce oynar (Mill Road'un The Turn Bar dersine somut örnek). | var olan `speedBoost`, yeni tetik: savaş başı |
+| P16 | **Pack Tactics** | Grey Wolf | Aynı sıradaki (row) her diğer canlı Grey Wolf için +%15 hasar (3 kurtta +%30). | Sürüyü alanla birlikte vur: biri ölünce diğerleri zayıflar. | giden hasar çarpanı (dost sayımı) |
+| P17 | **Hide in the Brush** | Ravenwood Poacher | Kendi şeridinde (lane) önünde canlı bir dost durdukça kaçınması +%20 (Shrouded ile aynı değer; durum rozeti değil, kartta pasif satırı). | Önce önündeki siperi temizle ya da alanla/sütunla vur. | koşullu kaçınma (`effectiveStats`) |
+| P18 | **Flock Shield** | Raven Seer | Savaş başına bir kez: ilk kez skill hasarı aldığında hasarın %50'sini kuzgunlar üstlenir. | Bilicinin ilk vuruşu yarım gelir; ilk vuruşu ucuz bir saldırıyla harca. | onDamaged + `passiveUsed` (Cut and Run gibi bir kez) |
+| P19 | **Shares of the Dead** | Bandit Chief (elit) | Bir dostu her ölünce 1 tur Fortified alır ve savaş sonuna kadar +%15 hasar kazanır (yığılır; 2 eşlikçiyle en çok +%30). | Seçim: önce şef mi, adamları mı? Adamları ölünce şef öfkelenir. | ölüm olayı + var olan `fortify` + birikimli hasar çarpanı |
+
+Ember Acolyte kendi pasifi P2 Last Ember ile gelir (değişmez).
+
+### 9.4 Mob kartları (Bölge I)
+
+Çizim stili, ikon ve VFX kuralları 2.3 ile aynı (ortak prompt başı; 4x2 ızgara 8 kare x 256 px; 128x128 ikon). Hiçbiri Warrior, Archer, Cutthroat ya da başka oynanabilir sınıfın çiziminden türetilmez. Statlar Road Thug (STR 28 / zırh 14) ölçeğinde; son değerler sim ile.
+
+**Road Thug** (var olan `road_thug` mobu) · ön, melee brute, caster değil · STR 28 / DEX 10, zırh 14 (değişmez) · Pasif P14 Grudge (Opportunist çıkar).
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| Cudgel (temel, VAR) | tek düşman, melee | STR fiziksel 0,95 | 0 / — | var (artOf; yeni ikon sonra) | var |
+| Hamstring (VAR) | tek düşman, melee | STR fiziksel 0,8 + 2 tur Slow | 4 / 2 | var (artOf) | var |
+
+Çizim: var olan sprite. Yeni skill yok (eski mob skill'lerinin yeni sanatı sonra, 8. bölüm madde 6).
+
+**Cutpurse** (YENİ) · ön, hızlı melee, caster değil · DEX 24 / STR 10, zırh 8, can düşük · Pasif P15 Head Start.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Shiv** (temel) | tek düşman, melee | DEX fiziksel 0,9 | 0 / — | Bez sarılı kısa, çentikli bıçak | Hızlı alttan bıçak darbesi, kısa gümüş iz, küçük kıvılcım |
+| **Sand in the Eyes** | tek düşman, melee | DEX fiziksel 0,3 + 1 tur Blinded | 4 / 3 | Avuçtan savrulan kum | Avuçtan saçılan sarı kum yelpazesi, hedefin yüzünde toz bulutu |
+
+Çizim: *"A wiry young street thief of the border roads, lean and quick, patched brown hood and short frayed cloak, leather vest hung with several stolen coin purses, one forearm wrapped in rags, crouched ready to dart, a short notched knife held low, a pinch of sand trickling from the other fist, faded mustard-yellow scarf as accent colour."*
+
+**Grey Wolf** (YENİ, Beasts) · ön, sürü, caster değil · STR 20 / DEX 16, zırh 6, can Road Thug'ın ~%70'i · Pasif P16 Pack Tactics.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Bite** (temel) | tek düşman, melee | STR fiziksel 0,85 | 0 / — | Açık kurt çenesi, sivri dişler | Yandan kapanan gri çene silueti, kısa kırmızı-beyaz ısırık izi |
+| **Rend** | tek düşman, melee | STR fiziksel 0,6 + 2 tur Wound | 4 / 3 | Üç paralel pençe yarığı | Çapraz üç pençe izi, koyu kırmızı yırtık çizgiler |
+
+Çizim: *"A lean grey forest wolf of the borderland woods, side view, rough winter fur with a darker back stripe, scarred muzzle, head low and hackles raised, teeth bared, thin and hungry build, pale amber eyes as accent colour."*
+
+**Ravenwood Poacher** (YENİ) · arka, menzilli tuzakçı, caster değil · DEX 24 / STR 10, zırh 8 · Pasif P17 Hide in the Brush.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Poacher's Shot** (temel) | tek düşman, menzilli | DEX fiziksel 0,9 | 0 / — | Siyah kuzgun tüylü kaba ok | Kısa yaydan çıkan kaba ok, siyah tüy izi, saplanınca yaprak savrulması |
+| **Tainted Bait** | tek düşman (hedef hücre) | DEX fiziksel 0,3 + hedef hücreye 2 tur Poison zemini (var olan `poison`) | 6 / 3 | Kanlı bez içinde yeşil lekeli et parçası | Yay çizip düşen yem, yerde yayılan yeşil zehir lekesi ve kabarcıklar |
+
+Çizim: *"A gaunt woodland poacher of the raven woods, mud-stained green-brown hooded cloak sewn with black raven feathers, fur-lined boots, an iron jaw-trap and coiled snares hanging from the belt, a short crude hunting bow made from a bent branch, quiver of black-fletched arrows, lower face hidden by a scarf, sickly poison-green stain on the gloves as accent colour."*
+
+**Raven Seer** (YENİ) · arka, **caster** · INT 26 / STR 6, zırh 4, MZ 8, can düşük · Pasif P18 Flock Shield.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Raven's Peck** (temel) | tek düşman, menzilli | INT büyü (karanlık) 0,75 | 0 / — | Gagası açık kuzgun başı, mor göz | Elden fırlayan mor gölgeli kuzgun, hedefe dalıp tüy patlaması |
+| **Murder of Crows** | 2x2 alan, düşman | INT büyü (karanlık) 0,35 | 8 / 3 | Daire çizen kuzgun sürüsü | Dönen siyah kuzgun sürüsü 4 hücrenin üstüne çöker, savrulan tüyler |
+
+Çizim: *"A ragged forest seer who lives among the ravens, old and thin, long tangled black hair braided with feathers and small bones, layered torn dark cloaks like folded wings, a raven perched on one shoulder and another on a gnarled staff, milky white clouded eyes, faint violet glow around the hands as accent colour."*
+
+**Ember Acolyte** (Bölge II, değişmez) · Ember Toss + Burn the Ground, P2 Last Ember. Yeni sanat yok.
+
+**Bandit Chief** (YENİ, elit = pasif + 3 aktif; poz sayfası sonra) · ön, melee, caster değil · STR 30 / DEX 12, zırh 20, MZ 6, can ~140 (elit) · `initialCooldownBonus` 1 kalır · Pasif P19 Shares of the Dead.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Chief's Cleaver** (temel) | tek düşman, melee | STR fiziksel 1,0 | 0 / — | Geniş ağızlı, çentikli kasap baltası | Ağır baltanın yukarıdan inişi, turuncu-kahve darbe halkası |
+| **Toll Sweep** | bir sıra (row) | STR fiziksel 0,55 | 6 / 3 | Yatay yay çizen balta | Sıra boyunca yatay balta yayı, ardışık kıvılcım ve toz |
+| **Hold the Tower** | kendisi | 2 tur taunt + 1 tur Fortified | 8 / 4 | Yıkık kule önünde kalkan | Ayak altında taş tozu halkası, arkada kule silueti, kalkan çınlar |
+
+Çizim: *"The bandit chief of a ruined border watchtower, big and broad, scarred bald head with a braided red beard, patchwork armour of mismatched plates stolen from different knights, a torn noble's cloak worn as a trophy, a heavy notched butcher's cleaver-axe in one hand, a ring of keys and a coin chain on the belt, dark rust-red cloak as accent colour."*
+Poz sayfası (sonra, elit kuralı): idle, Cleaver, Toll Sweep, Hold the Tower, hasar, ölüm.
+
+### 9.5 Kompozisyonlar
+
+| Düğüm | Birimler (yuva) | Diziliş | Caster | Karşılaşmanın dersi |
+|---|---|---|---|---|
+| Mill Road (partyUndying, 1 kahraman) | Road Thug (1), Cutpurse (0) | 2 ön | **0** (Bölge I'in tek caster'sız savaşı) | Zorunlu adımlar: sıra çubuğu (Cutpurse önce oynar), saldırı, hedef, MP skill'i |
+| Ravenwood (2 kahraman) | Grey Wolf (0), Grey Wolf (1), Grey Wolf (2), Ravenwood Poacher (7), Raven Seer (8) | 3 ön (kümeli) + 2 arka | 1 | Alan: ön sıradaki sürü sıra / 2x2 skill'ine değer; arkadakiler siperde (Rows and Reach), zehir zemini (Move) |
+| Ruined Watchtower (elit, 2 kahraman) | Bandit Chief (1, elit), Ravenwood Poacher (6), Ember Acolyte (8) | 1 ön + 2 arka | 1 | Elit ve seçim: taunt eden şef mi, öldükçe onu güçlendiren adamları mı? Acolyte'i öldüren yanar |
+
+Aynı birim kümesi yok (Poacher iki savaşta, yoldaşları farklı). Caster'sız savaş: 1 (Mill Road). Class kopyası: 0. Birim sayıları bugünkü gibi (2 / 5 / 3).
+Ravenwood'da Poacher şerit 1'de (7), önünde Grey Wolf (1): Hide in the Brush açık; Seer şerit 2'de (8), önünde Wolf (2). Watchtower'da Poacher (6) önünde dost yok (şef şerit 1'de): pasif kapalı, öğretimi Ravenwood'da.
+
+### 9.6 Tutorial kilit kuralları
+
+| Savaş | Kural | Neden |
+|---|---|---|
+| Mill Road | Road Thug `lockSkills: ["hamstring"]`, Cutpurse `lockSkills: ["sand_in_the_eyes"]` | Zorunlu adımlarda düşman yalnızca temel saldırı yapar: durum yok, MP harcamaz, okunur. |
+| Mill Road | `partyUndying: true` kalır; fallback `mill_road_thug_solo` = Road Thug mobu tek başına | Kaybedilemez ilk savaş. |
+| Mill Road | İki düşmanın toplam canı en az 2 kahraman turuna dayanır (sim ile) | İkinci karar (MP skill adımı `f_mp_skill`) için canlı hedef kalmalı. |
+| Ravenwood | kilit yok; Grey Wolf, Poacher ve Seer `initialCooldownBonus` 1 | İlk turda okunur başlangıç (yalnız temel saldırılar); durum, zemin ve düşman alanı sonra gelir. |
+| Watchtower | Bandit Chief `initialCooldownBonus` 1 (bugünkü gibi); eşlikçilerde kilit yok | Şefin Hold the Tower / Toll Sweep'i ilk turunda gelmez. |
+
+Eski `lockSkills` (`abyssal_cry`, `backstab`, `aimed_shot`) class kopyaları gidince kalkar (moblarda ultimate yok).
+
+### 9.7 Durum derslerinin doğal fırsatları
+
+| Ders | Nerede tetiklenebilir |
+|---|---|
+| Reading a Fighter | Ravenwood ilk kararı (yeni moblar, kartta pasif satırı) |
+| Rows and Reach | Ravenwood: melee kahraman arkadaki Poacher / Seer'e ulaşamaz (önde 3 kurt) |
+| Area Shapes | Ravenwood: kümeli 3 kurt; recruit `requireArea` zaten alan skill'li kahraman verir |
+| Statuses | Ravenwood: Rend (Wound) kahramanda ilk durum (Mill Road'da durum skill'leri kilitli) |
+| Burning Ground (Move) | Ravenwood: Tainted Bait zehir zemini; Watchtower: Last Ember ve Burn the Ground |
+| Rest | Ravenwood / Watchtower: uzun savaşta MP biter |
+| Hit Chance | Hide in the Brush kaçınması isabet önizlemesinde görünür |
+
+### 9.8 YENİ MEKANİK listesi (onay sayfası için)
+
+| # | Ad | Tek satır kural | Motor kancası |
+|---|---|---|---|
+| YM14 | Grudge | Temel saldırısı, ona en son skill ile vuran kahramana +%25 hasar. | var olan `lastHitOn` + giden hasar çarpanı |
+| YM15 | Head Start | Savaş başında Skip Turn'deki hız desteğini alır. | var olan `speedBoost`, savaş başı tetiği |
+| YM16 | Pack Tactics | Aynı sıradaki her diğer canlı Grey Wolf için +%15 hasar. | giden hasar çarpanı (dost sayımı) |
+| YM17 | Hide in the Brush | Şeridinde önünde canlı dost varken kaçınma +%20. | koşullu kaçınma (`effectiveStats`) |
+| YM18 | Flock Shield | Savaş başına bir kez, ilk skill hasarını yarıya indirir. | onDamaged + `passiveUsed` |
+| YM19 | Shares of the Dead | Dostu ölünce 1 tur Fortified + kalıcı +%15 hasar (yığılır). | ölüm olayı + var olan `fortify` + birikimli çarpan |
+
+MP'ye dayanan: 0. Ortak kanca: YM14 ve YM16 yeni "giden hasar çarpanı" kancasını paylaşır (bugün yalnız ALINAN hasar çarpanı var: Bone Ward); diğerleri 0.8.1 kancalarının yeni kullanıcısı.
+**Yalnızca doğrulanacak (engine-dev):** D7 `ground` etkisinin `single_enemy` hedefli skill'de hedef hücreye konması (Tainted Bait); D8 Ember Acolyte'in Bölge I'de (`enemyScale` bölge I hariç) doğru ölçeklenmesi; D9 Mill Road kilitleriyle mob YZ'sinin her turda temel saldırıyı seçmesi. Tüm AKTİF skill'ler var olan etkilerle kurulu.
+
+### 9.9 Sanat iş yükü ve açık sorular
+
+| Tür | Adet | Liste |
+|---|---|---|
+| Karakter çizimi (ChatGPT) | **5** | Cutpurse, Grey Wolf, Ravenwood Poacher, Raven Seer, Bandit Chief |
+| Poz sayfası | **1** | Bandit Chief |
+| Yeni skill ikonu | **11** | Shiv, Sand in the Eyes, Bite, Rend, Poacher's Shot, Tainted Bait, Raven's Peck, Murder of Crows, Chief's Cleaver, Toll Sweep, Hold the Tower |
+| VFX sheet (8 kare) | **11** | aynı 11 skill |
+| Pasif ikonu | **6** | Grudge, Head Start, Pack Tactics, Hide in the Brush, Flock Shield, Shares of the Dead |
+
+Onay paketleri (açılış sırasına göre): 1 Road Thug (yalnız pasif ikonu), 2 Cutpurse (çizim + 2), 3 Grey Wolf (çizim + 2), 4 Ravenwood Poacher (çizim + 2), 5 Raven Seer (çizim + 2), 6 Bandit Chief (çizim + 3 + poz sayfası). Yer tutucular 6.1 ile aynı yolla (`artOf`, ödünç `spriteId`); Grey Wolf için uygun ödünç insan dışı çizim yok, geçici olarak `ghoul` önerilir.
+
+**Ömer'e açık sorular:**
+1. Ravenwood caster'ı: yeni **Raven Seer** (önerilen; +1 çizim, +2 skill) mi, yoksa Ravenwood'da da **Ember Acolyte** mi (daha az sanat, ama Acolyte üç savaş üst üste görünür: Ravenwood, Watchtower, Windy Moor)?
+2. Watchtower'daki **Ember Acolyte** (tarikat elçisi, "ash on the wind" önsezisi) uygun mu, yoksa şefin yanına Raven Seer mi?
+3. Cutpurse'ün **Head Start**'ı Mill Road'da düşmanı ilk oynatır: Turn Bar dersine iyi örnek, ama oyuncu ilk kararından önce bir vuruş yer (partyUndying ile tehlikesiz). Kabul mü?
+4. Grey Wolf yeni bir aile (**Beasts**) açar; Bölge III'teki Ash Hound bu aileye bağlanabilir. Uygun mu?
+
+### 9.10 Yer tutucular (uygulandı 2026-10-16, engine-dev) — sanat BAĞLANDI (2026-10-16, content-designer)
+
+> **Durum: bağlandı.** ChatGPT sanatı (2026-10-16) Bölge II ile aynı yoldan içe aktarıldı (`docs/arch/assets.md` > Sefer mobu sanatı):
+> - **Çizimler bağlandı:** 5 mobun `spriteId`'si kendi id'si (`tools/import-mobs.py` HEADS; sprite + 256 avatar). Grey Wolf yatay çizim (1536x1024): idle.png üstten saydam boşlukla en/boy 1,45'e indirilir (1,5 ve üstü oyunda sprite sheet sayılır; araçta `WIDE_MAX`), `spriteScale` 1,6 ile ekranda insan boyunun ~%65'i, ayak zemin çizgisinde; avatarı kafa kırpması. Bandit Chief `spriteScale` 1,15 kalır.
+> - **Poz sayfası bağlandı:** Bandit Chief 4x3 (`data/mob-poses.json`; figürler ızgarayı aştığı için bileşen bazlı kesim, araçta `POSE_SPLIT`): boşta 1/2, Chief's Cleaver 3->4 (atılmadan önce kaldırma pozu, `MOB_VFX_SPECS.windMs`), Toll Sweep 5->6 (kayıtta skill'e özel `skills`), Hold the Tower 7, darbe 9 / sendeleme 10, yığılma 11 -> yerde 12; 8 = adım.
+> - **İkonlar bağlandı:** 11 skill + 6 pasif + eski **Cudgel, Hamstring, Gnaw** (5 sayfa, `ICON_SHEETS`). Veride `icon` ve `artOf` yedek olarak kalır (Bölge II gibi; boyalı ikon `mob:<id>` adıyla öne geçer).
+> - **VFX bağlandı:** 11 sheet (`MOB_VFX_SPECS`): yakın dövüş Shiv, Sand in the Eyes, Bite, Rend, Chief's Cleaver, Toll Sweep (sıradaki her hedefte); mermi Poacher's Shot, Raven's Peck; zemin Tainted Bait (hedef hücrede); alan Murder of Crows (2x2'nin ortasında tek büyük sheet); kendine Hold the Tower. Kaynak sheet'lerdeki komşu hücre kırıntıları ve Cleaver'ın soluk sisi araçta temizlenir (`CLEAN_EDGES`, `HAZE`, `ROW_SEAM`; yalnız Bölge I).
+> - **Hâlâ yer tutucu:** tüm SESLER (aşağıdaki sfx sütunu ödünç sahibinden; Bölge II gibi), eski mob skill'lerinin EFEKTLERİ (Cudgel, Hamstring, Gnaw ve Feast vb. `artOf` vfx'i) ve ikonu gelmemiş diğer eski mob skill'leri (ör. Ghoul'un Feast'i), Ember Acolyte'in Bölge II sanatı (değişmez).
+>
+> Aşağıdaki tablolar YER TUTUCU dönemin kaydıdır (ödünç değerler veride yedek olarak duruyor).
+
+Bölge I veri + motor olarak oyunda; yeni sanat henüz yok. Her şey var olan bir sanatı **ödünç** kullanıyor, eksik dosya çökertmez. Sanat gelince yalnızca aşağıdaki alanlar değişir (id'ler sabit). Yol 6.1 ile aynı.
+
+**Karakter çizimi** (`data/mobs/<id>.json > spriteId`; çizim gelince `spriteId` = mobun kendi id'si, dosyalar `assets/sprites/<id>/` + `assets/avatars/<id>.png`, `tools/import-mobs.py`):
+
+| Mob (id) | Şu anki yer tutucu spriteId | Son spriteId |
+|---|---|---|
+| Cutpurse (`cutpurse`) | `moor_raider` | `cutpurse` |
+| Grey Wolf (`grey_wolf`) | `ghoul` (9.9 önerisi; insan dışı ödünç çizim yok) | `grey_wolf` |
+| Ravenwood Poacher (`ravenwood_poacher`) | `bandit_crossbowman` | `ravenwood_poacher` |
+| Raven Seer (`raven_seer`) | `fen_witchling` | `raven_seer` |
+| Bandit Chief (`bandit_chief`) | `road_thug` (spriteScale 1,15) | `bandit_chief` (+ poz sayfası) |
+| Road Thug (`road_thug`) | kendi id'si (değişmez) | aynı |
+
+**Skill ikonu / VFX / ses** (`data/skills.json`; şu an `artOf` sahibinin `icon` + `vfx` + `sfx`'i birebir kopya, `tests/mobs.test.ts` denetler). Sanat gelince skill'in `icon`/`vfx` alanı yeni ada (öneri: skill id'si) geçer ve `artOf` silinir:
+
+| Skill | id | artOf (ödünç) | icon | vfx | sfx |
+|---|---|---|---|---|---|
+| Shiv | `shiv` | `backstab` | `backstab` | `backstab` | shadowStep, backstabThud, bloodSplat |
+| Sand in the Eyes | `sand_in_the_eyes` | `smoke_bomb` | `smokebomb` | `smokebomb` | fistWhoosh, smokePuff |
+| Bite | `bite` | `skeleton_slash` | `boneslash` | `boneslash` | boneSlashWhoosh, boneSlashHit, boneSlashCrack |
+| Rend | `rend` | `venom_edge` | `venomedge` | `venomedge` | daggerDraw, twinSlice |
+| Poacher's Shot | `poachers_shot` | `quick_shot` | `arrow` | `arrowshot` | bowTwang, arrowWhoosh, arrowThunk |
+| Tainted Bait | `tainted_bait` | `wail_of_the_dead` | `wail` | `wail` | ghostWail, graveMoan |
+| Raven's Peck | `ravens_peck` | `evil_eye` | `eye` | `voidstrike` | darkChant, boneImpact |
+| Murder of Crows | `murder_of_crows` | `arrow_rain` | `arrows` | `arrowrain` | bowTwang, arrowShower, arrowThunk |
+| Chief's Cleaver | `chiefs_cleaver` | `melee_attack` | `sword` | `doublestrike` | armorRun, axeSwing, axeChop |
+| Toll Sweep | `toll_sweep` | `whirlwind` | `whirlwind` | `whirlwind` | armorRun, axeSwing, axeChop |
+| Hold the Tower | `hold_the_tower` | `taunt` | `taunt2` | `taunt2` | shieldBang, battleRoar |
+
+Cudgel ve Hamstring (Road Thug) ve Ember Acolyte'in skill'leri eski `artOf` ile aynen kalır.
+
+**Pasif ikonu** (`data/mobs/<id>.json > passive.icon`; var olan ikon türleri, `src/ui/icon-kinds.ts`). ChatGPT ikonu gelince `icon` yeni ada geçer:
+
+| # | Pasif (id) | Yer tutucu icon | Kimde |
+|---|---|---|---|
+| P14 | Grudge (`grudge`) | `rage` | Road Thug |
+| P15 | Head Start (`head_start`) | `boot` | Cutpurse |
+| P16 | Pack Tactics (`pack_tactics`) | `roar` | Grey Wolf |
+| P17 | Hide in the Brush (`hide_in_the_brush`) | `leaves` | Ravenwood Poacher |
+| P18 | Flock Shield (`flock_shield`) | `shield` | Raven Seer |
+| P19 | Shares of the Dead (`shares_of_the_dead`) | `muscle` | Bandit Chief |
+
+**Uygulama sapmaları (engine-dev, 2026-10-16; madde 330):** D7 motorda yoktu (tek hedefli skill'in `ground` etkisi hiçbir şey yapmıyordu): artık zemin hedefin hücresine konur, YZ ve açıklama metni bunu tanır. YZ testinde imza skill'leri hiç seçilmediği için Murder of Crows gücü 0,35 -> 0,45 ve Toll Sweep 0,55 -> 0,7 (2 kahramanlı tutorial'da alan skill'i ancak böyle tek hedefliyi geçer). Bandit Chief YZ profili `mob_tank` (Guard'ı yok). Watchtower şefinin görünen adı karşılaşmada `Bandit Chief` olarak kaldı (harita önizlemesindeki lider adı).

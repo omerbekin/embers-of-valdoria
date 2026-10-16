@@ -54,6 +54,14 @@ export function isDoubleTap(prev: { key: string; at: number } | null, key: strin
 }
 
 /**
+ * Tüccarda torba item'ine çift tık / çift dokunuş (saf; Ömer 2026-10-16): Character görünümü açıkken (ve kahraman varken) kuşan, yoksa SAT.
+ * Mal (ware) çift tıkı ayrı (satın alır); kuşanılmış item'e çift dokunuş satmaz.
+ */
+export function merchantBagDouble(o: { charShown: boolean; hasHero: boolean }): 'equip' | 'sell' {
+  return o.charShown && o.hasHero ? 'equip' : 'sell';
+}
+
+/**
  * Dokunmatik basışın durumu (saf): uzun basış (`holdMs`) önce İPUCUNU açar; ardından parmak kayarsa SÜRÜKLEME başlar. Uzun basıştan önce
  * kayma = kaydırma (iptal). Fare: 6 px kaydırınca sürükleme (ipucu üstüne gelince zaten açık).
  */

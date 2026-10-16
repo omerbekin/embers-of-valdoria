@@ -1,6 +1,6 @@
-import { audioSettings, playSfxOn, synthSfx } from '../../game/audio';
+import { audioSettings, playSfxDef, playSfxOn, synthSfx } from '../../game/audio';
 import { iconUrl } from '../../ui/dom-icons';
-import { MASTER_GAIN, UI_SOUND_GROUP, WORLD_SOUND_GROUP, type Catalog, type SoundEntry } from '../../gallery/catalog';
+import { MASTER_GAIN, MOB_SOUND_GROUP, UI_SOUND_GROUP, WORLD_SOUND_GROUP, type Catalog, type SoundEntry } from '../../gallery/catalog';
 import { previewUiSound, previewWorldSound, UI_AUDIO, WORLD_AUDIO, type UiSoundKind, type WorldSoundKind } from '../../ui/ui-sound';
 import { musicPreviewing, previewMusic, type MusicTrack } from '../../ui/music';
 import { applyFilter, chipBar, fmtSec, h, isolateKeys, searchable, type SectionApi } from '../../gallery/dom';
@@ -24,11 +24,13 @@ export function playSound(id: string, card?: HTMLElement | null): void {
 
 const isUi = (s: SoundEntry): boolean => s.group === UI_SOUND_GROUP;
 const isWorld = (s: SoundEntry): boolean => s.group === WORLD_SOUND_GROUP;
+const isMob = (s: SoundEntry): boolean => s.group === MOB_SOUND_GROUP;
 
 /** Codex kartındaki ▶: arayüz sesi ui-sound üzerinden (seyreltmesiz, UI seviyesi kapalı olsa da duyulur), diğerleri oyunun skill sesi. */
 function playEntry(s: SoundEntry, card?: HTMLElement | null): void {
-  if (!isUi(s) && !isWorld(s)) return playSound(s.id, card);
-  if (isWorld(s)) previewWorldSound(s.id as WorldSoundKind, audioContext());
+  if (!isUi(s) && !isWorld(s) && !isMob(s)) return playSound(s.id, card);
+  if (isMob(s)) playSfxDef(audioContext(), s.def); // sefer düşmanı sesi: skill sesleriyle aynı master / Sound Effects seviyesi
+  else if (isWorld(s)) previewWorldSound(s.id as WorldSoundKind, audioContext());
   else previewUiSound(s.id as UiSoundKind, audioContext(), true);
   if (!card) return;
   card.classList.add('playing');
@@ -60,12 +62,12 @@ export function mountSounds(cat: Catalog): SectionApi {
   const cards = new Map<string, HTMLElement>();
   const peakEls = new Map<string, HTMLElement>();
 
-  const all = [...cat.sounds, ...cat.uiSounds, ...cat.worldSounds];
+  const all = [...cat.sounds, ...cat.uiSounds, ...cat.worldSounds, ...cat.mobSounds];
   const groups = new Map<string, SoundEntry[]>();
   for (const s of all) groups.set(s.group, [...(groups.get(s.group) ?? []), s]);
-  // Önce arayüz (menü) sesleri, sonra class/çağrı grupları (alfabetik), sonra Shared, en sonda kullanılmayanlar
+  // Önce arayüz (menü) sesleri, sonra class/çağrı grupları (alfabetik), sonra Shared, sefer düşmanları, en sonda kullanılmayanlar
   const order = [...groups.keys()].sort((a, b) => {
-    const rank = (g: string): number => (g === UI_SOUND_GROUP ? -2 : g === WORLD_SOUND_GROUP ? -1 : g === 'Unused / UI' ? 2 : g === 'Shared' ? 1 : 0);
+    const rank = (g: string): number => (g === UI_SOUND_GROUP ? -2 : g === WORLD_SOUND_GROUP ? -1 : g === 'Unused / UI' ? 3 : g === MOB_SOUND_GROUP ? 2 : g === 'Shared' ? 1 : 0);
     return rank(a) - rank(b) || a.localeCompare(b);
   });
 
@@ -105,7 +107,7 @@ export function mountSounds(cat: Catalog): SectionApi {
 
   const countEl = h('span', { class: 'count' });
   root.append(
-    h('div', { class: 'section-head' }, h('h2', { text: 'Sounds' }), countEl, h('span', { class: 'muted small', text: 'WebAudio synthesis from data/audio.json (menu sounds: data/audio-ui.json, world & stingers: data/audio-world.json)' })),
+    h('div', { class: 'section-head' }, h('h2', { text: 'Sounds' }), countEl, h('span', { class: 'muted small', text: 'WebAudio synthesis from data/audio.json (menu sounds: data/audio-ui.json, world & stingers: data/audio-world.json, campaign enemies: data/audio-mobs.json)' })),
     h('div', { class: 'toolbar' }, h('label', { class: 'inline' }, volLabel, vol), measure, status),
     chips,
   );
@@ -139,6 +141,11 @@ export function mountSounds(cat: Catalog): SectionApi {
       peakEls.set(s.id, peak);
       const users = isUi(s) || isWorld(s)
         ? [h('span', { class: 'muted small', text: `${isUi(s) ? 'Menu sound' : 'World sound'}: ${s.desc ?? ''}` })]
+        : isMob(s)
+        ? [
+            h('span', { class: 'muted small', text: `Enemy sound: ${s.desc ?? ''}` }),
+            ...s.usedBy.map((u) => h('span', { class: 'tag', title: `${u.name} (${u.owner.name})` }, h('img', { class: 'tag-icon pixelated', attrs: { src: iconUrl(u.icon, '#e8c47e'), alt: '' } }), `${u.name}`)),
+          ]
         : s.usedBy.length
         ? s.usedBy.map((u) => h('span', { class: 'tag', title: `${u.name} (${u.owner.name})` }, h('img', { class: 'tag-icon pixelated', attrs: { src: iconUrl(u.icon, '#e8c47e'), alt: '' } }), `${u.name}`))
         : [h('span', { class: 'muted small', text: 'Not used by any skill (backup / UI)' })];

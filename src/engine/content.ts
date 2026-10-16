@@ -52,6 +52,11 @@ import mobGraveChanter from '../../data/mobs/grave_chanter.json';
 import mobOathswornBrother from '../../data/mobs/oathsworn_brother.json';
 import mobCenserMonk from '../../data/mobs/censer_monk.json';
 import mobHighPriest from '../../data/mobs/high_priest_of_the_undying.json';
+import mobCutpurse from '../../data/mobs/cutpurse.json';
+import mobGreyWolf from '../../data/mobs/grey_wolf.json';
+import mobRavenwoodPoacher from '../../data/mobs/ravenwood_poacher.json';
+import mobRavenSeer from '../../data/mobs/raven_seer.json';
+import mobBanditChief from '../../data/mobs/bandit_chief.json';
 import groundsJson from '../../data/grounds.json';
 import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
@@ -146,6 +151,11 @@ const mobData: CombatantData[] = [
   mobOathswornBrother,
   mobCenserMonk,
   mobHighPriest,
+  mobCutpurse,
+  mobGreyWolf,
+  mobRavenwoodPoacher,
+  mobRavenSeer,
+  mobBanditChief,
 ] as unknown as CombatantData[];
 
 /**

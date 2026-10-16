@@ -13,10 +13,11 @@ import { GRID, PxGrid, spriteCells, type Cell } from './pixel-art';
 import { SHARED_KEY, statusOwner, wantsV2 } from './asset-versions';
 import { ICONS_V2 } from './art-v2/icons-index';
 import { V2_DEFAULT_SIZE, isV2Image, type V2Sprite, type V2SpriteEntry } from './art-v2/types';
-import { ICON_IMAGE_SIZE, STAT_IMAGE_TEXTURE, iconImageUrl, miscImage, statImage, uiImage } from './icon-image-files';
+import { ICON_IMAGE_SIZE, STAT_IMAGE_TEXTURE, iconImageUrl, miscImage, mobImage, statImage, uiImage } from './icon-image-files';
 import { STAT_ICON_PREFIX, statIconFallback } from '../ui/stat-icons';
 import { UI_ICON_PREFIX, uiIconFallback } from '../ui/ui-icons';
 import { isMiscIconName } from '../ui/misc-icons';
+import { MOB_ICON_PREFIX } from '../ui/mob-icons';
 
 export interface ResolvedSprite {
   /** Doku/önbellek anahtarı parçası: v1'de çıplak ad (eski anahtarlar aynen), v2'de `v2:<sahip>:<ad>`. */
@@ -115,6 +116,12 @@ export function resolveSprite(name: string, owner?: string | null): ResolvedSpri
   if (isMiscIconName(name)) {
     // boyalı oyun ikonu (assets/misc-icons): durum, element, zemin, kalıntı, amblem, sınıf logosu, düğüm; dosya yoksa yer tutucu (çağıran paintedOr ile eskiye düşer)
     const img = miscImage(name);
+    if (img) return { key: name, version: 'v2', size: STAT_IMAGE_TEXTURE, cells: () => null, image: img.small, domImage: img.url, smooth: true };
+    return { key: name, version: 'v1', size: GRID, cells: () => null };
+  }
+  if (name.startsWith(MOB_ICON_PREFIX)) {
+    // boyalı sefer mobu ikonu (assets/mob-icons): mob skill'i / pasifi; çağıran yalnızca dosya varsa bu adı verir (src/ui/mob-icons.ts)
+    const img = mobImage(name.slice(MOB_ICON_PREFIX.length));
     if (img) return { key: name, version: 'v2', size: STAT_IMAGE_TEXTURE, cells: () => null, image: img.small, domImage: img.url, smooth: true };
     return { key: name, version: 'v1', size: GRID, cells: () => null };
   }

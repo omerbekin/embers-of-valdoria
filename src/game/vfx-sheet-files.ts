@@ -50,7 +50,27 @@ export const VFX_SHEET_FILES: readonly VfxSheetFile[] = Object.entries(pngs)
   })
   .sort((a, b) => a.id.localeCompare(b.id));
 
-export const vfxSheetFile = (id: string): VfxSheetFile | undefined => VFX_SHEET_FILES.find((f) => f.id === id);
+/**
+ * SEFER MOBU sheet'leri (Bölge II, ChatGPT 2026-10-16): assets/mob-vfx/<mob>/<skill>.png + .json, kimlik 'mob/<mob>/<skill>' (owner = mob id).
+ * Sürüm sisteminin dışında (mob bir sürüm anahtarı değil): src/game/mob-vfx.ts skill id'sine göre oynatır. İçe aktarma
+ * `node tools/import-mob-art.mjs vfx` (asıllar assets/source/mob-vfx).
+ */
+const mobPngs = import.meta.glob('../../assets/mob-vfx/*/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const mobMetas = import.meta.glob('../../assets/mob-vfx/*/*.json', { eager: true, import: 'default' }) as Record<string, VfxSheetMeta>;
+
+export const mobSheetId = (mob: string, skill: string): string => `mob/${mob}/${skill}`;
+
+export const MOB_VFX_SHEET_FILES: readonly VfxSheetFile[] = Object.entries(mobPngs)
+  .map(([path, url]) => {
+    const [owner = '', name = ''] = vfxSheetId(path).split('/');
+    return { id: mobSheetId(owner, name), owner, name, url, meta: mobMetas[path.replace(/\.png$/, '.json')] ?? FALLBACK_META };
+  })
+  .sort((a, b) => a.id.localeCompare(b.id));
+
+export const vfxSheetFile = (id: string): VfxSheetFile | undefined => VFX_SHEET_FILES.find((f) => f.id === id) ?? MOB_VFX_SHEET_FILES.find((f) => f.id === id);
+
+/** Bu birimlerin (mob id'leri) mob sheet kimlikleri: savaş preload'u yalnızca sahnedeki mobların efektlerini yükler. */
+export const mobSheetsOf = (units: readonly string[]): string[] => MOB_VFX_SHEET_FILES.filter((f) => units.includes(f.owner)).map((f) => f.id);
 
 /** Bir sahibin sheet kimlikleri. */
 export const vfxSheetsOf = (owner: string): string[] => VFX_SHEET_FILES.filter((f) => f.owner === owner).map((f) => f.id);

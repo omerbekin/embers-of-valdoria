@@ -4,6 +4,9 @@ import { uiIconName, type UiIconKind } from '../../ui/ui-icons';
 import { itemIconUrl } from '../../ui/item-icon-dom';
 import { BRAZIER_FRAMES, BRAZIER_READY, brazierUrl } from '../../ui/valor-braziers';
 import itemsJson from '../../../data/items.json';
+import { MOB_IMAGE_FILES } from '../../game/icon-image-files';
+import { content } from '../../engine';
+import { MOB_ICON_PREFIX } from '../../ui/mob-icons';
 import type { Catalog, IconEntry } from '../../gallery/catalog';
 import { applyFilter, chipBar, h, isolateKeys, openLightbox, searchable, type SectionApi } from '../../gallery/dom';
 
@@ -171,6 +174,31 @@ export function mountIcons(cat: Catalog): SectionApi {
     );
   }
 
+  // Sefer mobu ikonları (assets/mob-icons/<skill ya da pasif id>.png; tools/import-mob-art.mjs): kim kullanıyor
+  const mobUse = (id: string): string => {
+    const users = Object.values(content.mobs).filter((m) => m.skills.includes(id) || m.passive?.id === id).map((m) => m.name);
+    const what = content.skills[id]?.name ?? Object.values(content.mobs).find((m) => m.passive?.id === id)?.passive?.name;
+    return what ? `${what}${users.length ? ` (${users.join(', ')})` : ''}` : '';
+  };
+  const mobs = h('div', { class: 'cards icons' });
+  for (const id of Object.keys(MOB_IMAGE_FILES).sort()) {
+    const url = iconUrl(`${MOB_ICON_PREFIX}${id}`);
+    const label = mobUse(id);
+    mobs.append(
+      searchable(
+        h(
+          'article',
+          { class: 'card icon-card' },
+          h('img', { class: 'bigicon', attrs: { src: url, alt: id, loading: 'lazy' }, title: 'Click to enlarge', on: { click: () => openLightbox(url, id, false) } }),
+          h('div', { class: 'card-title mono', text: id }),
+          h('div', { class: 'tags' }, h('span', { class: label ? 'badge ok' : 'badge', text: label ? (content.skills[id] ? 'Mob skill' : 'Mob passive') : 'Unlinked' })),
+          h('div', { class: 'small muted', text: label || 'no mob skill or passive with this id' }),
+        ),
+        `mob icon ${id} ${label}`,
+      ),
+    );
+  }
+
   // Valor mangalları (assets/valor): kor sayısına göre 5 kare + alevli (diriltme hazır) kare
   const valor = h('div', { class: 'cards icons' });
   const valorLabel = (n: string): string => (n === BRAZIER_READY ? 'Full + flame: revive ready' : `${n.replace('brazier-', '')} of 4 embers lit`);
@@ -208,6 +236,7 @@ export function mountIcons(cat: Catalog): SectionApi {
     applyFilter(stats, query);
     applyFilter(uis, query);
     applyFilter(misc, query);
+    applyFilter(mobs, query);
     applyFilter(valor, query);
     applyFilter(tints, query);
     countEl.textContent = `${n} / ${cat.icons.length}`;
@@ -231,6 +260,9 @@ export function mountIcons(cat: Catalog): SectionApi {
     h('h3', { class: 'sub', text: `Game icons (${cat.miscArt.filter((a) => a.url && !a.unlinked).length})` }),
     h('p', { class: 'note', text: 'Painted game icons (assets/misc-icons, cut by tools/make-misc-icons.mjs from assets/source/misc-icons; the checkerboard ChatGPT baked into two sheets is removed there). Status badges, element and ground icons, Endless relics and reward emblems, class logos, campaign map nodes, the corpse marker and the crit burst use these; without an image they fall back to the pixel icon.' }),
     misc,
+    h('h3', { class: 'sub', text: `Campaign enemy icons (${Object.keys(MOB_IMAGE_FILES).length})` }),
+    h('p', { class: 'note', text: 'Painted skill and passive icons of campaign enemies (assets/mob-icons, cut by tools/import-mob-art.mjs from assets/source/mob-icons). The battle HUD, tooltips and the Codex show these; an enemy skill without one keeps its borrowed pixel icon.' }),
+    mobs,
     h('h3', { class: 'sub', text: `Valor braziers (${BRAZIER_FRAMES.length + 1})` }),
     h('p', { class: 'note', text: 'Painted Valor braziers (assets/valor, cut by tools/make-valor-icons.mjs from assets/source/valor/brazier-sheet.png). Each brazier shows the frame for its lit embers; the flame frame appears only when the Valor is enough for a revive there. Used on the map, in Endless, in the battle HUD and the Revive button.' }),
     valor,

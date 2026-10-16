@@ -3,7 +3,7 @@
   "id": "thane_of_the_deep",
   "name": "Thane of the Deep",
   "family": "guardians",
-  "spriteId": "stonebound_warden",
+  "spriteId": "thane_of_the_deep",
   "spriteScale": 1.12,
   "color": "#6f7a8c",
   "logo": "bulwark",

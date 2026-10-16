@@ -358,6 +358,11 @@ export function playSfx(scene: Phaser.Scene, id: string, owner?: string | null):
   playSfxOn((scene.sound as unknown as { context?: AudioContext }).context, id, owner);
 }
 
+/** Hazır bir tarifi sahnenin AudioContext'inde çalar (sefer düşmanı sesleri: data/audio-mobs.json, src/game/mob-sfx.ts). */
+export function playSceneSfxDef(scene: Phaser.Scene, def: SfxDef | undefined): void {
+  playSfxDef((scene.sound as unknown as { context?: AudioContext }).context, def);
+}
+
 /** Ham AudioContext üzerinden çalar (ayarlar panelinin deneme sesi de bunu kullanır). */
 export function playSfxOn(ctx: AudioContext | undefined, id: string, owner?: string | null): void {
   playSfxDef(ctx, resolveSfx(id, owner));

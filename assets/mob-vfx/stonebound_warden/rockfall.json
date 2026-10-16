@@ -1,0 +1,31 @@
+{
+  "slug": "rockfall",
+  "title": "stonebound warden rockfall",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "bottom",
+  "pivot": [
+    128,
+    250
+  ],
+  "content_px": [
+    183,
+    244
+  ],
+  "source": "assets/source/mob-vfx/stonebound_warden-rockfall.png"
+}

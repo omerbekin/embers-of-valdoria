@@ -8,6 +8,7 @@
  * element ikonları yüzen hasar yazısındakiyle aynı, statlar alt bar / tooltip ikonları (stat-icons.ts), item yuvaları Gear ekranı siluetleri.
  */
 import { classLogoName, paintedOr } from '../ui/misc-icons';
+import { passiveIconName, skillIconName } from '../ui/mob-icons';
 import { uiSound, worldSound } from '../ui/ui-sound';
 import { previewMusic } from '../ui/music';
 import layout from '../../data/battle-layout.json';
@@ -78,7 +79,7 @@ function statusPic(id: string, icon: string, color: string, cls: string, zoom = 
   return bindStatusIcon(img, id, icon, color);
 }
 
-const skillPic = (s: { id: string; icon: string }, accent: string, cls: string, zoom = false): HTMLImageElement => pic(s.icon, accent, cls, ownerOfSkill(s.id), zoom);
+const skillPic = (s: { id: string; icon: string }, accent: string, cls: string, zoom = false): HTMLImageElement => pic(skillIconName(s), accent, cls, ownerOfSkill(s.id), zoom);
 const elementPic = (id: string, cls: string): HTMLImageElement => pic(elementIcon(id), ELEMENT_COLOR[id] ?? '#fff', cls, SHARED_KEY);
 
 /** Portre: avatar, yoksa tam boy sprite (üstten kırpılır), o da yoksa (ya da resim yüklenemezse) class logosu. Boş kutu yok. */
@@ -548,7 +549,7 @@ export class WikiPanel {
       : null;
     const stats = h('div', { class: 'cx-stats' }, ...u.derived.map((d) => h('div', { class: 'cx-stat' }, pic(d.icon, d.color, 'cx-ico tiny'), h('span', { text: d.label }), d.sub ? h('b', { class: 'multi' }, h('i', { text: d.value }), h('small', { text: d.sub })) : h('b', { text: d.value }))));
     const passive = u.passive
-      ? h('div', { class: 'cx-passive' }, pic(u.passive.icon, u.color, 'cx-ico big', ownerOfUnit(u.id), true), h('div', {}, h('b', { text: u.passive.name }), h('div', { class: 'cx-note', text: u.passive.text })))
+      ? h('div', { class: 'cx-passive' }, pic(passiveIconName(u.passive), u.color, 'cx-ico big', ownerOfUnit(u.id), true), h('div', {}, h('b', { text: u.passive.name }), h('div', { class: 'cx-note', text: u.passive.text })))
       : h('div', { class: 'cx-dim', text: 'No passive.' });
     const skills = u.skills.map((s) => h('div', { class: 'cx-skill', style: { '--accent': s.accent } }, skillPic(s, s.accent, 'cx-ico big', true), this.skillBody(s, true)));
     return h('div', { class: 'cx-unit', style: { '--g': this.primaryColor(u.id) } },

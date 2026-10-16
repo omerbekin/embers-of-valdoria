@@ -1,0 +1,41 @@
+{
+  "_not": "Sefer mobu / boss POZ SAYFALARI (Ömer 2026-10-16): assets/sprites/<id>/poses.png (cols x rows kare, sıra soldan sağa; üretim `node tools/import-mob-art.mjs poses`, asıl assets/source/mob-poses/<id>.png). Kayıt yoksa ya da dosya yoksa birim tek idle.png ile çizilir (bugünkü davranış). density = sayfanın idle.png'ye göre piksel yoğunluğu (araçtaki POSE_DENSITY). Kareler (0'dan): idle = boşta dönüşümlü, idleMs = kare başına süre; windup = büyü hazırlığı; release = büyü/atış bırakma (tek hedef); channel = alan büyüsü; bless = dosta büyü (şifa/kalkan/güç); strike = yakın dövüş vuruşu; move = koşu/süzülme; hit = darbe; defend = sendeleme/savunma; dying = yığılma; dead = yerde. Yeni mob/boss = bir kayıt (bosslar). skills = skill'e özel kareler (skill id -> windup + act), genel türün karesini ezer (Bandit Chief: Toll Sweep 5->6; Chief's Cleaver genel windup/strike 3->4, Hold the Tower kendine = bless 7).",
+  "high_priest_of_the_undying": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [0, 1],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 4,
+    "bless": 5,
+    "strike": 6,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11
+  },
+  "bandit_chief": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [0, 1],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 5,
+    "bless": 6,
+    "strike": 3,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "toll_sweep": { "windup": 4, "act": 5 },
+      "hold_the_tower": { "act": 6 }
+    }
+  }
+}

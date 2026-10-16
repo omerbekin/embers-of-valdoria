@@ -3,7 +3,7 @@
   "id": "deep_runecaller",
   "name": "Deep Runecaller",
   "family": "guardians",
-  "spriteId": "ember_acolyte",
+  "spriteId": "deep_runecaller",
   "color": "#5f86a8",
   "logo": "rune",
   "frontPriority": 7,

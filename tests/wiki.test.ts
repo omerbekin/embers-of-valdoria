@@ -206,7 +206,7 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
     for (const w of ['Row', 'Column', 'Block', 'Cross', 'bottom-left', 'slides', 'empty']) expect(text, w).toContain(w);
   });
 
-  it('Mechanics: "Enemy passives" her sefer mobu pasifini (YM1-YM13) sahipleriyle yazar; Enemies makaleleri yeni aileyi (Brann Order) ve pasifleri gösterir', () => {
+  it('Mechanics: "Enemy passives" her sefer mobu pasifini (YM1-YM19) sahipleriyle yazar; Enemies makaleleri yeni aileleri (Brann Order, Beasts) ve pasifleri gösterir', () => {
     const text = wiki.mechanics.find((a) => a.id === 'enemy-passives')!.blocks.flatMap(blockText).join(' ');
     for (const m of Object.values(content.mobs)) if (m.passive) {
       expect(text, m.passive.name).toContain(m.passive.name);
@@ -217,5 +217,9 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
     const enemies = JSON.stringify(buildWiki(files));
     expect(enemies).toContain("Brann's Order");
     for (const id of ['deep_runecaller', 'grave_chanter', 'oathsworn_brother', 'censer_monk', 'high_priest_of_the_undying']) expect(enemies, id).toContain(content.mobs[id]!.name);
+    // Bölge I (YM14-YM19, mob-plan.md 9): yeni aile Beasts ve tutorial mobları
+    expect(enemies).toContain('Beasts');
+    for (const id of ['cutpurse', 'grey_wolf', 'ravenwood_poacher', 'raven_seer', 'bandit_chief']) expect(enemies, id).toContain(content.mobs[id]!.name);
+    for (const name of ['Grudge', 'Head Start', 'Pack Tactics', 'Hide in the Brush', 'Flock Shield', 'Shares of the Dead']) expect(text, name).toContain(name);
   });
 });

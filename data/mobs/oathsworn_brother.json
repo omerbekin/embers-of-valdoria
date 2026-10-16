@@ -3,7 +3,7 @@
   "id": "oathsworn_brother",
   "name": "Oathsworn Brother",
   "family": "branns_order",
-  "spriteId": "shieldwarden",
+  "spriteId": "oathsworn_brother",
   "color": "#c9b27a",
   "logo": "bulwark",
   "frontPriority": 0,

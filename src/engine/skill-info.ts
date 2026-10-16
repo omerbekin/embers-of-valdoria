@@ -194,6 +194,19 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `You and allies in your lane (same column, every row) heal ${pct(e.ratio)} of their max HP at the start of their turns (Wound reduces it).`;
     case 'choirVessel':
       return `+${e.mpAdd} max MP. Every time an ally takes damage from an enemy skill, you gain ${e.mpPerHit} MP.`;
+    // Bölge I (tutorial) mob pasifleri (YM14-YM19; mob-plan.md 9.3)
+    case 'grudge':
+      return `Your basic attack deals +${pct(e.bonus)} damage to the enemy who last hit you with a skill. When another enemy hits you with a skill, the grudge moves to them.`;
+    case 'headStart':
+      return 'At the start of battle you gain a speed boost until your first turn (like Skip Turn), so you usually act first.';
+    case 'packTactics':
+      return `Deal +${pct(e.perAlly)} damage for every other living pack member of your kind in the same row.`;
+    case 'hideInBrush':
+      return `While a living ally stands in front of you in your lane, your evasion is +${pct(e.evasion)}.`;
+    case 'flockShield':
+      return `Once per battle, the first enemy skill that hits you deals ${pct(e.reduce)} less damage: the ravens take the blow.`;
+    case 'sharesOfDead':
+      return `Whenever an ally dies (not a summon), gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)} and +${pct(e.perDeath)} damage until the end of battle (stacks).`;
   }
 }
 
@@ -378,7 +391,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (blocked.length > 0) add(`Bosses are immune to ${blocked.map((d) => d.name).join(' and ')} (${blocked.every((d) => d.cc) ? 'crowd control' : 'crowd control and accuracy/crit penalties'})`);
     } else if (e.type === 'ground') {
       const g = defs.grounds?.[e.ground];
-      add(`Leaves ${g?.name ?? e.ground} on the area for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
+      add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {

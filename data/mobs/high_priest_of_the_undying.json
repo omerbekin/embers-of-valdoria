@@ -3,7 +3,7 @@
   "id": "high_priest_of_the_undying",
   "name": "High Priest of the Undying",
   "family": "undead",
-  "spriteId": "charcoal_burner",
+  "spriteId": "high_priest_of_the_undying",
   "spriteScale": 1.15,
   "color": "#5a3f7a",
   "logo": "skull",

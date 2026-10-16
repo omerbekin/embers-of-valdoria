@@ -2,7 +2,7 @@
  * Endless tüccarı (Odo) DOM ekranı (Ömer 2026-10-11, g1): solda TEZGÂH (konuşma satırı, 3x3 mal, yenileme, geri alım), sağda ORTAK
  * INVENTORY (Gear'daki torbanın aynısı; satış fiyatı etiketli). Karşılaştırma için "Character" (C) Character sayfasını tezgâhın üstünde açar
  * (kahraman satırları üstüne gelinen mala / item'e göre). Alım: malı torbaya sürükle, çift tıkla ya da seç + "Buy"; satış: torba item'ini
- * tezgâha sürükle ya da seç + "Sell"; geri alım aynı ziyarette. Varışta karşılama (seçenek C): soldaki yarım panelde Odo tam boy + selam +
+ * tezgâha sürükle, çift tıkla / çift dokun ya da seç + "Sell"; geri alım aynı ziyarette. Varışta karşılama (seçenek C): soldaki yarım panelde Odo tam boy + selam +
  * günün öne çıkan malı; "Browse wares" ile panel sola kayıp çekilir. Kurallar saf modüllerde (src/endless/run.ts: buyItem / sellItem ...),
  * bu ekran kaynağı (MerchantSource) çağırır. Görünüm: src/ui/gear.css (gr-shop*, mw-*). Oyun içi metinler İngilizce.
  */
@@ -20,7 +20,7 @@ import { avatarUrl, className, renderCharacter } from './character-panel';
 import { itemCell, renderInventory, snapBagRows } from './inventory';
 import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
-import { isDoubleTap } from './gear-drop';
+import { isDoubleTap, merchantBagDouble } from './gear-drop';
 import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
 import { affixContext, primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
@@ -190,6 +190,12 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       void s;
     },
     stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
+    // dokunmatik çift dokunuş: yalnızca torba item'i (sat / Character açıkken kuşan); mal ve kuşanılmış item'e çift dokunuş eylem değil
+    onDoubleTap: (key) => {
+      if (!key.startsWith('bag:')) return false;
+      bagDouble(key.slice(4));
+      return true;
+    },
   });
 
   let closed = false;
@@ -277,6 +283,15 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     if (sel?.kind === 'bag' && sel.uid === uid) sel = null;
     if (run(() => src.sell(uid), 'sell', 'sold')) flash(`Sold ${name} for ${price} gold`);
   };
+  /**
+   * Torba item'ine çift tık / çift dokunuş (Ömer 2026-10-16): SATAR (altın eklenir, item geri alım listesine düşer; yanlışlıkla satılan geri
+   * alınır). Character görünümü açıkken (karşılaştırma / kuşanma) çift tık eskisi gibi seçili kahramana kuşandırır.
+   */
+  const bagDouble = (uid: string): void => {
+    const h = curHero();
+    if (merchantBagDouble({ charShown: phoneLayout() ? view === 'char' : charOpen, hasHero: !!h }) === 'equip' && h) tryEquip(h.id, uid, undefined, true);
+    else doSell(uid);
+  };
   const doBuyBack = (index: number): void => {
     const e = src.buyback()[index];
     if (!e) return;
@@ -289,7 +304,8 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     sel = null;
     run(() => src.buyBack(index), 'buy', 'buyback');
   };
-  const tryEquip = (target: string, uid: string, slot?: SlotId): void => {
+  /** `quick` = çift tık / çift dokunuş: 'equip' yerine kısa toka şakırtısı ('snap', ~70 ms; Ömer 2026-10-16). */
+  const tryEquip = (target: string, uid: string, slot?: SlotId, quick = false): void => {
     const h = heroOf(target);
     const inst = src.bag().find((x) => x.uid === uid);
     const d = inst ? itemDef(inst.id) : undefined;
@@ -310,7 +326,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       renderAll();
       return;
     }
-    const go = (): void => void run(() => src.equip(target, uid, plan.slot), 'equip');
+    const go = (): void => void run(() => src.equip(target, uid, plan.slot), quick ? 'snap' : 'equip');
     const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
     if (pc.lost && pc.primary) {
       closeAsk = confirmIn(overlay, `${pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ')} would exceed ${pc.primary.toUpperCase()} on the ${className(h.class)}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`, 'Equip anyway', go);
@@ -380,7 +396,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         },
         onSlotDouble: (slot) => {
           const h = curHero();
-          if (h) run(() => src.unequip(h.id, slot), 'equip');
+          if (h?.equipment[slot]) run(() => src.unequip(h.id, slot), 'snap');
         },
       });
       curStats = r.stats;
@@ -466,10 +482,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         line = 'sell';
         renderAll();
       },
-      onDouble: (uid) => {
-        const h = curHero();
-        if (charOpen && h) tryEquip(h.id, uid);
-      },
+      onDouble: (uid) => bagDouble(uid),
     });
     right.replaceChildren(...(phone && view === 'char' ? [heroRail(src.heroes(), heroId, (id) => {
       heroId = id;
@@ -482,7 +495,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     }
   }
   function renderFoot(): void {
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || src.note || 'Drag a ware into your bag to buy it; drag a bag item onto the stall to sell it.');
+    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || src.note || 'Drag a ware into your bag to buy it; drag a bag item onto the stall, or double-tap it, to sell it.');
     flashText = '';
     const acts: HTMLElement[] = [btn('gr-btn', o.leaveLabel ?? 'Move on', () => o.onLeave())];
     // seçimin eylemi (birincil, en sağda)

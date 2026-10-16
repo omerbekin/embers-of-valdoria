@@ -871,9 +871,11 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
       if (o.notes.length < 6) o.notes.push(`${unitLabel(target)}: mana empty -> ${Math.round(ep.chance * 100)}% ${ep.statusName} ${ep.turns}t + ${ep.damage.avg} dmg`);
     }
   }
-  // Yerde kalan etki (zehir, yanan zemin, holy fire): alandaki (şeklin TÜM hücreleri; boş anchor dahil) düşmanların turlar boyunca alacağı beklenen hasar
-  if (areaCells) {
-    const cells = new Set(areaCells);
+  // Yerde kalan etki (zehir, yanan zemin, holy fire): alandaki (şeklin TÜM hücreleri; boş anchor dahil) düşmanların turlar boyunca alacağı beklenen hasar.
+  // Tek hedefli skill'de (D7, Tainted Bait) zemin hedefin hücresine konur
+  const groundCells = areaCells ?? (skill.target === 'single_enemy' && targets[0] && targets[0].side !== actor.side ? [targets[0].slot] : undefined);
+  if (groundCells) {
+    const cells = new Set(groundCells);
     for (const e of skill.effects) {
       if (e.type !== 'ground') continue;
       const amount = Math.round(attributePower(actor.stats, e.scale, battle.formulas) * e.power);

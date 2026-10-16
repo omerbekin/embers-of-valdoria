@@ -13,9 +13,11 @@ import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
 import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
 import { globalIconName, uiIconName } from '../../ui/ui-icons';
+import { passiveIconName } from '../../ui/mob-icons';
 import { avatarTexture, backgroundExists, backgroundKey, characterTexture, hasBackground, preloadAssets } from '../assets';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
+import { mobSheetsOf } from '../vfx-sheet-files';
 import { preloadPoses, releaseForBattle } from '../pose-rig';
 import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
@@ -30,9 +32,11 @@ import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
 import { skillTags } from '../../ui/skill-tags';
+import { skillTargetLabel } from '../../ui/skill-target-label';
 import { statName } from '../../ui/stat-name';
 import { BattleHud, type HudActor, type HudGlobal, type HudModel, type HudQueueCell, type HudSkill, type HudStat, type TipContent, type UnitCard } from '../../ui/battle-hud';
-import { playSfx } from '../audio';
+import { playSceneSfxDef, playSfx } from '../audio';
+import { MOB_SFX, mobSfxSession } from '../mob-sfx';
 import { BattleStats, showResultScreen } from '../result-screen';
 import type { ResultAction, ResultScreen } from '../result-screen';
 import { debugState, effectiveTimeScale, tweaksSummary } from '../debug-state';
@@ -354,6 +358,7 @@ export class BattleScene extends Phaser.Scene {
     releaseForBattle(this, cells); // önceki savaşların pişmiş atlasları birikmesin (telefon belleği; ayna savaşta görünmez birim)
     preloadPoses(this, cells);
     preloadVfxSheets(this); // v2 sprite sheet efektleri (assets/vfx; Defender)
+    if (cells) preloadVfxSheets(this, mobSheetsOf(cells)); // sefer mobu efektleri (assets/mob-vfx; yalnızca sahnedeki moblar)
   }
 
   /** Savaşın arka planı (preload yalnızca bunu yükler; seçim dosyalara göre, yüklü dokulara göre değil: iki çevrimiçi oyuncuda aynı). */
@@ -2330,8 +2335,26 @@ export class BattleScene extends Phaser.Scene {
     if (fed) effects.push({ name: fed.tone === 'empowered' ? 'Empowered' : 'Unfed', color: fed.tone === 'empowered' ? '#c58bff' : colors.muted, turns: '', text: fed.text });
     for (const tag of c.tags) for (const [el, m] of Object.entries(f.weaknesses[tag] ?? {})) effects.push({ name: `Weak to ${el}`, color: colors.element[el as keyof typeof colors.element] ?? colors.muted, turns: `+${Math.round((m - 1) * 100)}%`, text: `Takes more ${el} damage` });
     if (c.summoned && c.lifespan !== undefined) effects.push({ name: 'Summoned', color: colors.muted, turns: `${c.lifespan} left`, text: `Leaves after ${c.lifespan} more turn${c.lifespan === 1 ? '' : 's'}` });
-    const cds = this.battle.mode === 'turns' ? Object.entries(c.cooldowns).filter(([, n]) => n > 0) : [];
-    if (cds.length) effects.push({ name: 'Cooldowns', color: colors.muted, turns: '', text: cds.map(([id, n]) => `${content.skills[id]?.name ?? id} ${n}`).join(', ') });
+    // Skill'ler (Ömer 2026-10-16): kalan cooldown artık her skill satırında (eski "Cooldowns" etki satırı kaldırıldı)
+    const turns = this.battle.mode === 'turns';
+    const hourglass = this.texUrl(ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false));
+    const skills: NonNullable<UnitCard['skills']> = [];
+    for (const id of c.skills) {
+      const sk = content.skills[id];
+      if (!sk) continue;
+      const chips = this.skillCostChips(c, sk);
+      skills.push({
+        id,
+        name: sk.name,
+        iconUrl: this.texUrl(ensureSkillIcon(this, sk)),
+        target: skillTargetLabel(sk),
+        cost: skillCostAmount(sk.cost, c) > 0 ? (chips[0] ?? null) : null,
+        cd: turns ? (sk.cooldown ?? 0) : 0,
+        wait: turns ? (c.cooldowns[id] ?? 0) : 0,
+        cdIconUrl: hourglass,
+        tip: () => this.skillTip(c, sk),
+      });
+    }
     // Seçili skill'in bu birime önizlemesi (motorun previewSkill'i): isabet şansı + hasar / şifa aralığı
     let preview: UnitCard['preview'] = null;
     if (this.selected && this.playerCanAct) {
@@ -2369,6 +2392,7 @@ export class BattleScene extends Phaser.Scene {
       effects,
       passive: c.passive ? { name: c.passive.name, text: describePassive(c.passive, c.stats, f) } : null,
       preview,
+      skills,
     };
   }
 
@@ -3021,7 +3045,14 @@ export class BattleScene extends Phaser.Scene {
     const resolved = resolveSkillVfx(skill);
     const owner = resolved?.owner ?? ownerOfSkill(skill.id);
     const vfx = resolved?.run;
-    if (!vfx) for (const id of skill.sfx ?? []) playSfx(this, id, owner); // efekti kodda olmayan skill'in sesleri başta çalar (Radiance)
+    // sefer mobu skill'i: ödünç sesin yerine kendi sesi (data/audio-mobs.json, src/game/mob-sfx.ts); tabloda yoksa ödünç ses (yedek)
+    const mobSfx = mobSfxSession(skill.id);
+    const skillSfx = (id: string): void => {
+      const own = mobSfx?.(id, this.time.now);
+      if (own) playSceneSfxDef(this, MOB_SFX[own]);
+      else if (own === undefined && skillSfxAllowed(skill, id, owner)) playSfx(this, id, owner);
+    };
+    if (!vfx) for (const id of skill.sfx ?? []) skillSfx(id); // efekti kodda olmayan skill'in sesleri başta çalar (Radiance)
     if (vfx) {
       const area = center !== undefined && this.battle.isAreaSkill(skillId);
       // Kapsanan hücreler hedef tahtasına göre (oyuncu tahtasında ayna doğru): olaydaki liste, yoksa tahtayla hesap
@@ -3054,9 +3085,7 @@ export class BattleScene extends Phaser.Scene {
         viewOf: (uid) => this.views.get(uid),
         lunge: () => meleeApproach(this, actor, targets, area ? this.cellPos(board, center!) : undefined),
         windUp: (hex, anim = 'cast') => actor.windUp(hex, anim),
-        sfx: (id) => {
-          if (skillSfxAllowed(skill, id, owner)) playSfx(this, id, owner);
-        },
+        sfx: skillSfx,
         gate: (skip, run, abort) => {
           this.abortHitGate();
           this.hitGate = { skip, run, abort };
@@ -3787,7 +3816,7 @@ export class BattleScene extends Phaser.Scene {
         { title: 'Attack', stats: ATTACK_STATS.map((k) => this.hudStat(k, actor)) },
         { title: 'Defense', stats: DEFENSE_STATS.map((k) => this.hudStat(k, actor)) },
       ],
-      passive: actor.passive ? { name: actor.passive.name, text: describePassive(actor.passive, actor.stats, f), iconUrl: this.texUrl(ensureIcon(this, actor.passive.icon || uiIconName('passive'), actor.color, false, ownerOfUnit(actor.defId))) } : null,
+      passive: actor.passive ? { name: actor.passive.name, text: describePassive(actor.passive, actor.stats, f), iconUrl: this.texUrl(ensureIcon(this, passiveIconName(actor.passive, uiIconName('passive')), actor.color, false, ownerOfUnit(actor.defId))) } : null,
       notes,
     };
     const turns = this.battle.mode === 'turns';
@@ -3830,7 +3859,7 @@ export class BattleScene extends Phaser.Scene {
       ? {
           name: actor.passive.name,
           iconUrl: hudActor.passive!.iconUrl,
-          tip: this.makeInfo(actor.passive.name, EL.ON, ensureIcon(this, actor.passive.icon || uiIconName('passive'), actor.color, false, ownerOfUnit(actor.defId)), [[describePassive(actor.passive, actor.stats, f), colors.text]], 'Passive'),
+          tip: this.makeInfo(actor.passive.name, EL.ON, ensureIcon(this, passiveIconName(actor.passive, uiIconName('passive')), actor.color, false, ownerOfUnit(actor.defId)), [[describePassive(actor.passive, actor.stats, f), colors.text]], 'Passive'),
           lucky: null,
         }
       : null;

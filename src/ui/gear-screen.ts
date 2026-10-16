@@ -290,6 +290,20 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       else if (hadFocus) renderChar();
     },
     stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
+    // dokunmatik çift dokunuş (masaüstü çift tıkla aynı): torba item'i kuşanır, kuşanılmış item çıkar; kısa 'snap' sesi
+    onDoubleTap: (key) => {
+      const hero = curHero();
+      if (!hero) return false;
+      if (key.startsWith('bag:')) {
+        tryEquip(hero.id, key.slice(4), undefined, true);
+        return true;
+      }
+      if (key.startsWith('slot:') && hero.equipment[key.slice(5) as SlotId]) {
+        quickUnequip(hero.id, key.slice(5) as SlotId);
+        return true;
+      }
+      return false;
+    },
   });
 
   let closing = false;
@@ -323,18 +337,28 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (Done ile aynı; src/ui/backdrop.ts)
   dismissOnBackdrop(overlay, panel, () => close());
 
-  const apply = (fn: () => void): void => {
+  /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
+  const apply = (fn: () => void, okSound?: () => void): void => {
     try {
       fn();
+      okSound?.();
     } catch (err) {
       flashText = err instanceof Error ? err.message : String(err);
       uiSound('error');
     }
     renderAll();
   };
+  /** Çift tık / çift dokunuşla çıkarma: kısa toka şakırtısı ('snap'), malzeme sesi yerine (Ömer 2026-10-16). */
+  const quickUnequip = (hid: string, slot: SlotId): void => {
+    if (!heroSlotItem(hid, slot)) return;
+    apply(() => src.unequip(hid, slot), () => uiSound('snap'));
+  };
 
-  /** Kuşanma (sürükle-bırak / çift tıklama): silah ailesi uymuyorsa uyarı + sallanma; primary bonusu düşecekse onay ("Equip anyway"). */
-  const tryEquip = (targetHero: string, uid: string, slot?: SlotId): void => {
+  /**
+   * Kuşanma (sürükle-bırak / çift tıklama): silah ailesi uymuyorsa uyarı + sallanma; primary bonusu düşecekse onay ("Equip anyway").
+   * `quick` = çift tık / çift dokunuş: malzeme sesi yerine TEK kısa toka şakırtısı ('snap', ~70 ms; Ömer 2026-10-16).
+   */
+  const tryEquip = (targetHero: string, uid: string, slot?: SlotId, quick = false): void => {
     const h = heroOf(targetHero);
     const inst = bagInst(uid);
     const d = inst ? itemDef(inst.id) : undefined;
@@ -360,8 +384,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const doEquip = (): void => {
       if (sel === uid) sel = '';
       if (hoverUid === uid) hoverUid = '';
-      itemSound(inst.id);
-      apply(() => src.equip(targetHero, uid, plan.slot));
+      if (quick) apply(() => src.equip(targetHero, uid, plan.slot), () => uiSound('snap'));
+      else {
+        itemSound(inst.id);
+        apply(() => src.equip(targetHero, uid, plan.slot));
+      }
     };
     const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
     if (pc.lost && pc.primary) {
@@ -451,9 +478,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       },
       onSlotDouble: (slot) => {
         const h = curHero();
-        if (!h) return;
-        itemSound(h.equipment[slot]?.id);
-        apply(() => src.unequip(h.id, slot));
+        if (h) quickUnequip(h.id, slot);
       },
     });
     curStats = r.stats;
@@ -490,7 +515,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       },
       onDouble: (uid) => {
         const h = curHero();
-        if (h) tryEquip(h.id, uid);
+        if (h) tryEquip(h.id, uid, undefined, true);
       },
     });
     shakeUid = '';

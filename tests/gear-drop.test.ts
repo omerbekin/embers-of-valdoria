@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dropAction, isDoubleTap } from '../src/ui/gear-drop';
+import { dropAction, isDoubleTap, merchantBagDouble } from '../src/ui/gear-drop';
 import { mergeLine } from '../src/ui/stat-tips';
 
 const classOf = (id: string) => ({ w: 'warrior', a: 'archer' })[id];
@@ -62,5 +62,14 @@ describe('tüccar ipucu başlık farkı (Ömer 2026-10-10)', async () => {
     expect(up?.title).not.toContain('(+2)');
     expect(statTip('armor', { armor: 40 } as never, { armor: 37 } as never)?.titleDiff).toEqual({ text: '(-3)', dir: 'down' });
     expect(statTip('armor', { armor: 40 } as never, { armor: 40 } as never)?.titleDiff).toBeUndefined();
+  });
+});
+
+describe('tüccar: torba item\'ine çift tık / çift dokunuş (Ömer 2026-10-16)', () => {
+  it('mallar görünürken SATAR; Character görünümü açıkken kuşandırır', () => {
+    expect(merchantBagDouble({ charShown: false, hasHero: true })).toBe('sell');
+    expect(merchantBagDouble({ charShown: false, hasHero: false })).toBe('sell');
+    expect(merchantBagDouble({ charShown: true, hasHero: true })).toBe('equip');
+    expect(merchantBagDouble({ charShown: true, hasHero: false })).toBe('sell');
   });
 });

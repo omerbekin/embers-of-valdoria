@@ -92,3 +92,23 @@ export const MISC_IMAGE_FILES: Readonly<Record<string, { url: string; small: str
 
 /** Oyun ikonunun görseli (dosya yoksa null). */
 export const miscImage = (id: string): { url: string; small: string } | null => MISC_IMAGE_FILES[id] ?? null;
+
+// ---------------------------------------------------------------- SEFER MOBU ikonları (boyalı PNG, Bölge II, ChatGPT 2026-10-16)
+
+/**
+ * assets/mob-icons/<ad>.png (128, DOM) + assets/mob-icons/small/<ad>.png (64, Phaser). <ad> = mob skill'inin ya da mob pasifinin id'si.
+ * Asıl sayfalar assets/source/mob-icons/*.png; kesim `node tools/import-mob-art.mjs icons`. Kimlik 'mob:<ad>'
+ * (src/ui/mob-icons.ts > skillIconName / passiveIconName); art-registry görsele çözer. Dosya yoksa verideki (ödünç) piksel ikon kullanılır.
+ */
+const mobFiles = import.meta.glob('../../assets/mob-icons/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const mobSmall = import.meta.glob('../../assets/mob-icons/small/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+/** <ad> -> { url (128, DOM), small (64, Phaser; yoksa url) }. */
+export const MOB_IMAGE_FILES: Readonly<Record<string, { url: string; small: string }>> = (() => {
+  const big = byName(mobFiles);
+  const small = byName(mobSmall);
+  return Object.fromEntries(Object.entries(big).map(([k, url]) => [k, { url, small: small[k] ?? url }]));
+})();
+
+/** Mob ikonunun görseli (dosya yoksa null). */
+export const mobImage = (name: string): { url: string; small: string } | null => MOB_IMAGE_FILES[name] ?? null;

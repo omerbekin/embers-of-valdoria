@@ -1419,6 +1419,113 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
   text-align: right;
 }
 
+/* --- birim kartı: skill satırları (Ömer 2026-10-16): ikon, ad, kısa hedef / şekil, bedel, cooldown; ayrıntı satırın ipucunda.
+   Sabitlenmiş kartta yalnızca bu bölüm dokunulabilir (fare: gelince ipucu; dokunma: dokununca ipucu sabitlenir). */
+/* Kart alt çubuğa (üst kenarı 910) taşmaz (iç kutu; köşe elmasları kesilmesin diye kartın kendisi değil): uzun kart (4 skill + etkiler + pasif) kendi içinde kayar; sabitliyken dokunulabilir / kaydırılabilir */
+.bh-card-sc {
+  max-height: 694px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--gold), 0.35) transparent;
+}
+
+.bh-card.pin {
+  pointer-events: auto;
+}
+
+.bh-csl {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.bh-cs {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto 48px 46px;
+  align-items: center;
+  gap: 8px;
+  height: 32px;
+  padding: 0 4px;
+  border: 1px solid transparent;
+  cursor: help;
+}
+
+.bh-cs:hover,
+.bh-cs.tip {
+  border-color: rgba(var(--gold), 0.3);
+  background: rgba(var(--gold), 0.05);
+}
+
+.bh-cs .bh-cs-ico {
+  width: 28px;
+  height: 28px;
+}
+
+.bh-cs .n {
+  font: 16px var(--gar);
+  color: #f4ede1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bh-cs .t {
+  font: italic 14px var(--gar);
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bh-cs .c,
+.bh-cs .d,
+.bh-cs .w {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 3px;
+  font: 700 15px var(--num);
+  color: #f4ede1;
+  white-space: nowrap;
+}
+
+.bh-cs .c .bh-ico,
+.bh-cs .d .bh-ico,
+.bh-cs .w .bh-ico {
+  width: 15px;
+  height: 15px;
+}
+
+.bh-cs .d,
+.bh-cs .w {
+  justify-content: flex-end;
+  color: var(--muted);
+}
+
+/* cooldown simgesi yerine kum saati karakteri yok: ince altın elmas + sayı (temel), kor renk = beklemede (kalan / temel) */
+.bh-cs .d::before {
+  content: '';
+  width: 6px;
+  height: 6px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(var(--gold), 0.55);
+  margin-right: 3px;
+}
+
+.bh-cs .w {
+  color: var(--ember2);
+}
+
+.bh-cs .w em {
+  font: 700 12px var(--num);
+  font-style: normal;
+  color: var(--dim);
+}
+
+.bh-cs.cool .bh-cs-ico,
+.bh-cs.cool .n {
+  opacity: 0.55;
+}
+
 /* --- pasif madalyonu: 4 skill'in hemen solunda (Luck primary'de yanında Lucky Escape elması) --- */
 .bh-pasv {
   position: absolute;
@@ -1827,3 +1934,63 @@ html.short .bh-right.stacked .bh-pl-ico {
   height: 40px;
   margin: 0;
 }
+
+/* Telefon (html.short): kart skill'leri 2 sütunlu karolar; her karo en az 44 gerçek px (dokununca skill ipucu kartın yanında açılır).
+   Karo: solda ikon, üstte ad, altta kısa hedef + bedel + cooldown. */
+html.short .bh-csl {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 6px;
+}
+
+html.short .bh-cs {
+  grid-template-columns: 40px minmax(0, 1fr) auto auto;
+  grid-template-areas: 'ico n n n' 'ico t c d';
+  gap: 2px 5px;
+  height: auto;
+  min-height: calc(44px * var(--bh-inv, 1));
+  padding: 4px 6px;
+  border-color: rgba(var(--gold), 0.16);
+}
+
+html.short .bh-cs .c,
+html.short .bh-cs .d,
+html.short .bh-cs .w {
+  font-size: 14px;
+  gap: 1px;
+}
+
+html.short .bh-cs .bh-ico:not(.bh-cs-ico) {
+  width: 12px;
+  height: 12px;
+}
+
+html.short .bh-cs .w em {
+  display: none;
+}
+
+html.short .bh-cs .bh-cs-ico {
+  grid-area: ico;
+  width: 40px;
+  height: 40px;
+}
+
+html.short .bh-cs .n {
+  grid-area: n;
+  font-size: 18px;
+}
+
+html.short .bh-cs .t {
+  grid-area: t;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html.short .bh-cs .c {
+  grid-area: c;
+}
+
+html.short .bh-cs > :last-child {
+  grid-area: d;
+}
+

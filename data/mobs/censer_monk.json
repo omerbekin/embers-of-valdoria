@@ -3,7 +3,7 @@
   "id": "censer_monk",
   "name": "Censer Monk",
   "family": "branns_order",
-  "spriteId": "charcoal_burner",
+  "spriteId": "censer_monk",
   "color": "#c8a26a",
   "logo": "holy",
   "frontPriority": 7,

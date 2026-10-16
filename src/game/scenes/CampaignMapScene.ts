@@ -44,6 +44,7 @@ import {
   pendingTip,
   pickHero,
   recruit,
+  recruitHoldsBattle,
   saveCount,
   stopNumber,
   type CampaignMap,
@@ -182,6 +183,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private longPressed = false;
   /** Onaylanmış ("Fight") ama araya giren adım yüzünden henüz başlamamış savaş: düğüm + başlatma gecikmesi (ms). */
   private pendingFight: { node: string; delay: number } | null = null;
+  /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
+  private arrangeNotice: string | null = null;
   private legendOpen = true;
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
@@ -219,6 +222,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.pressTimer = null;
     this.longPressed = false;
     this.pendingFight = null;
+    this.arrangeNotice = null;
   }
 
   preload(): void {
@@ -1596,6 +1600,8 @@ export class CampaignMapScene extends Phaser.Scene {
         // battle / move: sol alttaki düğüm bilgisi (ipucu satırı) ve nabız atan düğüm
         this.renderHud();
         if (step.kind === 'battle' && this.pendingFight?.node === s.at) this.startPendingFight();
+        // Katılımdan sonra bekleyen savaş (Ravenwood): "Formation'ı düzenle, sonra savaşa dokun" kartı (yukarıdaki dal kartı kaldırır)
+        if (step.kind === 'battle' && this.arrangeNotice === s.at) this.showTip();
         return;
     }
   }
@@ -1885,7 +1891,9 @@ export class CampaignMapScene extends Phaser.Scene {
   private showTip(): void {
     this.tip?.destroy(true);
     this.tip = null;
-    const text = pendingTip(this.s);
+    const arrange = this.arrangeNotice === this.s.at && nextStep(this.s).kind === 'battle' ? (CONFIG.texts['recruitFormation'] ?? '') : '';
+    if (!arrange) this.arrangeNotice = null;
+    const text = pendingTip(this.s) ?? (arrange || null);
     if (!text) return;
     const c = this.add.container(0, 0);
     this.tip = c;
@@ -1906,6 +1914,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   private dismissTip(): void {
     if (!this.tip) return;
+    this.arrangeNotice = null;
     setState(markTipSeen(this.s));
     this.tip.destroy(true);
     this.tip = null;
@@ -2234,7 +2243,13 @@ export class CampaignMapScene extends Phaser.Scene {
           primary: true,
           run: () => {
             if (!chosen) return this.toast('Pick one companion first.');
-            this.commit(recruit(this.s, chosen));
+            const next = recruit(this.s, chosen);
+            // Savaştan önce katılım (Ravenwood; Ömer 2026-10-16): savaş kendiliğinden başlamaz, önce Formation; düğüme dokununca "Start battle?"
+            if (recruitHoldsBattle(this.s, next)) {
+              this.pendingFight = null;
+              this.arrangeNotice = next.at;
+            }
+            this.commit(next);
           },
         },
       ],

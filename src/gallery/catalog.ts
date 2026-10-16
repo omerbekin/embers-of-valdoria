@@ -11,6 +11,7 @@ import type { Attributes, CombatantDef, PassiveDef, SkillDef } from '../engine';
 import type { Layer, SfxDef } from '../game/audio';
 import { SFX } from '../game/audio';
 import { UI_SFX, UI_SOUND_KINDS, WORLD_SFX, WORLD_SOUND_KINDS } from '../ui/ui-sound';
+import { MOB_SFX, MOB_SKILL_SOUNDS, mobSoundsOf } from '../game/mob-sfx';
 import musicTracksData from '../../data/audio-music-tracks.json';
 import { PIXEL_FX } from '../game/pixel-fx';
 import { FAMILY_ICON, ITEM_ICON_LABEL, ITEM_ICON_NAMES, REWARD_ICON, SLOT_ICON, itemIconName } from '../game/item-icons';
@@ -194,6 +195,36 @@ export function buildWorldSounds(): SoundEntry[] {
       group: WORLD_SOUND_GROUP,
       def,
       desc: `${def.desc} (${def.bus === 'ui' ? 'UI sounds' : 'Sound Effects'} slider)`,
+    };
+  });
+}
+
+/** Sefer düşmanı skill sesleri grubu adı (Codex > Sounds). */
+export const MOB_SOUND_GROUP = 'Campaign enemies';
+
+/** Sefer düşmanı skill sesleri (data/audio-mobs.json; src/game/mob-sfx.ts): her mob skill'inin kendi sesi (cast / travel / hit). */
+export function buildMobSounds(): SoundEntry[] {
+  const users = new Map<string, SkillRef[]>();
+  for (const sid of Object.keys(MOB_SKILL_SOUNDS)) {
+    const s = content.skills[sid];
+    if (s) for (const k of mobSoundsOf(sid)) users.set(k, [...(users.get(k) ?? []), skillRef({ ...s, id: s.id ?? sid })]);
+  }
+  return Object.entries(MOB_SFX).map(([id, def]) => {
+    const counts = new Map<string, number>();
+    for (const l of def.layers) counts.set(l.type, (counts.get(l.type) ?? 0) + 1);
+    const usedBy = users.get(id) ?? [];
+    return {
+      id,
+      label: def.label,
+      gain: def.gain,
+      duration: sfxDuration(def),
+      layerCount: def.layers.length,
+      layers: def.layers.map(describeLayer),
+      summary: [...counts].map(([t, n]) => `${n} ${t}`).join(', '),
+      usedBy,
+      group: MOB_SOUND_GROUP,
+      def,
+      desc: `${def.desc}${usedBy.length ? ` (${usedBy.map((u) => `${u.name}, ${u.owner.name}`).join('; ')})` : ''}`,
     };
   });
 }
@@ -606,6 +637,8 @@ export interface Catalog {
   uiSounds: SoundEntry[];
   /** Dünya / anlatı sesleri (data/audio-world.json). */
   worldSounds: SoundEntry[];
+  /** Sefer düşmanı skill sesleri (data/audio-mobs.json). */
+  mobSounds: SoundEntry[];
   soundtracks: SoundtrackEntry[];
   animations: AnimEntry[];
   vfxKinds: VfxKindEntry[];
@@ -630,6 +663,7 @@ export function buildCatalog(files: AssetFiles): Catalog {
     sounds: buildSounds(),
     uiSounds: buildUiSounds(),
     worldSounds: buildWorldSounds(),
+    mobSounds: buildMobSounds(),
     soundtracks: buildSoundtracks(),
     animations: buildAnimations(),
     vfxKinds: buildVfxKinds(),

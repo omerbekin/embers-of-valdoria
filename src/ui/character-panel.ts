@@ -6,6 +6,7 @@
  * denetçisinde (`data-drop`, `data-drag`, `data-tip`, `data-stat`, `data-skill`). Görünüm: src/ui/gear.css. Oyun içi metinler İngilizce.
  */
 import { content } from '../engine';
+import { skillIconName } from './mob-icons';
 import type { Stats } from '../engine';
 import {
   ITEMS,
@@ -244,7 +245,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): Ti
   return {
     title: t.title,
     titleColor: COLORS.text,
-    iconUrl: iconUrl(skill.icon, skill.fx, ownerOfSkill(skill.id)),
+    iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)),
     meta,
     tags: skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
     rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}) })),
@@ -278,7 +279,7 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null): HT
       return passiveCellHtml(p.name, iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), colorDiffs(tipHtml(tip)), numsHtml(r));
     }
     const skill = r.skill!;
-    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skill.icon, skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: i === 3 };
+    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: i === 3 };
     return skillCellHtml(view, colorDiffs(tipHtml(skillTipContent(skill, stats, after))), numsHtml(r));
   });
   bar.innerHTML = html.join('');

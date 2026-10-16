@@ -4839,5 +4839,347 @@
       "leafRustle"
     ],
     "artOf": "rejuvenate"
+  },
+  "shiv": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Cutpurse temel saldırısı: DEX fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'backstab' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "shiv",
+    "name": "Shiv",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c9c9c9",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "backstab",
+    "vfx": "backstab",
+    "sfx": [
+      "shadowStep",
+      "backstabThud",
+      "bloodSplat"
+    ],
+    "artOf": "backstab"
+  },
+  "sand_in_the_eyes": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Cutpurse imza skill'i: küçük DEX hasarı + 1 tur Blinded. YER TUTUCU sanat: ikon/vfx/ses artOf 'smoke_bomb' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "sand_in_the_eyes",
+    "name": "Sand in the Eyes",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#d9b85a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "smoke_bomb"
+  },
+  "bite": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Grey Wolf temel saldırısı: STR fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'skeleton_slash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "bite",
+    "name": "Bite",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#b0b0b0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "skeleton_slash"
+  },
+  "rend": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Grey Wolf imza skill'i: STR fiziksel + 2 tur Wound. YER TUTUCU sanat: ikon/vfx/ses artOf 'venom_edge' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "rend",
+    "name": "Rend",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#a02a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "wound",
+        "turns": 2
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "venom_edge"
+  },
+  "poachers_shot": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Ravenwood Poacher temel saldırısı: DEX fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'quick_shot' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "poachers_shot",
+    "name": "Poacher's Shot",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#4a4a3a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "arrow",
+    "vfx": "arrowshot",
+    "sfx": [
+      "bowTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "artOf": "quick_shot"
+  },
+  "tainted_bait": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Ravenwood Poacher imza skill'i: küçük DEX hasarı + hedef hücreye 2 tur Poison zemini (D7). YER TUTUCU sanat: ikon/vfx/ses artOf 'wail_of_the_dead' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "tainted_bait",
+    "name": "Tainted Bait",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#6fcf4b",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "ground",
+        "ground": "poison",
+        "turns": 2,
+        "scale": "dex",
+        "power": 0.3
+      }
+    ],
+    "icon": "wail",
+    "vfx": "wail",
+    "sfx": [
+      "ghostWail",
+      "graveMoan"
+    ],
+    "artOf": "wail_of_the_dead"
+  },
+  "ravens_peck": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Raven Seer temel saldırısı: INT büyü (karanlık). YER TUTUCU sanat: ikon/vfx/ses artOf 'evil_eye' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "ravens_peck",
+    "name": "Raven's Peck",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7a4fb0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.75,
+        "element": "dark"
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "evil_eye"
+  },
+  "murder_of_crows": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Raven Seer imza skill'i: 2x2 alana INT büyü (karanlık). YER TUTUCU sanat: ikon/vfx/ses artOf 'arrow_rain' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "murder_of_crows",
+    "name": "Murder of Crows",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "fx": "#3a2a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.45,
+        "element": "dark"
+      }
+    ],
+    "skyFx": "arrows",
+    "icon": "arrows",
+    "vfx": "arrowrain",
+    "sfx": [
+      "bowTwang",
+      "arrowShower",
+      "arrowThunk"
+    ],
+    "artOf": "arrow_rain"
+  },
+  "chiefs_cleaver": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Bandit Chief (elit) temel saldırısı: STR fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'melee_attack' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "chiefs_cleaver",
+    "name": "Chief's Cleaver",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#b0703a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 1.0
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "melee_attack"
+  },
+  "toll_sweep": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Bandit Chief imza skill'i: bir sıraya STR fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'whirlwind' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "toll_sweep",
+    "name": "Toll Sweep",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#c9a070",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      }
+    ],
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "whirlwind"
+  },
+  "hold_the_tower": {
+    "_not": "Sefer mobu skill'i (BÖLGE I, docs/design/campaign/mob-plan.md 9.4, Ömer onayı 2026-10-16): Bandit Chief: kendine 2 tur taunt + 1 tur Fortified (Oath of Stone gibi). YER TUTUCU sanat: ikon/vfx/ses artOf 'taunt' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 9.10). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "hold_the_tower",
+    "name": "Hold the Tower",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#a08a6a",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "taunt"
   }
 }

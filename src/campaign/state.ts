@@ -321,6 +321,18 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
 }
 
 /**
+ * Katılım savaştan önceyse (Ravenwood, recruit.when 'before'; Ömer 2026-10-16): yeni kahraman katıldıktan sonra savaş KENDİLİĞİNDEN
+ * başlamaz; oyuncu önce Formation'ı düzenler, düğüme dokunup "Start battle?" ile başlatır. `before` = katılımdan önceki durum,
+ * `after` = katılımdan sonraki durum. Aynı düğümde sıradaki adım savaşsa true.
+ */
+export function recruitHoldsBattle(before: CampaignState, after: CampaignState): boolean {
+  const was = nextStep(before);
+  if (was.kind !== 'recruit') return false;
+  const now = nextStep(after);
+  return now.kind === 'battle' && now.node === was.node && after.at === was.node;
+}
+
+/**
  * Kasaba ekranında kışla / ilan panosu (Ömer 2026-10-12): ayrılırken gelen gönüllü (recruit.when 'leave') kasabadayken de seçilebilir.
  * Sunulan adaylar (gönüllü adımıyla aynı seed'li liste) ya da yoksa boş: kasaba adımında değilse, kasabanın adayı yoksa ya da zaten seçildiyse.
  */

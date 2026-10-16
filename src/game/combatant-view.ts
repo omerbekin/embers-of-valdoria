@@ -4,6 +4,7 @@ import { paintedOr } from '../ui/misc-icons';
 import layout from '../../data/battle-layout.json';
 import { content, type Combatant, type TargetPreview } from '../engine';
 import { animKey, characterTexture, type AnimName } from './assets';
+import { mobPoseFrame, mobPoseIdleAnim, mobPoseKey, setupMobPose, type MobPoseDef, type MobPoseSkill } from './mob-poses';
 import { debugState } from './debug-state';
 import { formatHit, hitColor } from './hit-format';
 import { type DamageTags, FLOAT_ICON_TINT, damagePaintedIcon, floatStyle, floatTimes, placeFloatClear, rowLayout, type FloatKind } from './float-text';
@@ -167,6 +168,11 @@ export class CombatantView {
   /** Bugünkü (idle.png) doku ve ölçeği: idleSprite açık pozlu sınıfta boşta buna döner. */
   private baseTex = '';
   private baseScale = 1;
+  /** Mob / boss poz sayfası (data/mob-poses.json + assets/sprites/<id>/poses.png); yoksa null = tek görsel. */
+  private mobPose: MobPoseDef | null = null;
+  /** Poz sayfalı birimin oynadığı skill (vuruş karesi seçimi) ve zamanlayıcı jetonu. */
+  private mobSkill: MobPoseSkill | null = null;
+  private mobToken = 0;
 
   constructor(
     private readonly scene: Phaser.Scene,
@@ -202,6 +208,16 @@ export class CombatantView {
       scene.textures
         .get(tex.key)
         .setFilter(scale < 1 ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
+    }
+    // Poz sayfalı mob / boss: gövde poz karelerinden çizilir (kutu ve ölçek idle.png'den; sayfa density katı çözünürlükte)
+    if (!this.rig && tex.real) {
+      this.mobPose = setupMobPose(scene, combatant.spriteId);
+      if (this.mobPose) {
+        this.sprite.setTexture(mobPoseKey(combatant.spriteId), this.mobPose.idle[0] ?? 0);
+        this.baseScale = scale / this.mobPose.density;
+        this.sprite.setScale(this.baseScale);
+        scene.textures.get(mobPoseKey(combatant.spriteId)).setFilter(this.baseScale < 1 ? Phaser.Textures.FilterMode.LINEAR : Phaser.Textures.FilterMode.NEAREST);
+      }
     }
     if (combatant.side === 'enemy') this.sprite.setFlipX(true);
 
@@ -780,6 +796,7 @@ export class CombatantView {
   /** `hitPoseMs`: darbe pozunun toplam süresi (ham ms; hit-reaction kademesi), verilmezse hitFlashMs x 3 + hitHoldMs. */
   play(anim: AnimName, hitPoseMs?: number): void {
     if (!this.realSprite) return;
+    if (this.mobPose) return this.playMobPose(anim, hitPoseMs);
     if (this.rig) {
       if (anim === 'idle' && this.holdSkillPose()) return;
       const rig = this.rig;
@@ -801,6 +818,28 @@ export class CombatantView {
     }
     const key = animKey(this.combatant.spriteId, anim, this.scene);
     if (key && this.scene.anims.exists(key)) this.sprite.play(key);
+  }
+
+  /** Poz sayfalı mob / boss: durum -> kare (src/game/mob-poses.ts > mobPoseFrame). Darbe karesi kısa süre sonra kendiliğinden döner. */
+  private playMobPose(anim: AnimName, hitPoseMs?: number): void {
+    const def = this.mobPose;
+    if (!def) return;
+    const id = this.combatant.spriteId;
+    const idleLoop = anim === 'idle' && !this.mobSkill;
+    if (idleLoop) {
+      const key = mobPoseIdleAnim(id);
+      // stop() sonrası currentAnim hâlâ boşta döngüsünü gösterir: oynamıyorsa yeniden başlat (yoksa darbe / skill karesinde takılı kalır)
+      if (this.scene.anims.exists(key) && !(this.sprite.anims.isPlaying && this.sprite.anims.currentAnim?.key === key)) this.sprite.play(key);
+      return;
+    }
+    this.sprite.stop();
+    this.sprite.setFrame(mobPoseFrame(def, anim, this.mobSkill));
+    const token = ++this.mobToken;
+    if (anim === 'hit') {
+      const ms = hitPoseMs !== undefined ? slow(hitPoseMs) : slow(timing.hitFlashMs) * 3 + slow(260);
+      this.scene.time.delayedCall(ms, () => token === this.mobToken && this.alive && !this.fallen && this.playMobPose('idle'));
+    }
+    if (anim === 'death') this.scene.time.delayedCall(slow(380), () => token === this.mobToken && this.sprite.setFrame(def.dead));
   }
 
   // --- Poz kütüphanesi (src/game/poses.ts; pozsuz sınıfta hepsi etkisiz) ---
@@ -870,6 +909,18 @@ export class CombatantView {
    * BattleScene: bu birim şimdi bu skill'i oynuyor (null = bitti). attack/cast durumları ve `skillPose()` skill'in poz dizisini kullanır.
    */
   useSkill(skill0: { id?: string; pose?: string | string[]; motion?: string } | null): void {
+    if (this.mobPose) {
+      // poz sayfalı mob: skill sürerken vuruş karesi tutulur; bitince kısa süre sonra boşta döngüsüne döner
+      const token = ++this.mobToken;
+      if (skill0) this.mobSkill = { ...(skill0.id ? { id: skill0.id } : {}), ...(skill0.motion ? { motion: skill0.motion } : {}), ...(skill0.id && content.skills[skill0.id] ? { target: content.skills[skill0.id]!.target } : {}) };
+      else
+        this.scene.time.delayedCall(slow(320), () => {
+          if (token !== this.mobToken) return;
+          this.mobSkill = null;
+          if (this.alive && !this.fallen) this.playMobPose('idle');
+        });
+      return;
+    }
     if (!this.rig) return;
     // v2 gövdeli gerçek sınıf: Pose Tester kopyasının (pt_<id>) pozu (aynı eşleme; poses.ts > poseSkill)
     const skill = skill0 ? poseSkill(this.combatant.defId, skill0, (id) => content.skills[id]) : null;

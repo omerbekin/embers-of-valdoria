@@ -293,7 +293,7 @@ describe('YM13 Vessel of the Choir (High Priest of the Undying)', () => {
 describe('YM metinleri', () => {
   it('her Bölge II mob pasifinin describePassive metni ve veri metni boş değil', () => {
     for (const m of Object.values(content.mobs)) {
-      if (!m.passive || m.id === 'road_thug') continue; // tutorial (Bölge I) mobu değişmedi
+      if (!m.passive) continue;
       expect(describePassive(m.passive, m.stats, f).length, m.id).toBeGreaterThan(10);
       expect(m.passive.text.length, m.id).toBeGreaterThan(10);
     }

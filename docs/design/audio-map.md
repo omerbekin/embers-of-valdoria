@@ -1,7 +1,7 @@
 # Ses haritası (2026-10-13)
 
 Tüm sesler WebAudio sentezidir (dosya yok). Ses felsefesi CLAUDE.md'de: gerçek karşılığından kurulur, çan / saf sinüs çınlaması yok.
-Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & stingers" grupları, en altta "Soundtracks").
+Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & stingers", "Campaign enemies" grupları, en altta "Soundtracks").
 
 ## Kaydırıcılar (Settings > Sounds)
 
@@ -40,6 +40,18 @@ Codex > Assets > Sounds hepsini listeler ve çalar ("UI (menus)", "World & sting
 | defeat | alçalan boru + iki yavaş davul + rüzgâr | yenilgi | SFX |
 
 Item kaldırma (sürükleme başı) aynı malzeme sesini `itemPickupGain` ile kısık çalar. Settings ekranı açılıp kapanınca menü sesi `open` / `close` (parşömen) çalar.
+
+## Sefer düşmanı skill sesleri (`data/audio-mobs.json`, çalma `src/game/mob-sfx.ts`; Ömer 2026-10-16)
+
+Bölge I-II'deki her mob skill'inin (50 skill, 98 ses) KENDİ sesi var; artık bir class'ın sesini ödünç almaz. Efekt (ödünç v1/v2 ya da mobun
+kendi sheet'i) eski ses adını ister (`c.sfx('axeChop')`); `roles` tablosu bunu role çevirir (cast = hazırlık / savurma / atış, travel = uçuş,
+hit = vuruş, none = sessiz; skill bazında `skills.<id>.roles` ezer) ve skill'in o roldeki sesi çalar. Aynı ses bir dökümde 90 ms'den sık çalmaz.
+Skill tabloda yoksa eski ödünç ses çalar (yedek; `skills.json > sfx` yedek olarak durur). Kaydırıcı: Sound Effects. Tepe 0,30-0,66 (vuruş ~0,6,
+savurma ~0,45, uçuş ~0,3, ilahi/fısıltı ~0,38), class skill sesleriyle aynı seviye. Codex > Assets > Sounds > "Campaign enemies" grubunda
+▶ ile dinlenir (kartta gerçek karşılığı ve kullanan skill yazar; "Play all in group" hepsini sırayla çalar).
+Örnekler: Billhook = demir kanca savrulması + kumaş takılması; Rockfall = gürleme, sonra sırayla taş düşmeleri + çakıl; Dirge = ağzı kapalı
+alçak mırıldanma (formantlı ses, sinüs değil); Holy Ember = buhurdan zinciri şıkırtısı + savrulma; Raven's Peck = çift karga gaklaması +
+kanat çırpışı ve gaga darbesi; Bite = kurt hırlaması + diş şaklaması.
 
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 

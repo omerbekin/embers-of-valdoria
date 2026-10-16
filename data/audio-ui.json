@@ -107,6 +107,18 @@
         { "type": "noise", "filter": "lowpass", "f0": 600, "f1": 250, "q": 0.7, "attack": 0.002, "decay": 0.04, "gain": 0.22, "at": 0.07 }
       ]
     },
+    "snap": {
+      "label": "Quick equip (snap)",
+      "desc": "Double-click equip / unequip: a single crisp buckle snap, the iron tongue seating in leather with a dull body. No creak lead-in, about 70 ms.",
+      "gain": 1.0,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1900, "f1": 1550, "q": 2.5, "attack": 0.001, "decay": 0.024, "gain": 0.75 },
+        { "type": "noise", "filter": "bandpass", "f0": 3000, "f1": 2700, "q": 4, "attack": 0.001, "decay": 0.014, "gain": 0.3, "at": 0.012 },
+        { "type": "tone", "wave": "sine", "f0": 165, "f1": 85, "attack": 0.002, "decay": 0.045, "gain": 0.38 },
+        { "type": "noise", "filter": "lowpass", "f0": 750, "f1": 260, "q": 0.7, "attack": 0.002, "decay": 0.04, "gain": 0.3 },
+        { "type": "noise", "filter": "lowpass", "f0": 500, "f1": 220, "q": 0.7, "attack": 0.002, "decay": 0.04, "gain": 0.16, "at": 0.032 }
+      ]
+    },
     "buy": {
       "label": "Buy (purse)",
       "desc": "Cloth coin purse shaken and handed over: muffled metal jostle inside the bag, then a soft set-down. No ringing coin.",

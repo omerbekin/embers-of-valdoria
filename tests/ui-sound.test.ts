@@ -48,6 +48,14 @@ describe('Arayüz sesleri: data/audio-ui.json şekli', () => {
     expect(loadUiSoundLevel()).toBe(UI_AUDIO.defaultLevel);
   });
 
+  it("çift tık kuşanma sesi ('snap', Ömer 2026-10-16): çok kısa (60-120 ms), 'equip'ten kısa ve hemen başlar", () => {
+    const snap = sfxDuration(UI_SFX.snap);
+    expect(snap).toBeGreaterThanOrEqual(0.06);
+    expect(snap).toBeLessThanOrEqual(0.12);
+    expect(snap).toBeLessThan(sfxDuration(UI_SFX.equip));
+    expect(Math.min(...UI_SFX.snap.layers.map((l) => l.at ?? 0))).toBe(0);
+  });
+
   it('kullanıcı hareketinden önce (ve Node da) uiSound sessizce hiçbir şey yapmaz', () => {
     for (const k of UI_SOUND_KINDS) expect(() => uiSound(k)).not.toThrow();
   });

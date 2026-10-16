@@ -1,4 +1,5 @@
 import Phaser from 'phaser';
+import { skillIconName } from '../ui/mob-icons';
 import type { SkillDef } from '../engine';
 import { GRID, INTERNAL_TOKEN_VALUES, shadeColor } from './pixel-art';
 import { resolveSprite } from './art-registry';
@@ -232,7 +233,7 @@ function refreshAllSceneIcons(): void {
 }
 
 /** Skill ikonu: skill'in `fx` renginde, çerçeveli; sahibinin (class / çağıran class) seçili sürümüyle. */
-export const ensureSkillIcon = (scene: Phaser.Scene, skill: SkillDef): string => ensureIcon(scene, skill.icon, skill.fx, true, ownerOfSkill(skill.id));
+export const ensureSkillIcon = (scene: Phaser.Scene, skill: SkillDef): string => ensureIcon(scene, skillIconName(skill), skill.fx, true, ownerOfSkill(skill.id));
 
 // Görsel ikonlar oyun açılırken arka planda yüklenir (küçük dosyalar): ilk savaşta ikon dokusu çoğunlukla hazır çizilir.
 if (typeof Image !== 'undefined') for (const url of [...Object.values(ICON_IMAGE_URLS), ...Object.values(STAT_IMAGE_FILES).map((f) => f.small)]) withImage(url, () => undefined);

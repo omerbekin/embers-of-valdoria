@@ -28,6 +28,7 @@ import {
   partyCap,
   pickHero,
   recruit,
+  recruitHoldsBattle,
   recruitOffer,
   stopNumber,
   validateMap,
@@ -226,7 +227,10 @@ describe('tutorial takım akışı', () => {
     expect(offer).toHaveLength(3);
     expect(offer).not.toContain('warrior');
     expect(offer.some(isAreaClass)).toBe(true);
+    const beforeRecruit = s;
     s = recruit(s, offer[1]!);
+    // Ravenwood: katılımdan sonra savaş kendiliğinden başlamaz (önce Formation; Ömer 2026-10-16)
+    expect(recruitHoldsBattle(beforeRecruit, s)).toBe(true);
     expect(s.roster).toHaveLength(2);
     expect(s.roster.every((h) => h.tutorial)).toBe(true);
     expect(partyCap(s)).toBe(2);
@@ -261,7 +265,9 @@ describe('tutorial takım akışı', () => {
     expect(vOffer).toHaveLength(3);
     for (const c of ['druid', 'warrior', 'archer']) expect(vOffer).not.toContain(c);
     expect(partyCap(s)).toBe(3);
+    const beforeVolunteer = s;
     s = recruit(s, vOffer[0]!);
+    expect(recruitHoldsBattle(beforeVolunteer, s)).toBe(false); // Valdren Keep (ayrılırken): savaş yok, etkilenmez
     expect(s.roster).toHaveLength(4);
     expect(s.roster[3]!.tutorial).toBeUndefined();
     expect(partyCap(s)).toBe(4);
