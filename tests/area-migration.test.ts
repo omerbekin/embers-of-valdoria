@@ -279,7 +279,7 @@ describe('migre edilen alan skill\'leri', () => {
     const art = buildWiki({ sprites: {}, avatars: {} }).mechanics.find((x) => x.id === 'area-shapes')!;
     const tbl = art.blocks.find((x) => x.kind === 'table') as { head: string[]; rows: string[][] };
     expect(tbl.head).toEqual(['Skill', 'Class', 'Shape', 'Waves']);
-    const listed = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !content.classes.aoe_tester!.skills.includes(s.id) && !s.artOf); // Pose Tester kopyaları (gizli) tabloda yok
+    const listed = Object.values(content.skills).filter((s) => (s.target === 'area_enemies' || s.target === 'area_any') && !content.classes.aoe_tester!.skills.includes(s.id) && (!s.artOf || Object.values(content.bosses).some((b) => b.skills.includes(s.id)))); // Pose Tester kopyaları (gizli) tabloda yok; boss skill'i (Ashfall: sanatı ödünç, mob-plan.md 10.6) var
     expect(tbl.rows.map((r) => r[0]).sort()).toEqual(listed.map((s) => s.name).sort());
     for (const id of Object.keys(MIGRATED)) expect(tbl.rows.map((r) => r[0])).toContain(content.skills[id]!.name);
     expect(tbl.rows.find((r) => r[0] === "Nature's Wrath")).toEqual(["Nature's Wrath", 'Druid', 'Block 2x3', 'row by row']);

@@ -19,8 +19,10 @@ const REGION1_PASSIVES = ['grudge', 'head_start', 'pack_tactics', 'hide_in_the_b
 /** Eski mob skill'leri: ödünç sınıf ikonu yerine boyalı ikon (efekt hâlâ ödünç). */
 const OLD_MOB_SKILL_ICONS = ['cudgel', 'hamstring', 'gnaw'];
 const REGION1_MOBS = ['cutpurse', 'grey_wolf', 'ravenwood_poacher', 'raven_seer', 'bandit_chief'];
-const mobPassiveIds = new Set(Object.values(content.mobs).flatMap((m) => (m.passive ? [m.passive.id] : [])));
-const mobSkillIds = new Set(Object.values(content.mobs).flatMap((m) => m.skills));
+// Bölge III: final boss Lord Morvane (data/bosses) da sefer düşmanı sanatı kullanır (mob-plan.md 10.6)
+const MORVANE = content.bosses['lord_morvane']!;
+const mobPassiveIds = new Set([...Object.values(content.mobs).flatMap((m) => (m.passive ? [m.passive.id] : [])), MORVANE.passive!.id]);
+const mobSkillIds = new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...MORVANE.skills]);
 
 describe('mob ikonları (assets/mob-icons)', () => {
   it('Bölge II\'nin 23 skill ve 13 pasifinin 128 + 64 px boyalı ikonu var; ikon adı görsele çözülür', () => {

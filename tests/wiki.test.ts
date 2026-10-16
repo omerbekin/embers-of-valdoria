@@ -221,5 +221,10 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
     expect(enemies).toContain('Beasts');
     for (const id of ['cutpurse', 'grey_wolf', 'ravenwood_poacher', 'raven_seer', 'bandit_chief']) expect(enemies, id).toContain(content.mobs[id]!.name);
     for (const name of ['Grudge', 'Head Start', 'Pack Tactics', 'Hide in the Brush', 'Flock Shield', 'Shares of the Dead']) expect(text, name).toContain(name);
+    // Bölge III (YM20-YM23, mob-plan.md 10): yeni aile Morvane's Army, yeni ve gelişmiş moblar; Lord Morvane'ın boss makalesi
+    expect(enemies).toContain("Morvane's Army");
+    for (const id of ['morvane_halberdier', 'sworn_guard', 'ash_hound', 'cinder_gatewarden', 'ember_hierophant', 'drake_priest']) expect(enemies, id).toContain(content.mobs[id]!.name);
+    for (const name of ['Close Ranks', 'Blood Scent', 'Molten Shed', 'Searing Rebuke']) expect(text, name).toContain(name);
+    for (const name of ['Lord Morvane', 'Crown of Ash', 'Pyre of Morvane', 'Ashfall', 'Iron Decree']) expect(enemies, name).toContain(name);
   });
 });

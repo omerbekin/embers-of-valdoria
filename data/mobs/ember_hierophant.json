@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GELİŞMİŞ Ember Acolyte (Castle Morvane): Last Ember ve Ember Toss aynı, Burn the Ground yerine 2x3 Burn the Field. GÖRSEL YER TUTUCU: spriteId 'ember_acolyte', spriteScale 1,12 (kendi çizimi gelince 'ember_hierophant'). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "ember_hierophant",
+  "name": "Ember Hierophant",
+  "family": "ember_cult",
+  "spriteId": "ember_acolyte",
+  "spriteScale": 1.12,
+  "color": "#d0502a",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "role": "Ember Cult · High Priest",
+  "attributes": {
+    "str": 10,
+    "int": 34,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 12,
+  "ai": "sniper",
+  "skills": [
+    "ember_toss",
+    "burn_the_field"
+  ],
+  "passive": {
+    "id": "last_ember",
+    "name": "Last Ember",
+    "icon": "flame",
+    "text": "If a hero kills this unit with a skill, the hero's cell becomes burning ground for 2 of the hero's turns. Deaths from ground or damage over time leave no ember.",
+    "effect": {
+      "type": "lastEmber",
+      "ground": "burning",
+      "turns": 2,
+      "scale": "int",
+      "power": 0.35
+    }
+  }
+}

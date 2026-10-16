@@ -540,7 +540,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
 
   it("yukarıdan düşen skill'lerin hepsinin düşen şey türü var", () => {
     const sky = Object.values(content.skills).filter((s) => s.motion === 'sky');
-    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows'];
+    const base = ['arrow_rain', 'blizzard', 'drain_field', 'fist_crush', 'holy_strike', 'burn_the_ground', 'judgment', 'meteor', 'radiance', 'root_smash', 'rockfall', 'glyph_of_breaking', 'holy_ember', 'consecrate', 'murder_of_crows', 'burn_the_field'];
     // Pose Tester kopyaları (pt_<id>, gizli debug): sınıf skill'lerinin kopyası, aynı hareket
     const copies = base.filter((id) => content.skills[`pt_${id}`]).map((id) => `pt_${id}`);
     expect(copies.length).toBeGreaterThan(0);

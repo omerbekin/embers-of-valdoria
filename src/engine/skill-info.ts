@@ -207,6 +207,15 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Once per battle, the first enemy skill that hits you deals ${pct(e.reduce)} less damage: the ravens take the blow.`;
     case 'sharesOfDead':
       return `Whenever an ally dies (not a summon), gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)} and +${pct(e.perDeath)} damage until the end of battle (stacks).`;
+    // Bölge III mob / boss pasifleri (YM20-YM23; mob-plan.md 10.5)
+    case 'closeRanks':
+      return `You take ${pct(e.perAlly)} less damage from every source for each other living ally in your row (${pct(e.perAlly * 2)} with a full row).`;
+    case 'bloodScent':
+      return `Deal +${pct(e.bonus)} damage to targets below ${pct(e.below)} HP.`;
+    case 'moltenShed':
+      return `Once per battle, the first time an enemy skill drops your HP below ${pct(e.below)}, you shed your burning skin: every enemy takes ${val(e.scale, e.power)} ${e.element} damage (it cannot miss or crit; armor applies) and you gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)}.`;
+    case 'crownOfAsh':
+      return `Whenever an ally dies (not a summon), gain a shield of ${pct(e.ratio)} of your max HP (${Math.round(stats.hp * e.ratio)}) for ${turnsText(e.turns)}; shields stack.`;
   }
 }
 

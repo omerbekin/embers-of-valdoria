@@ -349,6 +349,8 @@ export class Battle {
   /** Bone Ward (YM10, mob pasifi boneWard): kendi tarafında canlı bir çağrı varken alınan TÜM hasar çarpanı (1 - reduce); yoksa 1. */
   passiveTakenMult(target: Combatant): number {
     const e = target.passive?.effect;
+    // Close Ranks (YM20): aynı sıradaki her diğer canlı sıra alan dost için -perAlly (toplamsal; en az 0)
+    if (e?.type === 'closeRanks') return Math.max(0, 1 - e.perAlly * this.rowMatesOf(target));
     if (e?.type !== 'boneWard') return 1;
     return this.combatants.some((a) => a.side === target.side && a.summoned && a.hp > 0 && a.uid !== target.uid && !a.inert) ? 1 - e.reduce : 1;
   }
@@ -659,7 +661,14 @@ export class Battle {
     if (e.type === 'grudge') return skill?.id === e.skill && actor.grudgeOn === target.uid ? 1 + e.bonus : 1;
     if (e.type === 'packTactics') return 1 + e.perAlly * this.packMatesOf(actor);
     if (e.type === 'sharesOfDead') return 1 + e.perDeath * (actor.shares ?? 0);
+    // Blood Scent (YM21): canı eşiğin altındaki hedefe ek hasar
+    if (e.type === 'bloodScent') return target.hp > 0 && target.hp < e.below * target.maxHp ? 1 + e.bonus : 1;
     return 1;
+  }
+
+  /** Close Ranks: aynı tahtada aynı sıradaki diğer canlı, sıra alan dost sayısı (tür fark etmez). */
+  rowMatesOf(c: Combatant): number {
+    return this.combatants.filter((a) => a.uid !== c.uid && a.hp > 0 && !a.inert && a.side === c.side && a.board === c.board && this.rowOf(a.slot) === this.rowOf(c.slot)).length;
   }
 
   /** Pack Tactics: aynı tahtada aynı sıradaki diğer canlı aynı tür (defId) dost sayısı. */
@@ -2788,6 +2797,21 @@ export class Battle {
     emit({ type: 'shield', source: actor.uid, target: target.uid, amount, shieldAfter: target.shield, magicShieldAfter: target.magicShield, magic: true });
   }
 
+  /** Süreli (fiziksel, her hasarı emen) kalkan katmanı (Crown of Ash, YM23): `turns` taşıyanın tur başında azalır; aynı kaynak katmanı büyütür ve süreyi yeniler. */
+  private timedShield(source: Combatant, target: Combatant, id: string, amount: number, turns: number, emit: Emit): void {
+    if (amount <= 0 || target.hp <= 0) return;
+    emit({ type: 'passive', actor: source.uid, passive: id, name: source.passive?.name ?? id });
+    this.trimShieldHooks(target);
+    target.shield += amount;
+    const hooks = (target.shieldHooks ??= []);
+    const same = hooks.find((h) => h.skill === id && h.caster === source.uid && !h.magic);
+    if (same) {
+      same.amount += amount;
+      same.turns = turns;
+    } else hooks.push({ skill: id, caster: source.uid, magic: false, amount, onAbsorb: {}, turns });
+    emit({ type: 'shield', source: source.uid, target: target.uid, amount, shieldAfter: target.shield, magicShieldAfter: target.magicShield, magic: false });
+  }
+
   /** Turns modunda: sırası gelen aktör hiçbir şey yapamıyorsa (ör. MP bitti) turunu pas geçer. */
   skipTurn(): ActionResult {
     if (this.mode !== 'turns') return { ok: false, reason: 'Turns are only used in turn mode' };
@@ -3458,9 +3482,24 @@ export class Battle {
         this.announceIfDead(actor, emit);
       }
     }
+    // Molten Shed (YM22, mob pasifi): savaşta bir kez, düşman skill vuruşu canı ilk kez eşiğin altına indirince karşı tarafa sabit ateş + kendine Fortified
+    const ms = target.passive?.effect;
+    if (ms?.type === 'moltenShed' && !target.passiveUsed && target.hp > 0 && target.hp < ms.below * target.maxHp && actor.side !== target.side) this.moltenShed(target, ms, emit);
     this.announceIfDead(target, emit);
     if (guardian) this.announceIfDead(guardian, emit);
     return { landed: true, crit };
+  }
+
+  /** Molten Shed (YM22): patlama; karşı taraftaki her canlı sıra alan birime sabit tik hasarı (zırh uygulanır), sonra taşıyana durum. */
+  private moltenShed(c: Combatant, e: Extract<PassiveEffect, { type: 'moltenShed' }>, emit: Emit): void {
+    c.passiveUsed = true;
+    emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+    const raw = Math.round(attributePower(c.stats, e.scale, this.setup.formulas) * e.power);
+    for (const foe of this.living(opposite(c.side)).filter((u) => !u.inert)) {
+      if (raw > 0) this.applyHit(c, foe, this.tickDamage(e.element, 'magic', raw, foe), 'magic', false, emit, false, { origin: 'status', element: e.element, damageType: 'magic' });
+      this.announceIfDead(foe, emit);
+    }
+    if (this.statusDef(e.status)) this.addStatus(c, { kind: e.status, turns: e.turns, source: c.uid }, emit, c.passive!.id);
   }
 
   /** Martyr's Vow taşıyıcısı: hedefin aynı tahtadaki artı komşusu (ön/arka/sol/sağ), canlı, pasifi henüz kullanılmamış; yoksa undefined. */
@@ -3688,6 +3727,12 @@ export class Battle {
       a.shares = (a.shares ?? 0) + 1;
       emit({ type: 'passive', actor: a.uid, passive: a.passive!.id, name: a.passive!.name });
       if (this.statusDef(e.status)) this.addStatus(a, { kind: e.status, turns: e.turns, source: a.uid }, emit, a.passive!.id);
+    }
+    // Crown of Ash (YM23, boss pasifi): çağrı olmayan bir dost ölünce maks canın oranı kadar süreli kalkan (katman yığılır)
+    if (!c.summoned && !c.inert) for (const a of this.living(c.side)) {
+      const e = a.passive?.effect;
+      if (e?.type !== 'crownOfAsh' || a === c) continue;
+      this.timedShield(a, a, a.passive!.id, Math.round(a.maxHp * e.ratio), e.turns, emit);
     }
     // Corpse Hunger (YM9, mob pasifi): çağrı olmayan herhangi bir birim ölünce taşıyan maks canının oranı kadar iyileşir
     if (!c.summoned && !c.inert) for (const a of this.combatants) {

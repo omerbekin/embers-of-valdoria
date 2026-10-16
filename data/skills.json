@@ -5181,5 +5181,508 @@
       "battleRoar"
     ],
     "artOf": "taunt"
+  },
+  "halberd_chop": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Morvane Halberdier ve Sworn Guard temel saldırısı: STR fiziksel. YER TUTUCU sanat: ikon/vfx/ses artOf 'chiefs_cleaver' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "halberd_chop",
+    "name": "Halberd Chop",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9a8a7a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.9
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "chiefs_cleaver"
+  },
+  "pike_thrust": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Morvane Halberdier imza skill'i: menzil +1 sıra, STR fiziksel, zırhın %25'ini yok sayar. YER TUTUCU sanat: ikon/vfx/ses artOf 'billhook' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "pike_thrust",
+    "name": "Pike Thrust",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 5
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "reach": 1,
+    "fx": "#b0a090",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8,
+        "ignoreDefense": 0.25
+      }
+    ],
+    "icon": "clover",
+    "vfx": "bonethrow",
+    "sfx": [
+      "chainTether",
+      "boneImpact"
+    ],
+    "artOf": "billhook"
+  },
+  "wall_of_pikes": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Morvane's Sworn Guard (gelişmiş Halberdier) imza skill'i: Pike Thrust'ın alan sürümü: bir sütun boyunca sıra sıra STR fiziksel, her sonraki hedef x0,75. YER TUTUCU sanat: ikon/vfx/ses artOf 'scatter_quarrels' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "wall_of_pikes",
+    "name": "Wall of Pikes",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#c0392b",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75,
+        "falloff": 0.75
+      }
+    ],
+    "icon": "pierce",
+    "vfx": "pierce",
+    "sfx": [
+      "heavyTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "artOf": "scatter_quarrels"
+  },
+  "scorch_bite": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Ash Hound temel saldırısı: STR fiziksel + 2 tur Burning (STR 0,12). YER TUTUCU sanat: ikon/vfx/ses artOf 'bite' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "scorch_bite",
+    "name": "Scorch Bite",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "str",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "bite"
+  },
+  "run_down": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Ash Hound imza skill'i: her sıraya ulaşır (ignoreReach), STR fiziksel + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'rend' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "run_down",
+    "name": "Run Down",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 5
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#8a6a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "rend"
+  },
+  "hold_the_gate": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Cinder Gatewarden (gelişmiş Shieldwarden) imza skill'i: Hold the Line'ın güçlüsü: 2 tur taunt (dostlar x0,8 hasar alır) + kendine 1 tur Fortified. YER TUTUCU sanat: ikon/vfx/ses artOf 'oath_of_stone' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "hold_the_gate",
+    "name": "Hold the Gate",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#e07a3a",
+    "effects": [
+      {
+        "type": "taunt",
+        "turns": 2,
+        "breakRatio": 0.25,
+        "allyDamageMult": 0.8
+      },
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "oath_of_stone"
+  },
+  "burn_the_field": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Ember Hierophant (gelişmiş Ember Acolyte) imza skill'i: Burn the Ground'un büyüğü: 2x3 alana INT ateş + 2 tur yanan zemin. YER TUTUCU sanat: ikon/vfx/ses artOf 'burn_the_ground' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "burn_the_field",
+    "name": "Burn the Field",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 3,
+    "motion": "sky",
+    "skyCenter": true,
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.3,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.35
+      }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_ground",
+    "skyFx": "meteor"
+  },
+  "drakefire": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Drake Priest (elit) temel saldırısı: INT ateş + 2 tur Burning (INT 0,12). YER TUTUCU sanat: ikon/vfx/ses artOf 'shovel_of_embers' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "drakefire",
+    "name": "Drakefire",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff8a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.7,
+        "element": "fire"
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "shovel_of_embers"
+  },
+  "dragons_breath": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Drake Priest (elit) imza skill'i: X şekline INT ateş + 2 tur yanan zemin. YER TUTUCU sanat: ikon/vfx/ses artOf 'kiln_smoke' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "dragons_breath",
+    "name": "Dragon's Breath",
+    "target": "area_enemies",
+    "area": {
+      "shape": "x"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ff5a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.5,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.25
+      }
+    ],
+    "icon": "ashbrand",
+    "vfx": "ashbrand",
+    "sfx": [
+      "emberHiss"
+    ],
+    "artOf": "kiln_smoke"
+  },
+  "kindle_the_faithful": {
+    "_not": "Sefer mobu skill'i (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17): Drake Priest (elit) destek skill'i: tek dosta (kendisi hariç) INT kalkanı + 2 tur Haste. YER TUTUCU sanat: ikon/vfx/ses artOf 'sanctuary' sahibinden (boyalı ikon ve 8 karelik VFX o skill'inki; ChatGPT ikon + VFX gelince id ile kendiliğinden değişir, mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "kindle_the_faithful",
+    "name": "Kindle the Faithful",
+    "target": "single_ally",
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#ffb04a",
+    "effects": [
+      {
+        "type": "shield",
+        "scale": "int",
+        "power": 0.5
+      },
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2
+      }
+    ],
+    "icon": "spellward",
+    "vfx": "spellward",
+    "sfx": [
+      "wardHum"
+    ],
+    "artOf": "sanctuary"
+  },
+  "cinder_lash": {
+    "_not": "Lord Morvane (final boss, data/bosses/lord_morvane.json; mob-plan.md 10.3, campaign-dev 2026-10-17): temel saldırı: her sıraya, INT ateş + 2 tur Burning (INT 0,1). YER TUTUCU sanat: ikon/vfx artOf 'ember_toss' (boyalı ikon + VFX o skill'inki); ses kendi tarifi (data/audio-mobs.json). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "cinder_lash",
+    "name": "Cinder Lash",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#ff6a2a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.85,
+        "element": "fire"
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "int",
+        "power": 0.1,
+        "turns": 2
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "ember_toss"
+  },
+  "ashfall": {
+    "_not": "Lord Morvane (final boss, data/bosses/lord_morvane.json; mob-plan.md 10.3, campaign-dev 2026-10-17): telgraflı 2x2 alan (faz 2+: 2x3), Morvane'nin sonraki turunda INT ateş + 2 tur yanan zemin. YER TUTUCU sanat: ikon/vfx artOf 'peat_smoke' (boyalı ikon + VFX o skill'inki); ses kendi tarifi (data/audio-mobs.json). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "ashfall",
+    "name": "Ashfall",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 2,
+      "anchor": "bottom_left"
+    },
+    "areaByPhase": {
+      "2": {
+        "shape": "rect",
+        "rows": 2,
+        "cols": 3,
+        "anchor": "bottom_left"
+      }
+    },
+    "telegraph": {
+      "kind": "area"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 10
+    },
+    "cooldown": 2,
+    "motion": "cast",
+    "fx": "#8a6a5a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 1,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.3
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "peat_smoke"
+  },
+  "iron_decree": {
+    "_not": "Lord Morvane (final boss, data/bosses/lord_morvane.json; mob-plan.md 10.3, campaign-dev 2026-10-17): tüm dostlara 2 tur Haste. YER TUTUCU sanat: ikon/vfx artOf 'hold_the_tower' (boyalı ikon + VFX o skill'inki); ses kendi tarifi (data/audio-mobs.json). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "iron_decree",
+    "name": "Iron Decree",
+    "target": "all_allies",
+    "cost": {
+      "resource": "mp",
+      "amount": 12
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#c0392b",
+    "effects": [
+      {
+        "type": "status",
+        "status": "haste",
+        "turns": 2
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "hold_the_tower"
+  },
+  "pyre_of_morvane": {
+    "_not": "Lord Morvane (final boss, data/bosses/lord_morvane.json; mob-plan.md 10.3, campaign-dev 2026-10-17): ULTIMATE (faz 3; faza girişte telgraflanır): tüm kahraman tahtası, güvenli hücre YOK, INT ateş + tüm tahtada 2 tur yanan zemin (telgraf çözülmesi dot değil zemin bırakır). YER TUTUCU sanat: ikon/vfx artOf 'consecrate' (boyalı ikon + VFX o skill'inki); ses kendi tarifi (data/audio-mobs.json). Sayılar PROVİZYON (npm run sim:campaign).",
+    "id": "pyre_of_morvane",
+    "name": "Pyre of Morvane",
+    "target": "all_enemies",
+    "telegraph": {
+      "kind": "area",
+      "wholeBoard": true
+    },
+    "minPhase": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#ff4d1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "scale": "int",
+        "power": 0.8,
+        "element": "fire"
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.2
+      }
+    ],
+    "icon": "judgebeam",
+    "vfx": "judgment",
+    "sfx": [
+      "hammerWhoosh",
+      "hammerSlam",
+      "fireCrackle"
+    ],
+    "artOf": "consecrate"
   }
 }

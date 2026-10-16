@@ -21,7 +21,7 @@
  *   1. pozun boyu idle.png'deki figür boyunun o katı, alt boşluk idle.png'ninki). Hangi oyun anında hangi kare: data/mob-poses.json (önce
  *   `python tools/import-mobs.py --only <mob>` ile idle.png olmalı).
  */
-import { existsSync, mkdirSync, readdirSync, writeFileSync } from 'node:fs';
+import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
@@ -58,6 +58,12 @@ const ICON_SHEETS = {
   'old_b-sheet': ['shield_bash', 'hold_the_line', 'shield_wall', 'crossbow_bolt'],
   'old_c-sheet': ['hex_bolt', 'bog_curse', 'lure_light', 'wisp_spark'],
   'old_d-sheet': ['marsh_glow', null, null, null],
+  // Bölge III (mob-plan.md 10.6; sayfalar yarın ChatGPT'den: dosya yoksa atlanır)
+  'morvane_army-sheet': ['halberd_chop', 'pike_thrust', 'close_ranks', 'wall_of_pikes'],
+  'ash_hound-sheet': ['scorch_bite', 'run_down', 'blood_scent', 'searing_rebuke'],
+  'region3_upgrades-sheet': ['hold_the_gate', 'burn_the_field', 'crown_of_ash', null],
+  'drake_priest-sheet': ['drakefire', 'dragons_breath', 'kindle_the_faithful', 'molten_shed'],
+  'lord_morvane-sheet': ['cinder_lash', 'ashfall', 'iron_decree', 'pyre_of_morvane'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
@@ -80,6 +86,15 @@ const GROUND = new Set([
   'ravenwood_poacher-tainted_bait',
   'raven_seer-murder_of_crows',
   'bandit_chief-hold_the_tower',
+  // Bölge III (yarın)
+  'sworn_guard-wall_of_pikes',
+  'cinder_gatewarden-hold_the_gate',
+  'ember_hierophant-burn_the_field',
+  'drake_priest-dragons_breath',
+  'drake_priest-kindle_the_faithful',
+  'lord_morvane-ashfall',
+  'lord_morvane-iron_decree',
+  'lord_morvane-pyre_of_morvane',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
@@ -142,6 +157,15 @@ const CLEAN_EDGES = new Set([
   'bandit_chief-chiefs_cleaver',
   'bandit_chief-toll_sweep',
   'bandit_chief-hold_the_tower',
+  // Bölge III (yarın)
+  'sworn_guard-wall_of_pikes',
+  'cinder_gatewarden-hold_the_gate',
+  'ember_hierophant-burn_the_field',
+  'drake_priest-dragons_breath',
+  'drake_priest-kindle_the_faithful',
+  'lord_morvane-ashfall',
+  'lord_morvane-iron_decree',
+  'lord_morvane-pyre_of_morvane',
 ]);
 
 const FRAME = 256;
@@ -446,7 +470,25 @@ async function importPoses() {
       .png({ compressionLevel: 9 })
       .toFile(out);
     console.log(`${file} -> ${out} (${POSE_COLS}x${POSE_ROWS} kare, ${FW}x${FH})`);
+    promotePending(mob);
   }
+}
+
+/**
+ * Önceden yazılmış poz kaydı (data/mob-poses.json > _pending.<mob>, Bölge III: Drake Priest, Lord Morvane): poz sayfası içe aktarılınca kayıt
+ * üst düzeye taşınır (oyun _ ile başlayan anahtarları okumaz; dosyası olmayan kayıt testte kırmızı olurdu).
+ */
+function promotePending(mob) {
+  const path = 'data/mob-poses.json';
+  const data = JSON.parse(readFileSync(path, 'utf8'));
+  const rec = data._pending?.[mob];
+  if (!rec || data[mob]) return;
+  data[mob] = rec;
+  delete data._pending[mob];
+  if (Object.keys(data._pending).filter((k) => !k.startsWith('_')).length === 0) delete data._pending;
+  writeFileSync(path, JSON.stringify(data, null, 2) + '
+');
+  console.log(`  poz kaydı _pending.${mob} -> ${mob} (data/mob-poses.json)`);
 }
 
 const what = process.argv[2] ?? 'all';

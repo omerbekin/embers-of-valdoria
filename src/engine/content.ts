@@ -34,6 +34,7 @@ import skeleton from '../../data/summons/skeleton.json';
 import treant from '../../data/summons/treant.json';
 import bridgeWarden from '../../data/bosses/bridge_warden.json';
 import ironMooring from '../../data/bosses/iron_mooring.json';
+import lordMorvane from '../../data/bosses/lord_morvane.json';
 import mobRoadThug from '../../data/mobs/road_thug.json';
 import mobMoorRaider from '../../data/mobs/moor_raider.json';
 import mobBanditCrossbowman from '../../data/mobs/bandit_crossbowman.json';
@@ -57,6 +58,13 @@ import mobGreyWolf from '../../data/mobs/grey_wolf.json';
 import mobRavenwoodPoacher from '../../data/mobs/ravenwood_poacher.json';
 import mobRavenSeer from '../../data/mobs/raven_seer.json';
 import mobBanditChief from '../../data/mobs/bandit_chief.json';
+// Bölge III (mob-plan.md 10)
+import mobMorvaneHalberdier from '../../data/mobs/morvane_halberdier.json';
+import mobSwornGuard from '../../data/mobs/sworn_guard.json';
+import mobAshHound from '../../data/mobs/ash_hound.json';
+import mobCinderGatewarden from '../../data/mobs/cinder_gatewarden.json';
+import mobEmberHierophant from '../../data/mobs/ember_hierophant.json';
+import mobDrakePriest from '../../data/mobs/drake_priest.json';
 import groundsJson from '../../data/grounds.json';
 import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
@@ -130,6 +138,7 @@ export const summons: Record<string, CombatantDef> = {
 export const bosses: Record<string, CombatantDef> = {
   bridge_warden: buildDef(bridgeWarden as unknown as CombatantData, formulas),
   iron_mooring: buildDef(ironMooring as unknown as CombatantData, formulas),
+  lord_morvane: buildDef(lordMorvane as unknown as CombatantData, formulas),
 };
 
 const mobData: CombatantData[] = [
@@ -156,6 +165,12 @@ const mobData: CombatantData[] = [
   mobRavenwoodPoacher,
   mobRavenSeer,
   mobBanditChief,
+  mobMorvaneHalberdier,
+  mobSwornGuard,
+  mobAshHound,
+  mobCinderGatewarden,
+  mobEmberHierophant,
+  mobDrakePriest,
 ] as unknown as CombatantData[];
 
 /**

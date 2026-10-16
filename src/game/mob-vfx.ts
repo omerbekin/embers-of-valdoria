@@ -82,6 +82,22 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   bone_rite: { mob: 'high_priest_of_the_undying', mode: 'bolt', at: 'hit', impact: 3, size: 240, hex: '#a55cff' },
   requiem: { mob: 'high_priest_of_the_undying', mode: 'cells', at: 'ground', impact: 2, size: 230, hex: '#a55cff' },
   unholy_benediction: { mob: 'high_priest_of_the_undying', mode: 'ally', at: 'ground', impact: 4, size: 240, hex: '#a55cff' },
+  // Bölge III (campaign-dev 2026-10-17; mob-plan.md 10.6): satırlar HAZIR, sheet'ler yarın (ChatGPT). Sheet yokken skill sanatını ödünç aldığı
+  // mob skill'inin (artOf) sheet'ini oynar (vfx-select.ts); `node tools/import-mob-art.mjs vfx` sonrası kendi sheet'i kendiliğinden öne geçer.
+  halberd_chop: { mob: 'morvane_halberdier', mode: 'melee', at: 'hit', impact: 3, size: 250 },
+  pike_thrust: { mob: 'morvane_halberdier', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  wall_of_pikes: { mob: 'sworn_guard', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#c0392b' },
+  scorch_bite: { mob: 'ash_hound', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  run_down: { mob: 'ash_hound', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  hold_the_gate: { mob: 'cinder_gatewarden', mode: 'self', at: 'ground', impact: 3, size: 260, hex: '#ff7a1a' },
+  burn_the_field: { mob: 'ember_hierophant', mode: 'center', at: 'ground', impact: 3, size: 380, hex: '#ff5a1a' },
+  drakefire: { mob: 'drake_priest', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ff8a2a' },
+  dragons_breath: { mob: 'drake_priest', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#ff5a1a' },
+  kindle_the_faithful: { mob: 'drake_priest', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#ffb04a' },
+  cinder_lash: { mob: 'lord_morvane', mode: 'bolt', at: 'hit', impact: 3, size: 250, hex: '#ff6a2a' },
+  ashfall: { mob: 'lord_morvane', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#8a6a5a' },
+  iron_decree: { mob: 'lord_morvane', mode: 'self', at: 'ground', impact: 3, size: 280, hex: '#c0392b' },
+  pyre_of_morvane: { mob: 'lord_morvane', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#ff4d1a' },
 };
 
 type Pt = { x: number; y: number };

@@ -54,6 +54,15 @@ HEADS = {
     'raven_seer': (599, 110, 300),
     'bandit_chief': (640, 10, 260),
     'grey_wolf': (1270, 190, 400),
+    # Bölge III (mob-plan.md 10.6): YER TUTUCU kafa kutuları; çizim yarın gelince `--only <id> --check <klasör>` ile bakıp düzelt.
+    # Kaynağı (assets/source/mobs/<id>.png) olmayan id atlanır.
+    'morvane_halberdier': (560, 0, 280),
+    'sworn_guard': (560, 0, 290),
+    'ash_hound': (1270, 190, 400),
+    'cinder_gatewarden': (600, 0, 260),
+    'ember_hierophant': (560, 10, 280),
+    'drake_priest': (560, 20, 290),
+    'lord_morvane': (560, 0, 300),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
@@ -319,6 +328,9 @@ def main():
     cleaned = {}
     for mid in HEADS:
         if only and only != mid and VARIANTS.get(only, (None,))[0] != mid:
+            continue
+        if not os.path.exists(os.path.join(SRC, mid + '.png')):
+            print(f'  atlandı (kaynak yok): {mid}')
             continue
         img = clean(mid)
         bb = img.getchannel('A').point(lambda a: 255 if a > 8 else 0).getbbox()

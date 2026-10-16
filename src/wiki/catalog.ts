@@ -943,11 +943,10 @@ function bossArticles(): WikiArticle[] {
     const accCritNames = content.formulas.ccImmunity?.accuracyCrit ? Object.values(content.statuses).filter((d) => !d.cc && isAccuracyCritDebuff(d)).map((d) => d.name) : [];
     out.push(
       article(`boss-${def.id}`, 'Bosses', def.name, def.logo, [
-        p(`${def.name} guards King's Bridge. It has ${def.stats.hp} HP (before difficulty), acts more than once each turn and fights in phases.${anchor ? ` Two ${anchor.name}s (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) stand behind it: they never act and cannot be healed.` : ''}`),
+        p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchor ? ` Two ${anchor.name}s (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) stand behind it: they never act and cannot be healed.` : ''}`),
         list(
-          'Warnings: Breaking Span, Ash Brand and the Fall of King\'s Bridge do not hit at once. The marked cells crack (or a unit is branded) and the attack lands at the start of the Warden\'s next turn, before it acts. Every hero gets at least one turn in between: move out of the marked cells (Move) or take the hit. These hits cannot miss.',
-          'Ash Brand follows the branded unit: it bursts on the unit and everyone right next to it, wherever it stands. A dispel (Mana Barrier) removes it; if the branded unit falls, the brand fades.',
-          `Fall of King's Bridge cracks the whole board except one Keystone per lane (gold arch stone): stand on a Keystone.`,
+          // boss'a özel uyarılar (data/bosses > boss.notes: telgraflar ve kaçış yolu)
+          ...(b.notes ?? []),
           ...(b.phases ?? []).map((ph, i) => `Phase ${i + 2} at ${pctOf(ph.at)} HP: "${ph.banner}"${ph.actionsPerTurn ? `; ${ph.actionsPerTurn} actions per turn` : ''}${ph.powerMult ? `; hits ${pctOf(ph.powerMult - 1)} harder` : ''}${ph.armorMult ? `; armor x${ph.armorMult}` : ''}${ph.breakAnchors ? '; the Moorings snap' : ''}.`),
           'A single attack can cross only one phase threshold; extra damage stops just above the next one.',
           // Madde 271/272: CC + isabet/kritik cezaları (Blinded, Jinxed) + Omen'in Misfortune'u; adlar veriden

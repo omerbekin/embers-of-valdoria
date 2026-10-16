@@ -1,0 +1,34 @@
+{
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ mob. GÖRSEL YER TUTUCU: spriteId 'oathsworn_brother' (kendi ChatGPT çizimi gelince spriteId 'morvane_halberdier'; mob-plan.md 10.6). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "morvane_halberdier",
+  "name": "Morvane Halberdier",
+  "family": "morvane_army",
+  "spriteId": "oathsworn_brother",
+  "color": "#7a3a2a",
+  "logo": "helm",
+  "frontPriority": 0,
+  "role": "Morvane's Army · Line",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 20,
+  "magicArmor": 6,
+  "ai": "aggressive",
+  "skills": [
+    "halberd_chop",
+    "pike_thrust"
+  ],
+  "passive": {
+    "id": "close_ranks",
+    "name": "Close Ranks",
+    "icon": "shield",
+    "text": "Takes 12% less damage for every other living ally in its row. Break the line and the rest lose their cover.",
+    "effect": {
+      "type": "closeRanks",
+      "perAlly": 0.12
+    }
+  }
+}

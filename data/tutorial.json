@@ -406,13 +406,13 @@
     "regions": ["III"],
     "minDefeats": 2,
     "byEncounter": {
-      "ashen_plain": "Their Undead raises and feeds on the fallen. Bring it down first, before the bodies pile up.",
-      "siege_line": "Two Defenders wall the front. Use spells or ranged attacks on the Archer behind them.",
-      "dragons_spine": "The Drake Priest is the real danger. Spread your heroes across lanes and focus him down.",
-      "ember_road": "Their Cutthroat crits anyone with an empty cell behind them. Keep someone at your casters' backs.",
-      "riverhead": "The Druid keeps the others standing. Kill the Druid first, then the Archers.",
-      "gate_of_cinders": "The Paladin heals the wall in front. Reach the Paladin and the Mage before the Defenders.",
-      "lord_morvane": "Morvane shrugs off stuns and slows. Clear his Paladin first, then save your ultimates for him."
+      "ashen_plain": "The Ash Hounds leap past your front line and go for the wounded. Keep your heroes' HP up, and break the Grave Chanter's bones before you hit him.",
+      "siege_line": "Soldiers standing side by side shield each other. Bring down one end of the line first, and poke the Stonebound Warden now and then so it never hardens.",
+      "thornwood_hollow": "Below 40% HP the Drake Priest bursts and burns your whole team. Heal up first, then push him through it in one go.",
+      "ember_road": "The Outriders flee and act early at half HP: finish them in one blow. The Ash Hound hunts your weakest hero.",
+      "riverhead": "Every death feeds the Drowned and the Ghoul. Silence the Witchling's curses early and hit the Wisp with one heavy blow.",
+      "gate_of_cinders": "The Gatewardens punish melee blows. Use spells and ranged attacks, and reach the Runecaller who shields them.",
+      "castle_morvane": "Every guard that falls shields Morvane. Step out of the falling ash, and brace for the Pyre when he drops low: it covers your whole side."
     },
     "default": "Change the plan: put your sturdiest hero in front, keep healers behind, and strike the enemy's healer first."
   }

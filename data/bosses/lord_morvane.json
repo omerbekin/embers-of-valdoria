@@ -1,0 +1,76 @@
+{
+  "_not": "Lord Morvane: Castle Morvane (düğüm 12) final boss'u (mob-plan.md 10.3, campaign-dev 2026-10-17). INT'e dayalı ateş büyücüsü-şövalye; boss altyapısı (fazlar, telgraf, areaByPhase) Bridge Warden'la ortak, kurallar farklı: Ashfall alan telgrafı (Move ile kaçılır), faz 3'te güvenli hücresiz Pyre of Morvane, pasif Crown of Ash (YM23; passive.effect). GÖRSEL YER TUTUCU: spriteId 'high_priest_of_the_undying', spriteScale encounters.json'da (kendi ChatGPT çizimi + poz sayfası gelince spriteId 'lord_morvane'). Gizli boss tanımı (data/bosses): rastgele havuzda ve takım seçiminde YOK. Endless'ın eski 'lord_morvane' karşılaşması (Undead class kopyası) değişmedi. Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "lord_morvane",
+  "name": "Lord Morvane",
+  "spriteId": "high_priest_of_the_undying",
+  "color": "#8b1e1e",
+  "logo": "skull",
+  "frontPriority": 4,
+  "role": "Boss · Lord of Cinders",
+  "attributes": {
+    "str": 16,
+    "int": 40,
+    "dex": 8,
+    "luck": 8
+  },
+  "armor": 18,
+  "magicArmor": 12,
+  "overrides": {
+    "hp": 460,
+    "hpRegen": 0
+  },
+  "ai": "bridge_warden",
+  "skills": [
+    "cinder_lash",
+    "ashfall",
+    "iron_decree",
+    "pyre_of_morvane"
+  ],
+  "passive": {
+    "id": "crown_of_ash",
+    "name": "Crown of Ash",
+    "icon": "emberheart",
+    "text": "Whenever one of his allies dies (not a summon), Morvane gains a shield of 10% of his max HP for 3 turns. Shields stack.",
+    "effect": {
+      "type": "crownOfAsh",
+      "ratio": 0.1,
+      "turns": 3
+    }
+  },
+  "boss": {
+    "where": "rules Castle Morvane at the end of the campaign",
+    "firstBanner": "Kneel before the ash.",
+    "phases": [
+      {
+        "at": 0.6,
+        "banner": "The crown burns."
+      },
+      {
+        "at": 0.3,
+        "banner": "Valdoria burns with me.",
+        "actionsPerTurn": 2,
+        "powerMult": 1.15,
+        "telegraphOnEnter": "pyre_of_morvane"
+      }
+    ],
+    "notes": [
+      "Warnings: Ashfall and the Pyre of Morvane do not hit at once. The marked cells smoulder and the attack lands at the start of Morvane's next turn, before he acts. Every hero gets at least one turn in between. These hits cannot miss.",
+      "Ashfall marks a block of cells: move out of it (Move). From phase 2 the block is wider.",
+      "The Pyre of Morvane marks your whole side and has no safe cell: shield, guard, fortify or heal your heroes before it lands."
+    ],
+    "passives": [
+      {
+        "id": "crown_of_ash",
+        "name": "Crown of Ash",
+        "icon": "emberheart",
+        "text": "Whenever one of his allies dies (not a summon), Morvane gains a shield of 10% of his max HP for 3 turns. Shields stack: killing his guards first makes him harder to burn."
+      },
+      {
+        "id": "burning_crown",
+        "name": "Burning Crown",
+        "icon": "ashbrand",
+        "text": "At 60% HP the crown burns: Ashfall grows to 2x3. At 30% Valdoria burns with him: he acts twice a turn, hits 15% harder and at once calls the Pyre of Morvane. A single attack can cross only one of these thresholds."
+      }
+    ]
+  }
+}

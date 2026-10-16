@@ -1,0 +1,41 @@
+{
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ ELİT (Thornwood Hollow; pasif + 3 aktif, poz sayfası yarın). GÖRSEL YER TUTUCU: spriteId 'charcoal_burner', spriteScale 1,15 (kendi çizimi gelince 'drake_priest' + data/mob-poses.json > _pending kaydı). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "drake_priest",
+  "name": "Drake Priest",
+  "family": "ember_cult",
+  "spriteId": "charcoal_burner",
+  "spriteScale": 1.15,
+  "color": "#b8341a",
+  "logo": "wizhat",
+  "frontPriority": 7,
+  "role": "Ember Cult · Elite",
+  "attributes": {
+    "str": 8,
+    "int": 32,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 10,
+  "magicArmor": 16,
+  "ai": "caster",
+  "skills": [
+    "drakefire",
+    "dragons_breath",
+    "kindle_the_faithful"
+  ],
+  "passive": {
+    "id": "molten_shed",
+    "name": "Molten Shed",
+    "icon": "flame",
+    "text": "Once per battle, the first time an enemy skill drops it below 40% HP, it sheds its burning skin: every hero takes fire damage and it gains Fortified for 2 turns.",
+    "effect": {
+      "type": "moltenShed",
+      "below": 0.4,
+      "scale": "int",
+      "power": 0.35,
+      "element": "fire",
+      "status": "fortify",
+      "turns": 2
+    }
+  }
+}

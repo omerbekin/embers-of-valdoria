@@ -7,7 +7,7 @@ import { AUDIO_V2 } from '../src/game/art-v2/audio-index';
 import { ownerOfSkill } from '../src/game/asset-versions';
 
 /** Tüm sefer moblarının skill'leri (data/mobs). Bölge I-II karşılaşmalarındaki diğer birimler oynanabilir class'lar (kendi sesleri) ya da Bridge Warden (kendi sesleri). */
-const mobSkills = [...new Set(Object.values(content.mobs).flatMap((m) => m.skills))];
+const mobSkills = [...new Set([...Object.values(content.mobs).flatMap((m) => m.skills), ...content.bosses['lord_morvane']!.skills])]; // + Lord Morvane (Bölge III final boss, kendi sesleri)
 
 describe('sefer düşmanı skill sesleri (data/audio-mobs.json)', () => {
   it('her mob skill\'inin kendi ses kaydı var', () => {
@@ -107,7 +107,7 @@ describe('sefer düşmanı skill sesleri (data/audio-mobs.json)', () => {
     for (const s of list) {
       expect(s.group).toBe(MOB_SOUND_GROUP);
       expect(s.usedBy.length, s.id).toBe(1);
-      expect(s.usedBy[0]!.owner.kind, s.id).toBe('mob');
+      expect(['mob', 'boss'], s.id).toContain(s.usedBy[0]!.owner.kind); // Bölge III: Lord Morvane'ın skill sesleri de bu grupta (data/bosses)
     }
   });
 });

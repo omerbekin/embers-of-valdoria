@@ -9,6 +9,7 @@
  */
 import { classLogoName, paintedOr } from '../ui/misc-icons';
 import { passiveIconName, skillIconName } from '../ui/mob-icons';
+import { content } from '../engine';
 import { uiSound, worldSound } from '../ui/ui-sound';
 import { previewMusic } from '../ui/music';
 import layout from '../../data/battle-layout.json';
@@ -79,7 +80,8 @@ function statusPic(id: string, icon: string, color: string, cls: string, zoom = 
   return bindStatusIcon(img, id, icon, color);
 }
 
-const skillPic = (s: { id: string; icon: string }, accent: string, cls: string, zoom = false): HTMLImageElement => pic(skillIconName(s), accent, cls, ownerOfSkill(s.id), zoom);
+// artOf: Bölge III yer tutucu skill'leri ödünç aldıkları mob skill'inin boyalı ikonunu gösterir (src/ui/mob-icons.ts)
+const skillPic = (s: { id: string; icon: string; artOf?: string }, accent: string, cls: string, zoom = false): HTMLImageElement => pic(skillIconName({ ...s, artOf: s.artOf ?? content.skills[s.id]?.artOf }), accent, cls, ownerOfSkill(s.id), zoom);
 const elementPic = (id: string, cls: string): HTMLImageElement => pic(elementIcon(id), ELEMENT_COLOR[id] ?? '#fff', cls, SHARED_KEY);
 
 /** Portre: avatar, yoksa tam boy sprite (üstten kırpılır), o da yoksa (ya da resim yüklenemezse) class logosu. Boş kutu yok. */

@@ -14,6 +14,8 @@
   "ai": "bridge_warden",
   "skills": ["anchor_smash", "breaking_span", "chain_hook", "ash_brand", "fall_of_kings_bridge"],
   "boss": {
+    "where": "guards King's Bridge",
+    "notes": ["Warnings: Breaking Span, Ash Brand and the Fall of King's Bridge do not hit at once. The marked cells crack (or a unit is branded) and the attack lands at the start of the Warden's next turn, before it acts. Every hero gets at least one turn in between: move out of the marked cells (Move) or take the hit. These hits cannot miss.", "Ash Brand follows the branded unit: it bursts on the unit and everyone right next to it, wherever it stands. A dispel (Mana Barrier) removes it; if the branded unit falls, the brand fades.", "Fall of King's Bridge cracks the whole board except one Keystone per lane (gold arch stone): stand on a Keystone."],
     "firstBanner": "None shall cross.",
     "phases": [
       { "at": 0.66, "banner": "The Ember wakes." },

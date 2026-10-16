@@ -1682,3 +1682,16 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 - Privacy: Copy log ve Info ayrı satırlar ("Copy Log" -> Copy, "Privacy Info" -> Open; 44 px dokunma alanı için), sayfanın altında kısa gizlilik satırı.
 - Satır ve kategori yüksekliği 132 birim (telefonda ~44 px); son seçilen sayfa oturumda hatırlanır, ana menü ve oyun içi Settings aynı sayfayı açar.
 - Klavye: kategori sütununda yukarı/aşağı sayfa, sağ / Enter satırlara; satırda sol (ayarsız satırda) kategorilere döner; Tab sonraki sayfa.
+
+## 333. Bölge III mob paketi: yeni mekanikler ve varsayımlar (campaign-dev, 2026-10-17; Ömer onayı bekliyor, ayrıntı `docs/design/campaign/mob-plan.md` 10)
+- **YENİ MEKANİK (onay):** YM20 Close Ranks (aynı sıradaki her diğer canlı dost için alınan hasar -%12), YM21 Blood Scent (canı %50 altındaki hedefe +%30), YM22 Molten Shed (Drake Priest: savaşta bir kez %40 altında tüm kahramanlara sabit ateş + 2 tur Fortified), YM23 Crown of Ash (Lord Morvane: dost ölünce maks canın %10'u kalkan, 3 tur, yığılır). Hepsi var olan kanca yerlerinde; MP'ye dayanan yeni pasif yok.
+- **Gelişmiş moblar** var olan kuralları taşır: Cinder Gatewarden = Rebuke %45 ("Searing Rebuke"), Ember Hierophant = Last Ember aynen, Sworn Guard = Close Ranks aynen; 2. skill'leri güçlü/alan sürümü (Hold the Gate, Burn the Field 2x3, Wall of Pikes sütun).
+- **Endless:** eski `dragons_spine` ve `lord_morvane` karşılaşmaları (class kopyaları) Endless'ın elit/boss dalgası olarak AYNEN kaldı; sefer düğümleri yeni `thornwood_hollow` / `castle_morvane`'a geçti (Endless dengesi değişmesin diye). Gerçek Lord Morvane'ın Endless'a alınması sonra.
+- **Düğüm 12** `enemyTierMods` (Undead kopyasına göreydi) kaldırıldı; boss ayarı `castle_morvane` mods'unda. Zorluk rütbe ekleri (Easy/Hard boss) uygulanmaya devam eder.
+- **Lord Morvane sim ayarı:** faz 2'de 2 eylem final boss'u duvara çeviriyordu (Medium ilk deneme %0-40): 2 eylem faz 3'e kaydı; Iron Decree'deki Fortified çıkarıldı (yalnız Haste); büyü zırhı 22 -> 12; can/güç çarpanı 0,64 / 0,35 (boss'un taban statları yüksek, çarpan düşük). AI profili Bridge Warden'ınki (genel boss profili, telgraf mantığı ortak).
+- **Pyre of Morvane:** telgraf çözülmesi `dot` uygulamadığı için Burning yerine tüm tahtaya 2 tur yanan zemin bırakır (motor değişikliği yok).
+- **Görünen adlar:** Siege Line'daki Bandit Crossbowman "Siege Crossbowman", Ember Road'daki Moor Raider "Ember Outrider", Gate'teki Deep Runecaller "Gate Runecaller" (karşılaşmada `name`). Siege Line alt başlığı "Battle · Morvane's Vanguard".
+- **Sesler:** 29 yeni WebAudio tarifi, Bölge I-II seslerinden türetildi; kazanç şablondan (tarayıcıda tepe ölçümü yapılmadı). Kulakla kontrol önerilir (Codex > Assets > Sounds > Campaign enemies).
+- **Yer tutucu sanat:** ödünç çizimler ve artOf ile Bölge I-II mob skill'lerinin boyalı ikon/VFX'i; pasifler PASSIVE_ICON_STANDIN. Poz kayıtları `data/mob-poses.json > _pending` (içe aktarınca otomatik taşınır).
+- **Tutorial yenilgi ipuçları** (`data/tutorial.json > defeatHints.byEncounter`) Bölge III için yeni kompozisyonlara göre yeniden yazıldı.
+- **Codex boss makalesi** genelleştirildi: Warden'a özel uyarı satırları `data/bosses/bridge_warden.json > boss.notes`'a taşındı (metin aynı), Morvane'ınki kendi `notes`'unda.

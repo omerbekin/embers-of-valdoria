@@ -137,12 +137,13 @@
     ]
   },
   "ashen_plain": {
-    "name": "Ashen Revenants",
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ash Hound x2 (Blood Scent, Run Down arkaya dalar) + Charcoal Burner + Grave Chanter (kemikler). Çarpanlar sim:campaign ile (balance.json > _regionIII).",
+    "name": "Ash and Bone",
     "units": [
-      { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "warrior", "slot": 2, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "undead", "slot": 7, "mods": { "hpMult": 0.8, "powerMult": 0.85 } },
-      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.8, "powerMult": 0.85 } }
+      { "class": "ash_hound", "slot": 0, "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "ash_hound", "slot": 2, "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.15, "powerMult": 1.1 } },
+      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.15, "powerMult": 1.1 } }
     ]
   },
   "dragons_spine": {
@@ -152,15 +153,17 @@
       { "class": "mage", "slot": 6, "mods": { "hpMult": 0.6, "statMult": 0.9, "powerMult": 0.75 } },
       { "class": "druid", "slot": 8, "mods": { "hpMult": 0.6, "statMult": 0.9, "powerMult": 0.75 } },
       { "class": "cutthroat", "slot": 0, "mods": { "hpMult": 0.6, "statMult": 0.9, "powerMult": 0.75 } }
-    ]
+    ],
+    "_not": "YALNIZCA ENDLESS (data/endless.json > elites): eski Cult of the Drake (class kopyaları). Sefer düğümü thorn artık thornwood_hollow kullanır (mob-plan.md 10.4)."
   },
   "siege_line": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Morvane Halberdier x2 + Stonebound Warden aynı sırada (Close Ranks) + Siege Crossbowman; bölgenin tek caster'sız savaşı.",
     "name": "Morvane's Vanguard",
     "units": [
-      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.85 } },
-      { "class": "defender", "slot": 2, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.85 } },
-      { "class": "warrior", "slot": 1, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.85 } },
-      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.7, "statMult": 0.9, "powerMult": 0.85 } }
+      { "class": "morvane_halberdier", "slot": 0, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
+      { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
+      { "class": "morvane_halberdier", "slot": 2, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
+      { "class": "bandit_crossbowman", "slot": 7, "name": "Siege Crossbowman", "mods": { "hpMult": 0.8, "powerMult": 0.8 } }
     ]
   },
   "lord_morvane": {
@@ -170,7 +173,8 @@
       { "class": "defender", "slot": 1, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } },
       { "class": "paladin", "slot": 10, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } },
       { "class": "antimage", "slot": 6, "mods": { "hpMult": 0.6, "statMult": 0.95, "powerMult": 0.75 } }
-    ]
+    ],
+    "_not": "YALNIZCA ENDLESS (data/endless.json > bosses): eski Lord Morvane (Undead class kopyası). Sefer düğümü 12 artık castle_morvane (gerçek boss tanımı data/bosses/lord_morvane.json) kullanır (mob-plan.md 10.3)."
   },
   "windy_moor": {
     "name": "Moor Raiders",
@@ -226,30 +230,54 @@
     ]
   },
   "ember_road": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Ember Outrider (Moor Raider) x2 + Ash Hound + Ember Acolyte.",
     "name": "Morvane's Outriders",
     "units": [
-      { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "cutthroat", "slot": 2, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "archer", "slot": 7, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } }
+      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
+      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.75, "powerMult": 0.75 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.75, "powerMult": 0.75 } }
     ]
   },
   "riverhead": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Drowned + Ghoul (Corpse Hunger) + Fen Witchling + Will-o'-Wisp.",
     "name": "Spring Ambush",
     "units": [
-      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "druid", "slot": 7, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "archer", "slot": 6, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } },
-      { "class": "archer", "slot": 8, "mods": { "hpMult": 0.55, "statMult": 0.9, "powerMult": 0.75 } }
+      { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.4, "powerMult": 1.25 } },
+      { "class": "ghoul", "slot": 2, "mods": { "hpMult": 1.4, "powerMult": 1.25 } },
+      { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.4, "powerMult": 1.25 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.4, "powerMult": 1.25 } }
     ]
   },
   "gate_of_cinders": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Cinder Gatewarden x2 (gelişmiş Shieldwarden) + Morvane Halberdier ortada (Close Ranks) + Gate Runecaller (Ward-Etcher).",
     "name": "Gatewardens",
     "units": [
-      { "class": "defender", "slot": 0, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
-      { "class": "defender", "slot": 2, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
-      { "class": "paladin", "slot": 7, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } },
-      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.7, "statMult": 0.95, "powerMult": 0.8 } }
+      { "class": "cinder_gatewarden", "slot": 0, "mods": { "hpMult": 1.05, "powerMult": 0.95 } },
+      { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 1.05, "powerMult": 0.95 } },
+      { "class": "cinder_gatewarden", "slot": 2, "mods": { "hpMult": 1.05, "powerMult": 0.95 } },
+      { "class": "deep_runecaller", "slot": 7, "name": "Gate Runecaller", "mods": { "hpMult": 1.05, "powerMult": 0.95 } }
     ]
+  },
+  "thornwood_hollow": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Thornwood Hollow elit düğümü: Drake Priest (elit, Molten Shed) + Grey Wolf x2 (Pack Tactics) + Ember Acolyte. Endless'ın dragons_spine'ı (class kopyası) aynen kaldı.",
+    "name": "Cult of the Drake",
+    "units": [
+      { "class": "drake_priest", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.6, "powerMult": 1.0, "statMult": 1.15 } },
+      { "class": "grey_wolf", "slot": 0, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "grey_wolf", "slot": 2, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
+      { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.2, "powerMult": 1.1 } }
+    ]
+  },
+  "castle_morvane": {
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): FİNAL BOSS: Lord Morvane (data/bosses/lord_morvane.json; Crown of Ash, 3 faz, Ashfall / Pyre telgrafları) + Morvane's Sworn Guard x2 + Ember Hierophant. Endless'ın lord_morvane'ı (Undead class kopyası) aynen kaldı. Düğüm 12'nin eski enemyTierMods'u (Undead kopyasına göreydi) kaldırıldı; boss ayarı burada.",
+    "name": "Lord Morvane",
+    "units": [
+      { "class": "lord_morvane", "slot": 4, "name": "Lord Morvane", "tier": "boss", "mods": { "hpMult": 0.64, "powerMult": 0.35, "spriteScale": 1.35 } },
+      { "class": "sworn_guard", "slot": 0, "mods": { "hpMult": 0.55, "powerMult": 0.45 } },
+      { "class": "sworn_guard", "slot": 2, "mods": { "hpMult": 0.55, "powerMult": 0.45 } },
+      { "class": "ember_hierophant", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.45 } }
+    ],
+    "background": "castle-hall"
   }
 }

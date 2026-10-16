@@ -24,7 +24,10 @@ export function v2VfxOf(owner: string, skill: Pick<SkillDef, 'id' | 'vfx'>): V2V
 export function selectSkillVfx(skill: Pick<SkillDef, 'id' | 'vfx'>): { owner: string | null; version: 'v1' | 'v2'; v2?: V2Vfx } {
   const owner = ownerOfSkill(skill.id);
   // sefer mobu skill'i: kendi hazır sheet'i varsa sürümden bağımsız o (src/game/mob-vfx.ts); sesler mobun kendi sesleri (src/game/mob-sfx.ts), yoksa ödünç sahibin seçili sürümünden
-  const mob = mobVfxOf(skill.id, (id) => !!vfxSheetFile(id));
+  const hasSheet = (id: string): boolean => !!vfxSheetFile(id);
+  // Bölge III yer tutucusu: kendi sheet'i yoksa sanatını ödünç aldığı mob skill'inin (artOf) sheet'i (mob-plan.md 10.6); ses yine skill'in kendi sesi
+  const art = (skill as { artOf?: string }).artOf;
+  const mob = mobVfxOf(skill.id, hasSheet) ?? (art ? mobVfxOf(art, hasSheet) : undefined);
   if (mob) return { owner, version: 'v2', v2: mob };
   if (owner && wantsV2(owner, 'vfx')) {
     const v2 = v2VfxOf(owner, skill);

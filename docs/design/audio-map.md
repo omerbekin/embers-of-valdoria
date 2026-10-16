@@ -53,6 +53,14 @@ savurma ~0,45, uçuş ~0,3, ilahi/fısıltı ~0,38), class skill sesleriyle ayn�
 alçak mırıldanma (formantlı ses, sinüs değil); Holy Ember = buhurdan zinciri şıkırtısı + savrulma; Raven's Peck = çift karga gaklaması +
 kanat çırpışı ve gaga darbesi; Bite = kurt hırlaması + diş şaklaması.
 
+**Bölge III (campaign-dev 2026-10-17; mob-plan.md 10):** 14 yeni skill (Morvane Halberdier, Sworn Guard, Ash Hound, Cinder Gatewarden, Ember Hierophant,
+Drake Priest ve final boss Lord Morvane), 29 yeni ses; hepsi WebAudio tarifi, kayıtlı dosya yok. Her yeni ses tepe ölçümüyle eşitlenmiş bir Bölge I-II
+sesinin katmanlarından türetildi (frekans kaydırma + ek katman; kazanç şablondan, ek katmanda %10 kısık; tarayıcıda tepe ölçümü yapılmadı, kulak
+kontrolü önerilir). Örnekler: Halberd Chop = uzun sap savrulması + kalın balta vuruşu; Scorch Bite = dumanlı hırlama + diş şaklaması ve kor çıtırtısı;
+Hold the Gate = demir bantlı kalkan taşa vurulur + kalın "None pass the gate!" bağırışı; Cinder Lash = kor zincir kırbaç şaklaması + tıslama;
+Iron Decree = kızgın mühür basılması + Morvane'nin derin tek komutu; Pyre of Morvane = yer gürlemesi, sonra tüm alanı saran alev. Lord Morvane'ın
+sesleri de "Campaign enemies" grubunda (sahibi boss).
+
 ## Müzik (`data/audio-music.json` + `data/audio-music-tracks.json`, motor `src/game/music.ts`, denetim `src/ui/music.ts > sceneMusic`)
 
 | Parça | Ad | Nerede | Karakter |

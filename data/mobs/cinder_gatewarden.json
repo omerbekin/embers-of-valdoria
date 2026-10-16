@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GELİŞMİŞ Shieldwarden (Gate of Cinders): Rebuke kuralı %45 (Searing Rebuke), Shield Bash aynı, Hold the Line yerine güçlü Hold the Gate. GÖRSEL YER TUTUCU: spriteId 'shieldwarden', spriteScale 1,12 (kendi çizimi gelince 'cinder_gatewarden'). Sayılar PROVİZYON (npm run sim:campaign).",
+  "id": "cinder_gatewarden",
+  "name": "Cinder Gatewarden",
+  "family": "guardians",
+  "spriteId": "shieldwarden",
+  "spriteScale": 1.12,
+  "color": "#a0522d",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "role": "Guardian · Gate",
+  "attributes": {
+    "str": 28,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 34,
+  "magicArmor": 10,
+  "overrides": {
+    "hp": 150
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "shield_bash",
+    "hold_the_gate"
+  ],
+  "passive": {
+    "id": "searing_rebuke",
+    "name": "Searing Rebuke",
+    "icon": "bash",
+    "text": "When a melee skill hits this unit with physical damage, 45% of the damage its armor blocked is dealt back to the attacker as physical damage.",
+    "effect": {
+      "type": "rebuke",
+      "ratio": 0.45
+    }
+  }
+}

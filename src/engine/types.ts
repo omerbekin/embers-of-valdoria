@@ -132,7 +132,21 @@ export type PassiveEffect =
   /** YM18 Flock Shield: savaşta bir kez, ilk isabet eden düşman SKILL vuruşunun hasarı x(1 - reduce) (önizleme de gösterir; kullanılınca `passiveUsed`). */
   | { type: 'flockShield'; reduce: number }
   /** YM19 Shares of the Dead: çağrı olmayan bir dostu her ölünce `turns` tur `status` (Fortified) + savaş sonuna kadar verilen hasar +perDeath (yığılır). */
-  | { type: 'sharesOfDead'; status: StatusKind; turns: number; perDeath: number };
+  | { type: 'sharesOfDead'; status: StatusKind; turns: number; perDeath: number }
+  /*
+   * Bölge III mob / boss pasifleri (YM20-YM23, campaign-dev 2026-10-17; mob-plan.md 10.5). Var olan kancaların yeni kullanıcıları.
+   */
+  /** YM20 Close Ranks: aynı tahtada aynı SIRADAKİ (row) her diğer canlı (sıra alan) dost için alınan TÜM hasar x(1 - perAlly) (toplamsal: 2 dostta 1 - 2 x perAlly). */
+  | { type: 'closeRanks'; perAlly: number }
+  /** YM21 Blood Scent: hedefin canı maks canın `below` oranının ALTINDAYKEN verilen hasar x(1 + bonus). */
+  | { type: 'bloodScent'; below: number; bonus: number }
+  /**
+   * YM22 Molten Shed: savaşta bir kez, bir düşman skill vuruşu canı ilk kez `below` oranının altına indirince (ölmeden) karşı taraftaki her canlı
+   * birime sabit `element` büyü hasarı (scale x power; isabet zarı / kritik yok, zırh uygulanır) ve kendine `turns` tur `status` (Fortified).
+   */
+  | { type: 'moltenShed'; below: number; scale: Attribute; power: number; element: Element; status: StatusKind; turns: number }
+  /** YM23 Crown of Ash: çağrı olmayan bir dostu her ölünce maks canın `ratio` kadarı kalkan, `turns` tur (taşıyanın turları; katman yığılır). */
+  | { type: 'crownOfAsh'; ratio: number; turns: number };
 
 export interface PassiveDef {
   id: string;
@@ -216,6 +230,10 @@ export interface BossPhaseDef {
 export interface BossDef {
   /** Faz 1'in bandı (savaş başı bilgi; wiki). */
   firstBanner?: string;
+  /** Wiki giriş cümlesindeki yer ("guards King's Bridge"); yoksa yalnız ad. */
+  where?: string;
+  /** Wiki'deki boss'a özel uyarı satırları (telgraflar, kaçış yolu; oyun içi İngilizce). */
+  notes?: string[];
   /** Faz 2, 3... (eşik sırasıyla azalan `at`). Faz kilidi: tek bir eylem en fazla bir eşik geçer; fazla hasar eşiğin 1 altında durur. */
   phases?: BossPhaseDef[];
   /**

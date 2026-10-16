@@ -307,6 +307,7 @@ Kaldırılan: `snare_shot` (Bandit Crossbowman'ın eski skill'i, başka sahibi y
 
 ## 7. Taslak: Bölge III ve tutorial (Bölge I)
 
+> **Bu taslağın yerine 10. bölüm geçti (Bölge III planı ve uygulaması, 2026-10-17).**
 > **Ömer yönü (2026-10-16, Bölge III planlanırken uygulanacak):** Bölge III'te YENİ mob sayısı düşük tutulur; Bölge I-II'den temaya uyan moblar yeniden kullanılır (oyuncu sefer sonuna doğru düşmanlara aşinalık kazanır). Özel karşılaşmalarda farklı mob ya da aynı mobların **gelişmiş sürümü** kullanılabilir: benzer ya da yükseltilmiş skill seti (ör. aynı 2. skill'in gelişmiş sürümde alan vurması). Aşağıdaki taslak bu yöne göre yeniden yazılacak.
 
 **Bölge III** (~5 yeni sıradan mob; Ashen Plain, Siege Line, Thornwood Hollow elit, Ember Road, Riverhead, Gate of Cinders, Castle Morvane boss):
@@ -571,3 +572,138 @@ Cudgel ve Hamstring (Road Thug) ve Ember Acolyte'in skill'leri eski `artOf` ile 
 | P19 | Shares of the Dead (`shares_of_the_dead`) | `muscle` | Bandit Chief |
 
 **Uygulama sapmaları (engine-dev, 2026-10-16; madde 330):** D7 motorda yoktu (tek hedefli skill'in `ground` etkisi hiçbir şey yapmıyordu): artık zemin hedefin hücresine konur, YZ ve açıklama metni bunu tanır. YZ testinde imza skill'leri hiç seçilmediği için Murder of Crows gücü 0,35 -> 0,45 ve Toll Sweep 0,55 -> 0,7 (2 kahramanlı tutorial'da alan skill'i ancak böyle tek hedefliyi geçer). Bandit Chief YZ profili `mob_tank` (Guard'ı yok). Watchtower şefinin görünen adı karşılaşmada `Bandit Chief` olarak kaldı (harita önizlemesindeki lider adı).
+
+## 10. Bölge III (The Northern Heights) — plan ve uygulama
+
+> **Durum: UYGULANDI (campaign-dev, 2026-10-17; Ömer "hepsini şimdi bitir" dedi, özeti okuyup onaylayacak).** 7. bölümdeki Bölge III taslağının yerine geçer. Bağlayıcı yön (Ömer 2026-10-16, 7. bölüm): az yeni mob, Bölge I-II moblarının tekrar kullanımı (sefer sonunda aşinalık), özel karşılaşmalarda (elit, kapı, boss eşlikçileri, final boss) farklı mob ya da aynı mobun **gelişmiş sürümü** (ör. 2. skill alan vuruşuna döner). Önceki geri bildirim: oynanabilir sınıfların skill'leri birebir kopyalanmaz; MP yenileme / MP çalma pasifi YOK (Bölge III'te MP'ye dayanan yeni pasif 0); her savaşın kompozisyonu farklı; bölgede en çok 1 caster'sız savaş. Sayılar PROVİZYON, `sim:campaign` ile ayarlandı (`balance.json > _regionIII`). Varsayımlar `open-questions.md` madde 333.
+
+### 10.1 Mob listesi
+
+| Mob (id) | Aile | Durum | Rol | Caster | Pasif | Savaşlar |
+|---|---|---|---|---|---|---|
+| Charcoal Burner | Ember Cult | Bölge II, aynen | arka | evet | Last Ember | Ashen Plain |
+| Grave Chanter | Undead | Bölge II, aynen | arka, çağırıcı | evet | Bone Ward | Ashen Plain |
+| Stonebound Warden | Guardians | Bölge II, aynen | ön, tank | hayır | Stone Patience | Siege Line |
+| Bandit Crossbowman ("Siege Crossbowman") | Bandits | Bölge II, aynen | arka, menzilli | hayır | Cut and Run | Siege Line |
+| Grey Wolf | Beasts | Bölge I, aynen | ön, sürü | hayır | Pack Tactics | Thornwood Hollow |
+| Ember Acolyte | Ember Cult | Bölge I-II, aynen | arka | evet | Last Ember | Thornwood Hollow, Ember Road |
+| Moor Raider ("Ember Outrider") | Bandits | Bölge II, aynen | ön | hayır | Cut and Run | Ember Road |
+| Drowned, Ghoul | Undead | Bölge II, aynen | ön | hayır | Corpse Hunger | Riverhead |
+| Fen Witchling, Will-o'-Wisp | Hexes | Bölge II, aynen | arka | evet | Mire-Bound, Flicker | Riverhead |
+| Deep Runecaller ("Gate Runecaller") | Guardians | Bölge II, aynen | arka | evet | Ward-Etcher | Gate of Cinders |
+| **Morvane Halberdier** (`morvane_halberdier`) | Morvane's Army | **YENİ** | ön, melee | hayır | **Close Ranks** (YM20) | Siege Line, Gate of Cinders |
+| **Ash Hound** (`ash_hound`) | Beasts | **YENİ** (Grey Wolf'un ateşli akrabası, kendi kiti; Shepherd's Fold olayındaki "ash-hounds") | ön, dalıcı | hayır | **Blood Scent** (YM21) | Ashen Plain, Ember Road |
+| **Cinder Gatewarden** (`cinder_gatewarden`) | Guardians | **GELİŞMİŞ** Shieldwarden | ön, tank | hayır | Searing Rebuke (Rebuke kuralı, %45) | Gate of Cinders |
+| **Morvane's Sworn Guard** (`sworn_guard`) | Morvane's Army | **GELİŞMİŞ** Halberdier | ön, melee | hayır | Close Ranks | Castle Morvane |
+| **Ember Hierophant** (`ember_hierophant`) | Ember Cult | **GELİŞMİŞ** Ember Acolyte | arka | evet | Last Ember | Castle Morvane |
+| **Drake Priest** (`drake_priest`) | Ember Cult | **YENİ elit** (pasif + 3 aktif) | arka | evet | **Molten Shed** (YM22) | Thornwood Hollow |
+| **Lord Morvane** (`lord_morvane`, data/bosses) | boss | **YENİ final boss** (pasif + 3 aktif + ultimate, 3 faz) | orta sıra | evet | **Crown of Ash** (YM23) | Castle Morvane |
+
+Yeni sıradan mob: **2** (Morvane Halberdier, Ash Hound) + gelişmiş 3 + elit 1 + boss 1. Tekrar kullanılan Bölge I-II mobu: 12.
+
+### 10.2 Yeni / gelişmiş mob kartları
+
+**Morvane Halberdier** (YENİ) · ön, melee, caster değil · STR 26 / DEX 10, zırh 20, MZ 6 · Pasif **Close Ranks**: aynı sıradaki (row) diğer her canlı dost için aldığı tüm hasar %12 azalır (3'lü sırada %24). Ders: sırayı açmak için önce bir ucu ya da ortayı indir.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Halberd Chop** (temel) | tek düşman, melee | STR fiziksel 0,9 | 0 / — | Teber başı (balta + mızrak ucu), tahta sap | Yukarıdan inen teber, kısa çelik parıltısı, kıvılcım |
+| **Pike Thrust** | tek düşman, melee, menzil +1 sıra | STR fiziksel 0,8, zırhın %25'ini yok sayar | 5 / 3 | İleri uzanan mızrak ucu, hız çizgileri | Ön sıranın arkasına uzanan uzun dürtüş, ucu çarpınca toz halkası |
+
+**Morvane's Sworn Guard** (GELİŞMİŞ Halberdier, Castle Morvane) · STR 30, zırh 24, MZ 10, `spriteScale` 1,12 · Pasif Close Ranks (aynı) · Skill'ler: Halberd Chop (aynı) + **Wall of Pikes** (Pike Thrust'ın ALAN sürümü): bir sütun (şerit) boyunca sıra sıra STR fiziksel 0,75, her sonraki hedefe x0,75; 8 MP / CD 3.
+
+**Ash Hound** (YENİ, Beasts) · ön, dalıcı, caster değil · STR 22 / DEX 18, zırh 6, MZ 4 · Pasif **Blood Scent**: canı %50'nin altındaki hedeflere +%30 hasar. Ders: yaralı kahramanı iyileştir / koru; tazıyı önce öldür.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Scorch Bite** (temel) | tek düşman, melee | STR fiziksel 0,75 + 2 tur Burning (STR 0,12) | 0 / — | Közlü dişlerle açık tazı çenesi | Yandan kapanan kül grisi çene, turuncu kor kıvılcımları |
+| **Run Down** | tek düşman, HER sıra (ön sıra / menzil kuralı yok) | STR fiziksel 0,7 + 1 tur Slow | 5 / 3 | Koşan tazı silueti, arkasında kül izi | Ön sırayı atlayan kül çizgisi, hedefte toz ve kor patlaması |
+
+**Cinder Gatewarden** (GELİŞMİŞ Shieldwarden, Gate of Cinders) · STR 28, zırh 34, MZ 10, can 150, `spriteScale` 1,12 · Pasif **Searing Rebuke** (Rebuke kuralı, %45) · Skill'ler: Shield Bash (aynı) + **Hold the Gate** (Hold the Line'ın güçlüsü): 2 tur taunt (dostlar x0,8 hasar alır) + kendine 1 tur Fortified; 8 MP / CD 4.
+
+**Ember Hierophant** (GELİŞMİŞ Ember Acolyte, Castle Morvane) · INT 34, zırh 10, MZ 12, `spriteScale` 1,12 · Pasif Last Ember (aynı) · Skill'ler: Ember Toss (aynı) + **Burn the Field** (Burn the Ground'un büyüğü): 2x3 alan INT ateş 0,3 + 2 tur yanan zemin (INT 0,35); 12 MP / CD 3.
+
+**Drake Priest** (YENİ elit, Thornwood Hollow; poz sayfası) · arka, caster · INT 32, zırh 10, MZ 16, `spriteScale` 1,15 · Pasif **Molten Shed**: savaşta bir kez, canı ilk kez %40'ın altına inince deri döker: tüm kahramanlar sabit ateş hasarı alır (INT 0,35; isabet zarı yok) ve kendisi 2 tur Fortified olur. Ders: rahibi eşiğin altına tek seferde indir ya da patlamaya canı dolu gir.
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Drakefire** (temel) | tek düşman, menzilli | INT ateş 0,7 + 2 tur Burning (INT 0,12) | 0 / — | Ejder başı biçimli asa ucundan alev | Asadan fırlayan ejder kafalı alev, hedefte kıvılcım |
+| **Dragon's Breath** | X şekli (merkez + 4 çapraz) | INT ateş 0,5 + 2 tur yanan zemin (INT 0,25) | 12 / 3 | Açık ejder ağzından alev konisi | Çaprazlara yayılan alev dilleri, yerde yanan izler |
+| **Kindle the Faithful** | tek dost (kendisi hariç) | INT kalkanı 0,5 + 2 tur Haste | 10 / 4 | İki el arasında yükselen kor | Dostun çevresinde dönen kor halkası, yukarı süzülen kıvılcım |
+
+### 10.3 Lord Morvane (final boss, `data/bosses/lord_morvane.json`)
+
+Kül Laneti'nin kaynağı, Morvane Kalesi'nin efendisi; INT'e dayalı ateş büyücüsü-şövalye (Bridge Warden STR ve fiziksel; ikisi bilerek zıt). Orta sırada (yuva 4) iki Sworn Guard'ın arkasında durur. Boss rütbesi: CC'ye bağışık (her boss gibi).
+
+- **Pasif Crown of Ash (YM23):** çağrı olmayan bir dostu her ölünce maks canının %10'u kadar kalkan alır (3 tur; yığılır). Ders: eşlikçiyi öldürmek Morvane'yi kalkanlar; önce Morvane'ye yüklen ya da eşlikçileri ona yüklenmeden hemen önce indir.
+- **Fazlar (var olan boss altyapısı):** Faz 1 "Kneel before the ash." · Faz 2 (%60) "The crown burns.": Ashfall 2x2 -> 2x3 · Faz 3 (%30) "Valdoria burns with me.": tur başına 2 eylem, güç +%15, girişte Pyre of Morvane telgraflanır. (Sim: faz 2'de 2 eylem final boss'u duvara çeviriyordu; madde 333.)
+
+| Skill | Hedef / şekil | Etki | MP / CD | İkon | VFX |
+|---|---|---|---|---|---|
+| **Cinder Lash** (temel) | tek düşman, her sıra | INT ateş 0,85 + 2 tur Burning (INT 0,1) | 0 / — | Közden örülmüş kırbaç | Kırbaç gibi kıvrılan kor zinciri, hedefte kıvılcım patlaması |
+| **Ashfall** | 2x2 alan (faz 2+: 2x3), **telgraflı** (Morvane'nin sonraki turunda düşer) | INT ateş 1,0 + 2 tur yanan zemin (INT 0,3) | 10 / 2 | Gökten düşen kül ve kor yağmuru | Önce hücrelerde kül gölgesi, sonra yağan kor topakları ve alev |
+| **Iron Decree** | tüm dostlar | 2 tur Haste (Fortified sim'de çıkarıldı, madde 333) | 12 / 4 | Mühürlü ferman, kızgın demir mühür | Morvane'den yayılan kızıl mühür halkası, dostların üstünde kor tacı |
+| **Pyre of Morvane** (ultimate, faz 3) | tüm kahraman tahtası, **telgraflı**, güvenli hücre YOK | INT ateş 0,8 + tüm tahtada 2 tur yanan zemin (INT 0,2) | 0 / 4 | Alevler içinde taç ve kale silueti | Tüm tahtada yükselen alev sütunları, ortada yanan taç |
+
+Bridge Warden'dan fark: Warden'ın Fall'ında Keystone'a kaçılır; Pyre'dan kaçış yok, uyarı turu kalkan / Guard / şifa / Fortified ile hazırlanmak için. Ashfall ise Move ile kaçılan alan telgrafı.
+
+### 10.4 Kompozisyonlar
+
+| Düğüm | Karşılaşma | Birimler (yuva) | Caster | Ders |
+|---|---|---|---|---|
+| Ashen Plain | `ashen_plain` "Ash and Bone" | Ash Hound (0), Ash Hound (2), Charcoal Burner (6), Grave Chanter (7) | 2 | Tazılar arkaya dalar ve yaralıyı bitirir; kemikler Chanter'ı korur |
+| Siege Line | `siege_line` "Morvane's Vanguard" | Morvane Halberdier (0), Stonebound Warden (1), Morvane Halberdier (2), Siege Crossbowman (7) | **0** (bölgenin tek caster'sız savaşı) | Kapalı sıra: bir ucu kır, taş muhafızı arada dürt |
+| Thornwood Hollow (elit) | `thornwood_hollow` "Cult of the Drake" | Drake Priest (7, elit), Grey Wolf (0), Grey Wolf (2), Ember Acolyte (6) | 2 | Molten Shed eşiği; sürü + yanan zemin |
+| Ember Road | `ember_road` "Morvane's Outriders" | Ember Outrider (0), Ash Hound (1), Ember Outrider (2), Ember Acolyte (7) | 1 | Yarı canda kaçan atlılar + dalan tazı |
+| Riverhead | `riverhead` "Spring Ambush" | Drowned (0), Ghoul (2), Fen Witchling (6), Will-o'-Wisp (8) | 2 | Ölüm ölüleri doyurur; Omen'li yavaşlar; Wisp'e tek ağır vuruş |
+| Gate of Cinders | `gate_of_cinders` "Gatewardens" | Cinder Gatewarden (0), Morvane Halberdier (1), Cinder Gatewarden (2), Gate Runecaller (7) | 1 | Melee'yi cezalandıran kapı + sıra kalkanı + rün kalkanı: uzaktan / büyüyle vur |
+| Castle Morvane (boss) | `castle_morvane` "Lord Morvane" | Lord Morvane (4, boss), Sworn Guard (0), Sworn Guard (2), Ember Hierophant (7) | 2 | Taç kalkanı, Ashfall'dan kaç, Pyre'a hazırlan |
+
+Aynı birim kümesi yok (Bölge I-II dahil). Class kopyası: 0 (Bölge III'te rakip bölük yok). Eski `dragons_spine` ve `lord_morvane` (class kopyaları) Endless'ın elit/boss dalgası olarak AYNEN kalır; sefer düğümleri yeni `thornwood_hollow` / `castle_morvane` karşılaşmalarına geçti (madde 333).
+
+### 10.5 YENİ MEKANİK listesi (Ömer onayı bekler)
+
+| # | Ad | Tek satır kural | Kanca |
+|---|---|---|---|
+| YM20 | Close Ranks | Aynı sıradaki her diğer canlı dost için alınan tüm hasar -%12. | alınan hasar çarpanı (`passiveTakenMult`, Bone Ward ile aynı yer) |
+| YM21 | Blood Scent | Canı %50 altındaki hedefe +%30 hasar. | giden hasar çarpanı (`passiveDealtMult`, Bölge I ile aynı yer) |
+| YM22 | Molten Shed | Savaşta bir kez, can ilk kez %40 altına inince tüm kahramanlara sabit ateş hasarı + kendine 2 tur Fortified. | vuruş sonu (Rebuke / Flicker'ın yanı) + `passiveUsed` |
+| YM23 | Crown of Ash | Çağrı olmayan dost ölünce maks canın %10'u kalkan (3 tur, yığılır). | ölüm olayı (Shares of the Dead'in yanı) + süreli kalkan katmanı (Ward-Etcher'ınki) |
+
+MP'ye dayanan: 0. Gelişmiş mobların pasifleri var olan kurallar (Rebuke %45, Last Ember, Close Ranks). **Yeni mekanik DEĞİL, yalnızca doğrulandı:** D10 mob skill'inde `ignoreReach` (Run Down) ve `reach` (Pike Thrust); D11 X şekli + zemin (Dragon's Breath); D12 `all_allies` durum skill'i (Iron Decree); D13 boss telgrafında güvenli hücresiz `wholeBoard` + zemin (Pyre of Morvane; telgraf çözülmesi `dot` uygulamıyor, bu yüzden Burning yerine yanan zemin) ve `areaByPhase` ile 2x2 -> 2x3 alan telgrafı (Ashfall).
+
+### 10.6 Yer tutucular (bugün) ve ChatGPT sanat listesi (yarın)
+
+Bugün oyun tam oynanır; her şey var olan sanatı ödünç kullanır, eksik dosya çökertmez:
+- **Çizim:** Halberdier ve Sworn Guard `oathsworn_brother` (Guard 1,12 büyük), Ash Hound `grey_wolf` (1,3), Cinder Gatewarden `shieldwarden` (1,12), Ember Hierophant `ember_acolyte` (1,12), Drake Priest `charcoal_burner` (1,15), Lord Morvane `high_priest_of_the_undying` (1,35).
+- **İkon ve VFX:** yeni skill'ler `artOf` ile bir Bölge I-II mob skill'ine bağlı; o skill'in BOYALI ikonu ve 8 karelik VFX'i gösterilir (`skillIconName` ve `selectSkillVfx` artOf'a düşer). Yeni pasiflerin ikonu `src/ui/mob-icons.ts > PASSIVE_ICON_STANDIN` (ör. Close Ranks -> Rebuke'un ikonu). Kendi dosyası gelince kendiliğinden öne geçer.
+- **Ses:** hepsi kendi WebAudio tarifi (`data/audio-mobs.json`), yer tutucu değil.
+
+**ChatGPT art checklist (yarın; her satır bir onay paketi):**
+
+| # | Mob (id) | Karakter + avatar | İkon sayfası (2x2 TL TR BL BR, `assets/source/mob-icons/<sayfa>.png`) | VFX (8 kare, `assets/source/mob-vfx/<mob>-<skill>.png`) | Poz sayfası |
+|---|---|---|---|---|---|
+| 1 | Morvane Halberdier (`morvane_halberdier`) | evet | `morvane_army-sheet`: halberd_chop, pike_thrust, close_ranks, wall_of_pikes | halberd_chop, pike_thrust | — |
+| 2 | Sworn Guard (`sworn_guard`) | evet (Halberdier'in süslü muhafız sürümü) | (1. sayfadaki wall_of_pikes) | wall_of_pikes | — |
+| 3 | Ash Hound (`ash_hound`) | evet (yatay, Grey Wolf gibi) | `ash_hound-sheet`: scorch_bite, run_down, blood_scent, searing_rebuke | scorch_bite, run_down | — |
+| 4 | Cinder Gatewarden (`cinder_gatewarden`) | evet (Shieldwarden'ın kor işlemeli kapı sürümü) | (3. sayfadaki searing_rebuke) + `region3_upgrades-sheet`: hold_the_gate, burn_the_field, crown_of_ash, null | hold_the_gate | — |
+| 5 | Ember Hierophant (`ember_hierophant`) | evet (Acolyte'in yüksek rahip sürümü) | (4. satırdaki sayfada burn_the_field) | burn_the_field | — |
+| 6 | Drake Priest (`drake_priest`) | evet | `drake_priest-sheet`: drakefire, dragons_breath, kindle_the_faithful, molten_shed | drakefire, dragons_breath, kindle_the_faithful | **evet** |
+| 7 | Lord Morvane (`lord_morvane`) | evet | `lord_morvane-sheet`: cinder_lash, ashfall, iron_decree, pyre_of_morvane (+ crown_of_ash 4. satırdaki sayfada) | cinder_lash, ashfall, iron_decree, pyre_of_morvane | **evet** |
+
+Toplam: 7 çizim (+ 7 avatar otomatik), 5 ikon sayfası (14 skill + 5 pasif = 19 ikon, 1 boş hücre), 14 VFX sheet, 2 poz sayfası.
+
+Poz sayfası kareleri (4x3, soldan sağa; kayıtlar `data/mob-poses.json > _pending`):
+- **Drake Priest:** 1-2 boşta (asa yerde / asa kalkık nefes), 3 hazırlık (asa geri), 4 Drakefire bırakma (asa ileri, alev), 5 Dragon's Breath (iki el öne, alev konisi), 6 Kindle the Faithful (kollar yukarı, kor halkası), 7 Molten Shed (sırtından kopan erimiş pullar), 8 adım, 9 darbe, 10 sendeleme, 11 yığılma, 12 yerde.
+- **Lord Morvane:** 1-2 boşta (taçlı, kılıç yere dayalı / pelerin dalgalanır), 3 hazırlık (kor kırbaç geri), 4 Cinder Lash (kırbaç ileri), 5 Ashfall (kılıç göğe, kül yağmuru çağırır), 6 Iron Decree (mühürlü ferman havada), 7 Pyre of Morvane (iki kol açık, ayakta alev sütunu), 8 adım, 9 darbe, 10 sendeleme / faz geçişi, 11 diz çöküş, 12 yerde (taç yuvarlanmış).
+
+Çizim prompt'ları (ortak stil başı 2.3 ile aynı):
+- **Morvane Halberdier:** *"A foot soldier of Lord Morvane's army, soot-blackened half plate over a charred red gambeson, open sallet helmet with an ash-grey face cloth, a long halberd held at guard, a small ember-orange sigil of a burning crown on the chest, smoky dull-red accent colour."*
+- **Sworn Guard:** *"The elite royal guard of Lord Morvane: full blackened plate with gilded edges, crested close helm with a thin glowing visor slit, tattered crimson cloak, an ornate halberd with a crown-shaped blade, burning-crown sigil, deep crimson accent colour."*
+- **Ash Hound:** *"A gaunt hunting hound of the ash wastes, side view, soot-grey hide cracked like cooling embers with orange glow in the cracks, smoking breath, iron collar with a burning-crown tag, head low ready to lunge, ember-orange eyes as accent colour."*
+- **Cinder Gatewarden:** *"A castle gate guardian: heavy tower shield banded with red-hot iron, scorched plate armour, a ring of gate keys on the belt, cinders drifting off the shield rim, glowing coal-orange accent colour."*
+- **Ember Hierophant:** *"A high priest of the ember cult: tall horned ember mitre, layered burnt-orange and black robes embroidered with flame script, a brazier staff spilling sparks, face hidden in shadow except glowing eyes, bright ember-orange accent colour."*
+- **Drake Priest:** *"A fanatic priest of a dragon cult hiding in a thorn forest hollow, scaled leather vestments dyed deep red, a mask shaped like a drake's skull, a gnarled staff topped with a drake head holding a live flame, patches of molten scale on the arms, molten-gold accent colour."*
+- **Lord Morvane:** *"Lord Morvane, the ash-cursed lord of a northern castle, tall and regal, blackened ornate plate armour cracked with glowing embers beneath, a crown of burning iron spikes, a long tattered crimson-and-ash cloak, a whip of linked glowing coals in one hand and a long sword held downward in the other, ash falling around him, ember-red accent colour."*
+
+Yarın içe aktarma (araçlarda satırlar HAZIR): `python tools/import-mobs.py --only <id>` (HEADS'te yer tutucu kafa kutusu; çizim gelince `--check` ile düzelt; kaynağı olmayan id atlanır), sonra mob json `spriteId` = kendi id'si (boss: `data/bosses/lord_morvane.json`) ve `spriteScale` gözden geçirilir; `node tools/import-mob-art.mjs icons` (ICON_SHEETS'te 5 sayfa), `node tools/import-mob-art.mjs vfx` (MOB_VFX_SPECS'te 14 satır hazır; zemine oturanlar GROUND'da), `node tools/import-mob-art.mjs poses` (`_pending` kaydı poz dosyası gelince otomatik üst düzeye taşınır).
