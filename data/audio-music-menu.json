@@ -1,0 +1,42 @@
+{
+  "_not": "ANA MENÜ MÜZİĞİ, YUMUŞAK SÜRÜM (Ömer 2026-10-17: 'kulak tırmalayabiliyor, bir süre sonra sıkıyor'). data/audio-music.json tabanının ÜSTÜNE yazılan farklar (src/game/music.ts > MUSIC); sahne müzikleri tabandan türer, bu dosyadan etkilenmez. Yumuşatma: daha yavaş tempo (66), lavta tellerinde daha az parlaklık, tüm karışıma alçak geçiren (softLowpass), flütte yavaş atak + az nefes/chiff + az harmonik, ped üçgen dalga ve düşük kesim, davul yalnızca tek yumuşak 'soft' kalıbı, daha koyu yankı. Çeşitlilik: 6 bölüm x 8 ölçü = 48 ölçü (~130 sn) ve 5 döngülük 'cycles' dönüşü (ezgi türü, arp kalıbı, ped/bas/davul açık-kapalı, süsleme) + döngü numarasıyla tohumlanan üretilmiş ezgiler: tam tekrar ~11 dk sonra, o da farklı ezgilerle. Bölümler: hush (sakin giriş, ezgisiz), banner (ana tema), vale (ikinci tema, farklı akorlar), dusk (alçak, seyrek), reprise (ana tema süslü dönüş), embers (üretilmiş ezgi, kapanış). Bölümler arası ped bir sonraki ölçüye taşar, drone hiç kesilmez: dikişsiz.",
+  "bpm": 66,
+  "fadeInMs": 9000,
+  "humanize": { "timingMs": 14, "velocity": 0.22 },
+  "reverb": { "seconds": 3.6, "decay": 3.2, "damp": 0.75, "wet": 0.4, "dry": 0.75 },
+  "softLowpass": 3400,
+  "voices": {
+    "harp": { "gain": 0.42, "decay": 2.2, "bassDecay": 3.2, "bassGain": 0.36, "bright": 0.3, "pick": 0.3 },
+    "flute": { "gain": 0.15, "attack": 0.13, "release": 0.3, "vibratoHz": 4.6, "vibratoCents": 9, "vibratoDelay": 0.4, "h2": 0.07, "h3": 0.015, "breath": 0.06, "chiff": 0.05 },
+    "pad": { "gain": 0.034, "attack": 1.6, "release": 2.2, "detuneCents": 6, "cutoff": 560, "wave": "triangle" },
+    "drone": { "gain": 0.022, "cutoff": 300 },
+    "drum": { "gain": 0.26 }
+  },
+  "harpPatterns": {
+    "lull": [0, null, null, 4, null, null, 0, null, 3, null, null, null],
+    "rock": [0, null, 1, null, 3, null, 0, null, 1, null, 4, null],
+    "cascade": [5, null, 4, null, 3, null, 1, null, 0, null, null, null, 4, null, 3, null, 1, null, 0, null, null, null, null, null]
+  },
+  "drumPatterns": {
+    "soft": [0.7, 0, 0, 0, 0.3, 0]
+  },
+  "themes": {
+    "vale": ["A4:1.5 C5:0.5 F5:1", "E5:2 G5:1", "F5:1 E5:1 D5:1", "C5:1.5 B4:0.5 A4:1", "D5:1 C5:1 Bb4:1", "A4:1 C5:1 F5:1", "G5:1.5 E5:0.5 D5:1", "D5:3"]
+  },
+  "sections": {
+    "hush": { "chords": ["Dm", "C", "Dm", "Am", "F", "C", "G", "Dm"], "harp": "lull", "bass": true, "pad": 1, "drum": null, "melody": null },
+    "banner": { "chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "C", "Dm"], "harp": "flow", "bass": true, "pad": 1, "drum": "soft", "melody": "theme:banner" },
+    "vale": { "chords": ["F", "C", "Dm", "Am", "Bb", "F", "C", "Dm"], "harp": "rock", "bass": true, "pad": 1.1, "drum": null, "melody": "theme:vale", "ornament": 0.15 },
+    "dusk": { "chords": ["Dm", "Am", "Bb", "C", "Dm", "Am", "C", "Dm"], "harp": "sparse", "bass": true, "pad": 1.1, "drum": null, "melody": "gen:low" },
+    "reprise": { "chords": ["Dm", "Bb", "F", "C", "Dm", "Bb", "C", "Dm"], "harp": "climb", "bass": true, "pad": 1, "drum": "soft", "melody": "theme:banner", "ornament": 0.3 },
+    "embers": { "chords": ["Dm", "C", "Bb", "C", "F", "Am", "Bb", "A"], "harp": "sparse", "bass": true, "pad": 0.9, "drum": null, "melody": "gen:high" }
+  },
+  "form": ["hush", "banner", "vale", "dusk", "reprise", "embers"],
+  "cycles": [
+    {},
+    { "hush": { "melody": "gen:low", "harp": "flow" }, "banner": { "ornament": 0.3 }, "vale": { "melody": "gen:high", "harp": "flow" }, "dusk": { "harp": "lull" }, "embers": { "harp": "flow", "drum": "soft" } },
+    { "hush": { "harp": "rock" }, "banner": { "harp": "rock", "drum": null }, "vale": { "ornament": 0.4 }, "dusk": { "melody": "gen:high", "bass": false }, "reprise": { "melody": "gen:high", "harp": "flow" }, "embers": { "melody": "gen:low" } },
+    { "hush": { "melody": "gen:high", "harp": "sparse", "pad": 1.2 }, "banner": { "melody": "gen:low", "ornament": 0.2 }, "vale": { "harp": "climb", "drum": "soft" }, "dusk": { "harp": "rock" }, "reprise": { "ornament": 0.5, "harp": "rock" }, "embers": { "harp": "climb" } },
+    { "hush": { "harp": "cascade" }, "banner": { "harp": "climb", "ornament": 0.4 }, "vale": { "melody": "gen:low", "harp": "lull" }, "dusk": { "melody": "gen:high", "harp": "cascade" }, "reprise": { "melody": "gen:high", "drum": null }, "embers": { "harp": "lull", "melody": "gen:high" } }
+  ]
+}

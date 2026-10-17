@@ -1,5 +1,6 @@
 import musicData from '../../data/audio-music.json';
 import tracksData from '../../data/audio-music-tracks.json';
+import menuData from '../../data/audio-music-menu.json';
 
 /**
  * Ana menü müziği (Ömer 2026-10-10): dosya yok, WebAudio ile kodla bestelenir ve çalınır. Ayrı kod parçasındadır (src/ui/music.ts
@@ -18,7 +19,7 @@ export interface MusicVoices {
   /** `shift`: arp + bas transpozu (yarım ses; -12 = bir oktav alçak; sahne müziklerinde savaş ostinatosu). */
   harp: { gain: number; decay: number; bassDecay: number; bassGain: number; bright: number; pick: number; pan: number; shift?: number };
   flute: { gain: number; attack: number; release: number; vibratoHz: number; vibratoCents: number; vibratoDelay: number; h2: number; h3: number; breath: number; chiff: number; pan: number; lowGain: number };
-  pad: { gain: number; attack: number; release: number; detuneCents: number; cutoff: number; octave: number };
+  pad: { gain: number; attack: number; release: number; detuneCents: number; cutoff: number; octave: number; /** Osilatör dalgası (varsayılan testere; menüde yumuşak üçgen). */ wave?: 'sawtooth' | 'triangle' | 'sine' };
   drone: { gain: number; notes: string[]; cutoff: number; lfoHz: number; lfoDepth: number; attack: number };
   drum: { gain: number; dumAt: number; pan: number };
 }
@@ -50,6 +51,8 @@ export interface MusicConfig {
   humanize: { timingMs: number; velocity: number };
   reverb: { seconds: number; decay: number; damp: number; wet: number; dry: number };
   softClip: number;
+  /** Varsa karışımın tamamına alçak geçiren (Hz): tiz kısmı yumuşatır (yalnızca ana menü bunu kullanır). */
+  softLowpass?: number;
   voices: MusicVoices;
   harpPatterns: Record<string, Array<number | null>>;
   drumPatterns: Record<string, number[]>;
@@ -61,7 +64,36 @@ export interface MusicConfig {
   cycles: Array<Record<string, Partial<SectionDef>>>;
 }
 
-export const MUSIC = musicData as unknown as MusicConfig;
+/** Ham taban ayar (data/audio-music.json): sahne müzikleri bunun üstüne farklarını yazar. */
+const BASE = musicData as unknown as MusicConfig;
+type VoicePatch = { [K in keyof MusicVoices]?: Partial<MusicVoices[K]> };
+type Override = Partial<Omit<MusicConfig, 'voices'>> & { voices?: VoicePatch };
+
+/** Tabana fark uygular: üst düzey anahtar değişir; voices çalgı çalgı, harpPatterns / drumPatterns / themes ad ad birleşir. */
+function mergeConfig(base: MusicConfig, o: Override): MusicConfig {
+  const { voices, harpPatterns, drumPatterns, themes, ...rest } = o;
+  const v = base.voices;
+  return {
+    ...base,
+    ...rest,
+    voices: {
+      harp: { ...v.harp, ...voices?.harp },
+      flute: { ...v.flute, ...voices?.flute },
+      pad: { ...v.pad, ...voices?.pad },
+      drone: { ...v.drone, ...voices?.drone },
+      drum: { ...v.drum, ...voices?.drum },
+    },
+    harpPatterns: { ...base.harpPatterns, ...harpPatterns },
+    drumPatterns: { ...base.drumPatterns, ...drumPatterns },
+    themes: { ...base.themes, ...themes },
+  };
+}
+
+/** Ana menü müziği (2026-10-17): yumuşak tınılı, uzun/çeşitli biçimli sürüm = taban + data/audio-music-menu.json farkları. */
+export const MUSIC: MusicConfig = mergeConfig(BASE, (() => {
+  const { _not: _n, ...o } = menuData as unknown as Override & { _not: string };
+  return o;
+})());
 
 // ---------------------------------------------------------------- sahne müzikleri (data/audio-music-tracks.json; 2026-10-13)
 
@@ -84,22 +116,8 @@ export function trackConfig(id: MusicTrackId): MusicConfig {
   const o = id === 'menu' ? undefined : TRACKS[id];
   let cfg: MusicConfig = MUSIC;
   if (o) {
-    const { label: _l, desc: _d, voices, harpPatterns, drumPatterns, themes, ...rest } = o;
-    const v = MUSIC.voices;
-    cfg = {
-      ...MUSIC,
-      ...rest,
-      voices: {
-        harp: { ...v.harp, ...voices?.harp },
-        flute: { ...v.flute, ...voices?.flute },
-        pad: { ...v.pad, ...voices?.pad },
-        drone: { ...v.drone, ...voices?.drone },
-        drum: { ...v.drum, ...voices?.drum },
-      },
-      harpPatterns: { ...MUSIC.harpPatterns, ...harpPatterns },
-      drumPatterns: { ...MUSIC.drumPatterns, ...drumPatterns },
-      themes: { ...MUSIC.themes, ...themes },
-    };
+    const { label: _l, desc: _d, ...rest } = o;
+    cfg = mergeConfig(BASE, rest);
   }
   trackCache.set(id, cfg);
   return cfg;
@@ -557,7 +575,14 @@ export class MusicEngine {
     sum.gain.value = cfg.master;
     this.mix.connect(dry).connect(sum);
     this.mix.connect(conv).connect(wet).connect(sum);
-    sum.connect(this.fade).connect(this.level).connect(clip).connect(dest);
+    if (cfg.softLowpass) {
+      const soft = ctx.createBiquadFilter();
+      soft.type = 'lowpass';
+      soft.frequency.value = cfg.softLowpass;
+      soft.Q.value = 0.4;
+      sum.connect(soft).connect(this.fade);
+    } else sum.connect(this.fade);
+    this.fade.connect(this.level).connect(clip).connect(dest);
     const bus = (pan: number): AudioNode => {
       const g = ctx.createGain();
       if (typeof ctx.createStereoPanner === 'function') {
@@ -696,7 +721,7 @@ export class MusicEngine {
     for (const m of e.midis)
       for (const d of [-p.detuneCents, p.detuneCents]) {
         const o = ctx.createOscillator();
-        o.type = 'sawtooth';
+        o.type = p.wave ?? 'sawtooth';
         o.frequency.value = midiFreq(m);
         o.detune.value = d;
         o.connect(lp);

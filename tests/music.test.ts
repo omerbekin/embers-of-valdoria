@@ -13,6 +13,7 @@ import {
   parseChord,
   pluckSamples,
   reverbImpulse,
+  trackConfig,
   type MusicEvent,
 } from '../src/game/music';
 import { DEFAULT_MUSIC_LEVEL, loadMusicLevel, musicGain } from '../src/ui/music';
@@ -56,9 +57,9 @@ describe('Ana menü müziği: veri ve beste (data/audio-music.json, src/game/mus
     for (const f of MUSIC.form) expect(MUSIC.sections[f], f).toBeDefined();
   });
 
-  it('döngü 60-90 sn sürer; seviye varsayılanı ~%60', () => {
-    expect(cycleSec()).toBeGreaterThanOrEqual(60);
-    expect(cycleSec()).toBeLessThanOrEqual(90);
+  it('döngü 100-160 sn sürer (uzun biçim); seviye varsayılanı ~%60', () => {
+    expect(cycleSec()).toBeGreaterThanOrEqual(100);
+    expect(cycleSec()).toBeLessThanOrEqual(160);
     expect(DEFAULT_MUSIC_LEVEL).toBe(12); // 20 adımda %60
     expect(loadMusicLevel()).toBe(12); // node: localStorage yok -> varsayılan
     expect(musicGain(0, 7)).toBe(0); // 0 = tamamen kapalı
@@ -107,6 +108,41 @@ describe('Ana menü müziği: veri ve beste (data/audio-music.json, src/game/mus
     const mel = (k: number) => composeCycle(k).filter((e) => e.kind === 'flute').map((e) => (e.kind === 'flute' ? e.midi : 0)).join(',');
     const set = new Set([0, 1, 2, 3, 4, 5, 6, 7].map(mel));
     expect(set.size).toBe(8);
+  });
+});
+
+describe('Ana menü müziği: yumuşak sürüm (data/audio-music-menu.json)', () => {
+  it('tabandan daha yumuşak ve yavaş; sahne müzikleri tabandan türer (menüden etkilenmez)', () => {
+    expect(MUSIC.bpm).toBeLessThan(80);
+    expect(MUSIC.softLowpass).toBeLessThanOrEqual(4000);
+    expect(MUSIC.voices.pad.wave).toBe('triangle');
+    expect(MUSIC.voices.flute.attack).toBeGreaterThanOrEqual(0.1);
+    expect(MUSIC.form.length).toBeGreaterThanOrEqual(5);
+    expect(trackConfig('battle').softLowpass).toBeUndefined();
+    expect(trackConfig('battle').form).not.toEqual(MUSIC.form);
+  });
+
+  it('arp kalıpları ve davul kalıpları ölçüye uyar; döngü dönüşü >= 4 ve her ölçülük akorda ölçü başı vuruşu var', () => {
+    const eighths = MUSIC.beatsPerBar * 2;
+    for (const [n, p] of Object.entries(MUSIC.harpPatterns)) expect(p.length % eighths, n).toBe(0);
+    for (const [n, p] of Object.entries(MUSIC.drumPatterns)) expect(p.length, n).toBe(eighths);
+    expect(MUSIC.cycles.length).toBeGreaterThanOrEqual(4);
+    for (const c of MUSIC.cycles)
+      for (const [name, o] of Object.entries(c)) {
+        expect(MUSIC.sections[name], name).toBeDefined();
+        if (o.harp) expect(MUSIC.harpPatterns[o.harp], `${name} ${o.harp}`).toBeDefined();
+        if (o.drum) expect(MUSIC.drumPatterns[o.drum], `${name} ${o.drum}`).toBeDefined();
+      }
+  });
+
+  it('on döngü boyunca hiçbir ezgi dizisi tekrar etmez ve her döngüde bir ezgi vardır', () => {
+    const sigs = new Set<string>();
+    for (let k = 0; k < 10; k++) {
+      const m = composeCycle(k).filter((e) => e.kind === 'flute').map((e) => (e.kind === 'flute' ? e.midi : 0));
+      expect(m.length).toBeGreaterThan(20);
+      sigs.add(m.join(','));
+    }
+    expect(sigs.size).toBe(10);
   });
 });
 
