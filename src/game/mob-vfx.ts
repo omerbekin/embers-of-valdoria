@@ -129,8 +129,9 @@ type Pt = { x: number; y: number };
 /** OYNATMA AYARLARI (Ömer 2026-10-17: mob efektleri savaşta zor seçiliyordu). Hız ayarları veride: data/battle-layout.json > animation.mobVfx. */
 const SIZE_MULT = 1.5; // her spec.size bununla çarpılır (skill'ler arası oran korunur)
 const SIZE_MAX = 640; // büyük (center/cells) efektler ekranı kaplamasın (1080 yükseklikte ~%60)
-const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (12 fps -> ~9,8; 8 kare ~0,8 sn, slow öncesi)
+const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (12 fps -> ~13,2; 8 kare ~0,6 sn, slow öncesi)
 const HOLD_MS = layout.animation.mobVfx.impactHoldMs; // vuruş karesinde donma (ms, k.slow ile)
+const WIND_MULT = layout.animation.mobVfx.windMult; // spec.windMs (hazırlık pozu) çarpanı
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
 const FLASH_HEX = '#ffe2b0'; // spec.hex yoksa sıcak beyaz
 const FLASH_SIZE = 150; // vuruş parlaması başlangıç çapı (px)
@@ -188,7 +189,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     if (s.mode === 'melee') {
       if (s.windMs) {
         c.actor.play('cast');
-        await new Promise<void>((r) => c.scene.time.delayedCall(k.slow(s.windMs!), r));
+        await new Promise<void>((r) => c.scene.time.delayedCall(k.slow(s.windMs! * WIND_MULT), r));
       }
       const t = c.targets[0];
       await c.lunge(t ? t.container.x : c.actor.container.x);
