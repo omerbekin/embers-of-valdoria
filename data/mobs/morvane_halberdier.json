@@ -3,7 +3,7 @@
   "id": "morvane_halberdier",
   "name": "Morvane Halberdier",
   "family": "morvane_army",
-  "spriteId": "oathsworn_brother",
+  "spriteId": "morvane_halberdier",
   "color": "#7a3a2a",
   "logo": "helm",
   "frontPriority": 0,

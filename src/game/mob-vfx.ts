@@ -102,6 +102,21 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
 
 type Pt = { x: number; y: number };
 
+/** OYNATMA AYARLARI (Ömer 2026-10-17: mob efektleri savaşta zor seçiliyordu). Tüm sayılar burada. */
+const SIZE_MULT = 1.5; // her spec.size bununla çarpılır (skill'ler arası oran korunur)
+const SIZE_MAX = 640; // büyük (center/cells) efektler ekranı kaplamasın (1080 yükseklikte ~%60)
+const FPS_SCALE = 0.7; // sheet fps çarpanı (12 fps -> ~8,4; 8 kare ~0,95 sn)
+const HOLD_MS = 110; // vuruş karesinde donma (ms, k.slow ile)
+const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
+const FLASH_HEX = '#ffe2b0'; // spec.hex yoksa sıcak beyaz
+const FLASH_SIZE = 150; // vuruş parlaması başlangıç çapı (px)
+const FLASH_GROW = 2.4; // parlama büyüme çarpanı
+const FLASH_MS = 220; // parlama süresi (ms, k.slow ile)
+const FLASH_ALPHA = 0.85;
+const ADD_BLEND = 1; // Phaser.BlendModes.ADD
+const SHAKE_MS = 130; // yalnızca melee
+const SHAKE_MAG = 0.004;
+
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
   const promise = new Promise<void>((r) => (resolve = r));
@@ -116,11 +131,25 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
   return async (c: VfxCtx, k: VfxKit) => {
     await k.sheetsReady(c.scene, [id]);
     const flip = c.actor.combatant.side !== 'party';
-    const fps = vfxSheetFile(id)?.meta.fps ?? 12;
+    const fps = (vfxSheetFile(id)?.meta.fps ?? 12) * FPS_SCALE;
+    const size = Math.min(SIZE_MAX, Math.round(s.size * SIZE_MULT));
+    const flashColor = parseInt((s.hex ?? FLASH_HEX).slice(1), 16);
     const sfx = c.skill.sfx ?? [];
     const pos = (v: CombatantView): Pt => (s.at === 'hit' ? k.spot(v) : k.feet(v));
     const play = (p: Pt, delay = 0): void => {
-      k.sheet(c.scene, id, p.x, p.y, { size: s.size, flipX: flip, depth: k.DEPTH + 20, delay, ...(s.squashY ? { squashY: s.squashY } : {}) });
+      const base = { size, flipX: flip, fps, delay, ...(s.squashY ? { squashY: s.squashY } : {}) };
+      const main = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: k.DEPTH + 20 });
+      const glow = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: k.DEPTH + 21, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+      if (!main) return;
+      // vuruş karesi: sheet'i kısa dondur + hedefte parlama
+      c.scene.time.delayedCall(k.slow(delay + impactMs(s, fps)), () => {
+        for (const o of [main, glow]) if (o?.active) o.anims.pause();
+        const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(k.DEPTH + 22);
+        c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
+        c.scene.time.delayedCall(k.slow(HOLD_MS), () => {
+          for (const o of [main, glow]) if (o?.active) o.anims.resume();
+        });
+      });
     };
     const land = (): Promise<void> => {
       const d = deferred();
@@ -140,6 +169,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       const t = c.targets[0];
       await c.lunge(t ? t.container.x : c.actor.container.x);
       for (const v of c.targets) play(pos(v));
+      c.scene.time.delayedCall(k.slow(impactMs(s, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
     await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', 'cast');

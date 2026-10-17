@@ -28,9 +28,11 @@ import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader'
 import { installContextLossNotice } from './ui/context-loss';
 import { attachDiagGame, diagNoticed, installDiag } from './diag/diag';
 import { openDiagNotice } from './diag/diag-notice';
+import { installStaleBuildReload } from './ui/stale-build';
 
 // Hata raporu (opt-in, varsayılan kapalı; src/diag/, docs/arch/diagnostics.md): iz halkası + önceki oturumun çökme denetimi en başta
 installDiag();
+installStaleBuildReload();
 
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);

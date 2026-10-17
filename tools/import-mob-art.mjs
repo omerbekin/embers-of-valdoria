@@ -486,8 +486,7 @@ function promotePending(mob) {
   data[mob] = rec;
   delete data._pending[mob];
   if (Object.keys(data._pending).filter((k) => !k.startsWith('_')).length === 0) delete data._pending;
-  writeFileSync(path, JSON.stringify(data, null, 2) + '
-');
+  writeFileSync(path, JSON.stringify(data, null, 2) + '\n');
   console.log(`  poz kaydı _pending.${mob} -> ${mob} (data/mob-poses.json)`);
 }
 
