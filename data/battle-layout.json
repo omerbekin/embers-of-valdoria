@@ -259,6 +259,11 @@
     "aiThinkMs": 700,
     "announceMs": 1100,
     "skillSlowdown": 1.2,
+    "mobVfx": {
+      "_not": "Sefer mobu 8 karelik skill sheet'lerinin oynatma hızı (src/game/mob-vfx.ts; sınıf skill'lerinin v2 sheet'leri bundan etkilenmez). fpsScale = sheet fps'i (meta, çoğu 12) çarpanı; impactHoldMs = vuruş karesinde donma (ms, skillSlowdown ile çarpılır). Geçmiş: 0.8.3.2 öncesi 1 / 0 ms (çok hızlı, efekt seçilmiyordu), 0.8.3.2-0.8.4.1 arası 0.7 / 110 ms (çok yavaş); Ömer 2026-10-18 'tam ortası': kare süresinin ortası (83 ve 119 ms -> ~101 ms) = 0.82, donma 55 ms.",
+      "fpsScale": 0.82,
+      "impactHoldMs": 55
+    },
     "hitMaxRatio": 0.35,
     "damageNumberMaxRatio": 0.25,
     "damageNumberMinPx": 34,

@@ -10,6 +10,18 @@ export const ATTACK_STATS: StatKind[] = ['critChance', 'critMult', 'accuracy', '
 /** Defans sütunu: zırh, büyü zırhı, kaçınma, can ve mana yenilenmesi. */
 export const DEFENSE_STATS: StatKind[] = ['armor', 'magicArmor', 'evasion', 'hpRegen', 'mpRegen'];
 
+/**
+ * Karakter / Gear stat paneli (src/ui/character-panel.ts) bu aynı sırayı kullanır (Ömer 2026-10-18): üstte can + mana, altında
+ * Ana (MAIN_STATS) | Atak (hasar çarpanı + ATTACK_STATS) | Defans (DEFENSE_STATS). Panel satır kimlikleri (`heroPanel`) StatKind'dan
+ * yalnızca critChance -> 'crit' ve 'damage' farkıyla ayrılır; sıra TEK yerde, ayrışamaz.
+ */
+export const VITAL_STATS: string[] = ['hp', 'mp'];
+export const PANEL_GROUPS: string[][] = [
+  MAIN_STATS,
+  ['damage', ...ATTACK_STATS].map((k) => (k === 'critChance' ? 'crit' : k)),
+  DEFENSE_STATS,
+];
+
 export interface StatBlockMetrics {
   /** Avatar kenarı (1:1). */
   avatar: number;

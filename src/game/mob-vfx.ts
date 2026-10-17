@@ -19,6 +19,7 @@ import type { VfxCtx } from './vfx';
 import type { VfxKit } from './vfx-versions';
 import type { V2Vfx } from './art-v2/types';
 import { mobSheetId, vfxSheetFile } from './vfx-sheet-files';
+import layout from '../../data/battle-layout.json';
 
 type Mode = 'melee' | 'bolt' | 'cells' | 'center' | 'self' | 'ally';
 
@@ -125,11 +126,11 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
 
 type Pt = { x: number; y: number };
 
-/** OYNATMA AYARLARI (Ömer 2026-10-17: mob efektleri savaşta zor seçiliyordu). Tüm sayılar burada. */
+/** OYNATMA AYARLARI (Ömer 2026-10-17: mob efektleri savaşta zor seçiliyordu). Hız ayarları veride: data/battle-layout.json > animation.mobVfx. */
 const SIZE_MULT = 1.5; // her spec.size bununla çarpılır (skill'ler arası oran korunur)
 const SIZE_MAX = 640; // büyük (center/cells) efektler ekranı kaplamasın (1080 yükseklikte ~%60)
-const FPS_SCALE = 0.7; // sheet fps çarpanı (12 fps -> ~8,4; 8 kare ~0,95 sn)
-const HOLD_MS = 110; // vuruş karesinde donma (ms, k.slow ile)
+const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (12 fps -> ~9,8; 8 kare ~0,8 sn, slow öncesi)
+const HOLD_MS = layout.animation.mobVfx.impactHoldMs; // vuruş karesinde donma (ms, k.slow ile)
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
 const FLASH_HEX = '#ffe2b0'; // spec.hex yoksa sıcak beyaz
 const FLASH_SIZE = 150; // vuruş parlaması başlangıç çapı (px)

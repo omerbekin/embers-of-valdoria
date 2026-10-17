@@ -38,6 +38,7 @@ import {
 import type { Attribute } from '../engine';
 import { wikiFiles } from '../wiki/files';
 import { statIconUrl } from './stat-tips';
+import { PANEL_GROUPS, VITAL_STATS } from '../game/stat-columns';
 import { uiIconName } from './ui-icons';
 import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
@@ -279,7 +280,9 @@ export function renderCharacter(v: CharacterView): CharacterRender {
   };
   const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : pend ? pendDiff() : []);
   const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
-  const sg = el('div', 'gr-stats');
+  // Savaş alt barıyla aynı düzen (src/game/stat-columns.ts): can + mana üstte; Ana | Atak | Defans sütunları
+  const sg = el('div', 'gr-sgroups');
+  const rowsById = new Map<string, HTMLElement>();
   for (const p of heroPanel(hero)) {
     const row = el('div', 'gr-stat');
     row.dataset['stat'] = p.id;
@@ -333,8 +336,18 @@ export function renderCharacter(v: CharacterView): CharacterRender {
       row.dataset['delta'] = dText;
       row.dataset['dir'] = dv > 0 ? 'up' : 'down';
     }
-    sg.append(row);
+    rowsById.set(p.id, row);
   }
+  const addGroup = (cls: string, ids: string[]): void => {
+    const g = el('div', `gr-sgrp ${cls}`);
+    for (const id of ids) {
+      const r = rowsById.get(id);
+      if (r) g.append(r);
+    }
+    sg.append(g);
+  };
+  addGroup('vitals', VITAL_STATS);
+  PANEL_GROUPS.forEach((ids, i) => addGroup(['base', 'attack', 'defense'][i] ?? '', ids));
   const lostTo = pend && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
   const primaryLost = lostTo ? `${PRIMARY_BONUS_NAME[lostTo]} turns off while another base stat is above ${lostTo.toUpperCase()}.` : null;
   mid.append(levelBlock(hero, v.level, primaryLost), el('div', 'gr-sec', 'Stats'), sg);

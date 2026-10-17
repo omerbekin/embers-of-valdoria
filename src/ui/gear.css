@@ -2840,3 +2840,100 @@ html.short .gr-pts {
   margin-top: 6px;
   gap: 6px;
 }
+
+/* --- Stat grupları (Ömer 2026-10-18): savaş alt barıyla aynı düzen. Üst satır HP + MP; altında Ana (+ düğmeleri sağda sabit sütun) | Atak | Defans.
+   Satırlar eski `.gr-stat`; yalnızca kapsayıcı yeni (eski `.gr-stats` ızgara geçersiz kılmaları buna uygulanmaz). --- */
+.gr-sgroups {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(8 * var(--u)) calc(14 * var(--u));
+  font-size: max(12px, calc(20 * var(--u)));
+}
+
+.gr-sgrp {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+  min-width: 0;
+}
+
+.gr-sgrp.vitals {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: calc(14 * var(--u));
+  padding-bottom: calc(6 * var(--u));
+  border-bottom: 1px solid var(--g-line);
+}
+
+.gr-sgrp.vitals > .gr-stat {
+  flex: 1 1 0;
+}
+
+.gr-sgrp.attack,
+.gr-sgrp.defense {
+  padding-left: calc(12 * var(--u));
+  border-left: 1px solid var(--g-line);
+}
+
+.gr-sgrp .gr-stat {
+  min-height: max(20px, calc(30 * var(--u)));
+  font-size: 1em;
+  height: auto;
+}
+
+.gr-sgrp .gr-sico {
+  width: max(14px, calc(24 * var(--u)));
+  height: max(14px, calc(24 * var(--u)));
+}
+
+.gr-sgrp .gr-stat-k {
+  flex: 1 1 auto;
+  min-width: 0;
+  letter-spacing: 0.04em;
+}
+
+.gr-sgrp .gr-stat-v,
+.gr-sgrp .gr-stat-d {
+  flex: none;
+}
+
+.gr-sgrp .gr-stat-d:empty {
+  display: none;
+}
+
+/* "Stats" başlığı level bloğundan ayrık dursun */
+.gr-lvl + .gr-sec {
+  margin-top: calc(16 * var(--u));
+}
+
+html.short .gr-lvl + .gr-sec {
+  margin-top: 8px;
+}
+
+/* telefon (Gear + tüccar): sıkı; başlık gizli olduğundan çizgi gruplar arasında */
+.gr-phone .gr-sgroups {
+  font-size: 12px;
+  gap: 3px 8px;
+}
+
+.gr-phone .gr-sgrp {
+  gap: 1px;
+}
+
+.gr-phone .gr-sgrp .gr-stat {
+  min-height: 20px;
+}
+
+.gr-phone .gr-sgrp .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+.gr-phone .gr-sgrp.attack,
+.gr-phone .gr-sgrp.defense {
+  padding-left: 6px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-sgrp .gr-stat {
+  min-height: 14px;
+}
