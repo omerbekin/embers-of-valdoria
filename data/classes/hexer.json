@@ -6,11 +6,12 @@
   "logo": "rune",
   "role": "Curse Caster",
   "frontPriority": 6.5,
+  "range": 5,
   "attributes": {
-    "str": 16,
+    "str": 18,
     "int": 10,
     "dex": 6,
-    "luck": 28
+    "luck": 26
   },
   "primary": "luck",
   "armor": 8,

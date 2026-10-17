@@ -4,6 +4,8 @@ import { activeHeroes, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { valorRules } from '../engine/content';
+import { giveStarterIfUnarmed } from '../progression/weapon';
+import { normalizeLevelFields } from '../progression/levels';
 import { clampValor } from '../engine/valor';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
@@ -29,7 +31,17 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
  * 7: Valor (Ömer 2026-10-13): sefer durumuna isteğe bağlı `valor` alanı. Sürüm 6 kayıtları aynen okunur (harita aynı); Valdren Keep'i (Valor'un
  * tanıtıldığı kasaba) çoktan geçmiş eski kayıt Valor'u hediye miktarıyla açılmış olarak alır, geçmemiş kayıt kapalı kalır (normalizeState).
  */
-export const SAVE_VERSION = 7;
+/**
+ * 8: Item Güçlendirme (Ömer 2026-10-17): silah gücü + sınıf başına başlangıç silahı. Sürüm 7 ve öncesi okunurken silah yuvası boş her kahramana
+ * sınıfının başlangıç silahı takılır (progression > giveStarterIfUnarmed; var olan item'ler aynen kalır). Silah alan kahramanı olan kaydın
+ * duraklatılmış savaşı atılır (kurulum değişti; savaş baştan başlar). Yalnızca göçte: oyuncunun sonradan çıkardığı silah geri gelmez.
+ */
+/**
+ * 9: Level / XP (Ömer 2026-10-17, levels.md): kahramana stat / skill puanı ve dağıtılmış puanlar (`statPoints`, `skillPoints`, `alloc`).
+ * Sürüm 8 ve öncesi okunurken level ve XP AYNEN kalır (yoksa 1 / 0); eksik puanlar level'dan tamamlanır (progression > normalizeLevelFields).
+ * Sınıfların başlangıç statları değiştiği için duraklatılmış savaş kurulumu tutmaz: suspend.ts > canResume onu atar (savaş baştan).
+ */
+export const SAVE_VERSION = 9;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -107,16 +119,18 @@ function upgradeState(s: CampaignState): void {
       if (!h || typeof h !== 'object') return h;
       const eq = emptyEquipment();
       const old = (h as Partial<Hero>).equipment as Record<string, unknown> | undefined;
-      if (old && typeof old === 'object') for (const k of SLOT_IDS) if (isItem(old[k])) eq[k] = old[k] as ItemInstance;
+      if (old && typeof old === 'object') {
+        for (const k of SLOT_IDS) if (isItem(old[k])) eq[k] = old[k] as ItemInstance;
+      } else if (typeof h.id === 'string' && typeof h.class === 'string') {
+        // Ekipmanı hiç olmayan (durum v1) kahraman: sınıfının başlangıç silahı (Item Güçlendirme x5; ekipmanı olan kahramana dokunulmaz)
+        giveStarterIfUnarmed({ id: h.id, class: h.class, equipment: eq });
+      }
       // 2026-10-12 ikinci el yuvası: silah yuvasındaki kalkan ikinci ele geçer (sürüm artmaz; her okumada çalışır, idempotent)
       migrateOffhand(eq, overflow);
       promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
-      return {
-        ...h,
-        level: Number.isInteger(h.level) && h.level >= 1 ? h.level : 1,
-        xp: typeof h.xp === 'number' && h.xp >= 0 ? h.xp : 0,
-        equipment: eq,
-      };
+      const out = { ...h, equipment: eq };
+      normalizeLevelFields(out); // level / XP / puanlar (sürüm 9; bozuk değer varsayılana, hiçbir şey geri alınmaz)
+      return out;
     });
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
@@ -238,7 +252,9 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
+    const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
     // x2 stat ölçeği (sürüm 4): eski kayıttaki item zarları (STR/DEX/INT/LUCK, zırh, hız) x2
     const scaled = parsed.version < 6;
@@ -262,10 +278,31 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }
+}
+
+/**
+ * Sürüm 8 göçü (Item Güçlendirme x5): her kayıttaki her kahramanın silah yuvası boşsa sınıfının başlangıç silahı takılır; silah alan kahramanı
+ * olan kaydın duraklatılmış savaşı atılır (kurulum değişti). Yerinde değiştirir; takılan silah sayısı. Bozuk girdiler atlanır (çökmez).
+ */
+export function migrateStarterWeapons(slots: unknown): number {
+  let n = 0;
+  if (!Array.isArray(slots)) return 0;
+  for (const sd of slots as Array<Partial<SlotData> | null>) {
+    if (!sd || typeof sd !== 'object' || !Array.isArray(sd.saves)) continue;
+    for (const e of sd.saves as Array<Partial<SaveEntry> | null>) {
+      const st = e && typeof e === 'object' ? (e.state as Partial<CampaignState> | undefined) : undefined;
+      if (!st || typeof st !== 'object' || !Array.isArray(st.roster)) continue;
+      let given = 0;
+      for (const h of st.roster) if (h && typeof h === 'object' && typeof h.id === 'string' && typeof h.class === 'string' && giveStarterIfUnarmed(h)) given++;
+      if (given) delete (st as { suspended?: unknown }).suspended;
+      n += given;
+    }
+  }
+  return n;
 }
 
 /** Eski haritanın seferleri: kayıtlar silinir, yuva (mod, zorluk, tarihler) kalır, `mapChanged` işaretlenir. */

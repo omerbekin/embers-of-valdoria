@@ -10,6 +10,8 @@
 
 let shownAt = 0;
 let bootDone = false;
+/** Bekleyen kapanış zamanlayıcıları: kutu yeniden açılınca iptal edilir (yoksa önceki kapanış yeni açılan kutuyu gizler). */
+let hideTimers: number[] = [];
 
 const el = (): HTMLElement | null => (typeof document === 'undefined' ? null : document.getElementById('boot'));
 
@@ -31,6 +33,9 @@ export function setBootProgress(p: number, label?: string): void {
 function show(label: string): void {
   const root = el();
   if (!root) return;
+  // Önceki kapanış (ör. sahnenin kod parçası indi, hemen ardından sahnenin dosyaları inmeye başladı) yeni gösterimi gizlemesin:
+  // 0.8.3.8'de savaşın poz dosyaları inerken kutu 420 ms sonra kapanıyor, dakikalarca siyah ekran kalıyordu.
+  for (const t of hideTimers.splice(0)) window.clearTimeout(t);
   root.classList.remove('boot-off', 'boot-hidden');
   shownAt = performance.now();
   setBootProgress(0, label);
@@ -42,10 +47,12 @@ function hide(): void {
   setBootProgress(1);
   // çok kısa gösterimde göz kırpmasın: en az 250 ms görünür kalır, sonra solar
   const wait = Math.max(0, 250 - (performance.now() - shownAt));
-  window.setTimeout(() => {
-    root.classList.add('boot-off');
-    window.setTimeout(() => root.classList.add('boot-hidden'), 420);
-  }, wait);
+  hideTimers.push(
+    window.setTimeout(() => {
+      root.classList.add('boot-off');
+      hideTimers.push(window.setTimeout(() => root.classList.add('boot-hidden'), 420));
+    }, wait),
+  );
 }
 
 /** İlk menü hazır: açılış kutusu kapanır (bir kez). */
@@ -96,14 +103,22 @@ export interface LoaderLike {
 
 /**
  * Sahnenin preload'u dosya kuyruğa aldıysa: açılışta ilerlemeyi açılış kutusuna bağlar; açılıştan sonra (ör. savaşa girerken eksik
- * sprite / arka plan) 150 ms'den uzun sürerse aynı kutuyu kısa yükleyici olarak açar, bitince kapatır.
+ * sprite / arka plan / poz dosyaları) 150 ms'den uzun sürerse aynı kutuyu kısa yükleyici olarak açar, bitince kapatır.
+ * Açılıştan sonra dosya sayısı yükleyici BAŞLARKEN ('start') ölçülür: preload içinde bu çağrıdan sonra kuyruğa giren dosyalar da
+ * (savaşta pozlar ve efekt sayfaları preloadAssets'ten sonra eklenir) sayılır. Phaser preload biter bitmez start'ı çağırır.
  */
 export function trackSceneLoad(loader: LoaderLike, range: [number, number] = [0.15, 0.9]): void {
-  if (loader.list.size === 0) return;
   if (!bootDone) {
+    if (loader.list.size === 0) return;
     loader.on('progress', (v: number) => setBootProgress(range[0] + (range[1] - range[0]) * v));
     return;
   }
+  loader.once('start', () => {
+    if (loader.list.size > 0) showWhileLoading(loader);
+  });
+}
+
+function showWhileLoading(loader: LoaderLike): void {
   let visible = false;
   const timer = window.setTimeout(() => {
     visible = true;

@@ -1,6 +1,8 @@
 import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content } from '../src/engine';
+import { applyUnitModifiers } from '../src/engine/stats';
+import { enemyLevelAttrAdd } from '../src/progression/levels';
 import { battlePlan, chapterEnemyMods, CONFIG, debugTeleport, ENCOUNTERS, newCampaign, validateEncounters, withDifficulty } from '../src/campaign';
 
 // Sefer mobları (data/mobs; N1, docs/design/campaign/fill-plan.md 2 ve 6): gizli birim kategorisi. Yükleyici, gizlilik, mob kuralları
@@ -119,6 +121,7 @@ describe('moblar savaşta ve seferde', () => {
     const enc = ENCOUNTERS.windy_moor!;
     const med = at('medium');
     const hard = at('hard');
+    const plan0 = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5 }), 'moor'));
     expect(enc.units.every((u) => content.mobs[u.class])).toBe(true);
     for (const u of enc.units) {
       const m = med.mods[u.slot]!.modifiers!;
@@ -128,9 +131,11 @@ describe('moblar savaşta ve seferde', () => {
       expect(h.hpMult).toBe(expected(u, 'hard').hpMult);
       expect(h.powerMult).toBe(expected(u, 'hard').powerMult);
       expect(m.hpMult!).toBeLessThan(u.mods!.hpMult!); // ölçek gerçekten uygulandı (all < 1)
-      // motor: mob biriminin maks canı taban x çarpan
+      // motor: mob biriminin maks canı (düşman level'ının stat ekiyle türemiş taban) x çarpan (levels.md > Düşman level'ı)
       const unit = med.battle.combatants.find((c) => c.side === 'enemy' && c.defId === u.class)!;
-      expect(Math.abs(unit.maxHp - content.mobs[u.class]!.stats.hp * m.hpMult!)).toBeLessThanOrEqual(1);
+      const leveled = applyUnitModifiers(content.mobs[u.class]!, { attrAdd: m.attrAdd ?? {} }, content.formulas);
+      expect(m.attrAdd).toEqual(enemyLevelAttrAdd(u.class, plan0.enemyLevel));
+      expect(Math.abs(unit.maxHp - leveled.stats.hp * m.hpMult!)).toBeLessThanOrEqual(1);
     }
   });
 });

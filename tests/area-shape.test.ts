@@ -5,6 +5,7 @@ import type { AiTrace, BattleEvent, CombatantDef, SkillDef } from '../src/engine
 import { isShapeArea, shapeCells } from '../src/engine/area-shape';
 import { computeScreenGrid } from '../src/engine/formation';
 import { previewSkill } from '../src/engine/preview';
+import { rangeOff } from './range-helpers';
 
 // AOE şekilleri (row / column / rect / plus): hücre kümesi tabanlı alan. Ekran uzayı formulas.json > formation.screenGrid (layout'tan türetilir).
 // Terimler: SIRA = aynı derinlik (yuva = sıra*3+şerit), ŞERİT = aynı şerit (4 sıra boyunca). Rect: rows = sıra sayısı, cols = şerit sayısı, anchor = ekranda sol-alt.
@@ -15,10 +16,11 @@ const area = (shape: 'row' | 'column' | 'plus') => ({ shape });
 const rect = (rows: number, cols: number) => ({ shape: 'rect' as const, rows, cols, anchor: 'bottom_left' as const });
 const unitDef = (id: string): CombatantDef => (content.summons[id] ?? content.classes[id])!;
 
-function arena(party: [string, number][], enemies: [string, number][], skills: Record<string, SkillDef> = {}, partySkills?: string[]): Battle {
+function arena(party: [string, number][], enemies: [string, number][], skills: Record<string, SkillDef> = {}, partySkills?: string[], legacyReach = false): Battle {
   const base = content.battleSetup('random-battle', 1, 'test', { party: [], enemies: [] }, false);
   const mk = ([id]: [string, number]) => (partySkills && id === 'aoe_tester' ? { ...unitDef(id), skills: partySkills } : unitDef(id));
-  const b = new Battle({ ...base, skills: { ...base.skills, ...skills }, party: party.map(mk), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
+  const setup = { ...base, skills: { ...base.skills, ...skills }, party: party.map(mk), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) };
+  const b = new Battle(legacyReach ? rangeOff(setup) : setup); // legacyReach: menzil KAPALI (eski melee erişim kuralı testleri)
   for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0 });
   b.debug.crit = 'never';
   b.freeMp = true;
@@ -125,7 +127,7 @@ describe('Geometer (aoe_tester) test karakteri', () => {
     expect(c.role).toBe('AOE Test');
     expect(c.testOnly).toBe(true);
     expect(c.primary).toBe('int');
-    expect(Object.values(c.attributes).reduce((a, b) => a + b, 0)).toBe(30 * (content.formulas.statScale ?? 1)); // x2 stat ölçeği: 60
+    expect(Object.values(c.attributes).reduce((a, b) => a + b, 0)).toBe(60); // x2 stat ölçeği: 60
     const shapes = c.skills.map((id) => content.skills[id]!.area!.shape);
     expect(shapes).toEqual(['row', 'column', 'rect', 'plus']);
     for (const id of c.skills) {
@@ -266,9 +268,9 @@ describe('savaşta şekiller: vurulanlar, boş hücre anchor, olaylar, önizleme
     }
   });
 
-  it('melee şekil skill\'i yalnızca erişilebilir (ön sıra) hücrelere vurur; arkada kalan hücre/anchor geçersiz', () => {
+  it('melee şekil skill\'i yalnızca erişilebilir (ön sıra) hücrelere vurur; arkada kalan hücre/anchor geçersiz (menzil KAPALI: eski kural)', () => {
     const melee = { melee_rect: { ...content.skills.shape_rect!, id: 'melee_rect', motion: 'melee' as const } };
-    const b = arena([['aoe_tester', 0]], WAR(0, 4, 9), melee, ['melee_rect', 'shape_row', 'shape_column', 'shape_plus']);
+    const b = arena([['aoe_tester', 0]], WAR(0, 4, 9), melee, ['melee_rect', 'shape_row', 'shape_column', 'shape_plus'], true);
     // ön sıra = sıra 0 (enemy-0). Rect @0 -> sıra 0,1: yalnızca sıra 0'daki düşman vurulur (sıra 1'deki enemy-1 erişim dışı)
     expect(b.shapePreviewCells('party-0', 'melee_rect', 0)).toMatchObject({ cells: [0, 1, 2, 3, 4, 5], targets: ['enemy-0'], valid: true });
     // rect @9 -> sıra 2,3: yalnızca arkadakiler: erişim dışı -> geçersiz

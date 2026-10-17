@@ -6,18 +6,19 @@ export function isPrimaryActive(attrs: Attributes, primary: Attribute | undefine
   return attrs[primary] >= Math.max(attrs.str, attrs.int, attrs.dex, attrs.luck);
 }
 
-/** Kaçınma (evasion): tam sayı adımlı (her dexPerEvasionStep Dex = +evasionPerStep), evasionMax üst sınırlı. */
 /**
- * Ölçekli bir değeri statScale katına yuvarlar (x2 dönüşümü: eski "tam sayıya yuvarla"nın aynısı; statScale 1 iken Math.round). Kayan noktada TAM:
- * v / 2 ve x 2 üs kaydırmadır, yani sonuç eski ölçekteki yuvarlamanın birebir 2 katıdır.
+ * Hız yuvarlaması (Ömer 2026-10-17, gizli x2 stat ölçeği kaldırıldı): hız değerleri `formulas.json > attributes.spdStep` katına yuvarlanır
+ * (yoksa 1 = tam sayı). Oyuncunun gördüğü hız motorun kullandığı hızdır; adım yalnızca sıra çizelgesini bugünkü hâliyle korumak için veride.
  */
-export function roundStat(v: number, formulas: Pick<Formulas, 'statScale'>, step = 1): number {
-  const s = (formulas.statScale ?? 1) * step;
+export function roundSpeed(v: number, formulas: Pick<Formulas, 'attributes'>): number {
+  const s = formulas.attributes.spdStep ?? 1;
   return Math.round(v / s) * s;
 }
 
-/** Ölçekli birimlerin (hız) alt sınırı: eski 1'in statScale katı. */
-export const statMin = (formulas: Pick<Formulas, 'statScale'>): number => formulas.statScale ?? 1;
+/** Hızın alt sınırı: bir hız adımı. */
+export const speedMin = (formulas: Pick<Formulas, 'attributes'>): number => formulas.attributes.spdStep ?? 1;
+
+/** Kaçınma (evasion): tam sayı adımlı (her dexPerEvasionStep Dex = +evasionPerStep), evasionMax üst sınırlı. */
 
 export function evasionOf(dex: number, formulas: Formulas): number {
   const a = formulas.attributes;
@@ -64,7 +65,7 @@ export function deriveStats(data: CombatantData, formulas: Formulas): Stats {
     hp: Math.round(a.hpBase + a.hpPerStr * str),
     // Vessel of the Choir (YM13, mob pasifi choirVessel): maks MP'ye düz ek; pasif yoksa ifade aynı
     mp: Math.round(a.mpBase + a.mpPerInt * int) + (data.passive?.effect.type === 'choirVessel' ? data.passive.effect.mpAdd : 0),
-    spd: Math.max(statMin(formulas), roundStat(a.spdBase + a.spdPerDex * dex, formulas)),
+    spd: Math.max(speedMin(formulas), roundSpeed(a.spdBase + a.spdPerDex * dex, formulas)),
     mpRegen: Math.round(a.mpRegenPerInt * int),
     hpRegen: a.hpRegenPerStr * str,
     armor: data.armor,
@@ -95,6 +96,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     logo: data.logo,
     frontPriority: data.frontPriority,
     ...(data.role ? { role: data.role } : {}),
+    ...(data.range !== undefined ? { range: data.range } : {}),
     attributes: { ...data.attributes },
     ...(data.primary ? { primary: data.primary } : {}),
     ...(data.testOnly ? { testOnly: true } : {}),
@@ -136,6 +138,7 @@ export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
     ATTRS.some((k) => nonOne(mods.attrMult?.[k]) || nonZero(mods.attrAdd?.[k])) ||
     nonOne(mods.mpMult) ||
     nonOne(mods.spdMult) ||
+    nonOne(mods.weaponMult) ||
     AFFIX_ADD.some((k) => nonZero(mods[k])) ||
     Object.values(mods.elemDamageAdd ?? {}).some((v) => nonZero(v))
   );
@@ -153,7 +156,7 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   // Türev değerler (can, MP, kritik...) aşağıda bu tam sayı statlardan formüllerle türetilir.
   for (const k of ATTRS) {
     const v = def.attributes[k] * (mods.statMult ?? 1) * (mods.attrMult?.[k] ?? 1) + (mods.attrAdd?.[k] ?? 0);
-    attributes[k] = Math.max(0, roundStat(v, formulas));
+    attributes[k] = Math.max(0, Math.round(v));
   }
   const derived = deriveStats(
     {
@@ -181,7 +184,7 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
     ...derived,
     hp: Math.max(1, Math.round(derived.hp * (mods.hpMult ?? 1)) + Math.round(mods.hpAdd ?? 0)),
     mp: plus('mpAdd', derived.mp, (v) => Math.max(0, Math.round(v))),
-    spd: plus('spdAdd', derived.spd, (v) => Math.max(statMin(formulas), v)),
+    spd: plus('spdAdd', derived.spd, (v) => Math.max(speedMin(formulas), v)),
     critChance: plus('critAdd', derived.critChance, (v) => Math.max(0, r4(v))),
     critMult: plus('critMultAdd', derived.critMult, (v) => Math.max(1, r4(v))),
     accuracy: plus('accuracyAdd', derived.accuracy, (v) => Math.max(0, r4(v))),
@@ -194,9 +197,10 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   };
   // Affix ekleri (Ömer 2026-10-11): alan verilmezse stat hiç yazılmaz (bugünkü birimler birebir aynı)
   if (mods.mpMult !== undefined && mods.mpMult !== 1) stats.mp = Math.max(0, Math.round(stats.mp * mods.mpMult));
-  if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(statMin(formulas), r4(stats.spd * mods.spdMult));
+  if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(speedMin(formulas), r4(stats.spd * mods.spdMult));
   if (mods.surviveAdd) stats.surviveChance = Math.min(1, r4((stats.surviveChance ?? 0) + mods.surviveAdd));
   if (mods.damageAdd) stats.damageMult = r4(1 + mods.damageAdd);
+  if (mods.weaponMult !== undefined && mods.weaponMult !== 1) stats.weaponMult = r4(Math.max(0, mods.weaponMult));
   if (mods.healPowerAdd) stats.healPowerMult = r4(1 + mods.healPowerAdd);
   if (mods.shieldPowerAdd) stats.shieldPowerMult = r4(1 + mods.shieldPowerAdd);
   if (mods.dotPowerAdd) stats.dotPowerMult = r4(1 + mods.dotPowerAdd);
@@ -215,22 +219,22 @@ export function variantMult(def: CombatantDef, variant: keyof SummonVariants | u
  * yenilenmesi `mult` ile çarpılır; diğer her şey (zırh, hız, isabet, skill'ler, hasar azaltma) aynen kalır. mult 1 ise tanım aynen döner.
  * Motor (çağrı anı), skill açıklaması, wiki ve maç kaydı bu tek fonksiyonu kullanır.
  */
-export function applySummonVariant(def: CombatantDef, variant: keyof SummonVariants | undefined, formulas: Pick<Formulas, 'statScale'>): CombatantDef {
+export function applySummonVariant(def: CombatantDef, variant: keyof SummonVariants | undefined, formulas: Pick<Formulas, 'summon'>): CombatantDef {
   const mult = variantMult(def, variant);
   if (mult === 1) return def;
-  // STR/INT 0,1'e yuvarlanır (x2 ölçekte 0,2'ye: statScale katı; eskisiyle birebir)
-  const S = formulas.statScale ?? 1;
-  const r1 = (v: number) => (Math.round((v * mult * 10) / S) / 10) * S;
+  // STR/INT summon.variantStatStep katına yuvarlanır (formulas.json; yoksa 0,1)
+  const S = formulas.summon?.variantStatStep ?? 0.1;
+  const r1 = (v: number) => Math.round((v * mult) / S) * S;
   const stats: Stats = { ...def.stats, hp: Math.max(1, Math.round(def.stats.hp * mult)), str: r1(def.stats.str), int: r1(def.stats.int), hpRegen: def.stats.hpRegen * mult };
   return { ...def, attributes: { ...def.attributes, str: stats.str, int: stats.int }, stats };
 }
 
 /**
- * Verilen skill hasarının item çarpanı (Global damage x element hasarı; Ömer 2026-10-11). Çarpan yoksa TAM 1 (çağıran 1'de ifadeyi değiştirmez).
+ * Verilen skill hasarının item çarpanı (Global damage x silah gücü x element hasarı; Ömer 2026-10-11, silah 2026-10-17). Çarpan yoksa TAM 1 (çağıran 1'de ifadeyi değiştirmez).
  * Motor (damageSpecFor) ve skill-info aynı fonksiyonu kullanır.
  */
-export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult'>, element: Element | undefined): number {
-  return (stats.damageMult ?? 1) * (stats.elemDamageMult?.[element ?? 'physical'] ?? 1);
+export function outgoingDamageMult(stats: Pick<Stats, 'damageMult' | 'elemDamageMult' | 'weaponMult'>, element: Element | undefined): number {
+  return (stats.damageMult ?? 1) * (stats.weaponMult ?? 1) * (stats.elemDamageMult?.[element ?? 'physical'] ?? 1);
 }
 
 /** Bir özelliğin skill gücü: değer x katsayı (hasar, şifa ve kalkan için). */

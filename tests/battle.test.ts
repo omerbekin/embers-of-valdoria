@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content } from '../src/engine';
 import type { BattleEvent, CombatantDef } from '../src/engine';
 import { installLegacySkills } from './legacy-skills';
@@ -10,7 +11,7 @@ installLegacySkills();
  * (bu iki mekanik tests/mechanics.test.ts içinde ayrıca sınanır).
  */
 function newBattle(seed = 1, calm = true): Battle {
-  const b = new Battle(content.battleSetup('first-battle', seed, 'test'));
+  const b = new Battle(oldLayoutSetup('first-battle', seed, 'test'));
   if (calm) for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
   return b;
 }
@@ -61,7 +62,8 @@ describe('hasar skill\'leri', () => {
     const b = newBattle();
     const before = b.get(E_WARRIOR)!.hp;
     const events = act(b, WARRIOR, 'melee_attack', E_WARRIOR);
-    expect(events.map((e) => e.type)).toEqual(['skillUsed', 'damage', 'damage', 'rage']); // Double Strike: iki vuruş; Warrior'a Rage kazandırır
+    // Double Strike: iki vuruş; vurulan Warrior her vuruşta Berserker ile Rage kazanır (rage cause hurt), sonunda saldıran Warrior'ın Rage kazancı
+    expect(events.map((e) => e.type)).toEqual(['skillUsed', 'damage', 'rage', 'damage', 'rage', 'rage']);
     const hits = ofType(events, 'damage');
     const dmg = hits[1]!;
     expect(hits[0]!.amount).toBeGreaterThan(0);
@@ -99,7 +101,7 @@ describe('hasar skill\'leri', () => {
     // Aynı vuruş iki farklı hedefe: fiziksel zırhı yüksek Defender'a fiziksel hasar az, büyü hasarı aynı
     const teams = { party: ['mage', 'archer', 'warrior', 'paladin'], enemies: ['warrior', 'defender', 'mage', 'druid'] };
     const mk = () => {
-      const b = new Battle(content.battleSetup('first-battle', 1, 'test', teams));
+      const b = new Battle(oldLayoutSetup('first-battle', 1, 'test', teams));
       for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
       return b;
     };
@@ -131,7 +133,7 @@ describe('hasar skill\'leri', () => {
     let plain = 0;
     const power = (id: string) => (content.skills[id]!.effects[0] as { power: number }).power;
     for (let seed = 1; seed <= 40; seed++) {
-      const b = new Battle(content.battleSetup('first-battle', seed, 'test', teams));
+      const b = new Battle(oldLayoutSetup('first-battle', seed, 'test', teams));
       for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
       const archer = b.combatants.find((c) => c.side === 'party' && c.defId === 'archer')!.uid;
       const defender = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'defender')!.uid;
@@ -228,8 +230,9 @@ describe('Dark Mage pasifi: Soul Drain (verilen hasarın %10\'u şifa)', () => {
     const dmg = ofType(events, 'damage')[0]!;
     const heal = ofType(events, 'heal')[0]!;
     expect(heal.target).toBe(UNDEAD);
-    const ratio = (content.classes.undead!.passive!.effect as { ratio: number }).ratio; // veriden (madde 240: %35)
-    expect(heal.amount).toBe(Math.max(1, Math.round(dmg.amount * ratio)));
+    const ratio = (content.classes.undead!.passive!.effect as { ratio: number }).ratio; // veriden (madde 240: %35; t15: %50)
+    // şifa eksik canla (ödenen Blood Rite bedeli) sınırlı
+    expect(heal.amount).toBe(Math.min(content.skills.blood_rite!.cost.amount, Math.max(1, Math.round(dmg.amount * ratio))));
   });
 
   it('canı doluysa boş şifa olayı üretilmez (bedelsiz saldırıda)', () => {
@@ -301,7 +304,7 @@ describe('çağrı (Druid)', () => {
   });
 
   it('boş yuva yoksa çağrı reddedilir ve MP harcanmaz', () => {
-    const setup = content.battleSetup('first-battle', 1, 'test');
+    const setup = oldLayoutSetup('first-battle', 1, 'test');
     setup.maxSlots = { party: 6, enemy: 6 }; // düşman 0,2,3,5 dolu: yalnızca 1 ve 4 boş
     const b = new Battle(setup);
     b.get(E_DRUID)!.mp = 100;
@@ -331,7 +334,7 @@ describe('Paladin\'in undead bonusu', () => {
     const undeadDef: CombatantDef = { ...content.classes.warrior!, tags: ['undead'] };
     const plainDef = content.classes.warrior!;
     const dmg = (def: CombatantDef, seed: number) => {
-      const b = new Battle({ ...content.battleSetup('first-battle', seed, 'test'), enemies: [def] });
+      const b = new Battle({ ...oldLayoutSetup('first-battle', seed, 'test'), enemies: [def] });
       for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
       return ofType(act(b, PALADIN, 'holy_strike', E_WARRIOR), 'damage')[0]!.amount;
     };
@@ -386,6 +389,6 @@ describe('savaş sonu ve determinizm', () => {
     const seen: string[] = [];
     b.on((e) => seen.push(e.type));
     act(b, WARRIOR, 'melee_attack', E_WARRIOR);
-    expect(seen).toEqual(['skillUsed', 'damage', 'damage', 'rage']);
+    expect(seen).toEqual(['skillUsed', 'damage', 'rage', 'damage', 'rage', 'rage']);
   });
 });

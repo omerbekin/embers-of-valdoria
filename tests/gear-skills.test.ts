@@ -91,7 +91,7 @@ describe('Gear skill numbers equal skill-info output', () => {
     const before = heroStats(hero('mage'))!;
     const after = heroStats(hero('mage', [strongItem('mage', 'a_primary')!]))!;
     const plain = skillTip(skill, before);
-    expect(plain.rows.slice(0, describeSkill(skill, before, f, content.summons, defs).lines.length).map((r) => r.text)).toEqual(describeSkill(skill, before, f, content.summons, defs).lines);
+    expect(plain.rows.slice(0, describeSkill(skill, before, f, content.summons, defs, content.ownerRangeOf(skill.id)).lines.length).map((r) => r.text)).toEqual(describeSkill(skill, before, f, content.summons, defs, content.ownerRangeOf(skill.id)).lines);
     const cmp = skillTip(skill, before, after);
     expect(cmp.rows.some((r) => /\d+ → \d+ \(\+\d+\)/.test(r.text))).toBe(true);
     const p = content.classes.paladin?.passive ?? Object.values(content.classes).find((c) => c.passive)!.passive!;

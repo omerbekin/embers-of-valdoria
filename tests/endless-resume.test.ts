@@ -10,7 +10,7 @@ import {
   chooseReward,
   heroOf,
   loadRun,
-  newRun,
+  newRun as newRunBase,
   parseRun,
   replayActions,
   restoreBattle,
@@ -26,6 +26,10 @@ import {
   type SuspendedBattle,
 } from '../src/endless';
 import { type ItemDef } from '../src/progression';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Yarım kalan savaş (Ömer 2026-10-09, madde 281 cevabı 3): seed + eylem günlüğü saklanır, devam ederken savaş yeniden kurulup günlük oynatılır.
 // Ödüller (cevap 4): elit / boss sonrası daha değerli kartlar.

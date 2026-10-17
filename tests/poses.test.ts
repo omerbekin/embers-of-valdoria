@@ -2,7 +2,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { POSES, cycleFrames, frameExtent, gripFrames, itemPlacement, keyFrame, placementPoint, poseBounds, poseClass, poseGrip, poseItems, poseSkill, realPosesV2, resolvePose, setRealPosesV2, skillPoses, statePose, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
+import { POSES, cycleFrames, frameExtent, gripFrames, itemPlacement, keyFrame, placementPoint, poseBounds, poseClass, poseGrip, poseItems, poseSkill, realPosesV2, resolvePose, setRealPosesV2, skillPoses, statePose, toneImageData, rarityToneOf, validatePoses, weaponFor, weaponKey } from '../src/game/poses';
 import { POSE_TESTER_GEAR, classDefaultGear, offhandItem, partyWeapons, unitWeaponPick, weaponItem } from '../src/game/pose-weapons';
 
 // Poz kütüphanesi (Ömer 2026-10-11, Warrior denemesi; v2 tek el + çift el takımı 2026-10-12, yalnızca Pose Tester'lar; src/game/poses.ts,
@@ -60,7 +60,7 @@ describe('poz kütüphanesi verisi', () => {
     expect(skillPoses('warrior', s['melee_attack'])).toEqual(['overhead', 'slash']);
     expect(skillPoses('warrior', s['whirlwind'])).toEqual(['spin']);
     expect(skillPoses('warrior', s['charge'])).toEqual(['step', 'slash']);
-    expect(skillPoses('warrior', s['abyssal_cry'])).toEqual(['raise', 'channel']);
+    expect(skillPoses('warrior', s['headsmans_blow'])).toEqual(['overhead', 'slash']); // yer tutucu (Abyssal Cry'ın yerine, 2026-10-17)
     for (const skill of Object.values(s)) {
       const list = skill.pose === undefined ? [] : Array.isArray(skill.pose) ? skill.pose : [skill.pose];
       for (const p of list)
@@ -168,7 +168,7 @@ describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => 
 
   it('v2 (Pose Tester): çift el item çift el takımı + çift el görseli (Dane Axe, Avenger\'s Maul, asalar)', () => {
     const pt = 'pose_tester_1';
-    expect(weaponFor(pt, weaponItem(inst('dane_axe')))).toEqual({ family: 'greataxes', look: 'dane', glow: POSES.rarityGlow['epic'], grip: 'two' });
+    expect(weaponFor(pt, weaponItem(inst('dane_axe')))).toEqual({ family: 'greataxes', look: 'dane', glow: POSES.rarityGlow['epic'], tone: 'epic', grip: 'two' });
     expect(weaponFor(pt, weaponItem(inst('avengers_maul')))).toMatchObject({ family: 'mauls', grip: 'two' });
     expect(weaponFor(pt, weaponItem(inst('rune_staff')))).toMatchObject({ family: 'staves', look: 'rune', grip: 'two' });
     expect(weaponFor(pt, weaponItem(inst('arming_sword')))).toMatchObject({ family: 'swords' });
@@ -180,15 +180,51 @@ describe('silah görseli seçimi (aile + nadirlik + tutuş + ikinci el)', () => 
     expect(weaponFor(pt, weaponItem(inst('gamblers_last_coin')))).toMatchObject({ family: 'charms', look: 'coin' });
   });
 
+  it('çift el yakın dövüş tabanları (Greataxe, Greatsword, War Maul): taban başına tek görünüm, nadirlik yalnızca ton (Ömer 2026-10-17)', () => {
+    const pt = 'pose_tester_1';
+    const at = (id: string, rarity: 'common' | 'uncommon' | 'rare' | 'epic') => weaponFor(pt, weaponItem({ uid: id, id, rolls: { rarity, affixes: [] } }))!;
+    for (const id of ['greataxe', 'greatsword', 'war_maul']) {
+      const looks = new Set((['common', 'uncommon', 'rare', 'epic'] as const).map((r) => `${at(id, r).family}/${at(id, r).look}`));
+      expect(looks.size, id).toBe(1); // tek çizim
+      expect(at(id, 'common').grip).toBe('two');
+      expect(at(id, 'common').tone).toBe('common');
+      expect(at(id, 'uncommon').tone).toBe('uncommon');
+      expect(at(id, 'rare').tone).toBeUndefined(); // Rare = çizimin kendisi
+      expect(at(id, 'epic').tone).toBe('epic');
+      // ton atlas anahtarına girer (farklı nadirlik = ayrı pişmiş doku)
+      expect(weaponKey(at(id, 'common'))).not.toBe(weaponKey(at(id, 'epic')));
+    }
+    // Paket 8: üç tabanın kendi çizimi (greataxes/greataxe, greatswords/greatsword, mauls/warmaul)
+    expect(at('greataxe', 'rare')).toMatchObject({ family: 'greataxes', look: 'greataxe' });
+    expect(at('war_maul', 'rare')).toMatchObject({ family: 'mauls', look: 'warmaul' });
+    expect(at('greatsword', 'rare')).toMatchObject({ family: 'greatswords', look: 'greatsword' });
+    // Legendary tonlanmaz (kendi çizimi)
+    expect(weaponFor(pt, weaponItem(inst('avengers_maul')))?.tone).toBeUndefined();
+  });
+
+  it('nadirlik tonu: pikselleri soldurur / parlatır, alfa ve saydam piksel değişmez', () => {
+    const px = new Uint8ClampedArray([200, 100, 50, 255, 9, 9, 9, 0]);
+    toneImageData(px, POSES.rarityTone!['common']!);
+    expect(px[0]).toBeLessThan(200);
+    expect(px[0]! - px[2]!).toBeLessThan(150); // doygunluk düştü
+    expect(px[3]).toBe(255);
+    expect([px[4], px[5], px[6], px[7]]).toEqual([9, 9, 9, 0]);
+    const ep = new Uint8ClampedArray([100, 80, 60, 255]);
+    toneImageData(ep, POSES.rarityTone!['epic']!);
+    expect(ep[0]).toBeGreaterThan(100);
+    expect(rarityToneOf('legendary')).toBeUndefined();
+    expect(rarityToneOf('rare')).toBeUndefined();
+  });
+
   it('ikinci el: tek el silahla kalkan / hançer çizilir; çift el, yay ve tılsım ikinci eli kapatır; anahtar ikinci eli içerir', () => {
     const pt = 'pose_tester_2';
     const mace = weaponItem(inst('flanged_mace'));
     const shield = weaponFor(pt, mace, offhandItem(inst('oak_shield')))!;
-    expect(shield.offhand).toEqual({ family: 'shields', look: 'tower' });
+    expect(shield.offhand).toEqual({ family: 'shields', look: 'tower', tone: 'uncommon' });
     expect(weaponFor(pt, mace, offhandItem(inst('misericorde')))?.offhand).toEqual({ family: 'daggers', look: 'plain' });
     expect(weaponFor(pt, weaponItem(inst('dane_axe')), offhandItem(inst('oak_shield')))?.offhand).toBeUndefined();
     expect(weaponFor(pt, weaponItem(inst('hunting_bow')), offhandItem(inst('oak_shield')))?.offhand).toBeUndefined();
-    expect(weaponFor(pt, null, offhandItem(inst('oak_shield')))?.offhand).toEqual({ family: 'shields', look: 'tower' }); // silahsız + kalkan
+    expect(weaponFor(pt, null, offhandItem(inst('oak_shield')))?.offhand).toEqual({ family: 'shields', look: 'tower', tone: 'uncommon' }); // silahsız + kalkan
     expect(weaponKey(shield)).not.toBe(weaponKey({ family: 'maces', look: 'flanged' }));
     // v1 Warrior ikinci eli çizmez (eski görünüm)
     v1(() => expect(weaponFor('warrior', mace, offhandItem(inst('oak_shield')))?.offhand).toBeUndefined());

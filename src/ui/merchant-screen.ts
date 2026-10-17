@@ -22,7 +22,7 @@ import { itemTipNodes, type ItemTipAction } from './item-tip';
 import { attachItemInteractions } from './item-drag';
 import { isDoubleTap, merchantBagDouble } from './gear-drop';
 import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
-import { affixContext, primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip } from '../progression';
+import { affixContext, primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip, meetsLevel, levelReqMsg, instanceLevelReq } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -134,7 +134,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       if (!inst) return [];
       // Character sayfası kapalıyken her kahramana etkisi ipucunda (açıkken kahraman kartlarında)
       const hero = curHero();
-      const state = hero ? (affixContext(hero, inst, key.startsWith('slot:') ? (key.slice(5) as SlotId) : undefined) ?? undefined) : undefined;
+      const state = hero ? { ...(affixContext(hero, inst, key.startsWith('slot:') ? (key.slice(5) as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
       return itemTipNodes(inst, hero?.class, key.startsWith('slot:') ? [] : heroTipExtra(src.heroes(), inst, !charOpen || phoneLayout()), state);
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; alım / satım / kuşanma buradan ya da sürükle-bırakla)
@@ -163,7 +163,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         if (!inst) return [];
         const out: ItemTipAction[] = [];
         const d = itemDef(inst.id);
-        if (hero && d && (charOpen || (phoneLayout() && view === 'char')) && canEquip(hero.class, d)) out.push({ label: 'Equip', primary: false, run: () => tryEquip(hero.id, id) });
+        if (hero && d && (charOpen || (phoneLayout() && view === 'char')) && canEquip(hero.class, d)) out.push({ label: meetsLevel(hero.level, inst) ? 'Equip' : levelReqMsg(instanceLevelReq(inst)), disabled: !meetsLevel(hero.level, inst), primary: false, run: () => tryEquip(hero.id, id) });
         out.push({ label: `Sell · ${src.sellPrice(inst)}`, run: () => doSell(id) });
         return out;
       }
@@ -319,7 +319,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       return;
     }
     // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj (Gear ekranıyla aynı kural: planEquip)
-    const plan = planEquip(h.class, h.equipment, inst, slot);
+    const plan = planEquip(h.class, h.equipment, inst, slot, { level: h.level });
     if (isPlanError(plan)) {
       flashText = plan.error;
       uiSound('error');

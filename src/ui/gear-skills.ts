@@ -59,7 +59,7 @@ export function classSkills(classId: string): { skills: SkillDef[]; passive?: Pa
 /** Bir skill'in Gear satırı (`after`: item takılırsa statlar; yoksa fark yok). */
 export function skillRow(skill: SkillDef, stats: Stats, after: Stats | null = null): GearSkillRow {
   const f = content.formulas;
-  const info = describeSkill(skill, stats, f, content.summons, effectDefs());
+  const info = describeSkill(skill, stats, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id));
   const now = skillNumbers(skill, stats, f, effectDefs(), content.summons);
   return {
     id: skill.id,
@@ -112,8 +112,8 @@ export interface GearSkillTip {
 
 export function skillTip(skill: SkillDef, stats: Stats, after: Stats | null = null): GearSkillTip {
   const f = content.formulas;
-  const now = describeSkill(skill, stats, f, content.summons, effectDefs());
-  const next = after ? describeSkill(skill, after, f, content.summons, effectDefs()) : null;
+  const now = describeSkill(skill, stats, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id));
+  const next = after ? describeSkill(skill, after, f, content.summons, effectDefs(), content.ownerRangeOf(skill.id)) : null;
   const rows = now.lines.map((l, i): GearSkillTipRow => ({ text: next ? mergeLine(l, next.lines[i] ?? l, true) : l, ...(now.kinds[i] ? { kind: now.kinds[i] } : {}) }));
   if (now.initialCooldown) rows.push({ text: now.initialCooldown });
   const meta = [now.cost, ...((skill.cooldown ?? 0) > 0 ? [`Cooldown ${now.cooldown}`] : []), ...(now.turnCost ? [now.turnCost] : [])];

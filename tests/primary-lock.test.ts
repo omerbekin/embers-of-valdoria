@@ -37,6 +37,8 @@ describe('primary bonusu: normal kural + önceden uyarı', () => {
 
   it('güç katmanı primary için özel bayrak vermez (QB/MP/düşman kuralıyla aynı)', () => {
     const boots = { uid: 'i1', id: 'turnshoes', rolls: { rarity: 'common' as const, affixes: [{ id: 'c_eva', q: 0.5 }] } };
-    expect(loadout({ class: 'paladin', equipment: { boots } }).modifiers).toEqual({ evasionAdd: affixValues('c_eva', 5, 0.5)[0]! / 100 });
+    // silah yuvası boş: silah çarpanı (< 1) dışında yalnızca affix'in kendisi
+    const { weaponMult: _w, ...rest } = loadout({ class: 'paladin', equipment: { boots } }).modifiers!;
+    expect(rest).toEqual({ evasionAdd: affixValues('c_eva', 5, 0.5)[0]! / 100 });
   });
 });

@@ -775,6 +775,7 @@ const WEAPON_SHEETS = [
   { file: 'staves-bows.png', cells: [[['staves', 'ash'], ['staves', 'oak'], ['staves', 'rune']], [['bows', 'short'], ['bows', 'hunting'], ['bows', 'longbow']]] },
   { file: 'shields-charms.png', cells: [[['shields', 'round'], ['shields', 'heater'], ['shields', 'tower']], [['charms', 'cards'], ['charms', 'dice'], ['charms', 'doll']]] },
   { file: 'twohanded-coin.png', cells: [[['greataxes', 'dane'], ['greataxes', 'bearded'], ['greataxes', 'double']], [['mauls', 'maul'], ['mauls', 'hammer'], ['charms', 'coin']]] },
+  { file: 'twohanded-2.png', cells: [[['greataxes', 'greataxe'], ['greatswords', 'greatsword'], ['mauls', 'warmaul']]] },
 ];
 /**
  * Aile ölçüleri: length = boy (v1 Warrior gövde tuvali pikseli; sınıfın weaponScale'i ile çarpılır), lengths = görünüme özel boy,
@@ -791,6 +792,7 @@ const WEAPON_SPEC = {
   charms: { length: 70, lengths: { doll: 115, coin: 60 }, grip: 'center', hold: 'charm' },
   greataxes: { length: 330, grip: { frac: 0.76 }, hold: 'two' },
   mauls: { length: 320, grip: { frac: 0.78 }, hold: 'two' },
+  greatswords: { length: 340, grip: 'sword', hold: 'two' },
 };
 
 /** Satır başına dolu aralıklar (alfa > 128): [{ a, b }] parçalar. */
@@ -818,7 +820,9 @@ function measureGripV2(spec, buf, w, h) {
     let guard = Math.floor(h * 0.45);
     for (let y = guard; y < h; y++) if (widths[y] > widths[guard]) guard = y;
     const end = Math.floor(h * 0.93);
-    const narrow = Math.min(...widths.slice(guard, end).filter((v) => v > 0));
+    // balçağın altındaki dar şerit: en dar tek satır (topuz ucu) değil, alt kısımdaki ortanca genişlik (yuvarlak topuz ucu yanıltmasın)
+    const strip = widths.slice(guard + Math.round(h * 0.03), Math.floor(h * 0.85)).filter((v) => v > 0).sort((a, b) => a - b);
+    const narrow = strip[Math.floor(strip.length * 0.3)] ?? Math.min(...widths.slice(guard, end).filter((v) => v > 0));
     let g0 = guard;
     while (g0 < end && widths[g0] > narrow * 1.5) g0++;
     let g1 = g0;
@@ -931,3 +935,6 @@ if (PREVIEW) {
   writeFileSync(DATA, `${JSON.stringify(data, null, 2)}\n`);
   console.log(`measurements -> ${DATA}`);
 }
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

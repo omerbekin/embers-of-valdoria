@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import { bestHeroFor, buyItem, chooseReward, ipGain, itemStatRows, newRun, rerollShop, rewardOffer, statDelta, type EndlessRun } from '../src/endless';
+import { bestHeroFor, buyItem, chooseReward, ipGain, itemStatRows, newRun as newRunBase, rerollShop, rewardOffer, statDelta, type EndlessRun } from '../src/endless';
 import { affixLines, itemDef, itemValue, rolledAffixes, type ItemRoll } from '../src/progression';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Endless affix zarları (Ömer 2026-10-11, affix kademeleri): kartta / tezgâhta görünen zarlanmış değer = alınan örneğin değeri;
 // tüccar karşılaştırması ve BEST zarlanmış değerlerle; fiyat örneğin zarlarıyla.

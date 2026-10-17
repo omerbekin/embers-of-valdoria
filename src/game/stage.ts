@@ -59,7 +59,7 @@ function applyScene(scene: Phaser.Scene): void {
 
 /** Viewport yeni ölçüleri bildirince: tüm açık sahneler güncellenir. */
 export function setStageMetrics(m: StageMetrics): void {
-  Object.assign(stageView, { zoom: m.zoom, viewW: m.viewW, left: m.left, right: m.right, canvasW: m.canvasW, canvasH: m.canvasH, cssScale: m.cssScale });
+  Object.assign(stageView, { zoom: m.zoom, viewW: m.viewW, left: m.left, right: m.right, canvasW: m.canvasW, canvasH: m.canvasH, cssScale: m.cssScale, navK: m.navK });
   for (const s of gameRef?.scene.getScenes(false) ?? []) if (s.sys.isActive() || s.sys.isPaused()) applyScene(s);
 }
 

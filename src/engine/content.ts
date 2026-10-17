@@ -70,8 +70,11 @@ import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
 import type { BattleSetup } from './battle';
 import { Rng } from './rng';
+import { planRangeFormation, type FormationWeights, type PlanUnit } from './formation-ai';
+import { AREA_TARGETS } from './area-shape';
+import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules } from './types';
+import type { AreaDef, BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules } from './types';
 
 export interface BattleDef {
   id: string;
@@ -315,6 +318,8 @@ export const CELL_COUNT = GRID.rows * GRID.lanes;
 /** Yakın dövüş sınıfı mı (ilk skill'i melee)? Melee yalnızca ön sıradan vurabildiği için dizilimde önce onlar yerleşir. */
 export function isMeleeClass(id: string): boolean {
   const def = classes[id] ?? summons[id];
+  // Menzil açıkken (range.md) yakın dövüşçü = taban menzili <= 1 (Anti-Mage menzil 4: uzak sınıf gibi dizilir); kapalıyken eski kural (ilk skill melee)
+  if (formulas.range?.enabled) return (def?.range ?? formulas.range.default ?? 1) <= 1;
   return skills[def?.skills[0] ?? '']?.motion === 'melee';
 }
 
@@ -347,26 +352,89 @@ function planCells(ids: string[], pickSize: (min: number, max: number) => number
 /** Sıra boyutunun varsayılanı: ikişer (3 yakın dövüşçü kalmışsa üç). Şeritler: 1 -> [0], 2 -> [0, 2], 3 -> [0, 1, 2]. */
 const defaultLanes = (k: number): number[] => (k === 1 ? [0] : k === 2 ? [0, GRID.lanes - 1] : Array.from({ length: k }, (_, l) => l));
 
-/** Girdi sırasında her birimin otomatik dizilim hücresi (melee kuralına uygun). */
-export function defaultSlots(ids: string[]): number[] {
-  return planCells(ids, (min, max) => Math.min(max, Math.max(min, 2)), defaultLanes);
+/** Dizilim seçenekleri (menzil açıkken): `foes` = karşı takımın birim id'leri (alan tehdidi buradan; yoksa Quick Battle havuzunun şekilleri), `board` = tahta. */
+export interface FormationOptions {
+  foes?: string[];
+  board?: Side;
+}
+
+/** Dizilim için birim özeti (formation-ai.ts): ana menzil, etkin dayanıklılık, taunt, Guard menzili. */
+export function planUnitOf(id: string): PlanUnit {
+  const def = classes[id] ?? summons[id] ?? mobs[id] ?? bosses[id];
+  const own = (def?.skills ?? []).map((s) => skills[s]).filter((s): s is SkillDef => !!s);
+  // ana menzil: sınıfın taban menzili (range.md: "menzil temelde sınıfın"); yoksa düşmana vuran ilk hasar skill'inin menzili
+  const firstFoe = own.find((s) => FOE_TARGETS.includes(s.target) && s.effects.some((e) => e.type === 'damage'));
+  const range = def?.range ?? (firstFoe ? skillRangeFor(firstFoe, undefined, formulas) : (formulas.range?.default ?? 1));
+  const k = formulas.armor.k;
+  const mit = (a: number) => (Math.max(0, a) + k) / k;
+  const st = def?.stats;
+  const ehp = st ? st.hp * ((mit(st.armor) + mit(st.magicArmor)) / 2) : 1;
+  const guard = own.find((s) => s.target === 'single_ally' && s.effects.some((e) => e.type === 'guard'));
+  return {
+    range,
+    ehp,
+    taunt: own.some((s) => s.effects.some((e) => e.type === 'taunt')),
+    ...(guard ? { guardRange: guard.range ?? Infinity } : {}),
+  };
+}
+
+/** Birimlerin alan şekilleri (alan hedefli skill'lerinin area tanımları, tekrarsız). */
+export function areasOf(ids: string[]): AreaDef[] {
+  const seen = new Map<string, AreaDef>();
+  for (const id of ids) {
+    const def = classes[id] ?? summons[id] ?? mobs[id] ?? bosses[id];
+    for (const sid of def?.skills ?? []) {
+      const s = skills[sid];
+      if (s?.area?.shape && AREA_TARGETS.includes(s.target)) seen.set(JSON.stringify(s.area), s.area);
+    }
+  }
+  return [...seen.values()];
+}
+
+let poolAreas: AreaDef[] | undefined;
+
+/** Menzile duyarlı dizilim (menzil açıkken): eski kuralın sonucundan başlayıp formation-ai puanına göre iyileştirir. */
+function rangeSlots(ids: string[], start: number[], opts: FormationOptions, rng?: Rng): number[] {
+  const foeAreas = opts.foes?.length ? areasOf(opts.foes) : (poolAreas ??= areasOf(randomPool));
+  return planRangeFormation(ids.map(planUnitOf), {
+    formation: formulas.formation,
+    weights: (aiJson as unknown as { formation: FormationWeights }).formation,
+    foeAreas,
+    start,
+    board: opts.board,
+    ...(rng ? { rng } : {}),
+  });
+}
+
+/**
+ * Girdi sırasında her birimin otomatik dizilim hücresi. Menzil kapalıyken eski melee kuralı (planCells); açıkken menzile duyarlı
+ * (formation-ai.ts: ana skill'ler ilk turdan ulaşsın, kırılganlar geride, taunt önde, Guard menzilinde, alan vuruşuna karşı dağınık).
+ */
+export function defaultSlots(ids: string[], opts: FormationOptions = {}): number[] {
+  const old = planCells(ids, (min, max) => Math.min(max, Math.max(min, 2)), defaultLanes);
+  return formulas.range?.enabled ? rangeSlots(ids, old, opts) : old;
 }
 
 /**
  * Otomatik dizilim: dönen liste hücre listesidir (dizin = yuva, '' = boş). Yakın dövüşçüler ön sıraları doldurur
  * (bkz. planCells); varsayılan sıra boyutu 2, ön sıradaki 3 melee varsa 3.
  */
-export function defaultCells(ids: string[]): string[] {
+export function defaultCells(ids: string[], opts: FormationOptions = {}): string[] {
   const cells: string[] = Array.from({ length: CELL_COUNT }, () => '');
-  defaultSlots(ids).forEach((slot, i) => {
+  defaultSlots(ids, opts).forEach((slot, i) => {
     if (slot >= 0) cells[slot] = ids[i]!;
   });
   return cells;
 }
 
 /** Rastgele dizilimin her birimin hücresi (girdiyle aynı sırada): sıra boyutları ve şeritler seed'li rastgele, melee kuralı korunur. */
-export function randomSlots(ids: string[], seed: number): number[] {
+export function randomSlots(ids: string[], seed: number, opts: FormationOptions = {}): number[] {
   const rng = new Rng((seed ^ 0x2545f491) >>> 0);
+  if (formulas.range?.enabled) {
+    // menzil açık: menzile duyarlı plan + seed'li küçük gürültü (data/ai.json > formation.jitter); eski kural başlangıç noktasıdır
+    const old = planCells(ids, (min, max) => Math.min(max, Math.max(min, 2)), defaultLanes);
+    return rangeSlots(ids, old, opts, rng);
+  }
   const pickLanes = (k: number) => {
     const lanes = Array.from({ length: GRID.lanes }, (_, l) => l);
     for (let i = lanes.length - 1; i > 0; i--) {
@@ -382,9 +450,9 @@ export function randomSlots(ids: string[], seed: number): number[] {
  * Rastgele dizilim: karakterler 3 şeritten rastgele seçilir (ortadaki şerit de kullanılır). Yakın dövüşçüler ön sıraları doldurur:
  * bir melee, önündeki sıra dolmadıkça (3 karakter) arka sırada olmaz. Dönen liste hücre listesidir.
  */
-export function randomCells(ids: string[], seed: number): string[] {
+export function randomCells(ids: string[], seed: number, opts: FormationOptions = {}): string[] {
   const cells: string[] = Array.from({ length: CELL_COUNT }, () => '');
-  randomSlots(ids, seed).forEach((slot, i) => {
+  randomSlots(ids, seed, opts).forEach((slot, i) => {
     if (slot >= 0) cells[slot] = ids[i]!;
   });
   return cells;
@@ -418,20 +486,22 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
   };
   const random = !!def.random;
   const rolled = teams?.party && teams.enemies ? undefined : rollTeams(battleId, seed, { partySize: teams?.partySize, enemySize: teams?.enemySize });
-  const build = (given: string[] | undefined, rolledIds: string[] | undefined, mix: number): Built => {
+  // menzile duyarlı dizilim karşı takımın alan şekillerine bakar (menzil kapalıyken kullanılmaz)
+  const idsOf = (given: string[] | undefined, rolledIds: string[] | undefined) => (given ?? rolledIds ?? []).filter(Boolean);
+  const build = (given: string[] | undefined, rolledIds: string[] | undefined, mix: number, opts: FormationOptions): Built => {
     if (given) {
       if (!arrange) return fromCells(given); // hücre listesi (oyuncunun seçim ekranında elle dizdiği; dizin = yuva, '' = boş)
       // sınıf listesi: önce önceliğe göre sıralanır, sonra otomatik dizilir
       const list = given.slice(0, CELL_COUNT);
       const order = arrangeOrder(list);
       const a = order.map((i) => list[i]!);
-      return layout(a, defaultSlots(a), order);
+      return layout(a, defaultSlots(a, opts), order);
     }
     const ids = rolledIds ?? [];
-    return layout(ids, random ? randomSlots(ids, seed ^ mix) : defaultSlots(ids));
+    return layout(ids, random ? randomSlots(ids, seed ^ mix, opts) : defaultSlots(ids, opts));
   };
-  const party = build(teams?.party, rolled?.party, 0x1111);
-  const enemies = build(teams?.enemies, rolled?.enemies, 0x2222);
+  const party = build(teams?.party, rolled?.party, 0x1111, { foes: idsOf(teams?.enemies, rolled?.enemies), board: 'party' });
+  const enemies = build(teams?.enemies, rolled?.enemies, 0x2222, { foes: idsOf(teams?.party, rolled?.party), board: 'enemy' });
   // Sınıf ya da (hazır çağrı olarak) data/summons birimi
   const unitDef = (id: string): CombatantDef => classes[id] ?? bosses[id] ?? mobs[id] ?? lookup(summons, id, 'Class');
   // Birim kurulumları: verilen kurulum + çağrı id'leri için summoned bayrağı. Hiçbir birimde kurulum yoksa alan hiç yazılmaz (eski davranış).
@@ -465,4 +535,13 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     units: { ...classes, ...summons, ...bosses, ...mobs },
     maxSlots: def.slots,
   };
+}
+
+/**
+ * Skill'in sahibinin (bu skill'i taşıyan ilk sınıf / çağrı / boss / mob) taban menzili (range.md; savaş dışı ekranlar: Gear, wiki).
+ * Sahibi yoksa ya da menzili tanımsızsa undefined (describeSkill varsayılanı kullanır).
+ */
+export function ownerRangeOf(skillId: string): number | undefined {
+  for (const pool of [classes, summons, bosses, mobs]) for (const def of Object.values(pool)) if (def?.skills.includes(skillId)) return def.range;
+  return undefined;
 }

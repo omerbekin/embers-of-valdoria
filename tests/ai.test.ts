@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { oldLayoutSetup } from './range-helpers';
 import { Battle, chooseAction, content, explainChoice } from '../src/engine';
 import type { AiConfig } from '../src/engine';
 import { legacySkill } from './legacy-skills';
 
 /** Class skill kuralları testleri global skill'siz YZ ile (global skill kuralları: tests/ai-global.test.ts); tam savaş testleri content.aiConfig'i (global dahil) kullanır. */
 const ai: AiConfig = { ...content.aiConfig, global: undefined };
-const turnsBattle = (seed = 1) => new Battle(content.battleSetup('first-battle', seed, 'turns'));
+const turnsBattle = (seed = 1) => new Battle(oldLayoutSetup('first-battle', seed, 'turns'));
 /** Stat toplamı 30 olduğundan canlar düşük; AI senaryoları (can oranı, öldürme eşiği) sağlam birimler varsayar: can en az 100. */
 const sturdy = (b: Battle): Battle => {
   for (const c of b.combatants) {
@@ -14,10 +15,10 @@ const sturdy = (b: Battle): Battle => {
   }
   return b;
 };
-const testBattle = (seed = 1) => sturdy(new Battle(content.battleSetup('first-battle', seed, 'test')));
+const testBattle = (seed = 1) => sturdy(new Battle(oldLayoutSetup('first-battle', seed, 'test')));
 /** Undead'e (yalnızca bu savaşta) can bedelli eski Blood Rite'ı ekler: can bedeli kuralı testleri için (tests/legacy-skills.ts). */
 const withBloodRite = (seed = 1): Battle => {
-  const setup = content.battleSetup('first-battle', seed, 'test');
+  const setup = oldLayoutSetup('first-battle', seed, 'test');
   setup.skills = { ...setup.skills, blood_rite: legacySkill('blood_rite') };
   setup.party = setup.party.map((d) => (d.id === 'undead' ? { ...d, skills: [...d.skills, 'blood_rite'] } : d));
   return sturdy(new Battle(setup));
@@ -92,7 +93,7 @@ describe('yapay zeka: öncelik 1 - öldürebiliyorsa öldür', () => {
 
 describe('yapay zeka: şifa, kalkan, çağrı', () => {
   // Terazi (madde 257): şifa "eşik altı" kuralıyla değil, kurtarma değeriyle: dost bir sonraki turumuzdan önce ölecekse ve şifa onu kurtarıyorsa
-  const duel = () => sturdy(new Battle(content.battleSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['warrior', 'archer', 'druid'] })));
+  const duel = () => sturdy(new Battle(oldLayoutSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['warrior', 'archer', 'druid'] })));
   const uidOf = (b: Battle, side: 'party' | 'enemy', defId: string) => b.combatants.find((c) => c.side === side && c.defId === defId)!.uid;
 
   it('Druid, ölmek üzere olan (sıradaki vuruşla ölecek) ve şifayla kurtulacak dostunu iyileştirir', () => {
@@ -140,7 +141,7 @@ describe('yapay zeka: şifa, kalkan, çağrı', () => {
   });
 
   it('Mage, sıradaki vuruşla ölecek ve kalkanla kurtulacak dostuna Mana Barrier verir', () => {
-    const b = sturdy(new Battle(content.battleSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['mage', 'archer'] })));
+    const b = sturdy(new Battle(oldLayoutSetup('first-battle', 1, 'test', { party: ['archer'], enemies: ['mage', 'archer'] })));
     const ally = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'archer')!;
     ally.hp = 8;
     const mage = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'mage')!;
@@ -264,7 +265,7 @@ describe('yapay zeka: genel kurallar', () => {
 
 describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
   const make = (party: string[], enemies: string[], seed = 1) => {
-    const b = new Battle(content.battleSetup('first-battle', seed, 'test', { party, enemies }));
+    const b = new Battle(oldLayoutSetup('first-battle', seed, 'test', { party, enemies }));
     return sturdy(b);
   };
   const uid = (b: Battle, side: 'party' | 'enemy', defId: string) => b.combatants.find((c) => c.side === side && c.defId === defId)!.uid;
@@ -369,7 +370,7 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
 
   it('YZ ile oynanan tüm sınıflı rastgele savaşlar hep geçerli hamle yapar ve sonuçlanır', () => {
     for (let seed = 1; seed <= 60; seed++) {
-      const b = new Battle(content.battleSetup('random-battle', seed, 'turns'));
+      const b = new Battle(oldLayoutSetup('random-battle', seed, 'turns'));
       for (let i = 0; i < 500 && !b.winner; i++) {
         const actor = b.currentUid!;
         const choice = chooseAction(b, actor, content.aiConfig);
@@ -382,7 +383,7 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
 
 describe('yapay zeka: 4. (güçlü) skill ve mana yakma hedefi', () => {
   const make = (party: string[], enemies: string[], seed = 1) => {
-    const b = new Battle(content.battleSetup('random-battle', seed, 'turns', { party, enemies }));
+    const b = new Battle(oldLayoutSetup('random-battle', seed, 'turns', { party, enemies }));
     return sturdy(b);
   };
   const uid = (b: Battle, side: 'party' | 'enemy', defId: string) => b.combatants.find((c) => c.side === side && c.defId === defId)!.uid;

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { ENDLESS, RUN_KEY, chooseReward, heroSlots, autoSlots, loadRun, merchantEntry, newRun, parseRun, previewRun, saveRun, type EndlessRun, type KV } from '../src/endless';
+import { leveledRun } from './level-helpers';
 
 // Tüccar kısayolu (?merchant=1 / debug > Open merchant; Ömer 2026-10-10): gerçek koşu kampta bekliyorsa onda tüccar; yoksa atılır önizleme
 // koşusu. Önizleme ASLA kaydedilmez (gerçek kaydı ezmez / silmez) ve skor listesine girmez.
@@ -55,7 +56,7 @@ describe('tüccar önizleme koşusu', () => {
     const none = merchantEntry(null, 5);
     expect(none.save).toBe(false);
     expect(none.run.preview).toBe(true);
-    const camp: EndlessRun = { ...newRun(3, PARTY, AT), wave: 6, stats: { cleared: 5, turns: 0, kills: 0 } };
+    const camp: EndlessRun = { ...leveledRun(newRun(3, PARTY, AT)), wave: 6, stats: { cleared: 5, turns: 0, kills: 0 } };
     const e = merchantEntry(camp, 5);
     expect(e.save).toBe(true);
     expect(e.run.preview).toBeUndefined();

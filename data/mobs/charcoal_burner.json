@@ -7,6 +7,7 @@
   "color": "#4a3f3a",
   "logo": "wizhat",
   "frontPriority": 7,
+  "range": 5,
   "role": "Ember Cult · Caster",
   "attributes": {
     "str": 14,

@@ -2,13 +2,15 @@ import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
 import { CONFIG, ENCOUNTERS, EVENTS, STORIES, getMap, type EventChoice } from './data';
 import { finalNode, forwardDistances, incoming, node, outgoing } from './graph';
 import { rngFor, shuffle } from './seed';
-import { emptyEquipment, SLOT_IDS } from '../progression/items';
+import { SLOT_IDS } from '../progression/items';
+import { starterEquipment } from '../progression/weapon';
 import { itemRecovery } from '../progression/loadout';
 import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
 import { nodeIlvl } from './power';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
+import { applyXp, battleXp, fixedXp, fixedXpNode } from './xp';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
 
 /**
@@ -167,8 +169,9 @@ function place(s: CampaignState, hero: Hero): void {
 
 function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutorial?: boolean } = {}): Hero {
   if (!classes[classId]) throw new Error(`Unknown class: ${classId}`);
+  const id = `h${s.nextHeroId++}`;
   const hero: Hero = {
-    id: `h${s.nextHeroId++}`,
+    id,
     class: classId,
     hpRatio: 1,
     alive: true,
@@ -176,7 +179,11 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
     ...(o.tutorial ? { tutorial: true } : {}),
     level: 1,
     xp: 0,
-    equipment: emptyEquipment(),
+    statPoints: 0,
+    skillPoints: 0,
+    alloc: {},
+    // Item Güçlendirme x5 (Ömer 2026-10-17): her kahraman sınıfının Common başlangıç silahıyla gelir
+    equipment: starterEquipment(classId, id),
   };
   s.roster.push(hero);
   place(s, hero);
@@ -432,6 +439,8 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 's
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
   if (kind === 'treasure') grantLoot(t, t.at, 'treasure', activeHeroes(t));
   if (kind === 'town') closeShop(t); // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1); yeniden girilirse aynı tezgâh döner
+  // Savaşsız olay / hazine düğümü: sabit XP (levels.md, 0,5x)
+  if ((kind === 'treasure' || kind === 'event') && fixedXpNode(t)) applyXp(t, fixedXp(t, activeHeroes(t)));
   complete(t, kind);
   return t;
 }
@@ -502,7 +511,10 @@ export function chooseEvent(s: CampaignState, choiceId: string): CampaignState {
   if (c.chest) grantLoot(t, t.at, 'treasure', activeHeroes(t), small ? { maxItems: c.chestItems!, gold: c.gold ?? 0 } : undefined);
   const battle = choiceBattle(c);
   t.eventChoice = { node: t.at, choice: c.id, ...(battle ? { battle } : {}), ...(c.restHeal !== undefined ? { restHeal: c.restHeal } : {}) };
-  if (!battle) complete(t, 'event');
+  if (!battle) {
+    if (fixedXpNode(t)) applyXp(t, fixedXp(t, activeHeroes(t))); // savaşsız olay: sabit XP (savaşlı seçenekte XP savaştan)
+    complete(t, 'event');
+  }
   return t;
 }
 
@@ -594,6 +606,9 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     h.alive = true;
   }
   t.stats.victories++;
+  // XP (levels.md): düşman başına, düğüm çarpanı, savaşa girenlere bölünür; level atlayan (ayaktaki) kahraman tam iyileşir
+  const encounterId = t.eventChoice?.node === t.at && t.eventChoice.battle ? t.eventChoice.battle : (node(mapOf(t), t.at).encounter ?? '');
+  applyXp(t, battleXp(t, outcome, encounterId));
   // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1
   if (t.valor !== undefined) {
     const type = node(mapOf(t), t.at).type;

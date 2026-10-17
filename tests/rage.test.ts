@@ -5,10 +5,11 @@ import type { AiConfig, BattleEvent, BattleMode } from '../src/engine';
 /**
  * Rage (Warrior kaynağı): 0-max, savaş başında 0; skill ile hasar vurdukça kazanılır (isabet eden her vuruşta
  * min(perHitCap, hitBase + perHpPercent x vurulan hasarın hedefin maks canına yüzdesi); bir skill'de en yüksek tek hedef, perCastCap'li);
- * Abyssal Cry'ın bedeli Rage (MP değil). Sayılar formulas.json > rage'den okunur.
+ * Berserker pasifi (rageOnHurt) can kaybedince de Rage verir; Headsman's Blow'un bedeli Rage'in TAMAMI (en az cost.amount; 2026-10-17, Abyssal Cry'ın
+ * yerine). Sayılar formulas.json > rage ve warrior.json'dan okunur. Yeni mekaniklerin ayrıntılı testleri: tests/berserker.test.ts.
  */
 const R = content.formulas.rage;
-const cry = content.skills.abyssal_cry!;
+const cry = content.skills.headsmans_blow!;
 const classOnly: AiConfig = { ...content.aiConfig, global: undefined };
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T) => events.filter((e): e is Extract<BattleEvent, { type: T }> => e.type === type);
@@ -57,22 +58,25 @@ describe('Rage: veri ve başlangıç', () => {
     expect(start.combatants.find((c) => c.uid === 'party-1')!.maxRage).toBeUndefined();
   });
 
-  it('Abyssal Cry maliyeti yalnızca Rage (MP değil; madde 262: can bedeli kaldırıldı); cooldown/initialCooldown aynı', () => {
+  it('Headsman\x27s Blow maliyeti Rage\x27in tamamı (en az cost.amount, MP değil); cooldown 5, ilk bekleme 1 (Ömer 2026-10-17)', () => {
+    expect(content.classes.warrior!.skills[3]).toBe('headsmans_blow');
     expect(cry.cost.resource).toBe('rage');
+    expect(cry.cost.spendAll).toBe(true);
     expect(cry.cost.amount).toBeGreaterThan(0);
     expect(cry.cost.amount).toBeLessThanOrEqual(R.max);
     expect(cry.effects.some((e) => e.type === 'selfDamage')).toBe(false);
     expect(cry.cooldown).toBe(5);
-    expect(cry.initialCooldown).toBeUndefined();
+    expect(cry.initialCooldown).toBe(1);
     // Warrior'ın diğer skill'leri MP kullanır
-    for (const id of content.classes.warrior!.skills) if (id !== 'abyssal_cry') expect(content.skills[id]!.cost.resource, id).toBe('mp');
+    for (const id of content.classes.warrior!.skills) if (id !== 'headsmans_blow') expect(content.skills[id]!.cost.resource, id).toBe('mp');
     // Rage'li bir class dışında Rage bedelli skill yok
     for (const [id, s] of Object.entries(content.skills)) if (s.cost.resource === 'rage') expect(content.classes.warrior!.skills, id).toContain(id);
   });
 
-  it('skill açıklaması bedeli "N RAGE" olarak yazar', () => {
+  it('skill açıklaması bedeli "All RAGE (min N)" olarak yazar ve tamamını harcadığını söyler', () => {
     const info = describeSkill(cry, content.classes.warrior!.stats, content.formulas);
-    expect(info.cost).toBe(`${cry.cost.amount} RAGE`);
+    expect(info.cost).toBe(`All RAGE (min ${cry.cost.amount})`);
+    expect(info.lines.join(' ')).toContain(`Spends ALL your Rage (needs at least ${cry.cost.amount})`);
   });
 });
 
@@ -130,7 +134,7 @@ describe('Rage: kazanç', () => {
     expect(ofType(act(b, 'party-0', 'melee_attack', 'enemy-0'), 'rage')).toHaveLength(0);
   });
 
-  it('alınan hasar Rage vermez; zamanla azalmaz; tur sonunda sıfırlanmaz (turns modu)', () => {
+  it('alınan hasar (Berserker) Rage verir; Rage zamanla azalmaz; tur sonunda sıfırlanmaz (turns modu)', () => {
     const b = mk({ 0: 'warrior', 1: 'mage' }, { 0: 'warrior', 1: 'archer' }, 'turns', 300);
     const w = b.get('party-0')!;
     w.rage = 40;
@@ -142,7 +146,7 @@ describe('Rage: kazanç', () => {
       else b.applyChoice(cur.uid, chooseAction(b, cur.uid, classOnly));
     }
     expect(w.hp).toBeLessThan(hp0); // hasar aldı
-    expect(w.rage).toBe(40); // ama Rage ne arttı ne azaldı
+    expect(w.rage).toBeGreaterThan(40); // Berserker: can kaybı Rage verdi, hiç azalmadı
   });
 
   it('turns modunda da test modunda da kazanılır', () => {
@@ -181,59 +185,55 @@ describe('Rage: kazanç', () => {
   });
 });
 
-describe('Rage: harcama (Abyssal Cry)', () => {
+describe('Rage: harcama (Headsman\x27s Blow)', () => {
   it('Rage yetmezse kullanılamaz ("Not enough rage"); MP bol olsa bile', () => {
     const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'archer' });
     const w = b.get('party-0')!;
     w.mp = w.maxMp;
     w.rage = cry.cost.amount - 1;
-    expect(b.canUse('party-0', 'abyssal_cry')).toEqual({ ok: false, reason: 'Not enough rage' });
+    expect(b.canUse('party-0', 'headsmans_blow')).toEqual({ ok: false, reason: 'Not enough rage' });
     w.rage = cry.cost.amount;
-    expect(b.canUse('party-0', 'abyssal_cry').ok).toBe(true);
+    expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(true);
   });
 
-  it('kullanılınca Rage düşer (rage olayı delta -bedel), MP ve can harcanmaz, Abyssal Fury uygulanır (madde 262)', () => {
-    const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'archer' });
-    const w = b.get('party-0')!;
-    w.rage = R.max;
-    const mp0 = w.mp;
-    const hp0 = w.hp;
-    const events = act(b, 'party-0', 'abyssal_cry');
-    expect(ofType(events, 'rage')).toEqual([{ type: 'rage', actor: 'party-0', delta: -cry.cost.amount, after: R.max - cry.cost.amount, max: R.max }]);
-    expect(ofType(events, 'resource')).toHaveLength(0); // MP/can 'resource' olayı yok
-    expect(ofType(events, 'damage')).toHaveLength(0); // can bedeli yok (madde 262)
-    expect(w.rage).toBe(R.max - cry.cost.amount);
-    expect(w.mp).toBe(mp0);
-    expect(w.hp).toBe(hp0);
-    expect(w.statuses.some((s) => s.kind === 'abyssal_fury')).toBe(true);
+  it('kullanılınca TÜM Rage düşer (rage olayı delta -mevcut), MP harcanmaz; vuruş sonra kendi Rage kazancını verir', () => {
+    for (const start of [cry.cost.amount, R.max]) {
+      const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'archer' });
+      const w = b.get('party-0')!;
+      w.rage = start;
+      const mp0 = w.mp;
+      const events = act(b, 'party-0', 'headsmans_blow', 'enemy-0');
+      const rage = ofType(events, 'rage').filter((e) => e.actor === 'party-0');
+      expect(rage[0]).toEqual({ type: 'rage', actor: 'party-0', delta: -start, after: 0, max: R.max });
+      expect(rage[1]!.delta).toBeGreaterThan(0); // isabet eden vuruşun normal Rage kazancı
+      expect(ofType(events, 'resource')).toHaveLength(0);
+      expect(ofType(events, 'damage').filter((e) => e.target === 'enemy-0')).toHaveLength(1);
+      expect(w.mp).toBe(mp0);
+    }
   });
 
   it('Rage bedeli freeMp (debug) ile bedavalaşmaz; test modunda da çalışır', () => {
     const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'archer' });
     b.freeMp = true;
-    expect(b.canUse('party-0', 'abyssal_cry').ok).toBe(false);
+    expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(false);
     b.debugSetResource('party-0', 'rage', 80);
-    expect(b.canUse('party-0', 'abyssal_cry').ok).toBe(true);
+    expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(true);
   });
 
-  it('YZ yetmeyen Rage ile Abyssal Cry seçmez; Rage yeterliyse ve koşullar uygunsa seçer', () => {
-    const foes = { 0: 'mage', 1: 'archer', 2: 'undead', 3: 'gambler', 4: 'antimage' };
+  it('YZ yetmeyen Rage ile Headsman\x27s Blow seçmez; Rage dolu ve hedef yaralıyken seçer', () => {
     const setup = () => {
-      const b = mk({ 0: 'warrior', 1: 'paladin', 2: 'druid' }, foes);
+      const b = mk({ 0: 'warrior', 1: 'paladin' }, { 0: 'defender', 1: 'archer' }, 'test', 400);
       b.debugClearCooldowns();
-      for (const c of b.combatants) {
-        c.maxHp = Math.max(c.maxHp, 100);
-        c.hp = c.maxHp;
-        c.mp = c.maxMp;
-      }
+      for (const c of b.combatants) c.mp = c.maxMp;
       return b;
     };
     const poor = setup();
     poor.get('party-0')!.rage = cry.cost.amount - 1;
-    expect(chooseAction(poor, 'party-0', classOnly)?.skillId).not.toBe('abyssal_cry');
+    expect(chooseAction(poor, 'party-0', classOnly)?.skillId).not.toBe('headsmans_blow');
     const rich = setup();
-    rich.get('party-0')!.rage = cry.cost.amount;
-    expect(chooseAction(rich, 'party-0', classOnly)).toMatchObject({ skillId: 'abyssal_cry', reason: 'tactic' });
+    rich.get('party-0')!.rage = R.max;
+    for (const c of rich.combatants) if (c.side === 'enemy') c.hp = Math.round(c.maxHp * 0.3);
+    expect(chooseAction(rich, 'party-0', classOnly)?.skillId).toBe('headsmans_blow');
   });
 
   it('düşük Rage seçimi engellemez (terazi, madde 257; madde 258: skill ipuçlarında koşul yok); seçim en yüksek puandır', () => {
@@ -241,7 +241,6 @@ describe('Rage: harcama (Abyssal Cry)', () => {
     const c = new Battle(setup);
     for (const u of c.combatants) Object.assign(u.stats, { critChance: 0, accuracy: 10, evasion: 0 });
     c.get('party-0')!.mp = 100;
-    c.get('party-0')!.skills = c.get('party-0')!.skills.filter((s) => s !== 'abyssal_cry'); // Abyssal Cry ile yarışmasın
     c.get('party-0')!.rage = 10;
     const ex = explainChoice(c, 'party-0', classOnly)!;
     expect(ex.candidates.filter((x) => x.skill === 'whirlwind').every((x) => x.verdict !== 'blocked')).toBe(true);

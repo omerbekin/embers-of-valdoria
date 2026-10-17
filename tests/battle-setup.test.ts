@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyUnitModifiers, Battle, battleSummary, chooseAction, content, damageRange, deriveStats, previewSkill, roundStat, unitLabel } from '../src/engine';
+import { applyUnitModifiers, Battle, battleSummary, chooseAction, content, damageRange, deriveStats, previewSkill, roundSpeed, speedMin, unitLabel } from '../src/engine';
 import type { BattleEvent, BattleMode, CombatantData, Teams, UnitSetup } from '../src/engine';
 
 // Savaş kurulum seçenekleri (sefer için; docs/design/combat.md > Savaş kurulum seçenekleri): birim güçlendirmesi, özel ad, başlangıç canı/MP,
@@ -69,12 +69,12 @@ describe('modifiers: güçlendirme / zayıflatma', () => {
     const def = content.classes.warrior!;
     const m = applyUnitModifiers(def, { statMult: 1.15, hpMult: 1.8 }, f);
     const a = def.attributes;
-    const r = (v: number) => roundStat(v, f); // x2 stat ölçeği: statScale katına (eski tam sayının 2 katı)
+    const r = (v: number) => Math.round(v); // temel statlar tam sayıya (gizli x2 ölçek yok, Ömer 2026-10-17)
     expect(m.attributes).toEqual({ str: r(a.str * 1.15), int: r(a.int * 1.15), dex: r(a.dex * 1.15), luck: r(a.luck * 1.15) });
     const A = f.attributes;
     const baseHp = Math.round(A.hpBase + A.hpPerStr * m.attributes.str);
     expect(m.stats.hp).toBe(Math.round(baseHp * 1.8));
-    expect(m.stats.spd).toBe(Math.max(1, Math.round(A.spdBase + A.spdPerDex * m.attributes.dex)));
+    expect(m.stats.spd).toBe(Math.max(speedMin(f), roundSpeed(A.spdBase + A.spdPerDex * m.attributes.dex, f)));
     expect(m.stats.critChance).toBeCloseTo(A.critChanceBase + A.critChancePerLuck * m.attributes.luck, 10);
     expect(m.stats.mp).toBe(Math.round(A.mpBase + A.mpPerInt * m.attributes.int));
     // orijinal tanım değişmedi
@@ -88,15 +88,15 @@ describe('modifiers: güçlendirme / zayıflatma', () => {
       for (const mods of modsList) {
         const m = applyUnitModifiers(def!, mods, f);
         for (const k of ATTR) {
-          expect(Number.isInteger(m.attributes[k] / (f.statScale ?? 1)), `${def!.id} ${k} ${JSON.stringify(mods)}`).toBe(true); // eski ölçekte tam sayı
+          expect(Number.isInteger(m.attributes[k]), `${def!.id} ${k} ${JSON.stringify(mods)}`).toBe(true);
           const raw = def!.attributes[k] * (mods.statMult ?? 1) * ((mods as { attrMult?: Partial<Record<string, number>> }).attrMult?.[k] ?? 1) + ((mods as { attrAdd?: Partial<Record<string, number>> }).attrAdd?.[k] ?? 0);
-          expect(m.attributes[k]).toBe(Math.max(0, roundStat(raw, f)));
+          expect(m.attributes[k]).toBe(Math.max(0, Math.round(raw)));
         }
       }
     }
-    // örnek (x2 ölçek): 10 x 1,1 = 11 -> 12; 30 x 1,1 = 33 -> 34; 8 x 1,1 = 8,8 -> 8 (eski ölçekte 5,5 -> 6, 16,5 -> 17, 4,4 -> 4)
+    // örnek: 10 x 1,1 = 11; 30 x 1,1 = 33; 8 x 1,1 = 8,8 -> 9 (tek sayılar artık mümkün: gizli x2 ölçek kaldırıldı)
     const fake = { ...content.classes.warrior!, attributes: { str: 10, int: 30, dex: 30, luck: 8 } };
-    expect(applyUnitModifiers(fake, { statMult: 1.1 }, f).attributes).toEqual({ str: 12, int: 34, dex: 34, luck: 8 });
+    expect(applyUnitModifiers(fake, { statMult: 1.1 }, f).attributes).toEqual({ str: 11, int: 33, dex: 33, luck: 9 });
   });
 
   it('veri overrides korunur (Defender sabit canı statMult ile değişmez, hpMult ile değişir)', () => {
@@ -109,7 +109,7 @@ describe('modifiers: güçlendirme / zayıflatma', () => {
   it('attrMult / attrAdd / armorAdd / magicArmorAdd / powerMult / spriteScale', () => {
     const def = content.classes.archer!;
     const m = applyUnitModifiers(def, { attrMult: { dex: 0.5 }, attrAdd: { str: 4 }, armorAdd: 5, magicArmorAdd: -100, powerMult: 1.25, spriteScale: 1.4 }, f);
-    expect(m.attributes.dex).toBe(Math.round(def.attributes.dex * 0.5));
+    expect(m.attributes.dex).toBe(Math.round(def.attributes.dex * 0.5)); // tam sayıya yuvarlanır (archer DEX 26 -> 13)
     expect(m.attributes.str).toBe(def.attributes.str + 4);
     expect(m.stats.armor).toBe(def.stats.armor + 5);
     expect(m.stats.magicArmor).toBe(0);

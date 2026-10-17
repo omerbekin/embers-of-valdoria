@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { oldLayoutSetup } from './range-helpers';
 import { Battle, attributePower, content, describeClass, describeSkill, describeStat, nominalBurn, previewSkill } from '../src/engine';
 import type { BattleEvent, SkillDef, StatKind } from '../src/engine';
 import { installLegacySkills } from './legacy-skills';
@@ -7,7 +8,7 @@ installLegacySkills();
 
 /** Test modu, kritik ve dodge kapalı: önizleme aralığı kritiksiz hasarı gösterir. */
 function testBattle(seed = 1, teams?: { party: string[]; enemies: string[] }): Battle {
-  const b = new Battle(content.battleSetup('first-battle', seed, 'test', teams));
+  const b = new Battle(oldLayoutSetup('first-battle', seed, 'test', teams));
   for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
   return b;
 }
@@ -308,11 +309,25 @@ describe('skill açıklaması (tooltip)', () => {
     expect(text('mana_burn')).toContain('Steals 10 MP'); // Mana Steal: kısmen kendine geçer
   });
 
-  it('yakın dövüş skill\'leri menzil kuralını söyler; menzilli olanlar söylemez', () => {
-    expect(text('melee_attack')).toContain('Melee: front row only');
-    expect(text('whirlwind')).toContain('Melee: front row only');
-    expect(text('fire_bolt')).not.toContain('Melee:');
-    expect(text('shield_wall')).not.toContain('Melee:'); // kendine skill
+  it('yakın dövüş skill\'leri menzil kuralını söyler; menzilli olanlar söylemez (menzil KAPALI: eski satır)', () => {
+    const off = { ...f, range: { ...f.range!, enabled: false } };
+    const oldText = (id: string) => describeSkill(content.skills[id]!, stats, off, content.summons).lines.join('\n');
+    expect(oldText('melee_attack')).toContain('Melee: front row only');
+    expect(oldText('whirlwind')).toContain('Melee: front row only');
+    expect(oldText('fire_bolt')).not.toContain('Melee:');
+    expect(oldText('shield_wall')).not.toContain('Melee:'); // kendine skill
+    expect(oldText('fire_bolt')).not.toContain('Range ');
+  });
+
+  it('menzil AÇIK: kart satırı sahibin menzilini (sınıf / skill istisnası / Global) yazar; kendine skill yazmaz', () => {
+    const on = { ...f, range: { default: 1, ...f.range, enabled: true } };
+    const lines = (id: string) => describeSkill(content.skills[id]!, stats, on, content.summons, {}, content.ownerRangeOf(id)).lines.join('\n');
+    expect(lines('melee_attack')).toContain(`Range ${content.classes.warrior!.range}`);
+    expect(lines('fire_bolt')).toContain(`Range ${content.classes.mage!.range}`);
+    expect(lines('charge')).toContain(`Range ${content.skills.charge!.range}`); // skill istisnası sınıfı ezer
+    expect(lines('fist_crush')).toContain('Global');
+    expect(lines('shield_wall')).not.toMatch(/Range \d|Global/);
+    expect(lines('fire_bolt')).not.toContain('Melee:');
   });
 
   it('skill tooltip\'inde kritik ve accuracy bilgisi yazılmaz (stat tooltip\'inde kalır)', () => {

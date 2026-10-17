@@ -8,6 +8,8 @@ import type { Pt } from './shape-geometry';
 const BONE = '#e3d9c2';
 /** Boyalı mezar işaretinin (assets/misc-icons/fx/corpse.png) içerik alt kenarı / resim yüksekliği: 114 / 128 (alttaki saydam kenar payı hariç). */
 const CORPSE_ART_BASE = 114 / 128;
+/** Mezar işaretinin ekrandaki kenarı (px). Ömer 2026-10-17: yeni büyük haçlı çizimle %15 büyütüldü (70 -> 80). */
+const CORPSE_SIZE = 80;
 const ANKH = '#d9b26a';
 
 export interface CorpseMarker {
@@ -48,7 +50,7 @@ export function createCorpseMarker(scene: Phaser.Scene, pos: Pt, opts: CorpseMar
   if (painted) shadow.setPosition(0, FLOOR_LIFT).setSize(62, 13).setDisplaySize(62, 13).setFillStyle(0x000000, 0.5);
   const contact = painted ? scene.add.ellipse(0, FLOOR_LIFT, 40, 7, 0x000000, 0.45) : null;
   const art: Phaser.GameObjects.GameObject[] = painted
-    ? [...(contact ? [contact] : []), scene.add.image(0, FLOOR_LIFT + 2, ensureIcon(scene, miscIconName('fx', 'corpse'), BONE, false)).setOrigin(0.5, CORPSE_ART_BASE).setDisplaySize(70, 70)]
+    ? [...(contact ? [contact] : []), scene.add.image(0, FLOOR_LIFT + 2, ensureIcon(scene, miscIconName('fx', 'corpse'), BONE, false)).setOrigin(0.5, CORPSE_ART_BASE).setDisplaySize(CORPSE_SIZE, CORPSE_SIZE)]
     : [scene.add.image(18, -36, ensureIcon(scene, 'ankh', ANKH, false)).setDisplaySize(52, 52).setAlpha(0.92), scene.add.image(-9, -17, ensureIcon(scene, 'skull', BONE, false)).setDisplaySize(46, 40).setAngle(-9)];
   const hit = scene.add.zone(0, -26, 84, 66).setInteractive();
   if (opts.onOver) hit.on('pointerover', opts.onOver);

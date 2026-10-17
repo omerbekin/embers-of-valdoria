@@ -346,5 +346,30 @@
     "hookCombo": 1,
     "dodgeOpportunityShare": 1,
     "anchorShare": 1
+  },
+  "_formation": "YZ DİZİLİMİ (menzil açıkken; src/engine/formation-ai.ts, Ömer 2026-10-17): Quick Battle Randomize, otomatik dizilim (Auto arrange), sim ve Endless dalgaları. Her yerleşim puanlanır, en yüksek puanlı dizilim seçilir (yerel arama). reachValue[d] = birimin ana menzili düşmanın d. derinliğine (ön 0 ... arka 3) kadar ulaşıyorsa kazanç (birikimli değil, ulaşılan en derin satırın değeri); hiç ulaşamıyorsa -unreachable. safetyValue[r] = kendi en öndeki dolu sıradan r sıra geride durmanın değeri x (safetyBase + safetyFrag x kırılganlık; kırılganlık takım içinde 0 = en dayanıklı, 1 = en kırılgan; can x zırh). Taunt skill i olan her geri sıra için -tauntDepth. Guard (dost menzili) sahibinden menzil dışında kalan her dost için -guardReach x kırılganlık. aoe: düşmanın alan şekilleri (bilinmiyorsa Quick Battle havuzunun şekilleri) aynı vuruşa iki kırılganı birlikte alabiliyorsa -aoe x kırılganlık x kırılganlık x ortak vurulma oranı (kırılganlığı aoeFragFrom altındakiler sayılmaz; tahtanın aoeMaxCover oranından büyük şekiller, ör. 3x3, sayılmaz: dağılmak işe yaramaz). jitter: rastgele dizilimde (Randomize, Endless) her birim-hücre puanına eklenen seedli gürültünün genişliği. maxPasses: yerel arama tur sınırı. Menzil kapalıyken kullanılmaz (eski dizilim birebir).",
+  "formation": {
+    "reachValue": [
+      10,
+      11,
+      12.5,
+      14
+    ],
+    "safetyValue": [
+      0,
+      4,
+      5.5,
+      6
+    ],
+    "safetyBase": 0.5,
+    "safetyFrag": 0.5,
+    "unreachable": 30,
+    "tauntDepth": 4,
+    "guardReach": 1,
+    "aoe": 8,
+    "aoeMaxCover": 0.5,
+    "aoeFragFrom": 0.5,
+    "jitter": 0.2,
+    "maxPasses": 40
   }
 }

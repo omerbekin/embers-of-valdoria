@@ -425,14 +425,21 @@ body {
   --nav-icon: 18px;
   --nav-edge: 6px;
   --nav-gap: 4px;
+  /* Masaüstü katsayısı: viewport.ts > navScaleFor yazar (telefonda 1); gerçek ölçüler = taban x katsayı */
+  --nav-k: 1;
+  --nav-hit-k: calc(var(--nav-hit) * var(--nav-k));
+  --nav-frame-k: calc(var(--nav-frame) * var(--nav-k));
+  --nav-icon-k: calc(var(--nav-icon) * var(--nav-k));
+  --nav-edge-k: calc(var(--nav-edge) * var(--nav-k));
+  --nav-gap-k: calc(var(--nav-gap) * var(--nav-k));
 }
 
 .nav-btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: var(--nav-hit);
-  height: var(--nav-hit);
+  width: var(--nav-hit-k);
+  height: var(--nav-hit-k);
   min-width: 0;
   min-height: 0;
   padding: 0;
@@ -449,7 +456,7 @@ body {
 .nav-btn::before {
   content: '';
   position: absolute;
-  inset: calc((var(--nav-hit) - var(--nav-frame)) / 2);
+  inset: calc((var(--nav-hit-k) - var(--nav-frame-k)) / 2);
   border: 1px solid rgba(217, 178, 106, 0.42);
   background: rgba(12, 9, 6, 0.45);
   transition: border-color 0.18s;
@@ -467,8 +474,8 @@ body {
 
 .nav-btn svg {
   position: relative;
-  width: var(--nav-icon);
-  height: var(--nav-icon);
+  width: var(--nav-icon-k);
+  height: var(--nav-icon-k);
 }
 
 .nav-btn[hidden] {
@@ -478,13 +485,13 @@ body {
 /* Sağ üst sıra (sağdan sola): Menu (yalnızca oyun içinde), tam ekran. Menu görünmüyorsa tam ekran köşeye oturur. */
 .settings-toggle {
   position: fixed;
-  top: calc(var(--nav-edge) + var(--et));
-  right: calc(var(--nav-edge) + var(--er));
+  top: calc(var(--nav-edge-k) + var(--et));
+  right: calc(var(--nav-edge-k) + var(--er));
   z-index: 30;
 }
 
 html.menu-btn-on .settings-toggle.fullscreen-toggle {
-  right: calc(var(--nav-edge) + var(--nav-hit) + var(--nav-gap) + var(--er));
+  right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
 }
 
 /* --- Menü ve ayarlar ekranı: ana menü / sefer menüsüyle aynı görsel dil (koyu deri panel, altın çerçeve, serif, bronz düğmeler).
@@ -1555,6 +1562,23 @@ html.compact:not(.short) .gm-row {
 .mp-btn.primary {
   background: linear-gradient(#9a6a28, #3f220c);
   border-color: #e8c47e;
+}
+/* Pano yoksa davet metni (mp-overlay.ts > showCopyBox): seçili gösterilir, elle kopyalanır */
+.mp-share-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  font: italic 18px 'EB Garamond', Georgia, serif;
+  color: #f3e4c4;
+  background: #0c0806;
+  border: 2px solid #8a6a32;
+  border-radius: 6px;
+  resize: none;
+}
+html.short .mp-share-text {
+  min-height: 72px;
+  font-size: 15px;
 }
 .mp-code-input.mp-name-input {
   font: bold 24px Georgia, 'Times New Roman', serif;

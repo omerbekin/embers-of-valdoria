@@ -3,8 +3,8 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
-import { BAG_SIZE, ITEMS, RARITY_IDS } from '../progression';
+import { debugGrantXp, debugSetLevel, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
@@ -169,6 +169,65 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Open Gear',
     hint: 'Open the Gear screen (equip items from the bag) for the current campaign; opens the map first if needed',
     run: openGear,
+  });
+  // Level / XP (Ömer 2026-10-17, levels.md)
+  const levelOfTeam = (): number => {
+    const s = ensureState();
+    const team = s.active.filter(Boolean).map((id) => s.roster.find((h) => h.id === id)).filter((h) => !!h);
+    return team.length ? Math.min(...team.map((h) => h!.level)) : 1;
+  };
+  debug.register({
+    id: 'campaign.xp',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: 'Grant XP (one level)',
+    hint: 'Give every hero in the formation enough XP for one level (the Level Up card shows on the map)',
+    run: () => {
+      setState(debugGrantXp(ensureState(), xpToNext(levelOfTeam())));
+      reload();
+    },
+  });
+  for (const lv of [1, 5, 10, 20, 50])
+    debug.register({
+      id: `campaign.level-${lv}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Levels',
+      icon: 'muscle',
+      label: `Set level ${lv}`,
+      hint: `Set every hero to Level ${lv} (XP 0); placed stat points are reset and ${(lv - 1) * LEVELS.statPointsPerLevel} points wait to be spent`,
+      run: () => {
+        setState(debugSetLevel(ensureState(), lv));
+        reload();
+      },
+    });
+  debug.register({
+    id: 'campaign.enemy-levels',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'muscle',
+    label: () => `Enemy levels: ${LEVELS.enemies?.enabled ? 'on' : 'off'}`,
+    hint: 'Turn enemy level growth on or off for this session (campaign and Endless; off = enemies keep their Level 1 stats, the "Lv N" label stays). The next battle uses it.',
+    on: () => !!LEVELS.enemies?.enabled,
+    run: () => {
+      const e = (LEVELS.enemies ??= { enabled: true });
+      e.enabled = !e.enabled;
+    },
+  });
+  debug.register({
+    id: 'campaign.alloc',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'team',
+    label: 'Open stat allocation',
+    hint: 'Open Gear on the Character page (level, XP bar, stat points: drag the point stone onto a stat or tap +)',
+    run: () => {
+      const s = ensureState();
+      if (!s.roster.length) setState(debugTeleport(s, getMap(s.mapId).nodes.find((n) => n.type === 'town')?.id ?? s.at));
+      const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { openGear?: (h?: string, t?: boolean, a?: () => void, v?: 'char' | 'inv') => void }) : undefined;
+      if (scene?.openGear) scene.openGear(undefined, false, undefined, 'char');
+      else reload();
+    },
   });
   debug.register({
     id: 'campaign.give-item',

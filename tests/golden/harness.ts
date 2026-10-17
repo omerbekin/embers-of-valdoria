@@ -241,4 +241,21 @@ export function groupItems(): GoldenGroup {
   return { group: 'items', battles, extra };
 }
 
-export const GROUPS: Record<string, () => GoldenGroup> = { quick: groupQuick, comps: groupComps, campaign: groupCampaign, endless: groupEndless, items: groupItems };
+/**
+ * Menzil sistemi (range.md) KAPALI koşulur: altın kayıtlar menzil öncesi oyunun güvencesidir; formulas.range.enabled false iken eski hedefleme
+ * birebir aynı kalmalı (Ömer 2026-10-17: menzil en deneysel değişiklik, geri alınabilir olmalı). Menzil açık davranışı tests/range.test.ts ve sim'de.
+ */
+function rangeOff(fn: () => GoldenGroup): () => GoldenGroup {
+  return () => {
+    const r = content.formulas.range;
+    const was = r?.enabled;
+    if (r) r.enabled = false;
+    try {
+      return fn();
+    } finally {
+      if (r) r.enabled = was;
+    }
+  };
+}
+
+export const GROUPS: Record<string, () => GoldenGroup> = { quick: rangeOff(groupQuick), comps: rangeOff(groupComps), campaign: rangeOff(groupCampaign), endless: rangeOff(groupEndless), items: rangeOff(groupItems) };

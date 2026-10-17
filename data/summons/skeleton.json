@@ -5,6 +5,7 @@
   "color": "#d9d4c0",
   "logo": "skull",
   "frontPriority": 8,
+  "range": 1,
   "tags": [
     "undead"
   ],

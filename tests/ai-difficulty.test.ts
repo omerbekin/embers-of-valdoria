@@ -110,11 +110,17 @@ describe('madde 258 Faz 2: mana yakmanın "engellenen hamle" değeri', () => {
   });
 
   it('Drain Field / Mana Steal adayının burn terimi engellenen hamle değeridir (MP\'si az büyücüde pozitif)', () => {
-    const b = mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns');
+    // sıra Anti-Mage'de olsun (2026-10-17: Anti-Mage hızı 20 -> 18 = Druid; ilk tur Druid'in olabilir)
+    const ownTurn = (x: Battle): Battle => {
+      for (let i = 0; i < 20 && x.currentUid !== 'party-0'; i++) x.skipTurn();
+      for (const c of x.combatants) c.mp = c.maxMp;
+      return x;
+    };
+    const b = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
     for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = 16; // Radiance (20 MP) iki kez yerine bir kez
     const df = Math.max(...cand(b, 'party-0', 'drain_field').map((c) => c.terms?.burn ?? 0));
     expect(df).toBeGreaterThan(0);
-    const full = mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns');
+    const full = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
     expect(Math.max(...cand(full, 'party-0', 'drain_field').map((c) => c.terms?.burn ?? 0))).toBeLessThan(df);
   });
 });

@@ -160,6 +160,8 @@ describe('Valor savaşta: global diriltme', () => {
     const mkCase = (valor?: number) => {
       const b = new Battle(content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'warrior', 1: 'defender', 3: 'archer', 4: 'mage' }), enemies: cells({ 0: 'warrior', 1: 'archer', 2: 'druid' }), ...(valor !== undefined ? { valor: { party: valor } } : {}) }, false));
       b.debugKill(unitAt(b, 'party', 4).uid);
+      // Rage yok: Whirlwind/Charge/Headsman's Blow seçilemez (0.8.4: güçlenen Whirlwind dirilişin önüne geçiyordu); revive bedelsiz Strike ile yarışır
+      unitAt(b, 'party', 0).mp = 0;
       return b;
     };
     const none = mkCase();

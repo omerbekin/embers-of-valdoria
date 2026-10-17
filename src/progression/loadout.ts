@@ -1,18 +1,23 @@
 // Güç toplama katmanı (roadmap.md 1.1; saf, Phaser/DOM yok): savaşa girerken bir kahramanın "class temeli + item'ler (+ ileride level, ağaç)"
 // gücü TEK fonksiyonda toplanır ve motorun kapılarına (UnitSetup.modifiers + itemEffects) çevrilir. Sefer ve endless aynı fonksiyonu kullanır;
-// Quick Battle / multiplayer kullanmaz (Ömer kararı 2026-10-09: QB/MP dokunulmaz).
-// Kural: hiçbir şey takılı değilse modifiers YOK (undefined) => savaş bugünküyle birebir aynı (tests/loadout.test.ts determinizm testi).
+// Quick Battle / multiplayer kullanmaz (Ömer kararı 2026-10-09: QB/MP dokunulmaz; QB kahramanı başlangıç silahını taşır sayılır, gücü katlanmış = 1).
+// Kural: başlangıç silahı olmayan (test) sınıfta hiçbir şey takılı değilse modifiers YOK (undefined) => savaş bugünküyle birebir aynı; oynanabilir
+// sınıfta silahsız kahraman silah çarpanı < 1 alır (Item Güçlendirme 2026-10-17: başlangıç silahı sıfır noktası).
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes } from '../engine/content';
 import type { Attribute, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
-import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { equippedWeaponPower, weaponMultFor } from './weapon';
+import { LEVELS, type StatAlloc } from './levels';
 
 /** Güç katmanının girdisi: sefer kahramanı (campaign Hero) ve endless kahramanı bu şekle uyar. */
 export interface LoadoutSource {
   class: string;
-  /** Aşama 2 (level sistemi) için ayrıldı; şimdilik güce etkisi yok. */
+  /** Kahraman level'ı (item seviye şartı; güce doğrudan etkisi yok: güç dağıtılmış puanlardan, `alloc`). */
   level?: number;
   equipment?: Partial<Equipment>;
+  /** Level sistemi (Ömer 2026-10-17): dağıtılmış temel stat puanları (puan x levels.json > statPerPoint temel stata eklenir). */
+  alloc?: StatAlloc;
 }
 
 export interface LoadoutResult {
@@ -30,6 +35,10 @@ export interface LoadoutResult {
   capped: CapKey[];
   /** Veride bulunamayan item id'leri (kayıt eski/yeni veriyle uyuşmuyorsa; yok sayılır, oyun çökmez). */
   missing: string[];
+  /** Silah güç toplamı (ana el + ikinci eldeki hançerin payı; Item Güçlendirme x1). */
+  weaponPower: number;
+  /** Motora giden silah çarpanı (başlangıç silahına göre katlanmış; 1 = başlangıç silahı). */
+  weaponMult: number;
 }
 
 /** Tavanlı statlar (items.json > caps) ve affix eşlemesindeki hedefleri (`to`). Ömer 2026-10-13 (itemcaps m1): tavan sert, fazlası kaybolur. */
@@ -162,6 +171,28 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       a.def.parts.forEach((p, i) => applyPart(p.to, a.values[i] ?? 0, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(a.x ? { x: a.x } : {}), ...(p.below !== undefined ? { below: p.below } : {}), ...(p.form ? { form: p.form } : {}) }));
     }
   }
+  // Taban örtük statları (Item Güçlendirme x3/x4: hançer kritik, tılsım hız, kalkan zırh; zarsız, tavanlara dahil)
+  for (const slot of ['weapon', 'offhand'] as const) {
+    const inst = src.equipment?.[slot];
+    const d = inst ? itemDef(inst.id) : undefined;
+    const imp = d ? implicitDefOf(d) : undefined;
+    if (!inst || !imp) continue;
+    implicitValues(imp, instanceIlvl(inst)).forEach((v, i) => {
+      const p = imp.parts[i]!;
+      applyPart(p.to, v, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(p.form ? { form: p.form } : {}) });
+    });
+  }
+  // Level puanları (levels.md): temel stata düz ek (item'lerin attr ekleriyle aynı kapı: UnitModifiers.attrAdd)
+  for (const a of ATTRS) {
+    const pts = Math.max(0, Math.floor(src.alloc?.[a] ?? 0));
+    if (!pts) continue;
+    const rec = ((mods.attrAdd as Bag | undefined) ??= {}) as Bag;
+    rec[a] = ((rec[a] as number | undefined) ?? 0) + pts * LEVELS.statPerPoint;
+  }
+  // Silah gücü (x1): hasar x (1 + güç/100), sınıfın başlangıç silahına göre katlanmış (başlangıç silahı = 1; silahsız < 1)
+  const weaponPower = equippedWeaponPower(src.equipment);
+  const weaponMult = weaponMultFor(src.class, src.equipment);
+  if (weaponMult !== 1) mods.weaponMult = weaponMult;
   // Tavanlar (items.json > caps; sert: fazlası kaybolur). Tavana ulaşan statlar `capped` ile arayüze (Ömer 2026-10-13, itemcaps m1)
   const capped: CapKey[] = [];
   const bags: Record<string, Bag> = { mod: mods, fx, prog: acc as unknown as Bag };
@@ -188,6 +219,8 @@ export function loadout(src: LoadoutSource): LoadoutResult {
     inactive: [...off],
     capped,
     missing,
+    weaponPower,
+    weaponMult,
   };
 }
 

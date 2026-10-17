@@ -7,6 +7,7 @@
   "color": "#7a3a2a",
   "logo": "helm",
   "frontPriority": 0,
+  "range": 2,
   "role": "Morvane's Army · Line",
   "attributes": {
     "str": 26,

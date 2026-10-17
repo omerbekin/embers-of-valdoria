@@ -17,7 +17,7 @@ describe('sefer akışı: ayarlar menüsü ve wiki', () => {
     const a = buildMechanics().find((x) => x.id === 'campaign');
     expect(a).toBeTruthy();
     const text = a!.blocks.flatMap((b) => (b.kind === 'p' ? [b.text] : b.kind === 'list' ? b.items : [])).join(' ');
-    expect(text).toMatch(/25% of their maximum HP/); // zafer şifası (campaign.json > rules.victoryHeal, Ömer 2026-10-12)
+    expect(text).toMatch(/20% of their maximum HP/); // zafer şifası (campaign.json > rules.victoryHeal; levels.md 2026-10-17: %25 -> %20)
     expect(text).toMatch(/up to 5 saves/);
     expect(text).toMatch(/3 campaign slots/);
     expect(text).toMatch(/Easy, Medium or Hard/);

@@ -80,6 +80,9 @@ describe('affix kancaları (ItemEffects)', () => {
     expect(damageSpecFor(w, t, { ...eff, damageType: 'magic' }, f).ignoreDefense).toBeCloseTo(0.5, 9);
     const plain = make({ 0: 'warrior' }, { 0: 'defender' });
     expect(damageSpecFor(unit(plain, 'party-0'), unit(plain, 'enemy-0'), eff, f).ignoreDefense).toBeUndefined();
+    // büyük STR: delmenin farkı yuvarlamada kaybolmasın (levels.md 2026-10-17: Warrior STR 30 -> 26)
+    w.stats.str = 80;
+    unit(plain, 'party-0').stats.str = 80;
     const hi = previewSkill(b, 'party-0', warriorAttack, 'enemy-0')[0]!.damage!.avg;
     expect(hi).toBeGreaterThan(previewSkill(plain, 'party-0', warriorAttack, 'enemy-0')[0]!.damage!.avg);
   });

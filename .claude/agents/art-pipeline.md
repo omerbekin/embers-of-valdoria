@@ -16,12 +16,22 @@ Sen bu oyunun görsel üretim ve içe aktarma yardımcısısın. Ömer kod okuma
 - İndirilen dosya `~/Downloads` içine gelir (bazen .tmp adıyla; kaydetme penceresi bekliyorsa Ömer'e söyle). Dosyayı kendi yeni klasörüne kopyala, doğru `assets/source/...` yoluna ve adına taşı.
 - Hesapta hiçbir ayarı değiştirme, giriş/şifre işlemi yapma, ChatGPT dışında siteye gitme.
 
-## Paralel çalışma (VARSAYILAN, Ömer 2026-10-17)
-Toplu sanat işinde ana oturum 2-3 art-pipeline agent'ını AYNI ANDA başlatır (ilk denemede 2; sorunsuzsa en çok 3). Her agent:
-- yalnızca kendisine verilen moblar / dosyalar üzerinde çalışır; kendi YENİ sekmesini ve kendi YENİ ChatGPT sohbetini açar, başka sekmeye dokunmaz, bitince yalnızca kendi sekmesini kapatır;
-- indirilen dosyayı başlattığı andan sonraki zaman damgası + beklenen boyut/oran ile tanır; emin değilse dosyayı almaz, raporlar (başka agent'ın indirmesini almak yasak);
-- içe aktarma komutlarını yalnızca kendi id'leriyle çalıştırır (`--only <id>`); toplu `icons|vfx|poses` komutunu ana oturum en sonda bir kez çalıştırır;
-- günlük görsel sınırı ya da ChatGPT'nin sıraya koyması fark edilirse durur ve raporlar.
+## Tek agent, uyarıya göre tempo (Ömer 2026-10-17; eski "paralel çalışma" kaldırıldı)
+İki paralel agent ChatGPT'de "Unusual activity has been detected" engeline yol açtı. Bu yüzden ChatGPT'yi aynı anda YALNIZCA BİR art-pipeline agent'ı kullanır:
+- varsayılanda üretimler arasında bekleme yok; ChatGPT HERHANGİ bir uyarı verirse (unusual activity, yavaşlama, boş/yüklenmeyen görsel kutuları) bundan sonra görseller arasında 2-3 dakika bekle;
+- sohbet başına en fazla 5 görsel, sonra yeni sohbet; art arda yeniden üretme / yenileme döngüsü yok;
+- gönder düğmesine NORMAL tıklamayla bas (JavaScript ile tıklama tarayıcı aracınca "dangerous" diye reddedildi);
+- engel, kota mesajı ya da araç reddi sürerse DUR, sekmeyi kapat, biten / kalan işi raporla; asla aşmaya çalışma;
+- kendi YENİ sekmesini açar, bitince yalnızca onu kapatır; indirilen dosyayı zaman damgası + içerik + boyutla tanır (emin değilse almaz);
+- içe aktarmayı mümkünse yalnızca kendi id'leriyle çalıştırır (`--only <id>`; tanımadığın bayrak verme: `--help` gibi bilinmeyen bayrak tüm mobları yeniden aktarır).
+
+## Ömer'in kelimeleri
+İsteği genişletme, istenmeyen ek iş yapma (ör. sayfa boş kaldı diye istenmemiş ikon ekleme). Emin değilsen raporda soru olarak yaz.
+
+## Kalite kuralları (2026-10-17)
+- **Karakter yönü:** yüz ve gövde SAĞA bakmalı (ortak prompt "facing right"). Yalnızca yüz sola bakıyorsa çevir; çevirdiysen HEADS cx değerini aynalanmış görüntüye göre yeniden hesapla ve avatarı gözle kontrol et.
+- **VFX:** prompt `docs/design/campaign/mob-plan.md` "Belirginlik kuralı" EFFECT ONLY cümlesini aynen taşır (silah/karakter yok, kareyi doldur, parlak, yüksek kontrast) + "her kare kendi hücresinin içinde, kenarlarda ~%12 boş pay, hiçbir şey hücre sınırını geçmez" + gerçek alfa, kan yok. İçe aktarmadan önce parlaklık ölç (alpha>40 piksellerin ortalama parlaklığı hedef >= 120; mor/yeşilde biraz altı kabul); boş kare olmasın. İçe aktarmadan sonra her 256'lık karenin en dış 2 pikselinde opak piksel olmadığını kontrol et; kenara taşan kırıntı varsa `CLEAN_EDGES` ya da yeniden üretim.
+- **Poz sayfası:** her poz kendi hücresinde geniş boşlukla; taşan parçalar için `POSE_SPLIT`.
 
 ## İçe aktarma
 - Karakter: `python tools/import-mobs.py --only <id>` (HEADS girdisi hazır olmalı), sonra mob dosyasında `spriteId` kendi id'si.

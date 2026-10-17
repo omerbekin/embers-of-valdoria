@@ -107,6 +107,11 @@ export interface WeaponFamilyArt {
   looks: Record<string, WeaponLook>;
   order: string[];
 }
+/** Silah çiziminin tonu: bright = parlaklık çarpanı, sat = doygunluk çarpanı (1 = çizimin kendisi). */
+export interface WeaponTone {
+  bright?: number;
+  sat?: number;
+}
 export interface PosesData {
   classes: Record<string, PoseClassDef>;
   weapons: Record<string, WeaponFamilyArt>;
@@ -114,6 +119,8 @@ export interface PosesData {
   familyArt: Record<string, string>;
   rarityLook: Record<string, number>;
   rarityGlow: Record<string, string>;
+  /** Nadirlik tonu (Ömer 2026-10-17): görünümü sabit (itemLook) Legendary dışı item'in çizimi nadirliğine göre tonlanır (yoksa çizimin kendisi). */
+  rarityTone?: Record<string, WeaponTone>;
   fistRadius: number;
   /** Başlarken küçük savunma hareketi yapan skill'ler (Guard kopyası; gerçek koruma pozu gelene dek). */
   braceSkills?: string[];
@@ -138,8 +145,10 @@ export interface WeaponPick {
   family: string;
   look: string;
   glow?: string;
+  /** Nadirlik tonu (POSES.rarityTone anahtarı): çizim pişirilirken renk / parlaklıkla tonlanır (`toneImageData`). */
+  tone?: string;
   grip?: Grip;
-  offhand?: { family: string; look: string };
+  offhand?: { family: string; look: string; tone?: string };
 }
 
 /** Gerçek sınıflar v2 gövdesiyle mi (varsayılan: evet). Kapalıyken eski görünüm: tek idle görseli + kod hareketi (Warrior v1 pozları). */
@@ -162,7 +171,7 @@ export const poseNames = (classId: string): string[] => Object.keys(poseClass(cl
 
 /** Kimlik (ör. '<aile>.<görünüm>.<ışıltı>'): pişmiş doku anahtarı. */
 export const weaponKey = (w: WeaponPick): string =>
-  `${w.family}.${w.look}${w.glow ? `.${w.glow.replace('#', '')}` : ''}${w.grip && w.grip !== 'one' ? `.${w.grip}` : ''}${w.offhand ? `+${w.offhand.family}.${w.offhand.look}` : ''}`;
+  `${w.family}.${w.look}${w.tone ? `~${w.tone}` : ''}${w.glow ? `.${w.glow.replace('#', '')}` : ''}${w.grip && w.grip !== 'one' ? `.${w.grip}` : ''}${w.offhand ? `+${w.offhand.family}.${w.offhand.look}${w.offhand.tone ? `~${w.offhand.tone}` : ''}` : ''}`;
 
 /** Bu sınıfta kullanılacak poz takımının tutuşu: kendi takımı varsa o, yoksa gripFallback, yoksa 'one'. Takımsız sınıfta verilen. */
 export function poseGrip(def: PoseClassDef, grip: Grip | undefined): Grip {
@@ -207,7 +216,7 @@ export function weaponFor(
   if (def.grips && grip !== 'one') out.grip = grip;
   // ikinci el yalnızca tek el silahla (ya da silahsız); görseli olan aile çizilir (kalkan / hançer görseli gelene dek yok: veri yolu hazır)
   const offArt = def.grips && off && !gripBlocksOffhand(grip) ? artPick({ ...off, ...(off.shield ? { family: 'shield' } : {}) }) : null;
-  if (offArt) out.offhand = { family: offArt.family, look: offArt.look };
+  if (offArt) out.offhand = { family: offArt.family, look: offArt.look, ...(offArt.tone ? { tone: offArt.tone } : {}) };
   return out;
 }
 
@@ -223,7 +232,35 @@ function artPick(item: { id: string; family?: string; rarity?: string }, grip?: 
   const own = POSES.itemLook?.[item.id];
   const idx = Math.min(art.order.length - 1, Math.max(0, POSES.rarityLook[item.rarity ?? 'common'] ?? 0));
   const glow = POSES.rarityGlow[item.rarity ?? ''];
-  return { family: fam, look: own && art.looks[own] ? own : art.order[idx]!, ...(glow ? { glow } : {}) };
+  const pinned = !!own && !!art.looks[own];
+  // sabit görünümlü item (taban başına tek çizim): nadirlik yalnızca ton (Legendary'nin tonu yok: kendi çizimi)
+  const tone = pinned ? rarityToneOf(item.rarity) : undefined;
+  return { family: fam, look: pinned ? own! : art.order[idx]!, ...(glow ? { glow } : {}), ...(tone ? { tone } : {}) };
+}
+
+/** Nadirliğin tonu varsa (ve çizimi gerçekten değiştiriyorsa) anahtarı; yoksa undefined. */
+export function rarityToneOf(rarity: string | undefined): string | undefined {
+  const t = rarity ? POSES.rarityTone?.[rarity] : undefined;
+  return t && ((t.bright ?? 1) !== 1 || (t.sat ?? 1) !== 1) ? rarity : undefined;
+}
+
+/**
+ * RGBA pikselleri yerinde tonlar (saf; pose-rig silah kaynağını pişirmeden önce bir kez uygular): doygunluk luma'ya göre karışım, sonra
+ * parlaklık çarpanı. Alfa değişmez.
+ */
+export function toneImageData(data: Uint8ClampedArray, tone: WeaponTone): void {
+  const b = tone.bright ?? 1;
+  const sat = tone.sat ?? 1;
+  for (let i = 0; i < data.length; i += 4) {
+    if (data[i + 3] === 0) continue;
+    const r = data[i]!;
+    const g = data[i + 1]!;
+    const bl = data[i + 2]!;
+    const l = 0.299 * r + 0.587 * g + 0.114 * bl;
+    data[i] = (l + (r - l) * sat) * b;
+    data[i + 1] = (l + (g - l) * sat) * b;
+    data[i + 2] = (l + (bl - l) * sat) * b;
+  }
 }
 
 /** Tüm silah görünümleri (önizleme ve debug silah seçici). */
@@ -543,6 +580,8 @@ export function validatePoses(data: PosesData = POSES): string[] {
   for (const [f, fam] of Object.entries(data.familyArt)) if (!data.weapons[fam]) errors.push(`familyArt ${f} -> unknown family ${fam}`);
   for (const [g, m] of Object.entries(data.gripArt ?? {})) for (const [f, fam] of Object.entries(m ?? {})) if (!data.weapons[fam]) errors.push(`gripArt ${g}.${f} -> unknown family ${fam}`);
   for (const [item, look] of Object.entries(data.itemLook ?? {})) if (!Object.values(data.weapons).some((f) => f.looks[look])) errors.push(`itemLook ${item} -> unknown look ${look}`);
+  for (const [r, t] of Object.entries(data.rarityTone ?? {}))
+    for (const k of ['bright', 'sat'] as const) if (t[k] !== undefined && !(t[k]! > 0 && t[k]! <= 2)) errors.push(`rarityTone ${r}.${k} out of range (0-2]`);
   return errors;
 }
 

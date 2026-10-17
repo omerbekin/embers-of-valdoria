@@ -1,10 +1,13 @@
 import type Phaser from 'phaser';
+import { trackKills, levelUpText, type KillRecord } from '../progression/levels';
 import { content } from '../engine';
 import type { Battle } from '../engine';
 import { grantLegendariesRun,
   abandonRun,
   addScore,
   applyOutcome,
+  acknowledgeRunLevelUps,
+  type WaveOutcome,
   attachRecorder,
   battleFor,
   valorTeams,
@@ -157,6 +160,8 @@ function battleData(game: Phaser.Game, plan: WavePlan, run: EndlessRun, hooks: C
     ...(background ? { background } : {}),
     // Poz kütüphanesi (yalnızca sunum): kahramanın takılı silahı ekrandaki silahı seçer (src/game/poses.ts)
     weapons: { items: partyWeapons(plan.heroOrder, (id) => run.heroes.find((h) => h.id === id)?.equipment.weapon, (id) => run.heroes.find((h) => h.id === id)?.equipment.offhand) },
+    // Level'lar (ad plakasında "Lv N"): düşmanlar dalga seviyesinde, kahramanlar kendi level'ında (taşınan çağrının hücresi '')
+    levels: { enemy: plan.enemyLevel, party: Object.fromEntries(plan.heroOrder.flatMap((id, i) => (id ? [[`party-${i}`, run.heroes.find((h) => h.id === id)?.level ?? 1]] : []))) },
     campaign: { retreatLabel: 'Retreat to Camp', retreatConfirm: 'Retreat to camp? The battle stays paused and resumes where you left it.', battleEffects: () => endlessEffects(run), ...hooks },
   };
 }
@@ -166,9 +171,9 @@ function onVictory(game: Phaser.Game, plan: WavePlan, battle: Battle): boolean {
   if (recording?.battle === battle) stopRecording();
   const run = endless.run;
   if (!run) return false;
-  const next = applyOutcome(run, plan, outcomeFromBattle(plan, battle));
+  const next = applyOutcome(run, plan, withKills(outcomeFromBattle(plan, battle), battle));
   if (next === run || next.phase === 'over') return false;
-  commit(next);
+  commit(levelNotice(next));
   const bs = game.scene.getScene(BATTLE_SCENE) as BattleScene;
   void bs.playEndlessRecovery(pauseUnits(next, plan.heroOrder)).then(() => {
     if (bs.sys.isActive()) bs.enterEndlessPause();
@@ -224,6 +229,31 @@ export function openEndless(game: Phaser.Game): void {
   const active = game.scene.getScenes(true)[0];
   if (active) active.scene.start(ENDLESS_SCENE, { view: 'title' });
   else game.scene.start(ENDLESS_SCENE, { view: 'title' });
+}
+
+// ------------------------------------------------------------ öldürme kaydı ve level bildirimi (levels.md)
+
+let killTrack: { battle: Battle; kills: () => KillRecord[]; stop: () => void } | null = null;
+
+function startKillTrack(battle: Battle, heroOrder: string[]): void {
+  killTrack?.stop();
+  killTrack = { battle, ...trackKills(battle, heroOrder) };
+}
+
+/** Dalga sonucuna bu savaşın öldürme kaydı (düştükten sonraki öldürmeler %50). Kayıt yoksa sonuç aynen. */
+function withKills(out: WaveOutcome, battle: Battle): WaveOutcome {
+  if (killTrack?.battle !== battle) return out;
+  const killLog = killTrack.kills();
+  killTrack.stop();
+  killTrack = null;
+  return { ...out, killLog };
+}
+
+/** Level atlayan kahramanlar: kampta kısa not (bir kez), kayıt silinir. */
+function levelNotice(run: EndlessRun): EndlessRun {
+  if (!run.levelUps?.length) return run;
+  endless.notice = levelUpText(run.levelUps.map((u) => ({ name: content.classes[run.heroes.find((h) => h.id === u.heroId)?.class ?? '']?.name ?? 'A hero', to: u.to })));
+  return acknowledgeRunLevelUps(run);
 }
 
 // ------------------------------------------------------------ yarım kalan savaş (kayıt + devam)
@@ -284,6 +314,7 @@ export function startWave(scene: Phaser.Scene, resume = false): WavePlan | null 
     ...(resume ? {} : { seamless: true, intro: { title: `Wave ${plan.wave}`, ...(plan.kind !== 'normal' ? { subtitle: plan.name } : {}) } }),
     // Sahne savaşı kurar kurmaz (çizimden önce): devam ise günlük oynatılır, sonra kayıt başlar
     prepareBattle: (battle) => {
+      startKillTrack(battle, plan.heroOrder); // XP payı (levels.md): günlük oynatılmadan önce
       if (replay.length) replayActions(battle, replay);
       startRecording(battle, plan, replay);
     },
@@ -311,9 +342,9 @@ export function resultActions(game: Phaser.Game, plan: WavePlan, victory: boolea
   if (recording?.battle === battle) stopRecording();
   const run = endless.run;
   if (run) {
-    const next = applyOutcome(run, plan, outcomeFromBattle(plan, battle));
+    const next = applyOutcome(run, plan, withKills(outcomeFromBattle(plan, battle), battle));
     if (next !== run) {
-      commit(next);
+      commit(levelNotice(next));
       if (next.phase === 'over') recordScore(next);
     }
   }

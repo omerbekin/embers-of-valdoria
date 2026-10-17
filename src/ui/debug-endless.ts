@@ -3,9 +3,10 @@
  * denemek için), sonraki elit/boss dalgasına atla, altın ver, en iyi koşular listesini sil. Sahne sınıfını içe aktarmaz (Node testinde Phaser yok).
  */
 import type Phaser from 'phaser';
-import { SCORES_KEY, applyOutcome, autoPlayWave, giveItem, grantLegendariesRun, grantRelic, waveKind, wavePlan, type EndlessRun } from '../endless';
+import { SCORES_KEY, acknowledgeRunLevelUps, applyOutcome, debugRunLevel, debugRunXp, autoPlayWave, giveItem, grantLegendariesRun, grantRelic, waveKind, wavePlan, type EndlessRun } from '../endless';
 import { ENDLESS_SCENE, commit, continueRun, endless, openEndless, openMerchant, recordScore, startRun, storage } from '../game/endless-session';
 import type { DebugMenu } from './debug-menu';
+import { levelUpText, xpToNext } from '../progression/levels';
 
 const TAB = 'Setup';
 const SECTION = 'Endless';
@@ -42,6 +43,35 @@ export function registerEndlessDebug(game: Phaser.Game, debug: DebugMenu): void 
     hint: 'Put all 10 Legendary items into the run bag (they are not offered in rewards or the shop yet). Also: ?legendary=1',
     run: () => {
       commit(grantLegendariesRun(readyRun()));
+      open(game);
+    },
+  });
+  // Level / XP (Ömer 2026-10-17, levels.md): koşunun kahramanlarına; puanlar kampta Gear > Character
+  debug.register({
+    id: 'endless.xp',
+    tab: TAB,
+    section: SECTION,
+    icon: 'feather',
+    label: 'Grant XP (one level)',
+    hint: 'Give every hero of the run enough XP for one level; spend the stat points in camp: Gear > Character',
+    run: () => {
+      const run = readyRun();
+      const lv = Math.min(...run.heroes.map((h) => h.level ?? 1));
+      const next = debugRunXp(run, xpToNext(lv));
+      endless.notice = levelUpText((next.levelUps ?? []).map((u) => ({ name: next.heroes.find((h) => h.id === u.heroId)?.class ?? 'hero', to: u.to })));
+      commit(acknowledgeRunLevelUps(next));
+      open(game);
+    },
+  });
+  debug.register({
+    id: 'endless.level',
+    tab: TAB,
+    section: SECTION,
+    icon: 'muscle',
+    label: 'Set level 10',
+    hint: 'Set every hero of the run to Level 10 (XP 0; placed stat points reset, 27 points wait in Gear > Character)',
+    run: () => {
+      commit(debugRunLevel(readyRun(), 10));
       open(game);
     },
   });

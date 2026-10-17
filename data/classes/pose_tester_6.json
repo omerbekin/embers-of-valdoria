@@ -10,10 +10,10 @@
   "hidden": true,
   "frontPriority": 1,
   "attributes": {
-    "str": 30,
-    "int": 16,
+    "str": 26,
+    "int": 12,
     "dex": 8,
-    "luck": 6
+    "luck": 14
   },
   "primary": "str",
   "armor": 18,

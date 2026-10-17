@@ -2,6 +2,8 @@
  * Multiplayer DOM katmanı (sahneden bağımsız): üstte bağlantı şeridi (kopma geri sayımı, desync), kısa bildirimler,
  * lobi kodu giriş kutusu (yapıştırma desteği için gerçek <input>) ve panoya kopyalama. Metinler İngilizce.
  */
+import { dismissOnBackdrop } from './backdrop';
+
 const root = (): HTMLElement => document.getElementById('ui-root') ?? document.body;
 
 let banner: HTMLDivElement | null = null;
@@ -140,4 +142,62 @@ function promptText(o: PromptOptions): Promise<string | null> {
     input.oninput = () => (err.textContent = '');
     window.setTimeout(() => input.focus(), 30);
   });
+}
+
+/** Dış adresi yeni sekmede aç (lobi sekmesi yerinde kalsın: bağlantı kopmasın). Telefonda WhatsApp/Discord uygulaması devralır. */
+export function openExternal(url: string): void {
+  window.open(url, '_blank', 'noopener');
+}
+
+/**
+ * Pano yoksa yedek: davet metni seçili hâlde gösterilir (oyuncu elle kopyalar). İsteğe bağlı ikinci düğme (ör. Open Discord).
+ */
+export function showCopyBox(text: string, extra?: { label: string; run: () => void }): void {
+  const wrap = document.createElement('div');
+  wrap.className = 'mp-modal';
+  const box = document.createElement('div');
+  box.className = 'mp-modal-box';
+  const title = document.createElement('div');
+  title.className = 'mp-modal-title';
+  title.textContent = 'Copy your invite';
+  const hint = document.createElement('div');
+  hint.className = 'mp-modal-hint';
+  hint.textContent = 'Copy the text below and send it to your friend.';
+  const area = document.createElement('textarea');
+  area.className = 'mp-share-text';
+  area.readOnly = true;
+  area.value = text;
+  area.rows = 3;
+  area.setAttribute('aria-label', 'Invite message');
+  const row = document.createElement('div');
+  row.className = 'mp-modal-row';
+  const close = document.createElement('button');
+  close.className = 'mp-btn';
+  close.textContent = 'Close';
+  row.appendChild(close);
+  const done = () => wrap.remove();
+  close.onclick = done;
+  if (extra) {
+    const go = document.createElement('button');
+    go.className = 'mp-btn primary';
+    go.textContent = extra.label;
+    go.onclick = () => {
+      extra.run();
+      done();
+    };
+    row.appendChild(go);
+  }
+  box.append(title, hint, area, row);
+  wrap.appendChild(box);
+  dismissOnBackdrop(wrap, box, done);
+  area.onkeydown = (e) => {
+    e.stopPropagation();
+    if (e.key === 'Escape') done();
+  };
+  root().appendChild(wrap);
+  window.setTimeout(() => {
+    area.focus();
+    area.select();
+    area.setSelectionRange(0, text.length);
+  }, 30);
 }

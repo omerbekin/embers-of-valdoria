@@ -3,7 +3,7 @@
  * (dokunmatikte TEK DOKUNUŞ: item'in yanına sabitlenir, altta eylem düğmeleri; boşluğa dokununca kapanır, Ömer 2026-10-12). İçerik: ad (nadirlik rengi), nadirlik + yuva + item seviyesi, affix satırları (C / B / A kademe etiketi + ikon +
  * değer + zar aralığı), Legendary etkisi, değer. Gear, tüccar ve ödül torbası aynı bileşeni kullanır. Oyun içi metinler İngilizce.
  */
-import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceColor, instanceSubtitle, itemDef, itemValue, type CapKey, type ItemInstance } from '../progression';
+import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
 import { statIconUrl } from './stat-tips';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -49,6 +49,8 @@ export interface ItemTipLine {
 export interface ItemTipState {
   inactive?: Set<number>;
   capped?: Set<CapKey>;
+  /** Seçili kahramanın seviyesi: item'in şartı bundan yüksekse "Requires Level X" kırmızı (Item Güçlendirme x6). */
+  level?: number;
 }
 
 /** Tavan etiketi: "max 25%" (hız düz: "max 3"). */
@@ -61,6 +63,27 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const name = el('b', 'it-name', d.name);
   name.style.color = instanceColor(inst);
   const out: HTMLElement[] = [name, el('div', 'it-sub', instanceSubtitle(inst))];
+  // Taban (Item Güçlendirme 2026-10-17): silah gücü + örtük stat (affix değil: kademe etiketi yok) ve seviye şartı (karşılanmıyorsa kırmızı)
+  const base = instanceBaseLines(inst);
+  if (base.power !== undefined || base.implicit) {
+    const bl = el('div', 'it-base');
+    if (base.power !== undefined) bl.append(el('div', 'it-power', `Weapon power ${base.power}`));
+    if (base.implicit) {
+      const row = el('div', 'it-implicit');
+      const url = base.implicit.stat ? statIconUrl(base.implicit.stat) : '';
+      if (url) {
+        const i = el('img', 'it-ico');
+        i.src = url;
+        i.alt = '';
+        row.append(i);
+      }
+      row.append(el('span', 'it-text', base.implicit.text));
+      bl.append(row);
+    }
+    out.push(bl);
+  }
+  const unmet = state?.level !== undefined && state.level < base.req;
+  if (base.req > 1 || unmet) out.push(el('div', `it-req${unmet ? ' unmet' : ''}`, levelReqMsg(base.req)));
   const lines = el('div', 'it-lines');
   affixLines(inst, classId).forEach((l, i) => {
     const off = !!state?.inactive?.has(i);

@@ -6,9 +6,10 @@
   "logo": "bulwark",
   "role": "Tank",
   "frontPriority": 0,
+  "range": 1,
   "attributes": {
-    "str": 30,
-    "int": 20,
+    "str": 26,
+    "int": 24,
     "dex": 6,
     "luck": 4
   },

@@ -337,7 +337,7 @@
       "icon": "evasion",
       "parts": [
         {
-          "base": 1.0,
+          "base": 1,
           "perIlvl": 0.17,
           "step": 0.5,
           "ip": 0.6,
@@ -360,7 +360,7 @@
       "parts": [
         {
           "base": 6,
-          "perIlvl": 1.0,
+          "perIlvl": 1,
           "step": 2,
           "ip": 0.1,
           "to": "mod:mpAdd"
@@ -1198,6 +1198,98 @@
   ],
   "bag": 30,
   "_grip": "Tutuş (Ömer onayı 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): her silahın grip alanı one (tek el) | two (çift el) | bow (yay) | charm (tılsım). Tek el silahla (ya da silahsız) ikinci el yuvasına (offhand) KALKAN (slot offhand, Maces & Shields ailesi: defender, paladin, warrior) ya da ailesi offhand: true olan tek el silah (hançer: cutthroat, antimage) takılır. two / bow / charm ikinci eli kapatır: takılınca ikinci eldeki item torbaya döner (torba doluysa engellenir). Twin Stilettos artık sıradan tek el hançer (çift hançer = ikinci el yuvası). Kural kodu: src/progression/items.ts > gripOf / fitsSlot / planEquip.",
+  "_itempower": "Item Güçlendirme (Ömer onayı, form 2026-10-13, onay 2026-10-17; items.md 1.12). weaponPower = silahın TABAN GÜCÜ (affix değil, zarsız): güç = (base + perIlvl x ilvl) x grip[tutuş] x family[aile] (yoksa 1), step adımına yuvarlanır. Hasar = stat x skill gücü x (1 + güç / 100) (x1, x2: asa ve tılsım dahil her silah; şifa / kalkan değil). Çift el ve yay tek elden ~%35 güçlü (ikinci eli kapatır), tılsım arada (ikinci eli kapatır, örtük hız), hançer zayıf (örtük kritik; ikinci elde gücünün offhandShare kadarı sayılır). KATLAMA (x5): her sınıfın başlangıç silahının gücü (starterWeapons, ilvl 1) o sınıfın sıfır noktasıdır: motora giden çarpan = (1 + güç/100) / (1 + başlangıç gücü/100); başlangıç silahıyla 1 (Quick Battle / MP bunu hiç vermez: bugünle birebir), silahsız < 1. ip = 1 güç puanının Item Points değeri (değer, fiyat, Equip best; 1 güç ~ %0,9 hasar ~ Global damage %1 = 0,5 IP). implicits = taban örtük statları (zarsız, seviyeyle büyür, affixRules.power işlemez): hançer kritik şansı, tılsım hız %, kalkan zırh (x4: kalkanın tabanı zırhtır, hasar değil). Tavanlar (caps) örtük statları da kapsar. levelReq: takma şartı = max(min, ilvl - offset) (x6; seviye sistemi gelene kadar herkes L1). starterWeapons: sınıf başına Common başlangıç silahı (x5), ilvl = starterWeapons.ilvl. Sayılar İLK DEĞER (balance-tester son ayarı yapacak; hedef x8: iyi Endless koşusu item'lerden +6-10 dalga).",
+  "weaponPower": {
+    "base": 7.5,
+    "perIlvl": 2.5,
+    "step": 1,
+    "grip": {
+      "one": 1,
+      "two": 1.35,
+      "bow": 1.35,
+      "charm": 1.15
+    },
+    "family": {
+      "daggers": 0.85
+    },
+    "offhandShare": 0.4,
+    "ip": 0.45
+  },
+  "implicits": {
+    "daggers": {
+      "name": "Keen edge",
+      "text": "+{0}% Crit chance",
+      "icon": "crit",
+      "desc": "Daggers carry a little extra crit chance.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.1,
+          "step": 0.5,
+          "ip": 0.3,
+          "to": "mod:critAdd",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "charms": {
+      "name": "Quick hands",
+      "text": "+{0}% Speed",
+      "icon": "spd",
+      "desc": "Charms carry a little extra speed.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.1,
+          "step": 0.5,
+          "ip": 0.5,
+          "to": "mult:spdMult",
+          "scale": 0.01,
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    },
+    "shield": {
+      "name": "Shield armor",
+      "text": "+{0} Armor",
+      "icon": "armor",
+      "desc": "A shield's base value is armor, not damage.",
+      "parts": [
+        {
+          "base": 2,
+          "perIlvl": 0.5,
+          "step": 1,
+          "ip": 0.4,
+          "to": "mod:armorAdd",
+          "noRoll": true,
+          "noPower": true
+        }
+      ]
+    }
+  },
+  "levelReq": {
+    "offset": 3,
+    "min": 1
+  },
+  "starterWeapons": {
+    "ilvl": 1,
+    "classes": {
+      "warrior": "woodcutters_axe",
+      "defender": "flanged_mace",
+      "paladin": "flanged_mace",
+      "archer": "short_bow",
+      "cutthroat": "rondel_dagger",
+      "antimage": "rondel_dagger",
+      "mage": "ash_staff",
+      "druid": "ash_staff",
+      "undead": "ash_staff",
+      "gambler": "worn_deck",
+      "hexer": "worn_deck"
+    }
+  },
   "_items": "Katalog = taban item'ler (Ömer onayı 2026-10-11, items.md 1.3b): ad, yuva, silah ailesi, ilvl, ikon, varsayılan nadirlik ve ana C affix'i (main; silahta weaponFamilies[].mains listesinden örnek oluşurken seçilir). Diğer affix'ler örnek oluşurken kademesinin havuzundan çekilir. Legendary'nin dört affix'i (affixes) ve etkisi katalogda sabit; değerleri yine seviyeye göre zarlanır.",
   "items": [
     {
@@ -1236,6 +1328,25 @@
       "grip": "two",
       "rarity": "epic",
       "ilvl": 10
+    },
+    {
+      "id": "greataxe",
+      "name": "Greataxe",
+      "slot": "weapon",
+      "family": "axes",
+      "grip": "two",
+      "rarity": "common",
+      "ilvl": 3
+    },
+    {
+      "id": "greatsword",
+      "name": "Greatsword",
+      "icon": "sword",
+      "slot": "weapon",
+      "family": "axes",
+      "grip": "two",
+      "rarity": "common",
+      "ilvl": 5
     },
     {
       "id": "flanged_mace",
@@ -1294,6 +1405,15 @@
       "grip": "one",
       "rarity": "rare",
       "ilvl": 10
+    },
+    {
+      "id": "war_maul",
+      "name": "War Maul",
+      "slot": "weapon",
+      "family": "maces",
+      "grip": "two",
+      "rarity": "common",
+      "ilvl": 4
     },
     {
       "id": "short_bow",
@@ -1799,7 +1919,9 @@
         "b_critdmg",
         "a_primary"
       ],
-      "boost": { "c_acc": 1.25 },
+      "boost": {
+        "c_acc": 1.25
+      },
       "effect": "last_coin",
       "flavor": "Heads, you live. Tails, you flip again."
     },
@@ -1816,7 +1938,9 @@
         "b_resil",
         "a_immunity"
       ],
-      "boost": { "a_immunity": 2 },
+      "boost": {
+        "a_immunity": 2
+      },
       "effect": "ashen_crown",
       "flavor": "Cold as the curse that wore it."
     },
@@ -1927,7 +2051,9 @@
         "b_resil",
         "a_endure"
       ],
-      "boost": { "a_endure": 1.75 },
+      "boost": {
+        "a_endure": 1.75
+      },
       "effect": "laststand",
       "flavor": "Found on the bridge, on the last of the wardens, still standing."
     },
@@ -1960,7 +2086,9 @@
         "b_resil",
         "a_support"
       ],
-      "boost": { "a_support": 1.75 },
+      "boost": {
+        "a_support": 1.75
+      },
       "effect": "vigil",
       "flavor": "Worn through a hundred long nights on the walls of Ashford."
     },
@@ -1997,7 +2125,9 @@
         "b_tier",
         "a_primary"
       ],
-      "boost": { "c_acc": 1.25 },
+      "boost": {
+        "c_acc": 1.25
+      },
       "effect": "huntersmark",
       "flavor": "Cast them at the strongest foe, and they always land on its name."
     }
@@ -2209,7 +2339,7 @@
     "perPartyMember": {
       "battle": 0.5,
       "elite": 0.75,
-      "boss": 1.0
+      "boss": 1
     },
     "minItems": {
       "battle": 0,

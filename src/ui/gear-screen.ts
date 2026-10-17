@@ -8,7 +8,7 @@
 import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
-import { activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { allocateStats, activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
 import {
   fitsSlot,
   isPlanError,
@@ -32,7 +32,13 @@ import {
   type ItemDef,
   type ItemInstance,
   type SlotId,
+  meetsLevel,
+  levelReqMsg,
+  instanceLevelReq,
+  type StatAlloc,
+  LEVELS,
 } from '../progression';
+import type { Attribute } from '../engine';
 import { lockInput, unlockInput } from './input-lock';
 import { itemDefIcon } from './item-icon-dom';
 import { statIconUrl } from './stat-tips';
@@ -79,6 +85,8 @@ export interface GearOptions {
   /** Item takma tutorial'ı (Ashford teslimi): üstte yönlendirme satırı. */
   tutorial?: boolean;
   onClose?: () => void;
+  /** Telefonda açılış görünümü ('char' = Character; stat puanı dağıtımı / Level Up kartı). */
+  view?: 'char' | 'inv';
 }
 
 /** Gear ekranının gördüğü kahraman (sefer Hero'su ve endless kahramanı bu şekle uyar; ekipman 6 yuvalı, boş = null). */
@@ -87,6 +95,11 @@ export interface GearHero {
   class: string;
   level: number;
   equipment: Equipment;
+  /** Level sistemi (levels.md): XP, dağıtılmamış stat / skill puanları, dağıtılmış puanlar. */
+  xp?: number;
+  statPoints?: number;
+  skillPoints?: number;
+  alloc?: StatAlloc;
 }
 
 /**
@@ -107,6 +120,8 @@ export interface GearSource {
   equipBest(heroIds?: string[]): void;
   /** Torba boşken kartta görünen yazı. */
   emptyText?: string;
+  /** Stat puanı dağıt (levels.md; Character sayfasındaki Confirm). Yoksa puan dağıtımı gösterilmez. */
+  allocate?(heroId: string, add: StatAlloc): void;
 }
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
@@ -125,6 +140,7 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
     discard: (uid) => apply((x) => discardItem(x, uid)),
     equipBest: (ids) => apply((x) => equipBest(x, ids)),
     emptyText: 'The bag is empty. Victories and chests bring new gear.',
+    allocate: (heroId, add) => apply((x) => allocateStats(x, heroId, add)),
   };
 }
 
@@ -143,7 +159,7 @@ function withUiIcon(e: HTMLElement, k: UiIconKind): void {
 /** Sefer Gear ekranı (eski giriş; kaynak CampaignState). */
 export function openGearScreen(root: HTMLElement, o: GearOptions): () => void {
   const s0 = o.get();
-  return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose });
+  return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose, ...(o.view ? { view: o.view } : {}) });
 }
 
 /** Telefon mu (kısa sahne; src/ui/viewport.ts html.short): Character ve Inventory ayrı tam ekran + geçiş düğmesi. */
@@ -188,7 +204,7 @@ export function confirmIn(host: HTMLElement, text: string, ok: string, run: () =
  * kahramana); çıkarma: yuvayı torbaya sürükle ya da yuvaya çift tıkla; atma: sürüklerken sağ altta beliren çöp kutusu (Rare+ onaylı).
  * Telefonda Character ve Inventory ayrı tam ekran (üstte geçiş; C tuşu). Kaynaktan beslenir (sefer / endless).
  */
-export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void } = {}): () => void {
+export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv' } = {}): () => void {
   const overlay = el('div', 'gr-overlay el-modal'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Gear');
@@ -205,7 +221,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   /** Sürüklenen torba item'i (en öncelikli odak). */
   let dragUid = '';
   let usableOnly = false;
-  let view: 'char' | 'inv' = 'inv';
+  let view: 'char' | 'inv' = o.view ?? 'inv';
+  /** Bekleyen stat puanları (Character sayfası; Confirm kaynağa yazar, kahraman değişince silinir). */
+  let pending: StatAlloc = {};
   let shakeUid = '';
   let flashText = '';
   let curStats: Stats | null = null;
@@ -240,7 +258,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const inst = kind === 'bag' ? bagInst(id) : kind === 'slot' && hero ? hero.equipment[id as SlotId] : undefined;
       if (!inst) return [];
       // seçili kahramana göre: etkisiz A affix'leri soluk, tavanı dolu statlar "max" (Ömer 2026-10-13, itemcaps)
-      const state = hero ? (affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? undefined) : undefined;
+      const state = hero ? { ...(affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
       return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : [], state);
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
@@ -250,8 +268,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (key.startsWith('bag:')) {
         const uid = key.slice(4);
         const d = itemDef(bagInst(uid)?.id ?? '');
-        const ok = !!d && canEquip(hero.class, d);
-        const acts = [{ label: ok ? `Equip · ${className(hero.class)}` : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
+        const inst = bagInst(uid);
+        const fam = !!d && canEquip(hero.class, d);
+        const lvl = !!inst && meetsLevel(hero.level, inst);
+        const ok = fam && lvl;
+        const acts = [{ label: ok ? `Equip · ${className(hero.class)}` : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
         // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
         // ana el boşken "Off-hand" yok (hançer zaten ana ele gider, Ömer 2026-10-14)
         if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
@@ -373,7 +394,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       return;
     }
     // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj + sallanma (torba dolu ise işlem hatası mesajı)
-    const plan = planEquip(h.class, h.equipment, inst, slot);
+    const plan = planEquip(h.class, h.equipment, inst, slot, { level: h.level });
     if (isPlanError(plan)) {
       shakeUid = uid;
       uiSound('error');
@@ -473,9 +494,40 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       ...(o.tutorial ? { hint: 'Your escort left their gear for the new company. Drag an item from the bag onto a hero or a slot, or let Equip best choose.' } : {}),
       compact: phoneLayout(),
       onHero: (id) => {
+        if (id !== heroId) pending = {};
         heroId = id;
         renderAll();
       },
+      ...(src.allocate
+        ? {
+            level: {
+              pending,
+              onAdd: (k: Attribute) => {
+                pending = { ...pending, [k]: (pending[k] ?? 0) + 1 };
+                uiSound('select');
+                renderAll();
+              },
+              onSub: (k: Attribute) => {
+                const n = (pending[k] ?? 0) - 1;
+                pending = { ...pending };
+                if (n > 0) pending[k] = n;
+                else delete pending[k];
+                renderAll();
+              },
+              onReset: () => {
+                pending = {};
+                renderAll();
+              },
+              onConfirm: () => {
+                const h = curHero();
+                if (!h) return;
+                const add = pending;
+                pending = {};
+                apply(() => src.allocate!(h.id, add), () => uiSound('confirm'));
+              },
+            },
+          }
+        : {}),
       onSlotDouble: (slot) => {
         const h = curHero();
         if (h) quickUnequip(h.id, slot);
@@ -805,6 +857,19 @@ function discardButton(inst: ItemInstance, confirming: boolean, ask: () => void,
 }
 
 /** Ashford teslim kartı (pendingHandover): eski takım item'lerini yeni bölüğe bırakır. */
+/**
+ * "Level Up" kartı (Ömer 2026-10-17, levels.md): kim hangi level'a çıktı; Spend points = Gear > Character (puan dağıtımı), Later = sonra.
+ * Puanlar beklemede kalabilir (dağıtılmamış puan serbest).
+ */
+export function showLevelUp(root: HTMLElement, ups: Array<{ name: string; from: number; to: number }>, on: { spend: () => void; later: () => void }): () => void {
+  const lines = ups.map((u) => `${u.name} reached Level ${u.to}${u.to - u.from > 1 ? ` (+${u.to - u.from})` : ''}`);
+  const pts = ups.reduce((n, u) => n + (u.to - u.from), 0) * LEVELS.statPointsPerLevel;
+  return smallCard(root, 'Level Up', `${pts} new stat point${pts === 1 ? '' : 's'} to spend`, [], [...lines, 'Heroes who leveled up are fully healed. Each level also saves a skill point for the skill trees.'], [
+    { label: 'Later', run: on.later },
+    { label: 'Spend points', primary: true, run: on.spend },
+  ]);
+}
+
 export function showHandover(root: HTMLElement, s: CampaignState, on: { equip: () => void; later: () => void }): () => void {
   const ho = s.pendingHandover;
   const ids = (ho?.items ?? []).map((u) => s.inventory.find((i) => i.uid === u)?.id ?? findEquipped(s, u)).filter((x): x is string => !!x);

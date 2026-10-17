@@ -51,6 +51,11 @@ export interface Stats extends Attributes {
    */
   /** Verilen tüm skill hasarı çarpanı (Global damage). */
   damageMult?: number;
+  /**
+   * Silah gücü çarpanı (Item Güçlendirme x1, Ömer 2026-10-17): hasar = stat x skill gücü x (1 + silah gücü / 100), sınıfın başlangıç silahına göre
+   * katlanmış (başlangıç silahı = 1; Quick Battle bunu hiç vermez). Yoksa 1. Global damage ile aynı yoldan tüm skill hasarına işler.
+   */
+  weaponMult?: number;
   /** Element başına verilen skill hasarı çarpanı (Physical / Fire ... damage, All elemental damage). */
   elemDamageMult?: Partial<Record<Element, number>>;
   /** Skill şifası ve tur başı şifa (HoT) çarpanı (Support power). */
@@ -63,8 +68,12 @@ export interface Stats extends Attributes {
 
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
 export type PassiveEffect =
-  /** Kullanıcının hasarı, eksik can oranıyla artar: x(1 + maxBonus * eksikCanOranı). */
-  | { type: 'rage'; maxBonus: number }
+  /**
+   * Kullanıcının hasarı, eksik can oranıyla artar: x(1 + maxBonus * eksikCanOranı).
+   * rageOnHurt (Berserker, Ömer 2026-10-17): Rage'li taşıyıcı CAN kaybettikçe Rage kazanır: kaybedilen can maks canının %1'i başına
+   * perHpPercent Rage (vuruş başına en fazla perHitCap; kalkanın emdiği, Lucky Escape ile yok sayılan ve kendi verdiği hasar sayılmaz).
+   */
+  | { type: 'rage'; maxBonus: number; rageOnHurt?: { perHpPercent: number; perHitCap?: number } }
   /** Kendi turunun başında en yaralı dostu (varsa) scale gücünün power katı iyileştirir. */
   | { type: 'divineLight'; power: number; scale: Attribute }
   /** Cooldown'lu bir hasar skill'i kullanınca `chance` ihtimalle o skill'in cooldown'u sıfırlanır. */
@@ -172,6 +181,8 @@ export interface CombatantData {
   frontPriority: number;
   /** Seçim ekranında gösterilen klasman (yoksa ilk skill'in türüne göre Melee/Ranged/Caster). */
   role?: string;
+  /** Menzil (docs/design/range.md, Ömer 2026-10-17): sınıfın taban menzili, skill'lerine geçer (skill `range` ezer; `global` menzilsiz). Yoksa formulas.range.default. */
+  range?: number;
   attributes: Attributes;
   /** Class'ın primary statı (toplam stat 30 kuralı ve primary bonusu yalnızca class'larda). */
   primary?: Attribute;
@@ -304,6 +315,8 @@ export interface CombatantDef {
   logo: string;
   frontPriority: number;
   role?: string;
+  /** Menzil: sınıfın taban menzili (bkz. CombatantData.range). */
+  range?: number;
   attributes: Attributes;
   primary?: Attribute;
   /** true: test amaçlı class (rastgele havuz ve denge simülasyonu dışı). */
@@ -401,6 +414,8 @@ export interface UnitModifiers {
   surviveAdd?: number;
   /** Verilen tüm skill hasarına ek (0,05 = +%5) -> Stats.damageMult. */
   damageAdd?: number;
+  /** Silah gücü çarpanı -> Stats.weaponMult (güç katmanı hesaplar: src/progression/weapon.ts; 1 = başlangıç silahı). */
+  weaponMult?: number;
   /** Element başına verilen skill hasarına ek -> Stats.elemDamageMult. */
   elemDamageAdd?: Partial<Record<Element, number>>;
   /** Skill şifası / HoT gücüne ek -> Stats.healPowerMult. */
@@ -551,7 +566,7 @@ export interface UnitSetup {
   summoned?: boolean;
   /**
    * Başlangıç cooldown'u eki (sefer tutorial'ı: elit liderin ultimate'ı geç gelsin): birimin COOLDOWN'LU her skill'inin (cooldown ya da initialCooldown
-   * > 0; Rage'li Abyssal Cry gibi initialCooldown'u olmayan ultimate'lar dahil) başlangıç cooldown'una eklenir; cooldown'suz temel saldırılar etkilenmez.
+   * > 0; initialCooldown'u olmayan ultimate'lar dahil) başlangıç cooldown'una eklenir; cooldown'suz temel saldırılar etkilenmez.
    * Toplam formulas.json > cooldown.maxInitial sınırını AŞABİLİR (sınır skill verisi içindir; bu kurulum seçeneği bilinçli bir senaryo tercihi).
    * Yalnızca turns modunda, çağrılarda yok (initialCooldown kuralıyla aynı).
    */
@@ -716,6 +731,13 @@ export type SkillEffectKind =
       falloff?: number;
       /** Hedefin eksik mana başına eklenen hasar. */
       bonusPerMissingMana?: number;
+      /**
+       * Headsman's Blow (Ömer 2026-10-17): harcanan Rage başına güce eklenen pay: güç = power + powerPerRage x harcanan Rage
+       * (bedel spendAll ise vuruş anında harcanan TÜM Rage; önizleme/YZ'de kullanıcının o anki Rage'i).
+       */
+      powerPerRage?: number;
+      /** Headsman's Blow: hedefin eksik can oranıyla artan hasar: x(1 + executeBonus x (1 - can / maks can)), vuruştan önceki cana göre. */
+      executeBonus?: number;
       /** Kullanıcının kalkanından eklenen hasar (ratio) ve kalkanın tüketilip tüketilmeyeceği. */
       bonusFromShield?: { ratio: number; consume: boolean };
       /** 0-1: her hedefe vuruştan sonra bu ihtimalle AYNI vuruş bir kez daha tekrarlanır (çifte vuruş; seed'li RNG). */
@@ -875,6 +897,11 @@ export interface SkillCost {
    * Gerçek bedel her yerde `skillCostAmount` (src/engine/cost.ts) ile hesaplanır. Bedel kaynağa eşit/büyükse kullanılamaz (can bedeli asla öldürmez).
    */
   ofCurrent?: number;
+  /**
+   * true (Headsman's Blow, Ömer 2026-10-17): kullanınca kaynağın TAMAMI harcanır; `amount` en az gereken miktardır
+   * (gerçek bedel = max(amount, mevcut); skillCostAmount). Şimdilik Rage için.
+   */
+  spendAll?: boolean;
 }
 
 /** Görsel ipucu + menzil: melee = hedefe atılır VE yalnızca en öndeki birimlere vurur, ranged = mermi, cast = büyü hazırlığı, sky = yukarıdan düşer. */
@@ -924,29 +951,31 @@ export interface SkillDef {
    * sürede tekrar sıra alır; kalan sayaç korunur). Yalnızca turns modunda anlamlı. Global skill'ler ve pas her zaman tam turn.
    */
   turnCost?: number;
-  /** true: yakın dövüş skill'i olsa da kullanıcının ön sırada olma şartı aranmaz (ileride dash/charge gibi skill'ler için). */
+  /**
+   * Menzil (docs/design/range.md): bu skill'in menzili (yoksa kullanıcının sınıf menzili). Mesafe = saldıranın sıra derinliği + hedefin derinliği
+   * (hedef tarafının en öndeki dolu sırasından) + 1; dost skill'inde sıra farkı. battle.rangeOf / distanceTo.
+   */
+  range?: number;
+  /** true: menzilsiz ("Global": gökten / herkese vuran; Fist Crush, Radiance, Murder of Crows). Skill kartında "Global". */
+  global?: boolean;
+  /** ESKİ erişim kuralı (yalnızca formulas.range.enabled false iken): yakın dövüş skill'i olsa da kullanıcının ön sırada olma şartı aranmaz. */
   ignoreFrontRow?: boolean;
+  /** ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüş skill'i menzil sınırı olmadan herhangi bir düşmana gider (charge/dash). */
+  ignoreReach?: boolean;
+  /** ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüş menzili bonusu (satır). */
+  reach?: number;
   /**
    * true (Backstab): yalnızca ARKASI BOŞ hedef seçilebilir: hedefin hemen arkasındaki hücre (bir sıra daha derin, aynı şerit, hedefin tahtasında)
    * tahtanın içinde olmalı ve üzerinde CANLI birim olmamalı (ceset / ölü dostun ayrılmış yuvası engel sayılmaz). Hedef en arka sıradaysa kullanılamaz.
    * skillUsed olayı `behindSlot`/`behindBoard` (görsel ışınlanma hücresi) ve `from` (kullanıcının dönüş hücresi) taşır; gerçek yer değiştirme yok.
    */
   requiresOpenBehind?: boolean;
-  /** true: yakın dövüş skill'i menzil sınırı olmadan (ön sıra kuralı olmadan) herhangi bir düşmana gider (charge/dash). */
-  ignoreReach?: boolean;
   /**
    * true (Warrior Charge; madde 271): skill kullanıldıktan sonra (isabet etse de etmese de) kullanıcı kendi tahtasının ön sırasında (sıra 0) değilse ön sıraya geçer:
    * önce kendi şeridindeki ön hücre, o doluysa ön sıradaki en yakın boş hücre (şerit farkı en az, eşitlikte küçük şerit); ön sırada boş hücre yoksa
    * yerinde kalır. Canlı birim olmayan hücre boştur (ceset hücresi de: Move kuralı). Olay `moved { cause: skill id, by, advance: true }`. battle.advanceDestination.
    */
   advanceToFront?: boolean;
-  /** Yakın dövüş menzili bonusu (satır): kullanıcı ön sıranın bu kadar gerisinden de vurabilir ve düşmanın bu kadar fazla ön sırasına ulaşır. */
-  reach?: number;
-  /**
-   * true (Whirlwind; madde 284, Ömer 2026-10-09): durumlardan gelen menzil eki (`statuses.json > reachBonus`, Abyssal Fury) bu skill'e UYGULANMAZ:
-   * skill kendi normal menziliyle (yalnızca `reach`) vurur ve kullanılır. Durumun diğer etkileri (attackCharges yükü, attackAttrPct STR eki) aynen işler.
-   */
-  ignoreReachBonus?: boolean;
   /** Animasyonun çaldığı ses efektleri (data/audio.json adları); vfx yalnızca bu listedekileri çalar. */
   sfx?: string[];
   /** Skill efekti (animasyon) adı: src/ui/vfx-kinds.ts; yoksa `motion`/`skyFx` genel animasyonu oynar. */
@@ -1029,11 +1058,6 @@ export interface ScreenCell {
 }
 
 export interface Formulas {
-  /**
-   * Stat ölçeği (x2 dönüşümü, Ömer 2026-10-10; yoksa 1): STR/DEX/INT/LUCK, zırh, büyü zırhı ve hız bu kat. Tam sayıya yuvarlanan ölçekli değerler
-   * (hız, güçlendirilmiş statlar, çağrı varyantı STR/INT, zırh çarpanı, hazır tur payı) bu sayının katlarına yuvarlanır (stats.ts > roundStat).
-   */
-  statScale?: number;
   attributes: {
     hpBase: number;
     hpPerStr: number;
@@ -1041,6 +1065,8 @@ export interface Formulas {
     mpPerInt: number;
     spdBase: number;
     spdPerDex: number;
+    /** Hız yuvarlama adımı (yoksa 1; stats.ts > roundSpeed). */
+    spdStep?: number;
     critChanceBase: number;
     critChancePerLuck: number;
     /** Kritik çarpanı: SABİT (luck artırmaz). */
@@ -1078,13 +1104,16 @@ export interface Formulas {
   armor: { k: number };
   damage: { variance: number; minDamage: number };
   heal: { variance: number; minHeal: number };
-  summon: { damageTakenMultiplier: number };
+  /** Menzil (docs/design/range.md): `default` = verisinde `range` olmayan birimin taban menzili. */
+  range?: { enabled?: boolean; default: number };
+  summon: { damageTakenMultiplier: number; /** Çağrı varyantı STR/INT yuvarlama adımı (yoksa 0,1). */ variantStatStep?: number };
   /** Tür etiketine (tags) göre element hassasiyeti: weaknesses[etiket][element] = alınan hasar çarpanı. */
   weaknesses: Record<string, Partial<Record<Element, number>>>;
-  /** Dizilim: `rows` sıra (derinlik, 0 = en önde) x `lanes` şerit; yuva = sıra * lanes + şerit. Yakın dövüş en öndeki `meleeRows` dolu sıraya vurabilir. */
+  /** Dizilim: `rows` sıra (derinlik, 0 = en önde) x `lanes` şerit; yuva = sıra * lanes + şerit. */
   formation: {
     rows: number;
     lanes: number;
+    /** ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüş düşmanın en öndeki bu kadar dolu sırasına vurabilir. */
     meleeRows: number;
     /** Yan vuruş komşuluğu (ekran geometrisinden, bkz. formation.ts): tahta başına her hücrenin üst/alt komşu adayları. Yoksa eski kural (aynı sıra, şerit farkı 1). */
     sideNeighbors?: { maxDx: number; party: { up: number[]; down: number[] }[]; enemy: { up: number[]; down: number[] }[] };
@@ -1106,7 +1135,7 @@ export interface Formulas {
    */
   ccImmunity?: { tiers: string[]; taunt: boolean; displacement: boolean; accuracyCrit?: boolean; omenCrit?: boolean };
   /** Raise Dead ceset tehlikesi katsayıları (madde 230; battle.corpseChoices). Yoksa varsayılan hpRef 100, çarpanlar 1,5. */
-  corpseDanger?: { hpRef: number; reviverMult: number; revivableMult: number };
+  corpseDanger?: { hpRef: number; reviverMult: number; revivableMult: number; /** Tehdit (stat + hız) ağırlığı (yoksa 1). */ threatMult?: number };
 }
 
 /** Hasar olayının kaynağı (BattleEvent 'damage' > origin). */
@@ -1121,7 +1150,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'abyssal_fury' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1183,19 +1212,6 @@ export interface StatusDef {
   doom?: DoomDef;
   /** Zamanla hasar (DoT) durumu: tikin hasar türü ve elementi (miktar skill'in `dot` etkisinden, uygulama anında sabitlenir). */
   dot?: { damageType: 'physical' | 'magic'; element: Element };
-  /**
-   * Yüklü durum (Abyssal Fury, madde 262): tur sayısıyla DEĞİL, taşıyanın SALDIRILARIYLA biter. Uygulanınca kalan yük = bu sayı (durumun `turns`
-   * alanında tutulur; tur başında azalmaz). Taşıyanın her HASAR VEREN skill kullanımı (çok vuruşlu / alan skill'i dahil, tek saldırı) TÜM vuruşlarından
-   * sonra 1 yük düşürür; yük 0 olunca durum biter (statusEnd consumed). Yeniden uygulanırsa yük tazelenir (yığılmaz).
-   */
-  attackCharges?: number;
-  /** Yakın dövüş menziline ek sıra (generic; skill'in `reach`'ine eklenir: battle.reachOf). Hem hedef sırası hem saldıranın kendi sırası için geçerli. */
-  reachBonus?: number;
-  /**
-   * Saldırı statı eki, oran (ör. { str: 0.5 } = STR'nin %50'si kadar bonus STR). YALNIZCA skill hasarının hesabına girer (battle.attackStats:
-   * vuruş, önizleme, YZ); türetilmiş değerler (can, kritik, zırh...), şifa ve kalkan değişmez.
-   */
-  attackAttrPct?: Partial<Record<Attribute, number>>;
   /** true: süre turla azalmaz; durum onu koyan kural kaldırana kadar sürer (Ash Brand: telgraf çözülünce/iptal olunca; Anchored: Mooring sayısı, Staggered: kaybedilen eylem). */
   untilResolved?: boolean;
   /**
@@ -1514,8 +1530,8 @@ type BattleEventBody =
   | { type: 'valor'; side: Side; spent: number; after: number }
   /** `cause`: kalkan kancası (ör. 'mana_barrier') verdiyse skill id'si; yoksa tur başı yenilenme / Rest / pasif. */
   | { type: 'mpRegen'; actor: string; amount: number; after: number; cause?: string }
-  /** Rage değişimi (yalnızca Rage'li birim): delta + = kazanç (skill hasar verince), - = bedel (Abyssal Cry); after = yeni değer, max = üst sınır. */
-  | { type: 'rage'; actor: string; delta: number; after: number; max: number }
+  /** Rage değişimi (yalnızca Rage'li birim): delta + = kazanç (skill hasar verince; cause 'hurt' = Berserker: can kaybedince), - = bedel (Headsman's Blow: tüm Rage); after = yeni değer, max = üst sınır. */
+  | { type: 'rage'; actor: string; delta: number; after: number; max: number; cause?: 'hurt' }
   /** Global skill kullanıldı (rest / skip_turn / move_tile); ayrıntı olayları (mpRegen, turnSkipped, moved) hemen arkasından gelir. */
   | { type: 'globalUsed'; actor: string; id: string }
   /** Birim kendi tarafındaki boş yuvaya geçti (Move Tile); yeni yuva Combatant.slot'ta da güncellenir. `cause`/`by`: zorla yer değiştirme (Chain Hook çekmesi: skill id, çeken). */

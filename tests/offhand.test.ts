@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { endlessBagSize, equipBestRun, equipFromBag, newRun, parseRun, bagOf, type EndlessRun } from '../src/endless';
+import { endlessBagSize, equipBestRun, equipFromBag, newRun as newRunBase, parseRun, bagOf, type EndlessRun } from '../src/endless';
 import { newCampaign, normalizeState, pickHero } from '../src/campaign';
 import {
   GRIP_IDS,
@@ -24,6 +24,10 @@ import { Rng } from '../src/engine';
 import { dropAction } from '../src/ui/gear-drop';
 import { heroItemLine } from '../src/ui/gear-hover';
 import { buildMechanics } from '../src/wiki/catalog';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Tutuş + ikinci el yuvası (Ömer onayı 2026-10-12, future-ideas 'Silah ve tutuş kuralları').
 
@@ -146,7 +150,7 @@ describe('Endless off-hand', () => {
     const hw = after.heroes.find((h) => h.id === w.id)!;
     expect(hw.equipment.weapon?.id).toBe('dane_axe');
     expect(hw.equipment.offhand).toBeUndefined();
-    expect(bagOf(after).map((i) => i.id).sort()).toEqual(['arming_sword', 'oak_shield']);
+    expect(bagOf(after).map((i) => i.id).sort()).toEqual(['arming_sword', 'oak_shield', 'woodcutters_axe']); // başlangıç baltası ilk takışta torbaya döndü
     // dolu torba: kılıç + kalkan torbaya dönmeli (bir fazla) -> açık mesajla engel
     const size = endlessBagSize();
     const full = { ...r, bag: [...bagOf(r), ...Array.from({ length: size - bagOf(r).length }, (_, i) => ({ uid: `f${i}`, id: 'rondel_dagger' }))] };

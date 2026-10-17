@@ -13,6 +13,7 @@ import {
   CONFIG,
   activeHeroes,
   applyBattle,
+  autoAllocateAll,
   autoResolve,
   autoValorRevive,
   battlePlan,
@@ -226,6 +227,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
         case 'battle': {
           const agg = nodeAgg(step.node);
           agg.reached++;
+          s = autoAllocateAll(s); // level puanları: oyuncu vekili ana stata dağıtır (levels.md)
           if ((o.gear ?? 'best') === 'best') s = equipBest(s);
           const party = activeHeroes(s);
           o.onBattle?.(step.node, s);

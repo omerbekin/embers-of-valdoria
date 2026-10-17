@@ -8,6 +8,7 @@
   "testOnly": true,
   "hidden": true,
   "frontPriority": 7,
+  "range": 7,
   "attributes": {
     "str": 6,
     "int": 34,

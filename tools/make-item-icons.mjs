@@ -50,6 +50,7 @@ const GRIDS = [
   { label: 'legendary iconic-a', file: join(LEG, 'iconic-a.png'), cols: 3, rows: 2, ids: ['emberbrand', 'mantle_of_valdren', 'oathkeepers_bulwark', 'windrunner_longbow', 'whisper_of_morvane', 'staff_of_the_last_ember'] },
   { label: 'legendary iconic-b', file: join(LEG, 'iconic-b.png'), cols: 4, rows: 2, ids: ['gamblers_last_coin', 'crown_of_the_ashen_king', 'pilgrims_road_boots', 'heart_of_the_forge', 'iron_retort', 'serrated_edge', null, null] },
   { label: 'legendary maul-alt2', file: join(LEG, 'maul-alt2.png'), cols: 1, rows: 1, ids: ['avengers_maul'] },
+  { label: 'pack8 two-handed', file: join(SRC, 'pack8.png'), cols: 3, rows: 1, ids: ['greataxe', 'greatsword', 'war_maul'] },
 ];
 /** --only=<etiket öneki>: yalnızca o işler (ör. --only=legendary); verilmezse hepsi. */
 const ONLY = process.argv.find((a) => a.startsWith('--only='))?.slice(7);

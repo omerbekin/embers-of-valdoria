@@ -5,6 +5,7 @@
   "color": "#6b4423",
   "logo": "treant",
   "frontPriority": 8,
+  "range": 4,
   "attributes": {
     "str": 16,
     "int": 27,

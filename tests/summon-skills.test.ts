@@ -116,11 +116,11 @@ describe('Skeleton - Bone Slash (yan vuruş)', () => {
   });
 
   it('düşman Skeleton\'ı da aynı kuralla oyuncu tarafına vurur (iki taraf)', () => {
-    const b = arena(front([0, 1, 2, 3]), [['skeleton', 4]]);
+    const b = arena(front([0, 1, 2, 3]), [['skeleton', 1]]); // menzil 1: Skeleton kendi ön sırasında
     // party-0..3: slotlar 0,1,2,3; skeleton enemy-0
     const ev = act(b, 'enemy-0', 'skeleton_slash', 'party-0');
     expect(hitUids(ev).sort()).toEqual(['party-0', 'party-1']);
-    const ev2 = act(arena(front([0, 1, 2, 3]), [['skeleton', 4]]), 'enemy-0', 'skeleton_slash', 'party-1');
+    const ev2 = act(arena(front([0, 1, 2, 3]), [['skeleton', 1]]), 'enemy-0', 'skeleton_slash', 'party-1');
     expect(hitUids(ev2).sort()).toEqual(['party-0', 'party-1', 'party-2']);
   });
 
@@ -245,10 +245,10 @@ describe('Treant (madde 222): uzak menzilli doğa kontrolcüsü', () => {
     expect(content.skills.summon_treant!.effects.find((e) => e.type === 'summon')).toMatchObject({ unit: 'treant', lifespan: 3 });
   });
 
-  it('Root Smash uzak menzilli (havadan): melee değil, reach yok, arka sıradaki düşmana da vurur; Treant arka sıradan kullanabilir', () => {
+  it('Root Smash uzak menzilli (havadan): melee değil, reach yok, arka sıradaki düşmana da vurur (menzil 4: ön sıradan en arka sıraya 0+3+1=4)', () => {
     expect(smash.motion).not.toBe('melee');
     expect(smash.reach).toBeUndefined();
-    const b = arena([['warrior', 0], ['treant', 9]], [['warrior', 0], ['mage', 9]]);
+    const b = arena([['warrior', 0], ['treant', 1]], [['warrior', 0], ['mage', 9]]);
     expect(b.canUse('party-1', 'root_smash').ok).toBe(true);
     expect(b.validTargets('party-1', 'root_smash').map((c) => c.uid)).toContain('enemy-1'); // en arka sıra
     expect(hitUids(act(b, 'party-1', 'root_smash', 'enemy-1'))).toEqual(['enemy-1']);

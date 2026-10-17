@@ -2,6 +2,7 @@ import { tileUid, type Battle } from './battle';
 import { shapeLabel } from './area-shape';
 import { skillCostAmount } from './cost';
 import { betStake } from './gamble';
+import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { armorReduction, attributePower, hitChance } from './stats';
 import type { Combatant, CorpseChoice, Side, SkillDef } from './types';
@@ -184,7 +185,7 @@ export interface GlobalTrace {
   vNow?: number;
   spend?: number;
   danger?: { active: boolean; hpRatio: number; incoming: number; hp: number };
-  move?: { slot: number; net: number } | null;
+  move?: { slot: number; net: number; kind?: string } | null;
   moveBlocked?: string;
   restGain?: number;
   restBlocked?: string;
@@ -362,6 +363,14 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
           return { skillId: 'move_tile', slot: d.slot, targetUid: tileUid(d.slot), reason: 'move' };
         }
       }
+      // Menzil (range.md): yapacak hamle yokken menzile girme / yaklaşma Easy'de de denenir (yoksa menzil dışındaki birim sonsuza dek dinlenir)
+      if (!pick && battle.rangeOn && battle.canUseGlobal(actor.uid, 'move_tile').ok) {
+        const m = bestMove(battle, actor, g, 0);
+        if (m && m.net > 0 && m.kind && m.kind !== 'retreat out of enemy range' && m.kind !== 'aura adjacency') {
+          if (gt) gt.outcome = `move_tile [${m.kind}] (easy: nothing in range)`;
+          return { skillId: 'move_tile', slot: m.slot, targetUid: tileUid(m.slot), reason: 'move' };
+        }
+      }
       if (!pick && battle.canUseGlobal(actor.uid, 'rest').ok) {
         if (gt) gt.outcome = 'rest: no move to make (easy)';
         return { skillId: 'rest', reason: 'rest' };
@@ -470,7 +479,7 @@ function buildOptions(battle: Battle, actor: Combatant, profile: AiProfile, trac
     const basic = free.length > 0 ? Math.max(...free) : Math.max(0, ...attacks.map((x) => x.damage));
     // Terazi kıyaslamayı kendisi yapar: buff değerinden "kaçırılan saldırı" düşülmez (alt = 0; madde 254 K1)
     void alt;
-    o.buff = buffValue(battle, actor, o, 0, basic, profile, chargedBuffGain(battle, actor, o, profile, attacks));
+    o.buff = buffValue(battle, actor, o, 0, basic, profile);
   }
   // Dark Bond (madde 240): bağın değeri, kullanıcının TEK HEDEFLİ en iyi saldırısının beklenen hasarından (lifesteal kopyası; alan toplamı değil: ai-priorities K10)
   const singles = options.filter((x) => x.damage > 0 && x.anchorSlot === undefined && x.targets.length === 1);
@@ -577,7 +586,7 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
 
 const foeSide = (actor: Combatant) => (actor.side === 'party' ? 'enemy' : 'party');
 
-/** Saf self-buff skill'i mi: yalnızca kendine durum ve kendine hasar etkileri var (Abyssal Cry gibi). */
+/** Saf self-buff skill'i mi: yalnızca kendine durum ve kendine hasar etkileri var (kendine durum veren skill). */
 function isPureBuff(skill: SkillDef): boolean {
   return skill.target === 'self' && skill.effects.some((e) => e.type === 'status' && e.self) && skill.effects.every((e) => (e.type === 'status' && e.self) || e.type === 'selfDamage');
 }
@@ -639,62 +648,6 @@ function buffValue(battle: Battle, actor: Combatant, o: Option, alt: number, bas
     if (!aliveAfter) return -lost * profile.hpCostWeight - (threat < actor.hp + actor.shield ? ctx.save(actor) : 0);
   }
   return defend + offense + chargeGain - lost * profile.hpCostWeight - alt * 0.5;
-}
-
-/**
- * Saldırı yüklü saf buff'ın (Abyssal Fury, madde 262: `attackCharges` + `reachBonus` / `attackAttrPct`) saldırı değeri, can-eşdeğer, yapay ağırlık YOK:
- * durum GEÇİCİ olarak kullanıcıya eklenip şu anki saldırı seçenekleri yeniden değerlendirilir (bonus STR'li önizleme + genişleyen menzille yeni
- * hedefler: arka sıra, Whirlwind'in ek sırası, ön sırada değilken açılan yakın dövüş). Ufuktaki n = min(yük, ufuk) saldırı için iki plan kurulur
- * (buff'lı / buff'sız): her saldırıda en iyi net değerli (value - bedel) skill, cooldown'lu skill ufukta en çok floor((n-1)/cd)+1 kez (turns modu).
- * Değer = buff'lı plan - buff'sız plan. Durum hemen geri alınır (savaş değişmez; belirleyici). Zaten taşıyorsa 0.
- */
-function chargedBuffGain(battle: Battle, actor: Combatant, o: Option, profile: AiProfile, attacks: Option[]): number {
-  const own = o.skill.effects.filter((e): e is Extract<typeof e, { type: 'status' }> => e.type === 'status' && !!e.self);
-  let total = 0;
-  for (const e of own) {
-    const def = battle.statusDef(e.status);
-    if (!def?.attackCharges || (!def.reachBonus && !def.attackAttrPct)) continue;
-    if (actor.statuses.some((s) => s.kind === e.status)) continue; // yığılmaz
-    const n = Math.min(def.attackCharges, activeCtx ? activeCtx.vc.horizon : def.attackCharges);
-    const score = (x: Option) => value(x) - x.cost;
-    const bestBy = (list: Option[]) => {
-      const m = new Map<string, number>();
-      for (const x of list) if (x.damage > 0) m.set(x.skill.id, Math.max(m.get(x.skill.id) ?? -Infinity, score(x)));
-      return m;
-    };
-    // n saldırılık plan: her adımda kalan hakkı olan en iyi skill (cooldown'lu skill ufukta sınırlı sayıda)
-    const plan = (best: Map<string, number>) => {
-      const uses = new Map<string, number>();
-      const cdLimit = (id: string) => {
-        const cd = battle.mode === 'turns' && !battle.noCooldowns ? (battle.skill(id)?.cooldown ?? 0) : 0;
-        return cd > 0 ? Math.floor((n - 1) / cd) + 1 : Infinity;
-      };
-      let sum = 0;
-      for (let i = 0; i < n; i++) {
-        let pick: string | undefined;
-        for (const [id, v] of best) if ((uses.get(id) ?? 0) < cdLimit(id) && (pick === undefined || v > best.get(pick)!)) pick = id;
-        if (pick === undefined) break;
-        sum += Math.max(0, best.get(pick)!);
-        uses.set(pick, (uses.get(pick) ?? 0) + 1);
-      }
-      return sum;
-    };
-    const now = plan(bestBy(attacks));
-    const ids = actor.skills.filter((id) => id !== o.skill.id && battle.skill(id)?.effects.some((x) => x.type === 'damage'));
-    const saved = actor.statuses;
-    const buffedOpts: Option[] = [];
-    try {
-      actor.statuses = [...saved, { kind: e.status, turns: def.attackCharges, source: actor.uid }];
-      for (const id of ids) if (battle.canUse(actor.uid, id).ok) buffedOpts.push(...skillOptions(battle, actor, id, profile));
-    } finally {
-      actor.statuses = saved;
-    }
-    const buffed = plan(bestBy(buffedOpts));
-    const gain = Math.max(0, buffed - now);
-    total += gain;
-    if (o.notes.length < 6) o.notes.push(`${def.name}: next ${n} attacks ${r1(now)} -> ${r1(buffed)} (+${r1(gain)})`);
-  }
-  return total;
 }
 
 /** Birimin lifesteal oranı: soulDrain pasifi + skill'lerindeki en yüksek damage.lifesteal (Dark Bond değeri için kaba ölçü). */
@@ -811,6 +764,13 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     const extra = Math.max(0, first.maxMp - first.mp) * (manaEffect.bonusPerMissingMana ?? 0);
     const base = attributePower(actor.stats, manaEffect.scale, battle.formulas) * manaEffect.power;
     o.missingManaShare = extra + base > 0 ? extra / (extra + base) : 0;
+  }
+  // Headsman's Blow (powerPerRage / executeBonus): değer önizlemenin hasarındadır (harcanacak tüm Rage + hedefin eksik canı); maç kaydı için not
+  const headsman = skill.effects.find((e) => e.type === 'damage' && (e.powerPerRage || e.executeBonus));
+  if (headsman && headsman.type === 'damage' && first && o.notes.length < 6) {
+    const rage = skillCostAmount(skill.cost, actor);
+    const missing = first.maxHp > 0 ? Math.max(0, 1 - first.hp / first.maxHp) : 0;
+    o.notes.push(`${skill.name}: spends ${rage} Rage (power ${r2(headsman.power + (headsman.powerPerRage ?? 0) * rage)}), ${unitLabel(first)} missing ${Math.round(missing * 100)}% HP (x${r2(1 + (headsman.executeBonus ?? 0) * missing)})`);
   }
   const lifesteal = Math.max(0, ...skill.effects.map((e) => (e.type === 'damage' ? (e.lifesteal ?? 0) : 0)));
   for (const p of previews) {
@@ -1100,7 +1060,7 @@ function summonRawDamage(battle: Battle, stats: Combatant['stats'], skills: stri
 // ---------------------------------------------------------------- değer terazisi (madde 254 K1-K10, madde 257)
 
 /**
- * Bir adayın terazi puanı (can-eşdeğer; ai-value.ts). Terimler o.terms'e yazılır (maç kaydı her birini ayrı gösterir). Saf self-buff'ta (Abyssal Cry)
+ * Bir adayın terazi puanı (can-eşdeğer; ai-value.ts). Terimler o.terms'e yazılır (maç kaydı her birini ayrı gösterir). Saf self-buff'ta
  * buff değeri (savunma + hasar artışı - can bedeli) diğer terimlerin yerine geçer.
  */
 function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
@@ -1186,7 +1146,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
       const life = eff && eff.type === 'summon' ? (eff.lifespan ?? 3) : 3;
       let v = 0;
       if (unit && o.summonSlot !== undefined && alive < Math.max(1, profile.maxSummons)) {
-        const useful = ctx.usefulAt({ uid: '__summon__', skills: unit.skills }, actor.side, o.summonSlot);
+        const useful = ctx.usefulAt({ uid: '__summon__', skills: unit.skills, defId: unit.id }, actor.side, o.summonSlot);
         const tv = Math.max(0, ...unit.skills.map((id) => {
           const sk = battle.skill(id);
           return sk ? skillRawValue(battle, unit.stats, sk) : 0;
@@ -1257,8 +1217,8 @@ function reviveTerm(ctx: ValueContext, o: Option, add: (k: string, v: number) =>
   if (!d || d.hp > 0 || !e || e.type !== 'revive') return;
   const slots = battle.reviveSlots(ctx.actor.uid, o.skill.id);
   if (slots.length === 0) return;
-  const meleeRows = battle.formulas.formation.meleeRows;
-  const hasMelee = d.skills.some((id) => battle.skill(id)?.motion === 'melee');
+  const meleeRows = battle.rangeOn ? 1 : battle.formulas.formation.meleeRows;
+  const hasMelee = d.skills.some((id) => { const sk = battle.skill(id); return !!sk && (battle.rangeOn ? battle.rangeOf(d, sk) <= 1 : sk.motion === 'melee'); });
   const hp = Math.max(1, Math.round(d.maxHp * e.hpRatio));
   const avgHit = ctx.intents.length > 0 ? ctx.intents.reduce((a, i) => a + i.hit, 0) / ctx.intents.length : 0;
   const rankOf = (slot: number) => {
@@ -1435,10 +1395,21 @@ function advanceValue(ctx: ValueContext, o: Option): number {
   const to = battle.advanceDestination(actor);
   if (to === null) return 0;
   const vc = ctx.vc;
-  const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
-  const canFrom = (slot: number) => meleeSkills.some((sk) => battle.canMeleeFrom(actor.uid, slot, battle.reachOf(actor, sk)));
-  const gain = meleeSkills.length > 0 && !canFrom(actor.slot) && canFrom(to) ? ctx.turnValue(actor) * (vc.advanceMeleeShare ?? 0.5) : 0;
-  const extra = Math.max(0, meleeIncoming(battle, actor, to) - meleeIncoming(battle, actor, actor.slot));
+  let gain: number;
+  let extra: number;
+  if (battle.rangeOn) {
+    // Menzil (ai-range.ts): saldırıları şu an ulaşmıyor, yeni hücreden ulaşıyorsa kazanç; gelen hasar menzilden
+    // ilerleten skill'in kendisi (Charge, menzil 4) sayılmaz: soru "sonraki turlarda diğer saldırılarım ulaşır mı"
+    const attackSkills = rangedSkills(battle, actor).filter((sk) => !sk.advanceToFront);
+    const canFrom = (slot: number) => attackSkills.some((sk) => battle.reachesFrom(actor, sk, slot));
+    gain = attackSkills.length > 0 && !canFrom(actor.slot) && canFrom(to) ? ctx.turnValue(actor) * (vc.advanceMeleeShare ?? 0.5) : 0;
+    extra = Math.max(0, incomingAt(battle, actor, to) - incomingAt(battle, actor, actor.slot));
+  } else {
+    const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
+    const canFrom = (slot: number) => meleeSkills.some((sk) => battle.canMeleeFrom(actor.uid, slot, battle.reachOf(actor, sk)));
+    gain = meleeSkills.length > 0 && !canFrom(actor.slot) && canFrom(to) ? ctx.turnValue(actor) * (vc.advanceMeleeShare ?? 0.5) : 0;
+    extra = Math.max(0, meleeIncoming(battle, actor, to) - meleeIncoming(battle, actor, actor.slot));
+  }
   const risk = extra * (vc.advanceRiskShare ?? 0.5) * (2 - ratio(actor));
   const tg = battle.telegraphs.length > 0 ? telegraphLoad(battle, actor, to) - telegraphLoad(battle, actor, actor.slot) : 0;
   const v = gain - risk - tg;
@@ -1625,7 +1596,7 @@ const optionNet = (o: Option | undefined): number => (o ? Math.max(0, o.score) :
  * "şu an MP/cooldown yüzünden yapılamayan ama bekleyince yapılabilecek" skill'leri bulmak için.
  */
 function usableIgnoringCost(battle: Battle, actor: Combatant, skill: SkillDef): boolean {
-  if (skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && !battle.canMeleeFrom(actor.uid, actor.slot, battle.reachOf(actor, skill))) return false;
+  if (!battle.rangeOn && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && !battle.canMeleeFrom(actor.uid, actor.slot, battle.reachOf(actor, skill))) return false;
   if (skill.effects.some((e) => e.type === 'summon') && battle.summonSlots(actor.uid, skill.id).length === 0) return false;
   return battle.validTargets(actor.uid, skill.id).length > 0;
 }
@@ -1715,14 +1686,16 @@ function auraBenefit(battle: Battle, actor: Combatant, slot: number, pct: number
 interface MovePlan {
   slot: number;
   net: number;
+  /** Maç kaydı: planın türü (yalnızca menzil sürümü yazar). */
+  kind?: string;
 }
 
-/** Move Tile için en iyi plan (yoksa null): geri çekilme (kırılgan/yaralı), öne geçme (yakın dövüşçü), aura komşuluğu. Üst üste hareket yok. */
-function bestMove(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): MovePlan | null {
+/** ESKİ Move planı (menzil kapalı; yoksa null): geri çekilme (kırılgan/yaralı), öne geçme (yakın dövüşçü), aura komşuluğu. Üst üste hareket yok. */
+function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): MovePlan | null {
   const free = battle.freeTiles(actor.uid);
   if (free.length === 0) return null;
   // 0) Telgraftan kaçma (M12): bekleyen düşman çökmesi/damgası tarafımıza beklenen hasarı azaltan hücre (üst üste Move kuralı burada yok: amaçlı kaçış)
-  const dodge = telegraphDodge(battle, actor, free, vNow);
+  const dodge = telegraphDodgeLegacy(battle, actor, free, vNow);
   if (battle.lastActionOf(actor.uid) === 'move') return dodge;
   const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
   // O3 (madde 254): "kırılgan" = yakın dövüş skill'i yok VE canı eksik (tam canla geri çekilme yok: retreatHpRatio x 2'nin üstünde değil)
@@ -1804,7 +1777,7 @@ function bestMove(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: num
  * dövüşü koruyan, sonra öne yakın, sonra küçük yuva). Net = önlenen hasar (+ kullanıcıyı ölümden kurtarıyorsa kurtarma) - şimdiki hamle x dodgeOpportunityShare
  * (yakın dövüşçü melee yeteneğini kaybediyorsa + şimdiki hamlenin yarısı).
  */
-function telegraphDodge(battle: Battle, actor: Combatant, free: number[], vNow: number): MovePlan | null {
+function telegraphDodgeLegacy(battle: Battle, actor: Combatant, free: number[], vNow: number): MovePlan | null {
   if (battle.telegraphs.length === 0) return null;
   const now = telegraphLoad(battle, actor, actor.slot);
   if (now <= 0) return null;
@@ -1823,6 +1796,18 @@ function telegraphDodge(battle: Battle, actor: Combatant, free: number[], vNow: 
     if (net > 0 && (!best || net > best.net + 1e-9 || (Math.abs(net - best.net) < 1e-9 && s < best.slot))) best = { slot: s, net };
   }
   return best;
+}
+
+/** Telgraftan kaçma: menzil açıkken ai-range.ts sürümü, kapalıyken eski. */
+function telegraphDodge(battle: Battle, actor: Combatant, free: number[], vNow: number): MovePlan | null {
+  if (!battle.rangeOn) return telegraphDodgeLegacy(battle, actor, free, vNow);
+  return telegraphDodgeRange(battle, actor, free, vNow, { ctx: activeCtx, vc: activeCtx?.vc ?? DEFAULT_VALUE, dodgeOpportunityShare: activeTg.dodgeOpportunityShare, telegraphLoad, auraBenefit });
+}
+
+/** Move Tile için en iyi plan: menzil açıkken ai-range.ts > bestMoveRange (konum alma), kapalıyken eski plan. */
+function bestMove(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): MovePlan | null {
+  if (!battle.rangeOn) return bestMoveLegacy(battle, actor, g, vNow);
+  return bestMoveRange(battle, actor, g.move, vNow, { ctx: activeCtx, vc: activeCtx?.vc ?? DEFAULT_VALUE, dodgeOpportunityShare: activeTg.dodgeOpportunityShare, telegraphLoad, auraBenefit });
 }
 
 /**
@@ -1887,7 +1872,7 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
   if (trace) {
     trace.move = move;
     if (!canMove.ok) trace.moveBlocked = canMove.reason;
-    else if (!move) trace.moveBlocked = 'no profitable move (retreat / step forward / aura adjacency all fail their thresholds)';
+    else if (!move) trace.moveBlocked = 'no profitable move (retreat out of range / step into range / approach / aura adjacency all fail their thresholds)';
     trace.restGain = rest;
     if (!canRest.ok) trace.restBlocked = canRest.reason;
     else if (danger) trace.restBlocked = 'danger: low HP and high incoming damage';
@@ -1905,7 +1890,7 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
     ...(rest > 0 ? [{ net: rest, choice: { skillId: 'rest', reason: 'rest' } as AiChoice }] : []),
   ].sort((a, b) => b.net - a.net)[0];
   if (best) {
-    if (trace) trace.outcome = `${best.choice.skillId} (net ${r2(best.net)} beats the class move value ${r2(vNow)})`;
+    if (trace) trace.outcome = `${best.choice.skillId}${best.choice.skillId === 'move_tile' && move?.kind ? ` [${move.kind}]` : ''} (net ${r2(best.net)} beats the class move value ${r2(vNow)})`;
     return best.choice;
   }
   if (danger) {
@@ -2172,7 +2157,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
     candidates,
     rejected,
     reserves: trace.reserves.map((r) => ({ skill: r.skill, needMp: r.need, inTurns: r.turns })),
-    global: { ...g, ...(g.move ? { move: { slot: g.move.slot, net: r1(g.move.net) } } : {}) },
+    global: { ...g, ...(g.move ? { move: { slot: g.move.slot, net: r1(g.move.net), ...(g.move.kind ? { kind: g.move.kind } : {}) } } : {}) },
   };
 }
 

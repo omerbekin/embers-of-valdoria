@@ -7,7 +7,7 @@ import type { Battle } from '../engine';
 import type { Situation } from './lessons';
 
 const ENEMY_TARGETS = new Set(['single_enemy', 'area_enemies', 'random_enemies', 'all_enemies']);
-const REACH_REASONS = new Set(['Melee: front row only', 'No target in reach']);
+const REACH_REASONS = new Set(['Melee: front row only', 'No target in reach', 'No target in range']); // sonuncusu: menzil sistemi (range.md)
 const GLOBAL = { rest: 'rest', skip: 'skip_turn', move: 'move_tile' } as const;
 
 /** Bu savaşta birimin kullandığı class skill'leri (savaş kaydından). */
@@ -42,7 +42,8 @@ export function turnSituations(b: Battle, uid: string): Situation[] {
 
   // Move: düşmana giden hiçbir skill kullanılamıyor ve en az bir yakın dövüş skill'i menzil yüzünden (ön sıra değil / ulaşamıyor)
   const enemySkills = skills.filter((id) => ENEMY_TARGETS.has(b.skill(id)?.target ?? ''));
-  const blocked = enemySkills.find((id) => b.isMelee(id) && REACH_REASONS.has(reason(id) ?? ''));
+  // menzil açıkken (range.md) menzilli skill de menzil dışında kalabilir: Move dersi her menzil engelinde
+  const blocked = enemySkills.find((id) => (b.rangeOn || b.isMelee(id)) && REACH_REASONS.has(reason(id) ?? ''));
   const moveCase = !!blocked && !enemySkills.some(ok) && glob(GLOBAL.move);
   if (moveCase) out.push({ when: 'move', skill: blocked });
 

@@ -144,6 +144,8 @@ export function previewRun(seed: number, cfg: EndlessConfig = ENDLESS, catalog: 
   const p = cfg.merchantPreview;
   const base = newRun(seed, randomTeam(seed, cfg.partySize), startedAt, cfg);
   const run: EndlessRun = { ...base, wave: p.wave + 1, stats: { cleared: p.wave, turns: 0, kills: 0 }, gold: p.gold, preview: true };
+  // Önizleme kahramanları dalgaya uygun seviyede (seviye şartı: tezgâh ve torba takılabilir item'lerle dolsun)
+  if (p.level !== undefined) run.heroes = run.heroes.map((h) => ({ ...h, level: p.level }));
   // torba: seviye tavanının altındaki item'lerden seed'li farklı birkaçı
   const rng = rngFor(seed, 'merchant-preview');
   const pool = catalog.filter((d) => d.ilvl <= ilvlCap(p.wave, cfg));

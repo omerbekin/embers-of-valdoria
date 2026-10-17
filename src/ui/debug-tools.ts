@@ -1034,7 +1034,7 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     section: 'Switches',
     label: () => (testMode.unlimitedRage ? 'Unlimited Rage: on' : 'Unlimited Rage: off'),
     on: () => testMode.unlimitedRage,
-    hint: 'Rage skills (Abyssal Cry) cost no Rage and need none (both sides)',
+    hint: "Rage skills (Headsman's Blow) cost no Rage and need none (both sides)",
     run: () => {
       testMode.unlimitedRage = !testMode.unlimitedRage;
       applyTestSwitches();

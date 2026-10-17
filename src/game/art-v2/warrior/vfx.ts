@@ -33,7 +33,7 @@ type Pt = { x: number; y: number };
 
 const STEEL = ['#ffffff', '#d7dce6', '#98a2b4'];
 const SPARK = ['#ffffff', '#ffe9b0', '#ffd23f'];
-const FURY = 'abyssal_fury';
+const FURY: string = 'abyssal_fury'; // Abyssal Fury 2026-10-17'de kaldırıldı (Headsman's Blow); öfke izi artık tetiklenmez
 /** Öfke izi renkleri (drawSmear sırası: iç çekirdek, orta bant, dış kenar). */
 const FURY_SMEAR = [0xffb4a2, 0xe5463b, 0x8e1f2c];
 

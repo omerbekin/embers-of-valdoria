@@ -1,7 +1,7 @@
 import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { BACK_POS, backPlacement, NAV_BTN, navSvg } from '../src/ui/nav-icons';
+import { BACK_POS, backPlacement, NAV_BTN, navScaleFor, navSvg } from '../src/ui/nav-icons';
 
 // Ortak gezinme ikonları (Ömer 2026-10-14, ikon taslağı D): sol üst Back, sağ üst Menu ve tam ekran AYNI boyda.
 const read = (p: string) => readFileSync(resolve(__dirname, '..', p), 'utf8');
@@ -23,8 +23,8 @@ describe('Back / Menu / tam ekran aynı ölçü sabitini paylaşır', () => {
     expect(read('src/ui/settings.ts')).toMatch(/'nav-btn el-back/);
     expect(read('src/wiki/view.ts')).toMatch(/'nav-btn el-back/);
     const block = (css: string, sel: string) => css.slice(css.indexOf(`${sel} {`), css.indexOf('}', css.indexOf(`${sel} {`)));
-    expect(block(style, '.nav-btn')).toContain('width: var(--nav-hit)');
-    expect(block(style, '.nav-btn')).toContain('height: var(--nav-hit)');
+    expect(block(style, '.nav-btn')).toContain('width: var(--nav-hit-k)');
+    expect(block(style, '.nav-btn')).toContain('height: var(--nav-hit-k)');
     for (const sel of ['.settings-toggle', '.el-back']) expect(block(sel === '.el-back' ? elegant : style, sel)).not.toMatch(/\b(width|height)\s*:/);
   });
 
@@ -53,6 +53,27 @@ describe('Back konumu (oyun birimi): Menu / tam ekranla aynı hiza', () => {
   });
   it('DOM .el-back ve .nav-btn aynı top kuralını taşır', () => {
     const css = readFileSync('src/ui/elegant.css', 'utf8');
-    expect(css).toContain('top: calc(var(--et, 0px) + var(--nav-edge, 6px));');
+    expect(css).toContain('top: calc(var(--et, 0px) + var(--nav-edge-k, 6px));');
+  });
+});
+
+describe('Masaüstü büyütmesi (navScaleFor)', () => {
+  it('dokunmatikte her boyutta 1 (telefon değişmez)', () => {
+    for (const h of [300, 400, 720, 1080, 1440]) expect(navScaleFor(h, true)).toBe(1);
+  });
+  it('fare ile: küçük pencerede 1, 1080 civarında ~1.5-1.75, üst sınırlı', () => {
+    expect(navScaleFor(500, false)).toBe(1);
+    expect(navScaleFor(640, false)).toBe(1);
+    expect(navScaleFor(937, false)).toBeCloseTo(1.45);
+    expect(navScaleFor(1080, false)).toBeCloseTo(1.7);
+    expect(navScaleFor(2160, false)).toBe(1.75);
+    expect(navScaleFor(0, false)).toBe(1);
+  });
+  it('Back konumu katsayıyla ölçeklenir (kenar ve dikey orta, Menu ile aynı)', () => {
+    const p = backPlacement(0, 1, 1.5);
+    expect(p.scale).toBeCloseTo(1.5);
+    expect(p.x).toBeCloseTo(NAV_BTN.edge * 1.5);
+    expect(p.y).toBeCloseTo((NAV_BTN.edge + NAV_BTN.hit / 2) * 1.5);
+    expect(backPlacement(0, 1).scale).toBe(1);
   });
 });

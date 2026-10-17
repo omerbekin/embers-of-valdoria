@@ -1695,3 +1695,119 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 - **Yer tutucu sanat:** ödünç çizimler ve artOf ile Bölge I-II mob skill'lerinin boyalı ikon/VFX'i; pasifler PASSIVE_ICON_STANDIN. Poz kayıtları `data/mob-poses.json > _pending` (içe aktarınca otomatik taşınır).
 - **Tutorial yenilgi ipuçları** (`data/tutorial.json > defeatHints.byEncounter`) Bölge III için yeni kompozisyonlara göre yeniden yazıldı.
 - **Codex boss makalesi** genelleştirildi: Warden'a özel uyarı satırları `data/bosses/bridge_warden.json > boss.notes`'a taşındı (metin aynı), Morvane'ınki kendi `notes`'unda.
+
+## 334. Item Güçlendirme uygulandı: sayılar ve varsayımlar (engine-dev, 2026-10-17; ayrıntı `docs/design/progression/items.md` 1.12)
+- **İlk sayılar (balance-tester ayarlayacak):** silah gücü 7,5 + 2,5 x ilvl; çift el / yay x1,35, tılsım x1,15, hançer x0,85; ikinci eldeki hançer gücünün %40'ı; 1 güç = 0,45 IP.
+- **Katlama sınıf başınadır:** her sınıfın sıfır noktası KENDİ başlangıç silahı (Mage'in asası çift el olduğu için daha güçlü ama Mage'in sıfırı da odur). Böylece QB ve sefer L1 dengesi sınıflar arası değişmez; çift elin üstünlüğü yalnızca aynı sınıfın seçimlerinde (Warrior tek el + kalkan / çift el) hissedilir.
+- **Silahsız kahraman daha az hasar verir** (Warrior ~x0,91). Silahı çıkarmak ceza; yeni kahramanlar ve eski kayıtlar başlangıç silahıyla gelir.
+- **Silah gücü yalnızca doğrudan skill hasarına** işler (Global damage ile aynı yol); karakter üstü DoT'lar (Burning, Wither) DoT gücüyle ölçeklenir, silahla değil. Çağrılar sahibinin silahını kullanmaz.
+- **Kalkanın "block"u yok:** x4 "zırh / blok" dedi; yeni bir blok mekaniği (yeni kural) eklemedim, kalkanın tabanı yalnızca zırh. Blok istenirse ayrıca sorulmalı.
+- **Örtük stat seçimi:** hançer = kritik şansı, tılsım = hız % (Speed % tavansız; düz SPD tavanlı olduğu için seçilmedi). Değerler küçük (ilvl 10'da +3%).
+- **Başlangıç silahı eşleşmesi:** Anti-Mage hançer (balta da kullanabilir), Hexer Worn Deck (kendi Common tılsımı yok), Defender/Paladin Flanged Mace (kalkansız başlarlar). İsimler mevcut Common taban item'lerden.
+- **Seviye şartı ara durumu:** level sistemi gelene kadar herkes L1, yalnızca ilvl <= 4 takılabilir; Endless'ta ödül item kartları ve tezgâh bu yüzden çoğunlukla boş (tezgâh boşsa atlanır). Tüccar önizlemesi (debug) kahramanları `endless.json > merchantPreview.level` (5) seviyesinde açar. Saf kural fonksiyonları (`planEquip`, `bestMoves`) seviye verilmezse şartı denetlemez (yalnızca kural testleri); sefer, Endless ve arayüz seviyeyi her zaman verir (Endless kahramanında `level` alanı yoksa 1).
+- **Ekranda:** item ipucunda affix'lerin üstünde "Weapon power N" ve örtük stat satırı, altında "Requires Level X" (yetmiyorsa kırmızı); Gear panelindeki DMG satırı artık silah çarpanını da içerir (başlangıç silahıyla 0%, silahsız eksi); Endless ödül kartının alt başlığında "Power N".
+
+## 335. Level / XP sistemi uygulandı: sayılar ve varsayımlar (campaign-dev, 2026-10-17; ayrıntı `docs/design/progression/levels.md` > Uygulama notları)
+- **1 stat puanı = temel stata +2** (x2 stat ölçeğinde eski +1). Motor temel statları 2'nin katına yuvarladığı için +1 tek başına ya hiç ya +2 olurdu; ekranda STR 26 -> 28 görünür. Level başına 3 puan = +6.
+- **Eğri ve XP sayıları PROVİZYON:** eşik 20 x L^1,6, düşman 10 x seviye^1,2; farmsız oyuncu bölüm 1 sonunda L8 (test). Bölüm 2+ için aynı formül devam eder; o bölümler gelince yeniden ölçülmeli.
+- **Level farkı istisnası** yalnızca bandın ALTINDAKİ ve takımdan daha geride olan kahramana (diğerlerinin ortalaması düğüme 8'den yakınsa). Belgedeki "takım ortalaması da bandın dışındaysa ceza işler" ile çelişmesin diye: herkes eşit derecede gerideyse istisna yok. Öndeki (farm) kahramana istisna yok.
+- **Yakalama bonusu:** diğerlerinin ortalamasının altında level başına +%25, en çok +%100 (değer denge turunda).
+- **Olay / hazine 0,5x:** savaşsız olay / hazine düğümü bitince 3 düşmanlık XP x 0,5 (takıma bölünür); savaşlı olay / hazine düğümünde (Dwarven Mine, Witch's Hut, St. Brann's Abbey) XP yalnızca savaştan, öldürme başına 0,5x (çift sayılmaz).
+- **Düşen kahraman level atlarsa** tam iyileşmez, ceset kalır (aksi halde ölmek ödül olurdu). Ayaktaki tam can (Endless'ta MP de dolar).
+- **Onaylanan puan geri alınmaz** (sıfırlama / respec yok); Confirm'e kadar - ve Reset ile geri alınır. Dağıtılmamış puan beklemede kalabilir.
+- **Endless XP:** öldürme başına, dalganın tamamı kahraman başına 0,6 x (dalga seviyesinin eşiği); dalga seviyesi = dalga numarası; level farkı cezası yok (farm yok). Kayıpsız 20 dalgada ~L19-20 (item şartı ilvl - 3 ile takılabilir kalır).
+- **Başlangıç statları:** toplam 60 korundu (eski "toplam 30" kuralı ve testleri), çevik olmayanların DEX'i aynı; Archer / Cutthroat hız 26 -> 24 (Cutpurse'le eşit). Cutthroat "kırılgan" testi mutlak can yerine göreli (çevik olmayan herkesten az can).
+- **Denge (balance-tester):** level puanları güçlü ve düşmanlar bunu karşılamıyor (`power-budget.json > activeSystems`'e 'level' eklenmedi; bütçe bölüm 1 sonunda +%10 varsayıyor, gerçek L8'de temel statlar ~+%70). Sefer Medium bitirme %100, elit %100, boss %99; zorluklar arası fark kalmadı; Endless 32 dalgaya kayıpsız. Seçenekler: puan değerini düşürmek, eğriyi yavaşlatmak ya da düşman telafisini 'level' için açmak.
+- **engine-dev'e not:** Anti-Mage INT 26 ile Mana Burn değeri düştü, YZ %60-90 candaki dosta da Spell Ward atıyor (eski test eşiği %60'tı; şimdi yalnızca tam canda atmıyor). Gambler'ın All In'i Defender STR 26 karşısında düşük MP'de de seçiliyor (test ön düşmanı Paladin'e alındı).
+
+## 336. Çift el yakın dövüş tabanları (Greataxe, Greatsword, War Maul) ve nadirlik tonu: varsayımlar (content-designer, 2026-10-17; Ömer onayı: üç taban + "taban başına tek çizim, nadirlik = renk tonu")
+- **Tabanlar** (`data/items.json`): Greataxe (Axes & Swords, ilvl 3), Greatsword (Axes & Swords, ilvl 5), War Maul (Maces & Shields, ilvl 4); hepsi `grip: two` (güç x1,35, ikinci eli kapatır), katalog nadirliği Common. Taban nadirlikten bağımsız düştüğü için (1.3b, `dropRarity`) sefer loot'unda, Endless ödüllerinde ve iki tüccarda Common..Epic olarak çıkar; Legendary olamaz. **ilvl değerleri varsayım** (erken bölümde çift el seçeneği olsun diye düşük; L1'de ilvl <= 4 takılır: Greataxe ve War Maul hemen, Greatsword Level 2'den).
+- **Kim kullanır:** var olan aile kuralı aynen: Greataxe / Greatsword = Warrior + Anti-Mage (Dane Axe'teki gibi), War Maul = Warrior + Defender + Paladin. Kılıçlar için ayrı aile açılmadı (Arming Sword da Axes & Swords'ta).
+- **Not:** eski Dane Axe da zaten her nadirlikte düşebiliyordu (taban nadirlikten bağımsız); "yalnızca Epic" yalnızca katalog etiketiydi.
+- **Nadirlik tonu** (`data/poses.json > rarityTone`, kod `src/game/poses.ts > rarityToneOf / toneImageData`, uygulama `pose-rig.ts`): görünümü sabit (`itemLook`) olan Legendary dışı HER item'e uygulanır, yalnızca bu üçüne değil: Dane Axe, Oak Tower Shield, Worn Deck, Loaded Bones, Hex Doll da artık Common'da soluk, Epic'te parlak görünür. Rare = çizimin kendisi. Sayılar (Common parlaklık 0,8 / doygunluk 0,55; Uncommon 0,92 / 0,8; Epic 1,12 / 1,2) göz kararı; Ömer'in gözüyle ayarlanacak. Görünümü nadirliğe göre değişen eski aileler (balta, gürz, hançer, asa, yay: sade -> süslü çizim) aynen kaldı.
+- **Geçici çizim:** Greataxe = `greataxes/bearded`, War Maul = `mauls/maul`, Greatsword = tek el `swords/plain` (çift el kılıç çizimi yok); ikonlar kod çizimi. Asıl çizim listesi ve prompt: `docs/design/prompts/item-icons.md > Paket 8`.
+
+## 337. Düşman level'ı uygulandı: varsayımlar (campaign-dev, 2026-10-17; ayrıntı `docs/design/progression/levels.md` > Düşman level'ı)
+- **Profil = temel stat oranı** (her puan hedef oranın en gerisindeki stata). Kuralı baştan aşan moblarda (ör. Road Thug) ilk puanlar yan statlara gider; ana stat ancak kural izin verince büyür. Mob başına elle profil `levels.json > enemies.profiles` ile verilebilir (boş).
+- **Düz ek:** level eki zorluk / bölüm / karşılaşma `statMult`'uyla büyümez (kahramandaki item / puan ekleri gibi); `hpMult` ise türemiş canın tamamını çarpar (oransal büyüme kahramanla aynı).
+- **Çift ölçek yok:** bölüm ölçeği (power-budget 'item') ve Endless dalga büyümesi aynen kaldı; 'level' bütçe sistemi hiç açılmayacak (yerine düşman level'ı).
+- **Sefer zorlaştı:** normal oyuncu düğüm seviyesinin ~1-2 level gerisinde olduğu için (levels.md tasarımı) düşman hep biraz önde: Medium bitirme %100 -> %44 (bantlar balance-tester'da). Ayar seçenekleri: düğüm seviyesi eğrisi, bölüm ölçeği, karşılaşma çarpanları.
+- **Yarım kalan savaş:** güncelleme öncesi askıya alınan bir sefer / Endless savaşı yeni düşman statlarıyla yeniden kurulur; eylem günlüğü farklı sonuç verebilir (yalnızca bu sürüm geçişinde).
+- **Gösterim:** "Lv N" kahramanlarda da yazıyor (doğal yer: ad plakası); elit / boss rozetinde "ELITE · LV N". Sıra işaretinin (kor elmas) altında kalabilir, ui-dev bakar.
+
+
+## 338. Ultimate ilk beklemesi +1 ve Warrior "Berserker" (wr1): ilk değerler ve varsayımlar (engine-dev, 2026-10-17; Ömer onayı: ult-summon seçim sayfası, bölüm 1 ve 2 "wr1")
+- **İlk bekleme +1:** her sınıf ultimate'ının `initialCooldown`'u bir arttı (0 -> 1: Headsman's Blow, Raise Dead, Summon Treant; 1 -> 2: Radiance, Meteor; 2 -> 3: Aimed Shot, Fist Crush, Void Strike, All In, Backstab, Doom Mark). `formulas.json > cooldown.maxInitial` 3 olarak kaldı (hiçbiri kırpılmıyor; bundan sonraki +1 sınırın da artmasını ister). Ultimate cooldown -1 affix'i artık Raise Dead / Summon Treant / Headsman's Blow'a da işler (yalnızca başlangıç beklemesi olan skill'lere işliyordu).
+- **Ayrıca:** Radiance cooldown 3 -> 4, Aimed Shot gücü 1,425 -> 1,5, Summon Treant cooldown 6 -> 5.
+- **Berserker pasifi (hasar alınca Rage):** CAN kaybı maks canın %1'i başına **0,5 Rage**, vuruş başına en çok **15** (`warrior.json > passive.effect.rageOnHurt`). Varsayımlar: kalkanın emdiği hasar, Lucky Escape ile yok sayılan vuruş, öldürücü vuruş ve kendi verdiği hasar Rage vermez; DoT/yer etkisi tikleri VERİR (can kaybıdır); Resource mastery affix'i (Rage kazancı) buna da işler. Olay `rage` + `cause: 'hurt'` (ekranda aynı "+N Rage" yazısı).
+- **Whirlwind lifesteal:** verdiği hasarın **%20**'si (her hedef için ayrı; motorun var olan lifesteal kuralı). Double Strike ve Charge değişmedi.
+- **Headsman's Blow (Abyssal Cry'ın yerine):** tek hedef yakın dövüş, bedel Rage'in TAMAMI (en az 30; yeni `cost.spendAll`). Güç = **0,5 + 0,02 x harcanan Rage** STR (30 Rage: 1,1 / 50 Rage: 1,5), x(1 + **0,6** x hedefin eksik can oranı; vuruştan önceki cana göre). Cooldown 5 (Abyssal Cry'ınki), ilk bekleme 1. Berserker'ın eksik can bonusu da üstüne çarpılır. Yapay zeka için ayrı kural yok: değer önizlemedeki hasardan gelir (Rage ve hedefin eksik canı orada), maç kaydında aday notu `Headsman's Blow: spends N Rage (power X), <hedef> missing Y% HP (xZ)`. Varsayım: YZ "Rage biriktirip sonra vur" planı yapmaz (30 Rage'de değeri en iyiyse hemen kullanır); balance-tester kullanım payına bakmalı.
+- **Kaldırılanlar:** Abyssal Cry skill'i, Abyssal Fury durumu ve yalnızca onun kullandığı motor mekanikleri (durum menzil eki `reachBonus`, saldırı yükü `attackCharges`, hasara özel STR eki `attackAttrPct`, Whirlwind'in `ignoreReachBonus`'u). Skill'in kendi `reach` alanı duruyor. Yedek kalan sanat: `warcry` animasyonu (Wiki > Legacy), `abyssalfury` ikonu, `scream` sesi (Warrior referans sesi, silinmedi). Pose Tester I artık Headsman's Blow kopyasını taşır.
+- **Yer tutucular:** ikon `warcry`, animasyon `doublestrike` (overhead -> slash), sesler Warrior'ın balta/zırh sesleri (armorRun, axeSwing, axeChop). Gerçek görsel/ses content-designer'ın.
+- Tüm sayılar PROVİZYON; ayar balance-tester'ın (menzil sistemi değişikliğinden sonra).
+
+## 339. Menzil sistemi uygulandı ve stat 1:1 tamamlandı: varsayımlar (engine-dev, 2026-10-17; karar `docs/design/range.md` > Onaylanan menzil tablosu)
+- **Stat 1:1:** çift sayıya yuvarlayan son iki adım da kaldırıldı: hız artık tam sayı (`attributes.spdStep` 1; Warrior 17, Anti-Mage 19 gibi tek değerler), çağrı varyantı STR/INT 0,1 adımlı (`summon.variantStatStep`). Başlangıç statları altın kayıtlarda hız dışında birebir aynı; hız farkı yüzünden savaş akışları değişti, altın kayıtlar yeniden yazıldı (menzil KAPALI koşar).
+- **Whirlwind (tüm düşmanlar, menzil 1):** yalnızca menzildeki (ön sıradaki) düşmanlara vurur: eski "yalnızca ön sıra" davranışının aynısı. Diğer "tüm düşmanlar" skill'leri (Fall of King's Bridge, Pyre of Morvane) Global.
+- **Radiance (everyone):** dost kısmı menzilsiz, düşman kısmı skill Global olduğu için herkese.
+- **Alan skill'i önizlemesi:** menzil dışı anchor seçilince önizleme boş (atış geçersiz); alanın kenarı menzil dışına taşabilir.
+- **Varsayımsal birim (YZ: diriltme/çağrı hücresi) için alan skill'inde ulaşma, en yakın canlı düşmana göre ölçülür** (yaklaşık; karar bunu yalnızca sıralamada kullanır).
+- **YZ konum alma:** menzile girme planında eşit değerli hücreler arasında uzak birim (menzil 1 saldırısı olmayan) EN DERİN hücreyi, yakın dövüşçü en öndekini seçer; tam canlı uzak birim yalnızca menzilden çıkmak için geri çekilmez (eski "tam canla geri çekilme yok" kuralı). Kilitli skill (lockSkills) "yapabileceği saldırı" sayılmaz. Warrior Charge'ın ön sıraya geçiş değeri artık Charge'ın kendisini değil, diğer saldırıların yeni hücreden ulaşıp ulaşmadığını ölçer.
+- **Dizilim (takım kurulumu):** menzil açıkken "yakın dövüşçü" = taban menzili 1 olan sınıf (Anti-Mage menzil 4: uzak sınıf gibi arka sıralara dizilir; Cutthroat menzil 1: önde). Endless'teki "yakın dövüşçü arkada" uyarısı da aynı kuraldan.
+- **Tutorial Move dersi:** menzil açıkken yalnızca yakın dövüş değil, menzil yüzünden kullanılamayan her saldırı skill'i (neden 'No target in range') dersi açar.
+- **Skill kartı etiketi:** Melee / Ranged yerine "Range N" / "Global" (menzilsiz dost/kendine skill'de etiket yok). Paylaşılan mob skill'lerinde etiket ilk sahibin menzilinden (bugün aynı skill'i taşıyan moblar aynı menzilde).
+- Denge ayarı yapılmadı; tek denge turu sonra (range.md > Uygulama sırası 5).
+
+## 340. Menzile duyarlı YZ dizilimi: varsayımlar (engine-dev, 2026-10-17; ayrıntı `docs/design/range.md` > YZ dizilimi)
+- **Ağırlıklar ilk değerdir** (`data/ai.json > formation`); balance-tester küçük örnekle denetleyecek. Ana menzil = sınıfın taban menzili (Charge 4 Warrior'ı, Backstab 3 Cutthroat'ı geri çekmez).
+- **Kırılganlık takım içinde görecelidir** (can x zırh/büyü zırhı; en dayanıklı 0, en kırılgan 1). Alan cezası yalnızca takımın kırılgan yarısına bakar; 3x3 gibi tahtanın yarısından büyük şekiller sayılmaz (dağılmak işe yaramaz).
+- **Guard ile Archer çatışması:** Defender önde (taunt), Guard menzili 2; Archer'ın en arkada durması Guard'a yakın durmaktan değerli tutuldu (Ömer: "Archer en derinde"). Archer Guard menzili dışında kalabilir.
+- **Quick Battle Randomize** karşı takımı biliyorsa onun alan şekillerine bakar; ilk açılışta iki taraf sırayla dizildiği için ilk taraf havuz varsayılanını kullanır.
+- **Endless normal dalgaları** da bu dizilimi kullanır (kahramanların alan şekillerine bakar); dalga dizilimi bu yüzden değişti (Endless dengesi sim ile denetlenmeli). Sefer/boss karşılaşmaları elle dizili, değişmez.
+- Boş ön sıralar: dizilim boşluk bırakabilir (ör. Druid tek başına önde, 2. sıra boş, Mage 3. sırada); motorun mesafe kuralı (kendi tarafında boş sıralar sayılır) puanda doğrudan hesaplanır.
+
+
+## 341. Sınıf ayarı t9 (classtune/main, Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- **Whirlwind hasarı x1,125:** 0,69 x 1,125 = 0,77625; veride **0,776** olarak yuvarlandı (bedel 8 MP aynı).
+- **Süre değişiklikleri (Card Trick bekleme 2 -> 3, Resurrection bekleme 6 -> 5)** Ömer'in sayfadaki onayıyla yapıldı; başka süreye dokunulmadı.
+- **Başlangıç stat kuralı** (en yüksek <= diğer üçün toplamının %80'i): yeni Archer (10/14/26/10) ve Cutthroat (18/10/26/6) 26 <= 27,2 ile geçiyor; tüm sınıflar geçerli.
+- **Menzil testi:** `tests/range.test.ts` sınıf menzil tablosunda Druid beklentisi veriye göre 4 -> 5 yapıldı (deneme değerleri Archer 6, Mage 6, Druid 5).
+- **Açık kalan 2 test (karar bekliyor, YZ tarafı):** (a) `tests/mechanics.test.ts` "Archer en arkada": yeni Archer canı 60 = Anti-Mage canı; dizilim YZ'si takımların %1,4'ünde Anti-Mage'i Archer'ın arkasına koyuyor. (b) `tests/valor.test.ts` Valor diriltme senaryosu: yeni verilerle Warrior bu senaryoda diriltme yerine Whirlwind seçiyor (eski veride Whirlwind 0,72'ye çıkınca da aynı). Test veya YZ ağırlığı değişikliği Ömer/engine-dev kararı.
+
+## 342. Sınıf ayarı t10 (Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- **Archer statları 10/14/26/10 -> 13/13/26/8** (toplam 60 aynı); başlangıç kuralı 26 <= 0,8 x 34 = 27,2 ile geçiyor.
+- **Void Strike hasarı -%15:** yalnızca ana güç çarpanı değişti, 1,575 x 0,85 = 1,33875 -> veride **1,339**. "Hedefin eksik manası başına +1" eki (bonusPerMissingMana) aynı bırakıldı; Ömer'in isteği "damage power" olarak okundu. Bedel 17 MP ve bekleme aynı.
+- Ölçüm küçük örneklem (QB 1500 x seed 1 ve 50001); bant kararı için 2 x 10.000 savaşla doğrulanmalı.
+
+## 343. Sınıf ayarı t11 (Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- **Mana Steal (`mana_burn`) can hasarı gücü 0,72 -> 0,66**; mana çalma eki (10 MP, kazanç oranı 0,5), bedel ve bekleme aynı.
+- Etki küçük örneklemde (QB 1500 x seed 1 ve 50001) gürültü içinde: Anti-Mage %56,3/%58,9 -> %56,0/%59,9. YZ Mana Steal'i daha az seçip (%38 -> %34) Drain Field'e kayıyor; güç düşüşünün kazanma etkisi bu yüzden sınırlı varsayıldı. Bant kararı için 2 x 10.000 savaşla doğrulanmalı.
+
+## 344. Sınıf ayarı t12 (Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- **Drain Field -%10:** yalnızca "MP boşalınca" hasar gücü 0,725 -> 0,653; mana yakımı (pctMax 0,55), %50 şans, Silenced 1 tur, bedel ve bekleme aynı.
+- **Mage +%3 / Undead +%3:** zemin hasarları da "hasar gücü" sayıldı ve çarpıldı (Meteor yanık zemini 0,35 -> 0,361; Wail zehir zemini 0,2 -> 0,206). Ana vuruşlar: Fire Bolt 1 -> 1,03, Blizzard 0,76 -> 0,783, Meteor 0,61 -> 0,628, Bone Throw 0,55 -> 0,567, Wail of the Dead 0,65 -> 0,67.
+- **Vampiric Bite** bir skill değil, Undead pasifi (soulDrain, verilen hasarın 0,35'i can olarak döner); hasar gücü yok, değiştirilmedi. Dark Bond (bağ) ve Raise Dead (çağrı) hasar skill'i sayılmadı. Mana Barrier kalkan, değişmedi.
+- Pose tester kopyaları (pt_*) değişmedi. Ölçüm küçük örneklem (QB 1500 x seed 1 ve 50001).
+
+## 345. Sınıf ayarı t13 (Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- **Anti-Mage magicArmor 40 -> 30**; başka değer değişmedi. Pose tester kopyaları (pt_*) değişmedi.
+- Büyü zırhı YZ diziliminde etkin dayanıklılığa (planUnitOf ehp) girdiği için Anti-Mage artık daha önde diziliyor (en arka sıra payı ~%28 -> ~%21); kazanma etkisinin bir kısmı bu yer değişiminden geliyor.
+- Mana Overflow zaten çok seyrek tetikleniyordu (birim başına ~0,04 -> ~0,02); pasifin işlevi bu ayarla neredeyse sıfıra iniyor. Ölçüm küçük örneklem (QB 1500 x seed 1 ve 50001).
+
+## 346. Sınıf ayarı t14 (Ömer kararı 2026-10-17): varsayımlar (balance-tester)
+- Anti-Mage'in bugünkü ayarları geri alındı, ultimate hariç: Mana Steal güç 0,66 -> 0,775, Drain Field (boşalınca hasar) 0,653 -> 0,725, magicArmor 30 -> 40. Void Strike 1,339 (azaltılmış) KALDI; menzil 4 kaldı.
+- Stat: STR 10 -> 6, LUCK 12 -> 16; INT 26 kaldı. Ömer'in "4 puanı LUCK ve INT'e" isteğinin INT kısmı başlangıç kuralını (en yüksek temel stat <= diğer üçün toplamının %80'i; tests/levels.test.ts) bozduğu için uygulanmadı: INT 28/LUCK 14 -> 28 > 0,8 x 32 = 25,6; INT 27/LUCK 15 -> 27 > 0,8 x 33 = 26,4. Uygulanan: 26 <= 0,8 x 34 = 27,2.
+- STR düşüşü HP'yi 60 -> 48 indirdi (can STR'den geliyor); kazanma oranı düşüşünün ana nedeni bu varsayılıyor. Ölçüm küçük örneklem (QB 1500 x seed 1 ve 50001).
+- Pose tester kopyaları (pt_*) değişmedi.
+
+## 347. Sınıf ayarı t15 (Ömer kararı 2026-10-17): varsayımlar (balance-tester)
+- Gambler hasar -%7: dört hasar skill'inin power'ı x0,93 (3 ondalık): Loaded Dice 0,775 -> 0,721, High Stakes 1,1 -> 1,023, Card Trick 0,65 -> 0,605, All In 0,99 -> 0,921. Bahis çarpanları, All In perStake (0,0667), bedeller, süreler ve pasif değişmedi (perStake hasar gücü sayılmadı).
+- Paladin Holy Strike power 0,45 -> 0,482 (x1,07; 0,4815 yukarı yuvarlandı).
+- Undead Vampiric Bite ratio 0,35 -> 0,50 (Ömer düzeltmesi; ilk istek 0,385 idi, ölçülmeden değiştirildi). Pasifin başka sayısal alanı yok.
+- Pose tester kopyaları değişmedi. Golden kayıtlar (tests/fixtures/golden) t14'ten önce kaydedilmişti; yeniden kayıt push öncesi ana oturumda.
+- Gözlem: lifesteal artınca AI Dark Bond'u %26 -> %40 kullanıyor (bant dışı, durumsal 8-25); Undead kazanma oranı buna rağmen artmadı. Balans değil AI değerlemesi şüphesi (ai.json Dark Bond değeri lifesteal oranıyla ölçekleniyor olabilir).
+
+## 348. Sınıf ayarı t16 (Ömer onayı 2026-10-17): varsayımlar (balance-tester)
+- Dark Bond için tek düğme olarak bağ oranı seçildi: ratio 1,5 -> 1,2 (-%20). Cooldown (2) ve bağ süresi (3 tur) değişmedi (süre kuralı). Pose tester kopyası pt_dark_bond da 1,2'ye çekildi (gerçek efekt kopyası). Skill'in _not metnindeki "ratio 1" eski ifade olarak kaldı.
+- Raise Dead +%20 hasar = Skeleton'un iki hasar skill'i: Bone Strike (skeleton_strike) power 0,575 -> 0,69, Bone Slash (skeleton_slash) 0,45 -> 0,54. Ceset/cesetsiz (fed/unfed) ayrı skill değil, STR çarpanı (1 / 0,67) olduğu için ikisine de otomatik uygulanır. Can, ömür, bedel değişmedi.
+- Ölçüm (1500 x seed 1 ve 50001): Dark Bond payı %39,5/%40,1 -> %30,2/%29,2 (hâlâ durumsal bant 25 üstü); Skeleton hasarı Undead birimi başına yalnızca ~6-9 (toplam Undead hasarının %5-6'sı), yani Raise Dead buff'ının etkisi küçük; Undead'in yükselişinin asıl kaynağı AI'nın Dark Bond yerine Raise Dead/Bone Throw/Wail seçmesi.

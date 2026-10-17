@@ -297,7 +297,7 @@ describe('migre edilen alan skill\'leri', () => {
             const pv = b.shapePreviewCells(actor, id, anchor);
             const prev = previewSkill(b, actor, id, undefined, anchor).map((p) => p.uid).sort();
             const tag = `${id} ${actorSide} @${anchor}`;
-            expect(prev, tag).toEqual([...pv.targets].sort());
+            expect(prev, tag).toEqual(pv.valid ? [...pv.targets].sort() : []); // menzil dışı anchor (geçersiz atış): önizleme boş
             const r = b.useSkill(actor, id, undefined, anchor);
             expect(r.ok, tag).toBe(pv.valid);
             if (!r.ok) continue;
@@ -313,7 +313,7 @@ describe('migre edilen alan skill\'leri', () => {
     const b = arena([['defender', 0]], WAR(0, 2, 3, 4, 5));
     expect(b.shapeAnchors('party-0', 'tremor_slam')).toEqual([0, 1, 2]);
     expect(b.shapePreviewCells('party-0', 'tremor_slam', 0).targets).toEqual(['enemy-0', 'enemy-1']);
-    expect(b.shapePreviewCells('party-0', 'tremor_slam', 4)).toMatchObject({ valid: false, reason: 'No target in reach' });
+    expect(b.shapePreviewCells('party-0', 'tremor_slam', 4)).toMatchObject({ valid: false, reason: b.rangeOn ? 'Out of range' : 'No target in reach' });
     b.get('enemy-0')!.hp = 0;
     b.get('enemy-1')!.hp = 0;
     expect(b.shapeAnchors('party-0', 'tremor_slam')).toEqual([3, 4, 5]);

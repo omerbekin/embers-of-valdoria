@@ -6,7 +6,7 @@ import {
   buybackItem,
   chooseReward,
   leaveShop,
-  newRun,
+  newRun as newRunBase,
   openShop,
   parseRun,
   rerollShop,
@@ -22,6 +22,10 @@ import {
 } from '../src/endless';
 import { ITEMS, affixValues, itemDef, itemValue, sellValue, type ItemRoll } from '../src/progression';
 import { SAVE_VERSION } from '../src/endless/save';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Endless tüccarı (Odo the Peddler; Ömer 2026-10-09, taslak v1): 9 mal, satış (değerin yarısı), bu ziyaretin geri alımı, malları yenileme,
 // kayıt gidiş-dönüşü, detay panelinin hesapları.

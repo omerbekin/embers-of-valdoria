@@ -1,11 +1,12 @@
 import { describe, expect, it } from 'vitest';
+import { oldLayoutSetup } from './range-helpers';
 import { Battle, accuracyOf, chooseAction, content, describeSkill, describeStat, hitChance, hitOutcome, previewSkill, rollHitOutcome, Rng } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant } from '../src/engine';
 
 const f = content.formulas;
 const teams = { party: ['warrior', 'archer', 'mage', 'paladin'], enemies: ['warrior', 'defender', 'archer', 'mage'] };
 
-const mk = (seed: number, mode: BattleMode = 'test') => new Battle(content.battleSetup('first-battle', seed, mode, teams));
+const mk = (seed: number, mode: BattleMode = 'test') => new Battle(oldLayoutSetup('first-battle', seed, mode, teams));
 const unit = (b: Battle, side: 'party' | 'enemy', defId: string): Combatant => b.combatants.find((c) => c.side === side && c.defId === defId)!;
 const strikes = (events: BattleEvent[]) => events.filter((e) => e.type === 'damage' || e.type === 'dodge' || e.type === 'miss');
 
@@ -117,7 +118,7 @@ describe('isabet kontrolü yapmayan etkiler', () => {
   it('yerde kalan etki (zehir/yanan zemin) isabet kontrolü yapmaz: tick hasarı dodge olayı üretmez', () => {
     const src = Object.values(content.skills).find((s) => s.effects.some((e) => e.type === 'ground'));
     expect(src).toBeDefined();
-    const b = new Battle(content.battleSetup('random-battle', 1, 'turns', { party: ['druid', '', '', '', '', '', '', '', '', '', '', ''], enemies: ['warrior', '', '', '', '', '', '', '', '', '', '', ''] }, false));
+    const b = new Battle(oldLayoutSetup('random-battle', 1, 'turns', { party: ['druid', '', '', '', '', '', '', '', '', '', '', ''], enemies: ['warrior', '', '', '', '', '', '', '', '', '', '', ''] }, false));
     const enemy = b.combatants.find((c) => c.side === 'enemy')!;
     b.ground.push({ id: 'gx', ground: Object.keys(content.grounds)[0]!, board: 'enemy', slots: [enemy.slot], turns: 3, source: b.combatants.find((c) => c.side === 'party')!.uid, sourceSide: 'party', amount: 5 });
     enemy.stats.evasion = 5;

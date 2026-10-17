@@ -9,7 +9,6 @@ import { lobbyFromSearch } from './net/lobby-code';
 import { installDebugEntry } from './ui/debug-entry';
 import { flowContext, startMainMenu, startNewGame, startTeamSelect } from './game/session-flow';
 import { SettingsScreen } from './ui/settings';
-import { menuMusic } from './ui/music';
 import { stepFraction } from './ui/volume-steps';
 import { onSfxLevelChange, sfxLevel } from './ui/sfx-volume';
 import { GameMenu, isGameMenuOpen } from './ui/game-menu';
@@ -82,8 +81,9 @@ const withAudio = () =>
     return a;
   });
 if (firstScene !== 'menu') gateScene(firstScene, withAudio());
-// Ana menü müziği (src/ui/music.ts): menüyle açılışta yükleme ekranındaki ilk tık/tuş bile müziği başlatsın (motor modülü şimdi iner)
-if (firstScene === 'menu') menuMusic(true);
+// Ana menü müziği (src/ui/music.ts) yükleme ekranında BAŞLAMAZ (Ömer 2026-10-17): ana menü görününce MainMenuScene.create başlatır (açılış
+// bitince). Yükleme ekranındaki tık/tuş yine sesi açar (src/ui/music.ts > onGesture), müzik menü görününce gelir; müzik modülü de
+// açılışın indirmesiyle yarışmaz.
 whenBootReady(() => void withAudio().catch(() => undefined));
 onSfxLevelChange(() => {
   if (audioReady) void withAudio();

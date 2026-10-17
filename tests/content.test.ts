@@ -517,6 +517,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
       'tremor',
       'fistcrush',
       'bloodrite', // yedek: kaldırılan Blood Rite'ın ikonu (yerine Dark Bond; Wiki > Legacy)
+      'abyssalfury', // yedek: kaldırılan Abyssal Fury rozeti (2026-10-17 Headsman's Blow; Wiki > Legacy)
       ...UI_ICONS, // debug dock ve ayarlar (DOM)
     ]);
     for (const kind of ICON_KINDS) expect(used.has(kind), kind).toBe(true);
@@ -534,7 +535,8 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
     const used = new Set(Object.values(content.skills).map((s) => s.vfx));
     // kaldırılan Blood Rite'ın animasyonu (bloodhands) artık hiçbir skill'de yok: Wiki > Legacy'ye 'Unused' olarak düşer
     // (ui-dev/content-designer isterse src/ui/vfx-kinds.ts > BACKUP_VFX'e taşır; o zaman bu istisna gereksizleşir)
-    const removedSkillVfx = ['bloodhands'];
+    // warcry: kaldırılan Abyssal Cry'ın animasyonu (2026-10-17; Headsman's Blow şimdilik doublestrike yer tutucusunu kullanır)
+    const removedSkillVfx = ['bloodhands', 'warcry'];
     for (const k of VFX_KINDS) if (!BACKUP_VFX.includes(k) && !removedSkillVfx.includes(k)) expect(used.has(k), k).toBe(true);
   });
 

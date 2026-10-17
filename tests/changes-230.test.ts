@@ -107,6 +107,7 @@ describe('Raise Dead: YZ en tehlikeli cesedi seçer', () => {
       b.debugKill('enemy-2', false);
     tough(b);
       if (mode === 'turns') waitTurn(b, 'party-1');
+      b.debugClearCooldowns('party-1'); // Raise Dead/Summon Treant initialCooldown 1 (2026-10-17): ilk turda kapalı; bu test başlangıç beklemesini sınamıyor
       // Terazi: Raise Dead seçilip seçilmemesi değerine bağlı; seçildiğinde (ya da adayında) tüketilecek ceset en tehlikelisi
       const cand = explainChoice(b, 'party-1', ai)!.candidates.find((c) => c.skill === 'raise_dead')!;
       expect(cand.corpse?.unit).toBe('E1:Paladin');
@@ -228,10 +229,11 @@ describe('Resurrection: %30 can/mana + 2 tur %10 yenilenme', () => {
 });
 
 describe('Sharpshooter perRow ve açıklama', () => {
-  it('perRow veriden (0,08) ve açıklamada', () => {
+  it('perRow veriden ve açıklamada (değer veride; menzil denemesi)', () => {
     const p = content.classes.archer!.passive!;
-    expect((p.effect as { perRow: number }).perRow).toBe(0.08);
-    expect(describePassive(p, content.classes.archer!.stats, content.formulas)).toContain('+8% damage for every row');
+    const per = (p.effect as { perRow: number }).perRow;
+    expect(per).toBeGreaterThan(0);
+    expect(describePassive(p, content.classes.archer!.stats, content.formulas)).toContain(`+${Math.round(per * 100)}% damage for every row`);
   });
 });
 
@@ -262,11 +264,11 @@ describe('hasar olayı kaynak alanları (UI yazı/ikon)', () => {
 
   it('kendine hasar: origin self (generic selfDamage etkisi; madde 262 sonrası hiçbir oyun skilli kullanmıyor: test kopyası)', () => {
     const setup = content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'warrior' }), enemies: cells({ 0: 'archer' }) }, false);
-    const cry = setup.skills.abyssal_cry!;
-    setup.skills = { ...setup.skills, abyssal_cry: { ...cry, effects: [{ type: 'selfDamage', ratio: 0.15 }, ...cry.effects] } };
+    const blow = setup.skills.headsmans_blow!;
+    setup.skills = { ...setup.skills, headsmans_blow: { ...blow, effects: [{ type: 'selfDamage', ratio: 0.15 }, ...blow.effects] } };
     const b = new Battle(setup);
-    b.get('party-0')!.rage = 100;
-    const r = b.useSkill('party-0', 'abyssal_cry');
+    b.get('party-0')!.rage = content.formulas.rage.max;
+    const r = b.useSkill('party-0', 'headsmans_blow', 'enemy-0');
     expect(r.ok).toBe(true);
     if (r.ok) expect(ofType(r.events, 'damage').filter((e) => e.target === 'party-0')[0]).toMatchObject({ origin: 'self' });
   });

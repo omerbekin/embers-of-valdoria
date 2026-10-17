@@ -127,15 +127,21 @@ describe('en kötü 5 karar (ai-priorities.md 3. bölüm) düzeldi', () => {
     expect(chooseAction(three, 'party-0', ai)!.skillId).toBe('whirlwind');
   });
 
-  it('#3 Abyssal Cry (madde 262: saldırı buffı): tek düşman bu vuruşla ölecekse seçilmez; bir sonraki turundan önce ölecekse değeri 0 ya da altı', () => {
-    const one = mk({ 0: 'warrior', 1: 'paladin', 2: 'druid' }, { 0: 'mage' });
-    one.get('party-0')!.rage = one.get('party-0')!.maxRage;
-    one.get('enemy-0')!.hp = 3;
-    expect(chooseAction(one, 'party-0', ai)!.skillId).not.toBe('abyssal_cry');
-    const low = mk({ 0: 'warrior', 1: 'paladin', 2: 'druid' }, { 0: 'mage', 1: 'archer', 2: 'undead', 3: 'gambler' });
-    low.get('party-0')!.rage = low.get('party-0')!.maxRage;
-    low.get('party-0')!.hp = Math.max(1, Math.round(low.get('party-0')!.maxHp * 0.05));
-    expect(top(cand(low, 'party-0', 'abyssal_cry'))).toBeLessThanOrEqual(0);
+  it('#3 Headsman\'s Blow (Ömer 2026-10-17): adayın hasarı harcanacak Rage ve hedefin eksik canıyla büyür (önizlemeden); maç kaydı notu yazar', () => {
+    const b = mk({ 0: 'warrior' }, { 0: 'defender' });
+    const w = b.get('party-0')!;
+    const foe = b.get('enemy-0')!;
+    foe.maxHp = 100000; // hasar canla sınırlanmasın
+    const min = content.skills.headsmans_blow!.cost.amount;
+    const dmg = (rage: number, hpRatio: number) => {
+      w.rage = rage;
+      foe.hp = Math.round(foe.maxHp * hpRatio);
+      return cand(b, 'party-0', 'headsmans_blow')[0]!.dmg;
+    };
+    expect(dmg(w.maxRage!, 1)).toBeGreaterThan(dmg(min, 1)); // daha çok Rage = daha büyük darbe
+    expect(dmg(min, 0.3)).toBeGreaterThan(dmg(min, 1)); // yaralı hedef = daha büyük darbe
+    w.rage = w.maxRage!;
+    expect(cand(b, 'party-0', 'headsmans_blow')[0]!.notes?.join(' ')).toContain(`spends ${w.maxRage} Rage`);
   });
 
   it('#4 Dark Bond değeri gerçek çalınabilir canla sınırlı: Undead tam canlıyken küçük; 3 kümeli düşmanda Wail kazanır', () => {

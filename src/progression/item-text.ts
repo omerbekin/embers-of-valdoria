@@ -19,6 +19,12 @@ import {
   rarityDef,
   rolledAffixes,
   slotDef,
+  implicitDefOf,
+  implicitValues,
+  instanceLevelReq,
+  levelRequirement,
+  levelReqMsg,
+  weaponPowerOf,
   type AffixTier,
   type Equipment,
   type ItemDef,
@@ -98,6 +104,48 @@ const toLine = (a: RolledAffix, classId?: string): AffixLine => ({
 export function affixLines(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId?: string): AffixLine[] {
   return rolledAffixes(inst, classId).map((a) => toLine(a, classId));
 }
+
+/**
+ * Taban satırları (Item Güçlendirme, Ömer 2026-10-17): silah gücü ("Weapon power 32"), örtük stat ("+3% Crit chance"; kalkanda "+7 Armor")
+ * ve seviye şartı. Affix değildir: kademe etiketi yok, zar yok. İpucu, Endless kartı ve wiki aynı fonksiyonu kullanır.
+ */
+export interface BaseLines {
+  /** Silah gücü (silah değilse undefined). */
+  power?: number;
+  /** Örtük stat satırı. */
+  implicit?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
+  /** Takma seviye şartı (en az 1). */
+  req: number;
+}
+
+export function baseLinesOf(d: ItemDef, ilvl: number): BaseLines {
+  const out: BaseLines = { req: levelRequirement(ilvl) };
+  if (d.slot === 'weapon') out.power = weaponPowerOf(d, ilvl);
+  const imp = implicitDefOf(d);
+  if (imp) {
+    const values = implicitValues(imp, ilvl);
+    out.implicit = {
+      text: imp.text.replace(/\{(\d)\}/g, (_, i: string) => fmt(values[Number(i)] ?? 0)),
+      name: imp.name,
+      ...(imp.desc ? { desc: imp.desc } : {}),
+      ...(imp.icon && ICON_STAT[imp.icon] ? { stat: ICON_STAT[imp.icon] } : {}),
+      ...(imp.icon ? { icon: imp.icon } : {}),
+    };
+  }
+  return out;
+}
+
+/** Örneğin taban satırları (örnek seviyesiyle). Bilinmeyen item: yalnızca şart 1. */
+export const instanceBaseLines = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): BaseLines => {
+  const d = itemDef(inst.id);
+  return d ? baseLinesOf(d, instanceIlvl(inst)) : { req: instanceLevelReq(inst) };
+};
+
+/** Taban satırlarının düz yazısı (Endless kartı, wiki): ["Weapon power 32", "+3% Crit chance"]; seviye şartı ayrı (requirementText). */
+export const baseLineTexts = (b: BaseLines): string[] => [...(b.power !== undefined ? [`Weapon power ${fmt(b.power)}`] : []), ...(b.implicit ? [b.implicit.text] : [])];
+
+/** "Requires Level 7" (şart 1 ise boş: herkes takabilir). */
+export const requirementText = (req: number): string => (req > 1 ? levelReqMsg(req) : '');
 
 /** Kademe etiketi (satır öneki): "C", "B", "A". */
 export const tierTag = (t: AffixTier): string => t;
@@ -206,7 +254,10 @@ export function heroStats(src: LoadoutSource): Stats | null {
   return def ? applyUnitModifiers(def, loadout(src).modifiers, formulas).stats : null;
 }
 
-/** Kahramanın savaşa gireceği statlar (temel + item'ler; güç katmanıyla AYNI hesap). DMG = Global damage affix'lerinin toplamı. */
+/**
+ * Kahramanın savaşa gireceği statlar (temel + item'ler; güç katmanıyla AYNI hesap). DMG = Global damage affix'leri x silah gücü çarpanı
+ * (başlangıç silahına göre; Item Güçlendirme 2026-10-17): başlangıç silahıyla 0, güçlü silahla artı, silahsız eksi.
+ */
 export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
   const st = heroStats(src);
   if (!st) return [];
@@ -218,7 +269,7 @@ export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
     { id: 'dex', label: 'DEX', value: st.dex, fmt: 'dec' },
     { id: 'int', label: 'INT', value: st.int, fmt: 'dec' },
     { id: 'luck', label: 'LUCK', value: st.luck, fmt: 'dec' },
-    { id: 'damage', label: 'DMG', value: (st.damageMult ?? 1) - 1, fmt: 'pct' },
+    { id: 'damage', label: 'DMG', value: Math.round(((st.damageMult ?? 1) * (st.weaponMult ?? 1) - 1) * 10000) / 10000, fmt: 'pct' },
     { id: 'armor', label: 'ARM', value: st.armor, fmt: 'int' },
     { id: 'magicArmor', label: 'M.ARM', value: st.magicArmor, fmt: 'int' },
     { id: 'crit', label: 'CRIT', value: st.critChance, fmt: 'pct' },

@@ -8,6 +8,7 @@
   "color": "#8b2e1f",
   "logo": "helm",
   "frontPriority": 1,
+  "range": 1,
   "role": "Bandit · Elite",
   "attributes": {
     "str": 30,

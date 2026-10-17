@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, describeGlobalSkill, roundStat, slotOfTileUid, statMin, tileUid } from '../src/engine';
+import { Battle, content, describeGlobalSkill, roundSpeed, slotOfTileUid, speedMin, tileUid } from '../src/engine';
 import type { BattleEvent, BattleMode } from '../src/engine';
 import { isIconKind } from '../src/ui/icon-kinds';
 
@@ -171,7 +171,7 @@ describe('Skip Turn', () => {
     expect(b.speedBoostOf(actor)).toBeGreaterThan(0);
     until(b, actor);
     expect(b.speedBoostOf(actor)).toBe(0);
-    expect(b.speedOf(b.get(actor)!)).toBe(Math.max(statMin(content.formulas), roundStat(b.get(actor)!.stats.spd, content.formulas)));
+    expect(b.speedOf(b.get(actor)!)).toBe(Math.max(speedMin(content.formulas), roundSpeed(b.get(actor)!.stats.spd, content.formulas)));
   });
 
   it('düşman araya girer: skip eden birim hemen oynamaz, en az bir başka birim oynar; yine de skip etmemişe göre erken gelir', () => {
@@ -208,11 +208,11 @@ describe('Skip Turn', () => {
     b.useGlobal(actor, 'skip_turn');
     const bonus = G.skip_turn!.speedBonus!;
     const mult = (k: string) => content.statuses[k]!.speedMult!;
-    expect(b.speedOf(c)).toBe(Math.max(statMin(content.formulas), roundStat(c.stats.spd * (1 + bonus), content.formulas)));
+    expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (1 + bonus), content.formulas)));
     c.statuses = [{ kind: 'haste', turns: 3, source: actor }];
-    expect(b.speedOf(c)).toBe(Math.max(statMin(content.formulas), roundStat(c.stats.spd * (mult('haste') + bonus), content.formulas)));
+    expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (mult('haste') + bonus), content.formulas)));
     c.statuses = [{ kind: 'slow', turns: 3, source: actor }];
-    expect(b.speedOf(c)).toBe(Math.max(statMin(content.formulas), roundStat(c.stats.spd * (mult('slow') + bonus), content.formulas)));
+    expect(b.speedOf(c)).toBe(Math.max(speedMin(content.formulas), roundSpeed(c.stats.spd * (mult('slow') + bonus), content.formulas)));
   });
 
   it('cooldown ve MP yenilenmesi normal işler (birim tekrar sıraya gelince bir azalır)', () => {
@@ -264,7 +264,7 @@ describe('Skip Turn', () => {
     };
     const half = mkWith(0.5);
     expect(half.b.speedBoostOf(half.actor)).toBe(0.5);
-    expect(half.b.speedOf(half.b.get(half.actor)!)).toBe(Math.max(statMin(content.formulas), roundStat(half.b.get(half.actor)!.stats.spd * 1.5, content.formulas)));
+    expect(half.b.speedOf(half.b.get(half.actor)!)).toBe(Math.max(speedMin(content.formulas), roundSpeed(half.b.get(half.actor)!.stats.spd * 1.5, content.formulas)));
     const none = mkWith(0);
     expect(none.b.speedBoostOf(none.actor)).toBe(0);
   });
@@ -376,7 +376,8 @@ describe('Move Tile', () => {
     const b = mk({ 0: 'warrior', 3: 'archer' }, { 0: 'defender' }, 'test');
     expect(b.canUse('party-0', 'melee_attack').ok).toBe(true);
     expect(b.useGlobal('party-0', 'move_tile', 9).ok).toBe(true); // arka sıra
-    expect(b.canUse('party-0', 'melee_attack')).toEqual({ ok: false, reason: 'Melee: front row only' });
+    // menzil açıkken: arka sıradan (3) ön sıraya mesafe 3+0+1 = 4 > Double Strike menzili 1
+    expect(b.canUse('party-0', 'melee_attack')).toEqual({ ok: false, reason: b.rangeOn ? 'No target in range' : 'Melee: front row only' });
     expect(b.canMeleeFrom('party-0', 0)).toBe(true);
     expect(b.useGlobal('party-0', 'move_tile', 0).ok).toBe(true);
     expect(b.canUse('party-0', 'melee_attack').ok).toBe(true);

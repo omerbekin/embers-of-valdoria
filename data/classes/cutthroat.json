@@ -6,11 +6,12 @@
   "logo": "cutthroatlogo",
   "role": "Assassin",
   "frontPriority": 3,
+  "range": 1,
   "attributes": {
-    "str": 10,
+    "str": 18,
     "int": 10,
-    "dex": 30,
-    "luck": 10
+    "dex": 26,
+    "luck": 6
   },
   "primary": "dex",
   "armor": 10,

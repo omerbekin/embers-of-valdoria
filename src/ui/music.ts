@@ -2,8 +2,8 @@
 // Kurallar (Ömer 2026-10-10): ana menüde çalar; ilk kullanıcı hareketinden (tık/dokunma/tuş) önce ses YOK (tarayıcı autoplay kuralı), sonra
 // yavaşça yükselir; menüden savaşa / sefere / Endless'a çıkarken söner, menüye dönünce kaldığı yerden (bir sonraki ölçü başından) yükselir;
 // sekme gizlenince durur (bağlam askıya alınır). Seviye = Settings > Music (0-20 adım = %0-100, 0 = tamamen kapalı: motor ve düğümler
-// bırakılır) x Settings > Master Volume x data/audio-music.json > master. Hızlı başlangıç (Ömer 2026-10-10): main.ts ana menüyle açılışta
-// menuMusic(true) der ve motor modülü hemen indirilir; böylece yükleme ekranındaki ilk tık bile müziği başlatır. Hata oyunu durdurmaz.
+// bırakılır) x Settings > Master Volume x data/audio-music.json > master. Müzik yükleme ekranında başlamaz (Ömer 2026-10-17):
+// menuMusic(true) ana menü görününce (MainMenuScene.create) çağrılır; yükleme ekranındaki tık yine sesi açar (onGesture). Hata oyunu durdurmaz.
 // Sahne müzikleri (2026-10-13): aynı denetim sahne parçalarını da çalar (data/audio-music-tracks.json): harita, kasaba, savaş, boss savaşı, Endless
 // kampı. Her sahne create'inde `sceneMusic(parça)` der; parça değişince eski motor crossfadeMs içinde söner, yenisi aynı sürede yükselir
 // (yumuşak geçiş; geçiş anında en çok iki motor). Her parçanın konumu ayrı saklanır (dönünce bir sonraki ölçü başından). Codex önizlemesi

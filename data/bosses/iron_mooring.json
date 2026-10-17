@@ -6,6 +6,7 @@
   "color": "#8a4a25",
   "logo": "ironmooring",
   "frontPriority": 9,
+  "range": 1,
   "role": "Boss · Anchor",
   "attributes": { "str": 0, "int": 0, "dex": 0, "luck": 0 },
   "armor": 20,

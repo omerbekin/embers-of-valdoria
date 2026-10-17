@@ -395,11 +395,12 @@ describe('ilerleme ve wiki karşılaştırması', () => {
     withV2('warrior', { icons: { [ds.icon]: DRAW }, sfx: { [ds.sfx![0]!]: NOISE } }, () => {
       setAllVersions('v2');
       expect(pick()).toEqual(before);
-      const legacyIds = new Set(before.flatMap(([, ids]) => ids));
+      // tür başına (ikon adı ile vfx adı çakışabilir: 'warcry' hem Headsman's Blow ikonu hem kaldırılan Abyssal Cry'ın legacy animasyonu)
+      const legacyOf = (kind: string) => new Set(before.filter(([k]) => k === kind).flatMap(([, ids]) => ids));
       // sürümlü (v2 karşılığı olan) hiçbir v1 öğesi legacy de değil
       for (const r of buildVersions()) {
-        for (const i of r.icons.filter((x) => x.hasV2)) expect(legacyIds.has(i.name), i.name).toBe(false);
-        for (const s of r.sounds.filter((x) => x.hasV2)) expect(legacyIds.has(s.id), s.id).toBe(false);
+        for (const i of r.icons.filter((x) => x.hasV2)) expect(legacyOf('icon').has(i.name), i.name).toBe(false);
+        for (const s of r.sounds.filter((x) => x.hasV2)) expect(legacyOf('sound').has(s.id), s.id).toBe(false);
       }
     });
   });

@@ -8,6 +8,7 @@
   "color": "#5a4a44",
   "logo": "roar",
   "frontPriority": 1,
+  "range": 1,
   "role": "Beast · Hunter",
   "attributes": {
     "str": 22,

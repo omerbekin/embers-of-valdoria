@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, armorReduction, chooseAction, content, describePassive, roundStat, skillCostAmount } from '../src/engine';
+import { Battle, armorReduction, chooseAction, content, describePassive, roundSpeed, skillCostAmount } from '../src/engine';
 import type { BattleEvent, Combatant, CombatantDef, PassiveEffect } from '../src/engine';
 
 // Sefer mob pasifleri YM1-YM13 ve doğrulama maddeleri D1-D6 (Bölge II, docs/design/campaign/mob-plan.md 2.2 / 5; Ömer onayı 2026-10-16).
@@ -180,7 +180,7 @@ describe('YM7 Mire-Bound (Fen Witchling, Morwen)', () => {
     const w = unit(b, 'party-0');
     const plain = b.baseSpeedOf(w);
     b.debugAddStatus('party-0', 'omen');
-    expect(b.baseSpeedOf(w)).toBe(Math.max(f.statScale ?? 1, roundStat(w.stats.spd * e.speedMult, f)));
+    expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdStep ?? 1, roundSpeed(w.stats.spd * e.speedMult, f)));
     b.debugKill('enemy-0', false);
     expect(b.baseSpeedOf(w)).toBeLessThan(plain); // Morwen hâlâ yaşıyor
     b.debugKill('enemy-1', false);

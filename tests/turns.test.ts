@@ -1,8 +1,9 @@
 import { describe, expect, it } from 'vitest';
+import { oldLayoutSetup } from './range-helpers';
 import { Battle, advanceTurn, content, predictQueue } from '../src/engine';
 import type { BattleEvent, TurnSlot } from '../src/engine';
 
-const turnsBattle = (seed = 1) => new Battle(content.battleSetup('first-battle', seed, 'turns'));
+const turnsBattle = (seed = 1) => new Battle(oldLayoutSetup('first-battle', seed, 'turns'));
 const slot = (uid: string, spd: number, side: 'party' | 'enemy' = 'party', n = 0, counter = 0): TurnSlot => ({
   uid,
   side,
@@ -139,6 +140,7 @@ describe('savaşta sıra (turns modu)', () => {
     // Druid'in sırasına kadar pas geç, sonra çağır
     for (let i = 0; i < 40 && b.currentActor?.name !== 'Druid'; i++) b.skipTurn();
     expect(b.currentActor?.name).toBe('Druid');
+    b.debugClearCooldowns(b.currentUid!); // Raise Dead/Summon Treant initialCooldown 1 (2026-10-17): ilk turda kapalı; bu test başlangıç beklemesini sınamıyor
     const events = (b.useSkill(b.currentUid!, 'summon_treant') as { events: BattleEvent[] }).events;
     const summoned = events.find((e) => e.type === 'summon');
     expect(summoned).toBeDefined();
@@ -168,7 +170,7 @@ describe('savaşta sıra (turns modu)', () => {
 
 describe('test modu (sırasız)', () => {
   it('sıra yok: currentUid boş, kuyruk boş, herkes istediği an oynayabilir', () => {
-    const b = new Battle(content.battleSetup('first-battle', 1, 'test'));
+    const b = new Battle(oldLayoutSetup('first-battle', 1, 'test'));
     expect(b.mode).toBe('test');
     expect(b.currentUid).toBeNull();
     expect(b.turnQueue()).toEqual([]);
@@ -179,7 +181,7 @@ describe('test modu (sırasız)', () => {
   });
 
   it('test modunda pas geçmek yok', () => {
-    const b = new Battle(content.battleSetup('first-battle', 1, 'test'));
+    const b = new Battle(oldLayoutSetup('first-battle', 1, 'test'));
     expect(b.skipTurn().ok).toBe(false);
   });
 });
@@ -211,7 +213,7 @@ describe('SPEED çubuğu verisi (turnProgress / turnProgressOf)', () => {
     const cur = b.currentUid!;
     b.skipTurn();
     if (b.currentUid !== cur) expect(b.turnProgressOf(cur)).toBeLessThan(1);
-    const t = new Battle(content.battleSetup('first-battle', 1, 'test'));
+    const t = new Battle(oldLayoutSetup('first-battle', 1, 'test'));
     expect(t.turnProgressOf(t.combatants[0]!.uid)).toBeNull();
     expect(b.turnProgressOf('yok')).toBeNull();
   });

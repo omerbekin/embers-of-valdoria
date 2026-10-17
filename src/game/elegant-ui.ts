@@ -289,7 +289,7 @@ export function elBack(scene: Phaser.Scene, run: () => void, o: { isBusy?: () =>
       draw();
     },
     place(left?: number) {
-      const p = backPlacement(left ?? o.left?.() ?? stageView.left, stageView.cssScale);
+      const p = backPlacement(left ?? o.left?.() ?? stageView.left, stageView.cssScale, stageView.navK);
       body.setScale(p.scale);
       root.setPosition(p.x, p.y);
       api.width = hit * p.scale;

@@ -141,7 +141,8 @@ describe('YZ bağlam: Druid - Summon Treant, Undead - Raise Dead (çağrı)', ()
 });
 
 describe('YZ bağlam: Gambler - All In', () => {
-  const gambler = (mpRatio: number, turns: number, enemies: Record<number, string> = { 0: 'defender', 1: 'warrior' }) => {
+  // 2026-10-17 (levels.md başlangıç statları): Defender STR 30 -> 26 olunca düşük MP'de de All In seçiliyordu (terazi); ön düşman Paladin (statı değişmedi)
+  const gambler = (mpRatio: number, turns: number, enemies: Record<number, string> = { 0: 'paladin', 1: 'warrior' }) => {
     const b = mk({ 0: 'gambler', 1: 'warrior' }, enemies);
     const g = b.get('party-0')!;
     g.mp = Math.round(g.maxMp * mpRatio);
@@ -180,39 +181,36 @@ describe('YZ bağlam: Anti-Mage - Void Strike', () => {
   });
 });
 
-describe('YZ bağlam: Warrior - Abyssal Cry (madde 262: sonraki 3 saldırı için menzil +1 ve bonus STR; bedel yalnızca Rage)', () => {
+describe('YZ bağlam: Warrior - Headsman\x27s Blow (Ömer 2026-10-17: tüm Rage\x27i harcar; Rage ve hedefin eksik canıyla büyür)', () => {
   const FOES = { 0: 'mage', 1: 'archer', 2: 'undead', 3: 'gambler', 4: 'antimage' };
   const war = (foes: Record<number, string> = FOES, tweak?: (b: Battle) => void) => {
     const b = mk({ 0: 'warrior', 1: 'paladin', 2: 'druid' }, foes);
-    b.get('party-0')!.rage = b.get('party-0')!.maxRage; // Abyssal Cry Rage ister (bedel: rage)
-    b.get('party-0')!.mp = 0; // Charge (Stun) / Whirlwind yok: Abyssal Cry yalnızca bedelsiz Double Strike ile yarışsın
+    b.get('party-0')!.rage = b.get('party-0')!.maxRage; // dolu Rage
+    b.get('party-0')!.mp = 0; // Charge / Whirlwind yok: yalnızca bedelsiz Double Strike ile yarışsın
     tweak?.(b);
     return b;
   };
 
-  it('kalabalık düşmanda (3 saldırının bonusu bu turun saldırısından büyük) seçilir', () => {
-    expect(choose(war())).toMatchObject({ skillId: 'abyssal_cry', reason: 'tactic' });
+  it('Rage doluyken seçilir (tek ağır darbe Double Strike\x27tan değerli)', () => {
+    expect(choose(war())?.skillId).toBe('headsmans_blow');
   });
 
-  it('arka sıraya yalnızca buff ile ulaşılıyorsa seçilir (ön sırada tek Defender)', () => {
-    expect(choose(war({ 0: 'defender', 3: 'mage', 4: 'archer' }))?.skillId).toBe('abyssal_cry');
+  it('Rage yetmezse seçilmez', () => {
+    const b = war(FOES, (x) => (x.get('party-0')!.rage = content.skills.headsmans_blow!.cost.amount - 1));
+    expect(choose(b)?.skillId).not.toBe('headsmans_blow');
   });
 
-  it('bir sonraki turundan önce ölecekse seçilmez (buff boşa gider)', () => {
-    for (const ratio of [0.05, 0.1]) {
-      const b = war(FOES, (x) => (x.get('party-0')!.hp = Math.max(1, Math.round(x.get('party-0')!.maxHp * ratio))));
-      expect(choose(b)?.skillId, `can oranı ${ratio}`).not.toBe('abyssal_cry');
-    }
+  it('yaralı hedefi tercih eder (eksik can eki): ön sırada iki eş düşmandan canı düşük olana vurur', () => {
+    const b = war({ 0: 'defender', 1: 'defender' }, (x) => {
+      for (const c of x.combatants) if (c.side === 'enemy') c.hp = c.maxHp = 5000; // öldürme ihtimali karışmasın
+      x.get('enemy-1')!.hp = 2000;
+    });
+    expect(choose(b)).toMatchObject({ skillId: 'headsmans_blow', targetUid: 'enemy-1' });
   });
 
-  it('tek düşman bu vuruşla ölecekse seçilmez', () => {
-    const b = war({ 0: 'mage' }, (x) => (x.get('enemy-0')!.hp = 3));
-    expect(choose(b)?.skillId).not.toBe('abyssal_cry');
-  });
-
-  it('zaten Abyssal Fury varken tekrar seçilmez (yığılmaz)', () => {
-    const b = war(FOES, (x) => x.debugAddStatus('party-0', 'abyssal_fury', 3));
-    expect(choose(b)?.skillId).not.toBe('abyssal_cry');
+  it('yakın dövüştür: arka sıradaki hedefe ulaşmaz', () => {
+    const b = war({ 0: 'defender', 9: 'mage' });
+    expect(b.validTargets('party-0', 'headsmans_blow').map((c) => c.uid)).toEqual(['enemy-0']);
   });
 
   it('öldürme seçeneği öldürme terimini taşır; seçim en yüksek puandır (sabit "önce öldür" yok, K1)', () => {
@@ -223,13 +221,16 @@ describe('YZ bağlam: Warrior - Abyssal Cry (madde 262: sonraki 3 saldırı içi
     expect(ex.candidates.find((c) => c.verdict === 'chosen')!.score).toBe(Math.max(...ex.candidates.map((c) => c.score ?? -Infinity)));
   });
 
-  it('seçilirse gerçekten oynanır: can harcanmaz, Abyssal Fury verilir', () => {
+  it('seçilirse gerçekten oynanır: tüm Rage harcanır, hedef hasar alır', () => {
     const b = war();
-    const w = b.get('party-0')!;
-    const hp0 = w.hp;
-    expect(b.useSkill('party-0', 'abyssal_cry').ok).toBe(true);
-    expect(w.hp).toBe(hp0);
-    expect(w.statuses.some((s) => s.kind === 'abyssal_fury')).toBe(true);
+    const choice = choose(b)!;
+    expect(choice.skillId).toBe('headsmans_blow');
+    const r = b.applyChoice('party-0', choice);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.events.find((e) => e.type === 'rage' && e.actor === 'party-0')).toMatchObject({ delta: -content.formulas.rage.max, after: 0 });
+      expect(r.events.some((e) => e.type === 'damage' && e.target === choice.targetUid)).toBe(true);
+    }
   });
 });
 

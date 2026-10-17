@@ -3,6 +3,7 @@ import { CELL_COUNT, bosses, classes, randomCells, randomPool, summons } from '.
 import { Rng } from '../engine/rng';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
 import { loadoutSetup } from '../progression/loadout';
+import { LEVELS, withEnemyLevel } from '../progression/levels';
 import { ITEMS } from '../progression/items';
 import { ENDLESS, encounter, type EndlessConfig, type EndlessRun, type WaveKind } from './data';
 import { withRelics } from './relics';
@@ -44,6 +45,12 @@ export function enemyCount(wave: number, cfg: EndlessConfig = ENDLESS): number {
 }
 
 const r3 = (v: number) => Math.round(v * 1000) / 1000;
+
+/** Endless dalgasının seviyesi (levels.md): 1 + (dalga - 1) x levelPerWave, tavan L50. Dalganın düşmanları bu level'dadır. */
+export function waveLevel(wave: number, cfg: EndlessConfig = ENDLESS): number {
+  const per = cfg.levels?.levelPerWave ?? 1;
+  return Math.max(1, Math.min(LEVELS.maxLevel, 1 + Math.floor((Math.max(1, wave) - 1) * per)));
+}
 
 /** Dalganın düşman güçlenmesi (1. dalga: yok). */
 export function waveMods(wave: number, cfg: EndlessConfig = ENDLESS): UnitModifiers | undefined {
@@ -101,6 +108,8 @@ export interface WavePlan {
   enemyNames: string[];
   /** Savaş başı Valor'u (koşunun Valor'u; motora teams.valor.party). */
   valor: number;
+  /** Düşmanların level'ı = dalga seviyesi (levels.md > Düşman level'ı; ad plakasında "Lv N"). */
+  enemyLevel: number;
 }
 
 const unitName = (cls: string, name?: string) => name ?? classes[cls]?.name ?? bosses[cls]?.name ?? cls;
@@ -176,6 +185,8 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
 
   const enemyUnits: Record<number, UnitSetup> = {};
   const scale = waveMods(wave, cfg);
+  // Düşman level'ı (Ömer 2026-10-17): dalga seviyesi; kahramanla aynı temel stat büyümesi (attrAdd; dalga çarpanlarının üstüne düz ek)
+  const enemyLevel = waveLevel(wave, cfg);
   let enemies: string[];
   let name = `Wave ${wave}`;
   let background: string | undefined;
@@ -188,7 +199,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     enemies = Array.from({ length: CELL_COUNT }, () => '');
     for (const u of enc.units) {
       enemies[u.slot] = u.class;
-      const mods = combineMods(u.mods, scale);
+      const mods = withEnemyLevel(combineMods(u.mods, scale), u.class, enemyLevel);
       const setup: UnitSetup = { ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) };
       if (Object.keys(setup).length) enemyUnits[u.slot] = setup;
     }
@@ -202,8 +213,12 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
       [pool[i], pool[j]] = [pool[j]!, pool[i]!];
     }
     const ids = pool.slice(0, Math.min(pool.length, enemyCount(wave, cfg)));
-    enemies = randomCells(ids, hashSeed(run.seed, wave, 'cells'));
-    if (scale) enemies.forEach((c, slot) => c && (enemyUnits[slot] = { modifiers: { ...scale } }));
+    // menzil açıkken dizilim menzile duyarlı; alan tehdidi kahramanların şekillerinden (src/engine/formation-ai.ts)
+    enemies = randomCells(ids, hashSeed(run.seed, wave, 'cells'), { foes: live.map((h) => h.class), board: 'enemy' });
+    enemies.forEach((c, slot) => {
+      const mods = c ? withEnemyLevel(scale ? { ...scale } : undefined, c, enemyLevel) : undefined;
+      if (mods) enemyUnits[slot] = { modifiers: mods };
+    });
     enemyNames = enemies.filter(Boolean).map((c) => unitName(c));
   }
   return {
@@ -219,5 +234,6 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     ...(background ? { background } : {}),
     enemyNames,
     valor: run.valor ?? 0,
+    enemyLevel,
   };
 }

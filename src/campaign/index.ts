@@ -13,3 +13,4 @@ export * from './loot';
 export * from './merchant';
 export * from './town';
 export * from './suspend';
+export * from './xp';

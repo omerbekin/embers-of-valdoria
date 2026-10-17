@@ -45,7 +45,7 @@ import { rewardBlockedReason, takeRareDrop,
   draftClassAt,
   type FormationDraft,
 } from '../../endless';
-import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, defaultEquipSlot, equipInto, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, type AffixLine, type ItemDef } from '../../progression';
+import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, defaultEquipSlot, equipInto, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, weaponPowerOf, type AffixLine, type ItemDef } from '../../progression';
 import type { Stats } from '../../engine/types';
 import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
@@ -1276,7 +1276,10 @@ export class EndlessScene extends Phaser.Scene {
   /** Item kartı gövdesi: ad (nadirlik rengi), tür, statlar; altta "Usable by" satırı. */
   private itemCardBody(run: EndlessRun, d: ItemDef, k: CardCtx, y: number, heroId?: string, rolls?: ItemRolls): void {
     k.add(fitText(this.label(k.cx, y - 8, d.name, 26, rarityColor(d)).setOrigin(0.5, 0), k.w - 40));
-    k.add(fitText(this.note(k.cx, y + 30, itemSubtitle(d), 19, C.dim, true).setOrigin(0.5, 0), k.w - 40));
+    // Alt başlık: örneğin seviyesi + (silahta) taban gücü (Item Güçlendirme 2026-10-17)
+    const ilvl = rolls?.ilvl ?? d.ilvl;
+    const pw = d.slot === 'weapon' ? ` · Power ${weaponPowerOf(d, ilvl)}` : '';
+    k.add(fitText(this.note(k.cx, y + 30, `${itemSubtitle(d, clampRarity(d, rolls?.rarity), ilvl)}${pw}`, 19, C.dim, true).setOrigin(0.5, 0), k.w - 40));
     // Stat satırları: ikon + yazı (Gear kartı gibi); üstüne gelince / dokununca açıklama, kartın önerdiği kahraman için önce -> sonra
     const hero = heroId ? heroOf(run, heroId) : undefined;
     let ly = y + 70 + 15;

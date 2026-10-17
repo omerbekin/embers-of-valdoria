@@ -6,6 +6,8 @@ import type { EndlessRun, ScoreEntry } from './data';
 import { validSuspended } from './replay';
 import { cleanCarry } from './carry';
 import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand } from '../progression/items';
+import { giveStarterIfUnarmed } from '../progression/weapon';
+import { normalizeLevelFields } from '../progression/levels';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -22,10 +24,14 @@ export const SCORES_KEY = 'protomedi.endless.scores.v1';
  * (`summons`). Sürüm 1-2 okunurken bu alanlar yok (= tam MP, temiz başlangıç: eski kural bir kez daha) ve yarım savaş atılır (savaş kurulumu
  * değişti: dalga arası cooldown sıfırlama; dalga baştan başlar). Ara verme (ödül / tüccar / kalıntı / kamp) aşaması aynen sürer.
  */
-export const SAVE_VERSION = 4;
+export const SAVE_VERSION = 5;
 /*
  * 4: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls) ve yarım kalmış
  * savaş atılır (kurulum item statlarından yeniden kurulur; dalga baştan başlar). Koşunun geri kalanı aynen sürer.
+ */
+/*
+ * 5: Item Güçlendirme (Ömer 2026-10-17): silah gücü + başlangıç silahı. Sürüm 1-4 okunurken silah yuvası boş kahramana sınıfının başlangıç
+ * silahı takılır (progression > giveStarterIfUnarmed); silah alan olursa yarım savaş atılır (kurulum değişti; dalga baştan başlar).
  */
 /** Skor listesi sürümü (statsız; x2 dönüşümünden etkilenmez). */
 export const SCORES_VERSION = 1;
@@ -38,7 +44,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
   try {
     const data = JSON.parse(raw) as { version?: number; run?: EndlessRun };
     const r = data?.run;
-    if (![1, 2, 3, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
+    if (![1, 2, 3, 4, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
     if (data.version === 1) {
       migrateRollsX2(r);
       delete r.suspended;
@@ -49,8 +55,14 @@ export function parseRun(raw: string | null): EndlessRun | null {
       delete r.summons;
       for (const h of r.heroes ?? []) if (h) delete h.carry;
     }
+    // 4 -> 5 (Item Güçlendirme): silahsız kahramana başlangıç silahı; kurulum değiştiyse yarım savaş atılır
+    if ((data.version ?? 0) < 5 && Array.isArray(r.heroes)) {
+      let given = 0;
+      for (const h of r.heroes) if (h && typeof h === 'object' && typeof h.id === 'string' && typeof h.class === 'string' && giveStarterIfUnarmed(h)) given++;
+      if (given) delete r.suspended;
+    }
     // 3 -> 4 (affix kademeleri): eski zarlar en yakın yeni biçime; yarım savaş atılır
-    if (data.version !== SAVE_VERSION) {
+    if ((data.version ?? 0) < 4) {
       delete r.suspended;
       migrateItemRolls(r); // eski stat zarları -> en yakın affix biçimi (okunurken de instanceRoll onarır; asla çökmez)
     }
@@ -58,8 +70,11 @@ export function parseRun(raw: string | null): EndlessRun | null {
     if (!['ready', 'relic', 'reward', 'shop', 'over'].includes(r.phase)) return null;
     if (!Array.isArray(r.heroes) || !r.heroes.length) return null;
     for (const h of r.heroes) if (!h || typeof h.id !== 'string' || !classes[h.class] || !isNum(h.hpRatio) || typeof h.equipment !== 'object' || !h.equipment) return null;
+    // Seviye, XP, puanlar (level sistemi, Ömer 2026-10-17): bozuk değer varsayılana, eski kayıtta level'dan tamamlanır (hiçbir şey geri alınmaz)
+    for (const h of r.heroes) normalizeLevelFields(h);
     // Dizilim (2026-10-09): bozuk hücre atılır (o zaman wavePlan tüm takımı otomatik dizer)
     for (const h of r.heroes) if (h.slot !== undefined && (!Number.isInteger(h.slot) || h.slot < 0 || h.slot >= CELL_COUNT)) delete h.slot;
+    if (r.levelUps !== undefined && !(Array.isArray(r.levelUps) && r.levelUps.every((u) => u && typeof u.heroId === 'string' && isNum(u.from) && isNum(u.to)))) delete r.levelUps;
     if (!r.stats || !isNum(r.stats.cleared) || !isNum(r.stats.turns) || !isNum(r.stats.kills)) return null;
     if (r.phase === 'reward' && !Array.isArray(r.offer)) return null;
     if (r.phase === 'shop' && !Array.isArray(r.shop)) return null;

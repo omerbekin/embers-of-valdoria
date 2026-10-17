@@ -18,7 +18,7 @@ const mk = (primary: Attribute | undefined, attributes: CombatantData['attribute
 describe('stat toplamı ve primary stat (class verisi)', () => {
   for (const def of classes) {
     it(`${def.id}: dört stat toplamı 30 (x2 stat ölçeğinde 60)`, () => {
-      expect(sum(def.attributes)).toBe(30 * (content.formulas.statScale ?? 1));
+      expect(sum(def.attributes)).toBe(60);
     });
     it(`${def.id}: primary tanımlı ve class'ın en yüksek statıyla uyumlu`, () => {
       expect(def.primary, def.id).toBeDefined();
@@ -612,9 +612,8 @@ describe('skill temasına uygun stat (class verisi)', () => {
     expect(dmg.damageType).toBe('magic');
     expect(dmg.element).toBe('dark');
     expect(dmg.scale).toBe('int');
-    const S = content.formulas.statScale ?? 1; // x2 stat ölçeği: güç eski puan başına ~0,90
-    expect(dmg.power * S).toBeGreaterThan(0.8);
-    expect(dmg.power * S).toBeLessThan(1);
+    expect(dmg.power).toBeGreaterThan(0.4);
+    expect(dmg.power).toBeLessThan(0.6); // Ömer 2026-10-17 classtune: 0,45 -> 0,55
     // motor: zırh değil büyü zırhı azaltır; olay elementi dark (yüzen yazıda kuru kafa ikonu)
     const cells = (m: Record<number, string>) => Array.from({ length: 12 }, (_, i) => m[i] ?? '');
     const b = new Battle(content.battleSetup('random-battle', 3, 'test', { party: cells({ 0: 'undead' }), enemies: cells({ 0: 'warrior' }) }, false));

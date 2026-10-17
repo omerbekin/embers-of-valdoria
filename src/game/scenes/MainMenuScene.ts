@@ -2,10 +2,10 @@ import Phaser from 'phaser';
 import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from '../../ui/sfx-volume';
 import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel, uiSound } from '../../ui/ui-sound';
 import { loadMusicLevel, menuMusic, onMusicLevelChange, setMusicLevel } from '../../ui/music';
-import { getMap, latestSave, migrateSaves, readSaves, slotSummaries, type SaveEntry } from '../../campaign';
+import type { SaveEntry } from '../../campaign';
 import { backgroundKey, hasBackground, loadRestInBackground, preloadAssets } from '../assets';
 import { campaignArtKey, hasCampaignArt, preloadCampaignArt } from '../campaign-art';
-import { cardArt, preloadCardArt } from '../card-art';
+import { cardArt, hasCardArtFile, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
@@ -60,6 +60,22 @@ const ENDLESS_SCENE: LazySceneKey = 'EndlessScene';
 /** Sefer yuva ekranı + sefer oturumu (ayrı kod parçası; ilk kullanımda indirilir). */
 const loadCampaignUi = () =>
   trackChunkLoad(Promise.all([import('../campaign-slots-ui'), import('../campaign-session')]).then(([slots, session]) => ({ slots, session })));
+/**
+ * Sefer çekirdeği (kayıt okuma: Continue / Load düğmeleri, kayıt göçü; harita verisi). Motorun tamamını çektiği için açılış yolunda DEĞİL
+ * (Ömer 2026-10-17 yükleme performansı): menü onsuz görünür, modül menü hazır olunca iner; Play kartları ve kayıt notları gelince kurulur.
+ * Doğrudan açılışlar (yenilgi sonrası Load Game, debug görünümü) önce bunu bekler.
+ */
+type CampaignCore = typeof import('../../campaign');
+let campaignCore: CampaignCore | null = null;
+let campaignCoreChunk: Promise<CampaignCore> | null = null;
+const loadCampaignCore = (): Promise<CampaignCore> =>
+  (campaignCoreChunk ??= import('../../campaign').then(
+    (m) => (campaignCore = m),
+    (e: unknown) => {
+      campaignCoreChunk = null; // ağ hatası: sonraki denemede yeniden
+      throw e;
+    },
+  ));
 /** Patch Notes kod parçası (Ömer 2026-10-16): menü hazır olunca birkaç saniye sonra boşta önceden indirilir; inmişse sürüme dokununca
  *  yükleme ekranı çıkmadan anında açılır. */
 type PatchNotesModule = typeof import('../../ui/patch-notes');
@@ -230,6 +246,8 @@ export class MainMenuScene extends Phaser.Scene {
 
   init(data: MainMenuData): void {
     this.initData = data ?? {};
+    this.coreBuilt = false;
+    this.warmed = false; // dönüşte (savaş sprite'ları bıraktı) Play yeniden ısıtır
     this.openOnStart = data?.open;
     this.startView = initialView(data?.open, data?.view);
     this.modal = null;
@@ -261,8 +279,8 @@ export class MainMenuScene extends Phaser.Scene {
     preloadAssets(this, { sprites: false, avatars: false, items: false, backgrounds: MENU_BACKGROUNDS });
     // Katmanlı arka plan (assets/menu) varsa geniş harita görseli menüde gerekmez: yalnızca Campaign kartının görseli
     preloadMenuLayers(this);
-    preloadCampaignArt(this, ['valdoria-bg']);
-    preloadCardArt(this);
+    // Play kartlarının görselleri (~1 MB) açılış yolunda değil: menü görününce arka planda (loadPlayArt); doğrudan açılışta hemen
+    if (this.startView !== 'menu' || this.openOnStart) this.queuePlayArt();
     preloadLogo(this);
   }
 
@@ -276,10 +294,19 @@ export class MainMenuScene extends Phaser.Scene {
       });
       return;
     }
-    migrateSaves(storage()); // eski tek-liste kayıtlar Slot 1'e taşınır
+    // Doğrudan açılış (Load Game, debug görünümü): kayıt bilgisi hemen gerekir; sefer çekirdeğini bekle ve sahneyi yeniden kur
+    if (!campaignCore && (this.startView !== 'menu' || this.openOnStart)) {
+      this.cameras.main.setBackgroundColor('#0d0a07');
+      void trackChunkLoad(loadCampaignCore()).then(
+        () => this.sys.isActive() && this.scene.restart(this.initData),
+        () => undefined,
+      );
+      return;
+    }
+    this.playReady = null;
     if (mp.active || mp.state === 'connecting') mp.leave(); // ana menüye dönmek multiplayer lobisinden ayrılmaktır (ağ kodu inerken de)
     this.buildMenuColumn();
-    this.buildCards();
+    if (campaignCore && this.playArtLoaded()) this.campaignCoreReady(campaignCore);
     this.buildBack();
     this.buildVersion();
     this.buildBackground(); // geniş ekran yerleşimi sütunu ve Back'i de konumlar (onStageResize)
@@ -303,17 +330,34 @@ export class MainMenuScene extends Phaser.Scene {
 
     // Doğrudan açılış (debug görünümü ya da yenilgi sonrası Load Game): animasyonsuz
     if (this.startView !== 'menu') this.setView(this.startView, true);
-    if (this.openOnStart === 'load' && slotSummaries(storage()).some((x) => x && x.saveCount > 0)) this.loadSlots();
+    if (this.openOnStart === 'load' && campaignCore?.slotSummaries(storage()).some((x) => x && x.saveCount > 0)) this.loadSlots();
     if (this.openOnStart === 'new') this.chooseSlot();
     elScreenIn(this); // ortak ekran geçişi (data/ui-motion.json > screen)
     markBootReady(); // açılış yükleme ekranı kapanır (ilk menü hazır; ölçüm: performance 'menu-ready')
+    if (!this.coreBuilt) {
+      const scene = this.sys;
+      this.playReady = Promise.all([loadCampaignCore(), this.loadPlayArt()]).then(([m]) => {
+        if (scene.isActive()) this.campaignCoreReady(m);
+      });
+      this.playReady.catch(() => (this.playReady = null));
+    }
     if (!patchNotesChunk) prefetchPatchNotes(); // sürüm yazısına dokununca Patch Notes anında açılsın
-    // menü görününce kalan avatar / sprite / arka planlar (sahne saati font beklemesinden sonraki yeniden kuruluşta hemen işlemeyebiliyor: tarayıcı zamanlayıcısı)
-    // Sprite listesi (sınıflar + çağrılar + tüccar; moblar yalnızca savaşta, telefon belleği) motor içeriğine bağlı: ayrı parçadan (hızlı açılış)
+  }
+
+  /**
+   * Sınıf / çağrı / tüccar görselleri (takım seçimi, harita, Endless kampı çizer) artık menü açılır açılmaz DEĞİL, oyuncu Play'e girince
+   * arka planda iner (Ömer 2026-10-17 yükleme performansı: yavaş bağlantıda menüden hemen sonra Codex / Quick Battle ile yarışıyordu).
+   * Gelmeden sahne açılırsa o sahnenin preload'u eksikleri yükler (kısa yükleyici). Sprite listesi motor içeriğine bağlı: ayrı parçadan.
+   */
+  private warmCharacterArt(): void {
+    if (this.warmed) return;
+    this.warmed = true;
+    // sahne saati font beklemesinden sonraki yeniden kuruluşta hemen işlemeyebiliyor: tarayıcı zamanlayıcısı
     window.setTimeout(() => {
       void import('../sprite-needs').then((m) => this.sys.isActive() && loadRestInBackground(this, m.classSpriteIds())).catch(() => this.sys.isActive() && loadRestInBackground(this));
-    }, 400);
+    }, 50);
   }
+  private warmed = false;
 
   // ------------------------------------------------------------ arka plan
 
@@ -326,7 +370,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.cleanups.push(onReducedMotionChange((on) => this.backdrop?.setReduced(on)));
     }
     // Geniş (21:9) harita görseli varsa o (eski 16:9 haritanın bölgesi eski yerine oturur; geniş ekranda yanları görünür), yoksa 16:9 görsel
-    const art = this.backdrop ? null : mapArt(this, getMap('valdoria'));
+    const art = this.backdrop || !campaignCore ? null : mapArt(this, campaignCore.getMap('valdoria'));
     if (art) {
       this.bg = this.add.image(W / 2, H / 2, art.key).setDepth(0);
       // Eski kural: 16:9 harita ekranı %4 taşarak kaplar. Aynı dikdörtgen geniş görselin bölgesine uygulanır.
@@ -519,13 +563,60 @@ export class MainMenuScene extends Phaser.Scene {
       col.add(row.root);
       this.menuRows.push(row);
     });
-    const saves = readSaves(storage());
-    if (saves.corrupt) col.add(this.noteText(COL_X, H - 60, 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5));
-    // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferleri yeniden başlar; yuva kalır, yeni sefer kaydedilene kadar uyarı (campaign/save.ts)
-    if (saves.file.slots.some((sd) => sd?.mapChanged))
-      col.add(fitText(this.noteText(COL_X, saves.corrupt ? H - 96 : H - 60, 'The Valdoria map has changed; this campaign must restart.', 22, '#d8b27e').setOrigin(0, 0.5), 600));
     this.selectMain(0);
   }
+
+  /** Sefer çekirdeği hazır (menü onsuz kurulmuş olabilir): kayıt göçü, kayıt notları ve Play kartları. */
+  private campaignCoreReady(m: CampaignCore): void {
+    if (this.coreBuilt) return;
+    this.coreBuilt = true;
+    m.migrateSaves(storage()); // eski tek-liste kayıtlar Slot 1'e taşınır
+    const col = this.menuCol;
+    const saves = m.readSaves(storage());
+    if (col && saves.corrupt) col.add(this.noteText(COL_X, H - 60, 'A damaged save file was ignored.', 22, '#d88a7e').setOrigin(0, 0.5));
+    // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferleri yeniden başlar; yuva kalır, yeni sefer kaydedilene kadar uyarı (campaign/save.ts)
+    if (col && saves.file.slots.some((sd) => sd?.mapChanged))
+      col.add(fitText(this.noteText(COL_X, saves.corrupt ? H - 96 : H - 60, 'The Valdoria map has changed; this campaign must restart.', 22, '#d8b27e').setOrigin(0, 0.5), 600));
+    this.buildCards();
+    if (this.view === 'play') this.showCards(true, true);
+  }
+  private coreBuilt = false;
+  /** Play kartları için beklenen iş (sefer çekirdeği + kart görselleri); kartlar kurulunca / yoksa null. */
+  private playReady: Promise<void> | null = null;
+
+  /** Kart görsellerini (yoksa Campaign kartının harita yedeği) yükleyiciye ekler. Dönen: kuyruğa giren dosya. */
+  private queuePlayArt(): number {
+    const before = this.load.list.size;
+    preloadCardArt(this);
+    if (!hasCardArtFile('campaign')) preloadCampaignArt(this, ['valdoria-bg']);
+    return this.load.list.size - before;
+  }
+
+  /** Tüm kart görselleri yüklü mü (dosyası olmayan kart yedek görsele düşer). */
+  private playArtLoaded(): boolean {
+    return ['campaign', 'quick-battle', 'quick-battle-endless', 'multiplayer'].every((id) => !hasCardArtFile(id) || !!cardArt(this, id));
+  }
+
+  /** Kart görsellerini menü görününce arka planda yükler; en geç 20 sn sonra (yavaş / kopuk bağlantı) kartlar yedek görselle kurulur. */
+  private loadPlayArt(): Promise<void> {
+    if (this.queuePlayArt() === 0) return Promise.resolve();
+    return new Promise<void>((resolve) => {
+      let done = false;
+      const finish = (): void => {
+        if (done) return;
+        done = true;
+        this.load.off(Phaser.Loader.Events.COMPLETE, onComplete);
+        resolve();
+      };
+      const onComplete = (): void => {
+        if (this.playArtLoaded() || !this.load.isLoading()) finish(); // inmeyen dosya (ağ hatası): kart yedek görselle kurulur
+      };
+      this.load.on(Phaser.Loader.Events.COMPLETE, onComplete);
+      this.time.delayedCall(20000, finish);
+      if (!this.load.isLoading()) this.load.start();
+    });
+  }
+
 
   private selectMain(i: number): void {
     this.menuSel = i;
@@ -534,7 +625,15 @@ export class MainMenuScene extends Phaser.Scene {
 
   private pickMain(key: MenuItemKey): void {
     if (this.view !== 'menu') return;
-    if (key === 'play') this.setView('play');
+    if (key === 'play') {
+      // sefer çekirdeği daha inmediyse (çok yavaş bağlantı) kartlar onunla kurulur: bekle (kısa yükleyici), sonra aç
+      if (!this.coreBuilt)
+        void trackChunkLoad(this.playReady ?? loadCampaignCore().then((m) => this.campaignCoreReady(m))).then(
+          () => this.sys.isActive() && this.view === 'menu' && this.setView('play'),
+          () => undefined,
+        );
+      else this.setView('play');
+    }
     else if (key === 'settings') this.setView('settings');
     else if (key === 'mp') this.setView('mp');
     else openWiki(); // Codex = wiki (sağ üstteki kitap simgesiyle aynı pencere)
@@ -552,6 +651,7 @@ export class MainMenuScene extends Phaser.Scene {
     if (prev === next && !instant) return;
     if (next !== 'menu' && next !== 'play') this.cameFrom = prev;
     this.view = next;
+    if (next === 'play') this.warmCharacterArt();
     this.busyUntil = this.time.now + (instant ? 0 : 450);
     this.tweenLook(next, instant);
     this.slideMenu(next === 'menu', instant);
@@ -676,8 +776,10 @@ export class MainMenuScene extends Phaser.Scene {
   // ------------------------------------------------------------ Play: üç kart
 
   private buildCards(): void {
-    const latest = latestSave(storage());
-    const anySaves = slotSummaries(storage()).some((x) => x && x.saveCount > 0);
+    const core = campaignCore;
+    if (!core) return; // sefer çekirdeği gelince campaignCoreReady kurar
+    const latest = core.latestSave(storage());
+    const anySaves = core.slotSummaries(storage()).some((x) => x && x.saveCount > 0);
     // Campaign kartı (Ömer 2026-10-10): assets/cards/campaign.webp (uçurumdan Valdoria'ya bakan takım); yoksa harita
     const campaignArt = cardArt(this, 'campaign') ?? (hasCampaignArt(this, 'valdoria-bg') ? campaignArtKey('valdoria-bg') : null);
     // Kart görselleri (Ömer 2026-10-08): Quick Battle = Proving Grounds (öğleden sonra), Multiplayer = Duelling Ring (ay ışığı); yoksa eskileri

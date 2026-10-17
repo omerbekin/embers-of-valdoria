@@ -228,6 +228,7 @@ describe('Drain Field: önizleme, YZ, açıklama, kayıt, wiki', () => {
     // turns modu: MP 0'daki Mage bir sonraki turunda yenilenmeyle ucuz MP'li skill'ini (Fire Bolt) ödeyebilir; susturma onu engeller
     // (test modunda yenilenme yok: MP 0'daki birim zaten MP'li skill kullanamaz, susturmanın değeri 0 olur)
     const b = arena([['antimage', 0], ['warrior', 1]], [['hexer', 0], ['mage', 1], ['druid', 2]], 'turns');
+    for (let i = 0; i < 20 && b.currentUid !== P(b, 0).uid; i++) b.skipTurn(); // sıra Anti-Mage'de (2026-10-17: hızı Druid'le eşit)
     for (const c of b.living('enemy')) c.mp = 0;
     const ex = explainChoice(b, P(b, 0).uid, content.aiConfig)!;
     const drain = ex.candidates.filter((c) => c.skill === 'drain_field');

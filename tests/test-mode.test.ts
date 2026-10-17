@@ -18,15 +18,15 @@ describe('Test Mode: motor debug bayrakları (Unlimited Rage, No cooldowns)', ()
     expect(b.freeRage).toBe(false);
     expect(b.noCooldowns).toBe(false);
     b.currentUid = 'party-0';
-    expect(b.canUse('party-0', 'abyssal_cry').ok).toBe(false);
+    expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(false);
   });
 
   it('freeRage: Rage 0 iken Rage skill kullanılabilir ve Rage harcanmaz', () => {
     const b = mk({ 0: 'warrior' }, { 0: 'archer' }, 'test');
     b.freeRage = true;
     expect(b.get('party-0')!.rage ?? 0).toBe(0);
-    expect(b.canUse('party-0', 'abyssal_cry').ok).toBe(true);
-    const r = b.useSkill('party-0', 'abyssal_cry');
+    expect(b.canUse('party-0', 'headsmans_blow').ok).toBe(true);
+    const r = b.useSkill('party-0', 'headsmans_blow', 'enemy-0');
     expect(r.ok).toBe(true);
     expect(b.get('party-0')!.rage ?? 0).toBeGreaterThanOrEqual(0);
     expect(r.ok && r.events.some((e) => e.type === 'rage' && e.delta < 0)).toBe(false);

@@ -22,6 +22,8 @@ export function damageSpecFor(
   dealtMult = 1,
   /** Saldıranın geçerli stat'ları (aura zırhı dahil; hibrit ölçek bonusScale bunlardan okunur). Verilmezse actor.stats. */
   attackerStats?: Combatant['stats'],
+  /** powerPerRage (Headsman's Blow): harcanan Rage; verilmezse kullanıcının o anki Rage'i (önizleme/YZ: vuruştan önce). Motor vuruşta ödenen bedeli verir. */
+  rageSpent?: number,
 ): DamageSpec {
   // Tür hassasiyeti: ör. undead + holy, nature + fire
   const element = effect.element ?? 'physical';
@@ -41,6 +43,8 @@ export function damageSpecFor(
   }
   // Opportunist (bonusVsStatus): hedefte listedeki durumlardan biri (Wound/Slow/Stun) varsa hasar x(1 + bonus); kritik ayrıca son çarpandır
   if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => pe.statuses.includes(s.kind))) passiveMult *= 1 + pe.bonus;
+  // executeBonus (Headsman's Blow): hedefin eksik can oranıyla x(1 + executeBonus x eksik oran); alan yoksa çarpan yok (determinizm)
+  if (effect.executeBonus && target.maxHp > 0) passiveMult *= 1 + effect.executeBonus * Math.max(0, 1 - target.hp / target.maxHp);
   // Item affix'leri (Ömer 2026-10-11): Global damage x element hasarı; yoksa çarpılmaz (bugünkü savaşlar birebir aynı)
   const out = outgoingDamageMult(actor.stats, element);
   const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
@@ -53,7 +57,7 @@ export function damageSpecFor(
   return {
     damageType: effect.damageType,
     scale: effect.scale,
-    power: effect.power * mult,
+    power: (effect.powerPerRage ? effect.power + effect.powerPerRage * Math.max(0, rageSpent ?? actor.rage ?? 0) : effect.power) * mult,
     ...(bonus ? { bonus } : {}),
     ...(ignore ? { ignoreDefense: ignore } : {}),
     extra,

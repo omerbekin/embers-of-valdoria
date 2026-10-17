@@ -6,11 +6,12 @@
   "logo": "nullsphere",
   "role": "Mana Hunter",
   "frontPriority": 3.5,
+  "range": 4,
   "attributes": {
-    "str": 10,
-    "int": 30,
-    "dex": 14,
-    "luck": 6
+    "str": 6,
+    "int": 26,
+    "dex": 12,
+    "luck": 16
   },
   "primary": "int",
   "armor": 12,

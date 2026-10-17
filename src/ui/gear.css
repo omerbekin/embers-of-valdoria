@@ -1382,6 +1382,39 @@ html.short .gr-slot-sub {
   color: var(--g-dim);
 }
 
+/* Taban (Item Güçlendirme 2026-10-17): silah gücü + örtük stat, affix satırlarının üstünde; seviye şartı karşılanmıyorsa kırmızı */
+:is(.item-tip, .mw-stats) .it-base {
+  margin: 6px 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+:is(.item-tip, .mw-stats) .it-power {
+  font: 600 0.92em var(--g-disp);
+  letter-spacing: 0.06em;
+  color: #f3e2c0;
+}
+
+:is(.item-tip, .mw-stats) .it-implicit {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  color: #e6dcc6;
+}
+
+:is(.item-tip, .mw-stats) .it-req {
+  margin-top: 4px;
+  font: italic 0.92em var(--g-body);
+  color: var(--g-dim);
+}
+
+:is(.item-tip, .mw-stats) .it-req.unmet {
+  color: #e0574a;
+  font-style: normal;
+  font-weight: 600;
+}
+
 :is(.item-tip, .mw-stats) .it-lines {
   margin: 6px 0 4px;
   display: flex;
@@ -2636,4 +2669,174 @@ html.short .gr-slot {
 /* tüccar, Wares sekmesi: torba 8 sütun, telefonda 3 tam satır sığar (7 sütunda 2,6 satır kalıyordu) */
 .gr-overlay .gr-shop.gr-phone.show-inv .gr-inv .gr-bag {
   --bag-cols: 8;
+}
+
+/* --- Level / stat puanı (Ömer 2026-10-17, levels.md): Character sayfasında "Level N" + XP çubuğu, puan taşı (sürükle / dokun), satırda + / − --- */
+.gr-lvl {
+  margin-top: calc(14 * var(--u));
+  padding-top: calc(10 * var(--u));
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-lvl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(10 * var(--u));
+}
+
+.gr-lvl-n {
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.gr-lvl-xp {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-xpbar {
+  height: max(4px, calc(6 * var(--u)));
+  margin-top: calc(6 * var(--u));
+  background: rgba(217, 178, 106, 0.14);
+  border: 1px solid var(--g-line);
+}
+
+.gr-xpbar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b9853e, var(--g-gold));
+}
+
+.gr-pts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(10 * var(--u));
+  margin-top: calc(10 * var(--u));
+}
+
+/* Puan taşı: kor elmas yerine yuvarlak altın taş (sürüklenebilir); dokunma alanı en az 44 px */
+.gr-pts-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  font: 600 max(14px, calc(22 * var(--u))) var(--g-disp);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, var(--g-ember2), var(--g-ember) 70%);
+  box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.45);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.gr-pts-chip.empty {
+  background: rgba(217, 178, 106, 0.18);
+  color: var(--g-dim);
+  box-shadow: none;
+  cursor: default;
+}
+
+.gr-pts-text {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pts-acts {
+  display: inline-flex;
+  gap: calc(8 * var(--u));
+  margin-left: auto;
+}
+
+.gr-pts-warn {
+  margin-top: calc(6 * var(--u));
+  font: italic max(12px, calc(17 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: #e0785e;
+}
+
+.gr-pts-skill {
+  margin-top: calc(6 * var(--u));
+  font: italic max(11px, calc(16 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pm {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+/* + / − : görünen düğme küçük, dokunma alanı ::after ile 44 px */
+.gr-pm-b {
+  position: relative;
+  width: max(20px, calc(30 * var(--u)));
+  height: max(20px, calc(30 * var(--u)));
+  padding: 0;
+  border: 1px solid var(--g-line);
+  background: rgba(20, 14, 8, 0.6);
+  color: var(--g-gold);
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  line-height: 1;
+}
+
+.gr-pm-b::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gr-pm-b:hover:not(:disabled) {
+  border-color: var(--g-gold);
+}
+
+.gr-pm-b:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.gr-stat.drop-ok {
+  outline: 1px dashed rgba(240, 180, 90, 0.55);
+  outline-offset: 2px;
+}
+
+.gr-stat.drop-on {
+  outline: 1px solid var(--g-ember2);
+  background: rgba(224, 112, 42, 0.18);
+}
+
+.gr-pts-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font: 600 22px var(--g-disp, 'Cinzel', serif);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+html.short .gr-lvl {
+  margin-top: 8px;
+  padding-top: 6px;
+}
+
+html.short .gr-pts {
+  margin-top: 6px;
+  gap: 6px;
 }

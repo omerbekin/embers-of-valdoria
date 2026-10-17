@@ -5,9 +5,10 @@
   "color": "#7d8a73",
   "logo": "skull",
   "frontPriority": 4,
+  "range": 5,
   "attributes": {
-    "str": 24,
-    "int": 28,
+    "str": 26,
+    "int": 26,
     "dex": 4,
     "luck": 4
   },
@@ -28,7 +29,7 @@
     "text": "",
     "effect": {
       "type": "soulDrain",
-      "ratio": 0.35
+      "ratio": 0.5
     }
   },
   "role": "Dark Mage"

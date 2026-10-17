@@ -72,7 +72,7 @@ import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
 import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
 import { isDeltaStat, previewStatusText, statDir, statSources } from '../stat-delta';
-import { areaBoards, areaHoverSpecs, areaTone, blockedTargets } from '../target-cells';
+import { areaBoards, areaHoverSpecs, areaTone, blockedTargets, outOfRangeCells } from '../target-cells';
 import type { MpBattleHooks, MpResultInfo } from '../mp-hooks';
 import { isGameMenuOpen, toggleGameMenu } from '../../ui/game-menu';
 import { isSettingsOpen } from '../../ui/settings';
@@ -109,6 +109,11 @@ export interface BattleSceneData {
   weapons?: { items?: Record<string, WeaponItem>; picks?: Record<string, WeaponPick> };
   /** Sefer tutorial bağlamı (src/game/battle-tutorial.ts, docs/design/tutorial.md): düğüm dersleri, ilk savaşın zorunlu adımları, yenilgi ipucu. */
   tutorial?: BattleLessonCtx;
+  /**
+   * Birim level'ları (yalnızca sunum; levels.md): ad plakasında küçük "Lv N". enemy = tüm düşmanların level'ı (karşılaşma / dalga seviyesi),
+   * party = uid ('party-0'...) -> kahraman level'ı. Verilmezse (Quick Battle / multiplayer) level yazılmaz. Çağrılara yazılmaz.
+   */
+  levels?: { enemy?: number; party?: Record<string, number> };
 }
 
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
@@ -199,6 +204,8 @@ export class BattleScene extends Phaser.Scene {
   mp: MpBattleHooks | undefined = undefined;
   /** Poz kütüphanesi silahları (BattleSceneData.weapons; yalnızca sunum). */
   weapons: BattleSceneData['weapons'] = undefined;
+  /** Birim level'ları (BattleSceneData.levels; yalnızca sunum). */
+  private unitLevels: BattleSceneData['levels'] = undefined;
   /** Bu ekranda oynayan insanın tarafı: tek oyunculuda daima 'party'; multiplayer'da katılan 'enemy' (sağ). */
   localSide: 'party' | 'enemy' = 'party';
   private mpOff: Array<() => void> = [];
@@ -307,6 +314,7 @@ export class BattleScene extends Phaser.Scene {
     this.background = data.background;
     this.mp = data.mp;
     this.weapons = data.weapons;
+    this.unitLevels = data.levels;
     this.localSide = data.mp?.localSide ?? 'party';
     for (const off of this.mpOff) off();
     this.mpOff = [];
@@ -358,7 +366,9 @@ export class BattleScene extends Phaser.Scene {
   }
 
   preload(): void {
-    const cells = this.teams ? [...this.teams.party, ...this.teams.enemies].filter((c): c is string => !!c) : undefined;
+    // Savaşın birimleri preload'da bilinir (rastgele takımda da: kurulum seed'li ve saf, create aynısını kurar): yalnızca onların görselleri iner
+    const units = this.plannedUnits();
+    const cells = units ? units.map((u) => u.defId) : this.teams ? [...this.teams.party, ...this.teams.enemies].filter((c): c is string => !!c) : undefined;
     // Telefon belleği (0.8.2 Grave Field çökmesi): takım belliyse yalnızca sahnedeki birimlerin (+ çağrıların) sprite / avatarları yüklenir,
     // gerisi (başka moblar, poz sayfaları) bırakılır; harita / menü / item görselleri ve başka savaşların efektleri de savaşta tutulmaz
     // (dönüşte o sahnenin preload'u yeniden yükler). Rastgele takımda (takım preload'da belli değil) eskisi gibi hepsi.
@@ -367,12 +377,36 @@ export class BattleScene extends Phaser.Scene {
     releaseTextures(this, (key) => BATTLE_DROP.some((p) => key.startsWith(p)));
     // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
     releaseForBattle(this, cells); // önceki savaşların pişmiş atlasları birikmesin (telefon belleği; ayna savaşta görünmez birim)
-    preloadPoses(this, cells);
+    // yalnızca her birimin silahının tutuş takımı + takılı silah görselleri (src/game/pose-rig.ts; Ömer 2026-10-17 yükleme performansı)
+    preloadPoses(this, units ? units.map((u) => ({ classId: u.defId, pick: this.weaponPickOf(u) })) : cells);
     // efekt sprite sheet'leri: v2 sınıf sheet'leri (assets/vfx; Defender) ve sefer mobu sheet'leri (assets/mob-vfx) yalnızca sahnedeki birimler
     // için; diğerleri bırakılır (eksik kalan efekt başında tembel yüklenir: ensureVfxSheets)
     const sheets = cells ? [...VFX_SHEET_FILES.filter((f) => cells.includes(f.owner)).map((f) => f.id), ...mobSheetsOf(cells)] : VFX_SHEET_FILES.map((f) => f.id);
     releaseTextures(this, (key) => key.startsWith('vfxsheet:') && !sheets.includes(key.slice('vfxsheet:'.length)));
     preloadVfxSheets(this, sheets);
+  }
+
+  /**
+   * Bu savaşta kurulacak birimler (uid, sınıf, taraf), create'teki kurulumun aynısı: multiplayer'da hazır savaş, yoksa aynı seed / takımla
+   * `battleSetup` (saf, belirleyici). Kurulamazsa (bozuk veri: create zaten hata verir) undefined: preload eskisi gibi takım listesine düşer.
+   */
+  private plannedUnits(): Array<{ uid: string; defId: string; side: 'party' | 'enemy'; summoned: boolean }> | undefined {
+    try {
+      if (this.mp) return this.mp.battle.combatants.filter((c) => !c.summoned).map((c) => ({ uid: c.uid, defId: c.defId, side: c.side, summoned: false }));
+      const setup = content.battleSetup(this.battleId, this.seed, this.mode, this.teams ? { ...this.teams } : { partySize: this.partySize, enemySize: this.enemySize }, false);
+      const side = (list: readonly { id: string }[], units: readonly ({ summoned?: boolean } | undefined)[] | undefined, s: 'party' | 'enemy') =>
+        list.map((d, i) => ({ uid: `${s}-${i}`, defId: d.id, side: s, summoned: !!units?.[i]?.summoned }));
+      return [...side(setup.party, setup.partyUnits, 'party'), ...side(setup.enemies, setup.enemyUnits, 'enemy')];
+    } catch {
+      return undefined;
+    }
+  }
+
+  /** Birimin çizilecek silahı: takılı item, yoksa sınıfın varsayılan donanımı (preload ve addView AYNI kuralı kullanır). */
+  private weaponPickOf(c: { uid: string; defId: string; side: string; summoned?: boolean }): WeaponPick | null {
+    const item = c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined;
+    // takılı item, yoksa sınıfın varsayılan donanımı (Pose Tester silahı; sefer / Endless kahramanında boş yuva = yalnızca ana el)
+    return this.weapons?.picks?.[c.uid] ?? unitWeaponPick(c.defId, item, c.side === 'party' && !!this.weapons?.items && !c.summoned);
   }
 
   /** Savaşın arka planı (preload yalnızca bunu yükler; seçim dosyalara göre, yüklü dokulara göre değil: iki çevrimiçi oyuncuda aynı). */
@@ -534,9 +568,7 @@ export class BattleScene extends Phaser.Scene {
         const max = (def as { maxStacks?: number } | undefined)?.maxStacks ?? 0;
         // Yığılan durum (Omen): rozet "x2"; kalan tur ve yığın can çubuğunun solundaki mühür yuvalarında (hexer.md bölüm 8)
         if (max > 1 && st.stacks) seals = { stacks: st.stacks, max, turns: st.turns, color: def?.color ?? '#b04fa8' };
-        // Yüklü durum (Abyssal Fury, madde 262): rozet kalan saldırı yükünü gösterir ("x3"; `turns` alanında tutulur, tur saymaz)
-        const charged = !!def?.attackCharges;
-        list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : charged ? `x${st.turns}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) && !charged });
+        list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) });
       }
       for (const g of this.battle.ground) {
         if (g.board !== c.board || !g.slots.includes(c.slot) || g.sourceSide === c.side) continue;
@@ -1688,7 +1720,7 @@ export class BattleScene extends Phaser.Scene {
     if (boards.length === 0) boards.push(skill.target === 'single_enemy' ? this.targetSide(actorUid) : actor.side);
     // Backstab: units that cannot be picked show as pale invalid plates (the reason shows on hover); other single-target skills only on hover
     const blocked = skill.target === 'single_enemy' ? blockedTargets(this.battle, actorUid, skillId) : [];
-    const pale = skill.requiresOpenBehind ? blocked : [];
+    const pale: Array<{ board: 'party' | 'enemy'; slot: number }> = skill.requiresOpenBehind ? blocked : outOfRangeCells(this.battle, actorUid, skillId); // range.md: out-of-range enemies pale (empty when range is off)
     for (const b of pale) if (!boards.includes(b.board)) boards.push(b.board);
     this.showBasePlates(
       boards.map((board) => ({
@@ -2058,12 +2090,19 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
-  /** Tooltip over an empty cell while choosing where to move: its row and what it means for melee; warns about a fallen ally's cell. */
+  /** Tooltip over an empty cell while choosing where to move: its row and which skills reach an enemy from there (range); warns about a fallen ally's cell. */
   private showMoveTip(actor: Combatant, slot: number, warn: boolean): void {
     this.hideInfoTip();
     const rows: Array<[string, string?]> = [[`Row ${this.battle.rowOf(slot) + 1}${this.battle.rowOf(slot) === 0 ? ' (front)' : ''}`]];
+    // Menzil (range.md): düşmanı hedefleyen skill'lerden kaçı bu hücreden bir düşmana ulaşır; menzil kapalıyken eski melee satırı
+    const attacks = actor.skills.map((id) => content.skills[id]).filter((s): s is SkillDef => !!s && ['single_enemy', 'area_enemies', 'all_enemies', 'random_enemies', 'area_any'].includes(s.target));
     const hasMelee = actor.skills.some((id) => content.skills[id]?.motion === 'melee' && content.skills[id]?.target !== 'self');
-    if (hasMelee) rows.push(this.battle.canMeleeFrom(actor.uid, slot) ? ['Melee skills usable from here', colors.heal] : ['Too far back for melee skills', colors.targetHighlight]);
+    if (!this.battle.rangeOn) {
+      if (hasMelee) rows.push(this.battle.canMeleeFrom(actor.uid, slot) ? ['Melee skills usable from here', colors.heal] : ['Too far back for melee skills', colors.targetHighlight]);
+    } else if (attacks.length > 0) {
+      const reach = attacks.filter((s) => this.battle.reachesFrom(actor, s, slot));
+      rows.push(reach.length === attacks.length ? ['All your attacks reach an enemy from here', colors.heal] : reach.length === 0 ? ['Out of range: no attack reaches an enemy from here', colors.targetHighlight] : [`In range from here: ${reach.map((s) => s.name).join(', ')}`, colors.heal]);
+    }
     if (warn) {
       const fallenUnit = this.battle.combatants.find((c) => c.side === actor.side && c.board === c.side && c.hp <= 0 && !c.summoned && c.slot === slot);
       rows.push([`${fallenUnit ? unitName(fallenUnit) : 'A fallen ally'} fell here: the cell is reserved for their resurrection`, colors.lethal]);
@@ -2220,7 +2259,7 @@ export class BattleScene extends Phaser.Scene {
 
   /** Skill açıklaması (yalnızca skill düğmesinin üstünde gösterilir). */
   private skillTip(actor: Combatant, skill: SkillDef): TipContent {
-    const info = describeSkill(skill, actor.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
+    const info = describeSkill(skill, actor.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }, this.battle.unitRange(actor));
     const kindColor = (k: (typeof info.kinds)[number]): string | undefined =>
       k === 'shield' ? colors.shield : k === 'magicShield' ? colors.magicShield : k ? colors.element[k] : undefined;
     const rows: Array<[string, string?]> = info.lines.map((l, i): [string, string?] => [l, kindColor(info.kinds[i])]);
@@ -3641,10 +3680,9 @@ export class BattleScene extends Phaser.Scene {
     const slots = c.board === 'party' ? layout.partySlots : layout.enemySlots; // units summoned onto the enemy board stand there
     const slot = slots[c.slot];
     if (!slot) return undefined;
-    const item = c.side === 'party' ? this.weapons?.items?.[c.uid] : undefined;
-    // takılı item, yoksa sınıfın varsayılan donanımı (Pose Tester silahı; sefer / Endless kahramanında boş yuva = yalnızca ana el)
-    const pick = this.weapons?.picks?.[c.uid] ?? unitWeaponPick(c.defId, item, c.side === 'party' && !!this.weapons?.items && !c.summoned);
-    const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick });
+    const pick = this.weaponPickOf(c);
+    const level = c.summoned ? undefined : c.side === 'enemy' ? this.unitLevels?.enemy : this.unitLevels?.party?.[c.uid];
+    const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick, ...(level ? { level } : {}) });
     view.makeTappable(
       (p?: Phaser.Input.Pointer) => {
         if (!p || !this.isSelectGesture(p)) this.onCombatantTap(view);

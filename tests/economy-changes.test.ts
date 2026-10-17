@@ -3,7 +3,7 @@ import { Battle, content, describeStat } from '../src/engine';
 
 /**
  * Ömer kararları (open-questions.md madde 212): tüm class'larda taban mana 30 (MP = 30 + 2 x INT), INT başına MP yenilenmesi ~0,33,
- * Aimed Shot başlangıç cooldown'u 2, Resurrection 20 MP, Tremor Slam gücü 0,6. Sayılar veriden okunur; bu testler kararların veride durduğunu kilitler.
+ * Aimed Shot başlangıç cooldown'u 3 (2026-10-17), Resurrection 20 MP, Tremor Slam gücü 0,6. Sayılar veriden okunur; bu testler kararların veride durduğunu kilitler.
  */
 const f = content.formulas;
 const a = f.attributes;
@@ -22,14 +22,13 @@ describe('mana ekonomisi', () => {
     }
   });
 
-  it('int başına mana artışı (mpPerInt) aynı: eski puan başına 2 (x2 stat ölçeğinde 1)', () => {
-    expect(a.mpPerInt * (content.formulas.statScale ?? 1)).toBe(2);
+  it('int başına mana artışı (mpPerInt): INT başına 1', () => {
+    expect(a.mpPerInt).toBe(1);
   });
 
   it('INT başına MP yenilenmesi ~0,33 (eski 0,25\'ten arttı); yenilenme = round(INT x mpRegenPerInt)', () => {
-    const S = content.formulas.statScale ?? 1; // x2 stat ölçeği: katsayı eski puan başına ~0,33
-    expect(a.mpRegenPerInt * S).toBeGreaterThan(0.3);
-    expect(a.mpRegenPerInt * S).toBeLessThan(0.36);
+    expect(a.mpRegenPerInt).toBeGreaterThan(0.15);
+    expect(a.mpRegenPerInt).toBeLessThan(0.18);
     for (const [id, def] of Object.entries(content.classes)) expect(def.stats.mpRegen, id).toBe(Math.round(def.attributes.int * a.mpRegenPerInt));
   });
 
@@ -48,19 +47,19 @@ describe('mana ekonomisi', () => {
 });
 
 describe('skill değişiklikleri (veri)', () => {
-  it('Archer Aimed Shot başlangıç cooldown\'u 2: turns modunda birimin ilk 2 turunda kullanılamaz; test modunda yok', () => {
-    expect(content.skills.aimed_shot!.initialCooldown).toBe(2);
+  it('Archer Aimed Shot başlangıç cooldown\'u 3 (Ömer 2026-10-17: ultimate ilk beklemesi +1): turns modunda ilk turlarında kullanılamaz; test modunda yok', () => {
+    expect(content.skills.aimed_shot!.initialCooldown).toBe(3);
     expect(content.skills.aimed_shot!.initialCooldown!).toBeLessThanOrEqual(f.cooldown.maxInitial);
     const mk = (mode: 'turns' | 'test') => new Battle(content.battleSetup('random-battle', 1, mode, { party: cells({ 0: 'archer' }), enemies: cells({ 0: 'defender' }) }, false));
     const turns = mk('turns');
-    expect(turns.get('party-0')!.cooldowns.aimed_shot).toBe(2);
+    expect(turns.get('party-0')!.cooldowns.aimed_shot).toBe(content.skills.aimed_shot!.initialCooldown);
     expect(turns.canUse('party-0', 'aimed_shot')).toEqual({ ok: false, reason: 'On cooldown' });
     expect(mk('test').get('party-0')!.cooldowns.aimed_shot).toBeUndefined();
   });
 
-  it('Resurrection MP bedeli 20 (cooldown 6 aynı)', () => {
+  it('Resurrection MP bedeli 20 (cooldown 5: Ömer 2026-10-17 classtune, 6 -> 5)', () => {
     expect(content.skills.resurrection!.cost).toEqual({ resource: 'mp', amount: 20 });
-    expect(content.skills.resurrection!.cooldown).toBe(6);
+    expect(content.skills.resurrection!.cooldown).toBe(5);
   });
 
   it('Defender Tremor Slam hasar gücü pozitif (madde 214: 0,8; madde 261 denge turu: düşürüldü, temel saldırı payı bandı için; güncel değer veride; Slow ve diğer sayılar aynı)', () => {

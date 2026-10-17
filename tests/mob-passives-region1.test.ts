@@ -67,8 +67,8 @@ describe('YM15 Head Start (Cutpurse)', () => {
   it('turns modunda savaş başında hız desteği: daha hızlı kahramandan önce oynar; pasif olayı yazılır; test modunda yok', () => {
     const e = effectOf('cutpurse', 'headStart');
     expect(e.speedBoost).toBeGreaterThan(0);
-    // Archer cutpurse'ten hızlı; destek olmadan önce Archer oynardı
-    expect(content.classes.archer!.stats.spd).toBeGreaterThan(content.mobs.cutpurse!.stats.spd);
+    // Archer cutpurse'ten yavaş değil (levels.md 2026-10-17: Archer DEX 28 -> 26, hız 26 -> 24 = Cutpurse); destek olmadan önce Archer oynardı
+    expect(content.classes.archer!.stats.spd).toBeGreaterThanOrEqual(content.mobs.cutpurse!.stats.spd);
     const b = arena([['archer', 1]], [['cutpurse', 0]], 'turns');
     expect(b.currentUid).toBe('enemy-0');
     expect(ofType(b.log, 'passive').some((x) => x.actor === 'enemy-0' && x.passive === 'head_start')).toBe(true);

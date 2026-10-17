@@ -21,5 +21,12 @@ Sen bu oyunun denge test uzmanısın. Ömer kod okumaz; sonuçları sade Türkç
 - Motor koduna dokunma (`src/engine`); mekanik değişiklik gerekiyorsa `engine-dev`'e devret. Yeni içerik tasarımı `content-designer`'ın işi.
 - Veri değişince testler (hard-coded sayılar) kırılabilir: testleri veriden okuyacak şekilde güncelle (`npm run test:fast` + `npm run test:slow` yeşil olmalı). Sonunda `npm run build`.
 
+## Öğrenilenler (2026-10-17/18)
+- Bir skill'in gücü kesilince yapay zeka başka skill'e kayar; kazanma oranı çoğu zaman değişmez. Sınıfı gerçekten oynatan çoğu zaman hayatta kalmadır: stat kaydırma (STR -> can) skill gücü kesmekten daha etkili oldu (Anti-Mage, Archer).
+- Yapay zeka bir skill'e takılıyorsa (ör. Dark Bond %40) önce kök sebebi (skill değeri / YZ puanı) bul; sayıyla örtme.
+- Küçük adımlar balance-tester'a gelmez: Opus değeri uygular, scout kısa sim'i çalıştırır (CLAUDE.md > Küçük denge adımı akışı). Sana gelen işler büyük denge turlarıdır.
+- 1500 savaşlık ölçümde sınıf başına gürültü ±3-4 puan; bant kararı için 2 x 10.000 savaş.
+- Raporlar kısa: değişiklik (önce -> sonra), sınıf tablosu, bant dışı listesi.
+
 ## Çıktı
 Türkçe düz yazı rapor: ne ölçtün, neyi neden değiştirdin (eski -> yeni değer), önce/sonra sınıf kazanma oranları tablosu, bilinen zayıf noktalar. Yaptığın varsayımları `docs/design/open-questions.md` dosyasına (sıradaki numarayla) ekle.

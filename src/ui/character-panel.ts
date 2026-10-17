@@ -29,7 +29,13 @@ import {
   slotDef,
   type ItemInstance,
   type SlotId,
+  canAddPoint,
+  mergeAlloc,
+  PRIMARY_BONUS_NAME,
+  xpToNext,
+  type StatAlloc,
 } from '../progression';
+import type { Attribute } from '../engine';
 import { wikiFiles } from '../wiki/files';
 import { statIconUrl } from './stat-tips';
 import { uiIconName } from './ui-icons';
@@ -73,7 +79,104 @@ export interface CharacterView {
   compact?: boolean;
   onHero: (id: string) => void;
   onSlotDouble?: (slot: SlotId) => void;
+  /** Level / stat puanı dağıtımı (levels.md; kaynak dağıtımı destekliyorsa). Yoksa yalnızca level ve XP gösterilir. */
+  level?: LevelPanel;
 }
+
+/** Stat puanı dağıtımı: bekleyen (onaylanmamış) puanlar ekranın elinde; Confirm kaynağa yazar. */
+export interface LevelPanel {
+  pending: StatAlloc;
+  onAdd: (k: Attribute) => void;
+  onSub: (k: Attribute) => void;
+  onReset: () => void;
+  onConfirm: () => void;
+}
+
+const ATTR_IDS: Attribute[] = ['str', 'dex', 'int', 'luck'];
+const pendingCount = (p: StatAlloc): number => ATTR_IDS.reduce((t, k) => t + (p[k] ?? 0), 0);
+
+/**
+ * Level bloğu (Ömer 2026-10-17, levels.md): "Level 5" + XP çubuğu; puan varsa sürüklenebilir puan taşı + Reset / Confirm. Puan taşı bir stat
+ * satırına sürüklenince (fare + dokunma) ya da satırdaki + ile o stata bir puan gider (bekleyen; Confirm yazar). Kural (temel stat diğer üçünün
+ * toplamını aşamaz) + düğmesini kapatır ve satırı bırakma hedefi yapmaz.
+ */
+function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null): HTMLElement {
+  const box = el('div', 'gr-lvl');
+  const level = hero.level ?? 1;
+  const need = xpToNext(level);
+  const xp = hero.xp ?? 0;
+  const head = el('div', 'gr-lvl-head');
+  head.append(el('span', 'gr-lvl-n', `Level ${level}`), el('span', 'gr-lvl-xp', need > 0 ? `${xp} / ${need} XP` : 'Max level'));
+  const bar = el('div', 'gr-xpbar');
+  const fill = el('i');
+  fill.style.width = `${need > 0 ? Math.min(100, Math.round((xp / need) * 100)) : 100}%`;
+  bar.append(fill);
+  box.append(head, bar);
+  const pend = lv ? pendingCount(lv.pending) : 0;
+  const free = (hero.statPoints ?? 0) - pend;
+  if (lv && (free > 0 || pend > 0)) {
+    const row = el('div', 'gr-pts');
+    const chip = el('span', `gr-pts-chip${free > 0 ? '' : ' empty'}`, String(free));
+    chip.title = 'Drag onto a stat, or tap + next to it';
+    if (free > 0) chip.dataset['ptdrag'] = '1';
+    row.append(chip, el('span', 'gr-pts-text', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
+    const acts = el('span', 'gr-pts-acts');
+    if (pend > 0) {
+      const reset = el('button', 'gr-btn sm', 'Reset');
+      reset.type = 'button';
+      reset.addEventListener('click', lv.onReset);
+      const ok = el('button', 'gr-btn sm primary', 'Confirm');
+      ok.type = 'button';
+      ok.addEventListener('click', lv.onConfirm);
+      acts.append(reset, ok);
+    }
+    row.append(acts);
+    box.append(row);
+    if (pend > 0 && primaryLost) box.append(el('div', 'gr-pts-warn', primaryLost));
+  }
+  if ((hero.skillPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill', `${hero.skillPoints} skill point${hero.skillPoints === 1 ? '' : 's'} saved for the skill trees`));
+  return box;
+}
+
+/** Puan taşının sürüklenmesi (fare + dokunma): bırakma hedefi `.gr-stat[data-attr].can-add`; hayalet imleci izler. */
+function attachPointDrag(root: HTMLElement, onDrop: (k: Attribute) => void): void {
+  root.addEventListener('pointerdown', (e) => {
+    const chip = (e.target as HTMLElement).closest<HTMLElement>('[data-ptdrag]');
+    if (!chip) return;
+    e.preventDefault();
+    e.stopPropagation();
+    const ghost = el('div', 'gr-pts-ghost', '+1');
+    document.body.append(ghost);
+    const targets = [...root.querySelectorAll<HTMLElement>('.gr-stat.can-add')];
+    targets.forEach((x) => x.classList.add('drop-ok'));
+    const at = (x: number, y: number): HTMLElement | undefined =>
+      targets.find((t) => {
+        const r = t.getBoundingClientRect();
+        return x >= r.left && x <= r.right && y >= r.top && y <= r.bottom;
+      });
+    const move = (ev: PointerEvent): void => {
+      ghost.style.left = `${ev.clientX}px`;
+      ghost.style.top = `${ev.clientY}px`;
+      const hit = at(ev.clientX, ev.clientY);
+      targets.forEach((t) => t.classList.toggle('drop-on', t === hit));
+    };
+    const up = (ev: PointerEvent): void => {
+      window.removeEventListener('pointermove', move, true);
+      window.removeEventListener('pointerup', up, true);
+      window.removeEventListener('pointercancel', up, true);
+      ghost.remove();
+      targets.forEach((t) => t.classList.remove('drop-ok', 'drop-on'));
+      const hit = ev.type === 'pointerup' ? at(ev.clientX, ev.clientY) : undefined;
+      const k = hit?.dataset['attr'] as Attribute | undefined;
+      if (k) onDrop(k);
+    };
+    move(e);
+    window.addEventListener('pointermove', move, true);
+    window.addEventListener('pointerup', up, true);
+    window.addEventListener('pointercancel', up, true);
+  });
+}
+
 
 export interface CharacterRender {
   el: HTMLElement;
@@ -85,7 +188,7 @@ export interface CharacterRender {
 /** Character sayfasının DOM'u. */
 export function renderCharacter(v: CharacterView): CharacterRender {
   const root = el('div', `gr-char${v.compact ? ' compact' : ''}`);
-  const hero = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
+  let hero = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
   // --- kahramanlar (sığmazsa kayar; skill satırının üstüne kadar uzanır)
   const list = el('div', 'gr-heroes');
   for (const h of v.heroes) {
@@ -158,11 +261,23 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     slots.append(cell);
   }
   mid.append(slots);
+  // Level puanları (bekleyen dahil): statlar ve skill sayıları dağıtım sonrası değerlerle; fark sütunu bekleyen puanların etkisini gösterir
+  const pending = v.level?.pending ?? {};
+  const pend = pendingCount(pending);
+  const committed = hero;
+  const allocNow = mergeAlloc(hero.alloc, pending);
+  if (pend) hero = { ...hero, alloc: allocNow };
+  const freePts = (hero.statPoints ?? 0) - pend;
   const stats = heroStats(hero);
   const fd = v.focus ? itemDef(v.focus.id) : undefined;
   const focusSlot = fd ? defaultEquipSlot(hero.equipment, fd) : undefined;
   const usableFocus = v.focus && fd && focusSlot && !isPlanError(planEquip(hero.class, hero.equipment, v.focus, focusSlot)) && hero.equipment[focusSlot]?.uid !== v.focus.uid ? v.focus : null;
-  const diff = new Map((usableFocus ? equipDiff(hero, usableFocus, focusSlot) : []).map((x) => [x.id, x.delta]));
+  const pendDiff = (): Array<[string, number]> => {
+    const a = heroPanel(hero!);
+    const b = heroPanel(committed);
+    return a.map((x, i) => [x.id, Math.round((x.value - (b[i]?.value ?? x.value)) * 10000) / 10000] as [string, number]).filter(([, d]) => d !== 0);
+  };
+  const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : pend ? pendDiff() : []);
   const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
   const sg = el('div', 'gr-stats');
   for (const p of heroPanel(hero)) {
@@ -174,6 +289,37 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     ico.alt = '';
     ico.draggable = false;
     row.append(ico, el('span', 'gr-stat-k', p.label), el('span', 'gr-stat-v', fmtPanel(p)));
+    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı)
+    const attr = ATTR_IDS.find((k) => k === p.id);
+    if (attr && v.level && (freePts > 0 || (pending[attr] ?? 0) > 0)) {
+      const lv = v.level;
+      row.dataset['attr'] = attr;
+      const can = freePts > 0 && canAddPoint(hero.class, allocNow, attr);
+      if (can) row.classList.add('can-add');
+      const pm = el('span', 'gr-pm');
+      if ((pending[attr] ?? 0) > 0) {
+        const sub = el('button', 'gr-pm-b', '−');
+        sub.type = 'button';
+        sub.title = `Take back a point from ${p.label}`;
+        sub.addEventListener('click', (e) => {
+          e.stopPropagation();
+          lv.onSub(attr);
+        });
+        pm.append(sub);
+      }
+      if (freePts > 0) {
+        const add = el('button', 'gr-pm-b', '+');
+        add.type = 'button';
+        add.disabled = !can;
+        add.title = can ? `Add a point to ${p.label}` : 'A base stat can never exceed the sum of the other three';
+        add.addEventListener('click', (e) => {
+          e.stopPropagation();
+          if (can) lv.onAdd(attr);
+        });
+        pm.append(add);
+      }
+      row.append(pm);
+    }
     // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
     if (p.capped) {
       row.classList.add('capped');
@@ -189,7 +335,16 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     }
     sg.append(row);
   }
-  mid.append(el('div', 'gr-sec', 'Stats'), sg);
+  const lostTo = pend && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
+  const primaryLost = lostTo ? `${PRIMARY_BONUS_NAME[lostTo]} turns off while another base stat is above ${lostTo.toUpperCase()}.` : null;
+  mid.append(levelBlock(hero, v.level, primaryLost), el('div', 'gr-sec', 'Stats'), sg);
+  if (v.level) {
+    const lv = v.level;
+    const h = hero;
+    attachPointDrag(mid, (k) => {
+      if (freePts > 0 && canAddPoint(h.class, allocNow, k)) lv.onAdd(k);
+    });
+  }
   const extraCaps = cappedExtras(hero);
   if (extraCaps.length) mid.append(el('div', 'gr-cap-note', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
   root.append(mid);

@@ -3,6 +3,7 @@ import defenderRaw from '../data/classes/defender.json';
 import { Battle, content } from '../src/engine';
 import type { BattleEvent } from '../src/engine';
 import { installLegacySkill } from './legacy-skills';
+import { withOldLayout } from './range-helpers';
 
 type Ev<T extends BattleEvent['type']> = Extract<BattleEvent, { type: T }>;
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T): Ev<T>[] => events.filter((e): e is Ev<T> => e.type === type);
@@ -38,7 +39,7 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       }
       // Boss durumları (Bridge Warden): etkisi motor kuralıyla (untilResolved: Ash Brand telgrafı, Staggered eylem kaybı, Anchored zırh eki)
       if (def.untilResolved) continue;
-      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.attackCharges !== undefined, id).toBe(true);
+      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true, id).toBe(true);
     }
   });
 
@@ -101,15 +102,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(reduced).toBe(Math.round(normal * 0.75));
   });
 
-  it('Abyssal Cry (madde 262): can bedeli yok, kendine Abyssal Fury (yüklü buff); Fortified durumu generic olarak hâlâ alınan hasarı ~yarıya indirir', () => {
-    const b = calm(grid(cells({ 0: 'warrior' }), cells({ 0: 'archer' })));
-    const w = b.get('party-0')!;
-    w.rage = w.maxRage; // Abyssal Cry'ın bedeli Rage
-    const events = act(b, 'party-0', 'abyssal_cry');
-    expect(ofType(events, 'damage')).toHaveLength(0);
-    expect(w.hp).toBe(w.maxHp);
-    expect(hasStatus(b, 'party-0', 'abyssal_fury')).toBe(true);
-    expect(hasStatus(b, 'party-0', 'fortify')).toBe(false);
+  it('Fortified durumu generic olarak hâlâ alınan hasarı ~yarıya indirir (hiçbir skill vermiyor; debug ile eklenebilir)', () => {
     // fortify durumu (artık hiçbir skill vermiyor; debug ile eklenebilir) aynı saldırıdan ~yarı hasar aldırır
     const hit = (fort: boolean) => {
       const c = calm(grid(cells({ 0: 'warrior' }), cells({ 0: 'archer' })));
@@ -402,12 +395,12 @@ describe('Taunt: dostları korur', () => {
 });
 
 describe('Druid: Rejuvenate başlangıç şifası, dizilim ve Treant menzili', () => {
-  it('Druid\'li takımlarda ön sırada boş hücre bırakılmaz: ön sıra 3 kişiyle dolabilir', () => {
+  it('Druid\'li takımlarda ön sırada boş hücre bırakılmaz: ön sıra 3 kişiyle dolabilir (menzil KAPALI: eski dizilim)', () => {
     let full3 = 0;
     for (let seed = 1; seed <= 300; seed++) {
       const { party } = content.rollTeams('random-battle', seed);
       if (!party.includes('druid')) continue;
-      for (const cellsList of [content.randomCells(party, seed), content.defaultCells(party)]) {
+      for (const cellsList of withOldLayout(content.formulas, () => [content.randomCells(party, seed), content.defaultCells(party)])) {
         if (cellsList.slice(0, 3).filter(Boolean).length === 3) full3++;
       }
     }

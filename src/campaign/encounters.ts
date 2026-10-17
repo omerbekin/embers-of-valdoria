@@ -2,7 +2,8 @@ import { CELL_COUNT, classes, encounterUnit, randomPool, summons } from '../engi
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
-import { chapterEnemyMods } from './power';
+import { chapterEnemyMods, nodeLevel } from './power';
+import { withEnemyLevel } from '../progression/levels';
 import { loadoutSetup } from '../progression/loadout';
 import { activeHeroes, heroById } from './state';
 import type { UnitSetup } from '../engine/types';
@@ -63,6 +64,8 @@ export interface BattlePlan {
   background?: string;
   /** Savaş başı Valor'u (açıksa; motora teams.valor.party olarak gider). */
   valor?: number;
+  /** Düşmanların level'ı = düğüm seviyesi (levels.md > Düşman level'ı; ad plakasında "Lv N"). */
+  enemyLevel: number;
 }
 
 /**
@@ -101,6 +104,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   });
   // Bölüm ölçeği (data/campaign/power-budget.json): açık ilerleme sistemi yokken 1 => düşmanlar bugünküyle aynı
   const chapterMods = chapterEnemyMods(s.mapId, n.id);
+  // Düşman level'ı (Ömer 2026-10-17): düğüm seviyesi; kahramanla aynı temel stat büyümesi (attrAdd), çarpanların üstüne düz ek
+  const enemyLevel = nodeLevel(s.mapId, n.id);
   if (caps.unitMods)
     for (const u of enc.def.units) {
       const diff = CONFIG.difficulties[s.difficulty];
@@ -109,7 +114,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       // seferin genel düşman ölçeği (eğitim bölgesi hariç): boss rütbeli -> boss; elit düğümün diğer birimleri -> elite; kalan -> all
       const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : n.type === 'elite' ? (es?.elite ?? es?.all) : es?.all;
       const own = withDifficulty(withDifficulty(u.mods, scale), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
-      const mods = withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined);
+      const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined), u.class, enemyLevel);
       const setup: UnitSetup = {
         ...(mods ? { modifiers: mods } : {}),
         ...(u.name ? { displayName: u.name } : {}),
@@ -133,6 +138,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     // Arka plan önceliği: karşılaşma > düğüm > bölge (dosya yoksa sahne varsayılan arka plana düşer)
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
     ...(s.valor !== undefined ? { valor: s.valor } : {}),
+    enemyLevel,
   };
 }
 

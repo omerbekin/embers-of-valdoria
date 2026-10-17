@@ -11,13 +11,14 @@ import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
-import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, type Grip } from '../progression/items';
+import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
 import { dropChances } from '../progression/drop';
 import { RARE } from '../progression/rare';
 import endlessJson from '../../data/endless.json';
+import levelsJson from '../../data/levels.json';
 import { BATTLE_SPEEDS } from '../ui/battle-speed';
 import layout from '../../data/battle-layout.json';
-import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, TARGET_TEXT } from '../engine';
+import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
 import { isAccuracyCritDebuff } from '../engine/cc-immunity';
 import { statusStackMode } from '../engine/status-stack';
@@ -233,7 +234,7 @@ function slotOf(skillId: string, owner: Owner): number | null {
 export function buildSkill(skill: SkillDef): WikiSkill {
   const owner = skillOwner(skill.id);
   const def = unitDefs()[owner.id];
-  const info = describeSkill(skill, statsFor(skill), f, unitDefs(), effectDefs());
+  const info = describeSkill(skill, statsFor(skill), f, unitDefs(), effectDefs(), def?.range);
   const elements = skillElements(skill);
   return {
     id: skill.id,
@@ -353,6 +354,26 @@ function wikiMiniGrid(skill: SkillDef): MiniShape | null {
   return skillMiniGrid(skill, f.formation); // area_enemies and area_any (either side note)
 }
 
+/** Menzil makalesi (range.md, Ömer 2026-10-17): kural metni + sınıf menzilleri ve menzilsiz (Global) skill'ler veriden. */
+function rangeArticle(): WikiArticle {
+  const rows = f.formation.rows;
+  const classes = Object.values(content.classes).filter((d) => !d.testOnly && !d.hidden);
+  const globals = allSkills().filter((s) => s.global && skillOwner(s.id).kind !== 'mob').map((s) => s.name);
+  const own = allSkills().filter((s) => s.range !== undefined && skillOwner(s.id).kind === 'class' && !content.classes[skillOwner(s.id).id]?.testOnly).map((s) => `${s.name} ${s.range}`);
+  // dost skill'leri yalnızca kendi range'i varsa kısıtlanır (range.md: Guard 2); veriden
+  const allyRanged = allSkills().filter((s) => s.range !== undefined && (s.target === 'single_ally' || s.target === 'dead_ally') && skillOwner(s.id).kind === 'class' && !content.classes[skillOwner(s.id).id]?.testOnly).map((s) => `${s.name} reaches allies up to ${s.range} rows away`);
+  return article('range', 'Basics', 'Range', 'bow', [
+    p(`Every skill has a range. The distance to a target is: how many rows deep you stand on your own side (front row 0, back row ${rows - 1}), plus how deep the target stands behind the first row of its own side that still has someone in it, plus 1. Front row to front row is 1; back row to back row is ${2 * (rows - 1) + 1}.`),
+    p('Empty rows on your own side count: standing further back costs range. Empty rows in front of the enemy do not count: an enemy cannot escape melee by leaving its front row empty, the next filled row becomes its front.'),
+    p('A skill shows its range on its card ("Range 4"). Skills of the same class share the class range unless the card says otherwise; skills that fall from the sky or hit everyone have no range ("Global").'),
+    p(allyRanged.length ? `Healing and support skills reach any ally, except: ${allyRanged.join(', ')} (counted in rows between you and the ally).` : 'Healing and support skills reach any ally.'),
+    p('Area skills only need the cell you aim at to be in range; the area itself may reach further. A taunting enemy only forces your attack if it is in range; otherwise you may hit anyone else you can reach. When no target is in range the skill is greyed out: Move closer or pick another skill. The enemy does the same: it steps into range and keeps fragile units out of yours.'),
+    list(...classes.map((d) => `${d.name}: range ${d.range ?? f.range?.default ?? 1}`)),
+    ...(own.length ? [p(`Skills with their own range: ${own.join(', ')}.`)] : []),
+    ...(globals.length ? [p(`Global skills (no range): ${globals.join(', ')}.`)] : []),
+  ], '#e8c47e');
+}
+
 function areaSkillTable(): { head: string[]; rows: string[][] } {
   const waves: Record<string, string> = { row: 'row by row', column: 'lane by lane', distance: 'outward from the anchor' };
   const rows = allSkills()
@@ -399,11 +420,17 @@ export function buildGettingStarted(): WikiArticle[] {
     ]),
     article('formation', 'Basics', 'Formation and rows', 'team', [
       p(`Each side stands on a ${rows} x ${lanes} grid: ${rows} rows deep and ${lanes} lanes wide (${rows * lanes} cells). A normal team of ${teamSize()} leaves cells empty; a side of ${rows * lanes} fills the whole grid. Empty cells matter: a unit can step onto one with the Move action (see Actions in the Mechanics section).`),
-      p(`Melee skills can only reach the first ${f.formation.meleeRows === 1 ? 'occupied row' : `${f.formation.meleeRows} occupied rows`} of the enemy team, so the units in front shield the ones behind them. Ranged and magic skills reach anyone. Some melee skills say they charge or reach further; their description tells you.`),
-      ...Object.values(content.statuses).filter((d) => d.reachBonus).map((d) => p(`${d.name} adds ${d.reachBonus} row${(d.reachBonus ?? 0) > 1 ? 's' : ''} to melee reach while it lasts: melee skills also hit the row behind the front row, and the unit can strike from one row further back. Skills that say reach bonuses do not extend them (Whirlwind) keep their normal reach.${d.attackCharges ? ` It lasts for ${d.attackCharges} attacks, not turns: every damaging skill the unit uses spends one charge (a multi-hit or area skill counts as one attack).` : ''}`)),
-      p('Melee classes are placed in front. A melee unit only stands in a back row once the rows before it are full, so fighters in front, archers and mages behind is the normal picture.'),
+      ...(f.range?.enabled
+        ? [p('Every skill has a range (see Range in the Basics section): melee skills reach only the front, bows and spells reach deeper. Standing further back keeps you safer but costs you range.')]
+        : [p(`Melee skills can only reach the first ${f.formation.meleeRows === 1 ? 'occupied row' : `${f.formation.meleeRows} occupied rows`} of the enemy team, so the units in front shield the ones behind them. Ranged and magic skills reach anyone. Some melee skills say they charge or reach further; their description tells you.`)]),
+      p(
+        f.range?.enabled
+          ? 'Automatic formations (Randomize, Auto arrange, random enemy waves) follow range: every unit starts where its main attack reaches the enemy front from the first turn. Melee fighters and taunting tanks stand in front, spearmen (range 2) just behind them, casters and Anti-Mage in the middle rows, the Mage behind them and the Archer at the very back. Fragile units keep behind sturdier ones, a Guard user stays close to the allies it can protect, and when the enemy has area skills the fragile units spread out instead of crowding one row or lane. Hand-placed campaign and boss formations never change.'
+          : 'Melee classes are placed in front. A melee unit only stands in a back row once the rows before it are full, so fighters in front, archers and mages behind is the normal picture.',
+      ),
       p('Area skills hit a group of cells around the cell you pick, in a fixed shape (a whole row, a whole column, a block or a cross; see Area shapes in the Mechanics section). You can pick an empty cell too, as long as the shape still covers an enemy.'),
     ]),
+    ...(f.range?.enabled ? [rangeArticle()] : []),
     article('mana', 'Basics', 'MP and cooldowns', statIconName('mp'), [
       p(`Skills cost MP. Every unit has ${a.mpBase} base MP (the same for all classes) plus ${a.mpPerInt} per point of Intelligence. At the start of its own turn, every unit regains MP equal to Intelligence x ${num(a.mpRegenPerInt)} (rounded; 0 Intelligence regains nothing) and HP equal to Strength x ${num(a.hpRegenPerStr)}. The Rest action restores extra MP on demand.`),
       p('This regeneration shows on the bars, not as floating numbers: the HP or MP bar flashes briefly and a small faint "+1" or "+2 MP" appears next to it. The combat log lists it on its own line.'),
@@ -505,6 +532,20 @@ function multiplayerArticle(): WikiArticle {
 }
 
 /** Debuff'ların yığılmaması (Ömer 2026-10-10): kural statuses.json > stack'ten; yığılan istisnalar (Omen) adıyla sayılır. */
+/** Rage makalesi: hasar alınca Rage veren pasifler (Berserker rageOnHurt; veriden). */
+function rageHurtLines(): WikiBlock[] {
+  return Object.values(content.classes).filter((c) => !c.testOnly && c.passive?.effect.type === 'rage' && c.passive.effect.rageOnHurt).map((c) => {
+    const r = (c.passive!.effect as Extract<NonNullable<CombatantDef['passive']>['effect'], { type: 'rage' }>).rageOnHurt!;
+    return p(`${c.passive!.name} (${c.name}): losing HP gives Rage, ${num(r.perHpPercent)} per 1% of max HP lost${r.perHitCap !== undefined ? ` (at most ${r.perHitCap} per hit)` : ''}. Damage a shield absorbs, a hit Lucky Escape ignores and a killing blow give none.`);
+  });
+}
+
+/** Rage makalesi: Rage'in tamamını harcayan, harcanan Rage ve hedefin eksik canıyla büyüyen skill'ler (Headsman's Blow; veriden). */
+function rageSpendLines(): WikiBlock[] {
+  return allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && (!!e.powerPerRage || !!e.executeBonus)).map((e) =>
+    p(`${s.name}: ${s.cost.spendAll ? `spends ALL your Rage (at least ${s.cost.amount}); ` : ''}${e.powerPerRage ? `deals ${pct(e.power)} ${e.scale.toUpperCase()} plus ${pct(e.powerPerRage)} ${e.scale.toUpperCase()} for every Rage spent` : `deals ${pct(e.power)} ${e.scale.toUpperCase()}`}${e.executeBonus ? `, and up to +${pct(e.executeBonus)} more the more HP the target is missing (counted before the hit)` : ''}. Waiting for more Rage, or for a wounded target, makes it hit harder.`)));
+}
+
 function debuffStackingText(): string {
   const debuffs = Object.values(content.statuses).filter((d) => d.type === 'debuff');
   const stacking = debuffs.filter((d) => statusStackMode(d) === 'stack').map((d) => d.name);
@@ -631,7 +672,9 @@ export function buildMechanics(): WikiArticle[] {
     article('rage', 'Special rules', 'Rage', 'rage', [
       p(`Some classes have a Rage bar next to their HP and MP: ${Object.values(content.classes).filter((c) => c.maxRage !== undefined).map((c) => c.name).join(', ') || 'none yet'}.`),
       list(...describeRage(f)),
-      p(`Skills that cost Rage: ${allSkills().filter((s) => s.cost.resource === 'rage').map((s) => `${s.name} (${s.cost.amount})`).join(', ') || 'none yet'}.`),
+      p(`Skills that cost Rage: ${allSkills().filter((s) => s.cost.resource === 'rage').map((s) => `${s.name} (${skillCostLabel(s.cost)})`).join(', ') || 'none yet'}.`),
+      ...rageHurtLines(),
+      ...rageSpendLines(),
     ], '#c0392b'),
     article('area-shapes', 'Special rules', 'Area shapes', 'blast', [
       p('Some skills hit a shape made of cells instead of one target. You pick an anchor cell (it may be empty); every living enemy standing inside the shape is hit. Row means the same depth (all lanes of one row); column means one lane across all rows.'),
@@ -645,7 +688,7 @@ export function buildMechanics(): WikiArticle[] {
         `Either side: a few area skills (${allSkills().filter((s) => s.target === 'area_any').map((s) => s.name).join(', ') || 'none yet'}) can be thrown on the enemy side or on your own side. Each of their effects names who it touches: on the enemy side only enemies are affected, on your side only allies.`,
       ),
       p('Some area skills strike in waves: the shape is split into stages that land one after another. Row by row starts at the front row (closest to the attacker) and moves back; lane by lane starts at the top lane; outward waves start at the anchor cell and spread to its neighbours. Waves change only the order, never the damage: every enemy in the shape is still hit once.'),
-      p('Melee skills with a shape only hit enemies that melee can reach (the front rows); enemies in the shape but out of reach are not hit. A shape is valid only if it covers at least one enemy that can be hit. Shape skills ignore taunt. Test classes such as the Geometer carry one skill per shape; they never appear in random teams.'),
+      p((f.range?.enabled ? 'Range counts to the cell you aim at: that cell must be in range, but the shape may spill past it and hits every enemy inside. A shape is valid only if it covers at least one enemy.' : 'Melee skills with a shape only hit enemies that melee can reach (the front rows); enemies in the shape but out of reach are not hit. A shape is valid only if it covers at least one enemy that can be hit.') + ' Shape skills ignore taunt. Test classes such as the Geometer carry one skill per shape; they never appear in random teams.'),
       { kind: 'table', ...areaSkillTable() },
     ], '#c9a0ff', shapeExamples()),
     article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'boot', [
@@ -654,11 +697,12 @@ export function buildMechanics(): WikiArticle[] {
         const info = describeGlobalSkill(d, f);
         return `${info.name}: ${[info.summary, ...info.lines].map((s) => s.replace(/\.$/, '')).join('. ')}.`;
       })),
-      p('The enemy team uses these actions too: it rests when a strong skill is out of MP, waits when nothing useful can be done, and moves fragile units out of melee reach.'),
+      p(`The enemy team uses these actions too: it rests when a strong skill is out of MP, waits when nothing useful can be done, ${f.range?.enabled ? 'moves fragile units out of enemy range, and steps closer when none of its skills can reach an enemy' : 'moves fragile units out of melee reach'}.`),
     ], '#9ec5e8'),
     valorArticle(),
+    levelsArticle(),
     article('backstab', 'Special rules', 'Strikes from behind and sure crits', 'backstab', [
-      p('Some assassin skills slip behind the target, stab it in the back and return. They ignore the melee row rules (any row can be targeted), but only a target with an empty cell right behind it can be chosen: the next row back, same lane, must hold no living unit. A corpse or a cell kept for a fallen ally does not block it; a target in the back row can never be chosen ("No room behind the target"), and one with a living unit behind it is "shielded from behind". Moving units (or a unit falling) can open the way. The caster is drawn there only for the strike: the formation does not change.'),
+      p(`Some assassin skills slip behind the target, stab it in the back and return. ${f.range?.enabled ? 'They still need range like any skill' : 'They ignore the melee row rules (any row can be targeted)'}, but only a target with an empty cell right behind it can be chosen: the next row back, same lane, must hold no living unit. A corpse or a cell kept for a fallen ally does not block it; a target in the back row can never be chosen ("No room behind the target"), and one with a living unit behind it is "shielded from behind". Moving units (or a unit falling) can open the way. The caster is drawn there only for the strike: the formation does not change.`),
       p(`Some hits are always critical: no crit roll is made and the crit multiplier (x${num(a.critMult)}) always applies. The hit roll still happens, so they can still miss or be dodged.`),
       p(`Skills that strike from behind: ${allSkills().filter((s) => s.requiresOpenBehind).map((s) => s.name).join(', ') || 'none yet'}. Always critical: ${allSkills().filter((s) => s.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)).map((s) => s.name).join(', ') || 'none yet'}.`),
       p(`Some skills carry extra crit chance of their own: it is added to the caster's crit chance (statuses included) for that skill's hits only. ${allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'damage' }> => e.type === 'damage' && !!e.critBonus && !e.guaranteedCrit).slice(0, 1).map((e) => `${s.name} +${pct(e.critBonus!)}`)).join(', ') || 'None yet'}.`),
@@ -846,6 +890,26 @@ function valorArticle(): WikiArticle {
   ], '#ffb35a');
 }
 
+/** Level / XP makalesi (data/levels.json; Ömer 2026-10-17, levels.md). Sayılar veriden. */
+function levelsArticle(): WikiArticle {
+  const L = levelsJson;
+  const m = L.nodeMult;
+  const req = (ITEM_DATA.levelReq?.offset ?? 3);
+  return article('levels', 'Special rules', 'Levels and XP', 'muscle', [
+    p(`Heroes grow from Level 1 to Level ${L.maxLevel}. Each chapter of the campaign spans about ${L.levelsPerChapter} levels; a hero who plays every stop once ends a chapter a level or two below its cap, and the cap is reached by fighting again or in Endless.`),
+    list(
+      `XP comes from every enemy you defeat and is shared by every hero who entered the battle (a hero who falls still counts). Kills made after a hero has fallen give that hero ${pct(L.fallenShare)} of their share.`,
+      `Stops: a battle gives ${num(m.battle)}x, an elite ${num(m.elite)}x and a boss ${num(m.boss)}x XP; an event or treasure without a fight gives a fixed ${num(m.event)}x share.`,
+      `Every stop has a level. A hero more than ${L.gap.fullBand} levels above or below it gains less XP, and nothing at ${L.gap.zeroAt} levels apart. A hero who is far behind the rest of a company that fits the stop still gains full XP, and heroes below the company's average gain a catch-up bonus (up to +${pct(L.catchUp.max)}). New companions join at Level 1.`,
+      `Each level gives ${L.statPointsPerLevel} stat points to place yourself (each adds ${L.statPerPoint} to STR, DEX, INT or LUCK) and ${L.skillPointsPerLevel} skill point saved for the skill trees, and fully heals the hero (a fallen hero stays down). Spend points in Gear > Character: drag the point stone onto a stat or tap +, then Confirm. Points can wait.`,
+      'A base stat can never be higher than the other three base stats together. Bonuses from items do not count for this rule.',
+      `Items need a level: an item of item level N needs Level N - ${req} or higher.`,
+      `Enemies have levels too: every enemy is the level of its stop (in Endless, of its wave; shown as "Lv N" above its name) and grows like a hero, ${L.statPointsPerLevel} stat points per level spread to match its own build, under the same base stat rule. Its HP and other stats follow from its stats.`,
+      `Endless: every run starts at Level 1 and heroes level up with the waves. Quick Battle and online battles are always Level 1, for heroes and enemies alike.`,
+    ),
+  ], '#f3d999');
+}
+
 /** Endless makalesi (data/endless.json; sürekli akış, ödül kartları, ceset + Revive kartı, tüccar, torba). Sayılar veriden. */
 function endlessArticle(): WikiArticle {
   const E = endlessJson;
@@ -895,11 +959,33 @@ function gripText(): string {
   return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => f.name.toLowerCase().replace(/s$/, '')).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
 }
 
+/** Silah gücü, örtük statlar, başlangıç silahı ve seviye şartı (Item Güçlendirme, Ömer 2026-10-17; sayılar veriden). */
+function weaponPowerText(): string[] {
+  const w = ITEM_DATA.weaponPower;
+  const item = (id: string) => ITEM_DATA.items.find((d) => d.id === id)!;
+  const pw = (id: string, L: number) => weaponPowerOf(item(id), L);
+  const st = ITEM_DATA.starterWeapons;
+  const starters = Object.entries(st.classes)
+    .map(([c, id]) => `${content.classes[c]?.name ?? c}: ${item(id).name}`)
+    .join(', ');
+  const imp = (k: string, L: number) => {
+    const d = ITEM_DATA.implicits[k];
+    return d ? d.text.replace('{0}', String(implicitValues(d, L)[0] ?? 0)) : '';
+  };
+  const R = ITEM_DATA.levelReq;
+  return [
+    `Weapon power: every weapon has a base power that grows with its item level (${w.base} + ${w.perIlvl} per item level for a one-handed weapon: ${pw('woodcutters_axe', 1)} at item level 1, ${pw('woodcutters_axe', 10)} at 10, ${pw('woodcutters_axe', 30)} at 30). Skill damage is multiplied by (1 + power / 100), staffs and charms included; healing and shields are not. Two-handed weapons and bows have ${Math.round((w.grip.two - 1) * 100)}% more power than one-handed ones because they block the off-hand; charms ${Math.round((w.grip.charm - 1) * 100)}% more; daggers ${Math.round((1 - (w.family?.['daggers'] ?? 1)) * 100)}% less. A dagger in the off-hand adds ${Math.round(w.offhandShare * 100)}% of its power. Rarity does not change power: it only adds affixes.`,
+    `Base stats: daggers also carry ${imp('daggers', 10)}, charms ${imp('charms', 10)} (at item level 10, growing with item level). A shield's base value is armor, not damage (${imp('shield', 10)} at item level 10) on top of its affixes. Base stats count toward the gear limits.`,
+    `Starter weapons: every hero starts with a Common item level ${st.ilvl} weapon of their class (${starters}). Damage is measured against it: with the starter weapon a hero deals exactly the damage of Quick Battle, a stronger weapon deals more, and a hero with no weapon deals less. Starter weapons are normal items: you can sell or replace them.`,
+    `Level requirement: an item needs hero level item level - ${R.offset} (at least ${R.min}; item level 12 needs level ${levelRequirement(12)}). Below that it cannot be equipped: its card shows "Requires Level X" in red, the comparison is still shown, and Equip best skips it.`,
+  ];
+}
+
 function itemsArticleBody(): WikiArticle {
   const L = itemsJson.loot;
   const fams = itemsJson.weaponFamilies.map((x) => `${x.name} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
   return article('items', 'Campaign', 'Items and gear', 'helm', [
-    p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage. Quick Battle and multiplayer do not use items.`),
+    p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage: weapons multiply it through their power. Quick Battle and multiplayer do not use items (every hero counts as holding their class's starter weapon).`),
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
       `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good. The range itself grows only with item level, but rarity decides how high the roll lands: ${rollFloorText()}. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
@@ -913,6 +999,7 @@ function itemsArticleBody(): WikiArticle {
       rareDropText(),
       `Weapons come in families and each class uses only its own: ${fams}. Every other slot fits everyone.`,
       gripText(),
+      ...weaponPowerText(),
       `Loot: a victory drops about ${L.perPartyMember.battle} items per hero in the fight (elites ${L.perPartyMember.elite}, bosses ${L.perPartyMember.boss}), chests at least one item; their rarity comes from the drop table only. Drops are the same on every difficulty. Winning the same battle again gives less (${L.repeat.map((x) => `${Math.round(x.items * 100)}%`).join(' / ')}).`,
       `The bag holds ${itemsJson.bag} items. When it is full, loot that does not fit waits on the Spoils card: discard something to make room and take it, or it is left behind when you continue. You can discard items in the Gear screen too (Rare and better ask first). Open Gear from the Party window or in a town; Equip best picks the strongest usable items for you.`,
       "Primary bonus: if an item would raise another stat above a hero's primary stat, the primary bonus (Resilience, Hunter's Mark, Mana Echo or Lucky Escape) switches off. The Gear screen warns you before you equip it.",
@@ -935,7 +1022,7 @@ function bossArticles(): WikiArticle[] {
     const skillLines = def.skills.flatMap((id) => {
       const sk = content.skills[id];
       if (!sk) return [];
-      const info = describeSkill(sk, def.stats, f, unitDefs(), effectDefs());
+      const info = describeSkill(sk, def.stats, f, unitDefs(), effectDefs(), def.range);
       const when = sk.minPhase && sk.minPhase > 1 ? ` (from phase ${sk.minPhase})` : '';
       return [`${def.skills.indexOf(id) + 1}. ${sk.name} [${skillRange(sk)}]${when}:${info.lines.join('; ')}${sk.cooldown ? `; cooldown ${sk.cooldown}` : ''}`];
     });
@@ -994,7 +1081,7 @@ function mobArticles(): WikiArticle[] {
           ...def.skills.flatMap((id) => {
             const sk = content.skills[id];
             if (!sk) return [];
-            const info = describeSkill(sk, def.stats, f, unitDefs(), effectDefs());
+            const info = describeSkill(sk, def.stats, f, unitDefs(), effectDefs(), def.range);
             return [`${sk.name} [${skillRange(sk)}]:${info.lines.join('; ')}${sk.cooldown ? `; cooldown ${sk.cooldown}` : ''}`];
           }),
           ...(def.passive ? [`${def.passive.name} (passive)${def.passive.text ? `: ${def.passive.text}` : ''}`] : []),

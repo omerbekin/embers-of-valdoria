@@ -567,14 +567,14 @@
             "h": 387
           },
           "anchor": {
-            "x": 244,
-            "y": 111,
-            "angle": -30
+            "x": 262,
+            "y": 92,
+            "angle": -25
           },
           "offhand": {
-            "x": 244,
-            "y": 111,
-            "angle": -30
+            "x": 262,
+            "y": 92,
+            "angle": -25
           },
           "src": "warrior-v2/two-handed.png"
         },
@@ -7869,7 +7869,8 @@
       "hold": "two",
       "edge": {
         "dane": "left",
-        "bearded": "left"
+        "bearded": "left",
+        "greataxe": "left"
       },
       "looks": {
         "dane": {
@@ -7895,19 +7896,29 @@
             "x": 144,
             "y": 369
           }
+        },
+        "greataxe": {
+          "w": 163,
+          "h": 434,
+          "grip": {
+            "x": 100,
+            "y": 330
+          }
         }
       },
       "order": [
         "dane",
         "bearded",
-        "double"
+        "double",
+        "greataxe"
       ]
     },
     "mauls": {
       "length": 320,
       "hold": "two",
       "edge": {
-        "hammer": "left"
+        "hammer": "left",
+        "warmaul": "left"
       },
       "looks": {
         "maul": {
@@ -7925,17 +7936,44 @@
             "x": 120,
             "y": 392
           }
+        },
+        "warmaul": {
+          "w": 168,
+          "h": 433,
+          "grip": {
+            "x": 81,
+            "y": 338
+          }
         }
       },
       "order": [
         "maul",
-        "hammer"
+        "hammer",
+        "warmaul"
+      ]
+    },
+    "greatswords": {
+      "length": 340,
+      "hold": "two",
+      "looks": {
+        "greatsword": {
+          "w": 139,
+          "h": 435,
+          "grip": {
+            "x": 68,
+            "y": 344
+          }
+        }
+      },
+      "order": [
+        "greatsword"
       ]
     }
   },
   "itemArt": {
     "arming_sword": "swords",
-    "emberbrand": "swords"
+    "emberbrand": "swords",
+    "greatsword": "greatswords"
   },
   "familyArt": {
     "axes": "axes",
@@ -7957,6 +7995,21 @@
     "rare": "#5f93d6",
     "epic": "#b072e0",
     "legendary": "#f0a830"
+  },
+  "_rarityTone": "Nadirlik tonu (Omer 2026-10-17: taban basina TEK cizim, nadirlik yalnizca renk/parlaklik): gorunumu sabit (itemLook) olan Legendary disi item'in elindeki silah cizimi nadirligine gore tonlanir. bright = parlaklik carpani, sat = doygunluk carpani (1 = cizimin kendisi). Rare cizimin kendisi (tonsuz); Common mat/soluk, Uncommon biraz soluk, Epic parlak/cilali. Legendary'nin kendi cizimi var: tonlanmaz.",
+  "rarityTone": {
+    "common": {
+      "bright": 0.8,
+      "sat": 0.55
+    },
+    "uncommon": {
+      "bright": 0.92,
+      "sat": 0.8
+    },
+    "epic": {
+      "bright": 1.12,
+      "sat": 1.2
+    }
   },
   "fistRadius": 13,
   "classAliases": {
@@ -7987,6 +8040,9 @@
     "loaded_bones": "dice",
     "bones_of_the_quarry": "dice",
     "hex_doll": "doll",
-    "gamblers_last_coin": "coin"
+    "gamblers_last_coin": "coin",
+    "greataxe": "greataxe",
+    "greatsword": "greatsword",
+    "war_maul": "warmaul"
   }
 }

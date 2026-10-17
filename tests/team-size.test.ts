@@ -93,7 +93,7 @@ describe('takım boyutu: savaş kurulumu ve dizilim', () => {
           for (const sl of slots) perRow.set(Math.floor(sl / lanes), (perRow.get(Math.floor(sl / lanes)) ?? 0) + 1);
           defs.forEach((d, i) => {
             const row = Math.floor(slots[i]! / lanes);
-            const melee = content.skills[d.skills[0]!]?.motion === 'melee';
+            const melee = content.isMeleeClass(d.id); // menzil açıkken taban menzili <= 1 (range.md), kapalıyken ilk skill melee
             if (melee) for (let r = 0; r < row; r++) expect(perRow.get(r) ?? 0, `n=${n} seed ${seed} ${d.id} satır ${row}`).toBe(lanes);
           });
         }

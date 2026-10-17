@@ -42,8 +42,8 @@ interface Pending {
   handle: { closed: boolean; done: () => void; update: (o: { awaitText?: string; spotlight?: boolean }) => void };
 }
 
-const avatars = import.meta.glob('../../assets/avatars/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.png`];
+const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>; // PNG'nin WebP kopyası (tools/webp-assets.mjs)
+const avatarUrl = (id: string): string | undefined => avatars[`../../assets/avatars/${id}.webp`];
 
 const queue: Pending[] = [];
 let current: { p: Pending; root: HTMLElement; timer: number; spot: HTMLElement | null } | null = null;

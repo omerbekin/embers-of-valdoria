@@ -95,5 +95,5 @@ export function applyVariantFiles(files: { sprites: Record<string, string>; avat
 
 /** Diskteki varyantlar (Vite derleme sırasında assets/sprites taranır; elle liste yok): id -> varyant adları. */
 export const SPRITE_VARIANTS: Record<string, string[]> = variantsBySprite(
-  import.meta.glob('../../assets/sprites/*/idle-*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
+  import.meta.glob('../../assets/sprites/*/idle-*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>,
 );

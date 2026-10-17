@@ -434,12 +434,17 @@ export class ValueContext {
     return (this.before.get(a.uid) ?? 0) - less < a.hp + a.shield + a.magicShield + extra;
   }
 
-  /** Birimin hücreden vurabilecek durumda olup olmadığı (yakın dövüş skill'leri ön sıradan; menzilli her yerden). Varsayımsal hücre (dirilme/çağrı). */
-  usefulAt(u: Combatant | { uid: string; skills: string[] }, side: Combatant['side'], slot: number): number {
+  /** Birimin hücreden vurabilecek durumda olup olmadığı (menzil: range.md; skill'lerinin kaçı oradan bir düşmana ulaşır). Varsayımsal hücre (dirilme/çağrı). */
+  usefulAt(u: Combatant | { uid: string; skills: string[]; defId?: string }, side: Combatant['side'], slot: number): number {
     const skills = u.skills.map((id) => this.battle.skill(id)).filter((s): s is SkillDef => !!s && s.effects.some((e) => e.type === 'damage' || e.type === 'heal' || e.type === 'hot' || e.type === 'shield'));
     if (skills.length === 0) return 1;
-    const front = Math.min(this.battle.rowOf(slot), ...this.battle.living(side).filter((c) => c.board === side && c.uid !== u.uid).map((c) => this.battle.rowOf(c.slot)));
-    const ok = skills.filter((s) => s.motion !== 'melee' || s.target === 'self' || s.ignoreFrontRow || s.ignoreReach || this.battle.rowOf(slot) <= front + (s.reach ?? 0));
+    let ok: SkillDef[];
+    if (this.battle.rangeOn) ok = skills.filter((s) => this.battle.skillReachesFromCell(u.defId, side, s, slot));
+    else {
+      // ESKİ kural (menzil kapalı): yakın dövüş skill'leri ön sıradan; menzilli her yerden
+      const front = Math.min(this.battle.rowOf(slot), ...this.battle.living(side).filter((c) => c.board === side && c.uid !== u.uid).map((c) => this.battle.rowOf(c.slot)));
+      ok = skills.filter((s) => s.motion !== 'melee' || s.target === 'self' || s.ignoreFrontRow || s.ignoreReach || this.battle.rowOf(slot) <= front + (s.reach ?? 0));
+    }
     return ok.length === skills.length ? 1 : ok.length === 0 ? 0 : 0.5;
   }
 }

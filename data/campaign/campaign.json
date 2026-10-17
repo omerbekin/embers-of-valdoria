@@ -9,7 +9,7 @@
   "townScreen": { "heroHeight": 250, "feetY": 0.9, "feetYPhone": 0.86, "gap": 230, "labelSize": 21, "labelSizePhone": 34 },
   "rules": {
     "carryHp": true,
-    "victoryHeal": 0.25,
+    "victoryHeal": 0.2,
     "bossVictoryHeal": 1.0,
     "maxSaves": { "normal": 5, "ironman": 1 },
     "slots": 3

@@ -392,3 +392,6 @@ if (PREVIEW) {
   writeFileSync(DATA, `${JSON.stringify(data, null, 2)}\n`);
   console.log(`measurements -> ${DATA}`);
 }
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

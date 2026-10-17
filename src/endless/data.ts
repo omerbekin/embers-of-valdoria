@@ -2,6 +2,7 @@
 import endlessJson from '../../data/endless.json';
 import encountersJson from '../../data/campaign/encounters.json';
 import type { Equipment, ItemInstance } from '../progression/items';
+import type { LevelUp, StatAlloc } from '../progression/levels';
 import type { SuspendedBattle } from './replay';
 import type { RelicDef } from './relics';
 import type { ShieldHook, Status, UnitModifiers, UnitTier } from '../engine/types';
@@ -29,11 +30,16 @@ export interface EndlessConfig {
   /** Tüccar: her `every` dalgada, `size` mal, malları yenileme bedeli, bu ziyaretin geri alım listesi boyu. */
   shop: { every: number; size: number; rerollCost: number; buybackSize: number };
   /** Tüccar önizlemesi (?merchant=1): temizlenmiş dalga, altın, torbadaki item sayısı. */
-  merchantPreview: { wave: number; gold: number; bagItems: number };
+  merchantPreview: { wave: number; gold: number; bagItems: number; level?: number };
   /** Kalıntılar: boss sonrası teklif sayısı + liste (src/endless/relics.ts). */
   relics: { offer: number; list: RelicDef[] };
   difficulty: 'easy' | 'medium' | 'hard';
   highScores: number;
+  /**
+   * Level / XP (Ömer 2026-10-17, levels.md): her koşu L1'den başlar. Dalganın seviyesi = 1 + (dalga - 1) x levelPerWave. Bir dalganın tüm
+   * düşmanları kahraman başına xpPerWave x (dalga seviyesinin level eşiği) XP verir (düşman başına eşit pay; elit / boss levels.json > nodeMult).
+   */
+  levels?: { levelPerWave: number; xpPerWave: number };
 }
 
 /** Elit / boss dalgası sonrası ödül ayarları (data/endless.json > special). */
@@ -73,6 +79,13 @@ export interface EndlessHero {
   class: string;
   /** Taşınan can oranı (0-1); 0 = düştü (sonraki zaferde reviveRatio ile kalkar). */
   hpRatio: number;
+  /** Kahraman seviyesi (dalgayla artar, levels.md; yoksa 1). Item seviye şartı buna bakar (Item Güçlendirme x6). */
+  level?: number;
+  /** Bu level'daki XP, dağıtılmamış stat / skill puanları, dağıtılmış puanlar (eski kayıtta yok = 0 / boş). */
+  xp?: number;
+  statPoints?: number;
+  skillPoints?: number;
+  alloc?: StatAlloc;
   equipment: Partial<Equipment>;
   /**
    * Kendi tahtasındaki hücre (0-11; sıra*3+şerit, 0. sıra önde). Koşu başında oyuncu dizer; her zaferde savaş sonundaki hücre yazılır
@@ -200,6 +213,8 @@ export interface EndlessRun {
   suspended?: SuspendedBattle;
   /** Valor (Ömer 2026-10-13, data/valor.json): ilk dalgadan itibaren birikir, düşmüş kahramanı diriltmeye harcanır. Eski kayıtta yok = 0. */
   valor?: number;
+  /** Gösterilmemiş level atlamaları (kamp ekranında bildirim; gösterilince silinir). */
+  levelUps?: LevelUp[];
 }
 
 /** Yerel en iyi skor listesinin bir satırı. Skor = ulaşılan dalga (eşitlikte daha az tur önde). */

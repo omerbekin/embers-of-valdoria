@@ -80,7 +80,8 @@ describe('sefer karşılaşmaları', () => {
     // kahraman düşmandan hızlıysa ilk turunu oynamış olabilir: turn başı yenilenme (str x hpRegenPerStr) eklenebilir
     const regen = Math.round(c.stats.hpRegen ?? 0);
     expect([Math.round(c.maxHp * 0.4), Math.round(c.maxHp * 0.4) + regen]).toContain(c.hp);
-    expect(battlePlan(s, 0, { unitMods: true, startHp: false }).units.party).toEqual({});
+    // can taşıması kapalı: kurulumda yalnızca ekipman (başlangıç silahı) kalır
+    for (const u of Object.values(battlePlan(s, 0, { unitMods: true, startHp: false }).units.party)) expect(Object.keys(u)).toEqual(['modifiers']);
   });
 
   it('savaş planı mevcut savaş girişiyle kurulur; sonuç hero id ile geri okunur; seed belirleyici', () => {

@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
+import { withEnemyLevel } from '../src/progression/levels';
 import {
   ENDLESS,
   rewardBlockedReason,
@@ -25,7 +26,7 @@ import {
   leaveShop,
   loadRun,
   loadScores,
-  newRun,
+  newRun as newRunBase,
   outcomeFromSummary,
   parseRun,
   rewardOffer,
@@ -37,6 +38,7 @@ import {
   upgradePairs,
   waveKind,
   waveMods,
+  waveLevel,
   bossMult,
   wavePlan,
   type EndlessRun,
@@ -45,6 +47,10 @@ import {
   type WaveOutcome,
 } from '../src/endless';
 import { ITEMS, affixValues, canEquip, itemDef, itemIP, itemValue, loadoutSetup, type ItemDef } from '../src/progression';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Endless Lite (roadmap.md bölüm 3, open-questions madde 281): saf mantık testleri. Item kataloğu Item MVP ile değiştiği için testler
 // sabit item id'lerine değil, verilen küçük bir test kataloğuna dayanır.
@@ -128,10 +134,12 @@ describe('endless: dalga kuralları', () => {
 });
 
 describe('endless: dalga planı -> savaş', () => {
-  it('1. dalga: item\'siz takım hiçbir kurulum almaz (bugünkü birimle aynı), enemyCount(1) farklı rastgele havuz düşmanı', () => {
+  it('1. dalga: yalnızca başlangıç silahlı takım yalnızca o silahın affix kurulumunu alır (silah çarpanı katlanmış = 1), enemyCount(1) farklı rastgele havuz düşmanı', () => {
     const plan = wavePlan(fresh());
     expect(plan.kind).toBe('normal');
-    expect(plan.units.party).toEqual({});
+    for (const u of Object.values(plan.units.party)) expect(u.modifiers?.weaponMult).toBeUndefined();
+    const bare = wavePlan({ ...fresh(), heroes: fresh().heroes.map((h) => ({ ...h, equipment: {} })) });
+    for (const u of Object.values(bare.units.party)) expect(u.modifiers?.weaponMult).toBeLessThan(1); // silahsız: daha az hasar
     expect(plan.units.enemies).toEqual({});
     const foes = plan.enemies.filter(Boolean);
     expect(foes).toHaveLength(enemyCount(1));
@@ -157,7 +165,7 @@ describe('endless: dalga planı -> savaş', () => {
     run.heroes = run.heroes.map((h, i) => (i === 0 ? { ...h, hpRatio: 0.6, equipment: { weapon: { uid: 'e1', id: ITEMS.items.find((d) => canEquip('warrior', d))?.id ?? 'x' } } } : h));
     const plan = wavePlan(run);
     expect(plan.enemies.filter(Boolean)).toHaveLength(enemyCount(4));
-    for (const u of Object.values(plan.units.enemies)) expect(u.modifiers).toEqual(waveMods(4));
+    plan.enemies.forEach((c, slot) => c && expect(plan.units.enemies[slot]!.modifiers).toEqual(withEnemyLevel(waveMods(4), c, waveLevel(4)))); // dalga çarpanı + düşman level'ı (levels.md)
     const slot = plan.party.indexOf('warrior');
     const setup = plan.units.party[slot]!;
     expect(setup.startHpRatio).toBe(0.6);

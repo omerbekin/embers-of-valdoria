@@ -19,7 +19,7 @@ import {
   unequipItem,
   type CampaignState,
 } from '../src/campaign';
-import { emptyEquipment, loadout } from '../src/progression';
+import { emptyEquipment, ITEMS, loadout, starterPower, starterWeapon } from '../src/progression';
 import { fightPlan } from '../src/sim/campaign';
 
 // Güç toplama katmanı (roadmap.md 1.1, madde 278): temel + item -> UnitSetup.modifiers. Boş yükleme = bugünkü savaş birebir.
@@ -31,34 +31,45 @@ const atBattle = (node = '5A', seed = 42): CampaignState => {
   // Işınlanırken kazanılan savaşların loot'u torbayı doldurur: bu testler boş torbayla başlar
   const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed }), 'archer'), node);
   const { pendingLoot: _p, ...rest } = s;
-  return { ...rest, inventory: [], nextItemId: 1 };
+  // Seviye şartı (Item Güçlendirme x6) bu testlerin konusu değil: kahramanlar yüksek seviyede
+  return { ...rest, roster: rest.roster.map((h) => ({ ...h, level: 50 })), inventory: [], nextItemId: 1 };
 };
 
+const implicitClass = (c: string) => ['cutthroat', 'antimage', 'gambler', 'hexer'].includes(c);
+
 describe('güç katmanı: boş yükleme', () => {
-  it('hiçbir şey takılı değilse modifiers yok', () => {
-    expect(loadout({ class: 'warrior', level: 1, equipment: emptyEquipment() })).toEqual({ recovery: 0, affixes: [], inactive: [], capped: [], missing: [] });
-    expect(loadout({ class: 'warrior' }).modifiers).toBeUndefined();
+  it('hiçbir şey takılı değilse: başlangıç silahı olmayan (test) sınıfta modifiers yok; oynanabilir sınıf silahsızken silah çarpanı < 1', () => {
+    expect(loadout({ class: 'aoe_tester', level: 1, equipment: emptyEquipment() })).toEqual({ recovery: 0, affixes: [], inactive: [], capped: [], missing: [], weaponPower: 0, weaponMult: 1 });
+    expect(loadout({ class: 'aoe_tester' }).modifiers).toBeUndefined();
+    // silahsız: 1 / (1 + başlangıç gücü / 100)
+    const unarmed = loadout({ class: 'warrior', equipment: emptyEquipment() });
+    expect(unarmed.modifiers).toEqual({ weaponMult: Math.round((1 / (1 + starterPower('warrior') / 100)) * 10000) / 10000 });
+    expect(unarmed.weaponMult).toBeLessThan(1);
   });
 
-  it("battlePlan: item'siz kahramanın kurulumunda yalnızca can taşıma var (bugünkü plan)", () => {
+  it('başlangıç silahı katlanır: silah çarpanı tam 1 (Quick Battle ile aynı güç); kurulumda yalnızca kendi ana affixi ve (hançer / tılsım) örtük statı', () => {
+    for (const c of Object.keys(ITEMS.starterWeapons.classes)) {
+      const w = starterWeapon(c, 'x')!;
+      const l = loadout({ class: c, equipment: { ...emptyEquipment(), weapon: w } });
+      expect(l.weaponMult).toBe(1);
+      expect(l.modifiers?.weaponMult).toBeUndefined();
+      const keys = Object.keys(l.modifiers ?? {}).sort();
+      expect(keys).toEqual(['elemDamageAdd', ...(implicitClass(c) ? [c === 'gambler' || c === 'hexer' ? 'spdMult' : 'critAdd'] : [])].sort());
+    }
+  });
+
+  it('battlePlan: başlangıç silahlı kahramanın kurulumu güç katmanıyla aynı, silah çarpanı yok; aynı seed aynı savaş', () => {
     let s = atBattle();
-    // bir kahraman eksik canla
     s = { ...s, roster: s.roster.map((h, i) => (i === 0 ? { ...h, hpRatio: 0.5 } : h)) };
-    const plan = battlePlan(s);
-    for (const u of Object.values(plan.units.party)) expect(Object.keys(u)).toEqual(['startHpRatio']);
-    expect(Object.values(plan.units.party)).toHaveLength(1);
-  });
-
-  it("determinizm: aynı seed aynı savaş; item'siz plan, birim kurulumu hiç verilmemiş savaşla birebir aynı", () => {
-    const s = atBattle();
     expect(nextStep(s).kind).toBe('battle');
     const plan = battlePlan(s);
-    expect(plan.units.party).toEqual({});
-    const a = fightPlan(plan, 'medium');
-    const b = fightPlan(plan, 'medium');
-    expect(a.log).toEqual(b.log);
-    const bare = fightPlan({ ...plan, units: { party: {}, enemies: plan.units.enemies } }, 'medium');
-    expect(a.log).toEqual(bare.log);
+    for (const [cell, u] of Object.entries(plan.units.party)) {
+      const h = s.roster.find((x) => x.id === s.active[Number(cell)])!;
+      expect(h.equipment.weapon?.id).toBe(ITEMS.starterWeapons.classes[h.class]);
+      expect(u.modifiers).toEqual(heroLoadout(h).modifiers);
+      expect(u.modifiers?.weaponMult).toBeUndefined();
+    }
+    expect(fightPlan(plan, 'medium').log).toEqual(fightPlan(plan, 'medium').log);
   });
 });
 
@@ -83,7 +94,7 @@ describe('güç katmanı: item -> modifiers', () => {
   });
 
   it('veride olmayan item yok sayılır (eski kayıt çökmez)', () => {
-    const r = loadout({ class: 'mage', equipment: { ...emptyEquipment(), helm: { uid: 'i9', id: 'no_such_item' } } });
+    const r = loadout({ class: 'aoe_tester', equipment: { ...emptyEquipment(), helm: { uid: 'i9', id: 'no_such_item' } } });
     expect(r.modifiers).toBeUndefined();
     expect(r.missing).toEqual(['no_such_item']);
   });

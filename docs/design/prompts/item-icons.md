@@ -105,3 +105,37 @@ Oyundaki 52 item'in ikonları 7 sayfa halinde üretilecek; her sayfada 8 ikon (4
 ---
 
 **Sonra:** 7 sayfayı (Paket 1-7) bana gönder. Hücreleri kesip her item'e kendi ikonunu bağlarım; Gear ekranı, torba, ödül kartları, merchant ve Codex aynı ikonları kullanır. Şimdiki kod çizimi ikonlar yedek olarak kalır.
+
+---
+
+## Paket 8: Çift el yakın dövüş tabanları (Greataxe, Greatsword, War Maul; Ömer 2026-10-17)
+
+**Kural (Ömer):** taban başına TEK çizim. Bu üç taban Common, Uncommon, Rare ve Epic olarak düşer; nadirlik farkı yalnızca elde tutulan silah çiziminin renk / parlaklık tonudur (`data/poses.json > rarityTone`: Common mat ve soluk, Uncommon biraz soluk, Rare çizimin kendisi, Epic parlak ve cilalı). İkonda nadirliği çerçeve / parıltı gösterir (ekranın işi). Bu yüzden iki çizim de **nötr, "iyi yapılmış ama süssüz"** olmalı: değerli taş, renkli kumaş, altın süs YOK (ton bunları bozar). Çizimler gelene kadar oyunda yer tutucu kullanılır: Greataxe = mevcut çift el sakallı balta (`greataxes/bearded`), War Maul = mevcut çift el gürz (`mauls/maul`), Greatsword = tek el kılıç çizimi (`swords/plain`); ikon yerine kod çizimi piksel ikon (balta / kılıç / gürz).
+
+### A) 3 item ikonu (tek sayfa)
+
+- Dosya: `assets/source/item-icons/pack8.png`, **768x256**: 3 sütun x 1 satır, hücre 256x256, soldan sağa: 1 `greataxe`, 2 `greatsword`, 3 `war_maul`. Gerçek saydamlık.
+- Alternatif: her biri tek nesneli ayrı görsel `assets/source/item-icons/overrides/<item-id>.png` (araç bunları da okur).
+- İçe aktarma: `tools/make-item-icons.mjs > GRIDS` listesine `{ label: 'pack8 two-handed', file: join(SRC, 'pack8.png'), cols: 3, rows: 1, ids: ['greataxe', 'greatsword', 'war_maul'] }` eklenir, sonra `node tools/make-item-icons.mjs` -> `assets/items/<id>.webp` (256x256, saydam). Kod başka değişiklik istemez (ikon id'den bulunur).
+- Referans ekle: `assets/items/dane_axe.webp`, `assets/items/arming_sword.webp`, `assets/items/flanged_mace.webp` (aynı ışık, kontur, palet).
+
+> Create a sprite sheet of 3 item icons for a medieval side-view pixel-art RPG, matching the attached reference icons exactly (same palette, same outline weight, same lighting, same scale feel).
+> Output ONE image, 768x256: a 3x1 grid, each icon in its own 256x256 cell, left to right, centred, with at least 16 px of empty transparent space around each object, nothing touching the cell edges, transparent background, no grid lines, no text, no labels.
+> Style: crisp hand-placed pixel art, dark 1px outline, warm muted medieval palette, light from the top-left, a single object per cell shown diagonally (head / tip to the upper right, handle to the lower left), realistic proportions, readable when shrunk to 48x48. Grounded and medieval: real materials (iron, steel, leather, wood), no gems, no gold trim, no coloured cloth, no glow. Each weapon must look like a solid, well-made but plain soldier's weapon: one drawing is used for every rarity, so keep it neutral.
+> 1. Greataxe: a large two-handed battle axe, one broad crescent steel blade on a long ash haft (clearly longer than a one-handed axe), iron langets below the head, leather-wrapped lower grip.
+> 2. Greatsword: a long two-handed straight sword (longsword / zweihander proportions), long plain steel blade with a simple fuller, wide straight crossguard, long leather-wrapped two-hand grip, round iron pommel.
+> 3. War Maul: a heavy two-handed war hammer / maul, a big blocky iron head with a flat striking face and a short back spike, long iron-banded wooden haft, leather grip at the bottom.
+
+### B) 3 elde tutulan silah çizimi (poz katmanı)
+
+- Dosya: `assets/source/poses/weapons-v2/twohanded-2.png`, **1536x1024**, 3 sütun x 2 satır (diğer silah sayfalarıyla aynı düzen: `tools/make-poses-v2.mjs > WEAPON_SHEETS`). Yalnızca ÜST satır dolu: 1 Greataxe, 2 Greatsword, 3 War Maul; alt satır boş. Düz koyu zemin (araç arka planı siler) ya da gerçek saydamlık.
+- Çizim kuralı (içe aktarıcı bunu varsayar): eşya **tam dikey**, baş / uç **YUKARIDA**, kabza ve sap ucu AŞAĞIDA, yandan (profil) görünüm, hücreyi dikeyde ~%85 doldurur, hücre kenarına değmez. Balta ağzı ve çekiç yüzü SOLA baksın (mevcut `greataxes/dane`, `bearded` ve `mauls/hammer` gibi: `poses.json > weapons.<aile>.edge = "left"`). Tutma noktası araçta ölçülür: sapın üstten ~%76-78'i (balta / gürz), kılıçta balçağın hemen altı; bu yüzden elin tuttuğu alt sap düz ve okunur olmalı.
+- İçe aktarma (art-pipeline): `WEAPON_SHEETS`e `{ file: 'twohanded-2.png', cells: [[['greataxes', 'greataxe'], ['greatswords', 'greatsword'], ['mauls', 'warmaul']]] }`; `WEAPON_SPEC`e `greatswords: { length: 340, grip: 'sword', hold: 'two' }` (yeni aile; greataxes / mauls zaten var). Sonra `data/poses.json`: `itemArt.greatsword = "greatswords"`, `itemLook` -> `greataxe: "greataxe"`, `greatsword: "greatsword"`, `war_maul: "warmaul"`; `weapons.greataxes.edge.greataxe` ve `weapons.mauls.edge.warmaul` = `"left"`. **Dikkat:** araç `order` dizisini yalnızca o sayfada görülen görünümlerle yeniden yazar; greataxes / mauls için mevcut görünümler (`dane, bearded, double` / `maul, hammer`) `order` başında korunmalı, yeni görünüm sona eklenmeli (yoksa Legendary Avenger's Maul'ün görünümü kayar). Kontrol: `node tools/make-poses-v2.mjs --preview=<klasör>` + `npx vitest run tests/poses.test.ts`.
+- Referans ekle: `assets/source/poses/weapons-v2/twohanded-coin.png` (aynı sayfa düzeni ve çizim dili) ve `assets/weapons/greataxes/dane.png`.
+
+> Create ONE image, 1536x1024, a 3-column x 2-row layout of weapon sprites for a medieval side-view RPG character rig, matching the attached weapon sheet exactly (same painted pixel-art style, same outline, same lighting, same scale and layout). Only the TOP row is used: three weapons, one per cell, left to right; leave the bottom row completely empty. Plain flat dark background, no text, no labels, no grid lines, no hands, no characters.
+> Every weapon stands perfectly VERTICAL in strict side profile: head / blade tip at the TOP, handle end at the BOTTOM, centred in its cell, filling about 85% of the cell height, not touching the cell edges. Axe blades and hammer faces point to the LEFT. The lower haft / grip is straight, plain and clearly readable (a hand will hold it there).
+> Neutral, plain but well-made materials: steel, iron, ash wood, leather wraps. No gems, no gold or brass trim, no coloured cloth, no glow, no engraving (one drawing is recoloured in game for every rarity).
+> 1. Greataxe: a large two-handed battle axe, single broad crescent blade, long ash haft, iron langets under the head, leather wrap on the lower grip.
+> 2. Greatsword: a long two-handed straight sword, long plain blade with a simple fuller, wide straight crossguard, long leather two-hand grip, round iron pommel, blade pointing up.
+> 3. War Maul: a heavy two-handed maul, big blocky iron head with a flat striking face on the left and a short spike on the right, long iron-banded wooden haft, leather grip at the bottom.

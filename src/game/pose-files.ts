@@ -4,11 +4,12 @@
  *   assets/poses/<dir>/<poz>.png (+ small/)        gövde pozları (eller boş)
  *   assets/weapons/<aile>/<görünüm>.png (+ small/)  silah katmanı
  * Asıllar assets/source/poses/ (oyuna yüklenmez); kesim `node tools/make-poses.mjs`.
+ * Oyun PNG'lerin yanındaki aynı adlı .webp dosyalarını yükler (~4 kat küçük; `node tools/webp-assets.mjs`, tests/webp-assets.test.ts).
  */
-const bodyFiles = import.meta.glob('../../assets/poses/*/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const bodySmall = import.meta.glob('../../assets/poses/*/small/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const weaponFiles = import.meta.glob('../../assets/weapons/*/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
-const weaponSmall = import.meta.glob('../../assets/weapons/*/small/*.png', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const bodyFiles = import.meta.glob('../../assets/poses/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const bodySmall = import.meta.glob('../../assets/poses/*/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const weaponFiles = import.meta.glob('../../assets/weapons/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+const weaponSmall = import.meta.glob('../../assets/weapons/*/small/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
 /** '<klasör>/<ad>' -> URL (yol sonundaki iki parça; small/ alt klasörü atlanır). */
 function index(files: Record<string, string>): Record<string, string> {

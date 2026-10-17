@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, armorReduction, attributePower, chooseAction, content, describePassive, describeSkill, nominalBurn, previewSkill } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant } from '../src/engine';
 import { installLegacySkills } from './legacy-skills';
+import { rangeOff, withOldLayout } from './range-helpers';
 import { shapeCells } from '../src/engine/area-shape';
 
 installLegacySkills();
@@ -173,13 +174,18 @@ const grid = (party: string[], enemies: string[], seed = 1) => {
   for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0 });
   return b;
 };
+const gridOff = (party: string[], enemies: string[], seed = 1) => {
+  const b = new Battle(rangeOff(content.battleSetup('random-battle', seed, 'test', { party, enemies }, false)));
+  for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0 });
+  return b;
+};
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const full = (id = 'warrior') => Array.from({ length: 12 }, () => id);
 const eAt = (b: Battle, slot: number) => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 
 describe('dizilim ve menzil', () => {
-  it('otomatik dizilim: sıralara ikişer ikişer, her sıranın 1. ve 3. şeridine yerleşir', () => {
-    const b = make({ party: ['warrior', 'archer', 'mage', 'paladin', 'druid'], enemies: ['defender', 'warrior', 'archer', 'mage', 'antimage'] });
+  it('otomatik dizilim (menzil KAPALI: eski kural): sıralara ikişer ikişer, her sıranın 1. ve 3. şeridine yerleşir', () => {
+    const b = withOldLayout(content.formulas, () => make({ party: ['warrior', 'archer', 'mage', 'paladin', 'druid'], enemies: ['defender', 'warrior', 'archer', 'mage', 'antimage'] }));
     expect(b.livingByDepth('party').map((c) => [c.defId, c.slot])).toEqual([['warrior', 0], ['paladin', 2], ['druid', 3], ['mage', 5], ['archer', 6]]);
     expect(b.rowOf(5)).toBe(1);
     expect(b.laneOf(5)).toBe(2);
@@ -194,7 +200,8 @@ describe('dizilim ve menzil', () => {
   });
 
   it('ön sıra boşalınca arkadaki sıra menzile girer (en öndeki DOLU sıra sayılır)', () => {
-    const b = make({ party: ['warrior', 'archer', 'mage', 'paladin'], enemies: ['defender', 'warrior', 'archer', 'mage'] });
+    // eski otomatik dizilimle kurulur (Mage ve Archer aynı 2. sırada); savaş menzil bayrağıyla oynar
+    const b = withOldLayout(content.formulas, () => make({ party: ['warrior', 'archer', 'mage', 'paladin'], enemies: ['defender', 'warrior', 'archer', 'mage'] }));
     const w = unit(b, 'party', 'warrior').uid;
     unit(b, 'enemy', 'defender').hp = 0;
     expect(b.validTargets(w, 'melee_attack').map((c) => c.defId)).toEqual(['warrior']); // ön sırada hâlâ biri var
@@ -484,6 +491,7 @@ describe('Druid: tur bazlı şifa ve çağrı süresi', () => {
     const b = make(TDR, { mode: 'turns' });
     const druid = unit(b, 'party', 'druid');
     skipUntil(b, druid.uid);
+    b.debugClearCooldowns(druid.uid); // Raise Dead/Summon Treant initialCooldown 1 (2026-10-17): ilk turda kapalı; bu test başlangıç beklemesini sınamıyor
     const uid = ofType(act(b, druid.uid, 'summon_treant'), 'summon')[0]!.combatant.uid;
     expect(b.get(uid)!.lifespan).toBe(3);
     let acted = 0;
@@ -563,9 +571,15 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
       return ofType(act(b, am.uid, 'spell_ward', am.uid), 'shield')[0]!.amount; // madde 240: tek dost (kendisi dahil)
     };
     expect(shield(40)).toBeGreaterThan(shield(15));
+    // Menzil (range.md onaylı tablo): Anti-Mage uzak sınıf, tüm skill'leri sınıf menzili (4); ön sıradan en arka sıraya ulaşır (0+3+1=4)
     const b = make(TA);
+    const am = unit(b, 'party', 'antimage');
     const back = b.livingByDepth('enemy').at(-1)!;
-    expect(b.validTargets(unit(b, 'party', 'antimage').uid, 'mana_burn').map((c) => c.uid)).not.toContain(back.uid);
+    const targets = b.validTargets(am.uid, 'mana_burn').map((c) => c.uid);
+    if (b.rangeOn) {
+      expect(b.rangeOf(am, content.skills.mana_burn!)).toBe(content.classes.antimage!.range);
+      if (b.distanceTo(am, back.board, back.slot) <= b.rangeOf(am, content.skills.mana_burn!)) expect(targets).toContain(back.uid);
+    } else expect(targets).not.toContain(back.uid);
   });
 
   it('Mana Burn bedelsizdir (temel saldırı)', () => {
@@ -688,11 +702,12 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
 
   it('diziliş: yakın dövüşçüler önde (kendi aralarında öncelik sırasıyla), menzilliler arkada', () => {
     expect(content.arrangeTeam(['mage', 'archer', 'warrior', 'defender'])).toEqual(['defender', 'warrior', 'mage', 'archer']); // Archer her zaman en arkada
-    expect(content.arrangeTeam(['druid', 'undead', 'antimage', 'paladin'])).toEqual(['antimage', 'paladin', 'undead', 'druid']);
+    // menzil açıkken (range.md) Anti-Mage (menzil 4) uzak sınıf gibi dizilir; kapalıyken ilk skill'i melee olduğu için en önde
+    expect(content.arrangeTeam(['druid', 'undead', 'antimage', 'paladin'])).toEqual(content.formulas.range?.enabled ? ['paladin', 'antimage', 'undead', 'druid'] : ['antimage', 'paladin', 'undead', 'druid']);
     const all = content.arrangeTeam(Object.keys(content.classes).filter((id) => !id.startsWith('pose_tester_'))); // Pose Tester'lar: gizli debug kopyaları
     const melee = all.filter((id) => content.isMeleeClass(id));
     expect(all.slice(0, melee.length)).toEqual(melee); // melee grubu en önde
-    expect(new Set(melee)).toEqual(new Set(['defender', 'warrior', 'antimage', 'cutthroat'])); // Cutthroat: Venom Edge yakın dövüş
+    expect(new Set(melee)).toEqual(new Set(content.formulas.range?.enabled ? ['defender', 'warrior', 'cutthroat'] : ['defender', 'warrior', 'antimage', 'cutthroat'])); // Cutthroat: Venom Edge yakın dövüş / menzil 1
     // Defender (en yüksek zırh) en önde, Mage en arkada
     expect(content.classes[all[0]!]!.stats.armor).toBeGreaterThan(content.classes[all.at(-1)!]!.stats.armor);
   });
@@ -708,8 +723,8 @@ describe('class verisi: yeni sınıflar ve dizilim', () => {
     }
   });
 
-  it('sınıf listesi olarak verilen takım otomatik dizilir (savaşta sıra 0 = en ön)', () => {
-    const b = new Battle(content.battleSetup('random-battle', 1, 'test', { party: ['mage', 'archer', 'defender', 'warrior'], enemies: ['druid', 'paladin', 'mage', 'undead'] }));
+  it('sınıf listesi olarak verilen takım otomatik dizilir (savaşta sıra 0 = en ön; menzil KAPALI: eski kural)', () => {
+    const b = withOldLayout(content.formulas, () => new Battle(content.battleSetup('random-battle', 1, 'test', { party: ['mage', 'archer', 'defender', 'warrior'], enemies: ['druid', 'paladin', 'mage', 'undead'] })));
     expect(b.livingByDepth('party').map((c) => c.defId)).toEqual(['defender', 'warrior', 'mage', 'archer']);
     expect(b.livingByDepth('enemy').map((c) => c.defId)).toEqual(['paladin', 'undead', 'druid', 'mage']);
   });
@@ -757,7 +772,8 @@ describe('Çağrı yeri seçimi ve hücre listesi', () => {
   });
 
   it('çağrı: oyuncu boş hücreyi seçer; dolu hücre reddedilir; yapay zeka menzilli çağrıyı (Treant, madde 222) en arkadaki boş hücreye koyar', () => {
-    const b = make({ party: ['defender', 'warrior', 'archer', 'mage', 'druid'], enemies: ['defender', 'paladin', 'undead', 'antimage', 'archer'] });
+    // eski otomatik dizilimle kurulur (hücreler bu senaryoya göre); savaş menzil bayrağıyla oynar
+    const b = withOldLayout(content.formulas, () => make({ party: ['defender', 'warrior', 'archer', 'mage', 'druid'], enemies: ['defender', 'paladin', 'undead', 'antimage', 'archer'] }));
     const druid = unit(b, 'party', 'druid');
     expect(b.freeSlots('party')).toEqual([1, 4, 7, 8, 9, 10, 11]);
     expect(b.useSkill(druid.uid, 'summon_treant', undefined, 0).ok).toBe(false); // dolu
@@ -835,10 +851,10 @@ describe('Boş hücreye alan atışı ve Shield Bash', () => {
 });
 
 describe('Rastgele şerit yerleşimi', () => {
-  it('rastgele savaşlarda ortadaki şerit de kullanılır; her sırada en fazla 3, ön sıradan arkaya öncelik sırası korunur', () => {
+  it('rastgele savaşlarda ortadaki şerit de kullanılır; her sırada en fazla 3, ön sıradan arkaya öncelik sırası korunur (menzil KAPALI: eski kural)', () => {
     const usedLanes = new Set<number>();
     for (let seed = 1; seed <= 80; seed++) {
-      const b = new Battle(content.battleSetup('random-battle', seed, 'test'));
+      const b = withOldLayout(content.formulas, () => new Battle(content.battleSetup('random-battle', seed, 'test')));
       for (const side of ['party', 'enemy'] as const) {
         const units = b.living(side);
         const perRow = new Map<number, number>();
@@ -848,7 +864,7 @@ describe('Rastgele şerit yerleşimi', () => {
         }
         for (const n of perRow.values()) expect(n).toBeLessThanOrEqual(3);
         // sıralar öncelik sırasıyla dolar: önceki sıradaki hiçbir birim sonraki sıradakinden daha geride olamaz
-        const prOf = (u: Combatant) => (content.isMeleeClass(u.defId) ? 0 : 100) + content.classes[u.defId]!.frontPriority;
+        const prOf = (u: Combatant) => (withOldLayout(content.formulas, () => content.isMeleeClass(u.defId)) ? 0 : 100) + content.classes[u.defId]!.frontPriority;
         const rows = [...perRow.keys()].sort((x, y) => x - y);
         for (let i = 1; i < rows.length; i++) {
           const prev = Math.max(...units.filter((u) => b.rowOf(u.slot) === rows[i - 1]).map(prOf));
@@ -885,9 +901,9 @@ describe('Debug: bedava MP', () => {
   });
 });
 
-describe('Yakın dövüş yalnızca ön sıradan yapılır', () => {
+describe('Yakın dövüş yalnızca ön sıradan yapılır (menzil KAPALI: eski kural; bayrak kapalı = eski hedefleme)', () => {
   it('ikinci sıradaki yakın dövüşçü melee skill kullanamaz; ön sıradakiler kullanır', () => {
-    const b = grid(cells({ 0: 'warrior', 3: 'defender' }), cells({ 0: 'mage' }));
+    const b = gridOff(cells({ 0: 'warrior', 3: 'defender' }), cells({ 0: 'mage' }));
     expect(b.canUse('party-0', 'melee_attack').ok).toBe(true); // ön sıra
     expect(b.canUse('party-1', 'shield_bash')).toEqual({ ok: false, reason: 'Melee: front row only' }); // 2. sıra
     expect(b.canUse('party-1', 'taunt').ok).toBe(true); // yakın dövüş olmayan skill'ler serbest
@@ -895,14 +911,14 @@ describe('Yakın dövüş yalnızca ön sıradan yapılır', () => {
   });
 
   it('ön sıra boşalınca arkadaki yakın dövüşçü yeni ön sıra olur', () => {
-    const b = grid(cells({ 0: 'warrior', 3: 'defender' }), cells({ 0: 'mage' }));
+    const b = gridOff(cells({ 0: 'warrior', 3: 'defender' }), cells({ 0: 'mage' }));
     b.get('party-0')!.hp = 0;
     expect(b.frontRowOf('party')).toBe(1);
     expect(b.canUse('party-1', 'shield_bash').ok).toBe(true);
   });
 
   it('ön sırada 3 şeritte de yakın dövüşçü varsa hepsi vurabilir', () => {
-    const b = grid(cells({ 0: 'warrior', 1: 'defender', 2: 'antimage' }), cells({ 0: 'mage' }));
+    const b = gridOff(cells({ 0: 'warrior', 1: 'defender', 2: 'antimage' }), cells({ 0: 'mage' }));
     expect(b.canUse('party-0', 'melee_attack').ok).toBe(true);
     expect(b.canUse('party-1', 'shield_bash').ok).toBe(true);
     expect(b.canUse('party-2', 'mana_burn').ok).toBe(true);
@@ -911,12 +927,12 @@ describe('Yakın dövüş yalnızca ön sıradan yapılır', () => {
   it('ignoreFrontRow olan melee skill arka sıradan da kullanılabilir (charge benzeri)', () => {
     const setup = content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'warrior', 3: 'defender' }), enemies: cells({ 0: 'mage' }) }, false);
     setup.skills = { ...setup.skills, shield_bash: { ...setup.skills.shield_bash!, ignoreFrontRow: true } };
-    const b = new Battle(setup);
+    const b = new Battle(rangeOff(setup));
     expect(b.canUse('party-1', 'shield_bash').ok).toBe(true);
   });
 
   it('Charge: ön sıra ve menzil sınırı yok, herhangi bir düşmana gider ve sersemletir', () => {
-    const b = grid(cells({ 3: 'warrior' }), cells({ 0: 'defender', 6: 'mage' })); // Warrior arka sırada, hedef de arkada
+    const b = gridOff(cells({ 3: 'warrior' }), cells({ 0: 'defender', 6: 'mage' })); // Warrior arka sırada, hedef de arkada
     expect(b.canUse('party-0', 'charge').ok).toBe(true);
     expect(b.validTargets('party-0', 'charge').map((c) => c.uid)).toEqual(['enemy-0', 'enemy-1']);
     const events = act(b, 'party-0', 'charge', 'enemy-1');
@@ -925,17 +941,17 @@ describe('Yakın dövüş yalnızca ön sıradan yapılır', () => {
   });
 
   it('melee çağrı (Skeleton) ön sıraya konur', () => {
-    const b = grid(cells({ 0: 'undead', 2: 'warrior' }), cells({ 0: 'mage' }));
+    const b = gridOff(cells({ 0: 'undead', 2: 'warrior' }), cells({ 0: 'mage' }));
     const ev = ofType(act(b, 'party-0', 'raise_dead'), 'summon')[0]!;
     expect(b.rowOf(ev.combatant.slot)).toBe(0);
     expect(ev.combatant.slot).toBe(1);
   });
 
   it('Treant uzak menzilli (madde 222): arka sıradan da vurur; Skeleton (melee) arka sıradaysa vuramaz', () => {
-    const b = grid(cells({ 0: 'druid', 2: 'warrior' }), cells({ 0: 'mage' }));
+    const b = gridOff(cells({ 0: 'druid', 2: 'warrior' }), cells({ 0: 'mage' }));
     const sk = ofType(act(b, 'party-0', 'summon_treant', undefined, 7), 'summon')[0]!.combatant.uid;
     expect(b.canUse(sk, 'root_smash').ok).toBe(true);
-    const u = grid(cells({ 0: 'undead', 2: 'warrior' }), cells({ 0: 'mage' }));
+    const u = gridOff(cells({ 0: 'undead', 2: 'warrior' }), cells({ 0: 'mage' }));
     const skel = ofType(act(u, 'party-0', 'raise_dead', undefined, 7), 'summon')[0]!.combatant.uid;
     expect(u.canUse(skel, 'skeleton_strike')).toEqual({ ok: false, reason: 'Melee: front row only' });
   });
@@ -983,7 +999,7 @@ describe('Pasif skill\'ler', () => {
 
   it('Undead (Dark Mage) - Vampiric Bite: verdiği hasarın %20\'si (en az 1) kadar iyileşir (oran veriden, madde 240: %35); çağrısının hasarından da', () => {
     const ratio = (content.classes.undead!.passive!.effect as { ratio: number }).ratio;
-    expect(ratio).toBe(0.35);
+    expect(ratio).toBe(0.5); // t15 (Ömer 2026-10-17): 0,35 -> 0,50
     const b = calm(grid(cells({ 0: 'undead' }), cells({ 0: 'defender' })));
     const u = b.get('party-0')!;
     u.hp = u.maxHp - 30;
@@ -1160,18 +1176,42 @@ describe('Rastgele dizilimde yakın dövüş ön sıralarda', () => {
 });
 
 describe('Archer her zaman en arkada', () => {
-  it('rastgele ve otomatik dizilimde Archer, takımın en arka sırasında (kendinden daha arkada kimse yok)', () => {
+  const archerCases = (fn: (cellsList: string[], label: string) => void) => {
     for (let seed = 1; seed <= 300; seed++) {
       const { party, enemies } = content.rollTeams('random-battle', seed);
       for (const team of [party, enemies]) {
         if (!team.includes('archer')) continue;
-        for (const cellsList of [content.randomCells(team, seed), content.defaultCells(team)]) {
-          const rowOfAr = Math.floor(cellsList.indexOf('archer') / 3);
-          const maxRow = Math.max(...cellsList.map((id, i) => (id ? Math.floor(i / 3) : -1)));
-          expect(rowOfAr, `seed ${seed}`).toBe(maxRow);
-        }
+        fn(content.randomCells(team, seed), `random ${seed}`);
+        fn(content.defaultCells(team), `default ${seed}`);
       }
     }
+  };
+
+  it('menzil kapalıyken (eski dizilim) Archer, takımın en arka sırasında (kendinden daha arkada kimse yok)', () => {
+    withOldLayout(content.formulas, () =>
+      archerCases((cellsList, label) => {
+        const rowOfAr = Math.floor(cellsList.indexOf('archer') / 3);
+        const maxRow = Math.max(...cellsList.map((id, i) => (id ? Math.floor(i / 3) : -1)));
+        expect(rowOfAr, label).toBe(maxRow);
+      }),
+    );
+  });
+
+  // Menzil açıkken (docs/design/range.md > YZ dizilimi) Archer (taban 6) 2. sıradan da tüm tahtaya ulaşır; YZ bazen daha kısa menzilli
+  // bir arka sıra birimini (Mage/Anti-Mage) en arkaya koyar. Asıl amaç: Archer arka yarıda, hiçbir yakın dövüşçünün önünde/yanında değil
+  // ve ana menzili ilk turdan düşmanın en arka sırasına ya da en azından ön sırasına ulaşıyor.
+  it('menzil açıkken Archer arka yarıda (sıra >= 2), tüm yakın dövüşçülerin arkasında ve menzili düşmana ulaşır', () => {
+    expect(content.formulas.range?.enabled).toBe(true);
+    const meleeIds = new Set(Object.keys(content.classes).filter((id) => content.isMeleeClass(id)));
+    const range = content.classes.archer!.range!;
+    archerCases((cellsList, label) => {
+      const rowOfAr = Math.floor(cellsList.indexOf('archer') / 3);
+      expect(rowOfAr, label).toBeGreaterThanOrEqual(2);
+      cellsList.forEach((id, i) => {
+        if (id && meleeIds.has(id)) expect(Math.floor(i / 3), `${label}: ${id}`).toBeLessThan(rowOfAr);
+      });
+      expect(rowOfAr + 0 + 1, label).toBeLessThanOrEqual(range); // düşman ön sırası (derinlik 0)
+    });
   });
 });
 

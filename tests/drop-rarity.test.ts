@@ -1,7 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import { Rng } from '../src/engine';
 import { DROP, DROP_RARITIES, ITEMS, dropChances, dropShift, instanceIlvl, instanceRarity, itemDef, rollDropRarity, rollItem, rollLoot, validateDropRarity } from '../src/progression';
-import { ENDLESS, newRun, rewardOffer, shopStock, type EndlessRun } from '../src/endless';
+import { ENDLESS, newRun as newRunBase, rewardOffer, shopStock, type EndlessRun } from '../src/endless';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Düşüş nadirliği (Ömer onayı 2026-10-11): tek ağırlık tablosu; Common norm, Uncommon güzel bulgu, Rare dikkat çekici, Epic her dalgada gerçekten
 // özel. Dalga / item seviyesi ve elit / boss yalnızca hafif kaydırır, sert tavanlı. Taban item nadirlikten bağımsız. Legendary bu tablodan çıkmaz.

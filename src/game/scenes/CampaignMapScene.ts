@@ -17,6 +17,7 @@ import {
   acknowledgeHandover,
   grantAllLegendaries,
   acknowledgeLoot,
+  acknowledgeLevelUps,
   activeHeroes,
   autoFormation,
   canSaveManually,
@@ -95,7 +96,7 @@ import { debugState } from '../debug-state';
 import { isSettingsOpen, setSettingsOpen } from '../../ui/settings';
 import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
-import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
+import { openGearScreen, showHandover, showLevelUp, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBadge, elBody, elButton, elGlow, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
@@ -1477,7 +1478,7 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Gear ekranını açar (kahraman paneli / takım sütunu / kasaba / Spoils / teslim kartından). Kapanınca HUD yenilenir, `after` çağrılır. */
-  openGear(hero?: string, tutorial = false, after?: () => void): void {
+  openGear(hero?: string, tutorial = false, after?: () => void, view?: 'char' | 'inv'): void {
     const root = document.getElementById('ui-root');
     if (!root || this.pausedBlocks()) return;
     if (legendaryPreviewWanted()) setState(grantAllLegendaries(this.s)); // ?legendary=1 önizlemesi (madde 296)
@@ -1485,6 +1486,7 @@ export class CampaignMapScene extends Phaser.Scene {
       get: () => this.s,
       set: (s) => setState(s),
       ...(hero ? { hero } : {}),
+      ...(view ? { view } : {}),
       tutorial,
       onClose: () => {
         dismissLesson('gear'); // Gear dersleri Gear ekranıyla kapanır (haritada kalıp Farewell'in Continue düğmesini örtüyordu)
@@ -1515,6 +1517,21 @@ export class CampaignMapScene extends Phaser.Scene {
         },
         done: () => {
           setState(acknowledgeLoot(this.s));
+          this.advance();
+        },
+      });
+      return true;
+    }
+    // Level Up kartı (Ömer 2026-10-17, levels.md): savaş / olay / hazineden sonra, Spoils'tan sonra
+    if (s.levelUps?.length) {
+      const ups = s.levelUps;
+      showLevelUp(root, ups.map((u) => ({ name: content.classes[s.roster.find((h) => h.id === u.heroId)?.class ?? '']?.name ?? 'A hero', from: u.from, to: u.to })), {
+        spend: () => {
+          setState(acknowledgeLevelUps(this.s));
+          this.openGear(ups[0]!.heroId, false, () => this.advance(), 'char');
+        },
+        later: () => {
+          setState(acknowledgeLevelUps(this.s));
           this.advance();
         },
       });

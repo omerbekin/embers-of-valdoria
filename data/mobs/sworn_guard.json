@@ -8,6 +8,7 @@
   "color": "#8b1e1e",
   "logo": "helm",
   "frontPriority": 0,
+  "range": 2,
   "role": "Morvane's Army · Royal Guard",
   "attributes": {
     "str": 30,

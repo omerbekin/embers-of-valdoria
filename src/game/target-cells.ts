@@ -78,3 +78,18 @@ export function blockedTargets(battle: Battle, actorUid: string, skillId: string
   }
   return out;
 }
+
+/**
+ * Menzil (docs/design/range.md): skill seçiliyken MENZİL DIŞINDA kalan düşman hücreleri (soluk 'invalid' plaka; ulaşılabilenler zaten seçilebilir parlar).
+ * Tek hedefte motorun nedeni 'Out of range' olan canlı düşmanlar; alan skill'inde anchor olarak menzil dışında kalan dolu düşman hücreleri.
+ * Menzil sistemi kapalıyken (formulas.range.enabled false) boş: eski görünüm birebir.
+ */
+export function outOfRangeCells(battle: Battle, actorUid: string, skillId: string): Array<{ board: Side; slot: number }> {
+  const actor = battle.get(actorUid);
+  const skill = battle.skill(skillId);
+  if (!battle.rangeOn || !actor || !skill) return [];
+  const foe: Side = actor.side === 'party' ? 'enemy' : 'party';
+  if (skill.target === 'single_enemy') return battle.living(foe).filter((c) => battle.targetProblem(actorUid, skillId, c.uid) === 'Out of range').map((c) => ({ board: c.board, slot: c.slot }));
+  if (battle.isAreaSkill(skillId)) return battle.living(foe).filter((c) => c.board === foe && !battle.inRange(actor, skill, foe, c.slot)).map((c) => ({ board: c.board, slot: c.slot }));
+  return [];
+}

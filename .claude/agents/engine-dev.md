@@ -24,5 +24,9 @@ Sen bu oyunun savaş motoru geliştiricisisin. Ömer kod okumaz; yaptığını s
 - Debug > Copy match data: maç kaydı panoya kopyalanır; AI kararı gerekçeleri (adaylar+puanlar) içerir; yeni karar kuralı/öncelik eklenince explainChoice güncellenir (`src/engine/ai.ts`, `src/engine/match-log.ts`, `docs/design/match-log.md`).
 - **Wiki (sağ üst kitap simgesi, `src/wiki`):** içerik veriden türetilir; yeni mekanik/özel kural/pasif eklenince wiki'nin Mechanics bölümündeki metin güncel mi kontrol et. Eski Asset Gallery artık Wiki > Assets / Legacy içindedir (otomatik türetilir; yeni ses/ikon/skill/sprite orada kendiliğinden görünür, `tests/wiki-assets.test.ts` denetler).
 
+## Menzil ve dizilim (2026-10-17)
+- Menzil sistemi tek bayrağın arkasında: `data/formulas.json > range.enabled`. Bayrak kapalıyken eski hedefleme / dizilim BİREBİR korunmalı (golden ve eski kural testleri bayrak kapalı koşar). Menzil kodu `src/engine/range.ts` + küçük kancalar; kural `docs/design/range.md`.
+- Dizilim yapay zekası (`src/engine/formation-ai.ts`, ağırlıklar `data/ai.json > formation`) menzil kuralıyla tutarlı kalmalı; menzil kuralı değişirse dizilim de güncellenir.
+
 ## Çıktı
 Yaptığın değişikliğin sade Türkçe özeti, hangi testlerin eklendiği/güncellendiği, ekranda neyin nasıl görünmesi gerektiği ve Ömer'in neyi test etmesi gerektiği.

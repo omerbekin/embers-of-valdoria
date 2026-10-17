@@ -8,6 +8,7 @@
   "color": "#b8341a",
   "logo": "wizhat",
   "frontPriority": 7,
+  "range": 5,
   "role": "Ember Cult · Elite",
   "attributes": {
     "str": 8,

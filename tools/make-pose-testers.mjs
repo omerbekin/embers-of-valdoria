@@ -21,7 +21,7 @@ const POSE = {
   melee_attack: ['overhead', 'slash'],
   whirlwind: 'spin',
   charge: ['step', 'thrust'],
-  abyssal_cry: ['raise', 'channel'],
+  headsmans_blow: ['overhead', 'slash'],
   // Defender (gürz + kule kalkanı)
   tremor_slam: 'overhead',
   taunt: 'guard',
@@ -146,7 +146,7 @@ CLASSES.forEach((cls, i) => {
     hidden: true,
     // statlar sabit test değerleri (sınıf verisi testleri: zırh, çeviklik, Rage, büyü zırhı gerçek sınıflara özgü kalsın)
     frontPriority: 1,
-    attributes: { str: 30, int: 16, dex: 8, luck: 6 },
+    attributes: { str: 26, int: 12, dex: 8, luck: 14 }, // Warrior ile aynı (levels.md 2026-10-17: en yüksek temel stat <= diğer üçünün %80i)
     primary: 'str',
     armor: 18,
     magicArmor: 0,

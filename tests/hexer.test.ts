@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, chooseAction, content, describePassive, describeSkill, explainChoice, MatchLog, previewSkill, roundStat } from '../src/engine';
+import { Battle, chooseAction, content, describePassive, describeSkill, explainChoice, MatchLog, previewSkill, roundSpeed } from '../src/engine';
 import type { AiConfig, BattleEvent, Combatant, CombatantDef, Status } from '../src/engine';
 import { shapeCells } from '../src/engine/area-shape';
 import { buildWiki } from '../src/wiki/catalog';
@@ -57,7 +57,7 @@ describe('Hexer class verisi', () => {
     expect(hx.role).toBe('Curse Caster');
     expect(hx.color).toBe('#6a2f5f');
     const a = hx.attributes;
-    expect([a.str, a.int, a.dex, a.luck]).toEqual([16, 10, 6, 28]); // x2 stat ölçeği (eski 8/5/3/14; madde 261 denge turu: str 6 -> 8, int 7 -> 5)
+    expect([a.str, a.int, a.dex, a.luck]).toEqual([18, 10, 6, 26]); // levels.md (2026-10-17): en yüksek temel stat <= diğer üçünün %80'i (luck 28 -> 26, str 16 -> 18); önce 16/10/6/28
     expect(a.str + a.int + a.dex + a.luck).toBe(60);
     expect(hx.primary).toBe('luck');
     expect(a.luck).toBe(Math.max(a.str, a.int, a.dex, a.luck));
@@ -66,10 +66,10 @@ describe('Hexer class verisi', () => {
     const f = content.formulas.attributes;
     expect(hx.stats.hp).toBe(f.hpBase + f.hpPerStr * a.str); // 56
     expect(hx.stats.mp).toBe(f.mpBase + f.mpPerInt * a.int); // 44
-    expect(hx.stats.spd).toBe(roundStat(f.spdBase + f.spdPerDex * a.dex, content.formulas)); // 16 (x2 ölçek)
+    expect(hx.stats.spd).toBe(roundSpeed(f.spdBase + f.spdPerDex * a.dex, content.formulas)); // 16
     expect(hx.stats.accuracy).toBeCloseTo(f.accuracyBase + f.accuracyPerLuck * a.luck); // %94
     expect(hx.stats.critChance).toBeCloseTo(f.critChanceBase + f.critChancePerLuck * a.luck); // %12
-    expect([hx.stats.hp, hx.stats.mp, hx.stats.spd]).toEqual([78, 40, 16]); // madde 261: can tabanı 30, str 8; x2 stat ölçeği: hız 16 (eski 8)
+    expect([hx.stats.hp, hx.stats.mp, hx.stats.spd]).toEqual([84, 40, 16]); // levels.md 2026-10-17: str 18 (can 84; önce 78); x2 stat ölçeği: hız 16 (eski 8)
     expect(hx.stats.armor).toBe(8); // x2 ölçek (eski 4)
     expect(hx.stats.magicArmor).toBe(0);
     expect(hx.spriteId).toBe('hexer');
@@ -81,14 +81,14 @@ describe('Hexer class verisi', () => {
     expect(content.battles['random-battle']!.random!.pool).toContain('hexer');
   });
 
-  it('tüm hasarlar LUCK ölçekli büyü/dark; Evil Eye bedelsiz; Doom Mark 4. yuva (cooldown + initialCooldown 2 <= maxInitial)', () => {
+  it('tüm hasarlar LUCK ölçekli büyü/dark; Evil Eye bedelsiz; Doom Mark 4. yuva (cooldown + initialCooldown 3 <= maxInitial; Ömer 2026-10-17 ultimate ilk beklemesi +1)', () => {
     for (const id of hx.skills) for (const e of S[id]!.effects) if (e.type === 'damage' || e.type === 'dot') expect(e.scale, id).toBe('luck');
     expect(DOOM.scale).toBe('luck');
     expect(S.evil_eye!.cost.amount).toBe(0);
-    expect(S.doom_mark!.initialCooldown).toBe(2);
+    expect(S.doom_mark!.initialCooldown).toBe(3);
     expect(S.doom_mark!.initialCooldown!).toBeLessThanOrEqual(content.formulas.cooldown.maxInitial);
     const b = arena([['hexer', 4]], [['warrior', 0]], 'turns');
-    expect(P(b, 4).cooldowns.doom_mark).toBe(2);
+    expect(P(b, 4).cooldowns.doom_mark).toBe(S.doom_mark!.initialCooldown);
     expect(S.withering_curse!.area).toMatchObject({ shape: 'rect', rows: 2, cols: 3, stages: 'row' }); // Ö6
   });
 });

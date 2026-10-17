@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant, Teams } from '../src/engine';
 import { ENCOUNTERS, validateEncounters } from '../src/campaign';
+import { rangeOff } from './range-helpers';
 
 // The Bridge Warden (King's Bridge boss; docs/design/bosses/bridge-warden.md, M1-M14): telgraf, adalet kuralı, Iron Mooring (inert, zırh, Stagger, iptal),
 // fazlar ve faz kilidi, Fall of King's Bridge + Keystone, Chain Hook çekmesi, Ash Brand + dispel, Unyielding, Overextended, YZ kaçışı, determinizm.
@@ -239,7 +240,8 @@ describe('Chain Hook çekmesi (M6) ve Ash Brand (M4)', () => {
   });
 
   it('Ash Brand damgalar; çözülmede damgalının O ANKİ hücresi merkezli artı vurulur; Mana Barrier dispel iptal eder', () => {
-    const b = make();
+    // Menzil KAPALI: test damga mekaniğini sınar; Ash Brand menzil 1 (Warden yakın dövüşçü) iken yuva 3'teki Mage'e ulaşmaz (range.md)
+    const b = new Battle(rangeOff(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', TEAMS, false)));
     const w = warden(b);
     w.phase = 2;
     toWarden(b);
@@ -255,7 +257,7 @@ describe('Chain Hook çekmesi (M6) ve Ash Brand (M4)', () => {
     expect(r.hit.sort()).toEqual(['party-0', 'party-1']);
     expect(mage.statuses.some((s) => s.kind === 'ash_brand')).toBe(false);
     // dispel
-    const b2 = make();
+    const b2 = new Battle(rangeOff(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', TEAMS, false)));
     const w2 = warden(b2);
     w2.phase = 2;
     toWarden(b2);

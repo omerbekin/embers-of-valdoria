@@ -299,7 +299,9 @@ export class TeamSelectScene extends Phaser.Scene {
 
   private randomize(side: Side, redraw = true): void {
     const seed = newSeed() + (side === 'party' ? 1 : 977);
-    this.teams[side] = content.randomCells(content.randomTeam(seed, this.sizes[side], randomizePool()), seed);
+    // menzil açıkken YZ dizilimi menzile duyarlıdır ve karşı takımın alan şekillerine bakar (src/engine/formation-ai.ts)
+    const foes = (this.teams[this.other(side)] ?? []).filter(Boolean);
+    this.teams[side] = content.randomCells(content.randomTeam(seed, this.sizes[side], randomizePool()), seed, { foes, board: side === 'party' ? 'party' : 'enemy' });
     if (redraw) this.refresh();
   }
 
@@ -1168,7 +1170,7 @@ export class TeamSelectScene extends Phaser.Scene {
   private skillTip(def: CombatantDef, skillId: string): TipSpec {
     const skill = content.skills[skillId];
     if (!skill) return { title: skillId, lines: [] };
-    const info = describeSkill(skill, def.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
+    const info = describeSkill(skill, def.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }, def.range);
     const kc = (k: (typeof info.kinds)[number]): string => (k === 'shield' ? colors.shield : k === 'magicShield' ? colors.magicShield : k ? (colors.element as Record<string, string>)[k] ?? TXT : TXT);
     const lines: Array<[string, string?]> = info.lines.map((l, i) => [l, kc(info.kinds[i])]);
     if (info.initialCooldown) lines.push([info.initialCooldown, MUTED]);

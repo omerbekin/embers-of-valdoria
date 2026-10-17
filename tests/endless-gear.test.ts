@@ -8,7 +8,7 @@ import {
   equipBestRun,
   equipFromBag,
   loadRun,
-  newRun,
+  newRun as newRunBase,
   parseRun,
   planKey,
   saveRun,
@@ -23,6 +23,10 @@ import { BAG_SIZE, ITEMS, canEquip, itemDef, loadoutSetup } from '../src/progres
 import { endlessGearSource } from '../src/game/endless-gear';
 import { campaignGearSource } from '../src/ui/gear-screen';
 import { addItem, equipItem, newCampaign, pickHero, type CampaignState } from '../src/campaign';
+import { leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Endless torba modeli (Ömer 2026-10-09): ödül / dükkân item'leri torbaya girer, kampta Gear ekranında istenen kahramana takılır.
 

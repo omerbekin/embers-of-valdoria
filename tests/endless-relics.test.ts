@@ -118,7 +118,12 @@ describe('kalıntı teklifi', () => {
 describe('kalıntı etkileri', () => {
   it('kalıntısız kurulum aynen kalır (bugünkü savaş)', () => {
     expect(withRelics({ startHpRatio: 0.5 }, [])).toEqual({ startHpRatio: 0.5 });
-    expect(wavePlan(fresh()).units.party).toEqual({});
+    // kalıntısız: kahramanın kurulumu yalnızca kendi ekipmanından (başlangıç silahı; silah çarpanı katlanmış = yok)
+    const plan = wavePlan(fresh());
+    for (const u of Object.values(plan.units.party)) {
+      expect(Object.keys(u)).toEqual(['modifiers']);
+      expect(u.modifiers?.weaponMult).toBeUndefined();
+    }
   });
 
   it('Ember of Valdren: dalga başında her kahramana maks canın %8i kalkan', () => {

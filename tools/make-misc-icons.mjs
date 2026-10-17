@@ -506,3 +506,6 @@ for (const sheet of SHEETS) {
   }
 }
 console.log(`${new Set(made).size} icons -> ${OUT}/<group>/<name>.png (128) + small/ (64)`);
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

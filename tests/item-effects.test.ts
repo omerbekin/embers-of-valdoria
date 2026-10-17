@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it } from 'vitest';
+import { leveledCampaign } from './level-helpers';
 import { Battle, content, previewSkill, type BattleEvent, type ItemEffects, type Teams, type UnitSetup } from '../src/engine';
 import { activeHeroes, addItem, debugTeleport, equipItem, latestSave, memoryKV, newCampaign, pickHero, writeSave, battlePlan } from '../src/campaign';
 import { ITEMS, effectLine, emptyEquipment, equipmentEffects, itemDef, itemLines, loadoutSetup, validateItems } from '../src/progression';
@@ -195,7 +196,7 @@ describe('güç katmanı: etkiler, yığılmama, Endless, kayıt', () => {
   });
 
   it('sefer: affix kancalı item kayıt round-trip sonrası savaş planında kancasıyla gelir', () => {
-    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 21 }), 'archer'), '5A');
+    let s = leveledCampaign(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 21 }), 'archer'), '5A'));
     s = { ...s, inventory: [] };
     const hero = activeHeroes(s)[0]!;
     const r = addItem(s, 'great_helm');

@@ -6,6 +6,7 @@ import { content } from '../src/engine';
 import { buildWiki, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
+import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
 
 function scan(dir: string, depth: 1 | 2): Record<string, string> {
   const root = join(__dirname, '..', 'assets', dir);
@@ -127,7 +128,11 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     const r = content.formulas.rage;
     expect(text('rage')).toContain(`0 to ${r.max}`);
     expect(text('rage')).toContain(String(r.perHitCap));
-    expect(text('rage')).toContain(content.skills.abyssal_cry!.name);
+    expect(text('rage')).toContain(content.skills.headsmans_blow!.name);
+    // Berserker (Ömer 2026-10-17): hasar alınca Rage + Headsman's Blow'un tüm Rage'i harcaması; sayılar veriden
+    const berserker = content.classes.warrior!.passive!.effect as { rageOnHurt?: { perHpPercent: number; perHitCap?: number } };
+    expect(text('rage')).toContain(`${berserker.rageOnHurt!.perHpPercent} per 1% of max HP lost`);
+    expect(text('rage')).toContain(`spends ALL your Rage (at least ${content.skills.headsmans_blow!.cost.amount})`);
     for (const d of Object.values(content.globalSkills)) expect(text('actions'), d.id).toContain(d.name);
     expect(text('actions')).toContain(`${content.globalSkills.rest!.mp} MP`);
     expect(text('actions')).toContain('next turn arrives in half the time');
@@ -151,6 +156,9 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(items).toContain('+25% crit chance');
     expect(items).toContain('40% debuff resistance');
     expect(items).not.toMatch(/Might/);
+    // Item Güçlendirme (2026-10-17): silah gücü, başlangıç silahı, seviye şartı; sayılar veriden
+    for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', "Woodcutter's Axe", 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is armor"]) expect(items, w).toContain(w);
+    expect(items).toContain(`${weaponPowerOf(itemDef('woodcutters_axe')!, 30)} at 30`);
     expect(text('turns')).toContain('Battle speed');
     expect(text('mana')).toContain('"+2 MP"');
     const st = (id: string) => wiki.statuses.find((s) => s.id === id)!;

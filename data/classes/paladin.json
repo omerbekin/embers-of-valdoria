@@ -6,6 +6,7 @@
   "logo": "holy",
   "role": "Holy Healer",
   "frontPriority": 2,
+  "range": 4,
   "attributes": {
     "str": 24,
     "int": 26,

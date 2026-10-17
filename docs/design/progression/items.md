@@ -53,8 +53,8 @@ Karakter sprite'ları sabit (item görünüşü değiştirmez), bu yüzden kıs�
 
 | Aile (in-game) | Örnek tabanlar | Kullanan sınıflar |
 |---|---|---|
-| **Axes & Swords** | Woodcutter's Axe, Bearded Axe, Arming Sword, Dane Axe | Warrior, Anti-Mage |
-| **Maces & Shields** | Flanged Mace, Oak Tower Shield, Morning Star, Iron Bulwark | Defender, Paladin, Warrior |
+| **Axes & Swords** | Woodcutter's Axe, Bearded Axe, Arming Sword, Dane Axe, Greataxe, Greatsword | Warrior, Anti-Mage |
+| **Maces & Shields** | Flanged Mace, Oak Tower Shield, Morning Star, Iron Bulwark, War Maul | Defender, Paladin, Warrior |
 | **Bows** | Hunting Bow, Yew Longbow, Warbow | Archer |
 | **Daggers** | Rondel Dagger, Misericorde, Twin Stilettos | Cutthroat, Anti-Mage |
 | **Staves** | Ash Staff, Rune Staff, Bone Staff, Druid's Crook | Mage, Druid, Undead |
@@ -170,6 +170,22 @@ Bu bölüm 1.3'ün "ek stat satırı (affix)" sütununun ve 1.6'nın MVP kısmı
 - **Seviye bütçesi:** ~~`B(ilvl) = 1 + 0,2 x ilvl`~~ → 2026-10-10'dan beri `B(ilvl) = 0,7 + 0,14 x ilvl` ve nadirlik çarpanları Common = 1,0 ölçeğinde (1.3a); mutlak güç aynı.
 - **Item bütçesi:** `IP = slotWeight x B(ilvl) x rarityMult` (±%10 tolerans; tam sayıya yakın, "güzel" stat değerleri için).
 - Bölümün adı item adına girmez; ama taban isimleri bölüme göre sertleşir (bölüm 1 köylü/haydut malı: *Woodcutter's Axe, Padded Gambeson*; bölüm 2 asker malı: *Riveted Mail, Arming Sword*; bölüm 3 şövalye/rün malı: *Plate Harness, Rune Staff*). Bu "kademe" tabanların `minIlvl`'i ile sağlanır, ayrı tür gerekmez.
+
+### 1.12 Item Güçlendirme: silah gücü, başlangıç silahı, seviye şartı (Ömer onayı: form 2026-10-13, onay 2026-10-17)
+
+Sayılar `data/items.json > weaponPower / implicits / levelReq / starterWeapons` (İLK DEĞERLER; son ayar balance-tester). Kod: `src/progression/items.ts` (güç, örtük stat, şart), `src/progression/weapon.ts` (başlangıç silahı, katlama), motor kancası `UnitModifiers.weaponMult`. Test: `tests/item-power.test.ts`.
+
+- **x1 / x2 Silah gücü:** her silahın zarsız bir TABAN GÜCÜ var: `güç = (7,5 + 2,5 x ilvl) x tutuş x aile` (tam sayıya yuvarlanır). Skill hasarı = stat x skill gücü x (1 + güç / 100). Asa ve tılsım dahil her silah; yalnızca HASAR (şifa ve kalkan değil). Global damage affix'iyle çarpımsal. Nadirlik gücü değiştirmez (1.3b: kalite = affix sayısı).
+  - Tek el: ilvl 1 = 10, ilvl 10 = 33, ilvl 20 = 58, ilvl 30 = 83, ilvl 50 = 133.
+- **x3 Aileler:** çift el ve yay x1,35 (ikinci eli kapatır; ilvl 30'da 111); tılsım x1,15 (ikinci eli kapatır ama daha zayıf; örtük **hız %**: 2 + 0,1 x ilvl); hançer x0,85 (örtük **kritik şansı**: 2 + 0,1 x ilvl %; ikinci eldeki hançerin gücünün %40'ı sayılır). Asa çift el.
+- **x4 Kalkan:** gücü yok; tabanı **zırh** (örtük: 2 + 0,5 x ilvl; ilvl 10'da +7) + ana Armor affix'i. "Block" diye yeni bir mekanik eklenmedi (yeni kural = Ömer'e sorulur; open-questions 334).
+- Örtük statlar affix değildir (kademe etiketi yok, zar yok, `affixRules.power` işlemez), tavanlara (caps) dahildir, IP / fiyat / Equip best'e girer. Güç IP'si: 1 güç = 0,45 IP (1 güç ~ %0,9 hasar ~ Global damage %1 = 0,5 IP).
+- **x5 Başlangıç silahı ve katlama:** her sınıf Common, item level 1 silahla başlar: Warrior Woodcutter's Axe; Defender ve Paladin Flanged Mace; Archer Short Bow; Cutthroat ve Anti-Mage Rondel Dagger; Mage, Druid ve Undead Ash Staff; Gambler ve Hexer Worn Deck. Normal item (satılır, değiştirilir). Ana affix'i sınıfın elementinden (zar ortası). **Katlama:** motora giden çarpan = (1 + güç/100) / (1 + sınıfın başlangıç silahının gücü/100). Başlangıç silahıyla 1 (Quick Battle / MP güç katmanını hiç kullanmaz; QB L1 dengesi BİREBİR aynı), güçlü silahla > 1, silahsız < 1 (Warrior silahsız ~x0,91). Seferde başlangıç silahının kendi C affix'i ve (hançer / tılsımda) örtük statı küçük bir artı verir (QB'de yok).
+- **x6 Seviye şartı:** şart = max(1, ilvl − 3) (ilvl 12 -> Level 9). Kahramanın seviyesi yetmezse takılamaz: Gear / tüccar sürükle-bırak ve düğmesi "Requires Level X" mesajıyla reddeder, Equip best ve otomatik takma atlar, Endless ödül kartı ve tezgâh o kahramana önermez. İpucunda "Requires Level X" (karşılanmıyorsa kırmızı), kahraman kartında karşılaştırma yine gösterilir. Level sistemi gelene kadar herkes L1 (yalnızca ilvl <= 4 takılır; beklenen ara durum, ikisi birlikte yayınlanır).
+- **x7** Item seviyesi sabit, zamanla düşmez.
+- **Çift el yakın dövüş tabanları (Ömer 2026-10-17):** Greataxe (ilvl 3) ve Greatsword (ilvl 5) Axes & Swords, War Maul (ilvl 4) Maces & Shields ailesinde, hepsi çift el (x1,35). Her taban gibi Common..Epic düşer (sefer, Endless, tüccar). Taban başına TEK çizim: nadirlik elde tutulan silahta yalnızca renk / parlaklık tonu (`data/poses.json > rarityTone`; görünümü sabit her Legendary dışı item'e uygulanır). Varsayımlar open-questions 336; çizim listesi `docs/design/prompts/item-icons.md > Paket 8`.
+- **x8 Hedef etki (tahmin, uzun sim yapılmadı):** Endless'ta dalga N'de silah ~ilvl N+2: başlangıca göre hasar ilvl 10'da ~x1,2, 20'de ~x1,45, 30'da ~x1,7 (çift elde biraz daha). Düşman canı dalga başına +%1 büyüdüğü için bu, level sistemiyle birlikte item'lerin bugünkü ~+2 dalgalık etkisini +6-10 bandına taşıması beklenen ana kaldıraç. Ayar düğmeleri: `weaponPower.perIlvl` (eğim), `grip` (aile farkı), `implicits`. Şu an L1 şartı yüzünden Endless'ta ilvl 5+ item takılamaz: denge simleri item'siz gibi çalışır (bantlar yine içinde).
+- **Kayıt:** sefer dosyası sürüm 8, Endless koşusu sürüm 5: eski kayıtta silah yuvası boş kahramana (ikinci elinde hançer yoksa) sınıfının başlangıç silahı takılır, var olan item'ler aynen kalır; silah alan kahramanı olan kaydın duraklatılmış savaşı atılır (savaş baştan). Göç yalnızca sürüm yükselirken: oyuncunun sonradan çıkardığı silah geri gelmez.
 
 ### 1.5 Stat havuzu (item'de olan / olmayan)
 

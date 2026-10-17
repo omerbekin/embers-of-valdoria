@@ -8,6 +8,7 @@
   "color": "#a0522d",
   "logo": "bulwark",
   "frontPriority": 0,
+  "range": 1,
   "role": "Guardian · Gate",
   "attributes": {
     "str": 28,

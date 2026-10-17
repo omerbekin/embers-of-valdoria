@@ -242,8 +242,8 @@
      düğmeye iki sınıf birden verilir: "nav-btn el-back"). Konum Phaser elBack ile aynı kural (src/ui/nav-icons.ts > backPlacement):
      sol kenardan 48, dikey orta 56 oyun birimi (--gu), ama kenara en az 6 px. */
   position: absolute;
-  left: calc(var(--el, 0px) + var(--nav-edge, 6px));
-  top: calc(var(--et, 0px) + var(--nav-edge, 6px)); /* sağ üst Menu / tam ekranla aynı hiza (global kural, nav-icons.ts) */
+  left: calc(var(--el, 0px) + var(--nav-edge-k, 6px));
+  top: calc(var(--et, 0px) + var(--nav-edge-k, 6px)); /* sağ üst Menu / tam ekranla aynı hiza (global kural, nav-icons.ts) */
   z-index: 2;
 }
 

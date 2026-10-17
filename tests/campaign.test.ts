@@ -317,14 +317,16 @@ describe('tutorial takım akışı', () => {
 });
 describe('can taşıma', () => {
   it('zaferde hayatta kalanlar +%35 (victoryHeal), düşenler KALKMAZ (ceset; Ömer 2026-10-11), savaşa girmeyen değişmez', () => {
-    let s = playTo(fresh(9), '3');
+    // tavan level: XP level atlatmasın (level atlayınca tam iyileşme bu testin can kuralını örterdi; levels.md)
+    const maxed = (x: CampaignState): CampaignState => ({ ...x, roster: x.roster.map((h) => ({ ...h, level: 50, xp: 0 })) });
+    let s = maxed(playTo(fresh(9), '3'));
     const [a, b] = s.roster;
     s = applyBattle(s, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
     expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.victoryHeal);
     expect(s.roster[1]!.hpRatio).toBe(0);
     expect(s.roster[1]!.alive).toBe(false);
     expect(battlePlan(s).units.party[s.active.indexOf(b!.id)]?.startDead).toBe('revivable'); // sonraki savaşa ceset olarak girer
-    let t = playTo(fresh(9), '3');
+    let t = maxed(playTo(fresh(9), '3'));
     t = applyBattle(t, { victory: true, units: [{ heroId: t.roster[0]!.id, hpRatio: 0.95, alive: true }] });
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
@@ -336,6 +338,7 @@ describe('can taşıma', () => {
     expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: 0, alive: false });
     expect(team.slice(1).every((h) => s.roster.find((x) => x.id === h.id)!.hpRatio === 1)).toBe(true);
     let t = playTo(fresh(11), '3');
+    t = { ...t, roster: t.roster.map((h) => ({ ...h, level: 50, xp: 0 })) }; // XP level atlatmasın (tam iyileşme)
     t = applyBattle(t, { victory: true, units: t.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
     expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.victoryHeal);
     const lost = applyBattle(t, { victory: false, units: [] });

@@ -115,7 +115,7 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
     case 'resource':
       return `${L(e.actor)} pays ${e.amount} ${e.resource} (now ${e.after})`;
     case 'rage':
-      return `${L(e.actor)} rage ${e.delta >= 0 ? '+' : ''}${e.delta} (now ${e.after}/${e.max})`;
+      return `${L(e.actor)} rage ${e.delta >= 0 ? '+' : ''}${e.delta} (now ${e.after}/${e.max})${e.cause === 'hurt' ? ' [Berserker: hurt]' : ''}`;
     case 'damage':
       if (e.luckyEscape) return `${L(e.source)} -> ${L(e.target)}: killing blow IGNORED (Lucky Escape), 0 dmg${e.redirected ? ' (guard redirect)' : ''}, hp ${e.hpAfter}${e.shieldAfter ? `, shield ${e.shieldAfter}` : ''}${e.magicShieldAfter ? `, mshield ${e.magicShieldAfter}` : ''}`;
       return `${L(e.source)} -> ${L(e.target)}: ${e.amount} dmg${e.absorbed ? ` (+${e.absorbed} absorbed)` : ''}${e.crit ? ' CRIT' : ''}${e.redirected ? ' (guard redirect)' : ''}${e.status === 'wither' ? ' [wither tick]' : e.status === 'omen' ? ' [DOOM]' : e.status ? ` [${e.status}]` : ''}, hp ${e.hpAfter}${e.shieldAfter ? `, shield ${e.shieldAfter}` : ''}${e.magicShieldAfter ? `, mshield ${e.magicShieldAfter}` : ''}`;
@@ -142,9 +142,6 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
     case 'emptyProc':
       return `${L(e.target)} is out of mana: ${Math.round(e.chance * 100)}% roll for ${e.status} + damage (${battle.skill(e.skill)?.name ?? e.skill}) -> ${e.success ? 'HIT' : 'no effect'}`;
     case 'status':
-      // Yüklü durum (Abyssal Fury, madde 262): saldırı bir yük harcadı
-      if (e.cause === 'charge') return `${L(e.target)} ${e.status}: attack spent a charge, ${e.turns} left`;
-      if (battle.statusDef(e.status)?.attackCharges) return `${L(e.target)} +${e.status} ${e.turns} attack charge(s) (from ${L(e.source)}): ${battle.statusDef(e.status)?.text ?? ''}`;
       return `${L(e.target)} +${e.status}${e.stacks !== undefined ? ` x${e.stacks}` : ''} ${e.turns}t (from ${L(e.source)})${e.stacks !== undefined ? ` [omen timer ${e.turns}]` : ''}${e.partner ? ` bond with ${L(e.partner)}` : ''}${e.cause ? ` [${e.cause}]` : ''}`;
     case 'statusEnd':
       return `${L(e.target)} -${e.status}${e.broken ? ' (ended early: broken / control)' : e.dispelled ? ` (DISPELLED by ${e.source ? L(e.source) : '?'}${e.cause ? ` [${e.cause}]` : ''})` : e.cause === 'bond_broken' ? ' (bond broken)' : e.cause === 'doom' ? ' (burst into Doom)' : e.cause === 'ill_omen' ? ' (passed on by Ill Omen)' : e.cause === 'erased' ? ' (erased: Doom Mark kill, no Ill Omen)' : e.consumed ? ' (used up by its own attack)' : ' (expired)'}`;
@@ -565,7 +562,7 @@ function globalText(g: AiExplanation['global']): string {
 }
 
 function skillLine(sk: SkillDef): string {
-  const cost = sk.cost.ofCurrent ? `${sk.cost.resource.toUpperCase()} ${Math.round(sk.cost.ofCurrent * 100)}% of current${sk.cost.amount ? ` +${sk.cost.amount}` : ''}` : `${sk.cost.resource.toUpperCase()} ${sk.cost.amount}`;
+  const cost = sk.cost.spendAll ? `${sk.cost.resource.toUpperCase()} all (min ${sk.cost.amount})` : sk.cost.ofCurrent ? `${sk.cost.resource.toUpperCase()} ${Math.round(sk.cost.ofCurrent * 100)}% of current${sk.cost.amount ? ` +${sk.cost.amount}` : ''}` : `${sk.cost.resource.toUpperCase()} ${sk.cost.amount}`;
   const extra = [
     sk.cooldown ? `cd ${sk.cooldown}` : '',
     sk.initialCooldown ? `initialCd ${sk.initialCooldown}` : '',
@@ -573,6 +570,7 @@ function skillLine(sk: SkillDef): string {
     sk.excludeSelf ? 'excludeSelf' : '',
     sk.motion === 'melee' ? 'melee' : sk.motion,
     sk.reach ? `reach ${sk.reach}` : '',
+    sk.global ? 'global' : sk.range !== undefined ? `range ${sk.range}` : '',
     sk.area ? `area shape ${shapeLabel(sk.area)}` : '',
     sk.splash ? 'splash' : '',
     sk.count ? `count ${sk.count}` : '',

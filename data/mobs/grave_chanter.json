@@ -7,6 +7,7 @@
   "color": "#6a4f8a",
   "logo": "skull",
   "frontPriority": 7,
+  "range": 5,
   "role": "Undead · Summoner",
   "attributes": {
     "str": 6,

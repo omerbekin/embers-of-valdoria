@@ -178,7 +178,7 @@ export class CombatantView {
     readonly combatant: Combatant,
     x: number,
     y: number,
-    opts: { weapon?: WeaponPick | null } = {},
+    opts: { weapon?: WeaponPick | null; level?: number } = {},
   ) {
     this.homeX = x;
     this.baseY = y;
@@ -312,11 +312,21 @@ export class CombatantView {
       if (name.width > maxNameW) name.setScale(maxNameW / name.width);
     }
     const tierBadge: Phaser.GameObjects.GameObject[] = [];
+    // Level (levels.md; sefer / Endless): rütbeli birimde rozetin içinde ("ELITE · LV 7"), rütbesizde adın üstünde küçük soluk "Lv 7"
+    // Kahramanlarda Lv şimdilik gizli (Ömer 2026-10-17; data/battle-layout.json > hpBar.showHeroLevel)
+    const showLv = combatant.side !== 'party' || (hpBar as { showHeroLevel?: boolean }).showHeroLevel === true;
+    const lv = showLv && opts.level && opts.level > 0 ? Math.floor(opts.level) : 0;
     if (tier) {
       // Rütbe rozeti (kit etiketi): koyu zemin + rütbe renginde ince çerçeve ve Cinzel yazı
-      const label = scene.add.text(0, name.y - name.height * name.scaleY - 2, tier.label.toUpperCase(), { fontFamily: DISPLAY_FONT, fontSize: '14px', fontStyle: '600', color: tier.hex, letterSpacing: 2 }).setOrigin(0.5, 1);
+      const text = lv ? `${tier.label.toUpperCase()} · LV ${lv}` : tier.label.toUpperCase();
+      const label = scene.add.text(0, name.y - name.height * name.scaleY - 2, text, { fontFamily: DISPLAY_FONT, fontSize: '14px', fontStyle: '600', color: tier.hex, letterSpacing: 2 }).setOrigin(0.5, 1);
       const bg = scene.add.rectangle(0, label.y - label.height / 2, label.width + 16, label.height + 2, KIT.ink, 0.92).setStrokeStyle(1, color(tier.hex), 0.9);
       tierBadge.push(bg, label);
+    } else if (lv) {
+      const label = scene.add
+        .text(0, name.y - name.height * name.scaleY + 2, `Lv ${lv}`, { fontFamily: DISPLAY_FONT, fontSize: '16px', fontStyle: '600', color: '#d8c79e', stroke: '#120a05', strokeThickness: 3, letterSpacing: 1 })
+        .setOrigin(0.5, 1);
+      tierBadge.push(label);
     }
     // Sırası gelen birim: adın üstünde kor elmas (eski sarı ok) + ayaklarının altında kor / altın halka
     const my = this.hpY - hpBar.height - 62 + 14;
@@ -1059,7 +1069,7 @@ export class CombatantView {
     const baked = bakePoseTexture(this.scene, this.combatant.defId, pick, this.combatant.spriteScale ?? 1);
     // kaynak gövdeler savaş kurulunca bırakıldı (telefon belleği, releasePoseSources): yeni silah için yeniden yükleyip bir kez daha dene
     if (!baked) {
-      if (!retried) void ensurePoseSources(this.scene, [this.combatant.defId]).then(() => this.scene && this.setPoseWeapon(pick, true));
+      if (!retried) void ensurePoseSources(this.scene, [{ classId: this.combatant.defId, pick }]).then(() => this.scene && this.setPoseWeapon(pick, true));
       return;
     }
     rig.key = baked.key;

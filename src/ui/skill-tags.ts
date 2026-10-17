@@ -6,6 +6,7 @@
 import layout from '../../data/battle-layout.json';
 import { content } from '../engine';
 import { targetBadge } from '../engine/skill-info';
+import { rangeEnabled, rangeLabel } from '../engine/range';
 import type { Element, SkillDef } from '../engine';
 import { ELEMENT_ICON } from '../game/float-text';
 import { paintedOr } from './misc-icons';
@@ -48,10 +49,18 @@ export interface SkillTag {
   icon?: string;
 }
 
-/** Etiket satırı: hedef türü, element(ler), Melee / Ranged. */
-export function skillTags(skill: SkillDef): SkillTag[] {
+/**
+ * Etiket satırı: hedef türü, element(ler), menzil. Menzil sistemi açıkken (formulas.json > range.enabled; docs/design/range.md) "Range N" / "Global"
+ * (src/engine/range.ts > rangeLabel; `ownerRange` verilmezse skill'in sahibinin verideki menzili), kapalıyken eski Melee / Ranged.
+ */
+export function skillTags(skill: SkillDef, ownerRange: number | undefined = content.ownerRangeOf(skill.id)): SkillTag[] {
   const out: SkillTag[] = [{ kind: 'target', text: targetBadge(skill) }];
   for (const el of skillElements(skill)) out.push({ kind: 'element', text: elementName(el), color: ELEMENT_COLOR[el], icon: elementIcon(el) });
+  if (rangeEnabled(content.formulas)) {
+    const label = rangeLabel(skill, ownerRange, content.formulas);
+    if (label) out.push({ kind: 'range', text: label });
+    return out;
+  }
   const r = skillRange(skill);
   if (r === 'Melee' || r === 'Ranged') out.push({ kind: 'range', text: r });
   return out;

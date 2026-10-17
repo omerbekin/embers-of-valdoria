@@ -6,11 +6,12 @@
   "logo": "helm",
   "role": "Melee Bruiser",
   "frontPriority": 1,
+  "range": 1,
   "attributes": {
-    "str": 30,
-    "int": 16,
+    "str": 26,
+    "int": 12,
     "dex": 8,
-    "luck": 6
+    "luck": 14
   },
   "primary": "str",
   "resource": "rage",
@@ -21,16 +22,21 @@
     "melee_attack",
     "whirlwind",
     "charge",
-    "abyssal_cry"
+    "headsmans_blow"
   ],
   "passive": {
     "id": "berserker",
     "name": "Berserker",
     "icon": "rage",
-    "text": "The lower your HP, the harder you hit: up to +80% damage at the brink of death.",
+    "text": "The lower your HP, the harder you hit: up to +80% damage at the brink of death. Losing HP also gives Rage.",
     "effect": {
       "type": "rage",
-      "maxBonus": 0.8
+      "maxBonus": 0.8,
+      "rageOnHurt": {
+        "_not": "Ömer 2026-10-17 (wr1 Berserker): kaybedilen can maks canın %1'i başına perHpPercent Rage, vuruş başına en fazla perHitCap. İlk değer PROVİZYON (balance-tester).",
+        "perHpPercent": 0.5,
+        "perHitCap": 15
+      }
     }
   }
 }

@@ -165,6 +165,7 @@
   },
   "hpBar": {
     "width": 104,
+    "showHeroLevel": false,
     "height": 16,
     "offsetY": 24,
     "mpHeight": 8,
@@ -355,7 +356,7 @@
     "margin": 3,
     "phoneSize": 42,
     "phonePerSide": 3,
-    "phonePriority": ["stun", "silence", "omen", "wither", "burning", "wound", "slow", "blinded", "jinxed", "staggered", "ash_brand", "overextended", "ground:burning", "ground:poison", "ground:holy_fire", "ground:flooded_planks", "abyssal_fury", "dark_bond", "shrouded", "fortify", "anchored", "blessed", "haste", "fleet", "armorAura"]
+    "phonePriority": ["stun", "silence", "omen", "wither", "burning", "wound", "slow", "blinded", "jinxed", "staggered", "ash_brand", "overextended", "ground:burning", "ground:poison", "ground:holy_fire", "ground:flooded_planks", "dark_bond", "shrouded", "fortify", "anchored", "blessed", "haste", "fleet", "armorAura"]
   },
 
   "teamSelect": {

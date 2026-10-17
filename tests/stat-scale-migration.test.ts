@@ -9,9 +9,11 @@ import { migrateItemRolls, migrateRollsX2, rolledAffixes, SCALED_ITEM_STATS } fr
 // (sefer kaydı sürüm 5, Endless koşu kaydı sürüm 4); skor listesi etkilenmez.
 
 describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
-  it('veri: statScale 2, katsayılar yarı, zırh k ve sıra eşiği iki kat', () => {
+  it('veri: gizli ölçek yok (statScale kaldırıldı, Ömer 2026-10-17), katsayılar x2 dönüşümündeki gibi, hız adımı veride', () => {
     const f = content.formulas;
-    expect(f.statScale).toBe(2);
+    expect((f as unknown as Record<string, unknown>).statScale).toBeUndefined();
+    expect(f.attributes.spdStep).toBe(1); // hız tam sayı (tek değerler de olur; çift sayıya yuvarlama yok)
+    expect(f.summon.variantStatStep).toBe(0.1);
     expect(f.armor.k).toBe(60);
     expect(f.turn.threshold).toBe(200);
     expect(f.attributes.hpPerStr).toBe(3);
@@ -54,7 +56,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
   });
 
   it('Endless koşu kaydı v1 -> güncel: zarlar x2, yarım savaş atılır; güncel sürüm aynen okunur; skor listesi sürüm 1 kalır', () => {
-    expect(ENDLESS_SAVE_VERSION).toBe(4); // 3: sürekli akış (madde 300); 4: affix kademeleri (2026-10-11)
+    expect(ENDLESS_SAVE_VERSION).toBe(5); // 3: sürekli akış (madde 300); 4: affix kademeleri (2026-10-11); 5: başlangıç silahı (2026-10-17)
     expect(SCORES_VERSION).toBe(1);
     const run = newRun(5, ['warrior', 'mage', 'archer', 'paladin'], '2026-10-10T00:00:00.000Z');
     const legacy = { ...run, bag: [{ uid: 'b1', id: 'riveted_mail', rolls: { armor: 3, hp: 4 } }], suspended: { wave: 1, seed: 1, actions: [], turn: 0, hash: 'x' } };
@@ -63,7 +65,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
     expect(back.suspended).toBeUndefined();
     const kv = memoryKV();
     saveRun(kv, back);
-    expect(JSON.parse(kv.getItem(RUN_KEY)!).version).toBe(4);
+    expect(JSON.parse(kv.getItem(RUN_KEY)!).version).toBe(ENDLESS_SAVE_VERSION);
     expect(parseRun(kv.getItem(RUN_KEY))!.bag![0]!.rolls).toEqual(back.bag![0]!.rolls); // güncel sürüm: zar göçü yok
     kv.setItem(SCORES_KEY, JSON.stringify({ version: 1, scores: [] }));
     expect(loadScores(kv)).toEqual([]);

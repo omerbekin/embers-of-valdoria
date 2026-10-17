@@ -12,6 +12,7 @@
  * Tuval ekranın GERÇEK piksel çözünürlüğündedir: tuval = mantıksal boyut x render ölçeği (>= 1, üst sınırlı), kamera yakınlaştırması = render ölçeği.
  */
 import layout from '../../data/battle-layout.json';
+import { navScaleFor } from './nav-icons';
 
 export const GAME_W = layout.width;
 export const GAME_H = layout.height;
@@ -94,6 +95,8 @@ export interface StageMetrics {
   /** Görünen dünyanın sol / sağ kenarı (16:9'da 0 / 1920; geniş ekranda iki yana eşit açılır). */
   left: number;
   right: number;
+  /** Back / Menu / tam ekran masaüstü katsayısı (dokunmatikte 1); `stageMetrics` 1 verir, `installViewport` doldurur. */
+  navK: number;
 }
 
 /** Render ölçeği 1'e bu kadar yakınsa tam 1 alınır (1920x1080 civarında yeniden örnekleme bulanıklığı olmasın). */
@@ -117,7 +120,7 @@ export function stageMetrics(width: number, height: number, dpr = 1, lite = fals
   const canvasW = Math.round(logicalW * zoom);
   const viewW = canvasW / zoom;
   const left = (GAME_W - viewW) / 2;
-  return { logicalW, cssScale, canvasW, canvasH, zoom, viewW, left, right: left + viewW };
+  return { logicalW, cssScale, canvasW, canvasH, zoom, viewW, left, right: left + viewW, navK: 1 };
 }
 
 /** Ana menü / ayarlar sol sütununun yazı başlangıcı (dünya x, 16:9'da) ve geniş ekranda sütunun kayması (görünen sol kenara doğru, kenara yapışmadan). */
@@ -258,6 +261,8 @@ export function installViewport(game: unknown, stage: HTMLElement, initialMode: 
     // DOM katmanları için: mantıksal 1 birimin CSS pikseli ve sol sütunun oyun alanı solundan uzaklığı (ayarlar ekranı ana menü sütunuyla hizalı)
     root.style.setProperty('--gu', `${m.cssScale}px`);
     root.style.setProperty('--menu-x', `${(MENU_COL_X + menuColumnShift(m.left) - m.left) * m.cssScale}px`);
+    m.navK = navScaleFor(layout.stageH, coarse());
+    root.style.setProperty('--nav-k', String(m.navK));
     onStage?.(m);
   };
   relayout = apply;

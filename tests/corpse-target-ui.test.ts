@@ -219,7 +219,7 @@ describe('Backstab: geçersiz hedefler ve nedenleri', () => {
   it('menzil: melee ile arkadaki düşman engelli ve neden Out of reach; alan skill için boş', () => {
     const b = new Battle(content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'cutthroat' }), enemies: cells({ 0: 'warrior', 6: 'mage' }) }, false));
     const blocked = blockedTargets(b, 'party-0', 'venom_edge');
-    expect(blocked.map((x) => [x.slot, x.reason])).toEqual([[6, 'Out of reach']]);
+    expect(blocked.map((x) => [x.slot, x.reason])).toEqual([[6, b.rangeOn ? 'Out of range' : 'Out of reach']]); // menzil açıkken neden 'Out of range'
     expect(blockedTargets(b, 'party-0', 'x_cut')).toEqual([]);
   });
 });

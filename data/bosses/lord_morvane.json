@@ -6,6 +6,7 @@
   "color": "#8b1e1e",
   "logo": "skull",
   "frontPriority": 4,
+  "range": 5,
   "role": "Boss · Lord of Cinders",
   "attributes": {
     "str": 16,

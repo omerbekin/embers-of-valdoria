@@ -106,7 +106,8 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
     const b: Side = anyBoard ? (tileSlot !== undefined ? actor.side : anchored && anchored.hp > 0 ? anchored.board : (board ?? foe(actor.side))) : foe(actor.side);
     const unit = anchored && anchored.hp > 0 && anchored.board === b ? anchored : undefined;
     const center = unit ? unit.slot : (tileSlot ?? slot);
-    targets = center === undefined ? [] : battle.areaWindowAt(actorUid, skillId, center, b);
+    // Menzil (range.md): anchor hücre menzil dışındaysa atış geçersiz -> önizleme boş (kapalıyken inRange hep evet)
+    targets = center === undefined || !battle.inRange(actor, battle.skill(skillId)!, b, center) ? [] : battle.areaWindowAt(actorUid, skillId, center, b);
     centerUid = center === undefined ? undefined : targets.find((t) => t.board === b && t.slot === center)?.uid;
   } else if (battle.needsTargetChoice(skillId)) {
     targets = targets.filter((t) => t.uid === targetUid);

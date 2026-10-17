@@ -138,7 +138,7 @@ describe('YZ Rest: MP biriktirmek taktik değer katıyorsa', () => {
 
 describe('YZ Skip Turn: yapılacak anlamlı hamle yokken ya da 1 tur sonra hazır olacak güçlü skill beklemeye değerse', () => {
   it('hiçbir değerli hamle yoksa ve Rest\'in faydası yoksa (MP dolu) pas yerine Skip Turn seçilir', () => {
-    // Warrior arka sırada: yakın dövüş skill'leri kullanılamaz; Charge beklemede, Abyssal Cry'a Rage yok
+    // Warrior arka sırada: yakın dövüş skill'leri kullanılamaz; Charge beklemede, Headsman's Blow'a Rage yok
     const b = until(mk({ 0: 'paladin', 1: 'defender', 2: 'mage', 6: 'warrior' }, { 0: 'archer' }), 'party-3');
     const w = b.get('party-3')!;
     w.cooldowns = { charge: 3 };

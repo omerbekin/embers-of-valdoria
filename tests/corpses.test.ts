@@ -92,9 +92,9 @@ describe('Raise Dead: kendi tarafına çağrı + ceset tüketimi', () => {
     const unfed = applySummonVariant(skeletonDef, 'unfed', content.formulas).stats;
     expect(s.combatant.maxHp).toBe(Math.round(skeletonDef.stats.hp * variants.unfed.mult));
     expect(s.combatant.maxHp).toBe(unfed.hp);
-    // 0,1'e yuvarlanır (x2 ölçekte 0,2'ye: statScale katı; eskisiyle birebir)
-    const S = content.formulas.statScale ?? 1;
-    expect(s.combatant.stats.str).toBe((Math.round((skeletonDef.stats.str * variants.unfed.mult * 10) / S) / 10) * S);
+    // formulas.json > summon.variantStatStep katına yuvarlanır
+    const S = content.formulas.summon.variantStatStep ?? 0.1;
+    expect(s.combatant.stats.str).toBe(Math.round((skeletonDef.stats.str * variants.unfed.mult) / S) * S);
     expect(variants.unfed.mult).toBeCloseTo(0.67, 5);
   });
 
@@ -282,6 +282,7 @@ describe('iki mod, determinizm, maç kaydı', () => {
         const b = mk(mode, 5);
         b.debugKill('enemy-0', false);
         for (let i = 0; i < 400 && mode === 'turns' && b.currentUid !== 'party-1'; i++) b.skipTurn();
+        b.debugClearCooldowns('party-1'); // Raise Dead/Summon Treant initialCooldown 1 (2026-10-17): ilk turda kapalı; bu test başlangıç beklemesini sınamıyor
         act(b, 'party-1', 'raise_dead', undefined, undefined, 'enemy-0');
         return JSON.stringify(b.log.filter((e) => e.type !== 'battleStart'));
       };

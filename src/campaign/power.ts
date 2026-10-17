@@ -4,6 +4,7 @@ import budgetJson from '../../data/campaign/power-budget.json';
 import { getMap } from './data';
 import { finalNode, forwardDistances } from './graph';
 import type { DifficultyEnemyMods } from './types';
+import { levelAt } from '../progression/levels';
 
 export type PowerSystem = 'item' | 'level' | 'tree';
 
@@ -85,4 +86,9 @@ export function nodeIlvl(mapId: string, nodeId: string): number {
   const ch = chapterOf(mapId);
   const [a, b] = ch.ilvl;
   return Math.round(a + (b - a) * nodeDepth(mapId, nodeId));
+}
+
+/** Düğümün (karşılaşmanın) seviyesi (levels.md): bölümün level aralığında derinliğe göre (bölüm 1: L1-10, tavan L50). */
+export function nodeLevel(mapId: string, nodeId: string): number {
+  return levelAt(chapterOf(mapId).chapter, nodeDepth(mapId, nodeId));
 }

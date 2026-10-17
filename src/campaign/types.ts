@@ -136,6 +136,7 @@ export interface CampaignMap {
 
 import type { UnitModifiers, UnitTier } from '../engine/types';
 import type { Equipment, ItemInstance, ItemRoll } from '../progression/items';
+import type { KillRecord, LevelUp, StatAlloc } from '../progression/levels';
 
 /** Birim bazında güçlendirme/zayıflatma: motorun UnitModifiers'ı (hpMult, statMult, powerMult, spriteScale, actionsPerTurn...). */
 export type UnitMods = UnitModifiers;
@@ -210,10 +211,16 @@ export interface Hero {
   leader?: boolean;
   /** Tutorial takımından mı (Ashford'da ayrılır). */
   tutorial?: boolean;
-  /** Kalıcı kahraman kaydı (roadmap 1.4, aşama 0). Level sistemi Aşama 2'de; şimdilik hep 1. */
+  /** Level (Ömer 2026-10-17, levels.md; 1-50). Sonradan katılan L1'den başlar. */
   level: number;
-  /** Deneyim puanı (Aşama 2 için hazır; şimdilik 0). */
+  /** Bu level'daki XP (sonraki level'a gereken: progression > xpToNext). */
   xp: number;
+  /** Dağıtılmamış temel stat puanları (level başına 3; kayıt sürümü 9, eski kayıtta level'dan tamamlanır). */
+  statPoints?: number;
+  /** Skill puanları (level başına 1; skill ağacı gelene kadar birikir). */
+  skillPoints?: number;
+  /** Dağıtılmış temel stat puanları (stat başına puan; progression > baseAttrs). */
+  alloc?: StatAlloc;
   /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
 }
@@ -295,6 +302,8 @@ export interface CampaignState {
    * İsteğe bağlı alan (kayıt sürümü değişmez): eski kayıtta yok = kapı yok (takılma olmaz); başka düğümünse okunurken atılır.
    */
   formationDue?: string;
+  /** Gösterilmemiş level atlamaları (Ömer 2026-10-17): haritada "Level Up" kartı gösterilip onaylanınca silinir (`acknowledgeLevelUps`). */
+  levelUps?: LevelUp[];
 }
 
 /** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */
@@ -351,6 +360,8 @@ export interface BattleOutcome {
   valorLeft?: number;
   /** Kusursuz zafer: bu savaşta hiçbir kahraman düşmedi (diriltilse bile düştü sayılır). Yoksa `units`ten: herkes ayakta. */
   flawless?: boolean;
+  /** Öldürme kaydı (XP payı; progression > trackKills). Yoksa karşılaşmanın tüm düşmanları, kimse düşmeden öldürülmüş sayılır. */
+  kills?: KillRecord[];
 }
 
 export type NextStep =

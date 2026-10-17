@@ -115,8 +115,16 @@ function statTipBase(id: string, stats: Stats): StatTip | null {
   const kind = KIND[id];
   if (!kind) return null;
   if (kind === 'might') {
-    const pct = Math.round(((stats.damageMult ?? 1) - 1) * 1000) / 10;
-    return { title: `Damage +${pct}%`, lines: [`All damage of your skills +${pct}% (Global damage affixes).`, 'Stacks additively across items. Element damage affixes add on top for their element.'] };
+    const pct = Math.round(((stats.damageMult ?? 1) * (stats.weaponMult ?? 1) - 1) * 1000) / 10;
+    const sign = pct < 0 ? '' : '+';
+    return {
+      title: `Damage ${sign}${pct}%`,
+      lines: [
+        `All damage of your skills ${sign}${pct}% (weapon power and Global damage affixes).`,
+        "Weapon power multiplies skill damage: x(1 + power/100), measured against your class's starter weapon. No weapon = less damage.",
+        'Global damage stacks additively across items. Element damage affixes add on top for their element.',
+      ],
+    };
   }
   const info = describeStat(kind, stats, content.formulas);
   // Gear bağlamı: item'ler kritik çarpanını artırır (loadout critMultAdd), "herkes için sabit" satırı burada yanlış olur

@@ -1,8 +1,12 @@
 import { describe, expect, it } from 'vitest';
-import { bagOf, equipBestRun, equipFromBag, newRun, parseRun, unequipToBag, type EndlessRun } from '../src/endless';
+import { bagOf, equipBestRun, equipFromBag, newRun as newRunBase, parseRun, unequipToBag, type EndlessRun } from '../src/endless';
 import { equipBest, equipItem, newCampaign, normalizeState, pickHero, unequipItem, type CampaignState } from '../src/campaign';
 import { ITEMS, bestMoves, canEquip, defaultEquipSlot, emptyEquipment, isPlanError, itemDef, makeItem, planEquip, type ItemInstance } from '../src/progression';
 import { Rng } from '../src/engine';
+import { leveledCampaign, leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Ömer 2026-10-14 (0.7.11.2, telefonda sefer): ana el + ikinci el boşken silah ikinci ele gitmemeli; ana el önce dolar.
 
@@ -64,7 +68,7 @@ describe('empty hands: a weapon fills the main hand first', () => {
 
 describe('campaign + Endless paths', () => {
   const camp = (cls: string, ids: string[]): { s: CampaignState; id: string } => {
-    const s = pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'warrior');
+    const s = leveledCampaign(pickHero(newCampaign({ mode: 'normal', seed: 7, campaignId: 'c7' }), 'warrior'));
     const h = s.roster[0]!;
     h.class = cls; // Anti-Mage başlangıç havuzunda değil: sınıfı elle
     h.equipment = emptyEquipment();

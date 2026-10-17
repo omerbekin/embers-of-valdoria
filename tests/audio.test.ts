@@ -14,7 +14,9 @@ describe('ses efektleri (data/audio.json)', () => {
     // yedek: Defender'ın eski (rework öncesi) sesleri; armorLeap: Fist Crush artık yürümüyor/sıçramıyor (madde 239)
     const backup = ['swordWhoosh', 'swordStab', 'armorCharge', 'armorCrash', 'stunChime', 'warShout', 'testudo', 'effortHah', 'armorStomp', 'punchImpact', 'armorLeap',
       // yedek: kaldırılan Blood Rite'ın sesi (Dark Bond ile değişti; Wiki > Legacy)
-      'clawRake'];
+      'clawRake',
+      // yedek: kaldırılan Abyssal Cry'ın çığlığı (2026-10-17 Headsman's Blow ile değişti; Warrior referans sesi, silinmedi)
+      'scream'];
     for (const k of SFX_IDS) if (!backup.includes(k)) expect(used.has(k), `kullanılmayan ses: ${k}`).toBe(true);
   });
 
@@ -54,8 +56,7 @@ describe('ses efektleri (data/audio.json)', () => {
     }
   });
 
-  it('Abyssal Cry çığlığı: cinsiyetsiz bant (erkek ~120 Hz ile kadın ~220 Hz konuşmasının üstü), boğuk ve korkunç', () => {
-    expect(content.skills.abyssal_cry!.sfx).toContain('scream');
+  it('Warrior çığlığı (scream; eski Abyssal Cry sesi, yedek): cinsiyetsiz bant (erkek ~120 Hz ile kadın ~220 Hz konuşmasının üstü), boğuk ve korkunç', () => {
     const v = SFX.scream!.layers[0]!;
     if (v.type !== 'voice') throw new Error('çığlık voice katmanı olmalı');
     for (const f of [v.f0Start, v.f0End]) {

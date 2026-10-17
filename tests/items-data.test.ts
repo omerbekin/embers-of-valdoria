@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { content, Rng } from '../src/engine';
-import { BAG_SIZE, ITEMS, RARITY_IDS, SLOT_IDS, canEquip, rollLoot, classWeaponFamilies, instanceIP, itemDef, itemIP, itemValue, makeItem, sellValue, validateItems, type ItemsData } from '../src/progression';
+import { BAG_SIZE, baseIP, ITEMS, RARITY_IDS, SLOT_IDS, canEquip, rollLoot, classWeaponFamilies, instanceIP, itemDef, itemIP, itemValue, makeItem, sellValue, validateItems, type ItemsData } from '../src/progression';
 
 // data/items.json şeması (docs/design/progression/items.md 1.3b, 5.3; Ömer kararları bölüm 7 + affix kademeleri 2026-10-11).
 
@@ -71,8 +71,9 @@ describe('Legendary boost (Ömer 2026-10-12, Endless item dengesi p5)', () => {
     for (const id of ['crown_of_the_ashen_king', 'gamblers_last_coin', 'bones_of_the_quarry', 'watchmans_boots', 'helm_of_the_last_stand']) {
       const d = itemDef(id)!;
       for (const L of [20, 40]) {
-        const epic = Math.max(...ITEMS.items.filter((x) => x.slot === d.slot && x.rarity !== 'legendary').map((x) => itemIP(x, 'epic', L)));
-        expect(itemIP(d, 'legendary', L), `${id} L${L}`).toBeGreaterThan(epic * 1.05);
+        // affix gücü karşılaştırılır: taban değeri (silah gücü / örtük stat; Item Güçlendirme 2026-10-17) tutuşa göre değişir, iki yandan da düşülür
+        const epic = Math.max(...ITEMS.items.filter((x) => x.slot === d.slot && x.rarity !== 'legendary').map((x) => itemIP(x, 'epic', L) - baseIP(x, L)));
+        expect(itemIP(d, 'legendary', L) - baseIP(d, L), `${id} L${L}`).toBeGreaterThan(epic * 1.05);
       }
     }
     const bad = structuredClone(ITEMS) as ItemsData;

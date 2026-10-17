@@ -30,3 +30,6 @@ for (const pair of pairs) {
   await sharp(src).png({ compressionLevel: 9 }).toFile(out);
   console.log(`${src} -> ${out} (${meta.width}x${meta.height})`);
 }
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

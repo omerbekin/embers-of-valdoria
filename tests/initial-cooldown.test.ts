@@ -15,12 +15,12 @@ function skipUntil(b: Battle, uid: string): void {
 }
 
 describe('cooldown değerleri (veriden)', () => {
-  it('Ömer onayı: Aimed Shot, Meteor ve All In cooldown 3; High Stakes ve Card Trick 2; Taunt süresi (turn) değişmedi', () => {
+  it('Ömer onayı: Aimed Shot, Meteor ve All In cooldown 3; High Stakes 2; Card Trick 3 (Ömer 2026-10-17 classtune, 2 -> 3); Taunt süresi (turn) değişmedi', () => {
     expect(content.skills.aimed_shot!.cooldown).toBe(3);
     expect(content.skills.meteor!.cooldown).toBe(3);
     expect(content.skills.all_in!.cooldown).toBe(3);
     expect(content.skills.high_stakes!.cooldown).toBe(2);
-    expect(content.skills.card_trick!.cooldown).toBe(2);
+    expect(content.skills.card_trick!.cooldown).toBe(3);
     const taunt = content.skills.taunt!.effects.find((e) => e.type === 'taunt');
     expect(taunt).toMatchObject({ turns: 2 });
     expect(content.skills.taunt!.cooldown).toBe(4);
@@ -47,9 +47,13 @@ describe('başlangıç cooldown\'u (initialCooldown): veri', () => {
     for (const u of Object.values(content.summons)) for (const id of u.skills) expect(content.skills[id]!.initialCooldown, id).toBeUndefined();
   });
 
-  it('güçlü 4. skill\'lerin çoğunda var (gerekçeli dışarıda kalanlar: Abyssal Cry, Aimed Shot, çağrılar)', () => {
-    for (const id of ['meteor', 'fist_crush', 'void_strike', 'all_in', 'radiance']) expect(initialOf(id), id).toBeGreaterThan(0);
-    for (const id of ['summon_treant', 'raise_dead']) expect(content.skills[id]!.initialCooldown, id).toBeUndefined();
+  it('her sınıfın ultimate\'ında (4. yuva) var ve sınırı aşmıyor (Ömer 2026-10-17: tüm ultimate\'ların ilk beklemesi +1, çağrılar dahil)', () => {
+    for (const c of Object.values(content.classes)) {
+      if (c.testOnly) continue;
+      const id = c.skills[3]!;
+      expect(content.skills[id]!.initialCooldown, id).toBeGreaterThan(0);
+      expect(content.skills[id]!.initialCooldown!, id).toBeLessThanOrEqual(MAX);
+    }
   });
 
   it('skill açıklaması (tooltip) tek satır verir: "Opens on cooldown: N turns"; yoksa boş', () => {

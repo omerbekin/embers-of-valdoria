@@ -51,7 +51,8 @@ describe('Taunt: kontrol (CC) durumu taunt\'ı siler', () => {
       it('taunter Stun yer (Charge) -> taunt anında silinir, "taunt broken" olayı yayınlanır, dost koruması biter', () => {
         const b = setup();
         const events = act(b, 'enemy-0', 'charge', 'party-0');
-        expect(has(b, 'party-0', 'stun')).toBe(true);
+        // Stun uygulandı (sıradaki tur taunter'ınsa stun aynı akışta tüketilmiş olabilir: 2026-10-17 hızlar değişti)
+        expect(ofType(events, 'status').some((e) => e.target === 'party-0' && e.status === 'stun')).toBe(true);
         expect(has(b, 'party-0', 'taunt')).toBe(false);
         expect(ofType(events, 'statusEnd').some((e) => e.target === 'party-0' && e.status === 'taunt' && e.broken === true)).toBe(true);
         // olay sırası: önce stun uygulanır, sonra taunt biter

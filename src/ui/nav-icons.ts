@@ -8,6 +8,19 @@
 /** CSS pikseli (oyun biriminden bağımsız: her ekranda fiziksel olarak aynı boy). */
 export const NAV_BTN = { hit: 44, frame: 30, icon: 18, edge: 6, gap: 4 } as const;
 
+/**
+ * Masaüstü büyütmesi (Ömer 2026-10-17): düğmeler CSS pikseli olduğu için büyük masaüstü pencerede küçük kalıyordu. Dokunmatikte (coarse) 1 (telefon aynen);
+ * fare ile ise sahne yüksekliğine (CSS px) göre `NAV_DESKTOP.min`..`max` arası katsayı (`height / per`). Back, Menu ve tam ekran AYNI katsayıyı kullanır.
+ */
+export const NAV_DESKTOP = { per: 640, min: 1, max: 1.75, step: 0.05 } as const;
+
+/** Düğme katsayısı: dokunmatikte 1; fare ile sahne yüksekliğine göre büyür (0.05 adımlı). */
+export function navScaleFor(stageH: number, coarse: boolean): number {
+  if (coarse || !(stageH > 0)) return 1;
+  const k = Math.min(NAV_DESKTOP.max, Math.max(NAV_DESKTOP.min, stageH / NAV_DESKTOP.per));
+  return Math.round(k / NAV_DESKTOP.step) * NAV_DESKTOP.step;
+}
+
 /** Çizgi rengi (kit metni), hover rengi, çerçeve. */
 export const NAV_COLOR = { line: '#d9c8a2', hover: '#f3d999', border: 'rgba(217, 178, 106, 0.42)', fill: 'rgba(12, 9, 6, 0.45)', ember: '#e0702a', emberLine: '#e0904a' } as const;
 
@@ -49,8 +62,9 @@ export const BACK_POS = { edgePx: NAV_BTN.edge } as const;
  * x = düğmenin (44 px dokunma alanının) sol kenarı, y = dikey orta, `scale` = 1 CSS pikselinin oyun birimi (Phaser kabını bununla ölçekle).
  * DOM `.el-back` ve sağ üst `.nav-btn` (style.css) aynı kuralı CSS pikseliyle taşır.
  */
-export function backPlacement(left: number, cssScale: number): { x: number; y: number; scale: number } {
+export function backPlacement(left: number, cssScale: number, navK = 1): { x: number; y: number; scale: number } {
   const s = cssScale > 0 ? cssScale : 1;
-  const px = 1 / s;
+  const k = navK > 0 ? navK : 1;
+  const px = k / s; // 1 taban CSS pikselinin oyun birimi (masaüstü katsayısı dahil)
   return { x: left + NAV_BTN.edge * px, y: (NAV_BTN.edge + NAV_BTN.hit / 2) * px, scale: px };
 }

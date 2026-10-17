@@ -6,11 +6,12 @@
   "logo": "leaf",
   "role": "Nature Summoner",
   "frontPriority": 5,
+  "range": 5,
   "attributes": {
-    "str": 16,
-    "int": 32,
+    "str": 20,
+    "int": 26,
     "dex": 10,
-    "luck": 2
+    "luck": 4
   },
   "primary": "int",
   "armor": 16,

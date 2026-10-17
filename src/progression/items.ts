@@ -103,6 +103,30 @@ export interface WeaponFamilyDef {
   offhand?: boolean;
 }
 
+/** Silah taban gücü kuralları (items.json > weaponPower). */
+export interface WeaponPowerRules {
+  base: number;
+  perIlvl: number;
+  step: number;
+  /** Tutuş çarpanı (tek el 1; çift el / yay ~1,35; tılsım arada). */
+  grip: Record<Grip, number>;
+  /** Aile çarpanı (hançer < 1); yoksa 1. */
+  family?: Record<string, number>;
+  /** İkinci eldeki silahın (hançer) gücünün sayılan oranı. */
+  offhandShare: number;
+  /** 1 güç puanının Item Points değeri. */
+  ip: number;
+}
+
+/** Taban örtük statı (zarsız; affix gibi parçalı, kademesiz). */
+export interface ImplicitDef {
+  name: string;
+  text: string;
+  icon?: string;
+  desc?: string;
+  parts: AffixPart[];
+}
+
 /** Silah tutuşu (Ömer 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): tek el, çift el, yay, tılsım. */
 export const GRIP_IDS = ['one', 'two', 'bow', 'charm'] as const;
 export type Grip = (typeof GRIP_IDS)[number];
@@ -153,6 +177,14 @@ export interface ItemsData {
   /** Toplam tavanlar (yüzde ya da düz): kritik, isabet, kaçınma, hız; MP bedeli indirimi, debuff direnci. */
   caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number };
   weaponFamilies: WeaponFamilyDef[];
+  /** Silah taban gücü (Item Güçlendirme x1-x3, Ömer 2026-10-17; items.md 1.12). */
+  weaponPower: WeaponPowerRules;
+  /** Taban örtük statları: silah ailesi id'si ya da 'shield' (ikinci el kalkanı) -> zarsız stat (x3, x4). */
+  implicits: Record<string, ImplicitDef>;
+  /** Takma seviye şartı = max(min, ilvl - offset) (x6). */
+  levelReq: { offset: number; min: number };
+  /** Sınıf başına başlangıç silahı (x5): katalog id'si, örnek seviyesi `ilvl`. */
+  starterWeapons: { ilvl: number; classes: Record<string, string> };
   bag: number;
   items: ItemDef[];
   loot: LootConfig;
@@ -528,7 +560,7 @@ export const effectIP = (d: Pick<ItemDef, 'effect'>): number => (d.effect ? (ITE
 export const instanceIP = (inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }): number => {
   const d = itemDef(inst.id);
   if (!d) return 0;
-  const ip = rolledAffixes(inst).reduce((s, a) => s + affixIP(a.id, a.values), 0) + effectIP(d);
+  const ip = rolledAffixes(inst).reduce((s, a) => s + affixIP(a.id, a.values), 0) + effectIP(d) + baseIP(d, instanceIlvl(inst));
   return Math.round(ip * 1000) / 1000;
 };
 
@@ -558,7 +590,7 @@ export function itemIP(d: ItemDef, rarity?: RarityId, ilvl: number = d.ilvl): nu
       ip += i === 0 && mains.length ? mains.reduce((s, id) => s + midIP(id, ilvl), 0) / mains.length : tierMeanIP(tier, d.slot, ilvl);
     });
   }
-  return Math.round((ip + effectIP(d)) * 1000) / 1000;
+  return Math.round((ip + effectIP(d) + baseIP(d, ilvl)) * 1000) / 1000;
 }
 
 /** Değer hesabının girdisi: taban item (beklenen) ya da örnek (zarlarıyla). */
@@ -574,6 +606,52 @@ export const itemValue = (x: ValueSource): number => Math.max(ITEMS.budget.minVa
  * kartındaki "Sell: N" ve seferin satışı hep bunu kullanır.
  */
 export const sellValue = (x: ValueSource): number => Math.max(1, Math.round(itemValue(x) * ITEMS.budget.sellRatio));
+
+// ------------------------------------------------------------ taban gücü, örtük stat, seviye şartı (Item Güçlendirme, Ömer 2026-10-17)
+
+/** Silahın taban gücü (x1-x3): (base + perIlvl x ilvl) x tutuş x aile, adıma yuvarlanır. Silah değilse 0. */
+export function weaponPowerOf(d: Pick<ItemDef, 'slot' | 'grip' | 'family'>, ilvl: number): number {
+  if (d.slot !== 'weapon') return 0;
+  const w = ITEMS.weaponPower;
+  if (!w) return 0;
+  const raw = (w.base + w.perIlvl * Math.max(1, ilvl)) * (w.grip[gripOf(d) ?? 'one'] ?? 1) * (w.family?.[d.family ?? ''] ?? 1);
+  return Math.max(0, snap(raw, w.step || 1));
+}
+
+/** Örneğin silah gücü (örnek seviyesiyle). Bilinmeyen / silah değil: 0. */
+export const instanceWeaponPower = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): number => {
+  const d = itemDef(inst.id);
+  return d ? weaponPowerOf(d, instanceIlvl(inst)) : 0;
+};
+
+/** Tabanın örtük statı (x3, x4): kalkan (ikinci el yuvası) -> 'shield', silah -> ailesinin örtüğü. Yoksa undefined. */
+export function implicitDefOf(d: Pick<ItemDef, 'slot' | 'family'>): ImplicitDef | undefined {
+  const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? d.family : undefined;
+  return key ? ITEMS.implicits?.[key] : undefined;
+}
+
+/** Örtük statın seviyedeki değerleri (parça sırasıyla; zarsız). */
+export const implicitValues = (imp: ImplicitDef, ilvl: number): number[] => imp.parts.map((p) => partValue(p, ilvl, 0.5));
+
+/** Taban değerinin Item Points'i: silah gücü x ip (+ örtük stat). `share`: ikinci eldeki silahın sayılan oranı (Equip best). */
+export function baseIP(d: Pick<ItemDef, 'slot' | 'grip' | 'family'>, ilvl: number, share = 1): number {
+  let ip = weaponPowerOf(d, ilvl) * (ITEMS.weaponPower?.ip ?? 0) * share;
+  const imp = implicitDefOf(d);
+  if (imp) implicitValues(imp, ilvl).forEach((v, i) => (ip += v * (imp.parts[i]?.ip ?? 0)));
+  return Math.round(ip * 1000) / 1000;
+}
+
+/** Takma seviye şartı (x6): max(min, ilvl - offset). Item Level 12 -> Level 9. */
+export const levelRequirement = (ilvl: number): number => Math.max(ITEMS.levelReq?.min ?? 1, Math.round(ilvl) - (ITEMS.levelReq?.offset ?? 0));
+
+/** Örneğin seviye şartı (örnek seviyesinden). */
+export const instanceLevelReq = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): number => levelRequirement(instanceIlvl(inst));
+
+/** Kahraman (seviyesi yoksa 1) bu örneği seviyece takabilir mi? */
+export const meetsLevel = (level: number | undefined, inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): boolean => (level ?? 1) >= instanceLevelReq(inst);
+
+/** Seviye şartı hata mesajı (Gear, sürükle-bırak; ipucunda kırmızı satır). */
+export const levelReqMsg = (req: number): string => `Requires Level ${req}`;
 
 // ------------------------------------------------------------ kuşanma kuralları
 
@@ -668,12 +746,15 @@ export function equipInto(equipment: EquipMap, inst: ItemInstance, slot: SlotId)
 }
 
 /**
- * Takma planı + kurallar (sefer, Endless, Gear sürükle-bırak): sınıf / aile, yuva uyumu, ikinci el kapalı mı, kahraman başına 1 Legendary
- * (çıkacak item'ler sayılmaz). `slot` verilmezse defaultEquipSlot. Hata mesajı ya da plan. Torba yeri çağıranın işidir (displaced torbaya döner).
+ * Takma planı + kurallar (sefer, Endless, Gear sürükle-bırak): seviye şartı (`o.level`; verilmezse denetlenmez), sınıf / aile, yuva uyumu, ikinci el kapalı
+ * mı, kahraman başına 1 Legendary (çıkacak item'ler sayılmaz). `slot` verilmezse defaultEquipSlot. Hata mesajı ya da plan. Torba yeri çağıranın işidir (displaced torbaya döner).
  */
-export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstance, slot?: SlotId): EquipPlan | { error: string } {
+export function planEquip(classId: string, equipment: EquipMap, inst: ItemInstance, slot?: SlotId, o: { level?: number } = {}): EquipPlan | { error: string } {
   const d = itemDef(inst.id);
   if (!d) return { error: `Unknown item: ${inst.id}` };
+  // Seviye şartı (x6, Ömer 2026-10-17): kahramanın seviyesi item seviyesi - 3'ten düşükse takılamaz (sefer / Endless / arayüz seviyeyi HEP verir;
+  // verilmezse yalnızca kural testi: denetlenmez)
+  if (o.level !== undefined && !meetsLevel(o.level, inst)) return { error: levelReqMsg(instanceLevelReq(inst)) };
   if (!canEquip(classId, d)) return { error: d.usableBy && !d.usableBy.includes(classId) ? `${d.name} can only be used by ${d.usableBy.join(', ')}` : `${classId} cannot use ${d.family ?? d.slot}` };
   // Ana el boşken silah ikinci ele girmez (Ömer 2026-10-14): ikinci ele bırakılan / "Off-hand" ile takılan hançer de ana ele gider
   const at = slot === 'offhand' && offhandWeapon(d) && !equipment.weapon ? 'weapon' : (slot ?? defaultEquipSlot(equipment, d));
@@ -815,6 +896,26 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     }
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);
+  }
+  // Item Güçlendirme (2026-10-17): taban gücü, örtük statlar, seviye şartı, başlangıç silahları
+  const wp = data.weaponPower;
+  if (!wp || !(wp.base >= 0) || !(wp.perIlvl > 0) || !(wp.step > 0) || !(wp.ip >= 0) || !(wp.offhandShare >= 0 && wp.offhandShare <= 1)) errors.push('weaponPower: needs base, perIlvl, step, ip and offhandShare (0-1)');
+  for (const g of GRIP_IDS) if (!(wp?.grip?.[g] > 0)) errors.push(`weaponPower.grip: needs a positive ${g}`);
+  if (wp && wp.grip.two <= wp.grip.one) errors.push('weaponPower.grip: two-handed must be stronger than one-handed');
+  for (const f of Object.keys(wp?.family ?? {})) if (!famIds.includes(f)) errors.push(`weaponPower.family: unknown family ${f}`);
+  for (const [k, imp] of Object.entries(data.implicits ?? {})) {
+    if (k !== 'shield' && !famIds.includes(k)) errors.push(`implicit ${k}: must be a weapon family or shield`);
+    if (!imp.name || !imp.text?.includes('{0}') || !imp.parts?.length) errors.push(`implicit ${k}: needs name, text with {0} and parts`);
+    for (const p of imp.parts ?? []) if (!TARGET_RE.test(p.to) || !(p.step > 0) || !p.noRoll || !p.noPower) errors.push(`implicit ${k}: parts need a target, step, noRoll and noPower`);
+  }
+  if (!(Number.isInteger(data.levelReq?.offset) && data.levelReq.offset >= 0 && Number.isInteger(data.levelReq.min) && data.levelReq.min >= 1)) errors.push('levelReq: needs integer offset >= 0 and min >= 1');
+  const st = data.starterWeapons;
+  if (!st || !Number.isInteger(st.ilvl) || st.ilvl < 1) errors.push('starterWeapons: needs ilvl >= 1');
+  for (const c of randomPool) {
+    const id = st?.classes?.[c];
+    const d = id ? data.items.find((x) => x.id === id) : undefined;
+    if (!d) errors.push(`class ${c} has no starter weapon`);
+    else if (d.slot !== 'weapon' || d.rarity !== 'common' || !(data.weaponFamilies.find((f) => f.id === d.family)?.classes.includes(c) ?? false)) errors.push(`starter ${id} (${c}): must be a Common weapon of the class's family`);
   }
   return errors;
 }

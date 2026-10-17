@@ -8,6 +8,7 @@
   "color": "#6f7a8c",
   "logo": "bulwark",
   "frontPriority": 0,
+  "range": 1,
   "role": "Guardian · Leader",
   "attributes": {
     "str": 28,

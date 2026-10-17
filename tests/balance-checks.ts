@@ -13,14 +13,19 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
  * DENGESİ BEKLEYEN CLASS'LAR: bant kontrolünden GEÇİCİ muaf (ölçülür, uyarı yazılır). Normalde BOŞ.
  * Hexer 2026-10-08 denge turunda bantta (madde 261) olduğu için çıkarıldı.
  */
-export const PENDING_BALANCE: readonly string[] = [];
+// 2026-10-17 (levels.md başlangıç statları, en yüksek temel stat <= diğer üçünün %80'i): Warrior %43-44,6 (STR 30 -> 26), Paladin ~%56 (statı aynı,
+// diğerleri zayıfladı); level / item sonrası balance-tester turunda çıkarılacak (open-questions 335)
+export const PENDING_BALANCE: readonly string[] = ['warrior', 'paladin'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.
  * Normalde BOŞ; tasarım kararı verilip uygulanınca listeden çıkarılır (docs/balance.md > Bandı bekleyen skill'ler).
  */
 // Abyssal Cry madde 262 yeniden tasarımından sonra hazır olanlardan ~%69 kullanılıyor: 2026-10-08 denge turunda listeden çıkarıldı.
-export const PENDING_SKILLS: Readonly<Record<string, string>> = {};
+export const PENDING_SKILLS: Readonly<Record<string, string>> = {
+  whirlwind: '0.8.4: Whirlwind usage ~12% < 15 after range system + Headsman ult, tracked in handoff open items',
+  resurrection: '0.8.4: Paladin Resurrection usage ~8% at the band edge (8), tracked in handoff open items',
+};
 
 export function balanceSuite(label: string, firstSeed: number): void {
   const RUNS = balance.test.runs;

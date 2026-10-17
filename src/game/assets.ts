@@ -10,7 +10,8 @@ import { ITEM_IMAGE_FILES, itemImageKey } from './item-icon-files';
  *  - assets/backgrounds/<id>.(png|jpg)
  * Dosya yoksa placeholder çizilir; eksik asset oyunu çökertmez.
  */
-const spriteFiles = import.meta.glob('../../assets/sprites/*/*.png', {
+// Oyun PNG'lerin yanındaki aynı adlı .webp'yi yükler (~4 kat küçük; tools/webp-assets.mjs, tests/webp-assets.test.ts). PNG asıl kalır (araçlar, Codex).
+const spriteFiles = import.meta.glob('../../assets/sprites/*/*.webp', {
   eager: true,
   query: '?url',
   import: 'default',
@@ -22,8 +23,8 @@ const backgroundFiles = import.meta.glob('../../assets/backgrounds/*.{png,jpg,jp
   import: 'default',
 }) as Record<string, string>;
 
-/** Kafa avatarları: assets/avatars/<id>.png (tools/import-characters-v2.py ile kafa kırpılarak üretilir). */
-const avatarFiles = import.meta.glob('../../assets/avatars/*.png', {
+/** Kafa avatarları: assets/avatars/<id>.png (tools/import-characters-v2.py ile kafa kırpılarak üretilir; oyun .webp kopyasını yükler). */
+const avatarFiles = import.meta.glob('../../assets/avatars/*.webp', {
   eager: true,
   query: '?url',
   import: 'default',

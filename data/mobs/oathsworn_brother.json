@@ -7,6 +7,7 @@
   "color": "#c9b27a",
   "logo": "bulwark",
   "frontPriority": 0,
+  "range": 1,
   "role": "Brann's Order · Guardian",
   "attributes": {
     "str": 26,

@@ -7,6 +7,7 @@
   "color": "#5d7a3a",
   "logo": "rune",
   "frontPriority": 7,
+  "range": 5,
   "role": "Hex · Caster",
   "attributes": {
     "str": 10,

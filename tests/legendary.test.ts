@@ -15,8 +15,12 @@ import {
   rollLoot,
   validateItems,
 } from '../src/progression';
-import { equipFromBag, grantLegendariesRun, newRun, upgradePairs } from '../src/endless';
+import { equipFromBag, grantLegendariesRun, newRun as newRunBase, upgradePairs } from '../src/endless';
 import { buildMechanics } from '../src/wiki/catalog';
+import { leveledCampaign, leveledRun } from './level-helpers';
+
+/** Seviye şartı (ilvl - 3; Item Güçlendirme x6) bu testlerin konusu değil: koşu kahramanları yüksek seviyede. */
+const newRun = (...a: Parameters<typeof newRunBase>): ReturnType<typeof newRunBase> => leveledRun(newRunBase(...a));
 
 // Legendary item'ler (Ömer onayı 2026-10-10, madde 296): veri kuralları, kahraman başına 1, düşüş YOK, önizleme, 10 etkinin motor davranışı.
 
@@ -76,7 +80,7 @@ describe('veri ve kurallar', () => {
 });
 
 describe('kahraman başına 1 Legendary', () => {
-  const s0 = (): CampaignState => ({ ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 3 }), 'warrior'), '5A'), inventory: [] });
+  const s0 = (): CampaignState => ({ ...leveledCampaign(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 3 }), 'warrior'), '5A')), inventory: [] });
 
   it('sefer: ikinci Legendary engellenir (mesaj), aynı yuvadakinin yerine geçmek serbest; Equip best ikinciyi seçmez', () => {
     let s = s0();
@@ -104,7 +108,7 @@ describe('önizleme ve kayıt', () => {
   it("?legendary=1 / debug: tüm Legendary'ler torbaya (zarlı), tekrar verince çoğalmaz; kayıt round-trip etkiyi korur", () => {
     expect(legendaryPreviewWanted('?legendary=1')).toBe(true);
     expect(legendaryPreviewWanted('?endless=1')).toBe(false);
-    let s: CampaignState = { ...debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 8 }), 'warrior'), '5A'), inventory: [] };
+    let s: CampaignState = { ...leveledCampaign(debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 8 }), 'warrior'), '5A')), inventory: [] };
     s = grantAllLegendaries(s);
     expect(s.inventory.map((i) => i.id).sort()).toEqual(legendaryIds().sort());
     for (const i of s.inventory) expect(i.rolls).toBeDefined();

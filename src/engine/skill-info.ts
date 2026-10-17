@@ -3,6 +3,7 @@ import { bossBlocksStatus } from './cc-immunity';
 import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { bonusScaleRaw } from './spec';
+import { rangeEnabled, rangeLabel, rangeLine } from './range';
 import { applySummonVariant, attributePower, outgoingDamageMult } from './stats';
 import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
@@ -18,6 +19,8 @@ export interface SkillInfo {
   initialCooldown: string;
   /** Turn bedeli 1'den küçükse kısa etiket ('Half turn'); tam turn skill'de boş. (Açıklama satırı da lines içinde.) */
   turnCost: string;
+  /** Menzil etiketi (range.md): 'Range 4' / 'Global'; hedef seçimi olmayan skill'de (self, all allies) boş. */
+  range: string;
   /** Etki satırları: hasar ölçeği, şifa, kalkan, çağrı, menzil ve ek kurallar. */
   lines: string[];
   /** `lines` ile aynı sırada: satırın rengini belirleyen element ('shield' / 'magicShield' kalkan satırları). */
@@ -145,7 +148,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
   const val = (scale: Attribute, power: number) => scaled(stats, scale, power, formulas);
   switch (e.type) {
     case 'rage':
-      return `The lower your HP, the harder you hit: up to +${pct(e.maxBonus)} damage at the brink of death.`;
+      return `The lower your HP, the harder you hit: up to +${pct(e.maxBonus)} damage at the brink of death.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
     case 'divineLight':
       return `At the start of your turn, heal the most wounded ally for ${val(e.scale, e.power)} (${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}).`;
     case 'spellEcho':
@@ -287,17 +290,20 @@ export function describeRage(f: Formulas): string[] {
     `Rage: a bar from 0 to ${r.max}; you start every battle with 0`,
     `Every damaging hit that lands with a skill gives ${n(r.hitBase)} Rage plus ${n(r.perHpPercent)} per 1% of the target's max HP it takes (at most ${n(r.perHitCap)} per hit)`,
     `A skill that hits several targets gives the Rage of the best single target, never more than ${n(r.perCastCap)} per cast`,
-    'Rage never fades and is not gained from damage you take; skills that cost Rage need enough of it',
+    'Rage never fades; skills that cost Rage need enough of it',
+    'Damage you take gives Rage only through a passive that says so (Berserker)',
   ];
 }
 
-export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}): SkillInfo {
+/** `ownerRange`: skill sahibinin (sınıf/mob/çağrı) taban menzili (CombatantDef.range); verilmezse skill `range` ya da varsayılan. */
+export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}, ownerRange?: number): SkillInfo {
   const lines: string[] = [];
   const kinds: SkillInfo['kinds'] = [];
   const add = (text: string, kind?: SkillInfo['kinds'][number]) => {
     lines.push(text);
     kinds.push(kind);
   };
+  const range = rangeLabel(skill, ownerRange, formulas);
   // Aynı etki art arda tekrar ediyorsa (Double Strike: iki vuruş) tek satır + 'x2'
   for (const { e, times } of groupEffects(skill)) {
     const who = skill.target === 'area_any' ? (e.side === 'allies' ? ' (on your side: allies)' : e.side === 'enemies' ? ' (on the enemy side: enemies)' : '') : skill.target === 'everyone' ? ((e.side ?? (e.type === 'heal' || e.type === 'hot' || e.type === 'shield' || e.type === 'guard' ? 'allies' : 'enemies')) === 'allies' ? ' (allies)' : ' (enemies)') : '';
@@ -315,6 +321,14 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`x${e.bonusVsTag.multiplier} vs ${e.bonusVsTag.tag}`);
       if (e.falloff) add(`Each target hit takes ${pct(1 - e.falloff)} less damage than the previous one`);
+      // Headsman's Blow: harcanan Rage ve hedefin eksik canı (spec.ts > damageSpecFor ile aynı formül)
+      if (e.powerPerRage) {
+        const lo = skill.cost.resource === 'rage' ? skill.cost.amount : 0;
+        const hi = skill.cost.resource === 'rage' ? formulas.rage.max : 0;
+        const at = (r: number) => damageAmount({ ...e, power: e.power + e.powerPerRage! * r }, stats, formulas);
+        add(`+${pct(e.powerPerRage)} ${ATTRIBUTE_NAME[e.scale]} per Rage spent${hi > lo ? ` (${at(lo)} at ${lo} Rage, ${at(hi)} at ${hi} Rage)` : ''}`, element);
+      }
+      if (e.executeBonus) add(`Hits harder the more HP the target is missing: up to +${pct(e.executeBonus)} against a nearly dead target`, element);
       if (e.bonusPerMissingMana) add(`+${e.bonusPerMissingMana} per missing mana of the target`, element);
       if (e.repeatChance) add(`${pct(e.repeatChance)} chance to hit twice`, element);
       if (e.critBonus && !e.guaranteedCrit) add(`+${pct(e.critBonus)} crit chance`, element);
@@ -381,15 +395,6 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'status') {
       const def = defs.statuses?.[e.status];
       const how = e.cause === 'vines' ? ' (rooted by vines)' : '';
-      if (def?.attackCharges) {
-        // Yüklü durum (Abyssal Fury, madde 262): tur değil saldırı sayar; menzil ve bonus stat veriden
-        const parts: string[] = [];
-        if (def.reachBonus) parts.push(`melee reach +${def.reachBonus} row${def.reachBonus > 1 ? 's' : ''} (can hit one row deeper and strike from one row further back)`);
-        for (const [k, v] of Object.entries(def.attackAttrPct ?? {}) as Array<[Attribute, number]>) if (v) parts.push(`+${pct(v)} ${ATTRIBUTE_NAME[k]} (+${Math.round(stats[k] * v)}) for damage only`);
-        add(`${e.self ? 'You gain' : 'Applies'} ${def.name} for your next ${def.attackCharges} attacks: ${parts.join(', ')}`, undefined);
-        add('Each damaging skill you use spends 1 charge (a multi-hit or area skill counts as one attack)');
-        continue;
-      }
       if (e.chance !== undefined && e.chance < 1) add(`${pct(e.chance)} chance per target hit (rolled separately) to apply ${def?.name ?? e.status} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
       else add(`${e.self ? 'You gain' : 'Applies'} ${def?.name ?? e.status}${skill.target === 'area_any' ? who : ''} for ${e.turns} turn${e.turns > 1 ? 's' : ''}${how}${def ? `: ${def.text}` : ''}`, undefined);
       if (def && !e.self && bossBlocksStatus(formulas, def)) add(`Bosses are immune to ${def.name} (${immuneKind(def)})`);
@@ -462,12 +467,16 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (skill.target === 'area_any') add('Throw it on the enemy side or on your own side: only the units on that side of the cloud are affected');
   if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (x${formulas.attributes.critMult}); it can still miss`, 'physical');
   if (skill.requiresOpenBehind) add('Only targets with an empty cell right behind them (a living unit there blocks it; a corpse does not); never a unit in the back row');
-  if (skill.motion === 'melee' && skill.target !== 'self') add(skill.requiresOpenBehind ? 'Slips behind any enemy, strikes, and returns' : skill.ignoreReach ? 'Charges at any enemy' : skill.reach ? `Melee: front ${skill.reach + 1} rows only (reach +${skill.reach})` : 'Melee: front row only');
-  // ignoreReachBonus (Whirlwind, madde 284): durumların menzil eki (Abyssal Fury) bu skill'e işlemez
-  if (skill.motion === 'melee' && skill.ignoreReachBonus && !skill.ignoreReach) add('Reach bonuses (Abyssal Fury) do not extend it');
+  if (rangeEnabled(formulas)) {
+    // Menzil (range.md, range.ts): kart satırı; menzil kapalıyken eski melee satırı
+    if (skill.requiresOpenBehind) add('Slips behind the enemy, strikes, and returns');
+    const rl = rangeLine(skill, ownerRange, formulas);
+    if (rl) add(rl);
+  } else if (skill.motion === 'melee' && skill.target !== 'self') add(skill.requiresOpenBehind ? 'Slips behind any enemy, strikes, and returns' : skill.ignoreReach ? 'Charges at any enemy' : skill.reach ? `Melee: front ${skill.reach + 1} rows only (reach +${skill.reach})` : 'Melee: front row only');
   if (skill.advanceToFront) add('If you are not in the front row, you then step into the front row: the front cell of your own lane, or the nearest empty front cell if that one is taken (you stay put if the front row is full)');
   // Oranlı bedel (Wail of the Dead: mevcut canın %20'si): açıklama satırı; başlık skillCostLabel
-  if (isRatioCost(skill.cost)) add(`Costs ${pct(skill.cost.ofCurrent!)} of current ${skill.cost.resource.toUpperCase()} (rounded, at least 1)${skill.cost.resource === 'hp' ? ': it can never bring you below 1 HP' : ''}`);
+  if (skill.cost.spendAll) add(`Spends ALL your ${skill.cost.resource === 'rage' ? 'Rage' : skill.cost.resource.toUpperCase()} (needs at least ${skill.cost.amount})`);
+  else if (isRatioCost(skill.cost)) add(`Costs ${pct(skill.cost.ofCurrent!)} of current ${skill.cost.resource.toUpperCase()} (rounded, at least 1)${skill.cost.resource === 'hp' ? ': it can never bring you below 1 HP' : ''}`);
   if (skill.note) add(skill.note); // serbest not (Pose Tester: oynattığı poz)
   const initialTurns = Math.min(formulas.cooldown?.maxInitial ?? 0, Math.floor(skill.initialCooldown ?? 0));
   return {
@@ -478,6 +487,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     cooldown: (skill.cooldown ?? 0) > 0 ? `${skill.cooldown} turns` : 'None',
     initialCooldown: initialTurns > 0 ? `Opens on cooldown: ${initialTurns} turn${initialTurns > 1 ? 's' : ''}` : '',
     turnCost: turnCost < 1 ? (turnCost === 0.5 ? 'Half turn' : `${pct(turnCost)} turn`) : '',
+    range,
     lines,
     kinds,
   };
@@ -533,8 +543,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     } else if (e.type === 'status') {
       const def = defs.statuses?.[e.status];
       const name = def?.name ?? e.status;
-      if (def?.attackCharges) fixed(name, `${def.attackCharges} attacks`);
-      else fixed(name, e.chance !== undefined && e.chance < 1 ? `${pct(e.chance)}, ${turnsText(e.turns)}` : turnsText(e.turns));
+      fixed(name, e.chance !== undefined && e.chance < 1 ? `${pct(e.chance)}, ${turnsText(e.turns)}` : turnsText(e.turns));
     } else if (e.type === 'taunt') fixed('Taunt', turnsText(e.turns));
     else if (e.type === 'guard') fixed('Guard', turnsText(e.turns));
     else if (e.type === 'bond') fixed(defs.statuses?.dark_bond?.name ?? 'Dark Bond', turnsText(e.turns));
@@ -556,7 +565,7 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'armorAura':
       return num('Armor aura', Math.round(stats.armor * e.pct), 'shield');
     case 'rage':
-      return fixed('Max bonus', `+${pct(e.maxBonus)}`);
+      return e.rageOnHurt ? [...fixed('Max bonus', `+${pct(e.maxBonus)}`), ...fixed('Rage per 1% HP lost', String(Math.round(e.rageOnHurt.perHpPercent * 100) / 100))] : fixed('Max bonus', `+${pct(e.maxBonus)}`);
     case 'spellEcho':
       return fixed('Chance', pct(e.chance));
     case 'longshot':

@@ -92,3 +92,6 @@ def p_exists(name):
 
 if __name__ == '__main__':
     main()
+    # Oyun sprite / avatar PNG'lerinin .webp kopyasını yükler: değişenlerin WebP'si üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+    import subprocess
+    subprocess.run(['node', 'tools/webp-assets.mjs'], cwd=ROOT, check=False)

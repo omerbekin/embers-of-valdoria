@@ -48,6 +48,7 @@ export { storage } from './kv-storage';
 import { storage } from './kv-storage';
 import { partyWeapons } from './pose-weapons';
 import { logEvent } from '../diag/diag';
+import { trackKills, type KillRecord } from '../progression/levels';
 
 export const session = {
   state: null as CampaignState | null,
@@ -172,6 +173,18 @@ export function checkPaused(): boolean {
   return false;
 }
 
+/** Öldürme kaydı (XP payı: düştükten sonraki öldürmeler %50; progression > trackKills). */
+let killTrack: { battle: Battle; kills: () => KillRecord[]; stop: () => void } | null = null;
+
+function startKillTrack(battle: Battle, heroOrder: string[]): void {
+  killTrack?.stop();
+  const t = trackKills(battle, heroOrder);
+  killTrack = { battle, ...t };
+}
+
+/** Bu savaşın öldürme kaydı (yoksa undefined: applyBattle tüm düşmanları sayar). */
+const killsOf = (battle: Battle): KillRecord[] | undefined => (killTrack?.battle === battle ? killTrack.kills() : undefined);
+
 /** Sefer başı kaydı (Normal: listede görünür; Ironman: yalnızca bellekte, yenilgide dönüş noktası). */
 export function markJourneyStart(): void {
   const s = session.state;
@@ -204,6 +217,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     difficulty: plan.difficulty,
     // Poz kütüphanesi (yalnızca sunum): kahramanların takılı silahı ekranda çizilen silahı seçer (src/game/poses.ts)
     weapons: { items: partyWeapons(plan.heroOrder, (id) => st.roster.find((h) => h.id === id)?.equipment.weapon, (id) => st.roster.find((h) => h.id === id)?.equipment.offhand) },
+    // Level'lar (ad plakasında "Lv N"): düşmanlar düğüm seviyesinde, kahramanlar kendi level'ında
+    levels: { enemy: plan.enemyLevel, party: Object.fromEntries(plan.heroOrder.map((id, i) => [`party-${i}`, st.roster.find((h) => h.id === id)?.level ?? 1])) },
     // Savaş arka planı (karşılaşma > düğüm > bölge; dosya yoksa savaşın varsayılanı): King's Bridge = kings-bridge
     ...(plan.background ? { background: plan.background } : {}),
     // Tutorial bağlamı (docs/design/tutorial.md): düğüm / bölge dersleri, Bölüm III yenilgi ipucu (bu düğümdeki yenilgi sayısı)
@@ -215,6 +230,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
       retreatConfirm: PAUSED_CONFIRM,
       // Savaş kurulur kurulmaz (çizimden önce): sürdürülüyorsa günlük oynatılır, sonra kayıt başlar
       prepareBattle: (battle) => {
+        startKillTrack(battle, plan.heroOrder); // XP payı (levels.md): günlük oynatılmadan önce (sürdürülen savaşın öldürmeleri de sayılır)
         if (replay.length) replayActions(battle, replay);
         startRecording(battle, plan, replay);
       },
@@ -256,7 +272,10 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
         run: () => {
           const s = session.state;
           if (s && s.at === plan.nodeId) {
-            session.state = applyBattle(s, outcomeFrom(plan, true, battleSummary(battle)));
+            const kills = killsOf(battle);
+            session.state = applyBattle(s, { ...outcomeFrom(plan, true, battleSummary(battle)), ...(kills ? { kills } : {}) });
+            killTrack?.stop();
+            killTrack = null;
             save('auto');
           }
           goTo(game, MAP_SCENE);

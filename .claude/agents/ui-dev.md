@@ -20,5 +20,12 @@ Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 - **Asset Gallery artık Wiki > Assets / Legacy içinde** (kitap simgesi; `gallery.html` yalnızca gömülü animasyon sahnesi + yönlendirme): yeni ses/ikon/animasyon(vfx)/karakter/skill/sprite eklenince orada kendiliğinden görünür (otomatik türetilir: `src/gallery/catalog.ts` + `src/wiki/assets/legacy-catalog.ts`; kullanılmayan/yedek/eski olan her şey Legacy'ye düşer, elle liste yok); özel bir alan eklendiyse Assets bölümlerini güncelle (`src/wiki/assets/`). `tests/wiki-assets.test.ts` kapsamı denetler.
 - **Wiki (sağ üst kitap simgesi, `src/wiki`):** içerik veriden türetilir; yeni mekanik/özel kural/pasif eklenince wiki'nin Mechanics bölümündeki metin güncel mi kontrol et.
 
+## Yükleme bütçesi (2026-10-17)
+- Savaş başına indirme hedefi ~3 MB: yalnızca o savaştaki birimlerin kullandığı pozlar / silahlar iner (WebP / atlas); her şeyi önden yükleme yok.
+- Açılışta yalnızca ana menünün ihtiyacı; debug ve diğer ekran kodu tembel yüklenir. Menüden sonra büyük arka plan indirmesi yapılmaz.
+- Yükleme sırasında ASLA siyah ekran kalmaz (`src/ui/boot-loader.ts` göstergesi); hiçbir yükleme sonsuza dek beklemez, eksik dosya yer tutucuya düşer.
+- Müzik yükleme ekranında başlamaz; ana menü görününce başlar.
+- Menzil arayüzü (skill kartında "Range N"/"Global", hedef hücre vurgusu) `range.enabled` kapalıyken eski görünüme döner.
+
 ## Çıktı
 Hangi ekranda ne görünmesi/duyulması gerektiğini ve nasıl test edileceğini anlatan sade Türkçe özet.

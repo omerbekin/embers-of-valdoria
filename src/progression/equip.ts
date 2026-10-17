@@ -2,15 +2,18 @@
 // aynı fonksiyonu kullanır (items.md 4.4, 5.4). Puan = affix IP'lerinin toplamı, sınıfa uymayan affix'ler (başka element, Rage'li sınıfta MP,
 // çağrısı olmayan sınıfta Summon mastery...) düşük ağırlıklı; primary bonusunu kapatacak item seçilmez.
 import { affixFit } from './affix-fit';
-import { affixIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, itemDef, itemIP, legendaryConflict, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId } from './items';
+import { ITEMS, affixIP, baseIP, blocksOffhand, canEquip, effectIP, equipInto, fitsSlot, instanceIlvl, itemDef, itemIP, legendaryConflict, meetsLevel, offhandBlocker, rolledAffixes, SLOT_IDS, type Equipment, type ItemDef, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { inactivePenalty } from './loadout';
 import { primaryCheck } from './primary';
 
-/** Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi. */
-export function instanceScore(classId: string, inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }): number {
+/**
+ * Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi + taban değeri (silah gücü, örtük stat; Item Güçlendirme 2026-10-17).
+ * `slot` ikinci else silah gücünün yalnızca `offhandShare` kadarı sayılır.
+ */
+export function instanceScore(classId: string, inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, slot?: SlotId): number {
   const d = itemDef(inst.id);
   if (!d) return 0;
-  let score = effectIP(d);
+  let score = effectIP(d) + baseIP(d, instanceIlvl(inst), slot === 'offhand' && d.slot === 'weapon' ? (ITEMS.weaponPower?.offhandShare ?? 0) : 1);
   for (const a of rolledAffixes(inst, classId)) score += affixIP(a.id, a.values) * affixFit(classId, a);
   return Math.round(score * 1000) / 1000;
 }
@@ -25,7 +28,7 @@ export const itemScore = (_classId: string, d: ItemDef): number => itemIP(d);
 export function slotScore(classId: string, equipment: Partial<Equipment>, inst: (Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }) | null | undefined, slot: SlotId): number {
   if (!inst || !itemDef(inst.id)) return 0;
   const fitIP = (a: RolledAffix) => affixIP(a.id, a.values) * affixFit(classId, a);
-  return Math.round((instanceScore(classId, inst) - inactivePenalty(classId, equipment, inst as ItemInstance, slot, fitIP)) * 1000) / 1000;
+  return Math.round((instanceScore(classId, inst, slot) - inactivePenalty(classId, equipment, inst as ItemInstance, slot, fitIP)) * 1000) / 1000;
 }
 
 export interface EquipMove {
@@ -34,12 +37,12 @@ export interface EquipMove {
 }
 
 /**
- * Bir kahramanın torbadan yapacağı en iyi değişimler (yuva başına en yüksek puanlı, kullanılabilir, primary'yi bozmayan ve takılıdan
- * iyi item). `taken`: başka kahramanlara ayrılmış uid'ler (takım için sırayla çağrılır).
+ * Bir kahramanın torbadan yapacağı en iyi değişimler (yuva başına en yüksek puanlı, kullanılabilir, seviye şartını karşılayan (`hero.level`;
+ * verilmezse denetlenmez), primary'yi bozmayan ve takılıdan iyi item). `taken`: başka kahramanlara ayrılmış uid'ler (takım için sırayla çağrılır).
  * İkinci el (2026-10-12): ana el adayının değeri = silah + (ikinci eli kapatmıyorsa) eldeki ya da torbadaki en iyi ikinci el; çift el silah
  * ikinci eldeki item'i torbaya çıkarır. İkinci el yuvası ana elden sonra, ana el kapatmıyorsa doldurulur; ana el boşsa önce o dolar.
  */
-export function bestMoves(hero: { class: string; equipment: Equipment }, bag: ItemInstance[], taken: Set<string> = new Set()): EquipMove[] {
+export function bestMoves(hero: { class: string; equipment: Equipment; level?: number }, bag: ItemInstance[], taken: Set<string> = new Set()): EquipMove[] {
   const moves: EquipMove[] = [];
   let equipment = { ...hero.equipment };
   const score = (inst: ItemInstance | null | undefined, slot: SlotId = 'weapon', eq: Equipment = equipment) => slotScore(hero.class, eq, inst, slot);
@@ -49,7 +52,7 @@ export function bestMoves(hero: { class: string; equipment: Equipment }, bag: It
     for (const inst of bag) {
       if (taken.has(inst.uid) || inst.uid === skip) continue;
       const d = itemDef(inst.id);
-      if (d && fitsSlot(d, 'offhand') && canEquip(hero.class, d)) best = Math.max(best, score(inst, 'offhand', eq));
+      if (d && fitsSlot(d, 'offhand') && canEquip(hero.class, d) && (hero.level === undefined || meetsLevel(hero.level, inst))) best = Math.max(best, score(inst, 'offhand', eq));
     }
     return best;
   };
@@ -65,7 +68,7 @@ export function bestMoves(hero: { class: string; equipment: Equipment }, bag: It
     for (const inst of bag) {
       if (taken.has(inst.uid)) continue;
       const d = itemDef(inst.id);
-      if (!d || !fitsSlot(d, slot) || !canEquip(hero.class, d) || legendaryConflict(equipment, d, slot)) continue;
+      if (!d || !fitsSlot(d, slot) || !canEquip(hero.class, d) || (hero.level !== undefined && !meetsLevel(hero.level, inst)) || legendaryConflict(equipment, d, slot)) continue;
       const v = value(inst);
       if (best && v <= best.score) continue;
       if (primaryCheck({ class: hero.class, equipment }, { equip: inst, slot }).lost) continue;

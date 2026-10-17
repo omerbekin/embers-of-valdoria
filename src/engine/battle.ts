@@ -9,7 +9,8 @@ import { Rng } from './rng';
 import { ITEM_HOOK_CAPS } from './item-caps';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
-import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundStat, statMin } from './stats';
+import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
+import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
 import type { Attribute, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules } from './types';
@@ -134,7 +135,7 @@ export const slotOfTileUid = (uid?: string): number | undefined => {
  * Savaş durumu ve kuralları. Saf TypeScript; aynı seed + aynı eylemler = aynı olaylar.
  * turns modunda sırası gelmeyen aktör oynayamaz; test modunda sıra yoktur.
  * Dizilim: her tarafın `formation.rows` sırası (0 = en önde) ve her sırada `formation.lanes` şeridi var; yuva = sıra * lanes + şerit.
- * Yakın dövüş skill'leri düşmanın en öndeki `formation.meleeRows` dolu sırasına vurabilir.
+ * Menzil (docs/design/range.md): her skill'in menzili var (sınıfın `range`'i, skill `range` ile ezilebilir; `global` = menzilsiz); bkz. distanceTo / inRange.
  */
 export class Battle {
   readonly seed: number;
@@ -183,6 +184,8 @@ export class Battle {
   private readonly lastKind = new Map<string, LastActionKind>();
   /** Şu an işlenen skill'in Rage kazancı: hedef uid -> o hedefe yapılan vuruşların kazancı toplamı (yalnızca Rage'li kullanıcıda; yoksa null). */
   private rageTally: Map<string, number> | null = null;
+  /** Şu an işlenen skill'in harcadığı Rage (powerPerRage: Headsman's Blow); ödemeden ÖNCEKİ Rage (bedel atlansa da). Yoksa null. */
+  private castRage: number | null = null;
   /** Bu skill sırasında ölürse yığını Ill Omen ile GEÇMEYECEK hedefler (detonate noTransferOnKill: Doom Mark); skill bitince null. */
   private noTransferKill: Set<string> | null = null;
   /** Şu an işlenen skill (strike'ın skill'e bakan pasifleri için: Rebuke yalnızca yakın dövüş); skill bitince null. */
@@ -617,7 +620,7 @@ export class Battle {
 
   /** Destek HARİÇ hız: stat x durum çarpanları (Slow/Haste). */
   baseSpeedOf(c: Combatant): number {
-    return Math.max(statMin(this.setup.formulas), roundStat(c.stats.spd * this.statusMult(c, 'speedMult'), this.setup.formulas));
+    return Math.max(speedMin(this.setup.formulas), roundSpeed(c.stats.spd * this.statusMult(c, 'speedMult'), this.setup.formulas));
   }
 
   /**
@@ -627,7 +630,7 @@ export class Battle {
   speedOf(c: Combatant): number {
     const boost = this.speedBoostOf(c.uid);
     if (boost <= 0) return this.baseSpeedOf(c);
-    return Math.max(statMin(this.setup.formulas), roundStat(c.stats.spd * (this.statusMult(c, 'speedMult') + boost), this.setup.formulas));
+    return Math.max(speedMin(this.setup.formulas), roundSpeed(c.stats.spd * (this.statusMult(c, 'speedMult') + boost), this.setup.formulas));
   }
 
   /** Dex-primary Hunter's Mark: saldıran hedefinden daha HIZLIYSA (geçerli hız, Slow/Haste dahil; geçici Skip desteği hariç) hasar çarpanı 1 + hunterMark; değilse 1. */
@@ -702,34 +705,112 @@ export class Battle {
   }
 
   /**
-   * Yakın dövüş skill'inin bu birim için geçerli menzil eki: skill'in `reach`'i + taşıdığı durumların `reachBonus`'u (Abyssal Fury, madde 262).
-   * Hem hedeflenebilecek düşman sıraları (meleeRows + reach) hem de saldıranın kendi sırası ('Melee: front row only') için kullanılır.
+   * ESKİ erişim kuralı (yalnızca formulas.range.enabled false): yakın dövüş skill'inin menzil eki = skill `reach`. Hem hedeflenebilecek düşman sıraları
+   * (meleeRows + reach) hem de saldıranın kendi sırası için kullanılır.
    */
-  reachOf(actor: Combatant | string, skill: SkillDef): number {
-    const c = typeof actor === 'string' ? this.get(actor) : actor;
-    let bonus = 0;
-    // ignoreReachBonus (Whirlwind, madde 284): durum menzil eki bu skill'e işlemez (yük ve STR eki işler)
-    if (!skill.ignoreReachBonus) for (const s of c?.statuses ?? []) bonus += this.statusDef(s.kind)?.reachBonus ?? 0;
-    return (skill.reach ?? 0) + bonus;
+  reachOf(_actor: Combatant | string, skill: SkillDef): number {
+    return skill.reach ?? 0;
+  }
+
+  // --- Menzil kancaları (docs/design/range.md; kural src/engine/range.ts; bayrak formulas.range.enabled) ---
+
+  /** Menzil sistemi açık mı? Kapalıyken aşağıdaki menzil kancaları "her şey menzilde" der ve eski erişim kuralı işler. */
+  get rangeOn(): boolean {
+    return rangeEnabled(this.setup.formulas);
+  }
+
+  /** Skill menzilsiz mi ("Global" ya da hedef seçimi olmayan tür / range'siz dost skill'i)? */
+  isGlobalRange(skill: SkillDef): boolean {
+    return skillRangeFor(skill, 1, this.setup.formulas) === Infinity;
+  }
+
+  /** Birimin taban (sınıf) menzili: birim verisindeki `range`; yoksa formulas.json > range.default. */
+  unitRange(c: Combatant): number {
+    return this.setup.units[c.defId]?.range ?? this.setup.formulas.range?.default ?? 1;
+  }
+
+  /** Skill'in bu birim için menzili (Infinity = menzilsiz); range.ts > skillRangeFor. */
+  rangeOf(actor: Combatant | string, skill: SkillDef): number {
+    const a = typeof actor === 'string' ? this.get(actor) : actor;
+    return skillRangeFor(skill, a ? this.unitRange(a) : undefined, this.setup.formulas);
+  }
+
+  /** Bir tahtanın en öndeki DOLU sırası (canlı birim; 0 = en önde). `moved`: varsayımsal yer değiştirme (YZ). Tahta boşsa 0. */
+  frontOccupiedRow(board: Side, moved?: { uid: string; slot: number }): number {
+    let front = Infinity;
+    for (const c of this.combatants) {
+      if (c.hp <= 0 || c.board !== board) continue;
+      const slot = moved && c.uid === moved.uid ? moved.slot : c.slot;
+      front = Math.min(front, this.rowOf(slot));
+    }
+    return front === Infinity ? 0 : front;
+  }
+
+  /** Saldırandan `board` tahtasındaki `slot` hücresine mesafe (range.ts > cellDistance). `from`: saldıranın varsayımsal hücresi; `moved`: hedef tahtasında varsayımsal yer değiştirme. */
+  distanceTo(actor: Combatant, board: Side, slot: number, opts?: { from?: number; moved?: { uid: string; slot: number } }): number {
+    const from = opts?.from ?? actor.slot;
+    const fromRow = actor.board === actor.side || board === actor.side ? this.rowOf(from) : 0;
+    return cellDistance(fromRow, board === actor.side, this.rowOf(slot), board === actor.side ? 0 : this.frontOccupiedRow(board, opts?.moved));
+  }
+
+  /** Hücre bu skill'in menzilinde mi? Sistem kapalıyken ve debugCast sırasında hep evet. Alan skill'inde hücre = hedeflenen anchor. */
+  inRange(actor: Combatant, skill: SkillDef, board: Side, slot: number, opts?: { from?: number; moved?: { uid: string; slot: number } }): boolean {
+    if (!this.rangeOn || this.debugCasting) return true;
+    const r = this.rangeOf(actor, skill);
+    return r === Infinity || this.distanceTo(actor, board, slot, opts) <= r;
   }
 
   /**
-   * Skill HASARI hesabında kullanılan stat'lar (madde 262): durumların `attackAttrPct` eki (Abyssal Fury: STR'nin %X'i kadar bonus STR) uygulanmış.
-   * Yalnızca hasar (vuruş zarı, önizleme, YZ tahmini) bunu kullanır; can/kritik/zırh gibi türetilmiş değerler, şifa ve kalkan gerçek stat'tan.
-   * Ek yoksa gerçek stat nesnesi döner.
+   * Varsayımsal birim (`defId` menzilli, `side` tarafında) `slot` hücresinden bu skill'le karşı taraftaki bir canlı birime ulaşır mı (YZ: diriltme/çağrı
+   * hücresi)? Karşı tarafı hedeflemeyen skill'de evet. Alan skill'inde en yakın birim ölçülür (yaklaşık).
+   */
+  skillReachesFromCell(defId: string | undefined, side: Side, skill: SkillDef, slot: number): boolean {
+    if (!FOE_TARGETS.includes(skill.target)) return true;
+    const r = skillRangeFor(skill, defId ? this.setup.units[defId]?.range : undefined, this.setup.formulas);
+    if (r === Infinity) return true;
+    const foe = opposite(side);
+    const front = this.frontOccupiedRow(foe);
+    return this.living(foe).some((c) => c.board === foe && cellDistance(this.rowOf(slot), false, this.rowOf(c.slot), front) <= r);
+  }
+
+  /** Birim `from` hücresindeyken bu skill'in menzilinde en az bir geçerli hedef var mı (YZ konum alma; bedel/cooldown denetlenmez)? */
+  reachesFrom(actor: Combatant, skill: SkillDef, from: number): boolean {
+    if (this.rangeOf(actor, skill) === Infinity) return true;
+    const foe = opposite(actor.side);
+    const moved = { uid: actor.uid, slot: from };
+    switch (skill.target) {
+      case 'single_enemy':
+      case 'random_enemies':
+      case 'all_enemies':
+      case 'everyone':
+        return this.living(foe).some((c) => c.board === foe && this.inRange(actor, skill, c.board, c.slot, { from }) && (!skill.requiresOpenBehind || this.openBehindProblem(c) === null));
+      case 'area_enemies':
+      case 'area_any': {
+        const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
+        const boards: Side[] = skill.target === 'area_any' ? [foe, actor.side] : [foe];
+        return boards.some((b) => Array.from({ length: total }, (_, i) => i).some((i) => this.inRange(actor, skill, b, i, { from, moved }) && this.areaWindowAt(actor.uid, skill.id, i, b).length > 0));
+      }
+      case 'single_ally':
+        return this.living(actor.side).some((c) => c.board === actor.side && (!skill.excludeSelf || c.uid !== actor.uid) && this.inRange(actor, skill, c.board, c.uid === actor.uid ? from : c.slot, { from }));
+      default:
+        return true;
+    }
+  }
+
+  /**
+   * `foe` bu skill'le `target`'a, hedef `slot` hücresindeyken (varsayılan: şu anki) ulaşır mı (YZ: geri çekilme / konum alma)? Hedef tahtasının en
+   * öndeki dolu sırası hedefin varsayımsal hücresiyle hesaplanır. Taunt/arkası boş kuralı denetlenmez.
+   */
+  reachedBy(foe: Combatant, skill: SkillDef, target: Combatant, slot = target.slot): boolean {
+    return this.inRange(foe, skill, target.board, slot, { moved: { uid: target.uid, slot } });
+  }
+
+  /**
+   * Skill HASARI hesabında kullanılan stat'lar (vuruş zarı, önizleme, YZ tahmini). Abyssal Fury'nin bonus STR eki (attackAttrPct) 2026-10-17'de
+   * kaldırıldı; şimdilik gerçek stat nesnesi (hasara özel stat eki gelirse tek yer burası).
    */
   attackStats(c: Combatant): Combatant['stats'] {
-    let out: Combatant['stats'] | null = null;
-    for (const s of c.statuses) {
-      const pct = this.statusDef(s.kind)?.attackAttrPct;
-      if (!pct) continue;
-      for (const [k, v] of Object.entries(pct) as Array<[Attribute, number]>) {
-        if (!v) continue;
-        out ??= { ...c.stats };
-        out[k] += c.stats[k] * v;
-      }
-    }
-    return out ?? c.stats;
+    return c.stats;
   }
 
   /**
@@ -898,9 +979,9 @@ export class Battle {
       c.stats = {
         ...c.stats,
         spellPowerMult: (c.stats.spellPowerMult ?? 1) * (def.powerMult ?? 1),
-        // 0,1'e yuvarlanır (x2 ölçekte 0,2'ye: statScale katı)
-        armor: roundStat(c.stats.armor * (def.armorMult ?? 1) * 10, this.setup.formulas) / 10,
-        magicArmor: roundStat(c.stats.magicArmor * (def.armorMult ?? 1) * 10, this.setup.formulas) / 10,
+        // 0,1'e yuvarlanır
+        armor: Math.round(c.stats.armor * (def.armorMult ?? 1) * 10) / 10,
+        magicArmor: Math.round(c.stats.magicArmor * (def.armorMult ?? 1) * 10) / 10,
       };
     }
     emit({ type: 'phase', actor: c.uid, phase, hp: c.hp, maxHp: c.maxHp, banner: def.banner });
@@ -1421,7 +1502,11 @@ export class Battle {
     const b = this.areaBoard(actor, skillId, board);
     const stages = this.areaStageCells(skillId, centerSlot, b, actorUid);
     const cells = new Set(stages.flat());
-    let hits = this.validTargets(actorUid, skillId).filter((c) => c.board === b && cells.has(c.slot));
+    // Menzil açık: menzil yalnızca anchor hücreye bakar (shapeAnchors / cast); alandaki her canlı birim vurulur (kenar menzil dışına taşabilir).
+    // Kapalı (eski kural): yakın dövüşte erişilemeyen hücreler validTargets ile elenir.
+    const own: Side = actor?.side ?? 'party';
+    const pool = !this.rangeOn ? this.validTargets(actorUid, skillId) : skill.target === 'area_any' ? [...this.livingByDepth(opposite(own)), ...this.livingByDepth(own)] : this.livingByDepth(opposite(own));
+    let hits = pool.filter((c) => c.board === b && cells.has(c.slot));
     // area_any: hiçbir etkinin uygulanmadığı birimler (ör. yalnızca düşmana giden etki varken dostlar) hedef sayılmaz
     if (actor && skill.target === 'area_any') hits = hits.filter((c) => skill.effects.some((e) => this.effectAppliesTo(skill, e, c, actor)));
     if (stages.length <= 1) return hits;
@@ -1437,7 +1522,8 @@ export class Battle {
     if (!actor || !this.isAreaSkill(skillId)) return [];
     const b = this.areaBoard(actor, skillId, board);
     const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
-    return Array.from({ length: total }, (_, i) => i).filter((i) => this.areaWindowAt(actorUid, skillId, i, b).length > 0);
+    const skill = this.skill(skillId)!;
+    return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && this.areaWindowAt(actorUid, skillId, i, b).length > 0);
   }
 
   /** TÜM seçilebilir anchor hücreleri (tahta + yuva): area_enemies'de yalnızca karşı tahta; area_any'de önce karşı, sonra kendi tahtası. */
@@ -1462,10 +1548,11 @@ export class Battle {
     const b = this.areaBoard(actor, skillId, board);
     const cells = this.areaCells(skillId, anchorSlot, b, actorUid);
     const targets = this.areaWindowAt(actorUid, skillId, anchorSlot, b).map((c) => c.uid);
+    if (!this.inRange(actor, this.skill(skillId)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
     if (targets.length > 0) return { cells, targets, valid: true };
     if (this.isAnyBoardArea(skillId)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : 'No enemy in the area' };
     const inShape = this.livingByDepth(opposite(actor.side)).some((c) => c.board === b && cells.includes(c.slot));
-    return { cells, targets, valid: false, reason: inShape ? 'No target in reach' : 'No enemy in the area' };
+    return { cells, targets, valid: false, reason: inShape ? (this.rangeOn ? 'No target in range' : 'No target in reach') : 'No enemy in the area' };
   }
 
   /** Anchor olarak seçilen (canlı) birimin hücresine göre areaWindowAt (birim erişim dışında da olabilir: yalnızca hücreyi belirler). area_any'de birimin tahtası. */
@@ -1537,8 +1624,8 @@ export class Battle {
     const cfg = this.setup.formulas.corpseDanger ?? { hpRef: 100, reviverMult: 1.5, revivableMult: 1.5 };
     const f = this.setup.formulas;
     const r1 = (n: number) => Math.round(n * 10) / 10;
-    // tehdit eski ölçekte (stat + hız statScale kat büyük; en iyi skill değeri değişmez)
-    const threat = (Math.max(unit.stats.str, unit.stats.int, unit.stats.dex) + unit.stats.spd) / (this.setup.formulas.statScale ?? 1);
+    // tehdit ağırlığı veride (corpseDanger.threatMult; yoksa 1)
+    const threat = (Math.max(unit.stats.str, unit.stats.int, unit.stats.dex) + unit.stats.spd) * (cfg.threatMult ?? 1);
     let best = 0;
     let bestName = '';
     for (const id of unit.skills) {
@@ -1686,14 +1773,14 @@ export class Battle {
     return out;
   }
 
-  /** Yakın dövüş skill'i mi (menzili sınırlı: düşmanın en öndeki birimleri)? */
+  /** Yakın dövüş görünümlü skill mi (motion melee; yalnızca görsel/öğretici; kural menzildir: rangeOf)? */
   isMelee(skillId: string): boolean {
     return this.skill(skillId)?.motion === 'melee';
   }
 
   /**
-   * Bu skill için seçilebilecek hedefler (çoklu hedefli skill'de: hepsi).
-   * Yakın dövüş menzille sınırlıdır; taunt'lı düşman varsa tek hedefli skill'ler yalnızca ona (menzildeyse) gider.
+   * Bu skill için seçilebilecek hedefler (çoklu hedefli skill'de: hepsi). Menzil (range.md): tek hedef / rastgele / tümü yalnızca menzildeki birimler;
+   * alan skill'inde menzildeki anchor'lardan vurulabilecek birimlerin birleşimi; dost skill'inde sıra farkı. Taunt'lı düşman yalnızca MENZİLDEYSE zorlar.
    */
   validTargets(actorUid: string, skillId: string): Combatant[] {
     const actor = this.get(actorUid);
@@ -1706,9 +1793,13 @@ export class Battle {
       case 'area_enemies':
       case 'random_enemies':
       case 'all_enemies': {
+        if (skill.target === 'area_enemies' && this.rangeOn) return this.areaReachable(actor, skill);
         let list = this.livingByDepth(opposite(actor.side));
-        if (skill.motion === 'melee' && !skill.ignoreReach && !this.debugCasting) {
-          // Ön sıra, düşmanın kendi tahtasındaki birimlere göre belirlenir (çağrılar da kendi tahtalarında durur; eski "düşman tahtasına sızan çağrı" kuralı madde 222 ile kalktı)
+        if (this.rangeOn) {
+          // Menzil (range.md): taunt bundan SONRA uygulanır, yani menzil dışındaki taunter zorlamaz
+          list = list.filter((c) => this.inRange(actor, skill, c.board, c.slot));
+        } else if (skill.motion === 'melee' && !skill.ignoreReach && !this.debugCasting) {
+          // ESKİ kural: ön sıra, düşmanın kendi tahtasındaki birimlere göre belirlenir
           const home = list.filter((c) => c.board === c.side);
           const limit = this.meleeRowLimit(home.map((c) => this.rowOf(c.slot)), this.reachOf(actor, skill));
           list = list.filter((c) => c.board !== c.side || this.rowOf(c.slot) <= limit);
@@ -1723,23 +1814,40 @@ export class Battle {
       }
       case 'single_ally':
         // excludeSelf (Guard): kullanıcı kendini hedefleyemez
-        return this.livingByDepth(actor.side).filter((c) => !skill.excludeSelf || c.uid !== actor.uid);
+        return this.livingByDepth(actor.side).filter((c) => (!skill.excludeSelf || c.uid !== actor.uid) && this.inRange(actor, skill, c.board, c.slot));
       case 'all_allies':
         return this.livingByDepth(actor.side);
       case 'dead_ally':
         // Düşmüş dostlar (çağrılar hariç); cesedi tüketildiyse (Raise Dead) diriltilemez. Madde 257: cesedin hücresinde canlı birim (ör. Skeleton) olması
         // ENGEL DEĞİL: Resurrection önce ölüyü, sonra kendi tarafında boş bir hücreyi seçer (reviveSlots); boş hücre yoksa canUse 'No free cell'.
         return this.combatants
-          .filter((c) => c.side === actor.side && c.board === c.side && c.hp <= 0 && !c.summoned && this.corpseState.get(c.uid) !== 'consumed')
+          .filter((c) => c.side === actor.side && c.board === c.side && c.hp <= 0 && !c.summoned && this.corpseState.get(c.uid) !== 'consumed' && this.inRange(actor, skill, c.board, c.slot))
           .sort((x, y) => x.slot - y.slot);
       case 'everyone':
-        return [...this.livingByDepth(actor.side), ...this.livingByDepth(opposite(actor.side))];
+        // Dost kısmı menzilsiz; düşman kısmı menzile bağlı (Radiance global: hepsi)
+        return [...this.livingByDepth(actor.side), ...this.livingByDepth(opposite(actor.side)).filter((c) => this.inRange(actor, skill, c.board, c.slot))];
       case 'area_any':
-        // İki tahtaya da atılabilen alan (Smoke Bomb): alandaki her canlı birim aday; etkiler `side` ile ayrılır (menzil/taunt yok)
-        return [...this.livingByDepth(opposite(actor.side)), ...this.livingByDepth(actor.side)];
+        // İki tahtaya da atılabilen alan (Smoke Bomb): menzildeki anchor'lardan kapsanan canlı birimler (menzil kapalıyken alandaki her canlı birim); etkiler `side` ile ayrılır (taunt yok)
+        if (!this.rangeOn) return [...this.livingByDepth(opposite(actor.side)), ...this.livingByDepth(actor.side)];
+        return this.areaReachable(actor, skill);
       case 'empty_tile':
         return []; // hedef birim değil boş yuva: freeTiles(uid)
     }
+  }
+
+  /** Alan skill'inin menzildeki anchor'larından vurulabilecek birimlerin birleşimi (önce karşı tahta, yuva sırasıyla). */
+  private areaReachable(actor: Combatant, skill: SkillDef): Combatant[] {
+    const seen = new Set<string>();
+    const out: Combatant[] = [];
+    for (const { board, slot } of this.shapeAnchorCells(actor.uid, skill.id)) {
+      for (const c of this.areaWindowAt(actor.uid, skill.id, slot, board)) {
+        if (seen.has(c.uid)) continue;
+        seen.add(c.uid);
+        out.push(c);
+      }
+    }
+    const foe = opposite(actor.side);
+    return out.sort((a, b) => (a.board === b.board ? a.slot - b.slot : a.board === foe ? -1 : 1));
   }
 
   /** Bir birimin hemen ARKASINDAKİ hücre (bir sıra daha derin, aynı şerit, kendi tahtasında); en arka sıradaysa null. */
@@ -1763,7 +1871,7 @@ export class Battle {
 
   /**
    * UI/önizleme: bu skill bu hedefe kullanılabilir mi? Kullanılabilirse null; değilse neden (ör. Backstab: 'No room behind the target' /
-   * 'Target is shielded from behind'; menzil: 'Out of reach'; taunt: 'Must target the taunting enemy'). Bedel/sıra denetlenmez (canUse ayrı).
+   * 'Target is shielded from behind'; menzil: 'Out of range'; taunt: 'Must target the taunting enemy'). Bedel/sıra denetlenmez (canUse ayrı).
    */
   targetProblem(actorUid: string, skillId: string, targetUid: string): string | null {
     const actor = this.get(actorUid);
@@ -1778,9 +1886,11 @@ export class Battle {
         const p = this.openBehindProblem(target);
         if (p) return p;
       }
+      if (!this.inRange(actor, skill, target.board, target.slot)) return 'Out of range';
       const tauntingFoe = !this.ignoresTaunt(actor) && this.living(target.side).some((c) => c.statuses.some((s) => s.kind === 'taunt'));
-      return tauntingFoe ? 'Must target the taunting enemy' : 'Out of reach';
+      return tauntingFoe ? 'Must target the taunting enemy' : this.rangeOn ? 'Out of range' : 'Out of reach';
     }
+    if ((skill.target === 'single_ally' || skill.target === 'dead_ally') && target.side === actor.side && !this.inRange(actor, skill, target.board, target.slot)) return 'Out of range';
     return 'Invalid target';
   }
 
@@ -1812,8 +1922,8 @@ export class Battle {
       if (this.mode === 'turns' && this.telegraphedThisTurn.has(actorUid)) return { ok: false, reason: 'One warning per turn' };
     }
     if (this.mode === 'turns' && !this.noCooldowns && (actor.cooldowns[skillId] ?? 0) > 0) return { ok: false, reason: 'On cooldown' };
-    // Yakın dövüş yalnızca kendi takımının ön sırasındaki birimlerden yapılabilir (dash/charge gibi skill'ler ignoreFrontRow ile istisna olur)
-    if (skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
+    // ESKİ kural (menzil kapalı): yakın dövüş yalnızca kendi takımının ön sırasındaki birimlerden (ignoreFrontRow / ignoreReach istisna)
+    if (!this.rangeOn && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
       return { ok: false, reason: 'Melee: front row only' };
     }
     const resource = skill.cost.resource;
@@ -1827,7 +1937,7 @@ export class Battle {
       return { ok: false, reason: 'No free slot' };
     }
     if (this.validTargets(actorUid, skillId).length === 0) {
-      const reason = skill.target === 'dead_ally' ? this.noReviveReason(actor) : skill.requiresOpenBehind ? 'No target with room behind it' : skill.excludeSelf ? (skill.effects.some((e) => e.type === 'guard') ? 'No ally to guard' : 'No other ally') : 'No target in reach';
+      const reason = skill.target === 'dead_ally' ? this.noReviveReason(actor) : skill.requiresOpenBehind ? 'No target with room behind it' : skill.excludeSelf ? (skill.effects.some((e) => e.type === 'guard') ? 'No ally to guard' : 'No other ally') : this.rangeOn ? 'No target in range' : 'No target in reach';
       return { ok: false, reason };
     }
     // Diriltme (madde 257): dirilen kendi tarafında seçilen BOŞ hücreye gelir; hiç boş hücre yoksa kullanılamaz
@@ -1963,7 +2073,7 @@ export class Battle {
 
   /**
    * Birimin `slot` yuvasındaki (varsayılan: şu anki) SIRA SIRALAMASI: kendi tahtasındaki canlı birimlerin dolu sıraları arasında kaçıncı (0 = en önde).
-   * Düşmanın yakın dövüşü sıralamaya göre işler (meleeRows + reach'ten küçükse hedeflenebilir).
+   * Düşmanın yakın dövüşü sıralamaya göre işler (eski kural: meleeRows + reach'ten küçükse hedeflenebilir).
    */
   rowRank(uid: string, slot?: number): number {
     const c = this.get(uid);
@@ -1975,12 +2085,9 @@ export class Battle {
   }
 
   /**
-   * Yakın dövüşün bir tahtada ulaşabildiği en derin sıra (mutlak sıra numarası; bu ve önündeki dolu sıralar vurulabilir).
-   * Taban kural: en öndeki `formation.meleeRows` DOLU sıra (aradaki boş sıralar sayılmaz). Menzil eki (`reach`: skill reach + Abyssal Fury
-   * reachBonus) bunun üstüne MUTLAK sıra ekler: o sıranın `reach` sıra gerisine kadar. Boş sıralar menzili "atlatmaz": ön sırada Skeleton
-   * (sıra 0), en arkada Undead (sıra 3) varken +1 menzil yalnızca sıra 1'e uzanır, Undead'e ulaşmaz (madde 284; eskiden "bir sonraki DOLU sıra"
-   * sayıldığı için +1 menzil boş sıraları atlayıp en arkadaki Undead'i vurabiliyordu). reach 0'da davranış eskisiyle birebir aynı.
-   * `rows`: tahtadaki canlı birimlerin sıraları (sırasız, tekrarlı olabilir). Boşsa -1 (hiçbir sıra yok).
+   * ESKİ erişim kuralı (yalnızca range.enabled false): yakın dövüşün bir tahtada ulaşabildiği en derin sıra (mutlak sıra numarası; bu ve önündeki dolu
+   * sıralar vurulabilir). Taban: en öndeki `formation.meleeRows` DOLU sıra; `reach` bunun üstüne MUTLAK sıra ekler (boş sıraları atlamaz, madde 284).
+   * `rows`: tahtadaki canlı birimlerin sıraları. Boşsa -1.
    */
   meleeRowLimit(rows: number[], reach: number): number {
     const occupied = [...new Set(rows)].sort((a, b) => a - b);
@@ -1989,10 +2096,7 @@ export class Battle {
     return base + Math.max(0, reach);
   }
 
-  /**
-   * Birim `slot` yuvasındayken (varsayılan: şu anki) karşı tarafın `reach` menzilli yakın dövüşü ona ulaşır mı? validTargets ile aynı kural
-   * (meleeRowLimit); YZ'nin varsayımsal yuva hesabı (meleeIncoming) için. Kendi tahtasında olmayan (sızmış) birim her zaman ulaşılabilir.
-   */
+  /** ESKİ kural: birim `slot` yuvasındayken karşı tarafın `reach` menzilli yakın dövüşü ona ulaşır mı (YZ meleeIncoming)? Sızmış birim her zaman. */
   inMeleeReach(uid: string, reach: number, slot?: number): boolean {
     const c = this.get(uid);
     if (!c) return false;
@@ -2003,7 +2107,7 @@ export class Battle {
     return this.rowOf(at) <= this.meleeRowLimit(rows, reach);
   }
 
-  /** Birim `slot` yuvasındayken yakın dövüş skill'i (reach ile) kullanabilir mi? (canUse'taki 'Melee: front row only' kuralı, varsayımsal yuva için). */
+  /** ESKİ kural: birim `slot` yuvasındayken yakın dövüş skill'i (reach ile) kullanabilir mi ('Melee: front row only', varsayımsal yuva için). */
   canMeleeFrom(uid: string, slot: number, reach = 0): boolean {
     const c = this.get(uid);
     if (!c) return false;
@@ -2220,6 +2324,7 @@ export class Battle {
       const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
       const center = anchor ? anchor.slot : (tileSlot ?? slot ?? (debug ? targets.find((c) => c.board === board)?.slot ?? targets[0]?.slot : undefined));
       if (center === undefined || !Number.isInteger(center) || center < 0 || center >= total) return { ok: false, reason: 'Invalid target' };
+      if (!debug && !this.inRange(actor, skill, board, center)) return { ok: false, reason: 'Out of range' };
       targets = this.areaWindowAt(actorUid, skillId, center, board);
       if (!debug && targets.length === 0) return { ok: false, reason: anyBoard && board === actor.side ? 'No ally in the area' : 'No target in the area' };
       centerSlot = center;
@@ -2303,6 +2408,8 @@ export class Battle {
       emit({ type: 'passive', actor: actor.uid, passive: 'last_ember', name: 'The Last Ember' });
     }
     const cost = this.thriftyFree(actor, resource) || lastEmber ? 0 : skillCostAmount(skill.cost, actor); // oranlı bedel (Wail: mevcut canın %20'si) ödeme anındaki kaynaktan
+    // Headsman's Blow (powerPerRage): hasar, ödemeden önceki Rage'e göre (spendAll ile tamamı harcanır; freeRage debug'ında Rage aynı kalır)
+    this.castRage = skill.effects.some((e) => e.type === 'damage' && e.powerPerRage) ? (actor.rage ?? 0) : null;
     if (!debug && actor.itemEffects?.firstSkillFree && !actor.freeSkillUsed) {
       actor.freeSkillUsed = true;
       if (resource === 'mp' && skillCostAmount(skill.cost, actor) > 0) emit({ type: 'passive', actor: actor.uid, passive: 'thrifty', name: 'Thrifty' });
@@ -2330,8 +2437,6 @@ export class Battle {
     let repeatAnnounced = false;
     // endsOnOwnAttack (Jinxed): bu hasar skill'inin TÜM vuruşları durumdan etkilenir, skill bitince durum düşer
     const ownAttackEnds = skill.effects.some((e) => e.type === 'damage') ? actor.statuses.filter((s) => this.statusDef(s.kind)?.endsOnOwnAttack) : [];
-    // attackCharges (Abyssal Fury, madde 262): hasar veren skill = TEK saldırı (çok vuruşlu/alan dahil); skill bitince 1 yük düşer
-    const chargedBefore = skill.effects.some((e) => e.type === 'damage') ? actor.statuses.filter((s) => this.statusDef(s.kind)?.attackCharges) : [];
     const hitIndex = new Map<SkillEffect, number>(); // etki başına toplam vuruş sırası (falloff ve ilk-hedef ekleri aşamalar boyunca sürer)
     for (const [gi, group] of groups.entries()) {
     stage = stageGroups ? gi : undefined;
@@ -2697,15 +2802,6 @@ export class Battle {
       actor.statuses = actor.statuses.filter((x) => x !== s);
       emit({ type: 'statusEnd', target: actor.uid, status: s.kind, consumed: true });
     }
-    for (const s of chargedBefore) {
-      if (!actor.statuses.includes(s)) continue; // skill sırasında silindiyse (dispel) ya da yenilendiyse dokunma
-      s.turns--;
-      if (s.turns > 0) emit({ type: 'status', target: actor.uid, status: s.kind, turns: s.turns, source: s.source, cause: 'charge' });
-      else {
-        actor.statuses = actor.statuses.filter((x) => x !== s);
-        emit({ type: 'statusEnd', target: actor.uid, status: s.kind, consumed: true });
-      }
-    }
 
     // Rage kazancı: skill başına tek (en yüksek tek hedefin toplamı; perCastCap ile sınırlı), yalnızca isabet eden hasar vuruşlarından
     if (this.rageTally && this.rageTally.size > 0 && actor.maxRage !== undefined) {
@@ -2721,6 +2817,7 @@ export class Battle {
       }
     }
     this.rageTally = null;
+    this.castRage = null;
     this.noTransferKill = null;
     this.castingSkill = null;
 
@@ -2963,7 +3060,6 @@ export class Battle {
     for (const status of [...actor.statuses]) {
       if (!actor.statuses.includes(status)) continue;
       if (this.statusDef(status.kind)?.maxStacks) continue; // yığılan durumun süresi yukarıda işlendi
-      if (this.statusDef(status.kind)?.attackCharges) continue; // yüklü durum (Abyssal Fury): turla değil saldırıyla azalır
       if (this.statusDef(status.kind)?.untilResolved) continue; // kuralla süren durum (Ash Brand, Staggered, Anchored)
       if (this.statusDef(status.kind)?.tickAtTurnEnd) continue; // Silence: süre turun SONUNDA azalır (finishAction > tickTurnEnd)
       // Dark Bond: süre yalnızca bağı KURANIN turlarında azalır; bağlı dosttaki kopya kendi turunda azalmaz (sahibininkiyle eşitlenir)
@@ -3126,9 +3222,6 @@ export class Battle {
       status = { ...status, turns: status.turns - 1 };
       emit({ type: 'passive', actor: target.uid, passive: resilience > 0 ? 'primary_str' : 'iron_will', name: resilience > 0 ? 'Resilience' : 'Iron Will' });
     }
-    // Yüklü durum (attackCharges): kalan yük `turns` alanında, her uygulamada tam yükle başlar (yığılmaz, tazelenir)
-    const charges = this.statusDef(status.kind)?.attackCharges;
-    if (charges) status = { ...status, turns: charges };
     // Debuff yığılmaz (Ömer 2026-10-10; statuses.json > stack 'refresh-strongest'): birimde TEK örnek; süre max(kalan, yeni), güç (DoT miktarı) ve
     // kaynak en güçlü uygulamanın. Resilience / Unyielding kısaltması yeni uygulamaya yukarıda işlendi (zar her uygulamada atılır, akış aynı).
     if (statusStackMode(this.statusDef(status.kind)) === 'refresh-strongest') {
@@ -3326,13 +3419,13 @@ export class Battle {
     }
     // Flock Shield (YM18): savaşta bir kez ilk isabet eden düşman skill vuruşu azalır; yoksa 1 (ifade aynı)
     const flock = this.flockMult(actor, target);
-    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target) * flock : this.damageTakenMult(target), this.dealtDamageMult(actor, target, this.castingSkill), effect.bonusScale ? this.effectiveStats(actor) : undefined);
+    const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target) * flock : this.damageTakenMult(target), this.dealtDamageMult(actor, target, this.castingSkill), effect.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined);
     if (flock !== 1) {
       target.passiveUsed = true;
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
     }
     const targetStats = this.effectiveStats(target);
-    const base = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng); // Abyssal Fury: bonus STR yalnızca hasarda (madde 262)
+    const base = rollDamage(this.attackStats(actor), targetStats, spec, f, this.rng);
     // Garantili kritik (Backstab): kritik zarı ATILMAZ, kritik çarpanı uygulanır (debug 'never' yine kapatır; Jinxed bunu bozmaz: madde Ö5).
     // Kritik şansı durum ekleriyle (Jinxed, Omen Misfortune) geçerli değerdir (effectiveStats).
     // critBonus (Jinx): bu skill'in vuruşunda kritik şansına ek (generic)
@@ -3608,6 +3701,7 @@ export class Battle {
     // Ölemez birim (UnitSetup.undying; Mill Road açılış savaşı): can 1'de durur
     if (target.undying && rest > 0) rest = Math.max(0, Math.min(rest, target.hp - 1));
     target.hp = Math.max(0, target.hp - rest);
+    const hurtRage = this.hurtRageGain(actor, target, rest);
     const taunt = target.statuses.find((s) => s.kind === 'taunt' && s.breakAt !== undefined);
     if (taunt && rest > 0) {
       taunt.taken = (taunt.taken ?? 0) + rest;
@@ -3634,6 +3728,10 @@ export class Battle {
       ...(meta.status ? { status: meta.status } : {}),
     });
     if (pendingBreak) emit({ type: 'statusEnd', target: target.uid, status: 'taunt', broken: true });
+    if (hurtRage > 0) {
+      target.rage = Math.min(target.maxRage!, (target.rage ?? 0) + hurtRage);
+      emit({ type: 'rage', actor: target.uid, delta: hurtRage, after: target.rage, max: target.maxRage!, cause: 'hurt' });
+    }
     if (target.boss?.phases && target.hp > 0) this.checkPhase(target, emit);
     this.checkSecondWind(target, emit);
     this.checkShieldRefresh(target, emit);
@@ -3642,6 +3740,22 @@ export class Battle {
     // Kalkan kancaları yalnızca DOĞRUDAN bir saldırganın skill vuruşunda (yer etkisi tiki / kendine hasar tetiklemez)
     if (meta.origin === 'skill' && actor.side !== target.side) for (const { hook, part } of hooked) this.absorbTrigger(hook, target, actor, part, emit);
     return rest;
+  }
+
+  /**
+   * Berserker (rage pasifi rageOnHurt, Ömer 2026-10-17): Rage'li birim CAN kaybedince Rage kazanır: kaybedilen can maks canın %1'i başına
+   * perHpPercent (vuruş başına en fazla perHitCap; Resource mastery affix'i kazancı artırır). Kalkanın emdiği, kendi verdiği hasar ve
+   * ölümcül vuruş (birim düştü) sayılmaz; Rage barı doluysa 0. Dönen değer gerçekten eklenecek miktar (olayı applyHit yazar).
+   */
+  private hurtRageGain(actor: Combatant, target: Combatant, lost: number): number {
+    const pe = target.passive?.effect;
+    if (pe?.type !== 'rage' || !pe.rageOnHurt || target.maxRage === undefined || lost <= 0 || target.hp <= 0 || actor.uid === target.uid || target.maxHp <= 0) return 0;
+    const r = pe.rageOnHurt;
+    let gain = (lost / target.maxHp) * 100 * r.perHpPercent;
+    if (r.perHitCap !== undefined) gain = Math.min(r.perHitCap, gain);
+    const rg = target.itemEffects?.rageGain ?? 0;
+    gain = Math.round(gain * (rg > 0 ? 1 + rg : 1));
+    return Math.max(0, Math.min(target.maxRage - (target.rage ?? 0), gain));
   }
 
   /**
@@ -3988,7 +4102,7 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
   if (ie && Object.keys(ie).length > 0) {
     c.itemEffects = JSON.parse(JSON.stringify(ie)) as ItemEffects;
     if (finite(ie.startShieldRatio) && ie.startShieldRatio > 0) c.shield += Math.round(c.maxHp * ie.startShieldRatio);
-    if (finite(ie.startCharge) && ie.startCharge > 0) c.turnCounter = roundStat(formulas.turn.threshold * Math.min(ITEM_HOOK_CAPS.initiative, ie.startCharge), formulas);
+    if (finite(ie.startCharge) && ie.startCharge > 0) c.turnCounter = Math.round(formulas.turn.threshold * Math.min(ITEM_HOOK_CAPS.initiative, ie.startCharge));
     if (ie.shieldRefresh && ie.shieldRefresh.start > 0) c.shield += Math.round(c.maxHp * ie.shieldRefresh.start); // Mantle of Valdren
   }
   // Hazır çağrı (ör. düşman Skeleton): çağrı kuralları, sahipsiz ve süresiz

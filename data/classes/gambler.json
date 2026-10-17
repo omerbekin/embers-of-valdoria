@@ -6,6 +6,7 @@
   "logo": "gamblerlogo",
   "role": "Risk Taker",
   "frontPriority": 4.5,
+  "range": 5,
   "attributes": {
     "str": 16,
     "int": 6,

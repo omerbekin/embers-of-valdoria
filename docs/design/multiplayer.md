@@ -9,6 +9,12 @@ Varsayımlar ve sorular: `open-questions.md` madde 268.
 1. Ana menü > **Multiplayer** > **Host lobby** ya da **Join lobby**.
 2. Kurucu (host) lobi kurar: ekranda büyük **lobi kodu** (6 karakter), **Copy code** ve **Copy invite link** düğmeleri.
    Davet linki: `https://omerbekin.github.io/protomedi/?lobby=KOD` (oyunun açıldığı adres + `?lobby=KOD`).
+   Altında paylaşım satırı (Ömer 2026-10-17): **Share** (yalnızca `navigator.share` olan tarayıcıda, çoğu telefon; sistem paylaşım
+   menüsü), **WhatsApp** (`https://wa.me/?text=` + hazır mesaj, yeni sekme) ve **Discord** (Discord hazır mesaj linki desteklemez:
+   mesaj panoya kopyalanır, `https://discord.com/app` yeni sekmede açılır, "Invite copied — paste it in Discord"; pano yoksa
+   mesaj seçili bir kutuda gösterilir). Mesaj (`src/net/share-invite.ts`): "Join my Quick Battle in Embers of Valdoria! Lobby code:
+   ACD EFG" + yeni satırda "Tap to join: <davet linki>". Lobi sekmesi yerinde kalır (bağlantı kopmaz). Sahte rakipli yerel lobide yok.
+   Bu düğmeler yalnızca bağlantı açar; WhatsApp/Discord'a oyundan veri gitmez, oyuncu mesajı kendisi gönderir.
 3. Katılan (guest) linke tıklar (kod kendiliğinden girilir) ya da Join lobby'de kodu yazar.
 4. Lobi ekranı: "Opponent connected" göstergesi; ikisi de **Ready** deyince takım seçimine geçilir.
 5. Takım seçimi: kurucu **sol** (PLAYER/party), katılan **sağ** (ENEMY/enemies) taraftır; 4'er kişi (sabit). Her oyuncu yalnızca

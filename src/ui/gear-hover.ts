@@ -1,6 +1,7 @@
 // Character sayfasının kahraman listesi: üstüne gelinen / seçili item'in her kahramana etkisi (saf; testli: tests/gear-hover.test.ts).
 // Ömer 2026-10-11 (g1): "Usable by" ayrı blok değil; kahraman kartının alt satırı ("Level 1 · 4/6 items") item üstündeyken o kahramanın
 // kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Axes"); item yokken eski satır geri gelir.
+import type { StatAlloc } from '../progression/levels';
 import {
   ITEMS,
   affixDiff,
@@ -11,6 +12,9 @@ import {
   LEGENDARY_LIMIT_MSG,
   defaultEquipSlot,
   isPlanError,
+  instanceLevelReq,
+  levelReqMsg,
+  meetsLevel,
   offhandBlocker,
   planEquip,
   signedText,
@@ -24,6 +28,11 @@ export interface HoverHero {
   class: string;
   level: number;
   equipment: Equipment;
+  /** Level sistemi (levels.md): bu level'daki XP, dağıtılmamış stat / skill puanları, dağıtılmış puanlar (yoksa 0 / boş). */
+  xp?: number;
+  statPoints?: number;
+  skillPoints?: number;
+  alloc?: StatAlloc;
 }
 
 export interface HeroLinePart {
@@ -49,7 +58,7 @@ export function idleHeroLine(h: HoverHero): HeroLine {
 const MAX_PARTS = 2;
 
 /**
- * Item'in kahramana etkisi. Sıra: kullanamaz ("Can't use Axes" / "Can't use") → Legendary sınırı → stat paneli farkları (en büyük ikisi) →
+ * Item'in kahramana etkisi. Sıra: kullanamaz ("Can't use Axes" / "Can't use") → Legendary sınırı → (seviye şartı: "Requires Level X" + fark) → stat paneli farkları (en büyük ikisi) →
  * panelde görünmeyen affix farkı (element hasarı, delme...) → "No stat change". `inst` yoksa olağan satır.
  */
 export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined): HeroLine {
@@ -82,6 +91,11 @@ export function heroItemLine(h: HoverHero, inst: ItemInstance | null | undefined
     // Panelde görünmeyen affix'ler (element hasarı %, delme, auralar...): takılıyla affix farkı
     const ad = affixDiff(inst, h.equipment[slot], h.class).filter((a) => !a.stat && a.diff !== 0).slice(0, MAX_PARTS);
     parts = ad.map((a) => ({ text: `${signedText(a.diff, a.pct)} ${a.name}`, dir: a.diff > 0 ? 'up' : 'down' }));
+  }
+  // Seviye şartı (Item Güçlendirme x6): takılamaz ama karşılaştırma yine gösterilir (kırmızı "Requires Level X" önde)
+  if (!meetsLevel(h.level, inst)) {
+    const req = levelReqMsg(instanceLevelReq(inst));
+    return { text: [req, ...parts.map((p) => p.text)].join(' · '), tone: 'no', parts: [{ text: req }, ...parts] };
   }
   if (!parts.length) return { text: 'No stat change', tone: 'none', parts: [{ text: 'No stat change' }] };
   const ups = parts.filter((p) => p.dir === 'up').length;

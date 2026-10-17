@@ -140,3 +140,6 @@ for (let r = 0; r < 4; r++)
     if (DEBUG) console.log(`${name.padEnd(11)} cell ${cx[c]},${cy[r]}-${cx[c + 1]},${cy[r + 1]}  box ${b.left},${b.top} ${w}x${h}  side ${side}`);
   }
 console.log(`16 UI icons -> ${OUT}/<name>.png (128) + ${OUT}/small/<name>.png (64)`);
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

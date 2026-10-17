@@ -6,11 +6,12 @@
   "logo": "wizhat",
   "role": "Elemental Mage",
   "frontPriority": 7,
+  "range": 6,
   "attributes": {
-    "str": 12,
-    "int": 38,
+    "str": 20,
+    "int": 26,
     "dex": 6,
-    "luck": 4
+    "luck": 8
   },
   "primary": "int",
   "armor": 12,

@@ -1,21 +1,25 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content, previewSkill } from '../src/engine';
-import type { BattleEvent, BattleMode, StatusDef } from '../src/engine';
+import type { BattleEvent, BattleMode } from '../src/engine';
+import { rangeOff } from './range-helpers';
 
 /**
  * Madde 284 (Ömer'in Endless hata bildirimi): düşmanda arka sırada tek Undead + önüne çağrılmış Skeleton varken Warrior'ın Double Strike'ı
  * Undead'e vurabildi. Çağrı ön sırayı doğru dolduruyordu (ör. sıra 0); sızıntı Abyssal Fury'nin +1 menziliydi: menzil "bir sonraki DOLU sıra"
  * sayıldığı için +1, aradaki boş sıraları atlayıp sıra 3'teki Undead'e ulaşıyordu. Kural artık: en öndeki meleeRows dolu sıra + reach MUTLAK sıra
- * (battle.meleeRowLimit). Menzil eki yokken davranış değişmedi.
+ * (battle.meleeRowLimit). Menzil eki yokken davranış değişmedi. 2026-10-17: Abyssal Fury kaldırıldı (Headsman's Blow); menzil eki testleri
+ * skill'in kendi `reach` alanıyla (Double Strike'ın test kopyası) aynı kuralı sınar.
  */
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const ofType = <T extends BattleEvent['type']>(events: BattleEvent[], type: T) => events.filter((e): e is Extract<BattleEvent, { type: T }> => e.type === type);
-const FURY = (content.skills.abyssal_cry!.effects.find((e) => e.type === 'status') as { status: string }).status;
-const reachBonus = (content.statuses[FURY] as StatusDef).reachBonus!;
+const reachBonus = 1; // test kopyasının menzil eki (skill reach)
 const lanes = content.formulas.formation.lanes;
 
-function mk(enemies: Record<number, string>, mode: BattleMode = 'test'): Battle {
-  const b = new Battle(content.battleSetup('random-battle', 1, mode, { party: cells({ 0: 'warrior', 1: 'paladin' }), enemies: cells(enemies) }, false));
+function mk(enemies: Record<number, string>, mode: BattleMode = 'test', reach = 0): Battle {
+  const setup = content.battleSetup('random-battle', 1, mode, { party: cells({ 0: 'warrior', 1: 'paladin' }), enemies: cells(enemies) }, false);
+  // reach > 0: Double Strike'ın menzil ekli test kopyası (skill reach; eski Abyssal Fury +1 menzilinin yerine aynı kural)
+  if (reach > 0) setup.skills = { ...setup.skills, melee_attack: { ...setup.skills.melee_attack!, reach } };
+  const b = new Battle(rangeOff(setup)); // ESKİ erişim kuralı testi: menzil KAPALI (bayrak kapalı = eski hedefleme)
   for (const c of b.combatants) {
     Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0 });
     c.maxHp = Math.max(c.maxHp, 500);
@@ -52,15 +56,14 @@ describe('melee menzili: çağrılmış Skeleton önde, Undead arkada (madde 284
     expect(targets(b)).toEqual(['skeleton']);
   });
 
-  it('Abyssal Fury (+1 menzil) boş sıraları atlamaz: sıra 0 Skeleton, sıra 3 Undead -> yalnızca Skeleton; önizleme ve YZ de aynı', () => {
-    const b = mk({ 0: 'skeleton', [backSlot]: 'undead' });
+  it('menzil eki (+1, skill reach) boş sıraları atlamaz: sıra 0 Skeleton, sıra 3 Undead -> yalnızca Skeleton; önizleme ve YZ de aynı', () => {
+    const b = mk({ 0: 'skeleton', [backSlot]: 'undead' }, 'test', reachBonus);
     const w = warrior(b);
-    expect(b.useSkill(w.uid, 'abyssal_cry').ok).toBe(true);
-    expect(b.reachOf(w, content.skills.melee_attack!)).toBe(reachBonus);
+    expect(b.reachOf(w, b.skill('melee_attack')!)).toBe(reachBonus);
     const undead = enemyOf(b, 'undead');
     expect(targets(b)).toEqual(['skeleton']);
     expect(targets(b, 'whirlwind')).toEqual(['skeleton']);
-    expect(b.reachOf(w, content.skills.whirlwind!)).toBe(0); // Whirlwind Fury menzilini almaz
+    expect(b.reachOf(w, content.skills.whirlwind!)).toBe(0);
     expect(b.targetProblem(w.uid, 'melee_attack', undead.uid)).toBe('Out of reach');
     expect(b.useSkill(w.uid, 'melee_attack', undead.uid).ok).toBe(false);
     // Önizleme yalnızca geçerli hedefi gösterir (UI hedef hücreleri validTargets'tan gelir)
@@ -70,11 +73,9 @@ describe('melee menzili: çağrılmış Skeleton önde, Undead arkada (madde 284
     if (choice && content.skills[choice.skillId]?.motion === 'melee' && !content.skills[choice.skillId]?.ignoreReach) expect(choice.targetUid).not.toBe(undead.uid);
   });
 
-  it('Abyssal Fury hâlâ ön sıranın hemen arkasına ulaşır (sıra 0 + sıra 1); 2 sıra gerisine ulaşmaz', () => {
-    const b = mk({ 0: 'skeleton', [lanes]: 'mage', [2 * lanes]: 'undead' });
-    const w = warrior(b);
-    expect(targets(b)).toEqual(['skeleton']);
-    expect(b.useSkill(w.uid, 'abyssal_cry').ok).toBe(true);
+  it('menzil eki (+1) ön sıranın hemen arkasına ulaşır (sıra 0 + sıra 1); 2 sıra gerisine ulaşmaz', () => {
+    expect(targets(mk({ 0: 'skeleton', [lanes]: 'mage', [2 * lanes]: 'undead' }))).toEqual(['skeleton']);
+    const b = mk({ 0: 'skeleton', [lanes]: 'mage', [2 * lanes]: 'undead' }, 'test', reachBonus);
     expect(targets(b)).toEqual(['mage', 'skeleton']);
   });
 
@@ -91,35 +92,5 @@ describe('melee menzili: çağrılmış Skeleton önde, Undead arkada (madde 284
     expect(b.inMeleeReach(enemyOf(b, 'skeleton').uid, 0)).toBe(true);
     expect(b.inMeleeReach(undead.uid, 0, lanes)).toBe(false); // varsayımsal sıra 1: 0 menzilde değil
     expect(b.inMeleeReach(undead.uid, 1, lanes)).toBe(true); // +1 menzille sıra 1'e ulaşılır
-  });
-});
-
-describe('Abyssal Fury menzili Whirlwind üzerinde işlemez (madde 284, Ömer 2026-10-09)', () => {
-  it('Fury varken Whirlwind yalnızca ön sırayı vurur (2. sıra değil); Double Strike 2. sıraya ulaşır; Whirlwind yine 1 yük düşürür ve STR ekini alır', () => {
-    const b = mk({ 0: 'skeleton', [lanes]: 'mage', [lanes + 1]: 'archer' });
-    const w = warrior(b);
-    expect(b.useSkill(w.uid, 'abyssal_cry').ok).toBe(true);
-    const fury = () => w.statuses.find((s) => s.kind === FURY);
-    const before = fury()!.turns;
-    expect(targets(b)).toEqual(['archer', 'mage', 'skeleton']);
-    expect(targets(b, 'whirlwind')).toEqual(['skeleton']);
-    expect(content.skills.whirlwind!.ignoreReachBonus).toBe(true);
-    expect(b.attackStats(w).str).toBeGreaterThan(w.stats.str); // STR eki Fury'den (Whirlwind hasarına da işler)
-    const pv = previewSkill(b, w.uid, 'whirlwind', enemyOf(b, 'skeleton').uid);
-    expect(pv.map((p) => p.uid)).not.toContain(enemyOf(b, 'mage').uid);
-    const r = b.useSkill(w.uid, 'whirlwind');
-    if (!r.ok) throw new Error(r.reason);
-    expect(new Set(ofType(r.events, 'damage').map((e) => e.target))).toEqual(new Set([enemyOf(b, 'skeleton').uid]));
-    expect(fury()?.turns).toBe(before - 1);
-  });
-
-  it('Fury, Whirlwind için kendi sıra kuralını da gevşetmez: önünde dost varken (2. sıra) Whirlwind kullanılamaz, Double Strike kullanılabilir', () => {
-    const b = new Battle(content.battleSetup('random-battle', 1, 'test', { party: cells({ 0: 'paladin', 3: 'warrior' }), enemies: cells({ 0: 'defender' }) }, false));
-    const w = warrior(b);
-    w.rage = w.maxRage!;
-    w.mp = w.maxMp;
-    expect(b.useSkill(w.uid, 'abyssal_cry').ok).toBe(true);
-    expect(b.canUse(w.uid, 'melee_attack').ok).toBe(true);
-    expect(b.canUse(w.uid, 'whirlwind')).toEqual({ ok: false, reason: 'Melee: front row only' });
   });
 });

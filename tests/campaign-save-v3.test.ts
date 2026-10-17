@@ -15,7 +15,8 @@ import {
   writeSave,
   type CampaignState,
 } from '../src/campaign';
-import { emptyEquipment } from '../src/progression';
+import { emptyEquipment, starterEquipment } from '../src/progression';
+import { leveledCampaign } from './level-helpers';
 
 // Kayıt v3 (madde 278): kahraman level / XP / 6 yuva, sefer torbası, altın. Eski kayıtlar (dosya v1/v2, durum v1) bozulmadan taşınır.
 
@@ -36,11 +37,12 @@ function asV1(s: CampaignState): Record<string, unknown> {
 const played = (seed = 11): CampaignState => pickHero(newCampaign({ mode: 'normal', seed, campaignId: `c${seed}` }), 'archer');
 
 describe('kayıt v3: kahraman kaydı ve geçiş', () => {
-  it('yeni sefer: sürüm 2 durum, kahraman level 1 / XP 0 / 6 boş yuva, torba boş, altın 0', () => {
+  it('yeni sefer: sürüm 2 durum, kahraman level 1 / XP 0 / yalnızca başlangıç silahı (Item Güçlendirme x5), torba boş, altın 0', () => {
     const s = played();
     expect(s.version).toBe(2);
-    expect(SAVE_VERSION).toBe(7); // 4: x2 stat ölçeği (item zarları göçü); 5: affix kademeleri; 6: Valdoria A1-x haritası (2026-10-11); 7: Valor (2026-10-13)
-    expect(s.roster[0]).toMatchObject({ level: 1, xp: 0, equipment: emptyEquipment() });
+    expect(SAVE_VERSION).toBe(9); // 9: level / XP puanları (2026-10-17); 4: x2 stat ölçeği (item zarları göçü); 5: affix kademeleri; 6: Valdoria A1-x haritası (2026-10-11); 7: Valor (2026-10-13); 8: başlangıç silahı (2026-10-17)
+    expect(s.roster[0]).toMatchObject({ level: 1, xp: 0, equipment: starterEquipment(s.roster[0]!.class, s.roster[0]!.id) });
+    expect({ ...s.roster[0]!.equipment, weapon: null }).toEqual(emptyEquipment());
     expect(Object.keys(s.roster[0]!.equipment)).toEqual(['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket']);
     expect([s.inventory, s.gold, s.nextItemId]).toEqual([[], 0, 1]);
   });
@@ -85,7 +87,7 @@ describe('kayıt v3: kahraman kaydı ve geçiş', () => {
   });
 
   it('takılı item, torba ve altın kayıttan aynen döner; bozuk item girdisi atılır, uid sayacı çakışmaz', () => {
-    let s = played();
+    let s = leveledCampaign(played());
     let r = addItem(s, 'turnshoes');
     s = equipItem(r.state, s.roster[0]!.id, r.item.uid);
     r = addItem(s, 'woodcutters_axe');

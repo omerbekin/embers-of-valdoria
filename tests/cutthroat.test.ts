@@ -40,12 +40,13 @@ describe('Cutthroat class verisi', () => {
     expect(ct.name).toBe('Cutthroat');
     expect(ct.role).toBe('Assassin');
     const a = ct.attributes;
-    expect(a.str + a.int + a.dex + a.luck).toBe(30 * (content.formulas.statScale ?? 1)); // x2 stat ölçeği: 60
+    expect(a.str + a.int + a.dex + a.luck).toBe(60); // x2 stat ölçeği: 60
     expect(ct.primary).toBe('dex');
     expect(a.dex).toBe(Math.max(a.str, a.int, a.dex, a.luck));
     expect(ct.stats.primaryActive).toBe(true);
     expect(ct.stats.hunterMark).toBe(content.formulas.primaryBonus.dex.hunterMarkMult);
-    expect(ct.stats.hp).toBeLessThanOrEqual(content.formulas.attributes.hpBase + 30); // kırılgan (Str 5: taban + 30; madde 261'da taban 20 -> 30)
+    // kırılgan: çevik olmayan her sınıftan az can (levels.md 2026-10-17 başlangıç statları: mutlak "taban + 30" yerine göreli; Str 14 -> can 72)
+    for (const id of ['warrior', 'defender', 'paladin', 'mage', 'undead', 'druid', 'hexer']) expect(ct.stats.hp, id).toBeLessThanOrEqual(content.classes[id]!.stats.hp); // Ömer 2026-10-17 classtune: Str 18 -> can 84 = Hexer (eşit)
     expect(ct.ai).toBe('assassin');
     expect(content.aiConfig.profiles.assassin!.priorities).toEqual(['kill', 'tactic', 'damage']);
     expect(ct.skills).toEqual(['venom_edge', 'x_cut', 'smoke_bomb', 'backstab']);
@@ -103,8 +104,8 @@ describe("X şekli (shape 'x') ve merkez çift vuruş (hitsAtCenter)", () => {
     expect(skillAreaProblem(content.skills.smoke_bomb!, fm)).toBeNull();
   });
 
-  it('Saltire Cut: merkezdeki birim 2 kez (ayrı zar), çaprazlar 1 kez; toplam hasar = olaylar toplamı; menzilli (arka sıradan da)', () => {
-    const b = sure(arena([['cutthroat', 9]], WAR(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)));
+  it('Saltire Cut: merkezdeki birim 2 kez (ayrı zar), çaprazlar 1 kez; toplam hasar = olaylar toplamı; menzil 3 (ön sıradan merkeze ulaşır; range.md)', () => {
+    const b = sure(arena([['cutthroat', 0]], WAR(0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11)));
     const r = b.useSkill('party-0', 'x_cut', undefined, 4);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
@@ -303,7 +304,7 @@ describe('Blinded / Shrouded stat etkisi ve Resilience', () => {
 describe('Backstab: yalnızca arkası boş hedef, garantili kritik, ışınlanma olay alanları', () => {
   it('arkası dolu = geçersiz (Target is shielded from behind); en arka sıra = geçersiz (No room behind the target); arkası boş = geçerli (herhangi sırada)', () => {
     // düşman: 0 (arkası 3 dolu), 3 (arkası 6 boş), 1 (arkası 4 boş), 9 (en arka)
-    const b = arena([['cutthroat', 6]], WAR(0, 3, 1, 9));
+    const b = arena([['cutthroat', 0]], WAR(0, 3, 1, 9)); // Backstab menzil 3: ön sıradan 2. sıraya ulaşır (range.md)
     const valid = b.validTargets('party-0', 'backstab').map((c) => c.slot).sort((x, y) => x - y);
     expect(valid).toEqual([1, 3]);
     expect(b.targetProblem('party-0', 'backstab', 'enemy-0')).toBe('Target is shielded from behind');
@@ -311,7 +312,7 @@ describe('Backstab: yalnızca arkası boş hedef, garantili kritik, ışınlanma
     expect(b.targetProblem('party-0', 'backstab', 'enemy-1')).toBeNull();
     expect(b.useSkill('party-0', 'backstab', 'enemy-0')).toEqual({ ok: false, reason: 'Target is shielded from behind' });
     expect(b.useSkill('party-0', 'backstab', 'enemy-3')).toEqual({ ok: false, reason: 'No room behind the target' });
-    expect(b.useSkill('party-0', 'backstab', 'enemy-1').ok).toBe(true); // ön sıra kuralı yok: arka sıradan (6) vurur
+    expect(b.useSkill('party-0', 'backstab', 'enemy-1').ok).toBe(true);
   });
 
   it('ceset (ölü birim) ve ölü dostun ayrılmış hücresi engel DEĞİL: yalnızca canlı birim engeller', () => {
@@ -399,7 +400,7 @@ describe('Opportunist: Wound / Slow / Stun\'lu hedefe +%25 hasar', () => {
       const boosted = previewSkill(b, 'party-0', 'venom_edge', 'enemy-0')[0]!.damage!.avg;
       expect(Math.abs(boosted - base * (1 + bonus)), status).toBeLessThanOrEqual(1);
       b.debugClearStatuses('enemy-0');
-      b.debugAddStatus('enemy-0', 'haste', 2); // listede olmayan durum: bonus yok
+      b.debugAddStatus('enemy-0', 'shrouded', 2); // listede olmayan durum: bonus yok (haste değil: hızlanan hedef Hunter's Mark'ı kapatır; 2026-10-17 Defender DEX 8)
       expect(previewSkill(b, 'party-0', 'venom_edge', 'enemy-0')[0]!.damage!.avg).toBe(base);
     }
   });
@@ -466,7 +467,7 @@ describe('Cutthroat yapay zekası (assassin): bağlam ipuçları, determinizm', 
   });
 
   it('Saltire Cut: X en az 2 düşmanı kapsayınca seçilir; tek düşman varken seçilmez', () => {
-    const b = turnArena([['cutthroat', 9]], WAR(0, 2, 4, 6, 8), ['x_cut'])!;
+    const b = turnArena([['cutthroat', 0]], WAR(0, 2, 4, 6, 8), ['x_cut'])!; // menzil 3: merkez (4) ön sıradan menzilde
     const ch = chooseAction(b, b.currentUid!, NO_GLOBAL);
     expect(ch?.skillId).toBe('x_cut');
     expect(ch?.slot).toBe(4); // merkez çift vuruş + 4 çapraz

@@ -12,8 +12,8 @@ const vc = (): AiValueConfig => ({ ...DEFAULT_VALUE, ...(content.aiConfig.value 
 
 /** Undead (party) karşısında önde Skeleton, arkada Undead. Kritik/kaçınma kapalı, isabet tam. */
 function mirror(mode: 'turns' | 'test' = 'turns', lockOwn = false): { b: BattleT; me: string; foe: string; skel: string } {
-  const units = lockOwn ? { party: { 6: { lockSkills: ['raise_dead', 'wail_of_the_dead'] } } } : undefined;
-  const b = new Battle(content.battleSetup('random-battle', 4, mode, { party: cells({ 6: 'undead' }), enemies: cells({ 0: 'skeleton', 6: 'undead' }), ...(units ? { units } : {}) }, false));
+  const units = lockOwn ? { party: { 3: { lockSkills: ['raise_dead', 'wail_of_the_dead'] } } } : undefined;
+  const b = new Battle(content.battleSetup('random-battle', 4, mode, { party: cells({ 3: 'undead' }), enemies: cells({ 0: 'skeleton', 6: 'undead' }), ...(units ? { units } : {}) }, false));
   for (const c of b.combatants) Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0 });
   const me = b.combatants.find((c) => c.side === 'party' && c.defId === 'undead')!.uid;
   const foe = b.combatants.find((c) => c.side === 'enemy' && c.defId === 'undead')!.uid;

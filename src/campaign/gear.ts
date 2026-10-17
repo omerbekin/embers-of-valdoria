@@ -22,7 +22,7 @@ export function addItem(s: CampaignState, itemId: string): { state: CampaignStat
 
 /** Kahraman bu item'i (verilen yuvaya; yoksa varsayılan yuvaya) takabilir mi (yuva, silah ailesi, ikinci el, Legendary)? Hata nedeni ya da null. */
 export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId): string | null {
-  const p = planEquip(hero.class, hero.equipment, item, slot);
+  const p = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level });
   return isPlanError(p) ? p.error : null;
 }
 
@@ -36,7 +36,7 @@ export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: 
   const idx = s.inventory.findIndex((it) => it.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const item = s.inventory[idx]!;
-  const plan = planEquip(hero.class, hero.equipment, item, slot);
+  const plan = planEquip(hero.class, hero.equipment, item, slot, { level: hero.level });
   if (isPlanError(plan)) throw new Error(plan.error);
   if (plan.displaced.length && s.inventory.length - 1 + (plan.replaced ? 1 : 0) + plan.displaced.length > BAG_SIZE)
     throw new Error(`Bag is full: no room for ${plan.displaced.map((x) => itemDef(x.id)?.name ?? x.id).join(', ')}`);

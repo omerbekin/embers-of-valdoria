@@ -1,6 +1,7 @@
 /**
  * Poz kütüphanesi - Phaser tarafı (src/game/poses.ts saf kuralları kullanır): pozlu sınıfın gövde pozlarını ve silah görsellerini TEMBEL
- * yükler (yalnızca savaşta o sınıf varsa), her (sınıf, silah görünümü) için gövde + silah birleşimini tek bir canvas atlasına PİŞİRİR.
+ * yükler (yalnızca savaşta o sınıf varsa; yalnızca silahının tutuş takımı ve takılı silah görseli), her (sınıf, silah görünümü) için gövde +
+ * silah birleşimini tek bir canvas atlasına PİŞİRİR. Dosyalar PNG asılların WebP kopyaları (src/game/pose-files.ts).
  *
  *  - Kare başına bir poz; her kare kendi sınır kutusuna kırpılır (bellek), Phaser "trim" bilgisiyle hepsi aynı gerçek boyda görünür:
  *    ayak ortası karenin alt-ortası, sprite kökeni (0.5, 1) bugünkü gibi. Böylece hedefleme parıltısı (sprite-glow), hayalet izleri
@@ -15,7 +16,7 @@ import { stageView } from './stage-view';
 import { poseBodyUrl, weaponUrl } from './pose-files';
 import './pose-mode'; // gerçek sınıfların çizimi (v2 / debug v1): kayıtlı seçim pozlu birimler kurulmadan uygulanır
 import { texturesInUse } from './assets';
-import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
+import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, toneImageData, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;
 const weaponTex = (family: string, look: string, small: boolean) => `poseweapon:${family}:${look}${small ? ':s' : ''}`;
@@ -30,26 +31,33 @@ function density(def: PoseClassDef, spriteScale = 1): number {
 }
 const useSmall = (def: PoseClassDef): boolean => perfLite() || density(def) <= 0.5;
 
+/** Bir birimin poz ihtiyacı: sınıfı ve çizilecek silahı (BattleScene birimin silahını preload'da bilir: `unitWeaponPick`). */
+export interface PoseNeed {
+  classId: string;
+  pick: WeaponPick | null;
+}
+
 /**
- * preload() içinde: verilen sınıflardan pozu olanların gövde pozlarını ve silah görsellerini kuyruğa ekler (dokusu olan atlanır).
- * `classIds` verilmezse tüm pozlu sınıflar (rastgele takımlı Quick Battle: takım preload'da henüz belli değil). Dönen: kuyruğa giren dosya.
+ * preload() içinde: pozlu birimlerin YALNIZCA gerekenlerini kuyruğa ekler (dokusu olan atlanır): her birimin silahının tutuş takımındaki
+ * gövde kareleri (`gripFrames`: atlas tam olarak bunları pişirir; ör. çift el baltalı Warrior'da tek el kareleri inmez) ve yalnızca
+ * takılı silah / ikinci el görselleri. Eskiden her sınıfın tüm pozları ve TÜM silahlar iniyordu (8 sınıflı Quick Battle ~16 MB; Ömer
+ * 2026-10-17 yükleme performansı). Sınıf listesi (string) verilirse sınıfın varsayılan silahı. Dönen: kuyruğa giren dosya.
  */
-export function preloadPoses(scene: Phaser.Scene, classIds: readonly string[] = poseClassIds()): number {
+export function preloadPoses(scene: Phaser.Scene, needs: readonly (PoseNeed | string)[] = poseClassIds()): number {
   let n = 0;
   const add = (key: string, url: string | null) => {
     if (!url || scene.textures.exists(key)) return;
     scene.load.image(key, url);
     n++;
   };
-  const wanted = classIds.filter((c, i) => classIds.indexOf(c) === i && poseClass(c));
-  if (!wanted.length) return 0;
-  let small = false;
-  for (const id of wanted) {
-    const def = poseClass(id)!;
-    small ||= useSmall(def);
-    for (const pose of Object.keys(def.poses)) add(bodyKey(def.dir, pose, useSmall(def)), poseBodyUrl(def.dir, pose, useSmall(def)));
+  for (const need of needs) {
+    const { classId, pick } = typeof need === 'string' ? { classId: need, pick: poseClass(need)?.defaultWeapon ?? null } : need;
+    const def = poseClass(classId);
+    if (!def) continue;
+    const small = useSmall(def);
+    for (const pose of gripFrames(def, pick?.grip)) add(bodyKey(def.dir, pose, small), poseBodyUrl(def.dir, pose, small));
+    for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : [])] : []) add(weaponTex(w.family, w.look, small), weaponUrl(w.family, w.look, small));
   }
-  for (const [family, f] of Object.entries(POSES.weapons)) for (const look of f.order) add(weaponTex(family, look, small), weaponUrl(family, look, small));
   return n;
 }
 
@@ -63,13 +71,48 @@ function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null
     if (!k) return null;
     keys[pose] = k;
   }
-  const tex = (family: string, look: string): CanvasImageSource | null => {
+  const tex = (family: string, look: string, tone?: string): CanvasImageSource | null => {
     const wk = find(weaponTex(family, look, false), weaponTex(family, look, true));
-    return wk ? (scene.textures.get(wk).getSourceImage() as CanvasImageSource) : null;
+    const img = wk ? (scene.textures.get(wk).getSourceImage() as CanvasImageSource) : null;
+    return img && tone ? toned(wk!, img, tone) : img;
   };
-  const weapon = pick ? tex(pick.family, pick.look) : null;
-  const off = pick?.offhand ? tex(pick.offhand.family, pick.offhand.look) : null; // ikinci el (kalkan / hançer)
+  const weapon = pick ? tex(pick.family, pick.look, pick.tone) : null;
+  const off = pick?.offhand ? tex(pick.offhand.family, pick.offhand.look, pick.offhand.tone) : null; // ikinci el (kalkan / hançer)
   return { body: (pose) => scene.textures.get(keys[pose]!).getSourceImage() as CanvasImageSource, weapon, off };
+}
+
+/** Tonlanmış silah kaynakları ('<doku>~<ton>' -> tuval): pişirmede kaynak; releasePoseSources bırakır. */
+const tonedCache = new Map<string, HTMLCanvasElement>();
+
+/**
+ * Silah çiziminin nadirlik tonlu kopyası (data/poses.json > rarityTone; taban başına tek çizim, Ömer 2026-10-17). Tuval / piksel okunamazsa
+ * (bellek, güvenlik) çizimin kendisi: ton yalnızca görünüş, hiçbir şey bozulmaz.
+ */
+function toned(texKey: string, img: CanvasImageSource, tone: string): CanvasImageSource {
+  const t = POSES.rarityTone?.[tone];
+  if (!t) return img;
+  const key = `${texKey}~${tone}`;
+  const hit = tonedCache.get(key);
+  if (hit) return hit;
+  const w = (img as HTMLImageElement).naturalWidth || (img as { width: number }).width;
+  const h = (img as HTMLImageElement).naturalHeight || (img as { height: number }).height;
+  if (!w || !h) return img;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  try {
+    const ctx = c.getContext('2d');
+    if (!ctx) throw new Error('no ctx');
+    ctx.drawImage(img, 0, 0, w, h);
+    const data = ctx.getImageData(0, 0, w, h);
+    toneImageData(data.data, t);
+    ctx.putImageData(data, 0, 0);
+  } catch {
+    freeCanvas(c);
+    return img;
+  }
+  tonedCache.set(key, c);
+  return c;
 }
 
 export interface PoseTexture {
@@ -166,12 +209,14 @@ export function releasePoseSources(scene: Phaser.Scene): number {
     scene.textures.remove(key);
     n++;
   }
+  for (const c of tonedCache.values()) freeCanvas(c);
+  tonedCache.clear();
   return n;
 }
 
-/** Bu sınıfların kaynak dokuları eksikse çalışan sahnede yükler (en çok `timeout` ms bekler). */
-export function ensurePoseSources(scene: Phaser.Scene, classIds: readonly string[], timeout = 6000): Promise<void> {
-  if (preloadPoses(scene, classIds) === 0) return Promise.resolve();
+/** Bu birimlerin (sınıf + silah) kaynak dokuları eksikse çalışan sahnede yükler (en çok `timeout` ms bekler; dosya inmezse çağıran eski görünümde kalır). */
+export function ensurePoseSources(scene: Phaser.Scene, needs: readonly (PoseNeed | string)[], timeout = 6000): Promise<void> {
+  if (preloadPoses(scene, needs) === 0) return Promise.resolve();
   return new Promise<void>((resolve) => {
     let done = false;
     const finish = () => {

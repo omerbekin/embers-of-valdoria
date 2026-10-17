@@ -6,11 +6,12 @@
   "logo": "bow",
   "role": "Marksman",
   "frontPriority": 8,
+  "range": 6,
   "attributes": {
-    "str": 12,
-    "int": 16,
-    "dex": 28,
-    "luck": 4
+    "str": 13,
+    "int": 13,
+    "dex": 26,
+    "luck": 8
   },
   "primary": "dex",
   "armor": 10,
@@ -29,7 +30,7 @@
     "text": "",
     "effect": {
       "type": "longshot",
-      "perRow": 0.08
+      "perRow": 0.05
     }
   }
 }

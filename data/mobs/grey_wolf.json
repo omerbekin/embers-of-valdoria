@@ -8,6 +8,7 @@
   "color": "#8c8c8c",
   "logo": "roar",
   "frontPriority": 1,
+  "range": 1,
   "role": "Beast · Pack",
   "attributes": {
     "str": 20,

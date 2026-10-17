@@ -517,3 +517,6 @@ const what = process.argv[2] ?? 'all';
 if (what === 'all' || what === 'icons') await importIcons();
 if (what === 'all' || what === 'vfx') await importVfx();
 if (what === 'all' || what === 'poses') await importPoses();
+
+// Oyun bu PNG'lerin .webp kopyasını yükler: değişenlerin WebP'si hemen üretilir (tools/webp-assets.mjs, tests/webp-assets.test.ts)
+await import('./webp-assets.mjs');

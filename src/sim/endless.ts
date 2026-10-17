@@ -10,6 +10,7 @@ import { battleSummary, content, Rng, type AiDifficulty } from '../engine';
 import {
   ENDLESS,
   applyOutcome,
+  autoAllocateRun,
   chooseRelic,
   chooseReward,
   buyItem,
@@ -167,6 +168,7 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
           break;
         }
         if (o.carryFormation === false) run = { ...run, heroes: run.heroes.map(({ slot: _slot, ...h }) => h) };
+        run = autoAllocateRun(run); // level puanları: oyuncu vekili ana stata dağıtır (levels.md)
         const plan = wavePlan(run, cfg);
         const hs = avg(run.heroes.map((h) => h.hpRatio));
         const battle = fightWave(plan, player, valorInBattle(o.valor));

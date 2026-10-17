@@ -1,13 +1,14 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
-import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
+import { starterWeapon, starterUid } from '../progression/weapon';
 import { ENDLESS, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
-import { rngFor, waveKind, waveSeed, type WavePlan } from './waves';
+import { rngFor, waveKind, waveLevel, waveSeed, type WavePlan } from './waves';
 import type { SuspendedBattle } from './replay';
 import { relicOffer, victoryHealOf } from './relics';
 import { autoSlots, carrySlots, validSlots } from './formation';
@@ -17,12 +18,13 @@ import { snapshotCarry, type WaveCarry } from './carry';
 import type { UnitCarry } from './data';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
+import { LEVELS, addXp, allocate, autoAllocate, nodeXpMult, setLevel, xpToNext, type KillRecord, type StatAlloc } from '../progression/levels';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /**
- * Yeni koşu: seçilen class'lar (level 1, item yok, tam can). `slots` = koşu başı dizilimi (class'larla aynı sırada hücre; geçersizse /
+ * Yeni koşu: seçilen class'lar (level 1, yalnızca sınıfın başlangıç silahı, tam can). `slots` = koşu başı dizilimi (class'larla aynı sırada hücre; geçersizse /
  * verilmezse otomatik dizilim).
  */
 export function newRun(seed: number, classIds: string[], startedAt = new Date().toISOString(), cfg: EndlessConfig = ENDLESS, slots?: number[]): EndlessRun {
@@ -36,7 +38,12 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
     seed,
     wave: 1,
     phase: 'ready',
-    heroes: picked.map((c, i) => ({ id: `h${i + 1}`, class: c, hpRatio: 1, equipment: {}, slot: cells[i]! })),
+    // Item Güçlendirme x5 (Ömer 2026-10-17): her kahraman sınıfının başlangıç silahıyla başlar
+    heroes: picked.map((c, i) => {
+      const id = `h${i + 1}`;
+      const w = starterWeapon(c, starterUid(id));
+      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment: w ? { weapon: w } : {}, slot: cells[i]! };
+    }),
     gold: 0,
     stats: { cleared: 0, turns: 0, kills: 0 },
     nextItem: 1,
@@ -68,6 +75,8 @@ export interface WaveOutcome {
   /** Savaş sonunda kalan Valor ve kusursuz zafer (outcomeFromBattle; yoksa koşunun Valor'u ve kahraman sonuçlarından). */
   valorLeft?: number;
   flawless?: boolean;
+  /** Öldürme kaydı (XP payı; progression > trackKills). Yoksa `kills` kadar düşman, kimse düşmeden öldürülmüş sayılır. */
+  killLog?: KillRecord[];
 }
 
 /** Motor özetinin (battleSummary) birim görünümü. */
@@ -180,6 +189,8 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
     const flawless = out.flawless ?? out.units.every((u) => u.alive);
     s.valor = addValor(valorRules, out.valorLeft ?? run.valor ?? 0, valorEarned(valorRules, kind === 'boss' ? 'boss' : kind === 'elite' ? 'elite' : 'normal', flawless));
   }
+  // XP (levels.md): dalga seviyesine göre; level atlayan ayaktaki kahraman tam can + tam MP
+  grantWaveXp(s, run.wave, out, cfg);
   s.stats.cleared = run.wave;
   s.wave = run.wave + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her dalgada bir zar; dalga başına şans artar, Legendary 11. dalgadan itibaren
@@ -204,6 +215,93 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
       s.relicOffer = relics;
     }
   }
+  return s;
+}
+
+
+/**
+ * Dalga XP'si (kahraman başına): xpPerWave x eşik(dalga seviyesi) x tür çarpanı, düşman başına eşit pay; düştükten sonraki öldürmeler fallenShare;
+ * geride kalana yakalama bonusu (level farkı cezası yok). Kahraman yoksa boş.
+ */
+export function waveXp(run: Pick<EndlessRun, 'heroes'>, wave: number, out: Pick<WaveOutcome, 'units' | 'kills' | 'killLog'>, cfg: EndlessConfig = ENDLESS): Record<string, number> {
+  const kills: KillRecord[] = out.killLog ?? Array.from({ length: Math.max(0, out.kills) }, () => ({ down: [] }));
+  const res: Record<string, number> = {};
+  if (!kills.length || !cfg.levels) return res;
+  const kind = waveKind(wave, cfg);
+  const total = xpToNext(waveLevel(wave, cfg)) * cfg.levels.xpPerWave * nodeXpMult(kind === 'normal' ? 'battle' : kind);
+  const per = total / kills.length;
+  const fought = out.units.map((u) => run.heroes.find((h) => h.id === u.heroId)).filter((h): h is EndlessHero => !!h);
+  for (const h of fought) {
+    let raw = 0;
+    for (const k of kills) raw += k.down.includes(h.id) ? per * LEVELS.fallenShare : per;
+    const others = fought.filter((o) => o.id !== h.id).map((o) => o.level ?? 1);
+    const avg = others.length ? others.reduce((a, b) => a + b, 0) / others.length : h.level ?? 1;
+    const bonus = Math.min(LEVELS.catchUp.max, Math.max(0, avg - (h.level ?? 1)) * LEVELS.catchUp.perLevel);
+    res[h.id] = Math.round(raw * (1 + bonus));
+  }
+  return res;
+}
+
+/** Dalga XP'sini yazar (YERİNDE; `s` klonlanmış olmalı): level atlayan ayaktaki kahraman tam can ve tam MP alır, `levelUps`'a eklenir. */
+function grantWaveXp(s: EndlessRun, wave: number, out: WaveOutcome, cfg: EndlessConfig): void {
+  for (const [id, xp] of Object.entries(waveXp(s, wave, out, cfg))) {
+    const h = heroOf(s, id);
+    if (!h) continue;
+    const up = addXp(h, xp);
+    if (!up) continue;
+    if (h.hpRatio > 0) {
+      h.hpRatio = 1;
+      if (h.carry?.mpRatio !== undefined) delete h.carry.mpRatio;
+    }
+    const prev = (s.levelUps ??= []);
+    const p = prev.find((x) => x.heroId === up.heroId);
+    if (p) p.to = up.to;
+    else prev.push(up);
+  }
+}
+
+/** Stat puanı dağıt (Gear > Character): geçersizse Error. */
+export function allocateRun(run: EndlessRun, heroId: string, add: StatAlloc): EndlessRun {
+  const s = clone(run);
+  const h = heroOf(s, heroId);
+  if (!h) throw new Error('Unknown hero');
+  allocate(h, add);
+  return s;
+}
+
+/** Oyuncu vekili (sim): herkesin puanları ana stata (kural izin verdikçe). */
+export function autoAllocateRun(run: EndlessRun): EndlessRun {
+  if (!run.heroes.some((h) => (h.statPoints ?? 0) > 0)) return run;
+  const s = clone(run);
+  for (const h of s.heroes) autoAllocate(h);
+  return s;
+}
+
+/** Level bildirimi gösterildi: kayıt silinir. */
+export function acknowledgeRunLevelUps(run: EndlessRun): EndlessRun {
+  if (!run.levelUps) return run;
+  const s = clone(run);
+  delete s.levelUps;
+  return s;
+}
+
+/** Debug: tüm kahramanlara XP. */
+export function debugRunXp(run: EndlessRun, amount: number): EndlessRun {
+  const s = clone(run);
+  for (const h of s.heroes) {
+    const up = addXp(h, amount);
+    if (up) {
+      if (h.hpRatio > 0) h.hpRatio = 1;
+      (s.levelUps ??= []).push(up);
+    }
+  }
+  return s;
+}
+
+/** Debug: tüm kahramanların level'ı (dağıtılmış puanlar sıfırlanır). */
+export function debugRunLevel(run: EndlessRun, level: number): EndlessRun {
+  const s = clone(run);
+  for (const h of s.heroes) setLevel(h, level);
   return s;
 }
 
@@ -300,8 +398,10 @@ export function upgradePairs(run: EndlessRun, cleared: number, exclude: string[]
   for (const d of catalog) {
     if (d.ilvl > cap || exclude.includes(d.id) || bagOf(run).some((i) => i.id === d.id)) continue;
     if (d.rarity === 'legendary') continue;
+    const ilvl = o.ilvl !== undefined ? Math.max(d.ilvl, o.ilvl) : d.ilvl;
     const ip = itemIP(d, o.rarity, o.ilvl ?? d.ilvl);
-    for (const h of run.heroes) if (canEquip(h.class, d) && ip > slotIP(h, d, catalog)) pairs.push({ def: d, heroId: h.id });
+    // Seviye şartı (Item Güçlendirme x6): kahramanın takamayacağı item önerilmez
+    for (const h of run.heroes) if (canEquip(h.class, d) && (h.level ?? 1) >= levelRequirement(ilvl) && ip > slotIP(h, d, catalog)) pairs.push({ def: d, heroId: h.id });
   }
   if (!pairs.length) return pairs;
   const top = Math.max(...pairs.map((p) => p.def.ilvl));
@@ -495,7 +595,7 @@ export function equipFromBag(run: EndlessRun, heroId: string, uid: string, slot?
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const d = itemDef(bag[idx]!.id);
   if (!d) throw new Error(`Unknown item: ${bag[idx]!.id}`);
-  const plan = planEquip(hero.class, hero.equipment, bag[idx]!, slot);
+  const plan = planEquip(hero.class, hero.equipment, bag[idx]!, slot, { level: hero.level ?? 1 });
   if (isPlanError(plan)) throw new Error(plan.error);
   if (plan.displaced.length && bag.length - 1 + (plan.replaced ? 1 : 0) + plan.displaced.length > endlessBagSize(cfg))
     throw new Error(`Bag is full: no room for ${plan.displaced.map((x) => itemDef(x.id)?.name ?? x.id).join(', ')}`);
@@ -546,7 +646,7 @@ export function equipBestRun(run: EndlessRun, heroIds?: string[]): EndlessRun {
   for (const id of heroIds ?? run.heroes.map((h) => h.id)) {
     const h = heroOf(s, id);
     if (!h) continue;
-    for (const m of bestMoves({ class: h.class, equipment: { ...emptyEquipment(), ...h.equipment } }, bagOf(s))) {
+    for (const m of bestMoves({ class: h.class, equipment: { ...emptyEquipment(), ...h.equipment }, level: h.level ?? 1 }, bagOf(s))) {
       try {
         s = equipFromBag(s, id, m.uid, m.slot);
       } catch {

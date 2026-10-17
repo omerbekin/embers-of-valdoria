@@ -6,6 +6,7 @@
   "color": "#5b4636",
   "logo": "wardenlogo",
   "frontPriority": 0,
+  "range": 1,
   "role": "Boss · Siege Giant",
   "attributes": { "str": 50, "int": 12, "dex": 2, "luck": 8 },
   "armor": 24,
