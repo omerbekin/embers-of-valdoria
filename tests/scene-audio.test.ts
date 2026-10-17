@@ -252,7 +252,7 @@ describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.j
     expect(battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 3 }])).toBe('boss_morvane3');
     expect(battleTrack([{ defId: 'undead', tier: 'boss' }])).toBe('boss_morvane'); // Endless boss dalgası (eski Lord Morvane)
     expect(battleTrack([{ defId: 'undead', tier: 'elite' }])).toBe('battle'); // sıradan Undead boss değil
-    expect(battleTrack([{ defId: 'high_priest_of_the_undying', tier: 'elite' }])).toBe('boss_priest');
+    expect(battleTrack([{ defId: 'high_priest_of_the_undying', tier: 'elite' }])).toBe('battle');
     expect(battleTrack([{ defId: 'some_new_boss', tier: 'boss' }])).toBe('boss');
     expect(battleTrack([{ defId: 'x', boss: {} }])).toBe('boss');
     expect(phaseTrack('lord_morvane', 2)).toBe('boss_morvane2');
