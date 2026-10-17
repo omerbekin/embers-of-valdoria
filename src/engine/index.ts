@@ -23,6 +23,7 @@ export { previewForTargets, previewSkill } from './preview';
 export type { DoomPreview, TargetPreview } from './preview';
 export { ATTRIBUTE_NAME, describeGlobalSkill, describePassive, describeRage, describeSkill, TARGET_TEXT } from './skill-info';
 export { rangeEnabled, rangeLabel, rangeLine, skillRangeFor, cellDistance } from './range';
+export { placementHintText, placementHintTitle, type PlacementHint } from './formation-hints';
 export type { EffectDefs, GlobalSkillInfo } from './skill-info';
 export type { SkillInfo } from './skill-info';
 export { describeClass, describeStat, primaryBonusInfo } from './stat-info';

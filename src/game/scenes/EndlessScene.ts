@@ -3,7 +3,8 @@ import Phaser from 'phaser';
 import { uiSound, type UiSoundKind } from '../../ui/ui-sound';
 import { sceneMusic } from '../../ui/music';
 import layout from '../../../data/battle-layout.json';
-import { content } from '../../engine';
+import { content, placementHintText } from '../../engine';
+import { hintBadge, hintColor } from '../formation-hint-ui';
 import type { CombatantDef } from '../../engine/types';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { avatarUrl } from '../../ui/character-panel';
@@ -687,6 +688,8 @@ export class EndlessScene extends Phaser.Scene {
     // Izgara (sağ): 4 sıra x 3 şerit, ön sıra (0) en sağda
     this.add2(elText(this, G.x + gw + 34, G.top + gh / 2, T.pickFront, 17, EL.ON, { em: 0.2 }).setOrigin(0, 0.5));
     this.add2(elText(this, G.x - 30, G.top + gh / 2, T.pickBack, 15, EL.MUTED, { em: 0.2 }).setOrigin(1, 0.5));
+    // Dizilim ipuçları (formation-hints.ts; yalnızca öneri)
+    const hints = content.placementHintsFor(d.classes, d.slots);
     for (let row = 0; row < 4; row++)
       for (let lane = 0; lane < 3; lane++) {
         const slot = row * 3 + lane;
@@ -704,8 +707,9 @@ export class EndlessScene extends Phaser.Scene {
           img = this.add2(classAvatar(this, def, x + G.cell / 2, y + G.cell / 2 - 8, G.cell - 18));
           const band = this.add2(this.add.graphics());
           band.fillGradientStyle(EL.INK, EL.INK, EL.INK, EL.INK, 0, 0, 0.92, 0.92).fillRect(x + 1, y + G.cell - 40, G.cell - 2, 39);
-          const warn = row !== 0 && content.isMeleeClass(id);
-          this.add2(fitText(elText(this, x + G.cell / 2, y + G.cell - 20, def.name, 17, warn ? EL.BAD : EL.ON, { em: 0.04 }).setOrigin(0.5), G.cell - 10));
+          const hint = hints[d.classes.indexOf(id)];
+          this.add2(fitText(elText(this, x + G.cell / 2, y + G.cell - 20, def.name, 17, hint ? hintColor(hint) : EL.ON, { em: 0.04 }).setOrigin(0.5), G.cell - 10));
+          if (hint) this.add2(hintBadge(this, x + 18, y + 18, hint));
         }
         const z = this.add2(this.add.zone(x + G.cell / 2, y + G.cell / 2, G.cell, G.cell).setInteractive({ useHandCursor: !!def || !!this.pickSel }));
         if (def) z.on('pointerdown', (p: Phaser.Input.Pointer) => this.beginPickDrag(id, slot, p, img));
@@ -715,7 +719,7 @@ export class EndlessScene extends Phaser.Scene {
     // Sürükleme hedefi çizimi (ızgara ve kadro üstünde; yalnızca sürüklerken dolu) + kadroya bırakma yazısı
     this.pickFx = this.add2(this.add.graphics());
     this.pickRemoveText = this.add2(elText(this, this.rosterRect.centerX, this.rosterRect.bottom + 18, T.pickRemove, 17, EL.ON, { em: 0.2 }).setOrigin(0.5).setVisible(false));
-    this.infoText = this.add2(this.note(CX, PICK.infoY, this.pickInfo(this.hoverClass), 25, C.sub).setOrigin(0.5));
+    this.infoText = this.add2(this.note(CX, PICK.infoY, this.pickInfo(this.hoverClass), 25, C.sub).setOrigin(0.5).setAlign('center').setWordWrapWidth(1700));
     // Düğmeler: ikinciller solda, birincil (Start Run) en sağda
     this.button(CX - 450, LOOK.buttonY, 280, T.randomize, () => this.actRandomize());
     this.button(CX - 120, LOOK.buttonY, 300, T.autoArrange, () => this.actAutoArrange(), { enabled: d.classes.length > 0 });
@@ -734,11 +738,13 @@ export class EndlessScene extends Phaser.Scene {
     this.infoText?.setText(this.pickInfo(id, slot));
   }
 
-  /** Bilgi satırı: class + primary + pasif; ızgaradaysa sırası ve (yakın dövüşçü arkadaysa) uyarı. */
+  /** Bilgi satırı: class + primary + pasif; ızgaradaysa sırası ve (uygunsuz hücredeyse) dizilim ipucu. */
   private pickInfo(id: string | null, slot = id ? this.draft.slots[this.draft.classes.indexOf(id)] : undefined): string {
     const base = this.classInfo(id);
     if (!id || slot === undefined || slot < 0) return base;
-    const warn = slot >= 3 && content.isMeleeClass(id) ? `  ·  ${T.pickMeleeBack}` : '';
+    const hint = content.placementHintsFor(this.draft.classes, this.draft.slots)[this.draft.classes.indexOf(id)];
+    const def = content.classes[id];
+    const warn = hint && def ? `  ·  ${placementHintText(def.name, hint)}` : '';
     return `${base}  ·  ${T.heroRow(slot)}${warn}`;
   }
 

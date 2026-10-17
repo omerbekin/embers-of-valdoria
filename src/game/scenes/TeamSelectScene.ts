@@ -4,8 +4,9 @@ import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
 import { skillTags } from '../../ui/skill-tags';
-import { content, describePassive, describeSkill, describeStat, primaryBonusInfo } from '../../engine';
-import type { CombatantDef, Teams } from '../../engine';
+import { content, describePassive, describeSkill, describeStat, placementHintText, placementHintTitle, primaryBonusInfo } from '../../engine';
+import type { CombatantDef, PlacementHint, Teams } from '../../engine';
+import { hintBadge, hintColor } from '../formation-hint-ui';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
@@ -1026,12 +1027,14 @@ export class TeamSelectScene extends Phaser.Scene {
     v.cells.removeAll(true);
     this.cellViews = this.cellViews.filter((c) => c.side !== side);
     const team = this.teams[side];
+    // Dizilim ipuçları (formation-hints.ts; yalnızca öneri, yerleşimi engellemez)
+    const hints = this.editable(side) ? content.placementHintsForCells(team) : [];
     for (let i = 0; i < CELLS; i++) {
       const { lx, ly } = this.cellLocal(side, i);
       const row = Math.floor(i / LANES);
       const id = this.mp && !this.editable(side) ? '' : team[i];
       const def = id ? content.classes[id] : undefined;
-      const body = this.drawCell(side, i, lx, ly, def, row === 0);
+      const body = this.drawCell(side, i, lx, ly, def, row === 0, def ? hints[i] : undefined);
       const hot = this.add.container(lx + CELL / 2, ly + CELL / 2).setVisible(false);
       const hg = this.add.graphics();
       hg.lineStyle(2, EMBER, 1).strokeRect(-CELL / 2 + 1, -CELL / 2 + 1, CELL - 2, CELL - 2);
@@ -1048,7 +1051,7 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   /** Bir dizilim yuvası (merkezli kap): boşken ince çerçeve + ortada içi boş elmas; doluyken avatar + ad + (hover'da) ×. */
-  private drawCell(side: Side, i: number, lx: number, ly: number, def: CombatantDef | undefined, front: boolean): Phaser.GameObjects.Container {
+  private drawCell(side: Side, i: number, lx: number, ly: number, def: CombatantDef | undefined, front: boolean, hint?: PlacementHint): Phaser.GameObjects.Container {
     const h = CELL / 2;
     const body = this.add.container(lx + h, ly + h);
     const g = this.add.graphics();
@@ -1090,6 +1093,7 @@ export class TeamSelectScene extends Phaser.Scene {
       tg.fillStyle(0xffb347, 1).fillRect(-h + 4, -h + 4, 34, 13);
       body.add([tg, this.cz(-h + 21, -h + 10.5, 'Test', 9, '#2a1405', 0.04).setOrigin(0.5).setShadow(0, 0, 'rgba(0,0,0,0)', 0)]);
     }
+    if (hint) body.add(hintBadge(this, -h + 15, -h + (isTestClass(def) ? 33 : 15), hint, 10));
     const zone = this.add.zone(0, 0, CELL, CELL).setInteractive({ useHandCursor: this.editable(side) });
     body.add(zone);
     zone.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
@@ -1102,8 +1106,13 @@ export class TeamSelectScene extends Phaser.Scene {
       this.tweens.add({ targets: x, alpha: 0.9, duration: 180 });
       this.zoomImg(img, 1.06, CELL - 4);
       this.showInfo(def.id);
+      if (hint) {
+        const m = body.getWorldTransformMatrix();
+        this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), titleHex: hintColor(hint), lines: [[placementHintText(def.name, hint)]], width: 380 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
+      }
     });
     zone.on('pointerout', () => {
+      if (hint) this.hideTip();
       drawFrame(false);
       this.tweens.add({ targets: x, alpha: 0, duration: 180 });
       this.zoomImg(img, 1, CELL - 4);
@@ -1215,6 +1224,14 @@ export class TeamSelectScene extends Phaser.Scene {
     else this.tipTimer = this.time.delayedCall(70, kill);
   }
 
+  /** Elle bırakılan birim uygunsuz hücredeyse kısa öneri (yalnızca öneri; formation-hints.ts). */
+  private hintToast(side: Side, cell: number): void {
+    const id = this.teams[side][cell];
+    const def = id ? content.classes[id] : undefined;
+    const hint = def && this.editable(side) ? content.placementHintsForCells(this.teams[side])[cell] : undefined;
+    if (def && hint) this.toast(placementHintText(def.name, hint), null);
+  }
+
   // --- Drag & drop (raf -> yuva; yuva -> yuva; yuva -> diğer takım) ---
 
   private slotAt(x: number, y: number): CellView | undefined {
@@ -1282,8 +1299,9 @@ export class TeamSelectScene extends Phaser.Scene {
     const slot = this.slotAt(p.x, p.y);
     const side = slot ? slot.side : this.sideAt(p.x, p.y);
     if (d.kind === 'class') {
-      if (slot) this.addClass(d.id, { side: slot.side, i: slot.i });
-      else if (side) this.addClass(d.id, { side, i: null });
+      if (slot) {
+        if (this.addClass(d.id, { side: slot.side, i: slot.i })) this.hintToast(slot.side, slot.i);
+      } else if (side) this.addClass(d.id, { side, i: null });
       else this.refresh();
       return;
     }
@@ -1294,6 +1312,7 @@ export class TeamSelectScene extends Phaser.Scene {
       if (r.ok) {
         this.teams = r.teams;
         this.pop = { side: slot.side, cell: slot.i };
+        this.hintToast(slot.side, slot.i);
       } else if (r.reason === 'full') this.toast(`${NAME[slot.side]} team is full`, 'error');
     } else if (side && side !== d.side) {
       const r = moveToSide(this.teams, this.sizes, from, side);

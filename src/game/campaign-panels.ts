@@ -1,5 +1,6 @@
 import Phaser from 'phaser';
-import { content } from '../engine';
+import { content, placementHintText } from '../engine';
+import { hintBadge, hintColor } from './formation-hint-ui';
 import { heroById, type CampaignState, type Hero, type NodeType } from '../campaign';
 import { SLOT_IDS, fmtPanel, gripOf, heroPanel, instanceColor, instanceSummary, itemDef, offhandBlocker, slotDef, type SlotId } from '../progression';
 import { characterTexture } from './assets';
@@ -330,6 +331,8 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
   const layerC = scene.add.container(0, 0);
   m.root.add(layerC);
   let selected = '';
+  /** Son taşınan kahraman: bilgi sütunu onu (ve dizilim ipucunu) gösterir. */
+  let moved = '';
   // Sürükle-bırak: ortak yardımcı (src/game/slot-drag.ts; Quick Battle / Endless ile aynı hayalet kart + gölge); pencere kapanınca kaldırılır
   let drag: SlotDrag<{ id: string; from: number }>;
   const cellAt = (x: number, y: number): number => {
@@ -345,6 +348,8 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
   const draw = () => {
     layerC.removeAll(true);
     const s = on.get();
+    // Dizilim ipuçları (formation-hints.ts; yalnızca öneri, yerleşimi engellemez)
+    const hints = content.placementHintsForCells(s.active.map((id) => rosterHero(s, id)?.class ?? ''));
     // FRONT / BACK etiketleri + düşman yönü
     layerC.add(elText(scene, gx + gw + 26, gy + (3 * cell + 2 * gap) / 2, 'Front ▸', 16, EL.ON, { em: 0.2 }).setOrigin(0, 0.5));
     layerC.add(elText(scene, gx - 22, gy + (3 * cell + 2 * gap) / 2, 'Back', 14, EL.MUTED, { em: 0.2 }).setOrigin(1, 0.5));
@@ -376,6 +381,8 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
           layerC.add(fitW(elText(scene, x + cell / 2, y + cell - 22, def.name, 13, EL.ON, { em: 0.06 }).setOrigin(0.5), cell - 10));
           layerC.add(hpBar(scene, x + 14, y + cell - 9, cell - 28, 4, h.hpRatio));
           if (h.leader) layerC.add(crown(scene, x + cell - 18, y + 16, 0.62));
+          const hint = hints[slot];
+          if (hint) layerC.add(hintBadge(scene, x + 18, y + 18, hint));
         }
         const z = scene.add.zone(x + cell / 2, y + cell / 2, cell, cell).setInteractive({ useHandCursor: !!h || !!selected });
         z.on('pointerdown', (p: Phaser.Input.Pointer) => {
@@ -388,6 +395,7 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
           else if (selected === id) selected = '';
           else {
             on.move(selected, slot);
+            moved = selected;
             selected = '';
           }
           draw();
@@ -396,7 +404,7 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
       }
     // Bilgi (sağ): seçilen ya da lider kahraman
     const team = s.roster.filter((x) => s.active.includes(x.id));
-    const focus = rosterHero(s, selected) ?? team.find((x) => x.leader) ?? team[0];
+    const focus = rosterHero(s, selected) ?? rosterHero(s, moved) ?? team.find((x) => x.leader) ?? team[0];
     const ix = gx + gw + 190;
     const iy = gy;
     const iw = W / 2 + 640 - 30 - ix;
@@ -404,7 +412,6 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
       const def = content.classes[focus.class]!;
       const slot = s.active.indexOf(focus.id);
       const row = Math.floor(slot / 3);
-      const melee = content.isMeleeClass(focus.class);
       layerC.add(elText(scene, ix, iy, selected ? 'Selected' : 'Your company', 14, EL.MUTED, { em: 0.24 }).setOrigin(0, 0));
       const ln = scene.add.graphics();
       ln.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(ix, iy + 28, ix + iw, iy + 28);
@@ -412,12 +419,9 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
       layerC.add(classAvatar(scene, def, ix + 48, iy + 92, 92));
       layerC.add(fitW(elText(scene, ix + 112, iy + 70, def.name, 26, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), iw - 120));
       layerC.add(elBody(scene, ix + 112, iy + 104, `${def.role ?? ''} · ${['Front row', '2nd row', '3rd row', 'Back row'][row] ?? ''}`, 18, EL.MUTED).setOrigin(0, 0.5));
-      const note = melee
-        ? row === 0
-          ? 'Melee: in the front row, ready to strike.'
-          : 'Melee heroes can only hit from the front row. Move them forward.'
-        : 'Ranged and spells reach any row: the back keeps them safe.';
-      layerC.add(elBody(scene, ix, iy + 160, note, 20, melee && row !== 0 ? EL.BAD : EL.NOTE, true, iw).setOrigin(0, 0));
+      const hint = hints[slot];
+      const note = hint ? placementHintText(def.name, hint) : 'Good spot: it reaches the enemy from here.';
+      layerC.add(elBody(scene, ix, iy + 160, note, 20, hint ? hintColor(hint) : EL.NOTE, true, iw).setOrigin(0, 0));
       if (on.heroPanel) {
         const b = elButton(scene, 'Hero details', () => on.heroPanel?.(focus.id), { kind: 'secondary', w: 260, h: 54, size: 17 });
         b.root.setPosition(ix + 130, iy + 290);
@@ -448,7 +452,10 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
     },
     onDrop: (d, q) => {
       const c = cellAt(q.x, q.y);
-      if (c >= 0 && c !== d.from) on.move(d.id, c);
+      if (c >= 0 && c !== d.from) {
+        on.move(d.id, c);
+        moved = d.id;
+      }
       selected = '';
       draw();
     },

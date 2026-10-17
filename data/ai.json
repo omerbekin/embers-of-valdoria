@@ -371,5 +371,10 @@
     "aoeFragFrom": 0.5,
     "jitter": 0.2,
     "maxPasses": 40
+  },
+  "_formationHints": "DİZİLİM İPUÇLARI (Ömer 2026-10-18; src/engine/formation-hints.ts): menzil açıkken dizilim ekranlarında (Quick Battle, sefer Formation, Endless) uygunsuz hücredeki birime yalnızca ÖNERİ gösterilir, hiçbir yerleşim engellenmez. Ulaşamıyor: birimin ana menzili R, sırası r (ön 0) iken R - 1 - r < 0 (düşmanın ön sırasına bile ulaşamaz). Önde açıkta: R >= exposedFrom olan birim takımın en öndeki dolu sırasında ve takımda R <= meleeUpTo olan bir yakın dövüşçü var.",
+  "formationHints": {
+    "exposedFrom": 5,
+    "meleeUpTo": 2
   }
 }

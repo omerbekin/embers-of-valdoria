@@ -34,7 +34,6 @@ export const UI_TEXT = {
   pickBack: 'Back',
   pickRemove: 'Drop here to remove',
   pickFull: (size: number) => `Your company is full (${size}). Drop onto a hero to swap them out.`,
-  pickMeleeBack: 'Melee: move to the front row to strike.',
   autoArrange: 'Auto Arrange',
   classInfo: (name: string, primary: string, passive?: string) => `${name} · ${primary.toUpperCase()}${passive ? ` · Passive: ${passive}` : ''}`,
   randomize: 'Randomize',

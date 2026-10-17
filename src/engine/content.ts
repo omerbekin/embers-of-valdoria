@@ -71,6 +71,7 @@ import type { AiConfig } from './ai';
 import type { BattleSetup } from './battle';
 import { Rng } from './rng';
 import { planRangeFormation, type FormationWeights, type PlanUnit } from './formation-ai';
+import { placementHints, type HintRules, type PlacementHint } from './formation-hints';
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
@@ -376,6 +377,25 @@ export function planUnitOf(id: string): PlanUnit {
     taunt: own.some((s) => s.effects.some((e) => e.type === 'taunt')),
     ...(guard ? { guardRange: guard.range ?? Infinity } : {}),
   };
+}
+
+/**
+ * Dizilim ipuçları (formation-hints.ts; Ömer 2026-10-18): `ids[i]` sınıf/mob/çağrı id'si, `slots[i]` hücresi (-1 = yerleşmemiş). Yalnızca ÖNERİ;
+ * menzil kapalıyken hep boş. Ana menzil planUnitOf ile aynı (YZ dizilimiyle aynı mantık).
+ */
+export function placementHintsFor(ids: string[], slots: number[]): (PlacementHint | undefined)[] {
+  if (!formulas.range?.enabled) return ids.map(() => undefined);
+  const rules = (aiJson as unknown as { formationHints: HintRules }).formationHints;
+  return placementHints(ids.map((id) => planUnitOf(id).range), slots, GRID.lanes, GRID.rows, rules);
+}
+
+/** Hücre listesinden (dizin = yuva, '' = boş) yuva başına ipucu. */
+export function placementHintsForCells(cells: string[]): (PlacementHint | undefined)[] {
+  const idx = cells.map((id, i) => (id ? i : -1)).filter((i) => i >= 0);
+  const hints = placementHintsFor(idx.map((i) => cells[i]!), idx);
+  const out: (PlacementHint | undefined)[] = cells.map(() => undefined);
+  idx.forEach((slot, k) => (out[slot] = hints[k]));
+  return out;
 }
 
 /** Birimlerin alan şekilleri (alan hedefli skill'lerinin area tanımları, tekrarsız). */

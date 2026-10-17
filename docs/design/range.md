@@ -43,3 +43,6 @@ Kaynak: karar sayfası https://claude.ai/artifact/SrUJshshUCjRpyRkwcPykC (db `ra
 - Puan: ana menzil (sınıf tabanı) düşmanın ön sırasına ilk turdan ulaşmalı (ulaşamazsa büyük ceza), ne kadar derine ulaşırsa o kadar iyi; kendi ön sıradan geride durmak güvenlik (kırılgan birimde daha değerli); taunt'lu birim önde; Guard sahibi dostlarına menzilinde; düşmanın alan şekilleri (bilinmiyorsa Quick Battle havuzunun şekilleri; tahtanın yarısından büyük şekiller sayılmaz) iki kırılganı birlikte vuruyorsa ceza. Rastgele dizilimde seed'li küçük gürültü (çeşitlilik).
 - Tipik sonuç: menzil 1 önde, mızrak (2) ikinci sırada önündeki yakın dövüşçünün arkasında, Paladin/Druid/Anti-Mage (4) ve 5'likler 1-2. sıra, Mage (6) 2. sıra, Archer (7) en arkada.
 
+
+## Dizilim ipuçları (Ömer 2026-10-18)
+- Dizilim ekranlarında (sefer Formation, Quick Battle, MP, Endless) uygunsuz hücredeki birime yalnızca ÖNERİ: `src/engine/formation-hints.ts` (kural formation-ai ile aynı), eşikler `data/ai.json > formationHints`. Varsayımlar: open-questions 349.
