@@ -1,8 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import worldData from '../data/audio-world.json';
 import tracksData from '../data/audio-music-tracks.json';
+import bossesData from '../data/audio-music-bosses.json';
 import { sfxDuration } from '../src/gallery/catalog';
 import { MUSIC, MUSIC_CROSSFADE_MS, MUSIC_TRACK_IDS, barSec, chordScale, composeCycle, cycleSec, noteMidi, parseBar, parseChord, trackConfig, type MusicTrackId } from '../src/game/music';
+import { battleTrack, phaseTrack } from '../src/ui/music';
 import { itemSoundKind, WORLD_AUDIO, WORLD_SFX, WORLD_SOUND_KINDS, worldGain, worldSound } from '../src/ui/ui-sound';
 
 const pc = (m: number) => ((m % 12) + 12) % 12;
@@ -93,14 +95,14 @@ describe('Sahne müzikleri (data/audio-music-tracks.json, src/game/music.ts > tr
   const scenes = MUSIC_TRACK_IDS.filter((t): t is Exclude<MusicTrackId, 'menu'> => t !== 'menu');
 
   it('parça listesi veriyle aynı; menü = ana menü ayarı; ayarlar önbellekli (aynı nesne)', () => {
-    expect([...scenes].sort()).toEqual(Object.keys(tracksData.tracks).sort());
+    expect([...scenes].sort()).toEqual([...Object.keys(tracksData.tracks), ...Object.keys(bossesData.tracks)].sort());
     expect(trackConfig('menu')).toBe(MUSIC);
     for (const t of scenes) expect(trackConfig(t)).toBe(trackConfig(t));
     expect(MUSIC_CROSSFADE_MS).toBeGreaterThanOrEqual(800);
     expect(MUSIC_CROSSFADE_MS).toBeLessThanOrEqual(5000);
   });
 
-  it('her parça geçerli: akorlar, kalıp boyları (ölçü x 2 sekizlik), temalar tam ölçü ve akor ölçeğinde; döngü 30-90 sn', () => {
+  it('her parça geçerli: akorlar, kalıp boyları (ölçü x 2 sekizlik), temalar tam ölçü ve akor ölçeğinde; döngü 30-130 sn', () => {
     for (const t of scenes) {
       const cfg = trackConfig(t);
       const eighths = cfg.beatsPerBar * 2;
@@ -123,7 +125,7 @@ describe('Sahne müzikleri (data/audio-music-tracks.json, src/game/music.ts > tr
       for (const r of [...cfg.rhythms.high, ...cfg.rhythms.low, ...cfg.rhythms.cadence]) expect(r.reduce((a, b) => a + b, 0), `${t} ritim ${r}`).toBeCloseTo(cfg.beatsPerBar);
       for (const f of cfg.form) expect(cfg.sections[f], `${t} ${f}`).toBeDefined();
       expect(cycleSec(cfg), t).toBeGreaterThanOrEqual(30);
-      expect(cycleSec(cfg), t).toBeLessThanOrEqual(90);
+      expect(cycleSec(cfg), t).toBeLessThanOrEqual(130);
       expect(barSec(cfg)).toBeGreaterThan(0);
       for (const n of cfg.voices.drone.notes) expect(noteMidi(n), `${t} drone`).toBeGreaterThanOrEqual(noteMidi('A1'));
     }
@@ -163,5 +165,100 @@ describe('Sahne müzikleri (data/audio-music-tracks.json, src/game/music.ts > tr
     expect(trackConfig('boss').voices.drum.gain).toBeGreaterThan(trackConfig('battle').voices.drum.gain);
     expect(composeCycle(0, trackConfig('battle')).some((e) => e.kind === 'drum')).toBe(true);
     expect(trackConfig('battle').master).toBeLessThan(trackConfig('map').master); // savaş müziği skill seslerinin altında
+  });
+});
+
+describe('Sahne müzikleri yumuşak ve çeşitli (2026-10-17)', () => {
+  const calm = ['map', 'town', 'battle', 'camp'] as const;
+
+  it('tüm sahne parçalarında tiz kısık: alçak geçiren, yumuşak flüt, üçgen ped, düşük parlaklık', () => {
+    for (const t of MUSIC_TRACK_IDS) {
+      if (t === 'menu') continue;
+      const c = trackConfig(t);
+      expect(c.softLowpass, t).toBeGreaterThan(0);
+      expect(c.softLowpass, t).toBeLessThanOrEqual(4400);
+      expect(c.voices.pad.wave, t).toBe('triangle');
+      expect(c.voices.harp.bright, t).toBeLessThanOrEqual(0.4);
+      expect(c.voices.flute.attack, t).toBeGreaterThanOrEqual(0.1);
+      expect(c.voices.flute.chiff, t).toBeLessThanOrEqual(0.08);
+    }
+  });
+
+  it('sakin/savaş parçaları >= 4 bölüm ve >= 4 döngülük dönüş; ilk 4 döngü birbirinden farklı', () => {
+    for (const t of calm) {
+      const cfg = trackConfig(t);
+      expect(cfg.form.length, t).toBeGreaterThanOrEqual(4);
+      expect(cfg.cycles.length, t).toBeGreaterThanOrEqual(4);
+      const sig = (k: number) => composeCycle(k, cfg).flatMap((e) => (e.kind === 'flute' || (e.kind === 'harp' && !e.bass) ? [(e.kind === 'flute' ? 'f' : 'h') + e.midi] : [])).join(',');
+      expect(new Set([0, 1, 2, 3].map(sig)).size, t).toBe(4);
+    }
+  });
+
+  it('davul sakin parçalarda kısık', () => {
+    expect(trackConfig('map').voices.drum.gain).toBeLessThanOrEqual(0.3);
+    expect(trackConfig('town').voices.drum.gain).toBeLessThanOrEqual(0.3);
+    expect(trackConfig('camp').voices.drum.gain).toBeLessThanOrEqual(0.25);
+    expect(trackConfig('battle').voices.drum.gain).toBeLessThanOrEqual(0.42);
+  });
+});
+
+describe('Boss müzikleri (data/audio-music-bosses.json + audio-music-boss-map.json)', () => {
+  const bossIds = Object.keys(bossesData.tracks) as MusicTrackId[];
+
+  it('her boss parçası yüksek tempolu (>= 120 bpm), davullu, ped üçgen (saf sinüs yok); döngü 30-90 sn', () => {
+    expect(bossIds.length).toBeGreaterThanOrEqual(6);
+    for (const t of bossIds) {
+      const cfg = trackConfig(t);
+      expect(cfg.bpm, t).toBeGreaterThanOrEqual(120);
+      expect(cfg.voices.pad.wave, t).not.toBe('sine');
+      expect(cfg.voices.harp.shift ?? 0, t).toBeLessThan(1);
+      expect(composeCycle(0, cfg).filter((e) => e.kind === 'drum').length, t).toBeGreaterThan(30);
+      expect(cycleSec(cfg), t).toBeGreaterThanOrEqual(30);
+      expect(cycleSec(cfg), t).toBeLessThanOrEqual(90);
+      expect(cfg.cycles.length, t).toBeGreaterThanOrEqual(4);
+    }
+  });
+
+  it('boss parçaları savaştan hızlı ve davulu daha güçlü; her boss kendi anahtarı / kipi / ölçüsü', () => {
+    const battle = trackConfig('battle');
+    for (const t of bossIds) {
+      expect(trackConfig(t).bpm, t).toBeGreaterThan(battle.bpm);
+      expect(trackConfig(t).voices.drum.gain, t).toBeGreaterThan(battle.voices.drum.gain);
+    }
+    const id = (t: MusicTrackId) => {
+      const c = trackConfig(t);
+      return `${c.tonic}/${c.mode}/${c.beatsPerBar}`;
+    };
+    expect(new Set(['boss', 'boss_warden', 'boss_priest', 'boss_morvane'].map((t) => id(t as MusicTrackId))).size).toBe(4);
+    expect(id('boss_priest')).toMatch(/\/3$/);
+  });
+
+  it('Lord Morvane fazları aynı parçanın daha hızlı / yoğun hâli (tonik + tema aynı), son faz en hızlı', () => {
+    const [p1, p2, p3] = [trackConfig('boss_morvane'), trackConfig('boss_morvane2'), trackConfig('boss_morvane3')];
+    expect(p2.bpm).toBeGreaterThan(p1.bpm);
+    expect(p3.bpm).toBeGreaterThan(p2.bpm);
+    expect(p2.tonic).toBe(p1.tonic);
+    expect(p3.mode).toBe(p1.mode);
+    expect(p3.voices.drum.gain).toBeGreaterThan(p1.voices.drum.gain);
+    expect(p2.sections.ash!.drum).not.toBe(p1.sections.ash!.drum);
+    expect(p3.themes.crown).toEqual(p1.themes.crown);
+  });
+
+  it('seçim: boss düşman -> kendi parçası, boss yoksa battle, tanımsız boss -> genel boss; faz değişince parça değişir', () => {
+    expect(battleTrack([{ defId: 'warrior' }, { defId: 'mage' }])).toBe('battle');
+    expect(battleTrack([{ defId: 'bridge_warden', tier: 'boss' }, { defId: 'iron_mooring' }])).toBe('boss_warden');
+    expect(battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 1 }])).toBe('boss_morvane');
+    expect(battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 2 }])).toBe('boss_morvane2');
+    expect(battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 3 }])).toBe('boss_morvane3');
+    expect(battleTrack([{ defId: 'undead', tier: 'boss' }])).toBe('boss_morvane'); // Endless boss dalgası (eski Lord Morvane)
+    expect(battleTrack([{ defId: 'undead', tier: 'elite' }])).toBe('battle'); // sıradan Undead boss değil
+    expect(battleTrack([{ defId: 'high_priest_of_the_undying', tier: 'elite' }])).toBe('boss_priest');
+    expect(battleTrack([{ defId: 'some_new_boss', tier: 'boss' }])).toBe('boss');
+    expect(battleTrack([{ defId: 'x', boss: {} }])).toBe('boss');
+    expect(phaseTrack('lord_morvane', 2)).toBe('boss_morvane2');
+    expect(phaseTrack('lord_morvane', 3)).toBe('boss_morvane3');
+    expect(phaseTrack('bridge_warden', 2)).toBeNull();
+    expect(phaseTrack('warrior', 2)).toBeNull();
+    for (const t of [battleTrack([{ defId: 'bridge_warden', tier: 'boss' }]), battleTrack([{ defId: 'lord_morvane', tier: 'boss', phase: 3 }]), battleTrack([{ defId: 'q', tier: 'boss' }])]) expect(MUSIC_TRACK_IDS).toContain(t);
   });
 });

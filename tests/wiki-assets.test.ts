@@ -81,7 +81,8 @@ describe('Wiki > Assets: ortak katalog (src/gallery/catalog.ts)', () => {
 
   it('Soundtracks: ana menü + tüm sahne müzikleri (data/audio-music-tracks.json) listelenir', async () => {
     const tracks = (await import('../data/audio-music-tracks.json')).default as { tracks: Record<string, unknown> };
-    expect(catalog.soundtracks.map((t) => t.id)).toEqual(['menu', ...Object.keys(tracks.tracks)]);
+    const bosses = (await import('../data/audio-music-bosses.json')).default as { tracks: Record<string, unknown> };
+    expect(catalog.soundtracks.map((t) => t.id)).toEqual(['menu', ...Object.keys(tracks.tracks), ...Object.keys(bosses.tracks)]);
     for (const t of catalog.soundtracks) expect(t.label.length * t.desc.length, t.id).toBeGreaterThan(0);
   });
 

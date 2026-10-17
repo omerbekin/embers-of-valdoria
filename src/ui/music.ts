@@ -9,7 +9,8 @@
 // (yumuşak geçiş; geçiş anında en çok iki motor). Her parçanın konumu ayrı saklanır (dönünce bir sonraki ölçü başından). Codex önizlemesi
 // `previewMusic(parça)` sahneninkini geçici olarak bastırır.
 import musicData from '../../data/audio-music.json';
-import tracksData from '../../data/audio-music-tracks.json';
+import { crossfadeMs } from '../../data/audio-music-tracks.json';
+import bossMap from '../../data/audio-music-boss-map.json';
 import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
 type MusicModule = typeof import('../game/music');
@@ -18,9 +19,33 @@ type Engine = InstanceType<MusicModule['MusicEngine']>;
 const KEY = 'proto.music.v1';
 export const DEFAULT_MUSIC_LEVEL: number = musicData.defaultLevel;
 const FADE_OUT = musicData.fadeOutMs / 1000;
-const XFADE = tracksData.crossfadeMs / 1000;
+const XFADE = crossfadeMs / 1000;
 
-export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp';
+export type MusicTrack = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3';
+
+interface BossMapEntry {
+  track: MusicTrack;
+  anyTier?: boolean;
+  phases?: Record<string, MusicTrack>;
+}
+const BOSS_BY_DEF = bossMap.byDef as unknown as Record<string, BossMapEntry>;
+
+/** Savaş müziği seçimi (saf): sahadaki düşmanlardan boss varsa onun parçası, yoksa 'battle'. Boss = rütbesi boss / boss tanımlı / haritada anyTier. */
+export function battleTrack(enemies: ReadonlyArray<{ defId: string; tier?: string; boss?: unknown; phase?: number }>): MusicTrack {
+  let generic = false;
+  for (const e of enemies) {
+    const m = BOSS_BY_DEF[e.defId];
+    const isBoss = e.tier === 'boss' || e.boss !== undefined;
+    if (m && (isBoss || m.anyTier)) return (m.phases?.[String(e.phase ?? 1)] ?? m.track);
+    if (isBoss) generic = true;
+  }
+  return generic ? (bossMap.fallback as MusicTrack) : 'battle';
+}
+
+/** Boss yeni faza girdi: o fazın parçası (haritada tanımlıysa), yoksa null (müzik değişmez). */
+export function phaseTrack(defId: string, phase: number): MusicTrack | null {
+  return BOSS_BY_DEF[defId]?.phases?.[String(phase)] ?? null;
+}
 /** İleriye bakan zamanlayıcı: her PUMP_MS'de LOOKAHEAD sn ilerisi zamanlanır. */
 const PUMP_MS = 200;
 const LOOKAHEAD = 0.9;

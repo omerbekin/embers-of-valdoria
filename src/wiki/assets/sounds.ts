@@ -185,7 +185,7 @@ export function mountSounds(cat: Catalog): SectionApi {
   };
   root.append(
     h('h3', { class: 'sub', text: 'Soundtracks' }),
-    h('p', { class: 'muted small', text: 'Synthesized music (data/audio-music.json, data/audio-music-tracks.json). Uses the Music volume; scene changes crossfade. Preview stops when the Codex closes.' }),
+    h('p', { class: 'muted small', text: 'Synthesized music (data/audio-music.json, data/audio-music-tracks.json, data/audio-music-bosses.json). Uses the Music volume; scene changes crossfade. Preview stops when the Codex closes.' }),
     h(
       'div',
       { class: 'cards' },

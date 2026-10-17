@@ -1,0 +1,1192 @@
+{
+  "_not": "BOSS MÜZİKLERİ (Ömer 2026-10-17: 'her boss savaşının kendine özel, yüksek tempolu müziği olsun; yine ortaçağ, saf sinüs çan yok, kulak tırmalamasın'). Aynı motor ve dil (src/game/music.ts); data/audio-music-tracks.json'daki gibi tabanın + 'soft' ortak yumuşatmanın ÜSTÜNE yazılan farklar, ama önce bu dosyanın 'base'i (ortak boss sesi) uygulanır: hızlı tempo (124-150 bpm), alçak lavta ostinatosu (arp -1 oktav), kalın drone, YÜRÜYEN çerçeve davul ('dum' gövde + hafif kenar 'tek'; kalıplar drive / gallop / roll / half), üçgen dalga ped, flüt ezgisi alçak/yumuşak, alçak geçiren ile tiz kısık. Her boss kendi anahtarı / kipi / ölçüsü / ezgisi ile ayrı parça: boss_warden (D frig, 4/4, 'anvil' teması), boss_priest (G eol, 3/4 vals gibi hızlı, flüt ağırlıklı ağıt), boss_morvane (E frig, 4/4, 'crown' teması; 2. ve 3. faz aynı parçanın daha hızlı / yoğun hâli: 'extends'), 'boss' = tanımsız her boss için genel yedek. Hangi boss hangi parçayı çalar ve faz geçişleri: data/audio-music-boss-map.json (src/ui/music.ts > battleTrack / phaseTrack). Her parça 4-5 bölümlü, 4 döngülük 'cycles' ile tekrarda değişir. Davul kalıpları ölçü başına 8 sekizlik (4/4) ya da 6 (3/4), arp 16 / 12.",
+  "base": {
+    "beatsPerBar": 4,
+    "bpm": 132,
+    "master": 0.66,
+    "fadeInMs": 1400,
+    "fadeInFrom": 0,
+    "softLowpass": 4000,
+    "reverb": {
+      "seconds": 2,
+      "decay": 3.2,
+      "damp": 0.74,
+      "wet": 0.24,
+      "dry": 0.88
+    },
+    "humanize": {
+      "timingMs": 8,
+      "velocity": 0.16
+    },
+    "voices": {
+      "harp": {
+        "gain": 0.5,
+        "decay": 1.1,
+        "bassDecay": 2.2,
+        "bassGain": 0.5,
+        "bright": 0.34,
+        "pick": 0.24,
+        "pan": -0.1,
+        "shift": -12
+      },
+      "flute": {
+        "gain": 0.12,
+        "lowGain": 0.9
+      },
+      "pad": {
+        "gain": 0.026,
+        "cutoff": 560,
+        "octave": 3,
+        "wave": "triangle"
+      },
+      "drone": {
+        "gain": 0.04,
+        "notes": [
+          "A1",
+          "E2"
+        ],
+        "cutoff": 300,
+        "lfoHz": 0.11,
+        "lfoDepth": 120
+      },
+      "drum": {
+        "gain": 0.5,
+        "dumAt": 0.6
+      }
+    },
+    "harpPatterns": {
+      "chug": [
+        0,
+        0,
+        2,
+        0,
+        0,
+        1,
+        2,
+        0,
+        0,
+        0,
+        2,
+        0,
+        1,
+        2,
+        3,
+        2
+      ],
+      "grind": [
+        0,
+        1,
+        0,
+        2,
+        0,
+        1,
+        0,
+        3,
+        0,
+        1,
+        0,
+        2,
+        3,
+        2,
+        1,
+        0
+      ],
+      "hammer": [
+        0,
+        null,
+        0,
+        null,
+        2,
+        null,
+        0,
+        null,
+        0,
+        null,
+        0,
+        2,
+        null,
+        1,
+        null,
+        0
+      ],
+      "chant": [
+        0,
+        2,
+        0,
+        2,
+        0,
+        3,
+        0,
+        2,
+        0,
+        3,
+        2,
+        0
+      ],
+      "toll": [
+        0,
+        null,
+        2,
+        0,
+        null,
+        3,
+        0,
+        2,
+        null,
+        0,
+        3,
+        2
+      ]
+    },
+    "drumPatterns": {
+      "drive": [
+        1,
+        0.22,
+        0.5,
+        0.28,
+        0.9,
+        0.22,
+        0.5,
+        0.34
+      ],
+      "gallop": [
+        1,
+        0,
+        0.5,
+        0.45,
+        0.9,
+        0,
+        0.5,
+        0.55
+      ],
+      "roll": [
+        1,
+        0.4,
+        0.55,
+        0.4,
+        1,
+        0.55,
+        0.7,
+        0.85
+      ],
+      "half": [
+        1,
+        0,
+        0,
+        0.4,
+        0.85,
+        0,
+        0.4,
+        0
+      ],
+      "waltz": [
+        1,
+        0.2,
+        0.5,
+        0.25,
+        0.6,
+        0.25
+      ],
+      "waltzRoll": [
+        1,
+        0.4,
+        0.6,
+        0.4,
+        0.8,
+        0.7
+      ],
+      "knell": [
+        1,
+        0,
+        0,
+        0,
+        0.5,
+        0
+      ]
+    },
+    "rhythms": {
+      "high": [
+        [
+          2,
+          1,
+          1
+        ],
+        [
+          1.5,
+          0.5,
+          2
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          1,
+          1,
+          2
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "low": [
+        [
+          4
+        ],
+        [
+          2,
+          2
+        ],
+        [
+          3,
+          1
+        ]
+      ],
+      "cadence": [
+        [
+          4
+        ],
+        [
+          2,
+          2
+        ]
+      ]
+    },
+    "melodyRange": {
+      "high": [
+        "D4",
+        "D5"
+      ],
+      "low": [
+        "A3",
+        "A4"
+      ]
+    }
+  },
+  "tracks": {
+    "boss": {
+      "label": "Dread Banner",
+      "desc": "Generic boss battle (any boss without its own theme). A phrygian 4/4 at 132, driving frame drum, low lute ostinato, thick drone.",
+      "bpm": 132,
+      "tonic": "A",
+      "mode": "phrygian",
+      "melodyRange": {
+        "high": [
+          "E4",
+          "E5"
+        ],
+        "low": [
+          "A3",
+          "A4"
+        ]
+      },
+      "sections": {
+        "march": {
+          "chords": [
+            "Am",
+            "Bb",
+            "Am",
+            "Bb",
+            "Am",
+            "Gm",
+            "F",
+            "E"
+          ],
+          "harp": "chug",
+          "bass": true,
+          "pad": 1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": null
+        },
+        "siege": {
+          "chords": [
+            "Dm",
+            "Bb",
+            "Gm",
+            "Am",
+            "Dm",
+            "F",
+            "Bb",
+            "E"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        },
+        "clash": {
+          "chords": [
+            "Am",
+            "Am",
+            "Gm",
+            "Gm",
+            "F",
+            "F",
+            "E",
+            "E"
+          ],
+          "harp": "chug",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": "gen:high"
+        },
+        "breaker": {
+          "chords": [
+            "Bb",
+            "Am",
+            "Bb",
+            "Am",
+            "Gm",
+            "F",
+            "Bb",
+            "E"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        }
+      },
+      "form": [
+        "march",
+        "siege",
+        "clash",
+        "breaker"
+      ],
+      "cycles": [
+        {},
+        {
+          "march": {
+            "harp": "grind"
+          },
+          "siege": {
+            "harp": "chug"
+          },
+          "clash": {
+            "melody": "gen:low"
+          },
+          "breaker": {
+            "melody": "gen:high"
+          }
+        },
+        {
+          "march": {
+            "melody": "gen:low",
+            "drum": "gallop"
+          },
+          "siege": {
+            "melody": "gen:high"
+          },
+          "clash": {
+            "harp": "grind"
+          },
+          "breaker": {
+            "drum": "drive",
+            "harp": "chug"
+          }
+        },
+        {
+          "march": {
+            "drum": "half"
+          },
+          "siege": {
+            "melody": null
+          },
+          "clash": {
+            "drum": "gallop"
+          },
+          "breaker": {
+            "harp": "chug"
+          }
+        }
+      ]
+    },
+    "boss_warden": {
+      "label": "The Warden's Wrath",
+      "desc": "Bridge Warden. D phrygian 4/4 at 138: iron-heavy lute ostinato an octave down, thick D-A drone, hammering frame drum with rolls, 'anvil' recorder theme. Four sections, four loop variants.",
+      "bpm": 138,
+      "tonic": "D",
+      "mode": "phrygian",
+      "voices": {
+        "drone": {
+          "notes": [
+            "D2",
+            "A2"
+          ],
+          "gain": 0.044
+        },
+        "drum": {
+          "gain": 0.54
+        }
+      },
+      "themes": {
+        "anvil": [
+          "D4:1 F4:1 A4:1 D5:1",
+          "C5:1.5 A4:0.5 F4:1 D4:1",
+          "Bb4:1 D5:1 F5:1 D5:1",
+          "C5:1 Bb4:1 A4:2",
+          "G4:1 Bb4:1 Eb5:1 G5:1",
+          "F5:1 Eb5:1 D5:2",
+          "E5:1 A4:1 C#5:1 E5:1",
+          "D5:1 C#5:1 A4:2"
+        ]
+      },
+      "sections": {
+        "toll": {
+          "chords": [
+            "Dm",
+            "Eb",
+            "Dm",
+            "Eb",
+            "Dm",
+            "Cm",
+            "Bb",
+            "A"
+          ],
+          "harp": "chug",
+          "bass": true,
+          "pad": 1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": null
+        },
+        "wrath": {
+          "chords": [
+            "Gm",
+            "Eb",
+            "Dm",
+            "Dm",
+            "Gm",
+            "Bb",
+            "Eb",
+            "A"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        },
+        "anvil": {
+          "chords": [
+            "Dm",
+            "Dm",
+            "Bb",
+            "Bb",
+            "Eb",
+            "Eb",
+            "A",
+            "A"
+          ],
+          "harp": "hammer",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": "theme:anvil",
+          "ornament": 0.12
+        },
+        "break": {
+          "chords": [
+            "Cm",
+            "Bb",
+            "Eb",
+            "Bb",
+            "Cm",
+            "Gm",
+            "A",
+            "A"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:high"
+        }
+      },
+      "form": [
+        "toll",
+        "wrath",
+        "anvil",
+        "break"
+      ],
+      "cycles": [
+        {},
+        {
+          "toll": {
+            "harp": "grind"
+          },
+          "wrath": {
+            "harp": "chug",
+            "melody": "gen:high"
+          },
+          "anvil": {
+            "ornament": 0.35
+          },
+          "break": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "toll": {
+            "melody": "gen:low",
+            "drum": "gallop"
+          },
+          "wrath": {
+            "melody": null
+          },
+          "anvil": {
+            "harp": "chug",
+            "melody": "gen:high"
+          },
+          "break": {
+            "harp": "hammer",
+            "drum": "drive"
+          }
+        },
+        {
+          "toll": {
+            "drum": "half"
+          },
+          "wrath": {
+            "harp": "hammer"
+          },
+          "anvil": {
+            "drum": "gallop",
+            "ornament": 0.25
+          },
+          "break": {
+            "melody": "theme:anvil",
+            "ornament": 0.2
+          }
+        }
+      ]
+    },
+    "boss_priest": {
+      "label": "Requiem of the Undying",
+      "desc": "High Priest of the Undying. G aeolian 3/4 at 150: a fast, dark funeral waltz, recorder-led chant, tolling low lute, deep frame drum. Five sections, four loop variants.",
+      "bpm": 150,
+      "beatsPerBar": 3,
+      "tonic": "G",
+      "mode": "aeolian",
+      "master": 0.66,
+      "voices": {
+        "harp": {
+          "shift": -12,
+          "gain": 0.5
+        },
+        "flute": {
+          "gain": 0.17,
+          "lowGain": 0.95,
+          "vibratoCents": 12
+        },
+        "drone": {
+          "notes": [
+            "G2",
+            "D3"
+          ],
+          "gain": 0.042
+        },
+        "drum": {
+          "gain": 0.5
+        }
+      },
+      "rhythms": {
+        "high": [
+          [
+            1,
+            1,
+            1
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1.5,
+            0.5,
+            1
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "low": [
+          [
+            3
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            2
+          ]
+        ],
+        "cadence": [
+          [
+            3
+          ],
+          [
+            2,
+            1
+          ]
+        ]
+      },
+      "melodyRange": {
+        "high": [
+          "G4",
+          "G5"
+        ],
+        "low": [
+          "D4",
+          "D5"
+        ]
+      },
+      "themes": {
+        "requiem": [
+          "G4:1 Bb4:1 D5:1",
+          "D5:1 C5:1 Bb4:1",
+          "Eb5:2 D5:1",
+          "G5:1 F5:1 Eb5:1",
+          "C5:1 Eb5:1 G5:1",
+          "F5:1 Eb5:1 C5:1",
+          "F#5:1 D5:1 A4:1",
+          "A4:1 D5:2"
+        ]
+      },
+      "sections": {
+        "rite": {
+          "chords": [
+            "Gm",
+            "Gm",
+            "Eb",
+            "Eb",
+            "Cm",
+            "Cm",
+            "D",
+            "D"
+          ],
+          "harp": "chant",
+          "bass": true,
+          "pad": 1,
+          "drum": "waltz",
+          "drumLast": "waltzRoll",
+          "melody": "theme:requiem",
+          "ornament": 0.1
+        },
+        "dirge": {
+          "chords": [
+            "Gm",
+            "Eb",
+            "Bb",
+            "F",
+            "Gm",
+            "Cm",
+            "D",
+            "D"
+          ],
+          "harp": "toll",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "waltz",
+          "drumLast": "waltzRoll",
+          "melody": "gen:high"
+        },
+        "knell": {
+          "chords": [
+            "Cm",
+            "Gm",
+            "Cm",
+            "D",
+            "Eb",
+            "Bb",
+            "D",
+            "Gm"
+          ],
+          "harp": "chant",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "knell",
+          "drumLast": "waltzRoll",
+          "melody": "gen:low"
+        },
+        "vigil": {
+          "chords": [
+            "Gm",
+            "Dm",
+            "Eb",
+            "Bb",
+            "Cm",
+            "Gm",
+            "D",
+            "D"
+          ],
+          "harp": "toll",
+          "bass": true,
+          "pad": 1,
+          "drum": "waltz",
+          "drumLast": "waltzRoll",
+          "melody": "gen:high"
+        },
+        "rapture": {
+          "chords": [
+            "Eb",
+            "Bb",
+            "Gm",
+            "Gm",
+            "Eb",
+            "Cm",
+            "D",
+            "D"
+          ],
+          "harp": "chant",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "waltz",
+          "drumLast": "waltzRoll",
+          "melody": "theme:requiem",
+          "ornament": 0.3
+        }
+      },
+      "form": [
+        "rite",
+        "dirge",
+        "knell",
+        "vigil",
+        "rapture"
+      ],
+      "cycles": [
+        {},
+        {
+          "rite": {
+            "harp": "toll"
+          },
+          "dirge": {
+            "melody": "gen:low"
+          },
+          "knell": {
+            "drum": "waltz"
+          },
+          "vigil": {
+            "melody": "gen:low"
+          },
+          "rapture": {
+            "ornament": 0.5
+          }
+        },
+        {
+          "rite": {
+            "melody": "gen:high"
+          },
+          "dirge": {
+            "harp": "chant"
+          },
+          "knell": {
+            "melody": "gen:high"
+          },
+          "vigil": {
+            "harp": "chant",
+            "drum": "knell"
+          },
+          "rapture": {
+            "harp": "toll"
+          }
+        },
+        {
+          "rite": {
+            "drum": "knell"
+          },
+          "dirge": {
+            "melody": "theme:requiem",
+            "ornament": 0.2
+          },
+          "knell": {
+            "harp": "toll"
+          },
+          "vigil": {
+            "melody": "theme:requiem"
+          },
+          "rapture": {
+            "melody": "gen:high"
+          }
+        }
+      ]
+    },
+    "boss_morvane": {
+      "label": "Crown of Ash",
+      "desc": "Lord Morvane, phase I. E phrygian 4/4 at 124: grave lute ostinato, thick E-B drone, marching frame drum, 'crown' recorder theme. Phases II and III replay it faster and heavier.",
+      "bpm": 124,
+      "tonic": "E",
+      "mode": "phrygian",
+      "master": 0.68,
+      "voices": {
+        "flute": {
+          "gain": 0.14
+        },
+        "pad": {
+          "gain": 0.03
+        },
+        "drone": {
+          "notes": [
+            "E2",
+            "B2"
+          ],
+          "gain": 0.046
+        },
+        "drum": {
+          "gain": 0.54
+        }
+      },
+      "melodyRange": {
+        "high": [
+          "E4",
+          "E5"
+        ],
+        "low": [
+          "A3",
+          "A4"
+        ]
+      },
+      "themes": {
+        "crown": [
+          "A4:1 C5:1 E5:1 A5:1",
+          "G5:1.5 F5:0.5 E5:1 C5:1",
+          "B4:1 E5:1 G5:2",
+          "F5:1 E5:1 B4:2",
+          "C5:1 E5:1 A5:1 G5:1",
+          "B4:1 D5:1 G5:1 D5:1",
+          "A5:1 G5:1 F5:1 C5:1",
+          "F#5:1 D#5:1 B4:2"
+        ]
+      },
+      "sections": {
+        "ash": {
+          "chords": [
+            "Em",
+            "F",
+            "Em",
+            "F",
+            "Em",
+            "Dm",
+            "C",
+            "B"
+          ],
+          "harp": "chug",
+          "bass": true,
+          "pad": 1,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": null
+        },
+        "crown": {
+          "chords": [
+            "Am",
+            "F",
+            "Em",
+            "Em",
+            "Am",
+            "G",
+            "F",
+            "B"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1.1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "theme:crown",
+          "ornament": 0.12
+        },
+        "pyre": {
+          "chords": [
+            "Em",
+            "Em",
+            "C",
+            "C",
+            "Dm",
+            "Dm",
+            "F",
+            "B"
+          ],
+          "harp": "hammer",
+          "bass": true,
+          "pad": 1.15,
+          "drum": "drive",
+          "drumLast": "roll",
+          "melody": "gen:low"
+        },
+        "fall": {
+          "chords": [
+            "F",
+            "Em",
+            "F",
+            "Em",
+            "Dm",
+            "Dm",
+            "C",
+            "B"
+          ],
+          "harp": "grind",
+          "bass": true,
+          "pad": 1,
+          "drum": "gallop",
+          "drumLast": "roll",
+          "melody": "gen:high"
+        }
+      },
+      "form": [
+        "ash",
+        "crown",
+        "pyre",
+        "fall"
+      ],
+      "cycles": [
+        {},
+        {
+          "ash": {
+            "harp": "grind"
+          },
+          "crown": {
+            "ornament": 0.35
+          },
+          "pyre": {
+            "melody": "gen:high"
+          },
+          "fall": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "ash": {
+            "melody": "gen:low"
+          },
+          "crown": {
+            "harp": "chug",
+            "melody": "gen:high"
+          },
+          "pyre": {
+            "harp": "chug",
+            "drum": "gallop"
+          },
+          "fall": {
+            "harp": "hammer"
+          }
+        },
+        {
+          "ash": {
+            "drum": "half"
+          },
+          "crown": {
+            "drum": "drive"
+          },
+          "pyre": {
+            "melody": "theme:crown",
+            "ornament": 0.25
+          },
+          "fall": {
+            "melody": "theme:crown",
+            "drum": "drive"
+          }
+        }
+      ]
+    },
+    "boss_morvane2": {
+      "label": "Crown of Ash II",
+      "desc": "Lord Morvane, phase II. Same theme, faster (136) and heavier: grinding ostinato, galloping drum, louder pad.",
+      "extends": "boss_morvane",
+      "bpm": 136,
+      "voices": {
+        "pad": {
+          "gain": 0.036
+        },
+        "drone": {
+          "gain": 0.05
+        },
+        "drum": {
+          "gain": 0.58
+        }
+      },
+      "sectionPatch": {
+        "ash": {
+          "harp": "grind",
+          "drum": "gallop",
+          "pad": 1.15,
+          "melody": "gen:low"
+        },
+        "crown": {
+          "drum": "gallop",
+          "pad": 1.2
+        },
+        "pyre": {
+          "harp": "grind",
+          "drum": "gallop"
+        },
+        "fall": {
+          "drum": "roll",
+          "pad": 1.1
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "ash": {
+            "melody": "gen:high"
+          },
+          "crown": {
+            "ornament": 0.35
+          },
+          "pyre": {
+            "melody": "gen:high"
+          },
+          "fall": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "ash": {
+            "melody": null
+          },
+          "crown": {
+            "melody": "gen:high"
+          },
+          "pyre": {
+            "melody": "theme:crown",
+            "ornament": 0.2
+          },
+          "fall": {
+            "melody": "theme:crown"
+          }
+        },
+        {
+          "ash": {
+            "melody": "gen:high"
+          },
+          "crown": {
+            "ornament": 0.2
+          },
+          "pyre": {
+            "melody": "gen:low"
+          },
+          "fall": {
+            "melody": "gen:high"
+          }
+        }
+      ]
+    },
+    "boss_morvane3": {
+      "label": "Crown of Ash III",
+      "desc": "Lord Morvane, final phase. Fastest (148): relentless hammering lute, rolling drums, wide reverb, the recorder cries over everything.",
+      "extends": "boss_morvane",
+      "bpm": 148,
+      "softLowpass": 4400,
+      "reverb": {
+        "seconds": 2.6,
+        "decay": 3,
+        "damp": 0.72,
+        "wet": 0.3,
+        "dry": 0.84
+      },
+      "voices": {
+        "flute": {
+          "gain": 0.17
+        },
+        "pad": {
+          "gain": 0.042
+        },
+        "drone": {
+          "gain": 0.056
+        },
+        "drum": {
+          "gain": 0.62
+        }
+      },
+      "sectionPatch": {
+        "ash": {
+          "harp": "hammer",
+          "drum": "roll",
+          "pad": 1.2,
+          "melody": "gen:high"
+        },
+        "crown": {
+          "harp": "grind",
+          "drum": "roll",
+          "pad": 1.25,
+          "melody": "theme:crown",
+          "ornament": 0.3
+        },
+        "pyre": {
+          "harp": "grind",
+          "drum": "roll",
+          "melody": "gen:high"
+        },
+        "fall": {
+          "harp": "hammer",
+          "drum": "roll",
+          "pad": 1.2,
+          "melody": "gen:high"
+        }
+      },
+      "cycles": [
+        {},
+        {
+          "ash": {
+            "melody": "gen:low"
+          },
+          "crown": {
+            "ornament": 0.5
+          },
+          "pyre": {
+            "melody": "theme:crown",
+            "ornament": 0.2
+          },
+          "fall": {
+            "melody": "gen:low"
+          }
+        },
+        {
+          "ash": {
+            "melody": "theme:crown",
+            "ornament": 0.2
+          },
+          "crown": {
+            "melody": "gen:high"
+          },
+          "pyre": {
+            "melody": "gen:low"
+          },
+          "fall": {
+            "melody": "theme:crown",
+            "ornament": 0.3
+          }
+        },
+        {
+          "ash": {
+            "harp": "chug"
+          },
+          "crown": {
+            "ornament": 0.15
+          },
+          "pyre": {
+            "harp": "chug"
+          },
+          "fall": {
+            "harp": "grind"
+          }
+        }
+      ]
+    }
+  }
+}

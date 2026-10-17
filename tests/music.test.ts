@@ -112,13 +112,14 @@ describe('Ana menü müziği: veri ve beste (data/audio-music.json, src/game/mus
 });
 
 describe('Ana menü müziği: yumuşak sürüm (data/audio-music-menu.json)', () => {
-  it('tabandan daha yumuşak ve yavaş; sahne müzikleri tabandan türer (menüden etkilenmez)', () => {
+  it('tabandan daha yumuşak ve yavaş; sahne müzikleri tabandan türer (menüden etkilenmez) ve kendi yumuşatmasını taşır', () => {
     expect(MUSIC.bpm).toBeLessThan(80);
     expect(MUSIC.softLowpass).toBeLessThanOrEqual(4000);
     expect(MUSIC.voices.pad.wave).toBe('triangle');
     expect(MUSIC.voices.flute.attack).toBeGreaterThanOrEqual(0.1);
     expect(MUSIC.form.length).toBeGreaterThanOrEqual(5);
-    expect(trackConfig('battle').softLowpass).toBeUndefined();
+    expect(trackConfig('battle').softLowpass).toBeLessThanOrEqual(4400);
+    expect(trackConfig('battle').bpm).not.toBe(MUSIC.bpm);
     expect(trackConfig('battle').form).not.toEqual(MUSIC.form);
   });
 

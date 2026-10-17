@@ -3,7 +3,7 @@ import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wa
 import { battleSpeed } from '../../ui/battle-speed';
 import { reducedMotion } from '../../ui/motion-pref';
 import { uiSound, worldSound } from '../../ui/ui-sound';
-import { sceneMusic } from '../../ui/music';
+import { battleTrack, phaseTrack, sceneMusic } from '../../ui/music';
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
@@ -2966,10 +2966,13 @@ export class BattleScene extends Phaser.Scene {
         await this.runWardenFx(key, { actor: this.views.get(e.source), targets: e.hit.flatMap((u) => this.views.get(u) ?? []), board: e.board, slots: e.cells, event: e, skillId: e.skill });
         return;
       }
-      case 'phase':
+      case 'phase': {
+        const next = phaseTrack(this.battle.get(e.actor)?.defId ?? '', e.phase);
+        if (next && !this.campaign?.intermission) sceneMusic(next); // boss fazına özel müzik (data/audio-music-boss-map.json)
         this.announce(e.banner);
         await this.runWardenFx(e.phase >= 3 ? 'wardenphase3' : 'wardenphase2', { actor: this.views.get(e.actor), targets: [], event: e, skillId: 'anchor_smash' });
         return;
+      }
       case 'anchorBroken': {
         const w = this.views.get(e.owner);
         await this.runWardenFx('mooringbreak', { actor: this.views.get(e.anchor), targets: w ? [w] : [], event: e, skillId: 'chain_hook' });
@@ -3984,7 +3987,7 @@ export class BattleScene extends Phaser.Scene {
   private startBattleAudio(): void {
     if (this.campaign?.intermission) return;
     const boss = this.isBossBattle();
-    sceneMusic(boss ? 'boss' : 'battle');
+    sceneMusic(battleTrack(this.battle.combatants.filter((c) => c.side !== this.localSide)));
     worldSound(boss ? 'boss_horn' : 'battle_horn');
   }
 

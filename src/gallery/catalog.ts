@@ -13,6 +13,7 @@ import { SFX } from '../game/audio';
 import { UI_SFX, UI_SOUND_KINDS, WORLD_SFX, WORLD_SOUND_KINDS } from '../ui/ui-sound';
 import { MOB_SFX, MOB_SKILL_SOUNDS, mobSoundsOf } from '../game/mob-sfx';
 import musicTracksData from '../../data/audio-music-tracks.json';
+import musicBossData from '../../data/audio-music-bosses.json';
 import { PIXEL_FX } from '../game/pixel-fx';
 import { FAMILY_ICON, ITEM_ICON_LABEL, ITEM_ICON_NAMES, REWARD_ICON, SLOT_ICON, itemIconName } from '../game/item-icons';
 import itemsJson from '../../data/items.json';
@@ -238,7 +239,7 @@ export interface SoundtrackEntry {
 
 /** Müzik parçaları: ana menü (data/audio-music.json) + sahne müzikleri (data/audio-music-tracks.json). */
 export function buildSoundtracks(): SoundtrackEntry[] {
-  const tracks = (musicTracksData as unknown as { tracks: Record<string, { label: string; desc: string }> }).tracks;
+  const tracks = { ...(musicTracksData as unknown as { tracks: Record<string, { label: string; desc: string }> }).tracks, ...(musicBossData as unknown as { tracks: Record<string, { label: string; desc: string }> }).tracks };
   return [
     { id: 'menu', label: 'Embers of Valdoria', desc: 'Main menu: D dorian 3/4, lute arpeggios, recorder tune, drone and frame drum.' },
     ...Object.entries(tracks).map(([id, t]) => ({ id, label: t.label, desc: t.desc })),

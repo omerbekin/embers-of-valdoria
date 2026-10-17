@@ -1,6 +1,7 @@
 import musicData from '../../data/audio-music.json';
 import tracksData from '../../data/audio-music-tracks.json';
 import menuData from '../../data/audio-music-menu.json';
+import bossesData from '../../data/audio-music-bosses.json';
 
 /**
  * Ana menü müziği (Ömer 2026-10-10): dosya yok, WebAudio ile kodla bestelenir ve çalınır. Ayrı kod parçasındadır (src/ui/music.ts
@@ -67,15 +68,22 @@ export interface MusicConfig {
 /** Ham taban ayar (data/audio-music.json): sahne müzikleri bunun üstüne farklarını yazar. */
 const BASE = musicData as unknown as MusicConfig;
 type VoicePatch = { [K in keyof MusicVoices]?: Partial<MusicVoices[K]> };
-type Override = Partial<Omit<MusicConfig, 'voices'>> & { voices?: VoicePatch };
+type Override = Partial<Omit<MusicConfig, 'voices'>> & {
+  voices?: VoicePatch;
+  /** Bölümlere ad ad fark (bölüm tanımı birleşir; sections'ı baştan yazmadan faz / varyasyon için). */
+  sectionPatch?: Record<string, Partial<SectionDef>>;
+};
 
 /** Tabana fark uygular: üst düzey anahtar değişir; voices çalgı çalgı, harpPatterns / drumPatterns / themes ad ad birleşir. */
 function mergeConfig(base: MusicConfig, o: Override): MusicConfig {
-  const { voices, harpPatterns, drumPatterns, themes, ...rest } = o;
+  const { voices, harpPatterns, drumPatterns, themes, sectionPatch, ...rest } = o;
   const v = base.voices;
+  const sections = { ...(rest.sections ?? base.sections) };
+  for (const [name, patch] of Object.entries(sectionPatch ?? {})) if (sections[name]) sections[name] = { ...sections[name]!, ...patch };
   return {
     ...base,
     ...rest,
+    sections,
     voices: {
       harp: { ...v.harp, ...voices?.harp },
       flute: { ...v.flute, ...voices?.flute },
@@ -95,29 +103,42 @@ export const MUSIC: MusicConfig = mergeConfig(BASE, (() => {
   return o;
 })());
 
-// ---------------------------------------------------------------- sahne müzikleri (data/audio-music-tracks.json; 2026-10-13)
+// ---------------------------------------------------------------- sahne müzikleri (data/audio-music-tracks.json + audio-music-bosses.json)
 
-/** Çalınabilir parçalar: ana menü + sahne müzikleri (src/ui/music.ts > sceneMusic). */
-export type MusicTrackId = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp';
-export const MUSIC_TRACK_IDS: readonly MusicTrackId[] = ['menu', 'map', 'town', 'battle', 'boss', 'camp'];
-type TrackOverride = Partial<Omit<MusicConfig, 'voices'>> & { label: string; desc: string; voices?: { [K in keyof MusicVoices]?: Partial<MusicVoices[K]> } };
-const TRACKS = (tracksData as unknown as { tracks: Record<Exclude<MusicTrackId, 'menu'>, TrackOverride> }).tracks;
+/**
+ * Çalınabilir parçalar: ana menü + sahne müzikleri (src/ui/music.ts > sceneMusic). Boss parçaları (2026-10-17): 'boss' = genel boss,
+ * boss_warden / boss_priest / boss_morvane (+ Lord Morvane'ın 2. ve 3. fazı) = o boss'a özel (hangi boss hangi parça: data/audio-music-boss-map.json).
+ */
+export type MusicTrackId = 'menu' | 'map' | 'town' | 'battle' | 'boss' | 'camp' | 'boss_warden' | 'boss_priest' | 'boss_morvane' | 'boss_morvane2' | 'boss_morvane3';
+export const MUSIC_TRACK_IDS: readonly MusicTrackId[] = ['menu', 'map', 'town', 'battle', 'boss', 'camp', 'boss_warden', 'boss_priest', 'boss_morvane', 'boss_morvane2', 'boss_morvane3'];
+type TrackOverride = Override & { label: string; desc: string; /** Başka bir parçanın ayarını miras alır (ör. boss fazları). */ extends?: MusicTrackId };
+const SCENE_FILE = tracksData as unknown as { soft: Override; tracks: Record<string, TrackOverride> };
+const BOSS_FILE = bossesData as unknown as { base: Override; tracks: Record<string, TrackOverride> };
+const TRACKS: Record<string, TrackOverride> = { ...SCENE_FILE.tracks, ...BOSS_FILE.tracks };
 /** Sahneler arası yumuşak geçiş (ms). */
 export const MUSIC_CROSSFADE_MS: number = (tracksData as unknown as { crossfadeMs: number }).crossfadeMs;
 
 const trackCache = new Map<MusicTrackId, MusicConfig>();
+/** Parçanın fark zinciri (kökten yaprağa): boss dosyasının ortak tabanı -> miras alınan parça -> kendi farkları. */
+function overrideChain(id: string): Override[] {
+  const t = TRACKS[id];
+  if (!t) return [];
+  const { label: _l, desc: _d, extends: parent, ...rest } = t;
+  const up = parent ? overrideChain(parent) : id in BOSS_FILE.tracks ? [BOSS_FILE.base] : [];
+  return [...up, rest];
+}
 /**
- * Parçanın tam ayarı (saf, önbellekli: aynı nesne döner, örnek önbelleği nesneye bağlı): ana menü ayarı + parçanın farkları. Üst düzey anahtar
- * değişir; voices çalgı çalgı, harpPatterns / drumPatterns / themes ad ad birleşir. Bilinmeyen id = ana menü.
+ * Parçanın tam ayarı (saf, önbellekli: aynı nesne döner, örnek önbelleği nesneye bağlı). Sahne parçaları: taban + ortak yumuşatma ("soft":
+ * alçak geçiren, üçgen ped, yumuşak flüt) + parçanın farkları (extends zinciri). Üst düzey anahtar değişir; voices çalgı çalgı,
+ * harpPatterns / drumPatterns / themes ad ad birleşir, sectionPatch bölüm bölüm. Ana menü = MUSIC. Bilinmeyen id = ana menü.
  */
 export function trackConfig(id: MusicTrackId): MusicConfig {
   const hit = trackCache.get(id);
   if (hit) return hit;
-  const o = id === 'menu' ? undefined : TRACKS[id];
   let cfg: MusicConfig = MUSIC;
-  if (o) {
-    const { label: _l, desc: _d, ...rest } = o;
-    cfg = mergeConfig(BASE, rest);
+  if (id !== 'menu' && TRACKS[id]) {
+    cfg = mergeConfig(BASE, SCENE_FILE.soft);
+    for (const o of overrideChain(id)) cfg = mergeConfig(cfg, o);
   }
   trackCache.set(id, cfg);
   return cfg;
