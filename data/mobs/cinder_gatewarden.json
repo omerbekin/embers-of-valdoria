@@ -3,7 +3,7 @@
   "id": "cinder_gatewarden",
   "name": "Cinder Gatewarden",
   "family": "guardians",
-  "spriteId": "shieldwarden",
+  "spriteId": "cinder_gatewarden",
   "spriteScale": 1.12,
   "color": "#a0522d",
   "logo": "bulwark",

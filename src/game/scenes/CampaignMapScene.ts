@@ -45,6 +45,8 @@ import {
   pickHero,
   recruit,
   recruitHoldsBattle,
+  formationGate,
+  markFormationOpened,
   saveCount,
   stopNumber,
   type CampaignMap,
@@ -72,7 +74,7 @@ import {
 } from '../../campaign';
 import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
-import { markLessonSeen, seenLessons } from '../../tutorial/store';
+import { markLessonSeen, seenLessons, tutorialsOn } from '../../tutorial/store';
 import { closeAllLessons, dismissLesson, showLesson } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
 import { avatarUrl } from '../../ui/character-panel';
@@ -95,7 +97,7 @@ import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { openGearScreen, showHandover, showSpoils } from '../../ui/gear-screen';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, elBack, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, elBack, elBadge, elBody, elButton, elGlow, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
@@ -186,6 +188,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private pendingFight: { node: string; delay: number } | null = null;
   /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
   private arrangeNotice: string | null = null;
+  /** Zorunlu Formation kapısı açıkken Formation düğmesinin arkasındaki parıltı (nudge çakması için). */
+  private formationGlow: Phaser.GameObjects.Image | null = null;
   private legendOpen = true;
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
@@ -224,6 +228,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.longPressed = false;
     this.pendingFight = null;
     this.arrangeNotice = null;
+    this.formationGlow = null;
   }
 
   preload(): void {
@@ -1057,6 +1062,33 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Yazı düğmesinin dokunma alanını büyütür (telefonda >= 44 gerçek px: 1080 birimlik sahne 390 px'e iner, 124 birim ~ 45 px). */
+  /** Bağlantı düğmesinin arkasında kor parıltısı + yazı parıltısı (nabız); dikkat çekme (tutorial). Arkadaki parıltı görüntüsünü döner. */
+  private pulseLink(l: { root: Phaser.GameObjects.Container; width: number; text: Phaser.GameObjects.Text }, h: number): Phaser.GameObjects.Image {
+    const w = l.width + 60;
+    const glow = this.add.image(l.width / 2, 0, ensureGlow(this)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(w, h * 1.3).setAlpha(0.35);
+    l.root.addAt(glow, 0);
+    elGlow(l.text, true);
+    l.text.setColor(EL.ON);
+    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
+    if (!reduce) this.tweens.add({ targets: glow, alpha: { from: 0.3, to: 0.85 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    glow.once('destroy', () => this.tweens.killTweensOf(glow));
+    return glow;
+  }
+
+  /** Zorunlu Formation kapısı açık mı (tutorial, Ravenwood; ayar kapalıysa yok). */
+  private formationDue(): boolean {
+    return formationGate(this.s, tutorialsOn());
+  }
+
+  /** Kapı açıkken savaşa dokunuldu: kısa not + ipucu kartı yeniden + Formation parıltısı bir kez güçlü çakar. */
+  private nudgeFormation(): void {
+    this.toast('Open Formation first.');
+    this.arrangeNotice = this.s.at;
+    this.showTip();
+    const g = this.formationGlow;
+    if (g?.active) this.tweens.add({ targets: g, scaleX: g.scaleX * 1.25, scaleY: g.scaleY * 1.25, duration: 160, yoyo: true, repeat: 2, ease: 'Sine.easeInOut' });
+  }
+
   private growHit(l: { root: Phaser.GameObjects.Container; width: number }, h: number, minW = 0): void {
     const zone = l.root.list.find((o): o is Phaser.GameObjects.Zone => o instanceof Phaser.GameObjects.Zone);
     if (!zone) return;
@@ -1145,6 +1177,9 @@ export class CampaignMapScene extends Phaser.Scene {
       const y0 = ly + pitch / 2 - (c ? 14 : 8);
       const f = elLink(this, 'Formation', () => this.openFormationFromHud(), { size, iconSize, ...this.linkIcon('formation') });
       f.root.setPosition(x - 6, y0);
+      // Zorunlu Formation (tutorial, Ravenwood; Ömer 2026-10-17): açılana kadar düğme kor rengiyle nabız gibi parlar
+      if (this.formationDue()) this.formationGlow = this.pulseLink(f, pitch);
+      else this.formationGlow = null;
       const g = elLink(this, 'Gear', () => this.canOpenSide() && this.openGear(), { size, iconSize, ...this.linkIcon('gear') });
       g.root.setPosition(x - 6, y0 + pitch);
       this.growHit(f, pitch, 300);
@@ -1605,6 +1640,8 @@ export class CampaignMapScene extends Phaser.Scene {
         this.renderHud();
         if (step.kind === 'battle' && this.pendingFight?.node === s.at) this.startPendingFight();
         // Katılımdan sonra bekleyen savaş (Ravenwood): "Formation'ı düzenle, sonra savaşa dokun" kartı (yukarıdaki dal kartı kaldırır)
+        // Zorunlu Formation kapısı kayıtta (yeniden yüklemede de kart gelir)
+        if (step.kind === 'battle' && this.formationDue()) this.arrangeNotice = s.at;
         if (step.kind === 'battle' && this.arrangeNotice === s.at) this.showTip();
         return;
     }
@@ -1932,6 +1969,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (v === 'fog') return;
     const step = nextStep(this.s);
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
+    if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
     if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, false, () => void startCampaignBattle(this));
     if (id === this.s.at && this.actionHere()) return this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
@@ -2073,7 +2111,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.pendingFight = null;
     this.time.delayedCall(f.delay, () => {
       const ready = this.s.at === f.node && nextStep(this.s).kind === 'battle' && !this.modal && !this.menuOpen && !this.slotBrowser && !isSettingsOpen() && !document.querySelector('#ui-root .gr-overlay');
-      if (ready) startCampaignBattle(this);
+      if (ready && !this.formationDue()) startCampaignBattle(this);
     });
   }
 
@@ -2162,6 +2200,8 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Dizilim penceresi (sürükle ya da dokun-dokun; Auto arrange). Kapanınca harita kalır (önceki kart yeniden açılmaz). */
   private openFormation(): void {
     if (this.pausedBlocks()) return;
+    // Zorunlu Formation (tutorial): açıldı = kapı kalkar (Done / zemin / Esc hangisiyle kapanırsa kapansın); kapanınca HUD yenilenir, parıltı söner
+    if (this.s.formationDue !== undefined) setState(markFormationOpened(this.s));
     this.closeModal();
     this.sideOpen = true;
     this.modal = openFormation(this, this.ui, {

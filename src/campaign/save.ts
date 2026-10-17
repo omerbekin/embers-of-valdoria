@@ -136,6 +136,8 @@ function upgradeState(s: CampaignState): void {
   s.gold = typeof s.gold === 'number' && Number.isFinite(s.gold) && s.gold >= 0 ? s.gold : 0;
   // Duraklatılmış savaş (Ömer 2026-10-14; isteğe bağlı alan, sürüm değişmez): bozuksa ya da başka düğümünse atılır (savaş baştan başlar)
   if (s.suspended !== undefined && !(validCampaignSuspended(s.suspended) && s.suspended.node === s.at)) delete (s as { suspended?: unknown }).suspended;
+  // Zorunlu Formation kapısı (Ömer 2026-10-17; isteğe bağlı alan): bozuksa ya da başka düğümünse atılır (eski kayıt takılmaz)
+  if (s.formationDue !== undefined && s.formationDue !== s.at) delete (s as { formationDue?: unknown }).formationDue;
   // Valor (sürüm 7): bozuk değer kırpılır; alanı olmayan eski kayıt Valdren Keep'in hikâyesini / kasabasını bitirmişse hediye ile açılır
   const intro = valorRules.campaign.introNode;
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));

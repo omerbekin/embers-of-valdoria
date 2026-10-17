@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ mob (Beasts; Shepherd's Fold olayındaki ash-hounds). GÖRSEL YER TUTUCU: spriteId 'grey_wolf', spriteScale 1,3 (kendi çizimi gelince 'ash_hound'). Sayılar PROVİZYON (npm run sim:campaign).",
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. YENİ mob (Beasts; Shepherd's Fold olayındaki ash-hounds). GÖRSEL (ChatGPT 2026-10-17): kendi çizimi spriteId = id, yatay; spriteScale 1,3 (Grey Wolf 1,2'den biraz iri). Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "ash_hound",
   "name": "Ash Hound",
   "family": "beasts",
-  "spriteId": "grey_wolf",
+  "spriteId": "ash_hound",
   "spriteScale": 1.3,
   "color": "#5a4a44",
   "logo": "roar",

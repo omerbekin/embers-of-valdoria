@@ -1,9 +1,9 @@
 {
-  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GELİŞMİŞ Morvane Halberdier (Castle Morvane eşlikçisi): aynı pasif ve temel saldırı, 2. skill alan sürümü (Wall of Pikes). GÖRSEL YER TUTUCU: spriteId 'oathsworn_brother', spriteScale 1,12 (kendi çizimi gelince 'sworn_guard'). Sayılar PROVİZYON (npm run sim:campaign).",
+  "_not": "Sefer mobu (BÖLGE III, docs/design/campaign/mob-plan.md 10, campaign-dev 2026-10-17). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı. GELİŞMİŞ Morvane Halberdier (Castle Morvane eşlikçisi): aynı pasif ve temel saldırı, 2. skill alan sürümü (Wall of Pikes). GÖRSEL: kendi ChatGPT çizimi (spriteId 'sworn_guard', 2026-10-17), spriteScale 1,12. Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "sworn_guard",
   "name": "Morvane's Sworn Guard",
   "family": "morvane_army",
-  "spriteId": "oathsworn_brother",
+  "spriteId": "sworn_guard",
   "spriteScale": 1.12,
   "color": "#8b1e1e",
   "logo": "helm",

@@ -57,9 +57,9 @@ HEADS = {
     # Bölge III (mob-plan.md 10.6): YER TUTUCU kafa kutuları; çizim yarın gelince `--only <id> --check <klasör>` ile bakıp düzelt.
     # Kaynağı (assets/source/mobs/<id>.png) olmayan id atlanır.
     'morvane_halberdier': (520, 70, 290),
-    'sworn_guard': (560, 0, 290),
-    'ash_hound': (1270, 190, 400),
-    'cinder_gatewarden': (600, 0, 260),
+    'sworn_guard': (560, 90, 300),
+    'ash_hound': (1290, 170, 440),
+    'cinder_gatewarden': (557, 0, 260),
     'ember_hierophant': (560, 10, 280),
     'drake_priest': (560, 20, 290),
     'lord_morvane': (560, 0, 300),

@@ -15,6 +15,7 @@
 | I · Mill Road | Açılış sözü, The Turn Bar, Attacking, Choosing a Target | İlk karar: ZORUNLU adımlar (Next -> saldırı düğmesi -> düşmana dokun). Savaş kaybedilemez (takımın tamamı, 2 kahramanla da). |
 | I · Mill Road | Stronger Skills (`f_mp_skill`) + Skills and MP | İkinci karar: ZORUNLU; kahramanın şu an kullanılabilen en güçlü MP skill'i parlar, oyuncu onu kullanır; ardından Skills and MP burada gösterilir. Kullanılabilir MP skill'i yoksa adım sessizce atlanır. |
 | Her savaş (Mill Road hariç) | Durum dersleri (aşağıdaki tablo) | Durum ilk kez oluşunca |
+| I · Ravenwood (katılımdan sonra) | Zorunlu Formation (ipucu kartı "Arrange your formation...") | Yeni kahraman katılınca savaş beklemede; Formation düğmesi kor rengiyle parlar; Formation açılana kadar savaşa dokunmak savaşı BAŞLATMAZ ("Open Formation first." notu + ipucu kartı yeniden + parıltı çakar). Açılıp kapanınca parıltı söner, savaş normal (aşağıda Kurallar). |
 | I · ilk zafer sonrası harita | Wounds Carry Over | İlk zaferden sonraki ilk yol seçimi; yüzde verinin zafer toparlanmasından (`victoryHeal`) |
 | Harita | Reading the Road | Yolda (yakın / uzak) ilk kez elit, boss, dinlenme ya da hazine düğümü görününce (gerçek ikonlar: boynuzlu miğfer, taçlı kafatası, kamp ateşi, sandık) |
 | I · ilk loot | Gear (3 sayfa: sürükle, karşılaştır, Equip best) | Torbada item varken Gear ilk açıldığında; Gear kapanınca kutu da kapanır |
@@ -59,6 +60,7 @@
 - **Bir kez:** görülen dersler `localStorage proto.tutorial.v1` (`{ v, on, seen, done?, shows? }`); sefer yuvasından bağımsız.
 - **Codex > Lessons:** görülen her ders orada yeniden okunur (Getting Started'ın altında).
 - **Zorunlu adım:** adım bitene kadar diğer skill / Rest-Skip-Move / hedef girdisi kabul edilmez; "Don't show again" ya da ayar kapalıysa serbest.
+- **Zorunlu Formation (Ömer 2026-10-17, Ravenwood):** savaştan önce katılım olan tutorial düğümünde (`recruitHoldsBattle`) katılım kayda `formationDue = <düğüm>` yazar. Bu düğümde savaş sıradayken ve Tutorials açıkken (`formationGate`) Formation düğmesi parlar, savaş düğümüne dokunmak savaş yerine kısa not gösterir. Formation açılınca (Done, zemin ya da Esc ile kapanması fark etmez) alan silinir (`markFormationOpened`). Alan isteğe bağlı: eski kayıtta yoksa kapı yok (takılma olmaz); başka düğümünse ya da bozuksa okunurken atılır; yola çıkınca silinir. Tutorials kapalıysa kapı yok. Debug > Campaign > Tutorial > "Formation gate".
 - **Kaybedilemez ilk savaş:** motor `UnitSetup.undying` (can 1'de durur), karşılaşma `partyUndying: true` (Mill Road).
 
 ## Teknik

@@ -317,6 +317,24 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
   const t = clone(s);
   addHero(t, classId, { tutorial: tutorialActive(t) });
   complete(t, step.kind);
+  // Zorunlu Formation (tutorial): katılım savaştan önceyse savaş, Formation açılıp kapanana kadar bekler
+  if (tutorialActive(t) && recruitHoldsBattle(s, t)) t.formationDue = t.at;
+  return t;
+}
+
+/**
+ * Zorunlu Formation kapısı (tutorial; Ömer 2026-10-17): bulunulan düğümün savaşı, Formation açılıp kapanana kadar başlamaz.
+ * `lessonsOn` = Settings > Tutorials açık (kapalıysa kapı yok). Eski kayıtta alan yoksa kapı yok.
+ */
+export function formationGate(s: CampaignState, lessonsOn = true): boolean {
+  return lessonsOn && s.formationDue !== undefined && s.formationDue === s.at && nextStep(s).kind === 'battle';
+}
+
+/** Formation açıldı ve kapandı: kapı kalkar (yoksa aynı durum döner). */
+export function markFormationOpened(s: CampaignState): CampaignState {
+  if (s.formationDue === undefined) return s;
+  const t = clone(s);
+  delete t.formationDue;
   return t;
 }
 
@@ -614,6 +632,7 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
   t.path.push(to);
   delete t.eventChoice;
   delete t.closedShop;
+  delete t.formationDue;
   const n = node(mapOf(t), to);
   if (n.heal) healAll(t, n.heal);
   return t;

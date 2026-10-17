@@ -244,13 +244,84 @@ html.short .vl-corner .vl-lbl {
   color: var(--el-ember2, #ffb35a);
 }
 
+/* Kısa ekran (telefon yatay): pencere ekrana sığar; yalnızca kahraman listesi kayar (çok düşmüş kahramanda) */
+html.short .el-dialog {
+  padding-top: calc(8px + var(--et, 0px));
+  padding-bottom: calc(8px + var(--eb, 0px));
+}
+
 html.short .el-dialog > .el-panel.vl-panel {
-  padding: 14px 18px 14px;
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  padding: 10px 18px 12px;
+  overflow: visible;
+}
+
+html.short .vl-panel .el-title {
+  font-size: 22px;
+  gap: 12px;
+}
+
+html.short .vl-panel .vl-meter {
+  --vl-h: 34px !important;
+}
+
+html.short .vl-meter-box {
+  margin: 8px 0 2px;
 }
 
 html.short .vl-note {
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 4px 0 6px;
+}
+
+html.short .vl-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 4px;
+}
+
+html.short .vl-row {
+  padding: 4px 8px;
+  gap: 10px;
+}
+
+html.short .vl-face {
+  width: 40px;
+  height: 40px;
+}
+
+html.short .vl-name {
   font-size: 15px;
-  margin-bottom: 6px;
+}
+
+html.short .vl-sub {
+  font-size: 13px;
+}
+
+html.short .vl-go {
+  min-height: 44px;
+  padding: 0 24px 0 calc(24px + 0.1em);
+  font-size: 15px;
+}
+
+html.short .vl-msg {
+  margin: 4px 0 0;
+  font-size: 14px;
+  min-height: 1.2em;
+}
+
+html.short .vl-panel .el-row {
+  margin-top: 6px;
+}
+
+html.short .vl-panel .el-row .el-btn.primary {
+  min-height: 44px;
+  padding: 0 32px 0 calc(32px + 0.12em);
+  font-size: 17px;
 }
 
 .vl-meter[hidden] {

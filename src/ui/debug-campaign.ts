@@ -285,6 +285,20 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Forget every seen lesson and turn tutorials on: lessons show again (Mill Road is step by step again). Codex > Lessons empties.',
     run: () => resetTutorials(),
   });
+  // Zorunlu Formation kapısı (Ravenwood; Ömer 2026-10-17): bulunulan savaş düğümünde Formation açılana kadar savaş başlamaz
+  debug.register({
+    id: 'campaign.formation-gate',
+    tab: CAMPAIGN_TAB,
+    section: 'Tutorial',
+    icon: 'shield',
+    label: () => (current()?.formationDue ? 'Formation gate: on (open Formation to clear)' : 'Formation gate: require here'),
+    hint: 'Like Ravenwood after the recruit: the Formation button glows and the battle here waits until Formation is opened (needs a battle at this stop and tutorials on)',
+    run: () => {
+      const s = ensureState();
+      setState({ ...s, formationDue: s.at });
+      reload();
+    },
+  });
   debug.registerPanel({
     id: 'campaign.lessons',
     tab: CAMPAIGN_TAB,

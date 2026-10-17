@@ -289,6 +289,12 @@ export interface CampaignState {
    * diriltmesi kilitli. Zafer ya da yenilgi siler. İsteğe bağlı alan (kayıt sürümü değişmez); bozuk kayıt okunurken atılır.
    */
   suspended?: CampaignSuspended;
+  /**
+   * Zorunlu Formation (tutorial; Ömer 2026-10-17): savaştan önce katılım olan düğümde (Ravenwood) yeni kahraman katılınca düğüm id'si yazılır;
+   * oyuncu Formation'ı açıp kapatana kadar o düğümün savaşı başlamaz, Formation düğmesi parlar (src/campaign/state.ts > formationGate).
+   * İsteğe bağlı alan (kayıt sürümü değişmez): eski kayıtta yok = kapı yok (takılma olmaz); başka düğümünse okunurken atılır.
+   */
+  formationDue?: string;
 }
 
 /** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */
