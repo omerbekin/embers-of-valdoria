@@ -2,7 +2,7 @@
   "_not": "Lord Morvane: Castle Morvane (düğüm 12) final boss'u (mob-plan.md 10.3, campaign-dev 2026-10-17). INT'e dayalı ateş büyücüsü-şövalye; boss altyapısı (fazlar, telgraf, areaByPhase) Bridge Warden'la ortak, kurallar farklı: Ashfall alan telgrafı (Move ile kaçılır), faz 3'te güvenli hücresiz Pyre of Morvane, pasif Crown of Ash (YM23; passive.effect). GÖRSEL YER TUTUCU: spriteId 'high_priest_of_the_undying', spriteScale encounters.json'da (kendi ChatGPT çizimi + poz sayfası gelince spriteId 'lord_morvane'). Gizli boss tanımı (data/bosses): rastgele havuzda ve takım seçiminde YOK. Endless'ın eski 'lord_morvane' karşılaşması (Undead class kopyası) değişmedi. Sayılar PROVİZYON (npm run sim:campaign).",
   "id": "lord_morvane",
   "name": "Lord Morvane",
-  "spriteId": "high_priest_of_the_undying",
+  "spriteId": "lord_morvane",
   "color": "#8b1e1e",
   "logo": "skull",
   "frontPriority": 4,

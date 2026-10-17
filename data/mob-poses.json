@@ -4,7 +4,10 @@
     "cols": 4,
     "rows": 3,
     "density": 0.5,
-    "idle": [0, 1],
+    "idle": [
+      0,
+      1
+    ],
     "idleMs": 900,
     "windup": 2,
     "release": 3,
@@ -21,7 +24,10 @@
     "cols": 4,
     "rows": 3,
     "density": 0.5,
-    "idle": [0, 1],
+    "idle": [
+      0,
+      1
+    ],
     "idleMs": 900,
     "windup": 2,
     "release": 3,
@@ -34,13 +40,65 @@
     "dying": 10,
     "dead": 11,
     "skills": {
-      "toll_sweep": { "windup": 4, "act": 5 },
-      "hold_the_tower": { "act": 6 }
+      "toll_sweep": {
+        "windup": 4,
+        "act": 5
+      },
+      "hold_the_tower": {
+        "act": 6
+      }
     }
   },
-  "_pending": {
-    "_not": "Bölge III (mob-plan.md 10.6): poz sayfası yarın (ChatGPT); `node tools/import-mob-art.mjs poses` dosyayı içe aktarınca kayıt kendiliğinden üst düzeye taşınır. Kareler mob-plan.md 10.6 listesi (0'dan).",
-    "drake_priest": { "cols": 4, "rows": 3, "density": 0.5, "idle": [0, 1], "idleMs": 900, "windup": 2, "release": 3, "channel": 4, "bless": 5, "strike": 3, "move": 7, "hit": 8, "defend": 9, "dying": 10, "dead": 11, "skills": { "dragons_breath": { "windup": 2, "act": 4 } } },
-    "lord_morvane": { "cols": 4, "rows": 3, "density": 0.5, "idle": [0, 1], "idleMs": 900, "windup": 2, "release": 3, "channel": 4, "bless": 5, "strike": 3, "move": 7, "hit": 8, "defend": 9, "dying": 10, "dead": 11, "skills": { "pyre_of_morvane": { "windup": 4, "act": 6 } } }
+  "drake_priest": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [
+      0,
+      1
+    ],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 4,
+    "bless": 5,
+    "strike": 3,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "dragons_breath": {
+        "windup": 2,
+        "act": 4
+      }
+    }
+  },
+  "lord_morvane": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [
+      0,
+      1
+    ],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 4,
+    "bless": 5,
+    "strike": 3,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "pyre_of_morvane": {
+        "windup": 4,
+        "act": 6
+      }
+    }
   }
 }

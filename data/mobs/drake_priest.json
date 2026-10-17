@@ -3,7 +3,7 @@
   "id": "drake_priest",
   "name": "Drake Priest",
   "family": "ember_cult",
-  "spriteId": "charcoal_burner",
+  "spriteId": "drake_priest",
   "spriteScale": 1.15,
   "color": "#b8341a",
   "logo": "wizhat",

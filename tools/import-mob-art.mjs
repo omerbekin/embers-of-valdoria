@@ -90,9 +90,11 @@ const GROUND = new Set([
   'sworn_guard-wall_of_pikes',
   'cinder_gatewarden-hold_the_gate',
   'ember_hierophant-burn_the_field',
+  'drake_priest-drakefire',
   'drake_priest-dragons_breath',
   'drake_priest-kindle_the_faithful',
   'lord_morvane-ashfall',
+  'lord_morvane-cinder_lash',
   'lord_morvane-iron_decree',
   'lord_morvane-pyre_of_morvane',
 ]);
@@ -161,9 +163,11 @@ const CLEAN_EDGES = new Set([
   'sworn_guard-wall_of_pikes',
   'cinder_gatewarden-hold_the_gate',
   'ember_hierophant-burn_the_field',
+  'drake_priest-drakefire',
   'drake_priest-dragons_breath',
   'drake_priest-kindle_the_faithful',
   'lord_morvane-ashfall',
+  'lord_morvane-cinder_lash',
   'lord_morvane-iron_decree',
   'lord_morvane-pyre_of_morvane',
 ]);
@@ -370,7 +374,7 @@ function alphaBox(data, W, x0, y0, w, h) {
  * Figürleri ızgara çizgisini aşan poz sayfaları (Bandit Chief: ayak, balta, kafa komşu hücreye taşar): hücre dikdörtgeni yerine bağlı
  * bileşenler (alfa > 8, 8 komşu) ağırlık merkezinin düştüğü hücreye atanır. Diğer sayfalar düz ızgarayla kesilir (çıktıları aynen kalır).
  */
-const POSE_SPLIT = new Set(['bandit_chief']);
+const POSE_SPLIT = new Set(['bandit_chief', 'drake_priest', 'lord_morvane']);
 
 /** Hücre başına tam boy RGBA katman: yalnızca o hücreye atanan bileşenlerin pikselleri. */
 function cellLayers(data, W, H, cols, rows) {

@@ -60,9 +60,9 @@ HEADS = {
     'sworn_guard': (560, 90, 300),
     'ash_hound': (1290, 170, 440),
     'cinder_gatewarden': (557, 0, 260),
-    'ember_hierophant': (560, 10, 280),
-    'drake_priest': (560, 20, 290),
-    'lord_morvane': (560, 0, 300),
+    'ember_hierophant': (470, 0, 480),
+    'drake_priest': (540, 20, 370),
+    'lord_morvane': (765, 0, 280),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
