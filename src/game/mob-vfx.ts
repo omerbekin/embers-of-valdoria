@@ -82,6 +82,23 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   bone_rite: { mob: 'high_priest_of_the_undying', mode: 'bolt', at: 'hit', impact: 3, size: 240, hex: '#a55cff' },
   requiem: { mob: 'high_priest_of_the_undying', mode: 'cells', at: 'ground', impact: 2, size: 230, hex: '#a55cff' },
   unholy_benediction: { mob: 'high_priest_of_the_undying', mode: 'ally', at: 'ground', impact: 4, size: 240, hex: '#a55cff' },
+  // Bölge I-II eski skill'ler: kendi sheet'leri (2026-10-17; öncesinde ödünç artOf efekti). Ortak skill'lerin sahibi burada (ember_toss: Hierophant da, shield_bash: Gatewarden da)
+  cudgel: { mob: 'road_thug', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  hamstring: { mob: 'road_thug', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  gnaw: { mob: 'ghoul', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  feast: { mob: 'ghoul', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  hex_bolt: { mob: 'fen_witchling', mode: 'bolt', at: 'hit', impact: 2, size: 230, hex: '#b04fa8' },
+  bog_curse: { mob: 'fen_witchling', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#9cab3c' },
+  wisp_spark: { mob: 'will_o_wisp', mode: 'bolt', at: 'hit', impact: 2, size: 220, hex: '#6fc9b8' },
+  marsh_glow: { mob: 'will_o_wisp', mode: 'ally', at: 'ground', impact: 3, size: 230, hex: '#7dff9b' },
+  ember_toss: { mob: 'ember_acolyte', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ff7a1a' },
+  burn_the_ground: { mob: 'ember_acolyte', mode: 'center', at: 'ground', impact: 3, size: 340, hex: '#ff4d1a' },
+  shield_bash: { mob: 'shieldwarden', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  hold_the_line: { mob: 'shieldwarden', mode: 'self', at: 'ground', impact: 3, size: 250, hex: '#b9c8dc' },
+  drag_under: { mob: 'drowned', mode: 'melee', at: 'ground', impact: 3, size: 230 },
+  crossbow_bolt: { mob: 'bandit_crossbowman', mode: 'bolt', at: 'hit', impact: 2, size: 230, hex: '#d9c9a3' },
+  shield_wall: { mob: 'thane_of_the_deep', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#7fb8e8' },
+  lure_light: { mob: 'hedge_witch_morwen', mode: 'bolt', at: 'hit', impact: 2, size: 230, hex: '#e0b04a' },
   // Bölge III (campaign-dev 2026-10-17; mob-plan.md 10.6): satırlar HAZIR, sheet'ler yarın (ChatGPT). Sheet yokken skill sanatını ödünç aldığı
   // mob skill'inin (artOf) sheet'ini oynar (vfx-select.ts); `node tools/import-mob-art.mjs vfx` sonrası kendi sheet'i kendiliğinden öne geçer.
   halberd_chop: { mob: 'morvane_halberdier', mode: 'melee', at: 'hit', impact: 3, size: 250 },
@@ -98,6 +115,12 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   ashfall: { mob: 'lord_morvane', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#8a6a5a' },
   iron_decree: { mob: 'lord_morvane', mode: 'self', at: 'ground', impact: 3, size: 280, hex: '#c0392b' },
   pyre_of_morvane: { mob: 'lord_morvane', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#ff4d1a' },
+  // King's Bridge boss (Bridge Warden)
+  anchor_smash: { mob: 'bridge_warden', mode: 'melee', at: 'hit', impact: 3, size: 260, hex: '#ff8a3a' },
+  breaking_span: { mob: 'bridge_warden', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#6ad0d8' },
+  chain_hook: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 3, size: 250, hex: '#ff8a3a' },
+  ash_brand: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 4, size: 260, hex: '#ff6a1a' },
+  fall_of_kings_bridge: { mob: 'bridge_warden', mode: 'center', at: 'ground', impact: 3, size: 520, hex: '#ff5a1a' },
 };
 
 type Pt = { x: number; y: number };

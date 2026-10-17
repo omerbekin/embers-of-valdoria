@@ -64,6 +64,9 @@ const ICON_SHEETS = {
   'region3_upgrades-sheet': ['hold_the_gate', 'burn_the_field', 'crown_of_ash', null],
   'drake_priest-sheet': ['drakefire', 'dragons_breath', 'kindle_the_faithful', 'molten_shed'],
   'lord_morvane-sheet': ['cinder_lash', 'ashfall', 'iron_decree', 'pyre_of_morvane'],
+  // King's Bridge boss (Bridge Warden): 4 skill + (2. sayfa) fall_of_kings_bridge + 3 pasif
+  'bridge_warden-sheet': ['anchor_smash', 'breaking_span', 'chain_hook', 'ash_brand'],
+  'bridge_warden2-sheet': ['fall_of_kings_bridge', 'unyielding', 'anchored', 'ember_heart'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
@@ -86,6 +89,13 @@ const GROUND = new Set([
   'ravenwood_poacher-tainted_bait',
   'raven_seer-murder_of_crows',
   'bandit_chief-hold_the_tower',
+  // Bölge I-II eski skill'ler (kendi sheet'leri, 2026-10-17)
+  'fen_witchling-bog_curse',
+  'will_o_wisp-marsh_glow',
+  'ember_acolyte-burn_the_ground',
+  'shieldwarden-hold_the_line',
+  'drowned-drag_under',
+  'thane_of_the_deep-shield_wall',
   // Bölge III (yarın)
   'sworn_guard-wall_of_pikes',
   'cinder_gatewarden-hold_the_gate',
@@ -97,6 +107,9 @@ const GROUND = new Set([
   'lord_morvane-cinder_lash',
   'lord_morvane-iron_decree',
   'lord_morvane-pyre_of_morvane',
+  // King's Bridge boss (Bridge Warden)
+  'bridge_warden-breaking_span',
+  'bridge_warden-fall_of_kings_bridge',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
@@ -170,6 +183,12 @@ const CLEAN_EDGES = new Set([
   'lord_morvane-cinder_lash',
   'lord_morvane-iron_decree',
   'lord_morvane-pyre_of_morvane',
+  // King's Bridge boss (Bridge Warden)
+  'bridge_warden-anchor_smash',
+  'bridge_warden-breaking_span',
+  'bridge_warden-chain_hook',
+  'bridge_warden-ash_brand',
+  'bridge_warden-fall_of_kings_bridge',
 ]);
 
 const FRAME = 256;
@@ -374,7 +393,7 @@ function alphaBox(data, W, x0, y0, w, h) {
  * Figürleri ızgara çizgisini aşan poz sayfaları (Bandit Chief: ayak, balta, kafa komşu hücreye taşar): hücre dikdörtgeni yerine bağlı
  * bileşenler (alfa > 8, 8 komşu) ağırlık merkezinin düştüğü hücreye atanır. Diğer sayfalar düz ızgarayla kesilir (çıktıları aynen kalır).
  */
-const POSE_SPLIT = new Set(['bandit_chief', 'drake_priest', 'lord_morvane']);
+const POSE_SPLIT = new Set(['bandit_chief', 'drake_priest', 'lord_morvane', 'bridge_warden']);
 
 /** Hücre başına tam boy RGBA katman: yalnızca o hücreye atanan bileşenlerin pikselleri. */
 function cellLayers(data, W, H, cols, rows) {
