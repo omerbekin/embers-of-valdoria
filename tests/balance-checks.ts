@@ -15,7 +15,8 @@ import { balance, simulate, skillCategory, skillShare, ultReadyRate, winRate } f
  */
 // 2026-10-17 (levels.md başlangıç statları, en yüksek temel stat <= diğer üçünün %80'i): Warrior %43-44,6 (STR 30 -> 26), Paladin ~%56 (statı aynı,
 // diğerleri zayıfladı); level / item sonrası balance-tester turunda çıkarılacak (open-questions 335)
-export const PENDING_BALANCE: readonly string[] = ['warrior', 'paladin'];
+// 2026-10-18 genel denge turu (open-questions 350): Warrior 2 x 10.000'de %50,5-51,4 -> çıkarıldı; Paladin %46 civarında, Holy Strike 0,482 -> 0,51 sonrası ölçülecek.
+export const PENDING_BALANCE: readonly string[] = ['paladin'];
 
 /**
  * BANDI BEKLEYEN SKILL'LER (kullanım payı / ultimate oranı): Ömer onayı bekleyen yeniden tasarım önerisi olanlar; ölçülür, uyarı yazılır.
@@ -23,8 +24,7 @@ export const PENDING_BALANCE: readonly string[] = ['warrior', 'paladin'];
  */
 // Abyssal Cry madde 262 yeniden tasarımından sonra hazır olanlardan ~%69 kullanılıyor: 2026-10-08 denge turunda listeden çıkarıldı.
 export const PENDING_SKILLS: Readonly<Record<string, string>> = {
-  whirlwind: '0.8.4: Whirlwind usage ~12% < 15 after range system + Headsman ult, tracked in handoff open items',
-  resurrection: '0.8.4: Paladin Resurrection usage ~8% at the band edge (8), tracked in handoff open items',
+  // 2026-10-18 genel denge turu (open-questions 350): Whirlwind (güç 0,87, pay %16-18) ve Resurrection (MP 16, pay %8,5-9) bantta -> çıkarıldı.
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

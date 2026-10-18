@@ -11,7 +11,7 @@ import { selectSkillVfx, v2VfxKey } from './vfx-select';
 import { v2SpriteName } from './art-registry';
 import type { VfxKind } from '../ui/vfx-kinds';
 import { VFX, VFX_BASE_KIT, type VfxCtx } from './vfx';
-import { ensureVfxSheets, sheetDone, vfxSheet } from './vfx-sheets';
+import { ensureVfxSheets, sheetDone, vfxSheet, vfxSheetAnchors } from './vfx-sheets';
 
 /** v2 efektinin ikinci parametresi: v1 yardımcıları + v1 efektleri (`v1`) + v2 sprite yardımcıları + Phaser. */
 export const VFX_KIT = {
@@ -31,6 +31,8 @@ export const VFX_KIT = {
   sheet: vfxSheet,
   sheetsReady: ensureVfxSheets,
   sheetDone,
+  /** Sheet karesinin dayanak noktaları (ağırlık merkezi + zemin bandı y'si; kare pikseli) ya da null: `origin` olarak verilirse efekt hedef noktasına oturur. */
+  sheetAnchors: vfxSheetAnchors,
 };
 export type VfxKit = typeof VFX_KIT;
 

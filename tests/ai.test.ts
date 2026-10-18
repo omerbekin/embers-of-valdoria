@@ -114,7 +114,8 @@ describe('yapay zeka: şifa, kalkan, çağrı', () => {
 
   it('saldırıları zayıfken Treant çağırır (çağrının ufuktaki katkısı + Verdant Blessing)', () => {
     const b = testBattle();
-    Object.assign(b.get(E_DRUID)!.stats, { int: 1, str: 1, dex: 1 }); // Druid'in kendi vuruşları değersiz; Treant'ın gücü kendi statlarından
+    // Druid'in kendi vuruşları değersiz; Treant'ın gücü Druid'in item HARİÇ temel statından (summonBase; çağrı yeniden tasarımı 2026-10-18)
+    Object.assign(b.get(E_DRUID)!.stats, { int: 1, str: 1, dex: 1, summonBase: { ...content.classes.druid!.attributes } });
     const ex = explainChoice(b, E_DRUID, ai)!;
     expect(ex.candidates.find((c) => c.skill === 'summon_treant')!.terms!.summon).toBeGreaterThan(0);
     expect(chooseAction(b, E_DRUID, ai)).toMatchObject({ skillId: 'summon_treant', reason: 'summon' });

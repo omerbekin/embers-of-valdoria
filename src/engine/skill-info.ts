@@ -4,7 +4,7 @@ import { isRatioCost, skillCostLabel } from './cost';
 import { betMultipliers, betStake } from './gamble';
 import { bonusScaleRaw } from './spec';
 import { rangeEnabled, rangeLabel, rangeLine } from './range';
-import { applySummonVariant, attributePower, outgoingDamageMult } from './stats';
+import { applySummonerScale, applySummonVariant, attributePower, outgoingDamageMult } from './stats';
 import type { AreaDef, Attribute, CombatantDef, Element, Formulas, GlobalSkillDef, GroundDef, PassiveDef, SkillDef, SkillEffect, SkillTarget, Stats, StatusDef, ValorRules } from './types';
 
 /** Skill'in oyuncuya gösterilen genel bilgileri (tooltip). Metinler İngilizce (oyun içi arayüz). */
@@ -296,6 +296,13 @@ export function describeRage(f: Formulas): string[] {
 }
 
 /** `ownerRange`: skill sahibinin (sınıf/mob/çağrı) taban menzili (CombatantDef.range); verilmezse skill `range` ya da varsayılan. */
+/** Çağrının bu çağıranla (statları) tanımı: summonerScale varsa çağıranın item hariç temel statından türer (motorla aynı: applySummonerScale). */
+function summonUnitFor(unit: CombatantDef | undefined, stats: Stats, formulas: Formulas): CombatantDef | undefined {
+  if (!unit?.summonerScale) return unit;
+  const base = stats.summonBase ?? { str: stats.str, int: stats.int, dex: stats.dex, luck: stats.luck };
+  return applySummonerScale(unit, base, formulas);
+}
+
 export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas, units: Record<string, CombatantDef> = {}, defs: EffectDefs = {}, ownerRange?: number): SkillInfo {
   const lines: string[] = [];
   const kinds: SkillInfo['kinds'] = [];
@@ -361,7 +368,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (hook?.giveMana) add(`Every hit the shield absorbs gives the shielded unit ${hook.giveMana} MP`, magic ? 'magicShield' : 'shield');
       if (hook?.burnMana || hook?.dispelChance) add('Only direct attacks trigger it (not ground effects)');
     } else if (e.type === 'summon') {
-      const unit = units[e.unit];
+      // Çağrı çağıranla büyür (Ömer 2026-10-18): statlar çağıranın item hariç temel statından (Stats.summonBase ?? kendi statları)
+      const unit = summonUnitFor(units[e.unit], stats, formulas);
       const life = e.lifespan ? ` for ${e.lifespan} turns` : '';
       if (e.consumeCorpse && unit) {
         // Ceset tüketen çağrı (Raise Dead): iki hâlin can ve hasar statı veriden (applySummonVariant)
@@ -373,6 +381,12 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         add(`Empowered: HP ${fed.stats.hp}, ${statOf(fed)} · Without a corpse: HP ${unfed.stats.hp}, ${statOf(unfed)}`);
       } else {
         add(unit ? `Summons ${unit.name} (HP ${unit.stats.hp})${life}` : `Summons ${e.unit}${life}`);
+      }
+      const sc = unit?.summonerScale;
+      if (unit && sc) {
+        const key = (Object.keys(sc.attributes) as Attribute[])[0];
+        const what = key ? `${ATTRIBUTE_NAME[key]} and HP` : 'HP';
+        add(`The ${unit.name} grows with you: its ${what} come from your ${ATTRIBUTE_NAME[sc.from]} (items not counted) and it has your level`);
       }
       add(`Summons take x${formulas.summon.damageTakenMultiplier} damage`);
     } else if (e.type === 'manaBurn') {
@@ -461,7 +475,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (turnCost < 1) add(turnCost === 0.5 ? 'Takes half a turn: your next turn comes in half the usual time' : `Takes ${pct(turnCost)} of a turn: your next turn comes sooner`);
   const waves = skill.target === 'area_enemies' || skill.target === 'area_any' ? stageText(skill.area) : '';
   if (waves) add(waves);
-  if (skill.splash && skill.target === 'single_enemy') add(`Also hits the units beside the target (the neighbors above and below it on screen) for ${pct(skill.splash.mult ?? 1)} damage`, 'physical');
+  if (skill.splash?.pattern === 'chain' && skill.target === 'single_enemy') {
+    add(`Then jumps from foe to foe: each jump goes to the nearest foe not yet hit, up to ${skill.splash.jumps ?? 0} jumps (jumps ignore range)`);
+  } else if (skill.splash && skill.target === 'single_enemy') add(`Also hits the units beside the target (the neighbors above and below it on screen) for ${pct(skill.splash.mult ?? 1)} damage`, 'physical');
   if ((skill.target === 'area_enemies' || skill.target === 'area_any') && (skill.area?.hitsAtCenter ?? 1) > 1 && skill.area?.shape !== 'x') add(`The unit on the anchor cell is hit ${skill.area!.hitsAtCenter} times (each hit rolls on its own)`);
   if (skill.area?.shape === 'x' && (skill.area.hitsAtCenter ?? 1) > 1) add(`The blade crosses the center twice: the unit on the anchor cell is hit ${skill.area.hitsAtCenter} times, each hit rolls on its own`);
   if (skill.target === 'area_any') add('Throw it on the enemy side or on your own side: only the units on that side of the cloud are affected');
@@ -548,7 +564,10 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'guard') fixed('Guard', turnsText(e.turns));
     else if (e.type === 'bond') fixed(defs.statuses?.dark_bond?.name ?? 'Dark Bond', turnsText(e.turns));
     else if (e.type === 'revive') fixed('Revives with', `${pct(e.hpRatio)} HP`);
-    else if (e.type === 'summon' && units[e.unit]) fixed(`${units[e.unit]!.name} HP`, String(units[e.unit]!.stats.hp));
+    else if (e.type === 'summon' && units[e.unit]) {
+      const unit = summonUnitFor(units[e.unit], stats, formulas)!;
+      fixed(`${unit.name} HP`, String(unit.stats.hp));
+    }
   }
   return out;
 }

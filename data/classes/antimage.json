@@ -8,10 +8,10 @@
   "frontPriority": 3.5,
   "range": 4,
   "attributes": {
-    "str": 6,
+    "str": 8,
     "int": 26,
     "dex": 12,
-    "luck": 16
+    "luck": 14
   },
   "primary": "int",
   "armor": 12,

@@ -2897,8 +2897,35 @@ html.short .gr-pts {
   flex: none;
 }
 
-.gr-sgrp .gr-stat-d:empty {
-  display: none;
+/* Sabit satır düzeni (Ömer 2026-10-18): +, −, Reset, Confirm hiçbir şeyi kaydırmaz. Değer sağa yaslı sabit genişlikte,
+   fark (+1 / +0.1) boşken de yerini tutan sabit yuvada; puan ekranında − ve + yuvası görünmez de olsa yer kaplar. */
+.gr-sgroups .gr-stat .gr-stat-v {
+  min-width: 2.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-sgroups .gr-stat .gr-stat-d,
+.gr-sgroups .gr-stat .gr-stat-d:empty {
+  display: inline-block;
+  min-width: 2.9em;
+  margin-left: -0.15em;
+  overflow: visible;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-sgroups .gr-pm {
+  margin-left: 0;
+}
+
+.gr-sgroups .gr-stat .gr-stat-d:empty::before {
+  content: '\00a0';
+}
+
+.gr-pm-b.gr-pm-off,
+.gr-pts.gr-pts-idle {
+  visibility: hidden;
 }
 
 /* "Stats" başlığı level bloğundan ayrık dursun */

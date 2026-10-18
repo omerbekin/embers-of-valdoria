@@ -187,6 +187,47 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
     },
   });
+  // Mob battle: both sides are filled to the full board (CELL_COUNT units each) with sefer mobs (data/mobs; not bosses).
+  // Test mode, so the player side is played by hand like any test battle; the campaign save is never touched (no campaign hooks).
+  const mobBattle = (party: string[], enemies: string[]): void => {
+    const seed = newSeed();
+    const data = {
+      seed,
+      mode: 'test' as const,
+      teams: { party: content.randomCells(party, seed), enemies: content.randomCells(enemies, seed + 7) },
+      partySize: party.length,
+      enemySize: enemies.length,
+    };
+    const b = battle();
+    if (b) b.scene.restart(data);
+    else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+  };
+  const mobIds = Object.keys(content.mobs).sort((a, b) => content.mobs[a]!.name.localeCompare(content.mobs[b]!.name));
+  debug.registerPanel({
+    id: 'panel.mob-battle',
+    tab: 'Setup',
+    render: (el) => {
+      const full = content.CELL_COUNT;
+      el.append(
+        heading('Mob battle'),
+        noteLineText(`Both sides get ${full} mobs (full board). You play your side by hand, as in a test battle. Test mode: no turn order, no cooldowns. Your campaign save is not touched.`),
+        row(
+          debugButton('Random mobs', () => {
+            const seed = newSeed();
+            mobBattle(content.randomTeam(seed, full, mobIds), content.randomTeam(seed + 7, full, mobIds));
+          }, { icon: 'dice', title: `Both sides: ${full} random mobs each` }),
+        ),
+        heading('One mob, both sides'),
+      );
+      const grid = document.createElement('div');
+      grid.className = 'debug-grid';
+      for (const id of mobIds) {
+        const def = content.mobs[id]!;
+        grid.append(debugButton(def.name, () => mobBattle(Array(full).fill(id), Array(full).fill(id)), { icon: def.logo, title: `Both sides: ${full} x ${def.name}` }));
+      }
+      el.append(grid);
+    },
+  });
   debug.register({
     id: 'battle.rematch',
     icon: 'swap',

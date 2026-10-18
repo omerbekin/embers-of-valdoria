@@ -81,8 +81,9 @@ export interface AiGlobalConfig {
   };
   skip: {
     /**
-     * Skip (sonraki tur %100 hızla yarı sürede gelir; birim hemen tekrar oynamaz): yapacak değerli hamle yokken ya da şimdiki hamlenin değeri,
-     * 1 tur sonra hazır olacak skill'in değerinin bu payından azsa. Başka durumda seçilmez ('bedava zaman' yok: bir tur kaybedilir).
+     * Skip (sonraki tur %100 hızla yarı sürede gelir; birim hemen tekrar oynamaz): yapacak değerli hamle yokken ya da şimdiki hamle
+     * 1 tur sonra hazır olacak skill'i MP/Rage bedeliyle o turda karşılanamaz kılıyorsa VE değeri o skill'in değerinin bu payından azsa.
+     * Hamle skill'i engellemiyorsa Skip seçilmez (skill her iki yolda da hazırdır; pas bir tur kaybettirir).
      */
     worthlessShare: number;
   };
@@ -192,7 +193,8 @@ export interface GlobalTrace {
   /** Valor diriltmesi: en iyi aday (değer, net) ya da neden yok. */
   valor?: { target: string; slot: number; value: number; net: number } | null;
   valorBlocked?: string;
-  skipChecks?: Array<{ skill: string; futureValue: number; nowValue: number; needBelow: number; hit: boolean }>;
+  /** blocks: şimdiki hamle bu skill'i sonraki turda karşılanamaz kılıyor mu (MP/Rage); false ise pas bir şey kazandırmaz. */
+  skipChecks?: Array<{ skill: string; futureValue: number; nowValue: number; needBelow: number; blocks: boolean; hit: boolean }>;
   skipNote?: string;
   outcome?: string;
 }
@@ -1907,7 +1909,7 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
     return null;
   }
 
-  // Skip Turn: yapılacak değerli hamle yok; ya da 1 tur sonra hazır olacak güçlü skill'e kıyasla şimdiki hamle değersiz.
+  // Skip Turn: yapılacak değerli hamle yok; ya da şimdiki hamle (MP/Rage bedeliyle) 1 tur sonra hazır olacak güçlü skill'i engelliyor ve ona kıyasla değersiz.
   // Skip artık sonraki turu yarı sürede getirir (hız x2, düşman araya girebilir): cooldown/MP bir azalma sonraki turda yine işler, yani skill hazır olur.
   if (trace) trace.skipChecks = [];
   const canSkip = battle.canUseGlobal(actor.uid, 'skip_turn');
@@ -1918,15 +1920,22 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
       return { skillId: 'skip_turn', reason: 'skip' };
     }
     const regen = actor.stats.mpRegen;
+    // Şimdiki hamlenin Rage bedeli (MP bedeli yukarıda `spend`)
+    const rageSpend = pick && pick.option.skill.cost.resource === 'rage' && !battle.freeRage ? pick.option.skill.cost.amount : 0;
     for (const id of actor.skills) {
       const sk = battle.skill(id);
       if (!sk || (actor.cooldowns[id] ?? 0) !== 1) continue;
       const need = sk.cost.resource === 'mp' ? mpNeedOf(sk, actor) : 0;
       if (sk.cost.resource === 'mp' && !battle.freeMp && Math.min(actor.maxMp, actor.mp + regen) < need) continue;
       if (sk.cost.resource === 'rage' && (actor.rage ?? 0) < sk.cost.amount) continue;
+      // Skill bekleme süresi bir sonraki kendi turunda zaten dolar: pas yalnızca şimdiki hamle onu o turda karşılanamaz kılıyorsa
+      // (MP/Rage bedeli) bir şey kazandırır. Engellemiyorsa (ör. 0 MP Holy Strike, Radiance aynı tur hazır) Skip düşünülmez.
+      const blocks =
+        (sk.cost.resource === 'mp' && !battle.freeMp && spend > 0 && Math.min(actor.maxMp, actor.mp - spend + regen) < need) ||
+        (sk.cost.resource === 'rage' && !battle.freeRage && rageSpend > 0 && (actor.rage ?? 0) - rageSpend < sk.cost.amount);
       const v = bestSkillValue(battle, actor, sk, profile, Math.min(actor.maxMp, actor.mp + regen)) * g.rest.futureValueShare;
-      const hit = v > 0 && vNow < g.skip.worthlessShare * v;
-      trace?.skipChecks?.push({ skill: id, futureValue: v, nowValue: vNow, needBelow: g.skip.worthlessShare * v, hit });
+      const hit = blocks && v > 0 && vNow < g.skip.worthlessShare * v;
+      trace?.skipChecks?.push({ skill: id, futureValue: v, nowValue: vNow, needBelow: g.skip.worthlessShare * v, blocks, hit });
       if (hit) {
         if (trace) trace.outcome = `skip_turn: ${id} is ready next turn (value ${r2(v)}) and the current move is worth only ${r2(vNow)}`;
         return { skillId: 'skip_turn', reason: 'skip' };

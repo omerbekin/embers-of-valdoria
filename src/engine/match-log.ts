@@ -555,7 +555,7 @@ function globalText(g: AiExplanation['global']): string {
   else if (g.moveBlocked) bits.push(`move: ${g.moveBlocked}`);
   if (g.restGain) bits.push(`rest gain ${r1(g.restGain)}`);
   else if (g.restBlocked) bits.push(`rest: ${g.restBlocked}`);
-  if (g.skipChecks && g.skipChecks.length > 0) bits.push(`skip: ${g.skipChecks.map((s) => `${s.skill} next-turn value ${r1(s.futureValue)} vs now ${r1(s.nowValue)} (needs now < ${r1(s.needBelow)}) ${s.hit ? 'YES' : 'no'}`).join('; ')}`);
+  if (g.skipChecks && g.skipChecks.length > 0) bits.push(`skip: ${g.skipChecks.map((s) => `${s.skill} next-turn value ${r1(s.futureValue)} vs now ${r1(s.nowValue)} (needs now < ${r1(s.needBelow)}${s.blocks === false ? '; current move does not block it' : ''}) ${s.hit ? 'YES' : 'no'}`).join('; ')}`);
   else if (g.skipNote) bits.push(`skip: ${g.skipNote}`);
   if (g.outcome) bits.push(`=> ${g.outcome}`);
   return bits.join(' | ') || 'not evaluated';

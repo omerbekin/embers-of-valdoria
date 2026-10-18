@@ -119,6 +119,79 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
   return spr;
 }
 
+/** Bir sheet karesinin iki dayanak noktası (kare pikseli, 256'lık karede 0-256; alfa ağırlıklı). */
+export interface SheetAnchors {
+  /** Ağırlık merkezi: sheet'in "vuruş noktası" (göğüs hizasında inen melee/mermi efekti bunu hedefin gövdesine oturtur). */
+  core: [number, number];
+  /** Zemin teması: içeriğin en alt %25'lik bandının ağırlık merkezi y'si (zemin diski/halkası; efekt bu y'yi hücre zeminine oturtur). */
+  baseY: number;
+}
+
+const ANCHOR_BAND = 0.25; // içerik yüksekliğinin alttan bu kadarı "zemin bandı"
+const anchorCache = new Map<string, SheetAnchors | null>();
+
+/**
+ * Bir karenin dayanak noktaları (`SheetAnchors`). Sheet'ler vuruşu karenin ortasına, zemin halkasını da karenin en altına değil
+ * sanatın istediği yere çizer; pivot (kare ortası / alt kenar) bunu bilmez. Çağıran `origin` yapıp efekti hedefe oturtur (mob-vfx.ts).
+ * Doku/tuval yoksa (node, yüklenmemiş) ya da kare boşsa null: pivot kullanılır. Sonuç önbelleğe alınır.
+ */
+export function vfxSheetAnchors(scene: Phaser.Scene, id: string, frame: number): SheetAnchors | null {
+  const ck = `${id}#${frame}`;
+  if (anchorCache.has(ck)) return anchorCache.get(ck)!;
+  let out: SheetAnchors | null = null;
+  try {
+    const key = vfxSheetKey(id);
+    if (typeof document !== 'undefined' && scene.textures.exists(key)) {
+      const fr = scene.textures.get(key).get(frame);
+      const [fw, fh] = frameSize(id);
+      const cv = document.createElement('canvas');
+      cv.width = fw;
+      cv.height = fh;
+      const cx = cv.getContext('2d', { willReadFrequently: true });
+      if (cx) {
+        cx.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fw, fh);
+        const px = cx.getImageData(0, 0, fw, fh).data;
+        const rowSum = new Float64Array(fh);
+        const rowY = new Float64Array(fh);
+        let sa = 0;
+        let sx = 0;
+        let sy = 0;
+        for (let y = 0; y < fh; y++)
+          for (let x = 0; x < fw; x++) {
+            const a = px[(y * fw + x) * 4 + 3]!;
+            rowSum[y]! += a;
+            sa += a;
+            sx += a * x;
+            sy += a * y;
+          }
+        for (let y = 0; y < fh; y++) rowY[y] = rowSum[y]! * y;
+        // içerik satırları: gerçek kütle taşıyanlar (zayıf kıvılcım/hale satırları alt kenarı belirlemesin)
+        let top = -1;
+        let bot = -1;
+        for (let y = 0; y < fh; y++)
+          if (rowSum[y]! > 255 * 3) {
+            if (top < 0) top = y;
+            bot = y;
+          }
+        if (sa > 0 && top >= 0) {
+          const from = bot - (bot - top) * ANCHOR_BAND;
+          let ba = 0;
+          let by = 0;
+          for (let y = Math.ceil(from); y <= bot; y++) {
+            ba += rowSum[y]!;
+            by += rowY[y]!;
+          }
+          out = { core: [sx / sa, sy / sa], baseY: ba > 0 ? by / ba : bot };
+        }
+      }
+    }
+  } catch {
+    out = null; // okunamayan doku (çapraz köken vb.): pivota düşer
+  }
+  anchorCache.set(ck, out);
+  return out;
+}
+
 /** Sheet sprite'ının animasyonu bitince (ya da yok edilince) çözülür; null için hemen. */
 export function sheetDone(spr: Phaser.GameObjects.Sprite | null): Promise<void> {
   if (!spr || !spr.active) return Promise.resolve();

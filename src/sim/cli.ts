@@ -72,6 +72,19 @@ for (const { name, id, s } of rows) {
 console.log(skillWarnings.length ? `  UYARI: ${skillWarnings.join(', ')}` : '  Tüm skill\'ler bandında.');
 
 console.log('');
+console.log('ÇAĞRI HASARI (Skeleton/Treant vb. çağrıların verdiği hasar, çağıran sınıfa göre; birim başına = çağıran sınıfın birim sayısına bölünür)');
+console.log("  Not: çağrı hasarı yukarıdaki SINIF DENGESİ 'hasar' sütununa SAYILMAZ (çağrının kendi id'sine gider); burada ayrıca gösterilir. Pay = çağrı / (sınıf + çağrı).");
+const summoners = rows.filter((x) => x.s.summonDamage > 0 || x.s.summonSkillUses.size > 0);
+if (!summoners.length) console.log('  Çağrı hasarı yok.');
+for (const { name, s } of summoners) {
+  const own = s.damage / s.units;
+  const sum = s.summonDamage / s.units;
+  console.log(`  ${name.padEnd(9)} çağrı hasarı ${fmt(sum, 0).padStart(5)}  (sınıfın kendi hasarı ${fmt(own, 0)}, toplam ${fmt(own + sum, 0)}; çağrı payı %${fmt(pct(s.summonDamage, s.damage + s.summonDamage))})`);
+  const uses = [...s.summonSkillUses].sort((x, y) => y[1] - x[1]).map(([sk, n]) => `${content.skills[sk]?.name ?? content.globalSkills[sk]?.name ?? sk} ${n} (${fmt(n / s.units, 2)}/birim)`);
+  console.log(`      çağrı skill'leri: ${uses.length ? uses.join(', ') : '-'}`);
+}
+
+console.log('');
 console.log(`ULTIMATE (4. skill) KULLANIMI (hazır = birim hayattayken en az bir turunda kullanılabilirdi; hedef: class ortalaması >= %${B.ultimateUsedMin}; tek class %${B.ultimateLowWarn} altıysa uyarı)`);
 let ultSum = 0;
 for (const { name, id, s } of rows) {

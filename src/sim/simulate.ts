@@ -54,6 +54,12 @@ export interface ClassStat {
   ultReady: number;
   ultUsedWhenReady: number;
   ultUsedAny: number;
+  /**
+   * Bu sınıfın çağrılarının (Skeleton, Treant) verdiği hasar ve çağrı skill kullanımları (yalnızca ölçüm).
+   * `damage` alanına EKLENMEZ: çağrı hasarı orada çağrının kendi id'sine (ör. 'skeleton') sayılır.
+   */
+  summonDamage: number;
+  summonSkillUses: Map<string, number>;
 }
 
 export interface SimResult {
@@ -79,7 +85,7 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
   const stat = (id: string): ClassStat => {
     let s = classes.get(id);
     if (!s) {
-      s = { games: 0, wins: 0, units: 0, deaths: 0, damage: 0, heal: 0, shield: 0, moves: 0, skips: 0, skillUses: new Map(), ultReady: 0, ultUsedWhenReady: 0, ultUsedAny: 0 };
+      s = { games: 0, wins: 0, units: 0, deaths: 0, damage: 0, heal: 0, shield: 0, moves: 0, skips: 0, skillUses: new Map(), ultReady: 0, ultUsedWhenReady: 0, ultUsedAny: 0, summonDamage: 0, summonSkillUses: new Map() };
       classes.set(id, s);
     }
     return s;
@@ -93,6 +99,11 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
     const setup = content.battleSetup(battleId, firstSeed + i, 'turns', sizes);
     const battle = new Battle(setup);
     const idOf = (uid: string) => battle.get(uid)?.defId ?? '?';
+    /** Çağrıysa sahibinin sınıf id'si (ölçüm: çağrı hasarını sahibine ayrıca yazmak için). */
+    const ownerOf = (uid: string) => {
+      const c = battle.get(uid);
+      return c?.summoned && c.owner ? battle.get(c.owner)?.defId : undefined;
+    };
     /** Birim başına ultimate durumu: hazır gördü mü, kullandı mı. */
     const ult = new Map<string, { ready: boolean; used: boolean }>();
 
@@ -112,9 +123,15 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
       s.moves++;
       if (!choice) s.skips++;
       else bump(s.skillUses, choice.skillId);
+      const actorOwner = actor.summoned ? ownerOf(actor.uid) : undefined;
+      if (actorOwner && choice) bump(stat(actorOwner).summonSkillUses, choice.skillId);
       if (ultId && choice?.skillId === ultId) ult.get(actor.uid)!.used = true;
       for (const e of r.events) {
-        if (e.type === 'damage') stat(idOf(e.source)).damage += e.amount + e.absorbed;
+        if (e.type === 'damage') {
+          stat(idOf(e.source)).damage += e.amount + e.absorbed;
+          const o = ownerOf(e.source);
+          if (o) stat(o).summonDamage += e.amount + e.absorbed;
+        }
         if (e.type === 'heal') stat(idOf(e.source)).heal += e.amount;
         if (e.type === 'shield') stat(idOf(e.source)).shield += e.amount;
       }
@@ -185,9 +202,11 @@ export function mergeResults(parts: SimResult[]): SimResult {
     for (const [k, v] of p.comps) addWin(out.comps, k, v);
     for (const [k, v] of p.matchups) addWin(out.matchups, k, v);
     for (const [id, s] of p.classes) {
-      const o = out.classes.get(id) ?? { games: 0, wins: 0, units: 0, deaths: 0, damage: 0, heal: 0, shield: 0, moves: 0, skips: 0, skillUses: new Map(), ultReady: 0, ultUsedWhenReady: 0, ultUsedAny: 0 };
+      const o = out.classes.get(id) ?? { games: 0, wins: 0, units: 0, deaths: 0, damage: 0, heal: 0, shield: 0, moves: 0, skips: 0, skillUses: new Map(), ultReady: 0, ultUsedWhenReady: 0, ultUsedAny: 0, summonDamage: 0, summonSkillUses: new Map() };
       for (const key of ['games', 'wins', 'units', 'deaths', 'damage', 'heal', 'shield', 'moves', 'skips', 'ultReady', 'ultUsedWhenReady', 'ultUsedAny'] as const) o[key] += s[key];
+      o.summonDamage += s.summonDamage;
       for (const [sk, n] of s.skillUses) bump(o.skillUses, sk, n);
+      for (const [sk, n] of s.summonSkillUses) bump(o.summonSkillUses, sk, n);
       out.classes.set(id, o);
     }
   }

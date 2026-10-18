@@ -164,19 +164,48 @@ describe('YZ Skip Turn: yapılacak anlamlı hamle yokken ya da 1 tur sonra hazı
     }
   });
 
-  it('1 tur sonra hazır olacak güçlü skill (Aimed Shot) varken şimdiki hamle onunla kıyaslanınca değersizse Skip Turn', () => {
+  // Skip/Rest eşiklerini aşırı gevşeten/sıkan ayar: yalnızca "hamle skill'i engelliyor mu" kapısını sınamak için (Rest ve Move devre dışı)
+  const skipOnly: AiConfig = {
+    ...ai,
+    global: { ...g, skip: { ...g.skip, worthlessShare: 1e9 }, rest: { ...g.rest, minGainShare: 1e9 }, move: { ...g.move, minAvoidShare: 1e9, minFrontGainShare: 1e9, minAuraGain: 1e9 } },
+  };
+
+  it("bedelsiz hamle (Quick Shot) 1 tur sonra hazır olan Aimed Shot'u engellemiyorsa Skip seçilmez (skill her iki yolda da hazır)", () => {
     const b = until(mk({ 0: 'archer', 3: 'paladin' }, { 0: 'defender', 1: 'defender' }), 'party-0');
     const a = b.get('party-0')!;
     const aimed = content.skills.aimed_shot!;
     a.cooldowns = { aimed_shot: 1, arrow_rain: 9, piercing_arrow: 9 };
-    a.mp = aimed.cost.amount - a.stats.mpRegen; // yalnızca bedelsiz Quick Shot yapılabilir; bir tur sonra Aimed Shot yetecek
-    // Terazi (madde 257): Quick Shot'ın Haste'i de değerdir (Aimed Shot'a daha çabuk varır); Haste zaten üstündeyse yalnızca zayıf vuruş kalır
+    a.mp = aimed.cost.amount - a.stats.mpRegen; // yalnızca bedelsiz Quick Shot yapılabilir; bir tur sonra Aimed Shot yine yetecek
     a.statuses.push({ kind: 'haste', turns: 5, source: a.uid });
     expect(pick(b, 'party-0', classOnly)?.skillId).toBe('quick_shot');
-    expect(pick(b, 'party-0')).toMatchObject({ skillId: 'skip_turn', reason: 'skip' });
-    // skill 2+ tur sonra hazırsa beklemek değer katmaz
-    a.cooldowns = { aimed_shot: 3, arrow_rain: 9, piercing_arrow: 9 };
     expect(pick(b, 'party-0')?.skillId).not.toBe('skip_turn');
+    expect(pick(b, 'party-0', skipOnly)?.skillId).not.toBe('skip_turn');
+  });
+
+  it('Paladin: 0 MP Holy Strike varken Radiance 1 tur sonra hazırsa Skip seçilmez (beklemek bir şey kazandırmaz)', () => {
+    const b = until(mk({ 0: 'paladin', 3: 'archer' }, { 0: 'warrior', 1: 'defender' }), 'party-0');
+    const p = b.get('party-0')!;
+    p.cooldowns = { radiance: 1, judgment: 9, resurrection: 9 };
+    p.mp = p.maxMp;
+    expect(pick(b, 'party-0', classOnly)?.skillId).toBe('holy_strike');
+    expect(pick(b, 'party-0')?.skillId).not.toBe('skip_turn');
+    // eşik ne kadar gevşek olsa da: Holy Strike Radiance'ı engellemiyor
+    expect(pick(b, 'party-0', skipOnly)?.skillId).not.toBe('skip_turn');
+  });
+
+  it("Paladin: şimdiki hamlenin MP bedeli (Judgment) Radiance'ı sonraki turda karşılanamaz kılıyorsa Skip hâlâ seçilebilir", () => {
+    const b = until(mk({ 0: 'paladin', 3: 'archer' }, { 0: 'warrior', 1: 'defender', 3: 'mage' }), 'party-0');
+    const p = b.get('party-0')!;
+    const rad = content.skills.radiance!;
+    const jud = content.skills.judgment!;
+    p.cooldowns = { radiance: 1, holy_strike: 9, resurrection: 9 };
+    p.mp = rad.cost.amount; // Judgment sonrası MP + yenilenme < Radiance bedeli; pas geçerse yeter
+    expect(p.mp - jud.cost.amount + p.stats.mpRegen).toBeLessThan(rad.cost.amount);
+    expect(pick(b, 'party-0', classOnly)?.skillId).toBe('judgment');
+    expect(pick(b, 'party-0', skipOnly)).toMatchObject({ skillId: 'skip_turn', reason: 'skip' });
+    // aynı durumda Radiance 2+ tur sonra hazırsa beklemek değer katmaz
+    p.cooldowns = { radiance: 3, holy_strike: 9, resurrection: 9 };
+    expect(pick(b, 'party-0', skipOnly)?.skillId).not.toBe('skip_turn');
   });
 
   it('şimdiki hamle öldürüyorsa ya da işlevselse (şifa/çağrı...) Skip seçilmez', () => {

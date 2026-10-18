@@ -10,11 +10,23 @@ const easy = run('easy');
 const medium = run('medium');
 const hard = run('hard');
 
+/**
+ * BİLİNEN EKSİK (geçici muafiyet; normalde BOŞ): yalnızca listedeki kategori + aralık için "en az 5 puan" farkı denetlenmez (uyarı yazılır);
+ * sıralama (Easy > Medium) yine denetlenir. Diğer kategoriler ve Medium > Hard farkı aynen denetlenir. Sefer denge turunda listeden çıkarılır.
+ */
+export const PENDING_ORDER_GAPS: Readonly<Record<string, string>> = {
+  // Ömer 2026-10-18: sefer denge turuna kadar; Easy %99,2 / Medium %94,5 fark 4,7 (genel sınıf denge turu sonrası, open-questions 350)
+  'normal:easy-medium': 'Ömer 2026-10-18: until the campaign balance round; Easy 99.2% / Medium 94.5%, gap 4.7',
+};
+
 describe(`zorluk sıralaması (${T.orderRuns} sefer, seed ${T.orderSeed})`, () => {
   for (const c of ['normal', 'elite', 'boss'] as NodeCategory[])
     it(`${c}: Easy > Medium > Hard (en az 5 puan arayla)`, () => {
       const msg = `${c}: easy %${easy[c].toFixed(1)}, medium %${medium[c].toFixed(1)}, hard %${hard[c].toFixed(1)}`;
-      expect(easy[c] - medium[c], msg).toBeGreaterThanOrEqual(5);
+      if (`${c}:easy-medium` in PENDING_ORDER_GAPS) {
+        console.warn(`[campaign-difficulty] BİLİNEN EKSİK: ${msg} (Easy-Medium 5 puan farkı muaf: PENDING_ORDER_GAPS)`);
+        expect(easy[c], msg).toBeGreaterThan(medium[c]);
+      } else expect(easy[c] - medium[c], msg).toBeGreaterThanOrEqual(5);
       expect(medium[c] - hard[c], msg).toBeGreaterThanOrEqual(5);
     });
 

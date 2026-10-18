@@ -109,6 +109,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     ...(data.ai ? { ai: data.ai } : {}),
     ...(data.passive ? { passive: data.passive } : {}),
     ...(data.variants ? { variants: { fed: { ...data.variants.fed }, unfed: { ...data.variants.unfed } } } : {}),
+    ...(data.summonerScale ? { summonerScale: { ...data.summonerScale, attributes: { ...data.summonerScale.attributes } } } : {}),
     ...(data.overrides ? { overrides: { ...data.overrides } } : {}),
     ...(data.accuracyBase !== undefined ? { accuracyBase: data.accuracyBase } : {}),
     ...(data.boss ? { boss: data.boss } : {}),
@@ -212,6 +213,44 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
 /** Çağrı varyantının stat çarpanı (varyant yoksa 1). */
 export function variantMult(def: CombatantDef, variant: keyof SummonVariants | undefined): number {
   return variant ? (def.variants?.[variant].mult ?? 1) : 1;
+}
+
+/**
+ * Çağrının çağırana göre statları (Ömer 2026-10-18, D1; saf): `def.summonerScale` varsa çağrının listelenen temel statları, maks canı ve can yenilenmesi
+ * çağıranın `from` statından türer (bkz. SummonerScale), diğer türevler (MP, hız, kritik...) formüllerle yeniden hesaplanır; dosyadaki diğer
+ * overrides korunur. Kural ya da çağıran statı yoksa tanım aynen döner. Varyant (applySummonVariant) ve Summon mastery bundan SONRA uygulanır.
+ */
+export function applySummonerScale(def: CombatantDef, summoner: Attributes | undefined, formulas: Formulas): CombatantDef {
+  const sc = def.summonerScale;
+  if (!sc || !summoner) return def;
+  const src = summoner[sc.from] ?? 0;
+  const attributes: Attributes = { ...def.attributes };
+  for (const k of ATTRS) {
+    const r = sc.attributes[k];
+    if (r !== undefined) attributes[k] = Math.max(0, Math.round(src * r));
+  }
+  const overrides: Partial<Stats> = { ...(def.overrides ?? {}), hp: Math.max(1, Math.round(src * sc.hp)) };
+  if (sc.hpRegen !== undefined) overrides.hpRegen = Math.round(src * sc.hpRegen * 10000) / 10000;
+  const stats = deriveStats(
+    {
+      id: def.id,
+      name: def.name,
+      spriteId: def.spriteId,
+      color: def.color,
+      logo: def.logo,
+      frontPriority: def.frontPriority,
+      attributes,
+      ...(def.primary ? { primary: def.primary } : {}),
+      armor: def.stats.armor,
+      magicArmor: def.stats.magicArmor,
+      ...(def.accuracyBase !== undefined ? { accuracyBase: def.accuracyBase } : {}),
+      overrides,
+      ...(def.passive ? { passive: def.passive } : {}),
+      skills: def.skills,
+    },
+    formulas,
+  );
+  return { ...def, attributes, overrides, stats };
 }
 
 /**

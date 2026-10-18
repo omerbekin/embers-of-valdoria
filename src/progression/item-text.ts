@@ -33,7 +33,7 @@ import {
   type RolledAffix,
   type SlotId,
 } from './items';
-import { capOf, loadout, type LoadoutSource } from './loadout';
+import { capOf, loadout, loadoutSetup, type LoadoutSource } from './loadout';
 
 const fmt = (x: number) => (Number.isInteger(x) ? String(x) : String(Math.round(x * 10) / 10));
 const ATTR_NAME: Record<string, string> = { str: 'STR', dex: 'DEX', int: 'INT', luck: 'LUCK' };
@@ -251,7 +251,11 @@ export interface HeroPanelStat {
 /** Kahramanın savaşa gireceği motor statları (temel + item'ler; güç katmanıyla AYNI hesap). Class yoksa null. */
 export function heroStats(src: LoadoutSource): Stats | null {
   const def = classes[src.class];
-  return def ? applyUnitModifiers(def, loadout(src).modifiers, formulas).stats : null;
+  if (!def) return null;
+  const stats = applyUnitModifiers(def, loadout(src).modifiers, formulas).stats;
+  // Çağrı skill'lerinin metni item HARİÇ temel statla (summon yeniden tasarımı; motorla aynı: loadoutSetup.summonBase)
+  const base = loadoutSetup(src).summonBase;
+  return base ? { ...stats, summonBase: base } : stats;
 }
 
 /**

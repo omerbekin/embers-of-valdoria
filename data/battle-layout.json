@@ -260,10 +260,10 @@
     "announceMs": 1100,
     "skillSlowdown": 1.2,
     "mobVfx": {
-      "_not": "Sefer mobu 8 karelik skill sheet'lerinin oynatma hızı (src/game/mob-vfx.ts; sınıf skill'lerinin v2 sheet'leri bundan etkilenmez). fpsScale = sheet fps'i (meta, çoğu 12) çarpanı; impactHoldMs = vuruş karesinde donma (ms, skillSlowdown ile çarpılır); windMult = hazırlık pozlu yakın dövüş skill'lerinin (spec.windMs, Bandit Chief) bekleme çarpanı. Geçmiş: 0.8.3.2 öncesi 1 / 0 ms (çok hızlı, efekt seçilmiyordu), 0.8.3.2-0.8.4.1 arası 0.7 / 110 ms (çok yavaş); 0.8.4.2 'tam ortası' 0.82 / 55 ms (hâlâ yavaş: ekranda kare ~122 ms, sheet ~1,04 sn; yakın dövüş mobu efekt sonu ~1,25 sn, büyü mobu ~1,38 sn; sınıf skill'leri vuruşa 0,36-0,70 sn, efekt sonu ~0,9-1,1 sn, sheet'leri 12-22 fps). Ömer 2026-10-18 '~%35 hızlansın': 1.1 / 40 ms / windMult 0.7 (sheet kısmı 1,35 kat hızlı: ekranda kare ~91 ms; yakın dövüş vuruşa ~0,48 sn, sonu ~0,98 sn; büyü/alan vuruşa ~0,52-0,61 sn, sonu ~1,11 sn).",
-      "fpsScale": 1.1,
-      "impactHoldMs": 40,
-      "windMult": 0.7
+      "_not": "Sefer mobu 8 karelik skill sheet'lerinin oynatma hızı (src/game/mob-vfx.ts; sınıf skill'lerinin v2 sheet'leri bundan etkilenmez). fpsScale = sheet fps'i (meta, çoğu 12) çarpanı; impactHoldMs = vuruş karesinde donma (ms, skillSlowdown ile çarpılır); windMult = hazırlık pozlu yakın dövüş skill'lerinin (spec.windMs, Bandit Chief) bekleme çarpanı. Geçmiş: 0.8.3.2 öncesi 1 / 0 ms (çok hızlı, efekt seçilmiyordu), 0.8.3.2-0.8.4.1 arası 0.7 / 110 ms (çok yavaş); 0.8.4.2 'tam ortası' 0.82 / 55 ms (hâlâ yavaş: ekranda kare ~122 ms, sheet ~1,04 sn; yakın dövüş mobu efekt sonu ~1,25 sn, büyü mobu ~1,38 sn; sınıf skill'leri vuruşa 0,36-0,70 sn, efekt sonu ~0,9-1,1 sn, sheet'leri 12-22 fps). Ömer 2026-10-18 '~%35 hızlansın': 1.1 / 40 ms / windMult 0.7 (sheet kısmı 1,35 kat hızlı: ekranda kare ~91 ms; yakın dövüş vuruşa ~0,48 sn, sonu ~0,98 sn; büyü/alan vuruşa ~0,52-0,61 sn, sonu ~1,11 sn) Ömer 2026-10-18 '~%20 daha hızlı': 1.32 / 33 ms / windMult 0.58 (ekranda kare ~76 ms).",
+      "fpsScale": 1.32,
+      "impactHoldMs": 33,
+      "windMult": 0.58
     },
     "hitMaxRatio": 0.35,
     "damageNumberMaxRatio": 0.25,

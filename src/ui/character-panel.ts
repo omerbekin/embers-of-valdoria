@@ -115,8 +115,11 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
   box.append(head, bar);
   const pend = lv ? pendingCount(lv.pending) : 0;
   const free = (hero.statPoints ?? 0) - pend;
-  if (lv && (free > 0 || pend > 0)) {
-    const row = el('div', 'gr-pts');
+  // Puan ekranında satır puan yokken de (Confirm sonrası) görünmez olarak yer tutar: altındaki statlar kaymaz (Ömer 2026-10-18)
+  if (lv) {
+    const idle = free <= 0 && pend <= 0;
+    const row = el('div', `gr-pts${idle ? ' gr-pts-idle' : ''}`);
+    if (idle) row.setAttribute('aria-hidden', 'true');
     const chip = el('span', `gr-pts-chip${free > 0 ? '' : ' empty'}`, String(free));
     chip.title = 'Drag onto a stat, or tap + next to it';
     if (free > 0) chip.dataset['ptdrag'] = '1';
@@ -292,35 +295,42 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     ico.alt = '';
     ico.draggable = false;
     row.append(ico, el('span', 'gr-stat-k', p.label), el('span', 'gr-stat-v', fmtPanel(p)));
-    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı)
+    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
+    // (kullanılamayan düğme görünmez ama yerinde durur): +, −, Reset, Confirm satırları kaydırmaz (Ömer 2026-10-18)
     const attr = ATTR_IDS.find((k) => k === p.id);
-    if (attr && v.level && (freePts > 0 || (pending[attr] ?? 0) > 0)) {
+    if (attr && v.level) {
       const lv = v.level;
-      row.dataset['attr'] = attr;
+      const active = freePts > 0 || (pending[attr] ?? 0) > 0;
+      if (active) row.dataset['attr'] = attr;
       const can = freePts > 0 && canAddPoint(hero.class, allocNow, attr);
       if (can) row.classList.add('can-add');
       const pm = el('span', 'gr-pm');
+      const hide = (b: HTMLButtonElement): void => {
+        b.disabled = true;
+        b.tabIndex = -1;
+        b.classList.add('gr-pm-off');
+        b.setAttribute('aria-hidden', 'true');
+      };
+      const sub = el('button', 'gr-pm-b', '−');
+      sub.type = 'button';
       if ((pending[attr] ?? 0) > 0) {
-        const sub = el('button', 'gr-pm-b', '−');
-        sub.type = 'button';
         sub.title = `Take back a point from ${p.label}`;
         sub.addEventListener('click', (e) => {
           e.stopPropagation();
           lv.onSub(attr);
         });
-        pm.append(sub);
-      }
+      } else hide(sub);
+      const add = el('button', 'gr-pm-b', '+');
+      add.type = 'button';
       if (freePts > 0) {
-        const add = el('button', 'gr-pm-b', '+');
-        add.type = 'button';
         add.disabled = !can;
         add.title = can ? `Add a point to ${p.label}` : 'A base stat can never exceed the sum of the other three';
         add.addEventListener('click', (e) => {
           e.stopPropagation();
           if (can) lv.onAdd(attr);
         });
-        pm.append(add);
-      }
+      } else hide(add);
+      pm.append(sub, add);
       row.append(pm);
     }
     // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)

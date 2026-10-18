@@ -50,7 +50,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.776,
+        "power": 0.87,
         "lifesteal": 0.2
       }
     ],
@@ -78,7 +78,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.482,
+        "power": 0.51,
         "element": "holy"
       }
     ],
@@ -174,7 +174,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 1.03,
+        "power": 1.07,
         "element": "fire"
       }
     ],
@@ -209,7 +209,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.783,
+        "power": 0.81,
         "element": "ice"
       }
     ],
@@ -844,14 +844,13 @@
   },
   "vine_snare": {
     "id": "vine_snare",
+    "_not": "Ömer 2026-10-18 (summon yeniden tasarımı): 2x2 alan yerine mobdan moba uzanan kök zinciri. Oyuncu/YZ ilk hedefi seçer (menzil içinde), kök oradan en yakın vurulmamış düşmana sıçrar (splash chain, en çok jumps sıçrama; ekran ızgarasında en yakın, eşitlikte küçük yuva); her sıçramada hasar bir öncekinden %20 azalır (falloff 0,8: 1 / 0,8 / 0,64 / 0,512 / 0,41). Stun (Rooted) şansı %25 her vurulan hedefe ayrı. jumps 4 = en çok 5 hedef (Ömer 2026-10-18, open-questions 351).",
     "name": "Vine Snare",
     "icon": "vinesnare",
-    "target": "area_enemies",
-    "area": {
-      "shape": "rect",
-      "rows": 2,
-      "cols": 2,
-      "anchor": "bottom_left"
+    "target": "single_enemy",
+    "splash": {
+      "pattern": "chain",
+      "jumps": 4
     },
     "cost": {
       "resource": "mp",
@@ -866,7 +865,8 @@
         "damageType": "magic",
         "scale": "int",
         "power": 0.225,
-        "element": "nature"
+        "element": "nature",
+        "falloff": 0.8
       },
       {
         "type": "status",
@@ -1159,7 +1159,7 @@
     "target": "dead_ally",
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 16
     },
     "cooldown": 5,
     "motion": "cast",

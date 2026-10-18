@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { content } from '../src/engine';
+import { applySummonerScale, content } from '../src/engine';
 import type { Battle } from '../src/engine';
 import {
   ENDLESS,
@@ -115,23 +115,28 @@ describe('Endless sürekli akış: dalga arası taşıma', () => {
     const owner = base.heroes.find((h) => h.class === 'druid')!;
     const used = new Set(base.heroes.map((h) => h.slot));
     const cell = [...Array(12).keys()].find((c) => !used.has(c))!;
-    const run: EndlessRun = { ...base, wave: 2, summons: [{ unit: 'skeleton', slot: cell, owner: owner.id, hp: 20, lifespan: 3, empowered: true, statuses: [{ kind: 'haste', turns: 1, source: `h:${owner.id}` }] }] };
+    const run: EndlessRun = { ...base, wave: 2, summons: [{ unit: 'skeleton', slot: cell, owner: owner.id, hp: 20, lifespan: 3, empowered: true, statuses: [{ kind: 'haste', turns: 2, source: `h:${owner.id}` }] }] };
     const plan = wavePlan(run);
     expect(plan.heroOrder.filter((x) => x === '')).toHaveLength(1);
     const b = battleFor(plan);
     const sk = b.combatants.find((c) => c.summoned && c.side === 'party')!;
     const dr = unitOf(b, 'druid');
     expect(sk.slot).toBe(cell);
-    expect(sk.hp).toBe(20);
+    // Skeleton hızı 17 (Ömer 2026-10-18): kurulumda ilk sıra ona gelebilir; o zaman tur başı can yenilenmesini (yuvarlanmış) çoktan almıştır
+    const firstUp = b.currentUid === sk.uid;
+    expect(sk.hp).toBe(firstUp ? Math.min(sk.maxHp, 20 + Math.round(sk.stats.hpRegen)) : 20);
     expect(sk.owner).toBe(dr.uid);
     expect(sk.lifespan).toBe(3);
     expect(sk.empowered).toBe(true);
-    expect(sk.maxHp).toBe(content.summons.skeleton!.stats.hp); // beslenmiş varyant (mult 1)
-    expect(sk.statuses).toEqual([{ kind: 'haste', turns: 1, source: dr.uid }]);
+    // beslenmiş varyant (mult 1); çağrı yeniden tasarımı (2026-10-18): can sahibinin (bu savaştaki Druid) STR'sinden yeniden türer
+    expect(sk.maxHp).toBe(applySummonerScale(content.summons.skeleton!, dr.stats.summonBase ?? dr.stats, content.formulas).stats.hp);
+    expect(sk.maxHp).not.toBe(content.summons.skeleton!.stats.hp); // Druid STR 22 != Undead STR 26
+    // ilk sıra Skeleton'daysa tur başında süre 1 azalmıştır (Haste 2 tur taşınır: kaynak eşlemesi her iki durumda da görünür)
+    expect(sk.statuses).toEqual([{ kind: 'haste', turns: firstUp ? 1 : 2, source: dr.uid }]);
     // Sonuç eşlemesi: çağrı kahraman sayılmaz, kahramanlar doğru id'lerle
     const snap = snapshotCarry(b, plan.heroOrder);
     expect(Object.keys(snap.heroes).sort()).toEqual(run.heroes.map((h) => h.id).sort());
-    expect(snap.summons).toMatchObject([{ unit: 'skeleton', slot: cell, owner: owner.id, hp: 20, lifespan: 3, empowered: true }]);
+    expect(snap.summons).toMatchObject([{ unit: 'skeleton', slot: cell, owner: owner.id, hp: sk.hp, lifespan: 3, empowered: true }]);
   });
 
   it('kayıt sürüm 3: ara verme durumu aynen döner; sürüm 2 göçü taşınanı ve yarım savaşı siler', () => {

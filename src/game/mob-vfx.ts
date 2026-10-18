@@ -11,7 +11,13 @@
  *   self    kullanıcının ayağında (Oath of Stone, Call the Buried)
  *   ally    hedef dostun ayağında (Sanctuary, Unholy Benediction)
  * Sheet'ler soldan sağa çizilidir: düşman tarafı (moblar) için yatay aynalanır. `impact` = vuruş karesi (0-7): Promise o karede çözülür
- * (hasar rakamları o an), sheet arkada biter. `at`: 'hit' göğüs hizası (ortalanmış sheet), 'ground' ayak/hücre zemini (alta oturan sheet).
+ * (hasar rakamları o an), sheet arkada biter. `at`: 'hit' göğüs hizası, 'ground' ayak/hücre zemini (alta oturan sheet).
+ * DAYANAK NOKTASI (vfxSheetAnchors, vuruş karesinin alfa dağılımından): sheet'ler vuruşu karenin ortasına, zemin halkasını karenin altına
+ * çizmez, pivot (kare ortası / alt kenar) bunu bilmez ve efekt ayağa / havaya düşerdi (Ömer 2026-10-18). Bu yüzden:
+ *   'hit' + melee/bolt: karenin AĞIRLIK MERKEZİ hedefin gövde merkezine (k.spot) oturur;
+ *   'ground' (cells, self, ally, zemine inen melee/mermi): içeriğin ALT BANDININ merkezi (zemin diski) hücre zeminine / ayağa (k.feet) oturur;
+ *   center + 'hit' (Glyph of Breaking): sheet pivotundan (kare ortası), `squashY` ve -40 ayarıyla zemine yatar.
+ * DERİNLİK: efekt hedefin (alan efektinde her hücrenin) birim derinliğinin hemen üstünde çizilir; hedeften ÖNDEKİ birimler efektin üstünde kalır.
  * Phaser'ı çalışma zamanında içe aktarmaz (yalnızca tip): node testlerinde de yüklenir.
  */
 import type { CombatantView } from './combatant-view';
@@ -129,7 +135,7 @@ type Pt = { x: number; y: number };
 /** OYNATMA AYARLARI (Ömer 2026-10-17: mob efektleri savaşta zor seçiliyordu). Hız ayarları veride: data/battle-layout.json > animation.mobVfx. */
 const SIZE_MULT = 1.5; // her spec.size bununla çarpılır (skill'ler arası oran korunur)
 const SIZE_MAX = 640; // büyük (center/cells) efektler ekranı kaplamasın (1080 yükseklikte ~%60)
-const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (12 fps -> ~13,2; 8 kare ~0,6 sn, slow öncesi)
+const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (sheet 12 fps x fpsScale; ayar data/battle-layout.json > animation.mobVfx)
 const HOLD_MS = layout.animation.mobVfx.impactHoldMs; // vuruş karesinde donma (ms, k.slow ile)
 const WIND_MULT = layout.animation.mobVfx.windMult; // spec.windMs (hazırlık pozu) çarpanı
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -139,6 +145,7 @@ const FLASH_GROW = 2.4; // parlama büyüme çarpanı
 const FLASH_MS = 220; // parlama süresi (ms, k.slow ile)
 const FLASH_ALPHA = 0.85;
 const ADD_BLEND = 1; // Phaser.BlendModes.ADD
+const CELL_DEPTH = 8; // hücre zemin merkezi (ayak y'sinin ~4-6 px üstü) -> o hücredeki birimin derinliğinin hemen üstü
 const SHAKE_MS = 130; // yalnızca melee
 const SHAKE_MAG = 0.004;
 
@@ -161,15 +168,32 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     const flashColor = parseInt((s.hex ?? FLASH_HEX).slice(1), 16);
     const sfx = c.skill.sfx ?? [];
     const pos = (v: CombatantView): Pt => (s.at === 'hit' ? k.spot(v) : k.feet(v));
-    const play = (p: Pt, delay = 0): void => {
-      const base = { size, flipX: flip, fps, delay, ...(s.squashY ? { squashY: s.squashY } : {}) };
-      const main = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: k.DEPTH + 20 });
-      const glow = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: k.DEPTH + 21, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+    // dayanak noktası (origin): vuruş karesinden okunur, pivota değil (başlık yorumu). Doku okunamazsa (null) sheet pivotu kalır.
+    const meta = vfxSheetFile(id)?.meta;
+    const [fw, fh] = meta?.frame_size ?? [256, 256];
+    const anchors = s.at === 'ground' || s.mode === 'melee' || s.mode === 'bolt' ? k.sheetAnchors(c.scene, id, s.impact) : null;
+    const origin: [number, number] | null = !anchors
+      ? null
+      : s.at === 'ground'
+        ? [(meta?.pivot?.[0] ?? fw / 2) / fw, anchors.baseY / fh]
+        : [anchors.core[0] / fw, anchors.core[1] / fh];
+    // DERİNLİK: efekt hedefin hemen üstünde, hedeften ÖNDEKİ (ekranda daha aşağıdaki) birimlerin altında çizilir (birim derinliği = ayak y'si).
+    const play = (p: Pt, delay = 0, depth = k.DEPTH): void => {
+      const base = {
+        size,
+        flipX: flip,
+        fps,
+        delay,
+        ...(s.squashY ? { squashY: s.squashY } : {}),
+        ...(origin ? { origin } : {}),
+      };
+      const main = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 1 });
+      const glow = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
       if (!main) return;
       // vuruş karesi: sheet'i kısa dondur + hedefte parlama
       c.scene.time.delayedCall(k.slow(delay + impactMs(s, fps)), () => {
         for (const o of [main, glow]) if (o?.active) o.anims.pause();
-        const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(k.DEPTH + 22);
+        const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
         c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
         c.scene.time.delayedCall(k.slow(HOLD_MS), () => {
           for (const o of [main, glow]) if (o?.active) o.anims.resume();
@@ -193,36 +217,36 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       }
       const t = c.targets[0];
       await c.lunge(t ? t.container.x : c.actor.container.x);
-      for (const v of c.targets) play(pos(v));
+      for (const v of c.targets) play(pos(v), 0, v.container.depth);
       c.scene.time.delayedCall(k.slow(impactMs(s, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
     await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', 'cast');
     if (s.mode === 'bolt' || s.mode === 'ally') {
-      for (const v of c.targets) play(pos(v));
+      for (const v of c.targets) play(pos(v), 0, v.container.depth);
       return land();
     }
     if (s.mode === 'self') {
-      play(k.feet(c.actor));
+      play(k.feet(c.actor), 0, c.actor.container.depth);
       return land();
     }
     const cells = c.cells.length ? c.cells : c.targets.map((v) => k.feet(v));
     if (s.mode === 'center') {
       const m = c.centerPos ?? cells.reduce((a, p) => ({ x: a.x + p.x / cells.length, y: a.y + p.y / cells.length }), { x: 0, y: 0 });
       const mid = s.at === 'hit' ? { x: m.x, y: m.y - 40 } : m;
-      play(mid);
+      play(mid, 0, Math.max(...cells.map((q) => q.y)) + CELL_DEPTH);
       return land();
     }
     // cells: aşamalı skill'de aşama aşama (her aşama bir öncekinden ~180 ms sonra), değilse küçük rastgele gecikmeyle hepsi birden
     if (c.stages && c.stages.length > 1) {
       const STEP = 180;
       c.stages.forEach((st, i) => {
-        for (const p of st.cells) play(p, i * STEP);
+        for (const p of st.cells) play(p, i * STEP, p.y + CELL_DEPTH);
         c.scene.time.delayedCall(k.slow(i * STEP + impactMs(s, fps)), () => c.releaseStage(i));
       });
       return land();
     }
-    cells.forEach((p, i) => play(p, i * 50));
+    cells.forEach((p, i) => play(p, i * 50, p.y + CELL_DEPTH));
     return land();
   };
 }

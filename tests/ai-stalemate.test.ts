@@ -59,7 +59,11 @@ describe('YZ: boşuna çağrı ve tıkanma (Undead aynası)', () => {
   });
 
   it('Undead önündeki Skeleton yerine (Raise Dead hazırken) karşı Undead\'i vurur', () => {
-    const { b, me, foe } = mirror('test', true); // kendi Raise Dead'i kilitli: yalnızca hedef seçimi ölçülür
+    const { b, me, foe, skel } = mirror('test', true); // kendi Raise Dead'i kilitli: yalnızca hedef seçimi ölçülür
+    // Çağrı yeniden tasarımı (2026-10-18): Skeleton can 105 -> 75, STR 30 -> 40; bu test terazinin resummonShare payını ölçer, eski Skeleton'la kurulur
+    const sk = b.get(skel)!;
+    sk.hp = sk.maxHp = 105;
+    sk.stats.str = 30;
     const ch = chooseAction(b, me, { ...content.aiConfig, global: undefined });
     expect(ch?.skillId).toBe('bone_throw');
     expect(ch?.targetUid).toBe(foe);

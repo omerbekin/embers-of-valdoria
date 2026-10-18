@@ -6,6 +6,7 @@
   "logo": "treant",
   "frontPriority": 8,
   "range": 4,
+  "_not": "Ömer 2026-10-18 (summon yeniden tasarımı, D1): Treant'ın gücü çağıranın (Druid) item HARİÇ INT'inden türer (summonerScale): INT = round(çağıran INT x 1,04), maks can = round(çağıran INT x 4,04), can yenilenmesi = çağıran INT x 0,1298. L1 Druid (INT 26): INT 27, can 105, yenilenme 3,37 (bugünküyle aynı). STR/DEX dosyadaki gibi sabit. Aşağıdaki değerler L1 karşılığıdır (çağıransız hazır Treant bunları kullanır). Level = çağıranın level'ı.",
   "attributes": {
     "str": 16,
     "int": 27,
@@ -20,6 +21,14 @@
     "spd": 10,
     "hpRegen": 3.375,
     "mpRegen": 0
+  },
+  "summonerScale": {
+    "from": "int",
+    "attributes": {
+      "int": 1.04
+    },
+    "hp": 4.04,
+    "hpRegen": 0.1298
   },
   "ai": "vinewarden",
   "skills": [

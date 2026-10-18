@@ -4,8 +4,9 @@
 // Kural: başlangıç silahı olmayan (test) sınıfta hiçbir şey takılı değilse modifiers YOK (undefined) => savaş bugünküyle birebir aynı; oynanabilir
 // sınıfta silahsız kahraman silah çarpanı < 1 alır (Item Güçlendirme 2026-10-17: başlangıç silahı sıfır noktası).
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
-import { classes } from '../engine/content';
-import type { Attribute, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
+import { classes, formulas } from '../engine/content';
+import { applyUnitModifiers } from '../engine/stats';
+import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
 import { LEVELS, type StatAlloc } from './levels';
@@ -297,7 +298,19 @@ function mergeEffect(prev: unknown, next: EffectDef['value'], stack: boolean): u
  * Çağıran başka alanlarla (startHpRatio...) birleştirir. `effects: false` = Legendary etkileri verilmez (Endless'ta effectRules.endless kapalıysa);
  * affix kancaları her zaman verilir (affix'ler item'in statlarıdır).
  */
-export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects'> {
+/**
+ * Çağrıların türediği temel statlar (Ömer 2026-10-18, summon yeniden tasarımı): sınıf tabanı + level puanları, item HARİÇ (q3: item statları
+ * çağrıya geçmez). Sınıf yoksa undefined.
+ */
+export function summonBaseOf(src: LoadoutSource): Attributes | undefined {
+  const def = classes[src.class];
+  if (!def) return undefined;
+  const out: Attributes = { ...def.attributes };
+  for (const a of ATTRS) out[a] += Math.max(0, Math.floor(src.alloc?.[a] ?? 0)) * LEVELS.statPerPoint;
+  return out;
+}
+
+export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase'> {
   const l = loadout(src);
   let fx = l.itemEffects;
   if (fx && o.effects === false) {
@@ -308,5 +321,10 @@ export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean } = {}):
     }
     if (!Object.keys(fx).length) fx = undefined;
   }
-  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}) };
+  // Çağrı tabanı: yalnızca item'ler temel statı değiştirdiyse verilir (yoksa motor birimin kendi statını kullanır, sonuç aynı); level L2+'da
+  const base = summonBaseOf(src);
+  const final = base ? applyUnitModifiers(classes[src.class]!, l.modifiers, formulas).attributes : undefined;
+  const differs = !!base && !!final && ATTRS.some((a) => base[a] !== final[a]);
+  const level = Math.floor(src.level ?? 1);
+  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}) };
 }

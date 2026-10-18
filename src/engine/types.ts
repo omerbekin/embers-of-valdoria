@@ -56,6 +56,11 @@ export interface Stats extends Attributes {
    * katlanmış (başlangıç silahı = 1; Quick Battle bunu hiç vermez). Yoksa 1. Global damage ile aynı yoldan tüm skill hasarına işler.
    */
   weaponMult?: number;
+  /**
+   * Çağrı yeniden tasarımı (Ömer 2026-10-18): bu birimin çağrılarının statının türediği temel statlar (sınıf tabanı + level puanları, ITEM HARİÇ).
+   * Yalnızca güç katmanı (loadoutSetup) item'li kahramanlarda verir; yoksa birimin kendi str/int/dex/luck'ı kullanılır (bkz. CombatantDef.summonerScale).
+   */
+  summonBase?: Attributes;
   /** Element başına verilen skill hasarı çarpanı (Physical / Fire ... damage, All elemental damage). */
   elemDamageMult?: Partial<Record<Element, number>>;
   /** Skill şifası ve tur başı şifa (HoT) çarpanı (Support power). */
@@ -200,6 +205,10 @@ export interface CombatantData {
   accuracyBase?: number;
   /** Türev stat'ları doğrudan ezmek için (ör. çağrılan birimin canı). */
   overrides?: Partial<Stats>;
+  /**
+   * Çağrı statı çağırandan türer (yalnızca çağrılar; Ömer 2026-10-18, bkz. SummonerScale). Yoksa (ya da çağıran yoksa) dosyadaki statlar aynen.
+   */
+  summonerScale?: SummonerScale;
   /** Çağrı varyantları (yalnızca çağrılar; bkz. SummonVariants): ceset tüketen çağrıda beslenmiş / beslenmemiş hâlin stat çarpanı. */
   variants?: SummonVariants;
   tags?: string[];
@@ -332,6 +341,8 @@ export interface CombatantDef {
   tags?: string[];
   ai?: string;
   passive?: PassiveDef;
+  /** Çağrı statının çağırandan türeme kuralı (CombatantData.summonerScale aynen). */
+  summonerScale?: SummonerScale;
   /** Çağrı varyantları (CombatantData.variants aynen). */
   variants?: SummonVariants;
   /** Veri dosyasındaki türev stat ezmeleri (CombatantData.overrides aynen; birim güçlendirmesi statları yeniden türetirken korunur). */
@@ -590,6 +601,10 @@ export interface UnitSetup {
   startShield?: number;
   startMagicShield?: number;
   startShieldHooks?: ShieldHook[];
+  /** Birimin level'ı (sefer / Endless kahramanı; Combatant.level). Çağrılar çağıranın level'ını alır. Verilmezse L1. */
+  level?: number;
+  /** Çağrıların türediği temel statlar (item HARİÇ; Stats.summonBase). Verilmezse birimin son temel statları (QB: sınıf tabanı; düşman: level büyümesi dahil). */
+  summonBase?: Attributes;
   /** Hazır çağrının sahibi (uid; sahibi ölünce çağrı da ölür), kalan ömrü (kendi turu) ve beslenme hâli (ceset tüketen çağrı varyantı uygulanır). */
   owner?: string;
   lifespan?: number;
@@ -637,6 +652,20 @@ export interface BattleSummary {
 /** Çağrı varyantı: `mult` can (maks can) ve hasar statlarına (str, int; Str'den gelen düz can yenilenmesi dahil) uygulanan çarpan. */
 export interface SummonVariant {
   mult: number;
+}
+
+/**
+ * Çağrının çağıranla büyümesi (Ömer 2026-10-18, D1): çağıranın `from` temel statı (sınıf tabanı + level puanları, item HARİÇ; Stats.summonBase) x oran.
+ * `attributes[k]`: çağrının k statı = round(çağıran[from] x oran) (temel statlar tam sayı); listelenmeyen statlar dosyadaki gibi.
+ * `hp`: maks can = round(çağıran[from] x hp) (dosyadaki overrides.hp yerine); `hpRegen`: düz can yenilenmesi = çağıran[from] x hpRegen.
+ * Dosyadaki taban statlar L1 çağıranın verdiği değerdir (çağıransız hazır çağrı, ör. sefer Risen Skeleton, onları kullanır). Varyant (fed/unfed) ve
+ * Summon mastery bunun ÜSTÜNE uygulanır.
+ */
+export interface SummonerScale {
+  from: Attribute;
+  attributes: Partial<Attributes>;
+  hp: number;
+  hpRegen?: number;
 }
 
 /**
@@ -1001,8 +1030,11 @@ export interface SkillDef {
   /**
    * target 'single_enemy': seçilen hedefe ek olarak onun yanındaki hücrelere de (`mult` x hasar, varsayılan 1) vurur.
    * pattern 'perpendicular': hedefin aynı sıradaki sol ve sağ şerit komşuları (saldırı ön-arka ekseninde geldiği için yan hücreler).
+   * pattern 'chain' (Treant Vine Snare, Ömer 2026-10-18): vuruş seçilen hedeften en yakın (henüz vurulmamış) canlı düşmana sıçrar, oradan bir
+   * sonrakine; en çok `jumps` sıçrama. Yakınlık ekran ızgarasında (formation.screenGrid) Öklid mesafesi; eşitlikte küçük yuva. Sıçrayan hedefler
+   * menzile bakmaz (ilk hedef menzilde olmalı). Sıçrama başına azalma hasar etkisinin `falloff`'u ile (hedef sırası = zincir sırası).
    */
-  splash?: { pattern: 'perpendicular'; mult?: number };
+  splash?: { pattern: 'perpendicular' | 'chain'; mult?: number; jumps?: number };
   /**
    * target 'area_enemies' / 'area_any' (zorunlu): oyuncu bir ANCHOR hücre seçer (boş hücre de olabilir); şekil (hücre kümesi, bkz. area-shape.ts) row | column | rect | plus | x.
    * 'area_any': anchor KENDİ ya da KARŞI tahtada olabilir (Smoke Bomb); etkiler `side` ile dost/düşmana ayrılır.
@@ -1328,6 +1360,8 @@ export interface Combatant {
   lifespan: number | undefined;
   ai: string | undefined;
   passive?: PassiveDef;
+  /** Birimin level'ı (UnitSetup.level; verilmezse tanımsız = L1). Çağrı, çağıranın level'ını alır (Ömer 2026-10-18). */
+  level?: number;
   /** Bu birimi çağıran birim (çağrılanlarda). */
   owner?: string;
   /** Ceset tüketen çağrıda: true = beslenmiş (ceset tüketildi, `fed` varyantı; UI mor parıltı), false = beslenmemiş (`unfed`). Diğer birimlerde tanımsız. */

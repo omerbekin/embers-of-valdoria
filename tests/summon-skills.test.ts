@@ -3,7 +3,7 @@ import { Battle, attributePower, chooseAction, content, damageRange, damageSpecF
 import type { Attribute, BattleEvent, BattleMode, CombatantDef } from '../src/engine';
 
 // Çağrılan birimlerin skill'leri: Skeleton - Bone Slash (hedefin yanındakilere de vurur); Treant (madde 222) - uzak menzilli Root Smash ve
-// 2x2 alan skill'i Vine Snare (hasar + her hedefe bağımsız %25 Stun şansı). Eski Thorn Shield / thorns kaldırıldı.
+// kök zinciri Vine Snare (2026-10-18: seçilen hedeften en yakına sıçrar, sıçrama başına -%20; her hedefe bağımsız %25 Stun şansı). Eski Thorn Shield / thorns kaldırıldı.
 // (Her class tam 4 skill'e sahiptir; çağrılanlar için böyle bir kural yok.) Sayılar veriden okunur.
 
 const ai = content.aiConfig;
@@ -254,29 +254,70 @@ describe('Treant (madde 222): uzak menzilli doğa kontrolcüsü', () => {
     expect(hitUids(act(b, 'party-1', 'root_smash', 'enemy-1'))).toEqual(['enemy-1']);
   });
 
-  it('Vine Snare verisi: 2x2 alan (sol-alt anchor), 0 MP, cooldown 3, Int ölçekli doğa hasarı + %25 Stun (1 tur, cause vines)', () => {
-    expect(vines.target).toBe('area_enemies');
-    expect(vines.area).toMatchObject({ shape: 'rect', rows: 2, cols: 2, anchor: 'bottom_left' });
+  it('Vine Snare verisi (2026-10-18): tek hedef + kök zinciri (splash chain, jumps 4 = en çok 5 hedef; Ömer 2026-10-18), falloff 0,8 (her sıçrama bir öncekinden -%20); 0 MP, cooldown 3, Int ölçekli doğa hasarı + %25 Stun (1 tur, cause vines)', () => {
+    expect(vines.target).toBe('single_enemy');
+    expect(vines.area).toBeUndefined();
+    expect(vines.splash).toMatchObject({ pattern: 'chain', jumps: 4 });
     expect(vines.cost.amount).toBe(0);
     expect(vines.cooldown).toBe(3);
-    expect(vines.effects.find((e) => e.type === 'damage')).toMatchObject({ scale: 'int', element: 'nature' });
+    expect(vines.effects.find((e) => e.type === 'damage')).toMatchObject({ scale: 'int', element: 'nature', falloff: 0.8 });
     expect(vines.effects.find((e) => e.type === 'status')).toMatchObject({ status: 'stun', turns: 1, chance: 0.25, cause: 'vines' });
   });
 
-  /** 4 düşman: Vine Snare'in anchor 0'daki 2x2 hücrelerine. */
-  const vineArena = (seed: number, mode: BattleMode = 'test', overrides?: Record<string, import('../src/engine').SkillDef>) => {
-    const probe = arena([['treant', 9]], [['warrior', 0]], { seed });
-    const cells = probe.areaCells('vine_snare', 0, 'enemy');
-    const b = arena([['treant', 9]], cells.map((s): Placed => ['mage', s]), { seed, mode, ...(overrides ? { overrides } : {}) });
-    return { b, cells };
-  };
+  /** Treant arka sırada (yuva 9); düşmanlar verilen yuvalarda (uid enemy-i = i. yuva). */
+  const vineArena = (slots: number[], seed = 1, mode: BattleMode = 'test', overrides?: Record<string, import('../src/engine').SkillDef>) =>
+    arena([['treant', 9]], slots.map((sl): Placed => ['mage', sl]), { seed, mode, ...(overrides ? { overrides } : {}) });
+  const uidAt = (b: Battle, slot: number) => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!.uid;
+  const SIX = [0, 1, 2, 3, 4, 5];
+  const jumps = vines.splash!.jumps!;
 
-  it('2x2 şekil: tam 4 hücre, şekildeki 4 düşmanın hepsi vurulur; skillUsed.cells şekil hücreleri', () => {
-    const { b, cells } = vineArena(1);
-    expect(cells).toHaveLength(4);
-    const ev = act(b, 'party-0', 'vine_snare', 'enemy-0');
-    expect(ofType(ev, 'skillUsed')[0]!.cells).toEqual(cells);
-    expect(new Set(hitUids(ev)).size).toBe(4);
+  it('zincir sırası: seçilen hedef, sonra her adımda SON vurulana en yakın (ekran ızgarası) vurulmamış düşman; eşitlikte küçük yuva; en çok jumps sıçrama', () => {
+    const b = vineArena(SIX);
+    // yuva 1'den: 0, 2 ve 4 eşit yakın -> küçük yuva 0; 0'dan: arkasındaki 3; 3'ten: 4; 4'ten: 5. 2 vurulmaz (4 sıçrama doldu).
+    const order = [1, 0, 3, 4, 5].map((sl) => uidAt(b, sl));
+    expect(b.splashTargets('vine_snare', b.get(uidAt(b, 1))!).map((c) => c.uid)).toEqual(order.slice(1));
+    const ev = act(b, 'party-0', 'vine_snare', uidAt(b, 1));
+    expect(hitUids(ev)).toEqual(order);
+    expect(hitUids(ev)).toHaveLength(1 + jumps);
+    expect(hitUids(ev)).not.toContain(uidAt(b, 2));
+  });
+
+  it('az düşmanda zincir erken biter: 2 düşman = 2 vuruş, tek düşman = 1 vuruş; ölü düşmana sıçramaz', () => {
+    expect(hitUids(act(vineArena([0, 4]), 'party-0', 'vine_snare', 'enemy-0'))).toEqual(['enemy-0', 'enemy-1']);
+    expect(hitUids(act(vineArena([0]), 'party-0', 'vine_snare', 'enemy-0'))).toEqual(['enemy-0']);
+    const b = vineArena([0, 1, 2]);
+    b.get('enemy-1')!.hp = 0;
+    expect(hitUids(act(b, 'party-0', 'vine_snare', 'enemy-0'))).toEqual(['enemy-0', 'enemy-2']);
+  });
+
+  it('her sıçramada hasar %20 azalır (falloff 0,8 üst üste, bir öncekinden: 1 / 0,8 / 0,64 / 0,512 / 0,41); hasar sapması kapalıyken', () => {
+    const base = content.battleSetup('random-battle', 1, 'test', { party: [], enemies: [] }, false);
+    const b = new Battle({
+      ...base,
+      formulas: { ...f, damage: { ...f.damage, variance: 0 } },
+      party: [unitDef('treant')],
+      partySlots: [9],
+      enemies: SIX.map(() => unitDef('mage')),
+      enemySlots: SIX,
+    });
+    for (const c of b.combatants) {
+      Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0 });
+      c.hp = c.maxHp = 100000;
+    }
+    b.debug.crit = 'never';
+    const dmg = ofType(act(b, 'party-0', 'vine_snare', uidAt(b, 1)), 'damage').map((e) => e.amount);
+    expect(dmg).toHaveLength(1 + jumps);
+    const fall = (vines.effects.find((e) => e.type === 'damage') as { falloff: number }).falloff;
+    for (let i = 1; i < dmg.length; i++) expect(Math.abs(dmg[i]! - dmg[0]! * Math.pow(fall, i))).toBeLessThanOrEqual(1);
+  });
+
+  it('menzil: ilk hedef menzilde olmalı (Treant menzil 4: arka sıradan yalnızca düşmanın ön sırası); sıçramalar menzile bakmaz', () => {
+    const b = vineArena([0, 9]); // 9 = düşmanın en arka sırası (mesafe 3 + 3 + 1 = 7)
+    const valid = b.validTargets('party-0', 'vine_snare').map((c) => c.uid);
+    expect(valid).toContain('enemy-0');
+    expect(valid).not.toContain('enemy-1');
+    expect(b.useSkill('party-0', 'vine_snare', 'enemy-1').ok).toBe(false);
+    expect(hitUids(act(b, 'party-0', 'vine_snare', 'enemy-0'))).toEqual(['enemy-0', 'enemy-1']); // kök arka sıraya uzanır
   });
 
   it('Stun zarı her hedef için BAĞIMSIZ %25: 1000 atışta hedef başına oran ~%25, iki hedefin birlikte ~%6,25; olayda cause vines', () => {
@@ -286,72 +327,76 @@ describe('Treant (madde 222): uzak menzilli doğa kontrolcüsü', () => {
     let causeOk = true;
     const casts = 1000;
     for (let seed = 1; seed <= casts; seed++) {
-      const { b } = vineArena(seed);
-      const ev = act(b, 'party-0', 'vine_snare', 'enemy-0');
+      const b = vineArena(SIX, seed);
+      const ev = act(b, 'party-0', 'vine_snare', uidAt(b, 1));
       const st = ofType(ev, 'status').filter((e) => e.status === 'stun');
       if (st.some((e) => e.cause !== 'vines')) causeOk = false;
       stuns += st.length;
       const got = new Set(st.map((e) => e.target));
-      if (got.has('enemy-0') && got.has('enemy-1')) both++;
+      if (got.has(uidAt(b, 1)) && got.has(uidAt(b, 0))) both++;
     }
     expect(causeOk).toBe(true);
-    const rate = stuns / (casts * 4);
+    const rate = stuns / (casts * (1 + jumps));
     expect(rate).toBeGreaterThan(chance - 0.03);
     expect(rate).toBeLessThan(chance + 0.03);
     expect(both / casts).toBeGreaterThan(chance * chance - 0.025);
     expect(both / casts).toBeLessThan(chance * chance + 0.025);
   });
 
-  it('iska eden hedefe Stun gelmez (yalnızca vurulanlar); şans 1 iken vurulan herkes yere bağlanır', () => {
-    const { b } = vineArena(3, 'test', { vine_snare: sureVines() });
+  it('iska eden hedefe Stun gelmez (yalnızca vurulanlar); şans 1 iken zincirdeki herkes yere bağlanır', () => {
+    const b = vineArena(SIX, 3, 'test', { vine_snare: sureVines() });
     b.debug.dodge = 'always';
-    expect(ofType(act(b, 'party-0', 'vine_snare', 'enemy-0'), 'status')).toHaveLength(0);
-    const t = vineArena(3, 'test', { vine_snare: sureVines() }).b;
-    expect(ofType(act(t, 'party-0', 'vine_snare', 'enemy-0'), 'status').filter((e) => e.status === 'stun' && e.cause === 'vines')).toHaveLength(4);
+    expect(ofType(act(b, 'party-0', 'vine_snare', uidAt(b, 1)), 'status')).toHaveLength(0);
+    const t = vineArena(SIX, 3, 'test', { vine_snare: sureVines() });
+    expect(ofType(act(t, 'party-0', 'vine_snare', uidAt(t, 1)), 'status').filter((e) => e.status === 'stun' && e.cause === 'vines')).toHaveLength(1 + jumps);
   });
 
-  it('Stun kuralları geçerli: taunt\'ı bozar; 1 turluk Stun Resilience ile kısalmaz (zar da atılmaz)', () => {
-    const probe = arena([['treant', 9]], [['defender', 0]]);
-    const cells = probe.areaCells('vine_snare', 0, 'enemy');
-    const b = arena([['treant', 9]], [['defender', cells[0]!], ['warrior', cells[1]!]], { overrides: { vine_snare: sureVines() } });
+  it("Stun kuralları geçerli: taunt'ı bozar; 1 turluk Stun Resilience ile kısalmaz (zar da atılmaz)", () => {
+    const b = arena([['treant', 9]], [['defender', 0], ['warrior', 1]], { overrides: { vine_snare: sureVines() } });
     act(b, 'enemy-0', 'taunt');
     b.get('enemy-1')!.stats.resilience = 1; // her zaman tutacak Resilience
     const ev = act(b, 'party-0', 'vine_snare', 'enemy-0');
+    expect(hitUids(ev)).toEqual(['enemy-0', 'enemy-1']);
     expect(ofType(ev, 'statusEnd').some((e) => e.target === 'enemy-0' && e.status === 'taunt' && e.broken)).toBe(true);
     expect(ofType(ev, 'passive').some((e) => e.name === 'Resilience')).toBe(false);
     expect(b.get('enemy-1')!.statuses.find((s) => s.kind === 'stun')!.turns).toBe(1);
   });
 
   it('turns modunda cooldown (veriden); iki mod çalışır ve aynı seed = aynı olaylar', () => {
-    const { b } = vineArena(4, 'turns');
+    const b = vineArena(SIX, 4, 'turns');
     skipUntil(b, 'party-0');
-    act(b, 'party-0', 'vine_snare', 'enemy-0');
+    act(b, 'party-0', 'vine_snare', uidAt(b, 1));
     expect(b.get('party-0')!.cooldowns.vine_snare).toBe(vines.cooldown);
     for (const mode of ['test', 'turns'] as const) {
       const run = () => {
-        const x = vineArena(7, mode).b;
+        const x = vineArena(SIX, 7, mode);
         if (mode === 'turns') skipUntil(x, 'party-0');
-        return JSON.stringify(act(x, 'party-0', 'vine_snare', 'enemy-0'));
+        const ev = act(x, 'party-0', 'vine_snare', uidAt(x, 1));
+        expect(hitUids(ev)).toHaveLength(1 + jumps);
+        return JSON.stringify(ev);
       };
       expect(run()).toBe(run());
     }
   });
 
-  it('önizleme ve açıklama: Stun şansı yazılır', () => {
-    const { b } = vineArena(1);
-    const p = previewSkill(b, 'party-0', 'vine_snare', 'enemy-0');
-    expect(p).toHaveLength(4);
+  it('önizleme: zincirdeki her hedef (falloff sırasıyla) ve Stun şansı; açıklama: sıçrama satırı', () => {
+    const b = vineArena(SIX);
+    const p = previewSkill(b, 'party-0', 'vine_snare', uidAt(b, 1));
+    expect(p.map((x) => x.uid)).toEqual([1, 0, 3, 4, 5].map((sl) => uidAt(b, sl)));
     expect(p[0]!.statuses!.some((s) => s.includes('25% chance'))).toBe(true);
+    expect(p[1]!.damage!.max).toBeLessThan(p[0]!.damage!.max);
     const info = describeSkill(vines, unitDef('treant').stats, f, content.summons, { statuses: content.statuses, grounds: content.grounds });
     expect(info.lines.some((l) => l.includes('25% chance') && l.includes('Stun'))).toBe(true);
+    expect(info.lines.some((l) => l.includes(`up to ${jumps} jumps`) && l.includes('nearest foe'))).toBe(true);
     expect(info.cooldown).toBe(`${vines.cooldown} turns`);
   });
 
-  it('YZ (vinewarden): 2x2 en az 2 düşmanı kapsıyorsa Vine Snare; tek düşmanda Root Smash; Vine Snare cooldown\'dayken Root Smash', () => {
-    const many = vineArena(2, 'turns').b;
+  it("YZ (vinewarden): zincir birden çok düşmana uzanıyorsa Vine Snare; tek düşmanda Root Smash; Vine Snare cooldown'dayken Root Smash", () => {
+    const many = vineArena(SIX, 2, 'turns');
     skipUntil(many, 'party-0');
-    expect(chooseAction(many, 'party-0', ai)?.skillId).toBe('vine_snare');
-    act(many, 'party-0', 'vine_snare', 'enemy-0');
+    const ch = chooseAction(many, 'party-0', ai)!;
+    expect(ch.skillId).toBe('vine_snare');
+    act(many, 'party-0', 'vine_snare', ch.targetUid);
     skipUntil(many, 'party-0');
     expect(chooseAction(many, 'party-0', ai)?.skillId).toBe('root_smash');
     const one = arena([['treant', 9]], [['mage', 0]], { mode: 'turns' });

@@ -8,8 +8,8 @@
   "frontPriority": 3,
   "range": 1,
   "attributes": {
-    "str": 18,
-    "int": 10,
+    "str": 17,
+    "int": 11,
     "dex": 26,
     "luck": 6
   },

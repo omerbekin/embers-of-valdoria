@@ -57,8 +57,8 @@ describe('skill değişiklikleri (veri)', () => {
     expect(mk('test').get('party-0')!.cooldowns.aimed_shot).toBeUndefined();
   });
 
-  it('Resurrection MP bedeli 20 (cooldown 5: Ömer 2026-10-17 classtune, 6 -> 5)', () => {
-    expect(content.skills.resurrection!.cost).toEqual({ resource: 'mp', amount: 20 });
+  it('Resurrection MP bedeli 16 (Ömer 2026-10-18 denge turu 1: 20 -> 16; cooldown 5: Ömer 2026-10-17 classtune, 6 -> 5)', () => {
+    expect(content.skills.resurrection!.cost).toEqual({ resource: 'mp', amount: 16 });
     expect(content.skills.resurrection!.cooldown).toBe(5);
   });
 

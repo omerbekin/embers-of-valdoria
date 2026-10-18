@@ -1,7 +1,7 @@
 import { isAccuracyCritDebuff } from './cc-immunity';
 import { skillCostAmount } from './cost';
 import { damageRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, shieldAmount, type DamageSpec, type Range } from './formulas';
-import { isShapeArea, shapeCells, shapeStages } from './area-shape';
+import { isShapeArea, screenCellOf, shapeCells, shapeStages } from './area-shape';
 import { pickSideNeighbors } from './formation';
 import { betMultipliers, betStake } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
@@ -10,8 +10,8 @@ import { ITEM_HOOK_CAPS } from './item-caps';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
-import { applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
-import type { Attribute, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
+import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
+import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules } from './types';
 
@@ -225,6 +225,20 @@ export class Battle {
     ];
     // Endless: önceki dalgada düşen birim savaşa ceset olarak girer (UnitSetup.startDead); verilmezse savaş aynı
     const units = [...setup.party.map((_, i) => setup.partyUnits?.[i]), ...setup.enemies.map((_, i) => setup.enemyUnits?.[i])];
+    // Taşınan çağrı (Endless; sahibi bu savaşta): statları sahibinden yeniden türer (savaşta çağrıldığı gibi; Ömer 2026-10-18). Sahipsiz / kuralsız = aynen
+    this.combatants.forEach((c, i) => {
+      const owner = c.summoned && c.owner ? this.combatants.find((o) => o.uid === c.owner && !o.summoned) : undefined;
+      const baseDef = owner ? setup.units[c.defId] : undefined;
+      if (!owner || !baseDef?.summonerScale) return;
+      const def = this.summonDefFor(owner, baseDef, c.empowered);
+      const unit = units[i];
+      const ratio = c.maxHp > 0 ? c.hp / c.maxHp : 1;
+      c.stats = { ...def.stats };
+      c.maxHp = def.stats.hp;
+      const finite = (v: number | undefined): v is number => v !== undefined && Number.isFinite(v);
+      c.hp = Math.max(1, Math.min(c.maxHp, Math.round(finite(unit?.startHp) ? unit.startHp : c.maxHp * ratio)));
+      if (owner.level !== undefined) c.level = owner.level;
+    });
     this.combatants.forEach((c, i) => {
       const dead = units[i]?.startDead;
       if (!dead || c.summoned) return;
@@ -1409,6 +1423,7 @@ export class Battle {
   splashTargets(skillId: string, chosen: Combatant): Combatant[] {
     const skill = this.skill(skillId);
     if (!skill?.splash || skill.target !== 'single_enemy') return [];
+    if (skill.splash.pattern === 'chain') return this.chainTargets(chosen, skill.splash.jumps ?? 0);
     const map = this.setup.formulas.formation.sideNeighbors?.[chosen.board]?.[chosen.slot];
     if (map) {
       const alive = this.living(chosen.side).filter((c) => c.uid !== chosen.uid && c.board === chosen.board);
@@ -1419,6 +1434,29 @@ export class Battle {
     return this.living(chosen.side)
       .filter((c) => c.uid !== chosen.uid && c.board === chosen.board && this.rowOf(c.slot) === row && Math.abs(this.laneOf(c.slot) - lane) === 1)
       .sort((a, b) => a.slot - b.slot);
+  }
+
+  /**
+   * Zincir (splash 'chain', Treant Vine Snare; Ömer 2026-10-18): seçilen hedeften başlayarak her adımda SON vurulana en yakın, henüz vurulmamış canlı
+   * düşman (aynı tahta); en çok `jumps` sıçrama. Mesafe ekran ızgarasında (formation.screenGrid; area-shape.screenCellOf) Öklid; eşitlikte küçük yuva.
+   * Menzile bakmaz (ilk hedefin menzili seçimde denetlenir). Sıra = vuruş sırası (falloff bu sırayla azalır).
+   */
+  chainTargets(chosen: Combatant, jumps: number): Combatant[] {
+    const fm = this.setup.formulas.formation;
+    const pool = this.living(chosen.side).filter((c) => c.uid !== chosen.uid && c.board === chosen.board);
+    const out: Combatant[] = [];
+    let from = chosen;
+    for (let j = 0; j < jumps && pool.length > 0; j++) {
+      const a = screenCellOf(fm, chosen.board, from.slot);
+      const d2 = (c: Combatant) => {
+        const b = screenCellOf(fm, chosen.board, c.slot);
+        return (a.col - b.col) ** 2 + (a.row - b.row) ** 2;
+      };
+      pool.sort((x, y) => d2(x) - d2(y) || x.slot - y.slot);
+      from = pool.shift()!;
+      out.push(from);
+    }
+    return out;
   }
 
   /** Skill tek bir hedef seçilmesini gerektiriyor mu? */
@@ -1684,10 +1722,25 @@ export class Battle {
     const def = this.setup.units[effect.unit];
     const free = this.summonSlots(actorUid, skillId);
     const spot = slot !== undefined && free.includes(slot) ? slot : this.summonSlotFor(actorUid, skillId);
-    if (!effect.consumeCorpse) return { unit: def ?? null, empowered: undefined, corpse: null, slot: spot };
+    const actor = this.get(actorUid);
+    if (!effect.consumeCorpse) return { unit: def && actor ? this.summonDefFor(actor, def, undefined) : (def ?? null), empowered: undefined, corpse: null, slot: spot };
     const chosen = corpseUid && this.corpseChoices(actorUid, skillId).some((c) => c.uid === corpseUid) ? this.corpseOf(corpseUid) : null;
     const corpse = chosen ?? this.corpseToConsume(actorUid, skillId);
-    return { unit: def ? applySummonVariant(def, corpse ? 'fed' : 'unfed', this.setup.formulas) : null, empowered: !!corpse, corpse, slot: spot };
+    return { unit: def ? (actor ? this.summonDefFor(actor, def, !!corpse) : applySummonVariant(def, corpse ? 'fed' : 'unfed', this.setup.formulas)) : null, empowered: !!corpse, corpse, slot: spot };
+  }
+
+  /**
+   * Çağıranın çağıracağı birimin tanımı (saf; savaşı değiştirmez): çağırandan türeyen statlar (Ömer 2026-10-18: `summonerScale`, çağıranın
+   * item HARİÇ temel statı = Stats.summonBase ?? kendi temel statları) -> ceset varyantı (fed/unfed; `empowered` undefined = varyantsız) ->
+   * Summon mastery (item affix: maks can ve skill gücü). Çağrı etkisi ve summonPreview aynı yolu kullanır.
+   */
+  summonDefFor(actor: Combatant, baseDef: CombatantDef, empowered: boolean | undefined): CombatantDef {
+    const f = this.setup.formulas;
+    const scaled = applySummonerScale(baseDef, summonerAttrs(actor), f);
+    const variantDef = empowered === undefined ? scaled : applySummonVariant(scaled, empowered ? 'fed' : 'unfed', f);
+    // Summon mastery (item affix, Ömer 2026-10-11): çağrının maks canı ve skill gücü; yoksa tanım aynen
+    const sp = actor.itemEffects?.summonPower ?? 0;
+    return sp > 0 ? applyUnitModifiers(variantDef, { hpMult: 1 + sp, powerMult: 1 + sp }, f) : variantDef;
   }
 
   /**
@@ -2726,13 +2779,12 @@ export class Battle {
               emit({ type: 'corpseConsumed', uid: corpse.uid, by: actor.uid, slot: corpse.slot, side: corpse.side });
             }
           }
-          const variantDef = empowered === undefined ? baseDef : applySummonVariant(baseDef, empowered ? 'fed' : 'unfed', this.setup.formulas);
-          // Summon mastery (item affix, Ömer 2026-10-11): çağrının maks canı ve skill gücü; yoksa tanım aynen
-          const sp = actor.itemEffects?.summonPower ?? 0;
-          const def = sp > 0 ? applyUnitModifiers(variantDef, { hpMult: 1 + sp, powerMult: 1 + sp }, this.setup.formulas) : variantDef;
+          // Çağrı çağıranla büyür (Ömer 2026-10-18): statlar çağıranın item hariç temel statından, level = çağıranın level'ı
+          const def = this.summonDefFor(actor, baseDef, empowered);
           const summoned = createCombatant(def, actor.side, spot, `${actor.side}-s${this.summonCount++}`);
           summoned.board = board;
           summoned.owner = actor.uid;
+          if (actor.level !== undefined) summoned.level = actor.level;
           summoned.summoned = true;
           summoned.lifespan = effect.lifespan;
           if (empowered !== undefined) summoned.empowered = empowered;
@@ -4037,6 +4089,12 @@ export class Battle {
   }
 }
 
+/** Çağıranın çağrılarına geçen temel statları (item HARİÇ): Stats.summonBase (güç katmanı verdiyse) ya da birimin kendi temel statları. */
+function summonerAttrs(c: Combatant): Attributes {
+  const s = c.stats.summonBase;
+  return s ? { ...s } : { str: c.stats.str, int: c.stats.int, dex: c.stats.dex, luck: c.stats.luck };
+}
+
 function createCombatant(def: CombatantDef, side: Side, slot: number, uid: string): Combatant {
   return {
     uid,
@@ -4084,6 +4142,8 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
   const c = createCombatant(applyUnitModifiers(variantDef, mods, formulas), side, slot, uid);
   if (unit.displayName) c.displayName = unit.displayName;
   if (unit.tier) c.tier = unit.tier;
+  if (unit.level !== undefined && Number.isFinite(unit.level) && unit.level >= 1) c.level = Math.floor(unit.level);
+  if (unit.summonBase) c.stats.summonBase = { ...unit.summonBase };
   if (mods && Object.keys(mods).length > 0) c.modifiers = { ...mods, ...(mods.attrMult ? { attrMult: { ...mods.attrMult } } : {}), ...(mods.attrAdd ? { attrAdd: { ...mods.attrAdd } } : {}) };
   const actions = Math.floor(mods?.actionsPerTurn ?? 1);
   if (actions > 1) c.actionsPerTurn = actions;
