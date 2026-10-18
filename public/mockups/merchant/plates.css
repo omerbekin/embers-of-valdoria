@@ -1,0 +1,355 @@
+/* gear.css (.gr-slot taban) + gear-plates.css (Gear > Hero plakasi), birebir */
+.gr-slot {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  min-height: 44px;
+  padding: calc(8 * var(--u)) calc(10 * var(--u));
+  background: rgba(8, 6, 4, 0.55);
+  border: 1px solid color-mix(in srgb, var(--rc) 60%, transparent);
+  border-radius: 0;
+  text-align: left;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-slot.empty {
+  border-color: var(--g-line2);
+  opacity: 0.75;
+}
+
+.gr-slot-text {
+  min-width: 0;
+}
+
+.gr-slot-name {
+  font: 600 max(12px, calc(18 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-slot-sub {
+  font: italic max(11px, calc(17 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-svg {
+  flex: none;
+  width: calc(max(22px, 40 * var(--u)) * var(--sz, 1));
+  height: calc(max(22px, 40 * var(--u)) * var(--sz, 1));
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+.gr-slot {
+  min-width: 0;
+}
+
+.gr-slot {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gr-slot-text {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gr-slot-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-slot-sub {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.gr-slot {
+  padding: calc(4 * var(--u)) calc(10 * var(--u));
+}
+
+.gp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  min-height: max(22px, calc(32 * var(--u)));
+  padding: 0 0.8em 0 0.45em;
+  border: 1px solid rgba(217, 178, 106, 0.42);
+  background: rgba(8, 6, 4, 0.6);
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #d9c8a2;
+}
+
+.gp-chip img {
+  width: 1.5em;
+  height: 1.5em;
+  object-fit: contain;
+  opacity: 0.85;
+}
+
+.gp-chip.cls {
+  border-color: #e0702a;
+  color: var(--g-gold);
+  padding-left: 0.8em;
+}
+
+.gr-slots {
+  grid-auto-rows: minmax(max(48px, calc(92 * var(--u))), auto);
+  gap: calc(12 * var(--u)) calc(16 * var(--u));
+}
+
+.gr-slot.gr-plate {
+  position: relative;
+  height: auto;
+  min-height: max(48px, calc(92 * var(--u)));
+  overflow: visible;
+  gap: calc(14 * var(--u));
+  padding: calc(8 * var(--u)) calc(14 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u));
+  background: linear-gradient(180deg, rgba(24, 17, 10, 0.9), rgba(9, 6, 4, 0.9));
+  border: 1px solid color-mix(in srgb, var(--rc) 60%, rgba(217, 178, 106, 0.3));
+  box-shadow: inset 0 0 max(10px, calc(26 * var(--u))) color-mix(in srgb, var(--rc) 16%, transparent), 0 0 0 2px rgba(8, 6, 4, 0.6);
+  opacity: 1;
+}
+
+.gr-slot.gr-plate::before,
+.gr-slot.gr-plate::after {
+  content: '';
+  position: absolute;
+  width: max(7px, calc(10 * var(--u)));
+  height: max(7px, calc(10 * var(--u)));
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid color-mix(in srgb, var(--rc) 70%, #fff);
+  z-index: 2;
+  pointer-events: none;
+}
+
+.gr-slot.gr-plate::before {
+  left: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
+  top: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
+}
+
+.gr-slot.gr-plate::after {
+  right: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
+  bottom: calc(max(7px, calc(10 * var(--u))) / -2 - 1px);
+}
+
+.gr-slot.gr-plate.empty,
+.gr-slot.gr-plate.blocked {
+  border: 1px dashed var(--g-line2);
+  box-shadow: none;
+  background: rgba(8, 6, 4, 0.5);
+}
+
+.gr-slot.gr-plate.empty::before,
+.gr-slot.gr-plate.empty::after {
+  display: none;
+}
+
+.gr-slot.gr-plate:hover {
+  transform: none;
+  border-color: color-mix(in srgb, var(--rc) 85%, white);
+}
+
+.gr-slot.gr-plate.empty:hover {
+  border-color: var(--g-gold);
+}
+
+.gr-slot.gr-plate.on {
+  border-color: var(--rc, var(--g-gold));
+  box-shadow: inset 0 0 0 1px var(--rc, var(--g-gold)), 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc, #f08c28) 55%, transparent);
+}
+
+.gp-ico {
+  flex: none;
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: max(40px, calc(76 * var(--u)));
+  height: max(40px, calc(76 * var(--u)));
+  background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 30%, transparent), rgba(8, 6, 4, 0.8) 78%);
+  border: 1px solid color-mix(in srgb, var(--rc) 65%, transparent);
+}
+
+.gp-ico > .gr-svg {
+  --sz: 1 !important;
+  width: 86%;
+  height: 86%;
+  object-fit: contain;
+}
+
+.gr-slot.gr-plate.empty .gp-ico,
+.gr-slot.gr-plate.blocked .gp-ico {
+  background: rgba(8, 6, 4, 0.5);
+  border: 1px dashed var(--g-line2);
+}
+
+.gr-slot.gr-plate .gp-tx {
+  display: flex;
+  flex-direction: column;
+  gap: calc(3 * var(--u));
+  overflow: visible;
+}
+
+.gp-lbl {
+  display: flex;
+  align-items: center;
+  gap: 0.4em;
+  font: 600 max(10px, calc(13 * var(--u))) var(--g-disp);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.gp-lbl img {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+  opacity: 0.8;
+  object-fit: contain;
+}
+
+.gr-slot.gr-plate .gr-slot-name {
+  display: block;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: max(12px, calc(21 * var(--u)));
+  letter-spacing: 0.05em;
+  line-height: 1.2;
+}
+
+.gr-slot.gr-plate:not(.empty) .gr-slot-name {
+  color: color-mix(in srgb, var(--rc) 52%, #fff);
+}
+
+.gr-slot.gr-plate.empty .gr-slot-name {
+  color: #6d6150;
+}
+
+.gr-slot.gr-plate .gr-slot-sub {
+  font-style: normal;
+  display: block;
+}
+
+.gp-l2 {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: wrap;
+  gap: 0 0.9em;
+  font: max(11px, calc(16 * var(--u)))/1.2 var(--g-body);
+  color: var(--g-dim);
+}
+
+.gp-main,
+.gp-il {
+  flex: none;
+  white-space: nowrap;
+}
+
+.gp-l2 b {
+  color: var(--g-gold);
+  font: 700 1.05em var(--g-disp);
+}
+
+.gp-aff {
+  color: #cdbf9c;
+}
+
+.gp-aff::before {
+  content: '\25C6';
+  color: color-mix(in srgb, var(--rc) 52%, #fff);
+  font-size: 0.6em;
+  margin-right: 0.5em;
+  vertical-align: 0.12em;
+}
+
+.gp-hint::after {
+  content: 'Swap';
+}
+
+.gr-slot.empty .gp-hint::after {
+  content: 'Equip';
+}
+
+.gr-slot.drop-off .gp-hint::after {
+  content: 'Off-hand';
+}
+
+.gr-dragging .gr-slot.drop-ok .gp-hint {
+  display: block;
+}
+
+.gr-dragging .gr-slot.gr-plate.drop-ok {
+  border-style: solid;
+  background: linear-gradient(180deg, rgba(24, 17, 10, 0.9), rgba(9, 6, 4, 0.9));
+  box-shadow: inset 0 0 0 1px var(--drag-rc, var(--g-gold)), inset 0 0 max(12px, calc(30 * var(--u))) color-mix(in srgb, var(--drag-rc, #f08c28) 35%, transparent), 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 55%, transparent);
+}
+
+.gr-dragging .gr-slot.gr-plate.drop-no {
+  opacity: 0.38;
+}
+
+html.short .gr-slot.gr-plate {
+  min-height: 44px;
+  gap: 6px;
+  padding: 2px 6px 2px 3px;
+}
+
+html.short .gp-ico {
+  width: 38px;
+  height: 38px;
+}
+
+html.short .gp-lbl {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+html.short .gp-lbl img {
+  width: 10px;
+  height: 10px;
+}
+
+html.short .gr-slot.gr-plate .gr-slot-name {
+  font-size: 10px;
+  letter-spacing: 0;
+}
+
+html.short .gp-l2 {
+  font-size: 10px;
+  gap: 0 0.6em;
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+html.short .gp-aff {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+html.short .gp-aff ~ .gp-aff {
+  display: none;
+}
+
+html.short .gp-chip {
+  min-height: 22px;
+  font-size: 9px;
+}

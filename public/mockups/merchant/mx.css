@@ -65,9 +65,6 @@ html.mk-clean #mk-strip { display: none; }
 .meta { font: max(11px, calc(17 * var(--u)))/1.2 var(--g-body); color: var(--g-dim); }
 .meta b { color: var(--g-gold); font: 700 1.05em var(--g-disp); }
 .rn { font: 600 max(12px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .05em; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: color-mix(in srgb, var(--rc) 52%, #fff); }
-.pips { display: inline-flex; gap: calc(3 * var(--u)); }
-.pip { width: max(16px, calc(24 * var(--u))); height: max(16px, calc(24 * var(--u))); background: #120c08 center / cover; border: 1px solid var(--g-edge); image-rendering: pixelated; }
-.pip.no { opacity: .28; filter: grayscale(1); } .pip.up { border-color: #8fe39a; }
 
 /* ---- hucre (gear.css .gr-item uzerine) ---- */
 .cellb { position: relative; display: block; padding: 0; border: 0; background: none; }
@@ -82,59 +79,15 @@ html.mk-clean #mk-strip { display: none; }
 .sellbox .dim { color: var(--g-dim); display: block; }
 .sellbox.armed { border: 1px solid var(--g-gold); background: rgba(240,140,40,.1); }
 .dragging .sellbox.drop-ok, .dragging .ledger.drop-ok { border-color: var(--dragc, #f3d999); box-shadow: inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--dragc, #f08c28) 25%, transparent); }
-.phone .sellbox .dim { display: none; } .phone .sellbox { padding: 4px 8px; font-size: 11px; }
 .empty-t { font: max(12px, calc(20 * var(--u)))/1.3 var(--g-body); color: var(--g-dim); padding: calc(16 * var(--u)); border: 1px dashed var(--g-line2); text-align: center; }
 .act { margin-top: auto; display: flex; justify-content: flex-end; flex: none; align-items: center; gap: 12px; min-height: 44px; }
 .act .hint { margin-right: auto; font: max(11px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
 .phone .act .hint { display: none; }
 .gr-btn .gi { width: 1.1em; height: 1.1em; }
 
-/* ---- A: plakalar ---- */
-.plates { display: flex; flex-direction: column; gap: calc(12 * var(--u)); flex: none; }
-.pl { position: relative; display: grid; grid-template-columns: calc(78 * var(--u)) minmax(0, 1fr) auto; align-items: center; gap: calc(14 * var(--u)); padding: calc(8 * var(--u)) calc(14 * var(--u)) calc(8 * var(--u)) calc(8 * var(--u)); min-height: max(46px, calc(94 * var(--u))); background: linear-gradient(180deg, rgba(24,17,10,.9), rgba(9,6,4,.9)); border: 1px solid color-mix(in srgb, var(--rc) 60%, rgba(217,178,106,.3)); box-shadow: inset 0 0 max(10px, calc(26 * var(--u))) color-mix(in srgb, var(--rc) 16%, transparent), 0 0 0 2px rgba(8,6,4,.6); cursor: pointer; transition: border-color .15s, box-shadow .15s; }
-.pl::before, .pl::after { content: ''; position: absolute; width: max(7px, calc(10 * var(--u))); height: max(7px, calc(10 * var(--u))); transform: rotate(45deg); background: #130d07; border: 1px solid color-mix(in srgb, var(--rc) 70%, #fff); z-index: 2; pointer-events: none; }
-.pl::before { left: -5px; top: -5px; } .pl::after { right: -5px; bottom: -5px; }
-.pl:hover { border-color: var(--g-gold); }
-.pl.on { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240,140,40,.35); }
-.pl.on::before { background: var(--g-ember); border-color: var(--g-ember2); }
-.pl.sold { opacity: .4; cursor: default; }
-.pl .tx { min-width: 0; display: flex; flex-direction: column; gap: calc(4 * var(--u)); }
-.pl .l2 { display: flex; align-items: center; gap: .8em; white-space: nowrap; overflow: hidden; }
-.pl .pr { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-.pl .pr .price { font-size: max(13px, calc(24 * var(--u))); }
-.pl .need { font: max(9px, calc(13 * var(--u))) var(--g-body); color: #ff8a7a; }
-.phone .pl { grid-template-columns: 40px minmax(0, 1fr) auto; min-height: 44px; padding: 3px 8px 3px 4px; gap: 8px; } .phone .pl .l2 .pips { display: none; }
 
-/* ---- B: 3 sutun hucre izgarasi ---- */
-.grid3 { display: grid; grid-template-columns: repeat(3, 1fr); gap: calc(18 * var(--u)) calc(18 * var(--u)); flex: none; }
-.tile { display: flex; flex-direction: column; align-items: center; gap: calc(6 * var(--u)); min-width: 0; }
-.tile .cellb { width: 100%; }
-.tile .rn { max-width: 100%; font-size: max(10px, calc(15 * var(--u))); }
-.tile .price { font-size: max(12px, calc(22 * var(--u))); }
-.tile.sold { opacity: .4; }
-.tile .rrtile { width: 100%; aspect-ratio: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; background: rgba(8,6,4,.4); border: 1px dashed var(--g-line2); color: var(--g-gold); font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; }
-.tile .rrtile:hover:not(:disabled) { border-color: var(--g-gold); } .tile .rrtile:disabled { opacity: .45; cursor: default; }
-.tile .rrtile svg { width: calc(46 * var(--u)); height: calc(46 * var(--u)); min-width: 22px; min-height: 22px; }
-.phone .grid3 { grid-template-columns: repeat(3, 1fr); gap: 6px; } .phone .tile .rn { display: none; } .phone .tile .pips { display: none; }
-.vb .sellbox { flex: 1; flex-direction: column; justify-content: center; text-align: center; min-height: calc(150 * var(--u)); }
 .vb .sellbox img { width: max(34px, calc(64 * var(--u))); height: max(34px, calc(64 * var(--u))); }
-.phone.vb .sellbox { flex-direction: row; min-height: 44px; flex: none; }
 
-/* ---- C: vitrin ---- */
-.vc .banner { position: relative; flex: none; height: calc(230 * var(--u)); margin: 0 calc(-32 * var(--u)); background: radial-gradient(ellipse at 22% 100%, rgba(224,112,42,.28), transparent 62%), rgba(6,4,3,.55); border-top: 1px solid var(--g-line); border-bottom: 1px solid var(--g-line2); overflow: hidden; }
-.vc .banner img.fig { position: absolute; left: calc(18 * var(--u)); bottom: 0; height: 100%; object-fit: contain; filter: drop-shadow(0 6px 10px #000); }
-.vc .banner .say { position: absolute; left: calc(210 * var(--u)); right: calc(32 * var(--u)); top: 50%; transform: translateY(-50%); }
-.vc .banner .say::before { content: ''; position: absolute; left: calc(-7 * var(--u)); top: 50%; width: 12px; height: 12px; margin-top: -6px; transform: rotate(45deg); background: #0c0906; border-left: 1px solid var(--g-line2); border-bottom: 1px solid var(--g-line2); }
-.phone.vc .banner { display: none; }
-.rows { display: flex; flex-direction: column; flex: none; }
-.row { position: relative; display: grid; grid-template-columns: calc(64 * var(--u)) minmax(0, 1fr) auto; align-items: center; gap: calc(14 * var(--u)); padding: calc(8 * var(--u)) 0; border-bottom: 1px solid var(--g-line); cursor: pointer; min-height: max(46px, calc(80 * var(--u))); }
-.row:hover { background: rgba(217,178,106,.06); } .row.on { background: rgba(240,140,40,.09); }
-.row.sold { opacity: .4; cursor: default; }
-.row .tx { min-width: 0; display: flex; flex-direction: column; gap: calc(3 * var(--u)); } .row .l2 { display: flex; align-items: center; gap: .8em; white-space: nowrap; overflow: hidden; }
-.buy { display: inline-flex; align-items: center; gap: .4em; min-height: 44px; min-width: calc(112 * var(--u)); justify-content: center; padding: 0 calc(12 * var(--u)); background: linear-gradient(180deg, rgba(38,27,17,.9), rgba(12,9,6,.94)); border: 1px solid #d9b26a; color: var(--g-gold); font: 600 max(12px, calc(20 * var(--u))) var(--g-disp); }
-.buy:hover:not(:disabled) { border-color: var(--g-ember2); background: rgba(224,112,42,.25); } .buy.bad { color: #ff8a7a; border-color: rgba(255,138,122,.4); } .buy:disabled { cursor: default; }
-.phone .row { grid-template-columns: 38px minmax(0, 1fr) auto; min-height: 44px; padding: 3px 0; gap: 8px; } .phone .row .pips { display: none; } .phone .buy { min-width: 70px; padding: 0 6px; }
-.vc .sellbox { background: repeating-linear-gradient(135deg, rgba(217,178,106,.05) 0 10px, transparent 10px 20px); }
 
 /* ---- sag: Gear defteri (degismedi; temsili) ---- */
 .ledger .lhead { padding-right: 120px; } .ledger .htabs { display: flex; gap: calc(22 * var(--u)); }
@@ -160,7 +113,33 @@ html.mk-clean #mk-strip { display: none; }
 #toast { position: fixed; left: 50%; top: 24px; transform: translateX(-50%); z-index: 80; padding: 8px 18px; background: rgba(20,10,4,.95); border: 1px solid #f3d999; color: #f3d999; font: 600 15px Cinzel, serif; letter-spacing: .06em; }
 #ghost { position: fixed; z-index: 90; width: 64px; height: 64px; pointer-events: none; transform: translate(-50%, -50%); filter: drop-shadow(0 6px 10px #000); }
 #ghost img { width: 100%; height: 100%; object-fit: contain; image-rendering: pixelated; }
-.plates { gap: calc(9 * var(--u)); }
 .vb .sellbox { min-height: calc(100 * var(--u)); }
-.vc .banner { height: calc(196 * var(--u)); }
 .phone .bag { grid-template-columns: repeat(3, 1fr); }
+
+/* ---- tuccar plakalari: fiyat plakanin yanina eklenir (plaka kurallari plates.css, birebir) ---- */
+.wares { display: flex; flex-direction: column; gap: calc(12 * var(--u)); flex: none; }
+.we { position: relative; display: flex; flex-direction: column; min-width: 0; }
+.we .gr-slot.gr-plate { width: 100%; text-align: left; }
+.we .gr-slot.gr-plate.sold { opacity: .4; cursor: default; }
+.we .gr-slot-text { flex: 1; min-width: 0; }
+.wp-price { flex: none; display: inline-flex; align-items: center; gap: .3em; margin-left: auto; font: 600 max(13px, calc(24 * var(--u))) var(--g-disp); color: var(--g-gold); white-space: nowrap; }
+.wp-price.bad { color: #ff8a7a; }
+.wp-price .gi { width: max(14px, calc(26 * var(--u))); height: max(14px, calc(26 * var(--u))); }
+.we.out { flex-direction: row; align-items: center; gap: calc(12 * var(--u)); }
+.we.out .wp-price { margin-left: 0; min-width: calc(96 * var(--u)); justify-content: center; padding: calc(6 * var(--u)) calc(8 * var(--u)); border: 1px solid var(--g-line2); background: rgba(8,6,4,.6); }
+.we.out .wp-price.bad { border-color: rgba(255,138,122,.4); }
+.vb .sellbox { min-height: 44px; padding: calc(8 * var(--u)) calc(14 * var(--u)); }
+.vb .sellbox img { width: max(22px, calc(34 * var(--u))); height: max(22px, calc(34 * var(--u))); }
+.vc .wares { display: grid; grid-template-columns: 1fr 1fr; gap: calc(26 * var(--u)) calc(12 * var(--u)); }
+.vc .we.out { flex-direction: column; align-items: stretch; gap: 6px; }
+.vc .we.out .wp-price { align-self: flex-end; margin-top: -2px; }
+.vc .we .gr-slot.gr-plate { padding-right: calc(8 * var(--u)); }
+.vc .we .gp-l2 { flex-wrap: nowrap; overflow: hidden; } .vc .we .gp-aff ~ .gp-aff { display: none; } .vc .we .gp-aff { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; min-width: 0; }
+.vc .sellbox { min-height: calc(110 * var(--u)); border-style: dashed; flex: none; }
+.slotcol { display: flex; flex-direction: column; gap: calc(10 * var(--u)); }
+.slotcol .gr-slot.gr-plate { width: 100%; }
+.phone .we .gr-slot.gr-plate { min-height: 44px; }
+.phone .wares { gap: 6px; } .phone .vc .wares { gap: 6px; }
+.phone .sellbox .dim { display: none; } .phone .sellbox { padding: 4px 8px; font-size: 11px; }
+.stall { gap: calc(10 * var(--u)); } .phone .stall { gap: 6px; }
+.page { overflow: hidden auto; scrollbar-width: thin; scrollbar-color: rgba(217,178,106,.4) transparent; }

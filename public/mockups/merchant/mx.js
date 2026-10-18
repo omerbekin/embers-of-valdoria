@@ -10,9 +10,9 @@
   };
   var SET = [['u17', 'u18', 'u5', 'u2', 'u32'], ['u35', 'u28', 'u21', 'u9', 'u29']];
   var NOTES = {
-    a: 'A, Plakalar: tezgâh bugünkü sütun genişliğinde kalır; her mal bir plaka (hücre, ad, seviye, kim kullanabilir, fiyat), altta satış kutusu ve Buy çubuğu.',
-    b: 'B, 3 sütun hücre: envanterdeki gibi büyük kare hücreler, altlarında ad + fiyat; ↻ yenileme altıncı karo, satış kutusu kalan boşluğu doldurur.',
-    c: 'C, Odo vitrini: üstte Odo tam boy + balon, mallar tek satır liste ve her satırda fiyatlı Buy düğmesi; satış kutusu şeritli tezgâh gibi.'
+    a: 'A, Fiyat plakanın içinde sağ kenarda: tek sütun Gear > Hero plakası, altın ikon + sayı en sağda; satış kutusu bugünkü kesik çerçeve.',
+    b: 'B, Fiyat plakanın dışında küçük etiket: aynı plaka, sağında ayrı altın etiket (yetmeyen kırmızı); satış kutusu ince tek satır.',
+    c: 'C, İki sütun plaka: aynı plaka yan yana iki sütun, fiyat etiketi plakanın altında; satış kutusu geniş şerit.'
   };
   var BAG_SIZE = 8, REROLL = 15;
   var S, first = true;
@@ -49,10 +49,6 @@
     return Object.keys(p.d).slice(0, 3).map(function (k) { var pn = H.panel[k]; return { t: (p.d[k] > 0 ? '+' : '-') + fmtN(Math.abs(p.d[k]), pn.f) + ' ' + pn.l, dir: p.d[k] > 0 ? 'up' : 'down' }; });
   }
   function usable(it, hid) { return !it.d.per[hid].no; }
-  function pips(it) {
-    return '<span class="pips">' + HEROES.map(function (h) { var no = !usable(it, h[0]); return '<span class="pip' + (no ? ' no' : '') + '" style="background-image:url(' + M + 'av/' + h[1] + '.webp)" title="' + D.heroes[h[0]].name + (no ? " can't use" : '') + '"></span>'; }).join('') + '</span>';
-  }
-
   // ---- gercek item ipucu v3 (item-tip.ts > itemTipNodes ile ayni DOM / sinif adlari)
   function tipHTML(it, ctx) {
     var d = it.d, s = sub(d), H = D.heroes[S.hero];
@@ -139,60 +135,52 @@
   }
   var BB_EMPTY = '<div class="empty-t">Sold something by mistake? It waits here until you leave.</div>';
 
-  // ---- varyantlar (yalniz tezgah ici)
-  function paneA() {
-    var body;
-    if (S.tab === 'sell') {
-      body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span>' + rrBtn() + '</div><div class="plates">' + S.wares.map(function (w, i) {
-        var st = wareState(w), on = S.sel && S.sel.kind === 'ware' && S.sel.i === i;
-        return '<div class="pl' + (on ? ' on' : '') + (w.sold ? ' sold' : '') + '" style="--rc:' + w.d.color + '" data-tip="ware:' + i + '"' + (w.sold ? '' : ' data-sel="ware:' + i + '" data-drag="ware:' + i + '"') + '>' + cell(w, 'ware', i, { sold: w.sold }).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
-          '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">iL <b>' + sub(w.d).il + '</b></span><span class="meta">' + sub(w.d).kind + '</span>' + pips(w) + '</div></div>' +
-          '<div class="pr">' + (w.sold ? '<span class="price">SOLD</span>' : price(st.p, st.poor)) + (st.poor ? '<span class="need">Need ' + (st.p - S.gold) + ' more</span>' : '') + '</div></div>';
-      }).join('') + '</div>';
-    } else {
-      body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div><div class="plates">' + (S.bb.length ? S.bb.map(function (w, i) {
-        var poor = S.gold < w.bbPrice, on = S.sel && S.sel.kind === 'bb' && S.sel.i === i;
-        return '<div class="pl' + (on ? ' on' : '') + '" style="--rc:' + w.d.color + '" data-tip="bb:' + i + '" data-sel="bb:' + i + '" data-drag="bb:' + i + '">' + cell(w, 'bb', i).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
-          '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">iL <b>' + sub(w.d).il + '</b></span><span class="meta">' + sub(w.d).kind + '</span>' + pips(w) + '</div></div><div class="pr">' + price(w.bbPrice, poor) + (poor ? '<span class="need">Need ' + (w.bbPrice - S.gold) + ' more</span>' : '') + '</div></div>';
-      }).join('') : BB_EMPTY) + '</div>';
-    }
-    return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
+  // ---- Gear > Hero plakasi (character-panel.ts slotsBlock ile ayni DOM / sinif adlari)
+  var SLOTLBL = { weapon: 'Weapon', offhand: 'Offhand', helm: 'Head', armor: 'Chest', gloves: 'Hands', boots: 'Feet', trinket: 'Ring' };
+  var SLOTICO = { weapon: 'weapon', offhand: 'offhand', helm: 'helm', armor: 'armor', gloves: 'gloves', boots: 'boots', trinket: 'trinket' };
+  var goldNum = function (t) { return esc(t).replace(/[+\-]?\d+(\.\d+)?%?/, function (m) { return '<b>' + m + '</b>'; }); };
+  function plate(it, kind, i, o) {
+    o = o || {};
+    var d = it.d, on = S.sel && S.sel.kind === kind && S.sel.i === i, slot = d.slot, main = '';
+    if (d.power) main = '<span class="gp-main">Power <b>' + d.power + '</b></span>';
+    else if (d.blockPct) main = '<span class="gp-main">Block <b>' + d.blockPct + '%</b></span>';
+    else if (d.implicit) main = '<span class="gp-main">' + goldNum(d.implicit.text) + '</span>';
+    var aff = d.lines.slice(0, 2).map(function (l) { return '<span class="gp-aff">' + esc(l.text) + '</span>'; }).join('');
+    var attrs = ' data-tip="' + kind + ':' + i + '"' + (o.sold ? '' : ' data-sel="' + kind + ':' + i + '"') + (o.drag && !o.sold ? ' data-drag="' + kind + ':' + i + '"' : '');
+    return '<button type="button" class="gr-slot gr-plate' + (on ? ' on' : '') + (o.sold ? ' sold' : '') + '" style="--rc:' + d.color + '"' + attrs + '>' +
+      '<span class="gp-ico"><img class="gr-svg gr-px" src="' + M + 'items/' + d.icon.split('/').pop() + '" alt="" draggable="false"></span>' +
+      '<div class="gr-slot-text gp-tx"><div class="gp-lbl"><img src="' + M + 'slot/' + SLOTICO[slot] + '.webp" alt="">' + SLOTLBL[slot] + '</div><div class="gr-slot-name">' + esc(d.name) + '</div>' +
+      '<div class="gp-l2">' + main + '<span class="gp-il">iL <b>' + sub(d).il + '</b></span>' + aff + '</div></div>' + (o.inside || '') + '</button>';
   }
-  function paneB() {
-    var body;
-    var tile = function (w, i, kind, p, poor) {
-      return '<div class="tile' + (w.sold ? ' sold' : '') + '">' + cell(w, kind, i, { sold: w.sold, drag: true }) + '<div class="rn" style="--rc:' + w.d.color + '">' + esc(w.d.name) + '</div>' + (w.sold ? '<span class="price">SOLD</span>' : price(p, poor)) + pips(w) + '</div>';
-    };
-    if (S.tab === 'sell') {
-      body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span></div><div class="grid3">' + S.wares.map(function (w, i) { var st = wareState(w); return tile(w, i, 'ware', st.p, st.poor); }).join('') +
-        '<div class="tile"><button class="rrtile" data-act="reroll" title="Reroll wares" aria-label="Reroll wares"' + (S.gold < REROLL ? ' disabled' : '') + '>' + RR + 'Reroll</button>' + price(REROLL, S.gold < REROLL) + '</div></div>';
-    } else {
-      body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="grid3">' + S.bb.map(function (w, i) { return tile(w, i, 'bb', w.bbPrice, S.gold < w.bbPrice); }).join('') + '</div>' : BB_EMPTY);
-    }
-    return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
+  function emptyPlate(slot) {
+    return '<button type="button" class="gr-slot gr-plate empty" style="--rc:#5b4a33"><span class="gp-ico"><img class="gr-svg" style="opacity:.22;filter:grayscale(1)" src="' + M + 'slot/' + SLOTICO[slot] + '.webp" alt=""></span><div class="gr-slot-text gp-tx"><div class="gp-lbl"><img src="' + M + 'slot/' + SLOTICO[slot] + '.webp" alt="">' + SLOTLBL[slot] + '</div><div class="gr-slot-name">Empty</div></div></button>';
   }
-  function paneC() {
+  // fiyat: plakanin yanina eklenen TEK sey (altin ikonu + sayi; yetmeyen kirmizi)
+  function ptag(p, poor, cls) { return '<span class="wp-price' + (poor ? ' bad' : '') + (cls ? ' ' + cls : '') + '">' + gi() + p + '</span>'; }
+  function wareEntry(w, i, kind) {
+    var sold = kind === 'ware' && w.sold, p = kind === 'bb' ? w.bbPrice : w.d.value, poor = !sold && S.gold < p;
+    var tag = sold ? '<span class="wp-price">SOLD</span>' : ptag(p, poor);
+    if (S.v === 'a') return '<div class="we">' + plate(w, kind, i, { sold: sold, drag: true, inside: tag }) + '</div>';
+    return '<div class="we out">' + plate(w, kind, i, { sold: sold, drag: true }) + tag + '</div>';
+  }
+
+  // ---- varyantlar: plaka ve ipucu ayni; yalniz fiyatin yeri / sutun sayisi / satis kutusu
+  function paneAny() {
     var body;
-    var row = function (w, i, kind, p, poor) {
-      var on = S.sel && S.sel.kind === kind && S.sel.i === i;
-      return '<div class="row' + (on ? ' on' : '') + (w.sold ? ' sold' : '') + '" style="--rc:' + w.d.color + '" data-tip="' + kind + ':' + i + '"' + (w.sold ? '' : ' data-sel="' + kind + ':' + i + '" data-drag="' + kind + ':' + i + '"') + '>' + cell(w, kind, i, { sold: w.sold }).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
-        '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">' + sub(w.d).kind + ' · iL <b>' + sub(w.d).il + '</b></span>' + pips(w) + '</div></div>' +
-        (w.sold ? '<span class="price">SOLD</span>' : '<button class="buy' + (poor ? ' bad' : '') + '" data-act="' + (kind === 'bb' ? 'bback' : 'quick') + '" data-i="' + i + '"' + (poor ? ' disabled' : '') + '>' + gi() + p + '</button>') + '</div>';
-    };
-    if (S.tab === 'sell') body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span>' + rrBtn() + '</div><div class="rows">' + S.wares.map(function (w, i) { var st = wareState(w); return row(w, i, 'ware', st.p, st.poor); }).join('') + '</div>';
-    else body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="rows">' + S.bb.map(function (w, i) { return row(w, i, 'bb', w.bbPrice, S.gold < w.bbPrice); }).join('') + '</div>' : BB_EMPTY);
+    if (S.tab === 'sell') body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span>' + rrBtn() + '</div><div class="wares">' + S.wares.map(function (w, i) { return wareEntry(w, i, 'ware'); }).join('') + '</div>';
+    else body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="wares">' + S.bb.map(function (w, i) { return wareEntry(w, i, 'bb'); }).join('') + '</div>' : BB_EMPTY);
     return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
   }
 
-  // ---- sag: Gear defteri (degismedi; temsili)
+  // ---- sag: Gear defteri (Hero sekmesi: ayni plakalar; degismedi, temsili)
   function ledger() {
-    var slots = [['helm', 'Head'], ['armor', 'Chest'], ['gloves', 'Hands'], ['boots', 'Feet'], ['weapon', 'Weapon'], ['trinket', 'Trinket']];
-    var sl = slots.map(function (s) { var e = S.equip[s[0]]; return '<div class="sl">' + (e ? cell(e, 'equip', s[0]) : '<div class="slotempty">' + s[1] + '</div>') + '</div>'; }).join('');
+    var slots = ['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket'];
+    var pl = slots.map(function (s) { var e = S.equip[s]; return e ? plate(e, 'equip', s) : emptyPlate(s); }).join('');
     var bag = ''; for (var i = 0; i < BAG_SIZE; i++) { var it = S.bag[i]; bag += it ? '<div class="cw">' + cell(it, 'bag', i, { drag: true }) + price(it.d.sell, false) + '</div>' : '<div class="cw"><div class="empty"></div></div>'; }
     var H = D.heroes[S.hero];
     return '<section class="panel ledger" data-drop="bag"><div class="lhead"><div class="gtitle">Gear</div><div class="htabs"><button class="htab on">Hero</button><button class="htab">Sheet</button></div></div>' +
       '<div class="lbody"><div class="marks">' + HEROES.map(function (h) { return '<button class="mark' + (S.hero === h[0] ? ' on' : '') + '" data-hero="' + h[0] + '" style="background-image:url(' + M + 'av/' + h[1] + '.webp)" title="' + D.heroes[h[0]].name + '"></button>'; }).join('') + '</div>' +
-      '<div class="page"><div class="hname">' + H.name + ' <span class="meta">Lv ' + H.level + '</span></div><div class="slots">' + sl + '</div></div><div class="spine"></div>' +
+      '<div class="page"><div class="hname">' + H.name + ' <span class="meta">Lv ' + H.level + '</span></div><div class="slotcol">' + pl + '</div></div><div class="spine"></div>' +
       '<div class="page"><div class="sec">Bag <span class="cnt">' + S.bag.length + ' / ' + BAG_SIZE + '</span></div><div class="bag">' + bag + '</div><div class="meta">Prices under items are what Odo pays. Double-click an item to sell it.</div></div></div></section>';
   }
   var X = '<button class="xbtn" title="Leave the stall" aria-label="Leave"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
@@ -201,10 +189,7 @@
     tipHide();
     var st = $('#stage');
     st.className = (S.phone ? 'phone' : 'desk') + ' v' + S.v + (first ? ' enter' : '');
-    var inner;
-    if (S.v === 'a') inner = head() + talk() + tabs() + paneA();
-    else if (S.v === 'b') inner = head() + talk() + tabs() + paneB();
-    else inner = head() + '<div class="banner"><img class="fig" src="' + M + 'ui/odo-full.webp" alt=""><div class="say">' + esc(LINES[S.line]) + '</div></div>' + (S.phone ? '<div class="talk"><div class="say">' + esc(LINES[S.line]) + '</div></div>' : '') + tabs() + paneC();
+    var inner = head() + talk() + tabs() + paneAny();
     st.innerHTML = '<div class="bgimg"></div><div class="ov"></div><div class="pair"><section class="panel stall" data-drop="stall">' + inner + '</section>' + ledger() + '</div>' + X;
     fit();
     if (first) { first = false; setTimeout(function () { st.classList.remove('enter'); }, 700); }
@@ -217,7 +202,7 @@
   addEventListener('resize', fit);
   function strip() {
     var b = function (l, on, a) { return '<button class="' + (on ? 'on' : '') + '" ' + a + '>' + l + '</button>'; };
-    $('#mk-strip').innerHTML = '<b>MOCKUP</b>Merchant ' + b('A Plates', S.v === 'a', 'data-v="a"') + b('B Grid', S.v === 'b', 'data-v="b"') + b('C Showcase', S.v === 'c', 'data-v="c"') + '<span class="sep"></span>' + b('Desktop', !S.phone, 'data-d="desk"') + b('Phone 844x390', S.phone, 'data-d="phone"') + '<span class="sep"></span>' + b('Reset', false, 'data-reset="1"') + '<span class="sep"></span><span class="note">' + NOTES[S.v] + '</span>';
+    $('#mk-strip').innerHTML = '<b>MOCKUP</b>Merchant ' + b('A Price inside', S.v === 'a', 'data-v="a"') + b('B Price tag', S.v === 'b', 'data-v="b"') + b('C Two columns', S.v === 'c', 'data-v="c"') + '<span class="sep"></span>' + b('Desktop', !S.phone, 'data-d="desk"') + b('Phone 844x390', S.phone, 'data-d="phone"') + '<span class="sep"></span>' + b('Reset', false, 'data-reset="1"') + '<span class="sep"></span><span class="note">' + NOTES[S.v] + '</span>';
   }
   function toast(t) { var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { e.hidden = true; }, 1700); }
 
