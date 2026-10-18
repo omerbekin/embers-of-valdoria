@@ -1867,3 +1867,26 @@ Tasarım: `docs/design/tutorial.md`, içerik `data/tutorial.json`. Uygulanırken
 - **Sheet:** üç stat sütunu içeriğe göre boyutlanır, etiket sabit genişlik (telefon eski sıkı düzende kaldı); puan yokken puan satırı yer tutmaz (Confirm sonrası stat satırları bir kez yukarı kayar).
 - **Büyük ekran:** defter / tüccar / loot en çok 1920x1080 tabanı kadar, ortada; torba başlığında filtre düğmesi en sağda; sağ / sol kenar boşluklarına oyun alanı kayması eklendi (altın göstergesi nav düğmelerine binmesin). Görsel doğrulama yapılmadı (tarayıcı açılmadı): ana oturum kontrol edecek.
 - Endless ödül ekranı "View bag" (reward-bag.ts) bu görevde değişmedi (eski torba görünümü).
+
+### 354 - Ömer cevapları (2026-10-18)
+1. LOOT ekranı Victory özetinden SONRA gelir: aynen kalır.
+2. "Take all", "Done" ve "Leave N items behind?" onayı: kalsın.
+3. Tüccar: torba item'ine çift tık / çift dokunuş yine SATAR (kuşandırmaz). Yalnızca bu değişti (`merchant-screen.ts` onDoubleTap 'bag:'; `gear-screen.ts` masaüstü çift tık önce eke sorar).
+4. Endless ödül "View bag" (`reward-bag.ts`) yeni ortak envantere (Gear "Ledger") taşındı: ödül ikonları solda ek panel, torba/çöp kutusu Gear'ın kendisi. Ödül akışı ve kuralları aynı. (Yukarıdaki "değişmedi" notu eskidi.)
+
+## 355. "Start battle?" kartı v3 "Anchored" + C / F kısayolları (Ömer 2026-10-18): varsayımlar (ui-dev)
+- Kart: "Then" satırı ve "diğer yollar kapanır" notu kaldırıldı (yalnızca arayüz; sefer kuralı aynı). Seçenekli yolda (fork) da kart aynıdır.
+- Bilgi satırı YENİ metin değil: önder düşmanın (rütbeli, yoksa ilk pasifli) var olan pasif açıklaması (`data/mobs`); boss'ta pasif yoksa ilk savaş çığlığı (`data/bosses > firstBanner`, "None shall cross."). Gerçek lore / düğüm açıklaması verisi yok; Ömer isterse content-designer düğüm başına kısa bir açıklama yazar (kart sonra ona bağlanır). Telefon yatayda (`html.short`) bilgi satırı sığmadığı için gizli.
+- Kart açıkken Menu yerinde ortak X; Esc ve zemin = vazgeç. Debug > Campaign > "Open Start battle card" (+ elite) Fight'a basınca savaşı başlatmaz.
+- C = Gear, F = Formation (oyun geneli): Gear içinde C artık sekme değiştirmez, Gear'ı kapatır (354 / 352'deki "C Hero / Sheet" kalktı). F yalnızca Formation penceresi olan yerde (sefer haritası, kasaba); Endless'ta ayrı Formation penceresi yok (dizilim takım seçiminde), orada yalnızca C (kamp ekranında). Tüccar / loot içindeki Gear'da C o ekranı kapatır (Esc ile aynı).
+
+## 356. Sefer düğümü lore cümleleri (Ömer 2026-10-18 "lore yazdır"): taslak (content-designer)
+- `data/campaign/valdoria.json` içindeki 26 düğümün her birine tek cümlelik `lore` (oyun içi, İngilizce) yazıldı. Hepsi content-designer TASLAĞIDIR; Ömer okuyup onaylamalı ya da değiştirmeli.
+- Yeni özel ad uydurulmadı; yalnızca veride olan adlar kullanıldı (Ash Curse, Ash Lord, Castle Morvane, Lord Morvane, St. Brann, Odo, Valdren Keep, King's Bridge ve bekçisi). Witch's Hut'ta "hedge witch" adsız geçer, Thornwood'da "a drake cult".
+- "Start battle?" kartı artık bilgi satırında düğümün lore cümlesini gösterir (başlıksız, italik); lore yoksa eski davranış (önder pasifi / boss çığlığı). Telefon yatayda (`html.short`) yine gizli. Kasaba / dinlenme / tüccar / olay düğümlerinin lore'u şimdilik yalnızca veride (kart yalnızca savaşlı düğümde açılır); başka bir ekranda gösterilsin mi, Ömer karar verir.
+
+## 357. Düğüm kartı TÜM düğüm türlerinde (Ömer 2026-10-18 "bu arayüzü tüm nodelar için uygulat"): varsayımlar (ui-dev)
+- Savaşsız düğümler (kasaba, kamp, tüccar, hazine, olay) için de aynı anchored kart (portre satırı yok; rozet, ad · tür, lore satırı, düğümün eylemi). Eylem sözleri eski pencerelerdeki fiiller: kasaba "Enter", kamp "Rest", tüccar "Trade", hazine "Open", olay "Continue". Başlıklar benim: "Enter town?", "Make camp?", "Visit the merchant?", "Open the chest?", "Look closer?". Lore yoksa eski kısa tür metni (nodeFacts) gösterilir.
+- Kart ne zaman: (a) gidilebilir savaşsız düğüme dokununca (eskiden tek yol ise doğrudan yürürdü, çatalda "Take this road?" Yes/No vardı: ikisi de kalktı, "diğer yollar kapanır" notu da gitti); kartın eylemi yürümektir, varınca düğümün kendi ekranı (kamp penceresi, hazine, olay, kasaba ekranı, tüccar) eskisi gibi açılır. (b) Bulunulan düğümde bekleyen eylem varsa (pencere Esc ile kapatılmışsa) ve bitmiş kasaba / kamp / tüccara yeniden girerken.
+- Emin olmadığım yerler: hazine ve düz (seçeneksiz) olayda varışta eski pencere hâlâ açılır ("Open the chest" / "Continue"), yani kart + pencere iki adım olur; istenirse varıştaki pencere kaldırılıp kartın eylemi doğrudan ödülü verir (kural değişmez). Korumalı hazine / olay (Dwarven Mine, Witch's Hut, St. Brann's) savaşlı olduğu için savaş kartını ("Fight") kullanır. Hikâye adımı ve sefer sonu penceresi kart almadı (kasaba içi sahne / sonuç ekranı). Kasaba ekranının içindeki dokunuşlar (Gear, Trade, Leave) değişmedi.
+- Telefon yatayda (`html.short`) savaş kartında bilgi satırı gizli kalır; portresiz kartta lore iki satırla sınırlı gösterilir (yer var).

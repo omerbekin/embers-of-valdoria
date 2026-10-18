@@ -23,6 +23,10 @@ import {
   completeSimple,
   edgeVisibility,
   enemyPreview,
+  foeGroups,
+  startCardInfo,
+  type FoeGroup,
+  nodeLevel,
   farewell,
   formCompany,
   getMap,
@@ -77,6 +81,7 @@ import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
 import { markLessonSeen, seenLessons, tutorialsOn } from '../../tutorial/store';
 import { closeAllLessons, dismissLesson, showLesson } from '../../ui/lesson-box';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
+import { isInputLocked } from '../../ui/input-lock';
 import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
 import { openCampaignMerchant } from '../campaign-merchant';
@@ -86,6 +91,7 @@ import { preloadCampaignArt } from '../campaign-art';
 import { edgeFillers, mapArt } from '../map-art';
 import { placeArt } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
+import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { H, W, bodyText, classCard, crown, hpBar, openModal, type Modal } from '../campaign-ui';
 import { MAP_SCENE, MENU_SCENE, checkPaused, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
@@ -102,7 +108,7 @@ import { showLevelBanner } from '../../ui/level-banner';
 import { LEVELS } from '../../progression';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
-import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
+import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation } from '../campaign-panels';
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
@@ -130,6 +136,14 @@ import { sceneMusic } from '../../ui/music';
  * İki kamera: ana kamera haritayı, arayüz kamerası sabit katmanı gösterir (customStageCamera; gerçek yakınlaştırma = render ölçeği x harita).
  */
 
+/** Savaşsız düğüm kartı: başlık + birincil eylem (eski pencerelerdeki fiiller). */
+const PLACE_CARD: Partial<Record<NodeType, { title: string; action: string }>> = {
+  town: { title: 'Enter town?', action: 'Enter' },
+  rest: { title: 'Make camp?', action: 'Rest' },
+  merchant: { title: 'Visit the merchant?', action: 'Trade' },
+  treasure: { title: 'Open the chest?', action: 'Open' },
+  event: { title: 'Look closer?', action: 'Continue' },
+};
 const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', elite: 'Elite', event: 'Event', treasure: 'Treasure', boss: 'Boss', rest: 'Rest point', merchant: 'Merchant' };
 const NODE_R = 24;
 const WALK_SPEED = 320; // px/sn
@@ -390,6 +404,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Ok tuşları = kaydırma, + / - = yakınlaştırma (pencere / menü açıkken değil). */
   private onKey(e: KeyboardEvent): void {
+    if (this.hotkey(e)) return;
     if (this.modal || this.menuOpen || this.town || debugState.uiPaused || isSettingsOpen()) return;
     if (e.key === 'ArrowLeft') this.panBy(-PAN_STEP, 0);
     else if (e.key === 'ArrowRight') this.panBy(PAN_STEP, 0);
@@ -397,6 +412,28 @@ export class CampaignMapScene extends Phaser.Scene {
     else if (e.key === 'ArrowDown') this.panBy(0, PAN_STEP * 0.6);
     else if (e.key === '+' || e.key === '=') this.setMapZoom(this.mapZoom + MAP_ZOOM.step);
     else if (e.key === '-' || e.key === '_') this.setMapZoom(this.mapZoom - MAP_ZOOM.step);
+  }
+
+  /**
+   * Oyun geneli kısayollar (Ömer 2026-10-18): C = Gear / karakter ekranı (açıkken Gear kendisi C ile kapatır), F = Formation aç / kapat.
+   * Harita ve kasabada çalışır; yazı alanına yazarken, menü / ayarlar / başka pencere / onay / loot / tüccar açıkken çalışmaz.
+   */
+  private hotkey(e: KeyboardEvent): boolean {
+    if (e.ctrlKey || e.metaKey || e.altKey || e.repeat) return false;
+    const k = e.key.toLowerCase();
+    if (k !== 'c' && k !== 'f') return false;
+    const t = e.target as HTMLElement | null;
+    if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return false;
+    if (debugState.uiPaused || isSettingsOpen() || this.menuOpen || this.slotBrowser || this.walking) return false;
+    if (k === 'f' && this.formationOpen) {
+      this.closeFormation();
+      return true;
+    }
+    if (this.modal || isInputLocked() || otherDialogOpen() || document.querySelector('#ui-root .gr-overlay')) return false;
+    if (!activeHeroes(this.s).length || !this.canOpenSide()) return false;
+    if (k === 'c') this.openGear();
+    else this.openFormation();
+    return true;
   }
 
   // ------------------------------------------------------------ geometri
@@ -1447,6 +1484,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.modal?.close();
     this.modal = null;
     this.sideOpen = false;
+    this.formationOpen = false;
   }
 
   /**
@@ -1988,14 +2026,14 @@ export class CampaignMapScene extends Phaser.Scene {
     const step = nextStep(this.s);
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
-    if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, false, () => void startCampaignBattle(this));
-    if (id === this.s.at && this.actionHere()) return this.advance();
+    if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => void startCampaignBattle(this));
+    if (id === this.s.at && this.actionHere()) return ['town', 'rest', 'merchant', 'event', 'treasure'].includes(step.kind) ? this.confirmPlace(id, () => this.advance()) : this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
     if (id === this.s.at && step.kind === 'move') {
       const k = revisitKind(this.s);
       if (this.pausedBlocks()) return;
-      if (k === 'rest') return this.restModal(id, true);
-      if (k) return this.commit(revisitNode(this.s));
+      if (k === 'rest') return this.confirmPlace(id, () => this.restModal(id, true));
+      if (k) return this.confirmPlace(id, () => this.commit(revisitNode(this.s)));
     }
     const p = this.input.activePointer;
     if (p.wasTouch) {
@@ -2011,15 +2049,16 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Yol seçimi: savaş düğümünde "Start battle?" onayı (Fight = yürü + savaşı başlat); seçim noktasında (diğer yollar kapanacak) savaşsız
-   * düğüm için "Take this road?"; tek yol ve savaş yoksa doğrudan yürür (kasaba / dinlenme / tüccar / olay varışta açılır).
+   * Yol seçimi: her düğümde aynı anchored kart (Ömer 2026-10-18): savaşta "Start battle?" (Fight = yürü + savaşı başlat), savaşsızda
+   * düğümün kendi kartı (Enter / Rest / Trade / Open / Continue = yürü; kasaba / dinlenme / tüccar / olay ekranı varışta açılır).
+   * Eski "Take this road?" (Yes/No) penceresi kalktı; "diğer yollar kapanır" notu da yok (Ömer).
    */
   private chooseRoad(id: string): void {
     if (this.pausedBlocks()) return;
     const step = nextStep(this.s);
     if (step.kind !== 'move' || !step.options.includes(id)) return;
     const fork = step.options.length > 1;
-    if (this.fightsAt(id)) return this.confirmBattle(id, fork, () => this.march(id, true));
+    if (this.fightsAt(id)) return this.confirmBattle(id, () => this.march(id, true));
     if (!fork) return this.march(id);
     const f = this.nodeFacts(id);
     this.modal = openModal(this, this.ui, {
@@ -2035,29 +2074,100 @@ export class CampaignMapScene extends Phaser.Scene {
     });
   }
 
-  /** "Start battle?" onayı (oyunun pencere dili; Cancel solda, Fight sağda; zemin / Esc = Cancel): düğüm, düşmanlar, sonraki duraklar. */
-  private confirmBattle(id: string, fork: boolean, fight: () => void): void {
+  /**
+   * "Start battle?" kartı (Ömer 2026-10-18, taslak v3 "Anchored"; src/ui/start-battle.ts): düğümün yanında küçük DOM kartı, ok ucu düğümü gösterir.
+   * Fight sağda birincil; X (Menu yerinde), Esc ve zemine dokunma = vazgeç. "Then" ve "diğer yollar kapanır" satırları yok (Ömer). Sahne
+   * girdisi kart açıkken kilitli (`this.modal` yer tutucusu). Oyun kuralı değişmez: Fight yine `fight()` çalıştırır.
+   */
+  private confirmBattle(id: string, fight: () => void): void {
     const n = node(this.map, id);
-    const f = this.nodeFacts(id);
-    const lines = [f.foes ? `Foes: ${f.foes}` : '', f.then ? `Then: ${f.then}` : '', fork ? 'The other roads will close for this journey.' : ''].filter(Boolean);
-    this.modal = openModal(this, this.ui, {
-      title: 'Start battle?',
-      subtitle: `${n.name}  ·  ${n.subtitle || TYPE_LABEL[n.type]}`,
-      text: lines.join('\n'),
-      fit: true,
-      buttons: [
-        { label: 'Cancel', run: () => this.closeModal() },
-        {
-          label: 'Fight',
-          primary: true,
-          run: () => {
-            this.closeModal();
-            fight();
-          },
-        },
-      ],
-      onDismiss: () => this.closeModal(),
+    if (!n.encounter) return;
+    const foes = foeGroups(n.encounter);
+    this.nodeCard(id, { foes: foes.groups, fallback: foes.info, onGo: fight });
+  }
+
+  /**
+   * Savaşsız düğümler için AYNI kart (Ömer 2026-10-18 "tüm nodelar için"): rozet + ad · tür + lore satırı + düğümün kendi eylemi (portre yok).
+   * Eylem sözleri eski pencerelerdeki fiillerdir (Enter / Rest / Trade / Open / Continue). `go` kuralı değiştirmez: eskiden doğrudan
+   * yapılan şeyi (yürü, ya da düğümü aç) yapar.
+   */
+  private confirmPlace(id: string, go: () => void): void {
+    const n = node(this.map, id);
+    const t = PLACE_CARD[n.type] ?? { title: 'Continue?', action: 'Continue' };
+    this.nodeCard(id, { title: t.title, actionLabel: t.action, fallback: { text: this.nodeFacts(id).blurb }, onGo: go });
+  }
+
+  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; onGo: () => void }): void {
+    const root = document.getElementById('ui-root');
+    const n = node(this.map, id);
+    if (!root) return;
+    this.closeModal();
+    const info = startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
+    let card: StartBattleHandle | null = null;
+    const close = (): void => {
+      card?.close();
+      card = null;
+      this.modal = null;
+    };
+    card = openStartBattle(root, {
+      ...(o.title ? { title: o.title } : {}),
+      ...(o.actionLabel ? { actionLabel: o.actionLabel } : {}),
+      name: n.name,
+      subtitle: n.subtitle || TYPE_LABEL[n.type],
+      nodeType: n.type,
+      level: nodeLevel(this.s.mapId, id),
+      ...(o.foes ? { foes: o.foes } : {}),
+      ...(info ? { info } : {}),
+      anchor: () => this.nodeCssPoint(id, root),
+      onFight: () => {
+        this.closeModal();
+        o.onGo();
+      },
+      onCancel: () => this.closeModal(),
     });
+    const handle = card;
+    onStageResize(this, () => handle.place());
+    // Esc / başka pencereler `this.modal.close()` ile kapatır; yalnızca close() kullanılır
+    this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
+  }
+
+  /** Debug > Campaign > "Start card: <tür>": haritadaki ilk o türden düğüm için kartı açar (eylem yalnızca bildirim gösterir). */
+  debugNodeCard(type: string): void {
+    if (this.inputBusy()) return;
+    const n = this.map.nodes.find((x) => x.type === type);
+    if (!n) return this.toast(`No ${type} stop on this map.`);
+    const note = () => this.toast('Debug card: the action does nothing here.');
+    if (n.encounter) this.confirmBattle(n.id, note);
+    else this.confirmPlace(n.id, note);
+  }
+
+  /**
+   * Debug > Campaign > "Open Start battle card": bulunulan savaş düğümü, yoksa ilk gidilebilir savaş düğümü, yoksa haritadaki ilk karşılaşma
+   * düğümü için kartı açar. Fight burada savaşı BAŞLATMAZ (yalnızca kartı kapatır).
+   */
+  debugStartBattleCard(elite = false): void {
+    if (this.inputBusy()) return;
+    const step = nextStep(this.s);
+    const opts = step.kind === 'move' ? step.options : [];
+    const withEnc = this.map.nodes.filter((n) => !!n.encounter);
+    const pick = (elite ? withEnc.find((n) => n.type === 'elite') : undefined) ?? (this.fightsAt(this.s.at) ? node(this.map, this.s.at) : undefined) ?? withEnc.find((n) => opts.includes(n.id)) ?? withEnc[0];
+    if (pick) this.confirmBattle(pick.id, () => this.toast('Debug card: Fight does nothing here.'));
+  }
+
+  /** Düğümün #ui-root içindeki CSS piksel konumu (harita kamerası + tuval -> sahne ölçeği); görünür alan dışındaysa null. */
+  private nodeCssPoint(id: string, root: HTMLElement): { x: number; y: number } | null {
+    // Tuval sahnede ortalanır (Phaser FIT): pencere 16:9'dan dar / 2580:1080'den genişse kenarda bant kalır; tuvalin #stage içindeki ofseti
+    // ve CSS/piksel oranı tuvalin kendisinden ölçülür (sahne genişliğinden değil). Ofsetler dönüşümden etkilenmez (döndürülmüş dikeyde de doğru).
+    const c = this.game.canvas;
+    const stage = root.parentElement;
+    let left = 0;
+    let top = 0;
+    for (let e: HTMLElement | null = c; e && e !== stage; e = e.offsetParent as HTMLElement | null) {
+      left += e.offsetLeft;
+      top += e.offsetTop;
+    }
+    const cam = this.cameras.main;
+    return worldToStageCss(this.P(id), cam, { left, top, cssW: c.offsetWidth, cssH: c.offsetHeight, pxW: c.width, pxH: c.height });
   }
 
   /**
@@ -2068,7 +2178,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!checkPaused()) {
       this.toast(PAUSED_BROKEN);
       this.renderHud();
-      return this.confirmBattle(id, false, () => void startCampaignBattle(this));
+      return this.confirmBattle(id, () => void startCampaignBattle(this));
     }
     const n = node(this.map, id);
     const turn = (suspendedOf(this.s)?.turn ?? 0) + 1;
@@ -2204,6 +2314,15 @@ export class CampaignMapScene extends Phaser.Scene {
     this.openFormation();
   }
 
+  /** Formation penceresi açık mı (F tuşu aç / kapat). */
+  private formationOpen = false;
+
+  private closeFormation(): void {
+    this.closeModal();
+    this.renderHud();
+    this.placeCaravan(this.s.at);
+  }
+
   /** Dizilim penceresi (sürükle ya da dokun-dokun; Auto arrange). Kapanınca harita kalır (önceki kart yeniden açılmaz). */
   private openFormation(): void {
     if (this.pausedBlocks()) return;
@@ -2213,15 +2332,12 @@ export class CampaignMapScene extends Phaser.Scene {
     this.syncCampHud();
     this.closeModal();
     this.sideOpen = true;
+    this.formationOpen = true;
     this.modal = openFormation(this, this.ui, {
       get: () => this.s,
       move: (heroId, cell) => setState(moveHero(this.s, heroId, cell)),
       auto: () => setState(autoFormation(this.s)),
-      done: () => {
-        this.closeModal();
-        this.renderHud();
-        this.placeCaravan(this.s.at);
-      },
+      done: () => this.closeFormation(),
       toUi: (p) => this.uiPoint(p),
       heroPanel: (id) => this.openHero(id, () => this.openFormation()),
     });

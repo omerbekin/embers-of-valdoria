@@ -63,3 +63,20 @@ export function wheelAction(e: { dx: number; dy: number; ctrl: boolean }, _room:
 export function zoomTowardMid(cursor: { x: number; y: number }, offset: { x: number; y: number }, camZoom: number, b: Bounds, v: View): { x: number; y: number } {
   return clampMid({ x: cursor.x - offset.x / camZoom, y: cursor.y - offset.y / camZoom }, b, v);
 }
+
+/**
+ * Dünya noktası -> sahne (#stage) yerel CSS pikseli (start-battle kartının halkası / ok ucu; Ömer 2026-10-18 hata: halka boş yerdeydi).
+ * `cam`: ana kamera (merkezden yakınlaşır: ekran = (dünya - scroll - genişlik/2) * zoom + genişlik/2, tuval pikseli).
+ * `canvas`: tuvalin sahne içindeki CSS kutusu (#game ofseti + Phaser FIT ortalama payı; dar/geniş pencerede tuval ortalanır, kenarda
+ * siyah bant kalır) ve tuvalin piksel boyu. Nokta tuvalin dışındaysa null (kart ortalanır).
+ */
+export function worldToStageCss(
+  p: { x: number; y: number },
+  cam: { scrollX: number; scrollY: number; zoom: number; width: number; height: number },
+  canvas: { left: number; top: number; cssW: number; cssH: number; pxW: number; pxH: number },
+): { x: number; y: number } | null {
+  const sx = (p.x - cam.scrollX - cam.width / 2) * cam.zoom + cam.width / 2;
+  const sy = (p.y - cam.scrollY - cam.height / 2) * cam.zoom + cam.height / 2;
+  if (sx < 0 || sy < 0 || sx > canvas.pxW || sy > canvas.pxH) return null;
+  return { x: canvas.left + (sx * canvas.cssW) / (canvas.pxW || 1), y: canvas.top + (sy * canvas.cssH) / (canvas.pxH || 1) };
+}

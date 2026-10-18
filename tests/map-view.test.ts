@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { MAP_ZOOM, canPan, clampMid, clampZoom, midLimits, wheelAction, zoomTowardMid } from '../src/game/map-view';
+import { MAP_ZOOM, canPan, clampMid, clampZoom, midLimits, wheelAction, worldToStageCss, zoomTowardMid } from '../src/game/map-view';
 
 // 21:9 harita çerçevesi (geniş görsel; eski 16:9 bölge dünyada 0-1920)
 const frame = { left: -221, right: 2462, top: 0, bottom: 1080 };
@@ -59,5 +59,36 @@ describe('sefer haritası görünümü (kaydırma / yakınlaştırma)', () => {
     expect(edge.y - v.h / 2).toBeGreaterThanOrEqual(frame.top - 1e-9);
     // uzaklaşma (1,0): dikeyde yer yok, orta dikeyde sabit
     expect(zoomTowardMid({ x: 900, y: 100 }, { x: 0, y: -400 }, 1, frame, { w: 1920, h: 1080 }).y).toBe(540);
+  });
+});
+
+// Start-battle kartı halkası (Ömer 2026-10-18 hata: dar / çok geniş pencerede halka düğümde değil boş yerdeydi; tuval ofseti ve
+// tuvalin kendi CSS ölçeği hesaba katılmıyordu)
+describe('worldToStageCss', () => {
+  const cam = (mid: { x: number; y: number }, zoom: number, w: number, h: number) => ({ scrollX: mid.x - w / 2, scrollY: mid.y - h / 2, zoom, width: w, height: h });
+  it('16:9, tuval sahneyi doldurur: orta nokta ortada', () => {
+    const c = { left: 0, top: 0, cssW: 1280, cssH: 720, pxW: 1920, pxH: 1080 };
+    expect(worldToStageCss({ x: 960, y: 540 }, cam({ x: 960, y: 540 }, 1, 1920, 1080), c)).toEqual({ x: 640, y: 360 });
+  });
+  it('uzun pencere: tuval dikeyde ortalanır, üst bant eklenir', () => {
+    const c = { left: 0, top: 381, cssW: 817, cssH: 460, pxW: 1920, pxH: 1080 };
+    const p = worldToStageCss({ x: 0, y: 1080 }, cam({ x: 960, y: 540 }, 1, 1920, 1080), c)!;
+    expect(p.x).toBeCloseTo(0);
+    expect(p.y).toBeCloseTo(381 + 460);
+  });
+  it('çok geniş pencere: tuval yatayda ortalanır, ölçek tuval genişliğinden', () => {
+    const c = { left: 305, top: 0, cssW: 2389, cssH: 1000, pxW: 2580, pxH: 1080 };
+    const p = worldToStageCss({ x: 960, y: 540 }, cam({ x: 960, y: 540 }, 1, 2580, 1080), c)!;
+    expect(p.x).toBeCloseTo(305 + 2389 / 2);
+    expect(p.y).toBeCloseTo(500);
+  });
+  it('yakınlaştırma + kaydırma: kamera ortasından yakınlaşır', () => {
+    const c = { left: 0, top: 0, cssW: 1920, cssH: 1080, pxW: 1920, pxH: 1080 };
+    // orta (700, 600), zoom 1.4: dünya (800, 600) ekranda ortanın 140 px sağında
+    expect(worldToStageCss({ x: 800, y: 600 }, cam({ x: 700, y: 600 }, 1.4, 1920, 1080), c)).toEqual({ x: 960 + 140, y: 540 });
+  });
+  it('ekran dışındaki düğüm: null (kart ortalanır)', () => {
+    const c = { left: 0, top: 0, cssW: 1920, cssH: 1080, pxW: 1920, pxH: 1080 };
+    expect(worldToStageCss({ x: 2400, y: 540 }, cam({ x: 960, y: 540 }, 1, 1920, 1080), c)).toBeNull();
   });
 });

@@ -205,3 +205,52 @@ export function enemyPreview(encounterId: string, caps = ENGINE_CAPS): { name: s
 }
 
 export const partySize = (s: CampaignState): number => activeHeroes(s).length;
+
+export interface FoeGroup {
+  /** Sınıf / mob id'si (ikon). */
+  cls: string;
+  /** Portre dosyası kimliği (spriteId; yoksa cls). */
+  sprite: string;
+  name: string;
+  /** Aynı birimden kaç tane ("3×"). */
+  n: number;
+  tier?: 'elite' | 'boss';
+}
+
+/**
+ * "Start battle?" kartı için düşman grupları (ön sıradan arkaya, aynı ad birleşik) + tek satırlık bilgi. Bilgi YENİ metin değildir, var olan
+ * oyun metnidir: önderin (rütbeli birim, yoksa ilk pasifli birim) pasif açıklaması; yoksa boss'un ilk savaş çığlığı (data/bosses > firstBanner).
+ */
+export type CardInfo = { who?: string; text: string; quote?: boolean };
+
+/** "Start battle?" kartının bilgi satırı: düğümün `lore` cümlesi varsa o (başlıksız), yoksa foeGroups'un önder pasifi / boss çığlığı. */
+export function startCardInfo(lore: string | undefined, fallback?: CardInfo): CardInfo | undefined {
+  const t = lore?.trim();
+  return t ? { text: t } : fallback;
+}
+
+export function foeGroups(encounterId: string, caps = ENGINE_CAPS): { groups: FoeGroup[]; info?: { who: string; text: string; quote?: boolean } } {
+  const enc = resolveEncounter(encounterId, caps);
+  const units = [...enc.def.units].sort((a, b) => a.slot - b.slot);
+  const groups: FoeGroup[] = [];
+  for (const u of units) {
+    const name = unitDisplayName(u);
+    const g = groups.find((x) => x.name === name);
+    if (g) {
+      g.n++;
+      continue;
+    }
+    const def = (classes[u.class] ?? encounterUnit(u.class) ?? summons[u.class]) as { spriteId?: string } | undefined;
+    groups.push({ cls: u.class, sprite: def?.spriteId ?? u.class, name, n: 1, ...(u.tier ? { tier: u.tier } : {}) });
+  }
+  type Rich = { passive?: { text?: string }; boss?: { firstBanner?: string } };
+  const rich = (cls: string): Rich => (encounterUnit(cls) ?? {}) as Rich;
+  const lead = units.find((u) => u.tier) ?? units.find((u) => rich(u.class).passive?.text) ?? units[0];
+  if (!lead) return { groups };
+  const who = unitDisplayName(lead);
+  const lr = rich(lead.class);
+  if (lr.passive?.text) return { groups, info: { who, text: lr.passive.text } };
+  const quote = units.map((u) => rich(u.class).boss?.firstBanner).find(Boolean);
+  if (quote) return { groups, info: { who, text: quote, quote: true } };
+  return { groups };
+}

@@ -43,7 +43,7 @@ export function mountCampHud(root: HTMLElement, h: CampHudHooks): CampHud {
   const box = document.createElement('div');
   box.className = 'camp-hud';
   const gear = button('gear', 'Gear', 'Gear: heroes and bag (C)', h.gear);
-  const form = button('formation', 'Formation', 'Formation: who stands in front', h.formation);
+  const form = button('formation', 'Formation', 'Formation: who stands in front (F)', h.formation);
   box.append(gear, form);
   root.append(box);
   const of = (w: 'gear' | 'formation'): HTMLElement => (w === 'gear' ? gear : form);

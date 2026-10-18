@@ -7,6 +7,8 @@ import { content, placementHintText } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
 import type { CombatantDef } from '../../engine/types';
 import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememberShown } from '../../ui/valor-braziers';
+import { isInputLocked } from '../../ui/input-lock';
+import { isSettingsOpen } from '../../ui/settings';
 import { avatarUrl } from '../../ui/character-panel';
 import { reviveWithValor, valorReviveBlocked } from '../../endless';
 import { rewardBlockedReason, takeRareDrop,
@@ -464,6 +466,14 @@ export class EndlessScene extends Phaser.Scene {
       return this.render();
     }
     if (e.key === 'Escape') return this.back();
+    // C = Gear (Ömer 2026-10-18, oyun geneli): yalnızca kampta, başka pencere / ödül çantası / mağaza / ayar açık değilken (Gear kendisi C ile kapanır)
+    if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+      const t = e.target as HTMLElement | null;
+      const typing = !!t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable);
+      const run = endless.run;
+      if (!typing && this.view === 'camp' && run && !gearLockReason(run) && !this.rewardBag && !isInputLocked() && !isSettingsOpen() && !otherDialogOpen()) this.actGear();
+      return;
+    }
     // Seçim kartları: 1-4 seçer, Enter alır, ←/→ dolaşır
     if (!this.cards.length) return;
     const n = Number(e.key);

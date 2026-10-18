@@ -31,12 +31,14 @@
       foes: [{ cls: 'bridge_warden', name: 'The Bridge Warden', tier: 'boss' }, { cls: 'iron_mooring', name: 'Iron Mooring', n: 2 }],
       party: [{ cls: 'warrior', name: 'Warrior', lv: 6, hp: 1 }, { cls: 'archer', name: 'Archer', lv: 6, hp: 0.8 }, { cls: 'druid', name: 'Druid', lv: 6, hp: 0.55 }, { cls: 'mage', name: 'Mage', lv: 6, hp: 0.9 }], cx: 0.34 },
   };
+  // Savaşsız düğüm örneği (yalnız v3): aynı kart, portre satırı yok, düğümün kendi eylemi (Enter); bilgi = düğüm lore'u
+  E.town = { id: '4', prev: '3', subtitle: 'Town · Rest, Recruits, Trade', level: 1, thenId: '10', foes: [], place: { title: 'Enter town?', action: 'Enter', info: 'A quiet village of thatch and smoke, the last safe hearth before the road turns north toward the ash.' }, party: [] };
   E.battle.thenId = '3';
   const FORK = 'The other roads will close for this journey.';
   const VS = ['v1', 'v2', 'v3', 'v4', 'v5'];
   const VN = { v1: 'Classic', v2: 'Versus', v3: 'Anchored', v4: 'Dossier', v5: 'Banner' };
   const VT = { v1: 'Same window as today, with portraits', v2: 'Your party vs. foes', v3: 'Small card next to the node', v4: 'Side sheet with route', v5: 'Slim bottom banner' };
-  const EN = ['battle', 'elite', 'boss'];
+  const EN = ['battle', 'elite', 'boss', 'town'];
   let S = { v: 'v1', enc: 'elite', fork: false, shut: false };
   let key = '';
 
@@ -62,14 +64,20 @@
   const ntile = (id) => `<div class="sb-ntile">${img('nodes', N[id].icon)}</div>`;
   const nextBits = (e) => { const t = N[e.thenId]; return { name: t.name, ty: TL[t.type], icon: t.icon }; };
   const thenLine = (e) => { const t = nextBits(e); return `<div class="sb-then"><span class="k">Then</span>${img('nodes', t.icon)}<b>${t.name}</b><span class="ty">(${t.ty})</span></div>`; };
+  // v3: tek bilgi satırı = var olan oyun metni (önder düşmanın pasifi: data/mobs; boss: data/bosses > firstBanner). "Then" ve "diğer yollar kapanır" satırları YOK (Ömer).
+  const INFO = { battle: ['Grey Wolf', 'Deals +15% damage for every other living Grey Wolf in the same row. Kill one and the rest grow weaker.'],
+    elite: ['Bandit Chief', 'Whenever an ally dies, gains Fortified for 1 turn and +15% damage until the end of battle (stacks).'],
+    boss: ['The Bridge Warden', '“None shall cross.”'] };
+  const infoLine = (e) => { if (e.place) return `<p class="sb-info">${e.place.info}</p>`; const k = Object.keys(E).find((x) => E[x] === e); const [who, text] = INFO[k]; return `<p class="sb-info${k === 'boss' ? ' quote' : ''}"><b>${who}</b> ${text}</p>`; };
   const fightIcon = '<img src="start-battle/nodes/battle.webp" alt="">';
-  const fight = (ico) => `<button class="el-btn primary ready" type="button" data-act="fight">${ico ? fightIcon : ''}Fight</button>`;
+  const fight = (ico) => `<button class="el-btn primary ready" type="button" data-act="fight">${ico && !S.place ? fightIcon : ''}${S.place ? S.place.action : 'Fight'}</button>`;
   const cancel = '<button class="el-btn" type="button" data-act="cancel">Cancel</button>';
   const forkLine = (cls) => (S.fork ? `<p class="sb-note ${cls || ''}">${FORK}</p>` : '');
 
   function win(e, n) {
     const t = N[e.id], lv = e.level;
-    const title = '<h2 class="sb-t">Start battle?</h2>';
+    S.place = e.place || null;
+    const title = `<h2 class="sb-t">${e.place ? e.place.title : 'Start battle?'}</h2>`;
     const subHtml = `<p class="sb-sub">${t.name} · <b>${e.subtitle.split(' · ')[0]}</b>${e.subtitle.includes('·') ? ' · ' + e.subtitle.split(' · ')[1] : ''}</p>`;
     const foes = e.foes.map((f) => foeTile(f, lv)).join('');
     if (S.v === 'v1') return `<div class="sb-panel">
@@ -84,8 +92,8 @@
       ${thenLine(e)}${forkLine()}<div class="sb-acts">${fight(true)}</div></div>`;
     if (S.v === 'v3') return `<div class="sb-panel"><i class="sb-notch l"></i><i class="sb-notch r"></i>
       <div class="sb-head">${ntile(e.id)}<div class="tx">${title}${subHtml}</div></div><hr class="sb-rule">
-      <div class="sb-row">${e.foes.map((f) => foeTile(f, lv, { noName: false })).join('')}</div>
-      ${thenLine(e)}${forkLine()}<div class="sb-acts">${fight(true)}</div></div>`;
+      ${e.foes.length ? `<div class="sb-row">${e.foes.map((f) => foeTile(f, lv, { noName: false })).join('')}</div>` : ''}
+      ${infoLine(e)}<div class="sb-acts">${fight(true)}</div></div>`;
     if (S.v === 'v4') {
       const lead = e.foes.find((f) => f.tier) || e.foes[0];
       const rest = e.foes.filter((f) => f !== lead);
@@ -134,6 +142,7 @@
     if (k !== key) { stage.classList.add('sb-in'); }
     key = k;
     if (S.v === 'v3') place(e, m.px);
+    $('.sb-panel')?.classList.toggle('nofoes', !e.foes.length);
     strip();
   }
   function place(e, [nx, ny]) {
@@ -161,7 +170,7 @@
   const toast = (msg) => { const t = $('.mk-toast'); if (!t) return; t.textContent = msg; t.classList.add('on'); clearTimeout(toast.t); toast.t = setTimeout(() => t.classList.remove('on'), 1800); };
   function act(a) {
     if (a === 'cancel') { if (S.shut) return; S.shut = true; render(); toast('Closed: back to the map (backdrop / Esc / X = Cancel)'); }
-    else if (a === 'fight') { toast(`Marching to ${N[E[S.enc].id].name}... (mockup: battle would start)`); }
+    else if (a === 'fight') { toast(`${E[S.enc].place ? 'Heading into' : 'Marching to'} ${N[E[S.enc].id].name}... (mockup: ${E[S.enc].place ? 'the town screen would open' : 'battle would start'})`); }
     else if (a === 'fs') { document.fullscreenElement ? document.exitFullscreen() : document.documentElement.requestFullscreen?.().catch(() => {}); }
     else if (a === 'menu') { toast('Menu (Esc): Resume · Save · Codex · Settings · Main Menu'); }
   }

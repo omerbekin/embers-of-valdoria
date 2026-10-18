@@ -122,7 +122,11 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle { right: calc(var(--nav-edge
 .sb-v3 .sb-face { width: max(40px, calc(84 * var(--u))); height: max(40px, calc(84 * var(--u))); }
 .sb-v3 .sb-foe { width: max(48px, calc(96 * var(--u))); }
 .sb-v3 .sb-row { justify-content: flex-start; gap: max(6px, calc(10 * var(--u))); }
-.sb-v3 .sb-then { justify-content: flex-start; }
+.sb-info { margin: 0; font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sb-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: rgba(217,178,106,.85); font-style: normal; margin-right: .5em; }
+.sb-info.quote { color: #cdb88d; }
+html.short .sb-v3 .sb-panel:not(.nofoes) .sb-info { display: none; }
+html.short .sb-v3 .nofoes .sb-info { font-size: 12px; -webkit-line-clamp: 2; }
 .sb-v3 .sb-acts { justify-content: flex-end; }
 
 /* ---------- v4 Dossier (sağ çekmece) ---------- */

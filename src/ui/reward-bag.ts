@@ -1,33 +1,23 @@
 /**
- * Ödül ekranının torbası (Ömer 2026-10-11, g1): bugünkü ödül kartları değişmez; "View bag" ile kartlar küçülüp SOLA, yukarıdan aşağı dizilir
- * (küçük ikonlar), ORTAK INVENTORY sağda açılır. Küçük ikonun üstüne gelince / uzun basınca ne verdiği; torbadaki item'lerin ve item ödülünün
- * ipucunda her kahramana etkisi (karşılaştırma). Yer açmak için item çöp kutusuna sürüklenir (Rare+ onaylı). İkona dokunmak = o ödülü al
- * (kartla aynı). "Close bag" / Esc kartlara geri döner. Phaser kart animasyonu EndlessScene'de; bu DOM katmanı ikonlar + torba.
+ * Ödül ekranının torbası (Ömer 2026-10-11, g1; 2026-10-18: YENİ ORTAK ENVANTER): ödül kartları aynen kalır; "View bag" ile kartlar küçülüp
+ * söner ve ortak envanter (Gear, "Ledger" defteri) açılır; ödüllerin küçük ikonları ganimet ekranındaki gibi solda ek panel olarak durur
+ * (Gear'ın `GearExt` eki, loot-screen.ts / merchant-screen.ts ile aynı bileşen). İkona dokunmak = o ödülü al (kartla aynı); ipucunda ne
+ * verdiği ve item'in her kahramana etkisi. Yer açmak için torba item'i çöp kutusuna sürüklenir (Rare+ onaylı; Gear'ın kuralı).
+ * "Close bag" / Esc / zemine dokunma kartlara geri döner. Phaser kart animasyonu EndlessScene'de. Ödül akışı ve kuralları DEĞİŞMEZ.
  * Oyun içi metinler İngilizce.
  */
-import { closeDom } from './motion';
-import { uiSound } from './ui-sound';
 import './gear.css';
-import { discardNeedsConfirm } from '../campaign';
-import { itemDef, instanceColor, type ItemInstance } from '../progression';
-import { lockInput, unlockInput } from './input-lock';
+import { instanceColor, itemDef, type ItemInstance } from '../progression';
 import { iconUrl } from './dom-icons';
-import { itemIcon, renderInventory } from './inventory';
+import { itemIcon } from './inventory';
 import { itemTipNodes } from './item-tip';
-import { attachItemInteractions } from './item-drag';
-import { confirmIn, heroTipExtra, type GearSource } from './gear-screen';
+import { heroTipExtra, openGear, type GearApi, type GearExt, type GearSource } from './gear-screen';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
   if (cls) e.className = cls;
   if (text !== undefined) e.textContent = text;
   return e;
-};
-const btn = (cls: string, text: string, run: () => void): HTMLButtonElement => {
-  const b = el('button', cls, text);
-  b.type = 'button';
-  b.addEventListener('click', run);
-  return b;
 };
 
 /** Küçük ödül ikonu: item ödülünde item örneği; diğerlerinde amblem (ikon adı) + başlık + açıklama. */
@@ -54,134 +44,33 @@ export interface RewardBagHooks {
 }
 
 export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHooks): () => void {
-  const overlay = el('div', 'gr-overlay rb-overlay');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-label', 'Bag');
-  const panel = el('div', 'gr-panel gr-gear rb-panel');
-  overlay.append(panel);
-  root.append(overlay);
-  lockInput('reward-bag');
-  uiSound('open');
-  let sel = '';
-  let flashText = '';
-  let closeAsk: (() => void) | null = null;
-  const bagInst = (uid: string) => src.bag().find((i) => i.uid === uid);
-  const ix = attachItemInteractions({
-    overlay,
-    panel,
-    trash: true,
-    sourceOf: (v, t) => (v.startsWith('bag:') ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' } : null),
-    targetOf: (v) => (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : null),
-    classOf: (id) => src.heroes().find((x) => x.id === id)?.class,
-    tipNodes: (key) => {
-      if (key.startsWith('rw:')) {
-        const t = h.tiles()[Number(key.slice(3))];
-        if (!t) return [];
-        if (t.inst) return itemTipNodes(t.inst, undefined, heroTipExtra(src.heroes(), t.inst, true));
-        const out: HTMLElement[] = [el('b', 'it-name', t.title), el('div', 'it-sub', t.text)];
-        if (t.blocked) out.push(el('div', 'it-no', t.blocked));
-        return out;
-      }
-      const inst = key.startsWith('bag:') ? bagInst(key.slice(4)) : undefined;
-      return inst ? itemTipNodes(inst, undefined, heroTipExtra(src.heroes(), inst, true)) : [];
-    },
-    onDrop: (_s, _tg, act) => {
-      if (act?.kind === 'discard') tryDiscard(act.uid);
-    },
-    // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; ödül "Take" ile alınır, torba item'i çöpe sürüklenir ya da "Discard")
-    tipActions: (key) => {
-      if (key.startsWith('rw:')) {
-        const i = Number(key.slice(3));
-        const t = h.tiles()[i];
-        if (!t) return [];
-        return [{ label: 'Take', disabled: !!t.blocked, run: () => takeTile(i) }];
-      }
-      if (key.startsWith('bag:')) {
-        const uid = key.slice(4);
-        return [{ label: 'Discard', primary: false, run: () => tryDiscard(uid) }];
-      }
-      return [];
-    },
-  });
+  let api: GearApi | null = null;
+  /** true = ödül alındı ya da sahne kapattı: `h.onClose` çağrılmaz. */
+  let silent = false;
+  const side = el('div', 'gr-panel gr-gear gr-ledger gr-loot');
 
-  let closed = false;
-  const finish = (): void => {
-    if (closed) return;
-    closed = true;
-    document.removeEventListener('keydown', onKey, true);
-    ix.destroy();
-    unlockInput('reward-bag');
-  };
-  /** Kartlara dön: ikonlar ve torba kayarak söner (Reduced motion: anında). */
-  const close = (): void => {
-    if (closed) return;
-    uiSound('close');
-    overlay.classList.add('out');
-    finish();
-    closeDom(overlay, () => overlay.remove());
-    h.onClose();
-  };
-  const onKey = (e: KeyboardEvent): void => {
-    if (e.key !== 'Escape') return;
-    e.preventDefault();
-    e.stopPropagation();
-    if (closeAsk && overlay.querySelector('.gr-confirm')) {
-      closeAsk();
-      closeAsk = null;
-    } else close();
-  };
-  document.addEventListener('keydown', onKey, true);
-
-  const tryDiscard = (uid: string): void => {
-    const inst = bagInst(uid);
-    const d = inst ? itemDef(inst.id) : undefined;
-    if (!inst || !d) return;
-    const go = (): void => {
-      try {
-        src.discard(uid);
-        uiSound('confirm');
-      } catch (err) {
-        flashText = err instanceof Error ? err.message : String(err);
-        uiSound('error');
-      }
-      if (sel === uid) sel = '';
-      render();
-    };
-    if (discardNeedsConfirm(inst)) closeAsk = confirmIn(overlay, `Discard ${d.name}? It is gone for good.`, 'Discard', go, true);
-    else go();
-  };
-
-  /** Ödülü al (masaüstünde tıklama, dokunmatikte ipucundaki "Take"); engelliyse uyarı. */
   const takeTile = (i: number): void => {
     const t = h.tiles()[i];
-    if (!t || closed) return;
+    if (!t) return;
     if (t.blocked) {
-      flashText = t.blocked;
-      uiSound('error');
-      render();
+      api?.flash(t.blocked);
       return;
     }
-    finish();
-    overlay.remove();
+    silent = true;
+    closeGear();
     h.take(i);
   };
 
-  const head = el('div', 'gr-head');
-  const body = el('div', 'gr-body rb-body');
-  const left = el('div', 'rb-tiles');
-  const right = el('div', 'gr-right');
-  const foot = el('div', 'gr-foot');
-  body.append(left, right);
-  panel.append(head, body, foot);
-  function render(): void {
-    if (closed) return;
-    ix.hideTips();
-    const gold = el('div', 'gr-gold', `${src.gold()} gold`);
-    head.replaceChildren(el('div', 'gr-title', 'Bag'), gold);
-    // küçük ödül ikonları (yukarıdan aşağı); dokunmak = al
-    left.replaceChildren(el('div', 'gr-sec', 'Rewards'));
-    h.tiles().forEach((t, i) => {
-      const tile = el('button', `rb-tile${t.blocked ? ' blocked' : ''}`);
+  const renderSide = (): void => {
+    const tiles = h.tiles();
+    side.replaceChildren();
+    const head = el('div', 'gr-head gr-lhead');
+    head.append(el('div', 'gr-title', 'Bag'));
+    side.append(head);
+    side.append(el('div', 'gr-sec', `Rewards ${tiles.length}`));
+    const list = el('div', 'gr-loot-list');
+    tiles.forEach((t, i) => {
+      const tile = el('button', `rb-tile gr-loot-tile${t.blocked ? ' blocked' : ''}`);
       tile.type = 'button';
       tile.dataset['tip'] = `rw:${i}`;
       tile.style.setProperty('--i', String(i));
@@ -195,35 +84,58 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
         const im = el('img', 'rb-emblem');
         im.src = iconUrl(t.icon, t.accent ?? '#e8c47e');
         im.alt = '';
+        im.draggable = false;
         medal.append(im);
       }
       const lab = el('span', 'rb-label', t.label);
       if (t.inst) lab.style.color = instanceColor(t.inst);
       tile.append(medal, lab);
-      tile.addEventListener('click', () => {
-        if (ix.justEnded()) return;
-        takeTile(i);
-      });
-      left.append(tile);
+      tile.addEventListener('click', () => takeTile(i));
+      list.append(tile);
     });
-    const inv = renderInventory({
-      items: src.bag(),
-      size: src.bagSize,
-      selected: sel,
-      onTap: (uid) => {
-        sel = sel === uid ? '' : uid;
-        render();
-      },
-    });
-    right.replaceChildren(inv);
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || (window.matchMedia?.('(pointer: coarse)').matches ? 'Tap a reward, then Take. Drag an item to the trash to make room.' : 'Click a reward to take it. Drag an item to the trash to make room.'));
-    flashText = '';
-    foot.replaceChildren(hint, btn('gr-btn primary', 'Close bag', close));
-  }
-  render();
+    side.append(list);
+    const foot = el('div', 'gr-foot');
+    const close = el('button', 'gr-btn primary', 'Close bag');
+    close.type = 'button';
+    close.addEventListener('click', () => api?.close());
+    foot.append(close);
+    side.append(foot);
+  };
+
+  const ext: GearExt = {
+    side,
+    hideGold: false,
+    attach: (_overlay, a) => {
+      api = a;
+    },
+    render: renderSide,
+    tipNodes: (key) => {
+      if (!key.startsWith('rw:')) return null;
+      const t = h.tiles()[Number(key.slice(3))];
+      if (!t) return [];
+      if (t.inst) return itemTipNodes(t.inst, undefined, heroTipExtra(src.heroes(), t.inst, true));
+      const out: HTMLElement[] = [el('b', 'it-name', t.title), el('div', 'it-sub', t.text)];
+      if (t.blocked) out.push(el('div', 'it-no', t.blocked));
+      return out;
+    },
+    // dokunmatik: tek dokunuş ipucunu açar; ödül ipucundaki "Take" ile alınır
+    tipActions: (key) => {
+      if (!key.startsWith('rw:')) return null;
+      const i = Number(key.slice(3));
+      const t = h.tiles()[i];
+      if (!t) return [];
+      return [{ label: 'Take', disabled: !!t.blocked, run: () => takeTile(i) }];
+    },
+    onDoubleTap: (key) => (key.startsWith('rw:') ? (takeTile(Number(key.slice(3))), true) : undefined),
+  };
+  const closeGear = openGear(root, src, {
+    ext,
+    onClose: () => {
+      if (!silent) h.onClose();
+    },
+  });
   return () => {
-    if (closed) return;
-    finish();
-    overlay.remove();
+    silent = true;
+    closeGear();
   };
 }

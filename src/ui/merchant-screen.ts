@@ -463,6 +463,8 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     onDoubleTap: (key) => {
       if (key.startsWith('ware:')) return (doBuy(Number(key.slice(5))), true);
       if (key.startsWith('bb:')) return (doBuyBack(Number(key.slice(3))), true);
+      // torba item'ine çift tık / çift dokunuş = SAT (Ömer 2026-10-18); kuşanmak için sürükle ya da ipucu
+      if (key.startsWith('bag:')) return (doSell(key.slice(4)), true);
       return undefined;
     },
   };

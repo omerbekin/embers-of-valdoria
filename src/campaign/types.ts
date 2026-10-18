@@ -46,6 +46,8 @@ export interface MapNode {
   type: NodeType;
   name: string;
   subtitle: string;
+  /** Tek cümlelik yer anlatısı (oyun içi, İngilizce; Ömer 2026-10-18 "lore yazdır"): "Start battle?" kartında bilgi satırı olarak çıkar. */
+  lore?: string;
   region: string;
   /** Arka planın oranı (x, y), rozet merkezi. */
   pos: [number, number];

@@ -1,0 +1,82 @@
+/* "Start battle?" kartı (src/ui/start-battle.ts; taslak public/mockups/start-battle.html #v3). Ölçüler oyun birimiyle: calc(N * var(--u)). */
+.sbc {
+  --u: var(--gu, 1px);
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  position: fixed; inset: 0; z-index: 19; color: var(--g-text); font-family: var(--g-body);
+}
+/* harita daha az kararır; düğümün çevresi açık kalır */
+.sbc-scrim {
+  position: absolute; inset: 0;
+  background: radial-gradient(circle at var(--ax, 50%) var(--ay, 50%), rgba(5, 3, 2, 0.08) 0, rgba(5, 3, 2, 0.08) var(--ar, 40px), rgba(5, 3, 2, 0.42) calc(var(--ar, 40px) * 2.2));
+  animation: sbc-fade var(--m-modal-in, 200ms) ease-out both;
+}
+@keyframes sbc-fade { from { opacity: 0; } to { opacity: 1; } }
+.sbc-ring {
+  position: absolute; transform: translate(-50%, -50%); border-radius: 50%; pointer-events: none;
+  border: 1px solid var(--g-ember2); box-shadow: 0 0 calc(26 * var(--u)) rgba(240, 140, 40, 0.85), inset 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.5);
+}
+.sbc-card {
+  position: absolute; left: 0; top: 0; width: max(min(calc(100% - 20px), 330px), calc(560 * var(--u)));
+  padding: max(8px, calc(20 * var(--u))) max(12px, calc(26 * var(--u))) max(10px, calc(22 * var(--u)));
+  display: flex; flex-direction: column; gap: max(6px, calc(14 * var(--u))); box-sizing: border-box;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.97), rgba(12, 9, 6, 0.97)); border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0, 0, 0, 0.6);
+  animation: sbc-rise var(--m-modal-in, 220ms) ease-out both;
+}
+@keyframes sbc-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none; }
+
+.sbc-notch { position: absolute; width: max(10px, calc(20 * var(--u))); height: max(10px, calc(20 * var(--u))); background: rgb(26, 19, 12); border: 1px solid rgba(217, 178, 106, 0.75); transform: rotate(45deg); }
+.sbc-notch.l { left: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-right: 0; border-top: 0; }
+.sbc-notch.r { right: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-left: 0; border-bottom: 0; }
+
+.sbc-head { display: flex; align-items: center; gap: max(8px, calc(16 * var(--u))); }
+.sbc-head .tx { flex: 1; min-width: 0; }
+.sbc-t {
+  font: 600 max(15px, calc(26 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; text-align: left;
+  background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
+}
+.sbc-sub { font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: #cdb88d; margin: 0; text-align: left; }
+.sbc-sub b { font-style: normal; font-weight: 400; color: var(--g-ember2); }
+.sbc-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.55), transparent); }
+.sbc-ntile { flex: none; display: grid; place-items: center; width: max(36px, calc(64 * var(--u))); height: max(36px, calc(64 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
+.sbc-ntile::before { content: ''; position: absolute; inset: 14%; border-radius: 50%; background: #140e09; border: 1px solid rgba(217, 178, 106, 0.7); }
+.sbc-ntile img { position: relative; width: 66%; height: 66%; object-fit: contain; }
+
+.sbc-row { display: flex; flex-wrap: nowrap; gap: max(6px, calc(10 * var(--u))); justify-content: flex-start; align-items: flex-start; }
+.sbc-foe { position: relative; display: flex; flex-direction: column; align-items: center; gap: 2px; width: max(48px, calc(96 * var(--u))); outline: none; cursor: default; }
+.sbc-face { position: relative; width: max(40px, calc(84 * var(--u))); height: max(40px, calc(84 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7); }
+.sbc-face img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.sbc-face img.logo { object-fit: contain; padding: 14%; box-sizing: border-box; image-rendering: pixelated; }
+.sbc-foe.elite .sbc-face { border-color: var(--g-ember); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.55); }
+.sbc-foe.boss .sbc-face { border-color: var(--g-gold); box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.7), 0 0 0 4px rgba(243, 217, 153, 0.35), 0 0 calc(18 * var(--u)) rgba(243, 217, 153, 0.5); }
+.sbc-face .cnt { position: absolute; right: -1px; bottom: -1px; padding: 0 5px; background: rgba(12, 9, 6, 0.92); border: 1px solid var(--g-line2); font: 600 max(11px, calc(18 * var(--u))) var(--g-disp); color: var(--g-gold); font-style: normal; }
+.sbc-face .tg { position: absolute; left: 50%; top: 0; transform: translate(-50%, -55%); padding: 0 7px; white-space: nowrap; font: 600 max(8px, calc(12 * var(--u))) var(--g-disp); letter-spacing: 0.16em; color: #1a0f06; font-style: normal; background: linear-gradient(180deg, var(--g-ember2), var(--g-ember)); }
+.sbc-foe.boss .sbc-face .tg { background: linear-gradient(180deg, #fbe7b0, #c8964a); }
+.sbc-nm { font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: 0.06em; text-align: center; color: var(--g-text); line-height: 1.15; }
+.sbc-lv { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.12em; color: var(--g-dim); }
+.sbc-foe.elite .sbc-nm { color: var(--g-ember2); }
+.sbc-foe.boss .sbc-nm { color: var(--g-gold); }
+
+/* tek bilgi satırı (var olan oyun metni) */
+.sbc-info { margin: 0; font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sbc-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); font-style: normal; margin-right: 0.5em; }
+.sbc-info.quote { color: #cdb88d; }
+
+.sbc-acts { display: flex; justify-content: flex-end; align-items: center; }
+.sbc-acts .el-btn { min-height: 44px; font-size: max(14px, calc(22 * var(--u))); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }
+
+/* üstüne gelince / odakta ipucu: yalnızca CSS */
+.sbc [data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 40; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98)); border: 1px solid var(--g-edge); font: 600 max(11px, calc(15 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
+/* dokunmatikte :hover / :focus dokunduktan sonra takılı kalır (Ömer 2026-10-18 hata: ipucu başlık satırının üstünde asılı kaldı):
+   yalnızca gerçek fare üstündeyken ve klavye odağında */
+@media (hover: hover) and (pointer: fine) { .sbc [data-tip]:hover::after { opacity: 1; } }
+.sbc [data-tip]:focus-visible::after { opacity: 1; }
+
+/* kısa ekran (telefon yatay): sahneye sığsın; bilgi satırı gizlenir */
+html.short .sbc-card { padding: 8px 12px; gap: 5px; }
+html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-spacing: 0.06em; }
+html.short .sbc-card:not(.nofoes) .sbc-info { display: none; }
+/* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
+html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }

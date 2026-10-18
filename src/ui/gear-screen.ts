@@ -460,10 +460,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         sel = '';
         renderAll();
       } else close();
-    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
-      // C: Hero / Sheet arası geçiş (eski Character / Inventory kısayolu)
+    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+      // C: Gear'ı kapatır (Ömer 2026-10-18: oyun geneli C = aç / kapat; Hero / Sheet geçişi yalnızca tıklamayla)
+      const t = e.target as HTMLElement | null;
+      if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
       e.stopPropagation();
-      setTab(tab === 'hero' ? 'sheet' : 'hero');
+      e.preventDefault();
+      if (closeAsk && overlay.querySelector('.gr-confirm')) return; // onay açıkken çalışmaz
+      close();
     }
   };
   document.addEventListener('keydown', onKey, true);
@@ -746,6 +750,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         renderAll();
       },
       onDouble: (uid) => {
+        if (ext?.onDoubleTap?.(`bag:${uid}`) !== undefined) return;
         const h = curHero();
         if (h) tryEquip(h.id, uid, undefined, true);
       },

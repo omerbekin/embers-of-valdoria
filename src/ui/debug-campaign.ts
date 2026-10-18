@@ -38,6 +38,52 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       reload();
     },
   });
+  const startCard = (elite: boolean) => () => {
+    ensureState();
+    const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugStartBattleCard?: (e: boolean) => void }) : undefined;
+    if (scene?.debugStartBattleCard) scene.debugStartBattleCard(elite);
+    else reload();
+  };
+  debug.register({
+    id: 'campaign.start-battle-card',
+    tab: CAMPAIGN_TAB,
+    section: 'Map',
+    icon: 'burst',
+    label: 'Open Start battle card',
+    hint: 'Open the "Start battle?" card next to the current / first reachable battle node (Fight does nothing in this debug view). Close with X, Esc or the dark backdrop.',
+    run: startCard(false),
+  });
+  debug.register({
+    id: 'campaign.start-battle-card-elite',
+    tab: CAMPAIGN_TAB,
+    section: 'Map',
+    icon: 'helm',
+    label: 'Start battle card (elite)',
+    hint: 'Same card for the first Elite node (elite frame + tag).',
+    run: startCard(true),
+  });
+  // Savaşsız düğümler için aynı kart (Ömer 2026-10-18): her tür için ilk düğümde açılır
+  const placeCard = (type: string, label: string, icon: string, verb: string) =>
+    debug.register({
+      id: `campaign.node-card-${type}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Map',
+      icon,
+      label,
+      hint: `Open the same anchored card for the first ${type} stop (badge, name, lore line, "${verb}"; no enemy portraits). The action does nothing in this debug view. Close with X, Esc or the dark backdrop.`,
+      run: () => {
+        ensureState();
+        const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugNodeCard?: (t: string) => void }) : undefined;
+        if (scene?.debugNodeCard) scene.debugNodeCard(type);
+        else reload();
+      },
+    });
+  placeCard('town', 'Start card (town)', 'shield', 'Enter');
+  placeCard('rest', 'Start card (camp)', 'flame', 'Rest');
+  placeCard('merchant', 'Start card (merchant)', 'clover', 'Trade');
+  placeCard('treasure', 'Start card (treasure)', 'dice', 'Open');
+  placeCard('event', 'Start card (event)', 'feather', 'Continue');
+  placeCard('boss', 'Start card (boss)', 'burst', 'Fight');
   debug.register({
     id: 'campaign.fog',
     tab: CAMPAIGN_TAB,
