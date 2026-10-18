@@ -35,8 +35,11 @@ const IB = IB_CFG.player;
  * hiçbir şey değişmez: asıl sheet (assets/mob-vfx) ve data/vfx-inbetween.json > player ayarı.
  *   tween  16 karelik ChatGPT sheet'i (assets/mob-vfx-tween; test ekranı kaydeder, yoksa asıl sheet)
  *   ib     kodla ara kare (null = kapalı)
+ *   hand   sheet YERİNE tamamen kodla çizilen efekt (src/game/mob-vfx-hand.ts; test paneli verir, null = kapalı). `hitMs` = asıl sheet'in
+ *          vuruş anı (ms, yavaşlatılmadan): el yapımı efekt hasar rakamlarını aynı anda düşürür.
  */
-export const mobVfxTest: { on: boolean; tween: boolean; ib: { method: string; sub: number } | null } = { on: false, tween: false, ib: null };
+export type MobHandVfx = (c: VfxCtx, k: VfxKit, hitMs: number) => Promise<void>;
+export const mobVfxTest: { on: boolean; tween: boolean; ib: { method: string; sub: number } | null; hand: MobHandVfx | null } = { on: false, tween: false, ib: null, hand: null };
 
 type Mode = 'melee' | 'bolt' | 'cells' | 'center' | 'self' | 'ally';
 
@@ -173,6 +176,8 @@ const impactMs = (frame: number, fps: number): number => (frame * 1000) / Math.m
 function build(skillId: string, s: MobVfxSpec): V2Vfx {
   const origId = mobSheetId(s.mob, skillId);
   return async (c: VfxCtx, k: VfxKit) => {
+    // test ekranı: tamamen kodla çizilen sürüm (sheet yüklenmez); vuruş anı asıl sheet'inkiyle aynı
+    if (mobVfxTest.on && mobVfxTest.hand) return mobVfxTest.hand(c, k, impactMs(s.impact, (vfxSheetFile(origId)?.meta.fps ?? 12) * FPS_SCALE));
     // test ekranı: 16 karelik sheet (varsa) ve kare sayısı oranı (vuruş karesi ve fps ona göre); gerçek savaşta hep asıl sheet
     const tweenId = mobVfxTest.on && mobVfxTest.tween ? mobTweenSheetId(s.mob, skillId) : null;
     const id = tweenId && vfxSheetFile(tweenId) ? tweenId : origId;

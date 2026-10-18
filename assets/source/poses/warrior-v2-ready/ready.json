@@ -1,0 +1,23 @@
+{
+  "_not": "Hazir (tuvale yerlesmis) poz kareleri: make-poses-v2.mjs Warrior calistirmasinda bu karelerin gorselini dogrudan kullanir (496x467 tuval). fingers = govde -> silah -> parmaklar cizim sirasinda silahin USTUNDE cizilen on parmak katmani (ayni tuval). fist = yumruk noktasi (tuval pikseli), angle = silah acisi.",
+  "idle1": {
+    "file": "idle1.png",
+    "fingers": "idle1-fingers.png",
+    "fist": [
+      169.12,
+      245.64
+    ],
+    "angle": 15.78,
+    "dyShifted": 3
+  },
+  "guard1": {
+    "file": "guard1.png",
+    "fingers": "guard1-fingers.png",
+    "fist": [
+      145.804,
+      208.492
+    ],
+    "angle": 16.5,
+    "dyShifted": 1
+  }
+}

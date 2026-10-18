@@ -20,7 +20,7 @@ interface Hit {
   dmg: number;
   crit: boolean;
   heal: number;
-  miss?: 'miss' | 'dodge';
+  miss?: 'miss' | 'dodge' | 'block';
   statuses: string[];
   ko: boolean;
   escaped: boolean;
@@ -113,6 +113,12 @@ export class CombatLog {
         this.hit(e.target).miss = e.type;
         return true;
       }
+      case 'block': {
+        // Kalkan bloğu (Ömer 2026-10-18): "(blocked)"; Guard payını korumacı blokladıysa asıl hedefin satırı değişmez
+        if (!this.cur) return false;
+        this.hit(e.target).miss = 'block';
+        return true;
+      }
       case 'heal': {
         if (e.amount <= 0) return false;
         if (this.cur && e.cause !== 'dark_bond') this.hit(e.target).heal += e.amount;
@@ -201,7 +207,7 @@ export class CombatLog {
       if (i === 0 && !self) parts.push({ t: ' on ' });
       else if (i > 0) parts.push({ t: ', ' });
       if (!(self && i === 0)) parts.push(this.who(h.uid));
-      if (h.miss) parts.push({ t: h.miss === 'dodge' ? ' (dodged)' : ' (missed)' });
+      if (h.miss) parts.push({ t: h.miss === 'dodge' ? ' (dodged)' : h.miss === 'block' ? ' (blocked)' : ' (missed)' });
       if (h.dmg > 0) parts.push({ t: ' · ' }, { t: h.crit ? `${h.dmg} crit` : String(h.dmg), k: h.crit ? 'cr' : 'dm' });
       if (h.heal > 0) parts.push({ t: ' · ' }, { t: `+${h.heal}`, k: 'hl' });
       if (h.statuses.length) parts.push({ t: ` · ${h.statuses.join(', ')}` });

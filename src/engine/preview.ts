@@ -33,7 +33,7 @@ export interface TargetPreview {
     luckyEscape?: number;
     critChance: number;
     critMax: number;
-    /** İsabet şansı (0-1): saldırganın accuracy'si - hedefin evasion'ı. min/max/avg ve hpLoss değerleri İSABET ETTİĞİNDE geçerlidir; beklenen hasar = avg x hitChance. */
+    /** İsabet şansı (0-1): saldırganın accuracy'si - hedefin evasion'ı, x(1 - hedefin blok şansı) (fiziksel vuruşta kalkan). min/max/avg ve hpLoss değerleri İSABET ETTİĞİNDE geçerlidir; beklenen hasar = avg x hitChance. */
     hitChance: number;
     /** Beklenen hasar: avg x hitChance (kalkan/can ayrımı yapmaz; birden çok etkide toplanır). */
     expected: number;
@@ -161,7 +161,8 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const sure = effect.guaranteedCrit ? actor.stats.critMult : 1;
     const r = { min: lo <= 0 ? 0 : Math.round(range(lo).min * sure), max: Math.round(range(hi).max * sure) * (again > 0 ? 2 : 1), avg: Math.round(range(ex).avg * sure * (1 + again)) };
     // İsabet: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar, gerçek vuruşla aynı
-    const hit = hitChance(battle.effectiveStats(actor), stats, f);
+    // Blok (Ömer 2026-10-18): kalkanlı hedef fiziksel vuruşu bloklayabilir; bloklanan vuruş iska gibi (hasar ve ek etki yok)
+    const hit = hitChance(battle.effectiveStats(actor), stats, f) * (1 - battle.blockChance(actor, target, effect));
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;

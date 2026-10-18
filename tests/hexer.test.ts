@@ -523,10 +523,11 @@ describe('Önizleme (preview) = gerçek', () => {
     const defs = { statuses: content.statuses, grounds: content.grounds };
     const ee = describeSkill(S.evil_eye!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
     expect(ee).toContain(`Adds 1 ${OMEN.name} (2 on a critical hit)`);
-    expect(ee).toContain(`At ${MAX} Omens, Doom strikes`);
+    expect(ee).toContain(`Doom at ${MAX} Omens`); // yalnızca sayı satırı; Doom kuralı Codex Curses'ta
+    expect(ee).not.toContain('resets the');
     const dm = describeSkill(S.doom_mark!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
     expect(dm).toContain('x1.65');
-    expect(dm).not.toContain(`At ${MAX} Omens`);
+    expect(dm).not.toContain(`Doom at ${MAX} Omens`);
     const wc = describeSkill(S.withering_curse!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
     expect(wc).toContain('Withering for 3 turns');
     const jx = describeSkill(S.jinx!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
@@ -781,10 +782,14 @@ describe('Doom Mark öldürünce Omen silinir; kritik Jinx -> kritik Doom (2026-
   it('skill-info, pasif metni ve wiki yeni kuralları anlatır', () => {
     const defs = { statuses: content.statuses, grounds: content.grounds };
     const info = (id: string) => describeSkill(S[id]!, hx.stats, content.formulas, {}, defs).lines.join(' | ');
-    expect(info('jinx')).toContain(`A critical Jinx that completes ${MAX} Omens makes the Doom a critical hit`);
-    expect(info('evil_eye')).not.toContain('makes the Doom a critical hit');
-    expect(info('evil_eye')).toContain('resets the');
+    // Omen kuralları skill'lerde tekrar edilmez (Ömer 2026-10-18): Codex Curses + Hexer pasifi
+    for (const id of ['jinx', 'evil_eye', 'withering_curse']) {
+      expect(info(id), id).not.toContain('makes the Doom a critical hit');
+      expect(info(id), id).not.toContain('resets the');
+      expect(info(id), id).not.toContain('Bosses ignore Misfortune');
+    }
     expect(info('doom_mark')).toContain('Ill Omen does not trigger');
+    expect(describePassive(hx.passive!, hx.stats, content.formulas)).toContain('Codex');
     expect(describePassive(hx.passive!, hx.stats, content.formulas)).toContain('passes none');
     const wiki = buildWiki({ sprites: {}, avatars: {} });
     const art = wiki.mechanics.find((a) => a.id === 'curses')!;

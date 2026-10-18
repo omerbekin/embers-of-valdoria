@@ -1,3 +1,4 @@
+import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { TYPE } from '../ui/motion';
 import { content } from '../engine';
@@ -32,7 +33,7 @@ export interface Modal {
 export function bodyText(scene: Phaser.Scene, x: number, y: number, text: string, width: number, size = 25, color: string = EL.NOTE): Phaser.GameObjects.Text {
   return scene.add
     .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, color, wordWrap: { width, useAdvancedWrap: true }, align: 'center', lineSpacing: 4 })
-    .setResolution(2)
+    .setResolution(textRes())
     .setShadow(0, 2, EL.SH_DARK, 4, false, true)
     .setOrigin(0.5, 0);
 }

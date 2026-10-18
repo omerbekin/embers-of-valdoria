@@ -16,4 +16,6 @@ export const ITEM_HOOK_CAPS = {
   magicPen: itemCap('magicPen', 1),
   /** Alınan hasar azaltma (Global defense ve düşük can azaltması) üst sınırı. */
   damageTaken: itemCap('damageTaken', 0.9),
+  /** Kalkan blok şansı üst sınırı (Ömer 2026-10-18; taban + C affix toplamı). */
+  block: itemCap('block', 0.3),
 } as const;

@@ -5,6 +5,9 @@
  */
 import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
 import { statIconUrl } from './stat-tips';
+import { itemDefIcon } from './item-icon-dom';
+import { iconUrl } from './dom-icons';
+import { hasUiImage, uiIconName } from './ui-icons';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -51,82 +54,196 @@ export interface ItemTipState {
   capped?: Set<CapKey>;
   /** Seçili kahramanın seviyesi: item'in şartı bundan yüksekse "Requires Level X" kırmızı (Item Güçlendirme x6). */
   level?: number;
+  /** Tüccar: torba item'inin satış fiyatı (verilirse altta "sells for"; yoksa "value"). */
+  sellFor?: number;
 }
 
 /** Tavan etiketi: "max 25%" (hız düz: "max 3"). */
 export const capLabel = (k: CapKey): string => `max ${capOf(k) ?? ''}${k === 'spd' ? '' : '%'}`;
 
-/** İpucunun içeriği (DOM). `classId`: takan sınıf ({primary} yazısı); `extra`: alttaki ek satırlar (telefonda kahraman başına özet). */
-export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId?: string, extra: Array<{ label: string; parts: ItemTipLine[] }> = [], state?: ItemTipState): HTMLElement[] {
+/** Kahraman satırı (karşılaştırma): `face` portre adresi, `level` kahramanın seviyesi (item şartı yüksekse "Lv" kırmızı). */
+export interface ItemTipHero {
+  label: string;
+  parts: ItemTipLine[];
+  face?: string;
+  level?: number;
+}
+
+const TIER_ORDER: Record<string, number> = { A: 0, B: 1, C: 2 };
+
+/** Zar göstergesi için değerin aralıktaki yeri (0-1); aralık ya da sayı yoksa null. */
+function rollPos(text: string, range: string): number | null {
+  const [lo, hi] = range.split('–').map(Number);
+  const m = text.match(/\d+(\.\d+)?/);
+  if (!m || lo === undefined || hi === undefined || !(hi > lo)) return null;
+  return Math.max(0, Math.min(1, (Number(m[0]) - lo) / (hi - lo)));
+}
+
+/** Gövde: (Legendary etkisi) + örtük stat + kademeye göre YÜKSEKTEN düşüğe (A, B, C) sıralı affix satırları. Ortak ipucu ve tüccar karşılama kartı kullanır. */
+function bodyNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId: string | undefined, state: ItemTipState | undefined): HTMLElement[] {
   const d = itemDef(inst.id);
   if (!d) return [];
-  const name = el('b', 'it-name', d.name);
-  name.style.color = instanceColor(inst);
-  const out: HTMLElement[] = [name, el('div', 'it-sub', instanceSubtitle(inst))];
-  // Taban (Item Güçlendirme 2026-10-17): silah gücü + örtük stat (affix değil: kademe etiketi yok) ve seviye şartı (karşılanmıyorsa kırmızı)
-  const base = instanceBaseLines(inst);
-  if (base.power !== undefined || base.implicit) {
-    const bl = el('div', 'it-base');
-    if (base.power !== undefined) bl.append(el('div', 'it-power', `Weapon power ${base.power}`));
-    if (base.implicit) {
-      const row = el('div', 'it-implicit');
-      const url = base.implicit.stat ? statIconUrl(base.implicit.stat) : '';
-      if (url) {
-        const i = el('img', 'it-ico');
-        i.src = url;
-        i.alt = '';
-        row.append(i);
-      }
-      row.append(el('span', 'it-text', base.implicit.text));
-      bl.append(row);
-    }
-    out.push(bl);
+  const out: HTMLElement[] = [];
+  const fx = effectLine(d);
+  if (fx) {
+    const i = fx.indexOf(':');
+    const box = el('div', 'it-effect');
+    if (i > 0) box.append(el('strong', '', fx.slice(0, i)), el('span', '', fx.slice(i + 1).trim()));
+    else box.append(el('span', '', fx));
+    out.push(box);
   }
-  const unmet = state?.level !== undefined && state.level < base.req;
-  if (base.req > 1 || unmet) out.push(el('div', `it-req${unmet ? ' unmet' : ''}`, levelReqMsg(base.req)));
-  const lines = el('div', 'it-lines');
-  affixLines(inst, classId).forEach((l, i) => {
-    const off = !!state?.inactive?.has(i);
-    const row = el('div', `it-line${off ? ' off' : ''}`);
-    const tag = el('span', 'it-tier', l.tier);
-    tag.style.color = TIER_COLOR[l.tier];
-    tag.style.borderColor = TIER_COLOR[l.tier];
-    row.append(tag);
-    const url = l.stat ? statIconUrl(l.stat) : '';
+  const base = instanceBaseLines(inst);
+  if (base.implicit) {
+    const row = el('div', 'it-implicit');
+    const url = base.implicit.stat ? statIconUrl(base.implicit.stat) : '';
     if (url) {
       const i = el('img', 'it-ico');
       i.src = url;
       i.alt = '';
       row.append(i);
     }
+    row.append(el('span', 'it-text', base.implicit.text));
+    out.push(row);
+  }
+  const lines = el('div', 'it-lines');
+  // sıra: kademe yüksekten düşüğe (A, B, C); eşitlikte zar sırası. "Etkisiz" işareti özgün sıra numarasıyla eşlenir.
+  const ls = affixLines(inst, classId).map((l, i) => ({ l, i }));
+  ls.sort((x, y) => (TIER_ORDER[x.l.tier] ?? 9) - (TIER_ORDER[y.l.tier] ?? 9) || x.i - y.i);
+  for (const { l, i } of ls) {
+    const off = !!state?.inactive?.has(i);
+    const row = el('div', `it-line${off ? ' off' : ''}`);
+    const tag = el('span', 'it-tier', l.tier);
+    tag.style.setProperty('--tc', TIER_COLOR[l.tier]);
+    row.append(tag);
+    const url = l.stat ? statIconUrl(l.stat) : l.icon === 'block' ? statIconUrl('block') : '';
+    if (url) {
+      const im = el('img', 'it-ico');
+      im.src = url;
+      im.alt = '';
+      row.append(im);
+    } else row.append(el('i', 'it-dia'));
     row.append(el('span', 'it-text', l.text));
     // tavan dolu (fazlası kaybolur) ya da A affix sınırı (aynı A affix'i en çok 2 item'de sayılır)
     const capKey = off ? undefined : affixCapKeys(affixDef(l.id) ?? { parts: [] }).find((k) => state?.capped?.has(k));
     if (capKey) row.append(el('span', 'it-cap', capLabel(capKey)));
-    if (l.range) row.append(el('span', 'it-range', `(${l.range})`));
+    // zar göstergesi: mücevher rayı (değerin aralıktaki yeri), üstüne gelince aralık
+    const pos = l.range ? rollPos(l.text, l.range) : null;
+    if (l.range && pos !== null) {
+      const g = el('span', 'it-rail');
+      g.style.setProperty('--p', String(pos));
+      g.title = `Roll range ${l.range}`;
+      g.append(el('i'), el('strong'));
+      row.append(g);
+    } else if (l.range) row.append(el('span', 'it-range', `(${l.range})`));
     lines.append(row);
     if (off) lines.append(el('div', 'it-off-note', `Inactive: only ${ITEMS.caps.aAffixCopies ?? 2} of this affix count`));
-  });
-  out.push(lines);
-  const fx = effectLine(d);
-  if (fx) out.push(el('div', 'it-effect', fx));
-  out.push(el('div', 'it-value', `Value ${itemValue(inst)} gold`));
+  }
+  if (lines.childElementCount) out.push(lines);
+  return out;
+}
+
+/** Büyük taban değeri: silah gücü ya da kalkan blok şansı (büyük sayı + küçük etiket). */
+function bigNode(base: ReturnType<typeof instanceBaseLines>): HTMLElement | null {
+  if (base.power === undefined && base.block === undefined) return null;
+  const box = el('div', 'it-big');
+  if (base.power !== undefined) {
+    box.append(el('strong', '', String(base.power)), el('span', '', 'Weapon power'));
+  } else if (base.block !== undefined) {
+    const n = el('span', 'it-big-n');
+    const url = statIconUrl('block');
+    if (url) {
+      const i = el('img', 'it-big-ico');
+      i.src = url;
+      i.alt = '';
+      n.append(i);
+    }
+    n.append(el('strong', '', `${Math.round(base.block * 10) / 10}%`));
+    box.append(n, el('span', '', 'Block chance'));
+  }
+  return box;
+}
+
+/** Tüccar karşılama kartı için: büyük taban değeri, seviye şartı ve gövde (başlık / ad / değer kartın kendi yerinde). */
+export function itemTipBody(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }): HTMLElement[] {
+  const base = instanceBaseLines(inst);
+  const out: HTMLElement[] = [];
+  const big = bigNode(base);
+  if (big) out.push(big);
+  if (base.req > 1) out.push(el('div', 'it-req', levelReqMsg(base.req)));
+  out.push(...bodyNodes(inst, undefined, undefined));
+  return out;
+}
+
+/**
+ * İpucunun içeriği (DOM): TEK kart (Ömer 2026-10-18, taslak item-tooltip.html#v3): yuvarlak madalyon + ad + nadirlik kurdelesi + "tutuş · Item level"
+ * + büyük silah gücü / blok şansı; gövde (Legendary etkisi üstte, örtük stat, kademe sırası A > B > C stat satırları); "Requires Level" solda +
+ * değer sağda; kahraman karşılaştırma satırları. `classId`: takan sınıf ({primary} yazısı); `extra`: kahraman başına fark satırları.
+ */
+export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; rolls?: unknown }, classId?: string, extra: ItemTipHero[] = [], state?: ItemTipState): HTMLElement[] {
+  const d = itemDef(inst.id);
+  if (!d) return [];
+  const color = instanceColor(inst);
+  const card = el('div', 'it-card');
+  card.style.setProperty('--rc', color);
+  const base = instanceBaseLines(inst);
+
+  // ---- başlık
+  const head = el('div', 'it-head');
+  const medal = el('span', 'it-medal');
+  medal.append(itemDefIcon(d, d.slot, color, 'gr-svg gr-px'));
+  const id = el('div', 'it-id');
+  id.append(el('strong', 'it-name', d.name));
+  const sub = instanceSubtitle(inst).split(' · ');
+  const grip = sub.slice(1, -1).join(' · ');
+  const ilvl = sub.length > 1 ? (sub[sub.length - 1] ?? '') : '';
+  const rib = el('div', 'it-rib');
+  rib.append(el('span', '', sub[0] ?? ''));
+  id.append(rib);
+  const line = [grip, ilvl].filter(Boolean).join(' · ');
+  if (line) id.append(el('div', 'it-sub', line));
+  const big = bigNode(base);
+  if (big) id.append(big);
+  head.append(medal, id);
+  card.append(head);
+
+  // ---- gövde
+  const main = el('div', 'it-main');
+  main.append(...bodyNodes(inst, classId, state));
+  if (main.childElementCount) card.append(main);
+
+  // ---- şart (solda, karşılanmıyorsa kırmızı) + değer (sağda)
+  const unmet = state?.level !== undefined && state.level < base.req;
+  const foot = el('div', 'it-reqrow');
+  foot.append(el('span', `it-req${unmet ? ' unmet' : ''}`, base.req > 1 || unmet ? levelReqMsg(base.req) : ''));
+  const val = el('span', 'it-val');
+  if (hasUiImage('gold')) {
+    const c = el('img', 'it-coin');
+    c.src = iconUrl(uiIconName('gold'));
+    c.alt = '';
+    val.append(c);
+  }
+  val.append(el('strong', '', String(state?.sellFor ?? itemValue(inst))), el('em', '', state?.sellFor !== undefined ? 'sells for' : 'value'));
+  foot.append(val);
+  card.append(foot);
+
+  // ---- kahramanlar: kare portre + ad + seviye + fark (yuvarlak hap YOK; oyunun kare portre + ince altın çizgi dili)
   if (extra.length) {
     const box = el('div', 'it-heroes');
     for (const x of extra) {
-      const row = el('div', 'it-hero');
-      row.append(el('span', 'it-hero-k', x.label));
+      const no = x.parts.some((p) => p.dir === 'no');
+      const row = el('div', `it-hero${no ? ' no' : ''}`);
+      const face = el('span', 'it-face');
+      if (x.face) face.style.backgroundImage = `url("${x.face}")`;
+      row.append(face, el('strong', 'it-hero-k', x.label));
+      if (x.level !== undefined && !no) row.append(el('span', `it-lv${x.level < base.req ? ' unmet' : ''}`, `Lv ${x.level}`));
       const v = el('span', 'it-hero-v');
-      x.parts.forEach((p, i) => {
-        if (i) v.append(document.createTextNode(' · '));
-        v.append(el('span', p.dir ? `it-${p.dir}` : '', p.text));
-      });
+      for (const p of x.parts) v.append(el('span', `it-chip${p.dir ? ` it-${p.dir}` : ''}`, p.text));
       row.append(v);
       box.append(row);
     }
-    out.push(box);
+    card.append(box);
   }
-  return out;
+  return [card];
 }
 
 /**
@@ -185,7 +302,9 @@ export class ItemTip {
       }
       acts.push(row);
     }
-    this.box.replaceChildren(...nodes, ...acts);
+    const card = nodes[0]?.classList.contains('it-card') ? nodes[0] : null;
+    if (card) card.append(...acts);
+    this.box.replaceChildren(...(card ? nodes : [...nodes, ...acts]));
     this.key = key;
     this.setPinned(true);
     this.box.classList.add('on');

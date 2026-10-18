@@ -19,6 +19,7 @@ import {
   rarityDef,
   rolledAffixes,
   slotDef,
+  baseBlockChance,
   implicitDefOf,
   implicitValues,
   instanceLevelReq,
@@ -112,6 +113,8 @@ export function affixLines(inst: Pick<ItemInstance, 'id'> & { uid?: string; roll
 export interface BaseLines {
   /** Silah gücü (silah değilse undefined). */
   power?: number;
+  /** Kalkanın taban blok şansı, yüzde (Ömer 2026-10-18: silah gücü gibi büyük taban satırı "Block chance 18%"; kalkan değilse undefined). */
+  block?: number;
   /** Örtük stat satırı. */
   implicit?: { text: string; name: string; desc?: string; stat?: string; icon?: string };
   /** Takma seviye şartı (en az 1). */
@@ -122,8 +125,10 @@ export function baseLinesOf(d: ItemDef, ilvl: number): BaseLines {
   const out: BaseLines = { req: levelRequirement(ilvl) };
   if (d.slot === 'weapon') out.power = weaponPowerOf(d, ilvl);
   const imp = implicitDefOf(d);
-  if (imp) {
-    const values = implicitValues(imp, ilvl);
+  // Kalkanın örtüğü blok şansıdır: ayrı örtük satırı yerine silah gücü gibi taban satırı (Ömer 2026-10-18)
+  if (imp && imp.parts.length === 1 && imp.parts[0]!.to === BLOCK_TARGET) out.block = baseBlockChance(d, ilvl);
+  else if (imp) {
+    const values = implicitValues(imp, ilvl, d);
     out.implicit = {
       text: imp.text.replace(/\{(\d)\}/g, (_, i: string) => fmt(values[Number(i)] ?? 0)),
       name: imp.name,
@@ -142,7 +147,16 @@ export const instanceBaseLines = (inst: Pick<ItemInstance, 'id'> & { rolls?: unk
 };
 
 /** Taban satırlarının düz yazısı (Endless kartı, wiki): ["Weapon power 32", "+3% Crit chance"]; seviye şartı ayrı (requirementText). */
-export const baseLineTexts = (b: BaseLines): string[] => [...(b.power !== undefined ? [`Weapon power ${fmt(b.power)}`] : []), ...(b.implicit ? [b.implicit.text] : [])];
+export const baseLineTexts = (b: BaseLines): string[] => [
+  ...(b.power !== undefined ? [`Weapon power ${fmt(b.power)}`] : []),
+  ...(b.block !== undefined ? [blockLineText(b.block)] : []),
+  ...(b.implicit ? [b.implicit.text] : []),
+];
+
+/** Blok şansının motor hedefi (kalkan örtüğü + c_block affix'i). */
+export const BLOCK_TARGET = 'fx:blockChance';
+/** Kalkanın taban blok satırı ("Block chance 18%"). */
+export const blockLineText = (pct: number): string => `Block chance ${fmt(pct)}%`;
 
 /** "Requires Level 7" (şart 1 ise boş: herkes takabilir). */
 export const requirementText = (req: number): string => (req > 1 ? levelReqMsg(req) : '');
@@ -265,7 +279,8 @@ export function heroStats(src: LoadoutSource): Stats | null {
 export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
   const st = heroStats(src);
   if (!st) return [];
-  const capped = new Set<string>(loadout(src).capped);
+  const lo = loadout(src);
+  const capped = new Set<string>(lo.capped);
   const rows: HeroPanelStat[] = [
     { id: 'hp', label: 'HP', value: st.hp, fmt: 'int' },
     { id: 'mp', label: 'MP', value: st.mp, fmt: 'int' },
@@ -280,6 +295,8 @@ export function heroPanel(src: LoadoutSource): HeroPanelStat[] {
     { id: 'critMult', label: 'CDMG', value: st.critMult, fmt: 'dec' },
     { id: 'accuracy', label: 'ACC', value: st.accuracy, fmt: 'pct' },
     { id: 'evasion', label: 'EVA', value: st.evasion, fmt: 'pct' },
+    // Blok (Ömer 2026-10-18): kalkan tabanı + kalkan C affix'i (tavanlı; Stats'ta değil, item kancası)
+    { id: 'block', label: 'BLOCK', value: lo.itemEffects?.blockChance ?? 0, fmt: 'pct' },
     { id: 'spd', label: 'SPD', value: st.spd, fmt: 'dec' },
     { id: 'hpRegen', label: 'HP+/t', value: st.hpRegen, fmt: 'dec' },
     { id: 'mpRegen', label: 'MP+/t', value: st.mpRegen, fmt: 'int' },

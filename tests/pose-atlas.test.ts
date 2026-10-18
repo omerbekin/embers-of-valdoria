@@ -8,7 +8,7 @@ import { createHash } from 'node:crypto';
 import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import { POSE_ATLASES, poseBodyFrame, weaponFrame } from '../src/game/pose-files';
-import { POSES, gripFrames, type Grip } from '../src/game/poses';
+import { POSES, gripFiles, gripFrames, type Grip } from '../src/game/poses';
 
 const FIX = 'python tools/pack-pose-atlases.py';
 const manifest = JSON.parse(readFileSync('assets/pose-atlas/manifest.json', 'utf8')) as { sources: Record<string, string> };
@@ -28,7 +28,7 @@ describe('Poz atlasları (tools/pack-pose-atlases.py)', () => {
     for (const [path, h] of Object.entries(manifest.sources)) if (!existsSync(path) || sha(readFileSync(path)) !== h) stale.push(path);
     const expected: string[] = [];
     for (const def of Object.values(POSES.classes))
-      for (const pose of Object.keys(def.poses)) for (const small of [false, true]) if (existsSync(bodyPng(def.dir, pose, small))) expected.push(bodyPng(def.dir, pose, small));
+      for (const pose of [...Object.keys(def.poses), ...Object.values(def.poses).flatMap((p) => (p.fingers ? [p.fingers] : []))]) for (const small of [false, true]) if (existsSync(bodyPng(def.dir, pose, small))) expected.push(bodyPng(def.dir, pose, small));
     for (const fam of readdirSync('assets/weapons')) {
       for (const look of readdirSync(`assets/weapons/${fam}`).filter((f) => f.endsWith('.png'))) expected.push(weaponPng(fam, look.replace(/\.png$/, ''), false));
       if (existsSync(`assets/weapons/${fam}/small`)) for (const look of readdirSync(`assets/weapons/${fam}/small`).filter((f) => f.endsWith('.png'))) expected.push(weaponPng(fam, look.replace(/\.png$/, ''), true));
@@ -41,7 +41,7 @@ describe('Poz atlasları (tools/pack-pose-atlases.py)', () => {
   it('her gövde karesi ve silah görünümü bir atlasta; kare boyu PNG ile aynı, atlas içinde ve çakışmasız', () => {
     const bad: string[] = [];
     for (const def of Object.values(POSES.classes))
-      for (const pose of Object.keys(def.poses))
+      for (const pose of [...Object.keys(def.poses), ...Object.values(def.poses).flatMap((p) => (p.fingers ? [p.fingers] : []))])
         for (const small of [false, true]) {
           const png = bodyPng(def.dir, pose, small);
           if (!existsSync(png)) continue;
@@ -78,7 +78,7 @@ describe('Poz atlasları (tools/pack-pose-atlases.py)', () => {
     for (const def of Object.values(POSES.classes))
       for (const grip of GRIPS)
         for (const small of [false, true]) {
-          const want = new Set(gripFrames(def, grip).filter((p) => existsSync(bodyPng(def.dir, p, small))));
+          const want = new Set(gripFiles(def, grip).filter((p) => existsSync(bodyPng(def.dir, p, small))));
           const atlases = new Set(Array.from(want, (p) => poseBodyFrame(def.dir, p, small)?.atlas).filter((a): a is string => !!a));
           for (const id of atlases) for (const name of Object.keys(POSE_ATLASES[id]!.frames)) if (!want.has(name)) bad.push(`${def.dir} ${grip ?? 'varsayılan'}${small ? ' small' : ''}: ${id} fazladan ${name} indirir`);
         }

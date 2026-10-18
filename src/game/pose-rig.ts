@@ -16,7 +16,7 @@ import { stageView } from './stage-view';
 import { poseBodyFrame, weaponFrame, type AtlasFrame } from './pose-files';
 import './pose-mode'; // gerçek sınıfların çizimi (v2 / debug v1): kayıtlı seçim pozlu birimler kurulmadan uygulanır
 import { texturesInUse } from './assets';
-import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, toneImageData, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
+import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFiles, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, toneImageData, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
 
 /** Ekrandaki ölçek (gövde tuvali pikseli -> oyun birimi): figür spriteBox yüksekliğinin `heightFit` katı. */
@@ -54,7 +54,7 @@ export function preloadPoses(scene: Phaser.Scene, needs: readonly (PoseNeed | st
     const def = poseClass(classId);
     if (!def) continue;
     const small = useSmall(def);
-    for (const pose of gripFrames(def, pick?.grip)) add(poseBodyFrame(def.dir, pose, small));
+    for (const pose of gripFiles(def, pick?.grip)) add(poseBodyFrame(def.dir, pose, small));
     for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : [])] : []) add(weaponFrame(w.family, w.look, small));
   }
   return queued.size;
@@ -90,7 +90,7 @@ function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null
     return alt && scene.textures.exists(alt.key) ? alt : null;
   };
   const bodies: Record<string, HTMLCanvasElement> = {};
-  for (const pose of gripFrames(def, pick?.grip)) {
+  for (const pose of gripFiles(def, pick?.grip)) {
     const f = find((s) => poseBodyFrame(def.dir, pose, s));
     const c = f && cropFrame(scene, f, temp);
     if (!c) {
@@ -289,7 +289,7 @@ function paintAtlas(W: number, H: number, items: readonly AtlasItem[], s: number
     ctx.rect(it.px, it.py, it.w, it.h);
     ctx.clip();
     ctx.setTransform(s, 0, 0, s, it.px - it.x0 * s, it.py - it.y0 * s);
-    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off } : null, glowPx);
+    drawPoseComposite(ctx, def, it.name, src.body(it.name), src.weapon && pick ? { img: src.weapon, pick, offImg: src.off } : null, glowPx, def.poses[it.name]?.fingers ? src.body(def.poses[it.name]!.fingers!) : null);
     ctx.restore();
   }
   // Boş kare denetimi: tarayıcı tuval bellek sınırını aşınca bağlam verir ama çizmez (iOS Safari) -> saydam (görünmez) birim olmasın

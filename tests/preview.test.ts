@@ -303,7 +303,7 @@ describe('skill açıklaması (tooltip)', () => {
     expect(text('spell_ward')).toContain('Magic shield');
     expect(text('summon_treant')).toContain('Summons Treant');
     expect(text('summon_treant')).toContain('for 3 turns');
-    expect(text('summon_treant')).toContain('Summons take x2 damage');
+    expect(text('summon_treant')).not.toContain('Summons take'); // x2 hasar kuralı Codex Summons makalesinde
     expect(text('taunt')).toContain('must target you');
     expect(text('guard')).toContain(`take ${Math.round((content.skills.guard!.effects.find((e) => e.type === 'guard') as { share: number }).share * 100)}% of the damage`);
     expect(text('mana_burn')).toContain('Steals 10 MP'); // Mana Steal: kısmen kendine geçer
@@ -319,15 +319,20 @@ describe('skill açıklaması (tooltip)', () => {
     expect(oldText('fire_bolt')).not.toContain('Range ');
   });
 
-  it('menzil AÇIK: kart satırı sahibin menzilini (sınıf / skill istisnası / Global) yazar; kendine skill yazmaz', () => {
+  it('menzil AÇIK: menzil yalnızca adın altındaki etikette (sınıf / skill istisnası / Global); açıklama satırlarında tekrar edilmez (Ömer 2026-10-18)', () => {
     const on = { ...f, range: { default: 1, ...f.range, enabled: true } };
-    const lines = (id: string) => describeSkill(content.skills[id]!, stats, on, content.summons, {}, content.ownerRangeOf(id)).lines.join('\n');
-    expect(lines('melee_attack')).toContain(`Range ${content.classes.warrior!.range}`);
-    expect(lines('fire_bolt')).toContain(`Range ${content.classes.mage!.range}`);
-    expect(lines('charge')).toContain(`Range ${content.skills.charge!.range}`); // skill istisnası sınıfı ezer
-    expect(lines('fist_crush')).toContain('Global');
-    expect(lines('shield_wall')).not.toMatch(/Range \d|Global/);
-    expect(lines('fire_bolt')).not.toContain('Melee:');
+    const info = (id: string) => describeSkill(content.skills[id]!, stats, on, content.summons, {}, content.ownerRangeOf(id));
+    expect(info('melee_attack').range).toBe(`Range ${content.classes.warrior!.range}`);
+    expect(info('fire_bolt').range).toBe(`Range ${content.classes.mage!.range}`);
+    expect(info('charge').range).toBe(`Range ${content.skills.charge!.range}`); // skill istisnası sınıfı ezer
+    expect(info('fist_crush').range).toBe('Global');
+    expect(info('shield_wall').range).toBe('');
+    for (const id of ['melee_attack', 'fire_bolt', 'charge', 'fist_crush', 'shield_wall', 'meteor']) {
+      const text = info(id).lines.join('\n');
+      expect(text, id).not.toMatch(/Range \d|Global|steps away|front row to front row/);
+      expect(text, id).not.toContain('Melee:');
+    }
+    expect(info('meteor').lines.join('\n')).not.toContain('spill'); // alan taşma kuralı Codex Range makalesinde (Ömer 2026-10-18)
   });
 
   it('skill tooltip\'inde kritik ve accuracy bilgisi yazılmaz (stat tooltip\'inde kalır)', () => {

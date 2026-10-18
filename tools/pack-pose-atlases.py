@@ -90,8 +90,23 @@ def grip_frames(d: dict, grip):
     return [n for n in allf if n in own or n not in other]
 
 
+def with_fingers(d: dict, names):
+    """Kare listesine, karelerin ön parmak katmanlarını (poses.<kare>.fingers) ekler: parmak görseli karesiyle aynı gruba girer."""
+    out = []
+    for n in names:
+        out.append(n)
+        f = d['poses'][n].get('fingers')
+        if f:
+            out.append(f)
+    return out
+
+
 def body_groups(d: dict) -> dict:
-    """grup adı -> kare adları (poz sırası)."""
+    """grup adı -> kare adları (poz sırası; parmak katmanları karesiyle birlikte)."""
+    return {k: with_fingers(d, v) for k, v in _body_groups(d).items()}
+
+
+def _body_groups(d: dict) -> dict:
     if not d.get('grips'):
         return {'all': list(d['poses'].keys())}
     resolved = sorted({pose_grip(d, g) for g in ('one', 'two', 'bow', 'charm')})
@@ -182,7 +197,7 @@ def build():
 
 
 def input_digest(sources: dict, poses: dict) -> str:
-    group_rel = {cid: {k: d.get(k) for k in ('dir', 'grips', 'gripFallback', 'cycles')} | {'poses': list(d['poses'].keys())} for cid, d in poses['classes'].items()}
+    group_rel = {cid: {k: d.get(k) for k in ('dir', 'grips', 'gripFallback', 'cycles')} | {'poses': list(d['poses'].keys()), 'fingers': {n: p.get('fingers') for n, p in d['poses'].items() if p.get('fingers')}} for cid, d in poses['classes'].items()}
     blob = json.dumps({'v': VERSION, 'src': sources, 'g': group_rel}, sort_keys=True)
     return sha(blob.encode('utf-8'))
 

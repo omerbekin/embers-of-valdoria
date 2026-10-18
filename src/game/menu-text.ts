@@ -1,3 +1,4 @@
+import { textRes } from './stage-view';
 import type Phaser from 'phaser';
 import { SERIF } from './ui-frame';
 
@@ -50,7 +51,7 @@ export function serif(scene: Phaser.Scene, x: number, y: number, text: string, s
       strokeThickness: o.stroke ?? Math.max(2, Math.round(size / 8)),
       letterSpacing: o.spacing ?? 0,
     })
-    .setResolution(2);
+    .setResolution(textRes());
 }
 
 /** Altın degradeli başlık yazısı (beyaz metin + dikey tint). */

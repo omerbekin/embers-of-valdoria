@@ -69,8 +69,8 @@ describe('Toparlanma tavanı (%20)', () => {
 describe('Motorun gizli sınırları veride (Ömer 2026-10-13, itemfix m4)', () => {
   it('Quick start %99, delme %100, alınan hasar azaltma %90: items.json > caps; motor aynı değerleri okur; arayüz "capped" alır', async () => {
     const { ITEM_HOOK_CAPS } = await import('../src/engine/item-caps');
-    expect(ITEMS.caps).toMatchObject({ initiative: 99, armorPen: 100, magicPen: 100, damageTaken: 90 });
-    expect(ITEM_HOOK_CAPS).toEqual({ initiative: 0.99, armorPen: 1, magicPen: 1, damageTaken: 0.9 });
+    expect(ITEMS.caps).toMatchObject({ initiative: 99, armorPen: 100, magicPen: 100, damageTaken: 90, block: 30 });
+    expect(ITEM_HOOK_CAPS).toEqual({ initiative: 0.99, armorPen: 1, magicPen: 1, damageTaken: 0.9, block: 0.3 });
     const eq = { ...emptyEquipment(), boots: { uid: 'b', id: 'turnshoes', rolls: roll([['b_initiative', 1]], 30) }, trinket: { uid: 't', id: 'copper_ring', rolls: roll([['b_initiative', 1]], 30) } };
     const r = loadout({ class: 'archer', equipment: eq });
     expect(r.itemEffects!.startCharge).toBe(0.99);

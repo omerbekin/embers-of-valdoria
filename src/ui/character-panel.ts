@@ -44,7 +44,7 @@ import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
-import { heroItemLine, type HoverHero } from './gear-hover';
+import { FALLEN_GEAR_TEXT, FALLEN_MARK, FALLEN_POINTS_TEXT, heroFallen, heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
 import { slotIconUrl } from './slot-icons';
 import { escHtml, passiveCellHtml, skillCellHtml, type SkillCellView, type SkillCostChip } from './skill-bar';
@@ -81,6 +81,8 @@ export interface CharacterView {
   compact?: boolean;
   onHero: (id: string) => void;
   onSlotDouble?: (slot: SlotId) => void;
+  /** Düşmüş kahramanın kilitli yuvasına dokunuldu (açıklama toast'ı). */
+  onLocked?: () => void;
   /** Level / stat puanı dağıtımı (levels.md; kaynak dağıtımı destekliyorsa). Yoksa yalnızca level ve XP gösterilir. */
   level?: LevelPanel;
 }
@@ -139,6 +141,7 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
     box.append(row);
     if (pend > 0 && primaryLost) box.append(el('div', 'gr-pts-warn', primaryLost));
   }
+  if (!lv && heroFallen(hero) && (hero.statPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill gr-fallen-note', `${hero.statPoints} stat point${hero.statPoints === 1 ? '' : 's'} waiting. ${FALLEN_POINTS_TEXT}`));
   if ((hero.skillPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill', `${hero.skillPoints} skill point${hero.skillPoints === 1 ? '' : 's'} saved for the skill trees`));
   return box;
 }
@@ -233,7 +236,7 @@ function calcHero(v: CharacterView, hero0: HoverHero): HeroCalc {
 function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
   const list = el('div', 'gr-heroes');
   for (const h of v.heroes) {
-    const card = el('button', `gr-hero${h.id === heroId ? ' on' : ''}`);
+    const card = el('button', `gr-hero${h.id === heroId ? ' on' : ''}${heroFallen(h) ? ' fallen' : ''}`);
     card.type = 'button';
     card.dataset['drop'] = `hero:${h.id}`;
     card.addEventListener('click', () => v.onHero(h.id));
@@ -243,10 +246,12 @@ function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
     const meta = el('div', 'gr-hero-meta');
     const line = heroItemLine(h, v.focus);
     const sub = el('div', `gr-hero-sub tone-${line.tone}`);
-    line.parts.forEach((p, i) => {
-      if (i) sub.append(document.createTextNode(' · '));
-      sub.append(el('span', p.dir ? `gr-tip-d ${p.dir}` : '', p.text));
-    });
+    if (heroFallen(h)) sub.append(el('span', 'gr-fallen-txt', FALLEN_MARK));
+    else
+      line.parts.forEach((p, i) => {
+        if (i) sub.append(document.createTextNode(' · '));
+        sub.append(el('span', p.dir ? `gr-tip-d ${p.dir}` : '', p.text));
+      });
     meta.append(el('div', 'gr-hero-name', className(h.class)), sub);
     card.append(face, meta);
     list.append(card);
@@ -261,20 +266,22 @@ function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
 export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' | 'onHero'>): HTMLElement {
   const box = el('div', 'gr-marks');
   for (const h of v.heroes) {
-    const b = el('button', `gr-mark${h.id === v.heroId ? ' on' : ''}`);
+    const dead = heroFallen(h);
+    const b = el('button', `gr-mark${h.id === v.heroId ? ' on' : ''}${dead ? ' fallen' : ''}`);
     b.type = 'button';
     b.dataset['hero'] = h.id;
     b.dataset['drop'] = `hero:${h.id}`;
     const line = heroItemLine(h, v.focus);
     b.dataset['hint'] = className(h.class);
-    b.dataset['hintSub'] = line.text;
-    b.dataset['hintTone'] = line.tone;
+    b.dataset['hintSub'] = dead ? FALLEN_MARK : line.text;
+    b.dataset['hintTone'] = dead ? 'no' : line.tone;
     b.setAttribute('aria-label', className(h.class));
     b.addEventListener('click', () => v.onHero(h.id));
     const face = el('div', 'gr-face');
     const url = avatarUrl(h.class);
     if (url) face.style.backgroundImage = `url("${url}")`;
     b.append(face);
+    if (dead) b.append(el('span', 'gr-fallen-x', '✝'));
     if ((h.statPoints ?? 0) > 0) b.append(el('span', 'gr-pt', String(h.statPoints)));
     box.append(b);
   }
@@ -294,10 +301,28 @@ function emptySlotIcon(k: SlotId): HTMLImageElement {
   return img;
 }
 
+/** Kilit simgesi (düşmüş kahramanın yuvalarında). */
+function lockIcon(): HTMLElement {
+  const s = el('span', 'gr-lock');
+  s.setAttribute('aria-hidden', 'true');
+  s.innerHTML = '<svg viewBox="0 0 24 24"><rect x="5" y="11" width="14" height="9" rx="1.5" fill="currentColor"/><path d="M8 11V8a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>';
+  return s;
+}
+
+/** "Fallen · revive at a town" şeridi (Hero ve Sheet sayfalarının başında; düşmüş kahramanda). */
+function fallenBanner(hero: HoverHero): HTMLElement | null {
+  if (!heroFallen(hero)) return null;
+  const b = el('div', 'gr-fallen-banner');
+  b.append(el('span', 'gr-fallen-x in', '✝'), el('span', 'gr-fallen-b-t', FALLEN_MARK), el('span', 'gr-fallen-b-s', FALLEN_GEAR_TEXT));
+  return b;
+}
+
 /** Sınıf başlığı ("WARRIOR · AXES & SWORDS / ...") + 7 yuva. */
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const head = el('div', 'gr-sec gr-class-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`);
   const slots = el('div', 'gr-slots');
+  const dead = heroFallen(hero);
+  if (dead) slots.classList.add('gr-slots-locked');
   const blocker = offhandBlocker(hero.equipment);
   for (const k of SLOT_IDS) {
     const inst = hero.equipment[k];
@@ -327,13 +352,21 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
       slots.append(cell);
       continue;
     }
-    cell.dataset['drop'] = `slot:${k}`;
-    if (inst) {
-      cell.dataset['drag'] = `slot:${k}`;
-      cell.dataset['tip'] = `slot:${k}`;
-      cell.addEventListener('dblclick', () => v.onSlotDouble?.(k));
+    if (dead) {
+      // Düşmüş: yuva kilitli (sürüklenmez, bırakma hedefi değil, çift tık çıkarmaz); item ipucu yine açılır
+      cell.classList.add('locked');
+      if (inst) cell.dataset['tip'] = `slot:${k}`;
+      cell.addEventListener('click', () => v.onLocked?.());
+    } else {
+      cell.dataset['drop'] = `slot:${k}`;
+      if (inst) {
+        cell.dataset['drag'] = `slot:${k}`;
+        cell.dataset['tip'] = `slot:${k}`;
+        cell.addEventListener('dblclick', () => v.onSlotDouble?.(k));
+      }
     }
     cell.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
+    if (dead) cell.append(lockIcon());
     const txt = el('div', 'gr-slot-text');
     // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
     txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
@@ -354,6 +387,8 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
   const sg = el('div', 'gr-sgroups');
   const rowsById = new Map<string, HTMLElement>();
   for (const p of heroPanel(hero)) {
+    // Blok satırı yalnızca kalkanı olan (ya da kalkan takmayı deneyen) kahramanda (Ömer 2026-10-18)
+    if (p.id === 'block' && !p.value && !diff.get(p.id)) continue;
     const row = el('div', 'gr-stat');
     row.dataset['stat'] = p.id;
     const dv = diff.get(p.id);
@@ -469,6 +504,8 @@ export function renderCharacter(v: CharacterView): CharacterRender {
   if (!hero0) return { el: root, stats: null, after: null };
   const mid = el('div', 'gr-mid');
   if (v.hint) mid.append(el('div', 'gr-hint', v.hint));
+  const fb = fallenBanner(hero0);
+  if (fb) mid.append(fb);
   mid.append(...slotsBlock(hero0, v));
   const c = calcHero(v, hero0);
   mid.append(...sheetNodes(c, v, mid));
@@ -488,11 +525,14 @@ export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpR
   if (!hero0) return { el: box, stats: null, after: null };
   const c = calcHero(v, hero0);
   let skills: HTMLElement | undefined;
+  const fb = fallenBanner(hero0);
+  if (fb) box.append(fb);
   if (v.tab === 'hero') {
     if (v.hint) box.append(el('div', 'gr-hint', v.hint));
     box.append(...slotsBlock(hero0, v));
-    if (c.stats) skills = skillsNode(c.hero, c.stats, c.after);
   } else box.append(...sheetNodes(c, v, box, { hpRatio: v.hpRatio ?? 1 }));
+  // Skill bloğu Hero ve Sheet sekmelerinde aynı yerde (sayfanın altı, tam genişlik; Ömer 2026-10-18)
+  if (c.stats) skills = skillsNode(c.hero, c.stats, c.after);
   return { el: box, stats: c.stats, after: c.after, ...(skills ? { skills } : {}) };
 }
 

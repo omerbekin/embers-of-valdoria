@@ -377,6 +377,23 @@ export class Battle {
     return this.combatants.some((a) => a.side === target.side && a.summoned && a.hp > 0 && a.uid !== target.uid && !a.inert) ? 1 - e.reduce : 1;
   }
 
+  /**
+   * Blok şansı (Ömer 2026-10-18; 0-1): `target`'ın kalkanı (item kancası `blockChance`, tavan items.json > caps.block) `actor`'ün bu hasar
+   * etkisini bloklayabilir mi. Yalnızca DÜŞMANIN fiziksel vuruşu; büyü ve `unblockable` (Backstab) 0. İsabet zarsız (sure) vuruşu çağıran eler.
+   * Önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
+   */
+  blockChance(actor: Combatant, target: Combatant, effect: Pick<DamageEffect, 'damageType' | 'unblockable'>): number {
+    const c = target.itemEffects?.blockChance ?? 0;
+    if (!(c > 0) || actor.side === target.side || effect.damageType !== 'physical' || effect.unblockable) return 0;
+    return Math.min(ITEM_HOOK_CAPS.block, c);
+  }
+
+  /** Blok zarı: şans 0 ise (kalkansız hedef, büyü, Backstab, sure) rastgele sayı TÜKETMEZ (QB / altın kayıtlar birebir). */
+  private rollBlock(actor: Combatant, target: Combatant, effect: DamageEffect, sure: boolean): boolean {
+    const chance = sure ? 0 : this.blockChance(actor, target, effect);
+    return chance > 0 && this.rng.next() < chance;
+  }
+
   /** Alınan hasarın toplam çarpanı: durumlar (Fortified/Blessed...) x taunt eden dostun koruması (taunt'lı olmayan dostlar). */
   damageTakenMult(target: Combatant): number {
     let m = this.statusMult(target, 'damageTakenMult');
@@ -3479,6 +3496,12 @@ export class Battle {
       emit({ type: outcome, source: actor.uid, target: target.uid });
       return { landed: false };
     }
+    // Blok (Ömer 2026-10-18): kalkanlı hedef düşmanın doğrudan fiziksel vuruşunu TAMAMEN bloklar: hasar 0, ek etkiler (Stun, Wound...) yok,
+    // vuruş isabet etmemiş sayılır (dodge gibi). Şans yoksa zar atılmaz.
+    if (this.rollBlock(actor, target, effect, sure)) {
+      emit({ type: 'block', source: actor.uid, target: target.uid });
+      return { landed: false };
+    }
     // Flock Shield (YM18): savaşta bir kez ilk isabet eden düşman skill vuruşu azalır; yoksa 1 (ifade aynı)
     const flock = this.flockMult(actor, target);
     const spec = damageSpecFor(actor, target, effect, f, powerMult, extras, flock !== 1 ? this.damageTakenMult(target) * flock : this.damageTakenMult(target), this.dealtDamageMult(actor, target, this.castingSkill), effect.bonusScale ? this.effectiveStats(actor) : undefined, this.castRage ?? undefined);
@@ -3535,7 +3558,11 @@ export class Battle {
       hpLoss = this.applyHit(actor, target, total - redirected, effect.damageType, crit, emit, false, meta);
       lucky = this.lastHitLucky;
       // Guard payı korumacıya ayrı bir vuruştur: hedefin Lucky Escape'i onu iptal etmez (madde 258)
-      if (redirected > 0) this.applyHit(actor, guardian, redirected, effect.damageType, crit, emit, true, meta);
+      // Korumacının payı kendi vuruşudur: korumacının kalkanı varsa o pay bloklanabilir (asıl hedefin payı ve ek etkileri aynen)
+      if (redirected > 0) {
+        if (this.rollBlock(actor, guardian, effect, sure)) emit({ type: 'block', source: actor.uid, target: guardian.uid, guard: true });
+        else this.applyHit(actor, guardian, redirected, effect.damageType, crit, emit, true, meta);
+      }
     } else {
       hpLoss = this.applyHit(actor, target, total, effect.damageType, crit, emit, false, meta);
       lucky = this.lastHitLucky;

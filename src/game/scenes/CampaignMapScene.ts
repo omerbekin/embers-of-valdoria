@@ -204,6 +204,11 @@ export class CampaignMapScene extends Phaser.Scene {
   private longPressed = false;
   /** Onaylanmış ("Fight") ama araya giren adım yüzünden henüz başlamamış savaş: düğüm + başlatma gecikmesi (ms). */
   private pendingFight: { node: string; delay: number } | null = null;
+  /** Açık düğüm kartının konum yenileyicisi (yürürken kamera kayar; kart hedef düğümde kalır) ve son kamera imzası. */
+  private cardPlace: (() => void) | null = null;
+  private cardCam = '';
+  /** Yürüyüşte seçilen düğüm: kartın eylemine varıştan önce basıldıysa `requested` (yürüyüş atlanır, eylem varışta hemen çalışır). */
+  private arrival: { node: string; requested: boolean } | null = null;
   /** Düğüm kartının eylemi hazine / seçeneksiz olayı doğrudan verir (varış penceresi açılmaz; Ömer 2026-10-18, madde 357). */
   private directAt: string | null = null;
   /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
@@ -251,6 +256,8 @@ export class CampaignMapScene extends Phaser.Scene {
     this.pressTimer = null;
     this.longPressed = false;
     this.pendingFight = null;
+    this.cardPlace = null;
+    this.arrival = null;
     this.arrangeNotice = null;
     this.campHud = null;
     this.tipIsArrange = false;
@@ -301,6 +308,14 @@ export class CampaignMapScene extends Phaser.Scene {
       this.animateDashes(dt);
       this.updatePanButtons();
       this.syncOverlays();
+      if (this.cardPlace) {
+        const c = this.cameras.main;
+        const sig = `${c.scrollX.toFixed(1)}|${c.scrollY.toFixed(1)}|${c.zoom.toFixed(3)}`;
+        if (sig !== this.cardCam) {
+          this.cardCam = sig;
+          this.cardPlace(); // yürürken kamera kayar: kart hedef düğümü göstermeye devam eder
+        }
+      }
     });
     this.events.once('shutdown', () => setSettingsOpen(false));
     // Ses (2026-10-13): harita parşömeni açılır / dürülür; müzik advance > syncTown'da (harita yolculuğu ya da kasaba)
@@ -393,6 +408,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (isSettingsOpen()) return setSettingsOpen(false);
     if (this.slotBrowser) return this.slotBrowser.back();
     if (this.menuOpen) return this.closeMenu();
+    if (this.cardPlace && this.modal) return this.closeModal(); // yürürken açık düğüm kartı: Esc önce kartı kapatır (yürüyüş sürer)
     if (this.walking) return this.walking.finish();
     const step = nextStep(this.s).kind;
     // zorunlu seçim pencereleri (kahraman, aday, veda, yeni takım) Esc ile kapanmaz: menü üstlerine açılır. Kasaba ekranında ilk giriş akışı
@@ -2105,8 +2121,22 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.pausedBlocks()) return;
     const step = nextStep(this.s);
     if (step.kind !== 'move' || !step.options.includes(id)) return;
-    if (this.fightsAt(id)) return this.confirmBattle(id, () => this.march(id, true));
-    this.confirmPlace(id, () => this.march(id));
+    this.march(id);
+  }
+
+  /**
+   * Varıştaki eylem (kartın birincil düğmesi ya da varışta bekleyen düğüme yeniden dokunma ile aynı iş): savaş başlar (Formation borcu varsa
+   * önce ona yönlendirir), kasaba / kamp / tüccar / hazine / olay kendi ekranını açar, başka adım advance'a gider.
+   */
+  private runArrival(id: string): void {
+    if (this.s.at !== id) return;
+    const k = nextStep(this.s).kind;
+    if (k === 'battle') {
+      if (this.formationDue()) return this.advance();
+      return void startCampaignBattle(this);
+    }
+    if (['town', 'rest', 'merchant', 'event', 'treasure'].includes(k)) return this.openHere(id);
+    this.advance();
   }
 
   /** Bulunulan düğümde bekleyen eylemi açar; hazine / olayda kartın eylemi ödülü doğrudan verir. */
@@ -2149,6 +2179,7 @@ export class CampaignMapScene extends Phaser.Scene {
       card?.close();
       card = null;
       this.modal = null;
+      this.cardPlace = null;
     };
     card = openStartBattle(root, {
       ...(o.title ? { title: o.title } : {}),
@@ -2167,6 +2198,8 @@ export class CampaignMapScene extends Phaser.Scene {
       onCancel: () => this.closeModal(),
     });
     const handle = card;
+    this.cardPlace = () => handle.place();
+    this.cardCam = '';
     onStageResize(this, () => handle.place());
     // Esc / başka pencereler `this.modal.close()` ile kapatır; yalnızca close() kullanılır
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
@@ -2250,26 +2283,49 @@ export class CampaignMapScene extends Phaser.Scene {
     return !!lock;
   }
 
-  /** Yürüyüş. `fight`: varınca (onaylanmış) savaş kendiliğinden başlar; araya bekleyen kart / hikâye girerse oyuncu düğüme dokunur. */
-  private march(to: string, fight = false): void {
+  /**
+   * Yürüyüş (Ömer 2026-10-18, "önce yürüsünler, yürürken fight arayüzü açık"): düğüme dokununca kafile HEMEN yürür, düğüm kartı yürüme
+   * sürerken açıktır ve hedef düğümü gösterir. Kartın eylemine varıştan önce basılırsa yürüyüş atlanır ve eylem hemen çalışır; varış
+   * önce olursa kart eylemi bekler. Kart kapatılırsa kafile yine varır (hamle `moveTo` ile dokunuşta işlenmiştir), düğümün ekranı kendiliğinden
+   * açılmaz; düğüme yeniden dokunmak kartı açar.
+   */
+  private march(to: string): void {
     this.closeModal();
     this.hideNodeTip();
-    const tn = node(this.map, to);
-    this.directAt = (tn.type === 'treasure' || tn.type === 'event') && !this.fightsAt(to) ? to : null;
     const from = this.s.at;
     const before = node(this.map, from).region;
+    this.directAt = null;
+    this.pendingFight = null;
     this.update2(moveTo(this.s, to));
     this.tip?.destroy(true);
     this.tip = null;
+    const arrival = { node: to, requested: false };
+    this.arrival = arrival;
     this.walk(from, to, () => {
+      this.arrival = null;
       this.refresh(true);
       const region = node(this.map, to).region;
       const banner = region !== before;
       if (banner) this.regionBanner(region);
-      // Onaylanmış savaş: varışta (ya da araya giren kart / aday / hikâye penceresi kapanınca) advance kendiliğinden başlatır
-      this.pendingFight = fight ? { node: to, delay: banner ? 1400 : 250 } : null;
-      this.advance();
+      const k = nextStep(this.s).kind;
+      const waits = ['battle', 'town', 'rest', 'merchant', 'event', 'treasure'].includes(k);
+      if (arrival.requested) return void (banner && k === 'battle' ? this.time.delayedCall(1400, () => this.runArrival(to)) : this.runArrival(to));
+      if (!waits) return this.advance();
+      this.renderHud(); // eylem düğümü: kart (açıksa) bekler, kapalıysa düğüme dokunulur
     });
+    if (this.fightsAt(to)) this.confirmBattle(to, () => this.arrive(to));
+    else this.confirmPlace(to, () => this.arrive(to));
+  }
+
+  /** Kartın birincil düğmesi yürüme sürerken: yürüyüşü atlar, eylem varışta hemen çalışır; yürüyüş bittiyse doğrudan çalışır. */
+  private arrive(id: string): void {
+    const a = this.arrival;
+    if (this.walking && a && a.node === id) {
+      a.requested = true;
+      this.walking.finish();
+      return;
+    }
+    this.runArrival(id);
   }
 
   /**

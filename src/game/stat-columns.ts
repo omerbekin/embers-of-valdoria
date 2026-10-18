@@ -19,7 +19,8 @@ export const VITAL_STATS: string[] = ['hp', 'mp'];
 export const PANEL_GROUPS: string[][] = [
   MAIN_STATS,
   ['damage', ...ATTACK_STATS].map((k) => (k === 'critChance' ? 'crit' : k)),
-  DEFENSE_STATS,
+  // Blok (Ömer 2026-10-18): motor statı değil, kalkan kancası; panel yalnızca kahramanda blok varken (ya da takılacak item değiştirirken) gösterir
+  [...DEFENSE_STATS, 'block'],
 ];
 
 export interface StatBlockMetrics {

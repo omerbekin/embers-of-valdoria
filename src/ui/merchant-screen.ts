@@ -10,13 +10,13 @@
 import { reducedMotion } from './motion-pref';
 import { uiSound, worldSound } from './ui-sound';
 import './gear.css';
-import { instanceColor, instanceRarity, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
+import { instanceColor, instanceRarity, instanceSubtitle, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { avatarUrl } from './character-panel';
 import { itemCell } from './inventory';
-import { itemTipNodes, type ItemTipAction } from './item-tip';
+import { itemTipBody, itemTipNodes, type ItemTipAction } from './item-tip';
 import { isDoubleTap } from './gear-drop';
 import { heroTipExtra, openGear, phoneLayout, type GearApi, type GearExt, type GearSource } from './gear-screen';
 import { affixContext } from '../progression';
@@ -368,12 +368,11 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       const gi = goldIcon();
       if (gi) p.prepend(gi);
       // tüm özellikler: yüzen ipucunun aynı satırları (nadirlik / yuva / seviye, C / B / A affix'ler + aralık, Legendary etkisi)
-      const tip = itemTipNodes(best.inst);
-      const sub = tip.find((x) => x.classList.contains('it-sub'));
-      t.append(n, ...(sub ? [sub] : []), p);
+      const sub = el('div', 'it-sub', instanceSubtitle(best.inst));
+      t.append(n, sub, p);
       hl.append(t);
       const stats = el('div', 'mw-stats');
-      stats.append(...tip.filter((x) => !x.classList.contains('it-name') && !x.classList.contains('it-sub') && !x.classList.contains('it-value')));
+      stats.append(...itemTipBody(best.inst));
       card.append(hl, stats);
     }
     card.append(btn('gr-btn primary mw-go', 'Browse wares', dismissWelcome));

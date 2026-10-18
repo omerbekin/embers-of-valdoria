@@ -76,7 +76,7 @@ describe('Rage: veri ve başlangıç', () => {
   it('skill açıklaması bedeli "All RAGE (min N)" olarak yazar ve tamamını harcadığını söyler', () => {
     const info = describeSkill(cry, content.classes.warrior!.stats, content.formulas);
     expect(info.cost).toBe(`All RAGE (min ${cry.cost.amount})`);
-    expect(info.lines.join(' ')).toContain(`Spends ALL your Rage (needs at least ${cry.cost.amount})`);
+    expect(info.lines.join(' ')).not.toContain('Spends ALL'); // bedel yalnızca başlıkta, satırda tekrar yok
   });
 });
 

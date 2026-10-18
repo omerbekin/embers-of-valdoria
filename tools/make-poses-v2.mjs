@@ -106,6 +106,10 @@ const NARROW_SCALE = 1.0;
 /** Warrior ana sayfalarında sola bakan hücreler (kaynak hatası). */
 const REF_MIRROR = new Set(['thrust1', 'thrust2']);
 
+/** Hazır kareler (Warrior): ölçeklenmeden doğrudan tuval görseli (Ömer 2026-10-18 idle1 v3 + parmak katmanı). */
+const READY_DIR = `${SRCROOT}/warrior-v2-ready`;
+const READY = IS_REF && existsSync(join(READY_DIR, 'ready.json')) ? Object.fromEntries(Object.entries(JSON.parse(readFileSync(join(READY_DIR, 'ready.json'), 'utf8'))).filter(([k]) => !k.startsWith('_'))) : {};
+
 const CONFIG = existsSync(join(SRC, 'config.json')) ? JSON.parse(readFileSync(join(SRC, 'config.json'), 'utf8')) : {};
 
 /**
@@ -610,13 +614,32 @@ async function bodies(data) {
       .extend({ left, right: W - left - w, top, bottom: H - top - h, background: { r: 0, g: 0, b: 0, alpha: 0 } })
       .png()
       .toBuffer();
-    await sharp(canvas).png({ compressionLevel: 9 }).toFile(join(OUT, `${name}.png`));
-    await sharp(canvas).resize(Math.round(W / 2), Math.round(H / 2), { kernel: sharp.kernel.lanczos3 }).png({ compressionLevel: 9 }).toFile(join(OUT, 'small', `${name}.png`));
+    const rdy = IS_REF ? READY[name] : undefined; // hazır kare (warrior-v2-ready): gövde görseli doğrudan, parmak katmanı ayrı dosya
+    const outBuf = rdy ? readFileSync(join(READY_DIR, rdy.file)) : canvas;
+    await sharp(outBuf).png({ compressionLevel: 9 }).toFile(join(OUT, `${name}.png`));
+    await sharp(outBuf).resize(Math.round(W / 2), Math.round(H / 2), { kernel: sharp.kernel.lanczos3 }).png({ compressionLevel: 9 }).toFile(join(OUT, 'small', `${name}.png`));
+    if (rdy?.fingers) {
+      const fb = readFileSync(join(READY_DIR, rdy.fingers));
+      await sharp(fb).png({ compressionLevel: 9 }).toFile(join(OUT, `${name}_fingers.png`));
+      await sharp(fb).resize(Math.round(W / 2), Math.round(H / 2), { kernel: sharp.kernel.lanczos3 }).png({ compressionLevel: 9 }).toFile(join(OUT, 'small', `${name}_fingers.png`));
+    }
     const s = m.scale;
     // sayfa -> tuval (aynalı karede x çevrilir, ölçekli) ve tersi
     const toCanvas = ([x, y]) => ({ x: Math.round((m.mirror ? m.f.x1 - x : x - m.f.x0) * s + left), y: Math.round((y - m.f.y0) * s + top) });
     const toSheet = (cx, cy) => [Math.round(m.mirror ? m.f.x1 - (cx - left) / s : m.f.x0 + (cx - left) / s), Math.round(m.f.y0 + (cy - top) / s)];
     const p = (def.poses[name] ??= {});
+    if (rdy) {
+      // hazır kare: kutu = görselin alfa sınırı, yumruk + açı ready.json'dan, ikinci el / bayraklar korunur
+      const { data: rd, info } = await sharp(outBuf).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
+      let x0 = info.width, y0 = info.height, x1 = -1, y1 = -1;
+      for (let y = 0; y < info.height; y++) for (let x = 0; x < info.width; x++) if (rd[(y * info.width + x) * 4 + 3] > ALPHA) (x0 = Math.min(x0, x)), (x1 = Math.max(x1, x)), (y0 = Math.min(y0, y)), (y1 = Math.max(y1, y));
+      p.box = { x: x0, y: y0, w: x1 - x0 + 1, h: y1 - y0 + 1 };
+      p.anchor = { x: rdy.fist[0], y: rdy.fist[1], angle: rdy.angle };
+      if (rdy.fingers) p.fingers = `${name}_fingers`;
+      else delete p.fingers;
+      p.src = relative(SRCROOT, join(READY_DIR, rdy.file)).replaceAll('\\', '/');
+      continue;
+    }
     const src = relative(SRCROOT, m.sheet.file).replaceAll('\\', '/');
     // eski veride src yok: ana sayfa sayılır
     const oldSrc = p.src ?? relative(SRCROOT, join(SRC, ONE.flat().includes(name) ? 'one-handed.png' : TWO.flat().includes(name) ? 'two-handed.png' : 'bow.png')).replaceAll('\\', '/');

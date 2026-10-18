@@ -1,9 +1,12 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
 import { BAG_SIZE, bestMoves, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
-import { clone, heroById } from './state';
+import { clone, heroById, isFallen } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
+
+/** Düşmüş kahraman ekipmanını değiştiremez (Ömer 2026-10-18); arayüz de aynı metni gösterir. */
+export const FALLEN_GEAR_MSG = "Fallen heroes can't change gear. Revive them at a town.";
 
 /** Torbada yer var mı? */
 export const bagHasRoom = (s: CampaignState, n = 1): boolean => s.inventory.length + n <= BAG_SIZE;
@@ -31,8 +34,14 @@ export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId): strin
  * ikinci ele de girer; yoksa varsayılan yuva). Çift el / yay / tılsım takılınca ikinci eldeki item da torbaya döner; yer yoksa hata.
  */
 export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: SlotId): CampaignState {
+  return equipCore(s, heroId, uid, slot, true);
+}
+
+/** Sim / otomatik "best" politikası eski davranışı korur (düşmüşe de takar; altın kayıtlar); arayüz her zaman equipItem kullanır. */
+function equipCore(s: CampaignState, heroId: string, uid: string, slot: SlotId | undefined, guardFallen: boolean): CampaignState {
   const hero = heroById(s, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (guardFallen && isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
   const idx = s.inventory.findIndex((it) => it.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const item = s.inventory[idx]!;
@@ -53,6 +62,7 @@ export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: 
 export function unequipItem(s: CampaignState, heroId: string, slot: SlotId): CampaignState {
   const hero = heroById(s, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
   if (!hero.equipment[slot]) return s;
   if (!bagHasRoom(s)) throw new Error('Bag is full');
   const t = clone(s);
@@ -93,15 +103,15 @@ export const heroLoadout = (h: Hero): LoadoutResult => loadout(h);
  * "Equip best": verilen kahramanlara (varsayılan: aktif takım, dizilim sırasıyla) torbadan en iyi item'leri takar; çıkan item'ler torbaya döner.
  * Primary bonusunu kapatacak item seçilmez (madde 278). Kuşanma ekranı ve sim'in `best` politikası kullanır.
  */
-export function equipBest(s: CampaignState, heroIds?: string[]): CampaignState {
+export function equipBest(s: CampaignState, heroIds?: string[], opts: { skipFallen?: boolean } = {}): CampaignState {
   let t = s;
   const ids = heroIds ?? t.active.filter((id) => id && heroById(t, id));
   for (const id of ids) {
     const h = heroById(t, id);
-    if (!h) continue;
+    if (!h || (opts.skipFallen && isFallen(h))) continue; // arayüz: düşmüş kahramanın ekipmanı değişmez
     for (const m of bestMoves(h, t.inventory)) {
       try {
-        t = equipItem(t, id, m.uid, m.slot);
+        t = equipCore(t, id, m.uid, m.slot, !!opts.skipFallen);
       } catch {
         /* torba dolu (ikinci el çıkamıyor): bu değişim atlanır */
       }
@@ -121,6 +131,22 @@ export function grantAllLegendaries(s: CampaignState): CampaignState {
     if (have.has(id)) continue;
     const uid = `i${t.nextItemId++}`;
     t.inventory.push(makeItem(id, uid, rngFor(t.seed, 'item', uid)));
+  }
+  return t;
+}
+
+/** Debug: kahramanı düşmüş yap / diriltt (heroId yoksa aktif takımın ilk kahramanı). Düşmüş = alive false, can 0. */
+export function debugToggleFallen(s: CampaignState, heroId?: string): CampaignState {
+  const t = clone(s);
+  const id = heroId ?? t.active.find((x) => x && heroById(t, x)) ?? t.roster[0]?.id;
+  const h = id ? heroById(t, id) : undefined;
+  if (!h) return s;
+  if (isFallen(h)) {
+    h.alive = true;
+    h.hpRatio = 1;
+  } else {
+    h.alive = false;
+    h.hpRatio = 0;
   }
   return t;
 }

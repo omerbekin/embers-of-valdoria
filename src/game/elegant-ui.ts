@@ -1,3 +1,4 @@
+import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { BODY_FONT, DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-text';
@@ -113,7 +114,7 @@ export function elDiamond(scene: Phaser.Scene, r: number, hollow = false): Phase
 export function elText(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.TXT, o: { em?: number; pad?: boolean; weight?: string; upper?: boolean } = {}): Phaser.GameObjects.Text {
   const t = scene.add
     .text(x - (o.pad ? EL.PAD : 0), y, o.upper === false ? text : text.toUpperCase(), { fontFamily: DISPLAY_FONT, fontSize: `${size}px`, fontStyle: o.weight ?? '600', color, letterSpacing: size * (o.em ?? 0.05) })
-    .setResolution(2)
+    .setResolution(textRes())
     .setShadow(0, 2, EL.SH_DARK, 4, false, true);
   if (o.pad) t.setPadding(EL.PAD, EL.PAD, EL.PAD, EL.PAD);
   return t;
@@ -123,7 +124,7 @@ export function elText(scene: Phaser.Scene, x: number, y: number, text: string, 
 export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, italic = true, wrap?: number): Phaser.GameObjects.Text {
   const t = scene.add
     .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, fontStyle: italic ? 'italic' : 'normal', color, ...(wrap ? { wordWrap: { width: wrap, useAdvancedWrap: true } } : {}) })
-    .setResolution(2)
+    .setResolution(textRes())
     .setShadow(0, 2, EL.SH_DARK, 4, false, true);
   return t;
 }
@@ -497,7 +498,7 @@ export function elHeading(scene: Phaser.Scene, x: number, y: number, text: strin
   const c = scene.add.container(x, y);
   const t = scene.add
     .text(0, 0, text.toUpperCase(), { fontFamily: DISPLAY_FONT, fontSize: `${size}px`, fontStyle: '600', color: '#ffffff', letterSpacing: size * 0.14 })
-    .setResolution(2)
+    .setResolution(textRes())
     .setOrigin(0.5)
     .setShadow(0, 2, 'rgba(0,0,0,0.9)', 3, false, true)
     .setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f);
@@ -637,7 +638,7 @@ export function elTip(scene: Phaser.Scene, spec: ElTipSpec): { container: Phaser
       for (const seg of ln.segs) {
         for (const word of seg.text.split(/(?<= )/)) {
           if (!word) continue;
-          const t = scene.add.text(0, y, word, { fontFamily: BODY_FONT, fontSize: '19px', color: seg.hex ?? EL.TXT }).setResolution(2);
+          const t = scene.add.text(0, y, word, { fontFamily: BODY_FONT, fontSize: '19px', color: seg.hex ?? EL.TXT }).setResolution(textRes());
           if (x > px && x + t.width > w - px) {
             x = px;
             y += lineH + 1;
@@ -653,7 +654,7 @@ export function elTip(scene: Phaser.Scene, spec: ElTipSpec): { container: Phaser
       continue;
     }
     const [text, hex] = ln;
-    const t = scene.add.text(px, y, text, { fontFamily: BODY_FONT, fontSize: '19px', color: hex ?? EL.TXT, wordWrap: { width: w - px * 2, useAdvancedWrap: true }, lineSpacing: 1 }).setResolution(2);
+    const t = scene.add.text(px, y, text, { fontFamily: BODY_FONT, fontSize: '19px', color: hex ?? EL.TXT, wordWrap: { width: w - px * 2, useAdvancedWrap: true }, lineSpacing: 1 }).setResolution(textRes());
     items.push(t);
     y += t.height + 3;
   }
@@ -806,7 +807,7 @@ export function elBadge(scene: Phaser.Scene, tone: ElBadgeTone, r = 12): { c: Ph
   g.lineStyle(1.5, b.ring, 1).strokeCircle(0, 0, r);
   const t = scene.add
     .text(0, 0.5, '', { fontFamily: NUM_FONT, fontSize: `${Math.round(r * 1.25)}px`, fontStyle: 'bold', color: b.text })
-    .setResolution(2)
+    .setResolution(textRes())
     .setOrigin(0.5)
     .setShadow(0, 1, 'rgba(0,0,0,0.6)', 2, false, true);
   const c = scene.add.container(0, 0, [g, t]).setVisible(false);

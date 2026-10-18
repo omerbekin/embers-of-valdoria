@@ -1189,7 +1189,7 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     tab: 'Characters',
     section: 'Animation tests',
     label: 'VFX frame test (in battle)',
-    hint: 'Real test battle: the mob (Grave Chanter, Morvane Halberdier or Sworn Guard) casts its skill on a dummy with the full battle animation. Panel: skill, version (Original / ChatGPT 16f / Code in-between), Cast, Loop, speed, Pause + Step',
+    hint: 'Real test battle: the mob (Grave Chanter, Morvane Halberdier or Sworn Guard) casts its skill on a dummy with the full battle animation. Panel: skill, version (Original / ChatGPT 16f / Code in-between / Hand-coded), Cast, Loop, speed, Pause + Step',
     run: () => void import('./debug-vfx-battle').then((m) => m.openVfxBattleTest(game)),
   });
 

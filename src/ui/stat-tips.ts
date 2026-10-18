@@ -5,6 +5,8 @@ import { content, describeStat } from '../engine';
 import type { StatKind, Stats } from '../engine';
 import { iconUrl } from './dom-icons';
 import { MIGHT_COLOR, STAT_COLOR, statIconName } from './stat-icons';
+import { itemImageUrl } from '../game/item-icon-files';
+import itemsJson from '../../data/items.json';
 
 export interface StatTip {
   title: string;
@@ -112,6 +114,7 @@ export function statTip(id: string, stats: Stats, after?: Stats | null): StatTip
 }
 
 function statTipBase(id: string, stats: Stats): StatTip | null {
+  if (id === 'block') return BLOCK_TIP;
   const kind = KIND[id];
   if (!kind) return null;
   if (kind === 'might') {
@@ -143,8 +146,23 @@ export function statIcon(id: string): { kind: string; color: string } | null {
   return { kind: statIconName(kind), color: kind === 'might' ? MIGHT_COLOR : STAT_COLOR[kind] };
 }
 
+/**
+ * Blok (Ömer 2026-10-18): motor statı değil (kalkan kancası `blockChance`), açıklaması burada; ikonu Iron Buckler'ın item görseli (zırh ikonu
+ * zaten kalkan, ana oturumun seçimi). Değer satırın kendisinde (panel "BLOCK 18%"), ipucu kuralı anlatır.
+ */
+const BLOCK_TIP: StatTip = {
+  title: 'Block chance',
+  lines: [
+    "Chance that your shield blocks an enemy's physical hit (melee or ranged): the hit deals no damage and none of its effects (Stun, Wound...).",
+    "Spells, damage over time, burning ground, Doom and Backstab cannot be blocked. A guardian's shield can block the share it takes.",
+    `Comes only from shields: their base value plus the Block affix. At most ${(itemsJson.caps as Record<string, number>)['block'] ?? 30}%.`,
+  ],
+};
+export const blockIconUrl = (): string => itemImageUrl({ id: 'iron_buckler' }) ?? iconUrl(statIconName('armor'), STAT_COLOR.armor);
+
 /** DOM için ikon resmi (data URL; önbellekli). Bilinmeyen kimlikte ''. */
 export function statIconUrl(id: string): string {
+  if (id === 'block') return blockIconUrl();
   const i = statIcon(id);
   return i ? iconUrl(i.kind, i.color) : '';
 }

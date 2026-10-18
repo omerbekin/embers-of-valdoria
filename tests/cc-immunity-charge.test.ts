@@ -140,7 +140,7 @@ describe('CC bağışıklığı: motor', () => {
 
   it('skill-info: CC durumu veren skill "Bosses are immune"; Warden pasif metni immune to crowd control', () => {
     const info = describeSkill(CHARGE, content.classes.warrior!.stats, content.formulas, {}, { statuses: content.statuses });
-    expect(info.lines.some((l) => l.includes('Bosses are immune to Stun'))).toBe(true);
+    expect(info.lines.some((l) => l.includes('Bosses are immune'))).toBe(false); // Codex boss makalesinde tek yerde (Ömer 2026-10-18)
     const wound = describeSkill(content.skills.melee_attack!, content.classes.warrior!.stats, content.formulas, {}, { statuses: content.statuses });
     expect(wound.lines.some((l) => l.includes('Bosses are immune'))).toBe(false);
     const uy = content.bosses.bridge_warden!.boss!.passives!.find((p) => p.id === 'unyielding')!;

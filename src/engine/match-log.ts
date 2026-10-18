@@ -131,6 +131,8 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `${L(e.source)} -> ${L(e.target)}: DODGED`;
     case 'miss':
       return `${L(e.source)} -> ${L(e.target)}: MISSED`;
+    case 'block':
+      return `${L(e.source)} -> ${L(e.target)}: BLOCKED${e.guard ? ' (guard share)' : ''} (shield)`;
     case 'heal':
       return `${L(e.source)} heals ${L(e.target)} ${e.amount}${e.crit ? ' CRIT' : ''}${e.cause === 'dark_bond' ? ' (Dark Bond copy of life steal)' : ''}, hp ${e.hpAfter}`;
     case 'shieldTrigger':

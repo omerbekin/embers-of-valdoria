@@ -31,6 +31,8 @@ export interface PoseDef {
   hidden?: boolean;
   /** Yumruk yamasının yarıçapı (0 = yama yok). */
   fist?: number;
+  /** Ön parmak katmanı (Ömer 2026-10-18): gövdeyle aynı tuvalde ayrı görsel (assets/poses/<dir>/<ad>.png); çizim sırası gövde -> ana el silahı -> parmaklar (sap yumruğun içinden geçer). */
+  fingers?: string;
   /** Açık (avucu açık) el: point / throw. Büyü / fırlatılan şeyin çıkış noktası (CombatantView.castPoint), eşya o elde değilse. */
   open?: 'main' | 'off';
 }
@@ -193,6 +195,13 @@ export function gripFrames(def: PoseClassDef, grip?: Grip): string[] {
   const own = new Set(expand(Object.values(def.grips[g] ?? {})));
   const other = new Set(Object.entries(def.grips).filter(([k]) => k !== g).flatMap(([, m]) => expand(Object.values(m ?? {}))));
   return all.filter((n) => own.has(n) || !other.has(n));
+}
+
+/** Bu tutuşta indirilecek görseller: kareler + (varsa) ön parmak katmanları (`PoseDef.fingers`). */
+export function gripFiles(def: PoseClassDef, grip?: Grip): string[] {
+  const frames = gripFrames(def, grip);
+  const fingers = frames.map((n) => def.poses[n]?.fingers).filter((f): f is string => !!f);
+  return [...frames, ...fingers];
 }
 
 /** Tutuş ikinci eli kapatıyor mu (çift el, yay, tılsım): ikinci el eşyası çizilmez. */
@@ -483,6 +492,7 @@ export function drawPoseComposite(
   body: Src,
   weapon: { img: Src; pick: WeaponPick; offImg?: Src | null } | null,
   glowPx = 0,
+  fingers: Src | null = null,
 ): void {
   const p = def.poses[name];
   if (!p) return;
@@ -506,8 +516,9 @@ export function drawPoseComposite(
   ctx.drawImage(body, 0, 0, CW, CH);
   for (const pl of items) if (!pl.back && !topShield(pl)) draw(pl);
   const r = p.fist ?? POSES.fistRadius;
+  const front = fingers && p.fingers ? fingers : null; // parmak katmanı: ana el yaması yerine, silahın üstüne en son
   // yumruk yaması: eşyayı tutan elin (tek eşyada öteki elin de: çift elde sap üstündeki el) gövde pikselleri kabzanın üstüne
-  for (const h of fistPoints(p, items))
+  for (const h of fistPoints(p, items, !!front))
     if (r > 0) {
       ctx.save();
       ctx.beginPath();
@@ -523,7 +534,7 @@ export function drawPoseComposite(
   const main = shields.length ? items.find((pl) => pl.slot === 'main' && !pl.back && pl.hand === 'main') : undefined;
   if (main) {
     draw(main);
-    if (r > 0) {
+    if (r > 0 && !front) {
       ctx.save();
       ctx.beginPath();
       ctx.arc(main.hx, main.hy, r, 0, Math.PI * 2);
@@ -532,15 +543,17 @@ export function drawPoseComposite(
       ctx.restore();
     }
   }
+  if (front) ctx.drawImage(front, 0, 0, CW, CH);
 }
 
 /** Önde, her şeyin üstünde çizilen ikinci el kalkanı (kol kalkanın arkasında). */
 const topShield = (pl: ItemPlacement) => pl.slot === 'off' && !pl.back && !!POSES.weapons[pl.family]?.upright;
 
 /** Yumruk yaması noktaları: önde çizilen eşyaların elleri; tek eşya ana eldeyse ikinci el de (çift elde sapı saran el). */
-export function fistPoints(p: PoseDef, items: ItemPlacement[]): Array<{ x: number; y: number }> {
+export function fistPoints(p: PoseDef, items: ItemPlacement[], fingerLayer = false): Array<{ x: number; y: number }> {
   const front = items.filter((pl) => !pl.back);
-  const pts = front.map((pl) => ({ x: pl.hx, y: pl.hy }));
+  // parmak katmanı varsa ana eldeki silahın yaması çizilmez (parmaklar silahın üstüne ayrı katman olarak biner)
+  const pts = front.filter((pl) => !(fingerLayer && pl.slot === 'main' && pl.hand === 'main')).map((pl) => ({ x: pl.hx, y: pl.hy }));
   const main = front.find((pl) => pl.slot === 'main');
   if (main && main.hand === 'main' && !items.some((pl) => pl.slot === 'off') && p.offhand) pts.push({ x: p.offhand.x, y: p.offhand.y });
   return pts;

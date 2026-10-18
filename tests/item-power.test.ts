@@ -4,7 +4,11 @@ import { damageSpecFor, type DamageEffect } from '../src/engine/spec';
 import { outgoingDamageMult } from '../src/engine/stats';
 import {
   ITEMS,
+  affixValues,
+  baseBlockChance,
   baseIP,
+  baseLineTexts,
+  instanceBaseBlockChance,
   bestMoves,
   emptyEquipment,
   equippedWeaponPower,
@@ -84,20 +88,35 @@ describe('veri ve formül', () => {
     expect(weaponPowerOf(itemDef('oak_shield')!, L)).toBe(0);
   });
 
-  it('örtük statlar: hançer kritik, tılsım hız %, kalkan zırh; seviyeyle büyür; IP ve fiyata girer', () => {
+  it('örtük statlar: hançer kritik, tılsım hız % (seviyeyle büyür); kalkan blok şansı (taban başına sabit %15-20, seviyeyle büyümez); IP ve fiyata girer', () => {
     expect(implicitDefOf(itemDef('rondel_dagger')!)!.parts[0]!.to).toBe('mod:critAdd');
     expect(implicitDefOf(itemDef('worn_deck')!)!.parts[0]!.to).toBe('mult:spdMult');
-    expect(implicitDefOf(itemDef('oak_shield')!)!.parts[0]!.to).toBe('mod:armorAdd');
+    expect(implicitDefOf(itemDef('oak_shield')!)!.parts[0]!.to).toBe('fx:blockChance');
     expect(implicitDefOf(itemDef('woodcutters_axe')!)).toBeUndefined();
-    const sh = implicitDefOf(itemDef('oak_shield')!)!;
-    expect(implicitValues(sh, 30)[0]!).toBeGreaterThan(implicitValues(sh, 1)[0]!);
+    const dg = implicitDefOf(itemDef('rondel_dagger')!)!;
+    expect(implicitValues(dg, 30)[0]!).toBeGreaterThan(implicitValues(dg, 1)[0]!);
+    // Kalkan (Ömer 2026-10-18): taban blok şansı her kalkanda %15-20, item seviyesiyle DEĞİŞMEZ (items[].implicitBase)
+    const shields = ITEMS.items.filter((d) => d.slot === 'offhand');
+    expect(shields.length).toBeGreaterThan(0);
+    for (const d of shields) {
+      const sh = implicitDefOf(d)!;
+      const v = implicitValues(sh, 1, d)[0]!;
+      expect(v, d.id).toBeGreaterThanOrEqual(15);
+      expect(v, d.id).toBeLessThanOrEqual(20);
+      expect(implicitValues(sh, 50, d)[0], d.id).toBe(v);
+      expect(instanceBaseLines(inst(d.id, 30)).block, d.id).toBe(v);
+      expect(baseBlockChance(d, 40), d.id).toBe(v);
+      expect(instanceBaseBlockChance(inst(d.id, 5)), d.id).toBe(v);
+      expect(instanceBaseLines(inst(d.id, 30)).implicit, d.id).toBeUndefined();
+    }
     // IP: taban değeri örneğin IP'sine eklenir
     const a = inst('woodcutters_axe', 30);
     expect(baseIP(itemDef('woodcutters_axe')!, 30)).toBeCloseTo(weaponPowerOf(itemDef('woodcutters_axe')!, 30) * W.ip, 3);
     expect(instanceIP(a)).toBeGreaterThan(instanceIP(inst('woodcutters_axe', 1)));
     // ipucu satırları
     expect(instanceBaseLines(a).power).toBe(weaponPowerOf(itemDef('woodcutters_axe')!, 30));
-    expect(instanceBaseLines(inst('oak_shield', 10)).implicit!.text).toMatch(/Armor/);
+    expect(baseBlockChance(itemDef('woodcutters_axe')!, 10)).toBe(0);
+    expect(baseLineTexts(instanceBaseLines(inst('oak_shield', 10)))).toEqual([`Block chance ${itemDef('oak_shield')!.implicitBase![0]}%`]);
     expect(instanceBaseLines(inst('oak_shield', 10)).power).toBeUndefined();
   });
 });
@@ -164,13 +183,22 @@ describe('güç katmanı: katlama, tutuş, ikinci el, kalkan', () => {
     expect(equippedWeaponPower({ weapon: inst('arming_sword', L), offhand: inst('oak_shield', L) })).toBe(weaponPowerOf(itemDef('arming_sword')!, L));
   });
 
-  it('kalkanın tabanı zırh (x4): takan zırh kazanır, hasar değil; hançer örtüğü kritik verir', () => {
+  it('kalkanın tabanı blok şansı (x4, Ömer 2026-10-18): takan blok kazanır, zırhı yalnızca ana Armor affixinden; hasar değil; hançer örtüğü kritik verir', () => {
     const L = 10;
     const noShield = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L) }) });
     const shield = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'oak_shield', rolls: { rarity: 'common', ilvl: L, affixes: [{ id: 'c_armor', q: 0.5 }] } } }) });
-    const imp = implicitValues(implicitDefOf(itemDef('oak_shield')!)!, L)[0]!;
-    expect((shield.modifiers!.armorAdd ?? 0) - (noShield.modifiers!.armorAdd ?? 0)).toBeGreaterThanOrEqual(imp);
+    const imp = implicitValues(implicitDefOf(itemDef('oak_shield')!)!, L, itemDef('oak_shield')!)[0]!;
+    expect(noShield.itemEffects?.blockChance).toBeUndefined();
+    expect(shield.itemEffects!.blockChance).toBeCloseTo(imp / 100, 6);
+    // zırh yalnızca ana affix'ten (c_armor), örtük zırh yok
+    expect((shield.modifiers!.armorAdd ?? 0) - (noShield.modifiers?.armorAdd ?? 0)).toBeCloseTo(affixValues('c_armor', L, 0.5)[0]!, 6);
     expect(shield.weaponMult).toBe(noShield.weaponMult);
+    // kalkan C affix'i (c_block) tabana eklenir; toplam items.json > caps.block ile kırpılır ("max")
+    const withAffix = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'oak_shield', rolls: { rarity: 'uncommon', ilvl: L, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_block', q: 0.5 }] } } }) });
+    expect(withAffix.itemEffects!.blockChance).toBeCloseTo((imp + affixValues('c_block', L, 0.5)[0]!) / 100, 6);
+    const big = loadout({ class: 'warrior', equipment: eq({ weapon: inst('arming_sword', L), offhand: { uid: 's', id: 'wardens_pavise', rolls: { rarity: 'uncommon', ilvl: 400, affixes: [{ id: 'c_armor', q: 0.5 }, { id: 'c_block', q: 1 }] } } }) });
+    expect(big.itemEffects!.blockChance).toBeCloseTo(ITEMS.caps.block! / 100, 6);
+    expect(big.capped).toContain('block');
     const cut = loadout({ class: 'cutthroat', equipment: eq({ weapon: inst('rondel_dagger', L) }) });
     expect(cut.modifiers!.critAdd).toBeCloseTo(implicitValues(implicitDefOf(itemDef('rondel_dagger')!)!, L)[0]! / 100, 6);
   });

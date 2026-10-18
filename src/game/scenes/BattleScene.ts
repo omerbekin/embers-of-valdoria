@@ -2659,7 +2659,7 @@ export class BattleScene extends Phaser.Scene {
     // Aşamalı alan skill'i: aşama olayları vfx o aşamayı açana kadar bekler (vfx aşamadan habersizse beklemez)
     if (e.stage !== undefined) await this.awaitStage(e.stage);
     // Vuruşa bağlı olaylar (hasar, dodge, miss) durumlarını hit gate geçilince gösterir; diğerleri hemen
-    if (e.type !== 'damage' && e.type !== 'dodge' && e.type !== 'miss') this.presentStatuses(e);
+    if (e.type !== 'damage' && e.type !== 'dodge' && e.type !== 'miss' && e.type !== 'block') this.presentStatuses(e);
     if (this.combatLog?.push(e, { between: this.betweenTurns.has(e), regen: this.regenTicks.has(e) })) this.hud?.setLog(this.combatLog.entries());
     switch (e.type) {
       case 'skillUsed': {
@@ -2735,6 +2735,14 @@ export class BattleScene extends Phaser.Scene {
         await this.passHitGate();
         this.presentStatuses(e);
         this.views.get(e.target)?.dodge();
+        await this.wait(slow(90));
+        return;
+      case 'block':
+        // Shield block (Ömer 2026-10-18): the TARGET blocks the physical hit ("Block" above the target, shield sound); no damage, no effects
+        await this.passHitGate();
+        this.presentStatuses(e);
+        this.views.get(e.target)?.block();
+        playSfx(this, 'shieldBlock', SHARED_KEY);
         await this.wait(slow(90));
         return;
       case 'miss':

@@ -17,6 +17,7 @@ export function endlessGearSource(get: () => EndlessRun, set: (r: EndlessRun) =>
     discard: (uid) => apply((r) => discardFromBag(r, uid)),
     equipBest: (ids) => apply((r) => equipBestRun(r, ids)),
     emptyText: 'The bag is empty. Rewards and the merchant bring new gear.',
+    fallenText: "Fallen heroes can't change gear. Revive them first.",
     allocate: (heroId, add) => apply((r) => allocateRun(r, heroId, add)),
   };
 }

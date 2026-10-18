@@ -647,7 +647,8 @@ describe('Wail of the Dead can bedeli (madde 241 + Ömer 2026-10-07: MEVCUT can�
     if (ev2.ok) expect(ofType(ev2.events, 'resource')[0]).toMatchObject({ resource: 'hp', amount: 1, after: 1 }); // bedelden sonra 1 can (sonra Vampiric Bite iyileştirebilir)
     const info = describeSkill(S.wail_of_the_dead!, content.classes.undead!.stats, content.formulas);
     expect(info.cost).toBe(`${Math.round(ratio * 100)}% of current HP`);
-    expect(info.lines.join(' ')).toContain(`Costs ${Math.round(ratio * 100)}% of current HP`);
+    expect(info.lines.join(' ')).not.toContain('Costs '); // bedel başlıkta; satırda yalnızca yuvarlama / 1 can kuralı
+    expect(info.lines.join(' ')).toContain('never bring you below 1 HP');
   });
 
   it('madde 247 (Ömer): YZ düşük can kuralı (minHpRatioForHpCost) Wail\'e UYGULANMAZ: oranlı bedel muaf, yarı canın altında da kullanır', () => {

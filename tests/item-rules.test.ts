@@ -39,9 +39,9 @@ describe('nadirlik = affix sayısı', () => {
     expect(Object.values(ITEMS.affixDefs).every((a) => ['C', 'B', 'A'].includes(a.tier))).toBe(true);
   });
 
-  it("havuzlar Ömer'in seçimi: C 16, B 11, A 19 affix (id'ler aynen)", () => {
+  it("havuzlar Ömer'in seçimi: C 17 (c_block: Ömer 2026-10-18, yalnızca kalkan), B 11, A 19 affix (id'ler aynen)", () => {
     const ids = (t: string) => Object.keys(ITEMS.affixDefs).filter((k) => ITEMS.affixDefs[k]!.tier === t);
-    expect(ids('C')).toEqual(['c_armor', 'c_hp', 'c_phys', 'c_fire', 'c_ice', 'c_holy', 'c_arcane', 'c_nature', 'c_dark', 'c_acc', 'c_eva', 'c_mp', 'c_hpregen', 'c_mpregen', 'c_shield', 'c_dot']);
+    expect(ids('C')).toEqual(['c_armor', 'c_hp', 'c_phys', 'c_fire', 'c_ice', 'c_holy', 'c_arcane', 'c_nature', 'c_dark', 'c_acc', 'c_eva', 'c_mp', 'c_hpregen', 'c_mpregen', 'c_shield', 'c_dot', 'c_block']);
     expect(ids('B')).toEqual(['b_crit', 'b_critdmg', 'b_speed', 'b_marmor', 'b_tier', 'b_pen', 'b_mpen', 'b_mpcost', 'b_leech', 'b_initiative', 'b_resil']);
     expect(ids('A')).toEqual(['a_primary', 'a_allattr', 'a_gdmg', 'a_gdef', 'a_speedpct', 'a_hppct', 'a_auradmg', 'a_auradef', 'a_recovery', 'a_ultcd', 'a_allelem', 'a_keen', 'a_potency', 'a_immunity', 'a_mana', 'a_support', 'a_summon', 'a_resource', 'a_endure']);
     expect(Object.keys(ITEMS.affixDefs).some((k) => k === 'might' || k.includes('might'))).toBe(false); // Might kalktı
@@ -69,6 +69,7 @@ describe('nadirlik = affix sayısı', () => {
     only('c_acc', ['gloves', 'weapon']);
     only('c_eva', ['boots', 'gloves']);
     only('c_shield', ['offhand', 'trinket']);
+    only('c_block', ['offhand']);
     only('b_speed', ['boots', 'trinket']);
     only('b_initiative', ['boots', 'trinket']);
     for (const id of ['a_auradmg', 'a_auradef']) only(id, ['armor', 'offhand']);

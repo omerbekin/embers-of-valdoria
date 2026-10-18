@@ -159,6 +159,11 @@ export interface ItemDef {
   minChapter?: number;
   /** Legendary hikâye satırı (İngilizce, italik). */
   flavor?: string;
+  /**
+   * Taban başına sabit örtük değer (parça sırasıyla; Ömer 2026-10-18: kalkanın taban blok şansı %15-20, item seviyesiyle DEĞİŞMEZ). Verilirse
+   * örtük parçanın `base + perIlvl x ilvl` değerinin yerine geçer (zarsız; kayda yazılmaz, veriden okunur).
+   */
+  implicitBase?: number[];
 }
 
 export interface ItemsData {
@@ -175,7 +180,7 @@ export interface ItemsData {
   effects: Record<string, EffectDef>;
   effectRules: { stack: boolean; endless: boolean };
   /** Toplam tavanlar (yüzde ya da düz): kritik, isabet, kaçınma, hız; MP bedeli indirimi, debuff direnci. */
-  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number };
+  caps: { crit: number; accuracy: number; evasion: number; spd: number; mpCost?: number; resist?: number; recovery?: number; aAffixCopies?: number; block?: number };
   weaponFamilies: WeaponFamilyDef[];
   /** Silah taban gücü (Item Güçlendirme x1-x3, Ömer 2026-10-17; items.md 1.12). */
   weaponPower: WeaponPowerRules;
@@ -630,14 +635,34 @@ export function implicitDefOf(d: Pick<ItemDef, 'slot' | 'family'>): ImplicitDef 
   return key ? ITEMS.implicits?.[key] : undefined;
 }
 
-/** Örtük statın seviyedeki değerleri (parça sırasıyla; zarsız). */
-export const implicitValues = (imp: ImplicitDef, ilvl: number): number[] => imp.parts.map((p) => partValue(p, ilvl, 0.5));
+/** Örtük statın seviyedeki değerleri (parça sırasıyla; zarsız). `d`: tabanın sabit örtük değeri (`implicitBase`) varsa o kullanılır. */
+export const implicitValues = (imp: ImplicitDef, ilvl: number, d?: Pick<ItemDef, 'implicitBase'>): number[] =>
+  imp.parts.map((p, i) => {
+    const fixed = d?.implicitBase?.[i];
+    return typeof fixed === 'number' ? Math.max(p.step, snap(fixed, p.step)) : partValue(p, ilvl, 0.5);
+  });
+
+/**
+ * Kalkanın TABAN blok şansı, yüzde (Ömer 2026-10-18; ör. 18 = %18): örtük parçası `fx:blockChance` olan tabanda (kalkan) `implicitBase` ya da
+ * parçanın değeri; item seviyesiyle değişmez. Kalkan değilse 0. Affix (c_block) HARİÇ; toplam blok `loadout().itemEffects.blockChance` (oran).
+ */
+export function baseBlockChance(d: Pick<ItemDef, 'slot' | 'family' | 'implicitBase'>, ilvl = 1): number {
+  const imp = implicitDefOf(d);
+  const i = imp ? imp.parts.findIndex((p) => p.to === 'fx:blockChance') : -1;
+  return imp && i >= 0 ? (implicitValues(imp, ilvl, d)[i] ?? 0) : 0;
+}
+
+/** Örneğin taban blok şansı (yüzde; bilinmeyen / kalkan değil: 0). */
+export const instanceBaseBlockChance = (inst: Pick<ItemInstance, 'id'> & { rolls?: unknown }): number => {
+  const d = itemDef(inst.id);
+  return d ? baseBlockChance(d, instanceIlvl(inst)) : 0;
+};
 
 /** Taban değerinin Item Points'i: silah gücü x ip (+ örtük stat). `share`: ikinci eldeki silahın sayılan oranı (Equip best). */
-export function baseIP(d: Pick<ItemDef, 'slot' | 'grip' | 'family'>, ilvl: number, share = 1): number {
+export function baseIP(d: Pick<ItemDef, 'slot' | 'grip' | 'family' | 'implicitBase'>, ilvl: number, share = 1): number {
   let ip = weaponPowerOf(d, ilvl) * (ITEMS.weaponPower?.ip ?? 0) * share;
   const imp = implicitDefOf(d);
-  if (imp) implicitValues(imp, ilvl).forEach((v, i) => (ip += v * (imp.parts[i]?.ip ?? 0)));
+  if (imp) implicitValues(imp, ilvl, d).forEach((v, i) => (ip += v * (imp.parts[i]?.ip ?? 0)));
   return Math.round(ip * 1000) / 1000;
 }
 
@@ -896,6 +921,11 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     }
     if (d.usableBy) for (const c of d.usableBy) if (!classes[c]) errors.push(`${at}: usableBy has unknown class ${c}`);
     if (d.minChapter !== undefined && (!Number.isInteger(d.minChapter) || d.minChapter < 1)) errors.push(`${at}: bad minChapter`);
+    if (d.implicitBase !== undefined) {
+      const key = d.slot === 'offhand' ? 'shield' : d.slot === 'weapon' ? d.family : undefined;
+      const imp = key ? data.implicits?.[key] : undefined;
+      if (!imp || !Array.isArray(d.implicitBase) || d.implicitBase.length > imp.parts.length || d.implicitBase.some((v) => !(typeof v === 'number' && v > 0))) errors.push(`${at}: implicitBase needs positive numbers for its base's implicit parts`);
+    }
   }
   // Item Güçlendirme (2026-10-17): taban gücü, örtük statlar, seviye şartı, başlangıç silahları
   const wp = data.weaponPower;

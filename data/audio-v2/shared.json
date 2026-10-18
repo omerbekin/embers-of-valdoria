@@ -1,5 +1,5 @@
 {
-  "_not": "Shared (global) - SÜRÜM 2 SESLERİ: Rest = derin nefes al-ver (ağızdan hava: bant geçiren gürültü, formant yok), Skip Turn = pelerin/kumaş savrulması + kum saatinde akan kum hışırtısı, Move = üç adım: deri çizme gümlemesi + zincir zırh şıkırtısı. Çan/sinüs çınlaması YOK. Kılavuz: docs/design/art-v2.md. Lucky Escape (luckyCoin, 2026-10-11): ölümcül darbe sıyrılır (kısa yüksek geçiren sürtünme), başparmakla fırlatılan madeni para tıkı, dar bant metal tınısı (yüksek Q gürültü bantları, oranları tam sayı olmayan üç kısmi: gerçek para gibi, saf sinüs değil) ve avuca düşüş.",
+  "_not": "Shared (global) - SÜRÜM 2 SESLERİ: Rest = derin nefes al-ver (ağızdan hava: bant geçiren gürültü, formant yok), Skip Turn = pelerin/kumaş savrulması + kum saatinde akan kum hışırtısı, Move = üç adım: deri çizme gümlemesi + zincir zırh şıkırtısı. Çan/sinüs çınlaması YOK. Kılavuz: docs/design/art-v2.md. Lucky Escape (luckyCoin, 2026-10-11): ölümcül darbe sıyrılır (kısa yüksek geçiren sürtünme), başparmakla fırlatılan madeni para tıkı, dar bant metal tınısı (yüksek Q gürültü bantları, oranları tam sayı olmayan üç kısmi: gerçek para gibi, saf sinüs değil) ve avuca düşüş. Kalkan bloğu (shieldBlock, 2026-10-18): Defender shieldBang'in tek vuruşundan türetildi: silah kalkana çarpar (tok ahşap-demir gümlemesi, kısa demir tıkı, hafif sıyırma), çınlama yok.",
   "sfx": {
     "gasp": {
       "gain": 1.79,
@@ -40,6 +40,16 @@
         { "type": "noise", "filter": "bandpass", "f0": 9730, "f1": 9700, "q": 40, "attack": 0.002, "decay": 0.18, "gain": 0.35, "at": 0.032 },
         { "type": "noise", "filter": "lowpass", "f0": 1400, "f1": 500, "q": 0.7, "attack": 0.001, "decay": 0.04, "gain": 0.45, "at": 0.62 },
         { "type": "noise", "filter": "bandpass", "f0": 4300, "f1": 4100, "q": 20, "attack": 0.001, "decay": 0.06, "gain": 0.3, "at": 0.625 }
+      ]
+    },
+    "shieldBlock": {
+      "gain": 1.1,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 150, "f1": 90, "attack": 0.001, "decay": 0.1, "gain": 0.85 },
+        { "type": "noise", "filter": "lowpass", "f0": 700, "f1": 180, "q": 0.7, "attack": 0.001, "decay": 0.14, "gain": 0.7 },
+        { "type": "noise", "filter": "bandpass", "f0": 620, "f1": 460, "q": 1.8, "attack": 0.001, "decay": 0.08, "gain": 0.7 },
+        { "type": "noise", "filter": "bandpass", "f0": 2300, "f1": 1850, "q": 3.5, "attack": 0.001, "decay": 0.035, "gain": 0.4, "tremHz": 50, "tremDepth": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 1500, "f1": 900, "q": 1.2, "attack": 0.01, "decay": 0.09, "gain": 0.18, "at": 0.04 }
       ]
     }
   }

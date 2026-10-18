@@ -1186,7 +1186,7 @@ export class TeamSelectScene extends Phaser.Scene {
     const shape = skillMiniGrid(skill, content.formulas.formation);
     // Hedef türü · element · Melee / Ranged (ortak kaynak src/ui/skill-tags.ts; savaş HUD'ı ve Codex ile aynı)
     const tags = skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { icon: ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false) } : {}) }));
-    return { icon: ensureSkillIcon(this, skill), title: info.name, tags, meta: `Cost ${info.cost}   ·   Cooldown ${info.cooldown}`, shape, lines };
+    return { icon: ensureSkillIcon(this, skill), title: info.name, tags, meta: (skill.cooldown ?? 0) > 0 ? `Cost ${info.cost}   ·   Cooldown ${info.cooldown}` : `Cost ${info.cost}`, shape, lines };
   }
 
   private classTip(def: CombatantDef): TipSpec {

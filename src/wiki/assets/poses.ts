@@ -30,7 +30,8 @@ async function paint(canvas: HTMLCanvasElement, def: PoseClassDef, pose: string,
   const { halfW, up } = frameExtent(def, w);
   canvas.width = Math.ceil(halfW * 2 * scale);
   canvas.height = Math.ceil(up * scale);
-  const [body, wimg] = await Promise.all([load(poseBodyUrl(def.dir, pose)), load(weaponUrl(w.family, w.look))]);
+  const fname = def.poses[pose]?.fingers;
+  const [body, wimg, fimg] = await Promise.all([load(poseBodyUrl(def.dir, pose)), load(weaponUrl(w.family, w.look)), fname ? load(poseBodyUrl(def.dir, fname)) : Promise.resolve(null)]);
   const ctx = canvas.getContext('2d');
   if (!ctx || !body) return;
   ctx.clearRect(0, 0, canvas.width, canvas.height);
@@ -41,7 +42,7 @@ async function paint(canvas: HTMLCanvasElement, def: PoseClassDef, pose: string,
   }
   ctx.scale(scale, scale);
   ctx.translate(halfW - def.canvas.footX, up - def.canvas.footY);
-  drawPoseComposite(ctx, def, pose, body, wimg ? { img: wimg, pick: w } : null, 8 * scale);
+  drawPoseComposite(ctx, def, pose, body, wimg ? { img: wimg, pick: w } : null, 8 * scale, fimg);
   ctx.restore();
 }
 

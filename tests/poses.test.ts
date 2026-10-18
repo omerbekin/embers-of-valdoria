@@ -28,7 +28,7 @@ describe('poz kütüphanesi verisi', () => {
 
   it('her poz ve silah görünümünün dosyası (tam + small) diskte; diskte bağlantısız dosya yok', () => {
     for (const def of Object.values(POSES.classes)) {
-      const names = Object.keys(def.poses).sort();
+      const names = [...Object.keys(def.poses), ...Object.values(def.poses).flatMap((p) => (p.fingers ? [p.fingers] : []))].sort(); // + ön parmak katmanları
       expect(pngs(join(root, 'assets/poses', def.dir))).toEqual(names);
       expect(pngs(join(root, 'assets/poses', def.dir, 'small'))).toEqual(names);
     }

@@ -490,6 +490,12 @@ export interface ItemEffects {
   /*
    * Affix kancaları (Ömer 2026-10-11, items.md 1.3b; data/items.json > affixDefs). Oranlar 0-1. Hepsi genel; verilmezse birim aynı.
    */
+  /**
+   * Blok (Ömer 2026-10-18): kalkanın taban blok şansı + kalkana özgü C affix'i (oran 0-1; tavan items.json > caps.block). Düşmanın DOĞRUDAN
+   * FİZİKSEL skill vuruşu (yakın ve uzak) bu ihtimalle TAMAMEN bloklanır: hasar 0, vuruşun ek etkileri (Stun, Wound, Burning...) uygulanmaz.
+   * Büyü, DoT, zemin tiki, Doom, isabet zarsız (sure) vuruşlar ve `unblockable` (Backstab) bloklanmaz. Guard payı korumacının kendi bloğuyla.
+   */
+  blockChance?: number;
   /** Zırh delme: fiziksel vuruşta hedefin zırhının bu oranı yok sayılır (skill'in kendi ignoreDefense'iyle çarpımsal birleşir). */
   armorPen?: number;
   /** Büyü zırhı delme: büyü vuruşunda hedefin büyü zırhının bu oranı yok sayılır. */
@@ -775,6 +781,8 @@ export type SkillEffectKind =
       bet?: BetSpec;
       /** true: bu hasarın HER vuruşu kritiktir (kritik zarı atılmaz, kritik çarpanı uygulanır); isabet zarı normal atılır (iska olabilir). Backstab. */
       guaranteedCrit?: boolean;
+      /** true: bu hasar kalkanla BLOKLANAMAZ (Backstab; Ömer 2026-10-18, blok kuralı: `ItemEffects.blockChance`). */
+      unblockable?: boolean;
       /**
        * Bu hasarın vuruşlarında kritik şansına eklenen miktar (Jinx +0,25; generic). Kullanıcının geçerli kritik şansına (durum ekleri dahil:
        * Jinxed / Misfortune) eklenir, sonuç [0, 1]. guaranteedCrit varsa anlamsız (zaten her vuruş kritik).
@@ -1517,6 +1525,11 @@ type BattleEventBody =
    */
   | { type: 'dodge'; source: string; target: string }
   | { type: 'miss'; source: string; target: string }
+  /**
+   * Blok (Ömer 2026-10-18): `target` kalkanıyla `source`'un fiziksel vuruşunu TAMAMEN blokladı (hasar 0, vuruşun ek etkileri yok; UI: hedefin
+   * üstünde "Block"). `guard`: Guard payını korumacı blokladı (asıl hedef payını aldı, ek etkiler asıl hedefte normal).
+   */
+  | { type: 'block'; source: string; target: string; guard?: true }
   /** `cause`: 'dark_bond' = Dark Bond kopyası (kaynak bağı kuran, hedef bağlı dost); yoksa sıradan şifa. */
   | { type: 'heal'; source: string; target: string; amount: number; hpAfter: number; crit: boolean; cause?: string }
   /** amount negatifse kalkan tüketildi (ör. Shield Crush). */

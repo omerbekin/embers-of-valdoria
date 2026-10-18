@@ -56,6 +56,8 @@ export const CAP_TARGETS = {
   armorPen: 'fx:armorPen',
   magicPen: 'fx:magicPen',
   damageTaken: 'fx:damageTakenReduce',
+  // Kalkan blok şansı (Ömer 2026-10-18): taban + kalkan C affix'i toplamı
+  block: 'fx:blockChance',
 } as const;
 export type CapKey = keyof typeof CAP_TARGETS;
 /** Tavan (oyun birimi: yüzde puan; spd düz). Tanımsızsa tavan yok. */
@@ -172,13 +174,13 @@ export function loadout(src: LoadoutSource): LoadoutResult {
       a.def.parts.forEach((p, i) => applyPart(p.to, a.values[i] ?? 0, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(a.x ? { x: a.x } : {}), ...(p.below !== undefined ? { below: p.below } : {}), ...(p.form ? { form: p.form } : {}) }));
     }
   }
-  // Taban örtük statları (Item Güçlendirme x3/x4: hançer kritik, tılsım hız, kalkan zırh; zarsız, tavanlara dahil)
+  // Taban örtük statları (Item Güçlendirme x3/x4: hançer kritik, tılsım hız; kalkan blok şansı (Ömer 2026-10-18, taban başına sabit); zarsız, tavanlara dahil)
   for (const slot of ['weapon', 'offhand'] as const) {
     const inst = src.equipment?.[slot];
     const d = inst ? itemDef(inst.id) : undefined;
     const imp = d ? implicitDefOf(d) : undefined;
     if (!inst || !imp) continue;
-    implicitValues(imp, instanceIlvl(inst)).forEach((v, i) => {
+    implicitValues(imp, instanceIlvl(inst), d).forEach((v, i) => {
       const p = imp.parts[i]!;
       applyPart(p.to, v, p.scale ?? 1, { mods, fx, ...(primary ? { primary } : {}), acc, ...(p.form ? { form: p.form } : {}) });
     });

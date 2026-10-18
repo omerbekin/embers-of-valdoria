@@ -1,0 +1,127 @@
+/* "Left for the Company" alt kartı (src/ui/handover-toast.ts). Düzen: mockup left-gear v3 (Toast). Görünüm gear.css / elegant.css'ten.
+   Kasaba görünür kalır: zemin yalnızca alt kenarda hafif kararır, tıklama yalnızca kartta. */
+.ho-ov {
+  align-items: flex-end;
+  justify-content: center;
+  background: linear-gradient(to top, rgba(5, 3, 2, 0.6), transparent 45%);
+  pointer-events: none;
+  padding-bottom: calc(46 * var(--u));
+}
+
+.ho-ov .gr-panel {
+  pointer-events: auto;
+  width: min(100%, calc(980 * var(--u)));
+  height: auto;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(22 * var(--u));
+  flex-wrap: wrap;
+  padding: calc(14 * var(--u)) calc(24 * var(--u));
+}
+
+.ho-ov .ho-mid {
+  flex: 1 1 calc(280 * var(--u));
+  min-width: 0;
+}
+
+.ho-ov .gr-title {
+  font-size: max(16px, calc(30 * var(--u)));
+}
+
+.ho-ov .ho-hand {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+}
+
+.ho-ov .ho-faces {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+}
+
+.ho-ov .ho-face {
+  width: calc(52 * var(--u));
+  height: calc(52 * var(--u));
+  min-width: 36px;
+  min-height: 36px;
+  flex: none;
+  background: center / cover no-repeat;
+  border: 1px solid var(--g-edge);
+}
+
+.ho-ov .ho-faces .ho-face + .ho-face {
+  margin-left: calc(-14 * var(--u));
+}
+
+.ho-ov .ho-cells {
+  display: flex;
+  gap: calc(10 * var(--u));
+}
+
+.ho-ov .ho-cell {
+  width: calc(84 * var(--u));
+  min-width: 44px;
+  flex: none;
+  cursor: default;
+}
+
+.ho-ov .gr-foot {
+  margin: 0;
+  border: 0;
+  padding: 0;
+}
+
+.ho-ov .gr-btn {
+  min-height: 44px;
+}
+
+.ho-gear-ico {
+  width: max(18px, calc(26 * var(--u)));
+  height: max(18px, calc(26 * var(--u)));
+  vertical-align: middle;
+  margin-right: 8px;
+  margin-top: -3px;
+}
+
+/* 10 sn sonunda yavaşça solar */
+.ho-ov.ho-fade {
+  animation: ho-fade-out 700ms ease-in both;
+  pointer-events: none;
+}
+
+.ho-ov.ho-fade .gr-panel {
+  pointer-events: none;
+}
+
+@keyframes ho-fade-out {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+html.short .ho-ov {
+  padding: 6px 8px 40px;
+}
+
+html.short .ho-ov .gr-panel {
+  width: min(100%, 600px);
+  max-width: 600px;
+  padding: 8px 12px;
+  gap: 10px;
+}
+
+html.short .ho-ov .gr-title {
+  font-size: 15px;
+}
+
+html.short .ho-ov .gr-mini-sub {
+  font-size: 13px;
+}
+
+html.short .ho-ov .ho-cell {
+  width: 52px;
+}

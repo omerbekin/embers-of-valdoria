@@ -312,22 +312,23 @@
       "poses": {
         "idle1": {
           "box": {
-            "x": 128,
-            "y": 82,
-            "w": 240,
-            "h": 379
+            "x": 129,
+            "y": 78,
+            "w": 241,
+            "h": 383
           },
           "anchor": {
-            "x": 175,
-            "y": 240,
-            "angle": 22
+            "x": 169.12,
+            "y": 245.64,
+            "angle": 15.78
           },
           "offhand": {
             "x": 298,
             "y": 203,
             "angle": 10
           },
-          "src": "warrior-v2-narrow/narrow.png"
+          "src": "warrior-v2-ready/idle1.png",
+          "fingers": "idle1_fingers"
         },
         "step1": {
           "box": {
@@ -465,22 +466,23 @@
         },
         "guard1": {
           "box": {
-            "x": 100,
+            "x": 104,
             "y": 82,
-            "w": 273,
+            "w": 272,
             "h": 379
           },
           "anchor": {
-            "x": 159,
-            "y": 213,
-            "angle": 30
+            "x": 145.8,
+            "y": 208.49,
+            "angle": 16.5
           },
           "offhand": {
             "x": 335,
             "y": 137,
             "angle": 0
           },
-          "src": "warrior-v2-narrow/narrow.png"
+          "src": "warrior-v2-ready/guard1.png",
+          "fingers": "guard1_fingers"
         },
         "raise": {
           "box": {
@@ -816,20 +818,11 @@
       },
       "itemPoses": {
         "axes": {
-          "idle1": {
-            "angle": 14
-          },
-          "guard1": {
-            "angle": 14
-          },
           "point": {
             "angle": -20
           }
         },
         "maces": {
-          "idle1": {
-            "angle": 15
-          },
           "point": {
             "angle": -20
           }

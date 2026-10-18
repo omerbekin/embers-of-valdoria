@@ -12,7 +12,7 @@
   const COIN = A + 'ui-icons/gold.webp';
 
   // ---- adres
-  const S = { v: 'v1', item: 'u23', hero: 'h1', ctx: 'bag', clean: false };
+  const S = { v: 'v3', item: 'u23', hero: 'h1', ctx: 'bag', clean: false };
   function readHash() {
     for (const p of location.hash.slice(1).split('&')) {
       const [k, val] = p.split('=');
@@ -78,7 +78,7 @@
   }
   const dText = (d) => `${d.v > 0 ? '+' : '-'}${fmtStat(Math.abs(d.v), d.f)} ${d.label}`;
   const chip = (d) => `<span class="tt-d ${d.v > 0 ? 'up' : 'down'}">${ico(statUrl(d.k), 'tt-dico')}${esc(dText(d))}</span>`;
-  const face = (hs, cls = '') => `<img class="tt-face ${cls}" src="${hs.h.avatar}" alt="" draggable="false">`;
+  const face = (hs, cls = '') => `<span class="tt-face ${cls}" style="background-image:url('${hs.h.avatar}')"></span>`;
 
   // ---- yardımcılar (yeni)
   const tierChip = (t) => `<span class="tt-tier" style="--tc:${TIERC[t]}">${t}</span>`;
@@ -92,7 +92,9 @@
     }
     return `<span class="gg ${S.v === 'v3' ? 'g-rail' : 'g-notch'}" style="--p:${r.p}" title="${t}"><i></i><b></b></span>`;
   }
-  const statRows = (it) => it.lines.map((l) => {
+  const TORD = { A: 0, B: 1, C: 2 };
+  // sira: kademe YUKSEKTEN dusuge (Legendary etkisi en ustte, sonra A, B, C)
+  const statRows = (it) => [...it.lines].sort((a, b) => (TORD[a.tier] ?? 9) - (TORD[b.tier] ?? 9)).map((l) => {
     const r = roll(l);
     return `<div class="sl">${tierChip(l.tier)}${ico(lineIcon(l))}<span class="sl-t">${esc(l.text)}</span>${r ? gauge(r) : ''}</div>`;
   }).join('');

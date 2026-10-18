@@ -1,3 +1,4 @@
+import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { EL, diamondPts, elText, fadeLine, hGradient, vGradient } from './elegant-ui';
 
@@ -123,6 +124,6 @@ export function kitTextBand(scene: Phaser.Scene, cx: number, cy: number, w: numb
 export function hudNum(scene: Phaser.Scene, x: number, y: number, text: string, size: number, fill: string = EL.TXT): Phaser.GameObjects.Text {
   return scene.add
     .text(x, y, text, { fontFamily: HUD_NUM_FONT, fontSize: `${size}px`, fontStyle: 'bold', color: fill })
-    .setResolution(2)
+    .setResolution(textRes())
     .setShadow(0, 1.5, EL.SH_DARK, 3, true, true);
 }

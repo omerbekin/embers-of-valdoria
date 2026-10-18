@@ -1,3 +1,4 @@
+import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { reducedMotion } from '../ui/motion-pref';
 import { paintedOr } from '../ui/misc-icons';
@@ -535,7 +536,7 @@ export class CombatantView {
     if (mood !== 'haste') return;
     const spdY = this.speedFill.y;
     for (let i = 0; i < 7; i++) {
-      const t = this.scene.add.text(0, spdY, '»', { fontFamily: 'Georgia, serif', fontSize: '11px', fontStyle: 'bold', color: '#3d4a12' }).setOrigin(0.5, 0.55).setAlpha(0.75).setResolution(2);
+      const t = this.scene.add.text(0, spdY, '»', { fontFamily: 'Georgia, serif', fontSize: '11px', fontStyle: 'bold', color: '#3d4a12' }).setOrigin(0.5, 0.55).setAlpha(0.75).setResolution(textRes());
       this.chevrons.push(t);
       this.speedBox.add(t);
     }
@@ -649,7 +650,7 @@ export class CombatantView {
       const g = this.scene.add.graphics();
       g.fillStyle(0x0c0906, 0.92).fillCircle(cx, cy, r);
       g.lineStyle(2, 0xd9b26a, 0.8).strokeCircle(cx, cy, r);
-      const t = this.scene.add.text(cx, cy, `+${plan.more}`, { fontFamily: DISPLAY_FONT, fontSize: `${Math.round(size * 0.48)}px`, fontStyle: '700', color: '#f3d999' }).setOrigin(0.5).setResolution(2);
+      const t = this.scene.add.text(cx, cy, `+${plan.more}`, { fontFamily: DISPLAY_FONT, fontSize: `${Math.round(size * 0.48)}px`, fontStyle: '700', color: '#f3d999' }).setOrigin(0.5).setResolution(textRes());
       this.statusBox.add([g, t]);
     }
   }
@@ -1382,6 +1383,16 @@ export class CombatantView {
     const dir = this.combatant.side === 'enemy' ? 1 : -1;
     this.scene.tweens.add({ targets: this.sprite, x: dir * 46, duration: slow(120), yoyo: true, ease: 'Quad.easeOut' });
     this.floatText('Dodge', colors.dodge, 48, false, { kind: 'dodge' });
+  }
+
+  /**
+   * Kalkan bloğu (Ömer 2026-10-18): fiziksel vuruş tamamen bloklandı; birim kalkanını kaldırır gibi hafifçe geri çekilir (sarsıntı yok, sayı yok),
+   * üstünde çelik renkli "Block" (Dodge ile aynı yazı dili).
+   */
+  block(): void {
+    const dir = this.combatant.side === 'enemy' ? 1 : -1;
+    this.scene.tweens.add({ targets: this.sprite, x: dir * 14, duration: slow(70), yoyo: true, ease: 'Quad.easeOut' });
+    this.floatText('Block', colors.block, 48, false, { kind: 'dodge' });
   }
 
   /** Saldıranın isabeti yetmedi (accuracy yüzünden iska): saldıranın üstünde soluk "MISS" yazısı; kendisi kıpırdamaz. */

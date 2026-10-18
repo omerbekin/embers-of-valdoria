@@ -2,6 +2,7 @@
 import { summons } from '../engine/content';
 import { ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
+import { isFallen } from './state';
 import { nodeLevel } from './power';
 import { LEVELS, addXp, allocate, autoAllocate, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
 import type { BattleOutcome, CampaignState, Hero } from './types';
@@ -76,6 +77,7 @@ export function allocateStats(s: CampaignState, heroId: string, add: StatAlloc):
   const t = clone(s);
   const h = t.roster.find((x) => x.id === heroId);
   if (!h) throw new Error('Unknown hero');
+  if (isFallen(h)) throw new Error("Fallen heroes can't spend stat points. Revive them at a town.");
   allocate(h, add);
   return t;
 }

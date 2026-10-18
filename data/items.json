@@ -451,6 +451,26 @@
         }
       ]
     },
+    "c_block": {
+      "tier": "C",
+      "name": "Block",
+      "text": "+{0}% Block chance",
+      "slots": [
+        "offhand"
+      ],
+      "desc": "Shields only: a better chance to block an enemy's physical hit (no damage, none of its effects).",
+      "icon": "block",
+      "parts": [
+        {
+          "base": 1,
+          "perIlvl": 0.1,
+          "step": 0.5,
+          "ip": 0.4,
+          "to": "fx:blockChance",
+          "scale": 0.01
+        }
+      ]
+    },
     "b_crit": {
       "tier": "B",
       "name": "Crit chance",
@@ -1104,7 +1124,7 @@
       ]
     }
   },
-  "_caps": "Kahramanın tüm ekipmanından gelen toplam tavanlar (src/progression/loadout.ts kırpar; fazlası kaybolur): crit / accuracy / evasion = yüzde puan, spd = düz hız, mpCost = MP bedeli indirimi %, resist = debuff direnci %. Ömer 2026-10-12 (Endless item dengesi p4): crit 15 -> 25, evasion 10 -> 15, mpCost 50 ve resist 40 eklendi. Ömer 2026-10-13 (itemcaps): recovery = savaş sonrası toparlanma toplamı % (tavan 20); aAffixCopies = aynı A kademe affix'i bir kahramanda en çok kaç item'de sayılır (2; fazlasında en güçlü 2 örnek işler, gerisi etkisiz ve ipucunda soluk). Tavanlar dolunca arayüz statı \"max\" olarak gösterir. Tavansız statlar (can çalma, kritik hasarı, hasar, hız %, Lucky Escape, DoT gücü) tavansız kalır. Ömer 2026-10-13 (itemfix m4): motorun gizli sınırları da buraya taşındı (aynı değerler, motor buradan okur: src/engine/item-caps.ts): initiative = Quick start en çok %99, armorPen / magicPen = delme en çok %100, damageTaken = alınan hasar azaltma (Global defense, düşük can azaltması) en çok %90; arayüz bunlarda da \"max\" gösterir.",
+  "_caps": "Kahramanın tüm ekipmanından gelen toplam tavanlar (src/progression/loadout.ts kırpar; fazlası kaybolur): crit / accuracy / evasion = yüzde puan, spd = düz hız, mpCost = MP bedeli indirimi %, resist = debuff direnci %. Ömer 2026-10-12 (Endless item dengesi p4): crit 15 -> 25, evasion 10 -> 15, mpCost 50 ve resist 40 eklendi. Ömer 2026-10-13 (itemcaps): recovery = savaş sonrası toparlanma toplamı % (tavan 20); aAffixCopies = aynı A kademe affix'i bir kahramanda en çok kaç item'de sayılır (2; fazlasında en güçlü 2 örnek işler, gerisi etkisiz ve ipucunda soluk). Tavanlar dolunca arayüz statı \"max\" olarak gösterir. Tavansız statlar (can çalma, kritik hasarı, hasar, hız %, Lucky Escape, DoT gücü) tavansız kalır. Ömer 2026-10-13 (itemfix m4): motorun gizli sınırları da buraya taşındı (aynı değerler, motor buradan okur: src/engine/item-caps.ts): initiative = Quick start en çok %99, armorPen / magicPen = delme en çok %100, damageTaken = alınan hasar azaltma (Global defense, düşük can azaltması) en çok %90; arayüz bunlarda da \"max\" gösterir. Ömer 2026-10-18 (kalkan bloğu): block = kalkanın taban blok şansı (%15-20, taban başına sabit, item seviyesiyle değişmez: items[].implicitBase) + kalkana özgü C affix'i c_block toplamı en çok %30 (motor da buradan okur: src/engine/item-caps.ts > block).",
   "caps": {
     "crit": 25,
     "accuracy": 10,
@@ -1117,6 +1137,7 @@
     "armorPen": 100,
     "magicPen": 100,
     "damageTaken": 90,
+    "block": 30,
     "aAffixCopies": 2
   },
   "weaponFamilies": [
@@ -1198,7 +1219,7 @@
   ],
   "bag": 30,
   "_grip": "Tutuş (Ömer onayı 2026-10-12, future-ideas 'Silah ve tutuş kuralları'): her silahın grip alanı one (tek el) | two (çift el) | bow (yay) | charm (tılsım). Tek el silahla (ya da silahsız) ikinci el yuvasına (offhand) KALKAN (slot offhand, Maces & Shields ailesi: defender, paladin, warrior) ya da ailesi offhand: true olan tek el silah (hançer: cutthroat, antimage) takılır. two / bow / charm ikinci eli kapatır: takılınca ikinci eldeki item torbaya döner (torba doluysa engellenir). Twin Stilettos artık sıradan tek el hançer (çift hançer = ikinci el yuvası). Kural kodu: src/progression/items.ts > gripOf / fitsSlot / planEquip.",
-  "_itempower": "Item Güçlendirme (Ömer onayı, form 2026-10-13, onay 2026-10-17; items.md 1.12). weaponPower = silahın TABAN GÜCÜ (affix değil, zarsız): güç = (base + perIlvl x ilvl) x grip[tutuş] x family[aile] (yoksa 1), step adımına yuvarlanır. Hasar = stat x skill gücü x (1 + güç / 100) (x1, x2: asa ve tılsım dahil her silah; şifa / kalkan değil). Çift el ve yay tek elden ~%35 güçlü (ikinci eli kapatır), tılsım arada (ikinci eli kapatır, örtük hız), hançer zayıf (örtük kritik; ikinci elde gücünün offhandShare kadarı sayılır). KATLAMA (x5): her sınıfın başlangıç silahının gücü (starterWeapons, ilvl 1) o sınıfın sıfır noktasıdır: motora giden çarpan = (1 + güç/100) / (1 + başlangıç gücü/100); başlangıç silahıyla 1 (Quick Battle / MP bunu hiç vermez: bugünle birebir), silahsız < 1. ip = 1 güç puanının Item Points değeri (değer, fiyat, Equip best; 1 güç ~ %0,9 hasar ~ Global damage %1 = 0,5 IP). implicits = taban örtük statları (zarsız, seviyeyle büyür, affixRules.power işlemez): hançer kritik şansı, tılsım hız %, kalkan zırh (x4: kalkanın tabanı zırhtır, hasar değil). Tavanlar (caps) örtük statları da kapsar. levelReq: takma şartı = max(min, ilvl - offset) (x6; seviye sistemi gelene kadar herkes L1). starterWeapons: sınıf başına Common başlangıç silahı (x5), ilvl = starterWeapons.ilvl. Sayılar İLK DEĞER (balance-tester son ayarı yapacak; hedef x8: iyi Endless koşusu item'lerden +6-10 dalga).",
+  "_itempower": "Item Güçlendirme (Ömer onayı, form 2026-10-13, onay 2026-10-17; items.md 1.12). weaponPower = silahın TABAN GÜCÜ (affix değil, zarsız): güç = (base + perIlvl x ilvl) x grip[tutuş] x family[aile] (yoksa 1), step adımına yuvarlanır. Hasar = stat x skill gücü x (1 + güç / 100) (x1, x2: asa ve tılsım dahil her silah; şifa / kalkan değil). Çift el ve yay tek elden ~%35 güçlü (ikinci eli kapatır), tılsım arada (ikinci eli kapatır, örtük hız), hançer zayıf (örtük kritik; ikinci elde gücünün offhandShare kadarı sayılır). KATLAMA (x5): her sınıfın başlangıç silahının gücü (starterWeapons, ilvl 1) o sınıfın sıfır noktasıdır: motora giden çarpan = (1 + güç/100) / (1 + başlangıç gücü/100); başlangıç silahıyla 1 (Quick Battle / MP bunu hiç vermez: bugünle birebir), silahsız < 1. ip = 1 güç puanının Item Points değeri (değer, fiyat, Equip best; 1 güç ~ %0,9 hasar ~ Global damage %1 = 0,5 IP). implicits = taban örtük statları (zarsız, seviyeyle büyür, affixRules.power işlemez): hançer kritik şansı, tılsım hız %, kalkan BLOK ŞANSI (x4, Ömer 2026-10-18: eskiden zırhtı; taban başına sabit %15-20, items[].implicitBase, item seviyesiyle değişmez; düşmanın fiziksel vuruşunu tamamen bloklar). Tavanlar (caps) örtük statları da kapsar. levelReq: takma şartı = max(min, ilvl - offset) (x6; seviye sistemi gelene kadar herkes L1). starterWeapons: sınıf başına Common başlangıç silahı (x5), ilvl = starterWeapons.ilvl. Sayılar İLK DEĞER (balance-tester son ayarı yapacak; hedef x8: iyi Endless koşusu item'lerden +6-10 dalga).",
   "weaponPower": {
     "base": 7.5,
     "perIlvl": 2.5,
@@ -1253,17 +1274,18 @@
       ]
     },
     "shield": {
-      "name": "Shield armor",
-      "text": "+{0} Armor",
-      "icon": "armor",
-      "desc": "A shield's base value is armor, not damage.",
+      "name": "Block",
+      "text": "{0}% Block chance",
+      "icon": "block",
+      "desc": "A shield can block an enemy's physical hit: a blocked hit deals no damage and none of its effects. Spells, damage over time, burning ground and Backstab cannot be blocked.",
       "parts": [
         {
-          "base": 2,
-          "perIlvl": 0.5,
+          "base": 15,
+          "perIlvl": 0,
           "step": 1,
           "ip": 0.4,
-          "to": "mod:armorAdd",
+          "to": "fx:blockChance",
+          "scale": 0.01,
           "noRoll": true,
           "noPower": true
         }
@@ -1365,7 +1387,10 @@
       "family": "maces",
       "rarity": "common",
       "ilvl": 2,
-      "main": "c_armor"
+      "main": "c_armor",
+      "implicitBase": [
+        15
+      ]
     },
     {
       "id": "oak_shield",
@@ -1375,7 +1400,10 @@
       "family": "maces",
       "rarity": "uncommon",
       "ilvl": 6,
-      "main": "c_armor"
+      "main": "c_armor",
+      "implicitBase": [
+        17
+      ]
     },
     {
       "id": "kite_shield",
@@ -1385,7 +1413,10 @@
       "family": "maces",
       "rarity": "rare",
       "ilvl": 9,
-      "main": "c_armor"
+      "main": "c_armor",
+      "implicitBase": [
+        18
+      ]
     },
     {
       "id": "wardens_pavise",
@@ -1395,7 +1426,10 @@
       "family": "maces",
       "rarity": "epic",
       "ilvl": 10,
-      "main": "c_armor"
+      "main": "c_armor",
+      "implicitBase": [
+        20
+      ]
     },
     {
       "id": "morning_star",
@@ -1848,7 +1882,10 @@
         "defender",
         "paladin"
       ],
-      "flavor": "A shield that remembers every oath sworn behind it."
+      "flavor": "A shield that remembers every oath sworn behind it.",
+      "implicitBase": [
+        20
+      ]
     },
     {
       "id": "windrunner_longbow",

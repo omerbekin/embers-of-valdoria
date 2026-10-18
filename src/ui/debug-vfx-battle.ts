@@ -3,7 +3,8 @@
  * dummy'de bu skilli atsın, animasyon gerçekten oynasın"). GERÇEK test savaşı (BattleScene, mode 'test'): atan mob düşman tarafında, kukla (dummy)
  * oyuncu tarafında durur; skill gerçek savaş hattıyla oynar (hazırlık pozu, atılma, efekt, vuruş, hasar rakamı). Kukla hareket etmez ve ölmez
  * (BattleScene.vfxTestCast her atıştan önce/sonra canı doldurur). Savaş arayüzü gizlenir; üstte küçük kontrol paneli:
- *   Skill (Dirge / Halberd Chop / Wall of Pikes: atan mob değişince savaş yeniden kurulur) · Version (Original / ChatGPT 16f / Code) ·
+ *   Skill (Dirge / Halberd Chop / Wall of Pikes: atan mob değişince savaş yeniden kurulur) · Version (Original / ChatGPT 16f / Code in-between /
+ *   Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts) ·
  *   Code yöntemi + kat · Cast · Loop · Speed 0.25x/0.5x/1x · Pause + Step (≈1 efekt karesi).
  * Sürüm yalnızca O ATIŞ için seçilir (src/game/mob-vfx.ts > mobVfxTest); panel kapanınca ya da savaştan çıkılınca kapanır, gerçek savaşlar
  * değişmez (Original, ara kare KAPALI). Ayarlar data/vfx-inbetween.json > battleTest. Ayrı kod parçası: debug-tools tembel içe aktarır.
@@ -11,6 +12,7 @@
 import type Phaser from 'phaser';
 import { debugState, effectiveTimeScale } from '../game/debug-state';
 import { MOB_VFX_SPECS, mobVfxTest } from '../game/mob-vfx';
+import { MOB_HAND_VFX } from '../game/mob-vfx-hand';
 import { SLOW } from '../game/combatant-view';
 import { BattleScene } from '../game/scenes/BattleScene';
 import { newSeed } from '../game/seed';
@@ -52,7 +54,8 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: stri
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-type Version = 'orig' | 'tween' | 'code';
+type Version = 'orig' | 'tween' | 'code' | 'hand';
+const HAND_FPS = 60; // el yapımı efekt her karede çizilir: Step ≈ 1 ekran karesi
 let openPanel: { close: () => void } | null = null;
 
 export function openVfxBattleTest(game: Phaser.Game): void {
@@ -104,7 +107,8 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     [
       ['orig', 'Original', 'Original 8-frame sheet (assets/mob-vfx): what real battles use'],
       ['tween', 'ChatGPT 16f', 'ChatGPT 16-frame sheet (assets/mob-vfx-tween)'],
-      ['code', 'Code', 'Original 8 frames plus code-made in-between frames'],
+      ['code', 'Code in-between', 'Original 8 frames plus code-made in-between frames'],
+      ['hand', 'Hand-coded', 'Drawn fully in code (no sprite sheet): particles, arcs, glows, ground rings; redrawn every frame'],
     ] as Array<[Version, string, string]>
   ).map(([v, label, title]) => [
     v,
@@ -207,7 +211,9 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     const f = curSheet();
     const ibSub = state.version === 'code' ? state.sub : 1;
     const label =
-      state.version === 'tween' && !tweenOk[state.skill]
+      state.version === 'hand'
+        ? 'Hand-coded · no sprite sheet, drawn every frame · same hit moment as Original'
+        : state.version === 'tween' && !tweenOk[state.skill]
         ? 'ChatGPT 16f: not ready yet (assets/mob-vfx-tween), playing Original'
         : state.version === 'tween'
           ? `ChatGPT 16f · ${f?.meta.frames ?? '?'} frames @ ${((f?.meta.fps ?? 0) * FPS_SCALE).toFixed(1)} fps`
@@ -220,7 +226,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   async function step(): Promise<void> {
     if (!state.paused) return;
     const f = curSheet();
-    const fps = (f?.meta.fps ?? 12) * FPS_SCALE * (state.version === 'code' ? state.sub : 1);
+    const fps = state.version === 'hand' ? HAND_FPS : (f?.meta.fps ?? 12) * FPS_SCALE * (state.version === 'code' ? state.sub : 1);
     const ms = Math.max(16, ((1000 / fps) * SLOW) / state.speed);
     debugState.paused = false;
     applyTiming();
@@ -248,6 +254,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
         mobVfxTest.on = true;
         mobVfxTest.tween = useTween;
         mobVfxTest.ib = state.version === 'code' ? { method: state.method, sub: state.sub } : null;
+        mobVfxTest.hand = state.version === 'hand' ? (MOB_HAND_VFX[sk.skill] ?? null) : null;
         sync();
         const sc = sceneNow();
         if (!sc || myGen !== gen) return;
@@ -323,6 +330,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     mobVfxTest.on = false;
     mobVfxTest.tween = false;
     mobVfxTest.ib = null;
+    mobVfxTest.hand = null;
     debugState.speed = 1;
     debugState.paused = false;
     game.anims.globalTimeScale = 1;

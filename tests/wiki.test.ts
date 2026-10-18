@@ -157,7 +157,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(items).toContain('40% debuff resistance');
     expect(items).not.toMatch(/Might/);
     // Item Güçlendirme (2026-10-17): silah gücü, başlangıç silahı, seviye şartı; sayılar veriden
-    for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', "Woodcutter's Axe", 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is armor"]) expect(items, w).toContain(w);
+    for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', "Woodcutter's Axe", 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is its block chance"]) expect(items, w).toContain(w);
     expect(items).toContain(`${weaponPowerOf(itemDef('woodcutters_axe')!, 30)} at 30`);
     expect(text('turns')).toContain('Battle speed');
     expect(text('mana')).toContain('"+2 MP"');

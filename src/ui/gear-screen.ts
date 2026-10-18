@@ -19,17 +19,12 @@ import {
   SLOT_IDS,
   TIER_COLOR,
   affixContext,
-  affixLines,
   canEquip,
   itemDef,
-  instanceColor,
-  instanceSubtitle,
-  effectLine,
   ITEMS,
   primaryCheck,
   type AffixLine,
   type Equipment,
-  type ItemDef,
   type ItemInstance,
   type SlotId,
   meetsLevel,
@@ -39,7 +34,6 @@ import {
 } from '../progression';
 import type { Attribute } from '../engine';
 import { lockInput, unlockInput } from './input-lock';
-import { itemDefIcon } from './item-icon-dom';
 import { statIconUrl } from './stat-tips';
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
@@ -47,11 +41,12 @@ import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 import type { Stats } from '../engine';
 import { avatarUrl, className, heroMarks, renderLedgerPage } from './character-panel';
 import { mountCloseButton } from './nav-close';
+import { showHandoverToast } from './handover-toast';
 import { renderInventory, snapBagRows } from './inventory';
-import { itemTipNodes, type ItemTipAction, type ItemTipLine } from './item-tip';
+import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
-import { heroItemLine } from './gear-hover';
+import { FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -65,18 +60,6 @@ const btn = (cls: string, text: string, run: () => void): HTMLButtonElement => {
   b.addEventListener('click', run);
   return b;
 };
-
-/**
- * Item / yuva ikonu: piksel art (tek ortak kaynak src/game/item-icons.ts; Endless kartları ve Codex de aynısını çizer). Nadirlik rengi yalnızca
- * taş / kenar ayrıntısını boyar ve hafif bir parıltı verir; boş yuvada yuvanın ikonu soluk durur.
- */
-function slotIcon(d: ItemDef | undefined, slot: SlotId, color: string | null, size = 1, dim = !d): HTMLImageElement {
-  const img = itemDefIcon(d, slot, color ?? undefined, `gr-svg gr-px${dim ? ' dim' : ''}`);
-  img.style.setProperty('--sz', String(size));
-  if (!dim && color) img.style.setProperty('--glow', color);
-  return img;
-}
-
 
 export interface GearOptions {
   get: () => CampaignState;
@@ -125,6 +108,8 @@ export interface GearSource {
   equipBest(heroIds?: string[]): void;
   /** Torba boşken kartta görünen yazı. */
   emptyText?: string;
+  /** Düşmüş kahraman uyarısı (yoksa: "Fallen heroes can't change gear. Revive them at a town."; Endless'te "town" yok). */
+  fallenText?: string;
   /** Stat puanı dağıt (levels.md; Character sayfasındaki Confirm). Yoksa puan dağıtımı gösterilmez. */
   allocate?(heroId: string, add: StatAlloc): void;
 }
@@ -143,7 +128,7 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
     equip: (heroId, uid, slot) => apply((x) => equipItem(x, heroId, uid, slot)),
     unequip: (heroId, slot) => apply((x) => unequipItem(x, heroId, slot)),
     discard: (uid) => apply((x) => discardItem(x, uid)),
-    equipBest: (ids) => apply((x) => equipBest(x, ids)),
+    equipBest: (ids) => apply((x) => equipBest(x, ids, { skipFallen: true })),
     emptyText: 'The bag is empty. Victories and chests bring new gear.',
     allocate: (heroId, add) => apply((x) => allocateStats(x, heroId, add)),
   };
@@ -220,11 +205,12 @@ export interface GearExt {
 export const phoneLayout = (): boolean => document.documentElement.classList.contains('short');
 
 /** Item ipucunun telefondaki ek satırları: her kahramana etkisi (masaüstünde kahraman kartlarında görünür). */
-export function heroTipExtra(heroes: GearHero[], inst: ItemInstance, always = false): Array<{ label: string; parts: ItemTipLine[] }> {
+export function heroTipExtra(heroes: GearHero[], inst: ItemInstance, always = false): ItemTipHero[] {
   if (!always && !phoneLayout()) return [];
   return heroes.map((h) => {
     const l = heroItemLine(h, inst);
-    return { label: className(h.class), parts: l.parts.map((p) => ({ text: p.text, ...(p.dir ? { dir: p.dir } : l.tone === 'no' ? { dir: 'no' as const } : {}) })) };
+    const face = avatarUrl(h.class);
+    return { label: className(h.class), ...(face ? { face } : {}), level: h.level, parts: l.parts.map((p) => ({ text: p.text, ...(p.dir ? { dir: p.dir } : l.tone === 'no' ? { dir: 'no' as const } : {}) })) };
   });
 }
 
@@ -298,6 +284,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   let afterStats: Stats | null = null;
   let closeAsk: (() => void) | null = null;
   const heroOf = (id: string) => src.heroes().find((h) => h.id === id);
+  /** Düşmüş kahramanın ekipmanı değişmez (Ömer 2026-10-18); metin: Endless'te "town" yok. */
+  const fallenId = (id: string): boolean => heroFallen(heroOf(id));
+  const fallenMsg = (): string => src.fallenText ?? FALLEN_GEAR_TEXT;
+  const fallenWarn = (): void => {
+    uiSound('error');
+    showToast(fallenMsg());
+  };
   const curHero = () => heroOf(heroId) ?? src.heroes()[0];
   const bagInst = (uid: string) => src.bag().find((i) => i.uid === uid);
   // Malzeme sesi (2026-10-13): kumaş / deri / çelik / ahşap / takı (data/audio-world.json); kaldırma kısık, kuşanma / çıkarma tam
@@ -338,7 +331,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     trash: !ext?.noTrash,
     sourceOf: (v, t) => ext?.sourceOf?.(v, t) ?? (v.startsWith('bag:') ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : null),
     targetOf: (v) => ext?.targetOf?.(v) ?? (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
-    classOf: (id) => heroOf(id)?.class,
+    // düşmüş kahraman: hedef olarak "kullanamaz" (yuva / yer imi sönük kalır); bırakınca onDrop açıklama toast'ı verir
+    classOf: (id) => (fallenId(id) ? undefined : heroOf(id)?.class),
     tipNodes: (key) => {
       const hero = curHero();
       const extra = ext?.tipNodes?.(key);
@@ -349,7 +343,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const inst = kind === 'bag' ? bagInst(id) : kind === 'slot' && hero ? hero.equipment[id as SlotId] : undefined;
       if (!inst) return [];
       // seçili kahramana göre: etkisiz A affix'leri soluk, tavanı dolu statlar "max" (Ömer 2026-10-13, itemcaps)
-      const state = hero ? { ...(affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
+      const base = hero ? { ...(affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
+      // tüccar torbasında satış fiyatı ("sells for")
+      const state = kind === 'bag' && ext?.price ? { ...(base ?? {}), sellFor: ext.price(inst) } : base;
       // yer imleri yalnızca portre: her kahramana etkisi ipucunda (karşılaştırma)
       return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst, true) : [], state);
     },
@@ -360,6 +356,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (extra) return extra;
       if (bagOnly) return key.startsWith('bag:') ? (ext?.bagActions?.(key.slice(4)) ?? []) : [];
       if (!hero) return [];
+      if (heroFallen(hero)) return key.startsWith('bag:') ? [{ label: 'Fallen · cannot equip', disabled: true, run: () => fallenWarn() }, ...(ext?.bagActions?.(key.slice(4)) ?? [])] : [];
       if (key.startsWith('bag:')) {
         const uid = key.slice(4);
         const d = itemDef(bagInst(uid)?.id ?? '');
@@ -399,6 +396,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     onDrop: (s, tg, act) => {
       const hadFocus = !!dragUid;
       dragUid = '';
+      if ((tg && (tg.kind === 'slot' || tg.kind === 'hero') && fallenId(tg.heroId) && s.kind !== 'slot') || (s.kind === 'slot' && fallenId(s.heroId))) {
+        fallenWarn();
+        renderAll();
+        return;
+      }
       if (ext?.onDrop?.(s, tg, act)) return;
       if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
       else if (act?.kind === 'unequip') {
@@ -416,6 +418,10 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (extra !== undefined) return extra;
       if (bagOnly) return key.startsWith('bag:'); // yalnızca torba: çift dokunuş kuşandırmaz
       if (!hero) return false;
+      if (heroFallen(hero) && (key.startsWith('bag:') || key.startsWith('slot:'))) {
+        fallenWarn();
+        return true;
+      }
       if (key.startsWith('bag:')) {
         tryEquip(hero.id, key.slice(4), undefined, true);
         return true;
@@ -497,6 +503,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   /** Çift tık / çift dokunuşla çıkarma: kısa toka şakırtısı ('snap'), malzeme sesi yerine (Ömer 2026-10-16). */
   const quickUnequip = (hid: string, slot: SlotId): void => {
+    if (fallenId(hid)) return fallenWarn();
     if (!heroSlotItem(hid, slot)) return;
     apply(() => src.unequip(hid, slot), () => uiSound('snap'));
   };
@@ -510,6 +517,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const inst = bagInst(uid);
     const d = inst ? itemDef(inst.id) : undefined;
     if (!h || !inst || !d) return;
+    if (heroFallen(h)) return fallenWarn();
     if (targetHero !== heroId) pending = {};
     heroId = targetHero;
     if (!canEquip(h.class, d)) {
@@ -661,7 +669,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         heroId = id;
         renderAll();
       },
-      ...(src.allocate
+      ...(src.allocate && !heroFallen(hero)
         ? {
             level: {
               pending,
@@ -691,6 +699,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
             },
           }
         : {}),
+      onLocked: () => fallenWarn(),
       onSlotDouble: (slot) => {
         const h = curHero();
         if (h) quickUnequip(h.id, slot);
@@ -716,14 +725,24 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     if (bagOnly) return out;
     if (hero)
       out.push(
-        btn('gr-btn sm gr-best', `Best: ${className(hero.class)}`, () => {
-          sel = '';
-          apply(() => src.equipBest([hero.id]));
-        }),
+        (() => {
+          const b = btn('gr-btn sm gr-best', `Best: ${className(hero.class)}`, () => {
+            sel = '';
+            if (heroFallen(hero)) return fallenWarn();
+            apply(() => src.equipBest([hero.id]));
+          });
+          if (heroFallen(hero)) {
+            b.classList.add('off');
+            b.title = fallenMsg();
+          }
+          return b;
+        })(),
       );
     const all = btn('gr-btn sm gr-best', 'Best: all', () => {
       sel = '';
-      apply(() => src.equipBest());
+      const ids = src.heroes().filter((h) => !heroFallen(h)).map((h) => h.id);
+      if (!ids.length) return fallenWarn();
+      apply(() => src.equipBest(ids));
     });
     all.title = 'Equip best for the whole company';
     all.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
@@ -851,7 +870,7 @@ export function swapIn(node: HTMLElement | null | undefined): void {
 export function heroRail(heroes: GearHero[], heroId: string, pick: (id: string) => void): HTMLElement {
   const rail = el('div', 'gr-rail');
   for (const h of heroes) {
-    const b = btn(`gr-hero${h.id === heroId ? ' on' : ''}`, '', () => pick(h.id));
+    const b = btn(`gr-hero${h.id === heroId ? ' on' : ''}${heroFallen(h) ? ' fallen' : ''}`, '', () => pick(h.id));
     b.dataset['drop'] = `hero:${h.id}`;
     b.setAttribute('aria-label', className(h.class));
     const face = el('div', 'gr-face');
@@ -861,35 +880,6 @@ export function heroRail(heroes: GearHero[], heroId: string, pick: (id: string) 
     rail.append(b);
   }
   return rail;
-}
-
-/** Ortak küçük kart (Spoils / teslim). */
-function smallCard(root: HTMLElement, title: string, subtitle: string, items: string[], extra: string[], buttons: Array<{ label: string; primary?: boolean; run: () => void }>): () => void {
-  const overlay = el('div', 'gr-overlay gr-small el-modal');
-  const panel = el('div', 'gr-panel gr-mini el-modal-panel');
-  overlay.append(panel);
-  root.append(overlay);
-  lockInput('gear-card');
-  const close = (): void => {
-    closeDom(overlay, () => overlay.remove());
-    unlockInput('gear-card');
-  };
-  panel.append(el('div', 'gr-title', title));
-  if (subtitle) panel.append(el('div', 'gr-mini-sub', subtitle));
-  const list = el('div', 'gr-mini-list');
-  for (const id of items) if (itemDef(id)) list.append(itemRow({ id }));
-  if (items.length) panel.append(list);
-  for (const x of extra) panel.append(el('div', 'gr-mini-extra', x));
-  const foot = el('div', 'gr-foot');
-  for (const b of buttons)
-    foot.append(
-      btn(`gr-btn${b.primary ? ' primary' : ''}`, b.label, () => {
-        close();
-        b.run();
-      }),
-    );
-  panel.append(foot);
-  return close;
 }
 
 /**
@@ -922,37 +912,14 @@ export function affixLineEl(l: AffixLine, cls = 'gr-line', withRange = true): HT
   return row;
 }
 
-/** Tek item satırı (Spoils / teslim kartları). `gone`: geride kalan (soluk). */
-function itemRow(src: Pick<ItemInstance, 'id' | 'rolls'> & { uid?: string }, gone = false): HTMLDivElement {
-  const d = itemDef(src.id)!;
-  const color = instanceColor(src);
-  const row = el('div', `gr-mini-row${gone ? ' gone' : ''}`);
-  row.append(slotIcon(d, d.slot, color, 0.9, gone));
-  const t = el('div', 'gr-mini-text');
-  const n = el('div', 'gr-mini-name', d.name);
-  if (!gone) n.style.color = color;
-  const lines = el('div', 'gr-mini-lines');
-  lines.append(el('span', 'gr-mini-subt', instanceSubtitle(src)));
-  for (const l of affixLines(src)) lines.append(affixLineEl(l, 'gr-line inline', false));
-  const fx = effectLine(d);
-  if (fx) lines.append(el('div', 'gr-line inline gr-effect', fx));
-  t.append(n, lines);
-  row.append(t);
-  return row;
-}
-
-/** Ashford teslim kartı (pendingHandover): eski takım item'lerini yeni bölüğe bırakır. */
+/** Ashford teslim kartı (pendingHandover): eski takım item'lerini yeni bölüğe bırakır. Alt kart (Toast): src/ui/handover-toast.ts. */
 export function showHandover(root: HTMLElement, s: CampaignState, on: { equip: () => void; later: () => void }): () => void {
   const ho = s.pendingHandover;
-  const ids = (ho?.items ?? []).map((u) => s.inventory.find((i) => i.uid === u)?.id ?? findEquipped(s, u)).filter((x): x is string => !!x);
-  const from = (ho?.from ?? []).map((f) => className(f.class)).join(', ');
-  return smallCard(root, 'Left for the Company', from ? `${from} leave${ho!.from.length > 1 ? '' : 's'} their gear for you` : '', ids, ['Equip it on your new heroes before the road north.'], [
-    { label: 'Later', run: on.later },
-    { label: 'Equip now', primary: true, run: on.equip },
-  ]);
+  const items = (ho?.items ?? []).map((u) => s.inventory.find((i) => i.uid === u) ?? findEquippedInst(s, u)).filter((x): x is ItemInstance => !!x);
+  return showHandoverToast(root, { classes: (ho?.from ?? []).map((f) => f.class), items }, on);
 }
 
-function findEquipped(s: CampaignState, uid: string): string | undefined {
-  for (const h of s.roster as Hero[]) for (const k of SLOT_IDS) if (h.equipment[k]?.uid === uid) return h.equipment[k]!.id;
+function findEquippedInst(s: CampaignState, uid: string): ItemInstance | undefined {
+  for (const h of s.roster as Hero[]) for (const k of SLOT_IDS) if (h.equipment[k]?.uid === uid) return h.equipment[k]!;
   return undefined;
 }

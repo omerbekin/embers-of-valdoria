@@ -648,6 +648,7 @@ export function buildMechanics(): WikiArticle[] {
         'Dodge: the attacker\'s accuracy was good enough but the target\'s evasion made the hit fail. "Dodge" shows above the target.',
         'Miss: the attacker\'s own accuracy was not enough, no matter the evasion. "MISS" shows above the attacker.',
         'A dodged or missed hit deals no damage and applies none of the skill\'s effects.',
+        blockText(),
         'Heals, shields, buffs, effects on yourself and ground effects (poison, fire on the ground) never miss.',
         ...Object.values(content.statuses).filter((d) => d.accuracyDelta || d.evasionDelta).map((d) => `${d.name} (${d.type}): ${d.accuracyDelta ? `accuracy ${d.accuracyDelta > 0 ? '+' : '-'}${pct(Math.abs(d.accuracyDelta))}` : `evasion ${d.evasionDelta! > 0 ? '+' : '-'}${pct(Math.abs(d.evasionDelta!))}`} while it lasts. The hit chance still stays between 0% and ${pct(f.hit.max)}.`),
       ),
@@ -960,6 +961,14 @@ function gripText(): string {
   return `Grip and the Off-hand slot: every weapon is one-handed, two-handed, a bow or a charm. A hero with a one-handed weapon (or no weapon) can also fill the Off-hand slot with a shield (${shields.map((d) => d.name).join(', ')}; ${who(shields[0]?.family)}) or a second ${offFams.map((f) => f.name.toLowerCase().replace(/s$/, '')).join(' / ')} (${offFams.map((f) => who(f.id)).join(', ')}). Two-handed weapons, bows and charms need both hands: equipping one sends the off-hand item back to the bag (if the bag is full, make room first). An off-hand item adds its affixes like any other slot. Two-handed: ${names('two')}. Bows: ${names('bow')}. Charms: ${names('charm')}. Everything else is one-handed.`;
 }
 
+/** Kalkan bloğu (Ömer 2026-10-18): kural metni, sayılar veriden (kalkan tabanları, c_block, tavan). */
+function blockText(): string {
+  const shields = ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length);
+  const vals = shields.map((d) => d.implicitBase![0]!);
+  const cap = (ITEM_DATA.caps as Record<string, number | undefined>)['block'];
+  return `Block: a hero with a shield can block an enemy's physical hit (melee or ranged) after it lands: ${Math.min(...vals)}-${Math.max(...vals)}% from the shield itself (fixed per shield, it does not grow with item level) plus the shield-only Block affix${cap !== undefined ? `, at most ${cap}% in total` : ''}. A blocked hit deals no damage and applies none of the skill's effects; "Block" shows above the target. Spells, damage over time, burning ground, Doom and Backstab cannot be blocked. When a guardian takes part of a hit (Guard), the guardian's own shield can block that share.`;
+}
+
 /** Silah gücü, örtük statlar, başlangıç silahı ve seviye şartı (Item Güçlendirme, Ömer 2026-10-17; sayılar veriden). */
 function weaponPowerText(): string[] {
   const w = ITEM_DATA.weaponPower;
@@ -976,7 +985,7 @@ function weaponPowerText(): string[] {
   const R = ITEM_DATA.levelReq;
   return [
     `Weapon power: every weapon has a base power that grows with its item level (${w.base} + ${w.perIlvl} per item level for a one-handed weapon: ${pw('woodcutters_axe', 1)} at item level 1, ${pw('woodcutters_axe', 10)} at 10, ${pw('woodcutters_axe', 30)} at 30). Skill damage is multiplied by (1 + power / 100), staffs and charms included; healing and shields are not. Two-handed weapons and bows have ${Math.round((w.grip.two - 1) * 100)}% more power than one-handed ones because they block the off-hand; charms ${Math.round((w.grip.charm - 1) * 100)}% more; daggers ${Math.round((1 - (w.family?.['daggers'] ?? 1)) * 100)}% less. A dagger in the off-hand adds ${Math.round(w.offhandShare * 100)}% of its power. Rarity does not change power: it only adds affixes.`,
-    `Base stats: daggers also carry ${imp('daggers', 10)}, charms ${imp('charms', 10)} (at item level 10, growing with item level). A shield's base value is armor, not damage (${imp('shield', 10)} at item level 10) on top of its affixes. Base stats count toward the gear limits.`,
+    `Base stats: daggers also carry ${imp('daggers', 10)}, charms ${imp('charms', 10)} (at item level 10, growing with item level). A shield's base value is its block chance, shown like weapon power (${ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length).map((d) => `${d.name} ${d.implicitBase![0]}%`).join(', ')}; fixed, it does not grow with item level), on top of its affixes (its main affix is Armor). Base stats count toward the gear limits.`,
     `Starter weapons: every hero starts with a Common item level ${st.ilvl} weapon of their class (${starters}). Damage is measured against it: with the starter weapon a hero deals exactly the damage of Quick Battle, a stronger weapon deals more, and a hero with no weapon deals less. Starter weapons are normal items: you can sell or replace them.`,
     `Level requirement: an item needs hero level item level - ${R.offset} (at least ${R.min}; item level 12 needs level ${levelRequirement(12)}). Below that it cannot be equipped: its card shows "Requires Level X" in red, the comparison is still shown, and Equip best skips it.`,
   ];
@@ -990,7 +999,7 @@ function itemsArticleBody(): WikiArticle {
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
       `Each affix value is rolled within a small range when the item drops (shown as e.g. "+4 Max HP (3–5)"); the roll is kept for good. The range itself grows only with item level, but rarity decides how high the roll lands: ${rollFloorText()}. An item's gold value follows its power (${itemsJson.budget.goldPerIP} gold per power point).`,
-      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD${itemsJson.caps.mpCost !== undefined ? `, at most -${itemsJson.caps.mpCost}% MP cost` : ''}${itemsJson.caps.resist !== undefined ? ` and at most ${itemsJson.caps.resist}% debuff resistance` : ''}; anything above that is lost.`,
+      `Limits: all of a hero's gear together adds at most +${itemsJson.caps.crit}% crit chance, +${itemsJson.caps.accuracy}% accuracy, +${itemsJson.caps.evasion}% evasion and +${itemsJson.caps.spd} SPD${(itemsJson.caps as Record<string, number | undefined>)['block'] !== undefined ? `, +${(itemsJson.caps as Record<string, number | undefined>)['block']}% block chance (shields)` : ''}${itemsJson.caps.mpCost !== undefined ? `, at most -${itemsJson.caps.mpCost}% MP cost` : ''}${itemsJson.caps.resist !== undefined ? ` and at most ${itemsJson.caps.resist}% debuff resistance` : ''}; anything above that is lost.`,
       (() => {
         const lo = dropChances(0);
         const hi = dropChances(999, 'boss');

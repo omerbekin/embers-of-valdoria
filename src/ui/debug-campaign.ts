@@ -3,8 +3,8 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { activeHeroes, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
-import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, xpToNext } from '../progression';
+import { activeHeroes, debugToggleFallen, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, makeItem, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
@@ -192,6 +192,26 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       reload();
     },
   });
+  debug.register({
+    id: 'campaign.handover-toast',
+    tab: CAMPAIGN_TAB,
+    section: 'Progress',
+    icon: 'clipboard',
+    label: 'Left for the Company card',
+    hint: 'Show the town "Left for the Company" bottom card with sample gear from a Warrior and a Gambler. Hover / long-press an item for its tooltip; Equip now opens Gear; X, Esc or 10 seconds (fades out, hovering the card pauses it) close it.',
+    run: () => {
+      const s = ensureState();
+      const rng = { int: (a: number, b: number) => a + Math.floor(Math.random() * (b - a + 1)) };
+      const items = ['woodcutters_axe', 'worn_deck'].map((id, i) => makeItem(id, `dbg-handover-${i}`, rng));
+      const root = document.getElementById('ui-root') ?? document.body;
+      void import('./handover-toast').then(({ showHandoverToast }) =>
+        showHandoverToast(root, { classes: ['warrior', 'gambler'], items }, {
+          equip: () => void import('./gear-screen').then((g) => g.openGearScreen(root, { get: () => current() ?? s, set: setState })),
+          later: () => {},
+        }),
+      );
+    },
+  });
   // --- Item'ler (madde 280): Gear ekranı, item / altın ver, torbayı doldur
   const giveItem = (rarity?: string): void => {
     const s = ensureState();
@@ -215,6 +235,18 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Open Gear',
     hint: 'Open the Gear screen (equip items from the bag) for the current campaign; opens the map first if needed',
     run: openGear,
+  });
+  debug.register({
+    id: 'campaign.fallen',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'skull',
+    label: 'Toggle first hero fallen',
+    hint: 'Make the first hero of the formation fallen (or revive them): their gear and stat points are locked in Gear while fallen',
+    run: () => {
+      setState(debugToggleFallen(ensureState()));
+      reload();
+    },
   });
   // Level / XP (Ömer 2026-10-17, levels.md)
   const levelOfTeam = (): number => {

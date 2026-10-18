@@ -57,7 +57,7 @@ html.mk-strip-min #mk-strip > :not(.keep) { display: none; }
 .tt-imp { display: flex; align-items: center; gap: .5em; color: #f3e2c0; margin-top: 2px; }
 .tt-fx { margin: var(--gap) 0 2px; padding: 4px 10px; border-left: 2px solid rgba(255, 210, 122, .65); background: linear-gradient(90deg, rgba(255, 210, 122, .1), transparent); color: #ffd99a; font-style: italic; }
 .tt-fx b { font: 600 .8em var(--g-disp); letter-spacing: .1em; text-transform: uppercase; font-style: normal; display: block; color: #ffe2a8; }
-.tt-face { flex: none; width: max(26px, calc(40 * var(--u))); height: max(26px, calc(40 * var(--u))); border-radius: 50%; object-fit: cover; border: 1px solid var(--g-line2); background: #0c0905; }
+.tt-face { flex: none; width: max(26px, calc(40 * var(--u))); height: max(26px, calc(40 * var(--u))); background: #120c08 center / cover no-repeat; border: 1px solid var(--g-line2); image-rendering: pixelated; }
 .tt-face.gray { filter: grayscale(1) brightness(.6); }
 .tt-d { display: inline-flex; align-items: center; gap: .3em; padding: 0 .45em; height: 1.5em; font: 600 .86em var(--g-body); white-space: nowrap; }
 .tt-d.up { color: #8fe39a; background: rgba(90, 190, 110, .13); }
@@ -131,8 +131,9 @@ html.mk-strip-min #mk-strip > :not(.keep) { display: none; }
 .vl em { font: normal .8em var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); }
 
 /* kahraman hap satırları */
-.tt-heroes { display: flex; flex-direction: column; gap: max(4px, calc(6 * var(--u))); padding: var(--gap) max(10px, calc(16 * var(--u))) max(8px, calc(12 * var(--u))); }
-.hp { display: flex; align-items: center; gap: .5em; padding: 2px 6px 2px 3px; border-radius: 999px; background: rgba(0, 0, 0, .3); border: 1px solid var(--g-line); min-width: 0; }
+.tt-heroes { display: flex; flex-direction: column; padding: 0 max(10px, calc(16 * var(--u))); }
+.hp { display: flex; align-items: center; gap: .55em; padding: max(4px, calc(6 * var(--u))) 0; border-top: 1px solid var(--g-line); min-width: 0; }
+.hp:first-child { border-top: 0; }
 .hp > b { flex: none; width: 4.6em; font: 600 .7em var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-dim); }
 .hp-lv { flex: none; padding: 0 .5em; height: 1.5em; display: inline-flex; align-items: center; font: 600 .86em var(--g-disp); color: #e6dcc6; background: rgba(255, 255, 255, .07); }
 .hp-lv.unmet { color: #ff8a7a; background: rgba(220, 90, 70, .18); }
@@ -154,6 +155,6 @@ html.short .cv-power { margin-top: 2px; }
 html.short .sl-list { gap: 2px; margin: 2px 0; }
 html.short .sl .tt-ico, html.short .sl .tt-dia { width: 16px; height: 16px; }
 html.short .tt-face { width: 22px; height: 22px; }
-html.short .hp { padding: 1px 6px 1px 2px; }
+html.short .hp { padding: 2px 0; }
 html.short .tt-fx { padding: 1px 6px; margin: 2px 0; }
 html.short .g-notch, html.short .g-rail { width: 54px; }

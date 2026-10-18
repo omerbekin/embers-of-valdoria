@@ -1566,7 +1566,7 @@
     ]
   },
   "backstab": {
-    "_not": "Cutthroat 4. yuva (ultimate): hedefin ARKASINA ışınlanır, sırtından saplar, geri döner (görsel; formasyon değişmez). Menzil/ön sıra kısıtı yok (ignoreReach + ignoreFrontRow) ama requiresOpenBehind: hedefin hemen arkasındaki hücre (aynı şerit, bir sıra derin) boş olmalı (yalnızca CANLI birim engeller; ceset engellemez); en arka sıradaki hedefe kullanılamaz. guaranteedCrit: kritik zarı atılmaz, her vuruş kritik; isabet zarı normal. Sayılar PROVİZYON. Görsel: sırta saplı hançer ikonu; dumana dönüşüp hedefin arkasında belirir, sırtına saplar (kızıl-beyaz şok halkası, kan, sert sarsıntı, kısa donma), dumanla evine döner.",
+    "_not": "Cutthroat 4. yuva (ultimate): hedefin ARKASINA ışınlanır, sırtından saplar, geri döner (görsel; formasyon değişmez). Menzil/ön sıra kısıtı yok (ignoreReach + ignoreFrontRow) ama requiresOpenBehind: hedefin hemen arkasındaki hücre (aynı şerit, bir sıra derin) boş olmalı (yalnızca CANLI birim engeller; ceset engellemez); en arka sıradaki hedefe kullanılamaz. guaranteedCrit: kritik zarı atılmaz, her vuruş kritik; isabet zarı normal. unblockable: kalkanla bloklanamaz (Ömer 2026-10-18). Sayılar PROVİZYON. Görsel: sırta saplı hançer ikonu; dumana dönüşüp hedefin arkasında belirir, sırtına saplar (kızıl-beyaz şok halkası, kan, sert sarsıntı, kısa donma), dumanla evine döner.",
     "id": "backstab",
     "name": "Backstab",
     "icon": "backstab",
@@ -1589,7 +1589,8 @@
         "damageType": "physical",
         "scale": "dex",
         "power": 1.525,
-        "guaranteedCrit": true
+        "guaranteedCrit": true,
+        "unblockable": true
       }
     ],
     "vfx": "backstab",

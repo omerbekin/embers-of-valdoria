@@ -33,7 +33,18 @@ export interface HoverHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Düşmüş kahraman: alive false ya da can oranı 0 (ekipmanı değiştirilemez; Ömer 2026-10-18). */
+  alive?: boolean;
+  hpRatio?: number;
 }
+
+/** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */
+export const heroFallen = (h: { alive?: boolean; hpRatio?: number } | undefined): boolean => !!h && (h.alive === false || (h.hpRatio !== undefined && h.hpRatio <= 0));
+
+/** Düşmüş kahraman için ortak yazılar (harita ile aynı dil). */
+export const FALLEN_MARK = 'Fallen · revive at a town';
+export const FALLEN_GEAR_TEXT = "Fallen heroes can't change gear. Revive them at a town.";
+export const FALLEN_POINTS_TEXT = "Fallen heroes can't spend stat points. Revive them at a town.";
 
 export interface HeroLinePart {
   text: string;

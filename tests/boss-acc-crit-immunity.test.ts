@@ -137,12 +137,12 @@ describe('Boss isabet/kritik bağışıklığı: önizleme, YZ, skill-info, wiki
     }
   });
 
-  it('skill-info: Smoke Bomb ve Jinx "Bosses are immune to ..."; Omen veren skill "Bosses ignore Misfortune"', () => {
+  it('skill-info: boss bağışıklık satırları skilllerde yok; Warden pasifi anlatır', () => {
     const lines = (id: string, cls: string) => describeSkill(content.skills[id]!, content.classes[cls]!.stats, content.formulas, {}, { statuses: content.statuses }).lines;
-    expect(lines('smoke_bomb', 'cutthroat').some((l) => l.includes(`Bosses are immune to ${content.statuses.blinded!.name}`))).toBe(true);
-    expect(lines('smoke_bomb', 'cutthroat').some((l) => l.includes(`Bosses are immune to ${content.statuses.shrouded!.name}`))).toBe(false);
-    expect(lines('jinx', 'hexer').some((l) => l.includes(`Bosses are immune to ${content.statuses.jinxed!.name}`))).toBe(true);
-    expect(lines('evil_eye', 'hexer').some((l) => l.includes('Bosses ignore Misfortune'))).toBe(true);
+    // Ömer 2026-10-18: boss bağışıklığı skill satırlarında tekrar edilmez; Codex boss makalesinde tek yerde (aşağıdaki wiki testi)
+    for (const [id, cls] of [['smoke_bomb', 'cutthroat'], ['jinx', 'hexer'], ['evil_eye', 'hexer']] as const) {
+      expect(lines(id, cls).some((l) => l.includes('Bosses are immune') || l.includes('Bosses ignore')), id).toBe(false);
+    }
     const uy = content.bosses.bridge_warden!.boss!.passives!.find((p) => p.id === 'unyielding')!;
     expect(uy.text).toContain('Blinded');
     expect(uy.text).toContain('Misfortune');
