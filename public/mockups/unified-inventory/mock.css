@@ -344,3 +344,127 @@ html.short .mk-duo { gap: 6px; }
 html.short .gr-overlay .mk-duo.pair > .mk-enc { width: 38%; }
 html.short .gr-overlay .mk-duo.pair > .mk-enc-map { width: 30%; padding: 6px; }
 .mk-enc .gr-title { font-size: max(20px, calc(36 * var(--u))); }
+
+/* ===== 2026-10-18 (Ömer v3 seçti): kasaba sahnesi, küçük pencereler, ödül ekranı, tüccar sekmeleri, Sheet çubukları ===== */
+.mk-layer { --u: var(--gu, 1px); --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16);
+  --g-line2: rgba(217, 178, 106, 0.3); --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, serif; --g-body: 'EB Garamond', Georgia, serif;
+  position: absolute; inset: 0; z-index: 2; color: var(--g-text); font-family: var(--g-body); }
+.mk-ov.mk-empty { background: transparent; pointer-events: none; }
+.mk-ov.mk-empty .item-tip.pinned { pointer-events: auto; }
+/* v3: sekme başlıkları ile sayfa başlığı ("WARRIOR · AXES ...") arasında boşluk (üst üste binmesin) */
+.mk-v3 .gr-body { row-gap: calc(22 * var(--u)); }
+html.short .mk-v3 .gr-body { row-gap: 8px; }
+/* boş yuva simgesi (slot-icons): soluk */
+.gr-slot .mk-sloticon, .gr-item .mk-sloticon { opacity: .36; image-rendering: auto; filter: saturate(.8); }
+/* Sheet: HP / MP çubuğu (oyunun savaş HUD'ı .bh-bar) */
+.gr-sgrp.vitals > .mk-vital { flex: 1 1 0; min-width: 0; display: flex; flex-direction: column; gap: calc(4 * var(--u)); }
+.mk-vbar.bh-bar { --gold: 217, 178, 106; --ease: cubic-bezier(.33, 1, .68, 1); height: max(5px, calc(10 * var(--u))); }
+/* skill ağacı: kap aynı, içerik yok */
+.mk-tree.mk-soon { display: flex; align-items: center; justify-content: center; flex: 1 1 auto; min-height: calc(300 * var(--u)); border: 1px solid rgba(217, 178, 106, 0.16); background: rgba(8, 6, 4, .35); }
+html.short .mk-tree.mk-soon { min-height: 180px; }
+.mk-soon span { font: 600 max(14px, calc(26 * var(--u))) var(--g-disp); letter-spacing: .3em; text-transform: uppercase; color: var(--g-dim); }
+/* haritanın takım sütunu: kahraman satırı düğme (dokun = o kahramanın envanteri) */
+.mk-herobtn { width: 100%; min-height: 44px; padding: calc(4 * var(--u)) calc(6 * var(--u)); background: transparent; border: 1px solid transparent; color: inherit; text-align: left; cursor: pointer; transition: border-color .18s, background .2s; }
+.mk-herobtn:hover { border-color: var(--g-line2); background: rgba(8, 6, 4, .4); }
+.mk-herobtn.on { border-color: var(--g-gold); background: linear-gradient(90deg, rgba(224, 112, 42, .16), transparent); }
+
+/* kasaba (TownScreen): yer = görünmez alan + her zaman görünen etiket plakası; önde takım */
+.mk-town .mk-hot { position: absolute; background: transparent; border: 0; border-radius: 14px; cursor: pointer; transition: box-shadow .2s, background .2s; }
+.mk-town .mk-hot:hover, .mk-town .mk-hot.hl { background: rgba(255, 179, 90, .08); box-shadow: 0 0 0 2px rgba(243, 217, 153, .75), 0 0 0 7px rgba(224, 112, 42, .18); }
+.mk-town .mk-hotlab { position: absolute; transform: translateX(-50%); z-index: 2; white-space: nowrap; padding: .42em 1.1em; border-radius: 99px; background: rgba(12, 9, 6, .72); border: 1.5px solid rgba(217, 178, 106, .4);
+  font-family: var(--g-disp); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--g-text); cursor: pointer; transition: background .2s, border-color .2s, color .2s; }
+.mk-town .mk-hotlab::after { content: ''; position: absolute; left: 0; right: 0; top: 50%; height: 44px; transform: translateY(-50%); }
+.mk-town .mk-hotlab:hover, .mk-town .mk-hot:hover + .mk-hotlab { background: rgba(12, 9, 6, .9); border-color: var(--g-gold); color: var(--g-gold); text-shadow: 0 0 10px rgba(240, 140, 40, .7); }
+.mk-town .mk-thero { position: absolute; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; gap: 2px; padding: 0; background: transparent; border: 0; cursor: pointer; }
+.mk-town .mk-thero img { width: auto; max-width: 160%; object-fit: contain; image-rendering: auto; filter: drop-shadow(0 6px 6px rgba(0, 0, 0, .55)); transition: filter .2s; }
+.mk-town .mk-thero:hover img { filter: drop-shadow(0 0 10px rgba(255, 179, 90, .75)) drop-shadow(0 6px 6px rgba(0, 0, 0, .55)); }
+.mk-town .mk-thn { font-family: var(--g-disp); font-weight: 600; letter-spacing: .12em; text-transform: uppercase; color: var(--g-text); text-shadow: 0 1px 3px #000, 0 0 6px #000; }
+.mk-town .mk-thero .mk-pt { position: absolute; right: 18%; top: 4%; }
+.mk-townhud { position: absolute; left: max(12px, calc(28 * var(--u))); bottom: max(12px, calc(28 * var(--u))); display: flex; gap: max(10px, calc(16 * var(--u))); }
+
+/* küçük pencere (oyundaki openModal: başlık ortada, kısa metin, düğme altta) */
+.mk-dlgwrap { align-items: center; justify-content: center; }
+.gr-overlay .mk-dlgwrap > .mk-dlg { width: min(100%, calc(980 * var(--u))); min-width: min(100%, 320px); height: auto; align-items: center; text-align: center; animation: mkDlgIn .26s cubic-bezier(.33, 1, .68, 1) both; }
+html.compact .gr-overlay .mk-dlgwrap > .mk-dlg { width: min(100%, calc(1300 * var(--u))); }
+.mk-dlg .gr-title { font-size: max(20px, calc(40 * var(--u))); }
+.mk-dlg .mk-dlg-t { margin: calc(8 * var(--u)) 0; font: max(14px, calc(24 * var(--u))) var(--g-body); color: var(--g-text); max-width: 46em; }
+.mk-dlg .gr-foot { justify-content: center; align-self: stretch; }
+@keyframes mkDlgIn { from { transform: scale(.96); opacity: 0; } to { transform: none; opacity: 1; } }
+.mk-ov.mk-still .mk-dlg { animation: none !important; }
+/* Formation: 4 x 3, ön sıra sağda */
+.mk-fgrid { display: grid; grid-template-columns: repeat(4, max(52px, calc(124 * var(--u)))); grid-auto-rows: max(52px, calc(124 * var(--u))); gap: max(6px, calc(12 * var(--u))); margin-top: calc(10 * var(--u)); }
+.mk-fcell { border: 1px solid var(--g-line2); background: rgba(8, 6, 4, .5); display: grid; place-items: center; transition: border-color .18s, background .2s; }
+.mk-fcell.front { background: linear-gradient(270deg, rgba(224, 112, 42, .12), rgba(8, 6, 4, .5)); }
+.mk-fcell.tap-ok { border-color: rgba(243, 217, 153, .55); }
+.mk-fcell.drop-on { border-color: var(--g-ember2); background: rgba(224, 112, 42, .2); }
+.mk-fhero { padding: 0; background: transparent; border: 1px solid transparent; cursor: grab; width: 86%; height: 86%; touch-action: none; }
+.mk-fhero .gr-face { width: 100%; height: 100%; }
+.mk-fhero.on { border-color: var(--g-gold); box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .6); }
+.mk-fhero.lift { opacity: .35; }
+.mk-frow { display: flex; justify-content: space-between; width: calc(4 * max(52px, calc(124 * var(--u))) + 3 * max(6px, calc(12 * var(--u)))); font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); }
+.mk-fghost { position: fixed; z-index: 10000; pointer-events: none; transform: translate(-50%, -50%); width: 64px; height: 64px; border: 1px solid #f3d999; box-shadow: 0 0 16px rgba(240, 140, 40, .7); }
+.mk-fghost .gr-face { width: 100%; height: 100%; }
+
+/* tüccar: Wares + Sell / Buyback sekmeleri (Buy back alt bölümü kalktı) */
+.mk-shoptabs { display: flex; gap: calc(18 * var(--u)); }
+.mk-shoptabs .gr-tab .mk-pt { min-width: 20px; height: 20px; font-size: 11px; margin-left: 4px; vertical-align: 1px; }
+.mk-shoppane { min-height: max(64px, calc(120 * var(--u))); }
+.mk-sellbox { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(14 * var(--u)) calc(16 * var(--u)); border: 1px dashed var(--g-line2); background: rgba(8, 6, 4, .4);
+  font: max(13px, calc(19 * var(--u))) var(--g-body); color: var(--g-text); min-height: 44px; }
+.mk-sellbox img { width: max(26px, calc(44 * var(--u))); height: max(26px, calc(44 * var(--u))); object-fit: contain; flex: none; }
+.mk-sellbox i { display: block; color: var(--g-dim); }
+
+/* ödül ekranı (EndlessScene > drawReward): başlık, kartlar, View bag */
+.mk-rw { display: flex; flex-direction: column; align-items: center; padding: calc(70 * var(--u)) calc(60 * var(--u)) calc(40 * var(--u)); gap: calc(28 * var(--u)); background: rgba(5, 3, 2, .45); }
+.mk-rw-head { text-align: center; }
+.mk-rw-t { font: 600 max(22px, calc(64 * var(--u))) var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-gold); text-shadow: 0 0 20px rgba(240, 140, 40, .35); }
+.mk-rw-s { font: italic max(13px, calc(26 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mk-rw .mk-cards { width: min(100%, calc(1500 * var(--u))); flex: 1 1 auto; max-height: calc(700 * var(--u)); }
+.mk-rw .mk-usable { padding-bottom: 0; flex-wrap: wrap; }
+.mk-rw .mk-usable .gr-face { width: max(30px, calc(46 * var(--u))); height: max(30px, calc(46 * var(--u))); border: 1px solid var(--g-line2); }
+.mk-rw-foot { display: flex; gap: calc(26 * var(--u)); align-items: center; }
+.mk-rw-foot .gr-btn img { width: 1.3em; height: 1.3em; margin-right: .5em; vertical-align: -0.25em; }
+/* View bag: ödül ikonları solda, ortak envanter (v3) sağda */
+.gr-overlay .mk-rbduo > .mk-rbtiles { flex: 0 0 auto; width: max(110px, calc(240 * var(--u))); align-self: center; max-height: 100%; }
+.mk-rbtiles .rb-tile { cursor: pointer; color: inherit; }
+html.short .gr-overlay .mk-rbduo > .mk-rbtiles { width: 84px; gap: 6px; }
+html.short .mk-rbtiles .rb-label { font-size: 10px; }
+
+/* telefon */
+html.short .mk-rw { padding: 8px 10px 6px; gap: 6px; }
+html.short .mk-rw .mk-cards { max-height: none; min-height: 0; }
+html.short .mk-rw .mk-card { padding: 6px 8px; gap: 3px; }
+html.short .mk-rw .mk-medal { width: 44px; height: 44px; }
+html.short .mk-rw .mk-card .mk-big { font-size: 22px; }
+html.short .mk-rw .mk-card .mk-cn { font-size: 13px; }
+html.short .mk-rw .mk-card .mk-ct, html.short .mk-rw .mk-card .mk-cs, html.short .mk-rw .mw-stats .it-lines { font-size: 11px; }
+html.short .mk-rw .mk-heal-row .gr-face { width: 22px; height: 22px; }
+html.short .mk-rw .mk-heal-rows { gap: 2px; }
+html.short .mk-rw .mk-heal-row { font-size: 11px; }
+html.short .mk-rw .mk-kick { font-size: 10px; letter-spacing: .2em; }
+html.short .mk-rw-foot .gr-btn { min-height: 44px; }
+html.short .mk-fgrid { grid-template-columns: repeat(4, 52px); grid-auto-rows: 52px; }
+html.short .mk-frow { width: calc(4 * 52px + 3 * 6px); }
+html.short .mk-dlg .mk-dlg-t { font-size: 14px; }
+.gr-overlay .mk-duo > .mk-enc-shop { width: calc(600 * var(--u)); }
+.mk-enc-shop .gr-wares { grid-template-columns: repeat(5, minmax(0, 1fr)); gap: calc(8 * var(--u)) calc(12 * var(--u)); }
+.mk-enc-shop .gr-sec .mk-r.gr-btn { margin-left: auto; letter-spacing: .12em; color: var(--g-text); }
+.mk-enc-shop .gr-odo-line { font-size: max(12px, calc(19 * var(--u))); }
+/* telefon: envanter tüm genişliği / yüksekliği kullanır (sağ üst ikonların altından başlar) */
+html.short .gr-overlay .mk-duo > .gr-panel.mk { max-width: none; height: 100%; }
+html.short .gr-overlay .mk-duo:not(.pair) > .gr-panel.mk { flex: 1 1 auto; }
+html.short .mk-rw .mk-cards { flex: 1 1 0; }
+html.short .mk-rw-t { font-size: 22px; line-height: 1.1; }
+html.short .mk-rw-s { font-size: 13px; }
+html.short .mk-rw-head { padding-right: 110px; padding-left: 110px; }
+/* telefon v3: başlık satırı sekmelerle aynı satıra iner (dikey yer kazanır) */
+html.short .mk-v3.gr-panel { position: relative; }
+html.short .mk-v3 > .gr-head { position: absolute; left: 10px; right: 10px; top: 8px; padding: 0; border: 0; pointer-events: none; }
+html.short .mk-v3 > .gr-head > * { pointer-events: auto; }
+html.short .mk-v3 .gr-body > .gr-tabs { margin-left: 34px; min-height: 44px; }
+html.short .mk-v3 .gr-tab { min-height: 44px; }
+html.short .mk .gr-chip { min-height: 44px; }
+.mk-fhero { width: 100%; height: 100%; }
+.mk-rw-t, .mk-rw-s { text-shadow: 0 1px 3px #000, 0 0 12px rgba(0, 0, 0, .9); }
+.gr-overlay .mk-dlgwrap { position: absolute; inset: 0; z-index: 6; padding: inherit; }
+.gr-overlay .mk-dlgwrap.over { background: rgba(5, 3, 2, .6); }

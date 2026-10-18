@@ -26,7 +26,8 @@
     for (const h of Object.values(D.heroes))
       heroes[h.id] = { id: h.id, level: h.level, xp: h.xp, statPoints: h.statPoints, skillPoints: h.skillPoints, extra: {}, pending: {}, equip: { ...h.equip }, tree: {}, hp: h.id === 'h1' ? 0.62 : h.id === 'h3' ? 0.81 : h.id === 'h4' ? 0.45 : 1 };
     return {
-      v: S?.v ?? 'v1', mode: S?.mode ?? 'none', invOpen: true, hero: 'h1', heroes, bag: [...D.bag], wares: [...D.wares], buyback: [], gold: 240, sel: null, filter: false,
+      v: S?.v ?? 'v3', mode: S?.mode ?? 'none', invOpen: !['town', 'reward'].includes(S?.mode ?? 'none'), dlg: null, rbag: false, shopTab: 'sell', fsel: null,
+      form: { h1: [3, 1], h2: [1, 1], h3: [2, 0], h4: [2, 2] }, hero: 'h1', heroes, bag: [...D.bag], wares: [...D.wares], buyback: [], gold: 240, sel: null, filter: false,
       tab: { v1: 'stats', v2: 'equip', v3: 'hero', v5: 'gear' }, sheet: false, reward: { taken: null, target: null }, rested: false, rerolls: 0,
     };
   }
@@ -141,7 +142,7 @@
     const tap = sel && sel.slot === slot && usable(hid, S.sel.uid).ok ? ' tap-ok' : '';
     if (!uid) {
       const sub = slot === 'offhand' && !m.offhand ? 'No shield or dagger' : 'Empty';
-      return `<button class="gr-slot empty gr-slot-${slot}${tap}" type="button" data-drop="slot:${hid}:${slot}" style="--rc:#5b4a33"><img class="gr-svg gr-px dim" src="${D.glyph[slot]}" alt="" style="--sz:1.3"><div class="gr-slot-text"><div class="gr-slot-name">${sname}</div><div class="gr-slot-sub">${sub}</div></div></button>`;
+      return `<button class="gr-slot empty gr-slot-${slot}${tap}" type="button" data-drop="slot:${hid}:${slot}" style="--rc:#5b4a33">${slotGlyph(slot)}<div class="gr-slot-text"><div class="gr-slot-name">${sname}</div><div class="gr-slot-sub">${sub}</div></div></button>`;
     }
     const it = item(uid);
     return `<button class="gr-slot gr-slot-${slot}${tap}${S.sel?.uid === uid ? ' on' : ''}" type="button" data-drop="slot:${hid}:${slot}" data-drag="slot:${uid}" data-tip="${uid}" data-src="slot" style="--rc:${it.color}"><img class="gr-svg gr-px item-art" src="${it.icon}" alt="" draggable="false" style="--sz:1.3;--glow:${it.color}"><div class="gr-slot-text"><div class="gr-slot-name" style="color:${it.color}">${esc(it.name)}</div></div></button>`;
@@ -155,8 +156,12 @@
     if (uid) return itemCell(uid, { src: 'slot', drop: `slot:${hid}:${slot}` }).replace('class="gr-item', `class="gr-item mk-tile${tap}`);
     if (slot === 'offhand' && twoHand(hero(hid).equip.weapon)) return `<div class="gr-item empty mk-tile" data-tipt="${sname}" data-tipi="Two-handed weapon"><img class="gr-svg gr-px gr-silhouette" src="${item(hero(hid).equip.weapon).icon}" alt=""></div>`;
     const sub = slot === 'offhand' && !meta(hid).offhand ? 'No shield or dagger' : 'Empty';
-    return `<button class="gr-item empty mk-tile${tap}" type="button" data-drop="slot:${hid}:${slot}" data-tipt="${sname}" data-tipi="${sub}"><img class="gr-svg gr-px dim" src="${D.glyph[slot]}" alt=""></button>`;
+    return `<button class="gr-item empty mk-tile${tap}" type="button" data-drop="slot:${hid}:${slot}" data-tipt="${sname}" data-tipi="${sub}">${slotGlyph(slot).replace(' style="--sz:1.3"', '')}</button>`;
   }
+  // boş yuva simgesi (art-pipeline): slot-icons/<slot>.webp varsa o (soluk), yoksa eski gölge simge
+  const SLOT_ICON = {};
+  for (const sl of D.slots) { const im = new Image(); im.onload = () => { SLOT_ICON[sl.id] = im.src; render(); }; im.src = `${A}slot-icons/${sl.id}.webp`; }
+  const slotGlyph = (slot) => (SLOT_ICON[slot] ? `<img class="gr-svg mk-sloticon" src="${SLOT_ICON[slot]}" alt="" draggable="false" style="--sz:1.3">` : `<img class="gr-svg gr-px dim" src="${D.glyph[slot]}" alt="" style="--sz:1.3">`);
   const slotsGrid = (hid, ids = D.slots.map((s) => s.id)) => `<div class="gr-slots">${ids.map((s) => slotBtn(hid, s)).join('')}</div>`;
   function levelBlock(hid, o = {}) {
     const h = hero(hid);
@@ -194,49 +199,17 @@
         pm = `<span class="gr-pm">${sub}${add}</span>`;
       }
       const cls = ATTR.includes(id) && fr > 0 && canAdd(hid, id) ? ' can-add' : '';
-      return `<div class="gr-stat${cls}" data-tipt="${esc(STAT_NAME[id] ?? p.label)}" data-stat="${id}"${ATTR.includes(id) ? ` data-attr="${id}"` : ''}><img class="gr-sico" src="${statIco(id)}" alt="" draggable="false"><span class="gr-stat-k">${p.label}</span><span class="gr-stat-v">${fmt(now[id], p.fmt)}</span>${pm}<span class="gr-stat-d ${d ? (d > 0 ? 'up' : 'down') : ''}">${d ? fmtD(d, p.fmt) : ''}</span></div>`;
+      return `<div class="gr-stat${cls}" data-tipt="${esc(STAT_NAME[id] ?? p.label)}" data-stat="${id}"${ATTR.includes(id) ? ` data-attr="${id}"` : ''}><img class="gr-sico" src="${statIco(id)}" alt="" draggable="false"><span class="gr-stat-k">${p.label}</span><span class="gr-stat-v">${fmt(now[id], p.fmt)}</span><span class="gr-stat-d ${d ? (d > 0 ? 'up' : 'down') : ''}">${d ? fmtD(d, p.fmt) : ''}</span>${pm}</div>`;
     };
+    // Sheet: HP / MP satırının altında oyunun savaş HUD çubuğu (can yeşil, mana mavi); can = kahramanın şu anki canı
+    const vital = (id) => { const f = id === 'hp' ? h.hp : 1; const cur = Math.round(now[id] * f); return `<div class="mk-vital" data-tipt="${id === 'hp' ? 'Health' : 'Mana'}" data-tipi="${cur} / ${fmt(now[id], 'int')}">${row(id).replace(' data-tipt="', ' data-x="')}<div class="bh-bar ${id} mk-vbar"><i style="width:${Math.round(f * 100)}%"></i></div></div>`; };
     const grp = (cls, ids) => `<div class="gr-sgrp ${cls}">${ids.map(row).join('')}</div>`;
-    return `<div class="gr-sgroups">${grp('vitals', D.groups.vitals)}${D.groups.panel.map((ids, i) => grp(['base', 'attack', 'defense'][i], ids)).join('')}</div>`;
+    return `<div class="gr-sgroups"><div class="gr-sgrp vitals">${D.groups.vitals.map(vital).join('')}</div>${D.groups.panel.map((ids, i) => grp(['base', 'attack', 'defense'][i], ids)).join('')}</div>`;
   }
   const skillsBlock = (hid) => `<div class="gr-skills"><div class="gr-sec">Skills</div>${meta(hid).skillBar}</div>`;
 
-  // ---- skill ağacı (YER TUTUCU: düğüm adları / bedeller / kurallar tasarlanmadı; görsel oyun dilinde, ikonlar oyunun skill / durum ikonları)
-  const TREE_EXTRA = { warrior: ['wound', 'fortify', 'staggered', 'haste', 'anchored', 'blessed'], mage: ['ash_brand', 'slow', 'shrouded', 'haste', 'silence', 'blessed'], archer: ['wound', 'haste', 'blinded', 'slow', 'staggered', 'fortify'], hexer: ['jinxed', 'omen', 'doom', 'wither', 'dark_bond', 'abyssal_fury'] };
-  const TREE_WORDS = [['Honed', 'Swift'], ['Steady', 'Deep'], ['Hardened', 'Keen']];
-  function treeNodes(hid) {
-    const m = meta(hid);
-    const icons = [...m.skillBar.matchAll(/<div class="fr">\s*<img class="bh-ico" src="([^"]+)"/g)].map((x) => x[1]);
-    const names = [...m.skillBar.matchAll(/<span class="nm">([^<]+)<\/span>/g)].map((x) => x[1]);
-    const pas = (m.skillBar.match(/bh-medal lg">\s*<img class="bh-ico" src="([^"]+)"/) || [])[1];
-    const ex = TREE_EXTRA[m.class] ?? TREE_EXTRA.warrior;
-    return [0, 1, 2].map((b) => ({
-      name: names[b] ?? `Path ${b + 1}`,
-      nodes: [
-        { id: `${b}r`, name: names[b], icon: icons[b], need: null, tier: 'root' },
-        { id: `${b}a`, name: `${TREE_WORDS[b][0]} ${names[b]}`, icon: A + `misc-icons/status/${ex[b * 2]}.webp`, need: `${b}r` },
-        { id: `${b}b`, name: `${TREE_WORDS[b][1]} ${names[b]}`, icon: A + `misc-icons/status/${ex[b * 2 + 1]}.webp`, need: `${b}r` },
-        { id: `${b}c`, name: b === 2 ? m.passive : names[3], icon: b === 2 ? pas : icons[3], need: [`${b}a`, `${b}b`], tier: 'cap' },
-      ],
-    }));
-  }
-  function treeBlock(hid) {
-    const h = hero(hid);
-    const learned = (id) => !!h.tree[id];
-    const ready = (n) => !learned(n.id) && (!n.need || (Array.isArray(n.need) ? n.need.some(learned) : learned(n.need)));
-    const node = (n) => {
-      const cost = n.tier === 'cap' ? 2 : 1;
-      const st = learned(n.id) ? 'lrn' : ready(n) && h.skillPoints >= cost ? 'can' : 'off';
-      const tip = `<div class="bh-tt"><img class="bh-ico bh-tt-ico" src="${n.icon}" alt=""><span class="bh-tt-name" style="color:#f4ede1">${esc(n.name)}</span>${n.tier === 'cap' ? '<span class="bh-tag">Major</span>' : ''}</div><div class="bh-fade"></div><ul class="bh-rows"><li>Placeholder node: the skill tree is not designed yet.</li><li style="color:#b9ab94">${learned(n.id) ? 'Learned' : `Costs ${cost} skill point${cost > 1 ? 's' : ''}${n.need ? ' · needs the node above' : ''}`}</li></ul>`;
-      return `<div class="bh-sk ${n.tier === 'cap' ? 'ult' : ''} ${st}" data-node="${n.id}" data-cost="${cost}"><div class="fr"><img class="bh-ico" src="${n.icon}" alt="" draggable="false"></div><span class="nm">${esc(n.name)}</span><span class="cost">${learned(n.id) ? 'Learned' : `<span>${cost} pt</span>`}</span><div class="bh-sktip bh-panel bh-corners">${tip}</div></div>`;
-    };
-    const link = (lit) => `<div class="mk-link${lit ? ' lit' : ''}"></div>`;
-    const br = treeNodes(hid).map((b) => {
-      const [r, a, bb, c] = b.nodes;
-      return `<div class="mk-branch"><div class="gr-sec">${esc(b.name)}</div><div class="bh-kit"><div class="mk-row">${node(r)}</div>${link(learned(r.id))}<div class="mk-row">${node(a)}${node(bb)}</div>${link(learned(a.id) || learned(bb.id))}<div class="mk-row">${node(c)}</div></div></div>`;
-    });
-    return `<div class="mk-tree-head gr-sec mk-flex">Skill tree ${skBadge(hid)}<span class="mk-r mk-note">Draft · placeholder nodes</span></div><div class="mk-tree" data-zk="${{ v1: 0.76, v2: 0.92, v3: 0.7, v4: 0.9, v5: 0.62 }[S.v]}">${br.join('')}</div>`;
-  }
+  // ---- skill ağacı (Ömer 2026-10-18): yer tutucu düğüm YOK; kap aynı kalır, ortada "Coming soon"
+  const treeBlock = (hid) => `<div class="mk-tree-head gr-sec mk-flex">Skill tree ${skBadge(hid)}</div><div class="mk-tree mk-soon"><span>Coming soon</span></div>`;
   // ---- torba
   function bagBlock(o = {}) {
     const cells = [];
@@ -269,34 +242,34 @@
     const pts = party.reduce((t, hid) => t + hero(hid).statPoints, 0);
     const sk = party.reduce((t, hid) => t + hero(hid).skillPoints, 0);
     return `<div class="mk-ctx"><div class="gr-sec">The Border Road</div><div class="mk-note">Stop 6 of 11 · next: Bandit camp (Elite)</div>
-      ${party.map((hid) => `<div class="mk-heal-row">${face(hid)}<div><span>${esc(meta(hid).name)} · Lv ${hero(hid).level}</span><div class="mk-hpbar"><i style="width:${Math.round(hero(hid).hp * 100)}%"></i></div></div><span>${ptBadge(hid) || '&nbsp;'}</span></div>`).join('')}
+      ${party.map((hid) => `<button class="mk-heal-row mk-herobtn${S.invOpen && hid === S.hero ? ' on' : ''}" type="button" data-openhero="${hid}">${face(hid)}<div><span>${esc(meta(hid).name)} · Lv ${hero(hid).level}</span><div class="mk-hpbar"><i style="width:${Math.round(hero(hid).hp * 100)}%"></i></div></div><span>${ptBadge(hid) || '&nbsp;'}</span></button>`).join('')}
       <div class="mk-note">${pts ? `${pts} stat points and ` : ''}${sk} skill points wait to be spent.</div></div>`;
   }
   function merchantCtx(o = {}) {
     const wares = S.wares.map((uid) => `<div class="gr-cellw">${uid ? itemCell(uid, { src: 'ware', hid: S.hero }) + price(item(uid).value, item(uid).value > S.gold) : `<div class="gr-item empty sold"></div><div class="gr-price">Sold</div>`}</div>`).join('');
-    const bb = S.buyback.length ? S.buyback.map((uid) => `<div class="gr-cellw">${itemCell(uid, { src: 'bb', hid: S.hero })}${price(item(uid).sell, item(uid).sell > S.gold)}</div>`).join('') : '<div class="gr-card-empty">Sold something by mistake? Buy it back here until you leave.</div>';
-    return `<div class="mk-ctx gr-stall mk-stall mk-drop" data-drop="stall"><div class="gr-odo"><div class="gr-face" style="background-image:url('${D.extra.merchant_av}')"></div><div class="gr-odo-line">Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.</div></div>
+    const tab = S.shopTab === 'buyback' ? 'buyback' : 'sell';
+    const tabs = `<div class="gr-tabs mk-shoptabs" role="tablist">${[['sell', 'Sell'], ['buyback', 'Buyback']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-shoptab="${k}">${n}${k === 'buyback' && S.buyback.length ? ` <span class="mk-pt sk">${S.buyback.length}</span>` : ''}</button>`).join('')}</div>`;
+    const pane = tab === 'sell'
+      ? `<div class="mk-sellbox mk-drop" data-drop="stall"><img src="${D.extra.gold}" alt=""><div>Drag an item here from the bag or a hero to sell it for half its worth.<i>Or tap the item and choose Sell.</i></div></div>`
+      : S.buyback.length ? `<div class="gr-bb-row">${S.buyback.map((uid) => `<div class="gr-cellw">${itemCell(uid, { src: 'bb', hid: S.hero })}${price(item(uid).sell, item(uid).sell > S.gold)}</div>`).join('')}</div><div class="mk-note">Sold this visit. Buy back for the price you sold at, until you leave.</div>`
+      : '<div class="gr-card-empty">Sold something by mistake? It waits here until you leave.</div>';
+    return `<div class="mk-ctx gr-stall mk-stall" data-drop="stall"><div class="gr-odo"><div class="gr-face" style="background-image:url('${D.extra.merchant_av}')"></div><div class="gr-odo-line">Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.</div></div>
+      <div class="gr-sec mk-flex">Wares<button class="gr-btn sm gr-reroll mk-r" type="button" data-act="reroll" ${S.gold < 15 ? 'disabled' : ''}>Reroll<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button></div>
       <div class="gr-wares" style="--ware-cols:${o.cols ?? 3}">${wares}</div>
-      <button class="gr-btn sm gr-reroll" type="button" data-act="reroll" ${S.gold < 15 ? 'disabled' : ''}>Reroll wares<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button>
-      <div class="gr-buyback"><div class="gr-sec">Buy back · this visit</div><div class="gr-bb-row">${bb}</div></div>
-      <div class="mk-note">Drag a bag item here to sell it for half its worth.</div></div>`;
+      ${tabs}<div class="mk-shoppane">${pane}</div></div>`;
   }
   function rewardCards(o = {}) {
     const R = S.reward;
     const uid = D.reward[0];
     const it = item(uid);
-    const target = R.target ?? Object.keys(S.heroes).find((hid) => usable(hid, uid).ok) ?? null;
     const taken = R.taken;
-    const who = Object.keys(S.heroes).map((hid) => {
-      const u = usable(hid, uid);
-      const d = diffFor(hid, uid);
-      const best = d ? Object.entries(d).sort((a, b) => Math.abs(b[1]) - Math.abs(a[1]))[0] : null;
-      return `<button class="gr-hero${hid === target ? ' on' : ''}${u.ok ? '' : ' no'}" type="button" data-target="${hid}" data-drop="hero:${hid}" data-tipt="${esc(meta(hid).name)}" data-tipi="${esc(u.ok ? (best ? `${fmtD(best[1], PANEL_META[best[0]].fmt)} ${PANEL_META[best[0]].label}` : 'No change') : u.why)}">${face(hid)}${best ? `<span class="mk-d ${best[1] > 0 ? 'gr-tip-d up' : 'gr-tip-d down'}">${fmtD(best[1], PANEL_META[best[0]].fmt)} ${PANEL_META[best[0]].label}</span>` : ''}</button>`;
-    }).join('');
+    // oyundaki kart (EndlessScene > usableRow): silahsa takabilenlerin küçük portreleri (ad yok), değilse "Any hero"
+    const ok = Object.keys(S.heroes).filter((hid) => usable(hid, uid).ok || usable(hid, uid).lvl);
+    const who = it.slot !== 'weapon' ? '<div class="mk-cs">Any hero</div>' : ok.length ? ok.map((hid) => face(hid)).join('') : '<div class="mk-cs" style="color:#e0907a">No one in your party can wield this</div>';
     const lines = (it.tip.h1.match(/<div class="it-lines">[\s\S]*?<\/div><\/div>(?=<div class="it-(value|effect)")/) || [''])[0];
     const card1 = `<div class="mk-card${taken === 0 ? ' taken' : taken !== null ? ' dim' : ''}" style="--ac:${it.color}" data-card="0"><div class="mk-sell"><span>Sell: ${it.sell}</span><img src="${D.extra.gold}" alt=""></div><div class="mk-kick">Spoils</div>
-      <div class="mk-medal" data-drag="reward:${uid}" data-tip="${uid}" data-src="reward"><img src="${it.icon}" alt="" style="image-rendering:pixelated"></div><div class="mk-cn" style="color:${it.color}">${esc(it.name)}</div><div class="mk-cs">${esc(it.sub)}</div><div class="mw-stats">${lines}</div>
-      <div class="mk-who"><div class="mk-kick">${taken === 0 ? 'Given to' : 'Give to'}</div><div class="mk-who-row">${who}</div></div></div>`;
+      <div class="mk-medal" data-tip="${uid}" data-src="reward"><img src="${it.icon}" alt="" style="image-rendering:pixelated"></div><div class="mk-cn" style="color:${it.color}">${esc(it.name)}</div><div class="mk-cs">${esc(it.sub)}</div><div class="mw-stats">${lines}</div>
+      <div class="mk-who"><div class="mk-kick">Usable by</div><div class="mk-who-row mk-usable">${who}</div></div></div>`;
     const gold = 38;
     const card2 = `<div class="mk-card${taken === 1 ? ' taken' : taken !== null ? ' dim' : ''}" style="--ac:#c9a050" data-card="1"><div class="mk-kick">Coin</div><div class="mk-medal"><img src="${D.extra.gold}" alt=""></div><div class="mk-big">+${gold}</div><div class="mk-kick" style="letter-spacing:.2em">Gold</div><div class="mk-ct">Coin for the merchant who comes after every 5th wave.</div><div class="mk-ct" style="margin-top:auto">Purse ${S.gold} → ${S.gold + (taken === 1 ? 0 : gold)}</div></div>`;
     const card3 = `<div class="mk-card${taken === 2 ? ' taken' : taken !== null ? ' dim' : ''}" style="--ac:#d96a5a" data-card="2"><div class="mk-kick">Rest</div><div class="mk-medal"><img src="${D.extra.heal}" alt=""></div><div class="mk-big">+20%</div><div class="mk-ct">Every hero recovers 20% of their health.</div>
@@ -306,24 +279,104 @@
   // Envanter yalnızca karakterle ilgilidir (Ömer 2026-10-18): başlık hep "Gear"; dış etmenler (harita, kasaba, tüccar, ödül) kendi penceresinde
   const head = () => `<div class="gr-head"><div class="gr-head-l"><div class="gr-title">Gear</div></div>${S.mode === 'merchant' && S.invOpen ? '' : goldHead()}</div>`;
   function foot() {
-    const hint = S.sel ? `Selected: <b style="color:${item(S.sel.uid).color}">${esc(item(S.sel.uid).name)}</b> · tap a hero or a slot to equip` : S.mode === 'merchant' ? 'Drag between the stall and the bag to buy or sell' : S.mode === 'reward' ? 'Drag the reward onto a hero to give it' : 'Drag items onto a hero or a slot · double-click equips';
-    return `<div class="gr-foot"><div class="mk-hint">${hint}</div><button class="gr-btn primary" type="button" data-act="done">${S.mode === 'none' ? 'Done' : 'Close'}</button></div>`;
+    const hint = S.sel ? `Selected: <b style="color:${item(S.sel.uid).color}">${esc(item(S.sel.uid).name)}</b> · tap a hero or a slot to equip` : S.mode === 'merchant' ? 'Drag between the stall and the bag to buy or sell' : S.mode === 'reward' ? 'Tap a reward on the left to take it · drag an item to the trash to make room' : 'Drag items onto a hero or a slot · double-click equips';
+    return `<div class="gr-foot"><div class="mk-hint">${hint}</div><button class="gr-btn primary" type="button" data-act="done">${S.mode === 'none' ? 'Done' : S.mode === 'reward' ? 'Close bag' : 'Close'}</button></div>`;
   }
   // ---- dış pencereler (envanterden AYRI; envanter yanında açık kalabilir)
   const gearToggle = () => `<button class="mk-ib${S.invOpen ? ' on sel' : ''}" type="button" data-act="inv" data-tipt="Gear" data-tipi="${S.invOpen ? 'Hide the gear window' : 'Open heroes and bag'}"><img src="${D.extra.gear}" alt=""></button>`;
+  const formBtn = () => `<button class="mk-ib${S.dlg?.kind === 'formation' ? ' on sel' : ''}" type="button" data-act="formation" data-tipt="Formation" data-tipi="Who stands in front"><img src="${D.extra.formation}" alt=""></button>`;
   const encFoot = (primary, extra = '') => `<div class="gr-foot">${gearToggle()}<div class="mk-hint">${extra}</div><button class="gr-btn primary" type="button" data-act="encdone">${primary}</button></div>`;
   function encWindow() {
     const m = S.mode;
     if (m === 'none') return '';
     if (m === 'map') {
       // sefer haritası: pencere değil, haritanın kendi sol paneli (oyundaki "war table" bilgi sütunu)
-      return `<div class="mk-enc mk-enc-map"><div class="mk-maphead"><b>I · The Border Road</b><i>Normal · Medium</i></div>${campaignCtx().replace('<div class="gr-sec">The Border Road</div>', '<div class="gr-sec">Your party</div>')}<div class="mk-mapacts">${gearToggle()}<span class="mk-note">Gear opens over the map; the map stays visible.</span></div></div>`;
+      return `<div class="mk-enc mk-enc-map"><div class="mk-maphead"><b>I · The Border Road</b><i>Normal · Medium</i></div>${campaignCtx().replace('<div class="gr-sec">The Border Road</div>', '<div class="gr-sec">Your party</div>')}<div class="mk-mapacts">${gearToggle()}${formBtn()}<span class="mk-note">Tap a hero to open their gear.</span></div></div>`;
     }
-    if (m === 'town') return `<div class="gr-panel gr-gear mk-enc mk-enc-town"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Ashford Village</div><div class="gr-shop-sub">Town · Rest, Recruits, Trade</div></div></div><div class="mk-enc-b mk-scroll">${townCtx()}</div>${encFoot('Road out')}</div>`;
-    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div>${encFoot('Move on')}</div>`;
-    return `<div class="gr-panel gr-gear mk-enc mk-enc-reward"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Victory</div></div></div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Wave 6 cleared. Choose one reward.</div><div class="mk-enc-b mk-scroll">${rewardCards({ rows: true })}</div>${encFoot(S.reward.taken !== null ? 'Continue' : 'Skip reward')}</div>`;
+    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div>${encFoot('Back to town')}</div>`;
+    return ''; // kasaba ve ödül: pencere değil, sahnenin kendisi (townLayer / rewardLayer)
   }
   const priced = () => S.mode === 'merchant';
+  // ---- kasaba sahnesi (oyundaki TownScreen, src/game/town-screen.ts): tam ekran görsel, resimdeki yerler (valdoria.json > Ashford scene.hotspots)
+  //      tıklanınca KENDİ küçük penceresini açar; önde takım (dokun = o kahramanın envanteri). Sol altta Gear + Formation (Ömer 2026-10-18).
+  const TOWN = { w: 1599, h: 1066, focusY: 0.58, spots: [
+    { id: 'stall', act: 'trade', label: "Odo's Stall", r: [0, 0.3, 0.262, 0.62] },
+    { id: 'burner', act: 'story', label: 'Charcoal Burner', r: [0.29, 0.47, 0.385, 0.63] },
+    { id: 'campfire', act: 'rest', label: 'Campfire', r: [0.385, 0.42, 0.57, 0.63] },
+    { id: 'board', act: 'recruit', label: 'Notice Board', r: [0.585, 0.405, 0.67, 0.58], note: 'Notices of burned farms and missing travellers. No one here seeks to join a company. Recruits gather in the cities.' },
+    { id: 'road', act: 'leave', label: 'Road Out', r: [0.9, 0.34, 1, 0.6] },
+  ] };
+  function townLayer() {
+    const w = window.innerWidth, h = window.innerHeight;
+    const gu = Math.min(h / 1080, w / 1920);
+    const phone = h <= 720;
+    const sc = Math.max(w / TOWN.w, h / TOWN.h);
+    const ox = (w - TOWN.w * sc) / 2, oy = (h - TOWN.h * sc) * TOWN.focusY;
+    const fs = Math.max(12, (phone ? 34 : 21) * gu);
+    const spots = TOWN.spots.map((t) => {
+      const x = ox + t.r[0] * TOWN.w * sc, y = oy + t.r[1] * TOWN.h * sc, rw = (t.r[2] - t.r[0]) * TOWN.w * sc, rh = (t.r[3] - t.r[1]) * TOWN.h * sc;
+      const lx = Math.min(w - 70, Math.max(70, x + rw / 2)), ly = Math.max(150 * gu, y + 4);
+      return `<button class="mk-hot" type="button" data-hot="${t.id}" aria-label="${esc(t.label)}" style="left:${x}px;top:${y}px;width:${rw}px;height:${rh}px"></button>
+        <button class="mk-hotlab" type="button" data-hot="${t.id}" style="left:${lx}px;top:${ly}px;font-size:${fs}px">${esc(t.label)}</button>`;
+    }).join('');
+    const ids = Object.keys(S.heroes);
+    const k = phone ? 1.15 : 1;
+    const hh = 250 * gu * k, gap = 230 * gu * k, feet = h * (phone ? 0.86 : 0.9);
+    const heroes = ids.map((hid, i) => {
+      const x = w / 2 + (i - (ids.length - 1) / 2) * gap;
+      return `<button class="mk-thero" type="button" data-openhero="${hid}" style="left:${x - gap * 0.42}px;top:${feet - hh}px;width:${gap * 0.84}px;height:${hh + Math.max(18, 30 * gu)}px"><img src="${A}poses/${meta(hid).class}.webp" alt="" draggable="false" style="height:${hh}px"><span class="mk-thn" style="font-size:${Math.max(11, 18 * gu)}px">${esc(meta(hid).name)}</span>${ptBadge(hid)}</button>`;
+    }).join('');
+    return `<div class="mk-layer mk-town">${spots}${heroes}<div class="mk-townhud">${gearToggle()}${formBtn()}</div></div>`;
+  }
+  function townHot(id) {
+    const t = TOWN.spots.find((x) => x.id === id);
+    if (!t) return;
+    if (t.act === 'trade') return setMode('merchant');
+    if (t.act === 'rest') S.dlg = { kind: 'note', title: t.label, text: 'Your company has rested: everyone healed and revived.' };
+    else if (t.act === 'recruit') S.dlg = { kind: 'note', title: t.label, text: t.note };
+    else if (t.act === 'story') return toast('The Charcoal Burner scene plays again (mockup)');
+    else return toast('Leaves Ashford for the road (mockup)');
+    S.invOpen = false; unpin(); render();
+  }
+  // ---- küçük pencereler (oyundaki openModal / townNote): başlık, kısa metin, Close; zemine dokunmak kapatır
+  function dlgHtml() {
+    const d = S.dlg;
+    const sub = S.mode === 'map' ? 'I · The Border Road' : 'Ashford Village';
+    if (d.kind === 'note') return `<div class="gr-panel mk-dlg" data-dlg="1"><div class="gr-title">${esc(d.title)}</div><div class="gr-shop-sub">${sub}</div><p class="mk-dlg-t">${esc(d.text)}</p><div class="gr-foot"><button class="gr-btn primary" type="button" data-act="dlgclose">Close</button></div></div>`;
+    // Formation (oyundaki campaign-panels > openFormation): 4 x 3 ızgara, ön sıra SAĞDA; sürükle ya da dokun-dokun
+    const cells = [];
+    for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
+      const who = Object.keys(S.form).find((hid) => S.form[hid][0] === c && S.form[hid][1] === r);
+      cells.push(`<div class="mk-fcell${c === 3 ? ' front' : ''}${S.fsel && S.fsel !== who ? ' tap-ok' : ''}" data-fcell="${c},${r}">${who ? `<button class="mk-fhero${S.fsel === who ? ' on' : ''}" type="button" data-fhero="${who}" data-tipt="${esc(meta(who).name)}">${face(who)}</button>` : ''}</div>`);
+    }
+    return `<div class="gr-panel mk-dlg mk-form" data-dlg="1"><div class="gr-title">Formation</div><div class="gr-shop-sub">Drag a hero to a new place, or tap a hero and then a cell.</div>
+      <div class="mk-fgrid">${cells.join('')}</div><div class="mk-frow"><span>Back</span><span>Front</span></div>
+      <div class="gr-foot"><button class="gr-btn primary" type="button" data-act="dlgclose">Done</button></div></div>`;
+  }
+  function moveForm(hid, c, r) {
+    const other = Object.keys(S.form).find((x) => x !== hid && S.form[x][0] === c && S.form[x][1] === r);
+    if (other) S.form[other] = [...S.form[hid]];
+    S.form[hid] = [c, r];
+    S.fsel = null;
+  }
+  // ---- ödül (oyundaki EndlessScene > drawReward): başlık + kartlar (bütün kart = al) + "View bag"; yapı DEĞİŞMEDİ
+  function rewardLayer() {
+    const taken = S.reward.taken;
+    return `<div class="mk-layer mk-rw"><div class="mk-rw-head"><div class="mk-rw-t">Victory</div><div class="mk-rw-s">Wave 6 cleared. Choose one reward.</div></div>${rewardCards({})}
+      <div class="mk-rw-foot"><button class="gr-btn" type="button" data-act="viewbag"><img class="gr-ui-ico" src="${D.extra.bag}" alt="">View bag · ${S.bag.length}/${BAG_SIZE}</button>${taken !== null ? '<button class="gr-btn primary" type="button" data-act="encdone">Continue</button>' : ''}</div></div>`;
+  }
+  // View bag: kartlar küçük ikon olarak SOLDA (oyundaki reward-bag.ts rb-tiles); sağda artık ortak envanter (v3). İkona dokunmak = o ödülü al
+  function rbTiles() {
+    const uid = D.reward[0], it = item(uid), taken = S.reward.taken;
+    const tiles = [
+      `<span class="rb-medal" style="--rc:${it.color}"><img class="gr-svg gr-px" src="${it.icon}" alt=""></span><span class="rb-label" style="color:${it.color}">${esc(it.name)}</span>`,
+      `<span class="rb-medal" style="--rc:#ecc878"><img class="rb-emblem" src="${D.extra.gold}" alt=""></span><span class="rb-label">+38 gold</span>`,
+      `<span class="rb-medal" style="--rc:#d96a5a"><img class="rb-emblem" src="${D.extra.heal}" alt=""></span><span class="rb-label">Heal 20%</span>`,
+    ];
+    const tipOf = (i) => (i === 0 ? ` data-tip="${uid}" data-src="reward"` : ` data-tipt="${i === 1 ? '+38 gold' : 'Heal 20%'}" data-tipi="${i === 1 ? 'Coin for the merchant' : 'Every hero recovers 20% of their health'}"`);
+    return `<div class="rb-tiles mk-rbtiles"><div class="gr-sec">Rewards</div>${tiles.map((t, i) => `<button class="rb-tile${taken !== null ? ' blocked' : ''}" type="button" data-rbtake="${i}" style="--i:${i}"${tipOf(i)}>${t}</button>`).join('')}</div>`;
+  }
+
 
   // ---------------------------------------------------------------- düzenler (yalnızca kahramanlar, yuvalar, level / statlar, skill'ler, ağaç, torba)
   const L = {};
@@ -348,7 +401,8 @@
     const marks = `<div class="mk-marks">${Object.keys(S.heroes).map((hid) => `<button class="mk-mark${hid === S.hero ? ' on' : ''}" type="button" data-hero="${hid}" data-drop="hero:${hid}" data-tipt="${esc(meta(hid).name)}" data-tipi="${esc(heroLine(hid, focusUid()).html.replace(/<[^>]+>/g, ''))}">${face(hid)}${ptBadge(hid)}</button>`).join('')}</div>`;
     const tabs = `<div class="gr-tabs" role="tablist" style="grid-column:2 / -1">${[['hero', 'Hero'], ['sheet', 'Sheet']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-tab="v3:${k}">${n}${k === 'sheet' ? ' ' + skBadge(S.hero) : ''}</button>`).join('')}</div>`;
     const l = tab === 'hero' ? `<div class="gr-sec">${esc(meta().name)} · ${esc(meta().families)}</div>${slotsGrid(S.hero)}${skillsBlock(S.hero)}` : levelBlock(S.hero) + `<div class="gr-sec">Stats</div>` + statsBlock(S.hero);
-    const r = tab === 'hero' ? bagBlock({ priced: priced(), cols: 6 }) : treeBlock(S.hero);
+    const narrow = document.documentElement.classList.contains('short') && (S.mode === 'map' || S.mode === 'merchant' || S.rbag);
+    const r = tab === 'hero' ? bagBlock({ priced: priced(), cols: narrow ? 4 : 6 }) : treeBlock(S.hero);
     const n = tab === 'hero' ? [1, 2] : [3, 4];
     return `<div class="gr-panel gr-gear mk mk-v3">${head()}<div class="gr-body" style="grid-template-rows:auto minmax(0,1fr)"><div></div>${tabs}${marks}<div class="mk-col mk-page mk-scroll">${l}<div class="mk-folio">· ${n[0]} ·</div></div><div class="mk-spine"></div><div class="mk-col mk-page r mk-scroll">${r}<div class="mk-folio">· ${n[1]} ·</div></div></div>${foot()}</div>`;
   };
@@ -393,7 +447,15 @@
     const bg = { none: 'bg/map.webp', map: 'bg/map.webp', town: 'bg/town.webp', merchant: 'bg/town.webp', reward: 'bg/endless.webp' }[S.mode];
     $('#bgimg').style.backgroundImage = `url('${A}${bg}')`;
     const st = { none: ['Valdoria', 'I · The Border Road'], map: ['Valdoria', 'I · The Border Road'], town: ['Ashford Village', 'Town · Rest, Recruits, Trade'], merchant: ['Ashford Village', "Odo's stall"], reward: ['Endless', 'Wave 6'] }[S.mode];
-    const html = `<div class="mk-scene-title"><b>${st[0]}</b><i>${st[1]}</i></div><div class="gr-overlay el-modal mk-ov enc-${S.mode}" role="dialog"><div class="mk-duo${S.mode === 'none' ? '' : S.invOpen ? ' pair' : ' solo'}">${encWindow()}${S.mode === 'none' || S.invOpen ? L[S.v]() : ''}</div><div class="el-tip item-tip" role="tooltip"></div><div class="mk-tip"></div><div class="mk-toast"></div>
+    // sahnenin kendisi (kasaba / ödül ekranı) örtünün ALTINDA; örtü yalnızca bir pencere açıkken kararır
+    const layer = S.mode === 'town' ? townLayer() : S.mode === 'reward' && !S.rbag ? rewardLayer() : '';
+    let inner;
+    if (S.mode === 'town') inner = S.invOpen ? `<div class="mk-duo">${L[S.v]()}</div>` : '';
+    else if (S.mode === 'reward') inner = S.rbag ? `<div class="mk-duo pair mk-rbduo">${rbTiles()}${L[S.v]()}</div>` : '';
+    else inner = `<div class="mk-duo${S.mode === 'none' ? '' : S.invOpen ? ' pair' : ' solo'}">${encWindow()}${S.mode === 'none' || S.invOpen ? L[S.v]() : ''}</div>`;
+    // küçük pencere (Formation / not) açık olanın ÜSTÜNE gelir; haritanın sol sütunu arkada görünür kalır
+    if (S.dlg) inner = (inner || '') + `<div class="mk-duo mk-dlgwrap${inner ? ' over' : ''}">${dlgHtml()}</div>`;
+    const html = `${S.mode === 'reward' ? '' : `<div class="mk-scene-title"><b>${st[0]}</b><i>${st[1]}</i></div>`}${layer}<div class="gr-overlay el-modal mk-ov enc-${S.mode}${inner ? '' : ' mk-empty'}" role="dialog">${inner}<div class="el-tip item-tip" role="tooltip"></div><div class="mk-tip"></div><div class="mk-toast"></div>
       <div class="gr-trash" data-drop="trash" data-tipt="Discard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
       <button class="nav-btn settings-toggle fullscreen-toggle" type="button" title="Fullscreen" aria-label="Fullscreen" data-act="fs">${D.nav['fs-enter']}</button>
       <button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)" data-act="menu">${D.nav.menu}</button>`;
@@ -401,7 +463,7 @@
     overlay = $('.mk-ov');
     // açılış solması (oyunun .el-modal animasyonu) yalnızca ilk açılışta / düzen ya da mod değişince oynasın;
     // yoksa her yeniden çizimde (ör. item üstüne gelince) tüm pencere 0 opaklıktan yeniden solup yanıp söner
-    const sceneKey = `${S.v}|${S.mode}|${S.invOpen}`;
+    const sceneKey = `${S.v}|${S.mode}|${S.invOpen}|${S.rbag}|${S.dlg?.kind ?? ''}`;
     if (sceneKey === render.key) overlay.classList.add('mk-still');
     render.key = sceneKey;
     // savaş HUD birimi: oyundaki gibi skill çubuğu zoom = --gu (character-panel.ts > hudScale); ağaç aynı hücre, biraz küçük
@@ -414,8 +476,8 @@
       e.style.width = w0;
       if (need > have && have > 0) e.style.zoom = String(max * (have / need) * 0.98);
     };
+    root.querySelectorAll('.gr-skills .gr-skillbar').forEach((b) => { const p = b.querySelector('.bh-sk-pasv'); if (p) b.prepend(p); });
     root.querySelectorAll('.gr-skillbar').forEach((e) => fit(e, gu));
-    root.querySelectorAll('.mk-tree').forEach((e) => fit(e, gu * 0.95));
     [...document.querySelectorAll('.mk-scroll, .gr-bag')].forEach((e, i) => (e.scrollTop = keep[i] ?? 0));
     stripSync();
     if (S.pinned) { const a = overlay.querySelector(`[data-tip="${S.pinned}"]`); if (a) pinTip(S.pinned, a); else S.pinned = null; }
@@ -514,9 +576,7 @@
     if (R.taken !== null) return;
     if (i === 0) {
       const uid = D.reward[0];
-      const t = R.target ?? Object.keys(S.heroes).find((hid) => usable(hid, uid).ok);
-      if (t && usable(t, uid).ok) { S.bag.push(uid); equip(t, uid); toast(`${item(uid).name} → ${meta(t).name}`); }
-      else if (S.bag.length < BAG_SIZE) { S.bag.push(uid); toast(`${item(uid).name} → bag`); }
+      if (S.bag.length < BAG_SIZE) { S.bag.push(uid); toast(`${item(uid).name} → bag`); }
       else return toast('The bag is full', true);
     } else if (i === 1) { S.gold += 38; toast('+38 gold'); }
     else { for (const h of Object.values(S.heroes)) h.hp = Math.min(1, h.hp + 0.2); toast('Every hero recovers 20% health'); }
@@ -571,7 +631,7 @@
     const a = [];
     if (src === 'ware') { a.push(['Buy', 'buy', it.value > S.gold]); a.push([`Buy & equip`, 'buyeq', it.value > S.gold || !u.ok]); }
     else if (src === 'bb') a.push(['Buy back', 'bb', it.sell > S.gold]);
-    else if (src === 'reward') a.push([`Take for ${meta(hid).name}`, 'rtake', !u.ok]);
+    else if (src === 'reward') a.push(['Take', 'rtake', S.reward.taken !== null]);
     else if (src === 'slot') { a.push(['Unequip', 'uneq', false]); if (S.mode === 'merchant') a.push([`Sell ${it.sell}g`, 'sell', false]); }
     else { a.push([`Equip: ${meta(hid).name}`, 'eq', !u.ok]); if (S.mode === 'merchant') a.push([`Sell ${it.sell}g`, 'sell', false]); else a.push(['Discard', 'disc', false]); }
     return a;
@@ -730,6 +790,31 @@
     if (p.pointerType !== 'mouse' || p.kind === 'ware' || p.kind === 'bb' || p.kind === 'reward') { const a = overlay.querySelector(`[data-tip="${p.uid}"]`); if (a && S.sel) pinTip(p.uid, a); }
   });
   document.addEventListener('pointercancel', () => { if (press?.ghost) press.ghost.remove(); press = null; S.drag = null; render(); });
+  document.addEventListener('pointerdown', (e) => {
+    const fh = e.target.closest?.('[data-fhero]');
+    if (!fh || S.dlg?.kind !== 'formation') return;
+    const hid = fh.dataset.fhero, x0 = e.clientX, y0 = e.clientY;
+    let g = null;
+    const cellAt = (x, y) => document.elementsFromPoint(x, y).find((el) => el.dataset?.fcell);
+    const mv = (ev) => {
+      if (!g && Math.hypot(ev.clientX - x0, ev.clientY - y0) > 7) { g = document.createElement('div'); g.className = 'mk-fghost'; g.innerHTML = face(hid); document.body.append(g); fh.classList.add('lift'); }
+      if (!g) return;
+      g.style.left = `${ev.clientX}px`; g.style.top = `${ev.clientY}px`;
+      const c = cellAt(ev.clientX, ev.clientY);
+      document.querySelectorAll('.mk-fcell').forEach((x) => x.classList.toggle('drop-on', x === c));
+    };
+    const up = (ev) => {
+      window.removeEventListener('pointermove', mv, true); window.removeEventListener('pointerup', up, true);
+      if (!g) return;
+      g.remove();
+      const c = cellAt(ev.clientX, ev.clientY);
+      if (c) { const [cc, rr] = c.dataset.fcell.split(',').map(Number); moveForm(hid, cc, rr); }
+      S.fjust = true; setTimeout(() => (S.fjust = false), 50);
+      render();
+    };
+    window.addEventListener('pointermove', mv, true);
+    window.addEventListener('pointerup', up, true);
+  });
   // puan taşı sürükleme (oyundaki gibi: stat satırına bırak)
   function ptDrag(e) {
     e.preventDefault();
@@ -760,10 +845,23 @@
       const uid = ta.dataset.uid, k = ta.dataset.tipact;
       unpin(); S.sel = null;
       if (k === 'eq') equip(S.hero, uid); else if (k === 'uneq') unequip(uid); else if (k === 'sell') sell(uid); else if (k === 'disc') return discard(uid);
-      else if (k === 'buy') buy(uid); else if (k === 'buyeq') buy(uid, { hid: S.hero }); else if (k === 'bb') buyBack(uid); else if (k === 'rtake') { S.reward.target = S.hero; takeReward(0); }
+      else if (k === 'buy') buy(uid); else if (k === 'buyeq') buy(uid, { hid: S.hero }); else if (k === 'bb') buyBack(uid); else if (k === 'rtake') { takeReward(0); S.rbag = false; }
       return render();
     }
     if (t.closest('.item-tip.pinned')) return;
+    const oh = t.closest('[data-openhero]');
+    if (oh) { S.hero = oh.dataset.openhero; S.invOpen = true; S.tab.v3 = 'hero'; S.dlg = null; S.sel = null; unpin(); return render(); }
+    const hot = t.closest('[data-hot]'); if (hot) return townHot(hot.dataset.hot);
+    const stb = t.closest('[data-shoptab]'); if (stb) { S.shopTab = stb.dataset.shoptab; return render(); }
+    const rbt = t.closest('[data-rbtake]');
+    if (rbt) { if (S.reward.taken !== null) return toast('Reward already taken', true); takeReward(+rbt.dataset.rbtake); S.rbag = false; unpin(); return render(); }
+    if (S.dlg?.kind === 'formation') {
+      if (S.fjust) { S.fjust = false; return; }
+      const fh = t.closest('[data-fhero]'), fc = t.closest('[data-fcell]');
+      if (fh && S.fsel !== fh.dataset.fhero && !S.fsel) { S.fsel = fh.dataset.fhero; return render(); }
+      if (fc && S.fsel) { const [c, r] = fc.dataset.fcell.split(',').map(Number); if (S.form[S.fsel][0] === c && S.form[S.fsel][1] === r) S.fsel = null; else moveForm(S.fsel, c, r); return render(); }
+    }
+    if (S.dlg && !t.closest('[data-dlg]')) { S.dlg = null; S.fsel = null; return render(); }
     if (S.suppressClick) { S.suppressClick = false; if (t.closest('[data-drag]')) return; }
     // seçili item varken kahramana / yuvaya dokun = tak (dokunarak takma)
     const target = t.closest('[data-drop]');
@@ -796,8 +894,12 @@
       else if (a === 'rest') { for (const h of Object.values(S.heroes)) h.hp = 1; S.rested = true; toast('The company rests. Everyone is healed.'); }
       else if (a === 'reroll') { if (S.gold >= 15) { S.gold -= 15; S.rerolls++; S.wares = [...S.wares.slice(1), S.wares[0]].map((x, i) => x ?? D.wares[(i + S.rerolls) % D.wares.length]); S.wares = S.wares.filter((x, i, a) => a.indexOf(x) === i && !S.bag.includes(x) && !ownerOf(x)); while (S.wares.length < 9) S.wares.push(null); toast('Odo lays out new wares'); } }
       else if (a === 'sheet') S.sheet = !S.sheet;
-      else if (a === 'done') { if (S.mode === 'none') { toast('Closes the gear window (mockup)'); return; } S.invOpen = false; S.sel = null; S.sheet = false; unpin(); }
-      else if (a === 'inv') { S.invOpen = !S.invOpen; S.sel = null; S.sheet = false; unpin(); }
+      else if (a === 'done') { if (S.mode === 'none') { toast('Closes the gear window (mockup)'); return; } if (S.mode === 'reward') S.rbag = false; else S.invOpen = false; S.sel = null; S.sheet = false; unpin(); }
+      else if (a === 'inv') { S.invOpen = !S.invOpen; S.dlg = null; S.sel = null; S.sheet = false; unpin(); }
+      else if (a === 'formation') { S.dlg = S.dlg?.kind === 'formation' ? null : { kind: 'formation' }; S.fsel = null; if (S.mode === 'town') S.invOpen = false; unpin(); }
+      else if (a === 'dlgclose') { S.dlg = null; S.fsel = null; }
+      else if (a === 'viewbag') { S.rbag = true; S.sel = null; unpin(); }
+      else if (a === 'encdone' && S.mode === 'merchant') { setMode('town'); return; }
       else if (a === 'encdone') { toast(S.mode === 'reward' && S.reward.taken === null ? 'Reward skipped (mockup)' : 'Leaves this place (mockup)'); return; }
       else if (a === 'menu') { toast('Menu (Esc): Resume · Save · Codex · Settings · Main Menu'); return; }
       else if (a === 'fs') { if (document.fullscreenElement) document.exitFullscreen(); else document.documentElement.requestFullscreen?.(); return; }
@@ -808,7 +910,7 @@
     if (S.sel || S.pinned) { S.sel = null; unpin(); render(); }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (S.pinned || S.sel) { S.sel = null; unpin(); render(); } else if (S.sheet) { S.sheet = false; render(); } }
+    if (e.key === 'Escape') { if (S.dlg) { S.dlg = null; S.fsel = null; render(); } else if (S.pinned || S.sel) { S.sel = null; unpin(); render(); } else if (S.sheet) { S.sheet = false; render(); } }
   });
 
   // ---------------------------------------------------------------- adres (#v2&mode=merchant&clean) + taslak şeridi
@@ -821,12 +923,14 @@
       if (k === 'tab' && v) { const [lv, tv] = v.split('.'); if (lv && tv) S.tab[lv] = tv; }
     }
     document.documentElement.classList.toggle('mk-clean', parts.includes('clean'));
+    if (['town', 'reward'].includes(S.mode) && readHash.mode !== S.mode) { S.invOpen = false; S.rbag = false; S.dlg = null; }
+    readHash.mode = S.mode;
   }
   function writeHash() {
     const clean = document.documentElement.classList.contains('mk-clean');
     history.replaceState(null, '', `#${S.v}&enc=${S.mode}${clean ? '&clean' : ''}`);
   }
-  function setMode(m) { S.mode = m; S.invOpen = true; S.sel = null; S.sheet = false; unpin(); writeHash(); render(); }
+  function setMode(m) { S.mode = m; S.invOpen = !['town', 'reward'].includes(m); S.rbag = false; S.dlg = null; S.sel = null; S.sheet = false; unpin(); writeHash(); render(); }
   function strip() {
     const s = document.createElement('div');
     s.id = 'mk-strip';

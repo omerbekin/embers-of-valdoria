@@ -20,11 +20,21 @@
     #v3   Ledger: iki sayfalık defter; sol kenarda kahraman yer imleri; sekmeler Hero / Sheet
     #v4   Stage: solda statlar, ortada büyük portre + yuva halkası, altta geniş torba rafı; "Hero sheet" tam pencere
     #v5   Squad Board: dört kahraman kartı yan yana (seçili geniş), altta torba
-  Dış pencere: &enc=none (yalnız envanter) | map (haritanın sol bilgi sütunu + envanter haritanın üstünde) | town (Ashford penceresi: Rest /
-          Formation / Recruits / Odo) | merchant (Odo penceresi: tezgâhtan torbaya / kahramana sürükle = al, torbadan tezgâha = sat) |
-          reward (Victory penceresi: ödül madalyonunu kahramana sürükle = ver). Dış pencerenin sol altındaki Gear ikonu envanteri açar / kapatır.
-          Ör.: #v2&enc=merchant, #v5&enc=reward&clean. (Eski &mode=... adresleri de açılır.)
-  Skill ağacı düğümleri ve kuralları YER TUTUCU (oyunun skill hücresi + gerçek skill / durum ikonlarıyla çizildi).
+  SEÇİM (Ömer 2026-10-18): v3 Ledger. Bundan sonra yalnızca v3 geliştirilir; şerit ve adres varsayılanı v3 (v1, v2, v4, v5 duruyor, güncel değil).
+  Dış etmen (&enc=):
+    none     yalnız envanter.
+    map      haritanın sol takım sütunu; kahraman satırına dokun = envanter O kahraman seçili açılır (ayrı kahraman paneli yok);
+             sol altta Gear (envanteri aç / kapat) + Formation (küçük Formation penceresi, 4 x 3, ön sıra sağda; sürükle ya da dokun-dokun).
+    town     oyundaki kasaba ekranı (Ashford): birleşik pencere YOK; resimdeki yerler kendi küçük penceresini açar (Campfire / Notice Board
+             = kısa not, Odo's Stall = tüccar, Charcoal Burner = hikâye, Road Out = ayrıl); öndeki kahramana dokun = o kahramanın envanteri;
+             sol altta Gear + Formation.
+    merchant Odo penceresi: Wares (tezgâh) + iki sekme Sell (buraya sürükle = sat) / Buyback (bu ziyarette satılanlar); Back to town.
+    reward   oyundaki Victory ekranı aynen (kartlar, bütün kart = al, View bag); yalnızca View bag artık ortak envanteri (v3) açar,
+             ödüller solda küçük ikon (dokun = al), Close bag kartlara döner.
+  v3 ayrıntıları (2026-10-18): stat satırı "değer · fark (+1) · [−] [+]" (+ hiç kaymaz); Sheet'te HP / MP altında savaş HUD çubuğu;
+  skill ağacı kabı "Coming soon" (yer tutucu düğüm yok); skill sırası pasif önce; boş yuva simgesi unified-inventory/slot-icons/<slot>.webp
+  (yoksa eski gölge simge). Kasabadaki kahraman görselleri oyunun idle pozları (unified-inventory/poses/).
+  Ör.: #v3&enc=town, #v3&enc=reward&clean. (Eski &mode=... adresleri de açılır.)
 -->
 <link rel="stylesheet" href="unified-inventory/css/style.css" />
 <link rel="stylesheet" href="unified-inventory/css/elegant.css" />
