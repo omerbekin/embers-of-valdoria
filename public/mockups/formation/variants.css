@@ -50,3 +50,12 @@
 .rtip.no .mb i.on { background: var(--bad); }
 .cap { position: absolute; left: 0; right: 0; bottom: 0; z-index: 4; padding: 6px 6px 8px; text-align: center; background: linear-gradient(180deg, rgba(8,6,4,.86), rgba(8,6,4,.97)); border-top: 1px solid rgba(217,178,106,.4); pointer-events: none; }
 .cap .ct { display: block; font: 15px/1.15 var(--g-body); color: #f3e6c4; margin-bottom: 4px; } .cap .mb { justify-content: center; } .cap .mb i { width: 18px; } .cap.no .ct { color: #ffb7a6; }
+/* v3: nefes alani */
+.rp { gap: 18px; padding: 24px 26px; }
+.chd { gap: 20px; } .foot.wide { justify-content: center; } .foot.wide .el-btn { width: 100% !important; }
+.slr .el-btn { width: 190px !important; min-height: 40px !important; font-size: 14px !important; }
+.tilesA { gap: 10px; } .srowsA { gap: 10px; } .srow { padding: 7px 12px; } .srow.pas { padding: 9px 12px; }
+.plates5 { gap: 10px; } .iconsC { gap: 10px; }
+.midB { gap: 26px; }
+.rp.vb { gap: 26px; } .rp.vb .plates5 .plate { padding-top: 16px; padding-bottom: 12px; } .rp.vb .plates5 .ico { --is: 60px !important; }
+.slr { display: flex; align-items: center; gap: 16px; } .slr .sl { flex: 1; }

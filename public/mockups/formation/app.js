@@ -64,37 +64,35 @@
       const slot = row * 3 + lane, id = cells[slot], h = HEROES[id];
       let cls = 'cell' + (h ? '' : ' empty') + (row === 0 && !h ? ' fr' : '') + (id && id === S.sel ? ' sel' : '') + (S.drag && S.drag.on && S.drag.id === id ? ' src' : '');
       let inner = '';
-      if (pre && id !== pre && HEROES[pre]) { const f = fitAt(pre, slot); if (f) { cls += f === 'out' ? ' pb' : ' pw'; inner += '<i class="pdot"></i>'; } if (S.over === slot) cls += ' hot'; }
+      const pre2 = S.drag && S.drag.on ? S.drag.id : (S.sel && !id ? S.sel : ''); if (pre2 && id !== pre2 && HEROES[pre2]) { const f = fitAt(pre2, slot); if (f) { cls += f === 'out' ? ' pb' : ' pw'; inner += '<i class="pdot"></i>'; } if (S.over === slot) cls += ' hot'; }
       if (h) inner += `<img class="av" src="${av(id)}" alt=""><div class="nm">${h.name}</div><div class="hp"><i class="${hpCls(hpr[id])}" style="width:${hpr[id] * 100}%"></i></div>${id === leader ? crown : ''}${!pre && hintOf(cells, id) ? '<i class="pdot own"></i>' : ''}`;
       out += `<div class="${cls}" data-slot="${slot}" style="left:${(3 - row) * (c + gap)}px;top:${lane * (c + gap)}px;width:${c}px;height:${c}px">${inner}</div>`;
     }
-    return out + `</div><div class="how" style="left:${gx}px;top:${gy + gh + 24}px;width:${gw}px">Drag a hero to another cell, or tap a hero and then a cell. Hover a cell to see how far a hero reaches from there.</div>`;
+    return out + `</div><div class="how" style="left:${gx}px;top:${gy + gh + 24}px;width:${gw}px">Drag a hero onto another hero to swap, or onto an empty cell to move. Tap a hero to select it, then tap an empty cell. Hover any cell to see how far a hero reaches from there.</div>`;
   }
 
   // ---- sag panel: ortak parcalar ----
-  const rosterA = () => `<div class="sl">Your company <b>${S.n} / 4</b></div><div class="tabsA">${roster().map((h) => `<div class="tab ${h.id === focus().id ? 'on' : ''}" data-pick="${h.id}"><img src="${av(h.id)}" alt="">${hpBar(hpr[h.id])}</div>`).join('')}${Array(4 - S.n).fill('<div class="tab empty-slot">+</div>').join('')}</div>`;
-  const rosterB = () => `<div class="sl">Your company <b>${S.n} / 4</b></div><div class="cardsB">${roster().map((h) => `<div class="rcard ${h.id === focus().id ? 'on' : ''}" data-pick="${h.id}"><div class="ico sm" style="--is:40px"><img src="${av(h.id)}" alt=""></div><div class="rn">${h.name}</div>${hpBar(hpr[h.id])}</div>`).join('')}${Array(4 - S.n).fill('<div class="rcard empty-slot">Empty</div>').join('')}</div>`;
-  const rosterC = () => `<div class="sl">Your company <b>${S.n} / 4</b></div><div class="pillsC">${roster().map((h) => `<div class="pill ${h.id === focus().id ? 'on' : ''}" data-pick="${h.id}"><img src="${av(h.id)}" alt=""><span>${h.id === focus().id ? h.name : ''}</span></div>`).join('')}${Array(4 - S.n).fill('<div class="pill empty-slot">+</div>').join('')}</div>`;
-
   function panel() {
     const f = focus(), v = S.v;
-    const head = `<div class="chd"><div class="ico" style="--is:72px"><img src="${av(f.id)}" alt=""></div><div class="apt">${nameLine(f)}${chipsOf(f)}</div></div>`;
+    const head = `<div class="chd"><div class="ico" style="--is:84px"><img src="${av(f.id)}" alt=""></div><div class="apt">${nameLine(f)}${chipsOf(f)}</div></div>`;
+    const skRow = (x) => `<div class="srow ${x[2] === 'rage' ? 'rg' : ''}"><div class="ico sm sk" style="--is:44px"><img src="${sk(x[1])}" alt=""></div><div class="pn">${x[0]}</div>${costChip(x[2])}</div>`;
     if (v === 'a') {
       const tiles = ORDER.map((k) => `<div class="tile ${f.primary === k ? 'p' : ''}"><img src="${st(k)}" alt=""><div class="tx"><span class="n">${mainVal(f, k)}</span><span class="k">${NAMES[k]}</span></div></div>`).join('');
-      return `${rosterA()}${head}${bars(f)}<div class="tilesA">${tiles}</div><div class="sl">Skills</div><div class="srowsA">${f.skills.map((x) => `<div class="srow ${x[2] === 'rage' ? 'rg' : ''}"><div class="ico sm sk" style="--is:40px"><img src="${sk(x[1])}" alt=""></div><div class="pn">${x[0]}</div>${costChip(x[2])}</div>`).join('')}<div class="srow pas"><div class="ico sm sk" style="--is:40px"><img src="${sk(f.passive[1])}" alt=""></div><div class="pn">${f.passive[0]}</div><span class="ptag">Passive</span></div></div><div class="foot">${detailsBtn()}</div>`;
+      return `${head}${bars(f)}<div class="tilesA">${tiles}</div><div class="sl">Skills</div><div class="srowsA"><div class="srow pas"><div class="ico sm sk" style="--is:44px"><img src="${sk(f.passive[1])}" alt=""></div><div class="pn">${f.passive[0]}</div><span class="ptag">Passive</span></div>${f.skills.map(skRow).join('')}</div><div class="foot">${detailsBtn()}</div>`;
     }
     if (v === 'b') {
       const rows = ORDER.map((k) => `<div class="sr ${f.primary === k ? 'p' : ''}"><img src="${st(k)}" alt=""><span class="k">${NAMES[k]}</span><span class="n">${mainVal(f, k)}</span></div>`).join('');
-      return `${rosterB()}${head}<div class="midB"><div class="srB">${rows}</div>${bars(f)}</div><div class="sl">Skills</div><div class="plates5">${f.skills.map(skillPlate).join('')}${passivePlate(f)}</div><div class="foot">${detailsBtn()}</div>`;
+      return `${head}<div class="midB"><div class="srB">${rows}</div>${bars(f)}</div><div class="slr"><div class="sl">Skills</div>${detailsBtn()}</div><div class="plates5">${passivePlate(f)}${f.skills.map(skillPlate).join('')}</div>`;
     }
     const chips = ORDER.map((k) => `<span class="chip ${f.primary === k ? 'hot' : ''}"><img src="${st(k)}" alt=""><b>${mainVal(f, k)}</b>${NAMES[k].slice(0, 3)}</span>`).join('');
-    return `${rosterC()}${head}${bars(f)}<div class="chips one statsC">${chips}</div><div class="sl">Skills</div><div class="iconsC">${f.skills.map((x) => `<div class="ic ${x[2] === 'rage' ? 'rg' : ''}" title="${x[0]}"><div class="ico sm sk" style="--is:60px"><img src="${sk(x[1])}" alt=""></div><div class="pn">${x[0]}</div></div>`).join('')}<div class="ic pas"><div class="ico sm sk" style="--is:60px"><img src="${sk(f.passive[1])}" alt=""></div><div class="pn">${f.passive[0]}</div><span class="ptag">Passive</span></div></div><div class="foot">${detailsBtn()}</div>`;
+    const ic = (x) => `<div class="ic ${x[2] === 'rage' ? 'rg' : ''}"><div class="ico sm sk" style="--is:60px"><img src="${sk(x[1])}" alt=""></div><div class="pn">${x[0]}</div></div>`;
+    return `${head}${bars(f)}<div class="chips one statsC">${chips}</div><div class="sl">Skills</div><div class="iconsC"><div class="ic pas"><div class="ico sm sk" style="--is:60px"><img src="${sk(f.passive[1])}" alt=""></div><div class="pn">${f.passive[0]}</div><span class="ptag">Passive</span></div>${f.skills.map(ic).join('')}</div><div class="foot wide">${detailsBtn()}</div>`;
   }
 
   const notes = {
-    a: 'A: üstte portre sekmeleri; yeni panel: ad+etiketler tek satır, 4 temel stat karosu, skill satırları + Passive satırı; hover = sade Band kutusu (bir cümle + küçük çubuk).',
-    b: 'B: üstte küçük kahraman kartları (ad + HP); temel statlar Sheet listesi, skill + Passive plakaları yan yana; hover = tek satırlık küçük şerit.',
-    c: 'C: üstte yalnız portre (seçili olanın adı yanında); stat tek çip satırı, ikon ızgarası; hover yazısı hücrenin içinde, altta (kutu yok) - en sade.',
+    a: 'A: ad + etiketler, HP/MP, 4 stat karosu yan yana; Passive tam genişlikte İLK satır, altında 2x2 skill; Hero details altta sağda.',
+    b: 'B: stat listesi (Sheet) + HP/MP yan yana; Passive İLK plaka, 5 plaka tek sırada; Hero details Skills başlığının yanında.',
+    c: 'C: stat tek çip satırı; ikon ızgarasında Passive İLK; Hero details altta tam genişlikte tek düğme. Hover kutusu üçünde de aynı (Band).',
   };
   function render() {
     $('#win').innerHTML = `<div class="ttl">Formation</div><div class="sub">The front row faces the enemy.</div>${gridHTML()}<div class="panel rp v${S.v}" style="left:770px;top:134px;width:550px;height:580px">${panel()}</div>${wrapBtns()}`;
@@ -113,24 +111,20 @@
   const clearTip = () => { if (tip) { tip.remove(); tip = null; } };
   function tipInfo(cell) {
     if (cell < 0) return null;
-    const pre = S.drag && S.drag.on ? S.drag.id : S.sel;
-    const id = pre || cells[cell]; if (!id) return null;
-    const h = HEROES[id], hint = pre && slotOf(pre) !== cell ? fitAt(pre, cell) : pre ? hintOf(cells, id) : hintOf(cells, id);
-    const n = reachAt(id, rowOf(cell));
-    return { who: pre && slotOf(pre) !== cell ? `${h.name} here` : `${h.name} · ${ROWN[rowOf(cell)]}`, text: reachText(n), n, exp: hint === 'exp' };
+    const drag = S.drag && S.drag.on ? S.drag.id : '', occ = cells[cell];
+    const who = drag || (S.sel && !occ ? S.sel : '') || occ || focus().id;
+    const h = HEROES[who], here = slotOf(who) === cell, hint = here ? hintOf(cells, who) : fitAt(who, cell), n = reachAt(who, rowOf(cell));
+    return { who: here ? `${h.name} \u00B7 ${ROWN[rowOf(cell)]}` : `${h.name} here`, text: reachText(n), n, exp: hint === 'exp' };
   }
   const barHTML = (n) => `<span class="mb">${[1, 2, 3, 4].map((i) => `<i class="${i <= n ? 'on' : ''}"></i>`).join('')}</span>`;
   function showTip(cell, p) {
     clearTip();
     const t = tipInfo(cell); if (!t) return;
     const el = document.createElement('div');
-    el.className = `rtip t${S.v}${t.n <= 0 ? ' no' : ''}`;
-    const extra = t.exp ? '<div class="rx">Exposed in front</div>' : '';
-    if (S.v === 'c') { const ce = document.querySelector(`.cell[data-slot="${cell}"]`); el.className = `cap${t.n <= 0 ? ' no' : ''}`; el.innerHTML = `${barHTML(t.n)}`; ce.appendChild(el); el.title = t.text; tip = el; showCapText(el, t); return; }
-    el.innerHTML = S.v === 'a' ? `<div class="rk">${t.who}</div><div class="rt">${t.text}</div>${barHTML(t.n)}${extra}` : `<span class="rt">${t.text}</span>${barHTML(t.n)}`;
+    el.className = 'rtip ta' + (t.n <= 0 ? ' no' : '');
+    el.innerHTML = `<div class="rk">${t.who}</div><div class="rt">${t.text}</div>${barHTML(t.n)}${t.exp ? '<div class="rx">Exposed in front</div>' : ''}`;
     el.style.left = Math.min(p.x + 18, 1900 - 340) + 'px'; el.style.top = p.y + 18 + 'px'; $('#stage').appendChild(el); tip = el;
   }
-  function showCapText(el, t) { el.innerHTML = `<span class="ct">${t.text.replace('From here: ', '').replace("Can't reach the enemy from here", "Can't reach")}</span>${barHTML(t.n)}`; }
 
   function ghost() { const g = document.createElement('div'); g.className = 'ghost'; g.id = 'ghost'; g.innerHTML = `<img src="${av(S.drag.id)}" alt="">`; $('#stage').appendChild(g); }
   function bind() {
@@ -145,14 +139,14 @@
         S.over = cell; S.hover = cell;
         if ((S.drag && S.drag.on) || S.sel) { render(); if (S.drag && S.drag.on) { ghost(); const g2 = $('#ghost'); g2.style.left = p.x - 56 + 'px'; g2.style.top = p.y - 56 + 'px'; } }
         showTip(cell, p);
-      } else if (tip && S.v !== 'c') { tip.style.left = Math.min(p.x + 18, 1900 - 340) + 'px'; tip.style.top = p.y + 18 + 'px'; }
+      } else if (tip) { tip.style.left = Math.min(p.x + 18, 1900 - 340) + 'px'; tip.style.top = p.y + 18 + 'px'; }
     };
     w.onpointerleave = () => { clearTip(); S.hover = -1; };
     w.onpointerup = (e) => {
       const p = pt(e), cell = cellAt(p);
       if (S.drag && S.drag.on) { const id = S.drag.id; S.drag = null; S.down = null; S.over = -1; if (cell >= 0 && cell !== slotOf(id)) move(id, cell); S.sel = ''; render(); return; }
       const d = S.down; S.down = null; if (!d || cell < 0) return;
-      if (!S.sel) { if (cells[cell]) S.sel = cells[cell]; } else if (S.sel === cells[cell]) S.sel = ''; else { move(S.sel, cell); S.sel = ''; }
+      if (!S.sel) { if (cells[cell]) S.sel = cells[cell]; } else if (S.sel === cells[cell]) S.sel = ''; else if (cells[cell]) S.sel = cells[cell]; else { move(S.sel, cell); S.sel = ''; }
       S.over = -1; render();
     };
   }
