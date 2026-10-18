@@ -1062,6 +1062,38 @@ export class BattleScene extends Phaser.Scene {
     return '';
   }
 
+  /**
+   * Debug > VFX frame test (in battle; src/ui/debug-vfx-battle.ts): `casterUid` skill'i kukla `dummyUid` üstünde gerçek savaş hattıyla (hazırlık, efekt,
+   * vuruş, hasar rakamı) oynatır; kukla ölmesin diye önce ve sonra canı doldurulur (debugResetAll). Oynama bitince çözülür; hata varsa kısa mesaj, yoksa ''.
+   */
+  async vfxTestCast(skillId: string, casterUid: string, dummyUid: string): Promise<string> {
+    const b = this.battle;
+    if (b.winner) return 'Battle is over';
+    if (!b.get(casterUid) || !b.get(dummyUid)) return 'Unit missing';
+    if (b.get(dummyUid)!.hp <= 0 || b.get(casterUid)!.hp <= 0) b.debugResetAll();
+    b.debugClearStatuses(dummyUid);
+    b.debugSetResource(dummyUid, 'hp', b.get(dummyUid)!.maxHp);
+    this.galleryCaster = casterUid;
+    this.galleryCell = null;
+    const keep = debugState.galleryReset;
+    debugState.galleryReset = false; // bu yöntem kendi sıfırlamasını yapar (galeri 700 ms bekler)
+    const dodge = b.debug.dodge;
+    b.debug.dodge = 'never'; // test: vuruş hep isabet etsin (efekt ve hasar rakamı görünsün)
+    const err = this.debugCastSkill(skillId);
+    b.debug.dodge = dodge;
+    debugState.galleryReset = keep;
+    if (err) return err;
+    await this.eventQueue;
+    if (b === this.battle && !b.winner) b.debugResetAll();
+    await this.eventQueue;
+    return '';
+  }
+
+  /** Debug > VFX frame test (in battle): savaş arayüzünü (komut paneli, ad plakaları, sıra çubuğu) gizler / geri getirir; arena ve efektler kalır. */
+  vfxTestHud(hidden: boolean): void {
+    this.setBattleHudHidden(hidden);
+  }
+
   /** True while the battle is undecided (no winner yet); the settings menu asks for confirmation only then. */
   isBattleLive(): boolean {
     return !!this.battle && !this.battle.winner && !this.mp?.result();

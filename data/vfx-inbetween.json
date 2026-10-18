@@ -6,6 +6,15 @@
     "crossfade": { "label": "Crossfade", "motion": 0, "scale": 0 },
     "crossfade+motion": { "label": "Crossfade + motion", "motion": 1, "scale": 1, "scaleMin": 0.75, "scaleMax": 1.35, "minSize": 24, "alphaMin": 24 }
   },
+  "battleTest": {
+    "_not": "Debug > Characters > Animation tests > VFX frame test (in battle) (src/ui/debug-vfx-battle.ts): gerçek test savaşı. Atan mob (skill'in sahibi) DÜŞMAN tarafında, kukla (dummy) oyuncu tarafında durur; kukla hareket etmez, her atıştan önce/sonra canı doldurulur. dummy = kukla mob id'si, casterSlot / dummySlot = hücre (4 sıra x 3 şerit; 1 = ön sıra ortası), loopGapMs = döngü modunda atışlar arası bekleme (ms).",
+    "dummy": "stonebound_warden",
+    "background": "ashen-plain",
+    "casterSlot": 1,
+    "dummySlot": 1,
+    "loopGapMs": 500,
+    "speeds": [0.25, 0.5, 1]
+  },
   "test": {
     "_not": "Debug > Characters > VFX frame test. Ekran 720x540 mantıksal (savaş 1920x1080'in ~0,375 ölçeği); spriteHeight = hedef mobun yüksekliği (mantıksal px).",
     "background": "ashen-plain",

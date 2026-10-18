@@ -188,6 +188,8 @@ export interface CharacterRender {
   /** Seçili kahramanın statları ve odak item takılırsa statları (stat / skill ipuçları için). */
   stats: Stats | null;
   after: Stats | null;
+  /** Gear defteri: skill bloğu sayfanın içinde DEĞİL ayrı döner; ekran onu yer imi sütununun altına da uzayan tam genişlikte bir alana koyar. */
+  skills?: HTMLElement;
 }
 
 /** Seçili kahramanın hesapları (bekleyen puanlar dahil): statlar, fark sütunu, odak item takılırsa statlar. */
@@ -485,12 +487,13 @@ export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpR
   const hero0 = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
   if (!hero0) return { el: box, stats: null, after: null };
   const c = calcHero(v, hero0);
+  let skills: HTMLElement | undefined;
   if (v.tab === 'hero') {
     if (v.hint) box.append(el('div', 'gr-hint', v.hint));
     box.append(...slotsBlock(hero0, v));
-    if (c.stats) box.append(skillsNode(c.hero, c.stats, c.after));
+    if (c.stats) skills = skillsNode(c.hero, c.stats, c.after);
   } else box.append(...sheetNodes(c, v, box, { hpRatio: v.hpRatio ?? 1 }));
-  return { el: box, stats: c.stats, after: c.after };
+  return { el: box, stats: c.stats, after: c.after, ...(skills ? { skills } : {}) };
 }
 
 /** Savaş HUD'ının ölçeği (1 oyun birimi kaç CSS pikseli: src/ui/viewport.ts > --gu): Gear'daki skill çubuğu savaştakiyle aynı boyda görünür. */
@@ -556,6 +559,39 @@ function numsHtml(r: GearSkillRow): string {
     .join('')}</div>`;
 }
 
+let floatTip: HTMLElement | null = null;
+let floatTipFor: HTMLElement | null = null;
+function hideFloatTip(): void {
+  floatTip?.remove();
+  floatTip = null;
+  floatTipFor = null;
+}
+/** Skill / pasif açıklamasını Gear örtüsünün üst katmanına koyar (hücrenin üstünde; sığmazsa altında; ekran kenarından taşmaz). */
+function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
+  const src = cell.querySelector<HTMLElement>('.bh-sktip');
+  const host = bar.closest<HTMLElement>('.gr-overlay') ?? document.getElementById('ui-root');
+  if (!src || !host) return;
+  hideFloatTip();
+  const wrap = el('div', 'bh-kit gr-sktip-fl');
+  const tip = src.cloneNode(true) as HTMLElement;
+  (tip.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
+  wrap.append(tip);
+  host.append(wrap);
+  const hr = host.getBoundingClientRect();
+  const cr = cell.getBoundingClientRect();
+  const tr = wrap.getBoundingClientRect();
+  const M = 6;
+  let x = cr.left + cr.width / 2 - tr.width / 2 - hr.left;
+  let y = cr.top - tr.height - 14 - hr.top;
+  if (y < M) y = cr.bottom + 14 - hr.top;
+  x = Math.max(M, Math.min(hr.width - tr.width - M, x));
+  y = Math.max(M, Math.min(hr.height - tr.height - M, y));
+  wrap.style.left = `${Math.round(x)}px`;
+  wrap.style.top = `${Math.round(y)}px`;
+  floatTip = wrap;
+  floatTipFor = cell;
+}
+
 /** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
 export function skillBar(classId: string, stats: Stats, after: Stats | null): HTMLElement {
   const bar = el('div', 'bh-kit gr-skillbar');
@@ -574,11 +610,26 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null): HT
     return skillCellHtml(view, colorDiffs(tipHtml(skillTipContent(skill, stats, after))), numsHtml(r));
   });
   bar.innerHTML = html.join('');
-  // Dokunmatik: dokunuş tooltip'i açar / kapatır (savaştaki uzun basmanın yerine; Gear'da skill seçilmez)
+  // Açıklama kabın (kaydırmalı sayfa) içinde değil, ekranın en üst katmanında (Gear örtüsü) açılır: hiçbir kap kırpamaz, ekran içinde kalır.
+  // Hücrenin kendi `.bh-sktip` kopyası gizlidir (gear.css); üstüne gelince / dokununca kopya yüzen katmana konur.
+  bar.addEventListener('pointerover', (e) => {
+    if (e.pointerType === 'touch') return;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    if (cell) showFloatTip(bar, cell);
+  });
+  bar.addEventListener('pointerout', (e) => {
+    if (e.pointerType === 'touch') return;
+    const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    if (cell && !(into && cell.contains(into))) hideFloatTip();
+  });
+  // Dokunmatik: dokunuş açıklamayı açar / kapatır (savaştaki uzun basmanın yerine; Gear'da skill seçilmez)
   bar.addEventListener('click', (e) => {
     const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
-    bar.querySelectorAll('.bh-sk.tip').forEach((x) => x !== cell && x.classList.remove('tip'));
-    cell?.classList.toggle('tip');
+    const open = floatTipFor === cell;
+    hideFloatTip();
+    if (cell && !open) showFloatTip(bar, cell);
   });
+  hideFloatTip(); // yeniden çizimde eski açıklama asılı kalmasın
   return bar;
 }

@@ -585,7 +585,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const folioR = el('div', 'gr-folio');
   pageL.append(leafL, folioL);
   pageR.append(leafR, folioR);
-  body.append(marksBox, pageL, el('div', 'gr-spine'), pageR);
+  // skill'ler yer imi sütununun altına da uzanır (portrelerin altından sol sayfanın sonuna): sütunlar geniş kalır, adlar bölünmez
+  const skillsBox = el('div', 'gr-lskills');
+  body.append(marksBox, pageL, el('div', 'gr-spine'), pageR, skillsBox);
   panel.append(head, body);
   // sağ üst X: Menu düğmesinin yerinde (açıkken Menu gizli; src/ui/nav-close.ts)
   const unmountX = mountCloseButton(overlay, () => close());
@@ -697,6 +699,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     curStats = r.stats;
     afterStats = r.after;
     leafL.replaceChildren(r.el);
+    if (r.skills) skillsBox.replaceChildren(r.skills);
+    else skillsBox.replaceChildren();
     folioL.textContent = `· ${tab === 'hero' ? 1 : 3} ·`;
     pageL.scrollTop = top;
     if (ix.dragging()) ix.remark();

@@ -204,6 +204,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private longPressed = false;
   /** Onaylanmış ("Fight") ama araya giren adım yüzünden henüz başlamamış savaş: düğüm + başlatma gecikmesi (ms). */
   private pendingFight: { node: string; delay: number } | null = null;
+  /** Düğüm kartının eylemi hazine / seçeneksiz olayı doğrudan verir (varış penceresi açılmaz; Ömer 2026-10-18, madde 357). */
+  private directAt: string | null = null;
   /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
   private arrangeNotice: string | null = null;
   /** Global Gear + Formation ikonları (DOM, sol alt; src/ui/camp-hud.ts). */
@@ -1701,11 +1703,22 @@ export class CampaignMapScene extends Phaser.Scene {
       case 'event': {
         const e = EVENTS[step.event] ?? { title: node(this.map, step.node).name, text: 'Nothing happens.' };
         const choices = eventChoices(step.event);
-        if (choices.length) return this.choiceEvent(step.event, step.node, choices);
+        if (choices.length) {
+          this.directAt = null;
+          return this.choiceEvent(step.event, step.node, choices);
+        }
+        if (this.directAt === step.node) {
+          this.directAt = null;
+          return this.commit(completeSimple(this.s, 'event'));
+        }
         this.modal = openModal(this, this.ui, { title: e.title, subtitle: node(this.map, step.node).subtitle, text: e.text, height: 500, buttons: [{ label: 'Continue', primary: true, run: () => this.commit(completeSimple(this.s, 'event')) }] });
         return;
       }
       case 'treasure': {
+        if (this.directAt === step.node) {
+          this.directAt = null;
+          return this.commit(completeSimple(this.s, 'treasure')); // sandık: ganimet torbaya, LOOT ekranı advance'ta açılır
+        }
         const t = TREASURES[step.treasure] ?? { title: 'Treasure', text: 'You find a chest.', reward: 'Open the chest to claim its gear and gold.' };
         this.modal = openModal(this, this.ui, { title: 'Treasure', subtitle: t.title, text: `${t.text}\n\n${t.reward ?? ''}`, height: 500, buttons: [{ label: 'Open the chest', primary: true, run: () => this.commit(completeSimple(this.s, 'treasure')) }] });
         return;
@@ -2062,7 +2075,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (step.kind === 'move' && step.options.includes(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
     if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => void startCampaignBattle(this));
-    if (id === this.s.at && this.actionHere()) return ['town', 'rest', 'merchant', 'event', 'treasure'].includes(step.kind) ? this.confirmPlace(id, () => this.advance()) : this.advance();
+    if (id === this.s.at && this.actionHere()) return ['town', 'rest', 'merchant', 'event', 'treasure'].includes(step.kind) ? this.confirmPlace(id, () => this.openHere(id)) : this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
     if (id === this.s.at && step.kind === 'move') {
       const k = revisitKind(this.s);
@@ -2092,21 +2105,14 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.pausedBlocks()) return;
     const step = nextStep(this.s);
     if (step.kind !== 'move' || !step.options.includes(id)) return;
-    const fork = step.options.length > 1;
     if (this.fightsAt(id)) return this.confirmBattle(id, () => this.march(id, true));
-    if (!fork) return this.march(id);
-    const f = this.nodeFacts(id);
-    this.modal = openModal(this, this.ui, {
-      title: 'Take this road?',
-      subtitle: `${node(this.map, id).name}  ·  ${f.kind}`,
-      text: `${f.blurb ? `${f.blurb}\n` : ''}The other roads will close for this journey.`,
-      fit: true,
-      buttons: [
-        { label: 'No', run: () => this.closeModal() },
-        { label: 'Yes', primary: true, run: () => this.march(id) },
-      ],
-      onDismiss: () => this.closeModal(), // onay: zemin = No
-    });
+    this.confirmPlace(id, () => this.march(id));
+  }
+
+  /** Bulunulan düğümde bekleyen eylemi açar; hazine / olayda kartın eylemi ödülü doğrudan verir. */
+  private openHere(id: string): void {
+    if (['treasure', 'event'].includes(nextStep(this.s).kind)) this.directAt = id;
+    this.advance();
   }
 
   /**
@@ -2248,6 +2254,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private march(to: string, fight = false): void {
     this.closeModal();
     this.hideNodeTip();
+    const tn = node(this.map, to);
+    this.directAt = (tn.type === 'treasure' || tn.type === 'event') && !this.fightsAt(to) ? to : null;
     const from = this.s.at;
     const before = node(this.map, from).region;
     this.update2(moveTo(this.s, to));

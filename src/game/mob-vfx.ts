@@ -24,11 +24,19 @@ import type { CombatantView } from './combatant-view';
 import type { VfxCtx } from './vfx';
 import type { VfxKit } from './vfx-versions';
 import type { V2Vfx } from './art-v2/types';
-import { mobSheetId, vfxSheetFile } from './vfx-sheet-files';
+import { mobSheetId, mobTweenSheetId, vfxSheetFile } from './vfx-sheet-files';
 import layout from '../../data/battle-layout.json';
 import { IB_CFG } from './vfx-inbetween';
 
 const IB = IB_CFG.player;
+
+/**
+ * Yalnızca Debug > VFX frame test (in battle): bir sonraki mob efekti hangi sheet'le / ara karelerle oynasın. `on` kapalıyken (gerçek savaşlar)
+ * hiçbir şey değişmez: asıl sheet (assets/mob-vfx) ve data/vfx-inbetween.json > player ayarı.
+ *   tween  16 karelik ChatGPT sheet'i (assets/mob-vfx-tween; test ekranı kaydeder, yoksa asıl sheet)
+ *   ib     kodla ara kare (null = kapalı)
+ */
+export const mobVfxTest: { on: boolean; tween: boolean; ib: { method: string; sub: number } | null } = { on: false, tween: false, ib: null };
 
 type Mode = 'melee' | 'bolt' | 'cells' | 'center' | 'self' | 'ally';
 
@@ -160,11 +168,17 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
 }
 
 /** Vuruş karesine kadar geçen süre (ms, yavaşlatılmadan; sheet fps'i meta'dan). */
-const impactMs = (s: MobVfxSpec, fps: number): number => (s.impact * 1000) / Math.max(1, fps);
+const impactMs = (frame: number, fps: number): number => (frame * 1000) / Math.max(1, fps);
 
 function build(skillId: string, s: MobVfxSpec): V2Vfx {
-  const id = mobSheetId(s.mob, skillId);
+  const origId = mobSheetId(s.mob, skillId);
   return async (c: VfxCtx, k: VfxKit) => {
+    // test ekranı: 16 karelik sheet (varsa) ve kare sayısı oranı (vuruş karesi ve fps ona göre); gerçek savaşta hep asıl sheet
+    const tweenId = mobVfxTest.on && mobVfxTest.tween ? mobTweenSheetId(s.mob, skillId) : null;
+    const id = tweenId && vfxSheetFile(tweenId) ? tweenId : origId;
+    const mult = (vfxSheetFile(id)?.meta.frames ?? 8) / (vfxSheetFile(origId)?.meta.frames ?? 8);
+    const impactF = Math.round(s.impact * mult);
+    const ib = mobVfxTest.on ? mobVfxTest.ib : IB.enabled ? { method: IB.method, sub: IB.sub } : null;
     await k.sheetsReady(c.scene, [id]);
     const flip = c.actor.combatant.side !== 'party';
     const fps = (vfxSheetFile(id)?.meta.fps ?? 12) * FPS_SCALE;
@@ -176,7 +190,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     // dayanak noktası (origin): vuruş karesinden okunur, pivota değil (başlık yorumu). Doku okunamazsa (null) sheet pivotu kalır.
     const meta = vfxSheetFile(id)?.meta;
     const [fw, fh] = meta?.frame_size ?? [256, 256];
-    const anchors = s.at === 'ground' || s.mode === 'melee' || s.mode === 'bolt' ? k.sheetAnchors(c.scene, id, s.impact) : null;
+    const anchors = s.at === 'ground' || s.mode === 'melee' || s.mode === 'bolt' ? k.sheetAnchors(c.scene, id, impactF) : null;
     const origin: [number, number] | null = !anchors
       ? null
       : s.at === 'ground'
@@ -191,13 +205,13 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
         delay,
         ...(s.squashY ? { squashY: s.squashY } : {}),
         ...(origin ? { origin } : {}),
-        ...(IB.enabled ? { inbetween: { method: IB.method, sub: IB.sub } } : {}), // kodla ara kare (varsayılan KAPALI: data/vfx-inbetween.json > player)
+        ...(ib ? { inbetween: ib } : {}), // kodla ara kare (varsayılan KAPALI: data/vfx-inbetween.json > player)
       };
       const main = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 1 });
       const glow = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
       if (!main) return;
       // vuruş karesi: sheet'i kısa dondur + hedefte parlama
-      c.scene.time.delayedCall(k.slow(delay + impactMs(s, fps)), () => {
+      c.scene.time.delayedCall(k.slow(delay + impactMs(impactF, fps)), () => {
         for (const o of [main, glow]) if (o?.active) o.anims.pause();
         const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
         c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
@@ -208,7 +222,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     };
     const land = (): Promise<void> => {
       const d = deferred();
-      c.scene.time.delayedCall(k.slow(impactMs(s, fps)), () => {
+      c.scene.time.delayedCall(k.slow(impactMs(impactF, fps)), () => {
         for (const x of sfx.slice(1)) c.sfx(x);
         d.resolve();
       });
@@ -224,7 +238,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       const t = c.targets[0];
       await c.lunge(t ? t.container.x : c.actor.container.x);
       for (const v of c.targets) play(pos(v), 0, v.container.depth);
-      c.scene.time.delayedCall(k.slow(impactMs(s, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
+      c.scene.time.delayedCall(k.slow(impactMs(impactF, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
     await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', 'cast');
@@ -249,7 +263,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       const STEP = 180;
       c.stages.forEach((st, i) => {
         for (const p of st.cells) play(p, i * STEP, p.y + CELL_DEPTH);
-        c.scene.time.delayedCall(k.slow(i * STEP + impactMs(s, fps)), () => c.releaseStage(i));
+        c.scene.time.delayedCall(k.slow(i * STEP + impactMs(impactF, fps)), () => c.releaseStage(i));
       });
       return land();
     }

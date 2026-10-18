@@ -1182,6 +1182,17 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     run: () => void import('./debug-vfx-frames').then((m) => m.openVfxFrameTest()),
   });
 
+  // ===== Characters > Animation tests: the same comparison INSIDE a real test battle (mob casts on a dummy; src/ui/debug-vfx-battle.ts) =====
+  debug.register({
+    id: 'chars.vfx-frame-test-battle',
+    icon: 'wand',
+    tab: 'Characters',
+    section: 'Animation tests',
+    label: 'VFX frame test (in battle)',
+    hint: 'Real test battle: the mob (Grave Chanter, Morvane Halberdier or Sworn Guard) casts its skill on a dummy with the full battle animation. Panel: skill, version (Original / ChatGPT 16f / Code in-between), Cast, Loop, speed, Pause + Step',
+    run: () => void import('./debug-vfx-battle').then((m) => m.openVfxBattleTest(game)),
+  });
+
   // ===== Characters: look variants (assets/sprites/<id>/idle-<variant>.png; src/game/sprite-variants.ts) =====
   debug.registerPanel({
     id: 'panel.characters',

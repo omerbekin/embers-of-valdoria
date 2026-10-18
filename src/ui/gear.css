@@ -3573,6 +3573,12 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
   letter-spacing: 0.08em;
 }
 
+/* Üst kenar kaydırılan .gr-stall tarafından kırpılıyordu: hover'daki -2px kayma çerçevenin üstünü kesiyordu */
+.gr-wares-head .gr-reroll:hover,
+.gr-wares-head .gr-reroll:focus-visible {
+  transform: none;
+}
+
 .gr-wares-head .gr-reroll::before,
 .gr-wares-head .gr-reroll::after {
   display: none;
@@ -3917,4 +3923,159 @@ html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-bagonly {
 
 html.short .gr-ledger.gr-bagonly .gr-lbody {
   grid-template-columns: minmax(0, 1fr);
+}
+
+/* ===================== Gear defteri düzeni v2 (Ömer 2026-10-18) =====================
+   - Skill bloğu sol sayfanın içinde değil gövde ızgarasının ikinci satırında: yer imi sütununun altından sol sayfanın sonuna kadar tam genişlik
+     (5 eşit sütun geniş kalır, ad / bedel kesilmez). Sırt ve sağ sayfa (torba) iki satırı da kaplar.
+   - Torba 5 sütun (30 yuva = 6 satır, gerekirse kendi içinde kayar); sol sayfa biraz daha geniş. */
+.gr-ledger .gr-lbody {
+  grid-template-columns: calc(96 * var(--u)) minmax(0, 1.3fr) 1px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.gr-ledger .gr-lbody > .gr-marks-col {
+  grid-area: 1 / 1;
+}
+
+.gr-ledger .gr-lbody > .gr-page:not(.r) {
+  grid-area: 1 / 2;
+}
+
+.gr-ledger .gr-lbody > .gr-spine {
+  grid-area: 1 / 3 / 3 / 4;
+}
+
+.gr-ledger .gr-lbody > .gr-page.r {
+  grid-area: 1 / 4 / 3 / 5;
+}
+
+.gr-ledger .gr-lskills {
+  grid-area: 2 / 1 / 3 / 3;
+  min-width: 0;
+  padding: calc(8 * var(--u)) calc(26 * var(--u)) 2px 0;
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-ledger .gr-lskills:empty {
+  display: none;
+}
+
+.gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-bagonly .gr-lskills {
+  display: none;
+}
+
+.gr-overlay .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 5;
+}
+
+html.short .gr-ledger .gr-lbody {
+  grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr);
+}
+
+/* telefon: torba hücresi >= 44 px olsun diye 4 sütun (30 yuva = 8 satır, kendi içinde kayar); yer imleri sıkı (4 kahraman kaydırmasız sığar) */
+html.short .gr-overlay .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 4;
+}
+
+/* çift pencerede (tüccar / ganimet) Gear yarım ekran: torba 3 sütun (hücre >= 44 px) */
+html.short .gr-pair .gr-overlay .gr-ledger .gr-inv .gr-bag,
+html.short .gr-pair > .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 3;
+}
+
+html.short .gr-ledger .gr-marks {
+  gap: 4px;
+  padding-top: 3px;
+  padding-bottom: 0;
+}
+
+html.short .gr-ledger .gr-lskills {
+  padding: 4px 8px 0 0;
+}
+
+html.short .gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  margin-bottom: 4px;
+}
+
+html.short .gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* skill adı hiçbir zaman sözcüğün ortasından bölünmez: yalnızca boşlukta sarılır; sütun dar kalırsa yazı hücre genişliğine göre küçülür */
+.gr-skillbar .bh-sk {
+  container-type: inline-size;
+}
+
+.gr-skillbar .bh-sk .nm {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  font-size: min(15px, 9.4cqw);
+}
+
+/* bedel satırı ("RAGE 30", "3 | 2") bölünmez; sığmazsa alt satıra düşer */
+.gr-skillbar .bh-sk .cost {
+  height: auto;
+  min-height: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+  white-space: nowrap;
+}
+
+/* yüzen açıklama (skill / pasif): Gear örtüsünün üst katmanı, kaydırmalı kaplardan bağımsız */
+.gr-skillbar .bh-sktip {
+  display: none;
+}
+
+.gr-sktip-fl {
+  position: absolute;
+  z-index: 60;
+  pointer-events: none;
+  color: var(--txt);
+  font-family: var(--gar);
+}
+
+.gr-sktip-fl .bh-sktip {
+  display: block;
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: min(440px, calc(100vw - 24px));
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+
+.gr-sktip-fl .bh-sktip::after {
+  display: none;
+}
+
+.gr-sktip-fl .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-sktip-fl .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* yalnızca torba görünümü (ganimet / ödül): tek sütun, torba tüm genişlikte */
+.gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.gr-ledger.gr-bagonly .gr-lbody > .gr-page.r {
+  grid-area: 1 / 1;
+}
+
+/* torba tüm genişlikte olduğu için eski 6 sütun kalır */
+.gr-overlay .gr-ledger.gr-bagonly .gr-inv .gr-bag {
+  --bag-cols: 6;
 }

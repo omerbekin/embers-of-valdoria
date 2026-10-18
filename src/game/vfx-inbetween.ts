@@ -23,6 +23,7 @@ export const IB_CFG = cfg as unknown as {
   player: { enabled: boolean; method: string; sub: number };
   subOptions: number[];
   methods: Record<string, IbMethodCfg>;
+  battleTest: { dummy: string; background: string; casterSlot: number; dummySlot: number; loopGapMs: number; speeds: number[] };
   test: {
     background: string;
     logical: [number, number];

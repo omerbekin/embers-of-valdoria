@@ -68,7 +68,18 @@ export const MOB_VFX_SHEET_FILES: readonly VfxSheetFile[] = Object.entries(mobPn
   })
   .sort((a, b) => a.id.localeCompare(b.id));
 
-export const vfxSheetFile = (id: string): VfxSheetFile | undefined => VFX_SHEET_FILES.find((f) => f.id === id) ?? MOB_VFX_SHEET_FILES.find((f) => f.id === id);
+/**
+ * Çalışma zamanında eklenen sheet'ler (yalnızca Debug > VFX frame test (in battle): 16 karelik ChatGPT ara kare sheet'leri, assets/mob-vfx-tween).
+ * Gerçek savaşta boştur; kimlik `mobtween/<mob>/<skill>`.
+ */
+const EXTRA_SHEET_FILES: VfxSheetFile[] = [];
+export const mobTweenSheetId = (mob: string, skill: string): string => `mobtween/${mob}/${skill}`;
+export function registerExtraVfxSheet(f: VfxSheetFile): void {
+  if (!EXTRA_SHEET_FILES.some((x) => x.id === f.id)) EXTRA_SHEET_FILES.push(f);
+}
+
+export const vfxSheetFile = (id: string): VfxSheetFile | undefined =>
+  VFX_SHEET_FILES.find((f) => f.id === id) ?? MOB_VFX_SHEET_FILES.find((f) => f.id === id) ?? EXTRA_SHEET_FILES.find((f) => f.id === id);
 
 /** Bu birimlerin (mob id'leri) mob sheet kimlikleri: savaş preload'u yalnızca sahnedeki mobların efektlerini yükler. */
 export const mobSheetsOf = (units: readonly string[]): string[] => MOB_VFX_SHEET_FILES.filter((f) => units.includes(f.owner)).map((f) => f.id);
