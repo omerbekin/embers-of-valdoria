@@ -1,0 +1,292 @@
+/* Ortak envanter taslağı: YALNIZCA düzen (yerleşim). Görünüm oyunun kendi CSS'inden gelir (css/style.css, elegant.css, gear.css, battle-hud.css).
+   Ölçüler oyun birimiyle: calc(N * var(--u)), --gu = sahne yüksekliği / 1080 (oyundaki src/ui/viewport.ts ile aynı). */
+html, body { background: #000; }
+#stage { position: fixed; inset: 0; width: 100vw; height: 100dvh; overflow: hidden; background: #000; }
+#bgimg { position: absolute; inset: 0; background: #000 center / cover no-repeat; }
+#ui-root { position: absolute; inset: 0; }
+#ui-root .gr-overlay { position: absolute; }
+
+/* --- taslak şeridi (oyunun parçası değil) --- */
+#mk-strip { position: fixed; left: 8px; bottom: 8px; z-index: 60; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: calc(100vw - 120px);
+  padding: 4px 6px; background: rgba(20, 10, 4, 0.92); border: 1px dashed #e0702a; font: 600 11px system-ui, sans-serif; color: #ffb35a; letter-spacing: .04em; }
+#mk-strip b { color: #e0702a; margin-right: 4px; }
+#mk-strip button { font: 600 11px system-ui, sans-serif; color: #f3d999; background: #1b120a; border: 1px solid rgba(224, 112, 42, .5); padding: 3px 7px; cursor: pointer; min-height: 26px; }
+#mk-strip button.on { background: #e0702a; color: #1a0f06; }
+#mk-strip .sep { width: 1px; height: 18px; background: rgba(224, 112, 42, .5); margin: 0 3px; }
+#mk-strip .x { margin-left: 2px; }
+html.mk-clean #mk-strip { display: none; }
+html.mk-strip-min #mk-strip > :not(.keep) { display: none; }
+
+/* --- ortak --- */
+.mk { --mk-line: rgba(217, 178, 106, 0.16); }
+.mk .gr-body { display: grid; min-height: 0; overflow: hidden; }
+.mk .mk-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: calc(12 * var(--u)); }
+.mk .mk-col > * { flex-shrink: 0; }
+.mk .mk-col > .gr-inv { flex-shrink: 1; }
+.mk .mk-scroll { overflow: hidden auto; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, 0.4) transparent; }
+.mk .gr-sec.mk-flex { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.mk .gr-sec .mk-r { margin-left: auto; letter-spacing: .08em; color: var(--g-dim); }
+.mk .gr-inv { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.mk .gr-inv .gr-bag { flex: 1 1 auto; overflow: hidden auto; grid-auto-rows: max-content; }
+.gr-overlay .mk .gr-inv .gr-bag { grid-template-columns: repeat(var(--bag-cols, 6), minmax(0, 1fr)); }
+.mk .gr-bag-head { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.mk .gr-bag-head .gr-sec { flex: 1; margin-bottom: 0; }
+.mk .gr-item.on { outline: 2px solid var(--rc); outline-offset: 2px; }
+.mk .gr-item.filtered { opacity: .28; }
+.mk.gr-dragging .gr-item.drop-ok, .mk .gr-item.tap-ok { box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .6); }
+.mk .gr-slot.tap-ok, .mk .gr-hero.tap-ok, .mk .mk-drop.tap-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
+.mk.gr-dragging .mk-drop.drop-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
+.mk .gr-sgroups .gr-pm { flex: none; }
+.mk .gr-hero { width: 100%; }
+.mk .gr-hero .gr-badge { position: absolute; right: calc(6 * var(--u)); top: calc(6 * var(--u)); }
+.mk .mk-ico { width: max(18px, calc(28 * var(--u))); height: max(18px, calc(28 * var(--u))); object-fit: contain; flex: none; }
+.mk .mk-note { font: italic max(12px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mk .mk-hint { font: italic max(12px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); margin-right: auto; }
+.mk .gr-foot { display: flex; align-items: center; justify-content: flex-end; gap: calc(16 * var(--u)); }
+.mk .gr-gold img { width: max(18px, calc(30 * var(--u))); height: max(18px, calc(30 * var(--u))); vertical-align: -0.2em; margin-right: .3em; }
+.mk .gr-head-l .gr-shop-sub { margin: 0; }
+/* kahraman kart rozeti: harcanmamış puan */
+.mk-pt { display: inline-flex; align-items: center; justify-content: center; min-width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); border-radius: 50%;
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp); color: #1a120a; background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%); box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, .45); padding: 0 4px; }
+.mk-pt.sk { background: radial-gradient(circle at 35% 30%, #f3e1b0, #b9853e 70%); }
+/* ikon düğmesi (yazısız; ipucu üstüne gelince / uzun basınca) */
+.mk-ib { position: relative; display: inline-flex; align-items: center; justify-content: center; min-width: 44px; min-height: 44px; width: max(44px, calc(64 * var(--u))); height: max(44px, calc(64 * var(--u)));
+  padding: 0; background: rgba(8, 6, 4, .5); border: 1px solid var(--g-line2); cursor: pointer; transition: border-color .18s, background .2s; }
+.mk-ib img { width: 62%; height: 62%; object-fit: contain; }
+.mk-ib:hover { border-color: var(--g-gold); }
+.mk-ib.on { border-color: var(--g-gold); background: linear-gradient(90deg, rgba(224, 112, 42, .18), rgba(8, 6, 4, .5) 80%); }
+.mk-ib .mk-pt { position: absolute; right: -8px; top: -8px; min-width: 22px; height: 22px; font-size: 12px; }
+.mk-ib.sel::after { content: ''; position: absolute; left: 50%; bottom: -7px; width: 9px; height: 9px; margin-left: -4.5px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2), 0 0 8px rgba(240, 140, 40, .8); }
+/* ipucu (ikon düğmeleri, kahraman portreleri) */
+.mk-tip { position: absolute; z-index: 40; pointer-events: none; opacity: 0; transition: opacity .12s; padding: 6px 10px; background: linear-gradient(180deg, rgba(30, 22, 14, .98), rgba(12, 9, 6, .98));
+  border: 1px solid var(--g-edge); font: 600 max(12px, calc(16 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); white-space: nowrap; }
+.mk-tip.on { opacity: 1; }
+.mk-tip i { display: block; font: italic max(11px, calc(15 * var(--u))) var(--g-body); letter-spacing: 0; text-transform: none; color: var(--g-dim); }
+.mk-toast { position: absolute; left: 50%; top: calc(90 * var(--u)); transform: translateX(-50%); z-index: 45; padding: 8px 18px; background: rgba(12, 9, 6, .96); border: 1px solid var(--g-edge);
+  font: italic max(13px, calc(20 * var(--u))) var(--g-body); color: var(--g-gold); pointer-events: none; opacity: 0; transition: opacity .2s; }
+.mk-toast.on { opacity: 1; }
+.mk-toast.bad { color: #ff9a88; border-color: rgba(255, 138, 122, .55); }
+
+/* item ipucu: karşılaştırma bloğu */
+.item-tip .mk-cmp { margin-top: 6px; padding-top: 6px; border-top: 1px solid rgba(217, 178, 106, .2); }
+.item-tip .mk-cmp-h { font: 600 max(11px, calc(14 * var(--u))) var(--g-disp, Cinzel); letter-spacing: .16em; text-transform: uppercase; color: #a8977a; margin-bottom: 3px; }
+.item-tip .mk-cmp-h b { color: var(--cmp-c, #d9c8a2); letter-spacing: .06em; }
+.item-tip .mk-cmp-row { display: flex; align-items: center; gap: 6px; font-size: .95em; }
+.item-tip .mk-cmp-row img { width: 1.1em; height: 1.1em; }
+.item-tip .mk-cmp-row .k { min-width: 3.6em; color: #a8977a; font: 600 .78em var(--g-disp, Cinzel); letter-spacing: .1em; }
+.item-tip .mk-cmp-row .v { color: #d9c8a2; }
+
+/* yuva ızgarası: bebek (paperdoll) halkası, v4 sahnesi */
+.mk-doll { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); gap: calc(12 * var(--u)); align-items: center; }
+.mk-doll .mk-dcol { display: flex; flex-direction: column; gap: calc(10 * var(--u)); }
+.mk-doll .gr-slot { min-height: max(48px, calc(84 * var(--u))); }
+.mk-portrait { width: calc(250 * var(--u)); height: calc(250 * var(--u)); min-width: 110px; min-height: 110px; background: #120c08 center / cover no-repeat; border: 1px solid rgba(217, 178, 106, .55);
+  image-rendering: pixelated; box-shadow: 0 0 0 3px rgba(8, 6, 4, .7), 0 calc(14 * var(--u)) calc(30 * var(--u)) rgba(0, 0, 0, .55); position: relative; }
+.mk-portrait .mk-pname { position: absolute; left: 0; right: 0; bottom: calc(-46 * var(--u)); text-align: center; font: 600 max(14px, calc(24 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+
+/* skill ağacı (yer tutucu kurallar; düğümler oyunun skill hücresi .bh-sk). İç ölçüler savaş HUD biriminde (px), kutuya zoom = --gu x katsayı */
+.mk-tree { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; font-family: 'EB Garamond', serif; }
+.mk-branch { border: 1px solid rgba(217, 178, 106, 0.16); background: rgba(8, 6, 4, .35); padding: 12px 8px 10px; display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 0; }
+.mk-branch .gr-sec { align-self: stretch; text-align: center; margin-bottom: 4px; padding-bottom: 6px; letter-spacing: .16em; font-size: 17px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-branch .bh-kit { display: flex; flex-direction: column; align-items: center; gap: 0; }
+.mk-branch .mk-row { display: flex; justify-content: center; gap: 12px; }
+.mk-branch .mk-link { width: 1px; height: 16px; background: linear-gradient(180deg, rgba(217, 178, 106, .55), rgba(217, 178, 106, .15)); }
+.mk-branch .mk-link.lit { width: 2px; background: linear-gradient(180deg, #ffb35a, #e0702a); box-shadow: 0 0 6px rgba(240, 140, 40, .6); }
+.mk-tree .bh-sk { width: 118px; cursor: pointer; padding-top: 4px; gap: 4px; }
+.mk-tree .bh-sk::after { display: none; }
+.mk-tree .bh-sk .nm { max-width: 118px; white-space: normal; text-align: center; line-height: 1.05; font-size: 13px; min-height: 2.1em; display: flex; align-items: center; justify-content: center; }
+.mk-tree .bh-sk .cost { font: 600 13px Cinzel, serif; color: #b9ab94; min-height: 1.2em; }
+.mk-tree .bh-sk.lrn .fr { box-shadow: inset 0 0 0 2px #f3d999, 0 0 0 3px rgba(8, 6, 4, .75), 0 0 16px rgba(240, 160, 60, .55); }
+.mk-tree .bh-sk.lrn .cost { color: #8fe39a; }
+.mk-tree .bh-sk.can .fr { animation: mkPulse 1.6s ease-in-out infinite; }
+.mk-tree .bh-sk.off .fr .bh-ico { filter: grayscale(.85) brightness(.55); }
+.mk-tree .bh-sk.off .nm { color: #8f8068; }
+@keyframes mkPulse { 0%, 100% { box-shadow: inset 0 0 0 1px rgba(217, 178, 106, .45), 0 0 0 3px rgba(8, 6, 4, .75); } 50% { box-shadow: inset 0 0 0 1px #ffb35a, 0 0 0 3px rgba(8, 6, 4, .75), 0 0 18px rgba(240, 140, 40, .8); } }
+.mk-tree-head .mk-note { margin-left: auto; letter-spacing: 0; text-transform: none; }
+html.reduced-motion .mk-tree .bh-sk.can .fr { animation: none; }
+
+/* bağlam kutuları (town / merchant / reward) */
+.mk-ctx { border: 1px solid var(--g-line); background: rgba(8, 6, 4, .35); padding: calc(14 * var(--u)); display: flex; flex-direction: column; gap: calc(10 * var(--u)); min-height: 0; }
+.mk-svc { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(8 * var(--u)); border: 1px solid var(--g-line2); background: rgba(8, 6, 4, .45); min-height: 44px; }
+.mk-svc .mk-svc-t { flex: 1; min-width: 0; }
+.mk-svc .mk-svc-n { font: 600 max(13px, calc(20 * var(--u))) var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-text); }
+.mk-svc .mk-svc-s { font: italic max(12px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mk-svc img.big { width: max(36px, calc(60 * var(--u))); height: max(36px, calc(60 * var(--u))); object-fit: contain; }
+.mk-recruits { display: flex; gap: calc(8 * var(--u)); }
+.mk-recruits .gr-face { width: max(36px, calc(56 * var(--u))); height: max(36px, calc(56 * var(--u))); opacity: .55; }
+.mk-hpbar { height: max(4px, calc(7 * var(--u))); background: rgba(217, 178, 106, .14); border: 1px solid var(--g-line); margin-top: 3px; }
+.mk-hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #4f8f3a, #8fe37a); transition: width .4s; }
+.mk-hpbar.mp i { background: linear-gradient(90deg, #2c5f9e, #6fb0f0); }
+.mk .gr-wares { display: grid; grid-template-columns: repeat(var(--ware-cols, 3), max(54px, calc(104 * var(--u)))); gap: calc(12 * var(--u)) calc(14 * var(--u)); }
+.mk .gr-wares .gr-item { width: 100%; }
+.mk .gr-bb-row { display: flex; gap: calc(10 * var(--u)); min-height: max(44px, calc(70 * var(--u))); }
+.mk .gr-bb-row .gr-cellw { width: max(44px, calc(70 * var(--u))); }
+.mk .mk-stall { border: 1px dashed transparent; padding: calc(6 * var(--u)); }
+
+/* ödül kartları (EndlessScene choiceCard görünümü) */
+.mk-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(26 * var(--u)); min-height: 0; }
+.mk-card { position: relative; display: flex; flex-direction: column; align-items: center; text-align: center; gap: calc(10 * var(--u)); padding: calc(18 * var(--u)) calc(18 * var(--u)) calc(16 * var(--u));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 12%, rgba(26, 19, 12, .96)), rgba(12, 9, 6, .96) 45%); border: 1px solid color-mix(in srgb, var(--ac) 55%, rgba(217, 178, 106, .4));
+  cursor: pointer; transition: transform .18s, border-color .18s, box-shadow .2s; min-height: 0; overflow: hidden; }
+.mk-card:hover { transform: translateY(-3px); border-color: var(--ac); box-shadow: 0 0 calc(22 * var(--u)) color-mix(in srgb, var(--ac) 35%, transparent); }
+.mk-card.taken { border-color: #f3d999; box-shadow: 0 0 0 1px #f3d999, 0 0 calc(26 * var(--u)) rgba(240, 160, 60, .45); }
+.mk-card.dim { opacity: .38; pointer-events: none; }
+.mk-kick { display: flex; align-items: center; gap: 12px; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: .3em; text-transform: uppercase; color: #a8977a; }
+.mk-kick::before, .mk-kick::after { content: ''; width: calc(54 * var(--u)); height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, .55)); }
+.mk-kick::after { transform: scaleX(-1); }
+.mk-medal { width: max(64px, calc(110 * var(--u))); height: max(64px, calc(110 * var(--u))); border-radius: 50%; display: grid; place-items: center; flex: none;
+  border: 2px solid color-mix(in srgb, var(--ac) 80%, #f3d999); background: radial-gradient(circle, color-mix(in srgb, var(--ac) 28%, #120c08), #0b0806 70%); box-shadow: 0 0 calc(22 * var(--u)) color-mix(in srgb, var(--ac) 40%, transparent); }
+.mk-medal img { width: 72%; height: 72%; object-fit: contain; }
+.mk-card .mk-cn { font: 600 max(15px, calc(28 * var(--u))) var(--g-disp); letter-spacing: .06em; text-transform: uppercase; line-height: 1.1; }
+.mk-card .mk-big { font: 600 max(30px, calc(60 * var(--u))) var(--g-disp); color: #f3d999; line-height: 1; }
+.mk-card .mk-cs { font: italic max(12px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mk-card .mk-ct { font: max(13px, calc(20 * var(--u))) var(--g-body); color: var(--g-text); }
+.mk-card .mk-sell { position: absolute; right: calc(14 * var(--u)); top: calc(12 * var(--u)); font: max(12px, calc(17 * var(--u))) var(--g-body); color: #f3d999; display: flex; gap: 4px; align-items: center; }
+.mk-card .mk-sell img { width: 1.1em; height: 1.1em; }
+.mk-card .it-lines { text-align: left; align-self: stretch; }
+.mk-card .mk-who { margin-top: auto; align-self: stretch; }
+.mk-who-row { display: flex; justify-content: center; gap: calc(8 * var(--u)); margin-top: calc(6 * var(--u)); }
+.mk-who-row .gr-hero { width: auto; padding: 2px; }
+.mk-who-row .gr-face { width: max(40px, calc(58 * var(--u))); height: max(40px, calc(58 * var(--u))); }
+.mk-who-row .gr-hero.no { opacity: .35; }
+.mk-who-row .gr-hero .mk-d { position: absolute; left: 0; right: 0; bottom: -1.3em; font: 600 max(10px, calc(13 * var(--u))) var(--g-disp); white-space: nowrap; }
+.mk-heal-rows { align-self: stretch; display: flex; flex-direction: column; gap: calc(8 * var(--u)); text-align: left; }
+.mk-heal-row { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: calc(10 * var(--u)); align-items: center; font: max(12px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mk-heal-row .gr-face { width: max(30px, calc(44 * var(--u))); height: max(30px, calc(44 * var(--u))); }
+
+/* ödül kartları: dar sütunda satır düzeni (madalyon solda) */
+.mk-cards.rows { grid-template-columns: 1fr; gap: calc(14 * var(--u)); }
+.mk-cards.rows .mk-card { display: grid; grid-template-columns: auto minmax(0, 1fr); align-items: center; text-align: left; gap: calc(6 * var(--u)) calc(16 * var(--u)); padding: calc(12 * var(--u)) calc(16 * var(--u)); }
+.mk-cards.rows .mk-card > .mk-kick:first-of-type { grid-column: 1 / -1; justify-self: center; }
+.mk-cards.rows .mk-card > .mk-medal { grid-column: 1; grid-row: 2 / span 6; align-self: start; width: max(52px, calc(84 * var(--u))); height: max(52px, calc(84 * var(--u))); }
+.mk-cards.rows .mk-card > :not(.mk-kick:first-of-type):not(.mk-medal):not(.mk-sell) { grid-column: 2; justify-self: stretch; }
+.mk-cards.rows .mk-card .mk-cn { font-size: max(14px, calc(22 * var(--u))); }
+.mk-cards.rows .mk-card .mk-big { font-size: max(24px, calc(40 * var(--u))); }
+.mk-cards.rows .mk-card .mk-ct { font-size: max(12px, calc(17 * var(--u))); }
+.mk-cards.rows .mk-card .mk-kick { justify-content: flex-start; }
+.mk-cards.rows .mk-card .mk-who-row { justify-content: flex-start; }
+.mk-who-row { padding-bottom: 1.3em; }
+.mk-card .mw-stats { align-self: stretch; text-align: left; }
+.mk-heal-row > div { min-width: 0; }
+.mk-heal-row > div > span { display: block; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.mk-heal-row > span:last-child { white-space: nowrap; }
+
+/* ===== v1 Triptych ===== */
+.mk-v1 .gr-body { grid-template-columns: calc(330 * var(--u)) minmax(0, 1fr) calc(520 * var(--u)); gap: calc(26 * var(--u)); }
+.mk-v1 .mk-c2 .gr-slots { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+/* ===== v2 Tabbed Workbench ===== */
+.mk-v2 .gr-body { grid-template-columns: auto minmax(0, 1fr) calc(600 * var(--u)); grid-template-rows: auto minmax(0, 1fr); gap: calc(16 * var(--u)) calc(24 * var(--u)); }
+.mk-v2 .mk-rail { grid-column: 1 / -1; display: flex; gap: calc(10 * var(--u)); align-items: center; }
+.mk-v2 .mk-rail .gr-hero { width: auto; flex: 0 0 auto; padding-right: calc(16 * var(--u)); }
+.mk-v2 .mk-vtabs { display: flex; flex-direction: column; gap: calc(12 * var(--u)); }
+.mk-v2 .mk-vtabs .mk-ib.sel::after { left: auto; right: -8px; top: 50%; bottom: auto; margin: -4.5px 0 0; }
+.mk-v2 .mk-pane { border-left: 1px solid var(--g-line); padding-left: calc(24 * var(--u)); }
+/* ===== v3 Ledger ===== */
+.mk-v3 .gr-panel { position: relative; }
+.mk-v3 .gr-body { grid-template-columns: calc(96 * var(--u)) minmax(0, 1fr) 1px minmax(0, 1fr); gap: 0; }
+.mk-v3 .mk-marks { display: flex; flex-direction: column; gap: calc(10 * var(--u)); padding-right: calc(14 * var(--u)); }
+.mk-v3 .mk-mark { position: relative; padding: 2px; border: 1px solid var(--g-line2); background: rgba(8, 6, 4, .5); cursor: pointer; }
+.mk-v3 .mk-mark .gr-face { width: max(44px, calc(76 * var(--u))); height: max(44px, calc(76 * var(--u))); }
+.mk-v3 .mk-mark.on { border-color: var(--g-gold); transform: translateX(calc(8 * var(--u))); box-shadow: calc(-8 * var(--u)) 0 0 0 rgba(224, 112, 42, .5); }
+.mk-v3 .mk-mark .mk-pt { position: absolute; right: -9px; top: -9px; min-width: 22px; height: 22px; font-size: 12px; }
+.mk-v3 .mk-page { padding: 0 calc(26 * var(--u)); background: linear-gradient(90deg, rgba(8, 6, 4, .15), rgba(8, 6, 4, .4)); }
+.mk-v3 .mk-page.r { background: linear-gradient(270deg, rgba(8, 6, 4, .15), rgba(8, 6, 4, .4)); }
+.mk-v3 .mk-spine { background: linear-gradient(180deg, transparent, rgba(217, 178, 106, .5) 12%, rgba(217, 178, 106, .5) 88%, transparent); box-shadow: 0 0 calc(18 * var(--u)) rgba(0, 0, 0, .9); }
+.mk-v3 .mk-folio { text-align: center; font: italic max(11px, calc(15 * var(--u))) var(--g-body); color: var(--g-dim); margin-top: auto; padding-top: calc(6 * var(--u)); }
+/* ===== v4 Stage ===== */
+.mk-v4 .gr-body { grid-template-columns: calc(430 * var(--u)) minmax(0, 1fr) calc(360 * var(--u)); grid-template-rows: minmax(0, 1fr) auto; gap: calc(16 * var(--u)) calc(26 * var(--u)); }
+.mk-v4 .mk-shelf { grid-column: 1 / -1; }
+.gr-overlay .mk-v4 .mk-shelf .gr-bag { overflow: hidden; }
+.mk-v4 .mk-center { align-items: center; }
+.mk-v4 .mk-herorow { display: flex; gap: calc(10 * var(--u)); justify-content: center; }
+.mk-v4 .mk-herorow .gr-hero { width: auto; padding: 2px; }
+.mk-v4 .mk-herorow .gr-face { width: max(44px, calc(60 * var(--u))); height: max(44px, calc(60 * var(--u))); }
+.mk-sheet { position: absolute; inset: calc(20 * var(--u)); z-index: 8; display: flex; flex-direction: column; gap: calc(14 * var(--u)); padding: calc(26 * var(--u)) calc(32 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, .99), rgba(12, 9, 6, .99)); border: 1px solid var(--g-edge); box-shadow: 0 0 0 3px rgba(8, 6, 4, .7), 0 0 60px rgba(0, 0, 0, .8); }
+.mk-sheet .mk-sheet-b { display: grid; grid-template-columns: calc(560 * var(--u)) minmax(0, 1fr); gap: calc(30 * var(--u)); min-height: 0; flex: 1; }
+/* ===== v5 Squad ===== */
+.mk-v5 .gr-body { grid-template-rows: minmax(0, 1.7fr) minmax(0, 1fr); grid-template-columns: minmax(0, 1fr) calc(520 * var(--u)); gap: calc(16 * var(--u)) calc(22 * var(--u)); }
+.mk-v5 .mk-squad { grid-column: 1 / -1; display: grid; grid-template-columns: 1fr 1fr 1fr 1fr; gap: calc(14 * var(--u)); min-height: 0; transition: grid-template-columns .35s cubic-bezier(.33, 1, .68, 1); }
+.mk-v5 .mk-sq { border: 1px solid var(--g-line2); background: rgba(8, 6, 4, .4); padding: calc(12 * var(--u)); display: flex; flex-direction: column; gap: calc(10 * var(--u)); min-width: 0; min-height: 0; overflow: hidden; cursor: pointer; position: relative; }
+.mk-v5 .mk-sq.on { border-color: var(--g-gold); cursor: default; background: linear-gradient(180deg, rgba(224, 112, 42, .08), rgba(8, 6, 4, .45) 30%); }
+.mk-v5 .mk-sq-h { display: flex; align-items: center; gap: calc(12 * var(--u)); }
+.mk-v5 .mk-sq-h .gr-face { width: max(44px, calc(76 * var(--u))); height: max(44px, calc(76 * var(--u))); }
+.mk-v5 .mk-sq-h .gr-hero-name { white-space: nowrap; }
+.mk-v5 .mk-dots { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: calc(6 * var(--u)); }
+.mk-v5 .mk-dots .gr-item { min-height: 0; pointer-events: none; }
+.mk-v5 .mk-bottom { grid-column: 1 / 2; }
+.gr-overlay .mk-v5 .mk-bottom .gr-bag { overflow: hidden auto; }
+.mk-v5 .mk-mini-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 2px calc(10 * var(--u)); }
+.mk-v5 .mk-mini-stats .gr-stat { padding: 0; }
+.mk-v5 .mk-sqtabs { display: flex; gap: calc(10 * var(--u)); }
+
+/* sahne üst bilgisi (oyundaki sahne başlığı, panelin arkasında) */
+.mk-scene-title { position: absolute; left: 0; right: 0; top: calc(26 * var(--u)); text-align: center; z-index: 1; pointer-events: none; }
+.mk-scene-title b { display: block; font: 600 max(18px, calc(44 * var(--u))) Cinzel, serif; letter-spacing: .14em; text-transform: uppercase; color: rgba(243, 217, 153, .5); }
+.mk-scene-title i { font: italic max(12px, calc(22 * var(--u))) 'EB Garamond', serif; color: rgba(217, 200, 162, .45); }
+
+/* telefon (html.short / compact; oyunla aynı sınıflar) */
+html.short .mk .gr-panel { padding: 8px 10px; gap: 6px; }
+html.short .mk-v1 .gr-body { grid-template-columns: 60px minmax(0, 1fr) minmax(0, .9fr); gap: 8px; }
+html.short .mk-v1 .mk-c1 .gr-hero-meta, html.short .mk-v1 .mk-c1 .mk-ctx { display: none; }
+html.short .mk .gr-hero { padding: 2px; justify-content: center; }
+html.short .mk .gr-face { width: 44px; height: 44px; }
+html.short .mk-v2 .gr-body { grid-template-columns: auto minmax(0, 1fr) minmax(0, .85fr); gap: 6px 8px; }
+html.short .mk-v2 .mk-rail .gr-hero-meta { display: none; }
+html.short .mk-v2 .mk-rail .gr-hero { padding-right: 2px; }
+html.short .mk-v3 .gr-body { grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr); }
+html.short .mk-v3 .mk-page { padding: 0 8px; }
+html.short .mk-v4 .gr-body { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, .8fr); gap: 6px 8px; }
+html.short .mk-portrait { width: 110px; height: 110px; }
+html.short .mk-v5 .gr-body { grid-template-columns: minmax(0, 1fr) minmax(0, .6fr); gap: 6px; }
+html.short .mk-v5 .mk-sq-h .gr-hero-meta { display: none; }
+html.short .mk-cards { gap: 8px; }
+html.short .mk .gr-sec { margin-bottom: 4px; padding-bottom: 2px; }
+html.short .mk .gr-foot { padding-top: 4px; }
+html.short .mk .gr-head { padding-bottom: 4px; }
+html.short .gr-overlay { padding: 46px 6px 6px; }
+html.short .mk-tree .bh-sk .nm { display: none; }
+html.short .mk-scene-title { display: none; }
+.mk-v2 .mk-rail .gr-hero .gr-badge { position: static; margin-left: calc(6 * var(--u)); }
+.mk-v4 .mk-herorow { align-items: center; }
+.mk-v4 .mk-herorow .gr-btn { margin-left: calc(14 * var(--u)); }
+.mk-v4 .mk-doll { width: 100%; margin-top: calc(10 * var(--u)); }
+.mk-v4 .mk-doll .gr-slot-name { white-space: normal; }
+/* dar sütunda stat grupları: temel statlar tam satır, atak | defans yan yana */
+.mk-narrow .gr-sgroups { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+.mk-narrow .gr-sgrp.base { grid-column: 1 / -1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); column-gap: calc(12 * var(--u)); padding-bottom: calc(6 * var(--u)); border-bottom: 1px solid var(--g-line); }
+.mk-narrow .gr-sgrp.attack { padding-left: 0; border-left: 0; }
+.mk-v5 .mk-tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); align-content: start; gap: calc(8 * var(--u)); margin-bottom: calc(10 * var(--u)); }
+.mk-v5 .mk-tiles .gr-item { min-height: 0; }
+.mk-v5.rw .gr-body { grid-template-rows: minmax(0, 0.9fr) minmax(0, 1fr); }
+.mk-v5 .mk-squad { min-height: 0; }
+.mk-cards.compact { gap: calc(14 * var(--u)); }
+.mk-cards.compact .mk-card { padding: calc(10 * var(--u)) calc(12 * var(--u)); gap: calc(5 * var(--u)); }
+.mk-cards.compact .mk-medal { width: max(46px, calc(70 * var(--u))); height: max(46px, calc(70 * var(--u))); }
+.mk-cards.compact .mk-cn { font-size: max(13px, calc(19 * var(--u))); }
+.mk-cards.compact .mk-big { font-size: max(22px, calc(36 * var(--u))); }
+.mk-cards.compact .mk-ct, .mk-cards.compact .mk-cs { font-size: max(11px, calc(15 * var(--u))); }
+.mk-cards.compact .mw-stats .it-lines { font-size: max(11px, calc(15 * var(--u))); }
+.mk-cards.compact .mk-who-row .gr-face { width: max(36px, calc(46 * var(--u))); height: max(36px, calc(46 * var(--u))); }
+.mk-cards.compact .mk-heal-row .gr-face { width: max(26px, calc(32 * var(--u))); height: max(26px, calc(32 * var(--u))); }
+.mk-cards.compact .mk-heal-rows { gap: calc(4 * var(--u)); }
+.mk-cards.compact .mk-heal-row { font-size: max(11px, calc(15 * var(--u))); }
+/* stat satırı: grup içinde etiket yerine ikon (ad ipucunda; Ömer 2026-10-18: anlamı ikonla belli yerde yazı yok) */
+.mk .gr-sgrp:not(.vitals) .gr-stat-k { display: none; }
+.mk .gr-sgrp:not(.vitals) .gr-stat-v { margin-left: auto; }
+.item-tip .mk-cmp-h b { display: inline; font-size: 1em; }
+.mk-cards.compact .mk-who-row { flex-wrap: wrap; gap: calc(6 * var(--u)); }
+html.short .gr-overlay .gr-panel.mk { width: 100%; height: 100%; max-height: none; }
+html.short .mk .gr-title { font-size: 20px; }
+html.short .mk .gr-skillbar { gap: 4px; }
+html.short .mk-v1 .gr-body { grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr); }
+html.short .gr-overlay .mk-v4 .mk-shelf .gr-bag { --bag-cols: 15; }
+html.short .mk-v4 .gr-body { grid-template-rows: minmax(0, 1fr) auto; }
+html.short .mk-v5 .mk-sq-h .gr-face { width: 40px; height: 40px; }
+html.short .mk-v4 .mk-portrait { display: none; }
+html.short .mk-v4 .mk-doll { grid-template-columns: 1fr 1fr; }
+html.short .mk-v4 .mk-doll .gr-slot { min-height: 44px; }
+html.short .mk-v4 .mk-center { align-items: stretch; }
+html.short .gr-overlay .mk-v4 .mk-shelf .gr-bag { max-height: 104px; overflow: hidden auto; }
+.mk-v4 .mk-doll .gr-slot { min-height: max(46px, calc(74 * var(--u))); }
+.mk-v4 .mk-doll .mk-dcol { gap: calc(8 * var(--u)); }

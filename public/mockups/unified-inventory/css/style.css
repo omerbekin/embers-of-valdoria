@@ -1,0 +1,1605 @@
+/* Menü fontları (yerel dosyalar, internetsiz; SIL OFL 1.1, assets/fonts/LICENSE.md): Cinzel başlık/menü satırı, EB Garamond açıklama.
+   latin-ext alt kümesi Türkçe harfler içindir. Yükleme beklemesi: src/ui/menu-fonts.ts; stil anahtarı: src/ui/menu-style.ts */
+
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../fonts/Cinzel-normal-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF;
+}
+
+@font-face {
+  font-family: 'Cinzel';
+  font-style: normal;
+  font-weight: 400 900;
+  font-display: swap;
+  src: url('../fonts/Cinzel-normal-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: normal;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('../fonts/EBGaramond-normal-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+
+
+@font-face {
+  font-family: 'EB Garamond';
+  font-style: italic;
+  font-weight: 400 800;
+  font-display: swap;
+  src: url('../fonts/EBGaramond-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  width: 100%;
+  height: 100%;
+  background: #000;
+  color: #edf2f4;
+  font-family: system-ui, sans-serif;
+  overflow: hidden;
+  overscroll-behavior: none;
+  touch-action: manipulation;
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+  -webkit-tap-highlight-color: transparent;
+}
+
+:root {
+  /* Çentik / hareket çubuğu payları (döndürülmüş kipte 0: ekranın fiziksel kenarları sahnenin kenarı değildir) */
+  --sat: env(safe-area-inset-top, 0px);
+  --sar: env(safe-area-inset-right, 0px);
+  --sab: env(safe-area-inset-bottom, 0px);
+  --sal: env(safe-area-inset-left, 0px);
+}
+
+/* Oyun alanının kenarları (çentik payı + oyun alanının dışında kalan bant; src/ui/viewport.ts --game-*): sağ üst düğmeler, debug ve kenara
+   yaslanan DOM öğeleri ekranın değil OYUN ALANININ köşesine oturur (ultrawide'da 21.5:9'dan geniş ekran, 16:10/4:3'te üst-alt bant). */
+:root {
+  --et: calc(var(--sat) + var(--game-t, 0px));
+  --er: calc(var(--sar) + var(--game-r, 0px));
+  --eb: calc(var(--sab) + var(--game-b, 0px));
+  --el: calc(var(--sal) + var(--game-l, 0px));
+}
+
+:root.rotated {
+  --sat: 0px;
+  --sar: 0px;
+  --sab: 0px;
+  --sal: 0px;
+}
+
+/* Sahne: görünür alanın tamamı (JS visualViewport ile px verir; yoksa dvh). Dikeyde dokunmatikte 90 derece döner. */
+#stage {
+  position: fixed;
+  left: 0;
+  top: 0;
+  width: var(--stage-w, 100vw);
+  height: var(--stage-h, 100dvh);
+  overflow: hidden;
+  background: #000;
+}
+
+:root.rotated #stage {
+  transform-origin: 0 0;
+  transform: translateX(var(--view-w)) rotate(90deg);
+}
+
+#game {
+  position: absolute;
+  left: var(--sal);
+  right: var(--sar);
+  top: var(--sat);
+  bottom: var(--sab);
+  background: #000;
+}
+
+#game canvas {
+  display: block;
+  touch-action: none;
+}
+
+/* --- Debug menüsü (gerçek piksel; dokunma hedefi >= 44px) --- */
+.debug-toggle {
+  position: fixed;
+  right: calc(8px + var(--er));
+  bottom: calc(8px + var(--eb));
+  min-width: 64px;
+  min-height: 44px;
+  padding: 0 12px;
+  /* tasarım kiti: koyu zemin, ince altın çizgi, Cinzel */
+  font: 600 12px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #a8977a;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.82), rgba(12, 9, 6, 0.86));
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.5);
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+  z-index: 30;
+}
+
+.debug-toggle[hidden] {
+  display: none;
+}
+
+/* Görünür DEBUG düğmesi yoksa (varsayılan; ?debug=1 ile görünür) panel sağ alt köşeye kadar uzar */
+.debug-toggle[hidden] ~ .debug-panel {
+  bottom: calc(8px + var(--eb));
+}
+
+.debug-toggle:hover {
+  color: #f3d999;
+  border-color: #f3d999;
+}
+
+.debug-panel {
+  position: fixed;
+  right: calc(8px + var(--er));
+  bottom: calc(60px + var(--eb));
+  top: calc(64px + var(--et));
+  width: min(520px, calc(var(--stage-w, 100vw) - 16px - var(--er) - var(--el)));
+  overflow: hidden;
+  padding: 12px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.97), rgba(12, 9, 6, 0.97)); /* tasarım kiti */
+  border: 1px solid rgba(217, 178, 106, 0.42);
+  border-radius: 0;
+  z-index: 20;
+  touch-action: pan-y;
+}
+
+.debug-panel[hidden] {
+  display: none;
+}
+
+.debug-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font: 600 15px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f3d999;
+}
+
+.debug-panel h3 {
+  margin: 16px 0 8px;
+  padding-bottom: 5px;
+  font: 600 11px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(217, 178, 106, 0.85);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+}
+
+/* Her kategori bir ızgara: satır başına 2-3 düğme */
+.debug-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(104px, 1fr));
+  gap: 6px;
+}
+
+.debug-action,
+.debug-close {
+  display: block;
+  width: 100%;
+  min-height: 44px;
+  padding: 6px 8px;
+  font: 15px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  text-align: center;
+  color: #d9c8a2;
+  background: rgba(8, 6, 4, 0.45);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  border-radius: 0;
+  cursor: pointer;
+  transition: border-color 0.18s, color 0.18s, background 0.18s;
+}
+
+.debug-close {
+  width: auto;
+  margin: 0;
+}
+
+.debug-action:hover,
+.debug-close:hover {
+  border-color: rgba(243, 217, 153, 0.9);
+  color: #f3d999;
+}
+
+.debug-action:active,
+.debug-close:active {
+  background: rgba(224, 112, 42, 0.18);
+}
+
+.debug-info {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px 10px;
+  margin: 0;
+  font: 14px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  color: #d9c8a2;
+}
+
+.debug-info dt {
+  font: 600 11px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #a8977a;
+  align-self: center;
+}
+
+.debug-info dd {
+  margin: 0;
+}
+
+.fps-counter {
+  position: fixed;
+  left: calc(8px + var(--el));
+  top: calc(8px + var(--et));
+  padding: 4px 8px;
+  font: 600 12px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.06em;
+  color: #d9c8a2;
+  background: rgba(8, 6, 4, 0.7);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  z-index: 25;
+}
+
+/* --- Debug menüsü: sekmeler + her sekmede ikonlu düğmeler (ikon + kısa etiket + ON/OFF ya da değer rozeti) --- */
+.debug-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.debug-panel h3 {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.debug-h-icon {
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+}
+
+.debug-grid {
+  grid-template-columns: repeat(auto-fill, minmax(138px, 1fr));
+}
+
+.debug-action.debug-ibtn {
+  justify-content: flex-start;
+  gap: 8px;
+  min-height: 48px;
+  padding: 4px 8px 4px 6px;
+  text-align: left;
+  border-radius: 0;
+}
+
+.debug-action.debug-ibtn.on {
+  color: #f3d999;
+  background: rgba(224, 112, 42, 0.16);
+  border-color: #f3d999;
+  box-shadow: 0 0 10px rgba(240, 140, 40, 0.3);
+}
+
+.debug-ibtn-iconbox {
+  position: relative;
+  flex: none;
+  width: 32px;
+  height: 32px;
+}
+
+.debug-ibtn-icon {
+  width: 32px;
+  height: 32px;
+  image-rendering: pixelated;
+}
+
+.debug-ibtn-overlay {
+  position: absolute;
+  right: -3px;
+  bottom: -3px;
+  width: 18px;
+  height: 18px;
+  image-rendering: pixelated;
+}
+
+.debug-ibtn-text {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.15;
+}
+
+.debug-ibtn-label {
+  font: 600 11.5px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow-wrap: anywhere;
+}
+
+.debug-ibtn-badge {
+  margin-top: 2px;
+  font: italic 14px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+}
+
+.debug-ibtn-badge.on {
+  color: #ffb35a;
+}
+
+.debug-ibtn-badge.off {
+  color: #a8977a;
+}
+
+.debug-ibtn-badge.val {
+  color: #f3d999;
+}
+
+.debug-tab {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+}
+
+.debug-tab-label {
+  max-width: 100%;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  line-height: 1.1;
+}
+
+.debug-tab-icon {
+  width: 22px;
+  height: 22px;
+  flex: none;
+  image-rendering: pixelated;
+}
+
+/* Test Mode: takım yuvaları ve class seçici */
+.debug-slots {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(132px, 1fr));
+  gap: 6px;
+}
+
+.debug-action.debug-ibtn.slot {
+  min-height: 48px;
+}
+
+.debug-action.debug-ibtn.slot.sel {
+  border-color: #f3d999;
+  box-shadow: 0 0 10px rgba(240, 140, 40, 0.35);
+}
+
+.debug-action.debug-ibtn.sidebtn.party.on {
+  border-color: #9cbde6;
+}
+
+.debug-action.debug-ibtn.sidebtn.enemies.on {
+  border-color: #e39a88;
+}
+
+/* --- Gezinme ikon düğmeleri (Ömer 2026-10-14, ikon taslağı D): sol üst Back (.el-back), sağ üst tam ekran ve Menu AYNI kare.
+   Ölçüler TEK yerde: src/ui/nav-icons.ts > NAV_BTN (Phaser elBack da oradan okur; tests/nav-icons.test.ts bu sayıları denetler).
+   44 px dokunma alanı içinde 30 px ince altın çerçeve + ince çizgi simge. --- */
+:root {
+  --nav-hit: 44px;
+  --nav-frame: 30px;
+  --nav-icon: 18px;
+  --nav-edge: 6px;
+  --nav-gap: 4px;
+  /* Masaüstü katsayısı: viewport.ts > navScaleFor yazar (telefonda 1); gerçek ölçüler = taban x katsayı */
+  --nav-k: 1;
+  --nav-hit-k: calc(var(--nav-hit) * var(--nav-k));
+  --nav-frame-k: calc(var(--nav-frame) * var(--nav-k));
+  --nav-icon-k: calc(var(--nav-icon) * var(--nav-k));
+  --nav-edge-k: calc(var(--nav-edge) * var(--nav-k));
+  --nav-gap-k: calc(var(--nav-gap) * var(--nav-k));
+}
+
+.nav-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--nav-hit-k);
+  height: var(--nav-hit-k);
+  min-width: 0;
+  min-height: 0;
+  padding: 0;
+  color: #d9c8a2;
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  cursor: pointer;
+  filter: drop-shadow(0 1px 3px rgba(12, 8, 5, 0.9));
+  transition: color 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.nav-btn::before {
+  content: '';
+  position: absolute;
+  inset: calc((var(--nav-hit-k) - var(--nav-frame-k)) / 2);
+  border: 1px solid rgba(217, 178, 106, 0.42);
+  background: rgba(12, 9, 6, 0.45);
+  transition: border-color 0.18s;
+}
+
+.nav-btn:hover,
+.nav-btn:focus-visible {
+  color: #f3d999;
+}
+
+.nav-btn:hover::before,
+.nav-btn:focus-visible::before {
+  border-color: #f3d999;
+}
+
+.nav-btn svg {
+  position: relative;
+  width: var(--nav-icon-k);
+  height: var(--nav-icon-k);
+}
+
+.nav-btn[hidden] {
+  display: none;
+}
+
+/* Sağ üst sıra (sağdan sola): Menu (yalnızca oyun içinde), tam ekran. Menu görünmüyorsa tam ekran köşeye oturur. */
+.settings-toggle {
+  position: fixed;
+  top: calc(var(--nav-edge-k) + var(--et));
+  right: calc(var(--nav-edge-k) + var(--er));
+  z-index: 30;
+}
+
+html.menu-btn-on .settings-toggle.fullscreen-toggle {
+  right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
+}
+
+/* --- Menü ve ayarlar ekranı: ana menü / sefer menüsüyle aynı görsel dil (koyu deri panel, altın çerçeve, serif, bronz düğmeler).
+   z-index debug panelinin (20) ve sağ üst simgelerin (30) altında: debug menüsü her zaman erişilebilir. --- */
+.gm-overlay {
+  --g-dark: #6b4f26;
+  --g-edge: #9a7438;
+  --g-gold: #e8c47e;
+  --g-bright: #ffe29a;
+  --g-text: #f4ede1;
+  --g-muted: #b9ab94;
+  --g-serif: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: calc(64px + var(--et)) calc(16px + var(--er)) calc(16px + var(--eb)) calc(16px + var(--el));
+  background: rgba(5, 3, 2, 0.45); /* oyun içi Menu: sahne hafifçe görünsün (Ömer 2026-10-14) */
+  color: var(--g-text);
+  z-index: 18;
+}
+
+.gm-overlay[hidden],
+.st-overlay[hidden],
+.gm-overlay [hidden],
+.st-overlay [hidden] {
+  display: none !important;
+}
+
+.gm-box {
+  display: flex;
+  flex-direction: column;
+  width: min(330px, 100%); /* ortalı maddeler (Ömer 2026-10-12): eski 380 px'ten biraz dar */
+  max-height: 100%;
+  padding: 22px 28px 20px;
+  overflow: hidden auto;
+  zoom: 1.15; /* oyun içi Menu %15 büyük (Ömer 2026-10-11); telefonda html.short kuralı %10 küçültür */
+  /* Ömer 2026-10-14: Menu paneli hafif saydam (~%85), arkada sahne seçilir; yalnızca bu Menu (ortak .el-panel diğer pencerelerde opak kalır).
+     backdrop-filter yok (telefonda pahalı); yazı okunurluğu için koyu zemin korunur. */
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.86), rgba(12, 9, 6, 0.84));
+}
+
+.gm-title {
+  font-size: 30px;
+}
+
+/* Menü maddeleri (Ömer 2026-10-12, ortak ortalı menü): kutusuz satır, ikon + Cinzel yazı birlikte ortada, ince ayırıcı. İkon yazının
+   büyük harf yüksekliğinde (src/ui/menu-icons.ts: oyunun aynı işlev için kullandığı ikon); bekleyen ikon sıcak soluk altın tonda, üstüne
+   gelince / klavye odağında / seçili satırda (Resume) ikon ve yazı kor turuncusu + yumuşak parıltı (eski ◆ vurgusu gibi). */
+.gm-list {
+  display: flex;
+  flex-direction: column;
+  margin-top: 12px;
+}
+
+.gm-row {
+  all: unset;
+  box-sizing: border-box;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 52px;
+  padding: 0 10px;
+  font: 600 18px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d9c8a2;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+  cursor: pointer;
+  transition: color 0.18s, text-shadow 0.18s;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.gm-row:last-child {
+  border-bottom: 0;
+}
+
+.gm-icon {
+  flex: none;
+  width: 0.95em; /* görünen çizim ≈ büyük harf yüksekliği (ikon kutusunda kenar boşluğu var) */
+  height: 0.95em;
+  margin-top: -0.08em; /* Cinzel büyük harflerinin optik ortasına */
+  object-fit: contain;
+  image-rendering: auto; /* 64-128 px ikon küçültülür: yumuşak küçültme */
+  filter: sepia(0.55) saturate(0.85) brightness(0.88) drop-shadow(0 1px 1.5px rgba(12, 8, 5, 0.95));
+  transition: filter 0.18s;
+  pointer-events: none;
+}
+
+.gm-icon:not([src]),
+.gm-icon.empty {
+  visibility: hidden;
+}
+
+.gm-row:hover,
+.gm-row:focus-visible,
+.gm-row.primary {
+  color: #ffb35a;
+  text-shadow: 0 0 14px rgba(240, 140, 40, 0.75), 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gm-row:hover .gm-icon,
+.gm-row:focus-visible .gm-icon,
+.gm-row.primary .gm-icon {
+  filter: sepia(1) saturate(3.2) hue-rotate(-12deg) brightness(1.08) drop-shadow(0 0 4px rgba(240, 140, 40, 0.85));
+}
+
+/* Tek seçili satır: başka satırın üstüne gelinince / klavyeyle başka satıra geçilince Resume'un varsayılan vurgusu söner */
+.gm-list:hover .gm-row.primary:not(:hover),
+.gm-list:has(.gm-row:focus-visible) .gm-row.primary:not(:focus-visible) {
+  color: #d9c8a2;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gm-list:hover .gm-row.primary:not(:hover) .gm-icon,
+.gm-list:has(.gm-row:focus-visible) .gm-row.primary:not(:focus-visible) .gm-icon {
+  filter: sepia(0.55) saturate(0.85) brightness(0.88) drop-shadow(0 1px 1.5px rgba(12, 8, 5, 0.95));
+}
+
+.gm-btn {
+  width: 100%;
+  min-height: 52px;
+}
+
+.gm-confirm {
+  margin-top: 18px;
+  text-align: center;
+}
+
+.gm-confirm-text {
+  font-size: 22px;
+}
+
+.gm-confirm-row {
+  display: flex;
+  gap: 24px;
+  margin-top: 20px;
+  padding: 0 10px;
+}
+
+.gm-confirm-row .gm-btn {
+  flex: 1;
+  min-width: 0;
+  padding: 0 12px;
+}
+
+/* Ayarlar ekranı (oyun içi; Ömer 2026-10-08): ana menünün sol sütun görünümü (MainMenuScene > Settings). Ölçüler oyun birimiyle:
+   --gu = 1 mantıksal birimin CSS pikseli, --menu-x = sütunun oyun alanı solundan uzaklığı (src/ui/viewport.ts); dokunma alanı en az 44px. */
+.st-overlay {
+  --st-text: #d9c8a2;
+  --st-on: #f3d999;
+  --st-serif: Georgia, 'Palatino Linotype', 'Book Antiqua', Palatino, serif;
+  --u: var(--gu, 1px);
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  color: var(--st-text);
+  /* Ömer 2026-10-10 (taslak settings-backdrop v2 "Darkening everywhere"): sahne yalnızca kararır (%52, bulanıklık YOK; ana menü
+     Settings sütunu da aynı: MainMenuScene > SETTINGS_DARK); soldan sağa açılan gölge sütunun arkasında */
+  background:
+    linear-gradient(90deg, rgba(8, 6, 4, 0.85) 0, rgba(8, 6, 4, 0.85) calc(var(--el) + var(--menu-x, 140px) - 140 * var(--u)),
+      rgba(8, 6, 4, 0.55) calc(var(--el) + var(--menu-x, 140px) + 840 * var(--u)), rgba(8, 6, 4, 0) calc(var(--el) + var(--menu-x, 140px) + 1260 * var(--u))),
+    rgba(0, 0, 0, 0.52);
+}
+
+.st-col {
+  position: absolute;
+  left: calc(var(--el) + var(--menu-x, 140px));
+  top: calc(var(--et) + 280 * var(--u));
+  width: max(calc(800 * var(--u)), 500px);
+  max-width: calc(100% - var(--el) - var(--menu-x, 140px) - 16px);
+}
+
+.st-title {
+  margin-bottom: calc(26 * var(--u));
+  font: bold calc(66 * var(--u)) var(--st-serif);
+  letter-spacing: calc(3 * var(--u));
+  line-height: 1.1;
+  background: linear-gradient(180deg, #fff2c0 20%, #c89238 85%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 0 #0c0805) drop-shadow(0 0 2px #0c0805);
+}
+
+.st-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(20 * var(--u));
+  height: max(44px, calc(112 * var(--u)));
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+}
+
+.st-diamond {
+  width: calc(34 * var(--u));
+  flex: none;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+}
+
+.st-row.on .st-diamond::before {
+  content: '';
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+  margin-left: calc(4 * var(--u));
+  background: #e0702a;
+  border: max(1px, calc(2 * var(--u))) solid #ffb35a;
+  transform: rotate(45deg);
+}
+
+.st-label {
+  flex: 1 0 auto;
+  height: 100%;
+  padding: 0;
+  text-align: left;
+  white-space: nowrap;
+  font: bold calc(38 * var(--u)) var(--st-serif);
+  letter-spacing: calc(2 * var(--u));
+  color: var(--st-text);
+  text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805;
+  background: none;
+  border: 0;
+  cursor: pointer;
+  transition: transform 0.15s, color 0.15s;
+}
+
+.st-row.on .st-label {
+  color: var(--st-on);
+  transform: translateX(calc(10 * var(--u)));
+  text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805, 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.45);
+}
+
+/* Sayfalı düzen (Ömer 2026-10-16; src/ui/settings.ts, liste src/ui/settings-pages.ts): solda kategori sütunu (seçili olanın önünde kor
+   elması, en altta soluk Developer tools), sağda sayfa başlığı (kor tonu + sağa sönen çizgi) ve ondan içeride biraz daha küçük, yumuşak
+   renkli satırlar. Ana menü sütunuyla aynı ölçüler (MainMenuScene > SETTINGS_LAYOUT). */
+.st-body {
+  display: flex;
+  align-items: flex-start;
+  gap: calc(40 * var(--u));
+}
+
+.st-cats {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  width: max(calc(360 * var(--u)), 128px);
+}
+
+.st-cat {
+  all: unset;
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: max(44px, calc(132 * var(--u)));
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+  cursor: pointer;
+}
+
+.st-cat:focus-visible {
+  outline: 1px solid rgba(217, 178, 106, 0.55);
+  outline-offset: -2px;
+}
+
+.st-cat.on .st-diamond::before {
+  content: '';
+  width: calc(12 * var(--u));
+  height: calc(12 * var(--u));
+  min-width: 6px;
+  min-height: 6px;
+  margin-left: calc(4 * var(--u));
+  background: #e0702a;
+  border: max(1px, calc(2 * var(--u))) solid #ffb35a;
+  transform: rotate(45deg);
+}
+
+.st-cat-label {
+  white-space: nowrap;
+  font: 600 calc(30 * var(--u)) var(--st-serif);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--st-text);
+  text-shadow: 0 2px 4px #0c0805;
+  transition: transform 0.18s ease-out, color 0.18s, text-shadow 0.18s;
+}
+
+.st-cat:hover .st-cat-label {
+  color: var(--st-on);
+}
+
+.st-cat.on .st-cat-label {
+  color: var(--st-on);
+  transform: translateX(calc(12 * var(--u)));
+  text-shadow: 0 2px 4px #0c0805, 0 0 calc(16 * var(--u)) rgba(240, 140, 40, 0.55);
+}
+
+.st-pages {
+  flex: none;
+  width: max(calc(790 * var(--u)), 460px);
+}
+
+.st-page[hidden] {
+  display: none;
+}
+
+.st-page-head {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(16 * var(--u));
+  height: calc(90 * var(--u));
+  padding-bottom: calc(14 * var(--u));
+  box-sizing: border-box;
+  font: 600 calc(34 * var(--u)) var(--st-serif);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #e0904a; /* sayfa başlığı satırlardan ayrışsın: kor tonu, daha büyük */
+  text-shadow: 0 2px 3px #0c0805;
+}
+
+.st-page-head::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  margin-bottom: 0.4em;
+  background: linear-gradient(90deg, rgba(224, 144, 74, 0.55), rgba(224, 144, 74, 0));
+}
+
+/* Satırlar sayfa başlığından içeride; yazı biraz daha küçük ve yumuşak renk (seçilince parlak) */
+.st-page .st-row {
+  margin-left: calc(30 * var(--u));
+}
+
+.st-page .st-label {
+  color: #c4b18b;
+}
+
+.st-page .st-row.on .st-label {
+  color: var(--st-on);
+}
+
+.st-value.st-action {
+  cursor: pointer;
+  color: var(--st-text);
+}
+
+.st-row.on .st-value.st-action {
+  color: var(--st-on);
+}
+
+/* Privacy sayfasının kısa gizlilik satırı */
+.st-line:empty {
+  display: none;
+}
+
+.st-line {
+  margin: calc(14 * var(--u)) 0 0 calc(30 * var(--u));
+  font: italic calc(24 * var(--u)) var(--st-body, Georgia, serif);
+  color: #a8977a;
+  text-shadow: 0 1px 0 #0c0805;
+}
+
+.st-control {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  height: 100%;
+}
+
+.st-step {
+  min-width: 44px;
+  width: calc(56 * var(--u));
+  height: 100%;
+  padding: 0;
+  font: bold calc(40 * var(--u)) var(--st-serif);
+  color: var(--st-on);
+  text-shadow: 0 2px 0 #0c0805;
+  background: none;
+  border: 0;
+  cursor: pointer;
+}
+
+.st-step:active {
+  transform: scale(0.9);
+}
+
+.st-slider {
+  --fill: 70%;
+  width: calc(170 * var(--u));
+  min-width: 80px;
+  height: 100%;
+  margin: 0;
+  background: none;
+  -webkit-appearance: none;
+  appearance: none;
+  cursor: pointer;
+}
+
+.st-slider::-webkit-slider-runnable-track {
+  height: max(6px, calc(10 * var(--u)));
+  background: linear-gradient(90deg, #d9b26a var(--fill), rgba(18, 12, 7, 0.9) var(--fill));
+  border: 1px solid #9a7438;
+}
+
+.st-slider::-moz-range-track {
+  height: max(6px, calc(10 * var(--u)));
+  background: linear-gradient(90deg, #d9b26a var(--fill), rgba(18, 12, 7, 0.9) var(--fill));
+  border: 1px solid #9a7438;
+}
+
+.st-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: max(18px, calc(26 * var(--u)));
+  height: max(18px, calc(26 * var(--u)));
+  margin-top: calc((max(6px, calc(10 * var(--u))) - max(18px, calc(26 * var(--u)))) / 2 - 1px);
+  background: #f3d999;
+  border: 2px solid #5a3a10;
+  border-radius: 50%;
+}
+
+.st-slider::-moz-range-thumb {
+  width: max(18px, calc(26 * var(--u)));
+  height: max(18px, calc(26 * var(--u)));
+  background: #f3d999;
+  border: 2px solid #5a3a10;
+  border-radius: 50%;
+}
+
+.st-value {
+  min-width: calc(60 * var(--u));
+  text-align: right;
+  font: bold calc(32 * var(--u)) var(--st-serif);
+  color: var(--st-on);
+  text-shadow: 0 0 3px #0c0805, 0 2px 0 #0c0805;
+}
+
+.st-note {
+  margin: calc(10 * var(--u)) 0 0 calc(30 * var(--u));
+  font: calc(22 * var(--u)) var(--st-serif);
+  color: #cdb88d;
+  text-shadow: 0 1px 0 #0c0805;
+}
+
+.st-note:empty {
+  display: none;
+}
+
+/* Tutorials satırındaki "Replay" (kit yazı düğmesi el-link; dersleri yeniden oynatır, src/ui/settings.ts): satır boyunda, 44 px dokunma */
+.st-replay.el-link {
+  min-height: 44px;
+  height: 100%;
+  padding: 0 calc(10 * var(--u)) 0 calc(6 * var(--u));
+  font-size: max(13px, calc(22 * var(--u)));
+  color: var(--el-muted, #b9a27a);
+}
+
+/* Settings en altı: gizli debug girişinin yedeği (src/ui/debug-gesture.ts); küçük, soluk, kutusuz */
+.st-dev {
+  all: unset;
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+  margin-top: calc(24 * var(--u));
+  font: italic max(11px, calc(21 * var(--u))) 'EB Garamond', Georgia, serif;
+  color: rgba(168, 151, 122, 0.55);
+  letter-spacing: 0.02em;
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+.st-dev:hover,
+.st-dev:focus-visible {
+  color: #cdb88d;
+}
+
+/* Ayarlar açıkken alttaki oyun menüsü gizlenir (sütun onun yerine geçer; Back ile menü geri gelir) */
+html.settings-open .gm-overlay {
+  visibility: hidden;
+}
+
+/* Sol üst geri ikonu: görünüm ve konum tasarım kitinden (src/ui/elegant.css > .el-back); burada yalnızca katman */
+.st-back {
+  z-index: 3;
+}
+
+/* Zarif menü stili (önizleme ?menu=new; src/ui/menu-style.ts): ana menünün Settings sütunuyla aynı ölçüler (MainMenuScene > ELEGANT) */
+html.menu-elegant .st-overlay {
+  --st-serif: Cinzel, Georgia, 'Palatino Linotype', serif;
+  --st-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+}
+
+/* Konumlar ana menü sütunuyla birebir (MainMenuScene > SETTINGS_LAYOUT, Ömer 2026-10-16 sayfalı düzen): başlık ortası y 140, kategori ve
+   sayfa üst kenarı y 222, satır 132, kategori sütunu 360 + 40 boşluk, sayfa satırları başlıktan 30 içeride, satır genişliği 760 */
+html.menu-elegant .st-col {
+  top: calc(var(--et) + 111 * var(--u));
+  width: max(calc(1190 * var(--u)), 600px);
+  /* Sığmazsa sütun kendi içinde kayar; çubuk görünmez */
+  max-height: calc(100% - var(--et) - var(--eb) - 111 * var(--u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+html.menu-elegant .st-row {
+  gap: 0;
+}
+
+html.menu-elegant .st-row.on .st-label {
+  transform: translateX(calc(12 * var(--u)));
+}
+
+html.menu-elegant .st-title {
+  margin-bottom: calc(26 * var(--u));
+  font: 600 calc(52 * var(--u)) var(--st-serif);
+  letter-spacing: 0.05em;
+  line-height: 1.1;
+  text-transform: uppercase;
+}
+
+html.menu-elegant .st-row {
+  height: max(44px, calc(132 * var(--u))); /* sayfa başına en çok 4 satır: dokunma alanı telefonda da 44 px (SETTINGS_LAYOUT.rowH) */
+}
+
+html.menu-elegant .st-label {
+  font: 600 calc(26 * var(--u)) var(--st-serif);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px #0c0805;
+  transition: transform 0.18s ease-out, color 0.18s, text-shadow 0.18s;
+}
+
+html.menu-elegant .st-row.on .st-label {
+  text-shadow: 0 2px 4px #0c0805, 0 0 calc(16 * var(--u)) rgba(240, 140, 40, 0.55);
+}
+
+html.menu-elegant .st-step {
+  font: 600 calc(34 * var(--u)) var(--st-serif);
+}
+
+html.menu-elegant .st-value {
+  font: 600 calc(26 * var(--u)) var(--st-serif);
+  white-space: nowrap;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px #0c0805;
+}
+
+html.menu-elegant .st-note {
+  font: calc(24 * var(--u)) var(--st-body);
+}
+
+
+/* Kısa sahne (yatay telefon): satırlar 44 px dokunma alanında kalır; sütun Back'in hemen altından başlar, sığmazsa kendi içinde kayar */
+html.short .st-col {
+  top: calc(var(--et) + 50px);
+  max-height: calc(100% - var(--et) - var(--eb) - 58px);
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none; /* kaydırma çubuğu görünmez (değer sütununu kesmesin); dokunarak / tekerlekle kayar */
+}
+
+html.short .st-col::-webkit-scrollbar {
+  display: none;
+}
+
+html.short .st-title {
+  margin-bottom: 4px;
+}
+
+/* Telefon: yazılar okunur boyda (oyun birimi orada ~0,33 px), satır ve kategori 44 px dokunma alanı */
+html.short .st-col {
+  width: calc(100% - var(--el) - var(--menu-x, 140px) - 16px);
+}
+
+html.short .st-body {
+  gap: 14px;
+}
+
+html.short .st-pages {
+  flex: 1 1 auto;
+  min-width: 0;
+  max-width: 540px;
+}
+
+html.short .st-cat {
+  height: 44px;
+}
+
+html.short .st-cat-label {
+  font-size: max(12px, calc(30 * var(--u)));
+}
+
+html.short .st-page-head {
+  height: 30px;
+  padding-bottom: 4px;
+  font-size: max(13px, calc(32 * var(--u)));
+}
+
+html.short .st-row {
+  height: 44px;
+}
+
+html.short .st-label {
+  font-size: max(11px, calc(26 * var(--u)));
+}
+
+html.short .st-value {
+  min-width: 3.4em; /* kaydırıcılar alt alta hizalı kalsın (100% / 0.25x) */
+  font-size: max(11px, calc(26 * var(--u)));
+}
+
+html.short .st-line,
+html.short .st-note {
+  margin-top: 4px;
+  font-size: max(12px, calc(24 * var(--u)));
+}
+
+html.short .st-dev {
+  margin-top: 6px;
+}
+
+
+/* Kısa sahne (yatay telefon): daha sıkı; 5 madde + başlık her zaman sığar (satır 44 px = dokunma alanı) */
+html.short .gm-overlay {
+  padding-top: calc(50px + var(--et));
+  padding-bottom: calc(8px + var(--eb));
+}
+
+html.short .gm-box {
+  zoom: 1;
+  width: min(270px, 100%);
+  padding: 11px 22px 9px;
+}
+
+html.short .gm-title {
+  font-size: 19px;
+}
+
+html.short .gm-list {
+  margin-top: 6px;
+}
+
+html.short .gm-row {
+  min-height: 44px; /* dokunma alanı küçülmez */
+  font-size: 13.5px;
+}
+
+html.short .gm-btn {
+  min-height: 44px;
+  font-size: 14.5px;
+}
+
+html.short .gm-confirm-text {
+  font-size: 15.5px;
+}
+
+html.short .gm-confirm-row {
+  margin-top: 12px;
+}
+
+html.compact:not(.short) .gm-row {
+  min-height: 48px;
+  font-size: 17px;
+}
+
+/* Tam ekran ipucu (ilk açılışta tek seferlik, kapatılabilir) */
+.fs-hint {
+  position: fixed;
+  left: 50%;
+  bottom: calc(12px + var(--eb));
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: calc(var(--stage-w, 100vw) - 32px);
+  padding: 2px 2px 2px 18px;
+  font: italic 17px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  color: #cdb88d;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.96), rgba(12, 9, 6, 0.96)); /* tasarım kiti */
+  border: 1px solid rgba(217, 178, 106, 0.42);
+  border-radius: 0;
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.45);
+  z-index: 35;
+}
+
+.fs-hint-close:hover {
+  color: #f3d999;
+}
+
+.fs-hint[hidden] {
+  display: none;
+}
+
+.fs-hint-close {
+  flex: none;
+  width: 44px;
+  height: 44px;
+  font: 600 18px Cinzel, Georgia, 'Palatino Linotype', serif;
+  color: #a8977a;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  transition: color 0.18s;
+}
+
+/* --- Debug menüsü: sekmeler, paneller, galeri (üstteki kurallara ek) --- */
+.debug-panel.left {
+  right: auto;
+  left: 8px;
+}
+
+.debug-panel.ghost {
+  opacity: 0.22;
+  pointer-events: none;
+}
+
+.debug-panel.ghost .debug-header {
+  pointer-events: auto;
+}
+
+.debug-header {
+  gap: 8px;
+}
+
+.debug-header-tools {
+  display: flex;
+  gap: 6px;
+}
+
+.debug-action.debug-header-btn {
+  width: auto;
+  min-width: 44px;
+  padding: 6px 10px;
+}
+
+/* Sekme çubuğu: eşit hücreli ızgara (5 sütun), ikon üstte, kısa etiket altta; satır kaymaz, düğme boyları eşit */
+.debug-tabs {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+  margin: 10px 0 4px;
+}
+
+.debug-tab {
+  min-width: 0;
+  min-height: 48px;
+  padding: 5px 2px 4px;
+  font: 600 10px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #a8977a;
+  background: rgba(8, 6, 4, 0.45);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  border-radius: 0;
+  cursor: pointer;
+}
+
+.debug-tab.on {
+  color: #f3d999;
+  background: rgba(224, 112, 42, 0.14);
+  border-color: #f3d999;
+}
+
+.debug-body {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-right: 4px;
+  touch-action: pan-y;
+}
+
+.debug-block + .debug-block {
+  margin-top: 6px;
+  border-top: 1px solid rgba(217, 178, 106, 0.16);
+}
+
+.debug-action {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  overflow-wrap: anywhere;
+}
+
+.debug-action.on {
+  color: #f3d999;
+  background: rgba(224, 112, 42, 0.16);
+  border-color: #f3d999;
+}
+
+.debug-action.bad {
+  border-color: rgba(232, 128, 106, 0.6);
+}
+
+.debug-action.good {
+  border-color: rgba(127, 184, 90, 0.6);
+}
+
+.debug-action.chip {
+  min-height: 44px;
+  font-size: 12px;
+}
+
+.debug-action.chip.party {
+  border-left: 4px solid #9cbde6;
+}
+
+.debug-action.chip.enemy {
+  border-left: 4px solid #e39a88;
+}
+
+.debug-action.chip.dead {
+  opacity: 0.5;
+  text-decoration: line-through;
+}
+
+.debug-action.skill {
+  justify-content: flex-start;
+  text-align: left;
+}
+
+.debug-action-icon {
+  width: 28px;
+  height: 28px;
+  flex: none;
+  image-rendering: pixelated;
+}
+
+.debug-cells {
+  display: grid;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.debug-cells .debug-action {
+  padding: 2px;
+  font-size: 11px;
+}
+
+.debug-cells .debug-action.empty {
+  color: #7d705a;
+  background: rgba(8, 6, 4, 0.3);
+}
+
+.debug-note {
+  margin: 6px 0;
+  font: italic 15px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  color: #cdb88d;
+}
+
+.debug-note.dim {
+  color: #a8977a;
+}
+
+/* Debug > Versions: class başına satır (avatar + ad + sürüm menüsü) */
+.debug-version-list {
+  display: grid;
+  gap: 4px;
+  margin: 6px 0;
+}
+
+.debug-version-row {
+  display: grid;
+  grid-template-columns: 40px 1fr minmax(118px, auto);
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 2px 6px;
+  background: rgba(8, 6, 4, 0.45);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.16);
+}
+
+.debug-version-row.all {
+  grid-template-columns: 1fr minmax(118px, auto);
+  background: rgba(224, 112, 42, 0.08);
+}
+
+.debug-version-avatar {
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  background: #0c0806;
+}
+
+.debug-version-name {
+  font: 600 13px Cinzel, Georgia, 'Palatino Linotype', serif;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: #d9c8a2;
+}
+
+/* Satırdaki class logosu: seçili sürümle çizilir (v1 64 / v2 128 piksel) */
+.debug-version-logo {
+  width: 22px;
+  height: 22px;
+  margin-right: 6px;
+  vertical-align: middle;
+}
+
+.debug-select {
+  min-height: 44px;
+  padding: 4px 6px;
+  font: 15px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  color: #d9c8a2;
+  background: #0c0806;
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  border-radius: 0;
+}
+
+.debug-select.on {
+  border-color: #f3d999;
+  color: #f3d999;
+}
+
+.debug-inline {
+  display: flex;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.debug-inline .debug-action {
+  width: auto;
+  min-width: 72px;
+}
+
+.debug-input {
+  flex: 1;
+  min-width: 0;
+  min-height: 44px;
+  padding: 6px 8px;
+  font: 16px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  color: #f3d999;
+  background: #0c0806;
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  border-radius: 0;
+}
+
+/* Kısa sahnede (<= 720px; JS: html.compact, döndürülmüş sahnede de doğru) sekme çubuğu sıkışık */
+:root.compact .debug-tabs {
+  margin: 6px 0 2px;
+}
+
+/* Yatay telefon (kısa sahne <= 520px; JS: html.short): debug paneli üst düğmelerin altında değil solda, tüm yüksekliği kullanır */
+:root.short .debug-panel,
+:root.short .debug-panel.left {
+  left: calc(8px + var(--el));
+  right: auto;
+  top: calc(8px + var(--et));
+  bottom: calc(8px + var(--eb));
+  width: min(520px, calc(var(--stage-w, 100vw) - 190px - var(--er) - var(--el)));
+}
+
+
+/* --- Multiplayer (src/ui/mp-overlay.ts): bağlantı şeridi, bildirim, kod giriş kutusu --- */
+.mp-banner {
+  position: fixed;
+  top: calc(8px + var(--et));
+  left: 50%;
+  transform: translateX(-50%);
+  max-width: calc(var(--stage-w, 100vw) - 200px);
+  padding: 10px 18px;
+  font: bold 16px Georgia, 'Times New Roman', serif;
+  color: #f3e4c4;
+  background: rgba(40, 24, 10, 0.92);
+  border: 2px solid #c79a3e;
+  border-radius: 6px;
+  z-index: 35;
+  text-align: center;
+  pointer-events: none;
+}
+.mp-banner[data-kind='error'] {
+  border-color: #d9584a;
+  background: rgba(60, 14, 10, 0.94);
+}
+.mp-banner[data-kind='info'] {
+  border-color: #6ec1ff;
+}
+.mp-banner[hidden],
+.mp-toast[hidden] {
+  display: none;
+}
+.mp-toast {
+  position: fixed;
+  bottom: calc(70px + var(--eb));
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 10px 18px;
+  font: bold 15px Georgia, 'Times New Roman', serif;
+  color: #f3e4c4;
+  background: rgba(20, 14, 8, 0.92);
+  border: 1px solid #8a6a32;
+  border-radius: 6px;
+  z-index: 35;
+  pointer-events: none;
+}
+.mp-modal {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(5, 3, 2, 0.6);
+  z-index: 40;
+}
+.mp-modal-box {
+  width: min(440px, calc(var(--stage-w, 100vw) - 32px));
+  padding: 20px;
+  background: linear-gradient(#2e2218, #110b07);
+  border: 2px solid #c79a3e;
+  border-radius: 0;
+  color: #f3e4c4;
+  font-family: Georgia, 'Times New Roman', serif;
+}
+.mp-modal-title {
+  font-size: 26px;
+  font-weight: bold;
+  color: #ffe29a;
+  text-align: center;
+}
+.mp-modal-hint {
+  margin: 8px 0 12px;
+  font-size: 15px;
+  color: #b9a27a;
+  text-align: center;
+}
+.mp-code-input {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 56px;
+  padding: 0 12px;
+  font: bold 30px monospace;
+  letter-spacing: 6px;
+  text-align: center;
+  text-transform: uppercase;
+  color: #ffe29a;
+  background: #0c0806;
+  border: 2px solid #8a6a32;
+  border-radius: 6px;
+}
+.mp-modal-err {
+  min-height: 20px;
+  margin-top: 6px;
+  font-size: 14px;
+  color: #e08a7a;
+  text-align: center;
+}
+.mp-modal-row {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 10px;
+}
+.mp-btn {
+  min-width: 120px;
+  min-height: 48px;
+  font: bold 18px Georgia, 'Times New Roman', serif;
+  color: #f3e4c4;
+  background: linear-gradient(#5c4128, #24170d);
+  border: 2px solid #8a6a32;
+  border-radius: 6px;
+}
+.mp-btn.primary {
+  background: linear-gradient(#9a6a28, #3f220c);
+  border-color: #e8c47e;
+}
+/* Pano yoksa davet metni (mp-overlay.ts > showCopyBox): seçili gösterilir, elle kopyalanır */
+.mp-share-text {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 96px;
+  padding: 10px 12px;
+  font: italic 18px 'EB Garamond', Georgia, serif;
+  color: #f3e4c4;
+  background: #0c0806;
+  border: 2px solid #8a6a32;
+  border-radius: 6px;
+  resize: none;
+}
+html.short .mp-share-text {
+  min-height: 72px;
+  font-size: 15px;
+}
+.mp-code-input.mp-name-input {
+  font: bold 24px Georgia, 'Times New Roman', serif;
+  letter-spacing: 1px;
+  text-transform: none;
+}
+
+/* Boyalı görsel ikonlar (stat ikonları, assets/stat-icons): adresleri `#smooth` ile biter (src/game/icon-image-files.ts > smoothUrl).
+   Piksel ikonlar için konan `image-rendering: pixelated` boyalı resmi küçültürken tırtıklı yapar: tarayıcının yumuşak küçültmesi kullanılır. */
+img[src$='#smooth'] {
+  image-rendering: auto !important;
+}
+
+/* Show FPS (Settings > Gameplay; src/ui/fps-meter.ts): üst kenarda, sol üstteki geri ikonunun sağında (Menu sağ üstte, sıra çubuğu ortada,
+   alt çubuk altta: hiçbiriyle çakışmaz). Dokunmayı engellemez. Kit dili: ince altın kenar, koyu zemin, küçük yazı. */
+.fps-meter {
+  position: fixed;
+  left: calc(var(--el) + max(130px, calc(260 * var(--gu, 1px))));
+  top: calc(var(--et) + 6px);
+  z-index: 40;
+  padding: 2px 6px;
+  font: 600 10px/1.2 ui-monospace, 'Cascadia Mono', Consolas, monospace;
+  letter-spacing: 0.04em;
+  color: #f3d999;
+  background: rgba(12, 8, 5, 0.72);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  pointer-events: none;
+  user-select: none;
+  white-space: nowrap;
+}
+
+.fps-meter[hidden] {
+  display: none;
+}
+
+html.short .st-replay.el-link {
+  font-size: max(11px, calc(24 * var(--u)));
+}

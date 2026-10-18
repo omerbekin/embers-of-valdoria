@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Unified Inventory Mockups</title>
+<!--
+  ORTAK ENVANTER / KARAKTER EKRANI taslağı v2 (ui-dev, 2026-10-18). Oyun kodu DEĞİL; yalnızca seçim için.
+  Görünüm BİREBİR oyun: oyunun kendi CSS dosyaları (unified-inventory/css/: src/style.css, src/ui/elegant.css, gear.css, battle-hud.css kopyası),
+  oyunun ürettiği işaretleme (kahraman kartı, 7 yuva, level + stat puanı satırı, stat grupları, savaş skill hücreleri, item ipucu, torba hücresi,
+  tüccar tezgâhı) ve oyunun gerçek görselleri (avatarlar, item ikonları, stat / UI / durum ikonları, Ashford, Valdoria haritası, Proving Grounds).
+  Veri (data.js) oyunun kendi kodundan üretildi: statlar heroPanel (data/formulas.json), item zarları makeItem, ipuçları itemTipNodes, skill çubuğu skillBar.
+  Adresler (#düzen&mode=mod, isteğe bağlı &clean = taslak şeridini gizle, ekran görüntüsü için; H tuşu aç/kapa):
+    #v1   Triptych: kahramanlar + bağlam | yuvalar + Stats/Skills/Skill tree sekmeleri | torba
+    #v2   Tabbed Workbench: üstte kahraman şeridi, solda ikon sekmeler (Equipment / Attributes / Skill tree / bağlam), ortada tek pano, sağda torba
+    #v3   Ledger: iki sayfalık defter; sol kenarda kahraman yer imleri; sekmeler Hero / Sheet / bağlam
+    #v4   Stage: ortada büyük portre + yuva halkası, solda statlar, sağda bağlam, altta geniş torba rafı; "Hero sheet" tam pencere
+    #v5   Squad Board: dört kahraman kartı yan yana (seçili geniş), altta torba + bağlam
+  Modlar: &mode=campaign (Gear, harita) | town (Ashford: Rest / Formation / Recruits / Odo) | merchant (Odo: al / sat / buy back / reroll) |
+          reward (Endless ödül kartları: Spoils / Coin / Rest + "Give to" kahraman seçimi). Ör.: #v2&mode=merchant, #v5&mode=reward&clean
+  Skill ağacı düğümleri ve kuralları YER TUTUCU (oyunun skill hücresi + gerçek skill / durum ikonlarıyla çizildi).
+-->
+<link rel="stylesheet" href="unified-inventory/css/style.css" />
+<link rel="stylesheet" href="unified-inventory/css/elegant.css" />
+<link rel="stylesheet" href="unified-inventory/css/gear.css" />
+<link rel="stylesheet" href="unified-inventory/css/battle-hud.css" />
+<link rel="stylesheet" href="unified-inventory/mock.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg"></div><div id="ui-root"></div></div>
+<script src="unified-inventory/data.js"></script>
+<script src="unified-inventory/app.js"></script>
+</body>
+</html>
