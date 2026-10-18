@@ -5,10 +5,10 @@
   const $ = (s, r = document) => r.querySelector(s);
   const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
   const TIERC = { C: '#b9a98a', B: '#8fb8e8', A: '#f0b04a' };
-  const KEYS = { bow: 'u23', axe: 'u17', armor: 'u11', trinket: 'u38', common: 'u9', legendary: 'u30' };
-  const VNAMES = { v0: 'Today', v1: 'Banner', v2: 'Plaque', v3: 'Split', v4: 'Ledger', v5: 'Hero-first' };
+  const KEYS = { bow: 'u23', axe: 'u17', armor: 'u11', trinket: 'u38', common: 'u9', legendary: 'u30', shield: 'u41' };
+  const VNAMES = { v0: 'Today', v1: 'Banner', v2: 'Plaque', v3: 'Split', v4: 'Ledger', v5: 'Hero-first', v6: 'Crest', v7: 'Arch', v8: 'Seal', v9: 'Halo' };
   const HEROES = ['h1', 'h2', 'h3', 'h4'];
-  const STAT_ICO = { damage: 'might' };
+  const STAT_ICO = { damage: 'might', block: '../items/iron_buckler' };
   const COIN = A + 'ui-icons/gold.webp';
 
   // ---- adres
@@ -16,7 +16,7 @@
   function readHash() {
     for (const p of location.hash.slice(1).split('&')) {
       const [k, val] = p.split('=');
-      if (/^v[0-5]$/.test(k)) S.v = k;
+      if (/^v[0-9]$/.test(k)) S.v = k;
       else if (k === 'item' && val) S.item = KEYS[val] ?? (T.items[val] ? val : S.item);
       else if (k === 'hero' && HEROES.includes(val)) S.hero = val;
       else if (k === 'ctx') S.ctx = val === 'shop' ? 'shop' : 'bag';
@@ -28,6 +28,17 @@
     history.replaceState(null, '', `#${S.v}&item=${key}&hero=${S.hero}${S.ctx === 'shop' ? '&ctx=shop' : ''}${S.clean ? '&clean' : ''}`);
   }
   readHash();
+
+  // ---- KALKAN: taban Armor yerine Block chance (YER TUTUCU: % = 3*armor+3; gercek sayilar motor ajanindan gelecek)
+  const BLOCK_ICO = '../items/iron_buckler';
+  for (const it of Object.values(T.items)) {
+    if (it.slot !== 'offhand' || !it.implicit || it.implicit.ico !== 'armor') continue;
+    const a = Number(it.implicit.text.match(/[0-9]+/)[0]);
+    const pct = 3 * a + 3;
+    it.implicit = { ico: BLOCK_ICO, text: 'Block chance ' + pct + '%' };
+    for (const h of Object.values(it.per)) if (h.d) { h.d.armor = (h.d.armor || 0) - a; if (!h.d.armor) delete h.d.armor; h.d.block = pct / 100; }
+  }
+  for (const h of Object.values(T.heroes)) h.panel.block = { l: 'BLK', f: 'pct', v: 0 };
 
   // ---- veri yardımcıları
   const item = (u) => T.items[u];
@@ -198,7 +209,81 @@
       ${coinFoot(it)}</div>`;
   }
 
-  const BUILD = { v0, v1, v2, v3, v4, v5 };
+
+  // ---- v6-v9: v2 ailesi, hepsi ortalı
+  const rollRow = (r, cls = '') => (r ? `<div class="cv-roll ${cls}"><small>${fmtN(r.lo)}</small>${rollBar(r, 'wide')}<small>${fmtN(r.hi)}</small></div>` : '');
+  const medal = (it, cls) => `<span class="cv-medal ${cls}"><span class="gr-item k${it.k}" style="--rc:${it.color}"><span class="gr-c2"></span><span class="gr-c3"></span>${ico(`${A}${it.icon}`, 'gr-svg gr-px item-art')}</span></span>`;
+  const powerBlock = (it, cls) => (it.power ? `<div class="cv-power ${cls}"><b>${it.power}</b><span>Weapon power</span></div>` : '');
+  const cvImp = (it) => (it.implicit ? `<div class="cv-imp">${ico(it.implicit.ico ? `${A}stat-icons/${it.implicit.ico}.webp` : '', 'tt-ico')}<span>${esc(it.implicit.text)}</span></div>` : '');
+  const cvFoot = (it) => coinFoot(it, 'c');
+  const noRow = (g) => (g.no.length ? g.no.map((x) => `<div class="t2-nomsg">${x[1].map((s) => face(s, 'gray')).join('')}<span>${esc(x[0])}</span></div>`).join('') : '');
+  const heroDeltas = (s, it) => (s.kind === 'unmet' ? `<span class="tt-d down">Lv ${it.req}</span>` : '') + (s.deltas.map(chip).join('') || '<span class="tt-same">No change</span>');
+
+  // v6 Crest: büyük yuvarlak çift halkalı madalyon, kurdele nadirlik, ortalı satırlar + çubuk altta, kahraman şeridi (yüz + fark yan yana)
+  function v6(it) {
+    const sp = subParts(it);
+    const g = groups(it);
+    const rows = it.lines.map((l) => {
+      const r = roll(l);
+      return `<div class="cv-line"><div class="cv-lt">${tierChip(l.tier)}${ico(lineIcon(l))}<span class="tl-t">${esc(l.text)}</span></div>${rollRow(r)}</div>`;
+    }).join('');
+    const strip = g.usable.map((s) => `<div class="c6-h">${face(s)}<span><small>${esc(s.h.name)}</small>${heroDeltas(s, it)}</span></div>`).join('');
+    return `<div class="tt c6" style="--rc:${it.color}">
+      <header class="tt-head c6-head">${medal(it, 'ring')}<b class="tt-name">${esc(it.name)}</b><div class="c6-rib"><span>${esc(sp.rarity)} ${esc(sp.kind)}</span></div><div class="t2-grip">${sp.grip ? esc(sp.grip) + ' · ' : ''}Item level ${esc(sp.ilvl)}</div></header>
+      <div class="tt-main">${powerBlock(it, 'c6p')}${cvImp(it)}<div class="tt-lines">${rows}</div>${effectBlock(it)}${reqLine(it, 'c')}</div>
+      <div class="tt-side"><div class="tt-sec c">Compare</div><div class="c6-strip">${strip}</div>${noRow(g)}</div>
+      ${cvFoot(it)}</div>`;
+  }
+
+  // v7 Arch: kemerli altın çerçeve, oyma başlık + elmaslar (kurdele yok), 2 sütunlu ortalı stat ızgarası, küçük hap kahraman çipleri
+  function v7(it) {
+    const sp = subParts(it);
+    const g = groups(it);
+    const cells = it.lines.map((l) => {
+      const r = roll(l);
+      return `<div class="c7-cell">${ico(lineIcon(l), 'tt-ico big')}<span class="tl-t">${tierChip(l.tier)} ${esc(l.text)}</span>${rollRow(r, 'thin')}</div>`;
+    }).join('');
+    const chips = g.usable.map((s) => `<div class="c7-pill">${face(s)}<b>${esc(s.h.name)}</b>${heroDeltas(s, it)}</div>`).join('');
+    return `<div class="tt c7" style="--rc:${it.color}">
+      <header class="tt-head c7-head">${medal(it, 'arch')}<b class="tt-name">${esc(it.name)}</b><div class="c7-eng"><i></i><span>${esc(sp.rarity)} ${esc(sp.kind)}</span><i></i></div><div class="t2-grip">${sp.grip ? esc(sp.grip) + ' · ' : ''}Item level ${esc(sp.ilvl)}</div></header>
+      <div class="tt-main">${powerBlock(it, 'c7p')}${cvImp(it)}<div class="c7-grid">${cells}</div>${effectBlock(it)}${reqLine(it, 'c')}</div>
+      <div class="tt-side"><div class="c7-pills">${chips}</div>${noRow(g)}</div>
+      ${cvFoot(it)}</div>`;
+  }
+
+  // v8 Seal: altıgen mühür madalyonu, güçlü nadirlik ışıması; çubuk satırın alt çizgisi; kahraman sütunları (yüz üstte, fark altta)
+  function v8(it) {
+    const sp = subParts(it);
+    const g = groups(it);
+    const rows = it.lines.map((l) => {
+      const r = roll(l);
+      return `<div class="c8-line"><div class="cv-lt">${tierChip(l.tier)}${ico(lineIcon(l))}<span class="tl-t">${esc(l.text)}</span></div>${r ? `<span class="c8-bar">${rollBar(r, 'wide')}<em>${fmtN(r.lo)}&ndash;${fmtN(r.hi)}</em></span>` : ''}</div>`;
+    }).join('');
+    const cols = g.st.map((s) => `<div class="c8-col ${s.kind}">${face(s, s.kind === 'no' ? 'gray' : '')}<small>${esc(s.h.name)}</small>${s.kind === 'no' ? '<span class="t2-x">Can\'t use</span>' : heroDeltas(s, it)}</div>`).join('');
+    return `<div class="tt c8" style="--rc:${it.color}">
+      <header class="tt-head c8-head">${medal(it, 'seal')}<b class="tt-name">${esc(it.name)}</b><div class="c8-sub"><span>${esc(sp.rarity)}</span> ${esc(sp.kind)}</div><div class="t2-grip">${sp.grip ? esc(sp.grip) + ' · ' : ''}Item level ${esc(sp.ilvl)}</div></header>
+      <div class="tt-main">${powerBlock(it, 'c8p')}${cvImp(it)}<div class="tt-lines">${rows}</div>${effectBlock(it)}${reqLine(it, 'c')}</div>
+      <div class="tt-side"><div class="c8-cols">${cols}</div></div>
+      ${cvFoot(it)}</div>`;
+  }
+
+  // v9 Halo: çerçevesiz ikon + yumuşak hale, dolu nadirlik şeridi, güç tek satır, pip zar göstergesi, kahraman başına tek ortalı satır
+  function v9(it) {
+    const sp = subParts(it);
+    const g = groups(it);
+    const rows = it.lines.map((l) => {
+      const r = roll(l);
+      return `<div class="c9-line">${tierChip(l.tier)}${ico(lineIcon(l))}<span class="tl-t">${esc(l.text)}</span>${r ? rollPips(r) : ''}</div>`;
+    }).join('');
+    const hs = g.usable.map((s) => `<div class="c9-h">${face(s)}<b>${esc(s.h.name)}</b>${heroDeltas(s, it)}</div>`).join('');
+    return `<div class="tt c9" style="--rc:${it.color}">
+      <header class="tt-head c9-head"><span class="c9-halo">${ico(`${A}${it.icon}`, 'c9-art gr-px')}</span><b class="tt-name">${esc(it.name)}</b><div class="c9-band">${esc(sp.rarity)} ${esc(sp.kind)}</div><div class="t2-grip">${sp.grip ? esc(sp.grip) + ' · ' : ''}Item level ${esc(sp.ilvl)}</div></header>
+      <div class="tt-main">${it.power ? `<div class="c9-power"><i></i><b>${it.power}</b><span>Weapon power</span><i></i></div>` : ''}${cvImp(it)}<div class="tt-lines">${rows}</div>${effectBlock(it)}${reqLine(it, 'c')}</div>
+      <div class="tt-side">${hs}${noRow(g)}</div>
+      ${cvFoot(it)}</div>`;
+  }
+
+  const BUILD = { v0, v1, v2, v3, v4, v5, v6, v7, v8, v9 };
 
   // ------------------------------------------------------------ çanta
   const BAG = ['u23', 'u17', 'u11', 'u38', 'u9', 'u30', 'u10', 'u19', 'u18', 'u35', 'u24', 'u26', 'u8', 'u41', 'u21', 'u31', 'u36', 'u22', 'u42', 'u28', 'u15', 'u33', 'u25', 'u32'];
@@ -217,7 +302,7 @@
   // ------------------------------------------------------------ taslak şeridi
   const strip = document.createElement('div');
   strip.id = 'mk-strip';
-  strip.innerHTML = `<b class="keep">MOCKUP</b><span class="grp">${Object.entries(VNAMES).map(([k, n]) => `<button type="button" data-v="${k}">${k.slice(1)} ${n}</button>`).join('')}</span><span class="sep"></span><span class="grp">${['bow', 'axe', 'armor', 'trinket', 'common', 'legendary'].map((k) => `<button type="button" data-i="${k}">${k}</button>`).join('')}</span><span class="sep"></span><span class="grp">${HEROES.map((h) => `<button type="button" data-h="${h}">${T.heroes[h].name}</button>`).join('')}</span><span class="sep"></span><button type="button" data-ctx="shop">Shop</button><button type="button" class="x keep" data-x="min">_</button>`;
+  strip.innerHTML = `<b class="keep">MOCKUP</b><span class="grp">${Object.entries(VNAMES).map(([k, n]) => `<button type="button" data-v="${k}">${k.slice(1)} ${n}</button>`).join('')}</span><span class="sep"></span><span class="grp">${['bow', 'axe', 'armor', 'trinket', 'common', 'legendary', 'shield'].map((k) => `<button type="button" data-i="${k}">${k}</button>`).join('')}</span><span class="sep"></span><span class="grp">${HEROES.map((h) => `<button type="button" data-h="${h}">${T.heroes[h].name}</button>`).join('')}</span><span class="sep"></span><button type="button" data-ctx="shop">Shop</button><button type="button" class="x keep" data-x="min">_</button>`;
   document.body.append(strip);
 
   // ------------------------------------------------------------ çizim (yalnızca değişince)
