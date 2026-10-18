@@ -289,7 +289,7 @@
   function encWindow() {
     const m = S.mode;
     if (m === 'none') return '';
-    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div>${encFoot('Back to town')}</div>`;
+    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}${winX('encdone', 'Back to town')}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div></div>`;
     return ''; // kasaba ve ödül: pencere değil, sahnenin kendisi (townLayer / rewardLayer)
   }
   const priced = () => S.mode === 'merchant';
@@ -298,6 +298,8 @@
   // Gear + Formation: seferin HER ekranında aynı yerde (sol alt; Ömer 2026-10-18 "global olsun"); envanter ya da küçük pencere açıkken gizli
   const campHud = () => (['map', 'town', 'merchant'].includes(S.mode) && !S.invOpen && !S.dlg ? `<div class="mk-camphud">${gearToggle()}${formBtn()}</div>` : '');
   // sağ üst X (nav-icons.ts dilinde: aynı 44 px alan, 30 px çerçeve, 1.6 çizgi); envanterin Close / Done düğmesi ve alt çubuğu yerine
+  // pencerenin kendi sağ üst köşesindeki X (tüccar, küçük pencereler): sağ üst nav düğmeleriyle aynı kare dil
+  const winX = (act, tip) => `<button class="nav-btn mk-x" type="button" title="${tip}" aria-label="${tip}" data-act="${act}">${X_SVG}</button>`;
   const X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>';
   const invShown = () => S.v === 'v3' && !S.dlg && (S.mode === 'none' || S.invOpen && S.mode !== 'reward' || S.mode === 'reward' && S.rbag);
   // ---- kasaba sahnesi (oyundaki TownScreen, src/game/town-screen.ts): tam ekran görsel, resimdeki yerler (valdoria.json > Ashford scene.hotspots)
@@ -345,7 +347,7 @@
   function dlgHtml() {
     const d = S.dlg;
     const sub = S.mode === 'map' ? 'I · The Border Road' : 'Ashford Village';
-    if (d.kind === 'note') return `<div class="gr-panel mk-dlg" data-dlg="1"><div class="gr-title">${esc(d.title)}</div><div class="gr-shop-sub">${sub}</div><p class="mk-dlg-t">${esc(d.text)}</p><div class="gr-foot"><button class="gr-btn primary" type="button" data-act="dlgclose">Close</button></div></div>`;
+    if (d.kind === 'note') return `<div class="gr-panel mk-dlg" data-dlg="1"><div class="gr-title">${esc(d.title)}</div><div class="gr-shop-sub">${sub}</div><p class="mk-dlg-t">${esc(d.text)}</p>${winX('dlgclose', 'Close')}</div>`;
     // Formation (oyundaki campaign-panels > openFormation): 4 x 3 ızgara, ön sıra SAĞDA; sürükle ya da dokun-dokun
     const cells = [];
     for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
@@ -354,7 +356,7 @@
     }
     return `<div class="gr-panel mk-dlg mk-form" data-dlg="1"><div class="gr-title">Formation</div><div class="gr-shop-sub">Drag a hero to a new place, or tap a hero and then a cell.</div>
       <div class="mk-fgrid">${cells.join('')}</div><div class="mk-frow"><span>Back</span><span>Front</span></div>
-      <div class="gr-foot"><button class="gr-btn primary" type="button" data-act="dlgclose">Done</button></div></div>`;
+      ${winX('dlgclose', 'Close')}</div>`;
   }
   function moveForm(hid, c, r) {
     const other = Object.keys(S.form).find((x) => x !== hid && S.form[x][0] === c && S.form[x][1] === r);

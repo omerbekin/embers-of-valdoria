@@ -520,3 +520,9 @@ html.short .mk-enc .gr-price { font-size: 10px; }
 .mk-v3 .mk-page { padding-top: 4px; }
 .mk-headtabs .gr-tab .mk-pt { margin-left: 6px; }
 html.short .mk-enc-shop .gr-wares .gr-item { min-width: 46px; min-height: 46px; }
+/* pencere içi X (tüccar, Formation, Campfire / Notice Board notu): nav-btn dili, pencerenin sağ üst köşesinde */
+.nav-btn.mk-x { position: absolute; top: calc(10 * var(--u)); right: calc(10 * var(--u)); z-index: 3; }
+.mk-enc-shop.gr-panel, .mk-dlg.gr-panel { position: relative; }
+.mk-enc-shop > .gr-head { padding-right: calc(var(--nav-hit-k) + 4px); }
+.mk-dlg.gr-panel { padding-bottom: calc(30 * var(--u)); }
+.mk-dlg .gr-title { padding: 0 calc(var(--nav-hit-k) + 4px); }
