@@ -6,8 +6,11 @@
 <meta name="darkreader-lock" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Merchant mockup</title>
-<!-- TASLAK (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #a | #b | #c  ;  &phone (844x390)  ;  &bb (Buyback sekmesi)  ;  &sel=0..4 (secili mal)  ;  &clean (serit gizli) -->
-<link rel="stylesheet" href="merchant/band-tip.css" />
+<!-- TASLAK (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #a | #b | #c ; &phone (844x390) ; &bb (Buyback sekmesi) ; &clean (serit gizli).
+     Pencere siniri gercek tuccar ekraniyla ayni (sol tezgah paneli 600u + sag Gear defteri, src/ui/gear.css .gr-pair); yalniz tezgah ICERIGI degisti.
+     Item onizleme = oyunun gercek item ipucu v3 (item-tip.ts, gear.css it-*): fare uzerine gelince imlecin yaninda; dokunmatikte tek dokunus sabitler + eylem dugmeleri. -->
+<link rel="stylesheet" href="merchant/tip.css" />
+<link rel="stylesheet" href="merchant/cells.css" />
 <link rel="stylesheet" href="merchant/mx.css" />
 </head>
 <body>
@@ -15,6 +18,7 @@
 <div id="mk-strip"></div>
 <div id="toast" hidden></div>
 <div id="ghost" hidden></div>
+<script src="merchant/data.js"></script>
 <script src="merchant/mx.js"></script>
 </body>
 </html>

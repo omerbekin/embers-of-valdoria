@@ -1,415 +1,316 @@
 (function () {
   'use strict';
-  /* TASLAK: Merchant (Odo) ekran yeniden tasarimi. Veri ornektir; metin Ingilizce (oyun ici). */
-  var HEROES = [
-    { id: 'warrior', name: 'Warrior' }, { id: 'hexer', name: 'Hexer' }, { id: 'archer', name: 'Archer' }, { id: 'mage', name: 'Mage' }
-  ];
+  /* TASLAK: tuccar (Odo) ekrani. Veri oyunun gercek item-tip ciktisindan (item-tooltip/data.js). Metinler Ingilizce. */
+  var D = window.MX_DATA, IT = D.items, HEROES = [['h1', 'warrior'], ['h2', 'mage'], ['h3', 'archer'], ['h4', 'hexer']];
   var LINES = {
     idle: 'Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.',
     poor: 'That one is beyond your purse, friend. Come back after the next fight.',
-    buy: 'A fine choice. Mind the edge, it bites.',
-    sold: 'Pleasure doing business.',
-    buyback: 'Changed your mind? Same price, no questions.',
-    reroll: 'Fresh from the bottom of the cart. Have a look.',
-    bagFull: 'Your bag is bursting, friend. Sell me something first.',
-    empty: 'Nothing left on the stall that suits your company.'
+    buy: 'A fine choice. Mind the edge, it bites.', sold: 'Pleasure doing business.', buyback: 'Changed your mind? Same price, no questions.',
+    reroll: 'Fresh from the bottom of the cart. Have a look.', bagFull: 'Your bag is bursting, friend. Sell me something first.'
   };
-  var SLOTLBL = { weapon: 'Weapon', offhand: 'Off-hand', helm: 'Helm', chest: 'Chest', gloves: 'Hands', boots: 'Boots', trinket: 'Trinket' };
-  var RAR = { common: 'Common', uncommon: 'Uncommon', rare: 'Rare', epic: 'Epic', legendary: 'Legendary' };
-  var BAG_SIZE = 12;
-
-  function W(id, name, r, slot, fam, il, stat, val, aff, price, fit) { return { id: id, name: name, r: r, slot: slot, fam: fam, il: il, stat: stat, val: val, aff: aff, price: price, fit: fit }; }
-  var SET0 = [
-    W('dane_axe', 'Dane Axe of the Bear', 'epic', 'weapon', 'Axes · Two-handed', 10, 'Weapon power', '22', [['Crit multiplier', '+14%'], ['Speed', '+2%'], ['Strength', '+9']], 148,
-      { warrior: ['up', '+12', 'Weapon power'], hexer: ['no'], archer: ['no'], mage: ['no'] }),
-    W('kettle_hat', 'Kettle Hat of the Hawk', 'rare', 'helm', 'Heavy helm', 9, 'Max HP', '46', [['Armor', '+11'], ['Accuracy', '+3%']], 62,
-      { warrior: ['up', '+14', 'Max HP'], hexer: ['no'], archer: ['up', '+6', 'Max HP'], mage: ['no'] }),
-    W('hobnailed_boots', 'Hobnailed Boots', 'uncommon', 'boots', 'Heavy boots', 4, 'Armor', '9', [['Speed', '+2%']], 18,
-      { warrior: ['eq', '', 'Same as worn'], hexer: ['no'], archer: ['down', '-2', 'Armor'], mage: ['no'] }),
-    W('oak_shield', 'Oak Tower Shield', 'uncommon', 'offhand', 'Shields', 6, 'Armor', '17', [['Block chance', '+6%']], 34,
-      { warrior: ['up', '+9', 'Armor'], hexer: ['no'], archer: ['no'], mage: ['no'] }),
-    W('pilgrims_token', "Pilgrim's Token", 'uncommon', 'trinket', 'Charm', 8, 'MP regen', '+1.2', [['Luck', '+4%']], 29,
-      { warrior: ['no'], hexer: ['up', '+0.7', 'MP regen'], archer: ['up', '+0.4', 'MP regen'], mage: ['up', '+0.7', 'MP regen'] })
-  ];
-  var SET1 = [
-    W('great_helm', 'Great Helm', 'epic', 'helm', 'Heavy helm', 10, 'Max HP', '58', [['Armor', '+16'], ['Block chance', '+2%']], 120,
-      { warrior: ['up', '+26', 'Max HP'], hexer: ['no'], archer: ['no'], mage: ['no'] }),
-    W('leather_gloves', 'Leather Gloves', 'common', 'gloves', 'Light gloves', 5, 'Accuracy', '+4%', [], 9,
-      { warrior: ['eq', '', 'Same as worn'], hexer: ['up', '+4%', 'Accuracy'], archer: ['up', '+4%', 'Accuracy'], mage: ['up', '+4%', 'Accuracy'] }),
-    W('swift_sabatons', 'Swift Sabatons', 'epic', 'boots', 'Heavy boots', 10, 'Evasion', '+7%', [['Speed', '+5%'], ['Armor', '+8']], 96,
-      { warrior: ['up', '+7%', 'Evasion'], hexer: ['no'], archer: ['up', '+7%', 'Evasion'], mage: ['no'] }),
-    W('copper_ring', 'Copper Ring', 'common', 'trinket', 'Ring', 4, 'Max MP', '+8', [], 7,
-      { warrior: ['no'], hexer: ['up', '+8', 'Max MP'], archer: ['up', '+8', 'Max MP'], mage: ['up', '+8', 'Max MP'] }),
-    W('ranger_boots', 'Ranger Boots', 'uncommon', 'boots', 'Light boots', 6, 'Evasion', '+4%', [['Speed', '+3%']], 22,
-      { warrior: ['no'], hexer: ['down', '-1%', 'Evasion'], archer: ['up', '+4%', 'Evasion'], mage: ['up', '+4%', 'Evasion'] })
-  ];
-  var BAGSTART = [
-    W('iron_buckler', 'Iron Buckler', 'rare', 'offhand', 'Shields', 2, 'Block chance', '8%', [['Armor', '+17']], 42, { warrior: ['down', '-9', 'Armor'], hexer: ['no'], archer: ['no'], mage: ['no'] }),
-    W('quilted_jack', 'Quilted Jack', 'common', 'chest', 'Light armor', 3, 'Armor', '8', [], 16, { warrior: ['down', '-6', 'Armor'], hexer: ['up', '+8', 'Armor'], archer: ['up', '+8', 'Armor'], mage: ['up', '+8', 'Armor'] }),
-    W('soft_boots', 'Soft Boots', 'common', 'boots', 'Light boots', 2, 'Evasion', '+2%', [], 8, { warrior: ['no'], hexer: ['eq', '', 'Same as worn'], archer: ['down', '-2%', 'Evasion'], mage: ['up', '+2%', 'Evasion'] }),
-    W('wolf_tooth', 'Wolf Tooth', 'uncommon', 'trinket', 'Charm', 5, 'Crit chance', '+3%', [['Evasion', '+2%']], 24, { warrior: ['up', '+3%', 'Crit chance'], hexer: ['up', '+3%', 'Crit chance'], archer: ['up', '+3%', 'Crit chance'], mage: ['up', '+3%', 'Crit chance'] }),
-    W('arming_sword', 'Arming Sword', 'uncommon', 'weapon', 'Swords', 4, 'Weapon power', '13', [['Accuracy', '+2%']], 30, { warrior: ['down', '-9', 'Weapon power'], hexer: ['no'], archer: ['no'], mage: ['no'] }),
-    W('hex_doll', 'Hex Doll', 'rare', 'trinket', 'Charm', 7, 'Hex power', '+9%', [['MP regen', '+0.6']], 56, { warrior: ['no'], hexer: ['up', '+9%', 'Hex power'], archer: ['no'], mage: ['no'] }),
-    W('iron_cap', 'Iron Cap', 'common', 'helm', 'Heavy helm', 3, 'Max HP', '22', [], 14, { warrior: ['down', '-24', 'Max HP'], hexer: ['no'], archer: ['up', '+22', 'Max HP'], mage: ['no'] })
-  ];
-  var BBSTART = [
-    W('riding_boots', 'Riding Boots', 'common', 'boots', 'Light boots', 3, 'Evasion', '+3%', [], 5, { warrior: ['no'], hexer: ['up', '+3%', 'Evasion'], archer: ['up', '+3%', 'Evasion'], mage: ['up', '+3%', 'Evasion'] }),
-    W('bone_staff', 'Bone Staff', 'uncommon', 'weapon', 'Staves · Two-handed', 5, 'Magic power', '15', [['Max MP', '+6']], 17, { warrior: ['no'], hexer: ['up', '+4', 'Magic power'], archer: ['no'], mage: ['up', '+6', 'Magic power'] }),
-    W('twin_stilettos', 'Twin Stilettos', 'rare', 'weapon', 'Daggers', 8, 'Weapon power', '18', [['Crit chance', '+5%'], ['Speed', '+4%']], 53, { warrior: ['no'], hexer: ['no'], archer: ['up', '+5', 'Weapon power'], mage: ['no'] }),
-    W('leather_gloves', 'Leather Gloves', 'common', 'gloves', 'Light gloves', 5, 'Accuracy', '+4%', [], 4, { warrior: ['eq', '', 'Same as worn'], hexer: ['up', '+4%', 'Accuracy'], archer: ['up', '+4%', 'Accuracy'], mage: ['up', '+4%', 'Accuracy'] })
-  ];
-
+  var SET = [['u17', 'u18', 'u5', 'u2', 'u32'], ['u35', 'u28', 'u21', 'u9', 'u29']];
   var NOTES = {
-    a: 'A, Plaka listesi + yana yapışık ayrıntı: mallar satır plakası (ad, güç, fiyat, kim kullanabilir), seçilen malın Band ipucu sağda sabit; en çok bilgi.',
-    b: 'B, Hücre ızgarası + altta geniş ayrıntı: mallar bugünkü gibi kare hücre (ad + fiyat altta), ayrıntı alttaki geniş Band; envantere en yakın.',
-    c: 'C, Odo vitrini: solda Odo tam boy + konuşma balonu, mallar dikey kartlar, ayrıntı ve kahraman uyumu altta; en çok atmosfer.'
+    a: 'A, Plakalar: tezgâh bugünkü sütun genişliğinde kalır; her mal bir plaka (hücre, ad, seviye, kim kullanabilir, fiyat), altta satış kutusu ve Buy çubuğu.',
+    b: 'B, 3 sütun hücre: envanterdeki gibi büyük kare hücreler, altlarında ad + fiyat; ↻ yenileme altıncı karo, satış kutusu kalan boşluğu doldurur.',
+    c: 'C, Odo vitrini: üstte Odo tam boy + balon, mallar tek satır liste ve her satırda fiyatlı Buy düğmesi; satış kutusu şeritli tezgâh gibi.'
   };
+  var BAG_SIZE = 8, REROLL = 15;
+  var S, first = true;
 
-  // ---- durum
-  var S, firstRender = true;
-  function parseHash() {
+  function parse() {
     var h = (location.hash || '#a').slice(1).split('&');
-    var v = h[0];
-    var o = { v: (v === 'b' || v === 'c') ? v : 'a', phone: false, bb: false, sel: -1, clean: false };
-    h.slice(1).forEach(function (p) {
-      if (p === 'phone') o.phone = true; else if (p === 'bb') o.bb = true; else if (p === 'clean') o.clean = true; else if (p.indexOf('sel=') === 0) o.sel = +p.slice(4);
-    });
-    return o;
+    return { v: /^[abc]$/.test(h[0]) ? h[0] : 'a', phone: h.indexOf('phone') >= 0, bb: h.indexOf('bb') >= 0, clean: h.indexOf('clean') >= 0 };
   }
-  function resetState() {
-    var o = parseHash();
-    S = {
-      v: o.v, phone: o.phone, tab: o.bb ? 'bb' : 'sell', gold: 74, set: 0, rerolls: 0, rerollCost: 15, line: 'idle',
-      wares: SET0.map(function (w, i) { return Object.assign({ uid: 'w' + i, sold: false }, w); }),
-      bag: BAGSTART.map(function (w, i) { return Object.assign({ uid: 'b' + i }, w, { worth: w.price }); }),
-      bb: BBSTART.map(function (w, i) { return Object.assign({ uid: 'bb' + i }, w); }),
-      sel: null, hero: null, armed: false
-    };
-    if (o.sel >= 0 && S.tab === 'sell') select('ware', o.sel, true);
+  function mkItem(u, extra) { var d = IT[u]; return Object.assign({ key: u, d: d, uid: u + '_' + Math.random().toString(36).slice(2, 6) }, extra || {}); }
+  function reset() {
+    var o = parse();
+    S = { v: o.v, phone: o.phone, tab: o.bb ? 'bb' : 'sell', gold: 120, set: 0, line: 'idle', hero: 'h1', sel: null, armed: false,
+      wares: SET[0].map(function (u) { return mkItem(u, { sold: false }); }),
+      bag: ['u41', 'u8', 'u13', 'u16', 'u33', 'u25', 'u3'].map(function (u) { return mkItem(u); }),
+      bb: ['u37', 'u6', 'u12', 'u15'].map(function (u) { var i = mkItem(u); i.bbPrice = i.d.sell; return i; }),
+      equip: { helm: mkItem('u15'), gloves: mkItem('u12'), boots: mkItem('u37') } };
     document.documentElement.classList.toggle('mk-clean', o.clean);
+    document.documentElement.classList.toggle('short', o.phone);
   }
-  function sellPrice(it) { return Math.max(1, Math.floor((it.worth || it.price) / 2)); }
 
   // ---- yardimcilar
-  function $(s, r) { return (r || document).querySelector(s); }
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;'); }
-  function gi() { return '<img class="gi" src="merchant/ui/gold.webp" alt="">'; }
-  function itemOf(sel) {
-    if (!sel) return null;
-    return sel.kind === 'ware' ? S.wares[sel.i] : sel.kind === 'bb' ? S.bb[sel.i] : S.bag[sel.i];
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var esc = function (s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;'); };
+  var M = 'merchant/';
+  var gi = function () { return '<img class="gi" src="' + M + 'ui/gold.webp" alt="">'; };
+  var price = function (n, bad, t) { return '<span class="price' + (bad ? ' bad' : '') + '">' + gi() + (t || n) + '</span>'; };
+  var rcol = function (it) { return it.d.color; };
+  function sub(d) { var p = d.sub.split(' · '), f = p[0].split(' '); return { rar: f[0], kind: f.slice(1).join(' '), grip: p.slice(1, -1).join(' · '), il: p[p.length - 1].replace('Item level ', '') }; }
+  function fmtN(v, f) { if (f === 'pct') return (Math.round(v * 1000) / 10) + '%'; if (f === 'dec') return String(Math.round(v * 10) / 10); return String(Math.round(v)); }
+  function heroParts(hid, d) {
+    var p = d.per[hid];
+    if (p.no) return [{ t: p.no, dir: 'no' }];
+    var H = D.heroes[hid];
+    return Object.keys(p.d).slice(0, 3).map(function (k) { var pn = H.panel[k]; return { t: (p.d[k] > 0 ? '+' : '-') + fmtN(Math.abs(p.d[k]), pn.f) + ' ' + pn.l, dir: p.d[k] > 0 ? 'up' : 'down' }; });
   }
-  function select(kind, i, quiet) {
-    if (S.sel && S.sel.kind === kind && S.sel.i === i && !quiet) { S.sel = null; S.hero = null; return; }
-    S.sel = { kind: kind, i: i };
-    var it = itemOf(S.sel);
-    var ok = HEROES.filter(function (h) { return it.fit[h.id][0] !== 'no'; });
-    S.hero = ok.length ? ok[0].id : null;
-    if (S.hero) { var up = ok.filter(function (h) { return it.fit[h.id][0] === 'up'; }); if (up.length) S.hero = up[0].id; }
-    S.armed = kind === 'bag';
+  function usable(it, hid) { return !it.d.per[hid].no; }
+  function pips(it) {
+    return '<span class="pips">' + HEROES.map(function (h) { var no = !usable(it, h[0]); return '<span class="pip' + (no ? ' no' : '') + '" style="background-image:url(' + M + 'av/' + h[1] + '.webp)" title="' + D.heroes[h[0]].name + (no ? " can't use" : '') + '"></span>'; }).join('') + '</span>';
   }
-  function toast(t) { var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { e.hidden = true; }, 1700); }
+
+  // ---- gercek item ipucu v3 (item-tip.ts > itemTipNodes ile ayni DOM / sinif adlari)
+  function tipHTML(it, ctx) {
+    var d = it.d, s = sub(d), H = D.heroes[S.hero];
+    var big = d.power ? '<div class="it-big"><strong>' + d.power + '</strong><span>Weapon power</span></div>' : (d.blockPct ? '<div class="it-big"><span class="it-big-n"><strong>' + d.blockPct + '%</strong></span><span>Block chance</span></div>' : '');
+    var lineIco = function (l) { if (l.ico) return '<img class="it-ico" src="' + M + 'stat/' + l.ico + '.webp" alt="">'; var e = l.text.match(/(Fire|Ice|Holy|Arcane|Nature|Dark) damage/); return e ? '<img class="it-ico" src="' + M + 'el/' + e[1].toLowerCase() + '.webp" alt="">' : '<i class="it-dia"></i>'; };
+    var TC = { C: '#b9a98a', B: '#8fb8e8', A: '#f0b04a' }, TO = { A: 0, B: 1, C: 2 };
+    var imp = d.implicit ? '<div class="it-implicit">' + (d.implicit.ico ? '<img class="it-ico" src="' + M + 'stat/' + d.implicit.ico + '.webp" alt="">' : '') + '<span class="it-text">' + esc(d.implicit.text) + '</span></div>' : '';
+    var fx = d.effect ? '<div class="it-effect"><strong>' + esc(d.effect.split(':')[0]) + '</strong><span>' + esc(d.effect.split(':').slice(1).join(':').trim()) + '</span></div>' : '';
+    var rows = d.lines.slice().sort(function (a, b) { return (TO[a.tier] || 9) - (TO[b.tier] || 9); }).map(function (l) {
+      var rail = '';
+      if (l.range) { var r = l.range.split('–').map(Number), m = l.text.match(/\d+(\.\d+)?/); if (m && r[1] > r[0]) rail = '<span class="it-rail" style="--p:' + Math.max(0, Math.min(1, (Number(m[0]) - r[0]) / (r[1] - r[0]))) + '" title="Roll range ' + l.range + '"><i></i><strong></strong></span>'; else rail = '<span class="it-range">(' + l.range + ')</span>'; }
+      return '<div class="it-line"><span class="it-tier" style="--tc:' + TC[l.tier] + '">' + l.tier + '</span>' + lineIco(l) + '<span class="it-text">' + esc(l.text) + '</span>' + rail + '</div>';
+    }).join('');
+    var unmet = H.level < d.req;
+    var val = ctx === 'bag' ? d.sell : ctx === 'bb' ? d.sell : d.value;
+    var valLbl = ctx === 'bag' ? 'sells for' : 'value';
+    var heroes = HEROES.map(function (h) {
+      var pa = heroParts(h[0], d), no = pa.some(function (p) { return p.dir === 'no'; }), HH = D.heroes[h[0]];
+      return '<div class="it-hero' + (no ? ' no' : '') + '"><span class="it-face" style="background-image:url(' + M + 'av/' + h[1] + '.webp)"></span><strong class="it-hero-k">' + HH.name + '</strong>' +
+        (no ? '' : '<span class="it-lv' + (HH.level < d.req ? ' unmet' : '') + '">Lv ' + HH.level + '</span>') +
+        '<span class="it-hero-v">' + pa.map(function (p) { return '<span class="it-chip it-' + p.dir + '">' + esc(p.t) + '</span>'; }).join('') + '</span></div>';
+    }).join('');
+    return '<div class="it-card" style="--rc:' + d.color + '"><div class="it-head"><span class="it-medal"><img class="gr-svg gr-px" src="' + M + 'items/' + d.icon.split('/').pop() + '" alt=""></span>' +
+      '<div class="it-id"><strong class="it-name">' + esc(d.name) + '</strong><div class="it-rib"><span>' + s.rar + ' ' + s.kind + '</span></div><div class="it-sub">' + (s.grip ? esc(s.grip) + ' · ' : '') + 'Item level ' + s.il + '</div>' + big + '</div></div>' +
+      '<div class="it-main">' + fx + imp + '<div class="it-lines">' + rows + '</div></div>' +
+      '<div class="it-reqrow"><span class="it-req' + (unmet ? ' unmet' : '') + '">' + (d.req > 1 ? 'Requires Level ' + d.req : '') + '</span><span class="it-val"><img class="it-coin" src="' + M + 'ui/gold.webp" alt=""><strong>' + val + '</strong><em>' + valLbl + '</em></span></div>' +
+      '<div class="it-heroes">' + heroes + '</div></div>';
+  }
+
+  // ---- ItemTip (hover = imlecin yaninda, dokunma = sabitlenir)
+  var tipKey = '', tipPinned = false, goneT;
+  function tipBox() { var t = $('#tip'); if (!t) { t = document.createElement('div'); t.id = 'tip'; t.className = 'el-tip item-tip'; $('#stage').appendChild(t); } return t; }
+  function kScale() { var st = $('#stage'); return st.getBoundingClientRect().width / st.offsetWidth || 1; }
+  function tipPlace(cx, cy) {
+    var t = tipBox(), st = $('#stage'), r = st.getBoundingClientRect(), k = kScale(), x = (cx - r.left) / k, y = (cy - r.top) / k, Wd = st.offsetWidth, Ht = st.offsetHeight, tw = t.offsetWidth, th = t.offsetHeight, gap = 18;
+    var l = x + gap, tp = y + gap; if (l + tw > Wd - 6) l = x - gap - tw; if (tp + th > Ht - 6) tp = y - gap - th;
+    t.style.left = Math.max(6, Math.min(Wd - tw - 6, l)) + 'px'; t.style.top = Math.max(6, Math.min(Ht - th - 6, tp)) + 'px';
+  }
+  function tipShow(key, html, cx, cy) {
+    var t = tipBox(); clearTimeout(goneT);
+    if (key !== tipKey || tipPinned) t.innerHTML = html;
+    tipPinned = false; t.classList.remove('pinned'); tipKey = key;
+    if (t.style.display === 'none') { t.style.display = ''; void t.offsetWidth; }
+    t.classList.add('on'); tipPlace(cx, cy);
+  }
+  function tipHide() {
+    var t = $('#tip'); if (!t) return; tipKey = ''; tipPinned = false; t.classList.remove('on', 'pinned'); clearTimeout(goneT);
+    goneT = setTimeout(function () { if (!tipKey) t.style.display = 'none'; }, 200);
+  }
+  function tipPin(key, html, anchor, acts) {
+    var t = tipBox(); clearTimeout(goneT);
+    t.innerHTML = html;
+    if (acts.length) { var row = document.createElement('div'); row.className = 'it-acts'; acts.forEach(function (a) { var b = document.createElement('button'); b.type = 'button'; b.className = 'gr-btn sm' + (a.pri ? ' primary' : ''); b.innerHTML = a.label; b.disabled = !!a.dis; b.addEventListener('click', function (e) { e.stopPropagation(); tipHide(); a.run(); }); row.appendChild(b); }); t.querySelector('.it-card').appendChild(row); }
+    tipKey = key; tipPinned = true; t.classList.add('pinned', 'on'); if (t.style.display === 'none') t.style.display = '';
+    var st = $('#stage'), r = st.getBoundingClientRect(), k = kScale(), a = anchor.getBoundingClientRect(), ax = (a.left - r.left) / k, ay = (a.top - r.top) / k, aw = a.width / k, ah = a.height / k, Wd = st.offsetWidth, Ht = st.offsetHeight, tw = t.offsetWidth, th = t.offsetHeight, gap = 8, l, tp;
+    if (ax + aw + gap + tw <= Wd - 6) { l = ax + aw + gap; tp = ay + ah / 2 - th / 2; } else if (ax - gap - tw >= 6) { l = ax - gap - tw; tp = ay + ah / 2 - th / 2; } else { l = ax + aw / 2 - tw / 2; tp = ay + ah + gap + th <= Ht - 6 ? ay + ah + gap : ay - gap - th; }
+    t.style.left = Math.max(6, Math.min(Wd - tw - 6, l)) + 'px'; t.style.top = Math.max(6, Math.min(Ht - th - 6, tp)) + 'px';
+  }
 
   // ---- parcalar
-  function cell(it, o) {
-    o = o || {};
-    return '<button type="button" class="cell' + (o.on ? ' on' : '') + (o.sold ? ' sold' : '') + '" data-r="' + it.r + '"' + (o.sel ? ' data-sel="' + o.sel + '"' : '') + (o.drag ? ' data-drag="' + o.drag + '"' : '') + ' aria-label="' + esc(it.name) + '"><img src="merchant/items/' + it.id + '.webp" alt="" draggable="false">' + (o.il ? '<span class="il">' + it.il + '</span>' : '') + '</button>';
+  function itemOf(kind, i) { return kind === 'ware' ? S.wares[i] : kind === 'bb' ? S.bb[i] : kind === 'bag' ? S.bag[i] : S.equip[i]; }
+  function cell(it, kind, i, o) {
+    o = o || {}; var d = it.d, rank = { common: 0, uncommon: 1, rare: 2, epic: 3, legendary: 4 }[d.rarity];
+    var on = S.sel && S.sel.kind === kind && S.sel.i === i;
+    return '<div class="cellb' + (o.sold ? ' sold' : '') + '" data-tip="' + kind + ':' + i + '"' + (o.sold ? '' : ' data-sel="' + kind + ':' + i + '"') + (o.drag && !o.sold ? ' data-drag="' + kind + ':' + i + '"' : '') + '><div class="gr-item k' + rank + (on ? ' on' : '') + '" style="--rc:' + d.color + '">' + (rank >= 3 ? '<i class="gr-c2"></i><i class="gr-c3"></i>' : '') + '<img src="' + M + 'items/' + d.icon.split('/').pop() + '" alt="" draggable="false">' + (on ? '<i class="gr-dia"></i>' : '') + '</div></div>';
   }
-  function price(n, bad, label) { return '<span class="price' + (bad ? ' bad' : '') + '">' + gi() + (label || n) + '</span>'; }
-  function pips(it) {
-    return '<span class="pips">' + HEROES.map(function (h) {
-      var f = it.fit[h.id][0];
-      return '<span class="pip' + (f === 'no' ? ' no' : '') + (f === 'up' ? ' up' : '') + '" style="background-image:url(merchant/av/' + h.id + '.webp)" title="' + h.name + (f === 'no' ? " can't use" : '') + '"></span>';
-    }).join('') + '</span>';
+  function wareState(it) { var p = it.d.value, poor = !it.sold && S.gold < p; return { p: p, poor: poor }; }
+  var RR = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.5 4v4.5H15"/></svg>';
+  var rrBtn = function () { return '<button class="rr" data-act="reroll" title="Reroll wares" aria-label="Reroll wares"' + (S.gold < REROLL ? ' disabled' : '') + '>' + RR + gi() + REROLL + '</button>'; };
+  function head() { return '<div class="lhead"><div class="gtitle">Odo the Peddler</div><span class="gold"><img src="' + M + 'ui/gold.webp" alt="">' + S.gold + '</span></div><div class="shopsub">Travelling merchant · Ashford Village</div>'; }
+  function talk() { return '<div class="talk"><div class="face" style="background-image:url(' + M + 'av/merchant.webp)"></div><div class="say">' + esc(LINES[S.line]) + '</div></div>'; }
+  function tabs() { return '<div class="tabs" role="tablist"><button class="tab' + (S.tab === 'sell' ? ' on' : '') + '" data-tab="sell">Buy &amp; Sell</button><button class="tab' + (S.tab === 'bb' ? ' on' : '') + '" data-tab="bb">Buyback' + (S.bb.length ? '<span class="pt">' + S.bb.length + '</span>' : '') + '</button></div>'; }
+  function sellbox() {
+    var it = S.sel && S.sel.kind === 'bag' ? itemOf('bag', S.sel.i) : null, armed = !!(it && S.armed);
+    return '<div class="sellbox' + (armed ? ' armed' : '') + '" data-drop="sell" data-act="sellzone"><img src="' + M + 'ui/gold.webp" alt=""><div><span class="st">' + (armed ? 'Sell ' + esc(it.d.name) : 'Sell to Odo') + '</span><span class="dim">' + (armed ? 'Tap here to sell for ' + it.d.sell + ' gold.' : 'Drag an item here from the bag to sell it for half its worth.') + '</span></div></div>';
   }
-  function bagFull() { return S.bag.length >= BAG_SIZE; }
+  function actbar() {
+    var s = S.sel, h = '<span class="hint">Hover an item to inspect it. Double-click to buy.</span>';
+    if (!s) return '<div class="act">' + h + '</div>';
+    var it = itemOf(s.kind, s.i); if (!it || s.kind === 'equip') return '<div class="act">' + h + '</div>';
+    if (s.kind === 'ware') { var sh = it.d.value - S.gold, full = S.bag.length >= BAG_SIZE; return '<div class="act">' + h + '<button class="gr-btn primary" data-act="buy"' + (sh > 0 || full ? ' disabled' : '') + '>' + (sh > 0 ? 'Need ' + sh + ' more' : full ? 'Bag full' : 'Buy · ' + it.d.value) + '</button></div>'; }
+    if (s.kind === 'bb') { var sb = it.bbPrice - S.gold; return '<div class="act">' + h + '<button class="gr-btn primary" data-act="bback"' + (sb > 0 ? ' disabled' : '') + '>' + (sb > 0 ? 'Need ' + sb + ' more' : 'Buy back · ' + it.bbPrice) + '</button></div>'; }
+    return '<div class="act">' + h + '<button class="gr-btn primary" data-act="sell">Sell · ' + it.d.sell + '</button></div>';
+  }
+  var BB_EMPTY = '<div class="empty-t">Sold something by mistake? It waits here until you leave.</div>';
 
-  function plate(it, i) {
-    var poor = !it.sold && S.gold < it.price;
-    var on = S.sel && S.sel.kind === 'ware' && S.sel.i === i;
-    return '<div class="pl' + (on ? ' on' : '') + (it.sold ? ' sold' : '') + '" data-r="' + it.r + '"' + (it.sold ? '' : ' data-sel="ware:' + i + '" data-drag="ware:' + i + '"') + '>' +
-      cell(it, { il: false }) +
-      '<div class="tx"><div class="nm rl">' + esc(it.name) + '</div>' +
-      '<div class="l2"><span class="chip">' + SLOTLBL[it.slot] + '</span><span class="meta"><b>' + it.val + '</b> ' + it.stat + '</span><span class="meta">iL ' + it.il + '</span></div>' +
-      '<div class="l3"><span class="aff" style="flex:1">' + (it.aff.length ? it.aff.map(function (a) { return a[1] + ' ' + a[0]; }).join(' · ') : 'No bonus') + '</span>' + pips(it) + '</div></div>' +
-      '<div class="pr">' + (it.sold ? '<span class="price">SOLD</span>' : price(it.price, poor)) + (poor ? '<span class="need">Need ' + (it.price - S.gold) + ' more</span>' : '') + '</div></div>';
-  }
-  function bbPlate(it, i) {
-    var poor = S.gold < it.price;
-    var on = S.sel && S.sel.kind === 'bb' && S.sel.i === i;
-    return '<div class="pl' + (on ? ' on' : '') + '" data-r="' + it.r + '" data-sel="bb:' + i + '" data-drag="bb:' + i + '">' + cell(it) +
-      '<div class="tx"><div class="nm rl">' + esc(it.name) + '</div><div class="l2"><span class="chip">' + SLOTLBL[it.slot] + '</span><span class="meta"><b>' + it.val + '</b> ' + it.stat + '</span><span class="meta">iL ' + it.il + '</span></div>' +
-      '<div class="l3"><span class="aff" style="flex:1">Sold this visit</span>' + pips(it) + '</div></div>' +
-      '<div class="pr">' + price(it.price, poor) + (poor ? '<span class="need">Need ' + (it.price - S.gold) + ' more</span>' : '') + '</div></div>';
-  }
-
-  // Band ipucu (docked): baslik seridi + ozellikler + kahraman uyumu
-  function band(it, two) {
-    var lines = it.aff.map(function (a) { return '<div class="bt-ln"><span class="dia"></span><span class="tx"><span class="k">' + a[0] + '</span> <span class="n">' + a[1] + '</span></span></div>'; }).join('') || '<div class="bt-ln"><span class="dia"></span><span class="tx" style="color:#8a7d66">No extra bonuses</span></div>';
-    var rows = HEROES.map(function (h) {
-      var f = it.fit[h.id], st = f[0];
-      var tag = st === 'up' ? '<span class="tag up">Upgrade</span>' : st === 'down' ? '<span class="tag down">Worse</span>' : st === 'eq' ? '<span class="tag eq">Same</span>' : '';
-      var val = st === 'no' ? "Can't use this" : st === 'eq' ? 'Same as worn' : '<b class="' + (st === 'up' ? 'up' : 'down') + '">' + f[1] + '</b> ' + f[2];
-      return '<div class="hrow ' + st + (S.hero === h.id ? ' pick' : '') + '"' + (st === 'no' ? '' : ' data-pick="' + h.id + '"') + '><div class="hav" style="background-image:url(merchant/av/' + h.id + '.webp)"></div><div class="hn">' + h.name + '</div><div class="hv">' + val + '</div>' + tag + '</div>';
-    }).join('');
-    var head = '<div class="bt-head"><div class="bt-medal ico" style="background-image:url(merchant/items/' + it.id + '.webp)"></div><div class="bt-ht"><div class="bt-kind">' + RAR[it.r] + ' · ' + SLOTLBL[it.slot] + ' · iL ' + it.il + '</div><div class="bt-title">' + esc(it.name) + '</div></div><div class="bt-aside"><div class="bt-big">' + it.val + '<small>' + it.stat + '</small></div></div></div>';
-    var hl = '<div class="bt-body" style="padding-bottom:4px"><div class="bt-kind" style="opacity:.7">Who can use it</div></div>';
-    var foot = '<div class="bt-foot"><span class="dia"></span><span class="tx">' + it.fam + '</span><span class="n" style="color:var(--g-gold);font-family:var(--g-disp)">' + gi() + ' worth ' + (it.worth || it.price) + '</span></div>';
-    if (two) {
-      foot = '<div class="bt-foot"><span class="dia"></span><span class="tx">' + it.fam + ' · ' + gi() + ' worth ' + (it.worth || it.price) + '</span>' + actions(it, true) + '</div>';
-      return '<div class="bt" data-r="' + it.r + '" style="--ac:var(--rc)">' + head + '<div class="bt-div"></div><div class="bt-two"><div><div class="bt-body" style="padding-bottom:4px"><div class="bt-kind" style="opacity:.7">Bonuses</div></div><div class="bt-body" style="padding-top:2px">' + lines + '</div></div><div class="col2">' + hl + '<div class="heroes" style="padding:0 6px 8px">' + rows + '</div></div></div>' + foot + '</div>';
-    }
-    return '<div class="bt" data-r="' + it.r + '" style="--ac:var(--rc)">' + head + '<div class="bt-div"></div><div class="bt-body">' + lines + '</div><div class="bt-div"></div>' + hl + '<div style="padding:0 6px 8px;display:flex;flex-direction:column;gap:2px">' + rows + '</div>' + foot + '</div>';
-  }
-  function actions(it, inline) {
-    var k = S.sel.kind, h = HEROES.filter(function (x) { return x.id === S.hero; })[0];
-    if (k === 'ware') {
-      var short = it.price - S.gold, full = bagFull();
-      var lbl = short > 0 ? 'Need ' + short + ' more' : full ? 'Bag full' : 'Buy ' + gi() + ' ' + it.price;
-      return '<div class="acts' + (inline ? ' in' : '') + '">' + (h ? '<button class="btn" data-act="buyeq"' + (short > 0 || full ? ' disabled' : '') + '>Buy &amp; equip ' + h.name + '</button>' : '') + '<button class="btn pri" data-act="buy"' + (short > 0 || full ? ' disabled' : '') + '>' + lbl + '</button></div>';
-    }
-    if (k === 'bb') {
-      var s2 = it.price - S.gold;
-      return '<div class="acts' + (inline ? ' in' : '') + '"><button class="btn pri" data-act="bback"' + (s2 > 0 ? ' disabled' : '') + '>' + (s2 > 0 ? 'Need ' + s2 + ' more' : 'Buy back ' + gi() + ' ' + it.price) + '</button></div>';
-    }
-    return '<div class="acts' + (inline ? ' in' : '') + '"><button class="btn pri" data-act="sell">Sell ' + gi() + ' ' + sellPrice(it) + '</button></div>';
-  }
-  function nosel() {
-    var bb = S.tab === 'bb';
-    return '<div class="nosel"><img src="merchant/ui/gold.webp" alt=""><b>' + (bb ? 'Buyback' : 'Inspect a ware') + '</b>' + (bb ? 'Select an item to see who can use it.' : 'Select a ware to see its bonuses and which heroes it suits. Double-click to buy.') + '</div>';
-  }
-  function dock(two) {
-    var it = itemOf(S.sel);
-    return '<div class="dock">' + (it ? band(it, two) + (two ? '' : actions(it)) : nosel()) + '</div>';
-  }
-
-  function sellzone() {
-    var it = S.sel && S.sel.kind === 'bag' ? itemOf(S.sel) : null;
-    var armed = !!(it && S.armed);
-    return '<div class="sell' + (armed ? ' armed' : '') + '" data-drop="sell" data-act="sellzone"><img class="ico" src="merchant/ui/gold.webp" alt=""><div><div class="st">' + (armed ? 'Sell ' + esc(it.name) : 'Sell to Odo') + '</div>' +
-      '<div class="sd">' + (armed ? 'Tap here to sell for <b>' + sellPrice(it) + '</b> gold.' : 'Drag an item here from your bag. Odo pays half its worth.') + '</div></div>' +
-      (armed ? '<button class="btn pri" data-act="sell">Sell ' + gi() + ' ' + sellPrice(it) + '</button>' : '') + '</div>';
-  }
-  var REROLL_SVG = '<svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.5 4v4.5H15"/></svg>';
-  function waresHead() {
-    var left = S.wares.filter(function (w) { return !w.sold; }).length;
-    return '<div class="sech">Wares <span class="cnt">' + left + ' / ' + S.wares.length + '</span><button class="rr" data-act="reroll" title="Reroll wares"' + (S.gold < S.rerollCost ? ' disabled' : '') + '>' + REROLL_SVG + gi() + ' ' + S.rerollCost + '</button></div>';
-  }
-  function header() {
-    return '<div class="hd"><div><div class="ttl">Odo the Peddler</div><div class="sub">Travelling merchant · Ashford Village</div></div><span class="grow"></span><span class="purse"><img src="merchant/ui/gold.webp" alt="">' + S.gold + '</span></div>';
-  }
-  function talk(extraCls) {
-    return '<div class="talk"><div class="face" style="background-image:url(merchant/av/merchant.webp)"></div><div class="bubble' + (extraCls || '') + '">' + esc(LINES[S.line]) + '</div></div>';
-  }
-  function tabs() {
-    return '<div class="tabs" role="tablist"><button class="tab' + (S.tab === 'sell' ? ' on' : '') + '" data-tab="sell">Buy &amp; Sell</button><button class="tab' + (S.tab === 'bb' ? ' on' : '') + '" data-tab="bb">Buyback' + (S.bb.length ? '<span class="bdg">' + S.bb.length + '</span>' : '') + '</button></div>';
-  }
-  var XBTN = '<button class="xbtn" title="Leave the stall" aria-label="Leave"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
-
-  // ---- canta paneli
-  function bagPanel() {
-    var cells = '';
-    for (var i = 0; i < BAG_SIZE; i++) {
-      var it = S.bag[i];
-      if (!it) { cells += '<div class="cw"><div class="cell slot"></div></div>'; continue; }
-      var on = S.sel && S.sel.kind === 'bag' && S.sel.i === i;
-      cells += '<div class="cw">' + cell(it, { on: on, sel: 'bag:' + i, drag: 'bag:' + i, il: true }) + price(sellPrice(it), false) + '</div>';
-    }
-    return '<div class="sech">Your bag <span class="cnt">' + S.bag.length + ' / ' + BAG_SIZE + '</span></div><div class="bag">' + cells + '</div><div class="meta" style="margin-top:auto">Prices under items are what Odo pays. Double-click an item to sell it.</div>';
-  }
-  function sidePanel() {
-    var it = itemOf(S.sel);
-    if (S.phone && it) {
-      return '<div class="sech">Details<button class="backchip" data-act="back">Back to bag</button></div><div class="scr dock-wrap">' + dock(false) + '</div>';
-    }
-    return bagPanel();
-  }
-
-  // ---- varyantlar
+  // ---- varyantlar (yalniz tezgah ici)
   function paneA() {
     var body;
     if (S.tab === 'sell') {
-      body = '<div class="list">' + waresHead() + '<div class="plates scr">' + (S.wares.length ? S.wares.map(plate).join('') : '<div class="empty-t">' + LINES.empty + '</div>') + '</div></div>';
-    } else {
-      body = '<div class="list"><div class="sech">Sold this visit <span class="cnt">' + S.bb.length + '</span></div><div class="plates scr">' + (S.bb.length ? S.bb.map(bbPlate).join('') : '<div class="empty-t">Sold something by mistake? It waits here until you leave.</div>') + '</div></div>';
-    }
-    return '<div class="body">' + body + (S.phone ? '' : dock(false)) + '</div>' + (S.tab === 'sell' ? sellzone() : '');
-  }
-  function paneB() {
-    var out;
-    if (S.tab === 'sell') {
-      out = waresHead() + '<div class="wgrid">' + S.wares.map(function (w, i) {
-        var poor = !w.sold && S.gold < w.price, on = S.sel && S.sel.kind === 'ware' && S.sel.i === i;
-        return '<div class="cw">' + cell(w, { on: on, sold: w.sold, sel: w.sold ? '' : 'ware:' + i, drag: w.sold ? '' : 'ware:' + i, il: true }) + '<div class="wn rl" data-r="' + w.r + '">' + esc(w.name) + '</div>' + (w.sold ? '<span class="price">SOLD</span>' : price(w.price, poor)) + '</div>';
+      body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span>' + rrBtn() + '</div><div class="plates">' + S.wares.map(function (w, i) {
+        var st = wareState(w), on = S.sel && S.sel.kind === 'ware' && S.sel.i === i;
+        return '<div class="pl' + (on ? ' on' : '') + (w.sold ? ' sold' : '') + '" style="--rc:' + w.d.color + '" data-tip="ware:' + i + '"' + (w.sold ? '' : ' data-sel="ware:' + i + '" data-drag="ware:' + i + '"') + '>' + cell(w, 'ware', i, { sold: w.sold }).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
+          '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">iL <b>' + sub(w.d).il + '</b></span><span class="meta">' + sub(w.d).kind + '</span>' + pips(w) + '</div></div>' +
+          '<div class="pr">' + (w.sold ? '<span class="price">SOLD</span>' : price(st.p, st.poor)) + (st.poor ? '<span class="need">Need ' + (st.p - S.gold) + ' more</span>' : '') + '</div></div>';
       }).join('') + '</div>';
     } else {
-      out = '<div class="sech">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="wgrid">' + S.bb.map(function (w, i) {
-        var on = S.sel && S.sel.kind === 'bb' && S.sel.i === i;
-        return '<div class="cw">' + cell(w, { on: on, sel: 'bb:' + i, drag: 'bb:' + i, il: true }) + '<div class="wn rl" data-r="' + w.r + '">' + esc(w.name) + '</div>' + price(w.price, S.gold < w.price) + '</div>';
-      }).join('') + '</div>' : '<div class="empty-t">Sold something by mistake? It waits here until you leave.</div>');
+      body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div><div class="plates">' + (S.bb.length ? S.bb.map(function (w, i) {
+        var poor = S.gold < w.bbPrice, on = S.sel && S.sel.kind === 'bb' && S.sel.i === i;
+        return '<div class="pl' + (on ? ' on' : '') + '" style="--rc:' + w.d.color + '" data-tip="bb:' + i + '" data-sel="bb:' + i + '" data-drag="bb:' + i + '">' + cell(w, 'bb', i).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
+          '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">iL <b>' + sub(w.d).il + '</b></span><span class="meta">' + sub(w.d).kind + '</span>' + pips(w) + '</div></div><div class="pr">' + price(w.bbPrice, poor) + (poor ? '<span class="need">Need ' + (w.bbPrice - S.gold) + ' more</span>' : '') + '</div></div>';
+      }).join('') : BB_EMPTY) + '</div>';
     }
-    return out + (S.phone ? '' : dock(true)) + (S.tab === 'sell' ? sellzone() : '');
+    return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
+  }
+  function paneB() {
+    var body;
+    var tile = function (w, i, kind, p, poor) {
+      return '<div class="tile' + (w.sold ? ' sold' : '') + '">' + cell(w, kind, i, { sold: w.sold, drag: true }) + '<div class="rn" style="--rc:' + w.d.color + '">' + esc(w.d.name) + '</div>' + (w.sold ? '<span class="price">SOLD</span>' : price(p, poor)) + pips(w) + '</div>';
+    };
+    if (S.tab === 'sell') {
+      body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span></div><div class="grid3">' + S.wares.map(function (w, i) { var st = wareState(w); return tile(w, i, 'ware', st.p, st.poor); }).join('') +
+        '<div class="tile"><button class="rrtile" data-act="reroll" title="Reroll wares" aria-label="Reroll wares"' + (S.gold < REROLL ? ' disabled' : '') + '>' + RR + 'Reroll</button>' + price(REROLL, S.gold < REROLL) + '</div></div>';
+    } else {
+      body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="grid3">' + S.bb.map(function (w, i) { return tile(w, i, 'bb', w.bbPrice, S.gold < w.bbPrice); }).join('') + '</div>' : BB_EMPTY);
+    }
+    return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
   }
   function paneC() {
-    var out;
-    var mk = function (w, i, kind) {
-      var poor = kind === 'ware' ? (!w.sold && S.gold < w.price) : S.gold < w.price;
+    var body;
+    var row = function (w, i, kind, p, poor) {
       var on = S.sel && S.sel.kind === kind && S.sel.i === i;
-      return '<div class="card' + (on ? ' on' : '') + (w.sold ? ' sold' : '') + '" data-r="' + w.r + '"' + (w.sold ? '' : ' data-sel="' + kind + ':' + i + '" data-drag="' + kind + ':' + i + '"') + '>' + cell(w, { il: true }) + '<div class="nm rl">' + esc(w.name) + '</div><div class="meta"><b>' + w.val + '</b> ' + w.stat + '</div>' + (w.sold ? '<span class="price">SOLD</span>' : price(w.price, poor)) + '</div>';
+      return '<div class="row' + (on ? ' on' : '') + (w.sold ? ' sold' : '') + '" style="--rc:' + w.d.color + '" data-tip="' + kind + ':' + i + '"' + (w.sold ? '' : ' data-sel="' + kind + ':' + i + '" data-drag="' + kind + ':' + i + '"') + '>' + cell(w, kind, i, { sold: w.sold }).replace(/ data-tip="[^"]*"| data-sel="[^"]*"| data-drag="[^"]*"/g, '') +
+        '<div class="tx"><div class="rn">' + esc(w.d.name) + '</div><div class="l2"><span class="meta">' + sub(w.d).kind + ' · iL <b>' + sub(w.d).il + '</b></span>' + pips(w) + '</div></div>' +
+        (w.sold ? '<span class="price">SOLD</span>' : '<button class="buy' + (poor ? ' bad' : '') + '" data-act="' + (kind === 'bb' ? 'bback' : 'quick') + '" data-i="' + i + '"' + (poor ? ' disabled' : '') + '>' + gi() + p + '</button>') + '</div>';
     };
-    if (S.tab === 'sell') out = waresHead() + '<div class="cards">' + S.wares.map(function (w, i) { return mk(w, i, 'ware'); }).join('') + '</div>';
-    else out = '<div class="sech">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="cards">' + S.bb.map(function (w, i) { return mk(w, i, 'bb'); }).join('') + '</div>' : '<div class="empty-t">Sold something by mistake? It waits here until you leave.</div>');
-    return out + (S.phone ? '' : dock(true)) + (S.tab === 'sell' ? '<div class="tray">' + sellzone().replace('class="sell', 'style="flex:1" class="sell') + '</div>' : '');
+    if (S.tab === 'sell') body = '<div class="sec">Wares <span class="cnt">' + S.wares.filter(function (w) { return !w.sold; }).length + ' / ' + S.wares.length + '</span>' + rrBtn() + '</div><div class="rows">' + S.wares.map(function (w, i) { var st = wareState(w); return row(w, i, 'ware', st.p, st.poor); }).join('') + '</div>';
+    else body = '<div class="sec">Sold this visit <span class="cnt">' + S.bb.length + '</span></div>' + (S.bb.length ? '<div class="rows">' + S.bb.map(function (w, i) { return row(w, i, 'bb', w.bbPrice, S.gold < w.bbPrice); }).join('') + '</div>' : BB_EMPTY);
+    return body + (S.tab === 'sell' ? sellbox() : '') + actbar();
   }
 
+  // ---- sag: Gear defteri (degismedi; temsili)
+  function ledger() {
+    var slots = [['helm', 'Head'], ['armor', 'Chest'], ['gloves', 'Hands'], ['boots', 'Feet'], ['weapon', 'Weapon'], ['trinket', 'Trinket']];
+    var sl = slots.map(function (s) { var e = S.equip[s[0]]; return '<div class="sl">' + (e ? cell(e, 'equip', s[0]) : '<div class="slotempty">' + s[1] + '</div>') + '</div>'; }).join('');
+    var bag = ''; for (var i = 0; i < BAG_SIZE; i++) { var it = S.bag[i]; bag += it ? '<div class="cw">' + cell(it, 'bag', i, { drag: true }) + price(it.d.sell, false) + '</div>' : '<div class="cw"><div class="empty"></div></div>'; }
+    var H = D.heroes[S.hero];
+    return '<section class="panel ledger" data-drop="bag"><div class="lhead"><div class="gtitle">Gear</div><div class="htabs"><button class="htab on">Hero</button><button class="htab">Sheet</button></div></div>' +
+      '<div class="lbody"><div class="marks">' + HEROES.map(function (h) { return '<button class="mark' + (S.hero === h[0] ? ' on' : '') + '" data-hero="' + h[0] + '" style="background-image:url(' + M + 'av/' + h[1] + '.webp)" title="' + D.heroes[h[0]].name + '"></button>'; }).join('') + '</div>' +
+      '<div class="page"><div class="hname">' + H.name + ' <span class="meta">Lv ' + H.level + '</span></div><div class="slots">' + sl + '</div></div><div class="spine"></div>' +
+      '<div class="page"><div class="sec">Bag <span class="cnt">' + S.bag.length + ' / ' + BAG_SIZE + '</span></div><div class="bag">' + bag + '</div><div class="meta">Prices under items are what Odo pays. Double-click an item to sell it.</div></div></div></section>';
+  }
+  var X = '<button class="xbtn" title="Leave the stall" aria-label="Leave"><svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>';
+
   function render() {
+    tipHide();
     var st = $('#stage');
-    st.className = (S.phone ? 'phone' : 'desk') + ' v' + S.v + (firstRender ? ' enter' : '');
-    var stall;
-    if (S.v === 'c' && !S.phone) {
-      stall = '<section class="panel stall" data-drop="sell"><div class="odo"><img class="fig" src="merchant/ui/odo-full.webp" alt=""><div class="bubble">' + esc(LINES[S.line]) + '</div></div><div class="main">' + header() + tabs() + paneC() + '</div></section>';
-    } else {
-      var pane = S.v === 'a' ? paneA() : S.v === 'b' ? paneB() : paneC();
-      stall = '<section class="panel stall" data-drop="sell">' + header() + talk(S.v === 'c' ? ' sf' : '') + tabs() + pane + '</section>';
-    }
-    st.innerHTML = '<div class="bgimg"></div><div class="ms">' + stall + '<section class="panel side" data-drop="bag">' + sidePanel() + '</section>' + XBTN + '</div>';
-    // sahne iceriginde X sag ustte panel disinda dursun
+    st.className = (S.phone ? 'phone' : 'desk') + ' v' + S.v + (first ? ' enter' : '');
+    var inner;
+    if (S.v === 'a') inner = head() + talk() + tabs() + paneA();
+    else if (S.v === 'b') inner = head() + talk() + tabs() + paneB();
+    else inner = head() + '<div class="banner"><img class="fig" src="' + M + 'ui/odo-full.webp" alt=""><div class="say">' + esc(LINES[S.line]) + '</div></div>' + (S.phone ? '<div class="talk"><div class="say">' + esc(LINES[S.line]) + '</div></div>' : '') + tabs() + paneC();
+    st.innerHTML = '<div class="bgimg"></div><div class="ov"></div><div class="pair"><section class="panel stall" data-drop="stall">' + inner + '</section>' + ledger() + '</div>' + X;
     fit();
-    if (firstRender) { firstRender = false; setTimeout(function () { st.classList.remove('enter'); }, 700); }
+    if (first) { first = false; setTimeout(function () { st.classList.remove('enter'); }, 700); }
     strip();
   }
   function fit() {
-    var st = $('#stage'), vw = innerWidth, vh = innerHeight - 0;
-    var w = S.phone ? 844 : 1920, h = S.phone ? 390 : 1080;
-    var k = Math.min(vw / w, vh / h);
-    st.style.transform = 'scale(' + k + ')';
-    st.style.left = Math.max(0, (vw - w * k) / 2) + 'px'; st.style.top = Math.max(0, (vh - h * k) / 2) + 'px';
+    var st = $('#stage'), w = S.phone ? 844 : 1920, h = S.phone ? 390 : 1080, k = Math.min(innerWidth / w, innerHeight / h);
+    st.style.transform = 'scale(' + k + ')'; st.style.left = Math.max(0, (innerWidth - w * k) / 2) + 'px'; st.style.top = Math.max(0, (innerHeight - h * k) / 2) + 'px';
   }
   addEventListener('resize', fit);
-
   function strip() {
-    var s = $('#mk-strip');
-    var btn = function (l, on, a) { return '<button class="' + (on ? 'on' : '') + '" ' + a + '>' + l + '</button>'; };
-    s.innerHTML = '<b>MOCKUP</b>Merchant &middot; ' + btn('A Plates', S.v === 'a', 'data-v="a"') + btn('B Grid', S.v === 'b', 'data-v="b"') + btn('C Showcase', S.v === 'c', 'data-v="c"') +
-      '<span class="sep"></span>' + btn('Desktop 1920', !S.phone, 'data-d="desk"') + btn('Phone 844x390', S.phone, 'data-d="phone"') +
-      '<span class="sep"></span>' + btn('Reset', false, 'data-reset="1"') + '<span class="sep"></span><span class="note">' + NOTES[S.v] + '</span>';
+    var b = function (l, on, a) { return '<button class="' + (on ? 'on' : '') + '" ' + a + '>' + l + '</button>'; };
+    $('#mk-strip').innerHTML = '<b>MOCKUP</b>Merchant ' + b('A Plates', S.v === 'a', 'data-v="a"') + b('B Grid', S.v === 'b', 'data-v="b"') + b('C Showcase', S.v === 'c', 'data-v="c"') + '<span class="sep"></span>' + b('Desktop', !S.phone, 'data-d="desk"') + b('Phone 844x390', S.phone, 'data-d="phone"') + '<span class="sep"></span>' + b('Reset', false, 'data-reset="1"') + '<span class="sep"></span><span class="note">' + NOTES[S.v] + '</span>';
   }
-  function setHash(o) {
-    var p = o.v + (o.phone ? '&phone' : '') + (o.bb ? '&bb' : '') + (document.documentElement.classList.contains('mk-clean') ? '&clean' : '');
-    location.hash = p;
-  }
+  function toast(t) { var e = $('#toast'); e.textContent = t; e.hidden = false; clearTimeout(toast.t); toast.t = setTimeout(function () { e.hidden = true; }, 1700); }
 
   // ---- islemler
-  function acquire(it, kind) {
-    var o = Object.assign({}, it, { uid: 'n' + Date.now() + Math.random(), worth: it.worth || it.price });
-    delete o.sold; S.bag.push(o);
-    return o;
-  }
+  function select(kind, i) { if (S.sel && S.sel.kind === kind && S.sel.i === i) { S.sel = null; S.armed = false; return; } S.sel = { kind: kind, i: i }; S.armed = kind === 'bag'; }
   function doBuy(i, equip) {
     var w = S.wares[i]; if (!w || w.sold) return;
-    if (S.gold < w.price) { S.line = 'poor'; toast('Not enough gold'); return render(); }
-    if (bagFull()) { S.line = 'bagFull'; toast('Your bag is full'); return render(); }
-    S.gold -= w.price; w.sold = true; var hn = HEROES.filter(function (h) { return h.id === S.hero; })[0];
-    if (equip && hn) { toast(w.name + ' equipped on ' + hn.name); } else { acquire(w, 'ware'); toast(w.name + ' added to your bag'); }
-    S.line = 'buy'; S.sel = null; S.hero = null; render();
+    if (S.gold < w.d.value) { S.line = 'poor'; toast('Not enough gold'); return render(); }
+    if (S.bag.length >= BAG_SIZE) { S.line = 'bagFull'; return render(); }
+    S.gold -= w.d.value; w.sold = true; var n = mkItem(w.key); S.bag.push(n); S.line = 'buy'; S.sel = null; toast(w.d.name + ' added to your bag'); render();
   }
-  function doBuyBack(i) {
-    var e = S.bb[i]; if (!e) return;
-    if (S.gold < e.price) { S.line = 'poor'; return render(); }
-    if (bagFull()) { S.line = 'bagFull'; return render(); }
-    S.gold -= e.price; S.bb.splice(i, 1); var o = Object.assign({}, e, { uid: 'n' + Date.now(), worth: e.price * 2 }); S.bag.push(o);
-    S.line = 'buyback'; S.sel = null; S.hero = null; toast(e.name + ' bought back'); render();
-  }
-  function doSell(i) {
-    var it = S.bag[i]; if (!it) return;
-    var p = sellPrice(it); S.gold += p; S.bag.splice(i, 1);
-    S.bb.unshift(Object.assign({}, it, { price: p }));
-    S.line = 'sold'; S.sel = null; S.hero = null; S.armed = false; toast('Sold ' + it.name + ' for ' + p + ' gold'); render();
-  }
-  function doReroll() {
-    if (S.gold < S.rerollCost) return;
-    S.gold -= S.rerollCost; S.set = 1 - S.set; S.rerolls++;
-    var src = S.set ? SET1 : SET0;
-    S.wares = src.map(function (w, i) { return Object.assign({ uid: 'w' + i, sold: false }, w); });
-    S.line = 'reroll'; S.sel = null; S.hero = null; render();
-  }
+  function doBack(i) { var e = S.bb[i]; if (!e) return; if (S.gold < e.bbPrice) { S.line = 'poor'; return render(); } if (S.bag.length >= BAG_SIZE) { S.line = 'bagFull'; return render(); } S.gold -= e.bbPrice; S.bb.splice(i, 1); S.bag.push(mkItem(e.key)); S.line = 'buyback'; S.sel = null; toast(e.d.name + ' bought back'); render(); }
+  function doSell(i) { var it = S.bag[i]; if (!it) return; S.gold += it.d.sell; S.bag.splice(i, 1); var b = mkItem(it.key); b.bbPrice = it.d.sell; S.bb.unshift(b); S.line = 'sold'; S.sel = null; S.armed = false; toast('Sold ' + it.d.name + ' for ' + it.d.sell + ' gold'); render(); }
+  function doReroll() { if (S.gold < REROLL) return; S.gold -= REROLL; S.set = 1 - S.set; S.wares = SET[S.set].map(function (u) { return mkItem(u, { sold: false }); }); S.line = 'reroll'; S.sel = null; render(); }
 
   // ---- olaylar
-  var drag = null, lastTap = { k: '', t: 0 }, suppress = false;
+  var lastType = 'mouse', lastTap = { k: '', t: 0 }, drag = null, suppress = false;
+  function keyOf(el) { var t = el.closest('[data-tip]'); return t ? t.dataset.tip : ''; }
+  function itemFromKey(key) { var p = key.split(':'); return itemOf(p[0], isNaN(+p[1]) ? p[1] : +p[1]); }
+  function acts(key) {
+    var p = key.split(':'), kind = p[0], i = +p[1], it = itemFromKey(key), a = [];
+    if (kind === 'ware') { var sh = it.d.value - S.gold, full = S.bag.length >= BAG_SIZE; a.push({ label: sh > 0 ? 'Need ' + sh + ' more' : full ? 'Bag full' : 'Buy · ' + it.d.value, dis: sh > 0 || full, pri: true, run: function () { doBuy(i); } }); }
+    else if (kind === 'bb') { var s2 = it.bbPrice - S.gold; a.push({ label: s2 > 0 ? 'Need ' + s2 + ' more' : 'Buy back · ' + it.bbPrice, dis: s2 > 0, pri: true, run: function () { doBack(i); } }); }
+    else if (kind === 'bag') a.push({ label: 'Sell · ' + it.d.sell, pri: false, run: function () { doSell(i); } });
+    return a;
+  }
+  document.addEventListener('pointerdown', function (e) {
+    lastType = e.pointerType || 'mouse';
+    var d = e.target.closest('#stage [data-drag]'); if (d && !e.button) drag = { key: d.dataset.drag, x: e.clientX, y: e.clientY, on: false };
+    if (lastType === 'touch' && tipPinned && !e.target.closest('#tip')) { /* boslukta dokunus: kapat */ if (!e.target.closest('[data-tip]')) tipHide(); }
+  });
+  document.addEventListener('mouseover', function (e) {
+    if (lastType === 'touch' || drag) return;
+    var k = e.target.closest ? keyOf(e.target) : ''; if (!k || !e.target.closest('#stage')) return;
+    var it = itemFromKey(k); if (!it) return; var kind = k.split(':')[0];
+    tipShow(k, tipHTML(it, kind === 'equip' ? 'equip' : kind), e.clientX, e.clientY);
+  });
+  document.addEventListener('mousemove', function (e) { if (drag && drag.on) { var g = $('#ghost'); g.style.left = e.clientX + 'px'; g.style.top = e.clientY + 'px'; return; } if (tipKey && !tipPinned) tipPlace(e.clientX, e.clientY); });
+  document.addEventListener('mouseout', function (e) { if (lastType === 'touch') return; var f = e.target.closest ? e.target.closest('[data-tip]') : null; if (f && !(e.relatedTarget && f.contains(e.relatedTarget)) && !tipPinned) tipHide(); });
+  document.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    if (!drag.on) {
+      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 7) return;
+      drag.on = true; tipHide(); var it = itemFromKey(drag.key), g = $('#ghost'); g.innerHTML = '<img src="' + M + 'items/' + it.d.icon.split('/').pop() + '" alt="">'; g.hidden = false;
+      var st = $('#stage'); st.classList.add('dragging'); st.style.setProperty('--dragc', it.d.color);
+      var sell = drag.key.split(':')[0] === 'bag'; st.querySelectorAll('[data-drop]').forEach(function (n) { n.classList.toggle('drop-ok', sell ? n.dataset.drop === 'sell' || n.dataset.drop === 'stall' : n.dataset.drop === 'bag'); });
+    }
+    var g2 = $('#ghost'); g2.style.left = e.clientX + 'px'; g2.style.top = e.clientY + 'px';
+  });
+  function endDrag(e, cancel) {
+    if (!drag) return; var d = drag; drag = null; if (!d.on) return;
+    suppress = true; setTimeout(function () { suppress = false; }, 0);
+    $('#ghost').hidden = true; var st = $('#stage'); st.classList.remove('dragging'); st.querySelectorAll('.drop-ok').forEach(function (n) { n.classList.remove('drop-ok'); });
+    if (cancel) return;
+    var under = document.elementFromPoint(e.clientX, e.clientY), tg = under && under.closest('[data-drop]'), p = d.key.split(':'), i = +p[1]; if (!tg) return;
+    if (p[0] === 'bag' && (tg.dataset.drop === 'sell' || tg.dataset.drop === 'stall')) return doSell(i);
+    if (p[0] === 'ware' && tg.dataset.drop === 'bag') return doBuy(i);
+    if (p[0] === 'bb' && tg.dataset.drop === 'bag') return doBack(i);
+  }
+  document.addEventListener('pointerup', function (e) { endDrag(e, false); });
+  document.addEventListener('pointercancel', function (e) { endDrag(e, true); });
+
   document.addEventListener('click', function (e) {
-    if (suppress) { suppress = false; return; }
-    var t = e.target;
-    var sv = t.closest('[data-v]'); if (sv) { var o = parseHash(); o.v = sv.dataset.v; setHash(o); return; }
-    var sd = t.closest('[data-d]'); if (sd) { var o2 = parseHash(); o2.phone = sd.dataset.d === 'phone'; setHash(o2); return; }
-    if (t.closest('[data-reset]')) { resetState(); firstRender = true; render(); return; }
-    if (!t.closest('#stage')) return;
-    var tab = t.closest('[data-tab]'); if (tab) { if (S.tab !== tab.dataset.tab) { S.tab = tab.dataset.tab; S.sel = null; S.hero = null; S.line = tab.dataset.tab === 'bb' ? 'buyback' : 'idle'; render(); } return; }
+    if (suppress) return; var t = e.target;
+    var sv = t.closest('[data-v]'); if (sv) { S.v = sv.dataset.v; history.replaceState(null, '', '#' + S.v + (S.phone ? '&phone' : '') + (S.tab === 'bb' ? '&bb' : '')); first = true; return render(); }
+    var sd = t.closest('[data-d]'); if (sd) { S.phone = sd.dataset.d === 'phone'; document.documentElement.classList.toggle('short', S.phone); history.replaceState(null, '', '#' + S.v + (S.phone ? '&phone' : '')); first = true; return render(); }
+    if (t.closest('[data-reset]')) { reset(); first = true; return render(); }
+    if (!t.closest('#stage') || t.closest('#tip')) return;
+    var tab = t.closest('[data-tab]'); if (tab) { if (S.tab !== tab.dataset.tab) { S.tab = tab.dataset.tab; S.sel = null; S.line = S.tab === 'bb' ? 'buyback' : 'idle'; render(); } return; }
+    var hm = t.closest('[data-hero]'); if (hm) { S.hero = hm.dataset.hero; return render(); }
     var act = t.closest('[data-act]');
     if (act && !act.disabled) {
       var a = act.dataset.act, s = S.sel;
       if (a === 'reroll') return doReroll();
-      if (a === 'buy' && s) return doBuy(s.i, false);
-      if (a === 'buyeq' && s) return doBuy(s.i, true);
-      if (a === 'bback' && s) return doBuyBack(s.i);
-      if (a === 'sell' && s && s.kind === 'bag') return doSell(s.i);
+      if (a === 'quick') return doBuy(+act.dataset.i);
+      if (a === 'buy' && s) return doBuy(s.i);
+      if (a === 'bback') return doBack(act.dataset.i !== undefined ? +act.dataset.i : s.i);
+      if (a === 'sell' && s) return doSell(s.i);
       if (a === 'sellzone') { if (S.sel && S.sel.kind === 'bag') return doSell(S.sel.i); toast('Select an item from your bag first'); return; }
-      if (a === 'back') { S.sel = null; S.hero = null; return render(); }
     }
-    var pk = t.closest('[data-pick]'); if (pk) { S.hero = pk.dataset.pick; return render(); }
+    if (act && act.disabled) return;
     var se = t.closest('[data-sel]');
-    if (se && se.dataset.sel) {
-      var p = se.dataset.sel.split(':'), kind = p[0], i = +p[1], key = se.dataset.sel, now = performance.now();
-      if (lastTap.k === key && now - lastTap.t < 380) {
-        lastTap = { k: '', t: 0 };
-        if (kind === 'ware') { select(kind, i, true); return doBuy(i, false); }
-        if (kind === 'bb') return doBuyBack(i);
-        if (kind === 'bag') return doSell(i);
-      }
-      lastTap = { k: key, t: now };
-      var it = kind === 'ware' ? S.wares[i] : kind === 'bb' ? S.bb[i] : S.bag[i];
-      select(kind, i);
-      S.line = kind === 'ware' && S.sel && S.gold < it.price ? 'poor' : kind === 'bb' ? 'buyback' : 'idle';
+    if (se) {
+      var key = se.dataset.sel, p = key.split(':'), kind = p[0], i = +p[1], now = performance.now(), isTouch = lastType === 'touch';
+      var dbl = lastTap.k === key && now - lastTap.t < 380; lastTap = { k: key, t: now };
+      if (dbl) { lastTap = { k: '', t: 0 }; if (kind === 'ware') return doBuy(i); if (kind === 'bb') return doBack(i); if (kind === 'bag') return doSell(i); }
+      if (isTouch && (kind !== 'equip')) { select(kind, i); var it = itemFromKey(key); S.line = kind === 'ware' && S.gold < it.d.value ? 'poor' : 'idle'; render(); var anchor = $('[data-sel="' + key + '"]'); if (anchor) tipPin(key, tipHTML(it, kind), anchor, acts(key)); return; }
+      var it2 = itemFromKey(key); select(kind, i); S.line = kind === 'ware' && S.sel && S.gold < it2.d.value ? 'poor' : 'idle';
       return render();
     }
     if (t.closest('.xbtn')) toast('Leave the stall (mockup)');
   });
 
-  document.addEventListener('pointerdown', function (e) {
-    var d = e.target.closest('#stage [data-drag]');
-    if (!d || !d.dataset.drag || e.button) return;
-    drag = { key: d.dataset.drag, x: e.clientX, y: e.clientY, on: false, src: d };
-  });
-  document.addEventListener('pointermove', function (e) {
-    if (!drag) return;
-    if (!drag.on) {
-      if (Math.hypot(e.clientX - drag.x, e.clientY - drag.y) < 7) return;
-      drag.on = true;
-      var p = drag.key.split(':'), it = p[0] === 'ware' ? S.wares[+p[1]] : p[0] === 'bb' ? S.bb[+p[1]] : S.bag[+p[1]];
-      var g = $('#ghost'); g.innerHTML = '<img src="merchant/items/' + it.id + '.webp" alt="">'; g.hidden = false;
-      var st = $('#stage'); st.classList.add('dragging'); st.style.setProperty('--dragc', 'color-mix(in srgb, ' + ({ common: '#8a8a84', uncommon: '#5f8f3e', rare: '#3f6fa8', epic: '#7a3f9a', legendary: '#f0a830' }[it.r]) + ' 60%, #fff)');
-      var sell = p[0] === 'bag';
-      st.querySelectorAll('[data-drop]').forEach(function (n) { n.classList.toggle('drop-ok', sell ? n.dataset.drop === 'sell' : n.dataset.drop === 'bag'); });
-    }
-    var g2 = $('#ghost'); g2.style.left = e.clientX + 'px'; g2.style.top = e.clientY + 'px';
-  });
-  function endDrag(e, cancel) {
-    if (!drag) return;
-    var d = drag; drag = null;
-    if (!d.on) return;
-    suppress = true; setTimeout(function () { suppress = false; }, 0);
-    $('#ghost').hidden = true; var st = $('#stage'); st.classList.remove('dragging');
-    st.querySelectorAll('.drop-ok').forEach(function (n) { n.classList.remove('drop-ok'); });
-    if (cancel) return;
-    var under = document.elementFromPoint(e.clientX, e.clientY), tg = under && under.closest('[data-drop]');
-    var p = d.key.split(':'), i = +p[1];
-    if (!tg) return;
-    if (p[0] === 'bag' && tg.dataset.drop === 'sell') return doSell(i);
-    if (p[0] === 'ware' && tg.dataset.drop === 'bag') return doBuy(i, false);
-    if (p[0] === 'bb' && tg.dataset.drop === 'bag') return doBuyBack(i);
-  }
-  document.addEventListener('pointerup', function (e) { endDrag(e, false); });
-  document.addEventListener('pointercancel', function (e) { endDrag(e, true); });
-  addEventListener('hashchange', function () { var keep = S; resetState(); firstRender = true; render(); });
-
-  resetState();
-  render();
+  addEventListener('hashchange', function () { var o = parse(); S.v = o.v; S.phone = o.phone; S.tab = o.bb ? 'bb' : S.tab; document.documentElement.classList.toggle('short', S.phone); document.documentElement.classList.toggle('mk-clean', o.clean); first = true; render(); });
+  reset(); render();
 })();

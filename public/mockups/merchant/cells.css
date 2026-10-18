@@ -1,0 +1,322 @@
+/* gear.css hucre / fiyat / gr-btn kurallari (birebir) */
+.gr-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-height: 44px;
+  background: radial-gradient(circle, rgba(217, 178, 106, 0.06), rgba(8, 6, 4, 0.6));
+  border: 1px solid color-mix(in srgb, var(--rc, #5b4a33) 65%, transparent);
+  border-radius: 0;
+  padding: 0;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-item .gr-svg {
+  width: 84%;
+  height: 84%;
+}
+
+/* Piksel art item ikonu (src/game/item-icons.ts): nadirlik rengi yumuşak bir parıltı olarak arkada */
+.gr-px {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px #000) drop-shadow(0 0 calc(5 * var(--u, 1px)) color-mix(in srgb, var(--glow, transparent) 55%, transparent));
+}
+
+/* Item görseli (assets/items/<id>.webp, 256 px): piksel ikon değil, yumuşak küçültülür */
+.gr-px.item-art {
+  image-rendering: auto;
+}
+
+.gr-px.dim {
+  opacity: 0.28;
+  filter: grayscale(1) brightness(0.8);
+}
+
+.gr-item.empty {
+  border: 1px solid var(--g-line);
+  background: rgba(8, 6, 4, 0.3);
+}
+
+.gr-item.no {
+  opacity: 0.45;
+}
+
+.gr-btn {
+  position: relative;
+  min-height: 44px;
+  padding: 0 calc(26 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.82), rgba(12, 9, 6, 0.86));
+  border: 1px solid var(--g-line2);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.6);
+  font: 600 max(13px, calc(19 * var(--u))) var(--g-disp) !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-text);
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+  transition: border-color 0.18s, color 0.18s, text-shadow 0.18s, transform 0.25s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-btn:hover {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+  text-shadow: 0 0 14px rgba(240, 140, 40, 0.85);
+  transform: translateY(-2px);
+}
+
+/* Kit düğmesi: iki yanda küçük elmas (primary'de kor) */
+.gr-btn::before,
+.gr-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  transform: rotate(45deg);
+  background: #1a130c;
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.45);
+}
+
+.gr-btn::before {
+  left: -5px;
+}
+
+.gr-btn::after {
+  right: -5px;
+}
+
+.gr-btn.primary::before,
+.gr-btn.primary::after {
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.7);
+}
+
+.gr-btn.primary {
+  border: 2px solid #d9b26a;
+  color: var(--g-gold);
+  background: linear-gradient(180deg, rgba(38, 27, 17, 0.9), rgba(12, 9, 6, 0.94));
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.8), 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+.gr-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gr-btn.danger {
+  border-color: rgba(232, 128, 106, 0.6);
+  color: #e8806a;
+}
+
+.gr-item {
+  min-height: 0;
+  min-width: 0;
+}
+
+/* Filtre ("Usable by ..."): kullanılamayan item yerinde söner, yerleşim aynı kalır */
+.gr-item.filtered {
+  opacity: 0.16;
+  filter: grayscale(1);
+}
+
+/* kuşanılamayan item'e çift tıklama / bırakma: kısa sallanma */
+.gr-item.shake {
+  animation: gr-shake 0.36s;
+}
+
+.gr-item.k2,
+.gr-item.k3,
+.gr-item.k4 {
+  border-width: 2px;
+}
+
+.gr-item:not(.empty)::before,
+.gr-item:not(.empty)::after,
+.gr-item .gr-c2,
+.gr-item .gr-c3 {
+  content: '';
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--rc, #f3d999) 70%, white);
+  border-style: solid;
+  border-width: 0;
+}
+
+.gr-item:not(.empty)::before {
+  left: -1px;
+  top: -1px;
+  border-left-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item:not(.empty)::after {
+  right: -1px;
+  bottom: -1px;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item .gr-c2 {
+  right: -1px;
+  top: -1px;
+  border-right-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item .gr-c3 {
+  left: -1px;
+  bottom: -1px;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item.k4 {
+  box-shadow: 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc) 55%, transparent);
+}
+
+/* seçili: ekrandaki TEK kor elmas */
+.gr-dia {
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.9);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* fiyat etiketi (tüccar satış fiyatı) */
+.gr-cellw {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.gr-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 1.3em;
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+}
+
+.gr-price.bad {
+  color: #ff8a7a;
+}
+
+.gr-price-ico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+.gr-item.sold {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.gr-btn.sm {
+  min-height: 44px;
+  padding: 0 calc(18 * var(--u));
+  font-size: max(12px, calc(16 * var(--u))) !important;
+}
+
+.gr-pts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(10 * var(--u));
+  margin-top: calc(10 * var(--u));
+}
+
+.gr-pts-chip.empty {
+  background: rgba(217, 178, 106, 0.18);
+  color: var(--g-dim);
+  box-shadow: none;
+  cursor: default;
+}
+
+.gr-pts-text {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pts-acts {
+  display: inline-flex;
+  gap: calc(8 * var(--u));
+  margin-left: auto;
+}
+
+.gr-pts-warn {
+  margin-top: calc(6 * var(--u));
+  font: italic max(12px, calc(17 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: #e0785e;
+}
+
+.gr-pts-skill {
+  margin-top: calc(6 * var(--u));
+  font: italic max(11px, calc(16 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pts-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font: 600 22px var(--g-disp, 'Cinzel', serif);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+html.short .gr-pts {
+  margin-top: 6px;
+  gap: 6px;
+}
+
+/* harcanmamış puan rozeti (stat puanı kor, skill puanı açık altın) */
+.gr-pt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max(20px, calc(30 * var(--u)));
+  height: max(20px, calc(30 * var(--u)));
+  padding: 0 4px;
+  border-radius: 50%;
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.45);
+  letter-spacing: 0;
+}
+
+.gr-pt.sk {
+  background: radial-gradient(circle at 35% 30%, #f3e1b0, #b9853e 70%);
+}
+
+html.short .gr-pt {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+.gr-btn.off {
+  opacity: 0.45;
+}

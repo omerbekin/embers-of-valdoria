@@ -1,0 +1,450 @@
+/* gear.css item ipucu v3 kurallari (birebir) */
+/* Yüzen item ipucu (imlecin yanında) = TEK kart (Ömer 2026-10-18, taslak public/mockups/item-tooltip.html#v3): yuvarlak madalyon başlık, nadirlik ışımalı çerçeve,
+   Legendary etkisi üstte, kademe sırası A > B > C stat satırları + mücevher rayı, şart / değer satırı, kare portreli kahraman satırları. */
+.item-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 7;
+  width: max(320px, calc(500 * var(--u)));
+  max-width: none;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s, visibility 0s 0.12s;
+  font-size: max(13px, calc(19 * var(--u)));
+}
+
+.item-tip.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.12s;
+}
+
+.it-card {
+  --rl: color-mix(in srgb, var(--rc, #d9b26a) 52%, #fff);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  font: max(13px, calc(19 * var(--u))) / 1.25 var(--g-body);
+  color: #e6dcc6;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.985), rgba(11, 8, 5, 0.985));
+  border: 1px solid color-mix(in srgb, var(--rc, #d9b26a) 55%, rgba(217, 178, 106, 0.3));
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 max(4px, calc(8 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 28%, transparent),
+    inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 16.5%, transparent);
+}
+
+/* başlık */
+.it-head {
+  text-align: center;
+  padding: max(12px, calc(20 * var(--u))) 10px max(8px, calc(12 * var(--u)));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc, #d9b26a) 34%, transparent), transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent);
+}
+
+.it-medal {
+  display: block;
+  width: max(60px, calc(112 * var(--u)));
+  aspect-ratio: 1;
+  margin: 0 auto;
+  box-sizing: border-box;
+  border-radius: 50%;
+  padding: 5px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.25));
+  border: 2px solid var(--rl);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.9), 0 0 0 4px color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent), 0 0 max(10px, calc(22 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 50%, transparent);
+  overflow: hidden;
+}
+
+.it-medal .gr-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.it-name {
+  display: block;
+  margin-top: max(8px, calc(14 * var(--u)));
+  font: 600 max(14px, calc(23 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rl);
+  text-shadow: 0 0 max(6px, calc(14 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 45%, transparent);
+}
+
+.it-rib {
+  display: inline-block;
+  margin: 5px 0 3px;
+  padding: 2px 1.6em;
+  background: color-mix(in srgb, var(--rc, #d9b26a) 55%, #0c0905);
+  border-top: 1px solid var(--rl);
+  border-bottom: 1px solid var(--rl);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.8em) 50%, 100% 100%, 0 100%, 0.8em 50%);
+}
+
+.it-rib span {
+  font: 600 0.76em var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff4d6;
+}
+
+.it-sub {
+  color: var(--g-dim);
+  font: italic 0.92em var(--g-body);
+}
+
+.it-big {
+  text-align: center;
+  margin-top: 6px;
+}
+
+.it-big strong {
+  display: block;
+  font: 600 2.6em / 1 var(--g-disp);
+  color: #f8ebc9;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rc, #d9b26a) 50%, transparent);
+}
+
+.it-big > span {
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-big .it-big-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  letter-spacing: 0;
+}
+
+.it-big .it-big-n strong {
+  display: inline;
+}
+
+.it-big-ico {
+  width: 2.4em;
+  height: 2.4em;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+/* gövde (ipucu ve tüccar karşılama kartı) */
+.it-main {
+  padding: var(--gap, 7px) max(10px, calc(16 * var(--u)));
+  min-width: 0;
+}
+
+/* zar göstergesi: mücevher rayı (elmas = değerin aralıktaki yeri) */
+.it-rail {
+  flex: none;
+  margin-left: auto;
+  position: relative;
+  display: inline-block;
+  width: max(58px, calc(96 * var(--u)));
+  height: max(12px, calc(16 * var(--u)));
+}
+
+.it-rail::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, rgba(217, 178, 106, 0.8), rgba(217, 178, 106, 0.35));
+  box-shadow: 0 1px 0 #000;
+}
+
+.it-rail i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(217, 178, 106, 0.85) 0 1px, transparent 1px) left / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(217, 178, 106, 0.85) 0 1px, transparent 1px) right / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(217, 178, 106, 0.5) 0 1px, transparent 1px) center / 1px 50% no-repeat;
+}
+
+.it-rail strong {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--p) * 100%);
+  width: max(10px, calc(14 * var(--u)));
+  height: max(10px, calc(14 * var(--u)));
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: radial-gradient(circle at 35% 35%, #fff6d8, var(--rl, #e8cf8f) 45%, color-mix(in srgb, var(--rc, #d9b26a) 70%, #000));
+  border: 1px solid #1a1007;
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.8), 0 0 6px color-mix(in srgb, var(--rc, #d9b26a) 80%, transparent);
+}
+
+/* gereken seviye (sol) + değer (sağ) */
+.it-reqrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px max(10px, calc(16 * var(--u)));
+  border-top: 1px solid var(--g-line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.it-req {
+  font: italic 0.95em var(--g-body);
+  color: var(--g-dim);
+}
+
+.it-req.unmet {
+  color: #ff8a7a;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.it-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-left: auto;
+}
+
+.it-val strong {
+  font: 600 1.05em var(--g-disp);
+  color: #f3d999;
+  letter-spacing: 0.04em;
+}
+
+.it-val em {
+  font: normal 0.8em var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-coin {
+  width: max(16px, calc(26 * var(--u)));
+  height: max(16px, calc(26 * var(--u)));
+  image-rendering: pixelated;
+}
+
+/* kahraman karşılaştırma: kare portre karosu + ince altın çizgiler (yuvarlak hap yok) */
+.it-heroes {
+  display: flex;
+  flex-direction: column;
+  padding: 0 max(10px, calc(16 * var(--u)));
+}
+
+.it-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: max(4px, calc(6 * var(--u))) 0;
+  border-top: 1px solid var(--g-line);
+  min-width: 0;
+}
+
+.it-hero:first-child {
+  border-top: 0;
+}
+
+.it-face {
+  flex: none;
+  width: max(26px, calc(40 * var(--u)));
+  height: max(26px, calc(40 * var(--u)));
+  background: #120c08 center / cover no-repeat;
+  border: 1px solid var(--g-line2);
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+.it-hero.no .it-face {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.it-hero-k {
+  flex: none;
+  width: 7.4em;
+  white-space: nowrap;
+  font: 600 0.7em var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-lv {
+  flex: none;
+  padding: 0 0.5em;
+  height: 1.5em;
+  display: inline-flex;
+  align-items: center;
+  font: 600 0.86em var(--g-disp);
+  color: #e6dcc6;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.it-lv.unmet {
+  color: #ff8a7a;
+  background: rgba(220, 90, 70, 0.18);
+}
+
+.it-hero-v {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-width: 0;
+}
+
+.it-chip {
+  padding: 0 0.45em;
+  font: 600 0.86em / 1.5em var(--g-body);
+  white-space: nowrap;
+  color: var(--g-dim);
+}
+
+.it-chip.it-up {
+  color: #8fe39a;
+  background: rgba(90, 190, 110, 0.13);
+}
+
+.it-chip.it-down {
+  color: #ff8a7a;
+  background: rgba(220, 90, 70, 0.15);
+}
+
+.it-chip.it-no {
+  color: #e0907a;
+  font-weight: 400;
+}
+
+.item-tip .it-acts {
+  margin: 0;
+  padding: 8px max(10px, calc(16 * var(--u))) 10px;
+}
+
+/* kısa ekran (844x390): sol sütun başlık, sağ sütun stat + şart / değer + kahramanlar */
+html.short .item-tip {
+  width: min(660px, 96%);
+  font-size: 12px;
+}
+
+html.short .it-card {
+  grid-template-columns: 36% minmax(0, 1fr);
+  --gap: 3px;
+  line-height: 1.15;
+  font-size: 12px;
+}
+
+html.short .it-head {
+  grid-column: 1;
+  grid-row: 1 / 5;
+  padding: 6px;
+  border-bottom: 0;
+  border-right: 2px solid color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+html.short .it-main {
+  grid-column: 2;
+  padding: 3px 8px 0;
+}
+
+html.short .it-reqrow {
+  grid-column: 2;
+  padding: 2px 8px;
+}
+
+html.short .it-heroes {
+  grid-column: 2;
+  padding: 0 8px 4px;
+}
+
+html.short .item-tip .it-acts {
+  grid-column: 2;
+  padding: 4px 8px 6px;
+}
+
+html.short .it-medal {
+  width: 46px;
+  padding: 3px;
+}
+
+html.short .it-name {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+html.short .it-rib {
+  margin: 2px 0 1px;
+  padding: 1px 1.2em;
+}
+
+html.short .it-big strong {
+  font-size: 1.7em;
+}
+
+html.short .it-big {
+  margin-top: 2px;
+}
+
+html.short .it-lines {
+  gap: 2px;
+  margin: 2px 0;
+}
+
+html.short .it-line :is(.it-ico, .it-dia) {
+  width: 16px;
+  height: 16px;
+}
+
+html.short .it-hero {
+  padding: 2px 0;
+}
+
+html.short .it-face {
+  width: 22px;
+  height: 22px;
+}
+
+html.short .it-effect {
+  padding: 1px 6px;
+  margin: 2px 0;
+}
+
+html.short .it-rail {
+  width: 54px;
+}
+
+.item-tip .it-no {
+  color: #e0907a;
+  font-style: italic;
+}
+
+/* Dokunmatik: tek dokunuşla item'in yanına sabitlenen ipucu (Ömer 2026-10-12): dokunulabilir, altta eylem düğmeleri (Equip / Unequip / Buy / Sell / Take) */
+.item-tip.pinned {
+  pointer-events: auto;
+  z-index: 9;
+}
+
+.item-tip .it-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.item-tip .it-acts .gr-btn {
+  min-height: 44px;
+  padding: 0 calc(20 * var(--u));
+}
