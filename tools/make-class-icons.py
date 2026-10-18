@@ -11,6 +11,10 @@ Kullanım:
   python tools/make-class-icons.py warrior sword whirlwind charge warcry rage
 Adlar verideki ikon adlarıdır (skill.icon / passive.icon).
 
+Çağrı (summon) ikonları — 2x2 sayfa (hücre = boyut/2, ör. 1254 -> 627), yalnızca ikon (amblem yok):
+  python tools/make-class-icons.py --grid2 <sayfa-adı> <sahip/ad> <sahip/ad> <sahip/ad> <sahip/ad>   (sıra: sol üst, sağ üst, sol alt, sağ alt)
+  python tools/make-class-icons.py --grid2 summons druid/rootsmash druid/vinesnare undead/bone undead/boneslash
+
 Çıktı:
   assets/icons-v2/<sınıf>/<ad>.png (128)  +  .webp
   assets/misc-icons/class/<sınıf>.png (128) + small/<sınıf>.png (64)  +  .webp
@@ -61,22 +65,34 @@ def sha(path: str) -> str:
 
 
 def main() -> None:
-    if len(sys.argv) != 7:
-        raise SystemExit(__doc__)
-    cls, names = sys.argv[1], sys.argv[2:7]
-    sheet = Image.open(os.path.join(ROOT, 'assets/source/class-icons', f'{cls}-sheet.png')).convert('RGBA')
-    if sheet.size != (CELL * 3, CELL * 2):
-        raise SystemExit(f'beklenen 1536x1024, gelen {sheet.size}')
-    cells = [sheet.crop(((i % 3) * CELL, (i // 3) * CELL, (i % 3 + 1) * CELL, (i // 3 + 1) * CELL)) for i in range(6)]
     jobs = []  # (png yolu, görsel)
-    d = os.path.join(ROOT, 'assets/icons-v2', cls)
-    os.makedirs(d, exist_ok=True)
-    for i, name in enumerate(names):
-        jobs.append((os.path.join(d, f'{name}.png'), fit(cells[i], 128)))
-    cd = os.path.join(ROOT, 'assets/misc-icons/class')
-    os.makedirs(os.path.join(cd, 'small'), exist_ok=True)
-    jobs.append((os.path.join(cd, f'{cls}.png'), fit(cells[5], 128)))
-    jobs.append((os.path.join(cd, 'small', f'{cls}.png'), fit(cells[5], 64)))
+    if len(sys.argv) == 7 and sys.argv[1] == '--grid2':
+        sheet = Image.open(os.path.join(ROOT, 'assets/source/class-icons', f'{sys.argv[2]}-sheet.png')).convert('RGBA')
+        if sheet.width != sheet.height or sheet.width % 2:
+            raise SystemExit(f'2x2 için kare sayfa bekleniyor, gelen {sheet.size}')
+        h = sheet.width // 2
+        for i, ref in enumerate(sys.argv[3:7]):
+            owner, name = ref.split('/')
+            cell = sheet.crop(((i % 2) * h, (i // 2) * h, (i % 2 + 1) * h, (i // 2 + 1) * h))
+            d = os.path.join(ROOT, 'assets/icons-v2', owner)
+            os.makedirs(d, exist_ok=True)
+            jobs.append((os.path.join(d, f'{name}.png'), fit(cell, 128)))
+    elif len(sys.argv) == 7:
+        cls, names = sys.argv[1], sys.argv[2:7]
+        sheet = Image.open(os.path.join(ROOT, 'assets/source/class-icons', f'{cls}-sheet.png')).convert('RGBA')
+        if sheet.size != (CELL * 3, CELL * 2):
+            raise SystemExit(f'beklenen 1536x1024, gelen {sheet.size}')
+        cells = [sheet.crop(((i % 3) * CELL, (i // 3) * CELL, (i % 3 + 1) * CELL, (i // 3 + 1) * CELL)) for i in range(6)]
+        d = os.path.join(ROOT, 'assets/icons-v2', cls)
+        os.makedirs(d, exist_ok=True)
+        for i, name in enumerate(names):
+            jobs.append((os.path.join(d, f'{name}.png'), fit(cells[i], 128)))
+        cd = os.path.join(ROOT, 'assets/misc-icons/class')
+        os.makedirs(os.path.join(cd, 'small'), exist_ok=True)
+        jobs.append((os.path.join(cd, f'{cls}.png'), fit(cells[5], 128)))
+        jobs.append((os.path.join(cd, 'small', f'{cls}.png'), fit(cells[5], 64)))
+    else:
+        raise SystemExit(__doc__)
 
     mpath = os.path.join(ROOT, 'assets/webp-manifest.json')
     manifest = json.load(open(mpath, encoding='utf-8'))

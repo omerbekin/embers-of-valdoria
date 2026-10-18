@@ -16,7 +16,6 @@
  */
 import type { V2SpriteEntry } from '../types';
 import type { PxGrid } from '../../pixel-art';
-import { blade, sparkle } from '../../pixel-art';
 
 // ---------------------------------------------------------------------------------------------------------------- yardımcılar
 
@@ -109,6 +108,9 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   darkbond: { image: 'undead/darkbond' },
   raise: { image: 'undead/raise' },
   soul: { image: 'undead/soul' },
+  // ChatGPT boyalı ikonlar (summons-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  bone: { image: 'undead/bone' },
+  boneslash: { image: 'undead/boneslash' },
   /** Undead / Skeleton logosu: yırtık mor kukuletanın içinden bakan, gözleri turkuaz yanan kafatası. */
   skull: (g) => {
     // kukuleta (yırtık alt kenar)
@@ -135,47 +137,7 @@ export const ICONS: Record<string, V2SpriteEntry> = {
 
   /** Raise Dead: mezar toprağını yarıp çıkan iskelet eli; arkasında mor ölü-çağırma halkası, avucun üstünde turkuaz ruh. */
 
-  /** Bone Strike (Skeleton): iskelet elinde çentikli, paslı kısa kılıç çaprazlama iner. */
-  bone: (g) => {
-    blade(g, 10.5, 21.5, 27.5, 4.5, 4.6, 'l', 'm');
-    // pas lekeleri (dama) ve çentikler
-    g.dither(17, 12.5, 3, 2.5, 'b', 'm').dither(22.5, 8, 2.5, 2, 'b', 'Y');
-    g.poly([19.6, 12.6, 21.2, 12.2, 20.6, 13.8], '.').poly([14.2, 18.4, 15.6, 17.6, 15.4, 19.2], '.');
-    // demir siper
-    g.line(6.5, 17, 14, 24.5, 'd', 2.3).line(6.5, 16.6, 14, 24.1, 'm', 0.6);
-    // deri sarılı kabza
-    g.line(9.5, 22.5, 4, 28, 'k', 2.4);
-    // kemik parmaklar kabzayı sarar
-    for (let i = 0; i < 3; i++) {
-      const x = 8.1 - i * 1.55;
-      const y = 23.9 + i * 1.55;
-      g.line(x - 1.6, y - 1.6, x + 1.6, y + 1.6, 'e', 1.15);
-    }
-    g.disc(9.6, 25.6, 1.2, 'e'); // başparmak
-    g.disc(3.2, 28.8, 1.7, 'd').disc(2.8, 28.4, 0.6, 'l'); // topuz
-    sparkle(g, 26.5, 5.5, 3, 'w');
-  },
 
-  /** Bone Slash (Skeleton): paslı kılıç geniş yay çizerek savrulur; yay üç şeride (hedef + iki yanı) üç kesik bırakır. */
-  boneslash: (g) => {
-    // geniş hilal iz (kemik beyazı), içi oyulmuş
-    g.disc(15, 17, 13.5, 'l');
-    g.disc(15.6, 17.4, 12.6, 'e');
-    g.disc(18.6, 19.6, 12.2, '.');
-    g.ring(15, 17, 13.5, 'w', 0.9, Math.PI * 0.95, Math.PI * 1.75);
-    // yayın ucunda kılıç
-    blade(g, 21.5, 7.5, 30, 1.5, 3.4, 'l', 'm');
-    g.dither(25, 4.5, 2, 1.5, 'b', 'm');
-    g.line(19.5, 5.5, 23, 10, 'd', 1.8);
-    g.line(21, 8, 18.5, 10, 'k', 1.6);
-    // üç şerit, üç kesik
-    for (let i = 0; i < 3; i++) {
-      const y = 15.5 + i * 5.6;
-      g.poly([21.5, y + 1.6, 30, y - 2.6, 25.5, y + 0.4], 'R');
-      g.poly([22.5, y + 1.1, 29.4, y - 2.2, 25.6, y - 0.1], 'r');
-      g.line(23.6, y + 0.4, 28.2, y - 1.8, 'w', 0.5);
-    }
-  },
 };
 
 // ---------------------------------------------------------------------------------------------------------------- efekt sprite'ları

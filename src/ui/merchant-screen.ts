@@ -15,7 +15,7 @@ import { instanceColor, instanceRarity, instanceSubtitle, itemDef, rarityIndex, 
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
-import { avatarUrl } from './character-panel';
+import { avatarUrl, itemPlate } from './character-panel';
 import { itemCell } from './inventory';
 import { itemTipBody, itemTipNodes, type ItemTipAction } from './item-tip';
 import { isDoubleTap } from './gear-drop';
@@ -196,6 +196,22 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
     api?.rerender();
   };
 
+  /** Mal / geri alım plakası: Gear > Hero item plakası (character-panel.ts itemPlate) + sağ kenarda yalnızca fiyat (altın ikonu + sayı; yetmeyen kırmızı). */
+  const plateFor = (inst: ItemInstance, price: number | 'SOLD', poor: boolean, tip: string, drag: boolean, selected: boolean): HTMLButtonElement => {
+    const tag = el('span', `gp-price${poor ? ' bad' : ''}`);
+    if (price === 'SOLD') tag.textContent = 'SOLD';
+    else {
+      const gi = goldIcon('gp-price-ico');
+      if (gi) tag.append(gi);
+      tag.append(String(price));
+    }
+    const b = itemPlate(inst, curHero()?.class, tag);
+    b.dataset['tip'] = tip;
+    if (drag) b.dataset['drag'] = tip;
+    if (selected) b.classList.add('on');
+    return b;
+  };
+
   // --- tezgâh paneli
   function renderSide(): void {
     const phone = phoneLayout();
@@ -252,15 +268,11 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       reroll.disabled = src.gold() < src.rerollCost;
       reroll.addEventListener('click', doReroll);
       sec.append(reroll);
-      const wares = el('div', 'gr-wares');
+      const wares = el('div', 'gr-wares gr-wplates');
       src.wares().forEach((w, i) => {
         const poor = !w.sold && src.gold() < w.price;
-        const cell = itemCell(w.inst, { selected: sel?.kind === 'ware' && sel.index === i, ...(w.sold ? {} : { drag: `ware:${i}` }), tip: `ware:${i}`, price: w.sold ? null : w.price, priceBad: poor });
-        const b = cell.matches('button') ? cell : cell.querySelector('button')!;
-        if (w.sold) {
-          b.classList.add('sold');
-          cell.querySelector('.gr-price')!.textContent = 'SOLD';
-        }
+        const b = plateFor(w.inst, w.sold ? 'SOLD' : w.price, poor, `ware:${i}`, !w.sold, sel?.kind === 'ware' && sel.index === i);
+        if (w.sold) b.classList.add('sold');
         b.addEventListener('click', () => {
           const now = performance.now();
           if (isDoubleTap(lastWareTap, `ware:${i}`, now) && !w.sold) {
@@ -273,7 +285,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
           line = poor ? 'poor' : 'idle';
           renderSide();
         });
-        wares.append(cell);
+        wares.append(b);
       });
       if (!src.wares().length) wares.append(el('div', 'gr-card-empty', src.lines.empty));
       // satış kutusu: torba item'ini buraya sürükle (ya da seç + dokun)
@@ -291,16 +303,16 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       pane.append(sec, wares, box);
     } else {
       // geri alım (bu ziyaret)
-      const row = el('div', 'gr-bb-row');
+      const row = el('div', 'gr-bb-row gr-wplates');
       const list = src.buyback();
       list.forEach((e, i) => {
-        const cell = itemCell(e.inst, { selected: sel?.kind === 'bb' && sel.index === i, drag: `bb:${i}`, tip: `bb:${i}`, price: e.price, priceBad: src.gold() < e.price });
-        (cell.matches('button') ? cell : cell.querySelector('button')!).addEventListener('click', () => {
+        const b = plateFor(e.inst, e.price, src.gold() < e.price, `bb:${i}`, true, sel?.kind === 'bb' && sel.index === i);
+        b.addEventListener('click', () => {
           sel = sel?.kind === 'bb' && sel.index === i ? null : { kind: 'bb', index: i };
           line = 'buyback';
           renderSide();
         });
-        row.append(cell);
+        row.append(b);
       });
       if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? It waits here until you leave.'));
       pane.append(row);

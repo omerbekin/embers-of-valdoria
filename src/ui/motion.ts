@@ -6,7 +6,7 @@ import cfg from '../../data/ui-motion.json';
 import { onReducedMotionChange, reducedMotion } from './motion-pref';
 import { uiSound } from './ui-sound';
 
-export type MotionPreset = 'screen' | 'modal' | 'panel' | 'toast' | 'tooltip' | 'result' | 'wave' | 'lootXp';
+export type MotionPreset = 'screen' | 'modal' | 'panel' | 'toast' | 'tooltip' | 'result' | 'wave' | 'lootXp' | 'endlessTab';
 
 /** Başlık ölçeği (oyun birimi; data/ui-motion.json > type). */
 export const TYPE = cfg.type;

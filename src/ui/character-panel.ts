@@ -372,6 +372,53 @@ function plateMain(inst: ItemInstance): HTMLElement | null {
   return row;
 }
 
+/** Plakanın üst etiketi: yuva ikonu + yuva adı. */
+function plateLabel(k: SlotId): HTMLElement {
+  const lbl = el('div', 'gp-lbl');
+  const lurl = slotIconUrl(k);
+  if (lurl) {
+    const li = el('img');
+    li.src = lurl;
+    li.alt = '';
+    li.draggable = false;
+    lbl.append(li);
+  }
+  lbl.append(PLATE_LABEL[k] ?? slotDef(k).name);
+  return lbl;
+}
+
+/** Plakanın ikinci satırı: ana stat + iL + en çok 2 affix. */
+function plateL2(inst: ItemInstance, heroClass: string | undefined): HTMLElement {
+  const l2 = el('div', 'gp-l2');
+  const main = plateMain(inst);
+  if (main) l2.append(main);
+  const il = el('span', 'gp-il', 'iL ');
+  il.append(el('b', '', String(instanceIlvl(inst))));
+  l2.append(il);
+  for (const a of affixLines(inst, heroClass).slice(0, 2)) l2.append(el('span', 'gp-aff', a.text));
+  return l2;
+}
+
+/**
+ * Gear > Hero item plakası, yuva dışında kullanım için (tüccar malları / geri alım): AYNI DOM ve sınıflar (gear-plates.css).
+ * Sürükle / ipucu / seçim bağları çağırana aittir (data-tip, data-drag); `extra` plakanın sağ kenarına eklenir (ör. fiyat).
+ */
+export function itemPlate(inst: ItemInstance, heroClass: string | undefined, extra?: HTMLElement): HTMLButtonElement {
+  const d = itemDef(inst.id);
+  const k = (d?.slot ?? 'weapon') as SlotId;
+  const cell = el('button', `gr-slot gr-plate gr-slot-${k}`);
+  cell.type = 'button';
+  cell.style.setProperty('--rc', instanceColor(inst));
+  cell.dataset['item'] = inst.id;
+  const ico = el('span', 'gp-ico');
+  ico.append(itemIcon(inst, k, 1.3));
+  const txt = el('div', 'gr-slot-text gp-tx');
+  txt.append(plateLabel(k), el('div', 'gr-slot-name', d ? d.name : inst.id), plateL2(inst, heroClass));
+  cell.append(ico, txt);
+  if (extra) cell.append(extra);
+  return cell;
+}
+
 /** Sınıf başlığı (sınıf çipi + kullanılabilir silah ailesi çipleri) + 7 yuva plakası. */
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const head = el('div', 'gr-sec gr-class-sec');
@@ -403,16 +450,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     const cell = el('button', `gr-slot gr-plate${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');
-    const lbl = el('div', 'gp-lbl');
-    const lurl = slotIconUrl(k);
-    if (lurl) {
-      const li = el('img');
-      li.src = lurl;
-      li.alt = '';
-      li.draggable = false;
-      lbl.append(li);
-    }
-    lbl.append(PLATE_LABEL[k] ?? slotDef(k).name);
+    const lbl = plateLabel(k);
     const txt = el('div', 'gr-slot-text gp-tx');
     const ico = el('span', 'gp-ico');
     if (blocked) {
@@ -451,14 +489,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     ico.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
     txt.append(lbl, el('div', 'gr-slot-name', d ? d.name : 'Empty'));
     if (d && inst) {
-      const l2 = el('div', 'gp-l2');
-      const main = plateMain(inst);
-      if (main) l2.append(main);
-      const il = el('span', 'gp-il', 'iL ');
-      il.append(el('b', '', String(instanceIlvl(inst))));
-      l2.append(il);
-      for (const a of affixLines(inst, hero.class).slice(0, 2)) l2.append(el('span', 'gp-aff', a.text));
-      txt.append(l2);
+      txt.append(plateL2(inst, hero.class));
     } else if (k === 'offhand' && !classUsesOffhand(hero.class)) txt.append(el('div', 'gr-slot-sub', 'No shield or dagger'));
     cell.append(ico);
     if (dead) cell.append(lockIcon());

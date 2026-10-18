@@ -1,11 +1,8 @@
 import Phaser from 'phaser';
-import { content, placementHintText } from '../engine';
-import { hintBadge, hintColor } from './formation-hint-ui';
 import type { NodeType } from '../campaign';
-import { classAvatar } from './menu-ui';
-import { SlotDrag, makeDragGhost } from './slot-drag';
-import { EL, diamondPts, elBody, elButton, elText, fitW } from './elegant-ui';
-import { crown, hpBar, openModal, type Modal } from './campaign-ui';
+import type { Modal } from './campaign-ui';
+import { openFormationWindow } from '../ui/formation-board';
+import { boardHero, boardHints, boardIcons, boardRangeUi, type BoardHeroSource } from '../ui/formation-board-data';
 import { ensureIcon } from './icons';
 import { hasMiscImage, miscIconName } from '../ui/misc-icons';
 
@@ -14,7 +11,6 @@ import { hasMiscImage, miscIconName } from '../ui/misc-icons';
  * kaldırıldı (Ömer 2026-10-18): kahramana dokunmak / "Hero details" ortak Gear'ı o kahramanın sekmesinde açar. Kurallar src/campaign (moveHero, autoFormation); burası yalnızca çizer ve seçimi iletir.
  */
 
-const W = 1920;
 
 // ------------------------------------------------------------ düğüm glifleri
 
@@ -101,22 +97,20 @@ export function drawNodeGlyph(g: Phaser.GameObjects.Graphics, type: NodeType, co
 
 /**
  * Pencerenin okuduğu dizilim (genel bağdaştırıcı; Endless koşu başı dizilimi 2026-10-10'dan beri takım seçimi ekranında, bu pencerede değil). CampaignState buna
- * doğrudan uyar: `active` = hücre -> kahraman id ('' boş), `roster` = kahramanlar (yalnızca `active`tekiler çizilir).
+ * doğrudan uyar: `active` = hücre -> kahraman id ('' boş), `roster` = kahramanlar (yalnızca `active`tekiler çizilir; level / ekipman / puan kahraman panelinin sayıları için).
  */
 export interface FormationState {
   active: readonly string[];
-  roster: ReadonlyArray<{ id: string; class: string; hpRatio: number; leader?: boolean }>;
+  roster: ReadonlyArray<Omit<BoardHeroSource, 'leader'> & { leader?: boolean }>;
 }
-
-const rosterHero = (s: FormationState, id: string) => (id ? s.roster.find((h) => h.id === id) : undefined);
 
 export interface FormationHooks {
   get: () => FormationState;
   move: (heroId: string, cell: number) => void;
   auto: () => void;
   done: () => void;
-  /** Arayüz kamerasında işaretçinin dünya noktası (pencere arayüz katmanında). */
-  toUi: (p: Phaser.Input.Pointer) => { x: number; y: number };
+  /** Eski Phaser penceresinin işaretçi eşlemesi; DOM tahtada kullanılmaz (çağıranlar vermeye devam edebilir). */
+  toUi?: (p: Phaser.Input.Pointer) => { x: number; y: number };
   heroPanel?: (heroId: string) => void;
   /** Bitir düğmesinin yazısı (varsayılan 'Done'; Endless: 'Start Run'). */
   doneLabel?: string;
@@ -127,165 +121,44 @@ export interface FormationHooks {
 }
 
 /**
- * Dizilim penceresi: 4 sıra x 3 şerit (ön sıra sağda, düşmana bakar). Bir kahramanı başka hücreye SÜRÜKLE ya da önce kahramana sonra
- * hücreye DOKUN: boşsa taşır, doluysa yer değiştirir (src/campaign > moveHero). Sağda seçilen kahramanın notu (yakın dövüş ön sıra ister).
+ * Dizilim penceresi (Ömer 2026-10-18, Formation A): ortak DOM tahtası (src/ui/formation-board.ts): 4 sıra x 3 şerit (ön sıra sağda, düşmana bakar), seçili / sürüklenen
+ * kahraman için HER hücrede menzil uygunluk rengi, hücre hover kutusu, sağda kahraman paneli. Kahramana TIKLA = seç; seçiliyken BOŞ hücreye tıkla = taşı; takas yalnızca
+ * bir kahramanı başka kahramanın üstüne SÜRÜKLEYİNCE (src/campaign > moveHero kuralı değişmedi). Phaser tarafı yalnızca kapatma işleyicisi için boş bir Modal kabuğu döner.
  */
 export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Container, on: FormationHooks): Modal {
-  const m = openModal(scene, layer, {
-    title: 'Formation',
+  const root = scene.add.container(0, 0);
+  layer.add(root);
+  const classOf = (id: string): string => on.get().roster.find((h) => h.id === id)?.class ?? '';
+  const win = openFormationWindow({
     subtitle: on.subtitle ?? 'The front row faces the enemy.',
-    width: 1360,
-    height: 820,
-    y: 120,
-    buttons: [
-      ...(on.back ? [{ label: 'Back', run: () => on.back?.() }] : []),
-      { label: 'Auto arrange', run: () => (on.auto(), draw()) },
-      { label: on.doneLabel ?? 'Done', primary: true, run: () => on.done() },
-    ],
-    onDismiss: () => (on.back ? on.back() : on.done()),
+    heroes: () => {
+      const s = on.get();
+      return s.active.flatMap((id) => {
+        const h = id ? s.roster.find((x) => x.id === id) : undefined;
+        const b = h ? boardHero(h) : null;
+        return b ? [b] : [];
+      });
+    },
+    cells: () => on.get().active,
+    hintsFor: boardHints(classOf),
+    rangeUi: boardRangeUi(),
+    icons: boardIcons(),
+    move: (id, cell) => on.move(id, cell),
+    ...(on.heroPanel ? { details: (id: string) => on.heroPanel?.(id) } : {}),
+    auto: () => on.auto(),
+    done: () => on.done(),
+    ...(on.back ? { back: on.back } : {}),
+    ...(on.doneLabel ? { doneLabel: on.doneLabel } : {}),
   });
-  const cell = 128;
-  const gap = 10;
-  const gw = 4 * cell + 3 * gap;
-  const gx = W / 2 - 360 - gw / 2 + 160; // ızgara solda, bilgi sağda
-  const gy = m.area.y + 40;
-  const layerC = scene.add.container(0, 0);
-  m.root.add(layerC);
-  let selected = '';
-  /** Son taşınan kahraman: bilgi sütunu onu (ve dizilim ipucunu) gösterir. */
-  let moved = '';
-  // Sürükle-bırak: ortak yardımcı (src/game/slot-drag.ts; Quick Battle / Endless ile aynı hayalet kart + gölge); pencere kapanınca kaldırılır
-  let drag: SlotDrag<{ id: string; from: number }>;
-  const cellAt = (x: number, y: number): number => {
-    for (let row = 0; row < 4; row++)
-      for (let lane = 0; lane < 3; lane++) {
-        const cx = gx + (3 - row) * (cell + gap);
-        const cy = gy + lane * (cell + gap);
-        if (x >= cx && x <= cx + cell && y >= cy && y <= cy + cell) return row * 3 + lane;
-      }
-    return -1;
+  let closed = false;
+  return {
+    root,
+    area: { x: 310, y: 216, w: 1300, h: 600 },
+    close: () => {
+      if (closed) return;
+      closed = true;
+      win.close();
+      root.destroy(true);
+    },
   };
-  let hot = -1;
-  const draw = () => {
-    layerC.removeAll(true);
-    const s = on.get();
-    // Dizilim ipuçları (formation-hints.ts; yalnızca öneri, yerleşimi engellemez)
-    const hints = content.placementHintsForCells(s.active.map((id) => rosterHero(s, id)?.class ?? ''));
-    // FRONT / BACK etiketleri + düşman yönü
-    layerC.add(elText(scene, gx + gw + 26, gy + (3 * cell + 2 * gap) / 2, 'Front ▸', 16, EL.ON, { em: 0.2 }).setOrigin(0, 0.5));
-    layerC.add(elText(scene, gx - 22, gy + (3 * cell + 2 * gap) / 2, 'Back', 14, EL.MUTED, { em: 0.2 }).setOrigin(1, 0.5));
-    for (let row = 0; row < 4; row++)
-      for (let lane = 0; lane < 3; lane++) {
-        const slot = row * 3 + lane;
-        const x = gx + (3 - row) * (cell + gap);
-        const y = gy + lane * (cell + gap);
-        const id = s.active[slot] ?? '';
-        const h = rosterHero(s, id);
-        const g = scene.add.graphics();
-        const isSel = !!selected && id === selected;
-        g.fillStyle(EL.INK, h ? 0.75 : 0.38).fillRect(x, y, cell, cell);
-        if (slot === hot) {
-          g.lineStyle(2, EL.EMBER, 1).strokeRect(x + 1, y + 1, cell - 2, cell - 2);
-          g.fillStyle(EL.EMBER, 0.12).fillRect(x, y, cell, cell);
-        } else if (isSel) g.lineStyle(2, EL.ON_N, 1).strokeRect(x + 1, y + 1, cell - 2, cell - 2);
-        else g.lineStyle(1, EL.GOLD, h ? 0.62 : row === 0 ? 0.42 : EL.LINE.a2).strokeRect(x + 0.5, y + 0.5, cell - 1, cell - 1);
-        if (!h) g.lineStyle(1, EL.GOLD, 0.22).strokePoints(diamondPts(x + cell / 2, y + cell / 2, 6.4), true);
-        layerC.add(g);
-        if (h) {
-          const def = content.classes[h.class]!;
-          const img = classAvatar(scene, def, x + cell / 2, y + cell / 2 - 6, cell - 18);
-          if (drag?.payload?.id === id) img.setAlpha(0.3);
-          layerC.add(img);
-          const nm = scene.add.graphics();
-          nm.fillGradientStyle(0x080604, 0x080604, 0x080604, 0x080604, 0, 0, 0.92, 0.92).fillRect(x + 1, y + cell - 42, cell - 2, 41);
-          layerC.add(nm);
-          layerC.add(fitW(elText(scene, x + cell / 2, y + cell - 22, def.name, 13, EL.ON, { em: 0.06 }).setOrigin(0.5), cell - 10));
-          layerC.add(hpBar(scene, x + 14, y + cell - 9, cell - 28, 4, h.hpRatio));
-          if (h.leader) layerC.add(crown(scene, x + cell - 18, y + 16, 0.62));
-          const hint = hints[slot];
-          if (hint) layerC.add(hintBadge(scene, x + 18, y + 18, hint));
-        }
-        const z = scene.add.zone(x + cell / 2, y + cell / 2, cell, cell).setInteractive({ useHandCursor: !!h || !!selected });
-        z.on('pointerdown', (p: Phaser.Input.Pointer) => {
-          if (h) drag.begin({ id, from: slot }, p);
-        });
-        z.on('pointerup', () => {
-          if (drag.moved) return;
-          drag.cancel();
-          if (!selected) selected = id;
-          else if (selected === id) selected = '';
-          else {
-            on.move(selected, slot);
-            moved = selected;
-            selected = '';
-          }
-          draw();
-        });
-        layerC.add(z);
-      }
-    // Bilgi (sağ): seçilen ya da lider kahraman
-    const team = s.roster.filter((x) => s.active.includes(x.id));
-    const focus = rosterHero(s, selected) ?? rosterHero(s, moved) ?? team.find((x) => x.leader) ?? team[0];
-    const ix = gx + gw + 190;
-    const iy = gy;
-    const iw = W / 2 + 640 - 30 - ix;
-    if (focus) {
-      const def = content.classes[focus.class]!;
-      const slot = s.active.indexOf(focus.id);
-      const row = Math.floor(slot / 3);
-      layerC.add(elText(scene, ix, iy, selected ? 'Selected' : 'Your company', 14, EL.MUTED, { em: 0.24 }).setOrigin(0, 0));
-      const ln = scene.add.graphics();
-      ln.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(ix, iy + 28, ix + iw, iy + 28);
-      layerC.add(ln);
-      layerC.add(classAvatar(scene, def, ix + 48, iy + 92, 92));
-      layerC.add(fitW(elText(scene, ix + 112, iy + 70, def.name, 26, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), iw - 120));
-      layerC.add(elBody(scene, ix + 112, iy + 104, `${def.role ?? ''} · ${['Front row', '2nd row', '3rd row', 'Back row'][row] ?? ''}`, 18, EL.MUTED).setOrigin(0, 0.5));
-      const hint = hints[slot];
-      const note = hint ? placementHintText(def.name, hint) : 'Good spot: it reaches the enemy from here.';
-      layerC.add(elBody(scene, ix, iy + 160, note, 20, hint ? hintColor(hint) : EL.NOTE, true, iw).setOrigin(0, 0));
-      if (on.heroPanel) {
-        const b = elButton(scene, 'Hero details', () => on.heroPanel?.(focus.id), { kind: 'secondary', w: 260, h: 54, size: 17 });
-        b.root.setPosition(ix + 130, iy + 290);
-        layerC.add(b.root);
-      }
-    }
-  };
-  drag = new SlotDrag<{ id: string; from: number }>(scene, {
-    threshold: 10,
-    toPoint: (p) => on.toUi(p),
-    parent: () => m.root,
-    ghost: (d) => {
-      const h = rosterHero(on.get(), d.id);
-      const def = h ? content.classes[h.class] : undefined;
-      return def ? makeDragGhost(scene, def, { size: 112, depth: 0 }) : undefined;
-    },
-    onStart: () => draw(),
-    onMove: (_d, q) => {
-      const c = cellAt(q.x, q.y);
-      if (c !== hot) {
-        hot = c;
-        draw();
-      }
-    },
-    onEnd: (_d, moved) => {
-      hot = -1;
-      if (moved) draw(); // soluk kaynak ve hedef vurgusu geri gelsin
-    },
-    onDrop: (d, q) => {
-      const c = cellAt(q.x, q.y);
-      if (c >= 0 && c !== d.from) {
-        on.move(d.id, c);
-        moved = d.id;
-      }
-      selected = '';
-      draw();
-    },
-  });
-  const close0 = m.close;
-  m.close = () => {
-    drag.destroy();
-    close0();
-  };
-  draw();
-  return m;
 }

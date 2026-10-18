@@ -19,7 +19,7 @@ import { perfLite } from '../ui/perf-mode';
 import { cycleFrames, gripFrames, itemPlacement, keyFrame, placementPoint, poseClass, poseSkill, resolvePose, skillPoses, statePose, POSES, type Grip, type PoseClassDef, type WeaponPick } from './poses';
 import { bakePoseTexture, ensurePoseSources, poseDisplayScale } from './pose-rig';
 import { HIT_REACTION, hitReaction, type HitReaction } from './hit-reaction';
-import { POSE_TIMING, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
+import { POSE_TIMING, viewMotion, endDelay, holdEndDelay, idleRequestDelay, isHoldSkill, throwHoldDelay, type PoseHold } from './pose-timing';
 
 /**
  * Poz kütüphanesi bağlantısı (src/game/poses.ts): pozlu sınıfta gövde + silah pişmiş atlası, şu anki poz ve skill bağlamı.
@@ -932,7 +932,7 @@ export class CombatantView {
     if (!skill && this.rig.skill.length) this.rig.lastSkill = this.rig.skill;
     const prev = { motion: this.rig.motion, skillId: this.rig.skillId };
     this.rig.skill = skill ? skillPoses(this.combatant.defId, skill) : [];
-    this.rig.motion = skill?.motion;
+    this.rig.motion = viewMotion(skill as { motion?: string; viewMotion?: string } | null); // yalnızca sunum: skills.json > viewMotion (motor `motion`a bakar)
     this.rig.awaitFx = false;
     if (skill) {
       this.rig.lastReqAt = this.scene.time.now;
@@ -940,7 +940,7 @@ export class CombatantView {
       this.rig.holdUntil = 0;
     }
     // açık pozu olan menzilli / büyü skill'i: efekt pozu kendisi çağırmasa da (yukarıdan düşen Judgment gibi) baştan skill'in ilk pozu
-    if (skill?.pose !== undefined && skill.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
+    if (skill?.pose !== undefined && this.rig.motion !== 'melee' && this.rig.skill.length) this.showPose(this.rig.skill[0]!);
     // küçük savunma hareketi (Guard; gerçek koruma pozu üretilene dek): geriye yaslanıp çöker, sonra toparlanır (data/poses.json > braceSkills)
     if (skill && 'id' in skill && POSES.braceSkills?.includes(String((skill as { id: string }).id)) && !reducedMotion()) {
       const dir = this.combatant.side === 'enemy' ? 1 : -1;

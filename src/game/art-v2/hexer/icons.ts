@@ -15,7 +15,7 @@
  *   badge_omen, badge_wither, badge_jinxed (+ misfortune, doom). Bağlantı ui-dev/shared işi (rapora yazıldı).
  */
 import type { V2SpriteEntry } from '../types';
-import { flame, sparkle, type PxGrid } from '../../pixel-art';
+import { flame, type PxGrid } from '../../pixel-art';
 
 type P = [number, number];
 
@@ -105,24 +105,6 @@ function blackCandle(g: PxGrid, cx: number, base: number, h: number, w: number, 
   if (lit) flame(g, cx, base - h - w * 0.35, w * 1.5, w * 0.48, 'Y', 'y', 'w');
 }
 
-/** Çürük damarı: kökten dallanan sarı-yeşil çizgiler (deterministik). */
-function veins(g: PxGrid, x: number, y: number, ang: number, len: number, w: number, t: string, core: string, depth = 2): void {
-  let px = x;
-  let py = y;
-  const steps = 6;
-  for (let i = 0; i < steps; i++) {
-    const a = ang + Math.sin(i * 1.7 + x) * 0.35;
-    const nx = px + (Math.cos(a) * len) / steps;
-    const ny = py + (Math.sin(a) * len) / steps * 0.55;
-    g.line(px, py, nx, ny, t, w * (1 - i / (steps + 2)));
-    if (i < steps - 2) g.line(px, py, nx, ny, core, Math.max(0.25, w * 0.35));
-    if (depth > 0 && i === 2) veins(g, nx, ny, a + 0.7, len * 0.5, w * 0.7, t, core, depth - 1);
-    if (depth > 0 && i === 4) veins(g, nx, ny, a - 0.8, len * 0.4, w * 0.6, t, core, depth - 1);
-    px = nx;
-    py = ny;
-  }
-}
-
 /** Seramik (pişmiş toprak) boncuk; `cracked` ise ortadan çatlak. */
 function bead(g: PxGrid, cx: number, cy: number, r: number, cracked = false): void {
   g.disc(cx, cy, r, 'b');
@@ -145,6 +127,12 @@ function witchKnot(g: PxGrid, cx: number, cy: number, r: number, w: number, t = 
 // ---------------------------------------------------------------- ikonlar
 
 export const ICONS: Record<string, V2SpriteEntry> = {
+  // ChatGPT boyalı ikonlar (hexer-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  eye: { image: 'hexer/eye' },
+  drainfield: { image: 'hexer/drainfield' },
+  clover: { image: 'hexer/clover' },
+  voidstrike: { image: 'hexer/voidstrike' },
+  soul: { image: 'hexer/soul' },
   /**
    * LOGO (rune -> hexerlogo): kara mumlu demir kandil (Hexer'in elindeki), altında kırmızı iplikle sallanan üç kemik pul; sağdaki çatlak.
    * 15 px'te: koyu kandil + parlak alev + üç açık pul.
@@ -170,104 +158,10 @@ export const ICONS: Record<string, V2SpriteEntry> = {
     charm(g, 23.4, 26, 3, { rune: 2, crack: true });
   },
 
-  /**
-   * PASİF Ill Omen (soul -> illomen): ölen lanetlinin Omen'leri en yakın düşmana geçer. Soldaki çatlak pul, içinden eflatun bir duman
-   * ipliği kıvrılarak sağdaki sağlam pula akıyor ve onu ışıtıyor.
-   */
-  soul: (g) => {
-    charm(g, 8.4, 21.4, 6.6, { crack: true, rune: 0 });
-    // duman ipliği (kalın -> ince), eflatun
-    const pts: P[] = [[10.6, 17.2], [12.6, 10.8], [17.4, 9.4], [20.6, 13.4], [22.4, 15.6]];
-    for (let i = 0; i + 1 < pts.length; i++) {
-      const w = 2.2 - i * 0.35;
-      g.line(pts[i]![0], pts[i]![1], pts[i + 1]![0], pts[i + 1]![1], 'p', w);
-      g.line(pts[i]![0] - 0.25, pts[i]![1] - 0.25, pts[i + 1]![0] - 0.25, pts[i + 1]![1] - 0.25, 'z', Math.max(0.25, w * 0.3));
-    }
-    g.disc(13.2, 6.6, 0.9, 'p').disc(18.6, 5.4, 0.6, 'z').disc(9.4, 12.2, 0.6, 'p');
-    // alıcı pul (eflatun hale)
-    g.disc(23.6, 21.6, 7.4, 'P');
-    charm(g, 23.6, 21.6, 6, { rune: 2, carve: 'P' });
-    sparkle(g, 28.6, 14.6, 2, 'z');
-  },
 
-  /**
-   * EVIL EYE (eye -> evileye): asadaki pullar gibi kemik pul; üstüne oyulmuş TEK insan gözü (kirpiksiz), irisi lanet ışığında,
-   * pulun kenarında çürük yeşili halka, tepede kırmızı iplik ilmiği.
-   */
-  eye: (g) => {
-    thread(g, [13.2, 4.8], [16, 0.6], [18.8, 4.8], 0.7);
-    g.disc(16, 17, 13.4, 'S');
-    // kenar çürüğü: lekeli halka
-    for (let i = 0; i < 14; i++) {
-      const a = (i / 14) * Math.PI * 2 + 0.3;
-      g.disc(16 + Math.cos(a) * 12.4, 17 + Math.sin(a) * 12.4, i % 3 === 0 ? 1.3 : 0.8, i % 2 ? 's' : 'S');
-    }
-    g.disc(16, 17, 11.2, 'n');
-    g.disc(15.6, 16.6, 10.2, 'e');
-    // oyma göz
-    eye(g, 16, 17.2, 8.6, 4.6, 1, { lid: 'k', white: 'w' });
-    // oyma çizgileri (kirpik değil, kemikteki çentikler)
-    g.line(9, 9.6, 10.4, 11, 'b', 0.5).line(23, 9.6, 21.6, 11, 'b', 0.5).line(16, 7.4, 16, 9.2, 'b', 0.5);
-  },
 
-  /**
-   * WITHERING CURSE (drainfield -> witheringcurse): yere devrilmiş kara mum, fitili kararmış ve tütüyor; dibinden yere sarı-yeşil
-   * çürük damarları sızıyor, çevredeki ot bıçakları grileşmiş ve eğilmiş.
-   */
-  drainfield: (g) => {
-    // zemin
-    g.ellipse(16, 24.6, 14.6, 5.4, 'k');
-    g.ellipse(16, 24.2, 13.4, 4.6, 'S');
-    // damarlar (mumun dibinden sağa/sola sızar)
-    veins(g, 12.4, 23.6, 0.25, 15, 1.5, 'a', 'z');
-    veins(g, 12.4, 23.6, Math.PI - 0.15, 10, 1.3, 'a', 'z');
-    veins(g, 13.4, 24.4, 0.9, 9, 1.1, 'a', 'z', 1);
-    // ölü ot
-    for (const [x, y, d] of [[5, 22, -1], [7, 26.4, 1], [24, 21.6, 1], [27.4, 25.4, -1], [20.4, 27.6, 1]] as Array<[number, number, number]>) {
-      g.line(x, y, x + d * 0.8, y - 3, 'm', 0.5).line(x + d * 0.8, y - 3, x + d * 2.2, y - 3.6, 'm', 0.5);
-    }
-    // devrilmiş kara mum (çapraz): dip sol altta, fitil sağ üstte
-    g.line(9.4, 22.6, 21.6, 10.4, 'o', 4.4);
-    g.line(8.8, 21.4, 20.6, 9.6, 'd', 0.9);
-    g.disc(21.8, 10.2, 2.1, 'd');
-    g.line(22.6, 9.2, 23.8, 7.8, 'k', 0.6); // kararmış fitil
-    // eriyik birikintisi
-    g.ellipse(10.4, 24.2, 3.2, 1.2, 'o');
-    // tüten is (gri kıvrım)
-    thread(g, [24.2, 7.2], [22.4, 4.4], [25.6, 1.6], 0.75, 'm');
-    g.disc(26.4, 1.4, 0.6, 'l');
-  },
 
-  /**
-   * JINX (clover -> jinx): kırmızı iplikle üç kez atılmış cadı düğümü; ortasında çatlamış seramik boncuk, iki ip ucu sarkıyor.
-   */
-  clover: (g) => {
-    thread(g, [12, 21.6], [8.8, 26.4], [6.2, 30.4], 1.1, 'A');
-    thread(g, [20, 21.6], [23.2, 26.4], [25.8, 30.4], 1.1, 'A');
-    witchKnot(g, 16, 15.2, 9.4, 1.7, 'a', 'z');
-    bead(g, 16, 15.8, 3.4, true);
-    // çatlaktan seken kıymıklar
-    g.poly([20.6, 9.4, 22, 8.2, 21.6, 10.2], 'n').poly([11.2, 21.4, 9.6, 22.4, 10.6, 20.4], 'b');
-  },
 
-  /**
-   * DOOM MARK (voidstrike -> doommark): kemik beyazı halka içinde yedi köşeli rün mühür; mühür ortadan çatlamış, çatlaktan mor ışık
-   * sızıyor, kopan kemik kıymıkları.
-   */
-  voidstrike: (g) => {
-    g.disc(16, 16, 14, 'P');
-    g.disc(16, 16, 12.6, 'A');
-    g.ring(16, 16, 14, 'e', 2);
-    g.ring(16, 16, 11.4, 'n', 0.5);
-    heptagram(g, 16, 16, 10.6, 'e', 1.2);
-    // çatlak: sağ üstten sol alta, iki yana açılan mor ışık
-    const crack: P[] = [[22.4, 1.4], [18.8, 8.8], [20.4, 12.6], [14.6, 17.2], [16, 21], [10.4, 26.6], [9.4, 30.6]];
-    for (let i = 0; i + 1 < crack.length; i++) g.line(crack[i]![0], crack[i]![1], crack[i + 1]![0], crack[i + 1]![1], 'p', 2.4);
-    for (let i = 0; i + 1 < crack.length; i++) g.line(crack[i]![0], crack[i]![1], crack[i + 1]![0], crack[i + 1]![1], 'z', 1);
-    for (let i = 0; i + 1 < crack.length; i++) g.line(crack[i]![0], crack[i]![1], crack[i + 1]![0], crack[i + 1]![1], 'w', 0.25);
-    // kopan kemik kıymıkları
-    g.poly([24.6, 4, 27.4, 2.6, 26.2, 5.4], 'e').poly([6, 27.6, 3.6, 29.6, 4.4, 26.4], 'e').poly([27.6, 9.4, 30.2, 9.8, 28.2, 11.4], 'n');
-  },
 };
 
 // ---------------------------------------------------------------- efekt sprite'ları ve rozetler

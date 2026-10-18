@@ -27,10 +27,17 @@ Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 - Müzik yükleme ekranında başlamaz; ana menü görününce başlar.
 - Menzil arayüzü (skill kartında "Range N"/"Global", hedef hücre vurgusu) `range.enabled` kapalıyken eski görünüme döner.
 
+- **Önce oku:** `docs/design/ui-design-language.md` (Ömer'in onaylı arayüz dili; her yeni arayüz / mockup bu mantıkla).
+
 ## Arayüz mockup'ları (Ömer 2026-10-18: "arayüz mockuplarını hep böyle çıkarman gerekiyor")
 - Mockup HER ZAMAN oyundaki görünümle birebir: `public/mockups/<ad>.html` + `public/mockups/<ad>/` (oyunun gerçek CSS'i: style.css / elegant.css / gear.css kopyaları; gerçek portre, item, stat, skill ve UI ikonları, fontlar, arka planlar; yalnızca kullanılanlar, WebP, toplam ~4 MB altı). Yer tutucu harf/şekil, uydurma görsel YOK. Örnekler: `public/mockups/gear-unified.html`, `public/mockups/unified-inventory.html`.
 - Seçenekler ve durumlar adres `#hash` ile (`#v1..#v5`, `&enc=...`, `&clean`); sol altta küçük, oyun dışı olduğu belli MOCKUP şeridi. Tıklanabilir: sürükle-bırak, dokunarak seçme, ipucu, karşılaştırma gerçek gibi çalışır.
 - Ana oturum yalnızca mockup dosyalarını (sürüm ve patch notes olmadan) GitHub'a gönderir ve Ömer'e Pages linkini verir; Ömer oyundaki görünümü linkten seçer. Yazılı seçim sayfası (artifact) ya da tek başına yer tutucu görselli HTML YAPILMAZ.
+- Onaylı tasarım dili (Ömer 2026-10-18): tooltip / küçük bilgi kutuları = `public/mockups/tooltips.html` A Band; skill blokları = `skills-block.html` A Plates (src/ui/gear-plates.css, band-tip.ts). Açıklama yazıları düz EB Garamond, italik yalnızca kısa lore cümlesi. Önce öğenin kodda neyi etkilediğini bul (konumu o belirler).
+- ITEM ÖNİZLEME KURALI (global, Ömer 2026-10-18): item gösterilen HER yerde (gear, tüccar, loot, ödül, mockup dahil) önizleme oyunun gerçek item ipucudur: `src/ui/item-tip.ts` v3 (`itemTipNodes`, `it-*` satırları, gear.css), Band değil, kendi item kutun değil. Fareyle HOVER açar (tıklama zorunlu değil); dokunmatikte tek dokunuş sabitler (`attachItemInteractions`). Mevcut bir ekranı yenilerken pencere sınırlarını / boyutunu / yerini DEĞİŞTİRME, yalnızca içeriği iyileştir.
+- ITEM ŞERİDİ KURALI (global, Ömer 2026-10-18): item satır / şerit / liste halinde gösterilecekse HER yerde Gear > Hero sekmesindeki item plakası kullanılır (`src/ui/gear-plates.css` + `character-panel.ts` plakaları: kare ikon, yuva etiketi, Cinzel ad, Power / iL / affix özeti, köşe elmasları). Yeni şerit tasarlama; ek bilgi gerekiyorsa (fiyat gibi) plakanın yanına / sağına koy. Kim takar kim takmaz bilgisi plakada değil, hover item ipucunda (v3) durur.
+- PASİF KURALI (global, Ömer 2026-10-18): skill listesi gösterilen HER yerde pasif her zaman 1. sırada (önce pasif, sonra 4 skill).
+- Yerleşik tarayıcı file:// açmaz; mockup ve oyun için kendi önizleme sunucunu kullan (paylaşılan 5173 başka agentlarca yeniden başlatılabilir). Aynı klasörde başka oturum çalışabilir: yalnızca kendi dosyalarına dokun, ilgisiz kırmızı testleri raporla, düzeltme.
 - Yazı yerine yakışan yerlerde oyunun mevcut ikonları (Back/Menu/tam ekran = `src/ui/nav-icons.ts`, stat, yuva, altın); ikonlu düğmede üstüne gelince / uzun basınca kısa ipucu.
 - Her güncellemede yeniden çizim yanıp sönmesin: giriş animasyonu yalnızca ilk açılışta / düzen değişince oynar; hover ve sekme değişimi kökü baştan kurmaz.
 - Telefon yatay (844x390) kontrolü CSS/kodla düşünülür; görsel kontrolü ana oturum yapar.

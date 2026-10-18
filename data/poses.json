@@ -5602,8 +5602,8 @@
       "heightFit": 0.97,
       "idleSprite": false,
       "defaultWeapon": {
-        "family": "swords",
-        "look": "plain"
+        "family": "daggers",
+        "look": "rondel"
       },
       "weaponScale": 0.953,
       "cycles": {
@@ -5778,472 +5778,472 @@
         }
       },
       "canvas": {
-        "w": 610,
-        "h": 454,
-        "footX": 305,
-        "footY": 448
+        "w": 450,
+        "h": 412,
+        "footX": 225,
+        "footY": 406
       },
       "figure": {
-        "w": 268,
-        "h": 378
+        "w": 208,
+        "h": 382
       },
       "poses": {
         "idle1": {
           "anchor": {
-            "x": 247,
-            "y": 215,
-            "angle": 22
+            "x": 142,
+            "y": 232,
+            "angle": 15.78
           },
           "offhand": {
-            "x": 360,
-            "y": 187,
+            "x": 279,
+            "y": 151,
             "angle": 10
           },
           "box": {
-            "x": 170,
-            "y": 70,
-            "w": 268,
-            "h": 378
+            "x": 115,
+            "y": 24,
+            "w": 208,
+            "h": 382
           },
           "src": "antimage-v2/narrow.png"
         },
         "step1": {
           "anchor": {
-            "x": 208,
-            "y": 179,
+            "x": 111,
+            "y": 191,
             "angle": 35
           },
           "offhand": {
-            "x": 433,
-            "y": 201,
+            "x": 325,
+            "y": 205,
             "angle": 10
           },
           "box": {
-            "x": 169,
-            "y": 65,
-            "w": 303,
-            "h": 383
+            "x": 84,
+            "y": 26,
+            "w": 258,
+            "h": 380
           },
           "src": "antimage-v2/one-handed.png"
         },
         "slash1": {
           "anchor": {
-            "x": 528,
-            "y": 166,
+            "x": 134,
+            "y": 135,
             "angle": 80
           },
           "offhand": {
-            "x": 268,
-            "y": 194,
+            "x": 372,
+            "y": 222,
             "angle": 20
           },
           "box": {
-            "x": 107,
-            "y": 84,
-            "w": 442,
+            "x": 79,
+            "y": 42,
+            "w": 309,
             "h": 364
           },
           "src": "antimage-v2/one-handed.png"
         },
         "overhead1": {
           "anchor": {
-            "x": 311,
-            "y": 39,
+            "x": 235,
+            "y": 20,
             "angle": 10
           },
           "offhand": {
-            "x": 374,
-            "y": 211,
+            "x": 305,
+            "y": 179,
             "angle": 20
           },
           "box": {
-            "x": 127,
-            "y": 24,
-            "w": 357,
-            "h": 424
+            "x": 71,
+            "y": 11,
+            "w": 308,
+            "h": 395
           },
           "src": "antimage-v2/one-handed.png"
         },
         "thrust1": {
           "anchor": {
-            "x": 565,
-            "y": 189,
+            "x": 176,
+            "y": 179,
             "angle": 90
           },
           "offhand": {
-            "x": 308,
-            "y": 201,
+            "x": 388,
+            "y": 147,
             "angle": -10
           },
           "box": {
-            "x": 87,
-            "y": 110,
-            "w": 495,
-            "h": 338
+            "x": 71,
+            "y": 54,
+            "w": 328,
+            "h": 352
           },
           "src": "antimage-v2/one-handed.png"
         },
         "spin1a": {
           "anchor": {
-            "x": 151,
-            "y": 144,
+            "x": 115,
+            "y": 143,
             "angle": -80
           },
           "offhand": {
-            "x": 293,
-            "y": 188,
+            "x": 323,
+            "y": 233,
             "angle": 10
           },
           "box": {
-            "x": 94,
-            "y": 84,
-            "w": 349,
-            "h": 364
+            "x": 39,
+            "y": 51,
+            "w": 317,
+            "h": 355
           },
           "src": "antimage-v2/one-handed.png"
         },
         "spin1b": {
           "anchor": {
-            "x": 489,
-            "y": 178,
+            "x": 380,
+            "y": 165,
             "angle": 90
           },
           "offhand": {
-            "x": 217,
-            "y": 218,
+            "x": 71,
+            "y": 165,
             "angle": -10
           },
           "back": true,
           "box": {
-            "x": 115,
-            "y": 94,
-            "w": 393,
-            "h": 354
+            "x": 59,
+            "y": 38,
+            "w": 346,
+            "h": 368
           },
           "src": "antimage-v2/one-handed.png"
         },
         "spin1c": {
           "anchor": {
-            "x": 268,
-            "y": 192,
+            "x": 154,
+            "y": 170,
             "angle": 90
           },
           "offhand": {
-            "x": 370,
-            "y": 192,
+            "x": 390,
+            "y": 134,
             "angle": 90
           },
           "box": {
-            "x": 121,
-            "y": 80,
-            "w": 368,
-            "h": 368
+            "x": 78,
+            "y": 32,
+            "w": 324,
+            "h": 374
           },
           "src": "antimage-v2/one-handed.png"
         },
         "guard1": {
           "anchor": {
-            "x": 208,
-            "y": 203,
-            "angle": 30
+            "x": 147,
+            "y": 213,
+            "angle": 16.5
           },
           "offhand": {
-            "x": 406,
-            "y": 125,
+            "x": 290,
+            "y": 120,
             "angle": 0
           },
           "box": {
-            "x": 162,
-            "y": 69,
-            "w": 278,
-            "h": 379
+            "x": 114,
+            "y": 25,
+            "w": 219,
+            "h": 381
           },
           "src": "antimage-v2/narrow.png"
         },
         "raise": {
           "anchor": {
-            "x": 266,
-            "y": 59,
+            "x": 179,
+            "y": 23,
             "angle": 0
           },
           "offhand": {
-            "x": 371,
-            "y": 199,
+            "x": 272,
+            "y": 171,
             "angle": 20
           },
           "box": {
-            "x": 165,
-            "y": 43,
-            "w": 280,
-            "h": 405
+            "x": 100,
+            "y": 9,
+            "w": 237,
+            "h": 397
           },
           "src": "antimage-v2/narrow.png"
         },
         "channel": {
           "anchor": {
-            "x": 433,
-            "y": 174,
+            "x": 326,
+            "y": 135,
             "angle": 80
           },
           "offhand": {
-            "x": 394,
-            "y": 176,
+            "x": 371,
+            "y": 132,
             "angle": 80
           },
           "box": {
-            "x": 160,
-            "y": 86,
-            "w": 295,
-            "h": 362
+            "x": 108,
+            "y": 39,
+            "w": 278,
+            "h": 367
           },
           "src": "antimage-v2/narrow.png"
         },
         "point": {
           "anchor": {
-            "x": 241,
-            "y": 204,
+            "x": 125,
+            "y": 219,
             "angle": 30
           },
           "offhand": {
-            "x": 506,
-            "y": 140,
+            "x": 400,
+            "y": 104,
             "angle": 80
           },
           "open": "off",
           "box": {
-            "x": 156,
-            "y": 74,
-            "w": 366,
-            "h": 374
+            "x": 106,
+            "y": 29,
+            "w": 311,
+            "h": 377
           },
           "src": "antimage-v2/narrow.png"
         },
         "idle2": {
           "anchor": {
-            "x": 258,
-            "y": 258,
+            "x": 211,
+            "y": 197,
             "angle": 40
           },
           "offhand": {
-            "x": 258,
-            "y": 258,
+            "x": 203,
+            "y": 191,
             "angle": 40
           },
           "box": {
-            "x": 154,
-            "y": 70,
-            "w": 285,
-            "h": 378
+            "x": 120,
+            "y": 24,
+            "w": 224,
+            "h": 382
           },
           "src": "antimage-v2/narrow.png"
         },
         "step2": {
           "anchor": {
-            "x": 412,
-            "y": 232,
-            "angle": 40
+            "x": 188,
+            "y": 83,
+            "angle": -25
           },
           "offhand": {
-            "x": 412,
-            "y": 232,
-            "angle": 40
+            "x": 193,
+            "y": 90,
+            "angle": -25
           },
           "box": {
-            "x": 152,
-            "y": 53,
-            "w": 299,
-            "h": 395
+            "x": 89,
+            "y": 16,
+            "w": 272,
+            "h": 390
           },
           "src": "antimage-v2/two-handed.png"
         },
         "slash2": {
           "anchor": {
-            "x": 498,
-            "y": 295,
+            "x": 425,
+            "y": 188,
             "angle": 125
           },
           "offhand": {
-            "x": 498,
-            "y": 295,
+            "x": 430,
+            "y": 188,
             "angle": 125
           },
           "box": {
-            "x": 81,
-            "y": 101,
-            "w": 450,
-            "h": 347
+            "x": 94,
+            "y": 44,
+            "w": 350,
+            "h": 362
           },
           "src": "antimage-v2/two-handed.png"
         },
         "overhead2": {
           "anchor": {
-            "x": 302,
-            "y": 28,
+            "x": 211,
+            "y": 19,
             "angle": -10
           },
           "offhand": {
-            "x": 302,
-            "y": 28,
+            "x": 205,
+            "y": 25,
             "angle": -10
           },
           "box": {
-            "x": 108,
+            "x": 79,
             "y": 6,
-            "w": 395,
-            "h": 442
+            "w": 295,
+            "h": 400
           },
           "src": "antimage-v2/two-handed.png"
         },
         "thrust2": {
           "anchor": {
-            "x": 588,
-            "y": 184,
+            "x": 416,
+            "y": 150,
             "angle": 90
           },
           "offhand": {
-            "x": 588,
-            "y": 184,
+            "x": 423,
+            "y": 150,
             "angle": 90
           },
           "box": {
-            "x": 68,
-            "y": 108,
-            "w": 536,
-            "h": 340
+            "x": 70,
+            "y": 58,
+            "w": 370,
+            "h": 348
           },
           "src": "antimage-v2/two-handed.png"
         },
         "spin2a": {
           "anchor": {
-            "x": 213,
-            "y": 253,
+            "x": 112,
+            "y": 134,
             "angle": -100
           },
           "offhand": {
-            "x": 213,
-            "y": 253,
+            "x": 118,
+            "y": 137,
             "angle": -100
           },
           "box": {
-            "x": 117,
-            "y": 77,
-            "w": 377,
-            "h": 371
+            "x": 67,
+            "y": 36,
+            "w": 328,
+            "h": 370
           },
           "src": "antimage-v2/two-handed.png"
         },
         "spin2b": {
           "anchor": {
-            "x": 477,
-            "y": 160,
+            "x": 337,
+            "y": 133,
             "angle": 90
           },
           "offhand": {
-            "x": 477,
-            "y": 160,
+            "x": 340,
+            "y": 133,
             "angle": 90
           },
           "box": {
-            "x": 104,
-            "y": 81,
-            "w": 403,
-            "h": 367
+            "x": 28,
+            "y": 38,
+            "w": 360,
+            "h": 368
           },
           "src": "antimage-v2/two-handed.png"
         },
         "spin2c": {
           "anchor": {
-            "x": 259,
-            "y": 269,
+            "x": 87,
+            "y": 163,
             "angle": 90
           },
           "offhand": {
-            "x": 259,
-            "y": 269,
+            "x": 85,
+            "y": 163,
             "angle": 90
           },
           "box": {
-            "x": 98,
-            "y": 73,
-            "w": 417,
-            "h": 375
+            "x": 63,
+            "y": 38,
+            "w": 322,
+            "h": 368
           },
           "src": "antimage-v2/two-handed.png"
         },
         "guard2": {
           "anchor": {
-            "x": 371,
-            "y": 133,
+            "x": 280,
+            "y": 113,
             "angle": 15
           },
           "offhand": {
-            "x": 371,
-            "y": 133,
+            "x": 288,
+            "y": 108,
             "angle": 15
           },
           "box": {
-            "x": 159,
-            "y": 71,
-            "w": 284,
-            "h": 377
+            "x": 108,
+            "y": 25,
+            "w": 222,
+            "h": 381
           },
           "src": "antimage-v2/narrow.png"
         },
         "throw": {
           "anchor": {
-            "x": 253,
-            "y": 78,
+            "x": 175,
+            "y": 179,
             "angle": 190
           },
           "offhand": {
-            "x": 456,
-            "y": 234,
+            "x": 408,
+            "y": 130,
             "angle": 60
           },
           "open": "off",
           "box": {
-            "x": 132,
-            "y": 63,
-            "w": 342,
-            "h": 385
+            "x": 85,
+            "y": 41,
+            "w": 335,
+            "h": 365
           },
           "src": "antimage-v2/narrow.png"
         },
         "hit": {
           "anchor": {
-            "x": 313,
-            "y": 230,
+            "x": 310,
+            "y": 102,
             "angle": 150
           },
           "offhand": {
-            "x": 313,
-            "y": 230,
+            "x": 146,
+            "y": 151,
             "angle": 150
           },
           "box": {
-            "x": 158,
-            "y": 95,
-            "w": 269,
-            "h": 353
+            "x": 78,
+            "y": 39,
+            "w": 293,
+            "h": 367
           },
           "src": "antimage-v2/narrow.png"
         },
         "kneel": {
           "anchor": {
-            "x": 466,
-            "y": 428,
+            "x": 322,
+            "y": 296,
             "angle": 100
           },
           "offhand": {
-            "x": 466,
-            "y": 428,
+            "x": 322,
+            "y": 296,
             "angle": 100
           },
           "box": {
-            "x": 112,
-            "y": 162,
-            "w": 391,
-            "h": 286
+            "x": 67,
+            "y": 132,
+            "w": 317,
+            "h": 274
           },
           "src": "antimage-v2/two-handed.png"
         }

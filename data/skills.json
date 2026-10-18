@@ -675,6 +675,7 @@
     ]
   },
   "mana_burn": {
+    "_not": "Görünüm (Ömer 2026-10-18, Anti-Mage kadın hançer fırlatan): motor ve yapay zeka `motion: melee` görür (menzil kuralı, yapay zeka değeri DEĞİŞMEZ). `viewMotion: ranged` YALNIZCA savaş görünümünde okunur (src/game/pose-timing.ts > viewMotion): Anti-Mage hedefe koşmaz, yerinden hançer fırlatır.",
     "id": "mana_burn",
     "name": "Mana Steal",
     "icon": "manaburn",
@@ -685,6 +686,7 @@
       "amount": 0
     },
     "motion": "melee",
+    "viewMotion": "ranged",
     "fx": "#9b59d0",
     "effects": [
       {
@@ -2018,11 +2020,14 @@
     "name": "Charge",
     "icon": "charge",
     "target": "single_enemy",
+    "range": 4,
     "cost": {
       "resource": "mp",
       "amount": 0
     },
     "motion": "melee",
+    "ignoreFrontRow": true,
+    "ignoreReach": true,
     "advanceToFront": true,
     "fx": "#ffe9b0",
     "effects": [
@@ -2165,6 +2170,7 @@
     "name": "Guard",
     "icon": "guard2",
     "target": "single_ally",
+    "range": 2,
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
@@ -2194,6 +2200,7 @@
     "name": "Fist Crush",
     "icon": "fistcrush2",
     "target": "random_enemies",
+    "global": true,
     "count": 3,
     "cost": {
       "resource": "mp",
@@ -2336,6 +2343,7 @@
     "name": "Radiance",
     "icon": "radiance",
     "target": "everyone",
+    "global": true,
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -2562,6 +2570,7 @@
     "name": "Saltire Cut",
     "icon": "saltire",
     "target": "area_enemies",
+    "range": 3,
     "area": {
       "shape": "x",
       "hitsAtCenter": 2
@@ -2596,6 +2605,7 @@
     "name": "Smoke Bomb",
     "icon": "smokebomb",
     "target": "area_any",
+    "range": 4,
     "area": {
       "shape": "rect",
       "rows": 2,
@@ -2637,11 +2647,14 @@
     "name": "Backstab",
     "icon": "backstab",
     "target": "single_enemy",
+    "range": 3,
     "cost": {
       "resource": "mp",
       "amount": 0
     },
     "motion": "melee",
+    "ignoreFrontRow": true,
+    "ignoreReach": true,
     "requiresOpenBehind": true,
     "fx": "#c0203a",
     "effects": [
@@ -2650,7 +2663,8 @@
         "damageType": "physical",
         "scale": "dex",
         "power": 0.02,
-        "guaranteedCrit": true
+        "guaranteedCrit": true,
+        "unblockable": true
       }
     ],
     "vfx": "backstab",
@@ -2958,6 +2972,7 @@
     "name": "Bone Throw",
     "icon": "bonethrow",
     "target": "single_enemy",
+    "range": 4,
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -3045,7 +3060,7 @@
       {
         "type": "bond",
         "turns": 3,
-        "ratio": 1.2
+        "ratio": 0.96
       }
     ],
     "vfx": "guardlink",
@@ -3090,16 +3105,18 @@
     "note": "Pose test: plays the Raise Hand pose."
   },
   "pt_mana_burn": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Steal kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'slash'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Mana Steal kopyası; gerçek efekt/ses/hedef (artOf mana_burn), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_mana_burn",
     "name": "Mana Steal",
     "icon": "manaburn",
     "target": "single_enemy",
+    "range": 4,
     "cost": {
       "resource": "mp",
       "amount": 0
     },
     "motion": "melee",
+    "viewMotion": "ranged",
     "fx": "#9b59d0",
     "effects": [
       {
@@ -3120,9 +3137,9 @@
       "manaSizzle",
       "energySlurp"
     ],
-    "pose": "slash",
+    "pose": "throw",
     "artOf": "mana_burn",
-    "note": "Pose test: plays the Slash pose."
+    "note": "Pose test: plays the Throw pose."
   },
   "pt_drain_field": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Drain Field kopyası; gerçek efekt/ses/hedef (artOf drain_field), v2 poz takımında 'raise'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3130,6 +3147,7 @@
     "name": "Drain Field",
     "icon": "drainfield",
     "target": "area_enemies",
+    "range": 4,
     "area": {
       "shape": "rect",
       "rows": 3,
@@ -3204,7 +3222,7 @@
     "note": "Pose test: plays the Channel pose."
   },
   "pt_void_strike": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'thrust'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Void Strike kopyası; gerçek efekt/ses/hedef (artOf void_strike), v2 poz takımında 'point'. Bedel 0, cooldown yok, güç 0.02 (~1).",
     "id": "pt_void_strike",
     "name": "Void Strike",
     "icon": "voidstrike",
@@ -3233,9 +3251,9 @@
     "ai": {
       "reserveMp": 2
     },
-    "pose": "thrust",
+    "pose": "point",
     "artOf": "void_strike",
-    "note": "Pose test: plays the Thrust pose."
+    "note": "Pose test: plays the Point pose."
   },
   "pt_loaded_dice": {
     "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Loaded Dice kopyası; gerçek efekt/ses/hedef (artOf loaded_dice), v2 poz takımında 'throw'. Bedel 0, cooldown yok, güç 0.02 (~1).",
@@ -3309,6 +3327,7 @@
     "name": "Card Trick",
     "icon": "cardtrick",
     "target": "random_enemies",
+    "global": true,
     "count": 2,
     "cost": {
       "resource": "mp",

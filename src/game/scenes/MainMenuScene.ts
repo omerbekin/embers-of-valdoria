@@ -8,6 +8,7 @@ import { campaignArtKey, hasCampaignArt, preloadCampaignArt } from '../campaign-
 import { cardArt, hasCardArtFile, preloadCardArt } from '../card-art';
 import { MenuBackdrop, hasMenuLayers, preloadMenuLayers } from '../menu-backdrop';
 import { onReducedMotionChange, reducedMotion, setReducedMotion } from '../../ui/motion-pref';
+import { motion } from '../../ui/motion';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from '../../ui/perf-mode';
 import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../../tutorial/store';
 import { blurredTexture, edgeFillers, mapArt } from '../map-art';
@@ -233,7 +234,7 @@ export class MainMenuScene extends Phaser.Scene {
   private back!: Phaser.GameObjects.Container;
   /** Sağ alttaki küçük sürüm yazısı (DISPLAY_VERSION). */
   private version: Phaser.GameObjects.Text | null = null;
-  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean) => void; run: () => void }> = [];
+  private cards: Array<{ c: Phaser.GameObjects.Container; focus: (on: boolean, kb?: boolean) => void; run: () => void; toggle?: () => void }> = [];
   private cardSel = 0;
   private cleanups: Array<() => void> = [];
   private promptOpen = false;
@@ -719,7 +720,7 @@ export class MainMenuScene extends Phaser.Scene {
     });
   }
 
-  /** Quick Battle kartının altındaki "Endless mode" anahtarı (açıkken kart Endless'ı açar); seçim tarayıcıda saklanır. */
+  /** Quick Battle kartının üstündeki Endless sekmesinin durumu (açıkken kart Endless'ı açar); seçim tarayıcıda saklanır. */
   private endlessOn(): boolean {
     try {
       return window.localStorage?.getItem(ENDLESS_TOGGLE_KEY) === '1';
@@ -734,43 +735,6 @@ export class MainMenuScene extends Phaser.Scene {
     } catch {
       /* depolama yok: yalnızca bu oturum */
     }
-  }
-
-  /** Kit dilinde açma / kapama satırı: elmas (açık = kor, kapalı = içi boş) + yazı + italik durum. Kök (0, 0) = satırın ortası. */
-  private makeToggle(label: string, get: () => boolean, set: (on: boolean) => void, onChange: () => void): Phaser.GameObjects.Container {
-    const root = this.add.container(0, 0);
-    const on = elDiamond(this, 7);
-    const off = elDiamond(this, 7, true);
-    const text = elText(this, 0, 0, label, 20, EL.TXT, { em: 0.08, pad: true }).setOrigin(0, 0.5);
-    const state = elBody(this, 0, 1, '', 19, EL.MUTED).setOrigin(0, 0.5);
-    const zone = this.add.zone(0, 0, 10, EL.HIT).setInteractive({ useHandCursor: true });
-    root.add([on, off, text, state, zone]);
-    const draw = (hover: boolean) => {
-      const v = get();
-      on.setVisible(v);
-      off.setVisible(!v);
-      state.setText(v ? 'on' : 'off').setColor(v ? EL.ON : EL.MUTED);
-      text.setColor(hover || v ? EL.ON : EL.TXT);
-      elGlow(text, hover);
-      const tw = text.width - EL.PAD * 2;
-      const total = 14 + 14 + tw + 12 + state.width;
-      const x0 = -total / 2;
-      on.setPosition(x0 + 7, 0);
-      off.setPosition(x0 + 7, 0);
-      text.setX(x0 + 28 - EL.PAD);
-      state.setX(x0 + 28 + tw + 12);
-      zone.setSize(total + 40, EL.HIT);
-    };
-    draw(false);
-    zone.on('pointerover', () => draw(true));
-    zone.on('pointerout', () => draw(false));
-    zone.on('pointerup', () => {
-      if (!this.ready()) return;
-      set(!get());
-      draw(true);
-      onChange();
-    });
-    return root;
   }
 
   // ------------------------------------------------------------ Play: üç kart
@@ -880,16 +844,144 @@ export class MainMenuScene extends Phaser.Scene {
       c.add(zone);
       let lineText: Phaser.GameObjects.Text | null = null;
       if (s.line) c.add((lineText = (ELEGANT ? this.noteText(0, hh - 52, s.line, LOOK.cardLine - 2, '#cdb88d') : serif(this, 0, hh - 50, s.line, 24, '#cdb88d', { bold: false, stroke: 3 })).setOrigin(0.5)));
+      let tabFocus: ((kb: boolean) => void) | null = null;
+      let toggleEndless: (() => void) | null = null;
       if (s.endless) {
-        // Endless mode anahtarı (kartın altında; açıkken kart Endless dalga koşusunu açar: src/game/endless-session.ts)
+        // Endless sekmesi (Ömer 2026-10-18, taslak endless-toggle C): kartın üst kenarına asılı küçük sekme; fare kartın/sekmenin üstüne gelince
+        // karttan yukarı kayar, gidince geri girer. Açıkken (kapalı sekmeyle bile) kartın çerçevesi kor renginde yanar. Açıkken kart Endless'ı açar.
         const lineFor = () => (this.endlessOn() ? 'Endless waves - how far can you go?' : s.line!);
         lineText?.setText(lineFor());
-        const tg = this.makeToggle('Endless mode', () => this.endlessOn(), (v) => this.setEndlessOn(v), () => {
+        const TAB_H = 52;
+        const tab = this.add.container(0, 0);
+        const tabGlow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD);
+        const plate = this.add.graphics();
+        const dOn = elDiamond(this, 7);
+        const dOff = elDiamond(this, 7, true);
+        const tabLabel = elText(this, 0, 0, 'Endless', 19, EL.TXT, { em: 0.16, pad: true }).setOrigin(0, 0.5);
+        const tabState = elBody(this, 0, 1, '', 19, EL.MUTED, false).setOrigin(0, 0.5);
+        const tabZone = this.add.zone(0, 0, 10, TAB_H).setInteractive({ useHandCursor: true });
+        tab.add([tabGlow, plate, dOn, dOff, tabLabel, tabState, tabZone]);
+        c.addAt(tab, 0); // kartın görselinin ARKASINDA: gizliyken kartın içinde kalır
+        // Kartın kor çerçevesi (Endless açıkken sürekli; hover/odaktan bağımsız)
+        const emberGlow = this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(CARD_W * 1.4, CARD_H * 1.25);
+        c.addAt(emberGlow, 0);
+        const emberFrame = this.add.graphics();
+        c.add(emberFrame);
+        let tabHover = false;
+        const drawTab = (hover: boolean) => {
+          const v = this.endlessOn();
+          dOn.setVisible(v);
+          dOff.setVisible(!v);
+          tabState.setText(v ? 'on' : 'off').setColor(v ? EL.ON : EL.MUTED);
+          tabLabel.setColor(hover || v ? EL.ON : EL.TXT);
+          elGlow(tabLabel, hover);
+          const tw = tabLabel.width - EL.PAD * 2;
+          const inner = 14 + 14 + tw + 12 + tabState.width;
+          const w = inner + 60;
+          const x0 = -inner / 2;
+          dOn.setPosition(x0 + 7, 0);
+          dOff.setPosition(x0 + 7, 0);
+          tabLabel.setX(x0 + 28 - EL.PAD);
+          tabState.setX(x0 + 28 + tw + 12);
+          tabZone.setSize(w, TAB_H);
+          plate.clear();
+          plate.fillStyle(v ? 0x2a190d : 0x17100a, 1).fillRect(-w / 2, -TAB_H / 2, w, TAB_H);
+          plate.lineStyle(1, v || hover ? EL.ON_N : EL.GOLD, v || hover ? 1 : EL.LINE.a3).strokePoints([{ x: -w / 2 + 0.5, y: TAB_H / 2 }, { x: -w / 2 + 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: TAB_H / 2 }], false);
+          tabGlow.setDisplaySize(w * 1.7, TAB_H * 3).setAlpha(v ? 0.3 : 0);
+        };
+        const drawEmber = () => {
+          const v = this.endlessOn();
+          emberGlow.setAlpha(v ? 0.22 : 0);
+          emberFrame.clear();
+          if (v) emberFrame.lineStyle(2, EMBER, 0.95).strokeRect(-hw + 1, -hh + 1, CARD_W - 2, CARD_H - 2);
+        };
+        // Kayma: 0 = kartın içinde gizli, 1 = tamamen çıkmış. Sekmenin ortası gizliyken -hh+TAB_H/2, çıkınca -hh-TAB_H/2.
+        let slide = 0;
+        let slideTw: Phaser.Tweens.Tween | null = null;
+        const place = () => {
+          tab.setY(-hh + TAB_H / 2 - slide * TAB_H).setVisible(slide > 0.001);
+          if (tabZone.input) tabZone.input.enabled = slide > 0.5;
+        };
+        const slideTo = (to: number) => {
+          if (to === slide && !slideTw) return;
+          slideTw?.stop();
+          slideTw = null;
+          const m = motion('endlessTab');
+          const dur = to > slide ? m.inMs : m.outMs;
+          if (dur <= 0) {
+            slide = to;
+            place();
+            return;
+          }
+          const from = slide;
+          slideTw = this.tweens.addCounter({
+            from: 0,
+            to: 1,
+            duration: dur * Math.abs(to - from),
+            ease: 'Cubic.easeOut',
+            onUpdate: (tw) => {
+              if (!c.active) return void tw.stop(); // kartlar yenilendi
+              slide = from + (to - from) * (tw.getValue() ?? 1);
+              place();
+            },
+            onComplete: () => {
+              slide = to;
+              slideTw = null;
+              place();
+            },
+          });
+        };
+        const coarse = !!window.matchMedia?.('(pointer: coarse)').matches; // dokunmatik: fareyle gelme yok, sekme hep dışarıda
+        let cardHover = false;
+        let kbFocus = false;
+        let leaveEv: Phaser.Time.TimerEvent | null = null;
+        const refresh = () => {
+          const want = coarse || cardHover || tabHover || kbFocus;
+          leaveEv?.remove(false);
+          leaveEv = null;
+          if (want) return slideTo(1);
+          leaveEv = this.time.delayedCall(motion('endlessTab').leaveDelayMs, () => {
+            leaveEv = null;
+            if (!(cardHover || tabHover || kbFocus)) slideTo(0);
+          });
+        };
+        zone.on('pointerover', () => {
+          cardHover = true;
+          refresh();
+        });
+        zone.on('pointerout', () => {
+          cardHover = false;
+          refresh();
+        });
+        tabZone.on('pointerover', () => {
+          tabHover = true;
+          drawTab(true);
+          refresh();
+        });
+        tabZone.on('pointerout', () => {
+          tabHover = false;
+          drawTab(false);
+          refresh();
+        });
+        toggleEndless = () => {
+          this.setEndlessOn(!this.endlessOn());
           lineText?.setText(lineFor());
           showAlt(this.endlessOn(), true);
+          drawTab(tabHover);
+          drawEmber();
+        };
+        tabZone.on('pointerup', (_p: Phaser.Input.Pointer, _lx: number, _ly: number, ev: Phaser.Types.Input.EventData) => {
+          ev?.stopPropagation(); // kartın kendi tıklaması (Endless / takım seçimi) tetiklenmesin
+          if (this.ready()) toggleEndless?.();
         });
-        tg.setY(hh + 46);
-        outer.add(tg);
+        tabFocus = (kb) => {
+          kbFocus = kb; // klavye odağı sekmeyi gösterir; fareyle odak değişince (kb=false) kapanır
+          refresh();
+        };
+        drawTab(false);
+        drawEmber();
+        place();
+        if (coarse) slideTo(1);
       }
       if (s.buttons) {
         const gap = 22; // kit düğmelerinin yan elmasları birbirine değmesin
@@ -910,7 +1002,8 @@ export class MainMenuScene extends Phaser.Scene {
       }
       const look = { lift: 0, zoom: 1 };
       let lookTw: Phaser.Tweens.Tween | null = null;
-      const focus = (on: boolean) => {
+      const focus = (on: boolean, kb = false) => {
+        tabFocus?.(on && kb);
         drawFrame(on);
         this.tweens.killTweensOf(glow);
         this.tweens.add({ targets: glow, alpha: on ? 0.12 : 0, duration: 160 });
@@ -942,13 +1035,13 @@ export class MainMenuScene extends Phaser.Scene {
         if (ly >= btnStrip) return;
         if (this.ready()) s.run();
       });
-      this.cards.push({ c: outer, focus, run: s.run });
+      this.cards.push({ c: outer, focus, run: s.run, toggle: toggleEndless ?? undefined });
     });
   }
 
-  private focusCard(i: number): void {
+  private focusCard(i: number, kb = false): void {
     this.cardSel = i;
-    this.cards.forEach((k, j) => k.focus(j === i));
+    this.cards.forEach((k, j) => k.focus(j === i, kb));
   }
 
   private showCards(shown: boolean, instant: boolean): void {
@@ -1343,7 +1436,8 @@ export class MainMenuScene extends Phaser.Scene {
       if (up || down) this.selectMain(moveSelection(this.menuSel, up ? -1 : 1, this.menuRows.length));
       else if (enter) this.pickMain(MAIN_ITEMS[this.menuSel]!.key);
     } else if (this.view === 'play') {
-      if (left || right || up || down) this.focusCard(moveSelection(this.cardSel, left || up ? -1 : 1, this.cards.length));
+      if (left || right || up || down) this.focusCard(moveSelection(this.cardSel, left || up ? -1 : 1, this.cards.length), true);
+      else if (k === 'e' || k === 'E') this.cards[this.cardSel]?.toggle?.(); // Quick Battle odaktayken Endless anahtarı
       else if (enter) this.cards[this.cardSel]?.run();
     } else if (this.view === 'settings' && (this.panelZone === 'cat' || k === 'Tab')) {
       // Kategori sütunu: yukarı/aşağı sayfa değiştirir, sağ / Enter satırlara geçer; Tab her yerde sonraki sayfa

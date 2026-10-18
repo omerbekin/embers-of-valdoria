@@ -7,11 +7,13 @@
     "crossfade+motion": { "label": "Crossfade + motion", "motion": 1, "scale": 1, "scaleMin": 0.75, "scaleMax": 1.35, "minSize": 24, "alphaMin": 24 }
   },
   "battleTest": {
-    "_not": "Debug > Characters > Animation tests > VFX frame test (in battle) (src/ui/debug-vfx-battle.ts): gerçek test savaşı. Atan mob (skill'in sahibi) DÜŞMAN tarafında, kukla (dummy) oyuncu tarafında durur; kukla hareket etmez, her atıştan önce/sonra canı doldurulur. dummy = kukla mob id'si, casterSlot / dummySlot = hücre (4 sıra x 3 şerit; 1 = ön sıra ortası), loopGapMs = döngü modunda atışlar arası bekleme (ms).",
+    "_not": "Debug > Characters > Animation tests > VFX frame test (in battle) (src/ui/debug-vfx-battle.ts): gerçek test savaşı. Atan mob (skill'in sahibi) DÜŞMAN tarafında, kukla (dummy) oyuncu tarafında durur; kukla hareket etmez, her atıştan önce/sonra canı doldurulur. dummy = kukla mob id'si, casterSlot / dummySlot = hücre (4 sıra x 3 şerit; 1 = ön sıra ortası), loopGapMs = döngü modunda atışlar arası bekleme (ms). allyMob / allySlot = dost hedefli skill'lerde (Sanctuary, Shield Wall...) atanın yanına konan dost ve yuvası (atandan küçük yuva: debug atışı onu seçer).",
     "dummy": "stonebound_warden",
     "background": "ashen-plain",
     "casterSlot": 1,
     "dummySlot": 1,
+    "allyMob": "shieldwarden",
+    "allySlot": 0,
     "loopGapMs": 500,
     "speeds": [0.25, 0.5, 1]
   },

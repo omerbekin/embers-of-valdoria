@@ -16,7 +16,7 @@
 //     El noktaları Warrior v2'deki oranlardan tahmin edilir (yalnızca kutuya göre oran); yanlışsa ince ayar: node tools/pose-editor.mjs ya da
 //     assets/source/poses/<id>-v2/config.json:
 //       { "mirror": ["thrust1"], "noMirror": ["spin1b"], "seeds": { "idle1": { "main": [185, 213], "off": [75, 277] } } }
-//     (seeds = sayfa koordinatı, aynalamadan önce; verilen kare yeniden algılanır; "steelHands": true = çelik eldiven araması).
+//     ("holes": true = gövde sayfalarında da kapalı kalan büyük koyu zemin cepleri silinir, ör. kol ile gövde arası; ) (seeds = sayfa koordinatı, aynalamadan önce; verilen kare yeniden algılanır; "steelHands": true = çelik eldiven araması).
 //     Tek kare düzeltmesi: assets/source/poses/<id>-v2/override-<kare>.png (tek figür, koyu düz #121212 zemin, ör. 1024x1536) o kareyi
 //     sayfalardan ALIR; boyu yerine geçtiği karenin boyuna eşitlenir (taban/ayak ortası aynı kural). Tohumu config.json > seeds.<kare>
 //     içinde O DOSYANIN koordinatıyla verilir. Yeni poz eskisinden belirgin kısa/uzunsa (kambur isabet) config.json > "overrideScale":
@@ -503,7 +503,7 @@ async function bodies(data) {
   const baseH = new Map(); // Warrior: ana sayfadaki boy (ek sayfanın ölçeği için)
   for (const sheet of sheets) {
     const img = await load(sheet.file);
-    removeBackground(img);
+    removeBackground(img, !!CONFIG.holes);
     const cols = sheet.names[0].length;
     const rows = sheet.names.length;
     const { lab, comps: rawComps } = components(img);

@@ -16,7 +16,7 @@ MARGIN = 0.015
 
 # id: (cx, top, size)  -> içerik kutusunun sol-üstüne göre, orijinal (1254px) piksel; kare kafa+boyun kutusu
 HEADS = {
-    'antimage': (580, 0, 240),
+    'antimage': (318, 0, 275),  # 2026-10-18: yeni kadın Anti-Mage (antimage-v3-themes/final-idle-2.png); eskisi antimage-old-v2.png
     'archer': (309, 0, 235),
     'defender': (500, 0, 250),
     'druid':    (395, 25, 240),

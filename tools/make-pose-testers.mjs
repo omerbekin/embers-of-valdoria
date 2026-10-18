@@ -58,11 +58,11 @@ const POSE = {
   wail_of_the_dead: 'channel',
   dark_bond: 'channel',
   raise_dead: 'raise',
-  // Anti-Mage (kılıç + hançer)
-  mana_burn: 'slash',
+  // Anti-Mage (hançer; mana_burn = hançer fırlatır, void_strike = sol elle point)
+  mana_burn: 'throw',
   drain_field: 'raise',
   spell_ward: 'channel',
-  void_strike: 'thrust',
+  void_strike: 'point',
   // Gambler (iskambil: tılsım fırlatışta elden çıkar, point'te açık elin parmaklarında)
   loaded_dice: 'throw',
   high_stakes: 'point',

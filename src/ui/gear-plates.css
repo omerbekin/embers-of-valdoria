@@ -335,3 +335,58 @@ html.short .gp-chip {
 .gr-pl .pl-sl .n small {
   font: 600 0.78em var(--g-disp);
 }
+
+/* Tüccar malları / geri alım (Ömer 2026-10-18, taslak public/mockups/merchant.html#a): her mal Gear > Hero item plakası, tek sütun; yalnızca sağ kenarda fiyat. */
+html .gr-pair .gr-shop .gr-wares.gr-wplates,
+html .gr-pair .gr-shop .gr-bb-row.gr-wplates,
+html .gr-shop .gr-wares.gr-wplates,
+html .gr-shop .gr-bb-row.gr-wplates {
+  display: flex;
+  flex-direction: column;
+  grid-template-columns: none;
+  gap: calc(12 * var(--u));
+}
+
+.gr-wplates .gr-slot.gr-plate {
+  width: 100%;
+  text-align: left;
+  flex: none;
+  cursor: pointer;
+}
+
+.gr-wplates .gr-slot.gr-plate .gr-slot-text {
+  flex: 1;
+  min-width: 0;
+}
+
+.gr-wplates .gr-slot.gr-plate.sold {
+  opacity: 0.4;
+  filter: grayscale(0.7);
+  cursor: default;
+}
+
+.gp-price {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3em;
+  margin-left: auto;
+  font: 600 max(13px, calc(24 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+  white-space: nowrap;
+}
+
+.gp-price.bad {
+  color: #ff8a7a;
+}
+
+.gp-price-ico {
+  width: max(14px, calc(26 * var(--u)));
+  height: max(14px, calc(26 * var(--u)));
+}
+
+.gr-shop .gr-odo-line,
+.gr-shop .gr-shop-sub,
+.gr-shop .gr-sellbox-t i {
+  font-style: normal;
+}

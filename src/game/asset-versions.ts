@@ -25,6 +25,9 @@ export type ArtKind = 'icon' | 'vfx' | 'sfx';
 /** Yeniden tasarım kapsamı dışındaki class'lar (Ömer: Cutthroat tamamen kapsam dışı). Sürüm seçicide görünmez, hep v1. */
 export const VERSION_EXCLUDED: readonly string[] = ['cutthroat'];
 
+/** Sürüm seçicide görünmeyen ama İKONLARI her zaman v2 (boyalı) olan anahtarlar: Cutthroat (2026-10-18; animasyon/ses v1'de kalır). */
+export const ICONS_ALWAYS_V2: readonly string[] = ['cutthroat'];
+
 /** Kapsamı kısıtlı anahtarlar: yalnızca listelenen türler v2 olabilir (Shared: animasyonu yok). Defender 2026-10-10'dan beri tam kapsamda. */
 export const V2_SCOPE: Readonly<Record<string, readonly ArtKind[]>> = { [SHARED_KEY]: ['icon', 'sfx'] };
 
@@ -257,6 +260,7 @@ export function allVersionsState(): AssetVersion | 'mixed' {
 
 /** Sahibin `kind` türü için v2 seçili ve kapsamda mı. */
 export function wantsV2(owner: string | null | undefined, kind: ArtKind): boolean {
+  if (owner && kind === 'icon' && ICONS_ALWAYS_V2.includes(owner)) return true;
   return !!owner && inScope(owner, kind) && getVersion(owner) === 'v2';
 }
 

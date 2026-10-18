@@ -19,6 +19,7 @@ import { battleSpriteIds } from '../sprite-needs';
 import { CombatantView, color, slow, textStyle } from '../combatant-view';
 import { preloadVfxSheets } from '../vfx-sheets';
 import { VFX_SHEET_FILES, mobSheetsOf } from '../vfx-sheet-files';
+import { viewMotion } from '../pose-timing';
 import { preloadPoses, releaseForBattle, releasePoseSources } from '../pose-rig';
 import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
@@ -3219,7 +3220,7 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
 
-    if (skill.motion === 'melee') {
+    if (viewMotion(skill) === 'melee') {
       const avgX = targets.reduce((sum, t) => sum + t.container.x, 0) / targets.length;
       await new Promise<void>((resolve) => void actor.lunge(avgX, resolve));
       return;

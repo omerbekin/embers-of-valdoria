@@ -160,19 +160,16 @@ function ripMana(c: VfxCtx, k: VfxKit, from: CombatantView, to: () => Pt, o: { n
 // MANA STEAL
 
 /**
- * Mana Steal (yakın dövüş, tek hedef): Anti-Mage mor hayalet izler bırakarak hedefin yanına atılır, rünlü kılıcıyla çapraz keser (mor-beyaz
- * yay, kesik boyunca yanan rün kıvılcımları; vuruş anı = hasar). Kesikten hedefin MAVİ manası damlalar hâlinde fışkırır, ışık iplikleriyle
+ * Mana Steal (motor: yakın dövüş; görünüm: yerinden atış, skills.json > viewMotion 'ranged'; tek hedef): Anti-Mage YERİNDE küçük gümüş hançer fırlatır;
+ * hançer çarpınca mor-beyaz yay çapraz kesik gibi açılır (kesik boyunca yanan rün kıvılcımları; vuruş anı = hasar). Kesikten hedefin MAVİ manası damlalar hâlinde fışkırır, ışık iplikleriyle
  * geri dönen Anti-Mage'e çekilir; yolda MORA döner ve onun bedenine emilir (çalınan mana). İlk hasar ~0,34 sn.
  */
 const manasteal: V2Vfx = async (c, k) => {
   const t0 = c.targets[0];
   if (!t0) return;
-  c.sfx('swordWhoosh');
   const dir = t0.container.x >= c.actor.container.x ? 1 : -1;
-  const stand = { x: t0.container.x - dir * (t0.w * 0.5 + c.actor.w * 0.5 + 6), y: t0.container.y };
-  await c.actor.approach(stand.x, stand.y, 170, 0x9b59d0);
-  c.actor.play('attack');
-  c.scene.tweens.add({ targets: c.actor.container, x: stand.x + dir * 24, duration: k.slow(60), yoyo: true });
+  // yerinden atış (skills.json > viewMotion 'ranged'): koşmaz; küçük gümüş hançer elinden hedefe uçar, çarpınca mor boşluk efekti başlar
+  await Promise.all(c.targets.map((t) => k.throwDagger(c, t)));
   c.sfx('manaSizzle');
   for (const t of c.targets) {
     const p = k.spot(t);
@@ -193,7 +190,6 @@ const manasteal: V2Vfx = async (c, k) => {
     k.flash(c.scene, '#2a0a4a', 0.16, 220);
   }
   // geri dönüş + mana sökümü (arka planda)
-  void k.wait(c.scene, k.slow(200)).then(() => c.actor.returnHome(260, 0x9b59d0));
   void k.wait(c.scene, k.slow(90)).then(() => {
     c.sfx('energySlurp');
     for (const t of c.targets)

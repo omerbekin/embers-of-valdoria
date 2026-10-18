@@ -127,7 +127,8 @@ describe('sürüm kaydı: her class için dosyalar ve tek satırlık kayıt', ()
     expect(inScope('defender', 'icon')).toBe(true);
     expect(inScope('defender', 'vfx')).toBe(true);
     expect(inScope('defender', 'sfx')).toBe(true);
-    expect(ICONS_V2['cutthroat']).toBeUndefined();
+    expect(ICONS_V2['cutthroat']).toBeDefined(); // yalnızca ikon (ICONS_ALWAYS_V2); vfx/ses yok
+    expect(VFX_V2['cutthroat']).toBeUndefined();
     expect(AUDIO_V2['cutthroat']).toBeUndefined();
   });
 

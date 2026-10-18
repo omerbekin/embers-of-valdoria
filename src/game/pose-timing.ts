@@ -37,6 +37,13 @@ export interface PoseHold {
   shownAt: number;
 }
 
+/**
+ * Skill'in SUNUM hareketi (yalnızca görünüm; Ömer 2026-10-18): skills.json > `viewMotion` varsa o, yoksa `motion`. Motor ve yapay zeka yalnızca
+ * `motion`a bakar (menzil / yakın dövüş kuralı); koşarak vurma, poz tutma süresi gibi görsel kararlar buradan okunur
+ * (ör. Mana Steal: motor için `melee`, ekranda yerinden fırlatılan hançer = `ranged`).
+ */
+export const viewMotion = (s: { motion?: string; viewMotion?: string } | null | undefined): string | undefined => s?.viewMotion ?? s?.motion;
+
 /** Kanallı skill mi (poz vuruşa / efektin sonuna dek tutulur). */
 export const isHoldSkill = (t: PoseTiming, id: string | undefined): boolean => !!id && t.holdSkills.includes(id.replace(/^pt_/, ''));
 

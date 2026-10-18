@@ -135,12 +135,6 @@ function bramble(g: PxGrid, p0: [number, number], c: [number, number], p1: [numb
   }
 }
 
-/** Toprak şeridi (alt). */
-function soil(g: PxGrid, y: number, h = 5): void {
-  g.poly([0.5, y + 1, 5, y - 0.8, 11, y + 0.4, 17, y - 1, 23, y + 0.3, 31.5, y - 0.6, 31.5, y + h, 0.5, y + h], 'k');
-  g.poly([0.5, y + 1, 5, y - 0.8, 11, y + 0.4, 17, y - 1, 23, y + 0.3, 31.5, y - 0.6, 31.5, y + 1.4, 0.5, y + 2.2], 'b');
-}
-
 // ---------------------------------------------------------------------------------------------------------------- ikonlar
 
 export const ICONS: Record<string, V2SpriteEntry> = {
@@ -150,6 +144,9 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   rejuvenate: { image: 'druid/rejuvenate' },
   treant: { image: 'druid/treant' },
   leaves: { image: 'druid/leaves' },
+  // ChatGPT boyalı ikonlar (summons-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  rootsmash: { image: 'druid/rootsmash' },
+  vinesnare: { image: 'druid/vinesnare' },
   /** Druid logosu: altın damarlı meşe yaprağı, sapında küçük palamut. */
   leaf: (g) => {
     oakLeaf(g, 6.5, 26.5, 26.5, 5, 6.4, 'a', 'A', 'Y');
@@ -171,69 +168,7 @@ export const ICONS: Record<string, V2SpriteEntry> = {
 
   /** Summon Treant + Treant logosu: kabuklu meşe yüzü, kehribar gözler, alnında yosun, tepesinde meşe dalları ve yaprakları. */
 
-  /** Root Smash (Treant): yosunlu dev ahşap yumruk yerden yukarı fırlar; bileğinden kökler toprağa iner, darbe çizgileri. */
-  rootsmash: (g) => {
-    soil(g, 27, 5);
-    // bilek: burgulu kök demeti topraktan çıkar
-    root(g, [[16, 31], [14.8, 27], [16, 22.5]], 7.5, 6.5);
-    root(g, [[9.5, 30.5], [11.5, 27.5], [13, 24]], 2, 1.4);
-    root(g, [[23, 30.5], [20.6, 27.5], [19.2, 24]], 2, 1.4);
-    // yumruk gövdesi (boğumlar yukarıda)
-    g.poly([7.5, 7.5, 24.5, 7.5, 26, 12, 25.5, 22, 22, 24.5, 10, 24.5, 6.5, 22, 6, 12], 'k');
-    // dört kıvrık parmak (dikey sütunlar)
-    for (let i = 0; i < 4; i++) {
-      const x = 7.8 + i * 4.3;
-      g.poly([x, 9, x + 3.6, 9, x + 3.6, 17.5, x, 17.5], 'b');
-      g.ellipse(x + 1.8, 8.8, 1.9, 1.7, 'b');
-      g.line(x + 0.6, 9.5, x + 0.6, 16.5, 'n', 0.5);
-      g.line(x + 0.4, 13.2, x + 3.2, 13.4, 'k', 0.5); // orta boğum
-    }
-    // avuç tabanı
-    g.poly([7, 17.5, 25, 17.5, 24.6, 22, 21.6, 23.8, 10.4, 23.8, 7.4, 22], 'b');
-    // başparmak parmakların önünden yatay geçer
-    g.poly([6.5, 16, 18.5, 15.2, 20, 17.4, 18.4, 19.6, 7.6, 20.2], 'k');
-    g.poly([7.4, 16.8, 18, 16, 19, 17.6, 17.8, 19, 8, 19.4], 'n');
-    g.line(8, 17, 17, 16.4, 'w', 0.5);
-    // yosun + kehribar budak
-    g.dither(19.5, 20.5, 4.5, 2, 'g', 'G');
-    g.disc(10.2, 9.2, 1, 'g');
-    g.disc(12.5, 21.6, 0.9, 'f');
-    // darbe çizgileri
-    g.line(2.5, 4, 5.5, 7, 'w', 0.9).line(29.5, 4, 26.5, 7, 'w', 0.9).line(16, 0.5, 16, 4.5, 'w', 0.9);
-    g.disc(3.5, 25, 1, 'b').disc(28.5, 24.4, 1.1, 'k');
-  },
 
-  /** Vine Snare (Treant): topraktan çıkan kök-sarmaşık halkaları bir çizmeyi bileğinden sıkıca sarar (yere bağlanma). */
-  vinesnare: (g) => {
-    soil(g, 27, 5);
-    // yandan bacak (koyu mavi pantolon) + kahve çizme: yakalanan düşman
-    g.poly([10.5, 1, 17.5, 1, 17.8, 14, 10.8, 14], 'U');
-    g.line(11.4, 2, 11.6, 13.5, 'u', 0.6);
-    g.poly([10.4, 13, 18, 13, 18.2, 19.5, 27, 21, 28.6, 26.6, 9.8, 26.6], 'd');
-    g.poly([11.2, 13.6, 17.2, 13.6, 17.4, 20.2, 26.2, 21.8, 27.4, 25.6, 10.8, 25.6], 'm');
-    g.line(18, 21, 26, 22.6, 'l', 0.6);
-    g.rect(10, 12.4, 8.6, 1.8, 'l');
-    // kök-sarmaşık sarmalı: bacağı önden saran kavisli bantlar (arka yarısı gizli)
-    const wrap = (cy: number, tilt: number) => {
-      const pts: number[] = [];
-      for (let i = 0; i <= 12; i++) {
-        const a = (i / 12) * Math.PI;
-        pts.push(14.2 + Math.cos(a) * 6.6, cy + Math.sin(a) * 2.4 + Math.cos(a) * tilt);
-      }
-      for (let i = 0; i < 12; i++) g.line(pts[i * 2]!, pts[i * 2 + 1]!, pts[i * 2 + 2]!, pts[i * 2 + 3]!, 'k', 2.2);
-      for (let i = 0; i < 12; i++) g.line(pts[i * 2]!, pts[i * 2 + 1]! - 0.4, pts[i * 2 + 2]!, pts[i * 2 + 3]! - 0.4, 'G', 0.9);
-    };
-    wrap(6, -1.4);
-    wrap(15.5, -1.4);
-    // ayak bileğini saran kalın kök: topraktan çıkar, bileği dolar, ucu sağda kıvrılır
-    root(g, [[4.5, 30], [3.6, 24], [5, 17], [7.6, 7]], 2.8, 1.6, 'b', 'k');
-    g.line(6, 21.6, 22, 19.4, 'k', 2.8).line(6.4, 21, 21.6, 18.8, 'b', 1.3);
-    root(g, [[22, 19.4], [25.5, 17], [26.5, 13]], 2.2, 1.2, 'b', 'k');
-    // yeşil sürgünler
-    g.poly([7.6, 7, 3.6, 3.4, 5.6, 8.8], 'a').poly([26.5, 13, 30.6, 9.6, 29.4, 14.6], 'a').poly([3.8, 19.6, 0.6, 17.2, 1.8, 21.8], 'g');
-    // sıkma çizgileri
-    g.line(27.5, 12, 30, 11, 'w', 0.7).line(27.5, 15, 30.5, 15, 'w', 0.7).line(1, 26, 2.8, 25, 'w', 0.7);
-  },
 };
 
 // ---------------------------------------------------------------------------------------------------------------- efekt sprite'ları

@@ -115,3 +115,41 @@ html.short .vb-lbl {
 html.short .vb-info {
   font-size: 12px;
 }
+
+/* skill seçimi: mob'a göre gruplu açılır liste + önceki / sonraki */
+.vb-select {
+  min-height: 44px;
+  max-width: 300px;
+  padding: 0 10px;
+  font: 600 13px var(--el-display);
+  letter-spacing: 0.04em;
+  color: var(--el-txt);
+  background: rgba(20, 15, 11, 0.95);
+  border: 1px solid var(--el-line2);
+  cursor: pointer;
+}
+
+.vb-select:focus-visible {
+  outline: 1px solid var(--el-on);
+}
+
+.vb-select optgroup {
+  font-style: normal;
+  color: var(--el-dim);
+  background: #140f0b;
+}
+
+.vb-select option {
+  color: var(--el-txt);
+  background: #140f0b;
+}
+
+.vb-btn.vb-arrow {
+  min-width: 44px;
+  padding: 0;
+}
+
+html.short .vb-select {
+  max-width: 220px;
+  font-size: 11px;
+}

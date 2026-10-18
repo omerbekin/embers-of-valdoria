@@ -9,7 +9,7 @@
  * Bu class'ın v1 ikon adları (ICONS anahtarları): nullsphere, overflow, manaburn, drainfield, spellward, voidstrike
  */
 import type { V2SpriteEntry } from '../types';
-import { shieldShape, type PxGrid } from '../../pixel-art';
+import type { PxGrid } from '../../pixel-art';
 
 /** Rün tableti (sprite'taki eldivenin çevresindeki kırık parçalar): merkez, yarı boy, açı, renk. */
 function tablet(g: PxGrid, cx: number, cy: number, w: number, h: number, ang: number, body = 'p', rune = 'w'): void {
@@ -49,116 +49,15 @@ function runeSword(g: PxGrid, x0: number, y0: number, x1: number, y1: number, w:
 }
 
 export const ICONS: Record<string, V2SpriteEntry> = {
-  /** Mana Steal: mor rünlü kılıç, ucundaki MAVİ mana küresini deler; kürenin manası kılıca doğru damlalar hâlinde akar. */
-  manaburn: (g) => {
-    // mavi mana küresi (delinmiş, çatlak)
-    g.disc(22, 10, 8.2, 'U');
-    g.disc(22, 10, 6.9, 'u');
-    g.disc(20.2, 8.2, 2.6, 'c');
-    g.line(18, 14.5, 21.5, 10.5, 'w', 0.6);
-    g.line(25.5, 4.5, 23.5, 8.5, 'w', 0.6);
-    runeSword(g, 8, 24, 29.5, 2.5, 4);
-    // kılıca doğru akan mana damlaları (mavi -> mor)
-    const drop = (x: number, y: number, r: number, t: string) => {
-      g.poly([x - r * 0.9, y - r * 0.3, x + r * 1.9, y - r * 2.2, x + r * 0.3, y + r * 0.9], t);
-      g.disc(x, y, r, t);
-    };
-    drop(17, 21.5, 2, 'u');
-    drop(12.5, 26, 1.8, 'p');
-    drop(21.5, 19.5, 1.4, 'c');
-    g.disc(4.5, 27.5, 2.6, 'a');
-    g.disc(4.5, 27.5, 1.3, 'z');
-  },
+  // ChatGPT boyalı ikonlar (antimage-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  manaburn: { image: 'antimage/manaburn' },
+  drainfield: { image: 'antimage/drainfield' },
+  spellward: { image: 'antimage/spellward' },
+  voidstrike: { image: 'antimage/voidstrike' },
+  overflow: { image: 'antimage/overflow' },
 
-  /** Drain Field: yere işlenmiş 3x3 rün mührü (eğik ızgara), ortasında boşluk ağzı; yukarıdan mavi mana zerreleri içine çekilir. */
-  drainfield: (g) => {
-    // eğik eşkenar dörtgen alan (3x3)
-    const T = [16, 13.5];
-    const R = [31, 21.5];
-    const B = [16, 29.5];
-    const L = [1, 21.5];
-    g.poly([...T, ...R, ...B, ...L], 'P');
-    // ızgara çizgileri
-    const lerp = (a: number[], b: number[], k: number) => [a[0]! + (b[0]! - a[0]!) * k, a[1]! + (b[1]! - a[1]!) * k];
-    for (const k of [1 / 3, 2 / 3]) {
-      const [a1, a2] = lerp(T, R, k);
-      const [b1, b2] = lerp(L, B, k);
-      g.line(a1!, a2!, b1!, b2!, 'a', 0.6);
-      const [c1, c2] = lerp(T, L, k);
-      const [d1, d2] = lerp(R, B, k);
-      g.line(c1!, c2!, d1!, d2!, 'a', 0.6);
-    }
-    // dış kenar parlaklığı
-    g.line(L[0]!, L[1]!, T[0]!, T[1]!, 'z', 0.6);
-    g.line(T[0]!, T[1]!, R[0]!, R[1]!, 'z', 0.6);
-    // orta hücrede boşluk girdabı
-    g.ellipse(16, 21.5, 4.6, 2.5, 'o');
-    g.ring(16, 21.5, 4.6, 'z', 0.5, Math.PI * 0.9, Math.PI * 1.9);
-    g.ring(16.6, 21.3, 2.6, 'a', 0.5, Math.PI * -0.1, Math.PI * 0.9);
-    // çekilen mavi mana damlaları (aşağı bakan uç, arkada kısa kuyruk)
-    const mote = (x: number, y: number, ang: number, r: number) => {
-      const dx = Math.cos(ang);
-      const dy = Math.sin(ang);
-      g.line(x - dx * r * 3.2, y - dy * r * 3.2, x, y, 'U', r * 0.8);
-      g.poly([x - dy * r, y + dx * r, x + dx * r * 1.8, y + dy * r * 1.8, x + dy * r, y - dx * r], 'u');
-      g.disc(x, y, r, 'u');
-      g.disc(x - dx * 0.3, y - dy * 0.3, r * 0.5, 'c');
-    };
-    mote(9.5, 7.5, 1.2, 1.9);
-    mote(22.5, 7, 1.95, 1.9);
-    mote(16, 4.5, Math.PI / 2, 2.2);
-  },
 
-  /** Spell Ward: mor altıgen büyü kalkanı, ortasında büyü-kıran rün; çevresinde dışa dikenli kırık rün tabletleri (saldıranı cezalandırır). */
-  spellward: (g) => {
-    // dışa bakan küçük dikenler (misilleme)
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 - Math.PI / 2;
-      const x = 16 + Math.cos(a) * 14.6;
-      const y = 16.5 + Math.sin(a) * 14.6;
-      g.poly([16 + Math.cos(a - 0.12) * 11.5, 16.5 + Math.sin(a - 0.12) * 11.5, x, y, 16 + Math.cos(a + 0.12) * 11.5, 16.5 + Math.sin(a + 0.12) * 11.5], 'z');
-    }
-    // altıgen bariyer
-    const hexPts = (r: number) => Array.from({ length: 6 }, (_, i) => [16 + Math.cos((i / 6) * Math.PI * 2 + Math.PI / 6) * r, 16.5 + Math.sin((i / 6) * Math.PI * 2 + Math.PI / 6) * r]).flat();
-    g.poly(hexPts(10.5), 'P');
-    g.poly(hexPts(8.5), 'a');
-    g.poly(hexPts(6.3), 'P');
-    // büyü kıran rün: daire + çapraz çizgi
-    g.ring(16, 16.5, 4.2, 'z', 1);
-    g.line(12.5, 20, 19.5, 13, 'w', 1);
-    // çevrede kırık tabletler (sprite'taki eldivenin halkası)
-    for (let i = 0; i < 6; i++) {
-      const a = (i / 6) * Math.PI * 2 - Math.PI / 2 + Math.PI / 6;
-      tablet(g, 16 + Math.cos(a) * 12.4, 16.5 + Math.sin(a) * 12.4, 1.5, 2.4, a + Math.PI / 2, 'l', 'p');
-    }
-  },
 
-  /** Void Strike: kara boşluk tekilliği; sekiz mor iğne ve mavi mana damlaları merkeze çöker (kayıp mana kadar güçlü). */
-  voidstrike: (g) => {
-    // içe çöken iğneler
-    for (let i = 0; i < 8; i++) {
-      const a = (i / 8) * Math.PI * 2 + Math.PI / 8;
-      const ox = 16 + Math.cos(a) * 15;
-      const oy = 16 + Math.sin(a) * 15;
-      const ix = 16 + Math.cos(a) * 6.8;
-      const iy = 16 + Math.sin(a) * 6.8;
-      const nx = -Math.sin(a) * 1.4;
-      const ny = Math.cos(a) * 1.4;
-      g.poly([ox + nx, oy + ny, ix, iy, ox - nx, oy - ny], i % 2 ? 'a' : 'p');
-      g.line(ox, oy, 16 + Math.cos(a) * 10, 16 + Math.sin(a) * 10, 'z', 0.4);
-    }
-    // mavi mana damlaları (dört ana yönde, içe akan)
-    for (let i = 0; i < 4; i++) {
-      const a = (i / 4) * Math.PI * 2;
-      g.disc(16 + Math.cos(a) * 11, 16 + Math.sin(a) * 11, 1.5, 'u');
-      g.disc(16 + Math.cos(a) * 11, 16 + Math.sin(a) * 11, 0.7, 'c');
-    }
-    // tekillik: kızgın halka + kara çekirdek
-    g.disc(16, 16, 6.6, 'z');
-    g.disc(16, 16, 5.6, 'a');
-    g.disc(16, 16, 4.4, 'o');
-    g.ring(16, 16, 5.6, 'w', 0.5, Math.PI * 1.1, Math.PI * 1.5);
-  },
 
   /** Logo: büyüyü kıran kılıç: dik rünlü kılıç, kırılarak dağılan mor rün halkasının içinden geçer. */
   nullsphere: (g) => {
@@ -174,25 +73,6 @@ export const ICONS: Record<string, V2SpriteEntry> = {
     runeSword(g, 16, 25, 16, 1, 4.6);
   },
 
-  /** Mana Overflow (pasif): büyü zırhı plakası (çelik kalkan, mor rün) büyüyü emer; tepesinden takıma taşan mavi mana. */
-  overflow: (g) => {
-    // taşan mana (kalkanın üstünde kabaran yüzey + yükselen damlalar)
-    g.ellipse(16, 12, 9, 3, 'u');
-    g.ellipse(16, 11.6, 7, 2, 'c');
-    for (const [x, y, r] of [[9, 6, 1.7], [16, 3.5, 2.1], [23, 6, 1.7]] as Array<[number, number, number]>) {
-      g.disc(x, y, r, 'u');
-      g.poly([x - r * 0.8, y + r * 0.3, x, y - r * 2.4, x + r * 0.8, y + r * 0.3], 'u');
-      g.disc(x - r * 0.3, y - r * 0.2, r * 0.4, 'w');
-    }
-    shieldShape(g, 16, 12, 20, 19, 'm', 'd');
-    g.line(8, 14.2, 24, 14.2, 'l', 0.6);
-    // mor rün (büyü kıran) kalkan ortasında
-    g.ring(16, 20.5, 3.6, 'a', 0.9);
-    g.line(13.2, 23.4, 18.8, 17.6, 'z', 0.8);
-    // emilen mor oklar (yanlardan çarpan büyü)
-    g.poly([1, 18, 5.5, 16.5, 5, 20], 'a');
-    g.poly([31, 22, 26.5, 20.5, 27, 24], 'a');
-  },
 };
 
 export const SPRITES: Record<string, V2SpriteEntry> = {

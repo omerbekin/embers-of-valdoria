@@ -140,6 +140,13 @@ export const PIXEL_FX: Record<string, Draw> = {
     g.poly([16, 7, 21, 16.5, 21.3, 21, 19.2, 24.8, 16, 25.8, 12.8, 24.8, 10.7, 21, 11, 16.5], 'r');
     g.rect(12.4, 17, 1.8, 4.4, 'w');
   },
+  // Fırlatma hançeri (Anti-Mage Mana Steal): kısa, mat gümüş bıçak, dar siperlik, sade sap; NE'ye bakar (sağ-yukarı)
+  throwdagger: (g) => {
+    blade(g, 12, 20, 28, 4, 3.8, 'l', 'm');
+    g.line(8.6, 17.4, 14.6, 23.4, 'a', 1.8);
+    g.line(11, 21.5, 5.4, 27.2, 'b', 2.2).line(10.6, 22, 5.8, 26.8, 'k', 0.7);
+    g.disc(4.4, 28.2, 1.7, 'y');
+  },
   // Düello kılıcı: ince, düz uçlu; NE'ye bakar (sağ-yukarı)
   duelsword: (g) => {
     blade(g, 9, 23, 29, 3, 3.6, 'l', 'm');

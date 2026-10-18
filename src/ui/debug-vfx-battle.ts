@@ -3,8 +3,9 @@
  * dummy'de bu skilli atsın, animasyon gerçekten oynasın"). GERÇEK test savaşı (BattleScene, mode 'test'): atan mob düşman tarafında, kukla (dummy)
  * oyuncu tarafında durur; skill gerçek savaş hattıyla oynar (hazırlık pozu, atılma, efekt, vuruş, hasar rakamı). Kukla hareket etmez ve ölmez
  * (BattleScene.vfxTestCast her atıştan önce/sonra canı doldurur). Savaş arayüzü gizlenir; üstte küçük kontrol paneli:
- *   Skill (Dirge / Halberd Chop / Wall of Pikes / Rend / Glyph of Breaking: atan mob değişince savaş yeniden kurulur) · Version (Original / ChatGPT 16f / Code in-between /
- *   Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts) ·
+ *   Skill (TÜM mob skill'leri, src/game/mob-vfx.ts > MOB_VFX_SPECS: mob'a göre gruplu açılır liste + önceki / sonraki; seçince savaş o skill'in
+ *   sahibiyle yeniden kurulur; dost hedefli skill'de atanın yanına bir dost (battleTest.allyMob) konur) · Version (Original / ChatGPT 16f (varsa) /
+ *   Code in-between / Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts; panel varsayılanı Hand-coded) ·
  *   Code yöntemi + kat · Cast · Loop · Speed 0.25x/0.5x/1x · Pause + Step (≈1 efekt karesi).
  * Sürüm yalnızca O ATIŞ için seçilir (src/game/mob-vfx.ts > mobVfxTest); panel kapanınca ya da savaştan çıkılınca kapanır, gerçek savaşlar
  * değişmez (Original, ara kare KAPALI). Ayarlar data/vfx-inbetween.json > battleTest. Ayrı kod parçası: debug-tools tembel içe aktarır.
@@ -22,8 +23,7 @@ import { content } from '../engine';
 import layout from '../../data/battle-layout.json';
 import './debug-vfx-battle.css';
 
-const BT = IB_CFG.battleTest;
-const T = IB_CFG.test;
+const BT = IB_CFG.battleTest as typeof IB_CFG.battleTest & { allyMob: string; allySlot: number }; // allyMob / allySlot: dost hedefli skill testi (data/vfx-inbetween.json)
 const FPS_SCALE = layout.animation.mobVfx.fpsScale;
 const CASTER = 'enemy-0';
 const DUMMY = 'party-0';
@@ -58,6 +58,31 @@ type Version = 'orig' | 'tween' | 'code' | 'hand';
 const HAND_FPS = 60; // el yapımı efekt her karede çizilir: Step ≈ 1 ekran karesi
 let openPanel: { close: () => void } | null = null;
 
+interface TestSkill {
+  skill: string;
+  label: string;
+  mob: string;
+  mobName: string;
+  /** Dost hedefli (atanın yanına bir dost konur). */
+  ally: boolean;
+}
+/** Tüm mob skill'leri, sahibine göre gruplu (MOB_VFX_SPECS sırası; aynı mob'un skill'leri yan yana). */
+function testSkills(): TestSkill[] {
+  const byMob = new Map<string, TestSkill[]>();
+  for (const [skill, s] of Object.entries(MOB_VFX_SPECS)) {
+    const def = content.skills[skill];
+    const unit = content.bosses[s.mob] ?? content.mobs[s.mob];
+    const t = def?.target;
+    const item: TestSkill = { skill, label: def?.name ?? skill, mob: s.mob, mobName: unit?.name ?? s.mob, ally: t === 'single_ally' || t === 'all_allies' };
+    const list = byMob.get(s.mob) ?? [];
+    list.push(item);
+    byMob.set(s.mob, list);
+  }
+  return [...byMob.values()].flat();
+}
+/** Son seçim (panel yeniden açılınca aynı skill / sürüm). */
+const last = { skill: 'rend', version: 'hand' as Version };
+
 export function openVfxBattleTest(game: Phaser.Game): void {
   openPanel?.close();
   const root = document.getElementById('ui-root') ?? document.body;
@@ -65,9 +90,10 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   panel.setAttribute('role', 'region');
   panel.setAttribute('aria-label', 'VFX frame test (in battle)');
 
+  const SK = testSkills();
   const state = {
-    skill: 0,
-    version: 'orig' as Version,
+    skill: Math.max(0, SK.findIndex((s) => s.skill === last.skill)),
+    version: last.version,
     method: IB_CFG.player.method in IB_CFG.methods ? IB_CFG.player.method : IB_METHODS[0]!,
     sub: IB_CFG.subOptions[0] ?? 2,
     speed: 1,
@@ -79,7 +105,9 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   let queued = false;
   let gen = 0; // savaş yeniden kurulunca eski döngü kendiliğinden biter
   let seed = 0;
-  const tweenOk = T.skills.map((s) => tweenExists(MOB_VFX_SPECS[s.skill]!.mob, s.skill));
+  const tweenOk = SK.map((s) => tweenExists(s.mob, s.skill));
+  let builtFor = ''; // savaşın kurulduğu düzen (atan mob + dost): aynıysa skill değişince yalnızca atılır
+  const layoutKey = (i: number): string => `${SK[i]!.mob}|${SK[i]!.ally ? 1 : 0}`;
 
   const mk = (txt: string, title: string, fn: () => void, cls = ''): HTMLButtonElement => {
     const b = el('button', `el-icon-btn vb-btn ${cls}`, txt);
@@ -96,13 +124,38 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     return g;
   };
 
-  const skillBtns = T.skills.map((sk, i) =>
-    mk(sk.label, `Caster: ${MOB_VFX_SPECS[sk.skill]!.mob} casts ${sk.label} on the dummy`, () => {
-      if (state.skill === i) return void cast();
-      state.skill = i;
-      void rebuild();
-    }),
-  );
+  // skill seçimi: mob'a göre gruplu açılır liste (tüm mob skill'leri: düğme sırası yetmez) + önceki / sonraki
+  const pickSkill = (i: number): void => {
+    const n = (i + SK.length) % SK.length;
+    const sameLayout = layoutKey(n) === builtFor;
+    state.skill = n;
+    last.skill = SK[n]!.skill;
+    if (sameLayout) {
+      sync();
+      void cast();
+    } else void rebuild();
+  };
+  const skillSel = el('select', 'vb-select');
+  skillSel.title = 'Skill to test (grouped by the mob that casts it)';
+  skillSel.setAttribute('aria-label', 'Skill to test');
+  {
+    let grp: HTMLOptGroupElement | null = null;
+    SK.forEach((sk, i) => {
+      if (!grp || grp.label !== sk.mobName) {
+        grp = el('optgroup');
+        grp.label = sk.mobName;
+        skillSel.append(grp);
+      }
+      const o = el('option', '', sk.label);
+      o.value = String(i);
+      grp.append(o);
+    });
+  }
+  skillSel.addEventListener('change', () => pickSkill(Number(skillSel.value)));
+  const prevBtn = mk('', 'Previous skill', () => pickSkill(state.skill - 1), 'vb-arrow');
+  prevBtn.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M10 3L5 8l5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
+  const nextBtn = mk('', 'Next skill', () => pickSkill(state.skill + 1), 'vb-arrow');
+  nextBtn.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
   const verBtns: Array<[Version, HTMLButtonElement]> = (
     [
       ['orig', 'Original', 'Original 8-frame sheet (assets/mob-vfx): what real battles use'],
@@ -114,6 +167,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     v,
     mk(label, title, () => {
       state.version = v;
+      last.version = v;
       sync();
       void cast();
     }),
@@ -162,7 +216,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   codeRow.classList.add('vb-code');
   const rows = el('div', 'vb-rows');
   rows.append(
-    grp('Skill', ...skillBtns),
+    grp('Skill', prevBtn, skillSel, nextBtn),
     grp('Version', ...verBtns.map(([, b]) => b)),
     codeRow,
     grp('', castBtn, loopBtn, pauseBtn, stepBtn),
@@ -186,15 +240,15 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   }
 
   function curSheet() {
-    const sk = T.skills[state.skill]!;
-    const mob = MOB_VFX_SPECS[sk.skill]!.mob;
+    const sk = SK[state.skill]!;
+    const mob = sk.mob;
     const tw = state.version === 'tween' && tweenOk[state.skill] ? vfxSheetFile(mobTweenSheetId(mob, sk.skill)) : undefined;
     return tw ?? vfxSheetFile(mobSheetId(mob, sk.skill));
   }
 
   function sync(): void {
-    const sk = T.skills[state.skill]!;
-    skillBtns.forEach((b, i) => b.classList.toggle('on', i === state.skill));
+    const sk = SK[state.skill]!;
+    if (skillSel.value !== String(state.skill)) skillSel.value = String(state.skill);
     verBtns.forEach(([v, b]) => {
       b.classList.toggle('on', v === state.version);
       if (v === 'tween') b.classList.toggle('na', !tweenOk[state.skill]);
@@ -223,7 +277,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
           : state.version === 'code'
             ? `Code (${IB_CFG.methods[state.method]!.label}, ${state.sub}x) · ${(f?.meta.frames ?? 8) * ibSub} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE * ibSub).toFixed(1)} fps`
             : `Original · ${f?.meta.frames ?? 8} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE).toFixed(1)} fps`;
-    info.textContent = `${sk.label} · ${MOB_VFX_SPECS[sk.skill]!.mob} on the dummy · ${label}`;
+    info.textContent = `${sk.label} · ${sk.mobName} (${state.skill + 1}/${SK.length}) ${sk.ally ? 'on its ally' : 'on the dummy'} · ${label}`;
   }
 
   async function step(): Promise<void> {
@@ -251,8 +305,8 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     try {
       do {
         queued = false;
-        const sk = T.skills[state.skill]!;
-        const mob = MOB_VFX_SPECS[sk.skill]!.mob;
+        const sk = SK[state.skill]!;
+        const mob = sk.mob;
         const useTween = state.version === 'tween' && (await registerTween(mob, sk.skill));
         mobVfxTest.on = true;
         mobVfxTest.tween = useTween;
@@ -283,16 +337,19 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     casting = false;
     queued = false;
     sync();
-    const sk = T.skills[state.skill]!;
-    const mob = MOB_VFX_SPECS[sk.skill]!.mob;
-    const cells = (slot: number, id: string): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => (i === slot ? id : ''));
+    const sk = SK[state.skill]!;
+    const mob = sk.mob;
+    builtFor = layoutKey(state.skill);
+    const cells = (units: Array<[number, string]>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => units.find(([s]) => s === i)?.[1] ?? '');
+    // dost hedefli skill: dost daha küçük yuvada (debug atışı en küçük yuvadaki dostu seçer; kendisi hariç skill'ler de çalışsın)
+    const enemies: Array<[number, string]> = sk.ally ? [[BT.casterSlot, mob], [BT.allySlot, BT.allyMob]] : [[BT.casterSlot, mob]];
     seed = newSeed();
     const data = {
       seed,
       mode: 'test' as const,
-      teams: { party: cells(BT.dummySlot, BT.dummy), enemies: cells(BT.casterSlot, mob) },
+      teams: { party: cells([[BT.dummySlot, BT.dummy]]), enemies: cells(enemies) },
       partySize: 1,
-      enemySize: 1,
+      enemySize: enemies.length,
       background: BT.background,
     };
     const cur = game.scene.isActive(BattleScene.KEY) ? game.scene.getScene(BattleScene.KEY) : null;
@@ -349,7 +406,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   openPanel = { close };
   root.append(panel);
   sync();
-  // 16 karelik sheet'leri önceden kaydet (bilgi satırı doğru kare sayısını göstersin; indirme yalnızca atışta olur)
-  void Promise.all(T.skills.map((s) => registerTween(MOB_VFX_SPECS[s.skill]!.mob, s.skill))).then(sync);
+  // 16 karelik sheet'leri (yalnızca var olanlar) önceden kaydet: bilgi satırı doğru kare sayısını göstersin; indirme yalnızca atışta olur
+  void Promise.all(SK.filter((_, i) => tweenOk[i]).map((s) => registerTween(s.mob, s.skill))).then(sync);
   void rebuild();
 }

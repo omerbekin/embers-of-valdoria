@@ -423,6 +423,26 @@ export async function meleeApproach(scene: Phaser.Scene, actor: CombatantView, t
   void wait(scene, slow(330)).then(() => actor.returnHome());
 }
 
+/**
+ * Fırlatılan hançer (Anti-Mage Mana Steal, yalnızca görünüm; Ömer 2026-10-18): saldırgan YERİNDE kalır, atış pozuna geçer; küçük mat gümüş hançer
+ * açık elinden çıkıp düz bir çizgide hedefin saldırgana bakan kenarına uçar, çarpınca gümüş kıvılcımla söner. Çarpma anında çözülür.
+ */
+export async function throwDagger(c: VfxCtx, t: CombatantView): Promise<void> {
+  c.actor.play('attack');
+  await wait(c.scene, slow(110)); // atış pozu görünsün, sonra bırakış
+  c.sfx('swordWhoosh');
+  const hand = c.actor.castPoint() ?? { x: c.actor.container.x + dirTo(c.actor, t.container) * c.actor.w * 0.36, y: c.actor.container.y - c.actor.h * 0.6 };
+  const to = contact(c.actor, t);
+  const ang = Math.atan2(to.y - hand.y, to.x - hand.x);
+  const knife = sprite(c.scene, 'throwdagger', '#d7dce6', hand.x, hand.y, 78, DEPTH + 36).setRotation(ang + Math.PI / 4);
+  await travel(c.scene, knife, to, 230, { ease: 'in' });
+  knife.destroy();
+  hit(c.scene, to.x, to.y, ['#ffffff', '#d7dce6', '#98a2b4']);
+  const dir = dirTo(c.actor, t.container);
+  const shard = sprite(c.scene, 'throwdagger', '#d7dce6', to.x - dir * 8, to.y, 78, DEPTH + 36).setRotation(ang + Math.PI / 4);
+  c.scene.tweens.add({ targets: shard, alpha: 0, x: to.x - dir * 22, y: to.y + 14, duration: slow(160), onComplete: () => shard.destroy() });
+}
+
 /** Sersemletme: hedefin kafası üstünde dönen yıldızlar. */
 function stunStars(scene: Phaser.Scene, t: CombatantView): void {
   const stars = Array.from({ length: 3 }, () => sprite(scene, 'spark', '#ffd23f', t.container.x, t.container.y - t.h - 10, 40, DEPTH + 50));
@@ -3151,11 +3171,12 @@ async function dropGauntlet(c: VfxCtx, t: CombatantView, onHit: () => void): Pro
 const VOIDPURPLE = ['#b872ff', '#9b59d0', '#7d3fb0', '#e3ccff'];
 
 /**
- * Mana Steal (eski Mana Burn): Anti-Mage hedefin yanına gidip boşluk gücüyle vurur; hedefin bedeninden mana damlaları fışkırır
+ * Mana Steal (eski Mana Burn): Anti-Mage YERİNDEN küçük gümüş hançer fırlatır (görünüm: viewMotion ranged; motor yine melee sayar); hançer boşluk gücüyle çarpar; hedefin bedeninden mana damlaları fışkırır
  * (Void Strike'ın damlaları), uzayan iplikler hâlinde Anti-Mage'e doğru kıvrılarak çekilir ve onun bedenine emilir (çalınan mana).
  */
 const manasteal = async (c: VfxCtx) => {
-  await c.lunge(avgX(c.targets, c.actor.container.x));
+  // yerinden atış (skills.json > viewMotion 'ranged'): koşarak gitmez; küçük gümüş hançer hedefe uçar, sonra eski mana çalma efekti
+  await Promise.all(c.targets.map((t) => throwDagger(c, t)));
   c.sfx('manaSizzle');
   c.sfx('energySlurp');
   for (const t of c.targets) {
@@ -5228,6 +5249,7 @@ export const VFX_BASE_KIT = {
   playUntilHit,
   hitsAt,
   meleeApproach,
+  throwDagger,
   quadOf,
   cellMid,
   inQuad,

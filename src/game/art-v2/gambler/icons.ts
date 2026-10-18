@@ -78,15 +78,6 @@ function coinFace(g: PxGrid, cx: number, cy: number, r: number, body = 'y', rim 
   }
 }
 
-/** Yandan görünen para (elips) ve kalınlığı. */
-function coinTilt(g: PxGrid, cx: number, cy: number, rx: number, ry: number, th = 0.8): void {
-  g.ellipse(cx, cy + th, rx, ry, 'Y');
-  g.rect(cx - rx, cy, rx * 2, th, 'Y');
-  g.ellipse(cx, cy, rx, ry, 'y');
-  g.ellipse(cx, cy, rx * 0.66, ry * 0.66, 'Y');
-  g.ellipse(cx - rx * 0.06, cy - ry * 0.08, rx * 0.56, ry * 0.5, 'y');
-}
-
 /** Döndürülmüş oyun kartı: merkez, genişlik, yükseklik, açı; yüz ya da arka. */
 function card(g: PxGrid, cx: number, cy: number, w: number, h: number, ang: number, suit: 'diamond' | 'spade' | 'heart' | 'club' | 'back', o: { corner?: boolean } = {}): void {
   const T = (x: number, y: number): P => [cx + x * Math.cos(ang) - y * Math.sin(ang), cy + x * Math.sin(ang) + y * Math.cos(ang)];
@@ -153,6 +144,12 @@ function drop(g: PxGrid, x: number, y: number, r: number): void {
 // ---------------------------------------------------------------- ikonlar
 
 export const ICONS: Record<string, V2SpriteEntry> = {
+  // ChatGPT boyalı ikonlar (gambler-sheet.png -> tools/make-class-icons.py); eski kodla çizimler kaldırıldı.
+  loadeddice: { image: 'gambler/loadeddice' },
+  highstakes: { image: 'gambler/highstakes' },
+  cardtrick: { image: 'gambler/cardtrick' },
+  allin: { image: 'gambler/allin' },
+  doubleornothing: { image: 'gambler/doubleornothing' },
   /** LOGO: eğik duran maça ası + önünde altın para. 15 px'te bile: beyaz kart, siyah maça, sarı para. */
   gamblerlogo: (g) => {
     card(g, 13.6, 14, 15, 21, -0.22, 'spade');
@@ -160,112 +157,10 @@ export const ICONS: Record<string, V2SpriteEntry> = {
     sparkle(g, 27.6, 16.8, 2.2, 'w');
   },
 
-  /**
-   * PASİF Double or Nothing (bekleme süreli hasar skill'i %25 ihtimalle hemen yeniden hazır): öndeki parlak altın para (kazanç) ve
-   * arkasında aynı paranın kararmış, oyuk hayaleti (hiç); ikisini saran kırmızı dönüş oku = sıfırlanan bekleme süresi.
-   */
-  doubleornothing: (g) => {
-    // "hiç": arkadaki kararmış oyuk para
-    g.disc(21.2, 11.4, 7, 'd');
-    g.disc(21, 11.2, 5.6, 'o');
-    g.ring(21, 11.2, 4.4, 'd', 0.5);
-    // "çift": öndeki parlak para
-    coinFace(g, 12.6, 19, 8.4);
-    sparkle(g, 8.2, 13.6, 2.2, 'w');
-    // dönüş oku (bekleme süresi sıfırlanır)
-    const cx = 16;
-    const cy = 16;
-    const R = 14.2;
-    const a0 = Math.PI * 0.62;
-    const a1 = Math.PI * 1.95;
-    const n = 30;
-    for (let i = 0; i < n; i++) {
-      const a = a0 + ((a1 - a0) * i) / n;
-      const b = a0 + ((a1 - a0) * (i + 1)) / n;
-      g.line(cx + Math.cos(a) * R, cy + Math.sin(a) * R, cx + Math.cos(b) * R, cy + Math.sin(b) * R, 'r', 1.6);
-    }
-    const tip: P = [cx + Math.cos(a1) * R, cy + Math.sin(a1) * R];
-    const tan: P = [-Math.sin(a1), Math.cos(a1)];
-    const nor: P = [Math.cos(a1), Math.sin(a1)];
-    g.poly([tip[0] + tan[0] * 3.6, tip[1] + tan[1] * 3.6, tip[0] + nor[0] * 3, tip[1] + nor[1] * 3, tip[0] - nor[0] * 3, tip[1] - nor[1] * 3], 'r');
-  },
 
-  /**
-   * LOADED DICE (tek hedef, %25 ihtimalle bir zar daha): fildişi zar 3/4 görünüşte (üstte 6, solda 3, sağda 2: gerçek zar düzeni);
-   * soldaki noktalardan biri gri kurşun tıkaç (hileli). Arkada ikinci, silik zar (çifte atış ihtimali) ve uçuş yayı.
-   */
-  loadeddice: (g) => {
-    // ikinci zar (arkada, küçük, silik)
-    die3d(g, 24.2, 11.6, 5.2, { top: 5, left: 1, right: 3 }, { top: 'l', left: 'm', right: 'd', pip: 'o', pipR: 0.12 });
-    // uçuş yayı
-    for (let i = 0; i < 7; i++) {
-      const a = Math.PI * (1.05 + i * 0.07);
-      g.line(17 + Math.cos(a) * 13, 17 + Math.sin(a) * 13, 17 + Math.cos(a + 0.05) * 13, 17 + Math.sin(a + 0.05) * 13, i < 3 ? 'd' : 'm', 0.6);
-    }
-    // ana zar
-    die3d(g, 13.6, 18.4, 10.2, { top: 6, left: 3, right: 2 }, { top: 'w', left: 'l', right: 'm', pip: 'o', pipR: 0.105, special: ['left', 1, 'd'] });
-    // kurşun tıkacın kurşuni parlaması
-    sparkle(g, 4.2, 22.2, 1.6, 'w');
-  },
 
-  /**
-   * HIGH STAKES (kendi canının %15'ini bahse koyar; kazanırsa 2 kat hasar): yakut kabzalı hançer çapraz; önünde altın para ve paranın
-   * üstüne dökülen kendi kanı (bahis = kan). Hançerin ucundan bir damla daha düşüyor.
-   */
-  highstakes: (g) => {
-    // hançer: kabza sol altta, uç sağ üstte
-    blade(g, 9.6, 22.4, 27.6, 4.4, 3.4, 'l', 'm');
-    g.line(6.4, 19.2, 12.8, 25.6, 'y', 1.5); // siper
-    g.line(6.6, 19, 12.6, 25.4, 'Y', 0.25);
-    g.line(8.6, 23.4, 4.6, 27.4, 'R', 2.1); // kabza (bordo sargı)
-    for (let i = 0; i < 3; i++) g.line(8 - i * 1.2, 23 + i * 1.2, 8.8 - i * 1.2, 23.8 + i * 1.2, 'k', 0.25);
-    g.disc(3.8, 28.2, 1.7, 'r').disc(3.4, 27.8, 0.5, 'w'); // yakut topuz
-    // para ve üstüne dökülen kan
-    coinFace(g, 20.6, 21.4, 7.6, 'y', 'Y', false);
-    drop(g, 20.2, 20.6, 3);
-    g.line(22.6, 21.8, 23.4, 26.2, 'r', 0.9).disc(23.5, 26.8, 0.8, 'r');
-    // uçtan düşen damla
-    drop(g, 28.6, 10.6, 1.2);
-  },
 
-  /**
-   * CARD TRICK (iki rastgele düşmana kart fırlatır, rastgele durum): sprite'taki gibi elde yelpaze açılmış üç kart (karo, maça, kupa);
-   * yelpazeden fırlamış dönen dördüncü kart sağ üstte, keskin kenarı parlıyor, arkasında hava çizgileri.
-   */
-  cardtrick: (g) => {
-    // yelpaze (alt sol pivot)
-    const px = 10.5;
-    const py = 28;
-    const fan: Array<[number, 'diamond' | 'spade' | 'heart']> = [[-0.5, 'diamond'], [-0.1, 'spade'], [0.3, 'heart']];
-    for (const [a, s] of fan) card(g, px + Math.sin(a) * 10, py - Math.cos(a) * 10, 9, 13, a, s);
-    // uçan kart (arka yüzü, dönerek)
-    for (const [x0, y0, l] of [[14.4, 12.8, 5], [16.6, 15, 4], [13.8, 9.4, 3]] as Array<[number, number, number]>) g.line(x0, y0, x0 + l, y0 - l * 0.55, 'm', 0.5);
-    card(g, 25, 7.6, 7.4, 10.4, 0.95, 'back');
-    g.line(21.2, 4.2, 24.4, 1.8, 'w', 0.5); // keskin kenar parlaması
-  },
 
-  /**
-   * ALL IN (tüm manasını bahse koyar, %75 jackpot): altın para yığınının tepesine oturmuş iri altın zar (üstte 6), etrafa saçılmış
-   * paralar ve parıltı. Her şey ortada.
-   */
-  allin: (g) => {
-    const stack = (x: number, y: number, n: number, rx = 4.2) => {
-      for (let i = 0; i < n; i++) coinTilt(g, x, y - i * 1.35, rx, rx * 0.42, 1);
-    };
-    stack(6.6, 28.4, 4);
-    stack(25.2, 28.6, 5);
-    stack(15.6, 30, 3, 5);
-    stack(10.8, 26.4, 3);
-    stack(20.8, 26.2, 4);
-    // iri altın zar
-    die3d(g, 16, 17.6, 8.6, { top: 6, left: 5, right: 4 }, { top: 'y', left: 'a', right: 'Y', pip: 'R', pipR: 0.11 });
-    // saçılan paralar ve parıltı
-    coinTilt(g, 3.6, 21.6, 2.4, 1, 0.5);
-    coinTilt(g, 28.4, 19.4, 2.4, 1, 0.5);
-    sparkle(g, 26.6, 6.4, 3, 'w');
-    sparkle(g, 5.4, 9.2, 2.2, 'w');
-    sparkle(g, 29.4, 13, 1.4, 'w');
-  },
 };
 
 // ---------------------------------------------------------------- efekt sprite'ları

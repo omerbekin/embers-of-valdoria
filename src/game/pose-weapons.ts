@@ -64,7 +64,7 @@ export const POSE_TESTER_GEAR: Readonly<Record<string, readonly [string, string?
   pose_tester_6: ['rune_staff'],
   pose_tester_7: ['oak_staff'],
   pose_tester_8: ['bone_staff'],
-  pose_tester_9: ['arming_sword', 'rondel_dagger'],
+  pose_tester_9: ['rondel_dagger', 'misericorde'],
   pose_tester_10: ['worn_deck'],
   pose_tester_11: ['hex_doll'],
 };

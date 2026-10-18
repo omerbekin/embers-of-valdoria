@@ -1,0 +1,799 @@
+/* DİZİLİM TAHTASI + pencere kabuğu (src/ui/formation-board.ts; Ömer 2026-10-18, Formation A). Ölçüler MANTIKSAL px: kabuk (.fbw-pos) pencereyi
+   --gu ile ölçekler (1360x820). Renk / yazı tasarım kitiyle aynı (elegant.css, Band ipucu: band-tip.css). */
+.fbw {
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  background: rgba(5, 3, 2, 0.72);
+  color: #d9c8a2;
+  font-family: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+.fbw-pos {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 1360px;
+  height: 820px;
+  transform-origin: center center;
+}
+
+.fbw-win {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(26, 19, 12, 0.985), rgba(10, 7, 5, 0.985));
+  border: 1px solid rgba(217, 178, 106, 0.5);
+  box-shadow: 0 0 0 4px rgba(8, 6, 4, 0.75), 0 22px 60px rgba(0, 0, 0, 0.7), inset 0 0 40px rgba(217, 178, 106, 0.06);
+}
+
+.fbw-win::before,
+.fbw-win::after {
+  content: '';
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f3d999;
+}
+
+.fbw-win::before {
+  left: -8px;
+  top: -8px;
+}
+
+.fbw-win::after {
+  right: -8px;
+  bottom: -8px;
+}
+
+.fbw-ttl {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 28px;
+  text-align: center;
+  font: 600 40px/1 Cinzel, Georgia, serif;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f3d999;
+  text-shadow: 0 0 14px rgba(217, 178, 106, 0.4);
+}
+
+.fbw-ttl::before,
+.fbw-ttl::after {
+  content: '';
+  display: inline-block;
+  vertical-align: middle;
+  width: 110px;
+  height: 1px;
+  margin: 0 26px;
+  background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.6));
+}
+
+.fbw-ttl::after {
+  transform: scaleX(-1);
+}
+
+.fbw-sub {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 84px;
+  text-align: center;
+  font: 22px/1.2 'EB Garamond', Georgia, serif;
+  color: #a8977a;
+}
+
+.fbw-body {
+  position: absolute;
+  left: 0;
+  width: 1360px;
+  height: 600px;
+}
+
+.fbw-btns {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 20px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 34px;
+}
+
+.fbw-btns .el-btn {
+  width: 330px;
+  font-size: 19px;
+}
+
+.fbw-btns .el-btn.primary {
+  height: 72px;
+  font-size: 24px;
+}
+
+/* ================= tahta ================= */
+.fb {
+  --u: 1px;
+  --fb-good: #8fc65a;
+  --fb-warn: #e0a43a;
+  --fb-bad: #e8806a;
+  --fb-hot: #e0702a;
+  --g-text: #d9c8a2;
+  --g-dim: #a8977a;
+  --g-gold: #f3d999;
+  --g-line: rgba(217, 178, 106, 0.16);
+  --g-line2: rgba(217, 178, 106, 0.3);
+  --g-disp: Cinzel, Georgia, serif;
+  --g-body: 'EB Garamond', Georgia, serif;
+  position: relative;
+  width: 1360px;
+  height: 600px;
+  box-sizing: border-box;
+}
+
+.fb * {
+  box-sizing: border-box;
+}
+
+.fb-grid {
+  position: absolute;
+  left: 120px;
+  top: 16px;
+  width: 542px;
+  height: 404px;
+}
+
+.fb-lbl {
+  position: absolute;
+  top: 202px;
+  font: 600 15px var(--g-disp);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.fb-lbl.back {
+  right: calc(1360px - 100px);
+  color: var(--g-dim);
+}
+
+.fb-lbl.front {
+  left: 680px;
+  color: #f3d999;
+}
+
+.fb-how {
+  position: absolute;
+  left: 120px;
+  top: 444px;
+  width: 542px;
+  font: 19px/1.35 var(--g-body);
+  color: var(--g-dim);
+}
+
+/* ---- hücre ---- */
+.fb-cell {
+  position: absolute;
+  width: 128px;
+  height: 128px;
+  background: rgba(8, 6, 4, 0.75);
+  border: 1px solid rgba(217, 178, 106, 0.62);
+  overflow: hidden;
+  cursor: pointer;
+  touch-action: none;
+  transition: border-color 0.15s, background 0.15s, box-shadow 0.15s;
+}
+
+.fb-cell.empty {
+  background: rgba(8, 6, 4, 0.38);
+  border-color: rgba(217, 178, 106, 0.22);
+}
+
+.fb-cell.empty.fr {
+  border-color: rgba(217, 178, 106, 0.42);
+}
+
+.fb-cell.empty::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 9px;
+  height: 9px;
+  margin: -5px 0 0 -5px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(217, 178, 106, 0.22);
+}
+
+.fb-cell:hover {
+  border-color: rgba(243, 217, 153, 0.9);
+}
+
+.fb-cell.sel {
+  border: 2px solid #ffd76a;
+  box-shadow: 0 0 18px rgba(255, 215, 106, 0.3), inset 0 0 18px rgba(255, 215, 106, 0.1);
+}
+
+.fb-cell.src .fb-av {
+  opacity: 0.3;
+}
+
+.fb-av {
+  position: absolute;
+  left: 9px;
+  top: 3px;
+  width: 110px;
+  height: 110px;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.fb-nm {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 42px;
+  background: linear-gradient(180deg, transparent, rgba(8, 6, 4, 0.94));
+  text-align: center;
+  padding-top: 17px;
+  font: 600 14px var(--g-disp);
+  letter-spacing: 0.06em;
+  color: #f3d999;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.fb-hp {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 9px;
+  height: 5px;
+  background: rgba(8, 6, 4, 0.85);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  pointer-events: none;
+}
+
+.fb-hp i {
+  display: block;
+  height: 100%;
+  background: var(--fb-good);
+}
+
+.fb-hp i.mid {
+  background: #d9b24a;
+}
+
+.fb-hp i.low {
+  background: #c4553f;
+}
+
+.fb-crown {
+  position: absolute;
+  right: 8px;
+  top: 8px;
+  width: 28px;
+  height: 20px;
+  pointer-events: none;
+}
+
+/* menzil uygunluğu: her hücrede ince kenar rengi + küçük nokta (baskın değil) */
+.fb-pdot {
+  position: absolute;
+  left: 8px;
+  top: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--fb-good);
+  opacity: 0.6;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.fb-cell.fit-good {
+  box-shadow: inset 0 0 0 1px rgba(143, 198, 90, 0.34);
+}
+
+.fb-cell.fit-weak {
+  box-shadow: inset 0 0 0 1px rgba(224, 164, 58, 0.55);
+}
+
+.fb-cell.fit-bad {
+  box-shadow: inset 0 0 0 1px rgba(232, 128, 106, 0.55);
+}
+
+.fb-cell.fit-weak .fb-pdot {
+  background: var(--fb-warn);
+  opacity: 0.8;
+}
+
+.fb-cell.fit-bad .fb-pdot {
+  background: var(--fb-bad);
+  opacity: 0.8;
+}
+
+.fb-cell.own.fit-weak .fb-pdot,
+.fb-cell.own.fit-bad .fb-pdot {
+  opacity: 0.7;
+}
+
+.fb-cell.sel.fit-good,
+.fb-cell.sel.fit-weak,
+.fb-cell.sel.fit-bad {
+  box-shadow: 0 0 18px rgba(255, 215, 106, 0.3), inset 0 0 18px rgba(255, 215, 106, 0.1);
+}
+
+.fb-cell.hot {
+  box-shadow: 0 0 0 2px #ffd76a, 0 0 22px rgba(255, 215, 106, 0.55);
+}
+
+.fb-ghost {
+  position: absolute;
+  z-index: 90;
+  width: 112px;
+  height: 112px;
+  pointer-events: none;
+  opacity: 0.92;
+  border: 1px solid #ffd76a;
+  background: rgba(8, 6, 4, 0.85);
+  box-shadow: 0 10px 24px rgba(0, 0, 0, 0.7);
+}
+
+.fb-ghost img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ================= sağ panel ================= */
+.fb-panel {
+  position: absolute;
+  left: 770px;
+  top: 0;
+  width: 550px;
+  height: 580px;
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  padding: 24px 26px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.9), rgba(12, 9, 6, 0.9));
+  border: 1px solid rgba(217, 178, 106, 0.4);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.6), inset 0 0 22px rgba(217, 178, 106, 0.06);
+}
+
+.fb-panel::before,
+.fb-panel::after {
+  content: '';
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f3d999;
+  z-index: 2;
+}
+
+.fb-panel::before {
+  left: -6px;
+  top: -6px;
+}
+
+.fb-panel::after {
+  right: -6px;
+  bottom: -6px;
+}
+
+.fb-ico {
+  position: relative;
+  flex: none;
+  width: var(--is, 88px);
+  height: var(--is, 88px);
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--ac, #d9b26a) 30%, #1a110a) 0%, #0d0806 78%);
+  border: 1px solid color-mix(in srgb, var(--ac, #d9b26a) 62%, #000);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px color-mix(in srgb, var(--ac, #d9b26a) 32%, transparent), inset 0 0 14px color-mix(in srgb, var(--ac, #d9b26a) 22%, transparent);
+}
+
+.fb-ico::before,
+.fb-ico::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f3d999;
+  z-index: 2;
+}
+
+.fb-ico::before {
+  left: -5px;
+  top: -5px;
+}
+
+.fb-ico::after {
+  right: -5px;
+  bottom: -5px;
+}
+
+.fb-ico img {
+  width: 100%;
+  height: 100%;
+  display: block;
+  object-fit: cover;
+}
+
+.fb-ico.sk img {
+  object-fit: contain;
+}
+
+.fb-ico.sm::before,
+.fb-ico.sm::after {
+  width: 7px;
+  height: 7px;
+}
+
+.fb-ico.sm::before {
+  left: -4px;
+  top: -4px;
+}
+
+.fb-ico.sm::after {
+  right: -4px;
+  bottom: -4px;
+}
+
+.fb-chd {
+  display: flex;
+  gap: 20px;
+  align-items: center;
+}
+
+.fb-apt {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.fb-nmt {
+  display: flex;
+  align-items: baseline;
+  gap: 12px;
+}
+
+.fb-nmt .t {
+  font: 600 30px/1.05 var(--g-disp);
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: #fff0c4;
+  text-shadow: 0 0 12px rgba(217, 178, 106, 0.4);
+}
+
+.fb-nmt .lv {
+  margin-left: auto;
+  font: 600 18px var(--g-disp);
+  letter-spacing: 0.12em;
+  color: var(--g-gold);
+  white-space: nowrap;
+}
+
+.fb-nmt .lv i {
+  font: 600 13px var(--g-disp);
+  font-style: normal;
+  color: var(--g-dim);
+  letter-spacing: 0.2em;
+  margin-right: 6px;
+}
+
+.fb-chips {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.fb-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 26px;
+  padding: 0 9px;
+  font: 600 13px var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-text);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--g-line);
+  white-space: nowrap;
+}
+
+.fb-chip img {
+  width: 16px;
+  height: 16px;
+  object-fit: contain;
+}
+
+.fb-chip b {
+  font: 600 15px var(--g-disp);
+  color: var(--g-gold);
+  letter-spacing: 0;
+}
+
+.fb-chip.free {
+  color: #cfe8a8;
+  border-color: rgba(127, 191, 63, 0.5);
+  background: rgba(127, 191, 63, 0.13);
+}
+
+.fb-chip.rage {
+  color: #ffb070;
+  border-color: rgba(224, 112, 42, 0.6);
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.fb-chip.rage b {
+  color: #ffd2a0;
+}
+
+.fb-chip.hot {
+  color: #ffb98a;
+  border-color: rgba(224, 112, 42, 0.55);
+  background: rgba(224, 112, 42, 0.14);
+}
+
+.fb-bars {
+  display: flex;
+  gap: 16px;
+}
+
+.fb-bar2 {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  flex: 1;
+  min-width: 0;
+}
+
+.fb-bar2 img {
+  width: 26px;
+  height: 26px;
+  object-fit: contain;
+}
+
+.fb-bar2 .bb {
+  flex: 1;
+  height: 12px;
+  background: rgba(8, 6, 4, 0.9);
+  border: 1px solid rgba(217, 178, 106, 0.35);
+}
+
+.fb-bar2 .bb i {
+  display: block;
+  height: 100%;
+}
+
+.fb-bar2 .v {
+  font: 600 15px var(--g-disp);
+  color: var(--g-gold);
+  min-width: 36px;
+  text-align: right;
+}
+
+.fb-tiles {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+}
+
+.fb-tile {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid var(--g-line);
+}
+
+.fb-tile img {
+  width: 30px;
+  height: 30px;
+  object-fit: contain;
+  flex: none;
+}
+
+.fb-tile .tx {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.05;
+  min-width: 0;
+}
+
+.fb-tile .n {
+  font: 600 22px var(--g-disp);
+  color: var(--g-gold);
+}
+
+.fb-tile .k {
+  font: 14px var(--g-body);
+  color: var(--g-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.fb-tile.p {
+  border-color: rgba(224, 112, 42, 0.7);
+  background: linear-gradient(135deg, rgba(224, 112, 42, 0.24), rgba(224, 112, 42, 0.05));
+}
+
+.fb-tile.p .n {
+  color: #fff0c4;
+}
+
+.fb-sl {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  font: 600 14px var(--g-disp);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.fb-sl::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--g-line2);
+}
+
+.fb-srows {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.fb-srow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 7px 10px;
+  background: linear-gradient(90deg, rgba(217, 178, 106, 0.08), rgba(13, 9, 6, 0.9));
+  border: 1px solid rgba(217, 178, 106, 0.28);
+  min-width: 0;
+}
+
+.fb-srow.rg {
+  border-color: rgba(224, 112, 42, 0.5);
+}
+
+.fb-srow.rg .fb-ico {
+  --ac: #e0702a;
+}
+
+.fb-srow.pas {
+  grid-column: 1 / -1;
+  padding: 9px 12px;
+  border-color: rgba(111, 176, 168, 0.45);
+  background: linear-gradient(90deg, rgba(111, 176, 168, 0.13), rgba(13, 9, 6, 0.9));
+}
+
+.fb-srow.pas .fb-ico {
+  --ac: #6fb0a8;
+}
+
+.fb-srow .pn {
+  flex: 1;
+  min-width: 0;
+  font: 600 13px/1.15 var(--g-disp);
+  font-size: 12.5px;
+  letter-spacing: 0.02em;
+  text-transform: uppercase;
+  color: #f3e6c4;
+}
+
+.fb-srow .fb-chip {
+  height: 24px;
+  padding: 0 6px;
+  font-size: 12px;
+}
+
+.fb-ptag {
+  font: 700 11px var(--g-disp);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff4d6;
+  background: color-mix(in srgb, #6fb0a8 55%, #0c0905);
+  border: 1px solid #6fb0a8;
+  padding: 1px 8px;
+  white-space: nowrap;
+}
+
+.fb-foot {
+  margin-top: auto;
+  display: flex;
+  justify-content: flex-end;
+}
+
+.fb-details {
+  width: 230px;
+  min-height: 46px;
+  font-size: 16px;
+}
+
+/* ================= hücre hover kutusu (Band dili) ================= */
+.fb-tip {
+  position: absolute;
+  z-index: 95;
+  pointer-events: none;
+}
+
+.fb-tip .bt {
+  min-width: 340px;
+  max-width: 420px;
+}
+
+.fb-tip .bt-medal {
+  width: 44px;
+  height: 44px;
+  background-size: cover;
+  image-rendering: auto;
+}
+
+.fb-tip .bt-title {
+  font-size: 21px;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+}
+
+.fb-tip .bt-body {
+  padding-bottom: 12px;
+}
+
+.fb-reach {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fb-reach .rl {
+  flex: none;
+  font: 600 12px var(--g-disp);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.fb-reach .rb {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.fb-reach .rb i {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background: rgba(217, 178, 106, 0.12);
+  border: 1px solid rgba(217, 178, 106, 0.2);
+  font: 600 11px/16px var(--g-disp);
+  font-style: normal;
+  text-align: center;
+  color: rgba(168, 151, 122, 0.8);
+}
+
+.fb-reach .rb i.on {
+  background: color-mix(in srgb, var(--ac) 78%, #000);
+  border-color: var(--ac);
+  color: #1a0f06;
+}
