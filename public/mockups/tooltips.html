@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Tooltip Family Mockups</title>
+<!-- TOOLTIP AILESI taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 (masaustu) | #u=0.67 | #u=0.36 (telefon yatay 844x390 olcegi) ; &clean = serit gizli. -->
+<link rel="stylesheet" href="tooltips/tooltips.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Tooltip family</h1>
+Ömer: "bu arayüzlerde bana boş gelen bir şey var." Beş tooltip, mevcut hal solda, yeni öneri A / B / C sağda. Bilgi hiçbir yerde değişmedi.
+<h3>Neden boş geliyor (teşhis)</h3>
+<ol>
+<li><b>Başlık şeridi ve ikon yok.</b> Başlık, gövdeyle aynı zeminde düz yazı; item tooltip'indeki gibi başlığı taşıyan bir üst bant ya da madalyon yok. Stat, kahraman ve harita tooltip'lerinde hiç görsel yok.</li>
+<li><b>Tür etiketi yok.</b> Bakan kişi bunun stat mı, skill mi, kahraman mı, düğüm mü olduğunu yazıdan çıkarıyor; item'daki nadirlik kurdelesi gibi bir "tür" satırı yok (etiket metinleri bir öneri; Ömer onaylamalı).</li>
+<li><b>Sayılar öne çıkmıyor.</b> 18, 84, 30%, 14 MP, 2/7 hep aynı boyut ve renkte düz metin; item'da büyük altın rakam ve zar göstergesi var.</li>
+<li><b>Bölüm ayırıcı ve çerçeve süsü zayıf.</b> Beşinin çerçevesi birbirinden farklı (bronz, altın, çift çizgi); köşe elmasları, ışıma, altın ayırıcı yok. Beşi aynı oyunun parçası gibi durmuyor.</li>
+<li><b>Renk vurgusu ve alt bilgi yok.</b> Rengi yalnız skill'in mor yazısı taşıyor; durumlar (Cleared, Free, Wound/Omen) ve notlar ("Sweeps row by row") ayrı bir satır/çip olmadan metnin içinde kaybolmuş.</li>
+</ol>
+<h3>Ortak dil (A, B, C'nin hepsinde aynı)</h3>
+<ul>
+<li>Aynı çerçeve: item tooltip'inin koyu zemini + vurgu renginde ince kenar + dış koyu halka + hafif ışıma + sol üst / sağ alt köşe elmasları.</li>
+<li>Aynı başlık: küçük tür etiketi (Cinzel, geniş harf aralığı) üstte, büyük Cinzel başlık altta, vurgu rengi (element / durum); ikon çerçeveli.</li>
+<li>Aynı ayırıcı: altın çizgi + ortada elmas. Aynı satır: elmas madde işareti, anahtar kelime vurgu renginde, rakamlar Cinzel altın. Aynı çip, aynı alt bilgi çubuğu.</li>
+<li>İtalik yok (Ömer'in yeni kuralı): açıklama ve efekt satırları düz EB Garamond; yalnızca "Current" sütununda mevcut italikler korunur.</li>
+<li>Vurgu rengi: STR turuncu, Dark mor, Poison yeşil, düğüm/kahraman altın. Mor skill yazısı yerine mor yalnız anahtar kelimede.</li>
+</ul>
+<h3>Açık konu: başlık düzeni (A / B / C)</h3>
+<ul>
+<li><b>A Band:</b> ikon solda, renkli başlık şeridi, değer sağda. Her boyda dengeli; önerim (özellikle skill ve harita).</li>
+<li><b>B Compact plate:</b> bant yok, ince üst çizgi, daha dar; kahraman hover gibi küçük ve sık açılan ipuçları için.</li>
+<li><b>C Medallion:</b> item tooltip v3'ün aynısı, ortalanmış madalyon; en zengin ama en uzun (sık açılan hover'a ağır).</li>
+</ul>
+<h3>Ölçek (telefon yatay)</h3>
+<ul>
+<li>Alttaki şeritten ölçek seç: <b>1920</b> (masaüstü), <b>1280</b>, <b>844x390</b>. Oyundaki gibi yazı en az 13px, çipler en az 11px; telefonda C otomatik yatay (ikon solda) düzene döner. Tooltip'ler 320px altına inmez.</li>
+<li>Bu sayfada ipucu tıklanmaz; gerçek oyunda hover (masaüstü) ya da dokununca/uzun basınca açılır.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Tooltip family &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.36">844x390</button></div>
+<script src="tooltips/app.js"></script>
+</body>
+</html>
