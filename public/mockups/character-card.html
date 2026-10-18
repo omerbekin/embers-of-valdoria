@@ -1,0 +1,46 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Character Card Mockups</title>
+<!-- KARAKTER KARTI taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 (masaustu) | #u=0.67 | #u=0.44 (telefon yatay 844x390 olcegi) ; &clean = serit gizli. -->
+<link rel="stylesheet" href="character-card/character-card.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Character card (Quick Battle / team select)</h1>
+Ömer: "şuradaki arayüzü de elden geçirelim madem." Warrior kartı: solda mevcut hal, sağda A / B / C. İçerik (sayılar, metinler, sıra) hiçbir yerde değişmedi.
+<h3>Teşhis</h3>
+<ol>
+<li><b>Başlık yalnız yazı.</b> "WARRIOR" ile "Melee Bruiser · Strength 32 primary" aynı düz satırda; sınıfın amblemi yok, rol ve primary stat çip değil, cümle içinde kaybolmuş. "CHARACTER" etiketi sağ üstte soluk ve başlıktan kopuk (A-Band'de tür etiketi başlığın üstünde).</li>
+<li><b>Üç sütun boş ve dağınık.</b> MAIN / ATTACK / DEFENSE sütunları farklı uzunlukta (4, 4, 5 satır), arada ayırıcı yok; sütun başlıkları küçük ve soluk, ikonlar küçük ve rakamla etiket arasında geniş boşluk var. Gözün izleyeceği hizalı bir rakam sütunu yok.</li>
+<li><b>Sayılar öne çıkmıyor.</b> 32, 8.5%, x1.5, 28 etiketle aynı krem renkte ve ağırlıkta; Skills ve tooltip'lerdeki altın Cinzel rakam dili burada yok. Primary stat (Strength 32) yalnız küçük bir elmasla işaretli.</li>
+<li><b>Pasif bölümü ayrı bir dünyadan.</b> Küçük yuvarlak ikon, ad ve uzun <b>italik</b> paragraf; Skills bloğundaki pasif plakasıyla (aynı boy ikon, PASSIVE şeridi) akraba değil. Önemli sayılar (+80%, 0.5, 15) metnin içinde kayboluyor; italik kuralına da aykırı.</li>
+<li><b>Alt bilgi satırı yetim.</b> "Resilience (primary bonus): 35% debuff -1 turn" en altta tek italik satır, turuncu elmasla. Primary stat'a bağlı bir bonus olduğu belli değil; çip ya da alt bilgi çubuğu olmalı. Kartın çerçevesi de tooltip ailesindeki köşe elmaslı, ışımalı çerçeveye benzemiyor.</li>
+</ol>
+<h3>Ortak dil (A, B, C)</h3>
+<ul>
+<li>Tooltip A-Band çerçevesi (koyu zemin, ince kenar, köşe elmasları), başlık şeridi: amblem solda, üstünde "CHARACTER" türü, Cinzel başlık, çipler: rol (Melee Bruiser) ve primary stat (Strength 32 + ikon, vurgulu).</li>
+<li>Altın elmas ayırıcılar; sütun başlıkları ince çizgili şerit. Etiket soluk, <b>rakam altın Cinzel</b>; primary satırı vurgulu (turuncu zemin + elmas).</li>
+<li>Pasif: Skills "Plates" dilindeki plaka, aynı boy ikon, yeşilimsi bakır <b>PASSIVE</b> şeridi, <b>düz yazı</b> (italik yok), anahtar sayılar altın. Resilience: turuncu elmaslı alt bilgi çubuğu. Renkler ve etiket metinleri bir öneri; Ömer onaylamalı.</li>
+</ul>
+<h3>Varyantlar</h3>
+<ul>
+<li><b>A · Band:</b> tek akış: başlık şeridi, üç sütunlu stat bölümü, pasif plakası, Resilience çubuğu. Mevcut düzene en yakın, en az sürpriz; önerim.</li>
+<li><b>B · Plates:</b> solda büyük amblemli kahraman plakası, sağda üç stat plakası, altta tam genişlik pasif plakası. En çok "oyun" hissi; en çok yer ister.</li>
+<li><b>C · Tiles:</b> statlar küçük karolar (ikon, büyük rakam, etiket); primary karo parlak. Taranması en hızlı; telefon yatayda en iyi sığan.</li>
+</ul>
+<h3>Ölçek</h3>
+<ul><li>Alttaki şeritten seç: <b>1920</b>, <b>1280</b>, <b>844x390</b> (ölçek 0.44; yazı en az 13px, çip en az 11px).</li></ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Character card &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.44">844x390</button></div>
+<script src="character-card/app.js"></script>
+</body>
+</html>
