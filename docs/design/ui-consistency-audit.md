@@ -80,7 +80,7 @@ Hiçbir menü ekranında arayüz sesi yok; bu, tutarlı ve ✓ kabul edildi.
 |---|---|---|---|
 | Onay (elConfirm, Phaser) | 160 ms solma ✗ → ✓ ortak pencere açılışı / kapanışı | Yes solda (birincil), No sağda ✗ → ✓ No solda, Yes en sağda | Esc / zemin = No ✓ |
 | Toast (elToast) | Kendi süreleri ✓ → artık ortak ön ayar (veri) | Yatay bant | – |
-| Tooltip | Phaser elTip, DOM el-tip, HUD bh-tt: aynı kit dili ✓ | – | – |
+| Tooltip | Phaser bandTip, DOM bandTipHtml (.bt), HUD tipHtml: tek "A - Band" dili ✓ | – | – |
 
 ## 2. Ortak yapı (`docs/arch/ui-and-stage.md` > Tasarım kiti > "Ortak ekran yapısı"; özeti CLAUDE.md > Tasarım kiti)
 

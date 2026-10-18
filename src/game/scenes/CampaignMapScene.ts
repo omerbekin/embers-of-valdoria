@@ -96,6 +96,8 @@ import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { H, W, bodyText, classCard, crown, hpBar, openModal, type Modal } from '../campaign-ui';
 import { MAP_SCENE, MENU_SCENE, checkPaused, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
 import { classAvatar, classLogoBadge, ensureGlow } from '../menu-ui';
+import { avatarTexture } from '../assets';
+import { bandTip, type PhLine, type PhSection } from '../band-tip';
 import { sortByPrimary } from '../class-order';
 import { debugState } from '../debug-state';
 import { isSettingsOpen, setSettingsOpen } from '../../ui/settings';
@@ -1185,10 +1187,11 @@ export class CampaignMapScene extends Phaser.Scene {
       // Düşmüş kahraman (Ömer 2026-10-11): soluk portre + mezar işareti; ceset olarak taşınır, dinlenme noktasında altınla kalkar
       const fallen = isFallen(h);
       const name = fitW(elText(this, 112, 18, def.name, 19, fallen ? EL.DIM : EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - 120);
-      const roleText = fallen ? (this.s.valor !== undefined ? 'Fallen · revive at a town, a Rest camp or with Valor' : 'Fallen · revive at a town or Rest camp') : `${def.role ?? ''}${lead?.id === h.id ? ' · Leader' : ''}`;
+      const roleText = fallen ? 'Fallen' : `${def.role ?? ''}${lead?.id === h.id ? ' · Leader' : ''}`;
+      const reviveText = fallen ? (this.s.valor !== undefined ? 'Revive: town, Rest camp, Valor' : 'Revive: town, Rest camp') : '';
       const role = fitW(elBody(this, 112, 44, roleText, 16, fallen ? '#d88a7e' : EL.MUTED).setOrigin(0, 0.5), w - 120);
       const bar = hpBar(this, 112, 64, w - 130, 6, h.hpRatio);
-      const hp = elBody(this, 112, 82, session.showHp && !fallen ? `${Math.round(h.hpRatio * 100)}% health` : '', 14, EL.DIM).setOrigin(0, 0.5);
+      const hp = fitW(elBody(this, 112, 82, fallen ? reviveText : session.showHp ? `${Math.round(h.hpRatio * 100)}% health` : '', 14, EL.DIM, false).setOrigin(0, 0.5), w - 120);
       if (fallen) face.setAlpha(0.32);
       // Level atlama işareti (Ömer 2026-10-18): harcanmamış stat puanı olan kahraman, puan harcanana dek kor nabzıyla öne çıkar (ana eylem çağrısı; kor burada serbest)
       const pts = fallen ? 0 : (h.statPoints ?? 0);
@@ -1274,78 +1277,93 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Düğüm bilgi satırları (hover kartı ve savaş onayı ortak): tür · durum, düşmanlar, sonraki duraklar. */
-  private nodeFacts(id: string): { kind: string; foes: string; then: string; blurb: string; faces: string[] } {
+  private nodeFacts(id: string): { kind: string; state: string; foes: string; leader: string; then: string; next: Array<{ name: string; type: NodeType }>; blurb: string; faces: string[] } {
     const s = this.s;
     const n = node(this.map, id);
     const step = nextStep(s);
     const vis = nodeVisibility(this.map, s, session.revealFog)[id];
     const option = step.kind === 'move' && step.options.includes(id);
     const state = id === s.at ? 'You are here' : vis === 'cleared' ? 'Cleared' : option ? 'Reachable' : vis === 'closed' ? 'Road closed' : vis === 'goal' ? 'Your goal' : 'Ahead';
-    const kind = `${n.subtitle || TYPE_LABEL[n.type]}  ·  ${state}`;
+    const kind = n.subtitle || TYPE_LABEL[n.type];
     let foes = '';
+    let leaderName = '';
     let faces: string[] = [];
     let blurb = '';
     if (n.encounter && vis !== 'goal') {
       const p = enemyPreview(n.encounter);
-      const leader = p.leader && !p.names.includes(p.leader) ? `  (led by ${p.leader})` : '';
-      foes = `${p.names.join(', ')}${leader}`;
+      leaderName = p.leader && !p.names.includes(p.leader) ? p.leader : '';
+      foes = p.names.join(', ');
       faces = p.classes.filter((c) => !!content.classes[c]).slice(0, 6);
     } else if (vis !== 'goal')
       blurb = n.type === 'town' ? 'Rest, recruit and trade. Your heroes recover here.' : n.type === 'treasure' ? 'A cache of gear and gold.' : n.type === 'event' ? 'A crossroads encounter.' : n.type === 'rest' ? 'Make camp for free and recover. The fallen can be revived here for gold.' : n.type === 'merchant' ? 'Odo the Peddler sells gear and buys yours.' : '';
     const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
     const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
-    return { kind, foes, then, blurb, faces };
+    return { kind, state, foes, leader: leaderName, then, next: after.map((a) => ({ name: a.name, type: a.type })), blurb, faces };
   }
 
-  /** Düğüm bilgi kartı (fare hover / dokunmatik uzun basış): ad, tür · durum, düşman portreleri + adlar, "Then". İmlecin yanında. */
+  /**
+   * Düğüm bilgi kartı (fare hover / dokunmatik uzun basış): ortak "A - Band" ipucu (src/game/band-tip.ts; Ömer 2026-10-18). Ad + tür · alt başlık,
+   * durum çipi (Cleared...), düşman portre çipleri (Foes), sonraki duraklar (Then). İmlecin yanında.
+   */
   private showNodeTip(id: string, p: Phaser.Input.Pointer): void {
     this.hideNodeTip();
     if (nodeVisibility(this.map, this.s, session.revealFog)[id] === 'fog') return;
     const n = node(this.map, id);
     const f = this.nodeFacts(id);
     const c = this.compact();
-    const w = c ? 600 : 420;
-    const k = c ? 1.35 : 1;
-    const pad = 20;
-    const parts: Phaser.GameObjects.GameObject[] = [];
-    let y = pad;
-    const title = fitW(elText(this, pad, y + 12 * k, n.name, Math.round(21 * k), EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - pad * 2);
-    parts.push(title);
-    y += 28 * k;
-    const kind = elBody(this, pad, y, f.kind, Math.round(16 * k), EL.NOTE, true, w - pad * 2);
-    parts.push(kind);
-    y += kind.height + 10;
-    if (f.faces.length) {
-      const fs = Math.round(40 * k);
-      f.faces.forEach((cid, i) => {
-        const fx = pad + i * (fs + 8);
-        const fr = this.add.graphics();
-        fr.fillStyle(0x120c08, 1).fillRect(fx, y, fs, fs).lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(fx + 0.5, y + 0.5, fs - 1, fs - 1);
-        parts.push(fr, classAvatar(this, content.classes[cid]!, fx + fs / 2, y + fs / 2, fs - 2, true));
-      });
-      y += fs + 8;
-    }
-    const line = (label: string, text: string) => {
-      if (!text) return;
-      const lab = elText(this, pad, y + 10 * k, label, Math.round(13 * k), 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5);
-      const off = Math.round(64 * k);
-      const t = elBody(this, pad + off, y, text, Math.round(16 * k), EL.TXT, true, w - pad * 2 - off);
-      parts.push(lab, t);
-      y += t.height + 6;
+    const glyph = (type: NodeType) => (scene: Phaser.Scene, cx: number, cy: number, size: number): Phaser.GameObjects.GameObject[] => {
+      const art = nodeGlyphImage(scene, type, cx, cy, Math.round(size * 0.84));
+      if (art) return [art];
+      const g = scene.add.graphics();
+      drawNodeGlyph(g, type, EL.ON_N, 0.95, cx, cy);
+      return [g];
     };
-    line('Foes', f.foes);
-    if (f.blurb) {
-      const t = elBody(this, pad, y, f.blurb, Math.round(16 * k), EL.NOTE, true, w - pad * 2);
-      parts.push(t);
-      y += t.height + 6;
+    const sections: PhSection[] = [];
+    const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
+    if (n.encounter && f.foes && vis !== 'goal') {
+      sections.push({
+        label: 'Foes',
+        faces: foeGroups(n.encounter).groups.slice(0, 6).map((g) => {
+          const def = content.classes[g.cls];
+          return {
+            label: g.name,
+            count: g.n,
+            build: (scene, cx, cy, size) => {
+              const av = avatarTexture(scene, g.sprite);
+              if (av) return [scene.add.image(cx, cy, av).setDisplaySize(size, size).setFlipX(true)];
+              return def ? [classAvatar(scene, def, cx, cy, size, true)] : [];
+            },
+            ...(g.tier ? { chip: { text: g.tier === 'boss' ? 'Boss' : 'Elite', tone: 'warn' as const } } : {}),
+          };
+        }),
+      });
     }
-    line('Then', f.then);
-    const h = y + pad - 6;
-    const root = this.add.container(0, 0).setDepth(1500);
-    root.add([elPanel(this, 0, 0, w, h, { alpha: 0.94 }), ...parts]);
-    root.setData('size', { w, h });
-    this.ui.add(root);
-    this.nodeTip = root;
+    if (f.next.length) {
+      sections.push({
+        label: 'Then',
+        faces: f.next.map((a) => ({ label: a.name, build: glyph(a.type), chip: { text: TYPE_LABEL[a.type], ...(a.type === 'elite' || a.type === 'boss' ? { tone: 'warn' as const } : {}) } })),
+      });
+    }
+    const lines: PhLine[] = [];
+    if (f.blurb) lines.push({ text: f.blurb });
+    if (f.leader) lines.push({ text: `Led by ${f.leader}` });
+    const stateTone = f.state === 'Cleared' ? ('ok' as const) : f.state === 'Road closed' ? ('warn' as const) : undefined;
+    const tip = bandTip(this, {
+      accent: '#c9953f',
+      kind: f.kind,
+      title: n.name,
+      round: true,
+      medal: glyph(n.type),
+      asideChip: { text: f.state, ...(stateTone ? { tone: stateTone } : {}) },
+      lines,
+      sections,
+      width: c ? 760 : 580,
+      scale: c ? 1.35 : 1,
+    });
+    tip.container.setDepth(1500);
+    this.ui.add(tip.container);
+    tip.container.setData('size', { w: tip.width, h: tip.height });
+    this.nodeTip = tip.container;
     this.placeNodeTip(p);
   }
 

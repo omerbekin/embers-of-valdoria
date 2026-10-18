@@ -59,6 +59,11 @@ export interface HeroLine {
   parts: HeroLinePart[];
 }
 
+/** Dolu yuva sayısı / toplam yuva ("2/7"; kahraman ipucunda elmas sırası). */
+export function heroItemCount(h: HoverHero): { filled: number; total: number } {
+  return { filled: SLOT_IDS.filter((k) => h.equipment[k]).length, total: SLOT_IDS.length };
+}
+
 /** Olağan satır: "Level 1 · 4/6 items". */
 export function idleHeroLine(h: HoverHero): HeroLine {
   const count = SLOT_IDS.filter((k) => h.equipment[k]).length;

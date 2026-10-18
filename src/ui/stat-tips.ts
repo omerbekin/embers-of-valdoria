@@ -4,6 +4,8 @@
 import { content, describeStat, UNBLOCKABLE_LABEL } from '../engine';
 import type { StatKind, Stats } from '../engine';
 import { iconUrl } from './dom-icons';
+import { splitStatTitle } from './band-rich';
+import type { BandTipSpec } from './band-tip';
 import { MIGHT_COLOR, STAT_COLOR, statIconName } from './stat-icons';
 import { itemImageUrl } from '../game/item-icon-files';
 import itemsJson from '../../data/items.json';
@@ -144,6 +146,38 @@ export function statIcon(id: string): { kind: string; color: string } | null {
   const kind = KIND[id];
   if (!kind) return null;
   return { kind: statIconName(kind), color: kind === 'might' ? MIGHT_COLOR : STAT_COLOR[kind] };
+}
+
+const ATTRIBUTES = new Set(['str', 'dex', 'int', 'luck']);
+
+/** Stat ipucunun "A - Band" parçaları (DOM ve Phaser ortak): tür etiketi, ad, büyük değer, vurgu rengi. İçerik metni değişmez. */
+export function statTipParts(id: string, tip: StatTip): { kind: string; name: string; value?: string; valueLabel?: string; accent: string } {
+  const t = splitStatTitle(tip.title);
+  const base = ATTRIBUTES.has(id) ? 'Attribute' : 'Stat';
+  return {
+    kind: t.bonus ? `${base} · ${t.bonus}` : base,
+    name: t.name,
+    ...(t.value !== undefined ? { value: t.value } : {}),
+    ...(t.value !== undefined && ATTRIBUTES.has(id) ? { valueLabel: 'points' } : {}),
+    accent: statIcon(id)?.color ?? '#d9b26a',
+  };
+}
+
+/** Gear'ın stat ipucu (band): `diff` = başlıktaki fark ("+2" ya da parantezli; yoksa tip.titleDiff). */
+export function statBandSpec(id: string, tip: StatTip, diff?: { text: string; dir: 'up' | 'down' }): BandTipSpec {
+  const p = statTipParts(id, tip);
+  const d = diff ?? tip.titleDiff;
+  const icon = statIconUrl(id);
+  return {
+    accent: p.accent,
+    kind: p.kind,
+    title: p.name,
+    ...(icon ? { icon } : {}),
+    ...(p.value !== undefined ? { value: p.value } : {}),
+    ...(p.valueLabel ? { valueLabel: p.valueLabel } : {}),
+    ...(d ? { valueDiff: { text: d.text.replace(/^\((.*)\)$/, '$1'), dir: d.dir } } : {}),
+    lines: tip.lines.map((text) => ({ text })),
+  };
 }
 
 /**

@@ -4,6 +4,7 @@ import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { ValorMeter } from './valor-braziers';
 import { valorRules } from '../engine/content';
+import { bandTipHtml, type BandChip, type BandTipSpec } from './band-tip';
 
 /**
  * SAVAŞ HUD'ı (Ömer 2026-10-09, taslak public/mockups/battle-hud.html?v=2 "Slim bar, sheet rises"): DOM katmanı, oyun biriminde çizilir ve
@@ -49,6 +50,10 @@ export interface TipContent {
   tags?: Array<{ text: string; color?: string; iconUrl?: string }>;
   rows: TipRow[];
   shape?: MiniShapeLike | null;
+  /** Başlık şeridinin üstündeki tür etiketi ("Skill", "Passive"...); yoksa `badge` kullanılır (Band tooltip, src/ui/band-tip.ts). */
+  kind?: string;
+  /** Vurgu rengi (yoksa skill'in element rengi, o da yoksa altın). */
+  accent?: string;
 }
 export interface HudStat {
   kind: string;
@@ -204,25 +209,38 @@ const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', 
 const pct = (a: number, b: number) => `${b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : 0}%`;
 const img = (url: string, cls = 'bh-ico', extra = '') => (url ? `<img class="${cls}" src="${url}" alt="" draggable="false" ${extra}>` : '');
 
-/** Kit tooltip'inin iç HTML'i (skill, stat, global, sıra hücresi, bağlam ipuçları). */
-export function tipHtml(t: TipContent): string {
-  const shape = t.shape ? miniShapeHtml(t.shape) : '';
-  return `<div class="bh-tt">${img(t.iconUrl ?? '', 'bh-ico bh-tt-ico')}<span class="bh-tt-name" style="${t.titleColor ? `color:${t.titleColor}` : ''}">${esc(t.title)}</span>${
-    t.value !== undefined ? `<span class="bh-tt-v" style="${t.valueColor ? `color:${t.valueColor}` : ''}">${esc(t.value)}</span>` : ''
-  }${shape}${t.badge ? `<span class="bh-tag">${esc(t.badge)}</span>` : ''}</div>${
-    t.tags && t.tags.length
-      ? `<div class="bh-tags">${t.tags.map((g) => `<span style="${g.color ? `color:${g.color}` : ''}">${g.iconUrl ? img(g.iconUrl) : ''}${esc(g.text)}</span>`).join('<i class="bh-tdot"></i>')}</div>`
-      : ''
-  }${
-    t.meta && t.meta.length ? `<div class="bh-meta">${t.meta.map((m) => `<span style="${m.color ? `color:${m.color}` : ''}">${img(m.iconUrl ?? '')}${esc(m.text)}</span>`).join('')}</div>` : ''
-  }${t.rows.length ? `<div class="bh-fade"></div><ul class="bh-rows">${t.rows.map((r) => `<li style="${r.color ? `color:${r.color}` : ''}">${esc(r.text)}</li>`).join('')}</ul>` : ''}`;
+/** Nötr başlık renkleri (krem / altın): vurgu sayılmaz, ipucu altın kalır; renkli başlık (uyarı, seçili hücre) vurgu olur. */
+const NEUTRAL_TITLE = new Set(['#d9c8a2', '#f3d999', '#e8e2d0', '#f4ede1', '#ffffff']);
+
+/** TipContent -> "A - Band" ipucu tarifi (içerik aynı; yalnızca görünüm: src/ui/band-tip.ts). */
+export function tipToBand(t: TipContent): BandTipSpec {
+  const tagColor = t.tags?.find((g) => g.color)?.color;
+  const titleAccent = t.titleColor && !NEUTRAL_TITLE.has(t.titleColor.toLowerCase()) ? t.titleColor : undefined;
+  const chips: BandChip[] = [];
+  for (const g of t.tags ?? []) chips.push({ text: g.text, ...(g.iconUrl ? { icon: g.iconUrl } : {}), ...(g.color ? { tone: 'ac' as const, color: g.color } : {}) });
+  for (const m of t.meta ?? []) {
+    const free = /^(cost )?free$/i.test(m.text);
+    const num = /^(\d+(?:\.\d+)?)\s*(.*)$/.exec(m.text);
+    chips.push({ text: num ? num[2]! : m.text, ...(num ? { num: num[1]!, tone: 'v' as const } : { tone: free ? ('free' as const) : ('v' as const) }), ...(m.iconUrl ? { icon: m.iconUrl } : {}), ...(m.color && !free ? { color: m.color } : {}) });
+  }
+  const grid = t.shape ? { cols: t.shape.cols, rows: t.shape.rows, cells: t.shape.cells } : null;
+  const accent = t.accent ?? tagColor ?? titleAccent;
+  return {
+    ...(accent ? { accent } : {}),
+    ...((t.kind ?? t.badge) ? { kind: (t.kind ?? t.badge)! } : {}),
+    title: t.title,
+    ...(t.iconUrl ? { icon: t.iconUrl } : {}),
+    ...(t.value !== undefined ? { value: t.value, ...(t.valueColor ? { valueColor: t.valueColor } : {}) } : {}),
+    grid,
+    chips,
+    lines: t.rows.map((r) => ({ text: r.text, ...(r.color ? { color: r.color } : {}) })),
+    ...(t.shape?.note ? { foot: t.shape.note } : {}),
+  };
 }
 
-function miniShapeHtml(m: MiniShapeLike): string {
-  const cells = m.cells
-    .map((c) => `<i class="${c.on ? 'on' : ''} ${c.anchor ? 'an' : ''}" style="grid-column:${c.col + 1};grid-row:${c.row + 1};${c.on && c.stage && c.stage > 1 ? `opacity:${Math.max(0.4, 1 - 0.3 * (c.stage - 1))}` : ''}">${c.hits && c.hits > 1 ? c.hits : ''}</i>`)
-    .join('');
-  return `<span class="bh-mini" style="grid-template-columns:repeat(${m.cols},11px);grid-template-rows:repeat(${m.rows},11px)">${cells}</span>${m.note ? `<span class="bh-mini-note">${esc(m.note)}</span>` : ''}`;
+/** Kit tooltip'inin iç HTML'i (skill, stat, global, sıra hücresi, bağlam ipuçları): ortak "A - Band" bileşeni. */
+export function tipHtml(t: TipContent): string {
+  return bandTipHtml(tipToBand(t));
 }
 
 export class BattleHud {

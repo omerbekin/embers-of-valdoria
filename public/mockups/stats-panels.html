@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Stats Panels Mockups</title>
+<!-- STAT PANELLERI taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 | #u=0.67 | #u=0.44 (telefon yatay) ; &pts=0|3 (dagitilacak stat puani) ; &clean = serit gizli. -->
+<link rel="stylesheet" href="stats-panels/stats-panels.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Stat panels: Gear Sheet and battle unit card</h1>
+Ömer: "stat kısmını menü dışındaki arayüzlerde de kullanabilir miyiz?" Karakter kartındaki A stat dili (üç sütun, altın elmas ayırıcı, hizalı altın Cinzel rakam, primary vurgusu, boyalı ikon) iki oyun ekranına uygulandı. Her bölümde solda mevcut hal (ekran görüntülerinden birebir), sağda öneri(ler). Sayılar, metinler ve düğmeler aynı; yalnız dil değişti.
+<h3>Teşhis</h3>
+<ol>
+<li><b>Sheet: rakamlar ve etiketler aynı ağırlıkta.</b> STR, DMG, ARM kısaltmaları ve beyaz rakamlar aynı boyda; hangisinin primary olduğu belli değil. Karakter kartında tam ad ve altın rakam var; burada kısaltma ve beyaz. İki ekran aynı stat listesini farklı dilde gösteriyor.</li>
+<li><b>Sheet: çubuklar ve başlık kutusuz, dağınık.</b> HP/MP değeri çubuğun üstünde ortada yüzüyor, çubuk düz renk blok (kalın, çerçevesiz); XP çubuğu çok ince; "2 skill points saved" italik tek satır; "Stats" başlığı sütun başlıkları gibi çizgili değil.</li>
+<li><b>Sheet: sütunlar arası ayırıcı yalnız dikey çizgi</b>, sütun başlığı (Main / Attack / Defense) yok; sütunlar farklı uzunlukta bitiyor. [+] [-] düğmeleri ve fark yazısı (+1) etiketle rakamın arasına karışıyor.</li>
+<li><b>Birim kartı: başlık yalnız yazı, ALLY etiketi köşede yetim.</b> "Melee Bruiser · Strength 32 primary" italik cümle; seviye (Lv) hiç görünmüyor; ALLY çerçeveli kutu ama başka hiçbir kartta bu dil yok.</li>
+<li><b>Birim kartı: barlar üç ayrı dilde.</b> HP değeri solda, "/ 129" sağda, MP rakamı açık mavi, Rage sarı; çubuklar kalın düz bloklar. Tooltip ve karakter kartı ailesindeki ince altın çerçeve yok. Rage ayrı satırda yarım boş.</li>
+<li><b>Birim kartı: stat satırları iki ayrı ızgara.</b> Üst satır dört attribute, alt iki satır 3x3 karışık (ARM, EVA, SPD / M.ARM, CRIT, ACC / BLOCK); gruplar (Main, Attack, Defense) karışmış. ARM -32% küçük italik, başka satırlarla hizasız.</li>
+<li><b>Birim kartı: skills ve pasif.</b> Skill ikonları ince çerçeveli küçük kutular, hedef italik gri, MP ve bekleme simgeleri küçük; ulti soluk ama "1 /5" ne demek belli değil. PASSIVE bölümü uzun italik paragraf ve skill listesiyle tekrar (Ömer: kaldır). Alt satır italik.</li>
+</ol>
+<h3>Ortak dil</h3>
+<ul>
+<li>Karakter kartı A: A-Band başlık şeridi, altın elmas ayırıcı, MAIN / ATTACK / DEFENSE sütunları (ince çizgili başlık), soluk etiket + <b>altın Cinzel rakam</b>, primary satırı turuncu zeminli (Strength), boyalı stat ikonları.</li>
+<li>Barlar: ince altın çerçeve, koyu iç zemin, parlak dolgu; ikon + ad solda, <b>değer sağda</b> (altın Cinzel, tam değer soluk). Renkler aynı: HP yeşil, MP mavi, Rage turuncu, XP altın.</li>
+<li>Başlıkta sınıf adının sağında <b>Lv 3</b>. Birim kartında PASSIVE yok (skiller anlatıyor). Düz yazı, italik yok. Ömer onaylamalı: kısaltmalar (STR, M.ARM, HP+/T) Sheet'te tam ada döndü (Strength, Magic armor, HP regen); üzerine gelince açılan tooltip aynı kalır. Birim kartında yer az olduğu için kısa etiketler kaldı.</li>
+<li>Sheet'te stat puanı dağıtımı çalışır: alttaki şeritten <b>Points 3</b> seç; satırlarda [+] / [-], fark "+1", Reset / Confirm. +, kuralı: bir temel stat diğer üçünün toplamını aşamaz (aynen oyundaki gibi). Düğme yuvaları puan yokken de yer tutar (kayma yok).</li>
+</ul>
+<h3>Önerim</h3>
+<ul>
+<li><b>Sheet: A · Band</b> (düz akış, karakter kartının bire bir kuzeni; en az sürpriz). B Plates daha "oyun", ama panel içinde kutu içinde kutu olur.</li>
+<li><b>Birim kartı: A · Band + Plates</b> kartın tutarlı hali; <b>B · Band + Rows</b> daha yoğun, 4 skill tek sütunda; telefon yatayda B daha rahat. Önerim: masaüstü A, telefonda B (aynı veri, yalnız yerleşim).</li>
+</ul>
+<h3>Ölçek</h3>
+<ul><li>Alttaki şeritten: <b>1920</b>, <b>1280</b>, <b>844x390</b> (0.44; yazı en az 13px, çip en az 11px, dokunma alanı 44px).</li></ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Stat panels &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.44">844x390</button>
+<span class="sep"></span>Sheet points:
+<button data-p="0">0</button><button data-p="3">3</button></div>
+<script src="stats-panels/app.js"></script>
+</body>
+</html>

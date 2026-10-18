@@ -61,14 +61,14 @@ import {
   elHeading,
   elLink,
   elText,
-  elTip,
   elToast,
   fadeLine,
   placeElTip,
   vGradient,
   type ElButton,
-  type ElTipSpec,
 } from '../elegant-ui';
+import { bandTip, type BandTipSpec, type PhChip, type PhLine } from '../band-tip';
+import { statTipParts } from '../../ui/stat-tips';
 
 const { width: W, height: H, colors } = layout;
 const { rows: ROWS, lanes: LANES } = content.GRID;
@@ -112,7 +112,14 @@ const START = { h: 84, cy: 990, right: 48, pad: 56, size: 30 };
 const RANDOM_BOTH = { h: 56, gap: 14 };
 
 
-type TipSpec = ElTipSpec;
+type TipSpec = BandTipSpec;
+
+/** "14 MP" -> değerli çip (altın sayı); "Free" -> yeşil durum çipi ("Cost free"). */
+const costChip = (text: string, prefix = ''): PhChip => {
+  if (/^free$/i.test(text)) return { text: `${prefix}free`, tone: 'free' };
+  const m = /^(\d+(?:\.\d+)?)\s*(.*)$/.exec(text);
+  return m ? { tone: 'v', num: m[1]!, text: m[2]! } : { tone: 'v', text };
+};
 
 interface CellView {
   side: Side;
@@ -723,7 +730,7 @@ export class TeamSelectScene extends Phaser.Scene {
       boxes.unshift({
         key: `passive:${def.id}`,
         icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)),
-        tip: () => ({ icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)), title: p.name, badge: 'Passive', lines: [[describePassive(p, def.stats, content.formulas)]] }),
+        tip: () => ({ icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)), title: p.name, kind: 'Passive', accent: def.color, lines: [{ text: describePassive(p, def.stats, content.formulas) }] }),
       });
     }
     boxes.forEach((b, k) => {
@@ -858,7 +865,7 @@ export class TeamSelectScene extends Phaser.Scene {
       for (const side of SIDES) {
         const b = badges[side];
         if (b.n > 0 && Math.hypot(lx - b.c.x, ly - b.c.y) <= 16) {
-          this.showTip(`badge:${id}:${side}`, { title: `${NAME[side]} team`, titleHex: BADGE_LABEL[side], lines: [[`${b.n} ${def.name}${b.n > 1 ? 's' : ''} in the ${NAME[side]} team`]], width: 340 }, { x: m.tx + b.c.x - 14, y: m.ty - 6 + b.c.y - 14, w: 28, h: 28 });
+          this.showTip(`badge:${id}:${side}`, { title: `${NAME[side]} team`, accent: BADGE_LABEL[side], lines: [{ text: `${b.n} ${def.name}${b.n > 1 ? 's' : ''} in the ${NAME[side]} team` }], width: 380 }, { x: m.tx + b.c.x - 14, y: m.ty - 6 + b.c.y - 14, w: 28, h: 28 });
           return;
         }
       }
@@ -1108,7 +1115,7 @@ export class TeamSelectScene extends Phaser.Scene {
       this.showInfo(def.id);
       if (hint) {
         const m = body.getWorldTransformMatrix();
-        this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), titleHex: hintColor(hint), lines: [[placementHintText(def.name, hint)]], width: 380 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
+        this.showTip(`hint:${side}:${i}`, { title: placementHintTitle(hint), accent: hintColor(hint), lines: [{ text: placementHintText(def.name, hint) }], width: 420 }, { x: m.tx - h, y: m.ty - h, w: CELL, h: CELL });
       }
     });
     zone.on('pointerout', () => {
@@ -1166,13 +1173,15 @@ export class TeamSelectScene extends Phaser.Scene {
 
   private statTip(def: CombatantDef, kind: (typeof ATTRS)[number]): TipSpec {
     const info = describeStat(kind, def.stats, content.formulas);
+    const parts = statTipParts(kind, { title: info.title, lines: info.lines });
     return {
+      accent: info.primary ? PRI : STAT_COLOR[kind],
+      kind: info.bonus ? `Primary · ${info.bonus.name}` : parts.kind,
+      title: parts.name,
       icon: ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false),
-      iconSize: 40,
-      title: info.title,
-      titleHex: info.primary ? PRI : STAT_COLOR[kind],
-      badge: info.bonus ? `Primary · ${info.bonus.name}` : undefined,
-      lines: info.lines.map((l): [string] => [l]),
+      ...(parts.value !== undefined ? { value: parts.value } : {}),
+      ...(parts.valueLabel ? { valueLabel: parts.valueLabel } : {}),
+      lines: info.lines.map((text) => ({ text })),
     };
   }
 
@@ -1181,27 +1190,34 @@ export class TeamSelectScene extends Phaser.Scene {
     if (!skill) return { title: skillId, lines: [] };
     const info = describeSkill(skill, def.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds }, def.range);
     const kc = (k: (typeof info.kinds)[number]): string => (k === 'shield' ? colors.shield : k === 'magicShield' ? colors.magicShield : k ? (colors.element as Record<string, string>)[k] ?? TXT : TXT);
-    const lines: Array<[string, string?]> = info.lines.map((l, i) => [l, kc(info.kinds[i])]);
-    if (info.initialCooldown) lines.push([info.initialCooldown, MUTED]);
+    const lines: PhLine[] = info.lines.map((l, i) => {
+      const hex = kc(info.kinds[i]);
+      return hex === TXT ? { text: l } : { text: l, hex };
+    });
+    if (info.initialCooldown) lines.push({ text: info.initialCooldown, hex: MUTED });
     const shape = skillMiniGrid(skill, content.formulas.formation);
     // Hedef türü · element · Melee / Ranged (ortak kaynak src/ui/skill-tags.ts; savaş HUD'ı ve Codex ile aynı)
-    const tags = skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { icon: ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false) } : {}) }));
-    return { icon: ensureSkillIcon(this, skill), title: info.name, tags, meta: (skill.cooldown ?? 0) > 0 ? `Cost ${info.cost}   ·   Cooldown ${info.cooldown}` : `Cost ${info.cost}`, shape, lines };
+    const tagList = skillTags(skill);
+    const chips: PhChip[] = tagList.map((g) => ({ text: g.text, ...(g.color ? { hex: g.color, tone: 'ac' as const } : {}), ...(g.icon ? { icon: ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false) } : {}) }));
+    chips.push(costChip(info.cost, 'Cost '));
+    if ((skill.cooldown ?? 0) > 0) chips.push(costChip(info.cooldown));
+    const accent = tagList.find((g) => g.color)?.color;
+    return { ...(accent ? { accent } : {}), kind: 'Skill', icon: ensureSkillIcon(this, skill), title: info.name, chips, shape, ...(shape?.note ? { foot: shape.note } : {}), lines };
   }
 
   private classTip(def: CombatantDef): TipSpec {
     const f = content.formulas;
     const s = def.stats;
-    const lines: Array<[string, string?]> = [];
-    if (isTestClass(def)) lines.push(['Test class: left out of random teams, add it by hand', '#ffb347']);
+    const lines: PhLine[] = [];
+    if (isTestClass(def)) lines.push({ text: 'Test class: left out of random teams, add it by hand', hex: '#ffb347' });
     if (def.primary) {
       const b = primaryBonusInfo(def.primary, f, true);
-      lines.push([`Primary ${def.primary.toUpperCase()} - ${b.name}: ${b.detail}`, PRIMARY_GOLD]);
+      lines.push({ text: `Primary ${def.primary.toUpperCase()} - ${b.name}: ${b.detail}`, hex: PRIMARY_GOLD });
     }
-    lines.push([`HP ${s.hp}   ·   MP ${s.mp}   ·   SPD ${s.spd}`]);
-    lines.push([`Armor ${s.armor}${s.magicArmor > 0 ? `   ·   Magic armor ${s.magicArmor}` : ''}   ·   Crit ${(s.critChance * 100).toFixed(1).replace(/\.0$/, '')}% x${s.critMult.toFixed(2)}`]);
-    if (def.passive) lines.push([`${def.passive.name}: ${describePassive(def.passive, s, f)}`, NOTE]);
-    return { icon: ensureIcon(this, classLogoName(def), def.color, false, ownerOfUnit(def.id)), title: def.name, badge: `${archetypeOf(def)} · ${rangeOf(def)}`, lines };
+    lines.push({ text: `HP ${s.hp}   ·   MP ${s.mp}   ·   SPD ${s.spd}` });
+    lines.push({ text: `Armor ${s.armor}${s.magicArmor > 0 ? `   ·   Magic armor ${s.magicArmor}` : ''}   ·   Crit ${(s.critChance * 100).toFixed(1).replace(/\.0$/, '')}% x${s.critMult.toFixed(2)}` });
+    if (def.passive) lines.push({ text: `${def.passive.name}: ${describePassive(def.passive, s, f)}` });
+    return { accent: def.color, icon: ensureIcon(this, classLogoName(def), def.color, false, ownerOfUnit(def.id)), kind: `${archetypeOf(def)} · ${rangeOf(def)}`, title: def.name, lines };
   }
 
   /** Zarif tooltip: koyu degrade kutu, ince altın çerçeve, Cinzel başlık + EB Garamond satırlar; yukarı kayarak belirir. */
@@ -1209,7 +1225,7 @@ export class TeamSelectScene extends Phaser.Scene {
     this.tipTimer?.remove();
     if (this.tip?.key === key) return;
     this.hideTip(true);
-    const t = elTip(this, spec);
+    const t = bandTip(this, spec);
     placeElTip(this, t, anchor, 'above');
     this.tip = { key, container: t.container };
   }

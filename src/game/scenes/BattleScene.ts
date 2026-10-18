@@ -2324,7 +2324,7 @@ export class BattleScene extends Phaser.Scene {
     const summonLine = summonPreviewLine(sp, sp.corpse ? (this.battle.get(sp.corpse.uid)?.name ?? null) : null);
     if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) rows.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
     else if (summonLine) rows.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
-    const tip = this.makeInfo(info.name, colors.text, ensureSkillIcon(this, skill), rows, undefined, meta, skillMiniGrid(skill, content.formulas.formation));
+    const tip = this.makeInfo(info.name, colors.text, ensureSkillIcon(this, skill), rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
     // Hedef türü · element · Melee / Ranged (ortak kaynak: src/ui/skill-tags.ts; Codex ve takım seçimiyle aynı)
     tip.tags = skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));
     return tip;

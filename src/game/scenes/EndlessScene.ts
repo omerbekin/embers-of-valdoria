@@ -50,11 +50,12 @@ import { rewardBlockedReason, takeRareDrop,
 } from '../../endless';
 import { SLOT_IDS, TIER_COLOR, affixTip, canEquip, defaultEquipSlot, equipInto, clampRarity, effectLine, heroStats, itemDef, itemSubtitle, sellValue, slotDef, weaponPowerOf, type AffixLine, type ItemDef } from '../../progression';
 import type { Stats } from '../../engine/types';
-import { statIcon, statTip, statTipSegments } from '../../ui/stat-tips';
+import { statIcon, statTip, statTipParts } from '../../ui/stat-tips';
+import { bandTip } from '../band-tip';
 import { backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { classSpriteIds } from '../sprite-needs';
 import { classAvatar, fitText } from '../menu-ui';
-import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elTip, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
+import { EL, diamondPts, elBack, elBody, elButton, elConfirm, elConfirmOpen, elGo, elHeading, elIconButton, elPanel, elScreenIn, elText, elToast, fadeLine, placeElTip, vGradient, type ElButton } from '../elegant-ui';
 import { motion, MOTION } from '../../ui/motion';
 import { SlotDrag, makeDragGhost } from '../slot-drag';
 import { ensureGlow } from '../menu-ui';
@@ -881,7 +882,7 @@ export class EndlessScene extends Phaser.Scene {
     const d = relicDef(id);
     if (!d) return;
     this.hideTip();
-    const tip = elTip(this, { icon: ensureIcon(this, paintedOr('relic', d.id, d.icon), d.color, false), title: d.name, meta: T.relicEffectLabel, lines: [[d.text]], width: 420 });
+    const tip = bandTip(this, { accent: d.color, kind: T.relicEffectLabel, icon: ensureIcon(this, paintedOr('relic', d.id, d.icon), d.color, false), title: d.name, lines: [{ text: d.text }], width: 440 });
     placeElTip(this, tip, { x: x - size / 2, y: y - size / 2, w: size, h: size }, 'above');
     this.tip = tip.container;
   }
@@ -1157,7 +1158,8 @@ export class EndlessScene extends Phaser.Scene {
       const info = sk ? (st ? statTip(sk, st.now, st.after) : null) : typeof key === 'string' ? null : affixTip(key);
       if (!info) return;
       this.hideTip();
-      const tip = elTip(this, { icon: ic ? ensureIcon(this, ic.kind, ic.color, false) : undefined, iconSize: 40, title: info.title, ...(info.titleDiff ? { titleSuffix: { text: info.titleDiff.text, hex: info.titleDiff.dir === 'up' ? TIP_UP : TIP_DOWN } } : {}), lines: info.lines.map((l) => ({ segs: statTipSegments(l).map((g) => ({ text: g.text, ...(g.dir ? { hex: g.dir === 'up' ? TIP_UP : TIP_DOWN } : {}) })) })), width: 440 });
+      const parts = sk ? statTipParts(sk, info) : null;
+      const tip = bandTip(this, { accent: parts?.accent ?? '#d9b26a', kind: parts?.kind ?? 'Affix', title: parts?.name ?? info.title, ...(ic ? { icon: ensureIcon(this, ic.kind, ic.color, false) } : {}), ...(parts?.value !== undefined ? { value: parts.value } : {}), ...(parts?.valueLabel ? { valueLabel: parts.valueLabel } : {}), ...(info.titleDiff ? { valueDiff: { text: info.titleDiff.text.replace(/^\((.*)\)$/, '$1'), hex: info.titleDiff.dir === 'up' ? TIP_UP : TIP_DOWN } } : {}), lines: info.lines.map((text) => ({ text })), width: 460 });
       const m = z.getWorldTransformMatrix();
       placeElTip(this, tip, { x: m.tx - z.width / 2, y: m.ty - z.height / 2, w: z.width, h: z.height }, 'above');
       this.tip = tip.container;
@@ -1194,7 +1196,7 @@ export class EndlessScene extends Phaser.Scene {
     const z = this.add.zone(x0 + w / 2, cy, w, size + 14).setInteractive();
     const show = () => {
       this.hideTip();
-      const tip = elTip(this, { title: name ?? text, titleHex: col, lines: rest.length ? [[rest.join(': ')]] : [], width: 440 });
+      const tip = bandTip(this, { accent: col, title: name ?? text, lines: rest.length ? [{ text: rest.join(': ') }] : [], width: 440 });
       const m = z.getWorldTransformMatrix();
       placeElTip(this, tip, { x: m.tx - z.width / 2, y: m.ty - z.height / 2, w: z.width, h: z.height }, 'above');
       this.tip = tip.container;

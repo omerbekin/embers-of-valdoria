@@ -2,8 +2,6 @@ import { textRes } from './stage-view';
 import Phaser from 'phaser';
 import { BODY_FONT, DISPLAY_FONT } from '../ui/menu-style';
 import { ensureGlow } from './menu-text';
-import { drawMiniShape, miniShapeSize } from './shape-draw';
-import type { MiniShape } from '../ui/shape-diagram';
 import { onStageResize, stageView } from './stage';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { isBackdropTap } from '../ui/backdrop';
@@ -27,7 +25,7 @@ import { backPlacement, NAV_BTN, NAV_COLOR, NAV_STROKE } from '../ui/nav-icons';
  *  - elPanel                            ince çerçeveli koyu panel / kart (köşe elmasları isteğe bağlı)
  *  - elHeading                          altın degradeli başlık + iki yanda süs çizgisi
  *  - elStatus                           durum satırı (ok / warn / bad tonları, nabız)
- *  - elTip / placeElTip                 tooltip
+ *  - placeElTip                         tooltip konumu (kutu: band-tip.ts > bandTip, "A - Band")
  *  - elConfirm                          onay penceresi (Yes / No; Esc = No)
  *  - elBadge                            yuvarlak sayı rozeti (Player mavi / Enemy kırmızı / altın)
  *  - elToast                            üst ortada kısa bildirim
@@ -538,130 +536,7 @@ export function elStatus(scene: Phaser.Scene, x: number, y: number, o: { size?: 
 
 // --- Tooltip ---
 
-export interface ElTipSpec {
-  icon?: string;
-  iconSize?: number;
-  title: string;
-  titleHex?: string;
-  /** Başlığın hemen sağında farklı renkte kısa ek (ör. stat farkı "(+2)" yeşil). */
-  titleSuffix?: { text: string; hex: string };
-  badge?: string;
-  /** Başlığın altında yan yana küçük Cinzel etiketler (skill: hedef türü · element · Melee / Ranged; src/ui/skill-tags.ts). Varsa badge yerine. */
-  tags?: Array<{ text: string; color?: string; icon?: string }>;
-  /** Başlık altı ince çizginin altındaki küçük Cinzel satır (Cost · Cooldown). */
-  meta?: string;
-  shape?: MiniShape | null;
-  /** Satır: [yazı, renk] ya da renkli parçalar ({ segs }: ör. stat farkı "(+6.4%)" yeşil; kelime kelime sarılır). */
-  lines: Array<[string, string?] | { segs: Array<{ text: string; hex?: string }> }>;
-  width?: number;
-}
-
-/** Etiket satırı (yan yana, ince noktalarla ayrılmış küçük büyük harf Cinzel; element kendi renginde, ikonlu). Kök sol üst. */
-function tagRow(scene: Phaser.Scene, x: number, tags: NonNullable<ElTipSpec['tags']>): Phaser.GameObjects.Container {
-  const c = scene.add.container(x, 0);
-  let cx = 0;
-  const h = 22;
-  tags.forEach((t, i) => {
-    if (i > 0) {
-      const dot = scene.add.graphics();
-      dot.fillStyle(EL.GOLD, 0.55).fillCircle(cx + 6, h / 2, 1.6);
-      c.add(dot);
-      cx += 12;
-    }
-    if (t.icon) {
-      c.add(scene.add.image(cx + 8, h / 2, t.icon).setDisplaySize(16, 16));
-      cx += 20;
-    }
-    const tx = elText(scene, cx, h / 2, t.text, 13, t.color ?? EL.MUTED, { em: 0.14 }).setOrigin(0, 0.5);
-    c.add(tx);
-    cx += tx.displayWidth;
-  });
-  c.setSize(cx, h);
-  // elBody ile aynı arayüz: yükseklik / genişlik ölçüsü
-  (c as unknown as { height: number }).height = h;
-  (c as unknown as { width: number }).width = cx;
-  return c;
-}
-
-/** Tooltip kutusu (konumlanmamış; derinlik 5000). */
-export function elTip(scene: Phaser.Scene, spec: ElTipSpec): { container: Phaser.GameObjects.Container; width: number; height: number } {
-  const w = spec.width ?? 460;
-  const px = 20;
-  const items: Phaser.GameObjects.GameObject[] = [];
-  const y0 = 18;
-  const iconS = spec.icon ? (spec.iconSize ?? 52) : 0;
-  let hx = px;
-  if (spec.icon) {
-    items.push(scene.add.image(px + iconS / 2, y0 + iconS / 2, spec.icon).setDisplaySize(iconS, iconS));
-    const b = scene.add.graphics();
-    b.lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(px, y0, iconS, iconS);
-    items.push(b);
-    hx += iconS + 14;
-  }
-  const shapeSz = spec.shape ? miniShapeSize(spec.shape) : null;
-  const textW = w - hx - px - (shapeSz ? shapeSz.w + 10 : 0);
-  const title = fitW(elText(scene, hx, 0, spec.title, 24, spec.titleHex ?? EL.ON).setOrigin(0, 0), textW);
-  const badge = spec.tags?.length ? tagRow(scene, hx, spec.tags) : spec.badge ? elBody(scene, hx, 0, spec.badge, 18, EL.MUTED).setOrigin(0, 0) : null;
-  const headH = title.displayHeight + (badge ? badge.height : 0);
-  const blockH = Math.max(iconS, headH);
-  title.y = y0 + (blockH - headH) / 2;
-  if (badge) {
-    badge.y = title.y + title.displayHeight - 2;
-    if (badge.width > textW) badge.setScale(textW / badge.width);
-    items.push(badge);
-  }
-  items.push(title);
-  if (spec.titleSuffix) {
-    const sx = title.x + title.displayWidth - EL.PAD + 6;
-    const suf = elBody(scene, sx, 0, spec.titleSuffix.text, 20, spec.titleSuffix.hex).setOrigin(0, 0.5);
-    suf.y = title.y + title.displayHeight / 2;
-    items.push(suf);
-  }
-  if (spec.shape && shapeSz) items.push(drawMiniShape(scene, w - px - shapeSz.w, y0 + (blockH - shapeSz.h) / 2, spec.shape));
-  let y = y0 + Math.max(blockH, shapeSz?.h ?? 0) + 8;
-  const rule = scene.add.graphics();
-  items.push(rule);
-  if (spec.meta || spec.lines.length) {
-    rule.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(px, y, w - px, y);
-    y += spec.meta ? 6 : 8;
-  }
-  if (spec.meta) {
-    const m = elText(scene, px, y, spec.meta, 14, EL.MUTED, { em: 0.1 }).setOrigin(0, 0);
-    items.push(m);
-    y += m.height + 8;
-  }
-  for (const ln of spec.lines) {
-    if (!Array.isArray(ln)) {
-      // renkli parçalı satır: kelimeler tek tek dizilir, sığmayan alt satıra iner
-      let x = px;
-      let lineH = 0;
-      for (const seg of ln.segs) {
-        for (const word of seg.text.split(/(?<= )/)) {
-          if (!word) continue;
-          const t = scene.add.text(0, y, word, { fontFamily: BODY_FONT, fontSize: '19px', color: seg.hex ?? EL.TXT }).setResolution(textRes());
-          if (x > px && x + t.width > w - px) {
-            x = px;
-            y += lineH + 1;
-            t.y = y;
-          }
-          t.x = x;
-          x += t.width;
-          lineH = Math.max(lineH, t.height);
-          items.push(t);
-        }
-      }
-      y += lineH + 3;
-      continue;
-    }
-    const [text, hex] = ln;
-    const t = scene.add.text(px, y, text, { fontFamily: BODY_FONT, fontSize: '19px', color: hex ?? EL.TXT, wordWrap: { width: w - px * 2, useAdvancedWrap: true }, lineSpacing: 1 }).setResolution(textRes());
-    items.push(t);
-    y += t.height + 3;
-  }
-  const h = y + 14;
-  const bg = elPanel(scene, 0, 0, w, h, { alpha: 0.97 });
-  return { container: scene.add.container(0, 0, [bg, ...items]).setDepth(5000), width: w, height: h };
-}
+/** Tooltip kutusu: ortak "A - Band" bileşeni src/game/band-tip.ts > bandTip (Ömer 2026-10-18). Konum aşağıda. */
 
 /** Tooltip'i bir dikdörtgenin üstüne (yer yoksa altına) koyar, görünen alandan taşırmaz, yukarı kayarak belirtir. */
 export function placeElTip(scene: Phaser.Scene, tip: { container: Phaser.GameObjects.Container; width: number; height: number }, anchor: { x: number; y: number; w: number; h: number }, prefer: 'above' | 'below' = 'above'): void {

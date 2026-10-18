@@ -4739,3 +4739,276 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
 .gr-fallen-note {
   color: var(--g-dim);
 }
+
+/* ===================== Skills bloğu: "A · Plates" (Ömer 2026-10-18; taslak public/mockups/skills-block.html) =====================
+   Beş eşit dikey plaka (pasif + 4 skill); pasif yeşilimsi bakır şeritli, ulti (4. skill yuvası) turuncu ışımalı + "ULTIMATE" şeridi.
+   Boyalı ikon yumuşak, piksel ikon keskin büyür (style.css img[src$='#smooth']; piksel ikon biraz içeride). Üstüne gelince / dokununca A-Band skill ipucu. */
+.gr-skillbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(14 * var(--u));
+  align-items: stretch;
+  padding-top: calc(10 * var(--u));
+}
+
+.gr-pl {
+  --ac: #d9b26a;
+  --acl: color-mix(in srgb, var(--ac) 55%, #fff);
+  --is: min(calc(116 * var(--u)), 100%);
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  padding: calc(22 * var(--u)) calc(10 * var(--u)) calc(14 * var(--u));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 11%, #1d140c), #0d0906);
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, rgba(217, 178, 106, 0.2));
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 8%, transparent);
+  cursor: help;
+  container-type: inline-size;
+}
+
+.gr-pl.pas {
+  --ac: #6fb0a8;
+}
+
+.gr-pl.ult {
+  --ac: #e0702a;
+  border-color: color-mix(in srgb, var(--ac) 75%, #000);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 40%, transparent), inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--ac) 14%, transparent);
+}
+
+.gr-pl .pl-tag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  font: 700 max(10px, calc(13 * var(--u))) var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff4d6;
+  background: color-mix(in srgb, var(--ac) 55%, #0c0905);
+  border: 1px solid var(--acl);
+  padding: 0.15em 1.1em;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.gr-pl .pl-ico {
+  position: relative;
+  width: var(--is);
+  aspect-ratio: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--ac) 30%, #1a110a) 0%, #0d0806 78%);
+  border: 1px solid color-mix(in srgb, var(--ac) 62%, #000);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--ac) 32%, transparent), inset 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--ac) 22%, transparent);
+  transition: box-shadow 0.15s;
+}
+
+.gr-pl:hover .pl-ico {
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--ac) 60%, transparent), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 34%, transparent);
+}
+
+.gr-pl .pl-ico::before,
+.gr-pl .pl-ico::after {
+  content: '';
+  position: absolute;
+  width: max(7px, calc(10 * var(--u)));
+  height: max(7px, calc(10 * var(--u)));
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+  z-index: 2;
+}
+
+.gr-pl .pl-ico::before {
+  left: -6px;
+  top: -6px;
+}
+
+.gr-pl .pl-ico::after {
+  right: -6px;
+  bottom: -6px;
+}
+
+.gr-pl .pl-ico img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* piksel ikon (boyalı değil): keskin (NEAREST) büyür, çerçevede biraz nefes alır */
+.gr-pl .pl-ico img:not([src$='#smooth']) {
+  width: 78%;
+  height: 78%;
+  image-rendering: pixelated;
+}
+
+.gr-pl .pl-nm {
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font: 600 min(max(12px, calc(21 * var(--u))), 10.5cqw) var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acl);
+  text-shadow: 0 0 max(5px, calc(12 * var(--u))) color-mix(in srgb, var(--ac) 40%, transparent);
+  line-height: 1.15;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.gr-pl .pl-dv {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--g-line2) 15%, var(--g-line2) 85%, transparent);
+}
+
+.gr-pl .pl-dv::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+}
+
+.gr-pl .pl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: max(4px, calc(6 * var(--u)));
+  min-height: 1.75em;
+  font-size: max(11px, calc(15 * var(--u)));
+}
+
+.gr-pl.pas .pl-chips {
+  min-height: 0;
+}
+
+.gr-pl .pl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 1.75em;
+  padding: 0 0.6em;
+  font: 600 1em var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--g-line);
+  white-space: nowrap;
+}
+
+.gr-pl .pl-chip img {
+  width: 1.35em;
+  height: 1.35em;
+  object-fit: contain;
+}
+
+.gr-pl .pl-chip.free {
+  color: #cfe8a8;
+  border-color: rgba(127, 191, 63, 0.5);
+  background: rgba(127, 191, 63, 0.13);
+}
+
+.gr-pl .pl-chip.rage {
+  color: #ffb070;
+  border-color: rgba(224, 112, 42, 0.6);
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.gr-pl .pl-sls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  min-height: 2.6em;
+}
+
+.gr-pl .pl-sl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.1em 0.6em;
+  font: max(12px, calc(19 * var(--u)))/1.3 var(--g-body);
+  font-style: normal;
+}
+
+.gr-pl .pl-sl .k {
+  color: var(--g-dim);
+}
+
+.gr-pl .pl-sl .n {
+  font: 600 0.98em var(--g-disp);
+  color: var(--g-gold);
+  text-align: right;
+}
+
+.gr-pl .pl-sl .up {
+  color: #8fe39a;
+}
+
+.gr-pl .pl-sl .down {
+  color: #ff8a7a;
+}
+
+/* tüccarın Character sekmesi: yer dar, değer satırları gizli (farklar ipucunda) */
+.gr-stall .gr-pl .pl-sls {
+  display: none;
+}
+
+.gr-stall .gr-pl {
+  --is: min(calc(64 * var(--u)), 100%);
+  padding-top: calc(16 * var(--u));
+}
+
+/* telefon yatay: küçük ikon, sıkı plaka */
+html.short .gr-skillbar {
+  gap: 5px;
+  padding-top: 8px;
+}
+
+html.short .gr-pl {
+  --is: min(46px, 100%);
+  gap: 4px;
+  padding: 12px 3px 5px;
+}
+
+html.short .gr-pl .pl-sls {
+  display: none;
+}
+
+html.short .gr-pl .pl-nm {
+  min-height: 2.3em;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+html.short .gr-pl .pl-chips {
+  min-height: 0;
+  font-size: 9px;
+  gap: 2px;
+}
+
+html.short .gr-pl .pl-chip {
+  padding: 0 3px;
+  gap: 2px;
+}
+
+html.short .gr-pl .pl-tag {
+  letter-spacing: 0.06em;
+  font-size: 8px;
+  padding: 0.1em 0.5em;
+}

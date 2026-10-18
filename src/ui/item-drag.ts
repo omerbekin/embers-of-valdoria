@@ -12,7 +12,8 @@ import { affixTip, type AffixLine } from '../progression';
 import type { Stats } from '../engine';
 import { dropAction, isDoubleTap, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
-import { statTip, statTipSegments } from './stat-tips';
+import { statBandSpec, statTip } from './stat-tips';
+import { bandPipsHtml, bandTipHtml, type BandTipSpec } from './band-tip';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -86,26 +87,33 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const hint = t.dataset['hint'];
     const ctx = h.stats?.();
     if (!ctx && hint === undefined) return;
-    const line = (l: string, color?: string): HTMLElement => {
-      const d = el('div', 'gr-tip-l');
-      if (color) d.style.color = color;
-      d.append(...statTipSegments(l).map((g) => (g.dir ? el('span', `gr-tip-d ${g.dir}`, g.text) : document.createTextNode(g.text))));
-      return d;
-    };
+    // Hepsi ortak "A - Band" ipucu (src/ui/band-tip.ts; Ömer 2026-10-18)
     if (hint !== undefined) {
       // kısa ipucu (ikon düğmesi / kahraman yer imi): ad + isteğe bağlı alt satır
       const sub = t.dataset['hintSub'];
-      tip.replaceChildren(el('b', '', hint), ...(sub ? [el('div', `gr-tip-l gr-hint-sub tone-${t.dataset['hintTone'] ?? 'idle'}`, sub)] : []));
+      const tone = t.dataset['hintTone'] ?? 'idle';
+      const toneColor = tone === 'up' ? '#8fe39a' : tone === 'down' || tone === 'no' ? '#ff8a7a' : tone === 'mixed' ? '#ffd76a' : undefined;
+      const hero = t.dataset['hintKind'] === 'Hero';
+      const items = t.dataset['hintItems'];
+      const spec: BandTipSpec = {
+        title: hint,
+        ...(hero ? { kind: 'Hero', iconShape: 'round' as const, ...(t.dataset['hintImg'] ? { icon: t.dataset['hintImg'] } : {}), ...(t.dataset['hintLv'] ? { value: `Lv ${t.dataset['hintLv']}`, valueLabel: 'Level' } : {}) } : {}),
+        ...(hero && items ? { bodyHtml: `<div class="bt-ln"><span class="dia"></span><div class="tx"><span class="k">Items</span> <span class="n">${items}</span></div>${bandPipsHtml(Number(items.split('/')[0]), Number(items.split('/')[1]))}</div>` } : {}),
+        // kahramanda alt satır yalnızca bir item üstündeyken (etki özeti); olağan "Level N · k/7 items" satırı başlıkta zaten var
+        ...(sub && !(hero && tone === 'idle') ? { lines: [{ text: sub, ...(toneColor ? { color: toneColor } : {}) }] } : {}),
+        noKeywords: true,
+      };
+      tip.innerHTML = bandTipHtml(spec);
     } else if (!ctx) return;
     else if (t.dataset['affix'] !== undefined) {
       const info = affixTip({ name: t.dataset['affix'] ?? '', desc: t.dataset['desc'] ?? '', tier: (t.dataset['tier'] ?? 'C') as AffixLine['tier'], text: t.dataset['text'] ?? '', range: t.dataset['range'] ?? '' });
-      tip.replaceChildren(el('b', '', info.title), ...info.lines.map((l) => line(l)));
+      tip.innerHTML = bandTipHtml({ kind: 'Affix', title: info.title, lines: info.lines.map((text) => ({ text })) });
     } else {
-      const info = ctx.stats ? statTip(t.dataset['stat'] ?? '', ctx.stats, t.dataset['delta'] ? ctx.after : null) : null;
+      const id = t.dataset['stat'] ?? '';
+      const info = ctx.stats ? statTip(id, ctx.stats, t.dataset['delta'] ? ctx.after : null) : null;
       if (!info) return;
-      const head = el('b', '', info.title);
-      if (t.dataset['delta']) head.append(el('span', `gr-tip-d ${t.dataset['dir'] ?? ''}`, ` (${t.dataset['delta']})`));
-      tip.replaceChildren(head, ...info.lines.map((l) => line(l)));
+      const d = t.dataset['delta'] ? { text: t.dataset['delta'], dir: t.dataset['dir'] === 'down' ? ('down' as const) : ('up' as const) } : undefined;
+      tip.innerHTML = bandTipHtml(statBandSpec(id, info, d));
     }
     tip.classList.add('on');
     const p = offsetIn(t, overlay);

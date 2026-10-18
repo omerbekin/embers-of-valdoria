@@ -44,10 +44,10 @@ import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
-import { FALLEN_GEAR_TEXT, FALLEN_MARK, heroFallen, heroItemLine, type HoverHero } from './gear-hover';
+import { FALLEN_GEAR_TEXT, FALLEN_MARK, heroFallen, heroItemCount, heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
 import { slotIconUrl } from './slot-icons';
-import { escHtml, passiveCellHtml, skillCellHtml, type SkillCellView, type SkillCostChip } from './skill-bar';
+import { escHtml, type SkillCostChip } from './skill-bar';
 import { tipHtml, type TipContent } from './battle-hud';
 import { iconUrl } from './dom-icons';
 import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from './stat-icons';
@@ -274,6 +274,13 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     b.dataset['hint'] = className(h.class);
     b.dataset['hintSub'] = dead ? FALLEN_MARK : line.text;
     b.dataset['hintTone'] = dead ? 'no' : line.tone;
+    // Hero band ipucu (Ömer 2026-10-18): portre madalyonu, Lv büyük değer, Items k/7 elmas sırası
+    b.dataset['hintKind'] = 'Hero';
+    b.dataset['hintLv'] = String(h.level);
+    const cnt = heroItemCount(h);
+    b.dataset['hintItems'] = `${cnt.filled}/${cnt.total}`;
+    const portrait = avatarUrl(h.class);
+    if (portrait) b.dataset['hintImg'] = portrait;
     b.setAttribute('aria-label', className(h.class));
     b.addEventListener('click', () => v.onHero(h.id));
     const face = el('div', 'gr-face');
@@ -577,6 +584,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): Ti
   return {
     title: t.title,
     titleColor: COLORS.text,
+    kind: 'Skill',
     iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)),
     meta,
     tags: skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
@@ -585,17 +593,32 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): Ti
   };
 }
 
-/** Anahtar sayılar (hücrenin altında): "Damage 7 → 8 (+1)"; fark yeşil / kırmızı, sıfırsa gizli. */
+/** Plakadaki değer satırları (A Plates): soluk etiket + altın rakam; item takılırsa "→ yeni (fark)" yeşil / kırmızı. */
 function numsHtml(r: GearSkillRow): string {
   if (!r.numbers.length) return '';
-  return `<div class="gr-sk-nums">${r.numbers
+  return `<div class="pl-sls">${r.numbers
     .map((n) => {
-      const c = kindColor(n.kind);
-      const v = `<b${c ? ` style="color:${c}"` : ''}>${escHtml(n.text)}${n.times ? ` x${n.times}` : ''}</b>`;
-      const d = n.after && n.diff ? ` <b class="${n.dir ?? ''}">→ ${escHtml(n.after)}</b> <span class="${n.dir ?? ''}">(${escHtml(n.diff)})</span>` : '';
-      return `<div><i>${escHtml(n.label)}</i> ${v}${d}</div>`;
+      const v = `${escHtml(n.text)}${n.times ? ` x${n.times}` : ''}`;
+      const d = n.after && n.diff ? ` <span class="${n.dir ?? ''}">→ ${escHtml(n.after)} (${escHtml(n.diff)})</span>` : '';
+      return `<div class="pl-sl"><span class="k">${escHtml(n.label)}</span><span class="n">${v}${d}</span></div>`;
     })
     .join('')}</div>`;
+}
+
+/** Plakanın çipleri: bedel (MP / HP / Rage ikonlu) ya da Free + bekleme. */
+function plateChips(cost: SkillCostChip[]): string {
+  if (!cost.length) return '<span class="pl-chip free">Free</span>';
+  return cost
+    .map((c) => `<span class="pl-chip${c.text.startsWith('RAGE') ? ' rage' : ''}">${c.iconUrl ? `<img class="bh-ico" src="${escHtml(c.iconUrl)}" alt="" draggable="false">` : ''}${escHtml(c.text)}</span>`)
+    .join('');
+}
+
+/** Bir skill / pasif plakası (A Plates). kind: '' | 'pas' | 'ult'. Gizli `.bh-sktip` kopyası üstüne gelince yüzen katmana konur. */
+function plateHtml(kind: '' | 'pas' | 'ult', id: string, name: string, icon: string, chips: string, nums: string, tip: string): string {
+  const tag = kind ? `<span class="pl-tag">${kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
+  return `<div class="gr-pl ${kind}" data-skill="${escHtml(id)}">${tag}<div class="pl-ico">${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
+    <div class="pl-nm">${escHtml(name)}</div><div class="pl-dv"></div><div class="pl-chips">${chips}</div>${nums || '<div class="pl-sls"></div>'}
+    <div class="bh-sktip bh-panel bh-corners">${tip}</div></div>`;
 }
 
 let floatTip: HTMLElement | null = null;
@@ -633,38 +656,38 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
 
 /** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
 export function skillBar(classId: string, stats: Stats, after: Stats | null): HTMLElement {
-  const bar = el('div', 'bh-kit gr-skillbar');
-  (bar.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
+  const bar = el('div', 'gr-skillbar');
   const def = content.classes[classId];
   const rows = gearSkillRows(classId, stats, after);
   const skillRows = rows.filter((r) => !r.passive);
+  // Ulti: veride ayrı bir işaret yok; savaş HUD'ıyla aynı kural: 4. skill yuvası (battle-hud / SkillCellView.ult).
   const html = rows.map((r) => {
     if (r.passive && def?.passive) {
       const p = def.passive;
-      const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
-      return passiveCellHtml(p.name, iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), colorDiffs(tipHtml(tip)), numsHtml(r));
+      const ico = iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId));
+      const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: ico, badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
+      return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)));
     }
     const skill = r.skill!;
-    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: skillRows.indexOf(r) === 3 };
-    return skillCellHtml(view, colorDiffs(tipHtml(skillTipContent(skill, stats, after))), numsHtml(r));
+    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after))));
   });
   bar.innerHTML = html.join('');
   // Açıklama kabın (kaydırmalı sayfa) içinde değil, ekranın en üst katmanında (Gear örtüsü) açılır: hiçbir kap kırpamaz, ekran içinde kalır.
   // Hücrenin kendi `.bh-sktip` kopyası gizlidir (gear.css); üstüne gelince / dokununca kopya yüzen katmana konur.
   bar.addEventListener('pointerover', (e) => {
     if (e.pointerType === 'touch') return;
-    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.gr-pl');
     if (cell) showFloatTip(bar, cell);
   });
   bar.addEventListener('pointerout', (e) => {
     if (e.pointerType === 'touch') return;
     const into = e.relatedTarget instanceof Element ? e.relatedTarget : null;
-    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.gr-pl');
     if (cell && !(into && cell.contains(into))) hideFloatTip();
   });
   // Dokunmatik: dokunuş açıklamayı açar / kapatır (savaştaki uzun basmanın yerine; Gear'da skill seçilmez)
   bar.addEventListener('click', (e) => {
-    const cell = (e.target as HTMLElement).closest<HTMLElement>('.bh-sk');
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('.gr-pl');
     const open = floatTipFor === cell;
     hideFloatTip();
     if (cell && !open) showFloatTip(bar, cell);

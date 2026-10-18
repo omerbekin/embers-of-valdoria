@@ -23,6 +23,8 @@ const MARGIN = 0.05;
 /** Bu alfanın üstü "dolu" sayılır (yumuşak kenar gölgesi kutuyu şişirmesin). */
 const ALPHA = 40;
 const DEBUG = process.argv.includes('--debug');
+/** Yeniden çizilen ikonlar: bu araç yazmaz (tools/make-ui-icons-v2.py). */
+const V2_SKIP = new Set(['rage', 'cooldown']);
 
 /** Satır satır 4x4 (adlar src/ui/ui-icons.ts > UiIconKind ile aynı). */
 const GRID = [
@@ -115,6 +117,8 @@ for (const { dir } of SIZES) mkdirSync(dir, { recursive: true });
 for (let r = 0; r < 4; r++)
   for (let c = 0; c < 4; c++) {
     const name = GRID[r][c];
+    // rage + cooldown (Ömer 2026-10-18): yeni kaynaktan gelir (assets/source/ui-icons/rage-cooldown-v2.png, tools/make-ui-icons-v2.py); eskiyi geri yazma
+    if (V2_SKIP.has(name)) continue;
     const cx = cxs[r];
     const b = bbox(cx[c], cy[r], cx[c + 1], cy[r + 1]);
     if (!b) throw new Error(`${name}: hücre boş`);
