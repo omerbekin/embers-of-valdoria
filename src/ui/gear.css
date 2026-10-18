@@ -5012,3 +5012,644 @@ html.short .gr-pl .pl-tag {
   font-size: 8px;
   padding: 0.1em 0.5em;
 }
+
+/* ===================== Sheet: A · Band (Ömer 2026-10-18, public/mockups/stats-panels.html) =====================
+   Karakter kartının dili: "LEVEL N" altın başlık, ince altın çerçeveli çubuklar (değer sağda), yeşil skill puanı çipi, elmas madalyonlu stat puanı,
+   altın elmas ayırıcılar, MAIN / ATTACK / DEFENSE sütunları (altın Cinzel rakam, primary turuncu satır, tam adlar). Düz yazı, italik yok.
+   Hem Gear > Sheet (defter sayfası) hem tüccar / Endless Character sekmesi bu `.sh` kabını kullanır. Yer sıkı: skill plakaları altında kalır. */
+.sh {
+  --sh-fs: max(12px, calc(19 * var(--u)));
+  --sh-fs-s: max(10px, calc(14 * var(--u)));
+  --hot: #e0702a;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+  min-width: 0;
+  font: var(--sh-fs) / 1.25 var(--g-body);
+  color: #e6dcc6;
+}
+
+.sh-head {
+  display: flex;
+  align-items: baseline;
+  gap: calc(14 * var(--u));
+}
+
+.sh-lt {
+  font: 600 max(14px, calc(30 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e9d29a;
+  text-shadow: 0 0 max(5px, calc(12 * var(--u))) rgba(217, 178, 106, 0.4);
+  line-height: 1.1;
+}
+
+.sh-lt b {
+  color: #fff0c4;
+}
+
+.sh-xpv {
+  margin-left: auto;
+  font: 600 calc(var(--sh-fs) * 1.05) var(--g-disp);
+  letter-spacing: 0.04em;
+  color: var(--g-gold);
+}
+
+.sh-xpv s,
+.sh-bv s {
+  text-decoration: none;
+  color: var(--g-dim);
+  font-weight: 500;
+}
+
+/* ince altın çerçeveli çubuk (karakter kartı / tooltip ailesi) */
+.sh-bar {
+  height: max(8px, calc(14 * var(--u)));
+  padding: 2px;
+  background: #060403;
+  border: 1px solid rgba(217, 178, 106, 0.5);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.sh-bar i {
+  display: block;
+  height: 100%;
+  position: relative;
+}
+
+.sh-bar i::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+}
+
+.sh-bar .fhp {
+  background: #2fa34f;
+}
+
+.sh-bar .fmp {
+  background: linear-gradient(180deg, #2f62e0, #1f46b0);
+}
+
+.sh-xp i {
+  background: linear-gradient(90deg, #a8701c, #e0b25a);
+}
+
+.sh-under {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(8 * var(--u)) calc(14 * var(--u));
+  min-height: 44px;
+}
+
+.sh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 1.9em;
+  padding: 0 0.75em;
+  white-space: nowrap;
+  color: #cfe8a8;
+  background: rgba(127, 191, 63, 0.1);
+  border: 1px solid rgba(127, 191, 63, 0.5);
+}
+
+.sh-chip b {
+  font: 600 1.1em var(--g-disp);
+  color: #e6f6c4;
+}
+
+.sh-ptr {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-left: auto;
+}
+
+.sh-ptr.idle {
+  visibility: hidden;
+}
+
+.sh-tx {
+  color: var(--g-text);
+}
+
+/* elmas madalyon: sürüklenebilir puan taşı; dokunma alanı >= 44 px */
+.sh-medal {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  font: 600 var(--sh-fs) var(--g-disp);
+  color: #fff0c4;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.sh-medal::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  transform: rotate(45deg);
+  border: 1px solid var(--g-gold);
+  background: rgba(217, 178, 106, 0.16);
+  box-shadow: 0 0 8px rgba(217, 178, 106, 0.4);
+}
+
+.sh-medal span {
+  position: relative;
+}
+
+.sh-medal.empty {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sh-acts {
+  display: flex;
+  gap: calc(10 * var(--u));
+}
+
+.sh-btn {
+  position: relative;
+  min-height: 44px;
+  padding: 0 calc(20 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.82), rgba(12, 9, 6, 0.86));
+  border: 1px solid var(--g-line2);
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.6);
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.sh-btn:hover {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+}
+
+.sh-btn.primary {
+  border: 2px solid #d9b26a;
+  color: var(--g-gold);
+}
+
+.sh-warn {
+  color: #e0785e;
+  font-size: var(--sh-fs-s);
+}
+
+/* altın elmas ayırıcı */
+.sh-dv {
+  position: relative;
+  flex: none;
+  height: 1px;
+  margin: calc(2 * var(--u)) 0;
+  background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent);
+}
+
+.sh-dv::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid #e9d29a;
+}
+
+/* HP / MP */
+.sh-vit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(24 * var(--u));
+}
+
+.sh-bh {
+  min-width: 0;
+}
+
+.sh-bh-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+.sh-bh-top .sh-ico {
+  width: max(16px, calc(26 * var(--u)));
+  height: max(16px, calc(26 * var(--u)));
+}
+
+.sh-bn {
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.sh-bv {
+  margin-left: auto;
+  font: 600 1em var(--g-disp);
+  color: var(--g-gold);
+}
+
+/* sütunlar */
+.sh-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 calc(22 * var(--u));
+}
+
+.sh-col {
+  min-width: 0;
+}
+
+.sh-sl {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 0.3em;
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.sh-sl::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--g-line2);
+}
+
+.sh-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0 -0.4em;
+  padding: 0.1em 0.4em;
+  min-height: max(22px, calc(32 * var(--u)));
+}
+
+.sh-ico {
+  flex: none;
+  width: max(16px, calc(28 * var(--u)));
+  height: max(16px, calc(28 * var(--u)));
+  object-fit: contain;
+}
+
+.sh-k {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--g-dim);
+}
+
+.sh-n {
+  margin-left: auto;
+  min-width: 2.4em;
+  text-align: right;
+  font: 600 1em var(--g-disp);
+  font-variant-numeric: tabular-nums;
+  color: var(--g-gold);
+}
+
+.sh-d {
+  min-width: 2em;
+  text-align: right;
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  font-variant-numeric: tabular-nums;
+}
+
+.sh-d.up {
+  color: #8fd36a;
+}
+
+.sh-d.down {
+  color: #e0785e;
+}
+
+.sh-bh-top .sh-d:empty {
+  display: none;
+}
+
+.sh-cap {
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  color: #8fc7c0;
+}
+
+.sh-row.p {
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.2), rgba(224, 112, 42, 0.04));
+  border-left: 2px solid var(--hot);
+  padding-left: calc(0.4em - 2px);
+}
+
+.sh-row.p.off {
+  filter: saturate(0.35);
+}
+
+.sh-row.p .sh-k {
+  color: #f3e6c4;
+  font-weight: 600;
+}
+
+.sh-row.p .sh-n {
+  color: #fff0c4;
+  text-shadow: 0 0 8px rgba(224, 112, 42, 0.6);
+}
+
+.sh-row.drop-ok {
+  outline: 1px dashed rgba(240, 180, 90, 0.55);
+  outline-offset: 2px;
+}
+
+.sh-row.drop-on {
+  outline: 1px solid var(--g-ember2);
+  background: rgba(224, 112, 42, 0.18);
+}
+
+/* + ve - : yuvalar puan bitince de yerinde (görünmez), satırlar kaymaz */
+.sh-pm {
+  display: inline-flex;
+  flex: none;
+  gap: max(3px, calc(5 * var(--u)));
+}
+
+.sh-pmb {
+  position: relative;
+  width: max(22px, calc(30 * var(--u)));
+  height: max(22px, calc(30 * var(--u)));
+  padding: 0;
+  border: 1px solid var(--g-line);
+  background: rgba(20, 14, 8, 0.6);
+  color: var(--g-gold);
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  line-height: 1;
+}
+
+.sh-pmb::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sh-pmb:hover:not(:disabled) {
+  border-color: var(--g-gold);
+}
+
+.sh-pmb:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sh-pmb.off {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sh-capnote {
+  color: var(--g-dim);
+  font-size: var(--sh-fs-s);
+}
+
+/* kısa ekran (telefon yatay): daha sıkı; düğmeler küçük görünür ama dokunma alanı ::after ile 44 px */
+html.short .sh {
+  gap: 3px;
+  --sh-fs: 12px;
+  --sh-fs-s: 10px;
+}
+
+html.short .sh-lt {
+  font-size: 14px;
+}
+
+html.short .sh-bar {
+  height: 8px;
+  padding: 1px;
+  box-shadow: 0 0 0 1px rgba(8, 6, 4, 0.8);
+}
+
+html.short .sh-under {
+  gap: 2px 8px;
+  min-height: 30px;
+}
+
+html.short .sh-medal {
+  min-width: 30px;
+  min-height: 30px;
+}
+
+html.short .sh-medal::before {
+  inset: 4px;
+}
+
+html.short .sh-btn {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+html.short .sh-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+html.short .sh-dv {
+  margin: 0;
+}
+
+html.short .sh-vit {
+  gap: 12px;
+}
+
+html.short .sh-bh-top {
+  margin-bottom: 1px;
+}
+
+html.short .sh-cols {
+  gap: 0 8px;
+}
+
+html.short .sh-sl {
+  margin-bottom: 1px;
+  letter-spacing: 0.14em;
+}
+
+html.short .sh-row {
+  min-height: 20px;
+  gap: 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html.short .sh-ico {
+  width: 15px;
+  height: 15px;
+}
+
+html.short .sh-n {
+  min-width: 1.6em;
+}
+
+html.short .sh-d {
+  min-width: 1.6em;
+}
+
+html.short .sh-pmb {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+}
+
+/* dar sayfa (tüccar + Gear yan yana, telefon): kabın kendi genişliğine göre sıkılaşır (container query; sınıf değil) */
+.sh {
+  container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+  .sh-cols {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 8px;
+  }
+
+  .sh-sl {
+    letter-spacing: 0.12em;
+  }
+
+  .sh-row {
+    gap: 0.3em;
+  }
+
+  .sh-ico {
+    width: 15px;
+    height: 15px;
+  }
+
+  .sh-n {
+    min-width: 1.5em;
+  }
+
+  .sh-d,
+  .sh-d:empty {
+    min-width: 0;
+  }
+
+  .sh-vit {
+    gap: 12px;
+  }
+}
+
+@container (max-width: 330px) {
+  .sh-cols,
+  .sh-vit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sh-col + .sh-col {
+    margin-top: 6px;
+  }
+
+  .sh-under {
+    min-height: 0;
+  }
+}
+
+/* telefon yatay: Level satırı ve XP çubuğu tek satırda (ad | çubuk | değer); ayırıcılar kalkar, satırlar sıkı (sayfa yüksekliği ~150 px) */
+html.short .sh {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 3px;
+}
+
+html.short .sh > * {
+  grid-column: 1 / -1;
+}
+
+html.short .sh-head {
+  display: contents;
+}
+
+html.short .sh-head .sh-lt {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+html.short .sh > .sh-bar {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+html.short .sh-head .sh-xpv {
+  grid-column: 3;
+  grid-row: 1;
+  margin-left: 0;
+}
+
+html.short .sh-dv {
+  display: none;
+}
+
+html.short .sh-ptr.idle {
+  display: none;
+}
+
+html.short .sh-under {
+  min-height: 0;
+}
+
+html.short .sh-row {
+  min-height: 18px;
+}
+
+html.short .sh-chip {
+  height: 20px;
+  font-size: 11px;
+}
+
+html.short .sh-vit {
+  margin-top: 2px;
+}
+
+html.short .sh-d,
+html.short .sh-d:empty {
+  min-width: 0;
+}
+
+html.short .sh-cols {
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+html.short .sh-pm {
+  gap: 2px;
+}
+
+html.short .sh-n {
+  min-width: 1.2em;
+}
+
+/* telefon Sheet: sağdaki skill ağacı kabı henüz boş ("Coming soon"); sol sayfa genişler ki stat adları tam yazılsın */
+html.short .gr-ledger.tab-sheet .gr-lbody {
+  grid-template-columns: 54px minmax(0, 2.1fr) 1px minmax(0, 0.8fr);
+}

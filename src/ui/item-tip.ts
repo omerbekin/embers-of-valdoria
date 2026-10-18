@@ -254,6 +254,8 @@ export class ItemTip {
   readonly box: HTMLDivElement;
   private key = '';
   private isPinned = false;
+  /** Solma bitince kesin gizleme zamanlayıcısı (bkz. hide). */
+  private goneTimer: ReturnType<typeof setTimeout> | undefined;
   constructor(private host: HTMLElement) {
     this.box = el('div', 'el-tip item-tip');
     this.box.setAttribute('role', 'tooltip');
@@ -277,7 +279,7 @@ export class ItemTip {
     if (key !== this.key || this.isPinned) this.box.replaceChildren(...nodes);
     this.setPinned(false);
     this.key = key;
-    this.box.classList.add('on');
+    this.reveal();
     this.follow(clientX, clientY);
   }
   /**
@@ -307,7 +309,7 @@ export class ItemTip {
     this.box.replaceChildren(...(card ? nodes : [...nodes, ...acts]));
     this.key = key;
     this.setPinned(true);
-    this.box.classList.add('on');
+    this.reveal();
     const p = offsetIn(anchor, this.host);
     const aw = anchor.offsetWidth;
     const ah = anchor.offsetHeight;
@@ -353,9 +355,26 @@ export class ItemTip {
     this.box.style.left = `${Math.max(6, Math.min(W - tw - 6, left))}px`;
     this.box.style.top = `${Math.max(6, Math.min(H - th - 6, top))}px`;
   }
+  private reveal(): void {
+    clearTimeout(this.goneTimer);
+    if (this.box.style.display === 'none') {
+      this.box.style.display = '';
+      void this.box.offsetWidth; // yeniden akış: belirme solması display: none'dan sonra da çalışsın
+    }
+    this.box.classList.add('on');
+  }
+  /**
+   * Gizle: CSS solması (gear.css .item-tip) + solma süresinden sonra satır içi `display: none`. Tarayıcı sekmesi arka plandayken /
+   * önizleme paneli gizliyken CSS geçişleri donar ve ipucu yarı saydam "hayalet" olarak kalırdı (2026-10-18); zamanlayıcı bunu kesin kapatır
+   * (display: none; donmuş geçiş satır içi visibility'yi de ezerdi).
+   */
   hide(): void {
     this.key = '';
     this.setPinned(false);
     this.box.classList.remove('on');
+    clearTimeout(this.goneTimer);
+    this.goneTimer = setTimeout(() => {
+      if (!this.key) this.box.style.display = 'none';
+    }, 200);
   }
 }

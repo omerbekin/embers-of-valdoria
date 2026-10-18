@@ -9,7 +9,8 @@
  *   Dirge          (bolt)  c.windUp -> hitMs sonra vuruş (ilk ses başta, kalanlar vuruşta) -> Promise vuruşta çözülür
  *   Halberd Chop   (melee) c.lunge -> hitMs sonra vuruş + kamera sarsıntısı
  *   Wall of Pikes  (cells, aşamalı) c.windUp -> aşama i, i x 180 ms + hitMs anında (c.releaseStage(i)); Promise ilk aşamada çözülür
- *   Rend           (melee) c.lunge -> hitMs sonra vuruş + kamera sarsıntısı
+ *   Rend           (melee) c.lunge -> hızlı tırmık vuruştan hemen önce başlar (en uzun tırnak gövde ortasını ~hitMs'te geçer) ->
+ *                  hitMs anında zerreler + kısa sarsıntı (90 ms); hedefin geri itilmesi motorun hasar olayındaki vuruş tepkisinden gelir
  *   Glyph of Breaking (center, artı alanı) c.windUp -> hitMs sonra tüm hücrelerde aynı anda fışkırma + kısa sarsıntı
  *
  * Görünüş (renkler asıl sheet'ten: assets/mob-vfx/<mob>/<skill>.png):
@@ -19,9 +20,12 @@
  *     yere değince turuncu parlama, yassı şok halkası, yukarı fışkıran kıvılcımlar, uçan taş parçaları, toz, yanık iz.
  *   Wall of Pikes: saldırgan tarafından 5 mızrak (ahşap sap, çelik uç, alevli iz) sütun boyunca ilerler; her hücreye (aşamaya) değdiği
  *     anda uçlarda ateş patlaması (ışın yıldızı + kıvılcım + zemin halkası). Işınlanmaz: okçunun Pierce'ı gibi gerçekten geçer.
- *   Rend: atılan kurdun pençesi hedefin gövdesine üç kızıl yarık oyar ("/" çaprazı, uç yukarıda arka tarafta başlar, saldırgana doğru
- *     aşağı tırmıklar; koyu kızıl kenar, kırmızı gövde, ak-sıcak çekirdek), vuruşta kızıl parlama + ışın yıldızı + kan + dönen koyu
- *     kıymıklar + kızıl sis + zemin halkası; yarıklar koyulaşarak söner, içlerinden kan damlar.
+ *   Rend (Ömer 2026-10-18 yeniden: "daha gerçekçi, pençe izleri çok parlamasın"): atılan kurdun patisi hedefin gövdesine yelpaze gibi
+ *     açılan 4 ince keskin tırmık atar (kurt tarafında yukarıdan başlar, hedefin arkasına doğru aşağı çapraz; tırnaklar birkaç ms arayla).
+ *     İzler KOYU: kahverengi-siyah yırtık kenar, koyu kırmızı iç, daha koyu dip; yalnızca taze izin üst kenarında çok soluk ince ışık.
+ *     ADD karışımı, ak-sıcak çizgi, kıvılcım, ışın, halka YOK. Tırnak ucunun arkasında çok ince, kısa hareket izi. Vuruşta mat koyu kan /
+ *     toz zerreleri tırmık yönünde savrulur, birkaç kıl-kumaş lifi kopar, soluk koyu toz; izler hızla açılır, kısa kalır, koyulaşıp hafifçe
+ *     kapanarak söner, birkaç damla aşağı süzülür. İzler birimle birlikte kayar (geri itilince üstünde kalır).
  *   Glyph of Breaking: artının merkez hücresine camgöbeği rün dairesi kazınır (dikenli taş disk, iki halka, dönen rün işaretleri, ortada
  *     baklava; dışarıdan sarmalla toplanan zerreler), çatlaklar artı kolları boyunca her hücreye uzanır, hücre plakaları hafifçe yanar;
  *     vuruşta merkezden göğe ışık sütunu, her hücrede artı biçimli parlama + fışkıran dönen taşlar (camgöbeği kenarlı) + kıvılcım + zemin
@@ -597,152 +601,188 @@ function debris(c: VfxCtx, k: VfxKit, bits: Bit[], depth: number, gravity: numbe
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// REND (Grey Wolf): üç kızıl pençe yarığı
+// REND (Grey Wolf): gerçekçi pençe tırmığı (Ömer 2026-10-18: "daha gerçekçi, pençe izleri çok parlamasın")
+// Katman disiplini Glyph of Breaking gibi: tek ana çizim (yaralar + damlalar, her kare), kısa vuruş katmanı (zerre, kıl, toz).
+// ADD karışımı / ak-sıcak çekirdek / kıvılcım / ışın YOK: her şey normal karışımla koyu renkte çizilir.
 
-const BLOOD = ['#4a070c', '#7a0e14', '#a3161c', '#c42a22'];
-const CLAWS = [
-  // [normal kayması (px), boy çarpanı, başlama (T oranı), bitiş (T oranı), kalınlık]
-  { off: -34, len: 0.86, t0: 0.0, t1: 0.82, w: 20 },
-  { off: 0, len: 1.0, t0: 0.08, t1: 0.92, w: 25 },
-  { off: 34, len: 0.9, t0: 0.16, t1: 1.0, w: 21 },
+/** Mat kan zerreleri (koyu, parlamasız). */
+const GORE = ['#2a0507', '#3e080b', '#560c10', '#6e1214'];
+/** Kopan kıl / kumaş lifleri (gri kurt kılı + koyu kumaş). */
+const FIBER = ['#5e554e', '#7a6f66', '#463c36', '#4a3a2c', '#5a4634'];
+/** Pençeler: patiden yelpaze gibi açılan 4 tırnak. [dik kayma (px), açı sapması (rad), boy çarpanı, gecikme (ms), kalınlık (px)] */
+const RAKES = [
+  { off: -27, da: -0.04, len: 0.82, lag: 0, w: 6 },
+  { off: -9, da: -0.012, len: 1.0, lag: 12, w: 7.5 },
+  { off: 9, da: 0.016, len: 0.95, lag: 22, w: 7 },
+  { off: 26, da: 0.045, len: 0.76, lag: 34, w: 5.5 },
 ];
 
-/** Pençe yarığı: A'dan B'ye hafif bombeli, iki ucu sivri dolu şerit; [s0, s1] arası görünür. */
-function clawStrip(A: Pt, B: Pt, bow: number, W: number, s0: number, s1: number, rag?: number[]): Pt[] {
+/** İki rengi karıştırır (0xRRGGBB): t=0 a, t=1 b. */
+function mixCol(a: number, b: number, t: number): number {
+  const m = (sh: number) => Math.round(lerp((a >> sh) & 255, (b >> sh) & 255, t)) << sh;
+  return m(16) | m(8) | m(0);
+}
+
+/**
+ * Pençe izi şeridi: A'dan B'ye hafif bombeli; [0, head] arası görünür, kalınlık `wAt(s)` (girişte iğne, ortada dolgun, çıkışta uzun incelme),
+ * `rag` yırtık kenarı (iki kenar ayrı titrer). Merkez hattını da döndürür (damlalar ve kenar ışığı için).
+ */
+function rakePoly(A: Pt, B: Pt, bow: number, head: number, wAt: (s: number) => number, rag: number[][]): { poly: Pt[]; mid: Pt[]; top: Pt[] } {
   const dx = B.x - A.x;
   const dy = B.y - A.y;
   const L = Math.hypot(dx, dy) || 1;
   const nx = -dy / L;
   const ny = dx / L;
-  const N = 14;
+  const N = 18;
   const left: Pt[] = [];
   const right: Pt[] = [];
+  const mid: Pt[] = [];
   for (let i = 0; i <= N; i++) {
-    const s = s0 + ((s1 - s0) * i) / N;
+    const s = (head * i) / N;
     const bw = Math.sin(Math.PI * s) * bow;
     const cx = A.x + dx * s + nx * bw;
     const cy = A.y + dy * s + ny * bw;
-    // genişlik: yarığın ortası dolgun, uçlar iğne; görünen ucun (s1) son kısmı da incelir (oyulan uç)
-    const head = clamp01((s1 - s) / 0.12);
-    const r = rag ? rag[Math.min(rag.length - 1, Math.floor(s * (rag.length - 1)))]! : 1; // yırtık kenar
-    const w = (W * Math.sin(Math.PI * s) ** 0.95 * (0.3 + 0.7 * head) * r) / 2;
-    left.push({ x: cx + nx * w, y: cy + ny * w });
-    right.push({ x: cx - nx * w, y: cy - ny * w });
+    const j = Math.min(rag[0]!.length - 1, Math.round(s * (rag[0]!.length - 1)));
+    const w = wAt(s) / 2;
+    mid.push({ x: cx, y: cy });
+    left.push({ x: cx + nx * w * rag[0]![j]!, y: cy + ny * w * rag[0]![j]! });
+    right.push({ x: cx - nx * w * rag[1]![j]!, y: cy - ny * w * rag[1]![j]! });
   }
-  return [...left, ...right.reverse()];
+  // üst kenar: ekranda yukarıda kalan kenar (soluk kenar ışığı yalnızca oraya düşer)
+  const top = [...((left[N >> 1]?.y ?? 0) < (right[N >> 1]?.y ?? 0) ? left : right)];
+  return { poly: [...left, ...right.reverse()], mid, top };
+}
+
+interface Drip {
+  rake: number;
+  s: number;
+  t0: number;
+  /** Süzülme hızı (px/s) ve en fazla boy (px). */
+  v: number;
+  max: number;
 }
 
 function rendOn(c: VfxCtx, k: VfxKit, v: CombatantView, T: number): void {
   const sc = c.scene;
-  const dir = v.container.x >= c.actor.container.x ? 1 : -1;
+  const dir = v.container.x >= c.actor.container.x ? 1 : -1; // hedef saldırganın sağında: +1
   const depth = v.container.depth;
   const body = k.spot(v);
-  // yarıkların ortası: gövde merkezinden biraz saldırgana doğru (pençe önden girer)
-  const mid = { x: body.x - dir * v.w * 0.08, y: body.y - v.h * 0.04 };
-  const L = Math.max(220, Math.min(300, v.h * 1.05));
-  // yön: asıl sheet'teki gibi "/" çaprazı; uç yukarıda hedefin arka tarafında başlar, saldırgana doğru aşağı tırmıklar
-  const ux = dir * Math.cos(-0.95);
-  const uy = Math.sin(-0.95);
-  const nx = -uy;
-  const ny = ux;
-  const claws = CLAWS.map((cl) => {
-    const o = { x: mid.x + nx * cl.off, y: mid.y + ny * cl.off };
-    const h = (L * cl.len) / 2;
-    const rag = Array.from({ length: 15 }, () => k.rnd(0.72, 1.18));
-    return { ...cl, rag, A: { x: o.x + ux * h, y: o.y + uy * h }, B: { x: o.x - ux * h, y: o.y - uy * h } };
+  const mid0 = { x: body.x + dir * v.w * 0.08, y: body.y - v.h * 0.04 }; // gövdenin ortası, biraz arka tarafa (izler havada kalmasın)
+  const L = Math.max(190, Math.min(260, v.h * 0.85));
+  // yön: kurt tarafında yukarıdan başlar, hedefin arkasına doğru aşağı çapraz tırmıklar ("\" ya da "/" saldırgana göre)
+  const ang = 1.12;
+  const rakes = RAKES.map((r) => {
+    const a = ang + r.da;
+    const ux = dir * Math.cos(a);
+    const uy = Math.sin(a);
+    const o = { x: mid0.x + -uy * r.off, y: mid0.y + ux * r.off };
+    const h = (L * r.len) / 2;
+    const rag = [0, 1].map(() => Array.from({ length: 19 }, () => k.rnd(0.68, 1.22)));
+    return { ...r, rag, A: { x: o.x - ux * h, y: o.y - uy * h }, B: { x: o.x + ux * h, y: o.y + uy * h } };
   });
-  const dark = sc.add.graphics().setDepth(depth + 2);
-  const hot = sc.add.graphics().setDepth(depth + 3).setBlendMode(ADD);
-  const FADE = k.slow(520);
-  const total = T + FADE;
-  const bow = dir * 16;
-  const cDark = k.color('#1e0306');
-  const cRed = k.color('#8c0a10');
-  const cHot = k.color('#ff2c14');
-  const cCore = k.color('#ffb890');
-  const cWhite = k.color('#fff4ec');
-  let nextDrip = 0;
+  const bow = -dir * 10; // pençe yayı: hafif bombe (bilek dönüşü)
+  // zamanlama: hızlı savuruş vuruştan hemen önce başlar, en uzun tırnağın ucu gövde ortasını ~T anında geçer
+  const SW = Math.min(T * 0.7, k.slow(120)); // bir tırnağın boydan boya geçişi
+  const start = T - SW * 0.62;
+  const HOLD = k.slow(240); // izin taze (kırmızı) kaldığı süre
+  const FADE = k.slow(420); // koyulaşarak sönme
+  const total = T + HOLD + FADE + k.slow(80);
+  const cEdge = k.color('#170705'); // yırtık kenar: kahverengi-siyah
+  const cFlesh = k.color('#4a080b'); // iç: koyu kırmızı
+  const cDeep = k.color('#240306'); // yarığın dibi
+  const cWet = k.color('#631012'); // taze iç (biraz açık; parlamaz)
+  const cDry = k.color('#160605'); // kuruyan / koyulaşan renk
+  const cRim = k.color('#c9a99a'); // çok soluk kenar ışığı (yalnızca taze iz, düşük alfa)
+  const cSmear = k.color('#8a7a70');
+  const g = sc.add.graphics().setDepth(depth + 2);
+  // izler hedefin üstünde durur: birim geri itilince (kap + sprite kayması) onunla gider
+  const x0 = v.container.x;
+  const sx0 = v.sprite.x;
+  const drips: Drip[] = [];
+  for (let i = 0; i < 5; i++) drips.push({ rake: i % RAKES.length, s: k.rnd(0.3, 0.75), t0: T + k.slow(k.rnd(90, 260)), v: k.rnd(45, 80), max: k.rnd(34, 58) });
   void k.counter(sc, total, (u) => {
     const tm = u * total;
-    dark.clear();
-    hot.clear();
-    const post = clamp01((tm - T) / FADE); // vuruş sonrası sönme (0 vuruşta, 1 bitişte)
-    const flash = tm < T ? 0 : Math.max(0, 1 - (tm - T) / k.slow(140)); // vuruş anı ek parlama
-    for (const cl of claws) {
-      const a0 = T * cl.t0;
-      const a1 = T * cl.t1;
-      if (tm < a0) continue;
-      const g = clamp01((tm - a0) / Math.max(1, a1 - a0));
-      const head = 1 - (1 - g) ** 2.2; // hızla girer, sonda yavaşlar
-      const heat = tm < a1 ? 1 : Math.max(0, 1 - (tm - a1) / k.slow(260)); // ak-sıcak çekirdek sönüp koyulaşır
-      const alpha = 1 - post ** 1.6;
-      const shrink = 1 - 0.45 * post;
-      const W = cl.w * shrink;
-      dark.fillStyle(cDark, 0.78 * alpha).fillPoints(clawStrip(cl.A, cl.B, bow, W * 2.1, 0, head, cl.rag), true);
-      hot.fillStyle(cRed, 0.9 * alpha).fillPoints(clawStrip(cl.A, cl.B, bow, W * 1.2, 0, head, cl.rag), true);
-      hot.fillStyle(cHot, (0.45 + 0.45 * heat) * alpha).fillPoints(clawStrip(cl.A, cl.B, bow, W * 0.62, 0, head, cl.rag), true);
-      if (heat > 0.02 || flash > 0) {
-        const hh = Math.max(heat, flash);
-        hot.fillStyle(cCore, hh * 0.9 * alpha).fillPoints(clawStrip(cl.A, cl.B, bow, W * 0.32, Math.max(0, head - 0.7), head), true);
-        hot.fillStyle(cWhite, hh * 0.85 * alpha).fillPoints(clawStrip(cl.A, cl.B, bow, W * 0.13, Math.max(0, head - 0.45), head), true);
+    g.clear();
+    const fx = v.container.x - x0 + (v.sprite.x - sx0);
+    const post = clamp01((tm - T - HOLD) / FADE); // 0 taze, 1 tamamen söndü
+    const dry = smooth(clamp01((tm - T) / (HOLD + FADE * 0.6))); // koyulaşma
+    const alpha = 1 - post ** 1.4;
+    for (let ri = 0; ri < rakes.length; ri++) {
+      const r = rakes[ri]!;
+      const t0 = start + k.slow(r.lag);
+      if (tm < t0) continue;
+      const q = clamp01((tm - t0) / SW);
+      const head = 1 - (1 - q) ** 3; // hızlı girer, sonda yavaşlar
+      const since = Math.max(0, tm - t0 - SW); // tırnak çıktıktan sonra geçen süre
+      // açılma: tırnağın geçtiği yer kısa sürede tam genişliğe açılır; sönmede hafifçe kapanır
+      const wAt = (s: number) => {
+        const open = smooth(clamp01((head - s) / 0.28 + since / k.slow(70) + 0.25));
+        const taper = clamp01(s / 0.1) ** 0.7 * clamp01((1 - s) / 0.38) ** 0.9;
+        return r.w * taper * open * (1 - 0.35 * post);
+      };
+      const A = { x: r.A.x + fx, y: r.A.y };
+      const B = { x: r.B.x + fx, y: r.B.y };
+      const outer = rakePoly(A, B, bow, head, (s) => wAt(s) * 1.6, r.rag);
+      const inner = rakePoly(A, B, bow, head, wAt, r.rag);
+      const core = rakePoly(A, B, bow, head, (s) => wAt(s) * 0.45, r.rag);
+      if (outer.poly.length < 4) continue;
+      g.fillStyle(mixCol(cEdge, cDry, dry * 0.6), 0.82 * alpha).fillPoints(outer.poly, true);
+      g.fillStyle(mixCol(mixCol(cWet, cFlesh, clamp01((tm - T) / k.slow(140))), cDry, dry * 0.75), 0.95 * alpha).fillPoints(inner.poly, true);
+      g.fillStyle(mixCol(cDeep, cDry, dry * 0.8), 0.9 * alpha).fillPoints(core.poly, true);
+      // ince soluk kenar ışığı: yalnızca taze izde, üst kenarda, çok düşük alfa
+      const rimA = 0.14 * (1 - dry) * alpha;
+      if (rimA > 0.01 && inner.top.length > 3) g.lineStyle(1.2, cRim, rimA).strokePoints(inner.top.slice(2, -3), false);
+      // hareket bulanıklığı: tırnak ucunun hemen arkasında çok ince, kısa, soluk iz (yalnızca savuruş sırasında)
+      if (q < 1) {
+        const n = inner.mid.length;
+        const tip = inner.mid[n - 1]!;
+        const back = inner.mid[Math.max(0, n - 6)]!;
+        const sa = 0.3 * Math.sin(Math.PI * q);
+        g.lineStyle(1.6, cSmear, sa).lineBetween(back.x, back.y, tip.x, tip.y);
+        g.lineStyle(3.5, cSmear, sa * 0.35).lineBetween(back.x, back.y, tip.x, tip.y);
       }
-      // oyulan uçta kıvılcım noktası (pençe tırnağı)
-      if (tm < a1) {
-        const s = head;
-        const bw = Math.sin(Math.PI * s) * bow;
-        const px = cl.A.x + (cl.B.x - cl.A.x) * s - nx * bw; // clawStrip'in normali A->B'ye göre: -n
-        const py = cl.A.y + (cl.B.y - cl.A.y) * s - ny * bw;
-        hot.fillStyle(cWhite, 0.95).fillCircle(px, py, 5);
-        hot.fillStyle(cHot, 0.5).fillCircle(px, py, 13);
-      }
     }
-    // vuruştan sonra yarıklardan süzülen damlalar
-    if (tm > T && post < 0.7 && tm >= nextDrip) {
-      nextDrip = tm + k.slow(55);
-      const cl = k.pick(claws);
-      const s = k.rnd(0.25, 0.8);
-      debris(c, k, [{ x: lerp(cl.A.x, cl.B.x, s), y: lerp(cl.A.y, cl.B.y, s), vx: k.rnd(-12, 12), vy: k.rnd(10, 60), rot: Math.PI / 2, vr: 0, pts: shardShape(k), size: k.rnd(5, 8), col: k.color(k.pick(BLOOD)), life: k.rnd(380, 560), delay: 0 }], depth + 2, 900);
+    // izlerden aşağı süzülen birkaç damla (iz koyulaştıkça onlar da koyulaşır)
+    for (const d of drips) {
+      if (tm < d.t0) continue;
+      const r = rakes[d.rake]!;
+      const s = d.s;
+      const bw = Math.sin(Math.PI * s) * bow;
+      const Lr = Math.hypot(r.B.x - r.A.x, r.B.y - r.A.y) || 1;
+      const px = r.A.x + (r.B.x - r.A.x) * s + (-(r.B.y - r.A.y) / Lr) * bw + fx;
+      const py = r.A.y + (r.B.y - r.A.y) * s + ((r.B.x - r.A.x) / Lr) * bw + 3;
+      const ts = (tm - d.t0) / k.slow(1000);
+      const len = Math.min(d.max, d.v * ts * (1 + ts * 0.8)); // yavaş başlar, biraz hızlanır, boyu sınırlı
+      const col = mixCol(cFlesh, cDry, dry * 0.7);
+      g.lineStyle(3, col, 0.9 * alpha).lineBetween(px, py, px, py + len);
+      g.fillStyle(col, 0.95 * alpha).fillCircle(px, py + len, 3);
     }
-    if (u >= 1) {
-      dark.destroy();
-      hot.destroy();
-    }
-  });
-  // savuruş boyunca saldırgan tarafına uzanan ince hız çizgileri (pençenin geçtiği hava)
-  const streak = sc.add.graphics().setDepth(depth + 1).setBlendMode(ADD);
-  void k.counter(sc, T, (u) => {
-    streak.clear();
-    const a = Math.sin(Math.PI * u) * 0.55;
-    for (const cl of claws) {
-      const s0 = clamp01(u * 1.1 - 0.35);
-      const s1 = clamp01(u * 1.1);
-      const ext = 0.35; // yarığın ötesine uzanan kısım (A'nın arkası)
-      const P = (s: number) => ({ x: cl.A.x + ux * L * ext * (1 - s), y: cl.A.y + uy * L * ext * (1 - s) });
-      const p0 = P(s0);
-      const p1 = P(s1);
-      streak.lineStyle(3, k.color('#ff7a5a'), a).lineBetween(p0.x, p0.y, p1.x, p1.y);
-    }
-    if (u >= 1) streak.destroy();
+    if (u >= 1) g.destroy();
   });
 
-  // vuruş: kızıl parlama, ışın yıldızı, kan, koyu kıymıklar, kızıl sis, zemin halkası
+  // vuruş: mat kan / toz zerreleri tırmık yönünde savrulur, birkaç kıl-kumaş lifi kopar, koyu toz bulutu; parlama yok
   after(c, T, () => {
-    glow(c, k, mid, 300, 300, '#ff2414', { alpha: 0.75, dur: 340, grow: 1.5, depth: depth + 3 });
-    glow(c, k, mid, 110, 110, '#fff0e0', { alpha: 0.9, dur: 180, grow: 1.5, depth: depth + 4 });
-    starBurst(c, k, mid, 175, 14, ['#ff3826', '#fff0e0'], 260, depth + 4);
-    const sprayA = Math.atan2(-uy, -ux); // tırmık yönü (aşağı, saldırgana doğru)
-    k.burst(sc, mid.x, mid.y, { colors: BLOOD, n: 12, speed: [160, 460], angle: [sprayA - 1.1, sprayA + 0.5], gravity: 1000, life: [320, 620], size: [18, 32], depth: depth + 3 });
-    k.burst(sc, mid.x, mid.y, { colors: ['#ff3826', '#ffb48a', '#ffffff'], n: 7, speed: [220, 520], gravity: 500, life: [180, 340], size: [14, 22], depth: depth + 4 });
-    const shards: Bit[] = Array.from({ length: 10 }, () => {
-      const a = k.rnd(0, Math.PI * 2);
-      const sp = k.rnd(140, 380);
-      return { x: mid.x + Math.cos(a) * 20, y: mid.y + Math.sin(a) * 20, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 120, rot: a, vr: k.rnd(-9, 9), pts: shardShape(k), size: k.rnd(11, 19), col: k.color(k.pick(['#1a0a0c', '#2e1014', '#3a1418'])), life: k.rnd(420, 700), delay: 0 };
+    const p = { x: mid0.x + dir * 6, y: mid0.y + 6 };
+    const rakeA = Math.atan2(Math.sin(ang), dir * Math.cos(ang)); // tırmık yönü (aşağı, hedefin arkasına)
+    const gore: Bit[] = Array.from({ length: 14 }, () => {
+      const a = rakeA + k.rnd(-0.75, 0.45) * dir;
+      const sp = k.rnd(120, 340);
+      return { x: p.x + k.rnd(-26, 26), y: p.y + k.rnd(-30, 30), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - k.rnd(60, 160), rot: k.rnd(0, 6), vr: k.rnd(-4, 4), pts: rockShape(k), size: k.rnd(2.5, 5.5), col: k.color(k.pick(GORE)), life: k.rnd(360, 620), delay: k.rnd(0, 30) };
     });
-    debris(c, k, shards, depth + 3, 700);
-    puffs(c, k, mid, 6, { hex: ['#7a1018', '#a01a20', '#5a0a10'], spreadX: 50, spreadY: 40, rise: 40, size: [50, 84], dur: [420, 640], alpha: 0.3, depth: depth + 2, drift: 40 });
-    groundRing(c, k, k.feet(v), 120, ['#a3121a', '#ff5a3a'], 340, depth - 1, 0.3);
+    debris(c, k, gore, depth + 3, 1300);
+    // kopan kıl / kumaş: ince lifler, yavaş döner, hafif süzülür
+    const fibers: Bit[] = Array.from({ length: 6 }, () => {
+      const a = rakeA + k.rnd(-1.1, 0.3) * dir - 0.5 * dir;
+      const sp = k.rnd(70, 190);
+      return { x: p.x + k.rnd(-20, 20), y: p.y + k.rnd(-24, 18), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - 90, rot: k.rnd(0, 6), vr: k.rnd(-6, 6), pts: shardShape(k), size: k.rnd(6, 10), col: k.color(k.pick(FIBER)), life: k.rnd(560, 860), delay: k.rnd(0, 50) };
+    });
+    debris(c, k, fibers, depth + 3, 380);
+    puffs(c, k, p, 3, { hex: ['#3a1612', '#4a2018', '#2e1410'], spreadX: 28, spreadY: 26, rise: 18, size: [34, 54], dur: [360, 520], alpha: 0.2, depth: depth + 1, drift: 26 });
   });
 }
+
+const REND_SHAKE_MS = 90; // kısa, kontrollü sarsıntı
+const REND_SHAKE_MAG = 0.0028;
 
 const rend: MobHandVfx = async (c, k, hitMs) => {
   const sfx = c.skill.sfx ?? [];
@@ -751,7 +791,7 @@ const rend: MobHandVfx = async (c, k, hitMs) => {
   await c.lunge(t ? t.container.x : c.actor.container.x);
   const T = k.slow(hitMs);
   for (const v of c.targets) rendOn(c, k, v, T);
-  after(c, T, () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
+  after(c, T, () => k.shake(c.scene, REND_SHAKE_MS, REND_SHAKE_MAG));
   return land(c, T);
 };
 

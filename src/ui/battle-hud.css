@@ -20,6 +20,8 @@
   --num: 'Palatino Linotype', 'Book Antiqua', Palatino, Georgia, serif;
   --ease: cubic-bezier(0.33, 1, 0.68, 1);
   --panel: linear-gradient(180deg, rgb(31, 23, 15), rgb(12, 9, 6));
+  /* 1 gerçek ekran pikseli kaç oyun birimi (telefonda HUD ~0,36 ölçekli: kısa ekran yazıları bununla en az okunur boyuta çıkar; BattleHud.layout --bh-inv verir) */
+  --rp: calc(1px * var(--bh-inv, 1));
 }
 
 .bh-root {
@@ -363,141 +365,278 @@
   white-space: nowrap;
 }
 
-/* --- portre + ince çubuk + yükselen karakter sayfası --- */
+/* --- portre + karakter bloğu (B · Icon first, Ömer 2026-10-18) + yükselen karakter sayfası --- */
 .bh-actor {
   position: absolute;
-  left: 28px;
-  bottom: 24px;
+  left: 22px;
+  bottom: 12px;
 }
 
 .bh-opener {
   display: flex;
-  gap: 18px;
-  align-items: flex-start;
+  gap: 16px;
+  align-items: center;
   pointer-events: auto;
   cursor: pointer;
 }
 
+/* köşe elmaslı portre (sol üst + sağ alt) */
 .bh-pframe {
   position: relative;
-  width: 126px;
-  height: 126px;
+  width: 108px;
+  height: 128px;
   flex: none;
   background: linear-gradient(180deg, #22180f, #0a0705);
-  box-shadow: inset 0 0 0 2px var(--on), 0 0 0 3px rgba(8, 6, 4, 0.8), 0 0 20px rgba(240, 140, 40, 0.22);
+  border: 1px solid rgba(var(--gold), 0.62);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px rgba(var(--gold), 0.3), inset 0 0 16px rgba(var(--gold), 0.2);
   transition: box-shadow 0.2s;
 }
 
+.bh-pframe::before,
+.bh-pframe::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f0dca8;
+  z-index: 2;
+}
+
+.bh-pframe::before {
+  left: -5px;
+  top: -5px;
+}
+
+.bh-pframe::after {
+  right: -5px;
+  bottom: -5px;
+}
+
 .bh-pframe.en {
-  box-shadow: inset 0 0 0 2px #f0a090, 0 0 0 3px rgba(8, 6, 4, 0.8), 0 0 20px rgba(255, 90, 90, 0.22);
+  border-color: rgba(255, 130, 120, 0.65);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 16px rgba(255, 90, 90, 0.3), inset 0 0 16px rgba(255, 90, 90, 0.18);
+}
+
+.bh-pframe.en::before,
+.bh-pframe.en::after {
+  border-color: #f0a090;
 }
 
 .bh-pframe .bh-portrait {
-  padding: 3px;
+  object-position: top;
 }
 
 .bh-opener:hover .bh-pframe,
 .bh-actor.open .bh-pframe {
-  box-shadow: inset 0 0 0 2px var(--on), 0 0 0 3px rgba(8, 6, 4, 0.8), 0 0 28px rgba(240, 140, 40, 0.45);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 26px rgba(240, 140, 40, 0.5), inset 0 0 16px rgba(var(--gold), 0.28);
 }
 
 .bh-actor-info {
   display: flex;
   flex-direction: column;
-  gap: 9px;
-  padding-top: 2px;
+  gap: 4px;
+  min-width: 0;
+  width: 378px;
 }
 
 .bh-name {
   display: flex;
   align-items: baseline;
-  gap: 12px;
+  line-height: 1;
 }
 
 .bh-name .bh-n {
-  font-size: 21px;
+  font-size: 23px;
+  letter-spacing: 0.07em;
+  color: #f0dca8;
+  text-shadow: 0 0 12px rgba(var(--gold), 0.45);
 }
 
-.bh-hpmp-row {
-  display: grid;
-  grid-template-columns: 152px 152px;
-  gap: 4px 16px;
-}
-
-.bh-hpmp-row.three {
-  /* üç kaynak (HP / MP / Rage): aynı ızgara, üç eşit sütun; toplam genişlik 4 ana stat satırını (bh-main) aşmaz */
-  grid-template-columns: repeat(3, 108px);
-  column-gap: 14px;
-}
-
-.bh-hpmp.rage .bh-num {
-  color: #ffb35a;
-}
-
-.bh-main {
+/* rol + primary çipleri (ortak çip dili: ince çerçeve, koyu zemin; primary kor tonlu) */
+.bh-chips {
   display: flex;
-  gap: 18px;
+  gap: 6px;
+}
+
+.bh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 22px;
+  padding: 0 9px;
+  font: 600 12px var(--cin);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--gold), 0.16);
+  white-space: nowrap;
+}
+
+.bh-chip .bh-ico {
+  width: 17px;
+  height: 17px;
+}
+
+.bh-chip b {
+  font: 700 14px var(--cin);
+  letter-spacing: 0;
+  color: var(--on);
+}
+
+.bh-chip.hot {
+  color: #ffb98a;
+  border-color: rgba(224, 112, 42, 0.55);
+  background: rgba(224, 112, 42, 0.14);
+}
+
+.bh-chip.hot b {
+  color: #ffd2a0;
+}
+
+.bh-abody {
+  display: grid;
+  grid-template-columns: 1.12fr 1fr;
+  gap: 14px;
+  align-items: center;
+}
+
+/* ikonlu çubuklar: değer üstte solda (altın), ince altın çerçeveli çubuk */
+.bh-hpmp-row {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-width: 0;
+}
+
+.bh-hpmp .bh-num {
+  margin-bottom: 1px;
+  font: 700 15px/16px var(--cin);
+  color: var(--on);
+  text-shadow: none;
+}
+
+.bh-hpmp.mp .bh-num,
+.bh-hpmp.rage .bh-num {
+  color: var(--on);
+}
+
+.bh-hpmp .bh-num .of {
+  font: 600 12px var(--cin);
+  color: var(--muted);
+}
+
+.bh-hpmp .bh-bar {
+  height: 9px;
+  background: #1d150d;
+  border: 1px solid rgba(var(--gold), 0.22);
+  box-shadow: none;
+}
+
+.bh-hpmp .bh-bar.hp i {
+  background: linear-gradient(90deg, #4f9a32, #7fbf3f);
+}
+
+.bh-hpmp .bh-bar.hp.en i {
+  background: linear-gradient(90deg, #b83a30, #f07a6c);
+}
+
+.bh-hpmp .bh-bar.mp i {
+  background: linear-gradient(90deg, #2e6fc0, #5aa5f0);
+}
+
+.bh-hpmp .bh-bar.rage i {
+  background: linear-gradient(90deg, #c4561c, #f08a30);
+}
+
+.bh-aside {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  min-width: 0;
+}
+
+/* 2x2 stat karoları (primary kor tonlu) */
+.bh-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 5px;
 }
 
 .bh-st {
   display: flex;
   align-items: center;
-  gap: 7px;
-  font: 700 18px var(--num);
-  color: #f4ede1;
+  gap: 5px;
+  height: 26px;
+  padding: 0 7px;
+  font: 700 15px var(--cin);
+  color: var(--on);
   white-space: nowrap;
-  text-shadow: 0 2px 3px rgba(0, 0, 0, 0.9);
-  transition: color 0.15s;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--gold), 0.16);
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
 }
 
 .bh-st .bh-ico {
-  /* boyalı stat ikonu (assets/stat-icons) küçükte ezilmesin: 19 -> 20 (satır yüksekliği değişmez) */
-  width: 20px;
-  height: 20px;
+  width: 18px;
+  height: 18px;
 }
 
 .bh-st .l {
-  font: 600 12px var(--cin);
-  letter-spacing: 0.1em;
+  margin-right: auto;
+  font: 600 11px var(--cin);
+  letter-spacing: 0.06em;
   color: var(--muted);
 }
 
 .bh-st.pri {
-  color: var(--pri);
+  color: #ffd2a0;
+  background: rgba(224, 112, 42, 0.14);
+  border-color: rgba(224, 112, 42, 0.55);
+  box-shadow: inset 2px 0 0 var(--ember);
 }
 
 .bh-st.pri .l {
-  color: #e8c47e;
+  color: #ffb98a;
 }
 
-.bh-st:hover,
-.bh-st:hover .l {
-  color: var(--on);
+.bh-st:hover {
+  background: rgba(224, 112, 42, 0.18);
+  border-color: var(--ember);
 }
 
+/* "ALL STATS" düğmesi: çerçeveli, ortalı; karakter sayfasını açar */
 .bh-more {
-  display: inline-flex;
+  display: flex;
   align-items: center;
-  gap: 9px;
-  font: 600 12px var(--cin);
-  letter-spacing: 0.2em;
+  justify-content: center;
+  gap: 8px;
+  height: 27px;
+  font: 600 11px var(--cin);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: var(--dim);
-  transition: color 0.18s;
+  color: var(--on);
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(var(--gold), 0.3);
+  transition: color 0.18s, background 0.18s, border-color 0.18s;
 }
 
 .bh-more::before {
   content: '';
-  width: 7px;
-  height: 7px;
+  width: 6px;
+  height: 6px;
   transform: rotate(45deg);
-  box-shadow: 0 0 0 1px rgba(var(--gold), 0.55);
+  box-shadow: 0 0 0 1px rgba(var(--gold), 0.7);
   transition: background 0.18s, box-shadow 0.18s;
 }
 
 .bh-opener:hover .bh-more,
 .bh-actor.open .bh-more {
-  color: var(--on);
+  color: #ffd2a0;
+  background: rgba(224, 112, 42, 0.16);
+  border-color: var(--ember);
 }
 
 .bh-opener:hover .bh-more::before,
@@ -633,9 +772,9 @@
 /* --- skill'ler: tam ortada; açıklama hemen üstünde --- */
 .bh-skills {
   position: absolute;
-  top: 928px;
+  top: 926px;
   display: flex;
-  gap: 12px;
+  gap: 8px;
   pointer-events: auto;
 }
 
@@ -839,7 +978,8 @@
 
 /* Açıklama YALNIZCA üstüne gelinen skill'de (dokunmatikte uzun basınca: .tip); seçili skill yalnızca seçim görünümünü taşır (Ömer 2026-10-09) */
 @media (hover: hover) {
-  .bh-sk:hover .bh-sktip {
+  .bh-sk:hover .bh-sktip,
+  .bp:hover .bh-sktip {
     opacity: 1;
     visibility: visible;
     transform: translate(-50%, 0);
@@ -847,7 +987,8 @@
   }
 }
 
-.bh-sk.tip .bh-sktip {
+.bh-sk.tip .bh-sktip,
+.bp.tip .bh-sktip {
   opacity: 1;
   visibility: visible;
   transform: translate(-50%, 0);
@@ -855,13 +996,16 @@
 }
 
 /* kenarlardaki skill'in açıklaması ekrandan taşmasın */
-.bh-sk:first-child .bh-sktip {
+.bh-sk:first-child .bh-sktip,
+.bp:first-child .bh-sktip {
   left: 0;
   transform: translate(-20%, 6px);
 }
 
 .bh-sk:first-child:hover .bh-sktip,
-.bh-sk.tip:first-child .bh-sktip {
+.bh-sk.tip:first-child .bh-sktip,
+.bp:first-child:hover .bh-sktip,
+.bp.tip:first-child .bh-sktip {
   transform: translate(-20%, 0);
 }
 
@@ -1029,9 +1173,10 @@
 /* --- global eylemler: skill'lerin hemen sağında dikey sütun --- */
 .bh-globs {
   position: absolute;
-  top: 932px;
-  height: 122px;
+  top: 926px;
+  height: 148px;
   display: flex;
+  align-items: center;
   gap: 16px;
   pointer-events: auto;
 }
@@ -1121,17 +1266,13 @@
   filter: drop-shadow(0 0 5px rgba(255, 140, 50, 0.7));
 }
 
-/* 4 global (Valor'lu savaş: Rest / Skip / Move / Revive): sütun aynı yükseklikte kalır, satırlar sıkışır */
-html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4),
-html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
-  height: 29px;
-}
+/* 4 global (Valor'lu savaş: Rest / Skip / Move / Revive): plaka aynı yükseklikte kalır, satırlar eşit bölünür (aşağıda: tek çerçeveli plaka) */
 
 /* Valor mangalları (src/ui/valor-braziers.ts): global sütunun sağında, alt çubukta dikey ortalı */
 .bh-valor {
   position: absolute;
-  top: 932px;
-  height: 122px;
+  top: 926px;
+  height: 148px;
   display: flex;
   align-items: center;
   pointer-events: auto;
@@ -1144,17 +1285,18 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
 /* sağ alt kanca alanı (şimdilik boş) */
 .bh-right {
   position: absolute;
-  top: 932px;
-  height: 122px;
+  top: 926px;
+  height: 148px;
   pointer-events: auto;
 }
 
 /* --- birim kartı: düşman sağda, dost solda; her tarafta biri sabitlenebilir --- */
+/* "B · Band + Rows" (Ömer 2026-10-18, taslak stats-panels.html): çerçeve ortak A-Band bileşeninin (.bt, src/ui/band-tip.ts); kart yalnızca konum ve kaydırma. */
 .bh-card {
+  position: absolute;
   top: 172px;
-  left: 28px;
-  width: 384px;
-  padding: 16px 18px 14px;
+  left: 22px;
+  width: 500px;
   opacity: 0;
   visibility: hidden;
   transform: translateY(8px);
@@ -1170,152 +1312,229 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
   transition: opacity 0.18s, transform 0.22s var(--ease);
 }
 
-.bh-card.pin {
-  border-color: rgba(243, 217, 153, 0.8);
+/* Kart alt çubuğa (üst kenarı 910) taşmaz; iç kutu kayar, köşe elmasları / halka kesilmesin diye 8 px pay (negatif kenar boşluğu geri alır) */
+.bh-card-sc {
+  max-height: 710px;
+  margin: -8px;
+  padding: 8px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  /* dokunarak dikey kaydırma (telefon; Ömer 2026-10-16): kart dokunmaları Phaser'a gitmez (battle-hud.ts) */
+  touch-action: pan-y;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(var(--gold), 0.35) transparent;
+  pointer-events: none;
 }
 
-.bh-hdr {
-  display: flex;
-  gap: 14px;
-  align-items: center;
+.bh-card.pin,
+.bh-card.pin .bh-card-sc {
+  pointer-events: auto;
 }
 
-.bh-hdr .bh-cell {
-  width: 66px;
-  height: 66px;
-}
-
-.bh-hdr-t {
+.bh-card .bt {
+  width: 100%;
   min-width: 0;
+  max-width: none;
 }
 
-.bh-hdr .bh-n {
-  font-size: 21px;
-  overflow: hidden;
-  text-overflow: ellipsis;
+.bh-card.pin .bt {
+  border-color: rgba(243, 217, 153, 0.8);
+  pointer-events: auto;
 }
 
-.bh-hdr .bh-m {
-  font-size: 16px;
+.bh-card.enemy .bt-kind {
+  color: #ff9a8a;
+  opacity: 1;
 }
 
-.bh-side-tag {
-  margin-left: auto;
-  align-self: flex-start;
-  flex: none;
-  font: 600 11px var(--cin);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  padding: 3px 8px;
-  border: 1px solid;
+.bh-card.party .bt-kind {
+  color: #8cc0d8;
+  opacity: 1;
 }
 
-.bh-card.enemy .bh-side-tag {
-  color: #ffb0a0;
-  border-color: rgba(255, 90, 90, 0.55);
-}
-
-.bh-card.party .bh-side-tag {
-  color: #b8d8ff;
-  border-color: rgba(79, 163, 255, 0.55);
-}
-
-.bh-bars {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 6px 16px;
-  margin-top: 12px;
-}
-
-.bh-bars.one {
-  grid-template-columns: 1fr;
-  margin-top: 6px;
-}
-
-.bh-bars .lab {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  font: 700 16px var(--num);
-  color: #f4ede1;
-  margin-bottom: 3px;
-}
-
-.bh-attrs {
-  display: flex;
-  justify-content: space-between;
-  margin-top: 10px;
-}
-
-.bh-attrs .bh-st {
-  font-size: 17px;
-}
-
-.bh-attrs .bh-st .bh-ico {
-  width: 17px;
-  height: 17px;
-}
-
-.bh-grid {
-  display: grid;
-  grid-template-columns: repeat(3, 1fr);
-  gap: 4px 16px;
-}
-
-.bh-row {
-  display: grid;
-  grid-template-columns: 20px 1fr auto;
-  align-items: center;
-  gap: 6px;
-  height: 22px;
-}
-
-.bh-row .bh-ico {
-  width: 18px;
-  height: 18px;
-}
-
-.bh-row .l {
-  font: 600 11px var(--cin);
-  letter-spacing: 0.08em;
+.bh-card .bt-foot {
   color: var(--muted);
 }
 
-.bh-row .v {
-  font: 700 16px var(--num);
-  color: #f4ede1;
-  text-align: right;
-  text-shadow: 0 2px 3px #000;
+.bh-card .bt-body {
+  padding: 11px 16px 11px;
+  gap: 10px;
+}
+
+.bh-card .bt-body .bt-div {
+  margin: 0;
+}
+
+/* bölüm etiketi: soluk Cinzel + ince çizgi */
+.bh-cl {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 5px;
+  font: 600 11px var(--cin);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.bh-cl::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: rgba(var(--gold), 0.3);
+}
+
+/* HP / MP / Rage: tek sırada, ikon solda değer sağda, ince altın çerçeveli çubuk */
+.bh-cbars {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 14px;
+}
+
+.bh-cb-v {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 4px;
+  font: 700 15px/1.2 var(--cin);
+  color: var(--on);
   white-space: nowrap;
 }
 
-.bh-row .v small {
-  margin-left: 3px;
-  font: italic 13px var(--gar);
-  color: var(--dim);
+.bh-cb-v .bh-ico {
+  width: 20px;
+  height: 20px;
 }
 
-.bh-sec {
-  margin-top: 12px;
+.bh-cb-v b {
+  margin-left: auto;
+  font-weight: 600;
 }
 
+.bh-cb-v .of {
+  font: 500 12px var(--cin);
+  color: var(--muted);
+}
+
+.bh-cb .bh-bar {
+  height: 11px;
+  background: #060403;
+  border: 1px solid rgba(var(--gold), 0.5);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.bh-cb .bh-bar i {
+  top: 1px;
+  bottom: 1px;
+  left: 1px;
+  max-width: calc(100% - 2px);
+}
+
+.bh-cb .bh-bar.hp i {
+  background: linear-gradient(90deg, #4f9a32, #7fbf3f);
+}
+
+.bh-cb .bh-bar.hp.en i {
+  background: linear-gradient(90deg, #b83a30, #f07a6c);
+}
+
+.bh-cb .bh-bar.mp i {
+  background: linear-gradient(90deg, #2e6fc0, #5aa5f0);
+}
+
+.bh-cb .bh-bar.rage i {
+  background: linear-gradient(90deg, #c4561c, #f08a30);
+}
+
+/* MAIN / ATTACK / DEFENSE: hizalı altın rakam, azalma yüzdesi teal */
+.bh-scols {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 0 16px;
+}
+
+.bh-sr {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 0 4px;
+  margin: 0 -4px;
+}
+
+.bh-sr .bh-ico {
+  width: 24px;
+  height: 24px;
+}
+
+.bh-sr .k {
+  font: 600 11px var(--cin);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bh-sr .n {
+  margin-left: auto;
+  font: 600 15px var(--cin);
+  color: var(--on);
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bh-sr .rd {
+  min-width: 2.8em;
+  font: 600 11px var(--cin);
+  color: #8fc7c0;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.bh-sr.pri {
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.2), rgba(224, 112, 42, 0.04));
+  border-left: 2px solid var(--ember);
+  padding-left: 2px;
+}
+
+.bh-sr.pri .k {
+  color: #f3e6c4;
+}
+
+.bh-sr.pri .n {
+  color: #fff0c4;
+  text-shadow: 0 0 8px rgba(224, 112, 42, 0.6);
+}
+
+/* aktif buff / debuff'lar (ayrı bölüm): ikon, ad, yığın, kalan tur; altında kısa açıklama */
 .bh-eff {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 6px;
 }
 
 .bh-e {
   display: grid;
-  grid-template-columns: 12px 1fr;
-  gap: 1px 9px;
-  align-items: baseline;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  gap: 0 9px;
+  align-items: center;
 }
 
-.bh-e i {
-  width: 8px;
-  height: 8px;
-  transform: rotate(45deg) translateY(-1px);
+.bh-e .bh-e-ico {
+  grid-row: 1;
+  width: 28px;
+  height: 28px;
+  filter: drop-shadow(0 0 4px color-mix(in srgb, var(--c) 55%, transparent));
+}
+
+.bh-e-dia {
+  grid-row: 1;
+  justify-self: center;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
   background: var(--c);
   box-shadow: 0 0 6px var(--c);
 }
@@ -1323,39 +1542,159 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
 .bh-e b {
   font: 600 14px var(--cin);
   letter-spacing: 0.06em;
-  color: #f4ede1;
   text-transform: uppercase;
+  color: color-mix(in srgb, var(--c) 55%, #fff);
   white-space: nowrap;
 }
 
-.bh-e b em {
-  margin-left: 6px;
-  font: 700 14px var(--num);
-  color: var(--muted);
-  font-style: normal;
-  text-transform: none;
+.bh-e b .st {
+  margin-left: 8px;
+  padding: 1px 6px;
+  font: 600 12px var(--cin);
+  letter-spacing: 0.04em;
+  color: var(--on);
+  border: 1px solid rgba(var(--gold), 0.4);
+  background: rgba(var(--gold), 0.1);
 }
 
-.bh-e span {
-  grid-column: 2;
-  font: italic 15px/1.15 var(--gar);
+.bh-e em {
+  font: 600 13px var(--cin);
+  font-style: normal;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bh-e .d {
+  grid-column: 2 / -1;
+  font: 15px/1.2 var(--gar);
   color: var(--note);
 }
 
-.bh-pas-t {
+/* skill satırları (Ömer 2026-10-16): ikon · ad · hedef · bedel · bekleme (bedel / bekleme sütunları hizalı); ayrıntı satırın ipucunda.
+   Sabitlenmiş kartta yalnızca bu bölüm dokunulabilir (fare: gelince ipucu; dokunma: dokununca ipucu sabitlenir). */
+.bh-csl {
+  display: flex;
+  flex-direction: column;
+}
+
+.bh-cs {
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto 60px 74px;
+  align-items: center;
+  gap: 8px;
+  min-height: 38px;
+  padding: 2px 4px;
+  border-bottom: 1px solid rgba(var(--gold), 0.14);
+  cursor: help;
+}
+
+.bh-cs:last-child {
+  border-bottom: 0;
+}
+
+.bh-cs:hover,
+.bh-cs.tip {
+  background: rgba(var(--gold), 0.06);
+}
+
+.bh-cs .bh-cs-ico {
+  width: 34px;
+  height: 34px;
+  object-fit: contain;
+}
+
+.bh-cs .n {
+  font: 600 15px var(--cin);
+  letter-spacing: 0.03em;
+  color: var(--on);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.bh-cs .t {
+  font: 600 11px var(--cin);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+
+.bh-cs .c,
+.bh-cs .d {
+  display: flex;
+  justify-content: flex-start;
+}
+
+.bh-card .bt-chip {
+  height: 22px;
+  padding: 0 7px;
+  font-size: 12px;
+}
+
+.bh-card .bt-chip .n {
+  font: 600 14px var(--cin);
+  color: var(--on);
+}
+
+.bh-card .bt-chip.rg {
+  color: #ffb070;
+  border-color: rgba(224, 112, 42, 0.6);
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.bh-card .bt-chip.rg .n {
+  color: #ffd2a0;
+}
+
+.bh-card .bt-chip.wait .n {
+  color: #ffcf70;
+}
+
+.bh-cs.cool .bh-cs-ico,
+.bh-cs.cool .n {
+  opacity: 0.6;
+}
+
+.bh-cs.cool .bh-cs-ico {
+  filter: saturate(0.35) brightness(0.85);
+}
+
+/* pasif: kompakt ikon + ad + kısa düz açıklama (anahtar sayılar altın) */
+.bh-cpas {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.bh-cpas .bh-cpas-ico {
+  width: 38px;
+  height: 38px;
+  object-fit: contain;
+}
+
+.bh-cpas .tx b {
+  display: block;
   font: 600 14px var(--cin);
   letter-spacing: 0.06em;
-  color: var(--on);
   text-transform: uppercase;
+  color: var(--on);
 }
 
-.bh-pas-d {
-  font: italic 16px/1.2 var(--gar);
-  color: var(--note);
+.bh-cpas .tx > span {
+  display: block;
+  font: 16px/1.25 var(--gar);
+  color: var(--txt);
 }
 
+.bh-cpas .n {
+  font: 600 0.96em var(--cin);
+  color: var(--on);
+  white-space: nowrap;
+}
+
+/* seçili skill'in bu birime önizlemesi */
 .bh-pv {
-  margin-top: 12px;
   padding-top: 10px;
   border-top: 1px solid rgba(var(--gold), 0.16);
   display: flex;
@@ -1383,7 +1722,8 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
 }
 
 .bh-pv em {
-  font: italic 16px var(--gar);
+  font: 16px var(--gar);
+  font-style: normal;
   color: var(--muted);
 }
 
@@ -1392,132 +1732,12 @@ html:not(.short) .bh-gcol > .bh-gl:first-child:nth-last-child(4) ~ .bh-gl {
   font-size: 15px;
 }
 
-.bh-hint {
-  margin-top: 8px;
-  font: italic 14px var(--gar);
-  color: var(--dim);
-  text-align: right;
-}
-
-/* --- birim kartı: skill satırları (Ömer 2026-10-16): ikon, ad, kısa hedef / şekil, bedel, cooldown; ayrıntı satırın ipucunda.
-   Sabitlenmiş kartta yalnızca bu bölüm dokunulabilir (fare: gelince ipucu; dokunma: dokununca ipucu sabitlenir). */
-/* Kart alt çubuğa (üst kenarı 910) taşmaz (iç kutu; köşe elmasları kesilmesin diye kartın kendisi değil): uzun kart (4 skill + etkiler + pasif) kendi içinde kayar; sabitliyken dokunulabilir / kaydırılabilir */
-.bh-card-sc {
-  max-height: 694px;
-  overflow-y: auto;
-  overscroll-behavior: contain;
-  /* dokunarak dikey kaydırma (telefon; Ömer 2026-10-16): kart dokunmaları Phaser'a gitmez (battle-hud.ts) */
-  touch-action: pan-y;
-  -webkit-overflow-scrolling: touch;
-  scrollbar-width: thin;
-  scrollbar-color: rgba(var(--gold), 0.35) transparent;
-}
-
-.bh-card.pin {
-  pointer-events: auto;
-}
-
-.bh-csl {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.bh-cs {
-  display: grid;
-  grid-template-columns: 28px minmax(0, 1fr) auto 48px 46px;
-  align-items: center;
-  gap: 8px;
-  height: 32px;
-  padding: 0 4px;
-  border: 1px solid transparent;
-  cursor: help;
-}
-
-.bh-cs:hover,
-.bh-cs.tip {
-  border-color: rgba(var(--gold), 0.3);
-  background: rgba(var(--gold), 0.05);
-}
-
-.bh-cs .bh-cs-ico {
-  width: 28px;
-  height: 28px;
-}
-
-.bh-cs .n {
-  font: 16px var(--gar);
-  color: #f4ede1;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-.bh-cs .t {
-  font: italic 14px var(--gar);
-  color: var(--muted);
-  white-space: nowrap;
-}
-
-.bh-cs .c,
-.bh-cs .d,
-.bh-cs .w {
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-  gap: 3px;
-  font: 700 15px var(--num);
-  color: #f4ede1;
-  white-space: nowrap;
-}
-
-.bh-cs .c .bh-ico,
-.bh-cs .d .bh-ico,
-.bh-cs .w .bh-ico {
-  width: 15px;
-  height: 15px;
-}
-
-.bh-cs .d,
-.bh-cs .w {
-  justify-content: flex-end;
-  color: var(--muted);
-}
-
-/* cooldown simgesi yerine kum saati karakteri yok: ince altın elmas + sayı (temel), kor renk = beklemede (kalan / temel) */
-.bh-cs .d::before {
-  content: '';
-  width: 6px;
-  height: 6px;
-  transform: rotate(45deg);
-  border: 1px solid rgba(var(--gold), 0.55);
-  margin-right: 3px;
-}
-
-.bh-cs .w {
-  color: var(--ember2);
-}
-
-.bh-cs .w em {
-  font: 700 12px var(--num);
-  font-style: normal;
-  color: var(--dim);
-}
-
-.bh-cs.cool .bh-cs-ico,
-.bh-cs.cool .n {
-  opacity: 0.55;
-}
-
 /* --- pasif madalyonu: 4 skill'in hemen solunda (Luck primary'de yanında Lucky Escape elması) --- */
 .bh-pasv {
   position: absolute;
-  top: 944px;
-  width: 76px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 8px;
+  top: 926px;
+  width: 132px;
+  height: 148px;
   pointer-events: auto;
 }
 
@@ -1918,71 +2138,744 @@ html.short .bh-right.stacked .bh-pl-ico {
   margin: 0;
 }
 
-/* Telefon (html.short): kart üst çubuğun (sıra çubuğu + Menu, ~140 birim) hemen altından alt bandın (910) hemen üstüne kadar; içi kayar */
-html.short .bh-card {
-  top: 150px;
-}
-
-html.short .bh-card-sc {
-  max-height: 720px;
-}
-
-/* Telefon (html.short): kart skill'leri 2 sütunlu karolar; her karo en az 44 gerçek px (dokununca skill ipucu kartın yanında açılır).
-   Karo: solda ikon, üstte ad, altta kısa hedef + bedel + cooldown. */
-html.short .bh-csl {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+/* =====================================================================================================================================
+   SAVAŞ ALT ÇUBUĞU "A · Plates" (Ömer 2026-10-18, taslak public/mockups/battle-hud.html): skill / pasif plakaları, tek çerçeveli global
+   eylem plakası, Valor plakası, sağda kare ikonlar + Combat log düğmesi. Karakter bloğu yukarıda (B · Icon first). Yerleşim JS'te
+   (BattleHud.place: HUD_PLATE_W / HUD_PLATE_GAP). Gear / Character sayfası bu plakaları KULLANMAZ (.bh-sk ayrı kalır).
+   ===================================================================================================================================== */
+.bp {
+  --ac: #d9b26a;
+  --acl: color-mix(in srgb, var(--ac) 55%, #fff);
+  position: relative;
+  flex: none;
+  width: 132px;
+  height: 148px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   gap: 6px;
+  padding: 17px 5px 8px;
+  cursor: pointer;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 11%, #1d140c), #0d0906);
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, rgba(var(--gold), 0.2));
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), inset 0 0 20px color-mix(in srgb, var(--ac) 8%, transparent);
+  transition: transform 0.2s var(--ease), box-shadow 0.2s, background 0.2s, border-color 0.2s;
 }
 
-html.short .bh-cs {
-  grid-template-columns: 40px minmax(0, 1fr) auto auto;
-  grid-template-areas: 'ico n n n' 'ico t c d';
-  gap: 2px 5px;
-  height: auto;
-  min-height: calc(44px * var(--bh-inv, 1));
-  padding: 4px 6px;
-  border-color: rgba(var(--gold), 0.16);
+.bp.pas {
+  --ac: #6fb0a8;
+  width: 100%;
+  cursor: help;
 }
 
-html.short .bh-cs .c,
-html.short .bh-cs .d,
-html.short .bh-cs .w {
-  font-size: 14px;
-  gap: 1px;
+.bp.ult {
+  --ac: var(--ember);
+  border-color: color-mix(in srgb, var(--ac) 75%, #000);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 20px color-mix(in srgb, var(--ac) 40%, transparent), inset 0 0 24px color-mix(in srgb, var(--ac) 14%, transparent);
 }
 
-html.short .bh-cs .bh-ico:not(.bh-cs-ico) {
-  width: 12px;
-  height: 12px;
+/* PASSIVE / ULTIMATE şeridi: plakanın üst kenarında ortalı */
+.bp-tag {
+  position: absolute;
+  left: 50%;
+  top: 0;
+  transform: translate(-50%, -50%);
+  z-index: 5;
+  padding: 0.15em 0.9em;
+  font: 700 10px/1.5 var(--cin);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  color: #fff4d6;
+  background: color-mix(in srgb, var(--ac) 55%, #0c0905);
+  border: 1px solid var(--acl);
 }
 
-html.short .bh-cs .w em {
+.bp-tag .short {
   display: none;
 }
 
-html.short .bh-cs .bh-cs-ico {
-  grid-area: ico;
-  width: 40px;
-  height: 40px;
+.bp-key {
+  position: absolute;
+  left: 8px;
+  top: 9px;
+  z-index: 4;
+  font: 700 14px/1 var(--cin);
+  color: var(--on);
+  text-shadow: 0 1px 3px #000;
 }
 
-html.short .bh-cs .n {
-  grid-area: n;
-  font-size: 18px;
+/* köşe elmaslı ikon yuvası */
+.bp-ico {
+  position: relative;
+  flex: none;
+  width: 60px;
+  height: 60px;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--ac) 30%, #1a110a) 0%, #0d0806 78%);
+  border: 1px solid color-mix(in srgb, var(--ac) 62%, #000);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 14px color-mix(in srgb, var(--ac) 30%, transparent), inset 0 0 14px color-mix(in srgb, var(--ac) 22%, transparent);
+  transition: box-shadow 0.15s, transform 0.2s var(--ease);
 }
 
-html.short .bh-cs .t {
-  grid-area: t;
+.bp-ico .bh-ico {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.bp-ico::before,
+.bp-ico::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+  z-index: 2;
+}
+
+.bp-ico::before {
+  left: -5px;
+  top: -5px;
+}
+
+.bp-ico::after {
+  right: -5px;
+  bottom: -5px;
+}
+
+.bp-nm {
+  width: 100%;
+  min-height: 2.2em;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font: 600 13px/1.1 var(--cin);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--acl);
+  text-shadow: 0 0 10px color-mix(in srgb, var(--ac) 40%, transparent), 0 2px 4px rgba(0, 0, 0, 0.9);
+  transition: color 0.18s;
+}
+
+/* bedel / bekleme çipleri (MP, Rage, bekleme; ücretsizse FREE) */
+.bp-chips {
+  margin-top: auto;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 3px;
+  min-height: 21px;
+}
+
+.bp-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 21px;
+  padding: 0 6px;
+  font: 600 10px var(--cin);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--txt);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--gold), 0.16);
+  white-space: nowrap;
+}
+
+.bp-chip .bh-ico {
+  width: 15px;
+  height: 15px;
+}
+
+.bp-chip b {
+  font: 700 13px var(--cin);
+  letter-spacing: 0;
+  color: var(--on);
+}
+
+.bp-chip.free {
+  color: #cfe8a8;
+  border-color: rgba(127, 191, 63, 0.5);
+  background: rgba(127, 191, 63, 0.13);
+}
+
+.bp-chip.rage {
+  color: #ffb070;
+  border-color: rgba(224, 112, 42, 0.6);
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.bp-chip.rage b {
+  color: #ffd2a0;
+}
+
+.bp-chip.low {
+  color: #ff8f7a;
+  border-color: rgba(214, 74, 52, 0.65);
+  background: rgba(214, 74, 52, 0.14);
+}
+
+.bp-chip.low b {
+  color: #ffb4a4;
+}
+
+.bp .cdv {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  font: 600 30px var(--cin);
+  color: #f5a64a;
+  text-shadow: 0 2px 6px #000, 0 0 12px rgba(240, 140, 40, 0.6);
+}
+
+/* hover / seçili / beklemede / yetersiz kaynak */
+.bp:hover {
+  transform: translateY(-3px);
+}
+
+.bp:hover .bp-ico {
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 26px color-mix(in srgb, var(--ac) 60%, transparent), inset 0 0 20px color-mix(in srgb, var(--ac) 34%, transparent);
+}
+
+.bp.sel {
+  --ac: #f5a64a;
+  background: linear-gradient(180deg, rgba(245, 166, 74, 0.2), #120b06);
+  border-color: #f5a64a;
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 24px rgba(240, 140, 40, 0.4), inset 0 0 24px rgba(240, 140, 40, 0.12);
+}
+
+.bp.sel::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -8px;
+  width: 34px;
+  height: 2px;
+  transform: translateX(-50%);
+  background: #f5a64a;
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.9);
+}
+
+.bp.cdn,
+.bp.off {
+  --ac: #8c7a58;
+  background: linear-gradient(180deg, #17110b, #0a0705);
+  border-color: rgba(var(--gold), 0.14);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75);
+}
+
+.bp.cdn .bp-ico .bh-ico {
+  filter: grayscale(0.85) brightness(0.45);
+}
+
+.bp.off .bp-ico .bh-ico {
+  opacity: 0.45;
+}
+
+.bp.cdn .bp-nm,
+.bp.off .bp-nm {
+  color: var(--muted);
+  text-shadow: none;
+}
+
+/* ultimate beklerken (soluk + sayaç) şerit de soluk */
+.bp.ult.cdn .bp-tag,
+.bp.ult.off .bp-tag {
+  opacity: 0.7;
+}
+
+/* Lucky Escape (Luck primary): pasif plakasının sağ üst köşesinde */
+.bp .bh-lucky {
+  right: 5px;
+  top: 6px;
+}
+
+.bp .bh-lucky.ico {
+  right: 3px;
+  top: 4px;
+}
+
+/* --- global eylemler: tek çerçeveli plaka (masaüstü); telefonda aşağıdaki kare ikon düğmeleri --- */
+html:not(.short) .bh-globs {
+  gap: 0;
+}
+
+html:not(.short) .bh-globs > .bh-vfade {
+  display: none;
+}
+
+html:not(.short) .bh-gcol {
+  position: relative;
+  height: 126px;
+  min-width: 172px;
+  padding: 4px 0;
+  justify-content: stretch;
+  gap: 0;
+  background: linear-gradient(180deg, #1b130c, #0d0906);
+  border: 1px solid rgba(var(--gold), 0.4);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75);
+}
+
+html:not(.short) .bh-gcol::before,
+html:not(.short) .bh-gcol::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f0dca8;
+}
+
+html:not(.short) .bh-gcol::before {
+  left: -5px;
+  top: -5px;
+}
+
+html:not(.short) .bh-gcol::after {
+  right: -5px;
+  bottom: -5px;
+}
+
+html:not(.short) .bh-gl {
+  flex: 1 1 0;
+  height: auto;
+  padding: 0 14px 0 12px;
+  border-top: 1px solid transparent;
+}
+
+html:not(.short) .bh-gl + .bh-gl {
+  border-top-color: rgba(var(--gold), 0.14);
+}
+
+html:not(.short) .bh-gl::before {
+  display: none;
+}
+
+html:not(.short) .bh-gl:hover,
+html:not(.short) .bh-gl.on {
+  text-shadow: none;
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.3), transparent);
+}
+
+html:not(.short) .bh-gl.off:hover {
+  background: none;
+}
+
+html:not(.short) .bh-gl .bh-ico {
+  width: 24px;
+  height: 24px;
+}
+
+/* --- Valor plakası: mangallar + VALOR yazısı çerçeve içinde (masaüstü) --- */
+html:not(.short) .bh-valor .vl-meter {
+  position: relative;
+  padding: 10px 16px 8px;
+  background: linear-gradient(180deg, #1d140c, #0d0906);
+  border: 1px solid rgba(var(--gold), 0.42);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), inset 0 0 20px rgba(var(--gold), 0.08);
+  transition: box-shadow 0.2s;
+}
+
+html:not(.short) .bh-valor .vl-meter::before,
+html:not(.short) .bh-valor .vl-meter::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid #f0dca8;
+}
+
+html:not(.short) .bh-valor .vl-meter::before {
+  left: -5px;
+  top: -5px;
+}
+
+html:not(.short) .bh-valor .vl-meter::after {
+  right: -5px;
+  bottom: -5px;
+}
+
+html:not(.short) .bh-valor .vl-meter:hover {
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 22px rgba(224, 112, 42, 0.4), inset 0 0 20px rgba(224, 112, 42, 0.12);
+}
+
+html:not(.short) .bh-valor .vl-meter .vl-lbl {
+  font-size: 14px;
+  letter-spacing: 0.24em;
+  color: #f0dca8;
+}
+
+/* --- sağ: koşu boyu etkilerin kare ikonları + Combat log düğmesi --- */
+.bh-buffs {
+  gap: 10px;
+  max-height: 112px;
+}
+
+.bh-buff {
+  width: 52px;
+  height: 52px;
+  border-radius: 0;
+  background: radial-gradient(circle at 50% 42%, #2b1e12, #0d0806 78%);
+  border: 1px solid color-mix(in srgb, var(--c, rgb(var(--gold))) 70%, transparent);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9);
+  transition: transform 0.15s var(--ease), box-shadow 0.15s, border-color 0.15s;
+}
+
+.bh-buff .bh-ico {
+  width: 38px;
+  height: 38px;
+}
+
+.bh-buff:hover {
+  transform: translateY(-2px);
+  border-color: var(--on);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 18px rgba(var(--gold), 0.55);
+}
+
+.bh-links {
+  display: flex;
+}
+
+.bh-plink {
+  flex: 0 0 auto;
+  min-width: 190px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 9px;
+  height: 46px;
+  padding: 0 16px;
+  font: 600 13px var(--cin);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--txt);
+  white-space: nowrap;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid rgba(var(--gold), 0.42);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9);
+  transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+
+.bh-plink:hover,
+.bh-plink.open {
+  color: #ffd2a0;
+  background: rgba(224, 112, 42, 0.18);
+  border-color: var(--ember);
+}
+
+.bh-pl-ico {
+  width: 24px;
+  height: 24px;
+  margin: 0;
+  opacity: 1;
+}
+
+/* =====================================================================================================================================
+   TELEFON (html.short, 844x390 ~ HUD ölçeği 0,36): yazı yalnızca "gerçek piksel" cinsinden (var(--rp) = 1 gerçek px) en az okunur boyuta çıkar;
+   sığmayanlar gizlenir: skill / ulti plakasında ad gizli (ad ipucunda: uzun bas), çipler çerçevesiz, "ULTIMATE" yerine "ULT", karakter
+   bloğunda rol / primary çipleri ve "ALL STATS" yazısı yok (portreye / stat alanına dokunmak yine sayfayı açar). Pasif plakasında ad kalır.
+   ===================================================================================================================================== */
+html.short .bp {
+  width: 146px;
+  padding: 12px 4px 6px;
+  gap: 2px;
+}
+
+html.short .bp-ico {
+  width: 76px;
+  height: 76px;
+}
+
+html.short .bp-key {
+  left: 6px;
+  top: 7px;
+  font-size: calc(9 * var(--rp));
+}
+
+html.short .bp-tag {
+  font-size: calc(7 * var(--rp));
+  letter-spacing: 0.1em;
+}
+
+html.short .bp-tag .full {
+  display: none;
+}
+
+html.short .bp-tag .short {
+  display: inline;
+}
+
+html.short .bp-nm {
+  display: none;
+  min-height: 0;
+  font-size: calc(9 * var(--rp));
+  letter-spacing: 0;
+}
+
+html.short .bp.pas .bp-nm {
+  display: block;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
+  min-height: 0;
 }
 
-html.short .bh-cs .c {
-  grid-area: c;
+html.short .bp-chips {
+  gap: calc(5 * var(--rp));
+  min-height: 0;
 }
 
-html.short .bh-cs > :last-child {
-  grid-area: d;
+html.short .bp-chip {
+  height: auto;
+  padding: 0;
+  gap: 2px;
+  font-size: calc(9 * var(--rp));
+  background: none;
+  border: 0;
 }
 
+html.short .bp-chip b {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bp-chip .bh-ico {
+  width: calc(10 * var(--rp));
+  height: calc(10 * var(--rp));
+}
+
+html.short .bp-chip .w {
+  display: none;
+}
+
+html.short .bp .cdv {
+  font-size: calc(18 * var(--rp));
+}
+
+html.short .bh-pasv {
+  width: 146px;
+}
+
+html.short .bh-pasv .bp {
+  gap: 4px;
+}
+
+/* karakter bloğu: tek satır ad, üç çubuk yan yana (değer üstte), stat karoları tek satır (yalnızca ikon + değer) */
+html.short .bh-actor-info {
+  width: 540px;
+  gap: 8px;
+}
+
+html.short .bh-name .bh-n {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bh-chips,
+html.short .bh-more {
+  display: none;
+}
+
+html.short .bh-abody {
+  grid-template-columns: 1fr;
+  gap: 8px;
+}
+
+html.short .bh-hpmp-row {
+  flex-direction: row;
+  gap: 14px;
+}
+
+html.short .bh-hpmp {
+  flex: 1;
+}
+
+html.short .bh-hpmp .bh-num {
+  font-size: calc(9 * var(--rp));
+  line-height: 1.2;
+  gap: 4px;
+}
+
+html.short .bh-hpmp .bh-num .of {
+  font-size: calc(8 * var(--rp));
+}
+
+html.short .bh-num .bh-ico {
+  width: calc(10 * var(--rp));
+  height: calc(10 * var(--rp));
+}
+
+html.short .bh-hpmp .bh-bar {
+  height: calc(4 * var(--rp));
+}
+
+html.short .bh-main {
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+html.short .bh-st {
+  height: calc(14 * var(--rp));
+  padding: 0 6px;
+  font-size: calc(9 * var(--rp));
+  justify-content: center;
+  gap: 4px;
+}
+
+html.short .bh-st .l {
+  display: none;
+}
+
+html.short .bh-st .bh-ico {
+  width: calc(10 * var(--rp));
+  height: calc(10 * var(--rp));
+}
+
+html.short .bh-pframe {
+  width: 96px;
+  height: 118px;
+}
+
+/* sağ taraf: Combat log en az 44 gerçek px; etki ikonları kare */
+html.short .bh-buff {
+  width: 64px;
+  height: 64px;
+}
+
+html.short .bh-plink {
+  height: calc(34 * var(--rp));
+  min-height: 90px;
+  font-size: calc(9 * var(--rp));
+  letter-spacing: 0.06em;
+}
+
+/* telefon: birim kartı (B · Band + Rows) tek sütun satırlar; üst çubuğun (sıra çubuğu + Menu, ~140 birim) altından alt bandın (910) üstüne kadar; içi kayar */
+html.short .bh-card {
+  top: 150px;
+  width: 760px;
+}
+
+html.short .bh-card-sc {
+  max-height: 740px;
+}
+
+html.short .bh-card .bt {
+  --fs: calc(10 * var(--rp));
+  --fs-s: calc(9 * var(--rp));
+  --bu: 1px;
+}
+
+html.short .bh-card .bt-title {
+  font-size: calc(13 * var(--rp));
+}
+
+html.short .bh-card .bt-big {
+  font-size: calc(14 * var(--rp));
+}
+
+html.short .bh-card .bt-medal.por {
+  width: calc(36 * var(--rp));
+  height: calc(36 * var(--rp));
+}
+
+html.short .bh-cl,
+html.short .bh-sr .k,
+html.short .bh-sr .rd,
+html.short .bh-cs .t {
+  font-size: calc(8 * var(--rp));
+}
+
+html.short .bh-cb-v,
+html.short .bh-sr .n,
+html.short .bh-cs .n,
+html.short .bh-e b,
+html.short .bh-cpas .tx b {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bh-cb-v .of,
+html.short .bh-e em,
+html.short .bh-e b .st {
+  font-size: calc(8 * var(--rp));
+}
+
+html.short .bh-cb-v .bh-ico {
+  width: calc(11 * var(--rp));
+  height: calc(11 * var(--rp));
+}
+
+html.short .bh-cb .bh-bar {
+  height: calc(6 * var(--rp));
+}
+
+html.short .bh-sr {
+  min-height: calc(15 * var(--rp));
+}
+
+html.short .bh-sr .bh-ico {
+  width: calc(13 * var(--rp));
+  height: calc(13 * var(--rp));
+}
+
+html.short .bh-e .d,
+html.short .bh-cpas .tx > span {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bh-e .bh-e-ico {
+  width: calc(14 * var(--rp));
+  height: calc(14 * var(--rp));
+}
+
+html.short .bh-e {
+  grid-template-columns: calc(14 * var(--rp)) minmax(0, 1fr) auto;
+}
+
+html.short .bh-cpas .bh-cpas-ico {
+  width: calc(20 * var(--rp));
+  height: calc(20 * var(--rp));
+}
+
+html.short .bh-cs {
+  grid-template-columns: calc(22 * var(--rp)) minmax(0, 1fr) auto 7em 7em;
+  min-height: calc(26 * var(--rp));
+}
+
+html.short .bh-cs .bh-cs-ico {
+  width: calc(22 * var(--rp));
+  height: calc(22 * var(--rp));
+}
+
+html.short .bh-card .bt-chip {
+  height: auto;
+  padding: 0 3px;
+  font-size: calc(9 * var(--rp));
+}
+
+html.short .bh-card .bt-chip .n {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bh-card .bt-chip img {
+  width: calc(11 * var(--rp));
+  height: calc(11 * var(--rp));
+}
+
+html.short .bh-pv {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .bh-pv b {
+  font-size: calc(9 * var(--rp));
+}
+
+html.short .bh-pv .bh-ico {
+  width: calc(14 * var(--rp));
+  height: calc(14 * var(--rp));
+}

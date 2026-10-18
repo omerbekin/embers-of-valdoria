@@ -2422,7 +2422,19 @@ export class BattleScene extends Phaser.Scene {
     const effects: UnitCard['effects'] = [];
     for (const st of c.statuses) {
       const sd = content.statuses[st.kind];
-      effects.push({ name: sd?.name ?? st.kind, color: sd?.color ?? colors.targetHighlight, turns: `${st.turns} turn${st.turns === 1 ? '' : 's'}`, text: previewStatusText(st.kind, content.statuses).replace(/^[^ ]+ /, '') || (sd as { text?: string } | undefined)?.text || '' });
+      // rozet ikonu: birimin üstündeki rozetle aynı (statusBadge; sınıfa özgü durum sahibinin çizimi)
+      const art = statusBadge(st.kind, sd?.icon ?? 'roar');
+      const iconUrl = this.texUrl(ensureIcon(this, art.name, sd?.color ?? colors.targetHighlight, false, art.owner));
+      const maxStacks = (sd as { maxStacks?: number } | undefined)?.maxStacks ?? 0;
+      effects.push({
+        name: sd?.name ?? st.kind,
+        color: sd?.color ?? colors.targetHighlight,
+        turns: `${st.turns} turn${st.turns === 1 ? '' : 's'}`,
+        text: previewStatusText(st.kind, content.statuses).replace(/^[^ ]+ /, '') || (sd as { text?: string } | undefined)?.text || '',
+        ...(iconUrl ? { iconUrl } : {}),
+        ...(sd?.type ? { debuff: sd.type === 'debuff' } : {}),
+        ...(maxStacks > 1 && st.stacks ? { stacks: st.stacks } : {}),
+      });
     }
     if (c.shield > 0) effects.push({ name: 'Shield', color: colors.shield, turns: String(c.shield), text: 'Absorbs damage before HP' });
     if (c.magicShield > 0) effects.push({ name: 'Magic shield', color: colors.magicShield, turns: String(c.magicShield), text: 'Absorbs magic damage before HP' });
@@ -2482,10 +2494,16 @@ export class BattleScene extends Phaser.Scene {
       hp: { value: c.hp, max: c.maxHp },
       mp: c.maxMp > 0 ? { value: c.mp, max: c.maxMp } : null,
       rage: c.maxRage !== undefined ? { value: Math.round(this.rageShown.get(uid) ?? c.rage ?? 0), max: c.maxRage } : null,
+      hpIcon: this.texUrl(ensureIcon(this, statIconName('hp'), STAT_COLOR.hp, false)),
+      mpIcon: this.texUrl(ensureIcon(this, statIconName('mp'), STAT_COLOR.mp, false)),
+      rageIcon: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)),
+      role: def?.role ?? (c.summoned ? 'Summon' : ''),
+      primary: c.stats.primary ? { name: primaryName, iconUrl: icon(c.stats.primary) } : null,
+      ...(c.summoned && c.level === undefined ? {} : { level: c.level ?? 1 }),
       attrs: MAIN_STATS.map((k) => this.hudStat(k, c, false)),
       grid,
       effects,
-      passive: c.passive ? { name: c.passive.name, text: describePassive(c.passive, c.stats, f) } : null,
+      passive: c.passive ? { name: c.passive.name, text: describePassive(c.passive, c.stats, f), iconUrl: this.texUrl(ensureIcon(this, passiveIconName(c.passive, uiIconName('passive')), c.color, false, ownerOfUnit(c.defId))) } : null,
       preview,
       skills,
     };
@@ -3991,6 +4009,7 @@ export class BattleScene extends Phaser.Scene {
         enabled: this.playerCanAct && this.battle.canUse(actor.uid, skillId).ok,
         selected: this.selected?.actor === actor.uid && this.selected.skill === skill.id && this.playerCanAct,
         ult: idx === 3,
+        ...this.skillLack(actor, skill),
         tip: this.skillTip(actor, skill),
       });
     });
@@ -4036,18 +4055,29 @@ export class BattleScene extends Phaser.Scene {
     return { actor: hudActor, passive, skills, globals, turnLabel: this.turnLabel(actor) };
   }
 
+  /** Yetersiz kaynak (plaka bedel çipini kırmızı gösterir): bekleme sürerken de ölçülür; yalnızca MP / Rage / HP bedeli. */
+  private skillLack(actor: Combatant, skill: SkillDef): { lack?: 'mp' | 'rage' | 'hp' } {
+    const amount = skillCostAmount(skill.cost, actor);
+    if (amount <= 0) return {};
+    const b = this.battle;
+    if (skill.cost.resource === 'mp') return !b.freeMp && actor.mp < amount ? { lack: 'mp' } : {};
+    if (skill.cost.resource === 'rage') return !b.freeRage && (actor.rage ?? 0) < amount ? { lack: 'rage' } : {};
+    if (skill.cost.resource === 'hp') return actor.hp <= amount ? { lack: 'hp' } : {};
+    return {};
+  }
+
   /** Skill düğmesinin altındaki bedel / cooldown çipleri (ya da cooldown sürerken kalan bekleme). */
   private skillCostChips(actor: Combatant, skill: SkillDef): HudSkill['cost'] {
     const turns = this.battle.mode === 'turns';
     const out: HudSkill['cost'] = [];
     const hourglass = this.texUrl(ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false));
     const costNow = skillCostAmount(skill.cost, actor);
-    if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR });
+    if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage' });
     else if (costNow > 0) {
       const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
-      out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow) });
+      out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow), kind });
     }
-    if (turns && (skill.cooldown ?? 0) > 0) out.push({ iconUrl: hourglass, text: String(skill.cooldown), color: colors.muted });
+    if (turns && (skill.cooldown ?? 0) > 0) out.push({ iconUrl: hourglass, text: String(skill.cooldown), color: colors.muted, kind: 'cd' });
     return out;
   }
 

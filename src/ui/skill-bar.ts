@@ -58,3 +58,63 @@ export function passiveCellHtml(name: string, iconUrl: string, tipInner: string,
           <div class="bh-sktip bh-panel bh-corners">${tipInner}</div>
         </div>`;
 }
+
+// ---------------------------------------------------------------------------------------------------------------------
+// SAVAŞ ALT ÇUBUĞU PLAKALARI (Ömer 2026-10-18, taslak public/mockups/battle-hud.html "A · Plates"): savaş HUD'ının skill / pasif plakası.
+// Gear / Character sayfası bunu KULLANMAZ (yukarıdaki skillCellHtml / passiveCellHtml aynen kalır). Davranış kancaları aynı: `data-skill`,
+// `.tip` (dokunmatik uzun basma), içteki `.bh-sktip` (üstte açılan A-Band ipucu).
+// ---------------------------------------------------------------------------------------------------------------------
+
+/** Bedel çipinin türü (plaka yetersiz kaynağı bu türdeki çipte kırmızı gösterir). */
+export type SkillChipKind = 'mp' | 'rage' | 'hp' | 'cd';
+
+export interface SkillPlateChip extends SkillCostChip {
+  kind?: SkillChipKind;
+}
+
+export interface SkillPlateView {
+  id: string;
+  name: string;
+  iconUrl: string;
+  key?: number;
+  cost: SkillPlateChip[];
+  wait: number;
+  enabled: boolean;
+  selected: boolean;
+  ult: boolean;
+  /** Yetersiz kaynak: bu türdeki bedel çipi kırmızı olur ("Not enough MP / Rage / HP"). */
+  lack?: 'mp' | 'rage' | 'hp';
+}
+
+/** "RAGE 30" -> sözcük + sayı (telefonda sözcük gizlenir, ikon yeter); salt sayı -> yalnızca sayı. */
+function plateChip(c: SkillPlateChip, lack: SkillPlateView['lack']): string {
+  const m = /^(\D*?)\s*(\d+)$/.exec(c.text.trim());
+  const word = m && m[1] ? `<span class="w">${escHtml(m[1])}</span>` : '';
+  const num = m ? `<b>${escHtml(m[2]!)}</b>` : `<b>${escHtml(c.text)}</b>`;
+  const kind = c.kind ?? (/^RAGE/i.test(c.text) ? 'rage' : '');
+  const cls = [kind === 'rage' ? 'rage' : '', kind === 'cd' ? 'cd' : '', lack && kind === lack ? 'low' : ''].filter(Boolean).join(' ');
+  return `<span class="bp-chip ${cls}">${img(c.iconUrl ?? '', 'bh-ico')}${word}${num}</span>`;
+}
+
+/** Skill plakası: köşe elmaslı ikon, numara, ad, bedel / bekleme çipleri; üstte açılan ipucu `tipInner`. */
+export function skillPlateHtml(s: SkillPlateView, tipInner: string): string {
+  const chips = s.cost.length ? s.cost.map((c) => plateChip(c, s.lack)).join('') : '<span class="bp-chip free">Free</span>';
+  const tag = s.ult ? '<span class="bp-tag"><span class="full">Ultimate</span><span class="short">Ult</span></span>' : '';
+  return `<div class="bp ${s.ult ? 'ult' : ''} ${s.wait > 0 ? 'cdn' : ''} ${s.selected ? 'sel' : ''} ${s.enabled ? '' : 'off'}" data-skill="${escHtml(s.id)}">
+          ${tag}${s.key !== undefined ? `<span class="bp-key">${s.key}</span>` : ''}
+          <div class="bp-ico">${img(s.iconUrl)}${s.wait > 0 ? `<span class="cdv">${s.wait}</span>` : ''}</div>
+          <span class="bp-nm">${escHtml(s.name)}</span>
+          <div class="bp-chips">${chips}</div>
+          <div class="bh-sktip bh-panel bh-corners">${tipInner}</div>
+        </div>`;
+}
+
+/** Pasif plakası (4 skill'in solunda): "Passive" şeridi, ikon, ad; `attrs` = ipucu kaydı, `extra` = köşe rozeti (Lucky Escape). */
+export function passivePlateHtml(name: string, iconUrl: string, attrs = '', extra = ''): string {
+  return `<div class="bp pas" ${attrs}>
+          <span class="bp-tag"><span class="full">Passive</span><span class="short">Pas</span></span>
+          <div class="bp-ico">${img(iconUrl)}</div>
+          <span class="bp-nm">${escHtml(name)}</span>
+          <div class="bp-chips"></div>${extra}
+        </div>`;
+}

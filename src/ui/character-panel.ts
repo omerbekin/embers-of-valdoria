@@ -99,53 +99,72 @@ export interface LevelPanel {
 const ATTR_IDS: Attribute[] = ['str', 'dex', 'int', 'luck'];
 const pendingCount = (p: StatAlloc): number => ATTR_IDS.reduce((t, k) => t + (p[k] ?? 0), 0);
 
+/** Sheet'te tam stat adları (Ömer 2026-10-18, stats-panels A · Band): kısaltma yok; ipuçları `data-stat` kimliğiyle aynı kalır. */
+const FULL_NAME: Record<string, string> = {
+  hp: 'HP', mp: 'MP', str: 'Strength', dex: 'Dexterity', int: 'Intelligence', luck: 'Luck', damage: 'Damage', crit: 'Crit chance', critMult: 'Crit damage',
+  accuracy: 'Accuracy', spd: 'Speed', armor: 'Armor', magicArmor: 'Magic armor', evasion: 'Evasion', hpRegen: 'HP regen', mpRegen: 'MP regen', block: 'Block',
+};
+
 /**
- * Level bloğu (Ömer 2026-10-17, levels.md): "Level 5" + XP çubuğu; puan varsa sürüklenebilir puan taşı + Reset / Confirm. Puan taşı bir stat
- * satırına sürüklenince (fare + dokunma) ya da satırdaki + ile o stata bir puan gider (bekleyen; Confirm yazar). Kural (temel stat diğer üçünün
- * toplamını aşamaz) + düğmesini kapatır ve satırı bırakma hedefi yapmaz.
+ * Level bloğu (Ömer 2026-10-18, Sheet A · Band): "LEVEL 3" altın başlık + XP değeri sağda, ince altın çerçeveli XP çubuğu; altında yeşil
+ * "N skill points saved" çipi ve (puan ekranında) elmas madalyonlu stat puanı satırı + Reset / Confirm. Madalyon sürüklenebilir (fare + dokunma):
+ * bir stat satırına bırakılınca ya da satırdaki + ile o stata bir puan gider (bekleyen; Confirm yazar). Kural (temel stat diğer üçünün toplamını
+ * aşamaz) + düğmesini kapatır ve satırı bırakma hedefi yapmaz. Puan satırı puan yokken de görünmez olarak yer tutar (altı kaymaz).
  */
-function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null): HTMLElement {
-  const box = el('div', 'gr-lvl');
+function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: string | null): HTMLElement[] {
   const level = hero.level ?? 1;
   const need = xpToNext(level);
   const xp = hero.xp ?? 0;
-  const head = el('div', 'gr-lvl-head');
-  head.append(el('span', 'gr-lvl-n', `Level ${level}`), el('span', 'gr-lvl-xp', need > 0 ? `${xp} / ${need} XP` : 'Max level'));
-  const bar = el('div', 'gr-xpbar');
+  const head = el('div', 'sh-head');
+  const lt = el('span', 'sh-lt', 'Level ');
+  lt.append(el('b', '', String(level)));
+  const xpv = el('span', 'sh-xpv', need > 0 ? `${xp} ` : 'Max level');
+  if (need > 0) xpv.append(el('s', '', `/ ${need} XP`));
+  head.append(lt, xpv);
+  const bar = el('div', 'sh-bar sh-xp');
   const fill = el('i');
   fill.style.width = `${need > 0 ? Math.min(100, Math.round((xp / need) * 100)) : 100}%`;
   bar.append(fill);
-  box.append(head, bar);
+  const out: HTMLElement[] = [head, bar];
   const pend = lv ? pendingCount(lv.pending) : 0;
   const free = (hero.statPoints ?? 0) - pend;
-  // Puan ekranında satır puan yokken de (Confirm sonrası) görünmez olarak yer tutar: altındaki statlar kaymaz (Ömer 2026-10-18)
-  if (lv) {
-    const idle = free <= 0 && pend <= 0;
-    const row = el('div', `gr-pts${idle ? ' gr-pts-idle' : ''}`);
-    if (idle) row.setAttribute('aria-hidden', 'true');
-    const chip = el('span', `gr-pts-chip${free > 0 ? '' : ' empty'}`, String(free));
-    chip.title = 'Drag onto a stat, or tap + next to it';
-    if (free > 0) chip.dataset['ptdrag'] = '1';
-    row.append(chip, el('span', 'gr-pts-text', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
-    const acts = el('span', 'gr-pts-acts');
-    if (pend > 0) {
-      const reset = el('button', 'gr-btn sm', 'Reset');
-      reset.type = 'button';
-      reset.addEventListener('click', lv.onReset);
-      const ok = el('button', 'gr-btn sm primary', 'Confirm');
-      ok.type = 'button';
-      ok.addEventListener('click', lv.onConfirm);
-      acts.append(reset, ok);
+  const sp = hero.skillPoints ?? 0;
+  if (sp > 0 || lv) {
+    const under = el('div', 'sh-under');
+    if (sp > 0) {
+      const chip = el('span', 'sh-chip');
+      chip.append(el('b', '', String(sp)), document.createTextNode(` skill point${sp === 1 ? '' : 's'} saved for the skill trees`));
+      under.append(chip);
     }
-    row.append(acts);
-    box.append(row);
-    if (pend > 0 && primaryLost) box.append(el('div', 'gr-pts-warn', primaryLost));
+    if (lv) {
+      const idle = free <= 0 && pend <= 0;
+      const row = el('span', `sh-ptr${idle ? ' idle' : ''}`);
+      if (idle) row.setAttribute('aria-hidden', 'true');
+      const medal = el('span', `sh-medal${free > 0 ? '' : ' empty'}`);
+      medal.append(el('span', '', String(free)));
+      medal.title = 'Drag onto a stat, or tap + next to it';
+      if (free > 0) medal.dataset['ptdrag'] = '1';
+      row.append(medal, el('span', 'sh-tx', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
+      if (pend > 0) {
+        const acts = el('span', 'sh-acts');
+        const reset = el('button', 'sh-btn', 'Reset');
+        reset.type = 'button';
+        reset.addEventListener('click', lv.onReset);
+        const ok = el('button', 'sh-btn primary', 'Confirm');
+        ok.type = 'button';
+        ok.addEventListener('click', lv.onConfirm);
+        acts.append(reset, ok);
+        row.append(acts);
+      }
+      under.append(row);
+    }
+    out.push(under);
   }
-  if ((hero.skillPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill', `${hero.skillPoints} skill point${hero.skillPoints === 1 ? '' : 's'} saved for the skill trees`));
-  return box;
+  if (lv && pend > 0 && primaryLost) out.push(el('div', 'sh-warn', primaryLost));
+  return out;
 }
 
-/** Puan taşının sürüklenmesi (fare + dokunma): bırakma hedefi `.gr-stat[data-attr].can-add`; hayalet imleci izler. */
+/** Puan taşının sürüklenmesi (fare + dokunma): bırakma hedefi `.sh-row[data-attr].can-add`; hayalet imleci izler. */
 function attachPointDrag(root: HTMLElement, onDrop: (k: Attribute) => void): void {
   root.addEventListener('pointerdown', (e) => {
     const chip = (e.target as HTMLElement).closest<HTMLElement>('[data-ptdrag]');
@@ -154,7 +173,7 @@ function attachPointDrag(root: HTMLElement, onDrop: (k: Attribute) => void): voi
     e.stopPropagation();
     const ghost = el('div', 'gr-pts-ghost', '+1');
     document.body.append(ghost);
-    const targets = [...root.querySelectorAll<HTMLElement>('.gr-stat.can-add')];
+    const targets = [...root.querySelectorAll<HTMLElement>('.sh-row.can-add')];
     targets.forEach((x) => x.classList.add('drop-ok'));
     const at = (x: number, y: number): HTMLElement | undefined =>
       targets.find((t) => {
@@ -384,41 +403,61 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
 }
 
 /**
- * Stat grupları (savaş alt barıyla aynı düzen, src/game/stat-columns.ts): can + mana üstte; Ana | Atak | Defans sütunları.
- * Satır: ikon · ad · değer · fark (+1) · [+] [−] (Ömer 2026-10-18: fark değerin yanında, + ve − sağda, + solda sabit; + hiçbir durumda kaymaz).
- * `vitals` verilirse HP / MP satırı "93 / 150" + altında savaş HUD'ının çubuğu (can oranı kahramanın şu anki canı; mana dışarıda hep dolu).
+ * Stat grupları (Ömer 2026-10-18, Sheet A · Band): can + mana çubukları (ince altın çerçeve, değer sağda); altın elmas ayırıcı; MAIN | ATTACK | DEFENSE
+ * sütunları (savaş alt barıyla aynı sıra, src/game/stat-columns.ts). Satır: ikon · tam ad · altın rakam · fark (+1) · [+] [−]; primary stat turuncu.
+ * `vitals` verilirse HP / MP değeri "93 / 150" (can oranı kahramanın şu anki canı; mana hep dolu).
  */
-function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number }): HTMLElement {
+function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number }): HTMLElement[] {
   const { hero, pending, allocNow, freePts, diff } = c;
-  const sg = el('div', 'gr-sgroups');
+  const primary = c.stats?.primary;
   const rowsById = new Map<string, HTMLElement>();
   for (const p of heroPanel(hero)) {
     // Blok satırı yalnızca kalkanı olan (ya da kalkan takmayı deneyen) kahramanda (Ömer 2026-10-18)
     if (p.id === 'block' && !p.value && !diff.get(p.id)) continue;
-    const row = el('div', 'gr-stat');
-    row.dataset['stat'] = p.id;
+    const name = FULL_NAME[p.id] ?? p.label;
     const dv = diff.get(p.id);
-    const ico = el('img', 'gr-sico');
+    const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
+    const dEl = el('span', `sh-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText);
+    const ico = el('img', 'sh-ico');
     ico.src = statIconUrl(p.id);
     ico.alt = '';
     ico.draggable = false;
-    const vital = !!vitals && VITAL_STATS.includes(p.id);
-    const ratio = vitals && p.id === 'hp' ? Math.max(0, Math.min(1, vitals.hpRatio)) : 1;
-    row.append(ico, el('span', 'gr-stat-k', p.label), el('span', `gr-stat-v${vital ? ' gr-stat-cur' : ''}`, vital ? `${Math.round(p.value * ratio)} / ${fmtPanel(p)}` : fmtPanel(p)));
+    if (VITAL_STATS.includes(p.id)) {
+      const ratio = p.id === 'hp' ? Math.max(0, Math.min(1, vitals?.hpRatio ?? 1)) : 1;
+      const box = el('div', `sh-bh ${p.id}`);
+      box.dataset['stat'] = p.id;
+      const top = el('div', 'sh-bh-top');
+      const val = el('span', 'sh-bv', `${Math.round(p.value * ratio)} `);
+      val.append(el('s', '', `/ ${fmtPanel(p)}`));
+      top.append(ico, el('span', 'sh-bn', name), val, dEl);
+      if (dv) {
+        box.dataset['delta'] = dText;
+        box.dataset['dir'] = dv > 0 ? 'up' : 'down';
+      }
+      const bar = el('div', 'sh-bar');
+      const fill = el('i', p.id === 'hp' ? 'fhp' : 'fmp');
+      fill.style.width = `${Math.round(ratio * 100)}%`;
+      bar.append(fill);
+      box.append(top, bar);
+      rowsById.set(p.id, box);
+      continue;
+    }
+    const row = el('div', `sh-row${p.id === primary ? (c.stats?.primaryActive ? ' p' : ' p off') : ''}`);
+    row.dataset['stat'] = p.id;
+    row.append(ico, el('span', 'sh-k', name), el('span', 'sh-n', fmtPanel(p)));
     // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
     if (p.capped) {
       row.classList.add('capped');
-      const cap = el('span', 'gr-stat-cap', 'max');
+      const cap = el('span', 'sh-cap', 'max');
       cap.title = 'Capped: extra from items is wasted';
       row.append(cap);
     }
-    const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
-    row.append(el('span', `gr-stat-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText));
+    row.append(dEl);
     if (dv) {
       row.dataset['delta'] = dText;
       row.dataset['dir'] = dv > 0 ? 'up' : 'down';
     }
-    // Temel stat satırı: − / + (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
+    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
     // (kullanılamayan düğme görünmez ama yerinde durur): +, −, Reset, Confirm satırları kaydırmaz (Ömer 2026-10-18)
     const attr = ATTR_IDS.find((k) => k === p.id);
     if (attr && v.level) {
@@ -427,27 +466,27 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       if (active) row.dataset['attr'] = attr;
       const can = freePts > 0 && canAddPoint(hero.class, allocNow, attr);
       if (can) row.classList.add('can-add');
-      const pm = el('span', 'gr-pm');
+      const pm = el('span', 'sh-pm');
       const hide = (b: HTMLButtonElement): void => {
         b.disabled = true;
         b.tabIndex = -1;
-        b.classList.add('gr-pm-off');
+        b.classList.add('off');
         b.setAttribute('aria-hidden', 'true');
       };
-      const sub = el('button', 'gr-pm-b', '−');
+      const sub = el('button', 'sh-pmb', '−');
       sub.type = 'button';
       if ((pending[attr] ?? 0) > 0) {
-        sub.title = `Take back a point from ${p.label}`;
+        sub.title = `Take back a point from ${name}`;
         sub.addEventListener('click', (e) => {
           e.stopPropagation();
           lv.onSub(attr);
         });
       } else hide(sub);
-      const add = el('button', 'gr-pm-b', '+');
+      const add = el('button', 'sh-pmb', '+');
       add.type = 'button';
       if (freePts > 0) {
         add.disabled = !can;
-        add.title = can ? `Add a point to ${p.label}` : 'A base stat can never exceed the sum of the other three';
+        add.title = can ? `Add a point to ${name}` : 'A base stat can never exceed the sum of the other three';
         add.addEventListener('click', (e) => {
           e.stopPropagation();
           if (can) lv.onAdd(attr);
@@ -456,32 +495,33 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       pm.append(add, sub); // + solda ve sabit, − sağında (Ömer 2026-10-18)
       row.append(pm);
     }
-    if (vital) {
-      const wrap = el('div', 'gr-vital');
-      const bar = el('div', `bh-bar ${p.id} gr-vbar`);
-      const fill = el('i');
-      fill.style.width = `${Math.round(ratio * 100)}%`;
-      bar.append(fill);
-      wrap.append(row, bar);
-      rowsById.set(p.id, wrap);
-    } else rowsById.set(p.id, row);
+    rowsById.set(p.id, row);
   }
-  const addGroup = (cls: string, ids: string[]): void => {
-    const g = el('div', `gr-sgrp ${cls}`);
+  const out: HTMLElement[] = [];
+  const vit = el('div', 'sh-vit');
+  for (const id of VITAL_STATS) {
+    const r = rowsById.get(id);
+    if (r) vit.append(r);
+  }
+  out.push(vit, el('div', 'sh-dv'));
+  const cols = el('div', 'sh-cols');
+  PANEL_GROUPS.forEach((ids, i) => {
+    const g = el('div', `sh-col ${['base', 'attack', 'defense'][i] ?? ''}`);
+    g.append(el('div', 'sh-sl', ['Main', 'Attack', 'Defense'][i] ?? ''));
     for (const id of ids) {
       const r = rowsById.get(id);
       if (r) g.append(r);
     }
-    sg.append(g);
-  };
-  addGroup('vitals', VITAL_STATS);
-  PANEL_GROUPS.forEach((ids, i) => addGroup(['base', 'attack', 'defense'][i] ?? '', ids));
-  return sg;
+    cols.append(g);
+  });
+  out.push(cols);
+  return out;
 }
 
-/** Level bloğu + "Stats" + stat grupları + tavan notu; puan taşı sürüklemesi `host` üstünde. */
+/** Sheet: level bloğu + ayırıcı + çubuklar + MAIN / ATTACK / DEFENSE + tavan notu; puan taşı sürüklemesi `host` üstünde. Tek kap (`.sh`). */
 function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: { hpRatio: number }): HTMLElement[] {
-  const out: HTMLElement[] = [levelBlock(c.hero, v.level, c.primaryLost), el('div', 'gr-sec', 'Stats'), statGroups(c, v, vitals)];
+  const sh = el('div', 'sh');
+  sh.append(...levelBlock(c.hero, v.level, c.primaryLost), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
   if (v.level) {
     const lv = v.level;
     const h = c.hero;
@@ -490,8 +530,8 @@ function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: {
     });
   }
   const extraCaps = cappedExtras(c.hero);
-  if (extraCaps.length) out.push(el('div', 'gr-cap-note', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
-  return out;
+  if (extraCaps.length) sh.append(el('div', 'sh-capnote', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
+  return [sh];
 }
 
 /** Skill satırı (savaş HUD'ının skill çubuğuyla aynı bileşen; pasif ilk sırada). */
