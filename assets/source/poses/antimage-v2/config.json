@@ -1,41 +1,364 @@
 {
   "_not": "tools/make-poses-v2.mjs --class=antimage: v3 (kadin, hancer firlatan) govde sayfalari, 2026-10-18. EL KURALI: main = SAG el (arkadaki / resimde soldaki kol), off = SOL el. Eller kapali yumruk (hancer tutar). spin1c (one-handed satir 2 sutun 4) kaynakta isaret poz (yanlis), Anti-Mage skilleri spin kullanmaz. Eski v2 kaynaklari: antimage-v2-old/.",
   "holes": true,
+  "noMirror": [
+    "idle1",
+    "step1",
+    "slash1",
+    "overhead1",
+    "thrust1",
+    "spin1a",
+    "spin1b",
+    "spin1c",
+    "guard1",
+    "raise",
+    "channel",
+    "point",
+    "idle2",
+    "step2",
+    "slash2",
+    "overhead2",
+    "thrust2",
+    "spin2a",
+    "spin2b",
+    "spin2c",
+    "guard2",
+    "throw",
+    "hit",
+    "kneel"
+  ],
   "seeds": {
-    "idle1": { "main": [110, 190], "off": [232, 142] },
-    "step1": { "main": [450, 165], "off": [632, 177] },
-    "slash1": { "main": [808, 118], "off": [1010, 192] },
-    "overhead1": { "main": [1262, 20], "off": [1322, 155] },
-    "thrust1": { "main": [135, 490], "off": [315, 463] },
-    "spin1a": { "main": [462, 458], "off": [638, 535] },
-    "spin1b": { "main": [765, 482], "off": [1028, 482] },
-    "spin1c": { "main": [1190, 488], "off": [1390, 458] },
-    "guard1": { "main": [190, 797], "off": [243, 822] },
-    "raise": { "main": [508, 695], "off": [590, 822] },
-    "channel": { "main": [925, 815], "off": [1003, 780] },
-    "point": { "main": [1190, 812], "off": [1400, 787] },
-    "idle2": { "main": [180, 185], "off": [185, 180] },
-    "step2": { "main": [548, 75], "off": [552, 80] },
-    "slash2": { "main": [1098, 157], "off": [1102, 157] },
-    "overhead2": { "main": [1360, 25], "off": [1365, 30] },
-    "thrust2": { "main": [340, 445], "off": [345, 445] },
-    "spin2a": { "main": [520, 430], "off": [525, 432] },
-    "spin2b": { "main": [1060, 432], "off": [1062, 432] },
-    "spin2c": { "main": [1450, 455], "off": [1452, 455] },
-    "guard2": { "main": [240, 765], "off": [244, 768] },
-    "throw": { "main": [498, 705], "off": [720, 725] },
-    "hit": { "main": [850, 735], "off": [985, 712] },
-    "kneel": { "main": [1405, 880], "off": [1405, 880] }
+    "idle1": {
+      "main": [
+        110,
+        190
+      ],
+      "off": [
+        232,
+        142
+      ]
+    },
+    "step1": {
+      "main": [
+        450,
+        165
+      ],
+      "off": [
+        632,
+        177
+      ]
+    },
+    "slash1": {
+      "main": [
+        808,
+        118
+      ],
+      "off": [
+        1010,
+        192
+      ]
+    },
+    "overhead1": {
+      "main": [
+        1262,
+        20
+      ],
+      "off": [
+        1322,
+        155
+      ]
+    },
+    "thrust1": {
+      "main": [
+        135,
+        490
+      ],
+      "off": [
+        315,
+        463
+      ]
+    },
+    "spin1a": {
+      "main": [
+        462,
+        458
+      ],
+      "off": [
+        638,
+        535
+      ]
+    },
+    "spin1b": {
+      "main": [
+        765,
+        482
+      ],
+      "off": [
+        1028,
+        482
+      ]
+    },
+    "spin1c": {
+      "main": [
+        1190,
+        488
+      ],
+      "off": [
+        1390,
+        458
+      ]
+    },
+    "guard1": {
+      "main": [
+        190,
+        797
+      ],
+      "off": [
+        243,
+        822
+      ]
+    },
+    "raise": {
+      "main": [
+        508,
+        695
+      ],
+      "off": [
+        590,
+        822
+      ]
+    },
+    "channel": {
+      "main": [
+        925,
+        815
+      ],
+      "off": [
+        1003,
+        780
+      ]
+    },
+    "point": {
+      "main": [
+        1190,
+        812
+      ],
+      "off": [
+        1400,
+        787
+      ]
+    },
+    "idle2": {
+      "main": [
+        180,
+        185
+      ],
+      "off": [
+        185,
+        180
+      ]
+    },
+    "step2": {
+      "main": [
+        548,
+        75
+      ],
+      "off": [
+        552,
+        80
+      ]
+    },
+    "slash2": {
+      "main": [
+        1098,
+        157
+      ],
+      "off": [
+        1102,
+        157
+      ]
+    },
+    "overhead2": {
+      "main": [
+        1360,
+        25
+      ],
+      "off": [
+        1365,
+        30
+      ]
+    },
+    "thrust2": {
+      "main": [
+        340,
+        445
+      ],
+      "off": [
+        345,
+        445
+      ]
+    },
+    "spin2a": {
+      "main": [
+        520,
+        430
+      ],
+      "off": [
+        525,
+        432
+      ]
+    },
+    "spin2b": {
+      "main": [
+        1060,
+        432
+      ],
+      "off": [
+        1062,
+        432
+      ]
+    },
+    "spin2c": {
+      "main": [
+        1450,
+        455
+      ],
+      "off": [
+        1452,
+        455
+      ]
+    },
+    "guard2": {
+      "main": [
+        240,
+        765
+      ],
+      "off": [
+        244,
+        768
+      ]
+    },
+    "throw": {
+      "main": [
+        498,
+        705
+      ],
+      "off": [
+        720,
+        725
+      ]
+    },
+    "hit": {
+      "main": [
+        850,
+        735
+      ],
+      "off": [
+        985,
+        712
+      ]
+    },
+    "kneel": {
+      "main": [
+        1405,
+        880
+      ],
+      "off": [
+        1405,
+        880
+      ]
+    }
   },
   "narrowSeeds": {
-    "idle1": { "main": [232, 185], "off": [343, 120] },
-    "idle2": { "main": [768, 157], "off": [775, 152] },
-    "guard1": { "main": [1135, 170], "off": [1250, 95] },
-    "guard2": { "main": [343, 422], "off": [350, 418] },
-    "raise": { "main": [715, 350], "off": [790, 470] },
-    "channel": { "main": [1285, 440], "off": [1322, 437] },
-    "point": { "main": [222, 830], "off": [445, 737] },
-    "throw": { "main": [717, 797], "off": [905, 757] },
-    "hit": { "main": [1150, 735], "off": [1283, 775] }
+    "idle1": {
+      "main": [
+        232,
+        185
+      ],
+      "off": [
+        343,
+        120
+      ]
+    },
+    "idle2": {
+      "main": [
+        768,
+        157
+      ],
+      "off": [
+        775,
+        152
+      ]
+    },
+    "guard1": {
+      "main": [
+        1135,
+        170
+      ],
+      "off": [
+        1250,
+        95
+      ]
+    },
+    "guard2": {
+      "main": [
+        343,
+        422
+      ],
+      "off": [
+        350,
+        418
+      ]
+    },
+    "raise": {
+      "main": [
+        715,
+        350
+      ],
+      "off": [
+        790,
+        470
+      ]
+    },
+    "channel": {
+      "main": [
+        1285,
+        440
+      ],
+      "off": [
+        1322,
+        437
+      ]
+    },
+    "point": {
+      "main": [
+        222,
+        830
+      ],
+      "off": [
+        445,
+        737
+      ]
+    },
+    "throw": {
+      "main": [
+        717,
+        797
+      ],
+      "off": [
+        905,
+        757
+      ]
+    },
+    "hit": {
+      "main": [
+        1198,
+        762
+      ],
+      "off": [
+        1283,
+        775
+      ]
+    }
   }
 }
