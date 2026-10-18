@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Battle HUD Mockups</title>
+<!-- SAVAS ALT HUD taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 (masaustu) | #u=0.67 | #u=0.44 (telefon yatay 844x390 olcegi) ; &clean = serit gizli. -->
+<link rel="stylesheet" href="battle-hud/battle-hud.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Battle HUD (alt çubuk)</h1>
+Ömer: "buraya da bir şey yapalım. containerların yerini değiştirme."
+<h3>Teşhis</h3>
+<ol>
+<li><b>Skill ikonları küçük kutuda, yan elmaslar yatay yer yiyor.</b> 78px kutu, solunda ve sağında ikişer elmas; boyalı ikonun detayı kutunun siyahında kayboluyor. Seçili durum yalnızca ince turuncu çerçeve.</li>
+<li><b>Pasif yabancı.</b> Küçük yuvarlak ve kutusuz; skill'lerle aynı aileden görünmüyor, "PASSIVE" yazısı soluk ve ikondan uzak.</li>
+<li><b>Bilgi aynı ağırlıkta.</b> Ad, MP, bekleme ve Rage tek satırda düz yazı; "Free" italik (kural dışı); ulti "Headsman's B…" diye kesiliyor, beklemedeki ulti yalnızca soluk bir "1".</li>
+<li><b>Karakter bloğu düz.</b> Alt başlık italik; barlar ince, rakam barın üstünde dağınık; STR/DEX/INT/LCK düz yazı, "ALL STATS" soluk ve düğme gibi görünmüyor.</li>
+<li><b>REST / SKIP / MOVE / REVIVE düz metin.</b> Tıklanır olduğu belli değil, Revive kapalıyken de ayırt edilmiyor. Sağ taraf (Valor mangalları, iki yuvarlak ikon, Combat log) yan yana dağınık ve ikonların ne olduğu belli değil.</li>
+</ol>
+<h3>Kural</h3>
+<ul><li>Portre bloğu, pasif + skill bloğu ve REST/SKIP/MOVE/REVIVE bloğunun yeri ve sırası aynı. Yalnızca REVIVE'ın sağı (Valor, ikonlar, Combat log) yeniden düzenlendi. Bilgi aynı: ek yazı/mekanik yok.</li>
+<li>Hover (üstüne gelince), seçili (tıklayın), beklemede ve yetersiz kaynak durumları her varyantın altında ayrıca gösterildi. Revive soluk = Valor yetmiyor. Yuvarlak iki ikon: kuru kafa (Lucky Escape) ve parşömen (etkin efekt; oyundaki ekran görüntüsünden bu kadarı anlaşılıyor, adını ipucu olarak yazdım).</li></ul>
+<h3>Ölçek</h3>
+<ul><li>Alttaki şeritten seç: <b>1920</b>, <b>1280</b>, <b>844x390</b> (ölçek 0.44; yazılar okunabilsin diye alt sınırlı, telefonda gerçek oyunda ayrıca kısa-ekran düzeni gerekir).</li></ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Battle HUD &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.44">844x390</button></div>
+<script src="battle-hud/app.js"></script>
+</body>
+</html>
