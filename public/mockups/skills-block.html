@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skills Block Mockups</title>
+<!-- SKILLS BLOGU taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 (masaustu) | #u=0.67 | #u=0.44 (telefon yatay 844x390 olcegi) ; &clean = serit gizli. -->
+<link rel="stylesheet" href="skills-block/skills-block.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Skills block (Gear / Hero / Sheet)</h1>
+Ömer: "çok gördüğüm için mi eski gelmeye başladı; sanki iconların güzelliğini saklıyor gibi."
+<h3>Teşhis</h3>
+<ol>
+<li><b>İkonlar boğuluyor.</b> Yeni boyalı Warrior ikonları (128px çizim) yaklaşık 90px siyah bir kutunun içinde; kutunun kalın kenarı ve iki yan elmas dikkati ikondan alıyor. Çizimin parlak kılıç, ateş ve metal detayı kutunun siyahında kayboluyor.</li>
+<li><b>Pasif farklı bir dünyadan.</b> Berserker küçük (yarısı kadar), yuvarlak ve kutusuz; yan yana duran dört kutuyla aynı sınıftan görünmüyor. "PASSIVE" etiketi soluk, ad ile etiket arasında büyük boşluk var.</li>
+<li><b>Ulti öne çıkmıyor.</b> Headsman's Blow (Rage 30 harcar) diğerleriyle aynı kutuda; tek fark turuncu "RAGE 30" yazısı. En güçlü hamle sıradan duruyor.</li>
+<li><b>Satırlar dağınık.</b> Her kolonda ad, maliyet, hasar ayrı yükseklikte ve ortalı; gözün izleyeceği ortak bir çizgi yok. Kolonlar arası ve ikon ile bilgi arası boşluk fazla, bilgi ikona ait görünmüyor.</li>
+<li><b>İtalik.</b> "Damage", "Stun", "Max bonus" italik, rakamlar düz; Ömer'in "italik zorlama yok" kuralına aykırı.</li>
+<li><b>Benim gözlemim:</b> maliyet ve hasar satırları küçük, soluk ve tek tip; "Free", "8 / 3", "Damage 29" aynı ağırlıkta, hangisinin önemli olduğu belli değil. Sheet'in geri kalanı (çipler, tooltip dili) çerçeveli ve renkli; Skills bloğu ise düz kalıyor.</li>
+</ol>
+<h3>Ortak dil (A, B, C)</h3>
+<ul>
+<li>İkon 96-144px, kenarı ince (1px vurgu rengi), içinde hafif iç ışık; kalın koyu kutu yok. Köşe elmasları tooltip A-Band gibi.</li>
+<li>Maliyet ve bekleme <b>çip</b> (Cinzel altın rakam), hasar / sersemletme <b>tek satır</b> (etiket soluk, rakam altın). İtalik yok.</li>
+<li>Pasif ve ulti <b>aynı boyda</b> (ulti B ve C'de biraz büyük), farklı vurgu rengi ve şeritle ayrılır: Pasif = yeşilimsi bakır ("PASSIVE"), Ulti = ateş turuncusu ("ULTIMATE"), normal skill = altın. Etiket metinleri ve renkler bir öneri; Ömer onaylamalı. Ulti ayrımını şimdilik Rage harcayan skill olarak gösterdim (Headsman's Blow); gerçek kural farklıysa değişir.</li>
+<li>Hover / uzun basma: karta gelince tooltip A-Band skill tooltip'i açılır (bu sayfada açılmaz; kartta yalnız hover parlaması var).</li>
+</ul>
+<h3>Varyantlar</h3>
+<ul>
+<li><b>A · Plates:</b> beş eşit dikey plaka; büyük ikon üstte, ad, altın ayırıcı, çip + hasar satırı. Masaüstünde en dengeli; önerim.</li>
+<li><b>B · Icon first:</b> plakasız büyük ikon (ikonu hiçbir şey örtmez), ad altta; ulti daha büyük. İkonların güzelliğini en çok gösteren; bilgi daha az düzenli.</li>
+<li><b>C · Rows:</b> 2 sütunlu yatay kartlar (A-Band başlık şeridi gibi), ulti tüm genişlikte. Telefonda ve dar panelde rahat; yatayda az, dikeyde çok yer tutar.</li>
+</ul>
+<h3>Başka sınıf (Hexer)</h3>
+<ul>
+<li>Her varyantın altında Hexer örneği var. Hexer'in kodla çizilmiş piksel ikonlarından yalnız ikisi (Withering Curse, Venom Edge; 51px, keskin büyütülmüş) bu klasörde var; <b>diğer ikonlar için yer tutucu kare</b> (soru işareti), oyundan kırpmadım; ad/maliyet metinleri yer tutucu. <b>Sonuç:</b> piksel ikon, boyalı ikonun yanında kaba ve küçük durur; çerçeve ve iç ışık onu taşıyor ama sınıflar arası üslup farkı görünür. Hexer da boyalı ikona geçerse sorun biter.</li>
+</ul>
+<h3>Ölçek</h3>
+<ul><li>Alttaki şeritten seç: <b>1920</b>, <b>1280</b>, <b>844x390</b> (ölçek 0.44; yazı en az 13px, çip en az 11px). Telefonda ikon ~56-76px'e düşer.</li></ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Skills block &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.44">844x390</button></div>
+<script src="skills-block/app.js"></script>
+</body>
+</html>
