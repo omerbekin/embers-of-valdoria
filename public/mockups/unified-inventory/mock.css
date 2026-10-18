@@ -472,17 +472,23 @@ html.short .mk .gr-chip { min-height: 44px; }
 .mk-ov.mk-top .mk-duo > .gr-panel { height: 100%; max-height: 100%; align-self: stretch; }
 .mk-ov.mk-top .mk-duo > .gr-panel.mk { max-width: none; }
 .mk-ov.mk-top .mk-duo:not(.pair) > .gr-panel.mk { flex: 1 1 auto; }
-.mk-ov.mk-top .mk-duo > .mk-v3 { padding-top: 0; }
-.mk-v3 > .mk-v3head { display: flex; align-items: center; gap: calc(28 * var(--u)); min-height: var(--nav-hit-k); padding-right: calc(3 * var(--nav-hit-k) + 2 * var(--nav-gap-k) + 8px); }
+.mk-ov.mk-top .mk-duo > .mk-v3 { padding-top: max(8px, calc(14 * var(--u))); }
+.mk-v3 > .mk-v3head { display: flex; align-items: center; gap: calc(28 * var(--u)); min-height: var(--nav-hit-k); padding-right: calc(2 * var(--nav-hit-k) + var(--nav-gap-k) + 8px); }
 .mk-v3 > .mk-v3head .gr-title { line-height: 1; }
 .mk-v3 > .mk-v3head .mk-headtabs { align-self: stretch; display: flex; align-items: stretch; margin: 0; border: 0; }
 .mk-v3 > .mk-v3head .mk-headtabs .gr-tab { display: inline-flex; align-items: center; min-height: 44px; }
 .mk-v3 > .mk-v3head .mk-grow { flex: 1; }
 /* çift pencerede (tüccar + envanter) envanter sağda: X / tam ekran / Menu onun başlık satırında; tüccar penceresi de üste çıkar */
-.mk-ov.mk-top .mk-duo.pair > .mk-enc { padding-top: calc(10 * var(--u)); }
+.mk-ov.mk-top .mk-duo > .mk-enc { padding-top: max(8px, calc(14 * var(--u))); }
+/* iki başlık (GEAR / ODO THE PEDDLER) aynı yükseklik, aynı punto, aynı hiza */
+.mk-ov.mk-top .mk-duo > .mk-enc > .gr-head, .mk-v3 > .mk-v3head { min-height: var(--nav-hit-k); align-items: center; }
+.mk-ov.mk-top .mk-duo > .mk-enc > .gr-head .gr-title, .mk-v3 > .mk-v3head .gr-title { font-size: max(20px, calc(36 * var(--u))); line-height: 1; }
+html.short .mk-ov.mk-top .mk-duo > .mk-enc > .gr-head .gr-title, html.short .mk-v3 > .mk-v3head .gr-title { font-size: 17px; }
+/* reroll: yazı yerine simge + küçük fiyat */
+.mk-enc-shop .gr-reroll { min-width: 44px; min-height: 44px; padding: 0 calc(10 * var(--u)); display: inline-flex; align-items: center; justify-content: center; gap: 4px; }
+.mk-enc-shop .gr-reroll svg { flex: 0 0 auto; }
+.mk-enc-shop .gr-reroll .gr-cost { margin-left: 4px; font-size: max(11px, calc(14 * var(--u))); }
 /* X: sağ üst sıranın (Menu, tam ekran) solunda, aynı kare dil (nav-icons.ts: 44 px alan, 30 px çerçeve, 18 px simge, 1.6 çizgi) */
-html.menu-btn-on .settings-toggle.mk-close { right: calc(var(--nav-edge-k) + 2 * var(--nav-hit-k) + 2 * var(--nav-gap-k) + 8px + var(--er, 0px)); }
-.settings-toggle.mk-close::after { content: ''; position: absolute; right: calc(-4px - var(--nav-gap-k)); top: 25%; bottom: 25%; width: 1px; background: rgba(217, 178, 106, 0.3); }
 /* Gear + Formation: seferin her ekranında sol altta aynı yer */
 .mk-camphud { position: fixed; left: max(12px, calc(28 * var(--gu, 1px))); bottom: max(12px, calc(28 * var(--gu, 1px))); z-index: 25; display: flex; gap: max(10px, calc(16 * var(--gu, 1px)));
   --u: var(--gu, 1px); --g-gold: #f3d999; --g-line2: rgba(217, 178, 106, 0.3); --g-ember: #e0702a; --g-ember2: #ffb35a; }
@@ -523,6 +529,6 @@ html.short .mk-enc-shop .gr-wares .gr-item { min-width: 46px; min-height: 46px; 
 /* pencere içi X (tüccar, Formation, Campfire / Notice Board notu): nav-btn dili, pencerenin sağ üst köşesinde */
 .nav-btn.mk-x { position: absolute; top: calc(10 * var(--u)); right: calc(10 * var(--u)); z-index: 3; }
 .mk-enc-shop.gr-panel, .mk-dlg.gr-panel { position: relative; }
-.mk-enc-shop > .gr-head { padding-right: calc(var(--nav-hit-k) + 4px); }
 .mk-dlg.gr-panel { padding-bottom: calc(30 * var(--u)); }
-.mk-dlg .gr-title { padding: 0 calc(var(--nav-hit-k) + 4px); }
+.mk-enc-shop .gr-reroll::before, .mk-enc-shop .gr-reroll::after { display: none; }
+html.short .mk-enc-shop .gr-reroll { padding: 0 6px; margin-right: 2px; }

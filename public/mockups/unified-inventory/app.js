@@ -253,7 +253,7 @@
       ? `<div class="mk-sellbox mk-drop" data-drop="stall"><img src="${D.extra.gold}" alt=""><div>Drag an item here from the bag or a hero to sell it for half its worth.<i>Or tap the item and choose Sell.</i></div></div>`
       : S.buyback.length ? `<div class="gr-bb-row">${S.buyback.map((uid) => `<div class="gr-cellw">${itemCell(uid, { src: 'bb', hid: S.hero })}${price(item(uid).sell, item(uid).sell > S.gold)}</div>`).join('')}</div><div class="mk-note">Sold this visit. Buy back for the price you sold at, until you leave.</div>`
       : '<div class="gr-card-empty">Sold something by mistake? It waits here until you leave.</div>';
-    const buy = `<div class="gr-sec mk-flex">Wares<button class="gr-btn sm gr-reroll mk-r" type="button" data-act="reroll" ${S.gold < 15 ? 'disabled' : ''}>Reroll<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button></div>
+    const buy = `<div class="gr-sec mk-flex">Wares<button class="gr-btn sm gr-reroll mk-r" type="button" data-act="reroll" title="Reroll wares" aria-label="Reroll wares" data-tipt="Reroll wares" ${S.gold < 15 ? 'disabled' : ''}>${REROLL_SVG}<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button></div>
       <div class="gr-wares" style="--ware-cols:${o.cols ?? 3}">${wares}</div>`;
     return `<div class="mk-ctx gr-stall mk-stall" data-drop="stall"><div class="gr-odo"><div class="gr-face" style="background-image:url('${D.extra.merchant_av}')"></div><div class="gr-odo-line">Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.</div></div>
       ${tabs}<div class="mk-shoppane">${tab === 'sell' ? buy : ''}${pane}</div></div>`;
@@ -289,7 +289,7 @@
   function encWindow() {
     const m = S.mode;
     if (m === 'none') return '';
-    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}${winX('encdone', 'Back to town')}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div></div>`;
+    if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div></div>`;
     return ''; // kasaba ve ödül: pencere değil, sahnenin kendisi (townLayer / rewardLayer)
   }
   const priced = () => S.mode === 'merchant';
@@ -300,6 +300,7 @@
   // sağ üst X (nav-icons.ts dilinde: aynı 44 px alan, 30 px çerçeve, 1.6 çizgi); envanterin Close / Done düğmesi ve alt çubuğu yerine
   // pencerenin kendi sağ üst köşesindeki X (tüccar, küçük pencereler): sağ üst nav düğmeleriyle aynı kare dil
   const winX = (act, tip) => `<button class="nav-btn mk-x" type="button" title="${tip}" aria-label="${tip}" data-act="${act}">${X_SVG}</button>`;
+  const REROLL_SVG = '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.5 4v4.5H15"/></svg>';
   const X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>';
   const invShown = () => S.v === 'v3' && !S.dlg && (S.mode === 'none' || S.invOpen && S.mode !== 'reward' || S.mode === 'reward' && S.rbag);
   // ---- kasaba sahnesi (oyundaki TownScreen, src/game/town-screen.ts): tam ekran görsel, resimdeki yerler (valdoria.json > Ashford scene.hotspots)
@@ -347,7 +348,7 @@
   function dlgHtml() {
     const d = S.dlg;
     const sub = S.mode === 'map' ? 'I · The Border Road' : 'Ashford Village';
-    if (d.kind === 'note') return `<div class="gr-panel mk-dlg" data-dlg="1"><div class="gr-title">${esc(d.title)}</div><div class="gr-shop-sub">${sub}</div><p class="mk-dlg-t">${esc(d.text)}</p>${winX('dlgclose', 'Close')}</div>`;
+    if (d.kind === 'note') return `<div class="gr-panel mk-dlg" data-dlg="1"><div class="gr-title">${esc(d.title)}</div><div class="gr-shop-sub">${sub}</div><p class="mk-dlg-t">${esc(d.text)}</p></div>`;
     // Formation (oyundaki campaign-panels > openFormation): 4 x 3 ızgara, ön sıra SAĞDA; sürükle ya da dokun-dokun
     const cells = [];
     for (let r = 0; r < 3; r++) for (let c = 0; c < 4; c++) {
@@ -355,8 +356,7 @@
       cells.push(`<div class="mk-fcell${c === 3 ? ' front' : ''}${S.fsel && S.fsel !== who ? ' tap-ok' : ''}" data-fcell="${c},${r}">${who ? `<button class="mk-fhero${S.fsel === who ? ' on' : ''}" type="button" data-fhero="${who}" data-tipt="${esc(meta(who).name)}">${face(who)}</button>` : ''}</div>`);
     }
     return `<div class="gr-panel mk-dlg mk-form" data-dlg="1"><div class="gr-title">Formation</div><div class="gr-shop-sub">Drag a hero to a new place, or tap a hero and then a cell.</div>
-      <div class="mk-fgrid">${cells.join('')}</div><div class="mk-frow"><span>Back</span><span>Front</span></div>
-      ${winX('dlgclose', 'Close')}</div>`;
+      <div class="mk-fgrid">${cells.join('')}</div><div class="mk-frow"><span>Back</span><span>Front</span></div></div>`;
   }
   function moveForm(hid, c, r) {
     const other = Object.keys(S.form).find((x) => x !== hid && S.form[x][0] === c && S.form[x][1] === r);
@@ -461,11 +461,14 @@
     else inner = `<div class="mk-duo${S.mode === 'none' ? '' : S.invOpen ? ' pair' : ' solo'}">${encWindow()}${S.mode === 'none' || S.invOpen ? L[S.v]() : ''}</div>`;
     // küçük pencere (Formation / not) açık olanın ÜSTÜNE gelir; haritanın sol sütunu arkada görünür kalır
     if (S.dlg) inner = (inner || '') + `<div class="mk-duo mk-dlgwrap${inner ? ' over' : ''}">${dlgHtml()}</div>`;
+    // bir pencere açıkken X, Menu'nün yerinde durur (Menu gizli); en üstteki pencereyi kapatır
+    const winOpen = !!S.dlg || invShown() || S.mode === 'merchant';
+    const closeAct = S.dlg ? 'dlgclose' : invShown() ? 'done' : 'encdone';
     const html = `${S.mode === 'reward' ? '' : `<div class="mk-scene-title"><b>${st[0]}</b><i>${st[1]}</i></div>`}${layer}<div class="gr-overlay el-modal mk-ov enc-${S.mode}${inner ? '' : ' mk-empty'}${invShown() ? ' mk-top' : ''}" role="dialog">${inner}<div class="el-tip item-tip" role="tooltip"></div><div class="mk-tip"></div><div class="mk-toast"></div>
       <div class="gr-trash" data-drop="trash" data-tipt="Discard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
-      ${campHud()}${invShown() ? `<button class="nav-btn settings-toggle mk-close" type="button" title="Close" aria-label="Close" data-act="done">${X_SVG}</button>` : ''}
+      ${campHud()}
       <button class="nav-btn settings-toggle fullscreen-toggle" type="button" title="Fullscreen" aria-label="Fullscreen" data-act="fs">${D.nav['fs-enter']}</button>
-      <button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)" data-act="menu">${D.nav.menu}</button>`;
+      ${winOpen ? `<button class="nav-btn settings-toggle mk-close" type="button" title="Close" aria-label="Close" data-act="${closeAct}">${X_SVG}</button>` : `<button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)" data-act="menu">${D.nav.menu}</button>`}`;
     root.innerHTML = html;
     overlay = $('.mk-ov');
     // açılış solması (oyunun .el-modal animasyonu) yalnızca ilk açılışta / düzen ya da mod değişince oynasın;
