@@ -20,6 +20,7 @@ import { BATTLE_SPEEDS } from '../ui/battle-speed';
 import layout from '../../data/battle-layout.json';
 import { applySummonVariant, content, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, skillCostLabel, TARGET_TEXT } from '../engine';
 import { TARGET_BADGE } from '../engine/skill-info';
+import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../engine/unblockable';
 import { isAccuracyCritDebuff } from '../engine/cc-immunity';
 import { statusStackMode } from '../engine/status-stack';
 import type { Attribute, CombatantDef, Element, Formulas, SkillDef, StatKind, Stats } from '../engine';
@@ -649,6 +650,7 @@ export function buildMechanics(): WikiArticle[] {
         'Miss: the attacker\'s own accuracy was not enough, no matter the evasion. "MISS" shows above the attacker.',
         'A dodged or missed hit deals no damage and applies none of the skill\'s effects.',
         blockText(),
+        unblockableText(),
         'Heals, shields, buffs, effects on yourself and ground effects (poison, fire on the ground) never miss.',
         ...Object.values(content.statuses).filter((d) => d.accuracyDelta || d.evasionDelta).map((d) => `${d.name} (${d.type}): ${d.accuracyDelta ? `accuracy ${d.accuracyDelta > 0 ? '+' : '-'}${pct(Math.abs(d.accuracyDelta))}` : `evasion ${d.evasionDelta! > 0 ? '+' : '-'}${pct(Math.abs(d.evasionDelta!))}`} while it lasts. The hit chance still stays between 0% and ${pct(f.hit.max)}.`),
       ),
@@ -966,7 +968,15 @@ function blockText(): string {
   const shields = ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length);
   const vals = shields.map((d) => d.implicitBase![0]!);
   const cap = (ITEM_DATA.caps as Record<string, number | undefined>)['block'];
-  return `Block: a hero with a shield can block an enemy's physical hit (melee or ranged) after it lands: ${Math.min(...vals)}-${Math.max(...vals)}% from the shield itself (fixed per shield, it does not grow with item level) plus the shield-only Block affix${cap !== undefined ? `, at most ${cap}% in total` : ''}. A blocked hit deals no damage and applies none of the skill's effects; "Block" shows above the target. Spells, damage over time, burning ground, Doom and Backstab cannot be blocked. When a guardian takes part of a hit (Guard), the guardian's own shield can block that share.`;
+  return `Block: a hero with a shield can block an enemy's physical hit (melee or ranged) after it lands: ${Math.min(...vals)}-${Math.max(...vals)}% from the shield itself (fixed per shield, it does not grow with item level) plus the shield-only Block affix${cap !== undefined ? `, at most ${cap}% in total` : ''}. A blocked hit deals no damage and applies none of the skill's effects; "Block" shows above the target. Spells, damage over time, burning ground, Doom and ${UNBLOCKABLE_LABEL} skills cannot be blocked. When a guardian takes part of a hit (Guard), the guardian's own shield can block that share.`;
+}
+
+/** "Unblockable" etiketi (Ömer 2026-10-18): Block maddesinin altındaki kural; skill adları veriden (src/engine/unblockable.ts). */
+function unblockableText(): string {
+  const tagged = allSkills().filter((s) => isUnblockableSkill(s));
+  const boss = tagged.filter((s) => s.telegraph).map((s) => s.name);
+  const other = tagged.filter((s) => !s.telegraph).map((s) => s.name);
+  return `${UNBLOCKABLE_LABEL}: a skill with the ${UNBLOCKABLE_LABEL} tag (shown in its tooltip) can never be blocked by a shield. Every boss warning (a strike marked on the board a turn in advance) is ${UNBLOCKABLE_LABEL}: the marked cells show a broken shield and "${UNBLOCKABLE_LABEL}", so stepping out of the area is the only way to avoid it.${boss.length ? ` Boss warnings: ${boss.join(', ')}.` : ''}${other.length ? ` Other ${UNBLOCKABLE_LABEL} skills: ${other.join(', ')}.` : ''}`;
 }
 
 /** Silah gücü, örtük statlar, başlangıç silahı ve seviye şartı (Item Güçlendirme, Ömer 2026-10-17; sayılar veriden). */

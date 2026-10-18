@@ -5,6 +5,8 @@
  * yırtık kızıl etek, iki elle tutulan UZUN KILIÇ (pirinç siper, deri kabza). v1'deki balta/boynuzlu miğfer yerine v2 bu kılıcı ve
  * kızıl-çelik paleti kullanır. 128x128 (0..32 mantıksal; 0,25 = 1 ince piksel); ana hatlar en az 2 ince piksel (36-60 px'te okunur).
  *
+ * GÜNCEL: sword, whirlwind, charge, warcry (Headsman's Blow), rage ikonları ChatGPT boyalı resimdir (aşağıda `image:`; kaynak assets/source/class-icons/
+ * warrior-sheet.png, kesici tools/make-class-icons.py); aşağıdaki eski kodla çizim açıklamaları tarihçedir. helm (logo) ve abyssalfury kodla kalır.
  * Bu class'ın v1 ikon adları (ICONS anahtarları): helm, rage, sword, whirlwind, charge, warcry, abyssalfury (durum rozeti)
  *   helm (logo) ............ çapraz iki uzun kılıç + kızıl yuvarlak arma
  *   rage (Berserker) ....... kılıcın içinden geçtiği kan damlası (can azaldıkça vuruş sertleşir)
@@ -82,12 +84,6 @@ function star(g: PxGrid, cx: number, cy: number, r: number, t: string, spikes = 
   g.poly(pts, t);
 }
 
-/** Damla (alt yuvarlak, üst sivri). */
-function drop(g: PxGrid, cx: number, cy: number, r: number, t: string): void {
-  g.disc(cx, cy, r, t);
-  g.poly([cx - r * 0.92, cy - r * 0.35, cx, cy - r * 2.3, cx + r * 0.92, cy - r * 0.35], t);
-}
-
 /** Öfke koru: koyu kızıl rün halkası (4 çentikli) içinde parlayan kor (dış koyu kızıl, iç kızıl, sarı-beyaz çekirdek). */
 function furyCore(g: PxGrid, cx: number, cy: number, r: number): void {
   g.ring(cx, cy, r, 'R', r * 0.2);
@@ -99,6 +95,13 @@ function furyCore(g: PxGrid, cx: number, cy: number, r: number): void {
 }
 
 export const ICONS: Record<string, V2SpriteEntry> = {
+  // ChatGPT boyalı ikonlar (assets/source/class-icons/warrior-sheet.png -> python tools/make-class-icons.py warrior ...): eski kodla çizilmiş
+  // sword/whirlwind/charge/warcry/rage çizimleri kaldırıldı (Headsman's Blow verideki adıyla warcry).
+  sword: { image: 'warrior/sword' },
+  whirlwind: { image: 'warrior/whirlwind' },
+  charge: { image: 'warrior/charge' },
+  warcry: { image: 'warrior/warcry' },
+  rage: { image: 'warrior/rage' },
   // Logo: çapraz iki uzun kılıç, ortada kızıl yuvarlak arma (atkı rengi) + pirinç kenar
   helm: (g) => {
     greatsword(g, 6, 27, 27, 5, 3, 4.5);
@@ -107,84 +110,6 @@ export const ICONS: Record<string, V2SpriteEntry> = {
     g.line(13.5, 14, 15.5, 13, 'z', 0.5);
     // arma ortasında küçük çelik çivi
     g.disc(16, 16.5, 1.2, 'l').disc(15.7, 16.2, 0.45, 'w');
-  },
-
-  // Berserker: kılıç tepeden kan damlasının içinden geçer; damladan iki küçük damla kopar
-  rage: (g) => {
-    drop(g, 15.5, 20.5, 8, 'R');
-    drop(g, 15, 20.2, 6.6, 'r');
-    g.disc(12.3, 19.5, 1.4, 'z').disc(11.8, 22.5, 0.6, 'z');
-    greatsword(g, 16, 2, 16, 30.5, 3, 4.5);
-    drop(g, 26, 26.5, 1.7, 'r');
-    drop(g, 6.5, 28, 1.3, 'R');
-  },
-
-  // Double Strike: arkada çapraz iki beyaz kesik (iki vuruş), önde çapraz uzun kılıç
-  sword: (g) => {
-    // iki paralel kesik izi (sol üstten sağ alta, hafif kavisli): "iki vuruş"
-    for (const o of [-2.8, 2.8]) {
-      crescent(g, 34 + o, -4 - o, 31.5, 2.81, 1.88, 3.4, 'w');
-      crescent(g, 34 + o, -4 - o, 31.5, 2.81, 1.88, 1.4, 'r');
-    }
-    greatsword(g, 5, 28, 28, 4, 3.6, 5);
-  },
-
-  // Whirlwind: kızıl göbekten dışa uzanan kılıç (ibre) + arkasında dönen kesik yayları + yerde toz
-  whirlwind: (g) => {
-    crescent(g, 16, 16.5, 12.5, -0.6, 2.2, 3.4, 'l');
-    crescent(g, 16, 16.5, 12.5, -0.6, 2.2, 1.4, 'w');
-    crescent(g, 16, 16.5, 12.5, 2.55, 5.0, 3.0, 'm');
-    crescent(g, 16, 16.5, 12.5, 2.55, 5.0, 1.2, 'l');
-    crescent(g, 16, 16.5, 7.5, 0.9, 3.6, 1.8, 'z');
-    greatsword(g, 16.5, 16.5, 28.5, 4.8, 3.2, 3.2);
-    g.disc(16.5, 16.5, 2.6, 'R').disc(16.5, 16.5, 1.7, 'r');
-    g.disc(4, 28, 1.3, 'd').disc(7, 29.5, 0.9, 'm').disc(27.5, 28.5, 1.1, 'd');
-  },
-
-  // Charge: öne eğilmiş çelik omuzluk (pirinç kenar, perçin), arkada savrulan kızıl atkı, hız çizgileri, önde çarpma yıldızı
-  charge: (g) => {
-    // çarpma yıldızı (arka plan: önce çizilir)
-    star(g, 25.5, 15, 7.2, 'y', 8, 0.42, 0.2);
-    star(g, 25.5, 15, 4.4, 'w', 8, 0.45, 0.6);
-    // kabzaya bağlı kızıl atkı arkaya savrulur
-    g.poly([8, 17.5, 1, 12, 3.5, 16.5, 0.5, 20.5, 5, 20, 8, 19.5], 'R');
-    g.poly([8, 17.8, 2.5, 13.5, 4.5, 16.8, 7.5, 18.6], 'r');
-    // öne uzatılmış kılıç (hafif aşağı, ucu çarpmada)
-    greatsword(g, 5, 16.5, 25, 15.5, 4.8, 5);
-    // hız çizgileri
-    g.line(1, 24, 12, 24, 'z', 1.1).line(4, 27.5, 15, 27.5, 'z', 1.1).line(2, 8.5, 11, 8.5, 'z', 1.1);
-    // sersemletme yıldızı
-    star(g, 26.5, 26, 3.6, 'y', 5, 0.45, -Math.PI / 2);
-  },
-
-  // Abyssal Cry: sakallı savaşçı profilden (sağa) kükrer; arkada kızıl-karanlık alev, önde üç ses dalgası
-  warcry: (g) => {
-    // karanlık aura
-    g.poly([2, 30, 1.5, 21, 3.5, 15, 4.5, 19, 6, 10, 8, 15, 11, 7.5, 12, 14, 18, 30], 'R');
-    g.poly([3.5, 30, 3.5, 24, 5, 21, 6.5, 24, 8, 19, 10, 25, 12, 30], 'r');
-    // boyun + omuz (kızıl atkı)
-    g.poly([4, 31, 6, 24, 13, 23, 17, 26, 17, 31], 'R');
-    g.line(6, 25, 15, 24.5, 'r', 1.2);
-    // kafa (profil, sağa bakar)
-    g.ellipse(11, 13.5, 5.6, 6.6, 'n');
-    g.poly([14.5, 10, 17.8, 13, 16.6, 13.6, 15.5, 13.2], 'n'); // burun
-    // saç (koyu kahve, arkaya taranmış)
-    g.poly([5.4, 14, 5.6, 8.5, 8.5, 6, 13, 6.2, 16, 8.5, 13, 8.4, 10.5, 10, 8.5, 13.5, 7.5, 16], 'k');
-    // kaş + göz (öfkeli)
-    g.line(12.5, 10.2, 15.5, 11.4, 'k', 1);
-    g.rect(13.6, 11.5, 1, 0.8, 'o');
-    // ağız: geniş açık
-    g.poly([13.5, 15.6, 18.5, 14.8, 18, 19.8, 13.5, 18.5], 'o');
-    g.poly([14.2, 16.3, 17.6, 15.6, 17.2, 18.8, 14.2, 18], 'R');
-    g.line(14.4, 16, 17.6, 15.4, 'w', 0.5);
-    // sakal
-    g.poly([7.5, 16, 13.5, 18.8, 17, 19.6, 15, 22.6, 11, 23.4, 8, 21], 'k');
-    g.poly([8.5, 17.4, 12, 19.4, 14, 21.6, 11, 22.4], 'b');
-    g.ellipse(9.6, 14.6, 1.1, 1.4, 'n'); // kulak
-    // ses dalgaları
-    g.ring(18, 17, 4.5, 'r', 1.4, -0.9, 0.9);
-    g.ring(18, 17, 8.5, 'r', 1.4, -0.85, 0.85);
-    g.ring(18, 17, 12.5, 'R', 1.4, -0.8, 0.8);
   },
 
   // Abyssal Fury (durum rozeti): arkada kızıl-karanlık öfke alevi, öfkeyle dolu uzun kılıç (ağzında kızıl damarlar), ucundan ileri

@@ -242,7 +242,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Items',
     icon: 'skull',
     label: 'Toggle first hero fallen',
-    hint: 'Make the first hero of the formation fallen (or revive them): their gear and stat points are locked in Gear while fallen',
+    hint: 'Make the first hero of the formation fallen (or revive them): their gear is locked in Gear while fallen (stat points can still be spent)',
     run: () => {
       setState(debugToggleFallen(ensureState()));
       reload();
@@ -326,6 +326,18 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Open Loot screen',
     hint: 'Grant an elite drop at this stop and open the Loot screen on the map: drag the items into the bag or a hero slot (or tap them), or leave them. Gold shows there too',
     run: () => dropLoot(false),
+  });
+  debug.register({
+    id: 'campaign.loot-xp',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'burst',
+    label: 'Open Loot screen (with XP)',
+    hint: 'Same Loot screen with made-up XP rows: bars fill hero by hero, the first hero levels up; tap a row to open that hero character screen',
+    run: () => {
+      sessionStorage.setItem('proto.debugLootXp', '1');
+      dropLoot(false);
+    },
   });
   debug.register({
     id: 'campaign.loot-full',

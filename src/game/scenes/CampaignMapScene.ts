@@ -102,7 +102,7 @@ import { isSettingsOpen, setSettingsOpen } from '../../ui/settings';
 import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
 import { campaignGearSource, openGearScreen, showHandover } from '../../ui/gear-screen';
-import { openLootScreen } from '../../ui/loot-screen';
+import { openLootScreen, sampleLootXp, type LootXp } from '../../ui/loot-screen';
 import { mountCampHud, type CampHud } from '../../ui/camp-hud';
 import { showLevelBanner } from '../../ui/level-banner';
 import { LEVELS } from '../../progression';
@@ -1595,7 +1595,14 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root) return false;
     const s = this.s;
     if (s.pendingLoot) {
+      // Debug (Open Loot screen with XP): uydurma XP satırları, yalnızca gösterim
+      let dbgXp: LootXp[] | undefined;
+      if (sessionStorage.getItem('proto.debugLootXp')) {
+        sessionStorage.removeItem('proto.debugLootXp');
+        dbgXp = sampleLootXp(activeHeroes(s).map((x) => ({ id: x.id, class: x.class, level: x.level, xp: x.xp, fallen: isFallen(x) })), (c) => content.classes[c]?.name ?? c);
+      }
       const h = openLootScreen(root, {
+        ...(dbgXp ? { xp: dbgXp } : {}),
         get: () => this.s,
         set: (x) => setState(x),
         gear: campaignGearSource(() => this.s, (x) => setState(x)),

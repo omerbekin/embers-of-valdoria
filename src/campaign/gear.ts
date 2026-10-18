@@ -1,12 +1,12 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
 import { clone, heroById, isFallen } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
 
-/** Düşmüş kahraman ekipmanını değiştiremez (Ömer 2026-10-18); arayüz de aynı metni gösterir. */
-export const FALLEN_GEAR_MSG = "Fallen heroes can't change gear. Revive them at a town.";
+/** Düşmüş kahraman ekipmanını değiştiremez (Ömer 2026-10-18); metin tek yerde (src/progression/equip.ts), arayüz ve Endless aynı. */
+export { FALLEN_GEAR_MSG };
 
 /** Torbada yer var mı? */
 export const bagHasRoom = (s: CampaignState, n = 1): boolean => s.inventory.length + n <= BAG_SIZE;
@@ -34,14 +34,10 @@ export function equipError(hero: Hero, item: ItemInstance, slot?: SlotId): strin
  * ikinci ele de girer; yoksa varsayılan yuva). Çift el / yay / tılsım takılınca ikinci eldeki item da torbaya döner; yer yoksa hata.
  */
 export function equipItem(s: CampaignState, heroId: string, uid: string, slot?: SlotId): CampaignState {
-  return equipCore(s, heroId, uid, slot, true);
-}
-
-/** Sim / otomatik "best" politikası eski davranışı korur (düşmüşe de takar; altın kayıtlar); arayüz her zaman equipItem kullanır. */
-function equipCore(s: CampaignState, heroId: string, uid: string, slot: SlotId | undefined, guardFallen: boolean): CampaignState {
   const hero = heroById(s, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
-  if (guardFallen && isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
+  // Düşmüş kahraman item takamaz (Ömer 2026-10-18): arayüz, "Equip best" ve sim'in `best` politikası aynı kural
+  if (isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
   const idx = s.inventory.findIndex((it) => it.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
   const item = s.inventory[idx]!;
@@ -103,15 +99,15 @@ export const heroLoadout = (h: Hero): LoadoutResult => loadout(h);
  * "Equip best": verilen kahramanlara (varsayılan: aktif takım, dizilim sırasıyla) torbadan en iyi item'leri takar; çıkan item'ler torbaya döner.
  * Primary bonusunu kapatacak item seçilmez (madde 278). Kuşanma ekranı ve sim'in `best` politikası kullanır.
  */
-export function equipBest(s: CampaignState, heroIds?: string[], opts: { skipFallen?: boolean } = {}): CampaignState {
+export function equipBest(s: CampaignState, heroIds?: string[]): CampaignState {
   let t = s;
   const ids = heroIds ?? t.active.filter((id) => id && heroById(t, id));
   for (const id of ids) {
     const h = heroById(t, id);
-    if (!h || (opts.skipFallen && isFallen(h))) continue; // arayüz: düşmüş kahramanın ekipmanı değişmez
+    if (!h || isFallen(h)) continue; // düşmüş kahramanın ekipmanı değişmez (arayüz ve sim aynı; Ömer 2026-10-18)
     for (const m of bestMoves(h, t.inventory)) {
       try {
-        t = equipCore(t, id, m.uid, m.slot, !!opts.skipFallen);
+        t = equipItem(t, id, m.uid, m.slot);
       } catch {
         /* torba dolu (ikinci el çıkamıyor): bu değişim atlanır */
       }

@@ -2,7 +2,6 @@
 import { summons } from '../engine/content';
 import { ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
-import { isFallen } from './state';
 import { nodeLevel } from './power';
 import { LEVELS, addXp, allocate, autoAllocate, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
 import type { BattleOutcome, CampaignState, Hero } from './types';
@@ -72,12 +71,11 @@ export function acknowledgeLevelUps(s: CampaignState): CampaignState {
   return t;
 }
 
-/** Stat puanı dağıt (Gear > Character): geçersizse Error (puan yetmiyor / temel stat kuralı). */
+/** Stat puanı dağıt (Gear > Character): geçersizse Error (puan yetmiyor / temel stat kuralı). Düşmüş kahraman da harcayabilir (Ömer 2026-10-18). */
 export function allocateStats(s: CampaignState, heroId: string, add: StatAlloc): CampaignState {
   const t = clone(s);
   const h = t.roster.find((x) => x.id === heroId);
   if (!h) throw new Error('Unknown hero');
-  if (isFallen(h)) throw new Error("Fallen heroes can't spend stat points. Revive them at a town.");
   allocate(h, add);
   return t;
 }

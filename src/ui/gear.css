@@ -1384,8 +1384,8 @@ html.short .gr-slot-sub {
   color: #e6dcc6;
   background: linear-gradient(180deg, rgba(30, 22, 14, 0.985), rgba(11, 8, 5, 0.985));
   border: 1px solid color-mix(in srgb, var(--rc, #d9b26a) 55%, rgba(217, 178, 106, 0.3));
-  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 max(18px, calc(44 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 65%, transparent),
-    inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 22%, transparent);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 max(4px, calc(8 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 28%, transparent),
+    inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 16.5%, transparent);
 }
 
 /* başlık */
@@ -1756,7 +1756,8 @@ html.short .gr-slot-sub {
 
 .it-hero-k {
   flex: none;
-  width: 4.6em;
+  width: 7.4em;
+  white-space: nowrap;
   font: 600 0.7em var(--g-disp);
   letter-spacing: 0.08em;
   text-transform: uppercase;
@@ -1805,7 +1806,6 @@ html.short .gr-slot-sub {
 
 .it-chip.it-no {
   color: #e0907a;
-  font-style: italic;
   font-weight: 400;
 }
 
@@ -4049,8 +4049,149 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
   color: var(--g-gold);
 }
 
-.gr-loot-xp {
-  align-self: center;
+/* XP satırları (Ömer 2026-10-18): kahraman başına portre + ad + "+N XP" + level + dolan bar; satıra dokunmak karakter ekranını açar */
+.gr-lx {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+  flex: none;
+  margin-top: calc(8 * var(--u));
+}
+
+.gr-lx-row {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  min-height: 44px;
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  background: rgba(217, 178, 106, 0.05);
+  border: 1px solid var(--g-line);
+  color: var(--g-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--m-panel, 200ms) var(--m-ease, ease),
+    background var(--m-panel, 200ms) var(--m-ease, ease),
+    box-shadow var(--m-panel, 200ms) var(--m-ease, ease);
+}
+
+.gr-lx-row:hover,
+.gr-lx-row:focus-visible {
+  border-color: rgba(217, 178, 106, 0.5);
+  background: rgba(217, 178, 106, 0.1);
+  outline: none;
+}
+
+.gr-lx-face {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max(40px, calc(64 * var(--u)));
+  height: max(40px, calc(64 * var(--u)));
+  border: 1px solid rgba(217, 178, 106, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  font: 600 max(14px, calc(24 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+  overflow: hidden;
+}
+
+.gr-lx-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.gr-lx-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(6 * var(--u));
+}
+
+.gr-lx-top,
+.gr-lx-mid {
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+}
+
+.gr-lx-top {
+  justify-content: space-between;
+}
+
+.gr-lx-name {
+  font: 600 max(12px, calc(20 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-lx-gain {
+  flex: none;
+  font: italic max(12px, calc(20 * var(--u))) var(--g-body);
+  color: var(--g-gold);
+}
+
+.gr-lx-lv {
+  flex: none;
+  min-width: 3.2em;
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.gr-lx-bar.gr-xpbar {
+  flex: 1;
+  margin-top: 0;
+  height: max(6px, calc(10 * var(--u)));
+}
+
+.gr-lx-bar i {
+  width: 0;
+}
+
+.gr-lx-up {
+  flex: none;
+  font: 600 max(10px, calc(14 * var(--u))) var(--g-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1a120a;
+  background: linear-gradient(90deg, #b9853e, var(--g-gold));
+  padding: 1px calc(8 * var(--u));
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity var(--m-panel, 200ms) var(--m-ease, ease),
+    transform var(--m-panel, 200ms) var(--m-ease, ease);
+  display: none;
+}
+
+.gr-lx-up.on {
+  display: inline-block;
+  opacity: 1;
+  transform: none;
+}
+
+.gr-lx-row.lvup {
+  border-color: var(--g-gold);
+  background: rgba(243, 217, 153, 0.14);
+  box-shadow: 0 0 calc(22 * var(--u)) rgba(243, 217, 153, 0.35);
+}
+
+.gr-lx-row.none,
+.gr-lx-row.fallen {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.gr-lx-row.none .gr-lx-gain,
+.gr-lx-row.fallen .gr-lx-gain {
   color: var(--g-dim);
 }
 
@@ -4133,6 +4274,36 @@ html.short .gr-pair .gr-odo .gr-face {
 
 html.short .gr-pair .gr-loot-gain {
   font-size: 11px;
+}
+
+html.short .gr-pair .gr-lx {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+html.short .gr-pair .gr-lx-row {
+  gap: 8px;
+  padding: 4px 6px;
+}
+
+html.short .gr-pair .gr-lx-face {
+  width: 36px;
+  height: 36px;
+}
+
+html.short .gr-pair .gr-lx-name,
+html.short .gr-pair .gr-lx-gain {
+  font-size: 10px;
+}
+
+html.short .gr-pair .gr-lx-lv {
+  font-size: 9px;
+  min-width: 2.6em;
+}
+
+html.short .gr-pair .gr-lx-up {
+  font-size: 8px;
+  padding: 0 4px;
 }
 
 html.short .gr-pair .gr-loot-tile .rb-label {

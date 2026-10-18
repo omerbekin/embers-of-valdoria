@@ -15,6 +15,7 @@ import {
   PAUSED_CONFIRM,
   PAUSED_NOTICE,
   getMap,
+  isFallen,
   node,
   claimSlot,
   latestSave,
@@ -29,6 +30,7 @@ import {
   type SaveEntry,
   type SaveKind,
 } from '../campaign';
+import type { LootXp } from '../ui/loot-screen';
 import type { ResultAction } from './result-screen';
 import type { BattleSceneData } from './scenes/BattleScene';
 import { campaignEffects } from './battle-effects';
@@ -251,8 +253,8 @@ export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): 
   if (!victory) return undefined;
   const down = outcomeFrom(plan, true, battleSummary(battle)).units.filter((u) => !u.alive).length;
   if (!down) return undefined;
-  const where = session.state?.valor !== undefined ? 'at a town, a Rest camp or with Valor' : 'at a town or Rest camp';
-  return down === 1 ? `One hero has fallen: they stay down until revived ${where}` : `${down} heroes have fallen: they stay down until revived ${where}`;
+  const where = session.state?.valor !== undefined ? 'a town, Rest camp or with Valor' : 'a town or Rest camp';
+  return `${down} ${down === 1 ? 'hero' : 'heroes'} fallen  ·  revive at ${where}`;
 }
 
 /** Toplam XP (level eşiklerinin toplamı + mevcut XP): savaştan kazanılan XP'yi göstermek için fark alınır. */
@@ -262,7 +264,7 @@ const totalXp = (level: number, xp: number): number => totalXpFor(level) + xp;
  * Zaferden sonra (Continue): düşen ganimet varsa LOOT ekranı savaş sahnesinin üstünde açılır (Ömer 2026-10-18: "moblar ölünce loot ekranı";
  * haritada eski "Spoils" kartı açılmaz). Ekran kapanınca (alınmayanlar bırakıldı) kayıt yenilenir ve haritaya geçilir. Ganimet yoksa doğrudan harita.
  */
-function openLootThenMap(game: Phaser.Game, xp: Array<{ name: string; gain: number }>): void {
+function openLootThenMap(game: Phaser.Game, xp: LootXp[]): void {
   const root = document.getElementById('ui-root');
   if (!session.state?.pendingLoot || !root) return void goTo(game, MAP_SCENE);
   void import('../ui/loot-screen').then(async (m) => {
@@ -297,12 +299,18 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
         primary: true,
         run: () => {
           const s = session.state;
-          let xp: Array<{ name: string; gain: number }> = [];
+          let xp: LootXp[] = [];
           if (s && s.at === plan.nodeId) {
             const kills = killsOf(battle);
-            const before = new Map(s.roster.map((h) => [h.id, totalXp(h.level, h.xp)]));
+            const before = new Map(s.roster.map((h) => [h.id, { level: h.level, xp: h.xp }]));
             session.state = applyBattle(s, { ...outcomeFrom(plan, true, battleSummary(battle)), ...(kills ? { kills } : {}) });
-            xp = session.state.roster.map((h) => ({ name: content.classes[h.class]?.name ?? h.class, gain: totalXp(h.level, h.xp) - (before.get(h.id) ?? 0) })).filter((x) => x.gain > 0);
+            const act = session.state.active;
+            xp = session.state.roster
+              .map((h): LootXp => {
+                const b = before.get(h.id) ?? { level: h.level, xp: h.xp };
+                return { name: content.classes[h.class]?.name ?? h.class, gain: totalXp(h.level, h.xp) - totalXp(b.level, b.xp), heroId: h.id, cls: h.class, from: b, to: { level: h.level, xp: h.xp }, fallen: isFallen(h) };
+              })
+              .filter((x) => x.gain > 0 || (act.includes(x.heroId!) && x.fallen)); // XP almayan düşmüş kahraman da gri satır
             killTrack?.stop();
             killTrack = null;
             save('auto');

@@ -7,6 +7,14 @@ import { inactivePenalty } from './loadout';
 import { primaryCheck } from './primary';
 
 /**
+ * Düşmüş kahraman item takamaz / çıkaramaz (Ömer 2026-10-18): sefer ve Endless (motor/run katmanı), arayüz (toast, şerit notu, düğme ipucu) TEK metin.
+ * Diriltme yolu söylenmez (sefer / Endless farklı); stat puanı düşmüşken de harcanabilir.
+ */
+export const FALLEN_GEAR_MSG = "Fallen heroes can't equip items.";
+/** Aynı kuralın kısa hali (Equip düğmesi / menü satırı). */
+export const FALLEN_GEAR_SHORT = "Fallen: can't equip";
+
+/**
  * Örneğin (zarlarıyla) sınıfa değeri: affix IP'si x uyum + Legendary etkisi + taban değeri (silah gücü, örtük stat; Item Güçlendirme 2026-10-17).
  * `slot` ikinci else silah gücünün yalnızca `offhandShare` kadarı sayılır.
  */

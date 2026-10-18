@@ -38,7 +38,7 @@ export const debugState: DebugState = {
   enemyAiOff: false,
   galleryReset: true,
   matchLog: true,
-  flags: { damageMult: 1, crit: 'auto', dodge: 'auto', miss: 'auto' },
+  flags: { damageMult: 1, crit: 'auto', dodge: 'auto', miss: 'auto', block: false },
 };
 
 /** Phaser tween/zamanlayıcı hız çarpanı: duraklatma 0, atlama çok hızlı, aksi halde seçilen hız. */

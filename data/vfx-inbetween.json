@@ -29,7 +29,9 @@
     "skills": [
       { "skill": "dirge", "label": "Dirge", "target": "grave_chanter" },
       { "skill": "halberd_chop", "label": "Halberd Chop", "target": "morvane_halberdier" },
-      { "skill": "wall_of_pikes", "label": "Wall of Pikes", "target": "sworn_guard" }
+      { "skill": "wall_of_pikes", "label": "Wall of Pikes", "target": "sworn_guard" },
+      { "skill": "rend", "label": "Rend", "target": "grey_wolf" },
+      { "skill": "glyph_of_breaking", "label": "Glyph of Breaking", "target": "deep_runecaller" }
     ]
   }
 }

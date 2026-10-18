@@ -5,7 +5,7 @@
  */
 import type Phaser from 'phaser';
 import layout from '../../data/battle-layout.json';
-import { content, TARGET_TEXT } from '../engine';
+import { content, TARGET_TEXT, UNBLOCKABLE_LABEL } from '../engine';
 import type { Combatant } from '../engine';
 import {
   DAMAGE_MULTS,
@@ -918,6 +918,20 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       },
     });
   }
+  // Kalkan bloğu zorlaması (Ömer 2026-10-18): kural gereği bloklanabilen her vuruş (düşmanın doğrudan fiziksel vuruşu; Unblockable, büyü, DoT hariç)
+  debug.register({
+    id: 'tweak.block',
+    icon: 'shield',
+    tab: 'Rolls',
+    section: 'Block (shields)',
+    label: 'Force block (every blockable hit)',
+    hint: `Every enemy physical hit is blocked, shield or not, on both sides. Spells, damage over time, Doom and ${UNBLOCKABLE_LABEL} skills (Backstab, boss warnings) still land`,
+    on: () => !!debugState.flags.block,
+    run: () => {
+      debugState.flags.block = !debugState.flags.block;
+      applyFlags();
+    },
+  });
   debug.register({
     id: 'tweak.crit-cycle',
     dockOnly: true,

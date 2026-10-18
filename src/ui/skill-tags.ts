@@ -7,6 +7,7 @@ import layout from '../../data/battle-layout.json';
 import { content } from '../engine';
 import { targetBadge } from '../engine/skill-info';
 import { rangeEnabled, rangeLabel } from '../engine/range';
+import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../engine/unblockable';
 import type { Element, SkillDef } from '../engine';
 import { ELEMENT_ICON } from '../game/float-text';
 import { paintedOr } from './misc-icons';
@@ -14,6 +15,8 @@ import { paintedOr } from './misc-icons';
 export type SkillRange = 'Melee' | 'Ranged' | 'Support' | 'Self';
 
 export const ELEMENT_COLOR = layout.colors.element as Record<string, string>;
+/** "Unblockable" etiketinin ve savaştaki telgraf rozetinin rengi (kırık kalkan: soluk kızıl). */
+export const UNBLOCKABLE_COLOR = '#ff8a6a';
 
 /** Element adı (Codex Elements bölümüyle aynı: id'nin baş harfi büyük). */
 export const elementName = (id: string): string => id.charAt(0).toUpperCase() + id.slice(1);
@@ -41,7 +44,7 @@ export function skillElements(skill: SkillDef): Element[] {
 }
 
 export interface SkillTag {
-  kind: 'target' | 'element' | 'range';
+  kind: 'target' | 'element' | 'range' | 'unblockable';
   text: string;
   /** Elementte kendi rengi. */
   color?: string;
@@ -59,9 +62,11 @@ export function skillTags(skill: SkillDef, ownerRange: number | undefined = cont
   if (rangeEnabled(content.formulas)) {
     const label = rangeLabel(skill, ownerRange, content.formulas);
     if (label) out.push({ kind: 'range', text: label });
-    return out;
+  } else {
+    const r = skillRange(skill);
+    if (r === 'Melee' || r === 'Ranged') out.push({ kind: 'range', text: r });
   }
-  const r = skillRange(skill);
-  if (r === 'Melee' || r === 'Ranged') out.push({ kind: 'range', text: r });
+  // Unblockable (Ömer 2026-10-18): telgraflı boss skill'leri ve Backstab; ad tek yerde (src/engine/unblockable.ts)
+  if (isUnblockableSkill(skill)) out.push({ kind: 'unblockable', text: UNBLOCKABLE_LABEL, color: UNBLOCKABLE_COLOR });
   return out;
 }

@@ -261,7 +261,9 @@ describe('Sprite sheet efektleri (assets/vfx) bağlı; assets/source yalnızca k
     const owners = existsSync(iconsRoot) ? readdirSync(iconsRoot) : [];
     expect(owners).toContain('defender');
     for (const owner of owners) {
-      expect(existsSync(join(__dirname, '..', 'assets', 'source', `${owner}-icons`)), `assets/source/${owner}-icons yok`).toBe(true);
+      // asıl: ya assets/source/<sahip>-icons (hazır tek dosyalar) ya da assets/source/class-icons/<sahip>-sheet.png (tools/make-class-icons.py sayfası)
+      const srcOk = existsSync(join(__dirname, '..', 'assets', 'source', `${owner}-icons`)) || existsSync(join(__dirname, '..', 'assets', 'source', 'class-icons', `${owner}-sheet.png`));
+      expect(srcOk, `assets/source/${owner}-icons ya da class-icons/${owner}-sheet.png yok`).toBe(true);
       const src = readFileSync(join(__dirname, '..', 'src/game/art-v2', owner, 'icons.ts'), 'utf8');
       for (const f of readdirSync(join(iconsRoot, owner)).filter((x) => x.endsWith('.png'))) expect(src.includes(`'${owner}/${f.replace(/\.png$/, '')}'`), `${owner}/${f}: ${owner}/icons.ts bağlamıyor`).toBe(true);
     }

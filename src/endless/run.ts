@@ -3,7 +3,7 @@ import { classes } from '../engine/content';
 import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
-import { bestMoves } from '../progression/equip';
+import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
 import { starterWeapon, starterUid } from '../progression/weapon';
@@ -53,6 +53,8 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
 }
 
 export const heroOf = (run: EndlessRun, id: string): EndlessHero | undefined => run.heroes.find((h) => h.id === id);
+/** Endless'ta düşmüş kahraman (can 0; ceset): item takamaz / çıkaramaz (Ömer 2026-10-18, sefer ile aynı kural ve metin). */
+export const runHeroFallen = (h: Pick<EndlessHero, 'hpRatio'>): boolean => h.hpRatio <= 0;
 
 /** Gear Score: takılı item'lerin IP toplamı (items.md 2.3; 1 IP ~ +%1 güç). */
 export function gearScore(run: Pick<EndlessRun, 'heroes'>): number {
@@ -590,6 +592,7 @@ export function equipFromBag(run: EndlessRun, heroId: string, uid: string, slot?
   lockCheck(run);
   const hero = heroOf(run, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (runHeroFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
   const bag = bagOf(run);
   const idx = bag.findIndex((i) => i.uid === uid);
   if (idx < 0) throw new Error(`Item not in the bag: ${uid}`);
@@ -618,6 +621,7 @@ export function unequipToBag(run: EndlessRun, heroId: string, slot: SlotId, cfg:
   lockCheck(run);
   const hero = heroOf(run, heroId);
   if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (runHeroFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
   if (!hero.equipment[slot]) return run;
   if (bagOf(run).length >= endlessBagSize(cfg)) throw new Error('Bag is full');
   const s = clone(run);
@@ -645,7 +649,7 @@ export function equipBestRun(run: EndlessRun, heroIds?: string[]): EndlessRun {
   let s = run;
   for (const id of heroIds ?? run.heroes.map((h) => h.id)) {
     const h = heroOf(s, id);
-    if (!h) continue;
+    if (!h || runHeroFallen(h)) continue; // düşmüş kahramanın ekipmanı değişmez (arayüz ve sim aynı; Ömer 2026-10-18)
     for (const m of bestMoves({ class: h.class, equipment: { ...emptyEquipment(), ...h.equipment }, level: h.level ?? 1 }, bagOf(s))) {
       try {
         s = equipFromBag(s, id, m.uid, m.slot);

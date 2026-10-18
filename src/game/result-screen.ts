@@ -155,8 +155,21 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const myUnits = battle.combatants.filter((c) => c.side === local && !c.summoned);
   const standing = myUnits.filter((c) => c.hp > 0).length;
   const sub = o.subtitle ?? (victory ? 'The enemy line is broken' : 'Your party has fallen');
-  plaque.add(elBody(scene, W / 2, py + 148, sub, 26, accent.text).setOrigin(0.5));
-  plaque.add(elBody(scene, W / 2, py + 177, `${stats.turns} turns  ·  ${standing} of ${myUnits.length} heroes standing`, 19, EL.MUTED).setOrigin(0.5));
+  const statLine = `${stats.turns} turns  ·  ${standing} of ${myUnits.length} heroes standing`;
+  // Düz (italik değil) yazı; hiçbir satır çerçeveden taşmasın: genişlik plaketin içine sığacak kadar küçülür
+  const fit = (t: Phaser.GameObjects.Text) => {
+    const maxW = plaqueW - 90;
+    if (t.width > maxW) t.setScale(maxW / t.width);
+    return t;
+  };
+  if (o.subtitle) {
+    // Not varsa (ör. düşen kahraman): ana satır tur/hayatta sayısı, altında kısa not
+    plaque.add(fit(elBody(scene, W / 2, py + 148, statLine, 26, accent.text, false).setOrigin(0.5)));
+    plaque.add(fit(elBody(scene, W / 2, py + 180, sub, 20, EL.MUTED, false).setOrigin(0.5)));
+  } else {
+    plaque.add(fit(elBody(scene, W / 2, py + 148, sub, 26, accent.text, false).setOrigin(0.5)));
+    plaque.add(fit(elBody(scene, W / 2, py + 177, statLine, 19, EL.MUTED, false).setOrigin(0.5)));
+  }
   plaque.setSize(plaqueW, plaqueH);
   root.add(plaque);
   plaque.setAlpha(0);

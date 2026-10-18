@@ -32,7 +32,9 @@ import { formatHit } from '../hit-format';
 import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
 import { CombatLog } from '../combat-log';
-import { skillTags } from '../../ui/skill-tags';
+import { skillTags, UNBLOCKABLE_COLOR } from '../../ui/skill-tags';
+import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../../engine/unblockable';
+import { blockIconUrl } from '../../ui/stat-tips';
 import { skillTargetLabel } from '../../ui/skill-target-label';
 import { statName } from '../../ui/stat-name';
 import { BattleHud, type HudActor, type HudGlobal, type HudModel, type HudQueueCell, type HudSkill, type HudStat, type TipContent, type UnitCard } from '../../ui/battle-hud';
@@ -249,7 +251,7 @@ export class BattleScene extends Phaser.Scene {
   private hazes = new HazeTracker();
   private hazeViews = new Map<string, HazeView>();
   /** Bekleyen telgrafların (Bridge Warden) kalıcı göstergeleri: telgraf id -> çatlak hücreler + (damgada) birim üstü işaret. */
-  private telegraphViews = new Map<string, { cells?: { destroy(): void }; mark?: { destroy(): void }; kind: 'span' | 'fall' | 'brand' }>();
+  private telegraphViews = new Map<string, { cells?: { destroy(): void }; mark?: { destroy(): void }; badge?: { destroy(): void }; kind: 'span' | 'fall' | 'brand' }>();
   private badgeKeys = new Map<string, string>();
   /** Skill kullanımlarının olay özeti (VfxCtx.usage; src/game/skill-usage.ts): olaylar motor yayarken kaydedilir, efekt oynarken okunur. */
   private usageRec = new UsageRecorder();
@@ -2414,6 +2416,9 @@ export class BattleScene extends Phaser.Scene {
       { iconUrl: icon('critChance'), label: 'CRIT', value: this.statValue('critChance', eff) },
       { iconUrl: icon('accuracy'), label: 'ACC', value: `${Math.round(eff.accuracy * 100)}%`, ...(tint('accuracy') ? { color: tint('accuracy')! } : {}) },
     ];
+    // Blok (Ömer 2026-10-18): yalnızca kalkanı olan birimde; değer motorun uyguladığı şans (tavan dahil: battle.blockChance ile aynı)
+    const block = this.battle.unitBlockChance(c);
+    if (block > 0) grid.push({ iconUrl: blockIconUrl(), label: 'BLOCK', value: `${Math.round(block * 100)}%` });
     const effects: UnitCard['effects'] = [];
     for (const st of c.statuses) {
       const sd = content.statuses[st.kind];
@@ -3395,7 +3400,7 @@ export class BattleScene extends Phaser.Scene {
   private showTelegraph(id: string, skillId: string, kind: 'area' | 'brand', board: 'party' | 'enemy', cells: number[], safe?: number[], bound?: string): void {
     const vk: 'span' | 'fall' | 'brand' = kind === 'brand' ? 'brand' : content.skills[skillId]?.telegraph?.wholeBoard ? 'fall' : 'span';
     this.clearTelegraph(id);
-    const entry: { cells?: { destroy(): void }; mark?: { destroy(): void }; kind: 'span' | 'fall' | 'brand' } = { kind: vk };
+    const entry: { cells?: { destroy(): void }; mark?: { destroy(): void }; badge?: { destroy(): void }; kind: 'span' | 'fall' | 'brand' } = { kind: vk };
     try {
       entry.cells = wardenTelegraphCells(this, vk, board, cells.filter((c) => !safe?.includes(c)), safe ?? []);
       const v = bound ? this.views.get(bound) : undefined;
@@ -3403,7 +3408,49 @@ export class BattleScene extends Phaser.Scene {
     } catch (err) {
       console.warn('[warden] telgraf göstergesi çizilemedi', err);
     }
+    entry.badge = this.unblockableBadge(skillId, board, cells.filter((c) => !safe?.includes(c)));
     this.telegraphViews.set(id, entry);
+  }
+
+  /**
+   * "Unblockable" rozeti (Ömer 2026-10-18): bloklanamayan telgrafın (src/engine/unblockable.ts) işaretli hücrelerinin altında kırık kalkan + ad.
+   * Zemin katmanında (birimlerin altında) durur; telgraf çözülünce / iptal olunca silinir. Bloklanabilir telgrafta (yoksa) çizilmez.
+   */
+  private unblockableBadge(skillId: string, board: 'party' | 'enemy', cells: number[]): Phaser.GameObjects.Container | undefined {
+    if (!isUnblockableSkill(content.skills[skillId]) || cells.length === 0) return undefined;
+    try {
+      const pts = cells.map((c) => this.cellPos(board, c));
+      const x = pts.reduce((t, p) => t + p.x, 0) / pts.length;
+      const y = Math.max(...pts.map((p) => p.y)) + 52;
+      const col = Phaser.Display.Color.HexStringToColor(UNBLOCKABLE_COLOR).color;
+      const label = elText(this, 0, 0, UNBLOCKABLE_LABEL, 22, UNBLOCKABLE_COLOR, { em: 0.12 }).setOrigin(0, 0.5);
+      // Kırık kalkan: kalkan gövdesi + ortadan zikzak çatlak (iki yarı hafifçe ayrık)
+      const g = this.add.graphics();
+      const shield = (dx: number, half: -1 | 1): void => {
+        const p = [
+          { x: dx, y: -15 },
+          { x: dx + half * 12, y: -12 },
+          { x: dx + half * 12, y: 1 },
+          { x: dx + half * 6, y: 11 },
+          { x: dx, y: 16 },
+        ];
+        g.fillStyle(0x1b120d, 0.9).fillPoints(p, true);
+        g.lineStyle(2.5, col, 1).strokePoints(p, true);
+      };
+      shield(-2, -1);
+      shield(2, 1);
+      g.lineStyle(2.5, col, 1).beginPath().moveTo(0, -17).lineTo(-3, -6).lineTo(3, 2).lineTo(-2, 9).lineTo(0, 18).strokePath();
+      const w = 30 + label.width;
+      g.setPosition(14, 0);
+      label.setPosition(34, 0);
+      const box = this.add.container(x - w / 2, y, [g, label]).setDepth(51);
+      box.setAlpha(0);
+      this.tweens.add({ targets: box, alpha: 1, duration: slow(240) });
+      return box;
+    } catch (err) {
+      console.warn('[warden] Unblockable rozeti çizilemedi', err);
+      return undefined;
+    }
   }
 
   private clearTelegraph(id: string): void {
@@ -3411,6 +3458,7 @@ export class BattleScene extends Phaser.Scene {
     if (!t) return;
     t.cells?.destroy();
     t.mark?.destroy();
+    t.badge?.destroy();
     this.telegraphViews.delete(id);
   }
 
@@ -3425,6 +3473,8 @@ export class BattleScene extends Phaser.Scene {
       } catch {
         view.cells = undefined;
       }
+      view.badge?.destroy();
+      view.badge = this.unblockableBadge(t.skill, t.board, this.battle.telegraphCells(t));
     }
   }
 

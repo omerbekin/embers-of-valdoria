@@ -3,7 +3,7 @@
  * dummy'de bu skilli atsın, animasyon gerçekten oynasın"). GERÇEK test savaşı (BattleScene, mode 'test'): atan mob düşman tarafında, kukla (dummy)
  * oyuncu tarafında durur; skill gerçek savaş hattıyla oynar (hazırlık pozu, atılma, efekt, vuruş, hasar rakamı). Kukla hareket etmez ve ölmez
  * (BattleScene.vfxTestCast her atıştan önce/sonra canı doldurur). Savaş arayüzü gizlenir; üstte küçük kontrol paneli:
- *   Skill (Dirge / Halberd Chop / Wall of Pikes: atan mob değişince savaş yeniden kurulur) · Version (Original / ChatGPT 16f / Code in-between /
+ *   Skill (Dirge / Halberd Chop / Wall of Pikes / Rend / Glyph of Breaking: atan mob değişince savaş yeniden kurulur) · Version (Original / ChatGPT 16f / Code in-between /
  *   Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts) ·
  *   Code yöntemi + kat · Cast · Loop · Speed 0.25x/0.5x/1x · Pause + Step (≈1 efekt karesi).
  * Sürüm yalnızca O ATIŞ için seçilir (src/game/mob-vfx.ts > mobVfxTest); panel kapanınca ya da savaştan çıkılınca kapanır, gerçek savaşlar
@@ -198,6 +198,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     verBtns.forEach(([v, b]) => {
       b.classList.toggle('on', v === state.version);
       if (v === 'tween') b.classList.toggle('na', !tweenOk[state.skill]);
+      if (v === 'hand') b.classList.toggle('na', !MOB_HAND_VFX[sk.skill]);
     });
     codeRow.classList.toggle('on', state.version === 'code');
     methodBtns.forEach((b, i) => b.classList.toggle('on', state.version === 'code' && IB_METHODS[i] === state.method));
@@ -211,7 +212,9 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     const f = curSheet();
     const ibSub = state.version === 'code' ? state.sub : 1;
     const label =
-      state.version === 'hand'
+      state.version === 'hand' && !MOB_HAND_VFX[sk.skill]
+        ? 'Hand-coded: not made for this skill, playing Original'
+        : state.version === 'hand'
         ? 'Hand-coded · no sprite sheet, drawn every frame · same hit moment as Original'
         : state.version === 'tween' && !tweenOk[state.skill]
         ? 'ChatGPT 16f: not ready yet (assets/mob-vfx-tween), playing Original'

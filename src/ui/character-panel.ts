@@ -44,7 +44,7 @@ import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
-import { FALLEN_GEAR_TEXT, FALLEN_MARK, FALLEN_POINTS_TEXT, heroFallen, heroItemLine, type HoverHero } from './gear-hover';
+import { FALLEN_GEAR_TEXT, FALLEN_MARK, heroFallen, heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
 import { slotIconUrl } from './slot-icons';
 import { escHtml, passiveCellHtml, skillCellHtml, type SkillCellView, type SkillCostChip } from './skill-bar';
@@ -141,7 +141,6 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
     box.append(row);
     if (pend > 0 && primaryLost) box.append(el('div', 'gr-pts-warn', primaryLost));
   }
-  if (!lv && heroFallen(hero) && (hero.statPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill gr-fallen-note', `${hero.statPoints} stat point${hero.statPoints === 1 ? '' : 's'} waiting. ${FALLEN_POINTS_TEXT}`));
   if ((hero.skillPoints ?? 0) > 0) box.append(el('div', 'gr-pts-skill', `${hero.skillPoints} skill point${hero.skillPoints === 1 ? '' : 's'} saved for the skill trees`));
   return box;
 }
@@ -309,7 +308,7 @@ function lockIcon(): HTMLElement {
   return s;
 }
 
-/** "Fallen · revive at a town" şeridi (Hero ve Sheet sayfalarının başında; düşmüş kahramanda). */
+/** "Fallen" şeridi + tek kural metni (Hero ve Sheet sayfalarının başında; düşmüş kahramanda). */
 function fallenBanner(hero: HoverHero): HTMLElement | null {
   if (!heroFallen(hero)) return null;
   const b = el('div', 'gr-fallen-banner');

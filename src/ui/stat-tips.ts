@@ -1,7 +1,7 @@
 // Stat açıklamaları (savaş HUD'ı ile AYNI kaynak: src/engine/stat-info.ts > describeStat, değerler formulas.json): Gear ekranının stat paneli
 // ve item kartı satırları için. Motorda karşılığı tek stat olmayan "Damage" (Global damage affix'i = Stats.damageMult; eski Might'ın yerine,
 // Ömer 2026-10-11) burada anlatılır; ikonu eski Might ikonu.
-import { content, describeStat } from '../engine';
+import { content, describeStat, UNBLOCKABLE_LABEL } from '../engine';
 import type { StatKind, Stats } from '../engine';
 import { iconUrl } from './dom-icons';
 import { MIGHT_COLOR, STAT_COLOR, statIconName } from './stat-icons';
@@ -154,7 +154,7 @@ const BLOCK_TIP: StatTip = {
   title: 'Block chance',
   lines: [
     "Chance that your shield blocks an enemy's physical hit (melee or ranged): the hit deals no damage and none of its effects (Stun, Wound...).",
-    "Spells, damage over time, burning ground, Doom and Backstab cannot be blocked. A guardian's shield can block the share it takes.",
+    `Spells, damage over time, burning ground, Doom and ${UNBLOCKABLE_LABEL} skills (Backstab, boss warnings) cannot be blocked. A guardian's shield can block the share it takes.`,
     `Comes only from shields: their base value plus the Block affix. At most ${(itemsJson.caps as Record<string, number>)['block'] ?? 30}%.`,
   ],
 };

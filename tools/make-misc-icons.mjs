@@ -17,7 +17,7 @@
 // Doğrulama: --check=<klasör> her ikonu koyu ve açık zemin üstünde (128 ve 24 px) bir kontrol sayfasına yazar (<klasör>/misc-icons-check-<sayfa>.png).
 //
 // Yeniden üretmek için: node tools/make-misc-icons.mjs [--debug] [--check=<klasör>]
-import { mkdirSync } from 'node:fs';
+import { existsSync, mkdirSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
 
@@ -446,6 +446,8 @@ for (const sheet of SHEETS) {
   for (let r = 0; r < ROWS_S; r++)
     for (let c = 0; c < COLS_S; c++) {
       const [group, name] = sheet.grid[r][c];
+      // sınıf amblemi tools/make-class-icons.py ile (sınıf ikon sayfasından) yapıldıysa eski amblem ezilmez
+      if (group === 'class' && existsSync(join('assets', 'source', 'class-icons', `${name}-sheet.png`))) continue;
       const cx = cxs[r];
       const b = bbox(alpha, sheet.alphaBox, cx[c], cy[r], cx[c + 1], cy[r + 1]);
       if (!b) throw new Error(`${group}/${name}: hücre boş`);

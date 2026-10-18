@@ -2,6 +2,7 @@
 // Ömer 2026-10-11 (g1): "Usable by" ayrı blok değil; kahraman kartının alt satırı ("Level 1 · 4/6 items") item üstündeyken o kahramanın
 // kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Axes"); item yokken eski satır geri gelir.
 import type { StatAlloc } from '../progression/levels';
+import { FALLEN_GEAR_MSG, FALLEN_GEAR_SHORT } from '../progression/equip';
 import {
   ITEMS,
   affixDiff,
@@ -41,10 +42,10 @@ export interface HoverHero {
 /** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */
 export const heroFallen = (h: { alive?: boolean; hpRatio?: number } | undefined): boolean => !!h && (h.alive === false || (h.hpRatio !== undefined && h.hpRatio <= 0));
 
-/** Düşmüş kahraman için ortak yazılar (harita ile aynı dil). */
-export const FALLEN_MARK = 'Fallen · revive at a town';
-export const FALLEN_GEAR_TEXT = "Fallen heroes can't change gear. Revive them at a town.";
-export const FALLEN_POINTS_TEXT = "Fallen heroes can't spend stat points. Revive them at a town.";
+/** Düşmüş kahraman için ortak yazılar (Ömer 2026-10-18): şerit işareti + tek kural metni (sefer ve Endless; diriltme yolu söylenmez). */
+export const FALLEN_MARK = 'Fallen';
+export const FALLEN_GEAR_TEXT = FALLEN_GEAR_MSG;
+export const FALLEN_GEAR_SHORT_TEXT = FALLEN_GEAR_SHORT;
 
 export interface HeroLinePart {
   text: string;

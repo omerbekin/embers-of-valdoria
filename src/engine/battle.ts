@@ -7,6 +7,7 @@ import { betMultipliers, betStake } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
 import { Rng } from './rng';
 import { ITEM_HOOK_CAPS } from './item-caps';
+import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
@@ -65,6 +66,8 @@ export interface DebugFlags {
   dodge: 'auto' | 'always' | 'never';
   /** always: hasar veren her vuruş 'miss' olur (saldıranın isabeti yetmedi); dodge 'always' ile birlikteyse dodge kazanır. Yoksa/auto: oyun kuralı. */
   miss?: 'auto' | 'always';
+  /** Debug "Force block (every blockable hit)": kural gereği bloklanabilen her vuruş bloklanır (kalkansız birim ve düşman dahil). Yoksa/false: oyun kuralı. */
+  block?: boolean;
 }
 
 /** Yapay zeka (ya da arayüz) seçimini motora çevirmek için yapısal giriş: skillId bir class skill'i ya da global skill id'si olabilir. */
@@ -378,20 +381,39 @@ export class Battle {
   }
 
   /**
-   * Blok şansı (Ömer 2026-10-18; 0-1): `target`'ın kalkanı (item kancası `blockChance`, tavan items.json > caps.block) `actor`'ün bu hasar
-   * etkisini bloklayabilir mi. Yalnızca DÜŞMANIN fiziksel vuruşu; büyü ve `unblockable` (Backstab) 0. İsabet zarsız (sure) vuruşu çağıran eler.
-   * Önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
+   * Bu vuruş kural gereği bloklanabilir mi (kalkandan bağımsız): yalnızca DÜŞMANIN fiziksel vuruşu; büyü ve "Unblockable" (src/engine/unblockable.ts:
+   * hasar etkisinde `unblockable` bayrağı = Backstab, ya da telgraflı boss skill'i) hayır. `skill` verilmezse yalnızca etkinin bayrağına bakılır.
    */
-  blockChance(actor: Combatant, target: Combatant, effect: Pick<DamageEffect, 'damageType' | 'unblockable'>): number {
-    const c = target.itemEffects?.blockChance ?? 0;
-    if (!(c > 0) || actor.side === target.side || effect.damageType !== 'physical' || effect.unblockable) return 0;
-    return Math.min(ITEM_HOOK_CAPS.block, c);
+  blockableHit(actor: Combatant, target: Combatant, effect: Pick<DamageEffect, 'damageType' | 'unblockable'>, skill?: Pick<SkillDef, 'telegraph'> | null): boolean {
+    return actor.side !== target.side && effect.damageType === 'physical' && !isUnblockableHit(skill, effect);
   }
 
-  /** Blok zarı: şans 0 ise (kalkansız hedef, büyü, Backstab, sure) rastgele sayı TÜKETMEZ (QB / altın kayıtlar birebir). */
+  /**
+   * Blok şansı (Ömer 2026-10-18; 0-1): `target`'ın kalkanı (item kancası `blockChance`, tavan items.json > caps.block) `actor`'ün bu hasar
+   * etkisini bloklayabilir mi (blockableHit). İsabet zarsız (sure) vuruşu çağıran eler. Önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
+   */
+  blockChance(actor: Combatant, target: Combatant, effect: Pick<DamageEffect, 'damageType' | 'unblockable'>, skill?: Pick<SkillDef, 'telegraph'> | null): number {
+    const c = this.unitBlockChance(target);
+    if (!(c > 0) || !this.blockableHit(actor, target, effect, skill)) return 0;
+    return c;
+  }
+
+  /** Birimin kalkan blok şansı (0-1; tavan dahil, kalkansızda 0). Savaş birim kartı "BLOCK n%" satırı bunu gösterir. Saf. */
+  unitBlockChance(c: Pick<Combatant, 'itemEffects'>): number {
+    const v = c.itemEffects?.blockChance ?? 0;
+    return v > 0 ? Math.min(ITEM_HOOK_CAPS.block, v) : 0;
+  }
+
+  /**
+   * Blok zarı: şans 0 ise (kalkansız hedef, büyü, Unblockable, sure) rastgele sayı TÜKETMEZ (QB / altın kayıtlar birebir). Debug "Force block"
+   * (`debug.block`): kural gereği bloklanabilen her vuruş (kalkan şartı yok, iki taraf) bloklanır; zar yine şansa göre atılır (sayı akışı aynı).
+   */
   private rollBlock(actor: Combatant, target: Combatant, effect: DamageEffect, sure: boolean): boolean {
-    const chance = sure ? 0 : this.blockChance(actor, target, effect);
-    return chance > 0 && this.rng.next() < chance;
+    const skill = this.castingSkill;
+    const chance = sure ? 0 : this.blockChance(actor, target, effect, skill);
+    const rolled = chance > 0 && this.rng.next() < chance;
+    if (this.debug.block && !sure && this.blockableHit(actor, target, effect, skill)) return true;
+    return rolled;
   }
 
   /** Alınan hasarın toplam çarpanı: durumlar (Fortified/Blessed...) x taunt eden dostun koruması (taunt'lı olmayan dostlar). */
@@ -1214,8 +1236,10 @@ export class Battle {
     emit({ type: 'telegraphResolve', id: t.id, source: src.uid, skill: t.skill, board: t.board, cells: [...cells], hit: victims.map((v) => v.uid), avoided: tg.kind === 'brand' ? [] : marked.filter((u) => !victims.some((v) => v.uid === u)) });
     for (const effect of skill.effects) {
       if (effect.type === 'damage') {
+        // Unblockable (src/engine/unblockable.ts): telgraf çözülmesi zarsızdır ve bloklanamaz; bayrak açıkça verilir (strike'ta castingSkill yok)
+        const hit = isUnblockableHit(skill, effect) ? { ...effect, unblockable: true } : effect;
         victims.forEach((v, i) => {
-          if (v.hp > 0) this.strike(src, v, effect, emit, 1, i === 0, true);
+          if (v.hp > 0) this.strike(src, v, hit, emit, 1, i === 0, true);
         });
       } else if (effect.type === 'ground') {
         this.placeGround(src, effect, t.board, cells, emit);

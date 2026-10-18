@@ -5,6 +5,8 @@ import { describeEvent } from '../src/engine/match-log';
 import { CombatLog } from '../src/game/combat-log';
 import { ITEMS } from '../src/progression';
 import { buildMechanics } from '../src/wiki/catalog';
+import { isUnblockableSkill, UNBLOCKABLE_LABEL } from '../src/engine/unblockable';
+import { skillTags } from '../src/ui/skill-tags';
 
 // Kalkan bloğu (Ömer 2026-10-18): kalkanlı hedef düşmanın DOĞRUDAN FİZİKSEL skill vuruşunu tamamen bloklar (hasar 0, ek etkiler yok).
 // Büyü, Backstab (unblockable) bloklanmaz; tavan items.json > caps.block; önizleme / YZ isabet şansını x(1 - blok) ile çarpar.
@@ -152,7 +154,86 @@ describe('kalkan bloğu: Codex', () => {
   it('Hit chance makalesi ve Items makalesi bloğu anlatır (sayılar veriden)', () => {
     const text = JSON.stringify(buildMechanics());
     expect(text).toContain('Block: a hero with a shield');
-    expect(text).toContain('Backstab cannot be blocked');
+    expect(text).toContain('Unblockable skills cannot be blocked');
+    expect(text).toContain('Unblockable: a skill with the Unblockable tag');
+    expect(text).toMatch(/Other Unblockable skills: [^.]*Backstab/);
+    expect(text).toMatch(/Boss warnings: [^.]*Breaking Span/);
     expect(text).toContain("A shield's base value is its block chance");
+  });
+});
+
+// Unblockable etiketi (Ömer 2026-10-18): telgraflı boss skill'leri ve Backstab tek kural (src/engine/unblockable.ts); debug Force block; birim kartı BLOCK.
+describe('Unblockable ve Force block', () => {
+  const W_TEAMS: Teams = {
+    party: cells({ 0: 'warrior', 3: 'mage', 5: 'paladin', 7: 'archer' }),
+    enemies: cells({ 1: 'bridge_warden', 3: 'iron_mooring', 5: 'iron_mooring' }),
+    units: { party: { 3: shield(0.3), 5: shield(0.3) }, enemies: { 1: { tier: 'boss', displayName: 'The Bridge Warden', modifiers: { actionsPerTurn: 2 } } } },
+  };
+
+  it('kural: telgraflı skill ve Backstab Unblockable; sıradan fiziksel skill değil; ad tek sabit', () => {
+    expect(UNBLOCKABLE_LABEL).toBe('Unblockable');
+    const tele = Object.values(content.skills).filter((s) => s.telegraph && s.effects.some((e) => e.type === 'damage'));
+    expect(tele.length).toBeGreaterThan(0);
+    for (const s of tele) expect(isUnblockableSkill(s), s.id).toBe(true);
+    expect(isUnblockableSkill(content.skills.backstab)).toBe(true);
+    expect(isUnblockableSkill(content.skills[PHYS])).toBe(false);
+    expect(skillTags(content.skills.breaking_span!).some((t) => t.kind === 'unblockable' && t.text === UNBLOCKABLE_LABEL)).toBe(true);
+    expect(skillTags(content.skills.backstab!).some((t) => t.kind === 'unblockable')).toBe(true);
+    expect(skillTags(content.skills[PHYS]!).some((t) => t.kind === 'unblockable')).toBe(false);
+  });
+
+  it('telgraf çözülmesi Force block açıkken ve kalkanlı hedefte bile bloklanmaz', () => {
+    const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 3, 'turns', W_TEAMS, false));
+    b.debug.block = true;
+    const w = b.combatants.find((c) => c.defId === 'bridge_warden')!;
+    for (let i = 0; i < 60 && b.currentUid !== w.uid; i++) b.skipTurn();
+    expect(b.useSkill(w.uid, 'breaking_span', undefined, 3).ok).toBe(true);
+    b.skipTurn();
+    const n = b.log.length;
+    for (let i = 0; i < 60 && b.currentUid !== w.uid; i++) b.skipTurn();
+    const ev = b.log.slice(n);
+    const res = ev.find((e): e is Extract<BattleEvent, { type: 'telegraphResolve' }> => e.type === 'telegraphResolve')!;
+    expect(res.hit.length).toBeGreaterThan(0);
+    expect(ev.some((e) => e.type === 'block')).toBe(false);
+    for (const uid of res.hit) expect(ev.some((e) => e.type === 'damage' && e.target === uid)).toBe(true);
+  });
+
+  it('Force block: bloklanabilen her vuruş (kalkansız, iki taraf) bloklanır; büyü ve Backstab işler', () => {
+    for (let seed = 1; seed <= 20; seed++) {
+      const b = make({ 0: 'cutthroat' }, { 0: 'defender' }, {}, seed);
+      b.debug.block = true;
+      const r = b.useSkill('party-0', PHYS, 'enemy-0');
+      expect(r.ok && r.events.some((e) => e.type === 'block' && e.target === 'enemy-0'), `seed ${seed}`).toBe(true);
+      expect(r.ok && r.events.some((e) => e.type === 'damage' && e.target === 'enemy-0')).toBe(false);
+      const c = make({ 0: 'cutthroat' }, { 0: 'defender' }, {}, seed);
+      c.debug.block = true;
+      const rb = c.useSkill('party-0', 'backstab', 'enemy-0');
+      expect(rb.ok && rb.events.some((e) => e.type === 'block')).toBe(false);
+    }
+    // büyü: zorlama olay akışını hiç değiştirmez
+    const run = (force: boolean) => {
+      const b = make({ 0: 'mage' }, { 0: 'defender' }, {}, 7);
+      b.debug.block = force;
+      const r = b.useSkill('party-0', content.classes.mage!.skills[0]!, 'enemy-0');
+      return JSON.stringify(r.ok ? r.events : r);
+    };
+    expect(run(true)).toBe(run(false));
+  });
+
+  it('Force block kapalıyken (false) oyun kuralı birebir: olay akışı bayraksız savaşla aynı', () => {
+    const run = (flag: boolean | undefined) => {
+      const b = make({ 0: 'cutthroat' }, { 0: 'defender' }, { 0: shield(0.3) }, 11);
+      if (flag !== undefined) b.debug.block = flag;
+      const r = b.useSkill('party-0', PHYS, 'enemy-0');
+      return JSON.stringify(r.ok ? r.events : r);
+    };
+    expect(run(false)).toBe(run(undefined));
+  });
+
+  it('birim kartı: unitBlockChance tavanlı, kalkansızda 0', () => {
+    const b = make({ 0: 'cutthroat' }, { 0: 'defender', 1: 'mage' }, { 0: shield(0.9), 1: shield(0.12) });
+    expect(b.unitBlockChance(b.get('enemy-0')!)).toBeCloseTo(CAP, 9);
+    expect(b.unitBlockChance(b.get('enemy-1')!)).toBeCloseTo(0.12, 9);
+    expect(b.unitBlockChance(b.get('party-0')!)).toBe(0);
   });
 });

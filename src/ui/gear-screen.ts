@@ -46,7 +46,7 @@ import { renderInventory, snapBagRows } from './inventory';
 import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
-import { FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
+import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -108,8 +108,6 @@ export interface GearSource {
   equipBest(heroIds?: string[]): void;
   /** Torba boşken kartta görünen yazı. */
   emptyText?: string;
-  /** Düşmüş kahraman uyarısı (yoksa: "Fallen heroes can't change gear. Revive them at a town."; Endless'te "town" yok). */
-  fallenText?: string;
   /** Stat puanı dağıt (levels.md; Character sayfasındaki Confirm). Yoksa puan dağıtımı gösterilmez. */
   allocate?(heroId: string, add: StatAlloc): void;
 }
@@ -128,7 +126,7 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
     equip: (heroId, uid, slot) => apply((x) => equipItem(x, heroId, uid, slot)),
     unequip: (heroId, slot) => apply((x) => unequipItem(x, heroId, slot)),
     discard: (uid) => apply((x) => discardItem(x, uid)),
-    equipBest: (ids) => apply((x) => equipBest(x, ids, { skipFallen: true })),
+    equipBest: (ids) => apply((x) => equipBest(x, ids)),
     emptyText: 'The bag is empty. Victories and chests bring new gear.',
     allocate: (heroId, add) => apply((x) => allocateStats(x, heroId, add)),
   };
@@ -284,9 +282,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   let afterStats: Stats | null = null;
   let closeAsk: (() => void) | null = null;
   const heroOf = (id: string) => src.heroes().find((h) => h.id === id);
-  /** Düşmüş kahramanın ekipmanı değişmez (Ömer 2026-10-18); metin: Endless'te "town" yok. */
+  /** Düşmüş kahramanın ekipmanı değişmez (Ömer 2026-10-18); metin sefer ve Endless'te aynı (FALLEN_GEAR_TEXT). Stat puanı harcanabilir. */
   const fallenId = (id: string): boolean => heroFallen(heroOf(id));
-  const fallenMsg = (): string => src.fallenText ?? FALLEN_GEAR_TEXT;
+  const fallenMsg = (): string => FALLEN_GEAR_TEXT;
   const fallenWarn = (): void => {
     uiSound('error');
     showToast(fallenMsg());
@@ -356,7 +354,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (extra) return extra;
       if (bagOnly) return key.startsWith('bag:') ? (ext?.bagActions?.(key.slice(4)) ?? []) : [];
       if (!hero) return [];
-      if (heroFallen(hero)) return key.startsWith('bag:') ? [{ label: 'Fallen · cannot equip', disabled: true, run: () => fallenWarn() }, ...(ext?.bagActions?.(key.slice(4)) ?? [])] : [];
+      if (heroFallen(hero)) return key.startsWith('bag:') ? [{ label: FALLEN_GEAR_SHORT_TEXT, disabled: true, run: () => fallenWarn() }, ...(ext?.bagActions?.(key.slice(4)) ?? [])] : [];
       if (key.startsWith('bag:')) {
         const uid = key.slice(4);
         const d = itemDef(bagInst(uid)?.id ?? '');
@@ -669,7 +667,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         heroId = id;
         renderAll();
       },
-      ...(src.allocate && !heroFallen(hero)
+      ...(src.allocate
         ? {
             level: {
               pending,
