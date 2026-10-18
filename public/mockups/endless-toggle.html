@@ -1,0 +1,144 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Endless Toggle Mockups</title>
+<!-- Endless anahtari konum taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #z=0.42 (olcek) ; &clean = serit gizli. -->
+<style>
+@font-face { font-family: Cinzel; font-weight: 400 900; font-display: swap; src: url('endless-toggle/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: swap; src: url('endless-toggle/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+* { box-sizing: border-box; }
+:root { --txt:#d9c8a2; --on:#f3d999; --muted:#a8977a; --gold:#d9b26a; --ember:#e0702a; --disp:Cinzel,Georgia,serif; --body:'EB Garamond',Georgia,serif; --z:.42; }
+html,body { margin:0; background:#070504; color:var(--txt); font-family:var(--body); }
+body { padding:0 0 70px; }
+.page { padding:18px 22px; }
+h1 { font:600 26px var(--disp); letter-spacing:.08em; text-transform:uppercase; color:var(--on); margin:6px 0 4px; }
+.intro { max-width:1000px; font:18px/1.45 var(--body); margin-bottom:22px; }
+.intro b { color:var(--on); font-weight:600; }
+.sec { margin:0 0 36px; padding-top:14px; border-top:1px solid rgba(217,178,106,.3); }
+.sec h2 { font:600 20px var(--disp); letter-spacing:.1em; text-transform:uppercase; color:var(--on); margin:0 0 4px; }
+.sec .note { font:17px/1.4 var(--body); color:var(--muted); margin:0 0 12px; max-width:1000px; }
+.pair { display:flex; flex-wrap:wrap; gap:22px; }
+.col > label { display:block; font:600 12px system-ui,sans-serif; letter-spacing:.08em; color:#ffb35a; text-transform:uppercase; margin-bottom:6px; }
+.wrap { width:calc(1560px * var(--z)); height:calc(900px * var(--z)); overflow:hidden; border:1px solid rgba(255,255,255,.06); background:#0c0806; }
+.stage { width:1560px; height:900px; transform:scale(var(--z)); transform-origin:0 0; position:relative; background:radial-gradient(ellipse at 50% 30%, #2a1d12 0%, #120c08 70%); }
+.cards { position:absolute; left:40px; top:60px; display:flex; gap:46px; }
+.card { position:relative; width:460px; height:640px; background:#241a11; }
+.card .art { position:absolute; inset:0; overflow:hidden; }
+.card .art img { position:absolute; inset:0; width:100%; height:100%; object-fit:cover; opacity:.92; transition:opacity .42s ease-in-out; }
+.card .art img.alt { opacity:0; }
+.card.on .art img.alt { opacity:.92; } .card.on .art img.main { opacity:0; }
+.card .shade { position:absolute; inset:0; background:linear-gradient(180deg, rgba(10,7,4,0) 30%, rgba(10,7,4,.95) 100%); }
+.card .frame { position:absolute; inset:0; border:1px solid rgba(217,178,106,.55); box-shadow:inset 0 0 0 2px rgba(27,18,10,.9); transition:border-color .3s, box-shadow .3s; }
+.card.on .frame.q { border-color:var(--on); box-shadow:inset 0 0 0 2px rgba(27,18,10,.9), 0 0 26px rgba(224,112,42,.35); }
+.card .title { position:absolute; left:0; right:0; bottom:112px; text-align:center; font:700 44px var(--disp); letter-spacing:.12em; text-transform:uppercase; color:var(--on); text-shadow:0 2px 6px #000; }
+.card .line { position:absolute; left:0; right:0; bottom:38px; text-align:center; font:400 26px var(--body); color:#cdb88d; text-shadow:0 2px 4px #000; }
+.card .line .l-on { display:none; } .card.on .line .l-on { display:inline; } .card.on .line .l-off { display:none; }
+.btns { position:absolute; left:0; right:0; bottom:30px; display:flex; justify-content:center; gap:22px; }
+.btn { font:600 17px var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--txt); border:1px solid rgba(217,178,106,.55); padding:15px 22px; background:rgba(12,8,5,.55); }
+.btn.p { font-size:20px; padding:19px 26px; border:2px solid var(--gold); color:var(--on); }
+
+.dia { width:14px; height:14px; transform:rotate(45deg); border:1px solid var(--gold); flex:none; transition:all .25s; }
+.on .dia, .dia.lit { background:var(--ember); border-color:var(--on); box-shadow:0 0 10px rgba(224,112,42,.8); }
+.tg { cursor:pointer; user-select:none; }
+.tg .st { font:400 22px var(--body); color:var(--muted); }
+.on .tg .st { color:var(--on); }
+
+/* A: kartin icinde, basligin altinda kucuk anahtar satiri */
+.A .card .title { bottom:178px; }
+.A .tg { position:absolute; left:50%; transform:translateX(-50%); bottom:96px; display:flex; align-items:center; gap:14px; padding:8px 20px; min-height:48px; border-top:1px solid rgba(217,178,106,.3); border-bottom:1px solid rgba(217,178,106,.3); background:rgba(12,8,5,.5); white-space:nowrap; }
+.A .tg .lab { font:600 20px var(--disp); letter-spacing:.14em; text-transform:uppercase; color:var(--txt); }
+.A .on .tg .lab { color:var(--on); }
+.A .sw { width:54px; height:26px; border:1px solid var(--gold); border-radius:14px; position:relative; background:rgba(0,0,0,.4); transition:all .25s; }
+.A .sw::after { content:''; position:absolute; top:3px; left:5px; width:16px; height:16px; transform:rotate(45deg) scale(.8); background:var(--muted); transition:all .25s; }
+.A .on .sw { border-color:var(--on); background:rgba(224,112,42,.28); box-shadow:0 0 12px rgba(224,112,42,.5); }
+.A .on .sw::after { left:30px; background:var(--on); box-shadow:0 0 8px var(--ember); }
+
+/* B: kartlarin hemen altinda, ortada genis segmentli Standard | Endless */
+.seg { position:absolute; left:50%; top:716px; transform:translateX(-50%); width:620px; height:76px; display:flex; border:1px solid rgba(217,178,106,.55); background:rgba(12,8,5,.7); cursor:pointer; user-select:none; }
+.seg .opt { flex:1; display:flex; align-items:center; justify-content:center; gap:14px; font:600 24px var(--disp); letter-spacing:.16em; text-transform:uppercase; color:var(--muted); position:relative; transition:color .25s, background .25s; text-align:center; }
+.seg .opt small { display:block; font:400 17px var(--body); letter-spacing:0; text-transform:none; }
+.seg .opt + .opt { border-left:1px solid rgba(217,178,106,.3); }
+.seg .opt.act { color:var(--on); background:linear-gradient(180deg, rgba(217,178,106,.16), rgba(217,178,106,.04)); box-shadow:inset 0 -2px 0 var(--gold); }
+.seg .opt.e.act { background:linear-gradient(180deg, rgba(224,112,42,.28), rgba(224,112,42,.06)); box-shadow:inset 0 -2px 0 var(--ember); }
+.seg .lead { position:absolute; left:50%; top:-1px; width:14px; height:14px; transform:translate(-50%,-50%) rotate(45deg); background:#120c08; border:1px solid var(--gold); }
+.B .seg .dia { background:transparent; box-shadow:none; border-color:var(--gold); }
+.B .seg .dia.lit { background:var(--ember); border-color:var(--on); box-shadow:0 0 10px rgba(224,112,42,.8); }
+
+/* C: Quick Battle kartinin ust kenarina asili sekme */
+.C .cards { top:112px; }
+.C .tab { position:absolute; left:50%; top:-52px; transform:translateX(-50%); height:52px; padding:0 30px; display:flex; align-items:center; gap:14px; background:#17100a; border:1px solid rgba(217,178,106,.55); border-bottom:none; white-space:nowrap; transition:all .25s; }
+.C .tab .lab { font:600 19px var(--disp); letter-spacing:.16em; text-transform:uppercase; color:var(--txt); }
+.C .on .tab { border-color:var(--on); background:linear-gradient(180deg, #3a2210, #1c110a); box-shadow:0 0 22px rgba(224,112,42,.45); }
+.C .on .tab .lab { color:var(--on); }
+
+.hint { position:absolute; right:14px; bottom:10px; font:12px system-ui,sans-serif; color:#6f6250; }
+#mk-strip { position:fixed; left:10px; bottom:10px; z-index:9; background:rgba(0,0,0,.82); border:1px solid #555; padding:6px 10px; font:12px system-ui,sans-serif; color:#bbb; }
+#mk-strip b { color:#ffb35a; margin-right:8px; letter-spacing:.1em; }
+#mk-strip button { margin-left:6px; background:#222; color:#ddd; border:1px solid #555; padding:5px 10px; cursor:pointer; min-height:30px; }
+html.clean #mk-strip { display:none; }
+</style>
+</head>
+<body>
+<div class="page">
+<h1>Endless toggle: yeni konum</h1>
+<div class="intro">
+Ömer: "Endless anahtarı aşağıda çok uzak kalıyor." Anahtar yalnızca <b>Quick Battle</b> kartını etkiler: açıkken kartın görseli alacakaranlığa geçer, alt yazı "Endless waves - how far can you go?" olur ve karta basınca takım seçimi yerine Endless dalga koşusu açılır. Campaign ve Multiplayer değişmez. Bu yüzden anahtar o kartın yanında durmalı. Üç öneri, her biri kapalı (solda) ve açık (sağda); anahtarlara tıklayarak deneyebilirsin (kart görseli de gerçek gibi geçiş yapar).
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Endless toggle &middot; scale:
+<button data-z="0.3">tiny</button><button data-z="0.42">small</button><button data-z="0.6">medium</button></div>
+<script>
+const SECS = [
+ {k:'A', t:'A  Kartın içinde, başlığın altında', n:'A) Anahtar Quick Battle kartının içine, başlıkla alt yazı arasına küçük bir anahtar satırı olarak girer; karta bakan göz hemen görür, ayrı bir yere gitmez.'},
+ {k:'B', t:'B  Kartların hemen altında, geniş "Standard | Endless" anahtarı', n:'B) Kart sırasının hemen altında (boşluk dar), ortada geniş iki parçalı anahtar; seçili taraf yanar. Şu anki yerden çok yakın ve büyük, ama hâlâ kartın dışında.'},
+ {k:'C', t:'C  Quick Battle kartının üst kenarına asılı sekme', n:'C) Kartın üst kenarına yapışık küçük sekme (kurdele); açıkken sekme ve kartın çerçevesi kor renginde yanar. Anahtar kartın parçası gibi durur ve alt yazı alanını kalabalıklaştırmaz.'}
+];
+const camp = `<div class="card"><div class="art"><img src="endless-toggle/campaign.webp"></div><div class="shade"></div><div class="frame"></div>
+ <div class="title" style="bottom:170px">Campaign</div>
+ <div class="btns"><span class="btn p">Continue</span><span class="btn">New</span><span class="btn">Load</span></div></div>`;
+const mp = `<div class="card"><div class="art"><img src="endless-toggle/multiplayer.webp"></div><div class="shade"></div><div class="frame"></div>
+ <div class="title">Multiplayer</div><div class="line"><span>Fight a friend online</span></div></div>`;
+const qBase = (inner) => `<div class="card q"><div class="art"><img class="main" src="endless-toggle/quick-battle.webp"><img class="alt" src="endless-toggle/quick-battle-endless.webp"></div><div class="shade"></div><div class="frame q"></div>
+ <div class="title">Quick Battle</div><div class="line"><span class="l-off">Pick two teams</span><span class="l-on">Endless waves - how far can you go?</span></div>${inner}</div>`;
+function build(k) {
+  let q;
+  if (k==='A') q = qBase(`<div class="tg"><span class="dia"></span><span class="lab">Endless mode</span><span class="sw"></span></div>`);
+  else if (k==='B') q = qBase('');
+  else q = qBase(`<div class="tab tg"><span class="dia"></span><span class="lab">Endless</span><span class="st">off</span></div>`);
+  let seg = '';
+  if (k==='B') seg = `<div class="seg tg"><span class="lead"></span>
+   <div class="opt s"><span>Standard<small>Pick two teams</small></span></div>
+   <div class="opt e"><span class="dia"></span><span>Endless<small>Waves, no end</small></span></div></div>`;
+  return `<div class="stage ${k}"><div class="cards">${camp}${q}${mp}</div>${seg}<span class="hint">game main menu, 1920 wide, scaled</span></div>`;
+}
+function setOn(stage, on) {
+  stage.querySelectorAll('.card.q').forEach(c => c.classList.toggle('on', on));
+  stage.classList.toggle('on', on);
+  stage.querySelectorAll('.tab .st').forEach(s => s.textContent = on ? 'on' : 'off');
+  const sg = stage.querySelector('.seg');
+  if (sg) { sg.querySelector('.s').classList.toggle('act', !on); sg.querySelector('.e').classList.toggle('act', on); sg.querySelector('.e .dia').classList.toggle('lit', on); }
+}
+const root = document.getElementById('sections');
+for (const s of SECS) {
+  const sec = document.createElement('div'); sec.className = 'sec';
+  sec.innerHTML = `<h2>${s.t}</h2><div class="note">${s.n}</div><div class="pair"></div>`;
+  for (const on of [false, true]) {
+    const col = document.createElement('div'); col.className = 'col';
+    col.innerHTML = `<label>${s.k} &middot; ${on?'ON (açık)':'OFF (kapalı)'}</label><div class="wrap">${build(s.k)}</div>`;
+    const st = col.querySelector('.stage'); setOn(st, on);
+    st.addEventListener('click', e => { if (e.target.closest('.tg')) setOn(st, !st.classList.contains('on')); });
+    sec.querySelector('.pair').appendChild(col);
+  }
+  root.appendChild(sec);
+}
+if (location.hash.includes('clean')) document.documentElement.classList.add('clean');
+const zm = location.hash.match(/z=([\d.]+)/); if (zm) document.documentElement.style.setProperty('--z', zm[1]);
+document.querySelectorAll('#mk-strip button').forEach(b => b.onclick = () => document.documentElement.style.setProperty('--z', b.dataset.z));
+</script>
+</body>
+</html>
