@@ -3933,10 +3933,11 @@ export class BattleScene extends Phaser.Scene {
     };
     const rageVal = this.rageShown.get(actor.uid) ?? actor.rage ?? 0;
     const notes: HudActor['notes'] = [];
+    let bonus: { text: string } | null = null;
     if (primary) {
       const b = primaryBonusInfo(primary, f, !!actor.stats.primaryActive);
       const lucky = primary === 'luck' ? (this.battle.luckyEscapeChance(actor.uid) > 0 ? ' · ready' : ' · used this battle') : '';
-      notes.push({ text: `${b.name} (primary bonus): ${b.detail}${b.active ? lucky : ' · inactive'}`, color: b.active ? '#ffd76a' : colors.muted });
+      bonus = { text: `${b.name} (primary bonus): ${b.detail}${b.active ? lucky : ' · inactive'}` };
     }
     if (actor.shield > 0) notes.push({ text: `Shield ${actor.shield}`, color: colors.shield });
     if (actor.magicShield > 0) notes.push({ text: `Magic shield ${actor.magicShield}`, color: colors.magicShield });
@@ -3961,6 +3962,10 @@ export class BattleScene extends Phaser.Scene {
               tip: this.makeInfo('Rage', RAGE_COLOR, ensureIcon(this, uiIconName('rage'), RAGE_COLOR, true), [[`Rage ${Math.round(rageVal)} / ${actor.maxRage}`, colors.text], ...describeRage(f).map((l): [string, string?] => [l, colors.muted])], 'Resource'),
             }
           : null,
+      role: def?.role ?? (actor.summoned ? 'Summon' : ''),
+      primary: primary ? { name: primaryName, iconUrl: this.texUrl(ensureIcon(this, statIconName(primary), STAT_COLOR[primary], false)) } : null,
+      ...(actor.summoned && actor.level === undefined ? {} : { level: actor.level ?? 1 }),
+      bonus,
       main: MAIN_STATS.map((k) => this.hudStat(k, actor)),
       groups: [
         { title: 'Main', stats: MAIN_STATS.map((k) => this.hudStat(k, actor)) },

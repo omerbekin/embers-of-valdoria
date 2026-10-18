@@ -111,6 +111,11 @@ export interface HudActor {
   main: HudStat[];
   groups: Array<{ title: string; stats: HudStat[] }>;
   passive: { name: string; text: string; iconUrl: string } | null;
+  /** Kahraman sayfası başlığı (A-Band): rol, primary stat çipi, level (yoksa gizli), alt çubuktaki primary bonusu. */
+  role?: string;
+  primary?: { name: string; iconUrl: string } | null;
+  level?: number;
+  bonus?: { text: string } | null;
   /** Sayfanın altındaki ek satırlar (Lucky Escape, kalkan, beslenmiş çağrı...). */
   notes: TipRow[];
 }
@@ -502,18 +507,27 @@ export class BattleHud {
       ? `<div class="bh-hpmp rage" ${this.reg('b:rage', a.rage.tip)}><div class="bh-num">${img(a.rage.iconUrl)}<span class="v">${Math.round(a.rage.value)}</span><span class="of">/ ${a.rage.max}</span></div><div class="bh-bar rage"><i style="width:${pct(a.rage.value, a.rage.max)}"></i></div></div>`
       : '';
     const resCount = 1 + (a.mp ? 1 : 0) + (a.rage ? 1 : 0);
-    const passive = a.passive
-      ? `<div class="bh-sheet-sec"><div class="bh-hd"><i class="bh-dia h s"></i>Passive</div><div class="bh-pas">${img(a.passive.iconUrl, 'bh-ico bh-medal')}<div><div class="t">${esc(a.passive.name)}</div><div class="d">${esc(a.passive.text)}</div></div></div></div>`
-      : '';
-    const notes = a.notes.length ? `<div class="bh-sheet-notes">${a.notes.map((n) => `<div class="bh-note" style="${n.color ? `color:${n.color}` : ''}"><i class="bh-dia s"></i>${esc(n.text)}</div>`).join('')}</div>` : '';
+    // Kahraman sayfası = A-Band ipucu (ortak bileşen): başlık şeridi + rol / primary çipleri + 3 sütun + alt bilgi çubuğu (primary bonusu). Pasif burada YOK (skill'ler anlatıyor).
+    const notes = a.notes.map((n) => `<div class="bt-ln"><span class="dia"></span><div class="tx"${n.color ? ` style="color:${n.color}"` : ''}>${esc(n.text)}</div></div>`).join('');
+    const cols = `<div class="bh-cols">${a.groups.map((g, gi) => `${gi ? '<div class="bh-vfade"></div>' : ''}<div class="bh-col"><div class="bh-hd"><i class="bh-dia h s"></i>${esc(g.title)}</div>${g.stats.map(srow).join('')}</div>`).join('')}</div>${notes ? `<div class="bh-sheet-notes">${notes}</div>` : ''}`;
+    const chips: BandChip[] = [];
+    if (a.role) chips.push({ text: a.role });
+    if (a.primary) chips.push({ text: `${a.primary.name} primary`, ...(a.primary.iconUrl ? { icon: a.primary.iconUrl } : {}), tone: 'ac', color: '#ffb98a' });
+    const sheet = bandTipHtml({
+      kind: 'Character',
+      title: a.name,
+      icon: a.portraitUrl,
+      iconShape: 'portrait',
+      ...(a.flip ? { iconFlip: true } : {}),
+      ...(a.level !== undefined ? { value: `Lv ${a.level}` } : {}),
+      chips,
+      bodyHtml: cols,
+      ...(a.bonus ? { foot: a.bonus.text } : {}),
+    });
     this.put(
       this.actorBox,
       `
-      <div class="bh-sheet bh-panel bh-corners">
-        <div class="bh-sheet-head"><span class="bh-n">${esc(a.name)}</span><span class="bh-m">${esc(a.sub)}</span><span class="bh-k">Character</span></div>
-        <div class="bh-cols">${a.groups.map((g, gi) => `${gi ? '<div class="bh-vfade"></div>' : ''}<div class="bh-col"><div class="bh-hd"><i class="bh-dia h s"></i>${esc(g.title)}</div>${g.stats.map(srow).join('')}</div>`).join('')}</div>
-        ${passive}${notes}
-      </div>
+      <div class="bh-sheet">${sheet}</div>
       <div class="bh-opener" data-open="1">
         <div class="bh-pframe${a.enemy ? ' en' : ''}">${img(a.portraitUrl, 'bh-portrait', a.flip ? 'style="transform:scaleX(-1)"' : '')}</div>
         <div class="bh-actor-info">

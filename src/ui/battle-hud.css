@@ -507,9 +507,9 @@
 }
 
 .bh-sheet {
+  position: absolute;
   left: -6px;
   bottom: calc(100% + 26px);
-  padding: 18px 24px 16px;
   opacity: 0;
   visibility: hidden;
   pointer-events: none;
@@ -527,24 +527,39 @@
   transition: opacity 0.22s, transform 0.3s var(--ease);
 }
 
-.bh-sheet-head {
-  display: flex;
-  align-items: baseline;
-  gap: 14px;
-  margin-bottom: 12px;
+/* kahraman sayfası = A-Band ipucu (.bt, src/ui/band-tip.ts); açıkken stat satırları ipucu verir, bu yüzden tıklanabilir */
+.bh-sheet .bt {
+  max-width: none;
 }
 
-.bh-sheet-head .bh-n {
-  font-size: 20px;
+.bh-actor.open .bh-sheet .bt {
+  pointer-events: auto;
 }
 
-.bh-sheet-head .bh-k {
-  margin-left: auto;
+.bh-sheet .bt-body {
+  padding-bottom: 6px;
 }
 
 .bh-cols {
   display: flex;
   gap: 26px;
+}
+
+.bh-sheet-notes {
+  margin-top: 10px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(var(--gold), 0.12);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 660px;
+}
+
+.bh-srow.pri {
+  margin: 0 -8px;
+  padding: 0 8px;
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.2), rgba(224, 112, 42, 0.04));
+  border-left: 2px solid var(--ember);
 }
 
 .bh-col {
@@ -605,17 +620,6 @@
   box-shadow: 0 0 6px rgba(240, 140, 40, 0.8);
 }
 
-.bh-sheet-sec {
-  margin-top: 12px;
-}
-
-.bh-pas {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-  max-width: 660px;
-}
-
 .bh-medal {
   width: 30px;
   height: 30px;
@@ -624,36 +628,6 @@
   border-radius: 50%;
   background: radial-gradient(#2a1d12, #0c0906);
   box-shadow: inset 0 0 0 1.5px rgba(var(--gold), 0.65), 0 0 0 3px rgba(10, 7, 5, 0.75);
-}
-
-.bh-pas .t {
-  font: 600 16px var(--cin);
-  letter-spacing: 0.06em;
-  color: var(--on);
-  text-transform: uppercase;
-}
-
-.bh-pas .d {
-  font: italic 16px/1.2 var(--gar);
-  color: var(--note);
-}
-
-.bh-sheet-notes {
-  margin-top: 10px;
-  padding-top: 8px;
-  border-top: 1px solid rgba(var(--gold), 0.12);
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-}
-
-.bh-note {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  font: italic 16px/1.2 var(--gar);
-  color: var(--note);
-  max-width: 660px;
 }
 
 /* --- skill'ler: tam ortada; açıklama hemen üstünde --- */

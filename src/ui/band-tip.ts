@@ -41,7 +41,9 @@ export interface BandTipSpec {
   /** Başlık rengi (verilmezse vurgunun açık tonu). */
   titleColor?: string;
   icon?: string;
-  iconShape?: 'frame' | 'round';
+  iconShape?: 'frame' | 'round' | 'portrait';
+  /** Portre madalyası yatay çevrilir (düşman). */
+  iconFlip?: boolean;
   /** Başlığın sağındaki büyük değer (stat: "18"; kahraman: "Lv 3"). */
   value?: string;
   valueLabel?: string;
@@ -93,7 +95,7 @@ function gridHtml(g: BandGrid): string {
 
 /** İpucunun iç HTML'i (`.bt` kökü dahil). Konumlama çağıranda; kök kendi çerçevesini taşır. */
 export function bandTipHtml(s: BandTipSpec): string {
-  const medal = s.icon ? `<span class="bt-medal ${s.iconShape === 'round' ? 'round' : 'ico fr'}" style="background-image:url(&quot;${esc(s.icon)}&quot;)"></span>` : '';
+  const medal = s.icon ? `<span class="bt-medal ${s.iconShape === 'round' ? 'round' : s.iconShape === 'portrait' ? 'por' : 'ico frm'}" style="background-image:url(&quot;${esc(s.icon)}&quot;)${s.iconFlip ? ';transform:scaleX(-1)' : ''}"></span>` : '';
   const aside = [s.grid ? gridHtml(s.grid) : '', s.value !== undefined ? `<div class="bt-big"${s.valueColor ? ` style="color:${css(s.valueColor)}"` : ''}>${esc(s.value)}${s.valueLabel || s.valueDiff ? `<small>${esc(s.valueLabel ?? '')}${s.valueDiff ? ` <span class="${s.valueDiff.dir}">(${esc(s.valueDiff.text)})</span>` : ''}</small>` : ''}</div>` : ''].join('');
   const head = `<div class="bt-head">${medal}<div class="bt-ht">${s.kind ? `<div class="bt-kind">${esc(s.kind)}</div>` : ''}<div class="bt-title"${s.titleColor ? ` style="color:${css(s.titleColor)}"` : ''}>${esc(s.title)}</div></div>${aside ? `<div class="bt-aside">${aside}</div>` : ''}</div>`;
   const chips = s.chips && s.chips.length ? `<div class="bt-meta">${s.chips.map(chipHtml).join('')}</div>` : '';

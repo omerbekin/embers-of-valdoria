@@ -144,7 +144,14 @@
   border-color: var(--acl);
 }
 
-.bt-medal.fr {
+.bt-medal.por {
+  width: max(52px, calc(88 * var(--bu)));
+  height: max(52px, calc(88 * var(--bu)));
+  border-width: 3px;
+  image-rendering: auto;
+}
+
+.bt-medal.frm {
   border-width: 3px;
 }
 
