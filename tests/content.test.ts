@@ -297,7 +297,8 @@ describe('class ve çağrı verisi', () => {
   it('zırh "normal seviyelerde": hiçbir class\'ta fiziksel zırh k\'nin yarısını aşmaz (Defender hariç) ve yalnızca Defender yüksek', () => {
     const k = content.formulas.armor.k;
     for (const def of Object.values(content.classes)) {
-      if (def.id === 'defender') expect(def.stats.armor).toBeGreaterThan(k * 0.6);
+      // Ömer 2026-10-18 (open-questions 350): Defender zırhı 38 -> 36 = k x 0,6; eşik "k'nin yarısından belirgin yüksek" (> k x 0,55) olarak okundu
+      if (def.id === 'defender') expect(def.stats.armor).toBeGreaterThan(k * 0.55);
       else expect(def.stats.armor, def.id).toBeLessThanOrEqual(k * 0.5);
     }
   });

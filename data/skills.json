@@ -78,7 +78,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.51,
+        "power": 0.525,
         "element": "holy"
       }
     ],
@@ -114,7 +114,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.425,
+        "power": 0.438,
         "element": "holy"
       }
     ],
@@ -148,7 +148,7 @@
         "ground": "holy_fire",
         "turns": 2,
         "scale": "int",
-        "power": 0.28
+        "power": 0.288
       }
     ],
     "vfx": "judgment",
@@ -511,7 +511,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.86,
+        "power": 0.903,
         "element": "nature"
       },
       {
@@ -609,7 +609,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.63,
+        "power": 0.662,
         "element": "nature"
       }
     ],

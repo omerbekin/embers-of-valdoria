@@ -8,13 +8,13 @@
   "frontPriority": 0,
   "range": 1,
   "attributes": {
-    "str": 26,
+    "str": 24,
     "int": 24,
     "dex": 6,
-    "luck": 4
+    "luck": 6
   },
   "primary": "str",
-  "armor": 38,
+  "armor": 36,
   "magicArmor": 0,
   "ai": "tank",
   "skills": [

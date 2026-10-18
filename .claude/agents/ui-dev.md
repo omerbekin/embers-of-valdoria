@@ -27,5 +27,13 @@ Sen bu oyunun arayüz geliştiricisisin. Ömer kod okumaz; sade Türkçe anlat.
 - Müzik yükleme ekranında başlamaz; ana menü görününce başlar.
 - Menzil arayüzü (skill kartında "Range N"/"Global", hedef hücre vurgusu) `range.enabled` kapalıyken eski görünüme döner.
 
+## Arayüz mockup'ları (Ömer 2026-10-18: "arayüz mockuplarını hep böyle çıkarman gerekiyor")
+- Mockup HER ZAMAN oyundaki görünümle birebir: `public/mockups/<ad>.html` + `public/mockups/<ad>/` (oyunun gerçek CSS'i: style.css / elegant.css / gear.css kopyaları; gerçek portre, item, stat, skill ve UI ikonları, fontlar, arka planlar; yalnızca kullanılanlar, WebP, toplam ~4 MB altı). Yer tutucu harf/şekil, uydurma görsel YOK. Örnekler: `public/mockups/gear-unified.html`, `public/mockups/unified-inventory.html`.
+- Seçenekler ve durumlar adres `#hash` ile (`#v1..#v5`, `&enc=...`, `&clean`); sol altta küçük, oyun dışı olduğu belli MOCKUP şeridi. Tıklanabilir: sürükle-bırak, dokunarak seçme, ipucu, karşılaştırma gerçek gibi çalışır.
+- Ana oturum yalnızca mockup dosyalarını (sürüm ve patch notes olmadan) GitHub'a gönderir ve Ömer'e Pages linkini verir; Ömer oyundaki görünümü linkten seçer. Yazılı seçim sayfası (artifact) ya da tek başına yer tutucu görselli HTML YAPILMAZ.
+- Yazı yerine yakışan yerlerde oyunun mevcut ikonları (Back/Menu/tam ekran = `src/ui/nav-icons.ts`, stat, yuva, altın); ikonlu düğmede üstüne gelince / uzun basınca kısa ipucu.
+- Her güncellemede yeniden çizim yanıp sönmesin: giriş animasyonu yalnızca ilk açılışta / düzen değişince oynar; hover ve sekme değişimi kökü baştan kurmaz.
+- Telefon yatay (844x390) kontrolü dahil; ekran görüntüleri scratchpad'e.
+
 ## Çıktı
 Hangi ekranda ne görünmesi/duyulması gerektiğini ve nasıl test edileceğini anlatan sade Türkçe özet.

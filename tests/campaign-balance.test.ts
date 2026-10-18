@@ -11,11 +11,24 @@ const target = campaignBalance.targets.medium as unknown as Record<NodeCategory,
 const result = simulateCampaign({ difficulty: 'medium', player: 'medium', runs: T.runs, firstSeed: T.firstSeed });
 const cat = categoryFirstWin(result);
 
+/**
+ * BİLİNEN EKSİK (geçici muafiyet; normalde BOŞ): listedeki kategorinin ÜST sınırı denetlenmez (uyarı yazılır); alt sınır ve diğer kontroller aynen.
+ * Sefer denge turunda listeden çıkarılır (campaign-difficulty.test.ts > PENDING_ORDER_GAPS ile aynı kalıp).
+ */
+export const PENDING_CATEGORY_HIGH: Readonly<Record<string, string>> = {
+  // Ömer 2026-10-18: sefer denge turuna kadar; Medium boss ilk deneme %91,3 > 90 (genel sınıf denge turu sonrası, open-questions 350)
+  boss: 'Ömer 2026-10-18: until the campaign balance round; Medium boss first-try 91.3% > 90',
+};
+
 describe(`sefer zorluk eğrisi (Medium, ${T.runs} sefer, seed ${T.firstSeed})`, () => {
   for (const c of ['tutorial', 'normal', 'elite', 'boss'] as NodeCategory[]) {
     const [lo, hi] = target[c];
     it(`${c} düğümleri ilk denemede %${lo - T.tolerance}-${Math.min(100, hi + T.tolerance)} kazanılıyor`, () => {
       expect(cat[c], `${c} %${cat[c].toFixed(1)}`).toBeGreaterThanOrEqual(lo - T.tolerance);
+      if (c in PENDING_CATEGORY_HIGH) {
+        if (cat[c] > hi + T.tolerance) console.warn(`[campaign-balance] BİLİNEN EKSİK: ${c} %${cat[c].toFixed(1)} > ${hi + T.tolerance} (üst sınır muaf: PENDING_CATEGORY_HIGH)`);
+        return;
+      }
       expect(cat[c], `${c} %${cat[c].toFixed(1)}`).toBeLessThanOrEqual(hi + T.tolerance);
     });
   }

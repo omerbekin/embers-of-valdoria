@@ -345,7 +345,9 @@ describe('YZ global skill: tam savaşlar (kilitlenme yok, sınırlar korunur)', 
   it('60 rastgele savaş biter; her eylem geçerli; hiçbir birim üst üste maxConsecutive\'den fazla skip ya da iki kez Move yapmaz; üç global de kullanılır', () => {
     const used = new Map<string, number>();
     const maxSkip = content.globalSkills.skip_turn!.maxConsecutive!;
-    for (let seed = 1; seed <= 60; seed++) {
+    // Skip Turn artık seyrek (engine-dev 2026-10-18: yalnızca beklenen skill MP/Rage ile engelliyse; hamlelerin ~%0,1i): 60 savaşta görülmezse
+    // aynı denetimlerle en çok 300 savaşa kadar devam edilir (veri ayarı seed akışını değiştirince kırılmasın)
+    for (let seed = 1; seed <= 60 || (seed <= 300 && GLOBALS.some((g) => !used.get(g))); seed++) {
       const b = new Battle(content.battleSetup('random-battle', seed, 'turns'));
       const run = new Map<string, number>();
       const lastMove = new Map<string, boolean>();

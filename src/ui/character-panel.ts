@@ -450,14 +450,15 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null): HT
   (bar.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
   const def = content.classes[classId];
   const rows = gearSkillRows(classId, stats, after);
-  const html = rows.map((r, i) => {
+  const skillRows = rows.filter((r) => !r.passive);
+  const html = rows.map((r) => {
     if (r.passive && def?.passive) {
       const p = def.passive;
       const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
       return passiveCellHtml(p.name, iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), colorDiffs(tipHtml(tip)), numsHtml(r));
     }
     const skill = r.skill!;
-    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: i === 3 };
+    const view: SkillCellView = { id: skill.id, name: skill.name, iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), cost: costChips(skill, stats), wait: 0, enabled: true, selected: false, ult: skillRows.indexOf(r) === 3 };
     return skillCellHtml(view, colorDiffs(tipHtml(skillTipContent(skill, stats, after))), numsHtml(r));
   });
   bar.innerHTML = html.join('');

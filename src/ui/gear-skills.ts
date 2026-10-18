@@ -86,11 +86,11 @@ export function passiveRow(passive: PassiveDef, stats: Stats, after: Stats | nul
   };
 }
 
-/** Kahramanın tüm skill satırları: 4 skill + pasif (varsa, en sonda). */
+/** Kahramanın tüm skill satırları: standart sıra = pasif (varsa) EN BAŞTA, sonra skill'ler (Ömer 2026-10-18). */
 export function gearSkillRows(classId: string, stats: Stats, after: Stats | null = null): GearSkillRow[] {
   const { skills, passive } = classSkills(classId);
   const rows = skills.map((s) => skillRow(s, stats, after));
-  if (passive) rows.push(passiveRow(passive, stats, after));
+  if (passive) rows.unshift(passiveRow(passive, stats, after));
   return rows;
 }
 

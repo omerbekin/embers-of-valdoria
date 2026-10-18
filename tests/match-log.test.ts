@@ -243,7 +243,8 @@ describe('MatchLog: kayıt', () => {
 
   it('global skill\'ler (Rest / Skip / Move) kaydedilir; oyuncu hamlesi "PLAYER", açıklaması yoktur', () => {
     let seen = new Set<string>();
-    for (let seed = 1; seed <= 30 && seen.size < 3; seed++) {
+    // Skip Turn artık seyrek (engine-dev 2026-10-18): üçü görülene kadar en çok 300 savaş
+    for (let seed = 1; seed <= 300 && seen.size < 3; seed++) {
       const { log } = play(seed, { explain: true, max: 120 });
       for (const m of log!.moves) if (m.action.kind === 'global') seen.add(m.action.id!);
     }

@@ -60,7 +60,10 @@ describe('Gear skill numbers equal skill-info output', () => {
       const plain = gearSkillRows(c.id, before);
       const cmp = gearSkillRows(c.id, before, after);
       expect(plain.length).toBe(c.skills.length + (c.passive ? 1 : 0));
-      c.skills.forEach((id, i) => {
+      const off = c.passive ? 1 : 0; // pasif en başta
+      expect(plain[0]!.passive).toBe(!!c.passive);
+      c.skills.forEach((id, j) => {
+        const i = j + off;
         const skill = content.skills[id]!;
         const now = skillNumbers(skill, before, f, defs, content.summons);
         const next = skillNumbers(skill, after, f, defs, content.summons);

@@ -713,14 +713,14 @@ export class TeamSelectScene extends Phaser.Scene {
       x += 18;
     }
     x += 26 - 18;
-    // Skill'ler (48 px kutular) + pasif
+    // Pasif (en başta) + skill'ler (48 px kutular)
     const boxes: Array<{ key: string; icon: string; tip: () => TipSpec }> = def.skills
       .map((sid) => content.skills[sid])
       .filter((sk): sk is NonNullable<typeof sk> => !!sk)
       .map((sk) => ({ key: `skill:${def.id}:${sk.id}`, icon: ensureSkillIcon(this, sk), tip: () => this.skillTip(def, sk.id) }));
     if (def.passive) {
       const p = def.passive;
-      boxes.push({
+      boxes.unshift({
         key: `passive:${def.id}`,
         icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)),
         tip: () => ({ icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)), title: p.name, badge: 'Passive', lines: [[describePassive(p, def.stats, content.formulas)]] }),
@@ -730,7 +730,7 @@ export class TeamSelectScene extends Phaser.Scene {
       const bx = x;
       const box = this.add.container(bx + 24, 0);
       const g = this.add.graphics();
-      const passive = def.passive && k === boxes.length - 1;
+      const passive = !!def.passive && k === 0;
       const drawBox = (hov: boolean) => {
         g.clear();
         g.fillStyle(INK, 0.55).fillRect(-24, -24, 48, 48);

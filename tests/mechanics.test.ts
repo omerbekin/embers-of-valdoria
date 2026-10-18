@@ -662,12 +662,14 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
 });
 
 describe('class verisi: yeni sınıflar ve dizilim', () => {
-  it('Defender: en yüksek Strength ve zırh, 4 skill: tremor slam, taunt, guard, fist crush', () => {
+  it('Defender: Strength kendi en yüksek statı (primary Resilience korunur) ve en yüksek zırh, 4 skill: tremor slam, taunt, guard, fist crush', () => {
     const d = content.classes.defender!;
     expect(d.skills.slice(0, 4)).toEqual(['tremor_slam', 'taunt', 'guard', 'fist_crush']);
+    // Ömer 2026-10-18 (open-questions 350): STR 26 -> 24 (LUCK'a); artık sınıflar arasında en yüksek STR değil (Warrior/Undead 26), ama kendi en yüksek statı (INT ile eşit)
+    const a = d.attributes;
+    expect(a.str).toBeGreaterThanOrEqual(Math.max(a.int, a.dex, a.luck));
     for (const other of Object.values(content.classes)) {
       if (other.id === 'defender') continue;
-      expect(d.stats.str, other.id).toBeGreaterThanOrEqual(other.stats.str);
       expect(d.stats.armor, other.id).toBeGreaterThan(other.stats.armor);
     }
   });
