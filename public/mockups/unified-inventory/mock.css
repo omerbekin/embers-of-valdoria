@@ -19,32 +19,32 @@ html.mk-strip-min #mk-strip > :not(.keep) { display: none; }
 
 /* --- ortak --- */
 .mk { --mk-line: rgba(217, 178, 106, 0.16); }
-.mk .gr-body { display: grid; min-height: 0; overflow: hidden; }
-.mk .mk-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: calc(12 * var(--u)); }
-.mk .mk-col > * { flex-shrink: 0; }
-.mk .mk-col > .gr-inv { flex-shrink: 1; }
-.mk .mk-scroll { overflow: hidden auto; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, 0.4) transparent; }
-.mk .gr-sec.mk-flex { display: flex; align-items: center; gap: calc(10 * var(--u)); }
-.mk .gr-sec .mk-r { margin-left: auto; letter-spacing: .08em; color: var(--g-dim); }
-.mk .gr-inv { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-.mk .gr-inv .gr-bag { flex: 1 1 auto; overflow: hidden auto; grid-auto-rows: max-content; }
+:is(.mk, .mk-enc) .gr-body { display: grid; min-height: 0; overflow: hidden; }
+:is(.mk, .mk-enc) .mk-col { display: flex; flex-direction: column; min-height: 0; min-width: 0; gap: calc(12 * var(--u)); }
+:is(.mk, .mk-enc) .mk-col > * { flex-shrink: 0; }
+:is(.mk, .mk-enc) .mk-col > .gr-inv { flex-shrink: 1; }
+:is(.mk, .mk-enc) .mk-scroll { overflow: hidden auto; min-height: 0; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, 0.4) transparent; }
+:is(.mk, .mk-enc) .gr-sec.mk-flex { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+:is(.mk, .mk-enc) .gr-sec .mk-r { margin-left: auto; letter-spacing: .08em; color: var(--g-dim); }
+:is(.mk, .mk-enc) .gr-inv { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+:is(.mk, .mk-enc) .gr-inv .gr-bag { flex: 1 1 auto; overflow: hidden auto; grid-auto-rows: max-content; }
 .gr-overlay .mk .gr-inv .gr-bag { grid-template-columns: repeat(var(--bag-cols, 6), minmax(0, 1fr)); }
-.mk .gr-bag-head { display: flex; align-items: center; gap: calc(10 * var(--u)); }
-.mk .gr-bag-head .gr-sec { flex: 1; margin-bottom: 0; }
-.mk .gr-item.on { outline: 2px solid var(--rc); outline-offset: 2px; }
-.mk .gr-item.filtered { opacity: .28; }
-.mk.gr-dragging .gr-item.drop-ok, .mk .gr-item.tap-ok { box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .6); }
-.mk .gr-slot.tap-ok, .mk .gr-hero.tap-ok, .mk .mk-drop.tap-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
-.mk.gr-dragging .mk-drop.drop-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
-.mk .gr-sgroups .gr-pm { flex: none; }
-.mk .gr-hero { width: 100%; }
-.mk .gr-hero .gr-badge { position: absolute; right: calc(6 * var(--u)); top: calc(6 * var(--u)); }
-.mk .mk-ico { width: max(18px, calc(28 * var(--u))); height: max(18px, calc(28 * var(--u))); object-fit: contain; flex: none; }
-.mk .mk-note { font: italic max(12px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
-.mk .mk-hint { font: italic max(12px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); margin-right: auto; }
-.mk .gr-foot { display: flex; align-items: center; justify-content: flex-end; gap: calc(16 * var(--u)); }
-.mk .gr-gold img { width: max(18px, calc(30 * var(--u))); height: max(18px, calc(30 * var(--u))); vertical-align: -0.2em; margin-right: .3em; }
-.mk .gr-head-l .gr-shop-sub { margin: 0; }
+:is(.mk, .mk-enc) .gr-bag-head { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+:is(.mk, .mk-enc) .gr-bag-head .gr-sec { flex: 1; margin-bottom: 0; }
+:is(.mk, .mk-enc) .gr-item.on { outline: 2px solid var(--rc); outline-offset: 2px; }
+:is(.mk, .mk-enc) .gr-item.filtered { opacity: .28; }
+.gr-dragging .gr-item.drop-ok, :is(.mk, .mk-enc) .gr-item.tap-ok { box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .6); }
+:is(.mk, .mk-enc) .gr-slot.tap-ok, :is(.mk, .mk-enc) .gr-hero.tap-ok, :is(.mk, .mk-enc) .mk-drop.tap-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
+.gr-dragging .mk-drop.drop-ok { border-color: var(--g-gold); box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, .55); }
+:is(.mk, .mk-enc) .gr-sgroups .gr-pm { flex: none; }
+:is(.mk, .mk-enc) .gr-hero { width: 100%; }
+:is(.mk, .mk-enc) .gr-hero .gr-badge { position: absolute; right: calc(6 * var(--u)); top: calc(6 * var(--u)); }
+:is(.mk, .mk-enc) .mk-ico { width: max(18px, calc(28 * var(--u))); height: max(18px, calc(28 * var(--u))); object-fit: contain; flex: none; }
+:is(.mk, .mk-enc) .mk-note { font: italic max(12px, calc(17 * var(--u))) var(--g-body); color: var(--g-dim); }
+:is(.mk, .mk-enc) .mk-hint { font: italic max(12px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); margin-right: auto; }
+:is(.mk, .mk-enc) .gr-foot { display: flex; align-items: center; justify-content: flex-end; gap: calc(16 * var(--u)); }
+:is(.mk, .mk-enc) .gr-gold img { width: max(18px, calc(30 * var(--u))); height: max(18px, calc(30 * var(--u))); vertical-align: -0.2em; margin-right: .3em; }
+:is(.mk, .mk-enc) .gr-head-l .gr-shop-sub { margin: 0; }
 /* kahraman kart rozeti: harcanmamış puan */
 .mk-pt { display: inline-flex; align-items: center; justify-content: center; min-width: max(20px, calc(30 * var(--u))); height: max(20px, calc(30 * var(--u))); border-radius: 50%;
   font: 600 max(11px, calc(17 * var(--u))) var(--g-disp); color: #1a120a; background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%); box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, .45); padding: 0 4px; }
@@ -117,11 +117,11 @@ html.reduced-motion .mk-tree .bh-sk.can .fr { animation: none; }
 .mk-hpbar { height: max(4px, calc(7 * var(--u))); background: rgba(217, 178, 106, .14); border: 1px solid var(--g-line); margin-top: 3px; }
 .mk-hpbar i { display: block; height: 100%; background: linear-gradient(90deg, #4f8f3a, #8fe37a); transition: width .4s; }
 .mk-hpbar.mp i { background: linear-gradient(90deg, #2c5f9e, #6fb0f0); }
-.mk .gr-wares { display: grid; grid-template-columns: repeat(var(--ware-cols, 3), max(54px, calc(104 * var(--u)))); gap: calc(12 * var(--u)) calc(14 * var(--u)); }
-.mk .gr-wares .gr-item { width: 100%; }
-.mk .gr-bb-row { display: flex; gap: calc(10 * var(--u)); min-height: max(44px, calc(70 * var(--u))); }
-.mk .gr-bb-row .gr-cellw { width: max(44px, calc(70 * var(--u))); }
-.mk .mk-stall { border: 1px dashed transparent; padding: calc(6 * var(--u)); }
+:is(.mk, .mk-enc) .gr-wares { display: grid; grid-template-columns: repeat(var(--ware-cols, 3), max(54px, calc(104 * var(--u)))); gap: calc(12 * var(--u)) calc(14 * var(--u)); }
+:is(.mk, .mk-enc) .gr-wares .gr-item { width: 100%; }
+:is(.mk, .mk-enc) .gr-bb-row { display: flex; gap: calc(10 * var(--u)); min-height: max(44px, calc(70 * var(--u))); }
+:is(.mk, .mk-enc) .gr-bb-row .gr-cellw { width: max(44px, calc(70 * var(--u))); }
+:is(.mk, .mk-enc) .mk-stall { border: 1px dashed transparent; padding: calc(6 * var(--u)); }
 
 /* ödül kartları (EndlessScene choiceCard görünümü) */
 .mk-cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: calc(26 * var(--u)); min-height: 0; }
@@ -236,9 +236,9 @@ html.short .mk-v2 .mk-rail .gr-hero-meta { display: none; }
 html.short .mk-v2 .mk-rail .gr-hero { padding-right: 2px; }
 html.short .mk-v3 .gr-body { grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr); }
 html.short .mk-v3 .mk-page { padding: 0 8px; }
-html.short .mk-v4 .gr-body { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr) minmax(0, .8fr); gap: 6px 8px; }
+html.short .mk-v4 .gr-body { grid-template-columns: minmax(0, .9fr) minmax(0, 1.1fr); gap: 6px 8px; }
 html.short .mk-portrait { width: 110px; height: 110px; }
-html.short .mk-v5 .gr-body { grid-template-columns: minmax(0, 1fr) minmax(0, .6fr); gap: 6px; }
+html.short .mk-v5 .gr-body { grid-template-columns: minmax(0, 1fr); gap: 6px; }
 html.short .mk-v5 .mk-sq-h .gr-hero-meta { display: none; }
 html.short .mk-cards { gap: 8px; }
 html.short .mk .gr-sec { margin-bottom: 4px; padding-bottom: 2px; }
@@ -272,8 +272,8 @@ html.short .mk-scene-title { display: none; }
 .mk-cards.compact .mk-heal-rows { gap: calc(4 * var(--u)); }
 .mk-cards.compact .mk-heal-row { font-size: max(11px, calc(15 * var(--u))); }
 /* stat satırı: grup içinde etiket yerine ikon (ad ipucunda; Ömer 2026-10-18: anlamı ikonla belli yerde yazı yok) */
-.mk .gr-sgrp:not(.vitals) .gr-stat-k { display: none; }
-.mk .gr-sgrp:not(.vitals) .gr-stat-v { margin-left: auto; }
+:is(.mk, .mk-enc) .gr-sgrp:not(.vitals) .gr-stat-k { display: none; }
+:is(.mk, .mk-enc) .gr-sgrp:not(.vitals) .gr-stat-v { margin-left: auto; }
 .item-tip .mk-cmp-h b { display: inline; font-size: 1em; }
 .mk-cards.compact .mk-who-row { flex-wrap: wrap; gap: calc(6 * var(--u)); }
 html.short .gr-overlay .gr-panel.mk { width: 100%; height: 100%; max-height: none; }
@@ -294,3 +294,53 @@ html.short .gr-overlay .mk-v4 .mk-shelf .gr-bag { max-height: 104px; overflow: h
 /* yeniden çizimde açılış solması tekrar oynamasın (app.js > render: mk-still) */
 .mk-ov.mk-still,
 .mk-ov.mk-still .el-modal-panel { animation: none !important; }
+
+/* ===== dış pencere + envanter (Ömer 2026-10-18: dış etmenler envanterin içinde değil, kendi penceresinde; ikisi yan yana açık) ===== */
+.mk-duo { display: flex; gap: calc(20 * var(--u)); width: 100%; height: 100%; align-items: stretch; justify-content: center; min-height: 0; }
+.gr-overlay .mk-duo > .gr-panel { height: min(100%, calc(920 * var(--u))); max-height: 100%; align-self: center; }
+.gr-overlay .mk-duo > .gr-panel.mk { flex: 1 1 0; min-width: 0; width: auto; max-width: calc(1720 * var(--u)); }
+.gr-overlay .mk-duo:not(.pair) > .gr-panel.mk { flex: 0 1 calc(1720 * var(--u)); }
+.gr-overlay .mk-duo > .mk-enc { flex: 0 0 auto; display: flex; flex-direction: column; min-height: 0; animation: mkEncIn .45s cubic-bezier(.33, 1, .68, 1) both; }
+.mk-enc .mk-enc-b { flex: 1 1 auto; min-height: 0; display: flex; flex-direction: column; gap: calc(12 * var(--u)); }
+.mk-enc .mk-enc-b > * { flex-shrink: 0; }
+.mk-enc .gr-foot { display: flex; align-items: center; gap: calc(14 * var(--u)); }
+.mk-enc .gr-foot .mk-hint { margin-right: auto; }
+.gr-overlay .mk-duo > .mk-enc-town { width: calc(540 * var(--u)); }
+.gr-overlay .mk-duo > .mk-enc-shop { width: calc(560 * var(--u)); }
+.gr-overlay .mk-duo > .mk-enc-reward { width: calc(580 * var(--u)); }
+.gr-overlay .mk-duo.solo > .mk-enc-town, .gr-overlay .mk-duo.solo > .mk-enc-shop { width: calc(720 * var(--u)); }
+.gr-overlay .mk-duo.solo > .mk-enc-reward { width: calc(1400 * var(--u)); }
+.mk-duo.solo .mk-enc-reward .mk-cards.rows { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.mk-duo.solo .mk-enc-reward .mk-cards.rows .mk-card { display: flex; flex-direction: column; align-items: center; text-align: center; }
+.mk-duo.solo .mk-enc-reward .mk-cards.rows .mk-card .mk-kick, .mk-duo.solo .mk-enc-reward .mk-who-row { justify-content: center; }
+.mk-enc .mk-ctx { border: 0; background: transparent; padding: 0; }
+.mk-enc-shop .gr-wares { --ware-cols: 3; }
+/* sefer haritası: pencere değil, haritanın sol bilgi sütunu (war table); envanter haritanın üstünde, harita görünür kalır */
+.gr-overlay .mk-duo > .mk-enc-map { width: calc(420 * var(--u)); align-self: stretch; padding: calc(18 * var(--u)) calc(20 * var(--u)); gap: calc(14 * var(--u));
+  background: linear-gradient(90deg, rgba(10, 7, 5, .9), rgba(10, 7, 5, .55)); border-left: 1px solid rgba(217, 178, 106, .3); }
+.enc-map.gr-overlay { background: rgba(5, 3, 2, .38); }
+.mk-maphead b { display: block; font: 600 max(14px, calc(26 * var(--u))) Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: #f3d999; }
+.mk-maphead i { font: italic max(12px, calc(18 * var(--u))) 'EB Garamond', serif; color: #a8977a; }
+.mk-mapacts { display: flex; align-items: center; gap: calc(12 * var(--u)); margin-top: auto; }
+.mk-duo.solo { justify-content: flex-start; }
+.mk-duo.solo:not(:has(.mk-enc-map)) { justify-content: center; }
+@keyframes mkEncIn { from { transform: translateX(calc(-30 * var(--u))); opacity: 0; } to { transform: none; opacity: 1; } }
+.mk-ov.mk-still .mk-enc { animation: none !important; }
+html.reduced-motion .mk-enc { animation: none !important; }
+/* yan yana açıkken envanter daralır: sütunlar sıkışır */
+.mk-duo.pair .mk-v1 .gr-body { grid-template-columns: calc(250 * var(--u)) minmax(0, 1fr) calc(400 * var(--u)); gap: calc(18 * var(--u)); }
+.mk-duo.pair .mk-v2 .gr-body { grid-template-columns: auto minmax(0, 1fr) calc(400 * var(--u)); }
+.mk-duo.pair .mk-v2 .mk-rail .gr-hero-meta { display: none; }
+.mk-duo.pair .mk-v2 .mk-rail .gr-hero { padding-right: calc(8 * var(--u)); }
+.mk-duo.pair .mk-v4 .gr-body { grid-template-columns: calc(360 * var(--u)) minmax(0, 1fr); }
+.mk-duo.pair .mk-v5 .mk-sq-h .gr-hero-meta { min-width: 0; }
+.mk-duo.pair .mk-v5 .mk-squad { gap: calc(10 * var(--u)); }
+.mk-duo .mk-panel-note { display: none; }
+/* v4 / v5: dış bağlam sütunu kalktı */
+.mk-v4 .gr-body { grid-template-columns: calc(430 * var(--u)) minmax(0, 1fr); }
+.mk-v5 .gr-body { grid-template-columns: minmax(0, 1fr); }
+.mk-v5 .mk-bottom { grid-column: 1 / -1; }
+html.short .mk-duo { gap: 6px; }
+html.short .gr-overlay .mk-duo.pair > .mk-enc { width: 38%; }
+html.short .gr-overlay .mk-duo.pair > .mk-enc-map { width: 30%; padding: 6px; }
+.mk-enc .gr-title { font-size: max(20px, calc(36 * var(--u))); }
