@@ -12,6 +12,7 @@
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
 import { VFX_SHEET_FILES, vfxSheetFile } from './vfx-sheet-files';
+import { buildInbetween } from './vfx-inbetween';
 
 export const vfxSheetKey = (id: string): string => `vfxsheet:${id}`;
 
@@ -57,6 +58,13 @@ function animFor(scene: Phaser.Scene, id: string, frames: readonly number[] | un
   return key;
 }
 
+/** Ara kareli dokunun tüm kareleri için animasyon anahtarı. */
+function ibAnim(scene: Phaser.Scene, texKey: string, count: number): string {
+  const key = `${texKey}#all`;
+  if (!scene.anims.exists(key)) scene.anims.create({ key, frames: Array.from({ length: count }, (_, frame) => ({ key: texKey, frame })), frameRate: 12, repeat: 0 });
+  return key;
+}
+
 export interface SheetOpts {
   /** Karenin ekrandaki kenar uzunluğu (256'lık kare bu boyuta ölçeklenir; içerik karenin ~%40-80'i). Varsayılan 256. */
   size?: number;
@@ -82,6 +90,41 @@ export interface SheetOpts {
   blend?: Phaser.BlendModes;
   /** Başlangıç gecikmesi (ms, slow() ile): sprite o ana kadar görünmez. */
   delay?: number;
+  /** Kodla ara kare (src/game/vfx-inbetween.ts; varsayılan YOK = asıl kareler): kare sayısı ve fps `sub` kat (süre aynı). */
+  inbetween?: { method: string; sub: number };
+}
+
+/** Ara kareli türev doku (asıl dokudan bir kez üretilir); üretilemezse null (asıl kareler oynar). */
+function inbetweenKey(scene: Phaser.Scene, id: string, method: string, sub: number): string | null {
+  const src = vfxSheetKey(id);
+  const key = `${src}#ib:${method}:${sub}`;
+  if (scene.textures.exists(key)) return key;
+  try {
+    const f = vfxSheetFile(id)!;
+    const [fw, fh] = f.meta.frame_size;
+    const tex = scene.textures.get(src);
+    const frames: HTMLCanvasElement[] = [];
+    for (let i = 0; i < f.meta.frames; i++) {
+      const fr = tex.get(i);
+      const c = document.createElement('canvas');
+      c.width = fw;
+      c.height = fh;
+      c.getContext('2d')!.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fw, fh);
+      frames.push(c);
+    }
+    const out = buildInbetween(frames, method, sub);
+    const ct = scene.textures.createCanvas(key, fw * out.length, fh);
+    if (!ct) return null;
+    out.forEach((c, i) => {
+      ct.context.drawImage(c, i * fw, 0);
+      ct.add(i, 0, i * fw, 0, fw, fh);
+    });
+    ct.refresh();
+    ct.setFilter(Phaser.Textures.FilterMode.NEAREST);
+    return key;
+  } catch {
+    return null;
+  }
 }
 
 /**
@@ -94,7 +137,9 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
   scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
   const [fw] = frameSize(id);
   const pivot = f.meta.pivot ?? [fw / 2, f.meta.frame_size[1] / 2];
-  const spr = scene.add.sprite(x, y, key, o.frame ?? o.frames?.[0] ?? 0);
+  const ibKey = o.inbetween && o.inbetween.sub > 1 ? inbetweenKey(scene, id, o.inbetween.method, o.inbetween.sub) : null;
+  const sub = ibKey ? o.inbetween!.sub : 1;
+  const spr = scene.add.sprite(x, y, ibKey ?? key, (o.frame ?? o.frames?.[0] ?? 0) * sub);
   const k = (o.size ?? fw) / fw;
   spr.setOrigin(o.origin?.[0] ?? pivot[0] / fw, o.origin?.[1] ?? pivot[1] / f.meta.frame_size[1]);
   spr.setScale(k, k * (o.squashY ?? 1));
@@ -108,8 +153,9 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
     if (!spr.active) return;
     spr.setVisible(true);
     if (o.frame !== undefined) return;
-    const fps = (o.fps ?? f.meta.fps) / (slow(1000) / 1000);
-    spr.play({ key: animFor(scene, id, o.frames), frameRate: fps, repeat: o.loop ? -1 : 0 });
+    const fps = ((o.fps ?? f.meta.fps) * sub) / (slow(1000) / 1000);
+    const akey = ibKey ? ibAnim(scene, ibKey, f.meta.frames * sub) : animFor(scene, id, o.frames);
+    spr.play({ key: akey, frameRate: fps, repeat: o.loop ? -1 : 0 });
     if (!o.loop && !o.keep) spr.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => spr.destroy());
   };
   if (o.delay && o.delay > 0) {

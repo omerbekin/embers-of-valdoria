@@ -26,6 +26,9 @@ import type { VfxKit } from './vfx-versions';
 import type { V2Vfx } from './art-v2/types';
 import { mobSheetId, vfxSheetFile } from './vfx-sheet-files';
 import layout from '../../data/battle-layout.json';
+import { IB_CFG } from './vfx-inbetween';
+
+const IB = IB_CFG.player;
 
 type Mode = 'melee' | 'bolt' | 'cells' | 'center' | 'self' | 'ally';
 
@@ -188,6 +191,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
         delay,
         ...(s.squashY ? { squashY: s.squashY } : {}),
         ...(origin ? { origin } : {}),
+        ...(IB.enabled ? { inbetween: { method: IB.method, sub: IB.sub } } : {}), // kodla ara kare (varsayılan KAPALI: data/vfx-inbetween.json > player)
       };
       const main = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 1 });
       const glow = k.sheet(c.scene, id, p.x, p.y, { ...base, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });

@@ -254,7 +254,9 @@
       "reducedMotionMult": 0.5,
       "stepMs": 260,
       "stepPx": 16,
-      "slideCell": 80
+      "slideCell": 80,
+      "_speedBase": "Battle speed tabanı (Ömer 2026-10-18: varsayılan savaş hızı %10 hızlı; kaydırıcı yine 1x yazar, seçilen değer bunun üstüne çarpılır).",
+      "speedBase": 1.1
     },
     "aiThinkMs": 700,
     "announceMs": 1100,

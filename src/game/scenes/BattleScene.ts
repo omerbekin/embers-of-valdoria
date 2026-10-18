@@ -718,7 +718,7 @@ export class BattleScene extends Phaser.Scene {
     const T = content.formulas.turn.threshold;
     const cfg = layout.animation.turnWait;
     const rm = reducedMotion();
-    const ms = waitMs(info.ticks, T, cfg, battleSpeed(), rm);
+    const ms = waitMs(info.ticks, T, cfg, battleSpeed() * (cfg.speedBase ?? 1), rm);
     const from = new Map<string, number>();
     const to = new Map<string, number>();
     for (const [uid, n] of info.next) {
@@ -756,7 +756,7 @@ export class BattleScene extends Phaser.Scene {
     const view = this.views.get(e.actor);
     if (!view || ms <= 0) return;
     uiSound('select');
-    if (!rm) await view.stepForward(Math.round(cfg.stepMs / battleSpeed()), cfg.stepPx);
+    if (!rm) await view.stepForward(Math.round(cfg.stepMs / (battleSpeed() * (layout.animation.turnWait.speedBase ?? 1))), cfg.stepPx);
   }
 
   update(): void {

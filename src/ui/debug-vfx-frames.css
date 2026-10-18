@@ -1,0 +1,160 @@
+/* Debug > Characters > VFX frame test (src/ui/debug-vfx-frames.ts). Kit dili: koyu zemin, altın çizgi, Cinzel düğmeler. */
+.vf-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 19; /* debug panelinin (20) altında */
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: calc(8px + var(--et, 0px)) calc(12px + var(--er, 0px)) calc(8px + var(--eb, 0px)) calc(12px + var(--el, 0px));
+  box-sizing: border-box;
+  background: #0b0806;
+  color: var(--el-txt);
+  overflow: hidden;
+}
+
+.vf-head {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  padding-left: 64px; /* Back ikonu için yer */
+  padding-right: 56px; /* sağ üst tam ekran düğmesi */
+  min-height: 44px;
+}
+
+.vf-title {
+  margin: 0;
+  font-size: 18px;
+}
+
+.vf-seg {
+  display: flex;
+  gap: 6px;
+}
+
+.vf-grid {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 10px;
+  align-content: center;
+}
+
+.vf-col {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+}
+
+.vf-canvas {
+  width: auto;
+  max-width: 100%;
+  max-height: 52vh;
+  aspect-ratio: 4 / 3;
+  border: 1px solid var(--el-line2);
+  background: #000;
+}
+
+.vf-canvas.na {
+  opacity: 0.45;
+}
+
+.vf-cap {
+  font: 600 15px var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--el-on);
+}
+
+.vf-sub {
+  font: italic 14px var(--el-body);
+  color: var(--el-dim);
+  text-align: center;
+}
+
+.vf-bar {
+  flex: none;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 8px 18px;
+}
+
+.vf-grp {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.vf-lbl {
+  font: italic 14px var(--el-body);
+  color: var(--el-dim);
+}
+
+.vf-btn.vf-wide {
+  min-width: 76px;
+}
+
+.vf-btn.vf-txt {
+  font-size: 13px;
+  padding: 0 12px;
+}
+
+.vf-btn.on {
+  color: var(--el-on);
+  border-color: var(--el-on);
+}
+
+.vf-info {
+  flex: none;
+  text-align: center;
+  font: italic 14px var(--el-body);
+  color: var(--el-dim);
+}
+
+html.short .vf-overlay {
+  gap: 4px;
+  padding-top: calc(4px + var(--et, 0px));
+  padding-bottom: calc(4px + var(--eb, 0px));
+}
+
+html.short .vf-head {
+  gap: 4px 10px;
+}
+
+html.short .vf-title {
+  display: none;
+}
+
+html.short .vf-grid {
+  gap: 6px;
+}
+
+html.short .vf-canvas {
+  max-height: 44vh;
+}
+
+html.short .vf-cap {
+  font-size: 12px;
+}
+
+html.short .vf-sub,
+html.short .vf-info,
+html.short .vf-lbl {
+  font-size: 12px;
+}
+
+html.short .vf-bar {
+  gap: 4px 10px;
+}
+
+html.short .vf-btn.vf-txt {
+  font-size: 11px;
+  padding: 0 8px;
+}

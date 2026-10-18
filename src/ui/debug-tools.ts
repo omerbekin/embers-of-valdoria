@@ -1171,6 +1171,17 @@ export function registerDebugTools({ game, debug }: Ctx): void {
     },
   });
 
+  // ===== Characters > Animation tests: mob skill animation frame comparison (Original | ChatGPT 16 frames | Code in-betweens; src/ui/debug-vfx-frames.ts) =====
+  debug.register({
+    id: 'chars.vfx-frame-test',
+    icon: 'wand',
+    tab: 'Characters',
+    section: 'Animation tests',
+    label: 'VFX frame test',
+    hint: 'Full-screen page: 3 mob skill animations (Dirge, Halberd Chop, Wall of Pikes) side by side - original 8 frames, ChatGPT 16 frames, code-made in-between frames. Play, speed, step, loop',
+    run: () => void import('./debug-vfx-frames').then((m) => m.openVfxFrameTest()),
+  });
+
   // ===== Characters: look variants (assets/sprites/<id>/idle-<variant>.png; src/game/sprite-variants.ts) =====
   debug.registerPanel({
     id: 'panel.characters',
