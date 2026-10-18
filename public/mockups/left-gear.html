@@ -1,0 +1,132 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Left for the Company mockups</title>
+<!--
+  "LEFT FOR THE COMPANY" kartı taslağı (ui-dev, 2026-10-18). Oyun kodu DEĞİL. Görünüm oyunla birebir: oyunun kendi CSS'i (unified-inventory/css/),
+  gerçek avatar / poz / item görselleri, Ashford arka planı, ortak torba hücresi (nadirlik çerçevesi).
+  Gerçek veri (src/ui/gear-screen.ts > showHandover, src/campaign/state.ts > farewell): ayrılan kahramanlar (Warrior, Gambler), onların takılı item'leri
+  torbaya düşmüş durumda (Woodcutter's Axe, Worn Deck: ikisi Common, item level 2, ana affix C +3% Physical damage); "Equip it on your new heroes
+  before the road north."; düğmeler Later / Equip now. Equip now = ortak Gear (unified-inventory.html#v3&enc=town).
+  Adresler: #v1 Card (oyundaki kart, parlatılmış) · #v2 Handover (ayrılanlar -> torba) · #v3 Toast (alt kart, kasaba görünür, X) ·
+  #v4 Bag panel (tam panel, torba hücreleri + seçili item, X) · #v5 Cards (iki item kartı). &clean = şeridi gizle; H tuşu aç/kapa.
+-->
+<link rel="stylesheet" href="unified-inventory/css/style.css" />
+<link rel="stylesheet" href="unified-inventory/css/elegant.css" />
+<link rel="stylesheet" href="unified-inventory/css/gear.css" />
+<link rel="stylesheet" href="unified-inventory/mock.css" />
+<link rel="stylesheet" href="left-gear/lg.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg" style="background-image:url('unified-inventory/bg/town.webp')"></div><div id="ui-root"></div></div>
+<script>
+(() => {
+  const U = 'unified-inventory/', L = 'left-gear/';
+  const NAV = {
+    fs: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 9V4h5 M20 9V4h-5 M4 15v5h5 M20 15v5h-5"/></svg>',
+    menu: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M4 6h16 M4 12h5 M15 12h5 M4 18h16"/><path d="M12 9.2 l2.8 2.8 -2.8 2.8 -2.8 -2.8 z" stroke="#e0904a" fill="#e0702a" stroke-width="1"/></svg>',
+    x: '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>',
+  };
+  const ARROW = '<svg viewBox="0 0 48 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12h40 M34 5l8 7-8 7"/></svg>';
+  // gerçek veri: data/items.json (woodcutters_axe, worn_deck: common, ilvl 2) + gear-screen.ts satır metinleri
+  const ITEMS = [
+    { id: 'woodcutters_axe', name: "Woodcutter's Axe", sub: 'Common Axes & Swords · One-handed · Item level 2', icon: L + 'items/woodcutters_axe.webp' },
+    { id: 'worn_deck', name: 'Worn Deck', sub: 'Common Charms · Item level 2', icon: L + 'items/worn_deck.webp' },
+  ];
+  const COLOR = '#8a8a84', AFF = '+3% Physical damage', DMG = U + 'stat-icons/might.webp';
+  const HEROES = [
+    { cls: 'warrior', name: 'Warrior', face: U + 'avatars/warrior.webp', pose: U + 'poses/warrior.webp' },
+    { cls: 'gambler', name: 'Gambler', face: L + 'av/gambler.webp', pose: L + 'poses/gambler.webp' },
+  ];
+  const GEAR_URL = 'unified-inventory.html#v3&enc=town';
+  const NAMES = { v1: 'Card', v2: 'Handover', v3: 'Toast', v4: 'Bag panel', v5: 'Cards' };
+  const S = { v: 'v1', open: true, sel: 0, clean: false };
+  const root = document.getElementById('ui-root');
+
+  const cell = (it, cls = '', tag = 'div') => `<${tag}${tag === 'button' ? ' type="button"' : ''} class="gr-item k0 lg-cell ${cls}" data-i="${ITEMS.indexOf(it)}" style="--rc:${COLOR}"><img class="gr-svg gr-px item-art" src="${it.icon}" alt="${it.name}" draggable="false" style="--sz:1;--glow:${COLOR}"></${tag}>`;
+  const aff = () => `<div class="lg-aff"><span class="t">C</span><img src="${DMG}" alt=""><span>${AFF}</span></div>`;
+  const faces = (lap) => `<div class="lg-faces${lap ? ' lap' : ''}">${HEROES.map((h) => `<div class="lg-face" title="${h.name}" style="background-image:url('${h.face}')"></div>`).join('')}</div>`;
+  const WHO = 'Warrior, Gambler leave their gear for you';
+  const NOTE = 'Equip it on your new heroes before the road north.';
+  const bagIco = `<img src="${U}ui-icons/bag.webp" alt="">`;
+  const gearIco = `<img class="lg-gear-ico" src="${U}ui-icons/gear.webp" alt="">`;
+  const foot = (o = {}) => `<div class="gr-foot">${o.noLater ? '' : '<button class="gr-btn" type="button" data-act="later">Later</button>'}<button class="gr-btn primary" type="button" data-act="equip" title="Opens Gear">${o.ico ? gearIco : ''}Equip now</button></div>`;
+  const row = (it) => `<div class="lg-row">${cell(it, 'sm')}<div><div class="lg-name" style="--rc:${COLOR}">${it.name}</div><div class="lg-sub">${it.sub}</div>${aff()}</div></div>`;
+
+  function body() {
+    if (S.v === 'v1') return `<div class="gr-panel gr-mini el-modal-panel"><div class="gr-title">Left for the Company</div><div class="gr-mini-sub lg-hand">${faces(false)}<span>${WHO}</span></div><div class="lg-list">${ITEMS.map(row).join('')}</div><div class="gr-mini-extra">${NOTE}</div>${foot()}</div>`;
+    if (S.v === 'v2') return `<div class="gr-panel gr-mini el-modal-panel" style="width:min(100%,calc(1180 * var(--u)))"><div class="gr-title">Left for the Company</div><div class="gr-mini-sub">${WHO}</div><div class="lg-two"><div class="lg-leave">${HEROES.map((h) => `<div class="lg-hero"><img src="${h.pose}" alt="${h.name}"><b>${h.name}</b></div>`).join('')}</div><div class="lg-arrow">${ARROW}</div><div><div class="lg-bagtag">${bagIco}Now in your bag</div><div class="lg-list">${ITEMS.map(row).join('')}</div></div></div><div class="gr-mini-extra">${NOTE}</div>${foot({ ico: true })}</div>`;
+    if (S.v === 'v3') return `<div class="gr-panel gr-mini el-modal-panel"><div class="lg-mid"><div class="gr-title">Left for the Company</div><div class="gr-mini-sub lg-hand">${faces(true)}<span>${WHO}</span></div></div><div class="lg-cells">${ITEMS.map((i) => cell(i)).join('')}</div>${foot({ noLater: true, ico: true })}</div>`;
+    if (S.v === 'v4') {
+      const it = ITEMS[S.sel];
+      const cells = ITEMS.map((i, n) => `<div style="position:relative">${cell(i, 'pick' + (n === S.sel ? ' on' : ''), 'button').replace('<button', `<button data-pick="${n}"`)}<span class="lg-new">NEW</span></div>`).join('') + '<div class="gr-item empty"></div>'.repeat(10);
+      return `<div class="gr-panel el-modal-panel lg-full"><div class="gr-title">Left for the Company</div><div class="lg-body"><div style="display:flex;flex-direction:column;gap:calc(14 * var(--u))"><div class="lg-hand">${faces(false)}<div class="lg-who">${WHO}</div></div><div class="lg-bagrow"><div class="lg-bagtag" style="margin:0">${bagIco}Bag</div><div class="lg-sub">2 new</div></div><div class="gr-bag">${cells}</div></div><div class="lg-det"><div style="display:flex;gap:calc(14 * var(--u));align-items:center">${cell(it, 'big')}<div><div class="lg-name" style="--rc:${COLOR}">${it.name}</div><div class="lg-sub">${it.sub}</div></div></div>${aff()}<div class="lg-sub" style="margin-top:auto">${NOTE}</div></div></div>${foot({ noLater: true, ico: true })}</div>`;
+    }
+    return `<div class="gr-panel gr-mini el-modal-panel lg-center"><div class="gr-title">Left for the Company</div>${faces(false)}<div class="gr-mini-sub">${WHO}</div><div class="lg-cards">${ITEMS.map((i) => `<div class="lg-card" style="--rc:${COLOR}">${cell(i, 'big')}<div class="lg-name" style="--rc:${COLOR}">${i.name}</div><div class="lg-sub">${i.sub}</div>${aff()}</div>`).join('')}</div><div class="gr-mini-extra">${NOTE}</div>${foot({ ico: true })}</div>`;
+  }
+
+  const tipHtml = (it) => `<b class="it-name" style="color:${COLOR}">${it.name}</b><div class="it-sub">${it.sub.replace(/&/g, '&amp;')}</div><div class="it-lines"><div class="it-line"><span class="it-tier" style="color:#b9a98a;border-color:#b9a98a">C</span><img class="it-ico" src="${DMG}" alt=""><span class="it-text">${AFF}</span></div></div>`;
+
+  function render() {
+    const xBtn = (S.v === 'v3' || S.v === 'v4') && S.open;
+    root.innerHTML = `${S.open ? `<div class="gr-overlay el-modal lg-ov mk-still${S.v === 'v3' ? ' toast' : ''}${S.v === 'v5' ? ' cards' : ''}" role="dialog" aria-label="Left for the Company">${body()}<div class="el-tip item-tip" role="tooltip"></div></div>` : ''}
+      <button class="nav-btn settings-toggle fullscreen-toggle" type="button" title="Fullscreen" aria-label="Fullscreen">${NAV.fs}</button>
+      ${xBtn ? `<button class="nav-btn settings-toggle" type="button" title="Close (Later)" aria-label="Close (Later)" data-act="later">${NAV.x}</button>` : `<button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)">${NAV.menu}</button>`}`;
+    document.querySelectorAll('#mk-strip [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === S.v));
+    document.documentElement.classList.toggle('mk-clean', S.clean);
+  }
+  const hash = () => { location.hash = S.v + (S.clean ? '&clean' : ''); };
+  const read = () => { const h = location.hash.replace('#', '').split('&'); if (NAMES[h[0]]) S.v = h[0]; S.clean = h.includes('clean'); };
+
+  root.addEventListener('click', (e) => {
+    const a = e.target.closest('[data-act]'), p = e.target.closest('[data-pick]');
+    if (p) { S.sel = +p.dataset.pick; render(); return; }
+    if (!a) return;
+    if (a.dataset.act === 'later') { S.open = false; render(); }
+    if (a.dataset.act === 'equip') location.href = GEAR_URL;
+  });
+  root.addEventListener('mousemove', (e) => {
+    const t = root.querySelector('.item-tip'), c = e.target.closest('[data-i]');
+    if (!t) return;
+    if (!c) { t.classList.remove('on'); return; }
+    t.innerHTML = tipHtml(ITEMS[+c.dataset.i]);
+    t.classList.add('on');
+    const r = root.querySelector('.lg-ov').getBoundingClientRect(), a = c.getBoundingClientRect();
+    let left = a.right - r.left + 10, top = a.top - r.top;
+    if (left + t.offsetWidth > r.width - 6) left = a.left - r.left - t.offsetWidth - 10;
+    if (top + t.offsetHeight > r.height - 6) top = r.height - t.offsetHeight - 6;
+    t.style.left = left + 'px'; t.style.top = Math.max(6, top) + 'px';
+  });
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && S.open && (S.v === 'v3' || S.v === 'v4')) { S.open = false; render(); }
+    if (e.key === 'h' || e.key === 'H') { S.clean = !S.clean; hash(); }
+  });
+
+  const strip = document.createElement('div');
+  strip.id = 'mk-strip';
+  strip.innerHTML = `<b>MOCKUP</b>${Object.entries(NAMES).map(([v, n]) => `<button type="button" data-v="${v}" title="${n}">${v}<span class="n"> ${n}</span></button>`).join('')}<span class="sep"></span><button type="button" data-x="show" title="Bring the card back after Later / X">Show card</button><button type="button" data-x="clean" title="Hide this strip; H toggles">Hide</button>`;
+  strip.addEventListener('click', (e) => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.v) { S.v = b.dataset.v; S.open = true; hash(); render(); }
+    else if (b.dataset.x === 'show') { S.open = true; render(); }
+    else if (b.dataset.x === 'clean') { S.clean = true; hash(); }
+  });
+  document.body.append(strip);
+  function layout() {
+    const w = innerWidth, h = innerHeight, de = document.documentElement;
+    de.style.setProperty('--gu', Math.min(h / 1080, w / 1920) + 'px');
+    de.classList.toggle('short', h <= 520); de.classList.toggle('compact', h <= 720); de.classList.add('menu-btn-on');
+    const coarse = matchMedia('(pointer: coarse)').matches;
+    de.style.setProperty('--nav-k', String(coarse ? 1 : Math.min(1.75, Math.max(1, Math.round((h / 640) / 0.05) * 0.05))));
+  }
+  read(); layout(); render();
+  addEventListener('resize', layout);
+  addEventListener('hashchange', () => { const v = S.v; read(); if (v !== S.v) S.open = true; render(); });
+})();
+</script>
+</body>
+</html>

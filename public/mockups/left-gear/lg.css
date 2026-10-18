@@ -1,0 +1,94 @@
+/* "Left for the Company" taslağı: yalnızca düzen; görünüm oyunun kendi CSS'inden (unified-inventory/css/*). */
+.lg-ov { align-items: center; justify-content: center; }
+.lg-ov .gr-panel { height: auto; }
+.lg-cell { width: calc(84 * var(--u)); min-width: 44px; flex: none; cursor: default; }
+.lg-cell.big { width: calc(120 * var(--u)); min-width: 56px; }
+.lg-cell.sm { width: calc(64 * var(--u)); min-width: 44px; }
+.lg-row { display: flex; align-items: center; gap: calc(14 * var(--u)); padding: calc(8 * var(--u)) calc(14 * var(--u)) calc(8 * var(--u)) calc(10 * var(--u)); background: rgba(8, 6, 4, .45); border-bottom: 1px solid var(--g-line); }
+.lg-name { font: 600 max(14px, calc(24 * var(--u))) var(--g-disp); letter-spacing: .05em; text-transform: uppercase; color: var(--rc); }
+.lg-sub { font: italic max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); }
+.lg-aff { display: flex; align-items: center; gap: calc(8 * var(--u)); font: italic max(12px, calc(19 * var(--u))) var(--g-body); color: #c5ecb0; margin-top: 2px; }
+.lg-aff .t { display: grid; place-items: center; width: 1.5em; height: 1.5em; border: 1px solid #b9a98a; color: #b9a98a; font: 700 .78em var(--g-disp); font-style: normal; }
+.lg-aff img { width: max(14px, calc(22 * var(--u))); height: max(14px, calc(22 * var(--u))); }
+.lg-faces { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.lg-face { width: calc(52 * var(--u)); height: calc(52 * var(--u)); min-width: 36px; min-height: 36px; flex: none; background: center / cover no-repeat; border: 1px solid var(--g-edge); }
+.lg-faces.lap .lg-face + .lg-face { margin-left: calc(-14 * var(--u)); }
+.lg-who { font: italic max(14px, calc(23 * var(--u))) var(--g-body); color: var(--g-dim); }
+.lg-hand { display: flex; align-items: center; gap: calc(10 * var(--u)); }
+.lg-gear-ico { width: max(18px, calc(26 * var(--u))); height: max(18px, calc(26 * var(--u))); vertical-align: middle; margin-right: 8px; margin-top: -3px; }
+.gr-btn { min-height: 44px; }
+
+/* v2: veda sütunu + çanta sütunu */
+.lg-two { display: grid; grid-template-columns: auto auto minmax(0, 1fr); gap: calc(26 * var(--u)); align-items: center; }
+.lg-leave { display: flex; flex-wrap: nowrap; justify-content: center; gap: calc(14 * var(--u)); align-items: flex-end; }
+.lg-hero { flex: none; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+.lg-hero img { flex: none; height: calc(260 * var(--u)); min-height: 110px; max-width: none; image-rendering: auto; filter: drop-shadow(0 2px 3px #000); }
+.lg-hero b { font: 600 max(12px, calc(20 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); }
+.lg-arrow { color: var(--g-ember); opacity: .85; }
+.lg-arrow svg { width: calc(46 * var(--u)); min-width: 22px; height: auto; }
+.lg-list { display: flex; flex-direction: column; gap: calc(8 * var(--u)); }
+.lg-bagtag { display: flex; align-items: center; gap: 8px; font: 600 max(12px, calc(18 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); margin-bottom: calc(8 * var(--u)); }
+.lg-bagtag img { width: calc(30 * var(--u)); min-width: 18px; }
+
+/* v3: alt kart (kasaba görünür) */
+.lg-ov.toast { align-items: flex-end; justify-content: center; background: linear-gradient(to top, rgba(5, 3, 2, .6), transparent 45%); pointer-events: none; padding-bottom: calc(46 * var(--u)); }
+.lg-ov.toast .gr-panel { pointer-events: auto; width: min(100%, calc(980 * var(--u))); flex-direction: row; align-items: center; gap: calc(22 * var(--u)); flex-wrap: wrap; padding: calc(14 * var(--u)) calc(24 * var(--u)); }
+.lg-ov.toast .lg-mid { flex: 1 1 calc(280 * var(--u)); min-width: 0; }
+.lg-ov.toast .gr-title { font-size: max(16px, calc(30 * var(--u))); }
+.lg-ov.toast .lg-cells { display: flex; gap: calc(10 * var(--u)); }
+.lg-ov.toast .gr-foot { margin: 0; border: 0; padding: 0; }
+
+/* v4: tam panel, çanta */
+.lg-full { width: min(100%, calc(1060 * var(--u))); }
+.lg-full .lg-body { display: grid; grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr); gap: calc(26 * var(--u)); }
+.lg-full .gr-bag { grid-template-columns: repeat(6, minmax(0, 1fr)); grid-auto-rows: max-content; flex: none; }
+.lg-full .gr-item.on { outline: 2px solid var(--rc); outline-offset: 2px; }
+.lg-full .gr-item.new::marker { content: ''; }
+.lg-new { position: absolute; top: -6px; right: -6px; z-index: 2; font: 700 10px var(--g-disp); letter-spacing: .06em; color: #1a0f06; background: var(--g-ember2); padding: 1px 4px; }
+.lg-det { display: flex; flex-direction: column; gap: calc(8 * var(--u)); background: rgba(8, 6, 4, .45); border: 1px solid var(--g-line2); padding: calc(14 * var(--u)); min-height: calc(180 * var(--u)); }
+.lg-bagrow { display: flex; align-items: center; justify-content: space-between; }
+
+/* v5: iki kart */
+.lg-cards { display: grid; grid-template-columns: 1fr 1fr; gap: calc(18 * var(--u)); }
+.lg-card { display: flex; flex-direction: column; align-items: center; text-align: center; gap: calc(8 * var(--u)); padding: calc(18 * var(--u)) calc(14 * var(--u)); background: radial-gradient(circle at 50% 30%, color-mix(in srgb, var(--rc) 14%, transparent), rgba(8, 6, 4, .6) 70%); border: 1px solid color-mix(in srgb, var(--rc) 60%, transparent); }
+.lg-card .lg-aff { justify-content: center; }
+.lg-center { text-align: center; }
+.lg-center .lg-faces { justify-content: center; }
+.lg-ov.cards .gr-panel { width: min(100%, calc(900 * var(--u))); }
+
+html.short .lg-ov { padding-top: 8px; padding-bottom: 8px; }
+html.short .lg-hero img { height: calc(220 * var(--u)); }
+html.short .lg-ov.toast { padding-bottom: 8px; }
+html.compact .gr-panel { gap: calc(8 * var(--u)); }
+html.short .gr-panel { gap: 6px; padding: 8px 14px; }
+html.short .lg-card { padding: 6px; gap: 3px; }
+html.short .lg-card .lg-cell.big { width: 48px; }
+html.short .lg-full .lg-det { min-height: 0; padding: 6px; }
+html.short .lg-full .gr-bag { --n: 1; }
+html.short .lg-full .lg-body { gap: 12px; }
+html.short .gr-title { font-size: 18px; }
+
+/* --- yatay telefon (html.short, <= 520px yükseklik) --- */
+html.short .gr-panel.gr-mini, html.short .lg-full, html.short .lg-ov.toast .gr-panel, html.short .lg-ov.cards .gr-panel { width: min(100%, 600px) !important; max-width: 600px; }
+html.short .lg-ov { padding: 6px 8px; }
+html.short .lg-two { gap: 10px; }
+html.short .lg-hero img { height: 110px; min-height: 0; }
+html.short .lg-row { padding: 3px 8px 3px 6px; gap: 8px; }
+html.short .lg-face { width: 36px; height: 36px; }
+html.short .gr-mini-sub, html.short .lg-who { font-size: 13px; }
+html.short .gr-mini-extra { font-size: 12px; }
+html.short .lg-name { font-size: 13px; }
+html.short .lg-sub, html.short .lg-aff { font-size: 11px; }
+html.short .gr-foot { padding-top: 4px; }
+html.short .lg-ov.toast .gr-panel { padding: 8px 12px; gap: 10px; }
+html.short .lg-ov.toast .gr-title { font-size: 15px; }
+html.short .lg-cell.big { width: 52px; min-width: 44px; }
+html.short .lg-full .gr-bag { grid-template-columns: repeat(6, 44px); gap: 4px; }
+html.short .lg-full .lg-body { grid-template-columns: auto 1fr; }
+html.short .lg-card .lg-sub { display: none; }
+html.short .lg-cards { gap: 8px; }
+html.short .lg-bagrow { display: none; }
+html.short #mk-strip { padding: 2px 4px; gap: 2px; max-width: 300px; }
+html.short #mk-strip button { min-height: 22px; padding: 1px 5px; font-size: 10px; }
+html.short #mk-strip .n, html.short #mk-strip .sep { display: none; }
+html.short .lg-ov.toast { padding-bottom: 40px; }
