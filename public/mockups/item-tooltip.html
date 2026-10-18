@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Item Tooltip Mockups</title>
+<!--
+  ITEM IPUCU taslağı (ui-dev, 2026-10-18). Oyun kodu DEĞİL; yalnızca seçim için.
+  Görünüm: oyunun kendi CSS dosyaları (unified-inventory/css/ kopyaları yeniden kullanılır), gerçek item / stat / element / portre ikonları.
+  Veri (item-tooltip/data.js) oyunun kendi kodundan üretildi (item-tip.ts + item-text.ts çıktısı): ad, nadirlik, alt başlık, silah gücü, örtük stat,
+  seviye şartı, affix satırları (kademe C/B/A + değer + zar aralığı), Legendary etkisi, değer / satış, kahraman başına fark ya da "Can't use ...".
+  Hiçbir veri uydurulmadı. Zar çubuğu = oyundaki "(5.5–6.5)" aralığında değerin yeri.
+  Adresler: #v0 (bugünkü ipucu) ... #v5 ; &item=bow|axe|armor|trinket|common|legendary (ya da &item=u12 gibi kimlik) ; &hero=h1..h4 (seçili kahraman) ;
+  &ctx=shop (tüccar: "Sells for" satırı) ; &clean = taslak şeridini gizle. Ör.: #v3&item=axe
+  Çanta hücresi görünümü de sürümle birlikte değişir (nadirlik çerçevesi / rengi).
+-->
+<link rel="stylesheet" href="unified-inventory/css/style.css" />
+<link rel="stylesheet" href="unified-inventory/css/elegant.css" />
+<link rel="stylesheet" href="unified-inventory/css/gear.css" />
+<link rel="stylesheet" href="item-tooltip/tip.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg"></div><div id="ui-root"></div></div>
+<script src="item-tooltip/data.js"></script>
+<script src="item-tooltip/app.js"></script>
+</body>
+</html>
