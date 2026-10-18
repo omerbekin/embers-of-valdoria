@@ -26,7 +26,7 @@
     for (const h of Object.values(D.heroes))
       heroes[h.id] = { id: h.id, level: h.level, xp: h.xp, statPoints: h.statPoints, skillPoints: h.skillPoints, extra: {}, pending: {}, equip: { ...h.equip }, tree: {}, hp: h.id === 'h1' ? 0.62 : h.id === 'h3' ? 0.81 : h.id === 'h4' ? 0.45 : 1 };
     return {
-      v: S?.v ?? 'v3', mode: S?.mode ?? 'none', invOpen: !['town', 'reward'].includes(S?.mode ?? 'none'), dlg: null, rbag: false, shopTab: 'sell', fsel: null,
+      v: S?.v ?? 'v3', mode: S?.mode ?? 'none', invOpen: !['town', 'reward', 'map'].includes(S?.mode ?? 'none'), dlg: null, rbag: false, shopTab: 'sell', fsel: null,
       form: { h1: [3, 1], h2: [1, 1], h3: [2, 0], h4: [2, 2] }, hero: 'h1', heroes, bag: [...D.bag], wares: [...D.wares], buyback: [], gold: 240, sel: null, filter: false,
       tab: { v1: 'stats', v2: 'equip', v3: 'hero', v5: 'gear' }, sheet: false, reward: { taken: null, target: null }, rested: false, rerolls: 0,
     };
@@ -202,7 +202,7 @@
       return `<div class="gr-stat${cls}" data-tipt="${esc(STAT_NAME[id] ?? p.label)}" data-stat="${id}"${ATTR.includes(id) ? ` data-attr="${id}"` : ''}><img class="gr-sico" src="${statIco(id)}" alt="" draggable="false"><span class="gr-stat-k">${p.label}</span><span class="gr-stat-v">${fmt(now[id], p.fmt)}</span><span class="gr-stat-d ${d ? (d > 0 ? 'up' : 'down') : ''}">${d ? fmtD(d, p.fmt) : ''}</span>${pm}</div>`;
     };
     // Sheet: HP / MP satırının altında oyunun savaş HUD çubuğu (can yeşil, mana mavi); can = kahramanın şu anki canı
-    const vital = (id) => { const f = id === 'hp' ? h.hp : 1; const cur = Math.round(now[id] * f); return `<div class="mk-vital" data-tipt="${id === 'hp' ? 'Health' : 'Mana'}" data-tipi="${cur} / ${fmt(now[id], 'int')}">${row(id).replace(' data-tipt="', ' data-x="')}<div class="bh-bar ${id} mk-vbar"><i style="width:${Math.round(f * 100)}%"></i></div></div>`; };
+    const vital = (id) => { const f = id === 'hp' ? h.hp : 1; const cur = Math.round(now[id] * f); return `<div class="mk-vital" data-tipt="${id === 'hp' ? 'Health' : 'Mana'}">${row(id).replace(' data-tipt="', ' data-x="').replace(/<span class="gr-stat-v">([^<]*)<\/span>/, `<span class="gr-stat-v mk-cur">${cur} / $1</span>`)}<div class="bh-bar ${id} mk-vbar"><i style="width:${Math.round(f * 100)}%"></i></div></div>`; };
     const grp = (cls, ids) => `<div class="gr-sgrp ${cls}">${ids.map(row).join('')}</div>`;
     return `<div class="gr-sgroups"><div class="gr-sgrp vitals">${D.groups.vitals.map(vital).join('')}</div>${D.groups.panel.map((ids, i) => grp(['base', 'attack', 'defense'][i], ids)).join('')}</div>`;
   }
@@ -248,15 +248,15 @@
   function merchantCtx(o = {}) {
     const wares = S.wares.map((uid) => `<div class="gr-cellw">${uid ? itemCell(uid, { src: 'ware', hid: S.hero }) + price(item(uid).value, item(uid).value > S.gold) : `<div class="gr-item empty sold"></div><div class="gr-price">Sold</div>`}</div>`).join('');
     const tab = S.shopTab === 'buyback' ? 'buyback' : 'sell';
-    const tabs = `<div class="gr-tabs mk-shoptabs" role="tablist">${[['sell', 'Sell'], ['buyback', 'Buyback']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-shoptab="${k}">${n}${k === 'buyback' && S.buyback.length ? ` <span class="mk-pt sk">${S.buyback.length}</span>` : ''}</button>`).join('')}</div>`;
+    const tabs = `<div class="gr-tabs mk-shoptabs" role="tablist">${[['sell', 'Buy &amp; Sell'], ['buyback', 'Buyback']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-shoptab="${k}">${n}${k === 'buyback' && S.buyback.length ? ` <span class="mk-pt sk">${S.buyback.length}</span>` : ''}</button>`).join('')}</div>`;
     const pane = tab === 'sell'
       ? `<div class="mk-sellbox mk-drop" data-drop="stall"><img src="${D.extra.gold}" alt=""><div>Drag an item here from the bag or a hero to sell it for half its worth.<i>Or tap the item and choose Sell.</i></div></div>`
       : S.buyback.length ? `<div class="gr-bb-row">${S.buyback.map((uid) => `<div class="gr-cellw">${itemCell(uid, { src: 'bb', hid: S.hero })}${price(item(uid).sell, item(uid).sell > S.gold)}</div>`).join('')}</div><div class="mk-note">Sold this visit. Buy back for the price you sold at, until you leave.</div>`
       : '<div class="gr-card-empty">Sold something by mistake? It waits here until you leave.</div>';
+    const buy = `<div class="gr-sec mk-flex">Wares<button class="gr-btn sm gr-reroll mk-r" type="button" data-act="reroll" ${S.gold < 15 ? 'disabled' : ''}>Reroll<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button></div>
+      <div class="gr-wares" style="--ware-cols:${o.cols ?? 3}">${wares}</div>`;
     return `<div class="mk-ctx gr-stall mk-stall" data-drop="stall"><div class="gr-odo"><div class="gr-face" style="background-image:url('${D.extra.merchant_av}')"></div><div class="gr-odo-line">Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.</div></div>
-      <div class="gr-sec mk-flex">Wares<button class="gr-btn sm gr-reroll mk-r" type="button" data-act="reroll" ${S.gold < 15 ? 'disabled' : ''}>Reroll<span class="gr-cost"><img class="gr-price-ico" src="${D.extra.gold}" alt="">15</span></button></div>
-      <div class="gr-wares" style="--ware-cols:${o.cols ?? 3}">${wares}</div>
-      ${tabs}<div class="mk-shoppane">${pane}</div></div>`;
+      ${tabs}<div class="mk-shoppane">${tab === 'sell' ? buy : ''}${pane}</div></div>`;
   }
   function rewardCards(o = {}) {
     const R = S.reward;
@@ -285,18 +285,21 @@
   // ---- dış pencereler (envanterden AYRI; envanter yanında açık kalabilir)
   const gearToggle = () => `<button class="mk-ib${S.invOpen ? ' on sel' : ''}" type="button" data-act="inv" data-tipt="Gear" data-tipi="${S.invOpen ? 'Hide the gear window' : 'Open heroes and bag'}"><img src="${D.extra.gear}" alt=""></button>`;
   const formBtn = () => `<button class="mk-ib${S.dlg?.kind === 'formation' ? ' on sel' : ''}" type="button" data-act="formation" data-tipt="Formation" data-tipi="Who stands in front"><img src="${D.extra.formation}" alt=""></button>`;
-  const encFoot = (primary, extra = '') => `<div class="gr-foot">${gearToggle()}<div class="mk-hint">${extra}</div><button class="gr-btn primary" type="button" data-act="encdone">${primary}</button></div>`;
+  const encFoot = (primary, extra = '') => `<div class="gr-foot"><div class="mk-hint">${extra}</div><button class="gr-btn primary" type="button" data-act="encdone">${primary}</button></div>`;
   function encWindow() {
     const m = S.mode;
     if (m === 'none') return '';
-    if (m === 'map') {
-      // sefer haritası: pencere değil, haritanın kendi sol paneli (oyundaki "war table" bilgi sütunu)
-      return `<div class="mk-enc mk-enc-map"><div class="mk-maphead"><b>I · The Border Road</b><i>Normal · Medium</i></div>${campaignCtx().replace('<div class="gr-sec">The Border Road</div>', '<div class="gr-sec">Your party</div>')}<div class="mk-mapacts">${gearToggle()}${formBtn()}<span class="mk-note">Tap a hero to open their gear.</span></div></div>`;
-    }
     if (m === 'merchant') return `<div class="gr-panel gr-gear gr-shop mk-enc mk-enc-shop"><div class="gr-head"><div class="gr-head-l"><div class="gr-title">Odo the Peddler</div></div>${goldHead()}</div><div class="gr-shop-sub" style="margin-top:calc(-6 * var(--u))">Travelling merchant · follows the company</div><div class="mk-enc-b mk-scroll">${merchantCtx({ cols: 3 })}</div>${encFoot('Back to town')}</div>`;
     return ''; // kasaba ve ödül: pencere değil, sahnenin kendisi (townLayer / rewardLayer)
   }
   const priced = () => S.mode === 'merchant';
+  // sefer haritası: haritanın kendi sol takım sütunu (oyundaki "war table"); envanter bunun ÜSTÜNE tam sayfa açılır (Ömer 2026-10-18)
+  const mapLayer = () => `<div class="mk-layer mk-maplayer"><div class="mk-enc mk-enc-map"><div class="mk-maphead"><b>I · The Border Road</b><i>Normal · Medium</i></div>${campaignCtx().replace('<div class="gr-sec">The Border Road</div>', '<div class="gr-sec">Your party</div>')}<div class="mk-note">Tap a hero to open their gear.</div></div></div>`;
+  // Gear + Formation: seferin HER ekranında aynı yerde (sol alt; Ömer 2026-10-18 "global olsun"); envanter ya da küçük pencere açıkken gizli
+  const campHud = () => (['map', 'town', 'merchant'].includes(S.mode) && !S.invOpen && !S.dlg ? `<div class="mk-camphud">${gearToggle()}${formBtn()}</div>` : '');
+  // sağ üst X (nav-icons.ts dilinde: aynı 44 px alan, 30 px çerçeve, 1.6 çizgi); envanterin Close / Done düğmesi ve alt çubuğu yerine
+  const X_SVG = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>';
+  const invShown = () => S.v === 'v3' && !S.dlg && (S.mode === 'none' || S.invOpen && S.mode !== 'reward' || S.mode === 'reward' && S.rbag);
   // ---- kasaba sahnesi (oyundaki TownScreen, src/game/town-screen.ts): tam ekran görsel, resimdeki yerler (valdoria.json > Ashford scene.hotspots)
   //      tıklanınca KENDİ küçük penceresini açar; önde takım (dokun = o kahramanın envanteri). Sol altta Gear + Formation (Ömer 2026-10-18).
   const TOWN = { w: 1599, h: 1066, focusY: 0.58, spots: [
@@ -326,7 +329,7 @@
       const x = w / 2 + (i - (ids.length - 1) / 2) * gap;
       return `<button class="mk-thero" type="button" data-openhero="${hid}" style="left:${x - gap * 0.42}px;top:${feet - hh}px;width:${gap * 0.84}px;height:${hh + Math.max(18, 30 * gu)}px"><img src="${A}poses/${meta(hid).class}.webp" alt="" draggable="false" style="height:${hh}px"><span class="mk-thn" style="font-size:${Math.max(11, 18 * gu)}px">${esc(meta(hid).name)}</span>${ptBadge(hid)}</button>`;
     }).join('');
-    return `<div class="mk-layer mk-town">${spots}${heroes}<div class="mk-townhud">${gearToggle()}${formBtn()}</div></div>`;
+    return `<div class="mk-layer mk-town">${spots}${heroes}</div>`;
   }
   function townHot(id) {
     const t = TOWN.spots.find((x) => x.id === id);
@@ -399,12 +402,13 @@
     let tab = S.tab.v3;
     if (!['hero', 'sheet'].includes(tab)) tab = S.tab.v3 = 'hero';
     const marks = `<div class="mk-marks">${Object.keys(S.heroes).map((hid) => `<button class="mk-mark${hid === S.hero ? ' on' : ''}" type="button" data-hero="${hid}" data-drop="hero:${hid}" data-tipt="${esc(meta(hid).name)}" data-tipi="${esc(heroLine(hid, focusUid()).html.replace(/<[^>]+>/g, ''))}">${face(hid)}${ptBadge(hid)}</button>`).join('')}</div>`;
-    const tabs = `<div class="gr-tabs" role="tablist" style="grid-column:2 / -1">${[['hero', 'Hero'], ['sheet', 'Sheet']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-tab="v3:${k}">${n}${k === 'sheet' ? ' ' + skBadge(S.hero) : ''}</button>`).join('')}</div>`;
+    const tabs = `<div class="gr-tabs mk-headtabs" role="tablist">${[['hero', 'Hero'], ['sheet', 'Sheet']].map(([k, n]) => `<button class="gr-tab${tab === k ? ' on' : ''}" type="button" data-tab="v3:${k}">${n}${k === 'sheet' ? ' ' + skBadge(S.hero) : ''}</button>`).join('')}</div>`;
     const l = tab === 'hero' ? `<div class="gr-sec">${esc(meta().name)} · ${esc(meta().families)}</div>${slotsGrid(S.hero)}${skillsBlock(S.hero)}` : levelBlock(S.hero) + `<div class="gr-sec">Stats</div>` + statsBlock(S.hero);
-    const narrow = document.documentElement.classList.contains('short') && (S.mode === 'map' || S.mode === 'merchant' || S.rbag);
+    const narrow = document.documentElement.classList.contains('short') && (S.mode === 'merchant' || S.rbag);
     const r = tab === 'hero' ? bagBlock({ priced: priced(), cols: narrow ? 4 : 6 }) : treeBlock(S.hero);
     const n = tab === 'hero' ? [1, 2] : [3, 4];
-    return `<div class="gr-panel gr-gear mk mk-v3">${head()}<div class="gr-body" style="grid-template-rows:auto minmax(0,1fr)"><div></div>${tabs}${marks}<div class="mk-col mk-page mk-scroll">${l}<div class="mk-folio">· ${n[0]} ·</div></div><div class="mk-spine"></div><div class="mk-col mk-page r mk-scroll">${r}<div class="mk-folio">· ${n[1]} ·</div></div></div>${foot()}</div>`;
+    const hd = `<div class="gr-head mk-v3head"><div class="gr-title">Gear</div>${tabs}<span class="mk-grow"></span>${S.mode === 'merchant' && S.invOpen ? '' : goldHead()}</div>`;
+    return `<div class="gr-panel gr-gear mk mk-v3">${hd}<div class="gr-body" style="grid-template-rows:minmax(0,1fr)">${marks}<div class="mk-col mk-page mk-scroll">${l}<div class="mk-folio">· ${n[0]} ·</div></div><div class="mk-spine"></div><div class="mk-col mk-page r mk-scroll">${r}<div class="mk-folio">· ${n[1]} ·</div></div></div></div>`;
   };
   L.v4 = () => {
     const doll = `<div class="mk-doll"><div class="mk-dcol">${['helm', 'armor', 'gloves', 'boots'].map((x) => slotBtn(S.hero, x)).join('')}</div><div class="mk-portrait" style="background-image:url('${meta().avatar}')"><div class="mk-pname">${esc(meta().name)}</div></div><div class="mk-dcol">${['weapon', 'offhand', 'trinket'].map((x) => slotBtn(S.hero, x)).join('')}</div></div>`;
@@ -448,15 +452,16 @@
     $('#bgimg').style.backgroundImage = `url('${A}${bg}')`;
     const st = { none: ['Valdoria', 'I · The Border Road'], map: ['Valdoria', 'I · The Border Road'], town: ['Ashford Village', 'Town · Rest, Recruits, Trade'], merchant: ['Ashford Village', "Odo's stall"], reward: ['Endless', 'Wave 6'] }[S.mode];
     // sahnenin kendisi (kasaba / ödül ekranı) örtünün ALTINDA; örtü yalnızca bir pencere açıkken kararır
-    const layer = S.mode === 'town' ? townLayer() : S.mode === 'reward' && !S.rbag ? rewardLayer() : '';
+    const layer = S.mode === 'town' ? townLayer() : S.mode === 'map' ? mapLayer() : S.mode === 'reward' && !S.rbag ? rewardLayer() : '';
     let inner;
-    if (S.mode === 'town') inner = S.invOpen ? `<div class="mk-duo">${L[S.v]()}</div>` : '';
+    if (S.mode === 'town' || S.mode === 'map') inner = S.invOpen ? `<div class="mk-duo">${L[S.v]()}</div>` : '';
     else if (S.mode === 'reward') inner = S.rbag ? `<div class="mk-duo pair mk-rbduo">${rbTiles()}${L[S.v]()}</div>` : '';
     else inner = `<div class="mk-duo${S.mode === 'none' ? '' : S.invOpen ? ' pair' : ' solo'}">${encWindow()}${S.mode === 'none' || S.invOpen ? L[S.v]() : ''}</div>`;
     // küçük pencere (Formation / not) açık olanın ÜSTÜNE gelir; haritanın sol sütunu arkada görünür kalır
     if (S.dlg) inner = (inner || '') + `<div class="mk-duo mk-dlgwrap${inner ? ' over' : ''}">${dlgHtml()}</div>`;
-    const html = `${S.mode === 'reward' ? '' : `<div class="mk-scene-title"><b>${st[0]}</b><i>${st[1]}</i></div>`}${layer}<div class="gr-overlay el-modal mk-ov enc-${S.mode}${inner ? '' : ' mk-empty'}" role="dialog">${inner}<div class="el-tip item-tip" role="tooltip"></div><div class="mk-tip"></div><div class="mk-toast"></div>
+    const html = `${S.mode === 'reward' ? '' : `<div class="mk-scene-title"><b>${st[0]}</b><i>${st[1]}</i></div>`}${layer}<div class="gr-overlay el-modal mk-ov enc-${S.mode}${inner ? '' : ' mk-empty'}${invShown() ? ' mk-top' : ''}" role="dialog">${inner}<div class="el-tip item-tip" role="tooltip"></div><div class="mk-tip"></div><div class="mk-toast"></div>
       <div class="gr-trash" data-drop="trash" data-tipt="Discard"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 7h16M9 7V4.5h6V7M6.5 7l1 13h9l1-13M10 11v6M14 11v6" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg></div></div>
+      ${campHud()}${invShown() ? `<button class="nav-btn settings-toggle mk-close" type="button" title="Close" aria-label="Close" data-act="done">${X_SVG}</button>` : ''}
       <button class="nav-btn settings-toggle fullscreen-toggle" type="button" title="Fullscreen" aria-label="Fullscreen" data-act="fs">${D.nav['fs-enter']}</button>
       <button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)" data-act="menu">${D.nav.menu}</button>`;
     root.innerHTML = html;
@@ -702,12 +707,15 @@
     const dragEl = t.closest('[data-drag]');
     if (!dragEl || dragEl.closest('.mk-dots')) return;
     const [kind, uid] = [dragEl.dataset.drag.split(':')[0], dragEl.dataset.drag.split(':').slice(1).join(':')];
-    press = { kind, uid, el: dragEl, x: e.clientX, y: e.clientY, moved: false, pointerType: e.pointerType, id: e.pointerId };
+    press = { kind, uid, el: dragEl, x: e.clientX, y: e.clientY, moved: false, pointerType: e.pointerType, id: e.pointerId, held: e.pointerType !== 'touch' };
+    if (e.pointerType === 'touch') press.timer = setTimeout(() => { if (!press || press.moved) return; press.held = true; S.sel = { uid: press.uid, src: press.kind }; pinTip(press.uid, press.el); }, 380);
   });
+  document.addEventListener('touchmove', (e) => { if (press?.moved || press?.held) e.preventDefault(); }, { passive: false });
   // tarayıcının yerel resim sürüklemesi işaretçi olaylarını keser (oyunda da img draggable=false)
   document.addEventListener('dragstart', (e) => e.preventDefault());
   document.addEventListener('pointermove', (e) => {
-    if (press && !press.moved && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 7) {
+    if (press && !press.moved && !press.held && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 10) { clearTimeout(press.timer); press = null; return; }
+    if (press && !press.moved && press.held && Math.hypot(e.clientX - press.x, e.clientY - press.y) > 7) {
       press.moved = true;
       unpin(); hideTip();
       const it = item(press.uid);
@@ -757,6 +765,9 @@
     if (!press) return;
     const p = press;
     press = null;
+    clearTimeout(p.timer);
+    // uzun basıştan sonra parmak kalktı: ipucu açık kalır (oyundaki gibi)
+    if (!p.moved && p.pointerType === 'touch' && p.held) { S.suppressClick = true; return; }
     if (p.moved) {
       const hit = document.elementsFromPoint(e.clientX, e.clientY).find((x) => p.targets.includes(x));
       p.ghost.remove();
@@ -789,7 +800,13 @@
     render();
     if (p.pointerType !== 'mouse' || p.kind === 'ware' || p.kind === 'bb' || p.kind === 'reward') { const a = overlay.querySelector(`[data-tip="${p.uid}"]`); if (a && S.sel) pinTip(p.uid, a); }
   });
-  document.addEventListener('pointercancel', () => { if (press?.ghost) press.ghost.remove(); press = null; S.drag = null; render(); });
+  document.addEventListener('pointercancel', () => {
+    if (press) clearTimeout(press.timer);
+    const was = press?.moved;
+    if (press?.ghost) press.ghost.remove();
+    press = null; S.drag = null;
+    if (was) { overlay.classList.remove('gr-dragging', 'gr-trash-on'); render(); }
+  });
   document.addEventListener('pointerdown', (e) => {
     const fh = e.target.closest?.('[data-fhero]');
     if (!fh || S.dlg?.kind !== 'formation') return;
@@ -910,7 +927,7 @@
     if (S.sel || S.pinned) { S.sel = null; unpin(); render(); }
   });
   document.addEventListener('keydown', (e) => {
-    if (e.key === 'Escape') { if (S.dlg) { S.dlg = null; S.fsel = null; render(); } else if (S.pinned || S.sel) { S.sel = null; unpin(); render(); } else if (S.sheet) { S.sheet = false; render(); } }
+    if (e.key === 'Escape') { if (S.dlg) { S.dlg = null; S.fsel = null; render(); } else if (S.pinned || S.sel) { S.sel = null; unpin(); render(); } else if (S.sheet) { S.sheet = false; render(); } else if (invShown() && S.mode !== 'none') { if (S.mode === 'reward') S.rbag = false; else S.invOpen = false; render(); } }
   });
 
   // ---------------------------------------------------------------- adres (#v2&mode=merchant&clean) + taslak şeridi
@@ -923,14 +940,14 @@
       if (k === 'tab' && v) { const [lv, tv] = v.split('.'); if (lv && tv) S.tab[lv] = tv; }
     }
     document.documentElement.classList.toggle('mk-clean', parts.includes('clean'));
-    if (['town', 'reward'].includes(S.mode) && readHash.mode !== S.mode) { S.invOpen = false; S.rbag = false; S.dlg = null; }
+    if (['town', 'reward', 'map'].includes(S.mode) && readHash.mode !== S.mode) { S.invOpen = false; S.rbag = false; S.dlg = null; }
     readHash.mode = S.mode;
   }
   function writeHash() {
     const clean = document.documentElement.classList.contains('mk-clean');
     history.replaceState(null, '', `#${S.v}&enc=${S.mode}${clean ? '&clean' : ''}`);
   }
-  function setMode(m) { S.mode = m; S.invOpen = !['town', 'reward'].includes(m); S.rbag = false; S.dlg = null; S.sel = null; S.sheet = false; unpin(); writeHash(); render(); }
+  function setMode(m) { S.mode = m; S.invOpen = !['town', 'reward', 'map'].includes(m); S.rbag = false; S.dlg = null; S.sel = null; S.sheet = false; unpin(); writeHash(); render(); }
   function strip() {
     const s = document.createElement('div');
     s.id = 'mk-strip';

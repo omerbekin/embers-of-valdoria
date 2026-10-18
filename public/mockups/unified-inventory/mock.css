@@ -459,12 +459,64 @@ html.short .mk-rw-s { font-size: 13px; }
 html.short .mk-rw-head { padding-right: 110px; padding-left: 110px; }
 /* telefon v3: başlık satırı sekmelerle aynı satıra iner (dikey yer kazanır) */
 html.short .mk-v3.gr-panel { position: relative; }
-html.short .mk-v3 > .gr-head { position: absolute; left: 10px; right: 10px; top: 8px; padding: 0; border: 0; pointer-events: none; }
-html.short .mk-v3 > .gr-head > * { pointer-events: auto; }
-html.short .mk-v3 .gr-body > .gr-tabs { margin-left: 34px; min-height: 44px; }
 html.short .mk-v3 .gr-tab { min-height: 44px; }
 html.short .mk .gr-chip { min-height: 44px; }
 .mk-fhero { width: 100%; height: 100%; }
 .mk-rw-t, .mk-rw-s { text-shadow: 0 1px 3px #000, 0 0 12px rgba(0, 0, 0, .9); }
 .gr-overlay .mk-dlgwrap { position: absolute; inset: 0; z-index: 6; padding: inherit; }
 .gr-overlay .mk-dlgwrap.over { background: rgba(5, 3, 2, .6); }
+
+/* ===== 2026-10-18 (2. tur): tam sayfa envanter, üst şerit kullanımı, X kapatma, global Gear / Formation, harita katmanı ===== */
+/* envanter açıkken üstteki boş şerit kullanılır: pencere üst kenara (nav düğmelerinin hizasına) kadar çıkar; başlık satırı nav düğmeleriyle aynı yükseklikte */
+.gr-overlay.mk-ov.mk-top { padding-top: calc(var(--nav-edge-k) + var(--et, 0px)); }
+.mk-ov.mk-top .mk-duo > .gr-panel { height: 100%; max-height: 100%; align-self: stretch; }
+.mk-ov.mk-top .mk-duo > .gr-panel.mk { max-width: none; }
+.mk-ov.mk-top .mk-duo:not(.pair) > .gr-panel.mk { flex: 1 1 auto; }
+.mk-ov.mk-top .mk-duo > .mk-v3 { padding-top: 0; }
+.mk-v3 > .mk-v3head { display: flex; align-items: center; gap: calc(28 * var(--u)); min-height: var(--nav-hit-k); padding-right: calc(3 * var(--nav-hit-k) + 2 * var(--nav-gap-k) + 8px); }
+.mk-v3 > .mk-v3head .gr-title { line-height: 1; }
+.mk-v3 > .mk-v3head .mk-headtabs { align-self: stretch; display: flex; align-items: stretch; margin: 0; border: 0; }
+.mk-v3 > .mk-v3head .mk-headtabs .gr-tab { display: inline-flex; align-items: center; min-height: 44px; }
+.mk-v3 > .mk-v3head .mk-grow { flex: 1; }
+/* çift pencerede (tüccar + envanter) envanter sağda: X / tam ekran / Menu onun başlık satırında; tüccar penceresi de üste çıkar */
+.mk-ov.mk-top .mk-duo.pair > .mk-enc { padding-top: calc(10 * var(--u)); }
+/* X: sağ üst sıranın (Menu, tam ekran) solunda, aynı kare dil (nav-icons.ts: 44 px alan, 30 px çerçeve, 18 px simge, 1.6 çizgi) */
+html.menu-btn-on .settings-toggle.mk-close { right: calc(var(--nav-edge-k) + 2 * var(--nav-hit-k) + 2 * var(--nav-gap-k) + 8px + var(--er, 0px)); }
+.settings-toggle.mk-close::after { content: ''; position: absolute; right: calc(-4px - var(--nav-gap-k)); top: 25%; bottom: 25%; width: 1px; background: rgba(217, 178, 106, 0.3); }
+/* Gear + Formation: seferin her ekranında sol altta aynı yer */
+.mk-camphud { position: fixed; left: max(12px, calc(28 * var(--gu, 1px))); bottom: max(12px, calc(28 * var(--gu, 1px))); z-index: 25; display: flex; gap: max(10px, calc(16 * var(--gu, 1px)));
+  --u: var(--gu, 1px); --g-gold: #f3d999; --g-line2: rgba(217, 178, 106, 0.3); --g-ember: #e0702a; --g-ember2: #ffb35a; }
+/* harita: sol takım sütunu sahnenin parçası (pencere değil) */
+.mk-maplayer .mk-enc-map { position: absolute; left: 0; top: 0; bottom: 0; width: max(240px, calc(420 * var(--u))); display: flex; flex-direction: column; padding: calc(84 * var(--u)) calc(20 * var(--u)) calc(130 * var(--u)); gap: calc(14 * var(--u));
+  background: linear-gradient(90deg, rgba(10, 7, 5, .9), rgba(10, 7, 5, .55)); border-right: 1px solid rgba(217, 178, 106, .3); }
+.mk-maplayer .mk-ctx { overflow: hidden auto; min-height: 0; }
+html.short .mk-maplayer .mk-enc-map { padding: 8px 10px 70px; width: 250px; gap: 4px; }
+html.short .mk-maplayer .mk-maphead b { font-size: 14px; }
+/* Sheet: "93 / 150" */
+.gr-sgroups .gr-stat .gr-stat-v.mk-cur { min-width: 0; margin-left: auto; }
+
+/* telefon: yerleşim AYNI, yalnızca ölçek küçük (yazılar / simgeler ~%15 küçük; dokunma hedefleri 44 px kalır) */
+html.short .mk .gr-title { font-size: 17px; }
+html.short .mk .gr-tab { font-size: 11px; letter-spacing: .14em; }
+html.short .mk .gr-sec { font-size: 10px; letter-spacing: .16em; }
+html.short .mk .gr-slot-name { font-size: 11px; }
+html.short .mk .gr-slot-sub { font-size: 10px; }
+html.short .mk .gr-slot { min-height: 44px; padding-top: 2px; padding-bottom: 2px; }
+html.short .mk .gr-slot .gr-svg { --sz: 1 !important; }
+html.short .mk .gr-chip { font-size: 10px; }
+html.short .mk .gr-gold { font-size: 13px; }
+html.short .mk .gr-sgroups { font-size: 11px; }
+html.short .mk .gr-lvl-n { font-size: 12px; }
+html.short .mk .gr-lvl-xp, html.short .mk .gr-pts-text, html.short .mk .gr-pts-skill { font-size: 10px; }
+html.short .mk .gr-btn.sm { font-size: 10px; }
+html.short .mk .mk-folio { font-size: 9px; padding-top: 2px; }
+html.short .mk .mk-soon span { font-size: 12px; }
+html.short .mk .mk-pt { min-width: 18px; height: 18px; font-size: 10px; }
+html.short .mk-v3 .mk-mark .mk-pt { min-width: 18px; height: 18px; font-size: 10px; right: -6px; top: -6px; }
+html.short .mk-enc .gr-title { font-size: 17px; }
+html.short .mk-enc .gr-shop-sub, html.short .mk-enc .gr-odo-line { font-size: 11px; }
+html.short .mk-enc .gr-price { font-size: 10px; }
+.mk-v3 .mk-marks { padding-top: 10px; }
+.mk-v3 .mk-page { padding-top: 4px; }
+.mk-headtabs .gr-tab .mk-pt { margin-left: 6px; }
+html.short .mk-enc-shop .gr-wares .gr-item { min-width: 46px; min-height: 46px; }
