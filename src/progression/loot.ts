@@ -88,7 +88,8 @@ export function rollLoot(o: LootInput): LootResult {
   const first = replay === 0;
   const n = Math.max(1, o.party.length);
   const expected = o.kind === 'treasure' ? L.treasureBase + L.treasurePerMember * n : L.perPartyMember[o.kind] * n;
-  let count = roundChance(rng, expected * rep.items);
+  // Sefer düşüşü %35 az (Ömer 2026-10-18, TUR 1 madde 8; items.json > loot.dropMult); garanti tabanı (minItems) aynen
+  let count = roundChance(rng, expected * rep.items * (L.dropMult ?? 1));
   if (first) count = Math.max(count, L.minItems[o.kind] ?? 0);
   const families = [...new Set(o.party.flatMap((h) => classWeaponFamilies(h.class)))];
   const cap = rIdx(rep.maxRarity);
@@ -97,7 +98,9 @@ export function rollLoot(o: LootInput): LootResult {
   const forClass: Array<string | undefined> = [];
   for (let i = 0; i < count; i++) {
     // Nadirliği yalnızca tablo belirler (Ömer 2026-10-11: boss / hazine "en az Rare" ve Rare pity kalktı); Legendary bu tablodan çıkmaz: en çok Epic
-    const r = Math.min(rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind))), cap, rIdx('epic'));
+    // Nadirlik tabanı (TUR 1 madde 8): elit en az Uncommon, boss en az Rare; tekrar oynamanın tavanı yine işler
+    const floor = L.rarityFloor?.[o.kind] ? rIdx(L.rarityFloor[o.kind]!) : 0;
+    const r = Math.min(Math.max(rIdx(rollDropRarity(rng, o.ilvl, dropKind(o.kind))), floor), cap, rIdx('epic'));
     const slot = rng.next() < L.smartSlotChance ? weakestSlot(rng, o.party) : SLOT_IDS[rng.int(0, SLOT_IDS.length - 1)]!;
     let family: string | undefined;
     if (slot === 'weapon' || slot === 'offhand') {

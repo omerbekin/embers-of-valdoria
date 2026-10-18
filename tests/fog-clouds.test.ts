@@ -41,7 +41,7 @@ describe('sefer haritası sis bulutları', () => {
       }
       for (const n of map.nodes) {
         const v = vis[n.id];
-        if (v !== 'fog' && v !== 'goal' && v !== 'closed') continue;
+        if (v !== 'fog' && v !== 'goal') continue;
         const p = pos(n.id);
         for (const q of placePuffs(basePuffs(n.id, p.x, p.y), clear)) {
           for (const r of clear) expect(puffHits(q, r), `durak ${at.id}: ${n.id} bulutu açık alana değiyor`).toBe(false);

@@ -63,4 +63,39 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
     expect(hw.hpMult ?? 1).toBeCloseTo((mw.hpMult ?? 1) * (hard.enemy?.hpMult ?? 1), 2);
     expect(hw.actionsPerTurn).toBe(mw.actionsPerTurn);
   });
+
+  it('eliteEscort (open-questions 365): yalnızca ELİT düğümün rütbesiz eşlikçilerine; elit lider, noTierMods ve normal düğüm etkilenmez', () => {
+    const units = (difficulty: 'easy' | 'medium', node: string) => battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 3, difficulty }), node)).units.enemies;
+    const esc = CONFIG.difficulties.medium.eliteEscort!;
+    expect(esc.hpMult).toBeGreaterThan(1);
+    expect(CONFIG.difficulties.easy.eliteEscort).toBeUndefined();
+    const ratio = (m: Record<number, { modifiers?: { hpMult?: number; powerMult?: number }; tier?: string }>, e: typeof m, slot: string, k: 'hpMult' | 'powerMult') =>
+      (m[+slot]!.modifiers?.[k] ?? 1) / (e[+slot]!.modifiers?.[k] ?? 1);
+    for (const node of ['8C', '3']) {
+      const m = units('medium', node);
+      const e = units('easy', node);
+      let escorts = 0;
+      for (const slot of Object.keys(m)) {
+        if (m[+slot]!.tier) continue;
+        escorts++;
+        expect(ratio(m, e, slot, 'hpMult')).toBeCloseTo(esc.hpMult ?? 1, 2);
+        expect(ratio(m, e, slot, 'powerMult')).toBeCloseTo(esc.powerMult ?? 1, 2);
+      }
+      expect(escorts).toBeGreaterThan(0);
+    }
+    // Black Cathedral eliti: yalnızca enemyTier.elite farkı
+    const m8 = units('medium', '8C');
+    const e8 = units('easy', '8C');
+    const lead = Object.keys(m8).find((s) => m8[+s]!.tier === 'elite')!;
+    expect(ratio(m8, e8, lead, 'hpMult')).toBeCloseTo((CONFIG.difficulties.medium.enemyTier?.elite?.hpMult ?? 1) / (CONFIG.difficulties.easy.enemyTier?.elite?.hpMult ?? 1), 2);
+    // Bandit Chief (noTierMods): iki zorlukta aynı
+    const m3 = units('medium', '3');
+    const e3 = units('easy', '3');
+    const chief = Object.keys(m3).find((s) => m3[+s]!.tier === 'elite')!;
+    expect(m3[+chief]!.modifiers).toEqual(e3[+chief]!.modifiers);
+    // normal düğüm: Easy ile Medium aynı (eliteEscort uygulanmaz)
+    const m5 = units('medium', '5A');
+    const e5 = units('easy', '5A');
+    for (const slot of Object.keys(m5)) expect(m5[+slot]!.modifiers).toEqual(e5[+slot]!.modifiers);
+  });
 });

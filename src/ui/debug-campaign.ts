@@ -4,7 +4,7 @@
  */
 import type Phaser from 'phaser';
 import { activeHeroes, debugToggleFallen, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
-import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, makeItem, xpToNext } from '../progression';
+import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, makeItem, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
@@ -266,14 +266,14 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       reload();
     },
   });
-  for (const lv of [1, 5, 10, 20, 50])
+  for (const lv of [1, 5, 10, 20, 30])
     debug.register({
       id: `campaign.level-${lv}`,
       tab: CAMPAIGN_TAB,
       section: 'Levels',
       icon: 'muscle',
       label: `Set level ${lv}`,
-      hint: `Set every hero to Level ${lv} (XP 0); placed stat points are reset and ${(lv - 1) * LEVELS.statPointsPerLevel} points wait to be spent`,
+      hint: `Set every hero to Level ${lv} (XP 0; the campaign stops at Level ${campaignMaxLevel()}); placed stat points are reset and ${statPointsAt(lv)} points wait to be spent`,
       run: () => {
         setState(debugSetLevel(ensureState(), lv));
         reload();
@@ -360,6 +360,21 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       const id = getMap(s.mapId).nodes.find((n) => n.type === 'merchant')?.id;
       if (id) setState(debugTeleport(s, id));
       reload();
+    },
+  });
+  // Demirci (Ömer 2026-10-18, ilerleme TUR 1 madde 7): şehre (Valdren Keep) ışınlanmadan, bulunulan seferin üstünde açılır
+  debug.register({
+    id: 'campaign.blacksmith',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'muscle',
+    label: 'Open Blacksmith',
+    hint: 'Open the Blacksmith screen for the current campaign: pick an item (bag or equipped), then Temper (+1 item level, up to the best item level of this chapter) or Reforge (Epic only). Use Give 100 gold / Give epic first. In a town it is the Blacksmith place on the town screen',
+    run: () => {
+      const s = ensureState();
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      void import('./blacksmith-screen').then((m) => m.openBlacksmith(root, () => current() ?? s, (x) => setState(x), { sub: 'Debug' }));
     },
   });
   debug.register({

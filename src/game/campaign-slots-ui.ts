@@ -1,7 +1,7 @@
 import Phaser from 'phaser';
 import { motion } from '../ui/motion';
 import { content } from '../engine';
-import { CONFIG, deleteSave, deleteSlot, listSaves, slotSummaries, type CampaignMode, type Difficulty, type SaveEntry, type SlotSummary } from '../campaign';
+import { CONFIG, deleteSave, deleteSlot, listSaves, progressText, slotSummaries, type CampaignMode, type Difficulty, type SaveEntry, type SlotSummary } from '../campaign';
 import { storage } from './campaign-session';
 import { H, W, crown, hpBar } from './campaign-ui';
 import { classAvatar, classLogoBadge } from './menu-ui';
@@ -145,7 +145,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     };
     const refresh = () => {
       const s = sums[i];
-      sub.setText(s ? `${modeName(s.mode)} · ${diffName(s.difficulty)}${s.latest ? ` · Stop ${s.latest.summary.stop}` : ''}${s.mapChanged ? ' · Map changed' : ''}` : 'Empty');
+      sub.setText(s ? `${modeName(s.mode)} · ${diffName(s.difficulty)}${s.latest ? ` · ${progressText(s.latest.summary)}` : ''}${s.mapChanged ? ' · Map changed' : ''}` : 'Empty');
       paint();
     };
     zone.on('pointerover', () => ((hover = true), paint()));
@@ -217,7 +217,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     y += 54;
     panel.add(elText(scene, IX, y, `${modeName(s.mode)} · ${diffName(s.difficulty)}`, 15, s.mode === 'ironman' ? EL.BAD : EL.MUTED, { em: 0.14 }).setOrigin(0, 0));
     y += 30;
-    const meta = l ? `${l.summary.map} · Stop ${l.summary.stop} of ${l.summary.stops} · ${l.summary.victories} victories · ${s.saveCount} save${s.saveCount === 1 ? '' : 's'} · ${dateText(s.lastPlayed)}` : `${s.mapChanged ? 'Old map' : 'Not saved yet'} · ${dateText(s.lastPlayed)}`;
+    const meta = l ? `${l.summary.map} · ${progressText(l.summary, true)} · ${l.summary.victories} victories · ${s.saveCount} save${s.saveCount === 1 ? '' : 's'} · ${dateText(s.lastPlayed)}` : `${s.mapChanged ? 'Old map' : 'Not saved yet'} · ${dateText(s.lastPlayed)}`;
     panel.add(elBody(scene, IX, y, meta, 21, EL.MUTED, true, IW).setOrigin(0, 0));
     y += 44;
     // Valdoria A1-x (kayıt sürümü 6): eski haritanın seferi silindi, yuva duruyor (yeni sefer kaydedilince uyarı kalkar)
@@ -302,7 +302,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       const ry = y + k * rowH;
       if (k) g.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(IX, ry, IX + IW, ry);
       panel.add(elText(scene, IX, ry + 14, `${kindName(e.kind)}${k === 0 ? ' · Newest' : ''}`, 13, KICKER, { em: 0.2 }).setOrigin(0, 0));
-      panel.add(fitW(elText(scene, IX, ry + 34, `Stop ${e.summary.stop}/${e.summary.stops} · ${e.summary.node}`, 21, EL.TXT, { em: 0.04, upper: false }).setOrigin(0, 0), IW - 400));
+      panel.add(fitW(elText(scene, IX, ry + 34, `${progressText(e.summary, true)} · ${e.summary.node}`, 21, EL.TXT, { em: 0.04, upper: false }).setOrigin(0, 0), IW - 400));
       panel.add(elBody(scene, IX, ry + 60, `${e.summary.region} · ${dateText(e.savedAt)}`, 18, EL.MUTED).setOrigin(0, 0));
       const cy = ry + rowH / 2;
       const lb = elButton(scene, 'Load', () => o.onLoad?.(e), { kind: 'primary', w: 160, h: 58, size: 20, ready: true });

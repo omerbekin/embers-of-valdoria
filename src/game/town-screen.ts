@@ -1,8 +1,11 @@
 import Phaser from 'phaser';
 import { content } from '../engine';
-import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, leaderOf, partySpots, townCover, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
+import { CONFIG, activeHeroes, hotspotOffered, idleStartFrame, hotspotRect, isFallen, leaderOf, nextStep, partySpots, restInTown, smithHotspot, townCover, townRestPrice, townScene, type CampaignState, type Cover, type MapNode, type TownHotspot } from '../campaign';
 import { animKey, characterTexture } from './assets';
-import { H, W, crown } from './campaign-ui';
+import { H, W, crown, openModal, type Modal } from './campaign-ui';
+import { setState } from './campaign-session';
+import { openBlacksmith } from '../ui/blacksmith-screen';
+import { uiSound, worldSound } from '../ui/ui-sound';
 import { EL, elBody, elGlow, elText, fadeLine, vGradient } from './elegant-ui';
 import { stageView } from './stage';
 import { loadTownArt, townArtKey } from './town-art';
@@ -11,7 +14,8 @@ import { reducedMotion } from '../ui/motion-pref';
 /**
  * Kasaba ekranı (Ömer 2026-10-12, future-ideas "SIRADA" (1)): kasabaya girince tam ekran kasaba görseli (Ashford köy meydanı, Valdren Keep
  * kale avlusu), önde takım (dokun = Gear), resimdeki yerler tıklanabilir (valdoria.json > nodes[].scene.hotspots: tezgâh = Trade, ilan
- * panosu / kışla = aday, NPC = hikâye sahnesi yeniden, ateş = dinlenme notu, yol / kapı = Leave). Formation düğmesi yok (haritanın takım
+ * panosu / kışla = aday, NPC = hikâye sahnesi yeniden, ateş = dinlenme (ilk bedava, sonra ücretli; TUR 1 madde 10), demirci = Temper / Reforge
+ * (TUR 1 madde 7; yeri campaign.json > blacksmith), yol / kapı = Leave). Formation düğmesi yok (haritanın takım
  * sütununda). Kurallar ve geometri saf: src/campaign/town.ts.
  *
  * Girdi: fare = üstüne gelince vurgu + etiket, tıklama = eylem. Dokunmatik = haritadaki düğüm kuralı: ilk dokunuş seçer (vurgu + "Tap again"),
@@ -38,10 +42,14 @@ export class TownScreen {
   private hovered: string | null = null;
   private painters = new Map<string, (on: boolean) => void>();
   private destroyed = false;
+  /** Ekranın kendi penceresi (ateş başında dinlenme; TUR 1 madde 10). */
+  private modal: Modal | null = null;
+  /** Açık demirci ekranı (DOM; TUR 1 madde 7): kapatma işlevi. */
+  private closeSmith: (() => void) | null = null;
 
   constructor(
     private scene: Phaser.Scene,
-    layer: Phaser.GameObjects.Container,
+    private layer: Phaser.GameObjects.Container,
     readonly node: MapNode,
     private hooks: TownScreenHooks,
     index?: number,
@@ -63,7 +71,74 @@ export class TownScreen {
 
   destroy(): void {
     this.destroyed = true;
+    this.closeRest();
+    this.closeSmith?.();
+    this.closeSmith = null;
     this.root.destroy(true);
+  }
+
+  /**
+   * Yere dokunuldu. Ateş başı (rest) ve demirci (smith) bu ekranda çözülür (Ömer 2026-10-18, ilerleme TUR 1 madde 7 / 10): dinlenme penceresi
+   * (ilk dinlenme bedava, sonrakiler ücretli; diriltme yok) ve demirci ekranı. Diğer yerler sahneye gider (hooks.hotspot).
+   */
+  private onSpot(h: TownHotspot): void {
+    if (h.action !== 'rest' && h.action !== 'smith') return this.hooks.hotspot(h);
+    if (nextStep(this.hooks.state()).kind !== 'town') return;
+    if (h.action === 'rest') {
+      worldSound('hearth');
+      return this.restDialog(h);
+    }
+    const root = document.getElementById('ui-root');
+    if (!root || this.closeSmith) return;
+    this.closeSmith = openBlacksmith(root, () => this.hooks.state(), (x) => setState(x), {
+      sub: this.node.name,
+      onClose: () => {
+        this.closeSmith = null;
+        this.render();
+      },
+    });
+  }
+
+  private closeRest(): void {
+    this.modal?.close();
+    this.modal = null;
+  }
+
+  /** Ateş başı: "Rest" (ilk bedava, sonra fiyat) ya da Close; düşmüşler kalkmaz (yalnızca Valor). */
+  private restDialog(h: TownHotspot): void {
+    this.closeRest();
+    const s = this.hooks.state();
+    const price = townRestPrice(s, this.node.id);
+    const fallen = s.roster.filter((x) => isFallen(x)).length;
+    const lines = [
+      price === 0
+        ? 'Rest by the fire: the living are back to full health. The first rest here is free.'
+        : `Your free rest here was your first arrival. Rest by the fire again for ${price} gold: the living are back to full health. You have ${s.gold} gold.`,
+      ...(fallen ? ['The fallen stay down: only Valor can raise them.'] : []),
+    ];
+    const short = price - s.gold;
+    this.modal = openModal(this.scene, this.layer, {
+      title: h.label,
+      subtitle: this.node.name,
+      text: lines.join('\n\n'),
+      fit: true,
+      width: this.hooks.compact() ? 1300 : 980,
+      buttons: [
+        { label: 'Close', run: () => this.closeRest() },
+        {
+          label: short > 0 ? `Need ${short} more gold` : price ? `Rest · ${price} gold` : 'Rest',
+          primary: true,
+          run: () => {
+            if (short > 0) return uiSound('error');
+            setState(restInTown(this.hooks.state(), this.node.id));
+            worldSound('hearth');
+            this.closeRest();
+            this.render();
+          },
+        },
+      ],
+      onDismiss: () => this.closeRest(),
+    });
   }
 
   /** Ekranı baştan çizer (ilk kurulum, görsel yüklenince, ekran boyutu değişince, Gear / aday sonrası takım güncellenince). */
@@ -113,6 +188,9 @@ export class TownScreen {
     this.root.add(lines);
     this.root.add(elBody(s, W / 2, 104, this.node.subtitle, this.hooks.compact() ? 28 : 21, EL.MUTED).setOrigin(0.5));
     if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h)) this.addHotspot(h, cover);
+    // Demirci (TUR 1 madde 7): yeri campaign.json > blacksmith.hotspots'ta (kasabanın kendi verisi değil)
+    const smith = smithHotspot(this.node);
+    if (def && smith && smith.rect[2] > smith.rect[0]) this.addHotspot(smith, cover);
     this.addParty();
     // Seçim yeniden çizimden sonra korunur (ör. ekran döndürülünce)
     if (this.selected) this.painters.get(this.selected)?.(true);
@@ -164,7 +242,7 @@ export class TownScreen {
       elGlow(text, on);
       tap.setAlpha(on && this.selected === id ? 1 : 0);
     });
-    for (const z of [zone, labelZone]) this.bindTap(z, id, () => this.hooks.hotspot(h));
+    for (const z of [zone, labelZone]) this.bindTap(z, id, () => this.onSpot(h));
   }
 
   /** Takım: alttaki açık alanda ayakta (gerçek sprite ya da yer tutucu), adı ayaklarının altında, liderin üstünde taç. */
@@ -210,7 +288,7 @@ export class TownScreen {
   /** Fare: üstüne gelince vurgu, tıklama eylem. Dokunmatik: ilk dokunuş seçer, aynı yere ikinci dokunuş eylem. */
   private bindTap(zone: Phaser.GameObjects.Zone, id: string, run: () => void): void {
     zone.on('pointerover', (p: Phaser.Input.Pointer) => {
-      if (p.wasTouch || this.hooks.busy()) return;
+      if (p.wasTouch || this.busy()) return;
       this.hover(id);
     });
     zone.on('pointerout', (p: Phaser.Input.Pointer) => {
@@ -218,11 +296,16 @@ export class TownScreen {
       if (this.hovered === id) this.hover(null);
     });
     zone.on('pointerup', (p: Phaser.Input.Pointer) => {
-      if (this.hooks.busy()) return;
+      if (this.busy()) return;
       if (p.wasTouch && this.selected !== id) return this.select(id);
       this.select(null);
       run();
     });
+  }
+
+  /** Sahnenin meşguliyeti ya da bu ekranın kendi penceresi / demirci ekranı açık. */
+  private busy(): boolean {
+    return this.hooks.busy() || !!this.modal || !!this.closeSmith;
   }
 
   private hover(id: string | null): void {

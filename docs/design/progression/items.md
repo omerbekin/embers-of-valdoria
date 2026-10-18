@@ -611,6 +611,12 @@ Bölüm 2-3 içeriği (yeni haritalar) roadmap'e bağlı: MVP Valdoria'yı (böl
 | 7 | Ashford vedası | Ayrılan tutorial takımının item'leri **doğrudan yeni takımın torbasında** görünür (torba sınırı uygulanmaz, hiçbir item kaybolmaz; madde 278) ve **item takma tutorial'ı Ashford'da başlar** (ui-dev, Aşama 1). Bir **teslim anı** olur: "eski takım bunları size bıraktı". Veri hazır: `farewell` sefer durumuna `pendingHandover { node, from: [{ heroId, class }], items: [uid] }` yazar; Aşama 1 arayüzü bunu gösterip onaylatır, onayda `acknowledgeHandover` kaydı siler (item'ler zaten torbada). |
 | 8 | Boss'ta "3 item'den birini seç" | **YOK.** Boss ve korunan hazine dahil tüm düşüşler otomatik. (Fikir ileride farklı mekanikle gelebilir: quest ödülü ya da NPC hediyesi; `docs/design/future-ideas.md`.) |
 
+**TUR 1 güncellemeleri (Ömer 2026-10-18; open-questions 360 / 363):**
+- **Düşüş:** sefer item düşüşü x0,65 (`items.json > loot.dropMult`; Endless'a dokunulmaz); elit düşüşü en az Uncommon, boss en az Rare (`loot.rarityFloor`). Tüccar tamamlayıcı kaynak.
+- **Legendary** ortak nadir zardan (3.6 / madde 297), boss'a bağlı değil; set parçası garantisi set turunda.
+- **Demirci (Blacksmith)** kasabada, yalnız altın: Temper (item seviyesi bölüm tavanına kadar +1, değerler seviye formülünden; Legendary 2 kat fiyat; seviye şartı ilvl − 3 geçerli), Reforge (yalnız Epic, ana affix dışı bir affix aynı kademeden yeniden; aynı affix yeni değerle de gelebilir). Fiyatlar item'in tüccar fiyatına bağlı (open-questions 364, "pahalı olsun"): Temper adımı ~ tüccar fiyatının yarısı (Legendary 2 kat), Reforge tam fiyat ve her tekrarda x1,5; `campaign.json > blacksmith` PROVİZYON. Kod `src/campaign/smith.ts`, ekran `src/ui/blacksmith-screen.ts`.
+- **Endless:** item kartı normal ve elit dalgada 2, boss sonrası 3 seçenekli (biri alınır; open-questions 364, `endless.json > rewards.itemOptions`) ve elit / boss sonrası TEK item kartı (`special.*.itemCards` 1); boss zaferinde tam şifa yerine +%50, ardından kalıntı seçimi.
+
 ---
 
 ## 8. Varsayımlar (open-questions'a not edildi)

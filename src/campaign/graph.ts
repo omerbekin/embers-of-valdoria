@@ -16,6 +16,38 @@ export const findNode = (map: CampaignMap, id: string): MapNode | undefined => m
 export const outgoing = (map: CampaignMap, id: string): string[] => map.edges.filter((e) => e.from === id).map((e) => e.to);
 export const incoming = (map: CampaignMap, id: string): string[] => map.edges.filter((e) => e.to === id).map((e) => e.from);
 export const edgeBetween = (map: CampaignMap, from: string, to: string): MapEdge | undefined => map.edges.find((e) => e.from === from && e.to === to);
+/** Serbest dolaşım (roadmap 2.1): kenarlar iki yönlü yürünür. Komşular = ileri (çıkış) + geri (giriş), veri sırasıyla, tekrarsız. */
+export const neighbors = (map: CampaignMap, id: string): string[] => [...new Set([...outgoing(map, id), ...incoming(map, id)])];
+/** İki düğüm arasındaki kenar, hangi yönde yazılmış olursa olsun. */
+export const edgeEither = (map: CampaignMap, a: string, b: string): MapEdge | undefined => map.edges.find((e) => (e.from === a && e.to === b) || (e.from === b && e.to === a));
+
+/** BFS: `from` düğümünden İKİ YÖNLÜ grafta kenar sayısıyla mesafe (sis, roadmap 2.4). */
+export function undirectedDistances(map: CampaignMap, from: string): Map<string, number> {
+  const dist = new Map<string, number>([[from, 0]]);
+  const queue = [from];
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const o of neighbors(map, id)) {
+      if (dist.has(o)) continue;
+      dist.set(o, dist.get(id)! + 1);
+      queue.push(o);
+    }
+  }
+  return dist;
+}
+
+/** Bir düğümün tüm atası (girişlerden geriye ulaşılan düğümler, kendisi hariç). Tutorial kilidi: bölük kurma düğümünün ataları. */
+export function upstreamOf(map: CampaignMap, id: string): Set<string> {
+  const out = new Set<string>();
+  const queue = [...incoming(map, id)];
+  while (queue.length) {
+    const x = queue.shift()!;
+    if (out.has(x) || x === id) continue;
+    out.add(x);
+    queue.push(...incoming(map, x));
+  }
+  return out;
+}
 
 export const choicePoints = (map: CampaignMap): string[] => map.nodes.filter((n) => outgoing(map, n.id).length > 1).map((n) => n.id);
 export const mergePoints = (map: CampaignMap): string[] => map.nodes.filter((n) => incoming(map, n.id).length > 1).map((n) => n.id);

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { LEVELS, baseRuleOk, enemyLevelAttrAdd, growthAlloc, withEnemyLevel, ATTRS, type LevelRules } from '../src/progression/levels';
+import { LEVELS, baseRuleOk, enemyLevelAttrAdd, growthAlloc, withEnemyLevel, ATTRS, statPointsAt, type LevelRules } from '../src/progression/levels';
 import { bosses, classes, formulas, mobs, encounterUnit } from '../src/engine/content';
 import { applyUnitModifiers } from '../src/engine/stats';
 import { battlePlan, getMap, newCampaign, nodeLevel, pickHero } from '../src/campaign';
@@ -17,17 +17,18 @@ const plus = (base: Attributes, add: Partial<Attributes> | undefined): Attribute
 const units = { ...classes, ...mobs, ...bosses };
 
 describe('düşman stat büyümesi', () => {
-  it('veri: açık, kahramanla aynı puan (level başına statPointsPerLevel x statPerPoint)', () => {
+  it('veri: açık, kahramanla aynı puan (statPointsAt(level) x statPerPoint; TUR 1 madde 2)', () => {
     expect(LEVELS.enemies?.enabled).toBe(true);
     const add = enemyLevelAttrAdd('warrior', 10)!;
-    expect(total(add as Attributes)).toBe(9 * LEVELS.statPointsPerLevel * LEVELS.statPerPoint);
+    expect(total(add as Attributes)).toBe(statPointsAt(10) * LEVELS.statPerPoint);
+    expect(statPointsAt(10)).toBe(11);
     expect(enemyLevelAttrAdd('warrior', 1)).toBeUndefined();
     expect(enemyLevelAttrAdd('no_such_unit', 10)).toBeUndefined();
   });
 
   it('profil = birimin temel stat oranları: en yüksek temel stat en çok puanı alır (kural izin verdikçe)', () => {
     const a = growthAlloc({ str: 30, int: 20, dex: 10, luck: 10 }, 21);
-    expect(ATTRS.reduce((t, k) => t + (a[k] ?? 0), 0)).toBe(60);
+    expect(ATTRS.reduce((t, k) => t + (a[k] ?? 0), 0)).toBe(statPointsAt(21));
     expect(a.str!).toBeGreaterThan(a.int!);
     expect(a.int!).toBeGreaterThan(a.dex!);
     // veri profili temel oranların yerine geçer
@@ -52,7 +53,7 @@ describe('düşman stat büyümesi', () => {
     const add2 = enemyLevelAttrAdd('road_thug', 2)!;
     expect(add2.str ?? 0).toBe(0);
     const add30 = enemyLevelAttrAdd('road_thug', 30)!;
-    expect(total(add30 as Attributes)).toBe(29 * LEVELS.statPointsPerLevel * LEVELS.statPerPoint);
+    expect(total(add30 as Attributes)).toBe(35 * LEVELS.statPerPoint);
     const a = plus(base, add30);
     expect(baseRuleOk(a)).toBe(true);
   });
@@ -66,7 +67,7 @@ describe('düşman stat büyümesi', () => {
     const m = withEnemyLevel({ hpMult: 1.5, attrAdd: { luck: 2 } }, 'warrior', 3)!;
     expect(m.hpMult).toBe(1.5);
     expect(m.attrAdd!.luck! >= 2).toBe(true);
-    expect(total(plus({ str: 0, int: 0, dex: 0, luck: 0 }, m.attrAdd))).toBe(2 + 2 * LEVELS.statPointsPerLevel * LEVELS.statPerPoint);
+    expect(total(plus({ str: 0, int: 0, dex: 0, luck: 0 }, m.attrAdd))).toBe(2 + statPointsAt(3) * LEVELS.statPerPoint);
   });
 
   it('kapalıysa (enabled false) büyüme yok', () => {

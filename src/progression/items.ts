@@ -214,6 +214,10 @@ export interface LootConfig {
   /** Legendary düşüş şansı: 0 iken loot asla Legendary vermez (Legendary yalnızca ortak nadir düşüşten, madde 297). */
   legendaryChance?: number;
   gold: Record<LootKind, number>;
+  /** Sefer item düşüşü çarpanı (Ömer 2026-10-18, TUR 1 madde 8: 0,65); beklenen sayıya çarpılır, minItems aynen. Yoksa 1. */
+  dropMult?: number;
+  /** Kaynağın her item'inin nadirlik tabanı (TUR 1 madde 8: elit en az Uncommon, boss en az Rare). */
+  rarityFloor?: Partial<Record<LootKind, RarityId>>;
 }
 
 export const ITEMS: ItemsData = itemsJson as unknown as ItemsData;
@@ -240,6 +244,8 @@ export interface ItemInstance {
   uid: string;
   id: string;
   rolls?: ItemRoll;
+  /** Demircide kaç kez Reforge edildi (sefer; TUR 1 madde 7: her tekrarda fiyat artar). Yoksa 0. */
+  reforges?: number;
 }
 
 /** Kahramanın takılı item'leri: 6 yuvanın hepsi anahtar olarak var, boş = null. */

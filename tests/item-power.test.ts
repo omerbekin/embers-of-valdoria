@@ -336,7 +336,7 @@ describe('çift el yakın dövüş tabanları: Greataxe, Greatsword, War Maul (�
     const seen = new Map<string, Set<string>>();
     const party = [{ class: 'warrior' }, { class: 'defender' }, { class: 'paladin' }, { class: 'antimage' }];
     for (let seed = 1; seed <= 4000 && NEW.some((id) => (seen.get(id)?.size ?? 0) < 4); seed++) {
-      const res = rollLoot({ rng: new Rng(seed), kind: 'boss', chapter: 2, ilvl: 20, party });
+      const res = rollLoot({ rng: new Rng(seed), kind: 'battle', chapter: 2, ilvl: 20, party }); // normal savaş: boss'un nadirlik tabanı Rare (TUR 1 madde 8)
       res.items.forEach((id, i) => {
         if (!(NEW as readonly string[]).includes(id)) return;
         if (!seen.has(id)) seen.set(id, new Set());

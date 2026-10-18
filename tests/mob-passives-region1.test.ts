@@ -179,7 +179,8 @@ describe('D7-D9', () => {
     const u = enc.units.find((x) => x.class === 'ember_acolyte')!;
     expect(CONFIG.enemyScale?.skipRegions).toContain('I');
     const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty: 'medium' }), '3'));
-    const expected = withDifficulty(withDifficulty(u.mods, chapterEnemyMods('valdoria', '3')), CONFIG.difficulties.medium!.enemy)!;
+    // + elit düğümün rütbesiz eşlikçisi: zorluğun eliteEscort'u (open-questions 365)
+    const expected = withDifficulty(withDifficulty(withDifficulty(u.mods, chapterEnemyMods('valdoria', '3')), CONFIG.difficulties.medium!.enemy), CONFIG.difficulties.medium!.eliteEscort)!;
     const m = plan.units.enemies[u.slot]!.modifiers!;
     expect(m.hpMult).toBe(expected.hpMult);
     expect(m.powerMult).toBe(expected.powerMult);

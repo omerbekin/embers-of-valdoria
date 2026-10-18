@@ -1,6 +1,6 @@
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
-import { activeHeroes, stopNumber } from './state';
+import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
 import { valorRules } from '../engine/content';
@@ -41,7 +41,12 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
  * Sürüm 8 ve öncesi okunurken level ve XP AYNEN kalır (yoksa 1 / 0); eksik puanlar level'dan tamamlanır (progression > normalizeLevelFields).
  * Sınıfların başlangıç statları değiştiği için duraklatılmış savaş kurulumu tutmaz: suspend.ts > canResume onu atar (savaş baştan).
  */
-export const SAVE_VERSION = 9;
+/**
+ * 10: Serbest dolaşım (roadmap 2.1, Ömer 2026-10-09 kararları): sefer durumuna `visited`, `cleared`, `replays` (ve duraklatılmış devriyede
+ * `patrol`). Sürüm 9 ve öncesi okunurken `visited` / `cleared` yürüyüş günlüğünden (path) türetilir, `replays` boş; kapanan dal kavramı
+ * kalktığı için başka bir şey değişmez (normalizeState > upgradeRoam; her okumada çalışır, idempotent).
+ */
+export const SAVE_VERSION = 10;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -61,6 +66,9 @@ export interface SaveSummary {
   classes: string[];
   hp: number[];
   victories: number;
+  /** Temizlenmiş / toplam düğüm (sürüm 10; eski kayıt kartında yok, kart "Stop" yazar). */
+  cleared?: number;
+  total?: number;
 }
 
 export interface SaveEntry {
@@ -175,7 +183,35 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   if (!DIFFS.includes(s.difficulty)) s.difficulty = CONFIG.defaultDifficulty;
   if (slot !== undefined) s.slot = slot;
   else if (typeof s.slot !== 'number' || s.slot < 0 || s.slot >= SLOT_COUNT) s.slot = 0;
-  return isValidState(s) ? s : null;
+  if (!isValidState(s)) return null;
+  upgradeRoam(s);
+  return s;
+}
+
+/**
+ * Sürüm 10 (serbest dolaşım): `visited` / `cleared` yoksa ya da bozuksa yürüyüş günlüğünden türetilir (bulunulan dışındaki her geçilen düğüm
+ * temizlenmişti: eski kuralda düğüm bitmeden yola çıkılmazdı; bulunulan düğüm adımları bitmişse temizlenmiş). `replays` bozuksa / yoksa boş.
+ * Başlatılmış devriye yalnızca aynı düğümün duraklatılmış savaşıyla kalır. Eski `closedNodes` kavramının kayıtta alanı yoktu (path'ten
+ * türetiliyordu): atılacak bir şey yok. Yerinde değiştirir (geçerli durum).
+ */
+function upgradeRoam(s: CampaignState): void {
+  const map = MAPS[s.mapId]!;
+  const known = (x: unknown): x is string => typeof x === 'string' && !!findNode(map, x);
+  const uniq = (xs: string[]) => [...new Set(xs)];
+  s.visited = Array.isArray(s.visited) && s.visited.every(known) ? uniq(s.visited) : uniq([...s.path, s.at]);
+  if (!s.visited.includes(s.at)) s.visited.push(s.at);
+  if (Array.isArray(s.cleared) && s.cleared.every(known)) s.cleared = uniq(s.cleared);
+  else {
+    const out = uniq(s.path.filter((id) => id !== s.at));
+    if (nodeCleared(s, s.at) && !out.includes(s.at)) out.push(s.at);
+    s.cleared = out;
+  }
+  const r = s.replays as unknown;
+  s.replays =
+    r && typeof r === 'object' && !Array.isArray(r)
+      ? (Object.fromEntries(Object.entries(r as Record<string, unknown>).filter(([k, v]) => known(k) && typeof v === 'number' && Number.isInteger(v) && v > 0)) as Record<string, number>)
+      : {};
+  if (s.patrol !== undefined && !(s.patrol === s.at && s.suspended?.node === s.at && canReplay(map, findNode(map, s.at)!))) delete (s as { patrol?: unknown }).patrol;
 }
 
 /** Kaydedilmiş bir durum oyunda kullanılabilir mi (harita, düğüm, kadro ve dizilim tutarlı)? */
@@ -252,7 +288,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -278,7 +314,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }
@@ -338,8 +374,13 @@ export function summarize(s: CampaignState): SaveSummary {
     classes: team.map((h) => h.class),
     hp: team.map((h) => h.hpRatio),
     victories: s.stats.victories,
+    ...clearedProgress(s),
   };
 }
+
+/** Kayıt kartındaki ilerleme yazısı: sürüm 10 özeti "Cleared 9/26", eski özet "Stop 7" (long: "Stop 7 of 21"). */
+export const progressText = (sum: SaveSummary, long = false): string =>
+  sum.cleared !== undefined && sum.total !== undefined ? `Cleared ${sum.cleared}/${sum.total}` : long ? `Stop ${sum.stop} of ${sum.stops}` : `Stop ${sum.stop}`;
 
 /** Elle kayıt yalnızca Normal modda. */
 export const canSaveManually = (s: CampaignState): boolean => s.mode === 'normal';

@@ -1,10 +1,20 @@
 {
   "_not": "Sefer kuralları (PROVİZYON sayılar; denge balance-tester'ın işi). Metinler oyun içi (İngilizce). docs/design/campaign/campaign.md v5.",
   "maps": ["valdoria"],
-  "_rest": "Düşen kahraman zaferde KALKMAZ (Ömer 2026-10-11, Endless gibi): ceset olarak taşınır, sonraki savaşa ceset girer; yalnızca savaştaki Resurrection ya da burada altınla kalkar. Boss zaferinin tam şifası yalnızca yaşayanlara; kasaba (ücretsiz) herkesi tam cana getirir ve düşenleri de kaldırır (denge paketi). Zafer şifası %25 (Ömer 2026-10-12). Dinlenme noktası (Ömer 2026-10-11; Riverside Camp): ÜCRETSİZ, takım maks canın heal oranı kadar iyileşir (kasaba gibi tam değil). Düşmüş kahraman (can 0) burada ALTINLA diriltilir (tüccar değil): reviveRatio canla kalkar; fiyat = reviveCost.base + reviveCost.perIlvl x düğümün item seviyesi. Fiyat VARSAYIM (madde 305).",
-  "rest": { "heal": 0.5, "reviveRatio": 0.5, "reviveCost": { "base": 20, "perIlvl": 6 } },
+  "_rest": "Düşen kahraman zaferde KALKMAZ (Ömer 2026-10-11, Endless gibi): ceset olarak taşınır, sonraki savaşa ceset girer. Ömer 2026-10-18 (ilerleme TUR 1 madde 10): dinlenme / kamp / kasaba artık DİRİLTMEZ (eski rest.reviveRatio / reviveCost kalktı); diriltme yalnızca Valor ile (savaşta Resurrection / Raise Dead de). Boss zaferinin tam şifası yalnızca yaşayanlara. Zafer şifası %20. Dinlenme noktası (Riverside Camp): ÜCRETSİZ, yaşayanlar maks canın heal oranı kadar iyileşir. Kasabada dinlenme (ateş başı): her kasabada İLK dinlenme bedava, sonrakiler ücretli (aynı kasabada sayaç, kayıtta townRests); yaşayanlar kasabanın heal oranına (tam) iyileşir. price = kasabadaki ücretli dinlenme fiyatı: base + perChapter x bölüm (PROVİZYON, denge turunda; bölüm 1 = 15). Kasabaya varış şifası (Ömer 2026-10-18, karar 364: 'Varış şifası ilk bedava dinlenme olsun. Her tekrar ziyaret para istesin'): kasabaya İLK varışta valdoria.json > nodes[].heal kadar şifa (state.ts > moveTo) ve o kasabanın bedava dinlenmesi kullanılmış sayılır (townRests = 1); sonraki varışlarda şifa YOK, ateş başı dinlenme price kadar.",
+  "rest": { "heal": 0.5, "price": { "base": 5, "perChapter": 10 } },
   "_merchant": "Sefer tüccarı (Odo; Ömer 2026-10-11; Forward Camp): Endless tüccarının kuralları (alım / satım / geri alım / yenileme); stok tek nadirlik tablosundan (items.json > dropRarity), taban item'ler ve örnek seviyesi düğümün item seviyesinden; fiyat = örneğin değeri, satış = değerin yarısı.",
   "merchant": { "size": 9, "rerollCost": 15, "buybackSize": 4 },
+  "_blacksmith": "Demirci (Ömer 2026-10-18, ilerleme TUR 1 madde 7; kod src/campaign/smith.ts, ekran src/ui/blacksmith-screen.ts): kasabada, yalnız altınla. Temper: item seviyesi bulunulan bölümün tavanına (bölüm n: n x ilvlPerChapter) kadar +1; fiyat = temper.valueRatio x yükseltilmiş item'in tüccar fiyatı (itemValue), Legendary x legendaryMult. Reforge: yalnız Epic, ana affix dışındaki bir affix aynı kademeden yeniden zarlanır (aynı affix yeni değerle de gelebilir); fiyat = reforge.valueRatio x item'in tüccar fiyatı x growth ^ (önceki reforge sayısı). Ömer 2026-10-18 (open-questions 364: 'Aynısı da olabilir, pahalı olsun'): eski düz fiyatlar (Temper 10 + 5 x yeni ilvl, Reforge (40 + 6 x ilvl) x (1 + 0,5 x n)) item değerine bağlandı: bir Temper adımı ~ tüccar fiyatının yarısı, Reforge tam fiyat ve her tekrarda x1,5, Legendary Temper 2 kat. Bütün fiyatlar PROVİZYON (denge turunda ayarlanacak; balance-tester). hotspots = kasaba ekranındaki yer (görselin oranıyla [x0, y0, x1, y1]; anahtar kasaba görseli); Ashford'da şimdilik meyhane binası (görselde örs yok, content-designer), Valdren Keep'te kapı yanındaki silah rafı.",
+  "blacksmith": {
+    "ilvlPerChapter": 10,
+    "temper": { "valueRatio": 0.5, "legendaryMult": 2 },
+    "reforge": { "valueRatio": 1, "growth": 1.5 },
+    "hotspots": {
+      "town-ashford": { "label": "Blacksmith", "rect": [0.68, 0.22, 0.88, 0.58] },
+      "town-valdren": { "label": "Blacksmith", "rect": [0.82, 0.38, 0.884, 0.58] }
+    }
+  },
   "_townScreen": "Kasaba ekranı (Ömer 2026-10-12): tam ekran kasaba görseli, takım alttaki açık alanda durur (ayak çizgisi feetY x 1080), kahraman boyu ve aralığı 1920x1080 biriminde; yer etiketleri telefonda (html.short/compact) büyür. Yerler valdoria.json > nodes[].scene.",
   "townScreen": { "heroHeight": 250, "feetY": 0.9, "feetYPhone": 0.86, "gap": 230, "labelSize": 21, "labelSizePhone": 34 },
   "rules": {
@@ -20,7 +30,9 @@
   "defaultDifficulty": "medium",
   "difficulties": {
     "easy": { "name": "Easy", "ai": "easy", "text": "Enemies make more mistakes.", "enemyTier": { "elite": { "hpMult": 1.2, "powerMult": 1.08 }, "boss": { "powerMult": 1.07 } } },
-    "medium": { "name": "Medium", "ai": "medium", "text": "The intended challenge.", "enemyTier": { "elite": { "hpMult": 0.85, "powerMult": 0.9 } } },
+    "medium": { "name": "Medium", "ai": "medium", "text": "The intended challenge.", "enemyTier": { "elite": { "hpMult": 0.85, "powerMult": 0.9 } },
+      "_eliteEscort": "Elit düğümdeki rütbesiz eşlikçilere (elit lider ve boss hariç) zorluk eki; normal/boss düğüm ve Endless etkilenmez, Easy/Hard'da yok (= 1). Ömer 2026-10-19, open-questions 365 seçenek 3: Watchtower'ın eliti noTierMods, diğer elit düğümlerde 4 düşmandan 1'i elit olduğu için enemyTier.elite Easy-Medium farkını açamıyordu. 1,12 = seed 9001'de farkı 6 puanın üstüne çıkaran en küçük değer (96 sefer Medium elit %: 1,0 -> 92,7; 1,1 -> 90,6; 1,12 -> 89,6; 1,15 -> 87,5; 1,18 -> 89,6; 1,2 -> 90,6; gürültülü). PROVİZYON (balance-tester).",
+      "eliteEscort": { "hpMult": 1.12, "powerMult": 1.12 } },
     "hard": {
       "name": "Hard",
       "ai": "hard",
@@ -38,11 +50,15 @@
     "volunteer": "A volunteer catches up with you at the city gate.",
     "recruitBefore": "A wanderer on the road offers to join you. Choose one companion.",
     "recruitFormation": "Arrange your formation, then tap the battle on the map to start it.",
-    "townRest": "Your company rests by the fire. Everyone is back to full health, and the fallen are back on their feet.",
-    "townRested": "Your company has rested: everyone healed and revived.",
+    "townRest": "Your first arrival in a town is a free rest: the living are back to full health. Later visits pay to rest by the fire. The fallen stay down: only Valor can raise them.",
+    "townRested": "Your company has rested: the living are back to full health. The fallen stay down: only Valor can raise them.",
     "townRecruit": "Fighters at the barracks offer their swords. Choose one companion, or come back before you leave.",
     "complete": "The Ash Curse is broken. Valdoria is free again."
   },
   "_tips": "Eski düğüm ipuçları (Tip kartı) 2026-10-13'te mentor derslerine taşındı: data/tutorial.json (turn_bar, rows_reach, roads...). Mekanizma duruyor; boş bırakıldı.",
-  "tips": {}
+  "tips": {},
+  "replay": {
+    "_not": "Serbest dolaşım / devriye (roadmap 2.2-2.3 A, karar 1; campaign-dev): temizlenmiş Battle / Elite / Guarded Treasure düğümü yeniden oynanır. xp[i] = düğümün i. oynanışında XP çarpanı (0 = ilk zafer, son değer taban; haritadaki Patrol rozeti de bunu yazar: 100 / 60 / 40 / 25). Altın ve item çarpanı ayrı yerde, aynı sayılarla: data/items.json > loot.repeat. PROVİZYON (denge balance-tester).",
+    "xp": [1, 0.6, 0.4, 0.25]
+  }
 }

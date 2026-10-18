@@ -88,7 +88,7 @@ describe('loot üretimi', () => {
   it("beklenen sayı: savaş 0,5 x takım, boss / hazine en az 1 item (nadirlik garantisi yok: Ömer 2026-10-11); ilvl sınırı", () => {
     let battleItems = 0;
     for (let i = 0; i < 400; i++) battleItems += roll('battle', i).items.length;
-    expect(battleItems / 400).toBeCloseTo(ITEMS.loot.perPartyMember.battle * 4, 0);
+    expect(battleItems / 400).toBeCloseTo(ITEMS.loot.perPartyMember.battle * 4 * (ITEMS.loot.dropMult ?? 1), 0); // sefer düşüşü x0,65 (TUR 1 madde 8)
     for (let i = 0; i < 100; i++) {
       for (const kind of ['boss', 'treasure'] as const) {
         const r = roll(kind, i);

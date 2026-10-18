@@ -6,8 +6,12 @@ import type { Attribute, Attributes, UnitModifiers } from '../engine/types';
 import type { Battle } from '../engine';
 
 export interface LevelRules {
+  /** Genel tavan (Endless). */
   maxLevel: number;
-  statPointsPerLevel: number;
+  /** Sefer tavanı (Ömer 2026-10-18, TUR 1 madde 1: L30): seferde XP ve level burada durur. Yoksa maxLevel. */
+  campaignMaxLevel?: number;
+  /** Stat puanı kuralı (Ömer 2026-10-18, TUR 1 madde 2): her level perLevel, atMultiplesOf'un katlarında bonusLevelPoints. */
+  statPoints: { perLevel: number; atMultiplesOf: number; bonusLevelPoints: number };
   skillPointsPerLevel: number;
   statPerPoint: number;
   xpToNext: { base: number; pow: number };
@@ -17,12 +21,37 @@ export interface LevelRules {
   fallenShare: number;
   gap: { fullBand: number; zeroAt: number };
   catchUp: { perLevel: number; max: number };
+  /** Sonradan katılan kahraman takım ortalamasının bu kadar altında katılır (TUR 1 madde 6). */
+  joinBelow?: number;
+  /**
+   * Bölümün level rampasının başladığı yer (Ömer 2026-10-18, karar 364: "Sıradaki mapte lvl atlama başlasın. Orası lvl1den başlasın ve öyle
+   * scalelensin"): bölük kurma düğümü (Ashford) olan haritada rampa bu düğümden `rampStartSteps` adım sonra başlar; o adıma kadar (tutorial
+   * dahil) her düğüm bölümün ilk level'ında (L1), sonra final düğümüne doğru doğrusal. Yoksa eski kural (haritanın başından derinlik).
+   */
+  rampStartSteps?: number;
   levelsPerChapter: number;
   /** Düşman level büyümesi (levels.md > Düşman level'ı). Yoksa kapalı. */
   enemies?: { enabled: boolean; profiles?: Record<string, Partial<Record<Attribute, number>>> };
 }
 
-export const LEVELS: LevelRules = levelsJson as unknown as LevelRules;
+const RULES: LevelRules = levelsJson as unknown as LevelRules;
+
+/** Kurallar (data/levels.json). Level başına stat puanı: `statPointsBetween` / `statPointsAt` (eski sabit `statPointsPerLevel` 2026-10-18'de kalktı). */
+export const LEVELS: LevelRules = RULES;
+
+/** Seferin level tavanı (campaignMaxLevel; yoksa maxLevel). */
+export const campaignMaxLevel = (r: LevelRules = LEVELS): number => Math.min(r.maxLevel, r.campaignMaxLevel ?? r.maxLevel);
+
+/** L1'den `level`'a kadar kazanılan TOPLAM stat puanı (saf): her level perLevel, atMultiplesOf'un katlarında bonusLevelPoints. L30 = 35. */
+export function statPointsAt(level: number, r: LevelRules = LEVELS): number {
+  const l = Math.max(1, Math.floor(level));
+  const { perLevel, atMultiplesOf: m, bonusLevelPoints } = r.statPoints;
+  const bonusLevels = m >= 1 ? Math.floor(l / m) - Math.floor(1 / m) : 0; // L1 puan vermez
+  return (l - 1) * perLevel + bonusLevels * (bonusLevelPoints - perLevel);
+}
+
+/** `from` level'dan `to`'ya çıkarken kazanılan stat puanı. */
+export const statPointsBetween = (from: number, to: number, r: LevelRules = LEVELS): number => Math.max(0, statPointsAt(to, r) - statPointsAt(from, r));
 
 export const ATTRS: Attribute[] = ['str', 'dex', 'int', 'luck'];
 
@@ -40,7 +69,7 @@ export interface LevelHero {
   alloc?: StatAlloc;
 }
 
-const clampLevel = (l: number, r: LevelRules = LEVELS): number => Math.max(1, Math.min(r.maxLevel, Math.floor(l)));
+const clampLevel = (l: number, r: LevelRules = LEVELS, cap: number = r.maxLevel): number => Math.max(1, Math.min(r.maxLevel, cap, Math.floor(l)));
 
 /** `level`'dan bir sonrakine gereken XP (tavanda 0). */
 export function xpToNext(level: number, r: LevelRules = LEVELS): number {
@@ -142,33 +171,34 @@ export interface LevelUp {
 }
 
 /**
- * XP ekler (kahramanı YERİNDE değiştirir): eşik aşıldıkça level +1, stat ve skill puanı. Tavanda XP 0'da durur.
- * Dönen: level atlandıysa kayıt (yoksa null). Tam iyileşme çağıranın işi (can alanı moda göre farklı).
+ * XP ekler (kahramanı YERİNDE değiştirir): eşik aşıldıkça level +1, stat ve skill puanı. Tavanda (`cap`: sefer campaignMaxLevel, Endless
+ * maxLevel) XP 0'da durur; tavanın üstündeki kahraman (debug) düşürülmez. Dönen: level atlandıysa kayıt (yoksa null). Tam iyileşme çağıranın işi.
  */
-export function addXp(h: LevelHero, amount: number, r: LevelRules = LEVELS): LevelUp | null {
+export function addXp(h: LevelHero, amount: number, r: LevelRules = LEVELS, cap: number = r.maxLevel): LevelUp | null {
   const from = clampLevel(h.level ?? 1, r);
+  const top = Math.max(from, Math.min(r.maxLevel, cap));
   let level = from;
   let xp = Math.max(0, (h.xp ?? 0) + Math.max(0, Math.round(amount)));
-  while (level < r.maxLevel && xp >= xpToNext(level, r)) {
+  while (level < top && xp >= xpToNext(level, r)) {
     xp -= xpToNext(level, r);
     level++;
   }
-  if (level >= r.maxLevel) xp = 0;
+  if (level >= top) xp = 0;
   h.level = level;
   h.xp = xp;
   if (level === from) return null;
-  h.statPoints = (h.statPoints ?? 0) + (level - from) * r.statPointsPerLevel;
+  h.statPoints = (h.statPoints ?? 0) + statPointsBetween(from, level, r);
   h.skillPoints = (h.skillPoints ?? 0) + (level - from) * r.skillPointsPerLevel;
   return { heroId: h.id, from, to: level };
 }
 
 /** Debug: level'ı doğrudan ayarlar (XP 0). Yükselişte puan verilir; düşüşte dağıtılmış puanlar geri alınır (level'a göre yeniden). */
-export function setLevel(h: LevelHero, level: number, r: LevelRules = LEVELS): void {
-  const to = clampLevel(level, r);
+export function setLevel(h: LevelHero, level: number, r: LevelRules = LEVELS, cap: number = r.maxLevel): void {
+  const to = clampLevel(level, r, cap);
   h.level = to;
   h.xp = 0;
   h.alloc = {};
-  h.statPoints = (to - 1) * r.statPointsPerLevel;
+  h.statPoints = statPointsAt(to, r);
   h.skillPoints = (to - 1) * r.skillPointsPerLevel;
 }
 
@@ -247,28 +277,38 @@ export function autoAllocate(h: LevelHero, r: LevelRules = LEVELS): void {
   }
 }
 
-/** Kayıttan okunan kahramanın level alanlarını onarır (YERİNDE; bozuk değer varsayılana; eksik puanlar level'dan tamamlanır). */
+/**
+ * Kayıttan okunan kahramanın level alanlarını onarır (YERİNDE; bozuk değer varsayılana; eksik puanlar level'dan tamamlanır).
+ * Stat puanı kuralı göçü (Ömer 2026-10-18, TUR 1 madde 2; 3/level -> 1/level + 5'in katlarında 2): puanların tek kaynağı level olduğu için
+ * dağıtılmış + bekleyen = statPointsAt(level) her zaman doğrudur. Toplamı bunu AŞAN kahraman (eski kural: 3 x (level - 1)) göç edilir: dağıttığı
+ * puan yeni toplamı aşıyorsa dağılımı sıfırlanır ve yeni toplamın tamamı dağıtılmamış puan olur; aşmıyorsa dağılım kalır, bekleyen = toplam -
+ * dağıtılmış. Yeni kuraldaki kahramana dokunulmaz (idempotent; kayıt sürümü gerekmez, her okumada çalışır). Puan kaynağı ileride genişlerse
+ * (levels.json > _points) bu denetim o kaynağı da saymalı.
+ */
 export function normalizeLevelFields(h: LevelHero, r: LevelRules = LEVELS): void {
   h.level = Number.isInteger(h.level) && h.level! >= 1 ? Math.min(h.level!, r.maxLevel) : 1;
   h.xp = typeof h.xp === 'number' && Number.isFinite(h.xp) && h.xp >= 0 ? Math.floor(h.xp) : 0;
-  const alloc: StatAlloc = {};
+  let alloc: StatAlloc = {};
   if (h.alloc && typeof h.alloc === 'object') for (const k of ATTRS) if (Number.isInteger(h.alloc[k]) && h.alloc[k]! > 0) alloc[k] = h.alloc[k]!;
+  const earned = statPointsAt(h.level, r);
+  const okPts = Number.isInteger(h.statPoints) && h.statPoints! >= 0;
+  if (allocPoints(alloc) > earned) {
+    alloc = {};
+    h.statPoints = earned;
+  } else if (!okPts || h.statPoints! + allocPoints(alloc) > earned) h.statPoints = Math.max(0, earned - allocPoints(alloc));
   h.alloc = alloc;
-  // Eksik puan alanı (eski kayıt): level'ın verdiği puanlardan dağıtılmış olanlar düşülür (yıkıcı değil: hiçbir şey geri alınmaz)
-  const earned = (h.level - 1) * r.statPointsPerLevel;
-  if (!(Number.isInteger(h.statPoints) && h.statPoints! >= 0)) h.statPoints = Math.max(0, earned - allocPoints(alloc));
   if (!(Number.isInteger(h.skillPoints) && h.skillPoints! >= 0)) h.skillPoints = (h.level - 1) * r.skillPointsPerLevel;
 }
 
 // ------------------------------------------------------------ düşman level'ı (Ömer 2026-10-17)
 
 /**
- * Düşmanın level puanlarının otomatik dağıtımı (saf): (level - 1) x statPointsPerLevel puan, her puan hedef orana (ağırlık payı) en çok
+ * Düşmanın level puanlarının otomatik dağıtımı (saf): kahramanın o level'daki toplamı (statPointsAt) kadar puan, her puan hedef orana (ağırlık payı) en çok
  * gerideki stata; eşitlikte ATTRS sırası. Temel stat kuralı: puan, o stat (puanla birlikte) diğer üçünün toplamını AŞMAYACAKSA verilir
  * (kuralı baştan aşan birim önce diğer statlarına alır; hiçbir stata verilemiyorsa kalan puanlar yanar). Ağırlık yoksa temel statların kendisi.
  */
 export function growthAlloc(base: Attributes, level: number, weights?: Partial<Record<Attribute, number>>, r: LevelRules = LEVELS): StatAlloc {
-  const points = (clampLevel(level, r) - 1) * r.statPointsPerLevel;
+  const points = statPointsAt(clampLevel(level, r), r); // kahramanla aynı toplam (TUR 1 madde 2)
   const w = ATTRS.map((k) => Math.max(0, (weights ? weights[k] : base[k]) ?? 0));
   const W = w.reduce((a, b) => a + b, 0) || 1;
   const cnt = ATTRS.map(() => 0);

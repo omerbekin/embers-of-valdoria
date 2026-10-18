@@ -7,6 +7,8 @@ import { buildWiki, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
+import { CONFIG as CAMPAIGN_CONFIG } from '../src/campaign';
+const replayXp = CAMPAIGN_CONFIG.replay?.xp ?? [1];
 
 function scan(dir: string, depth: 1 | 2): Record<string, string> {
   const root = join(__dirname, '..', 'assets', dir);
@@ -149,6 +151,8 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     // Sefer Retreat to Map savaşı duraklatır (Ömer 2026-10-14)
     const campaign = text('campaign');
     for (const w of ['Retreat to Map', 'paused, not reset', 'Resume Battle']) expect(campaign, w).toContain(w);
+    // Serbest dolaşım ve devriye (2026-10-18): yüzdeler veriden (campaign.json > replay.xp)
+    for (const w of ['Free roaming', 'Patrols return to cleared battlefields', 'Patrol badge', ...replayXp.slice(1).map((x) => `${Math.round(x * 100)}%`)]) expect(campaign, w).toContain(w);
     const items = text('items');
     expect(items).toContain('Rare drops');
     expect(items).toContain('bad-luck protection');

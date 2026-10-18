@@ -63,3 +63,12 @@ Sorun: level puanları kahramanı çok güçlendiriyordu (L8'de temel statlar ~+
 - **Görünüm:** ad plakasında küçük "Lv N" (rütbesiz birimde adın üstünde soluk yazı; elit / boss rozetinde "ELITE · LV 7"); kahramanlarda da kendi level'ı. Çağrılarda yazmaz. Quick Battle'da hiç yazmaz.
 - **Kod / veri:** `src/progression/levels.ts > growthAlloc, enemyLevelAttrAdd, withEnemyLevel`; `src/campaign/encounters.ts > battlePlan` (plan.enemyLevel), `src/endless/waves.ts > wavePlan` (plan.enemyLevel); veri `data/levels.json > enemies`. Testler `tests/enemy-levels.test.ts`.
 - **İlk ölçüm (denge turu öncesi, bantlar ayarlanmadı):** sefer Medium/Medium vekil, 48 sefer, gear best: düşman level'ı KAPALI normal %99,8 / elit %100 / boss %100, bitirme %100; AÇIK normal %85,2 / elit %64,6 / boss %82,3 (bant 87-98 / 79-90 / 71-82), bitirme %43,8, sefer başına 14,9 yenilgi. Endless 48 koşu (tavan 40): ortalama 20,8 dalga (hedef 13-19), boss 10 %91, 20 %92, 30 %100, 40 %88 (önceden her koşu tavana). Ayar balance-tester'da.
+
+## TUR 1 güncellemeleri (Ömer 2026-10-18; open-questions 360 / 363)
+- **Sefer tavanı L30** (`levels.json > campaignMaxLevel`; Endless L50). Seferde XP ve level 30'da durur.
+- **Stat puanı:** her level 1, 5'in katlarında 2 (`levels.json > statPoints`; L30 = 35, L50 = 59; eski 3/level). Düşman büyümesi aynı toplam (`statPointsAt`). Eski kayıtta toplamı aşan dağılım sıfırlanır, puanlar dağıtılmamış verilir.
+- **Elit / boss gücü tipinden** (skill seti, can, hasar); mob, elit, boss aynı level'de; zorluk seviyeleri aynen.
+- **Farmsız hedef:** bölüm sonları L8,5 / 17 / 25,5; boss seviyeleri 10 / 20 / 30. Ölçüm bölüm 1: 8,63 (eğri değişmedi).
+- **Sonradan katılan:** takım ortalamasının 2 altında (en az L1), stat puanları dağıtılmamış; yakalama bonusu aynen (`levels.json > joinBelow`). Yukarıdaki "Sonradan katılan kahraman L1'den başlar" satırının yerine geçer.
+- **Dinlenme diriltmez** (kamp, kasaba); diriltme yalnızca Valor (savaşta revive skill'leri de).
+- **Level rampası Ashford sonrası başlar (Ömer 2026-10-18, open-questions 364):** Ashford bölüğü ve tutorial kahramanı L1 başlar. Düğüm seviyesi tutorial'dan değil Ashford'dan ölçeklenir (`levels.json > rampStartSteps` = 2): tutorial, Ashford, Windy Moor, Iron Pass, Charcoal Camp L1; sonrası Castle Morvane'a (L10) doğru doğrusal. Eğri için `enemyXp.base` 10 -> 11,5 (farmsız bölüm 1 sonu 7,85 -> 8,55; xpToNext aynı).

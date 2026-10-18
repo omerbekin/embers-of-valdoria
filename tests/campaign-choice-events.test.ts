@@ -151,13 +151,13 @@ describe('Town merchant (T1)', () => {
     expect(left.shop).toBeUndefined();
   });
 
-  it('towns still heal fully and revive on arrival', () => {
+  it('towns still heal the living fully on arrival; the fallen stay down (TUR 1 madde 10: only Valor revives)', () => {
     let s = autoResolve(at('5B', 'battle'));
     s = { ...s, roster: s.roster.map((h, i) => ({ ...h, hpRatio: i === 0 ? 0 : 0.3, alive: i !== 0 })) };
     const t = moveTo(s, '7');
-    t.roster.forEach((h) => {
-      expect(h.alive).toBe(true);
-      expect(h.hpRatio).toBe(1);
+    t.roster.forEach((h, i) => {
+      expect(h.alive).toBe(i !== 0);
+      expect(h.hpRatio).toBe(i === 0 ? 0 : 1);
     });
   });
 });

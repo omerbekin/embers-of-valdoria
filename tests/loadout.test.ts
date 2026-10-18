@@ -169,7 +169,7 @@ describe('sefer ekipmanı: torba, kuşanma, altın', () => {
     expect(acknowledgeHandover(s).inventory).toEqual(s.inventory);
     s = formCompany(s, ['warrior', 'mage', 'archer']);
     const w = s.roster.find((h) => h.class === 'warrior')!;
-    expect(w.level).toBe(1);
+    expect(w.level).toBe(1); // Ashford bölüğü L1 başlar (karar 364)
     s = equipItem(s, w.id, axeUid);
     expect(s.inventory.map((i) => i.uid)).not.toContain(axeUid);
   });

@@ -21,6 +21,7 @@ import { rewardBlockedReason, takeRareDrop,
   relicDef,
   cardText,
   chooseReward,
+  itemOptions,
   className,
   endlessBack,
   endlessView,
@@ -178,6 +179,8 @@ export class EndlessScene extends Phaser.Scene {
   /** Ödül ekranının açık DOM torbası (View bag; Ömer 2026-10-11) ve kapanınca kartların soldan geri gelme animasyonu. */
   private rewardBag: (() => void) | null = null;
   private cardsFromBag = false;
+  /** Açık iki seçenekli item kartı (ödül kartının dizini; Ömer 2026-10-18, TUR 1 madde 13). Yoksa null. */
+  private itemPick: number | null = null;
   /** Gear ekranı (DOM) açık mı. */
   private gearOpen = false;
   /** Açık DOM tüccar ekranının kapatıcısı (Ömer 2026-10-11: tüccar ortak Inventory ile DOM'da). */
@@ -413,11 +416,51 @@ export class EndlessScene extends Phaser.Scene {
     this.go('camp');
   }
 
-  private actTakeReward(run: EndlessRun, index: number): void {
-    const next = chooseReward(run, index);
+  private actTakeReward(run: EndlessRun, index: number, option?: number): void {
+    // Çok seçenekli item kartı (TUR 1 madde 13; karar 364: 3 seçenek): kart açılır, item'ler kalıntı teklifi gibi yan yana; biri alınır
+    const card = run.offer?.[index];
+    if (option === undefined && card?.kind === 'item' && itemOptions(card).length > 1) {
+      if (rewardBlockedReason(run, card)) return;
+      uiSound('open');
+      this.itemPick = index;
+      this.render();
+      return;
+    }
+    const next = chooseReward(run, index, undefined, undefined, option ?? 0);
     if (next === run) return;
+    this.itemPick = null;
     commit(next);
     this.go(endlessView(next));
+  }
+
+  /** Item kartının seçenekleri (2-3; kalıntı seçimiyle aynı kart dili); "Back" ödül kartlarına döner. 1920 içinde yan yana sığar. */
+  private drawItemPick(run: EndlessRun, index: number, special: 'elite' | 'boss' | null): boolean {
+    const card = run.offer?.[index];
+    if (!card || card.kind !== 'item') return false;
+    const opts = itemOptions(card);
+    if (opts.length < 2) return false;
+    const n = opts.length;
+    this.heading(T.itemPickTitle, T.itemPickSub(n));
+    const gap = 60;
+    const w = Math.min(520, (1760 - (n - 1) * gap) / n);
+    opts.forEach((o, i) => {
+      const d = viewDef(itemDef(o.itemId), o.rolls);
+      if (!d) return;
+      const accent = hexNum(rarityColor(d));
+      this.choiceCard({ index: i, cx: CX + (i - (n - 1) / 2) * (w + gap), w, rich: !!special, accent, tint: EndlessScene.TINT.item, kicker: T.kickerItem(special), take: () => this.actTakeReward(run, index, i), rarity: true }, (k) => {
+        const m = medallion(this, itemEmblem(this, d, rarityColor(d)), accent, LOOK.card.medal, { rich: !!special });
+        m.setPosition(k.cx, k.top + LOOK.card.medal + 18);
+        k.add(m);
+        this.itemCardBody(run, d, k, k.top + LOOK.card.medal * 2 + 52, o.heroId, o.rolls);
+        this.sellTag(sellValue({ id: d.id, ...(o.rolls ? { rolls: o.rolls } : {}) }), k.x1 - 18, k.top + 6, k.add);
+      });
+    });
+    this.button(CX, 1000, 300, T.itemPickBack, () => {
+      uiSound('back');
+      this.itemPick = null;
+      this.render();
+    });
+    return true;
   }
 
   /** Bekleyen nadir düşüşü torbaya al (yer açıldıysa). */
@@ -543,6 +586,7 @@ export class EndlessScene extends Phaser.Scene {
     this.closeConfirm();
     this.root.removeAll(true);
     if (this.view !== 'shop') this.closeShopDom();
+    if (this.view !== 'reward') this.itemPick = null;
     if (this.view !== 'reward' && this.rewardBag) {
       this.rewardBag();
       this.rewardBag = null;
@@ -946,6 +990,8 @@ export class EndlessScene extends Phaser.Scene {
     if (!run?.offer) return this.go('title');
     const kind = waveKind(run.stats.cleared);
     const special = kind === 'normal' ? null : kind;
+    if (this.itemPick !== null && this.drawItemPick(run, this.itemPick, special)) return;
+    this.itemPick = null;
     this.heading(T.rewardTitle, T.rewardSub(run.stats.cleared, special));
     // Kart genişliği kart sayısına uyar (normal 3, elit/boss 4)
     const n = run.offer.length;
@@ -1214,7 +1260,7 @@ export class EndlessScene extends Phaser.Scene {
   private rewardCard(run: EndlessRun, card: RewardCard, index: number, cx: number, w: number, special: 'elite' | 'boss' | null): void {
     const rich = !!special;
     const R = LOOK.card.medal;
-    const kicker = card.kind === 'item' ? T.kickerItem(special) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : T.kickerHeal(special);
+    const kicker = card.kind === 'item' ? (itemOptions(card).length > 1 ? `${T.kickerItem(special)} · ${T.itemCardChoice(itemOptions(card).length)}` : T.kickerItem(special)) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : T.kickerHeal(special);
     const d = card.kind === 'item' ? viewDef(itemDef(card.itemId), card.rolls) : undefined;
     const accent = d ? hexNum(rarityColor(d)) : card.kind === 'gold' ? 0xecc878 : card.kind === 'feast' ? 0xf0b860 : card.kind === 'revive' ? 0x9ad08a : 0xd96a5a;
     const tint = EndlessScene.TINT[card.kind];

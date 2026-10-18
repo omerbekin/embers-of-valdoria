@@ -1,22 +1,24 @@
 import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
 import { CONFIG, ENCOUNTERS, EVENTS, STORIES, getMap, type EventChoice } from './data';
-import { finalNode, forwardDistances, incoming, node, outgoing } from './graph';
+import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, upstreamOf } from './graph';
 import { rngFor, shuffle } from './seed';
 import { SLOT_IDS } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { itemRecovery } from '../progression/loadout';
 import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
-import { nodeIlvl } from './power';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
-import { applyXp, battleXp, fixedXp, fixedXpNode } from './xp';
+import { applyXp, battleXp, fixedXp, fixedXpNode, joinLevel } from './xp';
+import { LEVELS, campaignMaxLevel, setLevel } from '../progression/levels';
 import type { BattleOutcome, CampaignMap, CampaignMode, Difficulty, CampaignRules, CampaignState, Hero, MapNode, NextStep, StepKind } from './types';
 
 /**
  * Sefer ilerlemesi (saf; durum JSON'dur ve her işlem YENİ bir durum döndürür). Akış: campaign.md 1.2 ve 4.
- * Bir düğümdeki adımlar sırayla tamamlanır (nodeSteps); hepsi bitince yola çıkılır (moveTo). Seçim noktasında
- * seçilen yol kilitlenir: geri dönüş yok, seçilmeyen dallar graftan ulaşılamaz olur (sis 'closed').
+ * Bir düğümdeki adımlar sırayla tamamlanır (nodeSteps); hepsi bitince yola çıkılır (moveTo).
+ * Serbest dolaşım (roadmap 2.1, Ömer 2026-10-09 kararları): kenarlar iki yönlü yürünür, seçilen yol kilitlenmez; temizlenmiş düğümlerden
+ * geçerek uzak düğüme tek hamlede yolculuk (travelRoutes). Temizlenmiş Battle / Elite / Guarded Treasure düğümünde devriye (yeniden oynama,
+ * azalan getiri) başlatılabilir (startPatrol). Tutorial (bölük kurma düğümünden öncesi) tek yönlü kalır ve yeniden oynanmaz.
  */
 
 export const clone = (s: CampaignState): CampaignState => JSON.parse(JSON.stringify(s)) as CampaignState;
@@ -42,6 +44,9 @@ export function newCampaign(o: { mode: CampaignMode; seed: number; mapId?: strin
     active: Array.from({ length: CELL_COUNT }, () => ''),
     at: map.start,
     path: [map.start],
+    visited: [map.start],
+    cleared: [],
+    replays: {},
     done: [],
     tipsSeen: [],
     stats: { victories: 0, defeats: 0 },
@@ -85,6 +90,8 @@ export function nodeCleared(s: CampaignState, nodeId: string): boolean {
 export function nextStep(s: CampaignState): NextStep {
   const map = mapOf(s);
   const n = node(map, s.at);
+  // Başlatılmış devriye (temizlenmiş düğümün yeniden oynanışı): düğümün kendi karşılaşması
+  if (s.patrol === n.id && n.encounter && canReplay(map, n)) return { kind: 'battle', node: n.id, encounter: n.encounter, patrol: true };
   for (const kind of nodeSteps(map, n)) {
     if (isDone(s, n.id, kind)) continue;
     switch (kind) {
@@ -116,8 +123,11 @@ export function nextStep(s: CampaignState): NextStep {
         return { kind: 'merchant', node: n.id };
     }
   }
-  const options = outgoing(map, n.id);
-  return options.length ? { kind: 'move', options } : { kind: 'complete' };
+  // Final düğümü (Castle Morvane) temizlendi: sefer biter (bölüm geçişi ayrı iş)
+  if (n.id === finalNode(map)) return { kind: 'complete' };
+  const { forward, back } = moveOptions(s);
+  if (!forward.length && !back.length) return { kind: 'complete' };
+  return back.length ? { kind: 'move', options: forward, back } : { kind: 'move', options: forward };
 }
 
 // ---------------------------------------------------------------- kadro
@@ -167,7 +177,12 @@ function place(s: CampaignState, hero: Hero): void {
   if (cell >= 0) s.active[cell] = hero.id;
 }
 
-function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutorial?: boolean } = {}): Hero {
+/**
+ * Kadroya kahraman ekler. `join`: sonradan katılan (aday seçimi; Ömer 2026-10-18, TUR 1 madde 6): takımın (aktif dizilim; yoksa kadro) level
+ * ortalamasının `levels.json > joinBelow` altında, en az L1, XP 0, stat puanları DAĞITILMAMIŞ (xp.ts > joinLevel). Ashford'daki ilk bölük
+ * (formCompany) ve tutorial kahramanı L1 başlar (karar 364: "Karakterler l1 gelsin").
+ */
+function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutorial?: boolean; join?: boolean } = {}): Hero {
   if (!classes[classId]) throw new Error(`Unknown class: ${classId}`);
   const id = `h${s.nextHeroId++}`;
   const hero: Hero = {
@@ -187,6 +202,10 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
   };
   s.roster.push(hero);
   place(s, hero);
+  if (o.join) {
+    const level = joinLevel(s, [id]);
+    if (level > 1) setLevel(hero, level, LEVELS, campaignMaxLevel());
+  }
   return hero;
 }
 
@@ -220,6 +239,7 @@ const tutorialActive = (s: CampaignState): boolean => !mapOf(s).nodes.some((n) =
 export function complete(s: CampaignState, kind: StepKind): void {
   const k = key(s.at, kind);
   if (!s.done.includes(k)) s.done.push(k);
+  markCleared(s, s.at);
   // Valor (Ömer 2026-10-13): Valdren Keep'in hikâyesi (komutan Valor'u anlatır) ya da kasabası bitince açılır, hediye ile başlar
   if ((kind === 'story' || kind === 'town') && s.at === valorRules.campaign.introNode && s.valor === undefined) s.valor = addValor(valorRules, 0, valorRules.campaign.gift);
 }
@@ -322,7 +342,7 @@ export function recruit(s: CampaignState, classId: string): CampaignState {
   if (step.kind !== 'recruit' && step.kind !== 'volunteer') throw new Error(`No recruit here (step: ${step.kind})`);
   if (!step.offer.includes(classId)) throw new Error(`${classId} is not on offer`);
   const t = clone(s);
-  addHero(t, classId, { tutorial: tutorialActive(t) });
+  addHero(t, classId, { tutorial: tutorialActive(t), join: true });
   complete(t, step.kind);
   // Zorunlu Formation (tutorial): katılım savaştan önceyse savaş, Formation açılıp kapanana kadar bekler
   if (tutorialActive(t) && recruitHoldsBattle(s, t)) t.formationDue = t.at;
@@ -374,7 +394,7 @@ export function recruitInTown(s: CampaignState, classId: string): CampaignState 
   if (!offer.length) throw new Error('No recruits in this town');
   if (!offer.includes(classId)) throw new Error(`${classId} is not on offer`);
   const t = clone(s);
-  addHero(t, classId, { tutorial: tutorialActive(t) });
+  addHero(t, classId, { tutorial: tutorialActive(t), join: true });
   complete(t, 'volunteer');
   return t;
 }
@@ -534,25 +554,18 @@ function winEventBattle(t: CampaignState): void {
 /** Düşmüş mü (can 0 ya da alive false): dinlenme noktasında altınla diriltilebilir. */
 export const isFallen = (h: Hero): boolean => !h.alive || h.hpRatio <= 0;
 
-/** Dinlenme noktasında diriltme fiyatı: base + perIlvl x düğümün item seviyesi (campaign.json > rest.reviveCost; VARSAYIM, madde 305). */
-export function reviveCost(s: CampaignState, nodeId: string = s.at): number {
-  const c = CONFIG.rest.reviveCost;
-  return Math.round(c.base + c.perIlvl * nodeIlvl(s.mapId, nodeId));
+/**
+ * ESKİ (Ömer 2026-10-18, ilerleme TUR 1 madde 10: dinlenme DİRİLTMEZ, diriltme yalnızca Valor; campaign.json > rest.reviveCost kalktı).
+ * Kamp penceresi (CampaignMapScene > restModal) güncellenene dek derlensin diye duruyor: fiyat 0, diriltme hiçbir şey yapmaz (durum aynen).
+ * @deprecated
+ */
+export function reviveCost(_s: CampaignState, _nodeId?: string): number {
+  return 0;
 }
 
-/** Düşmüş kahramanı altınla dirilt (dinlenme adımında ya da dinlenilmiş kampa yeniden girince; altın yetmezse hata). reviveRatio canla kalkar. */
-export function reviveAtCamp(s: CampaignState, heroId: string): CampaignState {
-  if (revisitKind(s) !== 'rest') expectStep(s, 'rest'); // dinlenme adımında ya da kampa yeniden girince
-  const h = heroById(s, heroId);
-  if (!h || !isFallen(h)) throw new Error('This hero has not fallen');
-  const cost = reviveCost(s);
-  if (s.gold < cost) throw new Error('Not enough gold');
-  const t = clone(s);
-  const th = heroById(t, heroId)!;
-  t.gold -= cost;
-  th.alive = true;
-  th.hpRatio = Math.round(clamp01(CONFIG.rest.reviveRatio) * 1000) / 1000;
-  return t;
+/** ESKİ (TUR 1 madde 10): dinlenme diriltmez; durum aynen döner (Valor: reviveWithValor). @deprecated */
+export function reviveAtCamp(s: CampaignState, _heroId: string): CampaignState {
+  return s;
 }
 
 /** Bu düğümün dinlenme oranı: rest.heal, ya da olay seçeneğinin `restHeal`'ı (Shepherd's Fold "Share your bread": 1 = tam). */
@@ -608,12 +621,17 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   t.stats.victories++;
   // XP (levels.md): düşman başına, düğüm çarpanı, savaşa girenlere bölünür; level atlayan (ayaktaki) kahraman tam iyileşir
   const encounterId = t.eventChoice?.node === t.at && t.eventChoice.battle ? t.eventChoice.battle : (node(mapOf(t), t.at).encounter ?? '');
-  applyXp(t, battleXp(t, outcome, encounterId));
-  // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1
+  // Devriye (yeniden oynama): XP azalan getiriyle (roadmap 2.3 A; campaign.json > replay.xp); altın / item loot.ts'te (items.json > loot.repeat)
+  const patrol = t.patrol === t.at;
+  const gains = battleXp(t, outcome, encounterId);
+  applyXp(t, patrol ? scaleGains(gains, replayMult(replayCount(t, t.at) + 1)) : gains);
+  // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1. Düğüm başına bir kez
+  // (Ömer 2026-10-18, karar 364: "Valorü node başına 1 kere al"): devriye zaferi Valor KAZANDIRMAZ (savaşta harcanan yine düşülür).
   if (t.valor !== undefined) {
     const type = node(mapOf(t), t.at).type;
     const flawless = outcome.flawless ?? outcome.units.every((u) => u.alive && u.hpRatio > 0);
-    t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, valorEarned(valorRules, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'normal', flawless));
+    const earned = patrol ? 0 : valorEarned(valorRules, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'normal', flawless);
+    t.valor = addValor(valorRules, outcome.valorLeft ?? t.valor, earned);
   }
   if (t.eventChoice?.node === t.at && t.eventChoice.battle) {
     winEventBattle(t); // olay savaşı: düğümün savaş adımı zaten bitti
@@ -622,36 +640,185 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   // Zafer loot'u (items.md 3.1; zorluktan bağımsız, karar 6). Savaşa giren takım = bu sonuçtaki kahramanlar
   const fought = outcome.units.map((u) => heroById(t, u.heroId)).filter((h): h is Hero => !!h);
   const type = node(mapOf(t), t.at).type;
+  // Devriyede de aynı çağrı: loot.ts düğümün kaçıncı zaferi olduğunu lootState.clears'tan sayar (item / altın çarpanı, sandık yok)
   grantLoot(t, t.at, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'battle', fought.length ? fought : activeHeroes(t));
+  if (patrol) {
+    t.replays = { ...(t.replays ?? {}), [t.at]: replayCount(t, t.at) + 1 };
+    delete t.patrol;
+    return t;
+  }
   complete(t, 'battle');
   return t;
 }
 
-/** Kasaba şifası (Ömer 2026-10-11, denge paketi): ücretsiz, herkes `ratio` (tam) cana; düşmüşler de kalkar. */
+/** Kasaba şifası (Ömer 2026-10-11, denge paketi): ücretsiz, yaşayanlar `ratio` (tam) cana; düşmüşler KALKMAZ (TUR 1 madde 10: diriltme yalnızca Valor). */
 function healAll(s: CampaignState, ratio: number): void {
-  for (const h of s.roster) {
-    h.hpRatio = Math.max(isFallen(h) ? 0 : h.hpRatio, clamp01(ratio));
-    h.alive = true;
-  }
+  for (const h of s.roster) if (!isFallen(h)) h.hpRatio = Math.max(h.hpRatio, clamp01(ratio));
 }
 
 // ---------------------------------------------------------------- hareket
 
-/** Yola çıkar: yalnızca düğüm temizlendiyse ve hedef bir çıkışsa. Varılan kasaba iyileştirir. */
+/**
+ * Yola çıkar: yalnızca düğüm temizlendiyse. Hedef bir komşu (tek hamle) ya da serbest dolaşımda temizlenmiş düğümler üzerinden ulaşılan
+ * uzak düğüm (yolculuk, travelRoutes): aradaki düğümlerin içeriği tetiklenmez (iyileşme dahil), yalnızca varılan düğümünki (kasaba şifası,
+ * ilk kez varılan düğümün adımları). Yolun her düğümü yürüyüş günlüğüne (path) yazılır.
+ */
 export function moveTo(s: CampaignState, to: string): CampaignState {
   const step = nextStep(s);
-  if (step.kind !== 'move' || !step.options.includes(to)) throw new Error(`Cannot move to ${to} now`);
+  if (step.kind !== 'move') throw new Error(`Cannot move to ${to} now`);
   if (pausedLock(s)) throw new Error(PAUSED_LOCK);
+  const route = travelRoute(s, to);
+  if (!route) throw new Error(`Cannot move to ${to} now`);
   const t = clone(s);
+  t.visited = [...(t.visited ?? [])];
+  for (const id of route) {
+    t.path.push(id);
+    if (!t.visited.includes(id)) t.visited.push(id);
+  }
   t.at = to;
-  t.path.push(to);
   delete t.eventChoice;
   delete t.closedShop;
   delete t.formationDue;
+  delete t.patrol;
   const n = node(mapOf(t), to);
-  if (n.heal) healAll(t, n.heal);
+  // Varış şifası (Ömer 2026-10-18, karar 364: "Varış şifası ilk bedava dinlenme olsun. Her tekrar ziyaret para istesin"): kasabaya İLK
+  // varışta tam şifa ve o kasabanın bedava dinlenmesi kullanılmış sayılır (townRests = 1); sonraki varışlarda şifa yok, ateş başı ücretli.
+  if (n.heal) {
+    const rests = t.townRests?.[to];
+    const firstRest = !(typeof rests === 'number' && rests > 0);
+    if (n.type !== 'town' || firstRest) healAll(t, n.heal);
+    if (n.type === 'town' && firstRest) t.townRests = { ...(t.townRests ?? {}), [to]: 1 };
+  }
+  markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
 }
+
+// ---------------------------------------------------------------- serbest dolaşım ve devriye (roadmap 2.1-2.4, 2.7)
+
+/** Düğüm temizlendiyse (tüm adımları bitti) `cleared` listesine ekler (yerinde; çağıran klonlamış olmalı). */
+function markCleared(t: CampaignState, id: string): void {
+  if (!nodeCleared(t, id)) return;
+  t.cleared = t.cleared ?? [];
+  if (!t.cleared.includes(id)) t.cleared.push(id);
+}
+
+/** Temizlenmiş düğümler (eski / eksik durumda: bulunulan dışındaki geçilen düğümler + bitmişse bulunulan). */
+export function clearedNodes(s: CampaignState): string[] {
+  if (Array.isArray(s.cleared)) return s.cleared;
+  const out = [...new Set(s.path.filter((id) => id !== s.at))];
+  if (nodeCleared(s, s.at)) out.push(s.at);
+  return out;
+}
+export const isCleared = (s: CampaignState, id: string): boolean => clearedNodes(s).includes(id);
+/** Ayak basılan düğümler (eski / eksik durumda path'ten). */
+export const visitedNodes = (s: CampaignState): string[] => (Array.isArray(s.visited) ? s.visited : [...new Set(s.path)]);
+
+/** Bölük kurma düğümü (Ashford: newCompany) ve öncesi tutorial düğümleri (ataları). Haritada bölük kurma yoksa kilit yok. */
+export function tutorialNodes(map: CampaignMap): Set<string> {
+  let set = tutorialCache.get(map);
+  if (!set) {
+    const c = map.nodes.find((n) => n.newCompany);
+    set = c ? upstreamOf(map, c.id) : new Set();
+    tutorialCache.set(map, set);
+  }
+  return set;
+}
+const tutorialCache = new WeakMap<CampaignMap, Set<string>>();
+
+/** Serbest dolaşım açık mı (roadmap 2.7): bölük kurma ekranı bittiyse; öncesinde yollar tek yönlü (bugünkü gibi). */
+export function roamOpen(s: CampaignState): boolean {
+  const c = mapOf(s).nodes.find((n) => n.newCompany);
+  return !c || isDone(s, c.id, 'company');
+}
+
+/** Tek hamlede gidilebilen komşular: ileri (çıkışlar) ve serbest dolaşımda geri (girişler); tutorial düğümlerine geri dönülmez. */
+export function moveOptions(s: CampaignState): { forward: string[]; back: string[] } {
+  const map = mapOf(s);
+  const forward = outgoing(map, s.at);
+  if (!roamOpen(s)) return { forward, back: [] };
+  const locked = tutorialNodes(map);
+  return { forward: forward.filter((id) => !locked.has(id)), back: incoming(map, s.at).filter((id) => !locked.has(id) && !forward.includes(id)) };
+}
+
+/**
+ * Yolculuk hedefleri (roadmap 2.1): bulunulan düğümden, yalnızca TEMİZLENMİŞ düğümlerin içinden geçerek ulaşılan her düğüm ve yolu
+ * (bulunulan hariç, hedef dahil; en kısa yol, eşitlikte veri sırası). Komşular her zaman (tek hamle). Yalnızca yola çıkılabilirken (move).
+ */
+export function travelRoutes(s: CampaignState): Map<string, string[]> {
+  const out = new Map<string, string[]>();
+  if (nextStep(s).kind !== 'move') return out;
+  const { forward, back } = moveOptions(s);
+  for (const id of [...forward, ...back]) out.set(id, [id]);
+  if (!roamOpen(s)) return out;
+  const map = mapOf(s);
+  const locked = tutorialNodes(map);
+  const cleared = new Set(clearedNodes(s));
+  const queue = [...forward, ...back].filter((id) => cleared.has(id));
+  while (queue.length) {
+    const id = queue.shift()!;
+    for (const nb of neighbors(map, id)) {
+      if (nb === s.at || out.has(nb) || locked.has(nb)) continue;
+      out.set(nb, [...out.get(id)!, nb]);
+      if (cleared.has(nb)) queue.push(nb);
+    }
+  }
+  return out;
+}
+
+/** Hedefe giden yol (bulunulan hariç, hedef dahil) ya da gidilemiyorsa null. */
+export const travelRoute = (s: CampaignState, to: string): string[] | null => travelRoutes(s).get(to) ?? null;
+
+/** Düğüm yeniden oynanır mı (roadmap 2.2): Battle, Elite ve korunan hazine (savaşı); Boss, olay, saf hazine, kasaba hayır; tutorial düğümleri hayır. */
+export function canReplay(map: CampaignMap, n: MapNode): boolean {
+  if (!n.encounter || tutorialNodes(map).has(n.id) || n.newCompany) return false;
+  return n.type === 'battle' || n.type === 'elite' || n.type === 'treasure';
+}
+
+/** Düğümün devriye zaferi sayısı. */
+export const replayCount = (s: CampaignState, id: string): number => s.replays?.[id] ?? 0;
+
+/** i. yeniden oynanışın ödül çarpanı (0 = ilk zafer = 1; son değer taban): campaign.json > replay.xp. */
+export function replayMult(i: number): number {
+  const xs = CONFIG.replay?.xp ?? [1];
+  return xs[Math.max(0, Math.min(i, xs.length - 1))] ?? 1;
+}
+/** Bu düğümde sıradaki devriyenin ödül çarpanı (rozet: 100 / 60 / 40 / 25). */
+export const nextReplayMult = (s: CampaignState, id: string): number => replayMult(replayCount(s, id) + 1);
+
+const scaleGains = (g: Record<string, number>, k: number): Record<string, number> => Object.fromEntries(Object.entries(g).map(([id, v]) => [id, Math.round(v * k)]));
+
+/** Devriye bu düğümde başlatılabilir mi (düğüm temizlenmiş, yeniden oynanır, serbest dolaşım açık, yola çıkılabilir durumda). */
+export function patrolAvailable(s: CampaignState, id: string = s.at): boolean {
+  const map = mapOf(s);
+  return roamOpen(s) && isCleared(s, id) && canReplay(map, node(map, id));
+}
+
+/** Devriyeyi başlat (bulunulan temizlenmiş savaş düğümünde): nextStep düğümün karşılaşmasını döndürür. Değilse hata. */
+export function startPatrol(s: CampaignState): CampaignState {
+  if (pausedLock(s)) throw new Error(PAUSED_LOCK);
+  if (nextStep(s).kind !== 'move' || !patrolAvailable(s)) throw new Error('No patrol here');
+  const t = clone(s);
+  t.patrol = t.at;
+  return t;
+}
+
+/** Başlatılmış devriyeyi bırak (savaş başlamadan; yoksa aynı durum). */
+export function cancelPatrol(s: CampaignState): CampaignState {
+  if (!s.patrol || s.suspended) return s;
+  const t = clone(s);
+  delete t.patrol;
+  return t;
+}
+
+/** Keşfedilen düğümler (roadmap 2.4): ayak basılan her düğümün görüş mesafesi (visibility) içindekiler; bir kez görülen sise dönmez. */
+export function discoveredNodes(map: CampaignMap, visited: string[]): Set<string> {
+  const out = new Set<string>();
+  for (const v of visited) for (const [id, d] of undirectedDistances(map, v)) if (d <= map.visibility) out.add(id);
+  return out;
+}
+
+/** İlerleme yazısı: temizlenmiş / toplam düğüm (haritada "Cleared 9/26 · Chapter 1"). */
+export const clearedProgress = (s: CampaignState): { cleared: number; total: number } => ({ cleared: clearedNodes(s).length, total: mapOf(s).nodes.length });
 
 /** Takım sınırı: geçilen düğümlerin en büyük `partyCap`'i (ayrılırken katılım olan düğümde katılım bitince geçerli). */
 export function partyCap(s: CampaignState): number {
@@ -666,8 +833,8 @@ export function partyCap(s: CampaignState): number {
   return cap;
 }
 
-/** Durak numarası (1..stopsPerRun). */
-export const stopNumber = (s: CampaignState): number => s.path.length;
+/** Durak numarası: ayak basılan farklı düğüm sayısı (ilk geçişte 1..stopsPerRun; serbest dolaşımda yürüyüş günlüğü uzar, bu sayı uzamaz). */
+export const stopNumber = (s: CampaignState): number => visitedNodes(s).length;
 export const isComplete = (s: CampaignState): boolean => nextStep(s).kind === 'complete';
 export const isFinal = (s: CampaignState): boolean => s.at === finalNode(mapOf(s));
 
@@ -751,11 +918,8 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
     case 'town':
       return completeSimple(s, step.kind);
     case 'rest': {
-      // Vekil (sim / otomatik): altın yettikçe düşmüşleri diriltir (önce aktif takım), sonra ücretsiz dinlenir
-      let t = s;
-      const order = [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))];
-      for (const h of order) if (isFallen(h) && !h.tutorial && t.gold >= reviveCost(t)) t = reviveAtCamp(t, h.id);
-      return restAtCamp(t);
+      // Vekil (sim / otomatik): ücretsiz dinlenir (dinlenme diriltmez, TUR 1 madde 10)
+      return restAtCamp(s);
     }
     case 'merchant':
       return leaveMerchant(s);
@@ -767,11 +931,32 @@ export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): Cam
 /** Debug: bulunulan düğümün savaşını kazanılmış say (can değişmeden). */
 export const debugWinNode = (s: CampaignState): CampaignState => (nextStep(s).kind === 'battle' ? autoResolve(s) : s);
 
-/** Kapanan dalların düğümleri (seçilmeyen yollar). */
-export function closedNodes(s: CampaignState): string[] {
+/** Debug (Reset replays): devriye sayaçları sıfırlanır; loot sayacı ilk zafere döner (sonraki devriye yine %60'tan başlar). */
+export function debugResetReplays(s: CampaignState): CampaignState {
+  const t = clone(s);
+  t.replays = {};
+  for (const k of Object.keys(t.lootState.clears)) if (k.endsWith(':battle') && t.lootState.clears[k]! > 1) t.lootState.clears[k] = 1;
+  return t;
+}
+
+/**
+ * Debug (Teleport, serbest dolaşım): kadro ve ilerleme aynen kalır, takım keşfedilmiş bir düğüme konur (içerik tetiklenmez; düğüm temizlenmemişse
+ * adımları baştan bekler). Duraklatılmış savaş varken olmaz (aynı durum döner).
+ */
+export function debugRoamTeleport(s: CampaignState, target: string): CampaignState {
   const map = mapOf(s);
-  const reach = forwardDistances(map, s.at);
-  return map.nodes.filter((n) => !reach.has(n.id) && !s.path.includes(n.id)).map((n) => n.id);
+  if (pausedLock(s) || !map.nodes.some((n) => n.id === target) || target === s.at) return s;
+  const t = clone(s);
+  t.visited = [...visitedNodes(t)];
+  if (!t.visited.includes(target)) t.visited.push(target);
+  t.path.push(target);
+  t.at = target;
+  delete t.eventChoice;
+  delete t.closedShop;
+  delete t.formationDue;
+  delete t.patrol;
+  markCleared(t, target);
+  return t;
 }
 
 /** Birleşme noktası mı (rozet işareti için)? */

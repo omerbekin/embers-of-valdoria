@@ -120,6 +120,16 @@ Giriş metni (New Campaign, İngilizce): *"The Ash Curse spreading from Castle M
 
 ---
 
+### 2.3 Serbest dolaşım ve devriye (uygulandı 2026-10-18; tasarım roadmap 2.1-2.4, 2.6, 2.7, karar 1/2/4/5)
+Bu bölüm yukarıdaki "Choice point: seçilen yol kilitlenir" ve 2.1'deki "kapanan dallar sise döner" kurallarının YERİNE geçer.
+- **Yollar iki yönlü:** Ashford'daki bölük kurma ekranından sonra her yol iki yönde yürünür; seçim noktası yalnızca kavşaktır, "Road closed" / "Take this road" yok. Tutorial yolu (Mill Road -> Ravenwood -> Watchtower -> Ashford) tek yönlü kalır, oraya geri dönülmez ve yeniden oynanmaz.
+- **Yolculuk:** bir hamle = komşu düğüme yürümek. Temizlenmiş düğümlerin içinden geçerek uzak bir düğüme tek dokunuşla gidilir: rota kor rengiyle vurgulanır, kafile aradaki düğümlerde durmaz, içerikleri (şifa dahil) tetiklenmez. Yalnızca varılan düğümün içeriği çalışır (ilk kez varılan düğüm bugünkü gibi; temizlenmiş kasaba / tüccar / kampa yeniden girilir).
+- **Devriye (yeniden oynama):** temizlenmiş Battle, Elite ve Guarded Treasure düğümünde "Fight the patrol?" kartı. Aynı karşılaşma; savaş seed'i oynama sayısını içerir. Ödül azalan getiriyle: XP `campaign.json > replay.xp` (1 / 0,6 / 0,4 / 0,25, taban son değer); altın ve item `items.json > loot.repeat` (aynı sayılar). Sandık ve elitin ilk zafer garantisi yalnızca ilk zaferde. Boss, olay (korunan olay dahil), saf hazine tekrar oynanmaz. Düşman ölçeği düğüm seviyesine bağlı (oyuncuya değil).
+- **Sis:** mesafe iki yönlü grafta; d = 1 tam bilgi, d = 2 tür + ad, ötesi sis; bir kez görülen düğüm sise dönmez. `alwaysVisible` aynı.
+- **Durum ve kayıt:** `path` yürüyüş günlüğü (yolculukta aradaki düğümler dahil); yeni alanlar `visited`, `cleared`, `replays` (ve yalnızca duraklatılmış devriyede `patrol`). Kayıt sürümü 10: eski kayıtlarda `visited` / `cleared` path'ten türetilir. Her zaferden sonra otomatik kayıt (devriyeler dahil); yenilgi son kayda döner; yolculuk ve kasaba kayda sonraki zaferde girer.
+- **Arayüz:** temizlenmiş savaş düğümünde "Patrol 60%" rozeti (sıradaki devriyenin ödülü), lejantta Patrol, sol altta "Cleared 9/26 · Chapter 1". Kod: `src/campaign/state.ts` (moveOptions, travelRoutes, startPatrol), `fog.ts`, `save.ts`; sahne `src/game/scenes/CampaignMapScene.ts`; debug `src/ui/debug-campaign-roam.ts` (Reset replays, Teleport); test `tests/campaign-roam.test.ts`.
+- Açık sorular / varsayımlar: open-questions madde 362.
+
 ## 3. Valdoria haritası: veri modeli
 
 > **Güncel harita (2026-10-11): Valdoria A1-x** (`valdoria-2x.md` 10.5, open-questions 305). 26 düğüm, sefer başına 21 durak, 24 rota. Yeni düğüm türleri: `rest` (Riverside Camp: ücretsiz %50 iyileşme, altınla diriltme; `campaign.json > rest`) ve `merchant` (Forward Camp: Odo; `campaign.json > merchant`). Aşağıdaki 3.1-3.4 tabloları eski 17 düğümlük haritanın kaydıdır. K1'in tek istisnası: Witch's Hut kolu (madde 305).
@@ -362,7 +372,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 - ~~Savaşta düşen karakter: zaferden sonra can maks'ının %20'siyle kalkar.~~ **Ömer 2026-10-11 (madde 305), Endless gibi:** düşen kahraman zaferde KALKMAZ; ceset olarak taşınır, sonraki savaşlara cesedi girer (motor `startDead`). Savaştaki Resurrection, kasaba ya da dinlenme noktasında altınla kalkar (`campaign.json > rest`; Shepherd's Fold'da olaydan sonra da dinlenme var). Bütün takım düşerse yenilgi (aynı).
 - **Zafer sonrası toparlanma (Ömer kararı v3):** her zaferden sonra hayatta kalanlar can maks'ının **%20**'sini geri alır (`victoryHeal 0.2`). Zorluğa göre değiştirme altyapısı var (`campaign.json > difficulties.<x>.rules`, madde 264) ama kullanılmıyor: oranlar her zorlukta aynı. Sefer simülasyonu bu kuralın boss'larda bir "can sarmalı" yarattığını gösterdi (açık soru, madde 264).
 - **Büyük boss zaferi** (`type: boss`: King's Bridge; Castle Morvane haritayı bitirir): **tam iyileşme** (Ömer kararı v3, `bossVictoryHeal 1.0`). **Varsayım (2026-10-11, Endless ile aynı):** yalnızca yaşayanlar; düşenler kalkmaz. Elitlerden sonra tam iyileşme yok.
-- Kasaba (4, 7): ücretsiz, herkes tam can ve düşenler de kalkar (Ömer 2026-10-11 denge paketi). Zafer şifası %35; seferin genel düşman ölçeği `campaign.json > enemyScale` (madde 305).
+- Kasaba (4, 7): ~~ücretsiz, herkes tam can ve düşenler de kalkar (Ömer 2026-10-11 denge paketi).~~ **Ömer 2026-10-18 (open-questions 363 / 364):** kasabaya İLK varış = o kasabanın bedava dinlenmesi (yaşayanlar tam can, düşmüşler kalkmaz); tekrar varışta şifa yok, ateş başı dinlenme ücretli (`campaign.json > rest.price`). Zafer şifası %35; seferin genel düşman ölçeği `campaign.json > enemyScale` (madde 305).
 - **İleri iş (Ömer):** eşyalar / skill ağacıyla savaş öncesi iyileşme (iksir, kamp, "Field Medic" yeteneği). Şimdi değil.
 - Motor "eksik canla başla" desteği gerekir (engine-dev). Destek gelene kadar ilk sürümde her savaş tam canla başlar, can taşıma bayrağı kapalı.
 
@@ -537,6 +547,8 @@ Sefer başında seçilir, sonra değişmez. Tanım `campaign.json > difficulties
 | Can taşıma (`rules`) | aynı (%20 / %20) | aynı | aynı |
 
 `enemy`/`enemyTier` karşılaşmanın kendi `mods`'u ile birleşir (çarpanlar çarpılır, zırh ekleri toplanır); `rules` bu zorlukta `victoryHeal`, `reviveRatio`, `bossVictoryHeal`'i değiştirebilir (altyapı hazır, kullanılmıyor). İleride loot vb. aynı yere eklenir. Hızlı savaşta zorluk yok (Medium).
+
+`eliteEscort` (Ömer 2026-10-19, open-questions 365 seçenek 3): ELİT düğümdeki rütbesiz eşlikçilere (elit lider ve boss hariç; `noTierMods` korumasına dokunmaz) `enemy`'nin üstüne eklenen zorluk eki; normal/boss düğüm ve Endless etkilenmez. Yalnızca Medium'da: can ve güç x1,12 (PROVİZYON); Easy/Hard'da yok (= 1).
 
 ---|---|---|---|---|---|---|---|---|---|
 | Takım / düşman | 1 / 2w | 2 / 5w | 2 / 3 | 3 / 3 | 4 / 4-5 | 4 / dev | 4 / 4 | 4 / 5 | 4 / 5 |

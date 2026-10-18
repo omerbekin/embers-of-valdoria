@@ -15,14 +15,13 @@ import {
   rerollCampaignShop,
   restAtCamp,
   reviveAtCamp,
-  reviveCost,
   sellToMerchant,
   addItem,
   type CampaignState,
 } from '../src/campaign';
 import { BAG_SIZE, itemDef, itemValue, sellValue } from '../src/progression';
 
-// Valdoria A1-x (Ömer 2026-10-11): Riverside Camp = dinlenme (ücretsiz %50 iyileşme + altınla diriltme), Forward Camp = tüccar (Odo, Endless kuralları).
+// Valdoria A1-x (Ömer 2026-10-11): Riverside Camp = dinlenme (ücretsiz %50 iyileşme; 2026-10-18'den beri diriltme yok), Forward Camp = tüccar (Odo, Endless kuralları).
 const at = (node: string, seed = 5): CampaignState => debugTeleport(newCampaign({ mode: 'normal', seed }), node);
 
 describe('dinlenme noktası (Riverside Camp)', () => {
@@ -38,34 +37,16 @@ describe('dinlenme noktası (Riverside Camp)', () => {
     expect(() => restAtCamp(r)).toThrow();
   });
 
-  it('diriltme altınla: fiyat = base + perIlvl x düğümün item seviyesi; reviveRatio canla kalkar; altın yetmezse ya da düşmemişse hata', () => {
+  it('dinlenme DİRİLTMEZ (Ömer 2026-10-18, TUR 1 madde 10): veride diriltme fiyatı yok; eski diriltme çağrısı durumu değiştirmez; vekil düşmüşü kaldırmaz', () => {
+    expect((CONFIG.rest as Record<string, unknown>).reviveCost).toBeUndefined();
+    expect((CONFIG.rest as Record<string, unknown>).reviveRatio).toBeUndefined();
     const base = at('river');
-    const cost = reviveCost(base);
-    expect(cost).toBe(CONFIG.rest.reviveCost.base + CONFIG.rest.reviveCost.perIlvl * nodeIlvl(base.mapId, 'river'));
-    expect(cost).toBeGreaterThan(0);
     const fallen = base.roster[1]!.id;
-    const s = { ...base, gold: cost, roster: base.roster.map((h) => (h.id === fallen ? { ...h, hpRatio: 0, alive: false } : h)) };
-    const r = reviveAtCamp(s, fallen);
-    expect(r.gold).toBe(0);
-    const h = r.roster.find((x) => x.id === fallen)!;
-    expect([h.alive, h.hpRatio]).toEqual([true, CONFIG.rest.reviveRatio]);
-    expect(nextStep(r)).toEqual({ kind: 'rest', node: 'river' }); // diriltme adımı bitirmez
-    expect(() => reviveAtCamp({ ...s, gold: cost - 1 }, fallen)).toThrow(/gold/);
-    expect(() => reviveAtCamp(s, base.roster[0]!.id)).toThrow();
-    expect(() => reviveAtCamp(at('10'), fallen)).toThrow(); // dinlenme adımı dışında yok
-  });
-
-  it('vekil (sim) altın yettikçe düşmüşleri diriltir, sonra dinlenir; yetmeyen düşmüş kalır', () => {
-    const base = at('river');
-    const cost = reviveCost(base);
-    const [x, y] = [base.roster[0]!.id, base.roster[1]!.id];
-    const s = { ...base, gold: cost + 5, roster: base.roster.map((h) => (h.id === x || h.id === y ? { ...h, hpRatio: 0, alive: false } : h)) };
+    const s = { ...base, gold: 999, roster: base.roster.map((h) => (h.id === fallen ? { ...h, hpRatio: 0, alive: false } : h)) };
+    expect(reviveAtCamp(s, fallen)).toBe(s);
     const r = autoResolve(s, nextStep(s));
-    expect(r.gold).toBe(5);
-    const fallen = r.roster.filter((h) => isFallen(h));
-    expect(fallen).toHaveLength(1);
-    const up = r.roster.find((h) => (h.id === x || h.id === y) && !isFallen(h))!;
-    expect(up.hpRatio).toBe(Math.min(1, CONFIG.rest.reviveRatio + CONFIG.rest.heal));
+    expect(r.gold).toBe(999);
+    expect(isFallen(r.roster.find((h) => h.id === fallen)!)).toBe(true);
     expect(nextStep(r).kind).toBe('move');
   });
 

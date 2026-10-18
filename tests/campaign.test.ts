@@ -7,7 +7,6 @@ import {
   autoResolve,
   battlePlan,
   choicePoints,
-  closedNodes,
   completeSimple,
   debugTeleport,
   farewell,
@@ -109,7 +108,7 @@ describe('sefer haritası: graf', () => {
   });
 });
 
-describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
+describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
   it('başlangıç: kahraman seçimi, sonra Mill Road savaşı; tek yol ilerler', () => {
     let s = fresh();
     expect(nextStep(s)).toEqual({ kind: 'hero' });
@@ -124,23 +123,25 @@ describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
     expect(stopNumber(s)).toBe(2);
   });
 
-  it('seçim noktasında seçilen yol kilitlenir, diğerleri kapanır; birleşmede tek yola döner', () => {
+  it('seçim noktasında yol KİLİTLENMEZ (serbest dolaşım, roadmap 2.1): seçilmeyen dala geri dönülür; birleşmede tek yola döner', () => {
     let s = playTo(fresh(), '4');
     s = playTo(s, '4');
-    // Ashford'u bitir
+    // Ashford'u bitir: tutorial düğümleri (Watchtower ve öncesi) geri yol değil
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor'] });
     s = playTo(s, 'moor');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['4'] });
     s = moveTo(s, 'charcoal');
-    expect(closedNodes(s).sort()).toEqual(['5B']);
-    expect(() => moveTo(s, '5B')).toThrow();
+    while (nextStep(s).kind !== 'move') s = autoResolve(s);
+    s = moveTo(s, 'moor'); // geri
+    s = moveTo(s, '5B'); // seçilmeyen dal açık
+    expect(s.at).toBe('5B');
+    expect(nextStep(s).kind).toBe('battle');
     s = playTo(s, '7');
-    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'charcoal', '7']);
+    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'charcoal', 'moor', '5B', '7']);
     s = playTo(s, 'grave', (o) => o[2]!);
     expect(s.path.slice(-2)).toEqual(['5A', 'grave']);
-    expect(closedNodes(s)).toEqual(expect.arrayContaining(['5B', '6A', '6B']));
   });
 
   it('tam sefer 21 durakta biter (Valdoria Conquered)', () => {
@@ -161,7 +162,7 @@ describe('ilerleme: seçim noktası, kilitlenen yollar, birleşme', () => {
     s = autoResolve(s);
     expect(nextStep(s)).toEqual({ kind: 'treasure', node: '6B', treasure: 'dwarven_mine' });
     s = completeSimple(s, 'treasure');
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['grave'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['grave'], back: ['7'] });
     let a = playTo(fresh(), '6A', (o) => (o.includes('6A') ? '6A' : o[0]!));
     expect(nextStep(a)).toEqual({ kind: 'battle', node: '6A', encounter: 'witchs_hut_guard' });
     a = autoResolve(a);
@@ -184,7 +185,7 @@ describe('sis ve görünürlük', () => {
     expect(map.visibility).toBe(2);
   });
 
-  it('seçim noktasında iki dal da görünür; seçilmeyen dal kapanır, geçilenler cleared', () => {
+  it('seçim noktasında iki dal da görünür; seçilmeyen dal KAPANMAZ (d = 1 kalır, sise dönmez), geçilenler cleared', () => {
     let s = playTo(fresh(), '4');
     let v = nodeVisibility(map, s);
     expect(v['moor']).toBe('near');
@@ -197,17 +198,17 @@ describe('sis ve görünürlük', () => {
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
     s = moveTo(s, 'charcoal');
     v = nodeVisibility(map, s);
-    expect(v['5B']).toBe('closed');
+    expect(v['5B']).toBe('far'); // iki yönlü mesafe 2 (charcoal - moor - 5B)
     expect(v['moor']).toBe('cleared');
     expect(v['7']).toBe('near');
     expect([v['6A'], v['6B'], v['5A']]).toEqual(['far', 'far', 'far']);
     const e = map.edges.find((x) => x.from === 'moor' && x.to === '5B')!;
-    expect(edgeVisibility(map, s, v, e)).toBe('closed');
+    expect(edgeVisibility(map, s, v, e)).toBe('visible');
     expect(edgeVisibility(map, s, v, map.edges.find((x) => x.from === 'moor' && x.to === 'charcoal')!)).toBe('walked');
     expect(edgeVisibility(map, s, v, map.edges.find((x) => x.from === 'charcoal' && x.to === '7')!)).toBe('open');
   });
 
-  it('sis kapatılınca (debug) ulaşılabilir her şey görünür, kapanan dallar yine kapalı', () => {
+  it('sis kapatılınca (debug) her şey görünür', () => {
     const v = nodeVisibility(map, fresh(), true);
     expect(Object.values(v).filter((x) => x === 'fog' || x === 'goal')).toEqual([]);
   });
@@ -331,7 +332,7 @@ describe('can taşıma', () => {
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
 
-  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen kalkmaz); kasaba varışta herkesi tam iyileştirir ve düşenleri kaldırır; yenilgi yalnızca sayaç', () => {
+  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen kalkmaz); kasaba varışta yaşayanları tam iyileştirir, düşenleri KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
     let s = playTo(fresh(11), '9');
     const team = activeHeroes(s);
     s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
@@ -347,7 +348,7 @@ describe('can taşıma', () => {
     const down = t.roster[1]!.id;
     t = { ...t, roster: t.roster.map((h) => (h.id === down ? { ...h, hpRatio: 0, alive: false } : h)) };
     t = moveTo(t, '4');
-    expect(t.roster.every((h) => h.hpRatio === 1 && h.alive)).toBe(true); // kasaba düşeni de kaldırır (Ömer 2026-10-11 denge paketi)
+    expect(t.roster.every((h) => (h.id === down ? h.hpRatio === 0 && !h.alive : h.hpRatio === 1 && h.alive))).toBe(true); // dinlenme diriltmez (Ömer 2026-10-18)
   });
 });
 

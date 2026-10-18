@@ -80,7 +80,7 @@ describe('town scene data (valdoria.json > scene)', () => {
       else if (h.action === 'story') expect(hotspotOffered(n, h)).toBe(!!n.story);
       else expect(hotspotOffered(n, h)).toBe(true);
     }
-    expect(CONFIG.texts.townRested).toMatch(/healed and revived/);
+    expect(CONFIG.texts.townRested).toMatch(/fallen stay down/); // TUR 1 madde 10: dinlenme diriltmez
     expect(CONFIG.texts.townRecruit).toBeTruthy();
     expect(CONFIG.townScreen.heroHeight).toBeGreaterThan(0);
   });

@@ -12,7 +12,6 @@ import {
   openCampaignShop,
   restAtCamp,
   reviveAtCamp,
-  reviveCost,
   revisitKind,
   revisitNode,
   type CampaignState,
@@ -66,14 +65,14 @@ describe('düğüme yeniden giriş', () => {
     expect(openCampaignShop(s).shop!.wares).toEqual(wares);
   });
 
-  it('kamp: yeniden girişte ikinci dinlenme yok ama altınla diriltme açık', () => {
+  it('kamp: yeniden girişte ikinci dinlenme yok; diriltme de yok (TUR 1 madde 10: yalnızca Valor)', () => {
     const rested = until(restAtCamp(until(at('river'), 'rest')), 'move');
     expect(revisitKind(rested)).toBe('rest');
     expect(revisitNode(rested)).toBe(rested);
     expect(() => restAtCamp(rested)).toThrow();
     const fallen = rested.roster[0]!.id;
-    const s = { ...rested, gold: reviveCost(rested), roster: rested.roster.map((h) => (h.id === fallen ? { ...h, hpRatio: 0, alive: false } : h)) };
-    expect(reviveAtCamp(s, fallen).roster.find((h) => h.id === fallen)!.alive).toBe(true);
+    const s = { ...rested, gold: 999, roster: rested.roster.map((h) => (h.id === fallen ? { ...h, hpRatio: 0, alive: false } : h)) };
+    expect(reviveAtCamp(s, fallen).roster.find((h) => h.id === fallen)!.alive).toBe(false);
   });
 
   it('düz savaş düğümü ve bekleyen adım: yeniden giriş yok', () => {

@@ -30,6 +30,7 @@ import { DEFAULT_TEST_SIZE, buildTestBattleData, clampTeam, placeClass, removeSl
 import { copyMatchData } from './match-copy';
 import { isFullscreen, toggleFullscreen } from './fullscreen';
 import { registerCampaignDebug } from './debug-campaign';
+import { registerCampaignRoamDebug } from './debug-campaign-roam';
 import { debugSetValor as campaignSetValor } from '../campaign';
 import { current as campaignState, setState as setCampaignState, MAP_SCENE } from '../game/campaign-session';
 import { ENDLESS_SCENE, commit as commitRun, endless } from '../game/endless-session';
@@ -88,6 +89,7 @@ const row = (...children: HTMLElement[]): HTMLElement => {
 export function registerDebugTools({ game, debug }: Ctx): void {
   // Sefer (campaign-dev): Campaign sekmesi
   registerCampaignDebug(game, debug);
+  registerCampaignRoamDebug(game, debug); // serbest dolaşım: Reset replays, Teleport (src/ui/debug-campaign-roam.ts)
   // Multiplayer (multiplayer-dev): Setup > Multiplayer bölümü
   registerMultiplayerDebug(game, debug);
   // Endless Lite: Setup > Endless bölümü

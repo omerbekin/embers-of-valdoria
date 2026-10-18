@@ -9,6 +9,7 @@ import {
   battleHash,
   chooseReward,
   heroOf,
+  itemOptions,
   loadRun,
   newRun as newRunBase,
   parseRun,
@@ -177,10 +178,12 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(offer.map((c) => c.kind)).toEqual(['item', 'gold', 'heal']);
   });
 
-  it('elit (5. dalga): 2 farklı item (seviye tavanı yüksek; nadirlik tek tablodan, en az Rare garantisi YOK: Ömer 2026-10-11); x2 altın; %60 iyileştirme', () => {
+  it('elit (5. dalga): tek item kartı, 2 farklı seçenek (karar 364; seviye tavanı yüksek; nadirlik tek tablodan, en az Rare garantisi YOK: Ömer 2026-10-11); x2 altın; %60 iyileştirme', () => {
     const offer = rewardOffer(after(5), ENDLESS, CAT);
-    const its = items(offer);
-    expect(its).toHaveLength(ENDLESS.special.elite.itemCards);
+    expect(items(offer)).toHaveLength(ENDLESS.special.elite.itemCards);
+    expect(ENDLESS.special.elite.itemCards).toBe(1);
+    const its = items(offer).flatMap((c) => itemOptions(c));
+    expect(its).toHaveLength(2);
     expect(new Set(its.map((c) => c.itemId)).size).toBe(its.length);
     // seviye eki: normal dalgada açılmayan (ilvl 10 / 11) tabanlar elit kartında gelebilir
     expect(Math.max(...its.map((c) => CAT.find((d) => d.id === c.itemId)!.ilvl))).toBeGreaterThan(5 + ENDLESS.items.ilvlAhead);
@@ -191,9 +194,11 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(offer.find((c) => c.kind === 'heal')).toEqual({ kind: 'heal', ratio: ENDLESS.special.elite.healRatio });
   });
 
-  it("boss (10. dalga): 2 item (nadirlik tablosu hafif kayar), x3 altın, Hero's Feast", () => {
+  it("boss (10. dalga): tek item kartı, 3 seçenek (karar 364; nadirlik tablosu hafif kayar), x3 altın, Hero's Feast", () => {
     const offer = rewardOffer(after(10), ENDLESS, CAT);
     expect(items(offer)).toHaveLength(ENDLESS.special.boss.itemCards);
+    expect(ENDLESS.special.boss.itemCards).toBe(1);
+    expect(itemOptions(items(offer)[0]!)).toHaveLength(3);
     expect(offer.some((c) => c.kind === 'heal')).toBe(false);
     expect(offer.find((c) => c.kind === 'feast')).toEqual({ kind: 'feast', hpMult: ENDLESS.special.boss.feastHpMult, waves: ENDLESS.special.boss.feastWaves });
   });

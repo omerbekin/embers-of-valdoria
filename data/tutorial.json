@@ -354,7 +354,7 @@
       "id": "roads",
       "group": "On the Road",
       "title": "Roads",
-      "text": "You can see two stops ahead. Choose your road: the others will close.",
+      "text": "You can now travel back along cleared roads. Patrols return to cleared battlefields.",
       "trigger": {
         "screen": "map",
         "after": "4"

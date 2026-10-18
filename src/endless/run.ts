@@ -7,7 +7,7 @@ import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
 import { starterWeapon, starterUid } from '../progression/weapon';
-import { ENDLESS, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
+import { ENDLESS, itemOptionCount, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
 import { rngFor, waveKind, waveLevel, waveSeed, type WavePlan } from './waves';
 import type { SuspendedBattle } from './replay';
 import { relicOffer, victoryHealOf } from './relics';
@@ -120,6 +120,12 @@ export function outcomeFromBattle(plan: Pick<WavePlan, 'heroOrder'>, battle: Bat
  * Dalga sonucunu uygular. Yalnızca 'ready' aşamasında ve planın dalgası koşunun dalgasıysa işler (aynı sonuç iki kez yazılmaz).
  * Zafer: can taşıma (seferle aynı: +%20, düşen %20 ile kalkar, boss sonrası tam), dalga +1, ödül kartları. Yenilgi: koşu biter.
  */
+/** Boss zaferinin EK şifası (carry.bossHeal; eski veride bossVictoryHeal = tam iyileşme -> 1). */
+export const bossHealOf = (cfg: EndlessConfig = ENDLESS): number => {
+  const c = cfg.carry as EndlessConfig['carry'] & { bossVictoryHeal?: number };
+  return Math.max(0, c.bossHeal ?? c.bossVictoryHeal ?? 1);
+};
+
 export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out: WaveOutcome, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items): EndlessRun {
   if (run.phase !== 'ready' || plan.wave !== run.wave) return run;
   const s = clone(run);
@@ -166,7 +172,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
     }
     // Recovery affix'i (Ömer 2026-10-11): yalnızca takan, yalnızca sağ kalan; can ve MP'ye eklenir
     const rec = u.alive ? itemRecovery(h) : 0;
-    if (boss) h.hpRatio = clamp01(Math.max(cfg.carry.bossVictoryHeal, u.hpRatio + rec));
+    if (boss) h.hpRatio = clamp01(u.hpRatio + bossHealOf(cfg) + rec); // boss zaferi +%50 (TUR 1 madde 13; eskiden tam)
     else h.hpRatio = u.alive ? clamp01(u.hpRatio + heal + rec) : clamp01(cfg.carry.reviveRatio);
     // MP canla aynı oranla (Ömer 2026-10-10; 'full' = eski kural); buff / Rage / kalkan / cooldown yalnızca sağ kalana
     const carry: UnitCarry = u.alive ? { ...(out.carry?.heroes[u.heroId] ?? {}) } : {};
@@ -174,7 +180,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
     delete carry.corpse;
     if ((cfg.carry.cooldowns ?? 'carry') !== 'carry') delete carry.cooldowns;
     if (cfg.carry.mp !== 'full') {
-      const mp = boss ? Math.max(cfg.carry.bossVictoryHeal, (u.mpRatio ?? 1) + rec) : u.alive ? (u.mpRatio ?? 1) + heal + rec : cfg.carry.reviveRatio;
+      const mp = boss ? (u.mpRatio ?? 1) + bossHealOf(cfg) + rec : u.alive ? (u.mpRatio ?? 1) + heal + rec : cfg.carry.reviveRatio;
       if (clamp01(mp) < 1) carry.mpRatio = Math.round(clamp01(mp) * 1000) / 1000;
     }
     if (Object.keys(carry).length) h.carry = clone(carry);
@@ -456,7 +462,17 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
     if (pair) {
       taken.push(pair.def.id);
       // Zarlar teklif anında atılır (seed'li): kartta görünen değer = alınan değer
-      cards.push({ kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollFor(run, pair, rngFor(run.seed, cleared, 'offer-roll', i), pair.rarity, pair.ilvl) });
+      const card: Extract<RewardCard, { kind: 'item' }> = { kind: 'item', itemId: pair.def.id, heroId: pair.heroId, rolls: rollFor(run, pair, rngFor(run.seed, cleared, 'offer-roll', i), pair.rarity, pair.ilvl) };
+      // Çok seçenekli item kartı (Ömer 2026-10-18, TUR 1 madde 13; karar 364 "3 itemden biri seçilsin"; kalıntı teklifi gibi): ek item'ler
+      // aynı kurallarla, farklı taban. Seed anahtarları ilk ek seçenekte eski iki seçenekli kartla aynı ('offer-alt', 'offer-roll' ... 'alt').
+      for (let j = 1; j < itemOptionCount(kind, cfg); j++) {
+        const alt = rolledPair(run, cleared, taken, cfg, catalog, j === 1 ? rngFor(run.seed, cleared, 'offer-alt', i) : rngFor(run.seed, cleared, 'offer-alt', i, j), kind, sp?.ilvlBonus ?? 0);
+        if (!alt) break;
+        taken.push(alt.def.id);
+        const rr = j === 1 ? rngFor(run.seed, cleared, 'offer-roll', i, 'alt') : rngFor(run.seed, cleared, 'offer-roll', i, 'alt', j);
+        (card.alts ??= []).push({ itemId: alt.def.id, heroId: alt.heroId, rolls: rollFor(run, alt, rr, alt.rarity, alt.ilvl) });
+      }
+      cards.push(card);
     } else if (!cards.some((c) => c.kind === 'gold')) cards.push({ kind: 'gold', amount: Math.round(gold * 1.5) });
   }
   cards.push({ kind: 'gold', amount: gold });
@@ -697,10 +713,21 @@ export function autoValorRevive(run: EndlessRun, cfg: EndlessConfig = ENDLESS): 
   return s;
 }
 
-/** Kartı seç (yalnızca 'reward' aşamasında). */
-export function chooseReward(run: EndlessRun, index: number, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items): EndlessRun {
-  const card = run.phase === 'reward' ? run.offer?.[index] : undefined;
+/** Item kartının seçenekleri (ilk = kartın kendisi, sonra alts). Item kartı değilse boş. */
+export function itemOptions(card: RewardCard): Array<{ itemId: string; heroId: string; rolls?: ItemRolls }> {
+  if (card.kind !== 'item') return [];
+  return [{ itemId: card.itemId, heroId: card.heroId, ...(card.rolls ? { rolls: card.rolls } : {}) }, ...(Array.isArray(card.alts) ? card.alts : [])];
+}
+
+/** Kartı seç (yalnızca 'reward' aşamasında). Çok seçenekli item kartında `option` = alınacak item (0..n-1; karar 364: 3 seçenek). */
+export function chooseReward(run: EndlessRun, index: number, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items, option = 0): EndlessRun {
+  let card = run.phase === 'reward' ? run.offer?.[index] : undefined;
   if (!card) return run;
+  if (card.kind === 'item' && option > 0) {
+    const o = itemOptions(card)[option];
+    if (!o) return run;
+    card = { kind: 'item', ...o };
+  }
   const s = clone(run);
   if (card.kind === 'gold') s.gold += card.amount;
   // Şifa / Feast cesetleri kaldırmaz (yalnızca Revive kartı)

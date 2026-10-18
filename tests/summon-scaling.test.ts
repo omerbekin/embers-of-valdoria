@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, applySummonerScale, content } from '../src/engine';
 import type { BattleEvent, BattleMode, Combatant, UnitSetup } from '../src/engine';
 import { loadoutSetup, summonBaseOf } from '../src/progression/loadout';
-import { LEVELS } from '../src/progression/levels';
+import { LEVELS, statPointsAt } from '../src/progression/levels';
 
 // Çağrı yeniden tasarımı (Ömer 2026-10-18, D1 + D2 + q1-q3): çağrının statları çağıranın item HARİÇ temel statından türer (Skeleton STR'den,
 // Treant INT'ten; oranlar data/summons > summonerScale), level'ı çağıranın level'ı; çağrılar yine 2 kat hasar alır. L1'de Treant bugünküyle
@@ -80,8 +80,8 @@ describe('savaşta çağrı (iki mod)', () => {
     });
   }
 
-  it('L5 (4 level x 3 puan ana stata): çağrı büyür; level = çağıranın level\'ı', () => {
-    const pts = 4 * LEVELS.statPointsPerLevel;
+  it('L5 (L5 puanlarının hepsi ana stata): çağrı büyür; level = çağıranın level\'ı', () => {
+    const pts = statPointsAt(5);
     for (const cls of ['undead', 'druid']) {
       const scale = content.summons[UNIT_OF[cls]!]!.summonerScale!;
       const src = { class: cls, level: 5, alloc: { [scale.from]: pts } };

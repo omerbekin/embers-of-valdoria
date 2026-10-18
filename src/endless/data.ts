@@ -19,9 +19,17 @@ export interface EndlessConfig {
   elites: string[];
   bosses: string[];
   /** Dalga arası taşıma (sürekli akış, madde 300): mp 'ratio' = canla aynı oran ('full' = her dalga tam), cooldowns 'clear' | 'initial'. */
-  carry: { victoryHeal: number; reviveRatio: number; bossVictoryHeal: number; mp?: 'ratio' | 'full'; cooldowns?: 'carry' | 'clear' | 'initial'; fallen?: 'corpse' | 'rise' };
+  /**
+   * bossHeal (Ömer 2026-10-18, ilerleme TUR 1 madde 13): boss zaferinde sağ kalanlar maks can (ve MP) oranının bu kadarını EK alır (eski tam
+   * iyileşme `bossVictoryHeal: 1` yerine; 0,5 = +%50). Boss sonrası kalıntı seçimi aynen.
+   */
+  carry: { victoryHeal: number; reviveRatio: number; bossHeal: number; mp?: 'ratio' | 'full'; cooldowns?: 'carry' | 'clear' | 'initial'; fallen?: 'corpse' | 'rise' };
   /** reviveRatio: ödül ekranındaki 'Revive <kahraman>' kartının can (ve MP) oranı (carry.fallen 'corpse'). */
-  rewards: { healRatio: number; goldBase: number; goldPerWave: number; reviveRatio?: number; reviveCard?: boolean };
+  /**
+   * itemOptions (TUR 1 madde 13, karar 364: "Normal dalgalarda 2 itemdan 1'i. bossta 3'ten 1'i"): dalga türüne göre item kartı kaç seçenekli
+   * (kalıntı teklifi gibi, biri alınır); eksik tür 1.
+   */
+  rewards: { healRatio: number; goldBase: number; goldPerWave: number; reviveRatio?: number; reviveCard?: boolean; itemOptions?: Partial<Record<WaveKind, number>> };
   special: {
     elite: SpecialRewards & { healRatio: number };
     boss: SpecialRewards & { feastHpMult: number; feastWaves: number };
@@ -72,6 +80,9 @@ export const encounter = (id: string): EncounterLike | undefined => {
 };
 
 export type WaveKind = 'normal' | 'elite' | 'boss';
+
+/** Dalga türünün item kartı seçenek sayısı (rewards.itemOptions; karar 364: normal 2, elit 2, boss 3); yoksa 1. */
+export const itemOptionCount = (kind: WaveKind, cfg: Pick<EndlessConfig, 'rewards'> = ENDLESS): number => Math.max(1, Math.floor(cfg.rewards.itemOptions?.[kind] ?? 1));
 
 /** Endless kahramanı: güç katmanının (`src/progression/loadout.ts > LoadoutSource`) şekline uyar. */
 export interface EndlessHero {
@@ -128,7 +139,8 @@ export interface CarriedSummon extends UnitCarry {
 export type RewardCard =
   /** heroId: yalnızca ipucu (bu item'den en çok kim yararlanır); item torbaya girer. */
   /** `rolls`: kartta gösterilen stat zarları (alınınca torbadaki örnek AYNEN bu değerleri taşır; eski kayıtta yok = alınırken zarlanır). */
-  | { kind: 'item'; itemId: string; heroId: string; rolls?: ItemRolls }
+  /** `alt` (Ömer 2026-10-18, TUR 1 madde 13): item kartının ikinci seçeneği (kart açılınca iki item gösterilir, biri alınır). Eski kayıtta yok = tek item. */
+  | { kind: 'item'; itemId: string; heroId: string; rolls?: ItemRolls; /** Ek seçenekler (rewards.itemOptions[dalga türü] - 1 tane; karar 364). */ alts?: Array<{ itemId: string; heroId: string; rolls?: ItemRolls }> }
   | { kind: 'gold'; amount: number }
   | { kind: 'heal'; ratio: number }
   /** Boss sonrası: tam can + sonraki `waves` dalga boyunca maks can x hpMult. */

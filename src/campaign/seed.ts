@@ -22,8 +22,12 @@ export function hashSeed(...parts: Array<string | number>): number {
   return (h >>> 0) % 1_000_000_000;
 }
 
-/** Bir düğümdeki savaşın seed'i. `attempt` yenilgide artan yerel sayaç (kayda yazılmaz): zarlar değişir, düşman takımı aynı kalır. */
-export const battleSeed = (seed: number, mapId: string, nodeId: string, attempt = 0): number => hashSeed(seed, mapId, nodeId, 'battle', attempt);
+/**
+ * Bir düğümdeki savaşın seed'i: hash(seed, harita, düğüm, oynama sayısı, deneme) (roadmap 2.2). `attempt` yenilgide artan yerel sayaç (kayda
+ * yazılmaz): zarlar değişir, düşman takımı aynı kalır. `replay` = devriye sayısı (0 = ilk oynayış; ilk oynayışın seed'i eskisiyle birebir aynı).
+ */
+export const battleSeed = (seed: number, mapId: string, nodeId: string, attempt = 0, replay = 0): number =>
+  replay > 0 ? hashSeed(seed, mapId, nodeId, 'battle', attempt, 'replay', replay) : hashSeed(seed, mapId, nodeId, 'battle', attempt);
 
 export const rngFor = (seed: number, ...parts: Array<string | number>): Rng => new Rng(hashSeed(seed, ...parts));
 

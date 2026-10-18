@@ -4,7 +4,7 @@ import budgetJson from '../../data/campaign/power-budget.json';
 import { getMap } from './data';
 import { finalNode, forwardDistances } from './graph';
 import type { DifficultyEnemyMods } from './types';
-import { levelAt } from '../progression/levels';
+import { LEVELS, chapterLevels, levelAt } from '../progression/levels';
 
 export type PowerSystem = 'item' | 'level' | 'tree';
 
@@ -88,7 +88,20 @@ export function nodeIlvl(mapId: string, nodeId: string): number {
   return Math.round(a + (b - a) * nodeDepth(mapId, nodeId));
 }
 
-/** Düğümün (karşılaşmanın) seviyesi (levels.md): bölümün level aralığında derinliğe göre (bölüm 1: L1-10, tavan L50). */
+/**
+ * Düğümün (karşılaşmanın) seviyesi (levels.md): bölümün level aralığında derinliğe göre (bölüm 1: L1-10, tavan L50). Bölük kurma düğümü
+ * (newCompany) olan haritada rampa oradan başlar (karar 364; levels.json > rampStartSteps): bölük kurma düğümünden rampStartSteps adım
+ * ötesine kadar (tutorial dahil) bölümün ilk level'ı, sonra final düğümüne doğru doğrusal.
+ */
 export function nodeLevel(mapId: string, nodeId: string): number {
-  return levelAt(chapterOf(mapId).chapter, nodeDepth(mapId, nodeId));
+  const ch = chapterOf(mapId).chapter;
+  const k = LEVELS.rampStartSteps;
+  const map = getMap(mapId);
+  const company = map.nodes.find((n) => n.newCompany);
+  if (k === undefined || !company) return levelAt(ch, nodeDepth(mapId, nodeId));
+  const dist = forwardDistances(map, company.id);
+  const total = (dist.get(finalNode(map)) ?? 0) - k;
+  const d = dist.get(nodeId);
+  if (d === undefined || total <= 0) return chapterLevels(ch)[0]; // tutorial (bölük kurma düğümünün gerisi)
+  return levelAt(ch, Math.max(0, (d - k) / total));
 }

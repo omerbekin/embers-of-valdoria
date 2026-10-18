@@ -21,6 +21,11 @@ export interface DifficultyDef {
   enemy?: DifficultyEnemyMods;
   /** Rütbeli birimlere (elit lider / boss) `enemy`'nin ÜSTÜNE eklenen güçlendirme (aynı birleşme kuralı). */
   enemyTier?: Partial<Record<UnitTier, DifficultyEnemyMods>>;
+  /**
+   * ELİT düğümdeki rütbesiz birimlere (elit liderin eşlikçileri; elit/boss rütbeliler hariç) `enemy`'nin ÜSTÜNE eklenen güçlendirme
+   * (aynı birleşme kuralı). Normal/boss düğüm ve Endless etkilenmez; yoksa 1. Ömer 2026-10-19, open-questions 365 seçenek 3.
+   */
+  eliteEscort?: DifficultyEnemyMods;
   /** Bu zorlukta sefer kurallarının üstüne yazılanlar (ör. zafer sonrası toparlanma `victoryHeal`). Yoksa campaign.json > rules. */
   rules?: Partial<Pick<CampaignRules, 'victoryHeal' | 'bossVictoryHeal'>>;
 }
@@ -85,7 +90,7 @@ export interface MapNode {
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
-export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave';
+export type TownAction = 'trade' | 'recruit' | 'story' | 'rest' | 'leave' | 'smith'; // smith: demirci (TUR 1 madde 7; kasaba ekranı kendisi açar)
 
 /** Kasaba ekranında tıklanabilir yer. `rect` = arka plan görselinin oranı [x0, y0, x1, y1] (0-1); görsel ölçeklenince birlikte ölçeklenir. */
 export interface TownHotspot {
@@ -196,8 +201,16 @@ export interface CampaignConfig {
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
   enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı bölgeler (eğitim: I). */ skipRegions?: string[] };
-  /** Dinlenme noktası (Ömer 2026-10-11): ücretsiz iyileşme oranı; düşmüş kahramanı altınla diriltme (fiyat = base + perIlvl x düğüm item seviyesi). */
-  rest: { heal: number; reviveRatio: number; reviveCost: { base: number; perIlvl: number } };
+  /**
+   * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
+   * (base + perChapter x bölüm). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
+   */
+  rest: { heal: number; price: { base: number; perChapter: number } };
+  /**
+   * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
+   * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
+   */
+  replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
   merchant: { size: number; rerollCost: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
@@ -252,8 +265,22 @@ export interface CampaignState {
   active: string[];
   /** Bulunulan düğüm. */
   at: string;
-  /** Geçilen düğümler (başlangıç dahil, sırayla). */
+  /**
+   * Yürüyüş günlüğü (başlangıç dahil, sırayla): her girilen düğüm, yolculukta (serbest dolaşım) aradan geçilen temizlenmiş düğümler dahil.
+   * İlk geçişte bugünkü rota ile aynıdır. Yürünmüş yollar ardışık çiftlerden çıkar (src/campaign/fog.ts).
+   */
   path: string[];
+  /** Ayak basılan düğümler (tekil; kayıt sürümü 10, eski kayıtta path'ten türetilir). */
+  visited: string[];
+  /** İlk içeriği bitmiş (temizlenmiş) düğümler (tekil; eski kayıtta path'ten türetilir). Kasabaya yeniden girmek bunu geri almaz. */
+  cleared: string[];
+  /** Düğüm başına yeniden oynama (devriye zaferi) sayısı (roadmap 2.2; azalan getiri bundan). */
+  replays: Record<string, number>;
+  /**
+   * Başlatılmış devriye savaşı (temizlenmiş savaş düğümünü yeniden oynama): düğüm id'si. Varken nextStep o düğümün savaşını döndürür; zafer ya da
+   * yola çıkmak siler. Yalnızca duraklatılmış savaşla (Retreat to Map) birlikte kayda girer; okunurken duraklatma yoksa atılır.
+   */
+  patrol?: string;
   /** Tamamlanan adımlar: '<düğüm>:<adım>' (ör. '2:recruit', '2:battle'). */
   done: string[];
   /** Görülen tutorial ipuçları (düğüm id). */
@@ -273,6 +300,8 @@ export interface CampaignState {
   pendingHandover?: Handover;
   /** Loot sayaçları (items.md 3.3-3.4): Rare pity, düğüm başına zafer sayısı ('<düğüm>:battle' | '<düğüm>:treasure'; tekrar oynamada azalan ödül). */
   lootState: { rarePity: number; clears: Record<string, number>; rareMisses?: number };
+  /** Kasabada dinlenme sayacı (düğüm id -> kaç kez dinlenildi; TUR 1 madde 10: ilk bedava, sonrakiler ücretli). Eski kayıtta yok = hiç. */
+  townRests?: Record<string, number>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */
@@ -372,12 +401,16 @@ export type NextStep =
   | { kind: 'volunteer'; node: string; offer: string[] }
   | { kind: 'farewell'; node: string }
   | { kind: 'company'; node: string; size: number }
-  | { kind: 'battle'; node: string; encounter: string }
+  | { kind: 'battle'; node: string; encounter: string; /** Devriye (temizlenmiş düğümün yeniden oynanışı). */ patrol?: true }
   | { kind: 'treasure'; node: string; treasure: string }
   | { kind: 'event'; node: string; event: string }
   | { kind: 'story'; node: string; story: string }
   | { kind: 'town'; node: string }
   | { kind: 'rest'; node: string }
   | { kind: 'merchant'; node: string }
-  | { kind: 'move'; options: string[] }
+  /**
+   * Yola çıkılabilir. `options` = ileri komşular (eski tek yönlü davranış; otomatik oynatıcılar bunu izler), `back` = serbest dolaşımda geri
+   * komşular (yalnızca varsa). Temizlenmiş düğümler üzerinden uzak hedefler: state.ts > travelRoutes.
+   */
+  | { kind: 'move'; options: string[]; back?: string[] }
   | { kind: 'complete' };

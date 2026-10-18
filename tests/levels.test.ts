@@ -18,6 +18,9 @@ import {
   levelAt,
   loadout,
   normalizeLevelFields,
+  campaignMaxLevel,
+  statPointsAt,
+  statPointsBetween,
   splitXp,
   trackKills,
   xpToNext,
@@ -61,12 +64,40 @@ describe('eğri ve veri', () => {
     expect(levelAt(1, 1)).toBe(10);
   });
 
-  it('level atlama: 3 stat + 1 skill puanı her level için, birden çok level tek seferde', () => {
+  it('level atlama: her level 1 stat (5 katlarında 2) + 1 skill puanı, birden çok level tek seferde', () => {
     const h: LevelHero = { id: 'a', class: 'warrior', level: 1, xp: 0 };
     const up = addXp(h, xpToNext(1) + xpToNext(2) + 1);
     expect(up).toEqual({ heroId: 'a', from: 1, to: 3 });
-    expect([h.statPoints, h.skillPoints, h.xp]).toEqual([2 * levelsJson.statPointsPerLevel, 2 * levelsJson.skillPointsPerLevel, 1]);
+    expect([h.statPoints, h.skillPoints, h.xp]).toEqual([2, 2 * levelsJson.skillPointsPerLevel, 1]);
     expect(addXp(h, 0)).toBeNull();
+    // L4 -> L6: L5 iki puan, L6 bir puan
+    const g: LevelHero = { id: 'b', class: 'warrior', level: 4, xp: 0, statPoints: 0 };
+    addXp(g, xpToNext(4) + xpToNext(5));
+    expect([g.level, g.statPoints]).toEqual([6, 3]);
+  });
+
+  it('stat puanı kuralı (Ömer 2026-10-18, TUR 1 madde 2): tek tanım veride; toplam L30 = 35, L50 = 59; eski 3/level alanı veride yok', () => {
+    expect(levelsJson.statPoints).toEqual({ perLevel: 1, atMultiplesOf: 5, bonusLevelPoints: 2 });
+    expect('statPointsPerLevel' in (levelsJson as Record<string, unknown>)).toBe(false);
+    expect([1, 2, 4, 5, 6, 10, 30, 50].map((l) => statPointsAt(l))).toEqual([0, 1, 3, 5, 6, 11, 35, 59]);
+    expect(statPointsBetween(4, 10)).toBe(8);
+    expect(statPointsBetween(10, 10)).toBe(0);
+  });
+
+  it('sefer tavanı L30 (Endless 50): seferde XP ve level 30 olunca durur, Endless 50 olana dek gider', () => {
+    expect(levelsJson.campaignMaxLevel).toBe(30);
+    expect(campaignMaxLevel()).toBe(30);
+    const h: LevelHero = { id: 'a', class: 'warrior', level: 29, xp: 0, statPoints: 0 };
+    expect(addXp(h, 10 ** 9, LEVELS, campaignMaxLevel())).toEqual({ heroId: 'a', from: 29, to: 30 });
+    expect([h.level, h.xp, h.statPoints]).toEqual([30, 0, 2]);
+    expect(addXp(h, 10 ** 9, LEVELS, campaignMaxLevel())).toBeNull();
+    expect([h.level, h.xp]).toEqual([30, 0]);
+    let s = pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'warrior');
+    s = debugGrantXp(debugSetLevel(s, 45), 10 ** 9);
+    expect(s.roster[0]!.level).toBe(30);
+    const e: LevelHero = { id: 'e', class: 'warrior', level: 29, xp: 0 };
+    addXp(e, 10 ** 9);
+    expect(e.level).toBe(50);
   });
 
   it('düğüm seviyesi: Valdoria başı L1, final L10', () => {
@@ -87,8 +118,8 @@ describe('XP paylaşımı, level farkı ve istisna', () => {
     { id: 'c', level: 3 },
   ];
   it('düşman XP x çarpan / savaşa giren sayısı; düşen bölenden çıkmaz; düştükten sonraki öldürmeler %50', () => {
-    const per = (10 * Math.pow(3, LEVELS.enemyXp.pow)) / 3; // enemyXp(3) / 3 kahraman
-    const base = Math.round(10 * Math.pow(3, LEVELS.enemyXp.pow));
+    const per = (LEVELS.enemyXp.base * Math.pow(3, LEVELS.enemyXp.pow)) / 3; // enemyXp(3) / 3 kahraman
+    const base = Math.round(LEVELS.enemyXp.base * Math.pow(3, LEVELS.enemyXp.pow));
     const x = splitXp({ heroes, nodeLevel: 3, mult: 1, kills: [{ down: [] }, { down: [] }, { down: ['c'] }] });
     expect(x.a).toBe(Math.round((3 * base) / 3));
     expect(x.c).toBe(Math.round((2 * base) / 3 + (base / 3) * LEVELS.fallenShare));
@@ -195,18 +226,25 @@ function journey(seed: number, pick: number): { s: CampaignState; ups: number[] 
 }
 
 describe('sefer: eğri hedefi ve kurallar', () => {
-  it('farmsız oyuncunun Ashford bölüğü bölüm 1 sonunda ~L8 (7-9); ilk level ilk savaşta, sonrakiler giderek seyrek', () => {
+  it('farmsız oyuncunun bölüğü bölüm 1 sonunda ~L8,5 (ortalama 8,5 ± 0,5; Ömer 2026-10-18 TUR 1 madde 5); ilk level bölüğün ilk savaşlarında, sonrakiler giderek seyrek', () => {
+    const all: number[] = [];
     for (const pick of [0, 1, 2]) {
       const { s, ups } = journey(7 + pick, pick);
-      const levels = s.roster.map((h) => h.level);
+      // kesirli level (level + o level'daki XP payı): "8,5" hedefi ara değerdir
+      const levels = s.roster.map((h) => h.level + h.xp / Math.max(1, xpToNext(h.level)));
+      all.push(...levels);
       for (const l of levels) {
         expect(l).toBeGreaterThanOrEqual(7);
-        expect(l).toBeLessThanOrEqual(9);
+        expect(l).toBeLessThan(10);
       }
-      expect(ups[0]).toBe(1); // bölüğün ilk savaşı
+      // karar 364: Ashford sonrası ilk düğümler L1 (levels.json > rampStartSteps), L1 düşman az XP verir: bölüğün ilk level'ı 2. savaşta (ölçüm)
+      expect(ups[0]).toBeLessThanOrEqual(2);
       const gaps = ups.slice(1).map((u, i) => u - ups[i]!);
-      expect(gaps[0]!).toBeLessThanOrEqual(2); // ilk level'lar 1-2 savaşta
+      expect(gaps[0]!).toBeLessThanOrEqual(3); // ilk level'lar 2-3 savaşta (ölçüm: 2, 5)
     }
+    const mean = all.reduce((a, b) => a + b, 0) / all.length;
+    expect(mean).toBeGreaterThanOrEqual(8);
+    expect(mean).toBeLessThanOrEqual(9);
   });
 
   it('zafer XP verir, level atlayan ayaktaki kahraman tam iyileşir, düşen ceset kalır; Level Up kaydı ve onayı', () => {
@@ -237,11 +275,11 @@ describe('sefer: eğri hedefi ve kurallar', () => {
     let s = pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'archer');
     s = debugSetLevel(s, 5);
     const h = s.roster[0]!;
-    expect([h.level, h.statPoints, h.skillPoints]).toEqual([5, 12, 4]);
+    expect([h.level, h.statPoints, h.skillPoints]).toEqual([5, 5, 4]);
     const t = allocateStats(s, h.id, { dex: 2, luck: 1 });
     expect(t.roster[0]!.alloc).toEqual({ dex: 2, luck: 1 });
-    expect(t.roster[0]!.statPoints).toBe(9);
-    expect(s.roster[0]!.statPoints).toBe(12); // saf: girdi değişmez
+    expect(t.roster[0]!.statPoints).toBe(2);
+    expect(s.roster[0]!.statPoints).toBe(5); // saf: girdi değişmez
     const g = debugGrantXp(t, xpToNext(5));
     expect(g.roster[0]!.level).toBe(6);
     expect(g.levelUps?.length).toBe(1);
@@ -260,10 +298,26 @@ describe('kayıt göçü (sürüm 9)', () => {
     expect(r.migrated).toBe(true);
     expect(r.corrupt).toBe(false);
     const h = r.file.slots[0]!.saves[0]!.state.roster[0]!;
-    expect(h).toMatchObject({ level: 4, xp: 33, statPoints: 9, skillPoints: 3, alloc: {} });
+    expect(h).toMatchObject({ level: 4, xp: 33, statPoints: 3, skillPoints: 3, alloc: {} });
+    // L1 kahramanın dağılımı toplamı (0) aşıyor: sıfırlanır
     const bad: LevelHero = { id: 'x', class: 'mage', level: -2, xp: NaN, statPoints: 1.5, alloc: { int: -3, dex: 2 } as never };
     normalizeLevelFields(bad);
-    expect(bad).toMatchObject({ level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: { dex: 2 } });
+    expect(bad).toMatchObject({ level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {} });
+  });
+
+  it('stat puanı göçü (TUR 1 madde 2): toplamı yeni kuralı aşan (eski 3/level) kahraman; dağılım yeni toplamı aşıyorsa sıfırlanır, aşmıyorsa korunur ve kalan yeniden hesaplanır', () => {
+    // L10: yeni toplam 11. Eski kahraman 15 puan dağıtmış, 12 bekliyor -> dağılım sıfır, 11 dağıtılmamış
+    const over: LevelHero = { id: 'a', class: 'warrior', level: 10, xp: 5, statPoints: 12, alloc: { str: 10, luck: 5 } };
+    normalizeLevelFields(over);
+    expect(over).toMatchObject({ level: 10, xp: 5, statPoints: 11, alloc: {} });
+    // 6 dağıtmış, 21 bekliyor -> dağılım korunur, 11 - 6 = 5 bekler
+    const under: LevelHero = { id: 'b', class: 'warrior', level: 10, xp: 0, statPoints: 21, alloc: { str: 6 } };
+    normalizeLevelFields(under);
+    expect(under).toMatchObject({ statPoints: 5, alloc: { str: 6 } });
+    // yeni kuraldaki kahraman: dokunulmaz (idempotent)
+    const again = { ...under };
+    normalizeLevelFields(again);
+    expect(again).toEqual(under);
   });
 });
 

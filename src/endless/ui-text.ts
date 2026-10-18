@@ -67,6 +67,11 @@ export const UI_TEXT = {
   kickerHeal: (special: 'elite' | 'boss' | null) => (special ? 'Field surgeon' : 'Rest'),
   kickerFeast: "Hero's feast",
   relicKicker: 'Relic',
+  /** Çok seçenekli item kartı (Ömer 2026-10-18, TUR 1 madde 13; karar 364: 3 item'den biri). */
+  itemPickTitle: 'Choose an Item',
+  itemPickSub: (n: number) => (n === 2 ? 'Keep one of these two. The other is left behind.' : `Keep one of these ${n}. The others are left behind.`),
+  itemPickBack: 'Back to rewards',
+  itemCardChoice: (n: number) => `Choose 1 of ${n}`,
   purse: (from: number, to: number) => `Purse ${from} → ${to}`,
   fullHealth: 'FULL HEALTH',
   kickerRevive: 'Revival',

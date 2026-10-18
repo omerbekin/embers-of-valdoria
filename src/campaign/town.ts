@@ -1,5 +1,8 @@
+import { CONFIG } from './data';
 import { node } from './graph';
-import { mapOf, nextStep } from './state';
+import { chapterOf } from './power';
+import { SMITH } from './smith';
+import { isFallen, mapOf, nextStep } from './state';
 import type { CampaignState, MapNode, NextStep, TownHotspot, TownSceneDef } from './types';
 
 /**
@@ -91,4 +94,48 @@ export function partySpots(n: number, o: { cx: number; feetY: number; gap: numbe
 export function idleStartFrame(index: number, totalFrames: number): number {
   const n = Math.floor(totalFrames);
   return n > 1 ? Math.abs(Math.floor(index)) % n : 0;
+}
+
+// ---------------------------------------------------------------- kasabada dinlenme (Ömer 2026-10-18, ilerleme TUR 1 madde 10)
+
+/** Bu kasabada kaç kez dinlenildi (kayıtta townRests; bozuk / yok = 0). */
+export function townRestCount(s: Pick<CampaignState, 'townRests'>, nodeId: string): number {
+  const v = s.townRests?.[nodeId];
+  return typeof v === 'number' && Number.isFinite(v) && v > 0 ? Math.floor(v) : 0;
+}
+
+/** Kasabada sıradaki dinlenmenin fiyatı: ilk dinlenme bedava (0), sonrakiler campaign.json > rest.price (base + perChapter x bölüm; PROVİZYON). */
+export function townRestPrice(s: Pick<CampaignState, 'townRests' | 'mapId'>, nodeId: string): number {
+  if (townRestCount(s, nodeId) === 0) return 0;
+  const p = CONFIG.rest.price;
+  return Math.max(0, Math.round(p.base + p.perChapter * chapterOf(s.mapId).chapter));
+}
+
+/** Kasaba dinlenmesinin can oranı (düğümün heal'i; yoksa tam). */
+export const townRestHeal = (n: MapNode): number => Math.max(0, Math.min(1, n.heal ?? 1));
+
+/**
+ * Kasabada dinlen (ateş başı): yaşayanlar kasabanın heal oranına (tam) iyileşir; düşmüşler KALKMAZ (diriltme yalnızca Valor). İlk dinlenme bedava,
+ * sonrakiler ücretli; sayaç kasaba başına. Kasaba değilse ya da altın yetmezse Error. Saf: yeni durum döner.
+ */
+export function restInTown(s: CampaignState, nodeId: string = s.at): CampaignState {
+  const n = node(mapOf(s), nodeId);
+  if (n.type !== 'town') throw new Error('You can only rest like this in a town');
+  const price = townRestPrice(s, nodeId);
+  if (s.gold < price) throw new Error(`Need ${price - s.gold} more gold`);
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  const heal = townRestHeal(n);
+  for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(Math.max(h.hpRatio, heal) * 1000) / 1000;
+  t.gold -= price;
+  t.townRests = { ...(t.townRests ?? {}), [nodeId]: townRestCount(s, nodeId) + 1 };
+  return t;
+}
+
+// ---------------------------------------------------------------- demirci yeri (TUR 1 madde 7)
+
+/** Kasabanın demirci yeri (campaign.json > blacksmith.hotspots[kasaba görseli]); kasaba değilse null. Yer yoksa rect'siz (ekran kenarında plaka). */
+export function smithHotspot(n: MapNode): TownHotspot | null {
+  if (n.type !== 'town') return null;
+  const h = n.scene ? SMITH.hotspots?.[n.scene.background] : undefined;
+  return { id: 'blacksmith', action: 'smith', label: h?.label ?? 'Blacksmith', rect: h?.rect ?? [0, 0, 0, 0] };
 }

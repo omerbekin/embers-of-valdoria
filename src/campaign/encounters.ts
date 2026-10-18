@@ -5,7 +5,7 @@ import { battleSeed } from './seed';
 import { chapterEnemyMods, nodeLevel } from './power';
 import { withEnemyLevel } from '../progression/levels';
 import { loadoutSetup } from '../progression/loadout';
-import { activeHeroes, heroById } from './state';
+import { activeHeroes, heroById, replayCount } from './state';
 import type { UnitSetup } from '../engine/types';
 import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, UnitMods } from './types';
 
@@ -114,7 +114,9 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       // seferin genel düşman ölçeği (eğitim bölgesi hariç): boss rütbeli -> boss; elit düğümün diğer birimleri -> elite; kalan -> all
       const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : n.type === 'elite' ? (es?.elite ?? es?.all) : es?.all;
       const own = withDifficulty(withDifficulty(u.mods, scale), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
-      const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), u.tier && !u.noTierMods ? diff?.enemyTier?.[u.tier] : undefined), u.class, enemyLevel);
+      // eliteEscort (open-questions 365 seçenek 3): elit düğümde rütbesiz eşlikçilere zorluk eki (rütbeliler enemyTier'dan alır)
+      const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : n.type === 'elite' ? diff?.eliteEscort : undefined;
+      const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), rank), u.class, enemyLevel);
       const setup: UnitSetup = {
         ...(mods ? { modifiers: mods } : {}),
         ...(u.name ? { displayName: u.name } : {}),
@@ -126,7 +128,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     }
   return {
     nodeId: n.id,
-    seed: battleSeed(s.seed, s.mapId, n.id, attempt),
+    // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
+    seed: battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0),
     encounterId: enc.id,
     encounterName: enc.def.name,
     usedFallback: enc.fallback,

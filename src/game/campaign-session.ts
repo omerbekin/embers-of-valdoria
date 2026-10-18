@@ -115,6 +115,7 @@ export function loadLastSave(): CampaignState | null {
   if (!back) return null;
   back.stats.defeats = Math.max(back.stats.defeats, s.stats.defeats) + 1;
   delete back.suspended; // yenilgi duraklatma kaydını siler (kaybedilen savaş yarıdan sürdürülemez; düğümün savaşı baştan)
+  delete back.patrol; // kaybedilen devriye kayıttan dönünce başlatılmış kalmaz: takım temizlenmiş düğümde, yola çıkabilir
   session.attempts.set(s.at, (session.attempts.get(s.at) ?? 0) + 1);
   session.state = back;
   session.notice = entry ? 'Loaded your last save' : 'Back to the start of the journey';

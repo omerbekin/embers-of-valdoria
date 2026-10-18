@@ -3,7 +3,7 @@ import { summons } from '../engine/content';
 import { ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { nodeLevel } from './power';
-import { LEVELS, addXp, allocate, autoAllocate, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
+import { LEVELS, addXp, allocate, autoAllocate, campaignMaxLevel, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
 import type { BattleOutcome, CampaignState, Hero } from './types';
 
 const clone = (s: CampaignState): CampaignState => JSON.parse(JSON.stringify(s)) as CampaignState;
@@ -23,7 +23,7 @@ export function applyXp(t: CampaignState, gains: Record<string, number>): LevelU
   for (const [id, xp] of Object.entries(gains)) {
     const h = t.roster.find((x) => x.id === id);
     if (!h || xp <= 0) continue;
-    const up = addXp(h, xp);
+    const up = addXp(h, xp, LEVELS, campaignMaxLevel()); // sefer tavanı L30 (TUR 1 madde 1); Endless 50
     if (!up) continue;
     if (!fallen(h)) h.hpRatio = 1; // level atlayınca tam iyileşme (levels.md)
     ups.push(up);
@@ -99,6 +99,36 @@ export function debugGrantXp(s: CampaignState, amount: number, heroId?: string):
 /** Debug: level'ı ayarla (dağıtılmış puanlar sıfırlanır, puanlar level'a göre yeniden verilir). heroId yoksa tüm kadro. */
 export function debugSetLevel(s: CampaignState, level: number, heroId?: string): CampaignState {
   const t = clone(s);
-  for (const h of t.roster) if (!heroId || h.id === heroId) setLevel(h, level);
+  for (const h of t.roster) if (!heroId || h.id === heroId) setLevel(h, level, LEVELS, campaignMaxLevel());
+  return t;
+}
+
+// ---------------------------------------------------------------- sonradan katılan kahraman (Ömer 2026-10-18, TUR 1 madde 6)
+
+/**
+ * Sonradan katılan kahramanın level'ı: takımın (aktif dizilim; yoksa kadro) ortalamasının `joinBelow` altı, en az L1, sefer tavanını aşmaz.
+ * Ortalama tam sayıya AŞAĞI yuvarlanır (VARSAYIM, open-questions). `exclude` = yeni gelenler (ortalamaya girmez). Takım yoksa L1.
+ */
+export function joinLevel(s: Pick<CampaignState, 'roster' | 'active'>, exclude: string[] = []): number {
+  const pool = s.roster.filter((h) => !exclude.includes(h.id));
+  const act = pool.filter((h) => s.active.includes(h.id));
+  const team = act.length ? act : pool;
+  if (!team.length) return 1;
+  const avg = team.reduce((a, h) => a + (h.level ?? 1), 0) / team.length;
+  return Math.max(1, Math.min(campaignMaxLevel(), Math.floor(avg) - (LEVELS.joinBelow ?? 2)));
+}
+
+/**
+ * Katılım sonrası (saf): `before`'da olmayan yeni kahramanlar joinLevel'a çıkarılır, XP 0, stat puanları DAĞITILMAMIŞ (setLevel; skill puanı da
+ * level'dan). Yakalama bonusu XP kuralında aynen (heroXpMult). Yeni kahraman yoksa `after` aynen döner.
+ */
+export function settleJoiners(before: CampaignState, after: CampaignState): CampaignState {
+  const known = new Set(before.roster.map((h) => h.id));
+  const fresh = after.roster.filter((h) => !known.has(h.id));
+  if (!fresh.length) return after;
+  const level = joinLevel(after, fresh.map((h) => h.id));
+  if (level <= 1) return after;
+  const t = clone(after);
+  for (const h of t.roster) if (!known.has(h.id)) setLevel(h, level, LEVELS, campaignMaxLevel());
   return t;
 }

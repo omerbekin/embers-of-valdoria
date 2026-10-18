@@ -204,10 +204,10 @@ describe('endless: savaş sonucu ve can taşıma', () => {
     expect(run.wave).toBe(1); // girdi değişmez
   });
 
-  it('boss zaferi yaşayanları tam iyileştirir; ceseti kaldırmaz', () => {
+  it('boss zaferi yaşayanlara +%50 (TUR 1 madde 13; eskiden tam); ceseti kaldırmaz', () => {
     const run = { ...fresh(), wave: 10 };
     const next = applyOutcome(run, { wave: 10 }, win(run, 0.1, ['h3']));
-    for (const h of next.heroes) expect(h.hpRatio).toBe(h.id === 'h3' ? 0 : 1);
+    for (const h of next.heroes) expect(h.hpRatio).toBeCloseTo(h.id === 'h3' ? 0 : 0.1 + ENDLESS.carry.bossHeal, 5);
   });
 
   it('yenilgi: koşu biter, skor yazılabilir', () => {
