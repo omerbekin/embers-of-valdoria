@@ -1,0 +1,418 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Map nodes and roads - mockup</title>
+<!--
+  MOCKUP (oyun kodu degil): sefer haritasi dugum cerceveleri + yollar. Oyundaki harita parcasi (Valdoria, A1-x yerlesimi),
+  gercek dugum ikonlari (map-nodes/n), gercek arka plan, Cinzel / EB Garamond. Dunya birimi 1920x1080.
+  Adres: #cur (bugunku) | #a | #b | #c  ve  &path=0..3  &u=0.44 (telefon yatay olcegi)  &hit (44px dokunma alani)  &sheet (cerceve tablosu)  &comp=0 (kucuk ekran buyutmesini kapat)
+-->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('map-nodes/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('map-nodes/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400 800; font-display: block; src: url('map-nodes/fonts/EBGaramond-italic-latin.woff2') format('woff2'); }
+:root { color-scheme: dark; --gold: 217,178,106; --on: #f3d999; --txt: #d9c8a2; --muted: #a8977a; --ember: #e0702a; --ember2: #ffb35a;
+  --cin: Cinzel, Georgia, serif; --gar: 'EB Garamond', Georgia, serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); font-family: var(--gar); overflow: hidden; }
+#scroller { position: absolute; inset: 0; overflow: auto; background: #0a0705; scrollbar-width: thin; }
+#map { display: block; }
+/* node states */
+.node { cursor: pointer; transition: opacity .2s; }
+.node .body { transition: transform .18s ease, filter .2s; transform-box: fill-box; transform-origin: center; }
+.node .icon { transition: filter .2s; }
+.node.st-cleared { opacity: .85; }
+.node.st-cleared .icon { filter: grayscale(.5) brightness(.78); }
+.node.st-fog { opacity: .55; }
+.node.st-fog .icon { filter: grayscale(.6) brightness(.8); }
+.node.st-dead { opacity: .38; }
+.node.st-dead .icon { filter: grayscale(1) brightness(.7); }
+.node.st-reach .glow { animation: glow 2.4s ease-in-out infinite; }
+.node.boss.st-reach .glow, .node.boss .glow { animation: glow 1.8s ease-in-out infinite; }
+.node.st-fog.boss .glow, .node.st-dead .glow { display: none; }
+.node.st-fog.boss .bossglow { opacity: .35; }
+.node .selring { display: none; transform-box: fill-box; transform-origin: center; }
+.node.sel .selring, .node.hov.st-reach .selring { display: block; animation: spin 14s linear infinite; }
+.node.hov.st-reach .body, .node.sel .body { transform: scale(1.07); }
+.node .selglow { display: none; }
+.node.sel .selglow, .node.hov.st-reach .selglow { display: block; }
+.bossglow { animation: bosspulse 2.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes glow { 0%,100% { opacity: .55; } 50% { opacity: 1; } }
+@keyframes bosspulse { 0%,100% { opacity: .55; transform: scale(.96); } 50% { opacity: 1; transform: scale(1.06); } }
+@keyframes spin { to { transform: rotate(360deg); } }
+@keyframes flow { to { stroke-dashoffset: -42; } }
+.flow { animation: flow 1.6s linear infinite; }
+.lbl-name { font: 600 15px var(--cin); letter-spacing: .06em; text-transform: uppercase; }
+.lbl-sub { font: 400 13px var(--gar); }
+.hero { pointer-events: none; filter: drop-shadow(0 5px 4px rgba(0,0,0,.6)); animation: bob 2.6s ease-in-out infinite; }
+@keyframes bob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.hit.dbg { fill: rgba(80,200,255,.18); stroke: rgba(120,220,255,.95); stroke-width: 2px; vector-effect: non-scaling-stroke; }
+/* page chrome (not part of the game) */
+#mockstrip { position: fixed; left: 8px; bottom: 8px; z-index: 30; font: 600 11px var(--cin); letter-spacing: .12em; color: #0b0805; background: rgba(var(--gold),.9); padding: 3px 9px; border-radius: 2px; pointer-events: none; }
+#tools { position: fixed; right: 8px; top: 8px; z-index: 30; display: flex; flex-wrap: wrap; gap: 5px; justify-content: flex-end; max-width: 50vw; }
+#tools button, #tools a { font: 600 12px var(--cin); letter-spacing: .08em; text-transform: uppercase; color: var(--txt); background: rgba(14,10,7,.9); border: 1px solid rgba(var(--gold),.4); padding: 7px 11px; min-height: 32px; cursor: pointer; text-decoration: none; }
+#tools button.on { color: #1a1109; background: rgba(var(--gold),.95); }
+#diag { position: fixed; left: 8px; top: 8px; z-index: 30; width: min(500px, 44vw); max-height: calc(100vh - 50px); overflow: auto; background: rgba(12,8,5,.92); border: 1px solid rgba(var(--gold),.35); padding: 10px 14px 12px; font-size: 14.5px; line-height: 1.38; }
+#diag h2 { margin: 0 0 6px; font: 600 14px var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--on); }
+#diag ol { margin: 0 0 6px; padding-left: 19px; } #diag li { margin-bottom: 4px; }
+#diag .x { position: absolute; right: 6px; top: 4px; cursor: pointer; color: var(--muted); font: 600 16px var(--cin); background: none; border: 0; padding: 4px 8px; }
+#diag .vnote { color: var(--muted); font-size: 13.5px; border-top: 1px solid rgba(var(--gold),.2); padding-top: 6px; }
+#diag.min { width: auto; padding: 4px 10px; } #diag.min > :not(.x):not(h2) { display: none; } #diag.min h2 { margin: 0 26px 0 0; font-size: 12px; }
+#sheet { position: fixed; inset: 0; z-index: 25; background: rgba(8,5,3,.94); overflow: auto; display: none; }
+#sheet.show { display: block; }
+body.sheetOn #diag { display: none; }
+html.compact #diag { font-size: 12.5px; width: 56vw; } html.compact #tools button, html.compact #tools a { font-size: 10.5px; padding: 5px 8px; min-height: 28px; }
+</style>
+</head>
+<body>
+<div id="scroller"><svg id="map" lang="en" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<div id="sheet"><svg id="sheetsvg" lang="en" xmlns="http://www.w3.org/2000/svg"></svg></div>
+<div id="diag">
+  <button class="x" id="dx" title="Küçült / aç">&ndash;</button>
+  <h2>Teşhis (bugünkü harita)</h2>
+  <ol>
+    <li>Tüm düğümler aynı boy ve aynı yuvarlak disk: battle, rest, boss neredeyse aynı ağırlıkta. Elit ve boss "önemli" görünmüyor; yol seçimi küçük ikonu okuyarak yapılıyor.</li>
+    <li>İkonlar küçük (~44 birim); telefon yatayda (ölçek ~0.44) ikon 20 px civarı, dokunma hedefi 44 px'in altında.</li>
+    <li>Ad etiketi italik ve zeminsiz, orman/dağ dokusunun üstünde: "Battle · Moor Raiders", "Treasure · Guarded" okunmuyor. Etiketin koyu zemini yok, sisle birlikte siliniyor.</li>
+    <li>Yol: tek ince bej çizgi, harita dokusunda kayboluyor. Seçilebilir yol turuncu kesikli ama gidilen yol hiç işaretli değil.</li>
+    <li>Durumlar zayıf: temizlenen düğüm yalnızca küçük kılıç rozeti; sis altındaki ile ulaşılamayan düğüm aynı soluklukta; mevcut konum yalnızca kahraman figürü.</li>
+  </ol>
+  <div class="vnote" id="vnote"></div>
+</div>
+<div id="tools"></div>
+<div id="mockstrip">MOCKUP &middot; oyun degil</div>
+<script>
+const NS = 'http://www.w3.org/2000/svg';
+const $ = (s) => document.querySelector(s);
+const ICON = 'map-nodes/n/';
+const TYPE = { battle: 'Battle', elite: 'Elite', boss: 'Boss', town: 'Town', treasure: 'Treasure', event: 'Event', rest: 'Rest point', merchant: 'Merchant' };
+
+/* ---- harita parcasi: A1-x yerlesimi (dunya 1920x1080) ---- */
+const NODES = [
+  { id: 'mill', name: 'Mill Road', type: 'battle', sub: 'Start · Battle', w: [280, 914] },
+  { id: 'raven', name: 'Ravenwood', type: 'battle', sub: 'Battle · Outlaw Pack', w: [430, 690] },
+  { id: 'watch', name: 'Ruined Watchtower', type: 'elite', sub: 'Elite · Bandit Chief', w: [540, 440] },
+  { id: 'ash', name: 'Ashford Village', type: 'town', sub: 'Town · Rest, Recruits, Trade', w: [440, 250] },
+  { id: 'moor', name: 'Windy Moor', type: 'battle', sub: 'Battle · Moor Raiders', w: [646, 197], above: 1 },
+  { id: 'iron', name: 'Iron Pass', type: 'battle', sub: 'Battle · Ambush', w: [881, 410], above: 1 },
+  { id: 'charcoal', name: 'Charcoal Camp', type: 'battle', sub: 'Battle · Bandits', w: [645, 565] },
+  { id: 'valdren', name: 'Valdren Keep', type: 'town', sub: 'City · Rest, Recruits, Trade', w: [860, 598], above: 1 },
+  { id: 'mine', name: 'Dwarven Mine', type: 'treasure', sub: 'Treasure · Guarded', w: [1030, 540], above: 1 },
+  { id: 'witch', name: "Witch's Hut", type: 'event', sub: 'Event · Cursed Merchant', w: [965, 655] },
+  { id: 'marsh', name: 'Misty Marsh', type: 'battle', sub: 'Battle · Bog Ambush', w: [915, 790] },
+  { id: 'grave', name: 'Grave Field', type: 'battle', sub: 'Battle · Restless Dead', w: [1118, 673] },
+  { id: 'pilgrim', name: 'Pilgrim Road', type: 'battle', sub: 'Battle · Rival Company', w: [1215, 400] },
+  { id: 'abbey', name: "St. Brann's Abbey", type: 'treasure', sub: 'Treasure · Relic Vault', w: [1294, 280], above: 1 },
+  { id: 'cath', name: 'Black Cathedral', type: 'elite', sub: 'Elite · The Undying', w: [1221, 549] },
+  { id: 'river', name: 'Riverside Camp', type: 'rest', sub: 'Rest · Camp, Revive', w: [1350, 515], above: 1 },
+  { id: 'bridge', name: "King's Bridge", type: 'boss', sub: 'Boss · The Bridge Warden', w: [1300, 678] },
+  { id: 'ashen', name: 'Ashen Plain', type: 'battle', sub: 'Battle · Cursed Ground', w: [1460, 790] },
+];
+const EDGES = [['mill','raven'],['raven','watch'],['watch','ash'],['ash','moor'],['moor','iron'],['moor','charcoal'],['iron','valdren'],['charcoal','valdren'],
+  ['valdren','mine'],['valdren','witch'],['valdren','marsh'],['mine','grave'],['witch','grave'],['marsh','grave'],['grave','pilgrim'],['pilgrim','abbey'],['pilgrim','cath'],
+  ['abbey','river'],['cath','river'],['river','bridge'],['bridge','ashen']];
+const STATE = { mill: 'cleared', raven: 'cleared', watch: 'cleared', ash: 'cleared', moor: 'cleared', iron: 'cleared', valdren: 'cleared', mine: 'cleared', grave: 'cleared',
+  pilgrim: 'current', abbey: 'reach', cath: 'reach', river: 'fog', bridge: 'fog', ashen: 'fog', charcoal: 'dead', witch: 'dead', marsh: 'dead' };
+const FOGS = [[700, 640, 260], [960, 790, 300], [1400, 760, 240]];
+const VB = { x: 230, y: 120, w: 1340, h: 860 };
+
+/* ---- parametreler (adres) ---- */
+function parseHash() {
+  const o = { v: 'a', path: null, u: null, hit: false, sheet: false, comp: true };
+  for (const t of location.hash.replace(/^#/, '').split('&')) {
+    if (!t) continue; const [k, v] = t.split('=');
+    if (['cur', 'a', 'b', 'c'].includes(k)) o.v = k;
+    else if (k === 'path') o.path = +v; else if (k === 'u') o.u = +v; else if (k === 'hit') o.hit = true;
+    else if (k === 'sheet') o.sheet = true; else if (k === 'comp') o.comp = v !== '0';
+  }
+  return o;
+}
+let P = parseHash();
+
+/* ---- geometri yardimcilari ---- */
+const pt = (a, r) => [Math.cos(a) * r, Math.sin(a) * r];
+const rad = (d) => d * Math.PI / 180;
+function spikes(n, r0, r1, rot, half, fill, extra = '') { // dis halka uzerinde ucgen sivrilikler
+  let s = '';
+  for (let i = 0; i < n; i++) {
+    const a = rad(rot + (360 / n) * i), h = rad(half), tall = r1 + (i % 2 ? -(r1 - r0) * 0.35 : 0);
+    const [x1, y1] = pt(a - h, r0), [x2, y2] = pt(a + h, r0), [x3, y3] = pt(a, tall);
+    s += `M${x1.toFixed(1)} ${y1.toFixed(1)} L${x3.toFixed(1)} ${y3.toFixed(1)} L${x2.toFixed(1)} ${y2.toFixed(1)}Z `;
+  }
+  return `<path d="${s}" fill="${fill}" ${extra}/>`;
+}
+const diamond = (h) => `M0 ${-h} L${h} 0 L0 ${h} L${-h} 0Z`;
+const octagon = (r) => { let s = ''; for (let i = 0; i < 8; i++) { const [x, y] = pt(rad(22.5 + 45 * i), r); s += (i ? 'L' : 'M') + x.toFixed(1) + ' ' + y.toFixed(1); } return s + 'Z'; };
+const shield = (w, h) => `M${-w} ${-h * .8} L${w} ${-h * .8} L${w} ${h * .1} Q${w} ${h * .72} 0 ${h} Q${-w} ${h * .72} ${-w} ${h * .1}Z`;
+const img = (t, s) => `<image class="icon" href="${ICON}${t}.webp" x="${-s / 2}" y="${-s / 2 - 1}" width="${s}" height="${s}"/>`;
+const DISC = 'url(#discg)';
+const COL = { battle: '#cdb67f', event: '#b99ad6', treasure: '#efc85a', rest: '#f08c3c', merchant: '#9fc4a0', town: '#e3bf72', elite: '#d9562c', boss: '#ff7a2a', start: '#cdb67f' };
+
+/* ---- DUGUM CERCEVELERI: her varyant icerik turune gore cerceve dondurur { svg, R (etiket mesafesi), glowR } ---- */
+const FR = {};
+FR.cur = (t) => { // bugunku: tek boy yuvarlak disk
+  const r = t === 'boss' ? 30 : 24, s = r * 1.84;
+  return { R: r + 2, glowR: r + 8, body: `<circle r="${r}" fill="rgba(20,14,9,.95)" stroke="rgba(217,178,106,.7)" stroke-width="1.5"/>${img(t, s)}` };
+};
+FR.a = (t) => { // "Plaka halkalari": yuvarlak + elmas + arma halkasi + boynuzlu elit + alevli boss
+  const c = COL[t];
+  if (t === 'battle' || t === 'start') return { R: 33, glowR: 40, body: `<circle r="31" fill="none" stroke="rgba(217,178,106,.3)" stroke-width="1"/><circle r="28" fill="${DISC}" stroke="${c}" stroke-width="2.2"/>${img(t, 54)}` };
+  if (['event', 'treasure', 'rest', 'merchant'].includes(t)) return { R: 42, glowR: 50, body: `<path d="${diamond(43)}" fill="none" stroke="${c}" stroke-opacity=".35" stroke-width="1" stroke-linejoin="round"/><path d="${diamond(37)}" fill="${DISC}" stroke="${c}" stroke-width="2.6" stroke-linejoin="round"/>${img(t, 46)}` };
+  if (t === 'town') {
+    let ticks = ''; for (let i = 0; i < 12; i++) ticks += `<rect x="-3" y="-46" width="6" height="7" fill="${c}" opacity=".85" transform="rotate(${i * 30})"/>`;
+    return { R: 47, glowR: 54, body: `${ticks}<circle r="39" fill="none" stroke="${c}" stroke-width="1.6" stroke-opacity=".8"/><circle r="33" fill="${DISC}" stroke="${c}" stroke-width="3"/><circle r="30" fill="none" stroke="rgba(0,0,0,.5)"/>${img(t, 60)}` };
+  }
+  if (t === 'elite') return { R: 52, glowR: 62, body: `${spikes(4, 34, 52, 45, 13, '#8f2f17', 'stroke="#e5703a" stroke-width="1.6" stroke-linejoin="round"')}<circle r="39" fill="none" stroke="#9b3a1c" stroke-width="2.4"/><circle r="33" fill="${DISC}" stroke="#e06a3a" stroke-width="3.2"/><circle r="29.5" fill="none" stroke="rgba(255,190,120,.45)" stroke-width="1"/>${img(t, 60)}` };
+  return { R: 64, glowR: 80, boss: 1, body: `<circle class="bossglow" r="72" fill="url(#bossg)"/>${spikes(16, 46, 66, 0, 8.5, 'url(#flameg)', 'stroke="#ffcf7a" stroke-width="1" stroke-linejoin="round"')}<circle r="46" fill="${DISC}" stroke="#f0c25a" stroke-width="4"/><circle r="41" fill="none" stroke="#ff7a2a" stroke-width="2"/>${img(t, 78)}` };
+};
+FR.b = (t) => { // "Bicim = icerik": yuvarlak / elmas / kalkan / kare / mazgalli arma / sekizgen / tacli boss
+  const c = COL[t];
+  if (t === 'battle' || t === 'start') return { R: 33, glowR: 40, body: `<circle r="29" fill="${DISC}" stroke="${c}" stroke-width="3.2"/><circle r="25.5" fill="none" stroke="rgba(0,0,0,.55)" stroke-width="1.2"/>${img(t, 54)}` };
+  if (t === 'event') return { R: 42, glowR: 50, body: `<path d="${diamond(39)}" fill="${DISC}" stroke="${c}" stroke-width="3" stroke-linejoin="round"/><path d="${diamond(33)}" fill="none" stroke="${c}" stroke-opacity=".4" stroke-linejoin="round"/>${img(t, 46)}` };
+  if (t === 'treasure') return { R: 38, glowR: 48, body: `<rect x="-33" y="-33" width="66" height="66" rx="10" fill="${DISC}" stroke="${c}" stroke-width="3"/><rect x="-28.5" y="-28.5" width="57" height="57" rx="7" fill="none" stroke="${c}" stroke-opacity=".4"/>${[[-33,-33],[33,-33],[-33,33],[33,33]].map(([x,y]) => `<circle cx="${x}" cy="${y}" r="3.6" fill="${c}"/>`).join('')}${img(t, 54)}` };
+  if (t === 'rest' || t === 'merchant') return { R: 40, glowR: 50, body: `<path d="${shield(31, 40)}" fill="${DISC}" stroke="${c}" stroke-width="3" stroke-linejoin="round" transform="translate(0,-3)"/><g transform="translate(0,-4)">${img(t, 48)}</g>` };
+  if (t === 'town') {
+    let m = ''; for (let i = -2; i <= 2; i++) m += `<rect x="${i * 15 - 5}" y="-47" width="10" height="9" fill="${c}"/>`;
+    return { R: 48, glowR: 58, body: `${m}<rect x="-46" y="-39" width="92" height="74" rx="18" fill="${DISC}" stroke="${c}" stroke-width="3.2"/><rect x="-41" y="-34" width="82" height="64" rx="14" fill="none" stroke="${c}" stroke-opacity=".45"/>${img(t, 60)}` };
+  }
+  if (t === 'elite') {
+    const horns = [-1, 1].map((k) => `<path d="M${k * 22} -39 Q${k * 36} -44 ${k * 40} -60 Q${k * 28} -52 ${k * 15} -44Z" fill="#8f2f17" stroke="#e5703a" stroke-width="1.5" stroke-linejoin="round"/>`).join('');
+    return { R: 50, glowR: 60, body: `${horns}<path d="${octagon(46)}" fill="none" stroke="#8f3a1c" stroke-width="2.4" stroke-linejoin="round"/><path d="${octagon(39)}" fill="${DISC}" stroke="#e06a3a" stroke-width="3.4" stroke-linejoin="round"/>${[22.5,112.5,202.5,292.5].map((a) => { const [x, y] = pt(rad(a), 46); return `<circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="4" fill="#f0c25a" stroke="#6a2410"/>`; }).join('')}${img(t, 62)}` };
+  }
+  let rays = ''; for (let i = 0; i < 20; i++) rays += `<path d="M0 -50 L-2.6 -76 L2.6 -76Z" fill="rgba(255,175,80,.85)" transform="rotate(${i * 18})"/>`;
+  return { R: 66, glowR: 84, boss: 1, body: `<circle class="bossglow" r="78" fill="url(#bossg)"/>${rays}<circle r="48" fill="${DISC}" stroke="#f0c25a" stroke-width="4.4"/><circle r="43" fill="none" stroke="#ff7a2a" stroke-width="2"/><path d="M-26 -44 L-22 -66 L-12 -52 L0 -72 L12 -52 L22 -66 L26 -44Z" fill="#f0c25a" stroke="#7a4a10" stroke-width="1.5" stroke-linejoin="round"/><circle cx="0" cy="-58" r="3.2" fill="#e8352a"/>${img(t, 80)}` };
+};
+FR.c = (t) => { // "Madalyon + kurdele": hep yuvarlak, icerigi yan flama / boynuz yayi / kanat ile ayrisir
+  const c = COL[t];
+  const tab = (k, col) => `<path d="M${k * 30} -7 L${k * 46} 0 L${k * 30} 7 L${k * 34} 0Z" fill="${col}" stroke="rgba(0,0,0,.5)" stroke-width="1"/>`;
+  if (t === 'battle' || t === 'start') return { R: 33, glowR: 40, body: `<circle r="28" fill="${DISC}" stroke="${c}" stroke-width="2"/><circle r="31.5" fill="none" stroke="${c}" stroke-opacity=".3"/>${img(t, 54)}` };
+  if (['event', 'treasure', 'rest', 'merchant'].includes(t)) return { R: 36, glowR: 46, body: `${tab(-1, c)}${tab(1, c)}<circle r="29" fill="${DISC}" stroke="${c}" stroke-width="3"/><circle r="25" fill="none" stroke="${c}" stroke-opacity=".4"/>${img(t, 54)}` };
+  if (t === 'town') {
+    const flag = (k) => `<path d="M${k * 40} -12 L${k * 40} 16 M${k * 40} -12 L${k * 58} -6 L${k * 40} 0" stroke="${c}" stroke-width="2" fill="${k < 0 ? '#8c2b1c' : '#8c2b1c'}" stroke-linejoin="round"/>`;
+    return { R: 48, glowR: 56, body: `${flag(-1)}${flag(1)}<path d="M-14 -44 v-8 h6 v5 h5 v-5 h6 v5 h5 v-5 h6 v8Z" fill="${c}" stroke="rgba(0,0,0,.5)"/><circle r="34" fill="${DISC}" stroke="${c}" stroke-width="3.2"/><circle r="39" fill="none" stroke="${c}" stroke-opacity=".6" stroke-width="1.4"/>${img(t, 60)}` };
+  }
+  if (t === 'elite') {
+    const arc = (k) => `<path d="M${k * 30} -22 Q${k * 52} -26 ${k * 50} -50 Q${k * 42} -36 ${k * 24} -32Z" fill="#8f2f17" stroke="#e5703a" stroke-width="1.5" stroke-linejoin="round"/>`;
+    return { R: 50, glowR: 60, body: `${arc(-1)}${arc(1)}<circle r="39" fill="none" stroke="#9b3a1c" stroke-width="2.4" stroke-dasharray="3 4"/><circle r="33" fill="${DISC}" stroke="#e06a3a" stroke-width="3.4"/><path d="M0 -44 l7 7 l-7 7 l-7 -7Z" fill="#e8352a" stroke="#ffcf7a" stroke-width="1.5" stroke-linejoin="round"/>${img(t, 60)}` };
+  }
+  const wing = (k) => `<path d="M${k * 40} -10 Q${k * 62} -34 ${k * 76} -62 Q${k * 70} -34 ${k * 82} -22 Q${k * 66} -16 ${k * 74} 4 Q${k * 58} -2 ${k * 56} 18 Q${k * 46} 6 ${k * 42} 12Z" fill="url(#flameg)" stroke="#ffcf7a" stroke-width="1.2" stroke-linejoin="round"/>`;
+  return { R: 64, glowR: 84, boss: 1, body: `<circle class="bossglow" r="76" fill="url(#bossg)"/>${wing(-1)}${wing(1)}<circle r="46" fill="${DISC}" stroke="#f0c25a" stroke-width="4"/><circle r="41" fill="none" stroke="#ff7a2a" stroke-width="2"/>${[-18,0,18].map((x, i) => `<path d="M${x - 7} -48 L${x} ${-64 - (i === 1 ? 6 : 0)} L${x + 7} -48Z" fill="#f0c25a" stroke="#7a4a10" stroke-width="1.2" stroke-linejoin="round"/>`).join('')}<circle cx="0" cy="-54" r="3" fill="#e8352a"/>${img(t, 78)}` };
+};
+
+/* ---- yol stilleri: 0 bugun, 1 cift cizgi, 2 noktali, 3 serit ---- */
+function curve(a, b, bend = 0.08) {
+  const [x1, y1] = a.w, [x2, y2] = b.w, mx = (x1 + x2) / 2, my = (y1 + y2) / 2, dx = x2 - x1, dy = y2 - y1;
+  const k = ((a.id.charCodeAt(0) + b.id.charCodeAt(1)) % 2 ? 1 : -1) * bend;
+  return `M${x1} ${y1} Q${(mx - dy * k).toFixed(1)} ${(my + dx * k).toFixed(1)} ${x2} ${y2}`;
+}
+function roadSvg(style, d, kind) { // kind: trav | avail | future | dead
+  const A = (s) => `<path d="${d}" fill="none" stroke-linecap="round" ${s}/>`;
+  if (style === 0) {
+    if (kind === 'avail') return A('stroke="#e0702a" stroke-width="3.5" stroke-dasharray="11 9" class="flow"');
+    return A(`stroke="rgba(242,220,170,${kind === 'dead' ? .25 : kind === 'future' ? .55 : .8})" stroke-width="3"`);
+  }
+  if (style === 1) { // cift ince cizgi
+    if (kind === 'avail') return A('stroke="rgba(10,6,3,.55)" stroke-width="11"') + A('stroke="#ffb35a" stroke-width="3.6" stroke-dasharray="12 9" class="flow"');
+    const col = kind === 'trav' ? '#f0c25a' : '#eadcb4', al = kind === 'trav' ? 1 : kind === 'future' ? .6 : .25;
+    return A(`stroke="rgba(8,5,3,.5)" stroke-width="9.5" opacity="${al}"`) + A(`stroke="${col}" stroke-width="7" opacity="${al}"`) + A(`stroke="#2a1d10" stroke-width="3.6" opacity="${al}" stroke-linecap="butt"`);
+  }
+  if (style === 2) { // noktali yol
+    if (kind === 'avail') return A('stroke="rgba(10,6,3,.5)" stroke-width="9"') + A('stroke="#ffb35a" stroke-width="4.5" stroke-dasharray="14 10" class="flow"');
+    const col = kind === 'trav' ? '#f0c25a' : '#eadcb4', al = kind === 'trav' ? 1 : kind === 'future' ? .7 : .28;
+    return A(`stroke="rgba(8,5,3,.45)" stroke-width="${kind === 'trav' ? 9 : 8}" stroke-dasharray="0.1 13" opacity="${al}"`) + A(`stroke="${col}" stroke-width="${kind === 'trav' ? 6 : 5}" stroke-dasharray="0.1 13" opacity="${al}"`);
+  }
+  // serit
+  if (kind === 'avail') return A('stroke="rgba(10,6,3,.6)" stroke-width="12"') + A('stroke="#e0702a" stroke-width="8"') + A('stroke="#fff1cf" stroke-width="2.2" stroke-dasharray="7 7" class="flow" stroke-linecap="butt"');
+  const col = kind === 'trav' ? '#e3bf72' : '#d9c8a2', al = kind === 'trav' ? .98 : kind === 'future' ? .55 : .22;
+  return A(`stroke="rgba(8,5,3,.55)" stroke-width="11" opacity="${al > .5 ? 1 : al * 1.6}"`) + A(`stroke="${col}" stroke-width="7" opacity="${al}"`) + A(`stroke="#3a2812" stroke-width="1.6" stroke-dasharray="5 6" opacity="${al}" stroke-linecap="butt"`);
+}
+
+/* ---- etiketler ---- */
+function labelSvg(v, n, R, fs, side) {
+  const st = STATE[n.id], dim = st === 'dead' ? .55 : st === 'fog' ? .8 : 1;
+  const name = n.name.toUpperCase(), sub = n.sub;
+  const col = COL[n.type];
+  const wN = measure(name, `600 ${fs}px Cinzel`, fs * .06), wS = measure(sub, `400 ${fs * .87}px 'EB Garamond'`, 0);
+  const w = Math.max(wN, wS), y0 = side === 'above' ? -R - fs * 2.5 - 12 : R + 10;
+  if (v === 'cur') {
+    const yy = side === 'above' ? -R - 22 : R + 18;
+    return `<g opacity="${dim}"><text x="0" y="${yy}" text-anchor="middle" class="lbl-name" style="font-size:${fs}px" fill="#d9c8a2" stroke="rgba(8,5,3,.5)" stroke-width="2">${esc(name)}</text>` +
+      `<text x="0" y="${yy + fs * 1.05}" text-anchor="middle" class="lbl-sub" style="font-size:${fs * .87}px;font-style:italic" fill="#a8977a">${esc(sub)}</text></g>`;
+  }
+  if (v === 'a') { // A-Band: koyu serit + renkli sol aksan
+    const pw = w + 22, ph = fs * 2.35;
+    return `<g opacity="${dim}" transform="translate(0,${y0})"><rect x="${-pw / 2}" y="0" width="${pw}" height="${ph}" fill="rgba(13,9,6,.86)" stroke="rgba(217,178,106,.28)"/>` +
+      `<rect x="${-pw / 2}" y="0" width="4" height="${ph}" fill="${col}"/>` +
+      `<text x="2" y="${fs * 1.08}" text-anchor="middle" class="lbl-name" style="font-size:${fs}px" fill="#f0e2c0">${esc(name)}</text>` +
+      `<text x="2" y="${fs * 2.0}" text-anchor="middle" class="lbl-sub" style="font-size:${fs * .87}px" fill="#b9a883">${esc(sub)}</text></g>`;
+  }
+  if (v === 'b') { // yuvarlak uclu plaka, tur rengi nokta
+    const pw = w + 30, ph = fs * 2.45;
+    return `<g opacity="${dim}" transform="translate(0,${y0})"><rect x="${-pw / 2}" y="0" width="${pw}" height="${ph}" rx="${ph / 2}" fill="rgba(13,9,6,.84)" stroke="${col}" stroke-opacity=".7" stroke-width="1.3"/>` +
+      `<text x="0" y="${fs * 1.12}" text-anchor="middle" class="lbl-name" style="font-size:${fs}px" fill="#f4e8c8">${esc(name)}</text>` +
+      `<text x="0" y="${fs * 2.02}" text-anchor="middle" class="lbl-sub" style="font-size:${fs * .87}px" fill="#c2b18c">${esc(sub)}</text></g>`;
+  }
+  // c: sade golge + ince hat
+  return `<g opacity="${dim}" transform="translate(0,${y0})"><text x="0" y="${fs}" text-anchor="middle" class="lbl-name" style="font-size:${fs}px" fill="#f4e8c8" stroke="rgba(6,4,2,.95)" stroke-width="${fs * .36}" stroke-linejoin="round" paint-order="stroke">${esc(name)}</text>` +
+    `<rect x="${-w / 2}" y="${fs * 1.22}" width="${w}" height="1.4" fill="${col}" opacity=".85"/>` +
+    `<text x="0" y="${fs * 2.2}" text-anchor="middle" class="lbl-sub" style="font-size:${fs * .87}px" fill="#e2d4b0" stroke="rgba(6,4,2,.95)" stroke-width="${fs * .3}" stroke-linejoin="round" paint-order="stroke">${esc(sub)}</text></g>`;
+}
+const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+const cv = document.createElement('canvas').getContext('2d');
+function measure(t, font, ls) { cv.font = font; return cv.measureText(t).width + ls * t.length; }
+
+/* ---- dugum grubu ---- */
+function defs() {
+  return `<defs>
+   <radialGradient id="discg" cx="50%" cy="42%" r="65%"><stop offset="0" stop-color="#4a3622"/><stop offset=".7" stop-color="#1c130b"/><stop offset="1" stop-color="#0d0805"/></radialGradient>
+   <radialGradient id="emberg"><stop offset=".45" stop-color="rgba(255,150,60,.0)"/><stop offset=".7" stop-color="rgba(255,150,60,.55)"/><stop offset="1" stop-color="rgba(255,150,60,0)"/></radialGradient>
+   <radialGradient id="bossg"><stop offset=".5" stop-color="rgba(255,100,30,0)"/><stop offset=".78" stop-color="rgba(255,100,30,.5)"/><stop offset="1" stop-color="rgba(255,100,30,0)"/></radialGradient>
+   <radialGradient id="goldg"><stop offset=".5" stop-color="rgba(255,215,120,0)"/><stop offset=".78" stop-color="rgba(255,215,120,.6)"/><stop offset="1" stop-color="rgba(255,215,120,0)"/></radialGradient>
+   <linearGradient id="flameg" x1="0" y1="1" x2="0" y2="0"><stop offset="0" stop-color="#b8260e"/><stop offset=".6" stop-color="#ff6a1c"/><stop offset="1" stop-color="#ffd27a"/></linearGradient>
+   <radialGradient id="fogg"><stop offset="0" stop-color="rgba(238,240,232,.72)"/><stop offset=".55" stop-color="rgba(238,240,232,.38)"/><stop offset="1" stop-color="rgba(238,240,232,0)"/></radialGradient>
+  </defs>`;
+}
+function check(x, y, s) { return `<g transform="translate(${x},${y}) scale(${s})"><circle r="11" fill="#1b2a14" stroke="#e3bf72" stroke-width="1.8"/><path d="M-5 0.5 L-1.5 4 L5.5 -4" fill="none" stroke="#f3d999" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"/></g>`; }
+function xpip(x, y, s) { return `<g transform="translate(${x},${y}) scale(${s})"><circle r="9" fill="#241512" stroke="#8a6a5a" stroke-width="1.5"/><path d="M-4 -4 L4 4 M4 -4 L-4 4" stroke="#b89a88" stroke-width="2.2" stroke-linecap="round"/></g>`; }
+function lockpip(x, y, s) { return `<g transform="translate(${x},${y}) scale(${s})"><circle r="9" fill="#1a130d" stroke="#8d7d5e" stroke-width="1.5"/><rect x="-4" y="-1" width="8" height="6" fill="#b8a77f"/><path d="M-2.6 -1 v-2.2 a2.6 2.6 0 0 1 5.2 0 v2.2" fill="none" stroke="#b8a77f" stroke-width="1.6"/></g>`; }
+
+function nodeBody(v, type, state, sel, o) { // dondurur {html, R, glowR}
+  const f = FR[v](type);
+  let html = '';
+  const gR = f.glowR;
+  if (v !== 'cur') {
+    if (state === 'reach' || (f.boss && state !== 'dead')) html += `<circle class="glow" r="${gR + 10}" fill="url(#emberg)"/>`;
+    if (state === 'current') html += `<circle r="${gR + 12}" fill="url(#goldg)"/>`;
+    html += `<circle class="selglow" r="${gR + 14}" fill="url(#emberg)"/>`;
+  } else if (state === 'reach') html += `<circle r="${gR + 4}" fill="none" stroke="#e0702a" stroke-width="3"/>`;
+  html += `<g class="body">${f.body}`;
+  const bx = f.R * .72, by = f.R * .72;
+  if (state === 'cleared') html += v === 'cur'
+    ? `<g transform="translate(${bx},${by})"><circle r="9" fill="#26211a" stroke="#b9a883"/><path d="M-4 -4 L4 4 M4 -4 L-4 4" stroke="#d9c8a2" stroke-width="2"/></g>`
+    : check(bx, by, 1.15);
+  if (state === 'dead' && v !== 'cur') html += xpip(bx, by, 1.1);
+  if (state === 'fog' && v !== 'cur') html += lockpip(bx, by, 1.1);
+  html += `</g>`;
+  if (state === 'current' && v !== 'cur') html += `<circle r="${gR + 5}" fill="none" stroke="#f3d999" stroke-width="3" stroke-opacity=".95"/><circle r="${gR + 9}" fill="none" stroke="rgba(243,217,153,.4)" stroke-width="1.5"/>`;
+  if (v !== 'cur') html += `<circle class="selring" r="${gR + 7}" fill="none" stroke="#ffb35a" stroke-width="3" stroke-dasharray="10 7"/>`;
+  else html += `<circle class="selring" r="${gR + 4}" fill="none" stroke="#ffb35a" stroke-width="2.5" stroke-dasharray="8 6"/>`;
+  return { html, R: f.R, glowR: gR, boss: !!f.boss };
+}
+
+/* ---- ana cizim ---- */
+const svg = $('#map'), sc = $('#scroller');
+let U = 1, selected = 'cath', hovered = null;
+function computeU() {
+  if (P.u) return P.u;
+  return Math.min(sc.clientWidth / VB.w, sc.clientHeight / VB.h);
+}
+function render() {
+  P = parseHash(); U = computeU();
+  const v = P.v, roadStyle = P.path != null ? P.path : { cur: 0, a: 1, b: 2, c: 3 }[v];
+  const comp = P.comp && v !== 'cur';
+  const S = comp ? Math.min(1.6, Math.max(1, 0.62 / U)) : 1;
+  const fs = comp ? Math.max(15, Math.min(30, 10.5 / U)) : 15;
+  const vw = Math.max(VB.w, sc.clientWidth / U), vh = Math.max(VB.h, sc.clientHeight / U), vx = VB.x - (vw - VB.w) / 2, vy = VB.y - (vh - VB.h) / 2;
+  svg.setAttribute('viewBox', `${vx} ${vy} ${vw} ${vh}`);
+  svg.setAttribute('width', Math.round(vw * U)); svg.setAttribute('height', Math.round(vh * U));
+  const byId = Object.fromEntries(NODES.map((n) => [n.id, n]));
+  let h = defs();
+  h += `<image href="map-nodes/map.webp" x="${IMG.x}" y="${IMG.y}" width="${IMG.w}" height="${IMG.h}" preserveAspectRatio="none"/>`;
+  // yollar
+  let roads = '';
+  const order = { dead: 0, future: 1, trav: 2, avail: 3 };
+  const list = EDGES.map(([a, b]) => {
+    const sa = STATE[a], sb = STATE[b];
+    let kind = 'future';
+    if (sa === 'dead' || sb === 'dead') kind = 'dead';
+    else if ((sa === 'cleared' || sa === 'current') && (sb === 'cleared' || sb === 'current')) kind = 'trav';
+    else if (sa === 'current' && sb === 'reach') kind = 'avail';
+    return { a: byId[a], b: byId[b], kind };
+  }).sort((x, y) => order[x.kind] - order[y.kind]);
+  for (const e of list) roads += roadSvg(roadStyle, curve(e.a, e.b), e.kind);
+  h += `<g id="roads">${roads}</g>`;
+  // sis
+  h += FOGS.map(([x, y, r]) => `<ellipse cx="${x}" cy="${y}" rx="${r * 1.5}" ry="${r}" fill="url(#fogg)"/>`).join('');
+  // dugumler
+  let nodes = '';
+  const hero = [];
+  for (const n of NODES) {
+    const st = STATE[n.id];
+    const b = nodeBody(v, n.type, st, selected === n.id, {});
+    const cls = `node st-${st} ${n.type === 'boss' ? 'boss' : ''} ${selected === n.id ? 'sel' : ''}`;
+    const R = b.R * S, hitR = Math.max(b.R * S, 22 / U);
+    nodes += `<g class="${cls}" data-id="${n.id}" transform="translate(${n.w[0]},${n.w[1]})">` +
+      `<g transform="scale(${S})">${b.html}</g>` +
+      labelSvg(v, n, R, fs, n.above ? 'above' : 'below') +
+      `<circle class="hit ${P.hit ? 'dbg' : ''}" r="${hitR}" fill="transparent"/></g>`;
+    if (st === 'current') hero.push(n);
+  }
+  h += nodes;
+  for (const n of hero) { const hs = 118 * Math.max(1, S * .9); h += `<g transform="translate(${n.w[0]},${n.w[1] - 30 * S})"><image class="hero" href="map-nodes/hero.webp" x="${-hs * .5}" y="${-hs * .86}" width="${hs}" height="${hs * 466 / 495}"/></g>`; }
+  svg.innerHTML = h;
+  toolbar(); note(); if (P.sheet) renderSheet(); $('#sheet').classList.toggle('show', P.sheet); document.body.classList.toggle('sheetOn', P.sheet);
+}
+const REGN = [0.08229, 0.00077, 0.79804, 0.94083];
+const IMG = { w: 1920 / (REGN[2] - REGN[0]), h: 1080 / (REGN[3] - REGN[1]) };
+IMG.x = -REGN[0] * IMG.w; IMG.y = -REGN[1] * IMG.h;
+
+/* ---- varyant notlari + arac cubugu ---- */
+const NOTES = {
+  cur: 'Bugunku hal, birebir: tek boy yuvarlak disk, ince bej yol, italik tur satiri. Karsilastirma icindir.',
+  a: 'A - Plaka halkalari: battle ince halka; event/treasure/rest elmas; town on iki mazgalli genis arma halkasi; ELIT cift halka kizil-bakir + dort boynuz; BOSS buyuk altin halka + 16 alev sivrisi + nabiz isigi. Etiket A-Band seridi. Yol: cift ince cizgi.',
+  b: 'B - Bicim = icerik: battle yuvarlak, event elmas, treasure kare plaka, rest kalkan, town mazgalli arma plakasi, ELIT sekizgen + boynuz + koseler, BOSS tacli, isinli, nabizli. Etiket yuvarlak uclu plaka. Yol: noktali yol.',
+  c: 'C - Madalyon + kurdele: hepsi yuvarlak; event/treasure/rest yan flama, town bayrak + kule, ELIT boynuz yaylari + kizil mucevher, BOSS alev kanat + tac. Etiket sade golge + tur rengi ince hat. Yol: serit (yol seridi).',
+};
+function toolbar() {
+  const t = $('#tools'); const v = P.v;
+  const btn = (label, hash, on, title) => `<button class="${on ? 'on' : ''}" data-h="${hash}" title="${title || ''}">${label}</button>`;
+  const base = (o) => { const p = { ...P, ...o }; return '#' + [p.v, p.path != null ? 'path=' + p.path : '', p.u ? 'u=' + p.u : '', p.hit ? 'hit' : '', p.sheet ? 'sheet' : '', p.comp ? '' : 'comp=0'].filter(Boolean).join('&'); };
+  t.innerHTML = ['cur', 'a', 'b', 'c'].map((k) => btn(k === 'cur' ? 'Bugun' : k.toUpperCase(), base({ v: k }), v === k, 'Varyant')).join('') +
+    [0, 1, 2, 3].map((k) => btn('Yol ' + ['bugun', 'cift', 'nokta', 'serit'][k], base({ path: k }), (P.path != null ? P.path : { cur: 0, a: 1, b: 2, c: 3 }[v]) === k, 'Yol stili')).join('') +
+    btn('Telefon 0.44', base({ u: P.u === 0.44 ? 0 : 0.44 }), P.u === 0.44, 'Telefon yatay olcegi') +
+    btn('44px alan', base({ hit: !P.hit }), P.hit, 'Gercek 44 px dokunma alanini goster') +
+    btn('Cerceve tablosu', base({ sheet: !P.sheet }), P.sheet, 'Tum tur x durum');
+  t.querySelectorAll('button').forEach((b) => b.onclick = () => { location.hash = b.dataset.h; });
+}
+function note() { $('#vnote').textContent = NOTES[P.v]; }
+
+/* ---- cerceve tablosu (tur x durum) ---- */
+function renderSheet() {
+  const types = ['battle', 'event', 'treasure', 'rest', 'merchant', 'town', 'elite', 'boss'];
+  const states = [['reach', 'Erisilebilir'], ['sel', 'Secili / hover'], ['current', 'Mevcut konum'], ['cleared', 'Temizlendi'], ['fog', 'Sis / kilitli'], ['dead', 'Ulasilamaz']];
+  const cw = 190, rh = 170, x0 = 130, y0 = 90, W = x0 + cw * states.length + 20, H = y0 + rh * types.length + 20;
+  const ss = $('#sheetsvg'); ss.setAttribute('viewBox', `0 0 ${W} ${H}`); ss.style.width = '100%'; ss.style.height = 'auto'; ss.style.display = 'block';
+  let h = defs() + `<rect width="${W}" height="${H}" fill="#150e08"/><image href="map-nodes/map.webp" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="xMidYMid slice" opacity=".22"/>`;
+  h += `<text x="20" y="38" fill="#f3d999" style="font:600 18px Cinzel;letter-spacing:.1em">FRAME SHEET - ${P.v === 'cur' ? 'TODAY' : 'VARIANT ' + P.v.toUpperCase()}</text>`;
+  states.forEach(([, l], i) => { h += `<text x="${x0 + cw * i + cw / 2}" y="76" text-anchor="middle" fill="#a8977a" style="font:600 13px Cinzel;letter-spacing:.08em">${l.toUpperCase()}</text>`; });
+  types.forEach((t, r) => {
+    const cy = y0 + rh * r + rh / 2;
+    h += `<text x="20" y="${cy + 5}" fill="#d9c8a2" style="font:600 14px Cinzel;letter-spacing:.08em">${TYPE[t].toUpperCase()}</text>`;
+    states.forEach(([s], i) => {
+      const st = s === 'sel' ? 'reach' : s, b = nodeBody(P.v, t, st, false, {});
+      h += `<g class="node st-${st} ${s === 'sel' ? 'sel' : ''} ${t === 'boss' ? 'boss' : ''}" transform="translate(${x0 + cw * i + cw / 2},${cy})"><g transform="scale(1.1)">${b.html}</g></g>`;
+    });
+  });
+  ss.innerHTML = h;
+}
+
+/* ---- etkilesim ---- */
+svg.addEventListener('pointerover', (e) => { const n = e.target.closest('.node'); if (n) n.classList.add('hov'); });
+svg.addEventListener('pointerout', (e) => { const n = e.target.closest('.node'); if (n) n.classList.remove('hov'); });
+svg.addEventListener('click', (e) => {
+  const n = e.target.closest('.node'); if (!n) return;
+  if (STATE[n.dataset.id] === 'reach') { svg.querySelector('.node.sel')?.classList.remove('sel'); selected = n.dataset.id; n.classList.add('sel'); }
+});
+$('#dx').onclick = () => { const d = $('#diag'); d.classList.toggle('min'); $('#dx').textContent = d.classList.contains('min') ? '+' : '–'; };
+addEventListener('hashchange', render);
+addEventListener('resize', () => { document.documentElement.classList.toggle('compact', innerHeight <= 720); render(); });
+document.documentElement.classList.toggle('compact', innerHeight <= 720);
+if (innerHeight <= 720) { $('#diag').classList.add('min'); $('#dx').textContent = '+'; }
+document.fonts.load("600 15px Cinzel").then(() => document.fonts.load("400 13px 'EB Garamond'")).then(() => document.fonts.ready).then(() => Promise.all(['map.webp','hero.webp',...['battle','boss','elite','event','merchant','rest','town','treasure'].map((k) => 'n/' + k + '.webp')].map((f) => new Promise((ok) => { const i = new Image(); i.onload = i.onerror = ok; i.src = 'map-nodes/' + f; })))).then(render);
+</script>
+</body>
+</html>
