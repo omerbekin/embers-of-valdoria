@@ -83,15 +83,21 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     tipPinned = false;
   };
   const showTip = (t: HTMLElement): void => {
+    const hint = t.dataset['hint'];
     const ctx = h.stats?.();
-    if (!ctx) return;
+    if (!ctx && hint === undefined) return;
     const line = (l: string, color?: string): HTMLElement => {
       const d = el('div', 'gr-tip-l');
       if (color) d.style.color = color;
       d.append(...statTipSegments(l).map((g) => (g.dir ? el('span', `gr-tip-d ${g.dir}`, g.text) : document.createTextNode(g.text))));
       return d;
     };
-    if (t.dataset['affix'] !== undefined) {
+    if (hint !== undefined) {
+      // kısa ipucu (ikon düğmesi / kahraman yer imi): ad + isteğe bağlı alt satır
+      const sub = t.dataset['hintSub'];
+      tip.replaceChildren(el('b', '', hint), ...(sub ? [el('div', `gr-tip-l gr-hint-sub tone-${t.dataset['hintTone'] ?? 'idle'}`, sub)] : []));
+    } else if (!ctx) return;
+    else if (t.dataset['affix'] !== undefined) {
       const info = affixTip({ name: t.dataset['affix'] ?? '', desc: t.dataset['desc'] ?? '', tier: (t.dataset['tier'] ?? 'C') as AffixLine['tier'], text: t.dataset['text'] ?? '', range: t.dataset['range'] ?? '' });
       tip.replaceChildren(el('b', '', info.title), ...info.lines.map((l) => line(l)));
     } else {
@@ -107,15 +113,18 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const H = overlay.clientHeight;
     const tw = tip.offsetWidth;
     const th = tip.offsetHeight;
-    const x = p.x + t.offsetWidth / 2 - tw / 2;
-    let y = p.y - th - 8;
-    if (y < 6) y = p.y + t.offsetHeight + 8;
+    // kısa ipucu (sol kenardaki yer imleri): düğmenin sağında; diğerleri üstünde
+    const side = t.dataset['hint'] !== undefined;
+    const x = side ? p.x + t.offsetWidth + 10 : p.x + t.offsetWidth / 2 - tw / 2;
+    let y = side ? p.y + t.offsetHeight / 2 - th / 2 : p.y - th - 8;
+    if (y < 6) y = side ? 6 : p.y + t.offsetHeight + 8;
     tip.style.left = `${Math.max(6, Math.min(W - tw - 6, x))}px`;
     tip.style.top = `${Math.max(6, Math.min(H - th - 6, y))}px`;
     tipFor = t;
   };
   // skill hücreleri savaş HUD'ının kendi tooltip'ini taşır (src/ui/skill-bar.ts): burada yalnızca stat / affix satırları
-  const TIP_SEL = '[data-stat],[data-affix]';
+  // `data-hint`: kısa ipucu (yalnızca üstüne gelince / dokunmatikte uzun basınca; dokunuş düğmenin kendi eylemidir)
+  const TIP_SEL = '[data-stat],[data-affix],[data-hint]';
 
   let hoverKey = '';
   const setHover = (key: string): void => {
@@ -155,6 +164,10 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   };
   const onClickTip = (e: MouseEvent): void => {
     const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
+    if (t?.dataset['hint'] !== undefined) {
+      hideTip();
+      return;
+    }
     if (!t) {
       if (tipPinned) hideTip();
       return;
@@ -244,10 +257,30 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     markEnded();
     h.onDrop(d.src, tg, tg ? dropAction(d.src, tg, h.classOf) : null);
   };
+  /** Dokunmatikte `data-hint` düğmesine uzun basış: kısa ipucu (parmak kalkınca düğmenin tıklaması yutulur). */
+  let hintPress: { timer: number; x: number; y: number } | null = null;
+  const clearHintPress = (): void => {
+    if (hintPress) window.clearTimeout(hintPress.timer);
+    hintPress = null;
+  };
   const onDown = (e: PointerEvent): void => {
     tap = null;
+    clearHintPress();
     if (e.pointerType === 'touch') {
       lastTouchAt = performance.now();
+      if (tipFor?.dataset['hint'] !== undefined) hideTip();
+      const hintEl = (e.target as HTMLElement).closest<HTMLElement>('[data-hint]');
+      if (hintEl && panel.contains(hintEl))
+        hintPress = {
+          x: e.clientX,
+          y: e.clientY,
+          timer: window.setTimeout(() => {
+            hintPress = null;
+            showTip(hintEl);
+            tipPinned = true;
+            swallowUntil = performance.now() + 1500;
+          }, 380),
+        };
       const tipEl = (e.target as HTMLElement).closest<HTMLElement>('[data-tip]');
       if (!tipEl && itip.shownKey) {
         itip.hide();
@@ -274,6 +307,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   };
   const onMove = (e: PointerEvent): void => {
     if (tap && Math.hypot(e.clientX - tap.x, e.clientY - tap.y) > 10) tap = null;
+    if (hintPress && Math.hypot(e.clientX - hintPress.x, e.clientY - hintPress.y) > 10) clearHintPress();
     if (drag) {
       moveGhost(e.clientX, e.clientY);
       return;
@@ -292,6 +326,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     }
   };
   const onUp = (e: PointerEvent): void => {
+    clearHintPress();
     const tp = tap;
     tap = null;
     if (!drag && tp && e.pointerType === 'touch' && !press?.tipShown) {
@@ -324,7 +359,10 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     }
     endDrag(e.clientX, e.clientY, true);
   };
-  const onCancel = (e: PointerEvent): void => endDrag(e.clientX, e.clientY, false);
+  const onCancel = (e: PointerEvent): void => {
+    clearHintPress();
+    endDrag(e.clientX, e.clientY, false);
+  };
   const onTouchMove = (e: TouchEvent): void => {
     if (drag || press?.tipShown) e.preventDefault();
   };
@@ -364,6 +402,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     },
     justEnded: () => ended || performance.now() < swallowUntil,
     destroy: () => {
+      clearHintPress();
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);
       document.removeEventListener('pointercancel', onCancel);

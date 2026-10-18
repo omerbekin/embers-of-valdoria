@@ -1598,7 +1598,7 @@ const optionNet = (o: Option | undefined): number => (o ? Math.max(0, o.score) :
  * "şu an MP/cooldown yüzünden yapılamayan ama bekleyince yapılabilecek" skill'leri bulmak için.
  */
 function usableIgnoringCost(battle: Battle, actor: Combatant, skill: SkillDef): boolean {
-  if (!battle.rangeOn && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && !battle.canMeleeFrom(actor.uid, actor.slot, battle.reachOf(actor, skill))) return false;
+  if (!battle.rangeOn && !battle.ignoreRange && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && !battle.canMeleeFrom(actor.uid, actor.slot, battle.reachOf(actor, skill))) return false;
   if (skill.effects.some((e) => e.type === 'summon') && battle.summonSlots(actor.uid, skill.id).length === 0) return false;
   return battle.validTargets(actor.uid, skill.id).length > 0;
 }

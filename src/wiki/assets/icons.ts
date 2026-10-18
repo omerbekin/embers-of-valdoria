@@ -1,3 +1,4 @@
+import { SLOT_ICON_FILES } from '../../ui/slot-icons';
 import { iconUrl } from '../../ui/dom-icons';
 import { statIconName, type StatIconKind } from '../../ui/stat-icons';
 import { uiIconName, type UiIconKind } from '../../ui/ui-icons';
@@ -155,6 +156,23 @@ export function mountIcons(cat: Catalog): SectionApi {
     );
   }
 
+  // Boş yuva simgeleri (assets/ui-icons/slots; Gear'da boş yuvada soluk)
+  const slotArt = h('div', { class: 'cards icons' });
+  for (const [name, url] of Object.entries(SLOT_ICON_FILES))
+    slotArt.append(
+      searchable(
+        h(
+          'article',
+          { class: 'card icon-card' },
+          h('img', { class: 'bigicon', attrs: { src: url, alt: name, loading: 'lazy' }, title: 'Click to enlarge', on: { click: () => openLightbox(url, name, false) } }),
+          h('div', { class: 'card-title mono', text: name }),
+          h('div', { class: 'tags' }, h('span', { class: 'badge ok', text: 'Slot art' })),
+          h('div', { class: 'small muted', text: 'Gear: empty slot' }),
+        ),
+        `slot icon empty ${name}`,
+      ),
+    );
+
   // Boyalı oyun ikonları (assets/misc-icons/<grup>/<ad>.png): durum rozetleri, element, zemin, kalıntı, amblem, sınıf logoları, harita düğümleri
   const misc = h('div', { class: 'cards icons' });
   for (const a of cat.miscArt) {
@@ -238,6 +256,7 @@ export function mountIcons(cat: Catalog): SectionApi {
     applyFilter(misc, query);
     applyFilter(mobs, query);
     applyFilter(valor, query);
+    applyFilter(slotArt, query);
     applyFilter(tints, query);
     countEl.textContent = `${n} / ${cat.icons.length}`;
     return n;
@@ -257,6 +276,9 @@ export function mountIcons(cat: Catalog): SectionApi {
     h('h3', { class: 'sub', text: `UI icons (${cat.uiArt.filter((a) => a.url).length} / ${cat.uiArt.filter((a) => !a.unlinked).length})` }),
     h('p', { class: 'note', text: 'Painted UI icons (assets/ui-icons, cut by tools/make-ui-icons.mjs from assets/source/ui-icons). Battle HUD actions, cooldown and Rage chips, the Lucky Escape pip, the Combat log toggle, gold and bag counters, and the Gear / Formation buttons use these; without an image they fall back to the pixel icon or show no icon.' }),
     uis,
+    h('h3', { class: 'sub', text: `Empty slot icons (${Object.keys(SLOT_ICON_FILES).length})` }),
+    h('p', { class: 'note', text: 'Painted empty-slot icons (assets/ui-icons/slots, from assets/source/ui-icons/gear-slots-sheet.png). Gear shows them faded in empty slots; without one the slot keeps its pixel silhouette.' }),
+    slotArt,
     h('h3', { class: 'sub', text: `Game icons (${cat.miscArt.filter((a) => a.url && !a.unlinked).length})` }),
     h('p', { class: 'note', text: 'Painted game icons (assets/misc-icons, cut by tools/make-misc-icons.mjs from assets/source/misc-icons; the checkerboard ChatGPT baked into two sheets is removed there). Status badges, element and ground icons, Endless relics and reward emblems, class logos, campaign map nodes, the corpse marker and the crit burst use these; without an image they fall back to the pixel icon.' }),
     misc,

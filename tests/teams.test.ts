@@ -91,7 +91,7 @@ describe('rastgele takımlarla tam savaşlar', () => {
       if (!b.winner) stuck++;
     }
     expect(stuck).toBeLessThanOrEqual(2); // kilitlenen savaş neredeyse hiç olmamalı
-  });
+  }, 120_000); // ~12 sn tek başına; tam suite yükünde 30 sn sınırını aşıyordu (2026-10-18)
 
   it('Druid oyuncu tarafındayken de çağrı yapabilir (oyuncu tarafında boş yuva var)', () => {
     const teams = { party: ['druid', 'warrior', 'mage', 'paladin'], enemies: ['warrior', 'archer', 'mage', 'undead'] };

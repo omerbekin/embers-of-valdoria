@@ -46,6 +46,7 @@ import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
 import { heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
+import { slotIconUrl } from './slot-icons';
 import { escHtml, passiveCellHtml, skillCellHtml, type SkillCellView, type SkillCostChip } from './skill-bar';
 import { tipHtml, type TipContent } from './battle-hud';
 import { iconUrl } from './dom-icons';
@@ -189,14 +190,48 @@ export interface CharacterRender {
   after: Stats | null;
 }
 
-/** Character sayfasının DOM'u. */
-export function renderCharacter(v: CharacterView): CharacterRender {
-  const root = el('div', `gr-char${v.compact ? ' compact' : ''}`);
-  let hero = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
-  // --- kahramanlar (sığmazsa kayar; skill satırının üstüne kadar uzanır)
+/** Seçili kahramanın hesapları (bekleyen puanlar dahil): statlar, fark sütunu, odak item takılırsa statlar. */
+interface HeroCalc {
+  /** Bekleyen puanlar eklenmiş kahraman. */
+  hero: HoverHero;
+  pending: StatAlloc;
+  allocNow: StatAlloc;
+  freePts: number;
+  stats: Stats | null;
+  after: Stats | null;
+  diff: Map<string, number>;
+  primaryLost: string | null;
+}
+
+function calcHero(v: CharacterView, hero0: HoverHero): HeroCalc {
+  // Level puanları (bekleyen dahil): statlar ve skill sayıları dağıtım sonrası değerlerle; fark sütunu bekleyen puanların etkisini gösterir
+  const pending = v.level?.pending ?? {};
+  const pend = pendingCount(pending);
+  const committed = hero0;
+  const allocNow = mergeAlloc(hero0.alloc, pending);
+  const hero = pend ? { ...hero0, alloc: allocNow } : hero0;
+  const freePts = (hero.statPoints ?? 0) - pend;
+  const stats = heroStats(hero);
+  const fd = v.focus ? itemDef(v.focus.id) : undefined;
+  const focusSlot = fd ? defaultEquipSlot(hero.equipment, fd) : undefined;
+  const usableFocus = v.focus && fd && focusSlot && !isPlanError(planEquip(hero.class, hero.equipment, v.focus, focusSlot)) && hero.equipment[focusSlot]?.uid !== v.focus.uid ? v.focus : null;
+  const pendDiff = (): Array<[string, number]> => {
+    const a = heroPanel(hero);
+    const b = heroPanel(committed);
+    return a.map((x, i) => [x.id, Math.round((x.value - (b[i]?.value ?? x.value)) * 10000) / 10000] as [string, number]).filter(([, d]) => d !== 0);
+  };
+  const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : pend ? pendDiff() : []);
+  const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
+  const lostTo = pend && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
+  const primaryLost = lostTo ? `${PRIMARY_BONUS_NAME[lostTo]} turns off while another base stat is above ${lostTo.toUpperCase()}.` : null;
+  return { hero, pending, allocNow, freePts, stats, after, diff, primaryLost };
+}
+
+/** Kahraman kartları (tüccarın Character sekmesi): portre + ad + üstüne gelinen item'in etkisi. */
+function heroCards(v: CharacterView, heroId: string | undefined): HTMLElement {
   const list = el('div', 'gr-heroes');
   for (const h of v.heroes) {
-    const card = el('button', `gr-hero${hero && h.id === hero.id ? ' on' : ''}`);
+    const card = el('button', `gr-hero${h.id === heroId ? ' on' : ''}`);
     card.type = 'button';
     card.dataset['drop'] = `hero:${h.id}`;
     card.addEventListener('click', () => v.onHero(h.id));
@@ -214,12 +249,52 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     card.append(face, meta);
     list.append(card);
   }
-  root.append(list);
-  if (!hero) return { el: root, stats: null, after: null };
-  // --- yuvalar + statlar
-  const mid = el('div', 'gr-mid');
-  if (v.hint) mid.append(el('div', 'gr-hint', v.hint));
-  mid.append(el('div', 'gr-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`));
+  return list;
+}
+
+/**
+ * Defterin sol kenarındaki kahraman yer imleri (Ömer 2026-10-18, ortak envanter v3 "Ledger"): yalnızca portre; harcanmamış stat puanı rozeti;
+ * bırakma hedefi (`data-drop`); üstüne gelince / uzun basınca ipucu: ad + üstüne gelinen item'in o kahramana etkisi (`data-hint`).
+ */
+export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' | 'onHero'>): HTMLElement {
+  const box = el('div', 'gr-marks');
+  for (const h of v.heroes) {
+    const b = el('button', `gr-mark${h.id === v.heroId ? ' on' : ''}`);
+    b.type = 'button';
+    b.dataset['hero'] = h.id;
+    b.dataset['drop'] = `hero:${h.id}`;
+    const line = heroItemLine(h, v.focus);
+    b.dataset['hint'] = className(h.class);
+    b.dataset['hintSub'] = line.text;
+    b.dataset['hintTone'] = line.tone;
+    b.setAttribute('aria-label', className(h.class));
+    b.addEventListener('click', () => v.onHero(h.id));
+    const face = el('div', 'gr-face');
+    const url = avatarUrl(h.class);
+    if (url) face.style.backgroundImage = `url("${url}")`;
+    b.append(face);
+    if ((h.statPoints ?? 0) > 0) b.append(el('span', 'gr-pt', String(h.statPoints)));
+    box.append(b);
+  }
+  return box;
+}
+
+/** Boş yuvanın simgesi: boyalı simge (assets/ui-icons/slots, ~%36 opak) varsa o, yoksa eski soluk gölge simge. */
+function emptySlotIcon(k: SlotId): HTMLImageElement {
+  const url = slotIconUrl(k);
+  if (!url) return itemIcon(undefined, k, 1.3);
+  const img = el('img', 'gr-svg gr-slot-ico');
+  img.src = url;
+  img.alt = '';
+  img.draggable = false;
+  img.style.setProperty('--sz', '1.3');
+  img.addEventListener('error', () => img.replaceWith(itemIcon(undefined, k, 1.3)), { once: true });
+  return img;
+}
+
+/** Sınıf başlığı ("WARRIOR · AXES & SWORDS / ...") + 7 yuva. */
+function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
+  const head = el('div', 'gr-sec gr-class-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`);
   const slots = el('div', 'gr-slots');
   const blocker = offhandBlocker(hero.equipment);
   for (const k of SLOT_IDS) {
@@ -243,7 +318,7 @@ export function renderCharacter(v: CharacterView): CharacterRender {
         ghost.classList.add('gr-silhouette');
         ghost.style.removeProperty('--glow');
         cell.append(ghost);
-      } else cell.append(itemIcon(undefined, k, 1.3));
+      } else cell.append(emptySlotIcon(k));
       const txt = el('div', 'gr-slot-text');
       txt.append(el('div', 'gr-slot-name', slotDef(k).name), el('div', `gr-slot-sub${two ? ' gr-hands-hint' : ''}`, two ? '2H' : 'Hands full'));
       cell.append(txt);
@@ -256,7 +331,7 @@ export function renderCharacter(v: CharacterView): CharacterRender {
       cell.dataset['tip'] = `slot:${k}`;
       cell.addEventListener('dblclick', () => v.onSlotDouble?.(k));
     }
-    cell.append(itemIcon(inst, k, 1.3));
+    cell.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
     const txt = el('div', 'gr-slot-text');
     // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
     txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
@@ -264,26 +339,16 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     cell.append(txt);
     slots.append(cell);
   }
-  mid.append(slots);
-  // Level puanları (bekleyen dahil): statlar ve skill sayıları dağıtım sonrası değerlerle; fark sütunu bekleyen puanların etkisini gösterir
-  const pending = v.level?.pending ?? {};
-  const pend = pendingCount(pending);
-  const committed = hero;
-  const allocNow = mergeAlloc(hero.alloc, pending);
-  if (pend) hero = { ...hero, alloc: allocNow };
-  const freePts = (hero.statPoints ?? 0) - pend;
-  const stats = heroStats(hero);
-  const fd = v.focus ? itemDef(v.focus.id) : undefined;
-  const focusSlot = fd ? defaultEquipSlot(hero.equipment, fd) : undefined;
-  const usableFocus = v.focus && fd && focusSlot && !isPlanError(planEquip(hero.class, hero.equipment, v.focus, focusSlot)) && hero.equipment[focusSlot]?.uid !== v.focus.uid ? v.focus : null;
-  const pendDiff = (): Array<[string, number]> => {
-    const a = heroPanel(hero!);
-    const b = heroPanel(committed);
-    return a.map((x, i) => [x.id, Math.round((x.value - (b[i]?.value ?? x.value)) * 10000) / 10000] as [string, number]).filter(([, d]) => d !== 0);
-  };
-  const diff = new Map(usableFocus && focusSlot ? equipDiff(hero, usableFocus, focusSlot).map((x) => [x.id, x.delta] as [string, number]) : pend ? pendDiff() : []);
-  const after = usableFocus && focusSlot ? heroStats({ ...hero, equipment: equipInto(hero.equipment, usableFocus, focusSlot).equipment as typeof hero.equipment }) : null;
-  // Savaş alt barıyla aynı düzen (src/game/stat-columns.ts): can + mana üstte; Ana | Atak | Defans sütunları
+  return [head, slots];
+}
+
+/**
+ * Stat grupları (savaş alt barıyla aynı düzen, src/game/stat-columns.ts): can + mana üstte; Ana | Atak | Defans sütunları.
+ * Satır: ikon · ad · değer · fark (+1) · [−] [+] (Ömer 2026-10-18: fark değerin yanında, − ve + sağda sabit; + hiçbir durumda kaymaz).
+ * `vitals` verilirse HP / MP satırı "93 / 150" + altında savaş HUD'ının çubuğu (can oranı kahramanın şu anki canı; mana dışarıda hep dolu).
+ */
+function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number }): HTMLElement {
+  const { hero, pending, allocNow, freePts, diff } = c;
   const sg = el('div', 'gr-sgroups');
   const rowsById = new Map<string, HTMLElement>();
   for (const p of heroPanel(hero)) {
@@ -294,8 +359,23 @@ export function renderCharacter(v: CharacterView): CharacterRender {
     ico.src = statIconUrl(p.id);
     ico.alt = '';
     ico.draggable = false;
-    row.append(ico, el('span', 'gr-stat-k', p.label), el('span', 'gr-stat-v', fmtPanel(p)));
-    // Temel stat satırı: + / − (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
+    const vital = !!vitals && VITAL_STATS.includes(p.id);
+    const ratio = vitals && p.id === 'hp' ? Math.max(0, Math.min(1, vitals.hpRatio)) : 1;
+    row.append(ico, el('span', 'gr-stat-k', p.label), el('span', `gr-stat-v${vital ? ' gr-stat-cur' : ''}`, vital ? `${Math.round(p.value * ratio)} / ${fmtPanel(p)}` : fmtPanel(p)));
+    // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
+    if (p.capped) {
+      row.classList.add('capped');
+      const cap = el('span', 'gr-stat-cap', 'max');
+      cap.title = 'Capped: extra from items is wasted';
+      row.append(cap);
+    }
+    const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
+    row.append(el('span', `gr-stat-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText));
+    if (dv) {
+      row.dataset['delta'] = dText;
+      row.dataset['dir'] = dv > 0 ? 'up' : 'down';
+    }
+    // Temel stat satırı: − / + (puan dağıtımı; kural izin vermiyorsa + kapalı). Puan ekranında iki düğme yuvası HER ZAMAN yer kaplar
     // (kullanılamayan düğme görünmez ama yerinde durur): +, −, Reset, Confirm satırları kaydırmaz (Ömer 2026-10-18)
     const attr = ATTR_IDS.find((k) => k === p.id);
     if (attr && v.level) {
@@ -333,20 +413,15 @@ export function renderCharacter(v: CharacterView): CharacterRender {
       pm.append(sub, add);
       row.append(pm);
     }
-    // tavan dolu: fazlası kaybolur (Ömer 2026-10-13, itemcaps m1)
-    if (p.capped) {
-      row.classList.add('capped');
-      const cap = el('span', 'gr-stat-cap', 'max');
-      cap.title = 'Capped: extra from items is wasted';
-      row.append(cap);
-    }
-    const dText = dv ? `${dv > 0 ? '+' : ''}${fmtPanel({ value: dv, fmt: p.fmt })}` : '';
-    row.append(el('span', `gr-stat-d ${dv ? (dv > 0 ? 'up' : 'down') : ''}`, dText));
-    if (dv) {
-      row.dataset['delta'] = dText;
-      row.dataset['dir'] = dv > 0 ? 'up' : 'down';
-    }
-    rowsById.set(p.id, row);
+    if (vital) {
+      const wrap = el('div', 'gr-vital');
+      const bar = el('div', `bh-bar ${p.id} gr-vbar`);
+      const fill = el('i');
+      fill.style.width = `${Math.round(ratio * 100)}%`;
+      bar.append(fill);
+      wrap.append(row, bar);
+      rowsById.set(p.id, wrap);
+    } else rowsById.set(p.id, row);
   }
   const addGroup = (cls: string, ids: string[]): void => {
     const g = el('div', `gr-sgrp ${cls}`);
@@ -358,27 +433,64 @@ export function renderCharacter(v: CharacterView): CharacterRender {
   };
   addGroup('vitals', VITAL_STATS);
   PANEL_GROUPS.forEach((ids, i) => addGroup(['base', 'attack', 'defense'][i] ?? '', ids));
-  const lostTo = pend && stats && !stats.primaryActive && stats.primary ? stats.primary : null;
-  const primaryLost = lostTo ? `${PRIMARY_BONUS_NAME[lostTo]} turns off while another base stat is above ${lostTo.toUpperCase()}.` : null;
-  mid.append(levelBlock(hero, v.level, primaryLost), el('div', 'gr-sec', 'Stats'), sg);
+  return sg;
+}
+
+/** Level bloğu + "Stats" + stat grupları + tavan notu; puan taşı sürüklemesi `host` üstünde. */
+function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: { hpRatio: number }): HTMLElement[] {
+  const out: HTMLElement[] = [levelBlock(c.hero, v.level, c.primaryLost), el('div', 'gr-sec', 'Stats'), statGroups(c, v, vitals)];
   if (v.level) {
     const lv = v.level;
-    const h = hero;
-    attachPointDrag(mid, (k) => {
-      if (freePts > 0 && canAddPoint(h.class, allocNow, k)) lv.onAdd(k);
+    const h = c.hero;
+    attachPointDrag(host, (k) => {
+      if (c.freePts > 0 && canAddPoint(h.class, c.allocNow, k)) lv.onAdd(k);
     });
   }
-  const extraCaps = cappedExtras(hero);
-  if (extraCaps.length) mid.append(el('div', 'gr-cap-note', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
+  const extraCaps = cappedExtras(c.hero);
+  if (extraCaps.length) out.push(el('div', 'gr-cap-note', `At max: ${extraCaps.join(' · ')}. Extra from items is wasted.`));
+  return out;
+}
+
+/** Skill satırı (savaş HUD'ının skill çubuğuyla aynı bileşen; pasif ilk sırada). */
+function skillsNode(hero: HoverHero, stats: Stats, after: Stats | null): HTMLElement {
+  const sk = el('div', 'gr-skills');
+  sk.append(el('div', 'gr-sec', 'Skills'));
+  sk.append(skillBar(hero.class, stats, after));
+  return sk;
+}
+
+/** Character sayfasının DOM'u (tüccarın Character sekmesi: kahraman kartları | yuvalar + statlar, altta skill'ler). */
+export function renderCharacter(v: CharacterView): CharacterRender {
+  const root = el('div', `gr-char${v.compact ? ' compact' : ''}`);
+  const hero0 = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
+  root.append(heroCards(v, hero0?.id));
+  if (!hero0) return { el: root, stats: null, after: null };
+  const mid = el('div', 'gr-mid');
+  if (v.hint) mid.append(el('div', 'gr-hint', v.hint));
+  mid.append(...slotsBlock(hero0, v));
+  const c = calcHero(v, hero0);
+  mid.append(...sheetNodes(c, v, mid));
   root.append(mid);
-  // --- skill'ler: savaş HUD'ının skill çubuğuyla AYNI bileşen (src/ui/skill-bar.ts; Ömer 2026-10-11 "evrensel"); sol kenardan başlar
-  if (stats) {
-    const sk = el('div', 'gr-skills');
-    sk.append(el('div', 'gr-sec', 'Skills'));
-    sk.append(skillBar(hero.class, stats, after));
-    root.append(sk);
-  }
-  return { el: root, stats, after };
+  if (c.stats) root.append(skillsNode(c.hero, c.stats, c.after));
+  return { el: root, stats: c.stats, after: c.after };
+}
+
+/**
+ * Gear'ın sol sayfası (Ömer 2026-10-18, ortak envanter v3 "Ledger"): `hero` = sınıf başlığı + 7 yuva + skill satırı (pasif önce); `sheet` = level +
+ * statlar (HP / MP çubuklu "93 / 150", stat satırı "36 +1 [−] [+]"). `el` sayfa içeriğinin kabıdır (puan taşı sürüklemesi burada dinlenir);
+ * ekran bunu KALICI sayfa kabının içine koyar (kaydırma kabı yeniden kurulmaz).
+ */
+export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpRatio?: number }): CharacterRender {
+  const box = el('div', `gr-leaf gr-leaf-${v.tab}`);
+  const hero0 = v.heroes.find((h) => h.id === v.heroId) ?? v.heroes[0];
+  if (!hero0) return { el: box, stats: null, after: null };
+  const c = calcHero(v, hero0);
+  if (v.tab === 'hero') {
+    if (v.hint) box.append(el('div', 'gr-hint', v.hint));
+    box.append(...slotsBlock(hero0, v));
+    if (c.stats) box.append(skillsNode(c.hero, c.stats, c.after));
+  } else box.append(...sheetNodes(c, v, box, { hpRatio: v.hpRatio ?? 1 }));
+  return { el: box, stats: c.stats, after: c.after };
 }
 
 /** Savaş HUD'ının ölçeği (1 oyun birimi kaç CSS pikseli: src/ui/viewport.ts > --gu): Gear'daki skill çubuğu savaştakiyle aynı boyda görünür. */

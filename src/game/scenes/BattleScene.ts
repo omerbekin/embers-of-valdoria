@@ -114,6 +114,8 @@ export interface BattleSceneData {
    * party = uid ('party-0'...) -> kahraman level'ı. Verilmezse (Quick Battle / multiplayer) level yazılmaz. Çağrılara yazılmaz.
    */
   levels?: { enemy?: number; party?: Record<string, number> };
+  /** Debug (Setup > Mob battle > Ignore range): bu savaşta menzil sınırı yok (BattleSetup.ignoreRange); yalnızca o başlatmada geçerli. */
+  ignoreRange?: boolean;
 }
 
 /** Sefer bağlamı: savaş bitince sonuç ekranının düğmeleri (Continue / Load Last Save / Load Game / Main Menu). src/game/campaign-session.ts */
@@ -206,6 +208,7 @@ export class BattleScene extends Phaser.Scene {
   weapons: BattleSceneData['weapons'] = undefined;
   /** Birim level'ları (BattleSceneData.levels; yalnızca sunum). */
   private unitLevels: BattleSceneData['levels'] = undefined;
+  private ignoreRange = false;
   /** Bu ekranda oynayan insanın tarafı: tek oyunculuda daima 'party'; multiplayer'da katılan 'enemy' (sağ). */
   localSide: 'party' | 'enemy' = 'party';
   private mpOff: Array<() => void> = [];
@@ -315,6 +318,7 @@ export class BattleScene extends Phaser.Scene {
     this.mp = data.mp;
     this.weapons = data.weapons;
     this.unitLevels = data.levels;
+    this.ignoreRange = !data.mp && !data.campaign && !!data.ignoreRange;
     this.localSide = data.mp?.localSide ?? 'party';
     for (const off of this.mpOff) off();
     this.mpOff = [];
@@ -427,7 +431,7 @@ export class BattleScene extends Phaser.Scene {
     this.drawSlots();
 
     // Multiplayer: savaş iki istemcide aynı kurulan lockstep savaşıdır (src/net/lockstep.ts)
-    this.battle = this.mp ? this.mp.battle : new Battle(content.battleSetup(this.battleId, this.seed, this.mode, this.teams ? { ...this.teams } : { partySize: this.partySize, enemySize: this.enemySize }, false));
+    this.battle = this.mp ? this.mp.battle : new Battle({ ...content.battleSetup(this.battleId, this.seed, this.mode, this.teams ? { ...this.teams } : { partySize: this.partySize, enemySize: this.enemySize }, false), ...(this.ignoreRange ? { ignoreRange: true } : {}) });
     if (!this.mp) this.campaign?.prepareBattle?.(this.battle);
     // Gerçek boyutlar (takım seçiminden gelen hücre listeleri dahil): "New Game" ve Team Select bunları korur
     this.partySize = this.battle.combatants.filter((c) => c.side === 'party' && !c.summoned).length || this.partySize;

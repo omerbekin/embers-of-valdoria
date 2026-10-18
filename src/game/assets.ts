@@ -82,7 +82,22 @@ export function preloadAssets(scene: Phaser.Scene, o: PreloadOptions = {}): void
   if (Array.isArray(backgrounds)) releaseUnusedBackgrounds(scene, backgrounds);
   if (Array.isArray(o.sprites)) releaseUnusedSprites(scene, o.sprites);
   if (Array.isArray(o.avatars)) releaseUnusedAvatars(scene, o.avatars);
+  releaseOtherScenesArt(scene);
   if (o.track !== false) trackSceneLoad(scene.load);
+}
+
+/**
+ * Sahne açılırken başka ekranların büyük dokularını bırakır (Ömer 2026-10-18, bellek ölçümü: haritaya savaştan dönünce efekt sayfaları ve
+ * pişmiş poz atlasları, Endless'ten sonra 73 item görseli, takım seçiminde menü kartları bellekte kalıyordu). Her aile yalnızca kendi
+ * sahnelerinde tutulur; kullanımdaki doku hiç atılmaz (`releaseTextures`), gerekince o sahnenin preload'u yeniden yükler / pişirir.
+ */
+function releaseOtherScenesArt(scene: Phaser.Scene): void {
+  const me = scene.sys.settings.key;
+  // Savaş sürerken başka bir sahne üstüne açıldıysa (Endless ara ekranı) savaşın efekt / poz dokularına dokunma
+  const battleLive = scene.game.scene.scenes.some((s) => s.sys.settings.key === 'BattleScene' && s !== scene && (s.sys.isActive() || s.sys.isPaused() || s.sys.isSleeping()));
+  const drop = SCENE_ART.filter((a) => !a.keep.includes(me) && !(battleLive && a.keep.includes('BattleScene')));
+  if (!drop.length) return;
+  releaseTextures(scene, (key) => drop.some((a) => a.prefixes.some((p) => key.startsWith(p))));
 }
 
 // ---------------------------------------------------------------- arka plan belleği (Ömer 2026-10-11, performans)
@@ -130,7 +145,13 @@ export function releaseUnusedBackgrounds(scene: Phaser.Scene, keep: readonly str
 export function removeTexture(scene: Phaser.Scene, key: string): void {
   const anims = scene.anims as unknown as { anims?: { entries: Record<string, Phaser.Animations.Animation> } };
   for (const [k, a] of Object.entries(anims.anims?.entries ?? {})) if (a.frames.some((f) => f.textureKey === key)) scene.anims.remove(k);
+  // pişmiş atlas / hale tuvalleri: arka belleği hemen bırak (iOS Safari tuval belleğini çöp toplamayı beklemeden geri alır)
+  const canvas = key.startsWith('pose:') || key.startsWith('glowfx:') ? scene.textures.get(key).getSourceImage() : null;
   scene.textures.remove(key);
+  if (typeof HTMLCanvasElement !== 'undefined' && canvas instanceof HTMLCanvasElement) {
+    canvas.width = 0;
+    canvas.height = 0;
+  }
 }
 
 /**
@@ -154,6 +175,14 @@ export function releaseTextures(scene: Phaser.Scene, drop: (key: string) => bool
  * menüye dönüşte MainMenuScene.preload yeniden yükler (canvas dokuları yeniden çizilir).
  */
 export const MENU_ONLY_TEXTURES = ['card:', 'branding:', 'menu:', 'mm-'] as const;
+
+/** Doku ailesi -> yalnızca bu sahneler tutar (releaseOtherScenesArt). */
+const SCENE_ART: ReadonlyArray<{ prefixes: readonly string[]; keep: readonly string[] }> = [
+  { prefixes: MENU_ONLY_TEXTURES, keep: ['MainMenuScene'] },
+  { prefixes: ['campaign:'], keep: ['MainMenuScene', 'CampaignMapScene', 'MultiplayerScene'] },
+  { prefixes: ['item-img:'], keep: ['EndlessScene'] },
+  { prefixes: ['vfxsheet:', 'pose:', 'posebody:', 'poseweapon:', 'glowfx:'], keep: ['BattleScene'] },
+];
 
 /** Kimliği `keep` listesinde olmayan sprite dokularını (idle, poz sayfası, varyantlar) atar. */
 export function releaseUnusedSprites(scene: Phaser.Scene, keep: readonly string[]): number {

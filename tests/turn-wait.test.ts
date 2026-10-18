@@ -73,5 +73,5 @@ describe('turn-wait: oyun zamanı -> gerçek zaman', () => {
     expect(disagree / Math.max(1, agree + disagree)).toBeLessThan(0.05);
     expect(avgSec).toBeGreaterThan(1);
     expect(avgSec).toBeLessThan(180);
-  });
+  }, 120_000); // tam suite yükünde 30 sn sınırını aşıyordu (2026-10-18)
 });

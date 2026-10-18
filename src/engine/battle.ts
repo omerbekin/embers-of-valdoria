@@ -49,6 +49,11 @@ export interface BattleSetup {
    * party verir (düşmanların Valor'u yok); hızlı savaş / multiplayer hiç vermez (eylem görünmez, savaş birebir eskisi).
    */
   valor?: Partial<Record<Side, number>>;
+  /**
+   * Debug (Setup > Mob battle > Ignore range): bu savaşta menzil / erişim sınırı YOK; her skill her düşman hücresini hedefleyebilir (YZ dahil).
+   * Varsayılan false = hiçbir davranış değişmez. Backstab'ın "arkası boş" şartı ve taunt bundan etkilenmez.
+   */
+  ignoreRange?: boolean;
 }
 
 /** Debug: hasar çarpanı ve kritik/kaçınma zorlaması (varsayılan: 1, auto, auto = oyun kuralı aynen). */
@@ -733,6 +738,11 @@ export class Battle {
     return rangeEnabled(this.setup.formulas);
   }
 
+  /** Debug kurulumu: bu savaşta menzil / erişim sınırı yok mu (BattleSetup.ignoreRange)? */
+  get ignoreRange(): boolean {
+    return !!this.setup.ignoreRange;
+  }
+
   /** Skill menzilsiz mi ("Global" ya da hedef seçimi olmayan tür / range'siz dost skill'i)? */
   isGlobalRange(skill: SkillDef): boolean {
     return skillRangeFor(skill, 1, this.setup.formulas) === Infinity;
@@ -769,7 +779,7 @@ export class Battle {
 
   /** Hücre bu skill'in menzilinde mi? Sistem kapalıyken ve debugCast sırasında hep evet. Alan skill'inde hücre = hedeflenen anchor. */
   inRange(actor: Combatant, skill: SkillDef, board: Side, slot: number, opts?: { from?: number; moved?: { uid: string; slot: number } }): boolean {
-    if (!this.rangeOn || this.debugCasting) return true;
+    if (!this.rangeOn || this.debugCasting || this.setup.ignoreRange) return true;
     const r = this.rangeOf(actor, skill);
     return r === Infinity || this.distanceTo(actor, board, slot, opts) <= r;
   }
@@ -779,7 +789,7 @@ export class Battle {
    * hücresi)? Karşı tarafı hedeflemeyen skill'de evet. Alan skill'inde en yakın birim ölçülür (yaklaşık).
    */
   skillReachesFromCell(defId: string | undefined, side: Side, skill: SkillDef, slot: number): boolean {
-    if (!FOE_TARGETS.includes(skill.target)) return true;
+    if (!FOE_TARGETS.includes(skill.target) || this.setup.ignoreRange) return true;
     const r = skillRangeFor(skill, defId ? this.setup.units[defId]?.range : undefined, this.setup.formulas);
     if (r === Infinity) return true;
     const foe = opposite(side);
@@ -1851,7 +1861,7 @@ export class Battle {
         if (this.rangeOn) {
           // Menzil (range.md): taunt bundan SONRA uygulanır, yani menzil dışındaki taunter zorlamaz
           list = list.filter((c) => this.inRange(actor, skill, c.board, c.slot));
-        } else if (skill.motion === 'melee' && !skill.ignoreReach && !this.debugCasting) {
+        } else if (skill.motion === 'melee' && !skill.ignoreReach && !this.debugCasting && !this.setup.ignoreRange) {
           // ESKİ kural: ön sıra, düşmanın kendi tahtasındaki birimlere göre belirlenir
           const home = list.filter((c) => c.board === c.side);
           const limit = this.meleeRowLimit(home.map((c) => this.rowOf(c.slot)), this.reachOf(actor, skill));
@@ -1976,7 +1986,7 @@ export class Battle {
     }
     if (this.mode === 'turns' && !this.noCooldowns && (actor.cooldowns[skillId] ?? 0) > 0) return { ok: false, reason: 'On cooldown' };
     // ESKİ kural (menzil kapalı): yakın dövüş yalnızca kendi takımının ön sırasındaki birimlerden (ignoreFrontRow / ignoreReach istisna)
-    if (!this.rangeOn && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
+    if (!this.rangeOn && !this.setup.ignoreRange && skill.motion === 'melee' && skill.target !== 'self' && !skill.ignoreFrontRow && !skill.ignoreReach && actor.board === actor.side && this.rowOf(actor.slot) > this.frontRowOf(actor.side) + this.reachOf(actor, skill)) {
       return { ok: false, reason: 'Melee: front row only' };
     }
     const resource = skill.cost.resource;

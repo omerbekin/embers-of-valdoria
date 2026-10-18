@@ -2964,3 +2964,522 @@ html.short .gr-lvl + .gr-sec {
 .gr-shop.gr-phone .gr-stall .gr-char .gr-sgrp .gr-stat {
   min-height: 14px;
 }
+
+/* ===================== Ortak envanter v3 "Ledger" (Ömer 2026-10-18; taslak public/mockups/unified-inventory.html#v3; src/ui/gear-screen.ts > openGear) =====================
+   Tam sayfa defter: üst şerit (Gear, Hero / Sheet sekmeleri, altın) sağ üst X / tam ekranla aynı satırda; gövde = yer imleri | sol sayfa | sırt | sağ sayfa.
+   Telefon (html.short): yerleşim aynı, yazılar ~%15 küçük; dokunma hedefleri 44 px. */
+.gr-overlay.gr-ledger-ov {
+  padding-top: calc(var(--nav-edge-k) + var(--et, 0px));
+}
+
+.gr-panel.gr-gear.gr-ledger {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100%;
+  /* başlığın üstünde nefes payı (Ömer 2026-10-18: "gear üste çok yapışmış") */
+  padding-top: max(8px, calc(16 * var(--u)));
+}
+
+.gr-ledger > .gr-lhead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(28 * var(--u));
+  min-height: var(--nav-hit-k);
+  padding-bottom: 0;
+  /* sağ üstte X (Menu düğmesinin yerinde) + tam ekran */
+  padding-right: calc(2 * var(--nav-hit-k) + var(--nav-gap-k) + 8px);
+}
+
+.gr-ledger > .gr-lhead .gr-title {
+  line-height: 1;
+}
+
+.gr-ledger > .gr-lhead .gr-headtabs {
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  border: 0;
+}
+
+.gr-ledger > .gr-lhead .gr-headtabs .gr-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.gr-ledger > .gr-lhead .gr-grow {
+  flex: 1;
+}
+
+.gr-ledger .gr-gold .gr-ui-ico {
+  width: max(18px, calc(30 * var(--u)));
+  height: max(18px, calc(30 * var(--u)));
+}
+
+/* harcanmamış puan rozeti (stat puanı kor, skill puanı açık altın) */
+.gr-pt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max(20px, calc(30 * var(--u)));
+  height: max(20px, calc(30 * var(--u)));
+  padding: 0 4px;
+  border-radius: 50%;
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.45);
+  letter-spacing: 0;
+}
+
+.gr-pt.sk {
+  background: radial-gradient(circle at 35% 30%, #f3e1b0, #b9853e 70%);
+}
+
+.gr-headtabs .gr-tab .gr-pt {
+  margin-left: 6px;
+}
+
+.gr-ledger .gr-lbody {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: calc(96 * var(--u)) minmax(0, 1fr) 1px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  margin-top: calc(8 * var(--u));
+  overflow: hidden;
+}
+
+/* yer imleri: sol kenarda portreler; seçili olan sayfaya doğru çıkar */
+.gr-marks-col {
+  min-height: 0;
+  overflow: hidden auto;
+  scrollbar-width: none;
+}
+
+.gr-marks {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  padding: 10px calc(14 * var(--u)) 10px 0;
+}
+
+.gr-mark {
+  position: relative;
+  padding: 2px;
+  border: 1px solid var(--g-line2);
+  background: rgba(8, 6, 4, 0.5);
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.2s;
+}
+
+.gr-mark .gr-face {
+  width: max(44px, calc(76 * var(--u)));
+  height: max(44px, calc(76 * var(--u)));
+}
+
+.gr-mark:hover {
+  border-color: var(--g-gold);
+}
+
+.gr-mark.on {
+  border-color: var(--g-gold);
+  transform: translateX(calc(8 * var(--u)));
+  box-shadow: calc(-8 * var(--u)) 0 0 0 rgba(224, 112, 42, 0.5);
+}
+
+.gr-mark .gr-pt {
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.gr-dragging .gr-mark.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 0 1px var(--drag-rc, var(--g-gold)), 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 60%, transparent);
+}
+
+.gr-dragging .gr-mark.drop-no {
+  opacity: 0.4;
+}
+
+/* sayfalar: kalıcı kaydırma kapları (içerik yenilenir, kap yerinde kalır) */
+.gr-ledger .gr-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px calc(26 * var(--u)) 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+  background: linear-gradient(90deg, rgba(8, 6, 4, 0.15), rgba(8, 6, 4, 0.4));
+}
+
+.gr-ledger .gr-page.r {
+  background: linear-gradient(270deg, rgba(8, 6, 4, 0.15), rgba(8, 6, 4, 0.4));
+}
+
+.gr-ledger .gr-page-in {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+/* sağ sayfa (torba): sayfa kaymaz, torba kendi içinde kayar */
+.gr-ledger.tab-hero .gr-page.r {
+  overflow: hidden;
+}
+
+.gr-ledger.tab-hero .gr-page.r .gr-page-in {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.gr-ledger .gr-leaf {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  min-width: 0;
+}
+
+.gr-ledger .gr-leaf > * {
+  flex-shrink: 0;
+}
+
+.gr-ledger .gr-leaf > .gr-sec,
+.gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: 0;
+}
+
+.gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-ledger .gr-leaf .gr-lvl {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.gr-ledger .gr-folio {
+  flex: none;
+  margin-top: auto;
+  padding-top: calc(6 * var(--u));
+  text-align: center;
+  font: italic max(11px, calc(15 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-ledger .gr-spine {
+  background: linear-gradient(180deg, transparent, rgba(217, 178, 106, 0.5) 12%, rgba(217, 178, 106, 0.5) 88%, transparent);
+  box-shadow: 0 0 calc(18 * var(--u)) rgba(0, 0, 0, 0.9);
+}
+
+/* boş yuva: boyalı simge soluk (~%36; src/ui/slot-icons.ts) */
+.gr-slot .gr-slot-ico {
+  opacity: 0.36;
+  image-rendering: auto;
+  filter: saturate(0.8);
+}
+
+/* torba */
+.gr-ledger .gr-inv {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gr-ledger .gr-inv .gr-bag {
+  flex: 1 1 auto;
+  overflow: hidden auto;
+  grid-auto-rows: max-content;
+}
+
+.gr-ledger .gr-bag-head {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-ledger .gr-bag-head .gr-sec {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.gr-ledger .gr-bag-head .gr-best {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Sheet: HP / MP "93 / 150" + savaş HUD çubuğu */
+.gr-sgrp.vitals > .gr-vital {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+}
+
+.gr-vbar.bh-bar {
+  --gold: 217, 178, 106;
+  --ease: cubic-bezier(0.33, 1, 0.68, 1);
+  height: max(5px, calc(10 * var(--u)));
+}
+
+.gr-sgroups .gr-stat .gr-stat-v.gr-stat-cur {
+  min-width: 0;
+}
+
+/* skill ağacı: kap aynı, içerik yok */
+.gr-tree-head {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+}
+
+.gr-tree.gr-soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: calc(300 * var(--u));
+  border: 1px solid rgba(217, 178, 106, 0.16);
+  background: rgba(8, 6, 4, 0.35);
+}
+
+.gr-soon span {
+  font: 600 max(14px, calc(26 * var(--u))) var(--g-disp);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+/* kısa ipucu (yer imi: ad + üstüne gelinen item'in etkisi) */
+.gr-tip .gr-hint-sub.tone-up {
+  color: #8fe39a;
+}
+
+.gr-tip .gr-hint-sub.tone-down,
+.gr-tip .gr-hint-sub.tone-no {
+  color: #ff8a7a;
+}
+
+/* uyarı yazısı (eski alt çubuğun yerine) */
+.gr-toast {
+  position: absolute;
+  left: 50%;
+  top: calc(90 * var(--u));
+  z-index: 45;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 8px 18px;
+  background: rgba(12, 9, 6, 0.96);
+  border: 1px solid rgba(255, 138, 122, 0.55);
+  font: italic max(13px, calc(20 * var(--u))) var(--g-body);
+  color: #ffb0a0;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gr-toast.on {
+  opacity: 1;
+}
+
+/* telefon: yerleşim AYNI, ölçek küçük */
+html.short .gr-overlay.gr-ledger-ov {
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 6px;
+}
+
+html.short .gr-panel.gr-ledger {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+html.short .gr-ledger .gr-lbody {
+  grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr);
+  margin-top: 4px;
+}
+
+html.short .gr-ledger .gr-page {
+  padding: 4px 8px 0;
+}
+
+html.short .gr-ledger .gr-marks {
+  padding-right: 8px;
+}
+
+html.short .gr-ledger .gr-mark .gr-face {
+  width: 44px;
+  height: 44px;
+}
+
+html.short .gr-ledger .gr-mark .gr-pt {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  right: -6px;
+  top: -6px;
+}
+
+html.short .gr-ledger .gr-title {
+  font-size: 17px;
+}
+
+html.short .gr-ledger .gr-tab {
+  font-size: 11px !important;
+  letter-spacing: 0.14em;
+}
+
+html.short .gr-ledger .gr-sec {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  padding-bottom: 2px;
+}
+
+html.short .gr-ledger .gr-leaf {
+  gap: 6px;
+}
+
+html.short .gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: 4px;
+}
+
+html.short .gr-ledger .gr-slot-name {
+  font-size: 11px;
+}
+
+html.short .gr-ledger .gr-slot-sub {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-slot {
+  min-height: 44px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+html.short .gr-ledger .gr-slot .gr-svg {
+  --sz: 1 !important;
+}
+
+html.short .gr-ledger .gr-chip,
+html.short .gr-ledger .gr-best {
+  min-height: 44px;
+  font-size: 10px !important;
+  padding: 0 8px;
+}
+
+html.short .gr-ledger .gr-gold {
+  font-size: 13px;
+}
+
+html.short .gr-ledger .gr-sgroups {
+  font-size: 11px;
+}
+
+html.short .gr-ledger .gr-lvl-n {
+  font-size: 12px;
+}
+
+html.short .gr-ledger .gr-lvl-xp,
+html.short .gr-ledger .gr-pts-text,
+html.short .gr-ledger .gr-pts-skill {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-btn.sm {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-folio {
+  font-size: 9px;
+  padding-top: 2px;
+}
+
+html.short .gr-ledger .gr-soon span {
+  font-size: 12px;
+}
+
+html.short .gr-ledger .gr-tree.gr-soon {
+  min-height: 180px;
+}
+
+html.short .gr-pt {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-bag-head {
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+html.short .gr-toast {
+  top: 54px;
+  font-size: 13px;
+}
+
+/* telefon Sheet: stat etiketleri kesilmesin (sıkı ikon / fark / düğme; Atak ve Defans satırında boş fark yer tutmaz: orada + yok) */
+html.short .gr-ledger .gr-sgroups {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 6px;
+}
+
+html.short .gr-ledger .gr-sgrp .gr-stat {
+  gap: 3px;
+  min-height: 22px;
+}
+
+html.short .gr-ledger .gr-sgrp .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+html.short .gr-ledger .gr-sgrp.attack,
+html.short .gr-ledger .gr-sgrp.defense {
+  padding-left: 6px;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-stat .gr-stat-v {
+  min-width: 1.6em;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-stat .gr-stat-d {
+  min-width: 2.2em;
+}
+
+html.short .gr-ledger .gr-sgrp.attack .gr-stat-d:empty,
+html.short .gr-ledger .gr-sgrp.defense .gr-stat-d:empty,
+html.short .gr-ledger .gr-sgrp.vitals .gr-stat-d:empty {
+  min-width: 0;
+}
+
+html.short .gr-ledger .gr-pm-b {
+  width: 20px;
+  height: 20px;
+}
+
+html.short .gr-ledger .gr-bag-head .gr-sec {
+  white-space: nowrap;
+  overflow: visible;
+}

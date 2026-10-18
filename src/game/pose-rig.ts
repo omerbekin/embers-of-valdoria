@@ -13,13 +13,11 @@ import Phaser from 'phaser';
 import layout from '../../data/battle-layout.json';
 import { perfLite } from '../ui/perf-mode';
 import { stageView } from './stage-view';
-import { poseBodyUrl, weaponUrl } from './pose-files';
+import { poseBodyFrame, weaponFrame, type AtlasFrame } from './pose-files';
 import './pose-mode'; // gerçek sınıfların çizimi (v2 / debug v1): kayıtlı seçim pozlu birimler kurulmadan uygulanır
 import { texturesInUse } from './assets';
 import { GLOW_PAD, POSES, drawPoseComposite, frameExtent, gripFrames, isReleasablePoseTexture, pixelsBlank, poseBounds, poseClass, poseClassIds, poseOwner, toneImageData, weaponKey, type PoseClassDef, type WeaponPick } from './poses';
 
-const bodyKey = (dir: string, pose: string, small: boolean) => `posebody:${dir}:${pose}${small ? ':s' : ''}`;
-const weaponTex = (family: string, look: string, small: boolean) => `poseweapon:${family}:${look}${small ? ':s' : ''}`;
 
 /** Ekrandaki ölçek (gövde tuvali pikseli -> oyun birimi): figür spriteBox yüksekliğinin `heightFit` katı. */
 export const poseDisplayScale = (def: PoseClassDef, spriteScale = 1): number => ((layout.spriteBox.height * def.heightFit) / def.figure.h) * spriteScale;
@@ -44,41 +42,71 @@ export interface PoseNeed {
  * 2026-10-17 yükleme performansı). Sınıf listesi (string) verilirse sınıfın varsayılan silahı. Dönen: kuyruğa giren dosya.
  */
 export function preloadPoses(scene: Phaser.Scene, needs: readonly (PoseNeed | string)[] = poseClassIds()): number {
-  let n = 0;
-  const add = (key: string, url: string | null) => {
-    if (!url || scene.textures.exists(key)) return;
-    scene.load.image(key, url);
-    n++;
+  // Gövde pozları ve silahlar atlaslardan iner (assets/pose-atlas; sınıf x tutuş grubu, silah ailesi): aynı atlas bir kez istenir
+  const queued = new Set<string>();
+  const add = (f: AtlasFrame | null) => {
+    if (!f || queued.has(f.key) || scene.textures.exists(f.key)) return;
+    queued.add(f.key);
+    scene.load.image(f.key, f.url);
   };
   for (const need of needs) {
     const { classId, pick } = typeof need === 'string' ? { classId: need, pick: poseClass(need)?.defaultWeapon ?? null } : need;
     const def = poseClass(classId);
     if (!def) continue;
     const small = useSmall(def);
-    for (const pose of gripFrames(def, pick?.grip)) add(bodyKey(def.dir, pose, small), poseBodyUrl(def.dir, pose, small));
-    for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : [])] : []) add(weaponTex(w.family, w.look, small), weaponUrl(w.family, w.look, small));
+    for (const pose of gripFrames(def, pick?.grip)) add(poseBodyFrame(def.dir, pose, small));
+    for (const w of pick ? [pick, ...(pick.offhand ? [pick.offhand] : [])] : []) add(weaponFrame(w.family, w.look, small));
   }
-  return n;
+  return queued.size;
 }
 
-/** Bu sınıfın tüm gövde pozları ve verilen silahın görseli yüklü mü (değilse görünüm bugünkü tek sprite'a düşer). */
-function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null; off: CanvasImageSource | null } | null {
+/** Atlas karesini kendi tuvaline keser (kare kırpılmadan paketli: pişirme tek dosyayla aynı pikselleri okur). Atlas yüklü değilse null. */
+function cropFrame(scene: Phaser.Scene, f: AtlasFrame, temp: HTMLCanvasElement[]): HTMLCanvasElement | null {
+  if (!scene.textures.exists(f.key)) return null;
+  const [x, y, w, h] = f.rect;
+  const c = document.createElement('canvas');
+  c.width = w;
+  c.height = h;
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  ctx.drawImage(scene.textures.get(f.key).getSourceImage() as CanvasImageSource, x, y, w, h, 0, 0, w, h);
+  temp.push(c);
+  return c;
+}
+
+/** Bu sınıfın tüm gövde pozları ve verilen silahın görseli yüklü mü (değilse görünüm bugünkü tek sprite'a düşer). `free` geçici kesimleri bırakır. */
+function sources(scene: Phaser.Scene, def: PoseClassDef, pick: WeaponPick | null): { body: (pose: string) => CanvasImageSource; weapon: CanvasImageSource | null; off: CanvasImageSource | null; free: () => void } | null {
   const small = useSmall(def);
-  const find = (big: string, sm: string) => (scene.textures.exists(small ? sm : big) ? (small ? sm : big) : scene.textures.exists(small ? big : sm) ? (small ? big : sm) : null);
-  const keys: Record<string, string> = {};
+  const temp: HTMLCanvasElement[] = [];
+  const free = () => {
+    for (const c of temp) freeCanvas(c);
+    temp.length = 0;
+  };
+  // istenen boy yoksa öteki boy (eskiden de böyleydi)
+  const find = (get: (small: boolean) => AtlasFrame | null): AtlasFrame | null => {
+    const want = get(small);
+    if (want && scene.textures.exists(want.key)) return want;
+    const alt = get(!small);
+    return alt && scene.textures.exists(alt.key) ? alt : null;
+  };
+  const bodies: Record<string, HTMLCanvasElement> = {};
   for (const pose of gripFrames(def, pick?.grip)) {
-    const k = find(bodyKey(def.dir, pose, false), bodyKey(def.dir, pose, true));
-    if (!k) return null;
-    keys[pose] = k;
+    const f = find((s) => poseBodyFrame(def.dir, pose, s));
+    const c = f && cropFrame(scene, f, temp);
+    if (!c) {
+      free();
+      return null;
+    }
+    bodies[pose] = c;
   }
   const tex = (family: string, look: string, tone?: string): CanvasImageSource | null => {
-    const wk = find(weaponTex(family, look, false), weaponTex(family, look, true));
-    const img = wk ? (scene.textures.get(wk).getSourceImage() as CanvasImageSource) : null;
-    return img && tone ? toned(wk!, img, tone) : img;
+    const f = find((s) => weaponFrame(family, look, s));
+    const img = f ? cropFrame(scene, f, temp) : null;
+    return img && tone ? toned(`${f!.key}#${look}`, img, tone) : img;
   };
   const weapon = pick ? tex(pick.family, pick.look, pick.tone) : null;
   const off = pick?.offhand ? tex(pick.offhand.family, pick.offhand.look, pick.offhand.tone) : null; // ikinci el (kalkan / hançer)
-  return { body: (pose) => scene.textures.get(keys[pose]!).getSourceImage() as CanvasImageSource, weapon, off };
+  return { body: (pose) => bodies[pose]!, weapon, off, free };
 }
 
 /** Tonlanmış silah kaynakları ('<doku>~<ton>' -> tuval): pişirmede kaynak; releasePoseSources bırakır. */
@@ -172,8 +200,9 @@ export function bakePoseTexture(scene: Phaser.Scene, classId: string, pick: Weap
     // tuval belleği dolu (telefon): ekranda olmayan hale dokularını bırakıp bir kez daha dene; yine olmazsa bugünkü sprite
     releasePoseTextures(scene);
     canvas = paintAtlas(W, H, items, s, def, pick, src);
-    if (!canvas) return null;
   }
+  src.free(); // geçici kare kesimleri (atlaslar savaş kurulunca releasePoseSources ile bırakılır)
+  if (!canvas) return null;
   const tex = scene.textures.addCanvas(key, canvas);
   if (!tex) return null;
   for (const it of items) {

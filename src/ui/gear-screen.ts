@@ -46,7 +46,8 @@ import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName, type UiIconKind } from './ui-icons';
 import type { Stats } from '../engine';
-import { avatarUrl, className, renderCharacter } from './character-panel';
+import { avatarUrl, className, heroMarks, renderLedgerPage } from './character-panel';
+import { mountCloseButton } from './nav-close';
 import { renderInventory, snapBagRows } from './inventory';
 import { itemTipNodes, type ItemTipLine } from './item-tip';
 import { attachItemInteractions } from './item-drag';
@@ -100,6 +101,10 @@ export interface GearHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Şu anki can oranı (Sheet'te "93 / 150" + çubuk; yoksa dolu). */
+  hpRatio?: number;
+  /** Düşmüş kahraman (can 0 gösterilir). */
+  alive?: boolean;
 }
 
 /**
@@ -198,17 +203,20 @@ export function confirmIn(host: HTMLElement, text: string, ok: string, run: () =
 }
 
 /**
- * Gear ekranı (Ömer 2026-10-11, g1): solda CHARACTER sayfası (kahramanlar | yuvalar + statlar, altta skill'ler), sağda yalnızca INVENTORY
- * (torba). Item kartı / "Usable by" bloğu yok: torba item'inin üstüne gelince imlecin yanında item ipucu (dokunmatikte uzun basış) ve
- * kahraman kartlarının alt satırı o item'in her kahramana etkisi. Kuşanma: yuvaya / kahramana sürükle-bırak ya da çift tıklama (seçili
- * kahramana); çıkarma: yuvayı torbaya sürükle ya da yuvaya çift tıkla; atma: sürüklerken sağ altta beliren çöp kutusu (Rare+ onaylı).
- * Telefonda Character ve Inventory ayrı tam ekran (üstte geçiş; C tuşu). Kaynaktan beslenir (sefer / endless).
+ * Gear ekranı = ORTAK ENVANTER (Ömer 2026-10-18, taslak v3 "Ledger"; public/mockups/unified-inventory.html#v3). Yalnızca karakterle ilgilidir:
+ * iki sayfalık defter, sol kenarda kahraman yer imleri (portre, stat puanı rozeti, bırakma hedefi), iki sekme:
+ *  - Hero: sol sayfa sınıf başlığı + 7 yuva + skill satırı (pasif önce), sağ sayfa torba;
+ *  - Sheet: sol sayfa level + statlar (HP / MP çubuklu, "36 +1 [−] [+]"), sağ sayfa skill ağacı kabı ("Coming soon").
+ * Başlık satırı (Gear, sekmeler, altın) ekranın üst şeridinde, sağ üst Menu / tam ekranla aynı hizada; kapatma sağ üstte X (Esc, zemine dokunma).
+ * Kuşanma: yuvaya / yer imine sürükle-bırak ya da çift tıklama (seçili kahramana); çıkarma: yuvayı torbaya sürükle ya da yuvaya çift tıkla;
+ * atma: sürüklerken beliren çöp kutusu (Rare+ onaylı). İpucu: item'in özellikleri + her kahramana etkisi. Kaynaktan beslenir (sefer / endless).
+ * Sayfa kapları kalıcıdır: odak (üstüne gelinen item) değişince yalnızca içerik yenilenir, kaydırma kabı yerinde kalır (dokunmatikte kaydırma takılmaz).
  */
 export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv' } = {}): () => void {
-  const overlay = el('div', 'gr-overlay el-modal'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
+  const overlay = el('div', 'gr-overlay el-modal gr-ledger-ov'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Gear');
-  const panel = el('div', 'gr-panel gr-gear el-modal-panel');
+  const panel = el('div', 'gr-panel gr-gear gr-ledger el-modal-panel');
   overlay.append(panel);
   root.append(overlay);
   uiSound('open');
@@ -221,8 +229,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   /** Sürüklenen torba item'i (en öncelikli odak). */
   let dragUid = '';
   let usableOnly = false;
-  let view: 'char' | 'inv' = o.view ?? 'inv';
-  /** Bekleyen stat puanları (Character sayfası; Confirm kaynağa yazar, kahraman değişince silinir). */
+  /** Sekme: Hero (yuvalar + torba) / Sheet (statlar + skill ağacı). Level Up "Spend points" Sheet ile açar. */
+  let tab: 'hero' | 'sheet' = o.view === 'char' ? 'sheet' : 'hero';
+  /** Bekleyen stat puanları (Sheet; Confirm kaynağa yazar, kahraman değişince silinir). */
   let pending: StatAlloc = {};
   let shakeUid = '';
   let flashText = '';
@@ -243,6 +252,27 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }, danger);
   };
 
+  // Dokunmatikte parmak ekrandayken odak değişirse (sabit ipucu kapanınca) sayfa içeriği parmak kalkınca yenilenir: kaydırma yarıda kesilmez
+  let touching = 0;
+  let focusDirty = false;
+  const onTouchStart = (e: TouchEvent): void => {
+    touching = e.touches.length;
+  };
+  const onTouchEnd = (e: TouchEvent): void => {
+    touching = e.touches.length;
+    if (!touching && focusDirty) {
+      focusDirty = false;
+      renderFocus();
+    }
+  };
+  overlay.addEventListener('touchstart', onTouchStart, { passive: true });
+  document.addEventListener('touchend', onTouchEnd, { passive: true });
+  document.addEventListener('touchcancel', onTouchEnd, { passive: true });
+  const focusChanged = (): void => {
+    if (touching && !ix.dragging()) focusDirty = true;
+    else renderFocus();
+  };
+
   const ix = attachItemInteractions({
     overlay,
     panel,
@@ -259,7 +289,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (!inst) return [];
       // seçili kahramana göre: etkisiz A affix'leri soluk, tavanı dolu statlar "max" (Ömer 2026-10-13, itemcaps)
       const state = hero ? { ...(affixContext(hero, inst, kind === 'slot' ? (id as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
-      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst) : [], state);
+      // yer imleri yalnızca portre: her kahramana etkisi ipucunda (karşılaştırma)
+      return itemTipNodes(inst, hero?.class, kind === 'bag' ? heroTipExtra(src.heroes(), inst, true) : [], state);
     },
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
     tipActions: (key) => {
@@ -287,17 +318,17 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       }
       return [];
     },
-    // Odak değişince yalnızca Character sayfası yeniden çizilir (torba DOM'u yerinde kalır: üstüne gelme bozulmaz)
+    // Odak değişince yalnızca yer imleri + sol sayfa yenilenir (torba DOM'u yerinde kalır: üstüne gelme bozulmaz)
     onHover: (key) => {
       const uid = key.startsWith('bag:') ? key.slice(4) : '';
       if (uid === hoverUid) return;
       hoverUid = uid;
-      renderChar();
+      focusChanged();
     },
     onDragStart: (s) => {
       itemSound(s.kind === 'slot' ? heroSlotItem(s.heroId, s.slot) : s.itemId, WORLD_AUDIO.itemPickupGain);
       dragUid = s.kind === 'bag' ? s.uid : '';
-      if (dragUid) renderChar(); // sürüklenen item'e göre farklar ve kahraman satırları
+      if (dragUid) renderFocus(); // sürüklenen item'e göre farklar ve yer imi ipuçları
     },
     onDrop: (s, tg, act) => {
       const hadFocus = !!dragUid;
@@ -308,7 +339,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         apply(() => src.unequip(act.heroId, act.slot));
       } else if (act?.kind === 'discard') tryDiscard(act.uid);
       else if (act?.kind === 'none' && act.reason === 'Cannot use' && s.kind === 'bag' && tg && (tg.kind === 'slot' || tg.kind === 'hero')) tryEquip(tg.heroId, s.uid);
-      else if (hadFocus) renderChar();
+      else if (hadFocus) renderFocus();
     },
     stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
     // dokunmatik çift dokunuş (masaüstü çift tıkla aynı): torba item'i kuşanır, kuşanılmış item çıkar; kısa 'snap' sesi
@@ -331,11 +362,22 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const close = (): void => {
     if (closing) return;
     closing = true;
+    window.clearTimeout(toastTimer);
+    unmountX();
     closeDom(overlay, () => overlay.remove());
     document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener('touchend', onTouchEnd);
+    document.removeEventListener('touchcancel', onTouchEnd);
     ix.destroy();
     unlockInput('gear');
     o.onClose?.();
+  };
+  const setTab = (k: 'hero' | 'sheet'): void => {
+    if (k === tab) return;
+    tab = k;
+    renderAll();
+    swapIn(pageL);
+    swapIn(pageR);
   };
   const onKey = (e: KeyboardEvent): void => {
     if (e.key === 'Escape') {
@@ -348,14 +390,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         sel = '';
         renderAll();
       } else close();
-    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && phoneLayout()) {
+    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
+      // C: Hero / Sheet arası geçiş (eski Character / Inventory kısayolu)
       e.stopPropagation();
-      view = view === 'char' ? 'inv' : 'char';
-      renderAll();
+      setTab(tab === 'hero' ? 'sheet' : 'hero');
     }
   };
   document.addEventListener('keydown', onKey, true);
-  // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (Done ile aynı; src/ui/backdrop.ts)
+  // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (X ile aynı; src/ui/backdrop.ts)
   dismissOnBackdrop(overlay, panel, () => close());
 
   /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
@@ -384,6 +426,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const inst = bagInst(uid);
     const d = inst ? itemDef(inst.id) : undefined;
     if (!h || !inst || !d) return;
+    if (targetHero !== heroId) pending = {};
     heroId = targetHero;
     if (!canEquip(h.class, d)) {
       const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
@@ -434,67 +477,93 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     else run();
   };
 
-  // --- çizim: başlık, gövde (Character | Inventory), alt satır
-  const head = el('div', 'gr-head');
-  const body = el('div', 'gr-body');
-  const charWrap = el('div', 'gr-charwrap');
-  const invWrap = el('div', 'gr-right');
-  const foot = el('div', 'gr-foot');
-  body.append(charWrap, invWrap);
-  panel.append(head, body, foot);
+  // --- yerleşim: üst şerit (Gear, Hero / Sheet, altın) | gövde: yer imleri · sol sayfa · sırt · sağ sayfa. Kaplar kalıcıdır (yalnızca içerik yenilenir).
+  const head = el('div', 'gr-head gr-lhead');
+  const title = el('div', 'gr-title', 'Gear');
+  const tabsBox = el('div', 'gr-tabs gr-headtabs');
+  tabsBox.setAttribute('role', 'tablist');
+  const tabBtns = (['hero', 'sheet'] as const).map((k) => {
+    const b = btn('gr-tab', k === 'hero' ? 'Hero' : 'Sheet', () => setTab(k));
+    b.setAttribute('role', 'tab');
+    tabsBox.append(b);
+    return b;
+  });
+  const gold = el('div', 'gr-gold');
+  head.append(title, tabsBox, el('span', 'gr-grow'), gold);
+  const body = el('div', 'gr-body gr-lbody');
+  const marksBox = el('div', 'gr-marks-col');
+  const pageL = el('div', 'gr-page');
+  const pageR = el('div', 'gr-page r');
+  const leafL = el('div', 'gr-page-in');
+  const leafR = el('div', 'gr-page-in');
+  const folioL = el('div', 'gr-folio');
+  const folioR = el('div', 'gr-folio');
+  pageL.append(leafL, folioL);
+  pageR.append(leafR, folioR);
+  body.append(marksBox, pageL, el('div', 'gr-spine'), pageR);
+  panel.append(head, body);
+  // sağ üst X: Menu düğmesinin yerinde (açıkken Menu gizli; src/ui/nav-close.ts)
+  const unmountX = mountCloseButton(overlay, () => close());
+  // hata / uyarı yazısı (eski alt çubuğun yerine kısa toast)
+  const toast = el('div', 'gr-toast');
+  toast.setAttribute('role', 'status');
+  overlay.append(toast);
+  let toastTimer = 0;
+  const showToast = (text: string): void => {
+    toast.textContent = text;
+    toast.classList.add('on');
+    window.clearTimeout(toastTimer);
+    toastTimer = window.setTimeout(() => toast.classList.remove('on'), 2600);
+  };
+
   const focusInst = (): ItemInstance | null => {
     const uid = dragUid || hoverUid || sel;
     return uid ? (bagInst(uid) ?? null) : null;
   };
-  const bestButtons = (short: boolean): HTMLElement[] => {
-    const hero = curHero();
-    const out: HTMLElement[] = [];
-    if (hero)
-      out.push(
-        btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: ${className(hero.class)}`, () => {
-          sel = '';
-          apply(() => src.equipBest([hero.id]));
-        }),
-      );
-    const all = btn(`gr-btn${short ? ' sm' : ''}`, `${short ? 'Best' : 'Equip best'}: all`, () => {
-      sel = '';
-      apply(() => src.equipBest());
-    });
-    all.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
-    out.push(
-      all,
-      btn(`gr-btn${short ? ' sm' : ''} primary`, 'Done', close),
-    );
-    return out;
+  const badge = (n: number, cls: string, tip: string): HTMLElement => {
+    const b = el('span', `gr-pt ${cls}`, String(n));
+    b.title = tip;
+    return b;
   };
   function renderHead(): void {
-    const left = el('div', 'gr-head-l');
-    left.append(el('div', 'gr-title', 'Gear'));
-    if (phoneLayout()) {
-      // telefonda iki ayrı tam ekran: Character / Inventory (C tuşu da geçirir); alt satır yok, düğmeler başlığın sağında
-      left.append(viewTabs(view, (k) => {
-        view = k;
-        renderAll();
-      }));
-      const acts = el('div', 'gr-head-acts');
-      acts.append(...bestButtons(true));
-      head.replaceChildren(left, acts);
-      return;
-    }
-    const gold = el('div', 'gr-gold', `${src.gold()} gold`);
+    const hero = curHero();
+    tabBtns.forEach((b, i) => {
+      const on = (i === 0 ? 'hero' : 'sheet') === tab;
+      b.classList.toggle('on', on);
+      b.setAttribute('aria-selected', String(on));
+    });
+    const sheetBtn = tabBtns[1]!;
+    sheetBtn.querySelector('.gr-pt')?.remove();
+    if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
+    gold.replaceChildren(document.createTextNode(String(src.gold())));
     withUiIcon(gold, 'gold');
-    head.replaceChildren(left, gold);
+    gold.title = 'Gold';
   }
-  function renderChar(): void {
-    const scroll = ['.gr-heroes', '.gr-mid'].map((q) => [q, charWrap.querySelector<HTMLElement>(q)?.scrollTop ?? 0] as const);
-    const r = renderCharacter({
+  function renderMarks(): void {
+    marksBox.replaceChildren(
+      heroMarks({
+        heroes: src.heroes(),
+        heroId,
+        focus: focusInst(),
+        onHero: (id) => {
+          if (id !== heroId) pending = {};
+          heroId = id;
+          renderAll();
+        },
+      }),
+    );
+  }
+  function renderLeft(): void {
+    const top = pageL.scrollTop;
+    const hero = curHero();
+    const r = renderLedgerPage({
+      tab,
       heroes: src.heroes(),
       heroId,
       focus: focusInst(),
+      ...(hero && (hero.hpRatio !== undefined || hero.alive === false) ? { hpRatio: hero.alive === false ? 0 : (hero.hpRatio ?? 1) } : {}),
       ...(o.tutorial ? { hint: 'Your escort left their gear for the new company. Drag an item from the bag onto a hero or a slot, or let Equip best choose.' } : {}),
-      compact: phoneLayout(),
       onHero: (id) => {
-        if (id !== heroId) pending = {};
         heroId = id;
         renderAll();
       },
@@ -535,30 +604,65 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     });
     curStats = r.stats;
     afterStats = r.after;
-    charWrap.replaceChildren(r.el);
-    for (const [q, top] of scroll) {
-      const e = charWrap.querySelector<HTMLElement>(q);
-      if (e) e.scrollTop = top;
-    }
+    leafL.replaceChildren(r.el);
+    folioL.textContent = `· ${tab === 'hero' ? 1 : 3} ·`;
+    pageL.scrollTop = top;
     if (ix.dragging()) ix.remark();
   }
-  function renderInv(): void {
+  /** Odak (üstüne gelinen / sürüklenen / seçili item) değişti: farklar ve yer imi ipuçları. */
+  function renderFocus(): void {
+    renderMarks();
+    renderLeft();
+  }
+  const bestButtons = (): HTMLElement[] => {
+    const hero = curHero();
+    const out: HTMLElement[] = [];
+    if (hero)
+      out.push(
+        btn('gr-btn sm gr-best', `Best: ${className(hero.class)}`, () => {
+          sel = '';
+          apply(() => src.equipBest([hero.id]));
+        }),
+      );
+    const all = btn('gr-btn sm gr-best', 'Best: all', () => {
+      sel = '';
+      apply(() => src.equipBest());
+    });
+    all.title = 'Equip best for the whole company';
+    all.dataset['tut'] = 'best'; // mentor dersi vurgusu (data/tutorial.json > gear)
+    out.push(all);
+    return out;
+  };
+  function renderRight(): void {
+    folioR.textContent = `· ${tab === 'hero' ? 2 : 4} ·`;
+    if (tab === 'sheet') {
+      // skill ağacı (Ömer 2026-10-18): kap aynı, içerik yok
+      const hero = curHero();
+      const hd = el('div', 'gr-sec gr-tree-head', 'Skill tree');
+      if ((hero?.skillPoints ?? 0) > 0) hd.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
+      const tree = el('div', 'gr-tree gr-soon');
+      tree.append(el('span', '', 'Coming soon'));
+      leafR.replaceChildren(hd, tree);
+      return;
+    }
     const hero = curHero();
     const bag = src.bag();
     if (sel && !bag.some((i) => i.uid === sel)) sel = '';
-    const scroll = invWrap.querySelector<HTMLElement>('.gr-bag')?.scrollTop ?? 0;
+    const scroll = leafR.querySelector<HTMLElement>('.gr-bag')?.scrollTop ?? 0;
     const inv = renderInventory({
       items: bag,
       size: src.bagSize,
       ...(hero ? { usableClass: hero.class } : {}),
       filter: {
         on: usableOnly,
-        label: usableOnly && hero ? `Usable by ${className(hero.class)}` : 'All items',
+        // telefonda kısa (torba başlığına Best düğmeleriyle sığsın)
+        label: usableOnly && hero ? (phoneLayout() ? 'Usable' : `Usable by ${className(hero.class)}`) : phoneLayout() ? 'All' : 'All items',
         toggle: () => {
           usableOnly = !usableOnly;
-          renderInv();
+          renderRight();
         },
       },
+      headExtra: bestButtons(),
       selected: sel,
       shake: shakeUid,
       onTap: (uid) => {
@@ -572,36 +676,25 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     });
     shakeUid = '';
     if (!bag.length) inv.append(el('div', 'gr-card-empty', src.emptyText ?? 'The bag is empty.'));
-    invWrap.replaceChildren(...(phoneLayout() ? [heroRail(src.heroes(), heroId, (id) => {
-      heroId = id;
-      renderAll();
-    }), inv] : [inv]));
-    const g = invWrap.querySelector<HTMLElement>('.gr-bag');
+    leafR.replaceChildren(inv);
+    const g = leafR.querySelector<HTMLElement>('.gr-bag');
     if (g) {
       snapBagRows(g);
       g.scrollTop = scroll;
     }
   }
-  function renderFoot(): void {
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText);
-    flashText = '';
-    foot.replaceChildren(hint, ...bestButtons(false));
-  }
-  let shownView = '';
   function renderAll(): void {
     ix.hideTips();
-    const phone = phoneLayout();
-    const vk = phone ? view : 'desk';
-    if (shownView && vk !== shownView) swapIn(body);
-    shownView = vk;
-    panel.classList.toggle('gr-phone', phone);
-    panel.classList.toggle('show-char', phone && view === 'char');
-    panel.classList.toggle('show-inv', phone && view === 'inv');
+    panel.classList.toggle('tab-hero', tab === 'hero');
+    panel.classList.toggle('tab-sheet', tab === 'sheet');
     renderHead();
-    renderChar();
-    renderInv();
-    if (phone && flashText) ix.tip.hide();
-    renderFoot();
+    renderMarks();
+    renderLeft();
+    renderRight();
+    if (flashText) {
+      showToast(flashText);
+      flashText = '';
+    }
   }
   renderAll();
   return close;

@@ -2,6 +2,48 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.8.4.6",
+      "date": "2026-10-18",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "New Gear screen: one full-page ledger for every hero, with Hero and Sheet tabs and hero bookmarks on the left."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "The close button now sits where Menu is; Menu comes back when the window closes."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Sheet tab shows HP and MP bars, stat rows with - and + buttons, and a skill tree page (coming soon)."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Empty gear slots show drawn slot icons."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Battles and the map use much less memory, and battles open faster."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Scrolling no longer sticks while an item tip is pinned."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.8.4.5",
       "date": "2026-10-18",
       "groups": [

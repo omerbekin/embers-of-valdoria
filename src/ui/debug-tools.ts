@@ -189,7 +189,8 @@ export function registerDebugTools({ game, debug }: Ctx): void {
   });
   // Mob battle: both sides are filled to the full board (CELL_COUNT units each) with sefer mobs (data/mobs; not bosses).
   // Test mode, so the player side is played by hand like any test battle; the campaign save is never touched (no campaign hooks).
-  const mobBattle = (party: string[], enemies: string[]): void => {
+  // ignoreRange: Setup > Mob battle > Ignore range (menzil sınırı yok: her skill her düşman hücresine; yalnızca bu savaş).
+  const mobBattle = (party: string[], enemies: string[], ignoreRange = false): void => {
     const seed = newSeed();
     const data = {
       seed,
@@ -197,6 +198,7 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       teams: { party: content.randomCells(party, seed), enemies: content.randomCells(enemies, seed + 7) },
       partySize: party.length,
       enemySize: enemies.length,
+      ...(ignoreRange ? { ignoreRange: true } : {}),
     };
     const b = battle();
     if (b) b.scene.restart(data);
@@ -216,6 +218,10 @@ export function registerDebugTools({ game, debug }: Ctx): void {
             const seed = newSeed();
             mobBattle(content.randomTeam(seed, full, mobIds), content.randomTeam(seed + 7, full, mobIds));
           }, { icon: 'dice', title: `Both sides: ${full} random mobs each` }),
+          debugButton('Ignore range', () => {
+            const seed = newSeed();
+            mobBattle(content.randomTeam(seed, full, mobIds), content.randomTeam(seed + 7, full, mobIds), true);
+          }, { icon: 'target', title: `Both sides: ${full} random mobs each, no range limit: every skill can hit any enemy cell` }),
         ),
         heading('One mob, both sides'),
       );

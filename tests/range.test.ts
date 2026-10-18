@@ -16,9 +16,9 @@ const slotAt = (row: number, lane = 0) => row * LANES + lane;
 const R = (unit: string) => content.classes[unit]!.range!;
 const SR = (skill: string) => content.skills[skill]!.range!;
 
-function mk(party: Record<number, string>, enemies: Record<number, string>, opts: { mode?: BattleMode; off?: boolean; seed?: number; units?: Teams['units'] } = {}): Battle {
+function mk(party: Record<number, string>, enemies: Record<number, string>, opts: { mode?: BattleMode; off?: boolean; seed?: number; units?: Teams['units']; ignoreRange?: boolean } = {}): Battle {
   const base = content.battleSetup('random-battle', opts.seed ?? 1, opts.mode ?? 'test', { party: cells(party), enemies: cells(enemies), ...(opts.units ? { units: opts.units } : {}) }, false);
-  const b = new Battle(opts.off ? rangeOff(base) : rangeOn(base));
+  const b = new Battle({ ...(opts.off ? rangeOff(base) : rangeOn(base)), ...(opts.ignoreRange ? { ignoreRange: true } : {}) });
   for (const c of b.combatants) {
     Object.assign(c.stats, { critChance: 0, accuracy: 10, evasion: 0, surviveChance: 0 });
     c.hp = c.maxHp = 5000;
@@ -251,5 +251,30 @@ describe('arayüz: menzil dışı düşman hücreleri soluk (src/game/target-cel
     expect(outOfRangeCells(m, mage.uid, 'meteor')).toEqual([{ board: 'enemy', slot: slotAt(ROWS - 1) }]);
     const off = mk({ [slotAt(0)]: 'warrior' }, { [slotAt(0)]: 'mage', [slotAt(2, 1)]: 'archer' }, { off: true });
     expect(outOfRangeCells(off, at(off, 'party', slotAt(0)).uid, 'melee_attack')).toEqual([]);
+  });
+});
+
+describe('debug kurulumu: ignoreRange (Setup > Mob battle > Ignore range)', () => {
+  const layout = (): [Record<number, string>, Record<number, string>] => [{ [slotAt(ROWS - 1)]: 'warrior' }, { [slotAt(0)]: 'mage', [slotAt(ROWS - 1, 1)]: 'archer' }];
+
+  it('bayraksız değişiklik yok: geride duran melee hiçbir düşmana ulaşmaz, arka sıradaki düşman menzil dışı', () => {
+    const b = mk(...layout());
+    const w = at(b, 'party', slotAt(ROWS - 1));
+    expect(b.ignoreRange).toBe(false);
+    expect(b.validTargets(w.uid, 'melee_attack')).toEqual([]);
+    expect(b.targetProblem(w.uid, 'melee_attack', at(b, 'enemy', slotAt(ROWS - 1, 1)).uid)).toBe('Out of range');
+  });
+
+  it('ignoreRange: melee skill arka sıradaki düşmanı da seçer ve vurur; menzil dışı hücre yok; eski kural (menzil kapalı) da aşılır', async () => {
+    const { outOfRangeCells } = await import('../src/game/target-cells');
+    for (const off of [false, true]) {
+      const b = mk(...layout(), { ignoreRange: true, off });
+      const w = at(b, 'party', slotAt(ROWS - 1));
+      const back = at(b, 'enemy', slotAt(ROWS - 1, 1));
+      expect(uids(b.validTargets(w.uid, 'melee_attack')), `off=${off}`).toEqual(uids([at(b, 'enemy', slotAt(0)), back]));
+      expect(b.targetProblem(w.uid, 'melee_attack', back.uid)).toBeNull();
+      expect(outOfRangeCells(b, w.uid, 'melee_attack')).toEqual([]);
+      expect(b.useSkill(w.uid, 'melee_attack', back.uid).ok).toBe(true);
+    }
   });
 });

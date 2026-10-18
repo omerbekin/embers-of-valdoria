@@ -494,6 +494,15 @@ html.menu-btn-on .settings-toggle.fullscreen-toggle {
   right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
 }
 
+/* Pencerenin X kapatma düğmesi (Ömer 2026-10-18; src/ui/nav-close.ts): Menu'nün YERİNE geçer (açıkken Menu gizli), tam ekran yerinde kalır. */
+html.close-btn-on .settings-toggle.menu-toggle {
+  display: none !important;
+}
+
+html.close-btn-on .settings-toggle.fullscreen-toggle {
+  right: calc(var(--nav-edge-k) + var(--nav-hit-k) + var(--nav-gap-k) + var(--er));
+}
+
 /* --- Menü ve ayarlar ekranı: ana menü / sefer menüsüyle aynı görsel dil (koyu deri panel, altın çerçeve, serif, bronz düğmeler).
    z-index debug panelinin (20) ve sağ üst simgelerin (30) altında: debug menüsü her zaman erişilebilir. --- */
 .gm-overlay {
