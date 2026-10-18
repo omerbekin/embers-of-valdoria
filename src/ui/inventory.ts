@@ -117,6 +117,8 @@ export function renderInventory(v: InventoryView): HTMLElement {
     sec.prepend(i);
   }
   head.append(sec);
+  // sıra: ek düğmeler (Best: ...), filtre düğmesi en SAĞDA (Ömer 2026-10-18)
+  if (v.headExtra) head.append(...v.headExtra);
   if (v.filter) {
     const f = v.filter;
     const chip = el('button', `gr-chip${f.on ? ' on' : ''}`, f.label);
@@ -124,7 +126,6 @@ export function renderInventory(v: InventoryView): HTMLElement {
     chip.addEventListener('click', () => f.toggle());
     head.append(chip);
   }
-  if (v.headExtra) head.append(...v.headExtra);
   root.append(head);
   const grid = el('div', `gr-bag${v.price ? ' priced' : ''}`);
   grid.dataset['drop'] = 'bag';

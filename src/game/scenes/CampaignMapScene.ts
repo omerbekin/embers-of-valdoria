@@ -16,7 +16,6 @@ import {
   TREASURES,
   acknowledgeHandover,
   grantAllLegendaries,
-  acknowledgeLoot,
   acknowledgeLevelUps,
   activeHeroes,
   autoFormation,
@@ -96,15 +95,19 @@ import { debugState } from '../debug-state';
 import { isSettingsOpen, setSettingsOpen } from '../../ui/settings';
 import { isGameMenuOpen, setGameMenuOpen } from '../../ui/game-menu';
 import type { MapMenuState } from '../session-flow';
-import { openGearScreen, showHandover, showLevelUp, showSpoils } from '../../ui/gear-screen';
+import { campaignGearSource, openGearScreen, showHandover } from '../../ui/gear-screen';
+import { openLootScreen } from '../../ui/loot-screen';
+import { mountCampHud, type CampHud } from '../../ui/camp-hud';
+import { showLevelBanner } from '../../ui/level-banner';
+import { LEVELS } from '../../progression';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, elBack, elBadge, elBody, elButton, elGlow, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { EL, elBack, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
-import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation, openHeroPanel } from '../campaign-panels';
+import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation } from '../campaign-panels';
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
 import { ensureIcon } from '../icons';
-import { hasUiImage, uiIconName, type UiIconKind } from '../../ui/ui-icons';
+import { hasUiImage, uiIconName } from '../../ui/ui-icons';
 import { hasMiscImage } from '../../ui/misc-icons';
 import { WORLD_AUDIO, worldSound } from '../../ui/ui-sound';
 import { sceneMusic } from '../../ui/music';
@@ -189,8 +192,10 @@ export class CampaignMapScene extends Phaser.Scene {
   private pendingFight: { node: string; delay: number } | null = null;
   /** Katılımdan sonra savaş bekliyor (Ravenwood): bu düğümde "Formation'ı düzenle, sonra savaşı başlat" kartı (sahne kapanınca söner). */
   private arrangeNotice: string | null = null;
-  /** Zorunlu Formation kapısı açıkken Formation düğmesinin arkasındaki parıltı (nudge çakması için). */
-  private formationGlow: Phaser.GameObjects.Image | null = null;
+  /** Global Gear + Formation ikonları (DOM, sol alt; src/ui/camp-hud.ts). */
+  private campHud: CampHud | null = null;
+  /** Açık ipucu kartı "Formation'ı düzenle" ipucu mu (Formation düğmesi o sürece parlar). */
+  private tipIsArrange = false;
   private legendOpen = true;
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
@@ -229,7 +234,8 @@ export class CampaignMapScene extends Phaser.Scene {
     this.longPressed = false;
     this.pendingFight = null;
     this.arrangeNotice = null;
-    this.formationGlow = null;
+    this.campHud = null;
+    this.tipIsArrange = false;
   }
 
   preload(): void {
@@ -265,6 +271,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.toastFn = elToast(this, 150, this.ui); // bildirim arayüz katmanında
     this.renderHud();
     this.syncValor();
+    this.mountCampHud();
     this.bindCamera();
     const compact = document.documentElement.classList.contains('compact') || document.documentElement.classList.contains('short');
     if (compact) this.mapZoom = 1.2;
@@ -1041,7 +1048,8 @@ export class CampaignMapScene extends Phaser.Scene {
     const big = c ? 28 : 21;
     const small = c ? 26 : 19;
     const gap = c ? 44 : 34;
-    const y2 = H - (c ? 40 : 34);
+    const lift = c ? 170 : 104; // sol alttaki global Gear + Formation ikonlarının üstünde
+    const y2 = H - (c ? 40 : 34) - lift;
     const y1 = y2 - gap;
     const region = this.map.regions.find((r) => r.id === node(this.map, s.at).region);
     const r = elText(this, x, y1, region ? region.title : this.map.title, big, EL.ON, { em: 0.06 }).setOrigin(0, 0.5);
@@ -1062,20 +1070,6 @@ export class CampaignMapScene extends Phaser.Scene {
     return !!this.walking || !!this.modal || this.menuOpen || !!this.town || !!this.slotBrowser || isSettingsOpen();
   }
 
-  /** Yazı düğmesinin dokunma alanını büyütür (telefonda >= 44 gerçek px: 1080 birimlik sahne 390 px'e iner, 124 birim ~ 45 px). */
-  /** Bağlantı düğmesinin arkasında kor parıltısı + yazı parıltısı (nabız); dikkat çekme (tutorial). Arkadaki parıltı görüntüsünü döner. */
-  private pulseLink(l: { root: Phaser.GameObjects.Container; width: number; text: Phaser.GameObjects.Text }, h: number): Phaser.GameObjects.Image {
-    const w = l.width + 60;
-    const glow = this.add.image(l.width / 2, 0, ensureGlow(this)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(w, h * 1.3).setAlpha(0.35);
-    l.root.addAt(glow, 0);
-    elGlow(l.text, true);
-    l.text.setColor(EL.ON);
-    const reduce = window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-    if (!reduce) this.tweens.add({ targets: glow, alpha: { from: 0.3, to: 0.85 }, duration: 900, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
-    glow.once('destroy', () => this.tweens.killTweensOf(glow));
-    return glow;
-  }
-
   /** Zorunlu Formation kapısı açık mı (tutorial, Ravenwood; ayar kapalıysa yok). */
   private formationDue(): boolean {
     return formationGate(this.s, tutorialsOn());
@@ -1086,26 +1080,13 @@ export class CampaignMapScene extends Phaser.Scene {
     this.toast('Open Formation first.');
     this.arrangeNotice = this.s.at;
     this.showTip();
-    const g = this.formationGlow;
-    if (g?.active) this.tweens.add({ targets: g, scaleX: g.scaleX * 1.25, scaleY: g.scaleY * 1.25, duration: 160, yoyo: true, repeat: 2, ease: 'Sine.easeInOut' });
-  }
-
-  private growHit(l: { root: Phaser.GameObjects.Container; width: number }, h: number, minW = 0): void {
-    const zone = l.root.list.find((o): o is Phaser.GameObjects.Zone => o instanceof Phaser.GameObjects.Zone);
-    if (!zone) return;
-    const w = Math.max(l.width, minW);
-    zone.setPosition(w / 2, 0).setSize(w, h);
+    this.campHud?.pulse('formation');
   }
 
   /** Kısa / dar ekran (telefon yatay): dokunma hedefleri büyür, kart DOM simgelerinin altına iner. */
   private compact(): boolean {
     const c = document.documentElement.classList;
     return c.contains('compact') || c.contains('short');
-  }
-
-  /** Bağlantı düğmesinin ikonu (boyalı arayüz ikonu varsa doku anahtarı; yoksa ikonsuz). */
-  private linkIcon(k: UiIconKind): { icon?: string } {
-    return hasUiImage(k) ? { icon: ensureIcon(this, uiIconName(k), '#e8c47e', false) } : {};
   }
 
   private coin(x: number, y: number, size = 26): Phaser.GameObjects.GameObject {
@@ -1117,7 +1098,7 @@ export class CampaignMapScene extends Phaser.Scene {
     return g;
   }
 
-  /** Sol sütun: "Your party · n / 4", kahraman satırları (dokun = kahraman paneli), Formation · Gear. */
+  /** Sol sütun: "Your party · n / 4", kahraman satırları (dokun = o kahramanın Gear sekmesi). */
   private renderParty(x: number, y: number): number {
     const L = this.hud;
     const team = activeHeroes(this.s);
@@ -1168,29 +1149,8 @@ export class CampaignMapScene extends Phaser.Scene {
       row.add(zone);
       L.add(row);
     });
-    const ly = y + 44 + team.length * 112 + 16;
-    if (team.length) {
-      // Formation / Gear ALT ALTA, ikonlar büyük (Ömer 2026-10-12). Telefonda satır aralığı = dokunma alanı (124 birim ~ 45 gerçek px)
-      const c = this.compact();
-      const pitch = c ? 124 : 64;
-      const size = c ? 28 : 21;
-      const iconSize = c ? 64 : 42;
-      const y0 = ly + pitch / 2 - (c ? 14 : 8);
-      const f = elLink(this, 'Formation', () => this.openFormationFromHud(), { size, iconSize, ...this.linkIcon('formation') });
-      f.root.setPosition(x - 6, y0);
-      // Zorunlu Formation (tutorial, Ravenwood; Ömer 2026-10-17): açılana kadar düğme kor rengiyle nabız gibi parlar
-      if (this.formationDue()) this.formationGlow = this.pulseLink(f, pitch);
-      else this.formationGlow = null;
-      const g = elLink(this, 'Gear', () => this.canOpenSide() && this.openGear(), { size, iconSize, ...this.linkIcon('gear') });
-      g.root.setPosition(x - 6, y0 + pitch);
-      this.growHit(f, pitch, 300);
-      this.growHit(g, pitch, 300);
-      L.add([f.root, g.root]);
-      const end = y0 + pitch + pitch / 2;
-      // İpucu satırı yok (Ömer 2026-10-13: bariz yönerge yazıları kaldırıldı)
-      return c ? end - 10 : end + 4;
-    }
-    return ly;
+    // Formation / Gear artık sol alttaki global ikonlar (camp-hud.ts; Ömer 2026-10-18)
+    return y + 44 + team.length * 112 + 16;
   }
 
   /**
@@ -1382,6 +1342,41 @@ export class CampaignMapScene extends Phaser.Scene {
     this.toastFn?.(text);
   }
 
+  // ------------------------------------------------------------ global Gear + Formation ikonları (Ömer 2026-10-18)
+
+  /** Sol alttaki DOM ikonları (harita, kasaba, tüccar ekranında aynı yer); sahne kapanınca kalkar. */
+  private mountCampHud(): void {
+    const root = document.getElementById('ui-root');
+    if (!root) return;
+    const hud = mountCampHud(root, {
+      gear: () => {
+        if (this.canOpenSide()) this.openGear();
+      },
+      formation: () => this.openFormationFromHud(),
+    });
+    this.campHud = hud;
+    this.time.addEvent({ delay: 200, loop: true, callback: () => this.syncCampHud() });
+    this.events.once('shutdown', () => {
+      hud.destroy();
+      if (this.campHud === hud) this.campHud = null;
+    });
+    this.syncCampHud();
+  }
+
+  /**
+   * İkonların görünürlüğü ve parlaması. Gizli: takım yokken ya da bir pencere / menü / Gear açıkken. Gear parlar: harcanmamış stat puanı olan
+   * kahraman var (Level Up şeridinin yönlendirmesi; puan harcanana dek). Formation parlar: "Formation'ı düzenle" ipucu açık ya da zorunlu
+   * Formation kapısı (ipucu kapanınca / Formation açılınca söner; başka ipuçlarında parlamaz).
+   */
+  private syncCampHud(): void {
+    const hud = this.campHud;
+    if (!hud || !current()) return;
+    const busy = !!this.modal || this.menuOpen || !!this.slotBrowser || isSettingsOpen() || !!this.walking || !!document.querySelector('#ui-root .gr-overlay');
+    hud.setHidden(!activeHeroes(this.s).length || busy);
+    hud.setGlow('gear', this.s.roster.some((h) => (h.statPoints ?? 0) > 0));
+    hud.setGlow('formation', (!!this.tip && this.tipIsArrange) || this.formationDue());
+  }
+
   // ------------------------------------------------------------ akış
 
   private refresh(animateFog = true): void {
@@ -1499,43 +1494,45 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Bekleyen kartlar (madde 280): önce "Spoils" (zafer / sandık loot'u), sonra Ashford teslimi (yeni bölük kurulduktan sonra; item takma
-   * tutorial'ı). Bir kart açıldıysa true: kart kapanınca advance yeniden çağrılır.
+   * Bekleyen ekranlar: önce LOOT ekranı (zafer / sandık / hediye ganimeti; Ömer 2026-10-18: eski "Spoils" kartı ve "Level Up" kartı kalktı),
+   * sonra Ashford teslimi (yeni bölük kurulduktan sonra; item takma tutorial'ı). Level atlama yalnızca kısa şerit gösterir (bloklamaz).
+   * Bir ekran açıldıysa true: kapanınca advance yeniden çağrılır. Savaş zaferinde ganimet ekranı savaş sahnesinde açılır (campaign-session.ts);
+   * buraya yalnızca sandık / hediye ya da yarım kalan (kayıttan yüklenen) ganimet gelir.
    */
   private showPendingCards(): boolean {
     const root = document.getElementById('ui-root');
     if (!root) return false;
     const s = this.s;
     if (s.pendingLoot) {
-      showSpoils(root, {
+      const h = openLootScreen(root, {
         get: () => this.s,
         set: (x) => setState(x),
-        // Geride kalan yoksa kart kapanır; varsa Gear'dan dönünce kart yeniden açılır (yer açıp almak için; madde 280)
-        gear: () => {
-          if (!this.s.pendingLoot?.left?.length) setState(acknowledgeLoot(this.s));
-          this.openGear(undefined, false, () => this.advance());
-        },
-        done: () => {
-          setState(acknowledgeLoot(this.s));
+        gear: campaignGearSource(() => this.s, (x) => setState(x)),
+        onDone: () => {
+          this.renderHud();
           this.advance();
         },
       });
+      this.events.once('shutdown', () => h.abort()); // sahne kapanırsa ganimet kayıtta bekler
       return true;
     }
-    // Level Up kartı (Ömer 2026-10-17, levels.md): savaş / olay / hazineden sonra, Spoils'tan sonra
+    // Level atlama (Ömer 2026-10-18): açılır pencere yok; kısa şerit + Gear düğmesi / kahraman yer imi parlar (puan harcanana dek)
     if (s.levelUps?.length) {
       const ups = s.levelUps;
-      showLevelUp(root, ups.map((u) => ({ name: content.classes[s.roster.find((h) => h.id === u.heroId)?.class ?? '']?.name ?? 'A hero', from: u.from, to: u.to })), {
-        spend: () => {
-          setState(acknowledgeLevelUps(this.s));
-          this.openGear(ups[0]!.heroId, false, () => this.advance(), 'char');
-        },
-        later: () => {
-          setState(acknowledgeLevelUps(this.s));
-          this.advance();
-        },
-      });
-      return true;
+      showLevelBanner(
+        root,
+        ups.map((u) => {
+          const hero = s.roster.find((h) => h.id === u.heroId);
+          return {
+            name: content.classes[hero?.class ?? '']?.name ?? 'A hero',
+            to: u.to,
+            gained: u.to - u.from,
+            points: (u.to - u.from) * LEVELS.statPointsPerLevel,
+            healed: !!hero && !isFallen(hero),
+          };
+        }),
+      );
+      setState(acknowledgeLevelUps(this.s));
     }
     if (s.pendingHandover && !FORCED.includes(nextStep(s).kind)) {
       showHandover(root, s, {
@@ -1951,8 +1948,10 @@ export class CampaignMapScene extends Phaser.Scene {
     this.tip = null;
     const arrange = this.arrangeNotice === this.s.at && nextStep(this.s).kind === 'battle' ? (CONFIG.texts['recruitFormation'] ?? '') : '';
     if (!arrange) this.arrangeNotice = null;
-    const text = pendingTip(this.s) ?? (arrange || null);
+    const tipText = pendingTip(this.s);
+    const text = tipText ?? (arrange || null);
     if (!text) return;
+    this.tipIsArrange = !tipText && !!arrange; // yalnızca "Formation'ı düzenle" ipucunda Formation düğmesi parlar
     const c = this.add.container(0, 0);
     this.tip = c;
     this.ui.add(c);
@@ -1976,6 +1975,8 @@ export class CampaignMapScene extends Phaser.Scene {
     setState(markTipSeen(this.s));
     this.tip.destroy(true);
     this.tip = null;
+    this.tipIsArrange = false;
+    this.syncCampHud();
   }
 
   /**
@@ -2191,22 +2192,11 @@ export class CampaignMapScene extends Phaser.Scene {
     return true;
   }
 
-  private openHero(heroId: string): void {
+  /** Kahramana dokunma / "Hero details": ortak Gear o kahramanın sekmesinde açılır (eski kahraman paneli kalktı; Ömer 2026-10-18). */
+  private openHero(heroId: string, after?: () => void): void {
     if (!this.canOpenSide()) return;
     this.closeModal();
-    this.sideOpen = true;
-    this.modal = openHeroPanel(this, this.ui, heroId, {
-      get: () => this.s,
-      gear: (id) => {
-        this.closeModal();
-        this.openGear(id, false, () => this.openHero(id));
-      },
-      formation: () => this.openFormation(),
-      close: () => {
-        this.closeModal();
-        this.renderHud();
-      },
-    });
+    this.openGear(heroId, false, after);
   }
 
   private openFormationFromHud(): void {
@@ -2219,6 +2209,8 @@ export class CampaignMapScene extends Phaser.Scene {
     if (this.pausedBlocks()) return;
     // Zorunlu Formation (tutorial): açıldı = kapı kalkar (Done / zemin / Esc hangisiyle kapanırsa kapansın); kapanınca HUD yenilenir, parıltı söner
     if (this.s.formationDue !== undefined) setState(markFormationOpened(this.s));
+    this.tipIsArrange = false; // dizilim ipucunun parlaması Formation açılınca söner
+    this.syncCampHud();
     this.closeModal();
     this.sideOpen = true;
     this.modal = openFormation(this, this.ui, {
@@ -2231,7 +2223,7 @@ export class CampaignMapScene extends Phaser.Scene {
         this.placeCaravan(this.s.at);
       },
       toUi: (p) => this.uiPoint(p),
-      heroPanel: (id) => this.openHero(id),
+      heroPanel: (id) => this.openHero(id, () => this.openFormation()),
     });
   }
 

@@ -601,7 +601,7 @@ const fireBolt: V2Vfx = async (c, k) => {
     c.targets.map(async (t) => {
       c.sfx('flameRoar');
       const from = { x: hand.x + f * lead(c.actor), y: hand.y };
-      const to = k.spot(t);
+      const to = k.contact(c.actor, t);
       const dir = to.x >= from.x ? 1 : -1;
       const arc = Math.min(50, Math.abs(to.x - from.x) * 0.05);
       const core = glow(c, k, from.x, from.y, 26, 0xfff2c0, 1, k.DEPTH + 34);

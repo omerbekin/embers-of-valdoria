@@ -48,7 +48,7 @@ export { storage } from './kv-storage';
 import { storage } from './kv-storage';
 import { partyWeapons } from './pose-weapons';
 import { logEvent } from '../diag/diag';
-import { trackKills, type KillRecord } from '../progression/levels';
+import { totalXpFor, trackKills, type KillRecord } from '../progression/levels';
 
 export const session = {
   state: null as CampaignState | null,
@@ -255,6 +255,32 @@ export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): 
   return down === 1 ? `One hero has fallen: they stay down until revived ${where}` : `${down} heroes have fallen: they stay down until revived ${where}`;
 }
 
+/** Toplam XP (level eşiklerinin toplamı + mevcut XP): savaştan kazanılan XP'yi göstermek için fark alınır. */
+const totalXp = (level: number, xp: number): number => totalXpFor(level) + xp;
+
+/**
+ * Zaferden sonra (Continue): düşen ganimet varsa LOOT ekranı savaş sahnesinin üstünde açılır (Ömer 2026-10-18: "moblar ölünce loot ekranı";
+ * haritada eski "Spoils" kartı açılmaz). Ekran kapanınca (alınmayanlar bırakıldı) kayıt yenilenir ve haritaya geçilir. Ganimet yoksa doğrudan harita.
+ */
+function openLootThenMap(game: Phaser.Game, xp: Array<{ name: string; gain: number }>): void {
+  const root = document.getElementById('ui-root');
+  if (!session.state?.pendingLoot || !root) return void goTo(game, MAP_SCENE);
+  void import('../ui/loot-screen').then(async (m) => {
+    const g = await import('../ui/gear-screen');
+    const h = m.openLootScreen(root, {
+      get: () => session.state!,
+      set: setState,
+      gear: g.campaignGearSource(() => session.state!, setState),
+      xp,
+      onDone: () => {
+        save('auto'); // alınan item'ler kayda geçsin
+        goTo(game, MAP_SCENE);
+      },
+    });
+    game.scene.getScene(BATTLE_SCENE).events.once('shutdown', () => h.abort());
+  });
+}
+
 /** Sefer savaşının sonuç ekranı düğmeleri. */
 export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: boolean, battle: Battle): ResultAction[] {
   if (recording?.battle === battle) stopRecording();
@@ -271,14 +297,17 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
         primary: true,
         run: () => {
           const s = session.state;
+          let xp: Array<{ name: string; gain: number }> = [];
           if (s && s.at === plan.nodeId) {
             const kills = killsOf(battle);
+            const before = new Map(s.roster.map((h) => [h.id, totalXp(h.level, h.xp)]));
             session.state = applyBattle(s, { ...outcomeFrom(plan, true, battleSummary(battle)), ...(kills ? { kills } : {}) });
+            xp = session.state.roster.map((h) => ({ name: content.classes[h.class]?.name ?? h.class, gain: totalXp(h.level, h.xp) - (before.get(h.id) ?? 0) })).filter((x) => x.gain > 0);
             killTrack?.stop();
             killTrack = null;
             save('auto');
           }
-          goTo(game, MAP_SCENE);
+          openLootThenMap(game, xp);
         },
       },
     ];

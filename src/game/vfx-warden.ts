@@ -373,7 +373,7 @@ export async function ashbrand(c: VfxCtx, k: Kit): Promise<void> {
   k.burst(c.scene, chest.x, chest.y, { colors: EMBER, n: 8, speed: [40, 140], gravity: -120, life: [400, 700], size: [5, 9] });
   await k.wait(c.scene, k.slow(320));
   if (!t) return;
-  const to = { x: t.container.x, y: t.container.y - t.h * 0.55 };
+  const to = k.contact(c.actor, t, { x: t.container.x, y: t.container.y - t.h * 0.55 });
   const ember = k.sprite(c.scene, 'ember', '#e0702a', chest.x, chest.y, 34, k.DEPTH + 30);
   await k.travel(c.scene, ember, to, 420, {
     arc: 120,

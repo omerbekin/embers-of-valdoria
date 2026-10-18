@@ -12,6 +12,7 @@ import { ensureIcon } from './icons';
 import { cellOutlineEdges } from './cell-style';
 import { cellQuad } from './shape-geometry';
 import * as WARDEN from './vfx-warden';
+import { CONTACT_EDGE_RATIO } from './vfx-scale';
 
 /**
  * Skill efektleri (VFX): hepsi piksel art. Küçük 16x16'lık sprite'lar (ikonlar + efekt sprite'ları) tamsayı katıyla büyütülür,
@@ -94,6 +95,14 @@ const wait = (scene: Phaser.Scene, ms: number) => new Promise<void>((resolve) =>
 const spot = (v: CombatantView) => ({ x: v.container.x, y: v.container.y - v.h * 0.5 });
 const feet = (v: CombatantView) => ({ x: v.container.x, y: v.container.y - 6 });
 const avgX = (list: CombatantView[], fallback: number) => (list.length ? list.reduce((s, t) => s + t.container.x, 0) / list.length : fallback);
+/**
+ * Tek hedefli merminin VARIŞ noktası (Ömer 2026-10-18): merkez değil, ilk temas = hedef gövdesinin saldırgana bakan kenarı.
+ * `p` verilmezse gövde merkezi (spot); verilirse (ör. göğüs hizası) yalnızca x saldırgana doğru kaydırılır.
+ */
+const contact = (from: { container: { x: number } } | { x: number }, t: CombatantView, p: { x: number; y: number } = spot(t)) => {
+  const fx = 'container' in from ? from.container.x : from.x;
+  return { x: p.x + (fx >= t.container.x ? 1 : -1) * t.w * CONTACT_EDGE_RATIO, y: p.y };
+};
 const dirTo = (from: CombatantView, to: { x: number }) => (to.x >= from.container.x ? 1 : -1);
 
 /** Piksel sprite: `name` ikon ya da efekt sprite adı; `size` ekrandaki kenar uzunluğu (16'nın katı olursa keskin görünür). */
@@ -1187,7 +1196,7 @@ const fireball = async (c: VfxCtx) => {
     c.targets.map(async (t) => {
       c.sfx('flameRoar');
       const a = spot(c.actor);
-      const p = spot(t);
+      const p = contact(c.actor, t);
       const s = sprite(c.scene, 'fireball', '#ff7a1a', a.x + dirTo(c.actor, p) * 40, a.y, 128, DEPTH + 30);
       if (p.x < a.x) s.setFlipX(true);
       await travel(c.scene, s, p, 340, { ease: 'in', trail: (x, y) => burst(c.scene, x, y, { colors: FIRE, n: 3, speed: [20, 110], gravity: -80, life: [260, 520], size: [8, 16] }), trailEvery: 24 });
@@ -1460,7 +1469,7 @@ const bonethrow = async (c: VfxCtx) => {
     c.targets.map(async (t) => {
       c.sfx('boneSpin');
       const a = spot(c.actor);
-      const p = spot(t);
+      const p = contact(c.actor, t);
       const s = sprite(c.scene, 'bonethrow', '#b36bff', a.x + dirTo(c.actor, p) * 30, a.y, 96, DEPTH + 30);
       await travel(c.scene, s, p, 360, { spin: 3, arc: 70, trail: (x, y) => burst(c.scene, x, y, { colors: ['#b872ff', '#5a2a9c', '#fdfaf2'], n: 2, speed: [10, 60], gravity: 0, life: [260, 480], size: [8, 12] }), trailEvery: 28 });
       s.destroy();
@@ -1732,7 +1741,7 @@ const arrowshot = async (c: VfxCtx) => {
     c.targets.map(async (t) => {
       c.sfx('arrowWhoosh');
       const a = spot(c.actor);
-      const p = spot(t);
+      const p = contact(c.actor, t);
       const ang = Math.atan2(p.y - a.y, p.x - a.x);
       const s = sprite(c.scene, 'arrow', '#d9c9a3', a.x, a.y, 96, DEPTH + 30).setRotation(arrowRot(ang));
       await travel(c.scene, s, p, 210, { trail: (x, y) => burst(c.scene, x, y, { colors: ['#ffffff', '#d9c9a3'], n: 1, speed: [0, 20], gravity: 0, life: [150, 260], size: [8, 8] }), trailEvery: 22 });
@@ -1887,7 +1896,7 @@ const aimed = async (c: VfxCtx) => {
   const a = spot(c.actor);
   await Promise.all(
     c.targets.map(async (t) => {
-      const p = spot(t);
+      const p = contact(c.actor, t);
       const reticle = sprite(c.scene, 'aimedshot', '#ff5a4a', p.x, p.y, 256, DEPTH + 35).setAlpha(0.95);
       c.scene.tweens.add({ targets: reticle, displayWidth: 112, displayHeight: 112, angle: 90, duration: slow(420), ease: 'Quad.easeIn' });
       await wait(c.scene, slow(440));
@@ -5195,6 +5204,7 @@ export const VFX_BASE_KIT = {
   pick,
   wait,
   spot,
+  contact,
   feet,
   avgX,
   dirTo,

@@ -3483,3 +3483,359 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
   white-space: nowrap;
   overflow: visible;
 }
+
+/* ===================== Çift pencere: tüccar tezgâhı / ganimet alanı + Gear defteri (Ömer 2026-10-18; taslak #v3&enc=merchant, enc=reward) =====================
+   Sol panel Gear ile AYNI üst şeridi paylaşır (başlık aynı uzaklıkta: panel .gr-ledger sınıfını da taşır); sağ üstte ortak X (Menu'nün yerinde). */
+.gr-overlay.gr-pair-ov {
+  padding-top: calc(var(--nav-edge-k) + var(--et, 0px));
+}
+
+.gr-pair {
+  display: flex;
+  gap: calc(16 * var(--u));
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: 100%;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop,
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-loot {
+  flex: 0 0 auto;
+  width: calc(600 * var(--u));
+  overflow: hidden auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-pair > .gr-shop > .gr-lhead,
+.gr-pair > .gr-loot > .gr-lhead {
+  padding-right: 0;
+  gap: calc(16 * var(--u));
+}
+
+.gr-pair > .gr-shop .gr-grow {
+  flex: 1;
+}
+
+.gr-pair .gr-shop .gr-shop-sub {
+  margin-top: calc(-6 * var(--u));
+}
+
+/* tezgâh: sekmeler, mallar (5 sütun), yenileme simgesi, satış kutusu */
+.gr-shoptabs {
+  display: flex;
+  gap: calc(18 * var(--u));
+  flex: none;
+}
+
+.gr-shoptabs .gr-tab .gr-pt {
+  margin-left: 6px;
+  min-width: 20px;
+  height: 20px;
+  font-size: 11px;
+  vertical-align: 1px;
+}
+
+.gr-shoppane {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  min-height: max(64px, calc(120 * var(--u)));
+}
+
+.gr-pair .gr-shop .gr-wares {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(8 * var(--u)) calc(12 * var(--u));
+}
+
+.gr-wares-head {
+  display: flex;
+  align-items: center;
+}
+
+.gr-wares-head .gr-reroll {
+  margin-left: auto;
+  align-self: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 calc(10 * var(--u));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  letter-spacing: 0.08em;
+}
+
+.gr-wares-head .gr-reroll::before,
+.gr-wares-head .gr-reroll::after {
+  display: none;
+}
+
+.gr-wares-head .gr-reroll svg {
+  flex: 0 0 auto;
+}
+
+.gr-wares-head .gr-reroll .gr-cost {
+  margin-left: 4px;
+  font-size: max(11px, calc(14 * var(--u)));
+}
+
+.gr-wares-head .gr-reroll .gr-price-ico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+.gr-sellbox {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  padding: calc(14 * var(--u)) calc(16 * var(--u));
+  border: 1px dashed var(--g-line2);
+  background: rgba(8, 6, 4, 0.4);
+  font: italic max(12px, calc(20 * var(--u))) var(--g-body);
+  color: var(--g-text);
+  cursor: pointer;
+}
+
+.gr-sellbox .gr-ui-ico {
+  width: max(26px, calc(44 * var(--u)));
+  height: max(26px, calc(44 * var(--u)));
+  object-fit: contain;
+  flex: none;
+}
+
+.gr-sellbox i {
+  display: block;
+  color: var(--g-dim);
+}
+
+.gr-dragging .gr-sellbox.drop-ok,
+.gr-dragging .gr-shop.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 25%, transparent);
+}
+
+.gr-shopact {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+}
+
+/* ganimet alanı */
+.gr-loot-gain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6 * var(--u)) calc(22 * var(--u));
+  font: italic max(13px, calc(21 * var(--u))) var(--g-body);
+  color: var(--g-text);
+  flex: none;
+}
+
+.gr-loot-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 max(14px, calc(24 * var(--u))) var(--g-disp);
+  letter-spacing: 0.06em;
+  color: var(--g-gold);
+}
+
+.gr-loot-xp {
+  align-self: center;
+  color: var(--g-dim);
+}
+
+.gr-loot-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden auto;
+}
+
+.gr-loot-tile.rb-tile {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: calc(14 * var(--u));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  animation: none;
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+}
+
+.gr-loot-tile .rb-medal {
+  flex: none;
+  width: max(40px, calc(72 * var(--u)));
+  height: max(40px, calc(72 * var(--u)));
+}
+
+.gr-loot-tile .rb-label {
+  flex: 1;
+  text-align: left;
+}
+
+.gr-loot-tile .gr-rare-tag {
+  flex: none;
+}
+
+.gr-pair > .gr-loot > .gr-foot,
+.gr-pair > .gr-shop > .gr-foot {
+  margin-top: auto;
+}
+
+/* üstte kısa yazı: bilgi (altın çerçeve) */
+.gr-toast.ok {
+  border-color: rgba(217, 178, 106, 0.6);
+  color: var(--g-gold);
+}
+
+/* telefon: yan panel dar, yerleşim aynı */
+html.short .gr-pair {
+  gap: 6px;
+}
+
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop,
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-loot {
+  width: 44%;
+  height: 100%;
+}
+
+html.short .gr-pair .gr-shop .gr-wares {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+html.short .gr-pair .gr-shop .gr-wares .gr-item,
+html.short .gr-pair .gr-shop .gr-bb-row .gr-item {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html.short .gr-pair .gr-odo-line,
+html.short .gr-pair .gr-shop-sub,
+html.short .gr-pair .gr-sellbox {
+  font-size: 11px;
+}
+
+html.short .gr-pair .gr-odo .gr-face {
+  display: none;
+}
+
+html.short .gr-pair .gr-loot-gain {
+  font-size: 11px;
+}
+
+html.short .gr-pair .gr-loot-tile .rb-label {
+  font-size: 10px;
+}
+
+html.short .gr-pair .gr-bb-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ===================== Sheet: üç stat sütunu AYNI satır düzeninde (Ömer 2026-10-18) =====================
+   Etiket sabit genişlik, değer sağa yaslı sabit genişlik, fark değerin hemen yanında; sütunlar içeriğe göre boyutlanır (etiket - değer boşluğu
+   sütun genişliğine göre değişmez). Temel stat satırında − / + sağda sabit (puan bitince bile yerinde). Telefon kendi sıkı düzeninde kalır. */
+.gr-ledger .gr-sgroups {
+  grid-template-columns: auto auto auto;
+  justify-content: space-between;
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-stat-k {
+  flex: 0 0 auto;
+  min-width: 3.9em;
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-sico {
+  flex: none;
+}
+
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-v {
+  flex: none;
+  min-width: 2.2em;
+}
+
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d,
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d:empty {
+  min-width: 2.6em;
+}
+
+html.short .gr-ledger .gr-sgroups {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  justify-content: normal;
+}
+
+html.short .gr-ledger .gr-sgrp:not(.vitals) .gr-stat-k {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-v {
+  min-width: 1.6em;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d,
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d:empty {
+  min-width: 2.2em;
+}
+
+/* puan satırı: puan yokken boş yer tutmaz (level çubuğunun altı boşluk bırakmaz) */
+.gr-ledger .gr-pts.gr-pts-idle {
+  display: none;
+}
+
+/* harcanmamış stat puanı rozeti (kahraman yer imi): puan harcanana dek parlar (Ömer 2026-10-18) */
+@keyframes gr-pt-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 calc(8 * var(--u)) rgba(240, 140, 40, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 calc(22 * var(--u)) rgba(255, 179, 90, 0.95), 0 0 0 2px rgba(255, 179, 90, 0.55);
+  }
+}
+
+.gr-mark .gr-pt {
+  animation: gr-pt-glow 1.6s ease-in-out infinite;
+}
+
+html.reduced-motion .gr-mark .gr-pt {
+  animation: none;
+}
+
+/* Büyük ekranda defter tüm ekranı kaplamaz (Ömer 2026-10-18): oyunun 1920x1080 tabanına göre en büyük boyutta ortada durur, etrafı kararan zemin.
+   Küçük ekran / telefon (html.short) eskisi gibi tam sayfa. Aynı kural tüccar ve loot (çift pencere) için. */
+.gr-panel.gr-gear.gr-ledger.gr-solo {
+  max-width: calc(1920 * var(--u));
+}
+
+.gr-pair {
+  max-width: calc(1920 * var(--u));
+}
+
+html.short .gr-panel.gr-gear.gr-ledger.gr-solo,
+html.short .gr-pair {
+  max-width: none;
+}
+
+/* sağ / sol kenar boşlukları (geniş ekranda oyun alanı kayması): panel sağ üstteki Menu / tam ekran / X düğmeleriyle ve altın göstergesiyle çakışmaz */
+.gr-overlay.gr-ledger-ov,
+.gr-overlay.gr-pair-ov {
+  padding-left: calc(max(8px, calc(20 * var(--u))) + var(--el, 0px));
+  padding-right: calc(max(8px, calc(20 * var(--u))) + var(--er, 0px));
+}
+
+html.short .gr-overlay.gr-ledger-ov,
+html.short .gr-overlay.gr-pair-ov {
+  padding-left: calc(6px + var(--el, 0px));
+  padding-right: calc(6px + var(--er, 0px));
+}

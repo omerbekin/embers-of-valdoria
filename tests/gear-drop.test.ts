@@ -21,6 +21,19 @@ describe('Gear sürükle-bırak / çift tıklama kararları', () => {
     expect(dropAction(src, { kind: 'bag' }, classOf)).toEqual({ kind: 'unequip', heroId: 'w', slot: 'weapon' });
     expect(dropAction(src, { kind: 'hero', heroId: 'a' }, classOf).kind).toBe('none');
   });
+  it('tüccar malı / geri alım / ganimet: torbaya bırakılınca alınır; kahramana ya da yuvaya bırakılınca alınır ve kuşanılır (aile uymalı)', () => {
+    const ware = { kind: 'ware' as const, index: 2, itemId: 'woodcutters_axe' };
+    const bb = { kind: 'bb' as const, index: 0, itemId: 'woodcutters_axe' };
+    const loot = { kind: 'loot' as const, index: 1, itemId: 'leather_coif' };
+    expect(dropAction(ware, { kind: 'bag' }, classOf)).toEqual({ kind: 'buy', index: 2 });
+    expect(dropAction(bb, { kind: 'bag' }, classOf)).toEqual({ kind: 'buyback', index: 0 });
+    expect(dropAction(loot, { kind: 'bag' }, classOf)).toEqual({ kind: 'take', index: 1 });
+    expect(dropAction(ware, { kind: 'slot', heroId: 'w', slot: 'weapon' }, classOf)).toEqual({ kind: 'buy', index: 2, heroId: 'w', slot: 'weapon' });
+    expect(dropAction(loot, { kind: 'hero', heroId: 'a' }, classOf)).toEqual({ kind: 'take', index: 1, heroId: 'a' });
+    expect(dropAction(ware, { kind: 'hero', heroId: 'a' }, classOf).kind).toBe('none'); // yay ailesi baltayı kullanamaz
+    expect(dropAction(loot, { kind: 'slot', heroId: 'a', slot: 'weapon' }, classOf).kind).toBe('none'); // yanlış yuva
+    expect(dropAction(loot, { kind: 'trash' }, classOf).kind).toBe('none');
+  });
   it('çift dokunma: aynı hedef, kısa aralık', () => {
     expect(isDoubleTap({ key: 'u1', at: 1000 }, 'u1', 1300)).toBe(true);
     expect(isDoubleTap({ key: 'u1', at: 1000 }, 'u1', 1500)).toBe(false);

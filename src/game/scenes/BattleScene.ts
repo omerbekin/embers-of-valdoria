@@ -3134,7 +3134,8 @@ export class BattleScene extends Phaser.Scene {
         board,
         ...(center !== undefined ? { center } : {}),
         ...(rowCenter ? { rowCenter } : {}),
-        ...(area ? { centerPos: this.cellPos(board, center!) } : {}),
+        // alan efektinin merkezi = gerçekten kapsanan hücrelerin ağırlık merkezi (kırpılan alanda tıklanan hücreden farklıdır)
+        ...(area ? { centerPos: cells.length ? { x: cells.reduce((n, q) => n + q.x, 0) / cells.length, y: cells.reduce((n, q) => n + q.y, 0) / cells.length } : this.cellPos(board, center!) } : {}),
         cells,
         slots,
         ...(vfxStages ? { stages: vfxStages } : {}),

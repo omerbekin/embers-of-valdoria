@@ -125,6 +125,8 @@ export interface SheetAnchors {
   core: [number, number];
   /** Zemin teması: içeriğin en alt %25'lik bandının ağırlık merkezi y'si (zemin diski/halkası; efekt bu y'yi hücre zeminine oturtur). */
   baseY: number;
+  /** Zemin bandının x ağırlık merkezi (zemin diski/halkasının YATAY ortası; efekt bunu hücre merkezine oturtur). */
+  baseX: number;
 }
 
 const ANCHOR_BAND = 0.25; // içerik yüksekliğinin alttan bu kadarı "zemin bandı"
@@ -177,11 +179,13 @@ export function vfxSheetAnchors(scene: Phaser.Scene, id: string, frame: number):
           const from = bot - (bot - top) * ANCHOR_BAND;
           let ba = 0;
           let by = 0;
+          let bx = 0;
           for (let y = Math.ceil(from); y <= bot; y++) {
             ba += rowSum[y]!;
             by += rowY[y]!;
+            for (let x = 0; x < fw; x++) bx += px[(y * fw + x) * 4 + 3]! * x;
           }
-          out = { core: [sx / sa, sy / sa], baseY: ba > 0 ? by / ba : bot };
+          out = { core: [sx / sa, sy / sa], baseY: ba > 0 ? by / ba : bot, baseX: ba > 0 ? bx / ba : sx / sa };
         }
       }
     }

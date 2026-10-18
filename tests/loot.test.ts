@@ -12,6 +12,7 @@ import {
   discardItem,
   discardNeedsConfirm,
   takeLeftover,
+  stashLoot,
   equipBest,
   newCampaign,
   nextStep,
@@ -171,6 +172,30 @@ describe('seferde loot', () => {
     // kart kapanınca geride kalanlar kaybolur
     expect(acknowledgeLoot(took).pendingLoot).toBeUndefined();
     expect(acknowledgeLoot(took).inventory).toEqual(took.inventory);
+  });
+
+  it('stashLoot (LOOT ekranı): torbaya giren düşüş ganimet alanına döner, miktar / zarlar aynı; almak torbaya koyar; boşsa değişmez', () => {
+    let s0 = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 9 }), 'archer'), '6B');
+    while (nextStep(s0).kind !== 'treasure') s0 = autoResolve(s0);
+    let s: CampaignState = { ...s0, inventory: [] };
+    delete s.pendingLoot;
+    s = completeSimple(s, 'treasure');
+    const drop = s.pendingLoot!;
+    const n = drop.items.length;
+    expect(n).toBeGreaterThan(0);
+    const ids = drop.items.map((u) => s.inventory.find((i) => i.uid === u)!.id);
+    const rolls = drop.items.map((u) => s.inventory.find((i) => i.uid === u)!.rolls);
+    const st = stashLoot(s);
+    expect(st.inventory).toHaveLength(s.inventory.length - n);
+    expect(st.pendingLoot!.items).toEqual([]);
+    expect(st.pendingLoot!.left).toEqual(ids);
+    expect(st.pendingLoot!.leftRolls).toEqual(rolls);
+    expect(st.gold).toBe(s.gold); // altın zaten kesede: değişmez
+    expect(stashLoot(st)).toBe(st); // ikinci kez: alınacak yok
+    const took = takeLeftover(st, 0);
+    expect(took.inventory).toHaveLength(st.inventory.length + 1);
+    expect(took.inventory.at(-1)!.id).toBe(ids[0]);
+    expect(stashLoot({ ...s, pendingLoot: undefined })).toEqual({ ...s, pendingLoot: undefined });
   });
 
   it('atma: Rare ve üstü onay ister, altı istemez; torbada olmayan atılamaz', () => {

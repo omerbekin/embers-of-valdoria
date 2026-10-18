@@ -118,7 +118,7 @@ const loadeddice: V2Vfx = async (c, k) => {
       s.setPosition(h.x + Math.sin(u * 40) * 5, h.y - Math.abs(Math.sin(u * 22)) * 10).setRotation(Math.sin(u * 30) * 0.5);
     });
     const stop = tumble(c, k, s, ['die_a', 'die_b', 'die_c'], '#e8d9a8');
-    const p = chest(t);
+    const p = k.contact(c.actor, t, chest(t));
     const trail = c.scene.time.addEvent({ delay: k.slow(28), loop: true, callback: () => k.burst(c.scene, s.x, s.y, { colors: second ? GOLD : BONE, n: 1, speed: [5, 30], gravity: 0, life: [180, 300], size: [5, 8] }) });
     await arcTo(c, k, s, { x: p.x - d * 14, y: p.y }, second ? 360 : 420, Math.abs(p.x - h.x) * 0.22 + 40, 2.2 * d);
     trail.remove();
@@ -195,7 +195,7 @@ const duelbet: V2Vfx = async (c, k) => {
   }
   // 3) hançer
   c.actor.play('attack');
-  const p = chest(t);
+  const p = k.contact(c.actor, t, chest(t));
   const dagger = k.v2Sprite(c, 'dagger', '#d7dce6', hand.x + d * 20, hand.y + 10, 58, k.DEPTH + 33);
   if (d < 0) dagger.setFlipX(true);
   c.sfx('duelCut');
@@ -246,7 +246,7 @@ const cardfan: V2Vfx = async (c, k) => {
       await k.wait(c.scene, k.slow(i * 90));
       c.sfx('cardFlick');
       if (fan[2 - i]) fan[2 - i]!.setAlpha(0);
-      const p = chest(t);
+      const p = k.contact(c.actor, t, chest(t));
       const card = k.v2Sprite(c, 'card_back', '#ffffff', h.x, h.y, 29, k.DEPTH + 34);
       const base = card.scaleX;
       const from = { x: h.x, y: h.y };
@@ -501,7 +501,7 @@ const allin: V2Vfx = async (c, k) => {
   c.sfx('diceRoll');
   void k.ring(c.scene, land.x, land.y + 26, { r: 60, flat: 0.32, n: 16, colors: GOLD, dur: 280, size: 8 });
   k.burst(c.scene, land.x, land.y + 20, { colors: ['#98a2b4', '#5b6579', '#e3b983'], n: 6, speed: [60, 200], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: 400, life: [240, 420], size: [8, 12] });
-  const p = chest(t);
+  const p = k.contact(c.actor, t, chest(t));
   await arcTo(c, k, die, { x: p.x - d * 20, y: p.y + 16 }, 220, 50, 1.2 * d, 'in');
   stopSpin();
   swap(c, k, die, 'gdie_six', '#ffd166');

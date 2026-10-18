@@ -173,7 +173,7 @@ const evilEye: V2Vfx = async (c, k) => {
   }
   await k.wait(c.scene, k.slow(290));
   // bakış hattı
-  const p = chest(t);
+  const p = k.contact(c.actor, t, chest(t));
   const fa = feetOf(c.actor);
   const ft = feetOf(t);
   const g = c.scene.add.graphics().setDepth(k.FLOOR_FX + 3);
@@ -426,7 +426,7 @@ const jinx: V2Vfx = async (c, k) => {
     bead.setPosition(m.x, m.y);
   });
   // 2) fırlatma: boncuk önde, iplik dalgalı
-  const p = chest(t);
+  const p = k.contact(c.actor, t, chest(t));
   const from = { x: bead.x, y: bead.y };
   await k.counter(c.scene, k.slow(260), (u) => {
     const x = from.x + (p.x - from.x) * u;

@@ -104,6 +104,27 @@ export function takeLeftover(s: CampaignState, index: number): CampaignState {
   return t;
 }
 
+/**
+ * Loot ekranı açılırken (Ömer 2026-10-18): düşüşün torbaya otomatik giren item'leri ganimet alanına geri alınır (`left` listesine, zarlarıyla);
+ * oyuncu sürükleyip ya da dokunup alır (`takeLeftover`), almadıkları ekran kapanınca kalır (`acknowledgeLoot`). Düşüş miktarı / kuralı DEĞİŞMEZ,
+ * kayıt şeması aynı (mevcut `left` / `leftRolls` alanları). Hiç item yoksa durum aynen döner.
+ */
+export function stashLoot(s: CampaignState): CampaignState {
+  const pl = s.pendingLoot;
+  if (!pl) return s;
+  const mine = s.inventory.filter((i) => pl.items.includes(i.uid));
+  if (!mine.length) return s;
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  const p = t.pendingLoot!;
+  const prevLeft = p.left ?? [];
+  const prevRolls = prevLeft.map((_, i) => p.leftRolls?.[i]);
+  t.inventory = t.inventory.filter((i) => !p.items.includes(i.uid));
+  p.left = [...mine.map((i) => i.id), ...prevLeft];
+  p.leftRolls = [...mine.map((i) => i.rolls), ...prevRolls];
+  p.items = [];
+  return t;
+}
+
 /** Spoils kartı kapandı: geride kalan item'ler (varsa) kaybolur. */
 export function acknowledgeLoot(s: CampaignState): CampaignState {
   if (!s.pendingLoot) return s;

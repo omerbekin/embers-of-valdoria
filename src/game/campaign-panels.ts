@@ -1,9 +1,7 @@
 import Phaser from 'phaser';
 import { content, placementHintText } from '../engine';
 import { hintBadge, hintColor } from './formation-hint-ui';
-import { heroById, type CampaignState, type Hero, type NodeType } from '../campaign';
-import { SLOT_IDS, fmtPanel, gripOf, heroPanel, instanceColor, instanceSummary, itemDef, offhandBlocker, slotDef, type SlotId } from '../progression';
-import { characterTexture } from './assets';
+import type { NodeType } from '../campaign';
 import { classAvatar } from './menu-ui';
 import { SlotDrag, makeDragGhost } from './slot-drag';
 import { EL, diamondPts, elBody, elButton, elText, fitW } from './elegant-ui';
@@ -12,8 +10,8 @@ import { ensureIcon } from './icons';
 import { hasMiscImage, miscIconName } from '../ui/misc-icons';
 
 /**
- * Sefer haritası "War table" parçaları (Ömer 2026-10-09, taslak 2): düğüm glifleri, kahraman paneli (seviye / XP, 6 yuva, statlar),
- * dizilim (formation) penceresi. Kurallar src/campaign (moveHero, autoFormation); burası yalnızca çizer ve seçimi iletir.
+ * Sefer haritası "War table" parçaları (Ömer 2026-10-09, taslak 2): düğüm glifleri, dizilim (formation) penceresi. Eski kahraman paneli
+ * kaldırıldı (Ömer 2026-10-18): kahramana dokunmak / "Hero details" ortak Gear'ı o kahramanın sekmesinde açar. Kurallar src/campaign (moveHero, autoFormation); burası yalnızca çizer ve seçimi iletir.
  */
 
 const W = 1920;
@@ -97,183 +95,6 @@ export function drawNodeGlyph(g: Phaser.GameObjects.Graphics, type: NodeType, co
       L(-2, 3, 2, 3);
       break;
   }
-}
-
-/** Yuva glifi (ince çizgi; Phaser kahraman panelinde). */
-export function drawSlotGlyph(g: Phaser.GameObjects.Graphics, slot: SlotId, col: number, s: number, ox: number, oy: number): void {
-  const P = (x: number, y: number) => ({ x: ox + x * s, y: oy + y * s });
-  g.lineStyle(Math.max(1.2, 1.8 * s), col, 1);
-  switch (slot) {
-    case 'weapon':
-      g.strokePoints([P(-10, 10), P(6, -6), P(10, -10), P(8, -4), P(-8, 12)], true);
-      g.lineBetween(ox - 6 * s, oy + 4 * s, ox - 2 * s, oy + 8 * s);
-      break;
-    case 'offhand':
-      g.strokePoints([P(-9, -10), P(9, -10), P(9, 0), P(0, 11), P(-9, 0)], true);
-      g.lineBetween(ox, oy - 10 * s, ox, oy + 11 * s);
-      break;
-    case 'helm':
-      g.beginPath();
-      g.arc(ox, oy + 2 * s, 9 * s, Math.PI, 0, false);
-      g.strokePath();
-      g.strokePoints([P(-9, 2), P(-9, 9), P(-3, 9), P(-3, 3), P(3, 3), P(3, 9), P(9, 9), P(9, 2)], false);
-      break;
-    case 'armor':
-      g.strokePoints([P(-7, -10), P(-3, -8), P(3, -8), P(7, -10), P(11, -5), P(8, -2), P(8, 11), P(-8, 11), P(-8, -2), P(-11, -5)], true);
-      break;
-    case 'gloves':
-      g.strokePoints([P(-6, 11), P(-6, -1), P(-8, -7), P(-5, -8), P(-3, -2), P(-3, -10), P(0, -10), P(0, -2), P(1, -11), P(4, -11), P(3, -2), P(5, -7), P(8, -6), P(6, 2), P(6, 11)], true);
-      break;
-    case 'boots':
-      g.strokePoints([P(-6, -11), P(1, -11), P(1, 3), P(10, 6), P(10, 11), P(-8, 11), P(-8, 5)], true);
-      break;
-    case 'trinket':
-      g.strokeCircle(ox, oy + 3 * s, 7 * s);
-      g.strokePoints([P(-4, -10), P(0, -4), P(4, -10)], false);
-      break;
-  }
-}
-
-// ------------------------------------------------------------ kahraman paneli
-
-export interface HeroPanelHooks {
-  get: () => CampaignState;
-  gear: (heroId: string) => void;
-  formation: () => void;
-  close: () => void;
-}
-
-/**
- * Kahraman paneli (War table taslağı): ad, sınıf · primary, seviye + XP çubuğu, ortada karakter, iki yanda 6 ekipman yuvası (nadirlik rengi),
- * altta savaşa gireceği statlar (temel + item'ler: progression > heroPanel), pasif. Yuva ya da "Gear" = Gear ekranı (bu kahramanla).
- */
-export function openHeroPanel(scene: Phaser.Scene, layer: Phaser.GameObjects.Container, heroId: string, on: HeroPanelHooks): Modal | null {
-  const hero = heroById(on.get(), heroId);
-  const def = hero ? content.classes[hero.class] : undefined;
-  if (!hero || !def) return null;
-  const m = openModal(scene, layer, {
-    title: def.name,
-    subtitle: `${def.role ?? ''}${def.primary ? ` · ${def.primary.toUpperCase()}` : ''}${hero.leader ? ' · Leader of the company' : ''}`,
-    width: 1180,
-    height: 880,
-    y: 100,
-    buttons: [
-      { label: 'Formation', run: () => on.formation() },
-      { label: 'Gear', run: () => on.gear(heroId) },
-      { label: 'Close', primary: true, run: () => on.close() },
-    ],
-    onDismiss: () => on.close(),
-  });
-  const a = m.area;
-  const cx = W / 2;
-  // Seviye + XP (level sistemi Aşama 2'de; şimdilik kayıttaki değer)
-  const lvl = elText(scene, cx - 160, a.y + 10, `Level ${hero.level}`, 20, EL.TXT, { em: 0.1, upper: false }).setOrigin(0, 0.5);
-  const xp = elBody(scene, cx + 160, a.y + 10, `${hero.xp} XP`, 18, EL.MUTED).setOrigin(1, 0.5);
-  const bar = scene.add.graphics();
-  bar.fillStyle(EL.INK, 0.85).fillRect(cx - 160, a.y + 30, 320, 5);
-  bar.fillGradientStyle(EL.EMBER, 0xffd76a, EL.EMBER, 0xffd76a, 0.9).fillRect(cx - 160, a.y + 30, Math.max(2, 320 * Math.min(1, hero.xp / 100)), 5);
-  m.root.add([lvl, xp, bar]);
-  // Karakter + can
-  const figY = a.y + 330;
-  const glow = scene.add.graphics();
-  glow.fillStyle(EL.EMBER, 0.12).fillEllipse(cx, figY + 4, 220, 34);
-  m.root.add(glow);
-  const tex = characterTexture(scene, def.spriteId, def.color);
-  const fig = scene.add.image(cx, figY, tex.key, tex.real && scene.textures.get(tex.key).has('0') ? '0' : undefined).setOrigin(0.5, 1);
-  fig.setScale(Math.min(270 / fig.height, 230 / fig.width));
-  m.root.add(fig);
-  m.root.add(hpBar(scene, cx - 90, figY + 28, 180, 7, hero.hpRatio));
-  m.root.add(elBody(scene, cx, figY + 52, `${Math.round(hero.hpRatio * 100)}% health`, 17, EL.MUTED).setOrigin(0.5));
-  // 7 yuva (ikinci el 2026-10-12): sol 4 (Weapon, Off-hand, Helm, Armor), sağ 3
-  const sw = 330;
-  const sh = 72;
-  SLOT_IDS.forEach((slot, k) => {
-    const left = k < 4;
-    const x = left ? cx - 190 - sw : cx + 190;
-    const y = a.y + 70 + (left ? k : k - 4) * (sh + 16);
-    m.root.add(slotRow(scene, hero, slot, x, y, sw, sh, left, () => on.gear(heroId)));
-  });
-  // Statlar (4 sütun)
-  const stats = heroPanel(hero);
-  const top = a.y + 450;
-  const line = scene.add.graphics();
-  line.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(a.x + 60, top - 14, a.x + a.w - 60, top - 14);
-  m.root.add(line);
-  const colW = (a.w - 120) / 4;
-  stats.forEach((p, i) => {
-    const x = a.x + 60 + (i % 4) * colW;
-    const y = top + Math.floor(i / 4) * 38;
-    const pri = def.primary && p.id === def.primary;
-    m.root.add(elText(scene, x, y, p.label, 13, pri ? '#e9c062' : EL.MUTED, { em: 0.14 }).setOrigin(0, 0.5));
-    m.root.add(elText(scene, x + colW - 30, y, fmtPanel(p), 19, pri ? EL.PRI : EL.TXT, { em: 0.02 }).setOrigin(1, 0.5));
-    const u = scene.add.graphics();
-    u.lineStyle(1, EL.GOLD, EL.LINE.a1).lineBetween(x, y + 17, x + colW - 30, y + 17);
-    m.root.add(u);
-  });
-  const rows = Math.ceil(stats.length / 4);
-  if (def.passive) {
-    const py = top + rows * 38 + 18;
-    const t = elBody(scene, cx, py, `${def.passive.name}: ${def.passive.text ?? ''}`, 19, EL.NOTE, true, a.w - 160).setOrigin(0.5, 0).setAlign('center');
-    m.root.add(t);
-  }
-  return m;
-}
-
-function slotRow(scene: Phaser.Scene, hero: Hero, slot: SlotId, x: number, y: number, w: number, h: number, left: boolean, run: () => void): Phaser.GameObjects.Container {
-  const inst = hero.equipment[slot];
-  const d = inst ? itemDef(inst.id) : undefined;
-  const col = d && inst ? instanceColor(inst) : EL.DIM;
-  const colN = Phaser.Display.Color.HexStringToColor(col).color;
-  const c = scene.add.container(x, y);
-  const g = scene.add.graphics();
-  // İkinci el kapalı (çift el / yay / tılsım; Ömer 2026-10-12): yuva etkisiz (tıklanmaz)
-  const blocker = slot === 'offhand' && !inst ? offhandBlocker(hero.equipment) : undefined;
-  if (blocker) {
-    g.fillStyle(EL.INK, 0.4).fillRect(0, 0, w, h);
-    g.lineStyle(1, EL.GOLD, EL.LINE.a1).strokeRect(0.5, 0.5, w - 1, h - 1);
-    const icX = left ? 36 : w - 36;
-    const ic = scene.add.graphics();
-    ic.lineStyle(1, EL.GOLD, EL.LINE.a1).strokeRect(icX - 25, h / 2 - 25, 50, 50);
-    // Gölge yalnızca çift el silahta; yay / tılsım: düz kapalı boş yuva + "Hands full"
-    const two = gripOf(blocker) === 'two';
-    const glyph = scene.add.graphics();
-    drawSlotGlyph(glyph, two ? 'weapon' : slot, two ? 0x8a8478 : 0x7d705a, 1, icX, h / 2);
-    if (two) glyph.setAlpha(0.3);
-    const tx = left ? 72 : w - 72;
-    const name = elText(scene, tx, h / 2 - 11, slotDef(slot).name, 15, EL.DIM, { em: 0.05 }).setOrigin(left ? 0 : 1, 0.5);
-    const sub = two
-      ? elText(scene, tx, h / 2 + 13, '2H', 12, EL.MUTED, { em: 0.14 }).setOrigin(left ? 0 : 1, 0.5)
-      : elBody(scene, tx, h / 2 + 13, 'Hands full', 15, EL.MUTED).setOrigin(left ? 0 : 1, 0.5);
-    c.add([g, ic, glyph, name, sub]);
-    c.setAlpha(0.8);
-    return c;
-  }
-  let hover = false;
-  const draw = () => {
-    g.clear();
-    g.fillStyle(EL.INK, 0.55).fillRect(0, 0, w, h);
-    g.lineStyle(1, hover ? EL.ON_N : d ? colN : EL.GOLD, hover ? 1 : d ? 0.7 : EL.LINE.a2).strokeRect(0.5, 0.5, w - 1, h - 1);
-  };
-  draw();
-  const icX = left ? 36 : w - 36;
-  const ic = scene.add.graphics();
-  ic.lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(icX - 25, h / 2 - 25, 50, 50);
-  drawSlotGlyph(ic, slot, d ? colN : 0x7d705a, 1, icX, h / 2);
-  const tx = left ? 72 : w - 72;
-  const name = fitW(elText(scene, tx, h / 2 - 11, d ? d.name : slotDef(slot).name, 15, d ? col : EL.DIM, { em: 0.05 }).setOrigin(left ? 0 : 1, 0.5), w - 90);
-  const sub = fitW(elBody(scene, tx, h / 2 + 13, d && inst ? instanceSummary(inst, hero.class) : 'Empty slot', 15, EL.MUTED).setOrigin(left ? 0 : 1, 0.5), w - 90);
-  const zone = scene.add.zone(w / 2, h / 2, w, h).setInteractive({ useHandCursor: true });
-  zone.on('pointerover', () => {
-    hover = true;
-    draw();
-  });
-  zone.on('pointerout', () => {
-    hover = false;
-    draw();
-  });
-  zone.on('pointerup', run);
-  c.add([g, ic, name, sub, zone]);
-  return c;
 }
 
 // ------------------------------------------------------------ dizilim (formation)

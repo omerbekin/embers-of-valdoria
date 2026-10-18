@@ -240,7 +240,7 @@ const bonethrow: V2Vfx = async (c, k) => {
   const { after } = useEvents(c);
   await Promise.all(
     c.targets.map(async (t) => {
-      const p = k.spot(t);
+      const p = k.contact(c.actor, t);
       const start = { x: h.x + dir * 10, y: h.y - 20 };
       const bone = k.v2Sprite(c, 'femur', '#d9d4c0', start.x, start.y, 76, k.DEPTH + 40);
       const glow = c.scene.add.image(start.x, start.y, soulGlowTex(c, k)).setDisplaySize(120, 120).setDepth(k.DEPTH + 39).setBlendMode(k.Phaser.BlendModes.ADD).setAlpha(0.8);

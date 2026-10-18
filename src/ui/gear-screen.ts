@@ -1,5 +1,5 @@
 /**
- * Sefer kuşanma ekranı (Gear) + "Spoils" (loot) kartı + Ashford teslim kartı (madde 280; items.md 5.4). DOM katmanı, ana menünün zarif stili
+ * Sefer kuşanma ekranı (Gear) + Ashford teslim kartı (madde 280; items.md 5.4). DOM katmanı, ana menünün zarif stili
  * (Cinzel başlık, EB Garamond metin, kor/altın renkler; src/ui/gear.css). Açıkken Phaser girişi kilitli (input-lock).
  * Kurallar saf modüllerde: kuşanma `src/campaign/gear.ts`, karşılaştırma/metin `src/progression/item-text.ts`, primary uyarısı `primaryCheck`.
  * Ekran bir KAYNAK (GearSource) ile çalışır: sefer (`openGearScreen`, CampaignState) ve endless (`openGear` + src/game/endless-gear.ts) aynı ekranı besler.
@@ -8,7 +8,7 @@
 import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
-import { allocateStats, activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, takeLeftover, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { allocateStats, activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
 import {
   fitsSlot,
   isPlanError,
@@ -36,7 +36,6 @@ import {
   levelReqMsg,
   instanceLevelReq,
   type StatAlloc,
-  LEVELS,
 } from '../progression';
 import type { Attribute } from '../engine';
 import { lockInput, unlockInput } from './input-lock';
@@ -49,7 +48,8 @@ import type { Stats } from '../engine';
 import { avatarUrl, className, heroMarks, renderLedgerPage } from './character-panel';
 import { mountCloseButton } from './nav-close';
 import { renderInventory, snapBagRows } from './inventory';
-import { itemTipNodes, type ItemTipLine } from './item-tip';
+import { itemTipNodes, type ItemTipAction, type ItemTipLine } from './item-tip';
+import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
 import { heroItemLine } from './gear-hover';
 
@@ -167,6 +167,50 @@ export function openGearScreen(root: HTMLElement, o: GearOptions): () => void {
   return openGear(root, campaignGearSource(o.get, o.set), { hero: o.hero ?? activeHeroes(s0)[0]?.id ?? s0.roster[0]?.id ?? '', tutorial: o.tutorial, onClose: o.onClose, ...(o.view ? { view: o.view } : {}) });
 }
 
+/** Gear'ın dışarıya açtığı işlevler (tüccar / ganimet eki bunlarla Gear'ı sürer). */
+export interface GearApi {
+  rerender(): void;
+  /** Üstte kısa yazı (ok = bilgi, değilse hata sesi + kırmızı). */
+  flash(text: string, ok?: boolean): void;
+  hero(): GearHero | undefined;
+  /** Kuşanma (kurallar ve onaylar Gear'ın kendisi: aile / yuva / primary uyarısı). */
+  equip(heroId: string, uid: string, slot?: SlotId): void;
+  /** Seçili torba item'i (yoksa ''). */
+  selected(): string;
+  clearSel(): void;
+  close(): void;
+}
+
+/**
+ * Gear'ın yanına açılan sol panel (Ömer 2026-10-18, taslak enc=merchant / reward): tüccar tezgâhı ve ganimet alanı. Gear ekranı aynı kalır; ek
+ * yalnızca kendi sürükleme kaynaklarını / hedeflerini, ipucunu ve torba fiyatını ekler. İki panel tek çift kapta (.gr-pair) yan yana durur.
+ */
+export interface GearExt {
+  side: HTMLElement;
+  attach(overlay: HTMLElement, api: GearApi): void;
+  /** Gear her çizildiğinde (yan panel yenilenir). */
+  render(): void;
+  sourceOf?(value: string, el: HTMLElement): DragSource | null;
+  targetOf?(value: string): DropTarget | null;
+  /** true = bırakma ek tarafından işlendi. */
+  onDrop?(src: DragSource, target: DropTarget | null, action: DropAction | null): boolean;
+  tipNodes?(key: string): HTMLElement[] | null;
+  tipActions?(key: string): ItemTipAction[] | null;
+  /** Torba item'inin ipucu eylemlerine eklenenler (ör. Sell). */
+  bagActions?(uid: string): ItemTipAction[];
+  onDoubleTap?(key: string): boolean | undefined;
+  onHover?(key: string): void;
+  /** Torba hücresinin altında fiyat (tüccar satış fiyatı). */
+  price?(inst: ItemInstance): number;
+  hideGold?: boolean;
+  noTrash?: boolean;
+  /** Kapanmadan önce onay gerekiyorsa onayı açar ve true döner (onaylanınca `proceed` çağrılır). */
+  beforeClose?(proceed: () => void): boolean;
+  /** Klavye (Gear'dan önce; true = işlendi). */
+  onKey?(e: KeyboardEvent): boolean;
+  destroy?(): void;
+}
+
 /** Telefon mu (kısa sahne; src/ui/viewport.ts html.short): Character ve Inventory ayrı tam ekran + geçiş düğmesi. */
 export const phoneLayout = (): boolean => document.documentElement.classList.contains('short');
 
@@ -212,12 +256,21 @@ export function confirmIn(host: HTMLElement, text: string, ok: string, run: () =
  * atma: sürüklerken beliren çöp kutusu (Rare+ onaylı). İpucu: item'in özellikleri + her kahramana etkisi. Kaynaktan beslenir (sefer / endless).
  * Sayfa kapları kalıcıdır: odak (üstüne gelinen item) değişince yalnızca içerik yenilenir, kaydırma kabı yerinde kalır (dokunmatikte kaydırma takılmaz).
  */
-export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv' } = {}): () => void {
+export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string; tutorial?: boolean; onClose?: () => void; view?: 'char' | 'inv'; ext?: GearExt } = {}): () => void {
+  const ext = o.ext;
   const overlay = el('div', 'gr-overlay el-modal gr-ledger-ov'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Gear');
   const panel = el('div', 'gr-panel gr-gear gr-ledger el-modal-panel');
-  overlay.append(panel);
+  const pair = ext ? el('div', 'gr-pair') : null;
+  if (pair && ext) {
+    pair.append(ext.side, panel);
+    overlay.append(pair);
+    overlay.classList.add('gr-pair-ov');
+  } else {
+    panel.classList.add('gr-solo');
+    overlay.append(panel);
+  }
   root.append(overlay);
   uiSound('open');
   lockInput('gear');
@@ -275,13 +328,15 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
 
   const ix = attachItemInteractions({
     overlay,
-    panel,
-    trash: true,
-    sourceOf: (v, t) => (v.startsWith('bag:') ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : null),
-    targetOf: (v) => (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
+    panel: pair ?? panel,
+    trash: !ext?.noTrash,
+    sourceOf: (v, t) => ext?.sourceOf?.(v, t) ?? (v.startsWith('bag:') ? { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : null),
+    targetOf: (v) => ext?.targetOf?.(v) ?? (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
     classOf: (id) => heroOf(id)?.class,
     tipNodes: (key) => {
       const hero = curHero();
+      const extra = ext?.tipNodes?.(key);
+      if (extra) return extra;
       const i = key.indexOf(':');
       const kind = key.slice(0, i);
       const id = key.slice(i + 1);
@@ -295,6 +350,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; kuşanma / çıkarma buradan ya da sürükle-bırakla)
     tipActions: (key) => {
       const hero = curHero();
+      const extra = ext?.tipActions?.(key);
+      if (extra) return extra;
       if (!hero) return [];
       if (key.startsWith('bag:')) {
         const uid = key.slice(4);
@@ -303,10 +360,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         const fam = !!d && canEquip(hero.class, d);
         const lvl = !!inst && meetsLevel(hero.level, inst);
         const ok = fam && lvl;
-        const acts = [{ label: ok ? `Equip · ${className(hero.class)}` : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
+        const acts: ItemTipAction[] = [{ label: ok ? `Equip · ${className(hero.class)}` : fam && inst ? levelReqMsg(instanceLevelReq(inst)) : `${className(hero.class)} can't use`, disabled: !ok, run: () => tryEquip(hero.id, uid, d ? (fitsSlot(d, 'offhand') && d.slot === 'weapon' ? 'weapon' : undefined) : undefined) }];
         // Tek el hançer: ikinci ele de (ana elde tek el silah varken)
         // ana el boşken "Off-hand" yok (hançer zaten ana ele gider, Ömer 2026-10-14)
         if (ok && d && d.slot === 'weapon' && fitsSlot(d, 'offhand') && hero.equipment.weapon) acts.push({ label: 'Off-hand', disabled: !!offhandBlocker(hero.equipment), run: () => tryEquip(hero.id, uid, 'offhand') });
+        acts.push(...(ext?.bagActions?.(uid) ?? []));
         return acts;
       }
       if (key.startsWith('slot:')) {
@@ -320,6 +378,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     },
     // Odak değişince yalnızca yer imleri + sol sayfa yenilenir (torba DOM'u yerinde kalır: üstüne gelme bozulmaz)
     onHover: (key) => {
+      ext?.onHover?.(key);
       const uid = key.startsWith('bag:') ? key.slice(4) : '';
       if (uid === hoverUid) return;
       hoverUid = uid;
@@ -333,6 +392,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     onDrop: (s, tg, act) => {
       const hadFocus = !!dragUid;
       dragUid = '';
+      if (ext?.onDrop?.(s, tg, act)) return;
       if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
       else if (act?.kind === 'unequip') {
         itemSound(heroSlotItem(act.heroId, act.slot));
@@ -345,6 +405,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     // dokunmatik çift dokunuş (masaüstü çift tıkla aynı): torba item'i kuşanır, kuşanılmış item çıkar; kısa 'snap' sesi
     onDoubleTap: (key) => {
       const hero = curHero();
+      const extra = ext?.onDoubleTap?.(key);
+      if (extra !== undefined) return extra;
       if (!hero) return false;
       if (key.startsWith('bag:')) {
         tryEquip(hero.id, key.slice(4), undefined, true);
@@ -359,11 +421,18 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   });
 
   let closing = false;
+  /** Kapatma isteği: ek (ganimet) onay isteyebilir; onaylanınca `finalClose`. */
   const close = (): void => {
+    if (closing) return;
+    if (ext?.beforeClose?.(finalClose)) return;
+    finalClose();
+  };
+  const finalClose = (): void => {
     if (closing) return;
     closing = true;
     window.clearTimeout(toastTimer);
     unmountX();
+    ext?.destroy?.();
     closeDom(overlay, () => overlay.remove());
     document.removeEventListener('keydown', onKey, true);
     document.removeEventListener('touchend', onTouchEnd);
@@ -380,6 +449,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     swapIn(pageR);
   };
   const onKey = (e: KeyboardEvent): void => {
+    if (ext?.onKey?.(e)) return;
     if (e.key === 'Escape') {
       e.stopPropagation();
       e.preventDefault();
@@ -509,8 +579,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   toast.setAttribute('role', 'status');
   overlay.append(toast);
   let toastTimer = 0;
-  const showToast = (text: string): void => {
+  const showToast = (text: string, ok = false): void => {
     toast.textContent = text;
+    toast.classList.toggle('ok', ok);
     toast.classList.add('on');
     window.clearTimeout(toastTimer);
     toastTimer = window.setTimeout(() => toast.classList.remove('on'), 2600);
@@ -535,9 +606,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const sheetBtn = tabBtns[1]!;
     sheetBtn.querySelector('.gr-pt')?.remove();
     if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
-    gold.replaceChildren(document.createTextNode(String(src.gold())));
-    withUiIcon(gold, 'gold');
-    gold.title = 'Gold';
+    gold.replaceChildren();
+    gold.hidden = !!ext?.hideGold;
+    if (!ext?.hideGold) {
+      gold.append(document.createTextNode(String(src.gold())));
+      withUiIcon(gold, 'gold');
+      gold.title = 'Gold';
+    }
   }
   function renderMarks(): void {
     marksBox.replaceChildren(
@@ -663,6 +738,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         },
       },
       headExtra: bestButtons(),
+      ...(ext?.price ? { price: ext.price } : {}),
       selected: sel,
       shake: shakeUid,
       onTap: (uid) => {
@@ -691,11 +767,27 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     renderMarks();
     renderLeft();
     renderRight();
+    ext?.render();
     if (flashText) {
       showToast(flashText);
       flashText = '';
     }
   }
+  const api: GearApi = {
+    rerender: () => renderAll(),
+    flash: (t, ok = false) => {
+      if (!ok) uiSound('error');
+      showToast(t, ok);
+    },
+    hero: () => curHero(),
+    equip: (h, u, sl) => tryEquip(h, u, sl),
+    selected: () => sel,
+    clearSel: () => {
+      sel = '';
+    },
+    close: () => close(),
+  };
+  ext?.attach(overlay, api);
   renderAll();
   return close;
 }
@@ -825,144 +917,7 @@ function itemRow(src: Pick<ItemInstance, 'id' | 'rolls'> & { uid?: string }, gon
   return row;
 }
 
-export interface SpoilsHooks {
-  get: () => CampaignState;
-  set: (s: CampaignState) => void;
-  /** Gear ekranını aç (kart kapanır; çağıran kart dönüşünü yönetir). */
-  gear: () => void;
-  /** Kart kapandı (geride kalanlar kaybolur; çağıran acknowledgeLoot yapar). */
-  done: () => void;
-}
-
-/**
- * Zafer / sandık sonrası "Spoils" kartı (pendingLoot). Torba doluysa sığmayan item'ler soluk listelenir ("Bag full: N items left behind");
- * kart açıkken oyuncu torbadan item atıp (Rare+ onaylı) yer açabilir ve "Take" ile alabilir. Kart kapanınca geride kalanlar kaybolur (madde 280).
- */
-export function showSpoils(root: HTMLElement, on: SpoilsHooks): () => void {
-  const overlay = el('div', 'gr-overlay gr-small el-modal');
-  const panel = el('div', 'gr-panel gr-mini el-modal-panel');
-  overlay.append(panel);
-  root.append(overlay);
-  worldSound('loot_reveal'); // ganimet / hazine: sandık kapağı gıcırdar, içinde sikkeler kayar
-  lockInput('gear-card');
-  let pick = '';
-  let confirm = '';
-  const close = (): void => {
-    closeDom(overlay, () => overlay.remove());
-    unlockInput('gear-card');
-  };
-  const render = (): void => {
-    const s = on.get();
-    const drop = s.pendingLoot;
-    panel.replaceChildren();
-    if (!drop) return;
-    const insts = drop.items.map((u) => s.inventory.find((i) => i.uid === u)).filter((x): x is ItemInstance => !!x);
-    const ids = insts.map((i) => i.id);
-    const left = (drop.left ?? []).filter((id) => itemDef(id));
-    panel.append(el('div', 'gr-title', drop.gift ? 'Gift' : drop.kind === 'treasure' ? 'Treasure' : 'Spoils'));
-    if (ids.length) panel.append(el('div', 'gr-mini-sub', `${ids.length} new item${ids.length > 1 ? 's' : ''} in the bag`));
-    const list = el('div', 'gr-mini-list');
-    // Nadir düşüş (madde 297): altın-turuncu parıltılı satır + "Rare drop" etiketi
-    const rareLeft = [...(drop.rare ?? [])];
-    for (const inst of insts) {
-      const id = inst.id;
-      const row = itemRow(inst);
-      const ri = rareLeft.indexOf(id);
-      if (ri >= 0) {
-        rareLeft.splice(ri, 1);
-        row.classList.add('gr-rare-drop');
-        row.append(el('span', 'gr-rare-tag', 'Rare drop'));
-      }
-      list.append(row);
-    }
-    if (ids.length) panel.append(list);
-    // Altın 0 ise (ör. hediye) altın satırı yok
-    const goldTxt = drop.gold ? `+${drop.gold} gold` : '';
-    if (ids.length || left.length) {
-      if (goldTxt) panel.append(el('div', 'gr-mini-extra', goldTxt));
-    } else panel.append(el('div', 'gr-mini-extra', `No gear this time.${goldTxt ? ` ${goldTxt}` : ''}`));
-    if (left.length) {
-      const room = s.inventory.length < BAG_SIZE;
-      panel.append(el('div', 'gr-card-warn', `Bag full: ${left.length} item${left.length > 1 ? 's' : ''} left behind. Make room to take ${left.length > 1 ? 'them' : 'it'}, or ${left.length > 1 ? 'they are' : 'it is'} lost when you continue.`));
-      const lost = el('div', 'gr-mini-list');
-      left.forEach((id, i) => {
-        const rolls = drop.leftRolls?.[i];
-        const row = itemRow({ id, ...(rolls ? { rolls } : {}) }, true);
-        const take = btn('gr-btn', 'Take', () => {
-          on.set(takeLeftover(on.get(), i));
-          render();
-        });
-        take.disabled = !room;
-        row.append(take);
-        lost.append(row);
-      });
-      panel.append(lost);
-      // Yer aç: ortak Inventory bileşeni (Gear / tüccar / ödül torbasıyla aynı ızgara ve hücre); seç + at (Rare ve üstü onaylı)
-      const inv = renderInventory({
-        items: s.inventory,
-        size: BAG_SIZE,
-        title: 'Make room · Bag',
-        selected: pick,
-        onTap: (uid) => {
-          pick = pick === uid ? '' : uid;
-          confirm = '';
-          render();
-        },
-      });
-      inv.classList.add('gr-inv-mini');
-      panel.append(inv);
-      const picked = s.inventory.find((i) => i.uid === pick);
-      if (picked) {
-        const row = itemRow(picked);
-        row.append(discardButton(picked, confirm === picked.uid, () => {
-          confirm = picked.uid;
-          render();
-        }, () => {
-          on.set(discardItem(on.get(), picked.uid));
-          pick = '';
-          confirm = '';
-          render();
-        }));
-        panel.append(row);
-      }
-    }
-    const foot = el('div', 'gr-foot');
-    foot.append(
-      btn('gr-btn', 'Gear', () => {
-        close();
-        on.gear();
-      }),
-      btn('gr-btn primary', left.length ? `Continue (leave ${left.length})` : 'Continue', () => {
-        close();
-        on.done();
-      }),
-    );
-    panel.append(foot);
-  };
-  render();
-  return close;
-}
-
-/** "Discard" düğmesi: Rare ve üstü önce "Confirm discard" ister (madde 280). */
-function discardButton(inst: ItemInstance, confirming: boolean, ask: () => void, run: () => void): HTMLButtonElement {
-  if (!discardNeedsConfirm(inst)) return btn('gr-btn', 'Discard', run);
-  return confirming ? btn('gr-btn danger', 'Confirm discard', run) : btn('gr-btn', 'Discard', ask);
-}
-
 /** Ashford teslim kartı (pendingHandover): eski takım item'lerini yeni bölüğe bırakır. */
-/**
- * "Level Up" kartı (Ömer 2026-10-17, levels.md): kim hangi level'a çıktı; Spend points = Gear > Character (puan dağıtımı), Later = sonra.
- * Puanlar beklemede kalabilir (dağıtılmamış puan serbest).
- */
-export function showLevelUp(root: HTMLElement, ups: Array<{ name: string; from: number; to: number }>, on: { spend: () => void; later: () => void }): () => void {
-  const lines = ups.map((u) => `${u.name} reached Level ${u.to}${u.to - u.from > 1 ? ` (+${u.to - u.from})` : ''}`);
-  const pts = ups.reduce((n, u) => n + (u.to - u.from), 0) * LEVELS.statPointsPerLevel;
-  return smallCard(root, 'Level Up', `${pts} new stat point${pts === 1 ? '' : 's'} to spend`, [], [...lines, 'Heroes who leveled up are fully healed. Each level also saves a skill point for the skill trees.'], [
-    { label: 'Later', run: on.later },
-    { label: 'Spend points', primary: true, run: on.spend },
-  ]);
-}
-
 export function showHandover(root: HTMLElement, s: CampaignState, on: { equip: () => void; later: () => void }): () => void {
   const ho = s.pendingHandover;
   const ids = (ho?.items ?? []).map((u) => s.inventory.find((i) => i.uid === u)?.id ?? findEquipped(s, u)).filter((x): x is string => !!x);

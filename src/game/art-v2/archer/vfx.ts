@@ -208,7 +208,7 @@ const arrowshot: V2Vfx = async (c, k) => {
   const t = c.targets[0];
   if (!t) return;
   const d = facing(c);
-  const aim = chest(k, t);
+  const aim = k.contact(c.actor, t, chest(k, t));
   const bow = await drawBow(c, k, d, { ms: 85, pull: 0.7, arrow: 'arrow', aim, size: 88 });
   c.sfx('bowTwang');
   c.sfx('arrowWhoosh');
@@ -432,7 +432,7 @@ const aimed: V2Vfx = async (c, k) => {
   const t = c.targets[0];
   if (!t) return;
   const d = facing(c);
-  const aim = { x: t.container.x - d * t.w * 0.05, y: t.container.y - t.h * 0.55 };
+  const aim = k.contact(c.actor, t, { x: t.container.x, y: t.container.y - t.h * 0.55 });
   const dim = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x0a0812, 0).setDepth(k.DEPTH - 25);
   c.scene.tweens.add({ targets: dim, alpha: 0.22, duration: k.slow(380) });
   c.sfx('bowDraw');

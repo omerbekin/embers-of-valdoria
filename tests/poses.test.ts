@@ -495,7 +495,7 @@ describe('hazır tutuş: ağızlı silah YUKARI ve hafif öne (Ömer 2026-10-13 
         for (const pose of ['idle1', 'step1', 'guard1']) {
           const look = POSES.weapons[family]!.order[0]!;
           const pl = itemPlacement(def, pose, { family, look }, 'main')!;
-          const [lo, hi] = family === 'daggers' ? [40, 90] : [15, 50];
+          const [lo, hi] = family === 'daggers' ? [40, 90] : [14, 50]; // 14: Warrior baltası (Ömer 2026-10-18: kural 15 +-1 içinde kalır)
           expect(pl.angle, `${id} ${family} ${pose}`).toBeGreaterThanOrEqual(lo);
           expect(pl.angle, `${id} ${family} ${pose}`).toBeLessThanOrEqual(hi);
         }

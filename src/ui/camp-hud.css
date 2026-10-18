@@ -1,0 +1,134 @@
+/* Sefer ekranlarının global Gear + Formation ikonları ve level atlama şeridi (src/ui/camp-hud.ts, level-banner.ts; taslak enc=map / town). */
+.camp-hud {
+  --u: var(--gu, 1px);
+  --g-gold: #f3d999;
+  --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a;
+  --g-ember2: #ffb35a;
+  position: fixed;
+  left: calc(var(--el, 0px) + max(12px, calc(28 * var(--u))));
+  bottom: calc(var(--eb, 0px) + max(12px, calc(28 * var(--u))));
+  z-index: 18;
+  display: flex;
+  gap: max(10px, calc(16 * var(--u)));
+}
+
+.camp-hud.off {
+  display: none;
+}
+
+.camp-ib {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  width: max(44px, calc(64 * var(--u)));
+  height: max(44px, calc(64 * var(--u)));
+  padding: 0;
+  background: rgba(8, 6, 4, 0.55);
+  border: 1px solid var(--g-line2);
+  color: var(--g-gold);
+  font: 600 11px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: border-color 0.18s, background 0.2s;
+}
+
+.camp-ib img {
+  width: 62%;
+  height: 62%;
+  object-fit: contain;
+}
+
+.camp-ib:hover {
+  border-color: var(--g-gold);
+}
+
+/* parlama (Gear: harcanmamış puan; Formation: dizilim ipucu): kor nabzı, sebep bitince söner */
+@keyframes camp-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 0 1px rgba(240, 140, 40, 0.5), 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.35);
+  }
+
+  50% {
+    box-shadow: 0 0 0 1px rgba(255, 179, 90, 0.95), 0 0 calc(28 * var(--u)) rgba(240, 140, 40, 0.85);
+  }
+}
+
+.camp-ib.glow {
+  border-color: var(--g-ember2);
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.22), rgba(8, 6, 4, 0.55) 80%);
+  animation: camp-glow 1.6s ease-in-out infinite;
+}
+
+@keyframes camp-pulse {
+  0%,
+  100% {
+    transform: none;
+  }
+
+  50% {
+    transform: scale(1.18);
+  }
+}
+
+.camp-ib.pulse {
+  animation: camp-pulse 0.32s ease-in-out 3;
+}
+
+html.reduced-motion .camp-ib.glow {
+  animation: none;
+  box-shadow: 0 0 0 1px rgba(255, 179, 90, 0.95), 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.7);
+}
+
+/* level atlama şeridi: engellemez, kendiliğinden kaybolur */
+.lv-banner {
+  --u: var(--gu, 1px);
+  position: fixed;
+  left: 50%;
+  top: calc(var(--et, 0px) + max(52px, calc(112 * var(--u))));
+  transform: translateX(-50%);
+  z-index: 17;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: min(92vw, 900px);
+  pointer-events: none;
+  animation: lv-in 0.4s cubic-bezier(0.33, 1, 0.68, 1) both;
+  transition: opacity 0.5s;
+}
+
+.lv-banner.out {
+  opacity: 0;
+}
+
+.lv-line {
+  padding: 8px 20px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.96), rgba(12, 9, 6, 0.96));
+  border: 1px solid rgba(255, 179, 90, 0.65);
+  box-shadow: 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.35);
+  font: 600 max(13px, calc(20 * var(--u))) Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: #f3d999;
+}
+
+@keyframes lv-in {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -12px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+html.reduced-motion .lv-banner {
+  animation: none;
+}

@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { debugGrantXp, debugSetLevel, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { activeHeroes, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -182,7 +182,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Levels',
     icon: 'feather',
     label: 'Grant XP (one level)',
-    hint: 'Give every hero in the formation enough XP for one level (the Level Up card shows on the map)',
+    hint: 'Give every hero in the formation enough XP for one level (no popup: a short banner shows on the map, the Gear button and the hero bookmark glow until the points are spent)',
     run: () => {
       setState(debugGrantXp(ensureState(), xpToNext(levelOfTeam())));
       reload();
@@ -220,13 +220,56 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Levels',
     icon: 'team',
     label: 'Open stat allocation',
-    hint: 'Open Gear on the Character page (level, XP bar, stat points: drag the point stone onto a stat or tap +)',
+    hint: 'Open Gear on the Sheet tab (level, XP bar, stat points: drag the point stone onto a stat or tap +)',
     run: () => {
       const s = ensureState();
       if (!s.roster.length) setState(debugTeleport(s, getMap(s.mapId).nodes.find((n) => n.type === 'town')?.id ?? s.at));
       const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { openGear?: (h?: string, t?: boolean, a?: () => void, v?: 'char' | 'inv') => void }) : undefined;
       if (scene?.openGear) scene.openGear(undefined, false, undefined, 'char');
       else reload();
+    },
+  });
+  // LOOT ekranı (Ömer 2026-10-18): kazanılan savaş / sandık sonrası ortak envanterin yanında ganimet alanı
+  const dropLoot = (fullBag: boolean): void => {
+    let s = ensureState();
+    if (!s.roster.length) s = debugTeleport(s, getMap(s.mapId).nodes.find((n) => n.type === 'town')?.id ?? s.at);
+    setState(s);
+    if (fullBag) for (let i = 0; i < BAG_SIZE && bagHasRoom(current()!); i++) giveItem();
+    const t = JSON.parse(JSON.stringify(current()!)) as CampaignState;
+    grantLoot(t, t.at, 'elite', activeHeroes(t));
+    setState(t);
+    reload();
+  };
+  debug.register({
+    id: 'campaign.loot',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'dice',
+    label: 'Open Loot screen',
+    hint: 'Grant an elite drop at this stop and open the Loot screen on the map: drag the items into the bag or a hero slot (or tap them), or leave them. Gold shows there too',
+    run: () => dropLoot(false),
+  });
+  debug.register({
+    id: 'campaign.loot-full',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'team',
+    label: 'Open Loot screen (bag full)',
+    hint: 'Same, with a full bag: items cannot be taken until you make room (drag a bag item to the trash)',
+    run: () => dropLoot(true),
+  });
+  debug.register({
+    id: 'campaign.shop',
+    tab: CAMPAIGN_TAB,
+    section: 'Items',
+    icon: 'clover',
+    label: "Open Odo's shop (campaign)",
+    hint: "Jump to the first Merchant stop and open Odo the Peddler: shop panel on the left (Buy & Sell, Buyback, reroll icon), Gear on the right, X closes",
+    run: () => {
+      const s = ensureState();
+      const id = getMap(s.mapId).nodes.find((n) => n.type === 'merchant')?.id;
+      if (id) setState(debugTeleport(s, id));
+      reload();
     },
   });
   debug.register({
@@ -351,7 +394,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Tutorial',
     icon: 'shield',
     label: () => (current()?.formationDue ? 'Formation gate: on (open Formation to clear)' : 'Formation gate: require here'),
-    hint: 'Like Ravenwood after the recruit: the Formation button glows and the battle here waits until Formation is opened (needs a battle at this stop and tutorials on)',
+    hint: 'Like Ravenwood after the recruit: the tip "Arrange your formation" shows and the Formation button (bottom left) glows until the tip closes or Formation is opened; the battle here waits (needs a battle at this stop and tutorials on)',
     run: () => {
       const s = ensureState();
       setState({ ...s, formationDue: s.at });

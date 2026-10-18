@@ -817,14 +817,10 @@
       "itemPoses": {
         "axes": {
           "idle1": {
-            "angle": 15,
-            "dx": -16,
-            "dy": 4
+            "angle": 14
           },
           "guard1": {
-            "angle": 15,
-            "dx": -16,
-            "dy": 4
+            "angle": 14
           },
           "point": {
             "angle": -20
@@ -832,9 +828,7 @@
         },
         "maces": {
           "idle1": {
-            "angle": 15,
-            "dx": -16,
-            "dy": 4
+            "angle": 15
           },
           "point": {
             "angle": -20

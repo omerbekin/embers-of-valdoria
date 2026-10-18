@@ -1,28 +1,25 @@
 /**
- * Endless tüccarı (Odo) DOM ekranı (Ömer 2026-10-11, g1): solda TEZGÂH (konuşma satırı, 3x3 mal, yenileme, geri alım), sağda ORTAK
- * INVENTORY (Gear'daki torbanın aynısı; satış fiyatı etiketli). Karşılaştırma için "Character" (C) Character sayfasını tezgâhın üstünde açar
- * (kahraman satırları üstüne gelinen mala / item'e göre). Alım: malı torbaya sürükle, çift tıkla ya da seç + "Buy"; satış: torba item'ini
- * tezgâha sürükle, çift tıkla / çift dokun ya da seç + "Sell"; geri alım aynı ziyarette. Varışta karşılama (seçenek C): soldaki yarım panelde Odo tam boy + selam +
- * günün öne çıkan malı; "Browse wares" ile panel sola kayıp çekilir. Kurallar saf modüllerde (src/endless/run.ts: buyItem / sellItem ...),
- * bu ekran kaynağı (MerchantSource) çağırır. Görünüm: src/ui/gear.css (gr-shop*, mw-*). Oyun içi metinler İngilizce.
+ * Tüccar (Odo) DOM ekranı (Ömer 2026-10-18, ortak envanter v3 "Ledger"; taslak #v3&enc=merchant): solda TEZGÂH paneli (başlık "ODO THE PEDDLER" +
+ * kese, konuşma satırı, sekmeler Buy & Sell | Buyback, mallar, yenileme simgesi), sağda ORTAK ENVANTER (Gear defteri; torba hücrelerinin altında
+ * satış fiyatı). Kapatma: Menu'nün yerinde ortak X (src/ui/nav-close.ts). Alım: malı torbaya / kahramana / yuvaya sürükle, çift tıkla ya da
+ * seç + "Buy"; satış: torba item'ini tezgâha sürükle ya da ipucundaki "Sell"; geri alım aynı ziyarette. Kurallar (fiyat, yenileme bedeli, geri
+ * alım) AYNI; kurallar saf modüllerde (src/endless/run.ts, src/campaign/merchant.ts), bu ekran kaynağı (MerchantSource) çağırır.
+ * Varışta karşılama (seçenek C): soldaki yarım panelde Odo tam boy + selam + günün öne çıkan malı; "Browse wares" ile panel sola kayıp çekilir.
+ * Görünüm: src/ui/gear.css (gr-shop*, mw-*). Oyun içi metinler İngilizce.
  */
-import { closeDom } from './motion';
 import { reducedMotion } from './motion-pref';
 import { uiSound, worldSound } from './ui-sound';
 import './gear.css';
 import { instanceColor, instanceRarity, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
-import { lockInput, unlockInput } from './input-lock';
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
-import type { Stats } from '../engine';
-import { avatarUrl, className, renderCharacter } from './character-panel';
-import { itemCell, renderInventory, snapBagRows } from './inventory';
+import { avatarUrl } from './character-panel';
+import { itemCell } from './inventory';
 import { itemTipNodes, type ItemTipAction } from './item-tip';
-import { attachItemInteractions } from './item-drag';
-import { isDoubleTap, merchantBagDouble } from './gear-drop';
-import { confirmIn, heroRail, heroTipExtra, phoneLayout, swapIn, tabSwitch, type GearSource } from './gear-screen';
-import { affixContext, primaryCheck, PRIMARY_BONUS_NAME, canEquip, ITEMS, isPlanError, planEquip, meetsLevel, levelReqMsg, instanceLevelReq } from '../progression';
+import { isDoubleTap } from './gear-drop';
+import { heroTipExtra, openGear, phoneLayout, type GearApi, type GearExt, type GearSource } from './gear-screen';
+import { affixContext } from '../progression';
 import odoFull from '../../assets/sprites/merchant/idle.png?url';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -73,432 +70,244 @@ export interface MerchantSource extends GearSource {
   note?: string;
 }
 
-type ShopSel = { kind: 'ware'; index: number } | { kind: 'bag'; uid: string } | { kind: 'bb'; index: number } | null;
+type ShopSel = { kind: 'ware'; index: number } | { kind: 'bb'; index: number } | null;
+type EquipTo = { heroId: string; slot?: SlotId };
 
 /** Karşılamanın selamı (Odo). */
 const GREETING = 'Ah, the heroes of the hour! Steel, leather and a lucky charm or two. Honest prices. Well, honest enough.';
 
-/** Tüccar ekranını açar; `welcome` = varış karşılaması (seçenek C). Dönen: kapat (görünüm değişince çağıran kapatır). */
+/** Yenileme simgesi (dairesel ok; nav-icons.ts dilinde ince çizgi). */
+const REROLL_SVG =
+  '<svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M19.5 12a7.5 7.5 0 1 1-2.4-5.5"/><path d="M19.5 4v4.5H15"/></svg>';
+
+/**
+ * Tüccar ekranını açar; `welcome` = varış karşılaması (seçenek C). Gear ekranı (src/ui/gear-screen.ts) yanında tezgâh paneli olarak açılır.
+ * Dönen: kapat (görünüm değişince çağıran kapatır). Kapatma (X / Esc / zemin) = `onLeave`.
+ */
 export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcome?: boolean; onLeave: () => void; leaveLabel?: string }): () => void {
-  const overlay = el('div', 'gr-overlay gr-shop-overlay');
-  overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-label', src.name);
-  const panel = el('div', 'gr-panel gr-gear gr-shop');
-  overlay.append(panel);
-  root.append(overlay);
   worldSound('coin_count'); // tezgâh açılır: sikkeler meşe tezgâha sayılır
-  lockInput('merchant');
-  let heroId = src.heroes()[0]?.id ?? '';
+  let api: GearApi | null = null;
+  let overlayEl: HTMLElement | null = null;
+  let tab: 'sell' | 'bb' = 'sell';
   let sel: ShopSel = null;
-  let hoverKey = '';
-  let dragKey = '';
-  let charOpen = false;
-  let view: 'char' | 'inv' = 'inv';
-  /** Telefonda tezgâhın mal görünümü: mallar ya da geri alım (masaüstünde ikisi alt alta; Ömer 2026-10-14 telefon geri alım hatası). */
-  let stallTab: 'wares' | 'bb' = 'wares';
   let line: MerchantLine = 'idle';
-  let flashText = '';
-  let curStats: Stats | null = null;
-  let afterStats: Stats | null = null;
-  let closeAsk: (() => void) | null = null;
   /** Mala son dokunuş (çift dokunma = satın al; yeniden çizimden sonra da sürer). */
   let lastWareTap: { key: string; at: number } | null = null;
-  const heroOf = (id: string) => src.heroes().find((h) => h.id === id);
-  const curHero = () => heroOf(heroId) ?? src.heroes()[0];
-  /** İpucu / odak anahtarı -> item örneği ("ware:3", "bb:0", "bag:<uid>", "slot:helm"). */
+  const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop');
+  side.dataset['drop'] = 'wares';
+  const curHero = () => api?.hero();
   const instOf = (key: string): ItemInstance | undefined => {
     const i = key.indexOf(':');
     const kind = key.slice(0, i);
-    const id = key.slice(i + 1);
-    if (kind === 'ware') return src.wares()[Number(id)]?.inst;
-    if (kind === 'bb') return src.buyback()[Number(id)]?.inst;
-    if (kind === 'bag') return src.bag().find((x) => x.uid === id);
-    if (kind === 'slot') return curHero()?.equipment[id as SlotId] ?? undefined;
+    const id = Number(key.slice(i + 1));
+    if (kind === 'ware') return src.wares()[id]?.inst;
+    if (kind === 'bb') return src.buyback()[id]?.inst;
     return undefined;
   };
-  const selKey = (): string => (sel?.kind === 'ware' ? `ware:${sel.index}` : sel?.kind === 'bb' ? `bb:${sel.index}` : sel?.kind === 'bag' ? `bag:${sel.uid}` : '');
-
-  const ix = attachItemInteractions({
-    overlay,
-    panel,
-    sourceOf: (v, t) => {
-      if (v.startsWith('ware:')) return { kind: 'ware', index: Number(v.slice(5)), itemId: t.dataset['item'] ?? '' };
-      if (v.startsWith('bag:')) return { kind: 'bag', uid: v.slice(4), itemId: t.dataset['item'] ?? '' };
-      if (v.startsWith('slot:')) return { kind: 'slot', heroId, slot: v.slice(5) as SlotId };
-      return null;
-    },
-    targetOf: (v) => (v === 'bag' ? { kind: 'bag' } : v === 'wares' ? { kind: 'wares' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
-    classOf: (id) => heroOf(id)?.class,
-    tipNodes: (key) => {
-      const inst = instOf(key);
-      if (!inst) return [];
-      // Character sayfası kapalıyken her kahramana etkisi ipucunda (açıkken kahraman kartlarında)
-      const hero = curHero();
-      const state = hero ? { ...(affixContext(hero, inst, key.startsWith('slot:') ? (key.slice(5) as SlotId) : undefined) ?? {}), level: hero.level } : undefined;
-      return itemTipNodes(inst, hero?.class, key.startsWith('slot:') ? [] : heroTipExtra(src.heroes(), inst, !charOpen || phoneLayout()), state);
-    },
-    // dokunmatik: ipucundaki eylem (tek dokunuş ipucunu açar; alım / satım / kuşanma buradan ya da sürükle-bırakla)
-    tipActions: (key) => {
-      const i = key.indexOf(':');
-      const kind = key.slice(0, i);
-      const id = key.slice(i + 1);
-      const hero = curHero();
-      if (kind === 'ware') {
-        const index = Number(id);
-        const w = src.wares()[index];
-        if (!w || w.sold) return [];
-        const short = w.price - src.gold();
-        const full = src.bag().length >= src.bagSize;
-        return [{ label: short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, disabled: short > 0 || full, run: () => doBuy(index) }];
-      }
-      if (kind === 'bb') {
-        const index = Number(id);
-        const e = src.buyback()[index];
-        if (!e) return [];
-        const short = e.price - src.gold();
-        return [{ label: short > 0 ? `Need ${short} more` : `Buy back · ${e.price}`, disabled: short > 0, run: () => doBuyBack(index) }];
-      }
-      if (kind === 'bag') {
-        const inst = src.bag().find((x) => x.uid === id);
-        if (!inst) return [];
-        const out: ItemTipAction[] = [];
-        const d = itemDef(inst.id);
-        if (hero && d && (charOpen || (phoneLayout() && view === 'char')) && canEquip(hero.class, d)) out.push({ label: meetsLevel(hero.level, inst) ? 'Equip' : levelReqMsg(instanceLevelReq(inst)), disabled: !meetsLevel(hero.level, inst), primary: false, run: () => tryEquip(hero.id, id) });
-        out.push({ label: `Sell · ${src.sellPrice(inst)}`, run: () => doSell(id) });
-        return out;
-      }
-      if (kind === 'slot' && hero?.equipment[id as SlotId]) return [{ label: 'Unequip', run: () => run(() => src.unequip(hero.id, id as SlotId), 'equip') }];
-      return [];
-    },
-    onHover: (key) => {
-      const k = key.startsWith('slot:') ? '' : key;
-      if (k === hoverKey) return;
-      hoverKey = k;
-      if (charOpen) renderLeft();
-    },
-    onDragStart: (s) => {
-      dragKey = s.kind === 'ware' ? `ware:${s.index}` : s.kind === 'bag' ? `bag:${s.uid}` : '';
-      if (charOpen && dragKey) renderLeft();
-    },
-    onDrop: (s, _tg, act) => {
-      dragKey = '';
-      if (act?.kind === 'buy') doBuy(act.index);
-      else if (act?.kind === 'sell') doSell(act.uid);
-      else if (act?.kind === 'equip') tryEquip(act.heroId, act.uid, act.slot);
-      else if (act?.kind === 'unequip') run(() => src.unequip(act.heroId, act.slot), 'equip');
-      else if (charOpen) renderLeft();
-      void s;
-    },
-    stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
-    // dokunmatik çift dokunuş: yalnızca torba item'i (sat / Character açıkken kuşan); mal ve kuşanılmış item'e çift dokunuş eylem değil
-    onDoubleTap: (key) => {
-      if (!key.startsWith('bag:')) return false;
-      bagDouble(key.slice(4));
-      return true;
-    },
-  });
-
-  let closed = false;
-  const close = (): void => {
-    if (closed) return;
-    closed = true;
-    closeDom(overlay, () => overlay.remove());
-    document.removeEventListener('keydown', onKey, true);
-    ix.destroy();
-    unlockInput('merchant');
+  const flash = (t: string, ok = false): void => api?.flash(t, ok);
+  /** Yeni alınan item (alımdan önceki torbaya göre) ve isteğe bağlı kuşanma. */
+  const afterAcquire = (before: Set<string>, equip?: EquipTo): void => {
+    if (!equip) return;
+    const added = src.bag().find((i) => !before.has(i.uid));
+    if (added) api?.equip(equip.heroId, added.uid, equip.slot);
   };
-  const onKey = (e: KeyboardEvent): void => {
-    if (welcomeEl) {
-      if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
-        e.preventDefault();
-        e.stopPropagation();
-        dismissWelcome();
-      }
-      return;
-    }
-    if (e.key === 'Escape') {
-      e.preventDefault();
-      e.stopPropagation();
-      if (closeAsk && overlay.querySelector('.gr-confirm')) {
-        closeAsk();
-        closeAsk = null;
-      } else if (phoneLayout() && view === 'char') {
-        view = 'inv';
-        uiSound('tab');
-        renderAll();
-      } else if (charOpen && !phoneLayout()) toggleChar(false);
-      else if (sel) {
-        sel = null;
-        renderAll();
-      }
-    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey) {
-      e.stopPropagation();
-      if (phoneLayout()) {
-        view = view === 'char' ? 'inv' : 'char';
-        renderAll();
-      } else toggleChar(!charOpen);
-    }
-  };
-  document.addEventListener('keydown', onKey, true);
+  const equipOf = (heroId: string | undefined, slot: SlotId | undefined): EquipTo | undefined => (heroId ? { heroId, ...(slot ? { slot } : {}) } : undefined);
 
-  /** İşlem + yeniden çizim (hata: uyarı satırı + hata sesi). */
-  const run = (fn: () => void, sound: Parameters<typeof uiSound>[0], next?: MerchantLine): boolean => {
-    try {
-      fn();
-      uiSound(sound);
-      if (next) line = next;
-      renderAll();
-      return true;
-    } catch (err) {
-      flashText = err instanceof Error ? err.message : String(err);
-      uiSound('error');
-      renderAll();
-      return false;
-    }
-  };
-  const doBuy = (index: number): void => {
+  const doBuy = (index: number, equip?: EquipTo): void => {
     const w = src.wares()[index];
     if (!w || w.sold) return;
     if (src.gold() < w.price) {
       line = 'poor';
       uiSound('error');
-      renderAll();
+      api?.rerender();
       return;
     }
     if (src.bag().length >= src.bagSize) {
       line = 'bagFull';
       uiSound('error');
-      renderAll();
+      api?.rerender();
       return;
     }
     const name = itemDef(w.inst.id)?.name ?? '';
-    if (run(() => src.buy(index), 'buy', 'buy')) flash(`${name} added to your bag`);
+    const before = new Set(src.bag().map((i) => i.uid));
+    try {
+      src.buy(index);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    uiSound('buy');
+    line = 'buy';
     if (sel?.kind === 'ware' && sel.index === index) sel = null;
+    flash(`${name} added to your bag`, true);
+    afterAcquire(before, equip);
+    api?.rerender();
   };
   const doSell = (uid: string): void => {
     const inst = src.bag().find((x) => x.uid === uid);
     if (!inst) return;
     const price = src.sellPrice(inst);
     const name = itemDef(inst.id)?.name ?? '';
-    if (sel?.kind === 'bag' && sel.uid === uid) sel = null;
-    if (run(() => src.sell(uid), 'sell', 'sold')) flash(`Sold ${name} for ${price} gold`);
+    try {
+      src.sell(uid);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : String(err));
+      return;
+    }
+    uiSound('sell');
+    line = 'sold';
+    api?.clearSel();
+    flash(`Sold ${name} for ${price} gold`, true);
+    api?.rerender();
   };
-  /**
-   * Torba item'ine çift tık / çift dokunuş (Ömer 2026-10-16): SATAR (altın eklenir, item geri alım listesine düşer; yanlışlıkla satılan geri
-   * alınır). Character görünümü açıkken (karşılaştırma / kuşanma) çift tık eskisi gibi seçili kahramana kuşandırır.
-   */
-  const bagDouble = (uid: string): void => {
-    const h = curHero();
-    if (merchantBagDouble({ charShown: phoneLayout() ? view === 'char' : charOpen, hasHero: !!h }) === 'equip' && h) tryEquip(h.id, uid, undefined, true);
-    else doSell(uid);
-  };
-  const doBuyBack = (index: number): void => {
+  const doBuyBack = (index: number, equip?: EquipTo): void => {
     const e = src.buyback()[index];
     if (!e) return;
     if (src.gold() < e.price) {
       line = 'poor';
       uiSound('error');
-      renderAll();
+      api?.rerender();
       return;
     }
     sel = null;
-    run(() => src.buyBack(index), 'buy', 'buyback');
-  };
-  /** `quick` = çift tık / çift dokunuş: 'equip' yerine kısa toka şakırtısı ('snap', ~70 ms; Ömer 2026-10-16). */
-  const tryEquip = (target: string, uid: string, slot?: SlotId, quick = false): void => {
-    const h = heroOf(target);
-    const inst = src.bag().find((x) => x.uid === uid);
-    const d = inst ? itemDef(inst.id) : undefined;
-    if (!h || !inst || !d) return;
-    heroId = target;
-    if (!canEquip(h.class, d)) {
-      const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
-      flashText = `${className(h.class)} cannot use ${fam?.name ?? 'this weapon'}.`;
-      uiSound('error');
-      renderAll();
+    const before = new Set(src.bag().map((i) => i.uid));
+    try {
+      src.buyBack(index);
+    } catch (err) {
+      flash(err instanceof Error ? err.message : String(err));
       return;
     }
-    // İkinci el kapalı (çift el silah) / Legendary sınırı: açık mesaj (Gear ekranıyla aynı kural: planEquip)
-    const plan = planEquip(h.class, h.equipment, inst, slot, { level: h.level });
-    if (isPlanError(plan)) {
-      flashText = plan.error;
-      uiSound('error');
-      renderAll();
+    uiSound('buy');
+    line = 'buyback';
+    afterAcquire(before, equip);
+    api?.rerender();
+  };
+  const doReroll = (): void => {
+    try {
+      src.reroll();
+    } catch (err) {
+      flash(err instanceof Error ? err.message : String(err));
       return;
     }
-    const go = (): void => void run(() => src.equip(target, uid, plan.slot), quick ? 'snap' : 'equip');
-    const pc = primaryCheck(h, { equip: inst, slot: plan.slot });
-    if (pc.lost && pc.primary) {
-      closeAsk = confirmIn(overlay, `${pc.overtakenBy.map((k) => k.toUpperCase()).join(' and ')} would exceed ${pc.primary.toUpperCase()} on the ${className(h.class)}. ${PRIMARY_BONUS_NAME[pc.primary]} will be disabled.`, 'Equip anyway', go);
-      return;
-    }
-    go();
-  };
-  const flash = (t: string): void => {
-    flashText = t;
-    renderFoot();
-  };
-  const toggleChar = (on: boolean): void => {
-    charOpen = on;
-    uiSound('tab');
-    renderAll();
+    uiSound('confirm');
+    line = 'reroll';
+    sel = null;
+    api?.rerender();
   };
 
-  // --- çizim
-  const head = el('div', 'gr-head');
-  const body = el('div', 'gr-body');
-  const left = el('div', 'gr-stall');
-  left.dataset['drop'] = 'wares';
-  const right = el('div', 'gr-right');
-  const foot = el('div', 'gr-foot');
-  body.append(left, right);
-  panel.append(head, body, foot);
-
-  const focusInst = (): ItemInstance | null => instOf(dragKey || hoverKey || selKey()) ?? null;
-  function renderHead(): void {
-    const l = el('div', 'gr-head-l');
-    l.append(el('div', 'gr-title', src.name));
-    if (!phoneLayout()) l.append(el('div', 'gr-shop-sub', src.sub));
-    const purse = el('div', 'gr-gold', `${src.gold()} gold`);
+  // --- tezgâh paneli
+  function renderSide(): void {
+    const phone = phoneLayout();
+    const head = el('div', 'gr-head gr-lhead');
+    head.append(el('div', 'gr-title', src.name));
+    const purse = el('div', 'gr-gold', String(src.gold()));
     const gi = goldIcon('gr-ui-ico');
     if (gi) {
       purse.classList.add('gr-has-ico');
       purse.prepend(gi);
     }
-    head.replaceChildren(l, purse);
-  }
-  function renderLeft(): void {
-    const phone = phoneLayout();
-    const showChar = phone ? view === 'char' : charOpen;
-    // tezgâhın görünümleri tek anahtarda: masaüstü [ Wares | Character (C) ]; telefonda geri alım da sekme olur
-    // [ Wares | Buy back (n) | Character ] (yer darlığından geri alım ayrı görünümde; C ve Esc de geçirir)
-    const bar = el('div', 'gr-stall-bar');
-    const bbCount = src.buyback().length;
-    bar.append(
-      phone
-        ? tabSwitch<'wares' | 'bb' | 'char'>(showChar ? 'char' : stallTab, [['wares', 'Wares'], ['bb', `Buy back (${bbCount})`], ['char', 'Character']], (k) => {
-            view = k === 'char' ? 'char' : 'inv';
-            if (k !== 'char') stallTab = k;
-            uiSound('tab');
-            renderAll();
-          })
-        : tabSwitch<'wares' | 'char'>(showChar ? 'char' : 'wares', [['wares', 'Wares'], ['char', 'Character (C)']], (k) => toggleChar(k === 'char')),
-    );
-    if (showChar) {
-      const r = renderCharacter({
-        heroes: src.heroes(),
-        heroId,
-        focus: focusInst(),
-        compact: phone,
-        onHero: (id) => {
-          heroId = id;
-          renderAll();
-        },
-        onSlotDouble: (slot) => {
-          const h = curHero();
-          if (h?.equipment[slot]) run(() => src.unequip(h.id, slot), 'snap');
-        },
-      });
-      curStats = r.stats;
-      afterStats = r.after;
-      left.replaceChildren(bar, r.el);
-      left.classList.add('char');
-      if (ix.dragging()) ix.remark();
-      return;
-    }
-    left.classList.remove('char');
+    purse.title = 'Gold';
+    head.append(el('span', 'gr-grow'), purse);
+    const kids: HTMLElement[] = [head];
+    if (!phone) kids.push(el('div', 'gr-shop-sub', src.sub));
     // konuşma satırı (kafa portresi + balon)
     const talk = el('div', 'gr-odo');
     const face = el('div', 'gr-face');
     const url = avatarUrl('merchant');
     if (url) face.style.backgroundImage = `url("${url}")`;
     talk.append(face, el('div', 'gr-odo-line', src.lines[line]));
-    // mallar (3x3; satılmış soluk, yetmeyen altın kırmızı fiyat)
-    const wares = el('div', 'gr-wares');
-    src.wares().forEach((w, i) => {
-      const poor = !w.sold && src.gold() < w.price;
-      const cell = itemCell(w.inst, { selected: sel?.kind === 'ware' && sel.index === i, ...(w.sold ? {} : { drag: `ware:${i}` }), tip: `ware:${i}`, price: w.sold ? null : w.price, priceBad: poor });
-      const b = cell.querySelector<HTMLButtonElement>('button')!;
-      if (w.sold) {
-        b.classList.add('sold');
-        cell.querySelector('.gr-price')!.textContent = 'SOLD';
-      }
-      b.addEventListener('click', () => {
-        if (ix.justEnded()) return;
-        const now = performance.now();
-        if (isDoubleTap(lastWareTap, `ware:${i}`, now) && !w.sold) {
-          lastWareTap = null;
-          doBuy(i);
-          return;
-        }
-        lastWareTap = { key: `ware:${i}`, at: now };
-        sel = sel?.kind === 'ware' && sel.index === i ? null : { kind: 'ware', index: i };
-        line = poor ? 'poor' : 'idle';
-        renderAll();
+    kids.push(talk);
+    // sekmeler: Buy & Sell | Buyback
+    const tabs = el('div', 'gr-tabs gr-shoptabs');
+    tabs.setAttribute('role', 'tablist');
+    const bbCount = src.buyback().length;
+    for (const [k, label] of [['sell', 'Buy & Sell'], ['bb', 'Buyback']] as const) {
+      const b = btn(`gr-tab${tab === k ? ' on' : ''}`, label, () => {
+        if (tab === k) return;
+        tab = k;
+        sel = null;
+        uiSound('tab');
+        renderSide();
       });
-      wares.append(cell);
-    });
-    if (!src.wares().length) wares.append(el('div', 'gr-card-empty', src.lines.empty));
-    // yenileme (altın ikonu + bedel)
-    const can = src.gold() >= src.rerollCost;
-    const reroll = btn('gr-btn sm gr-reroll', 'Reroll wares', () => run(() => src.reroll(), 'confirm', 'reroll'));
-    const cost = el('span', 'gr-cost', String(src.rerollCost));
-    const gi = goldIcon();
-    if (gi) cost.prepend(gi);
-    reroll.append(cost);
-    reroll.disabled = !can;
-    // geri alım (bu ziyaret)
-    const bb = el('div', 'gr-buyback');
-    const list = src.buyback();
-    bb.append(el('div', 'gr-sec', 'Buy back · this visit'));
-    const row = el('div', 'gr-bb-row');
-    if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? Buy it back here until you leave.'));
-    list.forEach((e, i) => {
-      const cell = itemCell(e.inst, { selected: sel?.kind === 'bb' && sel.index === i, tip: `bb:${i}`, price: e.price, priceBad: src.gold() < e.price });
-      cell.querySelector('button')!.addEventListener('click', () => {
-        sel = sel?.kind === 'bb' && sel.index === i ? null : { kind: 'bb', index: i };
-        line = 'buyback';
-        renderAll();
-      });
-      row.append(cell);
-    });
-    bb.append(row);
-    if (phone) left.replaceChildren(bar, talk, ...(stallTab === 'bb' ? [bb] : [wares, reroll]));
-    else left.replaceChildren(bar, talk, wares, reroll, bb);
-  }
-  function renderRight(): void {
-    const phone = phoneLayout();
-    const hero = curHero();
-    const scroll = right.querySelector<HTMLElement>('.gr-bag')?.scrollTop ?? 0;
-    const inv = renderInventory({
-      items: src.bag(),
-      size: src.bagSize,
-      title: 'Your bag',
-      ...(charOpen && hero ? { usableClass: hero.class } : {}),
-      selected: sel?.kind === 'bag' ? sel.uid : '',
-      price: (inst) => src.sellPrice(inst),
-      onTap: (uid) => {
-        sel = sel?.kind === 'bag' && sel.uid === uid ? null : { kind: 'bag', uid };
-        line = 'sell';
-        renderAll();
-      },
-      onDouble: (uid) => bagDouble(uid),
-    });
-    right.replaceChildren(...(phone && view === 'char' ? [heroRail(src.heroes(), heroId, (id) => {
-      heroId = id;
-      renderAll();
-    }), inv] : [inv]));
-    const g = right.querySelector<HTMLElement>('.gr-bag');
-    if (g) {
-      snapBagRows(g);
-      g.scrollTop = scroll;
+      b.setAttribute('role', 'tab');
+      b.setAttribute('aria-selected', String(tab === k));
+      if (k === 'bb' && bbCount) b.append(el('span', 'gr-pt sk', String(bbCount)));
+      tabs.append(b);
     }
-  }
-  function renderFoot(): void {
-    const hint = el('div', `gr-foot-hint${flashText ? ' warn' : ''}`, flashText || src.note || 'Drag a ware into your bag to buy it; drag a bag item onto the stall, or double-tap it, to sell it.');
-    flashText = '';
-    const acts: HTMLElement[] = [btn('gr-btn', o.leaveLabel ?? 'Move on', () => o.onLeave())];
-    // seçimin eylemi (birincil, en sağda)
+    kids.push(tabs);
+    const pane = el('div', 'gr-shoppane');
+    if (tab === 'sell') {
+      // mallar (satılmış soluk, yetmeyen altın kırmızı fiyat) + yenileme (simge + küçük fiyat)
+      const sec = el('div', 'gr-sec gr-wares-head', 'Wares');
+      const reroll = el('button', 'gr-btn sm gr-reroll');
+      reroll.type = 'button';
+      reroll.dataset['hint'] = 'Reroll wares';
+      reroll.setAttribute('aria-label', 'Reroll wares');
+      reroll.innerHTML = REROLL_SVG;
+      const cost = el('span', 'gr-cost', String(src.rerollCost));
+      const cgi = goldIcon();
+      if (cgi) cost.prepend(cgi);
+      reroll.append(cost);
+      reroll.disabled = src.gold() < src.rerollCost;
+      reroll.addEventListener('click', doReroll);
+      sec.append(reroll);
+      const wares = el('div', 'gr-wares');
+      src.wares().forEach((w, i) => {
+        const poor = !w.sold && src.gold() < w.price;
+        const cell = itemCell(w.inst, { selected: sel?.kind === 'ware' && sel.index === i, ...(w.sold ? {} : { drag: `ware:${i}` }), tip: `ware:${i}`, price: w.sold ? null : w.price, priceBad: poor });
+        const b = cell.matches('button') ? cell : cell.querySelector('button')!;
+        if (w.sold) {
+          b.classList.add('sold');
+          cell.querySelector('.gr-price')!.textContent = 'SOLD';
+        }
+        b.addEventListener('click', () => {
+          const now = performance.now();
+          if (isDoubleTap(lastWareTap, `ware:${i}`, now) && !w.sold) {
+            lastWareTap = null;
+            doBuy(i);
+            return;
+          }
+          lastWareTap = { key: `ware:${i}`, at: now };
+          sel = sel?.kind === 'ware' && sel.index === i ? null : { kind: 'ware', index: i };
+          line = poor ? 'poor' : 'idle';
+          renderSide();
+        });
+        wares.append(cell);
+      });
+      if (!src.wares().length) wares.append(el('div', 'gr-card-empty', src.lines.empty));
+      // satış kutusu: torba item'ini buraya sürükle (ya da seç + dokun)
+      const box = el('div', 'gr-sellbox');
+      box.dataset['drop'] = 'wares';
+      const bi = goldIcon('gr-ui-ico');
+      if (bi) box.append(bi);
+      const txt = el('div', 'gr-sellbox-t', 'Drag an item here from the bag to sell it for half its worth.');
+      txt.append(el('i', '', 'Or select the item, then tap here.'));
+      box.append(txt);
+      box.addEventListener('click', () => {
+        const uid = api?.selected();
+        if (uid) doSell(uid);
+      });
+      pane.append(sec, wares, box);
+    } else {
+      // geri alım (bu ziyaret)
+      const row = el('div', 'gr-bb-row');
+      const list = src.buyback();
+      list.forEach((e, i) => {
+        const cell = itemCell(e.inst, { selected: sel?.kind === 'bb' && sel.index === i, drag: `bb:${i}`, tip: `bb:${i}`, price: e.price, priceBad: src.gold() < e.price });
+        (cell.matches('button') ? cell : cell.querySelector('button')!).addEventListener('click', () => {
+          sel = sel?.kind === 'bb' && sel.index === i ? null : { kind: 'bb', index: i };
+          line = 'buyback';
+          renderSide();
+        });
+        row.append(cell);
+      });
+      if (!list.length) row.append(el('div', 'gr-card-empty', 'Sold something by mistake? It waits here until you leave.'));
+      pane.append(row);
+      if (list.length) pane.append(el('div', 'gr-shop-sub', 'Sold this visit. Buy back for the price you sold at, until you leave.'));
+    }
+    kids.push(pane);
+    // seçimin eylemi (birincil): tıklayarak seçilen mal / geri alım
+    const strip = el('div', 'gr-shopact');
     if (sel?.kind === 'ware') {
       const w = src.wares()[sel.index];
       if (w && !w.sold) {
@@ -507,53 +316,34 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
         const index = sel.index;
         const b = btn('gr-btn primary', short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, () => doBuy(index));
         b.disabled = short > 0 || full;
-        acts.push(b);
+        strip.append(b);
       }
-    } else if (sel?.kind === 'bag') {
-      const inst = src.bag().find((x) => x.uid === (sel as { uid: string }).uid);
-      const uid = sel.uid;
-      if (inst) acts.push(btn('gr-btn primary', `Sell · ${src.sellPrice(inst)}`, () => doSell(uid)));
     } else if (sel?.kind === 'bb') {
       const e = src.buyback()[sel.index];
       const index = sel.index;
       if (e) {
         const b = btn('gr-btn primary', src.gold() < e.price ? `Need ${e.price - src.gold()} more` : `Buy back · ${e.price}`, () => doBuyBack(index));
         b.disabled = src.gold() < e.price;
-        acts.push(b);
+        strip.append(b);
       }
     }
-    foot.replaceChildren(hint, ...acts);
-  }
-  let shownView = '';
-  function renderAll(): void {
-    if (closed) return;
-    ix.hideTips();
-    const phone = phoneLayout();
-    const vk = (phone ? view === 'char' : charOpen) ? 'char' : phone ? stallTab : 'wares';
-    const swapped = shownView !== '' && vk !== shownView;
-    shownView = vk;
-    panel.classList.toggle('gr-phone', phone);
-    panel.classList.toggle('show-char', phone && view === 'char');
-    panel.classList.toggle('show-inv', phone && view === 'inv');
-    renderHead();
-    renderLeft();
-    renderRight();
-    renderFoot();
-    if (swapped) for (const c of [...left.children].slice(1)) swapIn(c as HTMLElement);
+    if (strip.childElementCount) kids.push(strip);
+    if (src.note) kids.push(el('div', 'gr-shop-sub', src.note));
+    side.replaceChildren(...kids);
   }
 
   // --- karşılama (seçenek C): yarım panel kayıp çekilir, arkada tüccar hazır
   let welcomeEl: HTMLElement | null = null;
   const dismissWelcome = (): void => {
     const w = welcomeEl;
-    if (!w) return;
+    if (!w || !overlayEl) return;
     welcomeEl = null;
     uiSound('confirm');
-    overlay.classList.remove('mw-on');
+    overlayEl.classList.remove('mw-on');
     w.classList.add('gone');
     window.setTimeout(() => w.remove(), reducedMotion() ? 0 : 560);
   };
-  if (o.welcome) {
+  const showWelcome = (overlay: HTMLElement): void => {
     const wares = src.wares().filter((w) => !w.sold);
     const best = [...wares].sort((a, b) => rarityIndex(instanceRarity(b.inst)) - rarityIndex(instanceRarity(a.inst)) || b.price - a.price)[0];
     const rare = best && rarityIndex(instanceRarity(best.inst)) >= rarityIndex('epic');
@@ -597,7 +387,84 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       off();
       dismissWelcome();
     });
-  }
-  renderAll();
-  return close;
+  };
+
+  const ext: GearExt = {
+    side,
+    hideGold: true,
+    noTrash: true,
+    attach: (overlay, a) => {
+      overlayEl = overlay;
+      api = a;
+      overlay.classList.add('gr-shop-overlay');
+      overlay.setAttribute('aria-label', src.name);
+      if (o.welcome) showWelcome(overlay);
+    },
+    render: renderSide,
+    price: (inst) => src.sellPrice(inst),
+    onKey: (e) => {
+      if (!welcomeEl) return false;
+      if (e.key === 'Enter' || e.key === 'Escape' || e.key === ' ') {
+        e.preventDefault();
+        e.stopPropagation();
+        dismissWelcome();
+      }
+      return true;
+    },
+    sourceOf: (v, t) => {
+      if (v.startsWith('ware:')) return { kind: 'ware', index: Number(v.slice(5)), itemId: t.dataset['item'] ?? '' };
+      if (v.startsWith('bb:')) return { kind: 'bb', index: Number(v.slice(3)), itemId: t.dataset['item'] ?? '' };
+      return null;
+    },
+    targetOf: (v) => (v === 'wares' ? { kind: 'wares' } : null),
+    onDrop: (s, _tg, act) => {
+      if (act?.kind === 'buy') doBuy(act.index, equipOf(act.heroId, act.slot));
+      else if (act?.kind === 'buyback') doBuyBack(act.index, equipOf(act.heroId, act.slot));
+      else if (act?.kind === 'sell') doSell(act.uid);
+      else if (s.kind === 'ware' || s.kind === 'bb') {
+        if (act?.kind === 'none' && act.reason) flash(act.reason === 'Cannot use' ? 'That hero cannot use this item.' : act.reason);
+      } else return false;
+      return true;
+    },
+    tipNodes: (key) => {
+      if (!key.startsWith('ware:') && !key.startsWith('bb:')) return null;
+      const inst = instOf(key);
+      if (!inst) return [];
+      const hero = curHero();
+      const state = hero ? { ...(affixContext(hero, inst) ?? {}), level: hero.level } : undefined;
+      return itemTipNodes(inst, hero?.class, heroTipExtra(src.heroes(), inst, true), state);
+    },
+    tipActions: (key) => {
+      const i = key.indexOf(':');
+      const kind = key.slice(0, i);
+      const index = Number(key.slice(i + 1));
+      const hero = curHero();
+      if (kind === 'ware') {
+        const w = src.wares()[index];
+        if (!w || w.sold) return [];
+        const short = w.price - src.gold();
+        const full = src.bag().length >= src.bagSize;
+        const acts: ItemTipAction[] = [{ label: short > 0 ? `Need ${short} more` : full ? 'Bag full' : `Buy · ${w.price}`, disabled: short > 0 || full, primary: !hero, run: () => doBuy(index) }];
+        if (hero) acts.push({ label: 'Buy & equip', disabled: short > 0 || full, run: () => doBuy(index, { heroId: hero.id }) });
+        return acts;
+      }
+      if (kind === 'bb') {
+        const e = src.buyback()[index];
+        if (!e) return [];
+        const short = e.price - src.gold();
+        return [{ label: short > 0 ? `Need ${short} more` : `Buy back · ${e.price}`, disabled: short > 0, run: () => doBuyBack(index) }];
+      }
+      return null;
+    },
+    bagActions: (uid) => {
+      const inst = src.bag().find((x) => x.uid === uid);
+      return inst ? [{ label: `Sell · ${src.sellPrice(inst)}`, primary: false, run: () => doSell(uid) }] : [];
+    },
+    onDoubleTap: (key) => {
+      if (key.startsWith('ware:')) return (doBuy(Number(key.slice(5))), true);
+      if (key.startsWith('bb:')) return (doBuyBack(Number(key.slice(3))), true);
+      return undefined;
+    },
+  };
+  return openGear(root, src, { ext, onClose: () => o.onLeave() });
 }

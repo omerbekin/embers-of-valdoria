@@ -137,6 +137,7 @@ const SIZE_MULT = 1.5; // her spec.size bununla çarpılır (skill'ler arası or
 const SIZE_MAX = 640; // büyük (center/cells) efektler ekranı kaplamasın (1080 yükseklikte ~%60)
 const FPS_SCALE = layout.animation.mobVfx.fpsScale; // sheet fps çarpanı (sheet 12 fps x fpsScale; ayar data/battle-layout.json > animation.mobVfx)
 const HOLD_MS = layout.animation.mobVfx.impactHoldMs; // vuruş karesinde donma (ms, k.slow ile)
+const MOB_SCALE = (layout.animation.mobVfx as { scale?: number }).scale ?? 1; // yalnızca ChatGPT mob sheet'leri (%20 küçük: 0.8); kodla çizilen sınıf efektleri etkilenmez
 const WIND_MULT = layout.animation.mobVfx.windMult; // spec.windMs (hazırlık pozu) çarpanı
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
 const FLASH_HEX = '#ffe2b0'; // spec.hex yoksa sıcak beyaz
@@ -164,10 +165,11 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     await k.sheetsReady(c.scene, [id]);
     const flip = c.actor.combatant.side !== 'party';
     const fps = (vfxSheetFile(id)?.meta.fps ?? 12) * FPS_SCALE;
-    const size = Math.min(SIZE_MAX, Math.round(s.size * SIZE_MULT));
+    const size = Math.min(SIZE_MAX, Math.round(s.size * SIZE_MULT * MOB_SCALE));
     const flashColor = parseInt((s.hex ?? FLASH_HEX).slice(1), 16);
     const sfx = c.skill.sfx ?? [];
-    const pos = (v: CombatantView): Pt => (s.at === 'hit' ? k.spot(v) : k.feet(v));
+    // 'bolt' + 'hit' (tek hedefli mermi): vuruş hedefin GÖVDE MERKEZİNDE değil, saldırgana bakan kenarında (ilk temas; data/battle-layout.json > animation.contactEdgeRatio)
+    const pos = (v: CombatantView): Pt => (s.at === 'hit' ? (s.mode === 'bolt' ? k.contact(c.actor, v) : k.spot(v)) : k.feet(v));
     // dayanak noktası (origin): vuruş karesinden okunur, pivota değil (başlık yorumu). Doku okunamazsa (null) sheet pivotu kalır.
     const meta = vfxSheetFile(id)?.meta;
     const [fw, fh] = meta?.frame_size ?? [256, 256];
@@ -175,7 +177,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     const origin: [number, number] | null = !anchors
       ? null
       : s.at === 'ground'
-        ? [(meta?.pivot?.[0] ?? fw / 2) / fw, anchors.baseY / fh]
+        ? [anchors.baseX / fw, anchors.baseY / fh]
         : [anchors.core[0] / fw, anchors.core[1] / fh];
     // DERİNLİK: efekt hedefin hemen üstünde, hedeften ÖNDEKİ (ekranda daha aşağıdaki) birimlerin altında çizilir (birim derinliği = ayak y'si).
     const play = (p: Pt, delay = 0, depth = k.DEPTH): void => {
@@ -232,7 +234,8 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     }
     const cells = c.cells.length ? c.cells : c.targets.map((v) => k.feet(v));
     if (s.mode === 'center') {
-      const m = c.centerPos ?? cells.reduce((a, p) => ({ x: a.x + p.x / cells.length, y: a.y + p.y / cells.length }), { x: 0, y: 0 });
+      // alanın merkezi = gerçekten kapsanan hücrelerin zemin konumlarının ağırlık merkezi (tıklanan hücre değil; kenarda kırpılan alanda ikisi farklıdır)
+      const m = cells.length ? cells.reduce((a, p) => ({ x: a.x + p.x / cells.length, y: a.y + p.y / cells.length }), { x: 0, y: 0 }) : (c.centerPos ?? k.feet(c.actor));
       const mid = s.at === 'hit' ? { x: m.x, y: m.y - 40 } : m;
       play(mid, 0, Math.max(...cells.map((q) => q.y)) + CELL_DEPTH);
       return land();

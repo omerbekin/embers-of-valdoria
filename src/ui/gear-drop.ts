@@ -10,7 +10,9 @@ import { canEquip, fitsSlot, itemDef, type SlotId } from '../progression';
 export type DragSource =
   | { kind: 'bag'; uid: string; itemId: string }
   | { kind: 'slot'; heroId: string; slot: SlotId }
-  | { kind: 'ware'; index: number; itemId: string };
+  | { kind: 'ware'; index: number; itemId: string }
+  | { kind: 'bb'; index: number; itemId: string }
+  | { kind: 'loot'; index: number; itemId: string };
 export type DropTarget =
   | { kind: 'slot'; heroId: string; slot: SlotId }
   | { kind: 'hero'; heroId: string }
@@ -21,13 +23,28 @@ export type DropAction =
   | { kind: 'equip'; heroId: string; uid: string; slot?: SlotId }
   | { kind: 'unequip'; heroId: string; slot: SlotId }
   | { kind: 'discard'; uid: string }
-  | { kind: 'buy'; index: number }
+  | { kind: 'buy'; index: number; heroId?: string; slot?: SlotId }
+  | { kind: 'buyback'; index: number; heroId?: string; slot?: SlotId }
+  | { kind: 'take'; index: number; heroId?: string; slot?: SlotId }
   | { kind: 'sell'; uid: string }
   | { kind: 'none'; reason?: string };
 
 /** `classOf`: kahramanın sınıfı (yoksa undefined). */
 export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId: string) => string | undefined): DropAction {
-  if (src.kind === 'ware') return target.kind === 'bag' ? { kind: 'buy', index: src.index } : { kind: 'none' };
+  if (src.kind === 'ware' || src.kind === 'bb' || src.kind === 'loot') {
+    // Mal / geri alım / ganimet: torbaya bırakılırsa alınır; kahramana ya da yuvaya bırakılırsa alınır ve kuşanılır (silah ailesi uymalı)
+    const kind = src.kind === 'ware' ? 'buy' : src.kind === 'bb' ? 'buyback' : 'take';
+    if (target.kind === 'bag') return { kind, index: src.index };
+    if (target.kind === 'slot' || target.kind === 'hero') {
+      const d = itemDef(src.itemId);
+      const cls = classOf(target.heroId);
+      if (!d || !cls) return { kind: 'none' };
+      if (target.kind === 'slot' && !fitsSlot(d, target.slot)) return { kind: 'none', reason: 'Wrong slot' };
+      if (!canEquip(cls, d)) return { kind: 'none', reason: 'Cannot use' };
+      return { kind, index: src.index, heroId: target.heroId, ...(target.kind === 'slot' ? { slot: target.slot } : {}) };
+    }
+    return { kind: 'none' };
+  }
   if (src.kind === 'slot') {
     if (target.kind === 'bag') return { kind: 'unequip', heroId: src.heroId, slot: src.slot };
     if (target.kind === 'trash' || target.kind === 'wares') return { kind: 'none', reason: 'Unequip first' };

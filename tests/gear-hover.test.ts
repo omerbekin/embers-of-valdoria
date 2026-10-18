@@ -15,9 +15,9 @@ describe('drag controller rules', () => {
     expect(dropAction(bagAxe, { kind: 'trash' }, classOf)).toEqual({ kind: 'discard', uid: 'u1' });
     expect(dropAction(slotSrc, { kind: 'trash' }, classOf)).toEqual({ kind: 'none', reason: 'Unequip first' });
   });
-  it('merchant: ware into the bag = buy; bag item onto the wares = sell; nothing else', () => {
+  it('merchant: ware into the bag = buy (onto a hero that can use it = buy and equip); bag item onto the wares = sell; nothing else', () => {
     expect(dropAction(ware, { kind: 'bag' }, classOf)).toEqual({ kind: 'buy', index: 2 });
-    expect(dropAction(ware, { kind: 'hero', heroId: 'w' }, classOf).kind).toBe('none');
+    expect(dropAction(ware, { kind: 'hero', heroId: 'w' }, classOf)).toEqual({ kind: 'buy', index: 2, heroId: 'w' });
     expect(dropAction(ware, { kind: 'trash' }, classOf).kind).toBe('none');
     expect(dropAction(bagAxe, { kind: 'wares' }, classOf)).toEqual({ kind: 'sell', uid: 'u1' });
     expect(dropAction(slotSrc, { kind: 'wares' }, classOf).kind).toBe('none');
