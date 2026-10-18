@@ -204,6 +204,11 @@ export interface GearExt {
   price?(inst: ItemInstance): number;
   hideGold?: boolean;
   noTrash?: boolean;
+  /**
+   * Yalnızca TORBA görünümü (Ömer 2026-10-18: ganimet ve ödül "View bag" ekranları): kahraman sayfası, yuvalar, skill'ler, Hero / Sheet
+   * sekmeleri YOK; yan panelin yanında yalnızca ortak torba (aynı hücre, filtre, çöp, ipucu, sürükle-bırak). Kuşanma sonra Gear'da yapılır.
+   */
+  bagOnly?: boolean;
   /** Kapanmadan önce onay gerekiyorsa onayı açar ve true döner (onaylanınca `proceed` çağrılır). */
   beforeClose?(proceed: () => void): boolean;
   /** Klavye (Gear'dan önce; true = işlendi). */
@@ -250,7 +255,7 @@ export function confirmIn(host: HTMLElement, text: string, ok: string, run: () =
  * Gear ekranı = ORTAK ENVANTER (Ömer 2026-10-18, taslak v3 "Ledger"; public/mockups/unified-inventory.html#v3). Yalnızca karakterle ilgilidir:
  * iki sayfalık defter, sol kenarda kahraman yer imleri (portre, stat puanı rozeti, bırakma hedefi), iki sekme:
  *  - Hero: sol sayfa sınıf başlığı + 7 yuva + skill satırı (pasif önce), sağ sayfa torba;
- *  - Sheet: sol sayfa level + statlar (HP / MP çubuklu, "36 +1 [−] [+]"), sağ sayfa skill ağacı kabı ("Coming soon").
+ *  - Sheet: sol sayfa level + statlar (HP / MP çubuklu, "36 +1 [+] [−]"), sağ sayfa skill ağacı kabı ("Coming soon").
  * Başlık satırı (Gear, sekmeler, altın) ekranın üst şeridinde, sağ üst Menu / tam ekranla aynı hizada; kapatma sağ üstte X (Esc, zemine dokunma).
  * Kuşanma: yuvaya / yer imine sürükle-bırak ya da çift tıklama (seçili kahramana); çıkarma: yuvayı torbaya sürükle ya da yuvaya çift tıkla;
  * atma: sürüklerken beliren çöp kutusu (Rare+ onaylı). İpucu: item'in özellikleri + her kahramana etkisi. Kaynaktan beslenir (sefer / endless).
@@ -260,8 +265,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const ext = o.ext;
   const overlay = el('div', 'gr-overlay el-modal gr-ledger-ov'); // ortak pencere hareketi (elegant.css > .el-modal, src/ui/motion.ts)
   overlay.setAttribute('role', 'dialog');
-  overlay.setAttribute('aria-label', 'Gear');
-  const panel = el('div', 'gr-panel gr-gear gr-ledger el-modal-panel');
+  overlay.setAttribute('aria-label', ext?.bagOnly ? 'Bag' : 'Gear');
+  const panel = el('div', `gr-panel gr-gear gr-ledger el-modal-panel${ext?.bagOnly ? ' gr-bagonly' : ''}`);
+  const bagOnly = !!ext?.bagOnly;
   const pair = ext ? el('div', 'gr-pair') : null;
   if (pair && ext) {
     pair.append(ext.side, panel);
@@ -352,6 +358,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const hero = curHero();
       const extra = ext?.tipActions?.(key);
       if (extra) return extra;
+      if (bagOnly) return key.startsWith('bag:') ? (ext?.bagActions?.(key.slice(4)) ?? []) : [];
       if (!hero) return [];
       if (key.startsWith('bag:')) {
         const uid = key.slice(4);
@@ -407,6 +414,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const hero = curHero();
       const extra = ext?.onDoubleTap?.(key);
       if (extra !== undefined) return extra;
+      if (bagOnly) return key.startsWith('bag:'); // yalnızca torba: çift dokunuş kuşandırmaz
       if (!hero) return false;
       if (key.startsWith('bag:')) {
         tryEquip(hero.id, key.slice(4), undefined, true);
@@ -460,7 +468,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         sel = '';
         renderAll();
       } else close();
-    } else if ((e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
+    } else if (!bagOnly && (e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
       // C: Gear'ı kapatır (Ömer 2026-10-18: oyun geneli C = aç / kapat; Hero / Sheet geçişi yalnızca tıklamayla)
       const t = e.target as HTMLElement | null;
       if (t && (t.tagName === 'INPUT' || t.tagName === 'TEXTAREA' || t.isContentEditable)) return;
@@ -472,7 +480,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   document.addEventListener('keydown', onKey, true);
   // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (X ile aynı; src/ui/backdrop.ts)
-  dismissOnBackdrop(overlay, panel, () => close());
+  // İÇERİ sayılanlar: tüm çift pencere (ganimet / tüccar paneli dahil) ve pencere içi onay kutusu (Ömer 2026-10-18: ganimetteki her tık "Leave?" açıyordu)
+  const inPair = pair ?? panel;
+  dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm')), () => close());
 
   /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
   const apply = (fn: () => void, okSound?: () => void): void => {
@@ -553,7 +563,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
 
   // --- yerleşim: üst şerit (Gear, Hero / Sheet, altın) | gövde: yer imleri · sol sayfa · sırt · sağ sayfa. Kaplar kalıcıdır (yalnızca içerik yenilenir).
   const head = el('div', 'gr-head gr-lhead');
-  const title = el('div', 'gr-title', 'Gear');
+  const title = el('div', 'gr-title', bagOnly ? 'Bag' : 'Gear');
   const tabsBox = el('div', 'gr-tabs gr-headtabs');
   tabsBox.setAttribute('role', 'tablist');
   const tabBtns = (['hero', 'sheet'] as const).map((k) => {
@@ -563,6 +573,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     return b;
   });
   const gold = el('div', 'gr-gold');
+  if (bagOnly) tabsBox.hidden = true;
   head.append(title, tabsBox, el('span', 'gr-grow'), gold);
   const body = el('div', 'gr-body gr-lbody');
   const marksBox = el('div', 'gr-marks-col');
@@ -619,6 +630,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }
   }
   function renderMarks(): void {
+    if (bagOnly) return;
     marksBox.replaceChildren(
       heroMarks({
         heroes: src.heroes(),
@@ -633,6 +645,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     );
   }
   function renderLeft(): void {
+    if (bagOnly) return;
     const top = pageL.scrollTop;
     const hero = curHero();
     const r = renderLedgerPage({
@@ -696,6 +709,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const bestButtons = (): HTMLElement[] => {
     const hero = curHero();
     const out: HTMLElement[] = [];
+    if (bagOnly) return out;
     if (hero)
       out.push(
         btn('gr-btn sm gr-best', `Best: ${className(hero.class)}`, () => {
@@ -714,7 +728,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   function renderRight(): void {
     folioR.textContent = `· ${tab === 'hero' ? 2 : 4} ·`;
-    if (tab === 'sheet') {
+    if (tab === 'sheet' && !bagOnly) {
       // skill ağacı (Ömer 2026-10-18): kap aynı, içerik yok
       const hero = curHero();
       const hd = el('div', 'gr-sec gr-tree-head', 'Skill tree');
@@ -731,11 +745,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const inv = renderInventory({
       items: bag,
       size: src.bagSize,
-      ...(hero ? { usableClass: hero.class } : {}),
+      ...(bagOnly ? { usableClasses: src.heroes().map((h) => h.class) } : hero ? { usableClass: hero.class } : {}),
       filter: {
         on: usableOnly,
         // telefonda kısa (torba başlığına Best düğmeleriyle sığsın)
-        label: usableOnly && hero ? (phoneLayout() ? 'Usable' : `Usable by ${className(hero.class)}`) : phoneLayout() ? 'All' : 'All items',
+        label: usableOnly && (hero || bagOnly) ? (phoneLayout() ? 'Usable' : bagOnly ? 'Usable by party' : `Usable by ${className(hero!.class)}`) : phoneLayout() ? 'All' : 'All items',
         toggle: () => {
           usableOnly = !usableOnly;
           renderRight();
@@ -751,6 +765,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       },
       onDouble: (uid) => {
         if (ext?.onDoubleTap?.(`bag:${uid}`) !== undefined) return;
+        if (bagOnly) return;
         const h = curHero();
         if (h) tryEquip(h.id, uid, undefined, true);
       },

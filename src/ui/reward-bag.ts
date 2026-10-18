@@ -65,9 +65,8 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
     const tiles = h.tiles();
     side.replaceChildren();
     const head = el('div', 'gr-head gr-lhead');
-    head.append(el('div', 'gr-title', 'Bag'));
+    head.append(el('div', 'gr-title', 'Rewards'));
     side.append(head);
-    side.append(el('div', 'gr-sec', `Rewards ${tiles.length}`));
     const list = el('div', 'gr-loot-list');
     tiles.forEach((t, i) => {
       const tile = el('button', `rb-tile gr-loot-tile${t.blocked ? ' blocked' : ''}`);
@@ -104,6 +103,7 @@ export function openRewardBag(root: HTMLElement, src: GearSource, h: RewardBagHo
 
   const ext: GearExt = {
     side,
+    bagOnly: true, // yalnızca ödüller + ortak torba (kahraman sayfası yok)
     hideGold: false,
     attach: (_overlay, a) => {
       api = a;

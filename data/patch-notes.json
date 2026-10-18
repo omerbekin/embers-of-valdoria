@@ -2,6 +2,42 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.8.4.10",
+      "date": "2026-10-18",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Clicking inside the Loot screen no longer asks to leave items; Cancel returns to the loot."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Loot and Endless rewards show only the bag next to the spoils."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Skill columns sit in the same places for every hero; stat rows are tighter with + then -."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "A hero with points to spend glows in the party list; tap to open their Sheet."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "The Formation tip only lights Formation; the Gear glow stops once Gear is opened."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.8.4.9",
       "date": "2026-10-18",
       "groups": [

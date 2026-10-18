@@ -3745,13 +3745,20 @@ html.short .gr-pair .gr-bb-row {
    Etiket sabit genişlik, değer sağa yaslı sabit genişlik, fark değerin hemen yanında; sütunlar içeriğe göre boyutlanır (etiket - değer boşluğu
    sütun genişliğine göre değişmez). Temel stat satırında − / + sağda sabit (puan bitince bile yerinde). Telefon kendi sıkı düzeninde kalır. */
 .gr-ledger .gr-sgroups {
-  grid-template-columns: auto auto auto;
-  justify-content: space-between;
+  /* üç stat sütunu AYNI genişlikte, içerik soldan sıkı dizilir (Ömer 2026-10-18: "statlar arası boşluk") */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-content: normal;
+  column-gap: calc(16 * var(--u));
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-stat {
+  justify-content: flex-start;
+  gap: calc(4 * var(--u));
 }
 
 .gr-ledger .gr-sgrp:not(.vitals) .gr-stat-k {
   flex: 0 0 auto;
-  min-width: 3.9em;
+  min-width: 3.2em;
 }
 
 .gr-ledger .gr-sgrp:not(.vitals) .gr-sico {
@@ -3760,12 +3767,19 @@ html.short .gr-pair .gr-bb-row {
 
 .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-v {
   flex: none;
-  min-width: 2.2em;
+  min-width: 1.9em;
 }
 
 .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d,
 .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d:empty {
-  min-width: 2.6em;
+  min-width: 2.2em;
+  margin-left: 0;
+}
+
+/* − sağda, + solda ve sabit (iki yuva puan bitince de yerinde durur) */
+.gr-ledger .gr-sgroups .gr-pm {
+  flex: none;
+  gap: calc(4 * var(--u));
 }
 
 html.short .gr-ledger .gr-sgroups {
@@ -3838,4 +3852,69 @@ html.short .gr-overlay.gr-ledger-ov,
 html.short .gr-overlay.gr-pair-ov {
   padding-left: calc(6px + var(--el, 0px));
   padding-right: calc(6px + var(--er, 0px));
+}
+
+/* ===================== Yalnızca torba görünümü (Ömer 2026-10-18): ganimet + ödül "View bag" =====================
+   Gear'ın defter sayfaları (yer imleri, yuvalar, skill'ler, sekmeler) YOK; yan panelin yanında yalnızca ortak torba (aynı hücre / filtre / çöp / ipucu). */
+.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gr-bagonly .gr-marks-col,
+.gr-bagonly .gr-page:not(.r),
+.gr-bagonly .gr-spine,
+.gr-bagonly .gr-folio {
+  display: none;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-bagonly {
+  flex: 1 1 0;
+  max-width: calc(1060 * var(--u));
+}
+
+.gr-pair:has(> .gr-bagonly) {
+  justify-content: center;
+}
+
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-bagonly {
+  max-width: none;
+}
+
+/* ===================== Skill satırı: sabit eşit sütunlar (Ömer 2026-10-18) =====================
+   Pasif + 4 skill her sınıfta AYNI yerde durur (ad / açıklama genişliği yeri kaydırmaz); uzun adlar sütun içinde sarılır. */
+.gr-skillbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(104px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.gr-skillbar .bh-sk {
+  width: auto;
+  min-width: 0;
+}
+
+.gr-skillbar .bh-sk .nm {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 2.7em; /* iki satır yeri ayrılır: bedel / sayı satırları her sütunda aynı hizada */
+  max-width: 100%;
+  overflow: visible;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.gr-skillbar .gr-sk-nums {
+  white-space: normal;
+}
+
+.gr-ledger.gr-bagonly > .gr-lhead .gr-headtabs {
+  display: none;
+}
+
+html.short .gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
 }

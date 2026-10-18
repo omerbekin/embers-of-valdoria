@@ -1,6 +1,6 @@
 /**
- * LOOT ekranı (Ömer 2026-10-18): kazanılan savaştan (ve sandık / hediyeden) sonra açılır; eski "Spoils" kartının yerini alır. Ortak envanterin
- * (Gear, v3 "Ledger") soluna ganimet alanı eklenir (taslak public/mockups/unified-inventory.html#v3&enc=reward): düşen item'ler orada durur;
+ * LOOT ekranı (Ömer 2026-10-18): kazanılan savaştan (ve sandık / hediyeden) sonra açılır; eski "Spoils" kartının yerini alır. Soluna ganimet alanı, sağına YALNIZCA ortak torba
+ * (Gear'ın torba bileşeni; kahraman sayfası yok, Ömer 2026-10-18: "çanta açtıran görüntü") konur (taslak public/mockups/unified-inventory.html#v3&enc=reward): düşen item'ler orada durur;
  * oyuncu onları torbaya ya da bir kahraman yuvasına sürükler / dokunur, ya da bırakır. Altın ve XP burada gösterilir. Kapatınca alınmayanlar
  * geride kalır. Düşüş miktarı ve kuralları DEĞİŞMEZ; torba doluysa önce yer açılır (Gear'ın torbası, çöp kutusu).
  * Durum: mevcut `pendingLoot.left / leftRolls` alanları (kayıt şeması aynı): açılırken düşüş `stashLoot` ile ganimet alanına alınır.
@@ -161,6 +161,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
 
   const ext: GearExt = {
     side,
+    bagOnly: true, // yalnızca ganimet + ortak torba (kahraman sayfası yok; kuşanma sonra Gear'da)
     hideGold: false,
     attach: (overlay, a) => {
       overlayEl = overlay;
@@ -182,10 +183,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     tipActions: (key) => {
       if (!key.startsWith('loot:')) return null;
       const i = idxOf(key);
-      const h = api?.hero();
-      const acts = [{ label: 'Take', primary: !h, disabled: bagFull(), run: () => void take(i) }];
-      if (h) acts.push({ label: 'Take & equip', primary: true, disabled: bagFull(), run: () => void take(i, { heroId: h.id }) });
-      return acts;
+      return [{ label: 'Take', primary: true, disabled: bagFull(), run: () => void take(i) }];
     },
     onDoubleTap: (key) => (key.startsWith('loot:') ? (take(idxOf(key)), true) : undefined),
     beforeClose: (proceed) => {

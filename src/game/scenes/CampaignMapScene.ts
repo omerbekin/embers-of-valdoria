@@ -210,6 +210,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private campHud: CampHud | null = null;
   /** Açık ipucu kartı "Formation'ı düzenle" ipucu mu (Formation düğmesi o sürece parlar). */
   private tipIsArrange = false;
+  /** Gear düğmesinin parlaması "gördüm" kaydı: kahraman -> Gear'ı açtığımızda ulaştığı level (yeni level atlama parlamayı yeniden kurar; yalnızca oturum, kayıt değişmez). */
+  private gearSeen = new Map<string, number>();
   private legendOpen = true;
   private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
@@ -1170,7 +1172,36 @@ export class CampaignMapScene extends Phaser.Scene {
       const bar = hpBar(this, 112, 64, w - 130, 6, h.hpRatio);
       const hp = elBody(this, 112, 82, session.showHp && !fallen ? `${Math.round(h.hpRatio * 100)}% health` : '', 14, EL.DIM).setOrigin(0, 0.5);
       if (fallen) face.setAlpha(0.32);
-      row.add([pic, face, frame, badge.c, name, role, bar, hp]);
+      // Level atlama işareti (Ömer 2026-10-18): harcanmamış stat puanı olan kahraman, puan harcanana dek kor nabzıyla öne çıkar (ana eylem çağrısı; kor burada serbest)
+      const pts = fallen ? 0 : (h.statPoints ?? 0);
+      let halo: Phaser.GameObjects.Image | null = null;
+      let ember: Phaser.GameObjects.GameObject[] = [];
+      if (pts > 0) {
+        const still = reducedMotion();
+        halo = this.add.image(46, 46, ensureGlow(this)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 190).setAlpha(still ? 0.6 : 0.4);
+        const ring = this.add.graphics();
+        ring.lineStyle(2, EL.EMBER2, 1).strokeRect(-1, -1, 94, 94);
+        const call = this.add.container(88, 6);
+        const cg = this.add.graphics();
+        cg.fillStyle(0x000000, 0.45).fillCircle(0, 1.5, 19.5);
+        cg.fillStyle(EL.EMBER, 1).fillCircle(0, 0, 18);
+        cg.lineStyle(2, EL.EMBER2, 1).strokeCircle(0, 0, 18);
+        const ct = elBody(this, 0, 1, `+${pts}`, 20, '#1a120a', false).setOrigin(0.5).setFontStyle('bold');
+        call.add([cg, ct]);
+        ember = [ring, call];
+        if (!still) {
+          const tw = [
+            this.tweens.add({ targets: halo!, alpha: { from: 0.3, to: 0.95 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+            this.tweens.add({ targets: ring, alpha: { from: 0.45, to: 1 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+            this.tweens.add({ targets: call, scale: { from: 1, to: 1.14 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
+          ];
+          row.once('destroy', () => tw.forEach((t) => t.stop()));
+        }
+      }
+      const upText = pts > 0 ? fitW(elBody(this, 112, 82, `Level up · ${pts} stat point${pts === 1 ? '' : 's'} to spend`, 14, '#ffb35a').setOrigin(0, 0.5), w - 120) : null;
+      if (upText) hp.destroy();
+      if (halo) row.add(halo);
+      row.add([pic, face, frame, badge.c, name, role, bar, upText ?? hp, ...ember]);
       if (fallen) row.add(graveMark(this, 46, 50, 58));
       if (lead?.id === h.id) row.add(crown(this, 14, 14, 0.55));
       const zone = this.add.zone(w / 2, 46, w + 8, 104).setInteractive({ useHandCursor: true });
@@ -1182,7 +1213,8 @@ export class CampaignMapScene extends Phaser.Scene {
         drawFrame(false);
         this.tweens.add({ targets: row, x, duration: 180, ease: EL.EASE });
       });
-      zone.on('pointerup', () => !this.drag.moved && this.openHero(h.id));
+      // puanı olan kahraman: dokununca Gear o kahramanın Sheet sekmesinde açılır (puan harcama)
+      zone.on('pointerup', () => !this.drag.moved && this.openHero(h.id, undefined, pts > 0 ? 'char' : undefined));
       row.add(zone);
       L.add(row);
     });
@@ -1410,7 +1442,8 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!hud || !current()) return;
     const busy = !!this.modal || this.menuOpen || !!this.slotBrowser || isSettingsOpen() || !!this.walking || !!document.querySelector('#ui-root .gr-overlay');
     hud.setHidden(!activeHeroes(this.s).length || busy);
-    hud.setGlow('gear', this.s.roster.some((h) => (h.statPoints ?? 0) > 0));
+    // Gear parlaması: puanı olan ve Gear'a henüz bakılmamış level atlama (Gear açılınca söner; yeni level atlama yeniden kurar). Kahraman yer imi + sol liste işareti puan harcanana dek sürer.
+    hud.setGlow('gear', this.s.roster.some((h) => (h.statPoints ?? 0) > 0 && h.level > (this.gearSeen.get(h.id) ?? 0)));
     hud.setGlow('formation', (!!this.tip && this.tipIsArrange) || this.formationDue());
   }
 
@@ -1515,6 +1548,8 @@ export class CampaignMapScene extends Phaser.Scene {
     const root = document.getElementById('ui-root');
     if (!root || this.pausedBlocks()) return;
     if (legendaryPreviewWanted()) setState(grantAllLegendaries(this.s)); // ?legendary=1 önizlemesi (madde 296)
+    for (const h of this.s.roster) this.gearSeen.set(h.id, h.level); // Gear'ın parlaması söner
+    this.syncCampHud();
     openGearScreen(root, {
       get: () => this.s,
       set: (s) => setState(s),
@@ -2303,10 +2338,10 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Kahramana dokunma / "Hero details": ortak Gear o kahramanın sekmesinde açılır (eski kahraman paneli kalktı; Ömer 2026-10-18). */
-  private openHero(heroId: string, after?: () => void): void {
+  private openHero(heroId: string, after?: () => void, view?: 'char' | 'inv'): void {
     if (!this.canOpenSide()) return;
     this.closeModal();
-    this.openGear(heroId, false, after);
+    this.openGear(heroId, false, after, view);
   }
 
   private openFormationFromHud(): void {

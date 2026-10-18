@@ -91,6 +91,8 @@ export interface InventoryView {
   title?: string;
   /** Kullanılabilirlik bu sınıfa göre (soluk hücre); yoksa hepsi olağan. */
   usableClass?: string;
+  /** Kullanılabilirlik bu sınıflardan HERHANGİ biri için (yalnızca torba ekranları: ganimet / ödül; kahraman seçili değil). */
+  usableClasses?: string[];
   /** "Usable" filtresi: verilirse başlıkta düğme görünür. */
   filter?: { on: boolean; label: string; toggle: () => void };
   selected?: string;
@@ -132,7 +134,7 @@ export function renderInventory(v: InventoryView): HTMLElement {
   for (const inst of sortBag(v.items)) {
     const d = itemDef(inst.id);
     if (!d) continue;
-    const usable = v.usableClass ? canEquip(v.usableClass, d) : true;
+    const usable = v.usableClasses ? v.usableClasses.some((c) => canEquip(c, d)) : v.usableClass ? canEquip(v.usableClass, d) : true;
     const cell = itemCell(inst, {
       selected: v.selected === inst.uid,
       unusable: !usable,

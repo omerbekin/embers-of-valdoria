@@ -344,7 +344,7 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
 
 /**
  * Stat grupları (savaş alt barıyla aynı düzen, src/game/stat-columns.ts): can + mana üstte; Ana | Atak | Defans sütunları.
- * Satır: ikon · ad · değer · fark (+1) · [−] [+] (Ömer 2026-10-18: fark değerin yanında, − ve + sağda sabit; + hiçbir durumda kaymaz).
+ * Satır: ikon · ad · değer · fark (+1) · [+] [−] (Ömer 2026-10-18: fark değerin yanında, + ve − sağda, + solda sabit; + hiçbir durumda kaymaz).
  * `vitals` verilirse HP / MP satırı "93 / 150" + altında savaş HUD'ının çubuğu (can oranı kahramanın şu anki canı; mana dışarıda hep dolu).
  */
 function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number }): HTMLElement {
@@ -410,7 +410,7 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
           if (can) lv.onAdd(attr);
         });
       } else hide(add);
-      pm.append(sub, add);
+      pm.append(add, sub); // + solda ve sabit, − sağında (Ömer 2026-10-18)
       row.append(pm);
     }
     if (vital) {
@@ -477,7 +477,7 @@ export function renderCharacter(v: CharacterView): CharacterRender {
 
 /**
  * Gear'ın sol sayfası (Ömer 2026-10-18, ortak envanter v3 "Ledger"): `hero` = sınıf başlığı + 7 yuva + skill satırı (pasif önce); `sheet` = level +
- * statlar (HP / MP çubuklu "93 / 150", stat satırı "36 +1 [−] [+]"). `el` sayfa içeriğinin kabıdır (puan taşı sürüklemesi burada dinlenir);
+ * statlar (HP / MP çubuklu "93 / 150", stat satırı "36 +1 [+] [−]"). `el` sayfa içeriğinin kabıdır (puan taşı sürüklemesi burada dinlenir);
  * ekran bunu KALICI sayfa kabının içine koyar (kaydırma kabı yeniden kurulmaz).
  */
 export function renderLedgerPage(v: CharacterView & { tab: 'hero' | 'sheet'; hpRatio?: number }): CharacterRender {
