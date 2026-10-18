@@ -1,0 +1,25 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Map event windows - mockup</title>
+<!--
+  MOCKUP (oyun kodu degil): haritadaki olay / etkilesim pencereleri. Gorunum oyunla ayni CSS (unified-inventory/css), gercek metinler (events.json, valdoria.json, campaign.json), gercek ikon / portre / sahne gorselleri.
+  Adres: #cur | #a | #b | #c   &s=hero|treasure|mine|fold|witch|result|rest|hearth|recruit|board   &ev=fold|witch &r=<secenek>  (yalniz result)   &gold=30 (altin yetmez durumu)   &u=0.44 (telefon yatay olcegi)   &clean (serit gizli; H tusu)
+  cur = bugunku pencere birebir. a = ortada levha. b = sahne solda. c = dugumun yaninda kart (Start Battle v3 dili). Secenek plakalarina tiklayinca sonuc ekrani acilir.
+  Ornek durum: altin 128, dusen kahramanlar Mage + Archer, diriltme 44 altin (gercekte sefer durumundan gelir). Kahraman aciklamalari ONERI metnidir (veride yok).
+-->
+<link rel="stylesheet" href="unified-inventory/css/style.css" />
+<link rel="stylesheet" href="unified-inventory/css/elegant.css" />
+<link rel="stylesheet" href="unified-inventory/css/gear.css" />
+<link rel="stylesheet" href="start-battle/sb.css" />
+<link rel="stylesheet" href="map-events/me.css" />
+</head>
+<body>
+<div id="stage"><div id="ui-root"></div></div>
+<script src="map-events/me.js"></script>
+</body>
+</html>

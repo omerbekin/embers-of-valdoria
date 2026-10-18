@@ -1,0 +1,212 @@
+/* HARITA OLAY PENCERELERI taslagi: YALNIZCA duzen. Gorunum oyunun CSS'inden (unified-inventory/css/*) + start-battle/sb.css (harita, dugum, serit, toast).
+   Olculer oyun birimiyle: calc(N * var(--u)). */
+.me-win { position: absolute; z-index: 15; color: var(--g-text); }
+.me-center { inset: 0; display: flex; align-items: center; justify-content: center; padding: max(44px, calc(60 * var(--u))) 12px 12px; }
+.me-panel { position: relative; background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0,0,0,.6); max-height: 100%; display: flex; flex-direction: column; }
+.me-in .me-panel { animation: sb-rise var(--m-modal-in, 220ms) ease-out both; }
+.me-in .sb-scrim { animation: sb-fade 200ms ease-out both; }
+html.reduced-motion .me-in .me-panel, html.reduced-motion .me-in .sb-scrim { animation: none; }
+.me-shut .sb-scrim, .me-shut .me-win { display: none; }
+.me-corner { position: absolute; width: 7px; height: 7px; background: #130d07; border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 2; }
+.me-corner.tl { left: -4px; top: -4px; } .me-corner.tr { right: -4px; top: -4px; } .me-corner.bl { left: -4px; bottom: -4px; } .me-corner.br { right: -4px; bottom: -4px; }
+.me-scroll { overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+
+/* ---------- yazilar ---------- */
+.me-t { font: 600 max(18px, calc(40 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; margin: 0; line-height: 1.12;
+  background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.me-txt { font: 400 max(13px, calc(26 * var(--u))) / 1.34 var(--g-body); color: #d9c8a2; }
+.me-txt p { margin: 0 0 .55em; } .me-txt p:last-child { margin-bottom: 0; }
+.me-txt .q { color: #cdb88d; }
+.me-lore { font: italic max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); margin: 0; }
+.me-cap { display: flex; align-items: center; gap: 10px; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0; }
+.me-cap::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217,178,106,.4), transparent); }
+.me-cap .r { order: 3; letter-spacing: .06em; color: var(--g-dim); font-weight: 400; text-transform: none; font-family: var(--g-body); font-size: max(11px, calc(19 * var(--u))); }
+
+/* ---------- cipler ---------- */
+.me-tags, .me-chips { display: flex; flex-wrap: wrap; gap: max(4px, calc(8 * var(--u))); align-items: center; }
+.me-chip { display: inline-flex; align-items: center; gap: .4em; padding: .1em .7em .1em .5em; min-height: max(20px, calc(32 * var(--u))); white-space: nowrap;
+  font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: .07em; text-transform: uppercase; background: rgba(12,9,6,.72); border: 1px solid var(--g-line2); color: var(--g-text); }
+.me-chip img { width: 1.5em; height: 1.5em; object-fit: contain; }
+.me-chip.type { color: #1a1109; border-color: transparent; background: var(--ac, #cdb67f); padding-left: .8em; }
+.me-chip.dim { color: var(--g-dim); border-color: var(--g-line); background: transparent; }
+.me-chip.gain { color: #f3d999; border-color: rgba(243,217,153,.5); background: rgba(243,217,153,.08); }
+.me-chip.heal { color: #a9d894; border-color: rgba(127,191,106,.55); background: rgba(127,191,106,.09); }
+.me-chip.loss { color: #ffb35a; border-color: rgba(224,112,42,.7); background: rgba(224,112,42,.1); }
+.me-chip.info { color: #cdb88d; }
+.me-chip.big { min-height: max(26px, calc(46 * var(--u))); font-size: max(11px, calc(21 * var(--u))); }
+.me-chip .ck { width: 1em; height: 1em; }
+
+/* ---------- baslik + madalyon + sahne gorseli ---------- */
+.me-medal { flex: none; display: block; overflow: visible; filter: drop-shadow(0 3px 4px rgba(0,0,0,.7)); }
+.me-hd { display: flex; align-items: center; gap: max(10px, calc(22 * var(--u))); padding: max(8px, calc(20 * var(--u))) max(14px, calc(34 * var(--u))); position: relative;
+  background: linear-gradient(90deg, rgba(var(--acr), .14), rgba(13,9,6,.5) 55%); border-bottom: 1px solid var(--g-line2); }
+.me-hd::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ac); }
+.me-hd .tx { display: flex; flex-direction: column; gap: max(4px, calc(10 * var(--u))); min-width: 0; }
+.me-art { position: relative; background-color: #120c08; background-size: cover; background-repeat: no-repeat; }
+.me-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,9,6,.0) 40%, rgba(14,10,7,.94) 100%), linear-gradient(90deg, rgba(12,9,6,.35), transparent 20%, transparent 80%, rgba(12,9,6,.35)); pointer-events: none; }
+.me-art.noveil::after { background: none; }
+.me-body { padding: max(10px, calc(24 * var(--u))) max(14px, calc(40 * var(--u))) max(12px, calc(30 * var(--u))); display: flex; flex-direction: column; gap: max(8px, calc(20 * var(--u))); min-height: 0; }
+.me-acts { display: flex; justify-content: flex-end; align-items: center; gap: max(12px, calc(26 * var(--u))); margin-top: auto; padding-top: max(2px, calc(6 * var(--u))); }
+.me-acts .el-btn { min-height: 44px; font-size: max(13px, calc(21 * var(--u))); padding-left: max(16px, calc(34 * var(--u))); padding-right: max(16px, calc(34 * var(--u))); }
+.me-acts .el-btn.primary { font-size: max(14px, calc(23 * var(--u))); min-height: max(46px, calc(62 * var(--u))); padding-left: max(24px, calc(48 * var(--u))); padding-right: max(24px, calc(48 * var(--u))); }
+.me-acts .el-btn:disabled { opacity: .5; cursor: not-allowed; }
+.me-acts .el-btn img { width: 1.3em; height: 1.3em; margin-right: .5em; object-fit: contain; }
+.me-acts.mid { justify-content: center; }
+
+/* ---------- secenek plakalari (A Plates dili) ---------- */
+.me-plates { display: grid; grid-template-columns: 1fr 1fr; gap: max(10px, calc(24 * var(--u))) max(10px, calc(22 * var(--u))); padding-top: max(6px, calc(12 * var(--u))); }
+.me-plates.one { grid-template-columns: 1fr; }
+.me-plate { --ac: #cdb67f; --acl: #e9d9a8; position: relative; display: flex; flex-direction: column; gap: max(4px, calc(10 * var(--u))); padding: max(12px, calc(26 * var(--u))) max(10px, calc(20 * var(--u))) max(8px, calc(16 * var(--u))); text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 11%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 40%, rgba(217,178,106,.2));
+  box-shadow: 0 0 0 3px rgba(8,6,4,.75), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 8%, transparent); transition: border-color .15s, box-shadow .15s, transform .15s; min-height: 44px; }
+.me-plate:hover, .me-plate:focus-visible { outline: none; border-color: var(--acl); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(22 * var(--u)) color-mix(in srgb, var(--ac) 35%, transparent), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); }
+.me-plate.dim { opacity: .55; cursor: not-allowed; } .me-plate.chosen { cursor: default; border-color: var(--acl); }
+.me-ptag { position: absolute; top: 0; left: max(12px, calc(20 * var(--u))); transform: translateY(-50%); z-index: 2; font: 700 max(9px, calc(13 * var(--u))) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: #fff4d6;
+  background: color-mix(in srgb, var(--ac) 55%, #0c0905); border: 1px solid var(--acl); padding: .15em 1em; white-space: nowrap; line-height: 1.5; }
+.me-pnm { font: 600 max(13px, calc(24 * var(--u))) var(--g-disp); letter-spacing: .07em; text-transform: uppercase; color: var(--acl); text-shadow: 0 0 max(5px, calc(12 * var(--u))) color-mix(in srgb, var(--ac) 40%, transparent); line-height: 1.15; }
+.me-pds { margin: 0; font: 400 max(12px, calc(21 * var(--u))) / 1.28 var(--g-body); color: #cdb88d; }
+.me-pdv { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent); margin: max(2px, calc(4 * var(--u))) 0; }
+.me-pdv::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--acl); }
+.me-plate .me-chips { margin-top: auto; }
+.me-plate .need { font: italic max(11px, calc(18 * var(--u))) var(--g-body); color: #ffb35a; }
+.me-plate.chosen::before, .me-card.sel::before { content: ''; position: absolute; left: 50%; top: 0; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); background: var(--g-ember); border: 1px solid var(--g-ember2); z-index: 3; box-shadow: 0 0 8px rgba(240,140,40,.8); }
+.acc-ember { --ac: #e0702a; --acl: #ffb35a; } .acc-gold { --ac: #d9a53a; --acl: #f3d999; } .acc-red { --ac: #b8402f; --acl: #f08a72; }
+.acc-violet { --ac: #8f6fb8; --acl: #cdb4ec; } .acc-green { --ac: #5f9a54; --acl: #b5e0a0; } .acc-dim { --ac: #8d7d5e; --acl: #d9c8a2; }
+.me-plates.compact .me-plate { flex-direction: row; flex-wrap: wrap; align-items: center; gap: max(4px, calc(8 * var(--u))) max(10px, calc(18 * var(--u))); padding-top: max(10px, calc(20 * var(--u))); }
+.me-plates.compact .me-plate .main { flex: 1 1 40%; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.me-plates.compact .me-pdv { display: none; } .me-plates.compact .me-plate .me-chips { margin-top: 0; flex: 1 1 100%; }
+
+/* ---------- kahraman / aday kartlari (karakter karti A + plaka dili) ---------- */
+.me-cards { display: flex; gap: max(10px, calc(24 * var(--u))); justify-content: center; flex-wrap: nowrap; padding-top: max(6px, calc(10 * var(--u))); }
+.me-card { --ac: #cdb67f; --acl: #e9d9a8; position: relative; flex: 0 1 max(150px, calc(380 * var(--u))); display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(10 * var(--u))); padding: 0 0 max(8px, calc(18 * var(--u))); cursor: pointer; font: inherit; color: inherit; text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 10%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 35%, rgba(217,178,106,.2)); box-shadow: 0 0 0 3px rgba(8,6,4,.75); transition: border-color .15s, box-shadow .15s; min-height: 44px; }
+.me-card:hover, .me-card:focus-visible { outline: none; border-color: var(--acl); }
+.me-card.sel { border-color: var(--g-gold); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(24 * var(--u)) rgba(243,217,153,.3), inset 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); }
+.me-card .pt { position: relative; width: 100%; aspect-ratio: 1 / .78; overflow: hidden; background: #120c08; border-bottom: 1px solid var(--g-line2); }
+.me-card .pt img.av { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }
+.me-card .pt::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(13,9,6,.85)); }
+.me-card .em { position: absolute; left: 6%; bottom: 6%; z-index: 2; width: max(22px, calc(54 * var(--u))); height: max(22px, calc(54 * var(--u))); border-radius: 50%; background: #140e09; border: 1px solid var(--ac); padding: 2px; }
+.me-card .crown { position: absolute; right: 6%; top: 6%; z-index: 2; width: max(18px, calc(40 * var(--u))); color: var(--g-gold); filter: drop-shadow(0 1px 2px #000); }
+.me-card .nm { font: 600 max(13px, calc(26 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--acl); }
+.me-card .ds { margin: 0; padding: 0 max(8px, calc(16 * var(--u))); font: 400 max(11px, calc(20 * var(--u))) / 1.26 var(--g-body); color: #cdb88d; }
+.me-card .me-chips { justify-content: center; padding: 0 6px; }
+.cc-warrior { --ac: #c0453a; --acl: #f0a090; } .cc-archer { --ac: #5f9a54; --acl: #b5e0a0; } .cc-paladin { --ac: #d9a53a; --acl: #f3d999; }
+.cc-hexer { --ac: #8f6fb8; --acl: #cdb4ec; } .cc-druid { --ac: #5aa08a; --acl: #a9e0cf; } .cc-mage { --ac: #4f86c0; --acl: #a8d0f0; }
+
+/* ---------- dusmus kahraman satiri (Rest) ---------- */
+.me-fallen { display: flex; flex-direction: column; gap: max(6px, calc(12 * var(--u))); }
+.me-frow { display: flex; align-items: center; gap: max(10px, calc(18 * var(--u))); padding: max(5px, calc(10 * var(--u))) max(8px, calc(16 * var(--u))); background: rgba(12,9,6,.6); border: 1px solid var(--g-line2); }
+.me-frow img.av { width: max(40px, calc(76 * var(--u))); height: max(40px, calc(76 * var(--u))); object-fit: cover; object-position: 50% 15%; border: 1px solid var(--g-line2); filter: grayscale(.8) brightness(.8); flex: none; }
+.me-frow .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.me-frow .tx b { font: 600 max(12px, calc(22 * var(--u))) var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-text); }
+.me-frow .tx span { font: 400 max(11px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); }
+.me-frow .el-btn { min-height: 44px; font-size: max(12px, calc(19 * var(--u))); padding-left: max(12px, calc(24 * var(--u))); padding-right: max(12px, calc(24 * var(--u))); }
+.me-frow .el-btn img { width: 1.3em; height: 1.3em; margin-left: .5em; }
+.me-frow .el-btn.off { opacity: .5; }
+.me-state { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; justify-content: space-between; font: 400 max(12px, calc(21 * var(--u))) var(--g-body); color: var(--g-dim); }
+.me-state b { color: var(--g-gold); font: 600 max(11px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .06em; }
+
+/* ---------- V0: bugunku pencere (birebir) ---------- */
+.cur .me-panel { padding: 0; align-items: stretch; text-align: center; }
+.cur .head { position: relative; display: flex; align-items: center; justify-content: center; gap: max(8px, calc(20 * var(--u))); padding-top: max(12px, calc(34 * var(--u))); }
+.cur .head::before, .cur .head::after { content: ''; width: max(40px, calc(130 * var(--u))); height: 1px; background: linear-gradient(90deg, transparent, rgba(217,178,106,.45)); }
+.cur .head::after { transform: scaleX(-1); }
+.cur .head i { width: 7px; height: 7px; border: 1px solid rgba(217,178,106,.7); transform: rotate(45deg); flex: none; }
+.cur .me-t { font-size: max(20px, calc(56 * var(--u))); letter-spacing: .16em; }
+.cur .sub { margin: max(6px, calc(14 * var(--u))) 0 0; font: italic max(13px, calc(26 * var(--u))) var(--g-body); color: #cdb88d; }
+.cur .tx { padding: 0 max(14px, calc(70 * var(--u))); margin-top: max(8px, calc(16 * var(--u))); font: 400 max(13px, calc(31 * var(--u))) / 1.3 var(--g-body); color: #d9c8a2; white-space: pre-line; }
+.cur .mid { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; gap: max(6px, calc(12 * var(--u))); padding: 0 max(14px, calc(40 * var(--u))); margin-top: max(6px, calc(14 * var(--u))); }
+.cur .acts { display: flex; justify-content: center; gap: max(12px, calc(34 * var(--u))); padding-bottom: max(10px, calc(30 * var(--u))); margin-top: auto; padding-top: max(6px, calc(20 * var(--u))); }
+.cur .acts .el-btn { min-height: 44px; font-size: max(12px, calc(19 * var(--u))); }
+.cur .acts .el-btn.primary { min-height: max(46px, calc(72 * var(--u))); font-size: max(14px, calc(24 * var(--u))); }
+.cur .crow { display: flex; align-items: center; gap: max(10px, calc(34 * var(--u))); text-align: left; padding: 0 max(8px, calc(26 * var(--u))); }
+.cur .crow .el-btn { flex: 0 0 max(150px, calc(470 * var(--u))); min-height: 44px; font-size: max(12px, calc(19 * var(--u))); }
+.cur .crow span { font: 400 max(11px, calc(21 * var(--u))) / 1.25 var(--g-body); color: #a8977a; }
+.cur .ccards { display: flex; justify-content: center; gap: max(8px, calc(18 * var(--u))); }
+.cur .cc { width: max(80px, calc(220 * var(--u))); padding: max(4px, calc(8 * var(--u))); border: 1px solid var(--g-line2); background: rgba(12,9,6,.7); display: flex; flex-direction: column; align-items: center; gap: 2px; cursor: pointer; color: inherit; font: inherit; }
+.cur .cc.sel { border: 2px solid #f3d999; }
+.cur .cc img { width: 100%; aspect-ratio: 1; object-fit: cover; object-position: 50% 15%; }
+.cur .cc b { font: 600 max(11px, calc(22 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-text); }
+.cur .cc i { font: italic max(10px, calc(18 * var(--u))) var(--g-body); color: var(--g-dim); }
+.cur .me-fallen { text-align: left; }
+
+/* ---------- V-A: levha (ortada, baslik seridi + sahne seridi) ---------- */
+.vA .me-panel { width: min(100%, max(calc(1240 * var(--u)), 600px)); }
+.vA .me-art { height: max(70px, calc(230 * var(--u))); }
+.vA .me-art .medalpos { display: none; }
+.vA.hero .me-panel, .vA.recruit .me-panel { width: min(100%, max(calc(1340 * var(--u)), 600px)); }
+
+/* ---------- V-B: sahne solda ---------- */
+.vB .me-panel { width: min(100%, max(calc(1560 * var(--u)), 700px)); flex-direction: row; overflow: hidden; }
+.vB .me-side { position: relative; flex: 0 0 34%; min-width: 0; border-right: 1px solid var(--g-line2); }
+.vB .me-side .me-art { position: absolute; inset: 0; }
+.vB .me-side .me-art::after { background: linear-gradient(0deg, rgba(10,7,5,.96) 0%, rgba(10,7,5,.0) 45%), linear-gradient(90deg, transparent 70%, rgba(14,10,7,.9)); }
+.vB .me-side .cap { position: absolute; left: 0; right: 0; bottom: 0; padding: max(10px, calc(24 * var(--u))); display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(8 * var(--u))); text-align: center; z-index: 2; }
+.vB .me-main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.vB .me-main .me-t { font-size: max(18px, calc(40 * var(--u))); }
+.vB .me-main .hd { padding: max(10px, calc(24 * var(--u))) max(14px, calc(36 * var(--u))) 0; display: flex; flex-direction: column; gap: max(4px, calc(10 * var(--u))); }
+.vB .me-body { padding-top: max(8px, calc(16 * var(--u))); flex: 1; }
+.vB .me-plates { grid-template-columns: 1fr; }
+
+/* ---------- V-C: dugumun yaninda kart (Anchored; onayli Start Battle dili) ---------- */
+.vC { left: 0; top: 0; width: max(min(calc(100vw - 20px), 340px), calc(660 * var(--u))); }
+.vC.wide { width: max(min(calc(100vw - 20px), 420px), calc(880 * var(--u))); }
+.vC .me-panel { overflow: visible; }
+.vC .me-art { height: max(44px, calc(150 * var(--u))); }
+.vC .me-art::after { background: linear-gradient(180deg, rgba(12,9,6,0) 30%, rgba(14,10,7,.96) 100%); }
+.vC .me-hd2 { display: flex; align-items: flex-end; gap: max(8px, calc(16 * var(--u))); margin-top: calc(max(20px, calc(42 * var(--u))) * -1); padding: 0 max(12px, calc(26 * var(--u))); position: relative; z-index: 2; }
+.vC .me-hd2 .tx { display: flex; flex-direction: column; gap: max(3px, calc(8 * var(--u))); min-width: 0; padding-bottom: 2px; }
+.vC .me-t { font-size: max(15px, calc(30 * var(--u))); letter-spacing: .1em; }
+.vC .me-body { padding: max(8px, calc(16 * var(--u))) max(12px, calc(26 * var(--u))) max(10px, calc(22 * var(--u))); gap: max(6px, calc(14 * var(--u))); }
+.vC .me-txt { font-size: max(12px, calc(22 * var(--u))); }
+.vC .me-notch { position: absolute; width: max(10px, calc(20 * var(--u))); height: max(10px, calc(20 * var(--u))); background: rgb(24,17,11); border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 4; }
+.vC .me-notch.l { left: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-right: 0; border-top: 0; }
+.vC .me-notch.r { right: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-left: 0; border-bottom: 0; }
+.vC .me-cards .me-card { flex-basis: max(90px, calc(190 * var(--u))); }
+.vC .me-card .ds { display: none; }
+
+/* sahnede hedef (kasaba etkilesim noktasi) */
+.me-town { position: absolute; background-color: #000; background-repeat: no-repeat; }
+.me-hot { position: absolute; transform: translate(-50%, -50%); z-index: 12; padding: 2px 10px; white-space: nowrap; background: rgba(12,9,6,.88); border: 1px solid var(--g-ember2); box-shadow: 0 0 calc(24 * var(--u)) rgba(240,140,40,.8);
+  font: 600 max(9px, calc(17 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+
+/* ---------- kisa ekran (telefon yatay) ---------- */
+html.short .me-center { padding: 6px; }
+html.short .me-panel { overflow: hidden; } html.short .me-corner { display: none; }
+html.short .vA .me-art, html.short .vC .me-art { height: 0; display: none; }
+html.short .vC .me-hd2 { margin-top: 0; padding-top: 8px; }
+html.short .me-body { padding: 8px 14px 8px; gap: 6px; }
+html.short .me-hd { padding: 6px 12px; }
+html.short .me-txt { font-size: 12.5px; line-height: 1.25; }
+html.short .me-txt p { margin-bottom: .3em; }
+html.short .me-plate { padding: 12px 8px 6px; gap: 2px; }
+html.short .me-pds { font-size: 11.5px; line-height: 1.2; }
+html.short .me-pdv { display: none; }
+html.short .me-plate .me-chips { gap: 3px; }
+html.short .me-chip { font-size: 9px; min-height: 20px; }
+html.short .me-plates { gap: 12px 8px; }
+html.short .vB .me-side { flex-basis: 24%; }
+html.short .vB .me-side .cap .me-chips, html.short .vB .me-side .cap .me-lore { display: none; }
+html.short .vB .me-main .hd { padding: 6px 12px 0; }
+html.short .vB .me-plates { grid-template-columns: 1fr 1fr; }
+html.short .me-card .ds { display: none; }
+html.short .me-card { flex-basis: 120px; }
+html.short .me-card .pt { aspect-ratio: 1 / .6; }
+html.short .me-acts .el-btn.primary { min-height: 44px; padding-left: 22px; padding-right: 22px; }
+html.short .me-frow img.av { width: 34px; height: 34px; }
+html.short .cur .tx { font-size: 12.5px; line-height: 1.2; margin-top: 4px; padding: 0 20px; }
+html.short .cur .crow span { display: none; } html.short .cur .crow .el-btn { flex: 1; }
+html.short .cur .sub { margin-top: 2px; }
+html.short .me-lore { display: none; }
+
+/* secenekli / yogun pencerelerde sahne seridi daha ince */
+.vA.bd-plates .me-art, .vA.bd-chosen .me-art, .vA.bd-fallen .me-art, .vA.bd-cards .me-art { height: max(50px, calc(150 * var(--u))); }
+.vA.bd-plates .me-body { gap: max(6px, calc(14 * var(--u))); padding-top: max(8px, calc(16 * var(--u))); }
+.vA .me-hd { padding-top: max(6px, calc(14 * var(--u))); padding-bottom: max(6px, calc(14 * var(--u))); }
+
+.vC { max-height: calc(100vh - 16px); display: flex; } .vC .me-panel { width: 100%; }
+.vC.wide .me-art { height: max(40px, calc(110 * var(--u))); }
+.vC .me-plates.compact .me-plate { padding-top: max(10px, calc(18 * var(--u))); }
+.vB .me-main .me-plates.compact .me-plate .main { flex-basis: 30%; }
+.me-plates.solo { grid-template-columns: 1fr !important; }

@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Battle Result Mockups</title>
+<!-- SAVAS SONU EKRANI taslagi (ui-dev, 2026-10-18). Oyun kodu DEGIL. Adres: #u=1 (masaustu) | #u=0.67 | #u=0.44 (telefon yatay 844x390 olcegi) ; &v=cur|a|b|c ; &clean = serit gizli. -->
+<link rel="stylesheet" href="battle-result/battle-result.css" />
+</head>
+<body>
+<div class="page">
+<div class="intro">
+<h1>Battle result (savaş sonu ekranı)</h1>
+Ömer: "oyun sonu ekranına da mockup çıkarsana." Mevcut hal ilk bölümde birebir; A / B / C önerileri altında. Her varyantta Zafer (1 kahraman, 2 düşman = şimdiki durum), Zafer 4v6 ve Yenilgi 4v4 gösterilir.
+<h3>Teşhis</h3>
+<ol>
+<li><b>Büyük boş alan.</b> Tek kahraman ve iki düşmanla panelin yarısından fazlası bomboş; 12 birimlik panel yüksekliği hep sabit ayrılıyor, ekran az doluyken "bitmemiş" duruyor.</li>
+<li><b>Satırlar düz, sayılar yalnız renkli.</b> Portre çerçevesiz ve rozetsiz; MVP ve "Fallen" ufak yazı (Fallen italik, kural dışı); HP barı sıradan çubuk, rakamı altında. DEALT / TAKEN / HEALED yalnız renk ve başlık yazısıyla ayrılıyor, birbirine oranı görünmüyor.</li>
+<li><b>Plaket yalın.</b> VICTORY güzel ama simgesiz ve tek parça; Defeat'te yalnız renk değişiyor. Tur sayısı ve hayatta kalan sayısı ince bir alt satıra gömülü, A-Band başlık dilindeki gibi sağda değer olarak durmuyor.</li>
+<li><b>Birincil eylem ile ikincil bağlantı karışık.</b> CONTINUE ortada, "Enter: Continue · Copy match data" aynı soluk italik satırda; Copy match data tıklanır olduğu belli değil. Kitin kuralı: ikincil solda, birincil en sağda.</li>
+<li><b>Maç özeti yok.</b> Oyunda zaten olan "en büyük vuruş, kritik, blok, kaçınma" gibi bilgiler gösterilmiyor (ayrıntı aşağıda).</li>
+</ol>
+<h3>Kural ve notlar</h3>
+<ul>
+<li>Kampanyada Continue sonrası ödül / XP / loot ekranı ayrıca geliyor: <b>XP ve ödül bu ekranda TEKRAR EDİLMEDİ</b>; yalnızca savaşın kendi özeti var.</li>
+<li><b>Özet şeridi verisi:</b> toplam hasar / alınan hasar zaten <code>BattleStats</code>'ta (dealt, taken). En büyük vuruş, kritik, blok ve kaçınma sayıları olay akışında var (<code>damage.crit</code>, <code>block</code>, <code>dodge</code> olayları) ama BattleStats bugün bunları toplamıyor; uygularken <code>record()</code>'a birkaç satır eklenir (yeni oyun kuralı değil, yalnız sayaç). "Biggest hit" altındaki skill adı isteğe bağlı. Rakamlar bu taslakta örnek veridir.</li>
+<li>Plaket: tooltips A-Band dili (üst şerit, solda ikon, ortada başlık, sağda değer). Defeat'te kırmızı çerçeve, şerit ve başlık. Satırlar skills-block "Plates" gibi plaka; kahraman portresinde sınıf amblemi, MVP turuncu şerit + rozet, Fallen gri portre + haç. HP barı karakter kartı dilinde (rakam çubuğun içinde). Sayılar altın Cinzel yerine türüne göre renkli (altın dealt, kırmızımsı taken, yeşil healed) + ikon + takım toplamına oranı gösteren küçük çubuk.</li>
+<li>Düğmeler: CONTINUE en sağda (kor elmaslı, tek birincil eylem), "Copy match data" solda küçük çerçeveli düğme; Enter ipucu klavye tuşu olarak CONTINUE'un yanında. İtalik yok. Giriş animasyonu yalnızca ilk açılışta oynar.</li>
+<li>İkonlar oyundaki mevcut stat/UI ikonları: yumruk = hasar, kalkan = alınan / blok, kalpli yeşil artı = şifa, yıldız = kritik, rüzgâr = kaçınma, kum saati = tur.</li>
+</ul>
+<h3>Ölçek (telefon yatay)</h3>
+<ul><li>Alttaki şeritten <b>1920</b>, <b>1280</b>, <b>844x390</b> (ölçek 0.44). Telefonda yazılar ve düğmeler dokunma için büyütülür; gerçek oyunda kısa ekranda ayrıca sığdırma gerekebilir.</li></ul>
+</div>
+<div id="sections"></div>
+</div>
+<div id="mk-strip"><b>MOCKUP</b>Battle Result &middot; scale:
+<button data-u="1">1920</button><button data-u="0.67">1280</button><button data-u="0.44">844x390</button><span class="sp"></span>view:
+<button data-v="all">All</button><button data-v="cur">Current</button><button data-v="a">A</button><button data-v="b">B</button><button data-v="c">C</button></div>
+<script src="battle-result/app.js"></script>
+</body>
+</html>
