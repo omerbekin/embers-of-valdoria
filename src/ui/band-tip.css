@@ -369,8 +369,26 @@
   color: #ff8a7a;
 }
 
+.bt-ln.has-now {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.bt-ln.has-now > .main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55em;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bt-ln.has-now > .main > .tx {
+  flex: 0 1 auto;
+}
+
 .bt-ln .now {
   flex: none;
+  white-space: nowrap;
   margin-left: auto;
   align-self: center;
 }

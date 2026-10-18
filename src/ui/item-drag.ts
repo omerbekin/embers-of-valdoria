@@ -8,7 +8,7 @@
  *  - stat / skill / affix satırlarının açıklaması (`data-stat`, `data-skill`, `data-affix`; savaş HUD'ıyla aynı metin).
  * Kararı çağıran verir (`onDrop`); denetçi yalnızca girdiyi yönetir. Oyun içi metinler İngilizce.
  */
-import { affixTip, type AffixLine } from '../progression';
+import { affixTip, itemDef, type AffixLine } from '../progression';
 import type { Stats } from '../engine';
 import { dropAction, isDoubleTap, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
@@ -186,6 +186,25 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       tipPinned = true;
     }
   };
+  // [+] / [−] ya da başka bir yenilemeden sonra satır baştan kurulur: açık stat ipucu (gezinme ya da sabitlenmiş) aynı statın yeni satırına
+  // geçirilir, böylece değerler ("POINTS (+1)", "now 18") anında güncellenir (Ömer 2026-10-18)
+  let tipSync = 0;
+  const syncTip = (): void => {
+    tipSync = 0;
+    if (!tipFor || tipFor.isConnected || !tip.classList.contains('on')) return;
+    const id = tipFor.dataset['stat'];
+    if (id === undefined) return;
+    const next = overlay.querySelector<HTMLElement>(`[data-stat="${id}"]`);
+    if (next) showTip(next);
+    else {
+      tip.classList.remove('on');
+      tipFor = null;
+    }
+  };
+  const tipObserver = new MutationObserver(() => {
+    if (!tipSync && tipFor && !tipFor.isConnected) tipSync = requestAnimationFrame(syncTip);
+  });
+  tipObserver.observe(overlay, { childList: true, subtree: true });
   overlay.addEventListener('pointerover', onOver);
   overlay.addEventListener('pointermove', onLocalMove);
   overlay.addEventListener('pointerout', onOut);
@@ -223,11 +242,13 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     overlay.classList.toggle('gr-dragging', on);
     overlay.classList.toggle('gr-trash-on', on && !!h.trash && showsTrash(drag?.src));
     overlay.querySelectorAll<HTMLElement>('[data-drop]').forEach((t) => {
-      t.classList.remove('drop-ok', 'drop-no');
+      t.classList.remove('drop-ok', 'drop-no', 'drop-off');
       if (!on || !drag) return;
       const tg = h.targetOf(t.dataset['drop'] ?? '');
       const ok = !!tg && dropAction(drag.src, tg, h.classOf).kind !== 'none';
       t.classList.add(ok ? 'drop-ok' : 'drop-no');
+      // silah ikinci el yuvasına gidiyorsa bant "Off-hand" der (gear.css > .gp-hint)
+      if (ok && t.dataset['drop'] === 'slot:offhand' && 'itemId' in drag.src && itemDef(drag.src.itemId)?.slot === 'weapon') t.classList.add('drop-off');
     });
     if (on && drag) overlay.style.setProperty('--drag-rc', drag.rc);
   };
@@ -410,6 +431,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     },
     justEnded: () => ended || performance.now() < swallowUntil,
     destroy: () => {
+      tipObserver.disconnect();
       clearHintPress();
       document.removeEventListener('pointermove', onMove);
       document.removeEventListener('pointerup', onUp);

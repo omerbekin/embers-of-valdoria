@@ -144,6 +144,12 @@ function soil(g: PxGrid, y: number, h = 5): void {
 // ---------------------------------------------------------------------------------------------------------------- ikonlar
 
 export const ICONS: Record<string, V2SpriteEntry> = {
+  // ChatGPT boyalı ikonlar (assets/source/class-icons/druid-sheet.png -> python tools/make-class-icons.py druid ...); eski kodla çizimler kaldırıldı.
+  thornwhip: { image: 'druid/thornwhip' },
+  roots: { image: 'druid/roots' },
+  rejuvenate: { image: 'druid/rejuvenate' },
+  treant: { image: 'druid/treant' },
+  leaves: { image: 'druid/leaves' },
   /** Druid logosu: altın damarlı meşe yaprağı, sapında küçük palamut. */
   leaf: (g) => {
     oakLeaf(g, 6.5, 26.5, 26.5, 5, 6.4, 'a', 'A', 'Y');
@@ -156,126 +162,14 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   },
 
   /** Verdant Blessing (çağırınca tüm dostlar iyileşir): yelpaze hâlinde üç meşe yaprağı, ortada filizlenen palamut, şifa ışıltısı. */
-  leaves: (g) => {
-    oakLeaf(g, 16, 23, 4, 7, 4.6, 'g', 'G', 'Y');
-    oakLeaf(g, 16, 23, 28, 7, 4.6, 'g', 'G', 'Y');
-    oakLeaf(g, 16, 24, 16, 2.5, 5, 'a', 'A', 'Y');
-    // palamut + filiz
-    g.ellipse(16, 26.4, 3.4, 3.8, 'b');
-    g.ellipse(16, 23.8, 3.9, 2, 'k');
-    g.dither(13, 23, 6, 1.4, 'k', 'b');
-    g.disc(14.8, 26.8, 0.9, 'n');
-    sparkle(g, 6, 22.5, 2.6, 'z');
-    sparkle(g, 26.5, 22.5, 2.6, 'z');
-    sparkle(g, 16, 30, 1.6, 'w');
-  },
 
   /** Thorn Whip: S kıvrımlı dikenli sarmaşık kırbaç; ucu şaklar, dikenden kan damlar (Wound). */
-  thornwhip: (g) => {
-    bramble(g, [4, 29], [3, 10], [16, 13], 3.8, 3, 4);
-    bramble(g, [16, 13], [28, 16], [25, 5], 3, 1.6, 4);
-    g.disc(4, 29, 2, 'k'); // tutulan uç (asa ucu)
-    // yapraklar
-    g.poly([7, 18, 3, 15.5, 4.6, 20.5], 'g').poly([19.5, 12.5, 21, 9, 22.5, 13], 'g');
-    // şak: kıvılcım + yay çizgileri
-    sparkle(g, 25.5, 4.5, 4.4, 'w');
-    sparkle(g, 25.5, 4.5, 2.2, 'z');
-    g.ring(25.5, 4.5, 7.2, 'w', 0.7, Math.PI * 0.1, Math.PI * 0.55);
-    // kan damlası (Wound)
-    g.poly([28.6, 9.5, 30, 12.6, 27.2, 12.6], 'r');
-    g.disc(28.6, 12.8, 1.4, 'r');
-  },
 
   /** Nature's Wrath: toprağı yarıp yelpaze gibi fışkıran kalın kökler ve dikenli sarmaşıklar; savrulan toprak. */
-  roots: (g) => {
-    soil(g, 25.5, 6);
-    // kalkan toprak kabukları
-    g.poly([9, 26, 12, 21.5, 16, 20.5, 20, 21.5, 23, 26], 'k');
-    g.poly([10.5, 25.6, 13, 22.4, 16, 21.6, 19, 22.4, 21.5, 25.6], 'b');
-    // üç kalın dikenli kök yelpaze gibi fışkırır (orta en kalın)
-    const arms: Array<[Array<[number, number]>, number]> = [
-      [[[13, 24], [9, 19], [5.5, 13], [4, 6.5]], 3.4],
-      [[[16, 23], [16.5, 16], [15, 9], [16.5, 2]], 4.2],
-      [[[19, 24], [23, 19], [26.5, 13], [28, 6.5]], 3.4],
-    ];
-    for (const [pts, w] of arms) root(g, pts, w, w * 0.4);
-    const spikes: Array<[number, number, number, number]> = [
-      [7.5, 16, -1, -0.2],
-      [10.2, 19.6, 1, -0.3],
-      [5.2, 10, 1, -0.4],
-      [14.2, 13, -1, -0.2],
-      [18, 17.5, 1, -0.2],
-      [16.4, 6.5, -1, -0.3],
-      [24.6, 16, 1, -0.2],
-      [22, 19.6, -1, -0.3],
-      [27, 10, -1, -0.4],
-    ];
-    for (const [x, y, nx, ny] of spikes) thorn(g, x, y, nx, ny, 2.6);
-    // yeşil sürgün yaprakları
-    g.poly([16.6, 9, 21, 6.4, 19.6, 11], 'a').poly([5, 13, 1.2, 11.4, 3, 15.4], 'a').poly([27, 13, 31, 11.4, 29.2, 15.4], 'a');
-    // savrulan toprak
-    g.disc(3, 22, 1.1, 'b').disc(29.5, 21.5, 1.2, 'k').disc(8.6, 23, 0.9, 'b').disc(24, 22.8, 0.9, 'k');
-  },
 
   /** Rejuvenate: tohumdan filizlenen genç sürgün (iki yaprak + ışıyan tomurcuk), etrafında yükselen şifa sarmalı. */
-  rejuvenate: (g) => {
-    // şifa sarmalı (arkada, yarım)
-    g.ring(16, 18, 11.5, 'A', 1.1, Math.PI * 1.05, Math.PI * 1.95);
-    for (let i = 0; i < 5; i++) {
-      const a = Math.PI * (0.15 + i * 0.17);
-      g.disc(16 + Math.cos(a) * 11.5, 18 + Math.sin(a) * 4, 0.9, 'z');
-    }
-    // tohum + toprak
-    g.ellipse(16, 28.5, 9, 2.6, 'k');
-    g.ellipse(16, 27.2, 3.2, 2.4, 'b');
-    g.line(14.4, 26.4, 17.2, 28, 'n', 0.5);
-    // sap
-    g.line(16, 26, 15.4, 19, 'G', 1.6).line(15.4, 19, 16.6, 11, 'G', 1.4);
-    g.line(15.7, 25, 15.2, 19.5, 'g', 0.5);
-    // iki yaprak
-    g.poly([15.6, 19.5, 8, 15.6, 6.4, 19.8, 11, 21.6], 'g');
-    g.poly([15.6, 19.5, 11, 21.6, 6.4, 19.8], 'G');
-    g.line(15, 19.6, 8.4, 18, 'z', 0.5);
-    g.poly([16.2, 16.4, 23.8, 11.6, 26, 15.8, 21, 18.2], 'g');
-    g.poly([16.2, 16.4, 21, 18.2, 26, 15.8], 'G');
-    g.line(16.8, 16.4, 24, 13.6, 'z', 0.5);
-    // ışıyan tomurcuk
-    g.disc(16.8, 8.6, 3.6, 'a');
-    g.disc(16.8, 8.6, 2.4, 'z');
-    g.disc(16.4, 8, 1.1, 'w');
-    sparkle(g, 23.5, 4.5, 2.6, 'w');
-    sparkle(g, 8.5, 9, 1.8, 'z');
-  },
 
   /** Summon Treant + Treant logosu: kabuklu meşe yüzü, kehribar gözler, alnında yosun, tepesinde meşe dalları ve yaprakları. */
-  treant: (g) => {
-    // tepe dalları (gövdeden yukarı ayrılır) + meşe yaprakları
-    root(g, [[10.5, 11], [7.5, 6.5], [4, 4.5]], 2.4, 1.2);
-    root(g, [[16, 10], [16.8, 5], [15.6, 1.5]], 2.6, 1.2);
-    root(g, [[21.5, 11], [24.5, 6.5], [28, 4.5]], 2.4, 1.2);
-    oakLeaf(g, 5, 6, 0.8, 1.2, 2.9, 'a', 'A', 'G');
-    oakLeaf(g, 27, 6, 31.2, 1.2, 2.9, 'a', 'A', 'G');
-    oakLeaf(g, 16, 3.5, 21.5, 0.8, 2.4, 'a', 'A', 'G');
-    // gövde-baş (yukarı doğru genişleyen kabuk, düzensiz kenar)
-    g.poly([7.5, 9.5, 12, 8, 16, 9, 20, 8, 24.5, 9.5, 26.5, 16, 25.5, 24, 26.5, 31.5, 5.5, 31.5, 6.5, 24, 5.5, 16], 'k');
-    g.poly([8.6, 10.5, 12, 9.2, 16, 10.2, 20, 9.2, 23.4, 10.5, 25.2, 16, 24.3, 24, 25, 31.5, 7, 31.5, 7.7, 24, 6.8, 16], 'b');
-    // kabuk lifleri
-    for (const x of [10.5, 13.5, 18.8, 21.6]) g.line(x, 11, x + (x < 16 ? -0.8 : 0.8), 31, 'k', 0.6);
-    g.line(16.2, 20, 16, 31, 'k', 0.6);
-    // ağır kaş + gözler
-    g.poly([8.5, 15, 15, 16.4, 15.4, 18.2, 8.2, 17], 'k');
-    g.poly([23.5, 15, 17, 16.4, 16.6, 18.2, 23.8, 17], 'k');
-    g.ellipse(12, 18.6, 2.3, 1.3, 'o').ellipse(20, 18.6, 2.3, 1.3, 'o');
-    g.ellipse(12, 18.6, 1.6, 0.9, 'f').ellipse(20, 18.6, 1.6, 0.9, 'f');
-    g.disc(12.3, 18.5, 0.45, 'y').disc(20.3, 18.5, 0.45, 'y');
-    // burun çıkıntısı + ağız yarığı
-    g.poly([16, 17.5, 17.6, 23, 14.4, 23], 'k');
-    g.poly([16, 18, 16.9, 22.4, 15.1, 22.4], 'n');
-    g.line(12.5, 26, 19.5, 25.6, 'o', 0.8);
-    // yosun
-    g.dither(9, 9.6, 6, 2, 'g', 'G').dither(19, 9.6, 5, 1.6, 'g', 'G');
-    g.disc(7.4, 23, 1.4, 'g').disc(24.8, 27, 1.2, 'g');
-  },
 
   /** Root Smash (Treant): yosunlu dev ahşap yumruk yerden yukarı fırlar; bileğinden kökler toprağa iner, darbe çizgileri. */
   rootsmash: (g) => {

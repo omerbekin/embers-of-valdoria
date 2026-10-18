@@ -70,6 +70,12 @@ export function warhammer(g: PxGrid, px: number, py: number, hx: number, hy: num
 }
 
 export const ICONS: Record<string, V2SpriteEntry> = {
+  // ChatGPT boyalı ikonlar (assets/source/class-icons/paladin-sheet.png -> python tools/make-class-icons.py paladin ...); eski kodla çizimler kaldırıldı.
+  judgehammer: { image: 'paladin/judgehammer' },
+  ankh: { image: 'paladin/ankh' },
+  judgebeam: { image: 'paladin/judgebeam' },
+  radiance: { image: 'paladin/radiance' },
+  divine: { image: 'paladin/divine' },
   // Logo: kızıl kite kalkan + krem haç
   holy: (g) => {
     const kite = (inset: number) => [16, 2.5 + inset, 27.5 - inset, 5.5 + inset * 0.6, 26.5 - inset, 17, 16, 30 - inset * 1.4, 5.5 + inset, 17, 4.5 + inset, 5.5 + inset * 0.6];
@@ -83,85 +89,14 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   },
 
   // Divine Light: yukarıdan inen yumuşak huzme (dama geçişli) + altında yeşil şifa artısı + parıltılar
-  divine: (g) => {
-    // tepeden yelpaze gibi açılan ışık şeritleri (dama ile yumuşak), altta parlayan şifa artısı
-    for (const [x1, w, t] of [[3, 2.2, 'Y'], [9, 2.6, 'y'], [16, 3.4, 'z'], [23, 2.6, 'y'], [29, 2.2, 'Y']] as Array<[number, number, string]>) {
-      g.poly([16 - 0.6, 0, 16 + 0.6, 0, x1 + w, 24, x1 - w, 24], t);
-    }
-    g.disc(16, 1.5, 2.6, 'w');
-    g.ellipse(16, 24, 7, 2.6, 'z');
-    // şifa artısı
-    g.rect(13, 16.5, 6, 14, 'G').rect(9, 20.5, 14, 6, 'G');
-    g.rect(13.8, 17.3, 4.4, 12.4, 'g').rect(9.8, 21.3, 12.4, 4.4, 'g');
-    g.line(14.5, 18, 14.5, 21.5, 'w', 0.5);
-    g.disc(4, 6, 0.8, 'w').disc(28, 9, 0.8, 'w');
-  },
 
   // Holy Strike: arkada kutsal ışık patlaması, önde haç işlemeli çekiç (baş sol üstte, inen darbe)
-  judgehammer: (g) => {
-    rays(g, 11, 11, 11, 6.5, 8, 1.4, 'y', 'Y', 0.2);
-    g.disc(11, 11, 4.5, 'z');
-    g.disc(11, 11, 2.8, 'w');
-    warhammer(g, 27.5, 28.5, 11.5, 11.5, 14, 10);
-  },
 
   // Resurrection: altın kanatlı kızıl kalp + krem haç + üstte hale
-  ankh: (g) => {
-    // kanatlar (aynalı): üç tüy katmanı
-    for (const sgn of [-1, 1]) {
-      const X = (x: number) => 16 + sgn * x;
-      g.poly([X(4), 13, X(15.5), 7, X(14.5), 11, X(16), 12.5, X(13.5), 15, X(14.5), 17.5, X(11), 18.5, X(11.5), 21, X(5), 20], 'Y');
-      g.poly([X(4), 13.5, X(14), 8.5, X(13), 11.5, X(14.2), 13, X(12), 15, X(12.6), 17, X(5), 18.5], 'y');
-      g.line(X(6), 14.5, X(12), 10.5, 'z', 0.5);
-    }
-    // kalp
-    g.disc(12.6, 15, 4.3, 'R').disc(19.4, 15, 4.3, 'R');
-    g.poly([8.4, 16, 23.6, 16, 16, 26], 'R');
-    g.disc(12.6, 15, 3.4, 'r').disc(19.4, 15, 3.4, 'r');
-    g.poly([9.3, 16, 22.7, 16, 16, 24.6], 'r');
-    g.disc(11.2, 13.6, 1, 'z');
-    paladinCross(g, 16, 17, 3.6, 1.5, 'e', 1.2);
-    // hale
-    g.ring(16, 4.5, 6, 'y', 1.2);
-    g.ring(16, 4.5, 6, 'Y', 0.4);
-  },
 
   // Judgment: gökten huzme, altında kutsal ateşten haç (alanın artı biçimi)
-  judgebeam: (g) => {
-    // yerde yassı haç (artı biçimli alan) kutsal ateşle yanar; gökten merkeze huzme iner
-    const fy = 0.5; // zemin basıklığı
-    const cy = 24;
-    const cell = (x: number, y: number, t: string, k = 1) => g.poly([x - 4.2 * k, y, x, y - 4.2 * fy * k, x + 4.2 * k, y, x, y + 4.2 * fy * k], t);
-    const cells: Array<[number, number]> = [[16, cy], [8, cy - 3.6], [24, cy + 3.6], [8, cy + 3.6], [24, cy - 3.6]];
-    // artı: merkez + sol-arka, sağ-ön, sol-ön, sağ-arka (izometrik kollar)
-    for (const [x, y] of cells) cell(x, y, 'Y', 1.05);
-    for (const [x, y] of cells) cell(x, y, 'y', 0.8);
-    // alevler: her hücreden yükselir
-    const fl = (x: number, y: number, h: number, w: number) => {
-      g.poly([x, y - h, x + w, y - h * 0.45, x + w * 0.8, y, x - w * 0.8, y, x - w, y - h * 0.45], 'f');
-      g.poly([x, y - h * 0.72, x + w * 0.62, y - h * 0.32, x + w * 0.5, y, x - w * 0.5, y, x - w * 0.62, y - h * 0.32], 'y');
-      g.poly([x, y - h * 0.4, x + w * 0.3, y - h * 0.15, x, y, x - w * 0.3, y - h * 0.15], 'w');
-    };
-    fl(8, cy - 3.6, 7, 2.6);
-    fl(24, cy - 3.6, 7, 2.6);
-    fl(8, cy + 3.6, 8, 2.9);
-    fl(24, cy + 3.6, 8, 2.9);
-    // huzme merkeze
-    g.poly([13.6, 0, 18.4, 0, 19.2, 23, 12.8, 23], 'Y');
-    g.poly([14.6, 0, 17.4, 0, 17.9, 23, 14.1, 23], 'y');
-    g.poly([15.4, 0, 16.6, 0, 16.8, 23, 15.2, 23], 'w');
-    g.ellipse(16, cy, 5.5, 2.4, 'w');
-    paladinCross(g, 16, 8, 3.2, 1.4, 'e', 1.1);
-  },
 
   // Radiance: haçlı güneş
-  radiance: (g) => {
-    rays(g, 16, 16, 15.5, 10, 8, 2.1, 'y', 'Y', -Math.PI / 2);
-    g.disc(16, 16, 8.4, 'Y');
-    g.disc(16, 16, 7.4, 'y');
-    g.disc(16, 16, 5.6, 'z');
-    paladinCross(g, 16, 15.5, 5, 2.2, 'w', 1.2);
-  },
 };
 
 export const SPRITES: Record<string, V2SpriteEntry> = {

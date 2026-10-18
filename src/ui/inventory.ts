@@ -51,14 +51,16 @@ export interface CellOptions {
   /** Altta fiyat etiketi (tüccar satış fiyatı); null = gizli. */
   price?: number | null;
   priceBad?: boolean;
+  /** Başka bir düğmenin içine konacaksa (ganimet satırı) 'span' (iç içe button geçersiz). */
+  tag?: 'button' | 'span';
 }
 
 /** Tek item hücresi (torba, tüccar malı, geri alım, ödül torbası). Nadirlik sırası büyüdükçe çerçeve kalınlaşır, köşebentler belirginleşir. */
 export function itemCell(inst: ItemInstance, o: CellOptions = {}): HTMLElement {
   const d = itemDef(inst.id);
   const rank = d ? rarityIndex(instanceRarity(inst)) : 0;
-  const cell = el('button', `gr-item k${rank}${o.selected ? ' on' : ''}${o.unusable ? ' no' : ''}${o.filtered ? ' filtered' : ''}${o.shake ? ' shake' : ''}`);
-  cell.type = 'button';
+  const cell = el(o.tag ?? 'button', `gr-item k${rank}${o.selected ? ' on' : ''}${o.unusable ? ' no' : ''}${o.filtered ? ' filtered' : ''}${o.shake ? ' shake' : ''}`);
+  if (cell instanceof HTMLButtonElement) cell.type = 'button';
   cell.style.setProperty('--rc', instanceColor(inst));
   if (o.drag) cell.dataset['drag'] = o.drag;
   if (o.tip) cell.dataset['tip'] = o.tip;

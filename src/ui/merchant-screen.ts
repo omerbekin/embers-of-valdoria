@@ -10,6 +10,7 @@
 import { reducedMotion } from './motion-pref';
 import { uiSound, worldSound } from './ui-sound';
 import './gear.css';
+import './gear-plates.css';
 import { instanceColor, instanceRarity, instanceSubtitle, itemDef, rarityIndex, type ItemInstance, type SlotId } from '../progression';
 import { dismissOnBackdrop } from './backdrop';
 import { iconUrl } from './dom-icons';

@@ -7,8 +7,9 @@
  * ZAMANLAMA SÖZLEŞMESİ (asıl sheet ile birebir, hasar rakamları aynı anda): `hitMs` = asıl sheet'in vuruş karesine kadar geçen süre
  * (impact / fps x fpsScale). Akış sheet sürümüyle aynıdır:
  *   Dirge          (bolt)  c.windUp -> hitMs sonra vuruş (ilk ses başta, kalanlar vuruşta) -> Promise vuruşta çözülür
- *   Halberd Chop   (melee) c.lunge -> hitMs sonra vuruş + kamera sarsıntısı
- *   Wall of Pikes  (cells, aşamalı) c.windUp -> aşama i, i x 180 ms + hitMs anında (c.releaseStage(i)); Promise ilk aşamada çözülür
+ *   Halberd Chop   (melee) c.lunge -> ağız hitMs anında yere değer: zemin kırıkları + kısa sarsıntı (110 ms) aynı anda
+ *   Wall of Pikes  (cells, aşamalı) c.windUp -> mızrak uçları aşama i hücresine i x 180 ms + hitMs anında değer (c.releaseStage(i) + o hücrenin
+ *                  toz/kıymık/kan zerreleri + kısa sarsıntı 70 ms aynı anda); Promise ilk aşamada çözülür
  *   Rend           (melee) c.lunge -> hızlı tırmık vuruştan hemen önce başlar (en uzun tırnak gövde ortasını ~hitMs'te geçer) ->
  *                  hitMs anında zerreler + kısa sarsıntı (90 ms); hedefin geri itilmesi motorun hasar olayındaki vuruş tepkisinden gelir
  *   Glyph of Breaking (center, artı alanı) c.windUp -> hitMs sonra tüm hücrelerde aynı anda fışkırma + kısa sarsıntı
@@ -16,16 +17,23 @@
  * Görünüş (renkler asıl sheet'ten: assets/mob-vfx/<mob>/<skill>.png):
  *   Dirge: mor ses dalgası hilalleri (")))") hedefe akar, vuruşta mor parlama + 4 kollu yıldız ışıltısı + mor kırıklar; ardından hedefin
  *     gövdesine sarılarak YUKARI yükselen iki mor ağıt şeridi (sarmal; önden geçen kısmı birimin önünde, arkası arkasında), yükselen mor duman.
- *   Halberd Chop: tepeden, saldırgan tarafından hedefin ayağına inen ağır alevli teber yayı (ivmelenen; beyaz-sıcak ön kenar, turuncu iz),
- *     yere değince turuncu parlama, yassı şok halkası, yukarı fışkıran kıvılcımlar, uçan taş parçaları, toz, yanık iz.
- *   Wall of Pikes: saldırgan tarafından 5 mızrak (ahşap sap, çelik uç, alevli iz) sütun boyunca ilerler; her hücreye (aşamaya) değdiği
- *     anda uçlarda ateş patlaması (ışın yıldızı + kıvılcım + zemin halkası). Işınlanmaz: okçunun Pierce'ı gibi gerçekten geçer.
+ *   Halberd Chop (Ömer 2026-10-18: Rend/Glyph dili, "fiziksel ve ağırlıklı"): saldırgan tarafında tepeden inen ağır çelik teber başı (koyu
+ *     çelik hilal ağız, sivri uç, kanca, ahşap sap; ivmelenerek iner), yalnızca inişin son kısmında kısa, ince, soluk hareket izi (kenarında
+ *     çok ince mat kor çizgisi: asıl sheet'in alevinden kalan tek iz). Hedefin ayağında yere gömülür (ağız zemin çizgisinin altına girer,
+ *     önünü kalkık toprak dudağı örter), kısa titrer, sonra geri çekilip söner. Vuruşta koyu çukur + yayılan çatlaklar (dibinde kısa süre mat
+ *     kor), mat toprak-taş kırıkları, alçak toz bulutu, ince duman teli; hedefe gerçekten hasar geldiyse koyu kan zerreleri. Parlama, ADD,
+ *     ak-sıcak kenar, ışın yıldızı, şok halkası, kıvılcım YOK.
+ *   Wall of Pikes (Ömer 2026-10-18: Rend/Glyph dili): saldırgan tarafından 5 mızrak (koyu ahşap sap, demir bilezik, mat çelik yaprak uç)
+ *     sütun boyunca GERÇEKTEN ilerler (okçunun Pierce'ı gibi, ışınlanmaz); hafifçe sallanır, ucun arkasında kısa soluk hareket izi, sapın
+ *     arkasında çok soluk duman ve ince mat kor çizgisi. Zeminde başlangıçtan duvarın önüne uzanan sürtünme izi (iki ince çizik + soluk
+ *     sürtme), sonra söner. Her hücreye değişte uçlar kısa geri seker; o hücrede mat toz, toprak zerresi, ahşap kıymıkları, vurulan
+ *     birimde koyu kan zerreleri ve kısa sarsıntı. Ateş patlaması, ışın yıldızı, parlama, zemin halkası YOK.
  *   Rend (Ömer 2026-10-18 yeniden: "daha gerçekçi, pençe izleri çok parlamasın"): atılan kurdun patisi hedefin gövdesine yelpaze gibi
  *     açılan 4 ince keskin tırmık atar (kurt tarafında yukarıdan başlar, hedefin arkasına doğru aşağı çapraz; tırnaklar birkaç ms arayla).
  *     İzler KOYU: kahverengi-siyah yırtık kenar, koyu kırmızı iç, daha koyu dip; yalnızca taze izin üst kenarında çok soluk ince ışık.
  *     ADD karışımı, ak-sıcak çizgi, kıvılcım, ışın, halka YOK. Tırnak ucunun arkasında çok ince, kısa hareket izi. Vuruşta mat koyu kan /
  *     toz zerreleri tırmık yönünde savrulur, birkaç kıl-kumaş lifi kopar, soluk koyu toz; izler hızla açılır, kısa kalır, koyulaşıp hafifçe
- *     kapanarak söner, birkaç damla aşağı süzülür. İzler birimle birlikte kayar (geri itilince üstünde kalır).
+ *     kapanarak söner, birkaç kalın damla (1x hızda okunur) aşağı süzülür. İzler birimle birlikte kayar (geri itilince üstünde kalır).
  *   Glyph of Breaking: artının merkez hücresine camgöbeği rün dairesi kazınır (dikenli taş disk, iki halka, dönen rün işaretleri, ortada
  *     baklava; dışarıdan sarmalla toplanan zerreler), çatlaklar artı kolları boyunca her hücreye uzanır, hücre plakaları hafifçe yanar;
  *     vuruşta merkezden göğe ışık sütunu, her hücrede artı biçimli parlama + fışkıran dönen taşlar (camgöbeği kenarlı) + kıvılcım + zemin
@@ -44,13 +52,9 @@ type Scene = Phaser.Scene;
 
 const ADD = 1; // Phaser.BlendModes.ADD
 const STAGE_STEP = 180; // aşamalı alan skill'inde aşamalar arası (ms): src/game/mob-vfx.ts ile aynı
-const SHAKE_MS = 130; // yakın dövüş vuruş sarsıntısı (mob-vfx.ts ile aynı)
-const SHAKE_MAG = 0.004;
 const CELL_DEPTH = 8; // hücre zemini -> o hücredeki birimin hemen üstü (mob-vfx.ts ile aynı)
 
 const PURPLE = ['#b872ff', '#8a5ad0', '#e0c8ff', '#5a2a9c'];
-const FIRE = ['#ff4d1a', '#ff8a1f', '#ffd23f', '#ffffff'];
-const ROCK = ['#4a2e1a', '#6b4a2e', '#2a1a10', '#8a6a48'];
 
 const clamp01 = (v: number) => (v < 0 ? 0 : v > 1 ? 1 : v);
 const lerp = (a: number, b: number, u: number) => a + (b - a) * u;
@@ -96,32 +100,6 @@ function groundRing(c: VfxCtx, k: VfxKit, p: Pt, r: number, cols: [string, strin
     const a = (1 - u) ** 1.3;
     g.lineStyle(Math.max(2, 9 * (1 - u)), c0, a * 0.8).strokeEllipse(p.x, p.y, rr * 2, rr * 2 * flat);
     g.lineStyle(Math.max(1.5, 4 * (1 - u)), c1, a).strokeEllipse(p.x, p.y, rr * 1.8, rr * 1.8 * flat);
-    if (u >= 1) g.destroy();
-  });
-}
-
-/** Işın yıldızı: merkezden dışa fırlayan ince ışık çizgileri (patlama anı). */
-function starBurst(c: VfxCtx, k: VfxKit, p: Pt, len: number, n: number, cols: [string, string], dur: number, depth: number, o: { flat?: number; dir?: number; spread?: number } = {}): void {
-  const g = c.scene.add.graphics().setDepth(depth).setBlendMode(ADD);
-  const rays = Array.from({ length: n }, (_, i) => {
-    const base = o.dir !== undefined ? (o.dir > 0 ? 0 : Math.PI) + (i / Math.max(1, n - 1) - 0.5) * (o.spread ?? 2.2) : (i / n) * Math.PI * 2;
-    return { a: base + k.rnd(-0.12, 0.12), l: len * k.rnd(0.55, 1) };
-  });
-  const c0 = k.color(cols[0]);
-  const c1 = k.color(cols[1]);
-  void k.counter(c.scene, k.slow(dur), (u) => {
-    g.clear();
-    const head = 1 - (1 - u) ** 3;
-    const tail = clamp01(u * 1.6 - 0.25);
-    const a = 1 - u * u;
-    for (const r of rays) {
-      const x0 = p.x + Math.cos(r.a) * r.l * tail;
-      const y0 = p.y + Math.sin(r.a) * r.l * tail * (o.flat ?? 1);
-      const x1 = p.x + Math.cos(r.a) * r.l * head;
-      const y1 = p.y + Math.sin(r.a) * r.l * head * (o.flat ?? 1);
-      g.lineStyle(6, c0, a * 0.7).lineBetween(x0, y0, x1, y1);
-      g.lineStyle(2.5, c1, a).lineBetween(x0, y0, x1, y1);
-    }
     if (u >= 1) g.destroy();
   });
 }
@@ -309,37 +287,97 @@ const dirge: MobHandVfx = async (c, k, hitMs) => {
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
-// HALBERD CHOP (Morvane Halberdier): ağır alevli teber yayı
+// HALBERD CHOP (Morvane Halberdier): ağır çelik teber ağzının inişi ve yere gömülmesi (Rend / Glyph dili)
+// Katman disiplini: tek ana çizim (teber + kısa hareket izi; zemin çukuru + çatlaklar ayrı zemin derinliğinde, aynı karede), kısa vuruş
+// katmanı (toprak-taş kırıkları, kan zerreleri, kor, toz). ADD karışımı / parlama / ak-sıcak kenar / ışın / halka YOK.
 
-/** Yay izi: pivot çevresinde [aFrom, aTo] açılarını kaplayan, ön kenara doğru parlayan bantlar. */
-function drawArc(g: Phaser.GameObjects.Graphics, k: VfxKit, p: Pt, dir: number, r0: number, r1: number, aFrom: number, aTo: number, alpha: number): void {
-  const n = 18;
-  const bands: Array<[number, number, number, number]> = [
-    // [iç yarıçap oranı, dış yarıçap oranı, renk, alfa çarpanı]
-    [0.0, 1.04, k.color('#c8401a'), 0.55],
-    [0.3, 1.0, k.color('#ff8a1f'), 0.8],
-    [0.62, 0.97, k.color('#ffd23f'), 0.95],
-    [0.85, 0.95, k.color('#fff6e0'), 1],
-  ];
-  const pt = (a: number, r: number) => ({ x: p.x + dir * Math.cos(a) * r, y: p.y + Math.sin(a) * r });
+/** Teber çeliği ve sapı (mat; yalnızca ağız kenarında soluk açık çizgi). */
+const STEEL = { dark: '#1c1f22', body: '#4c5157', mid: '#6e747a', edge: '#a9aeb3' };
+const WOOD = { dark: '#22170e', body: '#664830', hi: '#8a6a48' };
+/** Toprak / taş kırıkları (koyu, soğuk-kahve). */
+const EARTH = ['#54473b', '#685848', '#40352c', '#76654f'];
+/** Asıl sheet'in alev turuncusu, soldurulmuş: yalnızca ince mat kor. */
+const EMBER = ['#7a3a1c', '#8a4824', '#5e2c16'];
+const CHOP_SHAKE_MS = 110;
+const CHOP_SHAKE_MAG = 0.0036;
+
+/**
+ * Teber başı: pivot `P` çevresinde `a` açısında (yarıçap R'de baş). Sap ucu (pivota doğru solar), hilal ağız (ilerleme yönüne bakar),
+ * üst sivri uç, arka kanca. `groundY` altına inen noktalar zemine bastırılır: ağız yere gömülmüş görünür.
+ */
+function drawHalberd(g: Phaser.GameObjects.Graphics, k: VfxKit, P: Pt, dir: number, R: number, a: number, alpha: number, groundY: number): void {
+  const rx = dir * Math.cos(a);
+  const ry = Math.sin(a);
+  const tx = -dir * Math.sin(a); // açı artınca ilerleme yönü: ağız bu yana bakar
+  const ty = Math.cos(a);
+  const at = (r: number, t: number): Pt => ({ x: P.x + rx * r + tx * t, y: Math.min(groundY, P.y + ry * r + ty * t) });
+  // sap
+  for (const [r0, r1, aa] of [
+    [0.38, 0.56, 0.22],
+    [0.56, 0.72, 0.6],
+    [0.72, 0.96, 1],
+  ] as Array<[number, number, number]>) {
+    const A = at(R * r0, 0);
+    const B = at(R * r1, 0);
+    g.lineStyle(11, k.color(WOOD.dark), alpha * aa).lineBetween(A.x, A.y, B.x, B.y);
+    g.lineStyle(6.5, k.color(WOOD.body), alpha * aa).lineBetween(A.x, A.y, B.x, B.y);
+    const A2 = at(R * r0, -1.5);
+    const B2 = at(R * r1, -1.5);
+    g.lineStyle(1.4, k.color(WOOD.hi), alpha * aa * 0.8).lineBetween(A2.x, A2.y, B2.x, B2.y);
+  }
+  const bw = 44;
+  const blade = [at(R * 0.71, 4), at(R * 0.65, bw * 0.5), at(R * 0.655, bw * 0.95), at(R * 0.77, bw * 1.2), at(R * 0.91, bw * 1.13), at(R * 1.0, bw * 0.78), at(R * 0.95, 4)];
+  const edge = [at(R * 0.655, bw * 0.95), at(R * 0.77, bw * 1.2), at(R * 0.91, bw * 1.13), at(R * 1.0, bw * 0.78)];
+  const bevel = [at(R * 0.675, bw * 0.84), at(R * 0.775, bw * 1.06), at(R * 0.9, bw * 1.0), at(R * 0.975, bw * 0.74)];
+  // arka kanca + üst sivri uç
+  g.fillStyle(k.color(STEEL.body), alpha).fillPoints([at(R * 0.77, -4), at(R * 0.72, -bw * 0.44), at(R * 0.86, -4)], true);
+  g.fillStyle(k.color(STEEL.body), alpha).fillPoints([at(R * 0.95, -6), at(R * 1.17, 0), at(R * 0.95, 6)], true);
+  g.lineStyle(1.2, k.color(STEEL.edge), alpha * 0.45).lineBetween(at(R * 0.96, -5).x, at(R * 0.96, -5).y, at(R * 1.16, 0).x, at(R * 1.16, 0).y);
+  // ağız
+  // gövde, sapa yakın koyu sırt, kenara doğru açık bileme şeridi, ince kenar çizgisi (mat; parlama yok)
+  g.fillStyle(k.color(STEEL.body), alpha).fillPoints(blade, true);
+  g.fillStyle(k.color(STEEL.dark), alpha * 0.7).fillPoints([blade[0]!, at(R * 0.68, bw * 0.34), at(R * 0.94, bw * 0.32), blade[blade.length - 1]!], true);
+  g.fillStyle(k.color(STEEL.mid), alpha).fillPoints([...bevel, ...[...edge].reverse()], true);
+  g.lineStyle(1.6, k.color(STEEL.edge), alpha * 0.75).strokePoints(edge, false);
+  g.lineStyle(1.4, k.color(STEEL.dark), alpha).strokePoints(blade, true);
+  // sap yuvası (demir bilezik)
+  const s0 = at(R * 0.7, -7);
+  const s1 = at(R * 0.7, 7);
+  g.lineStyle(6, k.color(STEEL.dark), alpha).lineBetween(s0.x, s0.y, s1.x, s1.y);
+}
+
+/** Kısa hareket izi: ağzın geçtiği yayın son parçası, ince ve soluk (normal karışım); kenarında çok ince mat kor. */
+function drawChopTrail(g: Phaser.GameObjects.Graphics, k: VfxKit, P: Pt, dir: number, R: number, a: number, span: number, alpha: number): void {
+  if (span < 0.02 || alpha < 0.02) return;
+  const n = 10;
+  const arc = (r: number, t: number) =>
+    Array.from({ length: n + 1 }, (_, i) => {
+      const aa = a - span + (span * i) / n;
+      return { x: P.x + dir * Math.cos(aa) * r - dir * Math.sin(aa) * t, y: P.y + Math.sin(aa) * r + Math.cos(aa) * t };
+    });
+  const outer = arc(R * 0.86, 62);
+  const inner = arc(R * 0.72, 30);
+  // soluk geniş bant (iz yüzü)
   for (let i = 0; i < n; i++) {
-    const u0 = i / n;
-    const u1 = (i + 1) / n;
-    const a0 = aFrom + (aTo - aFrom) * u0;
-    const a1 = aFrom + (aTo - aFrom) * u1;
-    const fresh = u1 ** 1.8; // ön kenara yakın parlak
-    for (const [ri, ro, col, am] of bands) {
-      // izin kuyruğu incelir: iç kenar dışa kayar
-      const rIn = r0 + (r1 - r0) * Math.min(0.97, ri + (1 - u1) * 0.45);
-      const rOut = r0 + (r1 - r0) * ro;
-      if (rOut <= rIn) continue;
-      g.fillStyle(col, alpha * am * (0.08 + 0.92 * fresh)).fillPoints([pt(a0, rIn), pt(a0, rOut), pt(a1, rOut), pt(a1, rIn)], true);
+    const f = ((i + 1) / n) ** 1.6;
+    g.fillStyle(k.color('#6a6560'), 0.09 * alpha * f).fillPoints([inner[i]!, outer[i]!, outer[i + 1]!, inner[i + 1]!], true);
+  }
+  // ince iz çizgileri (ağız kenarı + uç), uca doğru belirginleşir
+  for (const [pts, w, col, am] of [
+    [outer, 2, '#8a847e', 0.3],
+    [arc(R * 1.12, 0), 1.4, '#7a756f', 0.22],
+    [arc(R * 0.8, 50), 1.2, EMBER[0]!, 0.28],
+  ] as Array<[Pt[], number, string, number]>) {
+    for (let i = n >> 1; i < n; i++) {
+      const f = ((i + 1 - (n >> 1)) / (n >> 1)) ** 1.3;
+      g.lineStyle(w, k.color(col), am * alpha * f).lineBetween(pts[i]!.x, pts[i]!.y, pts[i + 1]!.x, pts[i + 1]!.y);
     }
   }
-  // ön kenar: beyaz-sıcak çelik çizgisi
-  const A = pt(aTo, r0 + (r1 - r0) * 0.25);
-  const B = pt(aTo, r1 * 1.03);
-  g.lineStyle(5, k.color('#ffffff'), alpha).lineBetween(A.x, A.y, B.x, B.y);
+}
+
+/** Hedefe bu kullanımda gerçekten hasar geldi mi (olaysız önizlemede: evet). */
+function hurt(c: VfxCtx, v: CombatantView): boolean {
+  return !c.usage || c.usage.damages.some((d) => d.target === v.combatant.uid && d.amount > 0);
 }
 
 function chopOn(c: VfxCtx, k: VfxKit, v: CombatantView, T: number): void {
@@ -348,46 +386,111 @@ function chopOn(c: VfxCtx, k: VfxKit, v: CombatantView, T: number): void {
   const depth = v.container.depth;
   const R = Math.max(190, Math.min(280, v.h * 1.25));
   const foot = k.feet(v);
-  // uç yolu: saldırganın tepesinden (yukarı) hedefin üstünden geçip ayağının önüne iner; merkez saldırgan tarafında, diz hizasında
+  // uç yolu: saldırgan tarafında, tepeden hedefin üstünden geçip ayağının hizasında yere iner
   const A1 = 0.22; // vuruş açısı (ileri, hafif aşağı)
   const A0 = -1.8; // başlangıç (dik yukarı, biraz geri)
-  const G = { x: v.container.x + dir * R * 0.12, y: foot.y }; // yere değdiği nokta (hedefin ayağı)
+  // ağız aşağı bakar ve sapın altında asılıdır: sap ayak hizasının biraz üstünde kalır, ağzın alt yarısı zemine gömülür
+  const G = { x: v.container.x + dir * R * 0.12, y: foot.y - 24 }; // ucun indiği nokta
   const P = { x: G.x - dir * Math.cos(A1) * R, y: G.y - Math.sin(A1) * R }; // savuruş merkezi
-  const g = sc.add.graphics().setDepth(depth + 2).setBlendMode(ADD);
-  const TAIL = 1.45;
-  let nextEmber = 0;
-  // savuruş: ağır, ivmelenen (vuruşa kadar), sonra iz yerinde söner
-  void k.counter(sc, T, (u) => {
-    const e = u ** 2.1;
-    const a = A0 + (A1 - A0) * e;
+  const groundY = foot.y + 4;
+  // gömülme noktası: ağzın zemine girdiği yerin ortası
+  const B = { x: P.x + dir * Math.cos(A1) * R * 0.8, y: groundY };
+  const g = sc.add.graphics().setDepth(depth + 2);
+  const floor = sc.add.graphics().setDepth(k.FLOOR_FX + 3);
+  const HOLD = k.slow(230); // gömülü kalış
+  const PULL = k.slow(200); // geri çekilip sönme
+  const GROUND = k.slow(950); // çukur + çatlak ömrü (vuruştan sonra)
+  const total = T + GROUND;
+  const cracks = Array.from({ length: 5 }, (_, i) => {
+    const th = (i % 2 ? Math.PI : 0) + (i % 2 ? -1 : 1) * dir * k.rnd(0.05, 0.6) + (i === 4 ? Math.PI / 2 : 0);
+    const L = k.rnd(60, 130);
+    return crackPath(k, B, { x: B.x + Math.cos(th) * L, y: B.y + Math.sin(th) * L * 0.32 });
+  });
+  const lip = Array.from({ length: 6 }, (_, i) => ({ x: B.x + (i - 2.5) * 16 + k.rnd(-5, 5), y: groundY + k.rnd(-2, 3), w: k.rnd(12, 22), h: k.rnd(5, 9), col: k.color(k.pick(EARTH)) }));
+  const cDent = k.color('#18120d');
+  const cCrack = k.color('#110d09');
+  const cLit = k.color('#6a5a48');
+  void k.counter(sc, total, (u) => {
+    const tm = u * total;
     g.clear();
-    drawArc(g, k, P, dir, R * 0.5, R, Math.max(A0, a - TAIL * (0.4 + 0.6 * u)), a, Math.min(1, u * 5));
-    // uçtan dökülen közler
-    if (u * 1000 >= nextEmber) {
-      nextEmber += 70;
-      const tip = { x: P.x + dir * Math.cos(a) * R * 0.95, y: P.y + Math.sin(a) * R * 0.95 };
-      k.burst(sc, tip.x, tip.y, { colors: FIRE, n: 1, speed: [30, 90], gravity: 300, life: [200, 360], size: [16, 26], depth: depth + 3 });
+    floor.clear();
+    // 1) iniş: ağır, ivmelenen; yalnızca son kısmında kısa iz
+    if (tm < T) {
+      const q = tm / T;
+      const e = q ** 2.1;
+      const a = A0 + (A1 - A0) * e;
+      const appear = smooth(clamp01(q / 0.22));
+      drawChopTrail(g, k, P, dir, R, a, 0.42 * q ** 1.4, appear * clamp01((q - 0.35) / 0.3));
+      drawHalberd(g, k, P, dir, R, a, appear, groundY);
+      return;
     }
-  }).then(() => {
-    void k.counter(sc, k.slow(260), (u) => {
-      g.clear();
-      drawArc(g, k, P, dir, R * 0.5, R, A1 - TAIL * (1 - u * 0.7), A1, (1 - u) ** 1.4);
-      if (u >= 1) g.destroy();
-    });
+    const t = tm - T;
+    // 2) gömülü: kısa titreşim; sonra geri çekilip söner
+    if (t < HOLD + PULL) {
+      const qp = clamp01((t - HOLD) / PULL);
+      const quiver = 0.014 * Math.sin(t / k.slow(16)) * Math.exp(-t / k.slow(70));
+      const a = A1 + quiver - 0.32 * smooth(qp);
+      drawChopTrail(g, k, P, dir, R, A1, 0.42 * (1 - clamp01(t / k.slow(70))), 1 - clamp01(t / k.slow(70)));
+      drawHalberd(g, k, P, dir, R, a, (1 - qp) ** 1.3, groundY);
+    }
+    // 3) zemin: çukur, kalkık toprak dudağı (gömülen ağzın önü), çatlaklar (kısa sürede yayılır), çatlak dibinde sönen mat kor
+    const gf = 1 - clamp01((t - k.slow(520)) / k.slow(430)) ** 1.4;
+    const open = 1 - (1 - clamp01(t / k.slow(60))) ** 2;
+    floor.fillStyle(cDent, 0.6 * gf).fillEllipse(B.x, groundY - 1, 120 * open, 24 * open);
+    floor.fillStyle(k.color('#2a221c'), 0.5 * gf).fillEllipse(B.x, groundY - 3, 80 * open, 12 * open);
+    const grow = 1 - (1 - clamp01(t / k.slow(110))) ** 2;
+    const ember = (1 - clamp01(t / k.slow(480))) * gf;
+    for (const cr of cracks) {
+      const pm = partial(cr.main, grow);
+      if (pm.length < 2) continue;
+      floor.lineStyle(3.2, cCrack, 0.85 * gf).strokePoints(pm, false);
+      floor.lineStyle(1.1, cLit, 0.35 * gf).strokePoints(pm.map((p) => ({ x: p.x, y: p.y - 2 })), false);
+      if (ember > 0.02) floor.lineStyle(1.2, k.color(EMBER[0]!), 0.4 * ember).strokePoints(partial(pm, 0.55), false);
+      for (const br of cr.branches) {
+        const pb = partial(br.pts, clamp01((grow - br.at) / (1 - br.at)));
+        if (pb.length >= 2) floor.lineStyle(2, cCrack, 0.7 * gf).strokePoints(pb, false);
+      }
+    }
+    // toprak dudağı: gömülü ağzın zemine girdiği çizgiyi örter (teberle aynı katmanda, önünde)
+    const lipA = (t < HOLD + PULL ? 1 : 0.7) * gf * open;
+    for (const l of lip) g.fillStyle(l.col, 0.9 * lipA).fillEllipse(l.x, l.y, l.w, l.h);
+    if (u >= 1) {
+      g.destroy();
+      floor.destroy();
+    }
   });
 
-  // vuruş: zemin parlaması, şok halkası, kıvılcım, taş, toz, yanık
+  // vuruş katmanı: toprak-taş kırıkları, toz bulutu, mat kor kırıntısı; hedefe değdiyse koyu kan zerreleri
   after(c, T, () => {
-    glow(c, k, { x: G.x, y: G.y - 14 }, 280, 110, '#ff7a1a', { alpha: 0.85, dur: 320, grow: 1.35, depth: depth + 3 });
-    glow(c, k, { x: G.x, y: G.y - 16 }, 80, 46, '#fff2cc', { alpha: 0.8, dur: 170, grow: 1.5, depth: depth + 4 });
-    groundRing(c, k, G, 150, ['#ff6a1a', '#ffd23f'], 380, depth + 1, 0.28);
-    starBurst(c, k, { x: G.x, y: G.y - 8 }, 120, 9, ['#ff8a1f', '#fff2cc'], 240, depth + 3, { flat: 0.75, dir: -dir, spread: 2.4 });
-    k.burst(sc, G.x, G.y - 8, { colors: FIRE, n: 16, speed: [240, 580], angle: [-Math.PI + 0.3, -0.3], gravity: 1100, life: [320, 640], size: [20, 36], depth: depth + 3 });
-    k.burst(sc, G.x, G.y - 6, { colors: ROCK, n: 9, speed: [180, 420], angle: [-Math.PI + 0.35, -0.35], gravity: 1500, life: [420, 700], size: [38, 64], depth: depth + 3 });
-    puffs(c, k, { x: G.x, y: G.y - 10 }, 7, { hex: ['#8a7a6a', '#a8957f', '#6b5a4a'], spreadX: 60, spreadY: 6, rise: 40, size: [46, 76], dur: [480, 720], alpha: 0.45, depth: depth + 1, drift: 70 });
-    // yanık iz: hedefin ayağında koyu kızıl, yavaş sönen leke (birimin arkasında)
-    const scorch = sc.add.image(G.x, G.y, glowKey(k, sc)).setDisplaySize(180, 44).setTint(k.color('#ff4d1a')).setBlendMode(ADD).setAlpha(0.8).setDepth(depth - 1);
-    sc.tweens.add({ targets: scorch, alpha: 0, duration: k.slow(700), ease: 'Quad.easeIn', onComplete: () => scorch.destroy() });
+    const rocks: Bit[] = Array.from({ length: 14 }, () => {
+      const a = -Math.PI / 2 + k.rnd(-1.15, 1.15) + dir * 0.15;
+      const sp = k.rnd(200, 470);
+      return { x: B.x + k.rnd(-34, 34), y: groundY - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: k.rnd(0, 6), vr: k.rnd(-7, 7), pts: rockShape(k), size: k.rnd(6, 15), col: k.color(k.pick(EARTH)), life: k.rnd(440, 700), delay: k.rnd(0, 30), rim: k.color('#a48f78') };
+    });
+    const dirt: Bit[] = Array.from({ length: 12 }, () => {
+      const a = -Math.PI / 2 + k.rnd(-1.3, 1.3);
+      const sp = k.rnd(140, 380);
+      return { x: B.x + k.rnd(-40, 40), y: groundY - 3, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: k.rnd(0, 6), vr: k.rnd(-5, 5), pts: rockShape(k), size: k.rnd(2, 4), col: k.color(k.pick(EARTH)), life: k.rnd(320, 560), delay: k.rnd(0, 40) };
+    });
+    debris(c, k, [...rocks, ...dirt], depth + 3, 1500);
+    // çok az mat kor: ağır, yavaş yükselip söner (alev kimliğinin tek izi)
+    const embers: Bit[] = Array.from({ length: 4 }, () => ({ x: B.x + k.rnd(-30, 30), y: groundY - 6, vx: k.rnd(-40, 40), vy: k.rnd(-90, -40), rot: 0, vr: k.rnd(-3, 3), pts: rockShape(k), size: k.rnd(1.6, 2.6), col: k.color(k.pick(EMBER)), life: k.rnd(380, 600), delay: k.rnd(20, 120) }));
+    debris(c, k, embers, depth + 3, -30);
+    if (hurt(c, v)) {
+      const body = k.spot(v);
+      const p = { x: body.x - dir * v.w * 0.08, y: body.y + v.h * 0.08 };
+      const gore: Bit[] = Array.from({ length: 12 }, () => {
+        const a = -Math.PI / 2 + k.rnd(-1.25, 1.25) - dir * 0.35;
+        const sp = k.rnd(130, 330);
+        return { x: p.x + k.rnd(-18, 18), y: p.y + k.rnd(-36, 36), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: k.rnd(0, 6), vr: k.rnd(-4, 4), pts: rockShape(k), size: k.rnd(2.5, 5.5), col: k.color(k.pick(GORE)), life: k.rnd(360, 600), delay: k.rnd(0, 30) };
+      });
+      debris(c, k, gore, depth + 3, 1300);
+    }
+    // toz: yere yayılan alçak bulut + biraz yükselen
+    puffs(c, k, { x: B.x, y: groundY - 8 }, 6, { hex: ['#7e7062', '#8e8072', '#665a4e'], spreadX: 74, spreadY: 4, rise: 14, size: [60, 96], dur: [540, 780], alpha: 0.34, depth: depth + 1, drift: 70 });
+    puffs(c, k, { x: B.x, y: groundY - 18 }, 3, { hex: ['#6a5e52', '#7e7062'], spreadX: 34, spreadY: 8, rise: 46, size: [40, 64], dur: [480, 700], alpha: 0.26, depth: depth + 1, drift: 30 });
+    // ince duman teli: çatlaktan kısa süre süzülen koyu gri
+    puffs(c, k, { x: B.x, y: groundY - 10 }, 2, { hex: ['#3e3a36', '#4a4440'], spreadX: 20, spreadY: 4, rise: 70, size: [24, 36], dur: [620, 820], alpha: 0.14, depth: depth + 1, drift: 16, delay: 80 });
   });
 }
 
@@ -398,12 +501,14 @@ const halberdChop: MobHandVfx = async (c, k, hitMs) => {
   await c.lunge(t ? t.container.x : c.actor.container.x);
   const T = k.slow(hitMs);
   for (const v of c.targets) chopOn(c, k, v, T);
-  after(c, T, () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
+  after(c, T, () => k.shake(c.scene, CHOP_SHAKE_MS, CHOP_SHAKE_MAG));
   return land(c, T);
 };
 
 // ---------------------------------------------------------------------------------------------------------------------
-// WALL OF PIKES (Sworn Guard): sütun boyunca ilerleyen alevli mızrak duvarı
+// WALL OF PIKES (Sworn Guard): sütun boyunca gerçekten ilerleyen mızrak duvarı (Rend / Glyph dili: ahşap + çelik, mat)
+// Katman disiplini: tek ana çizim (mızraklar + kısa hareket izi + ince duman/kor; zeminde sürtünme izi aynı karede), her hücre değişinde
+// kısa vuruş katmanı (toz, kıymık, kan zerresi). ADD / parlama / ateş patlaması / ışın yıldızı / halka YOK.
 
 /** Mızrakların zeminden yüksekliği (px) ve uç kaydırması (bazıları önde): 5 mızrak. */
 const PIKES: Array<{ h: number; lead: number }> = [
@@ -414,49 +519,92 @@ const PIKES: Array<{ h: number; lead: number }> = [
   { h: 148, lead: 10 },
 ];
 const PIKE_LEN = 250;
+const SPLINTER = ['#6e5638', '#86684a', '#4e3a26', '#5e4a32'];
+/** Mızrak sapı ve ucu: küçük göründükleri için teberden biraz açık (yine mat). */
+const PIKE_WOOD = { dark: '#24180d', body: '#7a5838', hi: '#a07c54' };
+const PIKE_STEEL = { dark: '#202326', body: '#7a8086', edge: '#bfc3c7' };
+const PIKE_SHAKE_MS = 70;
+const PIKE_SHAKE_MAG = 0.0024;
 
-function drawPikes(g: Phaser.GameObjects.Graphics, k: VfxKit, tip: Pt, d: Pt, alpha: number, flick: number): void {
-  const nx = -d.y; // dik yön (uç yaprağının genişliği)
+/** Tek mızrak: sap (arkaya doğru solar), demir bilezik, yaprak uç; ilerlerken ucun arkasında ince soluk hareket izi + çok ince kor/duman. */
+function drawPike(g: Phaser.GameObjects.Graphics, k: VfxKit, tx: number, ty: number, d: Pt, alpha: number, speed: number, flick: number): void {
+  const nx = -d.y;
   const ny = d.x;
-  for (const [i, pk] of PIKES.entries()) {
-    const tx = tip.x + d.x * pk.lead;
-    const ty = tip.y - pk.h + d.y * pk.lead;
-    const bx = tx - d.x * PIKE_LEN;
-    const by = ty - d.y * PIKE_LEN;
-    const fl = 0.85 + 0.15 * Math.sin(flick * 1.7 + i * 2.1);
-    // alevli iz (ADD): dıştan içe kızıl, turuncu, sarı
-    g.lineStyle(30, k.color('#c8401a'), alpha * 0.32 * fl).lineBetween(bx + d.x * 30, by + d.y * 30, tx, ty);
-    g.lineStyle(17, k.color('#ff7a1a'), alpha * 0.5 * fl).lineBetween(bx + d.x * 80, by + d.y * 80, tx, ty);
-    g.lineStyle(7, k.color('#ffd23f'), alpha * 0.85).lineBetween(bx + d.x * 140, by + d.y * 140, tx, ty);
-    // sap: koyu ahşap (ADD'de koyu renk görünmez: sap için açık kor tonu)
-    g.lineStyle(3, k.color('#ffb070'), alpha * 0.7).lineBetween(bx, by, tx - d.x * 18, ty - d.y * 18);
-    // çelik uç: beyaz-sıcak yaprak
-    const L = 26;
-    const W = 8;
-    g.fillStyle(k.color('#fff6e0'), alpha).fillPoints(
-      [
-        { x: tx + d.x * 4, y: ty + d.y * 4 },
-        { x: tx - d.x * L * 0.45 + nx * W, y: ty - d.y * L * 0.45 + ny * W },
-        { x: tx - d.x * L, y: ty - d.y * L },
-        { x: tx - d.x * L * 0.45 - nx * W, y: ty - d.y * L * 0.45 - ny * W },
-      ],
-      true,
-    );
+  const pt = (s: number, o = 0): Pt => ({ x: tx - d.x * s + nx * o, y: ty - d.y * s + ny * o });
+  // ince duman: sapın arkasında soluk gri, çok ince kor çizgisi (asıl sheet'in alev izinin solmuş hali)
+  if (speed > 0.05) {
+    const s0 = pt(PIKE_LEN * 0.55);
+    const s1 = pt(PIKE_LEN * 1.2);
+    g.lineStyle(12, k.color('#3e3a36'), 0.07 * alpha * speed).lineBetween(s0.x, s0.y, s1.x, s1.y);
+    const e0 = pt(40, -3);
+    const e1 = pt(40 + 90 * speed, -3);
+    g.lineStyle(1.1, k.color(EMBER[0]!), (0.22 + 0.08 * Math.sin(flick)) * alpha * speed).lineBetween(e0.x, e0.y, e1.x, e1.y);
+    // hareket izi: ucun hemen arkasında kısa soluk çizgiler
+    const m0 = pt(18, 4);
+    const m1 = pt(18 + 70 * speed, 4);
+    g.lineStyle(1.6, k.color('#9a948e'), 0.34 * alpha * speed).lineBetween(m0.x, m0.y, m1.x, m1.y);
+    g.lineStyle(5, k.color('#8a847e'), 0.1 * alpha * speed).lineBetween(m0.x, m0.y, m1.x, m1.y);
   }
+  // sap: arka uçta solar (duvarın arkası okunmasın diye)
+  for (const [s0, s1, aa] of [
+    [PIKE_LEN, PIKE_LEN * 0.72, 0.3],
+    [PIKE_LEN * 0.72, PIKE_LEN * 0.4, 0.75],
+    [PIKE_LEN * 0.4, 30, 1],
+  ] as Array<[number, number, number]>) {
+    const A = pt(s0);
+    const B = pt(s1);
+    g.lineStyle(7.5, k.color(PIKE_WOOD.dark), alpha * aa).lineBetween(A.x, A.y, B.x, B.y);
+    g.lineStyle(4, k.color(PIKE_WOOD.body), alpha * aa).lineBetween(A.x, A.y, B.x, B.y);
+    const A2 = pt(s0, -1.2);
+    const B2 = pt(s1, -1.2);
+    g.lineStyle(1.2, k.color(PIKE_WOOD.hi), alpha * aa * 0.85).lineBetween(A2.x, A2.y, B2.x, B2.y);
+  }
+  // demir bilezik
+  const f0 = pt(34);
+  const f1 = pt(26);
+  g.lineStyle(8, k.color(PIKE_STEEL.dark), alpha).lineBetween(f0.x, f0.y, f1.x, f1.y);
+  // yaprak uç: mat çelik, ortada sırt, üst kenarda soluk açık çizgi
+  const leaf = [pt(-6), pt(12, 9), pt(30, 3.5), pt(30, -3.5), pt(12, -9)];
+  g.fillStyle(k.color(PIKE_STEEL.body), alpha).fillPoints(leaf, true);
+  g.lineStyle(1.2, k.color(PIKE_STEEL.dark), alpha).strokePoints(leaf, true);
+  const r0 = pt(-4);
+  const r1 = pt(28);
+  g.lineStyle(1.4, k.color(PIKE_STEEL.dark), 0.55 * alpha).lineBetween(r0.x, r0.y, r1.x, r1.y);
+  const top = ny < 0 ? 1 : -1; // ekranda yukarıda kalan kenar
+  const h0 = pt(-4, 0);
+  const h1 = pt(12, 8 * top);
+  g.lineStyle(1.4, k.color(PIKE_STEEL.edge), 0.7 * alpha).lineBetween(h0.x, h0.y, h1.x, h1.y);
 }
 
-/** Mızrak duvarının uçlarında ateş patlaması (aşamanın hücresinde). */
-function pikeBurst(c: VfxCtx, k: VfxKit, p: Pt, d: Pt): void {
+/** Hücreye değiş: toz + toprak zerresi (zeminde), kıymıklar (uç hizasında), vurulan birimde koyu kan zerreleri; kısa sarsıntı. */
+function pikeHit(c: VfxCtx, k: VfxKit, p: Pt, d: Pt, victims: CombatantView[]): void {
   const sc = c.scene;
-  const depth = p.y + CELL_DEPTH + 1;
-  const mid = { x: p.x + d.x * 16, y: p.y - 92 };
-  glow(c, k, mid, 220, 200, '#ff6a1a', { alpha: 0.9, dur: 320, grow: 1.3, depth });
-  glow(c, k, mid, 90, 140, '#fff2cc', { alpha: 0.95, dur: 180, grow: 1.4, depth: depth + 1 });
-  starBurst(c, k, mid, 130, 11, ['#ff8a1f', '#fff2cc'], 260, depth + 1, { dir: d.x >= 0 ? 1 : -1, spread: 2.6, flat: 1.2 });
+  const depth = p.y + CELL_DEPTH + 2;
   const fwd = Math.atan2(d.y, d.x);
-  k.burst(sc, mid.x, mid.y, { colors: FIRE, n: 14, speed: [200, 520], angle: [fwd - 1.0, fwd + 1.0], gravity: 700, life: [280, 560], size: [20, 34], depth: depth + 1 });
-  groundRing(c, k, p, 120, ['#ff5a1a', '#ffd23f'], 360, depth - 1, 0.3);
-  puffs(c, k, { x: p.x, y: p.y - 60 }, 4, { hex: ['#5a3a2a', '#7a4a2a'], spreadX: 40, spreadY: 40, rise: 50, size: [40, 64], dur: [420, 620], alpha: 0.35, depth: depth - 1, drift: 30 });
+  const splinters: Bit[] = Array.from({ length: 6 }, () => {
+    const pk = k.pick(PIKES);
+    const a = fwd + k.rnd(-0.9, 0.9) - 0.4;
+    const sp = k.rnd(120, 300);
+    return { x: p.x + k.rnd(-10, 10), y: p.y - pk.h, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - k.rnd(40, 120), rot: k.rnd(0, 6), vr: k.rnd(-9, 9), pts: shardShape(k), size: k.rnd(5, 9), col: k.color(k.pick(SPLINTER)), life: k.rnd(420, 640), delay: k.rnd(0, 30) };
+  });
+  const dirt: Bit[] = Array.from({ length: 8 }, () => {
+    const a = -Math.PI / 2 + k.rnd(-1.1, 1.1) + Math.sign(d.x || 1) * 0.3;
+    const sp = k.rnd(110, 280);
+    return { x: p.x + k.rnd(-30, 30), y: p.y - 4, vx: Math.cos(a) * sp, vy: Math.sin(a) * sp, rot: k.rnd(0, 6), vr: k.rnd(-5, 5), pts: rockShape(k), size: k.rnd(2, 4.5), col: k.color(k.pick(EARTH)), life: k.rnd(300, 520), delay: k.rnd(0, 30) };
+  });
+  const gore: Bit[] = [];
+  for (const v of victims) {
+    if (!hurt(c, v)) continue;
+    const b = k.spot(v);
+    for (let i = 0; i < 9; i++) {
+      const a = fwd + k.rnd(-0.8, 0.8) - 0.3;
+      const sp = k.rnd(140, 340);
+      gore.push({ x: b.x + k.rnd(-16, 16), y: b.y + k.rnd(-40, 40), vx: Math.cos(a) * sp, vy: Math.sin(a) * sp - k.rnd(40, 140), rot: k.rnd(0, 6), vr: k.rnd(-4, 4), pts: rockShape(k), size: k.rnd(2.5, 5), col: k.color(k.pick(GORE)), life: k.rnd(340, 560), delay: k.rnd(0, 30) });
+    }
+  }
+  debris(c, k, [...splinters, ...dirt, ...gore], depth, 1200);
+  puffs(c, k, { x: p.x, y: p.y - 8 }, 3, { hex: ['#5e5248', '#6e6256', '#4a4038'], spreadX: 40, spreadY: 4, rise: 14, size: [44, 70], dur: [420, 620], alpha: 0.24, depth: depth - 2, drift: 50 });
+  k.shake(sc, PIKE_SHAKE_MS, PIKE_SHAKE_MAG);
 }
 
 const wallOfPikes: MobHandVfx = async (c, k, hitMs) => {
@@ -467,10 +615,10 @@ const wallOfPikes: MobHandVfx = async (c, k, hitMs) => {
   const T = k.slow(hitMs);
   const STEP = k.slow(STAGE_STEP);
   const staged = !!c.stages && c.stages.length > 1;
-  const groups = staged ? c.stages!.map((s) => s.cells) : [c.cells.length ? c.cells : c.targets.map((v) => k.feet(v))];
+  const groups = staged ? c.stages!.map((s) => ({ cells: s.cells, victims: s.targets })) : [{ cells: c.cells.length ? c.cells : c.targets.map((v) => k.feet(v)), victims: c.targets }];
   const nodes = groups
-    .filter((cells) => cells.length)
-    .map((cells) => ({ x: cells.reduce((a, p) => a + p.x, 0) / cells.length, y: cells.reduce((a, p) => a + p.y, 0) / cells.length }));
+    .filter((gr) => gr.cells.length)
+    .map((gr) => ({ x: gr.cells.reduce((a, p) => a + p.x, 0) / gr.cells.length, y: gr.cells.reduce((a, p) => a + p.y, 0) / gr.cells.length, victims: gr.victims }));
   if (staged) c.stages!.forEach((_, i) => after(c, k.slow(i * STAGE_STEP + hitMs), () => c.releaseStage(i)));
   if (!nodes.length) return land(c, T);
   // ilerleme yönü: ilk hücreden sonrakine; tek hücrede saldırgandan hedefe
@@ -484,12 +632,15 @@ const wallOfPikes: MobHandVfx = async (c, k, hitMs) => {
   // yol düğümleri: başlangıç (ilk hücrenin saldırgan tarafı) -> her aşama hücresi (vuruş anında) -> biraz ileri
   const START = 260;
   const path: Array<Pt & { t: number }> = [{ x: nodes[0]!.x - d.x * START, y: nodes[0]!.y - d.y * START, t: 0 }];
-  nodes.forEach((p, i) => path.push({ ...p, t: T + (staged ? i * STEP : 0) }));
+  const hitTimes = nodes.map((_, i) => T + (staged ? i * STEP : 0));
+  nodes.forEach((p, i) => path.push({ x: p.x, y: p.y, t: hitTimes[i]! }));
   const last = path[path.length - 1]!;
   const OUT = k.slow(150);
   path.push({ x: last.x + d.x * 110, y: last.y + d.y * 110, t: last.t + OUT });
   const FADE = k.slow(220);
-  const total = path[path.length - 1]!.t + FADE;
+  const endT = path[path.length - 1]!.t;
+  const SCUFF = k.slow(520); // sürtünme izinin sönmesi (mızraklar gittikten sonra)
+  const total = endT + Math.max(FADE, SCUFF);
   const at = (tm: number): Pt => {
     for (let i = 1; i < path.length; i++) {
       const a = path[i - 1]!;
@@ -502,31 +653,51 @@ const wallOfPikes: MobHandVfx = async (c, k, hitMs) => {
     }
     return { x: last.x + d.x * 110, y: last.y + d.y * 110 };
   };
-  const g = sc.add.graphics().setBlendMode(ADD);
-  // duvarı saran ateş: mızrak demetinin arkasında giden yumuşak turuncu ışık
-  const aura = sc.add.image(0, 0, glowKey(k, sc)).setDisplaySize(PIKE_LEN * 1.3, 200).setTint(k.color('#ff5a1a')).setBlendMode(ADD).setAlpha(0);
-  let nextEmber = 0;
+  const g = sc.add.graphics();
+  const floor = sc.add.graphics().setDepth(k.FLOOR_FX + 3);
+  const scuff0 = { x: path[0]!.x + d.x * 40, y: path[0]!.y + d.y * 40 };
+  const cScuff = k.color('#1c140e');
+  const cScuffW = k.color('#3a3026');
+  let prevTip = at(0);
+  let prevTm = 0;
+  let speedS = 0;
   void k.counter(sc, total, (u) => {
     const tm = u * total;
-    const tip = at(tm);
-    const endT = path[path.length - 1]!.t;
+    // değiş geri tepmesi: her hücreye değişte uçlar kısa an geri sekip yeniden ilerler (ağırlık hissi)
+    let jolt = 0;
+    for (const ht of hitTimes) if (tm >= ht) jolt += 8 * Math.min(1, (tm - ht) / k.slow(12)) * Math.exp(-(tm - ht) / k.slow(55));
+    const base = at(Math.min(tm, endT));
+    const tip = { x: base.x - d.x * jolt, y: base.y - d.y * jolt };
+    const dt = Math.max(1, tm - prevTm);
+    const v = Math.hypot(base.x - prevTip.x, base.y - prevTip.y) / dt; // px / ms (yavaşlatılmış zamanda)
+    speedS = lerp(speedS, clamp01((v * k.slow(1000)) / 1000 / 1.4), 0.35);
+    prevTip = base;
+    prevTm = tm;
     const appear = clamp01(tm / k.slow(90));
     const alpha = tm <= endT ? appear : 1 - clamp01((tm - endT) / FADE);
-    g.setDepth(tip.y + CELL_DEPTH + 1);
-    aura.setPosition(tip.x - d.x * PIKE_LEN * 0.45, tip.y - 92 - d.y * PIKE_LEN * 0.45).setDepth(tip.y + CELL_DEPTH).setAlpha(alpha * (0.42 + 0.06 * Math.sin(tm / 30)));
     g.clear();
-    drawPikes(g, k, tip, d, alpha, tm / 40);
-    if (tm >= nextEmber && alpha > 0.2) {
-      nextEmber += k.slow(45);
-      const pk = k.pick(PIKES);
-      k.burst(sc, tip.x - d.x * k.rnd(20, 140), tip.y - pk.h, { colors: FIRE, n: 1, speed: [20, 80], angle: [-Math.PI * 0.85, -Math.PI * 0.15], gravity: -60, life: [220, 420], size: [16, 26], depth: tip.y + CELL_DEPTH + 2 });
+    floor.clear();
+    // zeminde sürtünme izi: başlangıçtan duvarın önüne kadar iki ince koyu çizik + soluk geniş sürtme
+    const sa = tm <= endT ? 1 : 1 - clamp01((tm - endT) / SCUFF);
+    const s1 = { x: base.x - d.x * 30, y: base.y - d.y * 30 };
+    if (sa > 0.01 && (s1.x - scuff0.x) * d.x + (s1.y - scuff0.y) * d.y > 0) {
+      floor.lineStyle(16, cScuffW, 0.2 * sa).lineBetween(scuff0.x, scuff0.y + 1, s1.x, s1.y + 1);
+      floor.lineStyle(2, cScuff, 0.6 * sa).lineBetween(scuff0.x, scuff0.y - 4, s1.x, s1.y - 4);
+      floor.lineStyle(1.5, cScuff, 0.5 * sa).lineBetween(scuff0.x + d.x * 20, scuff0.y + 5, s1.x - d.x * 10, s1.y + 5);
+    }
+    if (alpha > 0.01) {
+      g.setDepth(tip.y + CELL_DEPTH + 1);
+      for (const [i, pk] of PIKES.entries()) {
+        const bob = 1.5 * Math.sin(tm / k.slow(55) + i * 1.9);
+        drawPike(g, k, tip.x + d.x * pk.lead, tip.y - pk.h + d.y * pk.lead + bob, d, alpha, speedS, tm / k.slow(40) + i * 2.1);
+      }
     }
     if (u >= 1) {
       g.destroy();
-      aura.destroy();
+      floor.destroy();
     }
   });
-  nodes.forEach((p, i) => after(c, T + (staged ? i * STEP : 0), () => pikeBurst(c, k, p, d)));
+  nodes.forEach((p, i) => after(c, hitTimes[i]!, () => pikeHit(c, k, p, d, p.victims)));
   return land(c, T);
 };
 
@@ -699,7 +870,7 @@ function rendOn(c: VfxCtx, k: VfxKit, v: CombatantView, T: number): void {
   const x0 = v.container.x;
   const sx0 = v.sprite.x;
   const drips: Drip[] = [];
-  for (let i = 0; i < 5; i++) drips.push({ rake: i % RAKES.length, s: k.rnd(0.3, 0.75), t0: T + k.slow(k.rnd(90, 260)), v: k.rnd(45, 80), max: k.rnd(34, 58) });
+  for (let i = 0; i < 6; i++) drips.push({ rake: i % RAKES.length, s: k.rnd(0.3, 0.75), t0: T + k.slow(k.rnd(90, 260)), v: k.rnd(45, 80), max: k.rnd(34, 58) });
   void k.counter(sc, total, (u) => {
     const tm = u * total;
     g.clear();
@@ -753,9 +924,11 @@ function rendOn(c: VfxCtx, k: VfxKit, v: CombatantView, T: number): void {
       const py = r.A.y + (r.B.y - r.A.y) * s + ((r.B.x - r.A.x) / Lr) * bw + 3;
       const ts = (tm - d.t0) / k.slow(1000);
       const len = Math.min(d.max, d.v * ts * (1 + ts * 0.8)); // yavaş başlar, biraz hızlanır, boyu sınırlı
-      const col = mixCol(cFlesh, cDry, dry * 0.7);
-      g.lineStyle(3, col, 0.9 * alpha).lineBetween(px, py, px, py + len);
-      g.fillStyle(col, 0.95 * alpha).fillCircle(px, py + len, 3);
+      const col = mixCol(mixCol(cWet, cFlesh, 0.4), cDry, dry * 0.65);
+      // kalın damla (1x hızda okunsun): izde küçük birikinti, süzülen gövde, altta şişkin uç
+      g.fillStyle(col, 0.95 * alpha).fillCircle(px, py, 3.6);
+      g.lineStyle(5, col, 0.92 * alpha).lineBetween(px, py, px, py + len);
+      g.fillStyle(col, 0.97 * alpha).fillEllipse(px, py + len + 1, 9, 11);
     }
     if (u >= 1) g.destroy();
   });

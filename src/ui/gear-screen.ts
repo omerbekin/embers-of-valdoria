@@ -8,6 +8,7 @@
 import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
+import './gear-plates.css';
 import { allocateStats, activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
 import {
   fitsSlot,

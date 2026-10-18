@@ -25,6 +25,9 @@ import {
   heroPanel,
   heroStats,
   instanceColor,
+  instanceBaseLines,
+  instanceIlvl,
+  affixLines,
   itemDef,
   slotDef,
   type ItemInstance,
@@ -131,11 +134,6 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
   const sp = hero.skillPoints ?? 0;
   if (sp > 0 || lv) {
     const under = el('div', 'sh-under');
-    if (sp > 0) {
-      const chip = el('span', 'sh-chip');
-      chip.append(el('b', '', String(sp)), document.createTextNode(` skill point${sp === 1 ? '' : 's'} saved for the skill trees`));
-      under.append(chip);
-    }
     if (lv) {
       const idle = free <= 0 && pend <= 0;
       const row = el('span', `sh-ptr${idle ? ' idle' : ''}`);
@@ -157,6 +155,12 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
         row.append(acts);
       }
       under.append(row);
+    }
+    // skill puanı çipi sağda / arkada (Ömer 2026-10-18: stat puanı satırı ile yer değişti)
+    if (sp > 0) {
+      const chip = el('span', 'sh-chip');
+      chip.append(el('b', '', String(sp)), document.createTextNode(` skill point${sp === 1 ? '' : 's'} saved for the skill trees`));
+      under.append(chip);
     }
     out.push(under);
   }
@@ -342,9 +346,51 @@ function fallenBanner(hero: HoverHero): HTMLElement | null {
   return b;
 }
 
-/** Sınıf başlığı ("WARRIOR · AXES & SWORDS / ...") + 7 yuva. */
+/** Yuva plakası etiketleri (Ömer 2026-10-18, Gear > Hero "A · iki sütun satır plakaları"). */
+const PLATE_LABEL: Record<string, string> = { weapon: 'Weapon', offhand: 'Offhand', helm: 'Head', armor: 'Chest', gloves: 'Hands', boots: 'Feet', trinket: 'Ring' };
+
+const fmtNum = (n: number): string => (Number.isInteger(n) ? String(n) : String(Math.round(n * 10) / 10));
+
+/** "+4 Armor" -> sayı altın: "<b>+4</b> Armor" (ilk sayı kümesi). */
+function goldNumber(parent: HTMLElement, text: string): void {
+  const m = /^(.*?)([+-]?\d[\d.,]*%?)(.*)$/.exec(text);
+  if (!m) {
+    parent.append(text);
+    return;
+  }
+  parent.append(m[1] ?? '', el('b', '', m[2]), m[3] ?? '');
+}
+
+/** Plakanın ana stat satırı: silah gücü / blok / örtük stat (armor...). Gerçek veri: progression/item-text.ts > instanceBaseLines. */
+function plateMain(inst: ItemInstance): HTMLElement | null {
+  const b = instanceBaseLines(inst);
+  const row = el('span', 'gp-main');
+  if (b.power !== undefined) row.append('Power ', el('b', '', fmtNum(b.power)));
+  else if (b.block !== undefined) row.append('Block ', el('b', '', `${fmtNum(b.block)}%`));
+  else if (b.implicit) goldNumber(row, b.implicit.text);
+  else return null;
+  return row;
+}
+
+/** Sınıf başlığı (sınıf çipi + kullanılabilir silah ailesi çipleri) + 7 yuva plakası. */
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
-  const head = el('div', 'gr-sec gr-class-sec', `${className(hero.class)} · ${classWeaponFamilies(hero.class).map((f) => ITEMS.weaponFamilies.find((x) => x.id === f)?.name).join(' / ')}`);
+  const head = el('div', 'gr-sec gr-class-sec');
+  head.append(el('span', 'gp-chip cls', className(hero.class)));
+  for (const fid of classWeaponFamilies(hero.class)) {
+    const f = ITEMS.weaponFamilies.find((x) => x.id === fid);
+    if (!f) continue;
+    const chip = el('span', 'gp-chip');
+    const url = slotIconUrl(/shield/i.test(f.name) ? 'offhand' : 'weapon');
+    if (url) {
+      const i = el('img');
+      i.src = url;
+      i.alt = '';
+      i.draggable = false;
+      chip.append(i);
+    }
+    chip.append(f.name);
+    head.append(chip);
+  }
   const slots = el('div', 'gr-slots');
   const dead = heroFallen(hero);
   if (dead) slots.classList.add('gr-slots-locked');
@@ -354,9 +400,21 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
     const d = inst ? itemDef(inst.id) : undefined;
     // İkinci el (2026-10-12): çift el / yay / tılsım takılıyken kapalı görünür (bırakılırsa planEquip açık mesaj verir)
     const blocked = k === 'offhand' && !inst && !!blocker;
-    const cell = el('button', `gr-slot${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
+    const cell = el('button', `gr-slot gr-plate${inst ? '' : ' empty'}${blocked ? ' blocked' : ''} gr-slot-${k}`);
     cell.type = 'button';
     cell.style.setProperty('--rc', inst && d ? instanceColor(inst) : '#5b4a33');
+    const lbl = el('div', 'gp-lbl');
+    const lurl = slotIconUrl(k);
+    if (lurl) {
+      const li = el('img');
+      li.src = lurl;
+      li.alt = '';
+      li.draggable = false;
+      lbl.append(li);
+    }
+    lbl.append(PLATE_LABEL[k] ?? slotDef(k).name);
+    const txt = el('div', 'gr-slot-text gp-tx');
+    const ico = el('span', 'gp-ico');
     if (blocked) {
       // Çift el / yay / tılsım (Ömer 2026-10-12): ikinci el yuvası tamamen etkisizdir
       // (ipucu yok, tık / çift tık / dokunma yok, bırakma hedefi değil: data-drop / data-tip / data-drag taşımaz -> bırakılan item yerine döner)
@@ -369,11 +427,10 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
         const ghost = itemIcon(hero.equipment.weapon, 'weapon', 1.3);
         ghost.classList.add('gr-silhouette');
         ghost.style.removeProperty('--glow');
-        cell.append(ghost);
-      } else cell.append(emptySlotIcon(k));
-      const txt = el('div', 'gr-slot-text');
-      txt.append(el('div', 'gr-slot-name', slotDef(k).name), el('div', `gr-slot-sub${two ? ' gr-hands-hint' : ''}`, two ? '2H' : 'Hands full'));
-      cell.append(txt);
+        ico.append(ghost);
+      } else ico.append(emptySlotIcon(k));
+      txt.append(lbl, el('div', 'gr-slot-name', 'Empty'), el('div', `gr-slot-sub${two ? ' gr-hands-hint' : ''}`, two ? '2H' : 'Hands full'));
+      cell.append(ico, txt);
       slots.append(cell);
       continue;
     }
@@ -384,18 +441,27 @@ function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
       cell.addEventListener('click', () => v.onLocked?.());
     } else {
       cell.dataset['drop'] = `slot:${k}`;
+      cell.append(el('span', 'gp-hint'));
       if (inst) {
         cell.dataset['drag'] = `slot:${k}`;
         cell.dataset['tip'] = `slot:${k}`;
         cell.addEventListener('dblclick', () => v.onSlotDouble?.(k));
       }
     }
-    cell.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
+    ico.append(inst ? itemIcon(inst, k, 1.3) : emptySlotIcon(k));
+    txt.append(lbl, el('div', 'gr-slot-name', d ? d.name : 'Empty'));
+    if (d && inst) {
+      const l2 = el('div', 'gp-l2');
+      const main = plateMain(inst);
+      if (main) l2.append(main);
+      const il = el('span', 'gp-il', 'iL ');
+      il.append(el('b', '', String(instanceIlvl(inst))));
+      l2.append(il);
+      for (const a of affixLines(inst, hero.class).slice(0, 2)) l2.append(el('span', 'gp-aff', a.text));
+      txt.append(l2);
+    } else if (k === 'offhand' && !classUsesOffhand(hero.class)) txt.append(el('div', 'gr-slot-sub', 'No shield or dagger'));
+    cell.append(ico);
     if (dead) cell.append(lockIcon());
-    const txt = el('div', 'gr-slot-text');
-    // kuşanılmış yuva: yalnızca ikon + ad (nadirlik renginde); özellikler üstüne gelince / dokununca ipucunda (Ömer 2026-10-11). Boş: ad + "Empty"
-    txt.append(el('div', 'gr-slot-name', d ? d.name : slotDef(k).name));
-    if (!(d && inst)) txt.append(el('div', 'gr-slot-sub', k === 'offhand' && !classUsesOffhand(hero.class) ? 'No shield or dagger' : 'Empty'));
     cell.append(txt);
     slots.append(cell);
   }
@@ -638,9 +704,12 @@ function numsHtml(r: GearSkillRow): string {
   if (!r.numbers.length) return '';
   return `<div class="pl-sls">${r.numbers
     .map((n) => {
-      const v = `${escHtml(n.text)}${n.times ? ` x${n.times}` : ''}`;
-      const d = n.after && n.diff ? ` <span class="${n.dir ?? ''}">→ ${escHtml(n.after)} (${escHtml(n.diff)})</span>` : '';
-      return `<div class="pl-sl"><span class="k">${escHtml(n.label)}</span><span class="n">${v}${d}</span></div>`;
+      const times = n.times ? ` x${n.times}` : '';
+      // önizleme: ESKİ değer yerine YENİ değer vurgulu + küçük (fark); satır uzamaz, plaka yüksekliği değişmez (Ömer 2026-10-18)
+      const body = n.after && n.diff
+        ? `<span class="${n.dir ?? ''}">${escHtml(n.after)}${times}</span> <small class="${n.dir ?? ''}">(${escHtml(n.diff)})</small>`
+        : `${escHtml(n.text)}${times}`;
+      return `<div class="pl-sl"><span class="k" title="${escHtml(n.label)}">${escHtml(n.label)}</span><span class="n">${body}</span></div>`;
     })
     .join('')}</div>`;
 }

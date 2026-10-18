@@ -4133,7 +4133,7 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
 
 .gr-lx-gain {
   flex: none;
-  font: italic max(12px, calc(20 * var(--u))) var(--g-body);
+  font: max(12px, calc(20 * var(--u))) var(--g-body);
   color: var(--g-gold);
 }
 
@@ -4215,8 +4215,9 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
   touch-action: none;
 }
 
-.gr-loot-tile .rb-medal {
+.gr-loot-tile .gr-loot-sq {
   flex: none;
+  pointer-events: none;
   width: max(40px, calc(72 * var(--u)));
   height: max(40px, calc(72 * var(--u)));
 }
@@ -4228,6 +4229,11 @@ html.short .gr-ledger .gr-bag-head .gr-sec {
 
 .gr-loot-tile .gr-rare-tag {
   flex: none;
+}
+
+/* panel tam opak: arkadaki sahne yazıları (hero adları vb.) %3 şeffaflıktan silik hayalet gibi sızmasın */
+.gr-pair > .gr-panel.gr-loot {
+  background: linear-gradient(180deg, rgb(30, 22, 14), rgb(12, 9, 6));
 }
 
 .gr-pair > .gr-loot > .gr-foot,

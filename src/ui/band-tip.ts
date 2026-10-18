@@ -103,7 +103,11 @@ export function bandTipHtml(s: BandTipSpec): string {
     .map((l) => {
       const sp = l.now === undefined ? splitNow(l.text) : { text: l.text, now: l.now };
       const lead = l.icon ? img(l.icon) : '<span class="dia"></span>';
-      return `<div class="bt-ln">${lead}<div class="tx">${bandRichHtml(sp.text, l.color, !s.noKeywords)}</div>${sp.now ? `<span class="now bt-chip v">${bandRichHtml(sp.now, undefined, false)}</span>` : ''}</div>`;
+      const txt = `${lead}<div class="tx">${bandRichHtml(sp.text, l.color, !s.noKeywords)}</div>`;
+      // durum çipi ("now 3% ; max 75%"): metin + elmas ayrı bir kapta; çip sığmazsa satırın sonuna, kendi satırında sağa hizalı iner (metni bölmez)
+      return sp.now
+        ? `<div class="bt-ln has-now"><div class="main">${txt}</div><span class="now bt-chip v">${bandRichHtml(sp.now, undefined, false)}</span></div>`
+        : `<div class="bt-ln">${txt}</div>`;
     })
     .join('');
   const body = lines || s.bodyHtml ? `<div class="bt-div"></div><div class="bt-body">${lines}${s.bodyHtml ?? ''}</div>` : '';
