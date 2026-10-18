@@ -404,6 +404,11 @@
       <button class="nav-btn settings-toggle menu-toggle" type="button" title="Menu (Esc)" aria-label="Menu (Esc)" data-act="menu">${D.nav.menu}</button>`;
     root.innerHTML = html;
     overlay = $('.mk-ov');
+    // açılış solması (oyunun .el-modal animasyonu) yalnızca ilk açılışta / düzen ya da mod değişince oynasın;
+    // yoksa her yeniden çizimde (ör. item üstüne gelince) tüm pencere 0 opaklıktan yeniden solup yanıp söner
+    const sceneKey = `${S.v}|${S.mode}`;
+    if (sceneKey === render.key) overlay.classList.add('mk-still');
+    render.key = sceneKey;
     // savaş HUD birimi: oyundaki gibi skill çubuğu zoom = --gu (character-panel.ts > hudScale); ağaç aynı hücre, biraz küçük
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
     const fit = (e, max) => {
@@ -606,6 +611,7 @@
 
   // ---------------------------------------------------------------- giriş: sürükle-bırak (fare + dokunma), dokunarak seç, çift tık
   let press = null;
+  let lastPt = null;
   function dropTargets(srcKind, uid) {
     const out = [];
     const it = item(uid);
@@ -671,6 +677,7 @@
       return;
     }
     if (!press && e.pointerType === 'mouse') {
+      lastPt = { x: e.clientX, y: e.clientY };
       const tipEl = e.target.closest('[data-tip]');
       if (tipEl) { if (S.hover !== tipEl.dataset.tip) hoverChange(tipEl.dataset.tip); showTip(tipEl.dataset.tip, e.clientX, e.clientY); }
       else if (S.hover) { hoverChange(null); hideTip(); }
@@ -682,7 +689,12 @@
   function hoverChange(uid) {
     S.hover = uid;
     clearTimeout(hoverChange.t);
-    hoverChange.t = setTimeout(() => { if (!press) render(); }, 0);
+    hoverChange.t = setTimeout(() => {
+      if (press) return;
+      render();
+      // render() ipucu kutusunu da yeniden kurar: açık ipucunu aynı yerde geri koy (fare durunca kaybolmasın)
+      if (S.hover && lastPt) showTip(S.hover, lastPt.x, lastPt.y);
+    }, 0);
   }
   document.addEventListener('pointerup', (e) => {
     if (!press) return;

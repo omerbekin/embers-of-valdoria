@@ -290,3 +290,7 @@ html.short .mk-v4 .mk-center { align-items: stretch; }
 html.short .gr-overlay .mk-v4 .mk-shelf .gr-bag { max-height: 104px; overflow: hidden auto; }
 .mk-v4 .mk-doll .gr-slot { min-height: max(46px, calc(74 * var(--u))); }
 .mk-v4 .mk-doll .mk-dcol { gap: calc(8 * var(--u)); }
+
+/* yeniden çizimde açılış solması tekrar oynamasın (app.js > render: mk-still) */
+.mk-ov.mk-still,
+.mk-ov.mk-still .el-modal-panel { animation: none !important; }
