@@ -1,0 +1,17 @@
+/* Harita yolcusu taslagi: yalniz yolcu animasyonlari / hover. Oyun kodu DEGIL. */
+.trav { cursor: pointer; }
+.trav .tr-pp { opacity: 0; pointer-events: none; transition: opacity .2s ease; }
+.trav:hover .tr-pp, .trav.open .tr-pp { opacity: 1; }
+.tr-bob { animation: mtbob .7s ease-in-out infinite; }
+.tr-bob2 { animation: mtbob .7s ease-in-out .25s infinite; }
+@keyframes mtbob { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+.tr-flame { transform-box: fill-box; transform-origin: 50% 100%; animation: mtfl .8s ease-in-out infinite; }
+@keyframes mtfl { 0%,100% { transform: scale(1,1); } 50% { transform: scale(.88,1.14); } }
+.tr-flag { transform-box: fill-box; transform-origin: 0 50%; animation: mtfg 1.6s ease-in-out infinite; }
+@keyframes mtfg { 0%,100% { transform: skewY(0); } 50% { transform: skewY(-6deg); } }
+.tr-pulse { transform-box: fill-box; transform-origin: center; animation: mtpl 1.8s ease-out infinite; }
+@keyframes mtpl { 0% { transform: scale(.9); opacity: .9; } 100% { transform: scale(1.25); opacity: 0; } }
+.cm-stage .mt-play { position: absolute; left: 50%; bottom: 40px; transform: translateX(-50%); z-index: 6; font: 600 20px Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: #f3d999; background: rgba(13,9,6,.86); border: 1px solid rgba(217,178,106,.5); padding: 12px 26px; cursor: pointer; }
+.mk-ui > .mt-play { position: absolute; left: 50%; bottom: 14px; transform: translateX(-50%); z-index: 6; font: 600 13px Cinzel, serif; letter-spacing: .12em; text-transform: uppercase; color: #f3d999; background: rgba(13,9,6,.86); border: 1px solid rgba(217,178,106,.5); padding: 8px 16px; min-height: 44px; cursor: pointer; }
+.mk-ui > .mt-play:hover { background: rgba(60,38,16,.95); }
+.mk-frames { flex-direction: column; flex-wrap: nowrap; }
