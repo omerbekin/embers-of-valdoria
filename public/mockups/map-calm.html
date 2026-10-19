@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campaign map, calmer</title>
+<!-- SEFER HARITASI SADELESTIRME taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean  &before=0 (ustteki "once" karesini gizle). Harita: gercek valdoria.json dugum konumlari + gercek arka plan + gercek dugum cerceveleri (map-frames.ts C). Takim / sayilar ORNEKTIR. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="map-hud/mh.css" />
+<link rel="stylesheet" href="map-calm/mc.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Sefer haritası, daha sakin</h1>
+<p>Ömer: "çok boğucu". Aşağıda önce <b>Şimdiki</b> hal (birebir, ekran görüntüsündeki gibi), sonra birbirinden gerçekten farklı üç sadeleştirme. Üçünde de gerçek harita sanatı, gerçek düğüm çerçeveleri ve gerçek düğüm konumları var; sol panelin kimliği (portre, ad, can, "You are here") korundu. Düğümün üstüne gelince (telefonda dokununca) adı + alt yazısı açılır.</p>
+<h3>Ortak sadeleştirmeler</h3>
+<ul>
+<li>Yeşil tik yok: geçilen düğüm soluk. Patrol yazısı yok: küçük döngü simgesi (üstüne gelince "Patrol 60%").</li>
+<li>"MINE WARDENS DEFEATED" kurdelesi yok: küçük kafatası işareti (üstüne gelince yazısı).</li>
+<li>İlerleme ve mod / altın haritanın üstüne binmiyor; Legend tek "?" düğmesi; yakınlaştırma düğmeleri onunla aynı kümede.</li>
+<li>Her kahramanda tekrarlanan "Level up · 5 stat points to spend" yerine tek bir uyarı.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="map-calm/mc.js"></script>
+</body>
+</html>
