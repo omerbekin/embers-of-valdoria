@@ -1,0 +1,102 @@
+/* Dalgali savas taslagi: YALNIZCA duzen. Savas HUD'i oyunun kendi CSS'i (../kit-v2/css/battle-hud.css; oyun birimi 1920x1080, sahne olcekle kucultulur). Onek wb- = yeni oneriler. */
+.wb-stage { position: absolute; top: 0; width: 1920px; height: 1080px; left: calc(50% - 960px * var(--sc, .8333)); transform-origin: 0 0; transform: scale(var(--sc, .8333)); overflow: visible; }
+.wb-bg { position: absolute; left: -700px; right: -700px; top: -35px; height: 1280px; background: #0b0806 center top / auto 1280px repeat-x; }
+.wb-bg::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(6,4,3,.1), rgba(6,4,3,.25) 60%, rgba(6,4,3,.55)); }
+.wb-stage .bh-root { position: absolute; left: 0; top: 0; transform: none; }
+.wb-stage .bh-root.fade { opacity: .3; }
+.wb-stage .bh-root.gone { opacity: 0; }
+.wb-unit { position: absolute; width: 140px; height: 190px; display: flex; align-items: flex-end; justify-content: center; }
+.wb-unit > img.sp { max-width: 140px; max-height: 190px; object-fit: contain; filter: drop-shadow(0 6px 6px rgba(0,0,0,.55)); }
+.wb-unit.flip > img.sp { transform: scaleX(-1); }
+.wb-unit.enter { opacity: .8; translate: 60px 0; }
+.wb-unit.gone { opacity: .0; }
+.wb-unit .pl { position: absolute; left: 50%; top: -34px; transform: translateX(-50%); width: 120px; text-align: center; }
+.wb-unit .pl b { display: block; font: 600 15px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: #f4ede1; text-shadow: 0 2px 4px #000; white-space: nowrap; }
+.wb-unit .pl i { display: block; height: 6px; margin-top: 3px; background: rgba(0,0,0,.65); border: 1px solid rgba(217,178,106,.35); }
+.wb-unit .pl i u { display: block; height: 100%; background: #c04b3a; text-decoration: none; }
+.wb-unit.party .pl i u { background: #6fae45; }
+.wb-unit.dead > img.sp { filter: grayscale(1) brightness(.5); transform: rotate(80deg) translateY(30px); }
+.wb-unit.dead.flip > img.sp { transform: scaleX(-1) rotate(80deg) translateY(30px); }
+.wb-floor { position: absolute; left: 0; right: 0; top: 0; height: 0; }
+
+/* sira cubugu / etiket (oyunun .bh-turn / .bh-cell sinifi; yalnizca ek) */
+.wb-lbl2 { position: absolute; top: 148px; transform: translateX(-50%); display: flex; align-items: center; gap: 12px; white-space: nowrap; }
+.wb-pips { display: inline-flex; gap: 8px; align-items: center; }
+.wb-pips i { width: 11px; height: 11px; transform: rotate(45deg); border: 1px solid rgba(217,178,106,.6); background: rgba(8,6,4,.7); }
+.wb-pips i.on { background: var(--g-ember); border-color: var(--g-ember2); box-shadow: 0 0 8px rgba(240,140,40,.7); }
+.wb-pips i.cur { background: var(--g-gold); border-color: #fff3c8; box-shadow: 0 0 8px rgba(243,217,153,.6); }
+
+/* V1: sol ust plaka */
+.wb-corner { position: absolute; left: 28px; top: 22px; display: flex; align-items: center; gap: 14px; padding: 10px 22px 10px 12px; min-width: 210px;
+  background: linear-gradient(180deg, rgba(30,22,14,.94), rgba(11,8,5,.94)); border: 1px solid rgba(217,178,106,.5); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 10px 24px rgba(0,0,0,.5); }
+.wb-corner::before, .wb-corner::after { content: ''; position: absolute; width: 9px; height: 9px; transform: rotate(45deg); background: #130d07; border: 1px solid rgba(243,217,153,.8); }
+.wb-corner::before { left: -5px; top: -5px; } .wb-corner::after { right: -5px; bottom: -5px; }
+.wb-corner .ico { width: 54px; height: 54px; flex: none; display: grid; place-items: center; background: #0a0605; border: 1px solid rgba(217,178,106,.5); }
+.wb-corner .ico img { width: 40px; height: 40px; object-fit: contain; }
+.wb-corner .tx { display: flex; flex-direction: column; gap: 5px; }
+.wb-corner .k { font: 600 14px var(--g-disp); letter-spacing: .22em; text-transform: uppercase; color: var(--g-dim); line-height: 1; }
+.wb-corner .n { font: 700 38px var(--g-disp); color: var(--g-gold); line-height: 1; letter-spacing: .04em; }
+.wb-corner .n small { font-size: 22px; color: var(--g-dim); }
+.wb-corner.final .n { color: var(--g-ember2); }
+.wb-corner.final .k::after { content: ' · Final'; color: var(--g-ember2); }
+.wb-corner .k-tip { left: 0; transform: none; top: calc(100% + 12px); }
+
+/* V2: sira cubugunda dalga ayiraci */
+.wb-qdiv { position: relative; width: 70px; height: 70px; flex: none; display: grid; place-items: center; text-align: center; background: rgba(12,9,6,.7); border: 1px dashed rgba(217,178,106,.6); box-shadow: 0 0 0 3px rgba(8,6,4,.6); margin-left: 8px; }
+.wb-qdiv b { font: 700 24px var(--g-disp); color: var(--g-gold); line-height: 1; }
+.wb-qdiv small { display: block; font: 600 11px var(--g-disp); letter-spacing: .16em; color: var(--g-dim); text-transform: uppercase; margin-bottom: 4px; }
+.wb-qdiv .k-tip { left: 50%; top: calc(100% + 16px); }
+.wb-lbl2 .wv { font: 600 17px var(--g-disp); letter-spacing: .3em; text-transform: uppercase; color: var(--g-gold); }
+.wb-lbl2 .wv b { color: var(--g-ember2); font-weight: 700; }
+
+/* V3: sag kenar rayi (sonraki dalga onizlemesi hep gorunur) */
+.wb-rail { position: absolute; right: 24px; top: 130px; width: 214px; padding: 12px 12px 14px; background: linear-gradient(180deg, rgba(30,22,14,.92), rgba(11,8,5,.92)); border: 1px solid rgba(217,178,106,.45); box-shadow: 0 0 0 3px rgba(8,6,4,.7); }
+.wb-rail::before { content: ''; position: absolute; left: -5px; top: -5px; width: 9px; height: 9px; transform: rotate(45deg); background: #130d07; border: 1px solid rgba(243,217,153,.8); }
+.wb-rail .hd { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; padding-bottom: 8px; border-bottom: 1px solid rgba(217,178,106,.2); margin-bottom: 10px; }
+.wb-rail .hd span { font: 600 13px var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--g-dim); }
+.wb-rail .hd b { font: 700 26px var(--g-disp); color: var(--g-gold); letter-spacing: .04em; }
+.wb-rail .row { display: flex; gap: 8px; }
+.wb-rail .gh { position: relative; width: 58px; height: 58px; flex: none; background: #0a0605; border: 1px dashed rgba(217,178,106,.5); }
+.wb-rail .gh img { width: 100%; height: 100%; object-fit: cover; object-position: top; opacity: .72; filter: saturate(.8); display: block; }
+.wb-rail .gh.x2::after { content: attr(data-n); position: absolute; right: -4px; bottom: -4px; min-width: 20px; height: 20px; padding: 0 3px; display: grid; place-items: center; font: 700 12px var(--g-disp); color: var(--g-gold); background: #0c0806; border: 1px solid rgba(217,178,106,.6); }
+.wb-rail .ft { margin-top: 10px; padding-top: 8px; border-top: 1px solid rgba(217,178,106,.2); }
+.wb-rail .pips { display: flex; justify-content: center; }
+
+/* gecis: ortak bant (oyundaki WAVE bandi, src/game/wave-banner.ts) */
+.wb-ov { position: absolute; left: -400px; right: -400px; top: 0; height: 1080px; pointer-events: none; }
+.wb-tband { position: absolute; left: 0; right: 0; top: 170px; height: 260px; background: linear-gradient(90deg, transparent, rgba(10,7,5,.78) 30%, rgba(10,7,5,.78) 70%, transparent); display: grid; place-items: center; }
+.wb-tband .c { position: relative; display: flex; flex-direction: column; align-items: center; gap: 4px; width: 1040px; }
+.wb-tband .c::before, .wb-tband .c::after { content: ''; position: absolute; left: 50%; transform: translateX(-50%); height: 1px; background: linear-gradient(90deg, transparent, rgba(217,178,106,.7), transparent); }
+.wb-tband .c::before { top: -56px; width: 1040px; } .wb-tband .c::after { bottom: -58px; width: 840px; }
+.wb-tband .dia { position: absolute; top: -61px; left: 50%; width: 12px; height: 12px; margin-left: -6px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2), 0 0 12px rgba(240,140,40,.8); }
+.wb-tband h2 { margin: 0; font: 600 104px/1 var(--g-disp); letter-spacing: .18em; text-transform: uppercase; color: #f3d999; text-shadow: 0 4px 14px rgba(0,0,0,.9); padding-left: .18em; }
+.wb-tband .sub { font: 30px var(--g-body); color: #cdb88d; text-shadow: 0 2px 6px #000; margin-top: 8px; }
+.wb-tband .wb-pips { margin-top: 10px; }
+.wb-tband .wb-pips i { width: 14px; height: 14px; }
+
+/* V2: ince ust bant (HUD kalir) */
+.wb-slim { position: absolute; left: 0; right: 0; top: 218px; display: flex; justify-content: center; }
+.wb-slim .in { display: flex; align-items: center; gap: 28px; padding: 16px 40px 16px 26px; background: linear-gradient(180deg, rgba(30,22,14,.95), rgba(11,8,5,.95)); border: 1px solid rgba(217,178,106,.5); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 14px 30px rgba(0,0,0,.55); position: relative; }
+.wb-slim .in::before { content: ''; position: absolute; left: -5px; top: -5px; width: 9px; height: 9px; transform: rotate(45deg); background: #130d07; border: 1px solid rgba(243,217,153,.8); }
+.wb-slim .ttl { display: flex; flex-direction: column; gap: 6px; }
+.wb-slim .ttl .k { font: 600 15px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); }
+.wb-slim .ttl h2 { margin: 0; font: 600 54px/1 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: #f3d999; }
+.wb-slim .ttl h2 small { font-size: 30px; color: var(--g-dim); letter-spacing: .06em; }
+.wb-slim .foes { display: flex; gap: 8px; padding-left: 28px; border-left: 1px solid rgba(217,178,106,.25); }
+.wb-slim .foes .gh { width: 64px; height: 64px; position: relative; background: #0a0605; border: 1px solid rgba(255,90,90,.6); }
+.wb-slim .foes .gh img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+
+/* V3: ortada A Band plaka */
+.wb-bandbox { position: absolute; left: 0; right: 0; top: 190px; display: flex; justify-content: center; }
+.wb-bandbox .bt { --bu: 1.55px; width: 780px; max-width: none; min-width: 0; }
+
+.wb-chip-img { display: inline-flex; align-items: center; gap: 8px; }
+
+/* telefon yatay (html.short): HUD gercek px oldugu icin buyur; sahne 0.36 olcekte */
+html.short .wb-corner { transform-origin: 0 0; scale: 1.9; }
+html.short .wb-lbl2 { top: 150px; }
+html.short .wb-rail { scale: 1.6; transform-origin: 100% 0; }
+html.short .wb-slim .in { scale: 1.2; }
+html.short .wb-bandbox .bt { --bu: 2.2px; }
+html.short .wb-tband h2 { font-size: 140px; }
+html.short .wb-tband .sub { font-size: 44px; }

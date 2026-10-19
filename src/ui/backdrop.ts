@@ -4,8 +4,11 @@
 
 /** DOM penceresi: `overlay` kararan zemin, `panel` içerik kutusu (ya da "bu hedef panelin içinde mi" sınaması). Kaldırma işlevi döner. */
 export function dismissOnBackdrop(overlay: HTMLElement, panel: HTMLElement | ((t: Node) => boolean), onDismiss: () => void): () => void {
+  // Köşe düğmeleri (X / Menu / tam ekran = .nav-btn) örtünün çocuğu ama panelin dışında: bunlara basış "zemin dokunuşu" SAYILMAZ. Aksi halde
+  // X'e dokununca pencere pointerup'ta kapanır, düğme yer değiştirir ve ardından gelen click alttaki (tam ekran) düğmeye düşerdi (Ömer 2026-10-19).
   const inside = (t: EventTarget | null): boolean => {
     if (!(t instanceof Node)) return false;
+    if (t instanceof Element && t.closest('.nav-btn')) return true;
     return typeof panel === 'function' ? panel(t) : panel.contains(t);
   };
   let downOutside = false;

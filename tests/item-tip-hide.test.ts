@@ -22,7 +22,7 @@ class FakeEl {
     this.children = n;
   }
   getBoundingClientRect() {
-    return { left: 0, top: 0, width: 1000 };
+    return { left: 0, top: 0, right: 1000, bottom: 600, width: 1000 };
   }
   offsetWidth = 1000;
   clientWidth = 1000;

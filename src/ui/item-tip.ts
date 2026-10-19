@@ -4,6 +4,8 @@
  * değer + zar aralığı), Legendary etkisi, değer. Gear, tüccar ve ödül torbası aynı bileşeni kullanır. Oyun içi metinler İngilizce.
  */
 import { ITEMS, TIER_COLOR, affixCapKeys, affixDef, affixLines, capOf, effectLine, instanceBaseLines, instanceColor, instanceSubtitle, itemDef, itemValue, levelReqMsg, type CapKey, type ItemInstance } from '../progression';
+import { tipOn, tipOff } from './tip-vis';
+import { clientToLocal } from './formation-board-rules';
 import { statIconUrl } from './stat-tips';
 import { itemDefIcon } from './item-icon-dom';
 import { iconUrl } from './dom-icons';
@@ -255,7 +257,6 @@ export class ItemTip {
   private key = '';
   private isPinned = false;
   /** Solma bitince kesin gizleme zamanlayıcısı (bkz. hide). */
-  private goneTimer: ReturnType<typeof setTimeout> | undefined;
   constructor(private host: HTMLElement) {
     this.box = el('div', 'el-tip item-tip');
     this.box.setAttribute('role', 'tooltip');
@@ -339,10 +340,8 @@ export class ItemTip {
   }
   follow(clientX: number, clientY: number): void {
     if (!this.key || this.isPinned) return;
-    const r = this.host.getBoundingClientRect();
-    const s = r.width / Math.max(1, this.host.offsetWidth) || 1;
-    const x = (clientX - r.left) / s;
-    const y = (clientY - r.top) / s;
+    // dikey dokunmatikte sahne CSS ile döner: işaretçi yerel koordinata döndürmeye göre çevrilir
+    const { x, y } = clientToLocal(clientX, clientY, this.host.getBoundingClientRect(), this.host.offsetWidth, !!document.documentElement?.classList.contains('rotated'));
     const W = this.host.clientWidth;
     const H = this.host.clientHeight;
     const tw = this.box.offsetWidth;
@@ -356,12 +355,7 @@ export class ItemTip {
     this.box.style.top = `${Math.max(6, Math.min(H - th - 6, top))}px`;
   }
   private reveal(): void {
-    clearTimeout(this.goneTimer);
-    if (this.box.style.display === 'none') {
-      this.box.style.display = '';
-      void this.box.offsetWidth; // yeniden akış: belirme solması display: none'dan sonra da çalışsın
-    }
-    this.box.classList.add('on');
+    tipOn(this.box);
   }
   /**
    * Gizle: CSS solması (gear.css .item-tip) + solma süresinden sonra satır içi `display: none`. Tarayıcı sekmesi arka plandayken /
@@ -371,10 +365,6 @@ export class ItemTip {
   hide(): void {
     this.key = '';
     this.setPinned(false);
-    this.box.classList.remove('on');
-    clearTimeout(this.goneTimer);
-    this.goneTimer = setTimeout(() => {
-      if (!this.key) this.box.style.display = 'none';
-    }, 200);
+    tipOff(this.box);
   }
 }

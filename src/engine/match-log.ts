@@ -194,6 +194,10 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `ground effect ${e.id} ended`;
     case 'death':
       return `${L(e.target)} DIED${e.corpse ? ' (leaves a revivable corpse)' : ''}`;
+    case 'waveCleared':
+      return `WAVE ${e.index + 1}/${e.total} CLEARED`;
+    case 'waveStart':
+      return e.index === 0 ? `WAVE 1/${e.total}` : `WAVE ${e.index + 1}/${e.total} ARRIVES: ${e.combatants.map((c) => unitLabel(c)).join(', ') || 'no units'}`;
     case 'battleEnd':
       return `BATTLE END: ${e.winner} wins`;
   }

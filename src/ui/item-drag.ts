@@ -13,6 +13,8 @@ import type { Stats } from '../engine';
 import { dropAction, isDoubleTap, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
 import { statBandSpec, statTip } from './stat-tips';
+import { tipOn, tipOff } from './tip-vis';
+import { clientToLocal } from './formation-board-rules';
 import { bandPipsHtml, bandTipHtml, type BandTipSpec } from './band-tip';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
@@ -79,7 +81,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   let tipFor: HTMLElement | null = null;
   let tipPinned = false;
   const hideTip = (): void => {
-    tip.classList.remove('on');
+    tipOff(tip);
     tipFor = null;
     tipPinned = false;
   };
@@ -115,7 +117,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       const d = t.dataset['delta'] ? { text: t.dataset['delta'], dir: t.dataset['dir'] === 'down' ? ('down' as const) : ('up' as const) } : undefined;
       tip.innerHTML = bandTipHtml(statBandSpec(id, info, d));
     }
-    tip.classList.add('on');
+    tipOn(tip);
     const p = offsetIn(t, overlay);
     const W = overlay.clientWidth;
     const H = overlay.clientHeight;
@@ -173,7 +175,11 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   const onClickTip = (e: MouseEvent): void => {
     const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
     if (t?.dataset['hint'] !== undefined) {
-      hideTip();
+      // hintTap: pasif düğme (neden yapılamadığını anlatır): dokunuş ipucunu sabitler / kapatır; diğer kısa ipuçlarında dokunuş düğmenin eylemidir
+      if (t.dataset['hintTap'] !== undefined && !(tipFor === t && tipPinned)) {
+        showTip(t);
+        tipPinned = true;
+      } else hideTip();
       return;
     }
     if (!t) {
@@ -197,7 +203,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const next = overlay.querySelector<HTMLElement>(`[data-stat="${id}"]`);
     if (next) showTip(next);
     else {
-      tip.classList.remove('on');
+      tipOff(tip);
       tipFor = null;
     }
   };
@@ -254,10 +260,9 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   };
   const moveGhost = (x: number, y: number): void => {
     if (!drag) return;
-    const r = overlay.getBoundingClientRect();
-    const s = r.width / Math.max(1, overlay.offsetWidth);
-    drag.ghost.style.left = `${(x - r.left) / s}px`;
-    drag.ghost.style.top = `${(y - r.top) / s}px`;
+    const p = clientToLocal(x, y, overlay.getBoundingClientRect(), overlay.offsetWidth, document.documentElement.classList.contains('rotated'));
+    drag.ghost.style.left = `${p.x}px`;
+    drag.ghost.style.top = `${p.y}px`;
   };
   const startDrag = (x: number, y: number): void => {
     if (!press) return;

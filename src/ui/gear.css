@@ -4987,9 +4987,28 @@ html.short .gr-skillbar {
 }
 
 html.short .gr-pl {
-  --is: min(46px, 100%);
-  gap: 4px;
-  padding: 12px 3px 5px;
+  --is: min(30px, 100%);
+  gap: 3px;
+  padding: 10px 3px 4px;
+}
+
+/* skill şeridi telefonda kısa: ayraç yok, ad en çok 2 satır, böylece yuvalar / stat satırları daha çok yer bulur */
+html.short .gr-pl .pl-dv {
+  display: none;
+}
+
+html.short .gr-pl .pl-nm {
+  min-height: 2.2em;
+  line-height: 1.1;
+}
+
+html.short .gr-pl .pl-chips {
+  gap: 1px 2px;
+}
+
+/* "SKILLS" başlığı telefonda gizli (plakalar zaten beceri): yuvalara / stat satırlarına yer kalır */
+html.short .gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  display: none;
 }
 
 html.short .gr-pl .pl-sls {
@@ -5389,13 +5408,17 @@ html.short .gr-pl .pl-tag {
 .sh-pm {
   display: inline-flex;
   flex: none;
-  gap: max(3px, calc(5 * var(--u)));
+  gap: max(8px, calc(10 * var(--u)));
+}
+
+.sh-row:has(.sh-pm) {
+  min-height: max(28px, calc(32 * var(--u)));
 }
 
 .sh-pmb {
   position: relative;
-  width: max(22px, calc(30 * var(--u)));
-  height: max(22px, calc(30 * var(--u)));
+  width: max(26px, calc(30 * var(--u)));
+  height: max(26px, calc(30 * var(--u)));
   padding: 0;
   border: 1px solid var(--g-line);
   background: rgba(20, 14, 8, 0.6);
@@ -5407,18 +5430,19 @@ html.short .gr-pl .pl-tag {
 .sh-pmb::after {
   content: '';
   position: absolute;
-  width: 44px;
-  height: 44px;
+  width: calc(100% + 8px); /* + ve − yan yana: dokunma alanları birbirine binmez (aralık >= 8 px) */
+  height: max(28px, calc(32 * var(--u))); /* satır yüksekliği kadar: komşu satırın düğmesini örtmez */
   left: 50%;
   top: 50%;
   transform: translate(-50%, -50%);
 }
 
-.sh-pmb:hover:not(:disabled) {
+.sh-pmb:hover:not(:disabled):not(.dis) {
   border-color: var(--g-gold);
 }
 
-.sh-pmb:disabled {
+.sh-pmb:disabled,
+.sh-pmb.dis {
   opacity: 0.3;
   cursor: not-allowed;
 }
@@ -5522,9 +5546,22 @@ html.short .sh-d {
 }
 
 html.short .sh-pmb {
-  width: 18px;
-  height: 18px;
-  font-size: 12px;
+  width: 26px;
+  height: 26px;
+  font-size: 14px;
+}
+
+/* dokunma alanı satırdan taşmaz: üst/alt komşu satırın düğmesini örtmesin (bug-hunter 2026-10-19) */
+html.short .sh-pmb::after {
+  height: 28px;
+}
+
+html.short .sh-pm {
+  gap: 8px;
+}
+
+html.short .sh-row:has(.sh-pm) {
+  min-height: 28px;
 }
 
 /* dar sayfa (tüccar + Gear yan yana, telefon): kabın kendi genişliğine göre sıkılaşır (container query; sınıf değil) */
@@ -5647,10 +5684,6 @@ html.short .sh-cols {
   grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr) minmax(0, 1fr);
 }
 
-html.short .sh-pm {
-  gap: 2px;
-}
-
 html.short .sh-n {
   min-width: 1.2em;
 }
@@ -5658,4 +5691,40 @@ html.short .sh-n {
 /* telefon Sheet: sağdaki skill ağacı kabı henüz boş ("Coming soon"); sol sayfa genişler ki stat adları tam yazılsın */
 html.short .gr-ledger.tab-sheet .gr-lbody {
   grid-template-columns: 54px minmax(0, 2.1fr) 1px minmax(0, 0.8fr);
+}
+
+/* Hero / Sheet sekme ikonu (Ömer 2026-10-19): yazının önünde küçük, sekme olduğu anlaşılsın */
+.gr-tab-ico {
+  width: max(16px, calc(26 * var(--u, 1)));
+  height: max(16px, calc(26 * var(--u, 1)));
+  margin-right: 7px;
+  flex: none;
+  object-fit: contain;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+
+.gr-tab.on .gr-tab-ico,
+.gr-tab:hover .gr-tab-ico {
+  opacity: 1;
+}
+
+/* ===== Çift pencerede (Demirci / tüccar / ganimet) telefonda sağdaki Gear paneli (bug-hunter 2026-10-19) =====
+   Panel yarım ekran: yuvalar tek sütun (adlar kesilmesin), skill şeridi gizli (bu ekranlarda gerekmez; taşıyordu), torba başlığı satır atlar (BEST düğmeleri taşmasın). */
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-lbody {
+  grid-template-columns: 54px minmax(0, 1.2fr) 1px minmax(0, 1fr);
+}
+
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-lskills {
+  display: none;
+}
+
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-slots {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-bag-head {
+  flex-wrap: wrap;
+  row-gap: 2px;
 }

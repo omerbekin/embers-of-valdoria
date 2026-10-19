@@ -5,6 +5,7 @@
   "color": "#5a8f29",
   "logo": "leaf",
   "role": "Nature Summoner",
+  "blurb": "Nature summoner who calls treants to the field and heals allies as they rise.",
   "frontPriority": 5,
   "range": 5,
   "attributes": {

@@ -5,6 +5,7 @@
   "color": "#c8553d",
   "logo": "helm",
   "role": "Melee Bruiser",
+  "blurb": "Frontline bruiser who turns pain into Rage and hits hardest at death's door.",
   "frontPriority": 1,
   "range": 1,
   "attributes": {

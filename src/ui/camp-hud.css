@@ -132,3 +132,9 @@ html.reduced-motion .camp-ib.glow {
 html.reduced-motion .lv-banner {
   animation: none;
 }
+
+/* telefon yatay: şerit alta iner; üstte ders kutusu (.tut-wrap) ve Farewell penceresiyle çakışıp kaçırılıyordu */
+html.short .lv-banner {
+  top: auto;
+  bottom: calc(var(--eb, 0px) + 12px);
+}

@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wave battle mockups</title>
+<!-- DALGALI SAVAS taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone (844x390)  &clean. Savas HUD'i oyunun gercek CSS'i (kit-v2/css/battle-hud.css). -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/valor.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="wave-battle/wb.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Dalgalı savaş (yeni özellik)</h1>
+<p>Ömer'in notu: bir savaşta düşmanlar tek seferde değil 2-3 dalga halinde gelir; bir dalga ölünce yenisi girer (seferde tutorial'ın son haritasından, Endless'ta 6. dalgadan itibaren). Bu sayfa yalnızca görünümü gösterir; dalga sayısı ve düşmanlar ÖRNEKTİR.</p>
+<h3>Üç soru, her varyant farklı cevap verir</h3>
+<ol>
+<li><b>Gösterge nerede?</b> Sol üst plaka (V1) · sıra çubuğunun altında + sırada ayraç (V2) · sağ üst ray (V3).</li>
+<li><b>Geçiş anı nasıl duyurulur?</b> Endless'taki gibi tam bant, HUD gizli (V1) · ince üst bant, HUD kalır (V2) · ortada A Band plakası (V3).</li>
+<li><b>Sonraki dalga önizlenir mi?</b> Hayır, sürpriz (V1) · evet ama yalnızca üstüne gelince (V2) · evet, hep görünür (V3).</li>
+</ol>
+<h3>Notlar</h3>
+<ul>
+<li>Her varyantta üç durum: dalga 1/3 savaşıyor · geçiş anı (düşmanlar sağdan gri-soluk girerken, önceki dalganın leşleri kaybolurken) · son dalga 3/3.</li>
+<li>Alt çubuk, sıra çubuğu ve sahne oyunun gerçek hali (Warrior, Border Road arka planı, gerçek sprite'lar); dalga parçaları dışında HİÇBİR şey değiştirilmedi. Tüm yeni parçalar tasarım dili ortak kalıplarıyla: elmaslı çerçeve, Cinzel başlık, düz EB Garamond, A Band ipucu.</li>
+<li><b>Açık soru (isimlendirme):</b> Endless'ta "WAVE 7" zaten bir SAVAŞI ifade ediyor (bölüm numarası). Savaş içi dalgaya da "Wave" dersek karışır. Öneri: Endless'ta üstte "Wave 7" kalsın, savaş içi dalga göstergesi "Reinforcements 2/3" ya da "Round 2/3" olsun. Burada kampanya için "Wave" yazıldı; Ömer karar verir.</li>
+<li>Telefon yatay için şeritten <b>844x390</b>: HUD oyundaki kısa ekran kuralıyla büyür; dalga parçaları da büyütüldü (gerçek ekranda ayrıca kontrol gerekir).</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="wave-battle/app.js"></script>
+</body>
+</html>

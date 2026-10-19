@@ -386,6 +386,16 @@ describe('class havuzu', () => {
     for (const def of Object.values(content.classes)) expect(def.skills, def.id).toHaveLength(4);
   });
 
+  it('her oynanabilir class\'ın kısa açıklaması (blurb) var: tek cümle, en fazla 90 karakter', () => {
+    for (const id of content.selectableClasses) {
+      const blurb = content.classes[id]!.blurb;
+      expect(blurb, id).toBeTruthy();
+      expect(blurb!.length, id).toBeLessThanOrEqual(90);
+      expect(blurb!.trim(), id).toBe(blurb);
+      expect(blurb, id).toMatch(/^[A-Z][^.!?]*[.!?]$/); // tek cümle, büyük harfle başlar
+    }
+  });
+
   it('class id, sprite id ve görsel dosyası birbirine bağlı (görsel class\'a aittir, taraf fark etmez)', () => {
     for (const [id, def] of Object.entries(content.classes)) {
       expect(def.id).toBe(id);

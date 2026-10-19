@@ -4,6 +4,9 @@ import { iconUrl } from './dom-icons';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { ValorMeter } from './valor-braziers';
 import { valorRules } from '../engine/content';
+import { tipOn, tipOff } from './tip-vis';
+import { navSvg } from './nav-icons';
+import { rectToLocal } from './formation-board-rules';
 import { bandRichHtml, bandTipHtml, type BandChip, type BandTipSpec } from './band-tip';
 
 /**
@@ -275,6 +278,8 @@ export class BattleHud {
   private readonly band: HTMLDivElement;
   private readonly turn: HTMLDivElement;
   private readonly turnLbl: HTMLDivElement;
+  /** Dalgalı savaş göstergesi ("Wave 2/3"; yalnızca dalga sayısı 1'den büyükse; geçici görünüm: tek yer bu alan + .bh-wave). */
+  private readonly waveLbl: HTMLDivElement;
   private readonly actorBox: HTMLDivElement;
   private readonly skillBox: HTMLDivElement;
   private readonly globBox: HTMLDivElement;
@@ -328,6 +333,8 @@ export class BattleHud {
     this.band.innerHTML = '<i class="bh-dia bh-band-dia"></i>';
     this.turn = el('div', 'bh-turn');
     this.turnLbl = el('div', 'bh-turn-lbl');
+    this.waveLbl = el('div', 'bh-wave');
+    this.waveLbl.hidden = true;
     this.actorBox = el('div', 'bh-actor');
     this.skillBox = el('div', 'bh-skills');
     this.globBox = el('div', 'bh-globs');
@@ -341,7 +348,7 @@ export class BattleHud {
     this.ftip = el('div', 'bh-ftip bh-panel');
     this.ctip = el('div', 'bh-ctip bh-panel bh-corners');
     this.cards = { party: el('div', 'bh-card party'), enemy: el('div', 'bh-card enemy') };
-    this.root.append(this.band, this.turn, this.turnLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
+    this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
     parent.append(this.root);
 
     // Fare bırakması alttaki Phaser sahnesine gitmesin (Phaser window mouseup'ı dinler, defaultPrevented olanı yok sayar)
@@ -634,6 +641,12 @@ export class BattleHud {
     this.put(this.pasBox, p ? passivePlateHtml(p.name, p.iconUrl, this.reg('p:passive', p.tip), lucky) : '');
   }
 
+  /** Dalga göstergesi: "Wave 2/3" (null = gizli: dalgasız savaş). */
+  setWave(text: string | null): void {
+    this.waveLbl.hidden = !text;
+    this.waveLbl.textContent = text ?? '';
+  }
+
   private renderTurnLabel(): void {
     const t = this.model.turnLabel;
     this.put(this.turnLbl, t ? `<i class="bh-dia s"></i>${esc(t)}<i class="bh-dia s"></i>` : '');
@@ -679,6 +692,9 @@ export class BattleHud {
     this.turn.style.left = this.testLabel ? `${W / 2}px` : `${W / 2 - NW / 2 - past * (CW + GAP)}px`;
     this.turn.classList.toggle('test', !!this.testLabel);
     this.turnLbl.style.left = `${W / 2}px`;
+    // Dalga yazısı: sıra çubuğunun hemen solunda (şu anki hücrenin ad etiketine binmesin); test modunda çubuk yok, yazı üstte ortada
+    this.waveLbl.classList.toggle('test', !!this.testLabel);
+    this.waveLbl.style.left = this.testLabel ? `${W / 2}px` : `${W / 2 - NW / 2 - past * (CW + GAP) - 26}px`;
     // Sabit skill bölgesi (Ömer 0.8.2.3 telefon testi: 2 skill'li düşmanda Rest / Skip / Move ve Combat log ortaya kayıyordu): en az 4 yuva
     // genişliğinde, skill'ler soldan yuvalara dizilir; global sütun ve sağ alan skill sayısından bağımsız aynı yerde. 4'ten çok skill
     // (fazladan skill'li birim) bölgeyi iki yana eşit büyütür.
@@ -878,7 +894,9 @@ export class BattleHud {
       bodyHtml: body,
       ...(pinned ? { foot: 'Pinned · tap again or Esc to close' } : {}),
     });
-    return `<div class="bh-card-sc">${html}</div>`;
+    // Sabit kartta sağ üst X (Ömer 2026-10-19: telefonda Esc yok); kaydırma kabının dışında, dokunma hedefi en az 44 gerçek piksel
+    const x = pinned ? `<button type="button" class="bh-card-x" data-unpin="${side}" aria-label="Close card" title="Close">${navSvg('close')}</button>` : '';
+    return `<div class="bh-card-sc">${html}</div>${x}`;
   }
 
   // ------------------------------------------------------------------ bağlam ipucu (hücre: yürü, ceset, diriltme...)
@@ -886,12 +904,12 @@ export class BattleHud {
   /** Hücre / ceset ipuçları: alt çubuğun hemen üstünde, ortada (boş yere gelince gösterilmez). */
   showContextTip(t: TipContent): void {
     this.ctip.innerHTML = tipHtml(t);
-    this.ctip.classList.add('on');
+    tipOn(this.ctip);
     this.root.classList.add('ctx');
   }
 
   hideContextTip(): void {
-    this.ctip.classList.remove('on');
+    tipOff(this.ctip);
     this.root.classList.remove('ctx');
   }
 
@@ -911,6 +929,16 @@ export class BattleHud {
 
   private onClick(e: MouseEvent): void {
     const target = e.target as HTMLElement;
+    const un = target.closest<HTMLElement>('[data-unpin]');
+    if (un) {
+      const side = un.dataset['unpin'] as Side;
+      if (this.pins[side]) {
+        delete this.pins[side];
+        this.renderCards();
+        this.cb.onPinChange?.();
+      }
+      return;
+    }
     if (target.closest('.bh-sktip, .bh-logp')) return;
     const pl = target.closest<HTMLElement>('[data-panel]');
     if (pl) {
@@ -956,15 +984,11 @@ export class BattleHud {
     const t = this.tips.get(key) ?? (typeof ct === 'function' ? ct() : ct);
     if (!t) return;
     this.ftip.innerHTML = tipHtml(t);
-    this.ftip.classList.add('on');
+    tipOn(this.ftip);
     // Öğenin hemen üstünde (yer yoksa altında); ölçek: root dönüştürülmüş, offset'ler oyun biriminde
     const rr = this.root.getBoundingClientRect();
-    const r = el.getBoundingClientRect();
-    const s = rr.width / Math.max(1, this.root.offsetWidth);
-    const ex = (r.left - rr.left) / s;
-    const ey = (r.top - rr.top) / s;
-    const ew = r.width / s;
-    const eh = r.height / s;
+    const rot = document.documentElement.classList.contains('rotated');
+    const { x: ex, y: ey, w: ew, h: eh } = rectToLocal(el.getBoundingClientRect(), rr, this.root.offsetWidth, rot);
     const tw = this.ftip.offsetWidth;
     const th = this.ftip.offsetHeight;
     const card = el.closest<HTMLElement>('.bh-card');
@@ -973,9 +997,7 @@ export class BattleHud {
     let y = side === 'right' || side === 'beside' ? ey + eh / 2 - th / 2 : ey - th - 12;
     if (card) {
       // Birim kartının skill satırı: ipucu kartın yanında, tahtaya doğru (dost kartı solda: sağına; düşman kartı sağda: soluna)
-      const cr = card.getBoundingClientRect();
-      const cl = (cr.left - rr.left) / s;
-      const cw = cr.width / s;
+      const { x: cl, w: cw } = rectToLocal(card.getBoundingClientRect(), rr, this.root.offsetWidth, rot);
       x = card.classList.contains('enemy') ? cl - tw - 16 : cl + cw + 16;
     }
     if (y < 10 && side === 'above') y = ey + eh + 12;
@@ -989,7 +1011,7 @@ export class BattleHud {
   }
 
   hideTip(): void {
-    this.ftip.classList.remove('on');
+    tipOff(this.ftip);
     if (this.tipEl?.classList.contains('bh-cs')) this.tipEl.classList.remove('tip');
     this.tipEl = null;
     this.tipPinned = false;

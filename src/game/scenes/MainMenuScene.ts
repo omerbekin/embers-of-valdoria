@@ -15,6 +15,7 @@ import { blurredTexture, edgeFillers, mapArt } from '../map-art';
 import { coverShift, focusCrop, placeArt } from '../wide-map';
 import layout from '../../../data/battle-layout.json';
 import { onStageResize, stageView, worldXY } from '../stage';
+import { growTouchZone } from '../touch-hit';
 import { FULL_W, FULL_X0, MENU_COL_X, menuColumnShift } from '../../ui/viewport';
 import type { Modal } from '../campaign-ui';
 import { storage } from '../kv-storage';
@@ -860,6 +861,7 @@ export class MainMenuScene extends Phaser.Scene {
         const tabLabel = elText(this, 0, 0, 'Endless', 19, EL.TXT, { em: 0.16, pad: true }).setOrigin(0, 0.5);
         const tabState = elBody(this, 0, 1, '', 19, EL.MUTED, false).setOrigin(0, 0.5);
         const tabZone = this.add.zone(0, 0, 10, TAB_H).setInteractive({ useHandCursor: true });
+        const growTab = growTouchZone(this, tabZone, 10, TAB_H, { growY: 'up' }); // telefonda alan yukarı (kartın dışına) büyür; görünüm aynı
         tab.add([tabGlow, plate, dOn, dOff, tabLabel, tabState, tabZone]);
         c.addAt(tab, 0); // kartın görselinin ARKASINDA: gizliyken kartın içinde kalır
         // Kartın kor çerçevesi (Endless açıkken sürekli; hover/odaktan bağımsız)
@@ -883,7 +885,7 @@ export class MainMenuScene extends Phaser.Scene {
           dOff.setPosition(x0 + 7, 0);
           tabLabel.setX(x0 + 28 - EL.PAD);
           tabState.setX(x0 + 28 + tw + 12);
-          tabZone.setSize(w, TAB_H);
+          growTab(w, TAB_H);
           plate.clear();
           plate.fillStyle(v ? 0x2a190d : 0x17100a, 1).fillRect(-w / 2, -TAB_H / 2, w, TAB_H);
           plate.lineStyle(1, v || hover ? EL.ON_N : EL.GOLD, v || hover ? 1 : EL.LINE.a3).strokePoints([{ x: -w / 2 + 0.5, y: TAB_H / 2 }, { x: -w / 2 + 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: -TAB_H / 2 + 0.5 }, { x: w / 2 - 0.5, y: TAB_H / 2 }], false);
@@ -994,7 +996,7 @@ export class MainMenuScene extends Phaser.Scene {
             if (!this.ready()) return;
             if (!b.enabled) return btn.shake();
             runCamp(b.id);
-          }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled });
+          }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled, touch: { growY: 'up', maxW: bw + gap - 4 } }); // kart düğmeleri: telefonda alan yukarı büyür
           btn.root.setPosition(bx + bw / 2, hh - 58);
           bx += bw + gap;
           c.add(btn.root);

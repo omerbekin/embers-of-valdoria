@@ -5,6 +5,7 @@
   "color": "#b8892e",
   "logo": "gamblerlogo",
   "role": "Risk Taker",
+  "blurb": "Reckless risk taker who wagers HP and mana on fate for huge hits.",
   "frontPriority": 4.5,
   "range": 5,
   "attributes": {

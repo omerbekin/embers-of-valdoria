@@ -33,6 +33,7 @@ import {
   type ItemInstance,
   type SlotId,
   canAddPoint,
+  baseAttrs,
   mergeAlloc,
   PRIMARY_BONUS_NAME,
   xpToNext,
@@ -582,8 +583,18 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
       const add = el('button', 'sh-pmb', '+');
       add.type = 'button';
       if (freePts > 0) {
-        add.disabled = !can;
-        add.title = can ? `Add a point to ${name}` : 'A base stat can never exceed the sum of the other three';
+        if (can) add.title = `Add a point to ${name}`;
+        else {
+          // Pasif + : gerçek `disabled` DEĞİL (disabled düğme üstüne gelince olay vermez); NEDEN yapılamadığını A Band ipucu söyler (hover / dokunuş; Ömer 2026-10-19)
+          const base = baseAttrs(hero.class, allocNow);
+          const others = base ? ATTR_IDS.reduce((t, k) => t + base[k], 0) - (base[attr] ?? 0) : 0;
+          add.classList.add('dis');
+          add.setAttribute('aria-disabled', 'true');
+          add.dataset['hint'] = `Cannot add to ${name}`;
+          add.dataset['hintSub'] = `A base stat can never exceed the other three added together${base ? ` (${name} ${base[attr]}, the others total ${others})` : ''}. Raise another stat first.`;
+          add.dataset['hintTone'] = 'no';
+          add.dataset['hintTap'] = '1';
+        }
         add.addEventListener('click', (e) => {
           e.stopPropagation();
           if (can) lv.onAdd(attr);

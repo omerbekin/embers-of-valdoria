@@ -85,9 +85,9 @@
   "mine_wardens": {
     "name": "Mine Wardens",
     "units": [
-      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.7, "powerMult": 1.4 } },
-      { "class": "deep_runecaller", "slot": 6, "mods": { "hpMult": 1.7, "powerMult": 1.4 } },
-      { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 1.7, "powerMult": 1.4 } }
+      { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.4, "powerMult": 1.4 } },
+      { "class": "deep_runecaller", "slot": 6, "mods": { "hpMult": 1.4, "powerMult": 1.2 } },
+      { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 1.4, "powerMult": 1.2 } }
     ]
   },
   "vault_keepers": {
@@ -182,6 +182,14 @@
       { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.92, "powerMult": 0.92 } },
       { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.92, "powerMult": 0.92 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.92, "powerMult": 0.92 } }
+    ]
+  },
+  "cairn_hill": {
+    "name": "Cairn Raiders",
+    "units": [
+      { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.85, "powerMult": 0.85 } },
+      { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.85, "powerMult": 0.85 } }
     ]
   },
   "witchs_hut_guard": {

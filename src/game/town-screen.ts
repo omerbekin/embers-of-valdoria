@@ -8,6 +8,7 @@ import { openBlacksmith } from '../ui/blacksmith-screen';
 import { uiSound, worldSound } from '../ui/ui-sound';
 import { EL, elBody, elGlow, elText, fadeLine, vGradient } from './elegant-ui';
 import { stageView } from './stage';
+import { growTouchZone } from './touch-hit';
 import { loadTownArt, townArtKey } from './town-art';
 import { reducedMotion } from '../ui/motion-pref';
 
@@ -39,6 +40,10 @@ export class TownScreen {
   readonly root: Phaser.GameObjects.Container;
   /** Dokunmatikte seçili yer / kahraman (ikinci dokunuş eylem). */
   private selected: string | null = null;
+  /** Yerlerin ekrandaki merkezi + yarım genişliği (arayüz katmanı koordinatı; harita pencereleri C kartı yanına açılır). */
+  private spotCenters = new Map<string, { x: number; y: number; hw: number }>();
+  /** Etiket plakası dokunma alanları (telefonda 44 px'e büyütülür; growLabelZones). */
+  private labelZones: { zone: Phaser.GameObjects.Zone; x: number; y: number; w: number; h: number }[] = [];
   private hovered: string | null = null;
   private painters = new Map<string, (on: boolean) => void>();
   private destroyed = false;
@@ -148,6 +153,8 @@ export class TownScreen {
     this.root.removeAll(true);
     this.painters.clear();
     this.hovered = null;
+    this.spotCenters.clear();
+    this.labelZones = [];
     const def = townScene(this.node);
     const left = stageView.left;
     const right = stageView.right;
@@ -191,19 +198,41 @@ export class TownScreen {
     // Demirci (TUR 1 madde 7): yeri campaign.json > blacksmith.hotspots'ta (kasabanın kendi verisi değil)
     const smith = smithHotspot(this.node);
     if (def && smith && smith.rect[2] > smith.rect[0]) this.addHotspot(smith, cover);
+    this.growLabelZones();
     this.addParty();
     // Seçim yeniden çizimden sonra korunur (ör. ekran döndürülünce)
     if (this.selected) this.painters.get(this.selected)?.(true);
+  }
+
+  /** Yerin merkezi (arayüz katmanı koordinatı) ya da null. */
+  hotspotCenter(id: string): { x: number; y: number; hw: number } | null {
+    return this.spotCenters.get(id) ?? null;
   }
 
   private compactLabel(): number {
     return this.hooks.compact() ? CONFIG.townScreen.labelSizePhone : CONFIG.townScreen.labelSize;
   }
 
+  /**
+   * Telefonda etiket plakalarının dokunma alanını (görünüm aynı) en az 44 gerçek piksele büyütür. Üst üste binen komşu etiketle arasındaki boşluğu
+   * paylaşır: iki alan birbirine en çok boşluk kadar yaklaşır, çakışmaz.
+   */
+  private growLabelZones(): void {
+    for (const a of this.labelZones) {
+      let free = Infinity;
+      for (const b of this.labelZones) {
+        if (a === b || Math.abs(a.x - b.x) >= (a.w + b.w) / 2) continue; // yatayda ayrık: dikey büyüme çakışmaz
+        free = Math.min(free, Math.max(0, Math.abs(a.y - b.y) - (a.h + b.h) / 2));
+      }
+      growTouchZone(this.scene, a.zone, a.w, a.h, { maxExtraH: free });
+    }
+  }
+
   /** Bir yer: vurgu çerçevesi (gizli), her zaman görünen etiket plakası, dokunma alanı. */
   private addHotspot(h: TownHotspot, cover: Cover): void {
     const s = this.scene;
     const r = hotspotRect(h, cover);
+    this.spotCenters.set(h.id, { x: r.x + r.w / 2, y: r.y + r.h / 2, hw: r.w / 2 });
     const id = `spot:${h.id}`;
     const glow = s.add.graphics().setAlpha(0);
     const pad = 6;
@@ -233,7 +262,8 @@ export class TownScreen {
     this.root.add([plate, text, tap]);
     const zone = s.add.zone(r.x, r.y, r.w, r.h).setOrigin(0, 0).setInteractive({ useHandCursor: true });
     // Etiket plakası da aynı yere götürür (telefonda küçük nesneler için daha büyük hedef)
-    const labelZone = s.add.zone(lx - pw / 2, ly - ph / 2, pw, ph).setOrigin(0, 0).setInteractive({ useHandCursor: true });
+    const labelZone = s.add.zone(lx, ly, pw, ph).setInteractive({ useHandCursor: true });
+    this.labelZones.push({ zone: labelZone, x: lx, y: ly, w: pw, h: ph });
     this.root.add([zone, labelZone]);
     this.painters.set(id, (on) => {
       glow.setAlpha(on ? 1 : 0);

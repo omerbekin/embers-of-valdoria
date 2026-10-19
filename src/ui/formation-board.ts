@@ -89,6 +89,10 @@ const NAMES: Record<BoardAttr, string> = { str: 'Strength', dex: 'Dexterity', in
 const ORDER: BoardAttr[] = ['str', 'dex', 'int', 'luck'];
 const HOW = 'Click a hero to select it, then click an empty cell to move it there. Drag a hero onto another hero to swap them. Hover a cell to see how far the selected hero reaches from there.';
 const HOW_PLAIN = 'Click a hero to select it, then click an empty cell to move it there. Drag a hero onto another hero to swap them.';
+// dokunmatik (telefon): "Click / Hover" yerine dokunma dili
+const HOW_TOUCH = 'Tap a hero to select it, then tap an empty cell to move it there. Drag a hero onto another hero to swap them. Tap a cell to see how far the selected hero reaches from there.';
+const HOW_PLAIN_TOUCH = 'Tap a hero to select it, then tap an empty cell to move it there. Drag a hero onto another hero to swap them.';
+const isTouchUi = (): boolean => (typeof window !== 'undefined' && window.matchMedia ? window.matchMedia('(pointer: coarse)').matches : false);
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
 const num = (v: number): string => (Number.isInteger(v) ? String(v) : (Math.round(v * 10) / 10).toFixed(1));
@@ -185,7 +189,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   let gridEl: HTMLElement;
   let panelEl: HTMLElement;
   const build = (): void => {
-    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-lbl front">Front ▸</div><div class="fb-grid"></div><div class="fb-how">${esc(o.howText ?? (o.rangeUi ? HOW : HOW_PLAIN))}</div><div class="fb-panel"></div>`;
+    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-lbl front">Front ▸</div><div class="fb-grid"></div><div class="fb-how">${esc(o.howText ?? (isTouchUi() ? (o.rangeUi ? HOW_TOUCH : HOW_PLAIN_TOUCH) : o.rangeUi ? HOW : HOW_PLAIN))}</div><div class="fb-panel"></div>`;
     gridEl = root.querySelector('.fb-grid') as HTMLElement;
     panelEl = root.querySelector('.fb-panel') as HTMLElement;
   };
@@ -219,7 +223,11 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const n = reachRows(who.range, rowOfCell(cell));
     const accent = n <= 0 || fit === 'bad' ? '#e8806a' : fit === 'weak' ? '#e0a43a' : '#8fc65a';
     const segs = [1, 2, 3, 4].map((i) => `<i class="${i <= n ? 'on' : ''}">${i}</i>`).join('');
-    const bars = `<div class="fb-reach"><span class="rl">Enemy rows hit</span><span class="rb">${segs}</span></div>`;
+    // Dolu kutuların rengi isabet eden sıra sayısına göre: az = yeşil ... çok = sarı (1 -> 4 sıra, doğrusal; Ömer 2026-10-19). 0 sıra: kutu yanmaz.
+    const t = Math.max(0, Math.min(1, (n - 1) / 3));
+    const mix = (a: number, b: number): number => Math.round(a + (b - a) * t);
+    const reachCol = `rgb(${mix(0x7c, 0xf2)}, ${mix(0xc6, 0xd0)}, ${mix(0x5a, 0x3e)})`;
+    const bars = `<div class="fb-reach"><span class="rl">Enemy rows hit</span><span class="rb" style="--ac:${reachCol}">${segs}</span></div>`;
     const lines = [{ text: reachText(n), ...(n <= 0 ? { color: '#ffb7a6' } : {}) }, ...(fit === 'weak' ? [{ text: 'Exposed in front', color: '#f3d08a' }] : [])];
     const el = document.createElement('div');
     el.className = 'fb-tip';
@@ -403,6 +411,9 @@ export interface FormationWindow {
 }
 
 const BOARD_TOP = 134;
+/** Kısa ekranda (html.short) pencerenin mantıksal boyutu; formation-board.css ile aynı. */
+const SHORT_W = 1360;
+const SHORT_H = 690;
 
 export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
   const host = document.getElementById('ui-root') ?? document.body;
@@ -425,6 +436,13 @@ export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
 
   const place = (): void => {
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
+    if (document.documentElement.classList.contains('short')) {
+      // telefon yatay: pencere kısa ekrana göre yeniden düzenlenir (formation-board.css > html.short) ve ekranı doldurur (yazılar okunur kalsın)
+      const sc = Math.min((overlay.clientWidth * 0.98) / SHORT_W, (overlay.clientHeight * 0.97) / SHORT_H) || gu;
+      pos.style.transform = `translate(-50%, -50%) scale(${sc})`;
+      pos.style.top = '50%';
+      return;
+    }
     pos.style.transform = `translate(-50%, -50%) scale(${gu})`;
     pos.style.top = `calc(50% - ${10 * gu}px)`; // pencere 120..940: merkezi 530 (sahne ortası 540)
   };

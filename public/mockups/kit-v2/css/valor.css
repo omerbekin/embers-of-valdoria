@@ -1,0 +1,360 @@
+/* Valor göstergesi ve savaş dışı diriltme penceresi (src/ui/valor-braziers.ts; Ömer 2026-10-13). Kit dili: koyu demir + kor, Cinzel etiket,
+   ince altın çizgi. Mangallar boyalı görsel (assets/valor, Ömer 2026-10-14), yumuşak ölçek. Boyut TEK değişkende: --vl-h = kâse yüksekliği
+   (genişlik kare oranından; alevli kare kâsenin üstüne taşar, yerleşimi büyütmez). Görsel değişse de yerleşim aynı kalır. */
+.vl-meter {
+  --vl-h: 40px;
+  display: inline-flex;
+  flex-direction: row;
+  align-items: center;
+  gap: calc(var(--vl-h) * 0.22);
+  padding: 0;
+  margin: 0;
+  background: none;
+  border: 0;
+  color: inherit;
+  font: inherit;
+  line-height: 1;
+}
+
+.vl-brs {
+  display: flex;
+  align-items: flex-end;
+  gap: calc(var(--vl-h) * 0.08);
+}
+
+.vl-br {
+  position: relative;
+  display: block;
+  flex: none;
+  width: calc(var(--vl-h) * 1.055);
+  height: var(--vl-h);
+}
+
+.vl-br > img {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  pointer-events: none;
+  user-select: none;
+  image-rendering: auto;
+}
+
+.vl-br > .vl-img {
+  height: 100%;
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75));
+  transition: filter 0.2s;
+}
+
+/* alevli kare (diriltme hazır): kâseyle aynı taban ve genişlik, yalnızca yukarı uzar */
+.vl-br > .vl-flame {
+  height: auto;
+  opacity: 0;
+  transform-origin: 50% 100%;
+  transition: opacity 0.25s;
+  filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.55));
+}
+
+.vl-br.on > .vl-flame {
+  opacity: 1;
+  animation: vl-flicker 1.6s ease-in-out infinite alternate;
+}
+
+.vl-br.on > .vl-img {
+  opacity: 0;
+}
+
+/* yeni tutuşan korun mangalı kısa parlar */
+.vl-br.vl-flash > .vl-img {
+  filter: drop-shadow(0 2px 2px rgba(0, 0, 0, 0.75)) brightness(1.7) drop-shadow(0 0 6px rgba(255, 179, 90, 0.8));
+  transition: none;
+}
+
+@keyframes vl-flicker {
+  0% {
+    transform: scale(1, 1);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.16) rgba(255, 140, 50, 0.5)) brightness(1);
+  }
+  50% {
+    transform: scale(1.015, 1.035);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.22) rgba(255, 150, 60, 0.6)) brightness(1.08);
+  }
+  100% {
+    transform: scale(0.995, 0.99);
+    filter: drop-shadow(0 0 calc(var(--vl-h) * 0.18) rgba(255, 140, 50, 0.5)) brightness(0.97);
+  }
+}
+
+html.reduced-motion .vl-br.on > .vl-flame {
+  animation: none;
+}
+
+/* savaş bedeli çentiği: bedel korunun mangalının altında küçük altın çizgi; eşik dolunca kor rengi */
+.vl-notch {
+  position: absolute;
+  bottom: calc(var(--vl-h) * -0.1);
+  width: 2px;
+  height: calc(var(--vl-h) * 0.16);
+  margin-left: -1px;
+  background: #e8c47e;
+  box-shadow: 0 0 0 1px rgba(16, 11, 7, 0.9);
+}
+
+.vl-meter.vl-ready .vl-notch {
+  background: var(--el-ember2, #ffb35a);
+}
+
+.vl-meter .vl-lbl {
+  font: 600 11px var(--el-display, serif);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--el-muted, #a8977a);
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.9);
+}
+
+.vl-meter.vl-ready .vl-lbl {
+  color: var(--el-ember2, #ffb35a);
+}
+
+.vl-click {
+  cursor: pointer;
+  min-width: 44px;
+  min-height: 44px;
+}
+
+.vl-click:hover .vl-lbl,
+.vl-click:focus-visible .vl-lbl {
+  color: var(--el-on, #f3d999);
+}
+
+.vl-tip {
+  position: fixed;
+  z-index: 40;
+  max-width: 360px;
+}
+
+.vl-tip div + div {
+  margin-top: 4px;
+}
+
+/* ===== Savaş dışı yerleşim (Ömer 2026-10-14): TEK kural, her ekranda aynı. Sol üst bant, ◂ Back'in (ya da haritada o köşenin) hemen sağında,
+   Back ile aynı dikey ortada; küçük, kutusuz ince şerit + yanında küçük "VALOR". Başlıklar ortada, kartlar/paneller bandın altında başlar:
+   hiçbir karta binmez. Kâse ~40 px masaüstü, ~26 px yatay telefon. ===== */
+.vl-corner {
+  --vl-h: max(30px, calc(44 * var(--gu, 1px)));
+  position: absolute;
+  left: calc(var(--el, 0px) + max(64px, 112 * var(--gu, 1px)));
+  top: calc(var(--et, 0px) + 56 * var(--gu, 1px));
+  transform: translateY(-50%);
+  z-index: 6;
+  padding: 4px 12px 4px 8px;
+  background: linear-gradient(90deg, rgba(12, 9, 6, 0.62), rgba(12, 9, 6, 0.38) 70%, rgba(12, 9, 6, 0));
+  border-left: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+html.short .vl-corner {
+  --vl-h: 30px;
+  left: calc(var(--el, 0px) + 60px);
+  top: calc(var(--et, 0px) + 22px);
+  padding: 2px 8px 2px 6px;
+}
+
+html.short .vl-corner .vl-lbl {
+  font-size: 9px;
+  letter-spacing: 0.16em;
+}
+
+/* --- Savaş dışı diriltme penceresi (kit Diyalog) --- */
+.vl-overlay {
+  z-index: 20;
+}
+
+.el-dialog > .el-panel.vl-panel {
+  width: min(560px, 100%);
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.vl-meter-box {
+  display: flex;
+  justify-content: center;
+  margin: 10px 0 6px;
+}
+
+.vl-note {
+  margin: 6px 0 12px;
+  font: italic 18px/1.3 var(--el-body, serif);
+  color: var(--el-note, #cdb88d);
+}
+
+.vl-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  text-align: left;
+}
+
+.vl-row {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 8px 10px;
+  border-top: 1px solid var(--el-line1, rgba(217, 178, 106, 0.16));
+}
+
+.vl-face {
+  width: 52px;
+  height: 52px;
+  object-fit: cover;
+  image-rendering: pixelated;
+  filter: grayscale(0.85) brightness(0.75);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.vl-who {
+  flex: 1 1 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.vl-name {
+  font: 600 18px var(--el-display, serif);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--el-txt, #d9c8a2);
+}
+
+.vl-sub {
+  font: italic 16px var(--el-body, serif);
+  color: var(--el-bad, #e8806a);
+}
+
+.vl-go {
+  min-height: 44px;
+  white-space: nowrap;
+}
+
+.vl-msg {
+  min-height: 1.3em;
+  margin: 10px 0 0;
+  font: italic 17px var(--el-body, serif);
+  color: var(--el-ember2, #ffb35a);
+}
+
+/* Kısa ekran (telefon yatay): pencere ekrana sığar; yalnızca kahraman listesi kayar (çok düşmüş kahramanda) */
+html.short .el-dialog {
+  padding-top: calc(8px + var(--et, 0px));
+  padding-bottom: calc(8px + var(--eb, 0px));
+}
+
+html.short .el-dialog > .el-panel.vl-panel {
+  display: flex;
+  flex-direction: column;
+  width: min(520px, 100%);
+  padding: 10px 18px 12px;
+  overflow: visible;
+}
+
+html.short .vl-panel .el-title {
+  font-size: 22px;
+  gap: 12px;
+}
+
+html.short .vl-panel .vl-meter {
+  --vl-h: 34px !important;
+}
+
+html.short .vl-meter-box {
+  margin: 8px 0 2px;
+}
+
+html.short .vl-note {
+  font-size: 14px;
+  line-height: 1.2;
+  margin: 4px 0 6px;
+}
+
+html.short .vl-list {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 4px;
+}
+
+html.short .vl-row {
+  padding: 4px 8px;
+  gap: 10px;
+}
+
+html.short .vl-face {
+  width: 40px;
+  height: 40px;
+}
+
+html.short .vl-name {
+  font-size: 15px;
+}
+
+html.short .vl-sub {
+  font-size: 13px;
+}
+
+html.short .vl-go {
+  min-height: 44px;
+  padding: 0 24px 0 calc(24px + 0.1em);
+  font-size: 15px;
+}
+
+html.short .vl-msg {
+  margin: 4px 0 0;
+  font-size: 14px;
+  min-height: 1.2em;
+}
+
+html.short .vl-panel .el-row {
+  margin-top: 6px;
+}
+
+html.short .vl-panel .el-row .el-btn.primary {
+  min-height: 44px;
+  padding: 0 32px 0 calc(32px + 0.12em);
+  font-size: 17px;
+}
+
+.vl-meter[hidden] {
+  display: none !important;
+}
+
+/* Savaş HUD'ı (src/ui/battle-hud.ts > .bh-valor; oyun biriminde): mangallar üstte, küçük "VALOR" altta, alt çubukta dikey ortalı */
+.vl-meter.vl-stack {
+  flex-direction: column;
+  gap: 6px;
+}
+
+.vl-meter.vl-stack .vl-lbl {
+  font-size: 15px;
+}
+
+.bh-valor .vl-meter {
+  --vl-h: 60px;
+}
+
+/* telefonda HUD küçülür: mangal ve yazı oyun biriminde büyür (~30 px kâse, ~9 px yazı) */
+html.short .bh-valor .vl-meter {
+  --vl-h: 82px;
+  gap: 4px;
+}
+
+html.short .bh-valor .vl-meter .vl-lbl {
+  font-size: 24px;
+  letter-spacing: 0.14em;
+}
+
+/* Revive düğmesi / ipucu başlığı: alevli mangal karesi kare değil (uzun), ezilmeden sığar */
+.bh-gl .bh-ico,
+.bh-tt-ico {
+  object-fit: contain;
+}

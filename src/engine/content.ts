@@ -5,6 +5,7 @@ import formulasJson from '../../data/formulas.json';
 import skillsJson from '../../data/skills.json';
 import globalSkillsJson from '../../data/global-skills.json';
 import valorJson from '../../data/valor.json';
+import wavesJson from '../../data/waves.json';
 import firstBattle from '../../data/battles/first-battle.json';
 import randomBattle from '../../data/battles/random-battle.json';
 import aoeTester from '../../data/classes/aoe_tester.json';
@@ -75,7 +76,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { AreaDef, BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules } from './types';
+import type { AreaDef, BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -204,6 +205,8 @@ export const grounds = stripNotes<GroundDef>(groundsJson);
 
 /** Valor kuralları (data/valor.json; src/engine/valor.ts). */
 export const valorRules = valorJson as unknown as ValorRules;
+/** Dalgalı savaş geçiş kuralları (data/waves.json > rules; docs/design/waves.md). */
+export const waveRules = wavesJson.rules as WaveRules;
 
 export const aiConfig = aiJson as unknown as AiConfig;
 
@@ -222,6 +225,18 @@ export interface Teams {
   units?: TeamUnits;
   /** Valor (taraf başına, savaş başı miktarı; yoksa o tarafta Valor yok ve valor_revive görünmez). Sefer/Endless yalnızca party verir. */
   valor?: Partial<Record<Side, number>>;
+  /**
+   * Dalgalı savaş (docs/design/waves.md): `enemies` İLK dalgadır; burası SONRAKİ dalgalar. Her dalga `enemies` ile aynı biçimde (arrange false: hücre
+   * listesi, dizin = yuva, '' = boş; arrange true: sınıf listesi, otomatik dizilir) + isteğe bağlı birim kurulumları (anahtar `units.enemies` ile aynı
+   * kural). Yoksa savaş birebir eskisi.
+   */
+  waves?: TeamWave[];
+}
+
+/** Sonraki bir dalga (Teams.waves). */
+export interface TeamWave {
+  enemies: string[];
+  units?: TeamUnits['enemies'];
 }
 
 /**
@@ -536,6 +551,14 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
   };
   const partyUnits = unitsFor(party, teams?.units?.party);
   const enemyUnits = unitsFor(enemies, teams?.units?.enemies);
+  // Dalgalı savaş: sonraki dalgalar ilk dalgayla aynı yoldan (dizilim karşı takıma bakar); boş dalga atlanır
+  const waves: WaveSetup[] = (teams?.waves ?? [])
+    .map((w, k) => {
+      const b = build(w.enemies, undefined, 0x2222 + 0x101 * (k + 1), { foes: idsOf(teams?.party, rolled?.party), board: 'enemy' });
+      const units = unitsFor(b, w.units);
+      return { enemies: b.ids.map(unitDef), enemySlots: b.slots, ...(units ? { enemyUnits: units } : {}) };
+    })
+    .filter((w) => w.enemies.length > 0);
   return {
     seed,
     mode,
@@ -546,6 +569,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     ...(partyUnits ? { partyUnits } : {}),
     ...(enemyUnits ? { enemyUnits } : {}),
     ...(teams?.valor ? { valor: { ...teams.valor } } : {}),
+    ...(waves.length ? { waves, waveRules: { ...waveRules } } : {}),
     skills,
     globalSkills,
     valorRules,

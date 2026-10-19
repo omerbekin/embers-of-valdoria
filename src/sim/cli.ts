@@ -1,24 +1,28 @@
 // Headless denge simülatörü raporu (Türkçe).
 // Rastgele takımlı savaşlar (her seed'de farklı oyuncu/düşman kompozisyonu) iki taraf da yapay zeka ile oynanır;
 // sınıf, skill, ultimate, karşılaşma ve kompozisyon bazında rapor çıkarır. Hedef bantlar data/balance.json (docs/balance.md).
-// Kullanım: npm run sim -- [savaş sayısı] [ilk seed] [oyuncu boyutu] [düşman boyutu]
+// Kullanım: npm run sim -- [savaş sayısı] [ilk seed] [oyuncu boyutu] [düşman boyutu] [--waves=N]
+//   --waves=N: dalgalı savaş ölçümü (docs/design/waves.md): her savaşta N düşman dalgası (sonrakiler aynı havuzdan, seed'e göre).
 //   Argümansız: data/balance.json > measure (10.000 savaş x iki seed grubu, 4'e 4; tek çekirdekte birkaç dakika sürer).
 //   İlk seed verilirse yalnızca o grup koşulur.
 import { content } from '../engine';
 import { balance, mergeResults, simulate, skillCategory, skillShare, ultRawRate, ultReadyRate, winRate, type SimResult } from './simulate';
 
 const B = balance.bands;
-const runs = Number(process.argv[2] ?? balance.measure.runs);
-const seeds = process.argv[3] ? [Number(process.argv[3])] : balance.measure.seedGroups;
+const argv = process.argv.slice(2);
+const pos = argv.filter((a) => !a.startsWith('--'));
+const waves = Math.max(1, Number(argv.find((a) => a.startsWith('--waves='))?.split('=')[1] ?? 1) || 1);
+const runs = Number(pos[0] ?? balance.measure.runs);
+const seeds = pos[1] ? [Number(pos[1])] : balance.measure.seedGroups;
 // Takım boyutları (isteğe bağlı): npm run sim -- 3000 1 5 5  (oyuncu, düşman; taraf başına 1..12)
-const sizes: content.TeamSizes = { ...(process.argv[4] ? { partySize: Number(process.argv[4]) } : {}), ...(process.argv[5] ? { enemySize: Number(process.argv[5]) } : {}) };
+const sizes: content.TeamSizes = { ...(pos[2] ? { partySize: Number(pos[2]) } : {}), ...(pos[3] ? { enemySize: Number(pos[3]) } : {}) };
 const SKILL_SHARE_LIMIT = 40; // tek bir (bedelli) skill'in o sınıfın hamlelerindeki payı (eski "tek doğru hamle" uyarısı)
 
 const fmt = (n: number, d = 1) => n.toFixed(d).replace('.', ',');
 const pct = (n: number, total: number) => (total === 0 ? 0 : (n / total) * 100);
 const out = (band: { low: number; high: number }, v: number) => v < band.low || v > band.high;
 
-const groups = seeds.map((s) => ({ seed: s, r: simulate(runs, s, content.DEFAULT_BATTLE, sizes) }));
+const groups = seeds.map((s) => ({ seed: s, r: simulate(runs, s, content.DEFAULT_BATTLE, sizes, { waves }) }));
 const r: SimResult = groups.length === 1 ? groups[0]!.r : mergeResults(groups.map((g) => g.r));
 const total = r.runs;
 const size = content.battles[content.DEFAULT_BATTLE]?.random?.size;
@@ -27,6 +31,7 @@ console.log('Embers of Valdoria denge simülatörü');
 console.log('======================');
 console.log(`Savaş: ${content.DEFAULT_BATTLE} (her seed'de farklı takımlar), takım ${sizes.partySize ?? size}'e ${sizes.enemySize ?? size}. Yapay zeka vs yapay zeka (Medium).`);
 console.log(`Seed grupları: ${groups.map((g) => `${g.seed}..${g.seed + runs - 1}`).join(' ve ')} (grup başına ${runs} savaş, toplam ${total}).`);
+if (waves > 1) console.log(`Dalgalı savaş: savaş başına ${waves} düşman dalgası; ortalama ulaşılan dalga ${fmt((r.wavesReached ?? 0) / Math.max(1, total), 2)} / ${waves}.`);
 console.log('');
 console.log('GENEL');
 console.log(`  Oyuncu tarafı kazandı : ${r.partyWins} (%${fmt(pct(r.partyWins, total))})`);

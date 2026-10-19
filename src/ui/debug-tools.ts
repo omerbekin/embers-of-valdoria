@@ -44,6 +44,7 @@ import { backgroundPool } from '../game/battle-background';
 import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
 import { POSE_TESTER_GEAR, registerPosesPanel } from './debug-poses';
 import { weaponFor, type WeaponPick } from '../game/poses';
+import { waveTestBattleData } from '../game/wave-test-battle';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
@@ -166,6 +167,26 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
     },
   });
+  // Dalgalı savaş denemesi (docs/design/waves.md; yalnızca debug verisi: data/debug/wave-test.json): 3 dalga, 2 + 2 + 1 elit düşman; oyuncu tarafı rastgele 4 sınıf
+  for (const mode of ['turns', 'test'] as const) {
+    debug.register({
+      id: `battle.wave-test-${mode}`,
+      icon: mode === 'turns' ? 'skull' : 'flask',
+      tab: 'Setup',
+      section: 'Test battles',
+      label: mode === 'turns' ? 'Wave test battle' : 'Wave test battle (test mode)',
+      hint:
+        mode === 'turns'
+          ? 'Start a 3-wave battle (2 + 2 + 1 elite enemies) against a random team of 4; watch the WAVE banner, the old corpses leaving and the turn bar rebuilding'
+          : 'Same 3-wave battle in test mode (no turn order, any unit can act); handy for clearing waves quickly with the Units tools',
+      run: () => {
+        const data = waveTestBattleData(newSeed(), mode);
+        const b = battle();
+        if (b) b.scene.restart(data);
+        else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+      },
+    });
+  }
   // Cutthroat + Undead + Paladin test battle: Smoke Bomb on both boards, Backstab targets, corpse marks, Raise Dead preview, Resurrection (test mode: no turn order, no cooldowns)
   debug.register({
     id: 'battle.test-cutthroat',

@@ -3,7 +3,7 @@
   "id": "valdoria",
   "title": "VALDORIA",
   "subtitle": "Campaign Map",
-  "blurb": "From Mill Road to Castle Morvane: 26 stops, 4 choice points, 21 stops per run.",
+  "blurb": "From Mill Road to Castle Morvane: 27 stops, 4 choice points, 22 stops per run.",
   "background": "valdoria-bg",
   "backgroundWide": {
     "_not": "Geniş (21:9) harita görseli (Ömer 2026-10-08, ChatGPT outpaint, 1916x821). region = eski 16:9 haritanın (valdoria-bg, 1672x941) bu görselde kapladığı dikdörtgen [x0, y0, x1, y1] (kesir): SIFT özellik eşleştirmesiyle ölçüldü (1435 eşleşme, benzerlik dönüşümü: ölçek 0,8202, dönme 0, ortalama hata 1 px). Düğüm konumları (pos) eski haritaya göre kalır; yeni görsel takılırsa yalnızca image + region değişir (src/game/wide-map.ts). Görsel yoksa eski 16:9 görsel kullanılır.",
@@ -11,7 +11,7 @@
     "region": [0.08229, 0.00077, 0.79804, 0.94083]
   },
   "start": "1",
-  "stopsPerRun": 21,
+  "stopsPerRun": 22,
   "visibility": 2,
   "alwaysVisible": ["12"],
   "regions": [
@@ -32,6 +32,7 @@
         { "id": "road", "action": "leave", "label": "Road Out", "rect": [0.9, 0.34, 1.0, 0.6] }
       ] } },
     { "id": "moor", "type": "battle", "name": "Windy Moor", "subtitle": "Battle · Moor Raiders", "lore": "Wind howls across the open heath, and raiders ride it down on anyone foolish enough to cross alone.", "region": "II", "label": "above", "pos": [0.336, 0.182], "encounter": "windy_moor", "battleBackground": "windy-moor" },
+    { "id": "cairn", "type": "battle", "name": "Cairn Hill", "subtitle": "Battle · Cairn Raiders", "lore": "Old cairns crown this windswept hill, and raiders and ember-priests gather among the stones to watch the roads below.", "region": "II", "pos": [0.37, 0.33], "encounter": "cairn_hill", "battleBackground": "windy-moor" },
     { "id": "5B", "type": "battle", "name": "Iron Pass", "subtitle": "Battle · Ambush", "lore": "A narrow dwarven pass carved through the hills, its old stone guardians still standing watch in the cold.", "region": "II", "label": "above", "pos": [0.459, 0.38], "encounter": "iron_pass_ambush", "battleBackground": "iron-pass" },
     { "id": "charcoal", "type": "battle", "name": "Charcoal Camp", "subtitle": "Battle · Charcoal Burners", "lore": "Smoke never clears over the charcoal camp, where the burners now feed their fires to the Ash Lord's glory.", "region": "II", "pos": [0.336, 0.523], "encounter": "charcoal_camp", "battleBackground": "windy-moor" },
     { "id": "7", "type": "town", "name": "Valdren Keep", "subtitle": "City · Rest, Recruits, Trade", "lore": "Valdren Keep still flies the king's banner, though its soldiers stopped waiting for his return long ago.", "region": "II", "label": "above", "pos": [0.448, 0.554], "recruit": { "offer": 3, "pick": 1, "when": "leave" }, "partyCap": 4, "heal": 1.0, "city": true, "merchant": true, "merchantSize": 9, "story": "the_wardens_oath",
@@ -49,7 +50,7 @@
     { "id": "pilgrim", "type": "battle", "name": "Pilgrim Road", "subtitle": "Battle · Rival Company", "lore": "Pilgrims once walked this road to St. Brann's in peace; now sellswords hunt it for the abbey's relics.", "region": "II", "pos": [0.633, 0.37], "encounter": "pilgrim_road", "battleBackground": "pilgrim-road" },
     { "id": "8A", "type": "treasure", "name": "St. Brann's Abbey", "subtitle": "Treasure · Relic Vault", "lore": "Sworn brothers keep St. Brann's relic vault, sealed and untouched for a hundred years.", "region": "II", "label": "above", "pos": [0.674, 0.259], "encounter": "vault_keepers", "treasure": "relic_vault", "battleBackground": "pilgrim-road" },
     { "id": "8C", "type": "elite", "name": "Black Cathedral", "subtitle": "Elite · The Undying", "lore": "Beneath the black spires a choir sings to the dead, and the dead answer, refusing to stay buried.", "region": "II", "pos": [0.636, 0.508], "encounter": "black_cathedral", "battleBackground": "grave-field" },
-    { "id": "river", "type": "rest", "name": "Riverside Camp", "subtitle": "Rest · Camp, Revive", "lore": "A sheltered bend in the river where weary companies light their fires and tend to their fallen.", "region": "II", "label": "above", "pos": [0.703, 0.477], "rest": true },
+    { "id": "river", "type": "rest", "name": "Riverside Camp", "subtitle": "Rest · Camp", "lore": "A sheltered bend in the river where weary companies light their fires and tend to their fallen.", "region": "II", "label": "above", "pos": [0.703, 0.477], "rest": true },
     { "id": "9", "type": "boss", "name": "King's Bridge", "subtitle": "Boss · The Bridge Warden", "lore": "A warden swore to hold the bridge until the king returned; the king never came, and the warden never left.", "region": "II", "pos": [0.677, 0.628], "encounter": "bridge_warden", "enemyTierMods": { "boss": { "hpMult": 0.98 } }, "battleBackground": "kings-bridge" },
     { "id": "10", "type": "battle", "name": "Ashen Plain", "subtitle": "Battle · Cursed Ground", "lore": "Grey ash falls like snow over dead fields, and hounds and bone-singers roam where farms once stood.", "region": "III", "pos": [0.76, 0.731], "encounter": "ashen_plain", "battleBackground": "ashen-plain" },
     { "id": "11B", "type": "battle", "name": "Siege Line", "subtitle": "Battle · Morvane's Vanguard", "lore": "Morvane's halberdiers hold the trenches here in close ranks, the first wall of his marching vanguard.", "region": "III", "pos": [0.839, 0.69], "encounter": "siege_line", "battleBackground": "ashen-plain" },
@@ -66,8 +67,9 @@
     { "from": "2", "to": "3", "style": "solid" },
     { "from": "3", "to": "4", "style": "solid" },
     { "from": "4", "to": "moor", "style": "solid" },
-    { "from": "moor", "to": "5B", "style": "dashed" },
-    { "from": "moor", "to": "charcoal", "style": "dashed" },
+    { "from": "moor", "to": "cairn", "style": "solid" },
+    { "from": "cairn", "to": "5B", "style": "dashed" },
+    { "from": "cairn", "to": "charcoal", "style": "dashed" },
     { "from": "5B", "to": "7", "style": "dashed" },
     { "from": "charcoal", "to": "7", "style": "dashed" },
     { "from": "7", "to": "6B", "style": "dashed" },

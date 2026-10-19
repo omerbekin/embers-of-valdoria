@@ -110,6 +110,11 @@ export interface WavePlan {
   valor: number;
   /** Düşmanların level'ı = dalga seviyesi (levels.md > Düşman level'ı; ad plakasında "Lv N"). */
   enemyLevel: number;
+  /**
+   * Dalgalı savaş (motor dalgası; docs/design/waves.md; Endless "dalgası" = bir savaş, bu ise o savaşın içindeki düşman dalgalarıdır): sonraki
+   * dalgaların hücre listeleri + yuva başına kurulumları (motora teams.waves). Yalnızca karşılaşmanın `waves` alanı varsa yazılır.
+   */
+  waves?: Array<{ enemies: string[]; units: Record<number, UnitSetup> }>;
 }
 
 const unitName = (cls: string, name?: string) => name ?? classes[cls]?.name ?? bosses[cls]?.name ?? cls;
@@ -191,6 +196,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
   let name = `Wave ${wave}`;
   let background: string | undefined;
   let enemyNames: string[];
+  let waves: NonNullable<WavePlan['waves']> = [];
   const encId = specialEncounter(run.seed, wave, cfg);
   const enc = encId ? encounter(encId) : undefined;
   if (enc) {
@@ -204,6 +210,20 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
       if (Object.keys(setup).length) enemyUnits[u.slot] = setup;
     }
     enemyNames = [...enc.units].sort((a, b) => a.slot - b.slot).map((u) => unitName(u.class, u.name));
+    // Dalgalı karşılaşma: sonraki dalgalar aynı güçlenme / level kuralıyla
+    waves = (enc.waves ?? [])
+      .filter((w) => w.units.length > 0)
+      .map((w) => {
+        const cells = Array.from({ length: CELL_COUNT }, () => '');
+        const units: Record<number, UnitSetup> = {};
+        for (const u of w.units) {
+          cells[u.slot] = u.class;
+          const mods = withEnemyLevel(combineMods(u.mods, scale), u.class, enemyLevel);
+          const setup: UnitSetup = { ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) };
+          if (Object.keys(setup).length) units[u.slot] = setup;
+        }
+        return { enemies: cells, units };
+      });
   } else {
     // Normal dalga: rastgele havuzdan farklı class'lar (Geometer gibi test class'ları havuzda yok), seed'li rastgele dizilim
     const rng = rngFor(run.seed, wave, 'enemies');
@@ -235,5 +255,6 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     enemyNames,
     valor: run.valor ?? 0,
     enemyLevel,
+    ...(waves.length ? { waves } : {}),
   };
 }

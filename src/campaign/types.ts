@@ -165,9 +165,20 @@ export interface EncounterUnit {
   initialCooldownBonus?: number;
 }
 
+/** Dalgalı savaşın sonraki bir dalgası (EncounterDef.waves; docs/design/waves.md): birimler ilk dalgayla aynı şemada. */
+export interface EncounterWave {
+  units: EncounterUnit[];
+}
+
 export interface EncounterDef {
   name: string;
+  /** İlk dalga (dalgasız karşılaşmada tüm düşmanlar). */
   units: EncounterUnit[];
+  /**
+   * Dalgalı savaş (Ömer 2026-10-19, docs/design/waves.md): SONRAKİ dalgalar (2., 3. ...); her biri ilk dalga bitince boş düşman tarafına dizilir.
+   * Güçlendirme / zorluk / level kuralları ilk dalgadakiyle aynı uygulanır. Yoksa karşılaşma tek dalgadır.
+   */
+  waves?: EncounterWave[];
   /** Savaş arka planı (assets/backgrounds/<ad>.webp|png|jpg); öncelik: karşılaşma > düğüm > bölge > varsayılan. */
   background?: string;
   /** true: oyuncu kahramanları bu savaşta ölemez (motor UnitSetup.undying; Mill Road açılış savaşı kaybedilemez, docs/design/tutorial.md). */

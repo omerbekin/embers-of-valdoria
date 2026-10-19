@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campaign slots mockups</title>
+<!-- SEFER YUVALARI (New Campaign) taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Metinler src/game/campaign-slots-ui.ts'ten; yuva icerigi ornek. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="campaign-slots/cs.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Sefer yuvaları (New Campaign / Load Game)</h1>
+<p>Play kartlarında Campaign &gt; New ya da Load deyince açılan ekran (ana menünün üstünde yarı saydam). Sol sütun yuvalar, sağ panel ayrıntı; New'de iki adım (I yuva, II mod ve zorluk). Load aynı ekran; yuvanın kayıtları listelenir (bu taslak New akışını gösterir, Load aynı görünüm diliyle uygulanır).</p>
+<h3>Teşhis</h3>
+<ol>
+<li><b>Yuvalar çıplak.</b> Yalnızca ad ve italik tek satır ("Normal · Medium · Stop 8"); kim var, ne kadar ilerlenmiş, kaç kayıt görmek için yuvaya basıp sağ panele bakmak gerekiyor.</li>
+<li><b>Sağ panel seyrek ve italik.</b> Büyük boş alan, 12-14 birimlik silik meta, uzun italik satır (tasarım dili: düz yazı); takım yalnız minik portreler (seviye, sınıf yok); tek düğme.</li>
+<li><b>Adım II italik ve ayırt etmesi zayıf.</b> Mod / zorluk kartları italik açıklama; seçili hâl yalnız ince çerçeve. Adım göstergesi çok küçük (16 birim), telefonda ~6 piksel.</li>
+<li><b>Düğme sırası.</b> Adım II'de Back solda, Begin sağda (doğru); adım I'de tek düğme ortada-solda, birincil sağ alt kuralından kopuk.</li>
+</ol>
+<h3>Notlar</h3>
+<ul>
+<li>Üç yuva örnek: Slot 1 yeni başlamış (1 kahraman), Slot 2 sefer sonu (4 kahraman), Slot 3 orta (3 kahraman). Gerçekte yuva özetinden (<code>slotSummaries</code>) gelir; bu taslakta eklenen tek bilgi takım seviyesi (kayıt özetinde bugün var mı kontrol edilmeli) ve ilerleme çubuğu (Stop / 21).</li>
+<li>Her varyantta adım I ve adım II ayrı çerçevede; yuvaya, mod / zorluk seçeneğine ve düğmelere tıklanabilir (II'ye geçiş, Back).</li>
+<li>Telefon yatay için şeritten <b>844x390</b>: ekran oyundaki gibi küçülür (Phaser sahnesi); V3 sütun düzeni bu yüzden en iyisi. Gerçek ekranda dokunma hedefi kontrolü yapılmalı.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="campaign-slots/app.js"></script>
+</body>
+</html>

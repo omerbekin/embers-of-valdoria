@@ -5,6 +5,7 @@
   "color": "#3f7d4e",
   "logo": "bow",
   "role": "Marksman",
+  "blurb": "Patient marksman whose arrows strike harder the farther the target stands.",
   "frontPriority": 8,
   "range": 6,
   "attributes": {

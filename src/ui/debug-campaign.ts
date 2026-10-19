@@ -84,6 +84,45 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   placeCard('treasure', 'Start card (treasure)', 'dice', 'Open');
   placeCard('event', 'Start card (event)', 'feather', 'Continue');
   placeCard('boss', 'Start card (boss)', 'burst', 'Fight');
+  // Harita pencereleri (Ömer 2026-10-19, taslak map-events): örnek veriyle açılır, kayıt değişmez
+  const mapWindow = (kind: string, label: string, icon: string, hint: string) =>
+    debug.register({
+      id: `campaign.window-${kind}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Map windows',
+      icon,
+      label,
+      hint: `${hint} Sample data only: actions do nothing. Close with X, Esc or the dark backdrop.`,
+      run: () => {
+        ensureState();
+        const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugMapWindow?: (k: string) => void }) : undefined;
+        if (scene?.debugMapWindow) scene.debugMapWindow(kind);
+        else reload();
+      },
+    });
+  mapWindow('hero', 'Hero window', 'helm', 'Centered plaque with hero cards (bust, role, short blurb, leader crown). Open the map first.');
+  mapWindow('recruit', 'Recruit window', 'shield', 'Centered plaque with recruit cards (Paladin, Hexer, Druid).');
+  mapWindow('event-fold', 'Event window (Fold)', 'feather', 'Event plaque with four choice plates; picking one shows the result plaque.');
+  mapWindow('event-witch', 'Event window (Witch)', 'feather', 'Event plaque with a costly choice (gold, blood, fight, leave).');
+  mapWindow('treasure', 'Treasure window', 'dice', 'Treasure plaque (no "defeated" chip; the stamp is on the map).');
+  mapWindow('rest', 'Rest window', 'flame', 'Rest plaque with two sample fallen heroes (Gear left, Rest right).');
+  mapWindow('hearth', 'Campfire note', 'flame', 'Small anchored card next to the campfire (shows next to the spot when the town screen is open).');
+  mapWindow('board', 'Notice board note', 'dice', 'Small anchored card for the notice board.');
+  mapWindow('barracks', 'Barracks card', 'shield', 'Small anchored card with recruit cards.');
+  debug.register({
+    id: 'campaign.stamps',
+    tab: CAMPAIGN_TAB,
+    section: 'Map windows',
+    icon: 'skull',
+    label: 'Mark guarded stops cleared (stamps)',
+    hint: 'Marks every guarded treasure / event stop as cleared so the "<ENCOUNTER> DEFEATED" skull stamp shows next to it on the map. Changes the loaded campaign.',
+    run: () => {
+      const s = ensureState();
+      const ids = getMap(s.mapId).nodes.filter((n) => n.encounter && (n.type === 'treasure' || n.type === 'event')).map((n) => n.id);
+      setState({ ...s, cleared: [...new Set([...(s.cleared ?? []), ...ids])] });
+      reload();
+    },
+  });
   debug.register({
     id: 'campaign.fog',
     tab: CAMPAIGN_TAB,
@@ -221,6 +260,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     if (!pool.length) return;
     const rng = rngFor(s.seed, 'debug-item', s.nextItemId);
     setState(addItem(s, pool[rng.int(0, pool.length - 1)]!.id).state);
+    document.dispatchEvent(new CustomEvent('gear:refresh'));
   };
   const openGear = (): void => {
     const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { openGear?: () => void }) : undefined;
@@ -403,7 +443,10 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     icon: 'burst',
     label: 'Give all Legendaries',
     hint: 'Put all 10 Legendary items into the bag (they do not drop yet). Also: add ?legendary=1 to the address and open Gear',
-    run: () => setState(grantAllLegendaries(ensureState())),
+    run: () => {
+      setState(grantAllLegendaries(ensureState()));
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
+    },
   });
   debug.register({
     id: 'campaign.give-gold',
@@ -412,7 +455,10 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     icon: 'clover',
     label: 'Give 100 gold',
     hint: 'Add 100 gold to the campaign purse',
-    run: () => setState(addGold(ensureState(), 100)),
+    run: () => {
+      setState(addGold(ensureState(), 100));
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
+    },
   });
   debug.register({
     id: 'campaign.fill-bag',
@@ -432,7 +478,10 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     icon: 'flame',
     label: 'Empty the bag',
     hint: 'Remove every item in the bag (equipped items stay)',
-    run: () => setState({ ...ensureState(), inventory: [] }),
+    run: () => {
+      setState({ ...ensureState(), inventory: [] });
+      document.dispatchEvent(new CustomEvent('gear:refresh'));
+    },
   });
   debug.register({
     id: 'campaign.save',

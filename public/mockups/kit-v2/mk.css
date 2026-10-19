@@ -1,0 +1,75 @@
+/* Ortak taslak iskeleti (ui-dev, 2026-10-19). Oyun kodu DEGIL. Oyunun gercek CSS'i (css/*.css kopyalari) + yalnizca sayfa/serit duzeni.
+   Cerceveler (.mk-frame) 1600x900 (masaustu) ya da 844x390 (telefon yatay; html.short + html.compact sinifi) gercek pikseldir; sayfa dar ise zoom ile kucultulur. */
+html, body { height: auto; overflow: auto; background: #070504; margin: 0; }
+body { padding: 0 0 70px; color: #d9c8a2; font-family: 'EB Garamond', Georgia, serif; }
+:root { --er: 0px; --et: 0px; --eb: 0px; --el: 0px; --sat: 0px; --sar: 0px; --sab: 0px; --sal: 0px; --fw: 1600px; --fh: 900px;
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217,178,106,.42); --g-line: rgba(217,178,106,.16); --g-line2: rgba(217,178,106,.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, serif; --g-body: 'EB Garamond', Georgia, serif; }
+html.mk-phone { --fw: 844px; --fh: 390px; }
+.mk-page { padding: 18px 22px; }
+.mk-intro { max-width: 1100px; margin: 0 0 22px; font: 18px/1.45 var(--g-body); }
+.mk-intro h1 { font: 600 26px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); margin: 6px 0 6px; }
+.mk-intro h3 { font: 600 14px var(--g-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--g-dim); margin: 16px 0 6px; }
+.mk-intro p, .mk-intro li { margin: 4px 0; }
+.mk-intro ul, .mk-intro ol { margin: 4px 0 4px 20px; padding: 0; }
+.mk-intro code { color: #ffb98a; font-size: 15px; }
+.mk-sec { margin: 0 0 34px; padding-top: 6px; border-top: 1px solid rgba(217,178,106,.22); }
+.mk-sec > h2 { font: 600 20px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); margin: 10px 0 2px; }
+.mk-note { font: 17px/1.35 var(--g-body); color: #cdb88d; margin: 0 0 12px; max-width: 1100px; }
+.mk-frames { display: flex; flex-wrap: wrap; gap: 18px 22px; align-items: flex-start; }
+.mk-cell { display: flex; flex-direction: column; gap: 6px; }
+.mk-cap { font: 600 12px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); }
+.mk-zoom { width: fit-content; }
+.mk-frame { position: relative; width: var(--fw); height: var(--fh); overflow: hidden; background: #000; isolation: isolate; --gu: calc(var(--fh) / 1080); --u: var(--gu);
+  font-family: var(--g-body); color: var(--g-text); border: 1px solid rgba(217,178,106,.25); }
+.mk-bg { position: absolute; inset: 0; background: #0b0806 center / cover no-repeat; }
+.mk-bg.dim::after { content: ''; position: absolute; inset: 0; background: rgba(5,3,2,.45); }
+.mk-ui { position: absolute; inset: 0; }
+.mk-ui .el-dialog, .mk-ui .gr-overlay, .mk-ui .vl-overlay { position: absolute; }
+.mk-ui .el-dialog { animation: none; }
+.mk-ui .el-modal, .mk-ui .el-modal-panel { animation: none !important; }
+.mk-frame .nav-btn { position: absolute; z-index: 5; --nav-hit: 44px; --nav-frame: 30px; --nav-icon: 18px; --nav-edge: 6px; --nav-gap: 4px; --nav-k: 1; --nav-hit-k: 44px; --nav-frame-k: 30px; --nav-icon-k: 18px; --nav-edge-k: 6px; }
+.mk-frame .nav-btn.back { left: 6px; top: 6px; }
+.mk-frame .nav-btn.fs { right: 6px; top: 6px; }
+.mk-frame .nav-btn.menu { right: 54px; top: 6px; }
+.mk-frame .nav-btn::before { inset: 7px; }
+
+/* taslak seridi (oyun disi) */
+#mk-strip { position: fixed; left: 8px; bottom: 8px; z-index: 9999; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: calc(100vw - 16px);
+  padding: 4px 6px; background: rgba(20,10,4,.94); border: 1px dashed #e0702a; font: 600 11px system-ui, sans-serif; color: #ffb35a; letter-spacing: .04em; }
+#mk-strip b { color: #e0702a; margin-right: 4px; }
+#mk-strip button { font: 600 11px system-ui, sans-serif; color: #f3d999; background: #1b120a; border: 1px solid rgba(224,112,42,.5); padding: 3px 7px; cursor: pointer; min-height: 26px; }
+#mk-strip button.on { background: #e0702a; color: #1a0f06; }
+#mk-strip .sep { width: 1px; height: 18px; background: rgba(224,112,42,.5); margin: 0 3px; }
+html.mk-clean #mk-strip { display: none; }
+.mk-hide { display: none !important; }
+
+/* ---- ortak yeni parcalar (tum taslaklar) ---- */
+.k-chip { display: inline-flex; align-items: center; gap: .4em; min-height: 26px; padding: 0 .7em 0 .45em; border: 1px solid rgba(217,178,106,.42); background: rgba(8,6,4,.6);
+  font: 600 13px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: #d9c8a2; white-space: nowrap; }
+.k-chip img { width: 18px; height: 18px; object-fit: contain; opacity: .9; }
+.k-chip b { font: 700 14px var(--g-disp); color: var(--g-gold); letter-spacing: 0; }
+.k-chip.hot { color: #ffb98a; border-color: rgba(224,112,42,.6); background: rgba(224,112,42,.12); }
+.k-chip.bad { color: #e8806a; border-color: rgba(214,74,52,.55); background: rgba(214,74,52,.1); }
+.k-chip.ok { color: #cfe8a8; border-color: rgba(127,191,63,.5); background: rgba(127,191,63,.1); }
+.k-chip.dim { color: var(--g-dim); border-color: rgba(217,178,106,.2); }
+.k-dia { display: inline-block; width: 8px; height: 8px; transform: rotate(45deg); border: 1px solid currentColor; flex: none; }
+.k-dia.on { background: var(--g-ember); border-color: var(--g-ember2); box-shadow: 0 0 8px rgba(240,140,40,.6); }
+.k-bar { position: relative; height: 16px; background: rgba(0,0,0,.55); border: 1px solid rgba(217,178,106,.3); overflow: hidden; }
+.k-bar > i { position: absolute; inset: 0 auto 0 0; }
+.k-bar > span { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; gap: 4px; font: 700 12px var(--g-disp); color: #fff; text-shadow: 0 1px 2px #000; }
+.k-bar.hp > i { background: linear-gradient(90deg, #4f9a32, #7fbf3f); }
+.k-bar.mp > i { background: linear-gradient(90deg, #2e6fc0, #5aa5f0); }
+.k-bar.rg > i { background: linear-gradient(90deg, #c4561c, #f08a30); }
+.k-sub { font: 600 12px var(--g-disp); letter-spacing: .18em; text-transform: uppercase; color: var(--g-dim); }
+.k-tipwrap { position: relative; }
+.k-tipwrap > .k-tip { position: absolute; z-index: 30; display: none; left: 50%; top: calc(100% + 10px); transform: translateX(-50%); }
+.k-tipwrap:hover > .k-tip, .k-tipwrap:focus-within > .k-tip, .k-tipwrap.tipon > .k-tip { display: block; }
+.k-tip .bt { pointer-events: none; }
+
+/* ---- ortak: oyun birimli sahne (1920x1080, olcekle kucuk) ve kirpilmis cerceve ---- */
+.mk-stage { position: absolute; top: 0; width: 1920px; height: 1080px; left: calc(50% - 960px * var(--sc, .8333)); transform-origin: 0 0; transform: scale(var(--sc, .8333)); }
+.mk-stage.bottom { top: auto; bottom: 0; transform-origin: 0 100%; }
+.mk-frame.crop { height: var(--chd); }
+html.mk-phone .mk-frame.crop { height: var(--chp); }
+.mk-stage * { box-sizing: border-box; }

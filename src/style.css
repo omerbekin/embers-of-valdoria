@@ -133,8 +133,10 @@ body {
 /* --- Debug menüsü (gerçek piksel; dokunma hedefi >= 44px) --- */
 .debug-toggle {
   position: fixed;
-  right: calc(8px + var(--er));
+  /* sol alt: sağ alttaki START / Combat log / sürüm yazısını örtmesin (yalnız ?debug=1 görünümü); sürüklenip taşınabilir (debug-menu.ts) */
+  left: calc(8px + var(--el));
   bottom: calc(8px + var(--eb));
+  touch-action: none;
   min-width: 64px;
   min-height: 44px;
   padding: 0 12px;
@@ -156,11 +158,6 @@ body {
   display: none;
 }
 
-/* Görünür DEBUG düğmesi yoksa (varsayılan; ?debug=1 ile görünür) panel sağ alt köşeye kadar uzar */
-.debug-toggle[hidden] ~ .debug-panel {
-  bottom: calc(8px + var(--eb));
-}
-
 .debug-toggle:hover {
   color: #f3d999;
   border-color: #f3d999;
@@ -169,7 +166,7 @@ body {
 .debug-panel {
   position: fixed;
   right: calc(8px + var(--er));
-  bottom: calc(60px + var(--eb));
+  bottom: calc(8px + var(--eb));
   top: calc(64px + var(--et));
   width: min(520px, calc(var(--stage-w, 100vw) - 16px - var(--er) - var(--el)));
   overflow: hidden;

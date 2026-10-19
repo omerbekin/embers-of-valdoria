@@ -87,3 +87,16 @@ export function clientToLocal(cx: number, cy: number, r: { left: number; top: nu
   const s = w / Math.max(1, offsetW) || 1;
   return rotated ? { x: (cy - r.top) / s, y: (r.right - cx) / s } : { x: (cx - r.left) / s, y: (cy - r.top) / s };
 }
+
+/** Ögenin tarayıcı dikdörtgenini (`r`) kökün (`root`) YEREL mantıksal koordinatına çevirir (konum + boyut); döndürülmüş sahnede de doğru. */
+export function rectToLocal(
+  r: { left: number; top: number; right: number; bottom: number },
+  root: { left: number; top: number; right: number; bottom: number },
+  offsetW: number,
+  rotated: boolean,
+): { x: number; y: number; w: number; h: number } {
+  const w = rotated ? root.bottom - root.top : root.right - root.left;
+  const s = w / Math.max(1, offsetW) || 1;
+  if (rotated) return { x: (r.top - root.top) / s, y: (root.right - r.right) / s, w: (r.bottom - r.top) / s, h: (r.right - r.left) / s };
+  return { x: (r.left - root.left) / s, y: (r.top - root.top) / s, w: (r.right - r.left) / s, h: (r.bottom - r.top) / s };
+}

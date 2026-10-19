@@ -234,10 +234,12 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
   };
   const xpBox = buildXp();
 
+  let sawItems = false; // listede hiç item görüldüyse boş liste "hepsi alındı" demektir
   const renderSide = (): void => {
     const s = o.get();
     const drop = s.pendingLoot;
     const items = lootItems(s);
+    if (items.length) sawItems = true;
     const rare = [...(drop?.rare ?? [])];
     side.replaceChildren();
     const head = el('div', 'gr-head gr-lhead');
@@ -286,7 +288,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       tile.addEventListener('click', () => take(i));
       list.append(tile);
     });
-    if (!items.length) list.append(el('div', 'gr-card-empty', drop?.gold || xpBox ? 'No gear this time.' : 'Nothing here.'));
+    if (!items.length) list.append(el('div', 'gr-card-empty', sawItems ? 'All taken.' : drop?.gold || xpBox ? 'No gear this time.' : 'Nothing here.'));
     side.append(list);
     if (items.length && bagFull()) side.append(el('div', 'gr-card-warn', 'Bag full. Make room first: drag a bag item to the trash.'));
     const foot = el('div', 'gr-foot');

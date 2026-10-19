@@ -1,0 +1,128 @@
+/* Sefer yuvalari (New Campaign) taslagi: YALNIZCA duzen (oyun birimi 1920x1080, sahne olcekle kucuk). Gorunum oyunun kit CSS'i + .bp / .bt. */
+.cs-stage { color: var(--g-text); }
+.cs-shade { position: absolute; left: -700px; right: -700px; top: 0; bottom: 0; background: linear-gradient(90deg, rgba(5,3,2,.93) 0, rgba(5,3,2,.8) 36%, rgba(5,3,2,.5) 70%, rgba(5,3,2,.4)); }
+.cs-title { position: absolute; left: 110px; top: 118px; margin: 0; font: 600 52px/1 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: #fff; text-shadow: 0 3px 8px rgba(0,0,0,.9); }
+.cs-steps { position: absolute; left: 110px; top: 196px; display: flex; align-items: center; gap: 18px; font: 600 17px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); }
+.cs-steps .on { color: var(--g-gold); }
+.cs-steps i { width: 80px; height: 1px; background: rgba(217,178,106,.4); }
+.cs-steps button { all: unset; cursor: pointer; }
+.k-btn { display: inline-flex; align-items: center; justify-content: center; min-height: 56px; padding: 0 36px; font: 600 20px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-text); background: linear-gradient(180deg, rgba(30,22,14,.82), rgba(12,9,6,.86)); border: 1px solid rgba(217,178,106,.4); cursor: pointer; white-space: nowrap; position: relative; font-family: var(--g-disp); }
+.k-btn:hover { color: var(--g-gold); border-color: rgba(243,217,153,.9); }
+.k-btn.pri { border: 2px solid #d9b26a; color: var(--g-gold); min-height: 68px; font-size: 24px; padding: 0 50px; }
+.k-btn.pri::before, .k-btn.pri::after { content: ''; position: absolute; top: 50%; width: 12px; height: 12px; margin-top: -6px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2), 0 0 12px rgba(240,140,40,.8); }
+.k-btn.pri::before { left: -8px; } .k-btn.pri::after { right: -8px; }
+.k-btn:disabled { color: var(--g-dim); border-color: rgba(217,178,106,.2); cursor: default; }
+
+/* mevcut */
+.cs-row { position: absolute; left: 110px; width: 470px; height: 100px; cursor: pointer; border-bottom: 1px solid rgba(217,178,106,.18); }
+.cs-row b { position: absolute; left: 34px; top: 16px; font: 600 32px var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-text); }
+.cs-row em { position: absolute; left: 34px; top: 62px; font: italic 19px var(--g-body); color: var(--g-dim); }
+.cs-row.sel b { color: #ffd2a0; }
+.cs-row.sel::before { content: ''; position: absolute; left: 8px; top: 26px; width: 12px; height: 12px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2); }
+.cs-pan { position: absolute; left: 680px; top: 190px; width: 1130px; background: linear-gradient(180deg, rgba(30,22,14,.92), rgba(12,9,6,.92)); border: 1px solid rgba(217,178,106,.42); box-shadow: 0 0 0 3px rgba(8,6,4,.7); padding: 40px 44px 44px; }
+.cs-kick { font: 600 15px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); }
+.cs-pan h2 { margin: 12px 0 8px; font: 600 40px/1.1 var(--g-disp); letter-spacing: .04em; color: var(--g-gold); }
+.cs-meta { font: 600 14px var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--g-dim); }
+.cs-det { margin: 12px 0 14px; font: italic 20px var(--g-body); color: #cdb88d; }
+.cs-faces { display: flex; gap: 10px; margin: 10px 0 24px; }
+.cs-faces img { width: 56px; height: 62px; object-fit: cover; object-position: top; border: 1px solid rgba(217,178,106,.45); display: block; }
+.cs-opts { display: flex; gap: 20px; margin: 14px 0 26px; }
+.cs-opt { flex: 1; padding: 18px 20px 20px; cursor: pointer; background: rgba(12,9,6,.6); border: 1px solid rgba(217,178,106,.25); }
+.cs-opt b { display: block; font: 600 26px var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-text); margin-bottom: 8px; }
+.cs-opt em { display: block; font: italic 19px/1.3 var(--g-body); color: var(--g-dim); }
+.cs-opt.sel { border: 2px solid var(--g-ember2); background: rgba(224,112,42,.1); }
+.cs-opt.sel b { color: var(--g-gold); }
+.cs-note { font: italic 20px var(--g-body); color: var(--g-dim); margin: 0 0 20px; }
+.cs-acts { display: flex; justify-content: space-between; align-items: center; }
+
+/* V1: plakalar + A Band kagidi */
+.cs-plate { position: absolute; left: 110px; width: 560px; height: 150px; display: flex; align-items: center; gap: 20px; padding: 12px 22px 12px 12px; cursor: pointer;
+  background: linear-gradient(180deg, rgba(24,17,10,.92), rgba(9,6,4,.92)); border: 1px solid rgba(217,178,106,.3); box-shadow: 0 0 0 2px rgba(8,6,4,.6); }
+.cs-plate::before, .cs-plate::after { content: ''; position: absolute; width: 9px; height: 9px; transform: rotate(45deg); background: #130d07; border: 1px solid rgba(217,178,106,.6); }
+.cs-plate::before { left: -5px; top: -5px; } .cs-plate::after { right: -5px; bottom: -5px; }
+.cs-plate:hover { border-color: rgba(243,217,153,.7); }
+.cs-plate.sel { border: 1px solid var(--g-ember2); box-shadow: 0 0 0 2px rgba(8,6,4,.8), 0 0 26px rgba(224,112,42,.35); }
+.cs-plate.sel::before, .cs-plate.sel::after { background: var(--g-ember); border-color: var(--g-ember2); }
+.cs-plate .pf { width: 118px; height: 124px; flex: none; position: relative; border: 1px solid rgba(217,178,106,.45); background: #0a0605; }
+.cs-plate .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cs-plate .pf.empty { display: grid; place-items: center; border-style: dashed; color: var(--g-dim); font: 600 14px var(--g-disp); letter-spacing: .18em; text-transform: uppercase; }
+.cs-plate .pf .n { position: absolute; right: -6px; bottom: -6px; min-width: 28px; height: 28px; display: grid; place-items: center; font: 700 15px var(--g-disp); color: var(--g-gold); background: #0c0806; border: 1px solid rgba(217,178,106,.6); }
+.cs-plate .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 9px; }
+.cs-plate .k { font: 600 14px var(--g-disp); letter-spacing: .22em; text-transform: uppercase; color: var(--g-dim); line-height: 1; }
+.cs-plate .nm { font: 600 30px/1 var(--g-disp); letter-spacing: .05em; text-transform: uppercase; color: var(--g-gold); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.cs-plate.sel .nm { color: #ffd2a0; }
+.cs-chips { display: flex; gap: 8px; flex-wrap: nowrap; }
+.cs-chips .k-chip { min-height: 30px; font-size: 14px; }
+.cs-prog { height: 8px; background: rgba(0,0,0,.55); border: 1px solid rgba(217,178,106,.3); position: relative; }
+.cs-prog i { position: absolute; inset: 0 auto 0 0; background: linear-gradient(90deg, #a8742a, #e8c47e); }
+.cs-sheet { position: absolute; left: 720px; top: 250px; width: 1090px; }
+.cs-sheet .bt { --bu: 1.5px; width: 100%; max-width: none; pointer-events: auto; }
+.cs-sheet .bt-big { font-size: 56px; }
+.cs-party { display: flex; gap: 12px; padding: 8px 0 6px; }
+.cs-hero { width: 160px; background: rgba(255,255,255,.04); border: 1px solid rgba(217,178,106,.25); }
+.cs-hero .pf { height: 130px; position: relative; background: #0a0605; }
+.cs-hero .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cs-hero .pf .lv { position: absolute; left: 6px; top: 6px; min-width: 30px; height: 24px; padding: 0 6px; display: grid; place-items: center; font: 700 14px var(--g-disp); color: var(--g-gold); background: rgba(8,6,4,.82); border: 1px solid rgba(217,178,106,.45); }
+.cs-hero .nm { margin: 8px 8px 6px; font: 600 16px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; }
+.cs-hero .k-bar { margin: 0 8px 8px; height: 14px; }
+.cs-acts2 { position: absolute; left: 720px; top: 880px; width: 1090px; display: flex; justify-content: space-between; align-items: center; }
+.cs-sheet .bt-ln .tx { font-size: 22px; }
+
+/* V1 secenek plakalari (adim II) */
+.cs-oplates { display: grid; grid-template-columns: repeat(var(--n, 2), 1fr); gap: 20px; margin: 10px 0 26px; }
+.cs-op { position: relative; padding: 20px 22px 22px 22px; cursor: pointer; background: linear-gradient(180deg, rgba(24,17,10,.92), rgba(9,6,4,.92)); border: 1px solid rgba(217,178,106,.3); box-shadow: 0 0 0 2px rgba(8,6,4,.6); }
+.cs-op::before { content: ''; position: absolute; right: 16px; top: 16px; width: 13px; height: 13px; transform: rotate(45deg); border: 1px solid rgba(217,178,106,.6); background: #130d07; }
+.cs-op.sel { border-color: var(--g-ember2); box-shadow: 0 0 0 2px rgba(8,6,4,.8), 0 0 24px rgba(224,112,42,.3); }
+.cs-op.sel::before { background: var(--g-ember); border-color: var(--g-ember2); box-shadow: 0 0 10px rgba(240,140,40,.7); }
+.cs-op b { display: block; font: 600 28px var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-text); margin-bottom: 10px; }
+.cs-op.sel b { color: var(--g-gold); }
+.cs-op ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 6px; }
+.cs-op li { display: flex; gap: 10px; align-items: baseline; font: 21px/1.25 var(--g-body); color: #cdb88d; }
+.cs-op li::before { content: ''; flex: none; width: 7px; height: 7px; transform: translateY(-2px) rotate(45deg); background: rgba(217,178,106,.7); }
+
+/* V2: uc kart */
+.cs-cards { position: absolute; left: 110px; right: 110px; top: 270px; display: flex; gap: 30px; justify-content: center; }
+.cs-card { position: relative; width: 520px; height: 600px; cursor: pointer; display: flex; flex-direction: column; padding: 0; background: linear-gradient(180deg, rgba(26,19,12,.94), rgba(9,6,4,.94)); border: 1px solid rgba(217,178,106,.3); box-shadow: 0 0 0 3px rgba(8,6,4,.7); transition: transform .2s; }
+.cs-card:hover { transform: translateY(-6px); border-color: rgba(243,217,153,.7); }
+.cs-card.sel { border: 2px solid var(--g-ember2); box-shadow: 0 0 0 3px rgba(8,6,4,.8), 0 0 34px rgba(224,112,42,.35); }
+.cs-card .art { height: 250px; background: #0a0605 center / cover no-repeat; border-bottom: 1px solid rgba(217,178,106,.3); position: relative; }
+.cs-card .art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(0,0,0,.05), rgba(10,7,5,.85)); }
+.cs-card .art .k { position: absolute; left: 24px; top: 18px; z-index: 2; font: 600 16px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: #fff4d6; text-shadow: 0 2px 4px #000; }
+.cs-card .art .big { position: absolute; left: 24px; bottom: 16px; z-index: 2; font: 600 40px/1.05 var(--g-disp); letter-spacing: .04em; color: var(--g-gold); text-shadow: 0 3px 8px #000; }
+.cs-card .body { flex: 1; padding: 22px 26px; display: flex; flex-direction: column; gap: 18px; }
+.cs-card .faces { display: flex; gap: 10px; }
+.cs-card .faces .f { position: relative; width: 82px; height: 92px; border: 1px solid rgba(217,178,106,.45); background: #0a0605; }
+.cs-card .faces .f img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.cs-card .faces .f b { position: absolute; left: 4px; top: 4px; min-width: 24px; height: 20px; padding: 0 4px; display: grid; place-items: center; font: 700 12px var(--g-disp); color: var(--g-gold); background: rgba(8,6,4,.85); border: 1px solid rgba(217,178,106,.45); }
+.cs-card .empty { height: 92px; display: grid; place-items: center; border: 1px dashed rgba(217,178,106,.3); color: var(--g-dim); font: 20px var(--g-body); }
+.cs-card .ft { margin-top: auto; display: flex; justify-content: space-between; align-items: center; font: 600 14px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); }
+
+/* V3: ortada tek sutun */
+.cs-col { position: absolute; left: 50%; top: 150px; width: 1060px; margin-left: -530px; }
+.cs-col .hd { display: flex; align-items: center; justify-content: center; gap: 22px; margin-bottom: 26px; }
+.cs-col .hd h1 { margin: 0; font: 600 52px/1 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: #f3d999; }
+.cs-col .hd::before, .cs-col .hd::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, rgba(217,178,106,.6)); }
+.cs-col .hd::after { background: linear-gradient(270deg, transparent, rgba(217,178,106,.6)); }
+.cs-stepper { display: flex; justify-content: center; align-items: center; gap: 16px; margin-bottom: 30px; }
+.cs-stepper span { display: inline-flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 22px; font: 600 17px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); border: 1px solid rgba(217,178,106,.2); background: rgba(8,6,4,.55); }
+.cs-stepper span.on { color: var(--g-gold); border-color: var(--g-ember2); }
+.cs-stepper span.on::before { content: ''; width: 9px; height: 9px; transform: rotate(45deg); background: var(--g-ember); box-shadow: 0 0 0 1px var(--g-ember2); }
+.cs-wide { position: relative; display: flex; align-items: center; gap: 24px; height: 150px; margin-bottom: 16px; padding: 12px 28px 12px 12px; cursor: pointer; background: linear-gradient(180deg, rgba(26,19,12,.92), rgba(9,6,4,.92)); border: 1px solid rgba(217,178,106,.3); box-shadow: 0 0 0 2px rgba(8,6,4,.6); }
+.cs-wide.sel { border-color: var(--g-ember2); box-shadow: 0 0 0 2px rgba(8,6,4,.8), 0 0 26px rgba(224,112,42,.3); }
+.cs-wide .node { width: 110px; height: 124px; flex: none; display: grid; place-items: center; background: #0a0605; border: 1px solid rgba(217,178,106,.45); }
+.cs-wide .node img { width: 74px; height: 74px; object-fit: contain; }
+.cs-wide .tx { flex: 1; display: flex; flex-direction: column; gap: 9px; min-width: 0; }
+.cs-wide .nm { font: 600 30px/1 var(--g-disp); letter-spacing: .05em; text-transform: uppercase; color: var(--g-gold); }
+.cs-wide .k { font: 600 14px var(--g-disp); letter-spacing: .22em; text-transform: uppercase; color: var(--g-dim); }
+.cs-wide .faces { display: flex; gap: 8px; }
+.cs-wide .faces img { width: 64px; height: 72px; object-fit: cover; object-position: top; border: 1px solid rgba(217,178,106,.45); display: block; }
+.cs-wide .faces .e { color: var(--g-dim); font: 20px var(--g-body); padding: 0 6px; }
+.cs-seg { display: flex; gap: 0; margin: 6px 0 26px; }
+.cs-seg .so { flex: 1; padding: 16px 20px; cursor: pointer; text-align: center; border: 1px solid rgba(217,178,106,.25); margin-left: -1px; background: rgba(8,6,4,.55); }
+.cs-seg .so b { display: block; font: 600 24px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-text); }
+.cs-seg .so span { display: block; margin-top: 6px; font: 19px/1.25 var(--g-body); color: var(--g-dim); }
+.cs-seg .so.sel { border-color: var(--g-ember2); background: rgba(224,112,42,.12); position: relative; z-index: 1; }
+.cs-seg .so.sel b { color: var(--g-gold); }
+.cs-lbl { font: 600 15px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0 0 8px; }
+.cs-colacts { display: flex; justify-content: space-between; align-items: center; margin-top: 18px; }
+.cs-colnote { font: 20px var(--g-body); color: var(--g-dim); }

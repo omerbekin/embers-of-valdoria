@@ -5,6 +5,7 @@
   "color": "#3d7be0",
   "logo": "wizhat",
   "role": "Elemental Mage",
+  "blurb": "Elemental caster who rains fire and frost on enemy ranks from afar.",
   "frontPriority": 7,
   "range": 6,
   "attributes": {

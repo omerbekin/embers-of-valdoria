@@ -96,6 +96,7 @@ export function buildDef(data: CombatantData, formulas: Formulas): CombatantDef 
     logo: data.logo,
     frontPriority: data.frontPriority,
     ...(data.role ? { role: data.role } : {}),
+    ...(data.blurb ? { blurb: data.blurb } : {}),
     ...(data.range !== undefined ? { range: data.range } : {}),
     attributes: { ...data.attributes },
     ...(data.primary ? { primary: data.primary } : {}),

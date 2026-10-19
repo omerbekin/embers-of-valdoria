@@ -341,7 +341,7 @@ describe('karar 364: bölük L1; düğüm seviyesi Ashford sonrası L1den ölçe
   it('tutorial, Ashford ve ilk Ashford sonrası düğümler L1; sonra final düğümüne (L10) doğru artar', () => {
     expect(LEVELS.rampStartSteps).toBe(2);
     const lv = (id: string) => nodeLevel('valdoria', id);
-    for (const id of ['1', '2', '3', '4', 'moor', '5B', 'charcoal']) expect(lv(id), id).toBe(1);
+    for (const id of ['1', '2', '3', '4', 'moor', 'cairn']) expect(lv(id), id).toBe(1);
     expect(lv('12')).toBe(10);
     expect(lv('7')).toBeGreaterThan(1);
     // ileri yolda seviye azalmaz

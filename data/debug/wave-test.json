@@ -1,0 +1,21 @@
+{
+  "_not": "YALNIZCA debug (Setup > Test battles > Wave test battle): 3 dalgalı deneme savaşı, 2 + 2 + 1 (elit lider) düşman. Sefer / Endless verisi değildir; oyunda hiçbir karşılaşma bunu kullanmaz (docs/design/waves.md). Şema: tests/fixtures/wave-encounter.json ile aynı mantık, birim kurulumu doğrudan 'unit' (UnitSetup) olarak yazılır.",
+  "name": "Wave Test Road",
+  "enemies": [
+    { "class": "warrior", "slot": 0, "unit": { "modifiers": { "hpMult": 0.5, "powerMult": 0.6 } } },
+    { "class": "archer", "slot": 7, "unit": { "modifiers": { "hpMult": 0.5, "powerMult": 0.6 } } }
+  ],
+  "waves": [
+    {
+      "enemies": [
+        { "class": "defender", "slot": 1, "unit": { "modifiers": { "hpMult": 0.5, "powerMult": 0.6 } } },
+        { "class": "mage", "slot": 6, "unit": { "modifiers": { "hpMult": 0.5, "powerMult": 0.6 } } }
+      ]
+    },
+    {
+      "enemies": [
+        { "class": "paladin", "slot": 1, "unit": { "displayName": "Wave Captain", "tier": "elite", "modifiers": { "hpMult": 0.8, "powerMult": 0.7 } } }
+      ]
+    }
+  ]
+}

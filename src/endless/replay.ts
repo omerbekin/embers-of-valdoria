@@ -26,7 +26,9 @@ export interface SuspendedBattle {
 }
 
 /** Dalga planının parmak izi (takımlar + birim kurulumları + seed): devam ederken aynı savaşın kurulduğunu doğrular. */
-export const planKey = (plan: { seed: number; party: string[]; enemies: string[]; units: unknown }): string => fnv1a(JSON.stringify([plan.seed, plan.party, plan.enemies, plan.units]));
+// Dalgalı savaşta (plan.waves dolu) sonraki dalgalar da parmak izine girer; dalgasız planın anahtarı eskisiyle AYNI kalır (eski kayıtlar bozulmaz).
+export const planKey = (plan: { seed: number; party: string[]; enemies: string[]; units: unknown; waves?: readonly unknown[] }): string =>
+  fnv1a(JSON.stringify([plan.seed, plan.party, plan.enemies, plan.units, ...(plan.waves?.length ? [plan.waves] : [])]));
 
 export const battleHash = (battle: Battle): string => stateHash(battle);
 

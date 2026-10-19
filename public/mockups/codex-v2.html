@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Codex mockups</title>
+<!-- CODEX taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Bolum / madde adlari oyundan, sinif verisi data/classes. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="codex/cx.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Codex</h1>
+<p>Ana menü > Codex ve oyun içi Menu > Codex: tüm kuralların, sınıfların, skill'lerin ve durumların okunduğu tam ekran kitap. İçeriği veriden türetilir (yeni mekanik eklenince kendiliğinden güncellenir), bu yüzden bu mockup yalnızca kabuğu ve iki örnek görünümü (bir makale, sınıf ızgarası) yeniden kurar.</p>
+<h3>Teşhis</h3>
+<ol>
+<li><b>Bölüm adları kesiliyor.</b> Sol menü ~20% genişlikte; küçük pencerede ve telefonda "GETTING STA…", "STATS & ME…", "STATUSES &…" diye kesiliyor, sayı da yer için yarışıyor (taslakta telefon düğmesiyle görülür).</li>
+<li><b>Düz liste, hiyerarşi yok.</b> Satırlar çerçevesiz; kart başlığındaki italik alt başlık ("Basics") ve çok italik açıklama (wiki.css'te ~14 yerde italik) tasarım dili kuralına aykırı.</li>
+<li><b>Ortak parçaları kullanmıyor.</b> Sınıf / madde ayrıntısı kendi kartı: A Band başlık şeridi, A Plates skill plakaları (pasif önce) ve karakter kartı dili uygulanmamış; sınıfın skill'leri düz metin satırı.</li>
+<li><b>İkon dili karışık.</b> Renkli, sivri pikselart ikonlar (kılıç, kum saati) oyundaki boyalı ikonlarla uyuşmuyor.</li>
+</ol>
+<h3>Notlar</h3>
+<ul>
+<li>Bu taslakta yalnızca Getting Started (The goal, Reading the screen) ve Classes bölümleri tıklanır; diğer bölümler / maddeler yer tutucu değil, taslağın dışında (içerik veriden gelir). Metinler oyundaki gerçek metinler; sınıf kâğıdındaki pasif ve skill'ler <code>data/classes</code> + <code>data/skills</code>.</li>
+<li>Assets / Legacy bölümleri (geliştirici galerisi) bu taslağın dışında; kabuk ortak kalır.</li>
+<li>Telefon yatay için şeritten <b>844x390</b>: sütunlar küçülür, V2'de yer imleri üst sekmeye, V3'te ızgara iki sütuna iner (dokunma hedefleri 44 px).</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="codex/app.js"></script>
+</body>
+</html>

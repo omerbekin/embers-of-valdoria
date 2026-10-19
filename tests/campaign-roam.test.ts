@@ -83,19 +83,19 @@ describe('serbest dolaşım: tutorial tek yön, sonra iki yönlü yollar', () =>
   });
 
   it('kenarlar iki yönlü: seçim noktasında seçilmeyen dal kapanmaz, geri dönülüp girilir', () => {
-    let s = walk(afterAshford(), 'moor', 'charcoal');
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['7'], back: ['moor'] });
-    s = walk(s, 'moor', '5B');
+    let s = walk(afterAshford(), 'moor', 'cairn', 'charcoal');
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['7'], back: ['cairn'] });
+    s = walk(s, 'cairn', '5B');
     expect(s.at).toBe('5B');
     expect(isCleared(s, '5B')).toBe(true);
-    expect(visitedNodes(s)).toEqual(['1', '2', '3', '4', 'moor', 'charcoal', '5B']);
+    expect(visitedNodes(s)).toEqual(['1', '2', '3', '4', 'moor', 'cairn', 'charcoal', '5B']);
   });
 
   it('yolculuk: temizlenmiş düğümlerden geçerek tek hamlede uzak düğüme; aradakiler tetiklenmez, yol günlüğe yazılır', () => {
-    let s = walk(afterAshford(), 'moor', 'charcoal', '7', '6B');
+    let s = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
     const routes = travelRoutes(s);
     expect(routes.get('5B')).toEqual(['7', '5B']); // 7 temizlendi; 5B ona komşu (en kısa yol)
-    expect(travelRoute(s, '4')).toEqual(['7', 'charcoal', 'moor', '4']);
+    expect(travelRoute(s, '4')).toEqual(['7', 'charcoal', 'cairn', 'moor', '4']);
     // temizlenmemiş düğümün ötesine geçilmez: 5A temizlenmedi, grave'e 6B'den tek hamle (komşu)
     expect(travelRoute(s, 'grave')).toEqual(['grave']);
     expect(routes.has('pilgrim')).toBe(false);
@@ -103,7 +103,7 @@ describe('serbest dolaşım: tutorial tek yön, sonra iki yönlü yollar', () =>
     const hurt = { ...s, roster: s.roster.map((h) => ({ ...h, hpRatio: 0.3 })) };
     const t = moveTo(hurt, '4');
     expect(t.at).toBe('4');
-    expect(t.path.slice(-4)).toEqual(['7', 'charcoal', 'moor', '4']);
+    expect(t.path.slice(-5)).toEqual(['7', 'charcoal', 'cairn', 'moor', '4']);
     expect(nextStep(t).kind).toBe('move'); // kasaba temizlenmiş: yeniden giriş isteğe bağlı
     expect(t.roster.filter((h) => h.alive).every((h) => h.hpRatio === 0.3)).toBe(true);
     // tutorial düğümleri yolculuk hedefi değil
@@ -118,7 +118,7 @@ describe('serbest dolaşım: tutorial tek yön, sonra iki yönlü yollar', () =>
 
 describe('sis: iki yönlü mesafe, keşfedilen kalır', () => {
   it('d = 1 her iki yönde tam bilgi; bir kez görülen düğüm uzaklaşınca sise dönmez', () => {
-    let s = walk(afterAshford(), 'moor', 'charcoal');
+    let s = walk(afterAshford(), 'moor', 'cairn', 'charcoal');
     let v = nodeVisibility(map, s);
     expect(v['5B']).toBe('far');
     expect(v['7']).toBe('near');
@@ -145,7 +145,7 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
   });
 
   it('devriye: aynı karşılaşma, seed oynama sayısını içerir; zafer sayacı artar, XP %60 / %40 / %25 (taban), sandık yok', () => {
-    let s = walk(afterAshford(), 'moor', 'charcoal', '7', '6B');
+    let s = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
     expect(nextStep(s).kind).toBe('move');
     expect(patrolAvailable(s)).toBe(true);
     expect(nextReplayMult(s, '6B')).toBe(CONFIG.replay!.xp[1]);
@@ -180,7 +180,7 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     let s = finish(debugTeleport(fresh(), '9'));
     expect(patrolAvailable(s)).toBe(false);
     expect(() => startPatrol(s)).toThrow();
-    s = walk(afterAshford(), 'moor', 'charcoal', '7', '6A');
+    s = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6A');
     expect(patrolAvailable(s)).toBe(false);
     s = walk(afterAshford(), 'moor');
     s = startPatrol(s);
@@ -230,7 +230,7 @@ describe('kayıt: sürüm 10 göçü (visited / cleared / replays)', () => {
   };
 
   it('eski kayıt açılır: visited / cleared yürüyüş günlüğünden türetilir, devriye sayacı boş; durum yeni oyundakiyle aynı', () => {
-    const s = walk(afterAshford(), 'moor', 'charcoal', '7');
+    const s = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7');
     const got = normalizeState(asV9(s), 0)!;
     expect(got.visited).toEqual(s.visited);
     expect(got.cleared.sort()).toEqual([...clearedNodes(s)].sort());

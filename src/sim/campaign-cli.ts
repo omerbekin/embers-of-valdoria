@@ -2,12 +2,15 @@
 // Kullanım: npm run sim:campaign -- [sefer sayısı] [ilk seed] [zorluk: easy|medium|hard|all] [oyuncu vekili: medium|easy|both] [--jobs=N] [--attempts=N] [--gear=best|none] [--json=dosya]
 //   Varsayılan: 240 sefer (12 rotanın her biri 20 kez), seed 1, tüm zorluklar, oyuncu vekili Medium ("iyi oyuncu") ve Easy ("ortalama oyuncu"),
 //   iş sayısı = çekirdek sayısı - 1 (en fazla 12). Her (zorluk, vekil) çifti ayrı ölçülür.
+//   [--encounter-id=<id> --encounter-file=<dosya.json>]: bir karşılaşmayı dosyadakiyle değiştirir (dalgalı savaş denemesi).
 import { valorMode } from './valor-mode';
 import { spawn } from 'node:child_process';
 import { cpus } from 'node:os';
-import { writeFileSync } from 'node:fs';
+import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
-import { CONFIG, getMap, node, type Difficulty } from '../campaign';
+import { CONFIG, ENCOUNTERS, getMap, node, type Difficulty } from '../campaign';
+import type { EncounterDef } from '../campaign/types';
+import encountersJson from '../../data/campaign/encounters.json';
 import { content, type AiDifficulty } from '../engine';
 import { allRoutes, categoryFirstWin, mergeCampaignResults, nodeCategory, routeLabel, simulateCampaign, type CampaignSimResult, type NodeCategory } from './campaign';
 import campaignBalance from '../../data/campaign/balance.json';
@@ -23,6 +26,16 @@ const maxAttempts = Number(flag('attempts') ?? 10);
 const gear = (flag('gear') ?? 'best') as 'best' | 'none'; // --gear=best|none (items.md 4.4)
 const part = flag('part'); // iç kullanım: "başlangıç:bitiş" (paralel parça, JSON çıktı)
 const jobs = Math.max(1, Number(flag('jobs') ?? Math.min(12, cpus().length - 1)));
+// --encounter-id=<id> --encounter-file=<dosya.json>: o karşılaşmanın yerine dosyadaki karşılaşma (tek EncounterDef; ör. dalgalı deneme,
+// tests/fixtures/wave-encounter.json; docs/design/waves.md). Yalnızca simde; veri dosyası değişmez.
+const encId = flag('encounter-id');
+const encFile = flag('encounter-file');
+if (encId && encFile) {
+  const def = JSON.parse(readFileSync(encFile, 'utf8')) as EncounterDef;
+  ENCOUNTERS[encId] = def;
+  (encountersJson as unknown as Record<string, unknown>)[encId] = def;
+}
+const encArgs = encId && encFile ? [`--encounter-id=${encId}`, `--encounter-file=${encFile}`] : [];
 
 const map = getMap(CONFIG.maps[0]!);
 const fmt = (n: number, d = 1) => n.toFixed(d).replace('.', ',');
@@ -30,7 +43,7 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function runPart(start: number, end: number): Promise<CampaignSimResult[]> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, `--part=${start}:${end}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, ...encArgs, `--part=${start}:${end}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';

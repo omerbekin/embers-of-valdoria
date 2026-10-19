@@ -11,7 +11,9 @@ const fallen = (h: Hero): boolean => !h.alive || h.hpRatio <= 0;
 
 /** Karşılaşmanın öldürülecek düşman sayısı (hazır çağrılar hariç; öldürme kaydı olmayan sonuç için). */
 export function encounterEnemyCount(encounterId: string): number {
-  return (ENCOUNTERS[encounterId]?.units ?? []).filter((u) => !summons[u.class]).length;
+  const def = ENCOUNTERS[encounterId];
+  // dalgalı karşılaşma: her dalganın düşmanları sayılır
+  return [...(def?.units ?? []), ...(def?.waves ?? []).flatMap((w) => w.units)].filter((u) => !summons[u.class]).length;
 }
 
 /**

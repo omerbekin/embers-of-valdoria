@@ -218,6 +218,8 @@ export interface LootConfig {
   dropMult?: number;
   /** Kaynağın her item'inin nadirlik tabanı (TUR 1 madde 8: elit en az Uncommon, boss en az Rare). */
   rarityFloor?: Partial<Record<LootKind, RarityId>>;
+  /** Taban seçiminde tutuş ağırlığı (Ömer 2026-10-19: çift el az düşüyordu); yoksa / yazılmayan tutuş = 1 (eşit seçim). */
+  gripWeight?: Partial<Record<Grip, number>>;
 }
 
 export const ITEMS: ItemsData = itemsJson as unknown as ItemsData;

@@ -186,6 +186,8 @@ export interface CombatantData {
   frontPriority: number;
   /** Seçim ekranında gösterilen klasman (yoksa ilk skill'in türüne göre Melee/Ranged/Caster). */
   role?: string;
+  /** Seçim/Recruit kartlarında gösterilen tek cümlelik kısa açıklama (İngilizce, düz metin, en fazla ~90 karakter; Ömer 2026-10-19). Oynanabilir class'larda var. */
+  blurb?: string;
   /** Menzil (docs/design/range.md, Ömer 2026-10-17): sınıfın taban menzili, skill'lerine geçer (skill `range` ezer; `global` menzilsiz). Yoksa formulas.range.default. */
   range?: number;
   attributes: Attributes;
@@ -324,6 +326,8 @@ export interface CombatantDef {
   logo: string;
   frontPriority: number;
   role?: string;
+  /** Kısa tanıtım cümlesi (bkz. CombatantData.blurb). */
+  blurb?: string;
   /** Menzil: sınıfın taban menzili (bkz. CombatantData.range). */
   range?: number;
   attributes: Attributes;
@@ -1427,6 +1431,13 @@ export interface Combatant {
   phase?: number;
   /** Sıra almayan yardımcı nesne (Iron Mooring; bkz. CombatantData.inert). */
   inert?: boolean;
+  /**
+   * Dalgalı savaş (docs/design/waves.md): önceki dalganın DÜŞMÜŞ birimi, sonraki dalga gelince savaştan çıktı. Cesedi yok, diriltilemez, hedeflenemez;
+   * sahnede gösterilmez (UI `waveStart` olayında görünümünü kaldırır). Savaş özetinde (battleSummary) ölü birim olarak kalır (XP / öldürme sayımı).
+   */
+  removed?: boolean;
+  /** Dalgalı savaş: birimin geldiği dalga (0 = ilk dalga). Dalgasız savaşta tanımsız. */
+  wave?: number;
   /*
    * Mob pasiflerinin çalışma bayrakları (YM1-YM13): savaşta bir kez kullanılan pasif (Cut and Run, Martyr's Vow), Stone Patience birikimi ve
    * "son turundan beri hasar aldı" bayrağı, Flicker'ın bu tur kullanılıp kullanılmadığı.
@@ -1616,7 +1627,42 @@ type BattleEventBody =
   | { type: 'groundEnd'; id: string }
   /** `corpse`: true = ölen birim ceset bıraktı (çağrı değil; `battle.corpseOf(uid)` durumu 'revivable'); çağrının ölümünde false. */
   | { type: 'death'; target: string; corpse?: boolean }
+  /**
+   * Dalgalı savaş (BattleSetup.waves; docs/design/waves.md). `index` 0'dan başlar, `total` = toplam dalga sayısı. Dalgasız savaşta hiç gelmez.
+   * waveCleared: dalganın tüm (savaşan) düşmanları düştü. Son dalgada ardından battleEnd gelir.
+   * waveStart: yeni dalga dizildi. İlk dalgada (index 0) battleStart'tan hemen sonra gelir, `combatants` boştur (birimler battleStart'ta).
+   * Sonraki dalgalarda `combatants` = yeni düşman birimleri (sahne bunlar için görünüm oluşturur), `removed` = savaştan çıkan önceki dalga
+   * birimlerinin uid'leri (sahne görünümlerini/ceset işaretlerini kaldırır), `queue` = yeniden hesaplanan sıra.
+   */
+  | { type: 'waveCleared'; index: number; total: number }
+  | { type: 'waveStart'; index: number; total: number; combatants: Combatant[]; removed: string[]; queue: string[] }
   | { type: 'battleEnd'; winner: Side };
+
+/**
+ * Dalgalı savaşta sonraki bir dalganın kurulumu (BattleSetup.waves[i]; ilk dalga BattleSetup.enemies'tir). enemies / enemySlots / enemyUnits
+ * BattleSetup'taki adaşlarıyla aynı anlamdadır (enemyUnits: UnitSetup; startDead / owner yok sayılır).
+ */
+export interface WaveSetup {
+  enemies: CombatantDef[];
+  enemySlots?: number[];
+  enemyUnits?: (UnitSetup | undefined)[];
+}
+
+/**
+ * Dalga geçiş kuralları (data/waves.json > rules; Ömer onayı bekliyor, docs/design/waves.md). Motor sayıları buradan okur.
+ * turnOrder: 'reset' = yeni dalgada herkesin sıra sayacı sıfırlanır (savaş başı gibi), 'keep' = kahramanlar sayacını korur, yeni düşmanlar 0'dan.
+ * healRatio / mpRatio: dalga arası canlı oyuncu birimlerine maks can / MP oranında yenilenme (0 = yok).
+ * clearCorpses: önceki dalganın düşmüş düşmanları savaştan çıkar (ceset yok). clearEnemyGrounds: düşman tahtasındaki ve düşmanların bıraktığı
+ * zemin etkileri silinir. cancelEnemyTelegraphs: düşman tarafının bekleyen telgrafları iptal olur.
+ */
+export interface WaveRules {
+  turnOrder: 'reset' | 'keep';
+  healRatio: number;
+  mpRatio: number;
+  clearCorpses: boolean;
+  clearEnemyGrounds: boolean;
+  cancelEnemyTelegraphs: boolean;
+}
 
 /**
  * Global skill: her birimin class skill'lerine EK kullanabildiği ortak eylemler (data/global-skills.json). Skill listesinde (class'ın 4 skill'i) yer almaz.

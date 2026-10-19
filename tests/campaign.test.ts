@@ -56,8 +56,8 @@ function playTo(s: CampaignState, target: string, choose: (opts: string[]) => st
 }
 
 describe('sefer haritası: graf', () => {
-  it('26 düğüm (A1-x), geçerli bağlantılar, bölgeler, 1 başlangıç ve 1 final', () => {
-    expect(map.nodes).toHaveLength(26);
+  it('27 düğüm (A1-x + Cairn Hill), geçerli bağlantılar, bölgeler, 1 başlangıç ve 1 final', () => {
+    expect(map.nodes).toHaveLength(27); // 2026-10-19: Cairn Hill (Windy Moor ile çatal arası)
     expect(validateMap(map)).toEqual([]);
     expect(map.regions.map((r) => r.id)).toEqual(['I', 'II', 'III']);
     expect(map.start).toBe('1');
@@ -81,8 +81,8 @@ describe('sefer haritası: graf', () => {
     expect(node(map, '4').pos).toEqual([0.229, 0.231]);
   });
 
-  it('seçim noktaları moor, 7, pilgrim, 10; birleşmeler 7, grave, river, camp; kenar stilleri (tek yol düz, seçimli kesik)', () => {
-    expect(choicePoints(map).sort()).toEqual(['10', '7', 'moor', 'pilgrim']);
+  it('seçim noktaları cairn, 7, pilgrim, 10; birleşmeler 7, grave, river, camp; kenar stilleri (tek yol düz, seçimli kesik)', () => {
+    expect(choicePoints(map).sort()).toEqual(['10', '7', 'cairn', 'pilgrim']);
     expect(mergePoints(map).sort()).toEqual(['7', 'camp', 'grave', 'river']);
     for (const e of map.edges) {
       const single = map.edges.filter((x) => x.from === e.from).length === 1 && map.edges.filter((x) => x.to === e.to).length === 1;
@@ -90,7 +90,7 @@ describe('sefer haritası: graf', () => {
     }
   });
 
-  it('24 rota, hepsi 21 durak ve finale ulaşır; her rotada 16 savaşlı durak', () => {
+  it('24 rota, hepsi 22 durak ve finale ulaşır; her rotada 17 savaşlı durak', () => {
     const routes = allRoutes(map);
     expect(routes).toHaveLength(24);
     for (const r of routes) {
@@ -98,7 +98,7 @@ describe('sefer haritası: graf', () => {
       expect(r[0]).toBe('1');
       expect(r[r.length - 1]).toBe('12');
       const battles = r.filter((id) => isBattleNode(node(map, id))).length;
-      expect(battles, r.join('-')).toBe(16);
+      expect(battles, r.join('-')).toBe(17);
     }
   });
 
@@ -131,29 +131,32 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor'] });
     s = playTo(s, 'moor');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['4'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn'], back: ['4'] });
+    s = playTo(s, 'cairn');
+    while (nextStep(s).kind !== 'move') s = autoResolve(s);
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['moor'] });
     s = moveTo(s, 'charcoal');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    s = moveTo(s, 'moor'); // geri
+    s = moveTo(s, 'cairn'); // geri
     s = moveTo(s, '5B'); // seçilmeyen dal açık
     expect(s.at).toBe('5B');
     expect(nextStep(s).kind).toBe('battle');
     s = playTo(s, '7');
-    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'charcoal', 'moor', '5B', '7']);
+    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'cairn', 'charcoal', 'cairn', '5B', '7']);
     s = playTo(s, 'grave', (o) => o[2]!);
     expect(s.path.slice(-2)).toEqual(['5A', 'grave']);
   });
 
-  it('tam sefer 21 durakta biter (Valdoria Conquered)', () => {
+  it('tam sefer 22 durakta biter (Valdoria Conquered)', () => {
     const s = playTo(fresh(), '12');
     const done = (() => {
       let t = s;
       while (!isComplete(t)) t = autoResolve(t);
       return t;
     })();
-    expect(done.path).toHaveLength(21);
+    expect(done.path).toHaveLength(22);
     expect(isComplete(done)).toBe(true);
-    expect(done.stats.victories).toBe(16); // varsayılan seçimler ilk kolları izler (5B, 6B, 8A, Thornwood): 16 savaşlı durak
+    expect(done.stats.victories).toBe(17); // varsayılan seçimler ilk kolları izler (5B, 6B, 8A, Thornwood): 17 savaşlı durak
   });
 
   it("olay ve korunan hazine: hazine önce savaş, sonra sandık; Witch's Hut önce savaş, sonra olay", () => {
@@ -189,22 +192,23 @@ describe('sis ve görünürlük', () => {
     let s = playTo(fresh(), '4');
     let v = nodeVisibility(map, s);
     expect(v['moor']).toBe('near');
-    expect([v['5B'], v['charcoal']]).toEqual(['far', 'far']);
+    expect(v['cairn']).toBe('far');
+    expect([v['5B'], v['charcoal']]).toEqual(['fog', 'fog']);
     expect(v['7']).toBe('fog');
-    s = playTo(s, 'moor');
+    s = playTo(s, 'cairn');
     v = nodeVisibility(map, s);
     expect([v['5B'], v['charcoal']]).toEqual(['near', 'near']);
     expect(v['7']).toBe('far');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
     s = moveTo(s, 'charcoal');
     v = nodeVisibility(map, s);
-    expect(v['5B']).toBe('far'); // iki yönlü mesafe 2 (charcoal - moor - 5B)
-    expect(v['moor']).toBe('cleared');
+    expect(v['5B']).toBe('far'); // iki yönlü mesafe 2 (charcoal - cairn - 5B)
+    expect(v['cairn']).toBe('cleared');
     expect(v['7']).toBe('near');
     expect([v['6A'], v['6B'], v['5A']]).toEqual(['far', 'far', 'far']);
-    const e = map.edges.find((x) => x.from === 'moor' && x.to === '5B')!;
+    const e = map.edges.find((x) => x.from === 'cairn' && x.to === '5B')!;
     expect(edgeVisibility(map, s, v, e)).toBe('visible');
-    expect(edgeVisibility(map, s, v, map.edges.find((x) => x.from === 'moor' && x.to === 'charcoal')!)).toBe('walked');
+    expect(edgeVisibility(map, s, v, map.edges.find((x) => x.from === 'cairn' && x.to === 'charcoal')!)).toBe('walked');
     expect(edgeVisibility(map, s, v, map.edges.find((x) => x.from === 'charcoal' && x.to === '7')!)).toBe('open');
   });
 
@@ -371,7 +375,7 @@ describe('determinizm ve debug', () => {
   it('ışınlanma: yol kurulur, önceki adımlar bitmiş, kadro dolu; ipucu yok (dersler data/tutorial.json)', () => {
     const s = debugTeleport(fresh(3), 'thorn');
     expect(s.at).toBe('thorn');
-    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', '5B', '7', '6B', 'grave', 'pilgrim', '8A', 'river', '9', '10', 'thorn']);
+    expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'cairn', '5B', '7', '6B', 'grave', 'pilgrim', '8A', 'river', '9', '10', 'thorn']);
     expect(s.roster).toHaveLength(4);
     expect(nextStep(s).kind).toBe('battle');
     const t = debugTeleport(fresh(3), '1');

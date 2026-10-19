@@ -5,6 +5,7 @@
   "color": "#9b59d0",
   "logo": "nullsphere",
   "role": "Mana Hunter",
+  "blurb": "Mana hunter who burns enemy spellpower and turns blocked magic into team mana.",
   "frontPriority": 3.5,
   "range": 4,
   "attributes": {

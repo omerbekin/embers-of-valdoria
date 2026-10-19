@@ -1341,6 +1341,7 @@ function cleanseValue(ctx: ValueContext, profile: AiProfile, o: Option): number 
  * Mana yakmanın değeri (madde 258, Faz 2: "engellenen hamle"; eski sabit "yakılan MP x 0,6" yerine): doğrudan yakılan MP (Drain Field, Mana Steal) için
  * hedefin ufukta kaybedeceği MP'li hamlelerin değeri (ValueContext.manaDenial), vuruşa bağlıysa isabet şansıyla. Spell Ward kancası: korunan dosta
  * bir sonraki turumuzdan önce saldıracağı tahmin edilen (büyü kalkanında: büyü vuran) her düşmanın, kanca kadar MP kaybıyla engellenen hamlesi.
+ * Ek olarak MP'ye bağlı savunma (Deep Hoard gibi pasifler; mpArmorValue): yakılan MP'nin kaldıracağı zırh / büyü zırhının bize kazandıracağı hasar.
  */
 function burnValue(ctx: ValueContext, o: Option): number {
   const battle = ctx.battle;
@@ -1348,7 +1349,13 @@ function burnValue(ctx: ValueContext, o: Option): number {
   for (const [uid, x] of Object.entries(o.burnBy)) {
     const f = battle.get(uid);
     if (!f || f.side === ctx.actor.side) continue;
-    v += ctx.manaDenial(f, x) * previewHitChance(o, f);
+    const hit = previewHitChance(o, f);
+    v += ctx.manaDenial(f, x) * hit;
+    const armor = mpArmorValue(ctx, f, x) * hit * (1 - (o.killP[uid] ?? 0));
+    if (armor > 0) {
+      v += armor;
+      if (o.notes.length < 6) o.notes.push(`strips MP-armor of ${f.displayName ?? f.name}: +${r1(armor)}`);
+    }
   }
   if (o.wardBurn) {
     const covered = new Set([...Object.keys(o.shieldBy), ...Object.keys(o.magicShieldBy)]);
@@ -1357,10 +1364,46 @@ function burnValue(ctx: ValueContext, o: Option): number {
       const share = i.focus.filter((u) => covered.has(u)).length / Math.max(1, i.focus.length);
       const f = battle.get(i.foe);
       if (!f || share <= 0) continue;
-      v += ctx.manaDenial(f, Math.min(f.mp, o.wardBurn.amount)) * share;
+      const amt = Math.min(f.mp, o.wardBurn.amount);
+      v += (ctx.manaDenial(f, amt) + mpArmorValue(ctx, f, amt)) * share;
     }
   }
   return v;
+}
+
+/**
+ * MP'ye bağlı zırhın soyulma değeri (Thane of the Deep > Deep Hoard gibi pasifler; isim kontrolü yok): motorun geçerli stat'ı (effectiveStats) hedefin
+ * MP'si `amount` kadar azalmış halde yeniden okunur (MP -> zırh oranı pasifin verisinden, motorun kendi formülüyle); zırh / büyü zırhı düşmüyorsa 0.
+ * Değer = bizim tarafın ufukta (horizon) bu hedefe vereceği tahmini hasar x zırh azalmasındaki düşüşün getirdiği hasar artışı (fiziksel vuruş zırhla,
+ * büyü vuruşu büyü zırhıyla). Hedef odakta olan dostun vuruşu tam (eşitlikte bölünmüş), yalnızca ulaşabilen dostunki x pressureShare (Iron Mooring zırh
+ * kazancıyla aynı model, anchorValue).
+ */
+function mpArmorValue(ctx: ValueContext, f: Combatant, amount: number): number {
+  const battle = ctx.battle;
+  const lost = Math.min(f.mp, amount);
+  if (lost <= 0 || f.hp <= 0) return 0;
+  const before = battle.effectiveStats(f);
+  const armor0 = before.armor;
+  const magic0 = before.magicArmor;
+  const mp = f.mp;
+  f.mp = mp - lost; // geçici: yalnızca okumak için, hemen geri alınır (YZ saf kalır)
+  let after: Combatant['stats'];
+  try {
+    after = battle.effectiveStats(f);
+  } finally {
+    f.mp = mp;
+  }
+  if (after.armor >= armor0 && after.magicArmor >= magic0) return 0;
+  const red = (x: number) => armorReduction(Math.max(0, x), battle.formulas);
+  const gain = (a: number, b: number) => (b >= a ? 0 : (1 - red(b)) / Math.max(0.05, 1 - red(a)) - 1);
+  const gPhys = gain(armor0, after.armor);
+  const gMagic = gain(magic0, after.magicArmor);
+  let rate = 0;
+  for (const i of ctx.ownIntents()) {
+    const w = i.focus.includes(f.uid) ? 1 / Math.max(1, i.focus.length) : i.reach.includes(f.uid) ? ctx.vc.pressureShare : 0;
+    rate += i.hit * w * (i.magic ? gMagic : gPhys);
+  }
+  return rate * ctx.vc.horizon;
 }
 
 /**

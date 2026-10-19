@@ -236,6 +236,9 @@ export function confirmIn(host: HTMLElement, text: string, ok: string, run: () =
   return close;
 }
 
+/** Açık Gear / Demirci / Tüccar / Loot ekranını yeniden çizdiren belge olayı (debug araçları gönderir). */
+export const GEAR_REFRESH_EVENT = 'gear:refresh';
+
 /**
  * Gear ekranı = ORTAK ENVANTER (Ömer 2026-10-18, taslak v3 "Ledger"; public/mockups/unified-inventory.html#v3). Yalnızca karakterle ilgilidir:
  * iki sayfalık defter, sol kenarda kahraman yer imleri (portre, stat puanı rozeti, bırakma hedefi), iki sekme:
@@ -448,6 +451,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     ext?.destroy?.();
     closeDom(overlay, () => overlay.remove());
     document.removeEventListener('keydown', onKey, true);
+    document.removeEventListener(GEAR_REFRESH_EVENT, onRefresh);
     document.removeEventListener('touchend', onTouchEnd);
     document.removeEventListener('touchcancel', onTouchEnd);
     ix.destroy();
@@ -473,6 +477,12 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         sel = '';
         renderAll();
       } else close();
+    } else if (!bagOnly && e.key === 'Tab' && !e.ctrlKey && !e.metaKey && !e.altKey) {
+      // Tab: Hero / Sheet sekmeleri arasında geçer (Ömer 2026-10-19; Shift+Tab de aynı, iki sekme var). Odak halkası pencerenin dışına kaçmaz.
+      e.stopPropagation();
+      e.preventDefault();
+      if (closeAsk && overlay.querySelector('.gr-confirm')) return;
+      setTab(tab === 'hero' ? 'sheet' : 'hero');
     } else if (!bagOnly && (e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
       // C: Gear'ı kapatır (Ömer 2026-10-18: oyun geneli C = aç / kapat; Hero / Sheet geçişi yalnızca tıklamayla)
       const t = e.target as HTMLElement | null;
@@ -576,6 +586,14 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const tabBtns = (['hero', 'sheet'] as const).map((k) => {
     const b = btn('gr-tab', k === 'hero' ? 'Hero' : 'Sheet', () => setTab(k));
     b.setAttribute('role', 'tab');
+    // sekme ikonu (mevcut set): Hero = Gear ikonu, Sheet = Strength (nitelik) statı ikonu; sekme olduğu anlaşılsın
+    const ico = document.createElement('img');
+    ico.className = 'gr-tab-ico';
+    ico.alt = '';
+    ico.draggable = false;
+    ico.src = k === 'hero' ? iconUrl(uiIconName('gear')) : statIconUrl('str');
+    if (ico.src) b.prepend(ico);
+    b.title = k === 'hero' ? 'Hero (Tab)' : 'Sheet (Tab)';
     tabsBox.append(b);
     return b;
   });
@@ -829,6 +847,11 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     },
     close: () => close(),
   };
+  // debug araçları (altın / item ver) açık ekranı yeniden çizdirir
+  function onRefresh(): void {
+    if (!closing) renderAll();
+  }
+  document.addEventListener(GEAR_REFRESH_EVENT, onRefresh);
   ext?.attach(overlay, api);
   renderAll();
   return close;

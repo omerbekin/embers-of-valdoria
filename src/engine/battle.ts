@@ -14,7 +14,7 @@ import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range'
 import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
-import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules } from './types';
+import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleSetup {
   seed: number;
@@ -55,7 +55,17 @@ export interface BattleSetup {
    * Varsayılan false = hiçbir davranış değişmez. Backstab'ın "arkası boş" şartı ve taunt bundan etkilenmez.
    */
   ignoreRange?: boolean;
+  /**
+   * Dalgalı savaş (Ömer 2026-10-19, docs/design/waves.md): `enemies` İLK dalgadır; burası SONRAKİ dalgalar (2., 3. ...). Mevcut dalganın tüm savaşan
+   * düşmanları düşünce sıradaki dalga düşman tahtasına dizilir; savaş ancak son dalga bitince kazanılır. Yoksa / boşsa savaş birebir eskisi.
+   */
+  waves?: WaveSetup[];
+  /** Dalga geçiş kuralları (data/waves.json > rules). Dalga varken verilmezse DEFAULT_WAVE_RULES. */
+  waveRules?: WaveRules;
 }
+
+/** Dalga kuralları verilmediğinde (yalnızca motor testleri / eski çağıranlar): data/waves.json'daki varsayılanla aynı nötr kurallar. */
+export const DEFAULT_WAVE_RULES: WaveRules = { turnOrder: 'reset', healRatio: 0, mpRatio: 0, clearCorpses: true, clearEnemyGrounds: true, cancelEnemyTelegraphs: true };
 
 /** Debug: hasar çarpanı ve kritik/kaçınma zorlaması (varsayılan: 1, auto, auto = oyun kuralı aynen). */
 export interface DebugFlags {
@@ -220,6 +230,9 @@ export class Battle {
   private readonly valorPool = new Map<Side, number>();
   /** Bu savaşta düşen (çağrı olmayan, savaşa ceset olarak GİRMEMİŞ) birimler: kusursuz zafer (flawless Valor) bunlara bakar. */
   private readonly fellInBattle = new Set<string>();
+  /** Dalgalı savaş: sonraki dalgalar (boş dalgalar atılır) ve şu anki dalganın dizini (0 = ilk dalga). */
+  private readonly laterWaves: WaveSetup[];
+  private waveIdx = 0;
 
   constructor(setup: BattleSetup) {
     this.setup = setup;
@@ -227,6 +240,7 @@ export class Battle {
     this.mode = setup.mode ?? 'turns';
     this.rng = new Rng(setup.seed);
     this.tieFirst = (Math.imul(setup.seed >>> 0, 2654435761) >>> 16) % 2 === 0 ? 'party' : 'enemy';
+    this.laterWaves = (setup.waves ?? []).filter((w) => w.enemies.length > 0);
     this.combatants = [
       ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas)),
       ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas)),
@@ -277,7 +291,10 @@ export class Battle {
       const e = c.passive!.effect as Extract<PassiveEffect, { type: 'headStart' }>;
       if (e.speedBoost > 0) this.speedBoost.set(c.uid, e.speedBoost);
     }
+    // Dalgalı savaş: ilk dalganın düşmanları dalga 0 (dalgasız savaşta alan yazılmaz)
+    if (this.waveCount > 1) for (const c of this.combatants) if (c.side === 'enemy') c.wave = 0;
     this.record({ type: 'battleStart', seed: this.seed, combatants: this.combatants.map(cloneCombatant) });
+    if (this.waveCount > 1) this.record({ type: 'waveStart', index: 0, total: this.waveCount, combatants: [], removed: [], queue: [] });
     for (const c of headStart) this.record({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
     if (this.mode === 'turns') this.advance((e) => this.record(e));
   }
@@ -313,6 +330,26 @@ export class Battle {
 
   get formulas(): Formulas {
     return this.setup.formulas;
+  }
+
+  /** Dalgalı savaş: toplam dalga sayısı (dalgasız savaşta 1). */
+  get waveCount(): number {
+    return 1 + this.laterWaves.length;
+  }
+
+  /** Şu anki dalganın dizini (0 = ilk dalga). */
+  get waveIndex(): number {
+    return this.waveIdx;
+  }
+
+  /** Henüz gelmemiş dalgaların düşman tanımları (HUD önizlemesi için; sırayla). Dalgasız savaşta ya da son dalgada boş. */
+  upcomingWaves(): CombatantDef[][] {
+    return this.laterWaves.slice(this.waveIdx).map((w) => [...w.enemies]);
+  }
+
+  /** Dalga kuralları (verilmediyse DEFAULT_WAVE_RULES). */
+  get waveRules(): WaveRules {
+    return this.setup.waveRules ?? DEFAULT_WAVE_RULES;
   }
 
   get(uid: string): Combatant | undefined {
@@ -1801,7 +1838,7 @@ export class Battle {
   reviveBlockReason(actorUid: string, targetUid: string): string | null {
     const actor = this.get(actorUid);
     const t = this.get(targetUid);
-    if (!actor || !t || t.side !== actor.side || t.hp > 0 || t.summoned) return 'Not a fallen ally';
+    if (!actor || !t || t.side !== actor.side || t.hp > 0 || t.summoned || t.removed) return 'Not a fallen ally';
     if (this.corpseState.get(t.uid) === 'consumed') return 'Corpse was consumed';
     // Madde 257: cesedin hücresi dolu olabilir (dirilen seçilen BOŞ hücreye gelir); yalnızca kendi tarafında hiç boş hücre yoksa diriltilemez
     if (this.freeSlots(actor.side).length === 0) return 'No free cell';
@@ -1925,7 +1962,7 @@ export class Battle {
         // Düşmüş dostlar (çağrılar hariç); cesedi tüketildiyse (Raise Dead) diriltilemez. Madde 257: cesedin hücresinde canlı birim (ör. Skeleton) olması
         // ENGEL DEĞİL: Resurrection önce ölüyü, sonra kendi tarafında boş bir hücreyi seçer (reviveSlots); boş hücre yoksa canUse 'No free cell'.
         return this.combatants
-          .filter((c) => c.side === actor.side && c.board === c.side && c.hp <= 0 && !c.summoned && this.corpseState.get(c.uid) !== 'consumed' && this.inRange(actor, skill, c.board, c.slot))
+          .filter((c) => c.side === actor.side && c.board === c.side && c.hp <= 0 && !c.summoned && !c.removed && this.corpseState.get(c.uid) !== 'consumed' && this.inRange(actor, skill, c.board, c.slot))
           .sort((x, y) => x.slot - y.slot);
       case 'everyone':
         // Dost kısmı menzilsiz; düşman kısmı menzile bağlı (Radiance global: hepsi)
@@ -2057,7 +2094,7 @@ export class Battle {
 
   /** Diriltilecek hedef yoksa neden: tüm düşmüş dostların cesedi tüketildiyse 'Corpse was consumed', aksi halde 'No fallen ally'. */
   private noReviveReason(actor: Combatant): string {
-    const fallen = this.combatants.filter((c) => c.side === actor.side && c.hp <= 0 && !c.summoned);
+    const fallen = this.combatants.filter((c) => c.side === actor.side && c.hp <= 0 && !c.summoned && !c.removed);
     return fallen.length > 0 && fallen.every((c) => this.corpseState.get(c.uid) === 'consumed') ? 'Corpse was consumed' : 'No fallen ally';
   }
 
@@ -3048,19 +3085,15 @@ export class Battle {
         this.breakAllBonds(actor, emit);
       }
     }
-    if (!this.winner) {
-      // Sıra almayan yardımcı nesneler (inert) savaşın bitişinde sayılmaz
-      if (this.fighting('enemy').length === 0) this.winner = 'party';
-      else if (this.fighting('party').length === 0) this.winner = 'enemy';
-      if (this.winner) emit({ type: 'battleEnd', winner: this.winner });
-    }
+    // Savaşın bitişi ya da sıradaki dalga (dalgalı savaş); sıra almayan yardımcı nesneler (inert) sayılmaz
+    const wave = this.resolveEnd(emit);
     this.observer?.after?.(actor.uid);
     // Tur başına ek eylem (UnitModifiers.actionsPerTurn): skill / Rest / Move'dan sonra aynı birim aynı turda yeniden oynar (tur başı işlemleri yok).
     // Skip Turn, sersemlik ve pas turu bitirir. Sayaç yalnızca turun SON eyleminde düşer.
     const left = this.actionsLeft.get(actor.uid) ?? 0;
     this.actionsLeft.delete(actor.uid);
     const kind = this.lastKind.get(actor.uid);
-    if (this.mode === 'turns' && !this.winner && left > 0 && actor.hp > 0 && this.currentUid === actor.uid && (kind === 'skill' || kind === 'rest' || kind === 'move') && !actor.statuses.some((s) => this.statusDef(s.kind)?.skipTurn)) {
+    if (this.mode === 'turns' && !this.winner && !wave && left > 0 && actor.hp > 0 && this.currentUid === actor.uid && (kind === 'skill' || kind === 'rest' || kind === 'move') && !actor.statuses.some((s) => this.statusDef(s.kind)?.skipTurn)) {
       this.actionsLeft.set(actor.uid, left - 1);
       emit({ type: 'turnStart', actor: actor.uid, queue: this.turnQueue(), extra: true });
       this.tryStagger(actor, emit); // Stagger: bu ek eylem yanar
@@ -3068,10 +3101,95 @@ export class Battle {
     }
     // Tur sonu süreleri (tickAtTurnEnd: Silence): taşıyanın turu bitince 1 azalır; biten durum kalkar
     if (this.mode === 'turns' && this.currentUid === actor.uid) this.tickTurnEnd(actor, emit);
-    if (this.mode === 'turns' && !this.winner) {
-      actor.turnCounter -= this.setup.formulas.turn.threshold * turnCost;
-      this.advance(emit);
+    if (this.mode === 'turns' && !this.winner) actor.turnCounter -= this.setup.formulas.turn.threshold * turnCost;
+    wave?.(); // yeni dalga: sıra kuralı (reset sayaçları sıfırlar) + waveStart olayı, sıra ilerlemeden önce
+    if (this.mode === 'turns' && !this.winner) this.advance(emit);
+  }
+
+  /**
+   * Savaşın bitişi (kazanan + battleEnd) ya da dalgalı savaşta sıradaki dalga. Dalgasız savaşta eski kuralın aynısı: düşman tarafında savaşan
+   * kalmadıysa oyuncu kazanır (iki taraf aynı anda bitse de), yoksa oyuncu tarafı bittiyse düşman kazanır.
+   * Dalgalı savaşta düşman dalgası bitince waveCleared; sonraki dalga varsa ve oyuncu tarafında savaşan kaldıysa dalga dizilir ve dönüş değeri
+   * waveStart'ı yayınlayan bitirici fonksiyondur (çağıran, sıra sayaçlarını ayarladıktan sonra çağırır); oyuncu tarafı da bittiyse düşman kazanır.
+   */
+  private resolveEnd(emit: Emit): (() => void) | null {
+    if (this.winner) return null;
+    const enemyDone = this.fighting('enemy').length === 0;
+    const partyDone = this.fighting('party').length === 0;
+    if (enemyDone && this.waveCount > 1) emit({ type: 'waveCleared', index: this.waveIdx, total: this.waveCount });
+    if (enemyDone && this.waveIdx < this.laterWaves.length) {
+      if (!partyDone) return this.spawnWave(emit);
+      this.winner = 'enemy';
+    } else if (enemyDone) this.winner = 'party';
+    else if (partyDone) this.winner = 'enemy';
+    if (this.winner) emit({ type: 'battleEnd', winner: this.winner });
+    return null;
+  }
+
+  /**
+   * Sıradaki dalgayı dizer (data/waves.json > rules): önceki dalganın düşmüşleri savaştan çıkar (ceset kalkar), düşman tarafının zemin etkileri ve
+   * telgrafları temizlenir, isteğe bağlı dalga arası yenilenme, yeni düşmanlar (başlangıç cooldown'u, boss fazı, Head Start) eklenir. Oyuncu
+   * tarafının durumu (can, MP, Rage, cooldown, durumlar, çağrılar) aynen sürer. Dönen fonksiyon sıra kuralını uygular ve waveStart'ı yayınlar.
+   * Rastgele sayı tüketmez.
+   */
+  private spawnWave(emit: Emit): () => void {
+    const rules = this.waveRules;
+    const def = this.laterWaves[this.waveIdx]!;
+    this.waveIdx++;
+    const index = this.waveIdx;
+    const removed: string[] = [];
+    if (rules.clearCorpses)
+      for (const c of this.combatants) {
+        if (c.side !== 'enemy' || c.hp > 0 || c.removed) continue;
+        c.removed = true;
+        this.clearCorpse(c.uid);
+        removed.push(c.uid);
+      }
+    if (rules.cancelEnemyTelegraphs) for (const t of [...this.telegraphs]) if (this.get(t.source)?.side === 'enemy') this.cancelTelegraph(t, 'wave', emit);
+    if (rules.clearEnemyGrounds)
+      for (const g of [...this.ground]) {
+        if (g.board !== 'enemy' && g.sourceSide !== 'enemy') continue;
+        this.ground.splice(this.ground.indexOf(g), 1);
+        emit({ type: 'groundEnd', id: g.id });
+      }
+    // Dalga arası yenilenme (varsayılan 0): canlı oyuncu birimleri (yardımcı nesne hariç)
+    for (const c of this.fighting('party')) {
+      if (rules.healRatio > 0 && c.hp < c.maxHp) this.applyHeal(c, c, Math.max(1, Math.round(c.maxHp * rules.healRatio)), false, emit, 'wave');
+      const mp = rules.mpRatio > 0 ? Math.max(0, Math.min(Math.round(c.maxMp * rules.mpRatio), c.maxMp - c.mp)) : 0;
+      if (mp > 0) {
+        c.mp += mp;
+        emit({ type: 'mpRegen', actor: c.uid, amount: mp, after: c.mp, cause: 'wave' });
+      }
     }
+    // Yeni düşmanlar: verilen yuva doluysa (canlı birim) en yakın boş yuva; yer yoksa birim gelmez. startDead / owner yok sayılır.
+    const added: Combatant[] = [];
+    def.enemies.forEach((d, i) => {
+      const slot = this.nearestFreeSlot('enemy', def.enemySlots?.[i] ?? i);
+      if (slot === null) return;
+      const given = def.enemyUnits?.[i];
+      let unit: UnitSetup | undefined;
+      if (given) {
+        const { startDead: _dead, owner: _owner, ...rest } = given;
+        unit = rest;
+      }
+      const c = createSetupCombatant(d, 'enemy', slot, `enemy-w${index + 1}-${i}`, unit, this.setup.formulas);
+      c.wave = index;
+      this.combatants.push(c);
+      added.push(c);
+    });
+    if (this.mode === 'turns') for (const c of added) this.applyInitialCooldowns(c);
+    for (const c of added) if (c.boss?.phases?.length) c.phase = 1;
+    for (const c of added) if (c.boss) this.refreshAnchored(c);
+    const headStart = this.mode === 'turns' ? added.filter((c) => c.passive?.effect.type === 'headStart') : [];
+    for (const c of headStart) {
+      const e = c.passive!.effect as Extract<PassiveEffect, { type: 'headStart' }>;
+      if (e.speedBoost > 0) this.speedBoost.set(c.uid, e.speedBoost);
+    }
+    return () => {
+      if (this.mode === 'turns' && rules.turnOrder === 'reset') for (const c of this.combatants) if (c.hp > 0) c.turnCounter = 0;
+      emit({ type: 'waveStart', index, total: this.waveCount, combatants: added.map(cloneCombatant), removed, queue: this.mode === 'turns' ? this.turnQueue() : [] });
+      for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+    };
   }
 
   /** tickAtTurnEnd durumlarının süresi (Silence): turu biten birimde 1 azalır, 0'da statusEnd. */
@@ -3213,11 +3331,7 @@ export class Battle {
     // Telgraflar (Breaking Span, Ash Brand, Fall): sahibinin tur başında, eylemlerinden ÖNCE çözülür (adalet kuralı sağlanmadıysa ertelenir)
     if (actor.hp > 0 && this.telegraphs.length > 0) {
       this.resolveTelegraphsOf(actor, emit);
-      if (!this.winner) {
-        if (this.fighting('enemy').length === 0) this.winner = 'party';
-        else if (this.fighting('party').length === 0) this.winner = 'enemy';
-        if (this.winner) emit({ type: 'battleEnd', winner: this.winner });
-      }
+      this.resolveEnd(emit)?.(); // dalgalı savaş: yeni dalga dizilir, bu birimin turu sürer
       if (this.winner) return;
     }
     emit({ type: 'turnStart', actor: next.uid, queue: this.turnQueue() });
@@ -4005,10 +4119,7 @@ export class Battle {
   private readonly debugEmit: Emit = (e) => this.record(e);
 
   private checkWinner(): void {
-    if (this.winner) return;
-    if (this.fighting('enemy').length === 0) this.winner = 'party';
-    else if (this.fighting('party').length === 0) this.winner = 'enemy';
-    if (this.winner) this.record({ type: 'battleEnd', winner: this.winner });
+    this.resolveEnd(this.debugEmit)?.(); // dalgalı savaş: debug ile son düşman ölünce sıradaki dalga gelir
   }
 
   /** Debug: birimi öldürür (olaylar: death; takım biterse battleEnd). */
@@ -4032,6 +4143,7 @@ export class Battle {
     if (!c || c.hp > 0) return { ok: false, reason: 'Unit is not dead' };
     if (this.winner) return { ok: false, reason: 'Battle is over' };
     if (c.summoned) return { ok: false, reason: 'Summons cannot be revived' };
+    if (c.removed) return { ok: false, reason: 'Unit left the battle' };
     // Madde 257: hücresi doluysa en yakın boş hücrede dirilir (Resurrection'ın varsayılan hücre kuralı); hiç boş hücre yoksa olmaz
     const free = this.freeSlots(c.side);
     if (free.length === 0) return { ok: false, reason: 'No free cell' };

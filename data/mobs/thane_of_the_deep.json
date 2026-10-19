@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, adlı lider: Stonebound Warden çizimini paylaşır, spriteScale 1.12 ile biraz iri (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): elit şekilli adlı lider: Pick of the Deep + Oath of Stone + Shield Wall, STR 28 / INT 14 (44 MP), zırh 26, pasif P5 Deep Hoard (ikon yer tutucu 'mpregen'). spriteId 'stonebound_warden' YER TUTUCU (kendi çizimi gelince 'thane_of_the_deep').",
+  "_not": "Sefer mobu (data/mobs, N1; docs/design/campaign/fill-plan.md 2.3). Gizli: takım seçimi, rastgele/hızlı savaş, Endless ve denge sim'i dışı; class kuralları (4 skill, stat toplamı) uygulanmaz. Sayılar PROVİZYON (npm run sim:campaign). GÖRSEL (2026-10-13): spriteId 'stonebound_warden' (ChatGPT çizimi, adlı lider: Stonebound Warden çizimini paylaşır, spriteScale 1.12 ile biraz iri (fill-plan); içe aktarma tools/import-mobs.py, kaynak assets/source/mobs). BÖLGE II (2026-10-16, mob-plan.md 2.3): elit şekilli adlı lider: Pick of the Deep + Oath of Stone + Shield Wall, STR 28 / INT 14 (44 MP), zırh 26, pasif P5 Deep Hoard (ikon yer tutucu 'mpregen'). spriteId 'stonebound_warden' YER TUTUCU (kendi çizimi gelince 'thane_of_the_deep'). DENGE (balance-tester 2026-10-19, Ömer notu 'çok tank'): zırh 26 -> 8, Deep Hoard %50 -> %80 (zırhın çoğu MP'den: tam MP'de +35, MP yakan Anti-Mage onu soyar), can 150 -> 125 (karşılaşma çarpanı mine_wardens 1,7 -> 1,4); ölçüm 6B tekil sim (64 sefer durumu x 8 seed): Medium vekil AM'siz %92 -> %99, savaş 46 -> 36 tur.",
   "id": "thane_of_the_deep",
   "name": "Thane of the Deep",
   "family": "guardians",
@@ -16,10 +16,10 @@
     "dex": 4,
     "luck": 4
   },
-  "armor": 26,
+  "armor": 8,
   "magicArmor": 0,
   "overrides": {
-    "hp": 150
+    "hp": 125
   },
   "ai": "tank",
   "skills": [
@@ -31,10 +31,10 @@
     "id": "deep_hoard",
     "name": "Deep Hoard",
     "icon": "mpregen",
-    "text": "Bonus armor and magic armor equal to 50% of its current MP. Spending or losing MP thins it.",
+    "text": "Bonus armor and magic armor equal to 80% of its current MP. Spending or losing MP thins it.",
     "effect": {
       "type": "deepHoard",
-      "mpRatio": 0.5
+      "mpRatio": 0.8
     }
   }
 }

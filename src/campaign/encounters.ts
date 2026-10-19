@@ -7,7 +7,7 @@ import { withEnemyLevel } from '../progression/levels';
 import { loadoutSetup } from '../progression/loadout';
 import { activeHeroes, heroById, replayCount } from './state';
 import type { UnitSetup } from '../engine/types';
-import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, UnitMods } from './types';
+import type { BattleOutcome, CampaignState, Difficulty, DifficultyEnemyMods, EncounterDef, EncounterUnit, UnitMods } from './types';
 
 /**
  * Karşılaşmalar ve savaş motoruna köprü (saf). Savaş kurallarına dokunmaz: mevcut giriş noktasının istediği hücre listelerini
@@ -32,7 +32,7 @@ export function resolveEncounter(id: string, caps = ENGINE_CAPS): { id: string; 
 }
 
 /** Karşılaşmanın düşman hücre listesi (sınıf id'leri). */
-export function enemyCells(def: EncounterDef): string[] {
+export function enemyCells(def: Pick<EncounterDef, 'units'>): string[] {
   const cells = Array.from({ length: CELL_COUNT }, () => '');
   for (const u of def.units) cells[u.slot] = u.class;
   return cells;
@@ -58,6 +58,11 @@ export interface BattlePlan {
   heroOrder: string[];
   /** Motorun yuva başına birim kurulumları (teams.units; anahtar = yuva). */
   units: { party: Record<number, UnitSetup>; enemies: Record<number, UnitSetup> };
+  /**
+   * Dalgalı savaş (EncounterDef.waves; docs/design/waves.md): sonraki dalgaların hücre listeleri + yuva başına kurulumları; motora teams.waves olarak
+   * gider. Dalgasız karşılaşmada alan yazılmaz.
+   */
+  waves?: Array<{ enemies: string[]; units: Record<number, UnitSetup> }>;
   /** Genel zorluğun yapay zeka değeri (campaign.json > difficulties[x].ai): savaş kurulumuna iletilir. */
   difficulty: Difficulty;
   /** Region battle background id (content-designer: border-road, valley-field, ashen-heights; yoksa varsayılan arka plan). */
@@ -106,8 +111,10 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const chapterMods = chapterEnemyMods(s.mapId, n.id);
   // Düşman level'ı (Ömer 2026-10-17): düğüm seviyesi; kahramanla aynı temel stat büyümesi (attrAdd), çarpanların üstüne düz ek
   const enemyLevel = nodeLevel(s.mapId, n.id);
-  if (caps.unitMods)
-    for (const u of enc.def.units) {
+  // Bir dalganın düşman kurulumları (ilk dalga ve dalgalı savaşın sonraki dalgaları aynı kuralla)
+  const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>): void => {
+    if (!caps.unitMods) return;
+    for (const u of list) {
       const diff = CONFIG.difficulties[s.difficulty];
       // noTierMods: rütbe eki (enemyTier) bu birime uygulanmaz (The Bridge Warden: fazları/telgrafları zaten zor; sim ölçümü, open-questions)
       const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipRegions?.includes(n.region) ? CONFIG.enemyScale : undefined;
@@ -126,6 +133,15 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       };
       if (Object.keys(setup).length) enemies[u.slot] = setup;
     }
+  };
+  enemySetups(enc.def.units, enemies);
+  const waves = (enc.def.waves ?? [])
+    .filter((w) => w.units.length > 0)
+    .map((w) => {
+      const units: Record<number, UnitSetup> = {};
+      enemySetups(w.units, units);
+      return { enemies: enemyCells(w), units };
+    });
   return {
     nodeId: n.id,
     // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
@@ -137,6 +153,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     enemies: enemyCells(enc.def),
     heroOrder: partyHeroOrder(s),
     units: { party, enemies },
+    ...(waves.length ? { waves } : {}),
     difficulty: CONFIG.difficulties[s.difficulty]?.ai ?? CONFIG.defaultDifficulty,
     // Arka plan önceliği: karşılaşma > düğüm > bölge (dosya yoksa sahne varsayılan arka plana düşer)
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
@@ -174,15 +191,21 @@ export function validateEncounters(): string[] {
   for (const [id, def] of Object.entries(ENCOUNTERS)) {
     if (!def.name) errors.push(`${id}: no name`);
     if (!def.units.length) errors.push(`${id}: no units`);
-    const slots = def.units.map((u) => u.slot);
-    if (new Set(slots).size !== slots.length) errors.push(`${id}: duplicate slots`);
-    for (const u of def.units) {
-      // Boss (data/bosses) ve mob (data/mobs) tanımları istisna: oynanabilir class değiller ama karşılaşmada kullanılır. Çağrılar (data/summons; Grave Field'ın
-      // Risen Skeleton'ları, mob-plan.md 3) hazır çağrı olarak konur (content.battleSetup summoned: true verir).
-      if (!randomPool.includes(u.class) && !encounterUnit(u.class) && !summons[u.class]) errors.push(`${id}: class ${u.class} is not a playable class`);
-      if (!Number.isInteger(u.slot) || u.slot < 0 || u.slot >= CELL_COUNT) errors.push(`${id}: slot ${u.slot} out of range`);
-      for (const sk of u.lockSkills ?? []) if (!(classes[u.class] ?? encounterUnit(u.class) ?? summons[u.class])?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
-      if (u.initialCooldownBonus !== undefined && (!Number.isInteger(u.initialCooldownBonus) || u.initialCooldownBonus < 0)) errors.push(`${id}: bad initialCooldownBonus`);
+    // dalgalı karşılaşma: her dalga ayrı denetlenir (yuvalar dalga içinde tekrarsız)
+    (def.waves ?? []).forEach((w, k) => {
+      if (!w.units?.length) errors.push(`${id}: wave ${k + 2} has no units`);
+    });
+    for (const wave of [def.units, ...(def.waves ?? []).map((w) => w.units ?? [])]) {
+      const slots = wave.map((u) => u.slot);
+      if (new Set(slots).size !== slots.length) errors.push(`${id}: duplicate slots`);
+      for (const u of wave) {
+        // Boss (data/bosses) ve mob (data/mobs) tanımları istisna: oynanabilir class değiller ama karşılaşmada kullanılır. Çağrılar (data/summons; Grave Field'ın
+        // Risen Skeleton'ları, mob-plan.md 3) hazır çağrı olarak konur (content.battleSetup summoned: true verir).
+        if (!randomPool.includes(u.class) && !encounterUnit(u.class) && !summons[u.class]) errors.push(`${id}: class ${u.class} is not a playable class`);
+        if (!Number.isInteger(u.slot) || u.slot < 0 || u.slot >= CELL_COUNT) errors.push(`${id}: slot ${u.slot} out of range`);
+        for (const sk of u.lockSkills ?? []) if (!(classes[u.class] ?? encounterUnit(u.class) ?? summons[u.class])?.skills.includes(sk)) errors.push(`${id}: ${u.class} has no skill ${sk} to lock`);
+        if (u.initialCooldownBonus !== undefined && (!Number.isInteger(u.initialCooldownBonus) || u.initialCooldownBonus < 0)) errors.push(`${id}: bad initialCooldownBonus`);
+      }
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
   }

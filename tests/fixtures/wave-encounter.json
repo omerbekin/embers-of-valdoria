@@ -1,0 +1,17 @@
+{
+  "_not": "TEST karşılaşması (dalgalı savaş uçtan uca denemesi; docs/design/waves.md). Sefer verisinde YOK; tests/waves-sim.test.ts bunu geçici olarak karşılaşma tablosuna koyar. 3 dalga: 2 + 2 + 1 (elit lider) düşman.",
+  "name": "Wave Test Road",
+  "units": [
+    { "class": "warrior", "slot": 0, "mods": { "hpMult": 0.5, "powerMult": 0.6 } },
+    { "class": "archer", "slot": 7, "mods": { "hpMult": 0.5, "powerMult": 0.6 } }
+  ],
+  "waves": [
+    { "units": [
+      { "class": "defender", "slot": 1, "mods": { "hpMult": 0.5, "powerMult": 0.6 } },
+      { "class": "mage", "slot": 6, "mods": { "hpMult": 0.5, "powerMult": 0.6 } }
+    ] },
+    { "units": [
+      { "class": "paladin", "slot": 1, "name": "Wave Captain", "tier": "elite", "mods": { "hpMult": 0.8, "powerMult": 0.7 } }
+    ] }
+  ]
+}

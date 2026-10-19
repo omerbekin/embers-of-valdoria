@@ -70,6 +70,8 @@ export interface EncounterUnit {
 export interface EncounterLike {
   name: string;
   units: EncounterUnit[];
+  /** Dalgalı savaş (sefer şemasıyla aynı; docs/design/waves.md): sonraki dalgalar. */
+  waves?: Array<{ units: EncounterUnit[] }>;
   background?: string;
 }
 

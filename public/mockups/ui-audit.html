@@ -1,0 +1,100 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>UI audit - 2026-10-19</title>
+<!-- ARAYUZ TARAMASI (ui-dev, 2026-10-19). Oyun kodu DEGIL. Tasarim dili: docs/design/ui-design-language.md. Yontem: ekranlar yerlesik tarayicida acilip bakildi (ana menu, Play, Settings, Codex, Yuvalar, Harita, Quick Battle) + src/ui ve src/game/scenes kod taramasi. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<style>
+.au { max-width: 1240px; margin: 0 auto; padding: 24px 22px 90px; font: 19px/1.45 var(--g-body); }
+.au h1 { font: 600 28px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); margin: 6px 0; }
+.au h2 { font: 600 20px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); margin: 34px 0 8px; padding-top: 12px; border-top: 1px solid rgba(217,178,106,.25); }
+.au p, .au li { margin: 5px 0; }
+.au table { width: 100%; border-collapse: collapse; margin: 8px 0 6px; }
+.au th { text-align: left; font: 600 12px var(--g-disp); letter-spacing: .18em; text-transform: uppercase; color: var(--g-dim); padding: 8px 10px; border-bottom: 1px solid rgba(217,178,106,.35); }
+.au td { vertical-align: top; padding: 10px 10px; border-bottom: 1px solid rgba(217,178,106,.14); }
+.au td.n { width: 230px; font: 600 16px var(--g-disp); letter-spacing: .05em; text-transform: uppercase; color: var(--g-text); }
+.au td.n small { display: block; margin-top: 4px; font: 14px var(--g-body); letter-spacing: 0; text-transform: none; color: var(--g-dim); }
+.au td.s { width: 130px; }
+.au code { color: #ffb98a; font-size: 15px; }
+.st { display: inline-block; padding: 2px 10px; font: 600 12px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; border: 1px solid; white-space: nowrap; }
+.st.ok { color: #cfe8a8; border-color: rgba(127,191,63,.5); background: rgba(127,191,63,.1); }
+.st.mid { color: #f3d999; border-color: rgba(217,178,106,.6); background: rgba(217,178,106,.1); }
+.st.old { color: #e8806a; border-color: rgba(214,74,52,.6); background: rgba(214,74,52,.1); }
+.st.na { color: var(--g-dim); border-color: rgba(217,178,106,.25); }
+.au a { color: #ffb35a; }
+.au .links a { display: inline-block; margin: 4px 14px 4px 0; padding: 4px 12px; border: 1px solid rgba(224,112,42,.55); text-decoration: none; font: 600 13px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: #f3d999; }
+</style>
+</head>
+<body>
+<div class="au">
+<h1>Arayüz taraması</h1>
+<p>Ömer'in isteği (2026-10-19): "tüm arayüzler taranacak; eski yapıda kalanlar için mockup çıkarılacak." Ölçüt: <code>docs/design/ui-design-language.md</code> (ortak parçalar: A Band ipucu, Gear plakası, item ipucu v3, A Plates ve pasif 1. sırada, karakter kartı A; düz yazı / italik yalnızca kısa flavor; bilgi hover'da; sınırlar korunur; dokunma ≥ 44 px).</p>
+<p>Durum: <span class="st ok">Uygun</span> yeni dilde · <span class="st mid">Kısmen</span> kit dilinde ama bir iki kural eksik · <span class="st old">Eski</span> ortak parçalar / kurallar uygulanmamış (mockup çıkarıldı) · <span class="st na">Kapsam dışı</span> başka mockup'ta ya da geliştirici aracı.</p>
+<p class="links">Bu turun mockup'ları:
+<a href="valor.html">Valor</a><a href="wave-battle.html">Dalgalı savaş</a><a href="team-select-v2.html">Quick Battle şeridi</a><a href="campaign-slots-v2.html">Sefer yuvaları</a><a href="map-hud-v2.html">Sefer haritası HUD</a><a href="codex-v2.html">Codex</a></p>
+
+<h2>Önce eski kalanlar (mockup çıkarıldı)</h2>
+<table>
+<tr><th>Ekran</th><th>Durum</th><th>Sorun</th></tr>
+<tr><td class="n">Sefer yuvaları<small>New Campaign / Load Game · campaign-slots-ui.ts</small></td><td class="s"><span class="st old">Eski</span></td>
+ <td>Yuvalar çıplak satır (ad + italik tek satır), sağ panel seyrek: silik küçük meta, uzun italik ayrıntı, takım yalnız minik portre, tek düğme. Adım II seçenek kartları italik; adım göstergesi çok küçük (telefonda ~6 px). Gear plakası / A Band kâğıdı / karakter kartı dili yok. → <a href="campaign-slots-v2.html">campaign-slots-v2</a> (3 varyant: Plates + sheet, Three cards, One column).</td></tr>
+<tr><td class="n">Sefer haritası HUD'ı<small>Your party · You are here · alt bilgi · Legend · CampaignMapScene.ts</small></td><td class="s"><span class="st old">Eski</span></td>
+ <td>Kahraman satırı kart değil (rol italik, Lv küçük rozet, can ince çizgi); sol alt bilgi tek parça italik yazı (bölge · Cleared · Chapter · mod · zorluk · altın, hepsi aynı ağırlık); ilerleme çubuğu yok; sol sütun haritanın dörtte birini kararttırıyor; Legend küçük çerçevesiz. → <a href="map-hud-v2.html">map-hud-v2</a> (Plates, Rail, Top strip).</td></tr>
+<tr><td class="n">Codex<small>Ana menü / Menu &gt; Codex · src/wiki</small></td><td class="s"><span class="st old">Eski</span></td>
+ <td>Sol menü adları dar pencerede / telefonda kesiliyor ("GETTING STA…", "STATS &amp; ME…"); kart başlığında italik alt başlık, wiki.css'te ~14 yerde italik; sınıf / skill ayrıntısı düz metin (A Plates, A Band, karakter kartı yok); renkli sivri pikselart ikonlar boyalı ikon diliyle uyuşmuyor. → <a href="codex-v2.html">codex-v2</a> (Tabs, Ledger, Search first).</td></tr>
+<tr><td class="n">Quick Battle: seçili kahraman şeridi<small>TeamSelectScene · MP takım seçimi aynı</small></td><td class="s"><span class="st old">Eski</span></td>
+ <td>Üstteki iki takım tahtası, roster ve butonlar kit dilinde ✓. Alttaki şerit tek satır düz "STR 24 DEX 6..." ve 5 çıplak skill ikonu: primary belli değil, pasif / ulti / bedel yok, ipucu yok; karakter kartı A ve A Plates (pasif önce) kuralı uygulanmamış. → <a href="team-select-v2.html">team-select-v2</a> (Card strip, Slim, Hover sheet).</td></tr>
+<tr><td class="n">Valor penceresi<small>valor-braziers.ts &gt; openValorRevive</small></td><td class="s"><span class="st old">Eski</span></td>
+ <td>Kalıcı italik açıklama paragrafı, çıplak satırlar, kutusuz eski ipucu, mangal sayısı okunmuyor. → <a href="valor.html">valor</a> (Plates, Roll call, Band).</td></tr>
+</table>
+
+<h2>Kısmen (küçük rötuş yeter, mockup gerekmedi)</h2>
+<table>
+<tr><th>Ekran</th><th>Durum</th><th>Sorun</th></tr>
+<tr><td class="n">Phaser metni: <code>elBody</code> varsayılanı italik<small>elegant-ui.ts · 51 çağrı, yalnızca biri düz</small></td><td class="s"><span class="st mid">Sistemik</span></td>
+ <td><b>Tüm Phaser ekranlarında alt yazı varsayılan italik</b> (harita ekranında 21 çağrı, yuvalarda 10, Endless'te 11 açık italik not, takım seçiminde 4...). Tasarım dili "düz yazı varsayılan, italik yalnızca flavor" diyor. Çözüm tek yerde: <code>italic = false</code> varsayılan + flavor çağrılarına açıkça <code>true</code>; ama görünüm geniş değişir (Ömer onayı).</td></tr>
+<tr><td class="n">Patch Notes<small>patch-notes.ts / .css</small></td><td class="s"><span class="st mid">Kısmen</span></td>
+ <td>Kit çerçeve, elmaslı düğmeler, başlık ✓. Tarih ("19 Oct 2026") ve "Page 1/14" italik (2 yer). Sürüm satırı ve içerik düzgün.</td></tr>
+<tr><td class="n">Mentor kutusu (tutorial)<small>lesson-box.ts / .css</small></td><td class="s"><span class="st mid">Kısmen</span></td>
+ <td>el-panel çerçeveli, düğmeler kit ✓; metin 4 yerde italik; kutu A Band başlık şeridi dili değil (portre + başlık + metin düz kutu). Yeri / boyutu (sol üst şerit) doğru, değiştirme.</td></tr>
+<tr><td class="n">Endless: başlık / kamp / ödül / kalıntı / tüccar<small>EndlessScene.ts · endless-gear.ts</small></td><td class="s"><span class="st mid">Görülmedi</span></td>
+ <td>Şu an ana menüden ya da debug menüsünden açılamıyor (Endless anahtarı taslakta: <a href="endless-toggle.html">endless-toggle</a>), bu yüzden gözle bakılamadı. Koddan: kit düğme / heading / panel geçişi ✓, <b>11 açık italik not</b>; ödül kartları kendi çizimi (item satırı Gear plakası değil mi kontrol edilmeli); Valor mangalları ✓. Erişilebilir olunca ayrıca taranmalı.</td></tr>
+<tr><td class="n">Kasaba ekranı<small>town-screen.ts</small></td><td class="s"><span class="st mid">Görülmedi</span></td>
+ <td>Tam ekran kasaba resmi + tıklanır yerler; yazıları kit (<code>elText / elGlow</code>), düğme yok. Gözle bakılmadı; koddan uygun.</td></tr>
+<tr><td class="n">Multiplayer lobisi + kısa bildirimler<small>MultiplayerScene.ts · mp-overlay.ts</small></td><td class="s"><span class="st mid">Görülmedi</span></td>
+ <td>Lobi kit (<code>elHeading</code>, Leave solda / Ready en sağda ✓). <code>mp-overlay.ts</code> üst şerit ve bildirimi kendi <code>mp-banner</code> sınıfıyla çiziyor, kit değişkeni / yazı tipi yok: kit dışı olabilir (çevrimiçi iki oyuncu gerektiği için bakılamadı).</td></tr>
+<tr><td class="n">Yükleme göstergesi<small>boot-loader.ts</small></td><td class="s"><span class="st mid">Bilerek sade</span></td>
+ <td>Kit yazı tipi yok (fontlar yüklenmeden önce görünmesi gerek); bilinçli. Değiştirme.</td></tr>
+</table>
+
+<h2>Uygun (yeni dilde)</h2>
+<table>
+<tr><th>Ekran</th><th>Durum</th><th>Not</th></tr>
+<tr><td class="n">Ana menü + Play kartları</td><td class="s"><span class="st ok">Uygun</span></td><td>Kutusuz satırlar, kor elmas, kartlar; Campaign kartında Continue / New / Load kit düğmeleri (dokunma alanı 44 px, Phaser <code>elButton</code>). Küçük öneri: Continue hangi yuva / nerede kaldığını söylemiyor (hover bilgisi eklenebilir; öncelik düşük).</td></tr>
+<tr><td class="n">Settings (ana menü + oyun içi)</td><td class="s"><span class="st ok">Uygun</span></td><td>Başlık, kutusuz satırlar, kaydırıcılar; iki yerde aynı ölçü.</td></tr>
+<tr><td class="n">Oyun içi Menu (savaş / harita / Endless)</td><td class="s"><span class="st ok">Uygun</span></td><td>Tek ortak bileşen (<code>game-menu.ts</code>).</td></tr>
+<tr><td class="n">Savaş HUD'ı (alt çubuk, sıra çubuğu, Valor mangalları)</td><td class="s"><span class="st ok">Uygun</span></td><td>A Plates uygulanmış (pasif önce, ulti turuncu), karakter bloğu ve çipler; A Band ipuçları. Dalgalı savaş göstergesi eklenecek: <a href="wave-battle.html">wave-battle</a>.</td></tr>
+<tr><td class="n">Sonuç ekranı</td><td class="s"><span class="st ok">Uygun</span></td><td>battle-result A (plaket, satır başına birim, özet şeridi).</td></tr>
+<tr><td class="n">Gear · Formation · Merchant · Loot · Reward bag · Blacksmith · stat puanı</td><td class="s"><span class="st ok">Uygun</span></td><td>0.9.0 yenilemesi: ortak defter, Gear item plakası, item ipucu v3, ortak X.</td></tr>
+<tr><td class="n">Start Battle kartı · düğüm çerçeveleri · item / skill ipuçları</td><td class="s"><span class="st ok">Uygun</span></td><td>v3 Anchored, C çerçeveler, A Band, item ipucu v3.</td></tr>
+<tr><td class="n">Quick Battle takım tahtası (iki takım, roster, butonlar)</td><td class="s"><span class="st ok">Uygun</span></td><td>Kit dilinin çıkış ekranı. Yalnızca alttaki seçili kahraman şeridi eski (yukarıda).</td></tr>
+<tr><td class="n">Harita olay / hazine / dinlenme / aday / Choose your hero</td><td class="s"><span class="st na">Başka mockup</span></td><td><a href="map-events.html">map-events</a> (seçildi, ayrı agent uyguluyor; kodda <code>map-window.ts</code> zaten var).</td></tr>
+<tr><td class="n">Debug menüsü · Asset Gallery / Wiki Assets · Legacy</td><td class="s"><span class="st na">Kapsam dışı</span></td><td>Geliştirici araçları; oyuncuya görünmez (renkli ikonlar bilerek).</td></tr>
+</table>
+
+<h2>Ömer'e sorular</h2>
+<ol>
+<li><b>Phaser italik varsayılanı:</b> tüm Phaser ekranlarında (ana menü, harita, yuvalar, takım seçimi, Endless) alt yazılar italik. "Düz yazı varsayılan" kuralını bu ekranlara da yayalım mı? (Tek satırlık sistem değişikliği ama her ekranın görünümü değişir.)</li>
+<li><b>Endless erişimi:</b> Endless şu an menüden açılamıyor; tarama o zaman yapılsın mı? (taslak: endless-toggle)</li>
+<li><b>Dalga adı:</b> savaş içi dalga ile Endless'in "Wave 7"si (bölüm numarası) çakışıyor; ayrı bir ad (Reinforcements / Round) mı?</li>
+<li><b>Sefer yuvası özetindeki takım seviyesi:</b> campaign-slots-v2 takım portrelerinde Lv gösteriyor; kayıt özetinde seviye bugün tutuluyor mu bilmiyorum (yoksa uygulamada özete eklenecek).</li>
+</ol>
+</div>
+</body>
+</html>

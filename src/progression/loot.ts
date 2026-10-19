@@ -70,7 +70,17 @@ function pickBase(rng: Rng, slot: SlotId, family: string | undefined, ilvl: numb
   const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary');
   const fit = (useSlot: boolean, capIlvl: boolean) =>
     bases.filter((d) => (!useSlot || (fitsSlot(d, slot) && ((slot !== 'weapon' && slot !== 'offhand') || !family || d.family === family))) && (!capIlvl || d.ilvl <= ilvl));
-  const choose = (pool: ItemDef[]) => pool[rng.int(0, pool.length - 1)];
+  // Tutuş ağırlığı (items.json > loot.gripWeight; Ömer 2026-10-19 notu: seferde çift el silah çok az düşüyordu): ağırlık yoksa ya da havuzda
+  // tek tutuş varsa eşit seçim (eski zar yolu aynen); varsa taban, tutuşunun ağırlığıyla seçilir (yok = 1).
+  const gw = ITEMS.loot.gripWeight;
+  const weightOf = (d: ItemDef) => (d.grip && gw?.[d.grip]) || 1;
+  const choose = (pool: ItemDef[]) => {
+    if (!gw || pool.every((d) => weightOf(d) === weightOf(pool[0]!))) return pool[rng.int(0, pool.length - 1)];
+    const total = pool.reduce((a, d) => a + weightOf(d), 0);
+    let r = rng.next() * total;
+    for (const d of pool) if ((r -= weightOf(d)) < 0) return d;
+    return pool[pool.length - 1];
+  };
   for (const useSlot of [true, false]) {
     const pool = fit(useSlot, true);
     if (pool.length) return choose(pool);

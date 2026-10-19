@@ -226,3 +226,33 @@ describe('seferde loot', () => {
     expect(moves.map((m) => m.uid)).toEqual(['x2']); // Arming Sword ailesi (axes) Paladin'e uygun değil
   });
 });
+
+describe('loot tutuş ağırlığı (items.json > loot.gripWeight; Ömer 2026-10-19: çift el az düşüyordu)', () => {
+  it('Axes & Maces silahlarında çift el payı ağırlıkla artar; ağırlık yokken eşit seçim', () => {
+    const I = ITEMS;
+    const def = itemDef;
+    const party = [{ class: 'warrior', equipment: { weapon: { uid: 'a', id: 'woodcutters_axe' }, offhand: { uid: 'b', id: 'iron_buckler' } } }];
+    const share = () => {
+      let one = 0;
+      let two = 0;
+      for (let i = 0; i < 3000; i++)
+        for (const id of rollLoot({ rng: new Rng(i + 1), kind: 'battle', chapter: 1, ilvl: 10, party: party as never }).items) {
+          const d = def(id)!;
+          if (d.slot !== 'weapon' || (d.family !== 'axes' && d.family !== 'maces')) continue;
+          if (d.grip === 'two') two++;
+          else one++;
+        }
+      return two / Math.max(1, one + two);
+    };
+    const w = I.loot.gripWeight;
+    expect(w?.two ?? 1).toBeGreaterThan(1);
+    const weighted = share();
+    delete I.loot.gripWeight;
+    try {
+      const flat = share();
+      expect(weighted).toBeGreaterThan(flat + 0.1);
+    } finally {
+      I.loot.gripWeight = w;
+    }
+  });
+});

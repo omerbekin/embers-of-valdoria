@@ -44,7 +44,7 @@ describe('sefer kaydı: 3 yuva, yuva başına kayıtlar', () => {
     const list = listSaves(kv, 0);
     expect(list).toHaveLength(5);
     expect(list[0]!.savedAt).toBe('2026-10-07T10:09:00Z');
-    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 21, node: 'Mill Road', classes: ['archer'] });
+    expect(list[0]!.summary).toMatchObject({ map: 'VALDORIA', stop: 1, stops: 22, node: 'Mill Road', classes: ['archer'] });
   });
 
   it('her yuvanın kendi listesi var: bir yuvanın 5 sınırı diğerini etkilemez; Ironman yuvası tek kayıt', () => {

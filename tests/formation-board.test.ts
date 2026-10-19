@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { clientToLocal, dropOnCell, fitOfHint, previewMove, reachRows, reachText, rowName, tapCell } from '../src/ui/formation-board-rules';
+import { clientToLocal, rectToLocal, dropOnCell, fitOfHint, previewMove, reachRows, reachText, rowName, tapCell } from '../src/ui/formation-board-rules';
 
 // 12 hücre: 1 = Warrior (ön sıra), 10 = Undead (arka sıra)
 const cells = (): string[] => {
@@ -78,5 +78,15 @@ describe('formation board kuralları (Formation A)', () => {
     // döndürülmüş: ekran (vw - ly, lx); kutu 600 yüksek -> ekranda 1200 boy / 2720 en yok, bbox genişlik 1200 yükseklik 2720
     const rr = { left: 0, top: 0, right: 1200, bottom: 2720 };
     expect(clientToLocal(1100, 400, rr, 1360, true)).toEqual({ x: 200, y: 50 });
+  });
+
+  it('ögenin dikdörtgenini yerel konum + boyuta çevirir (ipucu / sürükleme gölgesi döndürülmüş sahnede de yerinde)', () => {
+    const root = { left: 100, top: 50, right: 100 + 2720, bottom: 50 + 1200 };
+    expect(rectToLocal({ left: 300, top: 250, right: 500, bottom: 450 }, root, 1360, false)).toEqual({ x: 100, y: 100, w: 100, h: 100 });
+    // döndürülmüş: kök bbox 1200x2720; ögenin sağ üst köşesi yerel sol üst köşedir (clientToLocal ile aynı eşleme)
+    const rr = { left: 0, top: 0, right: 1200, bottom: 2720 };
+    const r = { left: 600, top: 400, right: 800, bottom: 600 };
+    expect(rectToLocal(r, rr, 1360, true)).toEqual({ x: 200, y: 200, w: 100, h: 100 });
+    expect(clientToLocal(r.right, r.top, rr, 1360, true)).toEqual({ x: 200, y: 200 });
   });
 });

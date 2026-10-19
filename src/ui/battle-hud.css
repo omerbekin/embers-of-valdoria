@@ -350,6 +350,28 @@
   white-space: nowrap;
 }
 
+.bh-wave {
+  position: absolute;
+  top: 56px;
+  transform: translate(-100%, -100%); /* çubuğun altın çizgisinin hemen üstünde */
+  font: 600 13px var(--cin);
+  letter-spacing: 0.34em;
+  text-transform: uppercase;
+  color: rgb(var(--gold));
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
+  white-space: nowrap;
+  pointer-events: none;
+}
+
+.bh-wave.test {
+  top: 1px;
+  transform: translateX(-50%);
+}
+
+.bh-wave[hidden] {
+  display: none;
+}
+
 .bh-turn-lbl {
   position: absolute;
   top: 120px;
@@ -1330,6 +1352,52 @@
 .bh-card.pin,
 .bh-card.pin .bh-card-sc {
   pointer-events: auto;
+}
+
+/* sabit kartın X düğmesi: sağ üst köşe, en az 44 gerçek piksel dokunma alanı (görünen kare daha küçük) */
+.bh-card-x {
+  position: absolute;
+  top: 4px;
+  right: 4px;
+  z-index: 2;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max(44px, calc(44px * var(--bh-inv, 1)));
+  height: max(44px, calc(44px * var(--bh-inv, 1)));
+  padding: 0;
+  color: #d9c8a2;
+  background: transparent;
+  border: 0;
+  cursor: pointer;
+  pointer-events: auto;
+  -webkit-tap-highlight-color: transparent;
+  transition: color 0.18s;
+}
+
+.bh-card-x::before {
+  content: '';
+  position: absolute;
+  inset: 25%;
+  border: 1px solid rgba(217, 178, 106, 0.42);
+  background: rgba(12, 9, 6, 0.6);
+  transition: border-color 0.18s;
+}
+
+.bh-card-x svg {
+  position: relative;
+  width: 55%;
+  height: 55%;
+}
+
+.bh-card-x:hover,
+.bh-card-x:focus-visible {
+  color: #f3d999;
+}
+
+.bh-card-x:hover::before,
+.bh-card-x:focus-visible::before {
+  border-color: #f3d999;
 }
 
 .bh-card .bt {

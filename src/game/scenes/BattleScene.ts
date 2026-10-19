@@ -27,7 +27,7 @@ import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from 
 import { initialSeed, initialSizes, newSeed } from '../seed';
 import { clampSize } from '../team-select-model';
 import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
-import { motion } from '../../ui/motion';
+import { MOTION, motion } from '../../ui/motion';
 import { enemiesEnter, showWaveBanner } from '../wave-banner';
 import { formatHit } from '../hit-format';
 import { kitTextBand } from '../hud-kit';
@@ -303,6 +303,8 @@ export class BattleScene extends Phaser.Scene {
   private uiCorpses = new Map<string, CorpseState>();
   /** Yuvasında canlı çağrı duran hücreler ('board:slot'): üstte birim varken ceset işareti gizlenir. */
   private uiOccupied = new Set<string>();
+  /** Dalgalı savaş: ekranda gösterilen dalga (0 tabanlı; olaylar oynatıldıkça ilerler, motorun gerisinde kalabilir). */
+  private shownWave = 0;
 
   constructor() {
     super(BattleScene.KEY);
@@ -335,6 +337,7 @@ export class BattleScene extends Phaser.Scene {
     this.corpseMarkers = new Map();
     this.uiCorpses = new Map();
     this.uiOccupied = new Set();
+    this.shownWave = 0;
     this.views = new Map();
     this.lastSkill = new Map();
     this.controlled = null;
@@ -403,7 +406,9 @@ export class BattleScene extends Phaser.Scene {
       const setup = content.battleSetup(this.battleId, this.seed, this.mode, this.teams ? { ...this.teams } : { partySize: this.partySize, enemySize: this.enemySize }, false);
       const side = (list: readonly { id: string }[], units: readonly ({ summoned?: boolean } | undefined)[] | undefined, s: 'party' | 'enemy') =>
         list.map((d, i) => ({ uid: `${s}-${i}`, defId: d.id, side: s, summoned: !!units?.[i]?.summoned }));
-      return [...side(setup.party, setup.partyUnits, 'party'), ...side(setup.enemies, setup.enemyUnits, 'enemy')];
+      // sonraki dalgaların düşmanları da önceden yüklenir (uid'ler motordaki gibi enemy-w<dalga>-<sıra>; yalnızca sprite listesi için)
+      const later = (setup.waves ?? []).flatMap((w, k) => w.enemies.map((d, i) => ({ uid: `enemy-w${k + 2}-${i}`, defId: d.id, side: 'enemy' as const, summoned: !!w.enemyUnits?.[i]?.summoned })));
+      return [...side(setup.party, setup.partyUnits, 'party'), ...side(setup.enemies, setup.enemyUnits, 'enemy'), ...later];
     } catch {
       return undefined;
     }
@@ -450,12 +455,14 @@ export class BattleScene extends Phaser.Scene {
     this.applyDebugTiming();
     this.bindSkillHotkeys();
     this.bindUnitSelect();
-    for (const c of this.battle.combatants) this.addView(c);
+    for (const c of this.battle.combatants) if (!c.removed) this.addView(c); // dalgalı savaş: önceki dalganın savaştan çıkmış düşmanı çizilmez (devamda)
     releasePoseSources(this); // atlaslar pişti: gövde / silah kaynak dokuları bellekte tutulmaz (telefon belleği; src/game/pose-rig.ts)
     this.syncCorpsesNow();
     this.syncLoadedEffects();
     this.uiActor = this.battle.currentUid;
     this.mountHud();
+    this.shownWave = this.battle.waveIndex; // yarım savaştan devam edilen dalgalı savaşta doğru dalga yazılır
+    this.syncWaveLabel();
     // Sefer tutorial'ı (docs/design/tutorial.md): ders kutuları DOM'da; sahne kapanınca kapanır
     this.tut?.destroy();
     this.tut = this.tutCtx && !this.mp ? new BattleTutorial(this.tutCtx, () => this.battle) : null;
@@ -574,7 +581,11 @@ export class BattleScene extends Phaser.Scene {
         const art = statusBadge(st.kind, def?.icon ?? fallback[0]!);
         const max = (def as { maxStacks?: number } | undefined)?.maxStacks ?? 0;
         // Yığılan durum (Omen): rozet "x2"; kalan tur ve yığın can çubuğunun solundaki mühür yuvalarında (hexer.md bölüm 8)
-        if (max > 1 && st.stacks) seals = { stacks: st.stacks, max, turns: st.turns, color: def?.color ?? '#b04fa8' };
+        // Tek gösterge (Ömer 2026-10-19: "Bad Omen iki kez görünüyor"): mühür yuvaları yığını ve kalan turu zaten gösterir, aynı durum için "x1" rozeti eklenmez
+        if (max > 1 && st.stacks) {
+          seals = { stacks: st.stacks, max, turns: st.turns, color: def?.color ?? '#b04fa8' };
+          continue;
+        }
         list.push({ id: st.kind, left: st.turns, icon: art.name, owner: art.owner, color: def?.color ?? fallback[1]!, text: max > 1 && st.stacks ? `x${st.stacks}` : String(st.turns), debuff: def?.type === 'debuff', turns: !(max > 1 && st.stacks) });
       }
       for (const g of this.battle.ground) {
@@ -3098,9 +3109,70 @@ export class BattleScene extends Phaser.Scene {
         if (e.winner === this.localSide && this.campaign?.onVictory?.(this.battle)) return; // endless: toparlanma + ara verme (sonuç ekranı yok)
         this.showResult(e.winner === this.localSide);
         return;
+      case 'waveCleared':
+        // dalga bitti: kısa nefes (son dalgada ardından battleEnd gelir; sonuç ekranı kendi girişini yapar)
+        await this.wait(slow(450));
+        return;
+      case 'waveStart':
+        await this.playWaveStart(e);
+        return;
       case 'battleStart':
         return;
     }
+  }
+
+  // --- Dalgalı savaş (docs/design/waves.md): görünüm tek yerde; kesin görünüm Ömer'in wave-battle mockup seçiminden sonra değişir ---
+
+  /** HUD'daki küçük "Wave 1/3" yazısı (yalnızca dalga sayısı 1'den büyükse). */
+  private syncWaveLabel(): void {
+    const total = this.battle.waveCount;
+    this.hud?.setWave(total > 1 ? `Wave ${this.shownWave + 1}/${total}` : null);
+  }
+
+  /** Önceki dalganın düşmüş birimi savaştan çıktı: görünümü yumuşakça solar ve kalkar (ceset işareti de gider). */
+  private removeWaveView(uid: string): void {
+    const view = this.views.get(uid);
+    this.uiCorpses.delete(uid);
+    this.uiOccupied.delete(cellKey('enemy', this.battle.get(uid)?.slot ?? -1));
+    if (this.unitSel.has(uid)) this.unitSel.clear();
+    if (!view) return;
+    this.views.delete(uid);
+    if (this.hoverView === view) this.hoverView = undefined;
+    const box = view.container;
+    this.tweens.killTweensOf(box);
+    this.tweens.add({ targets: box, alpha: 0, duration: slow(300), onComplete: () => box.destroy() });
+  }
+
+  /** Yeni dalga: eski görünümler ve cesetler kalkar, "WAVE n/N" bandı, yeni düşmanlar sağdan girer, sıra çubuğu ve alt çubuk tazelenir. */
+  private async playWaveStart(e: BattleEvent & { type: 'waveStart' }): Promise<void> {
+    this.shownWave = e.index;
+    if (e.index === 0 && e.combatants.length === 0) {
+      this.syncWaveLabel();
+      return;
+    }
+    for (const uid of e.removed) this.removeWaveView(uid);
+    this.refreshCorpseMarks();
+    const boxes: Phaser.GameObjects.Container[] = [];
+    for (const c of e.combatants) {
+      const view = this.addView(c);
+      if (!view) continue;
+      // görünüm motorun canlı birimini izler (olaylar oynatılırken motor ilerde; olay kopyası dalga başındaki hâlidir)
+      const live = this.battle.get(c.uid);
+      if (live) (view as { combatant: Combatant }).combatant = live;
+      view.container.setAlpha(0);
+      if (c.maxRage !== undefined) this.rageShown.set(c.uid, c.rage ?? 0);
+      if (c.summoned) this.uiOccupied.add(cellKey(c.board, c.slot));
+      boxes.push(view.container);
+    }
+    this.refreshCorpseMarks();
+    this.clearSelection();
+    this.syncWaveLabel();
+    const names = e.combatants.map((c) => unitName(c)).join(' · ');
+    await showWaveBanner(this, `WAVE ${e.index + 1}/${e.total}`, names || undefined, MOTION.wave.battleHoldMs);
+    if (!this.sys.isActive()) return;
+    this.renderTurnBar(e.queue);
+    await enemiesEnter(this, boxes);
+    this.refreshCommands();
   }
 
   /** Charge (advanceToFront): the view's home cell becomes `to` without moving it now (the skill effect's return carries it there). */

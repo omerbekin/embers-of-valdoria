@@ -40,6 +40,7 @@ import { skillMiniGrid } from '../../ui/shape-diagram';
 import type { MpTeamHooks } from '../mp-hooks';
 import { debugState } from '../debug-state';
 import { onStageResize, stageView, worldXY } from '../stage';
+import { growTouchZone, type TouchZoneOpts } from '../touch-hit';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { startMainMenu } from '../session-flow';
@@ -432,7 +433,7 @@ export class TeamSelectScene extends Phaser.Scene {
     return elDiamond(this, r, hollow);
   }
 
-  private lnk(label: string, run: () => void, o: { size?: number; small?: string } = {}) {
+  private lnk(label: string, run: () => void, o: { size?: number; small?: string; touch?: TouchZoneOpts | true } = {}) {
     return elLink(this, label, run, { ...o, isBusy: () => !!this.drag?.moved });
   }
 
@@ -518,12 +519,12 @@ export class TeamSelectScene extends Phaser.Scene {
       const r = this.lnk('Random', () => {
         this.active = side;
         this.randomize(side);
-      });
+      }, { touch: { growX: 'left', maxExtraW: 60 } }); // yan yana düğmeler: Random sola, Clear sağa büyür (aradaki ◆ payı boş kalır, çakışma yok)
       const c = this.lnk('Clear', () => {
         this.teams[side] = this.emptyCells();
         this.active = side;
         this.refresh();
-      });
+      }, { touch: { growX: 'right', maxExtraW: 60 } });
       const sep = this.cz(0, ACTS_CY, '◆', 14, 'rgba(217,178,106,0.35)', 0).setOrigin(0.5);
       const total = r.width + 6 + 14 + 6 + c.width;
       const x0 = enemy ? SIDE_W - total : 0;
@@ -568,6 +569,7 @@ export class TeamSelectScene extends Phaser.Scene {
       draw();
       const c = this.add.container(cx, 0, [g]);
       const zone = this.add.zone(0, 0, HIT, HIT).setInteractive({ useHandCursor: true });
+      growTouchZone(this, zone, HIT, HIT, { maxW: 108 }); // iki ok arası 108 birim: çakışmadan 44 gerçek piksele
       c.add(zone);
       zone.on('pointerover', () => {
         hover = true;
@@ -624,7 +626,7 @@ export class TeamSelectScene extends Phaser.Scene {
           this.randomize('party', false);
           this.randomize('enemies');
         },
-        { kind: 'secondary', w, h: RANDOM_BOTH.h, isBusy: () => !!this.drag?.moved },
+        { kind: 'secondary', w, h: RANDOM_BOTH.h, isBusy: () => !!this.drag?.moved, touch: { growY: 'up' } }, // alt komşusu START: yalnızca yukarı büyür
       );
       const cy = top - RANDOM_BOTH.gap - RANDOM_BOTH.h / 2;
       rb.root.setY(cy);
@@ -639,7 +641,7 @@ export class TeamSelectScene extends Phaser.Scene {
 
   /** START BATTLE (multiplayer: READY): kitin primary düğmesi, sağ alt köşe. */
   private buildStart(): void {
-    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', minLabel: this.mp ? 'Not ready' : undefined, h: START.h, size: START.size, isBusy: () => !!this.drag?.moved });
+    const b = elButton(this, this.mp ? 'Ready' : 'Start Battle', () => !this.drag?.moved && this.start(), { kind: 'primary', minLabel: this.mp ? 'Not ready' : undefined, h: START.h, size: START.size, isBusy: () => !!this.drag?.moved, touch: { growY: 'down' } });
     b.root.setY(START.cy).setDepth(30);
     this.startUi = b;
     this.toastFn = elToast(this);

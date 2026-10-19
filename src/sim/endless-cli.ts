@@ -2,12 +2,14 @@
 // Kullanım: npm run sim:endless -- [koşu sayısı] [ilk seed] [--compare] [--gear=best|none] [--relics=pick|none] [--max=40] [--jobs=N] [--json=dosya]
 //   Varsayılan: 300 koşu, seed 1, item + kalıntı açık, oyuncu vekili Medium ("iyi oyuncu"), iş sayısı = çekirdek - 1 (en fazla 12).
 //   --compare: aynı seed'lerle item'siz ve kalıntısız koşuları da oynar ve karşılaştırır.
+//   [--encounter-id=<id> --encounter-file=<dosya.json>]: bir karşılaşmayı (elit/boss) dosyadakiyle değiştirir (dalgalı savaş denemesi).
 import { valorMode } from './valor-mode';
 import { spawn } from 'node:child_process';
 import { cpus } from 'node:os';
 import { readFileSync, writeFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { content } from '../engine';
+import encountersJson from '../../data/campaign/encounters.json';
 import { ENDLESS as BASE, relicDef, type EndlessConfig } from '../endless';
 import { keyMetrics, mergeEndlessResults, rarityByBand, simulateEndless, summarize, type EndlessSimResult } from './endless';
 
@@ -23,6 +25,15 @@ const cfgFile = flag('cfg');
 const ENDLESS: EndlessConfig = cfgFile ? { ...BASE, ...(JSON.parse(readFileSync(cfgFile, 'utf8')) as Partial<EndlessConfig>) } : BASE;
 const part = flag('part'); // iç kullanım: "başlangıç:bitiş:gear:relics" (paralel parça, JSON çıktı)
 const jobs = Math.max(1, Number(flag('jobs') ?? Math.min(12, cpus().length - 1)));
+// --encounter-id=<id> --encounter-file=<dosya.json>: o karşılaşmanın yerine dosyadaki karşılaşma (tek EncounterDef; ör. dalgalı deneme,
+// tests/fixtures/wave-encounter.json; docs/design/waves.md). Yalnızca simde; veri dosyası değişmez.
+const encId = flag('encounter-id');
+const encFile = flag('encounter-file');
+if (encId && encFile) {
+  const def = JSON.parse(readFileSync(encFile, 'utf8')) as unknown;
+  (encountersJson as unknown as Record<string, unknown>)[encId] = def;
+}
+const encArgs = encId && encFile ? [`--encounter-id=${encId}`, `--encounter-file=${encFile}`] : [];
 type Variant = { gear: 'best' | 'none'; relics: 'pick' | 'none'; label: string };
 const main0: Variant = { gear: (flag('gear') ?? 'best') as 'best' | 'none', relics: (flag('relics') ?? 'pick') as 'pick' | 'none', label: 'ana' };
 const variants: Variant[] = has('compare')
@@ -34,7 +45,7 @@ const bal = (ENDLESS as unknown as { balance?: { targets: Record<string, [number
 
 function runPart(start: number, end: number, v: Variant): Promise<EndlessSimResult> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), `--max=${maxWave}`, ...(cfgFile ? [`--cfg=${cfgFile}`] : []), `--part=${start}:${end}:${v.gear}:${v.relics}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), `--max=${maxWave}`, ...(cfgFile ? [`--cfg=${cfgFile}`] : []), ...encArgs, `--part=${start}:${end}:${v.gear}:${v.relics}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';

@@ -2,6 +2,35 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.1",
+      "date": "2026-10-19",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "New campaign stop: Cairn Hill, between Windy Moor and the Iron Pass fork",
+            "Event, treasure, rest and new companion windows got a new look; cleared guarded stops show a DEFEATED stamp",
+            "Hero cards show a portrait and a short description"
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Story stops on the map now wait for you to confirm on their card",
+            "Thane of the Deep is less tanky; Anti-Mage drains his MP-fed armor",
+            "Two-handed weapons drop more often in the campaign",
+            "Enemy skill effects are better sized, placed and timed; thrown skills fly to their target"
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Phone: bigger touch targets, readable Gear, Formation and results screens, and many small panel fixes"
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.0",
       "date": "2026-10-19",
       "groups": [

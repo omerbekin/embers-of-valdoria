@@ -1,0 +1,5678 @@
+/* Sefer Gear ekranı + Spoils / teslim kartları (src/ui/gear-screen.ts). Görünüm: tasarım kiti (src/ui/elegant.css; CLAUDE.md > Tasarım kiti):
+   Cinzel büyük harf başlık/düğme, EB Garamond italik metin, ince altın çizgiler, kor elmaslar, köşesiz kutular.
+   Ölçüler oyun birimiyle (--gu); dokunma hedefleri en az 44px. Burada yalnızca görünüm var; davranış gear-screen.ts içinde. */
+.gr-overlay {
+  --u: var(--gu, 1px);
+  --g-text: #d9c8a2;
+  --g-dim: #a8977a;
+  --g-gold: #f3d999;
+  --g-edge: rgba(217, 178, 106, 0.42);
+  --g-line: rgba(217, 178, 106, 0.16);
+  --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a;
+  --g-ember2: #ffb35a;
+  --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif;
+  --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  position: fixed;
+  inset: 0;
+  z-index: 19;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* üstte sağ üst simgelere (Menu, tam ekran, wiki; z-index 30) yer: panel onların altında kalmasın */
+  padding: max(44px, calc(84 * var(--u))) max(8px, calc(20 * var(--u))) max(8px, calc(20 * var(--u)));
+  background: rgba(5, 3, 2, 0.72);
+  color: var(--g-text);
+  font-family: var(--g-body);
+}
+
+.gr-panel {
+  display: flex;
+  flex-direction: column;
+  gap: calc(14 * var(--u));
+  width: min(100%, calc(1720 * var(--u)));
+  max-height: 100%;
+  padding: calc(26 * var(--u)) calc(32 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.97), rgba(12, 9, 6, 0.97));
+  border: 1px solid var(--g-edge);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0, 0, 0, 0.6);
+  overflow: hidden;
+}
+
+.gr-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  border-bottom: 1px solid var(--g-line);
+  padding-bottom: calc(10 * var(--u));
+}
+
+.gr-title {
+  font: 600 max(22px, calc(42 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
+}
+
+.gr-gold {
+  font: 600 max(15px, calc(24 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+  letter-spacing: 0.06em;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gr-hint {
+  font: italic max(14px, calc(23 * var(--u))) var(--g-body);
+  color: var(--g-gold);
+  padding: calc(6 * var(--u)) 0;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gr-body {
+  display: grid;
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.5fr) minmax(0, 1.6fr);
+  gap: calc(24 * var(--u));
+  min-height: 0;
+  overflow: auto;
+}
+
+.gr-sec {
+  font: 600 max(12px, calc(17 * var(--u))) var(--g-disp);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: rgba(217, 178, 106, 0.85);
+  padding-bottom: calc(6 * var(--u));
+  border-bottom: 1px solid var(--g-line);
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-overlay button {
+  font: inherit;
+  color: inherit;
+  cursor: pointer;
+}
+
+/* Kahramanlar */
+.gr-heroes {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+}
+
+.gr-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  min-height: 44px;
+  padding: calc(8 * var(--u));
+  background: rgba(8, 6, 4, 0.45);
+  border: 1px solid var(--g-line2);
+  border-radius: 0;
+  text-align: left;
+  transition: border-color 0.18s, background 0.2s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-hero.on {
+  border-color: var(--g-gold);
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.14), rgba(8, 6, 4, 0.45) 80%);
+}
+
+.gr-face {
+  flex: none;
+  width: max(36px, calc(68 * var(--u)));
+  height: max(36px, calc(68 * var(--u)));
+  background: #120c08 center / cover no-repeat;
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  image-rendering: pixelated;
+}
+
+.gr-hero-name {
+  font: 600 max(13px, calc(21 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gr-hero-sub {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+/* Yuvalar */
+.gr-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(8 * var(--u));
+}
+
+.gr-slot {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  min-height: 44px;
+  padding: calc(8 * var(--u)) calc(10 * var(--u));
+  background: rgba(8, 6, 4, 0.55);
+  border: 1px solid color-mix(in srgb, var(--rc) 60%, transparent);
+  border-radius: 0;
+  text-align: left;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-slot.empty {
+  border-color: var(--g-line2);
+  opacity: 0.75;
+}
+
+.gr-slot.on,
+.gr-item.on {
+  border-color: var(--g-gold);
+  box-shadow: inset 0 0 0 1px var(--g-gold), 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.35);
+}
+
+.gr-slot:hover,
+.gr-item:hover,
+.gr-hero:hover {
+  border-color: var(--g-gold);
+  transform: translateY(-2px);
+}
+
+.gr-slot-text {
+  min-width: 0;
+}
+
+.gr-slot-name {
+  font: 600 max(12px, calc(18 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-slot-sub {
+  font: italic max(11px, calc(17 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-svg {
+  flex: none;
+  width: calc(max(22px, 40 * var(--u)) * var(--sz, 1));
+  height: calc(max(22px, 40 * var(--u)) * var(--sz, 1));
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+/* Statlar */
+.gr-stats {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(4 * var(--u)) calc(12 * var(--u));
+  margin-top: calc(14 * var(--u));
+  padding-top: calc(12 * var(--u));
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-stat {
+  display: flex;
+  align-items: baseline;
+  gap: calc(6 * var(--u));
+  font-size: max(12px, calc(20 * var(--u)));
+}
+
+.gr-stat-k {
+  color: var(--g-dim);
+  font-family: var(--g-disp);
+  font-size: 0.72em;
+  font-weight: 600;
+  letter-spacing: 0.14em;
+}
+
+.gr-stat-v {
+  font: 600 1em var(--g-disp);
+}
+
+.gr-stat-d.up {
+  color: #8fd36a;
+}
+
+.gr-stat-d.down {
+  color: #e0785e;
+}
+
+/* Tavanı dolu stat (Ömer 2026-10-13, itemcaps): değer altın, yanında küçük "MAX" (fazlası kaybolur) */
+.gr-stat.capped .gr-stat-v {
+  color: #f0c46a;
+}
+
+.gr-stat-cap {
+  font: 600 0.56em var(--g-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #f0b04a;
+  opacity: 0.85;
+}
+
+.gr-cap-note {
+  margin-top: calc(8 * var(--u));
+  font: italic max(11px, calc(16 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+/* Torba */
+.gr-bag-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.gr-chip {
+  min-height: 36px;
+  padding: 0 calc(12 * var(--u));
+  background: rgba(8, 6, 4, 0.55);
+  border: 1px solid var(--g-line2);
+  border-radius: 0;
+  font: 600 max(11px, calc(15 * var(--u))) var(--g-disp) !important;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  transition: border-color 0.18s, color 0.18s;
+}
+
+.gr-chip.on {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+}
+
+.gr-bag {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(44px, calc(62 * var(--u))), 1fr));
+  gap: calc(5 * var(--u));
+}
+
+.gr-item {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1;
+  min-height: 44px;
+  background: radial-gradient(circle, rgba(217, 178, 106, 0.06), rgba(8, 6, 4, 0.6));
+  border: 1px solid color-mix(in srgb, var(--rc, #5b4a33) 65%, transparent);
+  border-radius: 0;
+  padding: 0;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-item .gr-svg {
+  width: 84%;
+  height: 84%;
+}
+
+/* Piksel art item ikonu (src/game/item-icons.ts): nadirlik rengi yumuşak bir parıltı olarak arkada */
+.gr-px {
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px #000) drop-shadow(0 0 calc(5 * var(--u, 1px)) color-mix(in srgb, var(--glow, transparent) 55%, transparent));
+}
+
+/* Item görseli (assets/items/<id>.webp, 256 px): piksel ikon değil, yumuşak küçültülür */
+.gr-px.item-art {
+  image-rendering: auto;
+}
+
+.gr-px.dim {
+  opacity: 0.28;
+  filter: grayscale(1) brightness(0.8);
+}
+
+/* İkinci el yuvası kapalıyken (Ömer 2026-10-12): çift elde silahın soluk, renksiz gölgesi (yay / tılsım: düz boş yuva); yuva her durumda etkisiz */
+.gr-px.gr-silhouette {
+  opacity: 0.38;
+  filter: grayscale(1) brightness(0.75) drop-shadow(0 1px 1px #000);
+}
+
+.gr-slot.blocked {
+  cursor: default;
+  pointer-events: none;
+  opacity: 0.8;
+}
+
+.gr-slot.blocked .gr-hands-hint {
+  font: 600 max(10px, calc(14 * var(--u))) var(--g-disp);
+  font-style: normal;
+  letter-spacing: 0.14em;
+}
+
+.gr-item.empty {
+  border: 1px solid var(--g-line);
+  background: rgba(8, 6, 4, 0.3);
+}
+
+.gr-item.no {
+  opacity: 0.45;
+}
+
+/* Seçilen item kartı */
+.gr-card {
+  margin-top: calc(12 * var(--u));
+  padding: calc(14 * var(--u)) calc(16 * var(--u));
+  min-height: calc(160 * var(--u));
+  background: rgba(8, 6, 4, 0.5);
+  border: 1px solid var(--g-line2);
+  border-radius: 0;
+}
+
+.gr-card-name {
+  font: 600 max(15px, calc(26 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+}
+
+.gr-card-sub,
+.gr-card-value,
+.gr-card-note,
+.gr-card-empty {
+  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-card-lines {
+  margin: calc(8 * var(--u)) 0;
+  font-size: max(13px, calc(22 * var(--u)));
+  color: #9fd98a;
+}
+
+.gr-card-warn {
+  margin-top: calc(8 * var(--u));
+  font-size: max(12px, calc(20 * var(--u)));
+  color: #f0a060;
+}
+
+.gr-card-actions {
+  display: flex;
+  gap: calc(10 * var(--u));
+  margin-top: calc(10 * var(--u));
+}
+
+/* Düğmeler */
+.gr-foot {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: calc(20 * var(--u));
+  border-top: 1px solid var(--g-line);
+  padding: calc(12 * var(--u)) calc(10 * var(--u)) 0;
+}
+
+.gr-btn {
+  position: relative;
+  min-height: 44px;
+  padding: 0 calc(26 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.82), rgba(12, 9, 6, 0.86));
+  border: 1px solid var(--g-line2);
+  border-radius: 0;
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.6);
+  font: 600 max(13px, calc(19 * var(--u))) var(--g-disp) !important;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-text);
+  text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
+  transition: border-color 0.18s, color 0.18s, text-shadow 0.18s, transform 0.25s cubic-bezier(0.33, 1, 0.68, 1);
+}
+
+.gr-btn:hover {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+  text-shadow: 0 0 14px rgba(240, 140, 40, 0.85);
+  transform: translateY(-2px);
+}
+
+/* Kit düğmesi: iki yanda küçük elmas (primary'de kor) */
+.gr-btn::before,
+.gr-btn::after {
+  content: '';
+  position: absolute;
+  top: 50%;
+  width: 8px;
+  height: 8px;
+  margin-top: -4px;
+  transform: rotate(45deg);
+  background: #1a130c;
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.45);
+}
+
+.gr-btn::before {
+  left: -5px;
+}
+
+.gr-btn::after {
+  right: -5px;
+}
+
+.gr-btn.primary::before,
+.gr-btn.primary::after {
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.7);
+}
+
+.gr-btn.primary {
+  border: 2px solid #d9b26a;
+  color: var(--g-gold);
+  background: linear-gradient(180deg, rgba(38, 27, 17, 0.9), rgba(12, 9, 6, 0.94));
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.8), 0 10px 24px rgba(0, 0, 0, 0.45);
+}
+
+/* Küçük kartlar (Spoils / teslim) */
+.gr-mini {
+  width: min(100%, calc(820 * var(--u)));
+}
+
+.gr-mini-sub {
+  font: italic max(14px, calc(23 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-mini-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+  max-height: calc(520 * var(--u));
+  overflow: auto;
+}
+
+.gr-mini-row {
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+  padding: calc(6 * var(--u)) calc(14 * var(--u)) calc(6 * var(--u)) calc(10 * var(--u));
+  background: rgba(8, 6, 4, 0.45);
+  border-bottom: 1px solid var(--g-line);
+  border-radius: 0;
+}
+
+.gr-mini-name {
+  font: 600 max(14px, calc(22 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.gr-mini-lines {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-mini-row.gone > :not(.gr-btn) {
+  opacity: 0.45;
+}
+
+.gr-mini-row .gr-btn {
+  margin-left: auto;
+}
+
+.gr-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.gr-btn.danger {
+  border-color: rgba(232, 128, 106, 0.6);
+  color: #e8806a;
+}
+
+.gr-mini-extra {
+  font: 600 max(13px, calc(21 * var(--u))) var(--g-disp);
+  letter-spacing: 0.06em;
+  color: var(--g-gold);
+}
+
+
+/* --- Sağlam yerleşim (2026-10-09): 16:9'dan 21:9'a ve yatay telefonda taşma yok ---
+   Sütunların alt / üst genişliği var; içerik sütunu genişletmez (min-width: 0), uzun yazılar sarılır ya da "…" ile kesilir;
+   her sütun kendi içinde kayar (torba yuvaların altına girmez). Gövde panelin kalan yüksekliğini doldurur. */
+.gr-panel {
+  height: 100%;
+  max-height: calc(1000 * var(--u));
+}
+
+/* Spoils / teslim kartları içerik kadar yüksek kalır */
+.gr-panel.gr-mini {
+  height: auto;
+}
+
+.gr-body {
+  flex: 1 1 auto;
+  grid-template-columns: minmax(150px, 0.85fr) minmax(260px, 1.5fr) minmax(240px, 1.55fr);
+  grid-template-rows: minmax(0, 1fr);
+  overflow: hidden;
+}
+
+.gr-heroes,
+.gr-mid,
+.gr-right {
+  min-width: 0;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+  padding-right: 2px;
+}
+
+.gr-right {
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* Torba: kendi içinde kayar; seçili item kartı altta sabit kalır */
+.gr-bag {
+  flex: 1 1 auto;
+  min-height: max(96px, calc(140 * var(--u)));
+  overflow-y: auto;
+  align-content: start;
+  padding: 2px;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-card {
+  flex: none;
+  max-height: 50%;
+  overflow-y: auto;
+}
+
+.gr-sec,
+.gr-hero-name,
+.gr-hero-sub {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-hero-meta {
+  min-width: 0;
+}
+
+.gr-slots {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-slot {
+  min-width: 0;
+}
+
+/* Statlar: sığdığı kadar sütun (en az ~110 px), değer kesilmez, uzun etiket "…" */
+.gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(max(104px, calc(150 * var(--u))), 1fr));
+}
+
+.gr-stat {
+  min-width: 0;
+  flex-wrap: wrap;
+  row-gap: 0;
+}
+
+.gr-stat-k {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-stat-v,
+.gr-stat-d {
+  white-space: nowrap;
+}
+
+.gr-card-name,
+.gr-card-lines,
+.gr-card-warn,
+.gr-card-note,
+.gr-card-sub {
+  overflow-wrap: anywhere;
+}
+
+.gr-card-actions {
+  flex-wrap: wrap;
+}
+
+.gr-foot {
+  flex: none;
+}
+
+/* Yatay telefon: dar kahraman sütunu (portre + kısa ad), yuvalar tek sütun */
+html.short .gr-body {
+  grid-template-columns: minmax(96px, 0.62fr) minmax(0, 1.35fr) minmax(0, 1.45fr);
+  gap: 8px;
+}
+
+html.short .gr-slots {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+html.short .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(92px, 1fr));
+}
+
+html.short .gr-hero-sub {
+  display: none;
+}
+
+/* --- stat açıklaması (savaş HUD'ıyla aynı metin; kit tooltip'i): stat paneli satırları ve item kartı stat satırları --- */
+.gr-stat[data-stat],
+.gr-card-line[data-stat] {
+  cursor: help;
+}
+
+.gr-stat[data-stat]:hover .gr-stat-k,
+.gr-card-line[data-stat]:hover {
+  color: var(--g-gold);
+}
+
+.gr-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 5;
+  max-width: min(420px, 80%);
+  font-size: max(13px, calc(19 * var(--u)));
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.14s, visibility 0s 0.14s;
+}
+
+.gr-tip.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.14s;
+}
+
+.gr-tip b {
+  font-size: max(13px, calc(19 * var(--u)));
+}
+
+.gr-tip-l {
+  color: var(--el-note, #cdb88d);
+  font-style: italic;
+}
+
+/* --- Sabit boyut (Ömer 2026-10-09): item'e / filtreye tıklamak paneli, torba ızgarasını ya da kartı yeniden boyutlandırmaz ---
+   Panel görünür alana göre sabit yükseklikte; torba sabit sütun sayısıyla (hep tüm yuvalar) kendi içinde kayar; item kartının
+   yüksekliği ayrılmıştır, uzun içerik kartın içinde kayar. */
+.gr-panel {
+  flex: none;
+  height: min(100%, calc(1000 * var(--u)));
+}
+
+.gr-bag {
+  flex: 1 1 0;
+  grid-template-columns: repeat(8, minmax(0, 1fr));
+  grid-auto-rows: max-content;
+}
+
+.gr-item {
+  min-height: 0;
+  min-width: 0;
+}
+
+.gr-card {
+  flex: none;
+  height: max(150px, calc(300 * var(--u)));
+  max-height: none;
+  overflow-y: auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+html.short .gr-bag {
+  grid-template-columns: repeat(6, minmax(0, 1fr));
+}
+
+html.short .gr-card {
+  height: 132px;
+}
+
+/* Filtre ("Usable by ..."): kullanılamayan item yerinde söner, yerleşim aynı kalır */
+.gr-item.filtered {
+  opacity: 0.16;
+  filter: grayscale(1);
+}
+
+/* Seçili item: NADİRLİK rengiyle parlar (isimle aynı kaynak: data/items.json > rarities[].color); boş yuva altın kalır */
+.gr-slot.on,
+.gr-item.on {
+  border-color: var(--rc, var(--g-gold));
+  box-shadow: inset 0 0 0 1px var(--rc, var(--g-gold)), 0 0 calc(16 * var(--u)) color-mix(in srgb, var(--rc, #f08c28) 70%, transparent);
+}
+
+.gr-slot.empty.on {
+  --rc: var(--g-gold);
+}
+
+.gr-slot:hover,
+.gr-item:hover {
+  border-color: color-mix(in srgb, var(--rc, var(--g-gold)) 85%, white);
+}
+
+/* Kuşanılmış yuvalar sabit: iki eşit sütun, sabit yükseklik; uzun stat satırı en çok iki satır, sonu "…" (tam metin title'da).
+   Yuva alanı kendi sütununu asla aşmaz (torbanın üstüne binmez). */
+.gr-mid {
+  overflow-x: hidden;
+  contain: inline-size;
+}
+
+.gr-slots {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-auto-rows: max(52px, calc(84 * var(--u)));
+}
+
+.gr-slot {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gr-slot-text {
+  flex: 1 1 0;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.gr-slot-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-slot-sub {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  overflow: hidden;
+  line-height: 1.15;
+}
+
+.gr-right {
+  contain: inline-size;
+}
+
+html.short .gr-slots {
+  grid-auto-rows: 48px;
+}
+
+html.short .gr-slot-sub {
+  -webkit-line-clamp: 1;
+  line-clamp: 1;
+}
+
+/* --- Stat ikonları (savaş HUD'ı ile aynı kaynak: src/ui/stat-tips.ts > statIconUrl): ikon + etiket + değer (+ fark) --- */
+.gr-sico {
+  flex: none;
+  width: max(14px, calc(24 * var(--u)));
+  height: max(14px, calc(24 * var(--u)));
+  image-rendering: pixelated;
+  align-self: center;
+}
+
+.gr-stat {
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: calc(6 * var(--u));
+}
+
+.gr-stat-k {
+  flex: 0 1 auto;
+}
+
+/* fark sütunu yer ayrılmış: item seçilince satır kaymaz */
+.gr-stat-d {
+  min-width: 2.6em;
+}
+
+.gr-line {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+}
+
+.gr-line.inline {
+  display: inline-flex;
+  gap: 4px;
+  margin-right: 10px;
+}
+
+.gr-line.inline .gr-sico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+.gr-mini-subt {
+  margin-right: 10px;
+}
+
+/* Affix kademe etiketi (C / B / A; Ömer 2026-10-11): renk satır içinde (progression > TIER_COLOR) */
+.gr-tier {
+  flex: none;
+  min-width: 1.1em;
+  font-family: 'Cinzel', serif;
+  font-weight: 700;
+  font-size: 0.78em;
+  letter-spacing: 0.04em;
+  text-align: center;
+  opacity: 0.95;
+}
+
+.gr-tip-d {
+  font-family: var(--el-body, 'EB Garamond', serif);
+  letter-spacing: 0;
+}
+
+.gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* --- sürükle-bırak: hayalet ikon imleci izler; geçerli hedefler parlar, geçersizler söner (yerleşim değişmez) --- */
+.gr-ghost {
+  position: absolute;
+  z-index: 6;
+  width: max(44px, calc(72 * var(--u)));
+  height: max(44px, calc(72 * var(--u)));
+  transform: translate(-50%, -60%);
+  pointer-events: none;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--rc);
+  background: rgba(8, 6, 4, 0.85);
+  box-shadow: 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--rc) 70%, transparent);
+}
+
+.gr-ghost .gr-svg {
+  width: 84%;
+  height: 84%;
+}
+
+.gr-dragging .gr-slot.drop-ok,
+.gr-dragging .gr-hero.drop-ok,
+.gr-dragging .gr-bag.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 0 1px var(--drag-rc, var(--g-gold)), 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 60%, transparent);
+}
+
+.gr-dragging .gr-slot.drop-no,
+.gr-dragging .gr-hero.drop-no {
+  opacity: 0.4;
+}
+
+.gr-dragging,
+.gr-dragging * {
+  cursor: grabbing !important;
+}
+
+.gr-item[data-drag],
+.gr-slot[data-drag] {
+  touch-action: pan-y;
+  -webkit-touch-callout: none;
+}
+
+/* kuşanılamayan item'e çift tıklama / bırakma: kısa sallanma */
+.gr-item.shake {
+  animation: gr-shake 0.36s;
+}
+
+@keyframes gr-shake {
+  0%,
+  100% {
+    transform: none;
+  }
+  20%,
+  60% {
+    transform: translateX(-4px);
+  }
+  40%,
+  80% {
+    transform: translateX(4px);
+  }
+}
+
+/* boyalı arayüz ikonları (assets/ui-icons: altın yığını, torba) başlıktaki altın ve torba sayacının önünde */
+.gr-has-ico {
+  display: flex;
+  align-items: center;
+  gap: calc(8 * var(--u));
+}
+
+.gr-ui-ico {
+  flex: none;
+  width: max(20px, calc(32 * var(--u)));
+  height: max(20px, calc(32 * var(--u)));
+  margin: calc(-6 * var(--u)) 0;
+  filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.8));
+}
+
+.gr-sec.gr-has-ico .gr-ui-ico {
+  width: max(18px, calc(26 * var(--u)));
+  height: max(18px, calc(26 * var(--u)));
+}
+
+/* Nadir düşüş (madde 297): altın-turuncu parıltı */
+@keyframes gr-rare-flash {
+  0% { box-shadow: 0 0 0 1px rgba(240, 168, 48, 0.9), 0 0 0 rgba(240, 168, 48, 0); background: rgba(240, 168, 48, 0.35); }
+  60% { box-shadow: 0 0 0 1px rgba(240, 168, 48, 0.9), 0 0 calc(28 * var(--u)) rgba(255, 179, 90, 0.75); }
+  100% { box-shadow: 0 0 0 1px rgba(240, 168, 48, 0.7), 0 0 calc(14 * var(--u)) rgba(255, 179, 90, 0.35); background: rgba(240, 168, 48, 0.1); }
+}
+.gr-mini-row.gr-rare-drop { animation: gr-rare-flash 1.6s ease-out 2 forwards; }
+.gr-rare-tag { margin-left: auto; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: #f0a830; text-shadow: 0 0 8px rgba(240, 140, 40, 0.8); }
+
+/* --- Skills (Ömer 2026-10-10): seçili kahramanın 4 skill'i + pasifi, o anki statlarla; karşılaştırmada "24 → 30 (+6)" ---
+   Her sayı kendi satırında, satır kaymaz (nowrap; dar sütunda etiket "…" ile kısalır): fark görünse de kart yüksekliği aynı kalır. */
+.gr-skills {
+  margin-top: calc(14 * var(--u));
+}
+
+.gr-skill-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(max(176px, calc(188 * var(--u))), 1fr));
+  gap: calc(8 * var(--u)) calc(10 * var(--u));
+}
+
+.gr-skill {
+  min-width: 0;
+  min-height: 44px;
+  padding: calc(6 * var(--u)) calc(10 * var(--u)) calc(7 * var(--u));
+  background: rgba(8, 6, 4, 0.45);
+  border: 1px solid var(--g-line2);
+  cursor: help;
+  transition: border-color 0.18s;
+}
+
+.gr-skill:hover {
+  border-color: var(--g-gold);
+}
+
+.gr-skill.passive {
+  border-style: dashed;
+}
+
+.gr-skill-head {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: calc(8 * var(--u));
+}
+
+.gr-skill-title {
+  min-width: 0;
+  line-height: 1.1;
+}
+
+.gr-skill-ico,
+.gr-stip-ico {
+  flex: none;
+  width: max(22px, calc(34 * var(--u)));
+  height: max(22px, calc(34 * var(--u)));
+  image-rendering: pixelated;
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+.gr-skill-name {
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-skill:hover .gr-skill-name {
+  color: var(--g-gold);
+}
+
+.gr-skill-meta {
+  font: italic max(11px, calc(15 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-skill-nums {
+  margin-top: calc(4 * var(--u));
+}
+
+.gr-skill-num {
+  display: flex;
+  align-items: baseline;
+  gap: calc(6 * var(--u));
+  font-size: max(12px, calc(18 * var(--u)));
+  line-height: 1.25;
+  white-space: nowrap;
+}
+
+.gr-skill-num.none {
+  font-style: italic;
+  color: var(--g-dim);
+}
+
+.gr-skill-k {
+  flex: 0 1 auto;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-style: italic;
+  color: var(--g-dim);
+}
+
+.gr-skill-v {
+  flex: none;
+  font: 600 0.92em var(--g-disp);
+}
+
+.gr-skill-a {
+  flex: none;
+  font: 600 0.92em var(--g-disp);
+}
+
+.gr-skill-d {
+  flex: none;
+}
+
+.gr-skill-a.up,
+.gr-skill-d.up {
+  color: #8fd36a;
+}
+
+.gr-skill-a.down,
+.gr-skill-d.down {
+  color: #e0785e;
+}
+
+/* skill tooltip'i (savaş kit tooltip'iyle aynı düzen) */
+.gr-stip-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.gr-stip-badge {
+  margin-left: auto;
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.gr-stip-meta,
+.gr-stip-tags {
+  font-size: 0.88em;
+  color: var(--g-dim);
+  margin: 2px 0;
+}
+
+.gr-stip-tags {
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.gr-skill-x {
+  flex: none;
+  color: var(--g-dim);
+}
+
+/* ===================== Character / Inventory ayrımı (Ömer 2026-10-11, g1) =====================
+   Gear = CHARACTER sayfası (kahramanlar | yuvalar + statlar, altta sol kenardan skill'ler) + yalnızca INVENTORY (torba). Item kartı yok:
+   item ipucu imlecin yanında yüzer (.item-tip), "Usable by" kahraman kartlarının alt satırında. Pencere bir miktar küçüldü; torba 6 sütun.
+   Telefonda (html.short) Character ve Inventory ayrı tam ekran (üstte geçiş). */
+.gr-panel.gr-gear {
+  width: min(100%, calc(1580 * var(--u)));
+  height: min(100%, calc(920 * var(--u)));
+  max-height: none;
+}
+
+.gr-gear .gr-head-l {
+  display: flex;
+  align-items: center;
+  gap: calc(22 * var(--u));
+  min-width: 0;
+}
+
+.gr-gear .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, calc(560 * var(--u)));
+  grid-template-rows: minmax(0, 1fr);
+  gap: calc(26 * var(--u));
+}
+
+.gr-charwrap {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+}
+
+.gr-char {
+  flex: 1;
+  min-width: 0;
+  min-height: 0;
+  display: grid;
+  grid-template-columns: minmax(150px, calc(270 * var(--u))) minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+  grid-template-areas: "heroes mid" "skills skills";
+  gap: calc(14 * var(--u)) calc(22 * var(--u));
+}
+
+.gr-char > .gr-heroes {
+  grid-area: heroes;
+}
+
+.gr-char > .gr-mid {
+  grid-area: mid;
+}
+
+.gr-char > .gr-skills {
+  grid-area: skills;
+  margin-top: 0;
+  padding-top: calc(10 * var(--u));
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-char .gr-skill-grid {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gr-char .gr-stats {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+/* kahraman kartının alt satırı: olağan "Level 1 · 4/6 items" ya da üstüne gelinen item'in etkisi */
+.gr-hero-sub.tone-up,
+.gr-hero-sub.tone-down,
+.gr-hero-sub.tone-mixed {
+  color: var(--g-text);
+  font-style: normal;
+}
+
+.gr-hero-sub.tone-no {
+  color: #e0907a;
+}
+
+.gr-hero-sub.tone-none {
+  color: var(--g-dim);
+}
+
+.gr-hero-sub .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-hero-sub .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* Inventory */
+.gr-gear .gr-right {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  min-height: 0;
+}
+
+.gr-inv {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  min-width: 0;
+}
+
+.gr-overlay .gr-inv .gr-bag {
+  flex: 1 1 0;
+  grid-template-columns: repeat(var(--bag-cols, 6), minmax(0, 1fr));
+  grid-auto-rows: max-content;
+  overflow-y: auto;
+  align-content: start;
+}
+
+.gr-inv .gr-card-empty {
+  margin-top: calc(8 * var(--u));
+}
+
+/* nadirlik çerçevesi (tüccar kartlarıyla aynı dil): sıra büyüdükçe kalın çerçeve + iç ton + köşebent; Epic / Legendary dört köşede */
+.gr-item {
+  position: relative;
+  background: radial-gradient(circle at 50% 45%, color-mix(in srgb, var(--rc, #5b4a33) 16%, transparent), rgba(8, 6, 4, 0.7) 72%);
+}
+
+.gr-item.k2,
+.gr-item.k3,
+.gr-item.k4 {
+  border-width: 2px;
+}
+
+.gr-item:not(.empty)::before,
+.gr-item:not(.empty)::after,
+.gr-item .gr-c2,
+.gr-item .gr-c3 {
+  content: '';
+  position: absolute;
+  width: 24%;
+  height: 24%;
+  pointer-events: none;
+  border-color: color-mix(in srgb, var(--rc, #f3d999) 70%, white);
+  border-style: solid;
+  border-width: 0;
+}
+
+.gr-item:not(.empty)::before {
+  left: -1px;
+  top: -1px;
+  border-left-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item:not(.empty)::after {
+  right: -1px;
+  bottom: -1px;
+  border-right-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item .gr-c2 {
+  right: -1px;
+  top: -1px;
+  border-right-width: 2px;
+  border-top-width: 2px;
+}
+
+.gr-item .gr-c3 {
+  left: -1px;
+  bottom: -1px;
+  border-left-width: 2px;
+  border-bottom-width: 2px;
+}
+
+.gr-item.k4 {
+  box-shadow: 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--rc) 55%, transparent);
+}
+
+/* seçili: ekrandaki TEK kor elmas */
+.gr-dia {
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 11px;
+  height: 11px;
+  margin-left: -5.5px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 10px rgba(240, 140, 40, 0.9);
+  z-index: 2;
+  pointer-events: none;
+}
+
+/* fiyat etiketi (tüccar satış fiyatı) */
+.gr-cellw {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  min-width: 0;
+}
+
+.gr-price {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 3px;
+  min-height: 1.3em;
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+}
+
+.gr-price.bad {
+  color: #ff8a7a;
+}
+
+.gr-price-ico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+/* Yüzen item ipucu (imlecin yanında) = TEK kart (Ömer 2026-10-18, taslak public/mockups/item-tooltip.html#v3): yuvarlak madalyon başlık, nadirlik ışımalı çerçeve,
+   Legendary etkisi üstte, kademe sırası A > B > C stat satırları + mücevher rayı, şart / değer satırı, kare portreli kahraman satırları. */
+.item-tip {
+  position: absolute;
+  left: 0;
+  top: 0;
+  z-index: 7;
+  width: max(320px, calc(500 * var(--u)));
+  max-width: none;
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  pointer-events: none;
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity 0.12s, visibility 0s 0.12s;
+  font-size: max(13px, calc(19 * var(--u)));
+}
+
+.item-tip.on {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 0.12s;
+}
+
+.it-card {
+  --rl: color-mix(in srgb, var(--rc, #d9b26a) 52%, #fff);
+  position: relative;
+  display: grid;
+  grid-template-columns: 1fr;
+  font: max(13px, calc(19 * var(--u))) / 1.25 var(--g-body);
+  color: #e6dcc6;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.985), rgba(11, 8, 5, 0.985));
+  border: 1px solid color-mix(in srgb, var(--rc, #d9b26a) 55%, rgba(217, 178, 106, 0.3));
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 18px 40px rgba(0, 0, 0, 0.65), 0 0 max(4px, calc(8 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 28%, transparent),
+    inset 0 0 max(14px, calc(30 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 16.5%, transparent);
+}
+
+/* başlık */
+.it-head {
+  text-align: center;
+  padding: max(12px, calc(20 * var(--u))) 10px max(8px, calc(12 * var(--u)));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--rc, #d9b26a) 34%, transparent), transparent);
+  border-bottom: 2px solid color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent);
+}
+
+.it-medal {
+  display: block;
+  width: max(60px, calc(112 * var(--u)));
+  aspect-ratio: 1;
+  margin: 0 auto;
+  box-sizing: border-box;
+  border-radius: 50%;
+  padding: 5px;
+  background: radial-gradient(circle, rgba(0, 0, 0, 0.55), rgba(0, 0, 0, 0.25));
+  border: 2px solid var(--rl);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.9), 0 0 0 4px color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent), 0 0 max(10px, calc(22 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 50%, transparent);
+  overflow: hidden;
+}
+
+.it-medal .gr-svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+.it-name {
+  display: block;
+  margin-top: max(8px, calc(14 * var(--u)));
+  font: 600 max(14px, calc(23 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--rl);
+  text-shadow: 0 0 max(6px, calc(14 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 45%, transparent);
+}
+
+.it-rib {
+  display: inline-block;
+  margin: 5px 0 3px;
+  padding: 2px 1.6em;
+  background: color-mix(in srgb, var(--rc, #d9b26a) 55%, #0c0905);
+  border-top: 1px solid var(--rl);
+  border-bottom: 1px solid var(--rl);
+  clip-path: polygon(0 0, 100% 0, calc(100% - 0.8em) 50%, 100% 100%, 0 100%, 0.8em 50%);
+}
+
+.it-rib span {
+  font: 600 0.76em var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff4d6;
+}
+
+.it-sub {
+  color: var(--g-dim);
+  font: italic 0.92em var(--g-body);
+}
+
+.it-big {
+  text-align: center;
+  margin-top: 6px;
+}
+
+.it-big strong {
+  display: block;
+  font: 600 2.6em / 1 var(--g-disp);
+  color: #f8ebc9;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--rc, #d9b26a) 50%, transparent);
+}
+
+.it-big > span {
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-big .it-big-n {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3em;
+  letter-spacing: 0;
+}
+
+.it-big .it-big-n strong {
+  display: inline;
+}
+
+.it-big-ico {
+  width: 2.4em;
+  height: 2.4em;
+  object-fit: contain;
+  filter: drop-shadow(0 1px 1px #000);
+}
+
+/* gövde (ipucu ve tüccar karşılama kartı) */
+.it-main {
+  padding: var(--gap, 7px) max(10px, calc(16 * var(--u)));
+  min-width: 0;
+}
+
+:is(.it-card, .mw-stats) .it-effect {
+  margin: var(--gap, 7px) 0 2px;
+  padding: 4px 10px;
+  border-left: 2px solid rgba(255, 210, 122, 0.65);
+  background: linear-gradient(90deg, rgba(255, 210, 122, 0.1), transparent);
+  color: #ffd99a;
+  font-style: italic;
+}
+
+:is(.it-card, .mw-stats) .it-effect strong {
+  display: block;
+  font: 600 0.8em var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  font-style: normal;
+  color: #ffe2a8;
+}
+
+:is(.it-card, .mw-stats) .it-implicit {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  color: #f3e2c0;
+  margin: 2px 0;
+}
+
+:is(.it-card, .mw-stats) .it-lines {
+  display: flex;
+  flex-direction: column;
+  gap: max(4px, calc(8 * var(--u)));
+  margin: var(--gap, 7px) 0;
+}
+
+:is(.it-card, .mw-stats) .it-line {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  color: #d6efc4;
+  min-width: 0;
+}
+
+:is(.it-card, .mw-stats) .it-text {
+  flex: 1;
+  min-width: 0;
+}
+
+:is(.it-card, .mw-stats) .it-tier {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 1.5em;
+  height: 1.5em;
+  border: 1px solid var(--tc);
+  color: var(--tc);
+  background: color-mix(in srgb, var(--tc) 12%, transparent);
+  font: 700 0.74em var(--g-disp);
+}
+
+:is(.it-card, .mw-stats) .it-ico {
+  flex: none;
+  width: max(18px, calc(28 * var(--u)));
+  height: max(18px, calc(28 * var(--u)));
+  object-fit: contain;
+}
+
+:is(.it-card, .mw-stats) .it-dia {
+  flex: none;
+  position: relative;
+  width: max(18px, calc(28 * var(--u)));
+  height: max(18px, calc(28 * var(--u)));
+}
+
+:is(.it-card, .mw-stats) .it-dia::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 36%;
+  height: 36%;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: rgba(217, 178, 106, 0.55);
+}
+
+:is(.it-card, .mw-stats) .it-range {
+  margin-left: auto;
+  color: var(--g-dim);
+  font-size: 0.9em;
+}
+
+:is(.it-card, .mw-stats) .it-cap {
+  font: 600 0.72em var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #f0b04a;
+  border: 1px solid rgba(240, 176, 74, 0.45);
+  padding: 0 4px;
+}
+
+/* A affix sınırı: etkisiz örnek soluk + üstü çizili, altında kısa not */
+:is(.it-card, .mw-stats) .it-line.off {
+  opacity: 0.45;
+}
+
+:is(.it-card, .mw-stats) .it-line.off .it-text {
+  text-decoration: line-through;
+}
+
+:is(.it-card, .mw-stats) .it-off-note {
+  margin: -1px 0 2px 2.1em;
+  font: italic 0.86em var(--g-body);
+  color: var(--g-dim);
+}
+
+/* zar göstergesi: mücevher rayı (elmas = değerin aralıktaki yeri) */
+.it-rail {
+  flex: none;
+  margin-left: auto;
+  position: relative;
+  display: inline-block;
+  width: max(58px, calc(96 * var(--u)));
+  height: max(12px, calc(16 * var(--u)));
+}
+
+.it-rail::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 2px;
+  transform: translateY(-50%);
+  background: linear-gradient(90deg, rgba(217, 178, 106, 0.8), rgba(217, 178, 106, 0.35));
+  box-shadow: 0 1px 0 #000;
+}
+
+.it-rail i {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, rgba(217, 178, 106, 0.85) 0 1px, transparent 1px) left / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(217, 178, 106, 0.85) 0 1px, transparent 1px) right / 1px 100% no-repeat,
+    linear-gradient(90deg, rgba(217, 178, 106, 0.5) 0 1px, transparent 1px) center / 1px 50% no-repeat;
+}
+
+.it-rail strong {
+  position: absolute;
+  top: 50%;
+  left: calc(var(--p) * 100%);
+  width: max(10px, calc(14 * var(--u)));
+  height: max(10px, calc(14 * var(--u)));
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: radial-gradient(circle at 35% 35%, #fff6d8, var(--rl, #e8cf8f) 45%, color-mix(in srgb, var(--rc, #d9b26a) 70%, #000));
+  border: 1px solid #1a1007;
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.8), 0 0 6px color-mix(in srgb, var(--rc, #d9b26a) 80%, transparent);
+}
+
+/* tüccar karşılama kartı: büyük taban değeri + şart */
+.mw-stats .it-big {
+  --rc: #d9b26a;
+  margin: 0 0 4px;
+  text-align: left;
+}
+
+.mw-stats .it-big strong {
+  font-size: 1.8em;
+}
+
+.mw-stats .it-big .it-big-n {
+  justify-content: flex-start;
+}
+
+.mw-stats .it-req {
+  font: italic 0.92em var(--g-body);
+  color: var(--g-dim);
+}
+
+.mw-stats .it-req.unmet {
+  color: #ff8a7a;
+}
+
+/* gereken seviye (sol) + değer (sağ) */
+.it-reqrow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 5px max(10px, calc(16 * var(--u)));
+  border-top: 1px solid var(--g-line);
+  background: rgba(0, 0, 0, 0.22);
+}
+
+.it-req {
+  font: italic 0.95em var(--g-body);
+  color: var(--g-dim);
+}
+
+.it-req.unmet {
+  color: #ff8a7a;
+  font-style: normal;
+  font-weight: 600;
+}
+
+.it-val {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  margin-left: auto;
+}
+
+.it-val strong {
+  font: 600 1.05em var(--g-disp);
+  color: #f3d999;
+  letter-spacing: 0.04em;
+}
+
+.it-val em {
+  font: normal 0.8em var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-coin {
+  width: max(16px, calc(26 * var(--u)));
+  height: max(16px, calc(26 * var(--u)));
+  image-rendering: pixelated;
+}
+
+/* kahraman karşılaştırma: kare portre karosu + ince altın çizgiler (yuvarlak hap yok) */
+.it-heroes {
+  display: flex;
+  flex-direction: column;
+  padding: 0 max(10px, calc(16 * var(--u)));
+}
+
+.it-hero {
+  display: flex;
+  align-items: center;
+  gap: 0.55em;
+  padding: max(4px, calc(6 * var(--u))) 0;
+  border-top: 1px solid var(--g-line);
+  min-width: 0;
+}
+
+.it-hero:first-child {
+  border-top: 0;
+}
+
+.it-face {
+  flex: none;
+  width: max(26px, calc(40 * var(--u)));
+  height: max(26px, calc(40 * var(--u)));
+  background: #120c08 center / cover no-repeat;
+  border: 1px solid var(--g-line2);
+  padding: 0;
+  image-rendering: pixelated;
+}
+
+.it-hero.no .it-face {
+  filter: grayscale(1) brightness(0.6);
+}
+
+.it-hero-k {
+  flex: none;
+  width: 7.4em;
+  white-space: nowrap;
+  font: 600 0.7em var(--g-disp);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.it-lv {
+  flex: none;
+  padding: 0 0.5em;
+  height: 1.5em;
+  display: inline-flex;
+  align-items: center;
+  font: 600 0.86em var(--g-disp);
+  color: #e6dcc6;
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.it-lv.unmet {
+  color: #ff8a7a;
+  background: rgba(220, 90, 70, 0.18);
+}
+
+.it-hero-v {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 3px;
+  min-width: 0;
+}
+
+.it-chip {
+  padding: 0 0.45em;
+  font: 600 0.86em / 1.5em var(--g-body);
+  white-space: nowrap;
+  color: var(--g-dim);
+}
+
+.it-chip.it-up {
+  color: #8fe39a;
+  background: rgba(90, 190, 110, 0.13);
+}
+
+.it-chip.it-down {
+  color: #ff8a7a;
+  background: rgba(220, 90, 70, 0.15);
+}
+
+.it-chip.it-no {
+  color: #e0907a;
+  font-weight: 400;
+}
+
+.item-tip .it-acts {
+  margin: 0;
+  padding: 8px max(10px, calc(16 * var(--u))) 10px;
+}
+
+/* kısa ekran (844x390): sol sütun başlık, sağ sütun stat + şart / değer + kahramanlar */
+html.short .item-tip {
+  width: min(660px, 96%);
+  font-size: 12px;
+}
+
+html.short .it-card {
+  grid-template-columns: 36% minmax(0, 1fr);
+  --gap: 3px;
+  line-height: 1.15;
+  font-size: 12px;
+}
+
+html.short .it-head {
+  grid-column: 1;
+  grid-row: 1 / 5;
+  padding: 6px;
+  border-bottom: 0;
+  border-right: 2px solid color-mix(in srgb, var(--rc, #d9b26a) 70%, transparent);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+html.short .it-main {
+  grid-column: 2;
+  padding: 3px 8px 0;
+}
+
+html.short .it-reqrow {
+  grid-column: 2;
+  padding: 2px 8px;
+}
+
+html.short .it-heroes {
+  grid-column: 2;
+  padding: 0 8px 4px;
+}
+
+html.short .item-tip .it-acts {
+  grid-column: 2;
+  padding: 4px 8px 6px;
+}
+
+html.short .it-medal {
+  width: 46px;
+  padding: 3px;
+}
+
+html.short .it-name {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+html.short .it-rib {
+  margin: 2px 0 1px;
+  padding: 1px 1.2em;
+}
+
+html.short .it-big strong {
+  font-size: 1.7em;
+}
+
+html.short .it-big {
+  margin-top: 2px;
+}
+
+html.short .it-lines {
+  gap: 2px;
+  margin: 2px 0;
+}
+
+html.short .it-line :is(.it-ico, .it-dia) {
+  width: 16px;
+  height: 16px;
+}
+
+html.short .it-hero {
+  padding: 2px 0;
+}
+
+html.short .it-face {
+  width: 22px;
+  height: 22px;
+}
+
+html.short .it-effect {
+  padding: 1px 6px;
+  margin: 2px 0;
+}
+
+html.short .it-rail {
+  width: 54px;
+}
+
+
+/* çöp kutusu: yalnızca torbadan sürüklerken sağ altta */
+.gr-trash {
+  position: absolute;
+  right: max(14px, calc(30 * var(--u)));
+  bottom: max(14px, calc(30 * var(--u)));
+  z-index: 6;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 96px;
+  min-height: 64px;
+  padding: 0 calc(18 * var(--u));
+  border: 1px dashed rgba(255, 138, 122, 0.55);
+  background: rgba(20, 8, 6, 0.92);
+  color: #ff9a88;
+  font: 600 max(12px, calc(17 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  opacity: 0;
+  transform: translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.16s, transform 0.16s;
+}
+
+.gr-trash svg {
+  width: max(22px, calc(34 * var(--u)));
+  height: max(22px, calc(34 * var(--u)));
+}
+
+.gr-trash-on .gr-trash {
+  opacity: 1;
+  transform: none;
+  pointer-events: auto;
+}
+
+.gr-dragging .gr-trash.drop-ok:hover {
+  border-style: solid;
+  background: rgba(60, 14, 10, 0.95);
+  box-shadow: 0 0 18px rgba(255, 120, 100, 0.45);
+}
+
+/* onay kutusu (Rare+ atma, primary bonusu kaybı) */
+.gr-confirm {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  display: grid;
+  place-items: center;
+  background: rgba(5, 3, 2, 0.55);
+}
+
+.gr-confirm-card {
+  max-width: min(92%, calc(640 * var(--u)));
+  padding: calc(22 * var(--u)) calc(28 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98));
+  border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 18px 40px rgba(0, 0, 0, 0.6);
+}
+
+.gr-confirm-text {
+  font-size: max(14px, calc(22 * var(--u)));
+  margin-bottom: calc(16 * var(--u));
+}
+
+.gr-confirm-row {
+  display: flex;
+  justify-content: flex-end;
+  gap: calc(20 * var(--u));
+}
+
+/* alt satır: solda ipucu / uyarı */
+.gr-foot-hint {
+  margin-right: auto;
+  align-self: center;
+  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.gr-foot-hint.warn {
+  color: #f0a060;
+  font-style: normal;
+}
+
+/* telefon: geçiş düğmeleri + iki ayrı tam ekran */
+.gr-tabs {
+  display: flex;
+  gap: 4px;
+}
+
+.gr-tab {
+  min-height: 44px;
+  padding: 0 12px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: 600 13px var(--g-disp) !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim) !important;
+}
+
+.gr-tab.on {
+  color: var(--g-gold) !important;
+  border-bottom-color: var(--g-gold);
+}
+
+.gr-gear.gr-phone .gr-body {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gr-gear.gr-phone.show-inv .gr-charwrap,
+.gr-gear.gr-phone.show-char .gr-right {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-right {
+  flex-direction: row;
+}
+
+.gr-rail {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  overflow-y: auto;
+}
+
+.gr-rail .gr-hero {
+  padding: 2px;
+  min-height: 44px;
+}
+
+.gr-rail .gr-face {
+  width: 46px;
+  height: 46px;
+}
+
+.gr-gear.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 10;
+}
+
+.gr-gear.gr-phone .gr-char {
+  grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.6fr);
+}
+
+.gr-gear.gr-phone .gr-char .gr-skill-nums,
+.gr-gear.gr-phone .gr-char .gr-skill-meta {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-foot .gr-btn:not(.primary) {
+  padding: 0 12px;
+}
+
+.gr-panel.gr-gear.gr-phone {
+  width: 100%;
+  height: 100%;
+}
+
+.gr-gear.gr-phone .gr-foot {
+  flex-wrap: nowrap;
+  gap: 14px;
+}
+
+.gr-gear.gr-phone .gr-foot-hint {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char {
+  grid-template-columns: 58px minmax(0, 1fr);
+  gap: 6px 10px;
+}
+
+.gr-gear.gr-phone .gr-char .gr-hero {
+  padding: 2px;
+  justify-content: center;
+}
+
+.gr-gear.gr-phone .gr-char .gr-hero-meta {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char .gr-face {
+  width: 48px;
+  height: 48px;
+}
+
+.gr-overlay .gr-gear.gr-phone .gr-slots {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.gr-gear.gr-phone .gr-foot {
+  display: none;
+}
+
+.gr-head-acts {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
+
+.gr-head-acts .gr-btn.sm {
+  min-height: 44px;
+  padding: 0 12px;
+  font-size: 12px !important;
+}
+
+.gr-gear.gr-phone .gr-head {
+  align-items: center;
+  padding-bottom: 4px;
+}
+
+.gr-gear.gr-phone .gr-title {
+  font-size: 20px;
+}
+
+/* ===================== Tüccar (Ömer 2026-10-11, g1): solda tezgâh, sağda ortak Inventory ===================== */
+.gr-shop .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, calc(600 * var(--u)));
+}
+
+.gr-shop-sub {
+  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-stall {
+  min-width: 0;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(14 * var(--u));
+  overflow-y: auto;
+  padding: 2px calc(6 * var(--u)) 2px 2px;
+  border: 1px solid transparent;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-stall.char {
+  overflow: hidden;
+}
+
+.gr-stall.char > .gr-char {
+  flex: 1;
+  min-height: 0;
+}
+
+.gr-dragging .gr-stall.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 25%, transparent);
+}
+
+.gr-stall-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.gr-stall-bar .gr-sec {
+  flex: 1;
+  margin: 0;
+}
+
+.gr-odo {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+}
+
+.gr-odo .gr-face {
+  width: max(44px, calc(84 * var(--u)));
+  height: max(44px, calc(84 * var(--u)));
+}
+
+.gr-odo-line {
+  flex: 1;
+  padding: calc(10 * var(--u)) calc(16 * var(--u));
+  background: rgba(8, 6, 4, 0.6);
+  border: 1px solid var(--g-line2);
+  font: italic max(13px, calc(22 * var(--u))) var(--g-body);
+  color: var(--g-text);
+}
+
+.gr-wares {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, calc(112 * var(--u))));
+  gap: calc(10 * var(--u)) calc(18 * var(--u));
+}
+
+.gr-wares .gr-item,
+.gr-bb-row .gr-item {
+  width: 100%;
+  aspect-ratio: 1;
+  height: auto;
+}
+
+.gr-item.sold {
+  opacity: 0.3;
+  filter: grayscale(1);
+}
+
+.gr-reroll {
+  align-self: flex-start;
+}
+
+.gr-cost {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: 10px;
+  color: var(--g-gold);
+}
+
+.gr-btn.sm {
+  min-height: 44px;
+  padding: 0 calc(18 * var(--u));
+  font-size: max(12px, calc(16 * var(--u))) !important;
+}
+
+.gr-bb-row {
+  display: grid;
+  grid-template-columns: repeat(6, minmax(0, calc(96 * var(--u))));
+  gap: calc(10 * var(--u));
+}
+
+.gr-bb-row .gr-card-empty {
+  grid-column: 1 / -1;
+}
+
+/* fiyat etiketli torba: satırlar biraz daha yüksek */
+.gr-bag.priced {
+  row-gap: calc(4 * var(--u));
+}
+
+/* telefon: Character / Wares geçişi (tezgâh = Wares ekranı, torba onun yanında) */
+.gr-shop.gr-phone .gr-body {
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr);
+}
+
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr);
+}
+
+.gr-shop.gr-phone .gr-charwrap {
+  display: none;
+}
+
+.gr-shop.gr-phone.show-char .gr-right,
+.gr-shop.gr-phone.show-inv .gr-right {
+  display: flex;
+}
+
+.gr-shop.gr-phone .gr-foot {
+  display: flex;
+}
+
+.gr-shop.gr-phone .gr-odo .gr-face {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-wares {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+/* telefon: geri alım ayrı sekmede ([ Wares | Buy back (n) | Character ]); başlık sekmede yazar, hücreler mallarla aynı ızgara */
+.gr-shop.gr-phone .gr-buyback > .gr-sec {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-bb-row {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px 8px;
+}
+
+.gr-shop.gr-phone .gr-stall-bar .gr-tab {
+  padding: 0 8px;
+  letter-spacing: 0.06em;
+}
+
+.gr-shop.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 6;
+}
+
+/* --- karşılama (seçenek C): soldaki yarım panel (Odo tam boy + selam), "Browse wares" ile sola kayıp çekilir --- */
+.mw-welcome {
+  position: absolute;
+  inset: 0;
+  z-index: 9;
+  pointer-events: none;
+}
+
+.gr-shop-overlay.mw-on .gr-panel {
+  filter: brightness(0.38) saturate(0.6);
+}
+
+.gr-shop-overlay .gr-panel {
+  transition: filter var(--motion-panel-ms, 0.5s) ease;
+}
+
+.mw-half {
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 62%;
+  pointer-events: auto;
+  background: linear-gradient(90deg, rgba(14, 9, 6, 0.98) 62%, rgba(14, 9, 6, 0.9));
+  border-right: 1px solid var(--g-edge);
+  box-shadow: 24px 0 50px rgba(0, 0, 0, 0.7);
+  transition: transform 0.55s cubic-bezier(0.33, 1, 0.68, 1), opacity 0.55s;
+  animation: mw-in 0.6s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+@keyframes mw-in {
+  from {
+    transform: translateX(-100%);
+  }
+  to {
+    transform: none;
+  }
+}
+
+.mw-welcome.gone .mw-half {
+  transform: translateX(-104%);
+  opacity: 0.2;
+}
+
+html.reduced-motion .mw-half {
+  animation: none;
+  transition: none;
+}
+
+.mw-odo {
+  position: absolute;
+  left: 2%;
+  bottom: 0;
+  height: 92%;
+  max-width: 44%;
+  object-fit: contain;
+  object-position: bottom;
+  filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.7));
+}
+
+.mw-card {
+  position: absolute;
+  right: 4%;
+  top: 14%;
+  width: 52%;
+  display: flex;
+  flex-direction: column;
+  gap: calc(16 * var(--u));
+  padding: calc(26 * var(--u));
+  background: rgba(10, 7, 5, 0.82);
+  border: 1px solid var(--g-line2);
+}
+
+.mw-kick {
+  font: 600 max(11px, calc(18 * var(--u))) var(--g-disp);
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.mw-name {
+  font: 600 max(20px, calc(46 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.mw-greet {
+  font: italic max(14px, calc(27 * var(--u))) var(--g-body);
+  color: var(--g-text);
+}
+
+.mw-notice {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font: 600 max(12px, calc(19 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-ember2);
+}
+
+.mw-notice::before {
+  content: '';
+  flex: none;
+  width: 10px;
+  height: 10px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.8);
+}
+
+.mw-hl {
+  display: flex;
+  align-items: center;
+  gap: calc(16 * var(--u));
+}
+
+.mw-hl .gr-item {
+  width: max(52px, calc(96 * var(--u)));
+  height: max(52px, calc(96 * var(--u)));
+  flex: none;
+}
+
+.mw-hl-name {
+  font: 600 max(14px, calc(25 * var(--u))) var(--g-disp);
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.mw-hl-price {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 max(13px, calc(22 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+}
+
+.mw-go {
+  align-self: flex-start;
+}
+
+html.short .mw-half {
+  width: 72%;
+}
+
+html.short .mw-card {
+  top: 4%;
+  width: 56%;
+  gap: 6px;
+  padding: 10px;
+}
+
+/* ===================== Ödül torbası (Ömer 2026-10-11, g1): kartlar küçük ikonlar olarak solda, Inventory sağda ===================== */
+.rb-overlay {
+  background: rgba(5, 3, 2, 0.5);
+}
+
+.rb-panel .gr-body.rb-body {
+  grid-template-columns: minmax(130px, calc(300 * var(--u))) minmax(0, 1fr);
+}
+
+.rb-panel .gr-inv .gr-bag {
+  --bag-cols: 9;
+}
+
+.rb-tiles {
+  display: flex;
+  flex-direction: column;
+  gap: calc(16 * var(--u));
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.rb-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(8 * var(--u));
+  min-height: 44px;
+  padding: calc(10 * var(--u)) 6px;
+  background: rgba(8, 6, 4, 0.5);
+  border: 1px solid var(--g-line2);
+  animation: rb-tile-in 0.46s cubic-bezier(0.33, 1, 0.68, 1) both;
+  animation-delay: calc(var(--i, 0) * 40ms);
+  transition: border-color 0.18s;
+}
+
+.rb-tile:hover {
+  border-color: var(--g-gold);
+}
+
+.rb-tile.blocked {
+  opacity: 0.55;
+}
+
+.rb-medal {
+  display: grid;
+  place-items: center;
+  width: max(48px, calc(104 * var(--u)));
+  height: max(48px, calc(104 * var(--u)));
+  border-radius: 50%;
+  border: 2px solid color-mix(in srgb, var(--rc, #e8c47e) 80%, white);
+  background: radial-gradient(circle, color-mix(in srgb, var(--rc, #e8c47e) 28%, #120c08), #0b0806 70%);
+  box-shadow: 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--rc, #e8c47e) 45%, transparent);
+}
+
+.rb-medal .gr-svg,
+.rb-emblem {
+  width: 70%;
+  height: 70%;
+  object-fit: contain;
+}
+
+.rb-label {
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  text-align: center;
+  color: var(--g-gold);
+}
+
+/* açılış: ikonlar kartların yerinden (sağdan, büyükten) sola süzülür; torba sağdan kayar */
+@keyframes rb-tile-in {
+  from {
+    transform: translateX(calc(600 * var(--u))) scale(2.4);
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+@keyframes rb-inv-in {
+  from {
+    transform: translateX(calc(120 * var(--u)));
+    opacity: 0;
+  }
+  to {
+    transform: none;
+    opacity: 1;
+  }
+}
+
+.rb-panel .gr-right {
+  animation: rb-inv-in 0.46s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+.rb-overlay.out .rb-tile {
+  transform: translateX(calc(600 * var(--u))) scale(2.4);
+  opacity: 0;
+  transition: transform 0.4s, opacity 0.3s;
+}
+
+.rb-overlay.out .rb-panel .gr-right {
+  transform: translateX(calc(120 * var(--u)));
+  opacity: 0;
+  transition: transform 0.4s, opacity 0.3s;
+}
+
+html.reduced-motion .rb-tile,
+html.reduced-motion .rb-panel .gr-right {
+  animation: none;
+  transition: none;
+}
+
+html.short .rb-panel .gr-body.rb-body {
+  grid-template-columns: 92px minmax(0, 1fr);
+}
+
+html.short .rb-panel .gr-inv .gr-bag {
+  --bag-cols: 8;
+}
+
+html.short .rb-medal {
+  width: 46px;
+  height: 46px;
+}
+
+.item-tip .it-no {
+  color: #e0907a;
+  font-style: italic;
+}
+
+html.short .rb-panel.gr-gear,
+html.short .gr-shop.gr-gear {
+  width: 100%;
+  height: 100%;
+}
+
+/* Spoils "yer aç": ortak Inventory küçük boyda */
+.gr-inv-mini {
+  flex: none;
+}
+
+.gr-inv-mini .gr-bag {
+  --bag-cols: 10;
+  max-height: calc(300 * var(--u));
+}
+
+.gr-overlay .gr-inv-mini .gr-bag {
+  flex: none;
+  --bag-cols: 10;
+}
+
+.gr-shop.gr-phone .gr-wares {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+}
+
+.gr-overlay .gr-shop.gr-phone .gr-inv .gr-bag {
+  --bag-cols: 7;
+}
+
+.gr-shop.gr-phone .gr-odo-line {
+  font-size: 12.5px;
+  padding: 4px 8px;
+}
+
+/* ===== Skill çubuğu: savaş HUD'ının bileşeni (src/ui/skill-bar.ts + battle-hud.css .bh-sk); oyun biriminde, `zoom` = --gu =====
+   Gear farkları: kısayol rozeti / seçim çizgisi yok, ad kısaltılmaz (hücre gerekirse genişler), altında anahtar sayılar + farkları. */
+.bh-kit,
+.bh-kit * {
+  box-sizing: border-box;
+}
+
+.gr-skillbar {
+  position: relative;
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  color: var(--txt);
+  font-family: var(--gar);
+}
+
+.gr-skillbar .bh-sk {
+  width: auto;
+  min-width: 146px;
+  cursor: help;
+}
+
+.gr-skillbar .bh-sk::after {
+  display: none;
+}
+
+.gr-skillbar .bh-sk .nm {
+  max-width: none;
+  overflow: visible;
+}
+
+.gr-skillbar .bh-sk-pasv {
+  padding-top: 14px;
+}
+
+.gr-skillbar .bh-sk-pasv .bh-medal {
+  margin-bottom: 4px;
+}
+
+.gr-sk-nums {
+  margin-top: 2px;
+  font: 15px/1.3 var(--gar);
+  color: var(--note);
+  text-align: center;
+  white-space: nowrap;
+}
+
+.gr-sk-nums i {
+  color: var(--muted);
+}
+
+.gr-sk-nums b {
+  font: 700 15px var(--num);
+  color: #f4ede1;
+}
+
+.gr-sk-nums .up {
+  color: #8fe39a;
+}
+
+.gr-sk-nums .down {
+  color: #ff8a7a;
+}
+
+.gr-skillbar .bh-sktip .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-skillbar .bh-sktip .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* son hücrenin (pasif) açıklaması sağdan taşmasın */
+.gr-skillbar .bh-sk:last-child .bh-sktip {
+  left: auto;
+  right: 0;
+  transform: translate(20%, 6px);
+}
+
+.gr-skillbar .bh-sk:last-child:hover .bh-sktip,
+.gr-skillbar .bh-sk.tip:last-child .bh-sktip {
+  transform: translate(20%, 0);
+}
+
+/* ===== Karşılama: "Today's pick" tüm özellikleriyle (ipucu satırları) + "Browse wares" sağda (birincil en sağ) ===== */
+.mw-card .mw-go {
+  align-self: flex-end;
+}
+
+.mw-hl-t {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.mw-hl-t .it-sub {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.mw-stats {
+  font-size: max(13px, calc(19 * var(--u)));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  background: rgba(0, 0, 0, 0.28);
+  border: 1px solid var(--g-line);
+}
+
+.mw-stats .it-lines {
+  margin: 0;
+}
+
+html.short .mw-stats {
+  font-size: 12px;
+  padding: 4px 8px;
+}
+
+html.short .mw-stats .it-lines {
+  gap: 1px;
+}
+
+html.short .mw-greet {
+  display: none;
+}
+
+/* ===== Ortak görünüm anahtarı (tabSwitch): [ Wares | Character (C) ], telefonda [ Character | Inventory ]; etkin sekmede ince altın alt çizgi + tek kor elması ===== */
+.gr-tabs {
+  display: flex;
+  gap: 0;
+  border-bottom: 1px solid var(--g-line);
+}
+
+.gr-tab {
+  position: relative;
+  min-height: 44px;
+  padding: 0 max(12px, calc(20 * var(--u)));
+  margin-bottom: -1px;
+  background: transparent;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  font: 600 max(12px, calc(17 * var(--u))) var(--g-disp) !important;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim) !important;
+  cursor: pointer;
+  transition: color 0.18s, border-color 0.18s;
+}
+
+.gr-tab:hover:not(.on) {
+  color: var(--g-txt, #e8dcc4) !important;
+}
+
+.gr-tab.on {
+  color: var(--g-gold) !important;
+  border-bottom-color: var(--g-gold);
+  cursor: default;
+}
+
+.gr-tab.on::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  bottom: -5px;
+  width: 8px;
+  height: 8px;
+  margin-left: -4px;
+  transform: rotate(45deg);
+  background: var(--g-ember);
+  box-shadow: 0 0 0 1px var(--g-ember2), 0 0 8px rgba(240, 140, 40, 0.7);
+}
+
+.gr-stall-bar .gr-tabs {
+  flex: 1;
+}
+
+/* görünüm değişince ortak panel geçişi */
+.gr-swap-in {
+  animation: gr-swap-in 0.26s cubic-bezier(0.33, 1, 0.68, 1) both;
+}
+
+@keyframes gr-swap-in {
+  from {
+    opacity: 0;
+    transform: translateX(10px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+html.reduced-motion .gr-swap-in {
+  animation: none;
+}
+
+/* telefonda skill çubuğu savaşınkiyle aynı boyda; altındaki sayılar okunmaz kalır, farklar tooltip'te (dokun → aç) */
+html.short .gr-sk-nums,
+.gr-phone .gr-sk-nums {
+  display: none;
+}
+
+/* ===== Character orta paneli kaydırmasız (Ömer 2026-10-11): kuşanılmış yuva yalnızca ikon + ad (nadirlik renginde), satırlar alçak;
+   6 yuva + STATS masaüstünde ve yatay telefonda kaydırma çubuğu olmadan sığar. Ayrıntı ipucunda (üstüne gel / dokun). ===== */
+.gr-slots {
+  grid-auto-rows: max(44px, calc(60 * var(--u)));
+  gap: calc(6 * var(--u)) calc(8 * var(--u));
+}
+
+.gr-slot {
+  padding: calc(4 * var(--u)) calc(10 * var(--u));
+}
+
+.gr-slot:not(.empty) .gr-slot-name {
+  color: var(--rc);
+}
+
+.gr-char .gr-mid .gr-stats {
+  margin-top: calc(6 * var(--u));
+}
+
+html.short .gr-slots {
+  grid-auto-rows: 44px;
+  gap: 4px 6px;
+}
+
+html.short .gr-slot {
+  padding: 2px 8px;
+}
+
+/* statlar Character sayfasında her zaman 4 sütun (16 stat = 4 satır), satır kırılmaz: fark (+N) değerin yanında, uzun etiket "…" */
+.gr-char .gr-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: calc(2 * var(--u)) calc(8 * var(--u));
+}
+
+.gr-char .gr-stat {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+/* yatay telefon: yuvalar 4 sütun x 2 satır (7 yuva, ikinci el 2026-10-12), statlar geniş satırda (2 satır), "Stats" başlığı yerine ince çizgi: kaydırmasız sığar */
+.gr-overlay .gr-gear.gr-phone .gr-char .gr-slots {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gr-gear.gr-phone .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+  margin-top: 4px;
+  padding-top: 3px;
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-gear.gr-phone .gr-char .gr-mid > .gr-sec:not(:first-child) {
+  display: none;
+}
+
+.gr-gear.gr-phone .gr-char .gr-skills > .gr-sec {
+  display: none;
+}
+
+/* ad kesilmesin: gerekirse iki satıra iner (yuva yüksekliği aynı) */
+.gr-slot:not(.empty) .gr-slot-name {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  white-space: normal;
+  line-height: 1.1;
+}
+
+/* 4 sütunlu stat satırı sıkı: kısa etiket (DEX, CDMG, HP+/t...) kesilmeden sığar */
+.gr-char .gr-stat {
+  gap: 4px;
+}
+
+.gr-char .gr-stat-k {
+  letter-spacing: 0.04em;
+  flex: 0 1 auto;
+  min-width: 0;
+}
+
+.gr-char .gr-stat-d {
+  font-size: 0.85em;
+}
+
+/* fark (+N) gelince yer açılır: önce etiket kısalır, değer ve fark daima görünür */
+.gr-char .gr-stat-v,
+.gr-char .gr-stat-d {
+  flex: none;
+}
+
+.gr-char .gr-stat-d:empty {
+  display: none;
+}
+
+/* tüccarın Character sekmesi: üstte sekme anahtarı olduğu için daha az yer; kaydırmasız sığsın diye skill başlığı ve skill altı sayıları
+   gizli (farklar skill ipucunda), telefonda skill satırı da gizli (karşılaştırma için yuvalar + statlar yeterli) */
+.gr-stall .gr-char .gr-skills > .gr-sec,
+.gr-stall .gr-char .gr-sk-nums {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-skills,
+.gr-shop.gr-phone .gr-stall .gr-char .gr-mid > .gr-sec {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-slots {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(84px, 1fr));
+}
+
+/* telefonda tüccar: kahraman seçimi sağdaki şeritte; Character sekmesinin kendi kahraman sütunu gizli, yuvalar + statlar tam genişlik */
+.gr-shop.gr-phone .gr-stall .gr-char {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-areas: "mid" "skills";
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char > .gr-heroes {
+  display: none;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(76px, 1fr));
+  gap: 0 6px;
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  grid-template-columns: repeat(auto-fill, minmax(58px, 1fr));
+  line-height: 13px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stat {
+  height: 14px;
+  align-items: center;
+}
+
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1.8fr) minmax(0, 1fr);
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-slots {
+  gap: 3px 6px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats {
+  margin-top: 2px;
+  padding-top: 2px;
+}
+
+/* Dokunmatik: tek dokunuşla item'in yanına sabitlenen ipucu (Ömer 2026-10-12): dokunulabilir, altta eylem düğmeleri (Equip / Unequip / Buy / Sell / Take) */
+.item-tip.pinned {
+  pointer-events: auto;
+  z-index: 9;
+}
+
+.item-tip .it-acts {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px 14px;
+  margin-top: 8px;
+  padding-top: 8px;
+  border-top: 1px solid rgba(217, 178, 106, 0.3);
+}
+
+.item-tip .it-acts .gr-btn {
+  min-height: 44px;
+  padding: 0 calc(20 * var(--u));
+}
+
+/* Yatay telefon, 4 sütun yuva (7 yuva, ikinci el 2026-10-12): ad sığsın diye harf aralığı ve iç boşluk dar */
+.gr-phone .gr-char .gr-slot {
+  gap: 5px;
+  padding: 2px 5px;
+}
+
+.gr-phone .gr-char .gr-slot-name {
+  letter-spacing: 0;
+}
+
+/* ===== Yatay telefon düzeltmesi (Ömer 2026-10-14, tüccar CHARACTER ekran görüntüsü): kahraman şeridi ile yuvalar birbirine girmesin, stat
+   etiketleri kesilmesin, torbanın son satırı ortadan kesik görünmesin. Yalnızca html.short / .gr-phone (döndürülmüş sahnede de doğru). ===== */
+
+/* kaydırmalı torba tam satıra yuvarlanır (inventory.ts > snapBagRows); kaydırma satır başına yapışır */
+.gr-bag.snapped {
+  scroll-snap-type: y proximity;
+}
+
+.gr-bag.snapped > * {
+  scroll-snap-align: start;
+}
+
+/* tüccar, Character sekmesi: sağ sütun (kahraman şeridi + torba) sabit dar genişlikte, ince altın çizgiyle ayrık; torba 4 sütun (hücre >= 44 px) */
+.gr-shop.gr-phone.show-char .gr-body {
+  grid-template-columns: minmax(0, 1fr) clamp(272px, 33%, 330px);
+  column-gap: 14px;
+}
+
+.gr-shop.gr-phone.show-char .gr-right {
+  gap: 8px;
+  padding-left: 12px;
+  border-left: 1px solid var(--g-line, rgba(217, 178, 106, 0.16));
+}
+
+.gr-overlay .gr-shop.gr-phone.show-char .gr-inv .gr-bag {
+  --bag-cols: 4;
+}
+
+/* stats: 4 sütun x 4 satır, kısa etiketler TAM (DMG, M.ARM, CRIT, CDMG, ACC, HP+/t...), değer ve fark sağda */
+.gr-shop.gr-phone .gr-stall .gr-char .gr-stats,
+.gr-gear.gr-phone .gr-char .gr-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1px 12px;
+}
+
+.gr-phone .gr-char .gr-stat {
+  overflow: visible;
+}
+
+.gr-phone .gr-char .gr-stat-k {
+  flex: 1 1 auto;
+  overflow: visible;
+  text-overflow: clip;
+  letter-spacing: 0.02em;
+}
+
+/* yuva kartları: ikon küçük, ad tek satır sığar */
+.gr-phone .gr-char .gr-slot .gr-silhouette,
+.gr-phone .gr-char .gr-slot > img {
+  flex: none;
+}
+
+/* tüccar, Wares sekmesi: torba 8 sütun, telefonda 3 tam satır sığar (7 sütunda 2,6 satır kalıyordu) */
+.gr-overlay .gr-shop.gr-phone.show-inv .gr-inv .gr-bag {
+  --bag-cols: 8;
+}
+
+/* --- Level / stat puanı (Ömer 2026-10-17, levels.md): Character sayfasında "Level N" + XP çubuğu, puan taşı (sürükle / dokun), satırda + / − --- */
+.gr-lvl {
+  margin-top: calc(14 * var(--u));
+  padding-top: calc(10 * var(--u));
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-lvl-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: calc(10 * var(--u));
+}
+
+.gr-lvl-n {
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.gr-lvl-xp {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-xpbar {
+  height: max(4px, calc(6 * var(--u)));
+  margin-top: calc(6 * var(--u));
+  background: rgba(217, 178, 106, 0.14);
+  border: 1px solid var(--g-line);
+}
+
+.gr-xpbar i {
+  display: block;
+  height: 100%;
+  background: linear-gradient(90deg, #b9853e, var(--g-gold));
+}
+
+.gr-pts {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(10 * var(--u));
+  margin-top: calc(10 * var(--u));
+}
+
+/* Puan taşı: kor elmas yerine yuvarlak altın taş (sürüklenebilir); dokunma alanı en az 44 px */
+.gr-pts-chip {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 44px;
+  min-height: 44px;
+  border-radius: 50%;
+  font: 600 max(14px, calc(22 * var(--u))) var(--g-disp);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, var(--g-ember2), var(--g-ember) 70%);
+  box-shadow: 0 0 calc(14 * var(--u)) rgba(240, 140, 40, 0.45);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.gr-pts-chip.empty {
+  background: rgba(217, 178, 106, 0.18);
+  color: var(--g-dim);
+  box-shadow: none;
+  cursor: default;
+}
+
+.gr-pts-text {
+  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pts-acts {
+  display: inline-flex;
+  gap: calc(8 * var(--u));
+  margin-left: auto;
+}
+
+.gr-pts-warn {
+  margin-top: calc(6 * var(--u));
+  font: italic max(12px, calc(17 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: #e0785e;
+}
+
+.gr-pts-skill {
+  margin-top: calc(6 * var(--u));
+  font: italic max(11px, calc(16 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+
+.gr-pm {
+  display: inline-flex;
+  gap: 2px;
+  margin-left: auto;
+}
+
+/* + / − : görünen düğme küçük, dokunma alanı ::after ile 44 px */
+.gr-pm-b {
+  position: relative;
+  width: max(20px, calc(30 * var(--u)));
+  height: max(20px, calc(30 * var(--u)));
+  padding: 0;
+  border: 1px solid var(--g-line);
+  background: rgba(20, 14, 8, 0.6);
+  color: var(--g-gold);
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  line-height: 1;
+}
+
+.gr-pm-b::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.gr-pm-b:hover:not(:disabled) {
+  border-color: var(--g-gold);
+}
+
+.gr-pm-b:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.gr-stat.drop-ok {
+  outline: 1px dashed rgba(240, 180, 90, 0.55);
+  outline-offset: 2px;
+}
+
+.gr-stat.drop-on {
+  outline: 1px solid var(--g-ember2);
+  background: rgba(224, 112, 42, 0.18);
+}
+
+.gr-pts-ghost {
+  position: fixed;
+  z-index: 10000;
+  pointer-events: none;
+  transform: translate(-50%, -50%);
+  font: 600 22px var(--g-disp, 'Cinzel', serif);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  border-radius: 50%;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.6);
+}
+
+html.short .gr-lvl {
+  margin-top: 8px;
+  padding-top: 6px;
+}
+
+html.short .gr-pts {
+  margin-top: 6px;
+  gap: 6px;
+}
+
+/* --- Stat grupları (Ömer 2026-10-18): savaş alt barıyla aynı düzen. Üst satır HP + MP; altında Ana (+ düğmeleri sağda sabit sütun) | Atak | Defans.
+   Satırlar eski `.gr-stat`; yalnızca kapsayıcı yeni (eski `.gr-stats` ızgara geçersiz kılmaları buna uygulanmaz). --- */
+.gr-sgroups {
+  display: grid;
+  grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: calc(8 * var(--u)) calc(14 * var(--u));
+  font-size: max(12px, calc(20 * var(--u)));
+}
+
+.gr-sgrp {
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+  min-width: 0;
+}
+
+.gr-sgrp.vitals {
+  grid-column: 1 / -1;
+  flex-direction: row;
+  gap: calc(14 * var(--u));
+  padding-bottom: calc(6 * var(--u));
+  border-bottom: 1px solid var(--g-line);
+}
+
+.gr-sgrp.vitals > .gr-stat {
+  flex: 1 1 0;
+}
+
+.gr-sgrp.attack,
+.gr-sgrp.defense {
+  padding-left: calc(12 * var(--u));
+  border-left: 1px solid var(--g-line);
+}
+
+.gr-sgrp .gr-stat {
+  min-height: max(20px, calc(30 * var(--u)));
+  font-size: 1em;
+  height: auto;
+}
+
+.gr-sgrp .gr-sico {
+  width: max(14px, calc(24 * var(--u)));
+  height: max(14px, calc(24 * var(--u)));
+}
+
+.gr-sgrp .gr-stat-k {
+  flex: 1 1 auto;
+  min-width: 0;
+  letter-spacing: 0.04em;
+}
+
+.gr-sgrp .gr-stat-v,
+.gr-sgrp .gr-stat-d {
+  flex: none;
+}
+
+/* Sabit satır düzeni (Ömer 2026-10-18): +, −, Reset, Confirm hiçbir şeyi kaydırmaz. Değer sağa yaslı sabit genişlikte,
+   fark (+1 / +0.1) boşken de yerini tutan sabit yuvada; puan ekranında − ve + yuvası görünmez de olsa yer kaplar. */
+.gr-sgroups .gr-stat .gr-stat-v {
+  min-width: 2.2em;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-sgroups .gr-stat .gr-stat-d,
+.gr-sgroups .gr-stat .gr-stat-d:empty {
+  display: inline-block;
+  min-width: 2.9em;
+  margin-left: -0.15em;
+  overflow: visible;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+.gr-sgroups .gr-pm {
+  margin-left: 0;
+}
+
+.gr-sgroups .gr-stat .gr-stat-d:empty::before {
+  content: '\00a0';
+}
+
+.gr-pm-b.gr-pm-off,
+.gr-pts.gr-pts-idle {
+  visibility: hidden;
+}
+
+/* "Stats" başlığı level bloğundan ayrık dursun */
+.gr-lvl + .gr-sec {
+  margin-top: calc(16 * var(--u));
+}
+
+html.short .gr-lvl + .gr-sec {
+  margin-top: 8px;
+}
+
+/* telefon (Gear + tüccar): sıkı; başlık gizli olduğundan çizgi gruplar arasında */
+.gr-phone .gr-sgroups {
+  font-size: 12px;
+  gap: 3px 8px;
+}
+
+.gr-phone .gr-sgrp {
+  gap: 1px;
+}
+
+.gr-phone .gr-sgrp .gr-stat {
+  min-height: 20px;
+}
+
+.gr-phone .gr-sgrp .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+.gr-phone .gr-sgrp.attack,
+.gr-phone .gr-sgrp.defense {
+  padding-left: 6px;
+}
+
+.gr-shop.gr-phone .gr-stall .gr-char .gr-sgrp .gr-stat {
+  min-height: 14px;
+}
+
+/* ===================== Ortak envanter v3 "Ledger" (Ömer 2026-10-18; taslak public/mockups/unified-inventory.html#v3; src/ui/gear-screen.ts > openGear) =====================
+   Tam sayfa defter: üst şerit (Gear, Hero / Sheet sekmeleri, altın) sağ üst X / tam ekranla aynı satırda; gövde = yer imleri | sol sayfa | sırt | sağ sayfa.
+   Telefon (html.short): yerleşim aynı, yazılar ~%15 küçük; dokunma hedefleri 44 px. */
+.gr-overlay.gr-ledger-ov {
+  padding-top: calc(var(--nav-edge-k) + var(--et, 0px));
+}
+
+.gr-panel.gr-gear.gr-ledger {
+  position: relative;
+  width: 100%;
+  max-width: none;
+  height: 100%;
+  max-height: 100%;
+  /* başlığın üstünde nefes payı (Ömer 2026-10-18: "gear üste çok yapışmış") */
+  padding-top: max(8px, calc(16 * var(--u)));
+}
+
+.gr-ledger > .gr-lhead {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  gap: calc(28 * var(--u));
+  min-height: var(--nav-hit-k);
+  padding-bottom: 0;
+  /* sağ üstte X (Menu düğmesinin yerinde) + tam ekran */
+  padding-right: calc(2 * var(--nav-hit-k) + var(--nav-gap-k) + 8px);
+}
+
+.gr-ledger > .gr-lhead .gr-title {
+  line-height: 1;
+}
+
+.gr-ledger > .gr-lhead .gr-headtabs {
+  align-self: stretch;
+  display: flex;
+  align-items: stretch;
+  margin: 0;
+  border: 0;
+}
+
+.gr-ledger > .gr-lhead .gr-headtabs .gr-tab {
+  display: inline-flex;
+  align-items: center;
+  min-height: 44px;
+}
+
+.gr-ledger > .gr-lhead .gr-grow {
+  flex: 1;
+}
+
+.gr-ledger .gr-gold .gr-ui-ico {
+  width: max(18px, calc(30 * var(--u)));
+  height: max(18px, calc(30 * var(--u)));
+}
+
+/* harcanmamış puan rozeti (stat puanı kor, skill puanı açık altın) */
+.gr-pt {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: max(20px, calc(30 * var(--u)));
+  height: max(20px, calc(30 * var(--u)));
+  padding: 0 4px;
+  border-radius: 50%;
+  font: 600 max(11px, calc(17 * var(--u))) var(--g-disp);
+  color: #1a120a;
+  background: radial-gradient(circle at 35% 30%, #ffb35a, #e0702a 70%);
+  box-shadow: 0 0 calc(10 * var(--u)) rgba(240, 140, 40, 0.45);
+  letter-spacing: 0;
+}
+
+.gr-pt.sk {
+  background: radial-gradient(circle at 35% 30%, #f3e1b0, #b9853e 70%);
+}
+
+.gr-headtabs .gr-tab .gr-pt {
+  margin-left: 6px;
+}
+
+.gr-ledger .gr-lbody {
+  flex: 1 1 auto;
+  display: grid;
+  grid-template-columns: calc(96 * var(--u)) minmax(0, 1fr) 1px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+  gap: 0;
+  min-height: 0;
+  margin-top: calc(8 * var(--u));
+  overflow: hidden;
+}
+
+/* yer imleri: sol kenarda portreler; seçili olan sayfaya doğru çıkar */
+.gr-marks-col {
+  min-height: 0;
+  overflow: hidden auto;
+  scrollbar-width: none;
+}
+
+.gr-marks {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  padding: 10px calc(14 * var(--u)) 10px 0;
+}
+
+.gr-mark {
+  position: relative;
+  padding: 2px;
+  border: 1px solid var(--g-line2);
+  background: rgba(8, 6, 4, 0.5);
+  cursor: pointer;
+  transition: border-color 0.18s, transform 0.18s cubic-bezier(0.33, 1, 0.68, 1), box-shadow 0.2s;
+}
+
+.gr-mark .gr-face {
+  width: max(44px, calc(76 * var(--u)));
+  height: max(44px, calc(76 * var(--u)));
+}
+
+.gr-mark:hover {
+  border-color: var(--g-gold);
+}
+
+.gr-mark.on {
+  border-color: var(--g-gold);
+  transform: translateX(calc(8 * var(--u)));
+  box-shadow: calc(-8 * var(--u)) 0 0 0 rgba(224, 112, 42, 0.5);
+}
+
+.gr-mark .gr-pt {
+  position: absolute;
+  right: -9px;
+  top: -9px;
+  min-width: 22px;
+  height: 22px;
+  font-size: 12px;
+}
+
+.gr-dragging .gr-mark.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 0 1px var(--drag-rc, var(--g-gold)), 0 0 calc(14 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 60%, transparent);
+}
+
+.gr-dragging .gr-mark.drop-no {
+  opacity: 0.4;
+}
+
+/* sayfalar: kalıcı kaydırma kapları (içerik yenilenir, kap yerinde kalır) */
+.gr-ledger .gr-page {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+  padding: 4px calc(26 * var(--u)) 0;
+  overflow: hidden auto;
+  overscroll-behavior: contain;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+  background: linear-gradient(90deg, rgba(8, 6, 4, 0.15), rgba(8, 6, 4, 0.4));
+}
+
+.gr-ledger .gr-page.r {
+  background: linear-gradient(270deg, rgba(8, 6, 4, 0.15), rgba(8, 6, 4, 0.4));
+}
+
+.gr-ledger .gr-page-in {
+  display: flex;
+  flex-direction: column;
+  flex: 1 0 auto;
+  min-width: 0;
+}
+
+/* sağ sayfa (torba): sayfa kaymaz, torba kendi içinde kayar */
+.gr-ledger.tab-hero .gr-page.r {
+  overflow: hidden;
+}
+
+.gr-ledger.tab-hero .gr-page.r .gr-page-in {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.gr-ledger .gr-leaf {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  min-width: 0;
+}
+
+.gr-ledger .gr-leaf > * {
+  flex-shrink: 0;
+}
+
+.gr-ledger .gr-leaf > .gr-sec,
+.gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: 0;
+}
+
+.gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-ledger .gr-leaf .gr-lvl {
+  margin-top: 0;
+  padding-top: 0;
+  border-top: 0;
+}
+
+.gr-ledger .gr-folio {
+  flex: none;
+  margin-top: auto;
+  padding-top: calc(6 * var(--u));
+  text-align: center;
+  font: italic max(11px, calc(15 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+}
+
+.gr-ledger .gr-spine {
+  background: linear-gradient(180deg, transparent, rgba(217, 178, 106, 0.5) 12%, rgba(217, 178, 106, 0.5) 88%, transparent);
+  box-shadow: 0 0 calc(18 * var(--u)) rgba(0, 0, 0, 0.9);
+}
+
+/* boş yuva: boyalı simge soluk (~%36; src/ui/slot-icons.ts) */
+.gr-slot .gr-slot-ico {
+  opacity: 0.36;
+  image-rendering: auto;
+  filter: saturate(0.8);
+}
+
+/* torba */
+.gr-ledger .gr-inv {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.gr-ledger .gr-inv .gr-bag {
+  flex: 1 1 auto;
+  overflow: hidden auto;
+  grid-auto-rows: max-content;
+}
+
+.gr-ledger .gr-bag-head {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-ledger .gr-bag-head .gr-sec {
+  flex: 1;
+  margin-bottom: 0;
+  min-width: 0;
+}
+
+.gr-ledger .gr-bag-head .gr-best {
+  flex: none;
+  white-space: nowrap;
+}
+
+/* Sheet: HP / MP "93 / 150" + savaş HUD çubuğu */
+.gr-sgrp.vitals > .gr-vital {
+  flex: 1 1 0;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(4 * var(--u));
+}
+
+.gr-vbar.bh-bar {
+  --gold: 217, 178, 106;
+  --ease: cubic-bezier(0.33, 1, 0.68, 1);
+  height: max(5px, calc(10 * var(--u)));
+}
+
+.gr-sgroups .gr-stat .gr-stat-v.gr-stat-cur {
+  min-width: 0;
+}
+
+/* skill ağacı: kap aynı, içerik yok */
+.gr-tree-head {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+}
+
+.gr-tree.gr-soon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1 1 auto;
+  min-height: calc(300 * var(--u));
+  border: 1px solid rgba(217, 178, 106, 0.16);
+  background: rgba(8, 6, 4, 0.35);
+}
+
+.gr-soon span {
+  font: 600 max(14px, calc(26 * var(--u))) var(--g-disp);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+/* kısa ipucu (yer imi: ad + üstüne gelinen item'in etkisi) */
+.gr-tip .gr-hint-sub.tone-up {
+  color: #8fe39a;
+}
+
+.gr-tip .gr-hint-sub.tone-down,
+.gr-tip .gr-hint-sub.tone-no {
+  color: #ff8a7a;
+}
+
+/* uyarı yazısı (eski alt çubuğun yerine) */
+.gr-toast {
+  position: absolute;
+  left: 50%;
+  top: calc(90 * var(--u));
+  z-index: 45;
+  transform: translateX(-50%);
+  max-width: 80%;
+  padding: 8px 18px;
+  background: rgba(12, 9, 6, 0.96);
+  border: 1px solid rgba(255, 138, 122, 0.55);
+  font: italic max(13px, calc(20 * var(--u))) var(--g-body);
+  color: #ffb0a0;
+  text-align: center;
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.2s;
+}
+
+.gr-toast.on {
+  opacity: 1;
+}
+
+/* telefon: yerleşim AYNI, ölçek küçük */
+html.short .gr-overlay.gr-ledger-ov {
+  padding-left: 6px;
+  padding-right: 6px;
+  padding-bottom: 6px;
+}
+
+html.short .gr-panel.gr-ledger {
+  padding: 8px 10px;
+  gap: 6px;
+}
+
+html.short .gr-ledger .gr-lbody {
+  grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr);
+  margin-top: 4px;
+}
+
+html.short .gr-ledger .gr-page {
+  padding: 4px 8px 0;
+}
+
+html.short .gr-ledger .gr-marks {
+  padding-right: 8px;
+}
+
+html.short .gr-ledger .gr-mark .gr-face {
+  width: 44px;
+  height: 44px;
+}
+
+html.short .gr-ledger .gr-mark .gr-pt {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+  right: -6px;
+  top: -6px;
+}
+
+html.short .gr-ledger .gr-title {
+  font-size: 17px;
+}
+
+html.short .gr-ledger .gr-tab {
+  font-size: 11px !important;
+  letter-spacing: 0.14em;
+}
+
+html.short .gr-ledger .gr-sec {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  padding-bottom: 2px;
+}
+
+html.short .gr-ledger .gr-leaf {
+  gap: 6px;
+}
+
+html.short .gr-ledger .gr-leaf .gr-skills > .gr-sec {
+  margin-bottom: 4px;
+}
+
+html.short .gr-ledger .gr-slot-name {
+  font-size: 11px;
+}
+
+html.short .gr-ledger .gr-slot-sub {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-slot {
+  min-height: 44px;
+  padding-top: 2px;
+  padding-bottom: 2px;
+}
+
+html.short .gr-ledger .gr-slot .gr-svg {
+  --sz: 1 !important;
+}
+
+html.short .gr-ledger .gr-chip,
+html.short .gr-ledger .gr-best {
+  min-height: 44px;
+  font-size: 10px !important;
+  padding: 0 8px;
+}
+
+html.short .gr-ledger .gr-gold {
+  font-size: 13px;
+}
+
+html.short .gr-ledger .gr-sgroups {
+  font-size: 11px;
+}
+
+html.short .gr-ledger .gr-lvl-n {
+  font-size: 12px;
+}
+
+html.short .gr-ledger .gr-lvl-xp,
+html.short .gr-ledger .gr-pts-text,
+html.short .gr-ledger .gr-pts-skill {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-btn.sm {
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-folio {
+  font-size: 9px;
+  padding-top: 2px;
+}
+
+html.short .gr-ledger .gr-soon span {
+  font-size: 12px;
+}
+
+html.short .gr-ledger .gr-tree.gr-soon {
+  min-height: 180px;
+}
+
+html.short .gr-pt {
+  min-width: 18px;
+  height: 18px;
+  font-size: 10px;
+}
+
+html.short .gr-ledger .gr-bag-head {
+  gap: 4px;
+  margin-bottom: 4px;
+}
+
+html.short .gr-toast {
+  top: 54px;
+  font-size: 13px;
+}
+
+/* telefon Sheet: stat etiketleri kesilmesin (sıkı ikon / fark / düğme; Atak ve Defans satırında boş fark yer tutmaz: orada + yok) */
+html.short .gr-ledger .gr-sgroups {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 4px 6px;
+}
+
+html.short .gr-ledger .gr-sgrp .gr-stat {
+  gap: 3px;
+  min-height: 22px;
+}
+
+html.short .gr-ledger .gr-sgrp .gr-sico {
+  width: 13px;
+  height: 13px;
+}
+
+html.short .gr-ledger .gr-sgrp.attack,
+html.short .gr-ledger .gr-sgrp.defense {
+  padding-left: 6px;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-stat .gr-stat-v {
+  min-width: 1.6em;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-stat .gr-stat-d {
+  min-width: 2.2em;
+}
+
+html.short .gr-ledger .gr-sgrp.attack .gr-stat-d:empty,
+html.short .gr-ledger .gr-sgrp.defense .gr-stat-d:empty,
+html.short .gr-ledger .gr-sgrp.vitals .gr-stat-d:empty {
+  min-width: 0;
+}
+
+html.short .gr-ledger .gr-pm-b {
+  width: 20px;
+  height: 20px;
+}
+
+html.short .gr-ledger .gr-bag-head .gr-sec {
+  white-space: nowrap;
+  overflow: visible;
+}
+
+/* ===================== Çift pencere: tüccar tezgâhı / ganimet alanı + Gear defteri (Ömer 2026-10-18; taslak #v3&enc=merchant, enc=reward) =====================
+   Sol panel Gear ile AYNI üst şeridi paylaşır (başlık aynı uzaklıkta: panel .gr-ledger sınıfını da taşır); sağ üstte ortak X (Menu'nün yerinde). */
+.gr-overlay.gr-pair-ov {
+  padding-top: calc(var(--nav-edge-k) + var(--et, 0px));
+}
+
+.gr-pair {
+  display: flex;
+  gap: calc(16 * var(--u));
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger {
+  flex: 1 1 0;
+  width: auto;
+  min-width: 0;
+  height: 100%;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop,
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-loot {
+  flex: 0 0 auto;
+  width: calc(600 * var(--u));
+  overflow: hidden auto;
+  scrollbar-width: thin;
+  scrollbar-color: rgba(217, 178, 106, 0.4) transparent;
+}
+
+.gr-pair > .gr-shop > .gr-lhead,
+.gr-pair > .gr-loot > .gr-lhead {
+  padding-right: 0;
+  gap: calc(16 * var(--u));
+}
+
+.gr-pair > .gr-shop .gr-grow {
+  flex: 1;
+}
+
+.gr-pair .gr-shop .gr-shop-sub {
+  margin-top: calc(-6 * var(--u));
+}
+
+/* tezgâh: sekmeler, mallar (5 sütun), yenileme simgesi, satış kutusu */
+.gr-shoptabs {
+  display: flex;
+  gap: calc(18 * var(--u));
+  flex: none;
+}
+
+.gr-shoptabs .gr-tab .gr-pt {
+  margin-left: 6px;
+  min-width: 20px;
+  height: 20px;
+  font-size: 11px;
+  vertical-align: 1px;
+}
+
+.gr-shoppane {
+  display: flex;
+  flex-direction: column;
+  gap: calc(12 * var(--u));
+  min-height: max(64px, calc(120 * var(--u)));
+}
+
+.gr-pair .gr-shop .gr-wares {
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(8 * var(--u)) calc(12 * var(--u));
+}
+
+.gr-wares-head {
+  display: flex;
+  align-items: center;
+}
+
+.gr-wares-head .gr-reroll {
+  margin-left: auto;
+  align-self: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0 calc(10 * var(--u));
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  letter-spacing: 0.08em;
+}
+
+/* Üst kenar kaydırılan .gr-stall tarafından kırpılıyordu: hover'daki -2px kayma çerçevenin üstünü kesiyordu */
+.gr-wares-head .gr-reroll:hover,
+.gr-wares-head .gr-reroll:focus-visible {
+  transform: none;
+}
+
+.gr-wares-head .gr-reroll::before,
+.gr-wares-head .gr-reroll::after {
+  display: none;
+}
+
+.gr-wares-head .gr-reroll svg {
+  flex: 0 0 auto;
+}
+
+.gr-wares-head .gr-reroll .gr-cost {
+  margin-left: 4px;
+  font-size: max(11px, calc(14 * var(--u)));
+}
+
+.gr-wares-head .gr-reroll .gr-price-ico {
+  width: max(12px, calc(18 * var(--u)));
+  height: max(12px, calc(18 * var(--u)));
+}
+
+.gr-sellbox {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  padding: calc(14 * var(--u)) calc(16 * var(--u));
+  border: 1px dashed var(--g-line2);
+  background: rgba(8, 6, 4, 0.4);
+  font: italic max(12px, calc(20 * var(--u))) var(--g-body);
+  color: var(--g-text);
+  cursor: pointer;
+}
+
+.gr-sellbox .gr-ui-ico {
+  width: max(26px, calc(44 * var(--u)));
+  height: max(26px, calc(44 * var(--u)));
+  object-fit: contain;
+  flex: none;
+}
+
+.gr-sellbox i {
+  display: block;
+  color: var(--g-dim);
+}
+
+.gr-dragging .gr-sellbox.drop-ok,
+.gr-dragging .gr-shop.drop-ok {
+  border-color: var(--drag-rc, var(--g-gold));
+  box-shadow: inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--drag-rc, #f08c28) 25%, transparent);
+}
+
+.gr-shopact {
+  display: flex;
+  justify-content: flex-end;
+  flex: none;
+}
+
+/* ganimet alanı */
+.gr-loot-gain {
+  display: flex;
+  flex-wrap: wrap;
+  gap: calc(6 * var(--u)) calc(22 * var(--u));
+  font: italic max(13px, calc(21 * var(--u))) var(--g-body);
+  color: var(--g-text);
+  flex: none;
+}
+
+.gr-loot-gold {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font: 600 max(14px, calc(24 * var(--u))) var(--g-disp);
+  letter-spacing: 0.06em;
+  color: var(--g-gold);
+}
+
+/* XP satırları (Ömer 2026-10-18): kahraman başına portre + ad + "+N XP" + level + dolan bar; satıra dokunmak karakter ekranını açar */
+.gr-lx {
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+  flex: none;
+  margin-top: calc(8 * var(--u));
+}
+
+.gr-lx-row {
+  display: flex;
+  align-items: center;
+  gap: calc(14 * var(--u));
+  min-height: 44px;
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  background: rgba(217, 178, 106, 0.05);
+  border: 1px solid var(--g-line);
+  color: var(--g-text);
+  text-align: left;
+  cursor: pointer;
+  transition:
+    border-color var(--m-panel, 200ms) var(--m-ease, ease),
+    background var(--m-panel, 200ms) var(--m-ease, ease),
+    box-shadow var(--m-panel, 200ms) var(--m-ease, ease);
+}
+
+.gr-lx-row:hover,
+.gr-lx-row:focus-visible {
+  border-color: rgba(217, 178, 106, 0.5);
+  background: rgba(217, 178, 106, 0.1);
+  outline: none;
+}
+
+.gr-lx-face {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: max(40px, calc(64 * var(--u)));
+  height: max(40px, calc(64 * var(--u)));
+  border: 1px solid rgba(217, 178, 106, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  font: 600 max(14px, calc(24 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+  overflow: hidden;
+}
+
+.gr-lx-face img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  image-rendering: pixelated;
+}
+
+.gr-lx-body {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: calc(6 * var(--u));
+}
+
+.gr-lx-top,
+.gr-lx-mid {
+  display: flex;
+  align-items: center;
+  gap: calc(12 * var(--u));
+}
+
+.gr-lx-top {
+  justify-content: space-between;
+}
+
+.gr-lx-name {
+  font: 600 max(12px, calc(20 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.gr-lx-gain {
+  flex: none;
+  font: max(12px, calc(20 * var(--u))) var(--g-body);
+  color: var(--g-gold);
+}
+
+.gr-lx-lv {
+  flex: none;
+  min-width: 3.2em;
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+
+.gr-lx-bar.gr-xpbar {
+  flex: 1;
+  margin-top: 0;
+  height: max(6px, calc(10 * var(--u)));
+}
+
+.gr-lx-bar i {
+  width: 0;
+}
+
+.gr-lx-up {
+  flex: none;
+  font: 600 max(10px, calc(14 * var(--u))) var(--g-disp);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: #1a120a;
+  background: linear-gradient(90deg, #b9853e, var(--g-gold));
+  padding: 1px calc(8 * var(--u));
+  opacity: 0;
+  transform: translateY(2px);
+  transition:
+    opacity var(--m-panel, 200ms) var(--m-ease, ease),
+    transform var(--m-panel, 200ms) var(--m-ease, ease);
+  display: none;
+}
+
+.gr-lx-up.on {
+  display: inline-block;
+  opacity: 1;
+  transform: none;
+}
+
+.gr-lx-row.lvup {
+  border-color: var(--g-gold);
+  background: rgba(243, 217, 153, 0.14);
+  box-shadow: 0 0 calc(22 * var(--u)) rgba(243, 217, 153, 0.35);
+}
+
+.gr-lx-row.none,
+.gr-lx-row.fallen {
+  filter: grayscale(1);
+  opacity: 0.55;
+}
+
+.gr-lx-row.none .gr-lx-gain,
+.gr-lx-row.fallen .gr-lx-gain {
+  color: var(--g-dim);
+}
+
+.gr-loot-list {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow: hidden auto;
+}
+
+.gr-loot-tile.rb-tile {
+  flex-direction: row;
+  justify-content: flex-start;
+  gap: calc(14 * var(--u));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  animation: none;
+  text-align: left;
+  cursor: grab;
+  touch-action: none;
+}
+
+.gr-loot-tile .gr-loot-sq {
+  flex: none;
+  pointer-events: none;
+  width: max(40px, calc(72 * var(--u)));
+  height: max(40px, calc(72 * var(--u)));
+}
+
+.gr-loot-tile .rb-label {
+  flex: 1;
+  text-align: left;
+}
+
+.gr-loot-tile .gr-rare-tag {
+  flex: none;
+}
+
+/* panel tam opak: arkadaki sahne yazıları (hero adları vb.) %3 şeffaflıktan silik hayalet gibi sızmasın */
+.gr-pair > .gr-panel.gr-loot {
+  background: linear-gradient(180deg, rgb(30, 22, 14), rgb(12, 9, 6));
+}
+
+.gr-pair > .gr-loot > .gr-foot,
+.gr-pair > .gr-shop > .gr-foot {
+  margin-top: auto;
+}
+
+/* üstte kısa yazı: bilgi (altın çerçeve) */
+.gr-toast.ok {
+  border-color: rgba(217, 178, 106, 0.6);
+  color: var(--g-gold);
+}
+
+/* telefon: yan panel dar, yerleşim aynı */
+html.short .gr-pair {
+  gap: 6px;
+}
+
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-shop,
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-loot {
+  width: 44%;
+  height: 100%;
+}
+
+html.short .gr-pair .gr-shop .gr-wares {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+html.short .gr-pair .gr-shop .gr-wares .gr-item,
+html.short .gr-pair .gr-shop .gr-bb-row .gr-item {
+  min-width: 44px;
+  min-height: 44px;
+}
+
+html.short .gr-pair .gr-odo-line,
+html.short .gr-pair .gr-shop-sub,
+html.short .gr-pair .gr-sellbox {
+  font-size: 11px;
+}
+
+html.short .gr-pair .gr-odo .gr-face {
+  display: none;
+}
+
+html.short .gr-pair .gr-loot-gain {
+  font-size: 11px;
+}
+
+html.short .gr-pair .gr-lx {
+  gap: 4px;
+  margin-top: 4px;
+}
+
+html.short .gr-pair .gr-lx-row {
+  gap: 8px;
+  padding: 4px 6px;
+}
+
+html.short .gr-pair .gr-lx-face {
+  width: 36px;
+  height: 36px;
+}
+
+html.short .gr-pair .gr-lx-name,
+html.short .gr-pair .gr-lx-gain {
+  font-size: 10px;
+}
+
+html.short .gr-pair .gr-lx-lv {
+  font-size: 9px;
+  min-width: 2.6em;
+}
+
+html.short .gr-pair .gr-lx-up {
+  font-size: 8px;
+  padding: 0 4px;
+}
+
+html.short .gr-pair .gr-loot-tile .rb-label {
+  font-size: 10px;
+}
+
+html.short .gr-pair .gr-bb-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+/* ===================== Sheet: üç stat sütunu AYNI satır düzeninde (Ömer 2026-10-18) =====================
+   Etiket sabit genişlik, değer sağa yaslı sabit genişlik, fark değerin hemen yanında; sütunlar içeriğe göre boyutlanır (etiket - değer boşluğu
+   sütun genişliğine göre değişmez). Temel stat satırında − / + sağda sabit (puan bitince bile yerinde). Telefon kendi sıkı düzeninde kalır. */
+.gr-ledger .gr-sgroups {
+  /* üç stat sütunu AYNI genişlikte, içerik soldan sıkı dizilir (Ömer 2026-10-18: "statlar arası boşluk") */
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  justify-content: normal;
+  column-gap: calc(16 * var(--u));
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-stat {
+  justify-content: flex-start;
+  gap: calc(4 * var(--u));
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-stat-k {
+  flex: 0 0 auto;
+  min-width: 3.2em;
+}
+
+.gr-ledger .gr-sgrp:not(.vitals) .gr-sico {
+  flex: none;
+}
+
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-v {
+  flex: none;
+  min-width: 1.9em;
+}
+
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d,
+.gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d:empty {
+  min-width: 2.2em;
+  margin-left: 0;
+}
+
+/* − sağda, + solda ve sabit (iki yuva puan bitince de yerinde durur) */
+.gr-ledger .gr-sgroups .gr-pm {
+  flex: none;
+  gap: calc(4 * var(--u));
+}
+
+html.short .gr-ledger .gr-sgroups {
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  justify-content: normal;
+}
+
+html.short .gr-ledger .gr-sgrp:not(.vitals) .gr-stat-k {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-v {
+  min-width: 1.6em;
+}
+
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d,
+html.short .gr-ledger .gr-sgroups .gr-sgrp:not(.vitals) .gr-stat-d:empty {
+  min-width: 2.2em;
+}
+
+/* puan satırı: puan yokken boş yer tutmaz (level çubuğunun altı boşluk bırakmaz) */
+.gr-ledger .gr-pts.gr-pts-idle {
+  display: none;
+}
+
+/* harcanmamış stat puanı rozeti (kahraman yer imi): puan harcanana dek parlar (Ömer 2026-10-18) */
+@keyframes gr-pt-glow {
+  0%,
+  100% {
+    box-shadow: 0 0 calc(8 * var(--u)) rgba(240, 140, 40, 0.45);
+  }
+
+  50% {
+    box-shadow: 0 0 calc(22 * var(--u)) rgba(255, 179, 90, 0.95), 0 0 0 2px rgba(255, 179, 90, 0.55);
+  }
+}
+
+.gr-mark .gr-pt {
+  animation: gr-pt-glow 1.6s ease-in-out infinite;
+}
+
+html.reduced-motion .gr-mark .gr-pt {
+  animation: none;
+}
+
+/* Büyük ekranda defter tüm ekranı kaplamaz (Ömer 2026-10-18): oyunun 1920x1080 tabanına göre en büyük boyutta ortada durur, etrafı kararan zemin.
+   Küçük ekran / telefon (html.short) eskisi gibi tam sayfa. Aynı kural tüccar ve loot (çift pencere) için. */
+.gr-panel.gr-gear.gr-ledger.gr-solo {
+  max-width: calc(1920 * var(--u));
+}
+
+.gr-pair {
+  max-width: calc(1920 * var(--u));
+}
+
+html.short .gr-panel.gr-gear.gr-ledger.gr-solo,
+html.short .gr-pair {
+  max-width: none;
+}
+
+/* sağ / sol kenar boşlukları (geniş ekranda oyun alanı kayması): panel sağ üstteki Menu / tam ekran / X düğmeleriyle ve altın göstergesiyle çakışmaz */
+.gr-overlay.gr-ledger-ov,
+.gr-overlay.gr-pair-ov {
+  padding-left: calc(max(8px, calc(20 * var(--u))) + var(--el, 0px));
+  padding-right: calc(max(8px, calc(20 * var(--u))) + var(--er, 0px));
+}
+
+html.short .gr-overlay.gr-ledger-ov,
+html.short .gr-overlay.gr-pair-ov {
+  padding-left: calc(6px + var(--el, 0px));
+  padding-right: calc(6px + var(--er, 0px));
+}
+
+/* ===================== Yalnızca torba görünümü (Ömer 2026-10-18): ganimet + ödül "View bag" =====================
+   Gear'ın defter sayfaları (yer imleri, yuvalar, skill'ler, sekmeler) YOK; yan panelin yanında yalnızca ortak torba (aynı hücre / filtre / çöp / ipucu). */
+.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+.gr-bagonly .gr-marks-col,
+.gr-bagonly .gr-page:not(.r),
+.gr-bagonly .gr-spine,
+.gr-bagonly .gr-folio {
+  display: none;
+}
+
+.gr-pair > .gr-panel.gr-gear.gr-ledger.gr-bagonly {
+  flex: 1 1 0;
+  max-width: calc(1060 * var(--u));
+}
+
+.gr-pair:has(> .gr-bagonly) {
+  justify-content: center;
+}
+
+html.short .gr-pair > .gr-panel.gr-gear.gr-ledger.gr-bagonly {
+  max-width: none;
+}
+
+/* ===================== Skill satırı: sabit eşit sütunlar (Ömer 2026-10-18) =====================
+   Pasif + 4 skill her sınıfta AYNI yerde durur (ad / açıklama genişliği yeri kaydırmaz); uzun adlar sütun içinde sarılır. */
+.gr-skillbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(104px, 1fr));
+  gap: 8px;
+  align-items: start;
+}
+
+.gr-skillbar .bh-sk {
+  width: auto;
+  min-width: 0;
+}
+
+.gr-skillbar .bh-sk .nm {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 2.7em; /* iki satır yeri ayrılır: bedel / sayı satırları her sütunda aynı hizada */
+  max-width: 100%;
+  overflow: visible;
+  text-align: center;
+  white-space: normal;
+  overflow-wrap: anywhere;
+  line-height: 1.25;
+}
+
+.gr-skillbar .gr-sk-nums {
+  white-space: normal;
+}
+
+.gr-ledger.gr-bagonly > .gr-lhead .gr-headtabs {
+  display: none;
+}
+
+html.short .gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* ===================== Gear defteri düzeni v2 (Ömer 2026-10-18) =====================
+   - Skill bloğu sol sayfanın içinde değil gövde ızgarasının ikinci satırında: yer imi sütununun altından sol sayfanın sonuna kadar tam genişlik
+     (5 eşit sütun geniş kalır, ad / bedel kesilmez). Sırt ve sağ sayfa (torba) iki satırı da kaplar.
+   - Torba 5 sütun (30 yuva = 6 satır, gerekirse kendi içinde kayar); sol sayfa biraz daha geniş. */
+.gr-ledger .gr-lbody {
+  grid-template-columns: calc(96 * var(--u)) minmax(0, 1.3fr) 1px minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr) auto;
+}
+
+.gr-ledger .gr-lbody > .gr-marks-col {
+  grid-area: 1 / 1;
+}
+
+.gr-ledger .gr-lbody > .gr-page:not(.r) {
+  grid-area: 1 / 2;
+}
+
+.gr-ledger .gr-lbody > .gr-spine {
+  grid-area: 1 / 3 / 3 / 4;
+}
+
+.gr-ledger .gr-lbody > .gr-page.r {
+  grid-area: 1 / 4 / 3 / 5;
+}
+
+.gr-ledger .gr-lskills {
+  grid-area: 2 / 1 / 3 / 3;
+  min-width: 0;
+  padding: calc(8 * var(--u)) calc(26 * var(--u)) 2px 0;
+  border-top: 1px solid var(--g-line);
+}
+
+.gr-ledger .gr-lskills:empty {
+  display: none;
+}
+
+.gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  margin-bottom: calc(10 * var(--u));
+}
+
+.gr-bagonly .gr-lskills {
+  display: none;
+}
+
+.gr-overlay .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 5;
+}
+
+html.short .gr-ledger .gr-lbody {
+  grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr);
+}
+
+/* telefon: torba hücresi >= 44 px olsun diye 4 sütun (30 yuva = 8 satır, kendi içinde kayar); yer imleri sıkı (4 kahraman kaydırmasız sığar) */
+html.short .gr-overlay .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 4;
+}
+
+/* çift pencerede (tüccar / ganimet) Gear yarım ekran: torba 3 sütun (hücre >= 44 px) */
+html.short .gr-pair .gr-overlay .gr-ledger .gr-inv .gr-bag,
+html.short .gr-pair > .gr-ledger .gr-inv .gr-bag {
+  --bag-cols: 3;
+}
+
+html.short .gr-ledger .gr-marks {
+  gap: 4px;
+  padding-top: 3px;
+  padding-bottom: 0;
+}
+
+html.short .gr-ledger .gr-lskills {
+  padding: 4px 8px 0 0;
+}
+
+html.short .gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  margin-bottom: 4px;
+}
+
+html.short .gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+}
+
+/* skill adı hiçbir zaman sözcüğün ortasından bölünmez: yalnızca boşlukta sarılır; sütun dar kalırsa yazı hücre genişliğine göre küçülür */
+.gr-skillbar .bh-sk {
+  container-type: inline-size;
+}
+
+.gr-skillbar .bh-sk .nm {
+  overflow-wrap: normal;
+  word-break: keep-all;
+  hyphens: none;
+  font-size: min(15px, 9.4cqw);
+}
+
+/* bedel satırı ("RAGE 30", "3 | 2") bölünmez; sığmazsa alt satıra düşer */
+.gr-skillbar .bh-sk .cost {
+  height: auto;
+  min-height: 18px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 2px 8px;
+  white-space: nowrap;
+}
+
+/* yüzen açıklama (skill / pasif): Gear örtüsünün üst katmanı, kaydırmalı kaplardan bağımsız */
+.gr-skillbar .bh-sktip {
+  display: none;
+}
+
+.gr-sktip-fl {
+  position: absolute;
+  z-index: 60;
+  pointer-events: none;
+  color: var(--txt);
+  font-family: var(--gar);
+}
+
+.gr-sktip-fl .bh-sktip {
+  display: block;
+  position: relative;
+  left: auto;
+  bottom: auto;
+  width: min(440px, calc(100vw - 24px));
+  opacity: 1;
+  visibility: visible;
+  transform: none;
+  transition: none;
+}
+
+.gr-sktip-fl .bh-sktip::after {
+  display: none;
+}
+
+.gr-sktip-fl .gr-tip-d.up {
+  color: #8fe39a;
+}
+
+.gr-sktip-fl .gr-tip-d.down {
+  color: #ff8a7a;
+}
+
+/* yalnızca torba görünümü (ganimet / ödül): tek sütun, torba tüm genişlikte */
+.gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: minmax(0, 1fr);
+}
+
+.gr-ledger.gr-bagonly .gr-lbody > .gr-page.r {
+  grid-area: 1 / 1;
+}
+
+/* torba tüm genişlikte olduğu için eski 6 sütun kalır */
+.gr-overlay .gr-ledger.gr-bagonly .gr-inv .gr-bag {
+  --bag-cols: 6;
+}
+
+/* Düşmüş kahraman (Ömer 2026-10-18): soluk portre, "Fallen" şeridi, kilitli yuvalar (ipucu açık kalır) */
+.gr-mark.fallen .gr-face,
+.gr-hero.fallen .gr-face {
+  filter: grayscale(1) brightness(0.65);
+}
+
+.gr-mark.fallen {
+  border-color: rgba(120, 112, 100, 0.55);
+}
+
+.gr-mark.fallen.on {
+  border-color: var(--g-dim);
+  box-shadow: calc(-8 * var(--u)) 0 0 0 rgba(120, 112, 100, 0.4);
+}
+
+.gr-fallen-x {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+  font: 600 max(18px, calc(34 * var(--u))) var(--g-disp);
+  color: #e6dcc6;
+  text-shadow: 0 0 6px #000, 0 0 2px #000;
+  pointer-events: none;
+}
+
+.gr-fallen-x.in {
+  position: static;
+  transform: none;
+  font-size: max(14px, calc(22 * var(--u)));
+}
+
+.gr-fallen-txt {
+  color: #c4b8a0;
+  font-style: italic;
+}
+
+.gr-fallen-banner {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 2px calc(12 * var(--u));
+  padding: calc(8 * var(--u)) calc(12 * var(--u));
+  border: 1px solid rgba(150, 140, 125, 0.4);
+  background: rgba(60, 56, 50, 0.28);
+  color: #d4c8ae;
+}
+
+.gr-fallen-b-t {
+  font: 600 max(12px, calc(19 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+}
+
+.gr-fallen-b-s {
+  font: italic 400 max(12px, calc(18 * var(--u))) 'EB Garamond', serif;
+  color: var(--g-dim);
+}
+
+.gr-slot.locked {
+  position: relative;
+  cursor: not-allowed;
+  filter: saturate(0.35) brightness(0.8);
+}
+
+.gr-slot.locked:hover {
+  border-color: inherit;
+}
+
+.gr-slot .gr-lock {
+  position: absolute;
+  right: 4px;
+  top: 4px;
+  width: max(12px, calc(20 * var(--u)));
+  height: max(12px, calc(20 * var(--u)));
+  color: #e6dcc6;
+  opacity: 0.85;
+  pointer-events: none;
+}
+
+.gr-slot .gr-lock svg {
+  width: 100%;
+  height: 100%;
+}
+
+.gr-btn.off {
+  opacity: 0.45;
+}
+
+.gr-fallen-note {
+  color: var(--g-dim);
+}
+
+/* ===================== Skills bloğu: "A · Plates" (Ömer 2026-10-18; taslak public/mockups/skills-block.html) =====================
+   Beş eşit dikey plaka (pasif + 4 skill); pasif yeşilimsi bakır şeritli, ulti (4. skill yuvası) turuncu ışımalı + "ULTIMATE" şeridi.
+   Boyalı ikon yumuşak, piksel ikon keskin büyür (style.css img[src$='#smooth']; piksel ikon biraz içeride). Üstüne gelince / dokununca A-Band skill ipucu. */
+.gr-skillbar {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: calc(14 * var(--u));
+  align-items: stretch;
+  padding-top: calc(10 * var(--u));
+}
+
+.gr-pl {
+  --ac: #d9b26a;
+  --acl: color-mix(in srgb, var(--ac) 55%, #fff);
+  --is: min(calc(116 * var(--u)), 100%);
+  position: relative;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  padding: calc(22 * var(--u)) calc(10 * var(--u)) calc(14 * var(--u));
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 11%, #1d140c), #0d0906);
+  border: 1px solid color-mix(in srgb, var(--ac) 40%, rgba(217, 178, 106, 0.2));
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 8%, transparent);
+  cursor: help;
+  container-type: inline-size;
+}
+
+.gr-pl.pas {
+  --ac: #6fb0a8;
+}
+
+.gr-pl.ult {
+  --ac: #e0702a;
+  border-color: color-mix(in srgb, var(--ac) 75%, #000);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 40%, transparent), inset 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--ac) 14%, transparent);
+}
+
+.gr-pl .pl-tag {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  z-index: 3;
+  font: 700 max(10px, calc(13 * var(--u))) var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: #fff4d6;
+  background: color-mix(in srgb, var(--ac) 55%, #0c0905);
+  border: 1px solid var(--acl);
+  padding: 0.15em 1.1em;
+  white-space: nowrap;
+  line-height: 1.5;
+}
+
+.gr-pl .pl-ico {
+  position: relative;
+  width: var(--is);
+  aspect-ratio: 1;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: radial-gradient(circle at 50% 42%, color-mix(in srgb, var(--ac) 30%, #1a110a) 0%, #0d0806 78%);
+  border: 1px solid color-mix(in srgb, var(--ac) 62%, #000);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--ac) 32%, transparent), inset 0 0 calc(18 * var(--u)) color-mix(in srgb, var(--ac) 22%, transparent);
+  transition: box-shadow 0.15s;
+}
+
+.gr-pl:hover .pl-ico {
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.9), 0 0 calc(30 * var(--u)) color-mix(in srgb, var(--ac) 60%, transparent), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 34%, transparent);
+}
+
+.gr-pl .pl-ico::before,
+.gr-pl .pl-ico::after {
+  content: '';
+  position: absolute;
+  width: max(7px, calc(10 * var(--u)));
+  height: max(7px, calc(10 * var(--u)));
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+  z-index: 2;
+}
+
+.gr-pl .pl-ico::before {
+  left: -6px;
+  top: -6px;
+}
+
+.gr-pl .pl-ico::after {
+  right: -6px;
+  bottom: -6px;
+}
+
+.gr-pl .pl-ico img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* piksel ikon (boyalı değil): keskin (NEAREST) büyür, çerçevede biraz nefes alır */
+.gr-pl .pl-ico img:not([src$='#smooth']) {
+  width: 78%;
+  height: 78%;
+  image-rendering: pixelated;
+}
+
+.gr-pl .pl-nm {
+  min-height: 2.4em;
+  display: flex;
+  align-items: center;
+  text-align: center;
+  font: 600 min(max(12px, calc(21 * var(--u))), 10.5cqw) var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acl);
+  text-shadow: 0 0 max(5px, calc(12 * var(--u))) color-mix(in srgb, var(--ac) 40%, transparent);
+  line-height: 1.15;
+  word-break: keep-all;
+  overflow-wrap: normal;
+}
+
+.gr-pl .pl-dv {
+  position: relative;
+  width: 100%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--g-line2) 15%, var(--g-line2) 85%, transparent);
+}
+
+.gr-pl .pl-dv::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+}
+
+.gr-pl .pl-chips {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: max(4px, calc(6 * var(--u)));
+  min-height: 1.75em;
+  font-size: max(11px, calc(15 * var(--u)));
+}
+
+.gr-pl.pas .pl-chips {
+  min-height: 0;
+}
+
+.gr-pl .pl-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 1.75em;
+  padding: 0 0.6em;
+  font: 600 1em var(--g-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--g-line);
+  white-space: nowrap;
+}
+
+.gr-pl .pl-chip img {
+  width: 1.35em;
+  height: 1.35em;
+  object-fit: contain;
+}
+
+.gr-pl .pl-chip.free {
+  color: #cfe8a8;
+  border-color: rgba(127, 191, 63, 0.5);
+  background: rgba(127, 191, 63, 0.13);
+}
+
+.gr-pl .pl-chip.rage {
+  color: #ffb070;
+  border-color: rgba(224, 112, 42, 0.6);
+  background: rgba(224, 112, 42, 0.16);
+}
+
+.gr-pl .pl-sls {
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 0.2em;
+  min-height: 2.6em;
+}
+
+.gr-pl .pl-sl {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.1em 0.6em;
+  font: max(12px, calc(19 * var(--u)))/1.3 var(--g-body);
+  font-style: normal;
+}
+
+.gr-pl .pl-sl .k {
+  color: var(--g-dim);
+}
+
+.gr-pl .pl-sl .n {
+  font: 600 0.98em var(--g-disp);
+  color: var(--g-gold);
+  text-align: right;
+}
+
+.gr-pl .pl-sl .up {
+  color: #8fe39a;
+}
+
+.gr-pl .pl-sl .down {
+  color: #ff8a7a;
+}
+
+/* tüccarın Character sekmesi: yer dar, değer satırları gizli (farklar ipucunda) */
+.gr-stall .gr-pl .pl-sls {
+  display: none;
+}
+
+.gr-stall .gr-pl {
+  --is: min(calc(64 * var(--u)), 100%);
+  padding-top: calc(16 * var(--u));
+}
+
+/* telefon yatay: küçük ikon, sıkı plaka */
+html.short .gr-skillbar {
+  gap: 5px;
+  padding-top: 8px;
+}
+
+html.short .gr-pl {
+  --is: min(46px, 100%);
+  gap: 4px;
+  padding: 12px 3px 5px;
+}
+
+html.short .gr-pl .pl-sls {
+  display: none;
+}
+
+html.short .gr-pl .pl-nm {
+  min-height: 2.3em;
+  font-size: 9px;
+  letter-spacing: 0.02em;
+}
+
+html.short .gr-pl .pl-chips {
+  min-height: 0;
+  font-size: 9px;
+  gap: 2px;
+}
+
+html.short .gr-pl .pl-chip {
+  padding: 0 3px;
+  gap: 2px;
+}
+
+html.short .gr-pl .pl-tag {
+  letter-spacing: 0.06em;
+  font-size: 8px;
+  padding: 0.1em 0.5em;
+}
+
+/* ===================== Sheet: A · Band (Ömer 2026-10-18, public/mockups/stats-panels.html) =====================
+   Karakter kartının dili: "LEVEL N" altın başlık, ince altın çerçeveli çubuklar (değer sağda), yeşil skill puanı çipi, elmas madalyonlu stat puanı,
+   altın elmas ayırıcılar, MAIN / ATTACK / DEFENSE sütunları (altın Cinzel rakam, primary turuncu satır, tam adlar). Düz yazı, italik yok.
+   Hem Gear > Sheet (defter sayfası) hem tüccar / Endless Character sekmesi bu `.sh` kabını kullanır. Yer sıkı: skill plakaları altında kalır. */
+.sh {
+  --sh-fs: max(12px, calc(19 * var(--u)));
+  --sh-fs-s: max(10px, calc(14 * var(--u)));
+  --hot: #e0702a;
+  display: flex;
+  flex-direction: column;
+  gap: calc(8 * var(--u));
+  min-width: 0;
+  font: var(--sh-fs) / 1.25 var(--g-body);
+  color: #e6dcc6;
+}
+
+.sh-head {
+  display: flex;
+  align-items: baseline;
+  gap: calc(14 * var(--u));
+}
+
+.sh-lt {
+  font: 600 max(14px, calc(30 * var(--u))) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #e9d29a;
+  text-shadow: 0 0 max(5px, calc(12 * var(--u))) rgba(217, 178, 106, 0.4);
+  line-height: 1.1;
+}
+
+.sh-lt b {
+  color: #fff0c4;
+}
+
+.sh-xpv {
+  margin-left: auto;
+  font: 600 calc(var(--sh-fs) * 1.05) var(--g-disp);
+  letter-spacing: 0.04em;
+  color: var(--g-gold);
+}
+
+.sh-xpv s,
+.sh-bv s {
+  text-decoration: none;
+  color: var(--g-dim);
+  font-weight: 500;
+}
+
+/* ince altın çerçeveli çubuk (karakter kartı / tooltip ailesi) */
+.sh-bar {
+  height: max(8px, calc(14 * var(--u)));
+  padding: 2px;
+  background: #060403;
+  border: 1px solid rgba(217, 178, 106, 0.5);
+  box-shadow: 0 0 0 2px rgba(8, 6, 4, 0.8), inset 0 0 6px rgba(0, 0, 0, 0.8);
+}
+
+.sh-bar i {
+  display: block;
+  height: 100%;
+  position: relative;
+}
+
+.sh-bar i::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 40%;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0));
+}
+
+.sh-bar .fhp {
+  background: #2fa34f;
+}
+
+.sh-bar .fmp {
+  background: linear-gradient(180deg, #2f62e0, #1f46b0);
+}
+
+.sh-xp i {
+  background: linear-gradient(90deg, #a8701c, #e0b25a);
+}
+
+.sh-under {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: calc(8 * var(--u)) calc(14 * var(--u));
+  min-height: 44px;
+}
+
+.sh-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 1.9em;
+  padding: 0 0.75em;
+  white-space: nowrap;
+  color: #cfe8a8;
+  background: rgba(127, 191, 63, 0.1);
+  border: 1px solid rgba(127, 191, 63, 0.5);
+}
+
+.sh-chip b {
+  font: 600 1.1em var(--g-disp);
+  color: #e6f6c4;
+}
+
+.sh-ptr {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-left: auto;
+}
+
+.sh-ptr.idle {
+  visibility: hidden;
+}
+
+.sh-tx {
+  color: var(--g-text);
+}
+
+/* elmas madalyon: sürüklenebilir puan taşı; dokunma alanı >= 44 px */
+.sh-medal {
+  position: relative;
+  flex: none;
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  font: 600 var(--sh-fs) var(--g-disp);
+  color: #fff0c4;
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.sh-medal::before {
+  content: '';
+  position: absolute;
+  inset: 8px;
+  transform: rotate(45deg);
+  border: 1px solid var(--g-gold);
+  background: rgba(217, 178, 106, 0.16);
+  box-shadow: 0 0 8px rgba(217, 178, 106, 0.4);
+}
+
+.sh-medal span {
+  position: relative;
+}
+
+.sh-medal.empty {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.sh-acts {
+  display: flex;
+  gap: calc(10 * var(--u));
+}
+
+.sh-btn {
+  position: relative;
+  min-height: 44px;
+  padding: 0 calc(20 * var(--u));
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.82), rgba(12, 9, 6, 0.86));
+  border: 1px solid var(--g-line2);
+  box-shadow: 0 0 0 3px rgba(12, 8, 5, 0.6);
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--g-text);
+}
+
+.sh-btn:hover {
+  border-color: var(--g-gold);
+  color: var(--g-gold);
+}
+
+.sh-btn.primary {
+  border: 2px solid #d9b26a;
+  color: var(--g-gold);
+}
+
+.sh-warn {
+  color: #e0785e;
+  font-size: var(--sh-fs-s);
+}
+
+/* altın elmas ayırıcı */
+.sh-dv {
+  position: relative;
+  flex: none;
+  height: 1px;
+  margin: calc(2 * var(--u)) 0;
+  background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent);
+}
+
+.sh-dv::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid #e9d29a;
+}
+
+/* HP / MP */
+.sh-vit {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: calc(24 * var(--u));
+}
+
+.sh-bh {
+  min-width: 0;
+}
+
+.sh-bh-top {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin-bottom: 0.3em;
+}
+
+.sh-bh-top .sh-ico {
+  width: max(16px, calc(26 * var(--u)));
+  height: max(16px, calc(26 * var(--u)));
+}
+
+.sh-bn {
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.sh-bv {
+  margin-left: auto;
+  font: 600 1em var(--g-disp);
+  color: var(--g-gold);
+}
+
+/* sütunlar */
+.sh-cols {
+  display: grid;
+  grid-template-columns: minmax(0, 1.4fr) minmax(0, 1fr) minmax(0, 1fr);
+  gap: 0 calc(22 * var(--u));
+}
+
+.sh-col {
+  min-width: 0;
+}
+
+.sh-sl {
+  display: flex;
+  align-items: center;
+  gap: 0.7em;
+  margin-bottom: 0.3em;
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+.sh-sl::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--g-line2);
+}
+
+.sh-row {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  margin: 0 -0.4em;
+  padding: 0.1em 0.4em;
+  min-height: max(22px, calc(32 * var(--u)));
+}
+
+.sh-ico {
+  flex: none;
+  width: max(16px, calc(28 * var(--u)));
+  height: max(16px, calc(28 * var(--u)));
+  object-fit: contain;
+}
+
+.sh-k {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  color: var(--g-dim);
+}
+
+.sh-n {
+  margin-left: auto;
+  min-width: 2.4em;
+  text-align: right;
+  font: 600 1em var(--g-disp);
+  font-variant-numeric: tabular-nums;
+  color: var(--g-gold);
+}
+
+.sh-d {
+  min-width: 2em;
+  text-align: right;
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  font-variant-numeric: tabular-nums;
+}
+
+.sh-d.up {
+  color: #8fd36a;
+}
+
+.sh-d.down {
+  color: #e0785e;
+}
+
+.sh-bh-top .sh-d:empty {
+  display: none;
+}
+
+.sh-cap {
+  font: 600 var(--sh-fs-s) var(--g-disp);
+  color: #8fc7c0;
+}
+
+.sh-row.p {
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.2), rgba(224, 112, 42, 0.04));
+  border-left: 2px solid var(--hot);
+  padding-left: calc(0.4em - 2px);
+}
+
+.sh-row.p.off {
+  filter: saturate(0.35);
+}
+
+.sh-row.p .sh-k {
+  color: #f3e6c4;
+  font-weight: 600;
+}
+
+.sh-row.p .sh-n {
+  color: #fff0c4;
+  text-shadow: 0 0 8px rgba(224, 112, 42, 0.6);
+}
+
+.sh-row.drop-ok {
+  outline: 1px dashed rgba(240, 180, 90, 0.55);
+  outline-offset: 2px;
+}
+
+.sh-row.drop-on {
+  outline: 1px solid var(--g-ember2);
+  background: rgba(224, 112, 42, 0.18);
+}
+
+/* + ve - : yuvalar puan bitince de yerinde (görünmez), satırlar kaymaz */
+.sh-pm {
+  display: inline-flex;
+  flex: none;
+  gap: max(3px, calc(5 * var(--u)));
+}
+
+.sh-pmb {
+  position: relative;
+  width: max(22px, calc(30 * var(--u)));
+  height: max(22px, calc(30 * var(--u)));
+  padding: 0;
+  border: 1px solid var(--g-line);
+  background: rgba(20, 14, 8, 0.6);
+  color: var(--g-gold);
+  font: 600 max(13px, calc(20 * var(--u))) var(--g-disp);
+  line-height: 1;
+}
+
+.sh-pmb::after {
+  content: '';
+  position: absolute;
+  width: 44px;
+  height: 44px;
+  left: 50%;
+  top: 50%;
+  transform: translate(-50%, -50%);
+}
+
+.sh-pmb:hover:not(:disabled) {
+  border-color: var(--g-gold);
+}
+
+.sh-pmb:disabled {
+  opacity: 0.3;
+  cursor: not-allowed;
+}
+
+.sh-pmb.off {
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.sh-capnote {
+  color: var(--g-dim);
+  font-size: var(--sh-fs-s);
+}
+
+/* kısa ekran (telefon yatay): daha sıkı; düğmeler küçük görünür ama dokunma alanı ::after ile 44 px */
+html.short .sh {
+  gap: 3px;
+  --sh-fs: 12px;
+  --sh-fs-s: 10px;
+}
+
+html.short .sh-lt {
+  font-size: 14px;
+}
+
+html.short .sh-bar {
+  height: 8px;
+  padding: 1px;
+  box-shadow: 0 0 0 1px rgba(8, 6, 4, 0.8);
+}
+
+html.short .sh-under {
+  gap: 2px 8px;
+  min-height: 30px;
+}
+
+html.short .sh-medal {
+  min-width: 30px;
+  min-height: 30px;
+}
+
+html.short .sh-medal::before {
+  inset: 4px;
+}
+
+html.short .sh-btn {
+  min-height: 28px;
+  padding: 0 8px;
+  font-size: 10px;
+}
+
+html.short .sh-btn::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 50%;
+  height: 44px;
+  transform: translateY(-50%);
+}
+
+html.short .sh-dv {
+  margin: 0;
+}
+
+html.short .sh-vit {
+  gap: 12px;
+}
+
+html.short .sh-bh-top {
+  margin-bottom: 1px;
+}
+
+html.short .sh-cols {
+  gap: 0 8px;
+}
+
+html.short .sh-sl {
+  margin-bottom: 1px;
+  letter-spacing: 0.14em;
+}
+
+html.short .sh-row {
+  min-height: 20px;
+  gap: 4px;
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+html.short .sh-ico {
+  width: 15px;
+  height: 15px;
+}
+
+html.short .sh-n {
+  min-width: 1.6em;
+}
+
+html.short .sh-d {
+  min-width: 1.6em;
+}
+
+html.short .sh-pmb {
+  width: 18px;
+  height: 18px;
+  font-size: 12px;
+}
+
+/* dar sayfa (tüccar + Gear yan yana, telefon): kabın kendi genişliğine göre sıkılaşır (container query; sınıf değil) */
+.sh {
+  container-type: inline-size;
+}
+
+@container (max-width: 560px) {
+  .sh-cols {
+    grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr) minmax(0, 1fr);
+    gap: 0 8px;
+  }
+
+  .sh-sl {
+    letter-spacing: 0.12em;
+  }
+
+  .sh-row {
+    gap: 0.3em;
+  }
+
+  .sh-ico {
+    width: 15px;
+    height: 15px;
+  }
+
+  .sh-n {
+    min-width: 1.5em;
+  }
+
+  .sh-d,
+  .sh-d:empty {
+    min-width: 0;
+  }
+
+  .sh-vit {
+    gap: 12px;
+  }
+}
+
+@container (max-width: 330px) {
+  .sh-cols,
+  .sh-vit {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .sh-col + .sh-col {
+    margin-top: 6px;
+  }
+
+  .sh-under {
+    min-height: 0;
+  }
+}
+
+/* telefon yatay: Level satırı ve XP çubuğu tek satırda (ad | çubuk | değer); ayırıcılar kalkar, satırlar sıkı (sayfa yüksekliği ~150 px) */
+html.short .sh {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  align-items: center;
+  column-gap: 8px;
+  row-gap: 3px;
+}
+
+html.short .sh > * {
+  grid-column: 1 / -1;
+}
+
+html.short .sh-head {
+  display: contents;
+}
+
+html.short .sh-head .sh-lt {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+html.short .sh > .sh-bar {
+  grid-column: 2;
+  grid-row: 1;
+}
+
+html.short .sh-head .sh-xpv {
+  grid-column: 3;
+  grid-row: 1;
+  margin-left: 0;
+}
+
+html.short .sh-dv {
+  display: none;
+}
+
+html.short .sh-ptr.idle {
+  display: none;
+}
+
+html.short .sh-under {
+  min-height: 0;
+}
+
+html.short .sh-row {
+  min-height: 18px;
+}
+
+html.short .sh-chip {
+  height: 20px;
+  font-size: 11px;
+}
+
+html.short .sh-vit {
+  margin-top: 2px;
+}
+
+html.short .sh-d,
+html.short .sh-d:empty {
+  min-width: 0;
+}
+
+html.short .sh-cols {
+  grid-template-columns: minmax(0, 1.75fr) minmax(0, 1fr) minmax(0, 1fr);
+}
+
+html.short .sh-pm {
+  gap: 2px;
+}
+
+html.short .sh-n {
+  min-width: 1.2em;
+}
+
+/* telefon Sheet: sağdaki skill ağacı kabı henüz boş ("Coming soon"); sol sayfa genişler ki stat adları tam yazılsın */
+html.short .gr-ledger.tab-sheet .gr-lbody {
+  grid-template-columns: 54px minmax(0, 2.1fr) 1px minmax(0, 0.8fr);
+}
+
+/* Hero / Sheet sekme ikonu (Ömer 2026-10-19): yazının önünde küçük, sekme olduğu anlaşılsın */
+.gr-tab-ico {
+  width: max(16px, calc(26 * var(--u, 1)));
+  height: max(16px, calc(26 * var(--u, 1)));
+  margin-right: 7px;
+  flex: none;
+  object-fit: contain;
+  opacity: 0.7;
+  pointer-events: none;
+  transition: opacity 0.18s;
+}
+
+.gr-tab.on .gr-tab-ico,
+.gr-tab:hover .gr-tab-ico {
+  opacity: 1;
+}

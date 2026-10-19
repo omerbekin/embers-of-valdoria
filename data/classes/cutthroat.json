@@ -5,6 +5,7 @@
   "color": "#5b4a6b",
   "logo": "cutthroatlogo",
   "role": "Assassin",
+  "blurb": "Cunning assassin who poisons, blinds and stabs weakened foes in the back.",
   "frontPriority": 3,
   "range": 1,
   "attributes": {

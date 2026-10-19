@@ -1,0 +1,25 @@
+{
+  "_not": "Harita pencereleri (src/ui/map-window.ts; taslak public/mockups/map-events.html). art = pencere üstündeki sahne şeridi: assets/campaign/windows/<dosya>.webp, pos = görselde odak noktası (0-1). Anahtarlar: event:<olay id>, treasure:<hazine id>, rest (tüm dinlenme noktaları), town:<kasaba arka planı>, hotspot:<kasaba yeri id> (varsa kasaba şeridinin odağını ezer). choices = seçenekli olayların plaka etiketi / vurgu rengi / kısa açıklaması (anahtar: <olay id>.<seçenek id>); yoksa seçeneğin verisinden türetilir (savaş = Fight, bedel = Gold, can kaybı = Blood, diğer = Free). acc: ember | gold | red | violet | green | dim. Metinler İngilizce.",
+  "art": {
+    "event:shepherds_fold": { "file": "shepherds_fold", "pos": [0.5, 0.5] },
+    "event:witchs_hut": { "file": "witchs_hut", "pos": [0.5, 0.5] },
+    "treasure:dwarven_mine": { "file": "dwarven_mine", "pos": [0.5, 0.5] },
+    "treasure:relic_vault": { "file": "relic_vault", "pos": [0.5, 0.5] },
+    "rest": { "file": "river", "pos": [0.5, 0.5] },
+    "town:town-ashford": { "file": "ashford", "pos": [0.5, 0.5] },
+    "town:town-valdren": { "file": "valdren", "pos": [0.5, 0.5] },
+    "hotspot:campfire": { "file": "ashford", "pos": [0.48, 0.52] },
+    "hotspot:board": { "file": "ashford", "pos": [0.63, 0.5] },
+    "hotspot:barracks": { "file": "valdren", "pos": [0.68, 0.45] }
+  },
+  "choices": {
+    "shepherds_fold.search": { "tag": "Fight", "acc": "ember", "desc": "Fight the ash-hounds that scattered the flock." },
+    "shepherds_fold.castle": { "tag": "Talk", "acc": "violet", "desc": "Hear what the shepherds know about the gate tower." },
+    "shepherds_fold.bread": { "tag": "Gift", "acc": "gold", "desc": "Share your supplies. Tonight's rest heals everyone fully." },
+    "shepherds_fold.rest": { "tag": "Free", "acc": "green", "desc": "Make camp as usual." },
+    "witchs_hut.pay": { "tag": "Gold", "acc": "gold", "desc": "She gives you one item from her chest and a few coins." },
+    "witchs_hut.blood": { "tag": "Blood", "acc": "red", "desc": "Every hero gives a drop of blood. No one dies." },
+    "witchs_hut.steal": { "tag": "Fight", "acc": "ember", "desc": "Fight the witch for her chest." },
+    "witchs_hut.leave": { "tag": "Free", "acc": "dim", "desc": "Walk away with nothing." }
+  }
+}

@@ -12,6 +12,7 @@ import { closeDom } from './motion';
 import { mountCloseButton } from './nav-close';
 import { avatarUrl, className } from './character-panel';
 import { itemCell } from './inventory';
+import { tipOn, tipOff } from './tip-vis';
 import { itemTipNodes, offsetIn } from './item-tip';
 import { iconUrl } from './dom-icons';
 import { uiIconName, hasUiImage } from './ui-icons';
@@ -142,7 +143,7 @@ export function showHandoverToast(root: HTMLElement, data: HandoverToastData, on
     const inst = data.items.find((i) => i.uid === cell.dataset['uid']);
     if (!inst) return;
     tip.replaceChildren(...itemTipNodes(inst));
-    tip.classList.add('on');
+    tipOn(tip);
     const p = offsetIn(cell, overlay);
     const w = tip.offsetWidth;
     const h = tip.offsetHeight;
@@ -150,7 +151,7 @@ export function showHandoverToast(root: HTMLElement, data: HandoverToastData, on
     tip.style.left = `${x}px`;
     tip.style.top = `${Math.max(6, p.y - h - 10)}px`;
   };
-  const hideTip = (): void => tip.classList.remove('on');
+  const hideTip = (): void => tipOff(tip);
   let press = 0;
   for (const c of Array.from(cells.children) as HTMLElement[]) {
     c.addEventListener('pointerenter', (e) => {

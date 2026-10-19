@@ -1,0 +1,16 @@
+{
+  "_not": "Hero / Recruit kartlarındaki yüksek çözünürlüklü büst: v2 savaş poz sanatından (assets/poses/<sınıf>-v2/<pose>.webp) kırpılmış göğüs-baş görüntüsü. x,y,w,h = kırpma dikdörtgeni (poz görselinin gerçek pikselinde), sw,sh = poz görselinin boyu. Sınıf burada yoksa ya da poz dosyası yoksa eski avatar yedeği (assets/avatars) kullanılır. Kod: src/ui/hero-bust.ts. Yeni sınıf = yeni satır.",
+  "classes": {
+    "warrior": { "pose": "idle1", "x": 139, "y": 67, "w": 228, "h": 193, "sw": 496, "sh": 467 },
+    "archer": { "pose": "idle1", "x": 162, "y": 54, "w": 260, "h": 221, "sw": 584, "sh": 454 },
+    "mage": { "pose": "idle1", "x": 172, "y": 65, "w": 225, "h": 191, "sw": 582, "sh": 460 },
+    "paladin": { "pose": "idle1", "x": 163, "y": 65, "w": 250, "h": 212, "sw": 604, "sh": 458 },
+    "hexer": { "pose": "idle1", "x": 147, "y": 41, "w": 248, "h": 211, "sw": 594, "sh": 440 },
+    "druid": { "pose": "idle1", "x": 142, "y": 56, "w": 272, "h": 231, "sw": 566, "sh": 452 },
+    "defender": { "pose": "idle1", "x": 154, "y": 45, "w": 260, "h": 221, "sw": 582, "sh": 441 },
+    "cutthroat": { "pose": "idle1", "x": 152, "y": 64, "w": 251, "h": 213, "sw": 582, "sh": 460 },
+    "gambler": { "pose": "idle1", "x": 168, "y": 51, "w": 234, "h": 199, "sw": 580, "sh": 447 },
+    "antimage": { "pose": "idle1", "x": 132, "y": 13, "w": 170, "h": 145, "sw": 450, "sh": 412 },
+    "undead": { "pose": "idle1", "x": 144, "y": 58, "w": 251, "h": 213, "sw": 568, "sh": 453 }
+  }
+}

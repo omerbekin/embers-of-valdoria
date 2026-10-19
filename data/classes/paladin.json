@@ -5,6 +5,7 @@
   "color": "#e6c14a",
   "logo": "holy",
   "role": "Holy Healer",
+  "blurb": "Holy knight who mends the most wounded each turn and raises the fallen.",
   "frontPriority": 2,
   "range": 4,
   "attributes": {

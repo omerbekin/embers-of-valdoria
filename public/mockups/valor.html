@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Valor window mockups</title>
+<!-- VALOR penceresi taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone (844x390)  &clean (seridi gizle). Gorunum oyunun kendi CSS'i (kit-v2/css). -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/valor.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="valor/valor-v.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Valor penceresi</h1>
+<p>Bu pencere sefer haritasında ve Endless kampında köşedeki iki mangala dokununca açılır (savaş dışı diriltme). Üstte mangallar (8 kor, mangal başına 4), altta düşmüş kahramanlar ve "Revive · 4"; kimse düşmediyse yalnızca "No hero has fallen..." yazar; Valor 4'ten azsa Revive soluk.</p>
+<h3>Teşhis</h3>
+<ol>
+<li><b>Açıklama paragrafı kalıcı ve italik.</b> "Spend 4 embers... (6)" her açılışta ekranda duruyor; tasarım dili "bilgi hover'da" diyor, italik de kural dışı.</li>
+<li><b>Satırlar çıplak.</b> Soluk küçük portre, italik kırmızı "Fallen", düz düğme; Gear plakası / kahraman kartı dilinden kopuk. Sınıf, level yok.</li>
+<li><b>Maliyet / yetmeme yalnız düğme yazısında.</b> "Revive · 4" ve soluk düğme; neden soluk olduğu yalnız tarayıcı başlık ipucunda (Needs 4 Valor).</li>
+<li><b>Mangalların sayısı yok.</b> 6 mi 7 mi okunmuyor; ipucu da kutusuz eski <code>el-tip</code>.</li>
+</ol>
+<h3>Kural ve notlar</h3>
+<ul>
+<li>Pencerenin yeri, boyutu ve çerçevesi (ortada kit Diyalog'u, Close + Esc + zemine dokunma) aynı; yalnızca içerik. Bilgi yeni mekanik değil: hepsi oyundaki mevcut metin ve <code>data/valor.json</code> sayıları (4 / 6 / %50).</li>
+<li>Her varyantta üç durum: <b>iki kahraman düşmüş, Valor 6</b> (Revive çalışır: tıkla, kahraman kalkar, mangal söner, "X rises again."), <b>bir düşmüş, Valor 2</b> (yetmiyor), <b>kimse düşmemiş</b>.</li>
+<li>Kahraman satırlarında oyundaki gerçek portre ve sınıf rolü (Warrior = Melee Bruiser...). Telefon yatay için üstteki şeritten <b>844x390</b> seç.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="valor/app.js"></script>
+</body>
+</html>

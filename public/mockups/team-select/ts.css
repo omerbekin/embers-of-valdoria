@@ -1,0 +1,88 @@
+/* Quick Battle takim secimi alt bolumu taslagi: YALNIZCA duzen (oyun birimi 1920x1080; sahne olcekle kirpilir). Skill / pasif plakalari oyunun .bp sinifi (battle-hud.css), A Band ipucu band-tip.css. */
+.ts-shade { position: absolute; left: -700px; right: -700px; top: 560px; bottom: 0; background: linear-gradient(180deg, rgba(8,6,4,0), rgba(8,6,4,.82) 22%, rgba(6,4,3,.94)); }
+.ts-stage { color: var(--g-text); }
+.ts-abs { position: absolute; }
+.ts-gh { position: absolute; display: flex; align-items: center; gap: 8px; font: 600 15px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); }
+.ts-gh i { width: 9px; height: 9px; transform: rotate(45deg); background: var(--c, #d9b26a); box-shadow: 0 0 0 1px rgba(255,255,255,.25); }
+.ts-tile { position: absolute; width: 112px; cursor: pointer; text-align: center; font-family: inherit; color: inherit; }
+.ts-tile .pf { position: relative; width: 112px; height: 112px; background: #0a0605; border: 1px solid rgba(217,178,106,.45); box-shadow: 0 0 0 3px rgba(8,6,4,.7); transition: transform .18s, border-color .18s; }
+.ts-tile .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.ts-tile:hover .pf { transform: translateY(-3px); border-color: #f3d999; }
+.ts-tile.sel .pf { border: 2px solid var(--g-ember2); box-shadow: 0 0 0 3px rgba(8,6,4,.8), 0 0 22px rgba(224,112,42,.5); }
+.ts-tile .nm { margin-top: 10px; font: 600 16px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-text); white-space: nowrap; }
+.ts-tile.sel .nm { color: var(--g-gold); }
+.ts-tile .bd { position: absolute; top: -8px; min-width: 28px; height: 28px; display: grid; place-items: center; padding: 0 6px; font: 700 17px 'Palatino Linotype', Georgia, serif; color: #fff; border: 1.5px solid #fff; border-radius: 14px; }
+.ts-tile .bd.p { left: -8px; background: #2b5a92; border-color: #9cbde6; }
+.ts-tile .bd.e { right: -8px; background: #93382a; border-color: #e39a88; }
+.ts-btns { position: absolute; left: 1500px; width: 380px; display: flex; flex-direction: column; gap: 22px; align-items: stretch; }
+.ts-btns .el-btn { width: 100%; min-height: 56px; font-size: 21px; }
+.ts-btns .el-btn.primary { min-height: 74px; font-size: 26px; }
+.ts-ready { text-align: right; font: 20px var(--g-body); color: var(--g-dim); }
+.ts-ready.old { font-style: italic; }
+
+/* mevcut: tek satirlik ozet */
+.ts-cur { position: absolute; left: 40px; top: 722px; width: 1400px; height: 90px; display: flex; align-items: center; gap: 34px; border-top: 1px solid rgba(217,178,106,.25); border-bottom: 1px solid rgba(217,178,106,.25); padding: 0 6px; }
+.ts-cur .pf { width: 64px; height: 64px; border: 1px solid rgba(217,178,106,.5); }
+.ts-cur .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.ts-cur .nm b { display: block; font: 600 32px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: #f4ede1; line-height: 1; }
+.ts-cur .nm em { font: italic 20px var(--g-body); color: var(--g-dim); }
+.ts-cur .sts { display: flex; gap: 22px; align-items: center; font: 600 20px var(--g-disp); color: var(--g-text); }
+.ts-cur .sts span { display: inline-flex; align-items: center; gap: 6px; }
+.ts-cur .sts img { width: 24px; height: 24px; }
+.ts-cur .sks { display: flex; gap: 12px; margin-left: 8px; }
+.ts-cur .sks img { width: 50px; height: 50px; border: 1px solid rgba(217,178,106,.4); background: #0a0605; object-fit: contain; }
+
+/* V1: kart seridi */
+.ts-card { position: absolute; left: 40px; top: 616px; width: 1400px; height: 218px; display: flex; align-items: stretch; gap: 26px; padding: 18px 26px 18px 18px;
+  background: linear-gradient(180deg, rgba(30,22,14,.96), rgba(11,8,5,.96)); border: 1px solid rgba(217,178,106,.5); box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 12px 30px rgba(0,0,0,.55); }
+.ts-card::before, .ts-card::after { content: ''; position: absolute; width: 11px; height: 11px; transform: rotate(45deg); background: #130d07; border: 1px solid #f3d999; }
+.ts-card::before { left: -6px; top: -6px; } .ts-card::after { right: -6px; bottom: -6px; }
+.ts-card .pf { position: relative; width: 150px; flex: none; background: #0a0605; border: 1px solid rgba(217,178,106,.5); box-shadow: 0 0 0 2px rgba(8,6,4,.8); }
+.ts-card .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.ts-card .pf .em { position: absolute; left: 6px; bottom: 6px; width: 38px; height: 38px; padding: 5px; background: rgba(8,6,4,.85); border: 1px solid #e0702a; }
+.ts-card .pf .em img { object-fit: contain; }
+.ts-info { width: 430px; flex: none; display: flex; flex-direction: column; gap: 10px; justify-content: center; }
+.ts-info .k { font: 600 14px var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); line-height: 1; }
+.ts-info h3 { margin: 0; font: 600 40px/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: #f3d999; }
+.ts-chips { display: flex; gap: 8px; flex-wrap: nowrap; }
+.ts-chips .k-chip { min-height: 32px; font-size: 15px; }
+.ts-chips .k-chip img { width: 22px; height: 22px; }
+.ts-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+.ts-stat { display: flex; align-items: center; justify-content: center; gap: 7px; height: 46px; border: 1px solid rgba(217,178,106,.25); background: rgba(255,255,255,.04); font: 600 15px var(--g-disp); color: var(--g-dim); letter-spacing: .06em; }
+.ts-stat img { width: 24px; height: 24px; }
+.ts-stat b { font: 700 24px var(--g-disp); color: var(--g-gold); letter-spacing: 0; }
+.ts-stat.pri { border-color: rgba(224,112,42,.65); background: rgba(224,112,42,.14); color: #ffb98a; }
+.ts-stat.pri b { color: #ffd2a0; }
+.ts-plates { display: flex; gap: 10px; align-items: center; margin-left: auto; padding-top: 6px; }
+.ts-plates .bp { width: 124px; height: 150px; }
+.ts-plates .bp.pas { width: 124px; }
+.ts-plates .bp-nm { font-size: 13px; }
+.ts-vsep { width: 1px; align-self: stretch; background: linear-gradient(180deg, transparent, rgba(217,178,106,.5), transparent); flex: none; margin: 0 -4px; }
+
+/* V2: ince seritte zengin ozet (skill ikonlari hover'da ipucu) */
+.ts-slim { position: absolute; left: 40px; top: 722px; width: 1400px; height: 104px; display: flex; align-items: center; gap: 22px; padding: 0 22px 0 14px;
+  background: linear-gradient(180deg, rgba(30,22,14,.94), rgba(11,8,5,.94)); border: 1px solid rgba(217,178,106,.45); box-shadow: 0 0 0 3px rgba(8,6,4,.7); }
+.ts-slim .pf { width: 76px; height: 76px; flex: none; border: 1px solid rgba(217,178,106,.5); position: relative; }
+.ts-slim .pf img { width: 100%; height: 100%; object-fit: cover; object-position: top; display: block; }
+.ts-slim .nm { display: flex; flex-direction: column; gap: 8px; width: 300px; flex: none; }
+.ts-slim .nm h3 { margin: 0; font: 600 30px/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: #f3d999; }
+.ts-slim .ts-chips .k-chip { min-height: 28px; font-size: 14px; }
+.ts-slim .ts-stats { grid-template-columns: repeat(4, 104px); }
+.ts-slim .ts-stat { height: 52px; }
+.ts-sq { position: relative; width: 64px; height: 64px; flex: none; background: radial-gradient(circle at 50% 42%, #3a2a18 0%, #0d0806 78%); border: 1px solid rgba(217,178,106,.6); box-shadow: 0 0 0 2px rgba(8,6,4,.9); cursor: help; }
+.ts-sq img { width: 100%; height: 100%; object-fit: contain; display: block; }
+.ts-sq.pas { border-color: #6fb0a8; }
+.ts-sq::before, .ts-sq::after { content: ''; position: absolute; width: 8px; height: 8px; transform: rotate(45deg); background: #130d07; border: 1px solid #f3d999; }
+.ts-sq::before { left: -5px; top: -5px; } .ts-sq::after { right: -5px; bottom: -5px; }
+.ts-sq:hover { border-color: #f3d999; }
+.ts-sqs { display: flex; gap: 12px; margin-left: auto; align-items: center; }
+.ts-sqs .sep { width: 1px; height: 54px; background: rgba(217,178,106,.35); }
+.ts-tipbox { position: absolute; z-index: 50; }
+.ts-tipbox .bt { --bu: 1.4px; }
+
+/* V3: bilgi sadece roster uzerine gelince */
+.ts-mini { position: absolute; left: 40px; top: 760px; width: 1400px; height: 64px; display: flex; align-items: center; gap: 22px; border-top: 1px solid rgba(217,178,106,.25); border-bottom: 1px solid rgba(217,178,106,.25); }
+.ts-mini h3 { margin: 0; font: 600 30px/1 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: #f3d999; }
+.ts-mini .hint { margin-left: auto; font: 18px var(--g-body); color: var(--g-dim); }
+
+html.short .ts-stage .el-btn { font-size: 22px; }

@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quick Battle hero strip mockups</title>
+<!-- QUICK BATTLE takim secimi, secili kahraman seridi taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Veri oyundan (data/classes, data/skills). -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Quick Battle: seçili kahraman şeridi</h1>
+<p>Takım seçimi ekranında (Quick Battle, Multiplayer takım seçimi) rosterdan bir kahramana basınca alttaki şerit onu özetler. Bu şerit tasarım dilinin "karakter kartı A" ve "A Plates, pasif 1. sırada" kurallarından önceki hâlinde kaldı; üstteki iki takım tahtası, roster ve butonlar zaten kit dilinde, onlara dokunulmadı.</p>
+<h3>Teşhis</h3>
+<ol>
+<li><b>Tek satır düz yazı.</b> "STR 24 DEX 6 INT 24 LUCK 6" ayrım yok: hangisi primary belli değil (kartta turuncu olmalı). Rol ("Tank") italik ve soluk, çip değil.</li>
+<li><b>Skill'ler çıplak ikon.</b> Pasif ile 4 skill aynı küçük kare; hangisi pasif, hangisi ulti, bedeli ne belli değil; ad ve bedel yok, ipucu da yok. Oysa Gear, savaş HUD'ı ve kahraman kartı hep A Plates kullanıyor (pasif 1. sırada).</li>
+<li><b>Boş ve küçük.</b> Portre 64 birim; sınıf amblemi, menzil çipi, HP yok. Telefonda yazı ~12 piksel civarına düşüyor.</li>
+</ol>
+<h3>Notlar</h3>
+<ul>
+<li>İçerik oyundakiyle aynı: gerçek sınıf verisi (rol, menzil, stat, pasif ve 4 skill, bedel / bekleme) <code>data/classes</code> ve <code>data/skills</code>'ten alındı; yeni mekanik / bilgi yok. Sayfa ekranın alt yarısını gösterir (portre, roster ve butonlar oyundaki yerinde).</li>
+<li>Roster'daki rozetler oyundaki gibi (mavi 1 = Player takımında, kırmızı 1 = Enemy takımında). Rosterda bir kahramana tıklayınca şerit değişir; V3'te üstüne gelince kart açılır.</li>
+<li>Telefon yatay için şeritten <b>844x390</b>: sahne olduğu gibi küçülür (oyundaki gibi); yeni parçalar bu yüzden elle büyütülmedi.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="team-select/app.js"></script>
+</body>
+</html>

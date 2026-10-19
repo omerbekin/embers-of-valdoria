@@ -8,6 +8,7 @@ import { isBackdropTap } from '../ui/backdrop';
 import { motion, MOTION } from '../ui/motion';
 import { uiSound, type UiSoundKind } from '../ui/ui-sound';
 import { screenGo } from './screen-go';
+import { growTouchZone, type TouchZoneOpts } from './touch-hit';
 import { backPlacement, NAV_BTN, NAV_COLOR, NAV_STROKE } from '../ui/nav-icons';
 
 /**
@@ -156,7 +157,7 @@ export function elLink(
   scene: Phaser.Scene,
   label: string,
   run: () => void,
-  o: { size?: number; small?: string; enabled?: boolean; isBusy?: () => boolean; onHover?: (on: boolean) => void; sound?: UiSoundKind; icon?: string | undefined; iconSize?: number } = {},
+  o: { size?: number; small?: string; enabled?: boolean; isBusy?: () => boolean; onHover?: (on: boolean) => void; sound?: UiSoundKind; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
 ): ElLink {
   const size = o.size ?? 21;
   const root = scene.add.container(0, 0);
@@ -175,6 +176,7 @@ export function elLink(
     width += 16 + s.width;
   }
   const zone = scene.add.zone(width / 2, 0, width, EL.HIT).setInteractive({ useHandCursor: true });
+  if (o.touch) growTouchZone(scene, zone, width, EL.HIT, o.touch === true ? {} : o.touch);
   root.add([...parts, zone]);
   let enabled = o.enabled !== false;
   icon?.setAlpha(enabled ? 1 : 0.45);
@@ -318,7 +320,7 @@ export function elButton(
   scene: Phaser.Scene,
   label: string,
   run: () => void,
-  o: { kind?: 'primary' | 'secondary'; w?: number; h?: number; size?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number } = {},
+  o: { kind?: 'primary' | 'secondary'; w?: number; h?: number; size?: number; minLabel?: string; isBusy?: () => boolean; ready?: boolean; icon?: string | undefined; iconSize?: number; /** Telefonda dokunma alanını 44 gerçek piksele büyüt (görünüm aynı; touch-hit.ts). */ touch?: TouchZoneOpts | true } = {},
 ): ElButton {
   const primary = (o.kind ?? 'primary') === 'primary';
   const size = o.size ?? (primary ? 30 : 21);
@@ -347,6 +349,7 @@ export function elButton(
   fitLabel();
   const lift = scene.add.container(0, 0, icon ? [plate, icon, text] : [plate, text]);
   const zone = scene.add.zone(0, 0, w + 16, Math.max(h + 12, EL.HIT - 6)).setInteractive({ useHandCursor: true });
+  if (o.touch) growTouchZone(scene, zone, w + 16, Math.max(h + 12, EL.HIT - 6), o.touch === true ? {} : o.touch);
   root.add([breath, lift, zone]);
   let ready = o.ready ?? !primary;
   let hover = false;

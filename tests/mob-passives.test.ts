@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, armorReduction, chooseAction, content, describePassive, roundSpeed, skillCostAmount } from '../src/engine';
+import { Battle, armorReduction, chooseAction, content, describePassive, explainChoice, roundSpeed, skillCostAmount } from '../src/engine';
 import type { BattleEvent, Combatant, CombatantDef, PassiveEffect } from '../src/engine';
 
 // Sefer mob pasifleri YM1-YM13 ve doğrulama maddeleri D1-D6 (Bölge II, docs/design/campaign/mob-plan.md 2.2 / 5; Ömer onayı 2026-10-16).
@@ -142,6 +142,26 @@ describe('YM5 Deep Hoard (Thane of the Deep)', () => {
     th.mp = 0;
     expect(b.effectiveStats(th).armor).toBe(th.stats.armor);
     expect(b.effectiveStats(th).magicArmor).toBe(th.stats.magicArmor);
+  });
+
+  it('YZ: MP yakmanın değeri MP bağlı zırhı da sayar (Drain Field / Mana Steal burn terimi pasifle büyür; MP ve zırh geri alınır)', () => {
+    const burnOf = (hoard: boolean) => {
+      const b = arena([['antimage', 0], ['warrior', 1], ['archer', 6]], [['thane_of_the_deep', 1]]);
+      const th = unit(b, 'enemy-0');
+      if (!hoard) th.passive = undefined;
+      const mp = th.mp;
+      const armor = b.effectiveStats(th).armor;
+      const am = b.combatants.find((c) => c.side === 'party' && c.defId === 'antimage')!;
+      const ex = explainChoice(b, am.uid, content.aiConfig)!;
+      expect(th.mp).toBe(mp); // değerlendirme durumu değiştirmez
+      expect(b.effectiveStats(th).armor).toBe(armor);
+      const best = (skill: string) => Math.max(0, ...ex.candidates.filter((c) => c.skill === skill).map((c) => c.terms?.burn ?? 0));
+      return { drain: best('drain_field'), steal: best('mana_burn') };
+    };
+    const withHoard = burnOf(true);
+    const without = burnOf(false);
+    expect(withHoard.drain).toBeGreaterThan(without.drain);
+    expect(withHoard.steal).toBeGreaterThan(without.steal);
   });
 });
 

@@ -7,6 +7,7 @@ import { fitText } from './menu-ui';
 import { EL, elBody, elButton, elText, diamondPts, hGradient, vGradient, type ElButton } from './elegant-ui';
 import { tierStyle, unitName } from './unit-label';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
+import { stageView } from './stage-view';
 import { gateActions } from './result-actions';
 import { ensureIcon } from './icons';
 import { statIconName } from '../ui/stat-icons';
@@ -186,7 +187,9 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const compactScreen = short || !!cls?.contains('compact');
   const k = short ? 1.55 : compactScreen ? 1.25 : 1;
   /** Küçük yazılar k ile tam, büyükler yarım büyür. */
-  const sz = (n: number): number => Math.round(n * (n < 22 ? k : 1 + (k - 1) * 0.5));
+  // Telefonda sahne ~0.35x küçüldüğü için küçük yazılar en az ~9,5 gerçek piksel olsun (cssScale = 1 birimin CSS pikseli)
+  const minSmall = short ? Math.ceil(9.5 / Math.max(0.2, stageView.cssScale)) : 0;
+  const sz = (n: number): number => Math.max(n < 22 ? minSmall : 0, Math.round(n * (n < 22 ? k : 1 + (k - 1) * 0.5)));
 
   // --- Vinyet: sahne hafifçe kararır; altındaki tıklamaları yutar ---
   const dim = scene.add.rectangle(FULL_X0, 0, FULL_W, H, 0x050302, 0).setOrigin(0, 0).setInteractive();
@@ -328,7 +331,8 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     area.add(g);
   };
 
-  const metricW = 108;
+  // Telefonda büyüyen etiketler (Dealt / Taken / Healed) için sütun genişliği; sağdaki ad ve can çubuğu payı da buna göre daralır
+  const metricW = short ? 142 : 108;
   const rowItems: Phaser.GameObjects.Container[] = [];
   const metricDefs = [
     { icon: stat('str'), label: 'Dealt', color: '#f0cf8a', bar: 0xf0cf8a, map: stats.dealt },
@@ -357,7 +361,8 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
       const cx = mRight - (2 - i) * metricW - metricW / 2;
       const lab = elText(scene, 0, hy + 34 * (short ? 1.15 : 1), m.label, sz(12), EL.MUTED, { em: 0.12 }).setOrigin(0, 0.5);
       const isz = sz(18);
-      const total = isz + 6 + lab.width;
+      if (short) lab.setScale(Math.min(1, (metricW - 8 - isz - 6) / lab.width));
+      const total = isz + 6 + lab.displayWidth;
       lab.setX(cx - total / 2 + isz + 6);
       area.add(icon(m.icon, cx - total / 2 + isz / 2, lab.y, isz).setAlpha(0.9));
       area.add(lab);
@@ -422,7 +427,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
 
       // Ad + MVP / Fallen
       const nameX = ax + av / 2 + 18;
-      const idW = tight ? 150 : 168;
+      const idW = short ? 140 : tight ? 150 : 168;
       const nameCol = alive ? (tierStyle(c.tier)?.hex ?? EL.ON) : '#8d8070';
       const nameSize = tight ? sz(18) : sz(19);
       const nameText = fitText(elText(scene, nameX, tight ? cy : cy - (rowH > 70 ? 13 : 11), unitName(c), nameSize, nameCol, { em: 0.04 }).setOrigin(0, 0.5), tight ? idW - 56 : idW);
@@ -456,7 +461,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
       }
       bar.lineStyle(1, EL.GOLD, 0.3).strokeRect(hpX + 0.5, cy - hpH / 2 + 0.5, hpW - 1, hpH - 1);
       row.add(bar);
-      row.add(elText(scene, hpX + hpW / 2, cy, alive ? `${c.hp} / ${c.maxHp}` : '0', sz(14), alive ? '#ffffff' : '#8d8070', { em: 0.04, upper: false }).setOrigin(0.5));
+      row.add(fitText(elText(scene, hpX + hpW / 2, cy, alive ? `${c.hp} / ${c.maxHp}` : '0', sz(14), alive ? '#ffffff' : '#8d8070', { em: 0.04, upper: false }).setOrigin(0.5), hpW - 6));
 
       // DEALT / TAKEN / HEALED: ikon + renkli sayı + takım toplamına oran çubuğu
       metricDefs.forEach((m, mi) => {
@@ -536,7 +541,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const buttons = scene.add.container(0, 0).setAlpha(0);
   const bw = 420;
   const kitButton = (label: string, run: () => void, x: number, w: number, primary: boolean): ElButton => {
-    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? primaryH : secH, size: primary ? sz(28) : sz(22), ready: true });
+    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? primaryH : secH, size: primary ? sz(28) : sz(22), ready: true, touch: { growY: 'both', maxW: w + gap - 4 } });
     b.root.setPosition(x, barY);
     return b;
   };

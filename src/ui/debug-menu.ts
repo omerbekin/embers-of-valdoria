@@ -4,6 +4,7 @@
  * İlk sekme 'Quick': en sık kullanılan eylemler (`dock` alanı olanlar) aynı ikonlu görünümde. Sekmelerde ayrıca özel paneller
  * (registerPanel: birim araçları, skill cast, seed, test takımı...) bulunur. Her yeni ekran/özellik buraya bir giriş koyar ki arayüzden test edilebilsin.
  */
+import { clientToLocal } from './formation-board-rules';
 import { DEFAULT_ACTION_ICON, DOCK_GROUPS, DOCK_HINT, DOCK_KEYS, QUICK_TAB, SECTION_ICONS, TAB_ICONS, dockBadge, dockTooltip, labelBadge, labelBase, type DockBadge, type DockGroup } from './debug-layout';
 import { listenDebugTap, wantsDebugButton } from './debug-gesture';
 import { bindIcon } from './dom-icons';
@@ -132,6 +133,8 @@ export function debugSection(title: string, ...children: HTMLElement[]): HTMLEle
   return [debugHeading(title), grid];
 }
 
+/** Debug düğmesinin sürüklenerek seçilen konumu. */
+const BTN_POS_KEY = 'proto.debugBtnPos';
 const SIDE_KEY = 'proto.debug.side';
 
 export class DebugMenu {
@@ -160,7 +163,57 @@ export class DebugMenu {
     toggle.className = 'debug-toggle';
     toggle.textContent = 'DEBUG';
     toggle.setAttribute('aria-label', 'Toggle debug menu');
-    toggle.addEventListener('click', () => this.setOpen(!this.open));
+    // Sürükleyip taşı (düğme ekrandaki bir şeyi örtüyorsa): kısa dokunuş menüyü açar, 8 px'ten fazla sürükleme düğmeyi taşır ve konumu hatırlanır
+    let dragged = false;
+    toggle.addEventListener('click', () => {
+      if (dragged) dragged = false;
+      else this.setOpen(!this.open);
+    });
+    const placeBtn = (x: number, y: number): void => {
+      const w = (root.clientWidth || window.innerWidth) - toggle.offsetWidth - 4;
+      const h = (root.clientHeight || window.innerHeight) - toggle.offsetHeight - 4;
+      toggle.style.left = `${Math.max(4, Math.min(w, x))}px`;
+      toggle.style.top = `${Math.max(4, Math.min(h, y))}px`;
+      toggle.style.right = 'auto';
+      toggle.style.bottom = 'auto';
+    };
+    toggle.addEventListener('pointerdown', (e) => {
+      // dikey dokunmatikte sahne döner: işaretçi yerel koordinata çevrilir
+      const loc = (cx: number, cy: number): { x: number; y: number } => clientToLocal(cx, cy, root.getBoundingClientRect(), root.offsetWidth, document.documentElement.classList.contains('rotated'));
+      const p0 = loc(e.clientX, e.clientY);
+      const x0 = toggle.offsetLeft;
+      const y0 = toggle.offsetTop;
+      const sx = e.clientX;
+      const sy = e.clientY;
+      const move = (m: PointerEvent): void => {
+        if (!dragged && Math.hypot(m.clientX - sx, m.clientY - sy) < 8) return;
+        dragged = true;
+        const p = loc(m.clientX, m.clientY);
+        placeBtn(x0 + p.x - p0.x, y0 + p.y - p0.y);
+      };
+      const up = (): void => {
+        document.removeEventListener('pointermove', move);
+        document.removeEventListener('pointerup', up);
+        document.removeEventListener('pointercancel', up);
+        if (dragged) {
+          try {
+            window.localStorage.setItem(BTN_POS_KEY, JSON.stringify({ x: parseFloat(toggle.style.left), y: parseFloat(toggle.style.top) }));
+          } catch {
+            /* storage unavailable */
+          }
+          window.setTimeout(() => (dragged = false), 0);
+        }
+      };
+      document.addEventListener('pointermove', move);
+      document.addEventListener('pointerup', up);
+      document.addEventListener('pointercancel', up);
+    });
+    try {
+      const saved = JSON.parse(window.localStorage.getItem(BTN_POS_KEY) ?? 'null') as { x: number; y: number } | null;
+      if (saved && Number.isFinite(saved.x) && Number.isFinite(saved.y)) window.requestAnimationFrame(() => placeBtn(saved.x, saved.y));
+    } catch {
+      /* ignore */
+    }
     // Görünür düğme yalnızca `?debug=1` ile; normalde gizli giriş: ` / F2, üç parmakla dokunma, Settings > Developer tools (src/ui/debug-gesture.ts)
     toggle.hidden = !wantsDebugButton(window.location.search);
     listenDebugTap(() => this.setOpen(!this.open));

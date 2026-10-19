@@ -12,7 +12,7 @@
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
 import { VFX_SHEET_FILES, vfxSheetFile } from './vfx-sheet-files';
-import { buildInbetween } from './vfx-inbetween';
+import { buildInbetween, stabilizeFrames, type StabilizeOpts } from './vfx-inbetween';
 
 export const vfxSheetKey = (id: string): string => `vfxsheet:${id}`;
 
@@ -92,18 +92,20 @@ export interface SheetOpts {
   delay?: number;
   /** Kodla ara kare (src/game/vfx-inbetween.ts; varsayılan YOK = asıl kareler): kare sayısı ve fps `sub` kat (süre aynı). */
   inbetween?: { method: string; sub: number };
+  /** Kare hizalama (src/game/vfx-inbetween.ts > stabilizeFrames; mob efektleri: mob-vfx.ts): kareler vuruş karesinin yerine oturur. Yoksa asıl kareler. */
+  stabilize?: StabilizeOpts;
 }
 
-/** Ara kareli türev doku (asıl dokudan bir kez üretilir); üretilemezse null (asıl kareler oynar). */
-function inbetweenKey(scene: Phaser.Scene, id: string, method: string, sub: number): string | null {
+/** Türev doku (asıl dokudan bir kez üretilir): kare hizalama ve/ya da kodla ara kare; üretilemezse null (asıl kareler oynar). */
+function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: number } | null, st: StabilizeOpts | undefined): string | null {
   const src = vfxSheetKey(id);
-  const key = `${src}#ib:${method}:${sub}`;
+  const key = `${src}#d:${ib ? `${ib.method}:${ib.sub}` : '-'}:${st ? JSON.stringify(st) : '-'}`;
   if (scene.textures.exists(key)) return key;
   try {
     const f = vfxSheetFile(id)!;
     const [fw, fh] = f.meta.frame_size;
     const tex = scene.textures.get(src);
-    const frames: HTMLCanvasElement[] = [];
+    let frames: HTMLCanvasElement[] = [];
     for (let i = 0; i < f.meta.frames; i++) {
       const fr = tex.get(i);
       const c = document.createElement('canvas');
@@ -112,7 +114,8 @@ function inbetweenKey(scene: Phaser.Scene, id: string, method: string, sub: numb
       c.getContext('2d')!.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fw, fh);
       frames.push(c);
     }
-    const out = buildInbetween(frames, method, sub);
+    if (st) frames = stabilizeFrames(frames, st);
+    const out = ib ? buildInbetween(frames, ib.method, ib.sub) : frames;
     const ct = scene.textures.createCanvas(key, fw * out.length, fh);
     if (!ct) return null;
     out.forEach((c, i) => {
@@ -137,8 +140,9 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
   scene.textures.get(key).setFilter(Phaser.Textures.FilterMode.NEAREST);
   const [fw] = frameSize(id);
   const pivot = f.meta.pivot ?? [fw / 2, f.meta.frame_size[1] / 2];
-  const ibKey = o.inbetween && o.inbetween.sub > 1 ? inbetweenKey(scene, id, o.inbetween.method, o.inbetween.sub) : null;
-  const sub = ibKey ? o.inbetween!.sub : 1;
+  const ib = o.inbetween && o.inbetween.sub > 1 ? o.inbetween : null;
+  const ibKey = ib || o.stabilize ? derivedKey(scene, id, ib, o.stabilize) : null;
+  const sub = ibKey && ib ? ib.sub : 1;
   const spr = scene.add.sprite(x, y, ibKey ?? key, (o.frame ?? o.frames?.[0] ?? 0) * sub);
   const k = (o.size ?? fw) / fw;
   spr.setOrigin(o.origin?.[0] ?? pivot[0] / fw, o.origin?.[1] ?? pivot[1] / f.meta.frame_size[1]);

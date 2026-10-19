@@ -155,6 +155,14 @@ export class CombatLog {
         this.line([this.who(e.actor), { t: ' is stunned and loses the turn', k: 'n' }]);
         return true;
       }
+      case 'waveCleared':
+        this.close();
+        this.line([{ t: `Wave ${e.index + 1} cleared`, k: 'n' }]);
+        return true;
+      case 'waveStart':
+        this.close();
+        this.line([{ t: `Wave ${e.index + 1}/${e.total}`, k: 'n' }]);
+        return true;
       case 'battleEnd':
         this.close();
         this.line([{ t: e.winner === this.localSide ? 'Victory' : 'Defeat', k: 'n' }]);

@@ -5,6 +5,7 @@
   "color": "#8a94a6",
   "logo": "bulwark",
   "role": "Tank",
+  "blurb": "Iron-clad tank who taunts foes and hardens the armor of allies at his side.",
   "frontPriority": 0,
   "range": 1,
   "attributes": {

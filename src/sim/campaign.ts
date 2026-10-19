@@ -156,7 +156,7 @@ const emptyClass = (): ClassAgg => ({ runs: 0, completed: 0, defeats: 0, heroRun
 
 /** Tek savaşı yapay zeka ile oynatır: oyuncu tarafı `player`, düşman tarafı zorluğun YZ'si. */
 export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty, valor = true): Battle {
-  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
+  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.waves ? { waves: plan.waves.map((w) => ({ enemies: w.enemies, units: w.units })) } : {}), ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
   while (!battle.winner && battle.turnsTaken < MAX_TURNS) {
     const actor = battle.currentActor;
     if (!actor) break;

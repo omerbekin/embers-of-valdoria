@@ -1,0 +1,11 @@
+{
+  "_not": "Dalgalı savaş geçiş kuralları (Ömer 2026-10-19; varsayılanlar Ömer onayı BEKLİYOR, seçenekler docs/design/waves.md). Motor bu nesneyi BattleSetup.waveRules olarak alır (src/engine/content.ts > battleSetup, teams.waves verilince). turnOrder: 'reset' = yeni dalgada herkesin sıra sayacı sıfırlanır (savaş başı gibi), 'keep' = kahramanlar sayacını korur, yeni düşmanlar 0'dan başlar. healRatio / mpRatio: dalga arası canlı oyuncu birimlerine maks can / MP oranında yenilenme (0 = yok). clearCorpses: önceki dalganın düşmüş düşmanları savaştan çıkar (ceset kalmaz, Raise Dead tüketemez). clearEnemyGrounds: düşman tahtasındaki ve düşmanların bıraktığı zemin etkileri silinir. cancelEnemyTelegraphs: düşman tarafının bekleyen telgrafları iptal olur.",
+  "rules": {
+    "turnOrder": "reset",
+    "healRatio": 0,
+    "mpRatio": 0,
+    "clearCorpses": true,
+    "clearEnemyGrounds": true,
+    "cancelEnemyTelegraphs": true
+  }
+}

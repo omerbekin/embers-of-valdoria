@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Campaign map HUD mockups</title>
+<!-- SEFER HARITASI HUD taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Metinler CampaignMapScene.ts'ten; takim ornek. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="map-hud/mh.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Sefer haritası HUD'ı</h1>
+<p>Oyuncunun sefer boyunca en çok baktığı ekran: solda "Your party" ve "You are here", sol altta bölge / ilerleme / mod / altın bilgisi ve Gear + Formation ikonları, sağ altta Legend. Düğüm kartları, Start Battle kartı ve harita pencereleri başka mockup'larda (map-nodes, start-battle, map-events); bu sayfa yalnızca sabit HUD parçaları.</p>
+<h3>Teşhis</h3>
+<ol>
+<li><b>Kahraman satırı kart değil.</b> Büyük portre ama sınıf, ad ve rol ayrı satırlarda italik; Lv ufak yuvarlak rozet; can yalnız ince çizgi (yüzde ancak "Show carried HP" açıkken). Tasarım dilindeki karakter kartı A / plaka diline uzak.</li>
+<li><b>İtalik kuralı.</b> Rol, "You are here" alt yazısı, sol alttaki iki bilgi satırı italik; sol alt satır tek parça yazı: bölge adı, "Cleared 4/26", "Chapter", mod, zorluk, altın hepsi aynı ağırlıkta, çip değil.</li>
+<li><b>İlerleme görünmüyor.</b> "Cleared 4/26" yalnız sayı; çubuk yok. Sol sütun haritanın ~%25'ini kaplıyor (kararmış alan).</li>
+<li><b>Legend.</b> İki sütun küçük yazı, katlanır; yeni oyuncu için ikon-ad eşleşmesi ince ve çerçevesiz.</li>
+</ol>
+<h3>Notlar</h3>
+<ul>
+<li>Düğümlerin kendisi, ipucu kartları, Gear / Formation ikon düğmeleri ve alt orta harita düğmeleri DEĞİŞMEDİ; yerleri korundu. Bilgi aynı: yeni mekanik / sayı yok (yalnızca V1'de ilerleme çubuğu, "Cleared / total" oranının görseli).</li>
+<li>Her varyantta Archer'da "+2 stat puanı" (kor nabzı), Druid düşmüş, Warrior lider (taç) durumları görünür. Dokununca Gear'ın o kahramanın sekmesini açması aynen kalır (taslakta tıklama yok).</li>
+<li>Telefon yatay için şeritten <b>844x390</b>: ekran oyundaki gibi küçülür; V2 ve V3 sol sütunu küçülttüğü / kaldırdığı için telefonda haritaya en çok yer bırakanlar.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="map-hud/app.js"></script>
+</body>
+</html>

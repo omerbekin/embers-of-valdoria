@@ -72,6 +72,14 @@ export interface SimResult {
   comps: Map<string, { games: number; wins: number }>;
   /** Karşılaşma tablosu: anahtar `a>b` = a sınıfının b sınıfına karşı (karşı taraflarda, aynı takımda değilken) savaşları ve a'nın kazandıkları. */
   matchups: Map<string, { games: number; wins: number }>;
+  /** Dalgalı ölçüm (SimOptions.waves > 1): savaş başına toplam dalga ve ulaşılan dalga sayısı toplamı (son dalgaya ulaşılan = waves). Yoksa 0. */
+  waveTotal?: number;
+  wavesReached?: number;
+}
+
+/** Ölçüm seçenekleri. waves: savaş başına dalga sayısı (1 = dalgasız, eski ölçüm); sonraki dalgaların düşmanları seed'e göre aynı havuzdan çekilir. */
+export interface SimOptions {
+  waves?: number;
 }
 
 const bump = (m: Map<string, number>, key: string, by = 1) => m.set(key, (m.get(key) ?? 0) + by);
@@ -80,7 +88,8 @@ const bump = (m: Map<string, number>, key: string, by = 1) => m.set(key, (m.get(
  * `sizes`: takım boyutları (taraf başına 1..12; varsayılan random-battle.json > random.size). Global skill (Rest/Skip Turn/Move Tile) kullanımları
  * `skillUses` içinde skill id'leriyle ('rest', 'skip_turn', 'move_tile') sayılır; toplam hamle sayısı `moves`.
  */
-export function simulate(runs: number, firstSeed = 1, battleId: string = content.DEFAULT_BATTLE, sizes: content.TeamSizes = {}): SimResult {
+export function simulate(runs: number, firstSeed = 1, battleId: string = content.DEFAULT_BATTLE, sizes: content.TeamSizes = {}, opts: SimOptions = {}): SimResult {
+  const waveCount = Math.max(1, Math.floor(opts.waves ?? 1));
   const classes = new Map<string, ClassStat>();
   const stat = (id: string): ClassStat => {
     let s = classes.get(id);
@@ -93,10 +102,12 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
   for (const id of content.randomPool) stat(id);
   const comps = new Map<string, { games: number; wins: number }>();
   const matchups = new Map<string, { games: number; wins: number }>();
-  const result: SimResult = { runs, partyWins: 0, enemyWins: 0, draws: 0, totalTurns: 0, classes, comps, matchups };
+  const result: SimResult = { runs, partyWins: 0, enemyWins: 0, draws: 0, totalTurns: 0, classes, comps, matchups, ...(waveCount > 1 ? { waveTotal: 0, wavesReached: 0 } : {}) };
 
   for (let i = 0; i < runs; i++) {
-    const setup = content.battleSetup(battleId, firstSeed + i, 'turns', sizes);
+    // Dalgalı ölçüm: ilk dalga eski yoldan (aynı seed = aynı takımlar); sonraki dalgaların düşmanları ayrı seed'le çekilir (dizilim otomatik)
+    const extra = Array.from({ length: waveCount - 1 }, (_, k) => ({ enemies: content.rollTeams(battleId, ((firstSeed + i) * 7919 + (k + 1) * 104729) >>> 0, sizes).enemies }));
+    const setup = content.battleSetup(battleId, firstSeed + i, 'turns', extra.length ? { ...sizes, waves: extra } : sizes);
     const battle = new Battle(setup);
     const idOf = (uid: string) => battle.get(uid)?.defId ?? '?';
     /** Çağrıysa sahibinin sınıf id'si (ölçüm: çağrı hasarını sahibine ayrıca yazmak için). */
@@ -138,12 +149,16 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
     }
 
     result.totalTurns += battle.turnsTaken;
+    if (waveCount > 1) {
+      result.waveTotal! += battle.waveCount;
+      result.wavesReached! += battle.waveIndex + 1;
+    }
     if (battle.winner === 'party') result.partyWins++;
     else if (battle.winner === 'enemy') result.enemyWins++;
     else result.draws++;
 
     const partyIds = setup.party.map((d) => d.id);
-    const enemyIds = setup.enemies.map((d) => d.id);
+    const enemyIds = [...setup.enemies, ...(setup.waves ?? []).flatMap((w) => w.enemies)].map((d) => d.id);
     for (const [side, mine, theirs] of [
       ['party', partyIds, enemyIds],
       ['enemy', enemyIds, partyIds],
@@ -199,6 +214,10 @@ export function mergeResults(parts: SimResult[]): SimResult {
     out.enemyWins += p.enemyWins;
     out.draws += p.draws;
     out.totalTurns += p.totalTurns;
+    if (p.waveTotal !== undefined) {
+      out.waveTotal = (out.waveTotal ?? 0) + p.waveTotal;
+      out.wavesReached = (out.wavesReached ?? 0) + (p.wavesReached ?? 0);
+    }
     for (const [k, v] of p.comps) addWin(out.comps, k, v);
     for (const [k, v] of p.matchups) addWin(out.matchups, k, v);
     for (const [id, s] of p.classes) {

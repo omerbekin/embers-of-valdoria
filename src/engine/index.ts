@@ -30,5 +30,5 @@ export type { SkillInfo } from './skill-info';
 export { describeClass, describeStat, primaryBonusInfo } from './stat-info';
 export type { PrimaryBonusInfo, StatInfo, StatKind } from './stat-info';
 export * as content from './content';
-export type { BattleDef, Teams, TeamUnits } from './content';
+export type { BattleDef, Teams, TeamUnits, TeamWave } from './content';
 export type * from './types';

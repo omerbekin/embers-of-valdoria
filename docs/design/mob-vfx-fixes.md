@@ -1,6 +1,6 @@
 # Mob skill animasyonu düzeltme listesi (Ömer, 2026-10-18)
 
-Durum: NOT ALINDI, henüz uygulanmadı. Önce "ara kare" testi (aşağıda) yapılıyor; sonuca göre bu liste uygulanacak.
+Durum (2026-10-19): UYGULANDI (ayarlar data/battle-layout.json > animation.mobVfx: sizeMult, speedMult, skills; kare hizalama + uçuş src/game/vfx-inbetween.ts > stabilizeFrames, mob-vfx.ts). Kalanlar: Scatter Quarrels ve Peat Smoke kareleri ChatGPT ile yeniden üretilecek; Glyph of Breaking perspektif uyumu açık.
 Kapsam: ChatGPT ile yapılmış düşman mob skill animasyonları (assets/mob-vfx, src/game/mob-vfx.ts, data/battle-layout.json > animation.mobVfx). Kodla çizilen kahraman efektleri bu listenin dışında.
 
 ## Genel

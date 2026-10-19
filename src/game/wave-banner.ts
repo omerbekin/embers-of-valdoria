@@ -11,9 +11,9 @@ const W = 1920;
 const CY = 300; // birimlerin ad plakalarının üstünde (gökyüzü)
 
 /** Bandı gösterir; bitince (sönünce) çözülür. `title` = "WAVE 7", `sub` = karşılaşma adı ya da düşmanlar. */
-export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string): Promise<void> {
+export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string, holdMs?: number): Promise<void> {
   const m = motion('wave');
-  const hold = MOTION.wave.holdMs;
+  const hold = holdMs ?? MOTION.wave.holdMs; // savaş içi dalga geçişi daha kısa bekler (wave.battleHoldMs)
   const root = scene.add.container(0, 0).setDepth(4900);
   const band = scene.add.graphics();
   vGradient(band, FULL_X0, CY - 130, FULL_W, 260, EL.INK, [

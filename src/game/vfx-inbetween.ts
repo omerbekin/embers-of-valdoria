@@ -145,7 +145,7 @@ export function sliceSheet(img: CanvasImageSource, frames: number, fw: number, f
 }
 
 /** Bir karenin dayanak noktaları (src/game/vfx-sheets.ts > vfxSheetAnchors ile aynı kural, canvas'tan): core = ağırlık merkezi, base = alt %25 bandının merkezi. */
-export function canvasAnchors(c: HTMLCanvasElement): { core: [number, number]; baseX: number; baseY: number } | null {
+export function canvasAnchors(c: HTMLCanvasElement): { core: [number, number]; baseX: number; baseY: number; mass: number } | null {
   const w = c.width;
   const h = c.height;
   const px = c.getContext('2d', { willReadFrequently: true })!.getImageData(0, 0, w, h).data;
@@ -177,5 +177,55 @@ export function canvasAnchors(c: HTMLCanvasElement): { core: [number, number]; b
     by += rowSum[y]! * y;
     for (let x = 0; x < w; x++) bx += px[(y * w + x) * 4 + 3]! * x;
   }
-  return { core: [sx / sa, sy / sa], baseX: ba > 0 ? bx / ba : sx / sa, baseY: ba > 0 ? by / ba : bot };
+  return { core: [sx / sa, sy / sa], baseX: ba > 0 ? bx / ba : sx / sa, baseY: ba > 0 ? by / ba : bot, mass: sa };
+}
+
+/**
+ * KARE HİZALAMA (Ömer 2026-10-19: ChatGPT mob animasyonlarında kareler aynı yere oturmuyor; ikinci satır karelerinin içeriği yukarı kayıyor).
+ * Her karenin dayanak noktası (`anchor`: 'base' = zemin diski, 'core' = ağırlık merkezi) vuruş karesininkine (`ref`) kaydırılır; böylece efekt
+ * baştan sona aynı yerde oturur. `pre`: vuruştan ÖNCEKİ kareler de hizalansın (halka/kubbe gibi zemine bağlı efektler); `travel` = vuruştan
+ * önceki uçuş karesi sayısı: bunlar ağırlık merkezinden vuruş karesinin ağırlık merkezine hizalanır (yolculuğu sprite'ın kendi hareketi yapar, mob-vfx.ts).
+ * Neredeyse boş kareler (sönen kıvılcım; kütlesi vuruş karesinin `minMass` oranından az) önceki karenin kaymasını alır; kayma `maxShift` ile sınırlı.
+ */
+export interface StabilizeOpts {
+  ref: number;
+  anchor: 'base' | 'core';
+  pre: boolean;
+  travel: number;
+  minMass: number;
+  maxShift: number;
+}
+
+export function stabilizeFrames(frames: readonly HTMLCanvasElement[], o: StabilizeOpts): HTMLCanvasElement[] {
+  const an = frames.map((f) => canvasAnchors(f));
+  const ra = an[o.ref];
+  if (!ra) return [...frames];
+  const pt = (a: NonNullable<(typeof an)[number]>, kind: 'base' | 'core'): [number, number] => (kind === 'base' ? [a.baseX, a.baseY] : a.core);
+  const target = pt(ra, o.anchor);
+  const clamp = (v: number): number => Math.max(-o.maxShift, Math.min(o.maxShift, v));
+  const shifts: Array<[number, number]> = frames.map(() => [0, 0]);
+  const settle = (i: number, kind: 'base' | 'core', fallback: [number, number], to: [number, number] = target): void => {
+    const a = an[i];
+    if (!a) return;
+    if (a.mass < ra.mass * o.minMass) {
+      shifts[i] = fallback;
+      return;
+    }
+    const p = pt(a, kind);
+    shifts[i] = [clamp(to[0] - p[0]), clamp(to[1] - p[1])];
+  };
+  for (let i = o.ref - 1; i >= 0; i--) {
+    if (i < o.travel) settle(i, 'core', [0, 0], ra.core);
+    else if (o.pre) settle(i, o.anchor, shifts[i + 1]!);
+  }
+  for (let i = o.ref + 1; i < frames.length; i++) settle(i, o.anchor, shifts[i - 1]!);
+  return frames.map((f, i) => {
+    const [dx, dy] = shifts[i]!;
+    if (!dx && !dy) return f;
+    const out = document.createElement('canvas');
+    out.width = f.width;
+    out.height = f.height;
+    out.getContext('2d')!.drawImage(f, Math.round(dx), Math.round(dy));
+    return out;
+  });
 }
