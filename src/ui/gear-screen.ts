@@ -497,7 +497,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   // Panelin dışına (kararan zemine) dokunmak Gear'ı kapatır (X ile aynı; src/ui/backdrop.ts)
   // İÇERİ sayılanlar: tüm çift pencere (ganimet / tüccar paneli dahil) ve pencere içi onay kutusu (Ömer 2026-10-18: ganimetteki her tık "Leave?" açıyordu)
   const inPair = pair ?? panel;
-  dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm')), () => close());
+  dismissOnBackdrop(overlay, (t) => inPair.contains(t) || !!(t instanceof Element && t.closest('.gr-confirm, .mw-welcome')), () => close());
 
   /** İşlem + yeniden çizim; `okSound` yalnızca işlem başarılıysa çalar (hata: uyarı + hata sesi, ikisi birden değil). */
   const apply = (fn: () => void, okSound?: () => void): void => {

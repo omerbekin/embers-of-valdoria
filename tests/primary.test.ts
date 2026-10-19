@@ -489,12 +489,27 @@ describe('Int primary: Mana Echo savaşta', () => {
   });
 });
 
+describe('primary satırı (V1): sayılar formulas.json verisinden', () => {
+  it('her statın kısa satırı veriden gelir; primary olmayanda yok', () => {
+    const b = f.primaryBonus;
+    const st = classes[0]!.stats;
+    const want = { str: `${Math.round(b.str.resilienceChance * 100)}%`, dex: `${Math.round(b.dex.hunterMarkMult * 100)}%`, int: `${Math.round(b.int.manaEchoChance * 100)}%`, luck: `${Math.round(b.luck.surviveChance * 100)}%` } as const;
+    for (const k of ATTRS) {
+      const on = describeStat(k, { ...st, primary: k, primaryActive: true }, f);
+      expect(on.primaryLine).toContain(want[k]);
+      expect(on.primaryLine!.length).toBeLessThan(90);
+      expect(describeStat(k, { ...st, primary: undefined }, f).primaryLine).toBeUndefined();
+    }
+  });
+});
+
 describe('arayüz açıklaması: primary stat altın, bonus tooltip\'te', () => {
   it('primary stat tooltip\'i primary işaretlidir ve bonusu anlatır', () => {
     for (const def of classes) {
       const info = describeStat(def.primary!, def.stats, f);
       expect(info.primary, def.id).toBe(true);
-      expect(info.lines.join('\n')).toContain('Primary bonus');
+      expect(info.primaryLine, def.id).toMatch(/^Primary: [A-Za-z0-9+]/);
+      expect(info.lines.join(' '), def.id).not.toContain('Primary bonus');
       for (const a of ATTRS.filter((x) => x !== def.primary)) expect(describeStat(a, def.stats, f).primary).toBeUndefined();
     }
   });
@@ -713,5 +728,20 @@ describe('Lucky Escape: şans %30, diriltme hakkı geri vermez', () => {
       expect(run(3), mode).toBe(0);
       expect(run(3), mode).toBe(run(3));
     }
+  });
+});
+
+describe('primary satırı DOM ipucunda (V1)', () => {
+  it('başlığın altında tek satır; uzun bonus maddesi yok; primary olmayanda satır yok', async () => {
+    const { statTip, statBandSpec } = await import('../src/ui/stat-tips');
+    const { bandTipHtml } = await import('../src/ui/band-tip');
+    const st = { ...classes[0]!.stats, primary: 'str' as const, primaryActive: true };
+    const tip = statTip('str', st)!;
+    const html = bandTipHtml(statBandSpec('str', tip));
+    expect(html).toContain('class="bt-sub"');
+    expect(html).toContain('Primary:');
+    expect(html).not.toContain('Primary bonus');
+    const other = bandTipHtml(statBandSpec('int', statTip('int', st)!));
+    expect(other).not.toContain('bt-sub');
   });
 });

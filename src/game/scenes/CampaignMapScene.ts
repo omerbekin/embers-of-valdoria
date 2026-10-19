@@ -1,5 +1,4 @@
 import Phaser from 'phaser';
-import { perfLite } from '../../ui/perf-mode';
 import { basePuffs, placePuffs, roadRects, type Rect } from '../fog-clouds';
 import { content } from '../../engine';
 import {
@@ -222,7 +221,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private sideOpen = false;
   /** Sağ üstteki DOM "Menu" düğmesi. */
   private tip: Phaser.GameObjects.Container | null = null;
-  private dashT = 0;
+  private glowTween: Phaser.Tweens.Tween | null = null;
   private drag = { down: false, moved: false, x: 0, y: 0 };
   /** Basışın başladığı düğüm (dokunuş = aynı düğümde basıp bırakmak). */
   private tapNode: string | null = null;
@@ -336,8 +335,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.mid = { x: at.x, y: at.y };
     this.layoutCameras(true);
     onStageResize(this, () => this.layoutCameras(false));
-    this.events.on('update', (_t: number, dt: number) => {
-      this.animateDashes(dt);
+    this.events.on('update', () => {
       this.updatePanButtons();
       this.syncOverlays();
       if (this.cardPlace) {
@@ -551,24 +549,24 @@ export class CampaignMapScene extends Phaser.Scene {
     const vis = nodeVisibility(this.map, this.s, session.revealFog);
     const options = this.moves();
     // 1) yollar (altta koyu iz: harita üstünde okunur kalsın), gidilebilenler ayrı katmanda akar
+    this.glowTween?.remove();
+    this.glowTween = null;
+    const glow = this.add.graphics();
     const lines = this.add.graphics();
-    this.dyn.add(lines);
+    this.dyn.add([glow, lines]);
     for (const e of this.map.edges) {
       const ev = edgeVisibility(this.map, this.s, vis, e);
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
       if (ev === 'open') {
-        // parıltı altlığı ve koyu iz bir kez çizilir; her karede yalnızca üstteki akan kesik çizgi yenilenir (Ömer 2026-10-11, performans)
-        const base = this.add.graphics();
-        this.drawRoad(base, pts, 'open', 0, 'base');
-        const g = this.add.graphics();
-        this.dyn.add([base, g]);
-        this.openEdges.push({ g, pts });
+        this.drawRoad(glow, pts, 'open', 0, 'base');
+        this.drawRoad(lines, pts, 'open', 0, 'dash');
+        this.openEdges.push({ g: glow, pts });
         this.clearZones.push(...roadRects(pts));
         continue;
       }
       this.drawRoad(lines, pts, ev, 0);
     }
-    this.animateDashes(0);
+    if (this.openEdges.length) this.glowTween = this.tweens.add({ targets: glow, alpha: { from: 1, to: 0.6 }, duration: 3200, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
     // 2) düğümler
     // Üst üste binen etiketlerde bulunulan ve gidilebilir düğüm en üstte kalsın: önce uzaklar, sonra gidilebilirler, en son bulunulan
     const rank = (id: string) => (vis[id] === 'current' ? 2 : options.includes(id) ? 1 : 0);
@@ -612,46 +610,38 @@ export class CampaignMapScene extends Phaser.Scene {
       const e = edgeEither(this.map, full[i - 1]!, full[i]!);
       if (!e) continue;
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
-      this.drawRoad(g, pts, 'open', 0, 'base');
-      this.drawRoad(g, pts, 'open', 0, 'dash');
+      this.drawRoad(g, pts, 'open', 0);
     }
     this.world.add(g);
     this.routeG = g;
   }
 
-  /** Yol: yürünmüş = düz altın; gidilebilir = akan kor (parıltı altlığıyla); görünür = kesik altın; sis = soluk. */
+  /** Yol (Footpath, Ömer 2026-10-19): yürünmüş = düz açık çizgi; gidilebilir = üç katman kor (parıltı 'base', çekirdek 'dash'); görünür = noktalı; sis = soluk noktalı. */
   private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number, part: 'all' | 'base' | 'dash' = 'all'): void {
-    const stroke = (w: number, col: number, a: number, dashed: boolean, dash = 14, gap = 10) => {
+    const stroke = (w: number, col: number, a: number, dashed: boolean) => {
       g.lineStyle(w, col, a);
       if (!dashed) {
         g.beginPath();
         pts.forEach((p, i) => (i === 0 ? g.moveTo(p.x, p.y) : g.lineTo(p.x, p.y)));
         g.strokePath();
-      } else this.dashed(g, pts, dash, gap, offset);
+      } else this.dashed(g, pts, 3, 7, offset);
     };
     switch (ev) {
-      // Çift ince çizgi (Ömer 2026-10-18, mockup path=1): koyu kenar + açık gövde + ortada koyu iz = iki paralel çizgi görünümü
       case 'walked':
-        stroke(9, 0x080503, 0.5, false);
-        stroke(6.5, 0xf0c25a, 1, false);
-        stroke(3.2, 0x2a1d10, 1, false);
+        stroke(3, 0xe8d6a4, 0.55, false);
         break;
       case 'open':
         if (part !== 'dash') {
-          stroke(14, EL.EMBER, 0.16, false);
-          stroke(11, 0x0a0603, 0.55, false);
+          stroke(10, EL.EMBER, 0.1, false);
+          stroke(6, EL.EMBER, 0.16, false);
         }
-        if (part !== 'base') stroke(3.6, EL.EMBER2, 1, true, 12, 9);
+        if (part !== 'base') stroke(2.6, EL.EMBER2, 0.85, false);
         break;
       case 'visible':
-        stroke(9, 0x080503, 0.5 * 0.6, false);
-        stroke(6.5, 0xeadcb4, 0.6, false);
-        stroke(3.2, 0x2a1d10, 0.6, false);
+        stroke(3.2, 0xeadcb4, 0.5, true);
         break;
       default:
-        stroke(9, 0x080503, 0.5 * 0.25, false);
-        stroke(6.5, 0xeadcb4, 0.25, false);
-        stroke(3.2, 0x2a1d10, 0.25, false);
+        stroke(3.2, 0xeadcb4, 0.125, true);
     }
   }
 
@@ -673,24 +663,6 @@ export class CampaignMapScene extends Phaser.Scene {
         t = t2 + 0.001;
       }
       dist += seg;
-    }
-  }
-
-  private dashAcc = 0;
-
-  /** Gidilebilecek yollarda akan kor çizgi. */
-  private animateDashes(dt: number): void {
-    if (!this.openEdges.length) return;
-    this.dashT += dt * 0.035;
-    // Performans modu: akan yol çizgileri her karede değil ~15 kez/sn yeniden çizilir (Graphics yeniden çizimi haritanın boşta en büyük işi)
-    if (perfLite()) {
-      this.dashAcc += dt;
-      if (this.dashAcc < 66) return;
-      this.dashAcc = 0;
-    }
-    for (const { g, pts } of this.openEdges) {
-      g.clear();
-      this.drawRoad(g, pts, 'open', -this.dashT, 'dash');
     }
   }
 

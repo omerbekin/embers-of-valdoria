@@ -15,10 +15,7 @@ const T = BAL.test;
  * BANDI BEKLEYEN ENDLESS ÜST SINIRLARI: GEÇİCİ muaf (ölçülür, uyarı yazılır; ALT sınırlar her zaman denetlenir). Normalde BOŞ.
  * Anahtar: 'firstBossWinHigh' | 'meanHigh'; değer: tek satır sebep.
  */
-export const PENDING_ENDLESS_BANDS: Readonly<Record<string, string>> = {
-  firstBossWinHigh: 'waves 2026-10-19: first boss win ~89% (48-run sample) vs 88 max; Endless still slightly easy after levels/item power, tracked in handoff open items',
-  meanHigh: 'waves 2026-10-19: avg wave ~22 vs 13-19 (was 24-28 before waves); Endless still easy after levels/item power, tracked in handoff open items',
-};
+export const PENDING_ENDLESS_BANDS: Readonly<Record<string, string>> = {};
 const upper = (key: string, value: number, max: number, msg: string) => {
   if (key in PENDING_ENDLESS_BANDS) {
     if (value > max) console.warn(`[endless-balance] BANDI BEKLİYOR: ${key} ${value.toFixed(1)} > ${max} (${PENDING_ENDLESS_BANDS[key]})`);

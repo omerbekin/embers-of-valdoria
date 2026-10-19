@@ -175,8 +175,9 @@ export interface EncounterDef {
   /** İlk dalga (dalgasız karşılaşmada tüm düşmanlar). */
   units: EncounterUnit[];
   /**
-   * Dalgalı savaş (Ömer 2026-10-19, docs/design/waves.md): SONRAKİ dalgalar (2., 3. ...); her biri ilk dalga bitince boş düşman tarafına dizilir.
-   * Güçlendirme / zorluk / level kuralları ilk dalgadakiyle aynı uygulanır. Yoksa karşılaşma tek dalgadır.
+   * Dalgalı savaş (Ömer 2026-10-19, docs/design/waves.md): elle yazılmış SONRAKİ dalgalar (2., 3. ...; tam liste = units + waves, olduğu gibi).
+   * Yoksa varsayılan ekleme kuralı çalışır (karşılaşma aynen kalır, eşlikçi kopyası takviye dalgaları eklenir; src/engine/wave-split.ts > buildWaves).
+   * Güçlendirme / zorluk / level kuralları ilk dalgadakiyle aynı uygulanır.
    */
   waves?: EncounterWave[];
   /** Savaş arka planı (assets/backgrounds/<ad>.webp|png|jpg); öncelik: karşılaşma > düğüm > bölge > varsayılan. */

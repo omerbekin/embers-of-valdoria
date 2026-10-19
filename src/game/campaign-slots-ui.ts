@@ -10,6 +10,7 @@ import { cardArt } from './card-art';
 import { EL, diamondPts, elBack, elBody, elButton, elDiamond, elGlow, elPanel, elText, fitW, hGradient, vGradient } from './elegant-ui';
 import { FULL_W, FULL_X0 } from '../ui/viewport';
 import { onStageResize } from './stage';
+import { stageView } from './stage-view';
 
 /**
  * Sefer yuvaları "Three cards" (Ömer 2026-10-19, taslak campaign-slots-v2.html #v2): New Campaign ve Load Game aynı ekran.
@@ -62,6 +63,8 @@ const dayText = (iso: string): string => {
   const d = new Date(iso);
   return Number.isNaN(d.getTime()) ? iso : d.toLocaleDateString();
 };
+/** Telefonda küçük yazıyı okunur yap (gerçek ~10 px); masaüstünde aynı kalır. */
+const legible = (base: number): number => Math.min(28, Math.max(base, Math.ceil(10 / (stageView.cssScale > 0 ? stageView.cssScale : 1))));
 const modeName = (m: CampaignMode) => (m === 'ironman' ? 'Ironman' : 'Normal');
 const diffName = (d: Difficulty) => CONFIG.difficulties[d]?.name ?? d;
 const MAP_NOTE = '#e3c48f'; // harita değişti uyarısı (kehribar; onay kutusunun kırmızısından ayrı)
@@ -124,14 +127,19 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
   };
 
   // --- dinamik görünüm (her render'da baştan kurulur) ---
-  const view = scene.add.container(0, 0);
-  root.add(view);
+  // Üç katman: viewRoot (giriş hareketi) > cardsC (yuva kartları) + bodyC (alt panel / onay / adım II). Onay, silme gibi eylemler yalnızca ilgili katmanı yeniler.
+  const viewRoot = scene.add.container(0, 0);
+  const cardsC = scene.add.container(0, 0);
+  const bodyC = scene.add.container(0, 0);
+  viewRoot.add([cardsC, bodyC]);
+  root.add(viewRoot);
+  let view: Phaser.GameObjects.Container = bodyC; // yardımcılar (button, kicker...) o an kurulan katmana ekler
 
   // Harita görseli menüde / haritada zaten yüklü (yeni indirme yok); yoksa Campaign kart görseli, o da yoksa düz koyu zemin
   const artKey = (): string | null => (hasCampaignArt(scene, 'valdoria-bg') ? campaignArtKey('valdoria-bg') : cardArt(scene, 'campaign'));
 
   const button = (label: string, run: () => void, x: number, cy: number, primary = true, w?: number, align: 'left' | 'right' = 'left'): number => {
-    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? 70 : 58, size: primary ? 23 : 19, ready: true, touch: true });
+    const b = elButton(scene, label, run, { kind: primary ? 'primary' : 'secondary', w, h: primary ? 70 : 58, size: primary ? 23 : 19, ready: true, touch: { minPx: 48 } });
     b.root.setPosition(align === 'left' ? x + b.w / 2 : x - b.w / 2, cy);
     view.add(b.root);
     return b.w;
@@ -223,9 +231,9 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
         pb.lineStyle(1, EL.GOLD, EL.LINE.a2).strokeRect(26.5, py + 0.5, w - 53, 7);
         c.add(pb);
       }
-      const fy = h - (compact ? 30 : 38);
-      c.add(elText(scene, 26, fy, `${s.saveCount} save${s.saveCount === 1 ? '' : 's'}`, 14, EL.DIM, { em: 0.14 }).setOrigin(0, 0));
-      c.add(elText(scene, w - 26, fy, dayText(s.lastPlayed), 14, EL.DIM, { em: 0.14 }).setOrigin(1, 0));
+      const fy = h - Math.max(compact ? 30 : 38, legible(14) + 14);
+      c.add(elText(scene, 26, fy, `${s.saveCount} save${s.saveCount === 1 ? '' : 's'}`, legible(14), EL.DIM, { em: 0.14 }).setOrigin(0, 0));
+      c.add(elText(scene, w - 26, fy, dayText(s.lastPlayed), legible(14), EL.DIM, { em: 0.14 }).setOrigin(1, 0));
     }
     // çerçeve (seçili: kor 2 px + dış ışıma; üstüne gelince açık altın)
     const frame = scene.add.graphics();
@@ -263,8 +271,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
 
   const slotCards = (top: number, h: number) => {
     const ids = visible();
+    view = cardsC;
     const total = ids.length * CARD_W + (ids.length - 1) * CARD_GAP;
     ids.forEach((i, k) => slotCard(i, W / 2 - total / 2 + k * (CARD_W + CARD_GAP), top, h));
+    view = bodyC;
   };
 
   /** Onay kutusu (kırmızımsı ince çerçeve), yatay: solda metin, sağda Cancel + onay düğmesi. Yüksekliği döner. */
@@ -280,7 +290,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       st.confirm = null;
       c.run();
     }, x + w - 28, cy, true, 220, 'right');
-    button('Cancel', () => ((st.confirm = null), render()), x + w - 28 - yw - 28, cy, false, 180, 'right');
+    button('Cancel', () => ((st.confirm = null), render('body')), x + w - 28 - yw - 28, cy, false, 180, 'right');
     return h;
   };
 
@@ -328,9 +338,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
     return y + h;
   };
 
-  const newView = (): void => {
+  const newView = (what: 'all' | 'cards' | 'body'): void => {
     const s = sums[st.slot] ?? null;
     if (st.step === 2) {
+      if (what === 'cards') return;
       let y = 280;
       kicker(EDGE, y, 'Mode');
       y = optionRow(y + 34, MODES, st.mode, (v) => (st.mode = v)) + 32;
@@ -339,12 +350,13 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       const cy = y + 35;
       button('Back', () => ((st.step = 1), render()), EDGE, cy, false, 200);
       view.add(elBody(scene, W / 2, cy, `Slot ${st.slot + 1} · Mode and difficulty cannot be changed later.`, 21, EL.MUTED, false, 800).setOrigin(0.5).setAlign('center'));
-      const begin = elButton(scene, 'Begin the journey', () => o.onStart?.(st.mode, st.diff, st.slot), { kind: 'primary', h: 70, size: 23, ready: true, touch: true });
+      const begin = elButton(scene, 'Begin the journey', () => o.onStart?.(st.mode, st.diff, st.slot), { kind: 'primary', h: 70, size: 23, ready: true, touch: { minPx: 48 } });
       begin.root.setPosition(RIGHT - begin.w / 2, cy);
       view.add(begin.root);
       return;
     }
-    slotCards(280, 560);
+    if (what !== 'body') slotCards(280, 560);
+    if (what === 'cards') return;
     const cy = 925;
     if (st.confirm) {
       confirmBox(EDGE, 880, W - EDGE * 2, st.confirm);
@@ -365,12 +377,13 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
         yes: 'Accept',
         run: () => ((st.step = 2), render()),
       };
-      render();
+      render('body');
     }, RIGHT, cy, true, undefined, 'right');
   };
 
-  const loadView = (): void => {
-    slotCards(250, 300);
+  const loadView = (what: 'all' | 'cards' | 'body'): void => {
+    if (what !== 'body') slotCards(250, 300);
+    if (what === 'cards') return;
     const s = sums[st.slot] ?? null;
     const px = EDGE;
     const pw = W - EDGE * 2;
@@ -392,10 +405,10 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
               deleteSlot(storage(), st.slot);
               sums = slotSummaries(storage());
               o.onChanged?.();
-              render();
+              render('both');
             },
           };
-          render();
+          render('body');
         }, px + pw - 32, py + 36, false, 200, 'right');
       }
       const saves = listSaves(storage(), st.slot);
@@ -414,7 +427,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
         view.add(fitW(elText(scene, x0, ry + 38, `${progressText(e.summary, true)} · ${e.summary.node}`, 21, EL.TXT, { em: 0.04, upper: false }).setOrigin(0, 0), tw));
         view.add(fitW(elBody(scene, x0, ry + 70, `${e.summary.region} · ${dateText(e.savedAt)}`, 18, EL.MUTED, false).setOrigin(0, 0), tw));
         const cy = ry + rowH / 2;
-        const lb = elButton(scene, 'Load', () => o.onLoad?.(e), { kind: 'primary', w: 130, h: 58, size: 20, ready: true, touch: { maxH: rowH, maxExtraW: 8 } });
+        const lb = elButton(scene, 'Load', () => o.onLoad?.(e), { kind: 'primary', w: 130, h: 58, size: 20, ready: true, touch: { maxH: rowH + 8, maxExtraW: 8, minPx: 48 } });
         lb.root.setPosition(x0 + cw - 110 - 22 - 65, cy);
         const db = elButton(scene, 'Delete', () => {
           st.confirm = {
@@ -424,11 +437,11 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
               deleteSave(storage(), st.slot, e.id);
               sums = slotSummaries(storage());
               o.onChanged?.();
-              render();
+              render('both');
             },
           };
-          render();
-        }, { kind: 'secondary', w: 110, h: 50, size: 16, touch: { maxH: rowH, maxExtraW: 8 } });
+          render('body');
+        }, { kind: 'secondary', w: 110, h: 50, size: 16, touch: { maxH: rowH + 8, maxExtraW: 20, minPx: 48 } });
         db.root.setPosition(x0 + cw - 55, cy);
         view.add([lb.root, db.root]);
       });
@@ -439,19 +452,30 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
 
   // Giriş hareketi yalnızca görünüm gerçekten değişince (ilk açılış, adım I <-> II, onay kutusu) oynar. Kart / seçenek tıklaması yalnızca
   // seçimi günceller: görünüm yeniden kurulur ama sönüp yükselmez (Ömer 2026-10-12: her tıklamada tüm kutu baştan yükleniyormuş gibi görünüyordu).
-  let lastView: string | null = null;
-  const render = () => {
+  let lastStep: number | null = null;
+  const fadeBody = () => {
+    scene.tweens.killTweensOf(bodyC);
+    bodyC.setAlpha(0);
+    scene.tweens.add({ targets: bodyC, alpha: 1, duration: 180, ease: EL.EASE });
+  };
+  /** what: 'all' = her şey; 'body' = yalnızca alt alan (onay aç/kapat); 'both' = kartlar + alt alan, giriş hareketi yok (silme sonrası sayılar). */
+  const render = (what: 'all' | 'body' | 'both' = 'all') => {
     if (closed) return;
-    drawSteps();
-    view.removeAll(true);
-    if (o.flow === 'new') newView();
-    else loadView();
-    const key = `${st.step}|${st.confirm ? 'confirm' : ''}`;
-    if (key === lastView) return;
-    lastView = key;
-    scene.tweens.killTweensOf(view);
-    view.setAlpha(0).setY(14);
-    scene.tweens.add({ targets: view, alpha: 1, y: 0, duration: 260, ease: EL.EASE });
+    const doCards = what !== 'body';
+    if (what === 'all') drawSteps();
+    if (doCards) cardsC.removeAll(true);
+    bodyC.removeAll(true);
+    view = bodyC;
+    const part = what === 'body' ? 'body' : 'all';
+    if (o.flow === 'new') newView(part);
+    else loadView(part);
+    view = bodyC;
+    if (what !== 'all') return fadeBody();
+    if (st.step === lastStep) return;
+    lastStep = st.step;
+    scene.tweens.killTweensOf(viewRoot);
+    viewRoot.setAlpha(0).setY(14);
+    scene.tweens.add({ targets: viewRoot, alpha: 1, y: 0, duration: 260, ease: EL.EASE });
   };
 
   const api: SlotBrowser = {
@@ -460,7 +484,7 @@ export function openSlotBrowser(scene: Phaser.Scene, layer: Phaser.GameObjects.C
       if (closed) return;
       if (st.confirm) {
         st.confirm = null;
-        return render();
+        return render('body');
       }
       if (st.step === 2) {
         st.step = 1;

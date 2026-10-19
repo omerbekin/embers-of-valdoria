@@ -6,7 +6,7 @@
  */
 
 /** CSS pikseli (oyun biriminden bağımsız: her ekranda fiziksel olarak aynı boy). */
-export const NAV_BTN = { hit: 44, frame: 30, icon: 18, edge: 6, gap: 4 } as const;
+export const NAV_BTN = { hit: 44, frame: 30, icon: 18, edge: 6, gap: 16 } as const;
 
 /**
  * Masaüstü büyütmesi (Ömer 2026-10-17): düğmeler CSS pikseli olduğu için büyük masaüstü pencerede küçük kalıyordu. Dokunmatikte (coarse) 1 (telefon aynen);

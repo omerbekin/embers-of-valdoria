@@ -455,6 +455,7 @@ export function elIconButton(scene: Phaser.Scene, content: { icon?: string; labe
   };
   draw();
   const zone = scene.add.zone(0, 0, Math.max(s, 56), Math.max(s, 56)).setInteractive({ useHandCursor: true });
+  growTouchZone(scene, zone, Math.max(s, 56), Math.max(s, 56), { maxExtraW: 8, maxExtraH: 8 }); // ekran küçülünce / döndürülünce de >= 44 gerçek px
   root.add([...parts, zone]);
   zone.on('pointerover', () => {
     hover = true;

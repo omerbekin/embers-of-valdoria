@@ -102,23 +102,27 @@ describe('endless: dalga kuralları', () => {
 
   it('boss basamağı: her boss bir öncekinden güçlü (scaling.bossMult), yalnızca dalga numarasına bağlı; liste bitince son değer', () => {
     const list = ENDLESS.scaling.bossMult!;
-    expect(list[0]).toBe(1);
+    expect(list[0]).toBeGreaterThanOrEqual(1); // 2026-10-19 (open-questions 367): ilk boss da ek çarpan alır
     for (let i = 1; i < list.length; i++) expect(list[i]!).toBeGreaterThan(list[i - 1]!);
     expect([0, 1, 2, 3, 4].map((b) => bossMult(b))).toEqual(list.slice(0, 5));
     expect(bossMult(list.length + 3)).toBe(list[list.length - 1]);
-    // 10. dalga: dalga güçlenmesi aynen; 20. dalga: bossMult[1] can ve güce çarpılır, stat değil; boss olmayan dalgaya eklenmez
-    expect(waveMods(10)).toEqual({ hpMult: 1.09, statMult: 1.09, powerMult: 1.083 });
+    // 10. dalga: bossMult[0], 20. dalga: bossMult[1] can ve güce çarpılır, stat değil; boss olmayan dalgaya eklenmez
     const plain = (w: number) => ({ hp: 1 + ENDLESS.scaling.hpPerWave * (w - 1), pw: 1 + ENDLESS.scaling.powerPerWave * (w - 1) });
+    expect(waveMods(10)!.hpMult).toBeCloseTo(plain(10).hp * list[0]!, 3);
+    expect(waveMods(10)!.powerMult).toBeCloseTo(plain(10).pw * list[0]!, 3);
+    expect(waveMods(10)!.statMult).toBeCloseTo(1 + ENDLESS.scaling.statPerWave * 9, 3);
     expect(waveMods(20)!.hpMult).toBeCloseTo(plain(20).hp * list[1]!, 3);
     expect(waveMods(20)!.powerMult).toBeCloseTo(plain(20).pw * list[1]!, 3);
     expect(waveMods(20)!.statMult).toBeCloseTo(1 + ENDLESS.scaling.statPerWave * 19, 3);
     expect(waveMods(21)!.hpMult).toBeCloseTo(plain(21).hp, 3);
   });
 
-  it('dalga güçlenmesi: 1. dalga yok, sonra dalga başına can/stat +%1, güç +%0,92 (Ömer 2026-10-14: Revive kartı kalkınca %20 yumuşadı)', () => {
+  it('dalga güçlenmesi: 1. dalga yok, sonra dalga başına doğrusal can/stat/güç (data/endless.json > scaling; değerler veriden)', () => {
+    const s = ENDLESS.scaling;
+    const r3 = (x: number) => Math.round(x * 1000) / 1000;
     expect(waveMods(1)).toBeUndefined();
-    expect(waveMods(2)).toEqual({ hpMult: 1.01, statMult: 1.01, powerMult: 1.009 }); // r3(1,01) / r3(1,0092)
-    expect(waveMods(11)).toEqual({ hpMult: 1.1, statMult: 1.1, powerMult: 1.092 });
+    expect(waveMods(2)).toEqual({ hpMult: r3(1 + s.hpPerWave), statMult: r3(1 + s.statPerWave), powerMult: r3(1 + s.powerPerWave) });
+    expect(waveMods(11)).toEqual({ hpMult: r3(1 + s.hpPerWave * 10), statMult: r3(1 + s.statPerWave * 10), powerMult: r3(1 + s.powerPerWave * 10) });
     expect(combineMods({ hpMult: 2, spriteScale: 1.4 }, { hpMult: 1.5, powerMult: 1.1 })).toEqual({ hpMult: 3, spriteScale: 1.4, powerMult: 1.1 });
   });
 

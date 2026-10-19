@@ -1,5 +1,7 @@
 import Phaser from 'phaser';
-import { motion, TYPE } from '../ui/motion';
+import { motion, ms, TYPE } from '../ui/motion';
+import victoryUrl from '../../assets/result-logos/victory.webp?url';
+import defeatUrl from '../../assets/result-logos/defeat.webp?url';
 import type { Battle, BattleEvent, Combatant, Side } from '../engine';
 import { debugState } from './debug-state';
 import { copyMatchData } from '../ui/match-copy';
@@ -170,6 +172,36 @@ function emblemArt(scene: Phaser.Scene, cx: number, cy: number, victory: boolean
   return g;
 }
 
+/**
+ * Sonuç amblemi (Ömer 2026-10-19, "Shield"): parlayan kalkan (Victory) / çatlak paslı kalkan (Defeat), assets/result-logos/*.webp (512).
+ * Görsel inene kadar kodla çizilen amblem durur; iner inmez yerini alır. Giriş: Victory yumuşak altın parıltı, Defeat hafif kararıp yerleşir.
+ */
+function loadEmblemImage(scene: Phaser.Scene, host: Phaser.GameObjects.Container, art: Phaser.GameObjects.Graphics, cx: number, cy: number, size: number, victory: boolean): void {
+  const key = victory ? 'result-logo-victory' : 'result-logo-defeat';
+  const show = (): void => {
+    if (!host.scene || !scene.textures.exists(key)) return;
+    art.destroy();
+    const img = scene.add.image(cx, cy, key).setDisplaySize(size, size);
+    host.add(img);
+    const base = img.scale;
+    if (victory) {
+      const glow = scene.add.circle(cx, cy, size * 0.42, 0xe8c47e, 0).setBlendMode(Phaser.BlendModes.ADD);
+      host.addAt(glow, host.getIndex(img));
+      img.setAlpha(0).setScale(base * 0.94);
+      scene.tweens.add({ targets: img, alpha: 1, scale: base, duration: ms(700), ease: 'Cubic.easeOut', delay: 200 });
+      scene.tweens.add({ targets: glow, fillAlpha: 0.3, scale: 1.18, duration: ms(900), ease: 'Sine.easeOut', delay: 250, yoyo: true, hold: 120 });
+    } else {
+      img.setAlpha(0).setScale(base * 1.05).setTint(0x888888);
+      scene.tweens.add({ targets: img, alpha: 1, scale: base, duration: ms(800), ease: 'Sine.easeOut', delay: 200 });
+      scene.tweens.addCounter({ from: 0, to: 1, duration: ms(900), delay: 200, onUpdate: (t) => { const v = Math.round(136 + 119 * (t.getValue() ?? 0)); img.setTint(Phaser.Display.Color.GetColor(v, v, v)); } });
+    }
+  };
+  if (scene.textures.exists(key)) return show();
+  scene.load.image(key, victory ? victoryUrl : defeatUrl);
+  scene.load.once(`filecomplete-image-${key}`, show);
+  if (!scene.load.isLoading()) scene.load.start();
+}
+
 /** Küçük haç (düşen birim işareti), merkez (cx, cy). */
 function crossMark(g: Phaser.GameObjects.Graphics, cx: number, cy: number, s: number, color: number): void {
   g.fillStyle(color, 1).fillRect(cx - s / 6, cy - s / 2, s / 3, s).fillRect(cx - s / 2, cy - s / 3, s, s / 3);
@@ -250,7 +282,9 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
     g.lineStyle(1, victory ? 0xd9b26a : 0xb0584c, 0.7).strokeRect(ex - 51.5, midY - 51.5, 103, 103);
     g.lineStyle(2, EL.INK, 0.9).strokeRect(ex - 54, midY - 54, 108, 108);
     plaque.add(g);
-    plaque.add(emblemArt(scene, ex, midY, victory));
+    const art = emblemArt(scene, ex, midY, victory);
+    plaque.add(art);
+    loadEmblemImage(scene, plaque, art, ex, midY, 124, victory);
   }
   // Başlık + süs + alt yazı (ortadaki alan: kutu ile sağdaki sütun arası)
   const midX = px + 28 + 104 + (plaqueW - 28 - 104 - 28 - 160) / 2 + 26;

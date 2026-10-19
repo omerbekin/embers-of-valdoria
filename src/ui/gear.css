@@ -3878,6 +3878,12 @@ html.short .gr-ledger .gr-pm-b {
 html.short .gr-ledger .gr-bag-head .gr-sec {
   white-space: nowrap;
   overflow: visible;
+  flex: 0 0 auto; /* "Bag 12 / 30" kendi yerini tutar: yanındaki Best / filtre düğmelerinin altında kalmaz */
+}
+
+html.short .gr-ledger .gr-bag-head {
+  flex-wrap: wrap;
+  row-gap: 2px;
 }
 
 /* ===================== Çift pencere: tüccar tezgâhı / ganimet alanı + Gear defteri (Ömer 2026-10-18; taslak #v3&enc=merchant, enc=reward) =====================

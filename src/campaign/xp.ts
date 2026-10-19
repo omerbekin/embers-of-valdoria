@@ -1,6 +1,7 @@
 // Seferde level / XP (saf; Ömer 2026-10-17, docs/design/progression/levels.md). Kurallar src/progression/levels.ts; burası sefer durumuna yazar.
 import { summons } from '../engine/content';
-import { ENCOUNTERS, getMap } from './data';
+import { getMap } from './data';
+import { encounterWavesById } from './encounter-waves';
 import { node } from './graph';
 import { nodeLevel } from './power';
 import { LEVELS, addXp, allocate, autoAllocate, campaignMaxLevel, nodeXpMult, setLevel, splitXp, type KillRecord, type LevelUp, type StatAlloc } from '../progression/levels';
@@ -11,9 +12,8 @@ const fallen = (h: Hero): boolean => !h.alive || h.hpRatio <= 0;
 
 /** Karşılaşmanın öldürülecek düşman sayısı (hazır çağrılar hariç; öldürme kaydı olmayan sonuç için). */
 export function encounterEnemyCount(encounterId: string): number {
-  const def = ENCOUNTERS[encounterId];
-  // dalgalı karşılaşma: her dalganın düşmanları sayılır
-  return [...(def?.units ?? []), ...(def?.waves ?? []).flatMap((w) => w.units)].filter((u) => !summons[u.class]).length;
+  // dalgalı karşılaşma: her dalganın (eklenen takviyeler dahil) düşmanları sayılır
+  return encounterWavesById(encounterId).flat().filter((u) => !summons[u.class]).length;
 }
 
 /**

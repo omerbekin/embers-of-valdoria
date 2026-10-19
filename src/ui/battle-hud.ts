@@ -48,6 +48,8 @@ export interface TipContent {
   /** Başlığın sağındaki değer (stat tooltip'i). */
   value?: string;
   valueColor?: string;
+  /** Başlığın altında tek düz satır (primary stat: "Primary: ..."). */
+  sub?: string;
   meta?: TipMeta[];
   /** Başlığın altında yan yana küçük etiketler (skill: hedef türü · element · Melee / Ranged; src/ui/skill-tags.ts). */
   tags?: Array<{ text: string; color?: string; iconUrl?: string }>;
@@ -259,6 +261,7 @@ export function tipToBand(t: TipContent): BandTipSpec {
     ...(accent ? { accent } : {}),
     ...((t.kind ?? t.badge) ? { kind: (t.kind ?? t.badge)! } : {}),
     title: t.title,
+    ...(t.sub ? { sub: t.sub } : {}),
     ...(t.iconUrl ? { icon: t.iconUrl } : {}),
     ...(t.value !== undefined ? { value: t.value, ...(t.valueColor ? { valueColor: t.valueColor } : {}) } : {}),
     grid,

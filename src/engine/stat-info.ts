@@ -12,6 +12,8 @@ export interface StatInfo {
   primary?: boolean;
   /** Primary statın bonusu (yalnızca primary stat'ta): kısa ad + kısa değer; `active` false ise arayüz soluk gösterir. */
   bonus?: PrimaryBonusInfo;
+  /** Primary statta başlığın hemen altında duran tek düz satır ("Primary: 35% chance ..."); Ömer 2026-10-19 (V1). Uzun bonus maddesi artık `lines` içinde yok. */
+  primaryLine?: string;
 }
 
 export interface PrimaryBonusInfo {
@@ -33,8 +35,8 @@ export function describeStat(kind: StatKind, stats: Stats, f: Formulas): StatInf
   const isAttr = kind === 'str' || kind === 'int' || kind === 'dex' || kind === 'luck';
   if (!isAttr || stats.primary !== kind) return info;
   const bonus = primaryBonusInfo(kind, f, !!stats.primaryActive);
-  const lines = [...info.lines, ...primaryBonusLines(kind, f), ...(bonus.active ? [] : ["Inactive: this is not the unit's highest stat"])];
-  return { ...info, lines, primary: true, bonus };
+  const lines = [...info.lines, ...(bonus.active ? [] : ["Inactive: this is not the unit's highest stat"])];
+  return { ...info, lines, primary: true, bonus, primaryLine: `Primary: ${primaryBonusShort(kind, f)}` };
 }
 
 /** Primary bonusun kısa adı ve değeri (alt bar ve tooltip başlığı); değerler formulas.json > primaryBonus. */
@@ -45,6 +47,17 @@ export function primaryBonusInfo(kind: 'str' | 'int' | 'dex' | 'luck', f: Formul
     case 'dex': return { name: "Hunter's Mark", detail: `+${pct(b.dex.hunterMarkMult)} dmg vs slower`, active };
     case 'int': return { name: 'Mana Echo', detail: `${pct(b.int.manaEchoChance)} refund half MP`, active };
     case 'luck': return { name: 'Lucky Escape', detail: `${pct(b.luck.surviveChance)} ignore killing blow`, active };
+  }
+}
+
+/** Primary bonusun kısa düz cümlesi (stat ipucunda "Primary: ..." satırı); sayılar formulas.json > primaryBonus. */
+export function primaryBonusShort(kind: 'str' | 'int' | 'dex' | 'luck', f: Formulas): string {
+  const b = f.primaryBonus;
+  switch (kind) {
+    case 'str': return `${pct(b.str.resilienceChance)} chance for debuffs on you to last 1 turn less`;
+    case 'dex': return `${pct(b.dex.hunterMarkMult)} more damage when you are faster than your target`;
+    case 'int': return `${pct(b.int.manaEchoChance)} chance to get back half of a skill's MP cost`;
+    case 'luck': return `${pct(b.luck.surviveChance)} chance to ignore a lethal hit once per battle`;
   }
 }
 

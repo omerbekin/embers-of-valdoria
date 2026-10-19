@@ -8,6 +8,8 @@
 import type { ValorRules } from '../engine/types';
 import { brazierFill } from '../engine/valor';
 import { valorRules } from '../engine/content';
+import { bandTipEl, type BandTipSpec } from './band-tip';
+import { BurnEdge } from './valor-fire';
 import { dismissOnBackdrop } from './backdrop';
 import { lockInput, unlockInput } from './input-lock';
 import { closeDom } from './motion';
@@ -78,6 +80,8 @@ export interface MeterOptions {
   readyAt?: number;
   /** Bedel çentiği (kor sayısı; savaş HUD'ı battleCost verir): o korun mangalının altında küçük altın çentik. */
   marker?: number;
+  /** Yalnızca bu sıradaki mangalı çizer (Valor penceresi: sol ve sağ mangal ayrı yerde); verilmezse ikisi birden. */
+  only?: number;
 }
 
 /**
@@ -86,7 +90,7 @@ export interface MeterOptions {
  */
 export class ValorMeter {
   readonly el: HTMLElement;
-  private readonly cells: Array<{ box: HTMLElement; img: HTMLImageElement; frame: string }> = [];
+  private readonly cells: Array<{ box: HTMLElement; img: HTMLImageElement; frame: string } | undefined> = [];
   private value = 0;
   private shown = 0;
   private flash: number | undefined;
@@ -115,6 +119,7 @@ export class ValorMeter {
       return e;
     };
     for (let i = 0; i < n; i++) {
+      if (o.only !== undefined && o.only !== i) continue;
       const box = document.createElement('span');
       box.className = 'vl-br';
       const base = img('vl-img');
@@ -128,7 +133,7 @@ export class ValorMeter {
         box.append(notch);
       }
       row.append(box);
-      this.cells.push({ box, img: base, frame: '' });
+      this.cells[i] = { box, img: base, frame: '' };
     }
     this.el.append(row);
     if (o.label) {
@@ -283,9 +288,16 @@ export interface ValorReviveOptions {
 
 let openDialog: HTMLElement | null = null;
 
+/** Basılı tutma süresi (ms): sancak yanarken bırakılırsa diriltme iptal. */
+const HOLD_MS = 900;
+
+const CROSS_SVG = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 3v18M6 9h12"/></svg>';
+
 /**
- * Savaş dışı Valor diriltmesi (kit Diyalog çerçevesi: kararan zemin + ortada panel, Close + Esc + zemine dokunma): üstte mangallar, altta düşmüş
- * kahramanlar ve "Revive · 4" düğmeleri. Diriltilen satır kaybolur, mangallar sönerek azalır.
+ * Savaş dışı Valor diriltmesi, "Nöbet" düzeni (Ömer 2026-10-19; taslak public/mockups/valor-v4.html #v1): iki yanda büyük mangal, ortada bir
+ * çubuktan asılı düşmüş kahraman sancakları. Sancağa ~0.9 sn BASILI TUT (fare / dokunma; Enter / Boşluk anında): düzensiz bir yanma çizgisi
+ * alttan yükselir, dolunca kahraman diriltilir; erken bırakılırsa iptal. Kurallar aynı: bedel outsideCost, dönüş hpRatio; Valor yetmezse
+ * sancak soluk ve basınca neden pencerede yazar; kimse düşmediyse boş çubuk. Close + Esc + zemine dokunma.
  */
 export function openValorRevive(o: ValorReviveOptions): void {
   if (openDialog) return;
@@ -296,74 +308,197 @@ export function openValorRevive(o: ValorReviveOptions): void {
     if (text !== undefined) e.textContent = text;
     return e;
   };
+  const cost = valorRules.revive.outsideCost;
+  const hpPct = Math.round(valorRules.revive.hpRatio * 100);
   const overlay = el('div', 'el-dialog el-modal vl-overlay');
   overlay.setAttribute('role', 'dialog');
   overlay.setAttribute('aria-label', 'Valor');
-  const panel = el('div', 'el-panel corners el-modal-panel vl-panel');
-  const title = el('h2', 'el-title vl-title', 'Valor');
-  const meter = new ValorMeter({ size: 64 });
-  meter.set(o.valor());
-  const note = el('p', 'vl-note');
-  const list = el('div', 'vl-list');
-  const msg = el('p', 'vl-msg');
-  const row = el('div', 'el-row');
+  const sparks = el('div', 'vz-sparks');
+  for (let i = 0; i < 16; i++) {
+    const sp = el('i', '');
+    sp.style.cssText = `left:${(i * 37 + 11) % 100}%;animation-delay:${-((i * 53) % 90) / 10}s;animation-duration:${7 + (i % 5)}s;--dx:${((i * 29) % 40) - 20}px`;
+    sparks.append(sp);
+  }
+  const panel = el('div', 'el-modal-panel vg');
+  const title = el('h2', 'el-title vg-title', 'Valor');
+  const row = el('div', 'vg-row');
+  const meters = [0, 1].map((only) => new ValorMeter({ only }));
+  const tipBox = (spec: BandTipSpec): HTMLElement => {
+    const b = el('div', 'vl-tipbox');
+    b.append(bandTipEl(spec));
+    return b;
+  };
+  const valorTipBox = (): HTMLElement => {
+    const r = valorRules;
+    return tipBox({
+      kind: 'Outside battle',
+      title: 'Valor',
+      icon: brazierIconUrl(true),
+      value: `${o.valor()}/${r.cap}`,
+      valueLabel: 'embers',
+      lines: [{ text: `Win battles to light more embers (+${r.earn.win}, +${r.earn.elite} elite, +${r.earn.boss} boss).` }, { text: `A revive costs ${r.revive.outsideCost} embers outside battle and ${r.revive.battleCost} in battle.` }, { text: `The fallen hero rises with ${hpPct}% HP.` }],
+    });
+  };
+  const sideBr = (i: number): HTMLElement => {
+    const w = el('div', 'vg-br vl-tw');
+    w.append(meters[i]!.el);
+    return w;
+  };
+  const left = sideBr(0);
+  const right = sideBr(1);
+  const hang = el('div', 'vg-hang');
+  const count = el('div', 'vg-count');
+  const msg = el('span', 'vz-msg');
   const close = el('button', 'el-btn primary', 'Close');
   close.type = 'button';
-  row.append(close);
-  const meterBox = el('div', 'vl-meter-box');
-  meterBox.append(meter.el);
-  panel.append(title, meterBox, note, list, msg, row);
-  overlay.append(panel);
-  const cost = valorRules.revive.outsideCost;
+  const foot = el('div', 'vz-foot');
+  foot.append(msg, close);
+  row.append(left, hang, right);
+  panel.append(title, row, count, foot);
+  overlay.append(sparks, panel);
+
+  let cancelHold: (() => void) | null = null;
+  const doRevive = (h: ValorReviveHero): void => {
+    const why = o.revive(h.id);
+    if (why) {
+      msg.textContent = why;
+      uiSound('error');
+      return;
+    }
+    uiSound('confirm');
+    msg.textContent = `${h.name} rises again.`;
+    meters.forEach((m) => m.set(o.valor(), true));
+    render();
+    (hang.querySelector('.vg-bn') as HTMLElement | null)?.focus({ preventScroll: true });
+  };
+
+  const banner = (h: ValorReviveHero, v: number): HTMLElement => {
+    const can = v >= cost;
+    const wrap = el('div', 'vg-bnw vl-tw');
+    wrap.append(el('span', 'rope'));
+    const bn = el('div', `vg-bn${can ? ' can' : ''}`);
+    bn.tabIndex = 0;
+    bn.setAttribute('role', 'button');
+    bn.setAttribute('aria-label', can ? `Revive ${h.name}: hold, or press Enter` : `${h.name}: needs ${cost} embers`);
+    bn.style.setProperty('--hold', '0');
+    const inner = el('div', 'bn-in');
+    const pt = el('div', 'pt');
+    if (h.portraitUrl) {
+      const img = el('img', '');
+      img.src = h.portraitUrl;
+      img.alt = '';
+      img.draggable = false;
+      pt.append(img);
+    }
+    const cross = el('i', 'cross');
+    cross.innerHTML = CROSS_SVG;
+    pt.append(cross);
+    const pill = el('div', `pill${can ? '' : ' low'}`);
+    pill.append(el('i', 'vz-dia'), document.createTextNode(`Revive · ${cost}`));
+    const cv = el('canvas', 'fire');
+    inner.append(pt, el('div', 'nm', h.name), el('div', 'rl', h.sub ?? 'Fallen'), pill, cv);
+    bn.append(inner);
+    wrap.append(
+      bn,
+      tipBox({ kind: 'Revive', title: h.name, icon: h.portraitUrl ?? '', iconShape: 'portrait', value: `${cost}`, valueLabel: 'embers', lines: [{ text: `Rises again with ${hpPct}% HP.` }, { text: can ? 'Hold to revive.' : `Needs ${cost} embers (you have ${v}).` }] }),
+    );
+
+    const burn = new BurnEdge(cv, reducedMotion);
+    let raf = 0;
+    let t0 = 0;
+    const stop = (): void => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      burn.clear();
+      bn.style.setProperty('--hold', '0');
+      bn.classList.remove('holding');
+      if (cancelHold === stop) cancelHold = null;
+    };
+    const step = (now: number): void => {
+      const p = Math.min(1, (now - t0) / HOLD_MS);
+      bn.style.setProperty('--hold', String(p));
+      burn.draw(p, now);
+      if (p >= 1) {
+        raf = 0;
+        cancelHold = null;
+        doRevive(h);
+        return;
+      }
+      raf = requestAnimationFrame(step);
+    };
+    const needs = (): void => {
+      msg.textContent = `${h.name} needs ${cost} embers (you have ${o.valor()}).`;
+      uiSound('error');
+    };
+    bn.addEventListener('pointerdown', (e) => {
+      if (e.button) return;
+      if (o.valor() < cost) return needs();
+      if (raf) return;
+      try {
+        bn.setPointerCapture(e.pointerId);
+      } catch {
+        /* yakalama yok: pointerleave yine iptal eder */
+      }
+      msg.textContent = '';
+      bn.classList.add('holding');
+      t0 = performance.now();
+      cancelHold = stop;
+      raf = requestAnimationFrame(step);
+    });
+    for (const ev of ['pointerup', 'pointercancel', 'pointerleave']) bn.addEventListener(ev, () => raf && stop());
+    bn.addEventListener('contextmenu', (e) => e.preventDefault());
+    bn.addEventListener('keyactivate', () => (o.valor() >= cost ? doRevive(h) : needs()));
+    return wrap;
+  };
+
   const render = (): void => {
+    cancelHold?.();
     const v = o.valor();
     const heroes = o.fallen();
-    note.textContent = heroes.length
-      ? `Spend ${cost} embers to raise a fallen hero with ${Math.round(valorRules.revive.hpRatio * 100)}% HP. Outside battle a revive is cheaper than in battle (${valorRules.revive.battleCost}).`
-      : 'No hero has fallen. Keep your embers for the battles ahead.';
-    list.replaceChildren(
-      ...heroes.map((h) => {
-        const r = el('div', 'vl-row');
-        if (h.portraitUrl) {
-          const img = el('img', 'vl-face');
-          img.src = h.portraitUrl;
-          img.alt = '';
-          img.draggable = false;
-          r.append(img);
-        }
-        const txt = el('div', 'vl-who');
-        txt.append(el('span', 'vl-name', h.name), el('span', 'vl-sub', h.sub ?? 'Fallen'));
-        const b = el('button', 'el-btn vl-go', `Revive · ${cost}`);
-        b.type = 'button';
-        b.disabled = v < cost;
-        b.title = v < cost ? `Needs ${cost} Valor (you have ${v})` : `Spend ${cost} Valor`;
-        b.addEventListener('click', () => {
-          const why = o.revive(h.id);
-          if (why) {
-            msg.textContent = why;
-            uiSound('error');
-            return;
-          }
-          uiSound('confirm');
-          msg.textContent = `${h.name} rises again.`;
-          meter.set(o.valor(), true);
-          render();
-        });
-        r.append(txt, b);
-        return r;
-      }),
-    );
+    meters.forEach((m) => m.set(v));
+    left.replaceChildren(meters[0]!.el, valorTipBox());
+    right.replaceChildren(meters[1]!.el, valorTipBox());
+    count.replaceChildren(el('b', '', `${v}`), document.createTextNode(` / ${valorRules.cap} `), el('span', '', 'embers'));
+    hang.classList.toggle('none', heroes.length === 0);
+    const bar = el('div', 'vg-bar');
+    bar.append(el('i', ''), el('i', ''));
+    if (heroes.length) {
+      const banners = el('div', 'vg-banners');
+      banners.append(...heroes.map((h) => banner(h, v)));
+      hang.replaceChildren(bar, banners);
+    } else {
+      const empty = el('div', 'vg-empty');
+      empty.append(el('div', 't1', 'No hero has fallen.'), el('div', 't2', 'Keep your embers for the battles ahead.'));
+      hang.replaceChildren(bar, empty);
+    }
+    if (overlay.isConnected) fit();
   };
+  meters.forEach((m) => m.set(o.valor()));
+  /** Pencere ölçeği (--k): sancak sayısı ve ekran boyuna göre; telefon yatay (844x390) dahil her şey sığar. */
+  const fit = (): void => {
+    const n = Math.max(0, o.fallen().length);
+    const needW = (n ? n * 204 + (n - 1) * 26 + 60 : 520) + 2 * 171 + 40;
+    const cs = getComputedStyle(overlay);
+    const availH = overlay.clientHeight - (parseFloat(cs.paddingTop) || 0) - (parseFloat(cs.paddingBottom) || 0);
+    const availW = overlay.clientWidth - (parseFloat(cs.paddingLeft) || 0) - (parseFloat(cs.paddingRight) || 0);
+    const kh = (availH - 100) / 500;
+    const kw = availW / needW;
+    overlay.style.setProperty('--k', Math.max(0.4, Math.min(1, kh, kw)).toFixed(3));
+  };
+  const onResize = (): void => fit();
+  window.addEventListener('resize', onResize);
   render();
 
   let closing = false;
   const finish = (): void => {
     if (closing) return;
     closing = true;
+    cancelHold?.();
     window.removeEventListener('keydown', onKey, true);
+    window.removeEventListener('resize', onResize);
     offBackdrop();
     closeDom(overlay, () => {
-      meter.destroy();
+      meters.forEach((m) => m.destroy());
       overlay.remove();
       openDialog = null;
       unlockInput('valor');
@@ -372,6 +507,14 @@ export function openValorRevive(o: ValorReviveOptions): void {
   };
   const onKey = (e: KeyboardEvent): void => {
     if (e.key === '`' || e.key === 'F2') return;
+    const a = document.activeElement as HTMLElement | null;
+    if ((e.key === 'Enter' || e.key === ' ') && a?.classList.contains('vg-bn')) {
+      // klavye: sancak odaktayken Enter / Boşluk anında diriltir (basılı tutma gerekmez)
+      e.preventDefault();
+      e.stopImmediatePropagation();
+      if (!e.repeat) a.dispatchEvent(new Event('keyactivate'));
+      return;
+    }
     e.stopImmediatePropagation();
     if (e.key === 'Escape') {
       e.preventDefault();
@@ -383,6 +526,8 @@ export function openValorRevive(o: ValorReviveOptions): void {
   window.addEventListener('keydown', onKey, true);
   overlay.addEventListener('mouseup', (e) => e.preventDefault());
   root.append(overlay);
+  overlay.style.setProperty('--fh', `${overlay.offsetHeight || 700}px`);
+  fit();
   openDialog = overlay;
   lockInput('valor');
   uiSound('open');

@@ -43,7 +43,9 @@ describe('sefer karşılaşmaları', () => {
     expect(resolveEncounter('bog_ambush').fallback).toBe(false);
     expect(enemyPreview('watchtower_chief')).toMatchObject({ classes: ['warrior', 'archer', 'archer'], leader: 'Bandit Chief' });
     // görünen adlar: id değil, boss adı ve birleşik tekrar
-    expect(enemyPreview('bridge_warden').names).toEqual(['The Bridge Warden', '2× Iron Mooring']);
+    // dalgalı savaş (Ömer 2026-10-19 düzeltmesi): önizleme tüm dalgaları dalga sırasıyla verir; Bridge Warden'dan önce bölge II'nin 2 takviye dalgası
+    expect(enemyPreview('bridge_warden').names).toEqual(['2× Stonebound Warden', '2× Pass Crossbowman', 'The Bridge Warden', '2× Iron Mooring']);
+    expect(enemyPreview('bridge_warden').leader).toBe('The Bridge Warden');
   });
 
   it('elit/boss güçlendirmesi, özel ad ve rütbe motora gider; tutorial düşmanları zayıf', () => {
@@ -72,7 +74,7 @@ describe('sefer karşılaşmaları', () => {
     expect(existsSync(join(__dirname, '..', 'assets', 'backgrounds', 'kings-bridge.webp'))).toBe(true);
     expect(at('3').plan.background).toBe(map.regions.find((r) => r.id === map.nodes.find((n) => n.id === '3')!.region)?.battleBackground);
     const b = at('9');
-    const warden = b.battle.combatants.find((c) => c.side === 'enemy')!;
+    const warden = toLastWave(b.battle).combatants.find((c) => c.side === 'enemy' && c.defId === 'bridge_warden')!;
     expect(warden.tier).toBe('boss');
     expect(warden.actionsPerTurn).toBe(2);
   });
@@ -116,20 +118,22 @@ describe('sefer karşılaşmaları', () => {
       const hero = s.roster.find((h) => h.id === id)!;
       expect(battle.get(`party-${i}`)!.defId).toBe(hero.class);
     });
-    // dalgalı savaş: tüm dalgaların düşmanları toplamı karşılaşma verisindeki tüm dalgaların birimleri kadar (veride `waves` yoksa bölünür, eklenmez)
+    // dalgalı savaş (Ömer 2026-10-19 düzeltmesi): karşılaşmanın takımı aynen 1. dalga (önder yok), takviye dalgası eklenir (eşlikçi kopyası)
     const enc = ENCOUNTERS[plan.encounterId]!;
-    expect([plan.enemies, ...(plan.waves ?? []).map((w) => w.enemies)].flat().filter(Boolean)).toHaveLength(enc.units.length + (enc.waves ?? []).reduce((n, w) => n + w.units.length, 0));
+    expect(plan.enemies.filter(Boolean)).toHaveLength(enc.units.length);
+    expect(plan.waves).toHaveLength(1);
+    expect(plan.waves![0]!.enemies.filter(Boolean)).toHaveLength(enc.units.length);
   });
 });
 
 describe('Bölge I mobları (mob-plan.md 9.5-9.6): class kopyası yok; Mill Road kilitli, Ravenwood ve şef geç açılır', () => {
   it("Mill Road: düşmanlar yalnızca temel saldırı (temel dışı skill'ler kilitli); Ravenwood: kilit yok, hepsi +1 başlangıç cooldown'u; Watchtower: elit şef +1, eşlikçiler kilitsiz; motora gider", () => {
-    // tüm dalgalar (units + veride waves; Watchtower'da şef son dalgada eşlikçisiyle, balance-tester 2026-10-19)
+    // karşılaşma verisi (units + varsa veride waves); takviye dalgaları bunların kopyasıdır
     const plays = (enc: string) => [...ENCOUNTERS[enc]!.units, ...(ENCOUNTERS[enc]!.waves ?? []).flatMap((w) => w.units)];
     for (const enc of ['mill_road_thugs', 'ravenwood_pack', 'watchtower_tutorial']) for (const u of plays(enc)) expect(content.mobs[u.class], `${enc} ${u.class}`).toBeDefined();
     expect(plays('mill_road_thugs').map((u) => u.class)).toEqual(['road_thug', 'cutpurse']);
     expect(plays('ravenwood_pack').map((u) => [u.class, u.slot])).toEqual([['grey_wolf', 0], ['grey_wolf', 1], ['grey_wolf', 2], ['ravenwood_poacher', 7], ['raven_seer', 8]]);
-    expect(plays('watchtower_tutorial').map((u) => [u.class, u.slot, u.tier])).toEqual([['ravenwood_poacher', 6, undefined], ['ember_acolyte', 8, undefined], ['bandit_chief', 1, 'elite'], ['ravenwood_poacher', 7, undefined]]);
+    expect(plays('watchtower_tutorial').map((u) => [u.class, u.slot, u.tier])).toEqual([['bandit_chief', 1, 'elite'], ['ravenwood_poacher', 6, undefined], ['ember_acolyte', 8, undefined]]);
     for (const u of plays('mill_road_thugs')) expect(u.lockSkills, u.class).toEqual(content.mobs[u.class]!.skills.slice(1));
     for (const u of plays('ravenwood_pack')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, 1]);
     for (const u of plays('watchtower_tutorial')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, u.tier ? 1 : undefined]);

@@ -4,13 +4,13 @@ import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
 import { skillTags } from '../../ui/skill-tags';
-import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle, primaryBonusInfo } from '../../engine';
+import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle } from '../../engine';
 import type { CombatantDef, PlacementHint, Teams } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
-import { PRIMARY_GOLD, STAT_COLOR, STAT_LABEL, statIconName } from '../../ui/stat-icons';
+import { STAT_COLOR, STAT_LABEL, statIconName } from '../../ui/stat-icons';
 import { initialSizes, newSeed } from '../seed';
 import { classAvatar, ensureGlow } from '../menu-ui';
 import { makeDragGhost } from '../slot-drag';
@@ -40,7 +40,7 @@ import { skillMiniGrid } from '../../ui/shape-diagram';
 import type { MpTeamHooks } from '../mp-hooks';
 import { debugState } from '../debug-state';
 import { onStageResize, stageView, worldXY } from '../stage';
-import { growTouchZone, type TouchZoneOpts } from '../touch-hit';
+import { growTouchZone, touchUnits, type TouchZoneOpts } from '../touch-hit';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
 import { menuFontsReady, whenMenuFontsReady } from '../../ui/menu-fonts';
 import { startMainMenu } from '../session-flow';
@@ -685,6 +685,10 @@ export class TeamSelectScene extends Phaser.Scene {
     this.infoLines.clear();
     this.infoLines.lineStyle(1, GOLDC, LINE.a1).lineBetween(x0, INFO.top, x0 + w, INFO.top).lineBetween(x0, INFO.top + INFO.h, x0 + w, INFO.top + INFO.h);
     if (!def) return;
+    // Telefonda sahne küçülür: yazılar en az ~10-12 gerçek piksel, dokunma alanları en az 44 gerçek piksel olsun (masaüstünde cssScale ~1: hiçbir şey değişmez)
+    const cs = stageView.cssScale > 0 ? stageView.cssScale : 1;
+    const fs = (base: number, minPx: number): number => Math.max(base, Math.ceil(minPx / cs));
+    const hit = touchUnits(48);
     let x = x0 + 12;
     // Avatar (üstüne gelince class özeti: türev statlar, pasif, skill'ler)
     const av = this.add.graphics();
@@ -694,8 +698,8 @@ export class TeamSelectScene extends Phaser.Scene {
     avb.lineStyle(2, GOLDC, LINE.a3).strokeRect(x, -36, 72, 72);
     root.add([av, img, avb]);
     x += 72 + 26;
-    const nm = this.cz(x, -12, def.name, 30, ON, 0.06).setOrigin(0, 0.5);
-    const rl = this.gar(x, 20, archetypeOf(def), 20, MUTED).setOrigin(0, 0.5);
+    const nm = this.cz(x, -12, def.name, fs(30, 13), ON, 0.06).setOrigin(0, 0.5);
+    const rl = this.gar(x, 20, archetypeOf(def), fs(20, 11), MUTED).setOrigin(0, 0.5);
     root.add([nm, rl]);
     const nameW = Math.max(nm.width, rl.width);
     const czone = this.add.zone(x0 + 12 + (72 + 26 + nameW) / 2, 0, 72 + 26 + nameW, 80).setInteractive();
@@ -722,14 +726,14 @@ export class TeamSelectScene extends Phaser.Scene {
       }
       const ic = this.add.image(x + 11, 0, ensureIcon(this, statIconName(k), STAT_COLOR[k], false)).setDisplaySize(22, 22);
       x += 22 + 7;
-      const lb = this.cz(x, 1, STAT_LABEL[k], 12, pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
+      const lb = this.cz(x, 1, STAT_LABEL[k], fs(12, 10), pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
       x += lb.width + 7;
-      const v = this.cz(x, 0, String(def.stats[k]), 22, pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
+      const v = this.cz(x, 0, String(def.stats[k]), fs(22, 12), pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
       x += v.width;
       const zw = x - sx;
       const lw = Math.max(6, Math.min(Math.min(LINE_MAX, zw), (def.stats[k] / 30) * LINE_MAX));
       sg.fillStyle(col, 0.7).fillRect(sx, 20, lw, 2);
-      const z = this.add.zone(sx + zw / 2, 0, zw + 12, 60).setInteractive();
+      const z = this.add.zone(sx + zw / 2, 0, zw + 12, touchUnits(60)).setInteractive();
       z.on('pointerover', () => !this.drag?.moved && this.showTip(`stat:${def.id}:${k}`, this.statTip(def, k), { x: sx, y: INFO.top + 20, w: zw, h: 50 }));
       z.on('pointerout', () => this.hideTip());
       root.add([ic, lb, v, z]);
@@ -780,7 +784,7 @@ export class TeamSelectScene extends Phaser.Scene {
         const num = /^\d+(?:\.\d+)?/.exec(b.cost)?.[0];
         const rage = /rage/i.test(b.cost);
         const txt = free ? 'FREE' : num ?? '*';
-        const t = this.cz(0, 0, txt, free ? 10 : 13, free ? '#cfe8a8' : rage ? '#ffb98a' : '#d9b26a', free ? 0.04 : 0).setOrigin(0.5);
+        const t = this.cz(0, 0, txt, fs(free ? 10 : 13, 10), free ? '#cfe8a8' : rage ? '#ffb98a' : '#d9b26a', free ? 0.04 : 0).setOrigin(0.5);
         const bw = Math.max(22, t.width + 10);
         const pg = this.add.graphics();
         pg.fillStyle(0x130d07, 1).fillRoundedRect(30 - bw, 8, bw, 22, 11);
@@ -788,7 +792,7 @@ export class TeamSelectScene extends Phaser.Scene {
         t.setPosition(30 - bw / 2, 19);
         parts.push(pg, t);
       }
-      const z = this.add.zone(0, 0, 58, 64).setInteractive();
+      const z = this.add.zone(0, 0, Math.max(58, hit + 8), Math.max(64, hit)).setInteractive();
       parts.push(z);
       box.add(parts);
       z.on('pointerover', () => {
@@ -803,7 +807,7 @@ export class TeamSelectScene extends Phaser.Scene {
         this.hideTip();
       });
       root.add(box);
-      x += 48 + 12;
+      x += 48 + Math.max(12, hit - 48 + 8);
       if (passive) {
         x += 6;
         sg.lineStyle(1, GOLDC, 0.3).lineBetween(x, -20, x, 20);
@@ -1230,6 +1234,7 @@ export class TeamSelectScene extends Phaser.Scene {
       accent: info.primary ? PRI : STAT_COLOR[kind],
       kind: info.bonus ? `Primary · ${info.bonus.name}` : parts.kind,
       title: parts.name,
+      ...(info.primaryLine ? { sub: info.primaryLine } : {}),
       icon: ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false),
       ...(parts.value !== undefined ? { value: parts.value } : {}),
       ...(parts.valueLabel ? { valueLabel: parts.valueLabel } : {}),
@@ -1258,17 +1263,9 @@ export class TeamSelectScene extends Phaser.Scene {
   }
 
   private classTip(def: CombatantDef): TipSpec {
-    const f = content.formulas;
-    const s = def.stats;
     const lines: PhLine[] = [];
     if (isTestClass(def)) lines.push({ text: 'Test class: left out of random teams, add it by hand', hex: '#ffb347' });
-    if (def.primary) {
-      const b = primaryBonusInfo(def.primary, f, true);
-      lines.push({ text: `Primary ${def.primary.toUpperCase()} - ${b.name}: ${b.detail}`, hex: PRIMARY_GOLD });
-    }
-    lines.push({ text: `HP ${s.hp}   ·   MP ${s.mp}   ·   SPD ${s.spd}` });
-    lines.push({ text: `Armor ${s.armor}${s.magicArmor > 0 ? `   ·   Magic armor ${s.magicArmor}` : ''}   ·   Crit ${(s.critChance * 100).toFixed(1).replace(/\.0$/, '')}% x${s.critMult.toFixed(2)}` });
-    if (def.passive) lines.push({ text: `${def.passive.name}: ${describePassive(def.passive, s, f)}` });
+    if (def.blurb) lines.push({ text: def.blurb });
     return { accent: def.color, icon: ensureIcon(this, classLogoName(def), def.color, false, ownerOfUnit(def.id)), kind: `${archetypeOf(def)} · ${rangeOf(def)}`, title: def.name, lines };
   }
 

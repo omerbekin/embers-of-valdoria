@@ -210,6 +210,14 @@
   const STRIDE = 50;
   function gait(phase) { const f = ((phase % 1) + 1) % 1, i = Math.floor(f * 4); return { pose: ['step1', 'idle1', 'step2', 'idle1'][i], i, bob: -3.4 * (0.5 - 0.5 * Math.cos(f * Math.PI * 4)) }; }
 
+  /* W sekmeleri (Omer: step2 yumruk pozu olmadan): yalnizca step1 / idle1 / ayna */
+  const wrapf = (m, st) => ((m / st) % 1 + 1) % 1;
+  const W_GAIT = {
+    w1: { gait: (m) => { const f = wrapf(m, 34), i = Math.floor(f * 2); return { pose: i === 0 ? 'step1' : 'idle1', i, bob: -2.4 * (0.5 - 0.5 * Math.cos(f * Math.PI * 2)) }; }, puffAt: (g) => g.i === 0, puffN: 4 },
+    w2: { gait: (m) => { const f = wrapf(m, 32), n = Math.floor(m / 32); return { pose: 'idle1', i: n, bob: -2.8 * Math.abs(Math.sin(f * Math.PI)) }; }, puffAt: () => true, puffN: 2, puffBig: 0.7 },
+    w3: { gait: (m) => { const f = wrapf(m, 50), i = Math.floor(f * 4); return { pose: i % 2 ? 'idle1' : 'step1', mir: i === 2, i, bob: -3.4 * (0.5 - 0.5 * Math.cos(f * Math.PI * 4)) }; }, puffAt: (g) => g.i === 0 || g.i === 2 },
+  };
+
   /* toz bulutu */
   function puff(layer, x, y, o) {
     if (RM || !layer) return;
@@ -337,7 +345,8 @@
      V1 · SANCAKTAR KAHRAMAN: gercek yuruyus pozlari + akan parti sancagi (tek bez, kivrim golgeli), toz bulutlari
      ===================================================================================================== */
   const crownPath = 'M-12 8 L-14 -9 L-6 -3 L0 -12 L6 -3 L14 -9 L12 8Z';
-  function mkV1(env) {
+  function mkV1(env, opt) {
+    opt = opt || {};
     const K = env.K, LH = 92, id = ++UID2, N = 12, W = 72, TOP = -166, CH = 54, POLE = -28;
     let root, cloth, folds, crest, gems, who, wk, clipP, shadow, lastI = -1, hem;
     const svg = `<g class="trav tv1"><g class="v1root">
@@ -364,9 +373,9 @@
       frame(s) {
         const walking = s.speed > 8, amp = lerp(1.0, 0.34, s.r) * (walking ? 1.25 : 1), tt = s.t * (1 + Math.min(1.2, s.speed / 70));
         root.setAttribute('transform', `translate(${s.x.toFixed(1)},${s.y.toFixed(1)}) scale(${(s.flip * K).toFixed(3)},${K})`);
-        const g = walking ? gait(s.moved / STRIDE) : { pose: 'idle1', i: -1, bob: Math.sin(s.t * 1.9) * 0.9 };
-        setPose(wk, g.pose); setFlip(wk, 1); who.setAttribute('transform', `translate(0,${g.bob.toFixed(1)})`);
-        if (walking && g.i !== lastI && (g.i === 0 || g.i === 2)) puff(env.under, s.x - s.flip * 10 * K, s.y + 1, { n: 4 });
+        const g = walking ? (opt.gait ? opt.gait(s.moved) : gait(s.moved / STRIDE)) : { pose: 'idle1', i: -1, bob: Math.sin(s.t * 1.9) * 0.9 };
+        setPose(wk, g.pose); setFlip(wk, g.mir ? -1 : 1); who.setAttribute('transform', `translate(0,${g.bob.toFixed(1)})`);
+        if (walking && g.i !== lastI && (opt.puffAt ? opt.puffAt(g) : (g.i === 0 || g.i === 2))) puff(env.under, s.x - s.flip * 10 * K, s.y + 1, { n: opt.puffN || 4, big: opt.puffBig || 1 });
         lastI = g.i;
         const droop = s.r * 10, pts = [], pts2 = [];
         for (let i = 0; i <= N; i++) { const u = i / N, x = POLE - u * W, dy = wave(u, tt, amp) + droop * u * u; pts.push([x, TOP + dy]); pts2.push([x, TOP + CH + dy]); }
@@ -647,8 +656,9 @@
      Bayrak ucu: F1 = liderin elinde kisa direkte duran sancak; F2 = yalniz dinlenirken yanina dikilen sancak; F3 = bayrak yok, 4 saglik elmasi ayaklarin altinda.
      ===================================================================================================== */
   const gemSvg = (h, x, y, sc) => `<g transform="translate(${x},${y}) scale(${sc || 1})"><path d="M0 -6 L5 0 L0 6 L-5 0Z" fill="${h.fallen ? '#1a1512' : hpCol(h)}" stroke="${h.fallen ? '#8a8078' : '#120b06'}" stroke-width="1.6"/>${h.fallen ? '<path d="M-2.4 -2.4 L2.4 2.4 M2.4 -2.4 L-2.4 2.4" stroke="#b8402f" stroke-width="1.3"/>' : '<path d="M0 -3.4 L2 0 L0 3.4 L-2 0Z" fill="rgba(255,255,255,.35)"/>'}</g>`;
-  function mkPlain(mode) {
+  function mkPlain(mode, opt) {
     return function (env) {
+      let lastI = -1;
       const K = env.K, LH = 92, m = MEAS.warrior.idle1, sc = LH / REF;
       const hx = (310 - m.cx) * sc;
       let root, fig, pen, ban;
@@ -675,7 +685,9 @@
         frame(s) {
           root.setAttribute('transform', `translate(${s.x.toFixed(1)},${s.y.toFixed(1)}) scale(${K})`);
           setFlip(fig.querySelector('.wk'), s.flip);
-          if (pen) { pen.setAttribute('transform', `translate(${(s.flip * hx).toFixed(1)},0)`); pen.firstChild.setAttribute('transform', s.flip > 0 ? 'scale(-1,1)' : ''); }
+          let bob = 0;
+          if (opt) { const g = s.speed > 8 ? opt.gait(s.moved) : { i: -1, bob: 0 }; bob = g.bob; fig.setAttribute('transform', `translate(0,${bob.toFixed(1)})`); if (s.speed > 8 && g.i !== lastI && opt.puffAt(g)) puff(env.under, s.x - s.flip * 10 * K, s.y + 1, { n: opt.puffN || 2, big: opt.puffBig || 1 }); lastI = g.i; }
+          if (pen) { pen.setAttribute('transform', `translate(${(s.flip * hx).toFixed(1)},${bob.toFixed(1)})`); pen.firstChild.setAttribute('transform', s.flip > 0 ? 'scale(-1,1)' : ''); }
           if (ban) { const a = clamp((s.r - 0.55) / 0.45, 0, 1); ban.setAttribute('opacity', a.toFixed(2)); ban.setAttribute('transform', `translate(0,${((1 - a) * -6).toFixed(1)})`); }
         },
       };
@@ -705,7 +717,7 @@
       frame(s) { this.cu.setAttribute('transform', `translate(${s.x.toFixed(1)},${s.y.toFixed(1)}) scale(${K})`); const rest = s.r > 0.5; a.style.display = rest ? 'none' : ''; b.style.display = rest ? '' : 'none'; },
     };
   }
-  const CTORS = { cur: mkCur, f1: mkPlain('f1'), f2: mkPlain('f2'), f3: mkPlain('f3'), v1: mkV1, v2: mkV2, v3: mkV3, v4: mkV4, v5: mkV5 };
+  const CTORS = { cur: mkCur, f1: mkPlain('f1'), f2: mkPlain('f2'), f3: mkPlain('f3'), v1: mkV1, w1: (e) => mkV1(e, W_GAIT.w1), w2: (e) => mkV1(e, W_GAIT.w2), w3: (e) => mkV1(e, W_GAIT.w3), w4: mkPlain('f1', W_GAIT.w2), v2: mkV2, v3: mkV3, v4: mkV4, v5: mkV5 };
 
   function setWalk(w) { // yururken: hedef (Pilgrim Road) henuz "gidilebilir", cikis (Grave Field) gecilmis
     ST.pilgrim = w ? 'reach' : 'current';
@@ -874,6 +886,10 @@
         { id: 'f2', tab: 'F2 Camp banner', h: 'F2 · Yürürken bayrak yok; yalnız dinlenirken yanına sancak dikilir', note: 'Yolda lider çıplak yürür. Düğümde durunca yanına (sol taraf, düğüme binmez) kısa bir sancak dikilir: dik direk, üstte çubuk, sarkan kırmızı bez, taç arması, altında 4 sağlık elması. Yola çıkarken sancak kalkar. Hiçbir şey dalgalanmaz.', build: two('f2') },
         { id: 'f3', tab: 'F3 No banner', h: 'F3 · Bayraksız düz yürüyüş; parti sağlığı 4 küçük elmas olarak ayakların altında', note: 'Yalnızca lider yürür. Ayağının altında 4 küçük elmas: yeşil sağlam, sarı yaralı, çarpılı gri düşmüş. Hem yürürken hem durunca figürle birlikte gider.', build: two('f3') },
         { id: 'v1', tab: 'V1 old', h: 'V1 eski (karşılaştırma): dalgalanan uzun sancak, adım pozları, toz', note: 'Ömer’in beğenip bayrağı ve animasyonunu düzelttirdiği ilk hal; yalnızca karşılaştırma için duruyor.', build: two('v1') },
+        { id: 'w1', tab: 'W1 Two-pose', h: 'W1 · İki pozlu adım: step1 / idle1 (yumruk pozu yok), toz, eski sancak', note: 'V1 old ile aynı ama döngü yalnız adım ve duruş pozu; her poz yaklaşık 17 px sürer, ayak basınca toz.', build: two('w1') },
+        { id: 'w2', tab: 'W2 Bob glide', h: 'W2 · Tek poz kayma + adım ritminde 2-3 px sekme, küçük toz, eski sancak', note: 'Poz değişmez (idle1); her adımda hafifçe iner-kalkar, ayak basış anında küçük toz.', build: two('w2') },
+        { id: 'w3', tab: 'W3 Mirrored', h: 'W3 · step1 / idle1 / step1 AYNA / idle1, eski sancak', note: 'Deneme: ikinci adımda step1 yatay çevrilir. Dikkat: figür sağa bakıyorsa ayna sola bakan figür verir, yön yanlış görünebilir.', build: two('w3') },
+        { id: 'w4', tab: 'W4 Bob + pennant', h: 'W4 · W2 sekmeli kayma ama F1 sabit flama', note: 'Sekme + küçük toz, elde küçük sabit sancak (dalgalanan yok).', build: two('w4') },
       ],
     });
   });

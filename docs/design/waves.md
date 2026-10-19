@@ -5,9 +5,10 @@
 > Denge buna göre yeniden ayarlanacak." (future-ideas.md 2026-10-19 satırı.)
 >
 > **Durum (engine-dev 2026-10-19):** dalgalar gerçek oyunda AÇIK (sefer Watchtower'dan, Endless 6. savaştan). Ömer'in cevapları aşağıda (bölüm 0).
-> **Denge (balance-tester 2026-10-19):** Bölge II-III karşılaşmaları, Watchtower ve Endless'ın lord_morvane'ı artık veride elle `waves` taşır
-> (çoğunda +1 eşlikçi, lider son dalgada 1 eşlikçiyle); genel ölçek ve XP eğrisi buna göre ayarlandı (`data/campaign/balance.json > _waves`,
-> open-questions 367). Bridge Warden (düğüm 9) seferde hâlâ tek dalga. Ekran ("Round 2/3") ui-dev'in işi.
+> **Ömer'in düzeltmesi (2026-10-19, 0.9.2 sonrası):** "Var olan mobları dalgalara böldünüz; 1-2 dalga mob EKLEMENİZ gerekiyordu. Çok zorlaşırsa
+> mob gücünü biraz düşürürüz." Bölme kuralı kalktı, yerine **ekleme kuralı** geldi (aşağıda bölüm 0). balance-tester'ın 0.9.2'de karşılaşmalara
+> elle yazdığı `waves` ve ek mobları geri alındı (`data/campaign/encounters.json` 1b6719a sürümüne döndü). Genel ölçek / XP ayarları
+> (`campaign.json > enemyScale`, `eliteEscort`, `levels.json > enemyXp.pow`) bölmeye göre yapılmıştı; ekleme kuralına göre yeniden ayarlandı (balance-tester 2026-10-19, open-questions 367; `balance.json > _waves2`).
 
 ## 0. Ömer'in cevapları (2026-10-19) ve uygulanışı
 
@@ -28,19 +29,28 @@ hızları kadar dolar: böylece mevcut sıraya **hızlarına göre** girerler. P
 düşmanlardan önce oynar, çok hızlı bir düşman yavaş bir kahramanın önüne geçebilir. Eşitlikte savaşın kendi eşitlik kuralı (sayaç > taraf > yuva).
 Dalgayı bitiren kahramanın sayacı turunu bitirdiği için zaten düşmüştür; ek eylem hakkı (actionsPerTurn) dalga geçişinde biter.
 
-**Bölme kuralı** (karşılaşmanın kendi `waves` alanı yoksa; `src/engine/wave-split.ts`): bugünkü düşman listesi **bölünür, eklenmez**.
-- Önder (rütbeli birim: elit / boss) ve sıra almayan yardımcı nesneler (Iron Mooring) **son dalgada** gelir.
-- Eşlikçiler ön sıradan arkaya dizilir ve önceki dalgalara sırayla dağıtılır (1., 2., 1. ...): her dalga ön ve arka sıradan karışık birim alır.
-  Önder yoksa eşlikçiler bütün dalgalara dağılır.
-- Birim yetmezse dalga sayısı azalır (boş dalga yok).
-- Karşılaşma verisine `waves` yazılırsa (bkz. bölüm 4 şeması) o kullanılır: balance-tester / campaign-dev bölmeyi karşılaşma bazında elle değiştirebilir.
-- Örnekler: Watchtower: 1. dalga kaçak avcı + rahip, 2. dalga Haydut Şefi. Castle Morvane: 1) yeminli muhafız + hierophant, 2) yeminli muhafız, 3) Lord Morvane.
-- **İstisna: The Bridge Warden (düğüm 9)** = boss + 2 Iron Mooring, eşlikçisi yok: seferde **tek dalga** kalır (yeni eşlikçi eklemek içerik/denge
-  kararı; karşılaşmaya `waves` yazılmalı). Endless'ta eksik dalgalar başa rastgele grup olarak eklenir (aşağıda).
+**Ekleme kuralı (Ömer 2026-10-19 düzeltmesi; eski "bölme kuralı"nın yerine)** (karşılaşmanın kendi `waves` alanı yoksa; `src/engine/wave-split.ts > buildWaves`,
+seferde `src/campaign/encounter-waves.ts`): karşılaşmanın düşman takımı **hiç değişmez**, ona **takviye dalgaları EKLENİR** (dalga sayısı = yukarıdaki sayı; ek dalga = sayı - 1).
+- **Takviye grubu:** karşılaşmanın eşlikçilerinin (rütbesiz, sıra almayan yardımcı nesne olmayan birimler) kopyası: aynı mob türü, aynı güçlendirme /
+  ad / yuva; boyu eşlikçi sayısı kadar, **en az 2** (`data/waves.json > reinforce.minSize`; az ise eşlikçi tekrar eder, aynı sıradaki boş yuvaya).
+  Önder (elit / boss) **asla kopyalanmaz**; yardımcı nesne (Iron Mooring) takviyeye girmez.
+- **Normal savaş:** 1. dalga = karşılaşmanın kendisi, 2. dalga = takviye.
+- **Elit / boss savaşı:** takviye dalgaları **önce**, önder kendi asıl eşlikçileriyle **son dalgada** (boss savaşın doruğu). Elit: takviye, sonra
+  asıl takım; boss: takviye, takviye, asıl takım.
+- **Eşlikçisi olmayan karşılaşma (The Bridge Warden):** takviye = düğümün bölgesinin sıradan birimleri (`data/waves.json > reinforce.regionGroups`,
+  bölge II: Stonebound Warden + Pass Crossbowman; bölge III: Morvane Halberdier + Siege Crossbowman; Iron Pass / Siege Line çarpanlarıyla).
+  Bridge Warden seferde artık 3 dalga: 2 takviye, sonra boss + 2 Iron Mooring. Bölge grubu da yoksa tek dalga.
+- **Veri önceliği:** karşılaşmaya `waves` yazılırsa tam dalga listesi = `units` + `waves` (sırasıyla, olduğu gibi); varsayılan üretici çalışmaz.
+- Güçlendirme / zorluk / level / bölüm çarpanları takviyeye de aynı kuralla uygulanır (elit düğümde takviye elit ölçeğini alır).
+- Örnekler (sefer): Windy Moor: 1) 2 Moor Raider + Ember Acolyte, 2) aynısı. Watchtower: 1) Poacher + Acolyte, 2) Bandit Chief + Poacher + Acolyte.
+  Castle Morvane: 1) 2 Sworn Guard + Hierophant, 2) aynısı, 3) Lord Morvane + 2 Sworn Guard + Hierophant.
+- **Önizleme:** harita düşman önizlemesi ve "Start battle?" kartı tüm dalgaların düşmanlarını dalga sırasıyla gösterir (aynı ad birleşik, "4× Moor Raider";
+  düğüm bağlamı haritadan bulunur: `encounterWavesById`). XP yedek sayımı (öldürme kaydı yoksa) da tüm dalgaları sayar.
 
 **Endless:** normal savaş (6+): her dalga ayrı rastgele grup (`enemyCount` kadar; önceki dalgaların class'ları tekrar etmez, 1. dalga bugünküyle
-birebir aynı). Elit / boss: karşılaşma aynı kuralla bölünür; bölme dalga sayısına yetmezse eksik dalgalar BAŞA rastgele grup olarak eklenir
-(Bridge Warden boss savaşı: 2 rastgele dalga + boss dalgası). Düşman önizlemesi (`enemyNames`) tüm dalgaların düşmanlarını sırayla verir.
+birebir aynı); bu zaten ekleme kuralıdır, değişmedi. Elit / boss: seferle aynı kural: karşılaşma aynen son dalgada, önce eşlikçilerinin kopyası
+takviye dalgaları (elit 1, boss 2). Eşlikçisiz boss (Bridge Warden; Endless'ta bölge yok): takviyeler rastgele grup. Düşman önizlemesi (`enemyNames`)
+tüm dalgaların düşmanlarını sırayla verir.
 
 **Kayıt / duraklatma:** seferde `suspend.ts > battleForPlan` dalgaları kurar, `resumeKey` dalgaları içerir (dalgasız planın anahtarı eskisiyle
 aynı). Endless `planKey` dalgaları zaten içeriyordu. Dalgalar açılmadan ÖNCE duraklatılmış bir savaş, düğümü artık dalgalıysa sürdürülemez ve
@@ -123,7 +133,7 @@ Mevcut mekaniklerle çakışma (test edildi, `tests/waves.test.ts`):
 - B) Normal 2-3 (bölge ilerledikçe 3), elit 3, boss 3 (ortalama ~2,6).
 - Öneri: **A** ile başla, Bölge III'te B.
 
-## 3. İlk bölme önerisi (UYGULANMADI; yerine bölüm 0'daki genel bölme kuralı çalışır, öneriler balance-tester için not)
+## 3. İlk bölme önerisi (UYGULANMADI, ESKİ; Ömer 2026-10-19: bölme yok, bölüm 0'daki ekleme kuralı çalışır)
 
 Genel ilke: bugünkü düşman listesi **bölünür ve az miktarda büyütülür**, tek düşmana can yığılmaz. Dalga başına can çarpanları **düşer**
 (et duvarı yerine sayı), toplam düşman canı bugünkünün yaklaşık **1,2-1,4 katı** hedeflenir (dalga arası yenilenme olmadığı için). Sayılar

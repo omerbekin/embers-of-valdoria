@@ -13,6 +13,8 @@ import itemsJson from '../../data/items.json';
 export interface StatTip {
   title: string;
   lines: string[];
+  /** Primary statta başlığın altındaki tek satır ("Primary: ..."), uzun bonus maddesi yerine. */
+  sub?: string;
   /** Karşılaştırmada başlıktaki fark ("+2" / "-3"; başlık yazısına eklenmez): tüccar ipucu yanına renkli yazar (Gear ekranı kendi farkını gösterir). */
   titleDiff?: { text: string; dir: 'up' | 'down' };
 }
@@ -112,7 +114,7 @@ export function statTip(id: string, stats: Stats, after?: Stats | null): StatTip
   for (let i = now.lines.length; i < next.lines.length; i++) lines.push(next.lines[i]!);
   const segs = statTipSegments(mergeLine(now.title, next.title, true));
   const d = segs.find((g) => g.dir);
-  return { title: mergeLine(now.title, next.title), lines, ...(d ? { titleDiff: { text: d.text, dir: d.dir! } } : {}) };
+  return { title: mergeLine(now.title, next.title), lines, ...(next.sub ? { sub: next.sub } : now.sub ? { sub: now.sub } : {}), ...(d ? { titleDiff: { text: d.text, dir: d.dir! } } : {}) };
 }
 
 function statTipBase(id: string, stats: Stats): StatTip | null {
@@ -134,7 +136,7 @@ function statTipBase(id: string, stats: Stats): StatTip | null {
   const info = describeStat(kind, stats, content.formulas);
   // Gear bağlamı: item'ler kritik çarpanını artırır (loadout critMultAdd), "herkes için sabit" satırı burada yanlış olur
   const lines = kind === 'critMult' ? [...info.lines.filter((l) => !l.startsWith('Fixed for every unit')), 'Items raise it: each +1% Crit damage adds 0.01 to the multiplier'] : [...info.lines];
-  return { title: info.bonus ? `${info.title} · ${info.bonus.name}` : info.title, lines };
+  return { title: info.bonus ? `${info.title} · ${info.bonus.name}` : info.title, lines, ...(info.primaryLine ? { sub: info.primaryLine } : {}) };
 }
 
 /**
@@ -172,6 +174,7 @@ export function statBandSpec(id: string, tip: StatTip, diff?: { text: string; di
     accent: p.accent,
     kind: p.kind,
     title: p.name,
+    ...(tip.sub ? { sub: tip.sub } : {}),
     ...(icon ? { icon } : {}),
     ...(p.value !== undefined ? { value: p.value } : {}),
     ...(p.valueLabel ? { valueLabel: p.valueLabel } : {}),

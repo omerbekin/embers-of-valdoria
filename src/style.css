@@ -421,7 +421,7 @@ body {
   --nav-frame: 30px;
   --nav-icon: 18px;
   --nav-edge: 6px;
-  --nav-gap: 4px;
+  --nav-gap: 16px;
   /* Masaüstü katsayısı: viewport.ts > navScaleFor yazar (telefonda 1); gerçek ölçüler = taban x katsayı */
   --nav-k: 1;
   --nav-hit-k: calc(var(--nav-hit) * var(--nav-k));

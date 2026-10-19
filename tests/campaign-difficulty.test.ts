@@ -53,7 +53,11 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
       expect(h5[+slot]!.modifiers!.powerMult ?? 1).toBeCloseTo((m5[+slot]!.modifiers!.powerMult ?? 1) * (hard.enemy?.powerMult ?? 1), 2);
     }
     // Lord Morvane (düğüm 12): rütbe eki uygulanır
-    const boss = (d: 'medium' | 'hard', node: string) => Object.values(allEnemies(plan(d, node))).find((u) => u.tier === 'boss')!.modifiers!;
+    // dalgalar ayrı ayrı taranır: takviye dalgası boss'la aynı yuvayı kullanabilir (King's Bridge: bölge takviyesi yuva 1), birleşik nesnede boss ezilirdi
+    const boss = (d: 'medium' | 'hard', node: string) => {
+      const p = plan(d, node);
+      return [p.units.enemies, ...(p.waves ?? []).map((w) => w.units)].flatMap((w) => Object.values(w)).find((u) => u.tier === 'boss')!.modifiers!;
+    };
     const mb = boss('medium', '12');
     const hb = boss('hard', '12');
     expect(hb.hpMult).toBeCloseTo(mb.hpMult! * (hard.enemy?.hpMult ?? 1) * (hard.enemyTier?.boss?.hpMult ?? 1), 2);

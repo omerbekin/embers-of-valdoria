@@ -1,5 +1,7 @@
 // Sefer simülatörü raporu (Türkçe). Tasarım ve hedefler: docs/balance.md > Sefer dengesi.
-// Kullanım: npm run sim:campaign -- [sefer sayısı] [ilk seed] [zorluk: easy|medium|hard|all] [oyuncu vekili: medium|easy|both] [--jobs=N] [--attempts=N] [--gear=best|none] [--json=dosya]
+// Varsayılan --mode=grind (Ömer 2026-10-19): serbest dolaşım + kasma oyuncusu; bayraklar ve rapor src/sim/campaign-grind-report.ts.
+// --mode=flat = eski düz tekrar modeli (aşağıdaki bayraklar):
+// Kullanım: npm run sim:campaign -- --mode=flat [sefer sayısı] [ilk seed] [zorluk: easy|medium|hard|all] [oyuncu vekili: medium|easy|both] [--jobs=N] [--attempts=N] [--gear=best|none] [--json=dosya]
 //   Varsayılan: 240 sefer (12 rotanın her biri 20 kez), seed 1, tüm zorluklar, oyuncu vekili Medium ("iyi oyuncu") ve Easy ("ortalama oyuncu"),
 //   iş sayısı = çekirdek sayısı - 1 (en fazla 12). Her (zorluk, vekil) çifti ayrı ölçülür.
 //   [--encounter-id=<id> --encounter-file=<dosya.json>]: bir karşılaşmayı dosyadakiyle değiştirir (dalgalı savaş denemesi).
@@ -14,6 +16,7 @@ import encountersJson from '../../data/campaign/encounters.json';
 import { content, type AiDifficulty } from '../engine';
 import { allRoutes, categoryFirstWin, mergeCampaignResults, nodeCategory, routeLabel, simulateCampaign, type CampaignSimResult, type NodeCategory } from './campaign';
 import campaignBalance from '../../data/campaign/balance.json';
+import { grindCli } from './campaign-grind-report';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=')[1];
@@ -43,7 +46,7 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function runPart(start: number, end: number): Promise<CampaignSimResult[]> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, ...encArgs, `--part=${start}:${end}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, '--mode=flat', ...encArgs, `--part=${start}:${end}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';
@@ -132,7 +135,9 @@ function report(results: CampaignSimResult[], secs: number) {
   }
 }
 
-if (part) {
+if ((flag('mode') ?? 'grind') === 'grind') {
+  void grindCli(args, fileURLToPath(import.meta.url));
+} else if (part) {
   const [start, end] = part.split(':').map(Number) as [number, number];
   const out = diffs.flatMap((difficulty) =>
     players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode() })),

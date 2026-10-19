@@ -1,5 +1,5 @@
 import { CELL_COUNT, classes, encounterUnit, randomPool, summons } from '../engine/content';
-import { splitIntoWaves, waveOpening } from '../engine/wave-split';
+import { encounterWaves, encounterWavesById, isInertUnit } from './encounter-waves';
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
@@ -87,21 +87,8 @@ export function withDifficulty(mods: UnitMods | undefined, diff: DifficultyEnemy
   return Object.keys(out).length ? out : undefined;
 }
 
-/** Sıra almayan yardımcı nesne mi (Iron Mooring): dalga bölmede önderle son dalgada kalır. */
-export const isInertUnit = (cls: string): boolean => !!(classes[cls] ?? encounterUnit(cls) ?? summons[cls])?.inert;
-
-/**
- * Karşılaşmanın dalgaları (ilk eleman = 1. dalga; docs/design/waves.md > Açılış). Karşılaşmanın kendi `waves` alanı varsa o (veri önceliklidir).
- * Yoksa dalgalar açıkken (data/waves.json > campaign) ve düğüm tutorial'ın dalgasız düğümlerinden değilse birimler düğüm türünün dalga sayısına
- * bölünür (normal 2, elit 2, boss 3; olay / hazine savaşı normal sayılır). Birim yetmezse daha az dalga; kapalıyken tek dalga.
- */
-export function encounterWaves(def: Pick<EncounterDef, 'units' | 'waves'>, nodeId: string, nodeType: string): EncounterUnit[][] {
-  const later = (def.waves ?? []).filter((w) => w.units.length > 0).map((w) => w.units);
-  if (later.length) return [def.units, ...later];
-  const o = waveOpening.campaign;
-  if (!o.enabled || o.skipNodes.includes(nodeId)) return [def.units];
-  return splitIntoWaves(def.units, o.count[nodeType] ?? o.count.battle ?? 1, isInertUnit);
-}
+// Dalga listesi (Ömer 2026-10-19 düzeltmesi: dalgalar EKLENİR, bölünmez): src/campaign/encounter-waves.ts
+export { encounterWaves, isInertUnit };
 
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
   const map = getMap(s.mapId);
@@ -152,7 +139,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     }
   };
   // Dalgalar (Ömer 2026-10-19): Watchtower'dan itibaren; ilk dalga motorun `enemies`i, kalanlar teams.waves
-  const [first, ...rest] = encounterWaves(enc.def, n.id, n.type);
+  const [first, ...rest] = encounterWaves(enc.def, n.id, n.type, n.region);
   enemySetups(first!, enemies);
   const waves = rest.map((list) => {
     const units: Record<number, UnitSetup> = {};
@@ -229,8 +216,12 @@ export function validateEncounters(): string[] {
   return errors;
 }
 
-/** Karşılaşmanın TÜM dalgalarının birimleri (units + veride `waves`; önizleme ve "Start battle?" kartı tüm düşmanları gösterir, önder son dalgada olabilir). */
-const allWaveUnits = (def: Pick<EncounterDef, 'units' | 'waves'>): EncounterUnit[] => [...def.units, ...(def.waves ?? []).flatMap((w) => w.units)];
+/**
+ * Karşılaşmanın TÜM dalgalarının birimleri, dalga sırasıyla (önizleme ve "Start battle?" kartı eklenen takviye dalgaları dahil tüm düşmanları
+ * gösterir; düğüm bağlamı haritadan: encounter-waves.ts > encounterWavesById). Dalga içinde ön sıradan arkaya.
+ */
+const allWaveUnits = (id: string, def: Pick<EncounterDef, 'units' | 'waves'>): EncounterUnit[] =>
+  encounterWavesById(id, def).flatMap((w) => [...w].sort((a, b) => a.slot - b.slot));
 
 /** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss/mob adı > id. */
 function unitDisplayName(u: { class: string; name?: string }): string {
@@ -243,7 +234,7 @@ function unitDisplayName(u: { class: string; name?: string }): string {
  */
 export function enemyPreview(encounterId: string, caps = ENGINE_CAPS): { name: string; classes: string[]; names: string[]; leader?: string } {
   const enc = resolveEncounter(encounterId, caps);
-  const units = allWaveUnits(enc.def).sort((a, b) => a.slot - b.slot);
+  const units = allWaveUnits(enc.id, enc.def);
   const counts = new Map<string, number>();
   for (const u of units) counts.set(unitDisplayName(u), (counts.get(unitDisplayName(u)) ?? 0) + 1);
   const names = [...counts].map(([n, k]) => (k > 1 ? `${k}× ${n}` : n));
@@ -277,7 +268,7 @@ export function startCardInfo(lore: string | undefined, fallback?: CardInfo): Ca
 
 export function foeGroups(encounterId: string, caps = ENGINE_CAPS): { groups: FoeGroup[]; info?: { who: string; text: string; quote?: boolean } } {
   const enc = resolveEncounter(encounterId, caps);
-  const units = allWaveUnits(enc.def).sort((a, b) => a.slot - b.slot);
+  const units = allWaveUnits(enc.id, enc.def);
   const groups: FoeGroup[] = [];
   for (const u of units) {
     const name = unitDisplayName(u);

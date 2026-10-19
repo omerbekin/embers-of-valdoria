@@ -50,6 +50,8 @@ export interface BandTipSpec {
   /** Başlığın üstündeki tür etiketi. */
   kind?: string;
   title: string;
+  /** Başlığın altında tek düz satır ("Primary: ..."): etiket altın, rakamlar altın. */
+  sub?: string;
   titleSuffix?: { text: string; hex: string };
   /** Madalyon: doku adı. */
   icon?: string;
@@ -205,7 +207,16 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   const kind = spec.kind ? elText(scene, 0, 0, spec.kind, Math.round(13 * s), accentL, { em: 0.2 }).setOrigin(0, 0).setAlpha(0.85) : null;
   const title = fitW(elText(scene, 0, 0, spec.title, Math.round(26 * s), accentL, { em: 0.06 }).setOrigin(0, 0), textMax);
   const titleH = title.displayHeight;
-  const textH = (kind ? kind.displayHeight : 0) + titleH;
+  // başlık altı satırı: etiket + rakamlar altın (DOM eşiyle aynı); önce ölçülür, başlıkla birlikte konumlanır
+  const subSegs = (() => {
+    if (!spec.sub) return null;
+    const m = /^([^:]+:)\s*(.*)$/.exec(spec.sub);
+    return m ? [{ text: `${m[1]} `, hex: '#f3d999' }, ...richSegs(m[2]!, false)] : richSegs(spec.sub, false);
+  })();
+  const subMeasure: Phaser.GameObjects.GameObject[] = [];
+  const subH = subSegs ? layRich(scene, subMeasure, 0, 0, Math.max(80, textMax), subSegs, '#f3d999', s) + Math.round(3 * s) : 0;
+  subMeasure.forEach((o) => o.destroy());
+  const textH = (kind ? kind.displayHeight : 0) + titleH + subH;
   const bandH = Math.max(medalS, textH, shapeSz ? shapeSz.h : 0) + padY * 2;
   const midY = bandH / 2;
   // şerit
@@ -237,6 +248,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   }
   title.setPosition(hx, ty);
   items.push(title);
+  if (subSegs) layRich(scene, items, hx, ty + titleH + Math.round(3 * s), Math.max(80, textMax), subSegs, '#f3d999', s);
   if (spec.titleSuffix) {
     const suf = scene.add.text(0, 0, spec.titleSuffix.text, { fontFamily: BODY_FONT, fontSize: `${Math.round(20 * s)}px`, color: spec.titleSuffix.hex }).setResolution(textRes()).setOrigin(0, 0.5);
     suf.setPosition(title.x + title.displayWidth + 8, title.y + titleH / 2);

@@ -38,6 +38,8 @@ export interface BandTipSpec {
   accent?: string;
   kind?: string;
   title: string;
+  /** Başlığın altında tek düz satır ("Primary: 35% chance ..."): "Etiket:" altın, rakamlar altın. */
+  sub?: string;
   /** Başlık rengi (verilmezse vurgunun açık tonu). */
   titleColor?: string;
   icon?: string;
@@ -93,11 +95,17 @@ function gridHtml(g: BandGrid): string {
   return `<span class="bt-grid" style="grid-template-columns:repeat(${g.cols},auto);grid-template-rows:repeat(${g.rows},auto)">${cells}</span>`;
 }
 
+/** Başlık altı satırı: baştaki "Primary:" etiketi altın, rakamlar altın, gerisi düz. */
+function subHtml(t: string): string {
+  const m = /^([^:]+:)\s*(.*)$/.exec(t);
+  return `<div class="bt-sub">${m ? `<span class="pl">${esc(m[1]!)}</span> ${bandRichHtml(m[2]!, undefined, false)}` : bandRichHtml(t, undefined, false)}</div>`;
+}
+
 /** İpucunun iç HTML'i (`.bt` kökü dahil). Konumlama çağıranda; kök kendi çerçevesini taşır. */
 export function bandTipHtml(s: BandTipSpec): string {
   const medal = s.icon ? `<span class="bt-medal ${s.iconShape === 'round' ? 'round' : s.iconShape === 'portrait' ? 'por' : 'ico frm'}" style="background-image:url(&quot;${esc(s.icon)}&quot;)${s.iconFlip ? ';transform:scaleX(-1)' : ''}"></span>` : '';
   const aside = [s.grid ? gridHtml(s.grid) : '', s.value !== undefined ? `<div class="bt-big"${s.valueColor ? ` style="color:${css(s.valueColor)}"` : ''}>${esc(s.value)}${s.valueLabel || s.valueDiff ? `<small>${esc(s.valueLabel ?? '')}${s.valueDiff ? ` <span class="${s.valueDiff.dir}">(${esc(s.valueDiff.text)})</span>` : ''}</small>` : ''}</div>` : ''].join('');
-  const head = `<div class="bt-head">${medal}<div class="bt-ht">${s.kind ? `<div class="bt-kind">${esc(s.kind)}</div>` : ''}<div class="bt-title"${s.titleColor ? ` style="color:${css(s.titleColor)}"` : ''}>${esc(s.title)}</div></div>${aside ? `<div class="bt-aside">${aside}</div>` : ''}</div>`;
+  const head = `<div class="bt-head">${medal}<div class="bt-ht">${s.kind ? `<div class="bt-kind">${esc(s.kind)}</div>` : ''}<div class="bt-title"${s.titleColor ? ` style="color:${css(s.titleColor)}"` : ''}>${esc(s.title)}</div>${s.sub ? subHtml(s.sub) : ''}</div>${aside ? `<div class="bt-aside">${aside}</div>` : ''}</div>`;
   const chips = s.chips && s.chips.length ? `<div class="bt-meta">${s.chips.map(chipHtml).join('')}</div>` : '';
   const lines = (s.lines ?? [])
     .map((l) => {

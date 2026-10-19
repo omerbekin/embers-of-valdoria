@@ -17,7 +17,7 @@ import { existsSync, readFileSync, readdirSync, statSync, unlinkSync, writeFileS
 import { join, relative } from 'node:path';
 
 /** WebP'si üretilen klasörler (assets/ altında; alt klasörler dahil). Liste tests/webp-assets.test.ts ile aynı. */
-export const WEBP_DIRS = ['poses', 'weapons', 'sprites', 'avatars', 'vfx', 'mob-vfx', 'stat-icons', 'ui-icons', 'misc-icons', 'mob-icons', 'icons-v2'];
+export const WEBP_DIRS = ['poses', 'weapons', 'sprites', 'avatars', 'vfx', 'mob-vfx', 'stat-icons', 'ui-icons', 'misc-icons', 'mob-icons', 'icons-v2', 'result-logos'];
 export const MANIFEST = 'assets/webp-manifest.json';
 export const WEBP_OPTS = { quality: 90, alphaQuality: 100, smartSubsample: true, effort: 6 };
 

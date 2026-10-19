@@ -123,6 +123,22 @@
   margin-top: 0.12em;
 }
 
+/* Primary stat satırı: başlığın hemen altında tek düz satır (Ömer 2026-10-19, V1); italik değil. */
+.bt-sub {
+  margin-top: 0.3em;
+  font: calc(var(--fs) * 0.95) / 1.25 var(--bt-body);
+  color: #e6dcc6;
+}
+
+.bt-sub .pl {
+  color: var(--bt-gold);
+}
+
+.bt-sub .n {
+  font: 600 0.98em var(--bt-disp);
+  color: var(--bt-gold);
+}
+
 .bt-medal {
   flex: none;
   width: max(40px, calc(64 * var(--bu)));

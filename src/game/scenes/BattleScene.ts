@@ -2358,6 +2358,7 @@ export class BattleScene extends Phaser.Scene {
     const tip = this.makeInfo(info.bonus ? `${info.title} · ${info.bonus.name}` : info.title, info.primary ? PRIMARY_GOLD : EL.ON, ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false), rows);
     tip.value = this.statValue(kind, stats);
     if (info.primary) tip.valueColor = '#ffd76a';
+    if (info.primaryLine) tip.sub = info.primaryLine;
     return tip;
   }
 

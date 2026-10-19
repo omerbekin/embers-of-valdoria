@@ -9,7 +9,7 @@ import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 // tools/webp-assets.mjs > WEBP_DIRS ile aynı
-const WEBP_DIRS = ['poses', 'weapons', 'sprites', 'avatars', 'vfx', 'mob-vfx', 'stat-icons', 'ui-icons', 'misc-icons', 'mob-icons', 'icons-v2'];
+const WEBP_DIRS = ['poses', 'weapons', 'sprites', 'avatars', 'vfx', 'mob-vfx', 'stat-icons', 'ui-icons', 'misc-icons', 'mob-icons', 'icons-v2', 'result-logos'];
 
 function walk(dir: string, out: string[] = []): string[] {
   if (!existsSync(dir)) return out;

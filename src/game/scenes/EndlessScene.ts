@@ -1205,7 +1205,7 @@ export class EndlessScene extends Phaser.Scene {
       if (!info) return;
       this.hideTip();
       const parts = sk ? statTipParts(sk, info) : null;
-      const tip = bandTip(this, { accent: parts?.accent ?? '#d9b26a', kind: parts?.kind ?? 'Affix', title: parts?.name ?? info.title, ...(ic ? { icon: ensureIcon(this, ic.kind, ic.color, false) } : {}), ...(parts?.value !== undefined ? { value: parts.value } : {}), ...(parts?.valueLabel ? { valueLabel: parts.valueLabel } : {}), ...(info.titleDiff ? { valueDiff: { text: info.titleDiff.text.replace(/^\((.*)\)$/, '$1'), hex: info.titleDiff.dir === 'up' ? TIP_UP : TIP_DOWN } } : {}), lines: info.lines.map((text) => ({ text })), width: 460 });
+      const tip = bandTip(this, { accent: parts?.accent ?? '#d9b26a', kind: parts?.kind ?? 'Affix', title: parts?.name ?? info.title, ...((info as { sub?: string }).sub ? { sub: (info as { sub?: string }).sub! } : {}), ...(ic ? { icon: ensureIcon(this, ic.kind, ic.color, false) } : {}), ...(parts?.value !== undefined ? { value: parts.value } : {}), ...(parts?.valueLabel ? { valueLabel: parts.valueLabel } : {}), ...(info.titleDiff ? { valueDiff: { text: info.titleDiff.text.replace(/^\((.*)\)$/, '$1'), hex: info.titleDiff.dir === 'up' ? TIP_UP : TIP_DOWN } } : {}), lines: info.lines.map((text) => ({ text })), width: 460 });
       const m = z.getWorldTransformMatrix();
       placeElTip(this, tip, { x: m.tx - z.width / 2, y: m.ty - z.height / 2, w: z.width, h: z.height }, 'above');
       this.tip = tip.container;

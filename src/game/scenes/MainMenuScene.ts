@@ -996,7 +996,7 @@ export class MainMenuScene extends Phaser.Scene {
             if (!this.ready()) return;
             if (!b.enabled) return btn.shake();
             runCamp(b.id);
-          }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled, touch: { growY: 'up', maxW: bw + gap - 4 } }); // kart düğmeleri: telefonda alan yukarı büyür
+          }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled, touch: { growY: 'up', maxW: bw + gap - 4, minPx: 48 } }); // kart düğmeleri: telefonda alan yukarı büyür
           btn.root.setPosition(bx + bw / 2, hh - 58);
           bx += bw + gap;
           c.add(btn.root);

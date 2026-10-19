@@ -1,5 +1,5 @@
 {
-  "_not": "Dalgalı savaş (Ömer 2026-10-19 cevapları, docs/design/waves.md). rules: motor bu nesneyi BattleSetup.waveRules olarak alır (src/engine/content.ts > battleSetup, teams.waves verilince). turnOrder: 'keep' (Ömer) = sıra kaldığı yerden sürer, kimsenin sayacı sıfırlanmaz; yeni dalganın düşmanları savaşa yeni giriyormuş gibi sayaç 0'dan başlar ve hızlarına göre mevcut sıraya girer ('reset' = herkes 0'dan, eski varsayılan). healRatio / mpRatio: dalga arası yenilenme (Ömer: yok = 0). clearCorpses: önceki dalganın cesetleri kalkar (Ömer). clearEnemyGrounds / cancelEnemyTelegraphs: düşman tarafının zeminleri / telgrafları silinir. campaign / endless: dalgaların AÇILDIĞI yer ve savaş türüne göre dalga sayısı (Ömer: normal 2, elit 2, boss 3). Karşılaşmanın kendi `waves` alanı varsa o kullanılır; yoksa birimler kurala göre bölünür (src/engine/wave-split.ts). campaign.skipNodes: dalgasız kalan tutorial düğümleri (Mill Road, Ravenwood; Watchtower'dan itibaren dalgalı). endless.fromBattle: dalgaların başladığı Endless savaşı. endless normal savaş: her dalga ayrı rastgele grup (enemyCount kadar, önceki dalgaların class'ları tekrar etmez).",
+  "_not": "Dalgalı savaş (Ömer 2026-10-19 cevapları, docs/design/waves.md). rules: motor bu nesneyi BattleSetup.waveRules olarak alır (src/engine/content.ts > battleSetup, teams.waves verilince). turnOrder: 'keep' (Ömer) = sıra kaldığı yerden sürer, kimsenin sayacı sıfırlanmaz; yeni dalganın düşmanları savaşa yeni giriyormuş gibi sayaç 0'dan başlar ve hızlarına göre mevcut sıraya girer ('reset' = herkes 0'dan, eski varsayılan). healRatio / mpRatio: dalga arası yenilenme (Ömer: yok = 0). clearCorpses: önceki dalganın cesetleri kalkar (Ömer). clearEnemyGrounds / cancelEnemyTelegraphs: düşman tarafının zeminleri / telgrafları silinir. campaign / endless: dalgaların AÇILDIĞI yer ve savaş türüne göre dalga sayısı (Ömer: normal 2, elit 2, boss 3). Dalgalar karşılaşmaya EKLENİR, bölünmez (Ömer 2026-10-19 düzeltmesi): karşılaşmanın kendi takımı aynen kalır, ek dalgalar eşlikçilerinin kopyası (takviye); elit / boss savaşında takviyeler önce, önder kendi takımıyla son dalgada; normal savaşta 1. dalga karşılaşmanın kendisi. Karşılaşmanın kendi `waves` alanı varsa o kullanılır (tam dalga listesi = units + waves; src/engine/wave-split.ts). reinforce.minSize: takviye grubunun en az birimi. reinforce.regionGroups: eşlikçisi olmayan karşılaşmanın (The Bridge Warden) seferdeki takviyesi = düğümün bölgesinin sıradan birimleri (Endless'ta bölge yok: rastgele grup). campaign.skipNodes: dalgasız kalan tutorial düğümleri (Mill Road, Ravenwood; Watchtower'dan itibaren dalgalı). endless.fromBattle: dalgaların başladığı Endless savaşı. endless normal savaş: her dalga ayrı rastgele grup (enemyCount kadar, önceki dalgaların class'ları tekrar etmez). regionGroups çarpanı (balance-tester 2026-10-19): bölge II takviyesi 0,66 -> 0,45 (King's Bridge boss savaşı çok zordu; seferde yalnızca Bridge Warden kullanır).",
   "rules": {
     "turnOrder": "keep",
     "healRatio": 0,
@@ -17,5 +17,18 @@
     "enabled": true,
     "fromBattle": 6,
     "count": { "normal": 2, "elite": 2, "boss": 3 }
+  },
+  "reinforce": {
+    "minSize": 2,
+    "regionGroups": {
+      "II": [
+        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.45, "powerMult": 0.45 } },
+        { "class": "bandit_crossbowman", "slot": 7, "name": "Pass Crossbowman", "mods": { "hpMult": 0.45, "powerMult": 0.45 } }
+      ],
+      "III": [
+        { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },
+        { "class": "bandit_crossbowman", "slot": 7, "name": "Siege Crossbowman", "mods": { "hpMult": 0.8, "powerMult": 0.8 } }
+      ]
+    }
   }
 }

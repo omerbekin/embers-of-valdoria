@@ -1,6 +1,6 @@
 // Endless dalga üretici (saf, seed'li; Math.random yok). Dalga -> motorun mevcut savaş girişi (hücre listeleri + yuva başına UnitSetup + seed).
 import { CELL_COUNT, bosses, classes, encounterUnit, randomCells, randomPool, summons } from '../engine/content';
-import { splitIntoWaves, waveOpening } from '../engine/wave-split';
+import { escortsOf, hasLeader, reinforcementGroup, waveOpening } from '../engine/wave-split';
 import { Rng } from '../engine/rng';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
 import { loadoutSetup } from '../progression/loadout';
@@ -113,14 +113,14 @@ export interface WavePlan {
   enemyLevel: number;
   /**
    * Dalgalı savaş (motor dalgası; docs/design/waves.md; Endless "dalgası" = bir savaş, bu ise o savaşın içindeki düşman dalgalarıdır): sonraki
-   * dalgaların hücre listeleri + yuva başına kurulumları (motora teams.waves). Yalnızca karşılaşmanın `waves` alanı varsa yazılır.
+   * dalgaların hücre listeleri + yuva başına kurulumları (motora teams.waves). Dalgalar açıkken (6. savaştan) yazılır; normal savaşta ek rastgele grup, elit / boss'ta takviyeler önce + önder son dalgada.
    */
   waves?: Array<{ enemies: string[]; units: Record<number, UnitSetup> }>;
 }
 
 const unitName = (cls: string, name?: string) => name ?? classes[cls]?.name ?? bosses[cls]?.name ?? cls;
 
-/** Sıra almayan yardımcı nesne (Iron Mooring): dalga bölmede önderle son dalgada kalır. */
+/** Sıra almayan yardımcı nesne (Iron Mooring): takviye şablonuna girmez, önderle kendi dalgasında kalır. */
 const isInert = (cls: string): boolean => !!(classes[cls] ?? encounterUnit(cls) ?? summons[cls])?.inert;
 
 /** Savaşın seed'i: koşu seed'i + dalga (deneme yok: yenilgide koşu biter; geri çekilmek aynı savaşı verir). */
@@ -246,10 +246,16 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     name = enc.name;
     background = enc.background;
     const explicit = (enc.waves ?? []).filter((w) => w.units.length > 0).map((w) => w.units);
-    // Karşılaşmanın kendi `waves` alanı önceliklidir; yoksa birimler bölünür (önder son dalgada). Birim yetmezse eksik dalgalar BAŞA rastgele grup olarak eklenir
-    const split = explicit.length ? [enc.units, ...explicit] : splitIntoWaves(enc.units, subWaves, isInert);
-    const fill = explicit.length ? 0 : Math.max(0, subWaves - split.length);
-    groups = [...Array.from({ length: fill }, (_, k) => randomGroup(k + 1)), ...split.map(encGroup)];
+    if (explicit.length) {
+      // Karşılaşmanın kendi `waves` alanı önceliklidir (tam liste = units + waves)
+      groups = [enc.units, ...explicit].map(encGroup);
+    } else {
+      // Ekleme kuralı (Ömer 2026-10-19 düzeltmesi; seferle aynı, wave-split.ts > buildWaves): karşılaşma aynen kalır, subWaves - 1 takviye
+      // EKLENİR = eşlikçilerin kopyası; eşlikçi yoksa (Bridge Warden) takviye rastgele grup. Önderli savaşta takviyeler önce, önder son dalgada.
+      const tmpl = reinforcementGroup(escortsOf(enc.units, isInert));
+      const extra = Array.from({ length: subWaves - 1 }, (_, k) => (tmpl.length ? encGroup(tmpl) : randomGroup(k + 1)));
+      groups = hasLeader(enc.units) ? [...extra, encGroup(enc.units)] : [encGroup(enc.units), ...extra];
+    }
   } else {
     groups = Array.from({ length: subWaves }, (_, k) => randomGroup(k));
   }
