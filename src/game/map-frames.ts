@@ -90,16 +90,6 @@ function disc(g: Phaser.GameObjects.Graphics, r: number, line: number, lw: numbe
   g.lineStyle(lw, line, 1).strokeCircle(0, 0, r);
 }
 
-/** Dönen seçim halkası için kesik daire (bir kez çizilir; tween döndürür). */
-export function drawDashRing(g: Phaser.GameObjects.Graphics, r: number, color: number, lw: number): void {
-  const n = 14;
-  g.lineStyle(lw, color, 1);
-  for (let i = 0; i < n; i++) {
-    const a0 = (i / n) * Math.PI * 2;
-    g.beginPath().arc(0, 0, r, a0, a0 + (Math.PI * 2 * 0.58) / n, false).strokePath();
-  }
-}
-
 /** Çerçeveyi (ikon hariç) `g` içine çizer. Çizim ikonun ALTINDA kalır. */
 export function drawFrame(g: Phaser.GameObjects.Graphics, type: NodeType | string): void {
   const kind = frameKind(type);
@@ -149,6 +139,13 @@ export function drawFrame(g: Phaser.GameObjects.Graphics, type: NodeType | strin
   g.lineStyle(1.6, 0xff7a2a, 1).strokeCircle(0, 0, S(41));
   [-18, 0, 18].forEach((x, i) => shape(g, `M${x - 7} -48 L${x} ${-64 - (i === 1 ? 6 : 0)} L${x + 7} -48`, k, 0xf0c25a, 1, 0x7a4a10, 1));
   g.fillStyle(0xe8352a, 1).fillCircle(0, S(-54), 2.6);
+}
+
+/** Devriye simgesi (Sakin etiket, Ömer 2026-10-19): temizlenmiş savaş düğümünün sağ üstünde küçük döngü oku; yüzde ("Patrol 60%") şeritte / lejantta yazar. */
+export function drawLoopIcon(g: Phaser.GameObjects.Graphics, x: number, y: number): void {
+  g.fillStyle(0x1a0f08, 1).fillCircle(x, y, 10.5).lineStyle(1.5, 0xe0702a, 0.85).strokeCircle(x, y, 10.5);
+  g.lineStyle(1.8, 0xffb35a, 1).beginPath().arc(x, y, 4.6, Phaser.Math.DegToRad(164), Phaser.Math.DegToRad(444), false).strokePath();
+  g.fillStyle(0xffb35a, 1).fillTriangle(x - 7, y - 0.8, x - 4, y + 2.4, x - 1.2, y - 1.2);
 }
 
 /** Durum rozetleri (sağ alt): temizlendi = onay, ulaşılamaz = çarpı, sis / kilitli = kilit. */

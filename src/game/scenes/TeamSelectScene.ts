@@ -421,8 +421,8 @@ export class TeamSelectScene extends Phaser.Scene {
     return elText(this, x, y, text, size, color, { em, ...o });
   }
 
-  private gar(x: number, y: number, text: string, size: number, color: string, italic = true): Phaser.GameObjects.Text {
-    return elBody(this, x, y, text, size, color, italic);
+  private gar(x: number, y: number, text: string, size: number, color: string, _italic = false): Phaser.GameObjects.Text {
+    return elBody(this, x, y, text, size, color, false);
   }
 
   private glow(t: Phaser.GameObjects.Text, on: boolean): void {

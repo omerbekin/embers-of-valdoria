@@ -79,7 +79,7 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 .mw-pdv { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent); margin: max(2px, calc(4 * var(--u))) 0; }
 .mw-pdv::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--acl); }
 .mw-plate .mw-chips { margin-top: auto; }
-.mw-plate .need { font: italic max(11px, calc(18 * var(--u))) var(--g-body); color: #ffb35a; }
+.mw-plate .need { font: max(11px, calc(18 * var(--u))) var(--g-body); color: #ffb35a; }
 .mw-plate.chosen::before, .mw-card.sel::before { content: ''; position: absolute; left: 50%; top: 0; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); background: var(--g-ember); border: 1px solid var(--g-ember2); z-index: 3; box-shadow: 0 0 8px rgba(240,140,40,.8); }
 .acc-ember { --ac: #e0702a; --acl: #ffb35a; } .acc-gold { --ac: #d9a53a; --acl: #f3d999; } .acc-red { --ac: #b8402f; --acl: #f08a72; }
 .acc-violet { --ac: #8f6fb8; --acl: #cdb4ec; } .acc-green { --ac: #5f9a54; --acl: #b5e0a0; } .acc-dim { --ac: #8d7d5e; --acl: #d9c8a2; }

@@ -16,8 +16,8 @@ const T = BAL.test;
  * Anahtar: 'firstBossWinHigh' | 'meanHigh'; değer: tek satır sebep.
  */
 export const PENDING_ENDLESS_BANDS: Readonly<Record<string, string>> = {
-  firstBossWinHigh: '0.8.4: Endless too easy after levels/item power (first boss win ~95% > 88), tracked in handoff open items',
-  meanHigh: '0.8.4: Endless too easy after levels/item power (avg wave ~24-28 vs 13-19), tracked in handoff open items',
+  firstBossWinHigh: 'waves 2026-10-19: first boss win ~89% (48-run sample) vs 88 max; Endless still slightly easy after levels/item power, tracked in handoff open items',
+  meanHigh: 'waves 2026-10-19: avg wave ~22 vs 13-19 (was 24-28 before waves); Endless still easy after levels/item power, tracked in handoff open items',
 };
 const upper = (key: string, value: number, max: number, msg: string) => {
   if (key in PENDING_ENDLESS_BANDS) {

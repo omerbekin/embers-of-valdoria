@@ -157,11 +157,11 @@ export class CombatLog {
       }
       case 'waveCleared':
         this.close();
-        this.line([{ t: `Wave ${e.index + 1} cleared`, k: 'n' }]);
+        this.line([{ t: `Round ${e.index + 1} cleared`, k: 'n' }]);
         return true;
       case 'waveStart':
         this.close();
-        this.line([{ t: `Wave ${e.index + 1}/${e.total}`, k: 'n' }]);
+        this.line([{ t: `Round ${e.index + 1}/${e.total}`, k: 'n' }]);
         return true;
       case 'battleEnd':
         this.close();

@@ -1,0 +1,18 @@
+# Yalnızca Claude'un arama araçlarını (Grep/Glob, ripgrep) etkiler; git/build/test bu dosyayı okumaz.
+# Gizlenen bir dosyaya yine ulaşılır: yolunu açıkça ver (Read veya Grep path).
+
+# Görsel / ses / font ikilileri (assets/ ve public/ içindeki json/css/js/html aranabilir kalır)
+*.png
+*.webp
+*.gif
+*.jpg
+*.jpeg
+*.wav
+*.mp3
+*.ogg
+*.woff
+*.woff2
+*.ttf
+
+# Geçmiş karar günlüğü (madde 1-329); güncel olan docs/design/open-questions.md
+/docs/design/open-questions-archive.md

@@ -54,6 +54,8 @@ export interface MobVfxSpec {
   size: number;
   /** Dikey basıklık (zemine yatan desen: Glyph of Breaking). */
   squashY?: number;
+  /** Zemin düzlemine yatır: derinlik ekseni yuva ızgarasının çaprazını izler (vfx-sheets groundTilt; Glyph of Breaking). */
+  groundPlane?: boolean;
   /** Hazırlık rengi (c.windUp). */
   hex?: string;
   /** melee: atılmadan önce bu kadar ms hazırlık pozu (poz sayfalı mobda kaldırma karesi: Bandit Chief'in baltası). */
@@ -75,7 +77,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   hold_the_tower: { mob: 'bandit_chief', mode: 'self', at: 'ground', impact: 3, size: 260, hex: '#c0704a' },
   // Bandits
   billhook: { mob: 'moor_raider', mode: 'melee', at: 'hit', impact: 3, size: 230 },
-  peat_smoke: { mob: 'moor_raider', mode: 'cells', at: 'ground', impact: 2, size: 210, hex: '#8a6a48' },
+  peat_smoke: { mob: 'moor_raider', mode: 'cells', at: 'ground', impact: 1, size: 210, hex: '#8a6a48' },
   scatter_quarrels: { mob: 'bandit_crossbowman', mode: 'cells', at: 'ground', impact: 1, size: 200, hex: '#c0392b' },
   // Ember Cult / Drowned
   shovel_of_embers: { mob: 'charcoal_burner', mode: 'bolt', at: 'hit', impact: 2, size: 240, hex: '#ff7a1a' },
@@ -87,7 +89,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   pick_of_the_deep: { mob: 'thane_of_the_deep', mode: 'melee', at: 'hit', impact: 3, size: 240 },
   oath_of_stone: { mob: 'thane_of_the_deep', mode: 'self', at: 'ground', impact: 3, size: 250, hex: '#3aa0ff' },
   rune_spark: { mob: 'deep_runecaller', mode: 'bolt', at: 'hit', impact: 2, size: 220, hex: '#4fe3ff' },
-  glyph_of_breaking: { mob: 'deep_runecaller', mode: 'center', at: 'hit', impact: 3, size: 460, squashY: 0.62, hex: '#4fe3ff' },
+  glyph_of_breaking: { mob: 'deep_runecaller', mode: 'center', at: 'hit', impact: 3, size: 460, squashY: 0.62, groundPlane: true, hex: '#4fe3ff' },
   // Hexes
   cauldron_splash: { mob: 'hedge_witch_morwen', mode: 'bolt', at: 'ground', impact: 1, size: 230, hex: '#a6e22e' },
   hags_mark: { mob: 'hedge_witch_morwen', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#a6e22e' },
@@ -178,6 +180,15 @@ const CELL_DEPTH = 8; // hücre zemin merkezi (ayak y'sinin ~4-6 px üstü) -> o
 const SHAKE_MS = 130; // yalnızca melee
 const SHAKE_MAG = 0.004;
 
+/**
+ * Zemin eğimi (ekranda yatay / dikey px): hedef tahtanın yuva ızgarasında bir sıra aşağı inince x ne kadar kayar (data/battle-layout.json yuvaları).
+ * Saldırgan düşmansa (flip) hedef oyuncu tahtasıdır: orada aşağı = sola (negatif), düşman tahtasında aşağı = sağa.
+ */
+function groundTilt(flip: boolean): number {
+  const slots = (flip ? layout.partySlots : layout.enemySlots) as Array<{ x: number; y: number }>;
+  return (slots[1]!.x - slots[0]!.x) / (slots[1]!.y - slots[0]!.y);
+}
+
 function deferred(): { promise: Promise<void>; resolve: () => void } {
   let resolve!: () => void;
   const promise = new Promise<void>((r) => (resolve = r));
@@ -241,6 +252,7 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
         fps,
         delay,
         ...(s.squashY ? { squashY: s.squashY } : {}),
+        ...(s.groundPlane ? { groundTilt: groundTilt(flip) } : {}),
         ...(origin ? { origin } : {}),
         ...(ib ? { inbetween: ib } : {}), // kodla ara kare (varsayılan KAPALI: data/vfx-inbetween.json > player)
         ...(stabilize ? { stabilize } : {}),

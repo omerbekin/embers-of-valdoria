@@ -120,7 +120,7 @@ export function elText(scene: Phaser.Scene, x: number, y: number, text: string, 
 }
 
 /** EB Garamond (varsayılan italik); hafif koyu gölge. */
-export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, italic = true, wrap?: number): Phaser.GameObjects.Text {
+export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, italic = false, wrap?: number): Phaser.GameObjects.Text {
   const t = scene.add
     .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, fontStyle: italic ? 'italic' : 'normal', color, ...(wrap ? { wordWrap: { width: wrap, useAdvancedWrap: true } } : {}) })
     .setResolution(textRes())
@@ -589,7 +589,7 @@ export function elConfirm(scene: Phaser.Scene, o: { title?: string; text: string
   const root = scene.add.container(0, 0).setDepth(7000);
   const shade = scene.add.rectangle(FULL_X0, 0, FULL_W, 1080, 0x050302, 0.62).setOrigin(0, 0).setInteractive();
   const w = 620;
-  const body = elBody(scene, 960, 0, o.text, 22, EL.NOTE, true, w - 80).setOrigin(0.5, 0).setAlign('center');
+  const body = elBody(scene, 960, 0, o.text, 22, EL.NOTE, false, w - 80).setOrigin(0.5, 0).setAlign('center');
   const titleH = o.title ? 56 : 0;
   const h = 40 + titleH + body.height + 36 + 64 + 34;
   const y0 = 540 - h / 2;

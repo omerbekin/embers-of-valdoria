@@ -144,14 +144,18 @@ describe('dalga geçişi', () => {
   });
 
   it("turnOrder 'reset': yeni dalgada herkesin sıra sayacı sıfırlanır; 'keep': kahraman sayacı korunur", () => {
-    const reset = make(8, 'turns', { ...BASE, waves: [WAVE2] });
+    const reset = make(8, 'turns', { ...BASE, waves: [WAVE2] }, { turnOrder: 'reset' });
     reset.get('party-0')!.turnCounter = 55;
     killSide(reset);
     expect(reset.living('party').every((c) => c.turnCounter === 0)).toBe(true);
-    const keep = make(8, 'turns', { ...BASE, waves: [WAVE2] }, { turnOrder: 'keep' });
-    keep.get('party-0')!.turnCounter = 55;
+    const keep = make(8, 'turns', { ...BASE, waves: [WAVE2] }); // varsayılan (data/waves.json): keep
+    expect(keep.waveRules.turnOrder).toBe('keep');
+    keep.living('party').forEach((c, i) => (c.turnCounter = 10 + 15 * i));
+    const before = keep.living('party').map((c) => [c.uid, c.turnCounter] as const);
     killSide(keep);
-    expect(keep.get('party-0')!.turnCounter).toBe(55);
+    expect(keep.waveIndex).toBe(1);
+    // kimsenin sayacı değişmez; yeni düşmanlar savaşa yeni giriyormuş gibi 0'dan
+    for (const [uid, v] of before) expect(keep.get(uid)!.turnCounter).toBe(v);
     expect(keep.living('enemy').every((c) => c.turnCounter === 0)).toBe(true);
   });
 

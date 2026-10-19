@@ -26,7 +26,10 @@ import {
   nodeVisibility,
   normalizeState,
   patrolAvailable,
+  patrolRetreatConfirm,
+  patrolRetreatMaxLoss,
   readSaves,
+  retreatPatrol,
   replayMult,
   roamOpen,
   startPatrol,
@@ -187,6 +190,34 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     expect(nextStep(s).kind).toBe('battle');
     s = cancelPatrol(s);
     expect(nextStep(s).kind).toBe('move');
+  });
+
+  it('devriyeden geri çekilme (Ömer 2026-10-19): devriye iptal, takım serbest; her kahraman 0-30% can kaybeder, kimse ölmez, seed\'li', () => {
+    expect(patrolRetreatMaxLoss()).toBe(CONFIG.replay!.retreatHpLoss);
+    expect(patrolRetreatConfirm()).toContain(`up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP`);
+    const base = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
+    const armed = startPatrol(base);
+    // devriye değilse bir şey olmaz
+    expect(retreatPatrol(base).state).toBe(base);
+    const r = retreatPatrol(armed);
+    expect(r.state.patrol).toBeUndefined();
+    expect(r.state.suspended).toBeUndefined();
+    expect(nextStep(r.state).kind).toBe('move');
+    expect(r.state.replays?.['6B'] ?? 0).toBe(armed.replays?.['6B'] ?? 0); // zafer sayılmaz
+    const alive = activeHeroes(armed).filter((h) => h.alive && h.hpRatio > 0);
+    expect(r.losses.length).toBe(alive.length);
+    for (const h of alive) {
+      const after = r.state.roster.find((x) => x.id === h.id)!;
+      expect(after.hpRatio).toBeGreaterThan(0);
+      expect(after.alive).toBe(true);
+      expect(h.hpRatio - after.hpRatio).toBeLessThanOrEqual(patrolRetreatMaxLoss() + 1e-9);
+      expect(h.hpRatio - after.hpRatio).toBeGreaterThanOrEqual(0);
+    }
+    // aynı durum = aynı kayıp (seed'li)
+    expect(retreatPatrol(armed).losses).toEqual(r.losses);
+    // canı düşük kahraman ölmez (en az 1 can: oran > 0)
+    const low = { ...armed, roster: armed.roster.map((h) => ({ ...h, hpRatio: h.alive ? 0.01 : h.hpRatio })) };
+    for (const h of retreatPatrol(low).state.roster) if (h.alive) expect(h.hpRatio).toBeGreaterThan(0);
   });
 
   it('ödül çarpanları veride (campaign.json > replay.xp): ilk zafer 1, azalan, taban > 0', () => {

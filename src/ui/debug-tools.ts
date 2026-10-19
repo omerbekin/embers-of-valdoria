@@ -177,8 +177,8 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       label: mode === 'turns' ? 'Wave test battle' : 'Wave test battle (test mode)',
       hint:
         mode === 'turns'
-          ? 'Start a 3-wave battle (2 + 2 + 1 elite enemies) against a random team of 4; watch the WAVE banner, the old corpses leaving and the turn bar rebuilding'
-          : 'Same 3-wave battle in test mode (no turn order, any unit can act); handy for clearing waves quickly with the Units tools',
+          ? 'Start a 3-round battle (2 + 2 + 1 elite enemies) against a random team of 4; watch the ROUND banner, the old corpses leaving and the turn bar rebuilding'
+          : 'Same 3-round battle in test mode (no turn order, any unit can act); handy for clearing rounds quickly with the Units tools',
       run: () => {
         const data = waveTestBattleData(newSeed(), mode);
         const b = battle();

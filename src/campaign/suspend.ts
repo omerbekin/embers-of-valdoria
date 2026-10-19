@@ -41,12 +41,17 @@ export function withSuspended(s: CampaignState, x: CampaignSuspended | undefined
 }
 
 /** Savaş kurulumunun parmak izi: seed + takımlar + birim kurulumları (ekipman, can, ceset) + Valor. */
-export const resumeKey = (plan: Pick<BattlePlan, 'seed' | 'party' | 'enemies' | 'units' | 'valor'>): string =>
-  planKey({ seed: plan.seed, party: plan.party, enemies: plan.enemies, units: [plan.units, plan.valor ?? null] });
+// Dalgalı savaşta sonraki dalgalar da girer (planKey; dalgasız planın anahtarı eskisiyle aynı). Dalgalar açılmadan önce duraklatılmış bir savaşın
+// düğümü artık dalgalıysa anahtar tutmaz ve savaş baştan başlar (PAUSED_BROKEN).
+export const resumeKey = (plan: Pick<BattlePlan, 'seed' | 'party' | 'enemies' | 'units' | 'valor' | 'waves'>): string =>
+  planKey({ seed: plan.seed, party: plan.party, enemies: plan.enemies, units: [plan.units, plan.valor ?? null], ...(plan.waves?.length ? { waves: plan.waves } : {}) });
+
+/** Planın dalgalı savaş girişi (motor teams.waves; docs/design/waves.md). Dalgasız planda boş. */
+export const campaignWaveTeams = (plan: Pick<BattlePlan, 'waves'>) => (plan.waves?.length ? { waves: plan.waves.map((w) => ({ enemies: w.enemies, units: w.units })) } : {});
 
 /** Planın savaşı (BattleScene'in kurduğuyla aynı giriş: hücre listeleri, arrange=false, Valor). */
 export const battleForPlan = (plan: BattlePlan): Battle =>
-  new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.valor !== undefined ? { valor: { party: plan.valor } } : {}) }, false));
+  new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...campaignWaveTeams(plan), ...(plan.valor !== undefined ? { valor: { party: plan.valor } } : {}) }, false));
 
 /** Duraklatılmış savaşın planı: düğümün planı, seed kayıttaki (deneme sayacı bellekte; yüklemede sıfırlanır). */
 export const resumePlan = (s: CampaignState, x: CampaignSuspended): BattlePlan => ({ ...battlePlan(s, 0), seed: x.seed });

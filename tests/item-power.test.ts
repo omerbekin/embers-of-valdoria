@@ -78,7 +78,8 @@ describe('veri ve formül', () => {
     const staff = weaponPowerOf(itemDef('ash_staff')!, L);
     expect(two / one).toBeCloseTo(W.grip.two, 1);
     expect(two / one).toBeGreaterThan(1.3);
-    expect(bow).toBe(two);
+    expect(bow).toBe(snap((W.base + W.perIlvl * L) * W.grip.bow)); // yay kendi tutuş çarpanıyla (Ömer 2026-10-19: yalnızca çift el 1,45)
+    expect(bow).toBeGreaterThan(one);
     expect(staff).toBe(two); // x2: asa da güç taşır (çift el)
     expect(dagger).toBeLessThan(one);
     expect(charm).toBeGreaterThan(one);

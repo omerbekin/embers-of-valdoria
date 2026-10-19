@@ -1487,8 +1487,8 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   /** EB Garamond açıklama yazısı (kit: elBody). */
-  private note(x: number, y: number, text: string, size = 24, color: string = C.text, italic = false): Phaser.GameObjects.Text {
-    return elBody(this, x, y, text, size, color, italic);
+  private note(x: number, y: number, text: string, size = 24, color: string = C.text, _italic = false): Phaser.GameObjects.Text {
+    return elBody(this, x, y, text, size, color, false);
   }
 
   /** Cinzel küçük başlık (kit: elText). */

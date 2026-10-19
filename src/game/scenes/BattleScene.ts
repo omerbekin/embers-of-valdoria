@@ -593,8 +593,9 @@ export class BattleScene extends Phaser.Scene {
         const def = content.grounds[g.ground];
         list.push({ id: `ground:${g.ground}`, left: g.turns, icon: paintedOr('ground', g.ground, def?.icon ?? 'flame'), color: def?.color ?? '#ffffff', text: String(g.turns), debuff: true, turns: true });
       }
+      // Endless kampında (ara verme) zırh aurası rozeti gizli: yalnızca savaşta görünür (Ömer 2026-10-19)
       const bonus = this.battle.effectiveStats(c).armor - c.stats.armor;
-      if (Math.round(bonus) > 0) list.push({ id: 'armorAura', left: 99, icon: 'shield', color: '#c9d1dc', text: `+${Math.round(bonus)}`, debuff: false, turns: false });
+      if (!this.endlessPaused && Math.round(bonus) > 0) list.push({ id: 'armorAura', left: 99, icon: 'shield', color: '#c9d1dc', text: `+${Math.round(bonus)}`, debuff: false, turns: false });
       lists.push({ view, c, list, seals });
     }
     // Telefon (taslak B, Ömer 2026-10-11): öncelikli rozetler + "+N" sayacı, hiçbir şeye binmez (src/game/badge-layout.ts); masaüstünde bugünkü düzen
@@ -3123,10 +3124,10 @@ export class BattleScene extends Phaser.Scene {
 
   // --- Dalgalı savaş (docs/design/waves.md): görünüm tek yerde; kesin görünüm Ömer'in wave-battle mockup seçiminden sonra değişir ---
 
-  /** HUD'daki küçük "Wave 1/3" yazısı (yalnızca dalga sayısı 1'den büyükse). */
+  /** HUD sol üstündeki "Round 1/3" plakası (yalnızca dalga sayısı 1'den büyükse). */
   private syncWaveLabel(): void {
     const total = this.battle.waveCount;
-    this.hud?.setWave(total > 1 ? `Wave ${this.shownWave + 1}/${total}` : null);
+    this.hud?.setWave(total > 1 ? { n: this.shownWave + 1, total } : null);
   }
 
   /** Önceki dalganın düşmüş birimi savaştan çıktı: görünümü yumuşakça solar ve kalkar (ceset işareti de gider). */
@@ -3143,7 +3144,7 @@ export class BattleScene extends Phaser.Scene {
     this.tweens.add({ targets: box, alpha: 0, duration: slow(300), onComplete: () => box.destroy() });
   }
 
-  /** Yeni dalga: eski görünümler ve cesetler kalkar, "WAVE n/N" bandı, yeni düşmanlar sağdan girer, sıra çubuğu ve alt çubuk tazelenir. */
+  /** Yeni dalga: eski görünümler ve cesetler kalkar, "ROUND n" bandı, yeni düşmanlar sağdan girer, sıra çubuğu ve alt çubuk tazelenir. */
   private async playWaveStart(e: BattleEvent & { type: 'waveStart' }): Promise<void> {
     this.shownWave = e.index;
     if (e.index === 0 && e.combatants.length === 0) {
@@ -3168,8 +3169,10 @@ export class BattleScene extends Phaser.Scene {
     this.clearSelection();
     this.syncWaveLabel();
     const names = e.combatants.map((c) => unitName(c)).join(' · ');
-    await showWaveBanner(this, `WAVE ${e.index + 1}/${e.total}`, names || undefined, MOTION.wave.battleHoldMs);
+    this.hud?.setHidden(true); // V1 Corner: geçiş anında HUD kısa süre gizlenir, tam bant gösterilir
+    await showWaveBanner(this, `ROUND ${e.index + 1}`, names || undefined, MOTION.wave.battleHoldMs);
     if (!this.sys.isActive()) return;
+    this.hud?.setHidden(false);
     this.renderTurnBar(e.queue);
     await enemiesEnter(this, boxes);
     this.refreshCommands();

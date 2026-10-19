@@ -810,6 +810,38 @@ export function cancelPatrol(s: CampaignState): CampaignState {
   return t;
 }
 
+/** Devriyeden geri çekilmenin can kaybı üst sınırı (oran; campaign.json > replay.retreatHpLoss, yoksa 0.3). */
+export const patrolRetreatMaxLoss = (): number => CONFIG.replay?.retreatHpLoss ?? 0.3;
+
+/** Devriyeden geri çekilme onayı (savaş menüsü > Retreat): oyuncuya bedeli açıkça yazar. */
+export const patrolRetreatConfirm = (): string =>
+  `Retreat from the patrol? The patrol is called off and you may move on, but each hero loses up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP.`;
+
+/**
+ * Devriyeden geri çekilme (Ömer 2026-10-19): savaş DURAKLATILMAZ, devriye iptal olur, takım serbestçe yola çıkabilir. Bedeli: takımdaki her
+ * ayaktaki kahraman en çok can oranının `retreatHpLoss` (0-30%) kadarını kaybeder (zar seed'li: hash(seed, harita, düğüm, devriye sayısı, yol
+ * uzunluğu); aynı durum = aynı kayıp). Kimse bundan ölmez (can en az 1: oran > 0 kalır, motor startHp'yi [1, maks] aralığına sıkıştırır).
+ * Savaşta alınan hasar sayılmaz (savaş hiç olmamış gibi). Dönüş: yeni durum + kahraman başına kaybedilen yüzde (gösterim için).
+ */
+export function retreatPatrol(s: CampaignState): { state: CampaignState; losses: { heroId: string; pct: number }[] } {
+  if (s.patrol !== s.at) return { state: s, losses: [] };
+  const t = clone(s);
+  delete t.patrol;
+  delete t.suspended;
+  const max = patrolRetreatMaxLoss();
+  const rng = rngFor(t.seed, t.mapId, t.at, 'patrol-retreat', replayCount(t, t.at), t.path.length);
+  const losses: { heroId: string; pct: number }[] = [];
+  for (const id of t.active) {
+    const h = heroById(t, id);
+    if (!h || isFallen(h)) continue;
+    const loss = Math.round(rng.next() * max * 100) / 100; // 0.00 - max, iki basamak
+    const before = h.hpRatio;
+    h.hpRatio = Math.max(0.001, Math.round((before - loss) * 1000) / 1000);
+    losses.push({ heroId: h.id, pct: Math.round((before - h.hpRatio) * 100) });
+  }
+  return { state: t, losses };
+}
+
 /** Keşfedilen düğümler (roadmap 2.4): ayak basılan her düğümün görüş mesafesi (visibility) içindekiler; bir kez görülen sise dönmez. */
 export function discoveredNodes(map: CampaignMap, visited: string[]): Set<string> {
   const out = new Set<string>();

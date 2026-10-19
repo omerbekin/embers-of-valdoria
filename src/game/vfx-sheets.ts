@@ -70,6 +70,12 @@ export interface SheetOpts {
   size?: number;
   /** Dikey ölçek çarpanı (zemin perspektifi için basık: 0,5 gibi). */
   squashY?: number;
+  /**
+   * Zemin eğimi (EKRANDA yatay px / dikey px; + = aşağı inince sağa): desen zemin düzlemine yatar, derinlik ekseni dikey değil yuva ızgarasının
+   * çaprazını izler (battle-layout.json yuvaları: ~±1,03). squashY dikey bileşen olarak uygulanır. Phaser sprite'ı kaydırma (shear) bilmediği
+   * için kareler bir kez türev dokuya pişirilir (içerik %50 geniş kareye); flipX'te eğim aynalanır, yani değer her zaman ekran yönüdür.
+   */
+  groundTilt?: number;
   /** Sabit kare (animasyonsuz). */
   frame?: number;
   /** Oynanacak kareler (varsayılan hepsi). */
@@ -97,9 +103,9 @@ export interface SheetOpts {
 }
 
 /** Türev doku (asıl dokudan bir kez üretilir): kare hizalama ve/ya da kodla ara kare; üretilemezse null (asıl kareler oynar). */
-function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: number } | null, st: StabilizeOpts | undefined): string | null {
+function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: number } | null, st: StabilizeOpts | undefined, tilt?: { shear: number; squash: number }): string | null {
   const src = vfxSheetKey(id);
-  const key = `${src}#d:${ib ? `${ib.method}:${ib.sub}` : '-'}:${st ? JSON.stringify(st) : '-'}`;
+  const key = `${src}#d:${ib ? `${ib.method}:${ib.sub}` : '-'}:${st ? JSON.stringify(st) : '-'}:${tilt ? `t${tilt.shear.toFixed(3)}/${tilt.squash}` : '-'}`;
   if (scene.textures.exists(key)) return key;
   try {
     const f = vfxSheetFile(id)!;
@@ -115,12 +121,27 @@ function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: 
       frames.push(c);
     }
     if (st) frames = stabilizeFrames(frames, st);
-    const out = ib ? buildInbetween(frames, ib.method, ib.sub) : frames;
-    const ct = scene.textures.createCanvas(key, fw * out.length, fh);
+    let out = ib ? buildInbetween(frames, ib.method, ib.sub) : frames;
+    // zemin eğimi: kare ortasına göre dikey basıklık + yatay kaydırma (x' = x + shear * (y - ortası)); kare genişliği %50 büyür (taşmasın)
+    const ow = tilt ? Math.round(fw * 1.5) : fw;
+    if (tilt)
+      out = out.map((src) => {
+        const c = document.createElement('canvas');
+        c.width = ow;
+        c.height = fh;
+        const cx = c.getContext('2d')!;
+        cx.imageSmoothingEnabled = false;
+        // kaynak (u, v) -> y' = ortası + (v - ortası) * basıklık; x' = ortası + (u - ortası) + shear * (y' - ortası)
+        const sq = tilt.squash;
+        cx.setTransform(1, 0, tilt.shear * sq, sq, ow / 2 - fw / 2 - (tilt.shear * sq * fh) / 2, (fh * (1 - sq)) / 2);
+        cx.drawImage(src, 0, 0);
+        return c;
+      });
+    const ct = scene.textures.createCanvas(key, ow * out.length, fh);
     if (!ct) return null;
     out.forEach((c, i) => {
-      ct.context.drawImage(c, i * fw, 0);
-      ct.add(i, 0, i * fw, 0, fw, fh);
+      ct.context.drawImage(c, i * ow, 0);
+      ct.add(i, 0, i * ow, 0, ow, fh);
     });
     ct.refresh();
     ct.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -141,12 +162,15 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
   const [fw] = frameSize(id);
   const pivot = f.meta.pivot ?? [fw / 2, f.meta.frame_size[1] / 2];
   const ib = o.inbetween && o.inbetween.sub > 1 ? o.inbetween : null;
-  const ibKey = ib || o.stabilize ? derivedKey(scene, id, ib, o.stabilize) : null;
+  const tilt = o.groundTilt ? { shear: o.flipX ? -o.groundTilt : o.groundTilt, squash: o.squashY ?? 1 } : undefined;
+  const ibKey = ib || o.stabilize || tilt ? derivedKey(scene, id, ib, o.stabilize, tilt) : null;
+  const tilted = !!tilt && !!ibKey; // üretilemezse düz (eğimsiz) çizime döner
   const sub = ibKey && ib ? ib.sub : 1;
   const spr = scene.add.sprite(x, y, ibKey ?? key, (o.frame ?? o.frames?.[0] ?? 0) * sub);
   const k = (o.size ?? fw) / fw;
-  spr.setOrigin(o.origin?.[0] ?? pivot[0] / fw, o.origin?.[1] ?? pivot[1] / f.meta.frame_size[1]);
-  spr.setScale(k, k * (o.squashY ?? 1));
+  if (tilted) spr.setOrigin(0.5, 0.5); // türev karede içerik ortada
+  else spr.setOrigin(o.origin?.[0] ?? pivot[0] / fw, o.origin?.[1] ?? pivot[1] / f.meta.frame_size[1]);
+  spr.setScale(k, tilted ? k : k * (o.squashY ?? 1));
   spr.setDepth(o.depth ?? 4300);
   if (o.flipX) spr.setFlipX(true);
   if (o.rotation) spr.setRotation(o.rotation);

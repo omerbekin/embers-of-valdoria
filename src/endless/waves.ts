@@ -1,5 +1,6 @@
 // Endless dalga üretici (saf, seed'li; Math.random yok). Dalga -> motorun mevcut savaş girişi (hücre listeleri + yuva başına UnitSetup + seed).
-import { CELL_COUNT, bosses, classes, randomCells, randomPool, summons } from '../engine/content';
+import { CELL_COUNT, bosses, classes, encounterUnit, randomCells, randomPool, summons } from '../engine/content';
+import { splitIntoWaves, waveOpening } from '../engine/wave-split';
 import { Rng } from '../engine/rng';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
 import { loadoutSetup } from '../progression/loadout';
@@ -119,6 +120,9 @@ export interface WavePlan {
 
 const unitName = (cls: string, name?: string) => name ?? classes[cls]?.name ?? bosses[cls]?.name ?? cls;
 
+/** Sıra almayan yardımcı nesne (Iron Mooring): dalga bölmede önderle son dalgada kalır. */
+const isInert = (cls: string): boolean => !!(classes[cls] ?? encounterUnit(cls) ?? summons[cls])?.inert;
+
 /** Savaşın seed'i: koşu seed'i + dalga (deneme yok: yenilgide koşu biter; geri çekilmek aynı savaşı verir). */
 export const waveSeed = (seed: number, wave: number): number => hashSeed(seed, wave, 'battle');
 
@@ -199,48 +203,62 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
   let waves: NonNullable<WavePlan['waves']> = [];
   const encId = specialEncounter(run.seed, wave, cfg);
   const enc = encId ? encounter(encId) : undefined;
-  if (enc) {
-    name = enc.name;
-    background = enc.background;
-    enemies = Array.from({ length: CELL_COUNT }, () => '');
-    for (const u of enc.units) {
-      enemies[u.slot] = u.class;
+  // Savaş içi dalgalar (Ömer 2026-10-19; docs/design/waves.md > Açılış): data/waves.json > endless.fromBattle'dan itibaren, savaş türüne göre sayı
+  const open = waveOpening.endless;
+  const subWaves = open.enabled && wave >= open.fromBattle ? Math.max(1, Math.floor(open.count[kind] ?? 1)) : 1;
+  type Unit = NonNullable<ReturnType<typeof encounter>>['units'][number];
+  // Karşılaşma birimlerinden bir dalga (hücreler + kurulumlar; dalga güçlenmesi / level ilk dalgayla aynı kural)
+  const encGroup = (list: readonly Unit[]): { cells: string[]; units: Record<number, UnitSetup>; names: string[] } => {
+    const cells = Array.from({ length: CELL_COUNT }, () => '');
+    const units: Record<number, UnitSetup> = {};
+    for (const u of list) {
+      cells[u.slot] = u.class;
       const mods = withEnemyLevel(combineMods(u.mods, scale), u.class, enemyLevel);
       const setup: UnitSetup = { ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) };
-      if (Object.keys(setup).length) enemyUnits[u.slot] = setup;
+      if (Object.keys(setup).length) units[u.slot] = setup;
     }
-    enemyNames = [...enc.units].sort((a, b) => a.slot - b.slot).map((u) => unitName(u.class, u.name));
-    // Dalgalı karşılaşma: sonraki dalgalar aynı güçlenme / level kuralıyla
-    waves = (enc.waves ?? [])
-      .filter((w) => w.units.length > 0)
-      .map((w) => {
-        const cells = Array.from({ length: CELL_COUNT }, () => '');
-        const units: Record<number, UnitSetup> = {};
-        for (const u of w.units) {
-          cells[u.slot] = u.class;
-          const mods = withEnemyLevel(combineMods(u.mods, scale), u.class, enemyLevel);
-          const setup: UnitSetup = { ...(mods ? { modifiers: mods } : {}), ...(u.name ? { displayName: u.name } : {}), ...(u.tier ? { tier: u.tier } : {}) };
-          if (Object.keys(setup).length) units[u.slot] = setup;
-        }
-        return { enemies: cells, units };
-      });
-  } else {
+    return { cells, units, names: [...list].sort((a, b) => a.slot - b.slot).map((u) => unitName(u.class, u.name)) };
+  };
+  // Rastgele havuzdan bir dalga: k = 0 bugünkü normal savaşın birebir aynısı (aynı seed parçaları); k >= 1 ayrı seed, önceki dalgaların class'ları tekrar etmez
+  const used = new Set<string>();
+  const randomGroup = (k: number): { cells: string[]; units: Record<number, UnitSetup>; names: string[] } => {
     // Normal dalga: rastgele havuzdan farklı class'lar (Geometer gibi test class'ları havuzda yok), seed'li rastgele dizilim
-    const rng = rngFor(run.seed, wave, 'enemies');
-    const pool = [...randomPool];
+    const rng = k === 0 ? rngFor(run.seed, wave, 'enemies') : rngFor(run.seed, wave, 'enemies', k);
+    const fresh = randomPool.filter((c) => !used.has(c));
+    const pool = fresh.length >= enemyCount(wave, cfg) ? fresh : [...randomPool];
     for (let i = pool.length - 1; i > 0; i--) {
       const j = rng.int(0, i);
       [pool[i], pool[j]] = [pool[j]!, pool[i]!];
     }
     const ids = pool.slice(0, Math.min(pool.length, enemyCount(wave, cfg)));
+    for (const c of ids) used.add(c);
     // menzil açıkken dizilim menzile duyarlı; alan tehdidi kahramanların şekillerinden (src/engine/formation-ai.ts)
-    enemies = randomCells(ids, hashSeed(run.seed, wave, 'cells'), { foes: live.map((h) => h.class), board: 'enemy' });
-    enemies.forEach((c, slot) => {
+    const cells = randomCells(ids, k === 0 ? hashSeed(run.seed, wave, 'cells') : hashSeed(run.seed, wave, 'cells', k), { foes: live.map((h) => h.class), board: 'enemy' });
+    const units: Record<number, UnitSetup> = {};
+    cells.forEach((c, slot) => {
       const mods = c ? withEnemyLevel(scale ? { ...scale } : undefined, c, enemyLevel) : undefined;
-      if (mods) enemyUnits[slot] = { modifiers: mods };
+      if (mods) units[slot] = { modifiers: mods };
     });
-    enemyNames = enemies.filter(Boolean).map((c) => unitName(c));
+    return { cells, units, names: cells.filter(Boolean).map((c) => unitName(c)) };
+  };
+  let groups: Array<{ cells: string[]; units: Record<number, UnitSetup>; names: string[] }>;
+  if (enc) {
+    name = enc.name;
+    background = enc.background;
+    const explicit = (enc.waves ?? []).filter((w) => w.units.length > 0).map((w) => w.units);
+    // Karşılaşmanın kendi `waves` alanı önceliklidir; yoksa birimler bölünür (önder son dalgada). Birim yetmezse eksik dalgalar BAŞA rastgele grup olarak eklenir
+    const split = explicit.length ? [enc.units, ...explicit] : splitIntoWaves(enc.units, subWaves, isInert);
+    const fill = explicit.length ? 0 : Math.max(0, subWaves - split.length);
+    groups = [...Array.from({ length: fill }, (_, k) => randomGroup(k + 1)), ...split.map(encGroup)];
+  } else {
+    groups = Array.from({ length: subWaves }, (_, k) => randomGroup(k));
   }
+  const [first, ...rest] = groups;
+  enemies = first!.cells;
+  Object.assign(enemyUnits, first!.units);
+  // Önizleme: savaşın tüm dalgalarının düşmanları sırayla
+  enemyNames = groups.flatMap((g) => g.names);
+  waves = rest.map((g) => ({ enemies: g.cells, units: g.units }));
   return {
     wave,
     kind,

@@ -105,5 +105,6 @@ tests/            vitest testleri
 | Tutorial | `docs/design/tutorial.md` | sefer tutorial'ı |
 | Menzil sistemi | `docs/design/range.md` | hedefleme, menzil değerleri, dizilim yapay zekası (`range.enabled` bayrağı) |
 | Level / XP | `docs/design/progression/levels.md` | XP, level, stat puanı ve başlangıç stat kuralı, düşman level'ı |
-| Açık sorular / karar günlüğü | `docs/design/open-questions.md` | varsayım eklerken (sıradaki numarayla) |
+| Açık sorular / karar günlüğü | `docs/design/open-questions.md` (madde 330+; 1-329 `open-questions-archive.md`, aramada hariç) | varsayım eklerken (sıradaki numarayla) |
 | Gelecek fikirleri | `docs/design/future-ideas.md` | "şimdilik alma" fikirleri |
+| Kod haritası (büyük dosyalar) | `docs/arch/code-map.md` | 40 KB+ bir src dosyasını okumadan önce; kod yapısı değişince `npm run codemap` |

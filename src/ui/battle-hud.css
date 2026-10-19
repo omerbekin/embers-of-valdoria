@@ -352,20 +352,115 @@
 
 .bh-wave {
   position: absolute;
-  top: 56px;
-  transform: translate(-100%, -100%); /* çubuğun altın çizgisinin hemen üstünde */
-  font: 600 13px var(--cin);
-  letter-spacing: 0.34em;
-  text-transform: uppercase;
-  color: rgb(var(--gold));
-  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.95);
-  white-space: nowrap;
+  left: 28px;
+  top: 22px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 10px 22px 10px 12px;
+  min-width: 210px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.94), rgba(11, 8, 5, 0.94));
+  border: 1px solid rgba(217, 178, 106, 0.5);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.7), 0 10px 24px rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
-.bh-wave.test {
-  top: 1px;
-  transform: translateX(-50%);
+.bh-wave::before,
+.bh-wave::after {
+  content: '';
+  position: absolute;
+  width: 9px;
+  height: 9px;
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid rgba(243, 217, 153, 0.8);
+}
+
+.bh-wave::before {
+  left: -5px;
+  top: -5px;
+}
+
+.bh-wave::after {
+  right: -5px;
+  bottom: -5px;
+}
+
+.bh-wave .ico {
+  width: 54px;
+  height: 54px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  background: #0a0605;
+  border: 1px solid rgba(217, 178, 106, 0.5);
+}
+
+.bh-wave .ico img {
+  width: 40px;
+  height: 40px;
+  object-fit: contain;
+}
+
+.bh-wave .tx {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.bh-wave .k {
+  font: 600 14px var(--cin);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: rgba(var(--gold), 0.7);
+  line-height: 1;
+}
+
+.bh-wave .n {
+  font: 700 38px var(--cin);
+  color: rgb(var(--gold));
+  line-height: 1;
+  letter-spacing: 0.04em;
+}
+
+.bh-wave .n small {
+  font-size: 22px;
+  opacity: 0.65;
+}
+
+.bh-wave.final .n {
+  color: #f0a64a;
+}
+
+.bh-wave.final .k::after {
+  content: ' · Final';
+  color: #f0a64a;
+}
+
+.bh-wave .bh-pips {
+  display: inline-flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.bh-wave .bh-pips i {
+  width: 11px;
+  height: 11px;
+  transform: rotate(45deg);
+  border: 1px solid rgba(217, 178, 106, 0.6);
+  background: rgba(8, 6, 4, 0.7);
+}
+
+.bh-wave .bh-pips i.on {
+  background: #e0782a;
+  border-color: #f0a64a;
+  box-shadow: 0 0 8px rgba(240, 140, 40, 0.7);
+}
+
+.bh-wave .bh-pips i.cur {
+  background: rgb(var(--gold));
+  border-color: #fff3c8;
+  box-shadow: 0 0 8px rgba(243, 217, 153, 0.6);
 }
 
 .bh-wave[hidden] {

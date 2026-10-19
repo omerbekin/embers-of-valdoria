@@ -116,7 +116,8 @@ describe('moblar savaşta ve seferde', () => {
     const at = (difficulty: 'medium' | 'hard') => {
       const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty }), 'moor'));
       const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
-      return { mods: plan.units.enemies, battle };
+      // dalgalı savaş (waves.md): birimler dalgalara bölünür; kurulumlar tüm dalgalardan (yuvalar karşılaşmada tekrarsız)
+      return { mods: Object.assign({}, ...(plan.waves ?? []).map((w) => w.units), plan.units.enemies) as typeof plan.units.enemies, battle };
     };
     const enc = ENCOUNTERS.windy_moor!;
     const med = at('medium');
@@ -130,7 +131,7 @@ describe('moblar savaşta ve seferde', () => {
       expect(m.powerMult).toBe(expected(u, 'medium').powerMult);
       expect(h.hpMult).toBe(expected(u, 'hard').hpMult);
       expect(h.powerMult).toBe(expected(u, 'hard').powerMult);
-      expect(m.hpMult!).toBeLessThan(u.mods!.hpMult!); // ölçek gerçekten uygulandı (all < 1)
+      expect(m.hpMult!).not.toBe(u.mods!.hpMult!); // ölçek gerçekten uygulandı (enemyScale.all != 1)
       // motor: mob biriminin maks canı (düşman level'ının stat ekiyle türemiş taban) x çarpan (levels.md > Düşman level'ı)
       const unit = med.battle.combatants.find((c) => c.side === 'enemy' && c.defId === u.class)!;
       const leveled = applyUnitModifiers(content.mobs[u.class]!, { attrAdd: m.attrAdd ?? {} }, content.formulas);

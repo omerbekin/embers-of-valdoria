@@ -14,10 +14,7 @@ const hard = run('hard');
  * BİLİNEN EKSİK (geçici muafiyet; normalde BOŞ): yalnızca listedeki kategori + aralık için "en az 5 puan" farkı denetlenmez (uyarı yazılır);
  * sıralama (Easy > Medium) yine denetlenir. Diğer kategoriler ve Medium > Hard farkı aynen denetlenir. Sefer denge turunda listeden çıkarılır.
  */
-export const PENDING_ORDER_GAPS: Readonly<Record<string, string>> = {
-  // Ömer 2026-10-18: sefer denge turuna kadar; Easy %99,2 / Medium %94,5 fark 4,7 (genel sınıf denge turu sonrası, open-questions 350)
-  'normal:easy-medium': 'Ömer 2026-10-18: until the campaign balance round; Easy 99.2% / Medium 94.5%, gap 4.7',
-};
+export const PENDING_ORDER_GAPS: Readonly<Record<string, string>> = {};
 
 describe(`zorluk sıralaması (${T.orderRuns} sefer, seed ${T.orderSeed})`, () => {
   for (const c of ['normal', 'elite', 'boss'] as NodeCategory[])
@@ -36,6 +33,9 @@ describe(`zorluk sıralaması (${T.orderRuns} sefer, seed ${T.orderSeed})`, () =
   });
 });
 
+/** Planın tüm dalgalarının düşman kurulumları (dalgalı savaş, waves.md; yuvalar karşılaşmada tekrarsız). */
+const allEnemies = (p: ReturnType<typeof battlePlan>): ReturnType<typeof battlePlan>['units']['enemies'] => Object.assign({}, ...(p.waves ?? []).map((w) => w.units), p.units.enemies);
+
 describe('zorluk tanımı düşmanlara uygulanır', () => {
   it('çarpanlar çarpılır, düz ekler toplanır; zorluk ekleri yoksa karşılaşma aynen', () => {
     expect(withDifficulty({ hpMult: 2, spriteScale: 1.4 }, { hpMult: 1.1, powerMult: 1.2, armorAdd: 2 })).toEqual({ hpMult: 2.2, spriteScale: 1.4, powerMult: 1.2, armorAdd: 2 });
@@ -46,14 +46,14 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
   it('Hard: tüm düşmanlar campaign.json > difficulties.hard.enemy ile, boss ayrıca enemyTier.boss ile güçlenir; Medium veride yazıldığı gibi', () => {
     const plan = (difficulty: 'medium' | 'hard', node: string) => battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 3, difficulty }), node));
     const hard = CONFIG.difficulties.hard;
-    const m5 = plan('medium', '5A').units.enemies;
-    const h5 = plan('hard', '5A').units.enemies;
+    const m5 = allEnemies(plan('medium', '5A'));
+    const h5 = allEnemies(plan('hard', '5A'));
     for (const slot of Object.keys(m5)) {
       expect(h5[+slot]!.modifiers!.hpMult).toBeCloseTo((m5[+slot]!.modifiers!.hpMult ?? 1) * (hard.enemy?.hpMult ?? 1), 2);
       expect(h5[+slot]!.modifiers!.powerMult ?? 1).toBeCloseTo((m5[+slot]!.modifiers!.powerMult ?? 1) * (hard.enemy?.powerMult ?? 1), 2);
     }
     // Lord Morvane (düğüm 12): rütbe eki uygulanır
-    const boss = (d: 'medium' | 'hard', node: string) => Object.values(plan(d, node).units.enemies).find((u) => u.tier === 'boss')!.modifiers!;
+    const boss = (d: 'medium' | 'hard', node: string) => Object.values(allEnemies(plan(d, node))).find((u) => u.tier === 'boss')!.modifiers!;
     const mb = boss('medium', '12');
     const hb = boss('hard', '12');
     expect(hb.hpMult).toBeCloseTo(mb.hpMult! * (hard.enemy?.hpMult ?? 1) * (hard.enemyTier?.boss?.hpMult ?? 1), 2);
@@ -65,7 +65,7 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
   });
 
   it('eliteEscort (open-questions 365): yalnızca ELİT düğümün rütbesiz eşlikçilerine; elit lider, noTierMods ve normal düğüm etkilenmez', () => {
-    const units = (difficulty: 'easy' | 'medium', node: string) => battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 3, difficulty }), node)).units.enemies;
+    const units = (difficulty: 'easy' | 'medium', node: string) => allEnemies(battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 3, difficulty }), node)));
     const esc = CONFIG.difficulties.medium.eliteEscort!;
     expect(esc.hpMult).toBeGreaterThan(1);
     expect(CONFIG.difficulties.easy.eliteEscort).toBeUndefined();

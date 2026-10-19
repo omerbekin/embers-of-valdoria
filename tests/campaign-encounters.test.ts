@@ -2,6 +2,7 @@ import { existsSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import {
+  campaignWaveTeams,
   ENCOUNTERS,
   ENGINE_CAPS,
   battlePlan,
@@ -49,11 +50,17 @@ describe('sefer karşılaşmaları', () => {
     const at = (node: string) => {
       const s = debugTeleport(newCampaign({ mode: 'normal', seed: 4 }), node);
       const plan = battlePlan(s);
-      const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));
+      const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...campaignWaveTeams(plan) }, false));
       return { plan, battle };
     };
+    // Dalgalı savaş (waves.md): önder son dalgada gelir; önceki dalgalar düşürülür
+    const toLastWave = (b: Battle) => {
+      while (b.waveIndex < b.waveCount - 1) for (const c of b.combatants.filter((x) => x.side === 'enemy' && x.hp > 0 && !x.inert)) b.debugKill(c.uid);
+      return b;
+    };
     const w = at('3');
-    const chief = battleSummary(w.battle).units.find((u) => u.side === 'enemy' && u.classId === 'bandit_chief')!;
+    expect(w.plan.waves).toHaveLength(1); // Watchtower: 2 dalga (eşlikçiler, sonra şef)
+    const chief = battleSummary(toLastWave(w.battle)).units.find((u) => u.side === 'enemy' && u.classId === 'bandit_chief')!;
     expect(chief.tier).toBe('elite');
     const m = at('1');
     const thug = battleSummary(m.battle).units.find((u) => u.side === 'enemy' && u.classId === 'road_thug')!;
@@ -109,17 +116,20 @@ describe('sefer karşılaşmaları', () => {
       const hero = s.roster.find((h) => h.id === id)!;
       expect(battle.get(`party-${i}`)!.defId).toBe(hero.class);
     });
-    expect(plan.enemies.filter(Boolean)).toHaveLength(ENCOUNTERS[plan.encounterId]!.units.length);
+    // dalgalı savaş: tüm dalgaların düşmanları toplamı karşılaşma verisindeki tüm dalgaların birimleri kadar (veride `waves` yoksa bölünür, eklenmez)
+    const enc = ENCOUNTERS[plan.encounterId]!;
+    expect([plan.enemies, ...(plan.waves ?? []).map((w) => w.enemies)].flat().filter(Boolean)).toHaveLength(enc.units.length + (enc.waves ?? []).reduce((n, w) => n + w.units.length, 0));
   });
 });
 
 describe('Bölge I mobları (mob-plan.md 9.5-9.6): class kopyası yok; Mill Road kilitli, Ravenwood ve şef geç açılır', () => {
   it("Mill Road: düşmanlar yalnızca temel saldırı (temel dışı skill'ler kilitli); Ravenwood: kilit yok, hepsi +1 başlangıç cooldown'u; Watchtower: elit şef +1, eşlikçiler kilitsiz; motora gider", () => {
-    const plays = (enc: string) => ENCOUNTERS[enc]!.units;
+    // tüm dalgalar (units + veride waves; Watchtower'da şef son dalgada eşlikçisiyle, balance-tester 2026-10-19)
+    const plays = (enc: string) => [...ENCOUNTERS[enc]!.units, ...(ENCOUNTERS[enc]!.waves ?? []).flatMap((w) => w.units)];
     for (const enc of ['mill_road_thugs', 'ravenwood_pack', 'watchtower_tutorial']) for (const u of plays(enc)) expect(content.mobs[u.class], `${enc} ${u.class}`).toBeDefined();
     expect(plays('mill_road_thugs').map((u) => u.class)).toEqual(['road_thug', 'cutpurse']);
     expect(plays('ravenwood_pack').map((u) => [u.class, u.slot])).toEqual([['grey_wolf', 0], ['grey_wolf', 1], ['grey_wolf', 2], ['ravenwood_poacher', 7], ['raven_seer', 8]]);
-    expect(plays('watchtower_tutorial').map((u) => [u.class, u.slot, u.tier])).toEqual([['bandit_chief', 1, 'elite'], ['ravenwood_poacher', 6, undefined], ['ember_acolyte', 8, undefined]]);
+    expect(plays('watchtower_tutorial').map((u) => [u.class, u.slot, u.tier])).toEqual([['ravenwood_poacher', 6, undefined], ['ember_acolyte', 8, undefined], ['bandit_chief', 1, 'elite'], ['ravenwood_poacher', 7, undefined]]);
     for (const u of plays('mill_road_thugs')) expect(u.lockSkills, u.class).toEqual(content.mobs[u.class]!.skills.slice(1));
     for (const u of plays('ravenwood_pack')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, 1]);
     for (const u of plays('watchtower_tutorial')) expect([u.lockSkills, u.initialCooldownBonus], u.class).toEqual([undefined, u.tier ? 1 : undefined]);

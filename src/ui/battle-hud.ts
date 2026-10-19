@@ -278,7 +278,7 @@ export class BattleHud {
   private readonly band: HTMLDivElement;
   private readonly turn: HTMLDivElement;
   private readonly turnLbl: HTMLDivElement;
-  /** Dalgalı savaş göstergesi ("Wave 2/3"; yalnızca dalga sayısı 1'den büyükse; geçici görünüm: tek yer bu alan + .bh-wave). */
+  /** Dalgalı savaş göstergesi ("Round 2/3"; yalnızca dalga sayısı 1'den büyükse; geçici görünüm: tek yer bu alan + .bh-wave). */
   private readonly waveLbl: HTMLDivElement;
   private readonly actorBox: HTMLDivElement;
   private readonly skillBox: HTMLDivElement;
@@ -641,10 +641,16 @@ export class BattleHud {
     this.put(this.pasBox, p ? passivePlateHtml(p.name, p.iconUrl, this.reg('p:passive', p.tip), lucky) : '');
   }
 
-  /** Dalga göstergesi: "Wave 2/3" (null = gizli: dalgasız savaş). */
-  setWave(text: string | null): void {
-    this.waveLbl.hidden = !text;
-    this.waveLbl.textContent = text ?? '';
+  /** Tur göstergesi (savaştaki dalga = "Round", Ömer 2026-10-19 V1 Corner): sol üst plaka "Round 2 / 3" + elmaslar (null = gizli: tek turlu savaş). */
+  setWave(round: { n: number; total: number } | null): void {
+    this.waveLbl.hidden = !round;
+    if (!round) {
+      this.waveLbl.innerHTML = '';
+      return;
+    }
+    const pips = Array.from({ length: round.total }, (_, i) => `<i class="${i + 1 < round.n ? 'on' : i + 1 === round.n ? 'cur' : ''}"></i>`).join('');
+    this.waveLbl.classList.toggle('final', round.n === round.total);
+    this.waveLbl.innerHTML = `<span class="ico"><img src="${iconUrl('node:battle')}" alt=""></span><span class="tx"><span class="k">Round</span><span class="n">${round.n}<small> / ${round.total}</small></span><span class="bh-pips">${pips}</span></span>`;
   }
 
   private renderTurnLabel(): void {
@@ -692,9 +698,6 @@ export class BattleHud {
     this.turn.style.left = this.testLabel ? `${W / 2}px` : `${W / 2 - NW / 2 - past * (CW + GAP)}px`;
     this.turn.classList.toggle('test', !!this.testLabel);
     this.turnLbl.style.left = `${W / 2}px`;
-    // Dalga yazısı: sıra çubuğunun hemen solunda (şu anki hücrenin ad etiketine binmesin); test modunda çubuk yok, yazı üstte ortada
-    this.waveLbl.classList.toggle('test', !!this.testLabel);
-    this.waveLbl.style.left = this.testLabel ? `${W / 2}px` : `${W / 2 - NW / 2 - past * (CW + GAP) - 26}px`;
     // Sabit skill bölgesi (Ömer 0.8.2.3 telefon testi: 2 skill'li düşmanda Rest / Skip / Move ve Combat log ortaya kayıyordu): en az 4 yuva
     // genişliğinde, skill'ler soldan yuvalara dizilir; global sütun ve sağ alan skill sayısından bağımsız aynı yerde. 4'ten çok skill
     // (fazladan skill'li birim) bölgeyi iki yana eşit büyütür.

@@ -124,8 +124,10 @@ describe('endless: dalga kuralları', () => {
 
   it('veri: özel dalga karşılaşmaları encounters.json içinde var; elit dalgaları elit, boss dalgaları boss rütbeli birim içerir', () => {
     for (const id of [...ENDLESS.elites, ...ENDLESS.bosses]) expect(encounter(id), id).toBeTruthy();
-    for (const id of ENDLESS.elites) expect(encounter(id)!.units.some((u) => u.tier === 'elite'), id).toBe(true);
-    for (const id of ENDLESS.bosses) expect(encounter(id)!.units.some((u) => u.tier === 'boss'), id).toBe(true);
+    // karşılaşmanın tüm dalgaları (units + waves; önder veride son dalgada olabilir, waves.md)
+    const allUnits = (id: string) => [...encounter(id)!.units, ...(encounter(id)!.waves ?? []).flatMap((w) => w.units)];
+    for (const id of ENDLESS.elites) expect(allUnits(id).some((u) => u.tier === 'elite'), id).toBe(true);
+    for (const id of ENDLESS.bosses) expect(allUnits(id).some((u) => u.tier === 'boss'), id).toBe(true);
     expect(specialEncounter(1, 10)).toBe(ENDLESS.bosses[0]);
     expect(specialEncounter(1, 20)).toBe(ENDLESS.bosses[1 % ENDLESS.bosses.length]);
     expect(ENDLESS.elites).toContain(specialEncounter(1, 5));
@@ -181,9 +183,12 @@ describe('endless: dalga planı -> savaş', () => {
     expect(() => battleFor(elite)).not.toThrow();
     const boss = wavePlan({ ...fresh(3), wave: 10 });
     expect(boss.kind).toBe('boss');
-    expect(Object.values(boss.units.enemies).some((u) => u.tier === 'boss')).toBe(true);
+    // dalgalı boss savaşı (waves.md): boss son dalgada gelir
+    expect(boss.waves?.length).toBe(2);
+    expect(Object.values(boss.waves!.at(-1)!.units).some((u) => u.tier === 'boss')).toBe(true);
     const b = battleFor(boss);
-    expect(b.combatants.some((c) => c.side === 'enemy' && c.tier === 'boss')).toBe(true);
+    while (b.waveIndex < b.waveCount - 1) for (const c of b.combatants.filter((x) => x.side === 'enemy' && x.hp > 0 && !x.inert)) b.debugKill(c.uid);
+    expect(b.combatants.some((c) => c.side === 'enemy' && c.hp > 0 && c.tier === 'boss')).toBe(true);
   });
 });
 

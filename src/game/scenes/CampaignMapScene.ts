@@ -33,7 +33,6 @@ import {
   formCompany,
   getMap,
   hasUnsavedProgress,
-  incoming,
   isAreaClass,
   leaderOf,
   markTipSeen,
@@ -61,6 +60,8 @@ import {
   nextReplayMult,
   replayMult,
   patrolAvailable,
+  patrolRetreatMaxLoss,
+  isDone,
   isCleared,
   startPatrol,
   travelRoute,
@@ -122,10 +123,10 @@ import { mountCampHud, type CampHud } from '../../ui/camp-hud';
 import { showLevelBanner } from '../../ui/level-banner';
 import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
-import { EL, elBack, elBadge, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
-import { MAP_ZOOM, canPan, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
+import { EL, elBack, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
+import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
-import { drawBadge, drawDashRing, drawFrame, frameColor, frameSpec } from '../map-frames';
+import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation } from '../campaign-panels';
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
 import { ensureIcon } from '../icons';
@@ -167,10 +168,9 @@ const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', '
 const WALK_SPEED = 320; // px/sn
 const FOLLOW_GAP = 55; // px
 const PAN_STEP = 340;
-/** Devriye rozetinin yüksekliği (madalyonun üstünde; etiket yerleşimi bu kadar yukarıyı dolu sayar). */
-const PATROL_CHIP_H = 22;
-/** Sütun genişlikleri (Ömer 2026-10-09: 16:9'da daralmasın): sol takım sütunu ve sağ düğüm sütunu aynı dilde, aynı genişlikte. */
-const SIDE = { left: 48, top: 150, partyW: 420 };
+/** Sol sütun (Sakin etiket, Ömer 2026-10-19; mockup map-calm V1): kenardan boşluk, üst boşluk, içerik genişliği. Telefonda içerik COL_K kat büyür. */
+const SIDE = { left: 36, top: 124, partyW: 360 };
+const COL_K = 1.45;
 /** Dokunmatikte düğüm bilgi kartı için uzun basış süresi (ms). */
 const LONG_PRESS_MS = 420;
 /** Zorunlu seçim pencereleri (Esc ile kapanmaz; Party / Formation bunların üstünde açılmaz). */
@@ -183,7 +183,9 @@ type Arrival = { node: string; requested: boolean; action?: () => void };
 /** Düğüme göre göreli etiket dikdörtgeni. */
 type Side = 'below' | 'above' | 'right' | 'left' | 'belowR' | 'belowL' | 'aboveR' | 'aboveL';
 type Box = { x0: number; y0: number; x1: number; y1: number };
-type LabelPlace = { x0: number; y0: number; w: number; h: number; sub: boolean };
+type LabelPlace = { x0: number; y0: number; w: number; h: number; sub: boolean; side: Side };
+/** Düğüm etiketi: `q` = kalıcı küçük ad (yalnızca masaüstü, bulunulan / gidilebilir olmayanlarda), `b` = ad + alt yazı şeridi (bulunulan / gidilebilir hep açık; diğerlerinde üstüne gelince / dokununca). */
+type LabelSlot = { q: LabelPlace | null; b: LabelPlace; hot: boolean };
 
 export class CampaignMapScene extends Phaser.Scene {
   static readonly KEY = 'CampaignMapScene';
@@ -246,8 +248,9 @@ export class CampaignMapScene extends Phaser.Scene {
   private tipIsArrange = false;
   /** Gear düğmesinin parlaması "gördüm" kaydı: kahraman -> Gear'ı açtığımızda ulaştığı level (yeni level atlama parlamayı yeniden kurar; yalnızca oturum, kayıt değişmez). */
   private gearSeen = new Map<string, number>();
-  private legendOpen = true;
-  private panBtns: { left?: Phaser.GameObjects.Container; right?: Phaser.GameObjects.Container; minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
+  /** Lejanda ? düğmesine basılıp açık bırakıldı (üstüne gelince geçici de açılır). */
+  private legendOpen = false;
+  private panBtns: { minus?: Phaser.GameObjects.Container; plus?: Phaser.GameObjects.Container } = {};
   private toastFn: ((msg: string) => void) | null = null;
   /** Kasaba ekranı (Ömer 2026-10-12): kasaba düğümünde tam ekran kasaba; açıkken harita girdisi kilitli, harita kamerası gizli. */
   private town: TownScreen | null = null;
@@ -616,19 +619,6 @@ export class CampaignMapScene extends Phaser.Scene {
     this.routeG = g;
   }
 
-  /** "Patrol" rozeti (madalyonun üstünde ortalı; tasarım kiti: Cinzel küçük harf aralıklı + sıradaki ödül yüzdesi). */
-  private patrolChip(x: number, bottom: number, mult: number): Phaser.GameObjects.Container {
-    const c = this.add.container(x, bottom);
-    const label = elText(this, 0, 0, `Patrol ${Math.round(mult * 100)}%`, 11, EL.ON, { em: 0.12 }).setOrigin(0.5, 0.5);
-    const w = label.width + 16;
-    const h = PATROL_CHIP_H - 4;
-    const bg = this.add.graphics();
-    bg.fillStyle(0x0d0906, 0.9).fillRect(-w / 2, -h, w, h).lineStyle(1, EL.GOLD, 0.6).strokeRect(-w / 2, -h, w, h);
-    label.setPosition(0, -h / 2);
-    c.add([bg, label]);
-    return c;
-  }
-
   /** Yol: yürünmüş = düz altın; gidilebilir = akan kor (parıltı altlığıyla); görünür = kesik altın; sis = soluk. */
   private drawRoad(g: Phaser.GameObjects.Graphics, pts: Pt[], ev: EdgeVis, offset: number, part: 'all' | 'base' | 'dash' = 'all'): void {
     const stroke = (w: number, col: number, a: number, dashed: boolean, dash = 14, gap = 10) => {
@@ -704,110 +694,109 @@ export class CampaignMapScene extends Phaser.Scene {
     }
   }
 
-  private labelPlan = new Map<string, LabelPlace>();
+  private labelPlan = new Map<string, LabelSlot>();
 
-  /** Etiketin içeriği: telefonda yalnızca bulunulan ve sıradaki düğümlerin adı yazar; alt satır yakın/geçilmiş/seçenek düğümlerde. */
-  private labelSpec(n: MapNode, v: NodeVis, option: boolean): { sub: string } | null {
-    const here = v === 'current';
+  /** Koruma savaşı kazanılmış korumalı hazine / olay düğümünde yenilen karşılaşmanın adı (kafatası işareti); yoksa null. */
+  private guardDefeated(n: MapNode, v: NodeVis): string | null {
+    if (n.encounter && (n.type === 'treasure' || n.type === 'event') && (v === 'cleared' || isDone(this.s, n.id, 'battle'))) return enemyPreview(n.encounter).name;
+    return null;
+  }
+
+  /** Şeridin alt satırı (yalnızca bulunulan / gidilebilir / üstüne gelinen düğümde görünür): tür · alt başlık, devriye yüzdesi, yenilen koruma. */
+  private labelSub(n: MapNode, v: NodeVis): string {
+    if (v === 'goal') return '';
     const done = v === 'cleared';
-    const next = this.adjacent(n.id);
-    const named = !this.compact() || here || option || next;
-    if (!named) return null;
-    const showSub = here || option || v === 'near' || done;
     const choice = outgoing(this.map, n.id).length > 1 && !done ? '  ·  choice' : '';
-    return { sub: showSub ? `${n.subtitle}${choice}` : '' };
+    const parts = [`${n.subtitle}${choice}`];
+    if (done && patrolAvailable(this.s, n.id)) parts.push(`Patrol ${Math.round(nextReplayMult(this.s, n.id) * 100)}%`);
+    const guard = this.guardDefeated(n, v);
+    if (guard) parts.push(`${guard} defeated`);
+    return parts.filter(Boolean).join('  ·  ');
   }
 
   /**
-   * Etiket yerleşimi (Ömer 2026-10-18): her ad için adaylar (veride yön varsa önce o, sonra altta/üstte/sağda/solda); düğüm madalyonları ve
-   * önceden yerleşen etiketlerle çakışmayan ilk aday seçilir. Çakışırsa alt satır gizlenip yeniden denenir (ad kalır). Sabit sıra = her açılışta aynı.
+   * Etiket yerleşimi (Ömer 2026-10-18; Sakin etiket 2026-10-19): her düğüm için kalıcı küçük ad (`q`, yalnızca masaüstü ve bulunulan / gidilebilir
+   * olmayanlarda) ve ad + alt yazı şeridi (`b`). Aday yönler (veride yön varsa önce o): düğüm madalyonları ve önceden yerleşen adlarla çakışmayan
+   * ilk aday seçilir. Çakışırsa bulunulan / gidilebilir şeritte alt satır gizlenip yeniden denenir. Sabit sıra = her açılışta aynı.
    */
   private planLabels(vis: Record<string, NodeVis>, options: string[]): void {
     this.labelPlan = new Map();
-    type Item = { n: MapNode; w: number; sub: boolean; subW: number; nameW: number };
+    const compact = this.compact();
+    type Item = { n: MapNode; hot: boolean; sub: boolean; subW: number; nameW: number };
     const items: Item[] = [];
-    const meds: Array<{ x0: number; y0: number; x1: number; y1: number }> = [];
+    const meds: Box[] = [];
     for (const n of this.map.nodes) {
       const v = vis[n.id]!;
       if (v === 'fog') continue;
       const p = this.P(n.id);
       const m = frameSpec(n.type).R + 6;
-      // Patrol rozeti madalyonun üstünde: etiket oraya konmasın
-      meds.push({ x0: p.x - m, y0: p.y - m - (v === 'cleared' && patrolAvailable(this.s, n.id) ? PATROL_CHIP_H : 0), x1: p.x + m, y1: p.y + m });
-      const spec = this.labelSpec(n, v, options.includes(n.id));
-      if (!spec) continue;
+      meds.push({ x0: p.x - m, y0: p.y - m, x1: p.x + m, y1: p.y + m });
+      const hot = v === 'current' || options.includes(n.id);
+      const subTxt = this.labelSub(n, v);
       const t1 = elText(this, 0, 0, n.name.toUpperCase(), 15, '#fff', { em: 0.06 });
-      const t2 = spec.sub ? elBody(this, 0, 0, spec.sub, 13, '#fff', false) : null;
-      items.push({ n, w: 0, sub: !!t2, nameW: t1.width, subW: t2?.width ?? 0 });
+      const t2 = subTxt ? elBody(this, 0, 0, subTxt, 13, '#fff', false) : null;
+      items.push({ n, hot, sub: !!t2, nameW: t1.width, subW: t2?.width ?? 0 });
       t1.destroy();
       t2?.destroy();
     }
     const prio = (id: string) => (vis[id] === 'current' ? 0 : options.includes(id) ? 1 : this.adjacent(id) ? 2 : 3);
     items.sort((a, b) => prio(a.n.id) - prio(b.n.id));
-    const placed: Array<{ x0: number; y0: number; x1: number; y1: number }> = [];
+    const placed: Box[] = [];
+    const area = (a: Box, b: Box) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+    const at = (side: Side, R: number, w: number, h: number) => ({
+      x0: side === 'right' ? R + 8 : side === 'left' ? -R - 8 - w : side === 'belowR' || side === 'aboveR' ? R * 0.3 : side === 'belowL' || side === 'aboveL' ? -w - R * 0.3 : -w / 2,
+      y0: side.startsWith('below') ? R + 8 : side.startsWith('above') ? -R - h - 8 : -h / 2,
+    });
     for (const it of items) {
       const n = it.n;
       const p = this.P(n.id);
       const R = frameSpec(n.type).R;
       const pref: Side[] = n.label === 'above' ? ['above', 'below', 'right', 'left', 'aboveR', 'aboveL', 'belowR', 'belowL'] : ['below', 'above', 'right', 'left', 'belowR', 'belowL', 'aboveR', 'aboveL'];
       const own = { x0: p.x - (R + 6), y0: p.y - (R + 6) };
-      const area = (a: Box, b: Box) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
+      const bandSize = (sub: boolean) => ({ w: Math.max(it.nameW, sub ? it.subW : 0) + 24, h: sub ? 38 : 24 });
+      if (compact && !it.hot) {
+        // telefon: kalıcı ad yok; şerit dokununca açılır (çakışma aranmaz)
+        const sz = bandSize(it.sub);
+        this.labelPlan.set(n.id, { q: null, b: { ...at(pref[0]!, R, sz.w, sz.h), ...sz, sub: it.sub, side: pref[0]! }, hot: false });
+        continue;
+      }
       let chosen: LabelPlace | null = null;
       let bestScore = Infinity;
       let bestRect: Box | null = null;
-      // önce alt satırlı tüm yönler, sonra yalnızca ad; hiçbiri temiz değilse en az çakışan
-      for (const sub of it.sub ? [true, false] : [false]) {
+      // bulunulan / gidilebilir: önce alt satırlı tüm yönler, sonra yalnızca ad; diğerleri: yalnızca küçük ad. Hiçbiri temiz değilse en az çakışan
+      for (const sub of it.hot && it.sub ? [true, false] : [false]) {
         for (const side of pref) {
-          const w = Math.max(it.nameW, sub ? it.subW : 0) + 24;
-          const h = sub ? 38 : 24;
-          const x0 = side === 'right' ? R + 8 : side === 'left' ? -R - 8 - w : side === 'belowR' || side === 'aboveR' ? R * 0.3 : side === 'belowL' || side === 'aboveL' ? -w - R * 0.3 : -w / 2;
-          const y0 = side.startsWith('below') ? R + 8 : side.startsWith('above') ? -R - h - 8 : -h / 2;
-          const rect = { x0: p.x + x0 - 4, y0: p.y + y0 - 3, x1: p.x + x0 + w + 4, y1: p.y + y0 + h + 3 };
+          const sz = it.hot ? bandSize(sub) : { w: it.nameW + 12, h: 22 };
+          const o = at(side, R, sz.w, sz.h);
+          const rect = { x0: p.x + o.x0 - 4, y0: p.y + o.y0 - 3, x1: p.x + o.x0 + sz.w + 4, y1: p.y + o.y0 + sz.h + 3 };
           let score = 0;
           for (const m of meds) if (!(m.x0 === own.x0 && m.y0 === own.y0)) score += area(rect, m);
           for (const q of placed) score += area(rect, q);
-          if (!sub && it.sub) score += 1; // alt satırı gizlemek küçük ceza: eşit temizlikte alt satırlı kazanır
+          if (it.hot && !sub && it.sub) score += 1; // alt satırı gizlemek küçük ceza: eşit temizlikte alt satırlı kazanır
           if (score < bestScore) {
             bestScore = score;
-            chosen = { x0, y0, w, h, sub };
+            chosen = { ...o, ...sz, sub, side };
             bestRect = rect;
           }
           if (score === 0) break;
         }
         if (bestScore === 0) break;
       }
-      if (chosen && bestRect) placed.push(bestRect);
-      else continue;
-      this.labelPlan.set(n.id, chosen);
+      if (!chosen || !bestRect) continue;
+      placed.push(bestRect);
+      if (it.hot) this.labelPlan.set(n.id, { q: null, b: chosen, hot: true });
+      else {
+        const sz = bandSize(it.sub);
+        this.labelPlan.set(n.id, { q: chosen, b: { ...at(chosen.side, R, sz.w, sz.h), ...sz, sub: it.sub, side: chosen.side }, hot: false });
+      }
     }
   }
 
   /**
-   * "<KARŞILAŞMA> DEFEATED" damgası (Ömer 2026-10-19): kafatası + koyu kırmızı çerçeveli, hafif eğik küçük plaka. Etiketin karşı tarafına
-   * (etiket üstteyse altına) konur. Yalnızca temizlenmiş korumalı hazine / olay düğümlerinde.
-   */
-  private defeatedStamp(name: string, R: number, label: LabelPlace | null): Phaser.GameObjects.Container {
-    const RED = '#e9a58f';
-    const txt = elText(this, 0, 0, `${name} defeated`, 12, RED, { em: 0.12 }).setOrigin(0, 0.5);
-    const icon = this.add.image(0, 0, ensureIcon(this, 'skull', RED, false)).setDisplaySize(20, 20);
-    const w = 10 + 20 + 6 + txt.width + 10;
-    const h = 26;
-    const g = this.add.graphics();
-    g.fillStyle(0x1a0c08, 0.93).fillRect(-w / 2, -h / 2, w, h);
-    g.lineStyle(2, 0xb8402f, 0.95).strokeRect(-w / 2, -h / 2, w, h);
-    g.lineStyle(1, 0xb8402f, 0.45).strokeRect(-w / 2 + 3, -h / 2 + 3, w - 6, h - 6);
-    icon.setPosition(-w / 2 + 10 + 10, 0);
-    txt.setPosition(-w / 2 + 10 + 20 + 6, 0);
-    const above = !!label && label.y0 + label.h <= 0; // etiket üstteyse damga altta
-    const st = this.add.container(0, above ? R + 24 : -R - 24, [g, icon, txt]);
-    st.setAngle(-6);
-    return st;
-  }
-
-  /**
-   * Düğüm (Ömer 2026-10-18, mockup map-nodes varyant C): ikon bugünkü boyda, çevresinde tür çerçevesi (`map-frames.ts`).
-   * Durumlar: gidilebilir (kor parıltı), seçili/hover (dönen kesik halka), buradasın (altın halka), geçildi (soluk + onay rozeti),
-   * kapalı (gri + çarpı), hedef/sisli (kilit). Boss hafif nabız ışığı (tween). Ad etiketi: koyu şerit + tür renkli sol çizgi.
+   * Düğüm (Ömer 2026-10-18, mockup map-nodes varyant C; Sakin etiket 2026-10-19, map-calm V1): ikon bugünkü boyda, çevresinde tür çerçevesi (`map-frames.ts`).
+   * Durumlar: gidilebilir (kor parıltı), üstüne gelince / dokununca yumuşak ışık (çerçeve / kutu vurgusu yok), buradasın (altın halka), geçildi (soluk,
+   * onay rozeti yok; devriye = küçük döngü simgesi), korumalı düğümde yenilen koruma = küçük kafatası, hedef/sisli (kilit). Boss hafif nabız ışığı (tween).
+   * Ad: küçük gölgeli yazı; şerit (ad + alt yazı) yalnızca bulunulan / gidilebilir / üstüne gelinen düğümde.
    */
   private drawNode(n: MapNode, v: NodeVis, option: boolean): void {
     if (v === 'fog') return;
@@ -830,6 +819,9 @@ export class CampaignMapScene extends Phaser.Scene {
       const gold = this.add.image(0, 0, ensureGlow(this)).setTint(EL.ON_N).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(fs.glowR * 2.8, fs.glowR * 2.8).setAlpha(0.4);
       c.add(gold);
     }
+    // Üstüne gelince / dokununca yumuşak ışık (kor / altın, ince; yavaşça açılıp söner). Çerçeve ya da kutu vurgusu YOK.
+    const halo = this.add.image(0, 0, ensureGlow(this)).setTint(0xffbe6a).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(fs.glowR * 3.4, fs.glowR * 3.4).setAlpha(0);
+    c.add(halo);
     const body = this.add.container(0, 0);
     c.add(body);
     const shadow = this.add.graphics();
@@ -846,14 +838,20 @@ export class CampaignMapScene extends Phaser.Scene {
       body.add(art);
     } else drawNodeGlyph(g, n.type, done ? 0x9a8c70 : goal ? 0x7d705a : 0xd9c8a2, fs.boss ? 1.25 : 1);
     const bx = R * 0.72;
-    if (done || goal) {
+    if (goal) {
       const bg = this.add.graphics();
-      drawBadge(bg, done ? 'check' : 'lock', bx, bx);
+      drawBadge(bg, 'lock', bx, bx);
       body.add(bg);
     }
-    // Devriye (serbest dolaşım, roadmap 2.10): temizlenmiş savaş düğümünde küçük "Patrol" rozeti + sıradaki ödül yüzdesi (100 / 60 / 40 / 25)
+    // Geçilen düğüm soluk (tik yok)
+    if (done) body.setAlpha(0.74);
+    // Devriye (serbest dolaşım, roadmap 2.10): temizlenmiş savaş düğümünde küçük döngü simgesi (yüzde şeritte: "Patrol 60%")
     const patrol = done && patrolAvailable(this.s, n.id);
-    if (patrol) c.add(this.patrolChip(0, -R - 4, nextReplayMult(this.s, n.id)));
+    if (patrol) {
+      const lg = this.add.graphics();
+      drawLoopIcon(lg, R * 0.74, -R * 0.74);
+      c.add(lg);
+    }
     // Yolculuk hedefi (temizlenmiş düğümler üzerinden; tek dokunuşla yürünür)
     const travel = !option && !here && this.travelTargets().has(n.id);
     if (here) {
@@ -861,24 +859,8 @@ export class CampaignMapScene extends Phaser.Scene {
       ring.lineStyle(3, EL.ON_N, 0.95).strokeCircle(0, 0, fs.glowR + 4).lineStyle(1.5, EL.ON_N, 0.4).strokeCircle(0, 0, fs.glowR + 8);
       body.add(ring);
     }
-    // seçili / hover halkası: yalnızca üstüne gelince görünür, tween ile döner (her karede çizim yok)
-    const sel = this.add.graphics();
-    drawDashRing(sel, fs.glowR + 6, EL.EMBER2, 3);
-    sel.setVisible(false);
-    body.add(sel);
-    const selTween = this.tweens.add({ targets: sel, angle: 360, duration: 14000, repeat: -1, paused: true });
-    let hoverTween: Phaser.Tweens.Tween | null = null;
-    const setHover = (on: boolean) => {
-      if (!(option || here || travel)) return;
-      if (travel) this.routeHint(on ? n.id : null);
-      sel.setVisible(on);
-      if (on) selTween.resume();
-      else selTween.pause();
-      hoverTween?.stop();
-      hoverTween = this.tweens.add({ targets: body, scale: on ? 1.07 : 1, duration: 160, ease: 'Sine.easeOut' });
-    };
     if (n.type === 'treasure' && n.encounter) {
-      // Korumalı hazine: sol altta küçük çapraz kılıç madalyonu (sağ alt rozet için boş kalsın)
+      // Korumalı hazine: sol altta küçük çapraz kılıç madalyonu (sağ alt işaret için boş kalsın)
       const gb = this.add.graphics();
       gb.fillStyle(0x140e09, 1).fillCircle(-r * 0.8, r * 0.8, 11).lineStyle(1, EL.GOLD, 0.8).strokeCircle(-r * 0.8, r * 0.8, 11);
       body.add(gb);
@@ -886,16 +868,21 @@ export class CampaignMapScene extends Phaser.Scene {
       if (guard) body.add(guard);
       else drawNodeGlyph(gb, 'battle', 0xd9c8a2, 0.45, -r * 0.8, r * 0.8);
     }
-    // Ad + alt yazı (A-Band şeridi). Yerleşim renderMap > planLabels'te (çakışmasız, sabit); telefonda yalnızca bulunulan ve sıradaki düğümlerin adı yazar
+    // Koruma savaşı kazanılan (düğüm henüz temizlenmemiş olsa da) korumalı hazine / olay: sağ altta küçük kafatası (ad şeritte: "<ad> defeated")
+    if (this.guardDefeated(n, v)) {
+      const sg = this.add.graphics();
+      sg.fillStyle(0x1a0c08, 1).fillCircle(R * 0.78, R * 0.78, 11.5).lineStyle(1.6, 0xb8402f, 0.9).strokeCircle(R * 0.78, R * 0.78, 11.5);
+      c.add([sg, this.add.image(R * 0.78, R * 0.78, ensureIcon(this, 'skull', '#e9a58f', false)).setDisplaySize(15, 15)]);
+    }
+    // Ad (küçük, gölgeli) + şerit (ad + alt yazı). Yerleşim renderMap > planLabels'te (çakışmasız, sabit)
     const nameCol = goal ? EL.DIM : here || option ? EL.ON : '#f0e2c0';
-    const plan = this.labelPlan.get(n.id);
-    const lb = plan ? this.labelSpec(n, v, option) : null;
-    const named = !!plan && !!lb;
-    let place: LabelPlace | null = null;
-    if (plan && lb) {
-      place = plan;
+    const slot = this.labelPlan.get(n.id);
+    let quiet: Phaser.GameObjects.Text | null = null;
+    let bandC: Phaser.GameObjects.Container | null = null;
+    if (slot) {
+      const plan = slot.b;
+      const sub = plan.sub ? elBody(this, 0, 0, this.labelSub(n, v), 13, goal ? EL.DIM : '#b9a883', false).setOrigin(0.5, 0.5) : null;
       const name = elText(this, 0, 0, n.name.toUpperCase(), 15, nameCol, { em: 0.06 }).setOrigin(0.5, 0.5);
-      const sub = plan.sub ? elBody(this, 0, 0, lb.sub, 13, goal ? EL.DIM : '#b9a883', false).setOrigin(0.5, 0.5) : null;
       const band = this.add.graphics();
       band.fillStyle(0x0d0906, goal ? 0.6 : 0.88).fillRect(plan.x0, plan.y0, plan.w, plan.h);
       band.lineStyle(1, 0xd9b26a, 0.28).strokeRect(plan.x0, plan.y0, plan.w, plan.h);
@@ -903,24 +890,39 @@ export class CampaignMapScene extends Phaser.Scene {
       const cx = plan.x0 + plan.w / 2 + 2;
       name.setPosition(cx, plan.y0 + (sub ? 13 : plan.h / 2));
       sub?.setPosition(cx, plan.y0 + 29);
-      c.add(sub ? [band, name, sub] : [band, name]);
+      bandC = this.add.container(0, 0, sub ? [band, name, sub] : [band, name]);
+      bandC.setAlpha(slot.hot ? 1 : 0);
+      c.add(bandC);
+      if (slot.q) {
+        const q = slot.q;
+        quiet = elText(this, q.x0 + q.w / 2, q.y0 + q.h / 2, n.name.toUpperCase(), 14, goal ? EL.DIM : '#e6d8b4', { em: 0.08 }).setOrigin(0.5, 0.5);
+        quiet.setStroke('#060402', 5).setAlpha(done || goal ? 0.82 : 1);
+        c.add(quiet);
+      }
     }
-    // Temizlenen korumalı hazine / olay: düğümün yanında "<KARŞILAŞMA> DEFEATED" damgası + kafatası (Ömer 2026-10-19; eski "... defeated" çipinin yerine)
-    if (done && n.encounter && (n.type === 'treasure' || n.type === 'event')) c.add(this.defeatedStamp(enemyPreview(n.encounter).name, R, place));
     // Sis kuralı (Ömer 2026-10-14): bulunulan ve sıradaki (gidilebilir) düğüm, adı ve alt yazısı bulutsuz kalır
     const next = this.adjacent(n.id);
     if (here || option || v === 'near' || next) {
+      const place = slot?.hot ? slot.b : null;
       const x0 = Math.min(-R - 8, place ? place.x0 - 10 : 0);
       const x1 = Math.max(R + 8, place ? place.x0 + place.w + 10 : 0);
       const y0 = Math.min(-R - 8, place ? place.y0 - 10 : 0);
       const y1 = Math.max(R + 8, place ? place.y0 + place.h + 10 : 0);
       this.clearZones.push({ x0: p.x + x0, x1: p.x + x1, y0: p.y + y0, y1: p.y + y1 });
     }
-    if (named && n.id === this.map.start && !here && !done) c.add(elText(this, 0, place && place.y0 + place.h <= -R ? place.y0 - 6 : -R - 6, 'Start', 12, EL.MUTED, { em: 0.2 }).setOrigin(0.5, 1));
-    if (incoming(this.map, n.id).length > 1 && !done) c.add(elText(this, -R - 10, 0, '›', 18, EL.MUTED, { em: 0 }).setOrigin(0.5));
-    if (done) c.setAlpha(patrol ? 0.95 : 0.85);
-    else if (goal) c.setAlpha(0.75);
+    if (goal) c.setAlpha(0.75);
     if (here && this.actionHere()) this.tweens.add({ targets: shadow, scale: { from: 1, to: 1.12 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+    // Üstüne gelince / dokununca: ışık yumuşakça açılır / söner; şerit (yoksa) belirir, kalıcı ad çekilir. Yolculuk hedefinde rota da vurgulanır.
+    let fx: Phaser.Tweens.Tween[] = [];
+    const setHover = (on: boolean) => {
+      if (travel) this.routeHint(on ? n.id : null);
+      if (on) this.dyn.bringToTop(c);
+      for (const t of fx) t.stop();
+      const dur = reducedMotion() ? 0 : on ? 220 : 320;
+      fx = [this.tweens.add({ targets: halo, alpha: on ? 0.5 : 0, duration: dur, ease: 'Sine.easeInOut' })];
+      if (bandC && !slot?.hot) fx.push(this.tweens.add({ targets: bandC, alpha: on ? 1 : 0, duration: dur, ease: 'Sine.easeInOut' }));
+      if (quiet) fx.push(this.tweens.add({ targets: quiet, alpha: on ? 0 : done || goal ? 0.82 : 1, duration: dur, ease: 'Sine.easeInOut' }));
+    };
     // Telefonda dokunma alanı >= 44 gerçek px (görünüm aynı): yarıçap anlık büyür (cssScale x harita yakınlaştırması) ve en yakın komşu düğüme
     // olan yarı mesafeyle sınırlıdır (komşular çakışmaz). Taban alandan küçülmez.
     let nearest = Infinity;
@@ -932,7 +934,7 @@ export class CampaignMapScene extends Phaser.Scene {
       hitAreaCallback: (_a: unknown, x: number, y: number) => Math.hypot(x - 52, y - 52) <= hitR(),
     });
     // Dokunuş = basış ve bırakış AYNI düğümde, arada sürükleme / sıkıştırma yok (sürükleme ya da başka yerden kayan parmak sayılmaz).
-    // Dokunmatikte uzun basış (yürümeden) bilgi kartını gösterir; fareyle üstüne gelmek de aynı kartı gösterir.
+    // Dokunmatikte basılı tutarken ışık + şerit açılır; uzun basış (yürümeden) bilgi kartını gösterir; fareyle üstüne gelmek de aynı kartı gösterir.
     const busy = () => !!this.walking || !!this.modal || this.menuOpen || !!this.town;
     zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
       this.tapNode = n.id;
@@ -940,6 +942,7 @@ export class CampaignMapScene extends Phaser.Scene {
       this.pressTimer?.remove();
       this.pressTimer = null;
       if (!p.wasTouch || busy()) return;
+      setHover(true);
       this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
         this.pressTimer = null;
         if (this.tapNode !== n.id || this.drag.moved || busy()) return;
@@ -947,13 +950,14 @@ export class CampaignMapScene extends Phaser.Scene {
         this.showNodeTip(n.id, p);
       });
     });
-    zone.on('pointerup', () => {
+    zone.on('pointerup', (p: Phaser.Input.Pointer) => {
       const same = this.tapNode === n.id;
       const long = this.longPressed;
       this.tapNode = null;
       this.longPressed = false;
       this.pressTimer?.remove();
       this.pressTimer = null;
+      if (p.wasTouch) setHover(false);
       if (long) return this.hideNodeTip();
       if (!same || this.drag.moved || busy()) return;
       this.hideNodeTip();
@@ -980,7 +984,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const want = new Map<string, number>();
     for (const n of this.map.nodes) {
       const v = vis[n.id];
-      if (v === 'fog' || v === 'goal') want.set(n.id, v === 'goal' ? 0.45 : 0.78);
+      if (v === 'fog' || v === 'goal') want.set(n.id, v === 'goal' ? 0.3 : 0.5);
     }
     // Parçalar açık alanlardan itilir (src/game/fog-clouds.ts); yerleşim değiştiyse bulut yeniden kurulur
     const plans = new Map<string, ReturnType<typeof placePuffs>>();
@@ -1276,14 +1280,11 @@ export class CampaignMapScene extends Phaser.Scene {
     this.setMid(this.mid);
   }
 
-  /** ◂ ▸ düğmeleri yalnızca o yöne gidilebiliyorsa etkin; − + sınırlarda soluk. */
+  /** − + düğmeleri sınırlarda soluk. */
   private updatePanButtons(): void {
     const b = this.panBtns;
-    if (!b.left) return;
-    const can = canPan(this.mid, this.frame, this.viewSize());
-    b.left.setAlpha(can.left ? 1 : 0.3);
-    b.right?.setAlpha(can.right ? 1 : 0.3);
-    b.minus?.setAlpha(this.mapZoom > MAP_ZOOM.min + 0.001 ? 1 : 0.3);
+    if (!b.minus) return;
+    b.minus.setAlpha(this.mapZoom > MAP_ZOOM.min + 0.001 ? 1 : 0.3);
     b.plus?.setAlpha(this.mapZoom < MAP_ZOOM.max - 0.001 ? 1 : 0.3);
   }
 
@@ -1319,34 +1320,26 @@ export class CampaignMapScene extends Phaser.Scene {
     const L = this.hud;
     const left = stageView.left;
     const right = stageView.right;
-    // Kenar gölgeleri: sütunların altı okunur, orta harita açık (taslaktaki yatay degrade)
+    const k = this.compact() ? COL_K : 1;
+    // Kenar gölgeleri (Sakin etiket): yalnızca sol sütunun altı ve üst şerit hafifçe kararır, harita açık kalır
     const shade = this.add.graphics();
-    hGradient(shade, left, 0, 620, H, 0x080604, [
-      [0, 0.92],
-      [0.7, 0.7],
+    hGradient(shade, left, 0, 430 * k, H, 0x080604, [
+      [0, 0.8],
+      [0.7, 0.45],
       [1, 0],
     ]);
-    vGradient(shade, left, 0, right - left, 120, 0x080604, [
-      [0, 0.85],
+    vGradient(shade, left, 0, right - left, 110, 0x080604, [
+      [0, 0.4],
       [1, 0],
-    ]);
-    // Sol alt: bölge / durak / mod / zorluk / altın bloğunun altı okunur kalsın
-    vGradient(shade, left, H - 190, 820, 190, 0x080604, [
-      [0, 0],
-      [1, 0.8],
     ]);
     L.add(shade);
     // Sol üst: geri ikonu (ana menüye; Menu > Main Menu ile aynı yer). Esc haritada Menu'yü açar. renderHud her boyut değişiminde yeniden kurar.
     const back = elBack(this, () => this.leaveMap(), { isBusy: () => this.inputBusy(), left: () => left, manual: true });
     L.add(back.root);
-    // Üst orta: harita adı (Ömer 2026-10-12)
-    L.add(elText(this, (left + right) / 2, 52, this.map.title, 34, '#ffffff', { em: 0.16 }).setOrigin(0.5, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f));
-    // Bulunulan düğümün bilgisi sol sütunda, takım panelinin hemen altında (yalnızca sol alttaki bilgi bloğuna yer kalırsa)
-    const infoTop = this.renderInfo(left + SIDE.left);
-    const partyEnd = this.renderParty(left + SIDE.left, SIDE.top);
-    this.renderNodeCard(left + SIDE.left, partyEnd + 24, SIDE.partyW, infoTop - 16);
+    // Üst orta: harita adı (Ömer 2026-10-12; Sakin etiket: biraz küçük ve soluk)
+    L.add(elText(this, (left + right) / 2, 52, this.map.title, 30, '#ffffff', { em: 0.16 }).setOrigin(0.5, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f).setAlpha(0.72));
+    this.renderColumn(left + SIDE.left, SIDE.top + (this.compact() ? 16 : 0)); // telefonda büyük Back düğmesinin altında kalsın
     this.renderControls();
-    this.renderLegend();
     if (session.notice) {
       this.toast(session.notice);
       session.notice = '';
@@ -1354,32 +1347,135 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Sol alt bilgi bloğu (Ömer 2026-10-12): 1. satır bölge · Cleared x/26 · Chapter n (serbest dolaşım, roadmap 2.1), 2. satır mod · zorluk · altın. Bloğun üst kenarını döndürür
-   * (üstteki düğüm bilgisi oraya kadar iner). Alt orta harita düğmelerinin solunda kalır.
+   * Sol sütun (Ömer 2026-10-19, Sakin etiket V1): "Your party" + kahraman satırları (portre, ad, Lv, ince can çubuğu, rol; dokun = o kahramanın Gear
+   * sekmesi), harcanmamış puan için tek not + portrede küçük kor elması, "You are here" ve bölge / ilerleme / mod / altın. Telefonda sütun COL_K kat büyür;
+   * sığmazsa önce "You are here" kalkar, sonra sütun küçülür.
    */
-  private renderInfo(x: number): number {
-    const L = this.hud;
+  private renderColumn(x: number, y: number): void {
     const s = this.s;
-    const c = this.compact();
-    const big = c ? 28 : 21;
-    const small = c ? 26 : 19;
-    const gap = c ? 44 : 34;
-    const lift = c ? 170 : 104; // sol alttaki global Gear + Formation ikonlarının üstünde
-    const y2 = H - (c ? 40 : 34) - lift;
-    const y1 = y2 - gap;
+    const team = activeHeroes(s);
+    const lead = leaderOf(s);
+    const w = SIDE.partyW;
+    const PITCH = 86;
+    const HEAD = 34;
+    const paused = suspendedOf(s);
+    const hereH = 14 + 48 + (paused ? 24 : 0) + 12;
+    const FOOT = 122;
+    const rowsEnd = HEAD + team.length * PITCH;
+    let k = this.compact() ? COL_K : 1;
+    const maxH = H - (this.compact() ? 190 : 130) - y; // sol alttaki Gear + Formation ikonlarının üstü
+    let showHere = true;
+    if ((rowsEnd + hereH + FOOT) * k > maxH) showHere = false;
+    if ((rowsEnd + FOOT) * k > maxH) k = maxH / (rowsEnd + FOOT);
+    const col = this.add.container(x, y).setScale(k);
+    this.hud.add(col);
+    const MUTE_LINE = 0.2;
+    // başlık + tek not
+    col.add(elText(this, 0, 0, 'Your party', 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5));
+    const pts = (h: (typeof team)[number]) => (isFallen(h) ? 0 : (h.statPoints ?? 0));
+    const unspent = team.map(pts).filter((n) => n > 0);
+    if (unspent.length) {
+      const same = unspent.every((n) => n === unspent[0]);
+      const txt = same ? `${unspent[0]} point${unspent[0] === 1 ? '' : 's'} to spend${unspent.length > 1 ? ' each' : ''}` : 'Stat points to spend';
+      const t = elText(this, 0, 0, txt, 12, '#ffb98a', { em: 0.06 }).setOrigin(0, 0.5);
+      const cw = t.width + 36;
+      const chip = this.add.graphics();
+      chip.fillStyle(0x2a1608, 0.75).fillRect(w - cw, -14, cw, 28).lineStyle(1, EL.EMBER2, 0.7).strokeRect(w - cw + 0.5, -13.5, cw - 1, 27);
+      chip.fillStyle(EL.EMBER, 1).fillPoints([new Phaser.Math.Vector2(w - cw + 14, -5), new Phaser.Math.Vector2(w - cw + 19, 0), new Phaser.Math.Vector2(w - cw + 14, 5), new Phaser.Math.Vector2(w - cw + 9, 0)], true);
+      t.setPosition(w - cw + 28, 0);
+      col.add([chip, t]);
+    }
+    team.forEach((h, i) => {
+      const def = content.classes[h.class];
+      if (!def) return;
+      const row = this.add.container(0, HEAD + i * PITCH);
+      const fallen = isFallen(h);
+      const pic = this.add.graphics();
+      pic.fillStyle(0x120c08, 1).fillRect(0, 0, 72, 72);
+      const frame = this.add.graphics();
+      const drawF = (on: boolean) => {
+        frame.clear();
+        frame.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 1 : 0.42).strokeRect(0.5, 0.5, 71, 71);
+      };
+      drawF(false);
+      const face = classAvatar(this, def, 36, 36, 70);
+      if (fallen) face.setAlpha(0.32);
+      const tx = 86;
+      const crownW = lead?.id === h.id ? 26 : 0;
+      const name = fitW(elText(this, tx + crownW, 12, def.name, 21, fallen ? EL.DIM : EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - tx - crownW - 56);
+      const lv = elText(this, w, 13, `Lv ${h.level}`, 14, EL.MUTED, { em: 0.08 }).setOrigin(1, 0.5);
+      const bar = hpBar(this, tx, 31, w - tx, 6, h.hpRatio);
+      const hpTxt = session.showHp && !fallen ? ` · ${Math.round(h.hpRatio * 100)}%` : '';
+      const meta = fallen ? (s.valor !== undefined ? 'Fallen · revive: town, Rest camp, Valor' : 'Fallen · revive: town, Rest camp') : `${def.role ?? ''}${hpTxt}`;
+      const role = fitW(elBody(this, tx, 55, meta, 16, fallen ? '#d88a7e' : EL.MUTED, false).setOrigin(0, 0.5), w - tx);
+      row.add([pic, face, frame, name, lv, bar, role]);
+      if (fallen) row.add(graveMark(this, 36, 38, 44));
+      if (lead?.id === h.id) row.add(crown(this, tx + 10, 12, 0.6));
+      // Harcanmamış puan: portrenin köşesinde küçük kor elması (hafif nabız)
+      if (pts(h) > 0) {
+        const dia = this.add.graphics();
+        dia.fillStyle(EL.EMBER, 1).lineStyle(1, EL.EMBER2, 1);
+        const d = [new Phaser.Math.Vector2(-1, -9), new Phaser.Math.Vector2(8, 0), new Phaser.Math.Vector2(-1, 9), new Phaser.Math.Vector2(-10, 0)];
+        dia.fillPoints(d, true).strokePoints(d, true);
+        dia.setPosition(2, 2);
+        row.add(dia);
+        if (!reducedMotion()) {
+          const tw = this.tweens.add({ targets: dia, alpha: { from: 0.55, to: 1 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
+          row.once('destroy', () => tw.stop());
+        }
+      }
+      const zone = this.add.zone(w / 2, 36, w + 8, PITCH).setInteractive({ useHandCursor: true });
+      zone.on('pointerover', () => {
+        drawF(true);
+        this.tweens.add({ targets: row, x: 6, duration: 180, ease: EL.EASE });
+      });
+      zone.on('pointerout', () => {
+        drawF(false);
+        this.tweens.add({ targets: row, x: 0, duration: 180, ease: EL.EASE });
+      });
+      // puanı olan kahraman: dokununca Gear o kahramanın Sheet sekmesinde açılır (puan harcama)
+      zone.on('pointerup', () => !this.drag.moved && this.openHero(h.id, undefined, pts(h) > 0 ? 'char' : undefined));
+      row.add(zone);
+      col.add(row);
+    });
+    let yy = rowsEnd + 6;
+    const rule = (at: number) => {
+      const ln = this.add.graphics();
+      ln.lineStyle(1, EL.GOLD, MUTE_LINE).lineBetween(0, at, w, at);
+      col.add(ln);
+    };
+    // Bulunulan düğüm
+    if (showHere) {
+      const n = node(this.map, s.at);
+      rule(yy);
+      const cy = yy + 14;
+      const tile = this.add.graphics();
+      tile.fillStyle(0x120c08, 1).fillRect(0, cy, 48, 48).lineStyle(1, EL.GOLD, 0.42).strokeRect(0.5, cy + 0.5, 47, 47);
+      col.add(tile);
+      const tileArt = nodeGlyphImage(this, n.type, 24, cy + 24, 34);
+      if (tileArt) col.add(tileArt);
+      else drawNodeGlyph(tile, n.type, EL.ON_N, 0.8, 24, cy + 24);
+      col.add(elText(this, 62, cy + 8, 'You are here', 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5));
+      col.add(fitW(elText(this, 62, cy + 32, n.name, 20, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - 62));
+      // Duraklatılmış savaş (Retreat to Map): düğüme dokununca aynı turdan sürer
+      if (paused) col.add(fitW(elBody(this, 62, cy + 58, `Battle paused · turn ${paused.turn + 1}`, 15, EL.BAD).setOrigin(0, 0.5), w - 62));
+      yy += hereH + 6;
+    }
+    // Bölge / ilerleme / mod / altın (eskiden sol altta haritanın üstündeydi)
+    rule(yy);
     const region = this.map.regions.find((r) => r.id === node(this.map, s.at).region);
-    const r = elText(this, x, y1, region ? region.title : this.map.title, big, EL.ON, { em: 0.06 }).setOrigin(0, 0.5);
-    L.add(r);
+    col.add(fitW(elText(this, 0, yy + 26, region ? region.title : this.map.title, 18, EL.ON, { em: 0.06 }).setOrigin(0, 0.5), w));
     const prog = clearedProgress(s);
-    L.add(elBody(this, x + r.width + 10, y1 + 1, `·  Cleared ${prog.cleared}/${prog.total} · Chapter ${chapterOf(s.mapId).chapter}`, small, EL.MUTED).setOrigin(0, 0.5));
+    const pb = this.add.graphics();
+    pb.fillStyle(EL.INK, 0.85).fillRect(0, yy + 44, w, 5).lineStyle(1, EL.GOLD, 0.28).strokeRect(0.5, yy + 44.5, w - 1, 4);
+    pb.fillStyle(0xe8c47e, 1).fillRect(1, yy + 45, Math.max(2, (w - 2) * (prog.total ? prog.cleared / prog.total : 0)), 3);
+    col.add(pb);
+    col.add(elBody(this, 0, yy + 70, `Cleared ${prog.cleared}/${prog.total}  ·  Chapter ${chapterOf(s.mapId).chapter}`, 17, EL.MUTED).setOrigin(0, 0.5));
     const diff = CONFIG.difficulties[s.difficulty]?.name ?? s.difficulty;
-    const mode = elBody(this, x, y2, s.mode === 'ironman' ? 'Ironman' : 'Normal', small, s.mode === 'ironman' ? EL.BAD : EL.MUTED).setOrigin(0, 0.5);
-    const d = elBody(this, mode.x + mode.width + 8, y2, `·  ${diff}  ·`, small, EL.MUTED).setOrigin(0, 0.5);
-    const cx = d.x + d.width + 14;
-    const coin = this.coin(cx + 6, y2, c ? 34 : 26); // boyalı altın yığını (assets/ui-icons/gold.png), yoksa kodla çizilen sikke
-    const g = elText(this, cx + (c ? 30 : 24), y2, `${s.gold}`, big, EL.ON, { em: 0.04 }).setOrigin(0, 0.5);
-    L.add([mode, d, coin, g, elBody(this, g.x + g.width + 6, y2 + 1, 'gold', small, EL.MUTED).setOrigin(0, 0.5)]);
-    return y1 - big;
+    const mode = elBody(this, 0, yy + 96, s.mode === 'ironman' ? 'Ironman' : 'Normal', 17, s.mode === 'ironman' ? EL.BAD : EL.MUTED).setOrigin(0, 0.5);
+    const d = elBody(this, mode.width + 8, yy + 96, `·  ${diff}`, 17, EL.MUTED).setOrigin(0, 0.5);
+    const g = elText(this, w, yy + 96, `${s.gold}`, 20, EL.ON, { em: 0.04 }).setOrigin(1, 0.5);
+    col.add([mode, d, this.coin(w - g.width - 18, yy + 96, 26), g]);
   }
 
   /** Harita girdisi meşgul mü (yürüyüş, pencere, menü, kasaba, ayarlar). */
@@ -1413,127 +1509,6 @@ export class CampaignMapScene extends Phaser.Scene {
     g.fillStyle(0xc8902e, 1).fillCircle(x, y, 7);
     g.fillStyle(0xffe9a8, 0.9).fillCircle(x - 2, y - 2, 3);
     return g;
-  }
-
-  /** Sol sütun: "Your party · n / 4", kahraman satırları (dokun = o kahramanın Gear sekmesi). */
-  private renderParty(x: number, y: number): number {
-    const L = this.hud;
-    const team = activeHeroes(this.s);
-    const lead = leaderOf(this.s);
-    const w = SIDE.partyW;
-    L.add(elText(this, x, y, `Your party · ${team.length}`, 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
-    const ln = this.add.graphics();
-    fadeLine(ln, x, x + w, y + 18, EL.GOLD, 0.45, 'out');
-    L.add(ln);
-    team.forEach((h, i) => {
-      const def = content.classes[h.class];
-      if (!def) return;
-      const ry = y + 44 + i * 112;
-      const row = this.add.container(x, ry);
-      const pic = this.add.graphics();
-      pic.fillStyle(0x120c08, 1).fillRect(0, 0, 92, 92);
-      const frame = this.add.graphics();
-      const drawFrame = (on: boolean) => {
-        frame.clear();
-        frame.lineStyle(1, on ? EL.ON_N : EL.GOLD, on ? 1 : EL.LINE.a3).strokeRect(0.5, 0.5, 91, 91);
-      };
-      drawFrame(false);
-      const face = classAvatar(this, def, 46, 46, 90);
-      const badge = elBadge(this, 'gold', 13);
-      badge.c.setPosition(90, 88);
-      badge.set(h.level, false);
-      // Düşmüş kahraman (Ömer 2026-10-11): soluk portre + mezar işareti; ceset olarak taşınır, dinlenme noktasında altınla kalkar
-      const fallen = isFallen(h);
-      const name = fitW(elText(this, 112, 18, def.name, 19, fallen ? EL.DIM : EL.ON, { em: 0.05 }).setOrigin(0, 0.5), w - 120);
-      const roleText = fallen ? 'Fallen' : `${def.role ?? ''}${lead?.id === h.id ? ' · Leader' : ''}`;
-      const reviveText = fallen ? (this.s.valor !== undefined ? 'Revive: town, Rest camp, Valor' : 'Revive: town, Rest camp') : '';
-      const role = fitW(elBody(this, 112, 44, roleText, 16, fallen ? '#d88a7e' : EL.MUTED).setOrigin(0, 0.5), w - 120);
-      const bar = hpBar(this, 112, 64, w - 130, 6, h.hpRatio);
-      const hp = fitW(elBody(this, 112, 82, fallen ? reviveText : session.showHp ? `${Math.round(h.hpRatio * 100)}% health` : '', 14, EL.DIM, false).setOrigin(0, 0.5), w - 120);
-      if (fallen) face.setAlpha(0.32);
-      // Level atlama işareti (Ömer 2026-10-18): harcanmamış stat puanı olan kahraman, puan harcanana dek kor nabzıyla öne çıkar (ana eylem çağrısı; kor burada serbest)
-      const pts = fallen ? 0 : (h.statPoints ?? 0);
-      let halo: Phaser.GameObjects.Image | null = null;
-      let ember: Phaser.GameObjects.GameObject[] = [];
-      if (pts > 0) {
-        const still = reducedMotion();
-        halo = this.add.image(46, 46, ensureGlow(this)).setTint(EL.EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(190, 190).setAlpha(still ? 0.6 : 0.4);
-        const ring = this.add.graphics();
-        ring.lineStyle(2, EL.EMBER2, 1).strokeRect(-1, -1, 94, 94);
-        const call = this.add.container(88, 6);
-        const cg = this.add.graphics();
-        cg.fillStyle(0x000000, 0.45).fillCircle(0, 1.5, 19.5);
-        cg.fillStyle(EL.EMBER, 1).fillCircle(0, 0, 18);
-        cg.lineStyle(2, EL.EMBER2, 1).strokeCircle(0, 0, 18);
-        const ct = elBody(this, 0, 1, `+${pts}`, 20, '#1a120a', false).setOrigin(0.5).setFontStyle('bold');
-        call.add([cg, ct]);
-        ember = [ring, call];
-        if (!still) {
-          const tw = [
-            this.tweens.add({ targets: halo!, alpha: { from: 0.3, to: 0.95 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
-            this.tweens.add({ targets: ring, alpha: { from: 0.45, to: 1 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
-            this.tweens.add({ targets: call, scale: { from: 1, to: 1.14 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' }),
-          ];
-          row.once('destroy', () => tw.forEach((t) => t.stop()));
-        }
-      }
-      const upText = pts > 0 ? fitW(elBody(this, 112, 82, `Level up · ${pts} stat point${pts === 1 ? '' : 's'} to spend`, 14, '#ffb35a').setOrigin(0, 0.5), w - 120) : null;
-      if (upText) hp.destroy();
-      if (halo) row.add(halo);
-      row.add([pic, face, frame, badge.c, name, role, bar, upText ?? hp, ...ember]);
-      if (fallen) row.add(graveMark(this, 46, 50, 58));
-      if (lead?.id === h.id) row.add(crown(this, 14, 14, 0.55));
-      const zone = this.add.zone(w / 2, 46, w + 8, 104).setInteractive({ useHandCursor: true });
-      zone.on('pointerover', () => {
-        drawFrame(true);
-        this.tweens.add({ targets: row, x: x + 6, duration: 180, ease: EL.EASE });
-      });
-      zone.on('pointerout', () => {
-        drawFrame(false);
-        this.tweens.add({ targets: row, x, duration: 180, ease: EL.EASE });
-      });
-      // puanı olan kahraman: dokununca Gear o kahramanın Sheet sekmesinde açılır (puan harcama)
-      zone.on('pointerup', () => !this.drag.moved && this.openHero(h.id, undefined, pts > 0 ? 'char' : undefined));
-      row.add(zone);
-      L.add(row);
-    });
-    // Formation / Gear artık sol alttaki global ikonlar (camp-hud.ts; Ömer 2026-10-18)
-    return y + 44 + team.length * 112 + 16;
-  }
-
-  /**
-   * Bulunulan düğümün kompakt bilgisi (Ömer 2026-10-12: tek dokunuşla yürüme geldi, "Selected road" kalktı; diğer düğümlerin bilgisi
-   * hover kartında / savaş onayında): başlık "You are here" + ince çizgi, 64 px glif karosu, ad, tür.
-   * `maxY` (sol alt bilgi bloğunun üstü) aşılacaksa blok çizilmez (telefonda 4 kahramanlı takım).
-   */
-  private renderNodeCard(x: number, y: number, w: number, maxY: number): void {
-    if (y + 34 + 64 > maxY) return;
-    const s = this.s;
-    const L = this.hud;
-    const n = node(this.map, s.at);
-    L.add(elText(this, x, y, 'You are here', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
-    const ln = this.add.graphics();
-    fadeLine(ln, x, x + w, y + 18, EL.GOLD, 0.45, 'out');
-    L.add(ln);
-    const cy = y + 34;
-    const T = 64;
-    const tile = this.add.graphics();
-    tile.fillStyle(0x120c08, 1).fillRect(x, cy, T, T).lineStyle(1, EL.GOLD, EL.LINE.a3).strokeRect(x + 0.5, cy + 0.5, T - 1, T - 1);
-    tile.fillStyle(0x140e09, 0.95).fillCircle(x + T / 2, cy + T / 2, 22).lineStyle(1, EL.GOLD, 0.7).strokeCircle(x + T / 2, cy + T / 2, 22);
-    L.add(tile);
-    const tileArt = nodeGlyphImage(this, n.type, x + T / 2, cy + T / 2, 42);
-    if (tileArt) L.add(tileArt);
-    else drawNodeGlyph(tile, n.type, EL.ON_N, 0.95, x + T / 2, cy + T / 2);
-    const tx = x + T + 16;
-    const tw = w - T - 20;
-    L.add(fitW(elText(this, tx, cy + 10, n.name, 19, EL.ON, { em: 0.05 }).setOrigin(0, 0.5), tw));
-    L.add(fitW(elBody(this, tx, cy + 34, n.subtitle || TYPE_LABEL[n.type], 16, EL.NOTE).setOrigin(0, 0.5), tw));
-    // Duraklatılmış savaş (Retreat to Map): düğüme dokununca aynı turdan sürer
-    const paused = suspendedOf(s);
-    if (paused) L.add(fitW(elBody(this, tx, cy + 56, `Battle paused · turn ${paused.turn + 1}`, 15, EL.BAD).setOrigin(0, 0.5), tw));
-    // Devriye (serbest dolaşım): temizlenmiş savaş düğümünde düğüme dokunmak savaşı yeniden açar
-    else if (nextStep(s).kind === 'move' && patrolAvailable(s)) L.add(fitW(elBody(this, tx, cy + 56, `Patrol · rewards ${Math.round(nextReplayMult(s, s.at) * 100)}%`, 15, EL.NOTE).setOrigin(0, 0.5), tw));
-    // Yönerge satırı yok (Ömer 2026-10-13: "Click a glowing node to march" vb. bariz ipuçları kaldırıldı)
   }
 
   /** Düğüm bilgi satırları (hover kartı ve savaş onayı ortak): tür · durum, düşmanlar, sonraki duraklar. */
@@ -1648,23 +1623,48 @@ export class CampaignMapScene extends Phaser.Scene {
     this.nodeTip = null;
   }
 
-  /** Alt orta: ◂ ▸ (kaydır) − + (yakınlaştır); dokunma alanı >= 56 px. */
+  /** Sağ alt küme (Sakin etiket): − + yakınlaştırma ve ? (lejant). Dokunma alanı >= 44 gerçek px; üstüne gelince / uzun basınca kısa ipucu. */
   private renderControls(): void {
-    // Telefonda dokunma hedefi >= 44 gerçek px: düğmeler büyür
-    const size = this.compact() ? 92 : 52;
-    const step = size + 12;
-    const y = H - 18 - size / 2;
-    const mk = (label: string, x: number, run: () => void) => {
-      const b = elIconButton(this, { label }, () => !this.modal && !this.menuOpen && run(), { size });
+    const size = touchUnits(56);
+    const gap = 8;
+    const right = stageView.right - 36;
+    const y = H - 36 - size / 2;
+    const hint = (x: number, text: string) => {
+      const t = elBody(this, 0, 0, text, 17, EL.ON).setOrigin(0.5, 0.5);
+      const w = t.width + 22;
+      const bg = this.add.graphics();
+      bg.fillStyle(0x0d0906, 0.92).fillRect(-w / 2, -16, w, 32).lineStyle(1, 0xd9b26a, 0.4).strokeRect(-w / 2 + 0.5, -15.5, w - 1, 31);
+      const c = this.add.container(Math.min(x, right - w / 2), y - size / 2 - 26, [bg, t]).setVisible(false);
+      this.hud.add(c);
+      return c;
+    };
+    const mk = (label: string, x: number, tip: string, run: () => void, extra?: (on: boolean) => void) => {
+      const h = hint(x, tip);
+      const b = elIconButton(this, { label }, () => !this.modal && !this.menuOpen && run(), {
+        size,
+        onHover: (on) => {
+          h.setVisible(on);
+          extra?.(on);
+        },
+      });
       b.root.setPosition(x, y);
       this.hud.add(b.root);
       return b.root;
     };
-    this.panBtns.left = mk('◂', W / 2 - 60 - step, () => this.panBy(-PAN_STEP, 0));
-    this.panBtns.right = mk('▸', W / 2 - 60, () => this.panBy(PAN_STEP, 0));
-    this.panBtns.minus = mk('−', W / 2 + 60, () => this.setMapZoom(this.mapZoom - MAP_ZOOM.step));
-    this.panBtns.plus = mk('+', W / 2 + 60 + step, () => this.setMapZoom(this.mapZoom + MAP_ZOOM.step));
-    this.hud.add(elText(this, W / 2, y, 'Map', 12, EL.DIM, { em: 0.24 }).setOrigin(0.5));
+    const step = size + gap;
+    this.panBtns.minus = mk('−', right - 2 * step - size / 2, 'Zoom out', () => this.setMapZoom(this.mapZoom - MAP_ZOOM.step));
+    this.panBtns.plus = mk('+', right - step - size / 2, 'Zoom in', () => this.setMapZoom(this.mapZoom + MAP_ZOOM.step));
+    const legend = this.renderLegend(right, y - size / 2 - 12);
+    mk(
+      '?',
+      right - size / 2,
+      'Legend',
+      () => {
+        this.legendOpen = !this.legendOpen;
+        legend.setVisible(this.legendOpen);
+      },
+      (on) => legend.setVisible(on || this.legendOpen),
+    );
     this.updatePanButtons();
   }
 
@@ -1674,41 +1674,39 @@ export class CampaignMapScene extends Phaser.Scene {
     return k === 'battle' || k === 'complete' || CONFIRM_STEPS.includes(k);
   }
 
-  /** Lejant (sağ alt, katlanabilir): düğüm türleri + Patrol (serbest dolaşım, roadmap 2.10), kit paneli. */
-  private renderLegend(): void {
-    const L = this.hud;
+  /** Sağ alttaki lejant kutusu (gizli; ? düğmesi üstüne gelince / basınca açılır): düğüm türleri + döngü simgesi (Patrol) + kafatası (yenilen koruma). */
+  private renderLegend(right: number, bottom: number): Phaser.GameObjects.Container {
     const w = 300;
-    const x = stageView.right - SIDE.left - w; // sağ alt (Ömer 2026-10-09; görünür DEBUG düğmesi yok)
-    const open = this.legendOpen;
-    const h = open ? 220 : 48;
-    const y = H - 24 - h;
-    L.add(elPanel(this, x, y, w, h, { alpha: 0.88 }));
-    L.add(elText(this, x + 18, y + 24, 'Legend', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
-    L.add(elBody(this, x + w - 18, y + 24, open ? 'hide' : 'show', 16, EL.MUTED).setOrigin(1, 0.5));
-    const hit = this.add.zone(x + w / 2, y + 24, w, 52).setInteractive({ useHandCursor: true });
-    hit.on('pointerup', () => {
-      this.legendOpen = !this.legendOpen;
-      this.renderHud();
-    });
-    L.add(hit);
-    if (!open) return;
     const types: NodeType[] = ['battle', 'elite', 'boss', 'town', 'treasure', 'event', 'rest', 'merchant'];
+    const rows = Math.ceil(types.length / 2) + 2;
+    const h = 64 + rows * 32 + 6;
+    const ps = this.compact() ? 1.6 : 1;
+    const root = this.add.container(right, bottom).setScale(ps).setVisible(this.legendOpen);
+    root.add(elPanel(this, -w, -h, w, h, { alpha: 0.92 }));
+    root.add(elText(this, -w + 18, -h + 24, 'Legend', 14, 'rgba(217,178,106,0.85)', { em: 0.24 }).setOrigin(0, 0.5));
     types.forEach((t, i) => {
-      const cx = x + 32 + (i % 2) * 140;
-      const cy = y + 64 + Math.floor(i / 2) * 32;
+      const cx = -w + 32 + (i % 2) * 140;
+      const cy = -h + 64 + Math.floor(i / 2) * 32;
       const g = this.add.graphics();
       g.fillStyle(0x140e09, 1).fillCircle(cx, cy, 12).lineStyle(1, EL.GOLD, 0.7).strokeCircle(cx, cy, 12);
-      L.add(g);
+      root.add(g);
       const legendArt = nodeGlyphImage(this, t, cx, cy, 26);
-      if (legendArt) L.add(legendArt);
+      if (legendArt) root.add(legendArt);
       else drawNodeGlyph(g, t, 0xd9c8a2, 0.5, cx, cy);
-      L.add(elBody(this, cx + 20, cy, TYPE_LABEL[t], 17, EL.TXT, false).setOrigin(0, 0.5));
+      root.add(elBody(this, cx + 20, cy, TYPE_LABEL[t], 17, EL.TXT, false).setOrigin(0, 0.5));
     });
-    // Patrol: temizlenmiş savaş düğümü yeniden oynanır (rozet haritadakiyle aynı, örnek yüzde ilk devriyeninki)
-    const py = y + 64 + Math.ceil(types.length / 2) * 32;
-    const chip = this.patrolChip(x + 32 + 30, py + (PATROL_CHIP_H - 4) / 2, replayMult(1));
-    L.add(chip);
-    L.add(elBody(this, x + 32 + 76, py, 'Cleared, fight again', 17, EL.TXT, false).setOrigin(0, 0.5));
+    const py = -h + 64 + Math.ceil(types.length / 2) * 32;
+    const loop = this.add.graphics();
+    drawLoopIcon(loop, -w + 32, py);
+    root.add(loop);
+    root.add(fitW(elBody(this, -w + 52, py, `Patrol ${Math.round(replayMult(1) * 100)}%: cleared, fight again`, 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
+    const sy = py + 32;
+    const sk = this.add.graphics();
+    sk.fillStyle(0x1a0c08, 1).fillCircle(-w + 32, sy, 11.5).lineStyle(1.6, 0xb8402f, 0.9).strokeCircle(-w + 32, sy, 11.5);
+    root.add([sk, this.add.image(-w + 32, sy, ensureIcon(this, 'skull', '#e9a58f', false)).setDisplaySize(15, 15)]);
+    root.add(fitW(elBody(this, -w + 52, sy, 'Guards defeated', 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
+    this.hud.add(root);
+    return root;
   }
 
   private toast(text: string): void {
@@ -2306,7 +2304,7 @@ export class CampaignMapScene extends Phaser.Scene {
       b.root.setPosition(bx, y);
       if (r.dim) b.root.setAlpha(0.5);
       this.modal!.root.add(b.root);
-      if (r.hint) this.modal!.root.add(elBody(this, a.x + 40 + bw + 34, y, r.hint, phone ? 26 : 21, EL.NOTE, true, a.w - bw - 110).setOrigin(0, 0.5));
+      if (r.hint) this.modal!.root.add(elBody(this, a.x + 40 + bw + 34, y, r.hint, phone ? 26 : 21, EL.NOTE, false, a.w - bw - 110).setOrigin(0, 0.5));
     });
   }
 
@@ -2439,7 +2437,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.tip = c;
     this.ui.add(c);
     const w = 760;
-    const body = elBody(this, 0, 0, text, 20, EL.NOTE, true, w - 110);
+    const body = elBody(this, 0, 0, text, 20, EL.NOTE, false, w - 110);
     const h = Math.max(84, body.height + 52);
     const x = W / 2 - w / 2;
     const y = H - (this.compact() ? 140 : 96) - h;
@@ -2515,7 +2513,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const n = node(this.map, id);
     if (!n.encounter) return;
     const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Rewards: ${pct}% of the first victory, no Valor.` }, onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Rewards: ${pct}% of the first victory, no Valor. Retreating costs each hero up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP.` }, onGo: go });
   }
 
   /**

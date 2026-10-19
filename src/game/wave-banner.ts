@@ -10,7 +10,7 @@ import { EL, elBody, elDiamond, elText, fadeLine, vGradient } from './elegant-ui
 const W = 1920;
 const CY = 300; // birimlerin ad plakalarının üstünde (gökyüzü)
 
-/** Bandı gösterir; bitince (sönünce) çözülür. `title` = "WAVE 7", `sub` = karşılaşma adı ya da düşmanlar. */
+/** Bandı gösterir; bitince (sönünce) çözülür. `title` = "ROUND 2", `sub` = karşılaşma adı ya da düşmanlar. */
 export function showWaveBanner(scene: Phaser.Scene, title: string, sub?: string, holdMs?: number): Promise<void> {
   const m = motion('wave');
   const hold = holdMs ?? MOTION.wave.holdMs; // savaş içi dalga geçişi daha kısa bekler (wave.battleHoldMs)

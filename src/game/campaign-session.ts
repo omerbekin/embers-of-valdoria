@@ -5,6 +5,7 @@ import { attachRecorder, replayActions, type ReplayAction } from '../endless/rep
 import {
   applyBattle,
   battlePlan,
+  campaignWaveTeams,
   canResume,
   clearPauseSave,
   pauseRecord,
@@ -23,6 +24,8 @@ import {
   newCampaign,
   outcomeFrom,
   writeSave,
+  retreatPatrol,
+  patrolRetreatConfirm,
   type BattlePlan,
   type CampaignMode,
   type CampaignState,
@@ -142,6 +145,24 @@ export function retreatToMap(): CampaignState | null {
   return session.state;
 }
 
+/**
+ * Devriyeden geri çekilme (Ömer 2026-10-19): savaş duraklatılmaz; devriye iptal olur, takım serbest. Her kahraman 0-30% can kaybeder
+ * (src/campaign/state.ts > retreatPatrol); haritada kayıplar not olarak yazar. Otomatik kayıt alınır (kayıp kayıttan dönülerek silinmesin).
+ */
+export function retreatPatrolToMap(): CampaignState | null {
+  const s = session.state;
+  if (!s) return null;
+  stopRecording();
+  const r = retreatPatrol(s);
+  session.state = r.state;
+  save('auto');
+  const name = (id: string) => content.classes[s.roster.find((h) => h.id === id)?.class ?? '']?.name ?? 'Hero';
+  const parts = r.losses.map((l) => `${name(l.heroId)} -${l.pct}%`);
+  session.notice = `Patrol called off${parts.length ? ` · HP lost: ${parts.join(', ')}` : ''}`;
+  logEvent('campaign', `patrol retreat at ${s.at}`);
+  return session.state;
+}
+
 // ------------------------------------------------------------ duraklatılmış savaş (eylem günlüğü; src/campaign/suspend.ts)
 
 /** Kayıt tutulan savaş: eylemler bellekte birikir, geri çekilmede duruma yazılır. */
@@ -207,13 +228,15 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
   const susp = suspendedOf(st);
   const plan = susp ? resumePlan(st, susp) : battlePlan(st, session.attempts.get(st.at) ?? 0);
   const replay = susp?.actions ?? [];
+  // Devriye (duraklatılmış eski kayıt değilse): Retreat duraklatmaz, devriyeyi can bedeliyle iptal eder (retreatPatrolToMap)
+  const patrolRetreat = !susp && st.patrol === st.at;
   logEvent('battle', `campaign enc ${plan.encounterId} node ${plan.nodeId}${susp ? `, resume ${replay.length} actions` : ''}`); // hata raporu izi
   const game = scene.game;
   const data: Partial<BattleSceneData> = {
     seed: plan.seed,
     mode: 'turns',
     battleId: content.DEFAULT_BATTLE,
-    teams: { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.valor !== undefined ? { valor: { party: plan.valor } } : {}) },
+    teams: { party: plan.party, enemies: plan.enemies, units: plan.units, ...campaignWaveTeams(plan), ...(plan.valor !== undefined ? { valor: { party: plan.valor } } : {}) },
     partySize: plan.party.filter(Boolean).length,
     enemySize: plan.enemies.filter(Boolean).length,
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
@@ -230,7 +253,7 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
       resultActions: (victory, battle) => resultActions(game, plan, victory, battle),
       resultSubtitle: (victory, battle) => fallenNote(plan, victory, battle),
       battleEffects: () => campaignEffects(st),
-      retreatConfirm: PAUSED_CONFIRM,
+      retreatConfirm: patrolRetreat ? patrolRetreatConfirm() : PAUSED_CONFIRM,
       // Savaş kurulur kurulmaz (çizimden önce): sürdürülüyorsa günlük oynatılır, sonra kayıt başlar
       prepareBattle: (battle) => {
         startKillTrack(battle, plan.heroOrder); // XP payı (levels.md): günlük oynatılmadan önce (sürdürülen savaşın öldürmeleri de sayılır)
@@ -238,7 +261,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
         startRecording(battle, plan, replay);
       },
       retreat: () => {
-        retreatToMap();
+        if (patrolRetreat) retreatPatrolToMap();
+        else retreatToMap();
         screenGo(game.scene.getScene(BATTLE_SCENE) as Phaser.Scene, MAP_SCENE); // kit ekran geçişi (kararıp açılma), Menu > Retreat
       },
     },

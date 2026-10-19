@@ -65,7 +65,7 @@ export interface BattleSetup {
 }
 
 /** Dalga kuralları verilmediğinde (yalnızca motor testleri / eski çağıranlar): data/waves.json'daki varsayılanla aynı nötr kurallar. */
-export const DEFAULT_WAVE_RULES: WaveRules = { turnOrder: 'reset', healRatio: 0, mpRatio: 0, clearCorpses: true, clearEnemyGrounds: true, cancelEnemyTelegraphs: true };
+export const DEFAULT_WAVE_RULES: WaveRules = { turnOrder: 'keep', healRatio: 0, mpRatio: 0, clearCorpses: true, clearEnemyGrounds: true, cancelEnemyTelegraphs: true };
 
 /** Debug: hasar çarpanı ve kritik/kaçınma zorlaması (varsayılan: 1, auto, auto = oyun kuralı aynen). */
 export interface DebugFlags {
@@ -3186,6 +3186,8 @@ export class Battle {
       if (e.speedBoost > 0) this.speedBoost.set(c.uid, e.speedBoost);
     }
     return () => {
+      // 'keep' (Ömer 2026-10-19): kimsenin sayacı değişmez, sıra kaldığı yerden sürer; yeni düşmanlar savaşa yeni giriyormuş gibi sayaç 0'dan
+      // (createSetupCombatant) başlar ve hızlarına göre mevcut sıraya girer (eşitlikte savaşın tieFirst kuralı). 'reset': herkes 0'dan.
       if (this.mode === 'turns' && rules.turnOrder === 'reset') for (const c of this.combatants) if (c.hp > 0) c.turnCounter = 0;
       emit({ type: 'waveStart', index, total: this.waveCount, combatants: added.map(cloneCombatant), removed, queue: this.mode === 'turns' ? this.turnQueue() : [] });
       for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });

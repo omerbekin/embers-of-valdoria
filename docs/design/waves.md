@@ -1,17 +1,52 @@
-# Dalgalı savaşlar (taslak; Ömer onayı bekliyor)
+# Dalgalı savaşlar (AÇIK; Ömer'in cevapları 2026-10-19)
 
 > Ömer'in kuralı (2026-10-19): "Dalgalı savaşlar: düşmanlar tek seferde gelmeyecek; bir dalga kesilince yeni dalga gelecek, savaş başına ortalama 2-3 dalga.
 > Seferde tutorial'ın son haritasından itibaren, Endless'ta 6. dalgadan itibaren. Amaç: sefer savaşları düşmanları et duvarı yapmadan daha uzun sürsün.
 > Denge buna göre yeniden ayarlanacak." (future-ideas.md 2026-10-19 satırı.)
 >
-> **Durum:** motor + veri şeması + sim desteği HAZIR (engine-dev 2026-10-19). Hiçbir gerçek karşılaşmada henüz dalga YOK; aşağıdaki bölme planı
-> UYGULANMADI (sonraki aşama: Ömer seçimleri -> campaign-dev veri -> balance-tester sim). Ekran (dalga geçişi animasyonu, "Wave 2/3" göstergesi)
-> ui-dev'in işi; mockup hazırlanıyor.
->
-> Terim notu: Endless'ta "dalga" zaten "bir savaş" demek (Wave 7). Bu belgedeki dalga, **bir savaşın içindeki düşman dalgası**dır. Ekranda
-> karışmaması için Endless'ta savaş içi dalgaya ayrı ad gerekebilir (bkz. soru S8).
+> **Durum (engine-dev 2026-10-19):** dalgalar gerçek oyunda AÇIK (sefer Watchtower'dan, Endless 6. savaştan). Ömer'in cevapları aşağıda (bölüm 0).
+> **Denge (balance-tester 2026-10-19):** Bölge II-III karşılaşmaları, Watchtower ve Endless'ın lord_morvane'ı artık veride elle `waves` taşır
+> (çoğunda +1 eşlikçi, lider son dalgada 1 eşlikçiyle); genel ölçek ve XP eğrisi buna göre ayarlandı (`data/campaign/balance.json > _waves`,
+> open-questions 367). Bridge Warden (düğüm 9) seferde hâlâ tek dalga. Ekran ("Round 2/3") ui-dev'in işi.
 
-## 1. Varsayılan kurallar (şimdilik böyle uygulandı)
+## 0. Ömer'in cevapları (2026-10-19) ve uygulanışı
+
+| Soru | Cevap | Uygulama |
+|---|---|---|
+| Nerede | Sefer: tutorial'ın son haritası **Watchtower (düğüm 3)'ten itibaren**; Endless: **6. savaştan itibaren** | `data/waves.json > campaign.skipNodes` = Mill Road (1), Ravenwood (2) dalgasız; geri kalan her savaş (olay / hazine savaşları dahil; yeni eklenecek düğümler kendiliğinden) dalgalı. `endless.fromBattle` = 6 (5. savaşın eliti dalgasız). |
+| S9 dalga sayısı | **A:** normal 2, elit 2, boss 3 | `campaign.count` / `endless.count`. Olay ve hazine savaşı normal sayılır. |
+| S1 dalga arası yenilenme | **Yok** | `rules.healRatio` / `mpRatio` = 0. |
+| S2 sıra | **Koru** (sıfırlama yok) | `rules.turnOrder` = `keep`; ayrıntı aşağıda "Sıra kuralı". |
+| S3 cooldown / savaşta bir kez | **Sürer** (aynı savaş) | Değişiklik yok (zaten böyleydi). |
+| S4 önceki dalganın cesetleri | **Kalkar** | `rules.clearCorpses` = true (Raise Dead / diriltme kullanamaz). |
+| S5 dalga başına Valor | **Yok**; Valor yalnızca savaş sonunda | Değişiklik yok (dalga Valor vermez). |
+| S8 adlandırma | Savaş içi dalga ekranda **"Round 2/3"** (sefer ve Endless'ta aynı) | Motor ve veri nötr ad kullanır (`wave`, `waveStart`, `waveIndex`, `waves`); ekrandaki yazıyı ui-dev değiştirir. Endless'ın "Wave 7" (koşunun kaçıncı savaşı) adı aynı kalır. |
+
+**Sıra kuralı (keep):** yeni dalga gelince sıra yeniden kurulmaz; kahramanların (ve hayattaki her birimin) sıra sayacı olduğu gibi kalır. Yeni
+dalganın düşmanları savaşa yeni giriyormuş gibi sayaç **0**'dan başlar (savaş başındaki gibi; Head Start pasifi de çalışır) ve her tikte
+hızları kadar dolar: böylece mevcut sıraya **hızlarına göre** girerler. Pratikte: o an yarı dolu sayacı olan kahramanlar genelde yeni
+düşmanlardan önce oynar, çok hızlı bir düşman yavaş bir kahramanın önüne geçebilir. Eşitlikte savaşın kendi eşitlik kuralı (sayaç > taraf > yuva).
+Dalgayı bitiren kahramanın sayacı turunu bitirdiği için zaten düşmüştür; ek eylem hakkı (actionsPerTurn) dalga geçişinde biter.
+
+**Bölme kuralı** (karşılaşmanın kendi `waves` alanı yoksa; `src/engine/wave-split.ts`): bugünkü düşman listesi **bölünür, eklenmez**.
+- Önder (rütbeli birim: elit / boss) ve sıra almayan yardımcı nesneler (Iron Mooring) **son dalgada** gelir.
+- Eşlikçiler ön sıradan arkaya dizilir ve önceki dalgalara sırayla dağıtılır (1., 2., 1. ...): her dalga ön ve arka sıradan karışık birim alır.
+  Önder yoksa eşlikçiler bütün dalgalara dağılır.
+- Birim yetmezse dalga sayısı azalır (boş dalga yok).
+- Karşılaşma verisine `waves` yazılırsa (bkz. bölüm 4 şeması) o kullanılır: balance-tester / campaign-dev bölmeyi karşılaşma bazında elle değiştirebilir.
+- Örnekler: Watchtower: 1. dalga kaçak avcı + rahip, 2. dalga Haydut Şefi. Castle Morvane: 1) yeminli muhafız + hierophant, 2) yeminli muhafız, 3) Lord Morvane.
+- **İstisna: The Bridge Warden (düğüm 9)** = boss + 2 Iron Mooring, eşlikçisi yok: seferde **tek dalga** kalır (yeni eşlikçi eklemek içerik/denge
+  kararı; karşılaşmaya `waves` yazılmalı). Endless'ta eksik dalgalar başa rastgele grup olarak eklenir (aşağıda).
+
+**Endless:** normal savaş (6+): her dalga ayrı rastgele grup (`enemyCount` kadar; önceki dalgaların class'ları tekrar etmez, 1. dalga bugünküyle
+birebir aynı). Elit / boss: karşılaşma aynı kuralla bölünür; bölme dalga sayısına yetmezse eksik dalgalar BAŞA rastgele grup olarak eklenir
+(Bridge Warden boss savaşı: 2 rastgele dalga + boss dalgası). Düşman önizlemesi (`enemyNames`) tüm dalgaların düşmanlarını sırayla verir.
+
+**Kayıt / duraklatma:** seferde `suspend.ts > battleForPlan` dalgaları kurar, `resumeKey` dalgaları içerir (dalgasız planın anahtarı eskisiyle
+aynı). Endless `planKey` dalgaları zaten içeriyordu. Dalgalar açılmadan ÖNCE duraklatılmış bir savaş, düğümü artık dalgalıysa sürdürülemez ve
+baştan başlar (mevcut "could not be restored" yolu).
+
+## 1. Motor kuralları (Ömer'in cevaplarıyla)
 
 Tüm sayılar ve açma/kapama tek yerde: `data/waves.json > rules`.
 
@@ -21,7 +56,7 @@ Tüm sayılar ve açma/kapama tek yerde: `data/waves.json > rules`.
 | K2 | Kahramanların can, MP, Rage, cooldown'ları, durumları (buff/debuff), kalkanları, çağrıları **aynen sürer** (aynı savaş devam ediyor). Savaşta bir kez olan şeyler (Lucky Escape, Cut and Run, "ilk debuff yok sayılır" item'i, Valor) savaş boyu bir kez kalır, dalga başına yenilenmez. | açık |
 | K3 | Önceki dalganın cesetleri kalkar: düşen düşmanlar savaştan çıkar, Raise Dead onları tüketemez, yeni dalganın diriltici düşmanı onları kaldıramaz (`clearCorpses`). | açık |
 | K4 | Düşman tahtasındaki zemin etkileri ve düşmanların bıraktığı zemin etkileri silinir (`clearEnemyGrounds`); oyuncunun kendi tahtasındaki kendi zeminleri kalır. Düşmanın bekleyen telgrafları iptal olur (`cancelEnemyTelegraphs`). | açık |
-| K5 | Sıra (turn order) yeni dalgayla yeniden hesaplanır: herkesin sıra sayacı sıfırlanır, savaş başı gibi (`turnOrder: "reset"`). | reset |
+| K5 | Sıra korunur (`turnOrder: "keep"`, Ömer): kimsenin sayacı değişmez, yeni düşmanlar 0'dan girer (bölüm 0 > Sıra kuralı). `reset` seçeneği motorda durur. | keep |
 | K6 | Dalga arası küçük yenilenme (canlı oyuncu birimlerine maks can / MP oranı) (`healRatio`, `mpRatio`). | 0 / 0 (yok) |
 | K7 | Savaş ancak SON dalga bitince kazanılır. Bir dalga ile oyuncu tarafı aynı anda biterse (sonraki dalga varken) düşman kazanır. Oyuncu herhangi bir dalgada tamamen düşerse kaybeder. | açık |
 | K8 | XP / öldürme / ganimet her dalganın düşmanlarını sayar (savaş özeti tüm dalgaları içerir; sefer XP'si öldürme başına). | açık |
@@ -35,7 +70,7 @@ Mevcut mekaniklerle çakışma (test edildi, `tests/waves.test.ts`):
 - **İki savaş modu:** turns ve test modunda aynı geçiş; test modunda sıra yok.
 - **Rastgelelik:** dalga geçişi rastgele sayı tüketmez; aynı seed = aynı savaş. Dalgasız savaş birebir eskisi (altın kayıtlar değişmedi).
 
-## 2. Ömer'e sorulacak seçenekler
+## 2. Ömer'e sorulan seçenekler (cevaplar bölüm 0'da; S6 ve S7 cevapsız, bugünkü hal sürer)
 
 **S1. Dalga arası yenilenme**
 - A) Yok (varsayılan): dalgalar gerçek yıpratma; savaş uzar, kaynak yönetimi önem kazanır.
@@ -88,7 +123,7 @@ Mevcut mekaniklerle çakışma (test edildi, `tests/waves.test.ts`):
 - B) Normal 2-3 (bölge ilerledikçe 3), elit 3, boss 3 (ortalama ~2,6).
 - Öneri: **A** ile başla, Bölge III'te B.
 
-## 3. Önerilen bölme planı (UYGULANMADI)
+## 3. İlk bölme önerisi (UYGULANMADI; yerine bölüm 0'daki genel bölme kuralı çalışır, öneriler balance-tester için not)
 
 Genel ilke: bugünkü düşman listesi **bölünür ve az miktarda büyütülür**, tek düşmana can yığılmaz. Dalga başına can çarpanları **düşer**
 (et duvarı yerine sayı), toplam düşman canı bugünkünün yaklaşık **1,2-1,4 katı** hedeflenir (dalga arası yenilenme olmadığı için). Sayılar

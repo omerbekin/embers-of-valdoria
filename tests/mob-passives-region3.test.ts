@@ -218,19 +218,24 @@ describe('Bölge III karşılaşmaları (mob-plan.md 10.4)', () => {
     const sets = new Set<string>();
     for (const id of REGION3) {
       const enc = ENCOUNTERS[id]!;
-      for (const u of enc.units) expect(content.classes[u.class], `${id} ${u.class}`).toBeUndefined();
-      if (!enc.units.some((u) => isCaster(u.class))) casterless++;
-      sets.add(enc.units.map((u) => u.class).sort().join('+'));
+      // dalgalı karşılaşma (waves.md): tüm dalgaların birimleri birlikte sayılır
+      const units = [...enc.units, ...(enc.waves ?? []).flatMap((w) => w.units)];
+      for (const u of units) expect(content.classes[u.class], `${id} ${u.class}`).toBeUndefined();
+      if (!units.some((u) => isCaster(u.class))) casterless++;
+      sets.add([...new Set(units.map((u) => u.class))].sort().join('+'));
     }
     expect(casterless).toBeLessThanOrEqual(1);
     expect(sets.size).toBe(REGION3.length);
     // Bölge I-II karşılaşmalarından da farklı
-    const other = valdoria.nodes.filter((n) => n.region !== 'III' && 'encounter' in n).map((n) => ENCOUNTERS[(n as { encounter: string }).encounter]!.units.map((u) => u.class).sort().join('+'));
+    const other = valdoria.nodes.filter((n) => n.region !== 'III' && 'encounter' in n).map((n) => {
+      const e = ENCOUNTERS[(n as { encounter: string }).encounter]!;
+      return [...new Set([...e.units, ...(e.waves ?? []).flatMap((w) => w.units)].map((u) => u.class))].sort().join('+');
+    });
     for (const s of sets) expect(other).not.toContain(s);
     // Endless'ın eski elit/boss dalgaları aynen duruyor
     expect(ENCOUNTERS.dragons_spine).toBeDefined();
     expect(ENCOUNTERS.lord_morvane).toBeDefined();
-    expect(ENCOUNTERS.castle_morvane!.units.find((u) => u.tier === 'boss')!.class).toBe('lord_morvane');
+    expect([...ENCOUNTERS.castle_morvane!.units, ...(ENCOUNTERS.castle_morvane!.waves ?? []).flatMap((w) => w.units)].find((u) => u.tier === 'boss')!.class).toBe('lord_morvane');
   });
 
   it('Castle Morvane YZ ile sonuna kadar oynanır (belirleyici)', () => {

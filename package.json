@@ -1,7 +1,7 @@
 {
   "name": "embers-of-valdoria",
   "private": true,
-  "version": "0.9.1",
+  "version": "0.9.2",
   "type": "module",
   "scripts": {
     "dev": "vite --host",
@@ -16,6 +16,7 @@
     "sim:endless": "tsx src/sim/endless-cli.ts",
     "diag:pull": "node cloudflare/scripts/diag-pull.mjs",
     "release": "node tools/release.mjs",
+    "codemap": "node tools/codemap.mjs",
     "deploy:cf": "npm run build && node cloudflare/scripts/check-assets.mjs && npm --prefix cloudflare run deploy"
   },
   "dependencies": {

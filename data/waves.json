@@ -1,11 +1,21 @@
 {
-  "_not": "Dalgalı savaş geçiş kuralları (Ömer 2026-10-19; varsayılanlar Ömer onayı BEKLİYOR, seçenekler docs/design/waves.md). Motor bu nesneyi BattleSetup.waveRules olarak alır (src/engine/content.ts > battleSetup, teams.waves verilince). turnOrder: 'reset' = yeni dalgada herkesin sıra sayacı sıfırlanır (savaş başı gibi), 'keep' = kahramanlar sayacını korur, yeni düşmanlar 0'dan başlar. healRatio / mpRatio: dalga arası canlı oyuncu birimlerine maks can / MP oranında yenilenme (0 = yok). clearCorpses: önceki dalganın düşmüş düşmanları savaştan çıkar (ceset kalmaz, Raise Dead tüketemez). clearEnemyGrounds: düşman tahtasındaki ve düşmanların bıraktığı zemin etkileri silinir. cancelEnemyTelegraphs: düşman tarafının bekleyen telgrafları iptal olur.",
+  "_not": "Dalgalı savaş (Ömer 2026-10-19 cevapları, docs/design/waves.md). rules: motor bu nesneyi BattleSetup.waveRules olarak alır (src/engine/content.ts > battleSetup, teams.waves verilince). turnOrder: 'keep' (Ömer) = sıra kaldığı yerden sürer, kimsenin sayacı sıfırlanmaz; yeni dalganın düşmanları savaşa yeni giriyormuş gibi sayaç 0'dan başlar ve hızlarına göre mevcut sıraya girer ('reset' = herkes 0'dan, eski varsayılan). healRatio / mpRatio: dalga arası yenilenme (Ömer: yok = 0). clearCorpses: önceki dalganın cesetleri kalkar (Ömer). clearEnemyGrounds / cancelEnemyTelegraphs: düşman tarafının zeminleri / telgrafları silinir. campaign / endless: dalgaların AÇILDIĞI yer ve savaş türüne göre dalga sayısı (Ömer: normal 2, elit 2, boss 3). Karşılaşmanın kendi `waves` alanı varsa o kullanılır; yoksa birimler kurala göre bölünür (src/engine/wave-split.ts). campaign.skipNodes: dalgasız kalan tutorial düğümleri (Mill Road, Ravenwood; Watchtower'dan itibaren dalgalı). endless.fromBattle: dalgaların başladığı Endless savaşı. endless normal savaş: her dalga ayrı rastgele grup (enemyCount kadar, önceki dalgaların class'ları tekrar etmez).",
   "rules": {
-    "turnOrder": "reset",
+    "turnOrder": "keep",
     "healRatio": 0,
     "mpRatio": 0,
     "clearCorpses": true,
     "clearEnemyGrounds": true,
     "cancelEnemyTelegraphs": true
+  },
+  "campaign": {
+    "enabled": true,
+    "skipNodes": ["1", "2"],
+    "count": { "battle": 2, "elite": 2, "boss": 3 }
+  },
+  "endless": {
+    "enabled": true,
+    "fromBattle": 6,
+    "count": { "normal": 2, "elite": 2, "boss": 3 }
   }
 }

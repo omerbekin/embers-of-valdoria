@@ -68,7 +68,7 @@ export function openModal(
   const dim = scene.add.rectangle(FULL_X0, 0, FULL_W, H, 0x050302, o.dim ?? 0.62).setOrigin(0, 0).setInteractive(); // geniş ekranda da tüm alan
   root.add(dim);
   // Yazılar önce ölçülür: `fit` (onay pencereleri) yüksekliği içeriğe göre kısar, metin ile düğmeler arasında boşluk kalmaz
-  const sub = o.subtitle ? elBody(scene, W / 2, 0, o.subtitle, 22, EL.MUTED, true, w - 140).setOrigin(0.5, 0).setAlign('center') : null;
+  const sub = o.subtitle ? elBody(scene, W / 2, 0, o.subtitle, 22, EL.MUTED, false, w - 140).setOrigin(0.5, 0).setAlign('center') : null;
   const text = o.text ? bodyText(scene, W / 2, 0, o.text, w - 140) : null;
   const buttons = o.buttons ?? [];
   const contentH = (sub ? sub.height + 12 : 0) + (text ? text.height + 22 : 0);

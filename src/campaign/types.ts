@@ -221,7 +221,7 @@ export interface CampaignConfig {
    * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
    * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
    */
-  replay?: { xp: number[] };
+  replay?: { xp: number[]; /** Devriyeden geri çekilmede kahraman başına en çok can kaybı (oran, 0-1; Ömer 2026-10-19). */ retreatHpLoss?: number };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
   merchant: { size: number; rerollCost: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
