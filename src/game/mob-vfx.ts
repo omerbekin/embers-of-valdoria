@@ -242,8 +242,11 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       : s.at === 'ground'
         ? [anchors.baseX / fw, anchors.baseY / fh]
         : [anchors.core[0] / fw, anchors.core[1] / fh];
-    // DERİNLİK: efekt hedefin hemen üstünde, hedeften ÖNDEKİ (ekranda daha aşağıdaki) birimlerin altında çizilir (birim derinliği = ayak y'si).
-    const play = (p0: Pt, delay = 0, depth = k.DEPTH, from0?: Pt): void => {
+    // DERİNLİK (Ömer 2026-10-19: "önündeki karakterlerin de önüne çıkacak, araya sıkışmaz"): efekt TÜM birimlerin üstünde (k.DEPTH, oyuncu
+    // skill efektleriyle aynı katman). Yalnızca zemine yatan desen (groundPlane: Glyph of Breaking) birim sırasına göre kalır: hedefin hemen
+    // üstü, öndeki birimlerin altı (birim derinliği = ayak y'si), yoksa öndekinin ayaklarına biner.
+    const play = (p0: Pt, delay = 0, unitDepth = k.DEPTH, from0?: Pt): void => {
+      const depth = s.groundPlane ? unitDepth : k.DEPTH;
       const p = { x: p0.x + off.x, y: p0.y + off.y };
       const from = from0 && travelF ? { x: from0.x + off.x, y: from0.y + off.y } : null;
       const base = {
