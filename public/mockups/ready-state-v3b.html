@@ -1,0 +1,42 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ready state v3b</title>
+<!-- HAZIR DURUMU taslagi v3b (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v6..#v10  &phone  &clean. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+<link rel="stylesheet" href="team-select-v3/v3.css" />
+<link rel="stylesheet" href="ready-state/rs.css" />
+<link rel="stylesheet" href="ready-state-v2/rs2.css" />
+<link rel="stylesheet" href="ready-state-v3b/rs3.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Hazır durumu v3b: serbest tasarımlar (V6-V10)</h1>
+<p>Aynı mantık (Ready'ye basan taraf ortaya doğru dolar, ikisi buluşunca kilitlenir, START BATTLE yanar, geri sayım yok), bu kez ekranın her yeri kullanılabiliyor. Her bölümde: tıklanabilir çerçeve (Ready düğmeleri + Reset + Quick Battle / Multiplayer geçişi) ve altında sabit durumlar. Durum yazısı hep net: tahta başlığında "Ready / Not ready", ortada "Waiting for Opponent" / "Both ready".</p>
+<ul>
+<li><b>Current:</b> oyunun bugünkü hâli (karşılaştırma).</li>
+<li><b>V6 Mandal:</b> iki tahta birbirine doğru kayar, kapı mandalları uzanır; ikisi gelince mandallar geçer, ortadan kor çivi iner.</li>
+<li><b>V7 Düello çemberi:</b> yere iki taraftan bir çember çizilir, ikisi hazır olunca çember kapanır ve içi kor parlar.</li>
+<li><b>V8 Mühür fermanı:</b> ortada bir parşömen; her taraf kendi mührünü basar, kordon ortada düğümlenir.</li>
+<li><b>V9 Vitray:</b> ortada gül vitray; her taraf kendi yarısını parça parça yakar, ikisi bitince merkez ve ışık huzmeleri açılır.</li>
+<li><b>V10 Rün çerçevesi:</b> ekranın tüm kenarındaki rünler iki yandan ortaya doğru yanar, çerçeve ateş alır.</li>
+</ul>
+<p>Telefon için alttaki şeritten 844x390. Reduced-motion açıksa animasyonsuz, son hâli gösterir. Ready düğmeleri yalnızca bu denemede iki tarafı da tıklayabilmek için var.</p>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="ready-state-v3b/rs3.js"></script>
+</body>
+</html>
