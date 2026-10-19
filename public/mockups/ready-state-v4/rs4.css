@@ -270,6 +270,20 @@ html.mk-phone .rs3-st { top: 546px; font-size: 22px; }
 .v-e3.joined .nt { transform: translateX(200px); opacity: .5; } .v-e3.joined .dy { transform: translateX(-200px); opacity: .5; }
 .v-e3.joined .sm { left: 760px; width: 400px; opacity: .3; background: linear-gradient(90deg, transparent, rgba(255,120,50,.8), transparent); }
 
+/* ---------- B2 ART: ChatGPT sancak sprite'lari (egilme / sallanma YOK) ---------- */
+.v-b2art .ba { position: absolute; top: 0; width: var(--w); aspect-ratio: 360 / 1000; z-index: 2; pointer-events: none; }
+.v-b2art .ba .gl { width: 100%; height: 100%; transition: filter 1s; filter: drop-shadow(0 6px 8px rgba(0,0,0,.55)); }
+.v-b2art .ba .rv { width: 100%; height: 100%; overflow: hidden; clip-path: inset(0 0 100% 0); transition: clip-path .9s ease-in; }
+.v-b2art .ba img { display: block; width: 100%; height: 100%; transform: translateY(-14%); transition: transform .9s ease-in; image-rendering: auto; }
+.v-b2art.p-on .ba.l .rv, .v-b2art.e-on .ba.r .rv { clip-path: inset(0 0 0 0); transition: clip-path 1.5s cubic-bezier(.3,0,.2,1); }
+.v-b2art.p-on .ba.l img, .v-b2art.e-on .ba.r img { transform: translateY(0); transition: transform 1.5s cubic-bezier(.3,0,.2,1); }
+.v-b2art.p-on .ba.l.n1 .rv, .v-b2art.e-on .ba.r.n1 .rv, .v-b2art.p-on .ba.l.n1 img, .v-b2art.e-on .ba.r.n1 img { transition-delay: .3s; }
+.v-b2art.joined .ba .gl { filter: drop-shadow(0 0 14px rgba(255,150,50,.85)) drop-shadow(0 0 34px rgba(255,110,30,.45)) brightness(1.18) sepia(.15); }
+.v-b2art .shf { position: absolute; top: 0; width: 170px; height: 700px; opacity: 0; background: linear-gradient(180deg, rgba(255,170,70,.32), transparent); transition: opacity 1s; }
+.v-b2art .shf.l { left: 560px; transform: skewX(-12deg); } .v-b2art .shf.r { left: 1190px; transform: skewX(12deg); }
+.v-b2art.joined .shf { opacity: 1; }
+.v-b2art.p-on:not(.joined) .shf.l, .v-b2art.e-on:not(.joined) .shf.r { opacity: .35; }
+
 @media (prefers-reduced-motion: reduce) {
   .v-b1 .rs-cell.f.ln0::after, .v-b2 .hb, .v-b3 .cr, .v-e1 .rys, .v-e2 .cn, .v-e3 .nt u { animation: none !important; }
   .v-e2 .rp { display: none; }

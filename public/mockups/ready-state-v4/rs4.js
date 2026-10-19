@@ -61,6 +61,8 @@
   const VSM = '<div class="vsm">VS</div>';
   /* B2: tepeden inen dev sancaklar */
   const hb = (side, kind, x, w, len, i) => `<div class="hb ${side} ${kind} n${i}" style="left:${x}px;--w:${w}px;--len:${len}px"><i class="rod"></i><div class="cl"><i class="em"></i><i class="em2"></i><i class="sw"></i></div></div>`;
+  /* B2 art: ChatGPT sancak sprite'lari (oran korunur, en/boy CSS aspect-ratio) */
+  const ba = (side, x, w, i) => `<div class="ba ${side} n${i}" style="left:${x}px;--w:${w}px"><div class="gl"><div class="rv"><img src="ready-state-v4/img/banner-${side === 'l' ? 'player' : 'enemy'}.webp" alt=""></div></div></div>`;
   /* B3: iki yariyi birlesen arma */
   const crestInner = '<path class="fL" d="M10 20 H75 V186 C45 172 10 145 10 100 Z"/><path class="fR" d="M75 20 H140 V100 C140 145 105 172 75 186 Z"/><path class="bd" d="M10 20 H140 V100 C140 145 105 172 75 186 C45 172 10 145 10 100 Z"/><path class="bd2" d="M18 28 H132 V100 C132 138 102 162 75 176 C48 162 18 138 18 100 Z"/><path class="mn" d="M44 52 A15 15 0 1 0 44 82 A11 11 0 1 1 44 52 Z"/><circle class="sn" cx="106" cy="67" r="9"/><g class="ry">' + Array.from({ length: 8 }, (_, i) => `<path d="M106 67 L${(106 + Math.cos(i * Math.PI / 4) * 19).toFixed(1)} ${(67 + Math.sin(i * Math.PI / 4) * 19).toFixed(1)}"/>`).join('') + '</g><path class="bl" d="M75 40 L80 54 V120 H70 V54 Z"/><rect class="bl" x="55" y="120" width="40" height="7" rx="2"/><rect class="bl" x="72" y="127" width="6" height="20"/><circle class="bl" cx="75" cy="152" r="5"/><path class="cw" d="M46 20 L52 3 L64 13 L75 0 L86 13 L98 3 L104 20 Z"/>';
   const crest = (side) => `<div class="cr ${side}"><svg viewBox="${side === 'l' ? '0 0 75 190' : '75 0 75 190'}" width="90" height="228" aria-hidden="true">${crestInner}</svg></div>`;
@@ -74,6 +76,7 @@
     a5: { b: '<div class="rs3-l sky"><i class="dk l"></i><i class="dk r"></i><i class="hz"></i><div class="eclp"><i class="sun"></i><i class="cor"></i><i class="moon"></i></div></div>', f: '', a: VSM, pos: -100 },
     b1: { b: '', f: '', a: VSM, pos: 140 },
     b2: { b: '<div class="rs3-l"><i class="shf l"></i><i class="shf r"></i></div>', f: `<div class="rs3-l">${hb('l', 'o', 8, 68, 720, 0)}${hb('l', 'i', 636, 98, 236, 1)}${hb('r', 'i', 1186, 98, 236, 1)}${hb('r', 'o', 1844, 68, 720, 0)}</div>`, a: VSM, pos: 140 },
+    b2art: { b: '<div class="rs3-l"><i class="shf l"></i><i class="shf r"></i></div>', f: `<div class="rs3-l">${ba('l', 6, 84, 0)}${ba('l', 630, 150, 1)}${ba('r', 1140, 150, 1)}${ba('r', 1830, 84, 0)}</div>`, a: VSM, pos: 140 },
     b3: { b: '', f: '', a: `<i class="cg"></i><i class="seam"></i>${crest('l')}${crest('r')}`, pos: 150 },
     e1: { b: '<div class="rs3-l sk4"><i class="tl"></i><i class="tr"></i><i class="tc"></i><svg viewBox="0 0 1920 1080" width="1920" height="1080" aria-hidden="true"><g class="la">' + ARC('M70 98 Q520 -62 948 182') + '</g><g class="ra">' + ARC('M1850 98 Q1400 -62 972 182') + '</g></svg><i class="so l"></i><i class="so r"></i></div>', f: `<div class="rs3-l">${medal('moon')}${medal('sun')}</div>`, a: VSM, pos: -94 },
     e2: { b: '<div class="rs3-l"><i class="bm l"></i><i class="bm r"></i></div>', f: '', a: `<i class="rune"></i><i class="gd l"><s></s></i><i class="gd r"><s></s></i><i class="cn"></i><i class="rp"></i><i class="rp b"></i>${VSM}`, pos: 205 },
@@ -171,14 +174,15 @@
     a2: 'ORİJİNAL (v3a V2, Ömer beğendi): iki savaş bayrağı yükselir, iç sancaklar birbirine eğilir, flama ipi ortada tutuşur.',
     b1: 'Sancak taşıyıcıları: Ready deyince takımın her sütunundaki ilk kahramanın elinde bir sancak yukarı doğru yükselir (arkadan öne, dalga gibi), dalgalanır. İkisi hazırsa tüm sancaklar rakibe doğru yatar ve ucu altın parlar.',
     b2: 'Dev sancaklar: ekranın tepesinden yere doğru iki uçta uzun, ortada kısa kumaşlar açılır (önce sarılı rulo, sonra iner). İkisi hazırsa ortadaki iki sancak birbirine sallanır, kumaşlar ateş ışığıyla parlar, tepeden ışık huzmesi iner.',
+    b2art: 'B2 ile aynı davranış, kumaşlar yerine ChatGPT sancak görselleri (sol kırmızı-altın taçlı kılıç, sağ gece mavisi gümüş boynuzlu kuru kafa), oranı korunmuş: uçlarda büyük, ortada küçük. Ready deyince tepeden yukarıdan aşağı açılır. İkisi hazırsa sancaklar ASLA eğilmez ya da sallanmaz; düz ve sabit kalır, yalnızca sıcak ateş ışığı yanar, tepeden ışık huzmesi iner, START yanar.',
     b3: 'Arma: her takım armanın bir yarısını yükseltir (sol yarı ay, sağ yarı güneş). Hazır olan yarı canlanıp ortaya yaklaşır; ikisi hazırsa yarılar birleşip tek kılıçlı taç armasına dönüşür, dikiş çizgisi parlar.',
     a5: 'ORİJİNAL (v3a V5, Ömer beğendi): soldan ay, sağdan güneş ortaya kayar, gökyüzü ember olur, tutulma koronası yanar.',
     e1: 'Madalyon yayı: ay madalyonu sol tahtanın köşesinden, güneş madalyonu sağ tahtanın köşesinden kalkar; gökyüzünde yay çizerek ortaya doğru ilerler, yay boyunca ateş izi yanar. İkisi hazırsa üst üste biner: çerçeveler erir, tutulma yanar.',
     e2: 'Zemin yansıması: gökyüzü yok; iki takımın arasındaki yerde bir ritüel çemberi var. Ready deyince yukarıdan ışık huzmesi iner, zeminde yassı bir ay / güneş yansıması yanar. İkisi hazırsa yansımalar üst üste biner, zeminde tutulma halkası ve dalgalar yayılır.',
     e3: 'Gün / gece bölünmüş ekran: Ready deyince kendi yarınız bir göğe dönüşür: sol yarı yıldızlı gece + ay, sağ yarı amber gündüz + güneş. İkisi hazırsa ortada buluşup kana boyalı bir alacakaranlığa karışır, ufukta kızıl güneş yükselir.',
   };
-  const TITLE = { cur: 'Current (oyunun bugünkü hâli)', a2: 'Sancaklar ve flama ipi (orijinal)', b1: 'B1 · Sancak taşıyıcılar', b2: 'B2 · Gökten inen dev sancaklar', b3: 'B3 · Birleşen arma', a5: 'Gökte tutulma (orijinal)', e1: 'E1 · Madalyon yayı', e2: 'E2 · Zeminde yansıyan tutulma', e3: 'E3 · Gün / gece bölünmüş ekran' };
-  const TAB = { cur: 'Current', a2: 'V2 orig', b1: 'B1 Taşıyıcı', b2: 'B2 Dev sancak', b3: 'B3 Arma', a5: 'V5 orig', e1: 'E1 Madalyon', e2: 'E2 Zemin', e3: 'E3 Gün/gece' };
+  const TITLE = { cur: 'Current (oyunun bugünkü hâli)', a2: 'Sancaklar ve flama ipi (orijinal)', b1: 'B1 · Sancak taşıyıcılar', b2: 'B2 · Gökten inen dev sancaklar', b2art: 'B2 art · Gökten inen sancaklar (ChatGPT sprite)', b3: 'B3 · Birleşen arma', a5: 'Gökte tutulma (orijinal)', e1: 'E1 · Madalyon yayı', e2: 'E2 · Zeminde yansıyan tutulma', e3: 'E3 · Gün / gece bölünmüş ekran' };
+  const TAB = { cur: 'Current', a2: 'V2 orig', b1: 'B1 Taşıyıcı', b2: 'B2 Dev sancak', b2art: 'B2 art', b3: 'B3 Arma', a5: 'V5 orig', e1: 'E1 Madalyon', e2: 'E2 Zemin', e3: 'E3 Gün/gece' };
 
   MK.onApply = () => {
     const z = Math.min(1, (window.innerWidth - 44) / (MK.S.phone ? 844 : 1600));
@@ -186,6 +190,6 @@
   };
   MK.mount({
     title: 'Ready state v4',
-    sections: ['cur', 'a2', 'b1', 'b2', 'b3', 'a5', 'e1', 'e2', 'e3'].map((v) => ({ id: v, tab: TAB[v], h: TITLE[v], note: NOTE[v], build: build(v) })),
+    sections: ['cur', 'a2', 'b1', 'b2', 'b2art', 'b3', 'a5', 'e1', 'e2', 'e3'].map((v) => ({ id: v, tab: TAB[v], h: TITLE[v], note: NOTE[v], build: build(v) })),
   });
 })();
