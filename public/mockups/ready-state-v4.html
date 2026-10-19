@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ready state v4</title>
+<!-- HAZIR DURUMU taslagi v4 (ui-dev, 2026-10-19). Oyun kodu DEGIL. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+<link rel="stylesheet" href="team-select-v3/v3.css" />
+<link rel="stylesheet" href="ready-state/rs.css" />
+<link rel="stylesheet" href="ready-state-v2/rs2.css" />
+<link rel="stylesheet" href="ready-state-v4/rs4.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Hazır durumu v4: Sancak ve Tutulma, üçer yeni yorum</h1><p>Beğendiğin ikisinin (V2 Sancaklar, V5 Tutulma) altı yeni yorumu; ikisinin aslı da karşılaştırma için "orig" sekmelerinde. Ortak mantık aynı: bir taraf <b>Ready</b>'ye basınca o taraftan bir animasyon akar, ikisi de hazırsa buluşur ve <b>START BATTLE</b> tutuşur. Geri sayım yok. Her bölümde tıklanabilir çerçeve (Ready, Reset, Quick Battle / Multiplayer) ve 4 sabit durum. Telefon: alttaki şeritten 844x390. Adres: #cur #a2 #b1 #b2 #b3 #a5 #e1 #e2 #e3 &phone.</p><ul><li><b>B1 Sancak taşıyıcılar:</b> kahramanların elinde sancaklar yükselir, dalga gibi.</li><li><b>B2 Dev sancaklar:</b> ekranın tepesinden uzun kumaşlar açılır, ortadakiler birbirine sallanır.</li><li><b>B3 Birleşen arma:</b> iki yarım arma ortada tek taç-kılıç armasına dönüşür.</li><li><b>E1 Madalyon yayı:</b> ay ve güneş madalyonları tahta köşelerinden gökte yay çizip ortada tutulur.</li><li><b>E2 Zemin yansıması:</b> ritüel çemberinde yassı ay/güneş yansımaları üst üste biner.</li><li><b>E3 Gün / gece:</b> ekran yarım gece yarım gündüz, ikisi kızıl alacakaranlıkta birleşir.</li></ul></div><div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="ready-state-v4/rs4.js"></script>
+</body>
+</html>
