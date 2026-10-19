@@ -1,6 +1,10 @@
 /* Ortak taslak iskeleti (ui-dev, 2026-10-19). Oyun kodu DEGIL. Oyunun gercek CSS'i (css/*.css kopyalari) + yalnizca sayfa/serit duzeni.
    Cerceveler (.mk-frame) 1600x900 (masaustu) ya da 844x390 (telefon yatay; html.short + html.compact sinifi) gercek pikseldir; sayfa dar ise zoom ile kucultulur. */
 html, body { height: auto; overflow: auto; background: #070504; margin: 0; }
+/* Oyunun style.css'i kökü ekrana sabitler ve kaydırmayı kapatır (oyun için doğru, taslak sayfası için değil): telefonda sayfa kaysın */
+html:root { position: static; inset: auto; overflow-x: hidden; overflow-y: auto; }
+html, body { overscroll-behavior: auto; touch-action: auto; -webkit-overflow-scrolling: touch; }
+body { overflow: visible; -webkit-user-select: text; user-select: text; }
 body { padding: 0 0 70px; color: #d9c8a2; font-family: 'EB Garamond', Georgia, serif; }
 :root { --er: 0px; --et: 0px; --eb: 0px; --el: 0px; --sat: 0px; --sar: 0px; --sab: 0px; --sal: 0px; --fw: 1600px; --fh: 900px;
   --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217,178,106,.42); --g-line: rgba(217,178,106,.16); --g-line2: rgba(217,178,106,.3);
