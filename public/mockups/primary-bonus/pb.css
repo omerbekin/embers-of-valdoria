@@ -1,4 +1,4 @@
-/* Primary bonus taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Yeni parcalar ember (#e0702a) tonunda; gerisi oyunun band-tip.css'i. */
+/* Primary bonus taslagi (sade, 2026-10-19). Oyun kodu DEGIL. */
 :root { --pb-u: .8px; }
 html.mk-phone { --pb-u: .42px; }
 .pb-row { display: flex; flex-wrap: wrap; gap: 26px 30px; align-items: flex-start; padding: 22px; background: #0c0806 url('../kit-v2/bg/menu.webp') center / cover; position: relative; width: 100%; box-sizing: border-box; }
@@ -9,46 +9,10 @@ html.mk-phone .pb-row { max-width: 844px; gap: 22px 18px; padding: 14px; }
 .pb-cap { font: 600 12px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-dim); max-width: 360px; }
 .pb-cap b { color: var(--g-gold); }
 .pb-cell .bt { max-width: max(300px, calc(460 * var(--u))); }
-
-/* ---- paylasilan ember dili ---- */
-.pb-em { --em: #e0702a; --em2: #ffb35a; }
-.pb-dia { display: inline-block; flex: none; width: .5em; height: .5em; transform: rotate(45deg); background: var(--em); box-shadow: 0 0 6px rgba(224, 112, 42, .8); }
-.pb-lab { white-space: nowrap; font: 600 var(--fs-s) var(--bt-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--em2); line-height: 1.1; }
-.pb-name { font: 600 1.12em var(--bt-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--bt-gold); text-shadow: 0 0 10px rgba(224, 112, 42, .45); }
-.pb-eff { color: #e6dcc6; }
-.pb-eff .n { font: 600 .98em var(--bt-disp); color: var(--bt-gold); }
-.pb-off { font: 600 var(--fs-s) var(--bt-disp); letter-spacing: .12em; text-transform: uppercase; color: #ff9a7a; border: 1px solid rgba(255, 138, 122, .4); background: rgba(220, 90, 70, .13); padding: 0 .6em; height: 1.6em; display: inline-flex; align-items: center; }
-.pb-offnote { color: #ff9a7a; font-size: .95em; }
-
-/* ---- V1: ust plaka ---- */
-.v1 .pb-plate { position: relative; margin: 0 0 max(2px, calc(2 * var(--bu))); padding: max(8px, calc(11 * var(--bu))) max(10px, calc(14 * var(--bu))) max(9px, calc(12 * var(--bu))) max(12px, calc(16 * var(--bu)));
-  background: linear-gradient(90deg, rgba(224, 112, 42, .30), rgba(224, 112, 42, .08) 80%); border: 1px solid rgba(224, 112, 42, .55); border-left: 4px solid var(--em);
-  box-shadow: inset 0 0 18px rgba(224, 112, 42, .12), 0 0 12px rgba(224, 112, 42, .18); display: flex; flex-direction: column; gap: .25em; }
-.v1 .pb-plate .t { display: flex; align-items: center; gap: .6em; }
-.v1 .pb-plate .pb-name { margin-left: auto; }
-.v1 .pb-plate.off { background: rgba(255, 255, 255, .04); border-color: rgba(168, 151, 122, .35); border-left-color: #6d5f4a; box-shadow: none; }
-.v1 .pb-plate.off .pb-name, .v1 .pb-plate.off .pb-lab { filter: grayscale(1) brightness(.8); }
-.v1 .pb-plate.off .pb-dia { background: #6d5f4a; box-shadow: none; }
-
-/* ---- V2: ayrik bolum (ayirici altinda) ---- */
-.v2 .pb-sec { padding: max(8px, calc(11 * var(--bu))) max(12px, calc(18 * var(--bu))) max(10px, calc(13 * var(--bu))); background: linear-gradient(180deg, rgba(224, 112, 42, .10), rgba(0, 0, 0, .2)); }
-.v2 .pb-sec .hd { display: flex; align-items: center; gap: .6em; margin-bottom: .45em; }
-.v2 .pb-sec .hd::after { content: ''; flex: 1; height: 1px; background: rgba(224, 112, 42, .4); }
-.v2 .pb-sec .nm { display: flex; align-items: center; gap: .7em; flex-wrap: wrap; }
-.v2 .pb-sec .val { font: 600 max(20px, calc(30 * var(--bu))) / 1 var(--bt-disp); color: #ffe2b0; text-shadow: 0 0 12px rgba(224, 112, 42, .65); padding: .12em .4em; border: 1px solid rgba(224, 112, 42, .6); background: rgba(224, 112, 42, .16); }
-.v2 .pb-sec .eff { margin-top: .4em; }
-.v2 .pb-sec.off { background: rgba(255, 255, 255, .03); }
-.v2 .pb-sec.off .val { color: #a8977a; border-color: rgba(168, 151, 122, .35); background: rgba(255, 255, 255, .04); text-shadow: none; }
-.v2 .pb-sec.off .pb-dia { background: #6d5f4a; box-shadow: none; }
-.v2 .pb-sec.off .pb-name, .v2 .pb-sec.off .pb-lab { filter: grayscale(1) brightness(.8); }
-
-/* ---- V3: baslikta altin alt baslik cipi ---- */
-.v3 .pb-chip { display: inline-flex; align-items: center; gap: .5em; margin-top: .4em; padding: 0 .7em 0 .55em; height: 1.75em; font: 600 var(--fs-s) var(--bt-disp); letter-spacing: .1em; text-transform: uppercase;
-  color: #ffe2b0; background: rgba(224, 112, 42, .22); border: 1px solid rgba(224, 112, 42, .7); box-shadow: 0 0 10px rgba(224, 112, 42, .25); }
-.v3 .pb-sub { margin-top: .3em; font-size: calc(var(--fs) * .95); line-height: 1.2; color: #f0dcb0; font-family: var(--bt-body); }
-.v3 .pb-sub .n { font: 600 .98em var(--bt-disp); color: var(--bt-gold); }
-.v3 .pb-chip.lock { color: #a8977a; background: rgba(255, 255, 255, .05); border-color: rgba(168, 151, 122, .35); box-shadow: none; }
-.v3 .pb-chip svg { width: 1em; height: 1em; flex: none; }
-.v3 .pb-sub.lock { color: #a8977a; }
-.v3 .bt-ln.long .tx { color: #cdbf9f; font-size: .95em; }
-.v3 .bt-ln.long .dia::after { background: var(--em); box-shadow: 0 0 5px rgba(224, 112, 42, .8); }
+.pb-gold { color: var(--bt-gold); }
+.pb-sub { margin-top: .3em; font-family: var(--bt-body); font-size: calc(var(--fs) * .95); line-height: 1.25; color: #e6dcc6; }
+.pb-sub .n { font: 600 .98em var(--bt-disp); color: var(--bt-gold); }
+.pb-tag { display: block; margin-top: .2em; font: 600 var(--fs-s) var(--bt-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--bt-gold); text-align: right; }
+.pb-first .bt-ln.pb-hl { border-left: 2px solid var(--bt-gold); padding-left: .5em; }
+.pb-first .bt-ln.pb-hl .tx { color: #f0e6cf; }
+.pb-first .bt-ln.pb-hl .pb-gold { font-family: var(--bt-disp); letter-spacing: .04em; }
