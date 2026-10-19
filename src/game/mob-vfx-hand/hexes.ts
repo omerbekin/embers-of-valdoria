@@ -21,6 +21,7 @@ import { fly } from './bolts';
 import { area, areaCenter, aura, bolt } from './flow';
 import { bolt as zap, columnFx, fumes, motes, orb, rays, ringFx, sigilFx, spiralFx } from './magic';
 import { bodyAt, cellDepth, gore } from './phys';
+import { condense, floorGlow, top } from './grand';
 
 const hurt = (c: VfxCtx, v: CombatantView): boolean => !c.usage || c.usage.damages.some((d) => d.target === v.combatant.uid && d.amount > 0);
 const dirTo = (c: VfxCtx, v: CombatantView | Pt): number => (('container' in v ? v.container.x : v.x) >= c.actor.container.x ? 1 : -1);
@@ -350,10 +351,16 @@ function wispSpark(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
 function marshGlowOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void {
   const foot = k.feet(v);
   const END = at + k.slow(900);
-  sigilFx(c, k, foot, Math.max(76, v.w * 0.72), { col: C('#5ac87a'), pale: C('#c8ffd8'), deep: C('#1a5a2a'), ticks: 8, inner: 'none', arcs: 3, peak: at, end: END, spin: 0.6, plate: { hex: '#5ac87a', a: 0.08 } });
-  columnFx(c, k, foot, { h: v.h * 1.5, w: v.w * 0.42, col: '#5ac87a', core: '#d8ffe0', at: at - k.slow(80), dur: 620, depth: v.container.depth + 2, a: 0.55, rise: 200 });
+  const R0 = Math.max(76, v.w * 0.72);
+  sigilFx(c, k, foot, R0, { col: C('#5ac87a'), pale: C('#c8ffd8'), deep: C('#1a5a2a'), ticks: 8, inner: 'none', arcs: 3, peak: at, end: END, spin: 0.6, plate: { hex: '#5ac87a', a: 0.08 } });
+  // görkem (Ömer 2026-10-20): ters dönen ikinci halka, zeminde soluk bataklık ışığı, doruğa toplanan ışık zerreleri, küçük süzülen bataklık ışıkları
+  sigilFx(c, k, foot, R0 * 1.5, { col: C('#4ab86a'), pale: C('#c8ffd8'), deep: C('#1a5a2a'), ticks: 12, inner: 'none', arcs: 2, peak: at + k.slow(140), end: END + k.slow(200), spin: -0.7 });
+  floorGlow(c, k, [{ p: foot, at }], { rx: R0 * 1.1, hex: '#2a7a40', core: '#7dff9b', a: 0.2, pre: 200, hold: 520, fade: 800, pulse: 0.12 });
+  columnFx(c, k, foot, { h: v.h * 1.5, w: v.w * 0.42, col: '#5ac87a', core: '#d8ffe0', at: at - k.slow(80), dur: 620, depth: top(k, 2), a: 0.55, rise: 200 });
   spiralFx(c, k, foot, v.container.depth, { H: v.h * 1.2, R: Math.max(40, v.w * 0.5), at: at - k.slow(120), dur: 700, cols: ['#1a5a2a', '#5ac87a', '#d8ffe0'], w: 6, a: 0.7 });
-  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 16, r: v.w * 0.55, rise: v.h * 1.2, cols: ['#7dff9b', '#c8ffd8', '#5ac87a'], size: [1.6, 2.6], life: 1000, depth: v.container.depth + 3, delay: 500 });
+  condense(c, k, { x: foot.x, y: foot.y - 16 }, { hex: ['#7dff9b', '#c8ffd8', '#5ac87a'], at, r: R0 * 1.3, depth: top(k, 4), n: 16, life: 460, flash: { hex: '#7dff9b', w: R0 * 1.5, h: R0 * 1.0, a: 0.3 } });
+  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 24, r: v.w * 0.55, rise: v.h * 1.2, cols: ['#7dff9b', '#c8ffd8', '#5ac87a'], size: [1.6, 2.6], life: 1000, depth: top(k, 3), delay: 500 });
+  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 4, r: v.w * 0.7, rise: v.h * 0.9, cols: ['#c8ffd8', '#7dff9b'], size: [3.2, 4.4], life: 1300, depth: top(k, 3), delay: 700, orbit: 0.5, a: 0.8 });
 }
 const marshGlow: MobHandVfx = (c, k, hitMs) => aura(c, k, hitMs, '#7dff9b', (v, at) => marshGlowOn(c, k, v, at));
 

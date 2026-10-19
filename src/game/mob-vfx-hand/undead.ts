@@ -17,7 +17,8 @@ import { C, FLAT, TAU, UP, after, bits, clamp01, eo, layer, layers, lerp, puffs,
 import { blob, blobPts, crackPath, drawCrack, flame, spiral, taper, xf } from './draw';
 import { fly } from './bolts';
 import { area, aura, bolt, melee } from './flow';
-import { fumes, motes, ringFx, sigilFx } from './magic';
+import { columnFx, fumes, motes, ringFx, sigilFx } from './magic';
+import { condense, floorGlow, top } from './grand';
 import { GORE, bodyAt, cellDepth, dust, gore, rubble, wounds } from './phys';
 
 const hurt = (c: VfxCtx, v: CombatantView): boolean => !c.usage || c.usage.damages.some((d) => d.target === v.combatant.uid && d.amount > 0);
@@ -363,7 +364,7 @@ function benedictionOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void
   const t0 = Math.max(0, at - k.slow(360));
   const END = at + k.slow(900);
   const bones = Array.from({ length: 6 }, () => ({ x: k.rnd(-0.6, 0.6), d: k.rnd(0, 0.5), r: k.rnd(0, 6), vr: k.rnd(-4, 4) }));
-  layers(c, END, [{ depth: v.container.depth - 1, add: true }, { depth: v.container.depth + 2, add: true }, { depth: v.container.depth + 3 }], ([back, front, solid], tm) => {
+  layers(c, END, [{ depth: v.container.depth - 1, add: true }, { depth: top(k, 2), add: true }, { depth: top(k, 3) }], ([back, front, solid], tm) => {
     if (tm < t0) return;
     const q = clamp01((tm - t0) / (at - t0));
     const post = clamp01((tm - at) / (END - at));
@@ -375,6 +376,11 @@ function benedictionOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void
     back!.lineStyle(7, VIOLET.dark, 0.5 * a).strokeEllipse(v.container.x, hy, R * 2, R * 0.6);
     front!.lineStyle(3, VIOLET.body, 0.9 * a).strokePoints(Array.from({ length: 13 }, (_, i) => ({ x: v.container.x + Math.cos((i / 12) * Math.PI) * R, y: hy + Math.sin((i / 12) * Math.PI) * R * 0.3 })), false);
     front!.lineStyle(1.6, VIOLET.pale, (0.6 + 0.4 * flare) * a).strokePoints(Array.from({ length: 13 }, (_, i) => ({ x: v.container.x + Math.cos((i / 12) * Math.PI) * R * 0.94, y: hy + Math.sin((i / 12) * Math.PI) * R * 0.28 })), false);
+    // ikinci, daha geniş hale: birinci haleyi izleyip gövdeye doğru alçalır (görkem, Ömer 2026-10-20)
+    const hy2 = lerp(headY - 60, foot.y - v.h * 0.45, eo(clamp01((q - 0.15) / 0.85), 2));
+    const R2 = R * 1.35;
+    back!.lineStyle(5, VIOLET.dark, 0.35 * a * q).strokeEllipse(v.container.x, hy2, R2 * 2, R2 * 0.6);
+    front!.lineStyle(2, VIOLET.body, 0.7 * a * q).strokePoints(Array.from({ length: 13 }, (_, i) => ({ x: v.container.x + Math.cos((i / 12) * Math.PI) * R2, y: hy2 + Math.sin((i / 12) * Math.PI) * R2 * 0.3 })), false);
     // ışık perdesi: haleden ayağa düşen soluk sütun
     const h = (foot.y - hy) * eo(q, 1.6);
     back!.fillStyle(VIOLET.body, 0.12 * a * (1 + flare)).fillRect(v.container.x - R, hy, R * 2, h);
@@ -391,7 +397,14 @@ function benedictionOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void
     }
   });
   sigilFx(c, k, foot, Math.max(70, v.w * 0.7), { col: VIOLET.body, pale: VIOLET.pale, deep: VIOLET.deep, ticks: 8, inner: 'none', arcs: 2, peak: at, end: END });
-  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 14, r: v.w * 0.5, rise: v.h * 1.1, cols: ['#c8a0ff', '#a55cff', '#e0c8ff'], size: [1.6, 2.6], life: 900, depth: v.container.depth + 3, delay: 400, orbit: 0.7 });
+  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 20, r: v.w * 0.5, rise: v.h * 1.1, cols: ['#c8a0ff', '#a55cff', '#e0c8ff'], size: [1.6, 2.6], life: 900, depth: top(k, 3), delay: 400, orbit: 0.7 });
+  // görkem: zeminde soluk ışık, yükselen ince ışık sütunu, doruğa toplanan zerreler, süzülen kemik tozu
+  const Rg = Math.max(70, v.w * 0.7);
+  sigilFx(c, k, foot, Rg * 1.5, { col: VIOLET.body, pale: VIOLET.pale, deep: VIOLET.deep, ticks: 12, inner: 'none', arcs: 2, peak: at + k.slow(140), end: END + k.slow(200), spin: -0.8 });
+  floorGlow(c, k, [{ p: foot, at }], { rx: Rg * 1.1, hex: '#5a2a8a', core: '#a55cff', a: 0.2, pre: 200, hold: 520, fade: 800, pulse: 0.1 });
+  columnFx(c, k, foot, { h: v.h * 1.7, w: v.w * 0.34, col: '#a55cff', core: '#e0c8ff', at, dur: 620, depth: top(k, 1), a: 0.3, rise: 220 });
+  condense(c, k, { x: foot.x, y: foot.y - 20 }, { hex: ['#c8a0ff', '#a55cff', '#e0c8ff'], at, r: Rg * 1.3, depth: top(k, 4), n: 16, life: 460, flash: { hex: '#c8a0ff', w: Rg * 1.5, h: Rg, a: 0.3 } });
+  after(c, at, () => spray(c, k, bits(k, 12, { x: foot.x, y: headY }, { kind: 'dot', ang: [Math.PI * 0.2, Math.PI * 0.8], sp: [10, 50], size: [1.6, 2.6], life: [900, 1400], cols: ['#d8d0bc', '#a8a090', '#c8a0ff'], jx: Rg * 0.8, jy: 10, drag: 1.2, a: 0.8 }), top(k, 3), 50));
 }
 const unholyBenediction: MobHandVfx = (c, k, hitMs) => aura(c, k, hitMs, '#a55cff', (v, at) => benedictionOn(c, k, v, at));
 
