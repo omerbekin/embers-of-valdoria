@@ -1,0 +1,41 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ready state v2</title>
+<!-- HAZIR DURUMU taslagi v2 (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1..#v5  &phone  &clean. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+<link rel="stylesheet" href="team-select-v3/v3.css" />
+<link rel="stylesheet" href="ready-state/rs.css" />
+<link rel="stylesheet" href="ready-state-v2/rs2.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Hazır durumu v2: doluş + ortada buluşma</h1>
+<p>Fikir: bir taraf <b>Ready</b>'ye basınca o taraftan ortaya doğru bir doluş animasyonu akar; ikisi de hazır olunca iki yarı ortada birleşir (net bir "kilitlenme" anı), ardından <b>START BATTLE</b> tutuşur. Geri sayım yok. Her bölümde: tıklanabilir çerçeve (Ready düğmeleri + Reset + Quick Battle / Multiplayer geçişi) ve altında sabit durumlar (hiçbiri hazır değil / bir taraf hazır / ikisi hazır).</p>
+<ul>
+<li><b>Current:</b> oyunun bugünkü hâli (yalnızca sağ altta küçük düz yazı).</li>
+<li><b>V1 Kor çubuğu:</b> iki yarı çubuk dıştan ortaya kor dolar, ortadaki elmas tutuşur.</li>
+<li><b>V2 Zincir:</b> iki yarı zincir halka halka ısınır; uçtaki iki halka birbirine geçip kilitlenir.</li>
+<li><b>V3 Kılıçlar:</b> iki kılıç kendi taraflarından uzanır, uçları ortada buluşur; ikisi hazır olunca çapraz kesişir.</li>
+<li><b>V4 Kalkan:</b> iki yarım kalkan ortaya kayar ve alttan kor dolar; ikisi birleşip tek kalkan olur.</li>
+<li><b>V5 Fitil:</b> iki yandan fitil yanar, kıvılcım ortadaki mangala varır; ikisi de varınca mangal alev alır.</li>
+</ul>
+<p>Telefon için alttaki şeritten 844x390. Ready düğmeleri yalnızca bu denemede iki tarafı da tıklayabilmek için var (oyunda Quick Battle'da iki taraf da oyuncu kontrolünde, Multiplayer'da rakibinki ağdan gelir).</p>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="ready-state-v2/rs2.js"></script>
+</body>
+</html>
