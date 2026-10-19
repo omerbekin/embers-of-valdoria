@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Primary bonus in stat tooltips</title>
+<!-- PRIMARY BONUS taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone (844x390 olcegi)  &clean. Metinler src/engine/stat-info.ts'ten. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="primary-bonus/pb.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Primary bonus in stat hovers</h1>
+<p>Ömer: "primary bonus daha görünür olsun." Bugün bonus, stat ipucunun en altında düz bir madde ve uzun bir cümle. Aşağıda mevcut hal ve üç öneri. Dört durum her seferinde aynı: Warrior STR (primary, bonus açık), Warrior STR (primary ama başka stat daha yüksek, bonus kapalı), Warrior INT (primary değil), Druid INT (primary, Mana Echo).</p>
+<h3>Notlar</h3>
+<ul>
+<li>Metinler oyundan birebir (<code>primaryBonusLines</code>, <code>primaryBonusInfo</code>); yüzdeler formulas.json değerleri (35% / 20%). "Primary for ..." listesi sınıf verisinden (STR: Warrior, Defender; INT: Mage, Paladin, Druid, Anti-Mage, Undead).</li>
+<li>Primary olmayan statta bugün bonus hiç yazılmaz. V1 ve V2 bunu korur; V3 ek olarak kilitli satır gösterir (yeni bilgi, onay gerekir).</li>
+<li>Bonus kapalıyken oyundaki "Inactive: this is not the unit's highest stat" cümlesi bonus bölümünün içine girer.</li>
+<li>Ember rengi oyunun ana vurgusu (#e0702a); bonus stat rengini (STR turuncu, INT mavi) taşımaz, her statta aynı "bonus" işareti okunur.</li>
+<li>Telefon yatay için şeritten <b>844x390</b>; sayfa kayar. İpuçları bu sayfada tıklanmaz, gerçek oyunda hover / dokunma.</li>
+</ul>
+</div>
+<div id="sections"></div>
+</div>
+<script src="kit-v2/mk.js"></script>
+<script src="primary-bonus/app.js"></script>
+</body>
+</html>
