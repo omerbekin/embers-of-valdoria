@@ -1,0 +1,3 @@
+/* Yol taslagi: yalnizca V3 hover/secim parlamasi. Oyun kodu DEGIL. */
+.rd-hot { opacity: 0; transition: opacity .35s ease; pointer-events: none; }
+.rd-hot.on, .rd-hot.hv { opacity: 1; }
