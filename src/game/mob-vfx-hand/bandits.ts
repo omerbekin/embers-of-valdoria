@@ -14,14 +14,15 @@
  *   Cudgel (Road Thug): çivili sopa omuz hizasına iner (Ömer: aşağı); toz şoku, kıymık, zeminde toz halkası.
  *   Hamstring (Road Thug): diz hizasında alçak bıçak savuruşu; bacakta kesik, yere damlayan kan, savrulan toz.
  *   Poacher's Shot (Ravenwood Poacher): hafif yaylı ok; saplanır; kuru sonbahar yaprakları ve tüyler savrulup süzülür.
- *   Tainted Bait (Ravenwood Poacher): ipli et yemi yayla ayağa düşer; yeşil zehir sıçrar, birikinti yayılır, kabarcık, yükselen buhar.
+ *   Tainted Bait (Ravenwood Poacher): kancalı ipli zehirli et yemi yayla düşer, ip şaklar, yem patlar; zehir birikintisi halka halka yayılır, sis, buhar, spor.
  */
 import type { MobHandVfx } from '../mob-vfx';
-import { C, TAU, UP, after, bits, clamp01, ei, eo, layer, lerp, puffs, smoke, spray, type CombatantView, type Pt, type VfxCtx, type VfxKit } from './core';
-import { blob, blobPts, crescent, xf } from './draw';
+import { C, FLAT, TAU, UP, after, bits, clamp01, ei, eo, layer, lerp, puffs, smoke, spray, type CombatantView, type G, type Pt, type VfxCtx, type VfxKit } from './core';
+import { blob, blobPts, crescent, sagLine, xf } from './draw';
+import { floorGlow, top } from './grand';
 import { angTo, fly } from './bolts';
 import { area, areaCenter, bolt, melee, aura } from './flow';
-import { fumes } from './magic';
+import { fumes, motes } from './magic';
 import {
   DUST,
   FIBER,
@@ -409,7 +410,7 @@ function peatSmoke(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
         to: { x: C0.x, y: C0.y - 6 },
         F,
         arc: 240,
-        depth: Math.max(...a.cells.map((p) => p.y)) + 20,
+        depth: top(k, 1),
         hist: 14,
         draw: (g, p, _ang, q, tm, hist) => {
           // ince fitil dumanı izi
@@ -426,9 +427,9 @@ function peatSmoke(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
     );
     // vuruş: çömlek kırılır (kil kırıkları), her hücrede yerden kabaran duman + kor + zeminde koyu leke
     after(c, a.at, () => {
-      spray(c, k, bits(k, 10, C0, { kind: 'shard', ang: [-Math.PI + 0.2, -0.2], sp: [140, 320], size: [5, 9], life: [480, 720], cols: ['#5e4430', '#3a2a1c', '#7a5a40'], jx: 8, jy: 4, floor: C0.y + 4 }), cellDepth(C0, 3), 1400);
+      spray(c, k, bits(k, 10, C0, { kind: 'shard', ang: [-Math.PI + 0.2, -0.2], sp: [140, 320], size: [5, 9], life: [480, 720], cols: ['#5e4430', '#3a2a1c', '#7a5a40'], jx: 8, jy: 4, floor: C0.y + 4 }), top(k, 3), 1400);
       for (const p of a.cells) {
-        const d = cellDepth(p, 2);
+        const d = top(k, 2);
         smoke(
           c,
           k,
@@ -448,6 +449,20 @@ function peatSmoke(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
           g.fillStyle(C('#1a120c'), 0.35 * al).fillEllipse(p.x, p.y, 120, 40);
           g.fillStyle(C('#c8501a'), 0.18 * al * (0.7 + 0.3 * Math.sin(tm / 60 + p.x))).fillEllipse(p.x, p.y, 40, 12);
         }
+      });
+      // zeminde hafif kızgınlık: dumanın altında soluk, nefes alan kor parıltısı (Ömer 2026-10-20) + sönen kor benekleri
+      floorGlow(c, k, a.cells.map((p) => ({ p, at: 0 })), { rx: 66, hex: '#b8481a', core: '#e87a2a', a: 0.22, pre: 40, hold: 520, fade: 900, pulse: 0.18, depth: k.FLOOR_FX + 4 });
+      layer(c, k.slow(1500), k.FLOOR_FX + 5, (g, tm) => {
+        const q = tm / k.slow(1500);
+        const al = (1 - q) ** 1.2;
+        a.cells.forEach((p, i) => {
+          for (let j = 0; j < 6; j++) {
+            const ax = p.x + Math.sin(i * 7 + j * 2.3) * 52;
+            const ay = p.y + Math.cos(i * 3 + j * 1.7) * 11;
+            const fl = 0.45 + 0.55 * Math.sin(tm / 85 + j * 2 + i);
+            g.fillStyle(C('#e0701e'), 0.5 * al * fl).fillCircle(ax, ay, 2.2);
+          }
+        });
       });
     });
   });
@@ -680,9 +695,26 @@ function poachersShot(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// TAINTED BAIT: yem + zehir birikintisi
+// TAINTED BAIT (yeniden tasarlandı, Ömer 2026-10-20): ucunda kanca olan ince bir ipe bağlı zehirli et yemi fırlatılır (ip yayda
+// sarkar), yere kanca gibi oturur; ip gerilip şaklar, yem patlar: çürük et parçaları fırlar, zehir birikintisi halka halka yayılır,
+// kabarcıklar patlar, yerde sürünen yeşil sis, yükselen buhar ve sporlar. Birikinti zemin katmanında, geri kalan her şeyin üstünde.
 
 const VENOM = ['#6fcf4b', '#58b03a', '#8ae05a', '#3e8a2a'];
+const MEAT = ['#4a1e16', '#7a3424', '#5a2a1c', '#3a1810'];
+
+/** Ucunda kancalı zehirli yem parçası. */
+function baitChunk(g: G, p: Pt, rot: number, a: number, drip = 0): void {
+  const f = xf(p, rot);
+  g.fillStyle(C('#2a0e0a'), a).fillPoints([f(-15, -9), f(4, -13), f(16, -3), f(13, 10), f(-7, 13), f(-16, 4)], true);
+  g.fillStyle(C(MEAT[1]!), a).fillPoints([f(-9, -6), f(4, -9), f(10, -1), f(4, 6), f(-8, 5)], true);
+  g.fillStyle(C('#a8d878'), a * 0.55).fillPoints([f(-4, -5), f(3, -6), f(5, -2), f(-2, -1)], true); // zehir parlak yağı
+  // kanca
+  const h = [f(13, -3), f(21, -8), f(26, -2), f(22, 5), f(17, 3)];
+  g.lineStyle(2.6, C('#1c1a18'), a).strokePoints(h, false);
+  g.lineStyle(1.2, C('#8a8078'), a * 0.7).strokePoints(h, false);
+  if (drip > 0) g.fillStyle(C(VENOM[0]!), a * 0.8).fillCircle(f(-4, 12).x, f(-4, 12).y + drip * 10, 2.4);
+}
+
 function taintedBait(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
   return bolt(
     c,
@@ -693,48 +725,76 @@ function taintedBait(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
       const dir = dirTo(c, v);
       const to = { x: v.container.x - dir * v.w * 0.15, y: k.feet(v).y - 8 };
       const from = { x: k.spot(c.actor).x + dir * c.actor.w * 0.3, y: k.spot(c.actor).y - 30 };
-      const LIFE = k.slow(1500);
-      const rs = blob(k, 16, 0.22);
+      const CUT = k.slow(320);
+      const cord = C('#6a5a3e');
       fly(c, k, {
         from,
         to,
         F,
-        arc: 200,
-        depth: v.container.depth + 2,
-        hold: LIFE,
-        draw: (g, p, _an, q) => {
-          const rot = q * 9;
-          const f = xf(p, rot);
-          g.fillStyle(C('#4a1e16'), 1).fillPoints([f(-14, -8), f(4, -12), f(15, -3), f(12, 9), f(-6, 12), f(-15, 4)], true);
-          g.fillStyle(C('#7a3424'), 1).fillPoints([f(-8, -6), f(4, -8), f(9, -1), f(3, 5), f(-7, 4)], true);
-          g.lineStyle(2, C('#8a7a5a'), 1).lineBetween(f(-12, -6).x, f(-12, -6).y, f(12, 6).x, f(12, 6).y);
-          g.fillStyle(C(VENOM[0]!), 0.8).fillCircle(f(8, 8).x, f(8, 8).y, 3);
+        arc: 190,
+        depth: top(k, 1),
+        hold: CUT,
+        hist: 10,
+        draw: (g, p, _an, q, tm, hist) => {
+          // ince ip: elden yeme, yayda sarkar (yem indikçe gerilir)
+          const line = sagLine(from, p, 26 * (1 - q) + 6, 16);
+          g.lineStyle(3, C('#1c140c'), 0.35).strokePoints(line, false);
+          g.lineStyle(1.6, cord, 0.9).strokePoints(line, false);
+          tail(g, hist, 5, C('#4a9a2a'), 0.3);
+          baitChunk(g, p, q * 8, 1, 0.5 + 0.5 * Math.sin(tm / 40));
         },
         stuck: (g, p, _an, t) => {
-          const q = t / LIFE;
-          const al = q < 0.75 ? 1 : 1 - (q - 0.75) / 0.25;
-          // birikinti (zemin), yemi altında yayılır
-          const spread = eo(clamp01(t / k.slow(260)), 2);
-          g.fillStyle(C('#1e3a12'), 0.5 * al).fillPoints(blobPts({ x: p.x, y: p.y + 6 }, 74 * spread, 22 * spread, rs), true);
-          g.fillStyle(C('#4a9a2a'), 0.55 * al).fillPoints(blobPts({ x: p.x, y: p.y + 6 }, 58 * spread, 16 * spread, rs, 0.3), true);
-          g.fillStyle(C('#8ae05a'), 0.25 * al).fillEllipse(p.x - 16, p.y + 3, 30 * spread, 5 * spread);
-          // kabarcıklar
-          for (let i = 0; i < 5; i++) {
-            const ph = (t / k.slow(420) + i * 0.37) % 1;
-            const bx = p.x + Math.sin(i * 2.7) * 44 * spread;
-            const by = p.y + 6 + Math.cos(i * 1.9) * 10 * spread;
-            g.lineStyle(1.6, C('#9aea6a'), al * (1 - ph) * 0.8).strokeCircle(bx, by - ph * 6, 2 + ph * 5);
-          }
-          // yem (ıslak, yerde)
-          const f = xf(p, 0.2);
-          g.fillStyle(C('#4a1e16'), al).fillPoints([f(-14, -6), f(4, -10), f(15, -2), f(12, 6), f(-6, 8), f(-15, 3)], true);
-          g.fillStyle(C('#7a3424'), al).fillPoints([f(-8, -4), f(4, -6), f(9, -1), f(3, 3), f(-7, 2)], true);
+          // ip şaklar, gevşeyip yere düşer ve söner (yem artık patlamış, yalnızca ip)
+          const u = clamp01(t / CUT);
+          const line = sagLine(from, to, 8 + 60 * eo(u, 1.5), 16);
+          g.lineStyle(1.6, cord, 0.9 * (1 - u)).strokePoints(line, false);
+          void p;
         },
       });
       after(c, F, () => {
-        spray(c, k, bits(k, 18, to, { kind: 'drop', ang: [-Math.PI + 0.25, -0.25], sp: [140, 340], size: [3, 5], life: [420, 640], cols: VENOM, jx: 10, jy: 4, floor: to.y + 8 }), v.container.depth + 3, 1300);
-        fumes(c, k, { x: to.x, y: to.y }, { n: 5, spread: 40, h: 150, cols: ['#6fcf4b', '#4a9a2a', '#8ae05a'], life: 1300, a: 0.35, depth: v.container.depth + 2, w: 9, delay: 300 });
-        if (hurt(c, v)) gore(c, k, bodyAt(k, v, dir, 0, 0.5), UP, 4, v.container.depth + 3, { sp: [60, 160] });
+        const LIFE = k.slow(1700);
+        const rs = blob(k, 18, 0.22);
+        const bub = Array.from({ length: 9 }, () => ({ a: k.rnd(0, TAU), r: k.rnd(0.15, 0.85), ph: k.rnd(0, 1), sp: k.rnd(0.8, 1.4) }));
+        // zemin: zehir birikintisi halka halka yayılır, kabarcıklar kabarıp patlar
+        layer(c, LIFE, k.FLOOR_FX + 4, (g, tm) => {
+          const q = tm / LIFE;
+          const al = q < 0.72 ? 1 : 1 - (q - 0.72) / 0.28;
+          const sp = eo(clamp01(tm / k.slow(300)), 2.2);
+          const P = { x: to.x, y: to.y + 6 };
+          g.fillStyle(C('#142a0c'), 0.5 * al).fillPoints(blobPts(P, 84 * sp, 25 * sp, rs), true);
+          g.fillStyle(C('#3e8a2a'), 0.55 * al).fillPoints(blobPts(P, 64 * sp, 18 * sp, rs, 0.3), true);
+          g.fillStyle(C('#8ae05a'), 0.22 * al).fillEllipse(P.x - 16, P.y - 2, 34 * sp, 6 * sp);
+          for (let i = 0; i < 2; i++) {
+            const u = clamp01((tm - i * k.slow(180)) / k.slow(620));
+            if (u > 0 && u < 1) g.lineStyle(2.4 * (1 - u) + 0.6, C('#9aea6a'), 0.6 * (1 - u)).strokeEllipse(P.x, P.y, 60 + 150 * eo(u, 2), (60 + 150 * eo(u, 2)) * FLAT);
+          }
+          for (const b of bub) {
+            const ph = (tm / k.slow(520) * b.sp + b.ph) % 1;
+            const bx = P.x + Math.cos(b.a) * 62 * b.r * sp;
+            const by = P.y + Math.sin(b.a) * 17 * b.r * sp;
+            const rr = 2 + ph * 6;
+            g.lineStyle(1.6, C('#b4f080'), al * (1 - ph) * 0.85).strokeCircle(bx, by - ph * 5, rr);
+            if (ph > 0.88) g.fillStyle(C('#9aea6a'), al * 0.5).fillEllipse(bx, by, rr * 3, rr);
+          }
+        });
+        // yem patlar: çürük et parçaları + zehir damlaları ve jetleri (hepsi birimlerin üstünde)
+        const D = top(k, 2);
+        spray(c, k, bits(k, 9, to, { kind: 'rock', ang: [-Math.PI + 0.2, -0.2], sp: [160, 380], size: [4, 8], life: [520, 780], cols: MEAT, rim: '#8a5a44', jx: 8, jy: 4, floor: to.y + 8 }), D, 1500);
+        spray(
+          c,
+          k,
+          [
+            ...bits(k, 20, to, { kind: 'drop', ang: [-Math.PI + 0.25, -0.25], sp: [140, 360], size: [3, 5], life: [420, 660], cols: VENOM, jx: 10, jy: 4, floor: to.y + 8 }),
+            ...bits(k, 8, to, { kind: 'streak', ang: [-Math.PI + 0.5, -0.5], sp: [260, 460], size: [2, 3], life: [200, 340], cols: ['#b4f080', '#8ae05a'], jx: 6 }),
+          ],
+          D,
+          1300,
+        );
+        // yerde sürünen yeşil sis, yükselen buhar, spor zerreleri
+        smoke(c, k, puffs(k, to, 6, { hex: ['#4a8a30', '#5aa03a', '#3e7a2a'], sx: 46, sy: 6, vx: [-60, 60], vy: [-34, -10], s0: [60, 80], s1: [150, 200], life: [1100, 1500], a: 0.3, drag: 1.2, delay: [40, 260], rise: 0.12 }), top(k));
+        fumes(c, k, to, { n: 5, spread: 40, h: 150, cols: ['#6fcf4b', '#4a9a2a', '#8ae05a'], life: 1300, a: 0.35, depth: top(k, 1), w: 9, delay: 300 });
+        motes(c, k, { x: to.x, y: to.y - 6 }, { n: 10, r: 52, rise: 110, cols: ['#b4f080', '#8ae05a'], size: [1.3, 2.2], life: 1300, depth: top(k, 3), delay: 500, a: 0.8 });
+        if (hurt(c, v)) gore(c, k, bodyAt(k, v, dir, 0, 0.5), UP, 4, D, { sp: [60, 160] });
       });
     },
     { anim: 'attack' },
