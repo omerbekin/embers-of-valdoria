@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Quick Battle hero strip v3</title>
+<!-- QUICK BATTLE secili kahraman seridi v3 (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Yerlesim oyundakiyle ayni (TeamSelectScene > renderInfo), yalniz stat ve skill gorunumu. -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+<link rel="stylesheet" href="team-select-v3/v3.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Quick Battle: seçili kahraman şeridi (v3)</h1>
+<p><b>Yerleşim oyundakiyle aynı ve değişmedi:</b> soldan portre, ad + rol, 4 stat, pasif + 4 skill; şerit aynı yer, aynı boy, aynı ince üst/alt çizgiler. Yalnızca stat ve skill çubuklarının görünümü yeni tasarım diline çekildi. "Current" oyunun bire bir kopyasıdır.</p>
+<ul>
+<li><b>V1 Ölçer:</b> statlar küçük gösterge hücresi (altta ince dolgu çizgisi, ana stat kor renkli elmaslı); skill'ler köşe elmaslı Gear yuvası, altında bedel.</li>
+<li><b>V2 Sakin:</b> statlar kutusuz, ince renkli alt çizgi; ana stat kor elmaslı. Skill'ler aynı 48 birimlik yuva, bedel köşede küçük rozet; pasif yuvarlak, ulti kor parıltılı.</li>
+<li><b>V3 Plaka:</b> statlar dolgulu çubuk çip; skill'ler adı yazılı mini A Plates (PAS / ULT şeridi, bedel çipi).</li>
+</ul>
+<p>Skill ve pasifin üstüne gelince A Band ipucu açılır. Rosterdan başka kahramana tıklayınca şerit değişir. Stat dolgusu = değer / 30 (yalnızca görsel oran). Telefon için alttaki şeritten 844x390.</p>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="team-select-v3/v3.js"></script>
+</body>
+</html>
