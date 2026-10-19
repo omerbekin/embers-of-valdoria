@@ -2361,7 +2361,7 @@ html.reduced-motion .mw-half {
   filter: drop-shadow(0 20px 30px rgba(0, 0, 0, 0.7));
 }
 
-.mw-card {
+.mw-wcard {
   position: absolute;
   right: 4%;
   top: 14%;
@@ -2447,7 +2447,7 @@ html.short .mw-half {
   width: 72%;
 }
 
-html.short .mw-card {
+html.short .mw-wcard {
   top: 4%;
   width: 56%;
   gap: 6px;
@@ -2705,7 +2705,7 @@ html.short .gr-shop.gr-gear {
 }
 
 /* ===== Karşılama: "Today's pick" tüm özellikleriyle (ipucu satırları) + "Browse wares" sağda (birincil en sağ) ===== */
-.mw-card .mw-go {
+.mw-wcard .mw-go {
   align-self: flex-end;
 }
 

@@ -4,7 +4,7 @@ import { classLogoName } from '../../ui/misc-icons';
 import type { UiSoundKind } from '../../ui/ui-sound';
 import layout from '../../../data/battle-layout.json';
 import { skillTags } from '../../ui/skill-tags';
-import { content, describePassive, describeSkill, describeStat, placementHintText, placementHintTitle, primaryBonusInfo } from '../../engine';
+import { content, describePassive, describeSkill, describeStat, skillCostLabel, placementHintText, placementHintTitle, primaryBonusInfo } from '../../engine';
 import type { CombatantDef, PlacementHint, Teams } from '../../engine';
 import { hintBadge, hintColor } from '../formation-hint-ui';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
@@ -92,7 +92,6 @@ export interface TeamSelectData {
 
 // --- Taslak paleti (qb-mockups.html taslak 1 'Twin Formations', Ömer 2026-10-09; taslak uygulandıktan sonra silindi) ---
 const { TXT, ON, MUTED, NOTE, PRI, EMBER, GOLD: GOLDC, ON_N: ONC, INK, PAD, LINE, HIT, EASE: easeOut } = EL;
-const PRI_SMALL = '#e9c062';
 
 // --- Yerleşim (1080 mantıksal yükseklik; kenara yaslananlar stageView.left/right'a göre) ---
 const MID_TOP = 146;
@@ -704,34 +703,51 @@ export class TeamSelectScene extends Phaser.Scene {
     czone.on('pointerout', () => this.hideTip());
     root.add(czone);
     x += Math.max(nameW, 210) + 26;
-    // Statlar: ikon + kısa ad + değer (primary altın)
-    for (const k of ATTRS) {
+    // Statlar (V2 Calm): kutusuz, aralarında ince ayraç, altında stat renginde kısa çizgi; ana stat ember elmaslı
+    const sg = this.add.graphics();
+    root.add(sg);
+    const STAT_PAD = 20;
+    const LINE_MAX = 56; // yalnızca görsel oran (değer/30, çubuğa kırpılır); oyun kuralı değil
+    ATTRS.forEach((k, n) => {
       const pri = def.primary === k;
+      const col = Phaser.Display.Color.HexStringToColor(STAT_COLOR[k]).color;
+      if (n > 0) {
+        sg.lineStyle(1, GOLDC, 0.18).lineBetween(x - STAT_PAD, -11, x - STAT_PAD, 11);
+      }
       const sx = x;
+      if (pri) {
+        sg.fillStyle(EMBER, 0.3).fillPoints(this.diamondPts(x + 4, 0, 7), true);
+        sg.fillStyle(EMBER, 1).fillPoints(this.diamondPts(x + 4, 0, 4.5), true);
+        x += 9 + 2;
+      }
       const ic = this.add.image(x + 11, 0, ensureIcon(this, statIconName(k), STAT_COLOR[k], false)).setDisplaySize(22, 22);
-      x += 22 + 6;
-      const lb = this.cz(x, 1, STAT_LABEL[k], 12, pri ? PRI_SMALL : MUTED, 0.12).setOrigin(0, 0.5);
-      x += lb.width + 6;
-      const v = this.cz(x, 0, String(def.stats[k]), 19, pri ? PRI : TXT, 0).setOrigin(0, 0.5);
+      x += 22 + 7;
+      const lb = this.cz(x, 1, STAT_LABEL[k], 12, pri ? '#ffb98a' : MUTED, 0.16).setOrigin(0, 0.5);
+      x += lb.width + 7;
+      const v = this.cz(x, 0, String(def.stats[k]), 22, pri ? '#ffd2a0' : TXT, 0).setOrigin(0, 0.5);
       x += v.width;
       const zw = x - sx;
+      const lw = Math.max(6, Math.min(Math.min(LINE_MAX, zw), (def.stats[k] / 30) * LINE_MAX));
+      sg.fillStyle(col, 0.7).fillRect(sx, 20, lw, 2);
       const z = this.add.zone(sx + zw / 2, 0, zw + 12, 60).setInteractive();
       z.on('pointerover', () => !this.drag?.moved && this.showTip(`stat:${def.id}:${k}`, this.statTip(def, k), { x: sx, y: INFO.top + 20, w: zw, h: 50 }));
       z.on('pointerout', () => this.hideTip());
       root.add([ic, lb, v, z]);
-      x += 18;
-    }
-    x += 26 - 18;
-    // Pasif (en başta) + skill'ler (48 px kutular)
-    const boxes: Array<{ key: string; icon: string; tip: () => TipSpec }> = def.skills
-      .map((sid) => content.skills[sid])
-      .filter((sk): sk is NonNullable<typeof sk> => !!sk)
-      .map((sk) => ({ key: `skill:${def.id}:${sk.id}`, icon: ensureSkillIcon(this, sk), tip: () => this.skillTip(def, sk.id) }));
+      x += STAT_PAD * 2;
+    });
+    x += 34 - STAT_PAD * 2 + 20;
+    // Pasif (en başta, yuvarlak, ayrı) + skill'ler (48 px kutular, bedel köşe rozeti, ulti ember parıltılı)
+    const boxes: Array<{ key: string; icon: string; cost: string; ult: boolean; tip: () => TipSpec }> = def.skills
+      .map((sid, idx) => ({ sk: content.skills[sid], idx }))
+      .filter((o): o is { sk: NonNullable<typeof o.sk>; idx: number } => !!o.sk)
+      .map(({ sk, idx }) => ({ key: `skill:${def.id}:${sk.id}`, icon: ensureSkillIcon(this, sk), cost: skillCostLabel(sk.cost), ult: idx === 3, tip: () => this.skillTip(def, sk.id) }));
     if (def.passive) {
       const p = def.passive;
       boxes.unshift({
         key: `passive:${def.id}`,
         icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)),
+        cost: '',
+        ult: false,
         tip: () => ({ icon: ensureIcon(this, p.icon, def.color, false, ownerOfUnit(def.id)), title: p.name, kind: 'Passive', accent: def.color, lines: [{ text: describePassive(p, def.stats, content.formulas) }] }),
       });
     }
@@ -742,14 +758,39 @@ export class TeamSelectScene extends Phaser.Scene {
       const passive = !!def.passive && k === 0;
       const drawBox = (hov: boolean) => {
         g.clear();
-        g.fillStyle(INK, 0.55).fillRect(-24, -24, 48, 48);
-        if (passive) g.lineStyle(1, hov ? ONC : GOLDC, hov ? 1 : LINE.a2).strokeCircle(0, 0, 23);
-        else g.lineStyle(1, hov ? ONC : GOLDC, hov ? 1 : LINE.a2).strokeRect(-24, -24, 48, 48);
+        if (passive) {
+          g.fillStyle(INK, 0.55).fillCircle(0, 0, 24);
+          g.lineStyle(1, hov ? ONC : 0x6fb0a8, 1).strokeCircle(0, 0, 23);
+          g.lineStyle(2, INK, 0.85).strokeCircle(0, 0, 21);
+          return;
+        }
+        g.fillStyle(0x1b130b, 1).fillRect(-24, -24, 48, 48);
+        g.lineStyle(1, hov ? ONC : b.ult ? EMBER : GOLDC, hov || b.ult ? 1 : 0.4).strokeRect(-24, -24, 48, 48);
+        g.lineStyle(2, INK, 0.85).strokeRect(-22, -22, 44, 44);
+        if (!b.ult) g.lineStyle(1, GOLDC, 0.14).strokeRect(-20.5, -20.5, 41, 41);
       };
       drawBox(false);
-      const ic = this.add.image(0, 0, b.icon).setDisplaySize(passive ? 34 : 48, passive ? 34 : 48);
+      const parts: Phaser.GameObjects.GameObject[] = [];
+      if (b.ult) parts.push(this.add.image(0, 0, ensureGlow(this)).setTint(EMBER).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(86, 86).setAlpha(0.4));
+      parts.push(g);
+      const ic = this.add.image(0, 0, b.icon).setDisplaySize(passive ? 36 : 48, passive ? 36 : 48);
+      parts.push(ic);
+      if (b.cost && !passive) {
+        const free = /^free$/i.test(b.cost);
+        const num = /^\d+(?:\.\d+)?/.exec(b.cost)?.[0];
+        const rage = /rage/i.test(b.cost);
+        const txt = free ? 'FREE' : num ?? '*';
+        const t = this.cz(0, 0, txt, free ? 10 : 13, free ? '#cfe8a8' : rage ? '#ffb98a' : '#d9b26a', free ? 0.04 : 0).setOrigin(0.5);
+        const bw = Math.max(22, t.width + 10);
+        const pg = this.add.graphics();
+        pg.fillStyle(0x130d07, 1).fillRoundedRect(30 - bw, 8, bw, 22, 11);
+        pg.lineStyle(1, rage ? EMBER : GOLDC, 0.6).strokeRoundedRect(30 - bw, 8, bw, 22, 11);
+        t.setPosition(30 - bw / 2, 19);
+        parts.push(pg, t);
+      }
       const z = this.add.zone(0, 0, 58, 64).setInteractive();
-      box.add([g, ic, z]);
+      parts.push(z);
+      box.add(parts);
       z.on('pointerover', () => {
         if (this.drag?.moved) return;
         drawBox(true);
@@ -762,8 +803,17 @@ export class TeamSelectScene extends Phaser.Scene {
         this.hideTip();
       });
       root.add(box);
-      x += 48 + 10;
+      x += 48 + 12;
+      if (passive) {
+        x += 6;
+        sg.lineStyle(1, GOLDC, 0.3).lineBetween(x, -20, x, 20);
+        x += 1 + 18;
+      }
     });
+  }
+
+  private diamondPts(cx: number, cy: number, r: number): Phaser.Math.Vector2[] {
+    return [new Phaser.Math.Vector2(cx, cy - r), new Phaser.Math.Vector2(cx + r, cy), new Phaser.Math.Vector2(cx, cy + r), new Phaser.Math.Vector2(cx - r, cy)];
   }
 
   /** Bilgi satırındaki class'ı değiştirir (fare çekilince geri dönmez). */

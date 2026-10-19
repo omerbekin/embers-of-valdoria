@@ -2,7 +2,7 @@
  * Harita pencereleri (Ömer 2026-10-19; src/ui/map-window*.ts, data/map-window.json, data/hero-bust.json): saf veri parçaları ve veri tutarlılığı.
  * Görünüm (DOM) yerleşik tarayıcıyla elle denetlenir: debug menüsü > Campaign > "Map windows".
  */
-import { existsSync, readdirSync } from 'node:fs';
+import { existsSync, readdirSync, readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import bust from '../data/hero-bust.json';
 import mw from '../data/map-window.json';
@@ -71,5 +71,14 @@ describe('veri tutarlılığı', () => {
       if (d.hidden || d.testOnly || !d.blurb) continue;
       expect((bust.classes as Record<string, unknown>)[id], `${id} büst`).toBeTruthy();
     }
+  });
+});
+
+// 0.9.2 hatası: harita penceresinin .mw-card kuralı (map-window.css, global) tüccar karşılama kartını ezdi; kart ekranın soluna kaydı, yarısı kesildi
+describe('mw- sınıf çakışması', () => {
+  it('tüccar ekranının mw- sınıfları harita penceresi CSS’inde tanımlı değil', () => {
+    const merchant = new Set(readFileSync('src/ui/merchant-screen.ts', 'utf8').match(/mw-[a-z0-9-]+/g) ?? []);
+    const mapCss = new Set((readFileSync('src/ui/map-window.css', 'utf8').match(/\.mw-[a-z0-9-]+/g) ?? []).map((x) => x.slice(1)));
+    expect([...merchant].filter((c) => mapCss.has(c))).toEqual([]);
   });
 });
