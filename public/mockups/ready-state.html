@@ -1,0 +1,37 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Ready state</title>
+<!-- HAZIR DURUMU taslagi (ui-dev, 2026-10-19). Oyun kodu DEGIL. Adres: #cur | #v1 | #v2 | #v3  &phone  &clean. Quick Battle + Multiplayer takim secimi (TeamSelectScene). -->
+<link rel="stylesheet" href="kit-v2/css/style.css" />
+<link rel="stylesheet" href="kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="kit-v2/css/battle-hud.css" />
+<link rel="stylesheet" href="kit-v2/mk.css" />
+<link rel="stylesheet" href="team-select/ts.css" />
+<link rel="stylesheet" href="team-select-v3/v3.css" />
+<link rel="stylesheet" href="ready-state/rs.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Hazır durumu: Quick Battle + Multiplayer</h1>
+<p>Bugün hazır olunca yalnızca sağ altta küçük düz bir yazı çıkıyor ("Both teams are ready"). Aşağıda <b>Current</b> oyunun birebiri; 3 varyant hazır durumunu görünür yapar. Her bölümde 4 durum var: Quick Battle (oyuncu takımı eksik / ikisi hazır) ve Multiplayer (sen hazırsın, rakip seçiyor / ikisi de hazır, savaş başlıyor). Yeni mekanik yok: yalnızca mevcut durumların gösterimi. Oyunda geri sayım yok; yalnızca "Both ready - starting..." yazısı var, taslakta da o var.</p>
+<ul>
+<li><b>V1 Plaka:</b> her tahtanın başlığının altında hazır plakası (elmas + durum + kor elmasları); ikisi hazır olunca START BATTLE tutuşur.</li>
+<li><b>V2 Mühür:</b> ortadaki VS bir mühür olur; sol yarı oyuncu, sağ yarı rakip hazır olunca kor dolar; ikisi yanınca mühür alev alır, altında kısa durum satırı.</li>
+<li><b>V3 Hazır çubuğu:</b> START'ın hemen üstünde iki yarı çubuk (sen / rakip); takım tamamlandıkça kor dolar, ikisi dolunca START'a akan parıltıyla birleşir.</li>
+</ul>
+<p>Telefon için alttaki şeritten 844x390 (sayfa kayar). Durumlar sabittir (tıklanabilir öğe yok).</p>
+</div>
+<div id="sections"></div>
+</div>
+<script src="team-select/data.js"></script>
+<script src="kit-v2/mk.js"></script>
+<script src="ready-state/rs.js"></script>
+</body>
+</html>
