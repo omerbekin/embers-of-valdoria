@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Skill Tree Structures (mockup)</title>
+<!-- SKILL AGACI YAPILARI taslagi (ui-dev, 2026-10-20). Oyun kodu DEGIL. Brief: docs/design/skill-tree-structures.md.
+  Adres: #s=1..10 (yapi) &c=w|h (sinif) &t=0|1 (agac sekmesi) &both (iki sinif) &phone (844 genislik) &clean (serit gizli). -->
+<link rel="stylesheet" href="skill-trees/skill-trees.css" />
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <h1>Skill tree structures <small>10 öneri · Gear &gt; Skills görünümü · düğümün üstüne gelin (dokunmada tek dokunuş)</small></h1>
+    <div class="st-tabs" id="st-tabs"></div>
+    <div class="st-info" id="st-info"></div>
+    <div class="cls-sel" id="cls-sel"></div>
+  </div>
+  <div class="sheets" id="sheets"></div>
+</div>
+<div id="tip"></div>
+<div id="mk-strip"><b>MOCKUP</b> oyun değil ·
+  <button id="mk-both">Both classes</button><button id="mk-phone">Phone width</button></div>
+<script src="skill-trees/app.js"></script>
+</body>
+</html>
