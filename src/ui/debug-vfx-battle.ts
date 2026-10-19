@@ -4,15 +4,15 @@
  * oyuncu tarafında durur; skill gerçek savaş hattıyla oynar (hazırlık pozu, atılma, efekt, vuruş, hasar rakamı). Kukla hareket etmez ve ölmez
  * (BattleScene.vfxTestCast her atıştan önce/sonra canı doldurur). Savaş arayüzü gizlenir; üstte küçük kontrol paneli:
  *   Skill (TÜM mob skill'leri, src/game/mob-vfx.ts > MOB_VFX_SPECS: mob'a göre gruplu açılır liste + önceki / sonraki; seçince savaş o skill'in
- *   sahibiyle yeniden kurulur; dost hedefli skill'de atanın yanına bir dost (battleTest.allyMob) konur) · Version (Original / ChatGPT 16f (varsa) /
- *   Code in-between / Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts; panel varsayılanı Hand-coded) ·
+ *   sahibiyle yeniden kurulur; dost hedefli skill'de atanın yanına bir dost (battleTest.allyMob) konur) · Version (Real battle (panel varsayılanı: gerçek savaşta oynayan sürüm, skill başına veri kararı) / Original / ChatGPT 16f (varsa) /
+ *   Code in-between / Hand-coded: sheet'siz, tamamen kodla çizilen efekt, src/game/mob-vfx-hand.ts) ·
  *   Code yöntemi + kat · Cast · Loop · Speed 0.25x/0.5x/1x · Pause + Step (≈1 efekt karesi).
  * Sürüm yalnızca O ATIŞ için seçilir (src/game/mob-vfx.ts > mobVfxTest); panel kapanınca ya da savaştan çıkılınca kapanır, gerçek savaşlar
- * değişmez (Original, ara kare KAPALI). Ayarlar data/vfx-inbetween.json > battleTest. Ayrı kod parçası: debug-tools tembel içe aktarır.
+ * değişmez ('Real battle' sürümü test ezmesi olmadan skill'in gerçek ayarıyla oynar). Ayarlar data/vfx-inbetween.json > battleTest. Ayrı kod parçası: debug-tools tembel içe aktarır.
  */
 import type Phaser from 'phaser';
 import { debugState, effectiveTimeScale } from '../game/debug-state';
-import { MOB_VFX_SPECS, mobVfxTest } from '../game/mob-vfx';
+import { MOB_VFX_SPECS, mobRealPlay, mobVfxTest } from '../game/mob-vfx';
 import { MOB_HAND_VFX } from '../game/mob-vfx-hand';
 import { SLOW } from '../game/combatant-view';
 import { BattleScene } from '../game/scenes/BattleScene';
@@ -54,7 +54,7 @@ const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: stri
 
 const sleep = (ms: number): Promise<void> => new Promise((r) => setTimeout(r, ms));
 
-type Version = 'orig' | 'tween' | 'code' | 'hand';
+type Version = 'real' | 'orig' | 'tween' | 'code' | 'hand';
 const HAND_FPS = 60; // el yapımı efekt her karede çizilir: Step ≈ 1 ekran karesi
 let openPanel: { close: () => void } | null = null;
 
@@ -81,7 +81,7 @@ function testSkills(): TestSkill[] {
   return [...byMob.values()].flat();
 }
 /** Son seçim (panel yeniden açılınca aynı skill / sürüm). */
-const last = { skill: 'rend', version: 'hand' as Version };
+const last = { skill: 'rend', version: 'real' as Version };
 
 export function openVfxBattleTest(game: Phaser.Game): void {
   openPanel?.close();
@@ -158,7 +158,8 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   nextBtn.innerHTML = '<svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M6 3l5 5-5 5" fill="none" stroke="currentColor" stroke-width="1.8"/></svg>';
   const verBtns: Array<[Version, HTMLButtonElement]> = (
     [
-      ['orig', 'Original', 'Original 8-frame sheet (assets/mob-vfx): what real battles use'],
+      ['real', 'Real battle', 'Exactly what a real battle plays for this skill (the review decision: Hand-coded, or ChatGPT sheet with code in-betweens)'],
+      ['orig', 'Original', 'Original 8-frame sheet (assets/mob-vfx), no in-between frames'],
       ['tween', 'ChatGPT 16f', 'ChatGPT 16-frame sheet (assets/mob-vfx-tween)'],
       ['code', 'Code in-between', 'Original 8 frames plus code-made in-between frames'],
       ['hand', 'Hand-coded', 'Drawn fully in code (no sprite sheet): particles, arcs, glows, ground rings; redrawn every frame'],
@@ -264,9 +265,16 @@ export function openVfxBattleTest(game: Phaser.Game): void {
     stepBtn.disabled = !state.paused;
     castBtn.classList.toggle('busy', casting);
     const f = curSheet();
-    const ibSub = state.version === 'code' ? state.sub : 1;
+    const real = mobRealPlay(sk.skill);
+    const ibSub = state.version === 'code' ? state.sub : state.version === 'real' ? (real.ib?.sub ?? 1) : 1;
     const label =
-      state.version === 'hand' && !MOB_HAND_VFX[sk.skill]
+      state.version === 'real'
+        ? real.hand
+          ? 'Real battle: Hand-coded (drawn in code, no sprite sheet) · this is what a real battle plays'
+          : real.ib
+            ? `Real battle: ChatGPT sheet + code in-betweens (${IB_CFG.methods[real.ib.method]?.label ?? real.ib.method}, ${real.ib.sub}x) · ${(f?.meta.frames ?? 8) * real.ib.sub} frames @ ${((f?.meta.fps ?? 12) * FPS_SCALE * real.ib.sub).toFixed(1)} fps · this is what a real battle plays`
+            : `Real battle: ChatGPT sheet, no in-betweens · ${f?.meta.frames ?? 8} frames`
+        : state.version === 'hand' && !MOB_HAND_VFX[sk.skill]
         ? 'Hand-coded: not made for this skill, playing Original'
         : state.version === 'hand'
         ? 'Hand-coded · no sprite sheet, drawn every frame · same hit moment as Original'
@@ -283,7 +291,9 @@ export function openVfxBattleTest(game: Phaser.Game): void {
   async function step(): Promise<void> {
     if (!state.paused) return;
     const f = curSheet();
-    const fps = state.version === 'hand' ? HAND_FPS : (f?.meta.fps ?? 12) * FPS_SCALE * (state.version === 'code' ? state.sub : 1);
+    const real = mobRealPlay(SK[state.skill]!.skill);
+    const handNow = state.version === 'hand' || (state.version === 'real' && real.hand);
+    const fps = handNow ? HAND_FPS : (f?.meta.fps ?? 12) * FPS_SCALE * (state.version === 'code' ? state.sub : state.version === 'real' ? (real.ib?.sub ?? 1) : 1);
     const ms = Math.max(16, ((1000 / fps) * SLOW) / state.speed);
     debugState.paused = false;
     applyTiming();
@@ -308,7 +318,7 @@ export function openVfxBattleTest(game: Phaser.Game): void {
         const sk = SK[state.skill]!;
         const mob = sk.mob;
         const useTween = state.version === 'tween' && (await registerTween(mob, sk.skill));
-        mobVfxTest.on = true;
+        mobVfxTest.on = state.version !== 'real'; // 'real' = test kapalı: skill'in gerçek ayarı (el yapımı ya da sheet + ara kare) aynen oynar
         mobVfxTest.tween = useTween;
         mobVfxTest.ib = state.version === 'code' ? { method: state.method, sub: state.sub } : null;
         mobVfxTest.hand = state.version === 'hand' ? (MOB_HAND_VFX[sk.skill] ?? null) : null;

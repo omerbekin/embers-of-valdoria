@@ -229,3 +229,15 @@ export function stabilizeFrames(frames: readonly HTMLCanvasElement[], o: Stabili
     return out;
   });
 }
+
+/** Her karenin kenarından `px` piksel silinir (sheet'e çizili çerçeve; içerik kenara bu kadar yaklaşmaz). */
+export function trimFrames(frames: readonly HTMLCanvasElement[], px: number): HTMLCanvasElement[] {
+  return frames.map((f) => {
+    const x = f.getContext('2d')!;
+    x.clearRect(0, 0, f.width, px);
+    x.clearRect(0, f.height - px, f.width, px);
+    x.clearRect(0, 0, px, f.height);
+    x.clearRect(f.width - px, 0, px, f.height);
+    return f;
+  });
+}

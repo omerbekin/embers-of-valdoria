@@ -44,7 +44,7 @@ export interface VfxCtx {
   /** Aşamalı skill'de aşama i'yi (ve öncekileri) serbest bırakır. Aşamasız skill'de etkisiz. */
   releaseStage: (i: number) => void;
   /** Yakın dövüş: kullanıcı hedefe atılır; Promise vuruş anında çözülür (geri dönüş sürer). */
-  lunge: (towardX: number) => Promise<void>;
+  lunge: (towardX: number, standOff?: number) => Promise<void>;
   /** Büyü/atış hazırlığı (halka + şişme). */
   windUp: (hex: string, anim?: 'cast' | 'attack') => Promise<void>;
   /** `all_enemies` yakın dövüş skill'inde (Whirlwind): hedeflerin bulunduğu ön sıranın orta hücresinin zemin konumu. */
@@ -406,7 +406,7 @@ const standNear = (actor: CombatantView, target: CombatantView) => {
  * Yakın dövüşçü, vuracağı en yakın hedefin yanına koşar ve vuruş duruşuna geçer (vuruş anında çözülür); kısa süre sonra kendiliğinden
  * yerine döner. Tüm yakın dövüş skill'lerinin ortak hareketi (`VfxCtx.lunge`).
  */
-export async function meleeApproach(scene: Phaser.Scene, actor: CombatantView, targets: CombatantView[], centerPos?: { x: number; y: number }): Promise<void> {
+export async function meleeApproach(scene: Phaser.Scene, actor: CombatantView, targets: CombatantView[], centerPos?: { x: number; y: number }, standOff = 0): Promise<void> {
   if (!targets.length && !centerPos) return;
   let stand: { x: number; y: number; dir: number };
   if (centerPos) {
@@ -417,6 +417,7 @@ export async function meleeApproach(scene: Phaser.Scene, actor: CombatantView, t
     const near = targets.reduce((m, t) => (Math.abs(t.container.x - actor.container.x) < Math.abs(m.container.x - actor.container.x) ? t : m));
     stand = standNear(actor, near);
   }
+  stand.x -= stand.dir * standOff; // standOff: hedefe bu kadar px daha az yaklaş (yalnızca görüntü: mızraklı mobların menzili; mob-vfx.ts > tune.standOff)
   await actor.approach(stand.x, stand.y, 170);
   actor.play('attack');
   scene.tweens.add({ targets: actor.container, x: stand.x + stand.dir * 22, duration: slow(60), yoyo: true });

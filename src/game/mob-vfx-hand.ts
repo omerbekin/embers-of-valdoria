@@ -1,6 +1,7 @@
 /**
- * EL YAPIMI (TAMAMEN KODLA ÇİZİLEN) MOB EFEKTLERİ: TÜM mob skill'leri (src/game/mob-vfx.ts > MOB_VFX_SPECS), yalnızca Debug > VFX frame test
- * (in battle) > Version "Hand-coded". Gerçek savaşlar bunu KULLANMAZ: test paneli `mobVfxTest.hand` alanına koyar (mob-vfx.ts > build ilk satırı).
+ * EL YAPIMI (TAMAMEN KODLA ÇİZİLEN) MOB EFEKTLERİ: TÜM mob skill'leri (src/game/mob-vfx.ts > MOB_VFX_SPECS) için var. GERÇEK savaşta yalnızca Ömer'in
+ * 2026-10-20'de seçtiği 18 skill oynar (data/battle-layout.json > animation.mobVfx.skills > hand:true; mob-vfx.ts bu modülü tembel yükler, savaş
+ * parçasına girmez); kalanı yalnızca Debug > VFX frame test (in battle) > Version "Hand-coded" (test paneli `mobVfxTest.hand` alanına koyar).
  *
  * Ömer 2026-10-18: "tüm düşman karakterlerinin animasyonunu rend'de ve glyph'de öğrendiklerinden yola çıkarak sıfırdan baştan yarat".
  * Dil: fiziksel vuruşlar Rend gibi gerçekçi, koyu, mat (ince keskin izler, mat kan/toz zerreleri, kopan lifler, kısa kontrollü sarsıntı,
@@ -31,7 +32,7 @@ import { GUARDIANS } from './mob-vfx-hand/guardians';
 import { MORVANE_MEN } from './mob-vfx-hand/morvane';
 import { BRIDGE } from './mob-vfx-hand/bridge';
 
-/** skill id -> el yapımı efekt (yalnızca test paneli). */
+/** skill id -> el yapımı efekt (gerçek savaşta yalnızca hand:true skill'ler; hepsi test panelinde). */
 export const MOB_HAND_VFX: Readonly<Record<string, MobHandVfx>> = {
   ...CLASSIC,
   ...BEASTS,

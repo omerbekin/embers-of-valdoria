@@ -648,7 +648,7 @@ export class BattleScene extends Phaser.Scene {
       cells: o.at ? [o.at] : [],
       slots: [],
       releaseStage: () => undefined,
-      lunge: () => meleeApproach(this, actor, targets),
+      lunge: (_x, off) => meleeApproach(this, actor, targets, undefined, off),
       windUp: (hex, anim = 'cast') => actor.windUp(hex, anim),
       sfx: (id) => {
         if (skillSfxAllowed(skill, id, owner) || CODE_SFX[owner]?.includes(id)) playSfx(this, id, owner);
@@ -3285,7 +3285,7 @@ export class BattleScene extends Phaser.Scene {
         foes: [...this.views.values()].filter((v) => v.combatant.side !== actor.combatant.side && v.combatant.hp > 0),
         ...(this.currentUsage && this.currentUsage.used.actor === actorUid && this.currentUsage.used.skill === skillId ? { usage: this.currentUsage } : {}),
         viewOf: (uid) => this.views.get(uid),
-        lunge: () => meleeApproach(this, actor, targets, area ? this.cellPos(board, center!) : undefined),
+        lunge: (_x, off) => meleeApproach(this, actor, targets, area ? this.cellPos(board, center!) : undefined, off),
         windUp: (hex, anim = 'cast') => actor.windUp(hex, anim),
         sfx: skillSfx,
         gate: (skip, run, abort) => {
@@ -3589,7 +3589,7 @@ export class BattleScene extends Phaser.Scene {
       cells: (o.slots ?? []).map((sl) => this.cellPos(board, sl)),
       slots: o.slots ?? [],
       releaseStage: () => undefined,
-      lunge: () => meleeApproach(this, actor, o.targets),
+      lunge: (_x, off) => meleeApproach(this, actor, o.targets, undefined, off),
       windUp: (hex, anim = 'cast') => actor.windUp(hex, anim),
       sfx: (id) => playSfx(this, id, SHARED_KEY),
       gate: () => undefined,
