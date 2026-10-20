@@ -1,6 +1,7 @@
-/* MOMENTS skill agaci arayuzu (mockup, oyun kodu DEGIL). Kurallar: core.js (SMM), icerik eslemesi: content.js (SMM_CONTENT, veri skill-mastery-v2/data/vN.js).
-   Belge: docs/design/skill-tree-moments.md. Adres: #c=w|h &lv=1..50 &focus=A-B [&clean]
-   Warrior icerigi: picks-warrior.js (Omer'in secimi, window.SMM_PICKS); bos yuva = { empty: true }. */
+/* MOMENTS skill agaci arayuzu (mockup, oyun kodu DEGIL). Kurallar: core.js (SMM). Icerik: content.js (SMM_CONTENT) + classes.js (SMM_CLASSES: class tablosu, ikonlar).
+   Belgeler: docs/design/skill-tree-moments.md (sema), skill-tree-moments-variants.md (class basina 5 varyant, veri sozlesmesi).
+   Adres: #c=<class>&v=<1-5|pick>&lv=1..50 [&focus=A-B] [&clean].  Eski adresler: #c=w -> warrior (Omer'in secimi), #c=h -> hexer v1.
+   Varyant dosyalari variants/<class>.js, class secilince script etiketiyle yuklenir (SMM_VARIANTS[class]); yoksa / bozuksa 'Variants coming' yer tutucusu. */
 'use strict';
 (function () {
   const MC = window.SMM, CT = window.SMM_CONTENT;
@@ -8,34 +9,56 @@
   const $$ = (q, r) => Array.from((r || document).querySelectorAll(q));
   const esc = (t) => String(t == null ? '' : t).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
   const A = 'skill-tree-moments/';
-
-  /* ---------- sinif tablosu (satir basligi: ikon, ad, temel aciklama). Satir 0 pasif, 1-3 skill, 4 ult ---------- */
-  const CLS = {
-    w: { name: 'Warrior', av: 'warrior', rows: [
-      { ic: 'rage', name: 'Berserker', pas: 1, d: 'Hits harder as HP drops, and losing HP also grants Rage.' },
-      { ic: 'sword', name: 'Double Strike', d: 'Two quick axe blows. The basic attack; builds Rage.' },
-      { ic: 'whirlwind', name: 'Whirlwind', d: 'Sweeps the front row and heals through lifesteal. Cooldown 3.' },
-      { ic: 'charge', name: 'Charge', d: 'Dives at the back row and Stuns the target. Cooldown 3.' },
-      { ic: 'warcry', name: "Headsman's Blow", ult: 1, d: 'Spends all Rage on one heavy strike. Cooldown 5.' },
-    ] },
-    h: { name: 'Hexer', av: 'hexer', rows: [
-      { ic: 'soul', name: 'Ill Omen', pas: 1, d: 'When a cursed enemy dies, its Omens pass to the nearest enemy.' },
-      { ic: 'eye', name: 'Evil Eye', d: 'Basic ranged curse. Stacks Omens on the target.' },
-      { ic: 'drainfield', name: 'Withering Curse', d: 'Area curse that withers enemies over time. Cooldown 3.' },
-      { ic: 'clover', name: 'Jinx', d: 'A Jinxed enemy misses more and crits less. Cooldown 3.' },
-      { ic: 'voidstrike', name: 'Doom Mark', ult: 1, d: 'Detonates the target’s Omens as Doom. Cooldown 4.' },
-    ] },
-  };
+  const CLASSES = window.SMM_CLASSES || [];
+  const CBY = {}; CLASSES.forEach((c) => { CBY[c.id] = c; });
+  const NVAR = 5;
   const KN = { F: 'Filler', E: 'Edge', N: 'Notable', B: 'Blood Price', V: 'Evolve' };
   const ULT = MC.ULT, NROWS = 4, EXPECT = { e1: 25, e2: 40 };
+  /* ikon yoksa tarafsiz yedek (kirik resim gorunmesin) */
+  const FB = 'data:image/svg+xml,' + encodeURIComponent("<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'><rect width='64' height='64' fill='#120c08'/><path d='M32 9 55 32 32 55 9 32Z' fill='none' stroke='#a8803a' stroke-width='3'/><path d='M32 22 42 32 32 42 22 32Z' fill='#a8803a' opacity='.55'/></svg>");
+  const FBQ = FB.replace(/'/g, '%27');
+  /* tooltip madalyonu: ikon + (yuklenemezse) tarafsiz yedek, ikisi de satir ici (goreli adres belgeye gore cozulur) */
+  const medalBg = (ic) => "background-image:url('" + A + ic + "'),url('" + FBQ + "')";
+  document.addEventListener('error', (e) => { const t = e.target; if (t && t.tagName === 'IMG' && !t.dataset.fb) { t.dataset.fb = '1'; t.src = FB; } }, true);
 
-  const ST = { c: 'w', lv: 30, states: {}, plans: {}, tip: null, fail: null, pinned: null, clean: false, fa: 0, fb: 1, content: {} };
-  const rows = () => CLS[ST.c].rows;
-  const sOf = () => ST.states[ST.c] || (ST.states[ST.c] = MC.newState());
-  const planOf = () => ST.plans[ST.c] || null;
-  const cOf = () => ST.content[ST.c] || (ST.content[ST.c] = CT.build(window.SMV_DATA, ST.c, window.SMM_PICKS));
+  const ST = { c: 'warrior', v: 'pick', lv: 30, S: MC.newState(), plan: null, tip: null, fail: null, pinned: null, clean: false, fa: 0, fb: 1,
+    vf: { state: 'loading' }, content: null, rowsC: null, tok: 0, pendingFocus: null };
+  const sOf = () => ST.S;
+  const planOf = () => ST.plan;
+  const defaultV = (c) => (c === 'warrior' ? 'pick' : 1);
+  const VCACHE = {}; // class -> varyant dosyasi verisi (basarili yukleme)
 
-  /* ---------- icerik erisimi (eksik = yer tutucu) ---------- */
+  /* ---------- varyant dosyasi yukleme (script etiketi, onload / onerror, onbellekli; eksik / bozuk = { ok: false }) ---------- */
+  function loadVariants(cls) {
+    return new Promise((resolve) => {
+      const V = (window.SMM_VARIANTS = window.SMM_VARIANTS || {});
+      const check = () => { const err = CT.validateFile(V[cls], cls); return err ? { ok: false, err } : { ok: true, data: V[cls] }; };
+      if (VCACHE[cls]) { resolve({ ok: true, data: VCACHE[cls] }); return; }
+      if (V[cls]) { const r = check(); if (r.ok) VCACHE[cls] = r.data; resolve(r); return; }
+      let done = false; const s = document.createElement('script'); let t = 0;
+      const url = A + 'variants/' + cls + '.js';
+      const fin = (r) => { if (done) return; done = true; clearTimeout(t); s.onload = s.onerror = null; s.remove(); resolve(r); };
+      s.onload = () => { const r = check(); if (r.ok) VCACHE[cls] = r.data; fin(r); };
+      s.onerror = () => fin({ ok: false, err: 'missing' });
+      t = setTimeout(() => fin({ ok: false, err: 'timeout' }), 10000);
+      const inject = () => { if (done) return; s.async = true; s.src = url; document.head.appendChild(s); };
+      /* once kisa yoklama: dosya yoksa bazi sunucular (Vite dev) 200 + HTML doner; script'e HTML yedirip konsola SyntaxError dusurmeyelim. Yoklama calismazsa dogrudan script. */
+      if (location.protocol.indexOf('http') === 0 && typeof fetch === 'function') {
+        fetch(url).then((r) => { if (!r.ok || /text\/html/i.test(r.headers.get('content-type') || '')) fin({ ok: false, err: 'missing' }); else inject(); }, inject);
+      } else inject();
+    });
+  }
+
+  /* ---------- satirlar (ikon / aciklama classes.js, ad varyant dosyasindan) ---------- */
+  function rows() {
+    if (ST.rowsC) return ST.rowsC;
+    const C = CBY[ST.c], D = ST.v !== 'pick' && ST.vf.state === 'ok' ? ST.vf.data : null;
+    return (ST.rowsC = C.rows.map((r, i) => { const f = D ? (i < NROWS ? D.rows[i] : D.ult) : null; return { ic: r.ic, name: (f && f.name) || r.name, d: r.d, pas: i === 0, ult: i === ULT }; }));
+  }
+  const ready = () => (ST.v === 'pick' ? ST.c === 'warrior' : ST.vf.state === 'ok' && !!ST.vf.data.variants[ST.v - 1]);
+  const cOf = () => ST.content || (ST.content = ST.v === 'pick' ? CT.fromPick(window.SMM_PICKS) : CT.fromVariant(ST.vf.data, ST.v - 1));
+
+  /* ---------- icerik erisimi ---------- */
   function nodeInfo(key) {
     const e = cOf().nodes[key], nd = MC.BY[key];
     if (!e) return { name: 'Node ' + nd.id, eff: '(content missing)', nw: false, src: '?', ph: true };
@@ -45,16 +68,17 @@
   /* kural metinlerinde (Needs ..., Needed by ...) bos yuva turuyle ayrilir: 'Open slot (Edge)' */
   const nameOf = (key) => { const i = nodeInfo(key); return i.empty ? 'Open slot (' + KN[MC.BY[key].kind] + ')' : i.name; };
   MC.setNamer(nameOf);
-  const masteryName = () => cOf().mastery || (ST.c === 'w' ? 'Bloodhour Mastery' : 'Portent Mastery');
+  const masteryName = () => cOf().mastery || (CBY[ST.c].name + ' Mastery');
+  const barSrc = () => (ST.v === 'pick' ? 'V6 Moments' : 'V' + ST.v + ' · ' + (cOf().title || ''));
   function barInfo(i) {
     const t = MC.BAR_THR[i];
     if (t > 25) return { name: 'L50: TBD', eff: 'Reserved for the Lv 50 bar (30 / 35 / 40 / 45). Content not decided yet.', tbd: true };
     const b = cOf().bar[i];
-    return b && b[0] ? { name: b[0], eff: b[1] || '(content missing)', tbd: false, src: 'V6 Moments' } : { name: 'Bonus ' + t, eff: '(content missing)', tbd: false, ph: true };
+    return b && b[0] ? { name: b[0], eff: b[1] || '(content missing)', tbd: false, src: barSrc() } : { name: 'Bonus ' + t, eff: '(content missing)', tbd: false, ph: true };
   }
 
   /* ---------- yerlesim ---------- */
-  const G = { COLW: 104, LANEH: 66, STRIP: 46, PADX: 14, COLS: 8, UD: 74 };
+  const G = { COLW: 104, LANEH: 66, HDR: 46, PADX: 14, COLS: 8, UD: 74 };
   const HALF = { F: 22, E: 22, B: 23, N: 28, V: 36 }, LBL = 28;
   const labelSide = (nd) => (nd.kind === 'N' || nd.kind === 'V' ? (nd.lane < 0 ? 'up' : 'dn') : null);
   function ext(nd) {
@@ -65,6 +89,7 @@
     const m = {}; tpl.forEach((n) => { const t = m[n.tier] || (m[n.tier] = { tier: n.tier, c0: n.col, c1: n.col }); t.c0 = Math.min(t.c0, n.col); t.c1 = Math.max(t.c1, n.col); });
     return Object.keys(m).map((k) => m[k]).sort((a, b) => a.c0 - b.c0);
   }
+  /* Tier basligi (Tier I .. Evolve) TEK sefer, agacin en ustunde (G.HDR); satirlar altinda ust uste, ayni kolonlar */
   function buildLayout() {
     const tpl = MC.NODES.filter((n) => n.i === 0);
     let lo = 1e9, hi = -1e9;
@@ -72,11 +97,11 @@
     const padT = 8, padB = 8, rowH = hi - lo + padT + padB, cy0 = padT - lo;
     const xc = (c) => G.PADX + G.COLW * (c + 0.5);
     const L = { tpl, xc, rows: [], pos: {}, W: G.PADX * 2 + G.COLW * G.COLS, H: 0, tiers: tierRanges(tpl) };
-    let y = 0;
+    let y = G.HDR;
     for (let i = 0; i < NROWS; i++) {
-      const row = { i, stripY: y, top: y + G.STRIP, h: rowH, cy: y + G.STRIP + cy0 }; L.rows.push(row);
+      const row = { i, top: y, h: rowH, cy: y + cy0 }; L.rows.push(row);
       tpl.forEach((n) => { L.pos[i + '.' + n.id] = { x: xc(n.col), y: row.cy + n.lane * G.LANEH }; });
-      y += G.STRIP + rowH;
+      y += rowH;
     }
     L.H = y + 4;
     /* ult: + sekli */
@@ -94,7 +119,7 @@
     const nd = MC.BY[key], info = nodeInfo(key), k = nd.kind, ic = rows()[nd.i].ic;
     let inner;
     if (k === 'B') inner = DROP;
-    else if (k === 'N' || k === 'V') inner = `<span class="dm"><img src="${A}${ic}.webp" alt="" draggable="false"></span>`;
+    else if (k === 'N' || k === 'V') inner = `<span class="dm"><img src="${A}${ic}" alt="" draggable="false"></span>`;
     else inner = '<span class="dm"></span>';
     const pp = k === 'F' ? '<span class="pp"></span>' : '';
     let lb = '';
@@ -102,17 +127,28 @@
     const nw = info.nw ? '<span class="nw">NEW</span>' : '';
     return `<button type="button" class="nd k-${k.toLowerCase()}${info.empty ? ' empty' : ''}" data-key="${key}" data-tip="n:${key}" aria-label="${esc(info.name)}" style="left:${p.x}px;top:${p.y}px">${inner}${pp}${lb}${nw}</button>`;
   }
-  function stripHTML(cls, style, tier, row) { return `<div class="ts ${cls}" data-tier="${tier}" data-row="${row}" style="${style}"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`; }
+  function stripHTML(cls, style, tier) { return `<div class="ts ${cls}" data-tier="${tier}" style="${style}"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`; }
 
   /* ---------- sayfa iskeleti ---------- */
   let R = null; // arayuz referanslari
-  function renderTop() {
-    $('#cls-sel').innerHTML = ['w', 'h'].map((c) => `<button type="button" data-cls="${c}" class="${ST.c === c ? 'on' : ''}"><img src="${A}${CLS[c].av}.webp" alt="">${CLS[c].name}</button>`).join('');
+  const loaded = () => ST.vf.state === 'ok' ? ST.vf.data : null;
+  function renderClassBar() {
+    $('#cls-sel').innerHTML = CLASSES.map((c) => `<button type="button" data-cls="${c.id}" class="${ST.c === c.id ? 'on' : ''}" aria-pressed="${ST.c === c.id}"><img src="${A}${c.portrait}" alt=""><span>${esc(c.name)}</span></button>`).join('');
+    const D = loaded(); let tabs = '';
+    if (ST.c === 'warrior') tabs += `<button type="button" data-var="pick" class="pk${ST.v === 'pick' ? ' on' : ''}" aria-pressed="${ST.v === 'pick'}">Ömer's pick</button>`;
+    for (let n = 1; n <= NVAR; n++) {
+      const V = D && D.variants[n - 1];
+      tabs += `<button type="button" data-var="${n}" class="${ST.v === n ? 'on' : ''}" aria-pressed="${ST.v === n}"${V ? '' : ' disabled'}>V${n}${V && V.title ? ' · ' + esc(V.title) : ''}</button>`;
+    }
+    const note = D ? '' : ST.vf.state === 'loading' ? 'Loading variants…' : 'Variants coming';
+    $('#var-tabs').innerHTML = tabs + (note ? `<span class="vnote">${note}</span>` : '');
+  }
+  function renderInfoBox() {
     $('#st-info').innerHTML = `<h2>Moments şeması</h2>
-      <p>Her satır 11 + 1 düğüm: <b>f1 → f2 → f3 → n0 (Notable) → r → ea / eb → [ma · fa | fb · mb] → Evolve</b>. Düz zincir, evolve için ma ya da mb gerekir. <b>fa</b> ve <b>fb</b> Blood Price (kazanç + bedel, çıkmaz sokak).</p>
-      <p>Kilit = <b>ağaca harcanan TOPLAM puan</b> (hangi satırdan geldiği önemli değil, ult da sayılır; ult'a en çok 3 puan): Tier II 5 · Tier III 10 · Tier IV 15 · <b>Evolve I 23</b> · <b>Evolve II 38</b>, en çok 2 evolve. Ult düğümleri puana değil <b>level</b>e bağlı (5 / 10 / 15).</p>
-      <p><b>Warrior:</b> Ömer'in seçimi (form). Boş yuvalar henüz seçilmedi.</p>
-      <p class="m">Puan = level − 1. Tık +1, sağ tık / uzun basma −1 (geri alma, kalan harcamalar geçerli kalıyorsa). Hexer içeriği geçici: V3 / V5 / V6 / V7 / V8 önerilerinden eşlendi, kaynak ipucunun altında yazıyor.</p>`;
+      <p>Şema sabit, her satır 11 + 1 düğüm: <b>f1 → f2 → f3 → n0 (Notable) → r → ea / eb → [ma · fa | fb · mb] → Evolve</b>. Düz zincir, evolve için ma ya da mb gerekir. <b>fa</b> ve <b>fb</b> Blood Price (kazanç + bedel, çıkmaz sokak).</p>
+      <p>Kilit = <b>pasif + 3 aktif skill satırına harcanan TOPLAM puan</b> (sayaç; hangi satırdan geldiği önemli değil): Tier II 5 · Tier III 10 · Tier IV 15 · <b>Evolve I 23</b> · <b>Evolve II 38</b>, en çok 2 evolve. <b>Ult puanları sayaca ve Mastery bar'a girmez</b> (ult ağacı ayrı); ult düğümleri puana değil <b>level</b>e bağlı (5 / 10 / 15), ult'a en çok 3 puan.</p>
+      <p><b>11 class, her class için 5 içerik varyantı</b> var (Warrior'da ek olarak Ömer'in seçimi). Üstten class ve varyantı seç; değişince puanlar sıfırlanır. İçerik taslaktır (content-designer), varyantı henüz yazılmamış class'ta "Variants coming" görünür.</p>
+      <p class="m">Puan = level − 1. Tık +1, sağ tık / uzun basma −1 (geri alma, kalan harcamalar geçerli kalıyorsa). Düğümün üstüne gelince ipucu, kaynağı ipucunun altında yazıyor.</p>`;
   }
   function renderFocus() {
     const opts = (sel) => [0, 1, 2, 3].map((i) => `<option value="${i}"${sel === i ? ' selected' : ''}>${esc(rows()[i].name)}${rows()[i].pas ? ' (passive)' : ''}</option>`).join('');
@@ -145,25 +181,25 @@
 
   function build() {
     G.COLW = pickColw();
-    const L = buildLayout(), C0 = CLS[ST.c], nds = MC.NODES;
-    renderTop(); renderFocus();
-    /* mastery bar */
+    const L = buildLayout(), C0 = CBY[ST.c], nds = MC.NODES, cn = cOf();
+    renderClassBar(); renderFocus();
+    /* mastery bar: yalniz bonus elmaslari (hover ipucu); tier / evolve yazilari ve cizgileri yok */
     const mk = MC.BAR_THR.map((t, i) => `<span class="mk${t > 25 ? ' tbd' : ''}" data-t="${t}" data-tip="b:${i}" style="left:${t / MC.BARMAX * 100}%"><em>${t}</em><i></i></span>`).join('');
-    /* Tier isaretleri yazili; Evolve isaretleri (23 / 38) yalniz cizgi, yazisiz */
-    const tkDef = [[5, 'Tier II', '5 pts'], [10, 'Tier III', '10 pts'], [15, 'Tier IV', '15 pts'], [MC.EVO_NEED[0], '', '', 1], [MC.EVO_NEED[1], '', '', 1]];
-    const tk = tkDef.map((d) => `<span class="tk${d[3] ? ' ev' : ''}" data-t="${d[0]}" style="left:${d[0] / MC.BARMAX * 100}%"><i></i>${d[1] ? `<em>${d[1]}<small>${d[2]}</small></em>` : ''}</span>`).join('');
-    const barHTML = `<div class="barw"><div class="bar-top"><span class="bnm">${esc(masteryName())}</span><span class="bval"><b id="bval">0</b> / ${MC.BARMAX}</span></div><div class="barrow"><div class="bartrack"><div class="bf" id="bf"></div>${mk}${tk}</div></div></div>`;
+    const barHTML = `<div class="barw"><div class="bar-top"><span class="bnm">${esc(masteryName())}</span><span class="bval"><b id="bval">0</b> / ${MC.BARMAX}</span></div><div class="barrow"><div class="bartrack"><div class="bf" id="bf"></div>${mk}</div></div></div>`;
     /* agac */
     let cv = '', svg = '', labs = '';
+    L.tiers.forEach((t) => {
+      const x0 = G.PADX + G.COLW * t.c0, w = G.COLW * (t.c1 - t.c0 + 1);
+      cv += stripHTML(t.tier === 'E' ? 'evo' : '', `left:${x0}px;top:0;width:${w}px;height:${G.HDR}px`, t.tier);
+    });
     L.rows.forEach((row) => {
       L.tiers.forEach((t) => {
         const x0 = G.PADX + G.COLW * t.c0, w = G.COLW * (t.c1 - t.c0 + 1);
-        cv += stripHTML(t.tier === 'E' ? 'evo' : '', `left:${x0}px;top:${row.stripY}px;width:${w}px;height:${G.STRIP}px`, t.tier, row.i);
-        cv += `<div class="tb" data-tier="${t.tier}" data-row="${row.i}" style="left:${x0}px;top:${row.top}px;width:${w}px;height:${row.h}px"></div>`;
+        cv += `<div class="tb" data-tier="${t.tier}" style="left:${x0}px;top:${row.top}px;width:${w}px;height:${row.h}px"></div>`;
       });
       svg += `<line class="sep" x1="0" y1="${row.top + row.h}" x2="${L.W}" y2="${row.top + row.h}"/>`;
       const rr = rows()[row.i];
-      labs += `<div class="rl${rr.pas ? ' pas' : ''}" data-row="${row.i}" data-tip="r:${row.i}" style="top:${row.cy - 26}px"><span class="med"><img src="${A}${rr.ic}.webp" alt=""></span><span class="rt"><b>${esc(rr.name)}</b><i>${rr.pas ? 'Passive' : 'Skill'} · <u data-pts="${row.i}">0</u> pts</i></span></div>`;
+      labs += `<div class="rl${rr.pas ? ' pas' : ''}" data-row="${row.i}" data-tip="r:${row.i}" style="top:${row.cy - 26}px"><span class="med"><img src="${A}${rr.ic}" alt=""></span><span class="rt"><b>${esc(rr.name)}</b><i>${rr.pas ? 'Passive' : 'Skill'} · <u data-pts="${row.i}">0</u> pts</i></span></div>`;
     });
     nds.filter((n) => n.i < NROWS).forEach((n) => {
       const B = L.pos[n.key];
@@ -184,27 +220,38 @@
     }));
     const ultHTML = `<div class="ultsec" id="ultsec"><div class="uhead"><h3>Ult tree · ${esc(ur.name)}</h3><span>Level locks 5 · 10 · 15</span><span>Ult points <b id="upts">0</b> / ${MC.ULT_MAX}</span></div>
       <div class="uwrap"><div class="uinfo"><p>Ortada ult'un ikonu (kendisi düğüm değil), <b>4 kol</b>, her kolda ortadan dışa <b>3 düğüm</b>: 1. düğüm <b>Lv 5</b>, 2. düğüm <b>Lv 10</b>, 3. düğüm <b>Lv 15</b> ve <b>Notable</b>.</p>
-        <p>Kollar serbest, ama ult'a toplam en çok <b>${MC.ULT_MAX} puan</b> verilir (1 puan / düğüm), gerek = koldaki iç düğüm. <b>Evolve yok.</b> Kilit puana değil level'a bağlı; ama ult puanları yine toplam sayaca girer.</p>
+        <p>Kollar serbest, ama ult'a toplam en çok <b>${MC.ULT_MAX} puan</b> verilir (1 puan / düğüm), gerek = koldaki iç düğüm. <b>Evolve yok.</b> Kilit puana değil level'a bağlı; ult puanları kilit sayacına ve Mastery bar'a <b>girmez</b>.</p>
         <div class="arms" id="arms">${MC.ARMS.map((a) => `<div data-arm="${a}">${MC.ARM_NAME[a]} arm<b>0 / 3</b></div>`).join('')}</div></div>
         <div class="uscroll"><div class="ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
-          <div class="ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px"><span class="ud"></span><img src="${A}${ur.ic}.webp" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;
-    $('#sheet').innerHTML = `<div class="sh-top"><img src="${A}${C0.av}.webp" alt=""><div class="nm">${C0.name}<small id="lvline"></small></div>
-      <div class="sp"><span class="sf">Spent <b id="spv">0</b></span><span class="sf">Free <b id="frv">0</b></span></div></div>
+          <div class="ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px"><span class="ud"></span><img src="${A}${ur.ic}" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;
+    const vinfo = `<div class="vinfo"><span class="vt">${esc(cn.title || 'Variant')}</span>${cn.theme ? `<p class="en"><b>EN</b>${esc(cn.theme)}</p>` : ''}${cn.tr ? `<p class="tr"><b>TR</b>${esc(cn.tr)}</p>` : ''}</div>`;
+    $('#sheet').innerHTML = `<div class="sh-top"><img src="${A}${C0.portrait}" alt=""><div class="nm">${esc(C0.name)}<small id="lvline"></small></div>
+      <div class="sp"><span class="sf">Tree <b id="spv">0</b></span><span class="sf">Ult <b id="upv">0</b></span><span class="sf">Free <b id="frv">0</b></span></div></div>
+      ${vinfo}
       ${barHTML}
       <div class="legend"><span><i class="lg lg-f"></i>Filler: küçük elmas, rank noktalı</span><span><i class="lg lg-e"></i>Edge: küçük yuvarlak</span><span><i class="lg lg-n"></i>Notable: orta boy, ikonlu, adı yazılı</span><span><i class="lg lg-b"></i>Blood Price: kan damlası, koyu kırmızı, çıkmaz sokak (arkasında düğüm yok)</span><span><i class="lg lg-v"></i>Evolve: büyük, altın (I: 23 puan, II: 38 puan, en çok 2)</span><span><b class="lg-w">NEW</b>motora yeni kural ister</span></div>
       <div class="treewrap"><div class="labcol" style="height:${L.H}px">${labs}</div><div class="tree" id="tree"><div class="canvas" style="width:${L.W}px;height:${L.H}px"><svg class="lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${cv}</div></div></div>
       ${ultHTML}
-      <div class="hintln">Tık: +1 rank · sağ tık ya da uzun basma: −1 · üstüne gelince ipucu (dokunmatikte ilk dokunuş ipucu açar, + / − düğmeleri orada). Kilitli sütunlar soluk, etiketteki "0/5" harcanan / gereken puan.</div>`;
+      <div class="hintln">Tık: +1 rank · sağ tık ya da uzun basma: −1 · üstüne gelince ipucu (dokunmatikte ilk dokunuş ipucu açar, + / − düğmeleri orada). Kilitli sütunlar soluk, üstteki başlıkta "0/5" = sayaç / gereken puan.</div>`;
     R = { L, nodes: {}, lines: [], bands: [], strips: [], pts: {}, ulv: {}, arms: {} };
     $$('.nd').forEach((e) => { R.nodes[e.dataset.key] = { el: e, base: e.className, pp: $('.pp', e) }; });
     $$('.lines path[data-a]').forEach((e) => R.lines.push({ el: e, a: e.dataset.a, b: e.dataset.b, base: e.getAttribute('class') || '' }));
     $$('.lines path[data-dead]').forEach((e) => R.lines.push({ el: e, a: null, b: e.dataset.b, base: 'dead' }));
-    $$('.tb').forEach((e) => R.bands.push({ el: e, tier: e.dataset.tier, row: +e.dataset.row }));
-    $$('.ts').forEach((e) => R.strips.push({ el: e, tier: e.dataset.tier, row: +e.dataset.row, sm: $('small', e), pt: $('.pt', e), em: $('em', e) }));
+    $$('.tb').forEach((e) => R.bands.push({ el: e, tier: e.dataset.tier }));
+    $$('.ts').forEach((e) => R.strips.push({ el: e, tier: e.dataset.tier, sm: $('small', e), pt: $('.pt', e), em: $('em', e) }));
     $$('[data-pts]').forEach((e) => { R.pts[e.dataset.pts] = e; });
     $$('.ulv').forEach((e) => { R.ulv[e.dataset.ulv] = e; });
     $$('#arms [data-arm]').forEach((e) => { R.arms[e.dataset.arm] = e; });
     $('#lv').value = ST.lv; hideTip(); update();
+    if (ST.pendingFocus) { const f = ST.pendingFocus; ST.pendingFocus = null; runFocus(f[0], f[1]); }
+  }
+  /* varyant yok / yukleniyor: sakin yer tutucu (sayfa cokmez) */
+  function buildPlaceholder() {
+    R = null; hideTip(); renderClassBar(); $('#focus').innerHTML = '';
+    const C0 = CBY[ST.c], loading = ST.vf.state === 'loading';
+    const why = !loading && ST.vf.err && ST.vf.err !== 'missing' ? `<small>variants/${esc(ST.c)}.js could not be read (${esc(ST.vf.err)}).</small>` : '';
+    $('#sheet').innerHTML = `<div class="sh-top"><img src="${A}${C0.portrait}" alt=""><div class="nm">${esc(C0.name)}</div></div>
+      <div class="vsoon"><b>${loading ? 'Loading variants…' : 'Variants coming'}</b><p>${loading ? 'Fetching the five Moments variants for ' + esc(C0.name) + '.' : esc(C0.name) + ' has no variant content yet. Pick another class above; this one will appear here once its five variants are written.'}</p>${why}</div>`;
   }
   /* kullanilabilir genislige gore kolon genisligi (104..140); dar ekranda 104 ve yatay kayar */
   function pickColw() {
@@ -213,12 +260,35 @@
     return Math.max(104, Math.min(140, Math.floor((inner - labw - 6 - 2 * G.PADX) / G.COLS)));
   }
 
+  /* ---------- class / varyant secimi ---------- */
+  function resolveV(c, v) {
+    if (v === 'pick') return c === 'warrior' ? 'pick' : 1;
+    const n = +v; return n >= 1 && n <= NVAR ? n : defaultV(c);
+  }
+  /* class + varyant degisir: puanlar sifirlanir, yeniden cizilir; dosya onbellekte degilse once yer tutucu, sonra yuklenince agac */
+  function go(c, v, keepFocus) {
+    if (!keepFocus) ST.pendingFocus = null;
+    if (!CBY[c]) c = 'warrior';
+    ST.c = c; ST.v = resolveV(c, v); ST.S = MC.newState(); ST.plan = null; ST.fail = null; ST.content = null; ST.rowsC = null; ST.fa = 0; ST.fb = 1;
+    const tok = ++ST.tok;
+    ST.vf = VCACHE[c] ? { state: 'ok', data: VCACHE[c] } : { state: 'loading' };
+    writeHash(); present();
+    if (!VCACHE[c]) loadVariants(c).then((r) => {
+      if (tok !== ST.tok) return; /* arada baska class secildi */
+      ST.vf = r.ok ? { state: 'ok', data: r.data } : { state: 'missing', err: r.err };
+      ST.content = null; ST.rowsC = null;
+      if (ST.v !== 'pick' && r.ok && !r.data.variants[ST.v - 1]) ST.v = 1; /* istenen varyant dosyada yok */
+      if (ST.v === 'pick') renderClassBar(); /* agac zaten cizili: yalniz sekmeler (yanip sonme yok) */
+      else { writeHash(); present(); }
+    });
+  }
+  function present() { if (ready()) build(); else buildPlaceholder(); $('#lv').value = ST.lv; update(); }
+
   /* ---------- guncelleme (yeniden kurmadan) ---------- */
-  function stripState(S, tier, row) {
-    const sp = MC.spent(S);
+  function stripState(S, tier) {
+    const sp = MC.counter(S);
     if (tier === 'E') {
       const es = MC.evoState(S);
-      if (MC.rk(S, row + '.v') > 0) return { small: 'Evolve', pt: 'taken', em: '', lk: false };
       if (es.capped) return { small: 'Evolve', pt: '2 / 2 used', em: '', lk: true };
       return { small: es.label, pt: es.need + ' pts', em: es.open ? '' : sp + '/' + es.need, lk: !es.open };
     }
@@ -226,13 +296,14 @@
     return { small: 'Tier ' + tier, pt: need === 0 ? 'open' : need + ' pts', em: sp >= need ? '' : sp + '/' + need, lk: sp < need };
   }
   function update() {
+    const S = sOf(), lv = ST.lv, fr = MC.free(lv, S);
+    $('#lvv').textContent = lv; $('#lvp').textContent = fr + ' / ' + MC.pool(lv);
     if (!R) return;
-    const S = sOf(), lv = ST.lv, sp = MC.spent(S), fr = MC.free(lv, S);
-    $('#spv').textContent = sp; const fe = $('#frv'); fe.textContent = fr; fe.className = fr === 0 ? 'z' : '';
-    $('#lvline').textContent = `Level ${lv} · ${MC.pool(lv)} points`; $('#lvv').textContent = lv; $('#lvp').textContent = fr + ' / ' + MC.pool(lv);
+    const sp = MC.counter(S);
+    $('#spv').textContent = sp; $('#upv').textContent = MC.ultSpent(S) + ' / ' + MC.ULT_MAX; const fe = $('#frv'); fe.textContent = fr; fe.className = fr === 0 ? 'z' : '';
+    $('#lvline').textContent = `Level ${lv} · ${MC.pool(lv)} points`;
     $('#bval').textContent = MC.barVal(S); $('#bf').style.width = (MC.barVal(S) / MC.BARMAX * 100) + '%';
     $$('.mk').forEach((e) => e.classList.toggle('rc', sp >= +e.dataset.t));
-    $$('.tk').forEach((e) => e.classList.toggle('rc', sp >= +e.dataset.t));
     for (const key in R.nodes) {
       const e = R.nodes[key], st = MC.status(lv, S, key); e.st = st;
       e.el.className = e.base + ' st-' + st.st; if (e.pp) e.pp.textContent = '●'.repeat(st.rank) + '○'.repeat(st.max - st.rank);
@@ -245,9 +316,9 @@
       l.el.setAttribute('class', l.base + cls);
     });
     R.strips.forEach((s) => {
-      const t = stripState(S, s.tier, s.row); s.sm.textContent = t.small; s.pt.textContent = t.pt; s.em.textContent = t.em; s.el.classList.toggle('lk', t.lk);
+      const t = stripState(S, s.tier); s.sm.textContent = t.small; s.pt.textContent = t.pt; s.em.textContent = t.em; s.el.classList.toggle('lk', t.lk);
     });
-    R.bands.forEach((b) => { b.el.classList.toggle('lk', stripState(S, b.tier, b.row).lk); });
+    R.bands.forEach((b) => { b.el.classList.toggle('lk', stripState(S, b.tier).lk); });
     for (const i in R.pts) R.pts[i].textContent = MC.rowSpent(S, +i);
     let up = 0;
     MC.ARMS.forEach((arm) => { let n = 0; [1, 2, 3].forEach((s) => { const key = ULT + '.' + arm + s; n += MC.rk(S, key); R.ulv[key].classList.toggle('lk', lv < MC.ULT_LV[s - 1]); }); up += n; const e = R.arms[arm]; e.querySelector('b').textContent = n + ' / 3'; e.classList.toggle('full', n === 3); });
@@ -267,7 +338,7 @@
       return es.capped ? { tier: 'Evolve', lock: '2 / 2 used', open: false } : { tier: es.label, lock: es.need + ' pts', open: es.open };
     }
     const need = MC.TIER_NEED[nd.tier];
-    return { tier: 'Tier ' + nd.tier, lock: need ? need + ' pts' : 'Open', open: MC.spent(S) >= need };
+    return { tier: 'Tier ' + nd.tier, lock: need ? need + ' pts' : 'Open', open: MC.counter(S) >= need };
   }
   function nodeTip(key) {
     const nd = MC.BY[key], S = sOf(), lv = ST.lv, info = nodeInfo(key), st = MC.status(lv, S, key), rr = rows()[nd.i], k = nd.kind;
@@ -281,9 +352,9 @@
     const lines = [line(esc(info.eff))];
     if (info.note) lines.push(line('<span class="k">Ömer\'in notu:</span> ' + esc(info.note)));
     if (!info.empty) { /* bos yuvada ipucu tek satir: yalniz 'Not picked yet' */
-      if (k === 'V') lines.push(line('<span class="k">Evolves in place:</span> the skill keeps its slot and gains this behaviour. Evolve I needs 23 points spent, Evolve II needs 38; two per hero at most.'));
+      if (k === 'V') lines.push(line('<span class="k">Evolves in place:</span> the skill keeps its slot and gains this behaviour. Evolve I needs 23 points in the passive and skill rows, Evolve II needs 38 (ult points do not count); two per hero at most.'));
       if (k === 'B') lines.push(line('<span class="k">Blood Price:</span> a gain with a cost. Dead end: nothing unlocks after it.'));
-      if (nd.arm) lines.push(line('<span class="k">Ult arm:</span> arms are free, but the ult takes ' + MC.ULT_MAX + ' points at most in total (' + MC.ultSpent(S) + ' / ' + MC.ULT_MAX + ' spent). 1 point per node. Locked by level, not by points; no Evolve here.'));
+      if (nd.arm) lines.push(line('<span class="k">Ult arm:</span> arms are free, but the ult takes ' + MC.ULT_MAX + ' points at most in total (' + MC.ultSpent(S) + ' / ' + MC.ULT_MAX + ' spent). 1 point per node. Locked by level, not by points; no Evolve here. Ult points do not count toward Tier locks or the Mastery bar.'));
       if (info.nw) lines.push(line('<span class="k">NEW:</span> needs a new engine rule.'));
       if (nd.req.length) lines.push(line('<span class="k">Needs:</span> ' + nd.req.map((term) => term.map((q) => { const met = MC.rk(S, q) > 0; return (met ? '' : '<span class="no">') + esc(nameOf(q)) + (met ? '' : '</span>'); }).join(' or ')).join(' + ')));
     }
@@ -292,17 +363,17 @@
     else if (st.rank === 0 && st.check && st.check.code !== 'points') foot = `<div class="tp-foot lock">${dia}<span class="tx">${st.check.code === 'ultcap' ? '' : 'Locked: '}${esc(st.check.text)}</span></div>`;
     else foot = `<div class="tp-foot">${dia}<span class="tx">${st.rank > 0 ? 'Click +1 · right-click −1' : 'Click to spend 1 point'}</span></div>`;
     const ctl = `<div class="tp-ctl"><button type="button" data-act="-1" aria-label="Remove a point">−</button><span class="rk">${st.rank} / ${nd.max}</span><button type="button" data-act="1" aria-label="Add a point">+</button></div>`;
-    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="background-image:url(${A}${rr.ic}.webp)"></div><div class="tp-ht"><div class="tp-kind">${esc(kind)}</div><div class="tp-title">${esc(info.name)}</div></div><div class="tp-aside"><div class="big">1<small>${nd.max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div><div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}${ctl}${info.src ? `<div class="tp-src">from ${esc(info.src)}</div>` : ''}</div>`;
+    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="${medalBg(rr.ic)}"></div><div class="tp-ht"><div class="tp-kind">${esc(kind)}</div><div class="tp-title">${esc(info.name)}</div></div><div class="tp-aside"><div class="big">1<small>${nd.max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div><div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}${ctl}${info.src ? `<div class="tp-src">from ${esc(info.src)}</div>` : ''}</div>`;
   }
   function bonusTip(i) {
-    const b = barInfo(i), S = sOf(), t = MC.BAR_THR[i], on = MC.spent(S) >= t;
-    const foot = b.tbd ? `Needs ${t} points spent; the Lv 50 bar. Content to be decided.` : on ? 'Reached: ' + MC.spent(S) + ' of ' + t : 'Spend ' + (t - MC.spent(S)) + ' more point' + (t - MC.spent(S) === 1 ? '' : 's') + ' in the tree';
+    const b = barInfo(i), S = sOf(), t = MC.BAR_THR[i], sp = MC.counter(S), on = sp >= t;
+    const foot = b.tbd ? `Needs ${t} points in the passive and skill rows; the Lv 50 bar. Content to be decided.` : on ? 'Reached: ' + sp + ' of ' + t : 'Spend ' + (t - sp) + ' more point' + (t - sp === 1 ? '' : 's') + ' in the passive and skill rows';
     return `<div class="tp va cp"><div class="tp-head"><div class="tp-ht"><div class="tp-kind">Mastery bonus · ${esc(masteryName())}</div><div class="tp-title">${esc(b.name)}</div></div><div class="tp-aside"><div class="big">${t}<small>BAR</small></div></div></div>
       <div class="tp-meta"><span class="chip ac">Bar ${t}</span><span class="chip${on ? ' ok' : ''}">${on ? (b.tbd ? 'Reached' : 'Active') : 'Not reached'}</span></div><div class="tp-div"></div><div class="tp-body">${line(esc(b.eff))}</div><div class="tp-foot">${dia}<span class="tx">${esc(foot)}</span></div>${b.src ? `<div class="tp-src">from ${esc(b.src)}</div>` : ''}</div>`;
   }
   function rowTip(i) {
     const rr = rows()[i], S = sOf(), kind = rr.ult ? 'Ultimate' : rr.pas ? 'Passive' : 'Skill';
-    return `<div class="tp va ${rr.pas ? 'ps' : ''}"><div class="tp-head"><div class="tp-medal" style="background-image:url(${A}${rr.ic}.webp)"></div><div class="tp-ht"><div class="tp-kind">${kind} · ${esc(CLS[ST.c].name)}</div><div class="tp-title">${esc(rr.name)}</div></div><div class="tp-aside"><div class="big">${MC.rowSpent(S, i)}<small>POINTS</small></div></div></div><div class="tp-div"></div><div class="tp-body">${line(esc(rr.d))}</div></div>`;
+    return `<div class="tp va ${rr.pas ? 'ps' : ''}"><div class="tp-head"><div class="tp-medal" style="${medalBg(rr.ic)}"></div><div class="tp-ht"><div class="tp-kind">${kind} · ${esc(CBY[ST.c].name)}</div><div class="tp-title">${esc(rr.name)}</div></div><div class="tp-aside"><div class="big">${MC.rowSpent(S, i)}<small>POINTS</small></div></div></div><div class="tp-div"></div><div class="tp-body">${line(esc(rr.d || kind))}</div></div>`;
   }
   function tipHTML(ref) { const [t, id] = [ref.slice(0, 1), ref.slice(2)]; return t === 'n' ? nodeTip(id) : t === 'b' ? bonusTip(+id) : rowTip(+id); }
   function showTip(el, pin) {
@@ -324,6 +395,7 @@
   /* ---------- eylemler ---------- */
   function detach() { const P = planOf(); if (P && P.live) { P.live = false; renderFocusOut(); } }
   function act(key, d) {
+    if (!R) return;
     const S = sOf(), res = d > 0 ? MC.take(ST.lv, S, key) : MC.untake(ST.lv, S, key);
     if (!res.ok) fail(key, res.reason); else { ST.fail = null; detach(); }
     update();
@@ -331,26 +403,29 @@
   function ensureValid() { const S = sOf(); if (MC.validate(ST.lv, S)) { MC.reset(S); detach(); toast('Level lowered: tree reset'); return true; } return false; }
   function setLevel(v) {
     ST.lv = Math.max(1, Math.min(MC.MAXLV, v)); const P = planOf();
-    if (P && P.live) ST.states[ST.c] = MC.replay(P, ST.lv); else ensureValid();
+    if (P && P.live) ST.S = MC.replay(P, ST.lv); else ensureValid();
     $('#lv').value = ST.lv; writeHash(); update();
   }
   function runFocus(a, b) {
-    ST.fa = a; ST.fb = b; const P = MC.focusPlan(a, b); ST.plans[ST.c] = P;
-    ST.states[ST.c] = MC.replay(P, ST.lv); ST.fail = null; hideTip(); renderFocus(); update();
+    if (!R) return;
+    ST.fa = a; ST.fb = b; const P = MC.focusPlan(a, b); ST.plan = P;
+    ST.S = MC.replay(P, ST.lv); ST.fail = null; hideTip(); renderFocus(); update();
     toast('Focus run: ' + rows()[a].name + ' + ' + rows()[b].name + ' · Evolve I Lv ' + P.e1 + ' · Evolve II Lv ' + P.e2);
   }
 
   /* ---------- adres ---------- */
-  let hashFocus = null;
+  const OLD_C = { w: 'warrior', h: 'hexer' };
   function readHash() {
     const h = new URLSearchParams(location.hash.slice(1)); const lv = +h.get('lv');
-    if (h.get('c') === 'h' || h.get('c') === 'w') ST.c = h.get('c');
+    let c = h.get('c'), v = h.get('v');
+    if (c && OLD_C[c]) { c = OLD_C[c]; if (!v) v = c === 'warrior' ? 'pick' : '1'; } /* eski adres: #c=w -> Omer'in secimi, #c=h -> hexer v1 */
+    if (!c || !CBY[c]) c = 'warrior';
+    ST.c = c; ST.v = resolveV(c, v == null ? defaultV(c) : v);
     if (lv >= 1 && lv <= MC.MAXLV) ST.lv = lv;
-    const f = (h.get('focus') || '').match(/^([0-3])-([0-3])$/); hashFocus = f && f[1] !== f[2] ? [+f[1], +f[2]] : null;
+    const f = (h.get('focus') || '').match(/^([0-3])-([0-3])$/); ST.pendingFocus = f && f[1] !== f[2] ? [+f[1], +f[2]] : null;
     ST.clean = h.has('clean'); document.documentElement.classList.toggle('mk-clean', ST.clean);
   }
-  function writeHash() { history.replaceState(null, '', '#c=' + ST.c + '&lv=' + ST.lv + (ST.clean ? '&clean' : '')); }
-  function rebuild() { const P = planOf(); if (P && P.live) ST.states[ST.c] = MC.replay(P, ST.lv); else ensureValid(); build(); }
+  function writeHash() { history.replaceState(null, '', '#c=' + ST.c + '&v=' + ST.v + '&lv=' + ST.lv + (ST.clean ? '&clean' : '')); }
 
   /* ---------- olaylar ---------- */
   let lastPtr = 'mouse', lpT = 0, suppress = false, lpX = 0, lpY = 0;
@@ -380,7 +455,8 @@
       if (isNode) act(t.dataset.key, 1);
       return;
     }
-    const c = e.target.closest('[data-cls]'); if (c) { ST.c = c.dataset.cls; writeHash(); rebuild(); return; }
+    const c = e.target.closest('[data-cls]'); if (c) { go(c.dataset.cls, defaultV(c.dataset.cls)); return; }
+    const vb = e.target.closest('[data-var]'); if (vb && !vb.disabled) { go(ST.c, vb.dataset.var === 'pick' ? 'pick' : +vb.dataset.var); return; }
     const ev = e.target.closest('.evc'); if (ev) { setLevel(+ev.dataset.lv); return; }
     if (e.target.closest('#fc-run')) { runFocus(+$('#fc-a').value, +$('#fc-b').value); return; }
     if (e.target.closest('#reset')) { MC.reset(sOf()); detach(); ST.fail = null; hideTip(); update(); return; }
@@ -392,11 +468,10 @@
     ST.fa = a; ST.fb = b;
   });
   $('#lv').addEventListener('input', (e) => setLevel(+e.target.value));
-  window.addEventListener('hashchange', () => { readHash(); rebuild(); if (hashFocus) runFocus(hashFocus[0], hashFocus[1]); });
-  let rzT = 0; window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { if (pickColw() !== G.COLW) { const t = $('#tree'), sx = t ? t.scrollLeft : 0; build(); const t2 = $('#tree'); if (t2) t2.scrollLeft = sx; } }, 160); });
+  window.addEventListener('hashchange', () => { readHash(); go(ST.c, ST.v, true); });
+  let rzT = 0; window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(() => { if (R && pickColw() !== G.COLW) { const t = $('#tree'), sx = t ? t.scrollLeft : 0; build(); const t2 = $('#tree'); if (t2) t2.scrollLeft = sx; } }, 160); });
   window.addEventListener('scroll', () => { if (ST.pinned) hideTip(); }, true);
 
-  readHash(); writeHash(); build();
-  if (hashFocus) runFocus(hashFocus[0], hashFocus[1]);
-  window.__SMM = { ST, sOf, build, update, MC, CT, nodeInfo, runFocus, setLevel };
+  renderInfoBox(); readHash(); go(ST.c, ST.v, true);
+  window.__SMM = { ST, sOf, build, update, MC, CT, nodeInfo, runFocus, setLevel, go, loadVariants, VCACHE, rows, present };
 })();

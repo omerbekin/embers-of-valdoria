@@ -7,7 +7,7 @@
 4. Tek skill'e tam odaklanan oyuncu **1. evolve'u L25'te, 2. evolve'u L40'ta** açacak şekilde puan ihtiyacı hesaplanacak.
 5. Ult'ta (Warrior: Headsman's Blow) evolve olmayacak. Onun yerine **+ şeklinde küçük özel ağaç** olacak: seçimler ortadan kenara gider, 1. düğüm L5'te, 2. düğüm L10'da, 3. düğüm L15'te açılır, 3. düğüm notable'dır.
 
-Değişmeyenler: Mastery bar üstte (toplam harcanan, 5/10/15/20/25 sabit bonus; L50'de 30/35/40/45). Her rank 1 puan. Puan = level − 1. Skill değişmez, evolve yerinde evrim. Item = genel stat, set = pasif / kaynak sayısı, ağaç = skill davranışı.
+Değişmeyenler: Mastery bar üstte (sayaç = pasif + 3 aktif satıra harcanan puan, **ult sayılmaz**; 5/10/15/20/25 sabit bonus; L50'de 30/35/40/45). Her rank 1 puan. Puan = level − 1. Skill değişmez, evolve yerinde evrim. Item = genel stat, set = pasif / kaynak sayısı, ağaç = skill davranışı.
 
 ## 1. Satır şekli (pasif + 3 aktif skill: Berserker, Double Strike, Whirlwind, Charge)
 | Sütun | id | Tür | Rank | Gerek | Tier | Şerit |
@@ -27,7 +27,7 @@ Değişmeyenler: Mastery bar üstte (toplam harcanan, 5/10/15/20/25 sabit bonus;
 Bir satır tam dolu = 23 puan + evolve = **24**. Gerek = önceki düğümde en az 1 rank.
 
 ## 2. Kilit kuralı (madde 3)
-- **Sayaç = ağaca harcanan toplam puan** (Mastery bar ile aynı sayı). Puanın hangi satırdan geldiği önemli değil.
+- **Sayaç = pasif + 3 aktif skill satırına harcanan toplam puan** (Mastery bar ile aynı sayı). **Ult puanları sayılmaz** (Ömer 2026-10-21): ult ağacı ayrıdır, kendi level kilidi (5 / 10 / 15) ve 3 puan tavanı vardır. Puanın hangi satırdan geldiği önemli değil. Focus check sonuçları değişmez (Evolve I L25, Evolve II L40); ama ult'a puan harcayan odaklı oyuncu evolve'ları 3 level geç açar (L28 / L43), çünkü ult puanı da level havuzundan düşer.
 - Tier I: 0 · Tier II: 5 · Tier III: 10 · Tier IV: 15 · **Evolve I: 23** · **Evolve II: 38**.
 - Evolve için o satırın notable'ı (ma ya da mb) ve sayaç şartı gerekir. Karakter başına **en çok 2 evolve**: birincisi için sayaç 23, ikincisi için sayaç 38 olmalı.
 
@@ -50,20 +50,22 @@ Not: sayaç toplam olduğu için puanını dağıtan oyuncu da L25'te evolve aç
 
 ## 4. Ult + ağacı (madde 5)
 - Ortada ult'un ikonu durur, kendisi düğüm değildir. 4 kol vardır (yukarı, sağ, aşağı, sol). Her kolda ortadan dışa 3 düğüm sıralanır: 1. düğüm **L5**, 2. düğüm **L10**, 3. düğüm **L15** ve **Notable**. 1. ve 2. düğüm küçüktür (Edge boyu), her biri 1 puan.
-- Kollar serbest, ama ult'a toplam en çok 3 puan verilir (Ömer 2026-10-21). Evolve yoktur. Ult puanları sayaca girer, ama ult düğümleri kendi level kilidini kullanır.
+- Kollar serbest, ama ult'a toplam en çok 3 puan verilir (Ömer 2026-10-21). Evolve yoktur. Ult puanları kilit sayacına ve Mastery bar'a girmez (Ömer 2026-10-21); ult düğümleri kendi level kilidini kullanır.
 
 ## 5. Düğüm türleri
 Filler (küçük, rank'lı) · Edge (küçük ama güçlü) · **Notable** (orta boy, ikonlu) · **Blood Price** (kazanç + bedel, notable'ın yanında dead end) · Evolve (büyük, altın).
 
 ## 6. Varsayımlarım (Ömer onayı bekliyor)
 1. Madde 3'teki "sıradaki row" ifadesini **sıradaki tier sütunu** olarak okudum (WoW tarzı: ağaca toplam X puan verilince sıradaki sütun açılır). L40 hesabı ancak böyle tutuyor: ikinci satırın kademeleri birinci satırın puanıyla zaten açık olur.
-2. Sayaç: Ömer "aktif skill" dedi. Pasif ve ult puanlarını da saydım; aksi halde pasife odaklanan oyuncu evolve açamaz.
+2. Sayaç: Ömer "aktif skill" dedi. **Ömer kararı (2026-10-21): pasif sayılır, ult sayılmaz** (pasife odaklanan oyuncu da evolve açabilir; ult ağacı sayaçtan ayrı).
 3. Ult kolları serbest, her düğüm 1 puan; ult'a (4 kolun toplamına) en çok 3 puan verilir (Ömer 2026-10-21). L5 / L10 / L15 kilitleri ve "iç düğüm gerek" kuralı aynı.
 4. Notable = orta boy düğüm (eski Major). Edge'ler (ea / eb) yerinde kaldı.
 5. Yeni 3 filler 3-5-5 rank; satır böylece 24 puana geliyor ve L25 hesabı tutuyor.
 
 ## 7. Mockup
-`public/mockups/skill-tree-moments.html`. İçerik geçicidir, 2. turun önerilerinden eşlenmiştir (aşağıda). Asıl içerik Ömer'in seçim formundan gelecek.
-- f1 ← V5.n1 · f2 ← V5.n3 · f3 ← V5.n5 · n0 ← V5.n6 · r, ea, eb, ma, mb, v ← V6 aynı id · fa ← V3.p1 · fb ← V3.p3 (satır 0-3, aynı satır numarası)
-- Ult kolları (satır 4): yukarı ← V6 ea, fa, ma · sağ ← V6 eb, fb, mb · aşağı ← V7 ea, eb, m · sol ← V8 s1, s2, sm
-- Bar bonusları ← V6.
+`public/mockups/skill-tree-moments.html` (+ `skill-tree-moments/`). Ev sahibi sayfa: **11 class × 5 varyant** (sıra: warrior, defender, paladin, archer, cutthroat, mage, druid, undead, hexer, antimage, gambler; Warrior'da ek olarak "Ömer's pick" sekmesi ve varsayılan). Class ve varyant seçilince puanlar sıfırlanır. İçerik `variants/<class>.js` dosyalarından gelir (sözleşme: `skill-tree-moments-variants.md` bölüm 3), class seçilince yüklenir; dosya yoksa ya da bozuksa sayfa "Variants coming" gösterir. Satır adları dosyadaki `rows[]` / `ult`ten, ikonlar `classes.js` + `ic/<class>/` (oyundaki v2 ikonlar ve portreler, sıraya göre: pasif, 3 aktif, ult).
+- Adres: `#c=<class>&v=<1-5|pick>&lv=30` (+ `&focus=A-B`, `&clean`). Eski adresler: `#c=w` = Warrior (Ömer'in seçimi), `#c=h` = Hexer v1.
+- Ekran (Ömer düzeltmeleri 2026-10-21 gece): tier başlık bandı (Tier I … Evolve I) yalnızca ağacın en üstünde TEK sefer, kolonlar tüm satırlarla hizalı; Mastery bar altında tier yazısı ve evolve çentiği yok (yalnızca bonus elmasları + hover ipucu); sayaç ve bar = pasif + 3 aktif (ult ayrı).
+- Warrior "Ömer's pick": `picks-warrior.js` (boş yuva = "Open slot"), Mastery adı ve bar eski V6 Moments'tan (`content.js` içinde sabit).
+- Eski geçici Hexer eşlemesi (V3/V5/V6/V7/V8) kaldırıldı; Hexer artık kendi 5 varyantıyla gelir.
+- Test (scratchpad, teste eklenmez): `node moments-test.js [--dir <variants klasörü>]`.

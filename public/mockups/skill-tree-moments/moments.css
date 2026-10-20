@@ -16,10 +16,18 @@ button, select { font-family: inherit; }
 .top h1 { font: 600 20px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); margin: 2px 0 6px; }
 .top h1 small { font: 400 15px var(--g-body); letter-spacing: 0; text-transform: none; color: var(--g-dim); margin-left: .6em; }
 .ctl { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin: 8px 0; }
-.cls-sel { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.cls-sel { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 6px 0 8px; }
 .cls-sel button { min-height: 44px; display: flex; align-items: center; gap: .5em; padding: 0 .9em 0 4px; background: rgba(8,6,4,.5); border: 1px solid rgba(217,178,106,.28); color: var(--g-text); cursor: pointer; font: 600 13px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; }
-.cls-sel button img { width: 36px; height: 36px; object-fit: cover; border: 1px solid rgba(217,178,106,.5); }
+.cls-sel button img { width: 36px; height: 36px; object-fit: cover; border: 1px solid rgba(217,178,106,.5); flex: none; }
 .cls-sel button.on { border-color: var(--g-ember); background: linear-gradient(90deg, rgba(224,112,42,.2), rgba(8,6,4,.5) 80%); color: #fff4d6; }
+/* varyant sekmeleri: class'in 5 varyanti (Warrior'da basta Omer'in secimi) */
+.var-tabs { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 6px; }
+.var-tabs button { min-height: 44px; display: inline-flex; align-items: center; padding: 0 1em; background: rgba(8,6,4,.5); border: 1px solid rgba(217,178,106,.22); color: var(--g-text); cursor: pointer; font: 600 12px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; }
+.var-tabs button.pk { border-style: dashed; border-color: rgba(243,217,153,.45); color: var(--g-gold); }
+.var-tabs button.on { border-style: solid; border-color: var(--g-ember); background: linear-gradient(90deg, rgba(224,112,42,.22), rgba(8,6,4,.5) 85%); color: #fff4d6; }
+.var-tabs button:disabled { opacity: .38; cursor: default; }
+.var-tabs button:not(:disabled):not(.on):hover { border-color: rgba(243,217,153,.6); }
+.var-tabs .vnote { font: 600 11px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); margin-left: 6px; }
 .lvbox { display: flex; align-items: center; gap: 10px; min-height: 44px; padding: 0 12px; border: 1px solid var(--g-line); background: rgba(255,255,255,.03); }
 .lvbox .lt { font: 600 12px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); }
 .lvbox .lt b { font: 600 18px var(--g-disp); color: var(--g-gold); margin-left: .35em; display: inline-block; min-width: 1.4em; }
@@ -128,7 +136,7 @@ html.mk-clean #mk-strip { display: none; }
 .bar-top { display: flex; align-items: baseline; gap: 12px; flex-wrap: wrap; }
 .bnm { font: 600 13px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
 .bval { font: 15px var(--g-body); color: var(--g-dim); } .bval b { font: 600 18px var(--g-disp); color: #fff4d6; }
-.barrow { padding: 28px 24px 40px; }
+.barrow { padding: 28px 24px 14px; }
 .bartrack { position: relative; height: 10px; background: #0d0806; border: 1px solid rgba(217,178,106,.4); }
 .bartrack::after { content: ''; position: absolute; inset: 0; pointer-events: none; background: repeating-linear-gradient(90deg, transparent 0, transparent calc(100% / 49 - 1px), rgba(217,178,106,.13) calc(100% / 49 - 1px), rgba(217,178,106,.13) calc(100% / 49)); }
 .bf { height: 100%; background: linear-gradient(90deg, #7a5a28, #e8cf8f); transition: width .2s; }
@@ -144,14 +152,7 @@ html.mk-clean #mk-strip { display: none; }
 .mk.rc i { background: linear-gradient(135deg, #ffd98a, #e0702a); border-color: #fff4d6; box-shadow: 0 0 0 2px #080604, 0 0 11px 1px rgba(255,155,58,.8); }
 .mk.rc em { color: var(--g-gold); text-shadow: 0 0 8px rgba(224,112,42,.65); }
 .mk.tbd.rc i { background: #3a2a12; border-color: rgba(243,217,153,.65); box-shadow: none; } .mk.tbd.rc em { text-shadow: none; }
-/* tier ve evolve isaretleri: iz altinda, kucuk yazi */
-.tk { position: absolute; top: 100%; width: 0; pointer-events: none; }
-.tk i { position: absolute; left: -.5px; top: 1px; width: 1px; height: 10px; background: rgba(217,178,106,.5); }
-.tk em { position: absolute; left: -34px; width: 68px; top: 12px; text-align: center; font: normal 600 10px/1.15 var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-dim); white-space: nowrap; }
-.tk em small { display: block; font-size: 9px; letter-spacing: .04em; opacity: .8; }
-.tk.ev i { width: 2px; left: -1px; height: 13px; background: #d9b26a; }
-.tk.rc i { background: #e8cf8f; } .tk.rc em { color: var(--g-gold); }
-@media (max-width: 900px), (max-height: 520px) { .barrow { padding-top: 24px; padding-bottom: 38px; } .tk em { font-size: 9px; width: 60px; left: -30px; } }
+@media (max-width: 900px), (max-height: 520px) { .barrow { padding-top: 24px; padding-bottom: 12px; } }
 
 /* ---------- agac: sol etiket sutunu + yatay kayan tuval ---------- */
 .treewrap { display: flex; align-items: flex-start; margin-top: 4px; }
@@ -291,4 +292,24 @@ html.mk-clean #mk-strip { display: none; }
   .focus { padding: 6px 8px 8px; } .fc-top h2 { font-size: 12px; } .fc-note { font-size: 12.5px; }
   .evc { min-width: 92px; padding: 3px 8px; } .evc b { font-size: 13px; }
   .uinfo { font-size: 13.5px; }
+}
+
+/* ---------- varyant bilgi satiri (sh-top altinda) + 'Variants coming' yer tutucusu ---------- */
+.vinfo { margin: 8px 0 4px; padding: 6px 12px; border-left: 2px solid rgba(224,112,42,.7); background: linear-gradient(90deg, rgba(224,112,42,.08), transparent 70%); }
+.vinfo .vt { display: block; font: 600 13px var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: var(--g-gold); margin-bottom: 2px; }
+.vinfo p { margin: 2px 0; font: 16px/1.35 var(--g-body); color: var(--g-text); display: flex; gap: .7em; align-items: baseline; }
+.vinfo p b { flex: none; min-width: 1.8em; font: 600 10px var(--g-disp); letter-spacing: .12em; color: var(--g-dim); }
+.vinfo p.tr { color: var(--g-dim); }
+.vsoon { margin: 14px 0 8px; padding: 26px 18px; text-align: center; border: 1px dashed var(--g-line2); background: rgba(255,255,255,.02); }
+.vsoon b { display: block; font: 600 16px var(--g-disp); letter-spacing: .16em; text-transform: uppercase; color: var(--g-dim); }
+.vsoon p { margin: 8px auto 0; max-width: 520px; font: 16px/1.4 var(--g-body); color: var(--g-dim); }
+.vsoon small { display: block; margin-top: 6px; font: 13px var(--g-body); color: #7f735d; }
+@media (max-width: 900px), (max-height: 520px) {
+  .cls-sel { gap: 4px; margin: 4px 0 6px; }
+  .cls-sel button { padding: 0 .55em 0 3px; gap: .35em; font-size: 11px; letter-spacing: .04em; }
+  .cls-sel button img { width: 32px; height: 32px; }
+  .var-tabs { gap: 4px; margin-bottom: 4px; }
+  .var-tabs button { padding: 0 .7em; font-size: 11px; letter-spacing: .04em; }
+  .vinfo { padding: 4px 8px; margin: 6px 0 2px; } .vinfo p { font-size: 13.5px; } .vinfo .vt { font-size: 11px; }
+  .vsoon { padding: 16px 10px; } .vsoon p { font-size: 13.5px; }
 }

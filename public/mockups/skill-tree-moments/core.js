@@ -1,8 +1,8 @@
 /* MOMENTS SKILL AGACI: KURAL MOTORU (mockup, oyun kodu DEGIL). Belge: docs/design/skill-tree-moments.md.
    Tarayicida window.SMM, Node'da require. Saf fonksiyonlar, DOM yok.
    Durum: S = { r: { 'satir.id': rank } }.  Satir 0 = pasif, 1-3 = aktif skill, 4 = ult (+ agaci).
-   Puan = level - 1.  SAYAC = agaca harcanan toplam puan (her satir + ult).
-   Kilitler: Tier II 5 / III 10 / IV 15 puan; Evolve I 23, Evolve II 38 (en cok 2 evolve); ult dugumleri LEVEL kilidi (5 / 10 / 15).
+   Puan = level - 1.  SAYAC = pasif + 3 aktif satira harcanan puan (Omer 2026-10-21: pasif sayilir, ULT SAYILMAZ; Mastery bar ayni sayi).
+   Kilitler: Tier II 5 / III 10 / IV 15 sayac; Evolve I 23, Evolve II 38 (en cok 2 evolve); ult dugumleri LEVEL kilidi (5 / 10 / 15).
    Ult tavani (Omer 2026-10-21): ult + agacina TOPLAM en cok 3 puan (kollar serbest, kilitler ve ic dugum kurali ayni). */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.SMM = f(); })(this, function () {
   const MAXLV = 50, BARMAX = 49, ULT = 4;
@@ -46,6 +46,7 @@
   const spent = (S) => { let t = 0; for (const k in S.r) t += S.r[k]; return t; };
   const rowSpent = (S, i) => { let t = 0; const p = i + '.'; for (const k in S.r) if (k.indexOf(p) === 0) t += S.r[k]; return t; };
   const ultSpent = (S) => rowSpent(S, ULT);
+  const counter = (S) => spent(S) - ultSpent(S); // kilit sayaci + Mastery bar: ult puani sayilmaz
   const free = (lv, S) => pool(lv) - spent(S);
   const newState = () => ({ r: {} });
   const reset = (S) => { S.r = {}; };
@@ -65,16 +66,16 @@
       const n = evoCount(S);
       if (n >= EVO_MAX) return { code: 'cap', text: 'Only ' + EVO_MAX + ' Evolves per hero' };
       const um = unmetTerm(S, nd); if (um) return { code: 'needs', text: needsText(um) };
-      const need = EVO_NEED[n], sp = spent(S);
-      if (sp < need) return { code: 'evo', text: 'Evolve ' + ROMAN[n] + ' needs ' + need + ' points spent (have ' + sp + ')', need, have: sp };
+      const need = EVO_NEED[n], sp = counter(S);
+      if (sp < need) return { code: 'evo', text: 'Evolve ' + ROMAN[n] + ' needs ' + need + ' tree points (have ' + sp + ')', need, have: sp };
     } else if (nd.arm) {
       if (ultSpent(S) >= ULT_MAX) return { code: 'ultcap', text: 'Ult takes ' + ULT_MAX + ' points at most' };
       const need = ultLv(nd);
       if (lv < need) return { code: 'tier', text: 'Ult node needs Lv ' + need + ' (you are Lv ' + lv + ')', need, have: lv };
       const um = unmetTerm(S, nd); if (um) return { code: 'needs', text: needsText(um) };
     } else {
-      const need = TIER_NEED[nd.tier], sp = spent(S);
-      if (sp < need) return { code: 'tier', text: 'Tier ' + nd.tier + ' needs ' + need + ' points spent (have ' + sp + ')', need, have: sp };
+      const need = TIER_NEED[nd.tier], sp = counter(S);
+      if (sp < need) return { code: 'tier', text: 'Tier ' + nd.tier + ' needs ' + need + ' tree points (have ' + sp + ')', need, have: sp };
       const um = unmetTerm(S, nd); if (um) return { code: 'needs', text: needsText(um) };
     }
     if (!noPts && free(lv, S) <= 0) return { code: 'points', text: 'No points left' };
@@ -129,12 +130,12 @@
   const anyOpen = (lv, S) => NODES.some((n) => !check(lv, S, n.key));
 
   /* ---- bar ---- */
-  const barVal = (S) => Math.min(BARMAX, spent(S));
-  const bonusReached = (S) => BAR_THR.map((t) => spent(S) >= t);
+  const barVal = (S) => Math.min(BARMAX, counter(S));
+  const bonusReached = (S) => BAR_THR.map((t) => counter(S) >= t);
 
   /* ---- Evolve durumu (sayac): sonraki evolve kacinci, kac puan ister, simdi acik mi ---- */
   function evoState(S) {
-    const n = evoCount(S), sp = spent(S);
+    const n = evoCount(S), sp = counter(S);
     if (n >= EVO_MAX) return { n, capped: true, need: null, open: false, have: sp, label: 'Evolve' };
     return { n, capped: false, need: EVO_NEED[n], open: sp >= EVO_NEED[n], have: sp, label: 'Evolve ' + ROMAN[n] };
   }
@@ -179,6 +180,6 @@
   }
 
   return { MAXLV, BARMAX, ULT, BAR_THR, TIER_NEED, EVO_NEED, EVO_MAX, ULT_LV, ULT_MAX, ARMS, ARM_NAME, ROMAN, ROW_DEF, NODES, BY,
-    pool, rk, spent, rowSpent, ultSpent, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
+    pool, rk, spent, rowSpent, ultSpent, counter, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
     check, take, validate, untake, status, anyOpen, barVal, bonusReached, focusPlan, replay, setNamer: (f) => { namer = f; } };
 });

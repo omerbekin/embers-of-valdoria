@@ -6,22 +6,19 @@
 <meta name="darkreader-lock" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Skill tree: Moments scheme (mockup)</title>
-<!-- MOMENTS skill agaci dogrulama taslagi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Belge: docs/design/skill-tree-moments.md.
-  Adres: #c=w|h &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli).
-  Icerik: Warrior = Omer'in secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot'); Hexer GECICI: skill-mastery-v2/data/v3, v5, v6, v7, v8 dosyalarindan eslenir (content.js). -->
+<!-- MOMENTS skill agaci: 11 class x 5 varyant ev sahibi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md.
+  Adres: #c=<class>&v=<1-5|pick> &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli). Eski: #c=w (Warrior, Omer'in secimi), #c=h (Hexer v1).
+  Icerik: class varyantlari skill-tree-moments/variants/<class>.js (secilince yuklenir; yoksa 'Variants coming'); Warrior'da ek olarak Omer'in secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot').
+  Class tablosu + ikonlar: skill-tree-moments/classes.js + skill-tree-moments/ic/. -->
 <link rel="stylesheet" href="skill-tree-moments/moments.css" />
-<script src="skill-mastery-v2/data/v3.js"></script>
-<script src="skill-mastery-v2/data/v5.js"></script>
-<script src="skill-mastery-v2/data/v6.js"></script>
-<script src="skill-mastery-v2/data/v7.js"></script>
-<script src="skill-mastery-v2/data/v8.js"></script>
 </head>
 <body>
 <div class="page">
   <div class="top">
-    <h1>Skill tree · Moments <small>şema doğrulama · tıklanabilir · içerik geçici</small></h1>
+    <h1>Skill tree · Moments <small>11 class · her class 5 varyant · şema doğrulama · tıklanabilir · içerik taslak</small></h1>
+    <div class="cls-sel" id="cls-sel" role="group" aria-label="Class"></div>
+    <div class="var-tabs" id="var-tabs" role="group" aria-label="Variant"></div>
     <div class="ctl">
-      <div class="cls-sel" id="cls-sel"></div>
       <div class="lvbox"><span class="lt">Level<b id="lvv">30</b></span><input type="range" id="lv" min="1" max="50" step="1" value="30" aria-label="Level" /><span class="lp">free <b id="lvp">29 / 29</b></span></div>
       <button class="rs" type="button" id="reset" title="Reset: refund every point"><img src="skill-tree-moments/gold.webp" alt="">Reset</button>
     </div>
@@ -35,6 +32,7 @@
 <div id="mk-strip"><b>MOCKUP</b> oyun değil</div>
 <script src="skill-tree-moments/core.js"></script>
 <script src="skill-tree-moments/content.js"></script>
+<script src="skill-tree-moments/classes.js"></script>
 <script src="skill-tree-moments/picks-warrior.js"></script>
 <script src="skill-tree-moments/app.js"></script>
 </body>
