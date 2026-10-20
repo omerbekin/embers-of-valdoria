@@ -1,0 +1,37 @@
+/* Taslak (oyun dışı): skill ipucu çipleri. Çip/ipucu stilleri oyunun band-tip.css'idir; burada yalnız yerleşim + V1-V3 çip stilleri. */
+.st-row { position: absolute; left: 0; right: 0; top: 40px; display: flex; gap: 24px; justify-content: center; align-items: flex-start; --u: 1px; }
+html.mk-phone .st-row { --u: .62px; gap: 14px; top: 28px; }
+.st-row .bt { pointer-events: auto; }
+.st-row .bt:last-child { align-self: flex-start; }
+.st-row .bt-chip { position: relative; }
+.st-row .bt-chip img.rg, .st-row .bt-chip img.mp, .st-row .bt-chip img.cd { width: var(--ic, 20px); height: var(--ic, 20px); image-rendering: auto; }
+.st-row .bt-chip.q { padding: 0 .6em 0 .45em; gap: .35em; height: calc(var(--ic, 20px) + 8px); min-height: 1.7em; }
+.st-row .bt-chip.q .n { font: 600 1.15em var(--bt-disp); }
+.st-row.i20 { --ic: 20px; }
+.st-row.i24 { --ic: 24px; }
+.st-row.tight .bt-meta { gap: max(3px, calc(4 * var(--bu))) max(4px, calc(5 * var(--bu))); }
+.st-row.tight .bt-chip { padding: 0 .5em; gap: .3em; }
+.st-row.tight .bt-chip.q { padding: 0 .45em 0 .3em; gap: .25em; }
+html.mk-phone .st-row.i20 { --ic: 16px; }
+html.mk-phone .st-row.i24 { --ic: 20px; }
+/* V3 bölmeli çip */
+.st-row .bt-chip.seg { padding: 0; gap: 0; height: calc(var(--ic, 20px) + 8px); border-color: var(--bt-line2); }
+.st-row .bt-chip.seg > .sg { position: relative; display: inline-flex; align-items: center; gap: .3em; height: 100%; padding: 0 .55em 0 .4em; }
+.st-row .bt-chip.seg > .sg + .sg { border-left: 1px solid var(--bt-line2); }
+.st-row .bt-chip.seg .n { font: 600 1.15em var(--bt-disp); color: var(--bt-gold); }
+/* ipucu balonu (öneri): hover / odak / dokunma */
+.st-row [data-tip]:hover::after, .st-row [data-tip]:focus::after { content: attr(data-tip); position: absolute; z-index: 40; left: 50%; bottom: calc(100% + 8px); transform: translateX(-50%); white-space: nowrap;
+  padding: 5px 10px; font: 600 12px Cinzel, Georgia, serif; letter-spacing: .08em; text-transform: none; color: #f3d999; background: #0b0806; border: 1px solid rgba(217,178,106,.55); box-shadow: 0 6px 16px rgba(0,0,0,.7); pointer-events: none; }
+.st-row [data-tip] { outline: none; cursor: help; }
+.st-row .bt-chip.q[data-tip]:focus { border-color: rgba(243,217,153,.8); }
+.st-row .bt-chip.seg > .sg[data-tip]:hover, .st-row .bt-chip.seg > .sg[data-tip]:focus { background: rgba(243,217,153,.1); }
+/* zoom şeridi */
+.zm { display: flex; flex-wrap: wrap; gap: 22px; padding: 6px 0 10px; }
+.zm-box { background: linear-gradient(180deg, rgba(30,22,14,.985), rgba(11,8,5,.985)); border: 1px solid rgba(217,178,106,.32); padding: 12px 16px 14px; box-shadow: 0 0 0 3px rgba(8,6,4,.75); }
+.zm-box h4 { margin: 0 0 10px; font: 600 12px Cinzel, serif; letter-spacing: .16em; text-transform: uppercase; color: #a8977a; }
+.zm-row { display: flex; align-items: center; gap: 12px; }
+.zm-row .sz { font: 600 11px Cinzel, serif; letter-spacing: .1em; color: #a8977a; width: 34px; }
+.zm-row .it { display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px 3px 5px; background: rgba(255,255,255,.05); border: 1px solid rgba(217,178,106,.16); font: 600 15px Cinzel, serif; color: #f3d999; }
+.zm-row + .zm-row { margin-top: 10px; }
+.zm-big { display: flex; gap: 18px; align-items: flex-end; }
+html.mk-phone .st-row .bt { max-width: 410px; }
