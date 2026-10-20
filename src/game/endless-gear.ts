@@ -1,4 +1,5 @@
-import { allocateRun, bagOf, discardFromBag, endlessBagSize, equipBestRun, equipFromBag, fullEquipment, unequipToBag, type EndlessRun } from '../endless';
+import { woundCount, woundsLine } from '../progression/wounds';
+import { allocateRun, endlessWoundRules, bagOf, discardFromBag, endlessBagSize, equipBestRun, equipFromBag, fullEquipment, unequipToBag, type EndlessRun } from '../endless';
 import { openGear, type GearSource } from '../ui/gear-screen';
 
 /**
@@ -8,7 +9,7 @@ import { openGear, type GearSource } from '../ui/gear-screen';
 export function endlessGearSource(get: () => EndlessRun, set: (r: EndlessRun) => void): GearSource {
   const apply = (fn: (r: EndlessRun) => EndlessRun): void => set(fn(get()));
   return {
-    heroes: () => get().heroes.map((h) => ({ id: h.id, class: h.class, level: h.level ?? 1, xp: h.xp ?? 0, statPoints: h.statPoints ?? 0, skillPoints: h.skillPoints ?? 0, alloc: h.alloc ?? {}, hpRatio: h.hpRatio, equipment: fullEquipment(h) })),
+    heroes: () => get().heroes.map((h) => ({ id: h.id, class: h.class, level: h.level ?? 1, xp: h.xp ?? 0, statPoints: h.statPoints ?? 0, skillPoints: h.skillPoints ?? 0, alloc: h.alloc ?? {}, hpRatio: h.hpRatio, ...(woundCount(h) > 0 ? { woundsNote: woundsLine(woundCount(h), endlessWoundRules()) } : {}), equipment: fullEquipment(h) })),
     bag: () => bagOf(get()),
     bagSize: endlessBagSize(),
     gold: () => get().gold,

@@ -4,9 +4,10 @@ import { escortsOf, hasLeader, reinforcementGroup, waveOpening } from '../engine
 import { Rng } from '../engine/rng';
 import type { UnitModifiers, UnitSetup } from '../engine/types';
 import { loadoutSetup } from '../progression/loadout';
+import { applyWounds, woundCount } from '../progression/wounds';
 import { LEVELS, withEnemyLevel } from '../progression/levels';
 import { ITEMS } from '../progression/items';
-import { ENDLESS, encounter, type EndlessConfig, type EndlessRun, type WaveKind } from './data';
+import { ENDLESS, encounter, endlessCorpses, endlessWoundRules, type EndlessConfig, type EndlessRun, type WaveKind } from './data';
 import { withRelics } from './relics';
 import { heroSlots } from './formation';
 import { carrySetup, heroRef, summonRef } from './carry';
@@ -153,7 +154,7 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
   const cdMode = cfg.carry.cooldowns ?? 'carry';
   const skipInitial = wave > 1 && cdMode !== 'initial';
   const keepCd = { cooldowns: cdMode === 'carry' };
-  const corpses = (cfg.carry.fallen ?? 'corpse') === 'corpse';
+  const corpses = endlessCorpses(cfg);
   live.forEach((h, i) => {
     const slot = slots[i]!;
     if (slot < 0) return;
@@ -165,9 +166,12 @@ export function wavePlan(run: EndlessRun, cfg: EndlessConfig = ENDLESS): WavePla
     // Hero's Feast (boss ödülü): kalan dalgalarda maks can çarpanı (item güçlendirmesiyle birleşir)
     if (run.blessing && run.blessing.waves > 0 && run.blessing.hpMult !== 1)
       setup.modifiers = { ...(setup.modifiers ?? {}), hpMult: r3((setup.modifiers?.hpMult ?? 1) * run.blessing.hpMult) };
+    // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks can -carry.wounds.maxHpLoss (kurulumda hpMult / hpAdd; motor aynı)
+    if (woundCount(h) > 0) applyWounds(setup, woundCount(h), endlessWoundRules(cfg));
     if (h.hpRatio < 1) setup.startHpRatio = Math.max(0, h.hpRatio);
     // Taşınan durum (MP oranı, buff'lar, Rage, kalkan, cooldown'lar) + dalga arası cooldown kuralı
     Object.assign(setup, carrySetup(h.carry, uidAt.get(slot)!, uidOf, keepCd));
+    if (cfg.carry.mp === 'full') delete setup.startMpRatio; // MP her dalgada dolu (Ömer 2026-10-19; eski kayıttaki oran yok sayılır)
     if (skipInitial) setup.skipInitialCooldown = true;
     // Önceki dalgada düşen kahraman bu savaşa CESET olarak girer (hücresinde; Resurrection / Revive kartı kaldırır)
     if (corpses && h.hpRatio <= 0) {

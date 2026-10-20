@@ -133,8 +133,8 @@ describe('kalıntı etkileri', () => {
     for (const c of heroes(battleFor(wavePlan(fresh())))) expect(c.shield).toBe(0);
   });
 
-  it("Pilgrim's Bell: zafer şifası %20 yerine %30", () => {
-    expect(victoryHealOf([])).toBe(0.2);
+  it("Pilgrim's Bell: zafer şifası %25 yerine %30", () => {
+    expect(victoryHealOf([])).toBe(0.25);
     expect(victoryHealOf(['pilgrims_bell'])).toBe(0.3);
     const run = fresh(['pilgrims_bell']);
     const next = applyOutcome(run, { wave: 1 }, { victory: true, units: run.heroes.map((h) => ({ heroId: h.id, hpRatio: 0.5, alive: true })), kills: 0, turns: 1 });

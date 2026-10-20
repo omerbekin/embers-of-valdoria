@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { activeHeroes, debugToggleFallen, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { activeHeroes, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, makeItem, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -288,6 +288,23 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       reload();
     },
   });
+  // Yara (can ve ölüm reworkü, Ömer 2026-10-19; docs/design/hp-death-rework.md)
+  const woundTool = (id: string, label: string, hint: string, delta: number | null): void =>
+    debug.register({
+      id,
+      tab: CAMPAIGN_TAB,
+      section: 'Items',
+      icon: 'skull',
+      label,
+      hint,
+      run: () => {
+        setState(debugWounds(ensureState(), delta));
+        reload();
+      },
+    });
+  woundTool('campaign.woundAdd', 'Wound first hero (+1)', 'Give the first hero of the formation one wound (each wound: lower max HP; with 3 wounds the next fall kills). Shown in the Gear hero bookmark tooltip', 1);
+  woundTool('campaign.woundRemove', 'Heal one wound (first hero)', 'Remove one wound from the first hero of the formation', -1);
+  woundTool('campaign.woundClear', 'Clear all wounds', 'Remove every wound from the whole roster (as a town rest does)', null);
   // Level / XP (Ömer 2026-10-17, levels.md)
   const levelOfTeam = (): number => {
     const s = ensureState();

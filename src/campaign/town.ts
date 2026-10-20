@@ -2,7 +2,7 @@ import { CONFIG } from './data';
 import { node } from './graph';
 import { chapterOf } from './power';
 import { SMITH } from './smith';
-import { isFallen, mapOf, nextStep } from './state';
+import { clearWounds, isFallen, mapOf, nextStep } from './state';
 import type { CampaignState, MapNode, NextStep, TownHotspot, TownSceneDef } from './types';
 
 /**
@@ -126,6 +126,7 @@ export function restInTown(s: CampaignState, nodeId: string = s.at): CampaignSta
   const t = JSON.parse(JSON.stringify(s)) as CampaignState;
   const heal = townRestHeal(n);
   for (const h of t.roster) if (!isFallen(h)) h.hpRatio = Math.round(Math.max(h.hpRatio, heal) * 1000) / 1000;
+  clearWounds(t); // kasaba dinlenmesi yaraları siler (Ömer 2026-10-19; kamp silmez)
   t.gold -= price;
   t.townRests = { ...(t.townRests ?? {}), [nodeId]: townRestCount(s, nodeId) + 1 };
   return t;

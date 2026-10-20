@@ -34,7 +34,7 @@ function wonWave1(): { run: EndlessRun; battle: Battle; plan: ReturnType<typeof 
 }
 
 describe('Endless sürekli akış: dalga arası taşıma', () => {
-  it('buff, Rage ve kalkan taşınır; debuff silinir; MP canla aynı oranla (+%20)', () => {
+  it('buff, Rage ve kalkan taşınır; debuff silinir; MP her dalgada dolu (hp-death-rework 2026-10-19)', () => {
     const { run, battle, plan } = wonWave1();
     const w = unitOf(battle, 'warrior');
     const m = unitOf(battle, 'mage');
@@ -53,7 +53,8 @@ describe('Endless sürekli akış: dalga arası taşıma', () => {
     expect(hw.carry?.rage).toBe(17);
     expect(hw.carry?.shield).toBe(9);
     const hm = next.heroes.find((h) => h.class === 'mage')!;
-    expect(hm.carry?.mpRatio).toBeCloseTo(Math.min(1, m.mp / m.maxMp + ENDLESS.carry.victoryHeal), 2);
+    expect(ENDLESS.carry.mp).toBe('full');
+    expect(hm.carry?.mpRatio).toBeUndefined();
     // Sonraki dalganın savaşı bu durumla kurulur (kaynak uid'si yeni savaşın büyücüsüne eşlenir)
     const b2 = battleFor(wavePlan({ ...next, phase: 'ready' }));
     const w2 = unitOf(b2, 'warrior');
@@ -64,17 +65,27 @@ describe('Endless sürekli akış: dalga arası taşıma', () => {
     expect(w2.statuses[0]!.turns).toBeLessThanOrEqual(2);
     expect(w2.rage).toBe(17);
     expect(w2.shield).toBe(9);
-    expect(m2.mp).toBe(Math.round(m2.maxMp * hm.carry!.mpRatio!));
+    expect(m2.mp).toBe(m2.maxMp);
+    // eski kayıttaki MP oranı yok sayılır
+    const stale = { ...next, phase: 'ready' as const, heroes: next.heroes.map((h) => (h.class === 'mage' ? { ...h, carry: { ...(h.carry ?? {}), mpRatio: 0.2 } } : h)) };
+    expect(wavePlan(stale).units.party[wavePlan(stale).party.indexOf('mage')]?.startMpRatio).toBeUndefined();
   });
 
-  it('düşen kahraman CESET olarak kalır; Revive kartı yok (Ömer 2026-10-14); boss şifası kaldırmaz; ceset sonraki savaşta geçerli', () => {
-    const { run, battle, plan } = wonWave1();
+  it('düşen kahraman yaralı kalkar; 3 yaralıysa CESET (Revive kartı yok); boss şifası kaldırmaz; ceset sonraki savaşta geçerli', () => {
+    const { run: run0, battle, plan } = wonWave1();
     const a = unitOf(battle, 'archer');
     a.hp = 0;
     a.statuses = [{ kind: 'haste', turns: 2, source: a.uid }];
+    // yarasız: %10 canla 1 yara, taşınan durum yok
+    const rose = applyOutcome(run0, plan, outcomeFromBattle(plan, battle)).heroes.find((h) => h.class === 'archer')!;
+    expect(rose).toMatchObject({ hpRatio: ENDLESS.carry.wounds!.riseRatio, wounds: 1 });
+    expect(rose.carry).toBeUndefined();
+    // 3 yaralı: ceset
+    const run = { ...run0, heroes: run0.heroes.map((h) => (h.class === 'archer' ? { ...h, wounds: ENDLESS.carry.wounds!.lethal } : h)) };
     const next = applyOutcome(run, plan, outcomeFromBattle(plan, battle));
     const ha = next.heroes.find((h) => h.class === 'archer')!;
     expect(ha.hpRatio).toBe(0);
+    expect(ha.wounds).toBe(ENDLESS.carry.wounds!.lethal);
     expect(ha.carry).toBeUndefined();
     expect(next.offer!.some((c) => c.kind === 'revive')).toBe(false); // rewards.reviveCard false
     // sonraki savaşta ceset (can 0, diriltilebilir), sırası yok

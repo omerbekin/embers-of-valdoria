@@ -1,6 +1,6 @@
 # Can ve ölüm reworkü (Ömer 2026-10-19)
 
-Durum: **KARAR, henüz UYGULANMADI.** Form: https://claude.ai/artifact/Y1bMNEr46cPRD79Ahcm5ef (db `canolum/main`). Sebep: can, düşme, şifa, dinlenme, geri çekilme ve yenilgi kuralları ayrı zamanlarda eklendi ve çelişti (zor zafer yenilgiden kötüydü, devriyeden çekilmek ölümü siliyordu, kasma kahraman öldürüyordu, sefer ve Endless farklı sayılar kullanıyordu).
+Durum: **UYGULANDI (2026-10-20, campaign-dev; varsayımlar open-questions 369).** Form: https://claude.ai/artifact/Y1bMNEr46cPRD79Ahcm5ef (db `canolum/main`). Sebep: can, düşme, şifa, dinlenme, geri çekilme ve yenilgi kuralları ayrı zamanlarda eklendi ve çelişti (zor zafer yenilgiden kötüydü, devriyeden çekilmek ölümü siliyordu, kasma kahraman öldürüyordu, sefer ve Endless farklı sayılar kullanıyordu).
 
 ## İlkeler
 1. **Savaşta olan savaşta kalır.** Zafer de geri çekilme de can kaybını ve yaraları taşır. Yalnızca yenilgi geri sarar (son kayda dönüş).

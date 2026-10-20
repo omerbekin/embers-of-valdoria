@@ -29,7 +29,8 @@ export const className = (id: string): string => classes[id]?.name ?? id;
 /** Ödül kartının başlığı (item kartında item adı ayrıca yazılır). */
 export function cardTitle(c: RewardCard): string {
   if (c.kind === 'gold') return `${c.amount} Gold`;
-  if (c.kind === 'heal') return c.ratio >= 0.6 ? 'Field Surgeon' : 'Tend the Wounded';
+  if (c.kind === 'heal') return 'Tend the Wounded';
+  if (c.kind === 'xp') return "Veteran's Lesson";
   if (c.kind === 'feast') return "Hero's Feast";
   if (c.kind === 'revive') return 'Revive';
   return 'Spoils';
@@ -37,8 +38,9 @@ export function cardTitle(c: RewardCard): string {
 
 export function cardText(c: RewardCard): string {
   if (c.kind === 'gold') return `Coin for the merchant who comes after every ${ENDLESS.shop.every}th wave.`;
-  if (c.kind === 'heal') return `Every hero recovers ${Math.round(c.ratio * 100)}% of their health.`;
+  if (c.kind === 'heal') return `Every hero recovers ${Math.round(c.ratio * 100)}% of their health.${ENDLESS.carry.clearWounds?.includes('heal') ? ' Wounds are healed.' : ''}`;
+  if (c.kind === 'xp') return `Every hero gains ${Math.round(c.ratio * 100)}% of the experience needed for their next level.`;
   if (c.kind === 'revive') return `The fallen hero rises with ${Math.round(c.ratio * 100)}% of their health and mana.`;
-  if (c.kind === 'feast') return `Every hero is fully healed and has +${Math.round((c.hpMult - 1) * 100)}% max health for the next ${c.waves} waves.`;
+  if (c.kind === 'feast') return `Every hero is fully healed${ENDLESS.carry.clearWounds?.includes('feast') ? ', wounds too,' : ''} and has +${Math.round((c.hpMult - 1) * 100)}% max health for the next ${c.waves} waves.`;
   return '';
 }

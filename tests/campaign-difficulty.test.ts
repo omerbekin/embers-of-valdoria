@@ -75,6 +75,8 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
     expect(CONFIG.difficulties.easy.eliteEscort).toBeUndefined();
     const ratio = (m: Record<number, { modifiers?: { hpMult?: number; powerMult?: number }; tier?: string }>, e: typeof m, slot: string, k: 'hpMult' | 'powerMult') =>
       (m[+slot]!.modifiers?.[k] ?? 1) / (e[+slot]!.modifiers?.[k] ?? 1);
+    // Easy'nin genel düşman eki (difficulties.easy.enemy; 2026-10-20 kasma turu) her birime uygulanır: Medium / Easy oranından ayrılır
+    const ee = (k: 'hpMult' | 'powerMult') => CONFIG.difficulties.easy.enemy?.[k] ?? 1;
     for (const node of ['8C', '3']) {
       const m = units('medium', node);
       const e = units('easy', node);
@@ -82,8 +84,8 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
       for (const slot of Object.keys(m)) {
         if (m[+slot]!.tier) continue;
         escorts++;
-        expect(ratio(m, e, slot, 'hpMult')).toBeCloseTo(esc.hpMult ?? 1, 2);
-        expect(ratio(m, e, slot, 'powerMult')).toBeCloseTo(esc.powerMult ?? 1, 2);
+        expect(ratio(m, e, slot, 'hpMult') * ee('hpMult')).toBeCloseTo(esc.hpMult ?? 1, 2);
+        expect(ratio(m, e, slot, 'powerMult') * ee('powerMult')).toBeCloseTo(esc.powerMult ?? 1, 2);
       }
       expect(escorts).toBeGreaterThan(0);
     }
@@ -91,15 +93,15 @@ describe('zorluk tanımı düşmanlara uygulanır', () => {
     const m8 = units('medium', '8C');
     const e8 = units('easy', '8C');
     const lead = Object.keys(m8).find((s) => m8[+s]!.tier === 'elite')!;
-    expect(ratio(m8, e8, lead, 'hpMult')).toBeCloseTo((CONFIG.difficulties.medium.enemyTier?.elite?.hpMult ?? 1) / (CONFIG.difficulties.easy.enemyTier?.elite?.hpMult ?? 1), 2);
-    // Bandit Chief (noTierMods): iki zorlukta aynı
+    expect(ratio(m8, e8, lead, 'hpMult') * ee('hpMult')).toBeCloseTo((CONFIG.difficulties.medium.enemyTier?.elite?.hpMult ?? 1) / (CONFIG.difficulties.easy.enemyTier?.elite?.hpMult ?? 1), 2);
+    // Bandit Chief (noTierMods): iki zorlukta yalnızca Easy'nin genel eki kadar fark
     const m3 = units('medium', '3');
     const e3 = units('easy', '3');
     const chief = Object.keys(m3).find((s) => m3[+s]!.tier === 'elite')!;
-    expect(m3[+chief]!.modifiers).toEqual(e3[+chief]!.modifiers);
-    // normal düğüm: Easy ile Medium aynı (eliteEscort uygulanmaz)
+    for (const k of ['hpMult', 'powerMult'] as const) expect(ratio(m3, e3, chief, k) * ee(k)).toBeCloseTo(1, 2);
+    // normal düğüm: Easy ile Medium arasında yalnızca Easy'nin genel eki (eliteEscort uygulanmaz)
     const m5 = units('medium', '5A');
     const e5 = units('easy', '5A');
-    for (const slot of Object.keys(m5)) expect(m5[+slot]!.modifiers).toEqual(e5[+slot]!.modifiers);
+    for (const slot of Object.keys(m5)) for (const k of ['hpMult', 'powerMult'] as const) expect(ratio(m5, e5, slot, k) * ee(k)).toBeCloseTo(1, 2);
   });
 });

@@ -9,7 +9,8 @@ import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
 import './gear-plates.css';
-import { allocateStats, activeHeroes, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { allocateStats, activeHeroes, heroWoundsLine, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { woundCount } from '../progression/wounds';
 import {
   fitsSlot,
   isPlanError,
@@ -87,6 +88,8 @@ export interface GearHero {
   alloc?: StatAlloc;
   /** Şu anki can oranı (Sheet'te "93 / 150" + çubuk; yoksa dolu). */
   hpRatio?: number;
+  /** Yara satırı (hero ipucunda; Ömer 2026-10-19): "Wounds: 2 (-40% max HP)". */
+  woundsNote?: string;
   /** Düşmüş kahraman (can 0 gösterilir). */
   alive?: boolean;
 }
@@ -119,7 +122,8 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
   return {
     heroes: () => {
       const s = get();
-      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))];
+      // Yara satırı (Ömer 2026-10-19): kahraman yer iminin ipucunda (en küçük gösterim; arayüzü mockup'tan seçilecek)
+      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => (woundCount(h) > 0 ? { ...h, woundsNote: heroWoundsLine(h) } : h));
     },
     bag: () => get().inventory,
     bagSize: BAG_SIZE,

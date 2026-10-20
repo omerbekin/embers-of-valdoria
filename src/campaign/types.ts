@@ -1,3 +1,4 @@
+import type { WoundRules } from '../progression/wounds';
 /**
  * Sefer (campaign) tipleri. Saf TypeScript: Phaser/DOM yok, Node'da test edilir (docs/design/campaign/campaign.md).
  */
@@ -27,7 +28,7 @@ export interface DifficultyDef {
    */
   eliteEscort?: DifficultyEnemyMods;
   /** Bu zorlukta sefer kurallarının üstüne yazılanlar (ör. zafer sonrası toparlanma `victoryHeal`). Yoksa campaign.json > rules. */
-  rules?: Partial<Pick<CampaignRules, 'victoryHeal' | 'bossVictoryHeal'>>;
+  rules?: Partial<Pick<CampaignRules, 'victoryHeal' | 'eliteVictoryHeal' | 'bossVictoryHeal'>>;
 }
 
 export type DifficultyEnemyMods = Pick<UnitModifiers, 'hpMult' | 'statMult' | 'powerMult' | 'armorAdd' | 'magicArmorAdd'>;
@@ -191,8 +192,12 @@ export interface EncounterDef {
 export interface CampaignRules {
   carryHp: boolean;
   victoryHeal: number;
-  /** Boss zaferi: YAŞAYANLAR bu orana iyileşir (düşenler kalkmaz; Ömer 2026-10-11, Endless ile aynı). */
+  /** Elit zaferi: YAŞAYANLAR maks canın bu kadarını alır (Ömer 2026-10-19, hp-death-rework.md; yoksa victoryHeal). */
+  eliteVictoryHeal?: number;
+  /** Boss zaferi: YAŞAYANLAR bu orana iyileşir (yara silmez; düşenler wounds kuralıyla). */
   bossVictoryHeal: number;
+  /** Yara kuralı (Ömer 2026-10-19; src/progression/wounds.ts). */
+  wounds: WoundRules;
   maxSaves: { normal: number; ironman: number };
   /** Sefer yuvası sayısı (3). */
   slots: number;
@@ -222,7 +227,7 @@ export interface CampaignConfig {
    * Serbest dolaşım / devriye (roadmap 2.2-2.3 A; campaign.json > replay): `xp[i]` = düğümün i. yeniden oynanışında XP çarpanı (0 = ilk zafer,
    * son değer taban). Altın ve item çarpanı items.json > loot.repeat'tedir (aynı sayılar). Yoksa yeniden oynama XP'si tam.
    */
-  replay?: { xp: number[]; /** Devriyeden geri çekilmede kahraman başına en çok can kaybı (oran, 0-1; Ömer 2026-10-19). */ retreatHpLoss?: number };
+  replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
   merchant: { size: number; rerollCost: number; buybackSize: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
@@ -248,6 +253,8 @@ export interface Hero {
   skillPoints?: number;
   /** Dağıtılmış temel stat puanları (stat başına puan; progression > baseAttrs). */
   alloc?: StatAlloc;
+  /** Yara sayısı (Ömer 2026-10-19, hp-death-rework.md; kayıt sürümü 11, eski kayıtta yok = 0): her yara maks can -rules.wounds.maxHpLoss. */
+  wounds?: number;
   /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
 }
@@ -405,6 +412,8 @@ export interface BattleOutcome {
   flawless?: boolean;
   /** Öldürme kaydı (XP payı; progression > trackKills). Yoksa karşılaşmanın tüm düşmanları, kimse düşmeden öldürülmüş sayılır. */
   kills?: KillRecord[];
+  /** Savaş içi Valor diriltmeleri (kahraman başına sayı; Battle.log, battleOutcomeOf). Her biri valor.json > revive.clearWounds yara siler. */
+  valorRevived?: Record<string, number>;
 }
 
 export type NextStep =

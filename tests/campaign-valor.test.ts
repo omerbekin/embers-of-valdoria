@@ -96,14 +96,19 @@ describe('sefer Valor kazancı', () => {
 describe('sefer: savaş dışında Valor ile diriltme', () => {
   const base = () => debugTeleport(completeStory(playTo(fresh(), R.campaign.introNode)), '5A');
   it('outsideCost Valor (savaştakinden ucuz) harcar, kahraman %50 canla kalkar', () => {
-    const s0 = winAll(base(), { fallen: 1 });
+    // 3 yaralı kahraman zaferi düşmüş bitirir: ceset (hp-death-rework 2026-10-19); Valor kaldırır, yaraları kalır
+    const b0 = base();
+    const first = activeHeroes(b0)[0]!.id;
+    const s0 = winAll({ ...b0, roster: b0.roster.map((h) => (h.id === first ? { ...h, wounds: 3 } : h)) }, { fallen: 1 });
     const fallen = s0.roster.find((h) => !h.alive)!;
+    expect(fallen.wounds).toBe(3);
     const s = { ...s0, valor: OUT };
     const t = reviveWithValor(s, fallen.id);
     expect(t.valor).toBe(0);
     const h = t.roster.find((x) => x.id === fallen.id)!;
     expect(h.alive).toBe(true);
     expect(h.hpRatio).toBe(R.revive.hpRatio);
+    expect(h.wounds).toBe(2); // Valor 1 yara siler (Ömer 2026-10-20)
     expect(valorReviveBlocked({ ...s0, valor: OUT - 1 }, fallen.id)).toBe(`Needs ${OUT} Valor (you have ${OUT - 1})`);
     expect(valorReviveBlocked(s0, s0.roster.find((x) => x.alive)!.id)).toBe('This hero has not fallen');
     const { valor: _v, ...locked } = s;
@@ -134,7 +139,7 @@ describe('sefer kaydı: Valor ve sürüm 7 göçü', () => {
     expect(saves[1]!.state.valor).toBe(R.campaign.gift);
     expect(migrateSaves(kv)).toBe(true);
     expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(10); // 8: başlangıç silahı (Item Güçlendirme), 9: level puanları (2026-10-17), 10: serbest dolaşım (2026-10-18)
+    expect(SAVE_VERSION).toBe(11); // 8: başlangıç silahı (Item Güçlendirme), 9: level puanları (2026-10-17), 10: serbest dolaşım (2026-10-18)
   });
 
   it('Valor kayıtta korunur; bozuk değer 0..cap aralığına kırpılır', () => {

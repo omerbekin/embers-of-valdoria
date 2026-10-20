@@ -37,6 +37,8 @@ export interface HoverHero {
   /** Düşmüş kahraman: alive false ya da can oranı 0 (ekipmanı değiştirilemez; Ömer 2026-10-18). */
   alive?: boolean;
   hpRatio?: number;
+  /** Yara satırı (Ömer 2026-10-19; en küçük işlevsel gösterim, yara arayüzü mockup'tan seçilecek): "Wounds: 2 (-40% max HP)"; yoksa yarasız. */
+  woundsNote?: string;
 }
 
 /** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */

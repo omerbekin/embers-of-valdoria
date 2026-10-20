@@ -12,6 +12,7 @@ import type { MatchResult, MpSession, Role, SessionEvent } from '../net/session'
 import { sanitizeName } from '../net/protocol';
 import type { LinkError, WebRtcLink } from '../net/webrtc-link';
 import { setBanner, toast } from '../ui/mp-overlay';
+import { reducedMotion } from '../ui/motion-pref';
 import type { MpBattleHooks, MpResultInfo, MpTeamHooks } from './mp-hooks';
 
 export const MP_SCENE = 'MultiplayerScene';
@@ -42,6 +43,8 @@ export function loadNet(): Promise<NetModule> {
   return netLoading;
 }
 
+/** İki taraf hazır olduktan sonra savaşa geçmeden önceki bekleme (sancak inişi + ışık). */
+const READY_HOLD_MS = 2300;
 const SCENES = ['BattleScene', 'TeamSelectScene', 'CampaignMapScene', 'MainMenuScene', MP_SCENE];
 const STORE_KEY = 'protomedi.mp';
 /** Yenilenen sekme bu süre içinde aynı lobiye kendiliğinden döner. */
@@ -150,6 +153,8 @@ export class MpClient {
   private readonly listeners = new Set<() => void>();
   private timer = 0;
   private offSession: (() => void) | null = null;
+  /** Hazır sancakları sahnesi (ikisi hazır): savaşa geçmeden önce kısa bekleme; bu sürede gelen hamle / bitiş olayları sıraya alınır. */
+  private hold: SessionEvent[] | null = null;
   private remoteCbs = new Set<() => void>();
   private endedCbs = new Set<(r: MpResultInfo) => void>();
   private teamCbs = new Set<() => void>();
@@ -360,6 +365,7 @@ export class MpClient {
     this.fake = null;
     this.session = null;
     this.error = '';
+    this.hold = null;
     this.remoteCbs.clear();
     this.endedCbs.clear();
     this.teamCbs.clear();
@@ -372,14 +378,43 @@ export class MpClient {
   private onSession(e: SessionEvent): void {
     const s = this.session;
     if (!s) return;
+    if (this.hold && (e.type === 'move' || e.type === 'ended')) {
+      this.hold.push(e);
+      return;
+    }
     switch (e.type) {
       case 'phase':
         if (e.phase === 'lobby') this.goto(MP_SCENE, {});
         else if (e.phase === 'teams') this.goto('TeamSelectScene', { mp: this.teamHooks(), teams: undefined });
         break;
-      case 'start':
-        this.goto('BattleScene', { mp: this.battleHooks(), seed: e.lockstep.setup.seed, mode: 'turns', teams: undefined, campaign: undefined });
+      case 'start': {
+        const go = () => this.goto('BattleScene', { mp: this.battleHooks(), seed: e.lockstep.setup.seed, mode: 'turns', teams: undefined, campaign: undefined });
+        if (!this.game?.scene.isActive('TeamSelectScene') || reducedMotion()) {
+          go();
+          break;
+        }
+        // İki taraf hazır: sancaklar inip ışık yansın diye kısa bekleme (src/game/ready-banners.ts), sonra savaş
+        const queue: SessionEvent[] = [];
+        this.hold = queue;
+        // Aynı anda savaşın kodu + görselleri arka planda iner (src/game/mp-prefetch.ts); geçiş, hem süre (en az) hem yükleme bitince olur.
+        // Yükleme uzarsa sancaklar yanık kalır, hızlıysa süre sonunda geçilir (zaman aşımı + hata: yine geçilir, savaş sahnesi eksiği tamamlar).
+        const minHold = new Promise<void>((r) => window.setTimeout(r, READY_HOLD_MS));
+        const ready = this.prefetchBattle(e.lockstep.battle);
+        void Promise.all([minHold, ready]).then(() => {
+          if (this.hold !== queue || this.session !== s) return;
+          this.hold = null;
+          go();
+          // beklerken gelen hamle / bitiş olayları savaş sahnesi dinlemeye başlayınca yeniden verilir
+          let tries = 0;
+          const replay = () => {
+            if (this.session !== s) return;
+            if ((this.remoteCbs.size || this.endedCbs.size) && this.game?.scene.isActive('BattleScene')) queue.forEach((q) => this.onSession(q));
+            else if (++tries < 80) window.setTimeout(replay, 100);
+          };
+          if (queue.length) replay();
+        });
         break;
+      }
       case 'move':
         if (e.remote) for (const cb of [...this.remoteCbs]) cb();
         break;
@@ -413,6 +448,18 @@ export class MpClient {
         break;
     }
     this.changed();
+  }
+
+  /** Savaş kodunu ve görsellerini takım seçimi sahnesinin yükleyicisiyle önceden indirir; asla reddedilmez (hata = yine devam). */
+  private async prefetchBattle(battle: Parameters<typeof import('./mp-prefetch').prefetchBattleAssets>[1]): Promise<void> {
+    try {
+      const scene = this.game?.scene.getScene('TeamSelectScene');
+      const [{ loadSceneClass }, { prefetchBattleAssets }] = await Promise.all([import('./lazy-scenes'), import('./mp-prefetch')]);
+      const all = Promise.all([loadSceneClass('BattleScene').catch(() => undefined), scene ? prefetchBattleAssets(scene, battle) : undefined]);
+      await Promise.race([all, new Promise((r) => window.setTimeout(r, 15_000))]); // hiçbir yükleme sonsuza dek beklemez
+    } catch (err) {
+      console.warn('[multiplayer] prefetch', err);
+    }
   }
 
   private goto(key: string, data: object): void {

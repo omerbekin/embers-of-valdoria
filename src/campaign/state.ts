@@ -5,6 +5,7 @@ import { rngFor, shuffle } from './seed';
 import { SLOT_IDS } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { itemRecovery } from '../progression/loadout';
+import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
 import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
@@ -269,6 +270,10 @@ export function reviveWithValor(s: CampaignState, heroId: string): CampaignState
   t.valor = addValor(valorRules, t.valor! - valorRules.revive.outsideCost, 0);
   h.alive = true;
   h.hpRatio = Math.round(clamp01(valorRules.revive.hpRatio) * 1000) / 1000;
+  // Valor 1 yara siler (Ömer 2026-10-20; valor.json > revive.clearWounds)
+  const w = healWounds(woundCount(h), valorClearWounds());
+  if (w > 0) h.wounds = w;
+  else delete h.wounds;
   return t;
 }
 
@@ -595,6 +600,58 @@ export function rulesFor(s: Pick<CampaignState, 'difficulty'>): CampaignRules {
   return { ...CONFIG.rules, ...(CONFIG.difficulties[s.difficulty]?.rules ?? {}) };
 }
 
+/** Zafer şifası (yaşayanlara, maks canın oranı): boss bossVictoryHeal, elit eliteVictoryHeal (yoksa victoryHeal), diğerleri victoryHeal. */
+export function victoryHealFor(rules: CampaignRules, nodeType: MapNode['type']): number {
+  if (nodeType === 'boss') return rules.bossVictoryHeal;
+  if (nodeType === 'elite') return rules.eliteVictoryHeal ?? rules.victoryHeal;
+  return rules.victoryHeal;
+}
+
+/** Sefer yara kuralı (campaign.json > rules.wounds). */
+export const woundRules = (): WoundRules => CONFIG.rules.wounds;
+
+/** Kahramanın yara satırı (en küçük işlevsel gösterim; yarasızsa boş): "Wounds: 2 (-40% max HP)". */
+export const heroWoundsLine = (h: Hero): string => woundsLine(woundCount(h), woundRules());
+
+/**
+ * Savaşın SONUNDA hâlâ düşmüş kahramanlar (YERİNDE; zafer ve devriyeden geri çekilme aynı kural): savaşa ayakta girmişse yarası lethal'ın
+ * altındaysa riseRatio canla kalkar ve +1 yara; değilse ceset. Savaşa ceset girip kalkmamışsa ceset kalır (yeni yara yok). Dönen: kalkanlar.
+ */
+function settleFallen(t: CampaignState, units: BattleOutcome['units'], rules: WoundRules): Set<string> {
+  const risen = new Set<string>();
+  for (const u of units) {
+    const h = heroById(t, u.heroId);
+    if (!h || (u.alive && u.hpRatio > 0)) continue;
+    const r = isFallen(h) ? ({ corpse: true, wounds: woundCount(h) } as const) : fallAfterVictory(woundCount(h), rules);
+    if (r.corpse) {
+      h.hpRatio = 0;
+      h.alive = false;
+    } else {
+      h.hpRatio = Math.round(r.hpRatio * 1000) / 1000;
+      h.alive = true;
+      risen.add(h.id);
+    }
+    if (r.wounds > 0) h.wounds = r.wounds;
+  }
+  return risen;
+}
+
+/** Savaş içi Valor diriltmeleri (YERİNDE): her biri valor.json > revive.clearWounds yara siler (Ömer 2026-10-20; skill dirilişi silmez). */
+function valorHealWounds(t: CampaignState, counts: Record<string, number> | undefined): void {
+  for (const [id, n] of Object.entries(counts ?? {})) {
+    const h = heroById(t, id);
+    if (!h) continue;
+    const w = healWounds(woundCount(h), n * valorClearWounds());
+    if (w > 0) h.wounds = w;
+    else delete h.wounds;
+  }
+}
+
+/** Yaraları siler (YERİNDE; kasaba dinlenmesi): yalnızca yaşayanlar (ceset dinlenmeyle kalkmaz, yarası da kalır; VARSAYIM open-questions 369). */
+export function clearWounds(t: CampaignState): void {
+  for (const h of t.roster) if (!isFallen(h)) delete h.wounds;
+}
+
 export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: CampaignRules = rulesFor(s)): CampaignState {
   const t = clone(s);
   delete t.suspended; // savaş bitti (zafer ya da yenilgi): duraklatma kaydı geçersiz
@@ -603,19 +660,15 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
     return t;
   }
   expectStep(t, 'battle');
-  const boss = node(mapOf(t), t.at).type === 'boss';
+  const heal = victoryHealFor(rules, node(mapOf(t), t.at).type);
+  // Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): yaşayanlar düğüm türünün zafer şifasını alır; savaş SONUNDA hâlâ düşmüş
+  // olan kahraman %10 canla yaralı kalkar (lethal yaralıysa ceset). Savaşa ceset girip kalkmayan ceset kalır.
+  valorHealWounds(t, outcome.valorRevived);
+  const risen = settleFallen(t, outcome.units, rules.wounds ?? woundRules());
   for (const u of outcome.units) {
     const h = heroById(t, u.heroId);
-    if (!h) continue;
-    if (!u.alive || u.hpRatio <= 0) {
-      // düşmüş (ya da ceset olarak girip diriltilmemiş): ceset kalır
-      h.hpRatio = 0;
-      h.alive = false;
-      continue;
-    }
-    if (boss) h.hpRatio = Math.max(u.hpRatio, rules.bossVictoryHeal);
-    else h.hpRatio = clamp01(u.hpRatio + rules.victoryHeal + itemRecovery(h)); // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
-    h.hpRatio = Math.round(clamp01(h.hpRatio) * 1000) / 1000;
+    if (!h || risen.has(h.id) || !u.alive || u.hpRatio <= 0) continue;
+    h.hpRatio = Math.round(clamp01(u.hpRatio + heal + itemRecovery(h)) * 1000) / 1000; // Recovery affix'i: yalnızca takan (Ömer 2026-10-11)
     h.alive = true;
   }
   t.stats.victories++;
@@ -625,6 +678,11 @@ export function applyBattle(s: CampaignState, outcome: BattleOutcome, rules: Cam
   const patrol = t.patrol === t.at;
   const gains = battleXp(t, outcome, encounterId);
   applyXp(t, patrol ? scaleGains(gains, replayMult(replayCount(t, t.at) + 1)) : gains);
+  // Yaralı kalkan kahraman level atlasa da riseRatio canla kalır (level şifası yalnızca savaşı ayakta bitirene; VARSAYIM open-questions 369)
+  for (const id of risen) {
+    const h = heroById(t, id);
+    if (h) h.hpRatio = Math.round(clamp01((rules.wounds ?? woundRules()).riseRatio) * 1000) / 1000;
+  }
   // Valor: yalnızca açıksa birikir (savaşta harcanan düşülür); elit +2, boss +3 (win yerine), kusursuzsa +1. Düğüm başına bir kez
   // (Ömer 2026-10-18, karar 364: "Valorü node başına 1 kere al"): devriye zaferi Valor KAZANDIRMAZ (savaşta harcanan yine düşülür).
   if (t.valor !== undefined) {
@@ -687,7 +745,10 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
     const rests = t.townRests?.[to];
     const firstRest = !(typeof rests === 'number' && rests > 0);
     if (n.type !== 'town' || firstRest) healAll(t, n.heal);
-    if (n.type === 'town' && firstRest) t.townRests = { ...(t.townRests ?? {}), [to]: 1 };
+    if (n.type === 'town' && firstRest) {
+      t.townRests = { ...(t.townRests ?? {}), [to]: 1 };
+      clearWounds(t); // ilk varış = bedava kasaba dinlenmesi: yaraları da siler (Ömer 2026-10-19)
+    }
   }
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
   return t;
@@ -810,36 +871,59 @@ export function cancelPatrol(s: CampaignState): CampaignState {
   return t;
 }
 
-/** Devriyeden geri çekilmenin can kaybı üst sınırı (oran; campaign.json > replay.retreatHpLoss, yoksa 0.3). */
-export const patrolRetreatMaxLoss = (): number => CONFIG.replay?.retreatHpLoss ?? 0.3;
+/**
+ * ESKİ (Ömer 2026-10-19 can ve ölüm reworkü: rastgele geri çekilme kaybı kalktı, savaşta ne olduysa kalır). Haritadaki devriye kartı metni
+ * (CampaignMapScene) patrolRetreatNote'a geçene dek derlensin diye duruyor: 0 döner. @deprecated
+ */
+export const patrolRetreatMaxLoss = (): number => 0;
+
+/** Devriye kartının geri çekilme notu (haritadaki "Fight the patrol?" kartı; İngilizce). */
+export const patrolRetreatNote = (): string => 'Retreating keeps what happened in the fight: lost health stays lost and fallen heroes rise wounded.';
 
 /** Devriyeden geri çekilme onayı (savaş menüsü > Retreat): oyuncuya bedeli açıkça yazar. */
-export const patrolRetreatConfirm = (): string =>
-  `Retreat from the patrol? The patrol is called off and you may move on, but each hero loses up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP.`;
+export const patrolRetreatConfirm = (): string => {
+  const w = woundRules();
+  return `Retreat from the patrol? The patrol is called off and you may move on. Health lost in this fight stays lost. Fallen heroes rise with ${Math.round(w.riseRatio * 100)}% health and a wound; a hero who already has ${w.lethal} wounds dies.`;
+};
 
 /**
- * Devriyeden geri çekilme (Ömer 2026-10-19): savaş DURAKLATILMAZ, devriye iptal olur, takım serbestçe yola çıkabilir. Bedeli: takımdaki her
- * ayaktaki kahraman en çok can oranının `retreatHpLoss` (0-30%) kadarını kaybeder (zar seed'li: hash(seed, harita, düğüm, devriye sayısı, yol
- * uzunluğu); aynı durum = aynı kayıp). Kimse bundan ölmez (can en az 1: oran > 0 kalır, motor startHp'yi [1, maks] aralığına sıkıştırır).
- * Savaşta alınan hasar sayılmaz (savaş hiç olmamış gibi). Dönüş: yeni durum + kahraman başına kaybedilen yüzde (gösterim için).
+ * Devriyeden geri çekilme (Ömer 2026-10-19, hp-death-rework.md: savaşta ne olduysa kalır): savaş DURAKLATILMAZ, devriye iptal olur, takım
+ * serbestçe yola çıkabilir. `battle` = geri çekilme anındaki kahraman durumu (outcomeFrom; victory alanına bakılmaz): canlar taşınır, düşmüş
+ * olanlar zaferdeki gibi yaralı kalkar (lethal yaralıysa ceset), harcanan Valor harcanmış kalır. Zafer şifası / XP / loot / Valor kazancı yok.
+ * `battle` yoksa (savaş kaydı yok) yalnızca devriye bırakılır. Dönen: yeni durum + kahraman başına kaybedilen yüzde / yara / ölüm (gösterim).
  */
-export function retreatPatrol(s: CampaignState): { state: CampaignState; losses: { heroId: string; pct: number }[] } {
+export function retreatPatrol(s: CampaignState, battle?: Pick<BattleOutcome, 'units' | 'valorLeft' | 'valorRevived'>): { state: CampaignState; losses: RetreatLoss[] } {
   if (s.patrol !== s.at) return { state: s, losses: [] };
   const t = clone(s);
   delete t.patrol;
   delete t.suspended;
-  const max = patrolRetreatMaxLoss();
-  const rng = rngFor(t.seed, t.mapId, t.at, 'patrol-retreat', replayCount(t, t.at), t.path.length);
-  const losses: { heroId: string; pct: number }[] = [];
-  for (const id of t.active) {
-    const h = heroById(t, id);
-    if (!h || isFallen(h)) continue;
-    const loss = Math.round(rng.next() * max * 100) / 100; // 0.00 - max, iki basamak
-    const before = h.hpRatio;
-    h.hpRatio = Math.max(0.001, Math.round((before - loss) * 1000) / 1000);
-    losses.push({ heroId: h.id, pct: Math.round((before - h.hpRatio) * 100) });
+  const losses: RetreatLoss[] = [];
+  if (!battle) return { state: t, losses };
+  const before = new Map(t.roster.map((h) => [h.id, { hp: isFallen(h) ? 0 : h.hpRatio, fallen: isFallen(h) }]));
+  valorHealWounds(t, battle.valorRevived);
+  const risen = settleFallen(t, battle.units, woundRules());
+  for (const u of battle.units) {
+    const h = heroById(t, u.heroId);
+    const b = before.get(u.heroId);
+    if (!h || !b) continue;
+    if (!risen.has(h.id) && u.alive && u.hpRatio > 0) {
+      h.hpRatio = Math.round(clamp01(u.hpRatio) * 1000) / 1000;
+      h.alive = true;
+    }
+    const died = !b.fallen && isFallen(h);
+    const pct = Math.max(0, Math.round((b.hp - (isFallen(h) ? 0 : h.hpRatio)) * 100));
+    if (pct > 0 || risen.has(h.id) || died) losses.push({ heroId: h.id, pct, ...(risen.has(h.id) ? { wounded: true } : {}), ...(died ? { died: true } : {}) });
   }
+  if (t.valor !== undefined && battle.valorLeft !== undefined) t.valor = addValor(valorRules, battle.valorLeft, 0);
   return { state: t, losses };
+}
+
+/** Geri çekilmede kahraman başına bedel (gösterim): kaybedilen can yüzdesi, yaralı kalktı mı, öldü mü (ceset). */
+export interface RetreatLoss {
+  heroId: string;
+  pct: number;
+  wounded?: boolean;
+  died?: boolean;
 }
 
 /** Keşfedilen düğümler (roadmap 2.4): ayak basılan her düğümün görüş mesafesi (visibility) içindekiler; bir kez görülen sise dönmez. */

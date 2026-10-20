@@ -315,14 +315,14 @@ describe('madde 13 + karar 364: Endless item kartı 3 seçenekli, boss zaferi %5
     expect(found).toBe(true);
   });
 
-  it('boss zaferi: sağ kalan maks canın %50\'sini EK alır (tam değil), sonra kalıntı seçimi', () => {
-    expect(ENDLESS.carry.bossHeal).toBe(0.5);
+  it('boss zaferi: sağ kalanlar tam iyileşir (hp-death-rework 2026-10-19; TUR 1 madde 13 +%50 idi), MP dolu, sonra kalıntı seçimi', () => {
+    expect(ENDLESS.carry.bossHeal).toBe(1);
     const run = { ...newRun(9, party, 't'), wave: ENDLESS.bossEvery } as EndlessRun;
     const ids = run.heroes.map((h) => h.id);
     const r = applyOutcome(run, { wave: ENDLESS.bossEvery }, { victory: true, units: ids.map((heroId, i) => ({ heroId, hpRatio: i === 0 ? 0.2 : 0.7, alive: true, mpRatio: 0.3 })), kills: 0, turns: 1 });
-    expect(r.heroes[0]!.hpRatio).toBeCloseTo(0.7, 5);
+    expect(r.heroes[0]!.hpRatio).toBe(1);
     expect(r.heroes[1]!.hpRatio).toBe(1);
-    expect(r.heroes[0]!.carry?.mpRatio).toBeCloseTo(0.8, 5);
+    expect(r.heroes[0]!.carry?.mpRatio).toBeUndefined();
     expect(r.phase).toBe('relic');
   });
 });

@@ -10,7 +10,7 @@
  */
 import { affixTip, itemDef, type AffixLine } from '../progression';
 import type { Stats } from '../engine';
-import { dropAction, isDoubleTap, pressStep, showsTrash, type DropAction, type DragSource, type DropTarget } from './gear-drop';
+import { dropAction, isDoubleTap, pressStep, showsTrash, tipClick, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
 import { statBandSpec, statTip } from './stat-tips';
 import { tipOn, tipOff } from './tip-vis';
@@ -136,6 +136,8 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   // `data-hint`: kısa ipucu (yalnızca üstüne gelince / dokunmatikte uzun basınca; dokunuş düğmenin kendi eylemidir)
   const TIP_SEL = '[data-stat],[data-affix],[data-hint]';
 
+  /** Son basışın girdi türü (tıklama sabitlemesi yalnızca dokunmatikte; onClickTip). */
+  let lastDownType = '';
   let hoverKey = '';
   const setHover = (key: string): void => {
     if (key === hoverKey) return;
@@ -174,20 +176,13 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   };
   const onClickTip = (e: MouseEvent): void => {
     const t = (e.target as HTMLElement).closest<HTMLElement>(TIP_SEL);
-    if (t?.dataset['hint'] !== undefined) {
-      // hintTap: pasif düğme (neden yapılamadığını anlatır): dokunuş ipucunu sabitler / kapatır; diğer kısa ipuçlarında dokunuş düğmenin eylemidir
-      if (t.dataset['hintTap'] !== undefined && !(tipFor === t && tipPinned)) {
-        showTip(t);
-        tipPinned = true;
-      } else hideTip();
-      return;
-    }
-    if (!t) {
-      if (tipPinned) hideTip();
-      return;
-    }
-    if (tipFor === t && tipPinned) hideTip();
-    else {
+    // hintTap: pasif düğme (neden yapılamadığını anlatır): dokunuş ipucunu sabitler / kapatır; diğer kısa ipuçlarında dokunuş düğmenin eylemidir.
+    // Sabitleme yalnızca dokunmatikte (gear-drop.ts > tipClick): farede tıklama sabitlerse imleç boşluğa çıkınca ipucu kapanmıyordu.
+    const on = !t ? 'empty' : t.dataset['hint'] === undefined ? 'row' : t.dataset['hintTap'] !== undefined ? 'hintTap' : 'hint';
+    const act = tipClick({ touch: lastDownType === 'touch', on, pinnedHere: !!t && tipFor === t && tipPinned, pinned: tipPinned });
+    if (act === 'hide') hideTip();
+    else if (act === 'hover') tipPinned = false;
+    else if (act === 'pin' && t) {
       showTip(t);
       tipPinned = true;
     }
@@ -298,6 +293,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     hintPress = null;
   };
   const onDown = (e: PointerEvent): void => {
+    lastDownType = e.pointerType;
     tap = null;
     clearHintPress();
     if (e.pointerType === 'touch') {

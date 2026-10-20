@@ -7,7 +7,8 @@ import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
 import { starterWeapon, starterUid } from '../progression/weapon';
-import { ENDLESS, itemOptionCount, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
+import { fallAfterVictory, healWounds, valorClearWounds, valorRevivedCounts, woundCount } from '../progression/wounds';
+import { ENDLESS, endlessCorpses, endlessWoundRules, itemOptionCount, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
 import { rngFor, waveKind, waveLevel, waveSeed, type WavePlan } from './waves';
 import type { SuspendedBattle } from './replay';
 import { relicOffer, victoryHealOf } from './relics';
@@ -79,6 +80,8 @@ export interface WaveOutcome {
   flawless?: boolean;
   /** Öldürme kaydı (XP payı; progression > trackKills). Yoksa `kills` kadar düşman, kimse düşmeden öldürülmüş sayılır. */
   killLog?: KillRecord[];
+  /** Savaş içi Valor diriltmeleri (kahraman başına; Battle.log). Her biri valor.json > revive.clearWounds yara siler (Ömer 2026-10-20). */
+  valorRevived?: Record<string, number>;
 }
 
 /** Motor özetinin (battleSummary) birim görünümü. */
@@ -112,7 +115,8 @@ export function outcomeFromSummary(plan: Pick<WavePlan, 'heroOrder'>, victory: b
 /** Bitmiş savaş -> dalga sonucu (can, MP, hücre + taşınan durum). Endless'ın tek doğru kapısı (sahne, sim, auto). */
 export function outcomeFromBattle(plan: Pick<WavePlan, 'heroOrder'>, battle: Battle): WaveOutcome {
   const sum = battleSummary(battle);
-  const out = { ...outcomeFromSummary(plan, battle.winner === 'party', sum.units, sum.turnsTaken), ...(sum.valor ? { valorLeft: sum.valor.left, flawless: sum.valor.flawless } : {}) };
+  const rv = valorRevivedCounts(battle.log as ReadonlyArray<{ type: string; target?: string; cause?: string }>, plan.heroOrder);
+  const out = { ...outcomeFromSummary(plan, battle.winner === 'party', sum.units, sum.turnsTaken), ...(sum.valor ? { valorLeft: sum.valor.left, flawless: sum.valor.flawless } : {}), ...(Object.keys(rv).length ? { valorRevived: rv } : {}) };
   return out.victory ? { ...out, carry: snapshotCarry(battle, plan.heroOrder) } : out;
 }
 
@@ -156,14 +160,37 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
     const c = cells.get(h.id);
     if (c !== undefined) h.slot = c;
   }
-  const heal = victoryHealOf(run.relics, cfg);
-  const corpses = (cfg.carry.fallen ?? 'corpse') === 'corpse';
+  // Zafer şifası (Ömer 2026-10-19, hp-death-rework.md): normal victoryHeal (Pilgrim's Bell daha yüksekse o), elit eliteHeal, boss bossHeal
+  const kindNow = waveKind(run.wave, cfg);
+  const relicHeal = victoryHealOf(run.relics, cfg);
+  const heal = kindNow === 'boss' ? bossHealOf(cfg) : kindNow === 'elite' ? Math.max(cfg.carry.eliteHeal ?? cfg.carry.victoryHeal, relicHeal) : relicHeal;
+  const fallenMode = cfg.carry.fallen ?? 'corpse';
+  const corpses = fallenMode !== 'rise';
+  const wr = endlessWoundRules(cfg);
+  const risen = new Set<string>();
+  // Savaş içi Valor diriltmesi yara siler (Ömer 2026-10-20; Resurrection / Raise Dead silmez)
+  for (const [id, n] of Object.entries(out.valorRevived ?? {})) {
+    const h = heroOf(s, id);
+    if (!h) continue;
+    const w = healWounds(woundCount(h), n * valorClearWounds());
+    if (w > 0) h.wounds = w;
+    else delete h.wounds;
+  }
   for (const u of out.units) {
     const h = heroOf(s, u.heroId);
     if (!h) continue;
-    // Düşen kahraman (Ömer 2026-10-10 takip): ceset olarak kalır (can 0; boss şifası da kaldırmaz), ödül ekranındaki Revive kartı kaldırır.
-    // carry.fallen 'rise' = eski kural (zaferde reviveRatio canla kendiliğinden kalkar).
+    // Düşen kahraman: 'wound' (Ömer 2026-10-19) = dalgayı düşmüş bitiren riseRatio canla yaralı kalkar, lethal yaralıysa ya da dalgaya ceset
+    // girip kalkmadıysa CESET; 'corpse' = hep ceset (can 0; boss şifası da kaldırmaz); 'rise' = en eski kural (reviveRatio canla kalkar).
     if (!u.alive && corpses) {
+      const before = heroOf(run, u.heroId);
+      const f = fallenMode === 'wound' && before && before.hpRatio > 0 ? fallAfterVictory(woundCount(h), wr) : null;
+      if (f && !f.corpse) {
+        h.hpRatio = f.hpRatio;
+        h.wounds = f.wounds;
+        delete h.carry; // yaralı kalkan: taşınan buff / Rage / kalkan yok (MP dolu)
+        risen.add(h.id);
+        continue;
+      }
       h.hpRatio = 0;
       const c = out.carry?.heroes[u.heroId];
       if (c?.corpse) h.carry = { corpse: c.corpse };
@@ -172,15 +199,14 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
     }
     // Recovery affix'i (Ömer 2026-10-11): yalnızca takan, yalnızca sağ kalan; can ve MP'ye eklenir
     const rec = u.alive ? itemRecovery(h) : 0;
-    if (boss) h.hpRatio = clamp01(u.hpRatio + bossHealOf(cfg) + rec); // boss zaferi +%50 (TUR 1 madde 13; eskiden tam)
-    else h.hpRatio = u.alive ? clamp01(u.hpRatio + heal + rec) : clamp01(cfg.carry.reviveRatio);
+    h.hpRatio = u.alive ? clamp01(u.hpRatio + heal + rec) : clamp01(cfg.carry.reviveRatio);
     // MP canla aynı oranla (Ömer 2026-10-10; 'full' = eski kural); buff / Rage / kalkan / cooldown yalnızca sağ kalana
     const carry: UnitCarry = u.alive ? { ...(out.carry?.heroes[u.heroId] ?? {}) } : {};
     delete carry.mpRatio;
     delete carry.corpse;
     if ((cfg.carry.cooldowns ?? 'carry') !== 'carry') delete carry.cooldowns;
     if (cfg.carry.mp !== 'full') {
-      const mp = boss ? (u.mpRatio ?? 1) + bossHealOf(cfg) + rec : u.alive ? (u.mpRatio ?? 1) + heal + rec : cfg.carry.reviveRatio;
+      const mp = u.alive ? (u.mpRatio ?? 1) + heal + rec : cfg.carry.reviveRatio;
       if (clamp01(mp) < 1) carry.mpRatio = Math.round(clamp01(mp) * 1000) / 1000;
     }
     if (Object.keys(carry).length) h.carry = clone(carry);
@@ -199,6 +225,7 @@ export function applyOutcome(run: EndlessRun, plan: Pick<WavePlan, 'wave'>, out:
   }
   // XP (levels.md): dalga seviyesine göre; level atlayan ayaktaki kahraman tam can + tam MP
   grantWaveXp(s, run.wave, out, cfg);
+  for (const id of risen) heroOf(s, id)!.hpRatio = clamp01(wr.riseRatio); // yaralı kalkan level atlasa da riseRatio canla (VARSAYIM 369)
   s.stats.cleared = run.wave;
   s.wave = run.wave + 1;
   // Ortak nadir düşüş (madde 297): kazanılan her dalgada bir zar; dalga başına şans artar, Legendary 11. dalgadan itibaren
@@ -255,18 +282,26 @@ function grantWaveXp(s: EndlessRun, wave: number, out: WaveOutcome, cfg: Endless
   for (const [id, xp] of Object.entries(waveXp(s, wave, out, cfg))) {
     const h = heroOf(s, id);
     if (!h) continue;
-    const up = addXp(h, xp);
-    if (!up) continue;
-    if (h.hpRatio > 0) {
-      h.hpRatio = 1;
-      if (h.carry?.mpRatio !== undefined) delete h.carry.mpRatio;
-    }
-    const prev = (s.levelUps ??= []);
-    const p = prev.find((x) => x.heroId === up.heroId);
-    if (p) p.to = up.to;
-    else prev.push(up);
+    giveXp(s, h, xp);
   }
 }
+
+/** XP yazar (YERİNDE): level atlayan ayaktaki kahraman tam can ve tam MP alır, `levelUps`'a eklenir (aynı kahramanın kaydı birleşir). */
+function giveXp(s: EndlessRun, h: EndlessHero, xp: number): void {
+  const up = addXp(h, xp);
+  if (!up) return;
+  if (h.hpRatio > 0) {
+    h.hpRatio = 1;
+    if (h.carry?.mpRatio !== undefined) delete h.carry.mpRatio;
+  }
+  const prev = (s.levelUps ??= []);
+  const p = prev.find((x) => x.heroId === up.heroId);
+  if (p) p.to = up.to;
+  else prev.push(up);
+}
+
+/** Veteran's Lesson kartının kahramana vereceği XP: bulunduğu level'dan sonrakine gereken XP x ratio (tavandaki / cesette 0). */
+export const lessonXp = (h: EndlessHero, ratio: number): number => (h.hpRatio > 0 && (h.level ?? 1) < LEVELS.maxLevel ? Math.round(xpToNext(h.level ?? 1) * ratio) : 0);
 
 /** Stat puanı dağıt (Gear > Character): geçersizse Error. */
 export function allocateRun(run: EndlessRun, heroId: string, add: StatAlloc): EndlessRun {
@@ -447,7 +482,7 @@ export const goldAmount = (cleared: number, cfg: EndlessConfig = ENDLESS): numbe
 /**
  * Dalga arası kartlar (seed'li). Normal dalga: item (yoksa x1,5 altın), altın, iyileştirme (+%40).
  * Elit / boss dalgası (data/endless.json > special): `itemCards` farklı item kartı (nadirlik tablosu hafif kayar, seviye tavanı yüksek), x2 / x3 altın,
- * elitte +%60 iyileştirme, boss'ta Hero's Feast (tam can + birkaç dalga maks can bonusu). Uygun item kalmazsa item kartının yerine altın.
+ * elitte Veteran's Lesson (XP kartı), boss'ta Hero's Feast (tam can + birkaç dalga maks can bonusu). Uygun item kalmazsa item kartının yerine altın.
  */
 export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catalog: ItemDef[] = ITEMS.items): RewardCard[] {
   const cleared = run.stats.cleared;
@@ -477,9 +512,11 @@ export function rewardOffer(run: EndlessRun, cfg: EndlessConfig = ENDLESS, catal
   }
   cards.push({ kind: 'gold', amount: gold });
   if (kind === 'boss') cards.push({ kind: 'feast', hpMult: cfg.special.boss.feastHpMult, waves: cfg.special.boss.feastWaves });
-  else cards.push({ kind: 'heal', ratio: kind === 'elite' ? cfg.special.elite.healRatio : cfg.rewards.healRatio });
+  // Elit: Veteran's Lesson XP kartı (Ömer 2026-10-20; eski %60 iyileştirme kartı Field Surgeon kaldırıldı); normal: Tend the Wounded aynen
+  else if (kind === 'elite') cards.push({ kind: 'xp', ratio: cfg.special.elite.xpRatio });
+  else cards.push({ kind: 'heal', ratio: cfg.rewards.healRatio });
   // Ceset varken ek kart: "Revive <kahraman>" (Ömer 2026-10-10 takip; ekranda en çok bir tane: kahraman sırasında ilk düşen)
-  const fallen = (cfg.carry.fallen ?? 'corpse') === 'corpse' ? run.heroes.find((h) => h.hpRatio <= 0) : undefined;
+  const fallen = endlessCorpses(cfg) ? run.heroes.find((h) => h.hpRatio <= 0) : undefined;
   // rewards.reviveCard false (Ömer 2026-10-14): kart yok; düşen kahraman yalnızca Valor / Resurrection / Raise Dead ile döner
   if (fallen && cfg.rewards.reviveCard !== false) cards.push({ kind: 'revive', heroId: fallen.id, ratio: cfg.rewards.reviveRatio ?? 0.5 });
   return cards;
@@ -677,6 +714,11 @@ export function equipBestRun(run: EndlessRun, heroIds?: string[]): EndlessRun {
   return s;
 }
 
+/** Yaraları siler (YERİNDE; Endless dinlenme karşılığı, carry.clearWounds): yalnızca yaşayanlar (ceset dinlenmeyle kalkmaz, yarası kalır). */
+export function clearRunWounds(s: EndlessRun): void {
+  for (const h of s.heroes) if (h.hpRatio > 0) delete h.wounds;
+}
+
 /** Kahramanın 7 yuvalı tam ekipmanı (Gear ekranı / stat paneli; boş yuva null). */
 export const fullEquipment = (h: EndlessHero) => ({ ...emptyEquipment(), ...h.equipment });
 
@@ -701,6 +743,9 @@ export function reviveWithValor(run: EndlessRun, heroId: string, cfg: EndlessCon
   s.valor = addValor(valorRules, (s.valor ?? 0) - valorRules.revive.outsideCost, 0);
   const r = clamp01(valorRules.revive.hpRatio);
   h.hpRatio = r;
+  const w = healWounds(woundCount(h), valorClearWounds()); // Valor 1 yara siler (Ömer 2026-10-20)
+  if (w > 0) h.wounds = w;
+  else delete h.wounds;
   if (r < 1 && cfg.carry.mp !== 'full') h.carry = { mpRatio: Math.round(clamp01(valorRules.revive.mpRatio) * 1000) / 1000 };
   else delete h.carry;
   return s;
@@ -731,9 +776,18 @@ export function chooseReward(run: EndlessRun, index: number, cfg: EndlessConfig 
   const s = clone(run);
   if (card.kind === 'gold') s.gold += card.amount;
   // Şifa / Feast cesetleri kaldırmaz (yalnızca Revive kartı)
-  else if (card.kind === 'heal') for (const h of s.heroes) h.hpRatio = h.hpRatio > 0 ? clamp01(h.hpRatio + card.ratio) : 0;
-  else if (card.kind === 'feast') {
+  else if (card.kind === 'heal') {
+    for (const h of s.heroes) h.hpRatio = h.hpRatio > 0 ? clamp01(h.hpRatio + card.ratio) : 0;
+    if (cfg.carry.clearWounds?.includes('heal')) clearRunWounds(s);
+  } else if (card.kind === 'xp') {
+    // Ayaktaki herkes (yaralı kalkanlar dahil); ceset almaz (VARSAYIM open-questions 370)
+    for (const h of s.heroes) {
+      const xp = lessonXp(h, card.ratio);
+      if (xp > 0) giveXp(s, h, xp);
+    }
+  } else if (card.kind === 'feast') {
     for (const h of s.heroes) if (h.hpRatio > 0) h.hpRatio = 1;
+    if (cfg.carry.clearWounds?.includes('feast')) clearRunWounds(s); // Endless'ın kasaba dinlenmesi karşılığı (VARSAYIM 369)
     s.blessing = { hpMult: card.hpMult, waves: card.waves };
   } else if (card.kind === 'revive') {
     const h = heroOf(s, card.heroId);

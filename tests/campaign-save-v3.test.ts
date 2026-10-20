@@ -40,7 +40,7 @@ describe('kayıt v3: kahraman kaydı ve geçiş', () => {
   it('yeni sefer: sürüm 2 durum, kahraman level 1 / XP 0 / yalnızca başlangıç silahı (Item Güçlendirme x5), torba boş, altın 0', () => {
     const s = played();
     expect(s.version).toBe(2);
-    expect(SAVE_VERSION).toBe(10); // 10: serbest dolaşım (visited / cleared / replays, 2026-10-18); 9: level / XP puanları (2026-10-17); 4: x2 stat ölçeği (item zarları göçü); 5: affix kademeleri; 6: Valdoria A1-x haritası (2026-10-11); 7: Valor (2026-10-13); 8: başlangıç silahı (2026-10-17)
+    expect(SAVE_VERSION).toBe(11); // 11: yara (2026-10-19); 10: serbest dolaşım (visited / cleared / replays, 2026-10-18); 9: level / XP puanları (2026-10-17); 4: x2 stat ölçeği (item zarları göçü); 5: affix kademeleri; 6: Valdoria A1-x haritası (2026-10-11); 7: Valor (2026-10-13); 8: başlangıç silahı (2026-10-17)
     expect(s.roster[0]).toMatchObject({ level: 1, xp: 0, equipment: starterEquipment(s.roster[0]!.class, s.roster[0]!.id) });
     expect({ ...s.roster[0]!.equipment, weapon: null }).toEqual(emptyEquipment());
     expect(Object.keys(s.roster[0]!.equipment)).toEqual(['weapon', 'offhand', 'helm', 'armor', 'gloves', 'boots', 'trinket']);

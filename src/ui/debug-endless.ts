@@ -137,6 +137,30 @@ export function registerEndlessDebug(game: Phaser.Game, debug: DebugMenu): void 
       if (game.scene.isActive(ENDLESS_SCENE)) open(game);
     },
   });
+  // Yara (can ve ölüm reworkü, Ömer 2026-10-19)
+  const woundTool = (id: string, label: string, hint: string, delta: number | null): void =>
+    debug.register({
+      id,
+      tab: TAB,
+      section: SECTION,
+      icon: 'skull',
+      label,
+      hint,
+      run: () => {
+        const run = readyRun();
+        const heroes = run.heroes.map((x, i) => {
+          if (delta !== null && i !== 0) return x;
+          const n = delta === null ? 0 : Math.max(0, Math.floor(x.wounds ?? 0) + delta);
+          const { wounds: _w, ...rest } = x;
+          return n > 0 ? { ...rest, wounds: n } : rest;
+        });
+        commit({ ...run, heroes });
+        if (game.scene.isActive(ENDLESS_SCENE)) open(game);
+      },
+    });
+  woundTool('endless.woundAdd', 'Wound first hero (+1)', 'Give the first hero of the run one wound (lower max HP; with 3 wounds the next fall kills). Shown under the hero health in camp and in the Gear tooltip', 1);
+  woundTool('endless.woundRemove', 'Heal one wound (first hero)', 'Remove one wound from the first hero of the run', -1);
+  woundTool('endless.woundClear', 'Clear all wounds', 'Remove every wound from the whole party', null);
   debug.register({
     id: 'endless.gold',
     tab: TAB,

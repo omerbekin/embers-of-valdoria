@@ -198,7 +198,7 @@ export function releaseUnusedAvatars(scene: Phaser.Scene, keep: readonly string[
   return releaseTextures(scene, (key) => key.startsWith('avatar:') && !avatarWanted([...keep], key.slice(7)));
 }
 
-function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
+export function queueAssets(scene: Phaser.Scene, o: PreloadOptions): number {
   let n = 0;
   const add = (key: string, url: string) => {
     if (scene.textures.exists(key)) return;

@@ -64,7 +64,9 @@ export const UI_TEXT = {
   sell: (gold: number) => `Sell: ${gold}`,
   kickerItem: (special: 'elite' | 'boss' | null) => (special === 'boss' ? 'Boss spoils' : special === 'elite' ? 'Elite spoils' : 'Spoils'),
   kickerGold: (special: 'elite' | 'boss' | null) => (special === 'boss' ? 'Boss bounty' : special === 'elite' ? 'Elite bounty' : 'Coin'),
-  kickerHeal: (special: 'elite' | 'boss' | null) => (special ? 'Field surgeon' : 'Rest'),
+  // Elit iyileştirme kartı (Field Surgeon) 2026-10-20'de kalktı: eski kayıtta bekleyen elit şifa kartı da 'Rest' yazar
+  kickerHeal: (_special: 'elite' | 'boss' | null) => 'Rest',
+  kickerXp: 'Elite lesson',
   kickerFeast: "Hero's feast",
   relicKicker: 'Relic',
   /** Çok seçenekli item kartı (Ömer 2026-10-18, TUR 1 madde 13; karar 364: 3 item'den biri). */

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { dropAction, isDoubleTap, merchantBagDouble } from '../src/ui/gear-drop';
+import { dropAction, isDoubleTap, merchantBagDouble, tipClick } from '../src/ui/gear-drop';
 import { mergeLine } from '../src/ui/stat-tips';
 
 const classOf = (id: string) => ({ w: 'warrior', a: 'archer' })[id];
@@ -84,5 +84,22 @@ describe('tüccar: torba item\'ine çift tık / çift dokunuş (Ömer 2026-10-16
     expect(merchantBagDouble({ charShown: false, hasHero: false })).toBe('sell');
     expect(merchantBagDouble({ charShown: true, hasHero: true })).toBe('equip');
     expect(merchantBagDouble({ charShown: true, hasHero: false })).toBe('sell');
+  });
+});
+
+describe('stat ipucu tıklaması (tipClick)', () => {
+  it('farede satıra tıklama ipucunu sabitlemez: imleç boşluğa çıkınca kapanır (Ömer 2026-10-20)', () => {
+    expect(tipClick({ touch: false, on: 'row', pinnedHere: false, pinned: false })).toBe('hover');
+    expect(tipClick({ touch: false, on: 'hintTap', pinnedHere: false, pinned: false })).toBe('hover');
+  });
+  it('dokunmatikte dokunuş sabitler, aynı satıra ikinci dokunuş kapatır', () => {
+    expect(tipClick({ touch: true, on: 'row', pinnedHere: false, pinned: false })).toBe('pin');
+    expect(tipClick({ touch: true, on: 'row', pinnedHere: true, pinned: true })).toBe('hide');
+    expect(tipClick({ touch: true, on: 'hintTap', pinnedHere: false, pinned: true })).toBe('pin');
+  });
+  it('boşluğa tıklama sabitlenmiş ipucunu kapatır; eylemli kısa ipucu düğmesi ipucunu kapatır', () => {
+    expect(tipClick({ touch: true, on: 'empty', pinnedHere: false, pinned: true })).toBe('hide');
+    expect(tipClick({ touch: false, on: 'empty', pinnedHere: false, pinned: false })).toBe('none');
+    expect(tipClick({ touch: false, on: 'hint', pinnedHere: false, pinned: false })).toBe('hide');
   });
 });

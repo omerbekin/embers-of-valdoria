@@ -8,7 +8,7 @@
 // iyileşmesi vb. yeniden yaşanır, yani savaşa giren takım birebir aynıdır), yeni denemede savaş seed'i değişir (attempt sayacı).
 // `maxAttempts` aşılırsa sefer o düğümde "takıldı" sayılır.
 import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
-import { Battle, battleSummary, chooseAction, content, type AiDifficulty } from '../engine';
+import { Battle, chooseAction, content, type AiDifficulty } from '../engine';
 import {
   CONFIG,
   activeHeroes,
@@ -25,19 +25,43 @@ import {
   newCampaign,
   nextStep,
   node,
-  outcomeFrom,
+  battleOutcomeOf,
+  clearedNodes,
+  isFallen,
   outgoing,
   pickHero,
   recruit,
   moveTo,
+  restInTown,
   rngFor,
   shuffle,
+  townRestPrice,
   type CampaignMap,
   type CampaignState,
   type Difficulty,
 } from '../campaign';
 import { MAX_TURNS } from './simulate';
 import { RARITY_IDS, clampRarity, instanceRarity, itemDef } from '../progression/items';
+import { woundCount } from '../progression/wounds';
+
+/**
+ * Oyuncu vekilinin kasaba dinlenmesi (iki sefer simülatörü ortak; 2026-10-20): yaşayanların ort. canı `healAt`'in altındaysa YA DA yaşayan yaralı
+ * kahraman varsa (yarayı yalnızca kasaba dinlenmesi siler) ve altın yetiyorsa temizlenmiş en ucuz kasabada dinlenir (yolculuk bedelsiz, serbest
+ * dolaşım). VARSAYIM (open-questions 371). Dinlenmezse null.
+ */
+export function simTownRest(s: CampaignState, healAt: number): { state: CampaignState; price: number } | null {
+  if (!healAt) return null;
+  const alive = activeHeroes(s).filter((h) => !isFallen(h));
+  const hp = alive.length ? alive.reduce((a, h) => a + h.hpRatio, 0) / alive.length : 0;
+  if (hp >= healAt && !alive.some((h) => woundCount(h) > 0)) return null;
+  const map = getMap(s.mapId);
+  const town = clearedNodes(s)
+    .filter((id) => node(map, id).type === 'town')
+    .map((id) => ({ id, price: townRestPrice(s, id) }))
+    .sort((a, b) => a.price - b.price)[0];
+  if (!town || s.gold < town.price) return null;
+  return { state: restInTown(s, town.id), price: town.price };
+}
 
 export type NodeCategory = 'tutorial' | 'normal' | 'elite' | 'boss';
 
@@ -98,6 +122,8 @@ export interface CampaignSimOptions {
    * 'none' = hiç item takmaz (item'siz referans: düşman ölçeği yine açık, yani zorlaşır).
    */
   gear?: 'best' | 'none';
+  /** Kasaba dinlenmesi eşiği (simTownRest; 0 = hiç dinlenmez, eski davranış). Varsayılan 0,5 (kasma simülatörüyle aynı). */
+  healAt?: number;
   /** Her düğümün ilk denemesinden önce durum (ayar betikleri için). */
   onBattle?: (nodeId: string, state: CampaignState) => void;
 }
@@ -246,7 +272,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
               if (attempt === 0) agg.firstWins++;
               agg.cleared++;
               agg.attemptsToClear += attempt + 1;
-              const out = outcomeFrom(plan, true, battleSummary(battle));
+              const out = battleOutcomeOf(plan, battle, true);
               agg.hpEndSum += out.units.reduce((a, u) => a + (u.alive ? u.hpRatio : 0), 0) / Math.max(1, out.units.length);
               agg.deathsOnWin += out.units.filter((u) => !u.alive).length;
               const pre = s;
@@ -280,6 +306,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
           s = autoResolve(s, step);
           break;
         case 'move': {
+          s = simTownRest(s, o.healAt ?? 0.5)?.state ?? s; // yaralı / düşük canlı takım kasabada dinlenir (yara kuralı, 2026-10-20)
           const next = route[s.path.length];
           s = moveTo(s, next && step.options.includes(next) ? next : step.options[0]!);
           break;

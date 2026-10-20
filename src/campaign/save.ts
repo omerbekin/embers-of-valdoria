@@ -1,3 +1,4 @@
+import { woundCount } from '../progression/wounds';
 import { CONFIG, MAPS } from './data';
 import { findNode } from './graph';
 import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
@@ -46,7 +47,11 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
  * `patrol`). Sürüm 9 ve öncesi okunurken `visited` / `cleared` yürüyüş günlüğünden (path) türetilir, `replays` boş; kapanan dal kavramı
  * kalktığı için başka bir şey değişmez (normalizeState > upgradeRoam; her okumada çalışır, idempotent).
  */
-export const SAVE_VERSION = 10;
+/**
+ * 11: Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): kahraman başına `wounds` (yara sayısı). Sürüm 10 ve öncesi okunurken
+ * herkes 0 yara (alan yok); eski cesetler ceset kalır (Valor kaldırır). Bozuk değer 0'a düşer (normalizeState; her okumada, idempotent).
+ */
+export const SAVE_VERSION = 11;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -180,6 +185,14 @@ export function normalizeState(x: unknown, slot?: number): CampaignState | null 
   upgradeState(s);
   // Düşmüş kahraman (Ömer 2026-10-11): can 0 ya da alive false = ceset; ikisi tutarlı tutulur (eski kayıtlarda herkes ayaktaydı)
   if (Array.isArray(s.roster)) s.roster = s.roster.map((h) => (h && typeof h.hpRatio === 'number' && (h.hpRatio <= 0 || h.alive === false) ? { ...h, hpRatio: 0, alive: false } : h));
+  // Yara (sürüm 11): yok / bozuk = 0 (alan silinir), geçerli sayı tam sayıya
+  if (Array.isArray(s.roster))
+    s.roster = s.roster.map((h) => {
+      if (!h || typeof h !== 'object') return h;
+      const n = woundCount(h);
+      const { wounds: _w, ...rest } = h;
+      return n > 0 ? { ...rest, wounds: n } : rest;
+    });
   if (!DIFFS.includes(s.difficulty)) s.difficulty = CONFIG.defaultDifficulty;
   if (slot !== undefined) s.slot = slot;
   else if (typeof s.slot !== 'number' || s.slot < 0 || s.slot >= SLOT_COUNT) s.slot = 0;
@@ -288,7 +301,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -314,7 +327,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

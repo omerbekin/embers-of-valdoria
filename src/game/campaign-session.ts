@@ -1,5 +1,5 @@
 import type Phaser from 'phaser';
-import { battleSummary, content } from '../engine';
+import { content } from '../engine';
 import type { Battle } from '../engine';
 import { attachRecorder, replayActions, type ReplayAction } from '../endless/replay';
 import {
@@ -22,10 +22,11 @@ import {
   latestSave,
   markPlayed,
   newCampaign,
-  outcomeFrom,
+  battleOutcomeOf,
   writeSave,
   retreatPatrol,
   patrolRetreatConfirm,
+  woundRules,
   type BattlePlan,
   type CampaignMode,
   type CampaignState,
@@ -34,6 +35,7 @@ import {
   type SaveKind,
 } from '../campaign';
 import type { LootXp } from '../ui/loot-screen';
+import { healWounds, valorClearWounds, woundCount } from '../progression/wounds';
 import type { ResultAction } from './result-screen';
 import type { BattleSceneData } from './scenes/BattleScene';
 import { campaignEffects } from './battle-effects';
@@ -152,13 +154,16 @@ export function retreatToMap(): CampaignState | null {
 export function retreatPatrolToMap(): CampaignState | null {
   const s = session.state;
   if (!s) return null;
+  // Savaşta ne olduysa kalır (Ömer 2026-10-19): geri çekilme anındaki kahraman canları / düşenler / kalan Valor
+  const rec = recording;
+  const now = rec && !rec.battle.winner ? battleOutcomeOf(rec.plan, rec.battle, false) : undefined;
   stopRecording();
-  const r = retreatPatrol(s);
+  const r = retreatPatrol(s, now);
   session.state = r.state;
   save('auto');
   const name = (id: string) => content.classes[s.roster.find((h) => h.id === id)?.class ?? '']?.name ?? 'Hero';
-  const parts = r.losses.map((l) => `${name(l.heroId)} -${l.pct}%`);
-  session.notice = `Patrol called off${parts.length ? ` · HP lost: ${parts.join(', ')}` : ''}`;
+  const parts = r.losses.map((l) => (l.died ? `${name(l.heroId)} died` : l.wounded ? `${name(l.heroId)} wounded` : `${name(l.heroId)} -${l.pct}%`));
+  session.notice = `Patrol called off${parts.length ? ` · ${parts.join(', ')}` : ''}`;
   logEvent('campaign', `patrol retreat at ${s.at}`);
   return session.state;
 }
@@ -276,10 +281,22 @@ const goTo = (game: Phaser.Game, key: string, data?: object) => (game.scene.getS
 /** Zaferde düşen kahramanlar (Ömer 2026-10-11): kendiliğinden kalkmazlar; sonuç ekranında not. */
 export function fallenNote(plan: BattlePlan, victory: boolean, battle: Battle): string | undefined {
   if (!victory) return undefined;
-  const down = outcomeFrom(plan, true, battleSummary(battle)).units.filter((u) => !u.alive).length;
-  if (!down) return undefined;
-  const where = session.state?.valor !== undefined ? 'a town, Rest camp or with Valor' : 'a town or Rest camp';
-  return `${down} ${down === 1 ? 'hero' : 'heroes'} fallen  ·  revive at ${where}`;
+  // Can ve ölüm reworkü (Ömer 2026-10-19): düşen kahraman yaralı kalkar; lethal yaralıysa ölür (ceset, Valor kaldırır)
+  const s = session.state;
+  const lethal = woundRules().lethal;
+  let wounded = 0;
+  let died = 0;
+  const out = battleOutcomeOf(plan, battle, true);
+  for (const u of out.units) {
+    if (u.alive) continue;
+    const h = s?.roster.find((x) => x.id === u.heroId);
+    // savaş içi Valor diriltmesi yara siler (Ömer 2026-10-20): ölümcül sınır o sayıya göre
+    const w = h ? healWounds(woundCount(h), (out.valorRevived?.[h.id] ?? 0) * valorClearWounds()) : 0;
+    if (!h || (isFallen(h) && !out.valorRevived?.[h.id]) || w >= lethal) died++;
+    else wounded++;
+  }
+  const parts = [wounded ? `${wounded} ${wounded === 1 ? 'hero' : 'heroes'} wounded` : '', died ? `${died} ${died === 1 ? 'hero' : 'heroes'} died  ·  only Valor can raise them` : ''].filter(Boolean);
+  return parts.length ? parts.join('  ·  ') : undefined;
 }
 
 /** Toplam XP (level eşiklerinin toplamı + mevcut XP): savaştan kazanılan XP'yi göstermek için fark alınır. */
@@ -328,7 +345,7 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
           if (s && s.at === plan.nodeId) {
             const kills = killsOf(battle);
             const before = new Map(s.roster.map((h) => [h.id, { level: h.level, xp: h.xp }]));
-            session.state = applyBattle(s, { ...outcomeFrom(plan, true, battleSummary(battle)), ...(kills ? { kills } : {}) });
+            session.state = applyBattle(s, { ...battleOutcomeOf(plan, battle, true), ...(kills ? { kills } : {}) });
             const act = session.state.active;
             xp = session.state.roster
               .map((h): LootXp => {

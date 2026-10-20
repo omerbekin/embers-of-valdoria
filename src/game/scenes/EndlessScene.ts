@@ -1,3 +1,4 @@
+import { woundCount, woundsLine } from '../../progression/wounds';
 import { closeAllLessons, showLesson } from '../../ui/lesson-box';
 import Phaser from 'phaser';
 import { uiSound, type UiSoundKind } from '../../ui/ui-sound';
@@ -10,7 +11,7 @@ import { ValorMeter, isValorReviveOpen, openValorRevive, otherDialogOpen, rememb
 import { isInputLocked } from '../../ui/input-lock';
 import { isSettingsOpen } from '../../ui/settings';
 import { avatarUrl } from '../../ui/character-panel';
-import { reviveWithValor, valorReviveBlocked } from '../../endless';
+import { endlessWoundRules, reviveWithValor, valorReviveBlocked } from '../../endless';
 import { rewardBlockedReason, takeRareDrop,
   ENDLESS,
   UI_TEXT as T,
@@ -20,6 +21,7 @@ import { rewardBlockedReason, takeRareDrop,
   heroOf,
   relicDef,
   cardText,
+  cardTitle,
   chooseReward,
   itemOptions,
   className,
@@ -976,6 +978,8 @@ export class EndlessScene extends Phaser.Scene {
     // Dizilim (koşu başında seçildi, dalgadan dalgaya taşınır; düzenlenmez): sırası
     const cell = run ? heroSlots(run.heroes)[run.heroes.filter((x) => content.classes[x.class]).indexOf(h)] : undefined;
     this.add2(this.note(cx, top + 206, cell !== undefined ? `${T.heroHealth(h.hpRatio)}  ·  ${T.heroRow(cell)}` : T.heroHealth(h.hpRatio), 20, C.dim).setOrigin(0.5, 0));
+    // Yara (Ömer 2026-10-19): en küçük işlevsel gösterim, sağlık satırının altında (yara arayüzü mockup'tan seçilecek)
+    if (woundCount(h) > 0) this.add2(this.note(cx, top + 228, woundsLine(woundCount(h), endlessWoundRules()), 18, '#d88a7e').setOrigin(0.5, 0));
     SLOT_IDS.forEach((slot, k) => {
       const y = top + 250 + k * 32; // 7 yuva (ikinci el 2026-10-12) 480'lik panele sığar
       const inst = h.equipment[slot];
@@ -1053,6 +1057,7 @@ export class EndlessScene extends Phaser.Scene {
           return { inst: { uid: `reward-${card.itemId}`, id: card.itemId, ...(card.rolls ? { rolls: card.rolls } : {}) }, title: d?.name ?? card.itemId, text: '', label: d?.name ?? card.itemId, blocked };
         }
         if (card.kind === 'gold') return { icon: uiIconName('gold'), accent: '#ecc878', title: `+${card.amount} gold`, text: cardText(card), label: `+${card.amount} gold`, blocked };
+        if (card.kind === 'xp') return { icon: uiIconName('codex'), accent: '#8fb0d8', title: cardTitle(card), text: cardText(card), label: cardTitle(card), blocked };
         const label = card.kind === 'heal' ? `Heal ${Math.round(card.ratio * 100)}%` : card.kind === 'revive' ? 'Revive' : 'Feast';
         return { icon: paintedOr('emblem', card.kind === 'feast' ? 'feast' : 'heal', 'ankh'), accent: card.kind === 'feast' ? '#f0b860' : '#d96a5a', title: label, text: cardText(card), label, blocked };
       });
@@ -1255,17 +1260,17 @@ export class EndlessScene extends Phaser.Scene {
   }
 
   /** Kart türlerinin hafif zemin renkleri (kit paleti içinde; çok düşük alfa). */
-  private static readonly TINT = { item: 0x6f8aa8, gold: 0xd9b24a, heal: 0x9a3a32, feast: 0xc0782a, relic: 0x8a6ab0, revive: 0x7aa86a } as const;
+  private static readonly TINT = { item: 0x6f8aa8, gold: 0xd9b24a, heal: 0x9a3a32, feast: 0xc0782a, relic: 0x8a6ab0, revive: 0x7aa86a, xp: 0x5a7aa0 } as const;
 
   private rewardCard(run: EndlessRun, card: RewardCard, index: number, cx: number, w: number, special: 'elite' | 'boss' | null): void {
     const rich = !!special;
     const R = LOOK.card.medal;
-    const kicker = card.kind === 'item' ? (itemOptions(card).length > 1 ? `${T.kickerItem(special)} · ${T.itemCardChoice(itemOptions(card).length)}` : T.kickerItem(special)) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : T.kickerHeal(special);
+    const kicker = card.kind === 'item' ? (itemOptions(card).length > 1 ? `${T.kickerItem(special)} · ${T.itemCardChoice(itemOptions(card).length)}` : T.kickerItem(special)) : card.kind === 'gold' ? T.kickerGold(special) : card.kind === 'feast' ? T.kickerFeast : card.kind === 'revive' ? T.kickerRevive : card.kind === 'xp' ? T.kickerXp : T.kickerHeal(special);
     const d = card.kind === 'item' ? viewDef(itemDef(card.itemId), card.rolls) : undefined;
-    const accent = d ? hexNum(rarityColor(d)) : card.kind === 'gold' ? 0xecc878 : card.kind === 'feast' ? 0xf0b860 : card.kind === 'revive' ? 0x9ad08a : 0xd96a5a;
+    const accent = d ? hexNum(rarityColor(d)) : card.kind === 'gold' ? 0xecc878 : card.kind === 'feast' ? 0xf0b860 : card.kind === 'revive' ? 0x9ad08a : card.kind === 'xp' ? 0x8fb0d8 : 0xd96a5a;
     const tint = EndlessScene.TINT[card.kind];
     this.choiceCard({ index, cx, w, rich, accent, tint, kicker, take: () => this.actTakeReward(run, index), rarity: !!d, blocked: rewardBlockedReason(run, card) }, (k) => {
-      const emblem = d ? itemEmblem(this, d, rarityColor(d)) : card.kind === 'gold' ? purseEmblem(this) : card.kind === 'feast' ? feastEmblem(this) : healEmblem(this);
+      const emblem = d ? itemEmblem(this, d, rarityColor(d)) : card.kind === 'gold' ? purseEmblem(this) : card.kind === 'feast' ? feastEmblem(this) : card.kind === 'xp' ? (this.uiTex('codex') ?? healEmblem(this)) : healEmblem(this);
       const m = medallion(this, emblem, accent, R, { rich });
       m.setPosition(k.cx, k.top + R + 18);
       k.add(m);
@@ -1282,6 +1287,11 @@ export class EndlessScene extends Phaser.Scene {
         const text = this.note(k.cx, y + 48, cardText(card), 20, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 56).setAlign('center');
         k.add(text);
         this.healRows(run, card.kind === 'heal' ? card.ratio : 1, k, y + 48 + text.height + 16);
+      } else if (card.kind === 'xp') {
+        // Veteran's Lesson (Ömer 2026-10-20): büyük oran + kart metni
+        k.add(elText(this, k.cx, y + 12, `+${Math.round(card.ratio * 100)}%`, 48, EL.ON, { em: 0.04, weight: '700' }).setOrigin(0.5));
+        k.add(this.label(k.cx, y + 52, 'XP', 18, C.dim).setOrigin(0.5, 0));
+        k.add(this.note(k.cx, y + 96, cardText(card), 21, C.text).setOrigin(0.5, 0).setWordWrapWidth(k.w - 60).setAlign('center'));
       } else if (card.kind === 'revive') {
         // Düşmüş kahraman: portre + ad, "0% → 50%" (Ömer 2026-10-10 takip)
         const hero = run.heroes.find((h) => h.id === card.heroId);

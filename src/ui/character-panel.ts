@@ -296,7 +296,7 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     b.dataset['drop'] = `hero:${h.id}`;
     const line = heroItemLine(h, v.focus);
     b.dataset['hint'] = className(h.class);
-    b.dataset['hintSub'] = dead ? FALLEN_MARK : line.text;
+    b.dataset['hintSub'] = dead ? FALLEN_MARK : h.woundsNote ? `${line.text} · ${h.woundsNote}` : line.text;
     b.dataset['hintTone'] = dead ? 'no' : line.tone;
     // Hero band ipucu (Ömer 2026-10-18): portre madalyonu, Lv büyük değer, Items k/7 elmas sırası
     b.dataset['hintKind'] = 'Hero';

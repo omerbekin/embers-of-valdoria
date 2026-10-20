@@ -5,6 +5,7 @@ import type { Equipment, ItemInstance } from '../progression/items';
 import type { LevelUp, StatAlloc } from '../progression/levels';
 import type { SuspendedBattle } from './replay';
 import type { RelicDef } from './relics';
+import type { WoundRules } from '../progression/wounds';
 import type { ShieldHook, Status, UnitModifiers, UnitTier } from '../engine/types';
 
 export interface EndlessConfig {
@@ -23,7 +24,22 @@ export interface EndlessConfig {
    * bossHeal (Ömer 2026-10-18, ilerleme TUR 1 madde 13): boss zaferinde sağ kalanlar maks can (ve MP) oranının bu kadarını EK alır (eski tam
    * iyileşme `bossVictoryHeal: 1` yerine; 0,5 = +%50). Boss sonrası kalıntı seçimi aynen.
    */
-  carry: { victoryHeal: number; reviveRatio: number; bossHeal: number; mp?: 'ratio' | 'full'; cooldowns?: 'carry' | 'clear' | 'initial'; fallen?: 'corpse' | 'rise' };
+  /**
+   * Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): eliteHeal = elit dalga zafer şifası (yoksa victoryHeal); fallen 'wound' = düşen
+   * yaralı kalkar (wounds; lethal yaralıysa ceset), 'corpse' = eski (hep ceset), 'rise' = en eski (reviveRatio ile kalkar). clearWounds =
+   * yaraları silen ödül kartları (feast / heal).
+   */
+  carry: {
+    victoryHeal: number;
+    eliteHeal?: number;
+    reviveRatio: number;
+    bossHeal: number;
+    mp?: 'ratio' | 'full';
+    cooldowns?: 'carry' | 'clear' | 'initial';
+    fallen?: 'wound' | 'corpse' | 'rise';
+    wounds?: WoundRules;
+    clearWounds?: Array<'feast' | 'heal'>;
+  };
   /** reviveRatio: ödül ekranındaki 'Revive <kahraman>' kartının can (ve MP) oranı (carry.fallen 'corpse'). */
   /**
    * itemOptions (TUR 1 madde 13, karar 364: "Normal dalgalarda 2 itemdan 1'i. bossta 3'ten 1'i"): dalga türüne göre item kartı kaç seçenekli
@@ -31,7 +47,8 @@ export interface EndlessConfig {
    */
   rewards: { healRatio: number; goldBase: number; goldPerWave: number; reviveRatio?: number; reviveCard?: boolean; itemOptions?: Partial<Record<WaveKind, number>> };
   special: {
-    elite: SpecialRewards & { healRatio: number };
+    /** xpRatio (Ömer 2026-10-20): Veteran's Lesson kartı, ayaktaki kahramana sonraki level eşiğinin bu oranı kadar XP (eski %60 Field Surgeon kaldırıldı). */
+    elite: SpecialRewards & { xpRatio: number };
     boss: SpecialRewards & { feastHpMult: number; feastWaves: number };
   };
   items: { ilvlPerWave: number; ilvlAhead: number; window: number };
@@ -105,6 +122,8 @@ export interface EndlessHero {
    * (src/endless/formation.ts). Eski kayıtta yok = otomatik dizilim.
    */
   slot?: number;
+  /** Yara sayısı (Ömer 2026-10-19; kayıt sürümü 6, eski kayıtta yok = 0): her yara maks can -carry.wounds.maxHpLoss. */
+  wounds?: number;
   /** Önceki dalgadan taşınan savaş durumu (sürekli akış, madde 300); eski kayıtta / ilk dalgada yok = tam MP, Rage 0, durum yok. */
   carry?: UnitCarry;
 }
@@ -145,6 +164,8 @@ export type RewardCard =
   | { kind: 'item'; itemId: string; heroId: string; rolls?: ItemRolls; /** Ek seçenekler (rewards.itemOptions[dalga türü] - 1 tane; karar 364). */ alts?: Array<{ itemId: string; heroId: string; rolls?: ItemRolls }> }
   | { kind: 'gold'; amount: number }
   | { kind: 'heal'; ratio: number }
+  /** Elit sonrası Veteran's Lesson: ayaktaki her kahraman xpToNext(level) x ratio XP (level atlatabilir). */
+  | { kind: 'xp'; ratio: number }
   /** Boss sonrası: tam can + sonraki `waves` dalga boyunca maks can x hpMult. */
   | { kind: 'feast'; hpMult: number; waves: number }
   /** Düşmüş (ceset) kahramanı `ratio` canla (ve MP ile) kaldırır (carry.fallen 'corpse'; ekranda en çok bir tane: ilk düşen). */
@@ -241,3 +262,8 @@ export interface ScoreEntry {
   gearScore: number;
   date: string;
 }
+
+/** Endless yara kuralı (carry.wounds; verilmeyen yapılandırmada data/endless.json'unki). */
+export const endlessWoundRules = (cfg: Pick<EndlessConfig, 'carry'> = ENDLESS): WoundRules => cfg.carry.wounds ?? ENDLESS.carry.wounds!;
+/** Düşen kahraman ceset olarak sonraki dalgaya girebilir mi (fallen 'wound' / 'corpse'; 'rise' hariç). */
+export const endlessCorpses = (cfg: Pick<EndlessConfig, 'carry'> = ENDLESS): boolean => (cfg.carry.fallen ?? 'corpse') !== 'rise';

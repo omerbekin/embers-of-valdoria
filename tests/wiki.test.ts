@@ -147,7 +147,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   it('son sistemler Codex\'te yazılıdır: Endless, nadir düşüş + kötü şans koruması, nadirlik zarı, Battle speed, yenilenme, item kaynaklı durumlar', () => {
     const text = (id: string) => [...wiki.mechanics, ...wiki.gettingStarted].find((a) => a.id === id)!.blocks.flatMap(blockText).join(' ');
     const endless = text('endless');
-    for (const w of ['Revive card', 'corpse', 'Odo', 'buy back', 'Reroll', 'Relics', 'same share of their MP', 'Cooldowns']) expect(endless, w).toContain(w);
+    for (const w of ['wound', 'corpse', 'Odo', 'buy back', 'Reroll', 'Relics', 'Mana starts full in every wave', 'Cooldowns']) expect(endless, w).toContain(w);
     // Sefer Retreat to Map savaşı duraklatır (Ömer 2026-10-14)
     const campaign = text('campaign');
     for (const w of ['Retreat to Map', 'paused, not reset', 'Resume Battle']) expect(campaign, w).toContain(w);

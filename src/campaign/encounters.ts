@@ -1,3 +1,5 @@
+import { applyWounds, valorRevivedCounts, woundCount } from '../progression/wounds';
+import { battleSummary, type Battle } from '../engine';
 import { CELL_COUNT, classes, encounterUnit, randomPool, summons } from '../engine/content';
 import { encounterWaves, encounterWavesById, isInertUnit } from './encounter-waves';
 import { CONFIG, ENCOUNTERS, getMap } from './data';
@@ -104,6 +106,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     if (!h) return;
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
     const setup: UnitSetup = caps.unitMods ? loadoutSetup(h) : {};
+    // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
+    if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds);
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)
     // Düşmüş kahraman (Ömer 2026-10-11, Endless gibi): savaşa CESET olarak girer (yuvasında; savaşta Resurrection ile kalkabilir)
     if (!h.alive || h.hpRatio <= 0) setup.startDead = 'revivable';
@@ -187,6 +191,16 @@ export function outcomeFrom(plan: Pick<BattlePlan, 'heroOrder'>, victory: boolea
     })
     .filter((u) => u.heroId);
   return { victory, units, ...(valor ? { valorLeft: valor.left, flawless: valor.flawless } : {}) };
+}
+
+/**
+ * Bitmiş (ya da geri çekilinen) savaştan sefer sonucu: outcomeFrom + savaş içi Valor diriltmeleri (Battle.log; Ömer 2026-10-20: Valor 1 yara
+ * siler). Sahne, sim ve geri çekilme bu kapıyı kullanır. `victory` verilmezse savaşın kazananı.
+ */
+export function battleOutcomeOf(plan: Pick<BattlePlan, 'heroOrder'>, battle: Battle, victory: boolean = battle.winner === 'party'): BattleOutcome {
+  const out = outcomeFrom(plan, victory, battleSummary(battle));
+  const rv = valorRevivedCounts(battle.log as ReadonlyArray<{ type: string; target?: string; cause?: string }>, plan.heroOrder);
+  return Object.keys(rv).length ? { ...out, valorRevived: rv } : out;
 }
 
 /** Karşılaşma verisinin doğrulaması: sınıflar rastgele havuzda (test class'ı yok), yuvalar 0..11 ve tekrarsız, yedek geçerli, kilitli skill'ler sınıfın skill'i. */

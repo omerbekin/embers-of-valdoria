@@ -105,8 +105,8 @@ describe('eğri ve veri', () => {
     expect(nodeLevel('valdoria', '12')).toBe(10);
   });
 
-  it('iyileşme %20: sefer düğüm arası (victoryHeal) ve Endless dalga arası kartı (healRatio)', () => {
-    expect(campaignJson.rules.victoryHeal).toBe(0.2);
+  it('iyileşme: sefer zafer şifası %25 (hp-death-rework 2026-10-19), Endless dalga arası kartı (healRatio) %20', () => {
+    expect(campaignJson.rules.victoryHeal).toBe(0.25);
     expect(endlessJson.rewards.healRatio).toBe(0.2);
   });
 });
@@ -247,7 +247,7 @@ describe('sefer: eğri hedefi ve kurallar', () => {
     expect(mean).toBeLessThanOrEqual(9);
   });
 
-  it('zafer XP verir, level atlayan ayaktaki kahraman tam iyileşir, düşen ceset kalır; Level Up kaydı ve onayı', () => {
+  it('zafer XP verir, level atlayan ayaktaki kahraman tam iyileşir, düşen %10 canla yaralı kalkar (level şifası yok); Level Up kaydı ve onayı', () => {
     let s = pickHero(newCampaign({ mode: 'normal', seed: 5 }), 'warrior');
     const h = s.roster[0]!;
     s = { ...s, roster: s.roster.map((x) => ({ ...x, xp: xpToNext(1) - 1 })) };
@@ -258,7 +258,7 @@ describe('sefer: eğri hedefi ve kurallar', () => {
     expect(acknowledgeLevelUps(won).levelUps).toBeUndefined();
     const fell = applyBattle(s, { victory: true, units: [{ heroId: h.id, hpRatio: 0, alive: false }] });
     expect(fell.roster[0]!.level).toBe(2); // düşen de XP alır (öldürme kaydı yok: hepsi düşmeden sayılır)
-    expect(fell.roster[0]).toMatchObject({ hpRatio: 0, alive: false });
+    expect(fell.roster[0]).toMatchObject({ hpRatio: campaignJson.rules.wounds.riseRatio, alive: true, wounds: 1 });
   });
 
   it('öldürme kaydı: düştükten sonraki öldürmeler %50 (sonuçta kills)', () => {

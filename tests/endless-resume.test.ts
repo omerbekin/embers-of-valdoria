@@ -178,7 +178,7 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(offer.map((c) => c.kind)).toEqual(['item', 'gold', 'heal']);
   });
 
-  it('elit (5. dalga): tek item kartı, 2 farklı seçenek (karar 364; seviye tavanı yüksek; nadirlik tek tablodan, en az Rare garantisi YOK: Ömer 2026-10-11); x2 altın; %60 iyileştirme', () => {
+  it('elit (5. dalga): tek item kartı, 2 farklı seçenek (karar 364; seviye tavanı yüksek; nadirlik tek tablodan, en az Rare garantisi YOK: Ömer 2026-10-11); x2 altın; XP kartı (Veteran Lesson)', () => {
     const offer = rewardOffer(after(5), ENDLESS, CAT);
     expect(items(offer)).toHaveLength(ENDLESS.special.elite.itemCards);
     expect(ENDLESS.special.elite.itemCards).toBe(1);
@@ -191,7 +191,9 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     const normalGold = rewardOffer(after(4), ENDLESS, CAT).find((c) => c.kind === 'gold');
     expect(gold && gold.kind === 'gold' && gold.amount).toBe(Math.round((ENDLESS.rewards.goldBase + ENDLESS.rewards.goldPerWave * 5) * ENDLESS.special.elite.goldMult));
     expect(gold!.kind === 'gold' && normalGold!.kind === 'gold' && gold!.amount > normalGold!.amount).toBe(true);
-    expect(offer.find((c) => c.kind === 'heal')).toEqual({ kind: 'heal', ratio: ENDLESS.special.elite.healRatio });
+    // Ömer 2026-10-20: elit sonrası iyileştirme kartı (Field Surgeon) yerine Veteran's Lesson XP kartı
+    expect(offer.find((c) => c.kind === 'heal')).toBeUndefined();
+    expect(offer.find((c) => c.kind === 'xp')).toEqual({ kind: 'xp', ratio: ENDLESS.special.elite.xpRatio });
   });
 
   it("boss (10. dalga): tek item kartı, 3 seçenek (karar 364; nadirlik tablosu hafif kayar), x3 altın, Hero's Feast", () => {

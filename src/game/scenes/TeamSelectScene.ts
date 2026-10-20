@@ -39,6 +39,8 @@ import type { SideSizes, TeamSide } from '../team-select-model';
 import { skillMiniGrid } from '../../ui/shape-diagram';
 import type { MpTeamHooks } from '../mp-hooks';
 import { debugState } from '../debug-state';
+import { ReadyBanners, preloadReadyBanners } from '../ready-banners';
+import { bannerWidths } from '../ready-banners-logic';
 import { onStageResize, stageView, worldXY } from '../stage';
 import { growTouchZone, touchUnits, type TouchZoneOpts } from '../touch-hit';
 import { FULL_W, FULL_X0 } from '../../ui/viewport';
@@ -197,6 +199,7 @@ export class TeamSelectScene extends Phaser.Scene {
   private status?: Phaser.GameObjects.Text;
   private statusTween?: Phaser.Tweens.Tween;
   private startUi?: ElButton;
+  private banners?: ReadyBanners;
   private bg?: { img?: Phaser.GameObjects.Image };
   private drag?: { kind: 'class' | 'cell'; id: string; side?: Side; from?: number; sx: number; sy: number; moved: boolean; ghost?: Phaser.GameObjects.Container; over: { side: Side; i: number } | null };
   private pop?: { side: Side; cell: number };
@@ -262,6 +265,7 @@ export class TeamSelectScene extends Phaser.Scene {
     // yalnızca gösterilen arka plan (src/game/assets.ts > arka plan belleği) ve sınıf görselleri (src/game/sprite-needs.ts; telefon belleği)
     const sprites = classSpriteIds();
     preloadAssets(this, { backgrounds: TEAM_SELECT_BACKGROUNDS(), sprites, avatars: sprites, items: false });
+    if (this.mp) preloadReadyBanners(this); // Multiplayer hazır sancakları (src/game/ready-banners.ts)
   }
 
   create(): void {
@@ -282,6 +286,8 @@ export class TeamSelectScene extends Phaser.Scene {
       this.mpOff = this.mp.onChange(() => !this.mpSyncing && this.scene.isActive() && this.built && this.refresh());
       this.events.once('shutdown', () => {
         this.mpOff?.();
+        this.banners?.destroy();
+        this.banners = undefined;
         this.mpOff = null;
       });
     }
@@ -294,6 +300,7 @@ export class TeamSelectScene extends Phaser.Scene {
     for (const side of SIDES) this.buildSide(side);
     this.buildCenter();
     this.buildStart();
+    if (this.mp) this.banners = new ReadyBanners(this, 11);
     this.buildActions();
     this.buildInfo();
     this.refresh();
@@ -478,7 +485,7 @@ export class TeamSelectScene extends Phaser.Scene {
 
   private buildHeader(): void {
     this.menuLink = elBack(this, () => this.goBack(), { isBusy: () => !!this.drag?.moved }).root;
-    this.titleRoot = elHeading(this, W / 2, 58, 'Quick Battle', 40).setDepth(20);
+    this.titleRoot = elHeading(this, W / 2, 58, this.mp ? 'Multiplayer' : 'Quick Battle', 40).setDepth(20);
   }
   private titleRoot?: Phaser.GameObjects.Container;
 
@@ -1021,9 +1028,12 @@ export class TeamSelectScene extends Phaser.Scene {
       const me = this.mp.myReady();
       this.startUi?.setLabel(me ? 'Not ready' : 'Ready');
       this.startUi?.setReady(ok);
+      const opp = this.mp.opponentReady();
+      this.banners?.set(me, opp);
       if (!ok) this.setStatus(this.missingText(), colors.lethal);
-      else if (me) this.setStatus(this.mp.opponentReady() ? 'Both ready - starting...' : 'Waiting for your opponent to be ready', ON);
-      else this.setStatus('Your team is complete - press READY', ON);
+      else if (me) this.setStatus(opp ? 'Both ready - the battle begins' : 'You are ready - waiting for Opponent', ON);
+      else if (opp) this.setStatus('Opponent is ready - press Ready', ON);
+      else this.setStatus('Your team is complete - press Ready', ON);
     } else {
       this.startUi?.setReady(ok);
       if (ok) this.setStatus('Both teams are ready', ON);
@@ -1193,6 +1203,13 @@ export class TeamSelectScene extends Phaser.Scene {
     const ax = stageView.right - START.right - (this.startUi?.w ?? 0) / 2;
     this.startUi?.root.setX(ax);
     this.actions?.setX(ax);
+    if (this.banners) {
+      // dış sancaklar büyük (yan boşluğa sığar), iç sancaklar küçük (iki tahtanın arasında)
+      const w = bannerWidths(SIDE_INSET);
+      const innerL = this.sideX('party') + SIDE_W + 30 + w.inner / 2;
+      const innerR = this.sideX('enemies') - 30 - w.inner / 2;
+      this.banners.layout({ outerL: stageView.left + 4 + w.outer / 2, outerR: stageView.right - 4 - w.outer / 2, innerL, innerR, margin: SIDE_INSET, beamL: innerL, beamR: innerR });
+    }
     this.renderInfo();
     if (!this.drag) {
       const entering = this.stripGroups.some((g) => g.getData('entering'));

@@ -321,31 +321,34 @@ describe('tutorial takım akışı', () => {
   });
 });
 describe('can taşıma', () => {
-  it('zaferde hayatta kalanlar +%35 (victoryHeal), düşenler KALKMAZ (ceset; Ömer 2026-10-11), savaşa girmeyen değişmez', () => {
+  it('zaferde hayatta kalanlar +victoryHeal; savaşı düşmüş bitiren %10 canla yaralı kalkar, ceset girip kalkmayan ceset kalır (Ömer 2026-10-19)', () => {
     // tavan level: XP level atlatmasın (level atlayınca tam iyileşme bu testin can kuralını örterdi; levels.md)
     const maxed = (x: CampaignState): CampaignState => ({ ...x, roster: x.roster.map((h) => ({ ...h, level: 50, xp: 0 })) });
     let s = maxed(playTo(fresh(9), '3'));
     const [a, b] = s.roster;
     s = applyBattle(s, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
-    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.victoryHeal);
-    expect(s.roster[1]!.hpRatio).toBe(0);
-    expect(s.roster[1]!.alive).toBe(false);
+    expect(s.roster[0]!.hpRatio).toBeCloseTo(0.5 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit: %50
+    expect(s.roster[1]).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 }); // yaralı kalkar
+    // ceset olarak girip kalkmayan: ceset kalır, yeni yara yok, sonraki savaşa ceset girer
+    s = { ...s, roster: s.roster.map((h) => (h.id === b!.id ? { ...h, hpRatio: 0, alive: false } : h)) };
+    s = applyBattle({ ...s, done: s.done.filter((k) => !k.endsWith(':battle')) }, { victory: true, units: [{ heroId: a!.id, hpRatio: 0.5, alive: true }, { heroId: b!.id, hpRatio: 0, alive: false }] });
+    expect(s.roster[1]).toMatchObject({ hpRatio: 0, alive: false, wounds: 1 });
     expect(battlePlan(s).units.party[s.active.indexOf(b!.id)]?.startDead).toBe('revivable'); // sonraki savaşa ceset olarak girer
     let t = maxed(playTo(fresh(9), '3'));
     t = applyBattle(t, { victory: true, units: [{ heroId: t.roster[0]!.id, hpRatio: 0.95, alive: true }] });
     expect(t.roster[0]!.hpRatio).toBe(1); // tavan 1
   });
 
-  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen kalkmaz); kasaba varışta yaşayanları tam iyileştirir, düşenleri KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
+  it('boss zaferi YAŞAYANLARI tam iyileştirir (düşen yaralı %10 kalkar); kasaba varışta yaşayanları tam iyileştirir, cesedi KALDIRMAZ (TUR 1 madde 10); yenilgi yalnızca sayaç', () => {
     let s = playTo(fresh(11), '9');
     const team = activeHeroes(s);
     s = applyBattle(s, { victory: true, units: team.map((h, i) => ({ heroId: h.id, hpRatio: i === 0 ? 0 : 0.1, alive: i !== 0 })) });
-    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: 0, alive: false });
+    expect(s.roster.find((h) => h.id === team[0]!.id)).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 });
     expect(team.slice(1).every((h) => s.roster.find((x) => x.id === h.id)!.hpRatio === 1)).toBe(true);
     let t = playTo(fresh(11), '3');
     t = { ...t, roster: t.roster.map((h) => ({ ...h, level: 50, xp: 0 })) }; // XP level atlatmasın (tam iyileşme)
     t = applyBattle(t, { victory: true, units: t.roster.map((h) => ({ heroId: h.id, hpRatio: 0.1, alive: true })) });
-    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.victoryHeal);
+    expect(t.roster[0]!.hpRatio).toBeCloseTo(0.1 + CONFIG.rules.eliteVictoryHeal!); // düğüm 3 elit
     const lost = applyBattle(t, { victory: false, units: [] });
     expect(lost.stats.defeats).toBe(1);
     expect(lost.roster).toEqual(t.roster);

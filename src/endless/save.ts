@@ -1,5 +1,6 @@
 // Endless kaydı (saf; depo dışarıdan verilir): tek koşu yuvası (her dalga sonrası otomatik, Ironman gibi; yenilgide yükleme yok) + yerel
 // en iyi skor listesi. Sürümlü; bozuk / tanınmayan kayıt oyunu çökertmez (yok sayılır). Anahtarlar `protomedi.*` kalıbında (CLAUDE.md).
+import { woundCount } from '../progression/wounds';
 import { CELL_COUNT, classes, valorRules } from '../engine/content';
 import { clampValor } from '../engine/valor';
 import type { EndlessRun, ScoreEntry } from './data';
@@ -24,7 +25,11 @@ export const SCORES_KEY = 'protomedi.endless.scores.v1';
  * (`summons`). Sürüm 1-2 okunurken bu alanlar yok (= tam MP, temiz başlangıç: eski kural bir kez daha) ve yarım savaş atılır (savaş kurulumu
  * değişti: dalga arası cooldown sıfırlama; dalga baştan başlar). Ara verme (ödül / tüccar / kalıntı / kamp) aşaması aynen sürer.
  */
-export const SAVE_VERSION = 5;
+export const SAVE_VERSION = 6;
+/*
+ * 6: Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): kahraman başına `wounds` (yoksa 0; bozuk değer atılır) ve MP her dalgada dolu
+ * (carry.mp 'full'). Sürüm 1-5 okunurken taşınan MP oranı silinir ve yarım savaş atılır (kurulumu eski MP oranıyla kurulmuştu; dalga baştan).
+ */
 /*
  * 4: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls) ve yarım kalmış
  * savaş atılır (kurulum item statlarından yeniden kurulur; dalga baştan başlar). Koşunun geri kalanı aynen sürer.
@@ -44,7 +49,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
   try {
     const data = JSON.parse(raw) as { version?: number; run?: EndlessRun };
     const r = data?.run;
-    if (![1, 2, 3, 4, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
+    if (![1, 2, 3, 4, 5, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
     if (data.version === 1) {
       migrateRollsX2(r);
       delete r.suspended;
@@ -72,6 +77,22 @@ export function parseRun(raw: string | null): EndlessRun | null {
     for (const h of r.heroes) if (!h || typeof h.id !== 'string' || !classes[h.class] || !isNum(h.hpRatio) || typeof h.equipment !== 'object' || !h.equipment) return null;
     // Seviye, XP, puanlar (level sistemi, Ömer 2026-10-17): bozuk değer varsayılana, eski kayıtta level'dan tamamlanır (hiçbir şey geri alınmaz)
     for (const h of r.heroes) normalizeLevelFields(h);
+    // Yara (sürüm 6): yok / bozuk = 0
+    for (const h of r.heroes) {
+      const n = woundCount(h);
+      if (n > 0) h.wounds = n;
+      else delete h.wounds;
+    }
+    // 5 -> 6: MP her dalgada dolu; eski taşınan MP oranı ve onunla kurulmuş yarım savaş atılır
+    if ((data.version ?? 0) < 6) {
+      let had = false;
+      for (const h of r.heroes)
+        if (h.carry && h.carry.mpRatio !== undefined) {
+          delete h.carry.mpRatio;
+          had = true;
+        }
+      if (had) delete r.suspended;
+    }
     // Dizilim (2026-10-09): bozuk hücre atılır (o zaman wavePlan tüm takımı otomatik dizer)
     for (const h of r.heroes) if (h.slot !== undefined && (!Number.isInteger(h.slot) || h.slot < 0 || h.slot >= CELL_COUNT)) delete h.slot;
     if (r.levelUps !== undefined && !(Array.isArray(r.levelUps) && r.levelUps.every((u) => u && typeof u.heroId === 'string' && isNum(u.from) && isNum(u.to)))) delete r.levelUps;

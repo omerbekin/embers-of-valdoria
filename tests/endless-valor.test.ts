@@ -38,12 +38,17 @@ describe('Endless Valor', () => {
   });
 
   it('savaş dışında Valor ile diriltme: outsideCost Valor, %50 can (+%50 MP taşınır); yetmezse / yarım savaş varken olmaz; Revive kartı yok', () => {
-    const won = applyOutcome(atWave(1, OUT), { wave: 1 }, win(atWave(1, OUT), { dead: ['h2'], flawless: false }));
+    // 3 yaralı kahraman düşerse ceset (hp-death-rework 2026-10-19); Valor kaldırır, yara silmez
+    const r0 = atWave(1, OUT);
+    const r1 = { ...r0, heroes: r0.heroes.map((h) => (h.id === 'h2' ? { ...h, wounds: 3 } : h)) };
+    const won = applyOutcome(r1, { wave: 1 }, win(r1, { dead: ['h2'], flawless: false }));
+    expect(won.heroes.find((h) => h.id === 'h2')!.hpRatio).toBe(0);
     expect(won.phase).toBe('reward');
     expect(won.valor).toBe(OUT + 1);
     const t = reviveWithValor(won, 'h2');
     expect(t.valor).toBe(1);
     expect(t.heroes.find((h) => h.id === 'h2')!.hpRatio).toBe(R.revive.hpRatio);
+    expect(t.heroes.find((h) => h.id === 'h2')!.wounds).toBe(2); // Valor 1 yara siler (Ömer 2026-10-20)
     expect(valorReviveBlocked(t, 'h2')).toBe('This hero has not fallen');
     expect(valorReviveBlocked({ ...won, valor: OUT - 1 }, 'h2')).toBe(`Needs ${OUT} Valor (you have ${OUT - 1})`);
     expect(valorReviveBlocked({ ...won, suspended: { wave: 2, seed: 1, turn: 1, hash: 'x', actions: [] } }, 'h2')).toBe('Finish the battle first');

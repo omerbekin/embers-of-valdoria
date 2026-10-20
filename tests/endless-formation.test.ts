@@ -5,6 +5,7 @@ import {
   autoSlots,
   carrySlots,
   heroSlots,
+  ENDLESS,
   loadRun,
   moveInDraft,
   nearestFree,
@@ -109,7 +110,7 @@ describe('endless dizilim: dalgadan dalgaya', () => {
     expect(d!.slot).toBe(9);
     expect(w!.slot).toBe(nearestFree(0, new Set([0, 6, 9]))); // 0'a en yakın boş: 1
     expect(w!.slot).toBe(1);
-    expect(w!.hpRatio).toBe(0); // Endless kuralı (2026-10-10 takip): düşen kahraman ceset olarak kalır (Revive kartı kaldırır)
+    expect(w!.hpRatio).toBe(ENDLESS.carry.wounds!.riseRatio); // hp-death-rework (2026-10-19): düşen kahraman %10 canla yaralı kalkar
     // boşsa kendi hücresine döner
     const { next: n2 } = won(run, [
       { i: 0, slot: 0, hp: 0 },

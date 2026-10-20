@@ -192,32 +192,41 @@ describe('devriye (yeniden oynama) ve azalan getiri', () => {
     expect(nextStep(s).kind).toBe('move');
   });
 
-  it('devriyeden geri çekilme (Ömer 2026-10-19): devriye iptal, takım serbest; her kahraman 0-30% can kaybeder, kimse ölmez, seed\'li', () => {
-    expect(patrolRetreatMaxLoss()).toBe(CONFIG.replay!.retreatHpLoss);
-    expect(patrolRetreatConfirm()).toContain(`up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP`);
+  it('devriyeden geri çekilme (Ömer 2026-10-19, hp-death-rework): devriye iptal, takım serbest; savaşta ne olduysa kalır (can kaybı, düşen yaralı / 3 yaralıysa ceset)', () => {
+    expect(patrolRetreatConfirm()).toContain('stays lost');
+    expect(patrolRetreatConfirm()).toContain(`${Math.round(CONFIG.rules.wounds.riseRatio * 100)}% health and a wound`);
+    expect((CONFIG.replay as Record<string, unknown>)['retreatHpLoss']).toBeUndefined(); // eski rastgele kayıp kalktı
+    expect(patrolRetreatMaxLoss()).toBe(0);
     const base = walk(afterAshford(), 'moor', 'cairn', 'charcoal', '7', '6B');
     const armed = startPatrol(base);
     // devriye değilse bir şey olmaz
     expect(retreatPatrol(base).state).toBe(base);
-    const r = retreatPatrol(armed);
+    const team = activeHeroes(armed);
+    const [a, b, c] = team;
+    // c: 3 yaralı (ölümcül sınır)
+    const set = { ...armed, roster: armed.roster.map((h) => (h.id === c!.id ? { ...h, wounds: CONFIG.rules.wounds.lethal } : h)) };
+    const units = [
+      { heroId: a!.id, hpRatio: 0.4, alive: true },
+      { heroId: b!.id, hpRatio: 0, alive: false },
+      { heroId: c!.id, hpRatio: 0, alive: false },
+    ];
+    const r = retreatPatrol(set, { units });
     expect(r.state.patrol).toBeUndefined();
     expect(r.state.suspended).toBeUndefined();
     expect(nextStep(r.state).kind).toBe('move');
     expect(r.state.replays?.['6B'] ?? 0).toBe(armed.replays?.['6B'] ?? 0); // zafer sayılmaz
-    const alive = activeHeroes(armed).filter((h) => h.alive && h.hpRatio > 0);
-    expect(r.losses.length).toBe(alive.length);
-    for (const h of alive) {
-      const after = r.state.roster.find((x) => x.id === h.id)!;
-      expect(after.hpRatio).toBeGreaterThan(0);
-      expect(after.alive).toBe(true);
-      expect(h.hpRatio - after.hpRatio).toBeLessThanOrEqual(patrolRetreatMaxLoss() + 1e-9);
-      expect(h.hpRatio - after.hpRatio).toBeGreaterThanOrEqual(0);
-    }
-    // aynı durum = aynı kayıp (seed'li)
-    expect(retreatPatrol(armed).losses).toEqual(r.losses);
-    // canı düşük kahraman ölmez (en az 1 can: oran > 0)
-    const low = { ...armed, roster: armed.roster.map((h) => ({ ...h, hpRatio: h.alive ? 0.01 : h.hpRatio })) };
-    for (const h of retreatPatrol(low).state.roster) if (h.alive) expect(h.hpRatio).toBeGreaterThan(0);
+    const get = (id: string) => r.state.roster.find((h) => h.id === id)!;
+    expect(get(a!.id)).toMatchObject({ hpRatio: 0.4, alive: true }); // can kaybı taşınır, şifa yok
+    expect(get(a!.id).wounds).toBeUndefined();
+    expect(get(b!.id)).toMatchObject({ hpRatio: CONFIG.rules.wounds.riseRatio, alive: true, wounds: 1 }); // düşen yaralı kalkar
+    expect(get(c!.id)).toMatchObject({ hpRatio: 0, alive: false, wounds: CONFIG.rules.wounds.lethal }); // 3 yaralı: ceset
+    expect(r.losses.find((l) => l.heroId === b!.id)?.wounded).toBe(true);
+    expect(r.losses.find((l) => l.heroId === c!.id)?.died).toBe(true);
+    expect(r.state.gold).toBe(set.gold); // loot yok
+    // savaş kaydı yoksa yalnızca devriye bırakılır
+    const bare = retreatPatrol(set);
+    expect(bare.state.patrol).toBeUndefined();
+    expect(bare.state.roster).toEqual(set.roster);
   });
 
   it('ödül çarpanları veride (campaign.json > replay.xp): ilk zafer 1, azalan, taban > 0', () => {
@@ -275,7 +284,7 @@ describe('kayıt: sürüm 10 göçü (visited / cleared / replays)', () => {
     expect(r.migrated).toBe(true);
     expect(r.file.slots[0]!.saves[0]!.state.at).toBe('7');
     expect(r.file.slots[0]!.saves[0]!.state.visited).toContain('charcoal');
-    expect(SAVE_VERSION).toBe(10);
+    expect(SAVE_VERSION).toBe(11);
   });
 
   it('başlatılmış devriye duraklatma olmadan kayıtta kalmaz; bozuk alanlar onarılır; özet "Cleared"', () => {

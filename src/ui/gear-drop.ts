@@ -79,6 +79,20 @@ export function merchantBagDouble(o: { charShown: boolean; hasHero: boolean }): 
 }
 
 /**
+ * Stat / affix / kısa ipucu (`data-hint`) satırına tıklama (saf; Ömer 2026-10-20: "gear ekranında mouse boş alandayken hover kapanmıyor").
+ * Sabitleme (pin) YALNIZCA dokunmatikte: farede ipucu üstüne gelince açılır, çıkınca kapanır; tıklama sabitlerse imleç boşluğa çıkınca
+ * kapanmazdı. Farede satıra tıklama 'hover' = sabitleme kalkar, ipucu gezinmeye bağlı kalır. `on`: hint = eylemli kısa ipucu düğmesi,
+ * hintTap = pasif düğme (neden yapılamadığını anlatır), row = stat / affix satırı, empty = ipucu olmayan yer.
+ */
+export type TipClick = 'pin' | 'hide' | 'hover' | 'none';
+export function tipClick(o: { touch: boolean; on: 'row' | 'hint' | 'hintTap' | 'empty'; pinnedHere: boolean; pinned: boolean }): TipClick {
+  if (o.on === 'empty') return o.pinned ? 'hide' : 'none';
+  if (o.on === 'hint') return 'hide';
+  if (!o.touch) return 'hover';
+  return o.pinnedHere ? 'hide' : 'pin';
+}
+
+/**
  * Dokunmatik basışın durumu (saf): uzun basış (`holdMs`) önce İPUCUNU açar; ardından parmak kayarsa SÜRÜKLEME başlar. Uzun basıştan önce
  * kayma = kaydırma (iptal). Fare: 6 px kaydırınca sürükleme (ipucu üstüne gelince zaten açık).
  */

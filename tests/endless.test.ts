@@ -197,15 +197,15 @@ describe('endless: dalga planı -> savaş', () => {
 });
 
 describe('endless: savaş sonucu ve can taşıma', () => {
-  it('zafer: canlılar +%20, düşen ceset olarak kalır (Revive kartı yok), dalga +1, ödül kartları açılır', () => {
+  it('zafer: canlılar +victoryHeal (%25), düşen %10 canla yaralı kalkar (Revive kartı yok), dalga +1, ödül kartları açılır', () => {
     const run = fresh();
     const plan = wavePlan(run);
     const next = applyOutcome(run, plan, win(run, 0.5, ['h2']));
     expect(next.wave).toBe(2);
     expect(next.phase).toBe('reward');
     expect(next.stats).toEqual({ cleared: 1, turns: 20, kills: 3 });
-    expect(heroOf(next, 'h1')!.hpRatio).toBeCloseTo(0.7);
-    expect(heroOf(next, 'h2')!.hpRatio).toBe(0);
+    expect(heroOf(next, 'h1')!.hpRatio).toBeCloseTo(0.5 + ENDLESS.carry.victoryHeal);
+    expect(heroOf(next, 'h2')).toMatchObject({ hpRatio: ENDLESS.carry.wounds!.riseRatio, wounds: 1 });
     expect(next.offer).toHaveLength(3);
     expect(next.offer!.some((c) => c.kind === 'revive')).toBe(false);
     // aynı sonuç ikinci kez yazılmaz (sonuç ekranı tekrar kurulsa da)
@@ -213,10 +213,13 @@ describe('endless: savaş sonucu ve can taşıma', () => {
     expect(run.wave).toBe(1); // girdi değişmez
   });
 
-  it('boss zaferi yaşayanlara +%50 (TUR 1 madde 13; eskiden tam); ceseti kaldırmaz', () => {
+  it('boss zaferi yaşayanları tam iyileştirir (hp-death-rework 2026-10-19), yara silmez; düşen %10 yaralı kalkar', () => {
     const run = { ...fresh(), wave: 10 };
-    const next = applyOutcome(run, { wave: 10 }, win(run, 0.1, ['h3']));
-    for (const h of next.heroes) expect(h.hpRatio).toBeCloseTo(h.id === 'h3' ? 0 : 0.1 + ENDLESS.carry.bossHeal, 5);
+    const hurt = { ...run, heroes: run.heroes.map((h) => (h.id === 'h1' ? { ...h, wounds: 2 } : h)) };
+    const next = applyOutcome(hurt, { wave: 10 }, win(hurt, 0.1, ['h3']));
+    expect(ENDLESS.carry.bossHeal).toBe(1);
+    for (const h of next.heroes) expect(h.hpRatio).toBeCloseTo(h.id === 'h3' ? ENDLESS.carry.wounds!.riseRatio : 1, 5);
+    expect(heroOf(next, 'h1')!.wounds).toBe(2); // boss şifası yara silmez
   });
 
   it('yenilgi: koşu biter, skor yazılabilir', () => {

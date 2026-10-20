@@ -8,10 +8,10 @@
 // - O düğüm için `wallCap` kasma savaşından sonra hâlâ geçemezse DUVAR: koşu orada biter (onWall 'force' = zorla geçilir, ölçüm sürer).
 //   Kasma yeri hiç yoksa (ör. Ashford sonrası ilk savaş, tutorial) kasma yerine düz tekrar; 1 + retries + wallCap denemede geçemezse duvar (farmsız).
 // - Stat puanı: iyi oyuncu ana stata (autoAllocateAll, Medium YZ), ortalama oyuncu dört stata eşit (Easy YZ). İkisi de "Equip best".
-// - Can: savaştan önce yaşayanların ort. canı `healAt`'in altındaysa ve altın yetiyorsa temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz).
+// - Can: savaştan önce yaşayanların ort. canı `healAt`'in altındaysa ya da yaşayan yaralı kahraman varsa ve altın yetiyorsa temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz).
 // - Demirci: her yola çıkışta (temizlenmiş kasaba varsa) parası yettikçe takımın en değerli silahını Temper eder; bir dinlenme parası ayrılır.
 import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
-import { battleSummary, type AiDifficulty } from '../engine';
+import { type AiDifficulty } from '../engine';
 import {
   CONFIG,
   activeHeroes,
@@ -33,12 +33,11 @@ import {
   newCampaign,
   nextStep,
   node,
-  outcomeFrom,
+  battleOutcomeOf,
   pickHero,
   recruit,
   replayCount,
   replayMult,
-  restInTown,
   rngFor,
   roamOpen,
   shuffle,
@@ -53,7 +52,7 @@ import {
 } from '../campaign';
 import { instanceIlvl, itemValue, SLOT_IDS } from '../progression/items';
 import { ATTRS, allocate, canAddPoint } from '../progression/levels';
-import { allRoutes, fightPlan, routeLabel } from './campaign';
+import { allRoutes, fightPlan, routeLabel, simTownRest } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
 
 export type PlayerType = 'good' | 'average';
@@ -202,7 +201,6 @@ export function pickFarm(s: CampaignState, record?: Map<string, { w: number; n: 
   return best;
 }
 
-const partyHp = (s: CampaignState): number => mean(activeHeroes(s).filter((h) => !isFallen(h)).map((h) => h.hpRatio));
 const clearedTowns = (s: CampaignState): string[] => {
   const map = getMap(s.mapId);
   return clearedNodes(s).filter((id) => node(map, id).type === 'town');
@@ -244,14 +242,12 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
     const company = new Set<string>();
 
     const heal = (t: CampaignState): CampaignState => {
-      if (!healAt || partyHp(t) >= healAt) return t;
-      const towns = clearedTowns(t).map((id) => ({ id, price: townRestPrice(t, id) })).sort((a, b) => a.price - b.price);
-      const town = towns[0];
-      if (!town || t.gold < town.price) return t;
-      res.goldRest += town.price;
+      const r = simTownRest(t, healAt);
+      if (!r) return t;
+      res.goldRest += r.price;
       res.rests++;
-      spent += town.price;
-      return restInTown(t, town.id);
+      spent += r.price;
+      return r.state;
     };
     const smith = (t: CampaignState): CampaignState => {
       const towns = clearedTowns(t);
@@ -302,7 +298,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
       if (battle.winner === 'party') {
         rec.w++;
         fa.farmWins++;
-        s = applyBattle(t, outcomeFrom(plan, true, battleSummary(battle)));
+        s = applyBattle(t, battleOutcomeOf(plan, battle, true));
         if (valorOutside(o.valor)) s = autoValorRevive(s);
       } else res.defeats++;
       farmRec.set(f, rec);
@@ -381,7 +377,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
             a.attemptsSum += c.tries;
             a.grindSum += c.grinds;
             if (c.grinds > 0) a.grindRuns++;
-            const out = outcomeFrom(plan, true, battleSummary(battle));
+            const out = battleOutcomeOf(plan, battle, true);
             a.hpEndSum += mean(out.units.map((u) => (u.alive ? u.hpRatio : 0)));
             a.deathsOnWin += out.units.filter((u) => !u.alive).length;
             s = applyBattle(s, out);

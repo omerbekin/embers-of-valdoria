@@ -146,3 +146,22 @@ export function debugToggleFallen(s: CampaignState, heroId?: string): CampaignSt
   }
   return t;
 }
+
+/**
+ * Debug (can ve ölüm reworkü, Ömer 2026-10-19): kahramanın yara sayısını `delta` kadar değiştirir (0'ın altına inmez; heroId yoksa aktif
+ * takımın ilk kahramanı). `delta` null = tüm takımın yaraları silinir (cesetler dahil).
+ */
+export function debugWounds(s: CampaignState, delta: number | null, heroId?: string): CampaignState {
+  const t = clone(s);
+  if (delta === null) {
+    for (const h of t.roster) delete h.wounds;
+    return t;
+  }
+  const id = heroId ?? t.active.find((x) => x && heroById(t, x)) ?? t.roster[0]?.id;
+  const h = id ? heroById(t, id) : undefined;
+  if (!h) return s;
+  const n = Math.max(0, Math.floor(h.wounds ?? 0) + Math.floor(delta));
+  if (n > 0) h.wounds = n;
+  else delete h.wounds;
+  return t;
+}

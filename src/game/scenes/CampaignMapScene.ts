@@ -59,7 +59,8 @@ import {
   nextReplayMult,
   replayMult,
   patrolAvailable,
-  patrolRetreatMaxLoss,
+  patrolRetreatNote,
+  heroWoundsLine,
   isDone,
   isCleared,
   startPatrol,
@@ -96,7 +97,7 @@ import { isInputLocked } from '../../ui/input-lock';
 import { avatarUrl } from '../../ui/character-panel';
 import { TownScreen } from '../town-screen';
 import { openCampaignMerchant } from '../campaign-merchant';
-import { characterTexture, MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
+import { MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
 import { classSpriteIds } from '../sprite-needs';
 import { preloadCampaignArt } from '../campaign-art';
 import { edgeFillers, mapArt } from '../map-art';
@@ -125,6 +126,7 @@ import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elButton, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
 import { reducedMotion } from '../../ui/motion-pref';
+import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
 import { drawNodeGlyph, graveMark, nodeGlyphImage, openFormation } from '../campaign-panels';
 import { openSlotBrowser, type SlotBrowser } from '../campaign-slots-ui';
@@ -165,7 +167,8 @@ const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', e
 /** Varışta kartın onayını bekleyen adımlar (Ömer 2026-10-19: kart çıkıp onaysız girmesin; hikaye / askerleme / veda / yeni takım dahil). */
 const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', 'treasure', 'story', 'recruit', 'volunteer', 'farewell', 'company'];
 const WALK_SPEED = 320; // px/sn
-const FOLLOW_GAP = 55; // px
+/** Liderin dinlenirken düğüme göre yeri (mockup W4: düğümün solunda, biraz aşağıda; ad etiketini örtmez). */
+const TRAV_REST = { x: -76, y: 8 };
 const PAN_STEP = 340;
 /** Sol sütun (Sakin etiket, Ömer 2026-10-19; mockup map-calm V1): kenardan boşluk, üst boşluk, içerik genişliği. Telefonda içerik COL_K kat büyür. */
 const SIDE = { left: 36, top: 124, partyW: 360 };
@@ -212,7 +215,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private cloudSig = new Map<string, string>();
   /** Sisin ASLA örtmeyeceği alanlar (gidilebilir düğüm + adı + yolu, bulunulan düğüm); renderMap her çizimde doldurur. */
   private clearZones: Rect[] = [];
-  private caravan: Phaser.GameObjects.Image[] = [];
+  private caravan: MapTraveller[] = [];
   private walking: { finish: () => void } | null = null;
   private modal: Modal | null = null;
   /** Menu > Load: bu yuvanın kayıt listesi (src/game/campaign-slots-ui.ts "Column"). */
@@ -714,6 +717,11 @@ export class CampaignMapScene extends Phaser.Scene {
     const prio = (id: string) => (vis[id] === 'current' ? 0 : options.includes(id) ? 1 : this.adjacent(id) ? 2 : 3);
     items.sort((a, b) => prio(a.n.id) - prio(b.n.id));
     const placed: Box[] = [];
+    // dinlenen lider (ve flaması) hiçbir ad etiketini örtmesin: etiketler onun kutusundan kaçınır
+    if (this.s.at && vis[this.s.at] === 'current') {
+      const lp = this.P(this.s.at);
+      placed.push({ x0: lp.x + TRAV_REST.x - 46, y0: lp.y + TRAV_REST.y - 100, x1: lp.x + TRAV_REST.x + 40, y1: lp.y + TRAV_REST.y + 8 });
+    }
     const area = (a: Box, b: Box) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
     const at = (side: Side, R: number, w: number, h: number) => ({
       x0: side === 'right' ? R + 8 : side === 'left' ? -R - 8 - w : side === 'belowR' || side === 'aboveR' ? R * 0.3 : side === 'belowL' || side === 'aboveL' ? -w - R * 0.3 : -w / 2,
@@ -1020,24 +1028,14 @@ export class CampaignMapScene extends Phaser.Scene {
   private placeCaravan(at: string): void {
     this.caravan.forEach((c) => c.destroy());
     this.caravan = [];
-    const team = activeHeroes(this.s);
-    const lead = leaderOf(this.s);
-    const order = lead ? [lead, ...team.filter((h) => h.id !== lead.id)] : team;
+    // W4 (Ömer 2026-10-19): yalnızca lider görünür (parti sağlığı düğüm kartında / sol sütunda); tek poz, sabit flama
+    const lead = leaderOf(this.s) ?? activeHeroes(this.s)[0];
+    const def = lead ? content.classes[lead.class] : undefined;
+    if (!lead || !def) return;
     const p = this.P(at);
-    order.forEach((h, i) => {
-      const def = content.classes[h.class];
-      if (!def) return;
-      const tex = characterTexture(this, def.spriteId, def.color);
-      const img = this.add.image(p.x, p.y, tex.key, tex.real && this.textures.get(tex.key).has('0') ? '0' : undefined).setOrigin(0.5, 1);
-      const height = i === 0 ? 96 : 96 * 0.85;
-      img.setScale(height / img.height);
-      if (i > 0) img.setTint(0x2a1a10).setAlpha(0.55);
-      img.setPosition(p.x - 34 - i * 28, p.y - 4);
-      this.world.add(img);
-      this.caravan.push(img);
-    });
-    // lider önde (en üstte çizilir)
-    this.caravan.slice().reverse().forEach((im) => this.world.bringToTop(im));
+    const t = new MapTraveller(this, this.world, lead.class, def.spriteId, def.color, p.x + TRAV_REST.x, p.y + TRAV_REST.y);
+    this.caravan.push(t);
+    this.world.bringToTop(t.root);
   }
 
   /**
@@ -1077,16 +1075,19 @@ export class CampaignMapScene extends Phaser.Scene {
       return this.P(to);
     };
     const place = () => {
-      this.caravan.forEach((im, i) => {
-        const d = state.d - i * FOLLOW_GAP;
-        const p = pointAt(d);
-        const ahead = pointAt(d + 4);
-        const bob = Math.abs(Math.sin((state.d / 26) * Math.PI + i * 0.8)) * 4;
-        im.setPosition(p.x, p.y - 4 - bob);
-        if (Math.abs(ahead.x - p.x) > 0.5) im.setFlipX(ahead.x < p.x);
-      });
       const lead = this.caravan[0];
-      if (lead) this.setMid({ x: lead.x, y: lead.y });
+      if (!lead) return;
+      const p = pointAt(state.d);
+      const ahead = pointAt(state.d + 4);
+      // kalkışta / varışta dinlenme yerinden (düğümün solu) yola yumuşakça süzülür
+      const u = Math.max(0, Math.min(1, Math.min(state.d, len - state.d) / 70));
+      const r = 1 - u * u * (3 - 2 * u);
+      const dx = ahead.x - p.x;
+      const face: 1 | -1 = r > 0.5 || Math.abs(dx) <= 0.5 ? lead.facing() : dx < 0 ? -1 : 1;
+      const x = p.x + TRAV_REST.x * r;
+      const y = p.y + TRAV_REST.y * r;
+      lead.place(x, y, r > 0.5 ? 1 : face, state.d > 0.5 && state.d < len - 0.5, state.d);
+      this.setMid({ x, y });
     };
     const tween = this.tweens.add({ targets: state, d: len, duration, ease: 'Sine.easeInOut', onUpdate: place, onComplete: () => finish() });
     // yürüyüş sesi: toprak yolda adımlar (sol/sağ dönüşümlü), arada araba gıcırtısı (data/audio-world.json > march)
@@ -1378,7 +1379,8 @@ export class CampaignMapScene extends Phaser.Scene {
       const lv = elText(this, w, 13, `Lv ${h.level}`, 14, EL.MUTED, { em: 0.08 }).setOrigin(1, 0.5);
       const bar = hpBar(this, tx, 31, w - tx, 6, h.hpRatio);
       const hpTxt = session.showHp && !fallen ? ` · ${Math.round(h.hpRatio * 100)}%` : '';
-      const meta = fallen ? (s.valor !== undefined ? 'Fallen · revive: town, Rest camp, Valor' : 'Fallen · revive: town, Rest camp') : `${def.role ?? ''}${hpTxt}`;
+      const wounds = heroWoundsLine(h);
+      const meta = fallen ? (s.valor !== undefined ? 'Fallen · revive: Valor' : 'Fallen') : `${def.role ?? ''}${hpTxt}${wounds ? ` · ${wounds}` : ''}`;
       const role = fitW(elBody(this, tx, 55, meta, 16, fallen ? '#d88a7e' : EL.MUTED, false).setOrigin(0, 0.5), w - tx);
       row.add([pic, face, frame, name, lv, bar, role]);
       if (fallen) row.add(graveMark(this, 36, 38, 44));
@@ -2485,7 +2487,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const n = node(this.map, id);
     if (!n.encounter) return;
     const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Rewards: ${pct}% of the first victory, no Valor. Retreating costs each hero up to ${Math.round(patrolRetreatMaxLoss() * 100)}% HP.` }, onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Rewards: ${pct}% of the first victory, no Valor. ${patrolRetreatNote()}` }, onGo: go });
   }
 
   /**
