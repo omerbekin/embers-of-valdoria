@@ -41,7 +41,7 @@
     const pips = max > 1 ? `<span class="pp">${(ST.phone || s.v === 8 || o.num) ? r + '/' + max : '●'.repeat(r) + '○'.repeat(max - r)}</span>` : '';
     const nmn = l50 ? (k === 'c' ? 'Tier II' : 'Major II') : row[k].n;
     const lb = (kc === 'm' || kc === 'v') && !o.nolb ? `<span class="lb">${esc(l50 ? nmn : kc === 'v' ? row[k].n : row[k].n)}</span>` : '';
-    const img = showIc ? `<img src="${row.ic}.webp" alt="" draggable="false">` : '';
+    const img = showIc ? `<img src="skill-mastery/${row.ic}.webp" alt="" draggable="false">` : '';
     return `<button type="button" class="nd k-${kc} st-${st}${l50 ? ' l50' : ''}${o.circ ? ' circ' : ''}${rq && r === 0 ? ' rq' : ''}${s.v === 7 && k === 'e' ? '' : ''}" data-key="${key}" aria-label="${esc(nmn)}" style="${o.style || ''}"><span class="dm">${img}</span>${pips}${lb}</button>`;
   }
   const cn = (on, dash) => `<i class="cn${on ? ' on' : ''}${dash ? ' d' : ''}"></i>`;
@@ -65,7 +65,7 @@
   }
   function label(s, i, o = {}) {
     const row = MC.rowsOf(s)[i];
-    return `<div class="rl${row.pas ? ' pas' : ''}${o.cls ? ' ' + o.cls : ''}"><span class="med"><img src="${row.ic}.webp" alt=""></span><span class="rt"><b>${esc(row.name)}</b><i>${row.pas ? 'Passive' : 'Skill'} · <u>${rowSpent(s, i)}</u> pts</i></span></div>`;
+    return `<div class="rl${row.pas ? ' pas' : ''}${o.cls ? ' ' + o.cls : ''}"><span class="med"><img src="skill-mastery/${row.ic}.webp" alt=""></span><span class="rt"><b>${esc(row.name)}</b><i>${row.pas ? 'Passive' : 'Skill'} · <u>${rowSpent(s, i)}</u> pts</i></span></div>`;
   }
   /* ---- bar ---- */
   function uniqMarks(s) {
@@ -142,7 +142,7 @@
     let cards = '';
     for (let i = 0; i < 5; i++) {
       const row = MC.rowsOf(s)[i], op = ST.open === i;
-      cards += `<div class="card${op ? ' open' : ''}${row.pas ? ' pas' : ''}"><button type="button" class="ch" data-card="${i}"><span class="med"><img src="${row.ic}.webp" alt=""></span><span class="rt"><b>${esc(row.name)}</b><i>${row.pas ? 'Passive' : 'Skill'}</i></span><span class="cp"><u>${rowSpent(s, i)}</u> pts</span><span class="chev">${op ? '▴' : '▾'}</span></button>${op ? `<div class="cs"><div class="rn">${chain(s, i, { num: true })}</div></div>` : ''}</div>`;
+      cards += `<div class="card${op ? ' open' : ''}${row.pas ? ' pas' : ''}"><button type="button" class="ch" data-card="${i}"><span class="med"><img src="skill-mastery/${row.ic}.webp" alt=""></span><span class="rt"><b>${esc(row.name)}</b><i>${row.pas ? 'Passive' : 'Skill'}</i></span><span class="cp"><u>${rowSpent(s, i)}</u> pts</span><span class="chev">${op ? '▴' : '▾'}</span></button>${op ? `<div class="cs"><div class="rn">${chain(s, i, { num: true })}</div></div>` : ''}</div>`;
     }
     return `<div class="ph-top">${ring}<div class="ph-bn"><div class="bnm">${C[s.c].mastery}</div>${bonusList(s)}</div></div><div class="cards">${cards}</div>`;
   }
@@ -161,12 +161,12 @@
     let nodes = '';
     // pasif: merkez cevresi
     const row0 = MC.rowsOf(s)[0];
-    nodes += `<div class="wc" style="left:${cx}px;top:${cy}px"><img src="${row0.ic}.webp" alt=""><u>${rowSpent(s, 0)}</u></div>`;
+    nodes += `<div class="wc" style="left:${cx}px;top:${cy}px"><img src="skill-mastery/${row0.ic}.webp" alt=""><u>${rowSpent(s, 0)}</u></div>`;
     keys.forEach((k, q) => { const a = -Math.PI / 2 + q * 2 * Math.PI / keys.length; const [x, y] = pos(a, rp); nodes += node(s, 0, k, { style: `left:${x}px;top:${y}px`, num: true, nolb: true }); });
     const dirs = [[1, -Math.PI / 2], [2, 0], [3, Math.PI / 2], [4, Math.PI]];
     dirs.forEach(([i, ang]) => {
       const row = MC.rowsOf(s)[i]; const [lx, ly] = pos(ang, labR);
-      nodes += `<div class="wl" style="left:${lx}px;top:${ly}px" title="${esc(row.name)}"><img src="${row.ic}.webp" alt=""><u>${rowSpent(s, i)}</u><b>${esc(row.name)}</b></div>`;
+      nodes += `<div class="wl" style="left:${lx}px;top:${ly}px" title="${esc(row.name)}"><img src="skill-mastery/${row.ic}.webp" alt=""><u>${rowSpent(s, i)}</u><b>${esc(row.name)}</b></div>`;
       let prev = pos(ang, labR + 22);
       keys.forEach((k, q) => {
         const [x, y] = pos(ang, r0 + q * step); const on = MC.rk(s, i, k) > 0;
@@ -183,12 +183,12 @@
     document.documentElement.dataset.v = ST.v;
     $('#st-tabs').innerHTML = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map((v) => `<button type="button" data-v="${v}" class="${ST.v === v ? 'on' : ''}"><b>${v}</b>${MC.VAR[v].name}</button>`).join('');
     $('#st-info').innerHTML = `<h2>${ST.v} · ${INFO[ST.v][0]}</h2><p><b>Fark:</b> ${INFO[ST.v][1]}</p>`;
-    $('#cls-sel').innerHTML = ['w', 'h'].map((c) => `<button type="button" data-cls="${c}" class="${ST.c === c ? 'on' : ''}"><img src="${C[c].av}.webp" alt="">${C[c].name}</button>`).join('');
+    $('#cls-sel').innerHTML = ['w', 'h'].map((c) => `<button type="button" data-cls="${c}" class="${ST.c === c ? 'on' : ''}"><img src="skill-mastery/${C[c].av}.webp" alt="">${C[c].name}</button>`).join('');
     const body = { 1: layClassic, 2: layClassic, 3: layClassic, 4: laySpine, 5: layClassic, 6: layClassic, 7: layTier, 8: layPhone, 9: layMedal, 10: layWheel }[ST.v](s);
-    $('#sheet').innerHTML = `<div class="sh-top"><img src="${C[s.c].av}.webp" alt=""><div class="nm">${C[s.c].name}<small>Level ${s.l50 ? 50 : 30} · ${MC.pool(s)} points</small></div>
+    $('#sheet').innerHTML = `<div class="sh-top"><img src="skill-mastery/${C[s.c].av}.webp" alt=""><div class="nm">${C[s.c].name}<small>Level ${s.l50 ? 50 : 30} · ${MC.pool(s)} points</small></div>
       <div class="sp"><span class="sf">Spent <b id="spv">${MC.spent(s)}</b></span><span class="sf">Free <b class="fr${MC.free(s) === 0 ? ' z' : ''}">${MC.free(s)}</b></span>
       <button class="rs${s.l50 ? ' on' : ''}" type="button" data-l50="1" title="Level 50: 49 points, Tier II area (design TBD)">L50</button>
-      <button class="rs" type="button" data-reset="1" title="Reset: refund every point"><img src="gold.webp" alt="">Reset</button></div></div>
+      <button class="rs" type="button" data-reset="1" title="Reset: refund every point"><img src="skill-mastery/gold.webp" alt="">Reset</button></div></div>
       <div class="sh-body v${ST.v}">${body}</div>
       <div class="hintln">Click a node to spend 1 point, click again to refund (fillers: +1 per click, at full rank click removes one; right-click removes one). Hover (touch: tap once) for the tip.</div>`;
     const t = document.querySelector('.tree'); if (t) { if (sx != null) { t.scrollLeft = sx; t.scrollTop = sy; } else if (firstWheel) { t.scrollLeft = (t.scrollWidth - t.clientWidth) / 2; t.scrollTop = (t.scrollHeight - t.clientHeight) / 2; } }
@@ -214,7 +214,7 @@
     if (k === 'v') lines.push(`<div class="ln"><span class="dia"></span><span class="tx"><span class="k">Evolves in place:</span> ${esc(row.name)} becomes ${esc(row.v.n)}.</span></div>`);
     lines.push(`<div class="ln"><span class="dia"></span><span class="tx"><span class="k">Opens:</span> ${esc(MC.openText(s, key))}</span></div>`);
     const foot = fail ? `<div class="tp-foot bad"><span class="dia"></span><span class="tx">${esc(fail)}</span></div>` : rq && r === 0 ? `<div class="tp-foot"><span class="dia"></span><span class="tx">Locked: ${esc(rq)}</span></div>` : `<div class="tp-foot ok"><span class="dia"></span><span class="tx">${r > 0 ? 'Click to refund a point' : 'Click to spend 1 point'}</span></div>`;
-    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="background-image:url(${row.ic}.webp)"></div><div class="tp-ht"><div class="tp-kind">${esc(kindLine)}</div><div class="tp-title">${esc(nmn)}</div></div><div class="tp-aside"><div class="big">1<small>${max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div>
+    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="background-image:url(skill-mastery/${row.ic}.webp)"></div><div class="tp-ht"><div class="tp-kind">${esc(kindLine)}</div><div class="tp-title">${esc(nmn)}</div></div><div class="tp-aside"><div class="big">1<small>${max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div>
       <div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}</div>`;
   }
   function showTip(el) {
