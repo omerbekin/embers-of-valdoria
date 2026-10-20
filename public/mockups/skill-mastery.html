@@ -1,0 +1,29 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Mastery Bar skill tree (mockup)</title>
+<!-- MASTERY BAR taslagi (ui-dev, 2026-10-20). Oyun kodu DEGIL. Brief: docs/design/skill-tree-mastery.md.
+  Adres: #v=1..10 (varyant) &c=w|h (sinif) &l50 (L50 anahtari acik) &phone (844 genislik) &clean (serit gizli). -->
+<link rel="stylesheet" href="skill-mastery/mastery.css" />
+</head>
+<body>
+<div class="page">
+  <div class="top">
+    <h1>Mastery Bar <small>10 varyant · tıklanabilir · 29 puan (L50: 49) · düğümün üstüne gelin (dokunmada ilk dokunuş ipucu, ikinci dokunuş harcar)</small></h1>
+    <div class="st-tabs" id="st-tabs"></div>
+    <div class="st-info" id="st-info"></div>
+    <div class="cls-sel" id="cls-sel"></div>
+  </div>
+  <div class="sheet" id="sheet"></div>
+</div>
+<div id="tip"></div>
+<div id="toast"></div>
+<div id="mk-strip"><b>MOCKUP</b> oyun değil · <button id="mk-phone">Phone width</button></div>
+<script src="skill-mastery/core.js"></script>
+<script src="skill-mastery/app.js"></script>
+</body>
+</html>
