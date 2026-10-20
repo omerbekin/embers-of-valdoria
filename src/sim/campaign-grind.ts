@@ -8,10 +8,18 @@
 // - O düğüm için `wallCap` kasma savaşından sonra hâlâ geçemezse DUVAR: koşu orada biter (onWall 'force' = zorla geçilir, ölçüm sürer).
 //   Kasma yeri hiç yoksa (ör. Ashford sonrası ilk savaş, tutorial) kasma yerine düz tekrar; 1 + retries + wallCap denemede geçemezse duvar (farmsız).
 // - Stat puanı: iyi oyuncu ana stata (autoAllocateAll, Medium YZ), ortalama oyuncu dört stata eşit (Easy YZ). İkisi de "Equip best".
+// - Valor: iyi oyuncu Medium YZ'nin değer tartan Valor kuralıyla, ortalama oyuncu sim'e özel geç kuralla (lateValorChoice: dost düşünce bir oyuncu turu
+//   gecikmeyle, bedel yetiyorsa diriltir; Ömer 2026-10-20). İkisi de zaferden sonra savaş dışı ceset diriltmeyi (autoValorRevive) kullanır.
 // - Can: savaştan önce yaşayanların ort. canı `healAt`'in altındaysa ya da yaşayan yaralı kahraman varsa ve altın yetiyorsa temizlenmiş bir kasabada ücretli dinlenir (yolculuk bedelsiz).
 // - Demirci: her yola çıkışta (temizlenmiş kasaba varsa) parası yettikçe takımın en değerli silahını Temper eder; bir dinlenme parası ayrılır.
+// - Tüccar (--merchant, varsayılan sell; Ömer 2026-10-20): tüccar adımında / tüccarlı kasabada, parası (sıradaki Temper + bir ücretli dinlenme) payından fazlaysa
+//   takılı item'dan IP olarak daha iyi bir mal alır ('sell' = önce torbadaki item'leri satar).
+// - Seçenek bayrakları (--repeat, --valor-revive, --rest-price): YALNIZCA bu sim sürecinde bellekteki veriyi geçici değiştirir (simOverrides; koşu
+//   bitince eski değerler geri konur), veri dosyası ve oyun kodu değişmez.
 import { valorInBattle, valorOutside, type ValorSimMode } from './valor-mode';
 import { type AiDifficulty } from '../engine';
+import { valorRules } from '../engine/content';
+import { valorEarned } from '../engine/valor';
 import {
   CONFIG,
   activeHeroes,
@@ -19,6 +27,9 @@ import {
   autoAllocateAll,
   autoResolve,
   autoValorRevive,
+  buyWare,
+  openCampaignShop,
+  sellToMerchant,
   battlePlan,
   battleXp,
   canReplay,
@@ -50,8 +61,9 @@ import {
   type CampaignState,
   type Difficulty,
 } from '../campaign';
-import { instanceIlvl, itemValue, SLOT_IDS } from '../progression/items';
-import { ATTRS, allocate, canAddPoint } from '../progression/levels';
+import { BAG_SIZE, canEquip, classUsesOffhand, fitsSlot, instanceIlvl, instanceIP, instanceRarity, instanceRoll, itemDef, itemValue, ITEMS, RARITY_IDS, SLOT_IDS, type RarityId } from '../progression/items';
+import { woundCount } from '../progression/wounds';
+import { ATTRS, LEVELS, addXp, allocate, campaignMaxLevel, canAddPoint, xpToNext } from '../progression/levels';
 import { allRoutes, fightPlan, routeLabel, simTownRest } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
 
@@ -79,6 +91,138 @@ export interface GrindSimOptions {
   /** Ücretli kasaba dinlenmesi eşiği (yaşayanların ort. can oranı; 0 = hiç dinlenmez). Varsayılan 0,5. */
   healAt?: number;
   valor?: ValorSimMode;
+  /** Tekrar (devriye) loot kesintisi (items.json > loot.repeat), yalnızca simde: today = veri aynen (varsayılan), soft / nocap / off (repeatPreset). */
+  repeat?: RepeatMode;
+  /** Tüccardan alışveriş (varsayılan 'sell' (Ömer 2026-10-20); 'off' = eski ölçümle birebir): 'on' = alır, 'sell' = önce torbayı satar sonra alır. */
+  merchant?: MerchantMode;
+  /** Valor diriltme bedeli [savaşta, savaş dışında] (valor.json > revive), yalnızca simde. */
+  valorRevive?: [number, number];
+  /** 1. bölümde ücretli kasaba dinlenmesinin fiyatı (campaign.json > rest.price), yalnızca simde. */
+  restPrice?: number;
+  /** Güç kaldıracı ölçümü (yalnızca sim; varsayılan 0 = bugünkü davranış). Bkz. GrindBonus. */
+  bonus?: Partial<GrindBonus>;
+}
+
+/**
+ * Güç kaldıracı (--bonus-level / --bonus-ilvl / --bonus-gold; Ömer 2026-10-20): hangi kaynağın kazanma oranını ne kadar değiştirdiği.
+ * level: bölük kurulunca (Ashford, newCompany adımı) kadrodaki herkes XP eşiklerini doldurarak N level atlar (stat / skill puanı oyun kuralıyla;
+ *   proxy normal dağıtır, level atlayan tam iyileşir), sonra XP eğrisi normal işler (sonradan katılan joinLevel'la ortalamadan gelir).
+ * ilvl: her savaş kurulumunda (yeni düğüm ve kasma) takılı her item'in seviyesi +N (geçici kopya; kayıttaki item, demirci tavanı, tüccar
+ *   ve seviye şartı değişmez; bölüm tavanını aşabilir).
+ * gold: bölük kurulunca bir kez +N altın (proxy demirci / tüccar / dinlenme kurallarıyla harcar).
+ */
+export interface GrindBonus {
+  level: number;
+  ilvl: number;
+  gold: number;
+}
+export const NO_BONUS: GrindBonus = { level: 0, ilvl: 0, gold: 0 };
+export const bonusOf = (b?: Partial<GrindBonus>): GrindBonus => ({ ...NO_BONUS, ...(b ?? {}) });
+
+/** Takılı item'leri +n ilvl ile kopyalanmış durum (yalnızca savaş kurulumu için; n <= 0 ise aynen). */
+export function withIlvlBonus(s: CampaignState, n: number): CampaignState {
+  if (!(n > 0)) return s;
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  for (const h of t.roster)
+    for (const k of SLOT_IDS) {
+      const it = h.equipment?.[k];
+      if (it && itemDef(it.id)) h.equipment![k] = { ...it, rolls: { ...instanceRoll(it), ilvl: instanceIlvl(it) + n } };
+    }
+  return t;
+}
+
+/** Kadrodaki herkese n level (XP eşiği doldurularak, oyunun addXp kuralı; level atlayan ayaktaysa tam iyileşir). */
+export function withLevelBonus(s: CampaignState, n: number): CampaignState {
+  if (!(n > 0)) return s;
+  const t = JSON.parse(JSON.stringify(s)) as CampaignState;
+  for (const h of t.roster) {
+    for (let k = 0; k < n; k++) if (!addXp(h, Math.max(1, xpToNext(h.level ?? 1) - (h.xp ?? 0)), LEVELS, campaignMaxLevel())) break;
+    if (!isFallen(h)) h.hpRatio = 1;
+  }
+  return t;
+}
+
+export type RepeatMode = 'today' | 'soft' | 'nocap' | 'off';
+export type MerchantMode = 'off' | 'on' | 'sell';
+type RepeatRow = { items: number; gold: number; maxRarity: RarityId };
+
+/** --repeat seçenekleri: bugünkü tablodan türetilir (today = aynen; soft = 1 / 0,8 / 0,65 / 0,5 tavan aynen; nocap = oran aynen tavan yok; off = hepsi 1). */
+export function repeatPreset(mode: RepeatMode, today: readonly RepeatRow[] = ITEMS.loot.repeat): RepeatRow[] {
+  const soft = [1, 0.8, 0.65, 0.5];
+  switch (mode) {
+    case 'soft':
+      return today.map((r, i) => ({ ...r, items: soft[Math.min(i, soft.length - 1)]!, gold: soft[Math.min(i, soft.length - 1)]! }));
+    case 'nocap':
+      return today.map((r) => ({ ...r, maxRarity: 'legendary' as RarityId }));
+    case 'off':
+      return today.map(() => ({ items: 1, gold: 1, maxRarity: 'legendary' as RarityId }));
+    default:
+      return today.map((r) => ({ ...r }));
+  }
+}
+
+/**
+ * Seçenek bayraklarını bellekteki veriye uygular (yalnızca bu süreç; dosya yazılmaz) ve geri alma fonksiyonu döner. Oyun kodu bu değerleri her
+ * çağrıda okur (rollLoot > ITEMS.loot.repeat, townRestPrice > CONFIG.rest.price, Battle / YZ > valorRules.revive), koşu boyunca geçerli olur.
+ */
+export function simOverrides(o: Pick<GrindSimOptions, 'repeat' | 'valorRevive' | 'restPrice'>): () => void {
+  const undo: Array<() => void> = [];
+  if (o.repeat && o.repeat !== 'today') {
+    const old = ITEMS.loot.repeat;
+    ITEMS.loot.repeat = repeatPreset(o.repeat, old);
+    undo.push(() => (ITEMS.loot.repeat = old));
+  }
+  if (o.valorRevive) {
+    const old = { ...valorRules.revive };
+    valorRules.revive.battleCost = o.valorRevive[0];
+    valorRules.revive.outsideCost = o.valorRevive[1];
+    undo.push(() => Object.assign(valorRules.revive, old));
+  }
+  if (o.restPrice !== undefined) {
+    const p = CONFIG.rest.price as { base: number; perChapter: number };
+    const old = { ...p };
+    p.base = o.restPrice - p.perChapter; // 1. bölüm: base + perChapter x 1 = restPrice
+    undo.push(() => Object.assign(p, old));
+  }
+  return () => undo.reverse().forEach((f) => f());
+}
+
+/** Ekonomi ve ölüm / Valor sayaçları (tüm koşuların toplamı; paralel parçalar toplanır). */
+export interface GrindEcon {
+  /** Altının kaynağı: ilk zafer normal / elit / boss, tekrar (devriye) zaferi, hazine sandığı, item satışı. */
+  goldBattle: number;
+  goldElite: number;
+  goldBoss: number;
+  goldReplay: number;
+  goldTreasure: number;
+  goldSell: number;
+  /** Tüccarda harcanan. */
+  goldMerchant: number;
+  /** Düşen item: ilk zafer, tekrar zaferi, hazine; torba dolu olduğu için kaybolan (bunlara dahil). */
+  itemsFirst: number;
+  itemsReplay: number;
+  itemsTreasure: number;
+  itemsLost: number;
+  /** Düşen item'lerin nadirlik dağılımı (kaybolanlar dahil). */
+  rarity: Record<string, number>;
+  /** Düşen item'lerden koşu içinde en az bir kez takılan. */
+  itemsEquipped: number;
+  itemsSold: number;
+  itemsBought: number;
+  /** Alınan item'lerden takılan. */
+  boughtEquipped: number;
+  merchantVisits: number;
+  /** Kazanılan savaş sonunda düşmüş kalıp yaralı kalkan (+1 yara) ve 3 yarayla ceset olan kahraman. */
+  wounds: number;
+  corpses: number;
+  /** Valor: savaş kazancı (tavan sonrası), tavana vurup boşa giden, Valdren hediyesi; savaşta / savaş dışında harcanan ve diriltme sayısı. */
+  valorEarned: number;
+  valorWasted: number;
+  valorGift: number;
+  valorSpentBattle: number;
+  valorSpentOut: number;
+  revivesBattle: number;
+  revivesOut: number;
 }
 
 /** Toplanabilir düğüm sayaçları (paralel parçalar birleştirilir). */
@@ -112,6 +256,14 @@ export interface GrindNodeAgg {
   /** Bu düğüm kasma yeri olarak: savaş / zafer. */
   farmBattles: number;
   farmWins: number;
+  /** İlk varışta: takılı item başına ort. IP, kahraman başına toplam IP, kahraman başına yara, takımdaki ceset. */
+  ipSum: number;
+  ipHeroSum: number;
+  woundInSum: number;
+  corpseInSum: number;
+  /** Bu düğümün kazanılan savaşlarında alınan yara / ceset. */
+  woundsTaken: number;
+  corpses: number;
 }
 
 export interface GrindGroupAgg {
@@ -137,12 +289,20 @@ export interface GrindSimResult {
   preGrindBattles: number;
   defeats: number;
   goldEarned: number;
+  /** --bonus-gold ile verilen altın (goldEarned'e dahil DEĞİL; harcamalar ve kesedeki altın bunu da içerir). */
+  goldBonus: number;
   goldSmith: number;
   goldRest: number;
   tempers: number;
   rests: number;
   /** Koşu sonunda takımın ort. level'ı toplamı. */
   levelEnd: number;
+  /** Seçenekler (metin; parçalar birleşince ilkinden). */
+  repeat: RepeatMode;
+  merchant: MerchantMode;
+  /** Güç kaldıracı (parçalar birleşince ilkinden; toplanmaz). */
+  bonus: GrindBonus;
+  econ: GrindEcon;
   nodes: Record<string, GrindNodeAgg>;
   routes: Record<string, GrindGroupAgg>;
   classes: Record<string, GrindGroupAgg>;
@@ -151,6 +311,12 @@ export interface GrindSimResult {
 const emptyNode = (): GrindNodeAgg => ({
   reached: 0, firstWins: 0, cleared: 0, attemptsSum: 0, grindSum: 0, grindRuns: 0, grindWall: 0, walls: 0, noFarmWalls: 0, battles: 0, wins: 0, hpEndSum: 0,
   deathsOnWin: 0, hpStartSum: 0, turnsSum: 0, turnHist: {}, lvSum: 0, ilvlSum: 0, gearSum: 0, farmBattles: 0, farmWins: 0,
+  ipSum: 0, ipHeroSum: 0, woundInSum: 0, corpseInSum: 0, woundsTaken: 0, corpses: 0,
+});
+const emptyEcon = (): GrindEcon => ({
+  goldBattle: 0, goldElite: 0, goldBoss: 0, goldReplay: 0, goldTreasure: 0, goldSell: 0, goldMerchant: 0, itemsFirst: 0, itemsReplay: 0, itemsTreasure: 0,
+  itemsLost: 0, rarity: Object.fromEntries(RARITY_IDS.map((r) => [r, 0])), itemsEquipped: 0, itemsSold: 0, itemsBought: 0, boughtEquipped: 0, merchantVisits: 0,
+  wounds: 0, corpses: 0, valorEarned: 0, valorWasted: 0, valorGift: 0, valorSpentBattle: 0, valorSpentOut: 0, revivesBattle: 0, revivesOut: 0,
 });
 const emptyGroup = (): GrindGroupAgg => ({ runs: 0, completed: 0, walls: 0, grind: 0, battles: 0 });
 const mean = (xs: number[]): number => (xs.length ? xs.reduce((a, b) => a + b, 0) / xs.length : 0);
@@ -206,7 +372,36 @@ const clearedTowns = (s: CampaignState): string[] => {
   return clearedNodes(s).filter((id) => node(map, id).type === 'town');
 };
 
+/** Ücretli bir kasaba dinlenmesinin fiyatı (tüccar payı; ilk bedava dinlenme sayılmaz). */
+const paidRestPrice = (s: CampaignState): number => townRestPrice({ mapId: s.mapId, townRests: { _: 1 } }, '_');
+
+/** Takımın (yaşayan) bir kahramanına göre malın IP kazancı: uygun yuvadaki takılı item'den IP farkı (boş yuva = 0); en iyi kahraman. */
+function wareGain(s: CampaignState, w: { itemId: string; rolls?: unknown }): number {
+  const d = itemDef(w.itemId);
+  if (!d) return 0;
+  const ip = instanceIP({ id: w.itemId, rolls: w.rolls });
+  let best = 0;
+  for (const h of activeHeroes(s)) {
+    if (isFallen(h) || !canEquip(h.class, d)) continue;
+    for (const k of SLOT_IDS) {
+      if (!fitsSlot(d, k) || (k === 'offhand' && !classUsesOffhand(h.class))) continue;
+      const cur = h.equipment?.[k];
+      best = Math.max(best, ip - (cur ? instanceIP(cur) : 0));
+    }
+  }
+  return best;
+}
+
 export function simulateGrind(o: GrindSimOptions): GrindSimResult {
+  const restore = simOverrides(o);
+  try {
+    return simulateGrindRuns(o);
+  } finally {
+    restore();
+  }
+}
+
+function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
   const map = getMap(CONFIG.maps[0]!);
   const routes = allRoutes(map);
   const wallCap = o.wallCap ?? CAMPAIGN_TARGETS.wallCap[o.difficulty];
@@ -216,10 +411,96 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
   const ai = PLAYER_AI[o.player];
   const res: GrindSimResult = {
     difficulty: o.difficulty, player: o.player, preGrind: o.preGrind ?? 0, wallCap, runs: 0, completed: 0, walls: 0, battles: 0, grindBattles: 0,
-    preGrindBattles: 0, defeats: 0, goldEarned: 0, goldSmith: 0, goldRest: 0, tempers: 0, rests: 0, levelEnd: 0, nodes: {}, routes: {}, classes: {},
+    preGrindBattles: 0, defeats: 0, goldEarned: 0, goldBonus: 0, goldSmith: 0, goldRest: 0, tempers: 0, rests: 0, levelEnd: 0,
+    repeat: o.repeat ?? 'today', merchant: o.merchant ?? 'sell', bonus: bonusOf(o.bonus), econ: emptyEcon(), nodes: {}, routes: {}, classes: {},
   };
+  const E = res.econ;
+  const bonus = res.bonus;
   const nodeAgg = (id: string) => (res.nodes[id] ??= emptyNode());
-  const prepare = (s: CampaignState) => equipBest(o.player === 'good' ? autoAllocateAll(s) : equalAllocateAll(s));
+  // Koşu içi item izleme (her koşuda sıfırlanır): düşen / alınan item uid'leri ve takılmış olanlar
+  let dropped = new Set<string>();
+  let bought = new Set<string>();
+  let worn = new Set<string>();
+  const track = (t: CampaignState): CampaignState => {
+    for (const h of t.roster)
+      for (const k of SLOT_IDS) {
+        const uid = h.equipment?.[k]?.uid;
+        if (uid && !worn.has(uid) && (dropped.has(uid) || bought.has(uid))) {
+          worn.add(uid);
+          if (dropped.has(uid)) E.itemsEquipped++;
+          else E.boughtEquipped++;
+        }
+      }
+    return t;
+  };
+  const prepare = (s: CampaignState) => track(equipBest(o.player === 'good' ? autoAllocateAll(s) : equalAllocateAll(s)));
+  /** Bir loot işleminin (zafer / sandık) düşürdüğü item'ler ve altın: kaynak sayaçlarına. */
+  const countLoot = (before: CampaignState, after: CampaignState, src: 'first' | 'replay' | 'treasure', gold: 'goldBattle' | 'goldElite' | 'goldBoss' | 'goldReplay' | 'goldTreasure') => {
+    E[gold] += after.gold - before.gold;
+    let n = 0;
+    for (const inst of after.inventory) {
+      const k = Number(inst.uid.slice(1));
+      if (inst.uid.startsWith('i') && k >= before.nextItemId && k < after.nextItemId) {
+        dropped.add(inst.uid);
+        E.rarity[instanceRarity(inst)] = (E.rarity[instanceRarity(inst)] ?? 0) + 1;
+        n++;
+      }
+    }
+    const pl = after.pendingLoot;
+    const prevLeft = pl && before.pendingLoot?.node === pl.node ? (before.pendingLoot.left?.length ?? 0) : 0;
+    (pl?.left ?? []).slice(prevLeft).forEach((id, i) => {
+      const r = instanceRarity({ id, rolls: pl!.leftRolls?.[prevLeft + i] });
+      E.rarity[r] = (E.rarity[r] ?? 0) + 1;
+      E.itemsLost++;
+      n++;
+    });
+    if (src === 'first') E.itemsFirst += n;
+    else if (src === 'replay') E.itemsReplay += n;
+    else E.itemsTreasure += n;
+  };
+  /** Zafer uygulanır + sayaçlar (loot, Valor, yara); `a` = yeni düğümün kendi zaferi ise o düğümün sayaçları. */
+  const win = (t: CampaignState, out: Parameters<typeof applyBattle>[1], a?: GrindNodeAgg): CampaignState => {
+    const patrol = t.patrol === t.at;
+    const type = node(map, t.at).type;
+    const after = applyBattle(t, out);
+    countLoot(t, after, patrol ? 'replay' : 'first', patrol ? 'goldReplay' : type === 'boss' ? 'goldBoss' : type === 'elite' ? 'goldElite' : 'goldBattle');
+    // Valor (applyBattle ile aynı hesap): savaşta harcanan, kazanılan, tavana vurup boşa giden
+    if (t.valor !== undefined && after.valor !== undefined) {
+      const start = out.valorLeft ?? t.valor;
+      E.valorSpentBattle += Math.max(0, t.valor - start);
+      const flawless = out.flawless ?? out.units.every((u) => u.alive && u.hpRatio > 0);
+      const raw = patrol ? 0 : valorEarned(valorRules, type === 'boss' ? 'boss' : type === 'elite' ? 'elite' : 'normal', flawless);
+      E.valorEarned += after.valor - start;
+      E.valorWasted += Math.max(0, raw - (after.valor - start));
+    }
+    E.revivesBattle += Object.values(out.valorRevived ?? {}).reduce((x, y) => x + y, 0);
+    // Savaş sonunda düşmüş: ayakta girdiyse yaralı kalkar (+1 yara) ya da lethal yarayla ceset olur (girerken ceset olan sayılmaz)
+    for (const u of out.units) {
+      if (u.alive && u.hpRatio > 0) continue;
+      const b = t.roster.find((h) => h.id === u.heroId);
+      const h = after.roster.find((x) => x.id === u.heroId);
+      if (!b || !h || isFallen(b)) continue;
+      const corpse = isFallen(h);
+      if (corpse) E.corpses++;
+      else E.wounds++;
+      if (a) corpse ? a.corpses++ : a.woundsTaken++;
+    }
+    return after;
+  };
+  /** Savaş dışı Valor diriltmesi (sayaçlı). */
+  const reviveOut = (t: CampaignState): CampaignState => {
+    if (!valorOutside(o.valor)) return t;
+    const after = autoValorRevive(t);
+    if (t.valor !== undefined && after.valor !== undefined) E.valorSpentOut += t.valor - after.valor;
+    E.revivesOut += after.roster.filter((h) => !isFallen(h) && t.roster.some((b) => b.id === h.id && isFallen(b))).length;
+    return after;
+  };
+  /** Valdren hediyesi gibi savaş dışı Valor açılışı. */
+  const gift = (t: CampaignState, after: CampaignState): CampaignState => {
+    if (t.valor === undefined && after.valor !== undefined) E.valorGift += after.valor;
+    return after;
+  };
+  const merchantMode = o.merchant ?? 'sell';
 
   for (let i = 0; i < o.runs; i++) {
     const seed = (o.firstSeed ?? 1) + i;
@@ -239,7 +520,11 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
     let runGrind = 0;
     let runBattles = 0;
     let spent = 0;
+    let runBonusGold = 0;
     const company = new Set<string>();
+    dropped = new Set();
+    bought = new Set();
+    worn = new Set();
 
     const heal = (t: CampaignState): CampaignState => {
       const r = simTownRest(t, healAt);
@@ -273,6 +558,46 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
       }
       return t;
     };
+    /**
+     * Tüccar (--merchant; tüccar adımında ya da tüccarlı kasabanın kasaba adımında, ilk varışta). VARSAYIM (open-questions): pay = sıradaki
+     * Temper (en değerli silah) + bir ücretli dinlenme; bu payın üstündeki parayla IP kazancı en yüksek mal alınır, sonra Equip best.
+     */
+    const shop = (t: CampaignState): CampaignState => {
+      if (merchantMode === 'off') return t;
+      t = openCampaignShop(t);
+      E.merchantVisits++;
+      if (merchantMode === 'sell')
+        for (const inst of [...t.inventory]) {
+          const g = t.gold;
+          t = sellToMerchant(t, inst.uid);
+          E.goldSell += t.gold - g;
+          E.itemsSold++;
+        }
+      for (let guard = 0; guard < 20; guard++) {
+        const top = activeHeroes(t)
+          .map((h) => h.equipment?.weapon)
+          .filter((w): w is NonNullable<typeof w> => !!w)
+          .sort((a, b) => itemValue(b) - itemValue(a))[0];
+        const tp = top ? temperPreview(t, top.uid) : null;
+        const reserve = (tp && !tp.blocked && tp.after ? tp.price : 0) + paidRestPrice(t);
+        if (t.inventory.length >= BAG_SIZE) break;
+        const wares = t.shop!.wares;
+        const pickIdx = wares
+          .map((w, i) => ({ i, w, g: w.sold ? 0 : wareGain(t, w) }))
+          .filter((x) => x.g > 0 && t.gold - x.w.price >= reserve)
+          .sort((x, y) => y.g - x.g)[0]?.i;
+        if (pickIdx === undefined) break;
+        const price = wares[pickIdx]!.price;
+        const uid = `i${t.nextItemId}`;
+        t = buyWare(t, pickIdx);
+        bought.add(uid);
+        E.itemsBought++;
+        E.goldMerchant += price;
+        spent += price;
+        t = track(equipBest(t));
+      }
+      return t;
+    };
     const hist = (a: GrindNodeAgg, turns: number) => (a.turnHist[turns] = (a.turnHist[turns] ?? 0) + 1);
     /** Bir kasma savaşı (yola çıkılabilir durumda): kazanırsa durum ilerler, kaybederse son kayda dönülür (durum aynen). */
     const grindOnce = (forNode: string | null): boolean => {
@@ -282,8 +607,8 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
       let t = s.at === f ? s : moveTo(s, f);
       t = startPatrol(t);
       const rec = farmRec.get(f) ?? { w: 0, n: 0 };
-      const plan = battlePlan(t, rec.n - rec.w); // kaybedilen devriye yeniden oynanınca seed değişsin
-      const battle = fightPlan(plan, ai, valorInBattle(o.valor));
+      const plan = battlePlan(withIlvlBonus(t, bonus.ilvl), rec.n - rec.w); // kaybedilen devriye yeniden oynanınca seed değişsin
+      const battle = fightPlan(plan, ai, valorInBattle(o.valor), o.player === 'average');
       const fa = nodeAgg(f);
       fa.farmBattles++;
       hist(fa, battle.turnsTaken);
@@ -298,8 +623,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
       if (battle.winner === 'party') {
         rec.w++;
         fa.farmWins++;
-        s = applyBattle(t, battleOutcomeOf(plan, battle, true));
-        if (valorOutside(o.valor)) s = autoValorRevive(s);
+        s = reviveOut(win(t, battleOutcomeOf(plan, battle, true)));
       } else res.defeats++;
       farmRec.set(f, rec);
       return true;
@@ -311,7 +635,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
       if (noFarm) a.noFarmWalls++;
       wall = true;
       if ((o.onWall ?? 'stop') === 'stop') stop = true;
-      else s = applyBattle(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
+      else s = win(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
     };
 
     for (let guard = 0; guard < 20000 && !stop; guard++) {
@@ -335,16 +659,31 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
           const picks = shuffle(CONFIG.companyPool, pick('company')).slice(0, step.size);
           picks.forEach((c) => company.add(c));
           s = formCompany(s, picks);
+          s = withLevelBonus(s, bonus.level);
+          if (bonus.gold > 0) {
+            s = { ...s, gold: s.gold + bonus.gold };
+            runBonusGold += bonus.gold;
+          }
           break;
         }
-        case 'treasure':
+        case 'treasure': {
+          const t = completeSimple(s, step.kind);
+          countLoot(s, t, 'treasure', 'goldTreasure');
+          s = t;
+          break;
+        }
+        case 'town':
+          if (node(map, s.at).merchant) s = shop(s);
+          s = gift(s, completeSimple(s, step.kind));
+          break;
         case 'event':
         case 'story':
-        case 'town':
-          s = completeSimple(s, step.kind);
+          s = gift(s, completeSimple(s, step.kind));
+          break;
+        case 'merchant':
+          s = autoResolve(shop(s), step);
           break;
         case 'rest':
-        case 'merchant':
           s = autoResolve(s, step);
           break;
         case 'battle': {
@@ -353,7 +692,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
           ctx.set(id, c);
           const a = nodeAgg(id);
           s = prepare(s);
-          const party = activeHeroes(s);
+          const party = activeHeroes(withIlvlBonus(s, bonus.ilvl)); // güç sütunları savaşa giren (bonuslu) item'lerle
           if (c.tries === 0) {
             a.reached++;
             a.hpStartSum += mean(party.map((h) => h.hpRatio));
@@ -361,9 +700,13 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
             const items = party.flatMap((h) => SLOT_IDS.map((k) => h.equipment?.[k]).filter((x): x is NonNullable<typeof x> => !!x));
             a.ilvlSum += mean(items.map((x) => instanceIlvl(x)));
             a.gearSum += items.length / Math.max(1, party.length);
+            a.ipSum += mean(items.map((x) => instanceIP(x)));
+            a.ipHeroSum += items.reduce((x, y) => x + instanceIP(y), 0) / Math.max(1, party.length);
+            a.woundInSum += mean(party.map((h) => woundCount(h)));
+            a.corpseInSum += party.filter((h) => isFallen(h)).length;
           }
-          const plan = battlePlan(s, c.tries);
-          const battle = fightPlan(plan, ai, valorInBattle(o.valor));
+          const plan = battlePlan(withIlvlBonus(s, bonus.ilvl), c.tries);
+          const battle = fightPlan(plan, ai, valorInBattle(o.valor), o.player === 'average');
           c.tries++;
           a.battles++;
           a.turnsSum += battle.turnsTaken;
@@ -380,8 +723,7 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
             const out = battleOutcomeOf(plan, battle, true);
             a.hpEndSum += mean(out.units.map((u) => (u.alive ? u.hpRatio : 0)));
             a.deathsOnWin += out.units.filter((u) => !u.alive).length;
-            s = applyBattle(s, out);
-            if (valorOutside(o.valor)) s = autoValorRevive(s);
+            s = reviveOut(win(s, out, a));
             break;
           }
           res.defeats++;
@@ -428,7 +770,8 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
     res.runs++;
     if (done) res.completed++;
     if (wall) res.walls++;
-    res.goldEarned += s.gold + spent;
+    res.goldEarned += s.gold + spent - runBonusGold;
+    res.goldBonus += runBonusGold;
     res.levelEnd += mean(activeHeroes(s).map((h) => h.level ?? 1));
     const groups = [(res.routes[label] ??= emptyGroup()), ...[...company].map((c) => (res.classes[c] ??= emptyGroup()))];
     for (const g of groups) {
@@ -457,5 +800,6 @@ export function mergeGrindResults(parts: GrindSimResult[]): GrindSimResult {
   for (const p of parts.slice(1)) deepAdd(out as unknown as Record<string, unknown>, p as unknown as Record<string, unknown>);
   out.wallCap = parts[0]!.wallCap;
   out.preGrind = parts[0]!.preGrind;
+  out.bonus = bonusOf(parts[0]!.bonus);
   return out;
 }

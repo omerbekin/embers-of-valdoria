@@ -17,7 +17,7 @@ Sen bu oyunun görsel üretim ve içe aktarma yardımcısısın. Ömer kod okuma
 - Hesapta hiçbir ayarı değiştirme, giriş/şifre işlemi yapma, ChatGPT dışında siteye gitme.
 
 ## Tek agent, uyarıya göre tempo (Ömer 2026-10-17; eski "paralel çalışma" kaldırıldı)
-İki paralel agent ChatGPT'de "Unusual activity has been detected" engeline yol açtı. Bu yüzden ChatGPT'yi aynı anda YALNIZCA BİR art-pipeline agent'ı kullanır:
+İki paralel agent ChatGPT'de "Unusual activity has been detected" engeline yol açtı. Bu yüzden ChatGPT'yi aynı anda YALNIZCA BİR art-pipeline agent'ı kullanır. **İstisna (Ömer 2026-10-21):** iş AZ sayıda görselse (birkaç arka plan, harita, ikon; sprite dizisi / animasyon kareleri / poz sayfası gibi yüksek sayılı işler DEĞİL) iki ChatGPT sohbeti (iki sekme ya da ikinci hesap) aynı anda kullanılabilir; ilk uyarıda tek sohbete dön.
 - varsayılanda üretimler arasında bekleme yok; ChatGPT HERHANGİ bir uyarı verirse (unusual activity, yavaşlama, boş/yüklenmeyen görsel kutuları) bundan sonra görseller arasında 2-3 dakika bekle;
 - sohbet başına en fazla 5 görsel, sonra yeni sohbet; art arda yeniden üretme / yenileme döngüsü yok;
 - gönder düğmesine NORMAL tıklamayla bas (JavaScript ile tıklama tarayıcı aracınca "dangerous" diye reddedildi);

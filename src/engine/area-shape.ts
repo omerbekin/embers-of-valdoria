@@ -7,7 +7,9 @@
 //  - x:      anchor + 4 ÇAPRAZ komşu (sıra±1 ve şerit±1 birlikte); tahta dışındakiler atlanır. `hitsAtCenter: 2` ile merkez iki kez vurulur.
 //  - rect:   `rows` sıra x `cols` şerit dikdörtgen; EKSEN EKSEN (ekran uzayında, Ömer kuralı): boyutu 3 ve üstü olan eksende fare hücresi alanın ORTASIdır
 //            (çift boyutta orta-sol); ortalanamıyorsa (tahta kenarı) o eksende SOLDAN referans (fare hücresi alanın başlangıcı), o da taşarsa kaydırılır.
-//            Boyutu 1-2 olan eksende eski kural: fare hücresi EKRANDAKİ sol-alt köşe (yatayda en sol, dikeyde en alt); dikdörtgen sağa ve yukarı uzanır.
+//            Boyutu 1-2 olan eksende: dikeyde fare hücresi EKRANDAKİ en alt (dikdörtgen yukarı uzanır); yatayda (derinlik) fare hücresi alanın ÖN
+//            ucu, dikdörtgen ARKAYA uzanır (anchor sırası + arkası), iki tahtada da (madde 376/8; düşman tahtasında = eski "en sol", oyuncu tahtasında
+//            ekranda en sağ). Böylece menzille ön dolu sıraya bağlanan anchor iki tarafta da aynı derinliği vurur.
 //            Tahta dışına taşarsa BOYUT KORUNARAK tahtaya KAYDIRILIR (clamp): her anchor için geçerli bir dikdörtgen vardır.
 //            Oyuncu ve düşman tarafı aynalı olduğundan ekranda "sol" iki tarafta farklı sıra yönüne denk gelir; bu yüzden hesap ekran ızgarasındadır.
 //            Geçerli boyutlar: rows 1..formation.rows (4), cols 1..formation.lanes (3) (1x1 .. 4x3). Tahtayı aşan / tam sayı olmayan boyut VERİ HATASIDIR
@@ -60,7 +62,9 @@ export function shapeCells(area: AreaDef, anchorSlot: number, board: Side, forma
       const a = screenCellOf(formation, board, anchorSlot);
       // Eksen eksen (ekran uzayında): boyut >= 3 ise fare hücresi ORTADA; ortalanamazsa soldan (düşük koordinat) referans; o da taşarsa kaydır.
       // Boyut < 3 ise sol-alt köşe kuralı (yatayda fare en solda, dikeyde en altta); taşarsa kaydır (boyut korunur).
-      const left = rectAxisStart(a.col, h, rows, 'low');
+      // Derinlik ekseni (ekranda yatay) boyut < 3: anchor sırası + ARKASINDAKİ sıra(lar), İKİ TAHTADA DA (madde 376/8). Düşman tahtasında arka = ekranda
+      // sağ (anchor en solda), oyuncu tahtasında arka = ekranda sol (anchor en sağda); ayna screenGrid'den okunur.
+      const left = rectAxisStart(a.col, h, rows, backIsLowCol(formation, board) ? 'high' : 'low');
       const top = rectAxisStart(a.row, v, lanes, 'high');
       return all.filter((i) => {
         const c = screenCellOf(formation, board, i);
@@ -68,6 +72,28 @@ export function shapeCells(area: AreaDef, anchorSlot: number, board: Side, forma
       });
     }
   }
+}
+
+/** Tahtanın arka sırası ekranda daha küçük sütunda mı (oyuncu tahtası: arka solda)? screenGrid yoksa hayır (sütun = sıra). */
+function backIsLowCol(formation: ShapeFormation, board: Side): boolean {
+  const front = screenCellOf(formation, board, 0).col;
+  const back = screenCellOf(formation, board, (formation.rows - 1) * formation.lanes).col;
+  return back < front;
+}
+
+/**
+ * Fare (imleç) hücresinden motorun anchor hücresi (Ömer 2026-10-21, madde 377: "çift sayılı olduğu için sol alt"). Kapsama iki tahtada aynıdır
+ * (anchor sırası + arkası); ama imleç hücresi ekranda alanın SOL-ALT köşesi kalmalı. Düşman tahtasında ikisi zaten aynı hücre. Oyuncu tahtasında
+ * (arka ekranda solda) derinliği 2 olan rect'te imleç alanın arka sırasıdır: anchor = imleçten (derinlik - 1) sıra öne (ön sırada kaydırılır).
+ * Diğer şekillerde ve 3+ derinlikte imleç = anchor.
+ */
+export function cursorAnchorSlot(area: AreaDef | undefined, cursorSlot: number, board: Side, formation: ShapeFormation): number {
+  if (area?.shape !== 'rect' || !backIsLowCol(formation, board)) return cursorSlot;
+  const depth = clamp(Math.floor(area.rows ?? 1), 1, formation.rows);
+  if (depth >= RECT_CENTER_MIN) return cursorSlot;
+  const row = Math.floor(cursorSlot / formation.lanes);
+  const lane = cursorSlot % formation.lanes;
+  return Math.max(0, row - (depth - 1)) * formation.lanes + lane;
 }
 
 /** Rect ekseninde fare hücresinin ORTADA olduğu en küçük boyut (Ömer kuralı: 3 ve üstü). */

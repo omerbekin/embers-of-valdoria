@@ -180,13 +180,39 @@ export interface CampaignSimResult {
 const emptyNode = (): NodeAgg => ({ reached: 0, firstWins: 0, battles: 0, wins: 0, cleared: 0, attemptsToClear: 0, hpEndSum: 0, deathsOnWin: 0, hpStartSum: 0, turnsSum: 0, stuck: 0 });
 const emptyClass = (): ClassAgg => ({ runs: 0, completed: 0, defeats: 0, heroRuns: 0, heroFirstWins: 0 });
 
-/** Tek savaşı yapay zeka ile oynatır: oyuncu tarafı `player`, düşman tarafı zorluğun YZ'si. */
-export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty, valor = true): Battle {
+/**
+ * Ortalama oyuncu taklidinin Valor kuralı (Ömer 2026-10-20 ekonomi formu; YALNIZCA sim, oyun YZ'si değişmez): Easy YZ Valor'u hiç kullanmaz
+ * (rules.globals = restWhenIdle), gerçek ortalama oyuncu ise geç de olsa kullanır. Kural: diriltilebilir bir dost düştükten sonra oyuncu tarafının
+ * İLK turu boşa gider (fark etmez, class hamlesi yapar); ondan sonraki ilk oyuncu turunda Valor diriltme bedeline yetiyorsa en önce düşeni diriltir.
+ * Değer tartmaz (iyi oyuncunun YZ'si gibi "savaş zaten kazanıldı mı" bakmaz). `seen` = düşmüş dostun görüldüğü oyuncu turu sayısı (savaş başına).
+ */
+export function lateValorChoice(battle: Battle, actorUid: string, seen: Map<string, number>): { skillId: string; targetUid: string; slot: number } | null {
+  const actor = battle.get(actorUid);
+  if (!actor || actor.side !== 'party' || actor.summoned) return null;
+  const id = battle.globalSkillIds(actor.side).find((x) => battle.globalDef(x)?.kind === 'valor');
+  if (!id) return null;
+  const targets = battle.valorTargets(actorUid);
+  for (const t of targets) seen.set(t.uid, (seen.get(t.uid) ?? 0) + 1);
+  const ready = targets.find((t) => (seen.get(t.uid) ?? 0) >= 2);
+  if (!ready || !battle.canUseGlobal(actorUid, id).ok) return null;
+  const slot = battle.valorSlotFor(ready.uid);
+  if (slot === null) return null;
+  seen.delete(ready.uid);
+  return { skillId: id, targetUid: ready.uid, slot };
+}
+
+/**
+ * Tek savaşı yapay zeka ile oynatır: oyuncu tarafı `player`, düşman tarafı zorluğun YZ'si. `lateValor` = ortalama oyuncunun geç Valor kuralı
+ * (lateValorChoice; yalnızca grind sim'in ortalama oyuncusu açar).
+ */
+export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty, valor = true, lateValor = false): Battle {
   const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.waves ? { waves: plan.waves.map((w) => ({ enemies: w.enemies, units: w.units })) } : {}), ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
+  const seen = new Map<string, number>();
   while (!battle.winner && battle.turnsTaken < MAX_TURNS) {
     const actor = battle.currentActor;
     if (!actor) break;
-    const choice = chooseAction(battle, actor.uid, content.aiConfig, undefined, { difficulty: actor.side === 'enemy' ? plan.difficulty : player });
+    const late = lateValor && valor ? lateValorChoice(battle, actor.uid, seen) : null;
+    const choice = late ?? chooseAction(battle, actor.uid, content.aiConfig, undefined, { difficulty: actor.side === 'enemy' ? plan.difficulty : player });
     if (!battle.applyChoice(actor.uid, choice).ok) break;
   }
   return battle;

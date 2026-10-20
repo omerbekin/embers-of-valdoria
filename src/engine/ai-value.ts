@@ -230,6 +230,73 @@ export class ValueContext {
   }
 
   /**
+   * Çağrının kendi değeri için ömür görünümü (2026-10-21, open-questions 377): çağrı ufukla değil ÖMRÜYLE (`life` kendi turu) yaşar; değeri ömrü
+   * boyunca yapacakları + üstüne çektiği saldırılardır. Saf, belirleyici; varsayımsal birim (`hp`, `hpRegen`, `spd`) `slot` hücresinde (kendi tahtası).
+   *  - foeTurns(f): çağrının ömrü boyunca düşman f'nin oynayacağı tur = life x hız(f) / hız(çağrı) (test modunda life).
+   *  - Saldırı payı p(f): çağrı ön sıranın ÖNÜNE konuyorsa yeni ön sıra olur, düşmanın ulaşabildiği derinlik kayar (range.md: hedef derinliği en öndeki
+   *    dolu sıradan sayılır); f'nin erişiminde dostlarımızdan kimse kalmıyorsa ENGELLENİR (p = 1: vuracaksa yalnızca çağrıya vurur), aksi halde çağrı
+   *    erişimindeyse kalan hedeflerle eşit pay (1 / (kalan + 1)), değilse 0.
+   *  - incoming: çağrının kendi turu başına gelecek beklenen hasar; ownTurns = min(life, (can + yenilenme x life) / incoming) (erken ölürse daha az oynar);
+   *    absorbed = engellenen kısım + eşit paylı kısım (ham; çarpanı çağıran uygular), çağrının can + yenilenmesiyle sınırlı (oran korunarak).
+   */
+  summonOutlook(unit: { hp: number; hpRegen: number; spd: number }, slot: number, life: number): { ownTurns: number; absorbedBlocked: number; absorbedShared: number; blockedFoes: string[] } {
+    const b = this.battle;
+    const side = this.actor.side;
+    const turnsMode = b.mode === 'turns';
+    const L = Math.max(0, Math.min(life, this.vc.horizon * 3));
+    const row = b.rowOf(slot);
+    const front = b.frontRowOf(side);
+    const newFront = Math.min(front, row);
+    let blocked = 0;
+    let shared = 0;
+    let incoming = 0;
+    const blockedFoes: string[] = [];
+    for (const i of this.intents) {
+      const f = b.get(i.foe);
+      if (!f) continue;
+      const reachUnits = i.reach.map((u) => b.get(u)).filter((c): c is Combatant => !!c && c.board === side);
+      if (reachUnits.length === 0) continue;
+      // f'nin yeni ön sırayla ulaşabildiği en derin sıra: menzil açıkken saldırılarının en uzun menzilinden (range.ts > cellDistance), kapalıyken
+      // bugün ulaştığı en derin hedefin derinliğinden (eski kural: ön sıraya göre)
+      let maxRow: number;
+      const r = b.rangeOn ? this.foeAttackRange(f) : undefined;
+      if (r !== undefined) {
+        const fromRow = f.board === f.side ? b.rowOf(f.slot) : 0;
+        maxRow = r === Infinity ? Infinity : newFront + (r - 1 - fromRow);
+      } else maxRow = newFront + Math.max(...reachUnits.map((c) => b.rowOf(c.slot) - front));
+      if (row > maxRow) continue; // çağrı f'nin erişiminde değil
+      const left = reachUnits.filter((c) => b.rowOf(c.slot) <= maxRow).length;
+      const foeTurns = turnsMode ? (L * Math.max(1, b.speedOf(f))) / Math.max(1, unit.spd) : L;
+      const per = i.hit * foeTurns;
+      if (left === 0) {
+        blocked += per;
+        blockedFoes.push(f.uid);
+      } else shared += per / (left + 1);
+      incoming += (left === 0 ? per : per / (left + 1)) / Math.max(1e-9, L);
+    }
+    const effHp = Math.max(0, unit.hp + Math.max(0, unit.hpRegen) * L);
+    const ownTurns = incoming > 0 ? Math.min(L, effHp / incoming) : L;
+    const total = blocked + shared;
+    const k = total > effHp && total > 0 ? effHp / total : 1;
+    return { ownTurns, absorbedBlocked: blocked * k, absorbedShared: shared * k, blockedFoes };
+  }
+
+  /** Düşmanın şu an kullanabildiği saldırılarının en uzun menzili (predictFoes süzgeci: bedeli yeten, cooldown'da olmayan); saldırısı yoksa undefined. */
+  private foeAttackRange(f: Combatant): number | undefined {
+    const b = this.battle;
+    let best: number | undefined;
+    for (const id of f.skills) {
+      const sk = b.skill(id);
+      if (!sk || !ATTACK_TARGETS.includes(sk.target) || !sk.effects.some((e) => e.type === 'damage')) continue;
+      if (b.mode === 'turns' && (f.cooldowns[sk.id] ?? 0) > 0) continue;
+      if ((sk.cost.resource === 'mp' && !b.freeMp && f.mp < sk.cost.amount) || (sk.cost.resource === 'rage' && (f.rage ?? 0) < sk.cost.amount)) continue;
+      const r = b.rangeOf(f, sk);
+      best = best === undefined ? r : Math.max(best, r);
+    }
+    return best;
+  }
+
+  /**
    * Çağrıyı öldürmenin değer payı (vc.resummonShare): çağrının tarafındaki canlı bir çağırıcı aynı birimi ufuk içinde yeniden çağırabiliyorsa (cooldown'u
    * ufukta bitiyor ve MP'si o zamana yetiyor) pay, değilse 1. Saf: yalnızca savaş durumunu okur.
    */

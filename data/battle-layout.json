@@ -189,7 +189,7 @@
       "castMinMs": 600,
       "meleeMinMs": 260,
       "throwHoldMs": 500,
-      "holdSkills": ["piercing_arrow", "aimed_shot", "guard", "taunt"],
+      "holdSkills": ["piercing_arrow", "aimed_shot", "close_ranks", "taunt"],
       "holdReleaseMs": 130,
       "lateWindowMs": 1200,
       "lateHoldMs": 250,

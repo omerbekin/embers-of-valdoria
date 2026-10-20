@@ -37,7 +37,14 @@
     "id": "whirlwind",
     "name": "Whirlwind",
     "icon": "whirlwind",
-    "target": "all_enemies",
+    "_not": "Ömer 2026-10-20: ilk 2 düşman sırasına vurur (ön sıra + arkasındaki): rect 2x3, anchor menzildeki (ön) sırada, alan menzilin ötesine taşar (range.md). Güç hedef başına Double Strike ve Charge altında (open-questions 376).",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
     "cost": {
       "resource": "mp",
       "amount": 8
@@ -50,7 +57,7 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.87,
+        "power": 0.45,
         "lifesteal": 0.2
       }
     ],
@@ -646,18 +653,22 @@
       "battleRoar"
     ]
   },
-  "guard": {
-    "id": "guard",
-    "name": "Guard",
+  "close_ranks": {
+    "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 5 (Ömer: %35 değersizse %50 + cooldown 5); bedel 10 MP (Ömer 2026-10-20). İkon/vfx/ses Guard'ınki.",
+    "id": "close_ranks",
+    "name": "Close Ranks",
     "icon": "guard2",
     "target": "single_ally",
     "range": 2,
     "excludeSelf": true,
+    "splash": {
+      "pattern": "row"
+    },
     "cost": {
       "resource": "mp",
-      "amount": 2
+      "amount": 10
     },
-    "cooldown": 4,
+    "cooldown": 5,
     "turnCost": 0.5,
     "motion": "cast",
     "fx": "#7fb8e8",
@@ -665,7 +676,7 @@
       {
         "type": "guard",
         "turns": 3,
-        "share": 0.6
+        "share": 0.5
       }
     ],
     "vfx": "guard2",
@@ -980,7 +991,7 @@
       "resource": "mp",
       "amount": 10
     },
-    "cooldown": 3,
+    "cooldown": 4,
     "motion": "melee",
     "ignoreFrontRow": true,
     "ignoreReach": true,
@@ -996,7 +1007,7 @@
       {
         "type": "status",
         "status": "stun",
-        "turns": 1
+        "turns": 2
       }
     ],
     "vfx": "charge",
@@ -1091,11 +1102,11 @@
         "type": "damage",
         "damageType": "physical",
         "scale": "str",
-        "power": 0.18,
+        "power": 0.21,
         "bonusScale": [
           {
             "stat": "armor",
-            "pct": 0.05
+            "pct": 0.1
           }
         ]
       },
@@ -1988,7 +1999,13 @@
     "id": "pt_whirlwind",
     "name": "Whirlwind",
     "icon": "whirlwind",
-    "target": "all_enemies",
+    "target": "area_enemies",
+    "area": {
+      "shape": "rect",
+      "rows": 2,
+      "cols": 3,
+      "anchor": "bottom_left"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -2164,14 +2181,17 @@
     "artOf": "taunt",
     "note": "Pose test: plays the Guard pose."
   },
-  "pt_guard": {
-    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Guard kopyası; gerçek efekt/ses/hedef (artOf guard), v2 poz takımında 'guard'. Bedel 0, cooldown yok, güç 0.02 (~1).",
-    "id": "pt_guard",
-    "name": "Guard",
+  "pt_close_ranks": {
+    "_not": "Pose Tester (debug, Ömer 2026-10-12; tools/make-pose-testers.mjs üretir): Close Ranks kopyası; gerçek efekt/ses/hedef (artOf close_ranks), v2 poz takımında 'guard'. Bedel 0, cooldown yok, güç 0.02 (~1).",
+    "id": "pt_close_ranks",
+    "name": "Close Ranks",
     "icon": "guard2",
     "target": "single_ally",
     "range": 2,
     "excludeSelf": true,
+    "splash": {
+      "pattern": "row"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -2182,7 +2202,7 @@
       {
         "type": "guard",
         "turns": 3,
-        "share": 0.6
+        "share": 0.5
       }
     ],
     "vfx": "guard2",
@@ -2191,7 +2211,7 @@
       "chainTether"
     ],
     "pose": "guard",
-    "artOf": "guard",
+    "artOf": "close_ranks",
     "note": "Pose test: plays the Guard pose."
   },
   "pt_fist_crush": {
@@ -3837,7 +3857,7 @@
       "shieldBrace",
       "chainTether"
     ],
-    "artOf": "guard"
+    "artOf": "close_ranks"
   },
   "hex_bolt": {
     "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Hexes temel saldırısı: LUCK karanlık hasar + 1 Omen (Evil Eye'ın zayıfı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",

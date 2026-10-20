@@ -477,7 +477,15 @@ describe('yarım turn (turnCost 0,5)', () => {
 
 describe('yapay zeka (madde 240)', () => {
   it('Undead: bağlanacak dost varken ve bağ yokken Dark Bond kurar (tactic; yarım turn tempo değeri); bağ sürerken yeniden kurmaz', () => {
-    const b = mk({ 0: 'warrior', 1: 'undead' }, { 0: 'defender' }, 'turns', 2);
+    // Senaryo, Tremor Slam'ın 2026-10-20 artışından (güç 0,18 -> 0,21, zırh payı %5 -> %10) önceki gelen hasarla kuruldu: artışla tam candaki
+    // değer kendi can sınırı yerine en iyi vuruşun lifesteal'iyle sınırlanıyor ve 'yaralıyken >= tam canda' kıyası anlamını yitiriyor. Kukla
+    // düşman Defender'ın Tremor Slam'ı eski sayılarla sabitlenir (sınanan şey Dark Bond'dur).
+    const oldTremor = (setup: ReturnType<typeof content.battleSetup>) => {
+      const t = structuredClone(setup.skills.tremor_slam!);
+      Object.assign(t.effects[0]!, { power: 0.18, bonusScale: [{ stat: 'armor', pct: 0.05 }] });
+      setup.skills = { ...setup.skills, tremor_slam: t };
+    };
+    const b = mk({ 0: 'warrior', 1: 'undead' }, { 0: 'defender' }, 'turns', 2, oldTremor);
     const u = at(b, 'party', 1);
     until(b, u.uid);
     u.cooldowns.raise_dead = 3; // çağrı önceliği karışmasın

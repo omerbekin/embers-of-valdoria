@@ -1415,3 +1415,42 @@
   font-size: 9px;
   letter-spacing: 0.02em;
 }
+
+/* skill kartı çipleri V2: ikon + sayı; tam anlam hover / odak / dokunmada balon (ipucu stili band-tip.css ile aynı) */
+.cx-tag.q {
+  position: relative;
+  gap: 0.3em;
+  outline: none;
+  cursor: help;
+}
+
+.cx-tag.q .cx-ico.q {
+  width: max(18px, calc(24 * var(--u)));
+  height: max(18px, calc(24 * var(--u)));
+  image-rendering: auto;
+}
+
+.cx-tag.q b {
+  font: 600 max(13px, calc(17 * var(--u))) var(--el-display);
+  color: #f3d999;
+}
+
+.cx-tag.q[data-tip]:hover::after,
+.cx-tag.q[data-tip]:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 40;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 5px 10px;
+  font: 600 12px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: #f3d999;
+  background: #0b0806;
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}

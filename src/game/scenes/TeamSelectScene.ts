@@ -10,7 +10,9 @@ import { hintBadge, hintColor } from '../formation-hint-ui';
 import { backgroundExists, backgroundKey, hasBackground, preloadAssets } from '../assets';
 import { ensureIcon, ensureSkillIcon } from '../icons';
 import { ownerOfUnit } from '../asset-versions';
-import { STAT_COLOR, STAT_LABEL, statIconName } from '../../ui/stat-icons';
+import { RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
+import { uiIconName } from '../../ui/ui-icons';
+import { cooldownChipOf, costChipOf, rangeChipOf } from '../../ui/skill-chips';
 import { initialSizes, newSeed } from '../seed';
 import { classAvatar, ensureGlow } from '../menu-ui';
 import { makeDragGhost } from '../slot-drag';
@@ -1272,9 +1274,22 @@ export class TeamSelectScene extends Phaser.Scene {
     const shape = skillMiniGrid(skill, content.formulas.formation);
     // Hedef türü · element · Melee / Ranged (ortak kaynak src/ui/skill-tags.ts; savaş HUD'ı ve Codex ile aynı)
     const tagList = skillTags(skill);
-    const chips: PhChip[] = tagList.map((g) => ({ text: g.text, ...(g.color ? { hex: g.color, tone: 'ac' as const } : {}), ...(g.icon ? { icon: ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false) } : {}) }));
-    chips.push(costChip(info.cost, 'Cost '));
-    if ((skill.cooldown ?? 0) > 0) chips.push(costChip(info.cooldown));
+    const rangeIcon = ensureIcon(this, uiIconName('range'), '#e8e2d0', false);
+    const chips: PhChip[] = tagList.map((g) => {
+      const rg = g.kind === 'range' ? rangeChipOf(g.text) : null;
+      if (rg) return { text: '', num: rg.num, bare: true, tone: 'v' as const, icon: rangeIcon, tip: rg.tip };
+      return { text: g.text, ...(g.color ? { hex: g.color, tone: 'ac' as const } : {}), ...(g.icon ? { icon: ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false) } : {}) };
+    });
+    // menzil / bedel / bekleme: ikon + sayı (V2, src/ui/skill-chips.ts); sayıya inmeyen bedel eski yazılı çip
+    const cost = costChipOf(info.cost);
+    if (cost) {
+      const icon = cost.res === 'rage' ? ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false) : ensureIcon(this, statIconName(cost.res), STAT_COLOR[cost.res], false);
+      chips.push({ text: '', num: cost.num, bare: true, tone: 'v', icon, tip: cost.tip });
+    } else chips.push(costChip(info.cost, 'Cost '));
+    if ((skill.cooldown ?? 0) > 0) {
+      const cd = cooldownChipOf(info.cooldown);
+      chips.push(cd ? { text: '', num: cd.num, bare: true, tone: 'v', icon: ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false), tip: cd.tip } : costChip(info.cooldown));
+    }
     const accent = tagList.find((g) => g.color)?.color;
     return { ...(accent ? { accent } : {}), kind: 'Skill', icon: ensureSkillIcon(this, skill), title: info.name, chips, shape, ...(shape?.note ? { foot: shape.note } : {}), lines };
   }

@@ -1,4 +1,4 @@
-import { CONFIG, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
+import { CONFIG, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
 import { UI_TEXT as T } from '../endless/ui-text';
 import { sellValue } from '../progression';
 import { campaignGearSource } from '../ui/gear-screen';
@@ -31,18 +31,31 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
 /** Sefer tüccarını açar (varışta karşılama). `onLeave`: oyuncu ayrılınca (sahne düğüm adımını tamamlar). */
 export function openCampaignMerchant(root: HTMLElement, get: () => CampaignState, set: (s: CampaignState) => void, o: { onLeave: () => void; sub?: string; leaveLabel?: string }): () => void {
   // Ekran kendini kapatmaz (Endless'ta da çağıran kapatır): Move on önce ekranı kapatır, sonra sahne adımı tamamlar (tek sefer)
+  // Karşılama ("Today's pick") her açılışta yalnızca bir kez: tezgâh zaten açıkken ikinci açma isteği (ör. aynı düğüme tekrar tıklama) yeni karşılama kurmaz
+  if (openNow) return openNow;
   let close: (() => void) | null = null;
+  const done = (): void => {
+    openNow = null;
+  };
   const leave = (): void => {
     if (!close) return;
     const c = close;
     close = null;
+    done();
     c();
     o.onLeave();
   };
-  close = openMerchant(root, campaignMerchantSource(get, set, o.sub), { welcome: true, onLeave: leave, ...(o.leaveLabel ? { leaveLabel: o.leaveLabel } : {}) });
-  return () => {
+  // Tanışma paneli tüccar örneği başına bir kez (kayıtta kalır); sonraki girişlerde doğrudan tezgâh açılır
+  const welcome = !merchantIntroSeen(get());
+  if (welcome) set(markMerchantIntroSeen(get()));
+  close = openMerchant(root, campaignMerchantSource(get, set, o.sub), { welcome, onLeave: leave, ...(o.leaveLabel ? { leaveLabel: o.leaveLabel } : {}) });
+  openNow = () => {
     const c = close;
     close = null;
+    done();
     c?.();
   };
+  return openNow;
 }
+
+let openNow: (() => void) | null = null;

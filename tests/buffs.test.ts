@@ -143,10 +143,11 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
     expect(hasStatus(b, victim, 'stun')).toBe(false);
   });
 
-  it('Charge: vurduğu düşmanı sersemletir (1 tur)', () => {
+  it('Charge: vurduğu düşmanı sersemletir (tur sayısı veriden)', () => {
     const b = calm(grid(cells({ 0: 'warrior' }), cells({ 0: 'mage' })));
     act(b, 'party-0', 'charge', 'enemy-0');
-    expect(b.get('enemy-0')!.statuses.find((s) => s.kind === 'stun')?.turns).toBe(1);
+    const stun = content.skills.charge!.effects.find((e) => e.type === 'status' && e.status === 'stun') as { turns: number };
+    expect(b.get('enemy-0')!.statuses.find((s) => s.kind === 'stun')?.turns).toBe(stun.turns);
   });
 });
 

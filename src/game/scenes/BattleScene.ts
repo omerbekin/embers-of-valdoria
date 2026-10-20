@@ -1787,10 +1787,10 @@ export class BattleScene extends Phaser.Scene {
     const targetAt = (board: 'party' | 'enemy', slot: number) => valid.find((c) => c.board === board && c.slot === slot);
     this.bindCellZones(boards, {
       twoTap: area,
-      canPick: (board, slot) => (area ? this.battle.shapePreviewCells(actorUid, skillId, slot, board).valid : !!targetAt(board, slot)),
+      canPick: (board, slot) => (area ? this.battle.shapePreviewCells(actorUid, skillId, this.battle.cursorAnchor(skillId, slot, board, actorUid), board).valid : !!targetAt(board, slot)),
       onHover: (board, slot) => this.onTargetHover(actorUid, skillId, board, slot, targetAt),
       onPick: (board, slot) => {
-        if (area) this.perform(actorUid, skillId, '', slot, board);
+        if (area) this.perform(actorUid, skillId, '', this.battle.cursorAnchor(skillId, slot, board, actorUid), board);
         else {
           const t = targetAt(board, slot);
           if (t) this.perform(actorUid, skillId, t.uid);
@@ -1809,12 +1809,13 @@ export class BattleScene extends Phaser.Scene {
     }
     if (!skill) return;
     if (this.battle.isAreaSkill(skillId)) {
-      const info = this.battle.shapePreviewCells(actorUid, skillId, slot, board);
+      const anchor = this.battle.cursorAnchor(skillId, slot, board, actorUid); // imleç hücresi = alanın ekrandaki sol-alt köşesi (madde 377)
+      const info = this.battle.shapePreviewCells(actorUid, skillId, anchor, board);
       const ok = info.valid;
-      const previews = ok ? previewSkill(this.battle, actorUid, skillId, undefined, slot, board) : [];
+      const previews = ok ? previewSkill(this.battle, actorUid, skillId, undefined, anchor, board) : [];
       this.showPreviews(previews);
       this.refreshGlows(previews.map((p) => p.uid));
-      const staged = this.battle.areaStageCells(skillId, slot, board);
+      const staged = this.battle.areaStageCells(skillId, anchor, board);
       const stages = staged.length > 1 ? stageMap(staged) : new Map<number, number>(); // numbers only for staged shapes
       const specs = areaHoverSpecs(info, slot, areaTone(this.battle, actorUid, skillId, board), stages);
       this.showPlates(board, specs, !ok && info.reason ? { slot, text: info.reason } : undefined);
@@ -1825,7 +1826,9 @@ export class BattleScene extends Phaser.Scene {
       const previews = previewSkill(this.battle, actorUid, skillId, t.uid);
       this.showPreviews(previews);
       this.refreshGlows(previews.map((p) => p.uid));
-      this.showPlates(board, [{ slot, state: this.toneOf(skill) === 'enemy' ? 'enemy' : 'ally' }]);
+      // Close Ranks (splash 'row'): the other allies in the chosen one's row are lit too (the whole row will be guarded)
+      const around = skill.splash?.pattern === 'row' ? this.battle.splashTargets(skillId, t, actorUid).filter((c) => c.board === board).map((c) => ({ slot: c.slot, state: 'ally' as const })) : [];
+      this.showPlates(board, [{ slot, state: this.toneOf(skill) === 'enemy' ? 'enemy' : 'ally' }, ...around]);
       return;
     }
     // A unit stands there but the skill cannot reach it (melee to the back row, Backstab without room behind...): pale red plate + the engine's reason
@@ -2339,7 +2342,7 @@ export class BattleScene extends Phaser.Scene {
     else if (summonLine) rows.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
     const tip = this.makeInfo(info.name, colors.text, ensureSkillIcon(this, skill), rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
     // Hedef türü · element · Melee / Ranged (ortak kaynak: src/ui/skill-tags.ts; Codex ve takım seçimiyle aynı)
-    tip.tags = skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));
+    tip.tags = skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));
     return tip;
   }
 

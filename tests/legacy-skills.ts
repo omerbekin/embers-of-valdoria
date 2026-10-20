@@ -23,6 +23,11 @@ const LEGACY: Record<string, SkillDef> = {
     id: 'blessing', name: 'Blessing', icon: 'cross', target: 'single_ally', cost: { resource: 'mp', amount: 12 }, cooldown: 3,
     motion: 'cast', fx: '#fff0a0', effects: [{ type: 'status', status: 'blessed', turns: 3 }],
   },
+  // Guard (Defender, Ömer 2026-10-20'de Close Ranks ile değişti): tek dost, 3 tur, %60 pay; eski Guard testleri için
+  guard: {
+    id: 'guard', name: 'Guard', icon: 'guard2', target: 'single_ally', range: 2, excludeSelf: true, cost: { resource: 'mp', amount: 2 }, cooldown: 4, turnCost: 0.5,
+    motion: 'cast', fx: '#7fb8e8', effects: [{ type: 'guard', turns: 3, share: 0.6 }], vfx: 'guard2', sfx: ['shieldBrace', 'chainTether'],
+  },
   shield_bash: {
     id: 'shield_bash', name: 'Shield Bash', icon: 'bash', target: 'single_enemy', cost: { resource: 'mp', amount: 0 },
     motion: 'melee', fx: '#ffe9b0', effects: [{ type: 'damage', damageType: 'physical', scale: 'str', power: 1.0 }, { type: 'shield', scale: 'str', power: 0.5, self: true }],
@@ -45,7 +50,7 @@ const LEGACY: Record<string, SkillDef> = {
 const GIVE: Record<string, string[]> = {
   warrior: ['power_strike', 'shield_wall'],
   paladin: ['lay_on_hands', 'blessing'],
-  defender: ['shield_bash'],
+  defender: ['shield_bash', 'guard'],
   undead: ['bone_slash', 'soul_drain', 'blood_rite'],
 };
 

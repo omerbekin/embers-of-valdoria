@@ -88,6 +88,8 @@ export interface WikiSkill {
   /** Skill'in vurduğu/etkilediği elementler (hasar ya da yer etkisi); hiçbiri yoksa boş. */
   elements: Element[];
   cost: string;
+  /** Menzil etiketi ('Range 6' / 'Global'; menzil sistemi kapalı ya da hedef seçimi yoksa boş; savaş ipucuyla aynı: skill-tags.ts). */
+  rangeLabel: string;
   cooldown: string;
   initialCooldown: string;
   /** Sahibinin `skills` dizisindeki yuva (1-4, düğme/tuş sırası); sahibi yoksa null. */
@@ -105,7 +107,7 @@ export interface WikiSkill {
 }
 
 // Menzil / element etiketleri savaş HUD'ı ve takım seçimiyle ortak (src/ui/skill-tags.ts): Codex de aynı kuralı gösterir
-import { elementIcon, skillElements, skillRange, type SkillRange } from '../ui/skill-tags';
+import { elementIcon, skillElements, skillRange, skillTags, type SkillRange } from '../ui/skill-tags';
 import { passiveIconName } from '../ui/mob-icons';
 export { elementIcon, skillElements, skillRange, type SkillRange };
 
@@ -255,6 +257,7 @@ export function buildSkill(skill: SkillDef): WikiSkill {
     targetText: info.target,
     elements,
     cost: info.cost,
+    rangeLabel: skillTags(skill, def?.range).find((t) => t.kind === 'range')?.text ?? '',
     cooldown: info.cooldown,
     initialCooldown: info.initialCooldown,
     slot: slotOf(skill.id, owner),
@@ -692,7 +695,7 @@ export function buildMechanics(): WikiArticle[] {
         'Row: the whole row of the anchor cell.',
         'Column: the whole lane of the anchor cell, across every row.',
         `Block RxC (from 1x1 up to ${f.formation.rows}x${f.formation.lanes}, for example 2x3): R rows deep by C lanes wide.`,
-        'On screen a block is drawn sideways: its rows run left to right and its lanes top to bottom. Each direction is placed on its own. In a direction where the block is 3 or more cells long, your cursor cell is its middle (for 4 cells: the second cell from the left); if the block cannot be centered there because of the edge, it starts at your cursor cell instead. In a direction where the block is only 1 or 2 cells long, your cursor cell is its bottom-left corner, so the block extends to the right and upwards. If it would still stick out of the grid it slides back inside (its size never shrinks), so every cell is a valid anchor. Your side and the enemy side are mirrored, so "left" is the front row on the enemy side and the back row on your side.',
+        'On screen a block is drawn sideways: its rows run left to right and its lanes top to bottom. Each direction is placed on its own. In a direction where the block is 3 or more cells long, your cursor cell is its middle (for 4 cells: the second cell from the left); if the block cannot be centered there because of the edge, it starts at your cursor cell instead. In a direction where the block is only 1 or 2 cells long, your cursor cell is its bottom-left corner on screen, so the block extends to the right and upwards. Both sides cover the same cells: a 2-row block always covers a row and the row behind it, and its front row is the one that must be in range (on the enemy side that is your cursor row; on your own side, where the back is on the left, it is the row to the right of your cursor). If it would still stick out of the grid it slides back inside (its size never shrinks), so every cell is a valid anchor.',
         'Cross: the anchor cell and the 4 cells next to it (one row in front or behind, one lane above or below). Cells outside the grid are skipped.',
         'X: the anchor cell and the 4 diagonal cells around it (one row in front or behind AND one lane above or below). Cells outside the grid are skipped, so a corner keeps only one diagonal. Some X skills cross the center twice: the unit on the anchor cell is then hit twice, each hit rolling its own hit, damage and crit.',
         `Either side: a few area skills (${allSkills().filter((s) => s.target === 'area_any').map((s) => s.name).join(', ') || 'none yet'}) can be thrown on the enemy side or on your own side. Each of their effects names who it touches: on the enemy side only enemies are affected, on your side only allies.`,
@@ -796,7 +799,7 @@ export function buildMechanics(): WikiArticle[] {
       p(`Half-turn skills: ${allSkills().filter((s) => s.turnCost !== undefined && s.turnCost < 1).map((s) => s.name).join(', ') || 'none yet'}.`),
     ], '#c9a227'),
     article('control', 'Special rules', 'Taunt, guard and mana burn', 'guardian', [
-      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself). Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
+      p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
       p(`A mana burn that is part of an attack only works if the attack hits: on a miss or a dodge no MP is burned or stolen${allSkills().some((s) => s.name === 'Mana Steal') ? ' (Mana Steal gains nothing)' : ''}.`),
@@ -815,7 +818,7 @@ export function buildMechanics(): WikiArticle[] {
           'Roads: a solid line is the only way on; a dashed line is a branching route. A choice point (gold ring) is a crossroads: the roads you did not take stay open, and you can come back for them later. Roads meet again further on.',
           `Fog: you see the next stop in full (name, type, enemies) and the stop after it by type and name only; anything further is under fog. The final castle is always visible as your goal.`,
           // Serbest dolaşım ve devriye (campaign-dev, roadmap 2.1-2.3 A; sayılar data/campaign/campaign.json > replay)
-          `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays less XP, gold and loot: ${REPLAY_PCTS.join(', ')} of the first victory, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows what its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,
+          `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays full gold and loot but less XP: ${REPLAY_PCTS.join(', ')} of the first victory's XP, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows the XP its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,
           `Stops: Battle, Elite (a stronger leader), Boss, Guarded treasure (a battle, then a chest), Event (a short story stop; a guarded one is a battle first), Town (rest, recruits and the Blacksmith), Rest (a free camp: living heroes regain ${Math.round(campaignConfig.rest.heal * 100)}% of their maximum HP) and Merchant (Odo sells gear for the region's item level, buys your spare items and lets you buy them back).`,
           `Your party: you start alone as a Warrior or an Archer, a companion joins in the forest, and at the first village the escort stays behind and you form a new company of three from every class, starting at Level 1. The tutorial road and the first stops past the village are all Level 1; from there the stops grow in level toward the final castle. The first hero you pick leads; the leader walks in front on the map. Another hero joins when you leave the city.`,
           `Health carries over between battles. After a victory the survivors regain ${pct(r.victoryHeal)} of their maximum HP, ${pct(r.eliteVictoryHeal ?? r.victoryHeal)} after an elite, and a boss victory heals them fully. Mana starts full in every battle. If the whole party falls, the battle is lost and you go back to your last save.`,

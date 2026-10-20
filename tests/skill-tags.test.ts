@@ -48,7 +48,7 @@ describe('skill etiket satırı, menzil AÇIK (range.md): "Range N" / "Global" s
     expect(tags('melee_attack').at(-1)).toBe(`Range ${content.classes.warrior!.range}`);
     expect(tags('charge').at(-1)).toBe(`Range ${content.skills.charge!.range}`);
     expect(tags('fist_crush').at(-1)).toBe('Global');
-    expect(tags('guard').at(-1)).toBe(`Range ${content.skills.guard!.range}`);
+    expect(tags('close_ranks').at(-1)).toBe(`Range ${content.skills.close_ranks!.range}`);
     expect(skillTags(content.skills.rejuvenate!).some((t) => t.kind === 'range')).toBe(false);
     for (const s of Object.values(content.skills)) expect(skillTags(s).some((t) => t.kind === 'range'), s.id).toBe(rangeLabel(s, content.ownerRangeOf(s.id), content.formulas) !== '');
   });

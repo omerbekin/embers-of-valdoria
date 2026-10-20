@@ -152,8 +152,8 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
     case 'longshot':
       return `Deal +${pct(e.perRow)} damage for every row of distance between you and your target (your row + their row).`;
-    case 'verdantBlessing':
-      return `Whenever you summon, all wounded allies are healed for ${val(e.scale, e.power)} (${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}).`;
+    case 'naturesGrudge':
+      return `When an ally hero falls (you included; summons do not count), the enemy that killed it is gripped by roots: ${cap(e.status)} and ${cap(e.dot)} for ${turnsText(e.turns)} (${val(e.scale, e.power)} damage per tick, ${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}). A kill by damage over time or ground counts for its source. Each Druid on the team applies it.`;
     case 'soulDrain':
       return `Heal for ${pct(e.ratio)} of all damage you deal (damage dealt by your summons counts too).`;
     case 'manaOverflow':
@@ -415,7 +415,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {
-      add(`Guard ${e.turns} turns: take ${pct(e.share)} of the damage ally takes`);
+      if (skill.splash?.pattern === 'row') add(`Guard ${e.turns} turns: allies in the chosen row pass ${pct(e.share)} of the damage they take to you`);
+      else add(`Guard ${e.turns} turns: take ${pct(e.share)} of the damage ally takes`);
       if (skill.excludeSelf) add('Cannot target yourself');
     } else if (e.type === 'dispel') {
       const names = Object.values(defs.statuses ?? {}).filter((d) => d.type === e.status && d.dispellable !== false).map((d) => d.name);
@@ -565,8 +566,9 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
   const fixed = (label: string, text: string): SkillNumber[] => [{ label, text, scaled: false }];
   switch (e.type) {
     case 'divineLight':
-    case 'verdantBlessing':
       return num('Heal', scaled(stats, e.scale, e.power, formulas), 'heal');
+    case 'naturesGrudge':
+      return [...num(`${cap(e.dot)} per tick`, scaled(stats, e.scale, e.power, formulas)), ...fixed('Duration', turnsText(e.turns))];
     case 'armorAura':
       return num('Armor aura', Math.round(stats.armor * e.pct), 'shield');
     case 'rage':

@@ -321,6 +321,8 @@ export interface CampaignState {
   lootState: { rarePity: number; clears: Record<string, number>; rareMisses?: number };
   /** Kasabada dinlenme sayacı (düğüm id -> kaç kez dinlenildi; TUR 1 madde 10: ilk bedava, sonrakiler ücretli). Eski kayıtta yok = hiç. */
   townRests?: Record<string, number>;
+  /** Tanışma paneli gösterilen tüccarlar (Ömer 2026-10-20: "her merchant instance'ında 1 kere"): '<harita>:<düğüm>' -> 1. Eski kayıtta yok = hiçbiri görülmedi (isteğe bağlı alan; sürüm değişmez). */
+  merchantSeen?: Record<string, number>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */

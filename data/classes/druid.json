@@ -5,7 +5,7 @@
   "color": "#5a8f29",
   "logo": "leaf",
   "role": "Nature Summoner",
-  "blurb": "Nature summoner who calls treants to the field and heals allies as they rise.",
+  "blurb": "Nature summoner who calls treants to the field, mends allies and roots whoever fells one.",
   "frontPriority": 5,
   "range": 5,
   "attributes": {
@@ -25,14 +25,17 @@
     "summon_treant"
   ],
   "passive": {
-    "id": "verdant_blessing",
-    "name": "Verdant Blessing",
+    "id": "natures_grudge",
+    "name": "Nature's Grudge",
     "icon": "leaves",
-    "text": "Whenever you summon, all allies are healed.",
+    "text": "When an ally falls, its killer is gripped by roots: Slow and Wither for 3 turns.",
     "effect": {
-      "type": "verdantBlessing",
-      "power": 0.3,
-      "scale": "int"
+      "type": "naturesGrudge",
+      "status": "slow",
+      "dot": "wither",
+      "power": 0.15,
+      "scale": "int",
+      "turns": 3
     }
   }
 }

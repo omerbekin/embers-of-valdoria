@@ -205,7 +205,7 @@ Her sınıf aynı kalıpta: kimlik satırı, skill tablosu, takım sinerjisi, a�
 | Thorn Whip | Doğa | Doğa | Wound (mevcut) | Yok | yok | Yok |
 | Nature’s Wrath | Doğa | Doğa veya **[ÖNERİ]** Su (Tidal Wrath) | **[ÖNERİ]** Wet (düşman alanı) | Kurar: ıslak düşman → Blizzard dondurur, elektrik sersemletir, ateş buharlaştırır | rework | Yok |
 | Healing Rain (eski Rejuvenate) | — (şifa) | Su (KARAR) | Şifa + HoT (mevcut) + müttefiğe Wet (taslak) | Müttefiğin Burning’ini ve yanan zemini söndürür; ama ıslak müttefik elektriğe açık | rework | Yok |
-| Summon Treant | — | Doğa | Treant: Root Smash (fiziksel), Vine Snare (doğa, kök) | Yok | yok | Verdant Blessing: çağırınca takım iyileşir (mevcut) |
+| Summon Treant | — | Doğa | Treant: Root Smash (fiziksel), Vine Snare (doğa, kök) | Yok | yok | Nature's Grudge (2026-10-20, Verdant Blessing'in yerine): dost kahraman düşünce öldüreni 3 tur Slow + Wither |
 
 **Takım sinerjisi:**
 - Mage: ıslak düşman → Frozen ya da buhar.

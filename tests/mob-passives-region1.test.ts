@@ -203,7 +203,11 @@ describe('D7-D9', () => {
         const choice = chooseAction(b, uid, content.aiConfig);
         if (b.get(uid)!.side === 'enemy') {
           enemyTurns++;
-          expect(choice?.skillId, `seed ${seed} ${uid}`).toBe(content.mobs[b.get(uid)!.defId]!.skills[0]);
+          // Kilitli skill'ler hiç seçilmez: sınıf skill'i seçilirse yalnızca temel saldırı; ortak hamleler (Move / Skip Turn / Rest:
+          // ör. 2 canla kalan Cutpurse'ün geri çekilmesi, balance-tester 2026-10-20 Warrior Rage turu) kilit kapsamında değil
+          const own = content.mobs[b.get(uid)!.defId]!.skills;
+          if (choice && own.includes(choice.skillId)) expect(choice.skillId, `seed ${seed} ${uid}`).toBe(own[0]);
+          else expect(['move_tile', 'skip_turn', 'rest'], `seed ${seed} ${uid}: ${choice?.skillId}`).toContain(choice?.skillId);
         }
         if (!b.applyChoice(uid, choice).ok) break;
       }

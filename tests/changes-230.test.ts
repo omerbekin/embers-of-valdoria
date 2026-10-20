@@ -122,22 +122,22 @@ describe('Raise Dead: YZ en tehlikeli cesedi seçer', () => {
 
 describe('Guard kendine atılamaz', () => {
   it('veri excludeSelf; hedef listesinde kullanıcı yok; kendine atmak "Cannot guard yourself"; önizleme boş', () => {
-    expect(content.skills.guard!.excludeSelf).toBe(true);
+    expect(content.skills.close_ranks!.excludeSelf).toBe(true);
     const b = mk({ 0: 'defender', 1: 'warrior' }, { 0: 'archer' });
-    expect(b.validTargets('party-0', 'guard').map((c) => c.uid)).toEqual(['party-1']);
-    expect(b.useSkill('party-0', 'guard', 'party-0')).toEqual({ ok: false, reason: 'Cannot guard yourself' });
-    expect(b.targetProblem('party-0', 'guard', 'party-0')).toBe('Cannot guard yourself');
-    expect(previewSkill(b, 'party-0', 'guard', 'party-0')).toEqual([]);
-    expect(b.useSkill('party-0', 'guard', 'party-1').ok).toBe(true);
+    expect(b.validTargets('party-0', 'close_ranks').map((c) => c.uid)).toEqual(['party-1']);
+    expect(b.useSkill('party-0', 'close_ranks', 'party-0')).toEqual({ ok: false, reason: 'Cannot guard yourself' });
+    expect(b.targetProblem('party-0', 'close_ranks', 'party-0')).toBe('Cannot guard yourself');
+    expect(previewSkill(b, 'party-0', 'close_ranks', 'party-0')).toEqual([]);
+    expect(b.useSkill('party-0', 'close_ranks', 'party-1').ok).toBe(true);
     // Taunt etkilenmez (kendine)
     expect(b.useSkill('party-0', 'taunt').ok).toBe(true);
   });
 
   it('yalnız Defender: Guard kullanılamaz ("No ally to guard"); YZ seçmez; açıklamada yazar', () => {
     const b = mk({ 0: 'defender' }, { 0: 'archer' });
-    expect(b.canUse('party-0', 'guard')).toEqual({ ok: false, reason: 'No ally to guard' });
-    expect(chooseAction(b, 'party-0', ai)?.skillId).not.toBe('guard');
-    const info = describeSkill(content.skills.guard!, content.classes.defender!.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
+    expect(b.canUse('party-0', 'close_ranks')).toEqual({ ok: false, reason: 'No ally to guard' });
+    expect(chooseAction(b, 'party-0', ai)?.skillId).not.toBe('close_ranks');
+    const info = describeSkill(content.skills.close_ranks!, content.classes.defender!.stats, content.formulas, content.summons, { statuses: content.statuses, grounds: content.grounds });
     expect(info.lines.join(' ')).toContain('Cannot target yourself');
   });
 });

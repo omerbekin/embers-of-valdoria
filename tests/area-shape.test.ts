@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import layout from '../data/battle-layout.json';
 import { Battle, MatchLog, chooseAction, content, describeSkill, explainChoice } from '../src/engine';
 import type { AiTrace, BattleEvent, CombatantDef, SkillDef } from '../src/engine';
-import { isShapeArea, shapeCells } from '../src/engine/area-shape';
+import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells } from '../src/engine/area-shape';
 import { computeScreenGrid } from '../src/engine/formation';
 import { previewSkill } from '../src/engine/preview';
 import { rangeOff } from './range-helpers';
@@ -91,11 +91,37 @@ describe('şekil hücre kümeleri (saf)', () => {
     expect(shapeCells(rect(2, 3), 11, 'enemy', fm)).toEqual([6, 7, 8, 9, 10, 11]);
   });
 
-  it('rect 2x3, oyuncu tarafı (ayna): ekranda sol = derin sıra, dikdörtgen sağa (öne doğru) uzanır', () => {
-    expect(shapeCells(rect(2, 3), 9, 'party', fm)).toEqual([6, 7, 8, 9, 10, 11]); // sıra 3 (en sol) ve 2
-    expect(shapeCells(rect(2, 3), 6, 'party', fm)).toEqual([3, 4, 5, 6, 7, 8]); // sıra 2 ve 1
-    expect(shapeCells(rect(2, 3), 3, 'party', fm)).toEqual([0, 1, 2, 3, 4, 5]); // sıra 1 ve 0
-    expect(shapeCells(rect(2, 3), 0, 'party', fm)).toEqual([0, 1, 2, 3, 4, 5]); // ön sıra: taşar, kaydırılır (sıra 1,0)
+  it('rect 2x3, oyuncu tarafı (ayna): derinlik ekseni yine anchor sırası + ARKASI (madde 376/8; ekranda sola uzanır)', () => {
+    expect(shapeCells(rect(2, 3), 0, 'party', fm)).toEqual([0, 1, 2, 3, 4, 5]); // ön sıra anchor: sıra 0,1
+    expect(shapeCells(rect(2, 3), 3, 'party', fm)).toEqual([3, 4, 5, 6, 7, 8]); // sıra 1,2
+    expect(shapeCells(rect(2, 3), 6, 'party', fm)).toEqual([6, 7, 8, 9, 10, 11]); // sıra 2,3
+    expect(shapeCells(rect(2, 3), 9, 'party', fm)).toEqual([6, 7, 8, 9, 10, 11]); // en arka: kaydırılır (sıra 2,3)
+  });
+
+  it('rect simetrisi: her derinlik-ekseni / şerit boyutu için oyuncu ve düşman tahtası aynı yuvaları kapsar', () => {
+    for (let h = 1; h <= fm.rows; h++) for (let v = 1; v <= fm.lanes; v++) for (let s = 0; s < 12; s++) {
+      expect(shapeCells(rect(h, v), s, 'party', fm)).toEqual(shapeCells(rect(h, v), s, 'enemy', fm));
+    }
+  });
+
+  it('imleç hücresi: 2 derinlikli rect alanında iki tahtada da alanın EKRANDAKİ sol-alt köşesi (madde 377); kapsama yine anchor sırası + arkası', () => {
+    for (const r of [rect(2, 3), rect(2, 2)]) for (const board of ['party', 'enemy'] as const) for (let s = 0; s < 12; s++) {
+      const cells = shapeCells(r, cursorAnchorSlot(r, s, board, fm), board, fm);
+      expect(cells).toContain(s);
+      const sc = cells.map((c) => screenCellOf(fm, board, c));
+      const me = screenCellOf(fm, board, s);
+      const row = Math.floor(s / 3);
+      // kenarda kaydırılmıyorsa imleç en solda ve en altta
+      const slides = board === 'party' ? row === 0 : row === 3;
+      if (!slides) expect(me.col, `${board} @${s}`).toBe(Math.min(...sc.map((c) => c.col)));
+      if (r.cols === 2 && me.row >= 1) expect(me.row).toBe(Math.max(...sc.map((c) => c.row)));
+    }
+    // oyuncu tahtası: imleç sıra 2 -> alan sıra 1 + 2 (anchor sıra 1); düşman: imleç = anchor
+    expect(cursorAnchorSlot(rect(2, 3), 6, 'party', fm)).toBe(3);
+    expect(shapeCells(rect(2, 3), cursorAnchorSlot(rect(2, 3), 6, 'party', fm), 'party', fm)).toEqual([3, 4, 5, 6, 7, 8]);
+    expect(cursorAnchorSlot(rect(2, 3), 6, 'enemy', fm)).toBe(6);
+    expect(cursorAnchorSlot(rect(3, 3), 6, 'party', fm)).toBe(6);
+    expect(cursorAnchorSlot({ shape: 'row' }, 6, 'party', fm)).toBe(6);
   });
 
   it('rect 2x2: şerit ekseninde de sol-alt (ekranda alt = büyük şerit no) ve kayma; boyut hep korunur', () => {
@@ -103,8 +129,8 @@ describe('şekil hücre kümeleri (saf)', () => {
     expect(shapeCells(rect(2, 2), 5, 'enemy', fm)).toEqual([4, 5, 7, 8]);
     // anchor şerit 0 (en üst): yukarı taşar -> aşağı kaydırılır (şerit 0,1)
     expect(shapeCells(rect(2, 2), 3, 'enemy', fm)).toEqual([3, 4, 6, 7]);
-    // oyuncu, anchor sıra 1 şerit 2: sütun 2 -> sağa 2 sütun = sıra 1,0
-    expect(shapeCells(rect(2, 2), 5, 'party', fm)).toEqual([1, 2, 4, 5]);
+    // oyuncu, anchor sıra 1 şerit 2: düşmanla aynı (sıra 1,2; şerit 1,2)
+    expect(shapeCells(rect(2, 2), 5, 'party', fm)).toEqual([4, 5, 7, 8]);
     for (const board of ['party', 'enemy'] as const) for (let s = 0; s < 12; s++) {
       expect(shapeCells(rect(2, 2), s, board, fm)).toHaveLength(4);
       expect(shapeCells(rect(2, 3), s, board, fm)).toHaveLength(6);
@@ -210,11 +236,24 @@ describe('savaşta şekiller: vurulanlar, boş hücre anchor, olaylar, önizleme
   });
 
   it('Block Slam, düşman tarafı OYUNCU: dikdörtgen oyuncunun ekran-sol/alt kuralıyla hücreleri seçer', () => {
-    // düşman Geometer'ı oynatır, oyuncu tarafındaki warriorlara vurur: anchor party slot 6 (sıra 2 = ekranda soldan 2.) -> sıra 2 ve 1
+    // düşman Geometer'ı oynatır, oyuncu tarafındaki warriorlara vurur: anchor party slot 3 (sıra 1) -> sıra 1 ve arkası 2 (madde 376/8)
     const b = arena(WAR(0, 3, 6, 9), [['aoe_tester', 0]]);
-    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 6).cells).toEqual([3, 4, 5, 6, 7, 8]);
-    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 6).targets).toEqual(['party-1', 'party-2']);
-    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 0).cells).toEqual([0, 1, 2, 3, 4, 5]); // ön sıra anchor: kaydırıldı (sıra 1,0)
+    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 3).cells).toEqual([3, 4, 5, 6, 7, 8]);
+    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 3).targets).toEqual(['party-1', 'party-2']);
+    expect(b.shapePreviewCells('enemy-0', 'shape_rect', 0).cells).toEqual([0, 1, 2, 3, 4, 5]); // ön sıra anchor: sıra 0,1
+  });
+
+  it('Whirlwind (melee, rect 2x3) iki tarafta simetrik: ön sıra boşken anchor dolu ön sırada, alan arkasındaki sırayı da vurur (madde 376/8)', () => {
+    const hits = (side: 'party' | 'enemy') => {
+      const foes = WAR(3, 6, 9); // sıra 1, 2, 3; ön sıra boş
+      const b = side === 'party' ? arena(WAR(0), foes) : arena(foes, WAR(0));
+      const me = side === 'party' ? 'party-0' : 'enemy-0';
+      const anchors = b.shapeAnchors(me, 'whirlwind');
+      expect(anchors.length).toBeGreaterThan(0);
+      return Math.max(...anchors.map((a) => b.shapePreviewCells(me, 'whirlwind', a).targets.length));
+    };
+    expect(hits('party')).toBe(2);
+    expect(hits('enemy')).toBe(2);
   });
 
   it('Cross Burst: + şekli, kenarda kırpılır; boş merkez hücre de seçilebilir', () => {

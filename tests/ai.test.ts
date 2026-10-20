@@ -112,7 +112,7 @@ describe('yapay zeka: şifa, kalkan, çağrı', () => {
     expect(chooseAction(b, uidOf(b, 'enemy', 'druid'), ai)?.targetUid).toBe(archer.uid);
   });
 
-  it('saldırıları zayıfken Treant çağırır (çağrının ufuktaki katkısı + Verdant Blessing)', () => {
+  it('saldırıları zayıfken Treant çağırır (çağrının ufuktaki katkısı)', () => {
     const b = testBattle();
     // Druid'in kendi vuruşları değersiz; Treant'ın gücü Druid'in item HARİÇ temel statından (summonBase; çağrı yeniden tasarımı 2026-10-18)
     Object.assign(b.get(E_DRUID)!.stats, { int: 1, str: 1, dex: 1, summonBase: { ...content.classes.druid!.attributes } });
@@ -276,8 +276,9 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     const archer = b.get(uid(b, 'enemy', 'archer'))!;
     archer.hp = Math.round(archer.maxHp * 0.12);
     const choice = chooseAction(b, uid(b, 'enemy', 'defender'), ai)!;
-    expect(['taunt', 'guard']).toContain(choice.skillId);
-    if (choice.skillId === 'guard') expect(choice.targetUid).toBe(archer.uid);
+    expect(['taunt', 'close_ranks']).toContain(choice.skillId);
+    // Close Ranks (Ömer 2026-10-20): seçilen dost ya da onun sırasındaki dost olarak Archer korunan grupta
+    if (choice.skillId === 'close_ranks') expect([choice.targetUid, ...b.splashTargets('close_ranks', b.get(choice.targetUid!)!, uid(b, 'enemy', 'defender')).map((c) => c.uid)]).toContain(archer.uid);
   });
 
   it('Taunt zaten aktifse tekrar çekmez; başka bir şey yapar', () => {
@@ -294,11 +295,13 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     archer.hp = Math.round(archer.maxHp * 0.12); // ölmek üzere: Guard (hasarın yarısını üstlenir) kurtarır
     const skills = b.get(d)!.skills;
     b.get(d)!.skills = skills.filter((x) => x !== 'taunt' && x !== 'fist_crush'); // Taunt kurtarabilirdi, Fist Crush (zırh ölçekli, 2026-10-10) daha değerli olabilir: yalnızca Guard sınansın
-    expect(chooseAction(b, d, ai)).toMatchObject({ skillId: 'guard', targetUid: archer.uid, reason: 'guard' });
+    const pick = chooseAction(b, d, ai)!;
+    expect(pick).toMatchObject({ skillId: 'close_ranks', reason: 'guard' });
+    expect([pick.targetUid, ...b.splashTargets('close_ranks', b.get(pick.targetUid!)!, d).map((c) => c.uid)]).toContain(archer.uid);
     // Taunt sürerken tek hedefli saldırılar zaten Defender'a gider: Guard'ın kurtarma terimi kalmaz
     b.get(d)!.skills = skills;
     b.useSkill(d, 'taunt');
-    const g = explainChoice(b, d, ai)!.candidates.find((c) => c.skill === 'guard' && c.target === 'E2:Archer');
+    const g = explainChoice(b, d, ai)!.candidates.find((c) => c.skill === 'close_ranks' && c.target === 'E2:Archer');
     if (g) expect(g.terms?.save).toBeUndefined();
   });
 
@@ -308,7 +311,7 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     b.useSkill(d, 'taunt');
     const archer = b.get(uid(b, 'enemy', 'archer'))!;
     archer.hp = Math.round(archer.maxHp * 0.5);
-    b.useSkill(d, 'guard', archer.uid);
+    expect(b.useSkill(d, 'close_ranks', archer.uid).ok).toBe(true);
     expect(chooseAction(b, d, ai)?.reason).not.toBe('guard');
   });
 

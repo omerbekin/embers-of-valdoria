@@ -49,7 +49,7 @@ describe('mesafe kuralı (range.ts > cellDistance)', () => {
     expect(skillRangeFor(content.skills.fist_crush!, R('defender'), F)).toBe(Infinity);
     expect(skillRangeFor(content.skills.shield_wall ?? content.skills.taunt!, R('defender'), F)).toBe(Infinity);
     expect(skillRangeFor(content.skills.rejuvenate!, R('druid'), F)).toBe(Infinity);
-    expect(skillRangeFor(content.skills.guard!, R('defender'), F)).toBe(SR('guard'));
+    expect(skillRangeFor(content.skills.close_ranks!, R('defender'), F)).toBe(SR('close_ranks'));
     const on = { range: { enabled: true, default: 1 } };
     expect(rangeLabel(content.skills.fire_bolt!, R('mage'), on)).toBe(`Range ${R('mage')}`);
     expect(rangeLabel(content.skills.fist_crush!, R('defender'), on)).toBe('Global');
@@ -60,7 +60,7 @@ describe('mesafe kuralı (range.ts > cellDistance)', () => {
   it('onaylanan tablo (range.md) veride: sınıf tabanları, istisnalar, Global listesi', () => {
     expect({ warrior: R('warrior'), defender: R('defender'), cutthroat: R('cutthroat'), paladin: R('paladin'), druid: R('druid'), antimage: R('antimage'), gambler: R('gambler'), undead: R('undead'), hexer: R('hexer'), mage: R('mage'), archer: R('archer') })
       .toEqual({ warrior: 1, defender: 1, cutthroat: 1, paladin: 4, druid: 5, antimage: 4, gambler: 5, undead: 5, hexer: 5, mage: 6, archer: 6 });
-    for (const [id, r] of [['charge', 4], ['backstab', 3], ['x_cut', 3], ['smoke_bomb', 4], ['bone_throw', 4], ['drain_field', 4], ['guard', 2]] as const) expect(content.skills[id]?.range, id).toBe(r);
+    for (const [id, r] of [['charge', 4], ['backstab', 3], ['x_cut', 3], ['smoke_bomb', 4], ['bone_throw', 4], ['drain_field', 4], ['close_ranks', 2]] as const) expect(content.skills[id]?.range, id).toBe(r);
     for (const id of ['fist_crush', 'radiance', 'card_trick']) expect(content.skills[id]?.global, id).toBe(true);
     for (const id of ['meteor', 'blizzard', 'arrow_rain']) expect(content.skills[id]?.global, id).toBeFalsy();
   });
@@ -140,14 +140,14 @@ describe('savaşta menzil (validTargets / canUse / useSkill / önizleme)', () =>
   });
 
   it('Guard yalnızca yakın dostu korur (dost menzili veriden: sıra farkı); diğer dost skill\'leri sınırsız', () => {
-    const g = SR('guard');
+    const g = SR('close_ranks');
     const b = mk({ [slotAt(0)]: 'defender', [slotAt(g, 1)]: 'mage', ...(g + 1 < ROWS ? { [slotAt(g + 1, 2)]: 'archer' } : {}) }, { [slotAt(0)]: 'warrior' });
     const d = at(b, 'party', slotAt(0));
     const near = at(b, 'party', slotAt(g, 1));
-    expect(uids(b.validTargets(d.uid, 'guard'))).toContain(near.uid);
+    expect(uids(b.validTargets(d.uid, 'close_ranks'))).toContain(near.uid);
     if (g + 1 < ROWS) {
       const far = at(b, 'party', slotAt(g + 1, 2));
-      expect(b.targetProblem(d.uid, 'guard', far.uid)).toBe('Out of range');
+      expect(b.targetProblem(d.uid, 'close_ranks', far.uid)).toBe('Out of range');
     }
     // Rejuvenate (range'siz dost skill'i): en arkaya da ulaşır
     const r = mk({ [slotAt(0)]: 'druid', [slotAt(ROWS - 1)]: 'mage' }, { [slotAt(0)]: 'warrior' });

@@ -102,7 +102,7 @@ describe('Whirlwind lifesteal', () => {
       w.hp = Math.round(w.maxHp / 3);
       w.mp = w.maxMp;
       for (let i = 0; i < 40 && mode === 'turns' && b.currentUid !== 'party-0'; i++) b.skipTurn();
-      const events = act(b, 'party-0', 'whirlwind');
+      const events = act(b, 'party-0', 'whirlwind', 'enemy-0'); // alan skill'i: ön sıradaki düşman anchor
       const hits = ofType(events, 'damage').filter((e) => e.source === 'party-0' && e.amount > 0);
       expect(hits.length).toBeGreaterThan(0);
       const heals = ofType(events, 'heal').filter((e) => e.target === 'party-0' && e.source === 'party-0');

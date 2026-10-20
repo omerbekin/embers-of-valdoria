@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { richSegs, splitNow, splitStatTitle } from '../src/ui/band-rich';
 import { bandTipHtml, bandRichHtml } from '../src/ui/band-tip';
+import { tipToBand } from '../src/ui/battle-hud';
 
 describe('band tooltip (A - Band) metin ayrıştırma', () => {
   it('etiket + rakam + fark parçalanır, metin birebir korunur', () => {
@@ -39,5 +40,51 @@ describe('band tooltip (A - Band) metin ayrıştırma', () => {
     expect(html).toContain('bt-foot');
     expect(html).toContain('Venom &lt;Edge&gt;');
     expect(bandRichHtml('Wound 2 turns')).toContain('<span class="n">2</span>');
+  });
+
+  // V2 çipleri (Ömer 2026-10-20): menzil / bedel / bekleme yalnızca ikon + sayı; sözcük yok, tam anlam ipucunda
+  it('skill ipucu V2: menzil / MP / bekleme çipleri sözcüksüz, ipucu ve aria metni dolu', () => {
+    const html = bandTipHtml(
+      tipToBand({
+        title: 'Blizzard',
+        meta: [
+          { iconUrl: 'mp.png', text: '14 MP' },
+          { iconUrl: 'cd.png', text: '2 turns' },
+        ],
+        tags: [{ text: 'Block 3x2' }, { text: 'Ice', color: '#8fd8ff' }, { text: 'Range 6', kind: 'range' }],
+        rows: [],
+      }),
+    );
+    const chips = [...html.matchAll(/<span class="bt-chip[^"]*"[^>]*>(.*?)<\/span>(?:<\/span>)?/g)];
+    expect(html).not.toMatch(/>\s*(Range|MP|turns?)/);
+    expect(html).not.toContain('turns</span>');
+    expect(chips.length).toBeGreaterThanOrEqual(5);
+    for (const t of ['Range 6', 'Costs 14 MP', 'Cooldown: 2 turns']) {
+      expect(html).toContain(`data-tip="${t}"`);
+      expect(html).toContain(`aria-label="${t}"`);
+    }
+    expect(html).toContain('<span class="n">14</span>');
+    expect(html).toContain('<span class="n">6</span>');
+    expect(html).toContain('<span class="n">2</span>');
+  });
+
+  it('skill ipucu V2: tek tur "1 turn", Rage bedeli "Costs 10 Rage", bedelsiz Free ve sözcüklü yedekler korunur', () => {
+    const html = bandTipHtml(
+      tipToBand({
+        title: 'Smash',
+        meta: [
+          { iconUrl: 'rage.png', text: 'RAGE 10' },
+          { iconUrl: 'cd.png', text: '1 turn' },
+          { text: 'Free' },
+          { iconUrl: 'hp.png', text: '20% of current HP' },
+        ],
+        rows: [],
+      }),
+    );
+    expect(html).toContain('data-tip="Costs 10 Rage"');
+    expect(html).toContain('data-tip="Cooldown: 1 turn"');
+    expect(html).toContain('Free');
+    expect(html).toContain('of current HP'); // sayıya indirgenemeyen bedel eski yazılı çip olarak kalır
+    expect(html).not.toContain('RAGE');
   });
 });

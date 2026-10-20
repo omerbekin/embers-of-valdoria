@@ -128,6 +128,21 @@
   margin-top: 0.3em;
   font: calc(var(--fs) * 0.95) / 1.25 var(--bt-body);
   color: #e6dcc6;
+  position: relative;
+  padding-left: 1.1em; /* asılı girinti: sarılan satırlar yazıyla hizalı */
+}
+
+/* karo madde imi: gövde satırlarındaki karoyla aynı (ipucunun vurgu rengi), ilk satırın ortasında */
+.bt-sub::before {
+  content: '';
+  position: absolute;
+  left: 0.3em;
+  top: 0.64em;
+  width: 0.34em;
+  height: 0.34em;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--acl);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
 }
 
 .bt-sub .pl {
@@ -458,4 +473,62 @@
 html.short .bt,
 html.compact .bt {
   line-height: 1.2;
+}
+
+/* skill ipucu çipleri V2 (Ömer 2026-10-20): menzil / bedel / bekleme = ikon + sayı, sıkı çip; tam anlam hover / odak / dokunmada küçük balon */
+.bt-meta {
+  --ic: max(18px, calc(24 * var(--bu)));
+  gap: max(3px, calc(4 * var(--bu))) max(4px, calc(5 * var(--bu)));
+}
+
+.bt-meta .bt-chip {
+  padding: 0 0.5em;
+  gap: 0.3em;
+}
+
+.bt-chip.q {
+  padding: 0 0.45em 0 0.3em;
+  gap: 0.25em;
+  height: calc(var(--ic) + 8px);
+  min-height: 1.7em;
+  position: relative;
+}
+
+.bt-chip.q img {
+  width: var(--ic);
+  height: var(--ic);
+  image-rendering: auto;
+}
+
+.bt-chip.q .n {
+  font: 600 1.15em var(--bt-disp);
+}
+
+.bt-chip[data-tip] {
+  outline: none;
+  cursor: help;
+}
+
+.bt-chip.q[data-tip]:focus {
+  border-color: rgba(243, 217, 153, 0.8);
+}
+
+.bt-chip[data-tip]:hover::after,
+.bt-chip[data-tip]:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 40;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 5px 10px;
+  font: 600 12px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: #f3d999;
+  background: #0b0806;
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
 }

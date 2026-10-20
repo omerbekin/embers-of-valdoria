@@ -297,8 +297,8 @@ describe('Pose Tester I ... XI (gizli debug class\'ları, v2 pozlar)', () => {
     expect(skillPoses('pose_tester_6', content.skills['pt_fire_bolt'])).toEqual(['thrust']); // asa öne uzanır, ok asanın ucundan (2026-10-12 denetim)
     expect(skillPoses('pose_tester_4', content.skills['pt_quick_shot'])).toEqual(['shot']); // yayda bow_shot (kiriş eli yanakta)
     expect(skillPoses('pose_tester_4', content.skills['pt_arrow_rain'])).toEqual(['sky']); // yayda bow_sky
-    expect(skillPoses('pose_tester_2', content.skills['pt_guard'])).toEqual(['guard']); // gerçek koruma pozu (eski kodla savunma hareketi yok)
-    expect(POSES.braceSkills ?? []).not.toContain('pt_guard');
+    expect(skillPoses('pose_tester_2', content.skills['pt_close_ranks'])).toEqual(['guard']); // gerçek koruma pozu (eski kodla savunma hareketi yok)
+    expect(POSES.braceSkills ?? []).not.toContain('pt_close_ranks');
   });
 });
 

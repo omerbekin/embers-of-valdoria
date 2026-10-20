@@ -683,7 +683,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const done = v === 'cleared';
     const choice = outgoing(this.map, n.id).length > 1 && !done ? '  ·  choice' : '';
     const parts = [`${n.subtitle}${choice}`];
-    if (done && patrolAvailable(this.s, n.id)) parts.push(`Patrol ${Math.round(nextReplayMult(this.s, n.id) * 100)}%`);
+    if (done && patrolAvailable(this.s, n.id)) parts.push(`Patrol ${Math.round(nextReplayMult(this.s, n.id) * 100)}% XP`);
     const guard = this.guardDefeated(n, v);
     if (guard) parts.push(`${guard} defeated`);
     return parts.filter(Boolean).join('  ·  ');
@@ -1508,7 +1508,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const after = vis === 'goal' ? [] : outgoing(this.map, id).map((a) => node(this.map, a));
     const then = after.map((a) => `${a.name} (${TYPE_LABEL[a.type]})`).join(' or ');
     // Devriye: temizlenmiş savaş düğümüne dönülünce aynı düşmanlar, ödül azalan getiriyle (sıradaki oynanışın yüzdesi)
-    if (patrol) blurb = `Patrols return here. Rewards: ${Math.round(nextReplayMult(s, id) * 100)}% of the first victory, no Valor.`;
+    if (patrol) blurb = `Patrols return here. Full gold and items, ${Math.round(nextReplayMult(s, id) * 100)}% of the first victory's XP, no Valor.`;
     return { kind, state, foes, leader: leaderName, then, next: after.map((a) => ({ name: a.name, type: a.type })), blurb, faces };
   }
 
@@ -1673,7 +1673,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const loop = this.add.graphics();
     drawLoopIcon(loop, -w + 32, py);
     root.add(loop);
-    root.add(fitW(elBody(this, -w + 52, py, `Patrol ${Math.round(replayMult(1) * 100)}%: cleared, fight again`, 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
+    root.add(fitW(elBody(this, -w + 52, py, `Patrol ${Math.round(replayMult(1) * 100)}% XP: cleared, fight again`, 17, EL.TXT, false).setOrigin(0, 0.5), w - 70));
     const sy = py + 32;
     const sk = this.add.graphics();
     sk.fillStyle(0x1a0c08, 1).fillCircle(-w + 32, sy, 11.5).lineStyle(1.6, 0xb8402f, 0.9).strokeCircle(-w + 32, sy, 11.5);
@@ -2487,7 +2487,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const n = node(this.map, id);
     if (!n.encounter) return;
     const pct = Math.round(nextReplayMult(this.s, id) * 100);
-    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Rewards: ${pct}% of the first victory, no Valor. ${patrolRetreatNote()}` }, onGo: go });
+    this.nodeCard(id, { title: 'Fight the patrol?', foes: foeGroups(n.encounter).groups, info: { text: `Patrols return to cleared battlefields. Full gold and items, ${pct}% of the first victory's XP, no Valor. ${patrolRetreatNote()}` }, onGo: go });
   }
 
   /**

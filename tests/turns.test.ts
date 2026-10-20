@@ -155,7 +155,7 @@ describe('savaşta sıra (turns modu)', () => {
     for (let i = 0; i < 60 && !b.winner; i++) {
       const actor = b.currentActor!;
       actor.mp = actor.maxMp; // MP yenilenmesi Int'ten gelir (Warrior düşük): senaryo MP'ye takılmasın
-      if (actor.side === 'party' && b.canUse(actor.uid, 'whirlwind').ok) b.useSkill(actor.uid, 'whirlwind');
+      if (actor.side === 'party' && b.canUse(actor.uid, 'whirlwind').ok) b.useSkill(actor.uid, 'whirlwind', b.livingByDepth('enemy')[0]!.uid); // alan skill'i: en öndeki düşman anchor
       else b.skipTurn();
     }
     expect(b.winner).toBe('party');

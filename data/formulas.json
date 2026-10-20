@@ -25,10 +25,10 @@
   },
   "rage": {
     "max": 50,
-    "hitBase": 10,
-    "perHpPercent": 0.6,
-    "perHitCap": 25,
-    "perCastCap": 50
+    "hitBase": 5,
+    "perHpPercent": 0.45,
+    "perHitCap": 15,
+    "perCastCap": 20
   },
   "scaling": {
     "str": 1,

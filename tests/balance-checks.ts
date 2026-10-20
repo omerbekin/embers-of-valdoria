@@ -25,6 +25,7 @@ export const PENDING_BALANCE: readonly string[] = ['paladin'];
 // Abyssal Cry madde 262 yeniden tasarımından sonra hazır olanlardan ~%69 kullanılıyor: 2026-10-08 denge turunda listeden çıkarıldı.
 export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   // 2026-10-18 genel denge turu (open-questions 350): Whirlwind (güç 0,87, pay %16-18) ve Resurrection (MP 16, pay %8,5-9) bantta -> çıkarıldı.
+  // 2026-10-20 (open-questions 376): Whirlwind güç 0,65 sonrası pay %11 -> listeye alındı; Ömer kararıyla ilk 2 sıraya vuran rect 2x3 oldu (güç 0,5), pay %22 -> çıkarıldı.
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

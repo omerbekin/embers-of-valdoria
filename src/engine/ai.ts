@@ -582,7 +582,7 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
     return out;
   }
   // Yan vuruşlu (splash) tek hedef skill'inde grup = seçilen hedef + yanındakiler (ilk eleman seçilen hedeftir)
-  const groups = battle.needsTargetChoice(skillId) ? candidates.map((t) => [t, ...battle.splashTargets(skillId, t)]) : [candidates];
+  const groups = battle.needsTargetChoice(skillId) ? candidates.map((t) => [t, ...battle.splashTargets(skillId, t, actor.uid)]) : [candidates];
   return groups.map((targets) => evaluate(battle, actor, skill, targets, battle.needsTargetChoice(skillId) ? targets[0]!.uid : undefined, profile));
 }
 
@@ -1140,32 +1140,43 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     if (o.taunt || o.guard) add('protect', protectValue(ctx, o));
     // Çağrı (K7): vurabileceği bir yuva yoksa değeri 0; çağrı sınırı (maxSummons)
     if (o.summon) {
-      // Çağrı değeri: ufukta (ömrüyle sınırlı) yapacakları x yuvada işe yararlık (K7: yakın dövüşçü vuramayacağı yuvada 0) + düşman saldırılarını üstüne
-      // çekmesi (canı, protectShare) + çağırma yan etkisi (Verdant Blessing: tüm dostlara şifa, eksik canla sınırlı)
+      // Çağrı değeri (2026-10-21, open-questions 377): çağrının KENDİ değeri, ÖMRÜ boyunca (ufukla kısılmaz; yavaş ve uzun ömürlü çağrı da tam sayılır):
+      //  saldırı = en iyi skill'inin tur değeri x ömür içinde oynayacağı tur (üstüne çektiği hasarla erken ölürse daha az; ValueContext.summonOutlook)
+      //  x yuvada işe yararlık (K7: vuramayacağı yuvada 0) + gövde = ömrü boyunca üstüne çektiği düşman hasarı (canı + yenilenmesiyle sınırlı;
+      //  ön sıranın önüne konup düşmanın erişimini kesiyorsa o düşmanın tüm vuruşları) x protectShare (Taunt/Guard ile aynı ölçü) + çağırma yan etkisi (Bone Ward).
       const alive = battle.combatants.filter((c) => c.side === actor.side && c.summoned && c.hp > 0).length;
       const unit = battle.summonPreview(actor.uid, o.skill.id, o.corpseUid, o.summonSlot).unit;
       const eff = o.skill.effects.find((e) => e.type === 'summon');
       const life = eff && eff.type === 'summon' ? (eff.lifespan ?? 3) : 3;
       let v = 0;
       if (unit && o.summonSlot !== undefined && alive < Math.max(1, profile.maxSummons)) {
-        const useful = ctx.usefulAt({ uid: '__summon__', skills: unit.skills, defId: unit.id }, actor.side, o.summonSlot);
         const tv = Math.max(0, ...unit.skills.map((id) => {
           const sk = battle.skill(id);
           return sk ? skillRawValue(battle, unit.stats, sk) : 0;
         })) * vc.contributionShare;
-        const turns = ctx.turnsForSpeed(unit.stats.spd, life);
-        const allies = Math.max(1, battle.living(actor.side).length);
-        const totalRound = [...ctx.round.values()].reduce((a, b) => a + b, 0);
-        const decoy = useful > 0 ? Math.min(unit.stats.hp, (totalRound * turns) / (allies + 1)) * vc.protectShare : 0;
-        v = tv * turns * useful + decoy;
+        const valueAt = (slot: number) => {
+          const useful = ctx.usefulAt({ uid: '__summon__', skills: unit.skills, defId: unit.id }, actor.side, slot);
+          const look = ctx.summonOutlook({ hp: unit.stats.hp, hpRegen: unit.stats.hpRegen, spd: unit.stats.spd }, slot, life);
+          const body = useful > 0 ? (look.absorbedBlocked + look.absorbedShared) * vc.protectShare : 0;
+          return tv * look.ownTurns * useful + body;
+        };
+        // Yuva (tahta alanı): varsayılan yuva (summonSlotFor) ile başla; boş yuvalardan değeri AÇIKÇA daha yüksek olan seçilir (ör. menzilli Treant
+        // arkada ne vurur ne saldırı çeker: önde hem tüm düşmanlara ulaşır hem vuruş üstlenir). Eşitlikte varsayılan yuva kalır.
+        let best = o.summonSlot;
+        v = valueAt(best);
+        for (const slot of battle.summonSlots(actor.uid, o.skill.id)) {
+          if (slot === best) continue;
+          const sv = valueAt(slot);
+          if (sv > v + 1e-6) {
+            v = sv;
+            best = slot;
+          }
+        }
+        o.summonSlot = best;
       }
       const pe = actor.passive?.effect;
       // Bone Ward (YM10, mob pasifi): tarafta çağrı yoksa yeni çağrı çağıranın aldığı hasarı azaltır: önlenen beklenen hasar (Fortify ile aynı ölçü)
       if (pe?.type === 'boneWard' && unit && battle.passiveTakenMult(actor) === 1) v += pe.reduce * (ctx.round.get(actor.uid) ?? 0) * Math.min(life, vc.horizon);
-      if (pe?.type === 'verdantBlessing' && unit) {
-        const amount = attributePower(actor.stats, pe.scale, battle.formulas) * pe.power;
-        v += sum(battle.living(actor.side).map((a) => Math.min(amount, a.maxHp - a.hp)));
-      }
       o.summonValue = v;
       add('summon', v);
     }
@@ -1497,10 +1508,15 @@ function protectValue(ctx: ValueContext, o: Option): number {
   } else {
     const a = o.targets[0];
     const e = o.skill.effects.find((x) => x.type === 'guard');
-    if (!a || a.uid === actor.uid || !e || e.type !== 'guard' || a.statuses.some((s) => s.kind === 'guard')) return 0;
+    if (!a || a.uid === actor.uid || !e || e.type !== 'guard') return 0;
     turns = Math.min(e.turns, vc.horizon);
-    redirected = (ctx.round.get(a.uid) ?? 0) * e.share;
-    if (ctx.rescued(a, 0, (ctx.before.get(a.uid) ?? 0) * e.share)) saves += ctx.save(a);
+    // Close Ranks (splash 'row'): grup = seçilen dost + sırasındaki dostlar; zaten korunanlar sayılmaz (yeni Guard eskisinin yerine geçer, değer katmaz).
+    // Tek hedefli Guard'da grup yalnızca seçilen dosttur (eski hesap birebir).
+    for (const g of o.targets) {
+      if (g.uid === actor.uid || g.statuses.some((s) => s.kind === 'guard')) continue;
+      redirected += (ctx.round.get(g.uid) ?? 0) * e.share;
+      if (ctx.rescued(g, 0, (ctx.before.get(g.uid) ?? 0) * e.share)) saves += ctx.save(g);
+    }
   }
   if (redirected <= 0 && saves <= 0) return 0;
   // Defender riski: bir tur dolusu kendi + yönlenen hasar canını + kalkanını geçiyorsa

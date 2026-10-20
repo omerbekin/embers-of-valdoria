@@ -16,6 +16,10 @@ export interface BandChip {
   color?: string;
   /** Çip 'v' ise değerin kalın altın kısmı ("14" + " MP"). */
   num?: string;
+  /** Yalnızca ikon + sayı (sözcük yok: skill ipucu V2 çipleri: menzil / bedel / bekleme); `text` boş kalır, tam anlam `tip`te. */
+  bare?: boolean;
+  /** Üstüne gelince / odakta / dokununca küçük balon ve ekran okuyucu metni ("Range 6", "Costs 14 MP", "Cooldown: 2 turns"). */
+  tip?: string;
 }
 
 export interface BandLine {
@@ -84,8 +88,9 @@ export function bandRichHtml(text: string, color?: string, keyword = true): stri
 
 function chipHtml(c: BandChip): string {
   const style = c.color ? ` style="color:${css(c.color)}"` : '';
-  const inner = c.tone === 'v' && c.num ? `<span class="n">${esc(c.num)}</span> ${esc(c.text)}` : esc(c.text);
-  return `<span class="bt-chip${c.tone ? ` ${c.tone}` : ''}"${style}>${img(c.icon ?? '')}${inner}</span>`;
+  const inner = c.bare ? `<span class="n">${esc(c.num ?? c.text)}</span>` : c.tone === 'v' && c.num ? `<span class="n">${esc(c.num)}</span> ${esc(c.text)}` : esc(c.text);
+  const tip = c.tip ? ` data-tip="${esc(c.tip)}" aria-label="${esc(c.tip)}" tabindex="0"` : '';
+  return `<span class="bt-chip${c.tone ? ` ${c.tone}` : ''}${c.bare ? ' q' : ''}"${style}${tip}>${img(c.icon ?? '')}${inner}</span>`;
 }
 
 function gridHtml(g: BandGrid): string {

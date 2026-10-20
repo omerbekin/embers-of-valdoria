@@ -8,7 +8,7 @@
  * kalın kök = Treant (Root Smash, Vine Snare).
  *
  * Bu class'ın v1 ikon adları (ICONS anahtarları): leaf, leaves, thornwhip, roots, rejuvenate, treant, rootsmash, vinesnare
- *  - leaf: Druid logosu; leaves: Verdant Blessing pasifi; treant: Summon Treant skill'i + Treant logosu
+ *  - leaf: Druid logosu; leaves: Nature's Grudge pasifi (eski Verdant Blessing ikonu; temaya özel ikon bekliyor); treant: Summon Treant skill'i + Treant logosu
  *
  * SPRITES: v2 efektlerinin (vfx.ts) kullandığı ek çizimler; efektte k.v2Sprite(c, 'ad', renk, x, y, boyut) ile çizilir.
  */

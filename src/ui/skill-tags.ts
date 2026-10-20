@@ -39,7 +39,7 @@ export function skillElements(skill: SkillDef): Element[] {
     if (e.type === 'damage') out.push(e.element ?? 'physical');
     else if (e.type === 'ground') out.push(content.grounds[e.ground]?.element as Element);
   }
-  if (skill.splash && skill.splash.pattern !== 'chain') out.push('physical'); // zincir (Vine Snare) kendi hasar elementini tekrarlar
+  if (skill.splash && skill.splash.pattern !== 'chain' && skill.splash.pattern !== 'row') out.push('physical'); // zincir (Vine Snare) kendi hasar elementini tekrarlar
   return [...new Set(out.filter(Boolean))];
 }
 

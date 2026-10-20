@@ -9,7 +9,7 @@
 import './map-window.css';
 import { statImage, miscImage, uiImage } from '../game/icon-image-files';
 import mwData from '../../data/map-window.json';
-import { avatarUrlOf, bustHtml } from './hero-bust';
+import { addBustWeapons, avatarUrlOf, bustHtml } from './hero-bust';
 import { lockInput, unlockInput } from './input-lock';
 import { mountCloseButton } from './nav-close';
 
@@ -197,6 +197,7 @@ export function openMapWindow(root: HTMLElement, o: MwSpec): MwHandle {
   }
   wrap.innerHTML = `${defs}<div class="mw-scrim"></div>${win}`;
   root.append(wrap);
+  addBustWeapons(wrap);
   lockInput('map-window');
 
   let done = false;

@@ -187,6 +187,8 @@ export interface GearExt {
   /** Torba item'inin ipucu eylemlerine eklenenler (ör. Sell). */
   bagActions?(uid: string): ItemTipAction[];
   onDoubleTap?(key: string): boolean | undefined;
+  /** Dokunmatik tek dokunuş (ipucu yine açılır). */
+  onTap?(key: string): void;
   onHover?(key: string): void;
   /** Torba hücresinin altında fiyat (tüccar satış fiyatı). */
   price?(inst: ItemInstance): number;
@@ -418,6 +420,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     },
     stats: () => ({ stats: curStats, after: afterStats, ...(curHero() ? { classId: curHero()!.class } : {}) }),
     // dokunmatik çift dokunuş (masaüstü çift tıkla aynı): torba item'i kuşanır, kuşanılmış item çıkar; kısa 'snap' sesi
+    onTap: (key) => ext?.onTap?.(key),
     onDoubleTap: (key) => {
       const hero = curHero();
       const extra = ext?.onDoubleTap?.(key);

@@ -98,25 +98,17 @@ describe('loot üretimi', () => {
     }
   });
 
-  it('tekrar oynamada azalan ödül (%60/%40/%25) ve nadirlik tavanı; garanti yok', () => {
-    const avg = (replay: number) => {
-      let n = 0;
-      let g = 0;
-      for (let i = 0; i < 300; i++) {
-        const r = roll('elite', i, { replay });
-        n += r.items.length;
-        g += r.gold;
-      }
-      return { n: n / 300, g: g / 300 };
-    };
-    const a0 = avg(0);
-    const a1 = avg(1);
-    const a3 = avg(5);
-    expect(a1.n).toBeLessThan(a0.n);
-    expect(a3.n).toBeLessThan(a1.n);
-    expect(a1.g / a0.g).toBeCloseTo(0.6, 2);
-    expect(a3.g / a0.g).toBeCloseTo(0.25, 2);
-    for (let i = 0; i < 200; i++) for (const r of roll('elite', i, { replay: 2 }).rarities) expect(RARITY_IDS.indexOf(r)).toBeLessThanOrEqual(RARITY_IDS.indexOf('rare'));
+  it('tekrar oynamada altın / item düşüşü ve nadirlik tavanı ilk zaferle aynı (Ömer 2026-10-20); elit garantisi yalnızca ilk zaferde', () => {
+    expect(ITEMS.loot.repeat.every((x) => x.items === 1 && x.gold === 1 && x.maxRarity === 'legendary')).toBe(true);
+    const guard = ITEMS.loot.minItems.elite ?? 0;
+    for (let i = 0; i < 300; i++) {
+      const first = roll('elite', i, { ilvl: 10 });
+      const rep = roll('elite', i, { ilvl: 10, replay: 3 });
+      expect(rep.gold).toBe(first.gold);
+      // aynı zar: tekrarın item'leri ilk zaferin ilk n item'i (tavan yok); fark yalnızca ilk zafer garantisinden gelebilir
+      expect(rep.rarities).toEqual(first.rarities.slice(0, rep.rarities.length));
+      expect(first.items.length).toBeGreaterThanOrEqual(Math.max(rep.items.length, guard));
+    }
   });
 
   it('Rare pity yok (Ömer 2026-10-11): sayaç ne olursa olsun nadirlik yalnızca tablodan; aynı zar aynı sonuç', () => {

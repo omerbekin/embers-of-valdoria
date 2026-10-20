@@ -217,16 +217,19 @@ describe('dizilim ve menzil', () => {
     expect(b.validTargets(unit(b, 'party', 'archer').uid, 'arrow_rain')).toHaveLength(4);
   });
 
-  it('Whirlwind yalnızca ön sıradaki herkese vurur', () => {
+  it('Whirlwind (rect 2x3, Ömer 2026-10-20) ilk iki düşman sırasındaki herkese vurur', () => {
     const b = make({ party: ['warrior', 'archer', 'mage', 'paladin'], enemies: ['defender', 'warrior', 'archer', 'mage'] });
-    const events = act(b, unit(b, 'party', 'warrior').uid, 'whirlwind');
-    expect(ofType(events, 'damage').map((e) => e.target)).toEqual([unit(b, 'enemy', 'defender').uid, unit(b, 'enemy', 'warrior').uid]);
+    const anchor = unit(b, 'enemy', 'defender');
+    const cells = b.areaCells('whirlwind', anchor.slot, 'enemy');
+    const expected = b.living('enemy').filter((c) => cells.includes(c.slot) && b.rowRank(c.uid) <= 1).map((c) => c.uid).sort();
+    const events = act(b, unit(b, 'party', 'warrior').uid, 'whirlwind', anchor.uid);
+    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(expected);
   });
 
-  it('ön sırada 3 kişi varsa Whirlwind üçüne de vurur', () => {
+  it('ön sırada 3 kişi + arkasında 1 kişi varsa Whirlwind dördüne de vurur (ilk iki sıra)', () => {
     const b = grid(cells({ 0: 'warrior' }), cells({ 0: 'warrior', 1: 'mage', 2: 'archer', 3: 'druid' }));
-    const events = act(b, 'party-0', 'whirlwind');
-    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1', 'enemy-2']);
+    const events = act(b, 'party-0', 'whirlwind', 'enemy-0');
+    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1', 'enemy-2', 'enemy-3']);
   });
 
   it('menzil karşı taraf için de aynı: düşman yakın dövüşçüsü oyuncunun ön sırasına vurur', () => {
@@ -662,9 +665,9 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
 });
 
 describe('class verisi: yeni sınıflar ve dizilim', () => {
-  it('Defender: Strength kendi en yüksek statı (primary Resilience korunur) ve en yüksek zırh, 4 skill: tremor slam, taunt, guard, fist crush', () => {
+  it('Defender: Strength kendi en yüksek statı (primary Resilience korunur) ve en yüksek zırh, 4 skill: tremor slam, taunt, close ranks, fist crush', () => {
     const d = content.classes.defender!;
-    expect(d.skills.slice(0, 4)).toEqual(['tremor_slam', 'taunt', 'guard', 'fist_crush']);
+    expect(d.skills.slice(0, 4)).toEqual(['tremor_slam', 'taunt', 'close_ranks', 'fist_crush']);
     // Ömer 2026-10-18 (open-questions 350): STR 26 -> 24 (LUCK'a); artık sınıflar arasında en yüksek STR değil (Warrior/Undead 26), ama kendi en yüksek statı (INT ile eşit)
     const a = d.attributes;
     expect(a.str).toBeGreaterThanOrEqual(Math.max(a.int, a.dex, a.luck));
@@ -971,7 +974,7 @@ describe('Pasif skill\'ler', () => {
       expect(def.passive, id).toBeDefined();
       expect(def.passive!.name.length, id).toBeGreaterThan(0);
       expect(describePassive(def.passive!, def.stats, content.formulas).length, id).toBeGreaterThan(20); // açıklama değerleri de yazar
-      expect(['rage', 'divineLight', 'spellEcho', 'longshot', 'verdantBlessing', 'soulDrain', 'manaOverflow', 'armorAura', 'bonusVsStatus', 'omenTransfer'], id).toContain(def.passive!.effect.type);
+      expect(['rage', 'divineLight', 'spellEcho', 'longshot', 'naturesGrudge', 'soulDrain', 'manaOverflow', 'armorAura', 'bonusVsStatus', 'omenTransfer'], id).toContain(def.passive!.effect.type);
     }
   });
 
@@ -1090,13 +1093,75 @@ describe('Pasif skill\'ler', () => {
     expect(ofType(events, 'passive')).toHaveLength(0);
   });
 
-  it('Druid - Verdant Blessing: çağrı yapınca tüm dostlar iyileşir', () => {
-    const b = calm(grid(cells({ 0: 'druid', 2: 'warrior' }), cells({ 0: 'mage' })));
-    b.get('party-0')!.hp -= 20;
-    b.get('party-1')!.hp -= 20;
-    const events = act(b, 'party-0', 'summon_treant', undefined, 1);
-    expect(ofType(events, 'passive').some((e) => e.passive === 'verdant_blessing')).toBe(true);
-    expect(ofType(events, 'heal').map((e) => e.target).sort()).toEqual(['party-0', 'party-1']);
+  describe("Druid - Nature's Grudge", () => {
+    // Druid party-0, Warrior party-1; düşman Mage enemy-0 öldürür. Ölümcül vuruş motorun kendi hasar yolundan (applyHit + announceIfDead)
+    type Priv = {
+      applyHit(a: Combatant, t: Combatant, n: number, dt: string, crit: boolean, emit: (e: BattleEvent) => void, guarded: boolean, meta: object): number;
+      announceIfDead(c: Combatant, emit: (e: BattleEvent) => void): void;
+    };
+    const setup = () => {
+      const b = calm(grid(cells({ 0: 'druid', 2: 'warrior' }), cells({ 0: 'mage' })));
+      return { b, druid: b.get('party-0')!, war: b.get('party-1')!, killer: b.get('enemy-0')! };
+    };
+    const kill = (b: Battle, from: Combatant, to: Combatant, origin: 'skill' | 'status' = 'skill', beforeDeath?: () => void) => {
+      const events: BattleEvent[] = [];
+      const priv = b as unknown as Priv;
+      to.hp = 1;
+      priv.applyHit(from, to, 50, 'magic', false, (e) => events.push(e), false, origin === 'skill' ? { origin, element: 'fire', damageType: 'magic' } : { origin, element: 'dark', damageType: 'magic', status: 'wither' });
+      beforeDeath?.();
+      priv.announceIfDead(to, (e) => events.push(e));
+      expect(to.hp).toBe(0);
+      return events;
+    };
+    const fired = (events: BattleEvent[]) => ofType(events, 'passive').some((e) => e.passive === 'natures_grudge');
+    const grudgeOn = (b: Battle, uid: string) => b.get(uid)!.statuses.filter((s) => s.source === 'party-0' && (s.kind === 'slow' || s.kind === 'wither'));
+
+    it('dost kahraman düşünce öldüren düşman 3 tur Slow + Wither alır (tik = Druid INT x power)', () => {
+      const { b, druid, war, killer } = setup();
+      const events = kill(b, killer, war);
+      expect(fired(events)).toBe(true);
+      const sts = grudgeOn(b, killer.uid);
+      expect(sts.map((s) => s.kind).sort()).toEqual(['slow', 'wither']);
+      for (const st of sts) expect(st.turns).toBe(3);
+      const pe = druid.passive!.effect;
+      if (pe.type !== 'naturesGrudge') throw new Error('Druid pasifi naturesGrudge değil');
+      expect(pe.turns).toBe(3);
+      expect(sts.find((s) => s.kind === 'wither')!.amount).toBe(Math.round(attributePower(druid.stats, pe.scale, content.formulas) * pe.power));
+    });
+
+    it('Druid kendisi düşünce de öldüren köklenir', () => {
+      const { b, druid, killer } = setup();
+      expect(fired(kill(b, killer, druid))).toBe(true);
+      expect(grudgeOn(b, killer.uid)).toHaveLength(2);
+    });
+
+    it('DoT ile ölümde öldürme durumun kaynağına yazılır', () => {
+      const { b, war, killer } = setup();
+      kill(b, killer, war, 'status');
+      expect(grudgeOn(b, killer.uid)).toHaveLength(2);
+    });
+
+    it('çağrı (Treant) düşünce tetiklenmez', () => {
+      const { b, druid, killer } = setup();
+      act(b, druid.uid, 'summon_treant', undefined, 1);
+      const treant = b.combatants.find((c) => c.summoned && c.side === 'party')!;
+      expect(treant).toBeDefined();
+      expect(fired(kill(b, killer, treant))).toBe(false);
+      expect(grudgeOn(b, killer.uid)).toHaveLength(0);
+    });
+
+    it('öldüren yoksa (hasar kaydı yok) ya da öldüren o an ölmüşse bir şey olmaz', () => {
+      const { b, war, killer } = setup();
+      war.hp = 0;
+      const events: BattleEvent[] = [];
+      (b as unknown as Priv).announceIfDead(war, (e) => events.push(e));
+      expect(ofType(events, 'death')).toHaveLength(1);
+      expect(fired(events)).toBe(false);
+      expect(grudgeOn(b, killer.uid)).toHaveLength(0);
+      const s2 = setup();
+      expect(fired(kill(s2.b, s2.killer, s2.war, 'skill', () => { s2.killer.hp = 0; }))).toBe(false);
+      expect(grudgeOn(s2.b, s2.killer.uid)).toHaveLength(0);
+    });
   });
 
   it('Paladin - Divine Light: tur başında en yaralı dostu iyileştirir', () => {
@@ -1402,7 +1467,7 @@ describe('Warrior: Double Strike (iki vuruş)', () => {
     expect(info.lines[0]).toContain('x2');
     const target = unit(b, 'enemy', 'defender');
     const pv = previewSkill(b, w.uid, 'melee_attack', target.uid)[0]!;
-    const single = previewSkill(b, w.uid, 'whirlwind')[0]; // yalnızca karşılaştırma için hazır
+    const single = previewSkill(b, w.uid, 'whirlwind', target.uid)[0]; // yalnızca karşılaştırma için hazır
     expect(pv.damage!.avg).toBeGreaterThan(0);
     expect(single).toBeDefined();
   });

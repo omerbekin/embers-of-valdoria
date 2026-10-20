@@ -2,6 +2,7 @@
    yalnızca seçili item, önce -> sonra satırları, affix seçimi ve takılı item satırları burada. Yazı: Cinzel başlık / EB Garamond düz yazı. */
 .bs-smith .bs-line {
   font-style: normal;
+  flex: none; /* Equipped bölümü kalkınca satır boşluğu doldurup uzamasın */
 }
 
 .bs-pane {
@@ -116,28 +117,4 @@
 .bs-affix:disabled {
   opacity: 0.5;
   cursor: default;
-}
-
-.bs-eq {
-  display: flex;
-  flex-direction: column;
-  gap: calc(8 * var(--u));
-}
-
-.bs-eqrow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: calc(6 * var(--u));
-}
-
-.bs-eqrow .bs-face {
-  width: max(36px, calc(56 * var(--u)));
-  height: max(36px, calc(56 * var(--u)));
-  flex: none;
-}
-
-.bs-eqrow .gr-item {
-  width: max(44px, calc(64 * var(--u)));
-  height: max(44px, calc(64 * var(--u)));
 }

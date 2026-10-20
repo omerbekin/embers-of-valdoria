@@ -1,6 +1,7 @@
 import './battle-hud.css';
 import { passivePlateHtml, skillPlateHtml, type SkillChipKind } from './skill-bar';
 import { iconUrl } from './dom-icons';
+import { cooldownChipOf, costChipOf, rangeChipOf } from './skill-chips';
 import { hasUiImage, uiIconName } from './ui-icons';
 import { ValorMeter } from './valor-braziers';
 import { valorRules } from '../engine/content';
@@ -52,7 +53,7 @@ export interface TipContent {
   sub?: string;
   meta?: TipMeta[];
   /** Başlığın altında yan yana küçük etiketler (skill: hedef türü · element · Melee / Ranged; src/ui/skill-tags.ts). */
-  tags?: Array<{ text: string; color?: string; iconUrl?: string }>;
+  tags?: Array<{ text: string; color?: string; iconUrl?: string; /** 'range' = menzil çipi (ikon + sayı, V2). */ kind?: string }>;
   rows: TipRow[];
   shape?: MiniShapeLike | null;
   /** Başlık şeridinin üstündeki tür etiketi ("Skill", "Passive"...); yoksa `badge` kullanılır (Band tooltip, src/ui/band-tip.ts). */
@@ -244,13 +245,33 @@ const primaryLabelHtml = (name: string): string => {
   return m ? `${esc(m[1]!)} <b>${esc(m[2]!)}</b>` : esc(name);
 };
 
+/** Skill ipucu çipleri V2 (Ömer 2026-10-20): menzil / bedel / bekleme yalnızca ikon + sayı; tam anlam üstüne gelince ("Range 6", "Costs 14 MP", "Cooldown: 2 turns"). */
+function tagChip(g: NonNullable<TipContent['tags']>[number]): BandChip {
+  const rg = g.kind === 'range' ? rangeChipOf(g.text) : null;
+  if (rg) return { text: '', num: rg.num, bare: true, tone: 'v', icon: iconUrl(uiIconName('range'), '#e8e2d0'), tip: rg.tip };
+  return { text: g.text, ...(g.iconUrl ? { icon: g.iconUrl } : {}), ...(g.color ? { tone: 'ac' as const, color: g.color } : {}) };
+}
+function metaBare(m: NonNullable<TipContent['meta']>[number]): BandChip | null {
+  const icon = m.iconUrl ? { icon: m.iconUrl } : {};
+  const cd = cooldownChipOf(m.text);
+  if (cd) return { text: '', num: cd.num, bare: true, tone: 'v', ...icon, tip: cd.tip };
+  const cost = m.iconUrl ? costChipOf(m.text) : null;
+  if (cost) return { text: '', num: cost.num, bare: true, tone: 'v', ...icon, tip: cost.tip, ...(m.color && cost.res === 'rage' ? { color: m.color } : {}) };
+  return null;
+}
+
 /** TipContent -> "A - Band" ipucu tarifi (içerik aynı; yalnızca görünüm: src/ui/band-tip.ts). */
 export function tipToBand(t: TipContent): BandTipSpec {
   const tagColor = t.tags?.find((g) => g.color)?.color;
   const titleAccent = t.titleColor && !NEUTRAL_TITLE.has(t.titleColor.toLowerCase()) ? t.titleColor : undefined;
   const chips: BandChip[] = [];
-  for (const g of t.tags ?? []) chips.push({ text: g.text, ...(g.iconUrl ? { icon: g.iconUrl } : {}), ...(g.color ? { tone: 'ac' as const, color: g.color } : {}) });
+  for (const g of t.tags ?? []) chips.push(tagChip(g));
   for (const m of t.meta ?? []) {
+    const bare = metaBare(m);
+    if (bare) {
+      chips.push(bare);
+      continue;
+    }
     const free = /^(cost )?free$/i.test(m.text);
     const num = /^(\d+(?:\.\d+)?)\s*(.*)$/.exec(m.text);
     chips.push({ text: num ? num[2]! : m.text, ...(num ? { num: num[1]!, tone: 'v' as const } : { tone: free ? ('free' as const) : ('v' as const) }), ...(m.iconUrl ? { icon: m.iconUrl } : {}), ...(m.color && !free ? { color: m.color } : {}) });

@@ -68,9 +68,12 @@ describe('önizleme: hasar', () => {
     expect(d.critMax).toBe(Math.round(d.max * 3));
   });
 
-  it('menzildeki tüm düşmanlar için önizleme döner (Whirlwind: ön sıra; Arrow Rain: şeklindeki herkes)', () => {
-    const w = previewSkill(testBattle(), WARRIOR, 'whirlwind');
-    expect(w.map((x) => x.uid).sort()).toEqual([E_WARRIOR, E_DRUID].sort());
+  it('alan skill önizlemesi şeklindeki herkes için döner (Whirlwind: ilk iki sıra; Arrow Rain: 3x3)', () => {
+    const t = testBattle();
+    const w = previewSkill(t, WARRIOR, 'whirlwind', E_WARRIOR);
+    const wc = t.areaCells('whirlwind', t.get(E_WARRIOR)!.slot, 'enemy');
+    expect(w.map((x) => x.uid).sort()).toEqual(t.living('enemy').filter((c) => wc.includes(c.slot) && t.rowRank(c.uid) <= 1).map((c) => c.uid).sort());
+    expect(w.length).toBeGreaterThan(2);
     for (const x of w) expect(x.damage?.avg).toBeGreaterThan(0);
     const b = testBattle();
     const rain = previewSkill(b, E_ARCHER, 'arrow_rain', PALADIN);
@@ -161,11 +164,11 @@ describe('önizleme: hasar', () => {
   it('önizleme savaşı değiştirmez ve RNG\'ye dokunmaz (önizlemeli ve önizlemesiz savaş birebir aynı)', () => {
     const a = testBattle(7);
     const b = testBattle(7);
-    for (let i = 0; i < 5; i++) previewSkill(a, WARRIOR, 'whirlwind');
+    for (let i = 0; i < 5; i++) previewSkill(a, WARRIOR, 'whirlwind', E_WARRIOR);
     previewSkill(a, MAGE, 'meteor', E_WARRIOR);
     expect(a.log).toHaveLength(b.log.length);
-    a.useSkill(WARRIOR, 'whirlwind');
-    b.useSkill(WARRIOR, 'whirlwind');
+    a.useSkill(WARRIOR, 'whirlwind', E_WARRIOR);
+    b.useSkill(WARRIOR, 'whirlwind', E_WARRIOR);
     expect(a.log).toEqual(b.log);
   });
 });
@@ -271,7 +274,7 @@ describe('skill açıklaması (tooltip)', () => {
 
   it('hedef biçimi, bedel ve bekleme süresi okunur metin olarak gelir', () => {
     expect(info('power_strike')).toMatchObject({ name: 'Power Strike', target: 'One enemy', cost: '10 MP', cooldown: '2 turns' });
-    expect(info('whirlwind').target).toBe('All enemies');
+    expect(info('whirlwind').target).toContain('2x3'); // Whirlwind rect 2x3 (Ömer 2026-10-20)
     expect(info('lay_on_hands').target).toBe('One ally');
     expect(info('radiance').target).toBe('Everyone');
     expect(info('shield_wall').target).toBe('Self');
@@ -405,7 +408,7 @@ describe('stat açıklaması (tooltip)', () => {
     const t = i.lines.join('\n');
     expect(i.title).toBe('Defender');
     expect(t).toContain(`STR ${content.classes.defender!.attributes.str}`);
-    expect(t).toContain('Skills: Tremor Slam, Taunt, Guard, Fist Crush');
+    expect(t).toContain('Skills: Tremor Slam, Taunt, Close Ranks, Fist Crush');
     expect(t).toContain(`Armor ${content.classes.defender!.stats.armor}`);
     expect(describeClass(content.classes.antimage!, content.skills, f).lines.join('\n')).toContain(`Magic armor ${content.classes.antimage!.stats.magicArmor}`);
   });

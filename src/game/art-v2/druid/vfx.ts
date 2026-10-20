@@ -516,7 +516,7 @@ const rejuvenate: V2Vfx = async (c, k) => {
  * yaprak ve yaşayan yeşil-altın ışık (ADD, düşük, nefes alan). İki parça art arda oynar (olay akışı değişmez):
  *  1) 'summonroots' (skill, ~0,85 sn): Druid asasını kaldırır (tepesinde yumuşak yeşil-altın ışık, asadan birkaç yaprak kopar), asayı
  *     toprağa saplar: ayağının dibinde toprak sıçrar, iki kök sırtı toprağın altından Treant'ın doğacağı yuvaya koşar, yuvada toprak
- *     kabarır (çakıllar zıplar). Verdant Blessing: dostların üstüne birer meşe yaprağı salınarak düşer.
+ *     kabarır (çakıllar zıplar).
  *  2) 'summon_treant' (olay, ~2,3 sn): toprak kabarıp çatlar; kalın, kabuklu, yosunlu kökler topraktan fışkırıp burularak yükselir
  *     (her kökün dibinde toprak püskürür, toz kalkar), kökler içe kıvrılıp gövdeye sarılırken Treant topraktan büyüyerek yükselir
  *     (koyu kabuk renginden kendi rengine açılır, kabuk kıymıkları savrulur), arkasında yaşayan yeşil-altın ışık nefes alır, polen
@@ -807,7 +807,7 @@ function grovePlot(c: VfxCtx, k: VfxKit, slot: unknown): Pt | undefined {
 /**
  * Summon Treant (skill): bkz. bölüm başı (1). Druid asasını kaldırır, tepesinde yaşayan yeşil-altın ışık toplanır, birkaç yaprak kopar;
  * asayı toprağa saplar (gövde çöker), dibinde toprak sıçrar; iki kök sırtı toprağın altından yuvaya koşar ve yuvada toprak kabarır.
- * Verdant Blessing: dostların üstüne birer yaprak salınarak düşer. ~0,85 sn; doğuş 'summon_treant' olay efektindedir.
+ * ~0,85 sn; doğuş 'summon_treant' olay efektindedir. (Eski Verdant Blessing yaprak yağmuru pasifle birlikte kalktı, 2026-10-20.)
  */
 const summonroots: V2Vfx = async (c, k) => {
   const a = c.actor;
@@ -831,9 +831,6 @@ const summonroots: V2Vfx = async (c, k) => {
   const to = grovePlot(c, k, used?.['slot']) ?? { x: f.x + facing(a) * 160, y: f.y };
   const r1 = rootRidge(c, k, { x: plant.x, y: plant.y }, to, 300, 10);
   const r2 = rootRidge(c, k, { x: plant.x, y: plant.y + 8 }, { x: to.x, y: to.y + 10 }, 340, 8);
-  // Verdant Blessing: dostların üstüne birer yaprak
-  const allies = [...(sceneOf(c).views?.values() ?? [])].filter((v) => v.combatant.side === a.combatant.side && v.combatant.hp > 0 && v !== a);
-  for (const v of allies.slice(0, 11)) leafFall(c, k, v.container.x, v.container.y - v.h - 30, 1, { spread: 20, fall: [v.h * 0.5, v.h * 0.7], dur: [900, 1200], delay: [100, 400], size: [18, 24] });
   await Promise.all([r1.done, r2.done]);
   r1.fade(500);
   r2.fade(500);

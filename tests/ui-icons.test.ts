@@ -8,7 +8,7 @@ import { content } from '../src/engine';
 // Boyalı arayüz ikonları (Ömer 2026-10-10): assets/ui-icons/<ad>.png (+ small/), tek kaynak uiIconName -> art-registry 'ui:<ad>'.
 describe('Arayüz ikonları: her kavram boyalı görselle, kodla çizilen yedek korunur', () => {
   it('her UiIconKind için 128 ve 64 piksellik görsel var; fazladan dosya yok', () => {
-    expect(UI_ICON_KINDS).toHaveLength(16);
+    expect(UI_ICON_KINDS).toHaveLength(17);
     for (const k of UI_ICON_KINDS) {
       const f = uiImage(k);
       expect(f, `${k}: assets/ui-icons/${k}.png yok`).not.toBeNull();

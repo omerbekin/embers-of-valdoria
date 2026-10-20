@@ -38,7 +38,12 @@ export function areaBoards(battle: Battle, actorUid: string, skillId: string): B
   const foe: Side = actor.side === 'party' ? 'enemy' : 'party';
   const boards: Side[] = battle.isAnyBoardArea(skillId) ? [foe, actor.side] : [foe];
   const cells = battle.shapeAnchorCells(actorUid, skillId);
-  return boards.map((board) => ({ board, tone: areaTone(battle, actorUid, skillId, board), anchors: cells.filter((c) => c.board === board).map((c) => c.slot) }));
+  // Seçilebilir plakalar İMLEÇ hücreleridir (oyuncu tahtasında 2 derinlikli rect'te imleç anchor'dan farklı: battle.cursorAnchor)
+  return boards.map((board) => {
+    const ok = new Set(cells.filter((c) => c.board === board).map((c) => c.slot));
+    const anchors = Array.from({ length: battle.formulas.formation.rows * battle.formulas.formation.lanes }, (_, s) => s).filter((s) => ok.has(battle.cursorAnchor(skillId, s, board, actorUid)));
+    return { board, tone: areaTone(battle, actorUid, skillId, board), anchors };
+  });
 }
 
 /**

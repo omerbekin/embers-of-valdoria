@@ -74,11 +74,15 @@ describe('hasar skill\'leri', () => {
     expect(dmg.crit).toBe(false);
   });
 
-  it('tüm düşmanları vuran yakın dövüş skill\'i (Whirlwind) yalnızca ön sıraya vurur', () => {
+  it('yakın dövüş alan skill\'i (Whirlwind) ilk iki düşman sırasına vurur', () => {
     const b = newBattle();
-    const events = act(b, WARRIOR, 'whirlwind');
-    // düşman ön sırası: Warrior (melee) + Druid (öncelik sırasıyla ikinci); Archer ve Mage 2. sırada
-    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual([E_WARRIOR, E_DRUID].sort());
+    // Whirlwind rect 2x3 (Ömer 2026-10-20): anchor ön sırada, alan ilk iki sırayı kapsar (şekil veriden: data/skills.json > whirlwind.area)
+    const cells = b.areaCells('whirlwind', b.get(E_WARRIOR)!.slot, 'enemy');
+    const inShape = b.living('enemy').filter((c) => cells.includes(c.slot) && b.rowRank(c.uid) <= 1).map((c) => c.uid).sort();
+    // düşman ön sırası: Warrior + Druid; Archer ve Mage 2. sırada: dördü de ilk iki sırada
+    expect(inShape).toEqual([E_WARRIOR, E_DRUID, E_ARCHER, E_MAGE].sort());
+    const events = act(b, WARRIOR, 'whirlwind', E_WARRIOR);
+    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(inShape);
   });
 
   it('menzilli tüm-düşman skill\'i (Arrow Rain) arkadakilere de ulaşır', () => {
@@ -355,7 +359,7 @@ describe('savaş sonu ve determinizm', () => {
     for (let i = 0; i < 500 && !b.winner; i++) {
       const target = b.livingByDepth('enemy')[0]!;
       const skill = b.canUse(WARRIOR, 'whirlwind').ok ? 'whirlwind' : 'melee_attack';
-      act(b, WARRIOR, skill, skill === 'melee_attack' ? target.uid : undefined);
+      act(b, WARRIOR, skill, target.uid); // Whirlwind alan skill'i: en öndeki düşman anchor
     }
     return b;
   }

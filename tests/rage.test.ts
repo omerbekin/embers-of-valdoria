@@ -104,7 +104,7 @@ describe('Rage: kazanç', () => {
 
   it('çok hedefli skill (Whirlwind) en yüksek tek hedefin kazancını verir: hedef sayısı kazancı artırmaz', () => {
     const b = mk({ 0: 'warrior' }, { 0: 'defender', 1: 'defender', 2: 'defender' }, 'test', 300);
-    const events = act(b, 'party-0', 'whirlwind');
+    const events = act(b, 'party-0', 'whirlwind', 'enemy-0'); // alan skill'i: ön sıradaki düşman anchor
     const hits = ofType(events, 'damage');
     expect(new Set(hits.map((h) => h.target)).size).toBe(3);
     const perTarget = hits.map((h) => hitGain(h.amount + h.absorbed, 300));

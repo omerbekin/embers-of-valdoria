@@ -121,7 +121,7 @@ describe('Taunt: kontrol (CC) durumu taunt\'ı siler', () => {
   it('Guard bağlantısı: taunter stun yiyince taunt gider ama taunter\'ın başkasına koyduğu guard sürer; taunt\'ın guard payı (allyDamageMult) gider', () => {
     const b = grid(cells({ 0: 'defender', 2: 'archer', 3: 'warrior' }), cells({ 0: 'warrior' }));
     act(b, 'party-0', 'taunt');
-    act(b, 'party-0', 'guard', 'party-1');
+    act(b, 'party-0', 'close_ranks', 'party-1');
     expect(has(b, 'party-1', 'guard')).toBe(true);
     expect(b.damageTakenMult(b.get('party-2')!)).toBe(allyMult);
     b.debugAddStatus('party-0', 'stun', 2);

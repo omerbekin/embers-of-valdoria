@@ -41,12 +41,12 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
-const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span']; // withering_curse: Hexer (rect 2x3, stages row)
+const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
   for (let R = 1; R <= fm.rows; R++)
     for (let C = 1; C <= fm.lanes; C++) {
-      it(`${R}x${C}: R*C hücre, ekranda R sütun x C satır dikdörtgen; boyutu 3+ eksende fare ortada (olmazsa soldan, o da olmazsa kaydır), 1-2 eksende sol-alt köşe`, () => {
+      it(`${R}x${C}: R*C hücre, ekranda R sütun x C satır dikdörtgen; boyutu 3+ eksende fare ortada (olmazsa soldan, o da olmazsa kaydır), 1-2 eksende dikeyde alt, derinlikte anchor sırası + arkası`, () => {
         const area = { shape: 'rect' as const, rows: R, cols: C, anchor: 'bottom_left' as const };
         for (const board of ['party', 'enemy'] as const)
           for (let a = 0; a < fm.rows * fm.lanes; a++) {
@@ -71,9 +71,13 @@ describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki taht
               }
               return clampTo(smallAt === 'low' ? p : p - n + 1, max - n);
             };
-            expect(cols[0], `${board} @${a} yatay`).toBe(expectStart(g.col, R, fm.rows, 'low'));
+            // Madde 376/8: derinlik ekseninde (yatay) boyut 1-2 -> anchor sırası + ARKASI; oyuncu tahtasında arka ekranda solda (fare en sağda)
+            const backLow = board === 'party';
+            expect(cols[0], `${board} @${a} yatay`).toBe(expectStart(g.col, R, fm.rows, backLow ? 'high' : 'low'));
             expect(rows[0], `${board} @${a} dikey`).toBe(expectStart(g.row, C, fm.lanes, 'high'));
-            if (R < 3 && g.col + R <= fm.rows) expect(cols[0], `${board} @${a} sol`).toBe(g.col); // eski kural: anchor = sol
+            if (R < 3 && !backLow && g.col + R <= fm.rows) expect(cols[0], `${board} @${a} sol`).toBe(g.col); // düşman: anchor = sol (ön)
+            if (R < 3 && backLow && g.col - R + 1 >= 0) expect(cols[cols.length - 1], `${board} @${a} sağ`).toBe(g.col); // oyuncu: anchor = sağ (ön)
+            if (R < 3) expect(shapeCells(area, a, 'party', fm), `ayna @${a}`).toEqual(shapeCells(area, a, 'enemy', fm)); // iki tahta simetrik
             if (C < 3 && g.row - C + 1 >= 0) expect(rows[rows.length - 1], `${board} @${a} alt`).toBe(g.row); // eski kural: anchor = alt
             if (R === 3 && g.col >= 1 && g.col + 1 < fm.rows) expect(cols[1], `${board} @${a} orta`).toBe(g.col); // 3 genişlik: fare tam ortada
             if (R === 4) expect(cols[0]).toBe(0); // 4 = tüm derinlik
@@ -254,12 +258,12 @@ describe('migre edilen alan skill\'leri', () => {
     for (const id of area) expect(id in MIGRATED || content.classes.aoe_tester!.skills.includes(id) || ADDED_LATER.includes(id) || !!content.skills[id]!.artOf, id).toBe(true); // artOf: Pose Tester kopyası
   });
 
-  it('dokunulmayan hedef-seçim türleri: Whirlwind (all_enemies), Radiance (everyone), Fist Crush / Card Trick (random_enemies)', () => {
-    expect(content.skills.whirlwind!.target).toBe('all_enemies');
+  it('dokunulmayan hedef-seçim türleri: Radiance (everyone), Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu', () => {
+    expect(content.skills.whirlwind!).toMatchObject({ target: 'area_enemies', area: { shape: 'rect', rows: 2, cols: 3 } });
     expect(content.skills.radiance!.target).toBe('everyone');
     expect(content.skills.fist_crush!.target).toBe('random_enemies');
     expect(content.skills.card_trick!.target).toBe('random_enemies');
-    for (const id of ['whirlwind', 'radiance', 'fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
+    for (const id of ['radiance', 'fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
   });
 
   it('açıklama ve rozet şekilden: Block 2x3 + "Sweeps row by row, front row first" (aşamalı), Cross, Row, Column', () => {

@@ -10,7 +10,7 @@
     "battleTurns": { "low": 35, "high": 50 },
     "matchup": { "crushingLow": 25, "crushingHigh": 75, "minGames": 200 }
   },
-  "situational": ["guard", "mana_barrier", "spell_ward", "jinx", "dark_bond", "resurrection"],
+  "situational": ["close_ranks", "mana_barrier", "spell_ward", "jinx", "dark_bond", "resurrection"],
   "measure": { "runs": 10000, "seedGroups": [1, 500001] },
   "test": { "runs": 5000, "seedGroups": [900001, 300001] }
 }

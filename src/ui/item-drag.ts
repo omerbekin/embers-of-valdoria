@@ -57,6 +57,8 @@ export interface ItemInteractionHost {
    * false / verilmemiş = eski davranış (ikinci dokunuş ipucunu kapatır).
    */
   onDoubleTap?(key: string): boolean;
+  /** Dokunmatikte her tek dokunuşta (ipucu yine sabitlenir); demirci takılı item'i hemen seçer. */
+  onTap?(key: string): void;
 }
 
 export interface ItemInteractions {
@@ -378,6 +380,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
         setHover('');
       } else pinTip(tp.key, tp.el);
       swallowUntil = performance.now() + 700;
+      if (tp.key) h.onTap?.(tp.key);
       return;
     }
     if (!drag && press?.touch && press.tipShown) {

@@ -25,7 +25,7 @@ const POSE = {
   // Defender (gürz + kule kalkanı)
   tremor_slam: 'overhead',
   taunt: 'guard',
-  guard: 'guard',
+  close_ranks: 'guard',
   fist_crush: 'raise',
   // Paladin (gürz + heater kalkanı)
   holy_strike: 'raise',

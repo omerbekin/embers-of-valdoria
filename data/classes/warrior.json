@@ -35,7 +35,7 @@
       "maxBonus": 0.8,
       "rageOnHurt": {
         "_not": "Ömer 2026-10-17 (wr1 Berserker): kaybedilen can maks canın %1'i başına perHpPercent Rage, vuruş başına en fazla perHitCap. İlk değer PROVİZYON (balance-tester).",
-        "perHpPercent": 0.5,
+        "perHpPercent": 0.4,
         "perHitCap": 15
       }
     }

@@ -17,7 +17,9 @@ import castleHall from '../../assets/backgrounds/castle-hall.webp?url';
 import { h, isolateKeys, openLightbox } from '../gallery/dom';
 import { bindIcon, bindStatusIcon } from '../ui/dom-icons';
 import { SHARED_KEY, ownerOfLogo, ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
-import { STAT_COLOR, statIconName } from '../ui/stat-icons';
+import { RAGE_COLOR, STAT_COLOR, UI_COLOR, statIconName } from '../ui/stat-icons';
+import { uiIconName } from '../ui/ui-icons';
+import { cooldownChipOf, costChipOf, rangeChipOf } from '../ui/skill-chips';
 import type { MiniShape } from '../ui/shape-diagram';
 import { buildWiki, elementIcon } from './catalog';
 import type { WikiArticle, WikiBlock, WikiCatalog, WikiElement, WikiGround, WikiSkill, WikiSkillRef, WikiStatus, WikiUnit } from './catalog';
@@ -518,13 +520,26 @@ export class WikiPanel {
     return h('div', {}, articleHead(pic(a.icon, a.accent, 'cx-ico head', undefined, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
   }
 
+  /** Skill kartı çipleri V2 (src/ui/skill-chips.ts): menzil / bedel / bekleme ikon + sayı, tam anlam balonda; sayıya inmeyenler eski yazılı çip. */
+  private skillNumChips(s: WikiSkill): Array<HTMLElement | null> {
+    const q = (icon: string, color: string, num: string, tip: string): HTMLElement =>
+      h('span', { class: 'cx-tag q', attrs: { 'data-tip': tip, 'aria-label': tip, tabindex: '0' } }, pic(icon, color, 'cx-ico q'), h('b', { text: num }));
+    const rg = rangeChipOf(s.rangeLabel);
+    const cost = costChipOf(s.cost);
+    const cd = cooldownChipOf(s.cooldown);
+    return [
+      rg ? q(uiIconName('range'), '#e8e2d0', rg.num, rg.tip) : s.rangeLabel ? chip(s.rangeLabel) : null,
+      cost ? q(cost.res === 'rage' ? uiIconName('rage') : statIconName(cost.res), cost.res === 'rage' ? RAGE_COLOR : STAT_COLOR[cost.res], cost.num, cost.tip) : chip(`Cost ${s.cost}`),
+      cd ? q(uiIconName('cooldown'), UI_COLOR, cd.num, cd.tip) : s.cooldown !== 'None' ? chip(`Cooldown ${s.cooldown}`) : null,
+    ];
+  }
+
   private skillBody(s: WikiSkill, withName: boolean): HTMLElement {
     const meta = h('div', { class: 'cx-meta' },
       h('span', { class: 'cx-tag', text: s.range, title: 'Melee: reaches the front rows only. Ranged: reaches anyone. Support: targets an ally. Self: only the caster.' }),
       h('span', { class: 'cx-tag strong', text: s.targetBadge, title: s.targetText }),
       s.shape ? shapeGrid(s.shape) : null,
-      h('span', { class: 'cx-tag', text: `Cost ${s.cost}` }),
-      h('span', { class: 'cx-tag', text: `Cooldown ${s.cooldown}` }),
+      ...this.skillNumChips(s),
       s.initialCooldown ? h('span', { class: 'cx-tag warn', text: s.initialCooldown }) : null);
     const applies = [...s.statuses.map((id) => this.statusRef(id)), ...s.grounds.map((id) => this.groundRef(id))].filter((x): x is HTMLElement => !!x);
     return h('div', { class: 'cx-skill-body' },

@@ -49,6 +49,19 @@ export function openCampaignShop(s: CampaignState): CampaignState {
   return t;
 }
 
+const seenKey = (s: Pick<CampaignState, 'mapId' | 'at'>): string => `${s.mapId}:${s.at}`;
+
+/** Bu tüccarın ("Today's pick") tanışma paneli daha önce gösterildi mi (kayıtla kalıcı). */
+export function merchantIntroSeen(s: Pick<CampaignState, 'mapId' | 'at' | 'merchantSeen'>): boolean {
+  return !!s.merchantSeen?.[seenKey(s)];
+}
+
+/** Tanışma paneli gösterildi diye işaretle (zaten işaretliyse durum aynen). */
+export function markMerchantIntroSeen(s: CampaignState): CampaignState {
+  if (merchantIntroSeen(s)) return s;
+  return { ...s, merchantSeen: { ...(s.merchantSeen ?? {}), [seenKey(s)]: 1 } };
+}
+
 const shopOf = (s: CampaignState): CampaignShop => {
   if (!s.shop || s.shop.node !== s.at) throw new Error('The merchant is not here');
   return s.shop;

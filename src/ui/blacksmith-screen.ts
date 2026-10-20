@@ -1,7 +1,7 @@
 /**
  * Demirci (Blacksmith) DOM ekranı (Ömer 2026-10-18, ilerleme TUR 1 madde 7): tüccar ekranının kalıbı (src/ui/merchant-screen.ts,
  * docs/design/ui-reference.md): solda DEMİRCİ paneli (başlık + kese, kısa satır, seçili item, Temper ve Reforge), sağda ORTAK ENVANTER (Gear).
- * Seçim dokunarak: torbadaki item'e dokun (ya da paneldeki "Equipped" satırından takılı bir item'e), istersen torbadan panele sürükle.
+ * Seçim dokunarak: torbadaki item'e dokun (ya da sağdaki kahraman panelinde takılı bir item'e tek tıkla), istersen torbadan panele sürükle.
  * Temper: önizleme (önce -> sonra: item seviyesi, seviye şartı, silah gücü, affix değerleri), fiyat; altın yetmezse ya da tavan / seviye şartı
  * engellerse düğme pasif ve neden yazar. Reforge (yalnız Epic): ana affix dışındaki bir affix seçilir, aynı kademeden yeniden zarlanır; fiyat her
  * tekrarda artar. Kurallar saf: src/campaign/smith.ts. Oyun içi metinler İngilizce; italik yok (yalnızca kısa flavor satırı).
@@ -22,10 +22,9 @@ import {
   temperPreview,
   type CampaignState,
 } from '../campaign';
-import { affixDef, affixLines, instanceColor, instanceSubtitle, itemDef, SLOT_IDS, type ItemInstance } from '../progression';
+import { affixDef, affixLines, instanceColor, instanceSubtitle, itemDef, type ItemInstance, type SlotId } from '../progression';
 import { campaignGearSource, openGear, type GearApi, type GearExt } from './gear-screen';
 import { itemCell } from './inventory';
-import { avatarUrl, className } from './character-panel';
 import { itemTipNodes } from './item-tip';
 import { uiSound, worldSound } from './ui-sound';
 import { hasUiImage, uiIconName } from './ui-icons';
@@ -89,6 +88,9 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     }
     return pick ? (findItem(s, pick)?.inst ?? null) : null;
   };
+
+  /** Sağ paneldeki seçili kahramanın `slot:<yuva>` anahtarından takılı item'in uid'i. */
+  const equippedUid = (key: string): string => api?.hero()?.equipment[key.slice(5) as SlotId]?.uid ?? '';
 
   const choose = (uid: string): void => {
     if (pick === uid) return;
@@ -170,32 +172,12 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     kids.push(el('div', 'gr-shop-sub', `${o.sub ? `${o.sub} · ` : ''}Items can be tempered up to item level ${smithCap(s)} in this chapter`));
     kids.push(el('div', 'gr-odo-line bs-line', LINES[line]));
 
-    // takılı item'ler (kahraman başına bir satır): dokun = seç
-    const eq = el('div', 'bs-eq');
-    eq.append(el('div', 'gr-sec', 'Equipped'));
-    for (const h of src.heroes()) {
-      const items = SLOT_IDS.map((k) => h.equipment[k]).filter((x): x is ItemInstance => !!x);
-      if (!items.length) continue;
-      const row = el('div', 'bs-eqrow');
-      const face = el('div', 'gr-face bs-face');
-      const url = avatarUrl(h.class);
-      if (url) face.style.backgroundImage = `url("${url}")`;
-      face.title = className(h.class);
-      row.append(face);
-      for (const it of items) {
-        const c = itemCell(it, { selected: pick === it.uid, tip: `smith:${it.uid}` });
-        c.addEventListener('click', () => choose(it.uid));
-        row.append(c);
-      }
-      eq.append(row);
-    }
-
     const inst = current();
     const pane = el('div', 'gr-shoppane bs-pane');
     if (!inst || !itemDef(inst.id)) {
       const box = el('div', 'gr-sellbox bs-pickbox');
       box.dataset['drop'] = 'wares';
-      box.append(el('div', 'gr-sellbox-t', 'Tap an item in the bag or one of the equipped items below, or drag an item from the bag here.'));
+      box.append(el('div', 'gr-sellbox-t', 'Tap an item in the bag or an equipped item, or drag one here.'));
       pane.append(box);
     } else {
       // seçili item: hücre + ad + alt başlık
@@ -242,7 +224,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
         pane.append(priceButton('Reforge', reforgePrice(inst), why, doReforge));
       }
     }
-    kids.push(pane, eq);
+    kids.push(pane);
     side.replaceChildren(...kids);
   }
 
@@ -252,6 +234,12 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     noTrash: true,
     attach: (overlay, a) => {
       api = a;
+      // sağdaki kahraman panelinde takılı item'e tek tıkla -> demirciye alınır (dokunmatikte ipucundaki "Choose for the smith")
+      overlay.addEventListener('click', (e) => {
+        const t = (e.target as HTMLElement).closest<HTMLElement>('[data-tip^="slot:"]');
+        const uid = t ? equippedUid(t.dataset['tip']!) : '';
+        if (uid) choose(uid);
+      });
       overlay.classList.add('gr-shop-overlay');
       overlay.setAttribute('aria-label', 'Blacksmith');
     },
@@ -274,6 +262,12 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
       if (!key.startsWith('smith:')) return null;
       const uid = key.slice(6);
       return pick === uid ? [] : [{ label: 'Choose', primary: true, run: () => choose(uid) }];
+    },
+    onTap: (key) => {
+      // dokunmatik: takılı item'e ilk dokunuş hemen demirciye alır (ipucu ve Unequip normal kalır)
+      if (!key.startsWith('slot:')) return;
+      const uid = equippedUid(key);
+      if (uid) choose(uid);
     },
     bagActions: (uid) => [{ label: 'Choose for the smith', primary: false, run: () => choose(uid) }],
     onDoubleTap: (key) => {

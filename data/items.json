@@ -2391,26 +2391,12 @@
     "treasurePerMember": 0.5,
     "smartSlotChance": 0.5, "gripWeight": { "two": 2.5 },
     "usableWeaponChance": 0.8,
+    "_repeat": "Ömer 2026-10-20 ekonomi formu: devriye (tekrar) zaferi altın/item düşüşü ve nadirlik tavanı ilk zaferle aynı; yalnızca XP azalır (campaign.json > replay.xp). Elit/sandık ilk zafer garantisi (minItems) yalnızca ilk zaferde.",
     "repeat": [
       {
         "items": 1,
         "gold": 1,
         "maxRarity": "legendary"
-      },
-      {
-        "items": 0.6,
-        "gold": 0.6,
-        "maxRarity": "epic"
-      },
-      {
-        "items": 0.4,
-        "gold": 0.4,
-        "maxRarity": "rare"
-      },
-      {
-        "items": 0.25,
-        "gold": 0.25,
-        "maxRarity": "rare"
       }
     ],
     "gold": {

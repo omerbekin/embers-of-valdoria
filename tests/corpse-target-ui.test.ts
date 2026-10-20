@@ -129,7 +129,13 @@ describe('area_any (Smoke Bomb): iki tahtada hücre seçimi', () => {
     expect(areaTone(b, 'party-0', 'smoke_bomb', 'enemy')).toBe('enemy');
     expect(areaTone(b, 'party-0', 'smoke_bomb', 'party')).toBe('ally');
     const all = b.shapeAnchorCells('party-0', 'smoke_bomb');
-    expect(boards.flatMap((g) => g.anchors.map((slot) => `${g.board}:${slot}`)).sort()).toEqual(all.map((c) => `${c.board}:${c.slot}`).sort());
+    // Plakalar İMLEÇ hücreleri (madde 377): imlecin motor anchor'ı (cursorAnchor) her zaman motorun listesinde; listedeki her anchor bir imleçle seçilebilir
+    const engine = new Set(all.map((c) => `${c.board}:${c.slot}`));
+    const viaCursor = boards.flatMap((g) => g.anchors.map((slot) => `${g.board}:${b.cursorAnchor('smoke_bomb', slot, g.board, 'party-0')}`));
+    for (const k of viaCursor) expect(engine.has(k), k).toBe(true);
+    expect(new Set(viaCursor)).toEqual(engine);
+    // karşı (düşman) tahtada imleç = anchor
+    expect(boards[0]!.anchors.sort()).toEqual(all.filter((c) => c.board === 'enemy').map((c) => c.slot).sort());
   });
 
   it('düşman Cutthroat oynarsa tahtalar ters', () => {

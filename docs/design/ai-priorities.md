@@ -136,7 +136,7 @@ Sabit sıra YOK (K3): Resurrection, Radiance, Judgment, Holy Strike ve öldürme
 | Rejuvenate | şifa + tur şifası | heal: dost < %50 | %23 | iyi (hedef ort. %31) |
 | Summon Treant | 3 tur Treant, 25 MP | summon: yoksa hemen | %23,5 | 12v12'de yer yok (hiç çağrılamıyor) |
 
-Terazide beklenen sonuç: öldürme (K2: dostu kurtarıyorsa ya da dost tehlikede değilse) > **Rejuvenate** (dost tehlikedeyse kurtarma değeri; yaralıysa şifa + tur şifası, Wound'lu dostta azalır) > **Summon Treant** (çağrının beklenen katkısı + Verdant Blessing toplu şifası) > **Nature's Wrath** 2+ > **Thorn Whip** (hasar + Wound değeri, K8). Druid bugün de büyük ölçüde doğru; fark yalnızca ortak kurallardan. Ayar: K.
+Terazide beklenen sonuç: öldürme (K2: dostu kurtarıyorsa ya da dost tehlikede değilse) > **Rejuvenate** (dost tehlikedeyse kurtarma değeri; yaralıysa şifa + tur şifası, Wound'lu dostta azalır) > **Summon Treant** (çağrının beklenen katkısı; Verdant Blessing 2026-10-20'de Nature's Grudge ile değişti, çağrıya şifa eki yok) > **Nature's Wrath** 2+ > **Thorn Whip** (hasar + Wound değeri, K8). Druid bugün de büyük ölçüde doğru; fark yalnızca ortak kurallardan. Ayar: K.
 
 ### Undead (darkmage: kill > summon > tactic > aoe > damage)
 
@@ -243,7 +243,7 @@ Her aday aynı birimde puanlanır: **can-eşdeğer net değer** = (bu hamleyle k
 | **Diriltme** | dirilen birimin kalan katkısı x hayatta kalma ihtimali + dönen can | yok (sabit "önce dirilt") | K + Soru P |
 | **Kontrol** (K8) | Stun = hedefin kaçırdığı hamlenin değeri x ihtimal; Slow/Haste = kaybedilen/kazanılan tur payı x birimin tur değeri; Wound = hedefin alacağı şifadaki beklenen azalma; Blinded/Shrouded/Jinxed = önlenen hasar (bugün var) | kısmen | K |
 | Taunt / Guard (K6) | 6.5 | yok | K |
-| Çağrı | çağrının ömrü boyunca beklenen katkısı (vurabileceği yuva yoksa 0, K7) + çağırma yan etkisi (Verdant Blessing) | kısmen | K |
+| Çağrı | çağrının KENDİ değeri (2026-10-21, open-questions 377): ömrü boyunca (ufukla kısılmaz) beklenen saldırısı (en iyi skill'inin tur değeri x oynayacağı tur; üstüne çekeceği hasarla erken ölürse daha az; vurabileceği yuva yoksa 0, K7) + gövdesi: ömrü boyunca üstüne çekeceği düşman hasarı (canı + yenilenmesiyle sınırlı; ön sıranın önüne konup bir düşmanın erişimini dostlardan kesiyorsa o düşmanın tüm vuruşları, değilse erişimdeki hedeflerle eşit pay) x protectShare + çağırma yan etkisi (Bone Ward). Yuva: boş yuvalardan değeri en yüksek olan (eşitlikte varsayılan yuva) | kısmen | K |
 | Mana yakma | düşmanın o mana ile yapamayacağı hamlelerin değeri | sabit x0,6 | K |
 | Bedel | MP/can/cooldown'un gelecekteki fırsat bedeli | MP x ağırlık | J (ağırlıklar) |
 | **Sınıf ağırlıkları** (kimlik) | `ai.json` profilinde terim çarpanları: ör. Mage hasar 1,0 / destek 1,0; Paladin şifa/diriltme ağırlığı Soru P ile; Archer "en az can" eğilimi | yok | J |

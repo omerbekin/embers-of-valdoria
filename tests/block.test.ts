@@ -99,7 +99,7 @@ describe('kalkan bloğu: motor', () => {
     let seen = 0;
     for (let seed = 1; seed <= 200 && seen < 3; seed++) {
       const b = make({ 0: 'cutthroat' }, { 0: 'mage', 1: 'defender' }, { 1: shield(0.3) }, seed);
-      const g = b.useSkill('enemy-1', 'guard', 'enemy-0');
+      const g = b.useSkill('enemy-1', 'close_ranks', 'enemy-0');
       expect(g.ok, 'guard').toBe(true);
       const guardian = b.get('enemy-1')!;
       const ghp = guardian.hp;

@@ -18,7 +18,7 @@
 - **Kimlik:** kalkansız, iki elli baltayla dalan, kanla beslenen gözü kara savaşçı. Dalar, kan kaybeder, kanla geri döner ve bitirir.
 - **Pasif - Berserker:** canı azaldıkça daha sert vurur (eski kural) **ve** can kaybettikçe Rage kazanır (Rage artık yalnızca vurarak gelmiyor).
 - **Double Strike:** aynı (Rage üretir). **Charge:** aynı (arka sıraya atılma + Stun).
-- **Whirlwind:** ön sırayı süpürür; verdiği hasarın bir kısmı Warrior'a can olarak döner (lifesteal). (Ömer notu: skill'ler değiştirilmedi, Whirlwind'e ek yapıldı.)
+- **Whirlwind:** ilk iki düşman sırasını süpürür (ön sıra + arkasındaki; Ömer 2026-10-20, rect 2x3); verdiği hasarın bir kısmı Warrior'a can olarak döner (lifesteal). (Ömer notu: skill'ler değiştirilmedi, Whirlwind'e ek yapıldı.)
 - **Ultimate - Headsman's Blow (Abyssal Cry'ın yerine):** yakın dövüş tek hedef; bütün Rage'i (en az 30) tek dev balta darbesine harcar. Hasar harcanan Rage ile ve hedefin eksik canıyla büyür: "şimdi 30 Rage ile mi vursam, 50'ye kadar bekleyip kafasını mı alsam?"
 - Görsel/ses şimdilik yer tutucu (Double Strike animasyonu, Warrior'ın balta/zırh sesleri); gerçekleri content-designer yapacak. Sayılar balance-tester'ın.
 

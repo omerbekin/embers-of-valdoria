@@ -4,6 +4,9 @@
  * Sınıf veride yoksa ya da poz dosyası eksikse eski avatar (assets/avatars) yedeği, o da yoksa boş zemin: oyun çökmez.
  */
 import bust from '../../data/hero-bust.json';
+import { poseBodyUrl, weaponUrl } from '../game/pose-files';
+import { drawPoseComposite, poseClass, type WeaponPick } from '../game/poses';
+import { unitWeaponPick } from '../game/pose-weapons';
 
 interface BustRect {
   pose: string;
@@ -41,8 +44,73 @@ export function bustHtml(classId: string, spriteId: string): string {
     const wPct = (r.sw / r.w) * 100;
     const left = -(r.x / r.w) * 100;
     const top = -(r.y / r.h) * 100;
-    return `<img class="bust" src="${b.url}" alt="" draggable="false" style="width:${wPct.toFixed(3)}%;left:${left.toFixed(3)}%;top:${top.toFixed(3)}%">`;
+    return `<img class="bust" data-bust="${classId}" src="${b.url}" alt="" draggable="false" style="width:${wPct.toFixed(3)}%;left:${left.toFixed(3)}%;top:${top.toFixed(3)}%">`;
   }
   const av = avatarUrlOf(spriteId);
   return av ? `<img class="av" src="${av}" alt="" draggable="false">` : '';
+}
+
+const loadImg = (url: string | null): Promise<HTMLImageElement | null> =>
+  new Promise((res) => {
+    if (!url) return res(null);
+    const im = new Image();
+    im.onload = () => res(im);
+    im.onerror = () => res(null);
+    im.src = url;
+  });
+
+/**
+ * Büst + sınıfın varsayılan silahı (savaştaki aynı poz + el noktası: `drawPoseComposite`), tuvale çizilmiş. Silah sprite'ı ya da poz yoksa null
+ * (çağıran çıplak büstü bırakır). Tuval poz görselinin tam boyunda; kırpma CSS ile (bustHtml'deki yüzdeler).
+ */
+export async function bustWithWeapon(classId: string, weaponOverride?: WeaponPick | null): Promise<HTMLCanvasElement | null> {
+  const def = poseClass(classId);
+  const rect = RECTS[classId];
+  if (!def || !rect) return null;
+  const pick = weaponOverride ?? unitWeaponPick(classId, null);
+  if (!pick) return null;
+  const pose = rect.pose;
+  const [body, wpn, off, fingerImg] = await Promise.all([
+    loadImg(poseBodyUrl(def.dir, pose)),
+    loadImg(weaponUrl(pick.family, pick.look)),
+    pick.offhand ? loadImg(weaponUrl(pick.offhand.family, pick.offhand.look)) : Promise.resolve(null),
+    def.poses[pose]?.fingers ? loadImg(poseBodyUrl(def.dir, def.poses[pose]!.fingers!)) : Promise.resolve(null),
+  ]);
+  if (!body || !wpn) return null;
+  const c = document.createElement('canvas');
+  // kırpma pozun üstünden taşabilir (uzun asa ucu, y < 0): tuval üstten o kadar uzar
+  const pad = Math.max(0, Math.ceil(-rect.y));
+  c.width = def.canvas.w;
+  c.height = def.canvas.h + pad;
+  c.dataset['pad'] = String(pad);
+  const ctx = c.getContext('2d');
+  if (!ctx) return null;
+  ctx.imageSmoothingQuality = 'high';
+  ctx.translate(0, pad);
+  drawPoseComposite(ctx, def, pose, body, { img: wpn, pick, offImg: off }, 0, fingerImg);
+  return c;
+}
+
+/**
+ * Kök içindeki çıplak büstleri silahlı hâliyle değiştirir (asenkron). Çıplak büst baştan gizlenir (yer ayrılı kalır), silahlı hâl hazır olunca
+ * yumuşakça belirir; silah / poz yüklenemezse çıplak büst gösterilir (yanıp sönme yok, çökme yok).
+ */
+export function addBustWeapons(root: HTMLElement): void {
+  for (const img of root.querySelectorAll<HTMLImageElement>('img.bust[data-bust]')) {
+    img.classList.add('pend');
+    const classId = img.dataset['bust'] ?? '';
+    const rect = RECTS[classId];
+    void bustWithWeapon(classId)
+      .then((c) => {
+        if (!img.isConnected) return;
+        if (!c || !rect) return void img.classList.remove('pend');
+        const pad = Number(c.dataset['pad'] ?? 0);
+        c.className = 'bust arm';
+        c.setAttribute('style', img.getAttribute('style') ?? '');
+        c.style.top = `${(((-pad - rect.y) / rect.h) * 100).toFixed(3)}%`;
+        c.draggable = false;
+        img.replaceWith(c);
+      })
+      .catch(() => img.classList.remove('pend'));
+  }
 }

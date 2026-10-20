@@ -112,7 +112,7 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
   } else if (battle.needsTargetChoice(skillId)) {
     targets = targets.filter((t) => t.uid === targetUid);
     // Yan vuruşlu skill: seçilen hedefin yanındaki hücreler de vurulur (ilk giriş seçilen hedef)
-    if (targets[0]) targets = [targets[0], ...battle.splashTargets(skillId, targets[0])];
+    if (targets[0]) targets = [targets[0], ...battle.splashTargets(skillId, targets[0], actorUid)];
   }
   return previewForTargets(battle, actor, skillId, targets, centerUid, battle.needsSlotChoice(skillId) ? { corpseUid, slot } : undefined);
 }

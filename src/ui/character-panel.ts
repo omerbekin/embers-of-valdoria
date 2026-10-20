@@ -735,7 +735,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): Ti
     kind: 'Skill',
     iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)),
     meta,
-    tags: skillTags(skill).map((g) => ({ text: g.text, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
+    tags: skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
     rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}) })),
     ...(shape ? { shape } : {}),
   };

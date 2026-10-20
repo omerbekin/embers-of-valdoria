@@ -24,6 +24,9 @@ export interface PhChip {
   tone?: 'ac' | 'v' | 'ok' | 'warn' | 'free';
   /** tone 'v' ise kalın altın değer ("14"). */
   num?: string;
+  /** Yalnızca ikon + sayı (skill ipucu V2: menzil / bedel / bekleme; ikon 24px, sıkı çip). Tam anlam `tip`te (Phaser ipucu fareyi tutmaz: balon yok). */
+  bare?: boolean;
+  tip?: string;
 }
 
 /** Satır: düz metin (anahtar kelime / rakam otomatik vurgulanır) ya da elle renkli parçalar. */
@@ -127,9 +130,10 @@ function layRich(
 
 /** Çip çizer; sağ kenar `rightX` (align right) ya da sol kenar `x`; genişliği döndürür. */
 function drawChip(scene: Phaser.Scene, items: Phaser.GameObjects.GameObject[], c: PhChip, x: number, cy: number, accent: number, s: number, rightAlign = false): number {
-  const h = Math.round(26 * s);
-  const pad = Math.round(10 * s);
-  const ico = c.icon ? Math.round(16 * s) : 0;
+  const bare = !!c.bare && !!c.icon;
+  const h = Math.round((bare ? 32 : 26) * s);
+  const pad = Math.round((bare ? 7 : 10) * s);
+  const ico = c.icon ? Math.round((bare ? 24 : 16) * s) : 0;
   const tone = c.tone === 'ok' || c.tone === 'warn' || c.tone === 'free' ? TONE[c.tone] : null;
   const fg = c.hex ?? (tone ? tone.fg : c.tone === 'ac' ? css(mix(accent, 0xffffff, 0.52)) : c.tone === 'v' ? '#f8ebc9' : '#d9c8a2');
   const parts: Phaser.GameObjects.Text[] = [];
@@ -150,7 +154,7 @@ function drawChip(scene: Phaser.Scene, items: Phaser.GameObjects.GameObject[], c
     parts.push(t);
     tw += t.displayWidth;
   }
-  const w = pad * 2 + (ico ? ico + Math.round(6 * s) : 0) + tw;
+  const w = pad * 2 + (ico ? ico + Math.round((bare ? 4 : 6) * s) : 0) + tw;
   const left = rightAlign ? x - w : x;
   const g = scene.add.graphics();
   if (tone) g.fillStyle(tone.bg, tone.bgA).fillRect(left, cy - h / 2, w, h).lineStyle(1, tone.bd, tone.bdA).strokeRect(left + 0.5, cy - h / 2 + 0.5, w - 1, h - 1);
@@ -160,7 +164,7 @@ function drawChip(scene: Phaser.Scene, items: Phaser.GameObjects.GameObject[], c
   let cx = left + pad;
   if (c.icon) {
     items.push(scene.add.image(cx + ico / 2, cy, c.icon).setDisplaySize(ico, ico));
-    cx += ico + Math.round(6 * s);
+    cx += ico + Math.round((bare ? 4 : 6) * s);
   }
   for (const p of parts) {
     p.x = cx;
@@ -214,7 +218,8 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
     return m ? [{ text: `${m[1]} `, hex: '#f3d999' }, ...richSegs(m[2]!, false)] : richSegs(spec.sub, false);
   })();
   const subMeasure: Phaser.GameObjects.GameObject[] = [];
-  const subH = subSegs ? layRich(scene, subMeasure, 0, 0, Math.max(80, textMax), subSegs, '#f3d999', s) + Math.round(3 * s) : 0;
+  const subInd = Math.round(16 * s);
+  const subH = subSegs ? layRich(scene, subMeasure, 0, 0, Math.max(80, textMax - subInd), subSegs, '#f3d999', s) + Math.round(3 * s) : 0;
   subMeasure.forEach((o) => o.destroy());
   const textH = (kind ? kind.displayHeight : 0) + titleH + subH;
   const bandH = Math.max(medalS, textH, shapeSz ? shapeSz.h : 0) + padY * 2;
@@ -248,7 +253,13 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   }
   title.setPosition(hx, ty);
   items.push(title);
-  if (subSegs) layRich(scene, items, hx, ty + titleH + Math.round(3 * s), Math.max(80, textMax), subSegs, '#f3d999', s);
+  if (subSegs) {
+    const sy = ty + titleH + Math.round(3 * s);
+    layRich(scene, items, hx + subInd, sy, Math.max(80, textMax - subInd), subSegs, '#f3d999', s);
+    const sg = scene.add.graphics();
+    sg.fillStyle(mix(accent, 0xffffff, 0.52), 1).fillPoints(diamondPts(hx + Math.round(5 * s), sy + Math.round(12 * s), Math.round(3.5 * s)), true);
+    items.push(sg);
+  }
   if (spec.titleSuffix) {
     const suf = scene.add.text(0, 0, spec.titleSuffix.text, { fontFamily: BODY_FONT, fontSize: `${Math.round(20 * s)}px`, color: spec.titleSuffix.hex }).setResolution(textRes()).setOrigin(0, 0.5);
     suf.setPosition(title.x + title.displayWidth + 8, title.y + titleH / 2);
@@ -276,7 +287,7 @@ export function bandTip(scene: Phaser.Scene, spec: BandTipSpec): { container: Ph
   if (spec.chips?.length) {
     y += Math.round(10 * s);
     let x = px;
-    const rowH = Math.round(26 * s);
+    const rowH = Math.round((spec.chips.some((c) => c.bare) ? 32 : 26) * s);
     for (const c of spec.chips) {
       // önce ölç (taşarsa alt satıra iner), sonra çiz
       const probe: Phaser.GameObjects.GameObject[] = [];

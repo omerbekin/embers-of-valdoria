@@ -9,7 +9,7 @@ Sayılar `data/balance.json` dosyasındadır; `npm run sim` raporu ve `tests/bal
 | Class kazanma oranı | **%44-56** (her iki seed grubunda) |
 | Bedelsiz temel saldırı (class'ın 1. skill'i) kullanım payı | **%20-45** |
 | Normal skill (2.-3. yuva, durumsal olmayan) | **%15-35** |
-| Durumsal destek skill'leri (`balance.json > situational`: Guard, Mana Barrier, Spell Ward, Jinx, Dark Bond, Resurrection) | **%8-25** |
+| Durumsal destek skill'leri (`balance.json > situational`: Close Ranks (eski Guard), Mana Barrier, Spell Ward, Jinx, Dark Bond, Resurrection) | **%8-25** |
 | Ultimate (class'ın 4. skill'i) | birim hayattayken ultimate'ı ilk kez kullanılabilir olduğu (kendi turunda kullanılabilir) savaşlarda en az bir kez kullanma oranı, **class ORTALAMASI >= %50** (Ömer kararı 2026-10-08: class bazında ayrı kontrol yok); tek bir class **%35 altındaysa** (`ultimateLowWarn`) test ve rapor UYARI yazar; ham oran (tüm birimler) da raporlanır |
 | Savaş süresi (tüm birimlerin turları toplamı, 4'e 4) | ortalama **35-50 tur** |
 | Karşılaşma tablosu (A class'ının B class'ına karşı kazanma oranı; karşı taraflarda, aynı takımda değilken) | eşitlik HEDEFLENMEZ; yalnızca ezici eşleşmeler (> %75 / < %25, en az 200 savaş) işaretlenir |
@@ -21,7 +21,7 @@ Sayılar `data/balance.json` dosyasındadır; `npm run sim` raporu ve `tests/bal
 
 ## Dengesi / bandı bekleyenler (geçici muafiyet; normalde BOŞ)
 - `tests/balance-checks.ts > PENDING_BALANCE` (class bandı): **boş**. Hexer bu turda bantta (%48) olduğu için listeden çıkarıldı.
-- `tests/balance-checks.ts > PENDING_SKILLS` (skill bandı): **boş**. Abyssal Cry (madde 262 yeni tasarımı) hazır olanlardan ~%69 kullanılıyor; 2026-10-08 ikinci turda listeden çıkarıldı.
+- `tests/balance-checks.ts > PENDING_SKILLS` (skill bandı): **boş**. Whirlwind 2026-10-20 kısa süre listedeydi (pay %11); Ömer kararıyla ilk iki sıraya vuran rect 2x3 olunca (güç 0,5) pay %22, çıkarıldı (open-questions 376).
 
 ## Sefer dengesi — 2026-10-08 (balance-tester, Opus; madde 264)
 

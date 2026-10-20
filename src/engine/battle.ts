@@ -1,7 +1,7 @@
 import { isAccuracyCritDebuff } from './cc-immunity';
 import { skillCostAmount } from './cost';
 import { damageRange, missingHpHealMult, rollCrit, rollDamage, rollHeal, shieldAmount, type DamageSpec, type Range } from './formulas';
-import { isShapeArea, screenCellOf, shapeCells, shapeStages } from './area-shape';
+import { cursorAnchorSlot, isShapeArea, screenCellOf, shapeCells, shapeStages } from './area-shape';
 import { pickSideNeighbors } from './formation';
 import { betMultipliers, betStake } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
@@ -1507,9 +1507,16 @@ export class Battle {
    * Yan vuruşlu (`splash`) tek hedef skill'inin, seçilen hedefin yanında vuracağı canlı düşmanlar (slot sırasıyla).
    * 'perpendicular': hedefin EKRANDA görünen üst ve alt komşusu (formulas.json > formation.sideNeighbors, layout koordinatlarından
    * üretilir; her yönün en yakın DOLU hücresi, boş/ölü hücre atlanır). Harita yoksa eski kural: aynı sıra, şerit farkı 1.
+   * 'row' (yalnızca single_ally; Close Ranks): seçilen dostun SIRASINDAKİ (alan şekli 'row', area-shape.shapeCells) diğer canlı dostlar, KULLANICI hariç.
    */
-  splashTargets(skillId: string, chosen: Combatant): Combatant[] {
+  splashTargets(skillId: string, chosen: Combatant, actorUid?: string): Combatant[] {
     const skill = this.skill(skillId);
+    if (skill?.splash?.pattern === 'row' && skill.target === 'single_ally') {
+      const cells = shapeCells({ shape: 'row' }, chosen.slot, chosen.board, this.setup.formulas.formation);
+      return this.living(chosen.side)
+        .filter((c) => c.uid !== chosen.uid && c.uid !== actorUid && c.board === chosen.board && cells.includes(c.slot))
+        .sort((a, b) => a.slot - b.slot);
+    }
     if (!skill?.splash || skill.target !== 'single_enemy') return [];
     if (skill.splash.pattern === 'chain') return this.chainTargets(chosen, skill.splash.jumps ?? 0);
     const map = this.setup.formulas.formation.sideNeighbors?.[chosen.board]?.[chosen.slot];
@@ -1594,6 +1601,11 @@ export class Battle {
     if (!skill || !this.isShapeSkill(skillId)) return [];
     // actorUid: faza göre alan (Breaking Span faz 2+: rect 2x3; areaOf)
     return shapeCells(this.areaOf(skillId, actorUid)!, centerSlot, board, this.setup.formulas.formation);
+  }
+
+  /** Arayüz: imlecin durduğu hücreden motorun anchor hücresi (area-shape.cursorAnchorSlot; oyuncu tahtasında 2 derinlikli rect'te imleç = sol-alt köşe). */
+  cursorAnchor(skillId: string, cursorSlot: number, board: Side, actorUid?: string): number {
+    return this.isShapeSkill(skillId) ? cursorAnchorSlot(this.areaOf(skillId, actorUid), cursorSlot, board, this.setup.formulas.formation) : cursorSlot;
   }
 
   /** Alan skill'inin hücreleri aşamalara bölünmüş (aşamasız skill: tek aşama). Her aşama yuva sırasıyla; boş hücreler dahil. */
@@ -2494,7 +2506,7 @@ export class Battle {
       }
       targets = [chosen];
       // Yan vuruşlu (splash) skill: seçilen hedefin yanındaki hücreler de vurulur (ilk hedef = seçilen)
-      for (const s of this.splashTargets(skillId, chosen)) {
+      for (const s of this.splashTargets(skillId, chosen, actorUid)) {
         targets.push(s);
         splashUids.add(s.uid);
       }
@@ -2878,13 +2890,6 @@ export class Battle {
           if (empowered !== undefined) summoned.empowered = empowered;
           this.combatants.push(summoned);
           emit({ type: 'summon', actor: actor.uid, combatant: cloneCombatant(summoned), ...(empowered !== undefined ? { empowered } : {}) });
-          // Pasif: Verdant Blessing, çağrı yapınca tüm dostları iyileştirir
-          const pe = actor.passive?.effect;
-          if (pe?.type === 'verdantBlessing') {
-            emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
-            const amount = Math.round(attributePower(actor.stats, pe.scale, f) * pe.power);
-            for (const ally of this.living(actor.side)) if (ally.hp < ally.maxHp) this.applyHeal(actor, ally, amount, false, emit);
-          }
           break;
         }
       }
@@ -4021,6 +4026,31 @@ export class Battle {
     }
   }
 
+  /**
+   * Nature's Grudge (pasif naturesGrudge): ölen çağrı olmayan kahramanın tarafındaki her taşıyan (canlı ya da ölen kahramanın kendisi), öldürmenin
+   * sahibine (lastHitOn: son vuran; DoT/zemin ölümünde kaynağı) `turns` tur `status` + `dot` uygular. Öldüren yoksa, ölmüşse, sıra almayan nesneyse ya da
+   * aynı taraftansa olmaz. Durumlar addStatus kurallarıyla (yenileme, direnç, bağışıklık) eklenir; Wither tiki taşıyanın scale gücü x power.
+   */
+  private naturesGrudge(dead: Combatant, emit: Emit): void {
+    if (dead.summoned || dead.inert) return;
+    const lh = this.lastHitOn.get(dead.uid);
+    const killer = lh ? this.get(lh.source) : undefined;
+    if (!killer || killer.hp <= 0 || killer.side === dead.side || killer.inert) return;
+    const f = this.setup.formulas;
+    for (const d of this.combatants) {
+      const e = d.passive?.effect;
+      if (e?.type !== 'naturesGrudge' || d.side !== dead.side || d.summoned || (d.hp <= 0 && d !== dead)) continue;
+      if (killer.hp <= 0) break;
+      emit({ type: 'passive', actor: d.uid, passive: d.passive!.id, name: d.passive!.name });
+      if (this.statusDef(e.status)) this.addStatus(killer, { kind: e.status, turns: e.turns, source: d.uid }, emit, d.passive!.id);
+      if (this.statusDef(e.dot)?.dot) {
+        const dm = d.stats.dotPowerMult; // DoT damage / Potency (affix): skill DoT'larıyla aynı
+        const amount = Math.round(attributePower(d.stats, e.scale, f) * (dm !== undefined && dm !== 1 ? e.power * dm : e.power));
+        this.addStatus(killer, { kind: e.dot, turns: e.turns, source: d.uid, amount }, emit, d.passive!.id);
+      }
+    }
+  }
+
   /** `doomed`: birim Doom ile öldüyse tüketilen yığın (Ill Omen yalnızca onDoomKill kadar geçirir). */
   private announceIfDead(c: Combatant, emit: Emit, doomed?: Status): void {
     if (c.hp > 0 || this.announcedDead.has(c.uid) || c.lifespan === 0) return;
@@ -4038,6 +4068,8 @@ export class Battle {
       emit({ type: 'passive', actor: a.uid, passive: 'vengeance', name: 'Vengeance' });
       for (const st of vg.statuses) if (this.statusDef(st)) this.addStatus(a, { kind: st as Status['kind'], turns: vg.turns, source: a.uid }, emit, 'vengeance');
     }
+    // Nature's Grudge (Druid pasifi): çağrı olmayan bir dost kahraman (Druid'in kendisi dahil) düşünce öldüren düşman Slow + Wither alır
+    this.naturesGrudge(c, emit);
     // Last Ember (YM2, mob pasifi): bir düşman SKILL vuruşuyla öldüyse öldürenin hücresi süreli yanan zemin olur (zemin/DoT ile ölümde olmaz)
     const le = c.passive?.effect;
     const lh = this.lastHitOn.get(c.uid);

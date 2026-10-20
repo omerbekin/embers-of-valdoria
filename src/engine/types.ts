@@ -85,8 +85,12 @@ export type PassiveEffect =
   | { type: 'spellEcho'; chance: number }
   /** Kullanıcı ile hedef arasındaki her sıra mesafesi için hasar +perRow (mesafe = kullanıcının sırası + hedefin sırası). */
   | { type: 'longshot'; perRow: number }
-  /** Çağrı yapınca tüm dostlar scale gücünün power katı iyileşir. */
-  | { type: 'verdantBlessing'; power: number; scale: Attribute }
+  /**
+   * Nature's Grudge (Druid, Ömer 2026-10-20): taşıyanın tarafındaki çağrı OLMAYAN bir kahraman (taşıyan dahil) düşünce, öldürmenin sahibi olan
+   * (son vuran; DoT/zemin ile ölümde durumun/zeminin kaynağı) canlı düşman birime `turns` tur `status` (Slow) + `dot` (Wither; tik = taşıyanın
+   * scale gücü x power) uygulanır. Öldüren yoksa / ölmüşse / aynı taraftansa olmaz. Her taşıyan ayrı uygular (durumlar addStatus kuralıyla yenilenir).
+   */
+  | { type: 'naturesGrudge'; status: StatusKind; dot: StatusKind; power: number; scale: Attribute; turns: number }
   /** Verilen her hasarın `ratio` kadarı kullanıcıya şifa olur. */
   | { type: 'soulDrain'; ratio: number }
   /** Büyü zırhının engellediği büyü hasarı `threshold` birikince tüm takıma `mana` MP verilir. */
@@ -1045,8 +1049,10 @@ export interface SkillDef {
    * pattern 'chain' (Treant Vine Snare, Ömer 2026-10-18): vuruş seçilen hedeften en yakın (henüz vurulmamış) canlı düşmana sıçrar, oradan bir
    * sonrakine; en çok `jumps` sıçrama. Yakınlık ekran ızgarasında (formation.screenGrid) Öklid mesafesi; eşitlikte küçük yuva. Sıçrayan hedefler
    * menzile bakmaz (ilk hedef menzilde olmalı). Sıçrama başına azalma hasar etkisinin `falloff`'u ile (hedef sırası = zincir sırası).
+   * pattern 'row' (YALNIZCA target 'single_ally'; Close Ranks, Ömer 2026-10-20): seçilen dostun sırasındaki (alan şekli 'row') diğer canlı dostlar
+   * (kullanıcı HARİÇ) da hedef olur; menzile yalnızca seçilen dost bakar. Etkiler (ör. guard) hepsine uygulanır.
    */
-  splash?: { pattern: 'perpendicular' | 'chain'; mult?: number; jumps?: number };
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row'; mult?: number; jumps?: number };
   /**
    * target 'area_enemies' / 'area_any' (zorunlu): oyuncu bir ANCHOR hücre seçer (boş hücre de olabilir); şekil (hücre kümesi, bkz. area-shape.ts) row | column | rect | plus | x.
    * 'area_any': anchor KENDİ ya da KARŞI tahtada olabilir (Smoke Bomb); etkiler `side` ile dost/düşmana ayrılır.
