@@ -1,0 +1,55 @@
+/* Harita 2 / 3 düğüm yerleşimi taslağı: oyun kodu DEGIL. Rozet çerçeveleri ve yol çizgisi map-roads taslağından. */
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2'); unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+1E00-1E9F, U+1EF2-1EFF, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215; }
+
+:root { --u: 1px; --gold: #f3d999; --txt: #d9c8a2; --dim: #a8977a; --disp: Cinzel, Georgia, serif; --body: 'EB Garamond', Georgia, serif; }
+* { box-sizing: border-box; }
+html, body { margin: 0; background: #0b0806; color: var(--txt); font-family: var(--body); }
+body { min-height: 100vh; }
+.pg { max-width: 1672px; margin: 0 auto; padding: 14px 14px 70px; }
+.top { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 22px; margin-bottom: 10px; }
+.top h1 { margin: 0; font: 600 22px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); }
+.top h1 small { display: block; margin-top: 3px; font: 400 15px var(--body); letter-spacing: 0; text-transform: none; color: var(--dim); }
+.tabs { margin-left: auto; display: flex; gap: 8px; }
+.tab, .tog { cursor: pointer; font: 600 13px var(--disp); letter-spacing: .14em; text-transform: uppercase; color: var(--txt); background: rgba(8, 6, 4, .7); border: 1px solid rgba(217, 178, 106, .35); padding: 0 16px; height: 44px; min-width: 44px; display: inline-flex; align-items: center; gap: 8px; transition: border-color .2s, color .2s, background .2s; }
+.tab:hover, .tog:hover { border-color: rgba(243, 217, 153, .85); color: var(--gold); }
+.tab.on { color: #1a0f05; background: linear-gradient(180deg, #f3d999, #d9b26a); border-color: #f3d999; }
+.tog.on { border-color: rgba(243, 217, 153, .8); color: var(--gold); background: rgba(217, 178, 106, .12); }
+.tools { display: flex; gap: 8px; flex-wrap: wrap; }
+.stage { position: relative; width: 100%; aspect-ratio: 1672 / 941; background: #05080c; border: 1px solid rgba(217, 178, 106, .3); box-shadow: 0 0 0 3px rgba(8, 6, 4, .75), 0 18px 40px rgba(0, 0, 0, .55); overflow: hidden; }
+.stage svg { position: absolute; inset: 0; width: 100%; height: 100%; display: block; }
+.node { cursor: pointer; }
+.node .body { transition: transform .18s ease; transform-box: fill-box; transform-origin: center; }
+.node:hover .body, .node.sel .body { transform: scale(1.12); }
+.node.pocket .nodebody { opacity: .72; }
+.node.pocket:hover .nodebody, .node.pocket.sel .nodebody { opacity: 1; }
+.node .selring { display: none; transform-box: fill-box; transform-origin: center; }
+.node.sel .selring { display: block; animation: spin 14s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.rd { transition: opacity .25s; }
+.rd.hot .hl { opacity: 1; }
+.rd .hl { opacity: 0; transition: opacity .25s; }
+.lbl { font: 600 11.5px Cinzel, Georgia, serif; letter-spacing: .04em; pointer-events: none; }
+.lbl.dim { opacity: .86; }
+.nonum .numchip { display: none; }
+.hidenames .lbl { display: none; }
+.hidereg .regl { display: none; }
+.regl text { font-family: Cinzel, Georgia, serif; font-weight: 600; letter-spacing: .2em; text-transform: uppercase; }
+.tipbox { position: absolute; z-index: 5; pointer-events: none; opacity: 0; transition: opacity .12s; --bu: 1px; }
+.tipbox.on { opacity: 1; }
+.tipbox .bt { max-width: 440px; }
+.legend { display: flex; flex-wrap: wrap; gap: 8px 18px; align-items: center; margin-top: 12px; font: 16px var(--body); color: var(--txt); }
+.legend .it { display: inline-flex; align-items: center; gap: 7px; }
+.legend img { width: 30px; height: 30px; object-fit: contain; }
+.legend .sw { width: 34px; height: 0; border-top: 3px dashed #cdb67f; }
+.legend .sw.sea { border-top-color: #8fd6e8; }
+.legend .sw.roam { border-top: 3px dotted #e8705a; }
+.legend .sw.solid { border-top: 3px solid #eadcb4; }
+.legend .pk { width: 22px; height: 22px; border-radius: 50%; border: 2px solid #cdb67f; opacity: .6; background: #1c130b; }
+.legend .gd { width: 15px; height: 15px; display: inline-block; }
+.stats { margin-top: 8px; font: 15px var(--body); color: var(--dim); }
+.stats b { color: var(--gold); font-weight: 600; }
+.mockstrip { position: fixed; left: 0; bottom: 0; z-index: 20; padding: 6px 14px; font: 600 11px var(--disp); letter-spacing: .22em; text-transform: uppercase; color: #1a0f05; background: #e0b24a; border-top-right-radius: 4px; }
+@media (max-width: 700px) { .top h1 { font-size: 17px; } .tabs { margin-left: 0; } .tab, .tog { padding: 0 12px; } .tipbox .bt { max-width: 300px; } }
