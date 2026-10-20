@@ -2,13 +2,14 @@
    Tarayicida window.SMM, Node'da require. Saf fonksiyonlar, DOM yok.
    Durum: S = { r: { 'satir.id': rank } }.  Satir 0 = pasif, 1-3 = aktif skill, 4 = ult (+ agaci).
    Puan = level - 1.  SAYAC = agaca harcanan toplam puan (her satir + ult).
-   Kilitler: Tier II 5 / III 10 / IV 15 puan; Evolve I 23, Evolve II 38 (en cok 2 evolve); ult dugumleri LEVEL kilidi (5 / 10 / 15). */
+   Kilitler: Tier II 5 / III 10 / IV 15 puan; Evolve I 23, Evolve II 38 (en cok 2 evolve); ult dugumleri LEVEL kilidi (5 / 10 / 15).
+   Ult tavani (Omer 2026-10-21): ult + agacina TOPLAM en cok 3 puan (kollar serbest, kilitler ve ic dugum kurali ayni). */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.SMM = f(); })(this, function () {
   const MAXLV = 50, BARMAX = 49, ULT = 4;
   const BAR_THR = [5, 10, 15, 20, 25, 30, 35, 40, 45];
   const TIER_NEED = { I: 0, II: 5, III: 10, IV: 15 };
   const EVO_NEED = [23, 38], EVO_MAX = 2;
-  const ULT_LV = [5, 10, 15];
+  const ULT_LV = [5, 10, 15], ULT_MAX = 3;
   const ARMS = ['u', 'r', 'd', 'l'];
   const ARM_NAME = { u: 'Up', r: 'Right', d: 'Down', l: 'Left' };
   const ROMAN = ['I', 'II', 'III', 'IV'];
@@ -44,6 +45,7 @@
   const rk = (S, key) => S.r[key] || 0;
   const spent = (S) => { let t = 0; for (const k in S.r) t += S.r[k]; return t; };
   const rowSpent = (S, i) => { let t = 0; const p = i + '.'; for (const k in S.r) if (k.indexOf(p) === 0) t += S.r[k]; return t; };
+  const ultSpent = (S) => rowSpent(S, ULT);
   const free = (lv, S) => pool(lv) - spent(S);
   const newState = () => ({ r: {} });
   const reset = (S) => { S.r = {}; };
@@ -66,6 +68,7 @@
       const need = EVO_NEED[n], sp = spent(S);
       if (sp < need) return { code: 'evo', text: 'Evolve ' + ROMAN[n] + ' needs ' + need + ' points spent (have ' + sp + ')', need, have: sp };
     } else if (nd.arm) {
+      if (ultSpent(S) >= ULT_MAX) return { code: 'ultcap', text: 'Ult takes ' + ULT_MAX + ' points at most' };
       const need = ultLv(nd);
       if (lv < need) return { code: 'tier', text: 'Ult node needs Lv ' + need + ' (you are Lv ' + lv + ')', need, have: lv };
       const um = unmetTerm(S, nd); if (um) return { code: 'needs', text: needsText(um) };
@@ -113,13 +116,13 @@
     return { ok: true };
   }
 
-  /* ---- dugumun arayuz durumu: max / part / av (alinabilir) / tlk (kilitli) / rq (gerek eksik) / xl (evolve siniri) ---- */
+  /* ---- dugumun arayuz durumu: max / part / av (alinabilir) / tlk (kilitli) / rq (gerek eksik) / xl (evolve ya da ult siniri) ---- */
   function status(lv, S, key) {
     const nd = BY[key], r = rk(S, key), c = check(lv, S, key);
     let st;
     if (r >= nd.max) st = 'max'; else if (r > 0) st = 'part';
     else if (!c || c.code === 'points') st = 'av';
-    else st = c.code === 'tier' || c.code === 'evo' ? 'tlk' : c.code === 'cap' ? 'xl' : 'rq';
+    else st = c.code === 'tier' || c.code === 'evo' ? 'tlk' : c.code === 'cap' || c.code === 'ultcap' ? 'xl' : 'rq';
     return { rank: r, max: nd.max, st, check: c };
   }
   /* herhangi bir dugum alinabilir mi (puan sayilmadan degil, puanla) */
@@ -175,7 +178,7 @@
     return S;
   }
 
-  return { MAXLV, BARMAX, ULT, BAR_THR, TIER_NEED, EVO_NEED, EVO_MAX, ULT_LV, ARMS, ARM_NAME, ROMAN, ROW_DEF, NODES, BY,
-    pool, rk, spent, rowSpent, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
+  return { MAXLV, BARMAX, ULT, BAR_THR, TIER_NEED, EVO_NEED, EVO_MAX, ULT_LV, ULT_MAX, ARMS, ARM_NAME, ROMAN, ROW_DEF, NODES, BY,
+    pool, rk, spent, rowSpent, ultSpent, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
     check, take, validate, untake, status, anyOpen, barVal, bonusReached, focusPlan, replay, setNamer: (f) => { namer = f; } };
 });

@@ -50,7 +50,7 @@ Not: sayaç toplam olduğu için puanını dağıtan oyuncu da L25'te evolve aç
 
 ## 4. Ult + ağacı (madde 5)
 - Ortada ult'un ikonu durur, kendisi düğüm değildir. 4 kol vardır (yukarı, sağ, aşağı, sol). Her kolda ortadan dışa 3 düğüm sıralanır: 1. düğüm **L5**, 2. düğüm **L10**, 3. düğüm **L15** ve **Notable**. 1. ve 2. düğüm küçüktür (Edge boyu), her biri 1 puan.
-- Kollar serbesttir, hepsi alınabilir (toplam 12 puan). Evolve yoktur. Ult puanları sayaca girer, ama ult düğümleri kendi level kilidini kullanır.
+- Kollar serbest, ama ult'a toplam en çok 3 puan verilir (Ömer 2026-10-21). Evolve yoktur. Ult puanları sayaca girer, ama ult düğümleri kendi level kilidini kullanır.
 
 ## 5. Düğüm türleri
 Filler (küçük, rank'lı) · Edge (küçük ama güçlü) · **Notable** (orta boy, ikonlu) · **Blood Price** (kazanç + bedel, notable'ın yanında dead end) · Evolve (büyük, altın).
@@ -58,7 +58,7 @@ Filler (küçük, rank'lı) · Edge (küçük ama güçlü) · **Notable** (orta
 ## 6. Varsayımlarım (Ömer onayı bekliyor)
 1. Madde 3'teki "sıradaki row" ifadesini **sıradaki tier sütunu** olarak okudum (WoW tarzı: ağaca toplam X puan verilince sıradaki sütun açılır). L40 hesabı ancak böyle tutuyor: ikinci satırın kademeleri birinci satırın puanıyla zaten açık olur.
 2. Sayaç: Ömer "aktif skill" dedi. Pasif ve ult puanlarını da saydım; aksi halde pasife odaklanan oyuncu evolve açamaz.
-3. Ult kolları serbest, her düğüm 1 puan.
+3. Ult kolları serbest, her düğüm 1 puan; ult'a (4 kolun toplamına) en çok 3 puan verilir (Ömer 2026-10-21). L5 / L10 / L15 kilitleri ve "iç düğüm gerek" kuralı aynı.
 4. Notable = orta boy düğüm (eski Major). Edge'ler (ea / eb) yerinde kaldı.
 5. Yeni 3 filler 3-5-5 rank; satır böylece 24 puana geliyor ve L25 hesabı tutuyor.
 
