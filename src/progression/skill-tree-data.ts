@@ -6,6 +6,7 @@ import rulesJson from '../../data/skill-trees/_rules.json';
 import warriorTree from '../../data/skill-trees/warrior.json';
 import defenderTree from '../../data/skill-trees/defender.json';
 import paladinTree from '../../data/skill-trees/paladin.json';
+import archerTree from '../../data/skill-trees/archer.json';
 import cutthroatTree from '../../data/skill-trees/cutthroat.json';
 import mageTree from '../../data/skill-trees/mage.json';
 import druidTree from '../../data/skill-trees/druid.json';
@@ -91,7 +92,7 @@ export type TreeFx = SkillFx | PassiveFx;
 export interface TreeNodeData {
   name: string;
   text: string;
-  /** Kaynak: '<karma>:<varyant>:<düğüm>' (ör. 'A:V1:2.f1'; sonda * = metni düzeltilmiş). */
+  /** Kaynak: '<karma>:<varyant>:<düğüm>' (ör. 'A:V1:2.f1'; sonda * = metni düzeltilmiş). Öneri satırı (alts.js c / d / e): 'D:new row proposal'. */
   src: string;
   /** Sinerji rozeti: bağlı skill adı (yalnızca arayüz). */
   syn?: string;
@@ -125,7 +126,7 @@ export interface TreeData {
 export const TREE_RULES: TreeRules = rulesJson as unknown as TreeRules;
 
 /** Class dosyaları (statik import). Yeni class = buraya 1 satır. */
-const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, cutthroatTree, mageTree, druidTree, undeadTree, hexerTree, antimageTree, gamblerTree];
+const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, archerTree, cutthroatTree, mageTree, druidTree, undeadTree, hexerTree, antimageTree, gamblerTree];
 
 export const TREES: Record<string, TreeData> = Object.fromEntries(TREE_FILES.map((t) => [(t as TreeData).class, t as TreeData]));
 

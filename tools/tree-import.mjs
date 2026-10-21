@@ -1,8 +1,11 @@
 #!/usr/bin/env node
 // Skill ağacı içe aktarma (docs/design/skill-tree-implementation.md bölüm 2.1): mockup seçiminden data/skill-trees/<class>.json üretir.
 // Kaynak: public/mockups/skill-tree-moments/ > final.js (Ömer'in satır satır karma seçimi), mix/<class>.js (karma A / B düğümleri),
-// variants/<class>.js (satır ve ult skill id'leri / adları). Dosyalar Node `vm` ile sahte `window` içinde okunur (tarayıcı betikleri).
-// Kural (content.js > fromSelection ile aynı): satır r'nin düğümleri final.rows[r] karmasından; Mastery adı + bar pasif satırının karmasından.
+// alts.js (satır için yeni öneriler C / D / E), variants/<class>.js (satır ve ult skill id'leri / adları). Dosyalar Node `vm` ile sahte
+// `window` içinde okunur (tarayıcı betikleri).
+// Kural (content.js > fromSelection / altOf ile aynı): satır r'nin düğümleri final.rows[r] karmasından ('a' = mixes[0], 'b' = mixes[1]);
+// harf 'c' / 'd' / 'e' ise SMM_ALT[class][r] listesinde id'si o harf olan önerinin nodes'undan (yalnızca satır 0-3; ult önerisi yok).
+// Mastery adı + bar pasif satırının karmasından (pasif satırı öneriyse content.js gibi karma A'dan).
 // Var olan class dosyası korunur: `fx` ve `approved` alanları anahtar bazında aynen kalır (içe aktarım metni yeniler, motor verisine dokunmaz);
 // metin değiştiyse uyarı yazar. İçe aktarımdan sonra KAYNAK JSON'dur; mockup yalnızca referans.
 // Kullanım: node tools/tree-import.mjs <class> [<class> ...] [--check]   (--check: yazmaz, mockup ile farkı raporlar; fark varsa çıkış kodu 1)
@@ -30,35 +33,48 @@ if (!classes.length) {
 function load(cls) {
   const ctx = { window: {} };
   vm.createContext(ctx);
-  for (const f of ['final.js', `mix/${cls}.js`, `variants/${cls}.js`]) vm.runInContext(fs.readFileSync(path.join(MOCK, f), 'utf8'), ctx, { filename: f });
+  for (const f of ['final.js', 'alts.js', `mix/${cls}.js`, `variants/${cls}.js`]) {
+    const file = path.join(MOCK, f);
+    if (f === 'alts.js' && !fs.existsSync(file)) continue; // öneri dosyası yoksa yalnızca a / b satırları içe aktarılabilir
+    vm.runInContext(fs.readFileSync(file, 'utf8'), ctx, { filename: f });
+  }
   const F = ctx.window.SMM_FINAL?.[cls];
   const M = ctx.window.SMM_MIX?.[cls];
   const V = ctx.window.SMM_VARIANTS?.[cls];
+  const A = ctx.window.SMM_ALT?.[cls];
   if (!F) throw new Error(`${cls}: no entry in final.js`);
   // Seçimi bitmemiş class (final.js > try: Ömer bir satırın alts.js önerilerinden henüz seçmedi) içe aktarılmaz
   if (F.try && Object.keys(F.try).length)
     throw new Error(`${cls}: final.js still has "try" (rows ${Object.keys(F.try).join(', ')} wait for a pick among alts.js proposals); import after Ömer picks`);
-  const alt = Array.isArray(F.rows) ? F.rows.findIndex((l) => l !== 'a' && l !== 'b') : -1;
-  if (alt >= 0) throw new Error(`${cls}: row ${alt} uses proposal "${F.rows[alt]}" (alts.js); only karma a / b rows can be imported yet`);
+  if (!Array.isArray(F.rows) || F.rows.length !== 5 || F.rows.some((l) => l !== 'a' && l !== 'b' && !isAltL(l)))
+    throw new Error(`${cls}: final.rows must be 5 x 'a' | 'b' (or 'c' | 'd' | 'e' = alts.js proposal)`);
+  F.rows.forEach((l, r) => {
+    if (!isAltL(l)) return;
+    if (r === 4) throw new Error(`${cls}: ult row cannot use a proposal ("${l}"); alts.js has rows 0-3 only`);
+    if (!altOf(A, r, l)) throw new Error(`${cls}: row ${r} uses proposal "${l}" but alts.js has no SMM_ALT.${cls}[${r}] entry with id "${l}"`);
+  });
   if (!M || !Array.isArray(M.mixes) || M.mixes.length < 2) throw new Error(`${cls}: mix file needs 2 karma trees`);
   if (!V || !Array.isArray(V.rows) || V.rows.length !== 4 || !V.ult) throw new Error(`${cls}: variants file needs rows[4] + ult`);
-  if (!Array.isArray(F.rows) || F.rows.length !== 5 || F.rows.some((l) => l !== 'a' && l !== 'b')) throw new Error(`${cls}: final.rows must be 5 x 'a' | 'b'`);
-  return { F, M, V };
+  return { F, M, V, A };
 }
 
+const isAltL = (l) => l === 'c' || l === 'd' || l === 'e';
+/** content.js > altOf: satır r için id'si l olan öneri (nodes taşımalı). */
+const altOf = (A, r, l) => (A && Array.isArray(A[r]) ? A[r].find((x) => x && x.id === l && x.nodes) : null) || null;
 const mixIdx = (l) => (l === 'b' ? 1 : 0);
-const letter = (l) => (l === 'b' ? 'B' : 'A');
+const letter = (l) => (isAltL(l) ? l.toUpperCase() : l === 'b' ? 'B' : 'A');
 
 /** Mockup seçimi -> class dosyası (fx'siz, approved'sız ham hâl). */
 function build(cls) {
-  const { F, M, V } = load(cls);
+  const { F, M, V, A } = load(cls);
   const nodes = {};
   for (const key of KEYS) {
     const r = Number(key.split('.')[0]);
     const l = F.rows[r];
-    const m = M.mixes[mixIdx(l)];
+    const m = isAltL(l) ? altOf(A, r, l) : M.mixes[mixIdx(l)]; // öneri de { syn, nodes } taşır
     const e = m.nodes[key];
-    if (!Array.isArray(e) || typeof e[0] !== 'string' || !e[0] || typeof e[1] !== 'string' || !e[1]) throw new Error(`${cls}: karma ${letter(l)} has no node ${key}`);
+    if (!Array.isArray(e) || typeof e[0] !== 'string' || !e[0] || typeof e[1] !== 'string' || !e[1])
+      throw new Error(`${cls}: ${isAltL(l) ? 'proposal' : 'karma'} ${letter(l)} has no node ${key}`);
     const syn = m.syn && typeof m.syn[key] === 'string' && m.syn[key] ? m.syn[key] : undefined;
     nodes[key] = {
       name: e[0],
@@ -69,8 +85,9 @@ function build(cls) {
       fx: null,
     };
   }
-  const pm = M.mixes[mixIdx(F.rows[0])];
-  const bar = (Array.isArray(pm.bar) ? pm.bar : []).map((b, i) => ({ at: BAR_AT[i], name: b[0], text: b[1], src: `${letter(F.rows[0])}:${b[2] ?? ''}`, fx: null }));
+  const pl = isAltL(F.rows[0]) ? 'a' : F.rows[0]; // Mastery + bar: önerilerde yok, content.js gibi karma A
+  const pm = M.mixes[mixIdx(pl)];
+  const bar = (Array.isArray(pm.bar) ? pm.bar : []).map((b, i) => ({ at: BAR_AT[i], name: b[0], text: b[1], src: `${letter(pl)}:${b[2] ?? ''}`, fx: null }));
   if (bar.length !== BAR_AT.length) throw new Error(`${cls}: Mastery bar needs ${BAR_AT.length} bonuses (has ${bar.length})`);
   return {
     class: cls,
@@ -78,7 +95,7 @@ function build(cls) {
     picked: { rows: [...F.rows], at: F.at ?? '' },
     rows: V.rows.map((row, i) => ({ skill: row.skill, name: row.name, ...(row.passive ? { passive: true } : {}), karma: letter(F.rows[i]) })),
     ult: { skill: V.ult.skill, name: V.ult.name, karma: letter(F.rows[4]) },
-    mastery: { name: pm.mastery, karma: letter(F.rows[0]), bar },
+    mastery: { name: pm.mastery, karma: letter(pl), bar },
     nodes,
   };
 }

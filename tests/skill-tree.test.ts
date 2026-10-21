@@ -207,7 +207,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(untake(W, L50, emptyAlloc(W), '1.f1')).toMatchObject({ ok: false, reason: 'Nothing to remove' });
   });
 
-  it('9: onaysız NEW düğüm alınamaz; approved: true olunca alınır (Ömer 2026-10-22: tüm NEW düğümler onaylı)', () => {
+  it('9: onaysız NEW düğüm alınamaz; approved: true olunca alınır (Ömer 2026-10-22: tüm NEW düğümler onaylı; bekleyen listesi hariç)', () => {
     const pending: TreeData = { ...W, nodes: { ...W.nodes, '1.v': { ...W.nodes['1.v']!, new: true, approved: false } } };
     const a = build(W, L50, [...fullA(1), '2.f1*3']);
     expect(check(pending, L50, a, '1.v')).toMatchObject({ code: 'unapproved', text: 'Awaiting approval' });
@@ -215,7 +215,16 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(validate(pending, L50, build(W, L50, ['1.v'], a))?.code).toBe('unapproved');
     expect(code(W, L50, a, '1.v')).toBeNull();
     // Ömer 2026-10-22 ikinci tur: bekleyen tüm NEW düğümler onaylandı; gerçek veride her NEW approved: true olmalı.
-    for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(true);
+    // Tek istisna listesi: Ömer'in henüz onaylamadığı NEW düğümler (approved: false kalmalı; onaylanınca listeden çıkar, veride true olur).
+    const awaiting = new Set([
+      'archer 2.ea', // Sunder (Piercing Arrow satırı öneri D, Bodkin Point): yeni durum, zırh -%20 / 2 tur; Ömer onayı bekleniyor
+    ]);
+    for (const t of Object.values(TREES))
+      for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!awaiting.has(`${t.class} ${k}`));
+    for (const id of awaiting) {
+      const [cls, k] = id.split(' ');
+      expect(TREES[cls!]?.nodes[k!]?.new, `${id} listed as awaiting but is not a NEW node`).toBe(true);
+    }
   });
 
   it('10: repair: bilinmeyen / tam sayı olmayan anahtar atılır, rank tavana kırpılır; geçersiz kalan dağılım tamamen iade; geçerli aynen (idempotent)', () => {
@@ -237,7 +246,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
 describe('veri doğrulama (3.2 madde 11)', () => {
   it('her class dosyası: 48 satır + 12 ult anahtarı, ad / metin sınırı, satır skill\'leri class sırasıyla, NEW approved taşır', () => {
     expect(treeKeys()).toHaveLength(60);
-    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'cutthroat', 'defender', 'druid', 'gambler', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
+    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'archer', 'cutthroat', 'defender', 'druid', 'gambler', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
     for (const t of Object.values(TREES)) expect(validateTreeData(t), t.class).toEqual([]);
   });
 
@@ -370,7 +379,8 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     expect(treeSetupFor(src, 'quick', on)).toBeUndefined();
     expect(treeSetupFor(src, 'multiplayer', on)).toBeUndefined();
     expect(treeSetupFor({ ...src, level: 5 }, 'campaign', on)).toBeUndefined(); // havuzu aşan
-    expect(treeSetupFor({ class: 'archer', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class
+    expect(treeOf('aoe_tester')).toBeUndefined();
+    expect(treeSetupFor({ class: 'aoe_tester', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class (test class'ı)
   });
 
   it('debug odaklı kurulum: şalter kapalıyken de sefer / Endless kahramanına _rules.json > debugFocus ön ayarıyla ağaç verir, QB vermez', () => {
@@ -397,6 +407,6 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     const trees = () => [...Object.values(battlePlan(s).units.party), ...Object.values(wavePlan(run).units.party)].filter((u) => u.tree).length;
     expect(trees()).toBe(0);
     setDebugTreeFocus({ dir: 'a' });
-    expect(trees()).toBe(3); // sefer Warrior + Endless Warrior + Defender (Mage / Archer ağaçsız)
+    expect(trees()).toBe(3); // sefer Warrior + Endless Warrior + Defender (Mage / Archer: debugFocus ön ayarı yok, ağaç verilmez)
   });
 });

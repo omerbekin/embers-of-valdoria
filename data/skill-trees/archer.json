@@ -1,0 +1,452 @@
+{
+  "class": "archer",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "a",
+      "a",
+      "d",
+      "a",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "sharpshooter",
+      "name": "Sharpshooter",
+      "passive": true,
+      "karma": "A"
+    },
+    {
+      "skill": "quick_shot",
+      "name": "Quick Shot",
+      "karma": "A"
+    },
+    {
+      "skill": "piercing_arrow",
+      "name": "Piercing Arrow",
+      "karma": "D"
+    },
+    {
+      "skill": "arrow_rain",
+      "name": "Arrow Rain",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "aimed_shot",
+    "name": "Aimed Shot",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Still Bow Mastery",
+    "karma": "A",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Still Hands",
+        "text": "If you did not move last turn, your first skill +5% critical chance.",
+        "src": "A:V1:bar2",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Knee Shots",
+        "text": "Slow from your skills lasts 1 turn longer.",
+        "src": "A:V3:bar0",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Wide Nock",
+        "text": "Piercing Arrow falloff 5% smaller.",
+        "src": "A:V4:bar1",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Full Quiver",
+        "text": "Arrow Rain costs 2 less MP.",
+        "src": "A:V4:bar0",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Plate Reader",
+        "text": "Aimed Shot ignores 5% more Armor.",
+        "src": "A:V1:bar1",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Long Sight",
+      "text": "Sharpshooter +1% damage per row of distance per rank.",
+      "src": "A:V1:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Steady Feet",
+      "text": "If you did not move last turn, your skills +2% critical chance per rank.",
+      "src": "A:V1:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Gap in the Plate",
+      "text": "Against targets 4+ rows away, your skills ignore 3% of Armor per rank.",
+      "src": "A:V1:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Eagle Eye",
+      "text": "Half of your Sharpshooter bonus is also added to your critical chance.",
+      "src": "A:V1:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Killing Distance",
+      "text": "Critical hits against targets 5+ rows away deal +8% damage per rank.",
+      "src": "A:V1:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Patient Aim",
+      "text": "If no enemy hit you since your last turn, your skill +20% critical chance.",
+      "src": "A:V1:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Long Pin",
+      "text": "Your skills against targets 5+ rows away have a 15% chance to Slow for 1 turn.",
+      "src": "A:V3:0.ea",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Held Breath",
+      "text": "Skip Turn steadies your aim: your next skill is a sure critical and ignores 30% of Armor.",
+      "src": "A:V1:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Tunnel Vision",
+      "text": "Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",
+      "src": "A:V1:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Exposed Perch",
+      "text": "Your skills count 2 extra rows of distance for their bonuses, but you take 20% more damage from enemy ranged skills.",
+      "src": "A:V1:0.fb*",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Range Keeper",
+      "text": "An enemy that moves within 3 distance of you takes a free Quick Shot (once between your turns).",
+      "src": "A:V1:0.mb",
+      "syn": "Quick Shot",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "0.v": {
+      "name": "Dead Center",
+      "text": "Sharpshooter evolves: your first hit on each enemy is a sure critical if it stands 4+ rows away.",
+      "src": "A:V1:0.v",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Hamstring",
+      "text": "Quick Shot has a 6% chance per rank to Slow for 1 turn.",
+      "src": "A:V3:1.f1",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Practiced Release",
+      "text": "Quick Shot +3% critical chance per rank against targets 4+ rows away.",
+      "src": "A:V1:1.f3",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Sting in the Eye",
+      "text": "Quick Shot has a 4% chance per rank to Blind for 1 turn.",
+      "src": "A:V3:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Shot to the Knee",
+      "text": "Quick Shot critical hits always Slow the target for 2 turns.",
+      "src": "A:V3:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Spiteful Nock",
+      "text": "Quick Shot +3% critical chance per rank against Slowed or Blinded enemies.",
+      "src": "A:V3:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Cut the Tendon",
+      "text": "Quick Shot on a Slowed enemy extends its Slow by 1 turn.",
+      "src": "A:V3:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "For the Eyes",
+      "text": "Quick Shot Blinds for 1 turn when it crits.",
+      "src": "A:V3:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Hobbled",
+      "text": "Quick Shot on an enemy Slowed for 2+ turns Stuns it for 1 turn and ends the Slow.",
+      "src": "A:V3:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Leg Shot Only",
+      "text": "Quick Shot always Slows for 2 turns, but no longer gives you Haste.",
+      "src": "A:V3:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Gouging Arrow",
+      "text": "Quick Shot Blinds for 2 turns every time, but it gains a 2-turn cooldown.",
+      "src": "A:V3:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Blind Panic",
+      "text": "A Blinded enemy hit by Quick Shot is also Jinxed.",
+      "src": "A:V3:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Maiming Shot",
+      "text": "Quick Shot evolves: it Slows; if the target is Slowed it Blinds; if Slowed and Blinded it Staggers.",
+      "src": "A:V3:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Tempered Point",
+      "text": "Piercing Arrow ignores 3% of Armor per rank.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Weighted Head",
+      "text": "Piercing Arrow +2% damage per rank against enemies with more Armor than you.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Narrow Bodkin",
+      "text": "Piercing Arrow falloff 2% smaller per rank against enemies with 20+ Armor.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Bodkin Point",
+      "text": "Piercing Arrow ignores 25% of Armor, or 50% against enemies with more Armor than you.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Rivet Breaker",
+      "text": "Piercing Arrow +4% damage per rank against Fortified or Blessed enemies.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Sunder",
+      "text": "Piercing Arrow Sunders every enemy it hits for 2 turns: their Armor is 20% lower.",
+      "src": "D:new row proposal",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Strip Wards",
+      "text": "Piercing Arrow removes one buff from each enemy it hits.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Shattered Line",
+      "text": "Aimed Shot ignores all Armor on a Sundered enemy.",
+      "src": "D:new row proposal",
+      "syn": "Aimed Shot",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Brittle Point",
+      "text": "Sunder is 40% instead of 20%, but Piercing Arrow stops after the second enemy.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Spent Quarrel",
+      "text": "Strip Wards removes every buff, but Piercing Arrow's cooldown is 4.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Through the Guard",
+      "text": "Piercing Arrow ignores Fortified, Blessed and shields on the enemies it hits.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Siege Bolt",
+      "text": "Piercing Arrow evolves into a ballista bolt: it ignores all Armor and loses only 10% per enemy it passes.",
+      "src": "D:new row proposal",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Thick Volley",
+      "text": "Arrow Rain +4% damage per rank.",
+      "src": "A:V4:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Scatter Shot",
+      "text": "Arrow Rain has a 5% chance per rank to Slow each enemy hit for 1 turn.",
+      "src": "A:V2:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Rear Volley",
+      "text": "Arrow Rain +4% damage per rank to enemies in their back row.",
+      "src": "A:V1:3.f3",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Hobbling Hail",
+      "text": "Arrow Rain extends every Slow on the enemies it hits by 1 turn.",
+      "src": "A:V3:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Stinging Shower",
+      "text": "Arrow Rain +3% damage per rank for each Slowed enemy in its area.",
+      "src": "A:V3:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Spent Arrows",
+      "text": "Arrow Rain leaves its area thick with shafts for 2 turns: enemies there are Slowed.",
+      "src": "A:V3:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Lingering Hail",
+      "text": "Arrow Rain keeps raining for 1 turn: 25% damage to enemies in its area at the start of their turns.",
+      "src": "A:V4:3.ea",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Killing Field",
+      "text": "Enemies in your field of shafts take 20% DEX at the start of their turns and are Blinded.",
+      "src": "A:V3:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Choking Rain",
+      "text": "Your field of shafts lasts 4 turns, but Arrow Rain deals 40% less damage on impact.",
+      "src": "A:V3:3.fa",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Endless Hail",
+      "text": "Your lingering rain lasts 4 turns, but Arrow Rain cooldown is 5.",
+      "src": "A:V4:3.fa",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Sky Full of Shafts",
+      "text": "Your lingering rain lasts 2 more turns, and Piercing Arrow fired through it has no falloff.",
+      "src": "A:V4:3.ma",
+      "syn": "Piercing Arrow",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Arrow Storm",
+      "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area (30% per turn).",
+      "src": "A:V4:3.v",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Killing Shot",
+      "text": "Aimed Shot +40% damage against enemies below 50% HP.",
+      "src": "B:V5:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Heart Shot",
+      "text": "Aimed Shot cannot miss enemies below 50% HP.",
+      "src": "B:V5:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Deathblow",
+      "text": "Aimed Shot deals +1% for every 1% HP the target is missing.",
+      "src": "B:V5:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Trophy",
+      "text": "If Aimed Shot kills, its cooldown resets.",
+      "src": "B:V5:4.r1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Blood Rush",
+      "text": "If Aimed Shot kills, gain Haste for 2 turns.",
+      "src": "B:V5:4.r2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Next in Line",
+      "text": "If Aimed Shot kills, your next skill deals +50% and cannot miss.",
+      "src": "B:V5:4.r3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Snap Shot",
+      "text": "While Hasted, Aimed Shot cooldown is 1 turn shorter.",
+      "src": "B:V2:4.u1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Quick Sight",
+      "text": "Aimed Shot no longer starts the battle on cooldown.",
+      "src": "B:V2:4.u2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Lightning Draw",
+      "text": "If you are faster than the target, Aimed Shot fires twice (the second at 50%).",
+      "src": "B:V2:4.u3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Draw and Vanish",
+      "text": "Aimed Shot gives you Fleet for 2 turns.",
+      "src": "B:V2:4.d1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Light Feet",
+      "text": "Aimed Shot gives you Haste for 2 turns.",
+      "src": "B:V2:4.d2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Ghost Archer",
+      "text": "After Aimed Shot you are Shrouded for 2 turns (evasion +20%).",
+      "src": "B:V2:4.d3",
+      "fx": null
+    }
+  }
+}
