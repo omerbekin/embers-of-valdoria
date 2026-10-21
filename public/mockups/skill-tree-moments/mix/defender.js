@@ -47,7 +47,7 @@
         "1.eb": ["Aftershock Ground", "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Slowed at turn start.", false, "V2:1.eb*"],
         "1.mb": ["Sinking Earth", "Enemies on quaking ground take 15% STR damage at the start of their turn.", false, "V2:1.mb"],
         "1.fb": ["Endless Tremor", "Quaking ground lasts 4 turns, but Tremor Slam deals 40% less damage.", false, "V2:1.fb"],
-        "1.v": ["Earthsplitter", "Tremor Slam evolves: it splits a column instead of a row, hitting front to back past reach, and Slows 3 turns.", false, "V2:1.v"],
+        "1.v": ["Earthsplitter", "Tremor Slam evolves: it strikes a cross, its whole row plus its column front to back past reach, and Slows 3 turns.", false, "V2:1.v*"],
 
         "2.f1": ["Bellow", "Taunt breaks after 3% more of your max HP lost per rank (25% → 34%).", false, "V1:2.f1"],
         "2.f2": ["Second Breath", "When your Taunt ends, heal 3% of your max HP per rank.", false, "V1:2.r"],
