@@ -398,7 +398,7 @@
   function fitView(b) {
     const top = 58, pad = 20, wp = M.pad || 26; // az bölgeli haritada (Harita 1) bölge sınırına daha geniş boşluk
     const bw = b.x1 - b.x0 + wp * 2, bh = b.y1 - b.y0 + wp * 2;
-    const k = Math.min((sw() - pad * 2) / bw, (sh() - top - pad) / bh, M.maxK || 7);
+    const k = Math.min((sw() - pad * 2) / bw, (sh() - top - pad) / bh, M.maxK || 7) * (M.zoomBoost || 1); // Harita 1: 3 bölge geniş, biraz daha yakın (Ömer 2026-10-22)
     const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, ax = sw() / 2, ay = top + (sh() - top - pad) / 2;
     return { k, tx: ax - cx * k, ty: ay - cy * k };
   }
