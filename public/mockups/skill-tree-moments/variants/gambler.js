@@ -66,7 +66,7 @@
         '3.f1': ['Sharp Edges', 'Card Trick +3% power per rank.'],
         '3.f2': ['Weighted Stun', 'Card Trick Stun odds +4% per rank (20% → 40%).'],
         '3.f3': ["Dealer's Reach", 'Card Trick +4% power per rank against back-row enemies.'],
-        '3.n0': ['Trump Card', 'Card Trick always deals Stun to a Jinxed target.'],
+        '3.n0': ['Crippling Ace', 'Card Trick always deals Stun to a Slowed target.'],
         '3.r': ['Slick Shuffle', 'Card Trick statuses have a 10% chance per rank to last 1 turn longer.'],
         '3.ea': ['Stacked Deck', 'Before Card Trick, choose its status: Slow, Wound or Stun (Stun lands on the first target only).', true],
         '3.ma': ['Royal Flush', 'If Card Trick deals the same status to both targets, it throws a third card at another enemy.'],

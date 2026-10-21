@@ -453,3 +453,47 @@ html.nw .sh-col.defense { grid-column: 1 / -1; }
 html.nw:not(.mk-phone) #mk-strip .keep, html.short:not(.mk-phone) #mk-strip .keep { display: inline-flex; }
 html.nw:not(.mk-phone) #mk-strip:not(.open) > :not(b):not(.keep), html.short:not(.mk-phone) #mk-strip:not(.open) > :not(b):not(.keep) { display: none; }
 html.nw .gr-panel.gr-gear.gr-ledger, html.nw .gr-panel.gt-wp { padding-left: 8px; padding-right: 8px; }
+
+/* ================= v3 Tree sekmesi: PLAKALI SATIRLAR (views.js > gpHTML; Omer 2026-10-22: "skiller cok sikismis, tam hali yok") =================
+   Her satir = oyunun kendi skill plakasi (gear.css .gr-pl, "A Plates": etiket, ikon, ad, cipler, deger satiri) + yaninda o satirin dugumleri.
+   Pasif 1. sirada, sonra 3 skill, ult en altta kendi satirinda (plaka + ult + agaci). Plaka kutusuna dokunulmaz; yalniz sutun genisligi, plakanin altindaki "Points" satiri ve satir araligi burada.
+   Satir yuksekligini plaka belirler (dugum tuvali dikeyde ortalanir); sigmayan yer plakayi kucultmez, sayfa kendi icinde dikey kayar (tier bandi ustte yapisik). */
+.gt-wide.gp { grid-template-columns: minmax(0, 1fr) clamp(300px, 21vw, 400px); }
+.gt-gpw { width: fit-content; max-width: 100%; margin: 0 auto; }
+.gt-sk { position: relative; }
+.gt-ghead { position: sticky; top: 0; z-index: 6; display: flex; background: rgba(10, 7, 5, .97); }
+.gt-gsp { flex: none; width: calc(var(--pw) + var(--pg)); box-shadow: inset 0 -1px 0 var(--g-line2); } /* alt cizgi: tier bandinin kendi cizgisinin devami */
+.gt-gcv { position: relative; flex: none; height: var(--hdr); }
+.gt-prow { display: flex; align-items: stretch; }
+.gt-prow + .gt-prow, .gt-prow.ult { border-top: 1px solid var(--g-line); }
+/* plaka sutunu: sabit genislik (masaustu 200 x --u, en az 150 px), plaka + altinda satir puani */
+.gt-pcell { flex: none; box-sizing: border-box; width: calc(var(--pw) + var(--pg)); padding: calc(28 * var(--u)) var(--pg) calc(20 * var(--u)) 0; display: flex; flex-direction: column; justify-content: center; gap: calc(10 * var(--u)); }
+.gt-pcell .gr-pl { width: 100%; }
+.gt-pcap { display: flex; justify-content: space-between; align-items: baseline; gap: .6em; padding: 0 calc(8 * var(--u)); font: max(12px, calc(19 * var(--u))) / 1.3 var(--g-body); }
+.gt-pcap .k { color: var(--g-dim); }
+.gt-pcap .n { font: 600 .98em var(--g-disp); color: var(--g-gold); }
+.gt-pcap .n.pd { color: #ffb35a; }
+/* dugum tuvali: tier bantlari satirin TAM yuksekligini kaplar, tuval dikeyde ortada */
+.gt-pcv { position: relative; flex: none; align-self: stretch; display: flex; align-items: center; padding: calc(8 * var(--u)) 0; box-sizing: content-box; }
+.gt-pin { position: relative; flex: none; }
+.gt-pult { flex: 1 1 0; min-width: 0; display: flex; align-items: center; padding: calc(10 * var(--u)) 0; }
+.gt-pult .gt-ult { width: 100%; margin: 0; border-top: 0; padding-top: 0; }
+.gt-prow.ult .gt-uwrap { justify-content: flex-start; }
+
+/* telefon yatay (html.short): plaka sutunu solda yapisik, tier bandi ustte yapisik; plaka oyunun kisa ekran plakasindan biraz buyuk (deger satirlari acik, ikon 52 px) */
+html.short .gt-gpw { width: max-content; max-width: none; }
+html.short .gt-ghead { background: rgba(14, 10, 7, .97); }
+html.short .gt-gsp { position: sticky; left: 0; z-index: 7; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); }
+html.short .gt-pcell { position: sticky; left: 0; z-index: 5; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); padding: 14px var(--pg) 8px 0; gap: 6px; }
+html.short .gt-pcv { padding: 6px 0; }
+html.short .gt-pult { padding: 6px 0; }
+html.short .gt-pult .gt-ult { position: static; margin: 0; padding-top: 0; }
+html.short .gt-pcell .gr-pl { --is: min(52px, 100%); gap: 6px; padding: 14px 4px 8px; }
+html.short .gt-pcell .gr-pl .pl-dv { display: block; }
+html.short .gt-pcell .gr-pl .pl-nm { font-size: 10.5px; letter-spacing: .03em; min-height: 2.3em; }
+html.short .gt-pcell .gr-pl .pl-chips { font-size: 10.5px; gap: 3px; min-height: 0; }
+html.short .gt-pcell .gr-pl .pl-chip { padding: 0 5px; gap: 3px; }
+html.short .gt-pcell .gr-pl .pl-sls { display: flex; min-height: 0; }
+html.short .gt-pcell .gr-pl .pl-sl { font-size: 11px; }
+html.short .gt-pcell .gr-pl .pl-tag { font-size: 9px; letter-spacing: .1em; padding: .1em .6em; }
+html.short .gt-pcap { padding: 0 4px; font-size: 11px; }

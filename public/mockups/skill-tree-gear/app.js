@@ -44,7 +44,7 @@
     const ph = ST.phone ? PHONES[ST.phone] || PHONES['812'] : null;
     const W = ph ? ph[0] : innerWidth, H = ph ? ph[1] : innerHeight;
     stage.style.setProperty('--stage-w', W + 'px'); stage.style.setProperty('--stage-h', H + 'px');
-    de.style.setProperty('--gu', Math.min(H / 1080, W / 1920) + 'px');
+    ST.u = Math.min(H / 1080, W / 1920); de.style.setProperty('--gu', ST.u + 'px');
     ST.short = H <= 520; de.classList.toggle('short', ST.short); de.classList.toggle('compact', H <= 720); /* oyundaki html.short / html.compact: gercek kisa pencerede Phone anahtarsiz da ayni yol */
     ST.nw = W <= 620 && !ST.short; de.classList.toggle('nw', ST.nw); /* nw: yalniz gercekten dar VE uzun pencere (yedek dikey yerlesim) */
     de.classList.toggle('mk-phone', !!ST.phone); de.classList.toggle('mk-clean', !!ST.clean);
@@ -65,7 +65,8 @@
   /* inbar: kisa ekranda islem dugmeleri agacin ust seridinde (v3 Tree sekmesi, v2 calisma paneli); v1'de sag sayfanin altinda kalir */
   function treeOpts(host, inbar) {
     const v = ST.variant, sh = ST.short;
-    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - 6), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar };
+    /* plates: v3 Tree sekmesi = her satir oyunun skill plakasi + dugumleri (views.js > gpHTML); dar + uzun yedek pencerede (nw) eski yerlesim */
+    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - 6), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar, plates: v === 'v3' && !ST.nw, u: ST.u };
   }
   function mountTree(host, inbar) {
     const t = V.treeHTML(treeOpts(host, inbar));
@@ -233,9 +234,9 @@
   const NOTES = {
     v1: 'A · Whole tree on the Sheet\'s right page: small nodes (details on hover or tap), tier band once at the top, ult plus-tree under the rows.',
     v2: 'B · Right page = summary (Mastery bar, points per row, evolve status). "Open skill tree" opens the full-screen working panel.',
-    v3: 'C · Third Gear tab "Tree" uses both pages: tree on the left; ult plus-tree, points and actions on the right. The Sheet tab keeps a small door.',
+    v3: 'C · Third Gear tab "Tree" uses both pages: each row shows the full skill plate of the game (passive first, ult last) with its tree nodes beside it; points and actions on the right. Long page = calm vertical scroll. The Sheet tab keeps a small door.',
   };
-  const HELP = 'Hover a node for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
+  const HELP = 'Hover a node (or, in the Tree tab, a skill plate) for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
     + 'Try: Deep Gash (Double Strike) = other direction chosen (Hamstring is taken); Not Today, Reaping Wind, Herald of Ruin, Dreadful Swing and the Stubborn Heart bonus = not active yet. '
     + 'Respec asks first (placeholder price). Level slider: lowering resets what no longer fits. Reset demo restores the start. '
     + 'Phone 812×375 and 740×360 = the landscape phone (the game\'s short screen, height up to 520, also a real short window): the Mastery bar is one slim strip, the tree scrolls inside its area (tier band and row icons stay in place), the ult plus-tree sits under the rows, Respec / Reset / Confirm stay in one row.';

@@ -216,9 +216,8 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(code(W, L50, a, '1.v')).toBeNull();
     // Ömer 2026-10-22 ikinci tur: bekleyen tüm NEW düğümler onaylandı; gerçek veride her NEW approved: true olmalı.
     // Tek istisna listesi: Ömer'in henüz onaylamadığı NEW düğümler (approved: false kalmalı; onaylanınca listeden çıkar, veride true olur).
-    const awaiting = new Set([
-      'archer 2.ea', // Sunder (Piercing Arrow satırı öneri D, Bodkin Point): yeni durum, zırh -%20 / 2 tur; Ömer onayı bekleniyor
-    ]);
+    // Şu an boş: archer 2.ea Sunder (Piercing Arrow öneri D, zırh -%20 / 2 tur) Ömer 2026-10-22 onayladı. Yeni bekleyen eklenirse: 'class key'.
+    const awaiting = new Set<string>([]);
     for (const t of Object.values(TREES))
       for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!awaiting.has(`${t.class} ${k}`));
     for (const id of awaiting) {

@@ -263,7 +263,7 @@
       "text": "Piercing Arrow Sunders every enemy it hits for 2 turns: their Armor is 20% lower.",
       "src": "D:new row proposal",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "2.eb": {

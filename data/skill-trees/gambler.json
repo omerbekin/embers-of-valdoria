@@ -323,10 +323,10 @@
       "fx": null
     },
     "3.n0": {
-      "name": "Trump Card",
-      "text": "Card Trick always deals Stun to a Jinxed target.",
+      "name": "Crippling Ace",
+      "text": "Card Trick always deals Stun to a Slowed target.",
       "src": "B:V1:3.n0",
-      "syn": "Loaded Dice",
+      "syn": "High Stakes",
       "fx": null
     },
     "3.r": {

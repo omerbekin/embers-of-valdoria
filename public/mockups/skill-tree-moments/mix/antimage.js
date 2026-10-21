@@ -157,7 +157,7 @@
         "3.eb": ["Ward Taunt", "When you cast Spell Ward on yourself, you taunt all enemies for 1 turn.", false, "V4:3.ea"],
         "3.ma": ["Second Ward", "When Spell Ward breaks, a 50% ward forms on the ally with the lowest HP.", false, "V4:3.mb"],
         "3.fa": ["Stretched Ward", "Split Ward is full strength, but Spell Ward costs 18 MP.", false, "V3:3.fb"],
-        "3.fb": ["Ironbound Oath", "Spell Ward on yourself is 60% larger, but it can no longer target allies.", false, "V4:3.fa"],
+        "3.fb": ["Cloistered Ward", "Spell Ward on yourself is 60% larger, but it can no longer target allies.", false, "V4:3.fa"],
         "3.mb": ["Bastion of Null", "While you hold Spell Ward and a taunt, you take 30% less physical damage.", false, "V4:3.ma"],
         "3.v": ["Mirror Ward", "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 50% of their damage.", true, "V4:3.v"],
 

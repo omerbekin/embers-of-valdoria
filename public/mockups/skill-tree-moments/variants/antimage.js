@@ -307,7 +307,7 @@
         "3.r":  ["Shelter Echo", "When Spell Ward breaks, the warded ally heals 3% of its max HP per rank."],
         "3.ea": ["Ward Taunt", "When you cast Spell Ward on yourself, you taunt all enemies for 1 turn."],
         "3.ma": ["Bastion of Null", "While you hold Spell Ward and a taunt, you take 30% less physical damage."],
-        "3.fa": ["Ironbound Oath", "Spell Ward on yourself is 60% larger, but it can no longer target allies."],
+        "3.fa": ["Cloistered Ward", "Spell Ward on yourself is 60% larger, but it can no longer target allies."],
         "3.eb": ["Watchful Ward", "Spell Ward also lets you Guard the warded ally for 2 turns, taking 30% of its damage."],
         "3.mb": ["Second Ward", "When Spell Ward breaks, a 50% ward forms on the ally with the lowest HP."],
         "3.fb": ["Spread Thin", "Spell Ward wards your whole team at 35% strength, but its cooldown is 6."],

@@ -9,7 +9,7 @@ Kaynaklar: `skill-tree-moments.md` (şekil, bölüm 8 = ea/eb tek yön), `skill-
 - Kayıt: her kahramana `tree` alanı eklenir (sefer kayıt sürümü 11 → 12, Endless 6 → 7). Veri değişip dağılım geçersiz kalırsa puanlar geri verilir.
 - Motor: savaşa girerken kahramanın skill'lerinin **kişisel kopyası** yamalanır (skill id aynı kalır, sayılar değişir). Koşullu / tetikli düğümler 6 ortak motor kancası ailesiyle gelir.
 - Sayım (Ömer'in seçtiği satırlar): **Warrior** 5 düz sayı (a) · 7 var olan etki (b) · 48 yeni kanca (c; 1'i NEW). **Defender** 13 (a) · 5 (b) · 42 (c; 2'si NEW). Yani düğümlerin ~%75'i motor kancası istiyor. Bu yüzden ağacın asıl hissi Faz 2-5'te gelir, Faz 1 yalnızca boru hattını kurar.
-- Ekran: Gear > Sheet sağ sayfası (bugün orada "Skill tree · Coming soon" yazıyor). Yerleşim için mockup seçimi gerekiyor.
+- Ekran: Gear > Sheet sağ sayfası (bugün orada "Skill tree · Coming soon" yazıyor). Yerleşim için mockup seçimi gerekiyor. **Seçildi (Ömer 2026-10-22): C**, Gear'a üçüncü sekme "Tree" (bölüm 6).
 - Varsayılan önerisi: sefer ve Endless'ta açık; Quick Battle ve multiplayer'da kapalı (soru).
 
 ## 1. Doğrulanan kurallar (belge + core.js; özetle çelişen nokta işaretli)
@@ -330,6 +330,7 @@ Faz kapsamı (düğüm, 60 üstünden): Faz 1 = (a) → W 5, D 13 · Faz 2 = + (
   - A: ağaç sağ sayfaya sığar (küçük düğümler, ult artısı satırların altında).
   - B: sağ sayfa özet (Mastery bar + 5 satırın puanı ve evolve durumu) + "Open tree" ile tam ekran çalışma paneli (mockup düzeni).
   - C: Gear'a üçüncü sekme "Tree", iki sayfayı birden kaplar.
+  - **Seçim (Ömer 2026-10-22): C** (`public/mockups/skill-tree-gear.html#v3`, Gear'da üçüncü sekme "Tree", ağaç iki sayfayı birden kaplar). Ömer'in şartı: skill'ler ekranda oyundaki **tam skill plakası** biçimiyle gösterilir (ui-dev mockup'ı buna göre düzeltiyor; Faz 3b bu düzeltilmiş C'yi uygular).
   - Ayrıca: telefonda düzen, Mastery bar'ın yeri, kilitli yönün görünümü, respec düğmesi ve bedel gösterimi, "Not active yet" düğümlerin test görünümü.
 
 ## 7. Modlar (öneri = varsayılan; hepsi soru 10.3)
@@ -350,7 +351,7 @@ Faz kapsamı (düğüm, 60 üstünden): Faz 1 = (a) → W 5, D 13 · Faz 2 = + (
 | 2a | **engine-dev (Opus)** | (b) bağlantıları (`addEffect`, `unitFx` kanalı + `effectOf` birleştirme), C1 `cond` kancası + koşul sözlüğü, C2 Rage kancaları; önizleme / YZ aynı yoldan | |
 | 2b | **content-designer (Opus)** | W/D (b) + C1 + C2 düğümlerinin `fx`'i (W 40, D 28 hazır), metin belirsizliklerini Ömer cevaplarıyla çözer, ipucu "Tree:" satırları | Warrior'ın çoğu satırı hissedilir |
 | 3a | **ui-dev (Sonnet)** | Mockup A / B / C (`public/mockups/skill-tree-gear.html`, gerçek görünüm); ana oturum 5000 + Pages linki | Seçim |
-| 3b | **ui-dev (Sonnet)** | Seçilen ekran: bekleyen / Reset / Confirm, A Band ipuçları, telefon, level metni, Codex makalesi, debug araçları. Motor / kayıt kodu yazmaz (kural modülünü çağırır); respec bedeli kayda dokunuyorsa o parça campaign-dev (Opus) | Oyunda ağaç ekranı |
+| 3b | **ui-dev (Sonnet)** | Seçilen ekran (**C**, Gear'da üçüncü sekme "Tree"; skill'ler tam skill plakasıyla, Ömer 2026-10-22): bekleyen / Reset / Confirm, A Band ipuçları, telefon, level metni, Codex makalesi, debug araçları. Motor / kayıt kodu yazmaz (kural modülünü çağırır); respec bedeli kayda dokunuyorsa o parça campaign-dev (Opus) | Oyunda ağaç ekranı |
 | 4 | **engine-dev (Opus)** + **content-designer (Opus)** | C3 tetikler + C4 şifa / kalkan; fx (W 52, D 44) | Defender aura / Taunt satırları |
 | 5 | **engine-dev (Opus)** + **content-designer (Opus)** | C5 hedef / alan / aura + C6 kurallar (yalnızca 4.7'de onaylananlar; onaysız kalan `approved: false`); fx (W 59, D 58) | |
 | 6 | **balance-tester (Opus)** (+ scout Haiku yalnızca sim çalıştırır) | Sim bayrakları + vekil; **Ömer onayıyla** bölüm 9 sim'leri | Tablo + öneri |
@@ -408,6 +409,11 @@ Yayın: ağaç `_rules.json > enabled` ile; Pages'te test için açık (ya da de
 - Ana oturumun önceki kararlardan cevapladıkları: tier sayacı global (soru 14); evolve için ek odak şartı yok (soru 12). Ekran yerleşimi (soru 7): mockup `public/mockups/skill-tree-gear.html` ile seçilecek.
 - **İkinci tur NEW onayları (Ömer 2026-10-22, "hepsini onaylıyorum"):** Cutthroat 0.eb Counter Cut; Mage 1.mb Rolling Doom, 2.v Eternal Winter, 4.d3 Twin Meteors; Druid 2.v Thicket Wave, 3.n0 Overflowing Cup, 4.d3 Living Bomb; Undead 0.ma Undying Thirst, 0.mb Stolen Remedy; Hexer 0.v Herald of Ruin, 2.v Plague Curse, 3.v Turned Hand, 4.l3 Last Rite; Anti-Mage 0.v Endless Spring, 3.v Mirror Ward, 4.l3 Grand Theft; Gambler 0.ea Streak, 0.v Run It Back, 2.n0 Due for a Win, 3.ea Stacked Deck; Archer A 0.mb Range Keeper (yalnızca belge; Archer ağaç verisi Piercing Arrow satırı seçilince). Veride 20 düğüm `approved: true`; artık onay bekleyen NEW düğüm yok (fx'ler sonraki faz).
 - **Üçüncü tur (Ömer 2026-10-22):** respec bedeli **20 + 5 x level** altın deneme olarak onaylandı (open-questions 379.1); Archer Piercing Arrow satırı = **öneri D (Bodkin Point, `alts.js`)**, `data/skill-trees/archer.json` yazıldı (içe aktarma aracı artık c / d / e öneri satırlarını da okur). Archer'ın yeni NEW düğümü D 2.ea Sunder (yeni durum: zırh -%20, 2 tur) **onay bekliyor** (`approved: false`; testte tek istisna).
+- **Dördüncü tur (Ömer 2026-10-22):**
+  - **Archer 2.ea Sunder onaylandı** ("onaylıyorum"): `data/skill-trees/archer.json` içinde `approved: true` (içe aktarma aracı var olan onayı korur); testteki bekleyen listesi artık boş, onay bekleyen NEW düğüm kalmadı (fx sonraki faz).
+  - **Gambler 3.n0 Trump Card → Crippling Ace** (seçim sayfası A seçeneği): "Card Trick always deals Stun to a Slowed target."; sinerji rozeti High Stakes (Loaded Dice yerine). Sorun: Trump Card'ın Jinx kaynağı seçimde düşmüştü (Loaded Dice A seçildi). Slow'u Gambler kendi verir: High Stakes B Knockout Bet, Swift Suit, Stacked Deck; Long Con Stun'ı uzatır. Yeni mekanik değil (NEW yok), fx null. Mix B + variants V1 düğümü değişti, `gambler.json` yeniden içe aktarıldı.
+  - **Anti-Mage 3.fb Ironbound Oath → Cloistered Ward** (ad çakışması Defender 2.fa ile; Ömer "değiştirebilirsin"). Metin ve etki aynı; ad 11 class ağacında ve mockup karma dosyalarında tek. Defender'ın Ironbound Oath'ı aynen kalır. Mix B + variants V4 düğümü değişti, `antimage.json` yeniden içe aktarıldı.
+  - **Gear ağaç yerleşimi: C** (`skill-tree-gear.html#v3`, Gear'da üçüncü sekme "Tree"); şart: skill'ler oyundaki tam skill plakası biçimiyle (bölüm 6, Faz 3b).
 
 ## 11. Uygulamayı engelleyenler
 - **Faz 1 için engel yok** (yalnızca (a) düğümler, debug'da bedava sıfırlama, ağaç canlıda kapalı).

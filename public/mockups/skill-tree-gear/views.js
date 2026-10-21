@@ -111,11 +111,15 @@
     const ctl = `<div class="gt-ctl"><button type="button" data-act="-1" aria-label="Take back a pending point"${canSub ? '' : ' disabled'}>−</button><span class="rk">${st.rank} / ${nd.max}</span><button type="button" data-act="1" aria-label="Add a pending point"${canAdd ? '' : ' disabled'}>+</button></div>`;
     return bt({ accent, kind: nd.arm ? 'Ult ' + KN[k] + ' · ' + rr.name : KN[k] + ' · ' + rr.name, title: info.name, icon: ic(nd.i), value: '1', valueLabel: nd.max > 1 ? 'POINT / RANK' : 'POINT', chips, lines, foot, ctl });
   }
-  function rowTip(i) {
+  /* full: v3 Tree sekmesindeki plaka ipucu (oyundaki skill ipucu gibi: aciklama + bedel / bekleme + plakadaki deger satiri); v1 / v2 etiketleri eski kisa ipucunu kullanir */
+  function rowTip(i, full) {
     const rr = ROWS[i], E = eff(), kind = rr.ult ? 'Ultimate' : rr.pas ? 'Passive' : 'Skill';
     const chips = [{ text: kind, tone: 'ac' }];
+    if (full) PLATE[i].tip.forEach((c) => chips.push(c));
     if (rr.ult) chips.push({ text: 'Ult points ' + MC.ultSpent(E) + ' / ' + MC.ULT_MAX });
-    return bt({ accent: rr.pas ? '#6fb0a8' : rr.ult ? '#e0702a' : undefined, kind: kind + ' · Warrior', title: rr.name, icon: A + rr.ic, value: String(MC.rowSpent(E, i)), valueLabel: 'POINTS', chips, lines: [rr.d] });
+    const lines = [rr.d];
+    if (full) PLATE[i].nums.forEach((n) => lines.push(kw(n.label + ':', richHtml(plRaw(n), false))));
+    return bt({ accent: rr.pas ? '#6fb0a8' : rr.ult ? '#e0702a' : undefined, kind: kind + ' · Warrior', title: rr.name, icon: A + rr.ic, value: String(MC.rowSpent(E, i)), valueLabel: 'POINTS', chips, lines });
   }
   function barInfo(i) {
     const t = MC.BAR_THR[i];
@@ -140,7 +144,7 @@
   }
   function tipHtml(ref, o) {
     const t = ref.slice(0, 1), id = ref.slice(2);
-    return t === 'n' ? nodeTip(id, o) : t === 'b' ? bonusTip(+id) : t === 'x' ? respecTip() : rowTip(+id);
+    return t === 'n' ? nodeTip(id, o) : t === 'b' ? bonusTip(+id) : t === 'x' ? respecTip() : t === 'p' ? rowTip(+id, true) : rowTip(+id);
   }
 
   /* ---------- kucuk parcalar ---------- */
@@ -212,6 +216,7 @@
   }
   /* o = { want: 'm'|'l'|'s'|'p', avail: px, coarse, ult: 'under'|'full'|'none'|'side', bar: bool, short: bool (telefon yatay: ince serit + kayan alan), inbar: bool (kisa ekran: islem dugmeleri seridin sagina) } -> { html, key, cfg, L } */
   function treeHTML(o) {
+    if (o.plates) return gpHTML(o);
     const key = pickPreset(o.want, o.avail, o.coarse), cfg = Object.assign({}, GL.PRESETS[key]);
     if (o.short) { cfg.hdr = 20; cfg.padV = 3; cfg.lblH = 0; } /* kisa ekran: dugum adi yok (ipucunda), tek satirlik tier bandi */
     cfg.colW = GL.pickColW(o.avail, cfg.labW, cfg);
@@ -247,6 +252,53 @@
     /* ult yan sutunda (v3): ayni .gt degiskenleriyle sarilir */
     const ultHtml = o.ult === 'side' ? `<div class="${cls}" style="${vars}">${ultHTML(L, cfg, 'side')}</div>` : '';
     return { html, key, cfg, L, ultHtml };
+  }
+
+  /* ---------- v3 Tree sekmesi: her satir = oyunun skill plakasi (A Plates) + yaninda o satirin dugumleri; ult en altta kendi satirinda ----------
+     Plaka sutunu sabit genislik (masaustu 200 x --u, en az 150 px; telefon 104 px: oyunun kisa ekran plakasindan biraz buyuk, deger satirlari acik).
+     Satir yuksekligini plaka belirler; dugum tuvali dikeyde ortalanir. Sigmayan yer plakalari kucultmez: sayfa kendi icinde dikey kayar
+     (tier bandi kayarken ustte yapisik kalir). Dugum ayari: orta (m) -> kucuk-yogun (l) -> telefon (p); dokunmatikte l atlanir. o: treeHTML ile ayni + { u: sahne olcegi } */
+  const GP_PG = 12, GP_PG_SHORT = 8;
+  const gpPlateW = (o) => (o.short ? 104 : Math.max(150, Math.round(200 * (o.u || 1))));
+  function gpPreset(o, pw, pg) {
+    const chain = o.coarse ? ['m', 'p'] : ['m', 'l', 'p'];
+    for (let i = 0; i < chain.length - 1; i++) { const p = GL.PRESETS[chain[i]]; if (o.avail >= pw + pg + 2 * p.padX + 8 * p.colMin) return chain[i]; }
+    return 'p';
+  }
+  function gpHTML(o) {
+    const pg = o.short ? GP_PG_SHORT : GP_PG, pw = gpPlateW(o), key = gpPreset(o, pw, pg), cfg = Object.assign({}, GL.PRESETS[key]);
+    if (o.short) { cfg.hdr = 20; cfg.padV = 3; cfg.lblH = 0; } /* kisa ekran: dugum adi yok (ipucunda), tek satirlik tier bandi */
+    if (key === 'm') { cfg.ultD = 64; cfg.coreSz = 66; } /* ult + sekli plaka satirina sigsin (542 yerine 482 px) */
+    if (key === 'p') cfg.colMax = 72; /* plaka sutunu kadar yer ayrildiktan sonra kalan genislik dugumlere */
+    cfg.colW = GL.pickColW(o.avail, pw + pg, cfg);
+    const L = GL.build(cfg), tight = cfg.colW < 70;
+    let tsh = '';
+    L.tiers.forEach((t) => {
+      const x0 = cfg.padX + cfg.colW * t.c0, w = cfg.colW * (t.c1 - t.c0 + 1);
+      tsh += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" data-tn="${t.tier}" style="left:${x0}px;top:0;width:${w}px;height:${cfg.hdr}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
+    });
+    let rowsH = '';
+    L.rows.forEach((row) => {
+      const i = row.i, loc = (k) => ({ x: L.pos[k].x, y: L.pos[k].y - row.top }); /* satir-yerel koordinat */
+      let bands = '', svg = '', nds = '';
+      L.tiers.forEach((t) => { bands += `<div class="gt-tb" data-tier="${t.tier}" style="left:${cfg.padX + cfg.colW * t.c0}px;top:0;bottom:0;width:${cfg.colW * (t.c1 - t.c0 + 1)}px"></div>`; });
+      MC.NODES.filter((n) => n.i === i).forEach((n) => {
+        const B = loc(n.key);
+        n.req.forEach((term) => term.forEach((src) => { svg += `<path class="${term.length > 1 ? 'alt' : ''}" data-a="${src}" data-b="${n.key}" d="${GL.link(loc(src), B)}"/>`; }));
+        if (n.kind === 'B') { const h = cfg.sz.B / 2 + 2; svg += `<path class="dead" data-b="${n.key}" data-dead="1" d="M${B.x + h},${B.y} H${B.x + h + 12} M${B.x + h + 12},${B.y - 6} V${B.y + 6}"/>`; }
+        nds += nodeHTML(n.key, B, cfg);
+      });
+      rowsH += `<div class="gt-prow" data-row="${i}"><div class="gt-pcell">${plateOne(i, 'p:' + i)}<div class="gt-pcap"><span class="k">Points</span><span class="n" data-pts2="${i}">0</span></div></div>
+        <div class="gt-pcv" style="width:${L.W}px">${bands}<div class="gt-pin" style="width:${L.W}px;height:${row.h}px"><svg class="gt-lines" width="${L.W}" height="${row.h}" viewBox="0 0 ${L.W} ${row.h}">${svg}</svg>${nds}</div></div></div>`;
+    });
+    const ultRow = `<div class="gt-prow ult" data-row="${ULT}"><div class="gt-pcell">${plateOne(ULT, 'p:' + ULT)}</div><div class="gt-pult">${ultHTML(L, cfg, 'side')}</div></div>`;
+    const vars = `--sF:${cfg.sz.F}px;--sE:${cfg.sz.E}px;--sB:${cfg.sz.B}px;--sN:${cfg.sz.N}px;--sV:${cfg.sz.V}px;--hit:${cfg.hit}px;--hdr:${cfg.hdr}px;--pw:${pw}px;--pg:${pg}px`;
+    const cls = `gt gp${key === 'm' && !o.short ? '' : ' cs'}${tight ? ' tight' : ''}${o.short ? ' sh' : ''} k-${key}`;
+    const bar = o.bar === false ? '' : barHTML(), acts = o.inbar ? `<div class="gt-acts gt-inbar" data-dyn="acts">${actsHTML()}</div>` : '';
+    const top = o.short ? `<div class="gt-tools">${bar}${acts}</div>` : bar;
+    const html = `<div class="${cls}" style="${vars}">${top}
+      <div class="gt-scroll"><div class="gt-gpw"><div class="gt-sk"><div class="gt-ghead"><div class="gt-gsp"></div><div class="gt-gcv" style="width:${L.W}px">${tsh}</div></div>${rowsH}</div>${ultRow}</div></div></div>`;
+    return { html, key, cfg, L, ultHtml: '' };
   }
 
   /* ---------- islem cubugu (stat sayfasi dili: puan madalyonu | Respec · Reset · Confirm) ---------- */
@@ -329,14 +381,25 @@
   }
   const HEROES = [['warrior', 'Warrior'], ['archer', 'Archer'], ['mage', 'Mage'], ['defender', 'Defender']];
   const marksHTML = () => `<div class="gr-marks">${HEROES.map(([id, nm]) => `<button type="button" class="gr-mark${id === 'warrior' ? ' on' : ''}" data-a="hero:${id}" aria-label="${nm}" title="${nm}"><div class="gr-face" style="background-image:url('${A}av/${id}.webp')"></div></button>`).join('')}</div>`;
-  /* skill plakalari (A Plates): pasif 1. sirada, sonra 4 skill; 4. skill yuvasi ulti */
+  /* skill plakalari (A Plates = oyunun .gr-pl isaretlemesi, character-panel.ts > plateHtml / plateChips / numsHtml): pasif 1. sirada, sonra 4 skill; 4. skill yuvasi ulti.
+     TEK uretici: Sheet seridi (platesHTML) ve v3 Tree sekmesindeki satirlar (gpHTML) ayni plakayi kullanir. Cipler ve deger satirlari GERCEK veriden (data/plates.js: skills.json + oyunun gear-skills.ts hesabi). */
+  const PD = ((root.SMM_PLATES || {})[CLS.id] || { rows: [] }).rows;
+  const PL_ICO = { mp: 'stat/mp.webp', hp: 'stat/hp.webp', cd: 'ui/cooldown.webp', rage: 'ui/rage.webp' };
+  const plChip = (c) => (c.kind === 'free' ? '<span class="pl-chip free">Free</span>' : `<span class="pl-chip${c.kind === 'rage' ? ' rage' : ''}"><img class="bh-ico" src="${A}${PL_ICO[c.kind]}" alt="" draggable="false">${esc(c.text)}</span>`);
+  const plRaw = (n) => n.text + (n.times ? ' x' + n.times : '');
+  const plVal = (n) => esc(plRaw(n));
+  const PL_SL = (n) => `<div class="pl-sl"><span class="k" title="${esc(n.label)}">${esc(n.label)}</span><span class="n">${plVal(n)}</span></div>`;
+  /* kind: '' | 'pas' | 'ult'; chips: plaka cipleri (html); nums: deger satirlari; tip: ipucundaki cipler (skillTip meta). Veri yoksa / ad uymazsa plaka bos cipli kalir (cokmez). */
+  const PLATE = ROWS.map((rr, i) => {
+    const d = PD[i] && PD[i].name === rr.name ? PD[i] : { kind: rr.pas ? 'pas' : rr.ult ? 'ult' : '', chips: [], nums: [], tip: [] };
+    return { kind: d.kind, chips: d.chips.map(plChip).join(''), nums: d.nums, tip: d.tip.map((t) => ({ text: t, tone: t === 'Free' ? 'ok' : /^RAGE/.test(t) ? 'warn' : '' })) };
+  });
+  function plateOne(i, ref) {
+    const p = PLATE[i];
+    return `<div class="gr-pl ${p.kind}" data-tip="${ref}"><span class="pl-tag"${p.kind ? '' : ' hidden'}>${p.kind === 'pas' ? 'Passive' : 'Ultimate'}</span><div class="pl-ico"><img src="${A}${ROWS[i].ic}#smooth" alt="" draggable="false"></div><div class="pl-nm">${esc(ROWS[i].name)}</div><div class="pl-dv"></div><div class="pl-chips">${p.chips}</div><div class="pl-sls">${p.nums.map(PL_SL).join('')}</div></div>`;
+  }
   function platesHTML() {
-    const cd = (n) => `<span class="pl-chip"><img src="${A}ui/cooldown.webp" alt="" draggable="false">${n}</span>`;
-    const free = '<span class="pl-chip free">Free</span>';
-    const rage = (n) => `<span class="pl-chip rage"><img src="${A}ui/rage.webp" alt="" draggable="false">RAGE ${n}</span>`;
-    const sl = (k, n) => `<div class="pl-sl"><span class="k">${k}</span><span class="n">${n}</span></div>`;
-    const plate = (i, kind, chips, sls) => `<div class="gr-pl ${kind}" data-tip="r:${i}"><span class="pl-tag"${kind ? '' : ' hidden'}>${kind === 'pas' ? 'Passive' : 'Ultimate'}</span><div class="pl-ico"><img src="${A}${ROWS[i].ic}#smooth" alt="" draggable="false"></div><div class="pl-nm">${esc(ROWS[i].name)}</div><div class="pl-dv"></div><div class="pl-chips">${chips}</div><div class="pl-sls">${sls}</div></div>`;
-    return `<div class="gr-skills"><div class="gr-sec">Skills</div><div class="gr-skillbar">${plate(0, 'pas', '', sl('Bonus', '+14%'))}${plate(1, '', free, sl('Damage', '16 x2'))}${plate(2, '', free + cd(3), sl('Damage', '12'))}${plate(3, '', free + cd(4), sl('Damage', '22'))}${plate(4, 'ult', rage(30) + cd(5), sl('Damage', '34'))}</div></div>`;
+    return `<div class="gr-skills"><div class="gr-sec">Skills</div><div class="gr-skillbar">${PLATE.map((p, i) => plateOne(i, 'r:' + i)).join('')}</div></div>`;
   }
 
   /* ---------- sag sayfa / sekme icerikleri ---------- */
@@ -352,8 +415,9 @@
   const rightV3Tree = () => {
     const head = `<div class="gt-head"><div class="gr-sec gr-tree-head">Skill tree · ${esc(CLS.name)}<span class="gr-pt sk" data-badge></span><span class="gt-lvl" data-dyn="lvl">${lvlText()}</span></div></div><div class="gt-sec-gap"></div>`;
     if (ST.short) return `<div class="gt-page fill">${head}<div class="gt-wide"><div class="gt-main"><div id="gt-treehost" class="gt-in"></div></div></div></div>`;
+    /* plakali satirlar (gpHTML): ult kendi satirinda ana sutunda; dar + uzun yedek pencerede (nw) eski yan sutun */
     return `<div class="gt-page">${head}
-    <div class="gt-wide"><div class="gt-main"><div id="gt-treehost" class="gt-in"></div></div><div class="gt-side"><div id="gt-ulthost"></div><div class="gt-card" data-dyn="card">${cardHTML()}</div><p class="gt-note"><b>Tap</b> a node: +1 pending (orange ring). <b>Right-click</b> or long-press: −1 pending. <b>Confirm</b> keeps the points.</p><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div></div></div>`;
+    <div class="gt-wide${ST.nw ? '' : ' gp'}"><div class="gt-main"><div id="gt-treehost" class="gt-in"></div></div><div class="gt-side">${ST.nw ? '<div id="gt-ulthost"></div>' : ''}<div class="gt-card" data-dyn="card">${cardHTML()}</div><p class="gt-note"><b>Tap</b> a node: +1 pending (orange ring). <b>Right-click</b> or long-press: −1 pending. <b>Confirm</b> keeps the points.</p><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div></div></div>`;
   };
   /* v2 calisma paneli (tam ekran) */
   const workspaceHTML = () => `<div class="gr-overlay el-modal gr-ledger-ov gt-wp-ov" id="gt-wp"><div class="gr-panel gr-gear gt-wp el-modal-panel"><div class="gr-head gr-lhead"><div class="gr-title">Skill tree</div><div class="gt-hero"><img src="${A}av/warrior.webp" alt=""><div>${esc(CLS.name)}<small data-dyn="lvl">${lvlText()}</small></div></div><span class="gr-grow"></span><div class="gr-gold" data-dyn="gold">${goldHtml()}</div></div>

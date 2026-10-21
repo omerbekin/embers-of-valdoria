@@ -109,7 +109,7 @@
         ['Sleight', 'When an enemy you Jinxed misses, gain 3 MP.', 'V4:bar2'],
         ['Checkmate', 'Once per battle, when you Stun an enemy, your next skill costs no MP.', 'V4:bar4']
       ],
-      syn: { '3.n0': 'Loaded Dice', '4.r3': 'High Stakes' },
+      syn: { '3.n0': 'High Stakes', '4.r3': 'High Stakes' },
       nodes: {
         '0.f1': ['Shaved Dice', 'After a Bust, Double or Nothing +5% chance per rank for that skill.', false, 'V1:0.f1'],
         '0.f2': ['House Rules', 'While you are above 50% HP, Double or Nothing +1% chance per rank.', false, 'V1:0.f3'],
@@ -153,7 +153,7 @@
         '3.f1': ['Sharp Corners', 'Card Trick +5% power per rank against Stunned targets.', false, 'V4:3.f3'],
         '3.f2': ['Jack of Clubs', 'Card Trick +4% power per rank against targets with a status.', false, 'V4:3.f2'],
         '3.f3': ['Swift Suit', 'Card Trick Slow odds +5% per rank.', false, 'V3:3.r'],
-        '3.n0': ['Trump Card', 'Card Trick always deals Stun to a Jinxed target.', false, 'V1:3.n0'],
+        '3.n0': ['Crippling Ace', 'Card Trick always deals Stun to a Slowed target.', false, 'V1:3.n0'],
         '3.r': ['Long Con', "Card Trick's Stun has a 5% chance per rank to last 1 turn longer.", false, 'V4:3.r'],
         '3.ea': ['Stacked Deck', 'Before Card Trick, choose its status: Slow, Wound or Stun (Stun lands on the first target only).', true, 'V1:3.ea'],
         '3.ma': ['Double Deal', 'Each Card Trick card deals two different statuses: your Stacked Deck pick and a random one.', false, 'V4:3.ma*'],
