@@ -1,0 +1,161 @@
+/* MOCKUP (oyun kodu degil): Lord Morvane sinematigi. Renkler / yazi tipleri oyunun tasarim kitinden (src/ui/elegant.css degiskenleri),
+   gezinme ikon dugmesi src/style.css > .nav-btn'in aynisi. Olcu birimi --u = sahne yuksekliginin 1/1080'i (1920x1080 mantigi). */
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+
+:root {
+  --u: calc(100vh / 1080);
+  --txt: #d9c8a2; --on: #f3d999; --muted: #a8977a; --dim: #7d705a; --note: #cdb88d;
+  --ember: #e0702a; --ember2: #ffb35a; --gold: #d9b26a;
+  --line1: rgba(217, 178, 106, .16); --line2: rgba(217, 178, 106, .3); --line3: rgba(217, 178, 106, .55);
+  --sh: 0 2px 4px rgba(12, 8, 5, .95); --glow: 0 0 14px rgba(240, 140, 40, .85);
+  --disp: Cinzel, Georgia, 'Palatino Linotype', serif; --body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  --nav-hit: 44px; --nav-frame: 30px; --nav-icon: 18px; --nav-edge: 6px; --nav-k: 1;
+  --nav-hit-k: calc(var(--nav-hit) * var(--nav-k)); --nav-frame-k: calc(var(--nav-frame) * var(--nav-k));
+  --nav-icon-k: calc(var(--nav-icon) * var(--nav-k)); --nav-edge-k: calc(var(--nav-edge) * var(--nav-k));
+}
+@supports (height: 100dvh) { :root { --u: calc(100dvh / 1080); } }
+
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; color: var(--txt); font-family: var(--body); -webkit-text-size-adjust: 100%; }
+#stage { position: fixed; inset: 0; overflow: hidden; background: #050302; cursor: pointer; user-select: none; -webkit-user-select: none; touch-action: manipulation; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; }
+
+/* ---------- gezinme ikon dugmesi (oyundaki .nav-btn ile ayni) ---------- */
+.nav-btn { display: inline-flex; align-items: center; justify-content: center; width: var(--nav-hit-k); height: var(--nav-hit-k); min-width: 0; min-height: 0; padding: 0; color: #d9c8a2; background: transparent; border: 0; border-radius: 0; cursor: pointer; filter: drop-shadow(0 1px 3px rgba(12, 8, 5, .9)); transition: color .18s; -webkit-tap-highlight-color: transparent; }
+.nav-btn::before { content: ''; position: absolute; inset: calc((var(--nav-hit-k) - var(--nav-frame-k)) / 2); border: 1px solid rgba(217, 178, 106, .42); background: rgba(12, 9, 6, .45); transition: border-color .18s; }
+.nav-btn:hover, .nav-btn:focus-visible { color: #f3d999; outline: none; }
+.nav-btn:hover::before, .nav-btn:focus-visible::before { border-color: #f3d999; }
+.nav-btn svg { position: relative; width: var(--nav-icon-k); height: var(--nav-icon-k); }
+.nav-btn[hidden] { display: none; }
+.cin-skip { position: fixed; top: var(--nav-edge-k); right: var(--nav-edge-k); z-index: 30; }
+.cin-skip::after { content: attr(data-tip); position: absolute; top: 100%; right: 0; margin-top: 2px; padding: 3px 9px; font: 600 12px var(--disp); letter-spacing: .14em; text-transform: uppercase; white-space: nowrap; color: var(--on); background: rgba(12, 9, 6, .92); border: 1px solid var(--line2); opacity: 0; pointer-events: none; transition: opacity .15s; }
+.cin-skip:hover::after, .cin-skip.tip::after { opacity: 1; }
+
+/* ---------- gorsel yuvasi: iki katman (yumusak gecis) + yavas kamera kaymasi ---------- */
+.cin-view { position: absolute; inset: 0; overflow: hidden; background: #000; }
+.cin-layer { position: absolute; inset: -6%; background: center / cover no-repeat; opacity: 0; transition: opacity 900ms ease; will-change: transform, opacity; }
+.cin-layer.on { opacity: 1; }
+.cin-layer.nt { transition: none; }
+.cin-layer.dark { filter: brightness(.4) saturate(.7) sepia(.3) hue-rotate(-12deg); }
+.cin-layer.d1 { animation: drift1 28s ease-in-out forwards; }
+.cin-layer.d2 { animation: drift2 28s ease-in-out forwards; }
+@keyframes drift1 { from { transform: scale(1.04) translate(1.2%, .6%); } to { transform: scale(1.13) translate(-1.6%, -.8%); } }
+@keyframes drift2 { from { transform: scale(1.13) translate(-1.4%, 0); } to { transform: scale(1.05) translate(1.4%, .8%); } }
+.cin-vig { position: absolute; inset: 0; pointer-events: none; background: radial-gradient(ellipse at 50% 45%, transparent 42%, rgba(5, 3, 2, .66) 100%); }
+.cin-fade { position: absolute; inset: 0; background: #050302; opacity: 0; pointer-events: none; transition: opacity 650ms ease; }
+.cin-fade.on { opacity: 1; }
+.cin-fade.slow { transition-duration: 1100ms; }
+.cin-ash { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
+html.reduced-motion .cin-layer { animation: none !important; transform: scale(1.02); transition-duration: 300ms; }
+html.reduced-motion .cin-fade { transition-duration: 250ms; }
+html.reduced-motion .cin-ash { display: none; }
+
+/* ---------- ortak: konusan adi, yazi (daktilo), siradaki elmasi ---------- */
+.tw { font: 400 max(15px, calc(34 * var(--u))) / 1.38 var(--body); text-shadow: var(--sh); }
+.tw .off { color: transparent; text-shadow: none; }
+.nx { position: absolute; width: 9px; height: 9px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), var(--glow); opacity: 0; transition: opacity .2s; pointer-events: none; }
+#stage.ready .nx { opacity: 1; animation: nx 1.5s ease-in-out infinite; }
+@keyframes nx { 0%, 100% { transform: rotate(45deg) scale(1); } 50% { transform: rotate(45deg) scale(1.35); } }
+html.reduced-motion #stage.ready .nx { animation: none; }
+.nm { font: 600 max(13px, calc(26 * var(--u))) var(--disp); letter-spacing: .16em; text-transform: uppercase; color: var(--on); text-shadow: var(--sh); }
+.nm.m { color: var(--ember2); } .nm.n { color: var(--muted); }
+.nm .role { font: 400 max(12px, calc(22 * var(--u))) var(--body); letter-spacing: .04em; text-transform: none; color: var(--muted); }
+
+/* ---------- kapanis karti (v1 / v2) ---------- */
+.cin-end { position: absolute; inset: 0; z-index: 8; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: max(10px, calc(26 * var(--u))); text-align: center; padding: 0 6%; opacity: 0; pointer-events: none; transition: opacity 900ms ease 500ms; }
+#stage.closing .cin-end { opacity: 1; pointer-events: auto; }
+.e-t { font: 600 max(20px, calc(76 * var(--u))) / 1.12 var(--disp); letter-spacing: .12em; text-transform: uppercase; background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, .9)); }
+.e-dia { display: flex; align-items: center; gap: 14px; width: min(560px, 70%); }
+.e-dia::before, .e-dia::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--line3)); }
+.e-dia::after { background: linear-gradient(270deg, transparent, var(--line3)); }
+.e-dia i { width: 8px; height: 8px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), var(--glow); }
+.e-s { font: 400 max(15px, calc(38 * var(--u))) var(--body); color: var(--txt); text-shadow: var(--sh); }
+.e-act { display: flex; align-items: center; gap: max(18px, calc(40 * var(--u))); margin-top: max(6px, calc(30 * var(--u))); }
+.cin-btn { position: relative; min-height: 44px; padding: 0 max(14px, calc(30 * var(--u))); background: none; border: 0; cursor: pointer; font: 600 max(12px, calc(22 * var(--u))) var(--disp); letter-spacing: .2em; text-transform: uppercase; color: var(--txt); text-shadow: var(--sh); transition: color .2s, text-shadow .2s; }
+.cin-btn:hover, .cin-btn:focus-visible { color: var(--on); text-shadow: var(--glow); outline: none; }
+.cin-btn.pri { color: var(--on); padding-left: max(30px, calc(52 * var(--u))); }
+.cin-btn.pri::before { content: ''; position: absolute; left: max(12px, calc(26 * var(--u))); top: 50%; width: 8px; height: 8px; margin-top: -4px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 12px rgba(240, 140, 40, .8); }
+
+/* ======================= v1: alt diyalog bandi ======================= */
+.v1-band { position: absolute; left: 0; right: 0; bottom: 0; z-index: 5; min-height: max(112px, calc(300 * var(--u))); box-sizing: border-box; padding: max(12px, calc(34 * var(--u))) max(46px, calc(120 * var(--u))) max(14px, calc(40 * var(--u))) max(14px, calc(90 * var(--u))); background: linear-gradient(180deg, rgba(14, 10, 7, .8), rgba(10, 7, 4, .9)); border-top: 1px solid var(--line3); backdrop-filter: blur(3px); -webkit-backdrop-filter: blur(3px); transition: opacity .35s; display: flex; flex-direction: column; justify-content: center; gap: max(4px, calc(12 * var(--u))); }
+.v1-band::before { content: ''; position: absolute; left: 50%; top: -5px; width: 8px; height: 8px; margin-left: -4px; transform: rotate(45deg); background: #130d07; border: 1px solid var(--line3); }
+#stage.hold .v1-band { opacity: 0; }
+.v1-por { position: absolute; left: max(14px, calc(90 * var(--u))); bottom: max(12px, calc(40 * var(--u))); width: max(66px, calc(232 * var(--u))); aspect-ratio: 1; background: #0c0906 center / cover no-repeat; border: 1px solid var(--line3); box-shadow: 0 0 0 3px rgba(8, 6, 4, .75), 0 6px 18px rgba(0, 0, 0, .6); transition: opacity .25s; }
+.v1-por::before, .v1-por::after { content: ''; position: absolute; width: 7px; height: 7px; transform: rotate(45deg); background: #130d07; border: 1px solid var(--line3); }
+.v1-por::before { left: -4px; top: -4px; } .v1-por::after { right: -4px; bottom: -4px; }
+.v1-band.nar .v1-por { opacity: 0; }
+.v1-txt { margin-left: max(82px, calc(270 * var(--u))); max-width: calc(1500 * var(--u)); min-width: 0; display: flex; flex-direction: column; gap: max(3px, calc(10 * var(--u))); transition: margin .2s; }
+.v1-band.nar .v1-txt { margin-left: 0; }
+.v1-name { display: flex; align-items: baseline; gap: .9em; }
+.v1-name::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, var(--line2), transparent); align-self: center; }
+.v1 .tw { color: var(--txt); }
+.v1-band.nar .tw { color: var(--note); }
+.v1 .nx { right: max(20px, calc(56 * var(--u))); bottom: max(14px, calc(46 * var(--u))); }
+
+/* ======================= v2: sinema seridi ======================= */
+.v2 { --bar-t: max(32px, calc(104 * var(--u))); --bar-b: max(98px, calc(252 * var(--u))); }
+.v2-bar { position: absolute; left: 0; right: 0; z-index: 4; background: #000; height: 0; transition: height 1100ms cubic-bezier(.33, 1, .68, 1); }
+.v2-bar.t { top: 0; } .v2-bar.b { bottom: 0; }
+.v2.open .v2-bar.t { height: var(--bar-t); } .v2.open .v2-bar.b { height: var(--bar-b); }
+.v2.closing .v2-bar { height: 50% !important; }
+.v2-bar.b::before { content: ''; position: absolute; left: 0; right: 0; bottom: 100%; height: max(16px, calc(60 * var(--u))); background: linear-gradient(0deg, rgba(0, 0, 0, .55), transparent); pointer-events: none; }
+.v2-sub { position: absolute; left: 0; right: 0; bottom: 0; height: var(--bar-b); z-index: 6; box-sizing: border-box; padding: 0 8%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: max(3px, calc(12 * var(--u))); text-align: center; transition: opacity .35s; }
+#stage.hold .v2-sub, #stage.closing .v2-sub { opacity: 0; }
+.v2-sub .nm { font-size: max(10px, calc(20 * var(--u))); letter-spacing: .34em; }
+.v2 .tw { max-width: calc(1500 * var(--u)); color: #e9dcc0; }
+.v2 .tw.n { color: #d3c4a2; }
+.v2 .nx { left: 50%; bottom: max(8px, calc(26 * var(--u))); margin-left: -4px; z-index: 6; }
+.v2 .cin-end { z-index: 7; }
+.v2 .cin-skip { z-index: 30; }
+
+/* ======================= v3: hikaye kitabi ======================= */
+.v3 { background: radial-gradient(ellipse at 50% 28%, #2b1d10, #0d0805 72%); }
+.v3-book { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: max(8px, calc(26 * var(--u))); padding: max(46px, calc(50 * var(--u))) 0 max(10px, calc(40 * var(--u))); box-sizing: border-box; }
+.v3-frame { position: relative; flex: 11 1 0; min-height: 0; width: min(94vw, calc(1500 * var(--u))); box-sizing: border-box; background: #120c08; border: 1px solid var(--line3); box-shadow: 0 0 0 3px rgba(8, 6, 4, .8), 0 14px 34px rgba(0, 0, 0, .65); }
+.v3-frame .cin-view { inset: max(4px, calc(10 * var(--u))); outline: 1px solid var(--line1); }
+.v3-frame i { position: absolute; width: 8px; height: 8px; transform: rotate(45deg); background: #130d07; border: 1px solid var(--line3); z-index: 3; }
+.v3-frame i:nth-of-type(1) { left: -5px; top: -5px; } .v3-frame i:nth-of-type(2) { right: -5px; top: -5px; } .v3-frame i:nth-of-type(3) { left: -5px; bottom: -5px; } .v3-frame i:nth-of-type(4) { right: -5px; bottom: -5px; }
+.v3-pw { position: relative; flex: 9 1 0; min-height: 0; width: min(94vw, calc(1500 * var(--u))); perspective: 2200px; }
+.v3-page, .v3-turn { position: absolute; inset: 0; box-sizing: border-box; overflow: hidden; color: #2b1b0d;
+  background: radial-gradient(ellipse at 28% 18%, #ead8ac 0%, #d9c28e 55%, #bfa06a 100%), repeating-radial-gradient(circle at 20% 30%, rgba(120, 80, 30, .05) 0 1px, transparent 1px 3px);
+  border: 1px solid #8a6a3a; box-shadow: 0 12px 30px rgba(0, 0, 0, .6), inset 0 0 70px rgba(120, 80, 30, .38); padding: max(10px, calc(34 * var(--u))) max(18px, calc(70 * var(--u))) max(22px, calc(60 * var(--u))); }
+.v3-page::before, .v3-turn::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: max(10px, calc(34 * var(--u))); background: linear-gradient(90deg, rgba(70, 40, 12, .38), transparent); pointer-events: none; }
+.v3-turn { z-index: 5; transform-origin: left center; backface-visibility: hidden; pointer-events: none; }
+.v3-p { display: flex; gap: .9em; align-items: flex-start; margin: 0 0 max(5px, calc(14 * var(--u))); transition: opacity .6s; }
+.v3-p.old { opacity: .62; }
+.v3-p .por { flex: none; width: max(34px, calc(96 * var(--u))); aspect-ratio: 1; background: #1a110a center / cover no-repeat; border: 1px solid #8a6a3a; box-shadow: 0 0 0 2px rgba(240, 220, 170, .5); }
+.v3-p .bd { min-width: 0; }
+.v3-p .who { display: block; font: 700 max(10px, calc(19 * var(--u))) var(--disp); letter-spacing: .22em; text-transform: uppercase; color: #7a2e12; margin-bottom: .15em; }
+.v3 .tw { color: #2b1b0d; text-shadow: none; font-size: max(14px, calc(31 * var(--u))); line-height: 1.36; }
+.v3-p.nar .tw { color: #4a3520; }
+.v3 .tw .off { color: transparent; }
+.v3-no { position: absolute; left: 50%; bottom: max(5px, calc(18 * var(--u))); transform: translateX(-50%); font: 600 max(9px, calc(17 * var(--u))) var(--disp); letter-spacing: .3em; color: #7b5a2c; }
+.v3 .nx { right: max(16px, calc(46 * var(--u))); bottom: max(10px, calc(30 * var(--u))); background: #a8431a; box-shadow: 0 0 0 1px #d9843a; }
+.v3 .cin-end { position: absolute; inset: 0; z-index: 2; opacity: 1; transition: none; pointer-events: auto; }
+.v3 .e-t { background: linear-gradient(180deg, #7a2e12, #4a1c0a); -webkit-background-clip: text; background-clip: text; filter: none; font-size: max(18px, calc(60 * var(--u))); }
+.v3 .e-s { color: #3b2713; text-shadow: none; }
+.v3 .e-dia::before { background: linear-gradient(90deg, transparent, #8a6a3a); } .v3 .e-dia::after { background: linear-gradient(270deg, transparent, #8a6a3a); }
+.v3 .cin-btn { color: #4a3520; text-shadow: none; } .v3 .cin-btn:hover { color: #7a2e12; text-shadow: none; } .v3 .cin-btn.pri { color: #7a2e12; }
+.v3 .cin-btn.pri::before { background: #a8431a; box-shadow: 0 0 0 1px #d9843a; }
+.v3 .cin-ash { z-index: 4; }
+
+/* kisa ekran (telefon yatay): kitap acik yayilim (resim solda, sayfa sagda) */
+html.short .v3-book { flex-direction: row; align-items: stretch; gap: 0; padding: 8px 10px; justify-content: center; }
+html.short .v3-frame { flex: 1 1 0; width: auto; }
+html.short .v3-pw { flex: 1 1 0; width: auto; }
+html.short .v3-page, html.short .v3-turn { padding: 10px 14px 20px 18px; }
+html.short .v3-frame { margin-top: 50px; } html.short .v3-pw { margin-top: 50px; }
+html.short .v3-book { padding-top: 0; }
+
+/* ======================= mockup seridi (oyun disi) ======================= */
+#mk-strip { position: fixed; left: 8px; bottom: 8px; z-index: 60; max-width: min(440px, calc(100vw - 16px)); box-sizing: border-box; padding: 6px 8px; font: 12px/1.35 system-ui, sans-serif; color: #cfc4ad; background: rgba(8, 8, 12, .9); border: 1px dashed #6f7a8a; border-radius: 4px; }
+#mk-strip.clean { display: none; }
+#mk-strip b { color: #9fc4ff; letter-spacing: .12em; margin-right: 8px; }
+#mk-strip .hd { display: flex; align-items: center; gap: 6px; }
+#mk-strip .hd .sp { flex: 1; }
+#mk-strip button { font: 12px system-ui, sans-serif; color: #e6e0d0; background: #1b1d26; border: 1px solid #4a5160; border-radius: 3px; padding: 3px 8px; cursor: pointer; min-height: 24px; }
+#mk-strip button.act { background: #34507a; border-color: #7fa6df; }
+#mk-strip .row { display: flex; align-items: center; gap: 8px; margin-top: 5px; }
+#mk-strip .row span { opacity: .85; }
+#mk-strip.min .row { display: none; }
+@media (pointer: coarse) { #mk-strip button { min-height: 32px; } }
