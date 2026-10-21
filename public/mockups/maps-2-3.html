@@ -5,40 +5,36 @@
 <meta name="color-scheme" content="dark" />
 <meta name="darkreader-lock" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Campaign maps II and III: node layout</title>
-<!-- HARITA 2 / 3 DUGUM YERLESIMI taslagi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Adres: #v1 = Harita 2 (The Drowned Reach) | #v2 = Harita 3 (The Hollow Crown); &clean = etiketsiz, &nonames = adsiz; &s=a|b|c|d = dugum gorunumu (A mevcut, B Epic Seal, C Banner, D Realm Materials), ornek #v1&s=b. Veri: maps-2-3/data.js -->
+<title>Campaign maps II and III: regions and nodes</title>
+<!-- HARITA 2 / 3 BOLGE BAZLI YAKINLASMA taslagi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Adres: #v1 = Harita 2 (The Drowned Reach) | #v2 = Harita 3 (The Hollow Crown); &r=II = o bolgeye yakin acilir (ornek #v1&r=III); &clean = adsiz ve numarasiz, &nonames = adsiz. Veri: maps-2-3/data.js -->
 <link rel="stylesheet" href="maps-2-3/band-tip.css" />
 <link rel="stylesheet" href="maps-2-3/m.css" />
-<link rel="stylesheet" href="maps-2-3/styles.css" />
 </head>
 <body>
 <div class="pg">
   <div class="top">
     <h1 id="ttl"></h1>
-    <div class="styles" id="styles">
-      <button class="stab" data-s="a" type="button" title="Current look (for comparison)"><b>A</b> Current</button>
-      <button class="stab" data-s="b" type="button" title="Heavy forged seals with ember aura"><b>B</b> Epic Seal</button>
-      <button class="stab" data-s="c" type="button" title="Banner poles planted in the map"><b>C</b> Banner &amp; Landmark</button>
-      <button class="stab" data-s="d" type="button" title="Frames made of each region's material"><b>D</b> Realm Materials</button>
-    </div>
     <div class="tools">
       <button class="tog on" data-t="names" type="button" title="Show or hide node names">Names</button>
       <button class="tog on" data-t="nums" type="button" title="Show or hide node numbers">Numbers</button>
-      <button class="tog on" data-t="reg" type="button" title="Show or hide region labels">Regions</button>
     </div>
     <div class="tabs">
       <button class="tab" data-v="m2" type="button">Map II · Drowned Reach</button>
       <button class="tab" data-v="m3" type="button">Map III · Hollow Crown</button>
     </div>
   </div>
-  <div class="snote" id="snote"></div>
-  <div class="stage" id="stage"><div class="tipbox" id="tip"></div></div>
+  <div class="stage" id="stage">
+    <div class="world" id="world"></div>
+    <button class="back" id="back" type="button" aria-hidden="true" title="Back to the full map (Esc)"><svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M15 4 L7 12 L15 20"/></svg><span>Back to map</span></button>
+    <div class="crumb" id="crumb"></div>
+    <div class="hint" id="hint">Pick a region to zoom in</div>
+    <div class="tipbox" id="tip"></div>
+  </div>
   <div class="legend" id="legend"></div>
   <div class="stats" id="stats"></div>
 </div>
 <div class="mockstrip">Mockup · not the game</div>
 <script src="maps-2-3/data.js"></script>
-<script src="maps-2-3/styles.js"></script>
 <script src="maps-2-3/m.js"></script>
 </body>
 </html>
