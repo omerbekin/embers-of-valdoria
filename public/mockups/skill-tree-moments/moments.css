@@ -20,8 +20,18 @@ button, select { font-family: inherit; }
 .cls-sel button { min-height: 44px; display: flex; align-items: center; gap: .5em; padding: 0 .9em 0 4px; background: rgba(8,6,4,.5); border: 1px solid rgba(217,178,106,.28); color: var(--g-text); cursor: pointer; font: 600 13px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; }
 .cls-sel button img { width: 36px; height: 36px; object-fit: cover; border: 1px solid rgba(217,178,106,.5); flex: none; }
 .cls-sel button.on { border-color: var(--g-ember); background: linear-gradient(90deg, rgba(224,112,42,.2), rgba(8,6,4,.5) 80%); color: #fff4d6; }
-/* varyant sekmeleri: class'in 5 varyanti (Warrior'da basta Omer'in secimi) */
-.var-tabs { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; margin: 0 0 6px; }
+/* sekmeler: ana satir = Karma A / Karma B (Warrior'da ucuncu Omer's pick; karma dosyasi yoksa V1-V5); ikinci, kucuk, kapali satir = '5 kaynak varyant' dugmesi + V1-V5 */
+.var-tabs { margin: 0 0 6px; }
+.vt-main, .vt-src { display: flex; gap: 6px; align-items: center; flex-wrap: wrap; }
+.vt-src { margin-top: 4px; }
+.var-tabs button.km { font-size: 13px; letter-spacing: .1em; }
+.var-tabs .srcbtn { min-height: 36px; padding: 0 .8em; background: transparent; border: 1px dashed rgba(217,178,106,.3); color: var(--g-dim); font: 600 11px var(--g-disp); letter-spacing: .1em; }
+.var-tabs .srcbtn i { font-style: normal; margin-left: .4em; color: var(--g-gold); }
+.var-tabs .srcbtn:hover { color: var(--g-text); border-color: rgba(243,217,153,.55); }
+.vt-srclist { display: contents; }
+.vt-src .vt-srclist button { min-height: 36px; padding: 0 .75em; font-size: 10.5px; letter-spacing: .06em; border-color: rgba(217,178,106,.16); color: var(--g-dim); }
+.vt-src .vt-srclist button.on { color: #fff4d6; border-color: var(--g-ember); }
+@media (pointer: coarse) { .var-tabs .srcbtn, .vt-src .vt-srclist button { min-height: 44px; } }
 .var-tabs button { min-height: 44px; display: inline-flex; align-items: center; padding: 0 1em; background: rgba(8,6,4,.5); border: 1px solid rgba(217,178,106,.22); color: var(--g-text); cursor: pointer; font: 600 12px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; }
 .var-tabs button.pk { border-style: dashed; border-color: rgba(243,217,153,.45); color: var(--g-gold); }
 .var-tabs button.on { border-style: solid; border-color: var(--g-ember); background: linear-gradient(90deg, rgba(224,112,42,.22), rgba(8,6,4,.5) 85%); color: #fff4d6; }
@@ -308,8 +318,72 @@ html.mk-clean #mk-strip { display: none; }
   .cls-sel { gap: 4px; margin: 4px 0 6px; }
   .cls-sel button { padding: 0 .55em 0 3px; gap: .35em; font-size: 11px; letter-spacing: .04em; }
   .cls-sel button img { width: 32px; height: 32px; }
-  .var-tabs { gap: 4px; margin-bottom: 4px; }
+  .vt-main, .vt-src { gap: 4px; } .var-tabs { margin-bottom: 4px; }
   .var-tabs button { padding: 0 .7em; font-size: 11px; letter-spacing: .04em; }
+  .var-tabs button.km { font-size: 11.5px; }
+  .vt-src .vt-srclist button { font-size: 9.5px; padding: 0 .55em; }
   .vinfo { padding: 4px 8px; margin: 6px 0 2px; } .vinfo p { font-size: 13.5px; } .vinfo .vt { font-size: 11px; }
   .vsoon { padding: 16px 10px; } .vsoon p { font-size: 13.5px; }
+}
+
+/* ---------- karma kimlik listesi (vinfo.mix): Omer'in asil okudugu yer, buyuk yazi ---------- */
+.vinfo.mix { padding: 9px 14px 11px; }
+.vinfo.mix .vt { display: flex; align-items: baseline; flex-wrap: wrap; gap: 2px 14px; font-size: 16px; margin-bottom: 4px; }
+.vinfo.mix .vt small { font: 600 11px var(--g-disp); letter-spacing: .12em; color: var(--g-dim); }
+.vinfo.mix p.mtr { display: block; margin: 2px 0 10px; font: 19px/1.4 var(--g-body); color: #eadcb8; }
+.idl { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.idl li { display: flex; align-items: flex-start; gap: 12px; min-width: 0; }
+.idl .ii { flex: none; width: 38px; height: 38px; overflow: hidden; border: 1px solid rgba(217,178,106,.55); background: radial-gradient(circle at 50% 42%, #2a1d10, #0d0806 78%); box-shadow: 0 0 0 2px rgba(8,6,4,.9); }
+.idl .ii img { display: block; width: 100%; height: 100%; object-fit: cover; }
+.idl li.pas .ii { border-color: #6fb0a8; box-shadow: 0 0 0 2px rgba(8,6,4,.9), 0 0 10px rgba(111,176,168,.3); }
+.idl li.ult .ii { border-color: var(--g-gold); }
+.idl .it { flex: 1; min-width: 0; padding-top: 1px; font: 18px/1.38 var(--g-body); color: var(--g-text); overflow-wrap: anywhere; }
+.idl .it b { margin-right: .7em; font: 600 13px var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-gold); }
+.idl .it em { margin-right: .7em; padding: 0 .5em; font: normal 600 10px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-dim); border: 1px solid var(--g-line2); vertical-align: 1px; white-space: nowrap; }
+
+/* ---------- sinerji rozeti: dugumun sol ustunde kucuk zincir halkasi (ipucunda 'Synergy: skill') ---------- */
+.nd .sy, .lg-s { display: inline-flex; align-items: center; justify-content: center; width: 17px; height: 17px; border-radius: 50%; background: #0b1514; border: 1.5px solid #6fd0c4; box-shadow: 0 0 6px rgba(111,208,196,.45); }
+.nd .sy { position: absolute; left: -2px; top: 2px; pointer-events: none; z-index: 2; }
+.nd.k-e .sy, .nd.k-f .sy, .nd.k-b .sy { left: -6px; top: 0; }
+.nd .sy svg, .lg-s svg { width: 11px; height: 11px; fill: none; stroke: #9ff0e4; stroke-width: 1.8; stroke-linecap: round; }
+.lg-s { flex: none; }
+/* dar / kisa ekran (telefon yatay 844x390 dahil): karma listesi yine okunur boyda (15px), yatay tasma yok */
+@media (max-width: 900px), (max-height: 520px) {
+  .vinfo.mix { padding: 5px 9px 7px; } .vinfo.mix .vt { font-size: 12px; } .vinfo.mix .vt small { font-size: 9px; }
+  .vinfo.mix p.mtr { font-size: 15px; margin-bottom: 6px; }
+  .idl { gap: 5px; } .idl li { gap: 8px; } .idl .ii { width: 30px; height: 30px; } .idl .it { font-size: 15px; line-height: 1.3; } .idl .it b { font-size: 10.5px; margin-right: .5em; } .idl .it em { font-size: 8.5px; margin-right: .5em; }
+}
+
+/* ---------- acilir / kapanir paneller: Kurallar, Focus check, Karma karsilastirmasi (tek satirlik dugme; varsayilan kapali, karsilastirma acik) ---------- */
+.tg { display: inline-flex; align-items: center; gap: .5em; min-height: 36px; padding: 0 .9em; background: transparent; border: 1px dashed rgba(217,178,106,.3); color: var(--g-dim); font: 600 12px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; cursor: pointer; }
+.tg i { font-style: normal; color: var(--g-gold); }
+.tg:hover, .tg.open { color: var(--g-text); border-color: rgba(243,217,153,.55); }
+@media (pointer: coarse) { .tg { min-height: 44px; } }
+.tg + .tgb { margin-top: 8px; }
+.col > .tgb { display: none; }
+.st-info.col { padding: 0; border-left: 0; margin: 4px 0; }
+.focus.col { padding: 0; border: 0; background: none; margin: 4px 0; }
+.focus:empty { display: none; }
+.cmp { margin: 6px 0 8px; }
+.cmp[hidden] { display: none; }
+.cmpg { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.cmpc { min-width: 0; padding: 9px 12px 11px; border: 1px solid var(--g-line2); background: rgba(255,255,255,.02); cursor: pointer; }
+.cmpc:hover { border-color: rgba(243,217,153,.55); }
+.cmpc:focus-visible { outline: 1px dashed var(--g-gold); outline-offset: 2px; }
+.cmpc.on { border-color: var(--g-ember); background: linear-gradient(180deg, rgba(224,112,42,.16), rgba(255,255,255,.02) 75%); box-shadow: inset 0 0 0 1px rgba(224,112,42,.3); }
+.cmpc .cl { display: block; font: 600 14px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+.cmpc.on .cl::before { content: '◆ '; color: var(--g-ember); }
+.cmpc p.mtr { margin: 4px 0 8px; font: 16.5px/1.38 var(--g-body); color: #eadcb8; }
+.cmpc .idl { gap: 6px; }
+.cmpc .idl li { gap: 10px; }
+.cmpc .idl .ii { width: 32px; height: 32px; }
+.cmpc .idl .it { font-size: 16px; }
+.cmpc .idl .it b { font-size: 11.5px; }
+@media (max-width: 1000px) { .cmpg { grid-template-columns: 1fr; gap: 6px; } }
+@media (max-width: 900px), (max-height: 520px) {
+  .tg { font-size: 11px; letter-spacing: .08em; }
+  .cmpg { grid-template-columns: 1fr; gap: 6px; }
+  .cmpc { padding: 6px 9px 8px; } .cmpc .cl { font-size: 12px; }
+  .cmpc p.mtr { font-size: 14.5px; margin: 3px 0 6px; }
+  .cmpc .idl { gap: 4px; } .cmpc .idl li { gap: 8px; } .cmpc .idl .ii { width: 28px; height: 28px; } .cmpc .idl .it { font-size: 14.5px; line-height: 1.3; } .cmpc .idl .it b { font-size: 10px; margin-right: .5em; } .cmpc .idl .it em { font-size: 8.5px; margin-right: .5em; }
 }

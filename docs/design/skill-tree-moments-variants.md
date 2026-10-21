@@ -94,3 +94,74 @@ Belirsiz: başka class statüleri Warrior'a verildi (Blinded, Jinxed, Overextend
 ### mage (OK, 0 warn) — NEW 8
 Ult Meteor. 1 Pyromancer: Burning yayılır, Blizzard ile söndür/patlat (NEW 2) · 2 Frostbinder: Slow→Stun dondurma, Blind/Silence (NEW 2) · 3 Echo Weaver: Spell Echo zinciri, kısa cooldown, sık Blizzard/Meteor (NEW 1) · 4 Mana Tide: fazla MP harca güç al, MP geri doldur (NEW 1) · 5 Glass Cannon: kritik, öldürme zinciri, düşük canda güç (NEW 2)
 Belirsiz: yarım tur düğümleri "en az 2 cooldown" kuralını zorlayabilir; yankı tekrar ateşleme, sonradan cooldown kazanma NEW sayılmadı.
+
+## 5. Karma turu (Ömer isteği 2026-10-22)
+Ömer: "Çok fazla okunacak skill var, seçemedim. Önerdiklerinden ortaya karışık yap. Buffladığı skill'in kimliğini güçlendirsin, skill'ler arasında nadiren sinerji olsun ama genelde farklı kimlikleri olsun, ilgi çekici olsun. Class başına 5'ten karma 2'ye düşür, oradan seçeyim."
+
+**Kurallar**
+- Her class için **2 karma ağaç** (Karma A, Karma B). Düğümler o class'ın 5 varyantından seçilir (`variants/<cls>.js`). Yeni düğüm yazılmaz.
+- Düğüm **aynı satırda** ve **aynı tür yuvada** kalır: filler (f1 f2 f3 r) ↔ filler, edge (ea eb) ↔ edge, notable (n0 ma mb) ↔ notable, blood price (fa fb) ↔ blood price, evolve (v) ↔ evolve, ult 1. düğüm (u1 r1 d1 l1) ↔ ult 1. düğüm, ult 2. düğüm ↔ ult 2. düğüm, ult notable (u3 r3 d3 l3) ↔ ult notable.
+- Kaynak her düğümde yazılır: `'V2:1.ea'`. Metin uyum için hafifçe düzeltilebilir (başka düğüme atıf, sayı, ad çakışması); düzeltilen düğümün kaynağının sonuna `*` konur. Karma başına en çok 12 düzeltme.
+- **Kimlik:** her satır kendi skill'inin kimliğini keskinleştirir (ör. Whirlwind = çevre / sürekli dönme, Charge = giriş / sersemletme). Satırın a ve b yönleri yine farklı oynar. Pasif satırı class'ın genel kimliğini taşır.
+- **Nadir sinerji:** karma başına **1-3 düğüm** başka bir skill'e bağlanır (`syn`). Geri kalanı yalnızca kendi skill'ini güçlendirir.
+- **İlgi çekici:** sıkıcı düz sayı yerine "an" yaratan düğüm tercih edilir; filler'lar bile skill'e özgü olur.
+- Karma A ile Karma B gerçekten **farklı** iki seçenek olur: her satırda farklı bir yön ya da ton (en çok 15 ortak düğüm).
+- NEW (yeni mekanik) karma başına en çok 4; mümkünse az.
+- Bar: 5 bonus, herhangi bir varyantın bar bonuslarından seçilir (kaynak `'V3:bar2'`).
+
+**Veri:** `public/mockups/skill-tree-moments/mix/<cls>.js`
+```js
+/* <CLASS>: 2 karma ağaç (content-designer, 2026-10-22). Kaynak: variants/<cls>.js */
+(window.SMM_MIX = window.SMM_MIX || {})['archer'] = {
+  cls: 'archer',
+  mixes: [
+    { title: 'Name',                    // EN, 1-3 kelime
+      theme: 'EN ≤ 120',
+      tr: 'TR ≤ 160, Ömer için genel özet',
+      rowsTr: ['Sharpshooter: ...', 'Quick Shot: ...', 'Piercing Arrow: ...', 'Arrow Rain: ...', 'Aimed Shot: ...'], // TR, 5 satır (pasif, 3 aktif, ult), her biri ≤ 110: o skill bu karmada ne olur
+      mastery: 'X Mastery',
+      bar: [['Name', 'Effect', 'V3:bar0'], ... 5 adet],
+      syn: { '2.mb': 'Quick Shot' },    // 1-3 sinerji düğümü: anahtar → bağlandığı skill adı
+      nodes: { '0.f1': ['Name', 'Effect', false, 'V2:0.f2'], ... 60 anahtar } }, // 3. eleman true = NEW
+    { ... Karma B ... }
+  ]
+};
+```
+Denetim: `node <scratchpad>/check-variants.js <cls> --mix`.
+
+## 6. Karma özeti (ajan raporlarından, 2026-10-22)
+Hepsi denetimden geçti (11 dosya × 2 karma × 60 düğüm, kurallar testi 0 hata). Sayılar taslak, sim yok.
+
+### defender — A Stone Rampart / B Iron Reprisal (ortak 0, NEW 2/3)
+A: yerinden kıpırdamayan duvar; Slam yavaşlatır/sersemletir, Taunt dayanır, Close Ranks öldürücü darbeyi üstlenir. Sinerji: Fist Crush kill → Taunt cooldown sıfır; Fist Crush yavaşlatılanlara iner.
+B: misilleme tankı; dikenli aura, Slam zırh kırar, Taunt düello + Riposte, Close Ranks vurana Jinx. Sinerji: Taunt kırılmazsa Fist Crush 2 tur erken; Close Ranks'ın üstlendiği vuruşlar Fist Crush'a eklenir.
+### gambler — A Push Your Luck / B Sleight of Hand (ortak 0, NEW 3/3)
+A: risk ve seri; Double or Nothing seriyle büyür, Loaded Dice yeniden atılır, High Stakes can yatırıp 3-4x, All In MP ile büyür. Sinerji: Loaded Dice kritik → sonraki bahis Jackpot şansı; Jackpot → Card Trick'e kart.
+B: hileli masa + kontrol; ilk bahis hep tutar, Loaded Dice ıskalamaz (Jinx/MP çalma), Card Trick durumunu sen seçersin. Sinerji: Jinx'li hedefi Card Trick hep bayıltır; High Stakes kaybedince sonraki All In kesin.
+### archer — A Still Bow / B Running Hunt (ortak 0, NEW 2/1)
+A: kıpırdamayan nişancı; uzak hedefe kritik/zırh delme, Quick Shot yavaşlatıp kör eder, Piercing geçtikçe sertleşir, Aimed Shot zırh yaran tek atış. Sinerji: yaklaşana bedava Quick Shot; yağmurdan geçen Piercing hasar kaybetmez.
+B: hep hareket eden avcı; Haste'le büyüyen pasif, seri Quick Shot, Piercing arkayı vurur, Aimed Shot canı azalanı bitirir. Sinerji: aynı tur yürü + Quick Shot; her 2. Quick Shot Arrow Rain cooldown -1.
+### hexer — A Grim Verdict / B Plague of Misfortune (ortak 0, NEW 2/3)
+A: tek kurbana Omen yığ, çürüme olgunlaştırır, Doom ile infaz; Evil Eye kritikte 3 Omen. Sinerji: Evil Eye Withered hedefe daha çok kritik; Doom Mark kalan çürümeyi +%50 tek seferde vurur.
+B: lanet sıçrar, Omen'li düşman ıskalar/sırasını kaybeder; Evil Eye kör eder, çürüme bulaşıcı. Sinerji: Evil Eye ıskalamış hedefe sert; Doom Mark'tan sağ çıkan 2 tur Jinxed.
+### antimage — A Silent Hunt / B Warden's Well (ortak 0, NEW 1/3)
+A: saldırgan; Mana Overflow engellediğine geri vurur, Mana Steal hançer yağmuru, Drain Field toplu susturur, Spell Ward tuzak kalkan, Void Strike MP'siz hedefi infaz. Sinerji: 0 MP'de ölen düşman Void Strike cooldown kısaltır; susturulmuş hedefe Void Strike +%20.
+B: takım; Overflow dostlara MP, Mana Steal buff söker + iyileşir, Drain Field alan tutar, Spell Ward debuff temizler, Void Strike kör/sersem/buff çalma. Sinerji: Void Strike sonrası Mana Steal fazla hançer; Void Strike Overflow'u tetikler.
+### undead — A Blood Price / B Grave Blight (ortak 0, NEW 2/3)
+A: canla öder; Vampiric Bite can azaldıkça çok emer, Bone Throw Slow/Stagger/Stun/Silence kilit, Wail can yakıp sert vurur, Dark Bond canını dosta aktarır. Sinerji: Wail için ödenen can bağlı dosta şifa.
+B: çürümeden beslenir; Wither tıkları iyileştirir, Wail zehir zemini yayılır, Bone Throw Overextended yapar, Dark Bond'da dostun vuruşu besler. Sinerji: bağlı dost ölürse Raise Dead cooldown sıfır / dost iskelet olarak kalkar.
+### druid — A Thornwrath / B Deep Roots (ortak 1, NEW 1/3)
+A: intikamcı orman; katil sersemler/ağır hasar yer, Thorn Whip kanca kırbaç, Wrath büyük patlama, Treant ön sırayı ezer. Sinerji: pasif tetiklenince katile bedava kritik Thorn Whip; dost düşünce katile bedava Wrath. VARSAYIM: pasif dost %30 altına inince de tetikleniyor (onay lazım).
+B: sabırlı orman; Wither ölenden yanındakine geçer, Thorn Whip az canlıyı bitirir, Wrath kök tarlası, Rejuvenate fazla şifa kalkan, Treant uzun yaşayan duvar. Sinerji: Treant ayaktayken Rejuvenate cooldown -1; Rejuvenate'te Treant da yarım güçle şifa.
+### cutthroat — A Rot and Ruin / B Ghost Blade (ortak 0, NEW 0/3)
+A: yıpratan suikastçı; Venom Edge zehir (Wither), Saltire dikenli bıçak yağmuru, Smoke Bomb susturur/kör eder, Backstab statüleri hasara çevirir. Sinerji: Backstab Venom zehrini tek vuruşta boşaltır; susturulmuş hedefe Backstab ek hasar.
+B: hayalet suikastçı; Venom Edge az canlıyı bitirir, Saltire merkezde kritik, Smoke Bomb dostları saklar/pusu, Backstab vur-kaybol. Sinerji: kör saldırgana kritik karşı kesik; Venom öldürünce Backstab cooldown -1.
+### mage — A Fire and Frost / B Arcane Tempo (ortak 0, NEW 2/2)
+A: Fire Bolt ve Meteor yakar, Blizzard ve Mana Barrier dondurur; Spell Echo ateşi patlatır ya da yavaşlatıp susturur. Sinerji: pasif yankı Fire Bolt'a da işler; kalkan kırılınca saldırana kesin kritik Fire Bolt.
+B: element yerine büyü ustalığı; yankılar cooldown kısaltır, Fire Bolt öldürünce bedava tekrar, Mana Barrier MP kuyusu, Meteor öldürünce yeniden hazır. Sinerji: Meteor Blizzard cooldown'unu sıfırlar.
+### paladin — A Dawn Crusade / B Oathkeeper (ortak 0, NEW 1/2)
+A: saldırgan; Divine Light iyileştirirken düşmanı çarpar, Holy Strike art arda büyür, Judgment ateşi yayılır, dirilen dost Haste/alevle kalkar. Sinerji: Judgment ateşindekine Holy Strike fazla hasar; Radiance sonrası Judgment cooldown sıfır.
+B: koruyucu/fedakâr; Divine Light kalkan verir, Holy Strike Taunt/MP, diriltilen Fortified+Blessed, Judgment kör/sersem/arındırma. Sinerji: art arda iki Holy Strike → Resurrection ya da Radiance bedava. En cömert şifa evolve'ları alınmadı.
+### warrior — A Blood and Fury / B Iron and Bone (ortak 1, NEW 1/3)
+A: acı ve Rage yakıt; darbe yiyince güçlenme, Double Strike Rage toplayıp yakar, Whirlwind herkesi kanatıp can çalar, Headsman's harcanan Rage'le büyür. Sinerji: Charge sonrası Headsman's 10 daha az Rage.
+B: düşmez, hattı kırar; ölümcül darbeden 1 canla kalkma, Double Strike ilk darbe ikinciyi hazırlar, Whirlwind çeker/kör eder, Charge koçbaşı, Headsman's sağ kalanı sersemletir. Sinerji: sersemlemiş hedefe Headsman's ıskalamaz + kritik.

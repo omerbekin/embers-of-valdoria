@@ -6,18 +6,19 @@
 <meta name="darkreader-lock" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Skill tree: Moments scheme (mockup)</title>
-<!-- MOMENTS skill agaci: 11 class x 5 varyant ev sahibi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md.
-  Adres: #c=<class>&v=<1-5|pick> &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli). Eski: #c=w (Warrior, Omer'in secimi), #c=h (Hexer v1).
-  Icerik: class varyantlari skill-tree-moments/variants/<class>.js (secilince yuklenir; yoksa 'Variants coming'); Warrior'da ek olarak Omer'in secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot').
+<!-- MOMENTS skill agaci: 11 class x (2 karma + 5 kaynak varyant) ev sahibi (ui-dev, 2026-10-21 / karma turu 2026-10-22). Oyun kodu DEGIL. Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md.
+  Adres: #c=<class>&v=<a|b|pick|1-5> (v yoksa a = Karma A; a / b karma, 1-5 kaynak varyant) &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli). Eski: #c=w (Warrior, Omer'in secimi), #c=h (Hexer v1).
+  Icerik: class varyantlari skill-tree-moments/variants/<class>.js (secilince yuklenir; yoksa 'Variants coming'); karmalar skill-tree-moments/mix/<class>.js (yoksa / bozuksa V1-V5 gosterilir; varsa sekmelerin altinda Karma A <-> Karma B karsilastirma paneli); Warrior'da ek olarak Omer'in secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot').
   Class tablosu + ikonlar: skill-tree-moments/classes.js + skill-tree-moments/ic/. -->
 <link rel="stylesheet" href="skill-tree-moments/moments.css" />
 </head>
 <body>
 <div class="page">
   <div class="top">
-    <h1>Skill tree · Moments <small>11 class · her class 5 varyant · şema doğrulama · tıklanabilir · içerik taslak</small></h1>
+    <h1>Skill tree · Moments <small>11 class · her class 2 karma ağaç (+ 5 kaynak varyant) · şema doğrulama · tıklanabilir · içerik taslak</small></h1>
     <div class="cls-sel" id="cls-sel" role="group" aria-label="Class"></div>
     <div class="var-tabs" id="var-tabs" role="group" aria-label="Variant"></div>
+    <div class="cmp" id="cmp" hidden></div>
     <div class="ctl">
       <div class="lvbox"><span class="lt">Level<b id="lvv">30</b></span><input type="range" id="lv" min="1" max="50" step="1" value="30" aria-label="Level" /><span class="lp">free <b id="lvp">29 / 29</b></span></div>
       <button class="rs" type="button" id="reset" title="Reset: refund every point"><img src="skill-tree-moments/gold.webp" alt="">Reset</button>

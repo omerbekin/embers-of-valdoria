@@ -1,8 +1,10 @@
-/* MOMENTS agaci: ICERIK COZUCU (mockup, oyun kodu DEGIL). Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md (veri sozlesmesi bolum 3).
-   Iki kaynak:
+/* MOMENTS agaci: ICERIK COZUCU (mockup, oyun kodu DEGIL). Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md (veri sozlesmesi bolum 3 + karma turu bolum 5).
+   Uc kaynak:
    - Class varyanti: variants/<cls>.js -> window.SMM_VARIANTS[cls] = { rows[4], ult, variants[5]: { title, theme, tr, mastery, bar[5], nodes{ '0.f1': [ad, etki, yeni?] ... 60 anahtar } } }
+   - Karma: mix/<cls>.js -> window.SMM_MIX[cls] = { mixes[2]: { title, theme, tr, rowsTr[5], mastery, bar[5]: [ad, etki, kaynak], syn{ anahtar: skill adi }, nodes{ '0.f1': [ad, etki, yeni?, kaynak] ... 60 anahtar } } }
+     kaynak 'V2:1.ea' (varyant 2, dugum 1.ea); sonunda * = metin karma icin duzeltilmis. Satir / ult adlari yine variants dosyasindan gelir.
    - Omer'in secimi (yalniz Warrior): picks-warrior.js -> window.SMM_PICKS.w.nodes (null / eksik = bos yuva); Mastery adi + bar asagidaki PICK_BAR (eski V6 Moments).
-   Cikti (node basina): { name, eff, nw, src, note, empty }. Eksik / bozuk anahtar = bos yuva ('Open slot'), sayfa cokmez.
+   Cikti (node basina): { name, eff, nw, src, edited, syn, note, empty }. Eksik / bozuk anahtar = bos yuva ('Open slot'), sayfa cokmez.
    Tarayicida window.SMM_CONTENT, Node'da require. */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.SMM_CONTENT = f(); })(this, function () {
   const RK = ['f1', 'f2', 'f3', 'n0', 'r', 'ea', 'eb', 'ma', 'fa', 'fb', 'mb', 'v'];
@@ -24,7 +26,7 @@
     ["Death's Door", 'Once per battle, when you drop below 25% HP, all your cooldowns drop by 1.'],
   ];
 
-  const empty = (eff) => ({ empty: true, name: 'Open slot', eff, nw: false, src: '', note: null });
+  const empty = (eff) => ({ empty: true, name: 'Open slot', eff, nw: false, src: '', edited: false, syn: null, note: null });
 
   /* Varyant dosyasi yapi denetimi: bozuksa metin dondurur (app 'Variants coming' gosterir), saglamsa null. */
   function validateFile(D, cls) {
@@ -36,6 +38,40 @@
     return null;
   }
 
+  /* Karma dosyasi yapi denetimi: bozuksa metin dondurur (app 5 kaynak varyanta duser), saglamsa null. En az 1 karma gerekir (A); ikinci yoksa B sekmesi kapali kalir. */
+  function validateMix(M, cls) {
+    if (!M || typeof M !== 'object') return 'no data';
+    if (!Array.isArray(M.mixes) || !M.mixes.length) return 'mixes missing';
+    if (M.mixes.some((m) => !m || typeof m !== 'object' || !m.nodes || typeof m.nodes !== 'object')) return 'mix nodes missing';
+    return null;
+  }
+
+  /* Karma kaynak etiketi: 'V2:1.ea' / 'V3:bar2' / sonunda * = duzeltilmis. Dondurur { text: 'V2 · Varyant adi', edited, v: 2 } (cozulemezse ham metin). */
+  const SRC_RE = /^V(\d+)\s*:\s*([^*\s]+)(\*)?$/;
+  function parseSrc(s, D) {
+    if (typeof s !== 'string' || !s) return { text: '', edited: false, v: 0 };
+    const m = SRC_RE.exec(s.trim());
+    if (!m) return { text: s, edited: false, v: 0 };
+    const v = +m[1], V = D && D.variants && D.variants[v - 1];
+    return { text: 'V' + v + (V && V.title ? ' · ' + V.title : ''), edited: !!m[3], v };
+  }
+
+  /* Karma (M.mixes[mi]) -> icerik. Dugum dizisi [ad, etki, yeniMi, kaynak]; bar girdisi [ad, etki, kaynak]; syn { anahtar: bagli skill adi }. D = variants dosyasi (kaynak varyant adlari icin, yoksa yalniz 'V2'). */
+  function fromMix(D, M, mi) {
+    const m = M.mixes[mi], nodes = {}, syn = m.syn && typeof m.syn === 'object' ? m.syn : {};
+    ALL_KEYS.forEach((key) => {
+      const e = m.nodes[key];
+      if (Array.isArray(e) && typeof e[0] === 'string' && e[0]) {
+        const sr = parseSrc(e[3], D);
+        nodes[key] = { name: e[0], eff: typeof e[1] === 'string' && e[1] ? e[1] : '(content missing)', nw: e[2] === true, src: sr.text, edited: sr.edited,
+          syn: typeof syn[key] === 'string' && syn[key] ? syn[key] : null, note: null, empty: false };
+      } else nodes[key] = empty(EMPTY_EFF_VAR);
+    });
+    const bar = Array.isArray(m.bar) ? m.bar : [];
+    return { mastery: m.mastery || null, bar, barSrc: bar.map((b) => parseSrc(b && b[2], D)), nodes, title: m.title || '', label: 'Karma ' + (mi === 0 ? 'A' : 'B'),
+      theme: m.theme || '', tr: m.tr || '', rowsTr: Array.isArray(m.rowsTr) ? m.rowsTr.filter((s) => typeof s === 'string') : [], syn, pick: false, mix: true, mi };
+  }
+
   /* Class dosyasinin vi. varyanti -> icerik. */
   function fromVariant(D, vi) {
     const v = D.variants[vi], nodes = {};
@@ -43,7 +79,7 @@
     ALL_KEYS.forEach((key) => {
       const e = v.nodes[key];
       nodes[key] = Array.isArray(e) && typeof e[0] === 'string' && e[0]
-        ? { name: e[0], eff: typeof e[1] === 'string' && e[1] ? e[1] : '(content missing)', nw: e[2] === true, src, note: null, empty: false }
+        ? { name: e[0], eff: typeof e[1] === 'string' && e[1] ? e[1] : '(content missing)', nw: e[2] === true, src, edited: false, syn: null, note: null, empty: false }
         : empty(EMPTY_EFF_VAR);
     });
     const bar = Array.isArray(v.bar) ? v.bar : [];
@@ -55,12 +91,12 @@
     const pk = P && P.w && P.w.nodes, nodes = {};
     ALL_KEYS.forEach((key) => {
       const p = pk && pk[key];
-      nodes[key] = p && p.name ? { name: p.name, eff: p.eff || '', nw: !!p.nw, src: p.src || '', note: p.note || null, empty: false } : empty(EMPTY_EFF);
+      nodes[key] = p && p.name ? { name: p.name, eff: p.eff || '', nw: !!p.nw, src: p.src || '', edited: false, syn: null, note: p.note || null, empty: false } : empty(EMPTY_EFF);
     });
     return { mastery: PICK_MASTERY, bar: PICK_BAR, nodes, title: 'Ömer\'s pick',
       theme: 'Ömer\'s own picks from the Warrior form. Slots he has not picked yet show as Open slot.',
       tr: 'Ömer\'in formdan seçtikleri; seçilmemiş yuvalar "Open slot" olarak görünür.', pick: true };
   }
 
-  return { ALL_KEYS, RK, UK, validateFile, fromVariant, fromPick, PICK_BAR, PICK_MASTERY };
+  return { ALL_KEYS, RK, UK, validateFile, validateMix, fromVariant, fromMix, fromPick, parseSrc, PICK_BAR, PICK_MASTERY };
 });
