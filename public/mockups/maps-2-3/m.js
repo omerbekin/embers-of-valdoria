@@ -377,7 +377,7 @@
       sg += `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}"><g mask="url(#fm${id})">${roadSvg(sub, s.e, L.rs, 'butt')}</g></g>`;
     });
     h += `<defs>${sd}</defs><g class="stubs">${sg}</g>`;
-    h += '<g class="ghostroads" opacity=".4">' + L.stubs.filter((s) => s.ghost).map((s) => `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}">${roadSvg(s.g, s.e, L.rs)}</g>`).join('') + '</g>';
+    h += '<g class="ghostroads" opacity=".8">' + L.stubs.filter((s) => s.ghost).map((s) => `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}">${roadSvg(s.g, s.e, L.rs)}</g>`).join('') + '</g>';
     // yön okları + komşu bölge etiketleri (tıkla = o bölgeye geç)
     const done = new Set();
     for (const s of L.stubs) {
