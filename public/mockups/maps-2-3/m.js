@@ -47,15 +47,20 @@
     for (let i = 1; i < poly.length; i++) cum.push(cum[i - 1] + Math.hypot(poly[i].x - poly[i - 1].x, poly[i].y - poly[i - 1].y));
     return { d, poly, cum, len: cum[cum.length - 1] };
   }
-  function geom(A, B, e, key) {
+  const quad = (A, B, q) => [[[A[0] + (2 / 3) * (q[0] - A[0]), A[1] + (2 / 3) * (q[1] - A[1])], [B[0] + (2 / 3) * (q[0] - B[0]), B[1] + (2 / 3) * (q[1] - B[1])], B]];
+  /* opt: spoke = hub yolu (derece >= 5): tek yumuşak kavis, ortada en çok uzunluğun %3'ü sapma; add = kıvrım tohumu kaydırması (kesişim kontrolü); amp = sapma çarpanı */
+  function geom(A, B, e, key, opt) {
     let segs;
+    const o = opt || {}, amp = o.amp == null ? 1 : o.amp, k0 = key + (o.add || 0) * 7919;
     if (e && e.ctrl) {
-      const q = [e.ctrl[0] * W, e.ctrl[1] * H];
-      segs = [[[A[0] + (2 / 3) * (q[0] - A[0]), A[1] + (2 / 3) * (q[1] - A[1])], [B[0] + (2 / 3) * (q[0] - B[0]), B[1] + (2 / 3) * (q[1] - B[1])], B]];
+      segs = quad(A, B, [e.ctrl[0] * W, e.ctrl[1] * H]);
+    } else if (o.spoke && !(window.MAPFLAGS && window.MAPFLAGS.off)) {
+      const dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1, sg = rng(k0)() < 0.5 ? 1 : -1, h = d * 0.06 * amp * sg; // ortada sapma = h / 2 = %3
+      segs = quad(A, B, [(A[0] + B[0]) / 2 - (dy / d) * h, (A[1] + B[1]) / 2 + (dx / d) * h]);
     } else {
       const dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, px = -uy, py = ux;
-      const r = rng(key), sg = r() < 0.5 ? 1 : -1, k = d > 260 ? 3 : 2;
-      const off = Math.min(d * (0.1 + r() * 0.045), 56);
+      const r = rng(k0), sg = r() < 0.5 ? 1 : -1, k = d > 260 ? 3 : 2;
+      const off = Math.min(d * (0.1 + r() * 0.045), 56) * amp;
       const pts = [A];
       for (let i = 1; i <= k; i++) {
         const t = i / (k + 1), o = off * (i % 2 ? 1 : -1) * sg * (0.85 + r() * 0.3);
@@ -201,10 +206,13 @@
   }
 
   /* ---------- YAKIN GÖRÜNÜM: bölgenin düğümleri, yolları, komşu bölgeye çıkış okları ---------- */
-  function placeLabels(nodes, extOf, fs, preRects) {
+  /* hub bölgesi (derece >= 8 olan düğüm): etiketler hub'ın dışına bakar ve yollara değmemeye çalışır; hub'ın kendi etiketi yollara en az değen yöne konur */
+  function placeLabels(nodes, extOf, fs, preRects, hubs, pts) {
     const rects = preRects.slice(), out = {}, h = fs * 1.3;
     const circles = nodes.map((n) => ({ x: n.px, y: n.py, r: extOf(n) + 2 }));
     const hit = (r) => rects.some((q) => !(r.x1 < q.x0 || r.x0 > q.x1 || r.y1 < q.y0 || r.y0 > q.y1)) || circles.some((c) => r.x1 > c.x - c.r && r.x0 < c.x + c.r && r.y1 > c.y - c.r && r.y0 < c.y + c.r);
+    const roadHits = (r) => (pts && pts.length ? pts.reduce((k, p) => k + (p.x > r.x0 - 2 && p.x < r.x1 + 2 && p.y > r.y0 - 2 && p.y < r.y1 + 2 ? 1 : 0), 0) : 0);
+    const hubSet = new Set((hubs || []).map((x) => x.n));
     for (const n of [...nodes].sort((a, b) => extOf(b) - extOf(a))) {
       const w = measure(n.name, `600 ${fs}px Cinzel`) + 4, R = extOf(n) + fs * 0.4;
       const cand = [
@@ -213,7 +221,25 @@
         { a: 'start', x: n.px + R + 3, y: n.py + fs * 0.35, r: { x0: n.px + R, x1: n.px + R + w + 4, y0: n.py - h / 2, y1: n.py + h / 2 } },
         { a: 'end', x: n.px - R - 3, y: n.py + fs * 0.35, r: { x0: n.px - R - w - 4, x1: n.px - R, y0: n.py - h / 2, y1: n.py + h / 2 } },
       ].filter((c) => c.r.x0 > 2 && c.r.x1 < W - 2 && c.r.y0 > 2 && c.r.y1 < H - 2);
-      const pick = cand.find((c) => !hit(c.r)), dim = !pick, p = pick || cand[0] || { a: 'middle', x: n.px, y: n.py + R + fs, r: { x0: n.px - w / 2, x1: n.px + w / 2, y0: n.py + R, y1: n.py + R + h } };
+      let pick;
+      if (hubs && hubs.length) {
+        if (hubSet.has(n.n)) { // hub: 8 yönden yollara en az değen çakışmasız yer
+          const dirs = [[0, 1], [0, -1], [1, 0], [-1, 0], [0.7, 0.7], [-0.7, 0.7], [0.7, -0.7], [-0.7, -0.7]];
+          const c8 = dirs.map(([dx, dy]) => {
+            const a = Math.abs(dx) > 0.5 ? (dx > 0 ? 'start' : 'end') : 'middle';
+            const x0 = a === 'start' ? n.px + R : a === 'end' ? n.px - R - w : n.px - w / 2, x1 = x0 + w, y0 = dy === 0 ? n.py - h / 2 : dy > 0 ? n.py + R : n.py - R - h, y1 = y0 + h;
+            return { a, x: a === 'start' ? n.px + R + 3 : a === 'end' ? n.px - R - 3 : n.px, y: (y0 + y1) / 2 + fs * 0.35, r: { x0, x1, y0, y1 } };
+          }).filter((c) => c.r.x0 > 2 && c.r.x1 < W - 2 && c.r.y0 > 2 && c.r.y1 < H - 2 && !hit(c.r));
+          c8.sort((p, q) => roadHits(p.r) - roadHits(q.r));
+          pick = c8[0];
+        } else {
+          const hb = hubs.reduce((b, q) => (Math.hypot(n.px - q.px, n.py - q.py) < Math.hypot(n.px - b.px, n.py - b.py) ? q : b), hubs[0]);
+          const vx = n.px - hb.px, vy = n.py - hb.py, vl = Math.hypot(vx, vy) || 1, dot = (c) => (c.a === 'middle' ? (c.y > n.py ? 1 : -1) * vy : (c.a === 'start' ? 1 : -1) * vx) / vl;
+          cand.sort((p, q) => dot(q) - dot(p)); // dışa bakan yön önce
+          pick = cand.find((c) => !hit(c.r) && !roadHits(c.r)) || cand.find((c) => !hit(c.r));
+        }
+      } else pick = cand.find((c) => !hit(c.r));
+      const dim = !pick, p = pick || cand[0] || { a: 'middle', x: n.px, y: n.py + R + fs, r: { x0: n.px - w / 2, x1: n.px + w / 2, y0: n.py + R, y1: n.py + R + h } };
       rects.push(p.r);
       out[n.n] = { ...p, dim };
     }
@@ -225,14 +251,54 @@
     const u = ns, sc = SC * ns, rs = Math.sqrt(ns);
     const nodes = nodesOf(rid), set = new Set(nodes.map((n) => n.n)), all = Object.fromEntries(M.nodes.map((n) => [n.n, { ...n, px: n.x * W, py: n.y * H }]));
     const extOf = (n) => EXT[kindOf(n.type)] * sc, radOf = (n) => RAD[kindOf(n.type)] * sc;
-    const roads = [], stubs = [];
+    const roads = [], stubs = [], deg = {};
+    for (const [a, b] of M.edges) { deg[a] = (deg[a] || 0) + 1; deg[b] = (deg[b] || 0) + 1; }
+    const off = !!(window.MAPFLAGS && window.MAPFLAGS.off); // karşılaştırma için: eski çizim
+    const spokeOf = (a, b) => !off && (deg[a] >= 5 || deg[b] >= 5);
     for (const [a, b, e] of M.edges) {
       const ia = set.has(a), ib = set.has(b);
-      if (ia && ib) roads.push({ a, b, e, g: geom([all[a].px, all[a].py], [all[b].px, all[b].py], e, hash(a, b)) });
+      if (ia && ib) roads.push({ a, b, e, key: hash(a, b), spoke: spokeOf(a, b), add: 0, amp: 1, A: [all[a].px, all[a].py], B: [all[b].px, all[b].py] });
       else if (ia || ib) {
         const inn = ia ? all[a] : all[b], out = ia ? all[b] : all[a];
-        stubs.push({ inn, out, e, g: geom([inn.px, inn.py], [out.px, out.py], e, hash(Math.min(a, b), Math.max(a, b))), nr: out.region });
+        stubs.push({ a: inn.n, b: out.n, inn, out, e, key: hash(Math.min(a, b), Math.max(a, b)), spoke: spokeOf(a, b), add: 0, amp: 1, A: [inn.px, inn.py], B: [out.px, out.py], nr: out.region, stub: true });
       }
+    }
+    const items = roads.concat(stubs);
+    for (const it of items) it.g = geom(it.A, it.B, it.e, it.key, it);
+    const stat = { before: 0, after: 0, hubBefore: 0, hubAfter: 0, nodeHitsBefore: 0, nodeHitsAfter: 0, changed: 0 };
+    let recount = null;
+    {
+      const cls = nodes.map((n) => ({ n: n.n, x: n.px, y: n.py, r: extOf(n) * 0.9 }));
+      const pre = (it) => { // çizilen kısım (yön ucu: en çok 230*u ya da %90)
+        const lim = it.stub ? Math.min(it.g.len * 0.9, 230 * u) : 1e9, p = [];
+        for (let i = 0; i < it.g.poly.length; i++) { p.push(it.g.poly[i]); if (it.g.cum[i] > lim) break; }
+        return p;
+      };
+      const segX = (p1, p2, p3, p4) => { const d1x = p2.x - p1.x, d1y = p2.y - p1.y, d2x = p4.x - p3.x, d2y = p4.y - p3.y, den = d1x * d2y - d1y * d2x; if (Math.abs(den) < 1e-9) return false; const t = ((p3.x - p1.x) * d2y - (p3.y - p1.y) * d2x) / den, s = ((p3.x - p1.x) * d1y - (p3.y - p1.y) * d1x) / den; return t >= 0 && t <= 1 && s >= 0 && s <= 1; };
+      const crossPoly = (P, Q) => { for (let i = 1; i < P.length; i++) for (let j = 1; j < Q.length; j++) if (segX(P[i - 1], P[i], Q[j - 1], Q[j])) return true; return false; };
+      const nearPoly = (P, c) => { for (let i = 1; i < P.length; i++) { const a = P[i - 1], b = P[i], dx = b.x - a.x, dy = b.y - a.y, l2 = dx * dx + dy * dy || 1, t = clamp(((c.x - a.x) * dx + (c.y - a.y) * dy) / l2, 0, 1); if (Math.hypot(a.x + dx * t - c.x, a.y + dy * t - c.y) < c.r) return true; } return false; };
+      const polys = items.map(pre);
+      const share = (p, q) => p.a === q.a || p.a === q.b || p.b === q.a || p.b === q.b;
+      const sharedId = (p, q) => (p.a === q.a || p.a === q.b ? p.a : p.b); // ortak düğüm
+      const crossSh = (it, P, jt, Q) => { // ortak düğümü paylaşan iki yol, ortak düğümden başka yerde kesişiyor mu
+        const s = sharedId(it, jt), p0 = it.a === s ? 1 : 0, q0 = jt.a === s ? 1 : 0, pl = P.length - 1, ql = Q.length - 1;
+        for (let i = 1; i <= pl; i++) { if ((p0 && i === 1) || (!p0 && i === pl)) continue; for (let j = 1; j <= ql; j++) { if ((q0 && j === 1) || (!q0 && j === ql)) continue; if (segX(P[i - 1], P[i], Q[j - 1], Q[j])) return true; } }
+        return false;
+      };
+      const costOf = (i, P) => { let c = 0; for (let j = 0; j < items.length; j++) if (j !== i && (share(items[i], items[j]) ? crossSh(items[i], P, items[j], polys[j]) : crossPoly(P, polys[j]))) c++; for (const cl of cls) if (cl.n !== items[i].a && cl.n !== items[i].b && nearPoly(P, cl)) c++; return c; };
+      const total = () => { let c = 0, h = 0, nh = 0; for (let i = 0; i < items.length; i++) { for (let j = i + 1; j < items.length; j++) if (share(items[i], items[j]) ? crossSh(items[i], polys[i], items[j], polys[j]) : crossPoly(polys[i], polys[j])) { c++; if (items[i].spoke && items[j].spoke) h++; } for (const cl of cls) if (cl.n !== items[i].a && cl.n !== items[i].b && nearPoly(polys[i], cl)) nh++; } return { c, h, nh }; };
+      const t0 = total(); stat.before = t0.c; stat.hubBefore = t0.h; stat.nodeHitsBefore = t0.nh;
+      if (!off) for (let pass = 0; pass < 2; pass++) for (let i = 0; i < items.length; i++) {
+        const it = items[i]; if (it.e && it.e.ctrl) continue; // elle çizilmiş eğri
+        let best = { c: costOf(i, polys[i]), add: it.add, amp: it.amp, g: it.g, P: polys[i] };
+        if (best.c === 0) continue;
+        const tryOne = (add, amp) => { const g = geom(it.A, it.B, it.e, it.key, { spoke: it.spoke, add, amp }), old = it.g; it.g = g; const P = pre(it); it.g = old; const c = costOf(i, P); if (c < best.c) best = { c, add, amp, g, P }; };
+        if (!it.spoke) for (let add = 1; add <= 6 && best.c > 0; add++) tryOne(add, 1); // en çok 6 farklı tohum
+        for (const amp of [0.55, 0.3, 0]) { if (best.c === 0) break; tryOne(best.add, amp); } // olmazsa sapmayı küçült
+        if (best.g !== it.g) { it.g = best.g; it.add = best.add; it.amp = best.amp; polys[i] = best.P; stat.changed++; }
+      }
+      const t1 = total(); stat.after = t1.c; stat.hubAfter = t1.h; stat.nodeHitsAfter = t1.nh;
+      recount = () => { for (let i = 0; i < items.length; i++) polys[i] = pre(items[i]); const t = total(); stat.after = t.c; stat.hubAfter = t.h; stat.nodeHitsAfter = t.nh; };
     }
     // komşu bölge okları: her komşu için tek etiket; çakışmasız yer seçilir
     const fsP = 9 * u, hP = fsP * 2, pills = [], used = {};
@@ -254,14 +320,27 @@
       if (!used[s.nr]) { used[s.nr] = 1; pills.push(best); }
     }
     const fs = 8 * u;
-    const lab = placeLabels(nodes, extOf, fs, pills.map((p) => p.r));
+    const hubs = off ? [] : nodes.filter((n) => deg[n.n] >= 8);
+    const ptsOf = () => { const q = []; for (const r of roads) { const g = r.g; for (let s = 0; s <= g.len; s += 6) { const p = pointAt(g, s); q.push({ x: p.x, y: p.y, r }); } } return q; };
+    let roadPts = hubs.length ? ptsOf() : [], lab = placeLabels(nodes, extOf, fs, pills.map((p) => p.r), hubs, roadPts);
+    for (let pass = 0; hubs.length && pass < 2; pass++) { // etiketin üstüne kıvrılan (hub dışı) yolun sapması küçülür, etiketler yeniden yerleşir
+      let ch = false;
+      for (const n of nodes) {
+        if (hubs.includes(n)) continue;
+        const l = lab[n.n];
+        for (const p of roadPts) if (p.x > l.r.x0 - 2 && p.x < l.r.x1 + 2 && p.y > l.r.y0 - 2 && p.y < l.r.y1 + 2 && !p.r.spoke && !(p.r.e && p.r.e.ctrl) && p.r.amp > 0.3) { p.r.amp = 0.3; p.r.g = geom(p.r.A, p.r.B, p.r.e, p.r.key, p.r); ch = true; }
+      }
+      if (!ch) break;
+      roadPts = ptsOf(); lab = placeLabels(nodes, extOf, fs, pills.map((p) => p.r), hubs, roadPts);
+      if (recount) recount();
+    }
     // sınırlar (dünya birimi)
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     const grow = (a, b, c, d) => { x0 = Math.min(x0, a); y0 = Math.min(y0, b); x1 = Math.max(x1, c); y1 = Math.max(y1, d); };
     for (const n of nodes) { const e = extOf(n); grow(n.px - e, n.py - e, n.px + e, n.py + e); const l = lab[n.n]; if (l) grow(l.r.x0, l.r.y0, l.r.x1, l.r.y1); }
     for (const p of pills) grow(p.r.x0, p.r.y0, p.r.x1, p.r.y1);
     for (const s of stubs) grow(s.tip.x - 4, s.tip.y - 4, s.tip.x + 4, s.tip.y + 4);
-    return { rid, ns, u, sc, rs, nodes, all, roads, stubs, pills, lab, extOf, radOf, fs, bounds: { x0, y0, x1, y1 } };
+    return { rid, ns, u, sc, rs, nodes, all, roads, stubs, pills, lab, extOf, radOf, fs, stat, bounds: { x0, y0, x1, y1 } };
   }
 
   function regionSvg(L, k) {
