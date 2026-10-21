@@ -84,10 +84,11 @@
     return out;
   }
 
-  let M, cur = 'm2', S = { names: true, nums: true, reg: true }, sel = null;
+  let M, cur = 'm2', style = 'a', S = { names: true, nums: true, reg: true }, sel = null;
   const stageEl = document.getElementById('stage'), tip = document.getElementById('tip');
 
   function mapSvg(m) {
+    if (style !== 'a') return window.MSTYLE.render(style, m, { W, H, COL, kindOf, measure, esc, node, boat });
     const nodes = m.nodes.map((n) => ({ ...n, px: n.x * W, py: n.y * H }));
     const byN = Object.fromEntries(nodes.map((n) => [n.n, n]));
     let h = defs + `<image href="${m.img}" x="0" y="0" width="${W}" height="${H}" preserveAspectRatio="none"/><rect width="${W}" height="${H}" fill="rgba(4,6,10,.12)"/>`;
@@ -143,8 +144,9 @@
     const sr = stageEl.getBoundingClientRect();
     const nx = (n.x * sr.width), ny = (n.y * sr.height);
     const tw = tip.offsetWidth, th = tip.offsetHeight;
-    let x = nx + 28, y = ny - th / 2;
-    if (x + tw > sr.width - 6) x = nx - tw - 28;
+    const gap = style === 'a' ? 28 : Math.max(28, window.MSTYLE.ext(style, n) * (sr.width / W) + 10);
+    let x = nx + gap, y = ny - th / 2;
+    if (x + tw > sr.width - 6) x = nx - tw - gap;
     if (x < 6) x = Math.max(6, Math.min(sr.width - tw - 6, nx - tw / 2));
     y = Math.max(6, Math.min(sr.height - th - 6, y));
     tip.style.left = x + 'px'; tip.style.top = y + 'px';
@@ -197,6 +199,9 @@
     wire(); legend();
     document.getElementById('ttl').innerHTML = `${esc(M.name)}<small>${esc(M.sub)}</small>`;
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.v === cur));
+    document.querySelectorAll('.stab').forEach((b) => b.classList.toggle('on', b.dataset.s === style));
+    stageEl.classList.remove('sa', 'sb', 'sc', 'sd'); stageEl.classList.add('s' + style);
+    const sn = document.getElementById('snote'); if (sn) sn.textContent = style === 'a' ? '' : window.MSTYLE.note(style);
     document.title = `${M.name}: node layout`;
     applyToggles();
   }
@@ -204,15 +209,17 @@
     stageEl.classList.toggle('hidenames', !S.names);
     stageEl.classList.toggle('nonum', !S.nums);
     stageEl.classList.toggle('hidereg', !S.reg);
-    document.querySelectorAll('.tog').forEach((b) => b.classList.toggle('on', S[b.dataset.t]));
+    document.querySelectorAll('.stab').forEach((b) => b.addEventListener('click', () => { style = b.dataset.s; writeHash(); render(); }));
+  document.querySelectorAll('.tog').forEach((b) => b.classList.toggle('on', S[b.dataset.t]));
   }
   function readHash() {
     const p = location.hash.replace(/^#/, '').split('&');
     cur = p.includes('v2') ? 'm3' : 'm2';
+    const sp = p.find((x) => /^s=[abcd]$/.test(x)); style = sp ? sp[2] : 'a';
     if (p.includes('clean')) { S.names = false; S.nums = false; S.reg = false; }
     if (p.includes('nonames')) S.names = false;
   }
-  function writeHash() { history.replaceState(null, '', '#' + (cur === 'm3' ? 'v2' : 'v1')); }
+  function writeHash() { history.replaceState(null, '', '#' + (cur === 'm3' ? 'v2' : 'v1') + (style === 'a' ? '' : '&s=' + style)); }
 
   document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { cur = b.dataset.v; writeHash(); render(); }));
   document.querySelectorAll('.tog').forEach((b) => b.addEventListener('click', () => { S[b.dataset.t] = !S[b.dataset.t]; applyToggles(); }));

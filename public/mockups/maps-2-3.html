@@ -6,14 +6,21 @@
 <meta name="darkreader-lock" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Campaign maps II and III: node layout</title>
-<!-- HARITA 2 / 3 DUGUM YERLESIMI taslagi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Adres: #v1 = Harita 2 (The Drowned Reach) | #v2 = Harita 3 (The Hollow Crown); &clean = etiketsiz, &nonames = adsiz. Veri: maps-2-3/data.js -->
+<!-- HARITA 2 / 3 DUGUM YERLESIMI taslagi (ui-dev, 2026-10-21). Oyun kodu DEGIL. Adres: #v1 = Harita 2 (The Drowned Reach) | #v2 = Harita 3 (The Hollow Crown); &clean = etiketsiz, &nonames = adsiz; &s=a|b|c|d = dugum gorunumu (A mevcut, B Epic Seal, C Banner, D Realm Materials), ornek #v1&s=b. Veri: maps-2-3/data.js -->
 <link rel="stylesheet" href="maps-2-3/band-tip.css" />
 <link rel="stylesheet" href="maps-2-3/m.css" />
+<link rel="stylesheet" href="maps-2-3/styles.css" />
 </head>
 <body>
 <div class="pg">
   <div class="top">
     <h1 id="ttl"></h1>
+    <div class="styles" id="styles">
+      <button class="stab" data-s="a" type="button" title="Current look (for comparison)"><b>A</b> Current</button>
+      <button class="stab" data-s="b" type="button" title="Heavy forged seals with ember aura"><b>B</b> Epic Seal</button>
+      <button class="stab" data-s="c" type="button" title="Banner poles planted in the map"><b>C</b> Banner &amp; Landmark</button>
+      <button class="stab" data-s="d" type="button" title="Frames made of each region's material"><b>D</b> Realm Materials</button>
+    </div>
     <div class="tools">
       <button class="tog on" data-t="names" type="button" title="Show or hide node names">Names</button>
       <button class="tog on" data-t="nums" type="button" title="Show or hide node numbers">Numbers</button>
@@ -24,12 +31,14 @@
       <button class="tab" data-v="m3" type="button">Map III · Hollow Crown</button>
     </div>
   </div>
+  <div class="snote" id="snote"></div>
   <div class="stage" id="stage"><div class="tipbox" id="tip"></div></div>
   <div class="legend" id="legend"></div>
   <div class="stats" id="stats"></div>
 </div>
 <div class="mockstrip">Mockup · not the game</div>
 <script src="maps-2-3/data.js"></script>
+<script src="maps-2-3/styles.js"></script>
 <script src="maps-2-3/m.js"></script>
 </body>
 </html>

@@ -1,0 +1,26 @@
+/* Düğüm görünümleri B / C / D için ek CSS (mockup). Stil A hiç etkilenmez. */
+.styles { display: flex; gap: 8px; flex-wrap: wrap; }
+.stab { cursor: pointer; font: 600 12.5px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--txt); background: rgba(8, 6, 4, .7); border: 1px solid rgba(217, 178, 106, .35); padding: 0 14px; height: 44px; min-width: 44px; display: inline-flex; align-items: center; gap: 8px; transition: border-color .2s, color .2s, background .2s; }
+.stab b { color: var(--gold); font-weight: 700; }
+.stab:hover { border-color: rgba(243, 217, 153, .85); color: var(--gold); }
+.stab.on { color: #1a0f05; background: linear-gradient(180deg, #f3d999, #d9b26a); border-color: #f3d999; }
+.stab.on b { color: #1a0f05; }
+.snote { margin: 0 0 10px; font: 16px var(--body); color: var(--dim); min-height: 22px; }
+.snote:empty { display: none; }
+.stlbl { font: 600 11px var(--disp); letter-spacing: .2em; text-transform: uppercase; color: var(--dim); align-self: center; }
+/* C: ayaklı sancak, hover'da hafif yükselir (merkezden ölçeklenmez) */
+.sc .node .body { transform-box: view-box; transform-origin: 0 0; }
+.sc .node:hover .body, .sc .node.sel .body { transform: translateY(-3px); }
+.node .selring2 { display: none; }
+.node.sel .selring2 { display: block; }
+.flap2 { animation: sway 5.2s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+.flap2.slow { animation-duration: 6.4s; }
+@keyframes sway { from { transform: skewX(-1.1deg); } to { transform: skewX(1.1deg); } }
+.flick { animation: flick 1.5s ease-in-out infinite alternate; transform-box: fill-box; transform-origin: 50% 100%; }
+@keyframes flick { from { transform: scaleY(.86) scaleX(1.04); } to { transform: scaleY(1.1) scaleX(.94); } }
+.pulse { animation: pulse 2.6s ease-in-out infinite alternate; }
+@keyframes pulse { from { opacity: .35; } to { opacity: .85; } }
+.tw { animation: tw 2.2s ease-in-out infinite alternate; }
+@keyframes tw { from { opacity: .25; } to { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .flap2, .flick, .pulse, .tw, .node.sel .selring, .node.sel .selring2 { animation: none; } }
+@media (max-width: 700px) { .stab { padding: 0 10px; font-size: 11px; letter-spacing: .06em; } .snote { font-size: 14px; } }
