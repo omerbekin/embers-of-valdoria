@@ -459,6 +459,14 @@ html.nw .gr-panel.gr-gear.gr-ledger, html.nw .gr-panel.gt-wp { padding-left: 8px
    Pasif 1. sirada, sonra 3 skill, ult en altta kendi satirinda (plaka + ult + agaci). Plaka kutusuna dokunulmaz; yalniz sutun genisligi, plakanin altindaki "Points" satiri ve satir araligi burada.
    Satir yuksekligini plaka belirler (dugum tuvali dikeyde ortalanir); sigmayan yer plakayi kucultmez, sayfa kendi icinde dikey kayar (tier bandi ustte yapisik). */
 .gt-wide.gp { grid-template-columns: minmax(0, 1fr) clamp(300px, 21vw, 400px); }
+.gt-wide.gp > .gt-main { overflow-x: clip; } /* emniyet: satirlar ana sutunun disina tasarsa yan sutunun altina girmez, kirpilir (clip kayma kabi degil: tier bandi yapisikligi bozulmaz) */
+/* ana sutun en dar satira yetmiyorsa (app.js > mountTree olcer): yan sutun agacin ALTINA iner; kart | not yan yana, islem dugmeleri sayfanin altinda yapisik */
+.gt-wide.gp.stack { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: calc(12 * var(--u)) calc(26 * var(--u)); }
+.gt-wide.gp.stack > .gt-main { grid-column: 1 / -1; }
+.gt-wide.gp.stack > .gt-side { display: contents; }
+.gt-wide.gp.stack .gt-card { grid-column: 1; align-self: start; }
+.gt-wide.gp.stack .gt-note { grid-column: 2; align-self: center; }
+.gt-wide.gp.stack .gt-acts { grid-column: 1 / -1; }
 .gt-gpw { width: fit-content; max-width: 100%; margin: 0 auto; }
 .gt-sk { position: relative; }
 .gt-ghead { position: sticky; top: 0; z-index: 6; display: flex; background: rgba(10, 7, 5, .97); }
@@ -478,16 +486,27 @@ html.nw .gr-panel.gr-gear.gr-ledger, html.nw .gr-panel.gt-wp { padding-left: 8px
 .gt-pin { position: relative; flex: none; }
 .gt-pult { flex: 1 1 0; min-width: 0; display: flex; align-items: center; padding: calc(10 * var(--u)) 0; }
 .gt-pult .gt-ult { width: 100%; margin: 0; border-top: 0; padding-top: 0; }
+/* altina inmis olsa bile sigmiyorsa (hs, yalniz uzun-dar pencere): agac alani yatay kayar, plaka sutunu solda yapisik kalir (telefon yatay ile ayni mantik) */
+html:not(.short) .gt.gp.hs .gt-scroll { overflow-x: auto; overflow-y: hidden; overscroll-behavior-x: contain; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, .4) transparent; }
+html:not(.short) .gt.gp.hs .gt-gpw { width: max-content; max-width: none; margin: 0; }
+html:not(.short) .gt.gp.hs .gt-gsp, html:not(.short) .gt.gp.hs .gt-pcell { position: sticky; left: 0; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); }
+html:not(.short) .gt.gp.hs .gt-gsp { z-index: 7; }
+html:not(.short) .gt.gp.hs .gt-pcell { z-index: 5; }
+html:not(.short) .gt.gp.hs .gt-scroll { scroll-padding-left: calc(var(--pw) + var(--pg)); }
 .gt-prow.ult .gt-uwrap { justify-content: flex-start; }
 
 /* telefon yatay (html.short): plaka sutunu solda yapisik, tier bandi ustte yapisik; plaka oyunun kisa ekran plakasindan biraz buyuk (deger satirlari acik, ikon 52 px) */
-html.short .gt-gpw { width: max-content; max-width: none; }
+html.short .gt-gpw { width: max-content; max-width: none; margin: 0; } /* sola yasli: ortalama yok (fazla genislikte sol taraf kesilmesin) */
+html.short .gr-ledger.tab-tree.gt-fill .gr-lbody > .gr-page.r { overflow: clip; } /* sag sayfa kaydirilamaz: yalniz .gt-scroll kayar; plaka sutunu kaymis bir kabin altinda kalamaz */
+html.short .gt-scroll { scroll-padding-left: calc(var(--pw) + var(--pg)); scroll-padding-top: var(--hdr); } /* odaklanan / ekrana getirilen dugum yapisik plaka sutununun ve tier bandinin altinda kalmaz */
 html.short .gt-ghead { background: rgba(14, 10, 7, .97); }
 html.short .gt-gsp { position: sticky; left: 0; z-index: 7; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); }
 html.short .gt-pcell { position: sticky; left: 0; z-index: 5; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); padding: 14px var(--pg) 8px 0; gap: 6px; }
 html.short .gt-pcv { padding: 6px 0; }
 html.short .gt-pult { padding: 6px 0; }
 html.short .gt-pult .gt-ult { position: static; margin: 0; padding-top: 0; }
+html.short .gt-pult .gt-uinfo { flex: 1 1 150px; } /* bilgi + ult agaci (350 px) 580 px'lik satira tek sirada sigsin; sigmazsa alta sarilir */
+html.short .gt-pult .gt-arms { grid-template-columns: repeat(2, minmax(88px, 1fr)); }
 html.short .gt-pcell .gr-pl { --is: min(52px, 100%); gap: 6px; padding: 14px 4px 8px; }
 html.short .gt-pcell .gr-pl .pl-dv { display: block; }
 html.short .gt-pcell .gr-pl .pl-nm { font-size: 10.5px; letter-spacing: .03em; min-height: 2.3em; }

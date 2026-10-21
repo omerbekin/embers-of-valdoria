@@ -260,13 +260,16 @@
      (tier bandi kayarken ustte yapisik kalir). Dugum ayari: orta (m) -> kucuk-yogun (l) -> telefon (p); dokunmatikte l atlanir. o: treeHTML ile ayni + { u: sahne olcegi } */
   const GP_PG = 12, GP_PG_SHORT = 8;
   const gpPlateW = (o) => (o.short ? 104 : Math.max(150, Math.round(200 * (o.u || 1))));
+  /* en dar satir: plaka + bosluk + telefon ayarinin 8 kolonu (en az genislik). Ana sutun bundan darsa satirlar sigmaz:
+     once yan sutun agacin ALTINA iner (app.js > mountTree, .gt-wide.stack); o da yetmezse agac alani kendi icinde yatay kayar (hs, plaka sutunu solda yapisik). */
+  const gpNeed = (o) => { const P = GL.PRESETS.p; return gpPlateW(o) + (o.short ? GP_PG_SHORT : GP_PG) + 2 * P.padX + GL.COLS * P.colMin; };
   function gpPreset(o, pw, pg) {
     const chain = o.coarse ? ['m', 'p'] : ['m', 'l', 'p'];
     for (let i = 0; i < chain.length - 1; i++) { const p = GL.PRESETS[chain[i]]; if (o.avail >= pw + pg + 2 * p.padX + 8 * p.colMin) return chain[i]; }
     return 'p';
   }
   function gpHTML(o) {
-    const pg = o.short ? GP_PG_SHORT : GP_PG, pw = gpPlateW(o), key = gpPreset(o, pw, pg), cfg = Object.assign({}, GL.PRESETS[key]);
+    const pg = o.short ? GP_PG_SHORT : GP_PG, pw = gpPlateW(o), key = gpPreset(o, pw, pg), cfg = Object.assign({}, GL.PRESETS[key]), hs = o.avail < gpNeed(o);
     if (o.short) { cfg.hdr = 20; cfg.padV = 3; cfg.lblH = 0; } /* kisa ekran: dugum adi yok (ipucunda), tek satirlik tier bandi */
     if (key === 'm') { cfg.ultD = 64; cfg.coreSz = 66; } /* ult + sekli plaka satirina sigsin (542 yerine 482 px) */
     if (key === 'p') cfg.colMax = 72; /* plaka sutunu kadar yer ayrildiktan sonra kalan genislik dugumlere */
@@ -291,14 +294,14 @@
       rowsH += `<div class="gt-prow" data-row="${i}"><div class="gt-pcell">${plateOne(i, 'p:' + i)}<div class="gt-pcap"><span class="k">Points</span><span class="n" data-pts2="${i}">0</span></div></div>
         <div class="gt-pcv" style="width:${L.W}px">${bands}<div class="gt-pin" style="width:${L.W}px;height:${row.h}px"><svg class="gt-lines" width="${L.W}" height="${row.h}" viewBox="0 0 ${L.W} ${row.h}">${svg}</svg>${nds}</div></div></div>`;
     });
-    const ultRow = `<div class="gt-prow ult" data-row="${ULT}"><div class="gt-pcell">${plateOne(ULT, 'p:' + ULT)}</div><div class="gt-pult">${ultHTML(L, cfg, 'side')}</div></div>`;
+    const ultRow = `<div class="gt-prow ult" data-row="${ULT}"><div class="gt-pcell">${plateOne(ULT, 'p:' + ULT)}</div><div class="gt-pult"${o.short || hs ? ` style="flex:none;width:${L.W}px"` : ''}>${ultHTML(L, cfg, 'side')}</div></div>`; /* telefon / yatay kayan alan: ult satiri dugum satirlarindan GENIS olmasin (kayan genislik = en genis satir; fazlasi yatay kayma yaratir): ult icerigi bu genislikte sarilir */
     const vars = `--sF:${cfg.sz.F}px;--sE:${cfg.sz.E}px;--sB:${cfg.sz.B}px;--sN:${cfg.sz.N}px;--sV:${cfg.sz.V}px;--hit:${cfg.hit}px;--hdr:${cfg.hdr}px;--pw:${pw}px;--pg:${pg}px`;
-    const cls = `gt gp${key === 'm' && !o.short ? '' : ' cs'}${tight ? ' tight' : ''}${o.short ? ' sh' : ''} k-${key}`;
+    const cls = `gt gp${key === 'm' && !o.short ? '' : ' cs'}${tight ? ' tight' : ''}${o.short ? ' sh' : ''}${hs ? ' hs' : ''} k-${key}`;
     const bar = o.bar === false ? '' : barHTML(), acts = o.inbar ? `<div class="gt-acts gt-inbar" data-dyn="acts">${actsHTML()}</div>` : '';
     const top = o.short ? `<div class="gt-tools">${bar}${acts}</div>` : bar;
     const html = `<div class="${cls}" style="${vars}">${top}
       <div class="gt-scroll"><div class="gt-gpw"><div class="gt-sk"><div class="gt-ghead"><div class="gt-gsp"></div><div class="gt-gcv" style="width:${L.W}px">${tsh}</div></div>${rowsH}</div>${ultRow}</div></div></div>`;
-    return { html, key, cfg, L, ultHtml: '' };
+    return { html, key, cfg, L, hs, ultHtml: '' };
   }
 
   /* ---------- islem cubugu (stat sayfasi dili: puan madalyonu | Respec · Reset · Confirm) ---------- */
@@ -441,6 +444,6 @@
   const fsButtonHTML = () => `<button type="button" class="nav-btn settings-toggle fullscreen-toggle" data-a="fs" title="Fullscreen" aria-label="Fullscreen">${NAVFS}</button>`;
   const closeButtonHTML = () => `<button type="button" class="nav-btn settings-toggle close-toggle" data-a="close-ws" title="Close" aria-label="Close">${NAVX}</button>`;
 
-  return { BAR_VIS, ST, MC, GT, GL, CN, ROWS, KN, INERT, A, esc, eff, freePts, reset, demoState, bt, richHtml, nodeTip, rowTip, bonusTip, respecTip, tipHtml, nodeInfo, stripState, treeHTML, pickPreset, presetNeed, barHTML, actsHTML, chipsHTML, summaryRowsHTML, cardHTML, lvlText, shltHtml, goldHtml, spChipHtml,
+  return { BAR_VIS, ST, MC, GT, GL, CN, ROWS, KN, INERT, A, esc, eff, freePts, reset, demoState, bt, richHtml, nodeTip, rowTip, bonusTip, respecTip, tipHtml, nodeInfo, stripState, treeHTML, pickPreset, presetNeed, gpNeed, barHTML, actsHTML, chipsHTML, summaryRowsHTML, cardHTML, lvlText, shltHtml, goldHtml, spChipHtml,
     sheetLeftHTML, platesHTML, gearHTML, workspaceHTML, fsButtonHTML, closeButtonHTML, rightV1, rightV2, rightV3Sheet, rightV3Tree };
 });

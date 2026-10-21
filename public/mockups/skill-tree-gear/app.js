@@ -66,10 +66,19 @@
   function treeOpts(host, inbar) {
     const v = ST.variant, sh = ST.short;
     /* plates: v3 Tree sekmesi = her satir oyunun skill plakasi + dugumleri (views.js > gpHTML); dar + uzun yedek pencerede (nw) eski yerlesim */
-    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - 6), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar, plates: v === 'v3' && !ST.nw, u: ST.u };
+    const plates = v === 'v3' && !ST.nw, gap = plates && sh ? 14 : 6; /* telefonda plakali satirlar: kayan alanin kendi dikey cubugu (ince ~11 px) genisliginden yer almasin, yatay kayma cikmasin */
+    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - gap), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar, plates, u: ST.u };
   }
   function mountTree(host, inbar) {
-    const t = V.treeHTML(treeOpts(host, inbar));
+    let o = treeOpts(host, inbar);
+    /* v3 plakali satirlar (masaustu): ana sutun en dar satira (plaka + 8 dugum kolonu) yetmiyorsa yan sutun (Points karti) agacin ALTINA iner;
+       o da yetmezse (cok dar pencere) agac alani kendi icinde yatay kayar (V.treeHTML > hs). Boylece hicbir pencere boyunda satirlar yan sutunun altina tasmaz. */
+    const wide = o.plates && !o.short && host.closest ? host.closest('.gt-wide') : null;
+    if (wide) {
+      wide.classList.remove('stack'); o = treeOpts(host, inbar); /* yan sutun sagda iken olc */
+      if (o.avail < V.gpNeed(o)) { wide.classList.add('stack'); o = treeOpts(host, inbar); } /* altina indirince genislik yeniden olculur */
+    }
+    const t = V.treeHTML(o);
     host.innerHTML = t.html;
     const uh = $('#gt-ulthost'); if (uh) uh.innerHTML = t.ultHtml || '';
     $$('.gt-nd').forEach((e) => { if (e.dataset.base === undefined) e.dataset.base = e.className; });
@@ -234,7 +243,7 @@
   const NOTES = {
     v1: 'A · Whole tree on the Sheet\'s right page: small nodes (details on hover or tap), tier band once at the top, ult plus-tree under the rows.',
     v2: 'B · Right page = summary (Mastery bar, points per row, evolve status). "Open skill tree" opens the full-screen working panel.',
-    v3: 'C · Third Gear tab "Tree" uses both pages: each row shows the full skill plate of the game (passive first, ult last) with its tree nodes beside it; points and actions on the right. Long page = calm vertical scroll. The Sheet tab keeps a small door.',
+    v3: 'C · Third Gear tab "Tree" uses both pages: each row shows the full skill plate of the game (passive first, ult last) with its tree nodes beside it; points and actions on the right. Long page = calm vertical scroll. On a mid-size window the points card moves under the tree so no row is ever covered. The Sheet tab keeps a small door.',
   };
   const HELP = 'Hover a node (or, in the Tree tab, a skill plate) for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
     + 'Try: Deep Gash (Double Strike) = other direction chosen (Hamstring is taken); Not Today, Reaping Wind, Herald of Ruin, Dreadful Swing and the Stubborn Heart bonus = not active yet. '
