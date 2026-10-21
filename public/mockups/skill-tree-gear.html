@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Skill Tree in Gear (mockup)</title>
+<!--
+  SKILL AGACI NEREDE DURSUN taslagi (ui-dev, 2026-10-22). Oyun kodu DEGIL; yalnizca secim icin. Belge: docs/design/skill-tree-implementation.md bolum 6 (Faz 3a).
+  Gorunum BIREBIR oyun: oyunun kendi CSS dosyalari (skill-tree-gear/css/: style.css, elegant.css, gear.css, gear-plates.css, band-tip.css kopyasi), Gear "Ledger" kabugu
+  (sekmeler, yer imleri, sol Sheet sayfasi, skill plakalari, sag sayfa), A Band ipuclari, stat sayfasi dugmeleri (Reset / Confirm), gercek portre / skill / stat / UI ikonlari ve yazi tipleri.
+  Agacin icerigi ve dugum dili skill-tree-moments taslagindan: Warrior, Omer'in secimi (final.js: Berserker B, Double Strike B, Whirlwind A, Charge A, ult B); Mastery bar yalniz bonus elmaslari.
+  Adresler: #v1 | #v2 | #v3  [&phone] [&lv=1..50] [&tab=tree (v3)] [&open (v2: calisma paneli acik)] [&clean (seridi gizle; H tusu da)]
+    #v1  A  Tum agac Sheet'in sag sayfasinda (kucuk dugumler, ult + agaci satirlarin altinda).
+    #v2  B  Sag sayfa = ozet (Mastery bar, satir basina puan, evolve durumu) + "Open skill tree" -> tam ekran calisma paneli (moments taslagi gibi).
+    #v3  C  Ucuncu Gear sekmesi "Tree": iki sayfayi birden kaplar (solda agac, sagda ult + puanlar + islemler); Sheet'te kucuk kapi.
+  Yeni oyun-ici seyler (hepsi tiklanir): secilmeyen yon (ea / eb ayri yonler) soluk + kilit + "Other direction chosen"; bekleyen puan akisi (tik +1, sag tik / uzun basis -1, Reset solda, Confirm sagda);
+  Respec (yer tutucu bedel, kural hala acik, once onay sorar); bazi dugumlerde "Not active yet" cipi; YENI dugumde "Awaiting approval" kilidi (Berserker evolve).
+  Telefon: 375x812 dikey (seritteki Phone ya da dar pencere): sayfalar alt alta, agac kendi icinde yatay kayar, dokunma hedefleri >= 44 px, sayfa yatay kaymaz.
+  Not: "Not active yet" listesi ve statlar mock veridir; gercek liste motor ekibinden gelecek. Hero sekmesi ve diger kahramanlar bu taslakta tiklanmaz.
+-->
+<link rel="stylesheet" href="skill-tree-gear/css/style.css" />
+<link rel="stylesheet" href="skill-tree-gear/css/elegant.css" />
+<link rel="stylesheet" href="skill-tree-gear/css/gear.css" />
+<link rel="stylesheet" href="skill-tree-gear/css/gear-plates.css" />
+<link rel="stylesheet" href="skill-tree-gear/css/band-tip.css" />
+<link rel="stylesheet" href="skill-tree-gear/tree.css" />
+</head>
+<body>
+<div id="stage"><div id="bgimg"></div><div id="ui-root"></div><div id="tip"></div></div>
+<div id="mk-strip"></div>
+<script src="skill-tree-gear/data/core.js"></script>
+<script src="skill-tree-gear/data/content.js"></script>
+<script src="skill-tree-gear/data/classes.js"></script>
+<script src="skill-tree-gear/data/final.js"></script>
+<script src="skill-tree-gear/data/mix-warrior.js"></script>
+<script src="skill-tree-gear/data/tree-logic.js"></script>
+<script src="skill-tree-gear/data/tree-layout.js"></script>
+<script src="skill-tree-gear/views.js"></script>
+<script src="skill-tree-gear/app.js"></script>
+</body>
+</html>
