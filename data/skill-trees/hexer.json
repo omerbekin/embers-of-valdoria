@@ -152,7 +152,7 @@
       "text": "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.",
       "src": "A:V1:0.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "1.f1": {
@@ -299,7 +299,7 @@
       "text": "Withering Curse evolves: its Wither is contagious: each tick also Withers an enemy next to the host for 2 turns.",
       "src": "B:V4:2.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "3.f1": {
@@ -373,7 +373,7 @@
       "text": "Jinx evolves: the Jinxed target's next attack strikes one of its own allies instead.",
       "src": "B:V3:3.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "4.u1": {
@@ -448,7 +448,7 @@
       "text": "Once per battle, a killing blow on you leaves you at 1 HP and fires a free Doom Mark at the killer.",
       "src": "B:V5:4.l3",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     }
   }

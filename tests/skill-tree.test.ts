@@ -214,9 +214,8 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(status(pending, L50, a, '1.v').st).toBe('new');
     expect(validate(pending, L50, build(W, L50, ['1.v'], a))?.code).toBe('unapproved');
     expect(code(W, L50, a, '1.v')).toBeNull();
-    // Ömer'in onayını bekleyen NEW düğümler (onaylanınca buradan silinir, JSON'da approved: true olur).
-    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb', 'hexer 0.v', 'hexer 2.v', 'hexer 3.v', 'hexer 4.l3', 'antimage 0.v', 'antimage 3.v', 'antimage 4.l3', 'gambler 0.ea', 'gambler 0.v', 'gambler 2.n0', 'gambler 3.ea']);
-    for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!PENDING.has(`${t.class} ${k}`));
+    // Ömer 2026-10-22 ikinci tur: bekleyen tüm NEW düğümler onaylandı; gerçek veride her NEW approved: true olmalı.
+    for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(true);
   });
 
   it('10: repair: bilinmeyen / tam sayı olmayan anahtar atılır, rank tavana kırpılır; geçersiz kalan dağılım tamamen iade; geçerli aynen (idempotent)', () => {

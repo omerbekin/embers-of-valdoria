@@ -296,7 +296,7 @@
       "text": "Nature's Wrath strikes the same cells again at the start of your next turn: 50% damage and a 1-turn Stun (Rooted).",
       "src": "B:V4:2.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "3.f1": {
@@ -322,7 +322,7 @@
       "text": "Healing from Rejuvenate beyond full HP becomes a shield of the same size.",
       "src": "B:V3:3.n0",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "3.r": {
@@ -426,7 +426,7 @@
       "text": "You can cast Summon Treant while one stands: the old Treant bursts at once for double damage.",
       "src": "A:V5:4.r3",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "4.l1": {

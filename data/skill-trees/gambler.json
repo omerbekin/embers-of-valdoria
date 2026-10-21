@@ -116,7 +116,7 @@
       "text": "Each Double or Nothing trigger in a row adds +10% to the next roll; a failed roll resets it.",
       "src": "A:V3:0.ea",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "0.eb": {
@@ -154,7 +154,7 @@
       "text": "When Double or Nothing triggers, the skill also fires again at once at 60% power.",
       "src": "A:V3:0.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "1.f1": {
@@ -253,7 +253,7 @@
       "text": "Each High Stakes Bust gives the next High Stakes +15% Jackpot chance, stacking until a Jackpot.",
       "src": "B:V1:2.n0",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "2.r": {
@@ -340,7 +340,7 @@
       "text": "Before Card Trick, choose its status: Slow, Wound or Stun (Stun lands on the first target only).",
       "src": "B:V1:3.ea",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "3.eb": {

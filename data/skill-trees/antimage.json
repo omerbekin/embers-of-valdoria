@@ -152,7 +152,7 @@
       "text": "Mana Overflow becomes Endless Spring: magic damage blocked by your allies' magic armor also counts, not only yours.",
       "src": "B:V3:0.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "1.f1": {
@@ -370,7 +370,7 @@
       "text": "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 50% of their damage.",
       "src": "B:V4:3.v",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "4.u1": {
@@ -446,7 +446,7 @@
       "text": "Void Strike steals every buff from its target and spreads them across your team.",
       "src": "B:V5:4.l3",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     }
   }

@@ -122,7 +122,7 @@
       "text": "When a melee enemy misses you, cut it back for 40% DEX; Opportunist applies.",
       "src": "B:V2:0.ea",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "0.ma": {

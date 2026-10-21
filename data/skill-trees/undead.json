@@ -128,7 +128,7 @@
       "text": "Once per battle, a fatal hit leaves you at 1 HP instead, and your next hit drains 100% of its damage.",
       "src": "A:V1:0.ma",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "0.fa": {
@@ -148,7 +148,7 @@
       "text": "When an enemy you Wounded is healed, you heal for the amount Wound blocked.",
       "src": "A:V3:0.mb",
       "new": true,
-      "approved": false,
+      "approved": true,
       "fx": null
     },
     "0.v": {
