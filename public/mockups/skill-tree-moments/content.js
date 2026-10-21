@@ -76,27 +76,38 @@
   /* Seçim (Omer'in satir satir karma secimi): final.js -> window.SMM_FINAL[cls] = { rows: ['b','b','a','a','b'], at }; rows = [pasif, aktif 1-3, ult], 'a' = mixes[0], 'b' = mixes[1].
      validateFinal: bozuksa metin, saglamsa null (secilen her karma dosyada olmali). */
   const selIdx = (l) => (l === 'b' ? 1 : 0);
-  function validateFinal(F, M) {
+  /* 'c' / 'd' / 'e' = o satir icin yeni oneri (alts.js: window.SMM_ALT[cls][satir] listesinde id'si bu harf olan) */
+  const isAltL = (l) => l === 'c' || l === 'd' || l === 'e';
+  const altOf = (ALT, r, l) => (ALT && Array.isArray(ALT[r]) ? ALT[r].find((x) => x && x.id === l && x.nodes) : null) || null;
+  function validateFinal(F, M, ALT) {
     if (!F || typeof F !== 'object') return 'no final';
-    if (!Array.isArray(F.rows) || F.rows.length !== 5 || F.rows.some((l) => l !== 'a' && l !== 'b')) return 'rows invalid';
+    if (!Array.isArray(F.rows) || F.rows.length !== 5 || F.rows.some((l) => l !== 'a' && l !== 'b' && !isAltL(l))) return 'rows invalid';
     if (!M || !Array.isArray(M.mixes)) return 'no mix';
-    if (F.rows.some((l) => !M.mixes[selIdx(l)])) return 'mix missing';
+    if (F.rows.some((l) => !isAltL(l) && !M.mixes[selIdx(l)])) return 'mix missing';
+    if (F.rows.some((l, r) => isAltL(l) && (r === 4 || !altOf(ALT, r, l)))) return 'alt missing';
     return null;
   }
   /* Satir r'nin dugumleri ('r.*', ult icin '4.*') rows[r] karmasindan; her dugume karma etiketi ('Karma A · Baslik') eklenir, sinerji rozeti kendi karmasindan gelir.
      Mastery adi + bar pasif satirinin (rows[0]) karmasindan; kimlik satirlari (rowsTr) her satirin kendi karmasindan. */
-  function fromSelection(D, M, F) {
+  function fromSelection(D, M, F, ALT) {
     const cache = [null, null], mix = (i) => cache[i] || (cache[i] = fromMix(D, M, i));
     const lab = (i) => mix(i).label + ' · ' + (mix(i).title || '');
+    const altNode = (a, key) => { const e = a.nodes[key], syn = a.syn || {};
+      return Array.isArray(e) && typeof e[0] === 'string' && e[0]
+        ? { name: e[0], eff: typeof e[1] === 'string' && e[1] ? e[1] : '(content missing)', nw: e[2] === true, src: typeof e[3] === 'string' ? e[3] : '', edited: false,
+          syn: typeof syn[key] === 'string' && syn[key] ? syn[key] : null, note: null, empty: false, karma: 'Öneri ' + a.id.toUpperCase() + ' · ' + (a.title || '') }
+        : empty(EMPTY_EFF_VAR); };
     const nodes = {};
     ALL_KEYS.forEach((key) => {
-      const r = +key.split('.')[0], mi = selIdx(F.rows[r]), n = mix(mi).nodes[key];
+      const r = +key.split('.')[0], l = F.rows[r];
+      if (isAltL(l)) { nodes[key] = altNode(altOf(ALT, r, l), key); return; }
+      const mi = selIdx(l), n = mix(mi).nodes[key];
       nodes[key] = n.empty ? n : Object.assign({}, n, { karma: lab(mi) });
     });
     const p = mix(selIdx(F.rows[0])), pk = lab(selIdx(F.rows[0]));
-    const rowsTr = F.rows.map((l, r) => { const t = M.mixes[selIdx(l)].rowsTr; return Array.isArray(t) && typeof t[r] === 'string' ? t[r] : ''; });
+    const rowsTr = F.rows.map((l, r) => { if (isAltL(l)) return altOf(ALT, r, l).tr || ''; const t = M.mixes[selIdx(l)].rowsTr; return Array.isArray(t) && typeof t[r] === 'string' ? t[r] : ''; });
     return { mastery: p.mastery, bar: p.bar, barSrc: p.barSrc.map((s) => Object.assign({}, s, { karma: pk })), barKarma: pk, nodes, title: 'Seçim', label: 'Seçim', theme: '', tr: '', rowsTr,
-      tags: F.rows.map((l) => (l === 'b' ? 'B' : 'A')), syn: {}, pick: false, mix: true, sel: true };
+      tags: F.rows.map((l) => l.toUpperCase()), syn: {}, pick: false, mix: true, sel: true };
   }
 
   /* Class dosyasinin vi. varyanti -> icerik. */
@@ -125,5 +136,5 @@
       tr: 'Eski form seçimi (artık Seçim ✓ sekmesi geçerli): Ömer\'in formdan seçtikleri; seçilmemiş yuvalar "Open slot" olarak görünür.', pick: true };
   }
 
-  return { ALL_KEYS, RK, UK, validateFile, validateMix, validateFinal, fromVariant, fromMix, fromSelection, fromPick, parseSrc, PICK_BAR, PICK_MASTERY };
+  return { ALL_KEYS, RK, UK, validateFile, validateMix, validateFinal, fromVariant, fromMix, fromSelection, fromPick, parseSrc, altOf, PICK_BAR, PICK_MASTERY };
 });

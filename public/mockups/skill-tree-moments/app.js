@@ -28,9 +28,13 @@
   const sOf = () => ST.S;
   const planOf = () => ST.plan;
   const FIN = window.SMM_FINAL || {};
-  const finalOf = (c) => { const F = FIN[c]; return F && Array.isArray(F.rows) && F.rows.length === 5 && F.rows.every((l) => l === 'a' || l === 'b') ? F : null; };
-  const defaultV = (c) => (finalOf(c) ? 'sel' : 'a'); /* Omer'in secimi (final.js) olan class Seçim ✓ ile, digerleri Karma A ile acilir */
-  const isSel = (v) => v === 'sel';
+  const ALTS = window.SMM_ALT || {};
+  const finalOf = (c) => { const F = FIN[c]; return F && Array.isArray(F.rows) && F.rows.length === 5 && F.rows.every((l) => /^[a-e]$/.test(l)) ? F : null; };
+  /* try: { satir: ['c','d','e'] } = o satir icin yeni oneriler, Omer henuz secmedi: Seçim sekmesi her oneri icin ayri (v = 'sc' / 'sd' / 'se') */
+  const tryOf = (F) => { const t = F && F.try && typeof F.try === 'object' ? F.try : null; const r = t ? Object.keys(t).find((k) => Array.isArray(t[k]) && t[k].length) : null; return r == null ? null : { r: +r, ls: t[r].filter((l) => /^[c-e]$/.test(l)) }; };
+  const selF = (c, v) => { const F = finalOf(c), T = tryOf(F); if (!F || !T || !/^s[c-e]$/.test(v)) return F; const rows = F.rows.slice(); rows[T.r] = v[1]; return Object.assign({}, F, { rows }); };
+  const defaultV = (c) => { const F = finalOf(c), T = tryOf(F); return F ? (T && T.ls.length ? 's' + T.ls[0] : 'sel') : 'a'; }; /* Omer'in secimi (final.js) olan class Seçim ✓ ile, digerleri Karma A ile acilir */
+  const isSel = (v) => v === 'sel' || /^s[c-e]$/.test(v);
   const fallbackV = (c) => (c === 'warrior' ? 'pick' : 1); /* karma dosyasi yoksa: eski varsayilan (Warrior'da eski form secimi, digerlerinde V1) */
   const isMix = (v) => v === 'a' || v === 'b';
   const mixIdx = (v) => (v === 'b' ? 1 : 0);
@@ -67,9 +71,9 @@
     return (ST.rowsC = C.rows.map((r, i) => { const f = D ? (i < NROWS ? D.rows[i] : D.ult) : null; return { ic: r.ic, name: (f && f.name) || r.name, d: r.d, pas: i === 0, ult: i === ULT }; }));
   }
   const mixOk = () => ST.mf.state === 'ok';
-  const selOk = () => mixOk() && !!finalOf(ST.c) && !CT.validateFinal(finalOf(ST.c), ST.mf.data);
+  const selOk = () => mixOk() && !!finalOf(ST.c) && !CT.validateFinal(selF(ST.c, ST.v), ST.mf.data, ALTS[ST.c]);
   const ready = () => (ST.v === 'pick' ? ST.c === 'warrior' : isSel(ST.v) ? ST.vf.state === 'ok' && selOk() : isMix(ST.v) ? ST.vf.state === 'ok' && mixOk() && !!ST.mf.data.mixes[mixIdx(ST.v)] : ST.vf.state === 'ok' && !!ST.vf.data.variants[ST.v - 1]);
-  const cOf = () => ST.content || (ST.content = ST.v === 'pick' ? CT.fromPick(window.SMM_PICKS) : isSel(ST.v) ? CT.fromSelection(ST.vf.data, ST.mf.data, finalOf(ST.c)) : isMix(ST.v) ? CT.fromMix(ST.vf.data, ST.mf.data, mixIdx(ST.v)) : CT.fromVariant(ST.vf.data, ST.v - 1));
+  const cOf = () => ST.content || (ST.content = ST.v === 'pick' ? CT.fromPick(window.SMM_PICKS) : isSel(ST.v) ? CT.fromSelection(ST.vf.data, ST.mf.data, selF(ST.c, ST.v), ALTS[ST.c]) : isMix(ST.v) ? CT.fromMix(ST.vf.data, ST.mf.data, mixIdx(ST.v)) : CT.fromVariant(ST.vf.data, ST.v - 1));
 
   /* ---------- icerik erisimi ---------- */
   function nodeInfo(key) {
@@ -195,7 +199,9 @@
     const tab = (v, label, dis, cls) => `<button type="button" data-var="${v}" class="${cls || ''}${ST.v === v || ST.v === +v ? ' on' : ''}" aria-pressed="${ST.v === v || ST.v === +v}"${dis ? ' disabled' : ''}>${label}</button>`;
     const vTabs = () => { let t = ''; for (let n = 1; n <= NVAR; n++) { const V = D && D.variants[n - 1]; t += tab(n, 'V' + n + (V && V.title ? ' · ' + esc(V.title) : ''), !V); } return t; };
     const pick = ST.c === 'warrior' ? tab('pick', 'Form seçimi (eski)', false, 'pk') : '';
-    const selTab = finalOf(ST.c) ? tab('sel', 'Seçim ✓', false, 'sl') : '';
+    const FF = finalOf(ST.c), TT = tryOf(FF);
+    const selTab = !FF ? '' : !TT ? tab('sel', 'Seçim ✓', false, 'sl')
+      : TT.ls.map((l) => { const a = CT.altOf(ALTS[ST.c], TT.r, l); return tab('s' + l, 'Seçim · ' + esc(rows()[TT.r].name) + ' öneri ' + l.toUpperCase() + (a && a.title ? ' · ' + esc(a.title) : ''), !a, 'sl'); }).join('');
     let main, src = '', note = '';
     if (mixFail) { /* geri donus: karma yok, 5 kaynak varyant ana sekme */
       main = pick + vTabs(); note = 'Karma dosyası yok ya da okunamadı: 5 kaynak varyant gösteriliyor.';
@@ -335,7 +341,7 @@
   /* ---------- class / varyant secimi ---------- */
   function resolveV(c, v) {
     if (v === 'pick') return c === 'warrior' ? 'pick' : defaultV(c);
-    if (v === 'sel') return defaultV(c) === 'sel' ? 'sel' : 'a'; /* Seçim yalniz final.js girdisi olan class'ta */
+    if (v === 'sel' || /^s[c-e]$/.test(v)) { const d = defaultV(c), T = tryOf(finalOf(c)); return !isSel(d) ? 'a' : T ? (T.ls.indexOf(v.slice(1)) >= 0 ? v : d) : 'sel'; } /* Seçim yalniz final.js girdisi olan class'ta; oneri bekleyen satir varsa her oneri ayri sekme */
     if (typeof v === 'string' && /^[abAB]$/.test(v)) return v.toLowerCase();
     const n = +v; return n >= 1 && n <= NVAR && Math.floor(n) === n ? n : defaultV(c);
   }

@@ -34,7 +34,7 @@
         "0.fa": ["Tunnel Vision","Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",false,"V1:0.fa"],
         "0.eb": ["Long Pin","Your skills against targets 5+ rows away have a 15% chance to Slow for 1 turn.",false,"V3:0.ea"],
         "0.mb": ["Range Keeper","An enemy that moves within 3 distance of you takes a free Quick Shot (once between your turns).",true,"V1:0.mb"],
-        "0.fb": ["Exposed Perch","Your skills count 2 extra rows of distance, but you take 20% more damage from enemy ranged skills.",false,"V1:0.fb"],
+        "0.fb": ["Exposed Perch","Your skills count 2 extra rows of distance for their bonuses, but you take 20% more damage from enemy ranged skills.",false,"V1:0.fb*"],
         "0.v": ["Dead Center","Sharpshooter evolves: your first hit on each enemy is a sure critical if it stands 4+ rows away.",false,"V1:0.v"],
 
         "1.f1": ["Hamstring","Quick Shot has a 6% chance per rank to Slow for 1 turn.",false,"V3:1.f1"],
