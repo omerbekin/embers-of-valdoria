@@ -1,0 +1,453 @@
+{
+  "class": "antimage",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "b",
+      "b",
+      "a",
+      "b",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "mana_overflow",
+      "name": "Mana Overflow",
+      "passive": true,
+      "karma": "B"
+    },
+    {
+      "skill": "mana_burn",
+      "name": "Mana Steal",
+      "karma": "B"
+    },
+    {
+      "skill": "drain_field",
+      "name": "Drain Field",
+      "karma": "A"
+    },
+    {
+      "skill": "spell_ward",
+      "name": "Spell Ward",
+      "karma": "B"
+    }
+  ],
+  "ult": {
+    "skill": "void_strike",
+    "name": "Void Strike",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Warden's Mastery",
+    "karma": "B",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Shared Cup",
+        "text": "Mana Overflow threshold 30 → 28.",
+        "src": "B:V3:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Quick Fingers",
+        "text": "Mana Steal burns +3 MP from enemies that have a buff.",
+        "src": "B:V5:bar0",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Wide Basin",
+        "text": "Drain Field gives your team 1 MP for each enemy it hits.",
+        "src": "B:V3:bar2",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Warded Steps",
+        "text": "Allies under your Spell Ward take 5% less physical damage.",
+        "src": "B:V4:bar1",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Void Focus",
+        "text": "Void Strike costs 2 less MP.",
+        "src": "B:V2:bar3",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Wide Channels",
+      "text": "Mana Overflow gives your team +1 MP per rank.",
+      "src": "B:V3:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Soaking Robes",
+      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
+      "src": "B:V3:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Overflow Spill",
+      "text": "Each Mana Overflow trigger gives the ally with the least MP 1 extra MP per rank.",
+      "src": "B:V3:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Tidal Surge",
+      "text": "Every third Mana Overflow trigger gives your team 15 MP instead of 5.",
+      "src": "B:V3:0.mb",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Hunter's Read",
+      "text": "Mana Overflow gains 3 blocked damage per rank whenever an enemy gains a buff.",
+      "src": "B:V5:0.f3",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Conduit",
+      "text": "Mana Overflow pours all its MP into the ally with the least MP instead of spreading it.",
+      "src": "B:V3:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Spillover",
+      "text": "MP an ally would gain above its max goes to the ally with the least MP.",
+      "src": "B:V3:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Brimming Ally",
+      "text": "An ally that Mana Overflow fills to full MP gains Haste for 1 turn.",
+      "src": "B:V3:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Lifeline Pact",
+      "text": "Conduit gives that ally double MP, but Mana Overflow needs 45 blocked damage.",
+      "src": "B:V3:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Martyr's Overflow",
+      "text": "Mana Overflow gives allies 8 MP, but you get none and lose 5% max HP on each trigger.",
+      "src": "B:V4:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Spell Sink",
+      "text": "When Mana Overflow triggers, you Guard the ally with the lowest HP until your next turn, taking 30% of its damage.",
+      "src": "B:V4:0.n0",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Endless Spring",
+      "text": "Mana Overflow becomes Endless Spring: magic damage blocked by your allies' magic armor also counts, not only yours.",
+      "src": "B:V3:0.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Generous Cut",
+      "text": "Mana Steal gives you 10% more of the burned MP per rank.",
+      "src": "B:V3:1.f1",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Deep Pockets",
+      "text": "Mana Steal burns +2 MP per rank from enemies above half MP.",
+      "src": "B:V3:1.f3",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Deep Cut",
+      "text": "Mana Steal also burns 3% of the target's max MP per rank.",
+      "src": "B:V1:1.r",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Prying Blade",
+      "text": "Mana Steal removes one random buff from its target.",
+      "src": "B:V5:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Bare Steel",
+      "text": "Mana Steal +5% damage per rank against enemies with no buffs.",
+      "src": "B:V5:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Siphon Vein",
+      "text": "Mana Steal gains 100% of the MP it burns instead of 50%.",
+      "src": "B:V3:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Quickening Steal",
+      "text": "If Mana Steal's target is at 0 MP, the ally with the least MP gains Haste for 1 turn.",
+      "src": "B:V3:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Drink Deep",
+      "text": "Mana Steal also heals you for the MP it burns.",
+      "src": "B:V4:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Drained Dry",
+      "text": "Mana Steal burns 20 MP instead of 10, but deals no damage.",
+      "src": "B:V3:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Hurried Hands",
+      "text": "Mana Steal takes only half a turn, but gains a 2-turn cooldown.",
+      "src": "B:V3:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Tempo Thief",
+      "text": "If Mana Steal empties its target, your next turn comes faster, as after Skip Turn.",
+      "src": "B:V3:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Spellsplitter",
+      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals +15% damage per buff removed.",
+      "src": "B:V5:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Wide Siphon",
+      "text": "Drain Field burns +4% of max MP per rank.",
+      "src": "A:V1:2.f1",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Hushing Mist",
+      "text": "Drain Field Silence chance +4% per rank.",
+      "src": "A:V1:2.f2",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Long Quiet",
+      "text": "Drain Field's Silence has a 6% chance per rank to last 1 more turn.",
+      "src": "A:V1:2.f3",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Sure Hush",
+      "text": "Drain Field always Silences enemies that were already at 0 MP before the cast.",
+      "src": "A:V1:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Settling Dust",
+      "text": "If Drain Field Silences anyone, 10% chance per rank that its cooldown is 1 turn shorter.",
+      "src": "A:V1:2.r",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Focused Siphon",
+      "text": "Drain Field burns 25% more MP from the enemy in its centre cell.",
+      "src": "A:V1:2.ea",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Wider Grasp",
+      "text": "Drain Field covers one more column (3x3 → 3x4).",
+      "src": "A:V1:2.eb",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Heart of Quiet",
+      "text": "Drain Field's centre enemy is always Silenced for 1 turn if it ends at 0 MP.",
+      "src": "A:V1:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Narrow Siphon",
+      "text": "Drain Field hits only its centre cell, but burns 100% of that enemy's max MP.",
+      "src": "A:V1:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Shallow Net",
+      "text": "Drain Field Silence chance 50% → 80%, but it no longer deals damage.",
+      "src": "A:V1:2.fb",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Mass Hush",
+      "text": "If Drain Field empties 3 or more enemies, all of them are Silenced, no roll.",
+      "src": "A:V1:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Hall of Silence",
+      "text": "Drain Field becomes Hall of Silence: the area stays 2 turns, burns 15% max MP each turn and Silences enemies at 0 MP inside.",
+      "src": "A:V1:2.v",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Layered Ward",
+      "text": "Spell Ward shield +4% per rank.",
+      "src": "B:V4:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Ward Mending",
+      "text": "Spell Ward heals the warded ally for 2% of its max HP per rank when cast.",
+      "src": "B:V4:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Deep Reserve",
+      "text": "Spell Ward's shield takes +6% per rank from your remaining MP.",
+      "src": "B:V3:3.f2",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Purging Ward",
+      "text": "Spell Ward first removes every debuff from the warded ally.",
+      "src": "B:V4:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Shelter Echo",
+      "text": "When Spell Ward breaks, the warded ally heals 3% of its max HP per rank.",
+      "src": "B:V4:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Split Ward",
+      "text": "Spell Ward also wards the ally with the least MP at 50% strength.",
+      "src": "B:V3:3.eb",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Ward Taunt",
+      "text": "When you cast Spell Ward on yourself, you taunt all enemies for 1 turn.",
+      "src": "B:V4:3.ea",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Second Ward",
+      "text": "When Spell Ward breaks, a 50% ward forms on the ally with the lowest HP.",
+      "src": "B:V4:3.mb",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Stretched Ward",
+      "text": "Split Ward is full strength, but Spell Ward costs 18 MP.",
+      "src": "B:V3:3.fb",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Ironbound Oath",
+      "text": "Spell Ward on yourself is 60% larger, but it can no longer target allies.",
+      "src": "B:V4:3.fa",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Bastion of Null",
+      "text": "While you hold Spell Ward and a taunt, you take 30% less physical damage.",
+      "src": "B:V4:3.ma",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Mirror Ward",
+      "text": "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 50% of their damage.",
+      "src": "B:V4:3.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Crippling Void",
+      "text": "Void Strike Blinds its target for 1 turn.",
+      "src": "B:V4:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Spell Shatter",
+      "text": "Void Strike's target deals 20% less magic damage for 2 turns.",
+      "src": "B:V4:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Void Shackle",
+      "text": "Void Strike Stuns its target if it is at 0 MP.",
+      "src": "B:V4:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Opening for All",
+      "text": "Void Strike makes its target Overextended.",
+      "src": "B:V3:4.l1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Shared Spoils",
+      "text": "Allies that hit the Overextended target gain 4 MP.",
+      "src": "B:V3:4.l2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Feeding Frenzy",
+      "text": "If an ally kills Void Strike's target before its next turn, your team gains 15 MP.",
+      "src": "B:V3:4.l3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Swift Void",
+      "text": "Void Strike takes only half a turn.",
+      "src": "B:V5:4.d1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Ready Blades",
+      "text": "After Void Strike, your next Mana Steal throws an extra dagger.",
+      "src": "B:V5:4.d2",
+      "syn": "Mana Steal",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Overflow Strike",
+      "text": "Casting Void Strike triggers Mana Overflow at once.",
+      "src": "B:V3:4.d3",
+      "syn": "Mana Overflow",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Rallying Break",
+      "text": "If Void Strike's target had a buff, your team gains Haste for 1 turn.",
+      "src": "B:V5:4.l1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Turned Boons",
+      "text": "Allies hasted by Rallying Break also gain 4 MP.",
+      "src": "B:V5:4.l2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Grand Theft",
+      "text": "Void Strike steals every buff from its target and spreads them across your team.",
+      "src": "B:V5:4.l3",
+      "new": true,
+      "approved": false,
+      "fx": null
+    }
+  }
+}

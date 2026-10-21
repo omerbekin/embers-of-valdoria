@@ -1,7 +1,7 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import { classes } from '../src/engine/content';
 import { TREE_RESET_NOTICE, TREE_RULES, autoTreePlan, compileTree, debugFocusAlloc, heroRespecCost, setDebugTreeFocus, treeOf, treeSetupFor } from '../src/progression';
-import { focusBuild, respecCost, spent, type TreeAlloc } from '../src/progression/skill-tree';
+import { focusBuild, respecCost, spent, validate, type TreeAlloc } from '../src/progression/skill-tree';
 import { setLevel } from '../src/progression/levels';
 import {
   PAUSED_LOCK,
@@ -126,6 +126,19 @@ describe('okumada onarım (normalizeTree; idempotent)', () => {
     expect(hero(got, id).tree).toBeUndefined();
     expect(hero(got, id).treeReset).toBe(true);
     expect(hero(got, id).skillPoints).toBe(pool(25));
+  });
+
+  it('iki ult kolunda puan (tek kol kuralı, Ömer 2026-10-22; tavan içinde bile): tamamı iade + treeReset; ikinci okuma aynı', () => {
+    const { s, id } = camp(20);
+    const a = wb(10); // ult u1 + u2 (2 puan)
+    expect([a.r['4.u1'], a.r['4.u2']]).toEqual([1, 1]);
+    const bad = { v: W.version, r: { ...a.r, '4.r1': 1 } };
+    expect(validate(W, 20, bad, { ...TREE_RULES, ult: { ...TREE_RULES.ult, singleArm: false } })).toBeNull(); // yalnızca tek kol kuralı bozuyor
+    const got = load(withHero(s, id, { tree: bad, skillPoints: pool(20) - spent(bad) }));
+    expect(hero(got, id).tree).toBeUndefined();
+    expect(hero(got, id).treeReset).toBe(true);
+    expect(hero(got, id).skillPoints).toBe(pool(20));
+    expect(load(got)).toEqual(got);
   });
 
   it('bilinmeyen anahtar atılır, kalan geçerli dağılım kalır (bayrak yok), atılan puan harcanmamışa döner', () => {

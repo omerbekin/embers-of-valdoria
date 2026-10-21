@@ -2,7 +2,8 @@
 // plan docs/design/skill-tree-implementation.md bölüm 1 ve 3.1. Mockup karşılığı public/mockups/skill-tree-moments/core.js.
 // Sayılar TEK yerde: data/skill-trees/_rules.json (TREE_RULES). Durum `TreeAlloc` değişmez nesne gibi kullanılır: take / untake yeni nesne döndürür.
 // Kararlar (Ömer 2026-10-21/22): kademe kilidi GLOBAL sayaç (pasif + 3 aktif satır, ult hariç; Mastery bar aynı sayı); ek "o satırda N puan"
-// evolve odak şartı YOK; ea / eb birbirini dışlar; ult toplamı en çok 3 puan, L5 / L10 / L15 kilitli; karakter başına en çok 2 evolve.
+// evolve odak şartı YOK; ea / eb birbirini dışlar; ult toplamı en çok 3 puan, L5 / L10 / L15 kilitli; karakter başına en çok 2 evolve;
+// ult'ta TEK kol (Ömer 2026-10-22, _rules.json > ult.singleArm): bir kolda puan varsa öbür üç kol alınamaz.
 import { LEVELS } from './levels';
 import { TREE_RULES, treeKeys, type TreeData, type TreeDir, type TreeNodeKind, type TreeRules, type TreeTier } from './skill-tree-data';
 
@@ -31,7 +32,7 @@ export interface TreeNode {
   ultLevel?: number;
 }
 
-export type TreeBlockCode = 'unknown' | 'unapproved' | 'max' | 'direction' | 'needs' | 'tier' | 'evo' | 'evoCap' | 'ultCap' | 'ultLevel' | 'points';
+export type TreeBlockCode = 'unknown' | 'unapproved' | 'max' | 'direction' | 'needs' | 'tier' | 'evo' | 'evoCap' | 'ultArm' | 'ultCap' | 'ultLevel' | 'points';
 
 /** Neden alınamaz (arayüz metni İngilizce, aynen gösterilir). */
 export interface TreeBlock {
@@ -113,6 +114,13 @@ export const ultSpent = (a: TreeAlloc, rules: TreeRules = TREE_RULES): number =>
 /** Kilit sayacı + Mastery bar: pasif + 3 aktif satıra harcanan TOPLAM (ult hariç; evolve puanları dahil, core.js ile aynı). */
 export const counter = (a: TreeAlloc, rules: TreeRules = TREE_RULES): number => spent(a) - ultSpent(a, rules);
 export const free = (level: number, a: TreeAlloc): number => treePool(level) - spent(a);
+/** Puan verilmiş ult kolları (rules.ult.arms sırasıyla; geçerli dağılımda singleArm açıkken en çok bir tane). */
+export function ultArmsUsed(a: TreeAlloc, rules: TreeRules = TREE_RULES): string[] {
+  const u = rules.rows;
+  return rules.ult.arms.filter((arm) => rules.ult.levels.some((_, s) => rankOf(a, `${u}.${arm}${s + 1}`) > 0));
+}
+/** Seçilmiş ult kolu (ilk puanlı kol) ya da null. */
+export const ultArm = (a: TreeAlloc, rules: TreeRules = TREE_RULES): string | null => ultArmsUsed(a, rules)[0] ?? null;
 
 const evoCount = (a: TreeAlloc, rules: TreeRules): number => treeNodes(rules).list.filter((n) => n.kind === 'evolve' && rankOf(a, n.key) > 0).length;
 const termMet = (a: TreeAlloc, term: string[]): boolean => term.some((k) => rankOf(a, k) > 0);
@@ -126,7 +134,9 @@ export const isInert = (tree: TreeData, key: string): boolean => !tree.nodes[key
 
 /**
  * Düğüme +1 rank konabilir mi? null = evet; değilse neden. `noPoints`: puan sınırına bakma (doğrulama). Sıra: bilinmeyen -> onay -> tavan ->
- * yön (ea / eb) -> tür kuralı (evolve: tavan, gerek, sayaç; ult: ult tavanı, level, gerek; diğer: kademe, gerek) -> puan.
+ * yön (ea / eb) -> tür kuralı (evolve: tavan, gerek, sayaç; ult: tek kol, ult tavanı, level, gerek; diğer: kademe, gerek) -> puan.
+ * Ult'ta tek kol tavandan önce bakılır: kol doluyken öbür kollar "tavan" değil "başka kol seçildi" der (bugünkü kurallarla ultCap yalnızca
+ * kol 3'ten uzun / max 3'ten küçük veride görülür).
  */
 export function check(tree: TreeData, level: number, a: TreeAlloc, key: string, opts: { noPoints?: boolean } = {}, rules: TreeRules = TREE_RULES): TreeBlock | null {
   const nd = treeNodes(rules).by.get(key);
@@ -146,6 +156,10 @@ export function check(tree: TreeData, level: number, a: TreeAlloc, key: string, 
     const have = counter(a, rules);
     if (have < need) return { code: 'evo', text: `Evolve ${ROMAN[n]} needs ${need} tree points (have ${have})`, need, have };
   } else if (nd.arm) {
+    if (rules.ult.singleArm) {
+      const other = ultArmsUsed(a, rules).find((arm) => arm !== nd.arm);
+      if (other) return { code: 'ultArm', text: `One ult path only: the ${nameOf(tree, `${nd.row}.${other}1`)} path is already chosen` };
+    }
     if (ultSpent(a, rules) >= rules.ult.max) return { code: 'ultCap', text: `Ult takes ${rules.ult.max} points at most` };
     const need = nd.ultLevel!;
     if (level < need) return { code: 'ultLevel', text: `Ult node needs Lv ${need} (you are Lv ${Math.floor(level)})`, need, have: Math.floor(level) };
@@ -178,7 +192,8 @@ export function take(tree: TreeData, level: number, a: TreeAlloc, key: string, r
 
 /**
  * Dağılım geçerli mi: tüm harcama boş ağaçtan yasal bir sırayla kurulabilir mi (core.js açgözlü kurulum) + bilinmeyen anahtar, tam sayı olmayan /
- * tavanı aşan rank, level havuzunu aşan toplam, ea + eb birlikte ve onaysız NEW geçersiz. null = geçerli; değilse ilk sorunlu anahtar + neden.
+ * tavanı aşan rank, level havuzunu aşan toplam, ea + eb birlikte, iki ult kolunda puan (singleArm) ve onaysız NEW geçersiz. null = geçerli;
+ * değilse ilk sorunlu anahtar + neden.
  */
 export function validate(tree: TreeData, level: number, a: TreeAlloc, rules: TreeRules = TREE_RULES): (TreeBlock & { key: string | null }) | null {
   const { by } = treeNodes(rules);
@@ -229,7 +244,10 @@ export function untake(tree: TreeData, level: number, a: TreeAlloc, key: string,
   return { ok: false, reason, ...(v.key ? { by: v.key } : {}) };
 }
 
-/** Arayüz durumu: max / part / av (alınabilir) / tlk (kademe-level kilidi) / rq (gerek eksik) / xl (evolve ya da ult tavanı) / dir (karşı yön) / new (onay bekliyor). */
+/**
+ * Arayüz durumu: max / part / av (alınabilir) / tlk (kademe-level kilidi) / rq (gerek eksik) / xl (evolve ya da ult tavanı) / dir (karşı yön:
+ * ea / eb ya da başka ult kolu seçildi; ikisi de "o yolu seçtin, bu kapandı" demek) / new (onay bekliyor).
+ */
 export type TreeNodeState = 'max' | 'part' | 'av' | 'tlk' | 'rq' | 'xl' | 'dir' | 'new';
 
 export function status(tree: TreeData, level: number, a: TreeAlloc, key: string, rules: TreeRules = TREE_RULES): { rank: number; max: number; st: TreeNodeState; block: TreeBlock | null; inert: boolean } {
@@ -242,7 +260,7 @@ export function status(tree: TreeData, level: number, a: TreeAlloc, key: string,
   else if (r >= max) st = 'max';
   else if (r > 0) st = 'part';
   else if (!block || block.code === 'points') st = 'av';
-  else if (block.code === 'direction') st = 'dir';
+  else if (block.code === 'direction' || block.code === 'ultArm') st = 'dir';
   else if (block.code === 'tier' || block.code === 'evo' || block.code === 'ultLevel') st = 'tlk';
   else if (block.code === 'evoCap' || block.code === 'ultCap') st = 'xl';
   else st = 'rq';
@@ -267,7 +285,8 @@ export function evoState(a: TreeAlloc, rules: TreeRules = TREE_RULES): { n: numb
 
 /**
  * Kayıttan okunan dağılımın onarımı (idempotent; Faz 1b normalizeTree bunu çağırır): bilinmeyen / tam sayı olmayan anahtar atılır (`dropped`),
- * rank tavana kırpılır, 0 rank silinir; kalan dağılım geçersizse (level, kilit, ea + eb, onaysız NEW) ağacın TAMAMI iade edilir (`reset`).
+ * rank tavana kırpılır, 0 rank silinir; kalan dağılım geçersizse (level, kilit, ea + eb, iki ult kolu, onaysız NEW) ağacın TAMAMI iade edilir
+ * (`reset`).
  * Geçerli dağılım aynen kalır (sürümü `v` dahil; sürüm farkı Faz 1b'nin işi: bir kez bedava sıfırlama hakkı).
  */
 export function repair(tree: TreeData, level: number, raw: unknown, rules: TreeRules = TREE_RULES): { alloc: TreeAlloc; reset: boolean; dropped: string[] } {
@@ -300,7 +319,9 @@ export function respecCost(level: number, rules: TreeRules = TREE_RULES): number
 }
 
 /**
- * Odaklı kurulum seçenekleri: yön (ea/eb; iki satırda aynı, varsayılan a), ult kolu (verilirse her ult kilidi açılınca puan önce oraya),
+ * Odaklı kurulum seçenekleri: yön (ea/eb; iki satırda aynı, varsayılan a), ult kolu (verilirse her ult kilidi açılınca puan önce oraya; tek kol
+ * kuralı: başlangıç dağılımında başka bir kol zaten seçiliyse o kol sürdürülür; verilmezse ult puanı yalnızca son "açık düğüm" adımında, ilk açılan
+ * kola gider ve check o kolda tutar: ult puanı hiçbir durumda iki kola dağılmaz),
  * `from` = başlangıç dağılımı (verilmezse boş ağaç; sim vekili kahramanın onaylı ağacından sürdürür: focusBuild(L) dağılımından başlanınca sonuç
  * focusBuild(L + 1) ile aynı).
  */
@@ -313,8 +334,10 @@ export interface FocusOptions {
 function nextFocusKey(tree: TreeData, level: number, a: TreeAlloc, A: number, B: number, o: FocusOptions, rules: TreeRules): string | null {
   const open = (k: string) => !check(tree, level, a, k, {}, rules);
   const d = o.dir ?? 'a';
-  if (o.ult) for (let s = 1; s <= rules.ult.levels.length; s++) {
-    const k = `${rules.rows}.${o.ult}${s}`;
+  // Tek kol: dağılımda seçilmiş kol varsa ön ayardaki kolun yerine o doldurulur (öbür kollar check'te kapalı)
+  const arm = o.ult ? ((rules.ult.singleArm ? ultArm(a, rules) : null) ?? o.ult) : null;
+  if (arm) for (let s = 1; s <= rules.ult.levels.length; s++) {
+    const k = `${rules.rows}.${arm}${s}`;
     if (rankOf(a, k) < 1 && open(k)) return k;
   }
   for (const R of [A, B]) if (open(`${R}.v`)) return `${R}.v`;

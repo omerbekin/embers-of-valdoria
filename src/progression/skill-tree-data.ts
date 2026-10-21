@@ -10,6 +10,8 @@ import cutthroatTree from '../../data/skill-trees/cutthroat.json';
 import mageTree from '../../data/skill-trees/mage.json';
 import druidTree from '../../data/skill-trees/druid.json';
 import undeadTree from '../../data/skill-trees/undead.json';
+import hexerTree from '../../data/skill-trees/hexer.json';
+import antimageTree from '../../data/skill-trees/antimage.json';
 import { classes } from '../engine/content';
 
 /** Ağacın açık olabileceği modlar (_rules.json > modes). */
@@ -42,7 +44,8 @@ export interface TreeRules {
   tierNeed: Record<string, number>;
   evolveNeed: number[];
   evolveMax: number;
-  ult: { arms: string[]; levels: number[]; max: number };
+  /** singleArm (Ömer 2026-10-22): ult'ta tek kol; bir kolda puan varsa öbür kollar alınamaz (blok ultArm). */
+  ult: { arms: string[]; levels: number[]; max: number; singleArm?: boolean };
   barAt: number[];
   exclusiveEdges: boolean;
   /** Respec bedeli (altın): base + perLevel x level (plan 10a; provizyon). Yoksa bedava. */
@@ -121,7 +124,7 @@ export interface TreeData {
 export const TREE_RULES: TreeRules = rulesJson as unknown as TreeRules;
 
 /** Class dosyaları (statik import). Yeni class = buraya 1 satır. */
-const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, cutthroatTree, mageTree, druidTree, undeadTree];
+const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, cutthroatTree, mageTree, druidTree, undeadTree, hexerTree, antimageTree];
 
 export const TREES: Record<string, TreeData> = Object.fromEntries(TREE_FILES.map((t) => [(t as TreeData).class, t as TreeData]));
 

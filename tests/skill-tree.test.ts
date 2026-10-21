@@ -20,7 +20,7 @@ import {
   type TreeData,
   type TreeRules,
 } from '../src/progression';
-import { anyOpen, check, counter, emptyAlloc, evoState, focusBuild, rankOf, repair, spent, status, take, treePool, untake, validate, type TreeAlloc } from '../src/progression/skill-tree';
+import { anyOpen, check, counter, emptyAlloc, evoState, focusBuild, rankOf, repair, spent, status, take, treePool, ultArmsUsed, untake, validate, type TreeAlloc } from '../src/progression/skill-tree';
 import { leveledCampaign, leveledRun } from './level-helpers';
 import { battlePlan, debugTeleport, newCampaign, pickHero } from '../src/campaign';
 import { newRun, wavePlan } from '../src/endless';
@@ -90,7 +90,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(repair(W, L50, both).reset).toBe(true);
   });
 
-  it('5: ult u1 L5, u2 L10, u3 L15; iç düğüm gerek; 4. ult puanı ultCap', () => {
+  it('5: ult u1 L5, u2 L10, u3 L15; iç düğüm gerek; dolu kolda öbür kol ultArm (tek kol); ultCap tavanı (max kol boyundan küçükse)', () => {
     const e = emptyAlloc(W);
     expect(check(W, 4, e, '4.u1')).toMatchObject({ code: 'ultLevel', text: 'Ult node needs Lv 5 (you are Lv 4)' });
     expect(code(W, 5, e, '4.u1')).toBeNull();
@@ -101,8 +101,39 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     const u2 = build(W, 14, ['4.u2'], u1);
     expect(code(W, 14, u2, '4.u3')).toBe('ultLevel');
     const u3 = build(W, 15, ['4.u3'], u2);
-    expect(check(W, 15, u3, '4.r1')).toMatchObject({ code: 'ultCap', text: 'Ult takes 3 points at most' });
-    expect(status(W, 15, u3, '4.r1').st).toBe('xl');
+    // tek kol (Ömer 2026-10-22) tavandan önce bakılır: kol doluyken öbür kol "başka kol seçildi" der
+    expect(check(W, 15, u3, '4.r1')).toMatchObject({ code: 'ultArm', text: `One ult path only: the ${W.nodes['4.u1']!.name} path is already chosen` });
+    expect(status(W, 15, u3, '4.r1').st).toBe('dir');
+    // ultCap kural olarak durur: tavanı 2 olan kuralla (kol 3 düğüm) u3 reddedilir
+    const cap2: TreeRules = { ...TREE_RULES, ult: { ...TREE_RULES.ult, max: 2 } };
+    expect(check(W, 15, u2, '4.u3', {}, cap2)).toMatchObject({ code: 'ultCap', text: 'Ult takes 2 points at most' });
+    expect(status(W, 15, u2, '4.u3', cap2).st).toBe('xl');
+  });
+
+  it('5b: ult tek kol (Ömer 2026-10-22): bir kolda puan varsa öbür üç kol ultArm; aynı kolda devam serbest; geri alınca serbest; iki kollu dağılım geçersiz, repair iade', () => {
+    expect(TREE_RULES.ult.singleArm).toBe(true);
+    const u1 = build(W, 15, ['4.u1']);
+    for (const k of ['4.r1', '4.d1', '4.l1', '4.r2', '4.l3']) {
+      expect(check(W, 15, u1, k), k).toMatchObject({ code: 'ultArm', text: `One ult path only: the ${W.nodes['4.u1']!.name} path is already chosen` });
+      expect(status(W, 15, u1, k).st, k).toBe('dir');
+    }
+    const r1 = build(W, 15, ['4.r1']);
+    expect(check(W, 15, r1, '4.u1')?.text).toBe(`One ult path only: the ${W.nodes['4.r1']!.name} path is already chosen`);
+    // aynı kolda devam serbest
+    const u2 = build(W, 15, ['4.u2'], u1);
+    expect(code(W, 15, u2, '4.u3')).toBeNull();
+    expect(take(W, 15, u2, '4.r1')).toMatchObject({ ok: false, block: { code: 'ultArm' } });
+    // geri alınca seçim yeniden serbest
+    const back = untake(W, 15, u1, '4.u1');
+    expect(back.ok).toBe(true);
+    if (back.ok) for (const k of ['4.r1', '4.d1', '4.l1']) expect(code(W, 15, back.alloc, k), k).toBeNull();
+    // iki kolda puan (tavan içinde bile) geçersiz; okuma onarımı ağacın tamamını iade eder
+    const two: TreeAlloc = { v: W.version, r: { '1.f1': 2, '4.u1': 1, '4.r1': 1 } };
+    expect(validate(W, 15, two)).toMatchObject({ key: '4.r1', code: 'ultArm' });
+    expect(repair(W, 15, two)).toEqual({ alloc: emptyAlloc(W), reset: true, dropped: [] });
+    // bayrak kapalıysa kollar serbest (eski kural; yalnızca tavan)
+    const multi: TreeRules = { ...TREE_RULES, ult: { ...TREE_RULES.ult, singleArm: false } };
+    expect(validate(W, 15, two, multi)).toBeNull();
   });
 
   it('6: evolve: ma / mb yoksa needs; sayaç 22\'de evo, 23\'te açık; ikinci evolve 38; üçüncü evoCap', () => {
@@ -144,6 +175,23 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(spent(u)).toBe(14);
   });
 
+  it('7b: odaklı kurulum ult puanını hiçbir zaman iki kola dağıtmaz: ön ayar kolu; başlangıç dağılımında başka kol seçiliyse o kol sürer', () => {
+    for (let lv = 5; lv <= 50; lv++) expect(ultArmsUsed(focusBuild(D, [2, 3], lv, { ult: 'r' })), `L${lv}`).toEqual(['r']);
+    // kayıttaki ağaçta l kolu seçili: ön ayar r yerine l doldurulur (L10 l2, L15 l3), puan boşta kalmaz
+    const from = build(D, 5, ['4.l1']);
+    const b = focusBuild(D, [2, 3], 20, { ult: 'r', from });
+    expect(ultArmsUsed(b)).toEqual(['l']);
+    expect(['4.l1', '4.l2', '4.l3'].map((k) => rankOf(b, k))).toEqual([1, 1, 1]);
+    expect(validate(D, 20, b)).toBeNull();
+    expect(spent(b)).toBe(19);
+    // kol verilmezse de en çok bir kol; debug / sim ön ayarları tek kol
+    for (const lv of [5, 15, 30, 50]) expect(ultArmsUsed(focusBuild(W, [1, 2], lv)).length).toBeLessThanOrEqual(1);
+    for (const cls of Object.keys(TREE_RULES.debugFocus ?? {})) {
+      const a = debugFocusAlloc(cls, 50, 'b');
+      if (a) expect(ultArmsUsed(a), cls).toEqual([TREE_RULES.debugFocus![cls]!.ult]);
+    }
+  });
+
   it('8: untake bağımlıyı bozuyorsa reddeder ("Needed by"); kademe / evolve sayacını düşürüyorsa reddeder', () => {
     const chain = build(W, L50, ['1.f1', '1.f2']);
     expect(untake(W, L50, chain, '1.f1')).toMatchObject({ ok: false, reason: `Needed by ${W.nodes['1.f2']!.name}` });
@@ -167,7 +215,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(validate(pending, L50, build(W, L50, ['1.v'], a))?.code).toBe('unapproved');
     expect(code(W, L50, a, '1.v')).toBeNull();
     // Ömer'in onayını bekleyen NEW düğümler (onaylanınca buradan silinir, JSON'da approved: true olur).
-    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb']);
+    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb', 'hexer 0.v', 'hexer 2.v', 'hexer 3.v', 'hexer 4.l3', 'antimage 0.v', 'antimage 3.v', 'antimage 4.l3']);
     for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!PENDING.has(`${t.class} ${k}`));
   });
 
@@ -190,7 +238,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
 describe('veri doğrulama (3.2 madde 11)', () => {
   it('her class dosyası: 48 satır + 12 ult anahtarı, ad / metin sınırı, satır skill\'leri class sırasıyla, NEW approved taşır', () => {
     expect(treeKeys()).toHaveLength(60);
-    expect(Object.keys(TREES).sort()).toEqual(['cutthroat', 'defender', 'druid', 'mage', 'paladin', 'undead', 'warrior']);
+    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'cutthroat', 'defender', 'druid', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
     for (const t of Object.values(TREES)) expect(validateTreeData(t), t.class).toEqual([]);
   });
 
@@ -323,7 +371,7 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     expect(treeSetupFor(src, 'quick', on)).toBeUndefined();
     expect(treeSetupFor(src, 'multiplayer', on)).toBeUndefined();
     expect(treeSetupFor({ ...src, level: 5 }, 'campaign', on)).toBeUndefined(); // havuzu aşan
-    expect(treeSetupFor({ class: 'hexer', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class
+    expect(treeSetupFor({ class: 'gambler', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class
   });
 
   it('debug odaklı kurulum: şalter kapalıyken de sefer / Endless kahramanına _rules.json > debugFocus ön ayarıyla ağaç verir, QB vermez', () => {

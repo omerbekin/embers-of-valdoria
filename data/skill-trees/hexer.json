@@ -1,0 +1,455 @@
+{
+  "class": "hexer",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "a",
+      "a",
+      "b",
+      "b",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "ill_omen",
+      "name": "Ill Omen",
+      "passive": true,
+      "karma": "A"
+    },
+    {
+      "skill": "evil_eye",
+      "name": "Evil Eye",
+      "karma": "A"
+    },
+    {
+      "skill": "withering_curse",
+      "name": "Withering Curse",
+      "karma": "B"
+    },
+    {
+      "skill": "jinx",
+      "name": "Jinx",
+      "karma": "B"
+    }
+  ],
+  "ult": {
+    "skill": "doom_mark",
+    "name": "Doom Mark",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Verdict Mastery",
+    "karma": "A",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Quick Fate",
+        "text": "Your first Evil Eye each battle adds 1 extra Omen.",
+        "src": "A:V1:bar1",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Grim Herald",
+        "text": "The first Doom you cause each battle deals +20% damage.",
+        "src": "A:V1:bar0",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Long Rot",
+        "text": "Wither you apply lasts 1 turn longer.",
+        "src": "A:V2:bar3",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Carrion Feast",
+        "text": "Wither on an enemy below 30% HP deals +20% damage.",
+        "src": "A:V2:bar2",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Hour of Ruin",
+        "text": "Once per battle, when Doom strikes, Doom Mark's cooldown drops by 2.",
+        "src": "A:V1:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Fresh Host",
+      "text": "Doom on a host of passed Omens deals +3% damage per rank.",
+      "src": "A:V4:0.f2",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Grim Arithmetic",
+      "text": "Doom +4% damage per rank against targets below 50% HP.",
+      "src": "A:V1:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Crooked Stars",
+      "text": "Doom +3% critical chance per rank.",
+      "src": "A:V1:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Fate Sealed",
+      "text": "An enemy that survives Doom keeps 1 Omen, so the next Doom comes sooner.",
+      "src": "A:V1:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Bitter Interest",
+      "text": "Doom heals you for 4% of its damage per rank.",
+      "src": "A:V5:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Crushing Doom",
+      "text": "Doom ignores 25% of Magic Armor.",
+      "src": "A:V1:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Doom Leaks",
+      "text": "When Doom kills, 1 Omen passes to the nearest enemy anyway.",
+      "src": "A:V4:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Ruinous Crit",
+      "text": "A critical Doom deals x2 damage instead of x1.5.",
+      "src": "A:V1:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Overcharged Doom",
+      "text": "Doom deals +30% damage, but you take 10% of that damage yourself.",
+      "src": "A:V1:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Final Toll",
+      "text": "Doom deals +40% to targets below 30% HP, but -20% to targets above it.",
+      "src": "A:V1:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Toppling Ruin",
+      "text": "When Doom kills, your next turn comes 50% sooner.",
+      "src": "A:V1:0.mb",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Herald of Ruin",
+      "text": "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.",
+      "src": "A:V1:0.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Prying Eye",
+      "text": "Evil Eye +4% power per rank against enemies with no Omens.",
+      "src": "A:V4:1.f3",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Unblinking",
+      "text": "Evil Eye +2% critical chance per rank.",
+      "src": "A:V1:1.f2",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Envy's Edge",
+      "text": "Evil Eye +4% power per rank against targets with 2 Omens.",
+      "src": "A:V1:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Opening Glare",
+      "text": "Evil Eye on a target with no Omens adds 2 Omens.",
+      "src": "A:V1:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Rheumy Stare",
+      "text": "Evil Eye +2% critical chance per rank against Withered targets.",
+      "src": "A:V2:1.f3",
+      "syn": "Withering Curse",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Glint of Malice",
+      "text": "Evil Eye +10% critical chance against targets with Omens.",
+      "src": "A:V1:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Fixed Stare",
+      "text": "Evil Eye +12% power if it hits the same target as your last skill.",
+      "src": "A:V1:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Fatal Glance",
+      "text": "A critical Evil Eye adds 3 Omens instead of 2, so it always brings Doom.",
+      "src": "A:V1:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Strained Eyes",
+      "text": "Evil Eye +15% critical chance, but its power drops by 15%.",
+      "src": "A:V1:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Burning Stare",
+      "text": "Evil Eye +25% power, but it costs 6 MP.",
+      "src": "A:V1:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Doom Gaze",
+      "text": "When Evil Eye brings Doom, that Doom deals +30% damage.",
+      "src": "A:V1:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Eye of Ruin",
+      "text": "Evil Eye evolves: it adds 2 Omens per hit (3 on a crit), but deals no direct damage.",
+      "src": "A:V1:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Plague Breath",
+      "text": "Withering Curse +1% power per rank for each enemy it hits.",
+      "src": "B:V4:2.f2",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Fog of Ill Luck",
+      "text": "Withered enemies have -2% accuracy per rank.",
+      "src": "B:V3:2.f3",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Leeching Rot",
+      "text": "Wither ticks heal you for 2% of their damage per rank.",
+      "src": "B:V5:2.f2",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Herd Curse",
+      "text": "If Withering Curse hits 3 or more enemies, each gains 1 extra Omen.",
+      "src": "B:V4:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Rot Contagion",
+      "text": "Withering Curse has a 10% chance per rank to also curse an enemy just outside its area.",
+      "src": "B:V4:2.r",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Broad Curse",
+      "text": "Withering Curse's area grows to 3x3.",
+      "src": "B:V4:2.ea",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Seeping Rot",
+      "text": "When Wither ends on an enemy, the enemies next to it are Withered for 2 turns.",
+      "src": "B:V2:2.eb",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Plague Tide",
+      "text": "Withering Curse also adds 1 Omen to every enemy outside its area that has one.",
+      "src": "B:V4:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Thin Plague",
+      "text": "Withering Curse hits every enemy, but deals half damage and its Wither lasts 1 turn.",
+      "src": "B:V4:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Gnawing Rot",
+      "text": "Withering Curse's Wither deals +50%, but lasts 2 turns.",
+      "src": "B:V2:2.fa",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Returning Curse",
+      "text": "When an enemy Withered by the Curse dies, Withering Curse's cooldown resets.",
+      "src": "B:V5:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Plague Curse",
+      "text": "Withering Curse evolves: its Wither is contagious: each tick also Withers an enemy next to the host for 2 turns.",
+      "src": "B:V4:2.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Clinging Jinx",
+      "text": "Jinxed has a 10% chance per rank not to end after the target's attack.",
+      "src": "B:V3:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Wobbly Aim",
+      "text": "Jinxed lowers accuracy by 2% more per rank (-20% → -30%).",
+      "src": "B:V3:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Hex Ward",
+      "text": "While any enemy is Jinxed, you take 3% less damage per rank.",
+      "src": "B:V5:3.r",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Double Jinx",
+      "text": "Jinxed lasts through the target's next 2 attacks.",
+      "src": "B:V3:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Rumour Mill",
+      "text": "Jinx has a 10% chance per rank to also Jinx an enemy next to the target.",
+      "src": "B:V4:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Lasting Jinx",
+      "text": "Jinxed lasts 3 turns instead of 2.",
+      "src": "B:V3:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Backlash",
+      "text": "When a Jinxed enemy misses, it takes dark damage equal to 40% of your LUCK.",
+      "src": "B:V3:3.eb",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Woeful Turn",
+      "text": "A Jinxed enemy that misses loses its next action.",
+      "src": "B:V3:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Spiteful Jinx",
+      "text": "Jinx also Silences for 1 turn, but its cooldown is 5.",
+      "src": "B:V3:3.fb",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Feeble Jinx",
+      "text": "Jinxed lowers accuracy by 40%, but Jinx deals no damage.",
+      "src": "B:V3:3.fa",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Turned Luck",
+      "text": "When a Jinxed enemy misses, the ally it aimed at gains Haste for 1 turn.",
+      "src": "B:V3:3.mb",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Turned Hand",
+      "text": "Jinx evolves: the Jinxed target's next attack strikes one of its own allies instead.",
+      "src": "B:V3:3.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Leaping Mark",
+      "text": "If Doom Mark kills, its Doom leaps to the nearest enemy at 50%.",
+      "src": "B:V4:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Hungry Leap",
+      "text": "Doom Mark's leap deals 75% instead of 50%.",
+      "src": "B:V4:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Unending Mark",
+      "text": "Doom Mark's leap repeats after every kill.",
+      "src": "B:V4:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Gathering Mark",
+      "text": "Doom Mark first pulls 1 Omen from up to 2 other enemies onto the target.",
+      "src": "B:V4:4.l1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Overflowing Fate",
+      "text": "Each pulled Omen past 3 adds +20% to Doom Mark's Doom.",
+      "src": "B:V4:4.l2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Mark of Many",
+      "text": "Doom Mark pulls 1 Omen from every other enemy before it detonates.",
+      "src": "B:V4:4.l3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Sealing Mark",
+      "text": "Doom Mark Silences the target for 1 turn.",
+      "src": "B:V3:4.u1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Heavy Seal",
+      "text": "Doom Mark's Silence lasts 2 turns.",
+      "src": "B:V3:4.u2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Mark of Silence",
+      "text": "Doom Mark Silences every caster in the target's row for 1 turn.",
+      "src": "B:V3:4.u3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Dread Ward",
+      "text": "After Doom Mark, you are Shrouded for 1 turn.",
+      "src": "B:V5:4.l1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Cowed Foe",
+      "text": "An enemy that survives Doom Mark is Jinxed for 2 turns.",
+      "src": "B:V5:4.l2",
+      "syn": "Jinx",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Last Rite",
+      "text": "Once per battle, a killing blow on you leaves you at 1 HP and fires a free Doom Mark at the killer.",
+      "src": "B:V5:4.l3",
+      "new": true,
+      "approved": false,
+      "fx": null
+    }
+  }
+}

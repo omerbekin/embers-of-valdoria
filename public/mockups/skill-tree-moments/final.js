@@ -10,5 +10,7 @@ window.SMM_FINAL = {
   cutthroat: { rows: ['b', 'b', 'b', 'a', 'b'], at: '2026-10-22' }, // Opportunist, Venom Edge, Saltire Cut, ult = B; Smoke Bomb = A
   mage: { rows: ['b', 'b', 'a', 'a', 'a'], at: '2026-10-22' }, // Spell Echo, Fire Bolt = B; Blizzard, Mana Barrier, ult = A
   druid: { rows: ['b', 'b', 'b', 'b', 'a'], at: '2026-10-22' }, // Nature's Grudge, Thorn Whip, Nature's Wrath, Rejuvenate = B; ult = A
-  undead: { rows: ['a', 'a', 'a', 'a', 'b'], at: '2026-10-22' } // Vampiric Bite, Bone Throw, Wail of the Dead, Dark Bond = A; ult = B
+  undead: { rows: ['a', 'a', 'a', 'a', 'b'], at: '2026-10-22' }, // Vampiric Bite, Bone Throw, Wail of the Dead, Dark Bond = A; ult = B
+  hexer: { rows: ['a', 'a', 'b', 'b', 'b'], at: '2026-10-22' }, // Ill Omen, Evil Eye = A; Withering Curse, Jinx, ult = B
+  antimage: { rows: ['b', 'b', 'a', 'b', 'b'], at: '2026-10-22' } // Mana Overflow, Mana Steal, Spell Ward, ult = B; Drain Field = A
 };

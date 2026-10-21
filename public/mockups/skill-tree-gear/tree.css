@@ -210,6 +210,7 @@ html.reduced-motion .gt-nd.shake { animation: none; }
 .gt-arms { display: grid; grid-template-columns: repeat(2, minmax(110px, 1fr)); gap: 6px; margin-top: 8px; }
 .gt-arms div { padding: 5px 9px; border: 1px solid var(--g-line); background: rgba(255, 255, 255, .02); font: 600 11px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); display: flex; justify-content: space-between; gap: 8px; }
 .gt-arms div b { color: var(--g-gold); font-size: 13px; } .gt-arms div.full { border-color: rgba(243, 217, 153, .5); background: rgba(217, 178, 106, .1); color: var(--g-text); }
+.gt-arms div.off { opacity: .45; border-style: dashed; } .gt-arms div.off b { color: #8d7f66; font-size: 11px; } /* tek ult kolu: kapanan kol */
 .gt-uscroll { flex: none; max-width: 100%; overflow-x: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; margin: 0 auto; }
 .gt-ucanvas { position: relative; flex: none; margin: 0 auto; }
 .gt-ucore { position: absolute; transform: translate(-50%, -50%); z-index: 2; cursor: help; }

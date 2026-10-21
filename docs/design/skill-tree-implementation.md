@@ -5,7 +5,7 @@ Kaynaklar: `skill-tree-moments.md` (şekil, bölüm 8 = ea/eb tek yön), `skill-
 
 ## 0. Kısa özet (Ömer için)
 - Ağaç içeriği `data/skill-trees/<class>.json` dosyasına girer. Mockup'taki seçimden (karma + final.js) küçük bir araçla bir kez üretilir; sonra her düğümün etkisi makinenin okuyacağı biçimde (`fx`) yazılır.
-- Kurallar (kilitler, ea/eb tek yön, ult en çok 3 puan, en çok 2 evolve, level kilitleri, geri alma) tek saf modülde toplanır: `src/progression/skill-tree.ts`.
+- Kurallar (kilitler, ea/eb tek yön, ult tek kol + en çok 3 puan, en çok 2 evolve, level kilitleri, geri alma) tek saf modülde toplanır: `src/progression/skill-tree.ts`.
 - Kayıt: her kahramana `tree` alanı eklenir (sefer kayıt sürümü 11 → 12, Endless 6 → 7). Veri değişip dağılım geçersiz kalırsa puanlar geri verilir.
 - Motor: savaşa girerken kahramanın skill'lerinin **kişisel kopyası** yamalanır (skill id aynı kalır, sayılar değişir). Koşullu / tetikli düğümler 6 ortak motor kancası ailesiyle gelir.
 - Sayım (Ömer'in seçtiği satırlar): **Warrior** 5 düz sayı (a) · 7 var olan etki (b) · 48 yeni kanca (c; 1'i NEW). **Defender** 13 (a) · 5 (b) · 42 (c; 2'si NEW). Yani düğümlerin ~%75'i motor kancası istiyor. Bu yüzden ağacın asıl hissi Faz 2-5'te gelir, Faz 1 yalnızca boru hattını kurar.
@@ -22,7 +22,7 @@ Kaynaklar: `skill-tree-moments.md` (şekil, bölüm 8 = ea/eb tek yön), `skill-
 | Tier kilitleri | Tier II sayaç 5 · III 10 · IV 15 · Evolve I 23 · Evolve II 38 | aynı |
 | Evolve | ma ya da mb + sayaç şartı; karakter başına en çok 2 | aynı |
 | ea / eb | Birbirini dışlar (yalnızca oyunda): biri alınınca öbür yönün edge + notable + blood price'ı kilitlenir; geri alınınca açılır. Tek yönlü satır evolve öncesi 20 puan; Evolve I L25 / II L40 değişmez (odaklı oyuncu kalan 3 puanı başka satırın Tier I filler'ına koyar) | belge bölüm 8 |
-| Ult | 4 kol × 3 düğüm; 1. düğüm L5, 2. L10, 3. L15 (notable); kolda iç düğüm gerek; ult toplamı en çok 3 puan; evolve yok | `core.js > ULT_LV, ULT_MAX` |
+| Ult | 4 kol × 3 düğüm; 1. düğüm L5, 2. L10, 3. L15 (notable); kolda iç düğüm gerek; ult toplamı en çok 3 puan; **tek kol** (Ömer 2026-10-22): bir kolda puan varsa öbür üç kol alınamaz, sonuç en fazla tek kolun 3 düğümü; evolve yok | `core.js > ULT_LV, ULT_MAX, check (ultarm)` |
 | Mastery bar | Sayaç 5 / 10 / 15 / 20 / 25'e ulaşınca 5 sabit bonus kendiliğinden açılır (seçim yok). 30-45 (L50) TBD | `app.js > bonusTip`, `core.js > bonusReached` |
 | Mockup etkileşimi | Tık +1; sağ tık / dokunmatikte uzun basış −1 (bağımlılığı bozacaksa reddeder: "Needed by X"); altın ikonlu Reset | `app.js` |
 
@@ -101,7 +101,7 @@ Warrior bar (b, var olan `ItemEffects.secondWind`) ve Defender NEW düğüm (ona
 ### 3.1 `src/progression/skill-tree.ts` (saf; `levels.ts` yanında)
 `core.js`'in TypeScript karşılığı + bölüm 8 (ea/eb tek yön) + onay kilidi. Durum: `TreeAlloc = { v: number; r: Record<string, number> }` (anahtar `'satır.id'`, mockup'taki `S.r` ile aynı).
 - Sayım: `treePool(level)`, `spent(a)`, `rowSpent(a, i)`, `ultSpent(a)`, `counter(a)` (ult hariç), `free(level, a)`.
-- `check(tree, level, a, key): Block | null`. Kodlar: `unknown`, `max`, `needs`, `tier`, `evo`, `evoCap`, `ultCap`, `ultLevel`, **`direction`** (karşı edge alınmış), **`unapproved`** (NEW), `points`. Metin İngilizce (UI aynen gösterir: "Tier III needs 10 tree points (have 7)", "Other direction chosen", "Awaiting approval").
+- `check(tree, level, a, key): Block | null`. Kodlar: `unknown`, `max`, `needs`, `tier`, `evo`, `evoCap`, **`ultArm`** (başka ult kolu seçilmiş; 2026-10-22), `ultCap`, `ultLevel`, **`direction`** (karşı edge alınmış), **`unapproved`** (NEW), `points`. Metin İngilizce (UI aynen gösterir: "Tier III needs 10 tree points (have 7)", "Other direction chosen", "Awaiting approval").
 - `take` / `untake` (untake = 1 eksiltip `validate`; bozuluyorsa reddeder ve "Needed by X" döner).
 - `validate(tree, level, a)`: core.js'teki gibi boş ağaçtan açgözlü yeniden kurulum; ek olarak ea + eb ikisi birden = geçersiz, onaysız NEW = geçersiz, bilinmeyen anahtar = geçersiz.
 - `status(...)`: arayüz durumu (max / part / av / tlk / rq / xl / dir / new / inert).
@@ -116,7 +116,7 @@ Warrior bar (b, var olan `ItemEffects.secondWind`) ve Defender NEW düğüm (ona
 2. f1 en çok 3 rank; f2 için f1 ≥ 1; zincir boyunca gerek.
 3. Tier II sayaç 5'te açılır ve sayaç **global**: başka satırın puanı da açar; ult puanı açmaz.
 4. ea alınınca eb, mb, fb kilit (`direction`); ea geri alınınca açılır; kayıtta ea + eb birlikte = `validate` hatası.
-5. Ult: L4'te u1 kapalı, L5'te açık; u2 L10, u3 L15; iç düğüm gerek; 4. ult puanı `ultCap`.
+5. Ult: L4'te u1 kapalı, L5'te açık; u2 L10, u3 L15; iç düğüm gerek; başka koldan puan `ultArm` (tek kol, 2026-10-22); `ultCap` tavanı kural olarak durur.
 6. Evolve: ma/mb yoksa `needs`; sayaç 22'de `evo`, 23'te açık; ikinci evolve 38; üçüncü `evoCap`.
 7. Focus check (bölüm 8 kuralıyla): tek yön + 3 puan başka satır → Evolve I **L25**, Evolve II **L40**; L2-L50 arası hiçbir level'da puan boşta kalmaz (`anyOpen`).
 8. `untake` bağımlıyı bozuyorsa reddeder ("Needed by"), tier/evolve sayacını düşürüyorsa reddeder.
@@ -442,3 +442,11 @@ Kayıt katmanı; plandan ayrılan yerler ve sonraki fazların bilmesi gerekenler
 - **Yeni debug araçları (Debug > Campaign > Levels):** "Spend skill tree points (saved)" (`autoTreeAll`, kayda yazar) ve "Reset skill tree: <class> (<bedel> gold)" (ilk ağaçlı kahraman; altın düşer). "Set level N" artık ağacı da sıfırlar (ipucu metni güncellendi). Endless debug sekmesine ağaç aracı eklenmedi.
 - **Sim vekili:** `autoTreeAll` / `autoTreeRun` (`focusBuild`, `FocusOptions.from` = onaylı ağaçtan sürdürür; focusBuild(L) dağılımından başlanınca sonuç focusBuild(L + 1) ile aynı). Ön ayar `debugFocus` (yoksa satır 1 + 2). Sim CLI'ya bağlanmadı (Faz 6).
 - **Test yardımcısı:** `tests/level-helpers.ts > leveledRun / leveledCampaign` artık skillPoints'i level'a göre verir (eski hali L50 + 0 puan = okumada düzeltilen imkânsız durum).
+
+## Ult tek kol (2026-10-22)
+Ömer kararı: "tüm classlar için ultide tek kol seçilebilsin. Bir yola başlayınca diğerine gidilmesin." Eski "kollar serbest" kuralının yerine geçer; 3 puan tavanı ve L5 / L10 / L15 kilitleri aynen kalır.
+- **Kural:** herhangi bir ult kolunun herhangi bir düğümünde puan varsa diğer üç kolun düğümleri alınamaz. Sonuç: en fazla tek kolun 3 düğümü. Veri: `_rules.json > ult.singleArm: true`.
+- **Oyun kural modülü** (`src/progression/skill-tree.ts`): `check` yeni blok kodu `ultArm`, metin "One ult path only: the <kolun 1. düğümünün adı> path is already chosen". Sıra: tek kol, sonra `ultCap`, sonra level, sonra gerek (kol doluyken öbür kollar "tavan" değil "başka kol seçildi" der; bugünkü veride `ultCap` yalnızca kol 3 düğümden uzun / tavan 3'ten küçük olursa görülür). `status` eşlemesi `dir` (ea / eb karşı yönüyle aynı görünüm: sönük + kilit). Yardımcılar `ultArmsUsed(a)` / `ultArm(a)`.
+- **Kayıt:** iki kolda puan olan dağılım `validate`te geçersiz (tavan içinde bile); okumada `repair` ağacın TAMAMINI bedava iade eder + `treeReset` (bugünkü yol).
+- **Odaklı kurulum / sim vekili / debug** (`focusBuild`, `autoTreeHero`, `debugFocusAlloc`): ult puanı hiçbir durumda iki kola dağılmaz; ön ayar kolu doldurulur, başlangıç dağılımında (kahramanın onaylı ağacı) başka kol seçiliyse o kol sürdürülür; kol verilmezse ult puanı yalnızca son "açık düğüm" adımında ilk açılan kola gider ve kural onu o kolda tutar.
+- **Mockup'lar:** Moments (`skill-tree-moments/core.js`, kod `ultarm`, görünüm `xl` = kesik çizgili sönük; kol listesinde kapanan kol "closed", çizgisi sönük) ve Gear (`skill-tree-gear/data/core.js` kopyası + `tree-logic.js` durumu `dir` = sönük + kilit simgesi, "Other ult path chosen" çipi). Gear'da bekleyen ult puanı geri alınınca kollar yeniden serbest; onaylı kol yalnızca respec ile değişir.

@@ -88,7 +88,7 @@
     chips.push(committed > 0 ? { text: 'Taken', tone: 'ok' } : pend > 0 ? { text: 'Pending', tone: 'v' } : { text: 'Not taken' });
     chips.push({ text: li.tier }, { text: li.lock, tone: li.open ? 'ok' : '' });
     if (INERT[key]) chips.push({ text: 'Not active yet', tone: 'warn' });
-    if (st.st === 'dir') chips.push({ text: 'Other direction chosen', tone: 'warn' });
+    if (st.st === 'dir') chips.push({ text: st.check && st.check.code === 'ultarm' ? 'Other ult path chosen' : 'Other direction chosen', tone: 'warn' });
     const lines = [info.eff];
     if (nd.req.length) {
       const terms = nd.req.map((term) => term.map((q) => { const met = MC.rk(E, q) > 0; return (met ? '' : '<span class="no">') + esc(nodeInfo(q).name) + (met ? '' : '</span>'); }).join(' or ')).join(' + ');
@@ -96,14 +96,14 @@
     }
     if (k === 'V') lines.push(kw('Evolves in place:', 'the skill keeps its slot and gains this behaviour. Evolve I needs 23 points in the passive and skill rows, Evolve II needs 38 (ult points do not count); two per hero at most.'));
     if (k === 'B') lines.push(kw('Blood Price:', 'a gain with a cost. Dead end: nothing unlocks after it.'));
-    if (nd.arm) lines.push(kw('Ult arm:', 'arms are free, but the ult takes ' + MC.ULT_MAX + ' points at most in total (' + MC.ultSpent(E) + ' / ' + MC.ULT_MAX + ' spent). Locked by level, not by points.'));
+    if (nd.arm) lines.push(kw('One ult path:', 'a point in any node of an arm closes the other three arms. A pending point can be taken back to choose again; only a respec changes a confirmed arm. ' + MC.ULT_MAX + ' points at most (' + MC.ultSpent(E) + ' / ' + MC.ULT_MAX + ' spent). Locked by level, not by points.'));
     if (GT.DIR[nd.id] && !nd.arm) lines.push(kw('One direction:', 'each skill follows one side (Edge, Notable and Blood Price). Taking this side locks the other; only a respec changes a confirmed choice.'));
     if (INERT[key]) lines.push(kw('Not active yet:', 'you can take it, but the battle engine does not apply it yet.'));
     const fl = o.fail && o.fail.key === key ? o.fail.msg : null;
     let foot;
     if (fl) foot = { text: fl, cls: 'bad' };
     else if (st.rank === 0 && st.check && st.check.code === 'points') foot = { text: 'No points left' };
-    else if (st.rank === 0 && st.check) foot = { text: (['ultcap', 'direction'].indexOf(st.check.code) >= 0 ? '' : 'Locked: ') + st.check.text, cls: 'lock' };
+    else if (st.rank === 0 && st.check) foot = { text: (['ultcap', 'ultarm', 'direction'].indexOf(st.check.code) >= 0 ? '' : 'Locked: ') + st.check.text, cls: 'lock' };
     else if (pend > 0) foot = { text: o.touch ? 'Pending +' + pend + ': Confirm keeps it, − takes it back' : 'Pending +' + pend + ': Confirm keeps it, right-click takes it back', cls: 'pend' };
     else if (committed > 0) foot = { text: 'Confirmed: only a respec takes it back' };
     else foot = { text: o.touch ? 'Tap again to add 1 pending point' : 'Click to add 1 pending point' };
@@ -204,8 +204,8 @@
     }));
     const arms = `<div class="gt-arms">${MC.ARMS.map((a) => `<div data-arm="${a}">${MC.ARM_NAME[a]} arm<b>0 / 3</b></div>`).join('')}</div>`;
     const info = mode === 'full'
-      ? `<p>The ult icon sits in the middle (it is not a node). Four arms, three nodes each: the 1st needs <b>Lv 5</b>, the 2nd <b>Lv 10</b>, the 3rd <b>Lv 15</b> and is a Notable.</p><p>Arms are free, but the ult takes <b>${MC.ULT_MAX} points</b> in total, 1 per node, and each node needs the one before it. <b>No Evolve here.</b> Ult points do not count toward tier locks or the Mastery bar.</p>${arms}`
-      : `<p>Nodes unlock by level (<b>5 · 10 · 15</b>), ${MC.ULT_MAX} points at most, free arms. Ult points do not count toward tiers or the bar.</p>${arms}`;
+      ? `<p>The ult icon sits in the middle (it is not a node). Four arms, three nodes each: the 1st needs <b>Lv 5</b>, the 2nd <b>Lv 10</b>, the 3rd <b>Lv 15</b> and is a Notable.</p><p><b>One arm only:</b> a point in any node of an arm closes the other three. The ult takes <b>${MC.ULT_MAX} points</b> at most, 1 per node, and each node needs the one before it. <b>No Evolve here.</b> Ult points do not count toward tier locks or the Mastery bar.</p>${arms}`
+      : `<p>Nodes unlock by level (<b>5 · 10 · 15</b>), ${MC.ULT_MAX} points at most, one arm only. Ult points do not count toward tiers or the bar.</p>${arms}`;
     return `<div class="gt-ult"><div class="gt-uhead"><h3>Ult tree · ${esc(ur.name)}</h3><span>Level locks 5 · 10 · 15</span><span>Ult points <b data-upts>0</b> / ${MC.ULT_MAX}</span></div>
       <div class="gt-uwrap"><div class="gt-uinfo">${info}</div><div class="gt-uscroll"><div class="gt-ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="gt-lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
         <div class="gt-ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px;width:${cfg.coreSz}px;height:${cfg.coreSz}px"><span class="ud"></span><img src="${A}${ur.ic}" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;

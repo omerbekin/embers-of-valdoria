@@ -3,7 +3,9 @@
    Durum: S = { r: { 'satir.id': rank } }.  Satir 0 = pasif, 1-3 = aktif skill, 4 = ult (+ agaci).
    Puan = level - 1.  SAYAC = pasif + 3 aktif satira harcanan puan (Omer 2026-10-21: pasif sayilir, ULT SAYILMAZ; Mastery bar ayni sayi).
    Kilitler: Tier II 5 / III 10 / IV 15 sayac; Evolve I 23, Evolve II 38 (en cok 2 evolve); ult dugumleri LEVEL kilidi (5 / 10 / 15).
-   Ult tavani (Omer 2026-10-21): ult + agacina TOPLAM en cok 3 puan (kollar serbest, kilitler ve ic dugum kurali ayni). */
+   Ult tavani (Omer 2026-10-21): ult + agacina TOPLAM en cok 3 puan (kilitler ve ic dugum kurali ayni).
+   Ult TEK KOL (Omer 2026-10-22, tum class'lar): bir kolun herhangi bir dugumunde puan varsa diger uc kol alinamaz (kod 'ultarm');
+   sonuc: en fazla tek kolun 3 dugumu. Kol kurali tavandan once bakilir. Oyun karsiligi: src/progression/skill-tree.ts (ultArm). */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.SMM = f(); })(this, function () {
   const MAXLV = 50, BARMAX = 49, ULT = 4;
   const BAR_THR = [5, 10, 15, 20, 25, 30, 35, 40, 45];
@@ -57,6 +59,9 @@
   const needsText = (term) => 'Needs ' + term.map((k) => namer(k)).join(' or ');
   const tierName = (t) => (t === 'E' ? 'Evolve' : t[0] === 'L' ? 'Ult ' + t.replace('L', 'Lv ') : 'Tier ' + t);
   const ultLv = (nd) => ULT_LV[nd.step - 1];
+  /* puan verilmis ult kollari (ARMS sirasiyla; gecerli durumda en cok bir tane) ve secilmis kol (yoksa null) */
+  const ultArmsUsed = (S) => ARMS.filter((a) => ULT_LV.some((_, s) => rk(S, ULT + '.' + a + (s + 1)) > 0));
+  const ultArm = (S) => ultArmsUsed(S)[0] || null;
 
   /* ---- bir dugume +1 rank konabilir mi? null = evet; yoksa {code, text}. noPts: puan sinirini sayma (dogrulama) ---- */
   function check(lv, S, key, noPts) {
@@ -69,6 +74,8 @@
       const need = EVO_NEED[n], sp = counter(S);
       if (sp < need) return { code: 'evo', text: 'Evolve ' + ROMAN[n] + ' needs ' + need + ' tree points (have ' + sp + ')', need, have: sp };
     } else if (nd.arm) {
+      const other = ultArmsUsed(S).find((a) => a !== nd.arm);
+      if (other) return { code: 'ultarm', text: 'One ult path only: the ' + namer(ULT + '.' + other + '1') + ' path is already chosen', arm: other };
       if (ultSpent(S) >= ULT_MAX) return { code: 'ultcap', text: 'Ult takes ' + ULT_MAX + ' points at most' };
       const need = ultLv(nd);
       if (lv < need) return { code: 'tier', text: 'Ult node needs Lv ' + need + ' (you are Lv ' + lv + ')', need, have: lv };
@@ -117,13 +124,13 @@
     return { ok: true };
   }
 
-  /* ---- dugumun arayuz durumu: max / part / av (alinabilir) / tlk (kilitli) / rq (gerek eksik) / xl (evolve ya da ult siniri) ---- */
+  /* ---- dugumun arayuz durumu: max / part / av (alinabilir) / tlk (kilitli) / rq (gerek eksik) / xl (evolve ya da ult siniri, baska ult kolu secili) ---- */
   function status(lv, S, key) {
     const nd = BY[key], r = rk(S, key), c = check(lv, S, key);
     let st;
     if (r >= nd.max) st = 'max'; else if (r > 0) st = 'part';
     else if (!c || c.code === 'points') st = 'av';
-    else st = c.code === 'tier' || c.code === 'evo' ? 'tlk' : c.code === 'cap' || c.code === 'ultcap' ? 'xl' : 'rq';
+    else st = c.code === 'tier' || c.code === 'evo' ? 'tlk' : c.code === 'cap' || c.code === 'ultcap' || c.code === 'ultarm' ? 'xl' : 'rq';
     return { rank: r, max: nd.max, st, check: c };
   }
   /* herhangi bir dugum alinabilir mi (puan sayilmadan degil, puanla) */
@@ -180,6 +187,6 @@
   }
 
   return { MAXLV, BARMAX, ULT, BAR_THR, TIER_NEED, EVO_NEED, EVO_MAX, ULT_LV, ULT_MAX, ARMS, ARM_NAME, ROMAN, ROW_DEF, NODES, BY,
-    pool, rk, spent, rowSpent, ultSpent, counter, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
+    pool, rk, spent, rowSpent, ultSpent, ultArmsUsed, ultArm, counter, free, newState, reset, evoKeys, evoCount, evoState, termMet, unmetTerm, needsText, tierName, ultLv,
     check, take, validate, untake, status, anyOpen, barVal, bonusReached, focusPlan, replay, setNamer: (f) => { namer = f; } };
 });

@@ -298,7 +298,7 @@
     }));
     const ultHTML = `<div class="ultsec" id="ultsec"><div class="uhead"><h3>Ult tree · ${esc(ur.name)}${cn.sel ? ` <span class="kt ${cn.tags[ULT].toLowerCase()}" title="Karma ${cn.tags[ULT]}">${cn.tags[ULT]}</span>` : ''}</h3><span>Level locks 5 · 10 · 15</span><span>Ult points <b id="upts">0</b> / ${MC.ULT_MAX}</span></div>
       <div class="uwrap"><div class="uinfo"><p>Ortada ult'un ikonu (kendisi düğüm değil), <b>4 kol</b>, her kolda ortadan dışa <b>3 düğüm</b>: 1. düğüm <b>Lv 5</b>, 2. düğüm <b>Lv 10</b>, 3. düğüm <b>Lv 15</b> ve <b>Notable</b>.</p>
-        <p>Kollar serbest, ama ult'a toplam en çok <b>${MC.ULT_MAX} puan</b> verilir (1 puan / düğüm), gerek = koldaki iç düğüm. <b>Evolve yok.</b> Kilit puana değil level'a bağlı; ult puanları kilit sayacına ve Mastery bar'a <b>girmez</b>.</p>
+        <p><b>Tek kol</b> (Ömer 2026-10-22): bir kolun herhangi bir düğümüne puan verince diğer üç kol kapanır; o puanı geri alınca kol yeniden seçilir. Ult'a toplam en çok <b>${MC.ULT_MAX} puan</b> (1 puan / düğüm, yani tek kolun 3 düğümü), gerek = koldaki iç düğüm. <b>Evolve yok.</b> Kilit puana değil level'a bağlı; ult puanları kilit sayacına ve Mastery bar'a <b>girmez</b>.</p>
         <div class="arms" id="arms">${MC.ARMS.map((a) => `<div data-arm="${a}">${MC.ARM_NAME[a]} arm<b>0 / 3</b></div>`).join('')}</div></div>
         <div class="uscroll"><div class="ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
           <div class="ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px"><span class="ud"></span><img src="${A}${ur.ic}" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;
@@ -400,11 +400,13 @@
       const e = R.nodes[key], st = MC.status(lv, S, key); e.st = st;
       e.el.className = e.base + ' st-' + st.st; if (e.pp) e.pp.textContent = '●'.repeat(st.rank) + '○'.repeat(st.max - st.rank);
     }
+    const uarm = MC.ultArm(S); /* secilmis ult kolu (tek kol kurali); yoksa null */
     R.lines.forEach((l) => {
       const rb = MC.rk(S, l.b); let cls;
       if (l.a == null) cls = rb > 0 ? ' on' : '';
       else if (l.a === 'C') cls = rb > 0 ? ' on' : '';
       else { const ra = MC.rk(S, l.a); cls = ra > 0 && rb > 0 ? ' on' : ra > 0 ? ' half' : ''; }
+      if (uarm && MC.BY[l.b] && MC.BY[l.b].arm && MC.BY[l.b].arm !== uarm) cls += ' off'; /* tek kol: kapanan kolun cizgisi soner */
       l.el.setAttribute('class', l.base + cls);
     });
     R.strips.forEach((s) => {
@@ -413,7 +415,7 @@
     R.bands.forEach((b) => { b.el.classList.toggle('lk', stripState(S, b.tier).lk); });
     for (const i in R.pts) R.pts[i].textContent = MC.rowSpent(S, +i);
     let up = 0;
-    MC.ARMS.forEach((arm) => { let n = 0; [1, 2, 3].forEach((s) => { const key = ULT + '.' + arm + s; n += MC.rk(S, key); R.ulv[key].classList.toggle('lk', lv < MC.ULT_LV[s - 1]); }); up += n; const e = R.arms[arm]; e.querySelector('b').textContent = n + ' / 3'; e.classList.toggle('full', n === 3); });
+    MC.ARMS.forEach((arm) => { let n = 0; [1, 2, 3].forEach((s) => { const key = ULT + '.' + arm + s; n += MC.rk(S, key); R.ulv[key].classList.toggle('lk', lv < MC.ULT_LV[s - 1]); }); up += n; const e = R.arms[arm], off = !!uarm && arm !== uarm; e.querySelector('b').textContent = off ? 'closed' : n + ' / 3'; e.classList.toggle('full', n === 3); e.classList.toggle('off', off); e.title = off ? 'One ult path only: the ' + MC.ARM_NAME[uarm] + ' arm is chosen' : ''; });
     $('#upts').textContent = up; $('#upts').parentNode.classList.toggle('full', up >= MC.ULT_MAX);
     markTimeline(); refreshTip();
   }
@@ -447,13 +449,13 @@
     if (!info.empty) { /* bos yuvada ipucu tek satir: yalniz 'Not picked yet' */
       if (k === 'V') lines.push(line('<span class="k">Evolves in place:</span> the skill keeps its slot and gains this behaviour. Evolve I needs 23 points in the passive and skill rows, Evolve II needs 38 (ult points do not count); two per hero at most.'));
       if (k === 'B') lines.push(line('<span class="k">Blood Price:</span> a gain with a cost. Dead end: nothing unlocks after it.'));
-      if (nd.arm) lines.push(line('<span class="k">Ult arm:</span> arms are free, but the ult takes ' + MC.ULT_MAX + ' points at most in total (' + MC.ultSpent(S) + ' / ' + MC.ULT_MAX + ' spent). 1 point per node. Locked by level, not by points; no Evolve here. Ult points do not count toward Tier locks or the Mastery bar.'));
+      if (nd.arm) lines.push(line('<span class="k">One ult path:</span> a point in any node of an arm closes the other three arms; take that point back to choose again. ' + MC.ULT_MAX + ' points at most (' + MC.ultSpent(S) + ' / ' + MC.ULT_MAX + ' spent), 1 point per node. Locked by level, not by points; no Evolve here. Ult points do not count toward Tier locks or the Mastery bar.'));
       if (info.nw) lines.push(line('<span class="k">NEW:</span> needs a new engine rule.'));
       if (nd.req.length) lines.push(line('<span class="k">Needs:</span> ' + nd.req.map((term) => term.map((q) => { const met = MC.rk(S, q) > 0; return (met ? '' : '<span class="no">') + esc(nameOf(q)) + (met ? '' : '</span>'); }).join(' or ')).join(' + ')));
     }
     const fl = ST.fail && ST.fail.key === key ? ST.fail.msg : null; let foot;
     if (fl) foot = `<div class="tp-foot bad">${dia}<span class="tx">${esc(fl)}</span></div>`;
-    else if (st.rank === 0 && st.check && st.check.code !== 'points') foot = `<div class="tp-foot lock">${dia}<span class="tx">${st.check.code === 'ultcap' ? '' : 'Locked: '}${esc(st.check.text)}</span></div>`;
+    else if (st.rank === 0 && st.check && st.check.code !== 'points') foot = `<div class="tp-foot lock">${dia}<span class="tx">${st.check.code === 'ultcap' || st.check.code === 'ultarm' ? '' : 'Locked: '}${esc(st.check.text)}</span></div>`;
     else foot = `<div class="tp-foot">${dia}<span class="tx">${st.rank > 0 ? 'Click +1 · right-click −1' : 'Click to spend 1 point'}</span></div>`;
     const ctl = `<div class="tp-ctl"><button type="button" data-act="-1" aria-label="Remove a point">−</button><span class="rk">${st.rank} / ${nd.max}</span><button type="button" data-act="1" aria-label="Add a point">+</button></div>`;
     return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="${medalBg(rr.ic)}"></div><div class="tp-ht"><div class="tp-kind">${esc(kind)}</div><div class="tp-title">${esc(info.name)}</div></div><div class="tp-aside"><div class="big">1<small>${nd.max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div><div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}${ctl}${info.src ? `<div class="tp-src">${info.karma ? esc(info.karma) + ' · From ' : 'from '}${esc(info.src)}${info.edited ? ' · edited' : ''}</div>` : ''}</div>`;

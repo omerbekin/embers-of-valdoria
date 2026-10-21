@@ -1,7 +1,9 @@
 /* SKILL AGACI (Gear taslagi): oyun-ici kurallar katmani (mockup, oyun kodu DEGIL).
    core.js (SMM) kurallarinin ustune: (1) ea / eb TEK YON (biri alinca oteki yonun edge + notable + blood price kilitlenir),
    (2) onaysiz NEW dugum ("Awaiting approval"), (3) BEKLEYEN puan akisi (stat sayfasi gibi: tik +1 bekleyen, sag tik / uzun basis -1 bekleyen,
-   Reset siler, Confirm kaydeder), (4) respec (yer tutucu bedel). Saf fonksiyonlar, DOM yok. Tarayicida window.GT, Node'da require. */
+   Reset siler, Confirm kaydeder), (4) respec (yer tutucu bedel). Saf fonksiyonlar, DOM yok. Tarayicida window.GT, Node'da require.
+   Ult TEK KOL (Omer 2026-10-22) kurali core.js check icinde (kod 'ultarm'); burada arayuz durumu 'dir' (karsi yonle ayni kilit gorunumu).
+   Etkin dagilim E = onayli + bekleyen oldugu icin bekleyen ult puani geri alininca diger kollar yeniden serbest; onayli kol yalniz respec ile degisir. */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(require('./core.js')); else root.GT = f(root.SMM); })(this, function (MC) {
   const BY = MC.BY;
   const rk = (S, k) => S.r[k] || 0;
@@ -27,14 +29,14 @@
     if (dirBlocked(E, key)) return { code: 'direction', text: 'Other direction chosen' };
     return MC.check(lv, E, key, noPts);
   }
-  /* arayuz durumu: max / part / av / tlk (tier ya da evolve sayaci) / rq (gerek eksik) / xl (sinir) / dir (diger yon) / new (onay bekliyor) */
+  /* arayuz durumu: max / part / av / tlk (tier ya da evolve sayaci) / rq (gerek eksik) / xl (sinir) / dir (diger yon ya da baska ult kolu) / new (onay bekliyor) */
   function status(lv, E, key) {
     const nd = BY[key], r = rk(E, key), c = check(lv, E, key);
     let st;
     if (r >= nd.max) st = 'max'; else if (r > 0) st = 'part';
     else if (!c || c.code === 'points') st = 'av';
     else if (c.code === 'unapproved') st = 'new';
-    else if (c.code === 'direction') st = 'dir';
+    else if (c.code === 'direction' || c.code === 'ultarm') st = 'dir';
     else st = c.code === 'tier' || c.code === 'evo' ? 'tlk' : c.code === 'cap' || c.code === 'ultcap' ? 'xl' : 'rq';
     return { rank: r, max: nd.max, st, check: c };
   }

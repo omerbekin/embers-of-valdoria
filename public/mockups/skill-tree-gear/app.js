@@ -129,10 +129,12 @@
     $$('.gt-ts').forEach((s) => { const t = V.stripState(E, s.dataset.tier); $('small', s).textContent = t.small; $('.pt', s).textContent = t.pt; $('em', s).textContent = t.em; s.classList.toggle('lk', t.lk); });
     $$('.gt-tb').forEach((b) => b.classList.toggle('lk', V.stripState(E, b.dataset.tier).lk));
     $$('[data-pts],[data-pts2]').forEach((e) => { const i = +(e.dataset.pts !== undefined ? e.dataset.pts : e.dataset.pts2); e.textContent = MC.rowSpent(E, i); e.classList.toggle('pd', MC.rowSpent(E, i) !== MC.rowSpent(S, i)); });
+    const uarm = MC.ultArm(E); /* tek kol (Omer 2026-10-22): secilmis kol disindakiler kapali */
     MC.ARMS.forEach((arm) => {
       let n = 0;
       [1, 2, 3].forEach((s) => { const key = MC.ULT + '.' + arm + s; n += MC.rk(E, key); const t = $('[data-ulv="' + key + '"]'); if (t) t.classList.toggle('lk', lv < MC.ULT_LV[s - 1]); });
-      $$('[data-arm="' + arm + '"]').forEach((e) => { $('b', e).textContent = n + ' / 3'; e.classList.toggle('full', n === 3); });
+      const off = !!uarm && arm !== uarm;
+      $$('[data-arm="' + arm + '"]').forEach((e) => { $('b', e).textContent = off ? 'closed' : n + ' / 3'; e.classList.toggle('full', n === 3); e.classList.toggle('off', off); e.title = off ? 'One ult path only: the ' + MC.ARM_NAME[uarm] + ' arm is chosen' : ''; });
     });
     const up = MC.ultSpent(E); $$('[data-upts]').forEach((e) => { e.textContent = up; if (e.parentNode) e.parentNode.classList.toggle('full', up >= MC.ULT_MAX); });
     const VIS = V.BAR_VIS, bvE = Math.min(VIS, MC.barVal(E)), bvS = Math.min(VIS, MC.barVal(S)), cE = MC.counter(E), cS = MC.counter(S);

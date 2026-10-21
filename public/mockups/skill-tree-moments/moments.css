@@ -175,6 +175,7 @@ html.mk-clean #mk-strip { display: none; }
 .lines path.on { stroke: #e8cf8f; stroke-width: 2.5; filter: drop-shadow(0 0 3px rgba(243,217,153,.4)); }
 .lines path.alt { stroke-dasharray: 6 4; }
 .lines path.dead { stroke: rgba(150,36,44,.55); stroke-width: 2; }
+.lines path.off { opacity: .3; stroke-dasharray: 3 4; } /* tek ult kolu: kapanan kolun cizgisi */
 .lines path.dead.on { stroke: #d24a4a; filter: drop-shadow(0 0 3px rgba(198,59,59,.5)); }
 .lines line.sep { stroke: var(--g-line); stroke-width: 1; }
 
@@ -272,6 +273,7 @@ html.mk-clean #mk-strip { display: none; }
 .arms { display: grid; grid-template-columns: repeat(2, minmax(120px, 1fr)); gap: 6px; margin-top: 8px; }
 .arms div { padding: 5px 9px; border: 1px solid var(--g-line); background: rgba(255,255,255,.02); font: 600 11px var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); display: flex; justify-content: space-between; gap: 8px; }
 .arms div b { color: var(--g-gold); font-size: 13px; } .arms div.full { border-color: rgba(243,217,153,.5); background: rgba(217,178,106,.1); color: var(--g-text); }
+.arms div.off { opacity: .45; border-style: dashed; } .arms div.off b { color: #8d7f66; font-size: 11px; } /* tek kol: kapanan kol (Omer 2026-10-22) */
 .uscroll { flex: none; max-width: 100%; overflow-x: auto; scrollbar-width: thin; -webkit-overflow-scrolling: touch; }
 .ucanvas { position: relative; flex: none; margin: 0 auto; }
 .ucore { position: absolute; transform: translate(-50%, -50%); width: 78px; height: 78px; z-index: 2; cursor: default; }
