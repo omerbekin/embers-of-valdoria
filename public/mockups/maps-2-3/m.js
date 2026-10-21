@@ -48,14 +48,14 @@
     return { d, poly, cum, len: cum[cum.length - 1] };
   }
   const quad = (A, B, q) => [[[A[0] + (2 / 3) * (q[0] - A[0]), A[1] + (2 / 3) * (q[1] - A[1])], [B[0] + (2 / 3) * (q[0] - B[0]), B[1] + (2 / 3) * (q[1] - B[1])], B]];
-  /* opt: spoke = hub yolu (derece >= 5): tek yumuşak kavis, ortada en çok uzunluğun %3'ü sapma; add = kıvrım tohumu kaydırması (kesişim kontrolü); amp = sapma çarpanı */
+  /* opt: spoke = hub yolu (derece >= 5): tek yumuşak kavis, ortada en çok uzunluğun %8'i sapma; add = kıvrım tohumu kaydırması (kesişim kontrolü); amp = sapma çarpanı */
   function geom(A, B, e, key, opt) {
     let segs;
     const o = opt || {}, amp = o.amp == null ? 1 : o.amp, k0 = key + (o.add || 0) * 7919;
     if (e && e.ctrl) {
       segs = quad(A, B, [e.ctrl[0] * W, e.ctrl[1] * H]);
     } else if (o.spoke && !(window.MAPFLAGS && window.MAPFLAGS.off)) {
-      const dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1, sg = rng(k0)() < 0.5 ? 1 : -1, h = d * 0.06 * amp * sg; // ortada sapma = h / 2 = %3
+      const dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1, sg = rng(k0)() < 0.5 ? 1 : -1, h = d * 0.16 * amp * sg; // ortada sapma = h / 2 = %8 (Ömer 2026-10-22: %3 çok düzdü)
       segs = quad(A, B, [(A[0] + B[0]) / 2 - (dy / d) * h, (A[1] + B[1]) / 2 + (dx / d) * h]);
     } else {
       const dx = B[0] - A[0], dy = B[1] - A[1], d = Math.hypot(dx, dy) || 1, ux = dx / d, uy = dy / d, px = -uy, py = ux;
