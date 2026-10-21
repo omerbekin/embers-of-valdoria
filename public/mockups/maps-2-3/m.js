@@ -1,4 +1,4 @@
-/* Harita 2 / 3: bölge bazlı yakınlaşma taslağı (mockup, oyun kodu DEĞİL). Veri: data.js (window.MAPS).
+/* Harita 1 / 2 / 3 (#v0 / #v1 / #v2): bölge bazlı yakınlaşma taslağı (mockup, oyun kodu DEĞİL). Veri: data.js (window.MAPS).
    Uzak görünüm: yalnızca 6 bölge işareti + ana yol. Bölgeye tıkla = yakınlaş, düğümler ve yollar belirir.
    Rozet dili map-roads taslağından (sade: küçük altın-is çerçeve + tür ikonu), yollar kıvrımlı (kenar kimliğinden sabit tohum). */
 (function () {
@@ -316,9 +316,9 @@
   const markS = () => f1(clamp(0.8 / farView().k, 1, 1.9));
   const farView = () => { const k = Math.min(sw() / W, sh() / H); return { k, tx: (sw() - W * k) / 2, ty: (sh() - H * k) / 2 }; };
   function fitView(b) {
-    const top = 58, pad = 20, wp = 26;
+    const top = 58, pad = 20, wp = M.pad || 26; // az bölgeli haritada (Harita 1) bölge sınırına daha geniş boşluk
     const bw = b.x1 - b.x0 + wp * 2, bh = b.y1 - b.y0 + wp * 2;
-    const k = Math.min((sw() - pad * 2) / bw, (sh() - top - pad) / bh, 7);
+    const k = Math.min((sw() - pad * 2) / bw, (sh() - top - pad) / bh, M.maxK || 7);
     const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, ax = sw() / 2, ay = top + (sh() - top - pad) / 2;
     return { k, tx: ax - cx * k, ty: ay - cy * k };
   }
@@ -434,18 +434,19 @@
 
   /* ---------- sayfa ---------- */
   function legend() {
+    const has_opt = () => M.nodes.some((n) => n.optional);
     const has = (t) => M.nodes.some((n) => n.type === t);
     const items = LEG.filter(has).map((t) => `<span class="it"><img src="${node(t === 'crossing' ? 'battle' : t)}" alt="">${KIND[t].replace(' (deck battle)', '')}</span>`);
     const extra = [
       '<span class="it"><span class="sw solid"></span>Road</span>',
-      '<span class="it"><span class="sw"></span>Optional pocket (dead end, faded badge)</span>',
+      ...(has_opt() ? ['<span class="it"><span class="sw"></span>Optional pocket (dead end, faded badge)</span>'] : []),
       '<span class="it"><svg class="gd" viewBox="-8 -9 16 20"><path d="M-6 -7 L6 -7 L6 1 Q6 6 0 9 Q-6 6 -6 1Z" fill="#1a0f08" stroke="#efc85a" stroke-width="1.6"/></svg>Guarded treasure</span>',
     ];
-    if (cur === 'm2') extra.push('<span class="it"><span class="sw sea"></span>Sea lane (needs a ship)</span>', '<span class="it"><span class="sw roam"></span>Black Caravel route</span>');
+    if (cur === 'm1') { /* Valdoria: özel yol türü yok */ } else if (cur === 'm2') extra.push('<span class="it"><span class="sw sea"></span>Sea lane (needs a ship)</span>', '<span class="it"><span class="sw roam"></span>Black Caravel route</span>');
     else extra.push('<span class="it"><span class="sw" style="border-top:3px dotted #cdb67f"></span>Lift (vertical road between floors)</span>');
     const cnt = (f) => M.nodes.filter(f).length;
     document.getElementById('legend').innerHTML = items.concat(extra).join('');
-    document.getElementById('stats').innerHTML = `<b>${M.nodes.length}</b> nodes · <b>${cnt((n) => n.type === 'boss')}</b> boss · <b>${cnt((n) => n.type === 'elite')}</b> elite · <b>${cnt((n) => n.type === 'town')}</b> town · <b>${cnt((n) => n.optional)}</b> optional pockets · <b>${M.edges.length}</b> roads · <b>${M.regions.length}</b> regions`;
+    document.getElementById('stats').innerHTML = `<b>${M.nodes.length}</b> nodes · <b>${cnt((n) => n.type === 'boss')}</b> boss · <b>${cnt((n) => n.type === 'elite')}</b> elite · <b>${cnt((n) => n.type === 'town')}</b> town · ${has_opt() ? `<b>${cnt((n) => n.optional)}</b> optional pockets · ` : ''}<b>${M.edges.length}</b> roads · <b>${M.regions.length}</b> regions`;
   }
   function render() {
     M = window.MAPS[cur];
@@ -458,7 +459,6 @@
     markScale(); wireFar(); legend();
     document.getElementById('ttl').innerHTML = `${esc(M.name)}<small>${esc(M.sub)}</small>`;
     document.querySelectorAll('.tab').forEach((b) => b.classList.toggle('on', b.dataset.v === cur));
-    document.title = `${M.name}: regions and nodes`;
     applyToggles();
     setRegion(null, false);
   }
@@ -470,12 +470,12 @@
   let startRegion = null;
   function readHash() {
     const p = location.hash.replace(/^#/, '').split('&');
-    cur = p.includes('v2') ? 'm3' : 'm2';
+    cur = p.includes('v0') ? 'm1' : p.includes('v2') ? 'm3' : 'm2';
     const rp = p.find((x) => /^r=/.test(x)); startRegion = rp ? rp.slice(2) : null;
     if (p.includes('clean')) { S.names = false; S.nums = false; }
     if (p.includes('nonames')) S.names = false;
   }
-  function writeHash() { history.replaceState(null, '', '#' + (cur === 'm3' ? 'v2' : 'v1') + (zoomed ? '&r=' + zoomed : '')); }
+  function writeHash() { history.replaceState(null, '', '#' + ({ m1: 'v0', m2: 'v1', m3: 'v2' }[cur]) + (zoomed ? '&r=' + zoomed : '')); }
   function boot() { render(); if (startRegion && regionOf(startRegion)) setRegion(startRegion, false); }
 
   document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { cur = b.dataset.v; render(); }));
