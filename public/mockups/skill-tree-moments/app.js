@@ -1,6 +1,7 @@
 /* MOMENTS skill agaci arayuzu (mockup, oyun kodu DEGIL). Kurallar: core.js (SMM). Icerik: content.js (SMM_CONTENT) + classes.js (SMM_CLASSES: class tablosu, ikonlar).
    Belgeler: docs/design/skill-tree-moments.md (sema), skill-tree-moments-variants.md (class basina 5 varyant, veri sozlesmesi).
-   Adres: #c=<class>&v=<a|b|pick|1-5>&lv=1..50 [&focus=A-B] [&clean]; v yoksa a (Karma A).  Eski adresler: #c=w -> warrior (Omer'in secimi), #c=h -> hexer v1; v=1..5 kaynak varyant olarak acilir.
+   Adres: #c=<class>&v=<sel|a|b|pick|1-5>&lv=1..50 [&focus=A-B] [&clean]; v yoksa: class'in final.js girdisi varsa sel (Seçim ✓), yoksa a (Karma A).  Eski adresler: #c=w -> warrior (eski form secimi), #c=h -> hexer v1; v=1..5 kaynak varyant olarak acilir.
+   Seçim (v=sel): final.js (SMM_FINAL[class].rows = [pasif, aktif 1-3, ult], 'a' / 'b') -> her satir secilen karmadan; mastery + bar pasif satirinin karmasindan. Eski form secimi (v=pick, yalniz Warrior) '5 kaynak varyant' alaninda.
    Varyant dosyalari variants/<class>.js, karma dosyalari mix/<class>.js (SMM_MIX[class]; 2 karma: Karma A / Karma B); class secilince script etiketiyle yuklenir.
    Varyant dosyasi yoksa / bozuksa 'Variants coming' yer tutucusu; karma dosyasi yoksa / bozuksa 5 kaynak varyant (V1-V5) kucuk bir notla gosterilir. */
 'use strict';
@@ -26,8 +27,11 @@
     vf: { state: 'loading' }, mf: { state: 'loading' }, srcOpen: false, infoOpen: false, focusOpen: false, cmpOpen: true, content: null, rowsC: null, tok: 0, pendingFocus: null };
   const sOf = () => ST.S;
   const planOf = () => ST.plan;
-  const defaultV = () => 'a'; /* her class Karma A ile acilir */
-  const fallbackV = (c) => (c === 'warrior' ? 'pick' : 1); /* karma dosyasi yoksa: eski varsayilan (Warrior'da Omer'in secimi, digerlerinde V1) */
+  const FIN = window.SMM_FINAL || {};
+  const finalOf = (c) => { const F = FIN[c]; return F && Array.isArray(F.rows) && F.rows.length === 5 && F.rows.every((l) => l === 'a' || l === 'b') ? F : null; };
+  const defaultV = (c) => (finalOf(c) ? 'sel' : 'a'); /* Omer'in secimi (final.js) olan class Seçim ✓ ile, digerleri Karma A ile acilir */
+  const isSel = (v) => v === 'sel';
+  const fallbackV = (c) => (c === 'warrior' ? 'pick' : 1); /* karma dosyasi yoksa: eski varsayilan (Warrior'da eski form secimi, digerlerinde V1) */
   const isMix = (v) => v === 'a' || v === 'b';
   const mixIdx = (v) => (v === 'b' ? 1 : 0);
   const VCACHE = {}; // class -> varyant dosyasi verisi (basarili yukleme)
@@ -63,15 +67,16 @@
     return (ST.rowsC = C.rows.map((r, i) => { const f = D ? (i < NROWS ? D.rows[i] : D.ult) : null; return { ic: r.ic, name: (f && f.name) || r.name, d: r.d, pas: i === 0, ult: i === ULT }; }));
   }
   const mixOk = () => ST.mf.state === 'ok';
-  const ready = () => (ST.v === 'pick' ? ST.c === 'warrior' : isMix(ST.v) ? ST.vf.state === 'ok' && mixOk() && !!ST.mf.data.mixes[mixIdx(ST.v)] : ST.vf.state === 'ok' && !!ST.vf.data.variants[ST.v - 1]);
-  const cOf = () => ST.content || (ST.content = ST.v === 'pick' ? CT.fromPick(window.SMM_PICKS) : isMix(ST.v) ? CT.fromMix(ST.vf.data, ST.mf.data, mixIdx(ST.v)) : CT.fromVariant(ST.vf.data, ST.v - 1));
+  const selOk = () => mixOk() && !!finalOf(ST.c) && !CT.validateFinal(finalOf(ST.c), ST.mf.data);
+  const ready = () => (ST.v === 'pick' ? ST.c === 'warrior' : isSel(ST.v) ? ST.vf.state === 'ok' && selOk() : isMix(ST.v) ? ST.vf.state === 'ok' && mixOk() && !!ST.mf.data.mixes[mixIdx(ST.v)] : ST.vf.state === 'ok' && !!ST.vf.data.variants[ST.v - 1]);
+  const cOf = () => ST.content || (ST.content = ST.v === 'pick' ? CT.fromPick(window.SMM_PICKS) : isSel(ST.v) ? CT.fromSelection(ST.vf.data, ST.mf.data, finalOf(ST.c)) : isMix(ST.v) ? CT.fromMix(ST.vf.data, ST.mf.data, mixIdx(ST.v)) : CT.fromVariant(ST.vf.data, ST.v - 1));
 
   /* ---------- icerik erisimi ---------- */
   function nodeInfo(key) {
     const e = cOf().nodes[key], nd = MC.BY[key];
     if (!e) return { name: 'Node ' + nd.id, eff: '(content missing)', nw: false, src: '?', ph: true };
     if (e.empty) return { name: 'Open slot', eff: e.eff, nw: false, src: '', edited: false, syn: null, ph: false, empty: true, note: null };
-    return { name: e.name, eff: e.eff || '(content missing)', nw: e.nw, src: e.src, edited: !!e.edited, syn: e.syn || null, ph: false, empty: false, note: e.note || null };
+    return { name: e.name, eff: e.eff || '(content missing)', nw: e.nw, src: e.src, karma: e.karma || null, edited: !!e.edited, syn: e.syn || null, ph: false, empty: false, note: e.note || null };
   }
   /* kural metinlerinde (Needs ..., Needed by ...) bos yuva turuyle ayrilir: 'Open slot (Edge)' */
   const nameOf = (key) => { const i = nodeInfo(key); return i.empty ? 'Open slot (' + KN[MC.BY[key].kind] + ')' : i.name; };
@@ -80,14 +85,14 @@
   /* bar bonusunun kaynagi: karmada girdinin kendi etiketi ('V3:bar2' -> 'V3 · Varyant adi', * = duzeltilmis), digerlerinde sekmenin kendisi */
   function barSrc(i) {
     if (ST.v === 'pick') return 'V6 Moments';
-    if (isMix(ST.v)) { const s = cOf().barSrc[i]; return s && s.text ? s.text + (s.edited ? ' · edited' : '') : ''; }
+    if (isMix(ST.v) || isSel(ST.v)) { const s = cOf().barSrc[i]; return s && s.text ? s.text + (s.edited ? ' · edited' : '') : ''; }
     return 'V' + ST.v + ' · ' + (cOf().title || '');
   }
   function barInfo(i) {
     const t = MC.BAR_THR[i];
     if (t > 25) return { name: 'L50: TBD', eff: 'Reserved for the Lv 50 bar (30 / 35 / 40 / 45). Content not decided yet.', tbd: true };
     const b = cOf().bar[i];
-    return b && b[0] ? { name: b[0], eff: b[1] || '(content missing)', tbd: false, src: barSrc(i) } : { name: 'Bonus ' + t, eff: '(content missing)', tbd: false, ph: true };
+    return b && b[0] ? { name: b[0], eff: b[1] || '(content missing)', tbd: false, src: barSrc(i), karma: cOf().barKarma || null } : { name: 'Bonus ' + t, eff: '(content missing)', tbd: false, ph: true };
   }
 
   /* ---------- yerlesim ---------- */
@@ -145,15 +150,23 @@
   function stripHTML(cls, style, tier) { return `<div class="ts ${cls}" data-tier="${tier}" style="${style}"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`; }
 
   /* karma kimlik listesi: karma ozeti (TR) + 5 satir (pasif, 3 skill, ult) kucuk ikonla; 'Ad: aciklama' bicimindeki satirda ad kalin, gerisi duz yazi */
-  function lisHTML(rowsTr, meta) {
+  /* o = { tag: ['A','B',...] -> satirin basinda kucuk karma etiketi (Seçim listesi); pick: [true,false,...] -> bu satir Omer'in secimi: vurgu + onay isareti (karsilastirma paneli) } */
+  function lisHTML(rowsTr, meta, o) {
+    o = o || {};
     return meta.map((r, i) => {
       const raw = rowsTr[i] || '', m = /^([^:]{1,40}):\s*([\s\S]*)$/.exec(raw);
-      const nm = m ? m[1] : r.name, tx = m ? m[2] : raw;
-      return `<li class="${r.pas ? 'pas' : r.ult ? 'ult' : ''}"><span class="ii"><img src="${A}${r.ic}" alt=""></span><span class="it"><b>${esc(nm)}</b>${r.pas ? '<em>Passive</em>' : r.ult ? '<em>Ult</em>' : ''}${esc(tx)}</span></li>`;
+      const nm = m ? m[1] : r.name, tx = m ? m[2] : raw, pk = o.pick && o.pick[i];
+      const kt = o.tag && o.tag[i] ? `<span class="kt ${o.tag[i].toLowerCase()}" title="Karma ${esc(o.tag[i])}">${esc(o.tag[i])}</span>` : '';
+      return `<li class="${r.pas ? 'pas' : r.ult ? 'ult' : ''}${pk ? ' pk' : ''}"><span class="ii"><img src="${A}${r.ic}" alt=""></span><span class="it">${kt}<b>${esc(nm)}</b>${r.pas ? '<em>Passive</em>' : r.ult ? '<em>Ult</em>' : ''}${pk ? '<em class="ck">✓ Seçim</em>' : ''}${esc(tx)}</span></li>`;
     }).join('');
   }
   function mixInfoHTML(cn) {
     return `<div class="vinfo mix"><span class="vt">${esc(cn.label)} · ${esc(cn.title)}<small>5 varyanttan karma</small></span>${cn.tr ? `<p class="mtr">${esc(cn.tr)}</p>` : ''}<ul class="idl">${lisHTML(cn.rowsTr, rows())}</ul></div>`;
+  }
+  /* Seçim: tek satirlik baslik ('Ömer'in seçimi: Berserker B · ...') + 5 satir, her biri secildigi karmanin kucuk A / B etiketiyle */
+  function selInfoHTML(cn) {
+    const R = rows(), head = R.map((r, i) => `${esc(r.name)} <span class="kt ${cn.tags[i].toLowerCase()}">${esc(cn.tags[i])}</span>`).join(' · ');
+    return `<div class="vinfo mix sel"><span class="vt">Seçim ✓<small>satır satır karma · Mastery ve bar: ${esc(cn.barKarma)}</small></span><p class="mtr"><b>Ömer'in seçimi:</b> ${head}</p><ul class="idl">${lisHTML(cn.rowsTr, R, { tag: cn.tags })}</ul></div>`;
   }
   /* Karma A <-> Karma B karsilastirma paneli (sekmelerin altinda, varsayilan acik): iki sutun = baslik + TR ozeti + 5 satir ikonlu; aktif karma vurgulu, sutuna tiklayinca o karmaya gecilir.
      Yalniz sinifin karma dosyasi varsa gorunur; ikonlar class tablosundan (classes.js), adlar rowsTr'den. */
@@ -163,31 +176,33 @@
     if (!M) { el.hidden = true; el.innerHTML = ''; return; }
     el.hidden = false; el.classList.toggle('col', !ST.cmpOpen);
     const meta = CBY[ST.c].rows.map((r, j) => ({ ic: r.ic, name: r.name, pas: j === 0, ult: j === ULT }));
+    const F = finalOf(ST.c); /* Omer'in satir secimi varsa her sutunda secilen satirlar isaretlenir */
     const cols = M.mixes.slice(0, 2).map((m, i) => {
-      const id = i ? 'b' : 'a', on = ST.v === id;
-      return `<div class="cmpc${on ? ' on' : ''}" role="button" tabindex="0" data-var="${id}" aria-pressed="${on}"><span class="cl">Karma ${i ? 'B' : 'A'} · ${esc(m.title || '')}</span>${m.tr ? `<p class="mtr">${esc(m.tr)}</p>` : ''}<ul class="idl">${lisHTML(Array.isArray(m.rowsTr) ? m.rowsTr : [], meta)}</ul></div>`;
+      const id = i ? 'b' : 'a', on = ST.v === id, pick = F ? F.rows.map((l) => l === id) : null, n = pick ? pick.filter(Boolean).length : 0;
+      return `<div class="cmpc${on ? ' on' : ''}" role="button" tabindex="0" data-var="${id}" aria-pressed="${on}"><span class="cl">Karma ${i ? 'B' : 'A'} · ${esc(m.title || '')}${pick ? `<small class="cc">✓ ${n} satır seçildi</small>` : ''}</span>${m.tr ? `<p class="mtr">${esc(m.tr)}</p>` : ''}<ul class="idl${pick ? ' pkd' : ''}">${lisHTML(Array.isArray(m.rowsTr) ? m.rowsTr : [], meta, { pick })}</ul></div>`;
     }).join('');
-    el.innerHTML = tgBtn('cmp', 'Karma A ↔ Karma B', ST.cmpOpen) + `<div class="tgb cmpg">${cols}</div>`;
+    el.innerHTML = tgBtn('cmp', 'Karma A ↔ Karma B', ST.cmpOpen) + `<div class="tgb cmpg">${F ? '<p class="cmpn">✓ işaretli satırlar Ömer\'in seçimi; Seçim ✓ sekmesi bu satırlardan kurulur.</p>' : ''}${cols}</div>`;
   }
 
   /* ---------- sayfa iskeleti ---------- */
   let R = null; // arayuz referanslari
   const loaded = () => ST.vf.state === 'ok' ? ST.vf.data : null;
-  /* sekmeler: ana sekmeler Karma A / Karma B (Warrior'da ucuncu: Omer's pick); 5 kaynak varyant ikinci, kucuk, kapali bir dugmenin arkasinda.
-     Karma dosyasi yoksa / bozuksa V1-V5 ana sekmeler olarak (eski gorunum) + kucuk not. */
+  /* sekmeler: ana sekmeler (Omer'in secimi final.js'te olan class'ta ilk: 'Seçim ✓') Karma A / Karma B; ikinci, kucuk, kapali bir dugmenin arkasinda 5 kaynak varyant
+     (+ Warrior'da 'Form seçimi (eski)': formdan gelen eski secim). Karma dosyasi yoksa / bozuksa V1-V5 ana sekmeler olarak (eski gorunum) + kucuk not. */
   function renderClassBar() {
     $('#cls-sel').innerHTML = CLASSES.map((c) => `<button type="button" data-cls="${c.id}" class="${ST.c === c.id ? 'on' : ''}" aria-pressed="${ST.c === c.id}"><img src="${A}${c.portrait}" alt=""><span>${esc(c.name)}</span></button>`).join('');
     const D = loaded(), M = mixOk() ? ST.mf.data : null, mixFail = ST.mf.state === 'missing';
     const tab = (v, label, dis, cls) => `<button type="button" data-var="${v}" class="${cls || ''}${ST.v === v || ST.v === +v ? ' on' : ''}" aria-pressed="${ST.v === v || ST.v === +v}"${dis ? ' disabled' : ''}>${label}</button>`;
     const vTabs = () => { let t = ''; for (let n = 1; n <= NVAR; n++) { const V = D && D.variants[n - 1]; t += tab(n, 'V' + n + (V && V.title ? ' · ' + esc(V.title) : ''), !V); } return t; };
-    const pick = ST.c === 'warrior' ? tab('pick', "Ömer's pick", false, 'pk') : '';
+    const pick = ST.c === 'warrior' ? tab('pick', 'Form seçimi (eski)', false, 'pk') : '';
+    const selTab = finalOf(ST.c) ? tab('sel', 'Seçim ✓', false, 'sl') : '';
     let main, src = '', note = '';
     if (mixFail) { /* geri donus: karma yok, 5 kaynak varyant ana sekme */
       main = pick + vTabs(); note = 'Karma dosyası yok ya da okunamadı: 5 kaynak varyant gösteriliyor.';
     } else {
       const mt = (i) => { const m = M && M.mixes[i]; return tab(i ? 'b' : 'a', 'Karma ' + (i ? 'B' : 'A') + (m && m.title ? ' · ' + esc(m.title) : ''), !m, 'km'); };
-      main = mt(0) + mt(1) + pick;
-      src = `<div class="vt-src"><button type="button" class="srcbtn" data-srct="1" aria-expanded="${ST.srcOpen}">5 kaynak varyant <i>${ST.srcOpen ? '▾' : '▸'}</i></button>${ST.srcOpen ? `<span class="vt-srclist">${vTabs()}</span>` : ''}</div>`;
+      main = selTab + mt(0) + mt(1);
+      src = `<div class="vt-src"><button type="button" class="srcbtn" data-srct="1" aria-expanded="${ST.srcOpen}">5 kaynak varyant <i>${ST.srcOpen ? '▾' : '▸'}</i></button>${ST.srcOpen ? `<span class="vt-srclist">${vTabs()}${pick}</span>` : ''}</div>`;
       if (ST.mf.state === 'loading' || (ST.vf.state === 'loading' && !D)) note = 'Loading…';
     }
     if (!mixFail && !D && ST.vf.state === 'missing') note = 'Variants coming';
@@ -201,7 +216,8 @@
     box.innerHTML = tgBtn('info', 'Kurallar', ST.infoOpen) + `<div class="tgb"><h2>Moments şeması</h2>
       <p>Şema sabit, her satır 11 + 1 düğüm: <b>f1 → f2 → f3 → n0 (Notable) → r → ea / eb → [ma · fa | fb · mb] → Evolve</b>. Düz zincir, evolve için ma ya da mb gerekir. <b>fa</b> ve <b>fb</b> Blood Price (kazanç + bedel, çıkmaz sokak).</p>
       <p>Kilit = <b>pasif + 3 aktif skill satırına harcanan TOPLAM puan</b> (sayaç; hangi satırdan geldiği önemli değil): Tier II 5 · Tier III 10 · Tier IV 15 · <b>Evolve I 23</b> · <b>Evolve II 38</b>, en çok 2 evolve. <b>Ult puanları sayaca ve Mastery bar'a girmez</b> (ult ağacı ayrı); ult düğümleri puana değil <b>level</b>e bağlı (5 / 10 / 15), ult'a en çok 3 puan.</p>
-      <p><b>11 class, her class için 2 karma ağaç</b> (<b>Karma A</b> / <b>Karma B</b>): her biri o class'ın 5 varyantından seçilmiş düğümlerle kuruldu; her skill kendi kimliğini güçlendirir, skill'ler arası bağ nadirdir. Class ve karmayı üstten seç (açılışta Karma A); class başlığının altındaki liste her skill'in o karmada ne olduğunu özetler. Düğüm ipucunun altında düğümün hangi varyanttan geldiği yazar (<b>edited</b> = karmaya uysun diye hafifçe düzeltildi). Eski 5 varyant <b>"5 kaynak varyant"</b> düğmesinin arkasında (kapalı). Warrior'da ek olarak Ömer'in seçimi var. Değişince puanlar sıfırlanır; içerik taslak.</p>
+      <p><b>11 class, her class için 2 karma ağaç</b> (<b>Karma A</b> / <b>Karma B</b>): her biri o class'ın 5 varyantından seçilmiş düğümlerle kuruldu; her skill kendi kimliğini güçlendirir, skill'ler arası bağ nadirdir. Class ve karmayı üstten seç (açılışta Karma A); class başlığının altındaki liste her skill'in o karmada ne olduğunu özetler. Düğüm ipucunun altında düğümün hangi varyanttan geldiği yazar (<b>edited</b> = karmaya uysun diye hafifçe düzeltildi). Eski 5 varyant <b>"5 kaynak varyant"</b> düğmesinin arkasında (kapalı; Warrior'da eski <b>Form seçimi</b> de burada).</p>
+      <p><b>Seçim ✓ sekmesi</b> (Ömer'in seçimini yazdığımız class'larda ilk sekme, açılışta bu açılır): Ömer her satır için (pasif, 3 skill, ult) Karma A ya da B seçer; ağaç satır satır seçilen karmadan kurulur. Mastery adı ve bar bonusları <b>pasif satırının</b> karmasından gelir. Satır etiketlerindeki ve kimlik listesindeki küçük <b>A</b> / <b>B</b> satırın hangi karmadan geldiğini gösterir; düğüm ipucunun altında "Karma A · ad · From V2 · varyant adı" yazar. Karma A ↔ B panelinde seçilen satırlar ✓ ile vurgulanır. Değişince puanlar sıfırlanır; içerik taslak.</p>
       <p><b>Sinerji rozeti</b> (düğümün sol üstünde küçük zincir halkası): bu düğüm başka bir skill'i de güçlendirir ya da onunla birlikte çalışır; ipucunda "Synergy: skill adı" yazar. Karma başına 1-3 tane.</p>
       <p class="m">Puan = level − 1. Tık +1, sağ tık / uzun basma −1 (geri alma, kalan harcamalar geçerli kalıyorsa). Düğümün üstüne gelince ipucu, kaynağı ipucunun altında yazıyor.</p></div>`;
   }
@@ -255,7 +271,7 @@
       });
       svg += `<line class="sep" x1="0" y1="${row.top + row.h}" x2="${L.W}" y2="${row.top + row.h}"/>`;
       const rr = rows()[row.i];
-      labs += `<div class="rl${rr.pas ? ' pas' : ''}" data-row="${row.i}" data-tip="r:${row.i}" style="top:${row.cy - 26}px"><span class="med"><img src="${A}${rr.ic}" alt=""></span><span class="rt"><b>${esc(rr.name)}</b><i>${rr.pas ? 'Passive' : 'Skill'} · <u data-pts="${row.i}">0</u> pts</i></span></div>`;
+      labs += `<div class="rl${rr.pas ? ' pas' : ''}" data-row="${row.i}" data-tip="r:${row.i}" style="top:${row.cy - 26}px"><span class="med"><img src="${A}${rr.ic}" alt="">${cn.sel ? `<span class="kk ${cn.tags[row.i].toLowerCase()}" title="Karma ${cn.tags[row.i]}">${cn.tags[row.i]}</span>` : ''}</span><span class="rt"><b>${esc(rr.name)}</b><i>${rr.pas ? 'Passive' : 'Skill'} · <u data-pts="${row.i}">0</u> pts</i></span></div>`;
     });
     nds.filter((n) => n.i < NROWS).forEach((n) => {
       const B = L.pos[n.key];
@@ -274,13 +290,13 @@
       const lx = vert ? P.x - (half + 34) : P.x, ly = vert ? P.y : P.y - (half + 17);
       ucv += `<span class="ulv" data-ulv="${key}" style="left:${lx}px;top:${ly}px">Lv ${MC.ULT_LV[s - 1]}</span>`;
     }));
-    const ultHTML = `<div class="ultsec" id="ultsec"><div class="uhead"><h3>Ult tree · ${esc(ur.name)}</h3><span>Level locks 5 · 10 · 15</span><span>Ult points <b id="upts">0</b> / ${MC.ULT_MAX}</span></div>
+    const ultHTML = `<div class="ultsec" id="ultsec"><div class="uhead"><h3>Ult tree · ${esc(ur.name)}${cn.sel ? ` <span class="kt ${cn.tags[ULT].toLowerCase()}" title="Karma ${cn.tags[ULT]}">${cn.tags[ULT]}</span>` : ''}</h3><span>Level locks 5 · 10 · 15</span><span>Ult points <b id="upts">0</b> / ${MC.ULT_MAX}</span></div>
       <div class="uwrap"><div class="uinfo"><p>Ortada ult'un ikonu (kendisi düğüm değil), <b>4 kol</b>, her kolda ortadan dışa <b>3 düğüm</b>: 1. düğüm <b>Lv 5</b>, 2. düğüm <b>Lv 10</b>, 3. düğüm <b>Lv 15</b> ve <b>Notable</b>.</p>
         <p>Kollar serbest, ama ult'a toplam en çok <b>${MC.ULT_MAX} puan</b> verilir (1 puan / düğüm), gerek = koldaki iç düğüm. <b>Evolve yok.</b> Kilit puana değil level'a bağlı; ult puanları kilit sayacına ve Mastery bar'a <b>girmez</b>.</p>
         <div class="arms" id="arms">${MC.ARMS.map((a) => `<div data-arm="${a}">${MC.ARM_NAME[a]} arm<b>0 / 3</b></div>`).join('')}</div></div>
         <div class="uscroll"><div class="ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
           <div class="ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px"><span class="ud"></span><img src="${A}${ur.ic}" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;
-    const vinfo = cn.mix ? mixInfoHTML(cn) : `<div class="vinfo"><span class="vt">${esc(cn.title || 'Variant')}</span>${cn.theme ? `<p class="en"><b>EN</b>${esc(cn.theme)}</p>` : ''}${cn.tr ? `<p class="tr"><b>TR</b>${esc(cn.tr)}</p>` : ''}</div>`;
+    const vinfo = cn.sel ? selInfoHTML(cn) : cn.mix ? mixInfoHTML(cn) : `<div class="vinfo"><span class="vt">${esc(cn.title || 'Variant')}</span>${cn.theme ? `<p class="en"><b>EN</b>${esc(cn.theme)}</p>` : ''}${cn.tr ? `<p class="tr"><b>TR</b>${esc(cn.tr)}</p>` : ''}</div>`;
     $('#sheet').innerHTML = `<div class="sh-top"><img src="${A}${C0.portrait}" alt=""><div class="nm">${esc(C0.name)}<small id="lvline"></small></div>
       <div class="sp"><span class="sf">Tree <b id="spv">0</b></span><span class="sf">Ult <b id="upv">0</b></span><span class="sf">Free <b id="frv">0</b></span></div></div>
       ${vinfo}
@@ -319,16 +335,17 @@
   /* ---------- class / varyant secimi ---------- */
   function resolveV(c, v) {
     if (v === 'pick') return c === 'warrior' ? 'pick' : defaultV(c);
+    if (v === 'sel') return defaultV(c) === 'sel' ? 'sel' : 'a'; /* Seçim yalniz final.js girdisi olan class'ta */
     if (typeof v === 'string' && /^[abAB]$/.test(v)) return v.toLowerCase();
     const n = +v; return n >= 1 && n <= NVAR && Math.floor(n) === n ? n : defaultV(c);
   }
   /* class + karma / varyant degisir: puanlar sifirlanir, yeniden cizilir; dosyalar onbellekte degilse once yer tutucu, sonra yuklenince agac.
-     Karma dosyasi yoksa / bozuksa (ya da istenen karma dosyada yoksa) 5 kaynak varyanta dusulur (Warrior'da Omer's pick). */
+     Karma dosyasi yoksa / bozuksa (ya da istenen karma dosyada yoksa) 5 kaynak varyanta dusulur (Warrior'da eski form secimi). */
   function go(c, v, keepFocus) {
     if (!keepFocus) ST.pendingFocus = null;
     if (!CBY[c]) c = 'warrior';
     ST.c = c; ST.v = resolveV(c, v); ST.S = MC.newState(); ST.plan = null; ST.fail = null; ST.content = null; ST.rowsC = null; ST.fa = 0; ST.fb = 1;
-    if (typeof ST.v === 'number') ST.srcOpen = true; /* kaynak varyant acildi: dugme acik gorunsun */
+    if (typeof ST.v === 'number' || ST.v === 'pick') ST.srcOpen = true; /* kaynak varyant / eski form secimi acildi: dugme acik gorunsun */
     const tok = ++ST.tok, wasPick = ST.v === 'pick';
     ST.vf = VCACHE[c] ? { state: 'ok', data: VCACHE[c] } : { state: 'loading' };
     ST.mf = MCACHE[c] ? { state: 'ok', data: MCACHE[c] } : { state: 'loading' };
@@ -344,9 +361,10 @@
   /* dosyalar geldikten sonra gecerli sekmeyi kesinlestir (istenen karma / varyant yoksa dusme) ve ciz */
   function settle(skipRedraw) {
     ST.content = null; ST.rowsC = null;
+    if (isSel(ST.v) && !selOk()) ST.v = mixOk() && ST.mf.data.mixes[0] ? 'a' : fallbackV(ST.c); /* karma dosyasi yok / secilen karma eksik: Karma A, o da yoksa eski geri donus */
     if (isMix(ST.v) && (ST.mf.state === 'missing' || (mixOk() && !ST.mf.data.mixes[mixIdx(ST.v)]))) ST.v = fallbackV(ST.c);
     if (typeof ST.v === 'number' && ST.vf.state === 'ok' && !ST.vf.data.variants[ST.v - 1]) ST.v = 1; /* istenen varyant dosyada yok */
-    if (typeof ST.v === 'number') ST.srcOpen = true;
+    if (typeof ST.v === 'number' || ST.v === 'pick') ST.srcOpen = true;
     if (skipRedraw && ST.v === 'pick') { renderClassBar(); return; } /* agac zaten cizili: yalniz sekmeler (yanip sonme yok) */
     writeHash(); present();
   }
@@ -432,13 +450,13 @@
     else if (st.rank === 0 && st.check && st.check.code !== 'points') foot = `<div class="tp-foot lock">${dia}<span class="tx">${st.check.code === 'ultcap' ? '' : 'Locked: '}${esc(st.check.text)}</span></div>`;
     else foot = `<div class="tp-foot">${dia}<span class="tx">${st.rank > 0 ? 'Click +1 · right-click −1' : 'Click to spend 1 point'}</span></div>`;
     const ctl = `<div class="tp-ctl"><button type="button" data-act="-1" aria-label="Remove a point">−</button><span class="rk">${st.rank} / ${nd.max}</span><button type="button" data-act="1" aria-label="Add a point">+</button></div>`;
-    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="${medalBg(rr.ic)}"></div><div class="tp-ht"><div class="tp-kind">${esc(kind)}</div><div class="tp-title">${esc(info.name)}</div></div><div class="tp-aside"><div class="big">1<small>${nd.max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div><div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}${ctl}${info.src ? `<div class="tp-src">from ${esc(info.src)}${info.edited ? ' · edited' : ''}</div>` : ''}</div>`;
+    return `<div class="tp va ${cls}"><div class="tp-head"><div class="tp-medal" style="${medalBg(rr.ic)}"></div><div class="tp-ht"><div class="tp-kind">${esc(kind)}</div><div class="tp-title">${esc(info.name)}</div></div><div class="tp-aside"><div class="big">1<small>${nd.max > 1 ? 'POINT / RANK' : 'POINT'}</small></div></div></div><div class="tp-meta">${chips.join('')}</div><div class="tp-div"></div><div class="tp-body">${lines.join('')}</div>${foot}${ctl}${info.src ? `<div class="tp-src">${info.karma ? esc(info.karma) + ' · From ' : 'from '}${esc(info.src)}${info.edited ? ' · edited' : ''}</div>` : ''}</div>`;
   }
   function bonusTip(i) {
     const b = barInfo(i), S = sOf(), t = MC.BAR_THR[i], sp = MC.counter(S), on = sp >= t;
     const foot = b.tbd ? `Needs ${t} points in the passive and skill rows; the Lv 50 bar. Content to be decided.` : on ? 'Reached: ' + sp + ' of ' + t : 'Spend ' + (t - sp) + ' more point' + (t - sp === 1 ? '' : 's') + ' in the passive and skill rows';
     return `<div class="tp va cp"><div class="tp-head"><div class="tp-ht"><div class="tp-kind">Mastery bonus · ${esc(masteryName())}</div><div class="tp-title">${esc(b.name)}</div></div><div class="tp-aside"><div class="big">${t}<small>BAR</small></div></div></div>
-      <div class="tp-meta"><span class="chip ac">Bar ${t}</span><span class="chip${on ? ' ok' : ''}">${on ? (b.tbd ? 'Reached' : 'Active') : 'Not reached'}</span></div><div class="tp-div"></div><div class="tp-body">${line(esc(b.eff))}</div><div class="tp-foot">${dia}<span class="tx">${esc(foot)}</span></div>${b.src ? `<div class="tp-src">from ${esc(b.src)}</div>` : ''}</div>`;
+      <div class="tp-meta"><span class="chip ac">Bar ${t}</span><span class="chip${on ? ' ok' : ''}">${on ? (b.tbd ? 'Reached' : 'Active') : 'Not reached'}</span></div><div class="tp-div"></div><div class="tp-body">${line(esc(b.eff))}</div><div class="tp-foot">${dia}<span class="tx">${esc(foot)}</span></div>${b.src ? `<div class="tp-src">${b.karma ? esc(b.karma) + ' · From ' : 'from '}${esc(b.src)}</div>` : ''}</div>`;
   }
   function rowTip(i) {
     const rr = rows()[i], S = sOf(), kind = rr.ult ? 'Ultimate' : rr.pas ? 'Passive' : 'Skill';

@@ -7,8 +7,8 @@
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>Skill tree: Moments scheme (mockup)</title>
 <!-- MOMENTS skill agaci: 11 class x (2 karma + 5 kaynak varyant) ev sahibi (ui-dev, 2026-10-21 / karma turu 2026-10-22). Oyun kodu DEGIL. Belgeler: docs/design/skill-tree-moments.md, skill-tree-moments-variants.md.
-  Adres: #c=<class>&v=<a|b|pick|1-5> (v yoksa a = Karma A; a / b karma, 1-5 kaynak varyant) &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli). Eski: #c=w (Warrior, Omer'in secimi), #c=h (Hexer v1).
-  Icerik: class varyantlari skill-tree-moments/variants/<class>.js (secilince yuklenir; yoksa 'Variants coming'); karmalar skill-tree-moments/mix/<class>.js (yoksa / bozuksa V1-V5 gosterilir; varsa sekmelerin altinda Karma A <-> Karma B karsilastirma paneli); Warrior'da ek olarak Omer'in secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot').
+  Adres: #c=<class>&v=<sel|a|b|pick|1-5> (v yoksa: class'in final.js girdisi varsa sel = Seçim ✓, yoksa a = Karma A; a / b karma, 1-5 kaynak varyant, pick = Warrior'in eski form secimi) &lv=1..50 &focus=A-B (0..3, orn. focus=0-1: Focus check'i otomatik calistirir) &clean (mockup seridi gizli). Eski: #c=w (Warrior, Omer'in secimi), #c=h (Hexer v1).
+  Icerik: class varyantlari skill-tree-moments/variants/<class>.js (secilince yuklenir; yoksa 'Variants coming'); karmalar skill-tree-moments/mix/<class>.js (yoksa / bozuksa V1-V5 gosterilir; varsa sekmelerin altinda Karma A <-> Karma B karsilastirma paneli); Seçim ✓ (Omer'in satir satir karma secimi): skill-tree-moments/final.js (window.SMM_FINAL[class].rows = [pasif, aktif 1-3, ult], 'a' / 'b'); girdisi olan class'ta ilk sekme ve varsayilan. Warrior'da eski form secimi (skill-tree-moments/picks-warrior.js, bos yuvalar 'Open slot') '5 kaynak varyant' alaninda.
   Class tablosu + ikonlar: skill-tree-moments/classes.js + skill-tree-moments/ic/. -->
 <link rel="stylesheet" href="skill-tree-moments/moments.css" />
 </head>
@@ -35,6 +35,7 @@
 <script src="skill-tree-moments/content.js"></script>
 <script src="skill-tree-moments/classes.js"></script>
 <script src="skill-tree-moments/picks-warrior.js"></script>
+<script src="skill-tree-moments/final.js"></script>
 <script src="skill-tree-moments/app.js"></script>
 </body>
 </html>

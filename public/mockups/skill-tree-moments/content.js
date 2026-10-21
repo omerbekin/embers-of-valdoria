@@ -3,7 +3,8 @@
    - Class varyanti: variants/<cls>.js -> window.SMM_VARIANTS[cls] = { rows[4], ult, variants[5]: { title, theme, tr, mastery, bar[5], nodes{ '0.f1': [ad, etki, yeni?] ... 60 anahtar } } }
    - Karma: mix/<cls>.js -> window.SMM_MIX[cls] = { mixes[2]: { title, theme, tr, rowsTr[5], mastery, bar[5]: [ad, etki, kaynak], syn{ anahtar: skill adi }, nodes{ '0.f1': [ad, etki, yeni?, kaynak] ... 60 anahtar } } }
      kaynak 'V2:1.ea' (varyant 2, dugum 1.ea); sonunda * = metin karma icin duzeltilmis. Satir / ult adlari yine variants dosyasindan gelir.
-   - Omer'in secimi (yalniz Warrior): picks-warrior.js -> window.SMM_PICKS.w.nodes (null / eksik = bos yuva); Mastery adi + bar asagidaki PICK_BAR (eski V6 Moments).
+   - Secim (Omer'in satir satir karma secimi): final.js -> window.SMM_FINAL[cls] = { rows: ['b','b','a','a','b'], at } ('a' = mixes[0], 'b' = mixes[1]); fromSelection satir satir mix dugumlerini birlestirir (mastery + bar pasif satirinin karmasindan).
+   - Eski form secimi (yalniz Warrior, 'Form seçimi (eski)'): picks-warrior.js -> window.SMM_PICKS.w.nodes (null / eksik = bos yuva); Mastery adi + bar asagidaki PICK_BAR (eski V6 Moments).
    Cikti (node basina): { name, eff, nw, src, edited, syn, note, empty }. Eksik / bozuk anahtar = bos yuva ('Open slot'), sayfa cokmez.
    Tarayicida window.SMM_CONTENT, Node'da require. */
 (function (root, f) { if (typeof module === 'object' && module.exports) module.exports = f(); else root.SMM_CONTENT = f(); })(this, function () {
@@ -72,6 +73,32 @@
       theme: m.theme || '', tr: m.tr || '', rowsTr: Array.isArray(m.rowsTr) ? m.rowsTr.filter((s) => typeof s === 'string') : [], syn, pick: false, mix: true, mi };
   }
 
+  /* Seçim (Omer'in satir satir karma secimi): final.js -> window.SMM_FINAL[cls] = { rows: ['b','b','a','a','b'], at }; rows = [pasif, aktif 1-3, ult], 'a' = mixes[0], 'b' = mixes[1].
+     validateFinal: bozuksa metin, saglamsa null (secilen her karma dosyada olmali). */
+  const selIdx = (l) => (l === 'b' ? 1 : 0);
+  function validateFinal(F, M) {
+    if (!F || typeof F !== 'object') return 'no final';
+    if (!Array.isArray(F.rows) || F.rows.length !== 5 || F.rows.some((l) => l !== 'a' && l !== 'b')) return 'rows invalid';
+    if (!M || !Array.isArray(M.mixes)) return 'no mix';
+    if (F.rows.some((l) => !M.mixes[selIdx(l)])) return 'mix missing';
+    return null;
+  }
+  /* Satir r'nin dugumleri ('r.*', ult icin '4.*') rows[r] karmasindan; her dugume karma etiketi ('Karma A · Baslik') eklenir, sinerji rozeti kendi karmasindan gelir.
+     Mastery adi + bar pasif satirinin (rows[0]) karmasindan; kimlik satirlari (rowsTr) her satirin kendi karmasindan. */
+  function fromSelection(D, M, F) {
+    const cache = [null, null], mix = (i) => cache[i] || (cache[i] = fromMix(D, M, i));
+    const lab = (i) => mix(i).label + ' · ' + (mix(i).title || '');
+    const nodes = {};
+    ALL_KEYS.forEach((key) => {
+      const r = +key.split('.')[0], mi = selIdx(F.rows[r]), n = mix(mi).nodes[key];
+      nodes[key] = n.empty ? n : Object.assign({}, n, { karma: lab(mi) });
+    });
+    const p = mix(selIdx(F.rows[0])), pk = lab(selIdx(F.rows[0]));
+    const rowsTr = F.rows.map((l, r) => { const t = M.mixes[selIdx(l)].rowsTr; return Array.isArray(t) && typeof t[r] === 'string' ? t[r] : ''; });
+    return { mastery: p.mastery, bar: p.bar, barSrc: p.barSrc.map((s) => Object.assign({}, s, { karma: pk })), barKarma: pk, nodes, title: 'Seçim', label: 'Seçim', theme: '', tr: '', rowsTr,
+      tags: F.rows.map((l) => (l === 'b' ? 'B' : 'A')), syn: {}, pick: false, mix: true, sel: true };
+  }
+
   /* Class dosyasinin vi. varyanti -> icerik. */
   function fromVariant(D, vi) {
     const v = D.variants[vi], nodes = {};
@@ -93,10 +120,10 @@
       const p = pk && pk[key];
       nodes[key] = p && p.name ? { name: p.name, eff: p.eff || '', nw: !!p.nw, src: p.src || '', edited: false, syn: null, note: p.note || null, empty: false } : empty(EMPTY_EFF);
     });
-    return { mastery: PICK_MASTERY, bar: PICK_BAR, nodes, title: 'Ömer\'s pick',
-      theme: 'Ömer\'s own picks from the Warrior form. Slots he has not picked yet show as Open slot.',
-      tr: 'Ömer\'in formdan seçtikleri; seçilmemiş yuvalar "Open slot" olarak görünür.', pick: true };
+    return { mastery: PICK_MASTERY, bar: PICK_BAR, nodes, title: 'Form seçimi (eski)',
+      theme: 'Old form picks (superseded by the Seçim tab). Slots he had not picked show as Open slot.',
+      tr: 'Eski form seçimi (artık Seçim ✓ sekmesi geçerli): Ömer\'in formdan seçtikleri; seçilmemiş yuvalar "Open slot" olarak görünür.', pick: true };
   }
 
-  return { ALL_KEYS, RK, UK, validateFile, validateMix, fromVariant, fromMix, fromPick, parseSrc, PICK_BAR, PICK_MASTERY };
+  return { ALL_KEYS, RK, UK, validateFile, validateMix, validateFinal, fromVariant, fromMix, fromSelection, fromPick, parseSrc, PICK_BAR, PICK_MASTERY };
 });

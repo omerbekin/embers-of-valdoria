@@ -165,3 +165,7 @@ B: koruyucu/fedakâr; Divine Light kalkan verir, Holy Strike Taunt/MP, diriltile
 ### warrior — A Blood and Fury / B Iron and Bone (ortak 1, NEW 1/3)
 A: acı ve Rage yakıt; darbe yiyince güçlenme, Double Strike Rage toplayıp yakar, Whirlwind herkesi kanatıp can çalar, Headsman's harcanan Rage'le büyür. Sinerji: Charge sonrası Headsman's 10 daha az Rage.
 B: düşmez, hattı kırar; ölümcül darbeden 1 canla kalkma, Double Strike ilk darbe ikinciyi hazırlar, Whirlwind çeker/kör eder, Charge koçbaşı, Headsman's sağ kalanı sersemletir. Sinerji: sersemlemiş hedefe Headsman's ıskalamaz + kritik.
+
+## 7. Ömer'in satır seçimleri (2026-10-22)
+Ömer her class için satır satır Karma A ya da B seçiyor; kaynak dosya `public/mockups/skill-tree-moments/final.js` (`rows = [pasif, aktif 1, aktif 2, aktif 3, ult]`). Mastery adı ve bar bonusları pasif satırının karmasından gelir. Mockup'ta "Seçim ✓" sekmesi.
+- **Warrior:** Berserker B, Double Strike B, Whirlwind A, Charge A, Headsman's Blow B. Çapraz kontrol: A'nın Charge sinerjisi (Into the Fire: Charge sonrası Headsman's 10 Rage ucuz) B'nin ult'uyla çalışır; B ult'unun Stun kolları A'nın Charge Stun'uyla çalışır. Bar: Iron Mastery (B).

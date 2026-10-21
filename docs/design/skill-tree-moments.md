@@ -69,3 +69,7 @@ Filler (küçük, rank'lı) · Edge (küçük ama güçlü) · **Notable** (orta
 - Warrior "Ömer's pick": `picks-warrior.js` (boş yuva = "Open slot"), Mastery adı ve bar eski V6 Moments'tan (`content.js` içinde sabit).
 - Eski geçici Hexer eşlemesi (V3/V5/V6/V7/V8) kaldırıldı; Hexer artık kendi 5 varyantıyla gelir.
 - Test (scratchpad, teste eklenmez): `node moments-test.js [--dir <variants klasörü>]`.
+
+## 8. Oyuna eklerken (Ömer kararı 2026-10-22)
+- **Edge'ler (ea / eb) birbirini dışlar:** satırda yalnızca bir yön seçilir; biri alınınca öbür yön (edge + notable + blood price) kilitlenir, geri alınınca açılır. Mockup'a uygulanmadı, yalnızca oyunda böyle olacak.
+- Hesap: tek yönle satır evolve öncesi 20 puan (3+5+5+1+3+1+1+1). Evolve I için sayaç 23 kalır; odaklı oyuncu 3 puanı başka satırın Tier I filler'larına koyar, evolve yine L25. Evolve II yine L40. Kilit sayıları değişmez; Focus check ve testler bu kurala göre yazılır.
