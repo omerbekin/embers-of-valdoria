@@ -382,6 +382,7 @@
       let body = `<g transform="scale(${f1(L.sc * 1000) / 1000})"><g class="body">${frame(n.type)}</g></g>`;
       body += `<circle class="selring" r="${f1(R + 4 * L.u)}" fill="none" stroke="#ffb35a" stroke-width="${f1(1.4 * L.u)}" stroke-dasharray="${f1(4 * L.u)} ${f1(3 * L.u)}"/>`;
       if (n.guarded) body += shield(R * 0.8, -R * 0.8, L.u * 0.62);
+      if (n.isNew) { const q = L.u, w = 17 * q, hh = 7 * q; body += `<g transform="translate(${f1(R * 0.75)},${f1(R * 0.85)})" pointer-events="none"><rect x="${f1(-w / 2)}" y="${f1(-hh / 2)}" width="${f1(w)}" height="${f1(hh)}" rx="${f1(1.5 * q)}" fill="#3d6b2a" stroke="#cfe8a0" stroke-width="${f1(0.6 * q)}"/><text y="${f1(2.1 * q)}" text-anchor="middle" style="font:700 ${f1(5.6 * q)}px Cinzel;letter-spacing:.06em" fill="#f2ffd8">NEW</text></g>`; } // Harita 1 yeniden çizim taslağı: yeni düğüm
       if (n.roaming) body += `<circle r="${f1(R + 3 * L.u)}" fill="none" stroke="#f08a6a" stroke-width="${f1(1.2 * L.u)}" stroke-dasharray="1 3" stroke-linecap="round"/>`;
       body += numChip(n.n, -R * 0.85, -R * 0.95 - (k0 === 'boss' ? 4 * L.u : 0), L.u);
       ns += `<g class="node${n.optional ? ' pocket' : ''}" data-n="${n.n}" transform="translate(${f1(n.px)},${f1(n.py)})"><g class="nodebody">${body}</g><circle r="${f1(Math.max(ex, 22 / k))}" fill="transparent"/></g>`;
@@ -443,6 +444,7 @@
     const tags = [];
     if (n.optional) tags.push('<span class="bt-chip ac">Optional pocket</span>');
     if (n.guarded) tags.push('<span class="bt-chip ac">Guarded</span>');
+    if (n.isNew) tags.push('<span class="bt-chip warn">New</span>');
     if (n.roaming) tags.push('<span class="bt-chip warn">Roams</span>');
     const lines = [];
     if (n.units) lines.push(`<div class="bt-ln"><span class="dia"></span><div class="tx"><span class="k">${/^(Choice|Lore|Storm|Rumours|Eel-wives|Empty|Save|Repair|Bargain|Morvane|The lantern|Stone|Ending|Descent|Charter|Lighthouse|FACTION|Order side|Order or)/.test(n.units) ? 'Event' : 'Enemies'}</span> · ${rich(n.units)}</div></div>`);
@@ -525,7 +527,7 @@
     else extra.push('<span class="it"><span class="sw" style="border-top:3px dotted #cdb67f"></span>Lift (vertical road between floors)</span>');
     const cnt = (f) => M.nodes.filter(f).length;
     document.getElementById('legend').innerHTML = items.concat(extra).join('');
-    document.getElementById('stats').innerHTML = `<b>${M.nodes.length}</b> nodes · <b>${cnt((n) => n.type === 'boss')}</b> boss · <b>${cnt((n) => n.type === 'elite')}</b> elite · <b>${cnt((n) => n.type === 'town')}</b> town · ${has_opt() ? `<b>${cnt((n) => n.optional)}</b> optional pockets · ` : ''}<b>${M.edges.length}</b> roads · <b>${M.regions.length}</b> regions`;
+    document.getElementById('stats').innerHTML = `<b>${M.nodes.length}</b> nodes · <b>${cnt((n) => n.type === 'boss')}</b> boss · <b>${cnt((n) => n.type === 'elite')}</b> elite · <b>${cnt((n) => n.type === 'town')}</b> town · ${has_opt() ? `<b>${cnt((n) => n.optional)}</b> optional pockets · ` : ''}${M.nodes.some((n) => n.isNew) ? `<b>${cnt((n) => n.isNew)}</b> new · ` : ''}<b>${M.edges.length}</b> roads · <b>${M.regions.length}</b> regions`;
   }
   function render() {
     M = window.MAPS[cur];
