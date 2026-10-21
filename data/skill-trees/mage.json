@@ -1,0 +1,452 @@
+{
+  "class": "mage",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "b",
+      "b",
+      "a",
+      "a",
+      "a"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "spell_echo",
+      "name": "Spell Echo",
+      "passive": true,
+      "karma": "B"
+    },
+    {
+      "skill": "fire_bolt",
+      "name": "Fire Bolt",
+      "karma": "B"
+    },
+    {
+      "skill": "blizzard",
+      "name": "Blizzard",
+      "karma": "A"
+    },
+    {
+      "skill": "mana_barrier",
+      "name": "Mana Barrier",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "meteor",
+    "name": "Meteor",
+    "karma": "A"
+  },
+  "mastery": {
+    "name": "Arcane Tempo Mastery",
+    "karma": "B",
+    "bar": [
+      {
+        "at": 5,
+        "name": "First Refrain",
+        "text": "Your first cooldown spell each battle is sure to echo.",
+        "src": "B:V3:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Resonant Kill",
+        "text": "When you kill an enemy, your longest cooldown drops by 1.",
+        "src": "B:V3:bar1",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Low Tide",
+        "text": "Once per battle, when your MP drops below 25%, your next spell costs no MP.",
+        "src": "B:V4:bar1",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Momentum",
+        "text": "When you kill an enemy, your next spell +15% damage.",
+        "src": "B:V5:bar2",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Encore",
+        "text": "Once per battle, when you drop below 40% HP, all your cooldowns are reset.",
+        "src": "B:V3:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Resonance",
+      "text": "Spell Echo chance +2% per rank.",
+      "src": "B:V3:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Killing Echo",
+      "text": "Spell Echo +3% chance per rank when the spell kills.",
+      "src": "B:V5:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Rapid Recall",
+      "text": "After Spell Echo triggers, your next turn comes 4% sooner per rank.",
+      "src": "B:V3:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Overload",
+      "text": "The spell you recast after a Spell Echo is a sure critical.",
+      "src": "B:V5:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Overtone",
+      "text": "Spell Echo +1% chance per rank for each enemy the spell hits beyond the first.",
+      "src": "B:V3:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Echo Chamber",
+      "text": "Each echo in a battle adds +3% to your Spell Echo chance for the rest of that battle.",
+      "src": "B:V3:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Sympathy",
+      "text": "When Spell Echo triggers, your other cooldown spells drop by 1.",
+      "src": "B:V3:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Endless Refrain",
+      "text": "A spell recast after an echo has double Spell Echo chance.",
+      "src": "B:V3:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Unstable Weave",
+      "text": "Recast spells deal +40% damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
+      "src": "B:V3:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Frayed Threads",
+      "text": "Sympathy cuts 2 turns instead of 1, but Spell Echo chance drops 25% → 18%.",
+      "src": "B:V3:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Time Fold",
+      "text": "When Spell Echo triggers, that spell's recast costs only half a turn.",
+      "src": "B:V3:0.mb",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Arcane Overload",
+      "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals +20% damage.",
+      "src": "B:V5:0.v",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Focused Bolt",
+      "text": "Fire Bolt +2% critical chance per rank.",
+      "src": "B:V5:1.f1",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Searing Crit",
+      "text": "Fire Bolt critical damage +6% per rank.",
+      "src": "B:V5:1.f2",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Clean Shot",
+      "text": "Fire Bolt +6% damage per rank against targets at full HP.",
+      "src": "B:V5:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Weak Spot",
+      "text": "Fire Bolt critical hits ignore 30% of Magic Armor.",
+      "src": "B:V5:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Finisher",
+      "text": "Fire Bolt +5% damage per rank against targets below 30% HP.",
+      "src": "B:V5:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Keen Gaze",
+      "text": "Fire Bolt cannot miss and gains +10% critical chance.",
+      "src": "B:V5:1.ea*",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Execution Bolt",
+      "text": "Fire Bolt deals +50% damage to targets below 25% HP.",
+      "src": "B:V5:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Hot Streak",
+      "text": "A critical Fire Bolt makes your next Fire Bolt a sure critical.",
+      "src": "B:V5:1.ma*",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Unstable Focus",
+      "text": "Fire Bolt critical hits deal +50% more, but its non-critical hits deal 20% less.",
+      "src": "B:V5:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Reckless Bolt",
+      "text": "Fire Bolt +35% damage against targets below 50% HP, but 20% less against healthier ones.",
+      "src": "B:V5:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Rolling Doom",
+      "text": "If Fire Bolt kills, it fires again at once at the lowest-HP enemy for free, and repeats for every kill.",
+      "src": "B:V5:1.mb",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "1.v": {
+      "name": "Sunfire",
+      "text": "Fire Bolt evolves into Sunfire: it deals +40% damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
+      "src": "B:V5:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Biting Gale",
+      "text": "Blizzard has a 10% chance per rank to Slow each enemy hit for 1 turn.",
+      "src": "A:V2:2.f1",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Numbing Cold",
+      "text": "Blizzard +4% damage per rank against Slowed enemies.",
+      "src": "A:V2:2.f2",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Driving Snow",
+      "text": "Blizzard has a 5% chance per rank to Blind each enemy hit for 1 turn.",
+      "src": "A:V2:2.f3",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Hard Frost",
+      "text": "Blizzard always Slows the enemies in the front row of its area for 1 turn.",
+      "src": "A:V2:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Snow Blindness",
+      "text": "Blizzard +4% damage per rank against Blinded enemies.",
+      "src": "A:V2:2.r",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Flash Freeze",
+      "text": "Each enemy already Slowed when Blizzard hits has a 50% chance to be Stunned for 1 turn.",
+      "src": "A:V2:2.ea",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Whiteout",
+      "text": "Blizzard's chance to Blind is doubled, and its Blind lasts 2 turns.",
+      "src": "A:V2:2.eb",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Winter's Grip",
+      "text": "While any enemy is Stunned, Blizzard's cooldown is 1 instead of 2.",
+      "src": "A:V2:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Black Ice",
+      "text": "Flash Freeze always Stuns, but Blizzard deals 40% less damage.",
+      "src": "A:V2:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Howling Squall",
+      "text": "Blizzard covers 3 rows x 3 lanes instead of 3 x 2, but it costs 14 → 20 MP.",
+      "src": "A:V2:2.fb",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Lost in the Snow",
+      "text": "An enemy Blinded by Blizzard that misses an attack is Stunned for 1 turn.",
+      "src": "A:V2:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Eternal Winter",
+      "text": "Blizzard evolves: the storm stays on its area for 2 turns and Slows every enemy that starts its turn there.",
+      "src": "A:V2:2.v",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Rimeguard",
+      "text": "Mana Barrier shield +5% per rank when cast on an ally in the front row.",
+      "src": "A:V2:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Cauterize",
+      "text": "Each debuff Mana Barrier dispels heals the ally for 2% of max HP per rank.",
+      "src": "A:V1:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Numbing Touch",
+      "text": "While Mana Barrier holds, Slowed attackers deal 3% less damage per rank to the holder.",
+      "src": "A:V2:3.f3",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Ice Mirror",
+      "text": "The first hit Mana Barrier absorbs Slows the attacker for 2 turns.",
+      "src": "A:V2:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Frozen Reserve",
+      "text": "Mana Barrier gives +1 MP per rank for each hit it absorbs from a Slowed enemy.",
+      "src": "A:V2:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Frost Armor",
+      "text": "Every hit Mana Barrier absorbs Slows the attacker for 1 turn.",
+      "src": "A:V2:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Ice Block",
+      "text": "Mana Barrier also makes the holder Fortified for 1 turn.",
+      "src": "A:V2:3.eb",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Frozen Rebuke",
+      "text": "A Slowed enemy that hits Mana Barrier is Stunned for 1 turn (once per barrier).",
+      "src": "A:V2:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Brittle Shell",
+      "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is 35% smaller.",
+      "src": "A:V2:3.fa",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Frozen Solid",
+      "text": "Ice Block lasts 2 turns, but the holder is Slowed while it lasts.",
+      "src": "A:V2:3.fb",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Twin Ward",
+      "text": "Mana Barrier also shields the ally with the lowest HP for 50% of its value.",
+      "src": "A:V3:3.ma",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Shatter Aegis",
+      "text": "Mana Barrier evolves: when it breaks, it fires a free Fire Bolt at the attacker that is a sure critical.",
+      "src": "A:V5:3.v",
+      "syn": "Fire Bolt",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Long Smoulder",
+      "text": "Meteor's Burning ground lasts 2 → 3 turns.",
+      "src": "A:V1:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "White Heat",
+      "text": "Meteor's Burning ground deals +30% damage.",
+      "src": "A:V1:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Sea of Fire",
+      "text": "Meteor's Burning ground also covers every cell touching the plus shape.",
+      "src": "A:V1:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Concussion",
+      "text": "Meteor Stuns the enemy at its center for 1 turn.",
+      "src": "A:V2:4.r1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Ringing Ears",
+      "text": "Enemies on Meteor's outer cells have a 25% chance to be Stunned for 1 turn.",
+      "src": "A:V2:4.r2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Earthshaker",
+      "text": "Each enemy Meteor hits has a 50% chance to be Staggered: it loses its next action.",
+      "src": "A:V2:4.r3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Flung Embers",
+      "text": "Meteor flings an ember at a random enemy outside its area: 30% INT and Burning for 2 turns.",
+      "src": "A:V1:4.d1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Ember Hail",
+      "text": "Meteor flings 3 embers instead of 1.",
+      "src": "A:V1:4.d2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Twin Meteors",
+      "text": "One turn after Meteor lands, a second meteor strikes the same cells for 50% power.",
+      "src": "A:V1:4.d3",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Dead Center",
+      "text": "Meteor deals +40% damage to the enemy at its center.",
+      "src": "A:V1:4.l1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Molten Core",
+      "text": "Meteor's Burning ground deals double damage on its center cell.",
+      "src": "A:V1:4.l2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Extinction",
+      "text": "Meteor's center target takes +20% damage for each other enemy the Meteor hits.",
+      "src": "A:V1:4.l3",
+      "fx": null
+    }
+  }
+}

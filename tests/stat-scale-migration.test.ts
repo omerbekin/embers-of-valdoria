@@ -56,7 +56,7 @@ describe('x2 stat ölçeği: veri ve kayıt göçü', () => {
   });
 
   it('Endless koşu kaydı v1 -> güncel: zarlar x2, yarım savaş atılır; güncel sürüm aynen okunur; skor listesi sürüm 1 kalır', () => {
-    expect(ENDLESS_SAVE_VERSION).toBe(6); // 6: yara + dolu MP (2026-10-19); 3: sürekli akış (madde 300); 4: affix kademeleri (2026-10-11); 5: başlangıç silahı (2026-10-17)
+    expect(ENDLESS_SAVE_VERSION).toBe(7); // 7: skill ağacı (2026-10-22); 6: yara + dolu MP (2026-10-19); 3: sürekli akış (madde 300); 4: affix kademeleri (2026-10-11); 5: başlangıç silahı (2026-10-17)
     expect(SCORES_VERSION).toBe(1);
     const run = newRun(5, ['warrior', 'mage', 'archer', 'paladin'], '2026-10-10T00:00:00.000Z');
     const legacy = { ...run, bag: [{ uid: 'b1', id: 'riveted_mail', rolls: { armor: 3, hp: 4 } }], suspended: { wave: 1, seed: 1, actions: [], turn: 0, hash: 'x' } };

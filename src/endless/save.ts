@@ -9,6 +9,7 @@ import { cleanCarry } from './carry';
 import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand } from '../progression/items';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
+import { normalizeTree } from '../progression/skill-tree-hero';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -25,7 +26,12 @@ export const SCORES_KEY = 'protomedi.endless.scores.v1';
  * (`summons`). Sürüm 1-2 okunurken bu alanlar yok (= tam MP, temiz başlangıç: eski kural bir kez daha) ve yarım savaş atılır (savaş kurulumu
  * değişti: dalga arası cooldown sıfırlama; dalga baştan başlar). Ara verme (ödül / tüccar / kalıntı / kamp) aşaması aynen sürer.
  */
-export const SAVE_VERSION = 6;
+export const SAVE_VERSION = 7;
+/*
+ * 7: Skill ağacı (Moments; plan docs/design/skill-tree-implementation.md 3.3, Faz 1b): kahraman başına isteğe bağlı `tree` (onaylı dağılım),
+ * `freeRespec` ve `treeReset` (sefer kaydıyla aynı alanlar). Göç yok: sürüm 1-6 okunurken alan yok = boş ağaç, puanlar aynen; her okumada onarım
+ * (progression > normalizeTree; idempotent). Ağaç değişirse yarım dalganın kurulum anahtarı (planKey) tutmaz, dalga baştan başlar.
+ */
 /*
  * 6: Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): kahraman başına `wounds` (yoksa 0; bozuk değer atılır) ve MP her dalgada dolu
  * (carry.mp 'full'). Sürüm 1-5 okunurken taşınan MP oranı silinir ve yarım savaş atılır (kurulumu eski MP oranıyla kurulmuştu; dalga baştan).
@@ -49,7 +55,7 @@ export function parseRun(raw: string | null): EndlessRun | null {
   try {
     const data = JSON.parse(raw) as { version?: number; run?: EndlessRun };
     const r = data?.run;
-    if (![1, 2, 3, 4, 5, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
+    if (![1, 2, 3, 4, 5, 6, SAVE_VERSION].includes(data?.version ?? 0) || !r || r.version !== 1 || r.preview) return null;
     if (data.version === 1) {
       migrateRollsX2(r);
       delete r.suspended;
@@ -77,6 +83,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     for (const h of r.heroes) if (!h || typeof h.id !== 'string' || !classes[h.class] || !isNum(h.hpRatio) || typeof h.equipment !== 'object' || !h.equipment) return null;
     // Seviye, XP, puanlar (level sistemi, Ömer 2026-10-17): bozuk değer varsayılana, eski kayıtta level'dan tamamlanır (hiçbir şey geri alınmaz)
     for (const h of r.heroes) normalizeLevelFields(h);
+    // Skill ağacı (sürüm 7): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec (sefer ile aynı kural)
+    for (const h of r.heroes) normalizeTree(h);
     // Yara (sürüm 6): yok / bozuk = 0
     for (const h of r.heroes) {
       const n = woundCount(h);

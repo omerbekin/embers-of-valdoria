@@ -139,7 +139,7 @@ describe('sefer kaydı: Valor ve sürüm 7 göçü', () => {
     expect(saves[1]!.state.valor).toBe(R.campaign.gift);
     expect(migrateSaves(kv)).toBe(true);
     expect(JSON.parse(kv.getItem(SAVE_KEY)!).version).toBe(SAVE_VERSION);
-    expect(SAVE_VERSION).toBe(11); // 8: başlangıç silahı (Item Güçlendirme), 9: level puanları (2026-10-17), 10: serbest dolaşım (2026-10-18)
+    expect(SAVE_VERSION).toBe(12); // 8: başlangıç silahı (Item Güçlendirme), 9: level puanları (2026-10-17), 10: serbest dolaşım (2026-10-18)
   });
 
   it('Valor kayıtta korunur; bozuk değer 0..cap aralığına kırpılır', () => {

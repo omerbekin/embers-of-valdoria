@@ -93,9 +93,9 @@ export interface TargetPreview {
  */
 export function previewSkill(battle: Battle, actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string): TargetPreview[] {
   const actor = battle.get(actorUid);
-  if (!actor || !battle.skill(skillId)) return [];
+  if (!actor || !battle.skill(skillId, actor)) return [];
   let targets = battle.validTargets(actorUid, skillId);
-  if (battle.skill(skillId)?.target === 'random_enemies') return []; // hedefler rastgele: önizleme yok
+  if (battle.skill(skillId, actor)?.target === 'random_enemies') return []; // hedefler rastgele: önizleme yok
   let centerUid: string | undefined;
   if (battle.isAreaSkill(skillId)) {
     // Anchor birimi erişim dışında (arkada) da olabilir: anchor yalnızca hücreyi belirler. Hedef sırası gerçek vuruşla aynı (aşamalıda aşama sırası;
@@ -107,7 +107,7 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
     const unit = anchored && anchored.hp > 0 && anchored.board === b ? anchored : undefined;
     const center = unit ? unit.slot : (tileSlot ?? slot);
     // Menzil (range.md): anchor hücre menzil dışındaysa atış geçersiz -> önizleme boş (kapalıyken inRange hep evet)
-    targets = center === undefined || !battle.inRange(actor, battle.skill(skillId)!, b, center) ? [] : battle.areaWindowAt(actorUid, skillId, center, b);
+    targets = center === undefined || !battle.inRange(actor, battle.skill(skillId, actor)!, b, center) ? [] : battle.areaWindowAt(actorUid, skillId, center, b);
     centerUid = center === undefined ? undefined : targets.find((t) => t.board === b && t.slot === center)?.uid;
   } else if (battle.needsTargetChoice(skillId)) {
     targets = targets.filter((t) => t.uid === targetUid);
@@ -124,7 +124,7 @@ const foe = (side: Side): Side => (side === 'party' ? 'enemy' : 'party');
  * `centerUid`: alan skill'inde anchor hücredeki birim (area.hitsAtCenter > 1 ise hasar etkileri ona o kadar kez uygulanır: X şekli).
  */
 export function previewForTargets(battle: Battle, actor: Combatant, skillId: string, targets: Combatant[], centerUid?: string, summonPick?: { corpseUid?: string; slot?: number }): TargetPreview[] {
-  const skill = battle.skill(skillId);
+  const skill = battle.skill(skillId, actor);
   if (!skill) return [];
   const f = battle.formulas;
   const out = new Map<string, TargetPreview>();

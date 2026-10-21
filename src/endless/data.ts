@@ -3,6 +3,7 @@ import endlessJson from '../../data/endless.json';
 import encountersJson from '../../data/campaign/encounters.json';
 import type { Equipment, ItemInstance } from '../progression/items';
 import type { LevelUp, StatAlloc } from '../progression/levels';
+import type { TreeAlloc } from '../progression/skill-tree';
 import type { SuspendedBattle } from './replay';
 import type { RelicDef } from './relics';
 import type { WoundRules } from '../progression/wounds';
@@ -116,6 +117,10 @@ export interface EndlessHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Skill ağacı (kayıt sürümü 7; sefer Hero ile aynı alanlar, plan 3.3): onaylı dağılım (yok = boş), bir kez bedava respec, okumada iade bayrağı. */
+  tree?: TreeAlloc;
+  freeRespec?: boolean;
+  treeReset?: boolean;
   equipment: Partial<Equipment>;
   /**
    * Kendi tahtasındaki hücre (0-11; sıra*3+şerit, 0. sıra önde). Koşu başında oyuncu dizer; her zaferde savaş sonundaki hücre yazılır

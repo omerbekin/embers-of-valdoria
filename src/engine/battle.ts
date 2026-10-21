@@ -233,6 +233,8 @@ export class Battle {
   /** Dalgalı savaş: sonraki dalgalar (boş dalgalar atılır) ve şu anki dalganın dizini (0 = ilk dalga). */
   private readonly laterWaves: WaveSetup[];
   private waveIdx = 0;
+  /** Savaşta skill ağaçlı (Combatant.skillDefs) en az bir birim var mı; yoksa skill() birim aramadan ortak tabloya gider. */
+  private treeUnits = false;
 
   constructor(setup: BattleSetup) {
     this.setup = setup;
@@ -245,6 +247,7 @@ export class Battle {
       ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas)),
       ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas)),
     ];
+    this.treeUnits = this.combatants.some((c) => !!c.skillDefs);
     // Endless: önceki dalgada düşen birim savaşa ceset olarak girer (UnitSetup.startDead); verilmezse savaş aynı
     const units = [...setup.party.map((_, i) => setup.partyUnits?.[i]), ...setup.enemies.map((_, i) => setup.enemyUnits?.[i])];
     // Taşınan çağrı (Endless; sahibi bu savaşta): statları sahibinden yeniden türer (savaşta çağrıldığı gibi; Ömer 2026-10-18). Sahipsiz / kuralsız = aynen
@@ -308,7 +311,7 @@ export class Battle {
     if (c.summoned || c.skipInitialCooldown) return;
     const max = this.setup.formulas.cooldown?.maxInitial ?? 0;
     for (const id of c.skills) {
-      const sk = this.skill(id);
+      const sk = this.skill(id, c);
       // Kurulum eki (UnitSetup.initialCooldownBonus): cooldown'lu her skill'e (cooldown ya da initialCooldown > 0); maxInitial'ı aşabilir
       const bonus = (sk?.cooldown ?? 0) > 0 || (sk?.initialCooldown ?? 0) > 0 ? Math.max(0, Math.floor(c.initialCooldownBonus ?? 0)) : 0;
       let n = Math.min(max, Math.floor(sk?.initialCooldown ?? 0)) + bonus;
@@ -983,7 +986,7 @@ export class Battle {
 
   /** Skill'in bu kullanıcı için geçerli alanı: faza göre alan (areaByPhase; fazına eşit/küçük en büyük anahtar), yoksa skill.area. */
   areaOf(skillId: string, actorUid?: string): AreaDef | undefined {
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!skill) return undefined;
     const byPhase = skill.areaByPhase;
     if (!byPhase || !actorUid) return skill.area;
@@ -1097,7 +1100,7 @@ export class Battle {
       }
     }
     if (def.telegraphOnEnter) {
-      const sk = this.skill(def.telegraphOnEnter);
+      const sk = this.skill(def.telegraphOnEnter, c);
       if (sk?.telegraph) {
         // Aynı anda tek alan telgrafı: bekleyen alan telgrafının yerini girişteki telgraf alır
         for (const t of this.telegraphs.filter((x) => x.source === c.uid && x.kind === 'area')) this.cancelTelegraph(t, 'phase', emit);
@@ -1224,7 +1227,7 @@ export class Battle {
   }
 
   private clearBrand(t: Telegraph, emit: Emit): void {
-    const kind = this.skill(t.skill)?.telegraph?.status;
+    const kind = this.skill(t.skill, t.source)?.telegraph?.status;
     const b = t.bound ? this.get(t.bound) : undefined;
     if (!b || !kind) return;
     const st = b.statuses.find((s) => s.kind === kind && s.source === t.source);
@@ -1255,7 +1258,7 @@ export class Battle {
 
   /** Telgrafın çözülmesi: işaretli hücrelerdeki (güvenli hariç) karşı taraf birimlerine skill'in etkileri; isabet zarı YOK (kaçmak için uyarıldılar). */
   private resolveTelegraph(t: Telegraph, src: Combatant, emit: Emit): void {
-    const skill = this.skill(t.skill);
+    const skill = this.skill(t.skill, src);
     const tg = skill?.telegraph;
     this.telegraphs.splice(this.telegraphs.indexOf(t), 1);
     if (!skill || !tg) return;
@@ -1325,7 +1328,7 @@ export class Battle {
         const b = t.bound ? this.get(t.bound) : undefined;
         if (!b || b.hp <= 0) continue;
         const center = b.uid === c.uid ? at : b.slot;
-        const area = this.skill(t.skill)?.telegraph?.area ?? { shape: 'plus' as const };
+        const area = this.skill(t.skill, src)?.telegraph?.area ?? { shape: 'plus' as const };
         hits = b.uid === c.uid || shapeCells(area, center, b.board, this.setup.formulas.formation).includes(at);
       } else hits = t.cells.includes(at) && !t.safeCells?.includes(at);
       if (!hits) continue;
@@ -1341,9 +1344,10 @@ export class Battle {
     let min = 0;
     let max = 0;
     if (!src || src.hp <= 0) return { avg, min, max };
-    for (const e of this.skill(t.skill)?.effects ?? []) {
+    const tsk = this.skill(t.skill, src);
+    for (const e of tsk?.effects ?? []) {
       if (e.type !== 'damage') continue;
-      const r = damageRange(this.attackStats(src), this.effectiveStats(c), damageSpecFor(src, c, e, this.setup.formulas, 1, true, this.damageTakenMult(c), this.dealtDamageMult(src, c, this.skill(t.skill)), e.bonusScale ? this.effectiveStats(src) : undefined), this.setup.formulas);
+      const r = damageRange(this.attackStats(src), this.effectiveStats(c), damageSpecFor(src, c, e, this.setup.formulas, 1, true, this.damageTakenMult(c), this.dealtDamageMult(src, c, tsk), e.bonusScale ? this.effectiveStats(src) : undefined), this.setup.formulas);
       avg += r.avg;
       min += r.min;
       max += r.max;
@@ -1476,12 +1480,12 @@ export class Battle {
    */
   turnQueueAfter(skillId: string, count = this.setup.formulas.turn.queueLength): string[] {
     if (this.mode !== 'turns') return [];
-    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieFirst, this.turnCostOf(skillId));
+    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieFirst, this.turnCostOf(skillId, this.currentUid ?? undefined));
   }
 
-  /** Skill'in turn bedeli (0 < x <= 1; yoksa 1). Global skill'ler ve bilinmeyen id'ler 1. */
-  turnCostOf(skillId: string): number {
-    const c = this.skill(skillId)?.turnCost;
+  /** Skill'in turn bedeli (0 < x <= 1; yoksa 1). Global skill'ler ve bilinmeyen id'ler 1. `actorUid`: kullanıcının (ağaçla yamalı) tanımı. */
+  turnCostOf(skillId: string, actorUid?: string): number {
+    const c = this.skill(skillId, actorUid)?.turnCost;
     return c !== undefined && c > 0 && c <= 1 ? c : 1;
   }
 
@@ -1499,7 +1503,17 @@ export class Battle {
     return Math.max(0, Math.min(1, c.stats.surviveChance ?? 0));
   }
 
-  skill(skillId: string): SkillDef | undefined {
+  /**
+   * Skill tanımı. `who` (birim uid'i ya da birimin kendisi) verilirse önce o birimin skill ağacıyla YAMALANMIŞ tanımına bakar
+   * (Combatant.skillDefs; docs/design/skill-tree-implementation.md 4.1: skill id aynı, yalnızca sayılar değişir), yoksa ortak tablo.
+   * Ağaçsız savaşta (hiçbir birimde skillDefs yok) doğrudan ortak tablo: davranış ve hız eskisiyle aynı.
+   * Bekçi test (tests/skill-tree-engine.test.ts): bu dosyada uid'siz `this.skill(` yalnızca izin listesindeki yapısal yüklemlerde kalır.
+   */
+  skill(skillId: string, who?: string | Combatant): SkillDef | undefined {
+    if (who !== undefined && this.treeUnits) {
+      const own = (typeof who === 'string' ? this.get(who) : who)?.skillDefs?.[skillId];
+      if (own) return own;
+    }
     return this.setup.skills[skillId];
   }
 
@@ -1510,7 +1524,7 @@ export class Battle {
    * 'row' (yalnızca single_ally; Close Ranks): seçilen dostun SIRASINDAKİ (alan şekli 'row', area-shape.shapeCells) diğer canlı dostlar, KULLANICI hariç.
    */
   splashTargets(skillId: string, chosen: Combatant, actorUid?: string): Combatant[] {
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (skill?.splash?.pattern === 'row' && skill.target === 'single_ally') {
       const cells = shapeCells({ shape: 'row' }, chosen.slot, chosen.board, this.setup.formulas.formation);
       return this.living(chosen.side)
@@ -1597,7 +1611,7 @@ export class Battle {
    * `board`: hücrelerin ait olduğu tahta (varsayılan 'enemy'; rect'in ekrandaki sol-alt köşesi tahtaya göre ayna).
    */
   areaCells(skillId: string, centerSlot: number, board: Side = 'enemy', actorUid?: string): number[] {
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!skill || !this.isShapeSkill(skillId)) return [];
     // actorUid: faza göre alan (Breaking Span faz 2+: rect 2x3; areaOf)
     return shapeCells(this.areaOf(skillId, actorUid)!, centerSlot, board, this.setup.formulas.formation);
@@ -1610,7 +1624,7 @@ export class Battle {
 
   /** Alan skill'inin hücreleri aşamalara bölünmüş (aşamasız skill: tek aşama). Her aşama yuva sırasıyla; boş hücreler dahil. */
   areaStageCells(skillId: string, centerSlot: number, board: Side = 'enemy', actorUid?: string): number[][] {
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!skill || !this.isShapeSkill(skillId)) return [];
     return shapeStages(this.areaOf(skillId, actorUid)!, centerSlot, board, this.setup.formulas.formation);
   }
@@ -1634,7 +1648,7 @@ export class Battle {
    * birimlerden en az bir etkinin uygulandığı (side) canlı birimleri döndürür; area_enemies yalnızca düşmanları.
    */
   areaWindowAt(actorUid: string, skillId: string, centerSlot: number, board?: Side): Combatant[] {
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!skill || !this.isShapeSkill(skillId)) return [];
     const actor = this.get(actorUid);
     const b = this.areaBoard(actor, skillId, board);
@@ -1660,7 +1674,7 @@ export class Battle {
     if (!actor || !this.isAreaSkill(skillId)) return [];
     const b = this.areaBoard(actor, skillId, board);
     const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
-    const skill = this.skill(skillId)!;
+    const skill = this.skill(skillId, actorUid)!;
     return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && this.areaWindowAt(actorUid, skillId, i, b).length > 0);
   }
 
@@ -1680,13 +1694,13 @@ export class Battle {
   shapePreviewCells(actorUid: string, skillId: string, anchorSlot: number, board?: Side): { cells: number[]; targets: string[]; valid: boolean; reason?: string } {
     const actor = this.get(actorUid);
     const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
-    if (!actor || !this.skill(skillId)) return { cells: [], targets: [], valid: false, reason: 'Unknown unit or skill' };
+    if (!actor || !this.skill(skillId, actor)) return { cells: [], targets: [], valid: false, reason: 'Unknown unit or skill' };
     if (!this.isAreaSkill(skillId)) return { cells: [], targets: [], valid: false, reason: 'Not an area skill' };
     if (!Number.isInteger(anchorSlot) || anchorSlot < 0 || anchorSlot >= total) return { cells: [], targets: [], valid: false, reason: 'Invalid cell' };
     const b = this.areaBoard(actor, skillId, board);
     const cells = this.areaCells(skillId, anchorSlot, b, actorUid);
     const targets = this.areaWindowAt(actorUid, skillId, anchorSlot, b).map((c) => c.uid);
-    if (!this.inRange(actor, this.skill(skillId)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
+    if (!this.inRange(actor, this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
     if (targets.length > 0) return { cells, targets, valid: true };
     if (this.isAnyBoardArea(skillId)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : 'No enemy in the area' };
     const inShape = this.livingByDepth(opposite(actor.side)).some((c) => c.board === b && cells.includes(c.slot));
@@ -1767,7 +1781,7 @@ export class Battle {
     let best = 0;
     let bestName = '';
     for (const id of unit.skills) {
-      const sk = this.skill(id);
+      const sk = this.skill(id, unit);
       if (!sk) continue;
       let v = 0;
       for (const e of sk.effects) {
@@ -1783,7 +1797,7 @@ export class Battle {
     const hpFactor = unit.maxHp / Math.max(1, cfg.hpRef);
     let danger = (threat + best) * hpFactor;
     const parts = [`(threat ${r1(threat)} + best skill ${r1(best)}${bestName ? ` ${bestName}` : ''}) x HP ${Math.round(hpFactor * 100) / 100}`];
-    const canRevive = (c: Combatant) => c.skills.some((id) => this.skill(id)?.effects.some((e) => e.type === 'revive'));
+    const canRevive = (c: Combatant) => c.skills.some((id) => this.skill(id, c)?.effects.some((e) => e.type === 'revive'));
     if (canRevive(unit)) {
       danger *= cfg.reviverMult;
       parts.push(`x reviver ${cfg.reviverMult}`);
@@ -1817,7 +1831,7 @@ export class Battle {
    * `corpseUid`: oyuncunun seçtiği ceset (geçerliyse o; verilmezse/geçersizse YZ önerisi = en tehlikeli). `slot`: seçilen yuva (geçerliyse o; yoksa varsayılan).
    */
   summonPreview(actorUid: string, skillId: string, corpseUid?: string, slot?: number): { unit: CombatantDef | null; empowered: boolean | undefined; corpse: Corpse | null; slot: number | null } {
-    const effect = this.skill(skillId)?.effects.find((e) => e.type === 'summon');
+    const effect = this.skill(skillId, actorUid)?.effects.find((e) => e.type === 'summon');
     if (!effect || effect.type !== 'summon') return { unit: null, empowered: undefined, corpse: null, slot: null };
     const def = this.setup.units[effect.unit];
     const free = this.summonSlots(actorUid, skillId);
@@ -1909,7 +1923,7 @@ export class Battle {
 
   /** Çağrının varsayılan (yapay zeka) yuvası: summonSlots içinden; yakın dövüşçü çağrı en öndeki, diğerleri en arkadaki yuvaya. Yer yoksa null. */
   summonSlotFor(actorUid: string, skillId: string): number | null {
-    const effect = this.skill(skillId)?.effects.find((e) => e.type === 'summon');
+    const effect = this.skill(skillId, actorUid)?.effects.find((e) => e.type === 'summon');
     const def = effect && effect.type === 'summon' ? this.setup.units[effect.unit] : undefined;
     const free = this.summonSlots(actorUid, skillId);
     if (!def || free.length === 0) return null;
@@ -1937,7 +1951,7 @@ export class Battle {
    */
   validTargets(actorUid: string, skillId: string): Combatant[] {
     const actor = this.get(actorUid);
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!actor || !skill) return [];
     switch (skill.target) {
       case 'self':
@@ -2028,7 +2042,7 @@ export class Battle {
    */
   targetProblem(actorUid: string, skillId: string, targetUid: string): string | null {
     const actor = this.get(actorUid);
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     const target = this.get(targetUid);
     if (!actor || !skill || !target) return 'Invalid target';
     if (target.hp <= 0 && skill.target !== 'dead_ally') return 'Target is dead';
@@ -2060,7 +2074,7 @@ export class Battle {
     if (actor.hp <= 0) return { ok: false, reason: 'Unit is dead' };
     if (this.mode === 'turns' && this.currentUid !== actorUid) return { ok: false, reason: "Not this unit's turn" };
     if (!actor.skills.includes(skillId)) return { ok: false, reason: 'Unit does not have this skill' };
-    const skill = this.skill(skillId);
+    const skill = this.skill(skillId, actorUid);
     if (!skill) return { ok: false, reason: 'Unknown skill' };
     if (actor.lockedSkills?.includes(skillId)) return { ok: false, reason: 'Locked' };
     // Boss fazı şartı (Ash Brand faz 2, Fall faz 3) ve bağlı yardımcı şartı (Chain Hook: canlı Iron Mooring)
@@ -2415,7 +2429,7 @@ export class Battle {
    */
   debugCast(actorUid: string, skillId: string, targetUid?: string, slot?: number, corpseUid?: string): ActionResult {
     if (!this.get(actorUid)) return { ok: false, reason: 'No such unit' };
-    if (!this.skill(skillId)) return { ok: false, reason: 'Unknown skill' };
+    if (!this.skill(skillId, actorUid)) return { ok: false, reason: 'Unknown skill' };
     this.debugCasting = true;
     try {
       return this.cast(actorUid, skillId, targetUid, slot, true, undefined, corpseUid);
@@ -2452,7 +2466,7 @@ export class Battle {
       if (summonSpot === null && debug) summonSpot = anyFree[0] ?? null;
     }
     const actor = this.get(actorUid)!;
-    const skill = this.skill(skillId)!;
+    const skill = this.skill(skillId, actorUid)!;
     const f = this.setup.formulas;
 
     let targets = this.validTargets(actorUid, skillId);
@@ -2546,7 +2560,7 @@ export class Battle {
       ...(backTarget && behind !== null ? { behindSlot: behind, behindBoard: backTarget.board, from: actor.slot } : {}),
       ...(summonSpot !== null ? { slot: summonSpot } : reviveSpot !== null ? { slot: reviveSpot } : {}),
       ...(corpseUid ? { corpseUid } : {}),
-      ...(this.turnCostOf(skill.id) < 1 ? { turnCost: this.turnCostOf(skill.id) } : {}),
+      ...(this.turnCostOf(skill.id, actor.uid) < 1 ? { turnCost: this.turnCostOf(skill.id, actor.uid) } : {}),
     });
 
     if (!debug && this.mode === 'turns' && !this.noCooldowns && (skill.cooldown ?? 0) > 0) actor.cooldowns[skill.id] = skill.cooldown!;
@@ -2989,7 +3003,7 @@ export class Battle {
 
     if (!debug) {
       this.noteAction(actor.uid, 'skill');
-      this.finishAction(actor, emit, this.turnCostOf(skill.id));
+      this.finishAction(actor, emit, this.turnCostOf(skill.id, actor.uid));
     }
     return { ok: true, events };
   }
@@ -3178,6 +3192,7 @@ export class Battle {
         unit = rest;
       }
       const c = createSetupCombatant(d, 'enemy', slot, `enemy-w${index + 1}-${i}`, unit, this.setup.formulas);
+      if (c.skillDefs) this.treeUnits = true;
       c.wave = index;
       this.combatants.push(c);
       added.push(c);
@@ -3485,7 +3500,7 @@ export class Battle {
       target.statuses = target.statuses.filter((x) => x !== s);
       emit({ type: 'statusEnd', target: target.uid, status: s.kind, dispelled: true, source: source.uid, cause });
       // Damga (Ash Brand) silindi: bağlı telgraf iptal
-      for (const t of this.telegraphs.filter((x) => x.bound === target.uid && this.skill(x.skill)?.telegraph?.status === s.kind)) this.cancelTelegraph(t, 'dispel', emit);
+      for (const t of this.telegraphs.filter((x) => x.bound === target.uid && this.skill(x.skill, x.source)?.telegraph?.status === s.kind)) this.cancelTelegraph(t, 'dispel', emit);
     }
     return picks;
   }
@@ -4372,6 +4387,14 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
     if (finite(ie.startCharge) && ie.startCharge > 0) c.turnCounter = Math.round(formulas.turn.threshold * Math.min(ITEM_HOOK_CAPS.initiative, ie.startCharge));
     if (ie.shieldRefresh && ie.shieldRefresh.start > 0) c.shield += Math.round(c.maxHp * ie.shieldRefresh.start); // Mantle of Valdren
   }
+  // Skill ağacı (derlenmiş; docs/design/skill-tree-implementation.md 4.1): birimin kendi skill'lerinin yamalı tanımları + yamalı pasif.
+  // Verilmezse birim aynı. Skill id'leri değişmez; listede olmayan skill ve id'si farklı pasif yok sayılır.
+  const tr = unit.tree;
+  if (tr?.skills) {
+    const own = Object.entries(tr.skills).filter(([id]) => c.skills.includes(id));
+    if (own.length) c.skillDefs = Object.fromEntries(own);
+  }
+  if (tr?.passive && c.passive && tr.passive.id === c.passive.id) c.passive = tr.passive;
   // Hazır çağrı (ör. düşman Skeleton): çağrı kuralları, sahipsiz ve süresiz
   if (unit.summoned) c.summoned = true;
   if (unit.lockSkills && unit.lockSkills.length > 0) c.lockedSkills = [...unit.lockSkills];

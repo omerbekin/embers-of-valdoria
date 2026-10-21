@@ -42,7 +42,7 @@ const foeSide = (c: Combatant) => (c.side === 'party' ? 'enemy' : 'party');
 
 /** Birimin düşmanı hedefleyen hasar skill'leri. */
 export function rangedSkills(battle: Battle, actor: Combatant): SkillDef[] {
-  return actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && FOE_TARGETS.includes(s.target) && s.effects.some((e) => e.type === 'damage'));
+  return actor.skills.map((id) => battle.skill(id, actor)).filter((s): s is SkillDef => !!s && FOE_TARGETS.includes(s.target) && s.effects.some((e) => e.type === 'damage'));
 }
 
 /** Skill şu an bedeli/cooldown'u (ya da kilidi: lockedSkills) yüzünden kullanılamıyor mu? */

@@ -145,6 +145,7 @@ export interface CampaignMap {
 import type { UnitModifiers, UnitTier } from '../engine/types';
 import type { Equipment, ItemInstance, ItemRoll } from '../progression/items';
 import type { KillRecord, LevelUp, StatAlloc } from '../progression/levels';
+import type { TreeAlloc } from '../progression/skill-tree';
 
 /** Birim bazında güçlendirme/zayıflatma: motorun UnitModifiers'ı (hpMult, statMult, powerMult, spriteScale, actionsPerTurn...). */
 export type UnitMods = UnitModifiers;
@@ -249,10 +250,17 @@ export interface Hero {
   xp: number;
   /** Dağıtılmamış temel stat puanları (level başına 3; kayıt sürümü 9, eski kayıtta level'dan tamamlanır). */
   statPoints?: number;
-  /** Skill puanları (level başına 1; skill ağacı gelene kadar birikir). */
+  /** HARCANMAMIŞ skill puanları (level başına 1; ağacı olmayan class'ta birikir). Değişmez kural: skillPoints + ağaçta harcanan = (level - 1) x 1. */
   skillPoints?: number;
   /** Dağıtılmış temel stat puanları (stat başına puan; progression > baseAttrs). */
   alloc?: StatAlloc;
+  /**
+   * Skill ağacı (kayıt sürümü 12; plan docs/design/skill-tree-implementation.md 3.3): onaylı dağılım (yok = boş ağaç), bir kez bedava respec hakkı
+   * (ağaç verisi değişti), okumada iade bildirimi bayrağı. Onarım: progression > normalizeTree.
+   */
+  tree?: TreeAlloc;
+  freeRespec?: boolean;
+  treeReset?: boolean;
   /** Yara sayısı (Ömer 2026-10-19, hp-death-rework.md; kayıt sürümü 11, eski kayıtta yok = 0): her yara maks can -rules.wounds.maxHpLoss. */
   wounds?: number;
   /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */

@@ -1,0 +1,451 @@
+{
+  "class": "paladin",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "a",
+      "a",
+      "b",
+      "a",
+      "a"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "divine_light",
+      "name": "Divine Light",
+      "passive": true,
+      "karma": "A"
+    },
+    {
+      "skill": "holy_strike",
+      "name": "Holy Strike",
+      "karma": "A"
+    },
+    {
+      "skill": "resurrection",
+      "name": "Resurrection",
+      "karma": "B"
+    },
+    {
+      "skill": "judgment",
+      "name": "Judgment",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "radiance",
+    "name": "Radiance",
+    "karma": "A"
+  },
+  "mastery": {
+    "name": "Crusade Mastery",
+    "karma": "A",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Battle Hymn",
+        "text": "On your first turn of each battle, Holy Strike deals +30% damage.",
+        "src": "A:V2:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Holy Soil",
+        "text": "Your skills deal +8% damage to enemies standing in holy fire.",
+        "src": "A:V4:bar1",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Charging Faith",
+        "text": "Each kill gives you Haste for 1 turn.",
+        "src": "A:V2:bar2",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Kindled Path",
+        "text": "When an enemy dies in holy fire, Judgment's cooldown drops by 1.",
+        "src": "A:V4:bar2",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Crusader's Oath",
+        "text": "Once per battle, when you drop below 30% HP, your next skill is a guaranteed critical.",
+        "src": "A:V2:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Wrathful Glow",
+      "text": "Divine Light also smites the weakest enemy for 4% INT holy damage per rank.",
+      "src": "A:V2:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Kindled Resolve",
+      "text": "Allies healed by Divine Light deal +2% damage per rank on their next skill.",
+      "src": "A:V2:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Bedside Watch",
+      "text": "Divine Light heals 4% more per rank on allies below 50% HP.",
+      "src": "A:V1:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "No Rest for Evil",
+      "text": "When no ally is wounded, Divine Light smites the weakest enemy for 30% INT holy damage.",
+      "src": "A:V2:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Sun-Forged Will",
+      "text": "Divine Light's smite +5% per rank against enemies below 50% HP.",
+      "src": "A:V2:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Twofold Light",
+      "text": "Divine Light always smites too: 20% INT holy damage to the weakest enemy.",
+      "src": "A:V2:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Anointed Arms",
+      "text": "The ally healed by Divine Light deals +15% damage on their next skill.",
+      "src": "A:V2:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Chain of Light",
+      "text": "If Divine Light's smite kills, it smites again at once.",
+      "src": "A:V2:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Vengeful Light",
+      "text": "Divine Light's smite deals double, but its heal is 40% weaker.",
+      "src": "A:V2:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Fervent Oath",
+      "text": "Divine Light's damage bonus to allies doubles, but it can no longer heal you.",
+      "src": "A:V2:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Banner of Dawn",
+      "text": "If Divine Light's target was below 50% HP, they also gain Haste for 1 turn.",
+      "src": "A:V2:0.mb",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Crusader's Dawn",
+      "text": "Divine Light heals the most wounded ally and smites the weakest enemy for the same amount; a kill refunds 5 MP.",
+      "src": "A:V2:0.v",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Relentless Hammer",
+      "text": "Holy Strike +2% power per rank on the enemy you hit last turn.",
+      "src": "A:V2:1.f2",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Piercing Light",
+      "text": "Holy Strike ignores 3% of Magic Armor per rank.",
+      "src": "A:V2:1.f3",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Sparking Hammer",
+      "text": "Holy Strike has a 6% chance per rank to set the target Burning for 2 turns.",
+      "src": "A:V4:1.f2",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "First Smite",
+      "text": "Your first Holy Strike each battle is a guaranteed critical hit.",
+      "src": "A:V2:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Unyielding Swing",
+      "text": "Holy Strike +5% power per rank against front-row enemies.",
+      "src": "A:V2:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Rising Fervor",
+      "text": "Each Holy Strike in a row deals +10% more than the last; using another skill resets it.",
+      "src": "A:V2:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Shockwave",
+      "text": "Holy Strike splashes 30% to the enemies beside the target.",
+      "src": "A:V2:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Hammer Rhythm",
+      "text": "Your third Holy Strike in a row strikes twice.",
+      "src": "A:V2:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Blind Zeal",
+      "text": "Rising Fervor grows +20% per strike, but Divine Light is 30% weaker while it is built up.",
+      "src": "A:V2:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Heavy Hammer",
+      "text": "Holy Strike +35% damage, but it now costs 6 MP.",
+      "src": "A:V2:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Hammerfall Quake",
+      "text": "If Holy Strike kills, the shock hits that enemy's row for 40%.",
+      "src": "A:V2:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Hammer of the Heavens",
+      "text": "Holy Strike calls down two hammers: the second falls on the enemy with the lowest HP for 60%.",
+      "src": "A:V2:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Life for Life",
+      "text": "Resurrection revives with +4% HP per rank, taken from your own HP.",
+      "src": "B:V5:2.f1",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Shielded Return",
+      "text": "Revived allies rise with a shield worth 4% of their max HP per rank.",
+      "src": "B:V3:2.f1",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Desperate Rite",
+      "text": "Resurrection costs 2 less MP per rank while you are below 50% HP.",
+      "src": "B:V5:2.f2",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Soul Exchange",
+      "text": "Resurrection can be paid with 25% of your current HP instead of MP.",
+      "src": "B:V5:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Iron Return",
+      "text": "The first hit a revived ally takes is 10% weaker per rank.",
+      "src": "B:V3:2.r",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Untouchable Rise",
+      "text": "Revived allies rise Fortified for 1 turn.",
+      "src": "B:V3:2.ea",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Quick Absolution",
+      "text": "Resurrection cooldown 5 → 4.",
+      "src": "B:V1:2.eb",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Risen in Glory",
+      "text": "A revived ally gains Blessed for 2 turns and their first skill deals +30%.",
+      "src": "B:V1:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Heavy Absolution",
+      "text": "Revived allies rise with a shield of 30% max HP, but Resurrection cooldown 5 → 7.",
+      "src": "B:V3:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Hasty Rite",
+      "text": "Resurrection's cooldown drops by 2 more, but it revives at only 15% HP.",
+      "src": "B:V1:2.fb",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Not Yet",
+      "text": "Resurrection costs no MP if the ally fell since your last turn.",
+      "src": "B:V1:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Martyr Rising",
+      "text": "Resurrection guards your own life: once per battle, if you fall while it is ready, you rise at 40% HP.",
+      "src": "B:V5:2.v",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Deep Coals",
+      "text": "Holy fire deals 3% more per rank on its second turn and later.",
+      "src": "A:V4:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Kindling",
+      "text": "Enemies in holy fire take +2% damage per rank from Holy Strike.",
+      "src": "A:V2:3.f2",
+      "syn": "Holy Strike",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Spark of Wrath",
+      "text": "Judgment has a 6% chance per rank to set each enemy hit Burning for 2 turns.",
+      "src": "A:V2:3.f3",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Sanctified Earth",
+      "text": "Judgment's holy fire lasts 3 turns instead of 2.",
+      "src": "A:V4:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Ash Upon Ash",
+      "text": "Holy fire +5% damage per rank against Burning enemies.",
+      "src": "A:V2:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Undying Flame",
+      "text": "Holy fire on a cell where an enemy died keeps burning for the rest of the battle at half power.",
+      "src": "A:V4:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Broad Sentence",
+      "text": "Judgment's plus reaches 1 cell further in each direction.",
+      "src": "A:V2:3.eb",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Fire on Fire",
+      "text": "Judgment cast on cells that already burn makes the fire there twice as hot.",
+      "src": "A:V4:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Scorched Earth",
+      "text": "Holy fire lasts 2 more turns, but Judgment's cooldown 3 → 5.",
+      "src": "A:V4:3.fa",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Scattered Flame",
+      "text": "Judgment also covers the center's whole row, but its holy fire deals 30% less.",
+      "src": "A:V2:3.fb",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Wildfire Verdict",
+      "text": "When an enemy dies in holy fire, the fire jumps to the nearest enemy for 2 turns.",
+      "src": "A:V4:3.mb",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Day of Judgment",
+      "text": "When holy fire ends, it erupts: 60% INT holy damage to each enemy still standing in it.",
+      "src": "A:V2:3.v",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Searing Dawn",
+      "text": "Radiance damage +20%.",
+      "src": "A:V2:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Scorching Light",
+      "text": "Radiance sets every enemy Burning for 2 turns.",
+      "src": "A:V2:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Wrath of Heaven",
+      "text": "Radiance's damage gets the missing-HP bonus too: up to +50% on the most wounded enemies.",
+      "src": "A:V2:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Final Light",
+      "text": "Radiance deals +40% to enemies below 30% HP.",
+      "src": "A:V2:4.r1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Reaping Dawn",
+      "text": "Each enemy Radiance kills restores 5 MP.",
+      "src": "A:V2:4.r2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Sunstrike",
+      "text": "If Radiance kills an enemy, its cooldown drops by 2.",
+      "src": "A:V2:4.r3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Focused Beam",
+      "text": "Radiance can target one enemy: it skips the heal and deals 220% damage to that enemy only.",
+      "src": "A:V2:4.d1",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Pillar of Wrath",
+      "text": "The focused beam leaves holy fire on the target's cell for 2 turns.",
+      "src": "A:V2:4.d2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Lance of Dawn",
+      "text": "The focused beam pierces the whole lane behind the target for 60%.",
+      "src": "A:V2:4.d3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Hallowed Steps",
+      "text": "After Radiance, Judgment's cooldown is reset.",
+      "src": "A:V4:4.d1",
+      "syn": "Judgment",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Frugal Glory",
+      "text": "Radiance costs 6 less MP.",
+      "src": "A:V1:4.d2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Second Sunrise",
+      "text": "If Radiance heals 3+ allies below 50% HP, its cooldown is 2 instead of 4 this time.",
+      "src": "A:V1:4.d3",
+      "fx": null
+    }
+  }
+}

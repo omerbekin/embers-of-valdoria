@@ -20,6 +20,9 @@ import type { UnitCarry } from './data';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
 import { LEVELS, addXp, allocate, autoAllocate, nodeXpMult, setLevel, xpToNext, type KillRecord, type StatAlloc } from '../progression/levels';
+import { applyRespec, applyTree, autoTreeHero, respecBlocked, treeChangeBlocked } from '../progression/skill-tree-hero';
+import { treeOf } from '../progression/skill-tree-data';
+import type { TreeAlloc } from '../progression/skill-tree';
 
 const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
@@ -317,6 +320,52 @@ export function autoAllocateRun(run: EndlessRun): EndlessRun {
   if (!run.heroes.some((h) => (h.statPoints ?? 0) > 0)) return run;
   const s = clone(run);
   for (const h of s.heroes) autoAllocate(h);
+  return s;
+}
+
+// ------------------------------------------------------------ skill ağacı (Faz 1b; plan skill-tree-implementation.md 3.3 + 10a)
+// Kurallar src/progression/skill-tree-hero.ts (sefer src/campaign/tree.ts ile aynı). Geçersiz işlem koşuyu DEĞİŞTİRMEZ (aynı nesne döner);
+// kilit Gear ile aynı (gearLockReason: yarım savaş / kalıntı seçimi / bitmiş koşu). Respec bedeli koşu altınından.
+
+/** Ağaç onayı yapılamıyorsa nedeni (yoksa null). `alloc` = onaylanacak TAM dağılım (onaylı ağaç + yeni puanlar). */
+export function runTreeBlocked(run: EndlessRun, heroId: string, alloc: TreeAlloc): string | null {
+  const lock = gearLockReason(run);
+  if (lock) return lock;
+  const h = heroOf(run, heroId);
+  if (!h) return 'Unknown hero';
+  return treeChangeBlocked(h, alloc);
+}
+
+/** Ağaç onayı (Gear > Confirm; Faz 3b): doğrulanır, yeni puanlar harcanmamıştan düşer. Geçersizse koşu aynen döner. */
+export function setRunHeroTree(run: EndlessRun, heroId: string, alloc: TreeAlloc): EndlessRun {
+  if (runTreeBlocked(run, heroId, alloc)) return run;
+  const s = clone(run);
+  applyTree(heroOf(s, heroId)!, alloc);
+  return s;
+}
+
+/** Respec yapılamıyorsa nedeni (yoksa null). */
+export function respecRunBlocked(run: EndlessRun, heroId: string): string | null {
+  const lock = gearLockReason(run);
+  if (lock) return lock;
+  const h = heroOf(run, heroId);
+  if (!h) return 'Unknown hero';
+  return respecBlocked(h, run.gold);
+}
+
+/** Respec (Ömer 10a): onaylı ağacın TAMAMI sıfırlanır, bedel koşu altınından (`freeRespec` varsa bir kez bedava). Geçersizse koşu aynen döner. */
+export function respecRunHeroTree(run: EndlessRun, heroId: string): EndlessRun {
+  if (respecRunBlocked(run, heroId)) return run;
+  const s = clone(run);
+  s.gold -= applyRespec(heroOf(s, heroId)!);
+  return s;
+}
+
+/** Oyuncu vekili (sim; autoAllocateRun gibi): ağacı olan herkesin harcanmamış puanları odaklı kurulumla harcanır. */
+export function autoTreeRun(run: EndlessRun): EndlessRun {
+  if (!run.heroes.some((h) => (h.skillPoints ?? 0) > 0 && treeOf(h.class))) return run;
+  const s = clone(run);
+  for (const h of s.heroes) autoTreeHero(h);
   return s;
 }
 

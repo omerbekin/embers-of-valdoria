@@ -3,8 +3,8 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { activeHeroes, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
-import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, makeItem, statPointsAt, xpToNext } from '../progression';
+import { activeHeroes, autoTreeAll, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
@@ -330,7 +330,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       section: 'Levels',
       icon: 'muscle',
       label: `Set level ${lv}`,
-      hint: `Set every hero to Level ${lv} (XP 0; the campaign stops at Level ${campaignMaxLevel()}); placed stat points are reset and ${statPointsAt(lv)} points wait to be spent`,
+      hint: `Set every hero to Level ${lv} (XP 0; the campaign stops at Level ${campaignMaxLevel()}); placed stat points and the skill tree are reset, ${statPointsAt(lv)} stat points and ${(lv - 1) * LEVELS.skillPointsPerLevel} skill points wait to be spent`,
       run: () => {
         setState(debugSetLevel(ensureState(), lv));
         reload();
@@ -347,6 +347,56 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     run: () => {
       const e = (LEVELS.enemies ??= { enabled: true });
       e.enabled = !e.enabled;
+    },
+  });
+  // Skill ağacı Faz 1a (docs/design/skill-tree-implementation.md): ağaç arayüzü yokken etkisi yazılmış (a) düğümlerin sayılarını görmek için;
+  // yalnızca bellekte (kayda yazmaz), _rules.json ana şalteri kapalıyken de sefer + Endless kahramanlarına level'ına göre odaklı kurulum verir
+  debug.register({
+    id: 'campaign.tree-focus',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: () => `Skill tree focus build: ${debugTreeFocus() ? `direction ${debugTreeFocus()!.dir.toUpperCase()}` : 'off'}`,
+    hint: 'Cycle off / direction A / direction B. While on, Warrior, Defender and Paladin heroes in campaign and Endless battles get a focused skill tree build for their level (session only, not saved). A hero with a saved skill tree (see Spend skill tree points) fights with that tree instead. Only nodes with written effects change numbers (Warrior: Double Strike, Whirlwind, Headsman\'s Blow; Defender: Taunt, Close Ranks, Fist Crush). Check the skill tooltips in the next battle; use Set level 10 / 20 / 30 for bigger builds.',
+    on: () => !!debugTreeFocus(),
+    run: () => {
+      const f = debugTreeFocus();
+      setDebugTreeFocus(!f ? { dir: 'a' } : f.dir === 'a' ? { dir: 'b' } : null);
+    },
+  });
+  // Skill ağacı Faz 1b (kayıt): ağaç ekranı (Faz 3b) gelene kadar kayda ağaç yazmak / respec'i denemek için. Savaşa yalnızca ana şalter açıkken
+  // ya da yukarıdaki odaklı kurulum açıkken girer (kayıtta ağacı olan kahraman kendi ağacıyla)
+  debug.register({
+    id: 'campaign.tree-auto',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: 'Spend skill tree points (saved)',
+    hint: 'Every hero whose class has a skill tree spends their unspent skill points on a focused build, saved into the campaign (as a player would on the tree screen). Classes without a tree keep their points. Battles use the saved tree only while "Skill tree focus build" is on (the skill tree is still switched off in the game).',
+    run: () => {
+      setState(autoTreeAll(ensureState()));
+      reload();
+    },
+  });
+  // Etiket her çizimde okunur: sefer yoksa yeni sefer AÇMAZ (current; ensureState yalnızca run içinde)
+  const respecTarget = (s: CampaignState | null = current()) =>
+    s ? (activeHeroes(s).find((h) => treeOf(h.class) && treeSpent(h) > 0) ?? activeHeroes(s).find((h) => treeOf(h.class))) : undefined;
+  debug.register({
+    id: 'campaign.tree-respec',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: () => {
+      const h = respecTarget();
+      return h ? `Reset skill tree: ${h.class} (${heroRespecCost(h)} gold)` : 'Reset skill tree (no hero with a tree)';
+    },
+    hint: 'Reset the whole skill tree of the first formation hero with a spent tree, paying gold (free once after a tree data update). Points return as unspent skill points. Nothing happens without enough gold, during a paused battle or with an empty tree.',
+    run: () => {
+      const s = ensureState();
+      const h = respecTarget(s);
+      if (!h || respecTreeBlocked(s, h.id)) return;
+      setState(respecHeroTree(s, h.id));
+      reload();
     },
   });
   debug.register({

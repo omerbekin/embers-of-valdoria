@@ -7,6 +7,7 @@ import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promo
 import { valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
+import { normalizeTree } from '../progression/skill-tree-hero';
 import { clampValor } from '../engine/valor';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
@@ -51,7 +52,12 @@ export const SAVE_KEY = 'protomedi.campaign.v1';
  * 11: Can ve ölüm reworkü (Ömer 2026-10-19, hp-death-rework.md): kahraman başına `wounds` (yara sayısı). Sürüm 10 ve öncesi okunurken
  * herkes 0 yara (alan yok); eski cesetler ceset kalır (Valor kaldırır). Bozuk değer 0'a düşer (normalizeState; her okumada, idempotent).
  */
-export const SAVE_VERSION = 11;
+/**
+ * 12: Skill ağacı (Moments; plan docs/design/skill-tree-implementation.md 3.3, Faz 1b): kahraman başına isteğe bağlı `tree` (onaylı dağılım),
+ * `freeRespec` (ağaç verisi değişti: bir kez bedava sıfırlama) ve `treeReset` (okumada iade bildirimi). `skillPoints` = harcanmamış puan.
+ * Göç yok: sürüm 11 ve öncesi okunurken alan yok = boş ağaç, puanlar aynen. Her okumada onarım (progression > normalizeTree; idempotent).
+ */
+export const SAVE_VERSION = 12;
 export const SLOT_COUNT = CONFIG.rules.slots;
 
 export interface KV {
@@ -143,6 +149,7 @@ function upgradeState(s: CampaignState): void {
       promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
       const out = { ...h, equipment: eq };
       normalizeLevelFields(out); // level / XP / puanlar (sürüm 9; bozuk değer varsayılana, hiçbir şey geri alınmaz)
+      normalizeTree(out); // skill ağacı (sürüm 12): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec
       return out;
     });
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
@@ -301,7 +308,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
       return { file: restartForNewMap(m.file), corrupt: m.dropped, migrated: true };
     }
     // Sürüm 2 (yuvalar, sefer durumu v1) ile 3 aynı dosya düzeni; 2'nin durumları cleanEntry > normalizeState ile v2'ye taşınır
-    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
+    if ((parsed.version !== SAVE_VERSION && parsed.version !== 2 && parsed.version !== 3 && parsed.version !== 4 && parsed.version !== 5 && parsed.version !== 6 && parsed.version !== 7 && parsed.version !== 8 && parsed.version !== 9 && parsed.version !== 10 && parsed.version !== 11) || !Array.isArray(parsed.slots)) return { file: empty(), corrupt: true, migrated: false };
     // Sürüm < 8 (Item Güçlendirme): silahsız kahramana sınıfının başlangıç silahı
     const starters = parsed.version < 8 ? migrateStarterWeapons(parsed.slots) : 0;
     const fromV2 = parsed.version === 2;
@@ -327,7 +334,7 @@ export function readSaves(kv: KV | null): { file: SaveFile; corrupt: boolean; mi
     file.lastSlot = typeof parsed.lastSlot === 'number' && file.slots[parsed.lastSlot] ? parsed.lastSlot : null;
     // Sürüm < 6: Valdoria haritası değişti; seferler yeniden başlar (yuva korunur, uyarı işareti)
     // Sürüm 6 -> 7 (Valor): harita aynı, kayıtlar korunur; Valor alanı normalizeState'te tamamlanır, dosya yeni sürümle yeniden yazılır
-    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || starters > 0 };
+    return { file: parsed.version < 6 ? restartForNewMap(file) : file, corrupt, migrated: fromV2 || scaled || parsed.version === 6 || parsed.version === 7 || parsed.version === 8 || parsed.version === 9 || parsed.version === 10 || parsed.version === 11 || starters > 0 };
   } catch {
     return { file: empty(), corrupt: true, migrated: false };
   }

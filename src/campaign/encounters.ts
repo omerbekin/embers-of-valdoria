@@ -105,7 +105,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     const h = id ? heroById(s, id) : undefined;
     if (!h) return;
     // Güç toplama katmanı (temel + item; ileride level/ağaç): hiçbir şey takılı değilse boş => birim bugünküyle aynı
-    const setup: UnitSetup = caps.unitMods ? loadoutSetup(h) : {};
+    const setup: UnitSetup = caps.unitMods ? loadoutSetup(h, { mode: 'campaign' }) : {};
     // Yara (Ömer 2026-10-19, hp-death-rework.md): her yara maks canı rules.wounds.maxHpLoss düşürür (kurulumda hpMult / hpAdd; motor aynı)
     if (caps.unitMods && woundCount(h) > 0) applyWounds(setup, woundCount(h), CONFIG.rules.wounds);
     // Can taşıma: eksik canlı karakter o oranla başlar (motor en az 1 can verir)

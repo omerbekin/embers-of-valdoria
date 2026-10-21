@@ -9,7 +9,7 @@ import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
 import './gear-plates.css';
-import { allocateStats, activeHeroes, heroWoundsLine, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { allocateStats, heroTreeBlocked, setHeroTree, activeHeroes, heroWoundsLine, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
 import { woundCount } from '../progression/wounds';
 import {
   fitsSlot,
@@ -33,6 +33,7 @@ import {
   levelReqMsg,
   instanceLevelReq,
   type StatAlloc,
+  type TreeAlloc,
 } from '../progression';
 import type { Attribute } from '../engine';
 import { lockInput, unlockInput } from './input-lock';
@@ -86,6 +87,8 @@ export interface GearHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Skill ağacı (Faz 1b kayıt alanı; ekranı Faz 3b): onaylı dağılım (yoksa boş ağaç). */
+  tree?: TreeAlloc;
   /** Şu anki can oranı (Sheet'te "93 / 150" + çubuk; yoksa dolu). */
   hpRatio?: number;
   /** Yara satırı (hero ipucunda; Ömer 2026-10-19): "Wounds: 2 (-40% max HP)". */
@@ -114,6 +117,8 @@ export interface GearSource {
   emptyText?: string;
   /** Stat puanı dağıt (levels.md; Character sayfasındaki Confirm). Yoksa puan dağıtımı gösterilmez. */
   allocate?(heroId: string, add: StatAlloc): void;
+  /** Skill ağacı onayı (Faz 1b kaynak bağlantısı; ekranı Faz 3b): `alloc` = onaylanacak TAM dağılım (onaylı + yeni puanlar). Geçersizse Error. */
+  setTree?(heroId: string, alloc: TreeAlloc): void;
 }
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
@@ -134,6 +139,12 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
     equipBest: (ids) => apply((x) => equipBest(x, ids)),
     emptyText: 'The bag is empty. Victories and chests bring new gear.',
     allocate: (heroId, add) => apply((x) => allocateStats(x, heroId, add)),
+    setTree: (heroId, alloc) =>
+      apply((x) => {
+        const why = heroTreeBlocked(x, heroId, alloc);
+        if (why) throw new Error(why);
+        return setHeroTree(x, heroId, alloc);
+      }),
   };
 }
 

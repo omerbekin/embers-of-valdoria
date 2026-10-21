@@ -14,4 +14,5 @@ export * from './merchant';
 export * from './town';
 export * from './suspend';
 export * from './xp';
+export * from './tree';
 export * from './smith';

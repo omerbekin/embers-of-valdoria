@@ -2464,7 +2464,7 @@ export class BattleScene extends Phaser.Scene {
     const hourglass = this.texUrl(ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false));
     const skills: NonNullable<UnitCard['skills']> = [];
     for (const id of c.skills) {
-      const sk = content.skills[id];
+      const sk = this.battle.skill(id, c) ?? content.skills[id]; // birimin kendi (skill ağacıyla yamalı) tanımı önce
       if (!sk) continue;
       const chips = this.skillCostChips(c, sk);
       skills.push({
@@ -2482,7 +2482,7 @@ export class BattleScene extends Phaser.Scene {
     // Seçili skill'in bu birime önizlemesi (motorun previewSkill'i): isabet şansı + hasar / şifa aralığı
     let preview: UnitCard['preview'] = null;
     if (this.selected && this.playerCanAct) {
-      const sk = content.skills[this.selected.skill];
+      const sk = this.battle.skill(this.selected.skill, this.selected.actor) ?? content.skills[this.selected.skill];
       const valid = sk && this.battle.validTargets(this.selected.actor, sk.id).some((t) => t.uid === uid);
       if (sk && valid && !this.battle.isAreaSkill(sk.id)) {
         const pv = previewSkill(this.battle, this.selected.actor, sk.id, uid).find((x) => x.uid === uid);
@@ -4076,7 +4076,7 @@ export class BattleScene extends Phaser.Scene {
     const turns = this.battle.mode === 'turns';
     const skills: HudSkill[] = [];
     actor.skills.forEach((skillId, idx) => {
-      const skill = content.skills[skillId];
+      const skill = this.battle.skill(skillId, actor) ?? content.skills[skillId]; // skill ağacı: ipucu / bedel / cooldown yamalı sayıyla
       if (!skill) return;
       const wait = turns ? (actor.cooldowns[skill.id] ?? 0) : 0;
       skills.push({

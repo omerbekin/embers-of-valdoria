@@ -198,7 +198,7 @@ export class ValueContext {
       // Yalnızca bedeli (yakında) ödenebilen skill'ler: MP'si bir tur yenilenmeyle yetmeyen pahalı skill o birimin tur değerini şişirmez
       const mpSoon = u.mp + (this.battle.mode === 'turns' ? u.stats.mpRegen : 0);
       v = Math.max(0, ...u.skills.map((id) => {
-        const sk = this.battle.skill(id);
+        const sk = this.battle.skill(id, u);
         if (!sk) return 0;
         // (ölü birim: diriltme sonrası MP'si belirsiz; süzgeç yok)
         if (u.hp > 0 && sk.cost.resource === 'mp' && !this.battle.freeMp && sk.cost.amount > mpSoon) return 0;
@@ -286,7 +286,7 @@ export class ValueContext {
     const b = this.battle;
     let best: number | undefined;
     for (const id of f.skills) {
-      const sk = b.skill(id);
+      const sk = b.skill(id, f);
       if (!sk || !ATTACK_TARGETS.includes(sk.target) || !sk.effects.some((e) => e.type === 'damage')) continue;
       if (b.mode === 'turns' && (f.cooldowns[sk.id] ?? 0) > 0) continue;
       if ((sk.cost.resource === 'mp' && !b.freeMp && f.mp < sk.cost.amount) || (sk.cost.resource === 'rage' && (f.rage ?? 0) < sk.cost.amount)) continue;
@@ -311,7 +311,7 @@ export class ValueContext {
     for (const s of b.living(f.side)) {
       if (s.summoned || v <= share) continue;
       for (const id of s.skills) {
-        const sk = b.skill(id);
+        const sk = b.skill(id, s);
         if (!sk || !sk.effects.some((e) => e.type === 'summon' && e.unit === f.defId)) continue;
         const cd = b.mode === 'turns' && !b.noCooldowns ? Math.max(0, s.cooldowns[id] ?? 0) : 0;
         if (cd >= this.turnsWithin(s)) continue; // ufukta hazır olmuyor
@@ -398,7 +398,7 @@ export class ValueContext {
       for (const e of sk.effects) if (e.type === 'ground') v += attributePower(f.stats, e.scale, this.battle.formulas) * e.power * e.turns * 0.7;
       return v * (this.battle.isAreaSkill(sk.id) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
     };
-    const skills = f.skills.map((id) => this.battle.skill(id)).filter((sk): sk is SkillDef => !!sk);
+    const skills = f.skills.map((id) => this.battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk);
     const free = Math.max(0, ...skills.filter((sk) => sk.cost.resource !== 'mp' || sk.cost.amount <= 0).map(raw));
     // MP etkisi kalıcıdır (yenilenene kadar): mana ufku = birimin ufuktaki turu x manaHorizonMult (tam tur)
     const T = Math.max(1, Math.round(this.turnsWithin(f) * this.vc.manaHorizonMult));
@@ -442,7 +442,7 @@ export class ValueContext {
       for (const e of sk.effects) if (e.type === 'ground') v += attributePower(f.stats, e.scale, this.battle.formulas) * e.power * e.turns * 0.7;
       return v * (this.battle.isAreaSkill(sk.id) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
     };
-    const skills = f.skills.map((id) => this.battle.skill(id)).filter((sk): sk is SkillDef => !!sk);
+    const skills = f.skills.map((id) => this.battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk);
     const free = Math.max(0, ...skills.filter((sk) => sk.cost.resource !== 'mp' || sk.cost.amount <= 0).map(raw));
     const regen = this.battle.mode === 'turns' ? f.stats.mpRegen : 0;
     const n = Math.min(turns, Math.max(1, Math.ceil(this.turnsWithin(f) - 1e-9)));
@@ -503,7 +503,7 @@ export class ValueContext {
 
   /** Birimin hücreden vurabilecek durumda olup olmadığı (menzil: range.md; skill'lerinin kaçı oradan bir düşmana ulaşır). Varsayımsal hücre (dirilme/çağrı). */
   usefulAt(u: Combatant | { uid: string; skills: string[]; defId?: string }, side: Combatant['side'], slot: number): number {
-    const skills = u.skills.map((id) => this.battle.skill(id)).filter((s): s is SkillDef => !!s && s.effects.some((e) => e.type === 'damage' || e.type === 'heal' || e.type === 'hot' || e.type === 'shield'));
+    const skills = u.skills.map((id) => this.battle.skill(id, u.uid)).filter((s): s is SkillDef => !!s && s.effects.some((e) => e.type === 'damage' || e.type === 'heal' || e.type === 'hot' || e.type === 'shield'));
     if (skills.length === 0) return 1;
     let ok: SkillDef[];
     if (this.battle.rangeOn) ok = skills.filter((s) => this.battle.skillReachesFromCell(u.defId, side, s, slot));
@@ -533,7 +533,7 @@ function predictFoes(battle: Battle, actor: Combatant, focusOf: (c: Combatant) =
   for (const foe of battle.living(foeSideOf(actor))) {
     if (foe.statuses.some((s) => battle.statusDef(s.kind)?.skipTurn && s.turns > 0)) continue;
     const usable = foe.skills
-      .map((id) => battle.skill(id))
+      .map((id) => battle.skill(id, foe))
       .filter((sk): sk is SkillDef => !!sk && ATTACK_TARGETS.includes(sk.target) && sk.effects.some((e) => e.type === 'damage'))
       .filter((sk) => !(battle.mode === 'turns' && (foe.cooldowns[sk.id] ?? 0) > 0))
       .filter((sk) => !(sk.cost.resource === 'mp' && !battle.freeMp && foe.mp < sk.cost.amount) && !(sk.cost.resource === 'rage' && (foe.rage ?? 0) < sk.cost.amount));

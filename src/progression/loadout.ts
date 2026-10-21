@@ -10,6 +10,9 @@ import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSe
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
 import { LEVELS, type StatAlloc } from './levels';
+import type { TreeAlloc } from './skill-tree';
+import { treeSetupFor } from './skill-tree-compile';
+import type { TreeMode } from './skill-tree-data';
 
 /** Güç katmanının girdisi: sefer kahramanı (campaign Hero) ve endless kahramanı bu şekle uyar. */
 export interface LoadoutSource {
@@ -19,6 +22,8 @@ export interface LoadoutSource {
   equipment?: Partial<Equipment>;
   /** Level sistemi (Ömer 2026-10-17): dağıtılmış temel stat puanları (puan x levels.json > statPerPoint temel stata eklenir). */
   alloc?: StatAlloc;
+  /** Skill ağacı dağılımı (docs/design/skill-tree-implementation.md): sefer Hero / Endless kahramanının kayıttaki `tree` alanı (Faz 1b). Yalnızca `mode` verilip açıksa savaşa girer. */
+  tree?: TreeAlloc;
 }
 
 export interface LoadoutResult {
@@ -312,7 +317,11 @@ export function summonBaseOf(src: LoadoutSource): Attributes | undefined {
   return out;
 }
 
-export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase'> {
+/**
+ * `mode`: skill ağacının modu (sefer 'campaign', Endless 'endless'); verilmezse ağaç YOK (arayüz önizlemeleri, golden kayıtlar, QB). Ağaç ancak
+ * _rules.json ana şalteri + mod bayrağı açıksa (ya da debug odaklı kurulum açıksa) `tree` olarak eklenir (skill-tree-compile.ts > treeSetupFor).
+ */
+export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: TreeMode } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase' | 'tree'> {
   const l = loadout(src);
   let fx = l.itemEffects;
   if (fx && o.effects === false) {
@@ -328,5 +337,6 @@ export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean } = {}):
   const final = base ? applyUnitModifiers(classes[src.class]!, l.modifiers, formulas).attributes : undefined;
   const differs = !!base && !!final && ATTRS.some((a) => base[a] !== final[a]);
   const level = Math.floor(src.level ?? 1);
-  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}) };
+  const tree = o.mode ? treeSetupFor(src, o.mode) : undefined;
+  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}), ...(tree ? { tree } : {}) };
 }

@@ -580,6 +580,11 @@ export interface UnitSetup {
   fallAllyHealRatio?: number;
   /** Epic item özel etkileri (madde 292; yalnızca güç katmanı `src/progression/loadout.ts` verir; QB / MP / düşmanlar vermez). */
   itemEffects?: ItemEffects;
+  /**
+   * Skill ağacının DERLENMİŞ hâli (docs/design/skill-tree-implementation.md 4.1; yalnızca güç katmanı verir: src/progression/skill-tree-compile.ts).
+   * Motor ağaç biçimini bilmez; yalnızca yamalı tanımları kullanır. Verilmezse birim bugünküyle birebir aynı.
+   */
+  tree?: TreeSetup;
   /** Başlangıç MP'si (mutlak; [0, maks MP]). startMpRatio'dan önceliklidir. */
   startMp?: number;
   /** Başlangıç MP oranı (0-1). */
@@ -629,6 +634,17 @@ export interface UnitSetup {
   startCooldowns?: Record<string, number>;
   /** Birim savaşa CESET olarak girer (önceki dalgada düştü): can 0, ceset 'revivable' ya da 'consumed'; sırası yok, Resurrection / Raise Dead kuralları geçerli. */
   startDead?: 'revivable' | 'consumed';
+}
+
+/**
+ * Skill ağacının derlenmiş hâli (UnitSetup.tree). Skill id'leri DEĞİŞMEZ (eylem günlüğü, cooldown anahtarları, arayüz ikon/vfx aramaları aynen
+ * çalışır); yalnızca sayılar değişir. Faz 1a: skills + passive; (b)/(c) kanalları (fx / hooks) sonraki fazlarda eklenir.
+ */
+export interface TreeSetup {
+  /** Yamalı TAM skill tanımları (skill id -> tanım); yalnızca ağacın değiştirdiği skill'ler. Birimin skill listesinde olmayan id yok sayılır. */
+  skills?: Record<string, SkillDef>;
+  /** Yamalı pasif (aynı id'li sınıf pasifinin yerine geçer; id farklıysa yok sayılır). */
+  passive?: PassiveDef;
 }
 
 /** Savaş sonu özetinde tek birim (src/engine/battle-summary.ts > battleSummary). */
@@ -1373,6 +1389,11 @@ export interface Combatant {
   statuses: Status[];
   tags: string[];
   skills: string[];
+  /**
+   * Skill ağacı (UnitSetup.tree.skills): bu birimin YAMALI skill tanımları (id aynı; yalnızca ağacın değiştirdikleri). Battle.skill(id, uid)
+   * önce buraya, yoksa ortak tabloya (setup.skills) bakar. Ağaçsız birimde tanımsız.
+   */
+  skillDefs?: Record<string, SkillDef>;
   summoned: boolean;
   /** Çağrılan birimin kalan tur sayısı (kendi turları). */
   lifespan: number | undefined;

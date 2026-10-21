@@ -10,3 +10,9 @@ export * from './drop';
 export * from './affix-fit';
 export * from './weapon';
 export * from './levels';
+// Skill ağacı: kural modülünün kısa adları (check, take, spent...) çakışmasın diye ad alanı olarak; veri + derleyici doğrudan
+export * as skillTree from './skill-tree';
+export type { TreeAlloc, TreeBlock, TreeBlockCode, TreeNode, TreeNodeState, FocusOptions } from './skill-tree';
+export * from './skill-tree-data';
+export * from './skill-tree-compile';
+export * from './skill-tree-hero';

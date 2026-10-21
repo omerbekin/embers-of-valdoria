@@ -489,10 +489,10 @@ function buildOptions(battle: Battle, actor: Combatant, profile: AiProfile, trac
   for (const o of options) if (o.skill.effects.some((e) => e.type === 'bond')) o.bond = bondValue(battle, actor, o, bestHit, profile);
   // Yarım turn (turnCost < 1): sıra (1 - turnCost) kadar erken geri gelir; o kadar "bedava" tam turn hamlesi değeri eklenir (skill kendi değer üretiyorsa)
   if (battle.mode === 'turns') {
-    const full = options.filter((x) => battle.turnCostOf(x.skill.id) >= 1);
+    const full = options.filter((x) => battle.turnCostOf(x.skill.id, actor.uid) >= 1);
     const fullBest = Math.max(0, ...full.map((x) => (x.pureBuff ? x.buff : value(x)) - x.cost));
     for (const o of options) {
-      const tc = battle.turnCostOf(o.skill.id);
+      const tc = battle.turnCostOf(o.skill.id, actor.uid);
       if (tc < 1 && (o.pureBuff ? o.buff : value(o)) > 0) o.tempo = (1 - tc) * fullBest;
     }
   }
@@ -532,7 +532,7 @@ function reservedMp(battle: Battle, actor: Combatant, profile: AiProfile): Reser
   if (battle.mode !== 'turns') return [];
   const out: Reserve[] = [];
   for (const id of actor.skills) {
-    const sk = battle.skill(id);
+    const sk = battle.skill(id, actor);
     const turns = actor.cooldowns[id] ?? 0;
     if (!sk?.ai?.reserveMp || sk.cost.resource !== 'mp' || turns > sk.ai.reserveMp) continue;
     const need = mpNeedOf(sk, actor);
@@ -553,7 +553,7 @@ function spentReserves(actor: Combatant, o: Option, reserves: Reserve[]): Reserv
 
 /** Bir skill'in tüm (hedef/alan) seçenekleri. Bekleme ve MP denetimi YAPMAZ (çağıran denetler). */
 function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile: AiProfile): Option[] {
-  const skill = battle.skill(skillId)!;
+  const skill = battle.skill(skillId, actor)!;
   if (skill.telegraph) return telegraphOptions(battle, actor, skill, profile);
   const candidates = battle.validTargets(actor.uid, skillId);
   if (candidates.length === 0) return [];
@@ -610,7 +610,7 @@ function incomingDamage(battle: Battle, actor: Combatant): number {
   for (const foe of battle.living(foeSide(actor))) {
     let top = 0;
     for (const id of foe.skills) {
-      const sk = battle.skill(id);
+      const sk = battle.skill(id, foe);
       if (!sk || !attacking.includes(sk.target)) continue;
       if (sk.cost.resource === 'mp' && foe.mp < sk.cost.amount) continue;
       if (sk.cost.resource === 'rage' && (foe.rage ?? 0) < sk.cost.amount) continue;
@@ -657,7 +657,7 @@ function lifestealRatio(battle: Battle, actor: Combatant): number {
   const pe = actor.passive?.effect;
   const passive = pe?.type === 'soulDrain' ? pe.ratio : 0;
   let skill = 0;
-  for (const id of actor.skills) for (const e of battle.skill(id)?.effects ?? []) if (e.type === 'damage') skill = Math.max(skill, e.lifesteal ?? 0);
+  for (const id of actor.skills) for (const e of battle.skill(id, actor)?.effects ?? []) if (e.type === 'damage') skill = Math.max(skill, e.lifesteal ?? 0);
   return passive + skill;
 }
 
@@ -686,12 +686,12 @@ function bondValue(battle: Battle, actor: Combatant, o: Option, bestHit: number,
 
 /** Birimin büyü hasarı veren bir skill'i var mı (Spell Ward'ın emebileceği saldırgan)? */
 function hasMagicAttack(battle: Battle, c: Combatant): boolean {
-  return c.skills.some((id) => battle.skill(id)?.effects.some((e) => e.type === 'damage' && e.damageType === 'magic'));
+  return c.skills.some((id) => battle.skill(id, c)?.effects.some((e) => e.type === 'damage' && e.damageType === 'magic'));
 }
 
 /** Birimin herhangi bir hasar skill'i var mı? */
 function hasAttack(battle: Battle, c: Combatant): boolean {
-  return c.skills.some((id) => battle.skill(id)?.effects.some((e) => e.type === 'damage'));
+  return c.skills.some((id) => battle.skill(id, c)?.effects.some((e) => e.type === 'damage'));
 }
 
 function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Combatant[], targetUid: string | undefined, profile: AiProfile, areaCells?: number[], centerUid?: string): Option {
@@ -967,7 +967,7 @@ function hitLossRaw(battle: Battle, attacker: Combatant, victim: Combatant, accD
   const after = hitChance({ accuracy: Math.max(0, a.accuracy + accDelta) }, { evasion: Math.max(0, v.evasion + evaDelta) }, f);
   let top = 0;
   for (const id of attacker.skills) {
-    const sk = battle.skill(id);
+    const sk = battle.skill(id, attacker);
     if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
     if (sk.cost.resource === 'mp' && attacker.mp < sk.cost.amount) continue;
     if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
@@ -991,7 +991,7 @@ function hitCritLoss(battle: Battle, attacker: Combatant, victim: Combatant, acc
   const cm = attacker.stats.critMult;
   let top = 0;
   for (const id of attacker.skills) {
-    const sk = battle.skill(id);
+    const sk = battle.skill(id, attacker);
     if (!sk || !ATTACK_TARGETS.includes(sk.target)) continue;
     if (sk.cost.resource === 'mp' && attacker.mp < skillCostAmount(sk.cost, attacker)) continue;
     if (sk.cost.resource === 'rage' && (attacker.rage ?? 0) < sk.cost.amount) continue;
@@ -1231,7 +1231,7 @@ function reviveTerm(ctx: ValueContext, o: Option, add: (k: string, v: number) =>
   const slots = battle.reviveSlots(ctx.actor.uid, o.skill.id);
   if (slots.length === 0) return;
   const meleeRows = battle.rangeOn ? 1 : battle.formulas.formation.meleeRows;
-  const hasMelee = d.skills.some((id) => { const sk = battle.skill(id); return !!sk && (battle.rangeOn ? battle.rangeOf(d, sk) <= 1 : sk.motion === 'melee'); });
+  const hasMelee = d.skills.some((id) => { const sk = battle.skill(id, d); return !!sk && (battle.rangeOn ? battle.rangeOf(d, sk) <= 1 : sk.motion === 'melee'); });
   const hp = Math.max(1, Math.round(d.maxHp * e.hpRatio));
   const avgHit = ctx.intents.length > 0 ? ctx.intents.reduce((a, i) => a + i.hit, 0) / ctx.intents.length : 0;
   const rankOf = (slot: number) => {
@@ -1312,7 +1312,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
         // Wound: düşman takımının bu süre içinde hedefe yapacağı beklenen şifanın azalması (şifacıların tur başı ham şifası / düşman sayısı)
         const foes = battle.living(t.side);
         const healPerTurn = foes.reduce((a, f) => a + Math.max(0, ...f.skills.map((id) => {
-          const sk = battle.skill(id);
+          const sk = battle.skill(id, f);
           return sk ? sum(sk.effects.map((e) => (e.type === 'heal' ? attributePower(f.stats, e.scale, battle.formulas) * e.power : e.type === 'hot' ? attributePower(f.stats, e.scale, battle.formulas) * e.power * e.turns : 0))) : 0;
         })), 0) / Math.max(1, foes.length);
         v += p * (1 - def.healTakenMult) * healPerTurn * own * ctx.vc.contributionShare;
@@ -1461,7 +1461,7 @@ function advanceValue(ctx: ValueContext, o: Option): number {
     gain = attackSkills.length > 0 && !canFrom(actor.slot) && canFrom(to) ? ctx.turnValue(actor) * (vc.advanceMeleeShare ?? 0.5) : 0;
     extra = Math.max(0, incomingAt(battle, actor, to) - incomingAt(battle, actor, actor.slot));
   } else {
-    const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
+    const meleeSkills = actor.skills.map((id) => battle.skill(id, actor)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
     const canFrom = (slot: number) => meleeSkills.some((sk) => battle.canMeleeFrom(actor.uid, slot, battle.reachOf(actor, sk)));
     gain = meleeSkills.length > 0 && !canFrom(actor.slot) && canFrom(to) ? ctx.turnValue(actor) * (vc.advanceMeleeShare ?? 0.5) : 0;
     extra = Math.max(0, meleeIncoming(battle, actor, to) - meleeIncoming(battle, actor, actor.slot));
@@ -1496,7 +1496,7 @@ function protectValue(ctx: ValueContext, o: Option): number {
       const foe = battle.get(i.foe);
       if (foe && battle.ignoresTaunt(foe)) continue; // boss taunt'a uymaz (madde 271): onun hasarı yönlenmez
       // Yalnızca tek hedefli saldırıyla gelen hasar yönlenir; alan skill'i olan düşmanın payı yarım sayılır
-      const single = foe?.skills.some((id) => battle.skill(id)?.target === 'single_enemy') ? 1 : 0.5;
+      const single = foe?.skills.some((id) => battle.skill(id, foe)?.target === 'single_enemy') ? 1 : 0.5;
       redirected += i.hit * single;
       if (i.before) pulled.set(i.target, (pulled.get(i.target) ?? 0) + i.hit * single);
     }
@@ -1681,7 +1681,7 @@ function restGain(battle: Battle, actor: Combatant, profile: AiProfile, g: AiGlo
   const regen = turnsMode ? actor.stats.mpRegen : 0;
   let top = 0;
   for (const id of actor.skills) {
-    const sk = battle.skill(id);
+    const sk = battle.skill(id, actor);
     if (!sk || sk.cost.resource !== 'mp' || sk.cost.amount <= 0) continue;
     const cd = turnsMode ? (actor.cooldowns[id] ?? 0) : 0;
     const wait = Math.max(1, cd);
@@ -1710,7 +1710,7 @@ function meleeIncoming(battle: Battle, actor: Combatant, slot: number): number {
     if (foe.board !== foe.side) continue; // tahtamıza sızmış çağrılar (yalnızca bitişik): bu hesabın dışında
     let top = 0;
     for (const id of foe.skills) {
-      const sk = battle.skill(id);
+      const sk = battle.skill(id, foe);
       if (!sk || sk.motion !== 'melee' || sk.target === 'self') continue;
       if (battle.get(foe.uid)?.cooldowns[id]) continue;
       if (sk.cost.resource === 'mp' && foe.mp < sk.cost.amount) continue;
@@ -1758,9 +1758,9 @@ function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNo
   // 0) Telgraftan kaçma (M12): bekleyen düşman çökmesi/damgası tarafımıza beklenen hasarı azaltan hücre (üst üste Move kuralı burada yok: amaçlı kaçış)
   const dodge = telegraphDodgeLegacy(battle, actor, free, vNow);
   if (battle.lastActionOf(actor.uid) === 'move') return dodge;
-  const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
+  const meleeSkills = actor.skills.map((id) => battle.skill(id, actor)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
   // O3 (madde 254): "kırılgan" = yakın dövüş skill'i yok VE canı eksik (tam canla geri çekilme yok: retreatHpRatio x 2'nin üstünde değil)
-  const fragile = !actor.skills.some((id) => battle.skill(id)?.motion === 'melee') && ratio(actor) < Math.min(1, g.move.retreatHpRatio * 2);
+  const fragile = !actor.skills.some((id) => battle.skill(id, actor)?.motion === 'melee') && ratio(actor) < Math.min(1, g.move.retreatHpRatio * 2);
   const wounded = ratio(actor) < g.move.retreatHpRatio;
   const meleeRows = battle.formulas.formation.meleeRows;
   const pickSlot = (slots: number[], adj: (slot: number) => number): number => {
@@ -1842,7 +1842,7 @@ function telegraphDodgeLegacy(battle: Battle, actor: Combatant, free: number[], 
   if (battle.telegraphs.length === 0) return null;
   const now = telegraphLoad(battle, actor, actor.slot);
   if (now <= 0) return null;
-  const meleeSkills = actor.skills.map((id) => battle.skill(id)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
+  const meleeSkills = actor.skills.map((id) => battle.skill(id, actor)).filter((s): s is SkillDef => !!s && s.motion === 'melee' && s.target !== 'self' && !s.ignoreFrontRow && !s.ignoreReach);
   const canMelee = (s: number) => meleeSkills.some((sk) => battle.canMeleeFrom(actor.uid, s, battle.reachOf(actor, sk)));
   const meleeNow = canMelee(actor.slot);
   let best: MovePlan | null = null;
@@ -1982,7 +1982,7 @@ function chooseGlobal(battle: Battle, actor: Combatant, profile: AiProfile, g: A
     // Şimdiki hamlenin Rage bedeli (MP bedeli yukarıda `spend`)
     const rageSpend = pick && pick.option.skill.cost.resource === 'rage' && !battle.freeRage ? pick.option.skill.cost.amount : 0;
     for (const id of actor.skills) {
-      const sk = battle.skill(id);
+      const sk = battle.skill(id, actor);
       if (!sk || (actor.cooldowns[id] ?? 0) !== 1) continue;
       const need = sk.cost.resource === 'mp' ? mpNeedOf(sk, actor) : 0;
       if (sk.cost.resource === 'mp' && !battle.freeMp && Math.min(actor.maxMp, actor.mp + regen) < need) continue;
@@ -2161,7 +2161,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
       ...(o.tempo > 0 ? { tempo: r1(o.tempo) } : {}),
       ...(o.curse > 0 ? { curse: r1(o.curse) } : {}),
       ...(o.notes.length > 0 ? { notes: [...o.notes] } : {}),
-      ...(battle.turnCostOf(o.skill.id) < 1 ? { turnCost: battle.turnCostOf(o.skill.id) } : {}),
+      ...(battle.turnCostOf(o.skill.id, actor.uid) < 1 ? { turnCost: battle.turnCostOf(o.skill.id, actor.uid) } : {}),
       revive: r1(o.revive),
       ...(o.reviveSlot !== undefined ? { reviveSlot: o.reviveSlot } : {}),
       cost: r1(o.cost),
@@ -2256,7 +2256,7 @@ function blockedReason(battle: Battle, actor: Combatant, o: Option, reserves: Re
 }
 
 function describeCanUse(battle: Battle, actor: Combatant, id: string, reason: string): string {
-  const sk = battle.skill(id);
+  const sk = battle.skill(id, actor);
   if (reason === 'On cooldown') return `on cooldown (${actor.cooldowns[id] ?? 0} own turn(s) left)`;
   if (reason === 'Not enough MP' && sk) return `not enough MP (needs ${sk.cost.amount}, has ${actor.mp})`;
   if (reason === 'Not enough rage' && sk) return `not enough Rage (needs ${sk.cost.amount}, has ${actor.rage ?? 0})`;

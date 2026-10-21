@@ -1,0 +1,475 @@
+{
+  "class": "warrior",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "b",
+      "b",
+      "a",
+      "a",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "berserker",
+      "name": "Berserker",
+      "passive": true,
+      "karma": "B"
+    },
+    {
+      "skill": "melee_attack",
+      "name": "Double Strike",
+      "karma": "B"
+    },
+    {
+      "skill": "whirlwind",
+      "name": "Whirlwind",
+      "karma": "A"
+    },
+    {
+      "skill": "charge",
+      "name": "Charge",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "headsmans_blow",
+    "name": "Headsman's Blow",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Iron Mastery",
+    "karma": "B",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Heavy Hand",
+        "text": "Your first skill each battle Slows its target for 1 turn.",
+        "src": "B:V4:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Second Wind",
+        "text": "The first time you drop below 30% HP in a battle, heal 10% of your max HP.",
+        "src": "B:V3:bar0",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Crushing Weight",
+        "text": "Your skills deal +8% damage to Stunned, Slowed or Staggered enemies.",
+        "src": "B:V4:bar2",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Stubborn Heart",
+        "text": "At the start of your turn below 25% HP, heal 3% of your max HP.",
+        "src": "B:V3:bar3",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Stagger Step",
+        "text": "Once per battle, when you Stun an enemy, your next turn comes 30% sooner.",
+        "src": "B:V4:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Thick Hide",
+      "text": "While below 50% HP, you take 2% less damage per rank.",
+      "src": "B:V3:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Grit",
+      "text": "While below 25% HP, healing you receive is 5% stronger per rank.",
+      "src": "B:V3:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Shared Scars",
+      "text": "Your Berserker bonus is 2% higher per rank for each ally below 50% HP.",
+      "src": "B:V5:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Iron Retort",
+      "text": "The first enemy to drop you below 50% HP is Stunned for 1 turn.",
+      "src": "B:V4:0.mb",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Hardened",
+      "text": "Each time you become Fortified, heal 2% of your max HP per rank.",
+      "src": "B:V3:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Measured Mending",
+      "text": "Healing you receive is 25% stronger below 50% HP, but halved above it.",
+      "src": "B:V3:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Stand Firm",
+      "text": "A single hit that would take 30%+ of your max HP is reduced by 25%.",
+      "src": "B:V3:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Red Line",
+      "text": "Healing that would lift you above 50% HP becomes a shield for 2 turns instead.",
+      "src": "B:V3:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Grave Pact",
+      "text": "While below 25% HP, your skills lifesteal 15%, but above 50% HP they deal 15% less damage.",
+      "src": "B:V3:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Iron Will",
+      "text": "Stun and Slow on you last 1 turn shorter, but healing you receive is 20% lower.",
+      "src": "B:V3:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Not Today",
+      "text": "Once per battle, a killing blow leaves you at 1 HP and you become Fortified for 1 turn.",
+      "src": "B:V3:0.mb",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Undying Rage",
+      "text": "Berserker evolves: below 25% HP, a non-critical hit cannot take you below 1 HP; each hit saved this way costs 10 Rage.",
+      "src": "B:V3:0.v",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Knee Cutter",
+      "text": "Double Strike has a 5% chance per rank to Slow the target for 1 turn.",
+      "src": "B:V4:1.f2",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Notched Axe",
+      "text": "Double Strike's second hit +4% power per rank.",
+      "src": "B:V1:1.f1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage:1",
+          "f": "power",
+          "op": "pct",
+          "v": 0.04,
+          "rank": true
+        }
+      ]
+    },
+    "1.f3": {
+      "name": "Hard Knocks",
+      "text": "Double Strike's second hit +4% critical chance per rank against Slowed targets.",
+      "src": "B:V4:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Gut Strike",
+      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for +20%.",
+      "src": "B:V1:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Bone Saw",
+      "text": "Double Strike ignores 4% of Armor per rank on Wounded targets.",
+      "src": "B:V1:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Hamstring",
+      "text": "Double Strike's second hit Slows the target for 1 turn.",
+      "src": "B:V4:1.eb",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Deep Gash",
+      "text": "Double Strike's Wound lasts 4 turns instead of 2.",
+      "src": "B:V1:1.ea",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Hobble",
+      "text": "Double Strike on a Slowed target extends the Slow by 1 turn and deals +15% damage.",
+      "src": "B:V4:1.mb",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Crippling Pair",
+      "text": "Double Strike's Slow lasts 2 turns, but Double Strike deals 15% less damage.",
+      "src": "B:V4:1.fb",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Third Cut",
+      "text": "Against a Wounded target Double Strike hits a third time, but it can no longer be a critical hit.",
+      "src": "B:V1:1.fa",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Butcher's Carve",
+      "text": "Each Double Strike hit deals +5% more for every turn of Wound left on the target.",
+      "src": "B:V1:1.ma",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Skull and Knee",
+      "text": "Double Strike evolves: the first hit Slows for 1 turn, the second Stuns a Slowed target for 1 turn; it gains a 2-turn cooldown.",
+      "src": "B:V4:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Steady Spin",
+      "text": "Whirlwind lifesteal +2% per rank.",
+      "src": "A:V3:2.r",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "lifesteal",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
+    },
+    "2.f2": {
+      "name": "Spin Recovery",
+      "text": "Whirlwind heals you 1% of your max HP per rank for each enemy it hits.",
+      "src": "A:V3:2.f1",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Hungry Arc",
+      "text": "Whirlwind +3% power per rank while you are below 50% HP.",
+      "src": "A:V3:2.f3",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Gore Wheel",
+      "text": "Whirlwind Wounds every enemy it hits for 2 turns.",
+      "src": "A:V1:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Red Arc",
+      "text": "Whirlwind +3% power per rank against Wounded enemies.",
+      "src": "A:V1:2.f2",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Thirst",
+      "text": "Whirlwind lifesteal from Wounded enemies is doubled.",
+      "src": "A:V1:2.eb",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Reaping Wind",
+      "text": "Whirlwind gains Rage from every enemy it hits, not only from the best one.",
+      "src": "A:V2:2.ea",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Blood Glut",
+      "text": "Whirlwind healing beyond your max HP turns into Rage: 1 Rage per 1% of max HP.",
+      "src": "A:V1:2.mb",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Glass Cyclone",
+      "text": "Whirlwind lifesteal +25%, but you take 15% more damage until your next turn.",
+      "src": "A:V3:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Reaper's Spin",
+      "text": "Whirlwind deals +30% to Wounded enemies, but no damage at all to enemies that are not Wounded.",
+      "src": "A:V1:2.fa",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Crimson Wheel",
+      "text": "Whirlwind deals +8% damage to all enemies it hits for each Wounded enemy among them.",
+      "src": "A:V1:2.ma",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Exsanguinate",
+      "text": "Whirlwind evolves: it tears open the Wound on each enemy hit, ending it for +40% damage and double lifesteal on that hit.",
+      "src": "A:V1:2.v",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Rolling Start",
+      "text": "Charge +3% power per rank against a target that has not acted yet this battle.",
+      "src": "A:V2:3.f2",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Vengeful Run",
+      "text": "Charge +5% power per rank against the enemy that hit you last.",
+      "src": "A:V3:3.r",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "War Gallop",
+      "text": "Charge grants 2 Rage per rank when it hits.",
+      "src": "A:V2:3.f1",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Roaring Charge",
+      "text": "Your first Charge each battle raises your Rage to at least 30.",
+      "src": "A:V2:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Grim Momentum",
+      "text": "Charge grants 1 Rage per rank for each 20% of HP you are missing.",
+      "src": "A:V3:3.f2",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Grudge Charge",
+      "text": "Charge Stuns the enemy that hit you last for 1 extra turn.",
+      "src": "A:V3:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Blood Up",
+      "text": "If Charge hits a target at full HP, gain 10 Rage.",
+      "src": "A:V2:3.ea",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Payback",
+      "text": "Charge on the enemy that hit you last deals +40% damage and heals you for half of it.",
+      "src": "A:V3:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Martyr's Rush",
+      "text": "Charge Taunts every enemy for 1 turn, but you take 15% more damage until your next turn.",
+      "src": "A:V3:3.fb",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Reckless Heat",
+      "text": "Charge grants 20 Rage, but its Stun lasts 1 turn instead of 2.",
+      "src": "A:V2:3.fa",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Into the Fire",
+      "text": "After Charge, your next Headsman's Blow needs 10 less Rage (30 → 20).",
+      "src": "A:V2:3.ma*",
+      "syn": "Headsman's Blow",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Herald of Ruin",
+      "text": "Charge evolves: it gains +1% power per Rage you hold, without spending it, and refunds 10 Rage when its Stun ends.",
+      "src": "A:V2:3.v",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Headsman's Feast",
+      "text": "Headsman's Blow lifesteals 20%.",
+      "src": "B:V3:4.u1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "lifesteal",
+          "op": "set",
+          "v": 0.2
+        }
+      ]
+    },
+    "4.u2": {
+      "name": "Gravedigger",
+      "text": "Below 25% HP, Headsman's Blow lifesteal is doubled.",
+      "src": "B:V3:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Grave Robber",
+      "text": "If Headsman's Blow kills, heal 25% of your max HP and become Fortified for 1 turn.",
+      "src": "B:V3:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Ringing Headsman",
+      "text": "If the target survives Headsman's Blow, it is Stunned for 1 turn.",
+      "src": "B:V4:4.r1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Heavy Toll",
+      "text": "If you spend 40+ Rage, the Stun from Headsman's Blow lasts 2 turns.",
+      "src": "B:V4:4.r2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Mercy Stroke",
+      "text": "Headsman's Blow on a Stunned target cannot miss and always crits, but ends the Stun.",
+      "src": "B:V4:4.u3",
+      "syn": "Charge",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Grim Calm",
+      "text": "After Headsman's Blow, you are Fortified until your next turn.",
+      "src": "B:V3:4.d1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Clean Slate",
+      "text": "Headsman's Blow removes all debuffs on you.",
+      "src": "B:V3:4.d2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Executioner's Calm",
+      "text": "After Headsman's Blow, no debuff can land on you until your next turn.",
+      "src": "B:V3:4.d3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Dreadful Swing",
+      "text": "Headsman's Blow Jinxes the target and the enemies beside it.",
+      "src": "B:V3:4.l1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Blinding Spray",
+      "text": "Headsman's Blow Blinds the target and the enemies beside it for 2 turns.",
+      "src": "B:V3:4.l2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Terror",
+      "text": "If Headsman's Blow kills, every enemy is Jinxed.",
+      "src": "B:V3:4.l3",
+      "fx": null
+    }
+  }
+}

@@ -1,0 +1,596 @@
+{
+  "class": "defender",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "a",
+      "a",
+      "a",
+      "a",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "bulwark_aura",
+      "name": "Bulwark Aura",
+      "passive": true,
+      "karma": "A"
+    },
+    {
+      "skill": "tremor_slam",
+      "name": "Tremor Slam",
+      "karma": "A"
+    },
+    {
+      "skill": "taunt",
+      "name": "Taunt",
+      "karma": "A"
+    },
+    {
+      "skill": "close_ranks",
+      "name": "Close Ranks",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "fist_crush",
+    "name": "Fist Crush",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Rampart Mastery",
+    "karma": "A",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Iron Morning",
+        "text": "On your first turn of each battle, gain a shield worth 50% of your armor.",
+        "src": "A:V1:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "First Tremor",
+        "text": "Your first Tremor Slam of each battle Slows for 1 extra turn.",
+        "src": "A:V2:bar0",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Formed Up",
+        "text": "Your first Close Ranks of each battle costs no MP.",
+        "src": "A:V3:bar0",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "Fault Line",
+        "text": "Enemies you Stun are Slowed for 1 turn after the Stun ends.",
+        "src": "A:V2:bar3",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Last Wall Standing",
+        "text": "When an ally falls, you are Fortified for 1 turn.",
+        "src": "A:V1:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Braced Stance",
+      "text": "Bulwark Aura on you +5% of your armor per rank if you did not Move last turn.",
+      "src": "A:V1:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Drilled Ranks",
+      "text": "Bulwark Aura also gives allies magic armor equal to 3% of your armor per rank.",
+      "src": "A:V3:0.f3",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Tight Formation",
+      "text": "Bulwark Aura +2% of your armor per rank for each ally in it.",
+      "src": "A:V3:0.r",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Shield Brothers",
+      "text": "At battle start, allies in Bulwark Aura gain a shield worth 10% of your max HP.",
+      "src": "A:V3:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Weathered",
+      "text": "Bulwark Aura on you +5% of your armor per rank against area skills.",
+      "src": "A:V1:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Rooted Stance",
+      "text": "Each turn in a row you do not Move, Bulwark Aura on you +10% of your armor (up to +40%).",
+      "src": "A:V1:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Diagonal Guard",
+      "text": "Bulwark Aura also reaches diagonal allies.",
+      "src": "A:V3:0.ea",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Unyielding",
+      "text": "With Rooted Stance full, you cannot be Stunned or pulled until you Move.",
+      "src": "A:V1:0.ma",
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Anchored Stone",
+      "text": "Bulwark Aura on you is 50% stronger, but you can never Move.",
+      "src": "A:V1:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Pledged Plate",
+      "text": "Allies in Bulwark Aura get 100% of your armor, but your own armor is 30% lower.",
+      "src": "A:V3:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Living Rampart",
+      "text": "When an ally in Bulwark Aura drops below 30% HP, it is Fortified for 1 turn (once per ally per battle).",
+      "src": "A:V3:0.ma",
+      "fx": null
+    },
+    "0.v": {
+      "name": "Fortress Aura",
+      "text": "Bulwark Aura evolves: at the start of each of your turns it also gives you a shield equal to its armor bonus.",
+      "src": "A:V1:0.v",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Deep Stomp",
+      "text": "Tremor Slam's Slow lasts 1 turn longer, 15% chance per rank.",
+      "src": "A:V2:1.f1",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Shockwave",
+      "text": "Tremor Slam +5% power per rank against enemies already Slowed.",
+      "src": "A:V2:1.f2",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Ringing Earth",
+      "text": "Tremor Slam has a 3% chance per rank to Stun each enemy hit for 1 turn.",
+      "src": "A:V2:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Rolling Quake",
+      "text": "Tremor Slam also hits the row behind for 50% damage, without Slow.",
+      "src": "A:V2:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Fault Strike",
+      "text": "Each Stun from Tremor Slam gives 2 MP per rank.",
+      "src": "A:V2:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Skull Rattler",
+      "text": "Tremor Slam has a 20% chance to Stun each enemy that is already Slowed.",
+      "src": "A:V2:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Aftershock Ground",
+      "text": "Tremor Slam leaves quaking ground where it hits for 2 turns: enemies there are Slowed at turn start.",
+      "src": "A:V2:1.eb*",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Third Quake",
+      "text": "Every third Tremor Slam Stuns the first enemy it hits for 1 turn.",
+      "src": "A:V2:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Heavy Landing",
+      "text": "Tremor Slam Slows for 3 turns instead of 2, but it no longer scales with Armor.",
+      "src": "A:V1:1.fa",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:slow",
+          "f": "turns",
+          "op": "set",
+          "v": 3
+        },
+        {
+          "k": "skill",
+          "sel": "bonusScale:armor",
+          "f": "pct",
+          "op": "set",
+          "v": 0
+        }
+      ]
+    },
+    "1.fb": {
+      "name": "Endless Tremor",
+      "text": "Quaking ground lasts 4 turns, but Tremor Slam deals 40% less damage.",
+      "src": "A:V2:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Sinking Earth",
+      "text": "Enemies on quaking ground take 15% STR damage at the start of their turn.",
+      "src": "A:V2:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Earthsplitter",
+      "text": "Tremor Slam evolves: it strikes a cross, its whole row plus its column front to back past reach, and Slows 3 turns.",
+      "src": "A:V2:1.v*",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Bellow",
+      "text": "Taunt breaks after 3% more of your max HP lost per rank (25% → 34%).",
+      "src": "A:V1:2.f1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "breakRatio",
+          "op": "add",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
+    },
+    "2.f2": {
+      "name": "Second Breath",
+      "text": "When your Taunt ends, heal 3% of your max HP per rank.",
+      "src": "A:V1:2.r",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Thick Skull",
+      "text": "Taunt gives you a shield worth 3% of your max HP per rank.",
+      "src": "A:V1:2.f3",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Cover Them",
+      "text": "When an ally drops below 30% HP, Taunt's cooldown resets.",
+      "src": "A:V3:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Rally Cry",
+      "text": "While you Taunt, allies take 2% less damage per rank (10% → 16%).",
+      "src": "A:V3:2.f1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "allyDamageMult",
+          "op": "add",
+          "v": -0.02,
+          "rank": true
+        }
+      ]
+    },
+    "2.ea": {
+      "name": "Stand Fast",
+      "text": "Taunt lasts 3 turns instead of 2.",
+      "src": "A:V1:2.ea",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "turns",
+          "op": "set",
+          "v": 3
+        }
+      ]
+    },
+    "2.eb": {
+      "name": "Brief Defiance",
+      "text": "Taunt cooldown 4 → 3.",
+      "src": "A:V1:2.eb",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 3
+        }
+      ]
+    },
+    "2.ma": {
+      "name": "Weathered the Storm",
+      "text": "If your Taunt ends without breaking, you are Fortified for 1 turn.",
+      "src": "A:V1:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Ironbound Oath",
+      "text": "Losing HP no longer breaks Taunt, but your allies get no damage cut from it.",
+      "src": "A:V1:2.fa",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "breakRatio",
+          "op": "set",
+          "v": 0
+        },
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "allyDamageMult",
+          "op": "set",
+          "v": 1
+        }
+      ]
+    },
+    "2.fb": {
+      "name": "Hollow Roar",
+      "text": "Taunt costs no MP and has cooldown 2, but it breaks after 15% of your max HP lost.",
+      "src": "A:V1:2.fb",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 0
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 2
+        },
+        {
+          "k": "skill",
+          "sel": "taunt",
+          "f": "breakRatio",
+          "op": "base",
+          "v": 0.15
+        }
+      ]
+    },
+    "2.mb": {
+      "name": "Refused to Fall",
+      "text": "When your Taunt breaks, its cooldown resets and you gain a shield worth 30% of your armor.",
+      "src": "A:V1:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Bastion Cry",
+      "text": "Taunt evolves: while it lasts you are also Fortified (damage taken -50%).",
+      "src": "A:V1:2.v",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Interlocked",
+      "text": "Close Ranks gives guarded allies armor equal to 3% of your armor per rank.",
+      "src": "A:V3:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Shield Chain",
+      "text": "Close Ranks gives guarded allies a shield worth 4% of your armor per rank.",
+      "src": "A:V3:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Linked Plates",
+      "text": "Damage Close Ranks shares to you is 3% lower per rank.",
+      "src": "A:V1:3.f1",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Second Chain",
+      "text": "Close Ranks also guards the allies in your own row.",
+      "src": "A:V3:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Linked Shields",
+      "text": "Close Ranks gives you a shield worth 5% of your armor per rank for each guarded ally.",
+      "src": "A:V1:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Hold Their Weight",
+      "text": "Close Ranks shares 65% of the damage instead of 50%.",
+      "src": "A:V1:3.ea",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "guard",
+          "f": "share",
+          "op": "set",
+          "v": 0.65
+        }
+      ]
+    },
+    "3.eb": {
+      "name": "Shield Toss",
+      "text": "Close Ranks also gives each guarded ally a shield worth 25% of your armor.",
+      "src": "A:V1:3.eb",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Final Shield",
+      "text": "When a guarded ally would die, you take the whole killing blow instead.",
+      "src": "A:V3:3.ma",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Chained to Them",
+      "text": "Close Ranks shares 80%, but you cannot Move or Taunt while it lasts.",
+      "src": "A:V1:3.fa",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Loose Chain",
+      "text": "Close Ranks cooldown 5 → 3, but it lasts 2 turns and shares 35%.",
+      "src": "A:V1:3.fb",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 3
+        },
+        {
+          "k": "skill",
+          "sel": "guard",
+          "f": "turns",
+          "op": "set",
+          "v": 2
+        },
+        {
+          "k": "skill",
+          "sel": "guard",
+          "f": "share",
+          "op": "set",
+          "v": 0.35
+        }
+      ]
+    },
+    "3.mb": {
+      "name": "Steady Them",
+      "text": "Close Ranks clears Stun and Slow from guarded allies.",
+      "src": "A:V2:3.mb",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Phalanx",
+      "text": "Close Ranks evolves: damage to any guarded ally is split evenly among all guarded allies and you.",
+      "src": "A:V3:3.v",
+      "new": true,
+      "approved": true,
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Payback Fist",
+      "text": "Fist Crush strikes enemies that hit you since your last turn first.",
+      "src": "B:V4:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Bitter Knuckles",
+      "text": "Fist Crush +25% damage against enemies that hit you since your last turn.",
+      "src": "B:V4:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Settle the Score",
+      "text": "Fist Crush always strikes the enemy that hurt you most this battle, twice.",
+      "src": "B:V4:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Plated Gauntlet",
+      "text": "Fist Crush's armor scaling 5% → 15% of Armor.",
+      "src": "B:V5:4.u1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bonusScale:armor",
+          "f": "pct",
+          "op": "set",
+          "v": 0.15
+        }
+      ]
+    },
+    "4.r2": {
+      "name": "Heavier Fall",
+      "text": "Fist Crush +1% damage for each 2 points of your armor above 40.",
+      "src": "B:V5:4.u2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Iron Meteor",
+      "text": "Fist Crush's armor scaling rises to 40% of Armor, but it strikes 2 enemies.",
+      "src": "B:V5:4.u3",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bonusScale:armor",
+          "f": "pct",
+          "op": "set",
+          "v": 0.4
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "count",
+          "op": "set",
+          "v": 2
+        }
+      ]
+    },
+    "4.d1": {
+      "name": "Plate Hunter",
+      "text": "Fist Crush strikes the enemies with the most armor first.",
+      "src": "B:V5:4.d1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Can Opener",
+      "text": "Fist Crush +1% damage per point of the target's armor.",
+      "src": "B:V5:4.d2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Breaker of Walls",
+      "text": "Fist Crush ignores all armor on enemies with more armor than you.",
+      "src": "B:V5:4.d3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Swift Iron",
+      "text": "Fist Crush cooldown 4 → 3.",
+      "src": "B:V5:4.l1",
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 3
+        }
+      ]
+    },
+    "4.l2": {
+      "name": "Pain Into Iron",
+      "text": "Fist Crush costs 1 MP less for each 10% of your max HP missing.",
+      "src": "B:V4:4.d2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Forge Again",
+      "text": "If Fist Crush kills, its cooldown resets.",
+      "src": "B:V5:4.l3",
+      "fx": null
+    }
+  }
+}

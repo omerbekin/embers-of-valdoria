@@ -4,6 +4,7 @@ import levelsJson from '../../data/levels.json';
 import { classes, encounterUnit, summons } from '../engine/content';
 import type { Attribute, Attributes, UnitModifiers } from '../engine/types';
 import type { Battle } from '../engine';
+import type { TreeAlloc } from './skill-tree';
 
 export interface LevelRules {
   /** Genel tavan (Endless). */
@@ -67,6 +68,10 @@ export interface LevelHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Skill ağacı (Faz 1b; src/progression/skill-tree-hero.ts): onaylı dağılım + bayraklar. setLevel sıfırlar. */
+  tree?: TreeAlloc;
+  freeRespec?: boolean;
+  treeReset?: boolean;
 }
 
 const clampLevel = (l: number, r: LevelRules = LEVELS, cap: number = r.maxLevel): number => Math.max(1, Math.min(r.maxLevel, cap, Math.floor(l)));
@@ -192,7 +197,10 @@ export function addXp(h: LevelHero, amount: number, r: LevelRules = LEVELS, cap:
   return { heroId: h.id, from, to: level };
 }
 
-/** Debug: level'ı doğrudan ayarlar (XP 0). Yükselişte puan verilir; düşüşte dağıtılmış puanlar geri alınır (level'a göre yeniden). */
+/**
+ * Debug: level'ı doğrudan ayarlar (XP 0). Dağıtılmış stat puanları ve skill ağacı (bayraklarıyla) sıfırlanır; tüm puanlar level'a göre yeniden
+ * harcanmamış olarak verilir (skill ağacı Faz 1b, plan 3.3).
+ */
 export function setLevel(h: LevelHero, level: number, r: LevelRules = LEVELS, cap: number = r.maxLevel): void {
   const to = clampLevel(level, r, cap);
   h.level = to;
@@ -200,6 +208,9 @@ export function setLevel(h: LevelHero, level: number, r: LevelRules = LEVELS, ca
   h.alloc = {};
   h.statPoints = statPointsAt(to, r);
   h.skillPoints = (to - 1) * r.skillPointsPerLevel;
+  delete h.tree;
+  delete h.freeRespec;
+  delete h.treeReset;
 }
 
 // ------------------------------------------------------------ temel stat dağıtımı

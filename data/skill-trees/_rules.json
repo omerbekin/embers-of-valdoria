@@ -1,0 +1,42 @@
+{
+  "_not": "Skill ağacı (Moments) kuralları: şekil ve kilit sayılarının TEK yeri (Ömer 2026-10-21/22; docs/design/skill-tree-moments.md, docs/design/skill-tree-implementation.md bölüm 1-2). Kod: src/progression/skill-tree.ts (saf kural modülü), src/progression/skill-tree-compile.ts (derleyici). Class içeriği aynı klasörde <class>.json (tools/tree-import.mjs ile mockup seçiminden üretilir).",
+  "_enabled": "enabled = ANA ŞALTER (false: hiçbir modda ağaç savaşa girmez; oyun bugünküyle birebir aynı). Arayüz gelene kadar false (Faz 1a). modes = şalter açıkken mod başına bayrak (plan bölüm 7: sefer + Endless açık; Quick Battle + multiplayer kapalı). Debug menüsündeki 'Skill tree: focus build' bu şalteri yalnızca o oturumda, bellekte aşar (kayda yazmaz).",
+  "enabled": false,
+  "modes": { "campaign": true, "endless": true, "quick": false, "multiplayer": false },
+  "_percentRule": "'+X% power' metinli düğümler fx'te op 'pct' ile yazılır; anlamı TEK yerden: 'mul' = oransal (güç x (1 + X x rank); 0,40 -> 0,416), 'add' = düz ek (güç + X x rank; 0,40 -> 0,44). Açık soru (plan 10.1); öneri oransal. Çevirmek için yalnızca bu değer değişir.",
+  "percentRule": "mul",
+  "_rowShape": "Satır şekli (pasif + 3 aktif skill satırı; core.js ROW_DEF): id, kind (filler | notable | edge | blood | evolve), max rank, tier (I-IV ya da E = evolve), col (sütun = uygulama sırası), lane (şerit, arayüz), req (önceki düğüm; 'a|b' = biri yeter), dir (ea/eb yönü: a ya da b; exclusiveEdges açıkken karşı yön kilitlenir).",
+  "rowShape": [
+    { "id": "f1", "kind": "filler", "max": 3, "tier": "I", "col": 0, "lane": 0, "req": "" },
+    { "id": "f2", "kind": "filler", "max": 5, "tier": "I", "col": 1, "lane": 0, "req": "f1" },
+    { "id": "f3", "kind": "filler", "max": 5, "tier": "I", "col": 2, "lane": 0, "req": "f2" },
+    { "id": "n0", "kind": "notable", "max": 1, "tier": "II", "col": 3, "lane": 0, "req": "f3" },
+    { "id": "r", "kind": "filler", "max": 3, "tier": "III", "col": 4, "lane": 0, "req": "n0" },
+    { "id": "ea", "kind": "edge", "max": 1, "tier": "III", "col": 5, "lane": -1, "req": "r", "dir": "a" },
+    { "id": "eb", "kind": "edge", "max": 1, "tier": "III", "col": 5, "lane": 1, "req": "r", "dir": "b" },
+    { "id": "ma", "kind": "notable", "max": 1, "tier": "IV", "col": 6, "lane": -1.5, "req": "ea", "dir": "a" },
+    { "id": "fa", "kind": "blood", "max": 1, "tier": "IV", "col": 6, "lane": -0.5, "req": "ea", "dir": "a" },
+    { "id": "fb", "kind": "blood", "max": 1, "tier": "IV", "col": 6, "lane": 0.5, "req": "eb", "dir": "b" },
+    { "id": "mb", "kind": "notable", "max": 1, "tier": "IV", "col": 6, "lane": 1.5, "req": "eb", "dir": "b" },
+    { "id": "v", "kind": "evolve", "max": 1, "tier": "E", "col": 7, "lane": 0, "req": "ma|mb" }
+  ],
+  "rows": 4,
+  "_tierNeed": "Kademe kilitleri GLOBAL sayaca bakar (Ömer 2026-10-21): sayaç = pasif + 3 aktif satıra harcanan TOPLAM puan (hangi satırdan geldiği önemsiz), ult sayılmaz; Mastery bar aynı sayı. Evolve: o satırın ma ya da mb'si + sayaç evolveNeed[kaçıncı evolve]; karakter başına en çok evolveMax. Ek 'o satırda N puan' odak şartı YOK (Ömer, plan sorusu 12).",
+  "tierNeed": { "I": 0, "II": 5, "III": 10, "IV": 15 },
+  "evolveNeed": [23, 38],
+  "evolveMax": 2,
+  "_ult": "Ult + ağacı: 4 kol (u, r, d, l) x 3 düğüm; adım 1 / 2 / 3 level kilidi levels (5 / 10 / 15), 3. adım notable; kolda iç düğüm gerek; ult toplamı en çok max puan; evolve yok; ult puanı sayaca ve Mastery bar'a girmez.",
+  "ult": { "arms": ["u", "r", "d", "l"], "levels": [5, 10, 15], "max": 3 },
+  "_barAt": "Mastery bar: sayaç bu değerlere ulaşınca class dosyasındaki mastery.bar[i] kendiliğinden açılır (seçim yok). L50 eşikleri (30-45) TBD.",
+  "barAt": [5, 10, 15, 20, 25],
+  "_exclusiveEdges": "ea / eb birbirini dışlar (Ömer 2026-10-22, moments.md bölüm 8): biri alınınca öbür yönün edge + notable + blood price'ı kilitlenir; geri alınınca açılır. Yalnızca oyunda (mockup'ta yok).",
+  "exclusiveEdges": true,
+  "_respec": "Respec (Ömer 2026-10-22, plan 10a): onaylanmış ağacın TAMAMI altınla sıfırlanır (tek düğüm geri alma yok), savaş dışında. Bedel = base + perLevel x kahramanın level'ı (sefer: sefer altını; Endless: koşu altını). Ağaç verisi (class dosyasının version'ı) değişince kahramana bir kez bedava (freeRespec). Sayılar PROVİZYON öneri (open-questions madde 379; Ömer kararı değil, balance-tester).",
+  "respec": { "base": 20, "perLevel": 5 },
+  "_debugFocus": "Debug (Debug > Campaign > 'Skill tree: focus build'): o oturumda sefer / Endless kahramanına level'ına göre odaklı kurulum verilir (kayda yazılmaz; kayıtta kendi ağacı olan kahraman kendi ağacıyla girer). Sim / otomatik oyuncu vekili (autoTreeAll / autoTreeRun) da aynı ön ayarı kullanır (ön ayarı olmayan class: satır 1 + 2). rows = [önce doldurulan satır, ikinci satır] (0 = pasif, 1-3 = aktif skill), ult = ult kolu (u / r / d / l; ult puanı her kilit açılınca önce oraya). Yön (a / b) menüden seçilir. Seçim, Faz 1a'da etkisi yazılmış (a) düğümlerin sayılarını göstermek için: Warrior Double Strike + Whirlwind + Headsman's Blow, Defender Taunt + Close Ranks + Fist Crush.",
+  "debugFocus": {
+    "warrior": { "rows": [1, 2], "ult": "u" },
+    "defender": { "rows": [2, 3], "ult": "r" },
+    "paladin": { "rows": [1, 2], "ult": "u" }
+  }
+}
