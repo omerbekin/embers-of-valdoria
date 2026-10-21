@@ -9,8 +9,8 @@ html, body { background: #000; }
 #ui-root .gr-overlay { position: absolute; }
 #stage .settings-toggle { position: absolute; }
 html.mk-phone, html.mk-phone body { overflow: auto; height: auto; min-height: 100%; }
-html.mk-phone body { min-height: 840px; }
-html.mk-phone #stage { position: absolute; left: 50%; top: 10px; margin-left: -187.5px; outline: 2px solid #3a2a12; box-shadow: 0 0 0 8px #120c08, 0 20px 50px rgba(0, 0, 0, .8); }
+html.mk-phone body { min-height: 470px; }
+html.mk-phone #stage { position: absolute; left: max(14px, calc(50% - var(--stage-w) / 2)); top: 14px; outline: 2px solid #3a2a12; box-shadow: 0 0 0 8px #120c08, 0 20px 50px rgba(0, 0, 0, .8); }
 
 /* ---------- taslak seridi (oyunun parcasi degil) ---------- */
 #mk-strip { position: fixed; left: 8px; bottom: 8px; z-index: 80; display: flex; flex-wrap: wrap; gap: 4px; align-items: center; max-width: calc(100vw - 16px); padding: 4px 6px;
@@ -69,6 +69,7 @@ html.mk-clean #mk-strip { display: none; }
 .gt-bval { font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); }
 .gt-bval b { font: 600 1.1em var(--g-disp); color: #fff4d6; }
 .gt-bval i { font-style: normal; color: #ffb070; margin-left: .4em; }
+.gt-bval i:not(:empty)::after { content: ' pending'; }
 .gt-bar-r { margin-left: auto; font: 600 max(10px, calc(14 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-dim); }
 .gt-bar-r b { color: var(--g-gold); font-weight: 600; margin-left: .35em; }
 .gt-barrow { padding: 26px 22px 12px; }
@@ -95,6 +96,9 @@ html.mk-clean #mk-strip { display: none; }
 .gt-labcol { flex: none; position: relative; border-top: 1px solid transparent; }
 .gt-tree { flex: 1; min-width: 0; overflow-x: auto; overflow-y: hidden; padding-bottom: 6px; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, .4) transparent; -webkit-overflow-scrolling: touch; overscroll-behavior-x: contain; }
 .gt-canvas { position: relative; }
+.gt-scroll { min-width: 0; }
+.gt-tsrow { position: absolute; left: 0; top: 0; width: 100%; height: var(--hdr, 38px); pointer-events: none; }
+.gt-corner { display: none; }
 .gt-lines { position: absolute; left: 0; top: 0; pointer-events: none; overflow: visible; }
 .gt-lines path { fill: none; stroke: rgba(217, 178, 106, .2); stroke-width: 2; }
 .gt-lines path.half { stroke: rgba(243, 217, 153, .42); }
@@ -178,13 +182,9 @@ html.mk-clean #mk-strip { display: none; }
 /* DIGER YON secilmis (ea ya da eb): soluk + kilit + "Other direction chosen" ipucu */
 .gt-nd.st-dir .dm, .gt-nd.st-dir .drop, .gt-nd.st-dir .lb, .gt-nd.st-dir .pp { opacity: .34; }
 .gt-nd.st-dir .dm { border-style: dashed; } .gt-nd.st-dir { cursor: not-allowed; }
-/* NEW dugum onay bekliyor: kilit + NEW etiketi */
-.gt-nd.st-new .dm { border-style: dashed; border-color: rgba(224, 112, 42, .7); } .gt-nd.st-new .dm img { filter: grayscale(1) brightness(.4); } .gt-nd.st-new { cursor: not-allowed; }
-.gt-nd.st-new .dm, .gt-nd.st-new .lb { opacity: .62; }
 .gt-nd .lkic { position: absolute; right: calc(50% - var(--s) / 2 - 3px); top: calc(50% - var(--s) / 2 - 4px); width: 15px; height: 15px; display: none; align-items: center; justify-content: center; border-radius: 50%; background: #120c08; border: 1px solid rgba(217, 178, 106, .75); z-index: 3; pointer-events: none; }
 .gt-nd .lkic svg { width: 9px; height: 10px; fill: none; stroke: #e8cf8f; stroke-width: 1.7; }
-.gt-nd.st-dir .lkic, .gt-nd.st-new .lkic { display: flex; }
-.gt-nd.st-new .lkic { border-color: rgba(224, 112, 42, .9); } .gt-nd.st-new .lkic svg { stroke: #ffb070; }
+.gt-nd.st-dir .lkic { display: flex; }
 .gt-nd .pp { position: absolute; left: 50%; top: calc(50% + var(--s) / 2 + 2px); transform: translateX(-50%); font: 600 8px/1 var(--g-disp); letter-spacing: .02em; color: var(--g-dim); white-space: nowrap; pointer-events: none; }
 .gt-nd .pp .c { color: var(--g-gold); } .gt-nd .pp .p { color: #ffb35a; }
 .gt-nd .lb { position: absolute; left: 50%; transform: translateX(-50%); width: 100px; text-align: center; font: normal 600 10px/1.1 var(--g-disp); letter-spacing: .04em; text-transform: uppercase; color: var(--g-dim); pointer-events: none; }
@@ -194,7 +194,6 @@ html.mk-clean #mk-strip { display: none; }
 .gt-nd.k-v .lb.dn { top: calc(50% + var(--s) / 2 + 13px); color: #cdbd7e; }
 .gt-nd.st-part .lb, .gt-nd.st-max .lb { color: #f3e6b8; }
 .gt.cs .gt-nd .lb { font-size: 8.5px; width: 84px; }
-.gt-nd .nwt { position: absolute; right: -2px; top: 2px; padding: 0 3px; font: 600 8px/12px var(--g-disp); letter-spacing: .1em; color: #ffb070; background: #1b0f06; border: 1px solid rgba(224, 112, 42, .75); pointer-events: none; z-index: 2; }
 .gt-nd.shake { animation: gt-shk .35s; }
 @keyframes gt-shk { 0%, 100% { translate: 0 0; } 20% { translate: -6px 0; } 40% { translate: 6px 0; } 60% { translate: -4px 0; } 80% { translate: 3px 0; } }
 html.reduced-motion .gt-nd.shake { animation: none; }
@@ -314,7 +313,7 @@ html.short .gt-wp { max-width: none; }
 .gr-btn.danger { border-color: #e0785e; color: #ffb09a; }
 .gr-btn img { width: 1.4em; height: 1.4em; object-fit: contain; }
 
-/* ================= telefon / dar ekran (html.nw: genislik <= 620 ya da Phone anahtari; dikey yerlesim, sayfa yatay kaymaz, hedefler >= 44 px) ================= */
+/* ================= YEDEK dikey yerlesim (html.nw: genislik <= 620 VE kisa degil; oyunda sahne hep yatay oldugu icin gercek telefon bunu gormez, yalniz dar + uzun masaustu pencere). Gercek telefon = html.short blogu (asagida) ================= */
 html.nw .gr-ledger .gr-lbody { display: flex; flex-direction: column; overflow: hidden auto; gap: 8px; }
 html.nw .gr-ledger .gr-lbody > .gr-marks-col { order: 0; flex: none; overflow: visible; }
 html.nw .gr-ledger .gr-marks { flex-direction: row; justify-content: center; gap: 10px; padding: 8px 4px 6px; }
@@ -371,16 +370,85 @@ html.nw .gt-rl { cursor: pointer; }
 html.nw .gt-uwrap { justify-content: center; }
 html.nw .gt-uinfo { flex: 1 1 100%; max-width: none; }
 html.nw .gr-ledger .gr-lbody > .gr-lskills:empty { display: none; }
-/* kisa ekran (html.short, telefon yatay): oyunun Sheet kurali sag sayfayi dar tutar (agac kabi bos); agac icin iki sayfa esit */
+/* ================= KISA EKRAN (html.short: yukseklik <= 520 = telefon yatay, 812x375 / 740x360; Phone anahtari ya da gercek kisa pencere ayni yol) =================
+   Paneller ekrani doldurur; Mastery bar TEK ince seritte; tier bandi + satir etiketleri yapisik, satirlar kendi icinde kayar (dikey + yatay);
+   ult + agaci satirlarin ALTINDA (kayarak ulasilir, yan sutun yok); Respec / Reset / Confirm tek satir, her zaman gorunur (dokunma alani 44 px, oyunun .sh-btn kurali). */
 html.short .gr-ledger.tab-sheet .gr-lbody { grid-template-columns: 54px minmax(0, 1fr) 1px minmax(0, 1fr); }
 html.short .gr-ledger.tab-tree .gr-lbody { grid-template-columns: 54px minmax(0, 1fr); }
-html.short .gt-wide { grid-template-columns: minmax(0, 1fr) 260px; }
-html.short .gt-barrow { padding-top: 24px; }
+/* zincir: sag sayfa -> .gt-page.fill -> .gt-in -> .gt -> .gt-scroll (yalniz bu kayar) */
+html.short .gr-ledger.gt-fill .gr-lbody > .gr-page.r { overflow: hidden; }
+html.short .gr-ledger.gt-fill .gr-page.r .gr-page-in { flex: 1 1 0; min-height: 0; }
+html.short .gr-ledger.gt-fill .gr-page.r .gr-folio { display: none; }
+html.short .gt-page.fill { flex: 1 1 0; min-height: 0; }
+html.short .gt-page.fill > .gt-sec-gap { height: 4px; }
+html.short .gr-ledger.tab-tree .gt-head, html.short .gr-ledger.tab-tree .gt-head + .gt-sec-gap { display: none; }
+html.short .gt-wide { display: flex; flex-direction: column; flex: 1 1 0; min-height: 0; padding-top: 0; }
+html.short .gt-wide > .gt-main { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+html.short .gt-in { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; width: 100%; }
+html.short .gt-in > .gt { flex: 1 1 0; min-height: 0; display: flex; flex-direction: column; }
+html.short .gt-scroll { flex: 1 1 0; min-height: 0; overflow: auto; overscroll-behavior: contain; overflow-anchor: none; scrollbar-width: thin; scrollbar-color: rgba(217, 178, 106, .4) transparent; -webkit-overflow-scrolling: touch; }
+html.short .gt-treewrap { width: max-content; max-width: none; margin: 0 auto; margin-top: 0; }
+html.short .gt-tree { flex: none; overflow: visible; padding-bottom: 0; }
+html.short .gt-labcol { position: sticky; left: 0; z-index: 5; background: rgba(14, 10, 7, .97); border-right: 1px solid var(--g-line); }
+html.short .gt-corner { display: block; position: sticky; top: 0; z-index: 6; height: var(--hdr); margin-bottom: calc(-1 * var(--hdr)); background: rgba(14, 10, 7, .97); border-bottom: 1px solid var(--g-line2); }
+html.short .gt-tsrow { position: sticky; top: 0; z-index: 4; height: var(--hdr); margin-bottom: calc(-1 * var(--hdr)); background: rgba(14, 10, 7, .97); }
+/* tier bandi: TEK satir "II · 5 pts" (dar tek kolonlu bantlara da sigar) */
+html.short .gt-ts { flex-direction: row; gap: 4px; padding: 0 2px; }
+html.short .gt-ts small { display: none; }
+html.short .gt-ts::before { content: attr(data-tn); font: 600 9px var(--g-disp); letter-spacing: .06em; text-transform: uppercase; color: var(--g-dim); }
+html.short .gt-ts.lk::before { opacity: .75; }
+html.short .gt-ts b { margin-top: 0; font-size: 10px; gap: 3px; }
+html.short .gt-ts b em { display: none; }
+/* ince Mastery bar: tek satir (ad, deger, iz); seviye yazisi yok (basliklarda var) */
+.gt-barw.slim { display: flex; align-items: center; gap: 0 10px; margin: 0; min-height: 30px; min-width: 0; }
+.gt-barw.slim .gt-bnm { flex: none; font-size: 11px; letter-spacing: .1em; white-space: nowrap; }
+.gt-barw.slim .gt-bval { flex: none; font-size: 12px; white-space: nowrap; }
+.gt-barw.slim .gt-bval i::after { content: none; }
+.gt-barw.slim .gt-barrow { flex: 1 1 0; min-width: 140px; padding: 17px 12px 6px 14px; }
+.gt-barw.slim .gt-track { height: 6px; }
+.gt-barw.slim .gt-mk { --mkw: 20px; }
+.gt-barw.slim .gt-mk::before { top: -26px; height: 44px; }
+.gt-barw.slim .gt-mk em { top: -16px; left: -14px; width: 28px; font-size: 9px; }
+.gt-barw.slim .gt-mk i { left: -5px; top: -5px; width: 10px; height: 10px; border-width: 1px; }
+html.short .gt-tools { display: flex; align-items: center; gap: 8px; flex: none; min-width: 0; padding-bottom: 2px; }
+html.short .gt-tools .gt-barw { flex: 1 1 0; min-width: 0; }
+html.short .gt-tools .gt-acts.gt-inbar { flex: none; margin: 0; padding: 0; border: 0; }
+/* islem satiri: tek satir, yazi yok (madalyonun title'i var), dugmeler oyunun kisa ekran olcusunde */
+html.short .gt-acts { padding: 3px 0 1px; margin-top: 2px; gap: 4px 8px; } /* flex-wrap kalir: cok dar pencerede Confirm kesilmez, alt satira iner */
+html.short .gt-acts .gt-sp { flex: 1 1 4px; }
+html.short .gt-acts .sh-tx { display: none; }
+html.short .gt-acts .sh-ptr { flex: none; margin: 0; }
+html.short .gt-acts .sh-acts { gap: 6px; margin-left: auto; }
+html.short .gt-acts .sh-btn { white-space: nowrap; }
+html.short .gt-sticky { padding-top: 4px; }
+/* ult + agaci: satirlarin altinda; aciklama paragrafi yok, kollar kutusu kalir */
+html.short .gt-ult { position: sticky; left: 0; margin-top: 2px; padding-top: 6px; }
+html.short .gt-uhead { padding: 0 6px; }
+html.short .gt-uinfo { flex: 1 1 180px; }
+html.short .gt-uinfo p { display: none; }
+html.short .gt-uinfo .gt-arms { margin-top: 0; }
+/* v2 calisma paneli: ekrani tamamen doldurur (kenar bosluk, cerceve, kutu yok); islem dugmeleri agacin ust seridinde */
+html.short .gr-overlay.gr-ledger-ov.gt-wp-ov { padding: 0; } /* oyunun kisa ekran 6 px kenar kurali (gear.css) workspace icin kalkar: ekrani tamamen doldurur */
+html.short .gr-panel.gt-wp { padding: 6px 10px; gap: 4px; max-width: none; width: 100%; border: 0; box-shadow: none; }
+html.short .gt-wp > .gr-lhead { gap: 14px; }
+html.short .gt-wp .gr-title { font-size: 17px; }
+html.short .gt-wp .gr-gold { font-size: 13px; }
+html.short .gt-hero img { width: 32px; height: 32px; }
+html.short .gt-wp-body { margin-top: 2px; overflow: hidden; padding: 0; background: none; }
+html.short .gt-wp-body > .gt-in { padding: 0; }
+/* v2 ozet satirlari + v3 Sheet kapisi: sikilastirilir (sayfa kendi icinde kayar) */
+html.short .gt-srow { padding: 6px 10px; gap: 10px; }
+html.short .gt-sum { gap: 6px; }
+html.short .gt-doorpage { gap: 8px; }
+/* ipucu: ekrana sigsin; sabitlenince +/- hep gorunur (metin kayar) */
+html.short #tip { max-height: calc(var(--stage-h) - 12px); overflow: hidden auto; scrollbar-width: thin; }
+html.short #tip.pin .gt-ctl { position: sticky; bottom: 0; background: #17110a; padding: 6px 10px 8px; }
+html.short #tip .gt-ctl button { min-height: 44px; }
 /* dar ekran: stat sutunlari 2 + 1 (adlar kesilmesin) */
 html.nw .sh-cols { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 4px 12px; }
 html.nw .sh-col.defense { grid-column: 1 / -1; }
 /* taslak seridi dar ekranda katlanir */
 #mk-strip .keep { display: none; }
-html.nw:not(.mk-phone) #mk-strip .keep { display: inline-flex; }
-html.nw:not(.mk-phone) #mk-strip:not(.open) > :not(b):not(.keep) { display: none; }
+html.nw:not(.mk-phone) #mk-strip .keep, html.short:not(.mk-phone) #mk-strip .keep { display: inline-flex; }
+html.nw:not(.mk-phone) #mk-strip:not(.open) > :not(b):not(.keep), html.short:not(.mk-phone) #mk-strip:not(.open) > :not(b):not(.keep) { display: none; }
 html.nw .gr-panel.gr-gear.gr-ledger, html.nw .gr-panel.gt-wp { padding-left: 8px; padding-right: 8px; }

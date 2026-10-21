@@ -1,5 +1,5 @@
 /* SKILL AGACI Gear taslagi: ETKILESIM KATMANI (mockup, oyun kodu DEGIL). Gorunum: views.js (GV), kurallar: data/tree-logic.js (GT) + data/core.js (SMM).
-   Adres: #v1 | #v2 | #v3 [&phone] [&lv=1..50] [&tab=tree (yalniz v3)] [&open (yalniz v2: calisma paneli acik)] [&clean (taslak seridini gizle; H tusu da)].
+   Adres: #v1 | #v2 | #v3 [&phone (telefon yatay 812x375) | &phone=740 (740x360)] [&lv=1..50] [&tab=tree (yalniz v3)] [&open (yalniz v2: calisma paneli acik)] [&clean (taslak seridini gizle; H tusu da)].
    Akis: tik = +1 BEKLEYEN puan, sag tik / uzun basis = -1 bekleyen, Reset siler, Confirm kaydeder (stat sayfasi gibi); onayli puan yalniz Respec ile geri gider.
    Dokunmatik: ilk dokunus ipucunu sabitler (+ / - dugmeleriyle), ikinci dokunus +1. */
 'use strict';
@@ -13,31 +13,42 @@
   let lastPtr = 'mouse', lpT = 0, lpX = 0, lpY = 0, suppress = false, toastT = 0, failT = 0, askBox = null, helpOn = false, rzT = 0;
 
   /* ---------- adres ---------- */
+  let lastHash = null;
   function readHash() {
+    lastHash = location.hash;
     const set = {};
     location.hash.slice(1).split('&').filter(Boolean).forEach((t) => { const p = t.split('='); set[p[0]] = p.length > 1 ? p[1] : true; });
     const v = ['v1', 'v2', 'v3'].find((x) => set[x]) || 'v1';
-    ST.variant = v; ST.phone = !!set.phone; ST.clean = !!set.clean;
-    const lv = +set.lv; if (lv >= 1 && lv <= MC.MAXLV) ST.lv = lv;
+    ST.variant = v; ST.phone = set.phone ? (set.phone === '740' ? '740' : '812') : ''; ST.clean = !!set.clean;
+    const lv = +set.lv; ST.lv = lv >= 1 && lv <= MC.MAXLV ? lv : 30; /* adres tum gorunumu tarif eder: lv yoksa 30 */
     ST.tab = v === 'v3' && set.tab === 'tree' ? 'tree' : 'sheet';
     ST.open = v === 'v2' && !!set.open;
   }
   function writeHash() {
     const t = [ST.variant];
-    if (ST.phone) t.push('phone'); if (ST.lv !== 30) t.push('lv=' + ST.lv);
+    if (ST.phone) t.push(ST.phone === '740' ? 'phone=740' : 'phone'); if (ST.lv !== 30) t.push('lv=' + ST.lv);
     if (ST.variant === 'v3' && ST.tab === 'tree') t.push('tab=tree'); if (ST.open) t.push('open'); if (ST.clean) t.push('clean');
-    history.replaceState(null, '', '#' + t.join('&'));
+    history.replaceState(null, '', '#' + t.join('&')); lastHash = location.hash;
+  }
+  /* adres disaridan degisti (adres cubugu, geri tusu, baska arac): gorunumu bastan kur. hashchange + popstate + hafif yoklama (replaceState / pushState olay uretmez) */
+  function syncHash() {
+    if (lastHash === null || location.hash === lastHash) return;
+    readHash();
+    if (GT.validate(ST.lv, V.eff())) GT.fitLevel(ST.lv, ST.S, ST.P);
+    render();
   }
 
-  /* ---------- sahne olcusu: oyundaki viewport.ts gibi --gu = sahne yuksekligi / 1080 (dar ekranda genislik / 1920); kisa ekran sinifi; dar = telefon dikey ---------- */
+  /* ---------- sahne olcusu: oyundaki viewport.ts gibi --gu = sahne yuksekligi / 1080 (dar ekranda genislik / 1920); html.short (<= 520) = telefon yatay; html.nw = yalniz dar + uzun pencere ---------- */
+  const PHONES = { '812': [812, 375], '740': [740, 360] }; /* yatay telefon (oyunda dikey telefon sahneyi dondurur: sahne hep yatay) */
   function layout() {
-    const W = ST.phone ? 375 : innerWidth, H = ST.phone ? 812 : innerHeight;
+    const ph = ST.phone ? PHONES[ST.phone] || PHONES['812'] : null;
+    const W = ph ? ph[0] : innerWidth, H = ph ? ph[1] : innerHeight;
     stage.style.setProperty('--stage-w', W + 'px'); stage.style.setProperty('--stage-h', H + 'px');
     de.style.setProperty('--gu', Math.min(H / 1080, W / 1920) + 'px');
-    de.classList.toggle('short', H <= 520); de.classList.toggle('compact', H <= 720);
-    ST.nw = W <= 620; de.classList.toggle('nw', ST.nw);
-    de.classList.toggle('mk-phone', ST.phone); de.classList.toggle('mk-clean', !!ST.clean);
-    ST.coarse = ST.phone || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
+    ST.short = H <= 520; de.classList.toggle('short', ST.short); de.classList.toggle('compact', H <= 720); /* oyundaki html.short / html.compact: gercek kisa pencerede Phone anahtarsiz da ayni yol */
+    ST.nw = W <= 620 && !ST.short; de.classList.toggle('nw', ST.nw); /* nw: yalniz gercekten dar VE uzun pencere (yedek dikey yerlesim) */
+    de.classList.toggle('mk-phone', !!ST.phone); de.classList.toggle('mk-clean', !!ST.clean);
+    ST.coarse = !!ST.phone || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
     de.style.setProperty('--nav-k', String(ST.coarse ? 1 : Math.min(1.75, Math.max(1, Math.round(H / 640 / 0.05) * 0.05))));
     de.classList.add('close-btn-on'); /* Gear acikken sag ustte X (Menu'nun yerinde) */
   }
@@ -45,18 +56,19 @@
   /* ---------- kurulum ---------- */
   function saveScroll() {
     const g = (q, p) => { const e = $(q); return e ? e[p] : 0; };
-    return { pr: g('#gt-gear .gr-page.r', 'scrollTop'), lb: g('#gt-gear .gr-lbody', 'scrollTop'), tx: g('#gt-treehost .gt-tree', 'scrollLeft'), wb: g('.gt-wp-body', 'scrollTop') };
+    return { pr: g('#gt-gear .gr-page.r', 'scrollTop'), lb: g('#gt-gear .gr-lbody', 'scrollTop'), tx: g('#gt-treehost .gt-tree', 'scrollLeft'), sx: g('#gt-treehost .gt-scroll', 'scrollLeft'), sy: g('#gt-treehost .gt-scroll', 'scrollTop'), wb: g('.gt-wp-body', 'scrollTop') };
   }
   function restoreScroll(o) {
     const s = (q, p, v) => { const e = $(q); if (e && v) e[p] = v; };
-    s('#gt-gear .gr-page.r', 'scrollTop', o.pr); s('#gt-gear .gr-lbody', 'scrollTop', o.lb); s('#gt-treehost .gt-tree', 'scrollLeft', o.tx); s('.gt-wp-body', 'scrollTop', o.wb);
+    s('#gt-gear .gr-page.r', 'scrollTop', o.pr); s('#gt-gear .gr-lbody', 'scrollTop', o.lb); s('#gt-treehost .gt-tree', 'scrollLeft', o.tx); s('#gt-treehost .gt-scroll', 'scrollLeft', o.sx); s('#gt-treehost .gt-scroll', 'scrollTop', o.sy); s('.gt-wp-body', 'scrollTop', o.wb);
   }
-  function treeOpts(host) {
-    const v = ST.variant;
-    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - 6), coarse: ST.coarse, ult: v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side' };
+  /* inbar: kisa ekranda islem dugmeleri agacin ust seridinde (v3 Tree sekmesi, v2 calisma paneli); v1'de sag sayfanin altinda kalir */
+  function treeOpts(host, inbar) {
+    const v = ST.variant, sh = ST.short;
+    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - 6), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar };
   }
-  function mountTree(host) {
-    const t = V.treeHTML(treeOpts(host));
+  function mountTree(host, inbar) {
+    const t = V.treeHTML(treeOpts(host, inbar));
     host.innerHTML = t.html;
     const uh = $('#gt-ulthost'); if (uh) uh.innerHTML = t.ultHtml || '';
     $$('.gt-nd').forEach((e) => { if (e.dataset.base === undefined) e.dataset.base = e.className; });
@@ -65,7 +77,7 @@
     ui.insertAdjacentHTML('beforeend', V.workspaceHTML());
     const ov = $('#gt-wp'); ov.insertAdjacentHTML('beforeend', V.closeButtonHTML() + '<div class="gr-toast" role="status"></div>');
     ov.addEventListener('pointerdown', (e) => { if (e.target === ov) closeWorkspace(); });
-    mountTree($('#gt-treehost', ov));
+    mountTree($('#gt-treehost', ov), true);
     ST.open = true;
   }
   function closeWorkspace() {
@@ -78,7 +90,7 @@
     const sc = saveScroll();
     layout();
     ui.innerHTML = V.gearHTML() + V.fsButtonHTML();
-    const host = $('#gt-treehost'); if (host) mountTree(host);
+    const host = $('#gt-treehost'); if (host) mountTree(host, ST.variant === 'v3');
     if (ST.open && ST.variant === 'v2') mountWorkspace();
     refresh();
     restoreScroll(sc);
@@ -111,7 +123,7 @@
         const ra = a === 'C' ? 1 : MC.rk(E, a), raS = a === 'C' ? 1 : MC.rk(S, a);
         cls = ra > 0 && rb > 0 ? (raS > 0 && rbS > 0 ? ' on' : ' pend') : ra > 0 ? ' half' : '';
       }
-      const sb = GT.status(lv, E, b).st; if (sb === 'dir' || sb === 'new') cls += ' dim';
+      const sb = GT.status(lv, E, b).st; if (sb === 'dir') cls += ' dim';
       p.setAttribute('class', (p.dataset.cls + cls).trim());
     });
     $$('.gt-ts').forEach((s) => { const t = V.stripState(E, s.dataset.tier); $('small', s).textContent = t.small; $('.pt', s).textContent = t.pt; $('em', s).textContent = t.em; s.classList.toggle('lk', t.lk); });
@@ -123,11 +135,11 @@
       $$('[data-arm="' + arm + '"]').forEach((e) => { $('b', e).textContent = n + ' / 3'; e.classList.toggle('full', n === 3); });
     });
     const up = MC.ultSpent(E); $$('[data-upts]').forEach((e) => { e.textContent = up; if (e.parentNode) e.parentNode.classList.toggle('full', up >= MC.ULT_MAX); });
-    const bvE = MC.barVal(E), bvS = MC.barVal(S), cE = MC.counter(E), cS = MC.counter(S);
+    const VIS = V.BAR_VIS, bvE = Math.min(VIS, MC.barVal(E)), bvS = Math.min(VIS, MC.barVal(S)), cE = MC.counter(E), cS = MC.counter(S);
     $$('.gt-barw').forEach((w) => {
-      $('[data-bv]', w).textContent = bvE; $('[data-bp]', w).textContent = bvE > bvS ? '+' + (bvE - bvS) + ' pending' : '';
-      $('.bf', w).style.width = (bvS / MC.BARMAX * 100) + '%';
-      const bp = $('.bp', w); bp.style.left = (bvS / MC.BARMAX * 100) + '%'; bp.style.width = ((bvE - bvS) / MC.BARMAX * 100) + '%';
+      $('[data-bv]', w).textContent = bvE; $('[data-bp]', w).textContent = bvE > bvS ? '+' + (bvE - bvS) : '';
+      $('.bf', w).style.width = (bvS / VIS * 100) + '%';
+      const bp = $('.bp', w); bp.style.left = (bvS / VIS * 100) + '%'; bp.style.width = ((bvE - bvS) / VIS * 100) + '%';
       $$('.gt-mk', w).forEach((m) => { const t = +m.dataset.t; m.classList.toggle('rc', cS >= t); m.classList.toggle('rp', cE >= t && cS < t); });
       const l = $('[data-lvl]', w); if (l) l.textContent = lv;
     });
@@ -222,12 +234,13 @@
     v3: 'C · Third Gear tab "Tree" uses both pages: tree on the left; ult plus-tree, points and actions on the right. The Sheet tab keeps a small door.',
   };
   const HELP = 'Hover a node for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
-    + 'Try: Deep Gash (Double Strike) = other direction chosen (Hamstring is taken); Undying Rage (Berserker evolve) = awaiting approval; Not Today, Reaping Wind, Herald of Ruin, Dreadful Swing and the Stubborn Heart bonus = not active yet. '
-    + 'Respec asks first (placeholder price). Level slider: lowering resets what no longer fits. Reset demo restores the start.';
+    + 'Try: Deep Gash (Double Strike) = other direction chosen (Hamstring is taken); Not Today, Reaping Wind, Herald of Ruin, Dreadful Swing and the Stubborn Heart bonus = not active yet. '
+    + 'Respec asks first (placeholder price). Level slider: lowering resets what no longer fits. Reset demo restores the start. '
+    + 'Phone 812×375 and 740×360 = the landscape phone (the game\'s short screen, height up to 520, also a real short window): the Mastery bar is one slim strip, the tree scrolls inside its area (tier band and row icons stay in place), the ult plus-tree sits under the rows, Respec / Reset / Confirm stay in one row.';
   function buildStrip() {
     const v = ST.variant, lab = { v1: 'V1 Right page', v2: 'V2 Summary + panel', v3: 'V3 Tree tab' };
     strip.innerHTML = '<b>MOCKUP</b><button type="button" class="keep" data-s="more" aria-label="Show mockup controls">…</button>' + ['v1', 'v2', 'v3'].map((x) => '<button type="button" data-s="' + x + '" class="' + (v === x ? 'on' : '') + '">' + lab[x] + '</button>').join('')
-      + '<span class="sep"></span><button type="button" data-s="phone" class="' + (ST.phone ? 'on' : '') + '">Phone 375×812</button>'
+      + '<span class="sep"></span><button type="button" data-s="phone" class="' + (ST.phone === '812' ? 'on' : '') + '">Phone 812×375</button><button type="button" data-s="phone740" class="' + (ST.phone === '740' ? 'on' : '') + '">740×360</button>'
       + '<label>Level <input id="mk-lv" type="range" min="1" max="' + MC.MAXLV + '" value="' + ST.lv + '"><b id="mk-lvv">' + ST.lv + '</b></label>'
       + '<button type="button" data-s="demo">Reset demo</button><button type="button" data-s="help" class="' + (helpOn ? 'on' : '') + '">How to test</button>'
       + '<div id="mk-note">' + NOTES[v] + '</div><div id="mk-help" class="' + (helpOn ? 'on' : '') + '">' + HELP + '</div>';
@@ -236,7 +249,7 @@
     const b = e.target.closest('[data-s]'); if (!b) return;
     const s = b.dataset.s;
     if (s === 'v1' || s === 'v2' || s === 'v3') { ST.variant = s; ST.tab = 'sheet'; ST.open = false; writeHash(); render(); }
-    else if (s === 'phone') { ST.phone = !ST.phone; writeHash(); render(); }
+    else if (s === 'phone' || s === 'phone740') { const want = s === 'phone' ? '812' : '740'; ST.phone = ST.phone === want ? '' : want; writeHash(); render(); }
     else if (s === 'demo') { V.reset(); writeHash(); refresh(); toast('Demo state restored', true); }
     else if (s === 'more') strip.classList.toggle('open');
     else if (s === 'help') { helpOn = !helpOn; $('#mk-help').classList.toggle('on', helpOn); b.classList.toggle('on', helpOn); }
@@ -278,7 +291,7 @@
     if (e.key === 'Escape') { if (askBox) closeAsk(); else if ($('#gt-wp')) closeWorkspace(); else hideTip(); }
     else if ((e.key === 'h' || e.key === 'H') && !(e.target && /INPUT|TEXTAREA/.test(e.target.tagName))) { ST.clean = !ST.clean; layout(); writeHash(); }
   });
-  window.addEventListener('hashchange', () => { readHash(); render(); });
+  window.addEventListener('hashchange', syncHash); window.addEventListener('popstate', syncHash); setInterval(syncHash, 350);
   window.addEventListener('resize', () => { clearTimeout(rzT); rzT = setTimeout(render, 160); });
   window.addEventListener('scroll', () => { if (TIP.pinned) hideTip(); }, true);
 

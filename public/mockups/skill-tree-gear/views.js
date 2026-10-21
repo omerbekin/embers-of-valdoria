@@ -18,7 +18,7 @@
   const INERT = { '0.mb': 1, '2.eb': 1, '3.v': 1, '4.l1': 1, 'bar:3': 1 };
   const nodeInfo = (key) => CN.nodes[key] || { name: key, eff: '(content missing)', nw: false };
   MC.setNamer((k) => nodeInfo(k).name);
-  GT.setApproved((k) => !(CN.nodes[k] && CN.nodes[k].nw));
+  GT.setApproved(() => true); /* Omer 2026-10-22: tum NEW dugumler (Undying Rage dahil) onayli; 'Awaiting approval' durumu bu taslakta gosterilmez */
   const ic = (i) => A + ROWS[i].ic;
 
   /* ---------- durum (app.js ayni nesneyi kullanir) ---------- */
@@ -29,7 +29,7 @@
     };
   }
   const D0 = demoState();
-  const ST = { variant: 'v1', tab: 'sheet', lv: 30, S: D0.S, P: D0.P, gold: 1480, open: false, phone: false, nw: false, coarse: false, touch: false, fail: null };
+  const ST = { variant: 'v1', tab: 'sheet', lv: 30, S: D0.S, P: D0.P, gold: 1480, open: false, phone: '', nw: false, short: false, coarse: false, touch: false, fail: null };
   const eff = () => GT.merge(ST.S, ST.P);
   const freePts = () => MC.pool(ST.lv) - MC.spent(ST.S) - GT.pendingCount(ST.P);
   const reset = () => { const d = demoState(); ST.S = d.S; ST.P = d.P; ST.gold = 1480; ST.fail = null; if (GT.validate(ST.lv, eff())) GT.fitLevel(ST.lv, ST.S, ST.P); };
@@ -88,7 +88,6 @@
     chips.push(committed > 0 ? { text: 'Taken', tone: 'ok' } : pend > 0 ? { text: 'Pending', tone: 'v' } : { text: 'Not taken' });
     chips.push({ text: li.tier }, { text: li.lock, tone: li.open ? 'ok' : '' });
     if (INERT[key]) chips.push({ text: 'Not active yet', tone: 'warn' });
-    if (info.nw) chips.push({ text: 'Awaiting approval', tone: 'warn' });
     if (st.st === 'dir') chips.push({ text: 'Other direction chosen', tone: 'warn' });
     const lines = [info.eff];
     if (nd.req.length) {
@@ -100,12 +99,11 @@
     if (nd.arm) lines.push(kw('Ult arm:', 'arms are free, but the ult takes ' + MC.ULT_MAX + ' points at most in total (' + MC.ultSpent(E) + ' / ' + MC.ULT_MAX + ' spent). Locked by level, not by points.'));
     if (GT.DIR[nd.id] && !nd.arm) lines.push(kw('One direction:', 'each skill follows one side (Edge, Notable and Blood Price). Taking this side locks the other; only a respec changes a confirmed choice.'));
     if (INERT[key]) lines.push(kw('Not active yet:', 'you can take it, but the battle engine does not apply it yet.'));
-    if (info.nw) lines.push(kw('Awaiting approval:', 'this node needs a new engine rule and cannot be taken until it is approved.'));
     const fl = o.fail && o.fail.key === key ? o.fail.msg : null;
     let foot;
     if (fl) foot = { text: fl, cls: 'bad' };
     else if (st.rank === 0 && st.check && st.check.code === 'points') foot = { text: 'No points left' };
-    else if (st.rank === 0 && st.check) foot = { text: (['ultcap', 'direction', 'unapproved'].indexOf(st.check.code) >= 0 ? '' : 'Locked: ') + st.check.text, cls: 'lock' };
+    else if (st.rank === 0 && st.check) foot = { text: (['ultcap', 'direction'].indexOf(st.check.code) >= 0 ? '' : 'Locked: ') + st.check.text, cls: 'lock' };
     else if (pend > 0) foot = { text: o.touch ? 'Pending +' + pend + ': Confirm keeps it, − takes it back' : 'Pending +' + pend + ': Confirm keeps it, right-click takes it back', cls: 'pend' };
     else if (committed > 0) foot = { text: 'Confirmed: only a respec takes it back' };
     else foot = { text: o.touch ? 'Tap again to add 1 pending point' : 'Click to add 1 pending point' };
@@ -159,8 +157,7 @@
     const pp = k === 'F' ? '<span class="pp"></span>' : '';
     let lb = '';
     if (cfg.lblH && (k === 'N' || k === 'V')) { const side = nd.arm ? (nd.arm === 'u' || nd.arm === 'd' ? 'rt' : 'dn') : labelSide(nd) === 'up' ? 'up' : 'dn'; lb = `<span class="lb ${side}">${esc(info.name)}</span>`; }
-    const nw = info.nw ? '<span class="nwt">NEW</span>' : '';
-    return `<button type="button" class="gt-nd k-${k.toLowerCase()}" data-key="${key}" data-tip="n:${key}" aria-label="${esc(info.name)}" style="left:${p.x}px;top:${p.y}px"><span class="lkic">${LOCK}</span>${inner}${pp}${lb}${nw}</button>`;
+    return `<button type="button" class="gt-nd k-${k.toLowerCase()}" data-key="${key}" data-tip="n:${key}" aria-label="${esc(info.name)}" style="left:${p.x}px;top:${p.y}px"><span class="lkic">${LOCK}</span>${inner}${pp}${lb}</button>`;
   }
   function stripState(E, tier) {
     const sp = MC.counter(E);
@@ -174,9 +171,13 @@
   }
 
   /* ---------- Mastery bar: yalniz bonus elmaslari (hover ipucu); bonus izgarasi / tier yazisi / evolve centigi YOK ---------- */
+  /* kisa ekranda (ST.short, telefon yatay): TEK satirlik ince serit (ad + deger + iz); seviye yazisi yok (baslikta var) */
+  /* 30-45 basamaklari icerik gelene kadar GIZLI (Omer 2026-10-22 form): iz 25'e olceklenir, deger 25'te dolar */
+  const BAR_VIS = 25;
   function barHTML() {
-    const mk = MC.BAR_THR.map((t, i) => `<span class="gt-mk${t > 25 ? ' tbd' : ''}" data-t="${t}" data-tip="b:${i}" style="left:${t / MC.BARMAX * 100}%"><em>${t}</em><i></i></span>`).join('');
-    return `<div class="gt-barw"><div class="gt-bar-top"><span class="gt-bnm">${esc(CN.mastery)}</span><span class="gt-bval"><b data-bv>0</b> / ${MC.BARMAX}<i data-bp></i></span><span class="gt-bar-r">Level<b data-lvl>${ST.lv}</b></span></div>
+    const mk = MC.BAR_THR.map((t, i) => [t, i]).filter(([t]) => t <= BAR_VIS).map(([t, i]) => `<span class="gt-mk" data-t="${t}" data-tip="b:${i}" style="left:${t / BAR_VIS * 100}%"><em>${t}</em><i></i></span>`).join('');
+    if (ST.short) return `<div class="gt-barw slim"><span class="gt-bnm">${esc(CN.mastery)}</span><span class="gt-bval"><b data-bv>0</b> / ${BAR_VIS}<i data-bp></i></span><div class="gt-barrow"><div class="gt-track"><div class="bf"></div><div class="bp"></div>${mk}</div></div></div>`;
+    return `<div class="gt-barw"><div class="gt-bar-top"><span class="gt-bnm">${esc(CN.mastery)}</span><span class="gt-bval"><b data-bv>0</b> / ${BAR_VIS}<i data-bp></i></span><span class="gt-bar-r">Level<b data-lvl>${ST.lv}</b></span></div>
       <div class="gt-barrow"><div class="gt-track"><div class="bf"></div><div class="bp"></div>${mk}</div></div></div>`;
   }
 
@@ -209,15 +210,16 @@
       <div class="gt-uwrap"><div class="gt-uinfo">${info}</div><div class="gt-uscroll"><div class="gt-ucanvas" style="width:${U.W}px;height:${U.H}px"><svg class="gt-lines" width="${U.W}" height="${U.H}" viewBox="0 0 ${U.W} ${U.H}">${usvg}</svg>
         <div class="gt-ucore" data-tip="r:${ULT}" style="left:${U.cx}px;top:${U.cy}px;width:${cfg.coreSz}px;height:${cfg.coreSz}px"><span class="ud"></span><img src="${A}${ur.ic}" alt="${esc(ur.name)}"></div>${ucv}</div></div></div></div>`;
   }
-  /* o = { want: 'm'|'l'|'s'|'p', avail: px, coarse, ult: 'under'|'full'|'none'|'side', bar: bool } -> { html, key, cfg, L } */
+  /* o = { want: 'm'|'l'|'s'|'p', avail: px, coarse, ult: 'under'|'full'|'none'|'side', bar: bool, short: bool (telefon yatay: ince serit + kayan alan), inbar: bool (kisa ekran: islem dugmeleri seridin sagina) } -> { html, key, cfg, L } */
   function treeHTML(o) {
     const key = pickPreset(o.want, o.avail, o.coarse), cfg = Object.assign({}, GL.PRESETS[key]);
+    if (o.short) { cfg.hdr = 20; cfg.padV = 3; cfg.lblH = 0; } /* kisa ekran: dugum adi yok (ipucunda), tek satirlik tier bandi */
     cfg.colW = GL.pickColW(o.avail, cfg.labW, cfg);
     const L = GL.build(cfg), mini = cfg.labW <= 56, tight = cfg.colW < 70, lh = mini ? 40 : 52;
-    let cv = '', svg = '', labs = '';
+    let cv = '', svg = '', labs = '', tsh = '';
     L.tiers.forEach((t) => {
       const x0 = cfg.padX + cfg.colW * t.c0, w = cfg.colW * (t.c1 - t.c0 + 1);
-      cv += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" style="left:${x0}px;top:0;width:${w}px;height:${cfg.hdr}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
+      tsh += `<div class="gt-ts${t.tier === 'E' ? ' evo' : ''}" data-tier="${t.tier}" data-tn="${t.tier}" style="left:${x0}px;top:0;width:${w}px;height:${cfg.hdr}px"><small></small><b>${PL}<span class="pt"></span><em></em></b></div>`;
     });
     L.rows.forEach((row) => {
       L.tiers.forEach((t) => {
@@ -234,11 +236,14 @@
       if (n.kind === 'B') { const h = cfg.sz.B / 2 + 2; svg += `<path class="dead" data-b="${n.key}" data-dead="1" d="M${B.x + h},${B.y} H${B.x + h + 12} M${B.x + h + 12},${B.y - 6} V${B.y + 6}"/>`; }
     });
     MC.NODES.filter((n) => n.i < NROWS).forEach((n) => { cv += nodeHTML(n.key, L.pos[n.key], cfg); });
-    const vars = `--sF:${cfg.sz.F}px;--sE:${cfg.sz.E}px;--sB:${cfg.sz.B}px;--sN:${cfg.sz.N}px;--sV:${cfg.sz.V}px;--hit:${cfg.hit}px;--medw:${lh}px`;
-    const cls = `gt cs${mini ? ' mini' : ''}${tight ? ' tight' : ''} k-${key}`, inside = o.ult === 'under' || o.ult === 'full';
-    const html = `<div class="${cls}" style="${vars}">${o.bar === false ? '' : barHTML()}
-      <div class="gt-treewrap"><div class="gt-labcol" style="width:${cfg.labW}px;height:${L.H}px">${labs}</div><div class="gt-tree"><div class="gt-canvas" style="width:${L.W}px;height:${L.H}px"><svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg>${cv}</div></div></div>
-      ${inside ? ultHTML(L, cfg, o.ult) : ''}</div>`;
+    const vars = `--sF:${cfg.sz.F}px;--sE:${cfg.sz.E}px;--sB:${cfg.sz.B}px;--sN:${cfg.sz.N}px;--sV:${cfg.sz.V}px;--hit:${cfg.hit}px;--medw:${lh}px;--hdr:${cfg.hdr}px`;
+    const cls = `gt cs${mini ? ' mini' : ''}${tight ? ' tight' : ''}${o.short ? ' sh' : ''} k-${key}`, inside = o.ult === 'under' || o.ult === 'full';
+    /* ust serit: ince Mastery bar (+ kisa ekranda islem dugmeleri); sonra TEK kayan alan (.gt-scroll): satirlar + altta ult (kisa ekranda dikey + yatay kayar, tier bandi ve etiket sutunu yapisik) */
+    const bar = o.bar === false ? '' : barHTML(), acts = o.inbar ? `<div class="gt-acts gt-inbar" data-dyn="acts">${actsHTML()}</div>` : '';
+    const top = o.short ? `<div class="gt-tools">${bar}${acts}</div>` : bar;
+    const html = `<div class="${cls}" style="${vars}">${top}
+      <div class="gt-scroll"><div class="gt-treewrap"><div class="gt-labcol" style="width:${cfg.labW}px;height:${L.H}px"><div class="gt-corner"></div>${labs}</div><div class="gt-tree"><div class="gt-canvas" style="width:${L.W}px;height:${L.H}px"><svg class="gt-lines" width="${L.W}" height="${L.H}" viewBox="0 0 ${L.W} ${L.H}">${svg}</svg><div class="gt-tsrow">${tsh}</div>${cv}</div></div></div>
+      ${inside ? ultHTML(L, cfg, o.ult) : ''}</div></div>`;
     /* ult yan sutunda (v3): ayni .gt degiskenleriyle sarilir */
     const ultHtml = o.ult === 'side' ? `<div class="${cls}" style="${vars}">${ultHTML(L, cfg, 'side')}</div>` : '';
     return { html, key, cfg, L, ultHtml };
@@ -247,7 +252,7 @@
   /* ---------- islem cubugu (stat sayfasi dili: puan madalyonu | Respec · Reset · Confirm) ---------- */
   function actsHTML() {
     const free = freePts(), pend = GT.pendingCount(ST.P), spent = MC.spent(ST.S), cost = GT.respecCost(ST.lv);
-    return `<span class="sh-ptr"><span class="sh-medal${free > 0 ? '' : ' empty'}"><span>${free}</span></span><span class="sh-tx">${free > 0 ? 'skill point' + (free === 1 ? '' : 's') + ' to spend' : 'All points placed'}</span></span><span class="gt-sp"></span>
+    return `<span class="sh-ptr" title="${free > 0 ? free + ' skill point' + (free === 1 ? '' : 's') + ' to spend' : 'All points placed'}"><span class="sh-medal${free > 0 ? '' : ' empty'}"><span>${free}</span></span><span class="sh-tx">${free > 0 ? 'skill point' + (free === 1 ? '' : 's') + ' to spend' : 'All points placed'}</span></span><span class="gt-sp"></span>
       <span class="sh-acts"><button type="button" class="sh-btn rs${spent > 0 ? '' : ' off'}" data-a="respec" data-tip="x:respec">Respec <span class="cost">${cost}<img src="${A}ui/gold.webp" alt="" draggable="false"></span></button>
       <button type="button" class="sh-btn${pend > 0 ? '' : ' off'}" data-a="reset">Reset</button>
       <button type="button" class="sh-btn primary${pend > 0 ? '' : ' off'}" data-a="confirm">Confirm${pend > 0 ? ' (' + pend + ')' : ''}</button></span>`;
@@ -266,7 +271,7 @@
   function chainDot(key, E) {
     const st = GT.status(ST.lv, E, key), pd = ST.P[key] > 0 && MC.rk(ST.S, key) === 0;
     const on = st.rank > 0;
-    return `${on ? (pd ? 'pd' : 'on') : ''}${!on && ['tlk', 'xl', 'dir', 'new'].indexOf(st.st) >= 0 ? ' lk' : ''}`.trim();
+    return `${on ? (pd ? 'pd' : 'on') : ''}${!on && ['tlk', 'xl', 'dir'].indexOf(st.st) >= 0 ? ' lk' : ''}`.trim();
   }
   function summaryRowsHTML() {
     const E = eff(), lv = ST.lv;
@@ -283,7 +288,6 @@
         const vk = i + '.v', vinfo = nodeInfo(vk), vst = GT.status(lv, E, vk);
         if (vst.rank > 0) evs = `<span class="evs ok">Evolved: <b>${esc(vinfo.name)}</b></span>`;
         else if (vst.st === 'av') evs = `<span class="evs gold">Evolve ready: <b>${esc(vinfo.name)}</b></span>`;
-        else if (vst.st === 'new') evs = `<span class="evs">Evolve <b>${esc(vinfo.name)}</b> awaits approval</span>`;
         else if (vst.check && vst.check.code === 'evo') evs = `<span class="evs">${vst.check.text}</span>`;
         else if (vst.check && vst.check.code === 'cap') evs = '<span class="evs">Both evolves used</span>';
         else evs = `<span class="evs">${esc(vst.check ? vst.check.text : '')}</span>`;
@@ -338,18 +342,22 @@
   /* ---------- sag sayfa / sekme icerikleri ---------- */
   const headHTML = () => `<div class="gr-sec gr-tree-head">Skill tree<span class="gr-pt sk" data-badge></span><span class="gt-lvl" data-dyn="lvl">${lvlText()}</span></div>`;
   /* v1: tum agac sag sayfada */
-  const rightV1 = () => `<div class="gt-page">${headHTML()}<div class="gt-sec-gap"></div><div id="gt-treehost" class="gt-in"></div><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div>`;
+  const rightV1 = () => `<div class="gt-page fill">${headHTML()}<div class="gt-sec-gap"></div><div id="gt-treehost" class="gt-in"></div><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div>`;
   /* v2: ozet + "Open tree" */
   const rightV2 = () => `<div class="gt-page">${headHTML()}<div class="gt-sec-gap"></div><div class="gt-sum"><div class="gt-chips" data-dyn="chips">${chipsHTML()}</div><div id="gt-barhost">${barHTML()}</div><div class="gt-srows" data-dyn="srows">${summaryRowsHTML()}</div>
     <button type="button" class="gt-door" data-a="open-tree">Open skill tree <small>full working panel</small></button></div><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div>`;
   /* v3: Sheet sekmesinin sag sayfasi = kucuk kapi; Tree sekmesi iki sayfayi kaplar */
   const rightV3Sheet = () => `<div class="gt-page">${headHTML()}<div class="gt-sec-gap"></div><div class="gt-doorpage"><div class="gt-chips" data-dyn="chips">${chipsHTML()}</div><div id="gt-barhost">${barHTML()}</div>
     <button type="button" class="gt-door" data-a="tab:tree">Open the Tree tab <small>uses both pages</small></button></div></div>`;
-  const rightV3Tree = () => `<div class="gt-page"><div class="gt-head"><div class="gr-sec gr-tree-head">Skill tree · ${esc(CLS.name)}<span class="gr-pt sk" data-badge></span><span class="gt-lvl" data-dyn="lvl">${lvlText()}</span></div></div><div class="gt-sec-gap"></div>
+  const rightV3Tree = () => {
+    const head = `<div class="gt-head"><div class="gr-sec gr-tree-head">Skill tree · ${esc(CLS.name)}<span class="gr-pt sk" data-badge></span><span class="gt-lvl" data-dyn="lvl">${lvlText()}</span></div></div><div class="gt-sec-gap"></div>`;
+    if (ST.short) return `<div class="gt-page fill">${head}<div class="gt-wide"><div class="gt-main"><div id="gt-treehost" class="gt-in"></div></div></div></div>`;
+    return `<div class="gt-page">${head}
     <div class="gt-wide"><div class="gt-main"><div id="gt-treehost" class="gt-in"></div></div><div class="gt-side"><div id="gt-ulthost"></div><div class="gt-card" data-dyn="card">${cardHTML()}</div><p class="gt-note"><b>Tap</b> a node: +1 pending (orange ring). <b>Right-click</b> or long-press: −1 pending. <b>Confirm</b> keeps the points.</p><div class="gt-acts gt-sticky" data-dyn="acts">${actsHTML()}</div></div></div></div>`;
+  };
   /* v2 calisma paneli (tam ekran) */
   const workspaceHTML = () => `<div class="gr-overlay el-modal gr-ledger-ov gt-wp-ov" id="gt-wp"><div class="gr-panel gr-gear gt-wp el-modal-panel"><div class="gr-head gr-lhead"><div class="gr-title">Skill tree</div><div class="gt-hero"><img src="${A}av/warrior.webp" alt=""><div>${esc(CLS.name)}<small data-dyn="lvl">${lvlText()}</small></div></div><span class="gr-grow"></span><div class="gr-gold" data-dyn="gold">${goldHtml()}</div></div>
-    <div class="gt-wp-body"><div id="gt-treehost" class="gt-in"></div><div class="gt-acts" data-dyn="acts">${actsHTML()}</div></div></div></div>`;
+    <div class="gt-wp-body"><div id="gt-treehost" class="gt-in"></div>${ST.short ? '' : `<div class="gt-acts" data-dyn="acts">${actsHTML()}</div>`}</div></div></div>`;
 
   const NAVX = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"><path d="M6 6 L18 18 M18 6 L6 18"/></svg>';
   const NAVFS = '<svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="square" stroke-linejoin="round"><path d="M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6"/></svg>';
@@ -362,13 +370,13 @@
     const tree = ST.variant === 'v3' && ST.tab === 'tree';
     const left = tree ? '' : sheetLeftHTML();
     const right = ST.tab === 'hero' ? '' : ST.variant === 'v1' ? rightV1() : ST.variant === 'v2' ? rightV2() : tree ? rightV3Tree() : rightV3Sheet();
-    return `<div class="gr-overlay el-modal gr-ledger-ov" id="gt-gear"><div class="gr-panel gr-gear gr-ledger el-modal-panel tab-${tree ? 'tree' : ST.tab}"><div class="gr-head gr-lhead"><div class="gr-title">Gear</div><div class="gr-tabs gr-headtabs" role="tablist">${tabHtml}</div><span class="gr-grow"></span><div class="gr-gold" data-dyn="gold">${goldHtml()}</div></div>
+    return `<div class="gr-overlay el-modal gr-ledger-ov" id="gt-gear"><div class="gr-panel gr-gear gr-ledger el-modal-panel tab-${tree ? 'tree' : ST.tab}${tree || (ST.variant === 'v1' && ST.tab === 'sheet') ? ' gt-fill' : ''}"><div class="gr-head gr-lhead"><div class="gr-title">Gear</div><div class="gr-tabs gr-headtabs" role="tablist">${tabHtml}</div><span class="gr-grow"></span><div class="gr-gold" data-dyn="gold">${goldHtml()}</div></div>
       <div class="gr-body gr-lbody"><div class="gr-marks-col">${marksHTML()}</div><div class="gr-page"><div class="gr-page-in" id="gt-leafL">${left}</div><div class="gr-folio">· 3 ·</div></div><div class="gr-spine"></div><div class="gr-page r"><div class="gr-page-in" id="gt-leafR">${right}</div><div class="gr-folio">· 4 ·</div></div><div class="gr-lskills">${tree ? '' : platesHTML()}</div></div></div>
       <button type="button" class="nav-btn settings-toggle close-toggle" data-a="close" title="Close" aria-label="Close">${NAVX}</button><div class="gr-toast" role="status"></div></div>`;
   }
   const fsButtonHTML = () => `<button type="button" class="nav-btn settings-toggle fullscreen-toggle" data-a="fs" title="Fullscreen" aria-label="Fullscreen">${NAVFS}</button>`;
   const closeButtonHTML = () => `<button type="button" class="nav-btn settings-toggle close-toggle" data-a="close-ws" title="Close" aria-label="Close">${NAVX}</button>`;
 
-  return { ST, MC, GT, GL, CN, ROWS, KN, INERT, A, esc, eff, freePts, reset, demoState, bt, richHtml, nodeTip, rowTip, bonusTip, respecTip, tipHtml, nodeInfo, stripState, treeHTML, pickPreset, presetNeed, barHTML, actsHTML, chipsHTML, summaryRowsHTML, cardHTML, lvlText, shltHtml, goldHtml, spChipHtml,
+  return { BAR_VIS, ST, MC, GT, GL, CN, ROWS, KN, INERT, A, esc, eff, freePts, reset, demoState, bt, richHtml, nodeTip, rowTip, bonusTip, respecTip, tipHtml, nodeInfo, stripState, treeHTML, pickPreset, presetNeed, barHTML, actsHTML, chipsHTML, summaryRowsHTML, cardHTML, lvlText, shltHtml, goldHtml, spChipHtml,
     sheetLeftHTML, platesHTML, gearHTML, workspaceHTML, fsButtonHTML, closeButtonHTML, rightV1, rightV2, rightV3Sheet, rightV3Tree };
 });
