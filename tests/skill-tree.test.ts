@@ -167,7 +167,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(validate(pending, L50, build(W, L50, ['1.v'], a))?.code).toBe('unapproved');
     expect(code(W, L50, a, '1.v')).toBeNull();
     // Ömer'in onayını bekleyen NEW düğümler (onaylanınca buradan silinir, JSON'da approved: true olur).
-    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3']);
+    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb']);
     for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!PENDING.has(`${t.class} ${k}`));
   });
 
@@ -190,7 +190,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
 describe('veri doğrulama (3.2 madde 11)', () => {
   it('her class dosyası: 48 satır + 12 ult anahtarı, ad / metin sınırı, satır skill\'leri class sırasıyla, NEW approved taşır', () => {
     expect(treeKeys()).toHaveLength(60);
-    expect(Object.keys(TREES).sort()).toEqual(['cutthroat', 'defender', 'druid', 'mage', 'paladin', 'warrior']);
+    expect(Object.keys(TREES).sort()).toEqual(['cutthroat', 'defender', 'druid', 'mage', 'paladin', 'undead', 'warrior']);
     for (const t of Object.values(TREES)) expect(validateTreeData(t), t.class).toEqual([]);
   });
 

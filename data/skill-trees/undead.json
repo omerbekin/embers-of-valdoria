@@ -1,0 +1,451 @@
+{
+  "class": "undead",
+  "version": 1,
+  "picked": {
+    "rows": [
+      "a",
+      "a",
+      "a",
+      "a",
+      "b"
+    ],
+    "at": "2026-10-22"
+  },
+  "rows": [
+    {
+      "skill": "vampiric_bite",
+      "name": "Vampiric Bite",
+      "passive": true,
+      "karma": "A"
+    },
+    {
+      "skill": "bone_throw",
+      "name": "Bone Throw",
+      "karma": "A"
+    },
+    {
+      "skill": "wail_of_the_dead",
+      "name": "Wail of the Dead",
+      "karma": "A"
+    },
+    {
+      "skill": "dark_bond",
+      "name": "Dark Bond",
+      "karma": "A"
+    }
+  ],
+  "ult": {
+    "skill": "raise_dead",
+    "name": "Raise Dead",
+    "karma": "B"
+  },
+  "mastery": {
+    "name": "Blood Price Mastery",
+    "karma": "A",
+    "bar": [
+      {
+        "at": 5,
+        "name": "Opening Cut",
+        "text": "The first time you pay HP for a skill in a battle, that skill drains double through Vampiric Bite.",
+        "src": "A:V1:bar0",
+        "fx": null
+      },
+      {
+        "at": 10,
+        "name": "Red Reserve",
+        "text": "The first time you drop below 50% HP in a battle, your next skill costs no HP or MP.",
+        "src": "A:V1:bar1",
+        "fx": null
+      },
+      {
+        "at": 15,
+        "name": "Tomb Frost",
+        "text": "Your first Bone Throw each battle Slows for 1 extra turn.",
+        "src": "A:V5:bar0",
+        "fx": null
+      },
+      {
+        "at": 20,
+        "name": "First Thread",
+        "text": "Your first Dark Bond each battle also heals the ally for 10% of their max HP.",
+        "src": "A:V4:bar0",
+        "fx": null
+      },
+      {
+        "at": 25,
+        "name": "Brink Walker",
+        "text": "Once per battle, when you drop below 25% HP, Wail of the Dead's cooldown resets.",
+        "src": "A:V1:bar4",
+        "fx": null
+      }
+    ]
+  },
+  "nodes": {
+    "0.f1": {
+      "name": "Thin Blood",
+      "text": "While below 50% HP, Vampiric Bite heals +4% more of the damage you deal per rank.",
+      "src": "A:V1:0.f1",
+      "fx": null
+    },
+    "0.f2": {
+      "name": "Tithe Collector",
+      "text": "After you pay HP for a skill, that skill drains +3% more per rank through Vampiric Bite.",
+      "src": "A:V1:0.f2",
+      "fx": null
+    },
+    "0.f3": {
+      "name": "Open Veins",
+      "text": "Your skills deal +1% damage per rank for every 10% of HP you are missing.",
+      "src": "A:V1:0.f3",
+      "fx": null
+    },
+    "0.n0": {
+      "name": "Sanguine Thirst",
+      "text": "While below 50% HP, the first hit you land each turn drains double through Vampiric Bite.",
+      "src": "A:V1:0.n0",
+      "fx": null
+    },
+    "0.r": {
+      "name": "Last Drop",
+      "text": "The first time you fall below 30% HP in a battle, heal 5% of your max HP per rank.",
+      "src": "A:V1:0.r",
+      "fx": null
+    },
+    "0.ea": {
+      "name": "Dying Light",
+      "text": "While below 50% HP, your skills ignore 20% of the target's magic armor.",
+      "src": "A:V1:0.ea",
+      "fx": null
+    },
+    "0.eb": {
+      "name": "Black Spittle",
+      "text": "Your direct hits Wound the target for 2 turns.",
+      "src": "A:V3:0.eb",
+      "fx": null
+    },
+    "0.ma": {
+      "name": "Undying Thirst",
+      "text": "Once per battle, a fatal hit leaves you at 1 HP instead, and your next hit drains 100% of its damage.",
+      "src": "A:V1:0.ma",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "0.fa": {
+      "name": "Gaunt Frame",
+      "text": "Vampiric Bite heals 70% of damage dealt instead of 50%, but your maximum HP is 20% lower.",
+      "src": "A:V1:0.fa",
+      "fx": null
+    },
+    "0.fb": {
+      "name": "Rancid Blood",
+      "text": "Wound you inflict lasts 2 turns longer, but Vampiric Bite heals 20% less.",
+      "src": "A:V3:0.fb",
+      "fx": null
+    },
+    "0.mb": {
+      "name": "Stolen Remedy",
+      "text": "When an enemy you Wounded is healed, you heal for the amount Wound blocked.",
+      "src": "A:V3:0.mb",
+      "new": true,
+      "approved": false,
+      "fx": null
+    },
+    "0.v": {
+      "name": "Crimson Tide",
+      "text": "Vampiric Bite evolves: each time you pay HP for a skill, it heals +5% more of damage dealt for the rest of the battle.",
+      "src": "A:V1:0.v",
+      "fx": null
+    },
+    "1.f1": {
+      "name": "Knee Breaker",
+      "text": "Bone Throw +4% damage per rank against Slowed targets.",
+      "src": "A:V5:1.f1",
+      "fx": null
+    },
+    "1.f2": {
+      "name": "Marrow Leech",
+      "text": "Vampiric Bite heals +3% more per rank from Bone Throw hits on Slowed targets.",
+      "src": "A:V1:1.f2",
+      "fx": null
+    },
+    "1.f3": {
+      "name": "Skull Rattle",
+      "text": "Bone Throw has a 3% chance per rank to Stagger its target (it loses its next action).",
+      "src": "A:V5:1.f3",
+      "fx": null
+    },
+    "1.n0": {
+      "name": "Crippling Bone",
+      "text": "Bone Throw's Slow lasts 3 turns instead of 2.",
+      "src": "A:V5:1.n0",
+      "fx": null
+    },
+    "1.r": {
+      "name": "Numb Joints",
+      "text": "Bone Throw +5% damage per rank against Staggered, Stunned or Silenced targets.",
+      "src": "A:V5:1.r",
+      "fx": null
+    },
+    "1.ea": {
+      "name": "Shattered Shin",
+      "text": "Bone Throw on an already Slowed target has a 25% chance to Stagger it.",
+      "src": "A:V5:1.ea",
+      "fx": null
+    },
+    "1.eb": {
+      "name": "Skull Cracker",
+      "text": "Bone Throw has a 30% chance to Silence its target for 1 turn.",
+      "src": "A:V5:1.eb",
+      "fx": null
+    },
+    "1.ma": {
+      "name": "Grave Shackle",
+      "text": "Bone Throw Stuns a Slowed target below 50% HP for 1 turn (each enemy once per battle).",
+      "src": "A:V5:1.ma",
+      "fx": null
+    },
+    "1.fa": {
+      "name": "Brutal Hurl",
+      "text": "Shattered Shin's chance 25% → 45%, but Bone Throw deals 20% less damage.",
+      "src": "A:V5:1.fa",
+      "fx": null
+    },
+    "1.fb": {
+      "name": "Mute Marrow",
+      "text": "Skull Cracker always Silences, but Bone Throw no longer Slows.",
+      "src": "A:V5:1.fb",
+      "fx": null
+    },
+    "1.mb": {
+      "name": "Jaw Breaker",
+      "text": "Bone Throw on a Silenced target also Jinxes it (accuracy -20%, no crits on its next attack).",
+      "src": "A:V5:1.mb",
+      "fx": null
+    },
+    "1.v": {
+      "name": "Femur Chain",
+      "text": "Bone Throw evolves: it hits its target and the enemy behind it, Slowing both for 3 turns.",
+      "src": "A:V5:1.v",
+      "fx": null
+    },
+    "2.f1": {
+      "name": "Bloody Breath",
+      "text": "Wail of the Dead +1% damage per rank for every 10 HP it costs.",
+      "src": "A:V1:2.f2",
+      "fx": null
+    },
+    "2.f2": {
+      "name": "Lingering Moan",
+      "text": "Vampiric Bite heals +3% more per rank from Wail of the Dead's hits.",
+      "src": "A:V1:2.f3",
+      "fx": null
+    },
+    "2.f3": {
+      "name": "Fearful Keening",
+      "text": "Wail of the Dead has a 4% chance per rank to Blind each enemy hit for 1 turn.",
+      "src": "A:V5:2.f3",
+      "fx": null
+    },
+    "2.n0": {
+      "name": "Scream of Need",
+      "text": "While you are below 50% HP, Wail of the Dead deals +30% damage.",
+      "src": "A:V1:2.n0",
+      "fx": null
+    },
+    "2.r": {
+      "name": "Tithe Refund",
+      "text": "For each enemy Wail of the Dead hits, refund 4% of its HP cost per rank.",
+      "src": "A:V1:2.r",
+      "fx": null
+    },
+    "2.ea": {
+      "name": "Deeper Cut",
+      "text": "Wail of the Dead costs 30% of your current HP instead of 20% and deals +30% damage.",
+      "src": "A:V1:2.ea",
+      "fx": null
+    },
+    "2.eb": {
+      "name": "Blood Hymn",
+      "text": "Wail of the Dead heals your bonded ally for the HP it cost you.",
+      "src": "A:V4:2.ea",
+      "syn": "Dark Bond",
+      "fx": null
+    },
+    "2.ma": {
+      "name": "Blood Banshee",
+      "text": "Wail of the Dead deals bonus dark damage equal to 50% of the HP it cost to every enemy hit.",
+      "src": "A:V1:2.ma",
+      "fx": null
+    },
+    "2.fa": {
+      "name": "Torn Lungs",
+      "text": "Wail of the Dead's cooldown 3 → 2, but it costs 40% of your current HP.",
+      "src": "A:V1:2.fa",
+      "fx": null
+    },
+    "2.fb": {
+      "name": "Bitter Gift",
+      "text": "Blood Hymn heals double, but Wail of the Dead deals 25% less damage.",
+      "src": "A:V4:2.fa",
+      "syn": "Dark Bond",
+      "fx": null
+    },
+    "2.mb": {
+      "name": "Gorging Howl",
+      "text": "If Wail of the Dead hits 3 or more enemies, it refunds its full HP cost.",
+      "src": "A:V1:2.mb",
+      "fx": null
+    },
+    "2.v": {
+      "name": "Banshee's Toll",
+      "text": "Wail of the Dead evolves: it hits every enemy on the field, costs 30% of current HP and drains double.",
+      "src": "A:V1:2.v",
+      "fx": null
+    },
+    "3.f1": {
+      "name": "Thick Blood",
+      "text": "Dark Bond passes +4% more of your healing per rank.",
+      "src": "A:V1:3.f1",
+      "fx": null
+    },
+    "3.f2": {
+      "name": "Kindred Pulse",
+      "text": "When Dark Bond starts, heal the bonded ally for 2% of your max HP per rank.",
+      "src": "A:V1:3.f2",
+      "fx": null
+    },
+    "3.f3": {
+      "name": "Kindred Guard",
+      "text": "Your bonded ally takes 2% less damage per rank.",
+      "src": "A:V4:3.f3",
+      "fx": null
+    },
+    "3.n0": {
+      "name": "Lifeline",
+      "text": "When the bonded ally drops below 30% HP, your next hit drains double and sends all of it to them.",
+      "src": "A:V1:3.n0",
+      "fx": null
+    },
+    "3.r": {
+      "name": "Blood Kin",
+      "text": "While you are below 50% HP, Dark Bond passes +5% more of your healing per rank.",
+      "src": "A:V1:3.r",
+      "fx": null
+    },
+    "3.ea": {
+      "name": "Transfusion",
+      "text": "Dark Bond also moves 15% of your current HP to the bonded ally as healing.",
+      "src": "A:V1:3.ea",
+      "fx": null
+    },
+    "3.eb": {
+      "name": "Soul Shield",
+      "text": "Dark Bond gives the ally a shield worth 15% of your max HP.",
+      "src": "A:V4:3.eb",
+      "fx": null
+    },
+    "3.ma": {
+      "name": "Life for Life",
+      "text": "Once per battle, a fatal hit on the bonded ally is redirected to you instead.",
+      "src": "A:V1:3.ma",
+      "fx": null
+    },
+    "3.fa": {
+      "name": "Bled Dry",
+      "text": "Transfusion moves 30% of your current HP instead of 15%, but Dark Bond's cooldown 2 → 3.",
+      "src": "A:V1:3.fa",
+      "fx": null
+    },
+    "3.fb": {
+      "name": "Iron Oath",
+      "text": "Blood Oath takes 60% instead of 30%, but Vampiric Bite heals you 20% less.",
+      "src": "A:V4:3.fb",
+      "fx": null
+    },
+    "3.mb": {
+      "name": "Blood Oath",
+      "text": "While bonded, you guard your ally: you take 30% of the damage aimed at them.",
+      "src": "A:V4:3.mb",
+      "fx": null
+    },
+    "3.v": {
+      "name": "Crimson Covenant",
+      "text": "Dark Bond evolves: it no longer ends after 3 turns; it holds until one of you falls or you bind another.",
+      "src": "A:V1:3.v",
+      "fx": null
+    },
+    "4.u1": {
+      "name": "Grasping Hands",
+      "text": "Your Skeleton's hits Slow the target for 1 turn.",
+      "src": "B:V5:4.u1",
+      "fx": null
+    },
+    "4.u2": {
+      "name": "Cold Grip",
+      "text": "Your Skeleton deals +20% damage to Slowed targets.",
+      "src": "B:V5:4.u2",
+      "fx": null
+    },
+    "4.u3": {
+      "name": "Grave Grasp",
+      "text": "Your Skeleton's first attack Stuns its target for 1 turn.",
+      "src": "B:V5:4.u3",
+      "fx": null
+    },
+    "4.r1": {
+      "name": "Pox Bloom",
+      "text": "When your Skeleton dies or expires, poison ground (15% INT, 2 turns) spreads under the enemy it last hit.",
+      "src": "B:V3:4.r1",
+      "fx": null
+    },
+    "4.r2": {
+      "name": "Spore Cloud",
+      "text": "Pox Bloom's ground also covers the cells beside that enemy.",
+      "src": "B:V3:4.r2",
+      "fx": null
+    },
+    "4.r3": {
+      "name": "Rot Bomb",
+      "text": "Pox Bloom also detonates all Withering on enemies inside its ground.",
+      "src": "B:V3:4.r3",
+      "fx": null
+    },
+    "4.d1": {
+      "name": "Fresh Meat",
+      "text": "A fed Skeleton gains +15% damage and +15% max HP.",
+      "src": "B:V2:4.d1",
+      "fx": null
+    },
+    "4.d2": {
+      "name": "Gravedigger",
+      "text": "With no corpse on the field, Raise Dead costs 8 more MP and raises a fed Skeleton anyway.",
+      "src": "B:V2:4.d2",
+      "fx": null
+    },
+    "4.d3": {
+      "name": "Tomb Knight",
+      "text": "A fed Skeleton's Bone Slash has no cooldown.",
+      "src": "B:V2:4.d3",
+      "fx": null
+    },
+    "4.l1": {
+      "name": "Hulking Frame",
+      "text": "Your Skeleton has +20% max HP and lives 1 turn longer.",
+      "src": "B:V2:4.u1",
+      "fx": null
+    },
+    "4.l2": {
+      "name": "Grave Plate",
+      "text": "Your Skeleton gains +10 armor and is Fortified on its first turn.",
+      "src": "B:V2:4.u2",
+      "fx": null
+    },
+    "4.l3": {
+      "name": "Bone Champion",
+      "text": "Your Skeleton lives until slain, but Raise Dead's cooldown 5 → 7.",
+      "src": "B:V2:4.u3",
+      "fx": null
+    }
+  }
+}
