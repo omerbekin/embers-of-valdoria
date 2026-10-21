@@ -1,6 +1,6 @@
-# Harita 1 (Valdoria) yeniden çizim + genişletme (PLAN, Ömer onayı bekliyor)
+# Harita 1 (Valdoria) yeniden çizim + genişletme (PLAN; Ömer cevapları 2026-10-22 işlendi)
 
-Durum: **TASLAK (campaign-dev 2026-10-22).** Oyun koduna ve `data/campaign/valdoria.json`'a dokunulmadı. Görsel taslak: `public/mockups/maps-2-3.html#v0` (Map I sekmesi; yeni düğümlerin ipucunda "New" etiketi var).
+Durum: **PLAN ONAYLI, uygulama bekliyor (campaign-dev 2026-10-22; Ömer cevapları 7. bölümde).** Oyun koduna ve `data/campaign/valdoria.json`'a dokunulmadı. Görsel taslak: `public/mockups/maps-2-3.html#v0` (Map I sekmesi; yeni düğümlerin rozetinde "NEW" etiketi). **Yeni harita görseli (Ömer onayı 2026-10-22):** `assets/source/maps-1/valdoria-map-v2.png` (mockup kopyası `public/mockups/maps-2-3/valdoria-v2-preview.webp`, 1672x940). Mockup'ta 33 düğümün **hepsi** bu görsele göre yeniden yerleştirildi (bölüm 3b); oyuna geçerken `valdoria.json > pos` bu konumlardan alınır.
 Ömer'in kararları (2026-10-22): yalnız yeniden çizim değil **genişletme**; yeni düğümler **yalnızca var olan moblardan** (yeni mob / mekanik / stat / kural yok); **1.0'dan önce** yapılır.
 Ortak kurallar `maps-2-3.md` bölüm 2'den: bölge başına 1-2 çatal, en az 1 isteğe bağlı cep (çıkmaz dal: elit ya da korunan hazine), dalga kuralı aynen (normal 2, elit 2, boss 3 Round), elit / boss eşlikçileri her düğümde farklı. Oyun içi adlar İngilizce. Sayılar PROVİZYON (denge balance-tester'ın).
 
@@ -24,7 +24,7 @@ Eski tagline'lar: I "Begins at Mill Road, climbs to Ashford", II "Moor, pass and
 
 ## 3. Düğüm tablosu
 
-Mockup no = `#v0` sekmesindeki numara (rota sırası). Karşılaşma: 1. dalga · 2. dalga (var olan class'lar; tırnak içi görünen ad). Eski düğümlerin her şeyi (karşılaşma, boss, kasaba, metin, konum) aynen.
+Mockup no = `#v0` sekmesindeki numara (rota sırası). Karşılaşma: 1. dalga · 2. dalga (var olan class'lar; tırnak içi görünen ad). Eski düğümlerin karşılaşması, boss'u, kasabası ve metni aynen; **konumları yeni görsele göre değişir** (3b).
 
 | No | id | Ad | Tür | Karşılaşma | Lv | Eski/Yeni |
 |---|---|---|---|---|---|---|
@@ -59,26 +59,48 @@ Mockup no = `#v0` sekmesindeki numara (rota sırası). Karşılaşma: 1. dalga �
 | 26 | `camp` | Forward Camp | Merchant | — | 7 | ESKİ |
 | 27 | `road` | Ember Road | Battle | ember_road | 8 | ESKİ (artık çatal: Shepherd's Fold / Burnt Hamlet) |
 | 28 | `fold` | Shepherd's Fold | Event · Rest | shepherds_fold | 8 | ESKİ |
-| 29 | `hamlet` | **Burnt Hamlet** | Battle · Ash Ghouls | 2 Ghoul + Ash Hound + Grave Chanter · 2 Skeleton "Risen Skeleton" + Charcoal Burner | 8 | **YENİ** (Shepherd's Fold'a paralel kol: dinlenme mi, savaş + XP mi) |
+| 29 | `hamlet` | **Burnt Hamlet** | Battle · Ash Ghouls | 2 Ghoul + Ash Hound + Grave Chanter · 2 Skeleton "Risen Skeleton" + Charcoal Burner | 8 | **YENİ** (Shepherd's Fold'a paralel kol: dinlenme mi, savaş + XP mi). Kül ovasının ortasında, Ember Road ve Riverhead ile **nehrin aynı (doğu) yakasında**; yolu nehri hiç geçmez |
 | 30 | `head` | Riverhead | Battle | riverhead | 9 | ESKİ |
-| 31 | `deserters` | **Deserters' Camp** | Elite · Deserter Captain | 2 Morvane Halberdier + Bandit Crossbowman "Siege Crossbowman" · **Bandit Chief "Deserter Captain" (elit)** + Shieldwarden + Moor Raider "Ember Outrider" | 9 | **YENİ CEP** (Riverhead'den) |
-| 32 | `gate` | Gate of Cinders | Battle | gate_of_cinders | 9 | ESKİ |
+| 31 | `gate` | Gate of Cinders | Battle | gate_of_cinders | 9 | ESKİ |
+| 32 | `deserters` | **Deserters' Camp** | Elite · Deserter Captain | 2 Morvane Halberdier + Bandit Crossbowman "Siege Crossbowman" · **"Deserter Captain" (elit; YENİ SPRITE, istatistikleri Bandit Chief'ten)** + Shieldwarden + Moor Raider "Ember Outrider" | 10 | **YENİ CEP** (Gate of Cinders'tan; karlı dağlarda) |
 | 33 | `12` | Castle Morvane | Final Boss | castle_morvane | 10 | ESKİ |
 
-Yeni kenarlar (eski kenarların hiçbiri silinmez): `4→hills`, `hills→cairn`, `moor→hoard`, `5A→shrine`, `10→wagons`, `road→hamlet`, `hamlet→head`, `head→deserters`.
+Yeni kenarlar (eski kenarların hiçbiri silinmez): `4→hills`, `hills→cairn`, `moor→hoard`, `5A→shrine`, `10→wagons`, `road→hamlet`, `hamlet→head`, `gate→deserters`.
+
+**Nehir kontrolü (Ömer 2026-10-22, yeni görselde yeniden ölçüldü):** nehir görselden piksel piksel çıkarıldı (kuzeydeki buzul şelalesinden güneye, taş köprünün altından, bataklık deltasından güneybatıda denize). Bölge I ve II nehrin batısında, bölge III doğusunda. **Ana yolda nehir yalnız King's Bridge'te (taş köprü) geçilir;** hiçbir yolda 8 pikselden uzun su geçişi yok (bataklıktaki Misty Marsh / Sunken Shrine adacıkları sığ kamış kanallarıyla bağlı). Burnt Hamlet ve Deserters' Camp yolları nehri geçmez.
 
 **Tür dağılımı (33):** Battle 16 (+2), Elite 4 (+1), Boss 2, Treasure 5 (+3, hepsi korunan), Event 2, Town/City 2, Rest 1, Merchant 1. Savaşlı düğüm 28 (eski 22).
 
 **Yeni düğüm kuralları:**
-- Elit lider her yerde **sonda** (2. dalga), waves.md elit kuralı. Deserter Captain = var olan **Bandit Chief** mobu, yalnız görünen adı farklı (`name` alanı). Eşlikçileri Watchtower'dakilerden (Poacher + Ember Acolyte) farklı.
-- Korunan hazineler için `events.json > treasures`'a 3 yeni metin (`raiders_hoard`, `sunken_shrine`, `supply_wagons`) ve harita penceresi görseli gerekir; görsel yoksa var olan yedek davranış (yeni görsel yalnız Ömer isterse, art-pipeline).
+- Elit lider her yerde **sonda** (2. dalga), waves.md elit kuralı. **Deserter Captain (Ömer kararı):** yeni sprite (art-pipeline, ayrı iş; elit poz sayfası kuralıyla), **istatistikleri, skill'leri ve pasifi Bandit Chief'ten** (yeni kural yok). Sprite gelene kadar Bandit Chief çizimi yer tutucu. Eşlikçileri Watchtower'dakilerden (Poacher + Ember Acolyte) farklı.
+- Korunan hazineler: arayüz Dwarven Mine / St. Brann's ile aynı, **içerik farklı** (3a).
 - Çarpanlar (can / güç) uygulamada komşu karşılaşmalardan alınır, Cairn Hill emsali: Brackenridge ≈ Windy Moor, Raiders' Hoard ≈ Cairn Hill + %10, Sunken Shrine ≈ Misty Marsh, Supply Wagons ≈ Siege Line + %10, Burnt Hamlet ≈ Ashen Plain, Deserters' Camp ≈ Thornwood Hollow (PROVİZYON, sim'le ayar).
 - Yeni lore metinleri (EN, 1 cümle, uygulamada yazılır): ör. Brackenridge *"Bracken hides the old hill track to Cairn Hill, and the thugs who fled Mill Road wait in it for stragglers."*
+
+## 3a. Yeni hazinelerin içeriği (Ömer 2026-10-22: arayüz aynı, içerik farklı)
+
+Yalnız var olan ödül türleri: sandık item sayısı (`grantLoot` > `maxItems`, Witch's Hut'ın küçük sandığı), sabit altın (`gold`), düğümün item seviyesinde belirli nadirlikte bir hediye item'i (`grantGift`, kasaba hediyesi) ve sabit hazine XP'si (değişmez). Standart sandık: 2 + 0,5 x takım item, 25 altın. Sayılar PROVİZYON (balance-tester; toplam değer standart sandığın ±%15'i içinde).
+
+| Hazine | `events.json > treasures` id | İçerik | Metin (EN) |
+|---|---|---|---|
+| Raiders' Hoard (L1) | `raiders_hoard` | **altın ağırlıklı:** 1 item + **45 altın** | title *Raiders' Hoard* · text *"The raiders never spent what they stole. Under a cairn of moor stones lies a chest heavy with coin."* · reward *"Take the hoard: mostly coin, and one piece of gear."* |
+| Sunken Shrine (L3) | `sunken_shrine` | **az ama iyi:** standart sandıktan 1 eksik item + **1 Uncommon hediye item** (garantili Uncommon) + 10 altın | title *Sunken Shrine* · text *"Pilgrims left their best at this shrine before the marsh rose. The offerings are few, but well kept."* · reward *"Take the offerings: a few fine pieces of gear."* |
+| Supply Wagons (L7) | `supply_wagons` | **item ağırlıklı:** standart sandık + **1 Common hediye item** (en çok item), 10 altın | title *Supply Wagons* · text *"Morvane's quartermasters left the wagons to their guards. Crates of arms and armour wait under the tarps."* · reward *"Raid the wagons: plenty of gear, little coin."* |
+
+Veri: hazine tanımına isteğe bağlı `loot: { maxItems?, itemsDelta?, gold?, gift? }`; kodda var olan `grantLoot` / `grantGift` seçenekleriyle okunur (campaign-dev, küçük). Dwarven Mine ve St. Brann's Abbey aynen. Harita penceresi şeridi (`map-window.json > art`): yeni görsel istenmedikçe var olan yedek davranış.
+
+## 3b. Yeni görselde yerleşim (mockup `#v0`; kesirler görsele göre, x / 1672, y / 940)
+
+- **I · The Borderlands (güneybatı kıyı, tepeler, geçit):** Mill Road taş köprülü kıyı yolunda, Ravenwood yarımadanın ormanında, Ruined Watchtower kayalık tepede, Ashford kumsalın üstünde, Windy Moor batı burnunda, Raiders' Hoard burnun uç falezinde, Brackenridge Ashford'un doğusundaki tepelerde, Cairn Hill koyun doğu kıyısında, Iron Pass kuzeydeki ormanlık sırtta, Charcoal Camp kalenin kuzeybatısındaki ormanda.
+- **II · Valdren Vale (orta: kale, tarlalar, bataklık, taş köprü):** Valdren Keep görseldeki kalede; Dwarven Mine dağ eteğinde; Witch's Hut kalenin doğusundaki tarlalarda; Misty Marsh ve Sunken Shrine bataklık deltasının kamış adacıklarında; Grave Field ortadaki tarlalarda; Pilgrim Road ve St. Brann's Abbey kuzeyde dağ eteğinde; Black Cathedral nehrin batı kıyısına yakın; Riverside Camp nehrin batı kıyısında; King's Bridge taş köprünün üstünde.
+- **III · The Northern Heights (doğu ve kuzey: kül ovası, sık orman, dağ yolu):** Ashen Plain köprünün doğusunda kül ovasının girişinde; Supply Wagons ova ile ormanın arasında yol kenarında; Thornwood Hollow güneydoğu ormanında; Siege Line, Forward Camp, Ember Road, Burnt Hamlet kül ovasında; Shepherd's Fold dağ eteğinde; Riverhead nehrin kaynağına (buzul şelalesi) yakın, doğu yakada; Gate of Cinders dağ yolunda; Deserters' Camp karlı dağlarda; Castle Morvane kuzeydoğudaki dağ kalesinin üstünde.
+- Kurallar sağlandı: hiçbir düğüm kenara %5'ten yakın değil, denizde / suda düğüm yok, rozetler arası en az ~120 px (1920 dünyasında), yollar birbirini kesmez, hiçbir rozet bir yolun 55 px'ten yakınında değil (ölçüm betiği, görselin su maskesiyle).
 
 ## 4. Kod ihtiyacı (küçük, campaign-dev; motor yok)
 
 1. **Cep (çıkmaz dal) desteği:** Valdoria'da şu an çıkmaz dal yok. `allRoutes` / rota testleri / K1 cepleri rota saymamalı; düğüm bayrağı `optional: true` (mockup'taki gibi). Cepteki oyuncu yalnız geri yol görür (serbest dolaşım zaten var; `nextStep` ileri yol yoksa geri seçenek veriyor). Harita 2-3 de aynı altyapıyı kullanacak.
-2. **Yol çizgisi dili:** oyunda bugün kesik çizgi = seçimli rota (referans görseldeki lejant). Onaylı mockup dilinde çatallar düz, **cepler kesik**. Oyun çizimi ve lejant buna geçer (soru 2).
+2. **Yol çizgisi dili (Ömer kararı, uygulama işi):** oyunda bugün kesik çizgi = seçimli rota (`edges[].style`: tek yol `solid`, seçimli `dashed`; `tests/campaign.test.ts` bunu sınar). Yeni kural: **çatallar dahil tüm yollar düz, yalnız cep yolları kesik.** Yapılacak: `valdoria.json` kenar stilleri (çatal kenarları `solid`, cep kenarları `dashed`), `CampaignMapScene` yol çizimi + harita lejantı ("Dashed road: optional pocket"), kenar stili testi, Codex > Mechanics harita metni. Harita 2-3 aynı kuralla.
+2b. **Elle kavis (`ctrl`):** oyunda yollar kimlikten otomatik hafif kavislidir (`CampaignMapScene > curve`). Yeni görselde Iron Pass → Valdren Keep yolu Charcoal Camp'in üstünden dolanmalı (yoksa Cairn Hill → Charcoal Camp yoluyla kesişir); bunun için kenar verisinde isteğe bağlı `ctrl: [x, y]` (mockup'taki kontrol noktası), yoksa bugünkü otomatik kavis. Küçük çizim kodu.
 3. **Eğitim ölçeği:** `campaign.json > enemyScale.skipRegions: ["I"]` bugün yalnız eğitim düğümlerini (1-4) kapsıyor. Bölge I büyüyünce Windy Moor / Cairn Hill / Iron Pass / Charcoal Camp'in dengesi değişmesin diye bu alan **düğüm listesine** çevrilir (`skipNodes: ["1","2","3","4"]`). `waves.json > reinforce.regionGroups` etkilenmez (bu dört karşılaşmanın elle yazılmış 2. dalgası var); `tutorial.json > defeatHints.regions ["III"]` aynı.
 4. Testler: graf (33 düğüm, 96 rota, hepsi 22 durak, 6 çatal, 4 cep, K1/K2), seviye, eski kayıt (Cairn Hill testinin aynısı), karşılaşmaların geçerli class'a işaret etmesi, rozet arası en az 120 px. Wiki (Codex) ve harita blurb'ü: *"From Mill Road to Castle Morvane: 33 stops, 6 choice points, 22 stops per run."*
 5. Debug: var olan "düğüme ışınlan / temizlenmiş say" araçları yeni düğümleri listeden kendiliğinden alır.
@@ -93,18 +115,24 @@ Yeni kenarlar (eski kenarların hiçbiri silinmez): `4→hills`, `hills→cairn`
 
 ## 6. Seviye eğrisi ve denge etkisi
 
-- Düğüm seviyesi = Ashford'dan en kısa yol (`levels.json > rampStartSteps 2`, final L10). Yeni kollar eski kollarla aynı uzunlukta, cepler yol dışında → **eski 27 düğümün seviyesi birebir aynı.** Yeni düğümler: Brackenridge L1, Raiders' Hoard L1, Sunken Shrine L3, Supply Wagons L7, Burnt Hamlet L8, Deserters' Camp L9 (tabloda).
-- **XP etkisi (tahmin):** her şeyi bir kez oynayan farmsız bölük, ceplerden ve Burnt Hamlet'ten kahraman başına ~+380 XP alır (Deserters' Camp elit x2 bunun yarısından fazlası) → bölüm 1 sonu **~L8,5 → ~L9,1**. Cepleri atlayan oyuncu için değişiklik yok. `tests/levels.test.ts` (8,5 ± 0,5) rota boyunca ölçüyorsa etkilenmez; tüm düğümleri sayıyorsa sınırda kalır.
-- **Harita 2 ile uyum:** Harita 2'nin ilk 3 düğümü L10 (maps-2-3.md 8). Bugün farmsız oyuncu L8,5 ile 1,5 level geride başlar; yeni cepler isteyene **farmsız yaklaşık L9** ve tekrar oynanabilir elit / hazine (Deserters' Camp L9) ile L10'a yetişme yolu verir. Bu yönde iyi; ayrıca `enemyXp` ayarı gerekmez (önerim).
-- **Denge riski:** Burnt Hamlet kolu Shepherd's Fold'un dinlenmesinin yerine savaş koyar (o rotada final öncesi son dinlenme yok: Forward Camp tüccar). Final boss başarı oranı o rotada düşebilir; bilinçli seçim olarak bırakılabilir (soru 4).
+- Düğüm seviyesi = Ashford'dan en kısa yol (`levels.json > rampStartSteps 2`, final L10). Yeni kollar eski kollarla aynı uzunlukta, cepler yol dışında → **eski 27 düğümün seviyesi birebir aynı.** Yeni düğümler: Brackenridge L1, Raiders' Hoard L1, Sunken Shrine L3, Supply Wagons L7, Burnt Hamlet L8, Deserters' Camp **L10** (Gate of Cinders'tan bağlandığı için final ile aynı seviye; boss öncesi farm yeri).
+- **XP etkisi (tahmin):** her şeyi bir kez oynayan farmsız bölük, ceplerden ve Burnt Hamlet'ten kahraman başına ~+380 XP alır (Deserters' Camp elit x2 bunun yarısından fazlası; L10'a taşınınca biraz daha) → bölüm 1 sonu **~L8,5 → ~L9,1-9,2**. Cepleri atlayan oyuncu için değişiklik yok. `tests/levels.test.ts` (8,5 ± 0,5) rota boyunca ölçüyorsa etkilenmez; tüm düğümleri sayıyorsa sınırda kalır.
+- **Harita 2 ile uyum:** Harita 2'nin ilk 3 düğümü L10 (maps-2-3.md 8). Bugün farmsız oyuncu L8,5 ile 1,5 level geride başlar; yeni cepler isteyene **farmsız yaklaşık L9** ve tekrar oynanabilir elit / hazine (Deserters' Camp L10) ile L10'a yetişme yolu verir. Bu yönde iyi; ayrıca `enemyXp` ayarı gerekmez (önerim).
+- **Denge riski:** Burnt Hamlet kolu Shepherd's Fold'un dinlenmesinin yerine savaş koyar (o rotada final öncesi son dinlenme yok: Forward Camp tüccar). Final boss başarı oranı o rotada düşebilir; bilinçli seçim (Ömer 2026-10-22: kol olarak kalıyor).
 - **Önerilen sim (çalıştırılmadı, Ömer onayıyla):** (1) `npm run sim:campaign -- --mode=flat 300 1 medium medium`: yeni kollar (Brackenridge, Burnt Hamlet) ve eski düğümlerin oranı değişmedi mi; (2) `tests/levels.test.ts` + levels ölçümü: bölüm 1 sonu level (cepli / cepsiz); (3) **cepler sim'de oynanmaz** (sim serbest dolaşım yapmıyor): 4 cep için ya sim'e "cepleri de oyna" seçeneği (campaign-dev) ya da debug kurulumundan 96'lık hızlı ölçüm (balance-tester).
 
-## 7. Açık sorular (Ömer)
+## 7. Ömer'in cevapları (2026-10-22)
 
-1. **Bölge sınırı:** Windy Moor → Charcoal Camp bölge I'e geçsin mi (önerim; 10/11/12)? Alternatif: bölgeler eski sınırda kalır, yeni düğümler eklenir (4+2 / 14+1 / 9+3: dengesiz ama hiçbir eski düğümün bölgesi değişmez).
-2. **Yol çizgisi:** oyunda da mockup'taki gibi çatallar düz, cepler kesik olsun mu? (Bugün oyunda kesik = seçimli rota; referans haritanın lejantı böyle.)
-3. **Deserters' Camp lideri:** var olan Bandit Chief'i "Deserter Captain" adıyla kullanmak uygun mu? Alternatifler (hepsi var olan): Thane of the Deep (Dwarven Mine'daki lider), High Priest of the Undying (Black Cathedral), Drake Priest (Thornwood Hollow), Ember Hierophant'ı elit rütbesiyle lider yapmak. Yeni elit çizimi / kiti yok.
-4. **Burnt Hamlet:** Shepherd's Fold'a alternatif kol olarak kalsın mı (dinlenme mi XP mi seçimi), yoksa Riverhead'den bir cep mi olsun (rota hep dinlenmeli kalır)?
-5. **Yeni hazinelerin ödülü:** var olan korunan hazine kuralı (sandık + altın, Dwarven Mine ile aynı) yeterli mi? Pencere görseli için var olan bir görsel (ör. dwarven_mine) mi kullanılsın, yeni görsel mi?
-6. **Sayı:** 6 yeni düğüm (33) yeterli mi, yoksa bölge II'ye bir elit cep daha (34) ister misin? (Elit lider seçeneği soru 3'teki listeden.)
-7. Haritanın arka plan görseli aynı kalıyor (yeni düğümler var olan araziye oturuyor: Brackenridge tepelerde, Raiders' Hoard karlı sırtın eteğinde, Sunken Shrine bataklık göllerinde, Supply Wagons güney ormanının kıyısında, Burnt Hamlet nehir kenarında, Deserters' Camp kuzey sırtlarda). Uygun mu?
+1. Bölge kayması (10 / 11 / 12): **onaylandı.**
+2. Oyunda da çatallar düz, cepler kesik: **evet** → uygulama işi (4. bölüm madde 2).
+3. Deserters' Camp lideri **"Deserter Captain"**: kesin; **yeni sprite** (art-pipeline, ayrı), istatistikler Bandit Chief'ten.
+4. Burnt Hamlet Shepherd's Fold'a **alternatif kol** olarak kalır; yolu nehri geçmez (yeni konum 3. bölümde).
+5. Yeni hazineler: arayüz aynı, **içerik farklı** (3a).
+6. **33 düğüm yeterli.**
+7. Mockup'ta bölge zoom'unda görselin dışı (siyah) görünüyordu: zoom ve kaydırma görsele kilitlendi (aşağıda). Yeni harita görseli geldi ve onaylandı; konumlar ona göre yerleşti (3b).
+
+**Oyunda bu sorun nasıl çözülmüş (`src/game/wide-map.ts`, `assets/campaign/valdoria-bg-wide.webp`):** oyunun dünyası 1920x1080 (eski 16:9 harita); geniş ekranda sahne 2580'e kadar esner. `valdoria-bg-wide.webp` (1916x821, 21:9, ChatGPT outpaint) eski haritayı içinde bir dikdörtgen olarak taşır (`valdoria.json > backgroundWide.region` = [0,082, 0,001, 0,798, 0,941]); `placeArt` bu dikdörtgeni dünyaya oturtur, görselin fazlası iki yana (sağda daha çok) taşar. Kamera: yakınlaştırma yalnız x1-x1,4 (`map-view.ts > MAP_ZOOM`), merkez `clampMid` ile görselin kapsamına (`frame`) kilitli, kalan kenarı `edgeFillers` doldurur. Bu yüzden oyunda siyah kenar görünmez; mockup ise yalnız 16:9 görseli ve x2,4'e varan bölge zoom'unu kullandığı için kenarda siyah açılıyordu. Düğüm konumları eski 16:9 görsele göredir; yeni görsel gelince ya `region` yeniden ölçülür ya da konumlar yeni görsele göre yazılır.
+
+**Mockup çözümü (`public/mockups/maps-2-3/m.js > clampView`):** bölge görünümünde ölçek en az görseli sahneye tam kaplatacak kadar ("cover"), kaydırma görsel kenarında durur; kenara yakın bölgede kamera kendiliğinden içeri kayar. Tekerlek ve sürükleme de aynı kilitten geçer. Uzak görünüm (tüm harita) değişmedi (sahne oranı görselle aynı). Üç harita sekmesinde de geçerli.
+
+Kalan açık soru: yok.

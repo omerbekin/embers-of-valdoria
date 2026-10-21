@@ -402,7 +402,17 @@
     const cx = (b.x0 + b.x1) / 2, cy = (b.y0 + b.y1) / 2, ax = sw() / 2, ay = top + (sh() - top - pad) / 2;
     return { k, tx: ax - cx * k, ty: ay - cy * k };
   }
+  /* bölge görünümünde kamera görsele kilitli (Ömer 2026-10-22): ölçek en az görseli sahneye "cover" edecek kadar, kaydırma görsel kenarında durur;
+     kenara yakın bölgede kamera içeri kayar, görselin dışı (siyah) hiç görünmez. Uzak görünüm (tüm harita) değişmez. */
+  function clampView(v) {
+    if (!zoomed) return v;
+    const kc = Math.max(sw() / W, sh() / H), k = Math.max(v.k, kc);
+    let tx = v.tx, ty = v.ty;
+    if (k !== v.k) { const cx = (sw() / 2 - tx) / v.k, cy = (sh() / 2 - ty) / v.k; tx = sw() / 2 - cx * k; ty = sh() / 2 - cy * k; }
+    return { k, tx: clamp(tx, sw() - W * k, 0), ty: clamp(ty, sh() - H * k, 0) };
+  }
   function applyView(v, anim) {
+    v = clampView(v);
     view = v;
     worldEl.classList.toggle('nt', !anim);
     worldEl.style.transform = `translate(${f1(v.tx)}px,${f1(v.ty)}px) scale(${v.k})`;
@@ -432,7 +442,7 @@
     const r = regionOf(rid);
     crumb.innerHTML = `<span class="cm">${esc(r.id)}</span><span class="cn">${esc(r.name)}</span>`;
     backBtn.removeAttribute('aria-hidden');
-    applyView(v, anim !== false); fitK = v.k;
+    applyView(v, anim !== false); fitK = view.k;
     requestAnimationFrame(() => requestAnimationFrame(() => layer.querySelector('.rgc')?.classList.add('on')));
     writeHash();
   }
