@@ -69,6 +69,7 @@ body { min-height: 100vh; }
 .rd { transition: opacity .25s; }
 .rd .hl { opacity: 0; transition: opacity .25s; }
 .rd.hot .hl { opacity: 1; }
+.rd.hot.soft .hl { opacity: .5; }
 .lbl { letter-spacing: .04em; pointer-events: none; }
 .lbl.dim { opacity: .86; }
 .pill rect { transition: stroke .2s, fill .2s; }

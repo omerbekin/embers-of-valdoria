@@ -377,7 +377,7 @@
       sg += `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}"><g mask="url(#fm${id})">${roadSvg(sub, s.e, L.rs, 'butt')}</g></g>`;
     });
     h += `<defs>${sd}</defs><g class="stubs">${sg}</g>`;
-    h += '<g class="ghostroads" opacity=".8">' + L.stubs.filter((s) => s.ghost).map((s) => `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}">${roadSvg(s.g, s.e, L.rs)}</g>`).join('') + '</g>';
+    h += '<g class="ghostroads" opacity=".8">' + L.stubs.filter((s) => s.ghost).map((s) => `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}">${roadSvg(s.g, s.e, L.rs)}<path class="hl" d="${s.g.d}" fill="none" stroke="#ffb35a" stroke-width="${f1(2 * L.rs)}" stroke-opacity=".95"/></g>`).join('') + '</g>';
     // yön okları + komşu bölge etiketleri (tıkla = o bölgeye geç)
     const done = new Set();
     for (const s of L.stubs) {
@@ -497,10 +497,16 @@
   let drag = null, moved = false;
   function wireRegion() {
     const byN = Object.fromEntries(M.nodes.map((n) => [n.n, n]));
-    const hot = (n, on) => worldEl.querySelectorAll('.rd').forEach((g) => { if (+g.dataset.a === n || +g.dataset.b === n) g.classList.toggle('hot', on); });
+    const hot = (n, on, soft) => worldEl.querySelectorAll('.rd').forEach((g) => { if (+g.dataset.a === n || +g.dataset.b === n) { g.classList.toggle('hot', on); g.classList.toggle('soft', !!(on && soft)); } });
     worldEl.querySelectorAll('.node').forEach((g) => {
       const n = byN[+g.dataset.n];
-      if (g.dataset.go) { g.addEventListener('click', (ev) => { ev.stopPropagation(); if (!moved) setRegion(g.dataset.go); }); return; }
+      if (g.dataset.go) {
+        // silik komşu düğüm: yolu hafif sarı (Ömer 2026-10-22)
+        g.addEventListener('mouseenter', () => hot(n.n, true, true));
+        g.addEventListener('mouseleave', () => hot(n.n, false));
+        g.addEventListener('click', (ev) => { ev.stopPropagation(); if (!moved) setRegion(g.dataset.go); });
+        return;
+      }
       g.addEventListener('mouseenter', () => { if (!sel) showTip(n, g); hot(n.n, true); });
       g.addEventListener('mouseleave', () => { if (!sel) tip.classList.remove('on'); if (sel !== n.n) hot(n.n, false); });
       g.addEventListener('click', (ev) => {
