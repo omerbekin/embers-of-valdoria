@@ -215,7 +215,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
     expect(validate(pending, L50, build(W, L50, ['1.v'], a))?.code).toBe('unapproved');
     expect(code(W, L50, a, '1.v')).toBeNull();
     // Ömer'in onayını bekleyen NEW düğümler (onaylanınca buradan silinir, JSON'da approved: true olur).
-    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb', 'hexer 0.v', 'hexer 2.v', 'hexer 3.v', 'hexer 4.l3', 'antimage 0.v', 'antimage 3.v', 'antimage 4.l3']);
+    const PENDING = new Set(['cutthroat 0.eb', 'mage 1.mb', 'mage 2.v', 'mage 4.d3', 'druid 2.v', 'druid 3.n0', 'druid 4.d3', 'undead 0.ma', 'undead 0.mb', 'hexer 0.v', 'hexer 2.v', 'hexer 3.v', 'hexer 4.l3', 'antimage 0.v', 'antimage 3.v', 'antimage 4.l3', 'gambler 0.ea', 'gambler 0.v', 'gambler 2.n0', 'gambler 3.ea']);
     for (const t of Object.values(TREES)) for (const [k, n] of Object.entries(t.nodes)) if (n.new) expect(n.approved, `${t.class} ${k}`).toBe(!PENDING.has(`${t.class} ${k}`));
   });
 
@@ -238,7 +238,7 @@ describe('kural modülü (3.2 madde 1-10)', () => {
 describe('veri doğrulama (3.2 madde 11)', () => {
   it('her class dosyası: 48 satır + 12 ult anahtarı, ad / metin sınırı, satır skill\'leri class sırasıyla, NEW approved taşır', () => {
     expect(treeKeys()).toHaveLength(60);
-    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'cutthroat', 'defender', 'druid', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
+    expect(Object.keys(TREES).sort()).toEqual(['antimage', 'cutthroat', 'defender', 'druid', 'gambler', 'hexer', 'mage', 'paladin', 'undead', 'warrior']);
     for (const t of Object.values(TREES)) expect(validateTreeData(t), t.class).toEqual([]);
   });
 
@@ -371,7 +371,7 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     expect(treeSetupFor(src, 'quick', on)).toBeUndefined();
     expect(treeSetupFor(src, 'multiplayer', on)).toBeUndefined();
     expect(treeSetupFor({ ...src, level: 5 }, 'campaign', on)).toBeUndefined(); // havuzu aşan
-    expect(treeSetupFor({ class: 'gambler', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class
+    expect(treeSetupFor({ class: 'archer', level: 20, tree: { v: 1, r: { '1.f1': 1 } } }, 'campaign', on)).toBeUndefined(); // ağaç verisi olmayan class
   });
 
   it('debug odaklı kurulum: şalter kapalıyken de sefer / Endless kahramanına _rules.json > debugFocus ön ayarıyla ağaç verir, QB vermez', () => {

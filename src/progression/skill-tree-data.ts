@@ -12,6 +12,7 @@ import druidTree from '../../data/skill-trees/druid.json';
 import undeadTree from '../../data/skill-trees/undead.json';
 import hexerTree from '../../data/skill-trees/hexer.json';
 import antimageTree from '../../data/skill-trees/antimage.json';
+import gamblerTree from '../../data/skill-trees/gambler.json';
 import { classes } from '../engine/content';
 
 /** Ağacın açık olabileceği modlar (_rules.json > modes). */
@@ -124,7 +125,7 @@ export interface TreeData {
 export const TREE_RULES: TreeRules = rulesJson as unknown as TreeRules;
 
 /** Class dosyaları (statik import). Yeni class = buraya 1 satır. */
-const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, cutthroatTree, mageTree, druidTree, undeadTree, hexerTree, antimageTree];
+const TREE_FILES: unknown[] = [warriorTree, defenderTree, paladinTree, cutthroatTree, mageTree, druidTree, undeadTree, hexerTree, antimageTree, gamblerTree];
 
 export const TREES: Record<string, TreeData> = Object.fromEntries(TREE_FILES.map((t) => [(t as TreeData).class, t as TreeData]));
 

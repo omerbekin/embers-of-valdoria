@@ -12,5 +12,6 @@ window.SMM_FINAL = {
   druid: { rows: ['b', 'b', 'b', 'b', 'a'], at: '2026-10-22' }, // Nature's Grudge, Thorn Whip, Nature's Wrath, Rejuvenate = B; ult = A
   undead: { rows: ['a', 'a', 'a', 'a', 'b'], at: '2026-10-22' }, // Vampiric Bite, Bone Throw, Wail of the Dead, Dark Bond = A; ult = B
   hexer: { rows: ['a', 'a', 'b', 'b', 'b'], at: '2026-10-22' }, // Ill Omen, Evil Eye = A; Withering Curse, Jinx, ult = B
-  antimage: { rows: ['b', 'b', 'a', 'b', 'b'], at: '2026-10-22' } // Mana Overflow, Mana Steal, Spell Ward, ult = B; Drain Field = A
+  antimage: { rows: ['b', 'b', 'a', 'b', 'b'], at: '2026-10-22' }, // Mana Overflow, Mana Steal, Spell Ward, ult = B; Drain Field = A
+  gambler: { rows: ['a', 'a', 'b', 'b', 'a'], at: '2026-10-22' } // Double or Nothing, Loaded Dice, ult = A; High Stakes, Card Trick = B
 };
