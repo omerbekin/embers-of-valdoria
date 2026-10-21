@@ -128,7 +128,7 @@
 
   /* ---------- durum ---------- */
   let M, cur = 'm2', S = { names: true, nums: true }, zoomed = null /* bölge kimliği ya da null */, sel = null;
-  let fitK = 1, view = { k: 1, tx: 0, ty: 0 }, regTimer = 0, uid = 0;
+  let LOCKED = new Set(), fitK = 1, view = { k: 1, tx: 0, ty: 0 }, regTimer = 0, uid = 0;
   const stageEl = document.getElementById('stage'), worldEl = document.getElementById('world'), tip = document.getElementById('tip');
   const backBtn = document.getElementById('back'), crumb = document.getElementById('crumb');
   const sw = () => stageEl.clientWidth, sh = () => stageEl.clientHeight;
@@ -260,7 +260,7 @@
       if (ia && ib) roads.push({ a, b, e, key: hash(a, b), spoke: spokeOf(a, b), add: 0, amp: 1, A: [all[a].px, all[a].py], B: [all[b].px, all[b].py] });
       else if (ia || ib) {
         const inn = ia ? all[a] : all[b], out = ia ? all[b] : all[a];
-        stubs.push({ a: inn.n, b: out.n, inn, out, e, key: hash(Math.min(a, b), Math.max(a, b)), spoke: spokeOf(a, b), add: 0, amp: 1, A: [inn.px, inn.py], B: [out.px, out.py], nr: out.region, stub: true });
+        stubs.push({ ghost: !out.optional && !(e && e.optional) && !inn.optional && !LOCKED.has(String(out.region).toUpperCase()), a: inn.n, b: out.n, inn, out, e, key: hash(Math.min(a, b), Math.max(a, b)), spoke: spokeOf(a, b), add: 0, amp: 1, A: [inn.px, inn.py], B: [out.px, out.py], nr: out.region, stub: true });
       }
     }
     const items = roads.concat(stubs);
@@ -270,7 +270,7 @@
     {
       const cls = nodes.map((n) => ({ n: n.n, x: n.px, y: n.py, r: extOf(n) * 0.9 }));
       const pre = (it) => { // çizilen kısım (yön ucu: en çok 230*u ya da %90)
-        const lim = it.stub ? Math.min(it.g.len * 0.9, 230 * u) : 1e9, p = [];
+        const lim = it.stub && !it.ghost ? Math.min(it.g.len * 0.9, 230 * u) : 1e9, p = [];
         for (let i = 0; i < it.g.poly.length; i++) { p.push(it.g.poly[i]); if (it.g.cum[i] > lim) break; }
         return p;
       };
@@ -301,10 +301,24 @@
       recount = () => { for (let i = 0; i < items.length; i++) polys[i] = pre(items[i]); const t = total(); stat.after = t.c; stat.hubAfter = t.h; stat.nodeHitsAfter = t.nh; };
     }
     // komşu bölge okları: her komşu için tek etiket; çakışmasız yer seçilir
+    const fs0 = (q) => 8 * q;
     const fsP = 9 * u, hP = fsP * 2, pills = [], used = {};
     const nodeCircles = nodes.map((n) => ({ x: n.px, y: n.py, r: extOf(n) + 3 }));
     const rectBad = (r) => r.x0 < 4 || r.x1 > W - 4 || r.y0 < 4 || r.y1 > H - 4 || nodeCircles.some((c) => r.x1 > c.x - c.r && r.x0 < c.x + c.r && r.y1 > c.y - c.r && r.y0 < c.y + c.r) || pills.some((p) => rectsHit(r, p.r));
+    const ghostNodes = [], gseen = new Set();
+    for (const s of stubs) if (s.ghost && !gseen.has(s.out.n)) { gseen.add(s.out.n); ghostNodes.push(s.out); }
+    for (const g of ghostNodes) nodeCircles.push({ x: g.px, y: g.py, r: extOf(g) + 3 });
+    // hayalet komşu: yol tam çizilir; bölge etiketi düğümün yanına konur (düğüm / etiket / rozetlerle çakışmasın)
+    const ghostPills = [];
+    for (const g of ghostNodes) {
+      const nreg = regionOf(g.region), label = `${nreg.id} · ${nreg.name}`, w = measure(label, `600 ${fsP}px Cinzel`) + fsP * 1.8, R = extOf(g) + fsP * 0.8;
+      const cands = [[0, R + hP / 2 + 4 * u + fs0(u) * 1.6], [0, -(R + hP / 2 + 4 * u + fs0(u) * 1.6)], [R + w / 2 + 4 * u, 0], [-(R + w / 2 + 4 * u), 0]];
+      let best = null;
+      for (const [dx, dy] of cands) { const cx = g.px + dx, cy = g.py + dy, r = { x0: cx - w / 2, x1: cx + w / 2, y0: cy - hP / 2, y1: cy + hP / 2 }, c = { cx, cy, w, r, label, nreg, ghost: true }; if (!best) best = c; if (!rectBad(r)) { best = c; break; } }
+      pills.push(best); used[g.region] = 1; ghostPills.push(best);
+    }
     for (const s of stubs) {
+      if (s.ghost) { s.len = s.g.len; s.tip = pointAt(s.g, s.g.len); continue; }
       const L0 = [150, 115, 190, 85, 230].map((v) => v * u), nreg = regionOf(s.nr), label = `${nreg.id} · ${nreg.name}`;
       const w = measure(label, `600 ${fsP}px Cinzel`) + fsP * 1.8;
       let best = null;
@@ -322,7 +336,7 @@
     const fs = 8 * u;
     const hubs = off ? [] : nodes.filter((n) => deg[n.n] >= 8);
     const ptsOf = () => { const q = []; for (const r of roads) { const g = r.g; for (let s = 0; s <= g.len; s += 6) { const p = pointAt(g, s); q.push({ x: p.x, y: p.y, r }); } } return q; };
-    let roadPts = hubs.length ? ptsOf() : [], lab = placeLabels(nodes, extOf, fs, pills.map((p) => p.r), hubs, roadPts);
+    let roadPts = hubs.length ? ptsOf() : [], lab = placeLabels(nodes.concat(ghostNodes), extOf, fs, pills.map((p) => p.r), hubs, roadPts);
     for (let pass = 0; hubs.length && pass < 2; pass++) { // etiketin üstüne kıvrılan (hub dışı) yolun sapması küçülür, etiketler yeniden yerleşir
       let ch = false;
       for (const n of nodes) {
@@ -331,16 +345,16 @@
         for (const p of roadPts) if (p.x > l.r.x0 - 2 && p.x < l.r.x1 + 2 && p.y > l.r.y0 - 2 && p.y < l.r.y1 + 2 && !p.r.spoke && !(p.r.e && p.r.e.ctrl) && p.r.amp > 0.3) { p.r.amp = 0.3; p.r.g = geom(p.r.A, p.r.B, p.r.e, p.r.key, p.r); ch = true; }
       }
       if (!ch) break;
-      roadPts = ptsOf(); lab = placeLabels(nodes, extOf, fs, pills.map((p) => p.r), hubs, roadPts);
+      roadPts = ptsOf(); lab = placeLabels(nodes.concat(ghostNodes), extOf, fs, pills.map((p) => p.r), hubs, roadPts);
       if (recount) recount();
     }
     // sınırlar (dünya birimi)
     let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9;
     const grow = (a, b, c, d) => { x0 = Math.min(x0, a); y0 = Math.min(y0, b); x1 = Math.max(x1, c); y1 = Math.max(y1, d); };
     for (const n of nodes) { const e = extOf(n); grow(n.px - e, n.py - e, n.px + e, n.py + e); const l = lab[n.n]; if (l) grow(l.r.x0, l.r.y0, l.r.x1, l.r.y1); }
-    for (const p of pills) grow(p.r.x0, p.r.y0, p.r.x1, p.r.y1);
-    for (const s of stubs) grow(s.tip.x - 4, s.tip.y - 4, s.tip.x + 4, s.tip.y + 4);
-    return { rid, ns, u, sc, rs, nodes, all, roads, stubs, pills, lab, extOf, radOf, fs, stat, bounds: { x0, y0, x1, y1 } };
+    for (const p of pills) if (!p.ghost) grow(p.r.x0, p.r.y0, p.r.x1, p.r.y1);
+    for (const s of stubs) if (!s.ghost) grow(s.tip.x - 4, s.tip.y - 4, s.tip.x + 4, s.tip.y + 4);
+    return { rid, ns, u, sc, rs, nodes, ghostNodes, all, roads, stubs, pills, lab, extOf, radOf, fs, stat, bounds: { x0, y0, x1, y1 } };
   }
 
   function regionSvg(L, k) {
@@ -355,6 +369,7 @@
     // komşu bölgeye çıkan yollar: bölge sınırında soluklaşır
     let sd = '', sg = '';
     L.stubs.forEach((s, i) => {
+      if (s.ghost) return;
       const sub = subGeom(s.g, 0, s.len), a = s.g.poly[0], t = s.tip, id = `${id0}_${i}`;
       const m = 14 * L.u;
       const bx0 = Math.min(a.x, t.x) - m, by0 = Math.min(a.y, t.y) - m, bw = Math.abs(t.x - a.x) + 2 * m, bh = Math.abs(t.y - a.y) + 2 * m;
@@ -362,9 +377,11 @@
       sg += `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}"><g mask="url(#fm${id})">${roadSvg(sub, s.e, L.rs, 'butt')}</g></g>`;
     });
     h += `<defs>${sd}</defs><g class="stubs">${sg}</g>`;
+    h += '<g class="ghostroads" opacity=".4">' + L.stubs.filter((s) => s.ghost).map((s) => `<g class="rd" data-a="${s.inn.n}" data-b="${s.out.n}">${roadSvg(s.g, s.e, L.rs)}</g>`).join('') + '</g>';
     // yön okları + komşu bölge etiketleri (tıkla = o bölgeye geç)
     const done = new Set();
     for (const s of L.stubs) {
+      if (s.ghost) continue;
       const key = s.nr + ':' + f1(s.tip.x) + ':' + f1(s.tip.y);
       if (done.has(key)) continue;
       done.add(key);
@@ -377,7 +394,8 @@
     }
     // rozetler
     let ns = '';
-    for (const n of L.nodes) {
+    for (const n of L.nodes.concat(L.ghostNodes)) {
+      const gh = L.ghostNodes.includes(n);
       const k0 = kindOf(n.type), R = L.radOf(n), ex = L.extOf(n);
       let body = `<g transform="scale(${f1(L.sc * 1000) / 1000})"><g class="body">${frame(n.type)}</g></g>`;
       body += `<circle class="selring" r="${f1(R + 4 * L.u)}" fill="none" stroke="#ffb35a" stroke-width="${f1(1.4 * L.u)}" stroke-dasharray="${f1(4 * L.u)} ${f1(3 * L.u)}"/>`;
@@ -385,10 +403,10 @@
       if (n.isNew) { const q = L.u, w = 17 * q, hh = 7 * q; body += `<g transform="translate(${f1(R * 0.75)},${f1(R * 0.85)})" pointer-events="none"><rect x="${f1(-w / 2)}" y="${f1(-hh / 2)}" width="${f1(w)}" height="${f1(hh)}" rx="${f1(1.5 * q)}" fill="#3d6b2a" stroke="#cfe8a0" stroke-width="${f1(0.6 * q)}"/><text y="${f1(2.1 * q)}" text-anchor="middle" style="font:700 ${f1(5.6 * q)}px Cinzel;letter-spacing:.06em" fill="#f2ffd8">NEW</text></g>`; } // Harita 1 yeniden çizim taslağı: yeni düğüm
       if (n.roaming) body += `<circle r="${f1(R + 3 * L.u)}" fill="none" stroke="#f08a6a" stroke-width="${f1(1.2 * L.u)}" stroke-dasharray="1 3" stroke-linecap="round"/>`;
       body += numChip(n.n, -R * 0.85, -R * 0.95 - (k0 === 'boss' ? 4 * L.u : 0), L.u);
-      ns += `<g class="node${n.optional ? ' pocket' : ''}" data-n="${n.n}" transform="translate(${f1(n.px)},${f1(n.py)})"><g class="nodebody">${body}</g><circle r="${f1(Math.max(ex, 22 / k))}" fill="transparent"/></g>`;
+      ns += `<g class="node${n.optional ? ' pocket' : ''}${gh ? ' ghost' : ''}"${gh ? ` data-go="${n.region}"` : ''} data-n="${n.n}" transform="translate(${f1(n.px)},${f1(n.py)})"><g class="nodebody">${body}</g><circle r="${f1(Math.max(ex, 22 / k))}" fill="transparent"/></g>`;
     }
     h += `<g class="nodes">${ns}</g>`;
-    h += '<g class="labels" pointer-events="none">' + L.nodes.map((n) => { const p = L.lab[n.n]; return `<text class="lbl${p.dim ? ' dim' : ''}" x="${f1(p.x)}" y="${f1(p.y)}" text-anchor="${p.a}" fill="${n.type === 'boss' ? '#ffd9a0' : '#ece0c0'}" stroke="rgba(6,4,2,.95)" stroke-width="${f1(2.8 * L.u)}" stroke-linejoin="round" paint-order="stroke" style="font:600 ${f1(L.fs)}px Cinzel">${esc(n.name)}</text>`; }).join('') + '</g>';
+    h += '<g class="labels" pointer-events="none">' + L.nodes.concat(L.ghostNodes).map((n) => { const p = L.lab[n.n]; return `<text class="lbl${p.dim ? ' dim' : ''}${L.ghostNodes.includes(n) ? ' ghostlbl' : ''}" x="${f1(p.x)}" y="${f1(p.y)}" text-anchor="${p.a}" fill="${n.type === 'boss' ? '#ffd9a0' : '#ece0c0'}" stroke="rgba(6,4,2,.95)" stroke-width="${f1(2.8 * L.u)}" stroke-linejoin="round" paint-order="stroke" style="font:600 ${f1(L.fs)}px Cinzel">${esc(n.name)}</text>`; }).join('') + '</g>';
     return h;
   }
 
@@ -482,6 +500,7 @@
     const hot = (n, on) => worldEl.querySelectorAll('.rd').forEach((g) => { if (+g.dataset.a === n || +g.dataset.b === n) g.classList.toggle('hot', on); });
     worldEl.querySelectorAll('.node').forEach((g) => {
       const n = byN[+g.dataset.n];
+      if (g.dataset.go) { g.addEventListener('click', (ev) => { ev.stopPropagation(); if (!moved) setRegion(g.dataset.go); }); return; }
       g.addEventListener('mouseenter', () => { if (!sel) showTip(n, g); hot(n.n, true); });
       g.addEventListener('mouseleave', () => { if (!sel) tip.classList.remove('on'); if (sel !== n.n) hot(n.n, false); });
       g.addEventListener('click', (ev) => {
@@ -558,15 +577,16 @@
     stageEl.classList.toggle('nonum', !S.nums);
     document.querySelectorAll('.tog').forEach((b) => b.classList.toggle('on', S[b.dataset.t]));
   }
-  let startRegion = null;
+  let startRegion = null, lockedRaw = '';
   function readHash() {
     const p = location.hash.replace(/^#/, '').split('&');
+    const lp = p.find((x) => /^locked=/.test(x)); lockedRaw = lp ? lp.slice(7) : ''; LOCKED = new Set(lockedRaw.split(',').map((x) => x.trim().toUpperCase()).filter(Boolean)); // hata ayıklama: &locked=III,II (kilitli bölgenin düğümü komşu olarak gösterilmez)
     cur = p.includes('v0') ? 'm1' : p.includes('v2') ? 'm3' : 'm2';
     const rp = p.find((x) => /^r=/.test(x)); startRegion = rp ? rp.slice(2) : null;
     if (p.includes('clean')) { S.names = false; S.nums = false; }
     if (p.includes('nonames')) S.names = false;
   }
-  function writeHash() { history.replaceState(null, '', '#' + ({ m1: 'v0', m2: 'v1', m3: 'v2' }[cur]) + (zoomed ? '&r=' + zoomed : '')); }
+  function writeHash() { history.replaceState(null, '', '#' + ({ m1: 'v0', m2: 'v1', m3: 'v2' }[cur]) + (zoomed ? '&r=' + zoomed : '') + (lockedRaw ? '&locked=' + lockedRaw : '')); }
   function boot() { render(); if (startRegion && regionOf(startRegion)) setRegion(startRegion, false); }
 
   document.querySelectorAll('.tab').forEach((b) => b.addEventListener('click', () => { cur = b.dataset.v; render(); }));

@@ -83,3 +83,7 @@ body { min-height: 100vh; }
 @media (max-aspect-ratio: 1/1) { .stage { aspect-ratio: 3 / 4; } }
 @media (max-width: 700px) { .back span { display: none; } .back { padding: 0 11px; } .crumb { font-size: 12px; } .crumb .cn { max-width: 52%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; } }
 @media (prefers-reduced-motion: reduce) { .world, .rgc { transition: none; } .node.sel .selring { animation: none; } }
+/* komşu bölgenin bağlanan düğümü: silik, tıklayınca o bölgeye geçer */
+.node.ghost .nodebody, .node.ghost.pocket .nodebody { opacity: .4; transition: opacity .2s; }
+.node.ghost:hover .nodebody { opacity: .75; }
+.lbl.ghostlbl { opacity: .42; }
