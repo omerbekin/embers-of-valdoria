@@ -147,7 +147,7 @@ describe('skill verisi', () => {
               expect(e.onEmpty.chance).toBeLessThanOrEqual(1);
               expect(content.statuses[e.onEmpty.status], e.onEmpty.status).toBeDefined();
               expect(e.onEmpty.turns).toBeGreaterThanOrEqual(1);
-              expect(e.onEmpty.damage.power).toBeGreaterThan(0);
+              expect(e.onEmpty.damage!.power).toBeGreaterThan(0);
             }
             break;
           case 'taunt':

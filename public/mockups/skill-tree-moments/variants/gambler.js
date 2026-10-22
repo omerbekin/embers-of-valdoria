@@ -178,7 +178,7 @@
         ['Warm Hands', 'Your first skill with a cooldown each battle has +15% Double or Nothing chance.'],
         ['On a Roll', 'After a Jackpot, gain Haste for 1 turn.'],
         ['Lucky Break', 'When your skill kills an enemy, your shortest cooldown ends.'],
-        ['Momentum', 'Each Double or Nothing trigger gives your skills +5% damage until your next Bust.'],
+        ['Winning Run', 'Each Double or Nothing trigger gives your skills +5% damage until your next Bust.'],
         ['Heater', 'Once per battle, after your third Jackpot, your next turn comes twice as fast.']
       ],
       nodes: {
@@ -291,7 +291,7 @@
         '2.f2': ['Pressing Odds', 'High Stakes +3% power per rank for each status on the target.'],
         '2.f3': ['Rattled Foe', 'High Stakes +2% Jackpot chance per rank against Jinxed targets.'],
         '2.n0': ['Sucker Bet', 'High Stakes against a Stunned target is always a Jackpot.'],
-        '2.r': ['Twist the Knife', 'A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.'],
+        '2.r': ['Let It Ride', 'A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.'],
         '2.ea': ['Vulture', 'High Stakes +5% Jackpot chance for each status on the target.'],
         '2.ma': ['Stacked Against You', 'High Stakes pays 3x on a Jackpot against a target with 3 or more statuses.'],
         '2.fa': ['Pick on the Weak', 'High Stakes +20% Jackpot chance against targets with a status, -20% against others.'],

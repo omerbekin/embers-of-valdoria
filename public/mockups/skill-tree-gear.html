@@ -11,12 +11,14 @@
   Gorunum BIREBIR oyun: oyunun kendi CSS dosyalari (skill-tree-gear/css/: style.css, elegant.css, gear.css, gear-plates.css, band-tip.css kopyasi), Gear "Ledger" kabugu
   (sekmeler, yer imleri, sol Sheet sayfasi, skill plakalari, sag sayfa), A Band ipuclari, stat sayfasi dugmeleri (Reset / Confirm), gercek portre / skill / stat / UI ikonlari ve yazi tipleri.
   Agacin icerigi ve dugum dili skill-tree-moments taslagindan: Warrior, Omer'in secimi (final.js: Berserker B, Double Strike B, Whirlwind A, Charge A, ult B); Mastery bar yalniz bonus elmaslari.
-  Adresler: #v1 | #v2 | #v3  [&phone (yatay telefon 812x375) | &phone=740 (740x360)] [&lv=1..50] [&tab=tree (v3)] [&open (v2: calisma paneli acik)] [&clean (seridi gizle; H tusu da)]
+  Adresler: #v4 (varsayilan, adres yoksa da) | #v1 | #v2 | #v3  [&phone (yatay telefon 812x375) | &phone=740 (740x360)] [&lv=1..50] [&tab=tree (v3) | &tab=sheet (v4)] [&open (v2: calisma paneli acik)] [&clean (seridi gizle; H tusu da)]
     #v1  A  Tum agac Sheet'in sag sayfasinda (kucuk dugumler, ult + agaci satirlarin altinda).
     #v2  B  Sag sayfa = ozet (Mastery bar, satir basina puan, evolve durumu) + "Open skill tree" -> tam ekran calisma paneli (moments taslagi gibi).
     #v3  C  Ucuncu Gear sekmesi "Tree": iki sayfayi birden kaplar. Solda her satir = oyunun TAM skill plakasi (A Plates, gear.css .gr-pl: etiket, ikon, ad, cipler, deger) + yaninda o satirin dugumleri;
             pasif 1. sirada, sonra 3 skill, ult en altta kendi satirinda (plaka + ult + agaci). Sigmayan yer plakayi kucultmez: sayfa dikey kayar, tier bandi ustte yapisik. Sagda puanlar + islemler (ana sutun en dar satira yetmezse - orta pencere - bu kart agacin ALTINA iner; cok dar uzun pencerede agac yatay kayar, plaka sutunu yapisik); Sheet'te kucuk kapi.
             Plakanin ustune gelince A Band ipucu (gercek aciklama, bedel / bekleme, deger).
+    #v4  D  SADE hali (Omer 2026-10-22: "sade ve oyunun tasarim dilini koruyacak sekilde, V3 uzerinden"): V3 ile ayni Tree sekmesi ve gercek plakalar; yan sutun / Points karti / not / satir puani kutusu / tier kutulari / dugum adlari yok; altta tek islem satiri; agac alani kendi icinde kayar.
+            Hareket (skor icin tree4.css, durum yakalama app.js > nodeFx): puan harcaninca dugum dolar + parlar, yol cizgisi sonraki dugume akar, kilit acilir (tier bandinda), evolve acilinca / alininca ozel an, yon secilince diger dal kisilir, Confirm / Reset gecisleri, evolve dugumunde hover animasyonu (yer tutucu). Reduced motion = hareket yok.
   Yeni oyun-ici seyler (hepsi tiklanir): secilmeyen yon (ea / eb ayri yonler) soluk + kilit + "Other direction chosen"; bekleyen puan akisi (tik +1, sag tik / uzun basis -1, Reset solda, Confirm sagda);
   Respec (yer tutucu bedel, kural hala acik, once onay sorar); bazi dugumlerde "Not active yet" cipi. (Tum NEW dugumler, Undying Rage dahil, Omer tarafindan onaylandi: onay bekleme kilidi gosterilmez.)
   Telefon YATAY (oyundaki html.short, yukseklik <= 520): seritteki Phone 812x375 / 740x360 ya da gercek kisa pencere. Paneller ekrani doldurur; Mastery bar tek ince serit; agac kendi alaninda kayar (tier bandi + satir ikonlari yapisik; v3'te plaka sutunu yapisik), ult + agaci satirlarin altinda, Respec / Reset / Confirm tek satir; dokunma hedefleri >= 44 px. (Dar ama uzun pencerede yedek dikey yerlesim.)
@@ -28,6 +30,7 @@
 <link rel="stylesheet" href="skill-tree-gear/css/gear-plates.css" />
 <link rel="stylesheet" href="skill-tree-gear/css/band-tip.css" />
 <link rel="stylesheet" href="skill-tree-gear/tree.css" />
+<link rel="stylesheet" href="skill-tree-gear/tree4.css" />
 </head>
 <body>
 <div id="stage"><div id="bgimg"></div><div id="ui-root"></div><div id="tip"></div></div>

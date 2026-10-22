@@ -48,35 +48,108 @@
         "name": "Warm Hands",
         "text": "Your first skill with a cooldown each battle has +15% Double or Nothing chance.",
         "src": "A:V3:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "when": {
+              "firstCooldownSkill": true
+            },
+            "mod": {
+              "echoChance": 0.15
+            }
+          }
+        ]
       },
       {
         "at": 10,
         "name": "On a Roll",
         "text": "After a Jackpot, gain Haste for 1 turn.",
         "src": "A:V3:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "jackpot",
+            "do": [
+              {
+                "status": "haste",
+                "turns": 1
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Blood Debt",
         "text": "After a Bust costs you HP, your next skill deals +15% damage.",
         "src": "A:V2:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "bust",
+            "resource": "hp",
+            "do": [
+              {
+                "buff": {
+                  "powerMul": 0.15
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 20,
-        "name": "Momentum",
+        "name": "Winning Run",
         "text": "Each Double or Nothing trigger gives your skills +5% damage until your next Bust.",
         "src": "A:V3:bar3",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "echo",
+            "do": [
+              {
+                "buff": {
+                  "powerMul": 0.05
+                },
+                "uses": 0,
+                "stack": true
+              }
+            ]
+          },
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "bust",
+            "do": [
+              {
+                "clear": true
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Death Shrug",
         "text": "When Lucky Escape saves you, heal 10% of your max HP.",
         "src": "A:V2:bar3",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "luckyEscape",
+            "do": [
+              {
+                "heal": 0.1
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -85,31 +158,108 @@
       "name": "Hot Hand",
       "text": "After a Jackpot, Double or Nothing +2% chance per rank on your next skill.",
       "src": "A:V3:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "jackpot",
+          "rank": true,
+          "do": [
+            {
+              "buff": {
+                "echoChance": 0.02
+              }
+            }
+          ]
+        }
+      ]
     },
     "0.f2": {
       "name": "Cornered Dog",
       "text": "While below 50% HP, Double or Nothing +2% chance per rank.",
       "src": "A:V2:0.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "selfHpBelow": 0.5
+          },
+          "mod": {
+            "echoChance": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f3": {
       "name": "Quick Shuffle",
       "text": "When Double or Nothing triggers, your next turn comes 3% sooner per rank.",
       "src": "A:V3:0.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "rank": true,
+          "do": [
+            {
+              "sooner": 0.03
+            }
+          ]
+        }
+      ]
     },
     "0.n0": {
       "name": "Chain Reaction",
       "text": "When Double or Nothing triggers, your other cooldowns drop by 1 too.",
       "src": "A:V3:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "cooldown": -1,
+              "cd": "others"
+            }
+          ]
+        }
+      ]
     },
     "0.r": {
       "name": "Scar Gambler",
       "text": "Each Bust that costs HP gives Double or Nothing +3% chance per rank until your next Jackpot.",
       "src": "A:V2:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "bust",
+          "resource": "hp",
+          "rank": true,
+          "do": [
+            {
+              "buff": {
+                "echoChance": 0.03
+              },
+              "uses": 0,
+              "stack": true
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "jackpot",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "0.ea": {
       "name": "Streak",
@@ -117,37 +267,147 @@
       "src": "A:V3:0.ea",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "echoChance": 0.1
+              },
+              "uses": 0,
+              "stack": true
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echoFail",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "0.eb": {
       "name": "Charmed Life",
       "text": "When Lucky Escape saves you, gain Haste for 2 turns.",
       "src": "A:V2:0.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "luckyEscape",
+          "do": [
+            {
+              "status": "haste",
+              "turns": 2
+            }
+          ]
+        }
+      ]
     },
     "0.ma": {
       "name": "Unbroken Run",
       "text": "After 3 Double or Nothing triggers in a row, your next skill is a sure critical hit.",
       "src": "A:V3:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "every": 3,
+          "do": [
+            {
+              "buff": {
+                "guaranteedCrit": true
+              }
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echoFail",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "0.fa": {
       "name": "All or Nothing",
       "text": "Double or Nothing chance 25% → 40%, but when it fails, that cooldown is 1 turn longer.",
       "src": "A:V3:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "chance",
+          "op": "base",
+          "v": 0.4
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echoFail",
+          "do": [
+            {
+              "cooldown": 1
+            }
+          ]
+        }
+      ]
     },
     "0.fb": {
       "name": "Coin Toss Life",
       "text": "Lucky Escape chance 30% → 50%, but you start every battle at 80% HP.",
       "src": "A:V2:0.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "luck",
+          "add": 0.2
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "battleStart",
+          "do": [
+            {
+              "hpLoss": 0.2
+            }
+          ]
+        }
+      ]
     },
     "0.mb": {
       "name": "Borrowed Time",
       "text": "After Lucky Escape saves you, Double or Nothing triggers on every skill for 2 turns.",
       "src": "A:V2:0.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "luckyEscape",
+          "do": [
+            {
+              "buff": {
+                "echoSet": 1
+              },
+              "uses": 0,
+              "turns": 2
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Run It Back",
@@ -155,98 +415,334 @@
       "src": "A:V3:0.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "cast": "event",
+              "power": 0.6
+            }
+          ]
+        }
+      ]
     },
     "1.f1": {
       "name": "Steady Wrist",
       "text": "Each repeat throw of Loaded Dice deals +6% damage per rank.",
       "src": "A:V1:1.r*",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "repeatIndexAtLeast": 1
+          },
+          "mod": {
+            "powerMul": 0.06
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f2": {
       "name": "Red Pips",
       "text": "Loaded Dice Double Hit chance +1% per rank for every 20% of HP you are missing.",
       "src": "A:V2:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "missingHp": 0.2
+          },
+          "mod": {
+            "repeatChance": 0.01
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Rolling Dice",
       "text": "Each Loaded Dice Double Hit adds +1% power per rank to Loaded Dice until one fails to Double Hit.",
       "src": "A:V3:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "repeat",
+          "rank": true,
+          "do": [
+            {
+              "buff": {
+                "powerMul": 0.01
+              },
+              "skill": "loaded_dice",
+              "stack": true,
+              "uses": 0
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "repeatFail",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "1.n0": {
       "name": "Endless Rattle",
       "text": "Loaded Dice's Double Hit can repeat again and again, each time with the same chance.",
       "src": "A:V3:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "repeatChain"
+        }
+      ]
     },
     "1.r": {
       "name": "Nimble Fingers",
       "text": "Each Loaded Dice Double Hit makes your next turn come 2% sooner per rank.",
       "src": "A:V3:1.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "repeat",
+          "rank": true,
+          "do": [
+            {
+              "sooner": 0.02
+            }
+          ]
+        }
+      ]
     },
     "1.ea": {
       "name": "Hot Dice",
       "text": "Loaded Dice Double Hit chance 25% → 35%; each repeat throw deals +10% more than the last.",
       "src": "A:V3:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "repeatChance",
+          "op": "base",
+          "v": 0.35
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "repeatIndex": true
+          },
+          "mod": {
+            "powerMul": 0.1
+          }
+        }
+      ]
     },
     "1.eb": {
       "name": "Loaded Corner",
       "text": "Loaded Dice's Double Hit is always a critical hit.",
       "src": "A:V1:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "repeatIndexAtLeast": 1
+          },
+          "mod": {
+            "guaranteedCrit": true
+          }
+        }
+      ]
     },
     "1.ma": {
       "name": "Boxcars",
       "text": "If Loaded Dice throws 3 or more times, it also hits a random other enemy once.",
       "src": "A:V3:1.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "repeat",
+          "when": {
+            "eventAmount": 2
+          },
+          "perCast": 1,
+          "do": [
+            {
+              "strike": 1,
+              "to": "outsideArea",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "1.fa": {
       "name": "Fever Dice",
       "text": "Loaded Dice Double Hit chance +20%, but each throw deals 15% less damage.",
       "src": "A:V3:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "repeatChance",
+          "op": "add",
+          "v": 0.2
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.15
+        }
+      ]
     },
     "1.fb": {
       "name": "Spendthrift",
       "text": "Loaded Dice costs 6 MP and deals +80% power, but Rest restores half as much MP.",
       "src": "A:V5:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 6
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.8
+        },
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "rest",
+          "mult": 0.5
+        }
+      ]
     },
     "1.mb": {
       "name": "Snake Eyes",
       "text": "When Loaded Dice lands a critical hit, your next wager gets +10% Jackpot chance.",
       "src": "A:V1:1.ma",
       "syn": "High Stakes / All In",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "do": [
+            {
+              "buff": {
+                "winChance": 0.1
+              },
+              "uses": 0
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "jackpot",
+          "skill": "*",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "bust",
+          "skill": "*",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "1.v": {
       "name": "Dice Storm",
       "text": "Loaded Dice throws 3 dice at random enemies; each die rolls its own Double Hit.",
       "src": "A:V3:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "target": "random_enemies",
+          "count": 3
+        }
+      ]
     },
     "2.f1": {
       "name": "Steady Stake",
       "text": "High Stakes Bust multiplier +0.05x per rank (0.6x → 0.75x).",
       "src": "B:V1:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "loseMult",
+          "op": "add",
+          "v": 0.05,
+          "rank": true
+        }
+      ]
     },
     "2.f2": {
       "name": "Cautious Wager",
       "text": "High Stakes HP stake -1% of max HP per rank (15% → 10%).",
       "src": "B:V1:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "ratio",
+          "op": "add",
+          "v": -0.01,
+          "rank": true
+        }
+      ]
     },
     "2.f3": {
       "name": "Read the Room",
       "text": "High Stakes +2% Jackpot chance per rank against a target below 50% HP.",
       "src": "B:V1:2.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "winChance": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "2.n0": {
       "name": "Due for a Win",
@@ -254,86 +750,409 @@
       "src": "B:V1:2.n0",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "bust",
+          "do": [
+            {
+              "buff": {
+                "winChance": 0.15
+              },
+              "skill": "high_stakes",
+              "uses": 0,
+              "stack": true
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "jackpot",
+          "do": [
+            {
+              "clear": true
+            }
+          ]
+        }
+      ]
     },
     "2.r": {
-      "name": "Twist the Knife",
+      "name": "Let It Ride",
       "text": "A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.",
       "src": "B:V4:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betWon": true
+          },
+          "procChance": 0.15,
+          "mod": {
+            "extendStatus": {
+              "status": "*",
+              "turns": 1
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "2.ea": {
       "name": "Knockout Bet",
       "text": "A High Stakes Jackpot Slows the target for 2 turns.",
       "src": "B:V4:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betWon": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "slow",
+              "turns": 2
+            }
+          }
+        }
+      ]
     },
     "2.eb": {
       "name": "Hedged Bet",
       "text": "When High Stakes Busts, you are Fortified for 1 turn.",
       "src": "B:V1:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betLost": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "fortify",
+              "turns": 1,
+              "self": true
+            }
+          }
+        }
+      ]
     },
     "2.ma": {
       "name": "Haymaker",
       "text": "A High Stakes Jackpot against a Slowed target Stuns it for 1 turn.",
       "src": "B:V4:2.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betWon": true,
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "2.fa": {
       "name": "Dirty Fighting",
       "text": "A High Stakes Jackpot always Stuns, but High Stakes pays 2x → 1.5x.",
       "src": "B:V4:2.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betWon": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "winMult",
+          "op": "base",
+          "v": 1.5
+        }
+      ]
     },
     "2.fb": {
       "name": "Penny Ante",
       "text": "High Stakes stakes only 5% of max HP, but its Jackpot pays 2x → 1.6x.",
       "src": "B:V1:2.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "ratio",
+          "op": "base",
+          "v": 0.05
+        },
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "winMult",
+          "op": "base",
+          "v": 1.6
+        }
+      ]
     },
     "2.mb": {
       "name": "Sure Thing",
       "text": "While High Stakes has 70% or more Jackpot chance, it stakes no HP.",
       "src": "B:V1:2.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betChanceAtLeast": 0.7
+          },
+          "mod": {
+            "stakeMul": -1
+          }
+        }
+      ]
     },
     "2.v": {
       "name": "Called Game",
       "text": "High Stakes bets the target's fate: Jackpot Stuns it 1 turn, Bust Jinxes it; HP stake 15% → 8%.",
       "src": "B:V4:2.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betWon": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "betLost": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "jinxed",
+              "turns": 2
+            }
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "ratio",
+          "op": "base",
+          "v": 0.08
+        }
+      ]
     },
     "3.f1": {
       "name": "Sharp Corners",
       "text": "Card Trick +5% power per rank against Stunned targets.",
       "src": "B:V4:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "stun"
+          },
+          "mod": {
+            "powerMul": 0.05
+          },
+          "rank": true
+        }
+      ]
     },
     "3.f2": {
       "name": "Jack of Clubs",
       "text": "Card Trick +4% power per rank against targets with a status.",
       "src": "B:V4:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHasAnyStatus": true
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "3.f3": {
       "name": "Swift Suit",
       "text": "Card Trick Slow odds +5% per rank.",
       "src": "B:V3:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "replaceEffect",
+          "sel": "randomStatus",
+          "byRank": [
+            {
+              "type": "randomStatus",
+              "options": [
+                {
+                  "status": "slow",
+                  "turns": 2,
+                  "weight": 0.45
+                },
+                {
+                  "status": "wound",
+                  "turns": 2,
+                  "weight": 0.366667
+                },
+                {
+                  "status": "stun",
+                  "turns": 1,
+                  "weight": 0.183333
+                }
+              ]
+            },
+            {
+              "type": "randomStatus",
+              "options": [
+                {
+                  "status": "slow",
+                  "turns": 2,
+                  "weight": 0.5
+                },
+                {
+                  "status": "wound",
+                  "turns": 2,
+                  "weight": 0.333333
+                },
+                {
+                  "status": "stun",
+                  "turns": 1,
+                  "weight": 0.166667
+                }
+              ]
+            },
+            {
+              "type": "randomStatus",
+              "options": [
+                {
+                  "status": "slow",
+                  "turns": 2,
+                  "weight": 0.55
+                },
+                {
+                  "status": "wound",
+                  "turns": 2,
+                  "weight": 0.3
+                },
+                {
+                  "status": "stun",
+                  "turns": 1,
+                  "weight": 0.15
+                }
+              ]
+            },
+            {
+              "type": "randomStatus",
+              "options": [
+                {
+                  "status": "slow",
+                  "turns": 2,
+                  "weight": 0.6
+                },
+                {
+                  "status": "wound",
+                  "turns": 2,
+                  "weight": 0.266667
+                },
+                {
+                  "status": "stun",
+                  "turns": 1,
+                  "weight": 0.133333
+                }
+              ]
+            },
+            {
+              "type": "randomStatus",
+              "options": [
+                {
+                  "status": "slow",
+                  "turns": 2,
+                  "weight": 0.65
+                },
+                {
+                  "status": "wound",
+                  "turns": 2,
+                  "weight": 0.233333
+                },
+                {
+                  "status": "stun",
+                  "turns": 1,
+                  "weight": 0.116667
+                }
+              ]
+            }
+          ]
+        }
+      ]
     },
     "3.n0": {
       "name": "Crippling Ace",
       "text": "Card Trick always deals Stun to a Slowed target.",
       "src": "B:V1:3.n0",
       "syn": "High Stakes",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "3.r": {
       "name": "Long Con",
       "text": "Card Trick's Stun has a 5% chance per rank to last 1 turn longer.",
       "src": "B:V4:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:stun",
+          "procChance": 0.05,
+          "mod": {
+            "turns": 1
+          },
+          "rank": "chance"
+        }
+      ]
     },
     "3.ea": {
       "name": "Stacked Deck",
@@ -347,7 +1166,27 @@
       "name": "Distracting Fan",
       "text": "Enemies hit by Card Trick deal 15% less damage on their next attack.",
       "src": "B:V4:3.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "weakened",
+            "turns": 2
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:weakened",
+          "mod": {
+            "statusPotency": {
+              "oneAttack": 1
+            }
+          }
+        }
+      ]
     },
     "3.ma": {
       "name": "Double Deal",
@@ -359,97 +1198,271 @@
       "name": "Cold Deck",
       "text": "Card Trick always deals Stun, but its cooldown is 3 → 5.",
       "src": "B:V1:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "replaceEffect",
+          "sel": "randomStatus",
+          "effect": {
+            "type": "status",
+            "status": "stun",
+            "turns": 1
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "base",
+          "v": 5
+        }
+      ]
     },
     "3.fb": {
       "name": "Smoke Cards",
       "text": "Card Trick Blinds both targets for 2 turns, but deals no damage.",
       "src": "B:V4:3.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "damage"
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 2
+          }
+        }
+      ]
     },
     "3.mb": {
       "name": "Blinding Flurry",
       "text": "Card Trick Blinds every enemy it hits for 1 turn, on top of its status.",
       "src": "B:V4:3.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 1
+          }
+        }
+      ]
     },
     "3.v": {
       "name": "Returning Cards",
       "text": "Every Card Trick card flies back for a second hit at 60% power, rolling a new status.",
       "src": "B:V3:3.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "strike": 0.6,
+              "to": "castTargets",
+              "rollStatus": true
+            }
+          ]
+        }
+      ]
     },
     "4.u1": {
       "name": "Fat Stack",
       "text": "All In Jackpot pays +0.02x more per MP staked (0.0667x → 0.0867x).",
       "src": "A:V5:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "perStake",
+          "op": "add",
+          "v": 0.02
+        }
+      ]
     },
     "4.u2": {
       "name": "Mortgage",
       "text": "All In also stakes 10% of max HP, counted as extra MP for its payout.",
       "src": "A:V5:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "bet",
+          "f": "hpStake",
+          "op": "set",
+          "v": 0.1
+        }
+      ]
     },
     "4.u3": {
       "name": "High Roller",
       "text": "An All In that stakes 25+ MP ignores 50% of Armor and cannot miss.",
       "src": "A:V5:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "stakeAtLeast": 25
+          },
+          "mod": {
+            "ignoreDefense": 0.5,
+            "sureHit": true
+          }
+        }
+      ]
     },
     "4.r1": {
       "name": "Run the Table",
       "text": "If All In kills, its cooldown ends.",
       "src": "A:V3:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "cooldown": "reset"
+            }
+          ]
+        }
+      ]
     },
     "4.r2": {
       "name": "Clean Sweep",
       "text": "If All In kills, you get back the MP you staked.",
       "src": "A:V3:4.l2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "mp": 1,
+              "of": "stake",
+              "to": "self"
+            }
+          ]
+        }
+      ]
     },
     "4.r3": {
       "name": "Domino",
       "text": "If All In kills, it strikes a random enemy for 60% of its damage.",
       "src": "A:V3:4.l3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "damage": 0.6,
+              "of": "dealt",
+              "to": "randomEnemy"
+            }
+          ]
+        }
+      ]
     },
     "4.d1": {
       "name": "Ride the Wave",
       "text": "All In +10% Double or Nothing chance.",
       "src": "A:V3:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "echoChance": 0.1
+          }
+        }
+      ]
     },
     "4.d2": {
       "name": "Fast Break",
       "text": "All In cooldown 3 → 2.",
       "src": "A:V3:4.r2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "base",
+          "v": 2
+        }
+      ]
     },
     "4.d3": {
       "name": "Blitz",
       "text": "All In is ready from the start of each battle, with no opening cooldown.",
       "src": "A:V3:4.r3",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "initialCooldown",
+          "op": "set",
+          "v": 0
+        }
+      ]
     },
     "4.l1": {
       "name": "Grudge Ledger",
       "text": "All In +2% damage for each hit you took since its last use.",
       "src": "A:V2:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "hitsTakenSinceLastUse": true
+          },
+          "mod": {
+            "powerMul": 0.02
+          }
+        }
+      ]
     },
     "4.l2": {
       "name": "Heartbeat",
       "text": "All In deals +1% damage for every 1% of HP you are missing.",
       "src": "A:V2:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "missingHp": 0.01
+          },
+          "mod": {
+            "powerMul": 0.01
+          }
+        }
+      ]
     },
     "4.l3": {
       "name": "Last Breath",
       "text": "While you are below 25% HP, All In is always a Jackpot.",
       "src": "A:V2:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "selfHpBelow": 0.25
+          },
+          "mod": {
+            "winSet": 1
+          }
+        }
+      ]
     }
   }
 }

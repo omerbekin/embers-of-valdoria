@@ -52,8 +52,8 @@ describe('Drain Field verisi (madde 260)', () => {
     expect(EMPTY.chance).toBeGreaterThan(0);
     expect(EMPTY.chance).toBeLessThanOrEqual(1);
     expect(EMPTY.turns).toBeGreaterThanOrEqual(1);
-    expect(EMPTY.damage.scale).toBe(content.classes.antimage!.primary); // hasar ölçekleme kuralı: skill sahibinin statı
-    expect(EMPTY.damage.power).toBeGreaterThan(0);
+    expect(EMPTY.damage!.scale).toBe(content.classes.antimage!.primary); // hasar ölçekleme kuralı: skill sahibinin statı
+    expect(EMPTY.damage!.power).toBeGreaterThan(0);
     expect(SIL.type).toBe('debuff');
     expect(SIL.blocksMpSkills).toBe(true);
     expect(SIL.tickAtTurnEnd).toBe(true);
@@ -121,7 +121,7 @@ describe('Drain Field: mana boşalma zarı', () => {
         const dmg = ofType(ev, 'damage').filter((e) => e.target === foe.uid);
         expect(dmg).toHaveLength(1);
         expect(dmg[0]!.origin).toBe('skill');
-        expect(dmg[0]!.element).toBe(EMPTY.damage.element);
+        expect(dmg[0]!.element).toBe(EMPTY.damage!.element);
         expect(dmg[0]!.amount + dmg[0]!.absorbed).toBeGreaterThan(0);
         // olay sırası: emptyProc -> status -> damage
         expect(ev.indexOf(proc[0]!)).toBeLessThan(ev.indexOf(st[0]!));
@@ -220,8 +220,8 @@ describe('Drain Field: önizleme, YZ, açıklama, kayıt, wiki', () => {
     expect(pz.emptyProc?.status).toBe(EMPTY.status);
     expect(pz.emptyProc?.statusName).toBe(SIL.name);
     expect(pz.emptyProc?.turns).toBe(EMPTY.turns);
-    expect(pz.emptyProc!.damage.min).toBeGreaterThan(0);
-    expect(pz.emptyProc!.damage.max).toBeGreaterThanOrEqual(pz.emptyProc!.damage.min);
+    expect(pz.emptyProc!.damage!.min).toBeGreaterThan(0);
+    expect(pz.emptyProc!.damage!.max).toBeGreaterThanOrEqual(pz.emptyProc!.damage!.min);
   });
 
   it('YZ: manası bitecek düşmanda silence terimi (engellenen MP\'li hamle) ve zarın hasarı değere girer', () => {

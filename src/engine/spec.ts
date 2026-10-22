@@ -1,6 +1,7 @@
 import type { DamageSpec } from './formulas';
 import { outgoingDamageMult } from './stats';
 import { ITEM_HOOK_CAPS } from './item-caps';
+import { effNum } from './tree-hooks';
 import type { BonusScale, Combatant, Formulas, SkillEffect, Stats } from './types';
 
 export type DamageEffect = Extract<SkillEffect, { type: 'damage' }>;
@@ -39,7 +40,7 @@ export function damageSpecFor(
   if (pe?.type === 'rage') passiveMult *= 1 + pe.maxBonus * (1 - actor.hp / actor.maxHp);
   if (pe?.type === 'longshot') {
     const lanes = formulas.formation.lanes;
-    passiveMult *= 1 + pe.perRow * (Math.floor(actor.slot / lanes) + Math.floor(target.slot / lanes));
+    passiveMult *= 1 + pe.perRow * (Math.floor(actor.slot / lanes) + Math.floor(target.slot / lanes) + (pe.extraRows ?? 0));
   }
   // Opportunist (bonusVsStatus): hedefte listedeki durumlardan biri (Wound/Slow/Stun) varsa hasar x(1 + bonus); kritik ayrıca son çarpandır
   if (pe?.type === 'bonusVsStatus' && target.statuses.some((s) => pe.statuses.includes(s.kind))) passiveMult *= 1 + pe.bonus;
@@ -50,7 +51,7 @@ export function damageSpecFor(
   const mult = out !== 1 ? tagBonus * weak * powerMult * passiveMult * out : tagBonus * weak * powerMult * passiveMult;
   // Zırh / büyü zırhı delme (affix): skill'in kendi ignoreDefense'iyle çarpımsal birleşir
   const phys = effect.damageType === 'physical';
-  const pen = phys ? (actor.itemEffects?.armorPen ?? 0) : (actor.itemEffects?.magicPen ?? 0);
+  const pen = effNum(actor, phys ? 'armorPen' : 'magicPen'); // item + ağaç kanalı (tree-hooks.ts)
   const penCap = phys ? ITEM_HOOK_CAPS.armorPen : ITEM_HOOK_CAPS.magicPen;
   const ignore = pen > 0 ? 1 - (1 - (effect.ignoreDefense ?? 0)) * (1 - Math.min(penCap, pen)) : effect.ignoreDefense;
   const bonus = effect.bonusScale ? bonusScaleRaw(effect.bonusScale, attackerStats ?? actor.stats) * mult : 0;

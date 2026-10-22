@@ -12,6 +12,7 @@
 // İyi oyuncu = Medium YZ + akıllı stat dağıtımı; ortalama oyuncu = Easy YZ + eşit stat dağıtımı. Her (zorluk, tip) ayrı; --overgrind > 0 ise
 // her biri bir de "aşırı kasma" koşusuyla (Ashford sonrası ilk yerlerde önceden N kasma savaşı) ölçülür.
 import { spawn } from 'node:child_process';
+import { treeFlag } from './tree-sim';
 import { cpus } from 'node:os';
 import { writeFileSync } from 'node:fs';
 import { CONFIG, getMap, node, nodeIlvl, nodeLevel, type Difficulty } from '../campaign';
@@ -113,6 +114,7 @@ export async function grindCli(args: string[], script: string): Promise<void> {
     valor: valorMode(),
     ...parseSimOptions(flag),
     bonus: parseBonus(flag),
+    ...(treeFlag(args) ? { tree: treeFlag(args)! } : {}),
   };
   const combos: Combo[] = diffs.flatMap((difficulty) =>
     players.flatMap((player) => (overgrind > 0 ? [0, overgrind] : [0]).map((preGrind) => ({ difficulty, player, preGrind }))),

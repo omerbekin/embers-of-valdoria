@@ -319,9 +319,16 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
   });
 
   it('fx null düğüm derlemeye girmez; yalnızca fx null düğümler -> undefined (birim bugünküyle aynı)', () => {
-    expect(W.nodes['1.f1']!.fx).toBeNull();
-    expect(compileTree(W, build(W, L, ['1.f1*3']))).toBeUndefined();
-    expect(compileTree(treeOf('paladin')!, focusBuild(treeOf('paladin')!, [1, 2], 50))).toBeUndefined();
+    // Faz 2b: gerçek veride fx'ler yazıldı; "yalnızca fx null" durumu fx'leri silinmiş kopyayla denenir
+    const bare = (t: typeof W): typeof W => {
+      const c = JSON.parse(JSON.stringify(t)) as typeof W;
+      for (const n of Object.values(c.nodes)) n.fx = null;
+      for (const bb of c.mastery.bar) bb.fx = null;
+      return c;
+    };
+    expect(treeOf('paladin')!.nodes['4.d1']!.fx).toBeNull(); // Focused Beam (mockup bekliyor; Fervent Oath altıncı turda yazıldı)
+    expect(compileTree(bare(W), build(W, L, ['1.f1*3']))).toBeUndefined();
+    expect(compileTree(bare(treeOf('paladin')!), focusBuild(treeOf('paladin')!, [1, 2], 50))).toBeUndefined();
     const ns = compileTree(W, build(W, L, ['1.f1*3', '1.f2*5']));
     expect(Object.keys(ns!.skills!)).toEqual(['melee_attack']);
     expect(ns!.passive).toBeUndefined();
@@ -329,7 +336,7 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
 
   it('Warrior: Notched Axe (+4% power / rank, yalnızca 2. vuruş) oransal; percentRule add\'e çevrilince düz ek; Steady Spin, Headsman\'s Feast', () => {
     const a = build(W, L, ['1.f1*3', '1.f2*5']);
-    const hits = (s: SkillDef) => s.effects.map((e) => (e as unknown as { power: number }).power);
+    const hits = (s: SkillDef) => s.effects.filter((e) => e.type === 'damage').map((e) => (e as unknown as { power: number }).power); // Knee Cutter (1.f1) durum etkisi ekler
     expect(hits(skillOf(compileTree(W, a), 'melee_attack'))).toEqual([0.4, 0.48]);
     const add: TreeRules = { ...TREE_RULES, percentRule: 'add' };
     expect(hits(skillOf(compileTree(W, a, add), 'melee_attack'))).toEqual([0.4, 0.6]);
@@ -385,14 +392,14 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
   it('debug odaklı kurulum: şalter kapalıyken de sefer / Endless kahramanına _rules.json > debugFocus ön ayarıyla ağaç verir, QB vermez', () => {
     expect(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'campaign' }).tree).toBeUndefined();
     setDebugTreeFocus({ dir: 'a' });
-    expect(Object.keys(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'campaign' }).tree!.skills!).sort()).toEqual(['fist_crush', 'taunt']);
+    expect(Object.keys(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'campaign' }).tree!.skills!).sort()).toEqual(['close_ranks', 'fist_crush', 'taunt']); // Faz 2b: bar 15 Formed Up Close Ranks'e bedel koşulu ekler
     const a = loadoutSetup({ class: 'defender', level: 35 }, { mode: 'campaign' }).tree!;
     expect(Object.keys(a.skills!).sort()).toEqual(['close_ranks', 'fist_crush', 'taunt']); // L35: Close Ranks satırı Hold Their Weight'e (3.ea) ulaştı
     expect((a.skills!.close_ranks!.effects[0] as unknown as { share: number }).share).toBe(0.65);
     expect(debugFocusAlloc('defender', 20, 'a')).toEqual(focusBuild(D, [2, 3], 20, { dir: 'a', ult: 'r' }));
     expect(loadoutSetup({ class: 'defender', level: 20 }, { mode: 'quick' }).tree).toBeUndefined();
     expect(loadoutSetup({ class: 'defender', level: 20 }).tree).toBeUndefined();
-    expect(loadoutSetup({ class: 'paladin', level: 30 }, { mode: 'endless' }).tree).toBeUndefined(); // tüm fx null
+    expect(loadoutSetup({ class: 'paladin', level: 30 }, { mode: 'endless' }).tree).toBeDefined(); // Faz 2b: Paladin fx'leri yazıldı
     setDebugTreeFocus({ dir: 'b' });
     const b = loadoutSetup({ class: 'defender', level: 30 }, { mode: 'endless' }).tree!;
     expect((b.skills!.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.24); // Hollow Roar (fb) + Bellow 3

@@ -1,6 +1,6 @@
 // Denge simülasyonunun çekirdeği: rastgele takımlı savaşları iki taraf da yapay zeka ile oynatır ve ölçümleri toplar.
 // npm run sim (rapor), denge testi (tests/balance.test.ts) ve ayar betikleri bunu kullanır. Hedef bantlar data/balance.json.
-import { Battle, chooseAction, content } from '../engine';
+import { Battle, chooseAction, content, type BattleEvent, type BattleSetup, type Combatant } from '../engine';
 import balanceJson from '../../data/balance.json';
 
 export const MAX_TURNS = 400; // bunu aşan savaş "bitmeyen" sayılır
@@ -80,6 +80,22 @@ export interface SimResult {
 /** Ölçüm seçenekleri. waves: savaş başına dalga sayısı (1 = dalgasız, eski ölçüm); sonraki dalgaların düşmanları seed'e göre aynı havuzdan çekilir. */
 export interface SimOptions {
   waves?: number;
+  /**
+   * Skill ağacı simi (src/sim/tree-sim.ts; Faz 6): savaş kurulumunu seed'den bu üretir (verilmezse eski yol; `waves` yok sayılır).
+   * Kurulum standart yolla aynı takımları ve dizilimi vermelidir (tree-sim.ts > treeBattleSetup).
+   */
+  setupFor?: (seed: number) => BattleSetup;
+  /** Ek ölçüm kancaları (yalnızca okur; savaşı değiştirmez). */
+  observer?: SimObserver;
+}
+
+/** Ek ölçüm kancaları (tree-sim.ts): savaş başı, her hamleden önce, her hamlenin olayları, savaş sonu. */
+export interface SimObserver {
+  start?(battle: Battle, setup: BattleSetup, seed: number): void;
+  beforeAct?(battle: Battle, actor: Combatant): void;
+  /** Hamle uygulandıktan sonra: aktör, seçilen skill (pas = null) ve hamlenin olayları. */
+  events?(battle: Battle, events: readonly BattleEvent[], actor: Combatant, skillId: string | null): void;
+  end?(battle: Battle, setup: BattleSetup, seed: number): void;
 }
 
 const bump = (m: Map<string, number>, key: string, by = 1) => m.set(key, (m.get(key) ?? 0) + by);
@@ -107,8 +123,10 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
   for (let i = 0; i < runs; i++) {
     // Dalgalı ölçüm: ilk dalga eski yoldan (aynı seed = aynı takımlar); sonraki dalgaların düşmanları ayrı seed'le çekilir (dizilim otomatik)
     const extra = Array.from({ length: waveCount - 1 }, (_, k) => ({ enemies: content.rollTeams(battleId, ((firstSeed + i) * 7919 + (k + 1) * 104729) >>> 0, sizes).enemies }));
-    const setup = content.battleSetup(battleId, firstSeed + i, 'turns', extra.length ? { ...sizes, waves: extra } : sizes);
+    const setup = opts.setupFor ? opts.setupFor(firstSeed + i) : content.battleSetup(battleId, firstSeed + i, 'turns', extra.length ? { ...sizes, waves: extra } : sizes);
     const battle = new Battle(setup);
+    const obs = opts.observer;
+    obs?.start?.(battle, setup, firstSeed + i);
     const idOf = (uid: string) => battle.get(uid)?.defId ?? '?';
     /** Çağrıysa sahibinin sınıf id'si (ölçüm: çağrı hasarını sahibine ayrıca yazmak için). */
     const ownerOf = (uid: string) => {
@@ -127,6 +145,7 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
         if (!u.ready && battle.canUse(actor.uid, ultId).ok) u.ready = true;
         ult.set(actor.uid, u);
       }
+      obs?.beforeAct?.(battle, actor);
       const choice = chooseAction(battle, actor.uid, content.aiConfig);
       const r = battle.applyChoice(actor.uid, choice); // seçim yoksa pas; global skill (rest/skip_turn/move_tile) de buradan geçer
       if (!r.ok) break; // YZ geçersiz hamle önermemeli; olursa raporu bozmamak için dur
@@ -137,6 +156,7 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
       const actorOwner = actor.summoned ? ownerOf(actor.uid) : undefined;
       if (actorOwner && choice) bump(stat(actorOwner).summonSkillUses, choice.skillId);
       if (ultId && choice?.skillId === ultId) ult.get(actor.uid)!.used = true;
+      obs?.events?.(battle, r.events, actor, choice?.skillId ?? null);
       for (const e of r.events) {
         if (e.type === 'damage') {
           stat(idOf(e.source)).damage += e.amount + e.absorbed;
@@ -148,6 +168,7 @@ export function simulate(runs: number, firstSeed = 1, battleId: string = content
       }
     }
 
+    obs?.end?.(battle, setup, firstSeed + i);
     result.totalTurns += battle.turnsTaken;
     if (waveCount > 1) {
       result.waveTotal! += battle.waveCount;

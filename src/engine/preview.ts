@@ -1,11 +1,12 @@
 import type { Battle } from './battle';
 import { damageRange, healRange, missingHpHealMult } from './formulas';
-import { betMultipliers, betStake } from './gamble';
+import { betMultipliers, betStakeParts } from './gamble';
 import { burnAmountFor, emptyProcApplies } from './mana-burn';
 import { damageSpecFor, type DamageEffect } from './spec';
 import { slotOfTileUid } from './battle';
 import { attributePower, hitChance } from './stats';
 import type { Combatant, OnAbsorbSpec, Side, SkillDef, SkillEffect } from './types';
+import type { HitInfo, TreeQuery } from './tree-hooks';
 
 /** Item affix çarpanlı güç (motorla aynı ifade): çarpan yoksa güç aynen. */
 const pw = (power: number, m: number | undefined): number => (m !== undefined && m !== 1 ? power * m : power);
@@ -33,6 +34,8 @@ export interface TargetPreview {
     luckyEscape?: number;
     critChance: number;
     critMax: number;
+    /** Skill ağacı: bu vuruşun kritik çarpanı (critDmgMul dahil); yalnızca kancalı aktörde, yoksa actor.stats.critMult. */
+    critMult?: number;
     /** İsabet şansı (0-1): saldırganın accuracy'si - hedefin evasion'ı, x(1 - hedefin blok şansı) (fiziksel vuruşta kalkan). min/max/avg ve hpLoss değerleri İSABET ETTİĞİNDE geçerlidir; beklenen hasar = avg x hitChance. */
     hitChance: number;
     /** Beklenen hasar: avg x hitChance (kalkan/can ayrımı yapmaz; birden çok etkide toplanır). */
@@ -60,7 +63,7 @@ export interface TargetPreview {
    * Mana boşalma zarı (manaBurn onEmpty, Drain Field; madde 260): bu yakımla MP'si 0'a inecek (ya da zaten 0 olan) hedefte `chance` ihtimalle
    * `status` (`turns` tur) + hasar (kritik hariç aralık; isabet zarı yok, kalkan düşülmemiş). Zar tutmazsa hiçbiri olmaz.
    */
-  emptyProc?: { chance: number; status: string; statusName: string; turns: number; damage: { min: number; max: number; avg: number; critChance: number; critMax: number } };
+  emptyProc?: { chance: number; status: string; statusName: string; turns: number; /** Yok: boşalma hasarı ağaçla kaldırıldı (Shallow Net). */ damage?: { min: number; max: number; avg: number; critChance: number; critMax: number } };
   /** Uygulanacak durumlar, okunur metin (ör. "Taunt 2 turns"). */
   statuses?: string[];
   /**
@@ -97,10 +100,10 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
   let targets = battle.validTargets(actorUid, skillId);
   if (battle.skill(skillId, actor)?.target === 'random_enemies') return []; // hedefler rastgele: önizleme yok
   let centerUid: string | undefined;
-  if (battle.isAreaSkill(skillId)) {
+  if (battle.isAreaSkill(skillId, actor)) {
     // Anchor birimi erişim dışında (arkada) da olabilir: anchor yalnızca hücreyi belirler. Hedef sırası gerçek vuruşla aynı (aşamalıda aşama sırası;
     // falloff bu sırayla), toplam hasar aşamalı/aşamasız aynı hesaplanır. area_any: tahta = anchor biriminin tahtası / `tile:<yuva>` kendi tahtası / `board`.
-    const anyBoard = battle.isAnyBoardArea(skillId);
+    const anyBoard = battle.isAnyBoardArea(skillId, actor);
     const tileSlot = anyBoard ? slotOfTileUid(targetUid) : undefined;
     const anchored = targetUid && tileSlot === undefined ? battle.get(targetUid) : undefined;
     const b: Side = anyBoard ? (tileSlot !== undefined ? actor.side : anchored && anchored.hp > 0 ? anchored.board : (board ?? foe(actor.side))) : foe(actor.side);
@@ -109,7 +112,7 @@ export function previewSkill(battle: Battle, actorUid: string, skillId: string, 
     // Menzil (range.md): anchor hücre menzil dışındaysa atış geçersiz -> önizleme boş (kapalıyken inRange hep evet)
     targets = center === undefined || !battle.inRange(actor, battle.skill(skillId, actor)!, b, center) ? [] : battle.areaWindowAt(actorUid, skillId, center, b);
     centerUid = center === undefined ? undefined : targets.find((t) => t.board === b && t.slot === center)?.uid;
-  } else if (battle.needsTargetChoice(skillId)) {
+  } else if (battle.needsTargetChoice(skillId, actor)) {
     targets = targets.filter((t) => t.uid === targetUid);
     // Yan vuruşlu skill: seçilen hedefin yanındaki hücreler de vurulur (ilk giriş seçilen hedef)
     if (targets[0]) targets = [targets[0], ...battle.splashTargets(skillId, targets[0], actorUid)];
@@ -142,27 +145,55 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     return p;
   };
 
-  const addDamage = (target: Combatant, effect: DamageEffect, powerMult: number, splash: boolean) => {
+  const addDamage = (target: Combatant, base: DamageEffect, powerMult: number, splash: boolean, hitInfo?: HitInfo) => {
+    // Skill ağacı C1 (Faz 2a): gerçek vuruşla aynı koşullu etki kopyası (kritik / zırh delme / lifesteal); güç dealtDamageMult'ta. Kancasızda aynı nesne
+    const tq: TreeQuery = actor.treeHooks && hitInfo ? { hit: hitInfo } : {};
+    const effect = battle.treeEffect(actor, target, skill, base, tq);
+    const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, base, tq) : null;
     const stats = battle.effectiveStats(target);
-    const range = (mult: number) => damageRange(battle.attackStats(actor), stats, damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target) * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill), effect.bonusScale ? battle.effectiveStats(actor) : undefined), f);
+    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill) * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined);
+    // Ağaç: düz hasar (flatDamage) ve vuruş sonrası (hitIsCrit) kancaları gerçek vuruşla aynı sırada (çarpan, sonra düz ek); kancasızda aynı aralık
+    const adj = (x: number, late: { mult: number; flat: number } | null) => (late || tm?.flat ? Math.round(x * (late?.mult ?? 1) + (tm?.flat ?? 0) + (late?.flat ?? 0)) : x);
+    const lateN = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), false, tq) : null;
+    const lateC = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), true, tq) : null;
+    const rawRange = (mult: number) => damageRange(battle.attackStats(actor), stats, specFor(mult), f);
+    const range = (mult: number) => {
+      const r0 = rawRange(mult);
+      return lateN || tm?.flat ? { min: adj(r0.min, lateN), max: adj(r0.max, lateN), avg: adj(r0.avg, lateN) } : r0;
+    };
     // Bahis: en az (kayıp), en çok (kazanç) ve beklenen çarpan (güce uygulanır, gerçek vuruşla aynı yuvarlama); çifte vuruş: en çok 2 vuruş, beklenen 1 + ihtimal
     let lo = 1;
     let hi = 1;
     let ex = 1;
     if (effect.bet) {
       const mpLeft = skill.cost.resource === 'mp' && !battle.freeMp ? actor.mp - skill.cost.amount : actor.mp;
-      const m = betMultipliers(effect.bet, betStake(effect.bet, actor.maxHp, actor.hp, mpLeft));
+      // Skill ağacı bahis yaması (winChance / stakeMul): gerçek zarla aynı tanım
+      const tb = actor.treeHooks ? battle.treeBet(actor, target, skill, effect.bet) : null;
+      const bet = tb?.bet ?? effect.bet;
+      // Mortgage (bet.hpStake): ek can bahsi kazanç çarpanında MP sayılır (betStakeParts; stakeMul her parçaya ayrı, gerçek zarla aynı)
+      const sp = betStakeParts(bet, actor.maxHp, actor.hp, mpLeft, tb?.stakeMul ?? 1);
+      const m = betMultipliers(bet, sp.main + sp.hp);
       lo = m.lose;
       hi = Math.max(m.win, m.lose);
       ex = m.expected;
     }
     const again = effect.repeatChance ?? 0;
     // Garantili kritik (Backstab): her vuruş kritik; aralık kritik çarpanıyla verilir (critChance 1)
-    const sure = effect.guaranteedCrit ? actor.stats.critMult : 1;
-    const r = { min: lo <= 0 ? 0 : Math.round(range(lo).min * sure), max: Math.round(range(hi).max * sure) * (again > 0 ? 2 : 1), avg: Math.round(range(ex).avg * sure * (1 + again)) };
+    // Ağaç: kritik çarpanı (critDmgMul) ve noCrit; kancasızda actor.stats.critMult
+    const cmult = actor.treeHooks ? battle.critMultFor(actor, target, skill, base, tq) : actor.stats.critMult;
+    const noCrit = !!tm?.noCrit;
+    const critR = (mult: number) => {
+      const r0 = rawRange(mult);
+      return lateC || tm?.flat ? { min: adj(r0.min * cmult, lateC), max: adj(r0.max * cmult, lateC), avg: adj(r0.avg * cmult, lateC) } : { min: r0.min * cmult, max: r0.max * cmult, avg: r0.avg * cmult };
+    };
+    const sureC = effect.guaranteedCrit && !noCrit;
+    const r = sureC
+      ? { min: lo <= 0 ? 0 : Math.round(critR(lo).min), max: Math.round(critR(hi).max) * (again > 0 ? 2 : 1), avg: Math.round(critR(ex).avg * (1 + again)) }
+      : { min: lo <= 0 ? 0 : Math.round(range(lo).min), max: Math.round(range(hi).max) * (again > 0 ? 2 : 1), avg: Math.round(range(ex).avg * (1 + again)) };
     // İsabet: durum ekleri (Blinded/Shrouded) dahil geçerli stat'lar, gerçek vuruşla aynı
     // Blok (Ömer 2026-10-18): kalkanlı hedef fiziksel vuruşu bloklayabilir; bloklanan vuruş iska gibi (hasar ve ek etki yok)
-    const hit = hitChance(battle.effectiveStats(actor), stats, f) * (1 - battle.blockChance(actor, target, effect, skill));
+    // Ağaç sureHit: isabet zarı yok (blok yine olabilir)
+    const hit = (tm?.sureHit ? 1 : hitChance(battle.effectiveStats(actor), stats, f)) * (1 - battle.blockChance(actor, target, effect, skill));
     const p = pool(target);
     // Bu hasarı emebilecek havuz: büyü hasarını iki kalkan da, fizikseli yalnızca genel kalkan emer
     const soak = effect.damageType === 'magic' ? p.magicShield + p.shield : p.shield;
@@ -180,8 +211,9 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       hpLossMin: (prev?.hpLossMin ?? 0) + loss(r.min),
       hpLossMax: (prev?.hpLossMax ?? 0) + loss(r.max),
       lethal: null,
-      critChance: effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, effect.critBonus ?? 0).critChance, // critBonus: Jinx
-      critMax: (prev?.critMax ?? 0) + (effect.guaranteedCrit ? r.max : Math.round(r.max * actor.stats.critMult)),
+      critChance: noCrit ? 0 : effect.guaranteedCrit ? 1 : battle.effectiveStats(actor, effect.critBonus ?? 0).critChance, // critBonus: Jinx
+      critMax: (prev?.critMax ?? 0) + (sureC || noCrit ? r.max : actor.treeHooks ? Math.round(critR(hi).max) * (again > 0 ? 2 : 1) : Math.round(r.max * actor.stats.critMult)),
+      ...(actor.treeHooks ? { critMult: cmult } : {}),
       hitChance: hit,
       expected: (prev?.expected ?? 0) + r.avg * hit,
       splash: prev ? prev.splash && splash : splash,
@@ -200,6 +232,8 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
   };
 
   const selfShieldDone = new Set<unknown>();
+  // Skill ağacı ölçeği hitWithStatus (Faz 2a): gerçek vuruştaki gibi bu skill'in hedefleri (yalnızca kancalı aktör; bitince temizlenir)
+  const prevTargets = actor.treeHooks ? battle.setCondTargets(targets) : null;
   for (const target of targets) {
     for (const effect of skill.effects) {
       if (!battle.effectAppliesTo(skill, effect, target, actor)) continue;
@@ -213,14 +247,27 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
           e.statuses = [...(e.statuses ?? []), `Immune: ${def?.name ?? effect.status}`];
           continue;
         }
-        const chance = effect.chance !== undefined && effect.chance < 1 ? ` (${Math.round(effect.chance * 100)}% chance)` : '';
-        e.statuses = [...(e.statuses ?? []), `${def?.name ?? effect.status} ${effect.turns} turns${chance}`];
+        // Skill ağacı C1 (Faz 2a): koşullu süre / şans eki gerçek uygulamayla aynı (kancasızda null, metin aynı)
+        const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, effect) : null;
+        const ch = tm ? Math.max(0, Math.min(1, (effect.chance ?? 1) + tm.chance)) : effect.chance;
+        const turns = tm ? Math.max(1, Math.round(effect.turns + tm.turns)) : effect.turns;
+        const chance = ch !== undefined && ch < 1 ? ` (${Math.round(ch * 100)}% chance)` : '';
+        e.statuses = [...(e.statuses ?? []), `${def?.name ?? effect.status} ${turns} turns${chance}`];
       } else if (effect.type === 'damage') {
         // Çok hedefli (alan) vuruşta her yeni hedef bir öncekinin falloff katı hasar alır (hedef sırası = vuruş sırası)
         const idx = effect.falloff || skill.splash ? targets.indexOf(target) : 0;
         const side = !!skill.splash && idx > 0; // yan vuruş: ana hedefin yanındaki hücre
-        const times = centerUid !== undefined && target.uid === centerUid ? Math.max(1, skill.area?.hitsAtCenter ?? 1) : 1; // X şekli: merkez çift vuruş
-        for (let k = 0; k < times; k++) addDamage(target, effect, (effect.falloff ? Math.pow(effect.falloff, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1), idx > 0 || k > 0);
+        // X şekli: merkez çift vuruş; Faz 5a hitsEach: alandaki her birim (merkezde büyüğü)
+        const each = skill.area?.hitsEach ?? 1;
+        const times = centerUid !== undefined && target.uid === centerUid ? Math.max(1, skill.area?.hitsAtCenter ?? 1, each) : Math.max(1, each);
+        // Skill ağacı: vuruş bilgisi (sıra / merkez) ve falloff eki gerçek vuruşla aynı (kancasızda ifade aynı)
+        const isC = centerUid !== undefined ? target.uid === centerUid : undefined;
+        // Faz 5a (Thrown Stiletto): fırlatma (arkası dolu hedef) gerçek vuruşla aynı
+        const thrownHit = !!skill.treeThrown && battle.openBehindProblem(target) !== null;
+        const hiOf = (k: number): HitInfo | undefined => (actor.treeHooks ? { index: idx, ...(isC !== undefined ? { center: isC } : {}), ...(isC ? { centerHit: k + 1 } : {}), mpBefore: target.mp, ...(thrownHit ? { thrown: true } : {}) } : undefined);
+        const fa = actor.treeHooks && effect.falloff ? (battle.treeMods(actor, target, skill, effect, { hit: hiOf(0)! })?.falloffAdd ?? 0) : 0;
+        const fo = effect.falloff ? effect.falloff + fa : effect.falloff;
+        for (let k = 0; k < times; k++) addDamage(target, effect, (fo ? Math.pow(fo, idx) : 1) * (side ? skill.splash!.mult ?? 1 : 1), idx > 0 || k > 0, hiOf(k));
       } else if (effect.type === 'randomStatus') {
         const e = entry(target.uid);
         const blocked = effect.options.filter((o) => battle.statusBlocked(target, o.status)).map((o) => battle.statusDef(o.status)?.name ?? o.status);
@@ -230,7 +277,9 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const r = healRange(actor.stats, effect.scale, pw(effect.power, actor.stats.healPowerMult), f);
         const missing = target.maxHp - target.hp;
         // missingHpBonus (Radiance): motorla aynı çarpan (hedefin şu anki eksik can oranı)
-        const low = missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp);
+        const low0 = missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp);
+        // Faz 4a C4: ağaç şifa çarpanı (healTaken / healDealt; gerçek şifayla aynı); kancasızda 1
+        const low = low0 * battle.treeHealMult(actor, target, skill);
         const k = (v: number) => (low === 1 ? v : Math.round(v * low));
         entry(target.uid).heal = {
           min: Math.min(k(r.min), missing),
@@ -256,7 +305,10 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         }
         const recipient = effect.self ? actor : target;
         const mpLeft = skill.cost.resource === 'mp' ? actor.mp - skill.cost.amount : actor.mp;
-        const amount = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.shieldPowerMult)) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
+        const amount0 = Math.round(attributePower(actor.stats, effect.scale, f) * pw(effect.power, actor.stats.shieldPowerMult)) + Math.round((effect.bonusPerMana ?? 0) * mpLeft);
+        // Faz 4a C4 (shieldDealt): gerçek kalkanla aynı çarpan; kancasızda aynı miktar
+        const shm = battle.treeShieldMult(actor, recipient, skill);
+        const amount = shm !== 1 ? Math.max(0, Math.round(amount0 * shm)) : amount0;
         entry(recipient.uid).shield = { amount, magic: effect.shieldType === 'magic', ...(effect.onAbsorb ? { onAbsorb: { ...effect.onAbsorb } } : {}) };
       } else if (effect.type === 'dispel') {
         const e = entry(target.uid);
@@ -279,15 +331,15 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         // Madde 260 (Drain Field): MP'si bu yakımla 0'a inecek (ya da zaten 0) hedefte onEmpty zarı: ihtimal, durum ve hasar aralığı (isabet zarı yok)
         const spec = effect.onEmpty;
         if (spec && emptyProcApplies(effect, target)) {
-          const dmg: DamageEffect = { type: 'damage', ...spec.damage };
-          const r = damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target), battle.dealtDamageMult(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f);
+          const dmg: DamageEffect | undefined = spec.damage ? { type: 'damage', ...spec.damage } : undefined;
+          const r = dmg ? damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target, actor, dmg.damageType, skill), battle.dealtDamageMult(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f) : undefined;
           if (battle.statusBlocked(target, spec.status)) e.immune = [...(e.immune ?? []), battle.statusDef(spec.status)?.name ?? spec.status];
           e.emptyProc = {
             chance: spec.chance,
             status: spec.status,
             statusName: battle.statusDef(spec.status)?.name ?? spec.status,
             turns: spec.turns,
-            damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor).critChance, critMax: Math.round(r.max * actor.stats.critMult) },
+            ...(r ? { damage: { min: r.min, max: r.max, avg: r.avg, critChance: battle.effectiveStats(actor).critChance, critMax: Math.round(r.max * actor.stats.critMult) } } : {}),
           };
         }
       } else if (effect.type === 'taunt') {
@@ -307,6 +359,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       }
     }
   }
+  if (actor.treeHooks) battle.setCondTargets(prevTargets);
 
   // advanceToFront (Warrior Charge): kullanıcının skill sonrası geçeceği ön sıra hücresi (kendi girdisinde, en sonda)
   if (skill.advanceToFront) {

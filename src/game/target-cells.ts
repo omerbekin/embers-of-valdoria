@@ -24,7 +24,7 @@ export interface BoardAnchors {
 /** Alan skill'inin bir tahtadaki plaka tonu: area_any'de kendi tahta 'ally', karşı tahta 'enemy'; diğer alan skill'lerinde 'neutral' (altın). */
 export function areaTone(battle: Battle, actorUid: string, skillId: string, board: Side): CellTone {
   const actor = battle.get(actorUid);
-  if (!actor || !battle.isAnyBoardArea(skillId)) return 'neutral';
+  if (!actor || !battle.isAnyBoardArea(skillId, actorUid)) return 'neutral';
   return board === actor.side ? 'ally' : 'enemy';
 }
 
@@ -34,9 +34,9 @@ export function areaTone(battle: Battle, actorUid: string, skillId: string, boar
  */
 export function areaBoards(battle: Battle, actorUid: string, skillId: string): BoardAnchors[] {
   const actor = battle.get(actorUid);
-  if (!actor || !battle.isAreaSkill(skillId)) return [];
+  if (!actor || !battle.isAreaSkill(skillId, actorUid)) return [];
   const foe: Side = actor.side === 'party' ? 'enemy' : 'party';
-  const boards: Side[] = battle.isAnyBoardArea(skillId) ? [foe, actor.side] : [foe];
+  const boards: Side[] = battle.isAnyBoardArea(skillId, actorUid) ? [foe, actor.side] : [foe];
   const cells = battle.shapeAnchorCells(actorUid, skillId);
   // Seçilebilir plakalar İMLEÇ hücreleridir (oyuncu tahtasında 2 derinlikli rect'te imleç anchor'dan farklı: battle.cursorAnchor)
   return boards.map((board) => {
@@ -91,10 +91,10 @@ export function blockedTargets(battle: Battle, actorUid: string, skillId: string
  */
 export function outOfRangeCells(battle: Battle, actorUid: string, skillId: string): Array<{ board: Side; slot: number }> {
   const actor = battle.get(actorUid);
-  const skill = battle.skill(skillId);
+  const skill = battle.skill(skillId, actorUid);
   if (!battle.rangeOn || !actor || !skill) return [];
   const foe: Side = actor.side === 'party' ? 'enemy' : 'party';
   if (skill.target === 'single_enemy') return battle.living(foe).filter((c) => battle.targetProblem(actorUid, skillId, c.uid) === 'Out of range').map((c) => ({ board: c.board, slot: c.slot }));
-  if (battle.isAreaSkill(skillId)) return battle.living(foe).filter((c) => c.board === foe && !battle.inRange(actor, skill, foe, c.slot)).map((c) => ({ board: c.board, slot: c.slot }));
+  if (battle.isAreaSkill(skillId, actorUid)) return battle.living(foe).filter((c) => c.board === foe && !battle.inRange(actor, skill, foe, c.slot)).map((c) => ({ board: c.board, slot: c.slot }));
   return [];
 }

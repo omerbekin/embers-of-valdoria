@@ -15,6 +15,7 @@ import hexerTree from '../../data/skill-trees/hexer.json';
 import antimageTree from '../../data/skill-trees/antimage.json';
 import gamblerTree from '../../data/skill-trees/gambler.json';
 import { classes } from '../engine/content';
+import type { AreaDef, CondMod, CondScale, CondWhen, HealHook, HookAt, ItemEffects, RuleHook, SkillEffect, TriggerHook } from '../engine';
 
 /** Ağacın açık olabileceği modlar (_rules.json > modes). */
 export type TreeMode = 'campaign' | 'endless' | 'quick' | 'multiplayer';
@@ -59,9 +60,10 @@ export interface TreeRules {
 /**
  * Op: add = düz ek, mul = x (1 + v), pct = '+X% power' (percentRule'a göre mul ya da add), set = ezer (kendinden öncekileri siler),
  * base = skill'in TEMEL değerini değiştirir (diğer tüm yamalardan önce uygulanır; ekler üstüne biner: Hollow Roar 0,15 + Bellow 3 rank = 0,24,
- * Ömer 2026-10-22 plan 10a). `rank: true` = v x rank.
+ * Ömer 2026-10-22 plan 10a). `rank: true` = v x rank. Faz 2c: `on` = bayrak alanını açar (Crimson Covenant: bond permanent); pasifte `remove`
+ * yalnızca izinli alanı siler (Black Mold: Nature's Grudge status).
  */
-export type TreeFxOp = 'add' | 'mul' | 'pct' | 'set' | 'base';
+export type TreeFxOp = 'add' | 'mul' | 'pct' | 'set' | 'base' | 'remove' | 'on';
 
 /**
  * (a) düz sayı yaması: skill tanımında `sel` seçicisinin `f` alanı. `skill` verilirse satırın skill'i yerine o skill (sinerji; class'ın skill'i olmalı).
@@ -86,8 +88,194 @@ export interface PassiveFx {
   rank?: boolean;
 }
 
-/** Faz 1a: yalnızca (a) türleri. (b)/(c) (addEffect, unitFx, hook) sonraki fazlarda eklenir. */
-export type TreeFx = SkillFx | PassiveFx;
+/**
+ * (b) etki ekleme (Faz 2a): satırın skill'ine (ya da `skill`) VAR OLAN türde bir SkillEffect ekler (status, randomStatus, dispel, shield, taunt...).
+ * Yer: `after` / `before` etki seçicisi ('damage', 'damage:0', 'status:stun', ya da etki türü: 'taunt', 'guard'...); yoksa sona.
+ * `effect` ya da `byRank` (rank başına ayrı etki, sıra rank - 1; eksikse sonuncusu: Knee Cutter şansı, Deep Stomp ağırlıkları).
+ */
+export interface AddEffectFx {
+  k: 'addEffect';
+  effect?: SkillEffect;
+  byRank?: SkillEffect[];
+  after?: string;
+  before?: string;
+  /** Faz 2c: etkiyi BAŞA ekler (Spellsplitter: silme hasardan önce). */
+  first?: boolean;
+  skill?: string;
+}
+
+/** (b) etki kaldırma (Faz 2a+): `sel` seçicisinin uyduğu etkiler silinir; hasar kalmazsa skill yine isabet zarı atar (treeHitRoll). */
+export interface RemoveEffectFx {
+  k: 'removeEffect';
+  sel: string;
+  skill?: string;
+}
+
+/** (b) etki değiştirme: `sel` seçicisinin uyduğu etkilerin her biri bu etkiyle değişir (`effect` / `byRank` addEffect gibi). */
+export interface ReplaceEffectFx {
+  k: 'replaceEffect';
+  sel: string;
+  effect?: SkillEffect;
+  byRank?: SkillEffect[];
+  /** Faz 2c (Desperate Sap): 'hot' etkisi tek seferlik şifaya döner, güç = HoT gücü x süre x collapse (effect / byRank yok). */
+  collapse?: number;
+  skill?: string;
+}
+
+/** Faz 4c: skill'in `ground` zeminine tur başı durumu ekler (içinde tur başlatan düşmana; `mpZero` = yalnızca MP'si 0 olana). */
+export interface GroundStatusFx {
+  k: 'groundStatus';
+  ground: string;
+  status: string;
+  turns?: number;
+  mpZero?: boolean;
+  skill?: string;
+}
+
+/** Faz 2c: birim stat çarpanı (yalnızca `f: 'hpMult'`, `op: 'mul'`: maks can x (1 + v); Gaunt Frame). */
+export interface StatFx {
+  k: 'stat';
+  f: 'hpMult' | 'armorAdd';
+  op: TreeFxOp;
+  v: number;
+  rank?: boolean;
+}
+
+/**
+ * (b) birim etkisi: ItemEffects biçimi (src/engine/types.ts), item'lerden AYRI kanal (UnitSetup.tree.fx). `rank: true` = sayısal alanlar x rank
+ * (eşik / süre alanları below, above, cap, turns, every, max, turnCost hariç). Anahtar beyaz listesi: src/engine/tree-hooks.ts > UNIT_FX_KEYS.
+ */
+export interface UnitFxFx {
+  k: 'unitFx';
+  fx: Partial<ItemEffects>;
+  rank?: boolean;
+}
+
+/**
+ * (c) C1 koşullu değiştirici. `when` koşul nesnesi (anahtarlar VE; `not`, `any`), `scale` TEK anahtarlı ölçek (sözlük: tree-hooks.ts > COND / SCALE),
+ * `sel` etki seçicisi (damage / damage:N / status / status:<durum>), `mod` değişiklikler (CondMod + `cost`: bedele düz ek, yalnızca kendi
+ * canı / Rage'i koşullarıyla). `skill`: varsayılan satırın skill'i (pasif satırı ve bar: her skill); '*' = her skill. `rank: true` = sayılar x rank.
+ */
+export interface CondFx {
+  k: 'hook';
+  h: 'cond';
+  when?: CondWhen;
+  scale?: CondScale;
+  sel?: string;
+  mod: CondMod & { cost?: number; costMul?: number };
+  /** Bağlantı yeri (Faz 2a+): 'hit' (varsayılan) | 'doom' | 'dot' | 'ground' | 'passiveHeal' | 'smite'. */
+  at?: HookAt;
+  /** Kancanın tetiklenme şansı (0-1]; yalnızca gerçek uygulamada zarlanır, önizleme saymaz. */
+  procChance?: number;
+  /** true = sayılar ve procChance x rank; 'chance' (Faz 2c) = yalnızca procChance x rank ("%10 per rank to last 1 turn longer"). */
+  rank?: boolean | 'chance';
+  skill?: string;
+  /** Faz 2c: bu düğümün daha önce eklenmiş kancaları kaldırılır (Blind Zeal, Rising Fervor'un yerine geçer). */
+  drop?: string;
+}
+
+/**
+ * Faz 2c: kural kancası. Faz 5a: C6 tam sözlüğü (motorun RuleHook'u; src/engine/tree-hooks.ts > RULE_KINDS, belge "Faz 5a notları"). `do` eylemleri
+ * C3 eylem sözlüğüyle aynı (cheatDeath sonrası). `rank: true` = add / share / hpRatio / mult x rank.
+ */
+export interface RuleFx extends Omit<RuleHook, 'h' | 'node'> {
+  k: 'hook';
+  h: 'rule';
+  rank?: boolean;
+  drop?: string;
+}
+
+/**
+ * Faz 5a: C5 hedef / alan / aura kancası: DERLEME anında birimin skill / pasif kopyasını yamalar (önizleme, YZ ve gerçek kullanım aynı tanımı okur).
+ *  - area: alan alanları (shape / rows / cols / hitsAtCenter / arm / also / maxTargets / stages; null = alanı sil).
+ *  - target + count: hedef türü (random_enemies / all_enemies / all_allies / self / single_enemy / single_ally); alan ve sıçrama kalkar.
+ *  - splash: sıçrama kalıbı (perpendicular = "beside" / chain / row / behind; mult, jumps; null = sil).
+ *  - range: sayı ya da 'global'.  - open: false (requiresOpenBehind kalkar) / 'thrown' (kalkar + koşul thrown).
+ *  - priority: rastgele hedef önceliği (hitMe / armor / hurtMe).  - gather: kullanım başı yığın çekme ({ status, from }).
+ *  - guard: skill'in Guard etkisine armorPct (x rank) / ownRow.
+ *  - aura (armorAura pasifi): square, magicPct (x rank), pct (dost payı set).  - smite / noSelf (divineLight pasifi).
+ */
+export interface TargetFx {
+  k: 'hook';
+  h: 'target';
+  skill?: string;
+  area?: Partial<AreaDef> | null;
+  target?: 'random_enemies' | 'all_enemies' | 'all_allies' | 'self' | 'single_enemy' | 'single_ally';
+  count?: number;
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind'; mult?: number; jumps?: number } | null;
+  range?: number | 'global';
+  open?: false | 'thrown';
+  priority?: 'hitMe' | 'armor' | 'hurtMe';
+  gather?: { status: string; from?: number };
+  guard?: { armorPct?: number; ownRow?: true };
+  aura?: { square?: true; magicPct?: number; pct?: number };
+  smite?: { power?: number; idle?: number; mirror?: number; mul?: number };
+  noSelf?: true;
+  /** Faz 5a: skill'in zeminleri alanın değdiği hücrelere de (Sea of Fire). */
+  groundWide?: 'touch';
+  /** Faz 5a: manaOverflow pasifi (Conduit / Lifeline Pact / Martyr's Overflow / Spillover / Endless Spring). */
+  overflow?: { to?: 'lowestMp'; mult?: number; noSelf?: true; spill?: true; allies?: true };
+  rank?: boolean;
+  drop?: string;
+}
+
+/**
+ * (c) C2 Rage kancası: `on` 'hit' (isabet eden her vuruş) | 'cast' (kullanım sonu, varsayılan); `gain` düz Rage (x ölçek), `floor` taban,
+ * `once` savaşta bir kez, `rule: 'tallyAll'` tüm hedeflerden Rage; `cost` = `skill`in Rage / MP bedeline düz ek, `after` verilirse yalnızca o skill
+ * kullanıldıktan sonraki ilk ödemede (Into the Fire). `rank: true` = gain / cost x rank.
+ */
+export interface RageFx {
+  k: 'hook';
+  h: 'rage';
+  on?: 'hit' | 'cast';
+  gain?: number;
+  floor?: number;
+  once?: boolean;
+  when?: CondWhen;
+  scale?: CondScale;
+  rule?: 'tallyAll';
+  cost?: number;
+  after?: string;
+  rank?: boolean;
+  skill?: string;
+  drop?: string;
+}
+
+/**
+ * Faz 4a: C3 tetik kancası (olay -> eylem). Alanlar motorun TriggerHook'uyla aynı (src/engine/tree-hooks.ts; tam sözlük belgede "Faz 4a notları");
+ * `skill` yoksa satırın skill'i (pasif satırı ve bar: her skill; '*' = her skill). `rank: true` = eylem sayıları ve procChance x rank.
+ */
+export interface TriggerFx extends Omit<TriggerHook, 'h' | 'node'> {
+  k: 'hook';
+  h: 'trigger';
+  rank?: boolean;
+  drop?: string;
+}
+
+/** Faz 4a: C4 şifa / kalkan / alınan hasar kancası (motorun HealHook'u). `rank: true` = mul / ratio x rank. */
+export interface HealFx extends Omit<HealHook, 'h' | 'node'> {
+  k: 'hook';
+  h: 'heal';
+  rank?: boolean;
+  drop?: string;
+}
+
+/** Faz 1a: (a) skill / passive. Faz 2a: (b) addEffect / replaceEffect / unitFx, (c) hook cond / rage. Faz 4a: (c) trigger (C3) / heal (C4). Kalan aileler (C5-C6) sonraki fazlarda. */
+/**
+ * Faz 2c: her fx `needs: '<düğüm anahtarı>'` taşıyabilir: o düğümün eklediği etkiye bakar (derleme o düğümün yamalarından SONRA uygular; checkTreeFx
+ * önce onun fx'ini uygular). Düğüm alınmadıysa seçici uymaz ve yama sessizce atlanır.
+ */
+export type TreeFx = (SkillFx | PassiveFx | StatFx | AddEffectFx | ReplaceEffectFx | RemoveEffectFx | UnitFxFx | GroundStatusFx | CondFx | RageFx | RuleFx | TargetFx | TriggerFx | HealFx) & {
+  needs?: string;
+  /** Faz 4c: yalnızca bu düğümlerin HEPSİ alınmışsa uygulanır. */
+  onlyWith?: string[];
+  /** Faz 4c: bu düğümlerden biri alınmışsa uygulanmaz. */
+  unless?: string[];
+  /** Faz 4c: fx çağrıya geçer (çağrının skill'leri / kancaları / stat'ı; sınıfın çağırdığı birim). */
+  summon?: string;
+  /** Faz 4c: yalnızca beslenmiş (ceset tüketmiş) çağrıya. */
+  fed?: true;
+};
 
 export interface TreeNodeData {
   name: string;

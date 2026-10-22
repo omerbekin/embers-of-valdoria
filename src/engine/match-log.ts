@@ -568,7 +568,9 @@ function globalText(g: AiExplanation['global']): string {
 }
 
 function skillLine(sk: SkillDef): string {
-  const cost = sk.cost.spendAll ? `${sk.cost.resource.toUpperCase()} all (min ${sk.cost.amount})` : sk.cost.ofCurrent ? `${sk.cost.resource.toUpperCase()} ${Math.round(sk.cost.ofCurrent * 100)}% of current${sk.cost.amount ? ` +${sk.cost.amount}` : ''}` : `${sk.cost.resource.toUpperCase()} ${sk.cost.amount}`;
+  const cost0 = sk.cost.spendAll ? `${sk.cost.resource.toUpperCase()} all (min ${sk.cost.amount})` : sk.cost.ofCurrent ? `${sk.cost.resource.toUpperCase()} ${Math.round(sk.cost.ofCurrent * 100)}% of current${sk.cost.amount ? ` +${sk.cost.amount}` : ''}` : `${sk.cost.resource.toUpperCase()} ${sk.cost.amount}`;
+  // Soul Exchange (cost.hpFallback): MP yetmezse candan ödenen yedek bedel
+  const cost = sk.cost.hpFallback ? `${cost0} or HP ${Math.round(sk.cost.hpFallback * 100)}% of current` : cost0;
   const extra = [
     sk.cooldown ? `cd ${sk.cooldown}` : '',
     sk.initialCooldown ? `initialCd ${sk.initialCooldown}` : '',

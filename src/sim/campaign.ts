@@ -41,6 +41,8 @@ import {
   type Difficulty,
 } from '../campaign';
 import { MAX_TURNS } from './simulate';
+import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
+import type { TreeDir } from '../progression/skill-tree-data';
 import { RARITY_IDS, clampRarity, instanceRarity, itemDef } from '../progression/items';
 import { woundCount } from '../progression/wounds';
 
@@ -101,6 +103,8 @@ export function routeLabel(map: CampaignMap, route: string[]): string {
 }
 
 export interface CampaignSimOptions {
+  /** Skill ağacı (Faz 6; --tree=a|b): oyuncu vekili puanları odaklı kurulumla bu yönde harcar, ağaç bu süreçte bellekte açık (tree-sim.ts). */
+  tree?: TreeDir;
   difficulty: Difficulty;
   /** Oyuncu tarafının vekili: Medium = "iyi oyuncu", Easy = "ortalama oyuncu". */
   player: AiDifficulty;
@@ -219,6 +223,10 @@ export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficu
 }
 
 export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
+  return withTreesInMemory(!!o.tree, () => simulateCampaignRuns(o));
+}
+
+function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
   const map = getMap(CONFIG.maps[0]!);
   const routes = allRoutes(map);
   const maxAttempts = o.maxAttempts ?? 10;
@@ -280,6 +288,7 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
           const agg = nodeAgg(step.node);
           agg.reached++;
           s = autoAllocateAll(s); // level puanları: oyuncu vekili ana stata dağıtır (levels.md)
+          if (o.tree) s = { ...s, roster: autoTreeHeroes(s.roster, o.tree) }; // skill ağacı (Faz 6; --tree)
           if ((o.gear ?? 'best') === 'best') s = equipBest(s);
           const party = activeHeroes(s);
           o.onBattle?.(step.node, s);

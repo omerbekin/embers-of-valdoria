@@ -29,9 +29,13 @@ import {
   type WaveKind,
 } from '../endless';
 import { RARITY_IDS, clampRarity, itemDef, itemValue } from '../progression/items';
+import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
+import type { TreeDir } from '../progression/skill-tree-data';
 
 export interface EndlessSimOptions {
   runs: number;
+  /** Skill ağacı (Faz 6; --tree=a|b): oyuncu vekili puanları odaklı kurulumla bu yönde harcar, ağaç bu süreçte bellekte açık (tree-sim.ts). */
+  tree?: TreeDir;
   firstSeed?: number;
   /** Oyuncu tarafının YZ'si (Medium = "iyi oyuncu"). */
   player?: AiDifficulty;
@@ -142,6 +146,10 @@ export function pickReward(run: EndlessRun, gear: 'best' | 'none'): number {
 }
 
 export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
+  return withTreesInMemory(!!o.tree, () => simulateEndlessRuns(o));
+}
+
+function simulateEndlessRuns(o: EndlessSimOptions): EndlessSimResult {
   const cfg = o.cfg ?? ENDLESS;
   const gear = o.gear ?? 'best';
   const relics = o.relics ?? 'pick';
@@ -169,6 +177,7 @@ export function simulateEndless(o: EndlessSimOptions): EndlessSimResult {
         }
         if (o.carryFormation === false) run = { ...run, heroes: run.heroes.map(({ slot: _slot, ...h }) => h) };
         run = autoAllocateRun(run); // level puanları: oyuncu vekili ana stata dağıtır (levels.md)
+        if (o.tree) run = { ...run, heroes: autoTreeHeroes(run.heroes, o.tree) }; // skill ağacı (Faz 6; --tree)
         const plan = wavePlan(run, cfg);
         const hs = avg(run.heroes.map((h) => h.hpRatio));
         const battle = fightWave(plan, player, valorInBattle(o.valor));

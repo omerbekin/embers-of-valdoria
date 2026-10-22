@@ -48,35 +48,75 @@
         "name": "Deep Rot",
         "text": "Withering you apply lasts 1 turn longer.",
         "src": "B:V1:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "passive",
+            "f": "dotTurns",
+            "op": "add",
+            "v": 1
+          }
+        ]
       },
       {
         "at": 10,
         "name": "Heart of the Wild",
         "text": "Critical hits with your nature skills restore 4 MP.",
         "src": "B:V5:bar4",
-        "fx": null
+        "fx": [
+          {
+            "k": "unitFx",
+            "fx": {
+              "critMp": 4
+            }
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Tight Weave",
-        "text": "The root field from Nature's Wrath lasts 1 turn longer.",
+        "text": "Nature's Wrath deals +5% damage.",
         "src": "B:V4:bar3",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "sel": "damage",
+            "f": "power",
+            "op": "pct",
+            "v": 0.05,
+            "skill": "natures_wrath"
+          }
+        ]
       },
       {
         "at": 20,
         "name": "Deep Spring",
         "text": "Rejuvenate's regeneration lasts 1 turn longer (3 → 4).",
         "src": "B:V3:bar4",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "sel": "hot",
+            "f": "turns",
+            "op": "base",
+            "v": 4,
+            "skill": "rejuvenate"
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Barkskin",
         "text": "Your Treant takes 15% less damage.",
         "src": "B:V2:bar2",
-        "fx": null
+        "fx": [
+          {
+            "summon": "treant",
+            "k": "hook",
+            "h": "heal",
+            "on": "damageTaken",
+            "mul": -0.15
+          }
+        ]
       }
     ]
   },
@@ -85,211 +125,769 @@
       "name": "Bitter Sap",
       "text": "Nature's Grudge Withering deals +10% damage per rank.",
       "src": "B:V1:0.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": 0.1,
+          "rank": true
+        }
+      ]
     },
     "0.f2": {
       "name": "Spreading Spite",
       "text": "When Nature's Grudge triggers, each enemy next to the killer has an 8% chance per rank to be gripped too.",
       "src": "B:V1:0.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "allyFell",
+          "rank": true,
+          "do": [
+            {
+              "status": "slow",
+              "turns": 3,
+              "chance": 0.08,
+              "to": "sourceNeighbors"
+            },
+            {
+              "status": "wither",
+              "turns": 3,
+              "power": 0.15,
+              "stat": "int",
+              "chance": 0.08,
+              "to": "sourceNeighbors"
+            }
+          ]
+        }
+      ]
     },
     "0.f3": {
       "name": "Choking Grip",
       "text": "Withering deals +6% damage per rank on a Slowed enemy.",
       "src": "B:V1:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "dot",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "powerMul": 0.06
+          },
+          "rank": true
+        }
+      ]
     },
     "0.n0": {
       "name": "Rot Remembers",
       "text": "Nature's Grudge also triggers the first time an ally drops below 30% HP: that attacker starts Withering for 3 turns.",
       "src": "B:V1:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "hpBelow",
+          "below": 0.3,
+          "who": "ally",
+          "do": [
+            {
+              "status": "wither",
+              "turns": 3,
+              "power": 0.15,
+              "stat": "int",
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "0.r": {
       "name": "Bitter Balm",
       "text": "Nature's Grudge Withering heals your lowest-HP ally for 20% of each tick per rank.",
       "src": "B:V3:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "dotTick",
+          "status": "wither",
+          "rank": true,
+          "do": [
+            {
+              "heal": 0.2,
+              "of": "amount",
+              "to": "lowestHpAlly"
+            }
+          ]
+        }
+      ]
     },
     "0.ea": {
       "name": "Creeping Blight",
       "text": "When a Withering enemy dies, its Withering jumps to the nearest enemy with the turns it had left.",
       "src": "B:V1:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyDied",
+          "status": "wither",
+          "mine": true,
+          "do": [
+            {
+              "spread": "wither",
+              "to": "nearestEnemy"
+            }
+          ]
+        }
+      ]
     },
     "0.eb": {
       "name": "Gnawing Rot",
       "text": "Nature's Grudge Withering grows each turn it ticks: +10%, then +20%, then +30% and so on.",
       "src": "B:V1:0.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "dot",
+          "scale": {
+            "dotTickNumber": 1
+          },
+          "mod": {
+            "powerMul": 0.1
+          }
+        }
+      ]
     },
     "0.ma": {
       "name": "Rot Bloom",
       "text": "A Withering enemy that dies bursts: 40% INT nature damage to each enemy next to it, and they start Withering for 2 turns.",
       "src": "B:V1:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyDied",
+          "status": "wither",
+          "do": [
+            {
+              "damage": 0.4,
+              "stat": "int",
+              "element": "nature",
+              "to": "neighbors"
+            },
+            {
+              "status": "wither",
+              "turns": 2,
+              "power": 0.15,
+              "stat": "int",
+              "to": "neighbors"
+            }
+          ]
+        }
+      ]
     },
     "0.fa": {
       "name": "Black Mold",
       "text": "Withering you apply deals +30% damage, but Nature's Grudge no longer Slows.",
       "src": "B:V1:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        },
+        {
+          "k": "passive",
+          "f": "status",
+          "op": "remove"
+        }
+      ]
     },
     "0.fb": {
       "name": "Grief's Toll",
       "text": "Nature's Grudge Withering deals double damage, but each trigger costs you 10% of your max HP.",
       "src": "B:V1:0.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "power",
+          "op": "pct",
+          "v": 1
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "allyFell",
+          "do": [
+            {
+              "hpLoss": 0.1
+            }
+          ]
+        }
+      ]
     },
     "0.mb": {
       "name": "Rot to the Core",
       "text": "When Nature's Grudge Withering runs out, the killer takes half of all the damage it dealt once more.",
       "src": "B:V1:0.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "statusEnd",
+          "status": "wither",
+          "mine": true,
+          "end": "expired",
+          "do": [
+            {
+              "damage": 0.5,
+              "of": "amount",
+              "damageType": "magic",
+              "element": "nature",
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Ever-Rot",
       "text": "Nature's Grudge becomes a blight: at the start of each of your turns, the enemy with the most HP starts Withering for 2 turns.",
       "src": "B:V1:0.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "turnStart",
+          "do": [
+            {
+              "status": "wither",
+              "turns": 2,
+              "power": 0.15,
+              "stat": "int",
+              "to": "highestHpEnemy"
+            }
+          ]
+        }
+      ]
     },
     "1.f1": {
       "name": "Hooked Barbs",
       "text": "Thorn Whip deals +3% damage per rank.",
       "src": "B:V5:1.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
     },
     "1.f2": {
       "name": "Nettle Sting",
       "text": "Thorn Whip has +2% critical chance per rank.",
       "src": "B:V5:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Charged Lash",
       "text": "After you cast an MP skill, your next Thorn Whip deals +5% damage per rank.",
       "src": "B:V5:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "lastSkillCostMp": true
+          },
+          "mod": {
+            "powerMul": 0.05
+          },
+          "rank": true
+        }
+      ]
     },
     "1.n0": {
       "name": "Whip Crack",
       "text": "Thorn Whip deals +50% damage to a target below 30% HP.",
       "src": "B:V5:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mod": {
+            "powerMul": 0.5
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Keen Thorns",
       "text": "Thorn Whip's critical hits deal +8% damage per rank.",
       "src": "B:V5:1.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "critDmgMul": 0.08
+          },
+          "rank": true
+        }
+      ]
     },
     "1.ea": {
       "name": "Forked Thorn",
       "text": "Thorn Whip chains to 1 more enemy for 60% damage; that enemy is Wounded too.",
       "src": "B:V1:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "strike": 0.6,
+              "to": "adjacentEnemy"
+            },
+            {
+              "status": "wound",
+              "turns": 2,
+              "to": "adjacentEnemy"
+            }
+          ]
+        }
+      ]
     },
     "1.eb": {
       "name": "Reaping Vine",
       "text": "If Thorn Whip kills, you regain 6 MP.",
       "src": "B:V5:1.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "mp": 6
+            }
+          ]
+        }
+      ]
     },
     "1.ma": {
       "name": "Thorn Volley",
       "text": "When Thorn Whip crits, it lashes another enemy at once for 60% damage.",
       "src": "B:V5:1.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "do": [
+            {
+              "strike": 0.6,
+              "to": "outsideArea",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "1.fa": {
       "name": "Wild Thorns",
       "text": "Thorn Whip deals +35% damage, but it can no longer crit.",
       "src": "B:V5:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.35
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "noCrit": true
+          }
+        }
+      ]
     },
     "1.fb": {
       "name": "Cutting Haste",
       "text": "Thorn Whip kills restore 15 MP, but it deals 20% less damage to targets above 50% HP.",
       "src": "B:V5:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "1.eb",
+          "on": "kill",
+          "do": [
+            {
+              "mp": 15
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpAbove": 0.5
+          },
+          "mod": {
+            "powerMul": -0.2
+          }
+        }
+      ]
     },
     "1.mb": {
       "name": "Endless Lash",
       "text": "If Thorn Whip kills, your next turn comes twice as fast.",
       "src": "B:V5:1.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "sooner": 0.5
+            }
+          ]
+        }
+      ]
     },
     "1.v": {
       "name": "Thornstorm Lash",
       "text": "Thorn Whip splits into three lashes: each hits a random enemy for 45%, no Wound; each crit restores 3 MP.",
       "src": "B:V5:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "target": "random_enemies",
+          "count": 3
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "set",
+          "v": 0.45
+        },
+        {
+          "k": "removeEffect",
+          "sel": "status:wound"
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "do": [
+            {
+              "mp": 3
+            }
+          ]
+        }
+      ]
     },
     "2.f1": {
       "name": "Grasping Earth",
       "text": "Nature's Wrath has an 8% chance per rank to Slow each enemy hit for 2 turns.",
       "src": "B:V4:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 2,
+              "chance": 0.08
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 2,
+              "chance": 0.16
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 2,
+              "chance": 0.24
+            }
+          ]
+        }
+      ]
     },
     "2.f2": {
       "name": "Tangleroot",
       "text": "Nature's Wrath has a 5% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "B:V4:2.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.05
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.1
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.15
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.25
+            }
+          ]
+        }
+      ]
     },
     "2.f3": {
       "name": "Pollen Drift",
       "text": "Enemies hit by Nature's Wrath deal 2% less damage per rank on their next turn.",
       "src": "B:V3:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "weakened",
+            "turns": 1
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:weakened",
+          "mod": {
+            "statusPotency": {
+              "damageDealtMult": 0.15
+            }
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:weakened",
+          "rank": true,
+          "mod": {
+            "statusPotency": {
+              "damageDealtMult": -0.02
+            }
+          }
+        }
+      ]
     },
     "2.n0": {
       "name": "Root Field",
       "text": "Nature's Wrath leaves a root field for 2 turns: enemies that start a turn there are Slowed for 1 turn.",
       "src": "B:V4:2.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "ground",
+            "ground": "root_field",
+            "turns": 2,
+            "scale": "int",
+            "power": 0
+          }
+        }
+      ]
     },
     "2.r": {
       "name": "Deep Tangle",
       "text": "Stuns from Nature's Wrath have a 10% chance per rank to last 1 turn longer.",
       "src": "B:V4:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:stun",
+          "procChance": 0.1,
+          "mod": {
+            "turns": 1
+          },
+          "rank": "chance"
+        }
+      ]
     },
     "2.ea": {
       "name": "Hushing Moss",
       "text": "The root field also Silences enemies that start a turn there.",
       "src": "B:V4:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "groundStatus",
+          "ground": "root_field",
+          "status": "silence",
+          "turns": 1,
+          "needs": "2.n0"
+        }
+      ]
     },
     "2.eb": {
       "name": "Grasp and Drag",
       "text": "Nature's Wrath pulls each enemy in its back row one row forward.",
       "src": "B:V4:2.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "pull",
+            "to": "stepForward",
+            "areaBack": true
+          }
+        }
+      ]
     },
     "2.ma": {
       "name": "Overgrown Field",
       "text": "The root field lasts 2 turns longer and deals 15% INT nature damage each turn.",
       "src": "B:V4:2.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:root_field",
+          "f": "turns",
+          "op": "add",
+          "v": 2,
+          "needs": "2.n0"
+        },
+        {
+          "k": "skill",
+          "sel": "ground:root_field",
+          "f": "power",
+          "op": "add",
+          "v": 0.15,
+          "needs": "2.n0"
+        }
+      ]
     },
     "2.fa": {
       "name": "Mire",
       "text": "The root field Slows on impact and lasts 4 turns, but Nature's Wrath cooldown 3 → 5.",
       "src": "B:V4:2.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "slow",
+            "turns": 1
+          },
+          "needs": "2.n0"
+        },
+        {
+          "k": "skill",
+          "sel": "ground:root_field",
+          "f": "turns",
+          "op": "set",
+          "v": 4,
+          "needs": "2.n0"
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 5
+        }
+      ]
     },
     "2.fb": {
       "name": "Briar Prison",
       "text": "Nature's Wrath Stuns its first row for 1 turn, but deals no damage.",
       "src": "B:V4:2.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "damage"
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "stun",
+              "turns": 1,
+              "to": "castFront"
+            }
+          ]
+        }
+      ]
     },
     "2.mb": {
       "name": "Strangling Grove",
       "text": "Nature's Wrath Stuns every Slowed enemy it hits for 1 turn.",
       "src": "B:V4:2.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "2.v": {
       "name": "Thicket Wave",
@@ -297,25 +895,75 @@
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "skill": "natures_wrath",
+          "do": [
+            {
+              "cast": "natures_wrath",
+              "delay": 1,
+              "power": 0.5,
+              "noChain": true,
+              "mod": {
+                "addStatus": {
+                  "status": "stun",
+                  "turns": 1
+                }
+              }
+            }
+          ]
+        }
+      ]
     },
     "3.f1": {
       "name": "Tender Sap",
       "text": "Rejuvenate heals +4% per rank.",
       "src": "B:V3:3.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "heal",
+          "f": "power",
+          "op": "pct",
+          "v": 0.04,
+          "rank": true
+        }
+      ]
     },
     "3.f2": {
       "name": "Long Bloom",
       "text": "Rejuvenate's regeneration +6% per rank.",
       "src": "B:V3:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "hot",
+          "f": "power",
+          "op": "pct",
+          "v": 0.06,
+          "rank": true
+        }
+      ]
     },
     "3.f3": {
       "name": "Soft Hands",
       "text": "Rejuvenate heals +4% more per rank on an ally below 50% HP.",
       "src": "B:V3:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "healDealt",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mul": 0.04,
+          "rank": true
+        }
+      ]
     },
     "3.n0": {
       "name": "Overflowing Cup",
@@ -323,103 +971,376 @@
       "src": "B:V3:3.n0",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "overhealDealt",
+          "into": "shield",
+          "ratio": 1
+        }
+      ]
     },
     "3.r": {
       "name": "Dewdrop Shield",
       "text": "Shields from Overflowing Cup +10% per rank.",
       "src": "B:V3:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "overhealDealt",
+          "into": "shield",
+          "ratio": 0.1,
+          "rank": true
+        }
+      ]
     },
     "3.ea": {
       "name": "Spreading Roots",
       "text": "Rejuvenate's regeneration also lands on allies next to the target at half strength.",
       "src": "B:V3:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "hot": 0.5,
+              "to": "neighbors"
+            }
+          ]
+        }
+      ]
     },
     "3.eb": {
       "name": "Emergency Bloom",
       "text": "Rejuvenate heals +50% on an ally below 30% HP.",
       "src": "B:V3:3.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "healDealt",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mul": 0.5
+        }
+      ]
     },
     "3.ma": {
       "name": "Grove Bloom",
       "text": "Rejuvenate's first heal also lands on every ally in the target's row.",
       "src": "B:V3:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "heal": 1,
+              "of": "firstHeal",
+              "to": "rowMates"
+            }
+          ]
+        }
+      ]
     },
     "3.fa": {
       "name": "Thin Sap",
       "text": "Rejuvenate heals every ally, but each heal is 50% weaker and its cooldown is 4.",
       "src": "B:V3:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "target": "all_allies"
+        },
+        {
+          "k": "skill",
+          "sel": "heal",
+          "f": "power",
+          "op": "pct",
+          "v": -0.5
+        },
+        {
+          "k": "skill",
+          "sel": "hot",
+          "f": "power",
+          "op": "pct",
+          "v": -0.5
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 4
+        }
+      ]
     },
     "3.fb": {
       "name": "Desperate Sap",
       "text": "Rejuvenate's regeneration lands all at once, +25%, but its cooldown is 4.",
       "src": "B:V3:3.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "replaceEffect",
+          "sel": "hot",
+          "collapse": 1.25
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 4
+        }
+      ]
     },
     "3.mb": {
       "name": "Lifebloom",
       "text": "When Rejuvenate's regeneration ends, the ally heals once more for the first heal's amount.",
       "src": "B:V3:3.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "statusEnd",
+          "status": "regen",
+          "mine": true,
+          "end": "expired",
+          "fromSkill": "rejuvenate",
+          "do": [
+            {
+              "heal": 1,
+              "of": "firstHeal",
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.v": {
       "name": "Verdant Link",
       "text": "Rejuvenate now links two allies: the target and your lowest-HP ally each get the full heal and regeneration.",
       "src": "B:V3:3.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "cast": "event",
+              "to": "lowestHpOtherAlly",
+              "noChain": true,
+              "notTarget": true
+            }
+          ]
+        }
+      ]
     },
     "4.u1": {
       "name": "Crashing Arrival",
       "text": "Summon Treant deals 50% INT nature damage to the enemy front row as it lands.",
       "src": "A:V5:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "arrive",
+          "summon": "treant",
+          "do": [
+            {
+              "damage": 0.5,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "summoner": true,
+              "to": "enemyFront"
+            }
+          ]
+        }
+      ]
     },
     "4.u2": {
-      "name": "Heavy Landing",
+      "name": "Oakfall",
       "text": "The arrival damage also hits the second row.",
       "src": "A:V5:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "arrive",
+          "summon": "treant",
+          "drop": "4.u1",
+          "do": [
+            {
+              "damage": 0.5,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "summoner": true,
+              "to": "enemyFront",
+              "rows": 2
+            }
+          ]
+        }
+      ]
     },
     "4.u3": {
       "name": "Falling Oak",
       "text": "The arrival damage +100%, and the enemy facing the Treant is Stunned for 1 turn.",
       "src": "A:V5:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "arrive",
+          "summon": "treant",
+          "drop": "4.u2",
+          "do": [
+            {
+              "damage": 1,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "summoner": true,
+              "to": "enemyFront",
+              "rows": 2
+            },
+            {
+              "status": "stun",
+              "turns": 1,
+              "to": "facing"
+            }
+          ]
+        }
+      ]
     },
     "4.r1": {
       "name": "Heavy Boughs",
       "text": "Root Smash deals +20% damage.",
       "src": "A:V2:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "summon": "treant",
+          "k": "skill",
+          "skill": "root_smash",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.2
+        }
+      ]
     },
     "4.r2": {
       "name": "Heavy Smash",
       "text": "Root Smash deals +25% damage to Slowed or Stunned enemies.",
       "src": "A:V4:4.l2",
-      "fx": null
+      "fx": [
+        {
+          "summon": "treant",
+          "k": "hook",
+          "h": "cond",
+          "skill": "root_smash",
+          "when": {
+            "any": [
+              {
+                "targetStatus": "slow"
+              },
+              {
+                "targetStatus": "stun"
+              }
+            ]
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        }
+      ]
     },
     "4.r3": {
       "name": "Wrathful Oak",
       "text": "The Treant acts twice per turn, but lives only 2 turns.",
       "src": "A:V2:4.l3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "actions",
+          "n": 2,
+          "summon": "treant"
+        },
+        {
+          "k": "skill",
+          "sel": "summon",
+          "f": "lifespan",
+          "op": "set",
+          "v": 2
+        }
+      ]
     },
     "4.d1": {
       "name": "Splinter Burst",
       "text": "When the Treant dies or wilts, it bursts: 60% INT nature damage to the 2 nearest enemies.",
       "src": "A:V5:4.r1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "summonDeath",
+          "unit": "treant",
+          "do": [
+            {
+              "damage": 0.6,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "to": "nearestEnemies",
+              "count": 2
+            }
+          ]
+        }
+      ]
     },
     "4.d2": {
       "name": "Brittle Bark",
       "text": "The Treant's burst +50%, but the Treant has 20% less HP.",
       "src": "A:V5:4.r2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "4.d1",
+          "onlyWith": [
+            "4.d1"
+          ],
+          "on": "summonDeath",
+          "unit": "treant",
+          "do": [
+            {
+              "damage": 0.9,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "to": "nearestEnemies",
+              "count": 2
+            }
+          ]
+        },
+        {
+          "summon": "treant",
+          "k": "stat",
+          "f": "hpMult",
+          "op": "mul",
+          "v": -0.2
+        }
+      ]
     },
     "4.d3": {
       "name": "Living Bomb",
@@ -427,25 +1348,78 @@
       "src": "A:V5:4.r3",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "resummon",
+          "mult": 2
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 3
+        }
+      ]
     },
     "4.l1": {
       "name": "Shieldbark",
       "text": "The Treant arrives with Taunt for 1 turn.",
       "src": "A:V2:4.d1",
-      "fx": null
+      "fx": [
+        {
+          "summon": "treant",
+          "k": "hook",
+          "h": "trigger",
+          "on": "arrive",
+          "do": [
+            {
+              "status": "taunt",
+              "turns": 1,
+              "to": "self"
+            }
+          ]
+        }
+      ]
     },
     "4.l2": {
       "name": "Thornbark",
       "text": "Enemies that hit the Treant take 15% INT nature damage.",
       "src": "A:V2:4.d2",
-      "fx": null
+      "fx": [
+        {
+          "summon": "treant",
+          "k": "hook",
+          "h": "trigger",
+          "on": "hitTaken",
+          "do": [
+            {
+              "damage": 0.15,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "nature",
+              "passive": true,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "4.l3": {
       "name": "Guardian Oak",
       "text": "The Treant Guards the ally behind it: half the damage that ally takes goes to the Treant.",
       "src": "A:V2:4.d3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "guardBehind",
+          "share": 0.5,
+          "summon": "treant"
+        }
+      ]
     }
   }
 }

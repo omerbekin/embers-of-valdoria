@@ -176,7 +176,7 @@
         ["Cold Blood", "Your skills +5% damage against targets below 30% HP."],
         ["Quick Hands", "When you kill an enemy, you regain 4 MP."],
         ["Killer Instinct", "Your skills +4% critical chance against targets below 50% HP."],
-        ["Trophy", "Each kill this battle adds +3% to your critical damage."],
+        ["Notched Blade", "Each kill this battle adds +3% to your critical damage."],
         ["Reaper's Due", "Your first kill each battle resets the cooldowns of your other skills."]
       ],
       nodes: {

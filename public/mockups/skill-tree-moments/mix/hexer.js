@@ -35,7 +35,7 @@
         "0.fa": ["Overcharged Doom", "Doom deals +30% damage, but you take 10% of that damage yourself.", false, "V1:0.fa"],
         "0.fb": ["Final Toll", "Doom deals +40% to targets below 30% HP, but -20% to targets above it.", false, "V1:0.fb"],
         "0.mb": ["Toppling Ruin", "When Doom kills, your next turn comes 50% sooner.", false, "V1:0.mb"],
-        "0.v": ["Herald of Ruin", "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.", true, "V1:0.v"],
+        "0.v": ["Passing Bell", "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.", true, "V1:0.v"],
         // 1 Evil Eye: a = kritikle 3 Omen; b = aynı hedefe dikilen bakış, Evil Eye'ın Doom'u sert
         "1.f1": ["Prying Eye", "Evil Eye +4% power per rank against enemies with no Omens.", false, "V4:1.f3"],
         "1.f2": ["Unblinking", "Evil Eye +2% critical chance per rank.", false, "V1:1.f2"],
@@ -146,7 +146,7 @@
         "2.eb": ["Seeping Rot", "When Wither ends on an enemy, the enemies next to it are Withered for 2 turns.", false, "V2:2.eb"],
         "2.ma": ["Plague Tide", "Withering Curse also adds 1 Omen to every enemy outside its area that has one.", false, "V4:2.ma"],
         "2.fa": ["Thin Plague", "Withering Curse hits every enemy, but deals half damage and its Wither lasts 1 turn.", false, "V4:2.fa"],
-        "2.fb": ["Gnawing Rot", "Withering Curse's Wither deals +50%, but lasts 2 turns.", false, "V2:2.fa"],
+        "2.fb": ["Swift Blight", "Withering Curse's Wither deals +50%, but lasts 2 turns.", false, "V2:2.fa"],
         "2.mb": ["Returning Curse", "When an enemy Withered by the Curse dies, Withering Curse's cooldown resets.", false, "V5:2.mb"],
         "2.v": ["Plague Curse", "Withering Curse evolves: its Wither is contagious: each tick also Withers an enemy next to the host for 2 turns.", true, "V4:2.v"],
         // 3 Jinx: a = uzun Jinx, ıskalayan sırasını kaybeder; b = ıska geri teper (daha çok ıska)

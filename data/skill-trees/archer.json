@@ -48,35 +48,82 @@
         "name": "Still Hands",
         "text": "If you did not move last turn, your first skill +5% critical chance.",
         "src": "A:V1:bar2",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "when": {
+              "notMovedLastTurn": true
+            },
+            "mod": {
+              "critBonus": 0.05
+            }
+          }
+        ]
       },
       {
         "at": 10,
         "name": "Knee Shots",
         "text": "Slow from your skills lasts 1 turn longer.",
         "src": "A:V3:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "sel": "status:slow",
+            "mod": {
+              "turns": 1
+            }
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Wide Nock",
         "text": "Piercing Arrow falloff 5% smaller.",
         "src": "A:V4:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "skill": "piercing_arrow",
+            "sel": "damage",
+            "f": "falloff",
+            "op": "add",
+            "v": 0.05
+          }
+        ]
       },
       {
         "at": 20,
         "name": "Full Quiver",
         "text": "Arrow Rain costs 2 less MP.",
         "src": "A:V4:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "skill": "arrow_rain",
+            "sel": "self",
+            "f": "cost.amount",
+            "op": "add",
+            "v": -2
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Plate Reader",
         "text": "Aimed Shot ignores 5% more Armor.",
         "src": "A:V1:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "skill": "aimed_shot",
+            "sel": "damage",
+            "f": "ignoreDefense",
+            "op": "add",
+            "v": 0.05
+          }
+        ]
       }
     ]
   },
@@ -85,61 +132,192 @@
       "name": "Long Sight",
       "text": "Sharpshooter +1% damage per row of distance per rank.",
       "src": "A:V1:0.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perRow",
+          "op": "add",
+          "v": 0.01,
+          "rank": true
+        }
+      ]
     },
     "0.f2": {
       "name": "Steady Feet",
       "text": "If you did not move last turn, your skills +2% critical chance per rank.",
       "src": "A:V1:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "notMovedLastTurn": true
+          },
+          "mod": {
+            "critBonus": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f3": {
       "name": "Gap in the Plate",
       "text": "Against targets 4+ rows away, your skills ignore 3% of Armor per rank.",
       "src": "A:V1:0.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetDistance": 4
+          },
+          "mod": {
+            "ignoreDefense": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "0.n0": {
       "name": "Eagle Eye",
       "text": "Half of your Sharpshooter bonus is also added to your critical chance.",
       "src": "A:V1:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "sharpshooterBonus": 0.5
+          },
+          "mod": {
+            "critBonus": 1
+          }
+        }
+      ]
     },
     "0.r": {
       "name": "Killing Distance",
       "text": "Critical hits against targets 5+ rows away deal +8% damage per rank.",
       "src": "A:V1:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetDistance": 5,
+            "hitIsCrit": true
+          },
+          "mod": {
+            "powerMul": 0.08
+          },
+          "rank": true
+        }
+      ]
     },
     "0.ea": {
       "name": "Patient Aim",
       "text": "If no enemy hit you since your last turn, your skill +20% critical chance.",
       "src": "A:V1:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "notHitSinceMyTurn": true
+          },
+          "mod": {
+            "critBonus": 0.2
+          }
+        }
+      ]
     },
     "0.eb": {
       "name": "Long Pin",
       "text": "Your skills against targets 5+ rows away have a 15% chance to Slow for 1 turn.",
       "src": "A:V3:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetDistance": 5
+          },
+          "mod": {
+            "addStatus": {
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.15
+            }
+          }
+        }
+      ]
     },
     "0.ma": {
       "name": "Held Breath",
       "text": "Skip Turn steadies your aim: your next skill is a sure critical and ignores 30% of Armor.",
       "src": "A:V1:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skip",
+          "do": [
+            {
+              "buff": {
+                "guaranteedCrit": true,
+                "ignoreDefense": 0.3
+              }
+            }
+          ]
+        }
+      ]
     },
     "0.fa": {
       "name": "Tunnel Vision",
       "text": "Sharpshooter +4% per row of distance, but targets 2 or fewer rows away take 25% less damage from you.",
       "src": "A:V1:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "perRow",
+          "op": "add",
+          "v": 0.04
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetDistance": {
+              "atMost": 2
+            }
+          },
+          "mod": {
+            "powerMul": -0.25
+          }
+        }
+      ]
     },
     "0.fb": {
       "name": "Exposed Perch",
       "text": "Your skills count 2 extra rows of distance for their bonuses, but you take 20% more damage from enemy ranged skills.",
       "src": "A:V1:0.fb*",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "extraRows",
+          "op": "add",
+          "v": 2
+        },
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "when": {
+            "incomingRanged": true
+          },
+          "mul": 0.2
+        }
+      ]
     },
     "0.mb": {
       "name": "Range Keeper",
@@ -148,115 +326,438 @@
       "syn": "Quick Shot",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMoved",
+          "near": 3,
+          "once": "perTurn",
+          "do": [
+            {
+              "cast": "quick_shot",
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Dead Center",
       "text": "Sharpshooter evolves: your first hit on each enemy is a sure critical if it stands 4+ rows away.",
       "src": "A:V1:0.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "firstHitOnTarget": true,
+            "targetDistance": 4
+          },
+          "mod": {
+            "guaranteedCrit": true
+          }
+        }
+      ]
     },
     "1.f1": {
-      "name": "Hamstring",
+      "name": "Hock Shot",
       "text": "Quick Shot has a 6% chance per rank to Slow for 1 turn.",
       "src": "A:V3:1.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.06
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.12
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.18
+            }
+          ]
+        }
+      ]
     },
     "1.f2": {
       "name": "Practiced Release",
       "text": "Quick Shot +3% critical chance per rank against targets 4+ rows away.",
       "src": "A:V1:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetDistance": 4
+          },
+          "mod": {
+            "critBonus": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Sting in the Eye",
       "text": "Quick Shot has a 4% chance per rank to Blind for 1 turn.",
       "src": "A:V3:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.04
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.08
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.12
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.16
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.2
+            }
+          ]
+        }
+      ]
     },
     "1.n0": {
       "name": "Shot to the Knee",
       "text": "Quick Shot critical hits always Slow the target for 2 turns.",
       "src": "A:V3:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "slow",
+              "turns": 2
+            }
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Spiteful Nock",
       "text": "Quick Shot +3% critical chance per rank against Slowed or Blinded enemies.",
       "src": "A:V3:1.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": [
+              "slow",
+              "blinded"
+            ]
+          },
+          "mod": {
+            "critBonus": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "1.ea": {
       "name": "Cut the Tendon",
       "text": "Quick Shot on a Slowed enemy extends its Slow by 1 turn.",
       "src": "A:V3:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "extendStatus": {
+              "status": "slow",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "1.eb": {
       "name": "For the Eyes",
       "text": "Quick Shot Blinds for 1 turn when it crits.",
       "src": "A:V3:1.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "blinded",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "1.ma": {
       "name": "Hobbled",
       "text": "Quick Shot on an enemy Slowed for 2+ turns Stuns it for 1 turn and ends the Slow.",
       "src": "A:V3:1.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatusTurnsAtLeast": {
+              "status": "slow",
+              "n": 2
+            }
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            },
+            "removeStatus": "slow"
+          }
+        }
+      ]
     },
     "1.fa": {
       "name": "Leg Shot Only",
       "text": "Quick Shot always Slows for 2 turns, but no longer gives you Haste.",
       "src": "A:V3:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "status:haste"
+        },
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "slow",
+            "turns": 2
+          }
+        }
+      ]
     },
     "1.fb": {
       "name": "Gouging Arrow",
       "text": "Quick Shot Blinds for 2 turns every time, but it gains a 2-turn cooldown.",
       "src": "A:V3:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 2
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 2
+        }
+      ]
     },
     "1.mb": {
       "name": "Blind Panic",
       "text": "A Blinded enemy hit by Quick Shot is also Jinxed.",
       "src": "A:V3:1.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "blinded"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "jinxed",
+              "turns": 2
+            }
+          }
+        }
+      ]
     },
     "1.v": {
       "name": "Maiming Shot",
-      "text": "Quick Shot evolves: it Slows; if the target is Slowed it Blinds; if Slowed and Blinded it Staggers.",
+      "text": "Quick Shot evolves: it Slows for 1 turn; if the target is Slowed it Blinds for 1 turn; if Slowed and Blinded it Staggers.",
       "src": "A:V3:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "slow",
+            "turns": 1
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "blinded",
+              "turns": 1
+            }
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow",
+            "targetStatusAny": "blinded"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "staggered",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "2.f1": {
       "name": "Tempered Point",
       "text": "Piercing Arrow ignores 3% of Armor per rank.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "ignoreDefense",
+          "op": "add",
+          "v": 0.03,
+          "rank": true
+        }
+      ]
     },
     "2.f2": {
       "name": "Weighted Head",
       "text": "Piercing Arrow +2% damage per rank against enemies with more Armor than you.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetArmorAboveMine": true
+          },
+          "mod": {
+            "powerMul": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f3": {
       "name": "Narrow Bodkin",
       "text": "Piercing Arrow falloff 2% smaller per rank against enemies with 20+ Armor.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetArmorAtLeast": 20
+          },
+          "mod": {
+            "falloffAdd": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "2.n0": {
       "name": "Bodkin Point",
       "text": "Piercing Arrow ignores 25% of Armor, or 50% against enemies with more Armor than you.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "ignoreDefense",
+          "op": "base",
+          "v": 0.25
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetArmorAboveMine": true
+          },
+          "mod": {
+            "ignoreDefense": 0.25
+          }
+        }
+      ]
     },
     "2.r": {
       "name": "Rivet Breaker",
       "text": "Piercing Arrow +4% damage per rank against Fortified or Blessed enemies.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": [
+              "fortify",
+              "blessed"
+            ]
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "2.ea": {
       "name": "Sunder",
@@ -264,189 +765,602 @@
       "src": "D:new row proposal",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "sunder",
+            "turns": 2
+          }
+        }
+      ]
     },
     "2.eb": {
       "name": "Strip Wards",
       "text": "Piercing Arrow removes one buff from each enemy it hits.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "dispel",
+            "status": "buff",
+            "count": 1
+          }
+        }
+      ]
     },
     "2.ma": {
       "name": "Shattered Line",
       "text": "Aimed Shot ignores all Armor on a Sundered enemy.",
       "src": "D:new row proposal",
       "syn": "Aimed Shot",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "aimed_shot",
+          "when": {
+            "targetStatus": "sunder"
+          },
+          "mod": {
+            "ignoreDefense": 1
+          }
+        }
+      ]
     },
     "2.fa": {
       "name": "Brittle Point",
       "text": "Sunder is 40% instead of 20%, but Piercing Arrow stops after the second enemy.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "maxTargets": 2
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:sunder",
+          "mod": {
+            "statusPotency": {
+              "armorMult": -0.2
+            }
+          }
+        }
+      ]
     },
     "2.fb": {
       "name": "Spent Quarrel",
       "text": "Strip Wards removes every buff, but Piercing Arrow's cooldown is 4.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "dispel",
+            "status": "buff"
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 4
+        }
+      ]
     },
     "2.mb": {
       "name": "Through the Guard",
       "text": "Piercing Arrow ignores Fortified, Blessed and shields on the enemies it hits.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "pierce",
+          "statuses": [
+            "fortify",
+            "blessed"
+          ],
+          "shields": true,
+          "skill": "piercing_arrow"
+        }
+      ]
     },
     "2.v": {
       "name": "Siege Bolt",
       "text": "Piercing Arrow evolves into a ballista bolt: it ignores all Armor and loses only 10% per enemy it passes.",
       "src": "D:new row proposal",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "ignoreDefense",
+          "op": "set",
+          "v": 1
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "falloff",
+          "op": "set",
+          "v": 0.9
+        }
+      ]
     },
     "3.f1": {
       "name": "Thick Volley",
       "text": "Arrow Rain +4% damage per rank.",
       "src": "A:V4:3.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.04,
+          "rank": true
+        }
+      ]
     },
     "3.f2": {
       "name": "Scatter Shot",
       "text": "Arrow Rain has a 5% chance per rank to Slow each enemy hit for 1 turn.",
       "src": "A:V2:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.05
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.1
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.15
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.25
+            }
+          ]
+        }
+      ]
     },
     "3.f3": {
       "name": "Rear Volley",
       "text": "Arrow Rain +4% damage per rank to enemies in their back row.",
       "src": "A:V1:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetRow": "back"
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "3.n0": {
       "name": "Hobbling Hail",
       "text": "Arrow Rain extends every Slow on the enemies it hits by 1 turn.",
       "src": "A:V3:3.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "extendStatus": {
+              "status": "slow",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "3.r": {
       "name": "Stinging Shower",
       "text": "Arrow Rain +3% damage per rank for each Slowed enemy in its area.",
       "src": "A:V3:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "hitWithStatus": "slow"
+          },
+          "mod": {
+            "powerMul": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "3.ea": {
       "name": "Spent Arrows",
       "text": "Arrow Rain leaves its area thick with shafts for 2 turns: enemies there are Slowed.",
       "src": "A:V3:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "ground",
+            "ground": "field_of_shafts",
+            "turns": 2,
+            "scale": "dex",
+            "power": 0
+          }
+        }
+      ]
     },
     "3.eb": {
       "name": "Lingering Hail",
       "text": "Arrow Rain keeps raining for 1 turn: 25% damage to enemies in its area at the start of their turns.",
       "src": "A:V4:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "ground",
+            "ground": "lingering_rain",
+            "turns": 1,
+            "scale": "dex",
+            "power": 0.25
+          }
+        }
+      ]
     },
     "3.ma": {
       "name": "Killing Field",
       "text": "Enemies in your field of shafts take 20% DEX at the start of their turns and are Blinded.",
       "src": "A:V3:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:field_of_shafts",
+          "f": "power",
+          "op": "add",
+          "v": 0.2,
+          "needs": "3.ea"
+        },
+        {
+          "k": "groundStatus",
+          "ground": "field_of_shafts",
+          "status": "blinded",
+          "turns": 1,
+          "needs": "3.ea"
+        }
+      ]
     },
     "3.fa": {
       "name": "Choking Rain",
       "text": "Your field of shafts lasts 4 turns, but Arrow Rain deals 40% less damage on impact.",
       "src": "A:V3:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:field_of_shafts",
+          "f": "turns",
+          "op": "set",
+          "v": 4,
+          "needs": "3.ea"
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.4
+        }
+      ]
     },
     "3.fb": {
       "name": "Endless Hail",
       "text": "Your lingering rain lasts 4 turns, but Arrow Rain cooldown is 5.",
       "src": "A:V4:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:lingering_rain",
+          "f": "turns",
+          "op": "set",
+          "v": 4,
+          "needs": "3.eb"
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 5
+        }
+      ]
     },
     "3.mb": {
       "name": "Sky Full of Shafts",
       "text": "Your lingering rain lasts 2 more turns, and Piercing Arrow fired through it has no falloff.",
       "src": "A:V4:3.ma",
       "syn": "Piercing Arrow",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:lingering_rain",
+          "f": "turns",
+          "op": "add",
+          "v": 2,
+          "needs": "3.eb"
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "skill": "piercing_arrow",
+          "when": {
+            "targetOnGround": "lingering_rain"
+          },
+          "mod": {
+            "falloffAdd": 0.3
+          }
+        }
+      ]
     },
     "3.v": {
       "name": "Arrow Storm",
       "text": "Arrow Rain evolves: it covers 4 rows instead of 3 and leaves a 2-turn rain on the area (30% per turn).",
       "src": "A:V4:3.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "rows": 4
+          }
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "ground",
+            "ground": "lingering_rain",
+            "turns": 2,
+            "scale": "dex",
+            "power": 0.3
+          }
+        }
+      ]
     },
     "4.u1": {
       "name": "Killing Shot",
       "text": "Aimed Shot +40% damage against enemies below 50% HP.",
       "src": "B:V5:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.4
+          }
+        }
+      ]
     },
     "4.u2": {
       "name": "Heart Shot",
       "text": "Aimed Shot cannot miss enemies below 50% HP.",
       "src": "B:V5:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "sureHit": true
+          }
+        }
+      ]
     },
     "4.u3": {
       "name": "Deathblow",
       "text": "Aimed Shot deals +1% for every 1% HP the target is missing.",
       "src": "B:V5:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "executeBonus",
+          "op": "set",
+          "v": 1
+        }
+      ]
     },
     "4.r1": {
       "name": "Trophy",
       "text": "If Aimed Shot kills, its cooldown resets.",
       "src": "B:V5:4.r1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "cooldown": "reset"
+            }
+          ]
+        }
+      ]
     },
     "4.r2": {
       "name": "Blood Rush",
       "text": "If Aimed Shot kills, gain Haste for 2 turns.",
       "src": "B:V5:4.r2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "status": "haste",
+              "turns": 2
+            }
+          ]
+        }
+      ]
     },
     "4.r3": {
       "name": "Next in Line",
       "text": "If Aimed Shot kills, your next skill deals +50% and cannot miss.",
       "src": "B:V5:4.r3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "buff": {
+                "powerMul": 0.5,
+                "sureHit": true
+              }
+            }
+          ]
+        }
+      ]
     },
     "4.d1": {
       "name": "Snap Shot",
       "text": "While Hasted, Aimed Shot cooldown is 1 turn shorter.",
       "src": "B:V2:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "selfStatus": "haste"
+          },
+          "mod": {
+            "cooldownDelta": -1
+          }
+        }
+      ]
     },
     "4.d2": {
       "name": "Quick Sight",
       "text": "Aimed Shot no longer starts the battle on cooldown.",
       "src": "B:V2:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "initialCooldown",
+          "op": "set",
+          "v": 0
+        }
+      ]
     },
     "4.d3": {
       "name": "Lightning Draw",
       "text": "If you are faster than the target, Aimed Shot fires twice (the second at 50%).",
       "src": "B:V2:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "when": {
+            "fasterThanTarget": true
+          },
+          "do": [
+            {
+              "strike": 0.5,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "4.l1": {
       "name": "Draw and Vanish",
       "text": "Aimed Shot gives you Fleet for 2 turns.",
       "src": "B:V2:4.d1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "fleet",
+            "turns": 2,
+            "self": true
+          }
+        }
+      ]
     },
     "4.l2": {
       "name": "Light Feet",
       "text": "Aimed Shot gives you Haste for 2 turns.",
       "src": "B:V2:4.d2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "haste",
+            "turns": 2,
+            "self": true
+          }
+        }
+      ]
     },
     "4.l3": {
       "name": "Ghost Archer",
       "text": "After Aimed Shot you are Shrouded for 2 turns (evasion +20%).",
       "src": "B:V2:4.d3",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "shrouded",
+            "turns": 2,
+            "self": true
+          }
+        }
+      ]
     }
   }
 }

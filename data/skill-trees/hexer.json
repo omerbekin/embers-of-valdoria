@@ -48,35 +48,93 @@
         "name": "Quick Fate",
         "text": "Your first Evil Eye each battle adds 1 extra Omen.",
         "src": "A:V1:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "skill": "evil_eye",
+            "when": {
+              "firstUseOfSkill": true
+            },
+            "mod": {
+              "omenStacks": 1
+            }
+          }
+        ]
       },
       {
         "at": 10,
         "name": "Grim Herald",
         "text": "The first Doom you cause each battle deals +20% damage.",
         "src": "A:V1:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "at": "doom",
+            "when": {
+              "firstDoom": true
+            },
+            "mod": {
+              "powerMul": 0.2
+            }
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Long Rot",
         "text": "Wither you apply lasts 1 turn longer.",
         "src": "A:V2:bar3",
-        "fx": null
+        "fx": [
+          {
+            "k": "skill",
+            "sel": "dot",
+            "f": "turns",
+            "op": "add",
+            "v": 1,
+            "skill": "withering_curse"
+          }
+        ]
       },
       {
         "at": 20,
         "name": "Carrion Feast",
         "text": "Wither on an enemy below 30% HP deals +20% damage.",
         "src": "A:V2:bar2",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "at": "dot",
+            "when": {
+              "targetHpBelow": 0.3
+            },
+            "mod": {
+              "powerMul": 0.2
+            }
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Hour of Ruin",
         "text": "Once per battle, when Doom strikes, Doom Mark's cooldown drops by 2.",
         "src": "A:V1:bar4",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "doom",
+            "once": true,
+            "do": [
+              {
+                "cooldown": -2,
+                "cd": "doom_mark"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -85,214 +143,691 @@
       "name": "Fresh Host",
       "text": "Doom on a host of passed Omens deals +3% damage per rank.",
       "src": "A:V4:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "when": {
+            "omenFromTransfer": true
+          },
+          "mod": {
+            "powerMul": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f2": {
       "name": "Grim Arithmetic",
       "text": "Doom +4% damage per rank against targets below 50% HP.",
       "src": "A:V1:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f3": {
       "name": "Crooked Stars",
       "text": "Doom +3% critical chance per rank.",
       "src": "A:V1:0.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "mod": {
+            "critBonus": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "0.n0": {
       "name": "Fate Sealed",
       "text": "An enemy that survives Doom keeps 1 Omen, so the next Doom comes sooner.",
       "src": "A:V1:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "doom",
+          "when": {
+            "targetHpAbove": 0
+          },
+          "do": [
+            {
+              "status": "omen",
+              "stacks": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "0.r": {
       "name": "Bitter Interest",
       "text": "Doom heals you for 4% of its damage per rank.",
       "src": "A:V5:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "mod": {
+            "lifesteal": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "0.ea": {
       "name": "Crushing Doom",
       "text": "Doom ignores 25% of Magic Armor.",
       "src": "A:V1:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "mod": {
+            "ignoreDefense": 0.25
+          }
+        }
+      ]
     },
     "0.eb": {
       "name": "Doom Leaks",
       "text": "When Doom kills, 1 Omen passes to the nearest enemy anyway.",
       "src": "A:V4:0.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "onDoomKill",
+          "op": "set",
+          "v": 1
+        }
+      ]
     },
     "0.ma": {
       "name": "Ruinous Crit",
       "text": "A critical Doom deals x2 damage instead of x1.5.",
       "src": "A:V1:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "mod": {
+            "critDmgMul": 0.333333
+          }
+        }
+      ]
     },
     "0.fa": {
       "name": "Overcharged Doom",
       "text": "Doom deals +30% damage, but you take 10% of that damage yourself.",
       "src": "A:V1:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "mod": {
+            "powerMul": 0.3
+          }
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "doom",
+          "do": [
+            {
+              "hpLoss": 0.1,
+              "of": "dealt",
+              "to": "self"
+            }
+          ]
+        }
+      ]
     },
     "0.fb": {
       "name": "Final Toll",
       "text": "Doom deals +40% to targets below 30% HP, but -20% to targets above it.",
       "src": "A:V1:0.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mod": {
+            "powerMul": 0.4
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "when": {
+            "not": {
+              "targetHpBelow": 0.3
+            }
+          },
+          "mod": {
+            "powerMul": -0.2
+          }
+        }
+      ]
     },
     "0.mb": {
       "name": "Toppling Ruin",
       "text": "When Doom kills, your next turn comes 50% sooner.",
       "src": "A:V1:0.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "via": "doom",
+          "do": [
+            {
+              "sooner": 0.5
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
-      "name": "Herald of Ruin",
+      "name": "Passing Bell",
       "text": "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.",
       "src": "A:V1:0.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyDied",
+          "status": "omen",
+          "mine": true,
+          "do": [
+            {
+              "doom": 1,
+              "of": "stacks",
+              "to": "nearestEnemy"
+            }
+          ]
+        }
+      ]
     },
     "1.f1": {
       "name": "Prying Eye",
       "text": "Evil Eye +4% power per rank against enemies with no Omens.",
       "src": "A:V4:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatusStacks": {
+              "status": "omen",
+              "eq": 0
+            }
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f2": {
       "name": "Unblinking",
       "text": "Evil Eye +2% critical chance per rank.",
       "src": "A:V1:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Envy's Edge",
       "text": "Evil Eye +4% power per rank against targets with 2 Omens.",
       "src": "A:V1:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatusStacks": {
+              "status": "omen",
+              "eq": 2
+            }
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "1.n0": {
       "name": "Opening Glare",
       "text": "Evil Eye on a target with no Omens adds 2 Omens.",
       "src": "A:V1:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatusStacks": {
+              "status": "omen",
+              "eq": 0
+            }
+          },
+          "mod": {
+            "omenSet": 2
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Rheumy Stare",
       "text": "Evil Eye +2% critical chance per rank against Withered targets.",
       "src": "A:V2:1.f3",
       "syn": "Withering Curse",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "wither"
+          },
+          "mod": {
+            "critBonus": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "1.ea": {
       "name": "Glint of Malice",
       "text": "Evil Eye +10% critical chance against targets with Omens.",
       "src": "A:V1:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatusStacks": {
+              "status": "omen",
+              "atLeast": 1
+            }
+          },
+          "mod": {
+            "critBonus": 0.1
+          }
+        }
+      ]
     },
     "1.eb": {
       "name": "Fixed Stare",
       "text": "Evil Eye +12% power if it hits the same target as your last skill.",
       "src": "A:V1:1.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsMyLastTarget": true
+          },
+          "mod": {
+            "powerMul": 0.12
+          }
+        }
+      ]
     },
     "1.ma": {
       "name": "Fatal Glance",
       "text": "A critical Evil Eye adds 3 Omens instead of 2, so it always brings Doom.",
       "src": "A:V1:1.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "omen",
+          "f": "critStacks",
+          "op": "set",
+          "v": 3
+        }
+      ]
     },
     "1.fa": {
       "name": "Strained Eyes",
       "text": "Evil Eye +15% critical chance, but its power drops by 15%.",
       "src": "A:V1:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.15
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.15
+        }
+      ]
     },
     "1.fb": {
       "name": "Burning Stare",
       "text": "Evil Eye +25% power, but it costs 6 MP.",
       "src": "A:V1:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.25
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 6
+        }
+      ]
     },
     "1.mb": {
       "name": "Doom Gaze",
       "text": "When Evil Eye brings Doom, that Doom deals +30% damage.",
       "src": "A:V1:1.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "doom",
+          "when": {
+            "doomSource": "evil_eye"
+          },
+          "mod": {
+            "powerMul": 0.3
+          }
+        }
+      ]
     },
     "1.v": {
       "name": "Eye of Ruin",
       "text": "Evil Eye evolves: it adds 2 Omens per hit (3 on a crit), but deals no direct damage.",
       "src": "A:V1:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "damage"
+        },
+        {
+          "k": "skill",
+          "sel": "omen",
+          "f": "stacks",
+          "op": "set",
+          "v": 2
+        },
+        {
+          "k": "skill",
+          "sel": "omen",
+          "f": "critStacks",
+          "op": "set",
+          "v": 3
+        }
+      ]
     },
     "2.f1": {
       "name": "Plague Breath",
       "text": "Withering Curse +1% power per rank for each enemy it hits.",
       "src": "B:V4:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "hitCount": 0
+          },
+          "mod": {
+            "powerMul": 0.01
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f2": {
       "name": "Fog of Ill Luck",
       "text": "Withered enemies have -2% accuracy per rank.",
       "src": "B:V3:2.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:wither",
+          "mod": {
+            "statusPotency": {
+              "accuracyDelta": -0.02
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f3": {
       "name": "Leeching Rot",
       "text": "Wither ticks heal you for 2% of their damage per rank.",
       "src": "B:V5:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "at": "dot",
+          "skill": "*",
+          "mod": {
+            "lifesteal": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "2.n0": {
       "name": "Herd Curse",
       "text": "If Withering Curse hits 3 or more enemies, each gains 1 extra Omen.",
       "src": "B:V4:2.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitCountAtLeast": 3
+          },
+          "mod": {
+            "omenStacks": 1
+          }
+        }
+      ]
     },
     "2.r": {
       "name": "Rot Contagion",
       "text": "Withering Curse has a 10% chance per rank to also curse an enemy just outside its area.",
       "src": "B:V4:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "procChance": 0.1,
+          "rank": true,
+          "do": [
+            {
+              "status": "wither",
+              "turns": 3,
+              "power": 0.2,
+              "stat": "luck",
+              "to": "outsideArea",
+              "count": 1
+            },
+            {
+              "status": "omen",
+              "stacks": 1,
+              "to": "outsideArea",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "2.ea": {
       "name": "Broad Curse",
       "text": "Withering Curse's area grows to 3x3.",
       "src": "B:V4:2.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "rows": 3
+          }
+        }
+      ]
     },
     "2.eb": {
       "name": "Seeping Rot",
       "text": "When Wither ends on an enemy, the enemies next to it are Withered for 2 turns.",
       "src": "B:V2:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "statusEnd",
+          "status": "wither",
+          "mine": true,
+          "do": [
+            {
+              "status": "wither",
+              "turns": 2,
+              "power": 0.1,
+              "stat": "luck",
+              "to": "neighbors"
+            }
+          ]
+        }
+      ]
     },
     "2.ma": {
       "name": "Plague Tide",
       "text": "Withering Curse also adds 1 Omen to every enemy outside its area that has one.",
       "src": "B:V4:2.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "omen",
+              "stacks": 1,
+              "to": "outsideArea",
+              "ifStatus": "omen"
+            }
+          ]
+        }
+      ]
     },
     "2.fa": {
       "name": "Thin Plague",
       "text": "Withering Curse hits every enemy, but deals half damage and its Wither lasts 1 turn.",
       "src": "B:V4:2.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "target": "all_enemies"
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "mul",
+          "v": -0.5
+        },
+        {
+          "k": "skill",
+          "sel": "dot",
+          "f": "turns",
+          "op": "set",
+          "v": 1
+        }
+      ]
     },
     "2.fb": {
-      "name": "Gnawing Rot",
+      "name": "Swift Blight",
       "text": "Withering Curse's Wither deals +50%, but lasts 2 turns.",
       "src": "B:V2:2.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "dot",
+          "f": "power",
+          "op": "pct",
+          "v": 0.5
+        },
+        {
+          "k": "skill",
+          "sel": "dot",
+          "f": "turns",
+          "op": "set",
+          "v": 2
+        }
+      ]
     },
     "2.mb": {
       "name": "Returning Curse",
       "text": "When an enemy Withered by the Curse dies, Withering Curse's cooldown resets.",
       "src": "B:V5:2.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyDied",
+          "status": "wither",
+          "mine": true,
+          "do": [
+            {
+              "cooldown": "reset",
+              "cd": "withering_curse"
+            }
+          ]
+        }
+      ]
     },
     "2.v": {
       "name": "Plague Curse",
@@ -300,73 +835,239 @@
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "dotTick",
+          "status": "wither",
+          "do": [
+            {
+              "status": "wither",
+              "turns": 2,
+              "power": 0.1,
+              "stat": "luck",
+              "to": "adjacentEnemy"
+            }
+          ]
+        }
+      ]
     },
     "3.f1": {
       "name": "Clinging Jinx",
       "text": "Jinxed has a 10% chance per rank not to end after the target's attack.",
       "src": "B:V3:3.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:jinxed",
+          "mod": {
+            "statusPotency": {
+              "keepChance": 0.1
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "3.f2": {
       "name": "Wobbly Aim",
       "text": "Jinxed lowers accuracy by 2% more per rank (-20% → -30%).",
       "src": "B:V3:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:jinxed",
+          "mod": {
+            "statusPotency": {
+              "accuracyDelta": -0.02
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "3.f3": {
       "name": "Hex Ward",
       "text": "While any enemy is Jinxed, you take 3% less damage per rank.",
       "src": "B:V5:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "when": {
+            "anyEnemyStatus": "jinxed"
+          },
+          "mul": -0.03,
+          "rank": true
+        }
+      ]
     },
     "3.n0": {
       "name": "Double Jinx",
       "text": "Jinxed lasts through the target's next 2 attacks.",
       "src": "B:V3:3.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:jinxed",
+          "mod": {
+            "statusPotency": {
+              "attacks": 1
+            }
+          }
+        }
+      ]
     },
     "3.r": {
       "name": "Rumour Mill",
       "text": "Jinx has a 10% chance per rank to also Jinx an enemy next to the target.",
       "src": "B:V4:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "procChance": 0.1,
+          "rank": true,
+          "do": [
+            {
+              "status": "jinxed",
+              "turns": 2,
+              "to": "adjacentEnemy"
+            }
+          ]
+        }
+      ]
     },
     "3.ea": {
       "name": "Lasting Jinx",
       "text": "Jinxed lasts 3 turns instead of 2.",
       "src": "B:V3:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:jinxed",
+          "f": "turns",
+          "op": "set",
+          "v": 3
+        }
+      ]
     },
     "3.eb": {
       "name": "Backlash",
       "text": "When a Jinxed enemy misses, it takes dark damage equal to 40% of your LUCK.",
       "src": "B:V3:3.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "when": {
+            "targetStatus": "jinxed"
+          },
+          "do": [
+            {
+              "damage": 0.4,
+              "stat": "luck",
+              "element": "dark",
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.ma": {
       "name": "Woeful Turn",
       "text": "A Jinxed enemy that misses loses its next action.",
       "src": "B:V3:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "when": {
+            "targetStatus": "jinxed"
+          },
+          "do": [
+            {
+              "status": "staggered",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.fa": {
       "name": "Spiteful Jinx",
       "text": "Jinx also Silences for 1 turn, but its cooldown is 5.",
       "src": "B:V3:3.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "status:jinxed",
+          "effect": {
+            "type": "status",
+            "status": "silence",
+            "turns": 1
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cooldown",
+          "op": "set",
+          "v": 5
+        }
+      ]
     },
     "3.fb": {
       "name": "Feeble Jinx",
       "text": "Jinxed lowers accuracy by 40%, but Jinx deals no damage.",
       "src": "B:V3:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "damage"
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:jinxed",
+          "mod": {
+            "statusPotency": {
+              "accuracyDelta": -0.2
+            }
+          }
+        }
+      ]
     },
     "3.mb": {
       "name": "Turned Luck",
       "text": "When a Jinxed enemy misses, the ally it aimed at gains Haste for 1 turn.",
       "src": "B:V3:3.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "when": {
+            "targetStatus": "jinxed"
+          },
+          "do": [
+            {
+              "status": "haste",
+              "turns": 1,
+              "to": "subject"
+            }
+          ]
+        }
+      ]
     },
     "3.v": {
       "name": "Turned Hand",
@@ -374,74 +1075,229 @@
       "src": "B:V3:3.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "turnedHand"
+        }
+      ]
     },
     "4.u1": {
       "name": "Leaping Mark",
       "text": "If Doom Mark kills, its Doom leaps to the nearest enemy at 50%.",
       "src": "B:V4:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "via": "doom",
+          "do": [
+            {
+              "doom": 0.5,
+              "of": "amount",
+              "to": "nearestEnemy"
+            }
+          ]
+        }
+      ]
     },
     "4.u2": {
       "name": "Hungry Leap",
       "text": "Doom Mark's leap deals 75% instead of 50%.",
       "src": "B:V4:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "4.u1",
+          "on": "kill",
+          "via": "doom",
+          "do": [
+            {
+              "doom": 0.75,
+              "of": "amount",
+              "to": "nearestEnemy"
+            }
+          ]
+        }
+      ]
     },
     "4.u3": {
       "name": "Unending Mark",
       "text": "Doom Mark's leap repeats after every kill.",
       "src": "B:V4:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "unless": [
+            "4.u2"
+          ],
+          "on": "kill",
+          "via": "leap",
+          "do": [
+            {
+              "doom": 0.5,
+              "of": "amount",
+              "to": "nearestEnemy"
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "onlyWith": [
+            "4.u2"
+          ],
+          "on": "kill",
+          "via": "leap",
+          "do": [
+            {
+              "doom": 0.75,
+              "of": "amount",
+              "to": "nearestEnemy"
+            }
+          ]
+        }
+      ]
     },
     "4.r1": {
       "name": "Gathering Mark",
       "text": "Doom Mark first pulls 1 Omen from up to 2 other enemies onto the target.",
       "src": "B:V4:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "gather": {
+            "status": "omen",
+            "from": 2
+          }
+        }
+      ]
     },
     "4.r2": {
       "name": "Overflowing Fate",
       "text": "Each pulled Omen past 3 adds +20% to Doom Mark's Doom.",
       "src": "B:V4:4.l2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "gathered": 3
+          },
+          "mod": {
+            "powerMul": 0.2
+          }
+        }
+      ]
     },
     "4.r3": {
       "name": "Mark of Many",
       "text": "Doom Mark pulls 1 Omen from every other enemy before it detonates.",
       "src": "B:V4:4.l3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "gather": {
+            "status": "omen"
+          },
+          "drop": "4.r1"
+        }
+      ]
     },
     "4.d1": {
       "name": "Sealing Mark",
       "text": "Doom Mark Silences the target for 1 turn.",
       "src": "B:V3:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "effect": {
+            "type": "status",
+            "status": "silence",
+            "turns": 1
+          }
+        }
+      ]
     },
     "4.d2": {
       "name": "Heavy Seal",
       "text": "Doom Mark's Silence lasts 2 turns.",
       "src": "B:V3:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:silence",
+          "mod": {
+            "turns": 1
+          }
+        }
+      ]
     },
     "4.d3": {
       "name": "Mark of Silence",
       "text": "Doom Mark Silences every caster in the target's row for 1 turn.",
       "src": "B:V3:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "silence",
+              "turns": 1,
+              "to": "rowMates",
+              "caster": true
+            },
+            {
+              "status": "silence",
+              "turns": 1,
+              "to": "target",
+              "caster": true
+            }
+          ]
+        }
+      ]
     },
     "4.l1": {
       "name": "Dread Ward",
       "text": "After Doom Mark, you are Shrouded for 1 turn.",
       "src": "B:V5:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "shrouded",
+            "turns": 1,
+            "self": true
+          }
+        }
+      ]
     },
     "4.l2": {
       "name": "Cowed Foe",
       "text": "An enemy that survives Doom Mark is Jinxed for 2 turns.",
       "src": "B:V5:4.l2",
       "syn": "Jinx",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "jinxed",
+            "turns": 2
+          }
+        }
+      ]
     },
     "4.l3": {
       "name": "Last Rite",
@@ -449,7 +1305,21 @@
       "src": "B:V5:4.l3",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "rule",
+          "rule": "cheatDeath",
+          "once": true,
+          "hp": 1,
+          "do": [
+            {
+              "cast": "doom_mark",
+              "to": "source"
+            }
+          ]
+        }
+      ]
     }
   }
 }

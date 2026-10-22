@@ -19,7 +19,7 @@
         ['Warm Hands', 'Your first skill with a cooldown each battle has +15% Double or Nothing chance.', 'V3:bar0'],
         ['On a Roll', 'After a Jackpot, gain Haste for 1 turn.', 'V3:bar1'],
         ['Blood Debt', 'After a Bust costs you HP, your next skill deals +15% damage.', 'V2:bar1'],
-        ['Momentum', 'Each Double or Nothing trigger gives your skills +5% damage until your next Bust.', 'V3:bar3'],
+        ['Winning Run', 'Each Double or Nothing trigger gives your skills +5% damage until your next Bust.', 'V3:bar3'],
         ['Death Shrug', 'When Lucky Escape saves you, heal 10% of your max HP.', 'V2:bar3']
       ],
       syn: { '1.mb': 'High Stakes / All In', '3.ea': 'High Stakes / All In' },
@@ -141,7 +141,7 @@
         '2.f2': ['Cautious Wager', 'High Stakes HP stake -1% of max HP per rank (15% → 10%).', false, 'V1:2.f2'],
         '2.f3': ['Read the Room', 'High Stakes +2% Jackpot chance per rank against a target below 50% HP.', false, 'V1:2.f3'],
         '2.n0': ['Due for a Win', 'Each High Stakes Bust gives the next High Stakes +15% Jackpot chance, stacking until a Jackpot.', true, 'V1:2.n0'],
-        '2.r': ['Twist the Knife', 'A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.', false, 'V4:2.r'],
+        '2.r': ['Let It Ride', 'A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.', false, 'V4:2.r'],
         '2.ea': ['Knockout Bet', 'A High Stakes Jackpot Slows the target for 2 turns.', false, 'V4:2.eb'],
         '2.ma': ['Haymaker', 'A High Stakes Jackpot against a Slowed target Stuns it for 1 turn.', false, 'V4:2.mb'],
         '2.fa': ['Dirty Fighting', 'A High Stakes Jackpot always Stuns, but High Stakes pays 2x → 1.5x.', false, 'V4:2.fb'],

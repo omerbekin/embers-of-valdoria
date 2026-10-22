@@ -174,7 +174,10 @@
     "color": "#e0702a",
     "dot": {
       "damageType": "magic",
-      "element": "fire"
+      "element": "fire",
+      "scale": "int",
+      "power": 0.12,
+      "turns": 2
     },
     "text": "Takes fire damage at the start of each of its turns"
   },
@@ -185,5 +188,33 @@
     "color": "#c9d6a0",
     "evasionDelta": 0.1,
     "text": "Evasion +10% (on the move)"
+  },
+  "exposed": {
+    "_not": "Faz 2c (skill ağacı): Warrior Glass Cyclone / Martyr's Rush kendine verir. Silinebilir. İkon yer tutucu (overextended).",
+    "name": "Exposed",
+    "type": "debuff",
+    "icon": "overextended",
+    "color": "#d0603a",
+    "damageTakenMult": 1.15,
+    "text": "Takes 15% more damage"
+  },
+  "sunder": {
+    "_not": "Faz 2c (skill ağacı): Archer Sunder (Piercing Arrow). Silinebilir. İkon yer tutucu (guardian).",
+    "name": "Sunder",
+    "type": "debuff",
+    "icon": "guardian",
+    "color": "#8a5a3c",
+    "armorMult": 0.8,
+    "text": "Armor -20%"
+  },
+  "weakened": {
+    "_not": "Altıncı tur (Ömer 2026-10-22, skill ağacı): verdiği hasar azalır. damageDealtMult = verdiği tüm hasar çarpanı, magicDealtMult = yalnızca büyü hasarı çarpanı (Battle.dealtDamageMult: gerçek vuruş, önizleme ve YZ aynı yol). Güç düğüme göre: ağaç statusPotency bu alanlara DÜZ eklenir (Druid Pollen Drift: rank başına -%2, sıradaki turu; Gambler Distracting Fan: -%15, sıradaki saldırısı (potency oneAttack); Anti-Mage Spell Shatter: büyü hasarı -%20, 2 tur). Buradaki -%15 kaynaksız (debug) varsayılan. tickAtTurnEnd: 1 tur = taşıyanın sıradaki turunun tamamı. Silinebilir. İkon yer tutucu (overextended).",
+    "name": "Weakened",
+    "type": "debuff",
+    "icon": "overextended",
+    "color": "#9a7a5a",
+    "damageDealtMult": 0.85,
+    "tickAtTurnEnd": true,
+    "text": "Deals less damage (strength depends on the source)"
   }
 }

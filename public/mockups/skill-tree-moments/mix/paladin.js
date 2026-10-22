@@ -33,7 +33,7 @@
         "0.fa": ["Vengeful Light", "Divine Light's smite deals double, but its heal is 40% weaker.", false, "V2:0.fa"],
         "0.eb": ["Anointed Arms", "The ally healed by Divine Light deals +15% damage on their next skill.", false, "V2:0.eb"],
         "0.mb": ["Banner of Dawn", "If Divine Light's target was below 50% HP, they also gain Haste for 1 turn.", false, "V2:0.mb"],
-        "0.fb": ["Fervent Oath", "Divine Light's damage bonus to allies doubles, but it can no longer heal you.", false, "V2:0.fb"],
+        "0.fb": ["Fervent Oath", "Anointed Arms' bonus doubles to +30%, but Divine Light heals 25% less.", false, "V2:0.fb"],
         "0.v": ["Crusader's Dawn", "Divine Light heals the most wounded ally and smites the weakest enemy for the same amount; a kill refunds 5 MP.", false, "V2:0.v"],
 
         "1.f1": ["Relentless Hammer", "Holy Strike +2% power per rank on the enemy you hit last turn.", false, "V2:1.f2"],
@@ -44,7 +44,7 @@
         "1.ea": ["Rising Fervor", "Each Holy Strike in a row deals +10% more than the last; using another skill resets it.", false, "V2:1.ea"],
         "1.ma": ["Hammer Rhythm", "Your third Holy Strike in a row strikes twice.", false, "V2:1.ma"],
         "1.fa": ["Blind Zeal", "Rising Fervor grows +20% per strike, but Divine Light is 30% weaker while it is built up.", false, "V2:1.fa"],
-        "1.eb": ["Shockwave", "Holy Strike splashes 30% to the enemies beside the target.", false, "V2:1.eb"],
+        "1.eb": ["Holy Burst", "Holy Strike splashes 30% to the enemies beside the target.", false, "V2:1.eb"],
         "1.mb": ["Hammerfall Quake", "If Holy Strike kills, the shock hits that enemy's row for 40%.", false, "V2:1.mb"],
         "1.fb": ["Heavy Hammer", "Holy Strike +35% damage, but it now costs 6 MP.", false, "V2:1.fb"],
         "1.v": ["Hammer of the Heavens", "Holy Strike calls down two hammers: the second falls on the enemy with the lowest HP for 60%.", false, "V2:1.v"],

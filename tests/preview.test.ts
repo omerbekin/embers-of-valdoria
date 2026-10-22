@@ -419,7 +419,7 @@ describe('skill rozeti ve primary bonus adı (UI)', () => {
   const st = content.classes.warrior!.stats;
 
   it('alan rozeti şekli (Row / Column / Block RxC / Cross), Random rozeti sayıyı taşır; açıklama satırlarında tekrarlanmaz', () => {
-    const badge = (a: NonNullable<SkillDef['area']>) => (a.shape === 'rect' ? `Block ${a.rows}x${a.cols}` : { row: 'Row', column: 'Column', plus: 'Cross', x: 'X' }[a.shape]);
+    const badge = (a: NonNullable<SkillDef['area']>) => (a.shape === 'rect' ? `Block ${a.rows}x${a.cols}` : { row: 'Row', column: 'Column', plus: 'Cross', x: 'X', rowColumn: 'Row + Column' }[a.shape]);
     for (const area of Object.values(content.skills).filter((s) => s.target === 'area_enemies' || s.target === 'area_any')) {
       const info = describeSkill(area, st, f);
       expect(info.targetBadge, area.id).toBe(badge(area.area!));

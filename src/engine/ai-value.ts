@@ -396,7 +396,7 @@ export class ValueContext {
     const raw = (sk: SkillDef) => {
       let v = skillRawValue(this.battle, f.stats, sk);
       for (const e of sk.effects) if (e.type === 'ground') v += attributePower(f.stats, e.scale, this.battle.formulas) * e.power * e.turns * 0.7;
-      return v * (this.battle.isAreaSkill(sk.id) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
+      return v * (this.battle.isAreaSkill(sk.id, f) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
     };
     const skills = f.skills.map((id) => this.battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk);
     const free = Math.max(0, ...skills.filter((sk) => sk.cost.resource !== 'mp' || sk.cost.amount <= 0).map(raw));
@@ -440,7 +440,7 @@ export class ValueContext {
     const raw = (sk: SkillDef) => {
       let v = skillRawValue(this.battle, f.stats, sk);
       for (const e of sk.effects) if (e.type === 'ground') v += attributePower(f.stats, e.scale, this.battle.formulas) * e.power * e.turns * 0.7;
-      return v * (this.battle.isAreaSkill(sk.id) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
+      return v * (this.battle.isAreaSkill(sk.id, f) && ATTACK_TARGETS.includes(sk.target) ? Math.max(1, opp) : 1);
     };
     const skills = f.skills.map((id) => this.battle.skill(id, f)).filter((sk): sk is SkillDef => !!sk);
     const free = Math.max(0, ...skills.filter((sk) => sk.cost.resource !== 'mp' || sk.cost.amount <= 0).map(raw));

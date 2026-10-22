@@ -63,6 +63,8 @@ import {
 } from '../campaign';
 import { BAG_SIZE, canEquip, classUsesOffhand, fitsSlot, instanceIlvl, instanceIP, instanceRarity, instanceRoll, itemDef, itemValue, ITEMS, RARITY_IDS, SLOT_IDS, type RarityId } from '../progression/items';
 import { woundCount } from '../progression/wounds';
+import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
+import type { TreeDir } from '../progression/skill-tree-data';
 import { ATTRS, LEVELS, addXp, allocate, campaignMaxLevel, canAddPoint, xpToNext } from '../progression/levels';
 import { allRoutes, fightPlan, routeLabel, simTownRest } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
@@ -72,6 +74,8 @@ export type PlayerType = 'good' | 'average';
 export const PLAYER_AI: Record<PlayerType, AiDifficulty> = { good: 'medium', average: 'easy' };
 
 export interface GrindSimOptions {
+  /** Skill ağacı (Faz 6; --tree=a|b): oyuncu vekili puanları odaklı kurulumla bu yönde harcar, ağaç bu süreçte bellekte açık (tree-sim.ts). */
+  tree?: TreeDir;
   difficulty: Difficulty;
   player: PlayerType;
   runs: number;
@@ -395,7 +399,7 @@ function wareGain(s: CampaignState, w: { itemId: string; rolls?: unknown }): num
 export function simulateGrind(o: GrindSimOptions): GrindSimResult {
   const restore = simOverrides(o);
   try {
-    return simulateGrindRuns(o);
+    return withTreesInMemory(!!o.tree, () => simulateGrindRuns(o));
   } finally {
     restore();
   }
@@ -433,7 +437,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       }
     return t;
   };
-  const prepare = (s: CampaignState) => track(equipBest(o.player === 'good' ? autoAllocateAll(s) : equalAllocateAll(s)));
+  const withTree = (s: CampaignState): CampaignState => (o.tree ? { ...s, roster: autoTreeHeroes(s.roster, o.tree) } : s);
+  const prepare = (s: CampaignState) => track(equipBest(withTree(o.player === 'good' ? autoAllocateAll(s) : equalAllocateAll(s))));
   /** Bir loot işleminin (zafer / sandık) düşürdüğü item'ler ve altın: kaynak sayaçlarına. */
   const countLoot = (before: CampaignState, after: CampaignState, src: 'first' | 'replay' | 'treasure', gold: 'goldBattle' | 'goldElite' | 'goldBoss' | 'goldReplay' | 'goldTreasure') => {
     E[gold] += after.gold - before.gold;

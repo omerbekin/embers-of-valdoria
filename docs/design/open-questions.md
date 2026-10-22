@@ -475,9 +475,244 @@ Yalnızca sim (`src/sim/campaign-grind.ts > GrindBonus`, CLI `--bonus-level / --
 - Ana oturumun önceki kararlardan cevapladıkları: tier sayacı global (soru 14); evolve için ek odak şartı yok (soru 12). Ekran yerleşimi (soru 7): mockup `public/mockups/skill-tree-gear.html` ile seçilecek.
 ## 379. Skill ağacı Faz 1b: kayıt (campaign-dev 2026-10-22; plan `docs/design/skill-tree-implementation.md` 3.3 + 10a): varsayımlar ve Ömer'e sorular
 1. **Respec bedeli (VARSAYIM, Ömer kararı değil):** `data/skill-trees/_rules.json > respec` = **20 + 5 x level** altın (L10 = 70, L20 = 120, L30 = 170, Endless L50 = 270). Gerekçe: sefer kamp bedeli 6 + 13 / bölüm, tüccar yenileme 15, item fiyatı 10 x IP; respec bir item'den ucuz, bir kamp gecesinden pahalı kalsın. Endless'ta koşu altını kullanılır (altın kartı 10 + 3 x dalga). Uygun mu, yoksa başka bir eğri mi? (Denge: balance-tester.)
+   - **Karar: Ömer 2026-10-22: uygun, deneyelim.** 20 + 5 x level deneme olarak kalır; sefer / Endless oynanınca gerekirse eğri yeniden konuşulur.
 2. **Onay yalnızca EKLER (10a'dan çıkarım):** `setHeroTree` / `setRunHeroTree` onaylı ağacın hiçbir rank'ını düşürmez ("Confirmed points can only be refunded by a full reset"); onaylı puan yalnızca tam respec ile geri gelir. Bekleyen (onaysız) puanın bedava geri alınması arayüzün işi (Faz 3b).
 3. **"Savaş dışında" = duraklatılmış savaş da savaş sayılır:** sefer `PAUSED_LOCK`, Endless Gear kilidi (`gearLockReason`: yarım savaş, kalıntı seçimi, bitmiş koşu) varken ağaç onayı ve respec yapılamaz (Gear zaten kilitli; saf fonksiyonda da aynı kural). Seferde kasaba / kamp şartı YOK (10a: savaş dışında her yerde).
 4. **skillPoints değişmez kuralı iki yönlü:** okumada `skillPoints = (level - 1) - harcanan` (fazlası düşer, eksiği tamamlanır; stat puanında yalnızca fazlası düşüyordu). Yalnızca ağacı olan class'ta; ağaçsız class'a dokunulmaz (puanlar birikir).
 5. **Bilinmeyen düğüm anahtarı atılır, kalan geçerliyse ağaç kalır ve `treeReset` KURULMAZ** (atılan puan sessizce harcanmamışa döner). Plan bayrağı yalnızca tam iade için istiyor; veri değişikliği zaten class `version`'ını artırıp bir kez bedava respec verir.
 6. **Debug "Skill tree focus build" + kayıtlı ağaç:** araç açıkken kayıtta kendi ağacı (en az 1 puan) olan kahraman KENDİ ağacıyla girer, ağacı boş olan ön ayarı alır (Gear'da kurulan ağaç ana şalter kapalıyken bu araçla denenir; ön ayar için ağaç Set level ile sıfırlanır).
 7. **Sim vekili ön ayarı:** `autoTreeAll` / `autoTreeRun` `_rules.json > debugFocus` ön ayarını kullanır (yön a); ön ayarı olmayan class satır 1 + 2. Sim'e bağlanmadı (Faz 6, `--tree`).
+
+## 383. Skill ağacı Faz 2a: (b) + C1 / C2 kancaları motorda (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 2a notları): varsayımlar
+
+Belgede karar olmayan yerlerde seçilen varsayılanlar (hepsi tek yerde değişir; ağaçsız savaşları etkilemez, `enabled: false`).
+1. **unitFx birleşmesi:** item + ağaç aynı anahtarı verirse sayılar toplanır; bir kezlik bayraklar (firstSkillFree, interceptLethal, rerollMiss, ignoreFirstDebuff) VEYA'lanır ve TEK kez kullanılır; nesne tetikleri (secondWind, lastStand, shieldRefresh...) her kaynak için ayrı birer kez çalışır (item Second Wind + ağaç Second Wind = iki şifa). `nthSpellFree` ve `moveStride` tek kaynaklı (item önce). Ağaç değerleri item tavanlarına takılmaz (startCharge hariç).
+2. **Birden çok `powerMul` kancası çarpılır** (toplanmaz): Red Arc %9 + Can Opener %10 = 1,09 × 1,10.
+3. **"Sana vuran" (targetLastHitMe / targetHitMeSinceMyTurn)** yalnızca düşmanın SKILL vuruşunu sayar (zemin / durum tiki / yansıtma sayılmaz); "son turundan beri" sayacı birimin kendi eylemiyle sıfırlanır.
+4. **Rage kancası ölçümü** Rage değişmese de (zaten tavanda / tabanın üstünde) sayılır: "tetiklendi" anlamında. War Gallop gibi vuruş Rage'i `perCastCap`'e takılmaz (tavan skill'in kendi kazancı için).
+5. **Bedel koşulu** yalnızca kendi canı / Rage'i ile çalışır (savaş bağlamı yok: tooltip ve canUse aynı sayıyı görsün); Pain Into Iron yuvarlaması aşağı (eksik %35 = 3 MP). Into the Fire silahı Charge'ın her kullanımında kurulur (isabet şartı yok), sıradaki Headsman's Blow ödemesinde harcanır, birikmez.
+6. **Gore Wheel sorunu:** hasarlı skill'de durum etkisi yalnızca o kullanımda vurulan hedeflere uygulanır; "vurmadan önce Wound" (before) bu yüzden aynı kullanımın vuruşunu güçlendirmez (Red Arc ilk Whirlwind'de değil, sonrakilerde çalışır). Metin bunu söylemiyorsa sorun yok; söylüyorsa Faz 2b'de C3 sıralama kuralı gerekir.
+7. **addEffect ölçümü:** durum etkileri hedef başına, diğer etki türleri kullanım başına (en az bir hedef vurulduysa ya da skill hasarsızsa) sayılır: yaklaşık.
+8. **Savunma / aura koşulları** (`incomingArea`, `alliesInAura`) sözlükte var ama uygulama noktaları (alınan hasar, aura) C4 / C5 fazında; bugün yalnızca hasar ölçeği olarak kullanılabilirler.
+
+## 385. Skill ağacı Faz 2a+: Faz 2 düğümlerinin hepsi yazılabilir (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 2a+ notları): varsayımlar
+
+1. **Durum gücü (`statusPotency`)** durum tanımındaki değere düz ek olarak yazılır, yalnızca ağaçla uygulanan örnekte tutulur. Jinxed'in `attacks` / `keepChance` alanları skill bitince okunur: önce ek saldırı hakkı harcanır, sonra düşmeme zarı atılır.
+2. **preHit (Gore Wheel):** durum, hedefin bu kullanımdaki İLK isabetinde (blok / ıska değilse) hasardan önce uygulanır. Kullanım sonunda aynı durum ikinci kez uygulanmaz. Iskalanan hedefe hiç uygulanmaz.
+3. **Hasarsız skill isabet zarı:** `removeEffect` hasarı kaldırınca skill, düşman hedeflerine kullanım başında birer isabet zarı atar (blok zarı yok). Durum, yakım, Omen, dispel ve randomStatus yalnızca isabet edene işler; dost hedefler zarsız.
+4. **Burning ortak değeri** yalnızca ağaç yolu ve `status` etkisiyle verilen Burning için geçerlidir. Item `onHitDot` Burning'i ve var olan `dot` etkili skill'ler kendi gücünü korur (ağaçsız savaş birebir aynı kalsın). Hepsi ortak değere mi bağlansın?
+5. **`targetRow`** hedefin kendi tarafındaki en ön / en arka DOLU sırasını ifade eder (sabit sıra numarası değil). Ön sıra boşsa ikinci sıra "front" sayılır.
+6. **Opportunist alternatif bonusu (`opportunistAlt`):** pasif hedefe işlemese de her zaman hesaplanır; normal bonusla büyük olan geçer.
+7. **`…Mul` biçimi:** x (1 + v) kuralıyla yazılır. Katalogdaki "drainMul 2" = v 1, "costMul 0" = v -1, Hexer "x1,5 → x2" = critDmgMul 0,333.
+8. **`extendStatus "*"`:** hedefteki süreli debuff'lardan seed'li rastgele birini seçer (süresiz ve kuralla süren durumlar hariç). Vuruş sonrası çalıştığı için aynı skill'in sonradan uyguladığı durumu (ör. Knockout Bet Slow'u) göremez.
+9. **Sayaçlar:**
+   - `dotTickIndex` 0'dan sayar.
+   - Zemin yaşı (`groundAgeAtLeast`) bırakanın tur sayısıdır.
+   - `skillStreak` önceki ardışık kullanımları sayar; ilk kullanımda 0.
+   - `hitsTakenSinceLastUse` düşman skill vuruşlarını sayar.
+10. **procChance'lı kancalar** yalnızca gerçek uygulamada zarlanır; önizleme ve YZ bu kancaları hiç saymaz (beklenen değer eklenmedi).
+11. **Kullanım sonu kancaları** (cooldown / Spell Echo) hedefsiz değerlendirilir; hedef koşulları orada tutmaz. `hitCountAtLeast`, kullanım sonunda isabet eden sayısıdır.
+12. **Doom kancaları (`at: doom`)** patlatanın (canlı tetikleyen ya da yığının sahibi) kancalarıdır ve hedefi patlamadan önceki haliyle görür. `firstDoom`, o Hexer'in savaştaki ilk Doom'udur.
+13. **Hâlâ yazılamayanlar:**
+    - `thrown` (C5).
+    - `smite` noktası (uygulama yeri yok).
+    - Hedefe bağlı bedel (Not Yet).
+    - Mass Hush türü toplu kurallar.
+    - Black Mold'un pasif durum silmesi.
+
+    Bunlar Faz 4/5'te ya da Ömer kararıyla gelir.
+
+## 386. Skill ağacı Faz 2b parça 2/3: Mage, Druid, Cutthroat, Undead fx'leri (content-designer 2026-10-22): varsayımlar
+Veri `data/skill-trees/{mage,druid,cutthroat,undead}.json`; testler `tests/skill-tree-fx-<class>.test.ts`. Ömer'e soru olarak:
+1. **Mage bar5 First Refrain** ("your first cooldown spell each battle"): `firstUseOfSkill` ile yazıldı (katalog), yani HER cooldown'lu büyünün savaştaki ilk kullanımı kesin yankılanır (Blizzard ve Meteor ayrı ayrı). Metin tek büyü diyor; "savaştaki ilk cooldown'lu büyü" koşulu sözlükte yok. Öneri: metni "Each cooldown spell's first cast each battle is sure to echo." yapmak ya da motora koşul eklemek.
+2. **Druid 0.eb Gnawing Rot** ("+10%, then +20%, then +30%"): `dotTickIndex` 0'dan saydığı için ilk tik normal, ikinci +%10. Metin ilk tikte +%10 diye de okunabilir.
+3. **Undead 1.fa Brutal Hurl** (Shattered Shin %25 → %45): ea'nın kancası yamalanamadığı için ikinci bağımsız Stagger zarı (%26,67) eklendi; birleşik şans tam %45.
+4. **Cutthroat 3.fa Sulfur Overload** ("Blinded is -45% accuracy"): Blinded'ın -%30'una -0,15 büyüklük eki; Lungful of Ash rank'ları bunun üstüne biner ("A → B" = base kuralıyla tutarlı).
+5. **Yüzdeler:** Opportunist bonusu ("+3%") ve Spell Echo şansı ("+2%") düz ek (yüzde puan); Vampiric Bite "drains +3% more" düğümleri (Tithe Collector, Marrow Leech, Lingering Moan) ve Blood Kin "+5% more" oransal (`drainMul` / `bondRatio` = x (1 + v)); Thin Blood "+4% more of the damage" düz ek (`drainAdd`). Katalog önerileri aynen.
+6. **Druid bar10 Heart of the Wild:** var olan `critMp` (eylem başına bir kez) kullanıldı; Druid'in kritik olabilen skill'lerinin hepsi `nature` olduğu için süzgeç gerekmedi. Nature's Wrath'ta birden çok kritik 4 MP'yi bir kez verir.
+
+## 387. Skill ağacı Faz 2b parça 1/3: Warrior, Defender, Paladin, Archer fx'leri (content-designer 2026-10-22): varsayımlar
+1. **Archer 1.v Maiming Shot** süre yazmıyor: Slow ve Blind **1 tur** (Quick Shot'ın diğer düğümleri gibi), Staggered zaten "bir sonraki eylemi kaybeder". "Slowed ise Blind, Slowed + Blinded ise Stagger" koşulları vuruştan ÖNCEKİ duruma bakar (aynı atışın verdiği Slow sayılmaz).
+2. **Defender 1.f1 Deep Stomp** ("%15 şansla 1 tur uzun"): katalogdaki `replaceEffect randomStatus` yerine Slow'a şanslı +1 tur kancası (`procChance`). Sebep: randomStatus Slow etkisini silince Heavy Landing'in (1.fa) `status:slow` yaması eşleşmez, derleme kırılır. Sonuç metinle aynı, iki düğüm birlikte çalışır (Heavy Landing 3 tur + şansla 4).
+3. **Archer 2.fb Spent Quarrel** ("every buff"): Strip Wards'ın (2.eb) etkisi yamalanamadığı için ikinci, sayısız bir buff silme eklendi (önce 1, sonra kalanların hepsi = hepsi). Sonuç metinle aynı.
+4. **Archer 0.n0 Eagle Eye** ("Sharpshooter bonusunun yarısı"): sabit %2,5 / sıra kritik (temel perRow 0,05'in yarısı). Long Sight / Tunnel Vision perRow'u artırınca kritik bonusu artmaz (kanca pasif değerini okuyamaz). Öneri: metni "+2.5% critical chance per row of distance" yapmak ya da motora pasif okuyan ölçek eklemek.
+5. **Paladin 1.f3 Sparking Hammer / 3.f3 Spark of Wrath:** Burning şanslı durum etkisi olarak (ortak Burning değeri, 2 tur); Judgment'ta hasar olmadığı için alandaki her düşmana ayrı zar. **4.u2 Scorching Light** Radiance'ın isabet ettiği her düşmana (dostlara değil) vuruş sonrası Burning.
+6. **Paladin 0.mb Banner of Dawn:** motor koşulu Divine Light şifasından SONRA değerlendiriyor; metin "hedef %50 altındaysa" (şifadan önce) diyor. Şifa hedefi %50 üstüne çıkarırsa Haste gelmez. Motor notu (engine-dev).
+7. **Warrior 2.fb Reaper's Spin** "no damage at all": Wound'suz düşmana güç x0 (`powerMul -1`); motorun en az hasar kuralı varsa 0 yerine çok küçük bir sayı görünebilir.
+8. **Archer bar10 Knee Shots / Warrior 1.fa / 1.eb, Defender bar10:** süre ekleri yalnızca skill'in durum etkisinden gelen Slow / Wound'a işler; vuruş sonrası kancaların verdiği (ör. Shot to the Knee'nin kritik Slow'u) uzamaz.
+
+## 388. Skill ağacı Faz 2c: motor boşlukları kapandı, bekleyen fx'ler yazıldı (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 2c notları): varsayımlar
+1. **Anti-Mage 1.v Spellsplitter:** buff silme skill'in EN BAŞINDA (hasardan önce) işler, bu yüzden Mana Steal ıskalasa da buff'lar silinir; hasar bonusu silinen buff sayısıyla. Iskada silinmemesi istenirse söyle.
+2. **Defender 0.r Weathered:** zırh eki yalnızca gerçek vuruşta (o an alan skill'i kullanan düşman varken) işler; hasar önizlemesi ve YZ tahmini eki görmez.
+3. **Defender 0.ea Rooted Stance:** "her tur" = Defender'ın Move olmayan her eylemi (skill, Rest, Skip); Move seriyi sıfırlar. 0.f1 Braced Stance "geçen tur Move yapmadıysan" = son eylemi Move değilse.
+4. **Defender 0.f3 Tight Formation:** ek Bulwark Aura'nın tamamına (Defender ve auradaki dostlar) işler; dost sayısı Defender'ın aurasındaki canlı dostlar.
+5. **Undead 3.mb Blood Oath:** bağlı dosta verilen guard (%30, bağ sürdükçe) dostta zaten bir guard varsa onun yerine geçer; bağ bitince (süre, ölüm, başka dosta bağ) kalkar. **3.fb Iron Oath** Blood Oath olmadan alınırsa yalnızca bedeli (Vampiric Bite -%20) işler.
+6. **Undead 3.v Crimson Covenant:** bağ süresiz; yeni Dark Bond eskisini koparır (metindeki gibi).
+7. **Paladin 2.mb Not Yet:** YZ ve önizleme bedeli hedefe bakmadan tam gösterebilir; kullanılabilirlik ve gerçek ödeme hedefe bakar.
+8. **Druid 3.fb Desperate Sap:** toplu şifa normal şifa gibi kritik atabilir; Deep Spring (4 tur) ile birlikte güç 0,225 x 4 x 1,25.
+9. **Archer 0.n0 Eagle Eye:** kritik eki Sharpshooter'ın o anki gerçek bonusunun yarısı (Long Sight / Tunnel Vision perRow'u artırınca eki de artar; madde 387.4'teki sorun kapandı).
+10. **Archer 2.fa Brittle Point** `null` kaldı (C5: "2. düşmandan sonra durur").
+11. **Exposed / Sunder ikonları yer tutucu** (overextended / guardian); content-designer gerçeğini yapacak. Exposed silinebilir, Resilience kısaltabilir (normal debuff).
+12. **Warrior 2.fa / 3.fa:** "bir sonraki turuna kadar" = Exposed 1 tur (taşıyanın tur sayımıyla).
+13. **Anti-Mage 2.ma Heart of Quiet:** "turu 0 MP ile bitirirse" = Drain Field yakımından sonra MP'si 0 (boşalma anı); merkez hücre = alanın tutturulduğu hücre.
+
+## 389. Skill ağacı Faz 4a: C3 tetik + C4 şifa / kalkan kelime dağarcığı (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 4a notları): varsayımlar ve sorular
+1. **"Sooner" (turnSooner):** var olan Skip Turn hız desteği kullanılır (bir sonraki turu x oranında erken getirir, yalnızca turns modu). Aynı tur içinde birden çok "sooner" toplanmaz, en büyüğü geçer.
+2. **onRepeat:** Double Hit / tekrar vuruşunun her işleyişi (`repeat` olayı).
+3. **Warrior 0.ma Red Line:** şifa canı %50'ye kadar doldurur, %50'yi aşacak kısmın tamamı 2 turluk kalkana döner. Can zaten %50'nin üstündeyse şifanın tamamı kalkan olur.
+4. **Warrior 4.l3 Terror:** Jinxed süresi 2 tur (katalogdaki değer). Jinxed kendi kuralıyla taşıyanın ilk hasar skill'inden sonra da düşer.
+5. **Hasar eylemi:** element verilmezse fiziksel hasar `physical`, büyü hasarı `arcane` olur.
+6. **"En düşük / en yüksek can" alıcıları can ORANINA bakar (eşitlikte küçük hücre).** "En az MP" (Anti-Mage 0.f3 Overflow Spill) MP oranına bakar. Ham MP isteniyorsa söyle.
+7. **Öldürme kimin:** hedefe son vuran (DoT ile ölümde DoT'un sahibi, Doom'da Doom'un sahibi). Öldürme tetiğinin skill'i, öldürenin o an sürmekte olan kullanımıdır.
+8. **Warrior 0.n0 Iron Retort:** "ilk düşman" savaşta bir kez. Eşiği düşman dışı bir şey geçirirse (örneğin kendi bedeli) hak yanar ve Stun olmaz.
+9. **Mage 1.ma Hot Streak:** kesin kritik Fire Bolt da kritik sayıldığı için bir sonrakini yine kesin kritik yapar. Zincir, bir Fire Bolt ıskalayana kadar sürer (metin birebir). Bu istenmiyorsa söyle (ör. "kesin kritik zinciri beslemez").
+10. **Warrior 2.ma Blood Glut:** Whirlwind kullanımındaki TÜM şifaların fazlası Rage olur (Spin Recovery ve Berserker can çalması dahil).
+11. **Defender 2.f3 Thick Skull:** kalkan, Taunt kullanılınca gelir (Taunt durumu başka yoldan gelirse gelmez).
+12. **Sonraki skill buff'ı** (Momentum, Next in Line, Blood Debt):
+    - Bir sonraki skill KULLANIMINDA harcanır, ıskalasa da.
+    - Mage "next spell" = Mage'in bir sonraki skill'i.
+    - Kazanıldığı kullanımda harcanmaz.
+13. **Bedelsiz (Low Tide, Red Reserve):** sonraki skill'in tüm bedeli (HP / MP / Rage) 0 olur. Low Tide MP'nin %25 altına ilk inişte, savaşta bir kez.
+14. **Warrior bar25 Stagger Step:** HER kaynaktan Stun sayılır (Iron Retort'un Stun'u dahil); savaşta bir kez.
+15. **Druid 3.n0 Overflowing Cup:** kalkan süresizdir (düz kalkan). Red Line'ınki 2 tur.
+16. **Hexer 3.ma Woeful Turn:** Staggered motor kuralı gereği yalnızca turns modunda uygulanır (test modunda tetik ölçülür ama durum yazılmaz).
+17. **Defender 2.f2 Second Breath:** Taunt'un her bitişinde çalışır (süre dolması, kırılma, silinme).
+18. **Sayı isteyen satırlar** (sözlükle yazılabilir ama metinde sayı yok, sonraki adımda sorulacak):
+    - Withering uygulayan tetiklerin DoT gücü (Druid 0.n0 Rot Remembers, 0.ma Rot Bloom, 0.v Ever-Rot; Hexer 2.eb Seeping Rot, 2.v Plague Curse).
+    - Anti-Mage 1.mb Tempo Thief'in "Skip Turn kadar" erkenlik oranı.
+    - Anti-Mage 3.ma Second Ward'ın "%50 kalkan"ı neyin %50'si.
+
+## 390. Skill ağacı Faz 4b parça 2/3: Mage, Druid, Cutthroat, Undead C3 / C4 fx'leri (content-designer 2026-10-22): varsayımlar ve sorular
+Veri `data/skill-trees/{mage,druid,cutthroat,undead}.json`; test `tests/skill-tree-fx4-mdcu.test.ts`.
+1. **Druid Withering gücü (madde 389.18):** Rot Remembers, Rot Bloom ve Ever-Rot'un verdiği Withering, Nature's Grudge'ın kendi gücüyle yazıldı (INT x 0,15 / tur). Bu tetikler sabit sayı taşıdığı için pasif güç yamaları (Bitter Sap, Black Mold, Grief's Toll x2) bunlara İŞLEMEZ; yalnızca pasifin kendi Withering'ine işler. Rot Remembers "Nature's Grudge also triggers" dese de yalnızca Withering verir (pasifin Slow'u yok; metin "starts Withering for 3 turns" diyor). İstenirse: pasif gücünü izleyen bir taban (motor) ya da Slow eklemek.
+2. **Druid 0.fb Grief's Toll:** "her tetikleniş" = pasifin tetiklendiği an, yani bir dost düştüğünde (`allyFell`; çağrılar hariç). Rot Remembers / Ever-Rot'un tetiklemeleri can kaybettirmez.
+3. **Druid 0.v Ever-Rot "the enemy with the most HP":** motorun `highestHpEnemy` alıcısı can ORANINA bakar (madde 389.6); herkes tam candayken eşitlikte küçük hücre seçilir. Paladin'deki "weakest" cevabı (sayı olarak can) gibi ham can isteniyorsa motorda alıcı gerekir.
+4. **Druid 0.ma Rot Bloom:** "A Withering enemy" metnine birebir: Withering'i kimin verdiğine bakılmaz (Hexer'in Withering'i de patlatır). "next to" = dört yön (plan 10a / 30). Ölen düşmanın komşularına hasar Druid'in INT'iyle, doğa elementiyle büyü hasarı.
+5. **Druid 3.r Dewdrop Shield:** Overflowing Cup'ın yanına ikinci bir "fazla şifa -> kalkan" kancası (oran 0,1 x rank); oyuncu iki ayrı kalkan olayı görür, toplam = fazla x (1 + 0,1 x rank).
+6. **Mage 3.ma Frozen Rebuke + 3.ea Frost Armor sırası:** iki tetik aynı emilen vuruşta sırayla çalışır; Frost Armor önce Slow verdiği için Frozen Rebuke AYNI vuruşta Stun'lar. Frozen Rebuke yalnızca Frost Armor'dan sonra alınabildiğinden fiilen "kalkanın emdiği ilk vuruş saldıranı Stun'lar" olur. Metin "Slowed bir düşman vurursa" diyor (vuruştan ÖNCE Slowed). Öneri: ya motor tetik koşulunu olay öncesi duruma baksın, ya metin "The first enemy that hits Mana Barrier is Stunned for 1 turn" olsun. (Frozen Reserve satırda önce geldiği için doğru çalışır: ilk vuruşta MP yok.)
+7. **Mage 0.fb Frayed Threads:** Spell Echo şansı `base` 0,18 (bölüm 14 cevap 8): Resonance gibi ekler bunun üstüne biner (Resonance 3 ile 0,24).
+8. **Mage 0.fa Unstable Weave / 0.n0 Overload / 0.v Arcane Overload:** "yeniden kullanım" = yankılanan büyünün BİR SONRAKİ kullanımı (başka büyü buff'ı harcamaz; arada başka büyü kullanılırsa buff bekler). Yankı yalnızca turns modunda vardır (test modunda bu düğümler çalışmaz).
+9. **Mage 3.f3 Numbing Touch:** kalkanı taşıyan dost ya da Mage'in kendisi (`who: team`); süzgeç = alanda Mage'in Mana Barrier kalkan katmanı var.
+10. **Undead 2.r Tithe Refund ve 2.mb Gorging Howl:** "iade" can şifası olarak verilir (Wound / şifa çarpanlarından geçer, can tavanını aşmaz).
+11. **Undead 3.ea Transfusion:** önce dosta Undead'in mevcut canının %15'i kadar şifa, sonra Undead aynı oranda can kaybeder (en az 1 can kalır). Dost tam candaysa can yine kaybedilir (metin "moves"). Bled Dry bunun yerine %30 yazar.
+12. **Cutthroat 0.f3 Feinting Step:** birden çok kaçınma bonusu biriktirir (+%2 x rank her biri) ve bir sonraki skill KULLANIMINDA harcanır (ıskalasa da; madde 389.12).
+13. **Motor notu (engine-dev için):** `payHp` olayında `of: "hpPaid"` tabanı 0 döner (olay, kullanım bilgisi kurulmadan önce atılıyor); Blood Hymn / Bitter Gift bu yüzden `of: "amount"` (= ödenen can) ile yazıldı. Faz 4a notlarındaki Blood Hymn örneği (`of hpPaid`) düzeltilmeli.
+
+## 391. Skill ağacı Faz 4b parça 1/3: Warrior, Defender, Paladin, Archer C3 / C4 fx'leri (content-designer 2026-10-22): varsayımlar
+1. **Defender 2.v Bastion Cry:** "Taunt sürerken Fortified" durum olarak DEĞİL, aynı etkiyle yazıldı: Taunt sürerken alınan hasar -%50 (C4 `damageTaken` + `selfTaunting`). Sebep: durum + "Taunt bitince Fortified'ı sil" yolu, Weathered the Storm'un (2.ma) Taunt bitince verdiği 1 turluk Fortified'ı da siliyordu (ikisi aynı yolda alınabilir). Sonuç: süre Taunt'la birebir (kırılınca / bitince / silinince biter), ama ekranda Fortified simgesi görünmez, düşman silemez ve başka bir Fortified ile çarpılarak birikebilir (x0,25). Simge istenirse motor işi (kaynağa göre silme).
+2. **Defender 1.ma Third Quake:** "ilk vurduğu düşman" = Tremor Slam kullanımının ilk hedefi (tıklanan); o hedef ıskalansa da her 3. kullanımda Stun alır. Sayaç her kullanımda artar.
+3. **Defender 1.r Fault Strike:** Tremor Slam kullanımı sırasındaki her Stun sayılır (Ringing Earth, Skull Rattler, Third Quake dahil).
+4. **Defender 3.f2 Shield Chain / 3.eb Shield Toss / 3.r Linked Shields:** kalkan, Close Ranks bir dosta Guard verdiği anda gelir (korunan dost başına); Close Ranks yeniden atılırsa yeniden gelir. Kalkanlar süresiz (düz kalkan). Zırh = Defender'ın görünen toplam zırhı.
+5. **Defender bar5 Iron Morning:** ilk tur başında (Stun'lı olsa bile) kalkan gelir; süresiz düz kalkan.
+6. **Defender bar20 Fault Line:** senin uyguladığın Stun hangi yolla biterse bitsin (süre, silinme) hedef 1 tur Slowed.
+7. **Paladin 4.r3 Sunstrike:** "bir düşman öldürürse" = kullanım başına bir kez -2 (iki düşman öldürse de -2; tur başına bir kez). Reaping Dawn ise her öldürmede ("each").
+8. **Paladin 2.f1 Life for Life:** senden düşen can = dirilenin maks canının %4 x rank'ı (dirilene eklenen miktar); en az 1 can kalırsın. **Metin tutarsızlığı:** Hasty Rite (2.fb) "only 15% HP" `set` olduğu için Life for Life'ın ekini siler ama can bedeli yine alınır. Öneri: Hasty Rite'ı `base` yapmak (Life for Life üstüne eklenir) ya da metne "Hasty Rite overrides" demek.
+9. **Paladin 2.ma Risen in Glory:** "+%30 ilk skill" dirilenin bir sonraki skill kullanımında harcanır (ıskalasa da; madde 389.12).
+10. **Paladin 2.fa Heavy Absolution:** cooldown 5 → 7 `set` (Quick Absolution / Hasty Rite karşı yönde, birlikte alınamaz).
+11. **Archer 0.fb Exposed Perch** null kaldı: "+2 sıra mesafe" için pasifte / mesafe koşullarında alan yok (yalnızca %20 alınan hasar kısmı yazılabilirdi; yarım yazılmadı).
+
+## 392. Skill ağacı Faz 4b parça 3/3: Hexer, Anti-Mage, Gambler C3 / C4 fx'leri (content-designer 2026-10-22): varsayımlar ve sorular
+1. **Wither veren tetiklerin gücü (Hexer 2.eb Seeping Rot, 2.v Plague Curse; madde 389.18):** metinde sayı yok; Withering Curse'ün kendi Wither'ı (LUCK x 0,1 / tur) kullanıldı, süre metindeki 2 tur. Başka değer istenirse söyle.
+2. **Hexer 2.v Plague Curse "an enemy next to the host":** tek düşman = konağa EN YAKIN düşman (`nearestEnemy`; eşitlikte küçük hücre). Konağın yanında düşman yoksa daha uzaktaki en yakın düşmana geçer (sözlükte "yalnız bitişikteki tek düşman" alıcısı yok). Her tik aynı en yakın düşmanın Wither'ını tazeler.
+3. **Hexer 2.eb Seeping Rot:** yalnızca SENİN uyguladığın Wither bitince (süre dolma / silinme) çalışır; düşman ölünce çalışmaz. Yayılan Wither de bitince yeniden yayılır (metin birebir; zincir her bitişte sürer).
+4. **Hexer 2.mb Returning Curse:** "Curse'ün Wither'ı" = senin uyguladığın herhangi bir Wither (Seeping Rot / Plague Curse yayılımları dahil; Hexer'in başka Wither kaynağı yok).
+5. **Hexer 0.n0 Fate Sealed:** her Doom (Ill Omen'in 3 Omen Doom'u, süre dolma Doom'u ve Doom Mark) sonrası sağ kalan hedefe 1 Omen (süresi 4 tur, yeniden başlar).
+6. **Anti-Mage bar15 Wide Basin "each enemy it hits":** Drain Field'ın MP YAKTIĞI düşman sayılır (MP'si 0 olan ya da MP'siz düşman sayılmaz; Drain Field hasar vurmadığı için "isabet" sayacı yok). MP'siz düşmanlar da sayılsın istenirse motor işi (kullanım sonu hedef sayısı).
+7. **Anti-Mage 1.mb Tempo Thief "as after Skip Turn":** Skip Turn'ün hız desteği (`global-skills.json > skip.speedBonus` = 1: sıradaki tur yarı sürede) aynen yazıldı (`sooner 1`). Skip Turn değeri değişirse bu düğüm elle güncellenmeli.
+8. **Anti-Mage 3.v Mirror Ward:** geri yansıyan = kalkanın EMDİĞİ kısmın %50'si (vuruşun kalkanı aşan kısmı sayılmaz); düz büyü hasarı (zırh uygulanmaz). Yalnızca düşmanın skill vuruşu (zemin / DoT değil).
+9. **Anti-Mage bar20 Warded Steps:** "allies" = Spell Ward'ı taşıyan herkes, Anti-Mage'in kendisi dahil (Spell Ward kendine de atılabiliyor). Bastion of Null bununla çarpılır (0,95 x 0,7).
+10. **Gambler 1.mb Snake Eyes "next wager":** buff bahissiz skill'lerde (Loaded Dice, Card Trick) HARCANMAZ; ilk bahis (High Stakes ya da All In) Jackpot ya da Bust olunca silinir. Birden çok kritik birikmez (+%10 kalır).
+11. **Gambler 2.n0 Due for a Win:** yalnızca High Stakes'in Bust'ı biriktirir, yalnızca High Stakes'in Jackpot'u sıfırlar (All In'in Jackpot'u sıfırlamaz).
+12. **Gambler 0.r Scar Gambler / 0.ea Streak / bar20 Winning Run:** birikim savaş boyu sürer, metindeki olayda (Jackpot / başarısız zar / Bust) sıfırlanır. Winning Run'ı her Bust sıfırlar (MP bahsi dahil).
+13. **Gambler 0.mb Borrowed Time "every skill for 2 turns":** Double or Nothing yalnızca uygun skill'lerde (cooldown'lu hasar skill'i) zar atar; bu düğüm o zarı 2 tur boyunca kesin yapar (süre sahibin tur başlarında azalır: durumlarla aynı kural).
+14. **Gambler 0.fa All or Nothing:** %25 → %40 `base` (madde 10a/8); başarısız zar o skill'in cooldown'unu 1 artırır.
+15. **Yazılamayanlar (null kaldı):** Hexer 0.fa Overcharged Doom (Doom hasar miktarı yok), 0.v Passing Bell (Omen kadar Doom), 4.u1 / u2 / u3 Leaping Mark ailesi (Doom aktarımı); Anti-Mage 0.ma Brimming Ally ("dostu doldurursa" koşulu yok), 0.mb Spell Sink (Guard eylemle verilemez), 3.ma Second Ward ("%50 kalkan" tabanı belirsiz ve kırılan kalkanın ilk boyu motorda tutulmuyor; madde 389.18), 4.r3 Feeding Frenzy ("sonraki turundan önce dost eliyle ölürse"), 4.d3 Overflow Strike ("hemen tetiklenir" yok); Gambler 0.v Run It Back (bedava kullanım), 1.f3 Rolling Dice ("tekrar olmayınca sıfırla" olayı yok), 3.ea Stacked Deck (mockup bekliyor), 4.r2 Clean Sweep (MP eyleminde bahis tabanı yok), 4.r3 Domino (öldürme hasarı miktarı yok).
+
+## 393. Skill ağacı Faz 4c: motor boşlukları + bekleyen C3 / C4 düğümleri (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 4c notları): varsayımlar ve sorular
+
+Madde 392.15'te null kalanların çoğu yazıldı. Aşağıdakiler metinden kesin çıkmayan yorumlar; değişecekse veri değişikliğidir.
+
+1. **Bedava kullanım (Range Keeper, Rolling Doom, Shatter Aegis, Run It Back, Twin Meteors, Thicket Wave):** skill'in TÜM etkileri yeniden işler (Quick Shot'un Haste'i, Meteor'un yanan zemini dahil). Bedava kullanım başka bedava kullanım doğurmaz; tek eylemde en çok 8.
+2. **Lingering Hail "25%":** DEX ölçeği varsayıldı.
+3. **Zeminler:** zemin hasarı her zaman büyü hasarı (bugünkü kural). Zemin durumları tur başında, süreli durumların düşmesinden SONRA işler.
+4. **Fortress Aura:** kalkan 1 tur sürer (sahibin sonraki tur başına kadar).
+5. **Spell Sink Guard:** sahibin sonraki turuna kadar.
+6. **Passing Bell:** Ill Omen'in normal aktarımı da sürer; Doom ölenin Omen sayısı kadar.
+7. **Leaping Mark ailesi:** her sıçrama bir önceki sıçramanın %50'si (Hungry Leap ile %75); sıçrayan Doom'un öldürmesi `via: leap` (Unending Mark).
+8. **Rot to the Core "killer":** Withering'i taşıyan düşman olarak okundu (Withering bitince verdiği toplam hasarın yarısını bir kez daha alır).
+9. **Feeding Frenzy "ally":** Anti-Mage'in kendisi sayılmaz.
+10. **Counter Cut "melee":** gelen skill menzilli DEĞİLSE. Creeping Blight yalnızca Druid'in verdiği Withering'i aktarır.
+11. **Thornbark %15 INT:** dikeni Treant verir, ölçek Treant'ın INT'i (çağıranın item hariç INT'i x 1,04). Druid'in kendi INT'i (item dahil) istenirse ayrı kanca gerekir.
+12. **Grave Grasp "first attack":** Skeleton'ın İSABET EDEN ilk vuruşu (ıskalarsa sonraki isabet sersemletir).
+13. **Grave Plate "Fortified on its first turn":** iner inmez 1 tur Fortified.
+14. **Hulking Frame + Bone Champion:** ikisi birlikte alınırsa Skeleton süresiz (Hulking Frame'in +1 turu yok sayılır).
+15. **Brittle Bark:** burst %90 (Splinter Burst'ün yerine), -%20 can her durumda.
+16. **Splinter Burst / Pox Bloom:** süre dolması da "ölüm" sayılır; burst Druid'in INT'iyle, "en yakın" Treant'ın hücresine göre.
+17. **Soru: Rot Bomb (Undead 4.r3)** "detonate all Withering": Withering'in kalan tiklerinin hepsi bir anda mı vurur (kalan tur x tik), yoksa tek tik mi? Ömer karar verince yazılır. **Ömer cevapladı (10a altıncı tur, 2026-10-22):** kalan tiklerin hepsi bir anda, Withering biter; yazıldı.
+18. **Yazılamayanlar (null kaldı):** Chain of Light (Smite'ın zincir noktası yok), Arrow Storm (alan şekli yamalanamıyor); kapsam dışı: Druid 4.u1-u3, 4.r3, 4.d3, 4.l3, Undead 4.r2, 4.d2.
+19. **Endless'ta taşınan çağrı** (savaşa hazır gelen sahipli çağrı): maks can / zırh ona da işler, ama skill yamaları ve kancalar yalnızca savaşta yeni çağrılana takılır.
+
+## 394. Skill ağacı Faz 5a: C5 hedef / alan / aura + C6 kural sözlüğü (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 5a notları): varsayımlar ve sorular
+
+Metinden kesin çıkmayan yorumlar. Değişecekse çoğu veri değişikliğidir.
+
+1. **Living Bomb (Druid 4.d3):** Summon Treant'ın bekleme süresi (5) Treant'ın ömründen (3) uzun. Treant dururken yeniden çağırmak bugün yalnızca bekleme süresi kısaltılırsa mümkün. Bekleme süresi kısalsın mı? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** evet, Living Bomb alınınca bekleme süresi 3.
+2. **Empty Grave (Undead 4.d2):** MP ek bedele yetmezse çağrı beslenmemiş doğar (iptal olmaz). Önizleme de böyle gösterir.
+3. **Settle the Score (Defender 4.u3):** "en çok can götüren" = bu savaşta sana verdiği toplam hasar (kalkanın emdiği dahil değil).
+4. **Undying Rage (Warrior 0.v):** Rage 10'un altındayken de kurtarır, Rage 0'a iner. Ya da 10 Rage yoksa kurtarmasın mı? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** 10 Rage yoksa kurtarmaz.
+5. **Banshee's Toll (Undead 2.v):** "her düşmana" = global hedef. Wail'in zemini hedeflerin kendi hücrelerine düşer.
+6. **Smite (Divine Light):** "en zayıf düşman" = şu anki canı en düşük. Wrathful Glow, No Rest for Evil ve Crusader's Dawn güçleri toplanır, Vengeful Light çarpar.
+7. **Pledged Plate (Defender 0.fb):** dosta verilen zırh, düşürülmüş (%70) zırhın %100'ü.
+8. **Conduit (Anti-Mage 0.ea):** dökülen havuz = pasif MP x alıcı sayısı (kendisi dahil). Alıcı dolarsa artan kaybolur (Spillover yoksa).
+9. **Spillover (Anti-Mage 0.eb):** yalnızca Mana Overflow'un taşan MP'si aktarılır, başka MP kazançlarınınki aktarılmaz. Bütün MP kazançları mı kastediliyor? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** yalnız Mana Overflow'un taşan MP'si (şimdiki yazım).
+10. **Grand Theft (Anti-Mage 4.l3):** çalınan buff'lar kalan süreleriyle sırayla dağılır (Anti-Mage, sonra hücre sırasıyla dostlar). Taunt ve Guard çalınmaz.
+11. **"Caster" (Mark of Silence):** MP bedelli skill'i olan birim.
+12. **Rot Contagion (Hexer 2.r):** "alanın hemen dışı" yerine alan dışındaki rastgele bir düşman. Zar rank başına %10, tek düşman.
+13. **Split Ward / Verdant Link:** ikinci alıcı (en az MP'li / canı en düşük dost) hedefin kendisi olabilir. O zaman ikinci kopya ona gider. Başka bir dost mu seçilsin? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** ikinci alıcı her zaman başka bir dost; yoksa ikinci kopya yok (`notTarget`).
+14. **Twin Ward (Mage 3.mb):** ikinci kalkan aynı skill'in yeniden işlemesi; Mana Barrier'ın diğer etkileri (varsa dispel) de işler.
+15. **Spreading Spite (Druid 0.f2):** Slow ve Wither ayrı zarlanır (biri tutup diğeri tutmayabilir). Alıcı = öldürenin dört yön komşuları.
+16. **Fervent Oath (Paladin 0.fb):** metin "Divine Light'ın dosta hasar bonusu" diyor, ama veride Divine Light'ın böyle bir bonusu yok. Yazılmadı: metin mi değişsin, bonus mu eklensin? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** metin değişti: "Anointed Arms' bonus doubles to +30%, but Divine Light heals 25% less."
+17. **Dreadful Swing (Warrior 4.l1):** Jinx süresi 2 tur varsayıldı (metinde yok).
+18. **Shadow Return (Cutthroat 4.u3):** Fleet 2 tur varsayıldı (Shrouded ile aynı).
+19. **Thin Sap (Druid 3.fa):** "her şifa %50 zayıf" yalnızca anlık şifa. Yenilenme (hot) aynen kalır. Yenilenme de mi yarıya insin? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** evet, yenilenme dahil bütün şifa yarıya.
+20. **Carving Arc (Cutthroat 1.mb):** Wound yalnızca ilk kesikte. Zincirdeki her kesik mi yaralasın? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** evet, her kesik (isabet edince).
+21. **Arrow Storm (Archer 3.v):** yağmur tik'i DEX ölçeğiyle %30 (Lingering Hail ile aynı).
+22. **Falling Oak (Druid 4.u3):** "karşısındaki" = Treant'ın şeridindeki en öndeki düşman. Şeritte düşman yoksa Stun yok.
+23. **Unyielding (Defender 0.ma):** "Rooted Stance dolu" = 4 tur kıpırdamadan.
+24. **Martyr Rising (Paladin 2.v):** kalkınca Resurrection bekleme süresine girmez ve MP harcanmaz. Girmeli mi? **Ömer cevapladı (10a altıncı tur, 2026-10-22):** girer (tam bekleme süresi), MP harcanmaz.
+25. **Hammer Rhythm (Paladin 1.ma):** "üçüncü kez üst üste" = önceki iki kullanım da Holy Strike (`skillStreakOf` en az 2). Arada Move / Rest seriyi bozar.
+26. **Butcher's Cross (Cutthroat 2.v):** merkez de iki kez vurulur (Saltire Cut'ın kendi 2'si ile büyüğü; Spent Belt alınırsa 4).
+27. **X Marks the Throat (Cutthroat 2.ma):** üçüncü vuruş zırhı yok sayar, kritik de olabilir, kullanım başına bir kez.
+28. **Boxcars (Gambler 1.ma):** "3 veya daha fazla atış" = ilk atış + en az 2 tutan tekrar (Endless Rattle'ın zincir kuralıyla). Rastgele diğer düşmana tam güçle bir vuruş.
+29. **Brittle Point (Archer 2.fa):** Sunder düğümünün (2.ea) yerine %40'lık Sunder (2.ea'yı düşürür). "İkinci düşmandan sonra durur" = alanda ilk 2 hedef.
+30. **Ready Blades (Anti-Mage 4.d2):** "fazladan hançer" = sıradaki Mana Steal bir kez daha vurur (tekrar zarı %100, tek kullanım).
+31. **Undying Thirst (Undead 0.ma):** "%100'ünü emer" = sıradaki vuruşa drain +1,0 (Soul Drain'in kendi payına ek).
+32. **Mark of Many (Hexer 4.r3):** Gathering Mark'ın (4.r1, 2 düşmandan) yerine geçer. İkisi alınmışsa her diğer düşmandan 1.
+33. **Overflowing Fate (Hexer 4.r2):** 3'ün üstündeki her çekilen Omen Doom'a +%20 (çarpan, toplamsal).
+34. **Hard Clay (Cutthroat 3.fb):** Stun alandaki rastgele bir düşmana. Smoke Bomb'un Blind'ı tamamen kalkar.
+
+## 395. Skill ağacı Faz 5b: 55 düğüm verisi + Paladin smite / Holy Strike düğümleri (content-designer 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 5b notları): varsayımlar
+
+1. **Coin Toss Life (Gambler 0.fb):** "start every battle at 80% HP" = savaş başında maks canın %20'si düşer (en az 1 can kalır). Seferde can savaştan savaşa taşındığı için yaralı giren Gambler %80'in altına iner (ör. %60 -> %40). "Canı en çok %80 olur" (yalnızca fazlası kesilsin) isteniyorsa bu motor işi (sözlükte "canı şu orana indir" eylemi yok). **Ömer onayladı (2026-10-22, "önerinle git"):** şimdiki yazım kalır, tavan yok.
+2. **Chain of Light (Paladin 0.ma):** ikinci smite tur başına bir kez; ikinci smite de öldürürse üçüncüsü gelmez (metin "again" diyor, Rolling Doom gibi "repeats" demiyor).
+3. **Hammerfall Quake (Paladin 1.mb):** "the shock" = Holy Strike'ın ilk hasar etkisiyle %40 güçte gerçek vuruş (isabet / kritik zarlı), ölenin sırasındaki her düşmana. Ölen düşman sayılmaz.
+4. **Sun-Forged Will (Paladin 0.r):** "below 50% HP" = smite anında hedefin can ORANI %50'nin altında; bonus smite gücüne çarpan olarak eklenir (Vengeful Light ile çarpılır).
+5. **Brittle Point (Archer 2.fa):** Sunder düğümü (2.ea) alınmışsa Sunder %40 olur; 2.ea'sız 2.fa alınamadığı için ayrı Sunder vermez.
+6. **Cloistered Ward (Anti-Mage 3.fb):** "%60 daha büyük" bütün kalkana (INT payı + kalan MP payı) uygulanır.
+
+## 396. Skill ağacı Faz 6: sim'e ağaç modu (balance-tester 2026-10-22; `docs/arch/sims-and-deploy.md` > Skill ağacı modu): varsayımlar
+
+1. **Quick Battle vekilinde level:** `--level N` her birime (iki taraf) o level'ın stat puanlarını oyuncu vekili gibi ana stata dağıtır (`autoAllocate`), item vermez. Referans aynı level ve aynı statlarla ağaçsızdır; fark yalnızca ağaçtır. 9.2a'daki "+10-15 puan" bu tanımla ölçülür (item'li karşılaştırma istenirse sefer / Endless `--tree`).
+2. **Class kazanma farkı (`--side party`):** class'ın yalnızca oyuncu (ağaçlı) tarafında olduğu savaşlar; takım arkadaşlarının ağacı da etkiler. Tek class'ın saf katkısı için `--only=<class>` (yalnızca o class ağaç alır).
+3. **Varsayılan ön ayar `focus`:** satırlar `_rules.json > debugFocus` (yoksa 1+2, sefer / Endless vekiliyle aynı), ult kolu debugFocus'taki kol, yoksa ilk kol `u` (vekil kural kolsuz bırakıyor; o zaman ult puanı L15'e kadar hiç harcanmaz). Vekille birebir build `proxy` ön ayarında.
+4. **Ölü düğüm tanımı:** alınmış, tetikli fx'i (kanca, addEffect / replaceEffect, groundStatus, tetikli unitFx) olan ama hiç `treeProc` yazmayan düğüm. Sürekli sayı yamaları ve sürekli unitFx'ler sayılmaz (motor onlar için treeProc yazmıyor). Quick Battle'da elit / boss olmadığı için elit / boss koşullu düğümler burada ölü görünebilir.
+5. **Kontrol payı:** karşı taraf birimlerinin (çağrılar hariç) başlattığı turlardan, `cc` ya da `skipTurn` bayraklı bir durum altındakilerin payı (Stun'la atlanan turlar dahil). `--side both`'ta iki taraf birlikte.
+6. **Kaynak tükenmemesi:** MP'li birimin savaştaki en düşük MP oranı ortalaması ve hiç %25 altına inmeyen birim payı. Rage ayrıca ölçülmüyor.
+7. **Sefer / Endless `--tree=a|b`:** referans koşuyu otomatik yapmaz (o simler zaten uzun ve paralel); aynı komut bayraksız koşulup karşılaştırılır. Yön dışındaki build (satır / ult kolu) `autoTreePlan`.
+
+## 397. Skill ağacı Faz 5c: kalan 4 motor eksiği (engine-dev 2026-10-22; `docs/design/skill-tree-implementation.md` > Faz 5c notları): varsayımlar
+
+1. **Soul Exchange (Paladin 2.n0):** can bedeli = ödeme anındaki mevcut canın %25'i (yuvarlanır, en az 1); can 1 iken (bedel canı bitirecekse) ödenemez, skill "Not enough MP" kalır. Silenced iken yine kullanılamaz (skill MP bedelli büyü sayılır). Unlimited MP debug'ı açıkken hep MP. Can ödemesi Wail'in can bedeli gibi `payHp` tetiğini ve `hpPaid`'i doldurur (Life for Life / Blood Banshee türü düğümlerle birleşir).
+2. **Returning Cards (Gambler 3.v):** "every card" = Card Trick'in HER hedefi (ilk kart iskalasa da) %60 güçte ikinci, gerçek (isabet / kritik zarlı) vuruş alır. Durum zarı yalnızca dönüş isabet ederse atılır; "a new status" = yeni, bağımsız zar (ilk kartla aynı durum da çıkabilir, süresi yenilenir). Mutlaka FARKLI durum mu olmalı? **Ömer onayladı (2026-10-22, "önerinle git"):** aynı durum da çıkabilir.
+3. **Mortgage (Gambler 4.u2):** ek can bahsi = maks canın %10'u (canı en az 1 bırakır). Kazançta hiçbir şey düşmez, kayıpta MP bahsi MP'den, can bahsi candan düşer. Sure Thing'in bahis çarpanı iki parçaya ayrı ayrı uygulanır. Jackpot / bust tetiklerinin `amount`'u toplam bahis (MP + can), kaynağı `mp`.
+4. **Turned Hand (Hexer 3.v):** yeni durum EKLENMEDİ; düğüme özel kural (`turnedHand`). Sayılan Jinxed = o Hexer'in verdiği her Jinxed (Jinx skill'i, Rumour Mill...; başka class'ın Jinxed'i sayılmaz). "Next attack" = Jinxed taşıyanın sıradaki hasar skill'i (hedefleri karşı tarafta); bir Jinxed en fazla bir saldırıyı çevirir. Hedef = saldıranın kendi dostlarından seed'li rastgele biri (kendisi hariç); alan / çok hedefli saldırı da tek dosta iner (alan, zemin, yan vuruş düşer). Dostu yoksa saldırı normal. Yapay zeka çevrileceğini bilmez (hedefi normal seçer, motor çevirir). Hedef "rastgele dost" yerine "en yakın dost" ya da "alan aynen dostlara" mı olmalı? **Ömer onayladı (2026-10-22, "önerinle git"):** rastgele dost, alan saldırısı tek dosta iner.

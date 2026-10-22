@@ -4,12 +4,12 @@ import type { Combatant, SkillEffect } from './types';
 export type ManaBurnEffect = Extract<SkillEffect, { type: 'manaBurn' }>;
 
 /**
- * Etkinin hedef başına NOMİNAL yakımı (mevcut MP sınırı yok): `pctMax` varsa hedefin MAKSİMUM MP'sinin o oranı (yuvarlanır), yoksa sabit `amount`.
- * Madde 260 (Ömer): Drain Field yüzdeyle yakar.
+ * Etkinin hedef başına NOMİNAL yakımı (mevcut MP sınırı yok): sabit `amount` + `pctMax` (hedefin MAKSİMUM MP'sinin o oranı, yuvarlanır).
+ * Madde 260 (Ömer): Drain Field yüzdeyle yakar. Faz 2c (Deep Cut): ikisi birlikte varsa TOPLANIR (veride birlikte olan skill yok; ağaç ekler).
  */
 export function nominalBurn(effect: ManaBurnEffect, target: Pick<Combatant, 'maxMp'>): number {
-  if (effect.pctMax !== undefined) return Math.max(0, Math.round(target.maxMp * effect.pctMax));
-  return Math.max(0, effect.amount ?? 0);
+  const pct = effect.pctMax !== undefined ? Math.round(target.maxMp * effect.pctMax) : 0;
+  return Math.max(0, (effect.amount ?? 0) + pct);
 }
 
 /** Gerçek yakım: nominal yakım, hedefin mevcut MP'siyle sınırlı. Saf (motor, önizleme, YZ, skill-info aynı hesabı kullanır). */

@@ -39,12 +39,12 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
       }
       // Boss durumları (Bridge Warden): etkisi motor kuralıyla (untilResolved: Ash Brand telgrafı, Staggered eylem kaybı, Anchored zırh eki)
       if (def.untilResolved) continue;
-      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true, id).toBe(true);
+      expect(def.speedMult !== undefined || def.damageTakenMult !== undefined || def.healTakenMult !== undefined || def.skipTurn === true || def.accuracyDelta !== undefined || def.evasionDelta !== undefined || def.critDelta !== undefined || def.critDeltaPerStack !== undefined || def.maxStacks !== undefined || def.dot !== undefined || def.blocksMpSkills === true || def.armorMult !== undefined || def.damageDealtMult !== undefined || def.magicDealtMult !== undefined, id).toBe(true);
     }
   });
 
   it('yer etkileri (zehir, yanan zemin) tanımlı', () => {
-    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'flooded_planks', 'holy_fire', 'poison']);
+    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
   });
 });
 

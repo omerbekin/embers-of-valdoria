@@ -1,5 +1,5 @@
 // Endless simülatörü raporu (Türkçe). Hedefler: data/endless.json > balance.
-// Kullanım: npm run sim:endless -- [koşu sayısı] [ilk seed] [--compare] [--gear=best|none] [--relics=pick|none] [--max=40] [--jobs=N] [--json=dosya]
+// Kullanım: npm run sim:endless -- [koşu sayısı] [ilk seed] [--tree=a|b] [--compare] [--gear=best|none] [--relics=pick|none] [--max=40] [--jobs=N] [--json=dosya]
 //   Varsayılan: 300 koşu, seed 1, item + kalıntı açık, oyuncu vekili Medium ("iyi oyuncu"), iş sayısı = çekirdek - 1 (en fazla 12).
 //   --compare: aynı seed'lerle item'siz ve kalıntısız koşuları da oynar ve karşılaştırır.
 //   [--encounter-id=<id> --encounter-file=<dosya.json>]: bir karşılaşmayı (elit/boss) dosyadakiyle değiştirir (dalgalı savaş denemesi).
@@ -11,6 +11,7 @@ import { fileURLToPath } from 'node:url';
 import { content } from '../engine';
 import encountersJson from '../../data/campaign/encounters.json';
 import { ENDLESS as BASE, relicDef, type EndlessConfig } from '../endless';
+import { treeFlag } from './tree-sim';
 import { keyMetrics, mergeEndlessResults, rarityByBand, simulateEndless, summarize, type EndlessSimResult } from './endless';
 
 const args = process.argv.slice(2);
@@ -33,6 +34,9 @@ if (encId && encFile) {
   const def = JSON.parse(readFileSync(encFile, 'utf8')) as unknown;
   (encountersJson as unknown as Record<string, unknown>)[encId] = def;
 }
+const treeDir = treeFlag(args); // --tree=a|b: skill ağacı (Faz 6), oyuncu vekili odaklı kurulum (tree-sim.ts)
+const treeOpt = treeDir ? { tree: treeDir } : {};
+if (treeDir && !flag('part')) console.log(`Skill ağacı AÇIK (yalnızca bu süreçte; oyuncu vekili odaklı kurulum, yön ${treeDir}). Ağaçsız referans için aynı komutu --tree olmadan koşun.`);
 const encArgs = encId && encFile ? [`--encounter-id=${encId}`, `--encounter-file=${encFile}`] : [];
 type Variant = { gear: 'best' | 'none'; relics: 'pick' | 'none'; label: string };
 const main0: Variant = { gear: (flag('gear') ?? 'best') as 'best' | 'none', relics: (flag('relics') ?? 'pick') as 'pick' | 'none', label: 'ana' };
@@ -45,7 +49,7 @@ const bal = (ENDLESS as unknown as { balance?: { targets: Record<string, [number
 
 function runPart(start: number, end: number, v: Variant): Promise<EndlessSimResult> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), `--max=${maxWave}`, ...(cfgFile ? [`--cfg=${cfgFile}`] : []), ...encArgs, `--part=${start}:${end}:${v.gear}:${v.relics}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), `--max=${maxWave}`, ...(cfgFile ? [`--cfg=${cfgFile}`] : []), ...(treeDir ? [`--tree=${treeDir}`] : []), ...encArgs, `--part=${start}:${end}:${v.gear}:${v.relics}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';
@@ -55,7 +59,7 @@ function runPart(start: number, end: number, v: Variant): Promise<EndlessSimResu
 }
 
 async function runVariant(v: Variant): Promise<EndlessSimResult> {
-  if (jobs <= 1 || runs < 12) return simulateEndless({ runs, firstSeed, gear: v.gear, relics: v.relics, maxWave, cfg: ENDLESS, valor: valorMode() });
+  if (jobs <= 1 || runs < 12) return simulateEndless({ runs, firstSeed, gear: v.gear, relics: v.relics, maxWave, cfg: ENDLESS, valor: valorMode(), ...treeOpt });
   const n = Math.min(jobs, runs);
   const bounds = Array.from({ length: n }, (_, k) => [Math.floor((runs * k) / n), Math.floor((runs * (k + 1)) / n)] as const);
   return mergeEndlessResults(await Promise.all(bounds.map(([a, b]) => runPart(a, b, v))));
@@ -175,7 +179,7 @@ if (part) {
   const [a, b, g, rl] = part.split(':') as [string, string, 'best' | 'none', 'pick' | 'none'];
   const start = Number(a);
   const end = Number(b);
-  process.stdout.write(JSON.stringify(simulateEndless({ runs: end - start, firstSeed: firstSeed + start, gear: g, relics: rl, maxWave, cfg: ENDLESS, valor: valorMode() })));
+  process.stdout.write(JSON.stringify(simulateEndless({ runs: end - start, firstSeed: firstSeed + start, gear: g, relics: rl, maxWave, cfg: ENDLESS, valor: valorMode(), ...treeOpt })));
 } else {
   void main();
 }

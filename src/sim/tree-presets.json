@@ -1,0 +1,14 @@
+{
+  "_not": "Skill ağacı simi (Faz 6, src/sim/tree-sim.ts) için build ön ayarları. YALNIZCA SİM (oyun verisi değil; data/skill-trees/_rules.json > enabled false kalır). Bir ön ayar = class başına build: rows = [önce doldurulan satır, ikinci satır] (0 = pasif, 1-3 = aktif skill), dirs = denenecek yönler (a / b; ikisi verilirse a - b farkı da ölçülür), ult = ult kolu (u / r / d / l; 'auto' = _rules.json > debugFocus kolu, yoksa ilk kol; 'none' = kol yok, ult puanı yalnızca başka açık düğüm kalmayınca, sefer / Endless vekiliyle aynı), evolve / ultFx / bar = false ise o kısım derlenirken etkisiz sayılır (puan aynı yere harcanır, etkisi yok; katkı = tam - bu). rows 'auto' = _rules.json > debugFocus satırları, yoksa [1, 2] (sefer / Endless vekili autoTreePlan ile aynı). classes = class başına üstüne yazma.",
+  "presets": {
+    "focus": { "_not": "Varsayılan: vekil satırları, ult kolu auto, a ve b yönü.", "rows": "auto", "dirs": ["a", "b"], "ult": "auto" },
+    "proxy": { "_not": "Sefer / Endless oyuncu vekiliyle birebir (autoTreePlan: yön a, ult kolu yalnızca debugFocus'ta varsa).", "rows": "auto", "dirs": ["a"], "ult": "none" },
+    "focus-noevolve": { "rows": "auto", "dirs": ["a", "b"], "ult": "auto", "evolve": false },
+    "focus-noult": { "rows": "auto", "dirs": ["a", "b"], "ult": "auto", "ultFx": false },
+    "focus-nobar": { "rows": "auto", "dirs": ["a", "b"], "ult": "auto", "bar": false },
+    "rows-01": { "rows": [0, 1], "dirs": ["a", "b"], "ult": "auto" },
+    "rows-12": { "rows": [1, 2], "dirs": ["a", "b"], "ult": "auto" },
+    "rows-23": { "rows": [2, 3], "dirs": ["a", "b"], "ult": "auto" },
+    "rows-31": { "rows": [3, 1], "dirs": ["a", "b"], "ult": "auto" }
+  }
+}

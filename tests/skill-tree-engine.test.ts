@@ -43,7 +43,7 @@ function playOut(b: Battle, maxMoves = 400): BattleEvent[] {
   }
   return b.log;
 }
-const power = (b: Battle, id: string, who?: string | Combatant) => b.skill(id, who)!.effects.map((e) => (e as unknown as { power?: number }).power);
+const power = (b: Battle, id: string, who?: string | Combatant) => b.skill(id, who)!.effects.filter((e) => e.type === 'damage').map((e) => (e as unknown as { power?: number }).power); // yalnız hasar etkileri (Knee Cutter durum ekler)
 
 /** Warrior: Notched Axe 5 (Double Strike 2. vuruş +%20 oransal) + Steady Spin 3 (Whirlwind lifesteal +0,06) + Headsman's Feast. */
 const warriorTree = compileTree(W, alloc(W, 20, ['1.f1*3', '1.f2*5', '2.f1*3', '4.u1']))!;
@@ -51,7 +51,7 @@ const warriorTree = compileTree(W, alloc(W, 20, ['1.f1*3', '1.f2*5', '2.f1*3', '
 describe('bekçi: battle.ts içinde uid\'siz this.skill( yalnızca izin listesinde', () => {
   // Yapısal yüklemler: ağaç bu alanları (hedef türü, alan şekli, ceset / dirilme / yakın dövüş, brand) Faz 1a'da yamalamaz.
   // Yeni bir uid'siz çağrı = birim katmanı atlanır (ağaç sayıları görünmez): ya uid geçir ya da gerekçesiyle buraya ekle.
-  const ALLOW = new Set(['brandCells', 'needsTargetChoice', 'needsSlotChoice', 'isShapeSkill', 'isAnyBoardArea', 'isStagedSkill', 'consumesCorpse', 'isReviveSkill', 'isMelee']);
+  const ALLOW = new Set(['brandCells', 'needsSlotChoice', 'consumesCorpse', 'isReviveSkill', 'isMelee']);
   it('her this.skill(...) çağrısı ikinci argümanı (aktör) taşır ya da izinli yüklemin içindedir', () => {
     const src = fs.readFileSync(path.resolve(__dirname, '../src/engine/battle.ts'), 'utf8');
     const lines = src.split(/\r?\n/);

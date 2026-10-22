@@ -193,7 +193,7 @@
         '0.fb': ['Cruel Streak', 'Your skills +30% damage against enemies with a status, but 20% less against those with none.'],
         '0.v': ['Hobbling Eye', 'Sharpshooter evolves: each row of distance also gives your skills +4% chance to Slow the target for 1 turn.'],
 
-        '1.f1': ['Hamstring', 'Quick Shot has a 6% chance per rank to Slow for 1 turn.'],
+        '1.f1': ['Hock Shot', 'Quick Shot has a 6% chance per rank to Slow for 1 turn.'],
         '1.f2': ['Knee Splitter', 'Quick Shot +4% damage per rank against Slowed enemies.'],
         '1.f3': ['Sting in the Eye', 'Quick Shot has a 4% chance per rank to Blind for 1 turn.'],
         '1.n0': ['Shot to the Knee', 'Quick Shot critical hits always Slow the target for 2 turns.'],
@@ -204,7 +204,7 @@
         '1.eb': ['For the Eyes', 'Quick Shot Blinds for 1 turn when it crits.'],
         '1.mb': ['Blind Panic', 'A Blinded enemy hit by Quick Shot is also Jinxed.'],
         '1.fb': ['Gouging Arrow', 'Quick Shot Blinds for 2 turns every time, but it gains a 2-turn cooldown.'],
-        '1.v': ['Maiming Shot', 'Quick Shot evolves: it Slows; if the target is Slowed it Blinds; if Slowed and Blinded it Staggers.'],
+        '1.v': ['Maiming Shot', 'Quick Shot evolves: it Slows for 1 turn; if the target is Slowed it Blinds for 1 turn; if Slowed and Blinded it Staggers.'],
 
         '2.f1': ['Barbed Shaft', 'Piercing Arrow has a 5% chance per rank to Slow each enemy hit for 1 turn.'],
         '2.f2': ['Weighted Line', 'Piercing Arrow +4% damage per rank against Stunned enemies.'],

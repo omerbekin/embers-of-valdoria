@@ -257,7 +257,7 @@
         ['Clinging Burrs', "Slows you apply last 1 turn longer."],
         ['Knotted Roots', "Your skills deal +8% damage to Slowed enemies."],
         ['Root Memory', "An enemy you Stunned is Slowed for 1 turn when the Stun ends."],
-        ['Tight Weave', "The root field from Nature's Wrath lasts 1 turn longer."],
+        ['Tight Weave', "Nature's Wrath deals +5% damage."],
         ['Sap of Patience', "Each Stun you apply restores 3 MP."]
       ],
       nodes: {
@@ -393,7 +393,7 @@
         '3.v': ['Wild Growth', "Rejuvenate becomes Wild Growth: its heal is halved, but the ally's skills deal +25% damage for 3 turns."],
 
         '4.u1': ['Crashing Arrival', "Summon Treant deals 50% INT nature damage to the enemy front row as it lands."],
-        '4.u2': ['Heavy Landing', "The arrival damage also hits the second row."],
+        '4.u2': ['Oakfall', "The arrival damage also hits the second row."],
         '4.u3': ['Falling Oak', "The arrival damage +100%, and the enemy facing the Treant is Stunned for 1 turn."],
         '4.r1': ['Splinter Burst', "When the Treant dies or wilts, it bursts: 60% INT nature damage to the 2 nearest enemies."],
         '4.r2': ['Brittle Bark', "The Treant's burst +50%, but the Treant has 20% less HP."],

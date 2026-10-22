@@ -7,7 +7,7 @@ import { battleTrack, phaseTrack, sceneMusic } from '../../ui/music';
 import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-layout';
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
-import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, primaryBonusInfo, previewSkill, armorReduction } from '../../engine';
+import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
 import type { AreaStage, BattleEvent, BattleMode, Combatant, SkillDef, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
@@ -1046,9 +1046,9 @@ export class BattleScene extends Phaser.Scene {
     const at = this.galleryCell !== null ? b.combatants.find((c) => c.board === targetBoard && c.slot === this.galleryCell && c.hp > 0) : undefined;
     const target = at ?? (skill.target === 'self' ? caster : b.livingByDepth(targetBoard)[0]);
     let slot: number | undefined;
-    if (this.galleryCell !== null && (b.isAreaSkill(skillId) || b.needsSlotChoice(skillId))) slot = this.galleryCell;
+    if (this.galleryCell !== null && (b.isAreaSkill(skillId, caster.uid) || b.needsSlotChoice(skillId))) slot = this.galleryCell;
     if (b.needsSlotChoice(skillId) && slot !== undefined && !b.freeSlots(b.summonBoard(caster.uid, skillId)).includes(slot)) slot = undefined;
-    const aimUid = b.isAreaSkill(skillId) && !at && slot !== undefined ? undefined : target?.uid; // empty chosen cell: aim at the cell itself
+    const aimUid = b.isAreaSkill(skillId, caster.uid) && !at && slot !== undefined ? undefined : target?.uid; // empty chosen cell: aim at the cell itself
     // Çağrı skill'i (galeri önizlemesi; tahtada tüm class'lar olduğundan hücre kalmıyor): yer yoksa çağıranın en öndeki dostu düşer (ceset
     // hücresine çağrı gelebilir, madde 257); ceset tüketen çağrıda (Raise Dead) ceset yoksa en arkadaki düşman düşer ve TAM (beslenmiş) hâl oynar.
     let corpseUid: string | undefined;
@@ -1163,11 +1163,11 @@ export class BattleScene extends Phaser.Scene {
     this.clearAreaMarker();
     this.refreshGlows();
     if (this.battle.needsSlotChoice(skill) || this.battle.isReviveSkill(skill)) this.showSlotMarkers(actor, skill); // Raise Dead / Resurrection: two-step flow
-    else if (this.battle.needsTargetChoice(skill)) this.showTargetCells(actor, skill);
+    else if (this.battle.needsTargetChoice(skill, actor)) this.showTargetCells(actor, skill);
     // Skills without a target choice (all enemies, self, ...) show their effect on everyone affected right away
     else {
       this.showPreviews(previewSkill(this.battle, actor, skill));
-      const sk = this.battle.skill(skill);
+      const sk = this.battle.skill(skill, actor);
       if (sk?.target === 'all_enemies' && sk.motion === 'melee') this.showFrontRowBand(actor, skill);
       else this.showAffectedPlates(actor, skill);
     }
@@ -1194,8 +1194,8 @@ export class BattleScene extends Phaser.Scene {
     }
     const kind = this.isHarmful(skill) ? 'bad' : 'good';
     const valid = new Set(this.battle.validTargets(sel.actor, sel.skill).map((c) => c.uid));
-    const choice = this.battle.needsTargetChoice(sel.skill);
-    const area = this.battle.isAreaSkill(sel.skill);
+    const choice = this.battle.needsTargetChoice(sel.skill, sel.actor);
+    const area = this.battle.isAreaSkill(sel.skill, sel.actor);
     const slotSkill = this.battle.needsSlotChoice(sel.skill);
     const actorSide = this.battle.get(sel.actor)?.side;
     for (const v of this.views.values()) {
@@ -1763,7 +1763,7 @@ export class BattleScene extends Phaser.Scene {
     const skill = content.skills[skillId];
     const actor = this.battle.get(actorUid);
     if (!skill || !actor) return;
-    const area = this.battle.isAreaSkill(skillId); // tüm alan skill'leri şekillidir (isAreaSkill = isShapeSkill)
+    const area = this.battle.isAreaSkill(skillId, actorUid); // tüm alan skill'leri şekillidir (isAreaSkill = isShapeSkill)
     const tone = this.toneOf(skill);
     const valid = this.battle.validTargets(actorUid, skillId);
     const areaGroups = area ? areaBoards(this.battle, actorUid, skillId) : [];
@@ -1808,14 +1808,14 @@ export class BattleScene extends Phaser.Scene {
       return;
     }
     if (!skill) return;
-    if (this.battle.isAreaSkill(skillId)) {
+    if (this.battle.isAreaSkill(skillId, actorUid)) {
       const anchor = this.battle.cursorAnchor(skillId, slot, board, actorUid); // imleç hücresi = alanın ekrandaki sol-alt köşesi (madde 377)
       const info = this.battle.shapePreviewCells(actorUid, skillId, anchor, board);
       const ok = info.valid;
       const previews = ok ? previewSkill(this.battle, actorUid, skillId, undefined, anchor, board) : [];
       this.showPreviews(previews);
       this.refreshGlows(previews.map((p) => p.uid));
-      const staged = this.battle.areaStageCells(skillId, anchor, board);
+      const staged = this.battle.areaStageCells(skillId, anchor, board, actorUid);
       const stages = staged.length > 1 ? stageMap(staged) : new Map<number, number>(); // numbers only for staged shapes
       const specs = areaHoverSpecs(info, slot, areaTone(this.battle, actorUid, skillId, board), stages);
       this.showPlates(board, specs, !ok && info.reason ? { slot, text: info.reason } : undefined);
@@ -1961,7 +1961,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.tut && !this.tut.allowSkill(skillId)) return this.tut.blocked(); // ilk savaşın zorunlu adımı başka düğme beklemiyor (kutu sallanır)
     this.cancelMoveQuiet();
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && this.battle.needsSlotChoice(skillId)) return;
-    if (this.selected?.skill === skillId && this.selected.actor === actor.uid && !this.battle.needsTargetChoice(skillId)) {
+    if (this.selected?.skill === skillId && this.selected.actor === actor.uid && !this.battle.needsTargetChoice(skillId, actor.uid)) {
       const first = this.battle.validTargets(actor.uid, skillId)[0];
       if (first) this.perform(actor.uid, skillId, first.uid);
       return;
@@ -2484,7 +2484,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.selected && this.playerCanAct) {
       const sk = this.battle.skill(this.selected.skill, this.selected.actor) ?? content.skills[this.selected.skill];
       const valid = sk && this.battle.validTargets(this.selected.actor, sk.id).some((t) => t.uid === uid);
-      if (sk && valid && !this.battle.isAreaSkill(sk.id)) {
+      if (sk && valid && !this.battle.isAreaSkill(sk.id, this.selected.actor)) {
         const pv = previewSkill(this.battle, this.selected.actor, sk.id, uid).find((x) => x.uid === uid);
         if (pv) {
           const d = pv.damage;
@@ -2614,7 +2614,7 @@ export class BattleScene extends Phaser.Scene {
     if (e.type === 'turnStart') {
       const statsOf = (uid: string) => {
         const c = this.battle.get(uid);
-        return c ? { hpRegen: c.stats.hpRegen ?? 0, mpRegen: c.stats.mpRegen + (c.itemEffects?.turnMp?.mp ?? 0) } : undefined;
+        return c ? { hpRegen: c.stats.hpRegen ?? 0, mpRegen: c.stats.mpRegen + effList(c, 'turnMp').reduce((t, x) => t + x.v.mp, 0) } : undefined;
       };
       for (const r of regenTickEvents(this.sinceAction, e, statsOf)) this.regenTicks.add(r);
       for (const r of betweenTurnEvents(this.sinceAction, e)) this.betweenTurns.add(r);
@@ -3217,8 +3217,8 @@ export class BattleScene extends Phaser.Scene {
     // Shape skills: the covered floor cells flash quietly while the effect plays and once more the moment it lands. Staged skills flash stage by
     // stage: each stage's plates flash when the vfx releases that stage (VfxCtx.releaseStage), the rest when the effect resolves / the gate closes.
     const board = areaBoard ?? this.targetSide(actorUid); // either-side areas (Smoke Bomb) carry the board they landed on
-    const shape = center !== undefined && this.battle.isShapeSkill(skillId);
-    const groups = shape ? (stages && stages.length > 1 ? stages.map((s) => s.cells) : [eventCells ?? this.battle.areaCells(skillId, center!, board)]) : [];
+    const shape = center !== undefined && this.battle.isShapeSkill(skillId, actorUid);
+    const groups = shape ? (stages && stages.length > 1 ? stages.map((s) => s.cells) : [eventCells ?? this.battle.areaCells(skillId, center!, board, actorUid)]) : [];
     const flashes = groups.map((cells) => this.beginShapeFlash(board, cells));
     const staged = !!stages && stages.length > 1;
     const release = staged ? this.openStageGate((i) => flashes.forEach((f, k) => k <= i && f?.hit())) : undefined;
@@ -3258,9 +3258,9 @@ export class BattleScene extends Phaser.Scene {
     };
     if (!vfx) for (const id of skill.sfx ?? []) skillSfx(id); // efekti kodda olmayan skill'in sesleri başta çalar (Radiance)
     if (vfx) {
-      const area = center !== undefined && this.battle.isAreaSkill(skillId);
+      const area = center !== undefined && this.battle.isAreaSkill(skillId, actorUid);
       // Kapsanan hücreler hedef tahtasına göre (oyuncu tahtasında ayna doğru): olaydaki liste, yoksa tahtayla hesap
-      const slots = area ? (eventCells ?? this.battle.areaCells(skillId, center!, board)) : [];
+      const slots = area ? (eventCells ?? this.battle.areaCells(skillId, center!, board, actorUid)) : [];
       const cells = slots.map((slot) => this.cellPos(board, slot));
       const vfxStages = area && stages && stages.length > 1 ? stages.map((s) => ({ slots: s.cells, cells: s.cells.map((slot) => this.cellPos(board, slot)), targets: s.targets.flatMap((uid) => this.views.get(uid) ?? []) })) : undefined;
       // Whirlwind gibi tüm düşmanlara vuran yakın dövüş: hedeflerin ön sırasının orta hücresi
@@ -4140,6 +4140,8 @@ export class BattleScene extends Phaser.Scene {
     const amount = skillCostAmount(skill.cost, actor);
     if (amount <= 0) return {};
     const b = this.battle;
+    // Soul Exchange (cost.hpFallback): MP yetmezse candan ödenebiliyorsa eksik değil
+    if (skill.cost.resource === 'mp' && skillCostPay(skill.cost, actor, undefined, b.freeMp).resource === 'hp') return {};
     if (skill.cost.resource === 'mp') return !b.freeMp && actor.mp < amount ? { lack: 'mp' } : {};
     if (skill.cost.resource === 'rage') return !b.freeRage && (actor.rage ?? 0) < amount ? { lack: 'rage' } : {};
     if (skill.cost.resource === 'hp') return actor.hp <= amount ? { lack: 'hp' } : {};
@@ -4151,10 +4153,12 @@ export class BattleScene extends Phaser.Scene {
     const turns = this.battle.mode === 'turns';
     const out: HudSkill['cost'] = [];
     const hourglass = this.texUrl(ensureIcon(this, uiIconName('cooldown'), UI_COLOR, false));
-    const costNow = skillCostAmount(skill.cost, actor);
+    // Soul Exchange (cost.hpFallback): MP yetmezse çip candan ödenecek miktarı gösterir (HP simgesi)
+    const pay = skillCostPay(skill.cost, actor, undefined, this.battle.freeMp);
+    const costNow = pay.amount;
     if (costNow > 0 && skill.cost.resource === 'rage') out.push({ iconUrl: this.texUrl(ensureIcon(this, uiIconName('rage'), RAGE_COLOR, false)), text: `RAGE ${costNow}`, color: RAGE_COLOR, kind: 'rage' });
     else if (costNow > 0) {
-      const kind = skill.cost.resource === 'mp' ? 'mp' : 'hp';
+      const kind = pay.resource === 'mp' ? 'mp' : 'hp';
       out.push({ iconUrl: this.texUrl(ensureIcon(this, statIconName(kind), STAT_COLOR[kind], false)), text: String(costNow), kind });
     }
     if (turns && (skill.cooldown ?? 0) > 0) out.push({ iconUrl: hourglass, text: String(skill.cooldown), color: colors.muted, kind: 'cd' });

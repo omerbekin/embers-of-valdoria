@@ -1,3 +1,5 @@
+import type { CondWhen, CostCond, TreeBuff, TreeHook } from './tree-hooks';
+
 /** 4 temel özellik: Strength (can, str skill hasarı), Intelligence (mana, int skill hasarı), Dexterity (hız, dex skill hasarı), Luck (kritik). */
 export type Attribute = 'str' | 'int' | 'dex' | 'luck';
 
@@ -72,6 +74,18 @@ export interface Stats extends Attributes {
 }
 
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
+/**
+ * Faz 5a (C5 smite, Paladin Divine Light): pasifin tur başı kutsal hasarı. Hedef = canı (mevcut) en düşük düşman (katalog 14.3). `power` her tur
+ * (Twofold Light, Wrathful Glow), `idle` yalnızca canı eksik dost yokken, şifa yerine (No Rest for Evil), `mirror` verilen şifa x oran (Crusader's
+ * Dawn). Güç = INT gücü x oran x `mul` (Vengeful Light). Bağlantı yeri at 'smite' (C1 kancaları), öldürme yolu (via) 'smite'.
+ */
+export interface SmiteSpec {
+  power?: number;
+  idle?: number;
+  mirror?: number;
+  mul?: number;
+}
+
 export type PassiveEffect =
   /**
    * Kullanıcının hasarı, eksik can oranıyla artar: x(1 + maxBonus * eksikCanOranı).
@@ -80,23 +94,37 @@ export type PassiveEffect =
    */
   | { type: 'rage'; maxBonus: number; rageOnHurt?: { perHpPercent: number; perHitCap?: number } }
   /** Kendi turunun başında en yaralı dostu (varsa) scale gücünün power katı iyileştirir. */
-  | { type: 'divineLight'; power: number; scale: Attribute }
+  | { type: 'divineLight'; power: number; scale: Attribute; /** Faz 5a (C5 smite): tur başı kutsal hasar. */ smite?: SmiteSpec; /** Faz 5a (Fervent Oath): şifa sahibini seçemez. */ noSelf?: boolean }
   /** Cooldown'lu bir hasar skill'i kullanınca `chance` ihtimalle o skill'in cooldown'u sıfırlanır. */
   | { type: 'spellEcho'; chance: number }
   /** Kullanıcı ile hedef arasındaki her sıra mesafesi için hasar +perRow (mesafe = kullanıcının sırası + hedefin sırası). */
-  | { type: 'longshot'; perRow: number }
+  | { type: 'longshot'; perRow: number; /** Faz 4c (Exposed Perch): bonus için sayılan ek sıra mesafesi. */ extraRows?: number }
   /**
    * Nature's Grudge (Druid, Ömer 2026-10-20): taşıyanın tarafındaki çağrı OLMAYAN bir kahraman (taşıyan dahil) düşünce, öldürmenin sahibi olan
    * (son vuran; DoT/zemin ile ölümde durumun/zeminin kaynağı) canlı düşman birime `turns` tur `status` (Slow) + `dot` (Wither; tik = taşıyanın
    * scale gücü x power) uygulanır. Öldüren yoksa / ölmüşse / aynı taraftansa olmaz. Her taşıyan ayrı uygular (durumlar addStatus kuralıyla yenilenir).
    */
-  | { type: 'naturesGrudge'; status: StatusKind; dot: StatusKind; power: number; scale: Attribute; turns: number }
+  | { type: 'naturesGrudge'; /** Slow (ağaç kaldırabilir: Black Mold). */ status?: StatusKind; dot: StatusKind; power: number; scale: Attribute; turns: number; /** Faz 2c: DoT'un (Wither) ayrı süresi (yoksa `turns`; Deep Rot). */ dotTurns?: number }
   /** Verilen her hasarın `ratio` kadarı kullanıcıya şifa olur. */
   | { type: 'soulDrain'; ratio: number }
   /** Büyü zırhının engellediği büyü hasarı `threshold` birikince tüm takıma `mana` MP verilir. */
-  | { type: 'manaOverflow'; threshold: number; mana: number }
+  | {
+      type: 'manaOverflow';
+      threshold: number;
+      mana: number;
+      /**
+       * Faz 5a (yalnızca ağaç): `to` 'lowestMp' = tüm havuz (mana x alıcı sayısı) MP'si en az olana (Conduit); `mult` alıcı payı çarpanı (Lifeline
+       * Pact); `noSelf` sahibi almaz (Martyr's Overflow); `spill` taşan MP en az MP'liye (Spillover); `allies` dostların büyü zırhının engellediği de
+       * sayılır (Endless Spring).
+       */
+      to?: 'lowestMp';
+      mult?: number;
+      noSelf?: boolean;
+      spill?: boolean;
+      allies?: boolean;
+    }
   /** Kullanıcının KENDİ zırhının `pct` kadarı, kendine ve 1 yarıçaplı (artı şekli) komşu dostlara bonus zırh olur; bir birim en fazla `maxStacks` kaynaktan alır. */
-  | { type: 'armorAura'; pct: number; maxStacks: number }
+  | { type: 'armorAura'; pct: number; maxStacks: number; /** Faz 2c: auranın sahibinin KENDİSİNE verdiği pay (yoksa `pct`; Anchored Stone). */ selfPct?: number; /** Faz 5a (Diagonal Guard): aura artı yerine 3x3 kare. */ square?: boolean; /** Faz 5a (Drilled Ranks): dostlara sahibin zırhının bu oranı kadar büyü zırhı. */ magicPct?: number }
   /** Opportunist (Cutthroat): hasar verdiği hedefin üzerinde `statuses` listesindeki durumlardan biri varsa verilen hasar x(1 + bonus) (tüm vuruşlar; kritik ayrıca son çarpan). */
   | { type: 'bonusVsStatus'; statuses: StatusKind[]; bonus: number }
   /**
@@ -545,8 +573,8 @@ export interface ItemEffects {
   openerStatus?: { status: string; turns: number; max: number };
   /** Vigil: Rest kendine `status` (`turns` tur) ve maks canın `healRatio` oranı şifa verir. */
   restBlessing?: { status: string; turns: number; healRatio: number };
-  /** Vengeance: ekranda yan komşu dost (çağrı değil) ölünce kendine listedeki durumlar, `turns` tur. */
-  vengeance?: { statuses: string[]; turns: number };
+  /** Vengeance: ekranda yan komşu dost (çağrı değil) ölünce kendine listedeki durumlar, `turns` tur. `scope: 'any'` (Faz 2c, Last Wall Standing): herhangi bir dost. */
+  vengeance?: { statuses: string[]; turns: number; scope?: 'any' };
   /** Marked Quarry: elit / boss hedefe isabet eden skill vuruşu `status`, `turns` tur verir. */
   tierStatus?: { status: string; turns: number };
 }
@@ -645,6 +673,20 @@ export interface TreeSetup {
   skills?: Record<string, SkillDef>;
   /** Yamalı pasif (aynı id'li sınıf pasifinin yerine geçer; id farklıysa yok sayılır). */
   passive?: PassiveDef;
+  /** (b) unitFx kanalı (Faz 2a): ItemEffects biçimi, item'lerden AYRI (Combatant.treeFx; okuma src/engine/tree-hooks.ts > effNum / effList...). */
+  fx?: ItemEffects;
+  /** unitFx anahtarı -> o anahtarı veren düğümler ('<class>:<anahtar>'; ölçüm). */
+  fxNodes?: Record<string, string[]>;
+  /** (c) kancalar (Faz 2a: C1 cond, C2 rage). */
+  hooks?: TreeHook[];
+  /** Faz 2c (Gaunt Frame): maks can çarpanı; stat türetiminde UnitModifiers.hpMult ile çarpılır (Combatant.modifiers değişmez). */
+  hpMult?: number;
+  /** Faz 4c (yalnızca çağrı kurulumunda): düz zırh eki. */
+  armorAdd?: number;
+  /** Faz 5a (Pledged Plate): birimin kendi zırh çarpanı (stat türetiminden sonra). */
+  armorMult?: number;
+  /** Faz 4c: çağrıya geçen ağaç (çağrı id'si; ceset tüketen çağrıda '<id>#fed' beslenmiş kopyası): skill yamaları, kancalar, can çarpanı, zırh. */
+  summons?: Record<string, TreeSetup>;
 }
 
 /** Savaş sonu özetinde tek birim (src/engine/battle-summary.ts > battleSummary). */
@@ -751,6 +793,11 @@ export interface BetSpec {
   loseMult?: number;
   /** Bahse konan her can/MP birimi için kazanç çarpanına eklenen miktar. */
   perStake?: number;
+  /**
+   * Skill ağacı (Gambler Mortgage; yalnızca yamalı kopyada, MP bahsinde): bahse ayrıca maks canın bu oranı konur (canı en az 1 bırakır); kazanç çarpanı
+   * (perStake) için MP sayılır, kaybedilirse candan düşer. Bkz. gamble.ts > betStakeParts.
+   */
+  hpStake?: number;
 }
 
 /**
@@ -762,7 +809,8 @@ export interface ManaEmptySpec {
   chance: number;
   status: StatusKind;
   turns: number;
-  damage: { damageType: 'physical' | 'magic'; element?: Element; scale: Attribute; power: number };
+  /** Faz 2c: ağaç kaldırabilir (Shallow Net): yoksa boşalma hasarı YOK (en az 1 hasar kuralı işlemez; yalnızca ağaçla). */
+  damage?: { damageType: 'physical' | 'magic'; element?: Element; scale: Attribute; power: number };
 }
 
 /** randomStatus seçeneği: `weight` ağırlıklı zarla seçilen durum. */
@@ -851,7 +899,7 @@ export type SkillEffectKind =
    * `count` yoksa hepsi; varsa en uzun süreliler önce (eşitlikte önce uygulanan). statuses.json'da `dispellable: false` olanlar silinmez.
    * Olay: her silinen için `statusEnd { dispelled: true, source, cause: skill id }`.
    */
-  | { type: 'dispel'; status: 'debuff' | 'buff'; count?: number }
+  | { type: 'dispel'; status: 'debuff' | 'buff'; count?: number; /** Yalnızca bu durumlar silinir (ağaç: Steady Them, Mercy Stroke). */ kinds?: StatusKind[]; /** true: kullanıcının kendisinden siler (Clean Slate). */ self?: boolean; /** Faz 2c (Prying Blade): adaylardan seed'li RASTGELE seçim (yoksa en uzun süreli önce). */ random?: boolean }
   /**
    * Karanlık bağ (Dark Bond): kullanıcı ile hedef dost arasında `turns` (kullanıcının kendi turları) sürecek bağ kurar. Bağ sürerken kullanıcının
    * her lifesteal kazancının (skill lifesteal'i ve soulDrain pasifi; çağrılarının hasarından gelen dahil) `ratio` katı bağlı dosta da şifa olur
@@ -866,14 +914,14 @@ export type SkillEffectKind =
    */
   | { type: 'summon'; unit: string; lifespan?: number; consumeCorpse?: boolean }
   /**
-   * Mana yakma: hedef başına `amount` (sabit) ya da `pctMax` (hedefin MAKSİMUM MP'sinin oranı, yuvarlanır; ikisi birden varsa pctMax) kadar, mevcut MP'yle
+   * Mana yakma: hedef başına `amount` (sabit) + `pctMax` (hedefin MAKSİMUM MP'sinin oranı, yuvarlanır; ikisi birden varsa toplanır: Deep Cut) kadar, mevcut MP'yle
    * sınırlı (miktar: src/engine/mana-burn.ts > burnAmountFor). `onEmpty`: bkz. ManaEmptySpec (Drain Field).
    */
   | { type: 'manaBurn'; amount?: number; pctMax?: number; /** Yakılan mananın bu oranı kullanıcıya geri verilir. */ gainRatio?: number; onEmpty?: ManaEmptySpec }
   /** Kullanıcı `turns` tur boyunca düşmanların tek hedefli skill'lerinin hedefi olmak zorunda. */
   | { type: 'taunt'; turns: number; /** Taunt'lı karakter maks canının bu oranı kadar can kaybederse taunt biter. */ breakRatio?: number; /** Taunt sürerken taunt'lı olmayan dostların aldığı hasar bu çarpanla çarpılır (ör. 0.5 = yarı hasar). */ allyDamageMult?: number }
   /** Hedef dost `turns` tur boyunca aldığı hasarın `share` kadarını kullanıcıya aktarır. */
-  | { type: 'guard'; turns: number; share: number }
+  | { type: 'guard'; turns: number; share: number; /** Faz 2c (Blood Oath): guard kullanıcının Dark Bond'una bağlı: yalnızca bağlı dosta, bağ sürdükçe (süresiz), bağ bitince kalkar. */ bond?: boolean; /** Faz 5a (Interlocked): korunana korumacının zırhının bu oranı kadar zırh. */ armorPct?: number; /** Faz 5a (Second Chain): kullanıcının kendi sırasındaki dostlar da korunur (ikinci Guard kümesi). */ ownRow?: boolean }
   /**
    * Hasar alan (hedefler arasında vurulan) birimlere ya da `self` ise kullanıcıya süreli durum (buff/debuff) verir.
    * `chance` (0-1, yoksa 1): her alıcı için BAĞIMSIZ zar (seed'li RNG; alıcı başına bir sayı). `cause`: durumun görsel nedeni, `status` olayına aynen yazılır
@@ -883,7 +931,19 @@ export type SkillEffectKind =
   /** Vurulan (hasar yoksa tüm) hedeflerin HER BİRİNE ağırlıklı zarla seçilen tek bir durum verir (seed'li RNG). */
   | { type: 'randomStatus'; options: RandomStatusOption[] }
   /** Skill'in kapsadığı hücrelere `turns` turluk yer etkisi (zehir, yanan zemin...) bırakır. */
-  | { type: 'ground'; ground: string; turns: number; scale: Attribute; power: number }
+  | {
+      type: 'ground';
+      ground: string;
+      turns: number;
+      scale: Attribute;
+      power: number;
+      /** Skill ağacı (Faz 4c): aynı türden zemin zaten yanan hücrelerde güç çarpanı (Fire on Fire; eski zemin o hücreyi bırakır), merkez hücre çarpanı (Molten Core), tur başı ek durumlar (Hushing Moss, Killing Field). */
+      stackMult?: number;
+      centerMult?: number;
+      statuses?: GroundStatus[];
+      /** Faz 5a (Sea of Fire): zemin alanın dört yönden değdiği hücrelere de yayılır (aynı tahta). */
+      treeWide?: 'touch';
+    }
   /** Kullanıcı kendine maks canının `ratio` kadarını hasar verir (canı en az 1 kalır). */
   | { type: 'selfDamage'; ratio: number }
   /**
@@ -914,7 +974,13 @@ export type SkillEffectKind =
    * Çekme (Chain Hook, M6): İSABET EDEN (hasar yoksa tüm) hedef, kendi tahtasında kendi şeridinin EN ÖNDEKİ boş (canlı birim olmayan) hücresine
    * taşınır (yalnızca önünde boş hücre varsa). Olay `moved { cause: skill id, by }`. Boss kontrol direnci (unyielding.immuneDisplacement) etkilenmez.
    */
-  | { type: 'pull'; to: 'laneFront' };
+  | {
+      type: 'pull';
+      /** laneFront: şeridin en öndeki boş hücresi; Faz 5a stepForward: bir sıra öne (önü boşsa; Grasp and Drag). */
+      to: 'laneFront' | 'stepForward';
+      /** Faz 5a: yalnızca alanın arka sırasındaki hedefler. */
+      areaBack?: boolean;
+    };
 
 /**
  * Kalkan emilim kancaları (generic; her kalkan türünde çalışır: physical / magic). Kalkan ayaktayken bir SKILL vuruşunun hasarını emdiğinde tetiklenir
@@ -940,13 +1006,31 @@ export interface ShieldHook {
   onAbsorb: OnAbsorbSpec;
   /** Süreli katman (Ward-Etcher, YM6): taşıyanın kendi tur başında 1 azalır; 0'da katmanın kalan miktarı havuzdan silinir. Yoksa süresiz. */
   turns?: number;
+  /** Faz 4c: katmanın son atılıştaki tam boyu (Second Ward: kırılan kalkanın ilk boyu). */
+  size?: number;
 }
 
 /**
  * `side`: 'everyone' hedefli skill'lerde etkinin hangi tarafa gideceği (varsayılan: hasar/mana yakma/durum düşmana, şifa/kalkan/koruma dosta).
  */
 /** `area_any` hedefli skill'lerde de aynı alan: etki yalnızca alandaki o taraftaki birimlere (kullanıcıya göre dost/düşman) uygulanır (Smoke Bomb). */
-export type SkillEffect = SkillEffectKind & { side?: 'allies' | 'enemies' };
+export type SkillEffect = SkillEffectKind & {
+  side?: 'allies' | 'enemies';
+  /**
+   * Skill ağacı (Faz 2a+; Gore Wheel, plan 10a): durum etkisi hasardan ÖNCE işler: hedef başına ilk vuruş isabet edince (blok / Lucky Escape
+   * öncesi) hasar hesaplanmadan uygulanır, aynı vuruş ve koşullar onu görür. Yalnızca 'status' etkisinde; ağaç ekler, skills.json'da yok.
+   */
+  preHit?: boolean;
+  /** Skill ağacı: uygulanan durum / zemin süresiz (katalog 14.16 cevabı: `permanent` bayrağı). */
+  permanent?: boolean;
+  /** Skill ağacının eklediği / değiştirdiği etki (addEffect / replaceEffect): düğüm kimliği '<class>:<anahtar>' (ölçüm; kural değiştirmez). */
+  treeNode?: string;
+  /**
+   * Faz 2c (Ward Taunt): etki koşulu (tree-hooks.ts COND sözlüğü; hedef = alıcı). Hedefe giden etkide koşulu tutmayan alıcı atlanır; kendine / taunt
+   * etkisinde grubun hedeflerinden biri tutarsa uygulanır. Yalnızca ağaç ekler.
+   */
+  when?: CondWhen;
+};
 
 export interface SkillCost {
   /** mp: mana; hp: can; rage: Rage barı (yalnızca Rage'li class'lar; yetmiyorsa kullanılamaz). */
@@ -963,6 +1047,16 @@ export interface SkillCost {
    * (gerçek bedel = max(amount, mevcut); skillCostAmount). Şimdilik Rage için.
    */
   spendAll?: boolean;
+  /**
+   * Skill ağacı bedel koşulları (yalnızca derleyicinin yamaladığı birim kopyasında; skills.json'da YOK): koşul tutarsa bedele ek (Pain Into Iron,
+   * Into the Fire). skillCostAmount uygular; bkz. src/engine/tree-hooks.ts > CostCond.
+   */
+  cond?: CostCond[];
+  /**
+   * Skill ağacı yedek bedeli (Paladin Soul Exchange; yalnızca derleyicinin yamaladığı kopyada, yalnızca MP bedelinde): MP yetmezse bedel kendiliğinden
+   * MEVCUT canın bu oranından ödenir (round, en az 1; can bedeli gibi asla öldürmez). Oyuncu seçimi yok (Ömer 10a beşinci tur, soru 26). Bkz. cost.ts > skillCostPay.
+   */
+  hpFallback?: number;
 }
 
 /** Görsel ipucu + menzil: melee = hedefe atılır VE yalnızca en öndeki birimlere vurur, ranged = mermi, cast = büyü hazırlığı, sky = yukarıdan düşer. */
@@ -986,6 +1080,20 @@ export interface SkillAiHint {
 export interface SkillDef {
   id: string;
   name: string;
+  /**
+   * Skill ağacı (Faz 2a+, katalog 14.10 cevabı): ağaç bu skill'in hasarını kaldırdıysa (removeEffect) durum / Omen / yakım gibi etkiler yine
+   * İSABET ZARI ister: düşman hedeflere kullanım başında hasarsız isabet zarı atılır, yalnızca isabet edenler etkilenir. skills.json'da YOK.
+   */
+  treeHitRoll?: boolean;
+  /**
+   * Faz 5a (C5, YALNIZCA ağaç kopyasında; skills.json'da YOK): rastgele hedef önceliği (random_enemies: önce bu düşmanlar, kalan yer rastgele).
+   * 'hitMe' = sahibin son turundan beri ona vuranlar (Payback Fist), 'armor' = en zırhlılar (Plate Hunter), 'hurtMe' = savaşta ona en çok hasar veren.
+   */
+  treePriority?: 'hitMe' | 'armor' | 'hurtMe';
+  /** Faz 5a (Thrown Stiletto): requiresOpenBehind gevşetildi; arkası dolu hedefe vuruş "fırlatma" sayılır (koşul thrown). */
+  treeThrown?: boolean;
+  /** Faz 5a (Gathering Mark / Mark of Many): kullanım başında `from` (yoksa tüm) başka düşmandan hedefe 1'er yığın `status` çekilir. */
+  treeGather?: { status: string; from?: number };
   target: SkillTarget;
   cost: SkillCost;
   motion: SkillMotion;
@@ -1068,7 +1176,7 @@ export interface SkillDef {
    * pattern 'row' (YALNIZCA target 'single_ally'; Close Ranks, Ömer 2026-10-20): seçilen dostun sırasındaki (alan şekli 'row') diğer canlı dostlar
    * (kullanıcı HARİÇ) da hedef olur; menzile yalnızca seçilen dost bakar. Etkiler (ör. guard) hepsine uygulanır.
    */
-  splash?: { pattern: 'perpendicular' | 'chain' | 'row'; mult?: number; jumps?: number };
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind'; mult?: number; jumps?: number };
   /**
    * target 'area_enemies' / 'area_any' (zorunlu): oyuncu bir ANCHOR hücre seçer (boş hücre de olabilir); şekil (hücre kümesi, bkz. area-shape.ts) row | column | rect | plus | x.
    * 'area_any': anchor KENDİ ya da KARŞI tahtada olabilir (Smoke Bomb); etkiler `side` ile dost/düşmana ayrılır.
@@ -1089,7 +1197,7 @@ export interface SkillDef {
  * Alan şekilleri (area-shape.ts): row = hedefin SIRASI (aynı derinlik), column = hedefin ŞERİDİ, rect = rows x cols dikdörtgen (boyutu 3+ olan eksende
  * fare hücresi ortada, diğer eksenlerde sol-alt köşe), plus = hedef + 4 yön komşusu, x = hedef + 4 ÇAPRAZ komşu.
  */
-export type AreaShapeKind = 'row' | 'column' | 'rect' | 'plus' | 'x';
+export type AreaShapeKind = 'row' | 'column' | 'rect' | 'plus' | 'x' | 'rowColumn';
 
 /**
  * Aşamalı vuruş (staged): şeklin hücreleri hangi eksende aşamalara bölünür.
@@ -1115,6 +1223,14 @@ export interface AreaDef {
    * X şekli: "X çizilirken ortadan iki kez geçilir" = 2. Hasar dışı etkiler (durum vb.) bir kez uygulanır.
    */
   hitsAtCenter?: number;
+  /** Faz 5a (Butcher's Cross): alandaki HER birim bu kadar kez vurulur (merkezde hitsAtCenter ile büyüğü). */
+  hitsEach?: number;
+  /** Faz 5a (ağaç; Broad Sentence): plus kolunun uzunluğu (varsayılan 1; 1..3). */
+  arm?: number;
+  /** Faz 5a (ağaç; Scattered Flame): şekle anchor'ın SIRASI ('row') ya da ŞERİDİ ('column') da eklenir (birleşim). */
+  also?: 'row' | 'column';
+  /** Faz 5a (ağaç; Brittle Point): alan, vuruş sırasıyla (aşamalıda aşama sırası) en çok bu kadar hedefte durur. */
+  maxTargets?: number;
 }
 
 /** Bir hücrenin ekran konumu (dizin, 0 tabanlı): col = soldan sağa (derinlik ekseni), row = yukarıdan aşağıya (şerit ekseni). */
@@ -1216,7 +1332,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1238,6 +1354,11 @@ export interface StatusDef {
   speedMult?: number;
   damageTakenMult?: number;
   healTakenMult?: number;
+  /** Faz 2c (Sunder): taşıyanın geçerli zırhı bu çarpanla (0,8 = %20 düşük; Battle.effectiveStats). */
+  armorMult?: number;
+  /** Altıncı tur (Weakened): taşıyanın VERDİĞİ hasar çarpanı (tüm hasar) ve yalnızca büyü hasarı çarpanı (Battle.dealtDamageMult; önizleme / YZ aynı yol). */
+  damageDealtMult?: number;
+  magicDealtMult?: number;
   skipTurn?: boolean;
   /** true: bu durum bir birime uygulandığı AN o birimin kendi taunt'ı silinir (kontrol/CC durumu; şu an yalnızca Stun). Yeni durum eklemek tek satır. */
   breaksTaunt?: boolean;
@@ -1276,8 +1397,12 @@ export interface StatusDef {
   burstOnExpire?: boolean;
   /** Patlama tanımı (yığılan durum). */
   doom?: DoomDef;
-  /** Zamanla hasar (DoT) durumu: tikin hasar türü ve elementi (miktar skill'in `dot` etkisinden, uygulama anında sabitlenir). */
-  dot?: { damageType: 'physical' | 'magic'; element: Element };
+  /**
+   * Zamanla hasar (DoT) durumu: tikin hasar türü ve elementi (miktar skill'in `dot` etkisinden, uygulama anında sabitlenir).
+   * `scale` + `power` (+ `turns`): TÜM kaynaklarda ortak tik gücü (Burning, plan 10a / katalog 14.4): miktarı verilmeden uygulanan durum
+   * (status etkisi, ağaç addStatus) tik miktarını uygulayanın scale gücü x power olarak alır; `turns` süre verilmezse varsayılan.
+   */
+  dot?: { damageType: 'physical' | 'magic'; element: Element; scale?: Attribute; power?: number; turns?: number };
   /** true: süre turla azalmaz; durum onu koyan kural kaldırana kadar sürer (Ash Brand: telgraf çözülünce/iptal olunca; Anchored: Mooring sayısı, Staggered: kaybedilen eylem). */
   untilResolved?: boolean;
   /**
@@ -1300,6 +1425,17 @@ export interface GroundDef {
   /** Birimin can çubuğu yanındaki rozetin ikon türü. */
   icon: string;
   element: Element;
+  /** Faz 4c (ağaç zeminleri): içinde tur başlatan düşmana verilen durumlar (süre durumlarından SONRA uygulanır: 1 turluk Slow o turu kapsar). */
+  statuses?: GroundStatus[];
+  /** Faz 4c (Hall of Silence): içinde tur başlatan düşmanın maks MP'sinin bu oranı yanar (durumlardan önce). */
+  manaBurnPct?: number;
+}
+
+/** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */
+export interface GroundStatus {
+  status: string;
+  turns?: number;
+  mpZero?: boolean;
 }
 
 /** Yerde bırakılmış, süreli bir etki. */
@@ -1321,6 +1457,15 @@ export interface GroundEffect {
   power?: number;
   /** Süresi bu birimin turlarıyla sayılır ve etki bu birim ölünce biter (yoksa `source`). Last Ember (YM2): bırakan ölüdür, sayaç öldürenindir. */
   tickOn?: string;
+  /** Skill ağacı: süresiz zemin (süre azalmaz; bırakan ölünce yine biter). */
+  permanent?: boolean;
+  /** Skill ağacı: konduğundan beri geçen sayaç turu (koşul groundAgeAtLeast; yalnızca ağaçlı savaşta artar). */
+  age?: number;
+  /** Faz 4c: hücre başına güç çarpanı (Fire on Fire, Molten Core), tur başı ek durumlar, tik hasarı yok (yalnızca durum veren zemin), üst üste kuralı (aynı türden daha güçlü zemin hücredeyse tiklemez; ağacın doğurduğu zemin). */
+  cellMult?: Record<number, number>;
+  statuses?: GroundStatus[];
+  noDamage?: boolean;
+  yields?: boolean;
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
@@ -1338,6 +1483,8 @@ export interface Status {
   taken?: number;
   /** guard: hasarın korumacıya aktarılan oranı. */
   share?: number;
+  /** Faz 5a (Interlocked): guard sürerken korunan, korumacının zırhının bu oranı kadar zırh alır. */
+  armorPct?: number;
   /** regen: iyileştirenin kritik değerleri (her tikte kritik zarı atılır). */
   critChance?: number;
   critMult?: number;
@@ -1356,6 +1503,25 @@ export interface Status {
   snapStat?: number;
   snapCrit?: number;
   snapCritMult?: number;
+  /** Skill ağacı (Faz 2a+): süresiz (süre azalmaz; katalog 14.16). */
+  permanent?: boolean;
+  /** Faz 2c (Blood Oath): guard, kaynağın Dark Bond'una bağlı (bağ bitince / kopunca kalkar). */
+  bond?: boolean;
+  /**
+   * Skill ağacı (Faz 2a+, katalog 14.7 cevabı): uygulayana özgü büyüklük eki, statuses.json alanına DÜZ eklenir (accuracyDelta, evasionDelta,
+   * critDelta, damageTakenMult, speedMult, healTakenMult). Jinxed (endsOnOwnAttack): `attacks` = düşmeden önce ek saldırı sayısı, `keepChance` =
+   * saldırıdan sonra düşmeme şansı. Yalnızca ağaçlı uygulayanın durumunda.
+   */
+  potency?: Record<string, number>;
+  /** Yığın (Omen) Ill Omen ile geçti: konakta geçmiş Omen var (koşul omenFromTransfer; yalnızca ağaçlı savaşta yazılır). */
+  transferred?: boolean;
+  /** DoT: bu örneğin şimdiye kadar tik sayısı (ölçek dotTickIndex; yalnızca ağaçlı savaşta yazılır). */
+  ticks?: number;
+  /** Faz 4c (yalnızca ağaçlı savaşta yazılır): durumu veren skill (Herald of Ruin), DoT'un şimdiye kadar verdiği hasar (Rot to the Core), regen'in aynı kullanımdaki ilk şifası (Lifebloom), sıçrayan Doom (Leaping Mark). */
+  fromSkill?: string;
+  dealt?: number;
+  first?: number;
+  leap?: boolean;
 }
 
 export interface Combatant {
@@ -1394,6 +1560,24 @@ export interface Combatant {
    * önce buraya, yoksa ortak tabloya (setup.skills) bakar. Ağaçsız birimde tanımsız.
    */
   skillDefs?: Record<string, SkillDef>;
+  /** Skill ağacı (b) unitFx kanalı (UnitSetup.tree.fx): item'lerden ayrı; motor okuması tree-hooks.ts > effNum / effFlag / effList. */
+  treeFx?: ItemEffects;
+  /** unitFx anahtarı -> düğümler (ölçüm). */
+  treeFxNodes?: Record<string, string[]>;
+  /** Skill ağacı (c) kancaları (UnitSetup.tree.hooks). */
+  treeHooks?: TreeHook[];
+  /** Faz 4c: çağırdığı birimlere geçen ağaç (UnitSetup.tree.summons). */
+  treeSummons?: Record<string, TreeSetup>;
+  /** Ağaç kanalının "savaşta bir kez" tetikleri (unitFx anahtarları) ve tek seferlik Rage kancaları (düğüm kimlikleri). */
+  treeOnce?: string[];
+  /** Silahlanmış bedel koşulları (CostCond.after; düğüm kimlikleri): sıradaki ödemede kullanılır. */
+  treeArmed?: string[];
+  /** Skill ağacı (Faz 2a+): bu savaşta kullandığı skill id'leri (koşul firstUseOfSkill; yalnızca ağaçlı savaşta dolar). */
+  treeUsed?: string[];
+  /** Faz 2c: bu savaşta cooldown'lu bir skill kullandı (koşul firstCooldownSkill; yalnızca ağaçlı birimde yazılır). */
+  treeCdUsed?: boolean;
+  /** Faz 4a: tetiklerin verdiği geçici güç / bedelsizlik (tree-hooks.ts > TreeBuff); yalnızca ağaçlı birimde yazılır. */
+  treeBuffs?: TreeBuff[];
   summoned: boolean;
   /** Çağrılan birimin kalan tur sayısı (kendi turları). */
   lifespan: number | undefined;

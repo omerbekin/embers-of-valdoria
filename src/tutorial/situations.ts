@@ -93,7 +93,7 @@ export function selectSituations(b: Battle, uid: string, skillId: string): Situa
     const foes = b.living(actor.side === 'party' ? 'enemy' : 'party').filter((c) => c.board === c.side);
     if (foes.some((c) => b.rowOf(c.slot) > deepest)) out.push({ when: 'reach', skill: skillId });
   }
-  if (b.isAreaSkill(skillId) || b.isShapeSkill(skillId)) out.push({ when: 'area', skill: skillId });
+  if (b.isAreaSkill(skillId, uid) || b.isShapeSkill(skillId, uid)) out.push({ when: 'area', skill: skillId });
   return out;
 }
 

@@ -1,7 +1,7 @@
 import { tileUid, type Battle } from './battle';
 import { shapeLabel } from './area-shape';
-import { skillCostAmount } from './cost';
-import { betStake } from './gamble';
+import { skillCostAmount, skillCostPay } from './cost';
+import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { armorReduction, attributePower, hitChance } from './stats';
@@ -557,15 +557,15 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
   if (skill.telegraph) return telegraphOptions(battle, actor, skill, profile);
   const candidates = battle.validTargets(actor.uid, skillId);
   if (candidates.length === 0) return [];
-  if (battle.isAreaSkill(skillId)) {
+  if (battle.isAreaSkill(skillId, actor)) {
     // Alan (şekil) skill'i: her seçilebilir anchor hücre (boş hücre dahil) bir aday; aynı hücre kümesini veren anchor'lar tek aday (en küçük yuva).
     // Aşamalı skill de aynı: değerlendirme toplam hasar / hedef sayısı üzerinden (aşama sırası sonucu değiştirmez; falloff sırası gerçek vuruşla aynı).
     // area_any (Smoke Bomb): her iki tahtanın anchor'ları ayrı aday (tahta anahtarın parçası).
     const out: Option[] = [];
     const seen = new Set<string>();
-    const anyBoard = battle.isAnyBoardArea(skillId);
+    const anyBoard = battle.isAnyBoardArea(skillId, actor);
     for (const { board, slot } of battle.shapeAnchorCells(actor.uid, skillId)) {
-      const cells = battle.areaCells(skillId, slot, board);
+      const cells = battle.areaCells(skillId, slot, board, actor.uid);
       const key = `${board}:${cells.join(',')}`;
       if (seen.has(key)) continue;
       seen.add(key);
@@ -582,8 +582,8 @@ function skillOptions(battle: Battle, actor: Combatant, skillId: string, profile
     return out;
   }
   // Yan vuruşlu (splash) tek hedef skill'inde grup = seçilen hedef + yanındakiler (ilk eleman seçilen hedeftir)
-  const groups = battle.needsTargetChoice(skillId) ? candidates.map((t) => [t, ...battle.splashTargets(skillId, t, actor.uid)]) : [candidates];
-  return groups.map((targets) => evaluate(battle, actor, skill, targets, battle.needsTargetChoice(skillId) ? targets[0]!.uid : undefined, profile));
+  const groups = battle.needsTargetChoice(skillId, actor) ? candidates.map((t) => [t, ...battle.splashTargets(skillId, t, actor.uid)]) : [candidates];
+  return groups.map((targets) => evaluate(battle, actor, skill, targets, battle.needsTargetChoice(skillId, actor) ? targets[0]!.uid : undefined, profile));
 }
 
 const foeSide = (actor: Combatant) => (actor.side === 'party' ? 'enemy' : 'party');
@@ -595,7 +595,9 @@ function isPureBuff(skill: SkillDef): boolean {
 
 /** Skill'in kullanıcıya vereceği can kaybı (can bedeli + kendine hasar); canı en az 1 bırakır. */
 function selfHpCost(actor: Combatant, skill: SkillDef): number {
-  const hpCost = skill.cost.resource === 'hp' ? skillCostAmount(skill.cost, actor) : 0; // oranlı bedel: mevcut canın oranı
+  // oranlı bedel: mevcut canın oranı; Soul Exchange (cost.hpFallback): MP yetmezse candan ödenen yedek bedel de sayılır
+  const pay = skillCostPay(skill.cost, actor);
+  const hpCost = pay.resource === 'hp' ? pay.amount : 0;
   const self = sum(skill.effects.map((e) => (e.type === 'selfDamage' ? e.ratio * actor.maxHp : 0)));
   return Math.max(0, Math.min(actor.hp - 1, hpCost + self));
 }
@@ -737,7 +739,8 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     score: 0,
     // Rage bedeli skora yansımaz (Rage yalnızca harcanmak için birikir; bedel koşulu canUse + skill'in ai bağlamıyla sağlanır).
     // Oranlı bedel (Wail: mevcut canın %20'si) şu anki kaynaktan hesaplanır (skillCostAmount).
-    cost: skillCostAmount(skill.cost, actor) * (skill.cost.resource === 'mp' ? profile.mpCostWeight : skill.cost.resource === 'hp' ? profile.hpCostWeight : 0),
+    // Soul Exchange (cost.hpFallback): MP yetmezse gerçekten ödenecek can bedeli can ağırlığıyla (skillCostPay)
+    cost: ((p) => p.amount * (p.resource === 'mp' ? profile.mpCostWeight : p.resource === 'hp' ? profile.hpCostWeight : 0))(skillCostPay(skill.cost, actor, undefined, battle.freeMp)),
     // Düşük can kuralı (minHpRatioForHpCost) yalnızca SABİT can bedeline ve can bahsine uygulanır. Oranlı can bedeli
     // (cost.ofCurrent; Wail of the Dead: mevcut canın %20'si) muaf: bedel can azaldıkça kendiliğinden küçülür (Ömer kararı, madde 247).
     hpCost: (skill.cost.resource === 'hp' && !(skill.cost.ofCurrent ?? 0) && skillCostAmount(skill.cost, actor) > 0) || skill.effects.some((e) => e.type === 'damage' && e.bet?.resource === 'hp'),
@@ -746,7 +749,10 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
   for (const e of skill.effects) {
     if (e.type === 'damage' && e.bet?.resource === 'mp') {
       const mpLeft = skill.cost.resource === 'mp' && !battle.freeMp ? actor.mp - skill.cost.amount : actor.mp;
-      o.cost += (1 - e.bet.winChance) * betStake(e.bet, actor.maxHp, actor.hp, mpLeft) * profile.mpCostWeight;
+      // Mortgage (bet.hpStake): ek can bahsi can ağırlığıyla (yalnızca yamalı kopyada; yoksa hp 0)
+      const sp = betStakeParts(e.bet, actor.maxHp, actor.hp, mpLeft);
+      o.cost += (1 - e.bet.winChance) * sp.main * profile.mpCostWeight;
+      if (sp.hp > 0) o.cost += (1 - e.bet.winChance) * sp.hp * profile.hpCostWeight;
     }
   }
   // Çağrı: beslenmiş/beslenmemiş hâli ve tahmini değeri (varyantı uygulanmış birimin en iyi ham hasarı x ömür x summonValueShare)
@@ -791,7 +797,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
         const magic = skill.effects.some((e) => e.type === 'damage' && e.damageType === 'magic');
         const need = target.hp + target.shield + (magic ? target.magicShield : 0);
         const d = p.damage;
-        const cm = actor.stats.critMult;
+        const cm = d.critMult ?? actor.stats.critMult; // skill ağacı critDmgMul (kancasızda tanımsız)
         const c = Math.max(0, Math.min(1, d.critChance));
         const pk = d.critChance >= 1 ? pAtLeast(d.min, d.max, need) : (1 - c) * pAtLeast(d.min, d.max, need) + c * pAtLeast(d.min * cm, d.critMax, need);
         // Madde 258: hedefin kullanılmamış Lucky Escape hakkı ölümcül vuruşu o şansla tamamen yok sayar
@@ -827,10 +833,10 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
     if (p.emptyProc && target.side !== actor.side) {
       const ep = p.emptyProc;
       const left = Math.max(0, target.hp - (p.damage?.hpLoss ?? 0));
-      const exp = ep.chance * Math.min(left + target.shield + target.magicShield, ep.damage.avg * (1 + ep.damage.critChance * (actor.stats.critMult - 1)));
+      const exp = ep.damage ? ep.chance * Math.min(left + target.shield + target.magicShield, ep.damage.avg * (1 + ep.damage.critChance * (actor.stats.critMult - 1))) : 0;
       o.damage += exp; // (dmgBy'a yazılmaz: isabet zarı olmadığından burn/silence değeri isabet şansıyla çarpılmamalı)
       (o.emptyBy ??= {})[target.uid] = { chance: ep.chance, mpAfter: target.mp - (p.burn ?? 0), turns: ep.turns, status: ep.status };
-      if (o.notes.length < 6) o.notes.push(`${unitLabel(target)}: mana empty -> ${Math.round(ep.chance * 100)}% ${ep.statusName} ${ep.turns}t + ${ep.damage.avg} dmg`);
+      if (o.notes.length < 6) o.notes.push(`${unitLabel(target)}: mana empty -> ${Math.round(ep.chance * 100)}% ${ep.statusName} ${ep.turns}t + ${ep.damage?.avg ?? 0} dmg`);
     }
   }
   // Yerde kalan etki (zehir, yanan zemin, holy fire): alandaki (şeklin TÜM hücreleri; boş anchor dahil) düşmanların turlar boyunca alacağı beklenen hasar.

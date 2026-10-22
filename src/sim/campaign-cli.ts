@@ -1,5 +1,6 @@
 // Sefer simülatörü raporu (Türkçe). Tasarım ve hedefler: docs/balance.md > Sefer dengesi.
 // Varsayılan --mode=grind (Ömer 2026-10-19): serbest dolaşım + kasma oyuncusu; bayraklar ve rapor src/sim/campaign-grind-report.ts.
+// --tree=a|b (iki modda): skill ağacı açık, oyuncu vekili puanları odaklı kurulumla o yönde harcar (Faz 6; src/sim/tree-sim.ts).
 // --mode=flat = eski düz tekrar modeli (aşağıdaki bayraklar):
 // Kullanım: npm run sim:campaign -- --mode=flat [sefer sayısı] [ilk seed] [zorluk: easy|medium|hard|all] [oyuncu vekili: medium|easy|both] [--jobs=N] [--attempts=N] [--gear=best|none] [--json=dosya]
 //   Varsayılan: 240 sefer (12 rotanın her biri 20 kez), seed 1, tüm zorluklar, oyuncu vekili Medium ("iyi oyuncu") ve Easy ("ortalama oyuncu"),
@@ -17,6 +18,7 @@ import { content, type AiDifficulty } from '../engine';
 import { allRoutes, categoryFirstWin, mergeCampaignResults, nodeCategory, routeLabel, simulateCampaign, type CampaignSimResult, type NodeCategory } from './campaign';
 import campaignBalance from '../../data/campaign/balance.json';
 import { grindCli } from './campaign-grind-report';
+import { treeFlag } from './tree-sim';
 
 const args = process.argv.slice(2);
 const flag = (name: string) => args.find((a) => a.startsWith(`--${name}=`))?.split('=')[1];
@@ -38,6 +40,9 @@ if (encId && encFile) {
   ENCOUNTERS[encId] = def;
   (encountersJson as unknown as Record<string, unknown>)[encId] = def;
 }
+const treeDir = treeFlag(args); // --tree=a|b: skill ağacı (Faz 6), oyuncu vekili odaklı kurulum (tree-sim.ts)
+const treeOpt = treeDir ? { tree: treeDir } : {};
+if (treeDir && !flag('part')) console.log(`Skill ağacı AÇIK (yalnızca bu süreçte; oyuncu vekili odaklı kurulum, yön ${treeDir}). Ağaçsız referans için aynı komutu --tree olmadan koşun.`);
 const encArgs = encId && encFile ? [`--encounter-id=${encId}`, `--encounter-file=${encFile}`] : [];
 
 const map = getMap(CONFIG.maps[0]!);
@@ -46,7 +51,7 @@ const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function runPart(start: number, end: number): Promise<CampaignSimResult[]> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, '--mode=flat', ...encArgs, `--part=${start}:${end}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, '--mode=flat', ...(treeDir ? [`--tree=${treeDir}`] : []), ...encArgs, `--part=${start}:${end}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';
@@ -59,7 +64,7 @@ async function main() {
   const t0 = Date.now();
   let results: CampaignSimResult[];
   if (jobs <= 1 || runs < 24) {
-    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear, valor: valorMode() })));
+    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear, valor: valorMode(), ...treeOpt })));
   } else {
     const n = Math.min(jobs, runs);
     const bounds = Array.from({ length: n }, (_, k) => [Math.floor((runs * k) / n), Math.floor((runs * (k + 1)) / n)] as const);
@@ -140,7 +145,7 @@ if ((flag('mode') ?? 'grind') === 'grind') {
 } else if (part) {
   const [start, end] = part.split(':').map(Number) as [number, number];
   const out = diffs.flatMap((difficulty) =>
-    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode() })),
+    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode(), ...treeOpt })),
   );
   process.stdout.write(JSON.stringify(out));
 } else {

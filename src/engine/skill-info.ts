@@ -151,9 +151,9 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
     case 'longshot':
-      return `Deal +${pct(e.perRow)} damage for every row of distance between you and your target (your row + their row).`;
+      return `Deal +${pct(e.perRow)} damage for every row of distance between you and your target (your row + their row${e.extraRows ? ` + ${e.extraRows}` : ''}).`;
     case 'naturesGrudge':
-      return `When an ally hero falls (you included; summons do not count), the enemy that killed it is gripped by roots: ${cap(e.status)} and ${cap(e.dot)} for ${turnsText(e.turns)} (${val(e.scale, e.power)} damage per tick, ${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}). A kill by damage over time or ground counts for its source. Each Druid on the team applies it.`;
+      return `When an ally hero falls (you included; summons do not count), the enemy that killed it is gripped by roots: ${e.status ? `${cap(e.status)} for ${turnsText(e.turns)} and ` : ''}${cap(e.dot)} for ${turnsText(e.dotTurns ?? e.turns)} (${val(e.scale, e.power)} damage per tick, ${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}). A kill by damage over time or ground counts for its source. Each Druid on the team applies it.`;
     case 'soulDrain':
       return `Heal for ${pct(e.ratio)} of all damage you deal (damage dealt by your summons counts too).`;
     case 'manaOverflow':
@@ -340,7 +340,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
         const b = e.bet;
         const stake = betStake(b, stats.hp, stats.hp, Math.max(0, stats.mp - (skill.cost.resource === 'mp' ? skill.cost.amount : 0)));
         const m = betMultipliers(b, stake);
-        const what = b.resource === 'hp' ? `${pct(b.ratio)} of your max HP (${stake})` : b.ratio >= 1 ? 'all your remaining MP' : `${pct(b.ratio)} of your remaining MP`;
+        const what0 = b.resource === 'hp' ? `${pct(b.ratio)} of your max HP (${stake})` : b.ratio >= 1 ? 'all your remaining MP' : `${pct(b.ratio)} of your remaining MP`;
+        // Mortgage (skill ağacı, bet.hpStake): ek can bahsi, kazançta MP sayılır
+        const what = b.resource === 'mp' && (b.hpStake ?? 0) > 0 ? `${what0} plus ${pct(b.hpStake!)} of your max HP (counts as MP)` : what0;
         const win = b.perStake ? `x${(b.winMult).toFixed(1).replace(/.0$/, '')} damage, +${b.perStake} per ${b.resource.toUpperCase()} bet` : `x${m.win.toFixed(1).replace(/.0$/, '')} damage`;
         const lose = m.lose <= 0 ? 'you miss' : `x${m.lose.toFixed(1).replace(/.0$/, '')} damage`;
         add(`Bet ${what}: ${pct(b.winChance)} chance for ${win}; otherwise ${lose} and you lose the bet`, element);
@@ -387,14 +389,15 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       }
     } else if (e.type === 'manaBurn') {
       // Madde 260: sabit miktar ya da hedefin maks MP'sinin yüzdesi (pctMax)
-      const what = e.pctMax !== undefined ? `${pct(e.pctMax)} of each target's max MP` : `${e.amount ?? 0} MP`;
+      const what = e.pctMax !== undefined ? `${e.amount ? `${e.amount} MP + ` : ''}${pct(e.pctMax)} of each target's max MP` : `${e.amount ?? 0} MP`;
       const onHit = skill.effects.some((x) => x.type === 'damage') ? ' on hit (none if the attack misses)' : '';
       add(e.gainRatio ? `Steals ${what}${onHit}: you gain ${pct(e.gainRatio)} of it` : `Burns ${what}${onHit}`);
       const em = e.onEmpty;
       if (em) {
         const def = defs.statuses?.[em.status];
-        const el = em.damage.element ?? 'physical';
-        add(`Each target left with 0 MP (or already at 0) has a ${pct(em.chance)} chance (rolled separately) to be ${def?.name ?? em.status} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${def ? ` (${def.text})` : ''} and take ${pct(em.damage.power)} ${ATTRIBUTE_NAME[em.damage.scale]} (${raw(em.damage.scale, withMult(em.damage.power, outgoingDamageMult(stats, em.damage.element)))}) ${el} damage; it cannot miss but can crit`, el);
+        const d = em.damage;
+        const el = d?.element ?? 'physical';
+        add(`Each target left with 0 MP (or already at 0) has a ${pct(em.chance)} chance (rolled separately) to be ${def?.name ?? em.status} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${def ? ` (${def.text})` : ''}${d ? ` and take ${pct(d.power)} ${ATTRIBUTE_NAME[d.scale]} (${raw(d.scale, withMult(d.power, outgoingDamageMult(stats, d.element)))}) ${el} damage; it cannot miss but can crit` : ''}`, el);
       }
     } else if (e.type === 'taunt') {
       add(`Taunt ${e.turns} turns: enemies must target you${e.breakRatio ? ` (ends after losing ${pct(e.breakRatio)} HP)` : ''}`);
@@ -531,7 +534,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'heal') num('Heal', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
-    else if (e.type === 'manaBurn' && e.onEmpty) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
+    else if (e.type === 'manaBurn' && e.onEmpty?.damage) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
     else if (e.type === 'ground') num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];

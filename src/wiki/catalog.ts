@@ -519,7 +519,7 @@ function silenceArticle(): WikiArticle {
         const em = e.onEmpty!;
         const st = content.statuses[em.status]?.name ?? em.status;
         const burn = e.pctMax !== undefined ? `${pct(e.pctMax)} of each enemy's max MP` : `${e.amount ?? 0} MP`;
-        return `${s.name}: burns ${burn}. Every enemy left with 0 MP (or already at 0) rolls on its own: ${pct(em.chance)} chance to be ${st} for ${em.turns} turn${em.turns > 1 ? 's' : ''} and take ${pct(em.damage.power)} ${em.damage.scale.toUpperCase()} ${em.damage.element ?? 'physical'} damage (it cannot miss, but it can crit).`;
+        return `${s.name}: burns ${burn}. Every enemy left with 0 MP (or already at 0) rolls on its own: ${pct(em.chance)} chance to be ${st} for ${em.turns} turn${em.turns > 1 ? 's' : ''}${em.damage ? ` and take ${pct(em.damage.power)} ${em.damage.scale.toUpperCase()} ${em.damage.element ?? 'physical'} damage (it cannot miss, but it can crit)` : ''}.`;
       }),
   );
   return article('silence', 'Special rules', 'Silence and Drain Field', sil?.icon ?? 'manaburn', [
@@ -646,6 +646,16 @@ export function buildMechanics(): WikiArticle[] {
         `Power and attribute: every skill names the attribute it scales with (STR, INT, DEX or LUCK). A power of 60% with 40 INT is 24 base damage. Scaling per attribute: ${(['str', 'int', 'dex', 'luck'] as const).map((s) => `${STAT_LABEL[s]} x${num(f.scaling[s])}`).join(', ')}.`,
         `Variance: every hit rolls within plus or minus ${pct(f.damage.variance)}; damage is never below ${f.damage.minDamage}.`,
         `Armor: physical damage is reduced by Armor, every other element by Magic armor. Reduction = armor / (armor + ${k}), so ${k} armor blocks 50% and more armor gives less and less. Some skills ignore a share of armor (the description says so).`,
+        // Faz 2c: zırhı düşüren / alınan hasarı artıran durumlar (statuses.json armorMult / damageTakenMult; Sunder, Exposed...)
+        `Armor and damage-taken effects: ${Object.values(content.statuses)
+          .filter((s) => s.armorMult !== undefined || s.damageTakenMult !== undefined)
+          .map((s) => `${s.name} (${s.armorMult !== undefined ? `Armor x${num(s.armorMult)}` : `damage taken x${num(s.damageTakenMult!)}`})`)
+          .join(', ')}. They multiply the target's current armor or the damage it takes; several stack by multiplying.`,
+        // Altıncı tur: verilen hasarı azaltan durumlar (statuses.json damageDealtMult / magicDealtMult; Weakened)
+        `Damage-dealt effects: ${Object.values(content.statuses)
+          .filter((s) => s.damageDealtMult !== undefined || s.magicDealtMult !== undefined)
+          .map((s) => `${s.name} (damage dealt x${num(s.damageDealtMult ?? s.magicDealtMult!)} unless its source says otherwise; some sources weaken only magic damage)`)
+          .join(', ')}. They multiply the damage the affected unit deals, in the battle preview too.`,
         `Weaknesses: ${wk.join(' ')} See the Elements section.`,
         `Crit: a crit multiplies the final damage by x${num(a.critMult)} (chance ${pct(a.critChanceBase)} + ${pct(a.critChancePerLuck, 1)} per Luck). The multiplier never changes; Luck only adds chance. Crits also apply to healing, never to shields.`,
         `Summoned units take x${num(f.summon.damageTakenMultiplier)} damage.`,

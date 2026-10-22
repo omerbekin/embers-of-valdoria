@@ -98,7 +98,7 @@
         ['Ash Cloak', 'Shrouded you gain lasts 1 turn longer.', 'V2:bar0'],
         ['Light Step', 'Each attack you dodge restores 2 MP.', 'V2:bar1'],
         ['Killer Instinct', 'Your skills +4% critical chance against targets below 50% HP.', 'V3:bar2'],
-        ['Trophy', 'Each kill this battle adds +3% to your critical damage.', 'V3:bar3'],
+        ['Notched Blade', 'Each kill this battle adds +3% to your critical damage.', 'V3:bar3'],
         ['Reaper\'s Due', 'Your first kill each battle resets the cooldowns of your other skills.', 'V3:bar4']
       ],
       syn: { '0.mb': 'Smoke Bomb', '1.ma': 'Backstab' },

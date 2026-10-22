@@ -48,35 +48,97 @@
         "name": "First Refrain",
         "text": "Your first cooldown spell each battle is sure to echo.",
         "src": "B:V3:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "when": {
+              "firstCooldownSkill": true
+            },
+            "mod": {
+              "echoSet": 1
+            }
+          }
+        ]
       },
       {
         "at": 10,
         "name": "Resonant Kill",
         "text": "When you kill an enemy, your longest cooldown drops by 1.",
         "src": "B:V3:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "kill",
+            "do": [
+              {
+                "cooldown": -1,
+                "cd": "longest"
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Low Tide",
         "text": "Once per battle, when your MP drops below 25%, your next spell costs no MP.",
         "src": "B:V4:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "mpBelow",
+            "below": 0.25,
+            "do": [
+              {
+                "free": true
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 20,
         "name": "Momentum",
         "text": "When you kill an enemy, your next spell +15% damage.",
         "src": "B:V5:bar2",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "kill",
+            "do": [
+              {
+                "buff": {
+                  "powerMul": 0.15
+                }
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Encore",
         "text": "Once per battle, when you drop below 40% HP, all your cooldowns are reset.",
         "src": "B:V3:bar4",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "hpBelow",
+            "below": 0.4,
+            "once": true,
+            "do": [
+              {
+                "cooldown": "reset",
+                "cd": "all"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -85,133 +147,447 @@
       "name": "Resonance",
       "text": "Spell Echo chance +2% per rank.",
       "src": "B:V3:0.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "passive",
+          "f": "chance",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
     },
     "0.f2": {
       "name": "Killing Echo",
       "text": "Spell Echo +3% chance per rank when the spell kills.",
       "src": "B:V5:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "killedThisCast": true
+          },
+          "mod": {
+            "echoChance": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f3": {
       "name": "Rapid Recall",
       "text": "After Spell Echo triggers, your next turn comes 4% sooner per rank.",
       "src": "B:V3:0.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "rank": true,
+          "do": [
+            {
+              "sooner": 0.04
+            }
+          ]
+        }
+      ]
     },
     "0.n0": {
       "name": "Overload",
       "text": "The spell you recast after a Spell Echo is a sure critical.",
       "src": "B:V5:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "guaranteedCrit": true
+              },
+              "skill": "event"
+            }
+          ]
+        }
+      ]
     },
     "0.r": {
       "name": "Overtone",
       "text": "Spell Echo +1% chance per rank for each enemy the spell hits beyond the first.",
       "src": "B:V3:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "hitCount": 1
+          },
+          "mod": {
+            "echoChance": 0.01
+          },
+          "rank": true
+        }
+      ]
     },
     "0.ea": {
       "name": "Echo Chamber",
       "text": "Each echo in a battle adds +3% to your Spell Echo chance for the rest of that battle.",
       "src": "B:V3:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "echoChance": 0.03
+              },
+              "uses": 0,
+              "stack": true
+            }
+          ]
+        }
+      ]
     },
     "0.eb": {
       "name": "Sympathy",
       "text": "When Spell Echo triggers, your other cooldown spells drop by 1.",
       "src": "B:V3:0.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "cooldown": -1,
+              "cd": "others"
+            }
+          ]
+        }
+      ]
     },
     "0.ma": {
       "name": "Endless Refrain",
       "text": "A spell recast after an echo has double Spell Echo chance.",
       "src": "B:V3:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "echoMul": 1
+              },
+              "skill": "event",
+              "uses": 1
+            }
+          ]
+        }
+      ]
     },
     "0.fa": {
       "name": "Unstable Weave",
       "text": "Recast spells deal +40% damage, but a cooldown spell that fails to echo gets +1 turn of cooldown.",
       "src": "B:V3:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "powerMul": 0.4
+              },
+              "skill": "event"
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echoFail",
+          "do": [
+            {
+              "cooldown": 1,
+              "cd": "event"
+            }
+          ]
+        }
+      ]
     },
     "0.fb": {
       "name": "Frayed Threads",
       "text": "Sympathy cuts 2 turns instead of 1, but Spell Echo chance drops 25% → 18%.",
       "src": "B:V3:0.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "0.eb",
+          "on": "echo",
+          "do": [
+            {
+              "cooldown": -2,
+              "cd": "others"
+            }
+          ]
+        },
+        {
+          "k": "passive",
+          "f": "chance",
+          "op": "base",
+          "v": 0.18
+        }
+      ]
     },
     "0.mb": {
       "name": "Time Fold",
       "text": "When Spell Echo triggers, that spell's recast costs only half a turn.",
       "src": "B:V3:0.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "buff": {
+                "turnCost": 0.5
+              },
+              "skill": "event",
+              "uses": 1
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Arcane Overload",
       "text": "Spell Echo evolves: an echo resets all your cooldowns, not just the spell's, and the recast deals +20% damage.",
       "src": "B:V5:0.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "echo",
+          "do": [
+            {
+              "cooldown": "reset",
+              "cd": "all"
+            },
+            {
+              "buff": {
+                "powerMul": 0.2
+              },
+              "skill": "event"
+            }
+          ]
+        }
+      ]
     },
     "1.f1": {
       "name": "Focused Bolt",
       "text": "Fire Bolt +2% critical chance per rank.",
       "src": "B:V5:1.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
     },
     "1.f2": {
       "name": "Searing Crit",
       "text": "Fire Bolt critical damage +6% per rank.",
       "src": "B:V5:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "critDmgMul": 0.06
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Clean Shot",
       "text": "Fire Bolt +6% damage per rank against targets at full HP.",
       "src": "B:V5:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetFullHp": true
+          },
+          "mod": {
+            "powerMul": 0.06
+          },
+          "rank": true
+        }
+      ]
     },
     "1.n0": {
       "name": "Weak Spot",
       "text": "Fire Bolt critical hits ignore 30% of Magic Armor.",
       "src": "B:V5:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": true
+          },
+          "mod": {
+            "ignoreDefense": 0.3
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Finisher",
       "text": "Fire Bolt +5% damage per rank against targets below 30% HP.",
       "src": "B:V5:1.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mod": {
+            "powerMul": 0.05
+          },
+          "rank": true
+        }
+      ]
     },
     "1.ea": {
       "name": "Keen Gaze",
       "text": "Fire Bolt cannot miss and gains +10% critical chance.",
       "src": "B:V5:1.ea*",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "sureHit": true
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.1
+        }
+      ]
     },
     "1.eb": {
       "name": "Execution Bolt",
       "text": "Fire Bolt deals +50% damage to targets below 25% HP.",
       "src": "B:V5:1.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.25
+          },
+          "mod": {
+            "powerMul": 0.5
+          }
+        }
+      ]
     },
     "1.ma": {
       "name": "Hot Streak",
       "text": "A critical Fire Bolt makes your next Fire Bolt a sure critical.",
       "src": "B:V5:1.ma*",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "do": [
+            {
+              "buff": {
+                "guaranteedCrit": true
+              },
+              "skill": "fire_bolt"
+            }
+          ]
+        }
+      ]
     },
     "1.fa": {
       "name": "Unstable Focus",
       "text": "Fire Bolt critical hits deal +50% more, but its non-critical hits deal 20% less.",
       "src": "B:V5:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": true
+          },
+          "mod": {
+            "powerMul": 0.5
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": false
+          },
+          "mod": {
+            "powerMul": -0.2
+          }
+        }
+      ]
     },
     "1.fb": {
       "name": "Reckless Bolt",
       "text": "Fire Bolt +35% damage against targets below 50% HP, but 20% less against healthier ones.",
       "src": "B:V5:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.35
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "not": {
+              "targetHpBelow": 0.5
+            }
+          },
+          "mod": {
+            "powerMul": -0.2
+          }
+        }
+      ]
     },
     "1.mb": {
       "name": "Rolling Doom",
@@ -219,79 +595,305 @@
       "src": "B:V5:1.mb",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "skill": "fire_bolt",
+          "do": [
+            {
+              "cast": "fire_bolt",
+              "to": "lowestHpEnemy"
+            }
+          ]
+        }
+      ]
     },
     "1.v": {
       "name": "Sunfire",
       "text": "Fire Bolt evolves into Sunfire: it deals +40% damage, and a critical Sunfire splashes its full damage to the enemies beside the target.",
       "src": "B:V5:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": 0.4
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "do": [
+            {
+              "strike": 1,
+              "to": "beside"
+            }
+          ]
+        }
+      ]
     },
     "2.f1": {
       "name": "Biting Gale",
       "text": "Blizzard has a 10% chance per rank to Slow each enemy hit for 1 turn.",
       "src": "A:V2:2.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.1
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.3
+            }
+          ]
+        }
+      ]
     },
     "2.f2": {
       "name": "Numbing Cold",
       "text": "Blizzard +4% damage per rank against Slowed enemies.",
       "src": "A:V2:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f3": {
       "name": "Driving Snow",
       "text": "Blizzard has a 5% chance per rank to Blind each enemy hit for 1 turn.",
       "src": "A:V2:2.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "after": "damage",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.05
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.1
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.15
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.25
+            }
+          ]
+        }
+      ]
     },
     "2.n0": {
       "name": "Hard Frost",
       "text": "Blizzard always Slows the enemies in the front row of its area for 1 turn.",
       "src": "A:V2:2.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "slow",
+              "turns": 1,
+              "to": "castFront"
+            }
+          ]
+        }
+      ]
     },
     "2.r": {
       "name": "Snow Blindness",
       "text": "Blizzard +4% damage per rank against Blinded enemies.",
       "src": "A:V2:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "blinded"
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "2.ea": {
       "name": "Flash Freeze",
       "text": "Each enemy already Slowed when Blizzard hits has a 50% chance to be Stunned for 1 turn.",
       "src": "A:V2:2.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.5
+            }
+          }
+        }
+      ]
     },
     "2.eb": {
       "name": "Whiteout",
       "text": "Blizzard's chance to Blind is doubled, and its Blind lasts 2 turns.",
       "src": "A:V2:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "status:blinded",
+          "f": "chance",
+          "op": "mul",
+          "v": 1,
+          "needs": "2.f3"
+        },
+        {
+          "k": "skill",
+          "sel": "status:blinded",
+          "f": "turns",
+          "op": "set",
+          "v": 2,
+          "needs": "2.f3"
+        }
+      ]
     },
     "2.ma": {
       "name": "Winter's Grip",
       "text": "While any enemy is Stunned, Blizzard's cooldown is 1 instead of 2.",
       "src": "A:V2:2.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "anyEnemyStatus": "stun"
+          },
+          "mod": {
+            "cooldownSet": 1
+          }
+        }
+      ]
     },
     "2.fa": {
       "name": "Black Ice",
       "text": "Flash Freeze always Stuns, but Blizzard deals 40% less damage.",
       "src": "A:V2:2.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.4
+        }
+      ]
     },
     "2.fb": {
       "name": "Howling Squall",
       "text": "Blizzard covers 3 rows x 3 lanes instead of 3 x 2, but it costs 14 → 20 MP.",
       "src": "A:V2:2.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "cols": 3
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 20
+        }
+      ]
     },
     "2.mb": {
       "name": "Lost in the Snow",
       "text": "An enemy Blinded by Blizzard that misses an attack is Stunned for 1 turn.",
       "src": "A:V2:2.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "when": {
+            "targetStatus": "blinded"
+          },
+          "do": [
+            {
+              "status": "stun",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "2.v": {
       "name": "Eternal Winter",
@@ -299,128 +901,419 @@
       "src": "A:V2:2.v",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "ground",
+            "ground": "storm",
+            "turns": 2,
+            "scale": "int",
+            "power": 0
+          }
+        }
+      ]
     },
     "3.f1": {
       "name": "Rimeguard",
       "text": "Mana Barrier shield +5% per rank when cast on an ally in the front row.",
       "src": "A:V2:3.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "shieldDealt",
+          "when": {
+            "targetRow": "front"
+          },
+          "mul": 0.05,
+          "rank": true
+        }
+      ]
     },
     "3.f2": {
       "name": "Cauterize",
       "text": "Each debuff Mana Barrier dispels heals the ally for 2% of max HP per rank.",
       "src": "A:V1:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "dispel",
+          "rank": true,
+          "do": [
+            {
+              "heal": 0.02,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.f3": {
       "name": "Numbing Touch",
       "text": "While Mana Barrier holds, Slowed attackers deal 3% less damage per rank to the holder.",
       "src": "A:V2:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "team",
+          "shield": "mana_barrier",
+          "when": {
+            "incomingStatus": "slow"
+          },
+          "mul": -0.03,
+          "rank": true
+        }
+      ]
     },
     "3.n0": {
       "name": "Ice Mirror",
       "text": "The first hit Mana Barrier absorbs Slows the attacker for 2 turns.",
       "src": "A:V2:3.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "shieldAbsorb",
+          "once": "perShield",
+          "do": [
+            {
+              "status": "slow",
+              "turns": 2,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.r": {
       "name": "Frozen Reserve",
       "text": "Mana Barrier gives +1 MP per rank for each hit it absorbs from a Slowed enemy.",
       "src": "A:V2:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "shieldAbsorb",
+          "when": {
+            "targetStatus": "slow"
+          },
+          "rank": true,
+          "do": [
+            {
+              "mp": 1
+            }
+          ]
+        }
+      ]
     },
     "3.ea": {
       "name": "Frost Armor",
       "text": "Every hit Mana Barrier absorbs Slows the attacker for 1 turn.",
       "src": "A:V2:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "shieldAbsorb",
+          "do": [
+            {
+              "status": "slow",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.eb": {
       "name": "Ice Block",
       "text": "Mana Barrier also makes the holder Fortified for 1 turn.",
       "src": "A:V2:3.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "fortify",
+            "turns": 1
+          }
+        }
+      ]
     },
     "3.ma": {
       "name": "Frozen Rebuke",
       "text": "A Slowed enemy that hits Mana Barrier is Stunned for 1 turn (once per barrier).",
       "src": "A:V2:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "shieldAbsorb",
+          "once": "perShield",
+          "when": {
+            "before": {
+              "targetStatus": "slow"
+            }
+          },
+          "do": [
+            {
+              "status": "stun",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.fa": {
       "name": "Brittle Shell",
       "text": "Frost Armor Slows for 2 turns, but Mana Barrier's shield is 35% smaller.",
       "src": "A:V2:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "3.ea",
+          "on": "shieldAbsorb",
+          "do": [
+            {
+              "status": "slow",
+              "turns": 2,
+              "to": "target"
+            }
+          ]
+        },
+        {
+          "k": "skill",
+          "sel": "shield",
+          "f": "power",
+          "op": "pct",
+          "v": -0.35
+        }
+      ]
     },
     "3.fb": {
       "name": "Frozen Solid",
       "text": "Ice Block lasts 2 turns, but the holder is Slowed while it lasts.",
       "src": "A:V2:3.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:fortify",
+          "mod": {
+            "turns": 1
+          }
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "slow",
+            "turns": 2
+          }
+        }
+      ]
     },
     "3.mb": {
       "name": "Twin Ward",
       "text": "Mana Barrier also shields the ally with the lowest HP for 50% of its value.",
       "src": "A:V3:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "cast": "event",
+              "power": 0.5,
+              "to": "lowestHpAlly",
+              "noChain": true
+            }
+          ]
+        }
+      ]
     },
     "3.v": {
       "name": "Shatter Aegis",
       "text": "Mana Barrier evolves: when it breaks, it fires a free Fire Bolt at the attacker that is a sure critical.",
       "src": "A:V5:3.v",
       "syn": "Fire Bolt",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "shieldBreak",
+          "skill": "mana_barrier",
+          "do": [
+            {
+              "cast": "fire_bolt",
+              "to": "target",
+              "crit": true
+            }
+          ]
+        }
+      ]
     },
     "4.u1": {
       "name": "Long Smoulder",
       "text": "Meteor's Burning ground lasts 2 → 3 turns.",
       "src": "A:V1:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground",
+          "f": "turns",
+          "op": "base",
+          "v": 3
+        }
+      ]
     },
     "4.u2": {
       "name": "White Heat",
       "text": "Meteor's Burning ground deals +30% damage.",
       "src": "A:V1:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground",
+          "f": "power",
+          "op": "pct",
+          "v": 0.3
+        }
+      ]
     },
     "4.u3": {
       "name": "Sea of Fire",
       "text": "Meteor's Burning ground also covers every cell touching the plus shape.",
       "src": "A:V1:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "groundWide": "touch"
+        }
+      ]
     },
     "4.r1": {
       "name": "Concussion",
       "text": "Meteor Stuns the enemy at its center for 1 turn.",
       "src": "A:V2:4.r1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1
+            }
+          }
+        }
+      ]
     },
     "4.r2": {
       "name": "Ringing Ears",
       "text": "Enemies on Meteor's outer cells have a 25% chance to be Stunned for 1 turn.",
       "src": "A:V2:4.r2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": false
+          },
+          "mod": {
+            "addStatus": {
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.25
+            }
+          }
+        }
+      ]
     },
     "4.r3": {
       "name": "Earthshaker",
       "text": "Each enemy Meteor hits has a 50% chance to be Staggered: it loses its next action.",
       "src": "A:V2:4.r3",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "staggered",
+            "turns": 1,
+            "chance": 0.5
+          },
+          "after": "damage"
+        }
+      ]
     },
     "4.d1": {
       "name": "Flung Embers",
       "text": "Meteor flings an ember at a random enemy outside its area: 30% INT and Burning for 2 turns.",
       "src": "A:V1:4.d1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "damage": 0.3,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "fire",
+              "to": "outsideArea",
+              "count": 1
+            },
+            {
+              "status": "burning",
+              "turns": 2,
+              "to": "outsideArea",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "4.d2": {
       "name": "Ember Hail",
       "text": "Meteor flings 3 embers instead of 1.",
       "src": "A:V1:4.d2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "drop": "4.d1",
+          "do": [
+            {
+              "damage": 0.3,
+              "stat": "int",
+              "damageType": "magic",
+              "element": "fire",
+              "to": "outsideArea",
+              "count": 3
+            },
+            {
+              "status": "burning",
+              "turns": 2,
+              "to": "outsideArea",
+              "count": 3
+            }
+          ]
+        }
+      ]
     },
     "4.d3": {
       "name": "Twin Meteors",
@@ -428,25 +1321,73 @@
       "src": "A:V1:4.d3",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "skill": "meteor",
+          "do": [
+            {
+              "cast": "meteor",
+              "delay": 1,
+              "power": 0.5,
+              "noChain": true
+            }
+          ]
+        }
+      ]
     },
     "4.l1": {
-      "name": "Dead Center",
+      "name": "Crater's Heart",
       "text": "Meteor deals +40% damage to the enemy at its center.",
       "src": "A:V1:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true
+          },
+          "mod": {
+            "powerMul": 0.4
+          }
+        }
+      ]
     },
     "4.l2": {
       "name": "Molten Core",
       "text": "Meteor's Burning ground deals double damage on its center cell.",
       "src": "A:V1:4.l2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "ground:burning",
+          "f": "centerMult",
+          "op": "set",
+          "v": 2
+        }
+      ]
     },
     "4.l3": {
       "name": "Extinction",
       "text": "Meteor's center target takes +20% damage for each other enemy the Meteor hits.",
       "src": "A:V1:4.l3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true
+          },
+          "scale": {
+            "hitCount": 1
+          },
+          "mod": {
+            "powerMul": 0.2
+          }
+        }
+      ]
     }
   }
 }

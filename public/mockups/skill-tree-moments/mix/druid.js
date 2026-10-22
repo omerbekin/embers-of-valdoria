@@ -78,7 +78,7 @@
         "3.v": ["Two-Way Rite", "Rejuvenate can target an enemy: instead of healing, it Withers it for 3 turns, each tick as strong as the regeneration +50%.", false, "V1:3.v"],
 
         "4.u1": ["Crashing Arrival", "Summon Treant deals 50% INT nature damage to the enemy front row as it lands.", false, "V5:4.u1"],
-        "4.u2": ["Heavy Landing", "The arrival damage also hits the second row.", false, "V5:4.u2"],
+        "4.u2": ["Oakfall", "The arrival damage also hits the second row.", false, "V5:4.u2"],
         "4.u3": ["Falling Oak", "The arrival damage +100%, and the enemy facing the Treant is Stunned for 1 turn.", false, "V5:4.u3"],
         "4.r1": ["Heavy Boughs", "Root Smash deals +20% damage.", false, "V2:4.l1"],
         "4.r2": ["Heavy Smash", "Root Smash deals +25% damage to Slowed or Stunned enemies.", false, "V4:4.l2"],
@@ -105,7 +105,7 @@
       bar: [
         ["Deep Rot", "Withering you apply lasts 1 turn longer.", "V1:bar1"],
         ["Heart of the Wild", "Critical hits with your nature skills restore 4 MP.", "V5:bar4"],
-        ["Tight Weave", "The root field from Nature's Wrath lasts 1 turn longer.", "V4:bar3"],
+        ["Tight Weave", "Nature's Wrath deals +5% damage.", "V4:bar3"],
         ["Deep Spring", "Rejuvenate's regeneration lasts 1 turn longer (3 → 4).", "V3:bar4"],
         ["Barkskin", "Your Treant takes 15% less damage.", "V2:bar2"]
       ],

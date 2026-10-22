@@ -37,7 +37,7 @@
         "0.fb": ["Exposed Perch","Your skills count 2 extra rows of distance for their bonuses, but you take 20% more damage from enemy ranged skills.",false,"V1:0.fb*"],
         "0.v": ["Dead Center","Sharpshooter evolves: your first hit on each enemy is a sure critical if it stands 4+ rows away.",false,"V1:0.v"],
 
-        "1.f1": ["Hamstring","Quick Shot has a 6% chance per rank to Slow for 1 turn.",false,"V3:1.f1"],
+        "1.f1": ["Hock Shot","Quick Shot has a 6% chance per rank to Slow for 1 turn.",false,"V3:1.f1"],
         "1.f2": ["Practiced Release","Quick Shot +3% critical chance per rank against targets 4+ rows away.",false,"V1:1.f3"],
         "1.f3": ["Sting in the Eye","Quick Shot has a 4% chance per rank to Blind for 1 turn.",false,"V3:1.f3"],
         "1.n0": ["Shot to the Knee","Quick Shot critical hits always Slow the target for 2 turns.",false,"V3:1.n0"],
@@ -48,7 +48,7 @@
         "1.eb": ["For the Eyes","Quick Shot Blinds for 1 turn when it crits.",false,"V3:1.eb"],
         "1.mb": ["Blind Panic","A Blinded enemy hit by Quick Shot is also Jinxed.",false,"V3:1.mb"],
         "1.fb": ["Gouging Arrow","Quick Shot Blinds for 2 turns every time, but it gains a 2-turn cooldown.",false,"V3:1.fb"],
-        "1.v": ["Maiming Shot","Quick Shot evolves: it Slows; if the target is Slowed it Blinds; if Slowed and Blinded it Staggers.",false,"V3:1.v"],
+        "1.v": ["Maiming Shot","Quick Shot evolves: it Slows for 1 turn; if the target is Slowed it Blinds for 1 turn; if Slowed and Blinded it Staggers.",false,"V3:1.v"],
 
         "2.f1": ["Long Shaft","Piercing Arrow +2% damage per rank for each enemy it hits.",false,"V4:2.f1"],
         "2.f2": ["Clean Flight","Piercing Arrow falloff 2% smaller per rank.",false,"V4:2.f2"],

@@ -1,5 +1,5 @@
 /* SKILL AGACI Gear taslagi: ETKILESIM KATMANI (mockup, oyun kodu DEGIL). Gorunum: views.js (GV), kurallar: data/tree-logic.js (GT) + data/core.js (SMM).
-   Adres: #v1 | #v2 | #v3 [&phone (telefon yatay 812x375) | &phone=740 (740x360)] [&lv=1..50] [&tab=tree (yalniz v3)] [&open (yalniz v2: calisma paneli acik)] [&clean (taslak seridini gizle; H tusu da)].
+   Adres: #v4 (varsayilan) | #v1 | #v2 | #v3 [&phone (telefon yatay 812x375) | &phone=740 (740x360)] [&lv=1..50] [&tab=tree (yalniz v3)] [&open (yalniz v2: calisma paneli acik)] [&clean (taslak seridini gizle; H tusu da)].
    Akis: tik = +1 BEKLEYEN puan, sag tik / uzun basis = -1 bekleyen, Reset siler, Confirm kaydeder (stat sayfasi gibi); onayli puan yalniz Respec ile geri gider.
    Dokunmatik: ilk dokunus ipucunu sabitler (+ / - dugmeleriyle), ikinci dokunus +1. */
 'use strict';
@@ -18,16 +18,16 @@
     lastHash = location.hash;
     const set = {};
     location.hash.slice(1).split('&').filter(Boolean).forEach((t) => { const p = t.split('='); set[p[0]] = p.length > 1 ? p[1] : true; });
-    const v = ['v1', 'v2', 'v3'].find((x) => set[x]) || 'v1';
+    const v = ['v4', 'v1', 'v2', 'v3'].find((x) => set[x]) || 'v4'; /* adres yoksa V4 (Omer 2026-10-22: V4 varsayilan) */
     ST.variant = v; ST.phone = set.phone ? (set.phone === '740' ? '740' : '812') : ''; ST.clean = !!set.clean;
     const lv = +set.lv; ST.lv = lv >= 1 && lv <= MC.MAXLV ? lv : 30; /* adres tum gorunumu tarif eder: lv yoksa 30 */
-    ST.tab = v === 'v3' && set.tab === 'tree' ? 'tree' : 'sheet';
+    ST.tab = v === 'v4' ? (set.tab === 'sheet' ? 'sheet' : 'tree') : v === 'v3' && set.tab === 'tree' ? 'tree' : 'sheet'; /* V4: Tree sekmesi acik gelir */
     ST.open = v === 'v2' && !!set.open;
   }
   function writeHash() {
     const t = [ST.variant];
     if (ST.phone) t.push(ST.phone === '740' ? 'phone=740' : 'phone'); if (ST.lv !== 30) t.push('lv=' + ST.lv);
-    if (ST.variant === 'v3' && ST.tab === 'tree') t.push('tab=tree'); if (ST.open) t.push('open'); if (ST.clean) t.push('clean');
+    if (ST.variant === 'v3' && ST.tab === 'tree') t.push('tab=tree'); if (ST.variant === 'v4' && ST.tab === 'sheet') t.push('tab=sheet'); if (ST.open) t.push('open'); if (ST.clean) t.push('clean');
     history.replaceState(null, '', '#' + t.join('&')); lastHash = location.hash;
   }
   /* adres disaridan degisti (adres cubugu, geri tusu, baska arac): gorunumu bastan kur. hashchange + popstate + hafif yoklama (replaceState / pushState olay uretmez) */
@@ -50,6 +50,7 @@
     de.classList.toggle('mk-phone', !!ST.phone); de.classList.toggle('mk-clean', !!ST.clean);
     ST.coarse = !!ST.phone || (window.matchMedia && matchMedia('(pointer: coarse)').matches);
     de.style.setProperty('--nav-k', String(ST.coarse ? 1 : Math.min(1.75, Math.max(1, Math.round(H / 640 / 0.05) * 0.05))));
+    ST.reduced = !!(window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches); de.classList.toggle('reduced-motion', ST.reduced); /* oyundaki html.reduced-motion: hareket yok */
     de.classList.add('close-btn-on'); /* Gear acikken sag ustte X (Menu'nun yerinde) */
   }
 
@@ -66,14 +67,14 @@
   function treeOpts(host, inbar) {
     const v = ST.variant, sh = ST.short;
     /* plates: v3 Tree sekmesi = her satir oyunun skill plakasi + dugumleri (views.js > gpHTML); dar + uzun yedek pencerede (nw) eski yerlesim */
-    const plates = v === 'v3' && !ST.nw, gap = plates && sh ? 14 : 6; /* telefonda plakali satirlar: kayan alanin kendi dikey cubugu (ince ~11 px) genisliginden yer almasin, yatay kayma cikmasin */
-    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - gap), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar, plates, u: ST.u };
+    const q4 = v === 'v4', plates = (v === 'v3' && !ST.nw) || q4, gap = plates && (sh || q4) ? 14 : 6; /* v4: kayan alanin kendi dikey cubugu (~11 px) genislikten yer alir */ /* telefonda plakali satirlar: kayan alanin kendi dikey cubugu (ince ~11 px) genisliginden yer almasin, yatay kayma cikmasin */
+    return { want: ST.nw ? 'p' : v === 'v1' ? 's' : v === 'v2' ? 'm' : 'l', avail: Math.max(240, host.clientWidth - gap), coarse: ST.coarse, ult: sh ? 'under' : v === 'v1' ? 'under' : v === 'v2' ? 'full' : 'side', short: sh, inbar: sh && !!inbar, plates, q4, u: ST.u };
   }
   function mountTree(host, inbar) {
     let o = treeOpts(host, inbar);
     /* v3 plakali satirlar (masaustu): ana sutun en dar satira (plaka + 8 dugum kolonu) yetmiyorsa yan sutun (Points karti) agacin ALTINA iner;
        o da yetmezse (cok dar pencere) agac alani kendi icinde yatay kayar (V.treeHTML > hs). Boylece hicbir pencere boyunda satirlar yan sutunun altina tasmaz. */
-    const wide = o.plates && !o.short && host.closest ? host.closest('.gt-wide') : null;
+    const wide = o.plates && !o.short && !o.q4 && host.closest ? host.closest('.gt-wide') : null; /* v4: yan sutun yok */
     if (wide) {
       wide.classList.remove('stack'); o = treeOpts(host, inbar); /* yan sutun sagda iken olc */
       if (o.avail < V.gpNeed(o)) { wide.classList.add('stack'); o = treeOpts(host, inbar); } /* altina indirince genislik yeniden olculur */
@@ -100,8 +101,11 @@
     const sc = saveScroll();
     layout();
     ui.innerHTML = V.gearHTML() + V.fsButtonHTML();
-    const host = $('#gt-treehost'); if (host) mountTree(host, ST.variant === 'v3');
+    const host = $('#gt-treehost'); if (host) mountTree(host, ST.variant === 'v3' || ST.variant === 'v4');
     if (ST.open && ST.variant === 'v2') mountWorkspace();
+    const ek = ST.variant + ST.tab, g4 = $('#gt-treehost .gt.q4'); /* giris animasyonu yalniz ilk acilista / sekme-gorunum degisince; yeniden boyutlandirmada yok */
+    if (g4 && ST.enterKey !== ek && !ST.reduced) { g4.classList.add('enter'); setTimeout(() => g4.classList.remove('enter'), 1200); }
+    ST.enterKey = ek;
     refresh();
     restoreScroll(sc);
     buildStrip();
@@ -116,11 +120,31 @@
     refreshTree(E);
     refreshTip();
   }
+  /* ---------- v4 animasyonlari: durum degisimini yakalar, yalniz sinif ekler (CSS: tree.css > "v4"); azaltilmis harekette hic eklenmez ---------- */
+  const FXC = ['anim-fill', 'anim-evolve', 'anim-reset', 'anim-confirm', 'anim-dim', 'anim-awaken', 'anim-evoready'];
+  function playFx(el, names, ms) {
+    FXC.forEach((c) => el.classList.remove(c)); void el.offsetWidth; names.split(' ').forEach((c) => el.classList.add(c));
+    clearTimeout(el._at); el._at = setTimeout(() => FXC.forEach((c) => el.classList.remove(c)), ms || 1500);
+  }
+  function nodeFx(el, st, pn) {
+    const old = el._fx; el._fx = { rank: st.rank, pn, st: st.st };
+    if (!old || ST.reduced) return;
+    const isV = el.classList.contains('k-v'), shut = (x) => x === 'tlk' || x === 'rq' || x === 'dir';
+    if (st.rank < old.rank) playFx(el, 'anim-reset', 700);
+    else if (st.rank > old.rank) playFx(el, 'anim-fill' + (isV ? ' anim-evolve' : ''), isV ? 1800 : 1000);
+    else if (old.pn > 0 && pn === 0) playFx(el, 'anim-confirm', 1000);
+    else if (st.st === 'dir' && old.st !== 'dir') playFx(el, 'anim-dim', 600);
+    else if (isV && st.st === 'av' && old.st !== 'av') playFx(el, 'anim-evoready', 1800);
+    else if (shut(old.st) && !shut(st.st)) playFx(el, 'anim-awaken', 900);
+  }
+  const LVL = { '': 0, half: 1, pend: 2, on: 2 };
   function refreshTree(E) {
-    const lv = ST.lv, S = ST.S;
+    const lv = ST.lv, S = ST.S, q4 = ST.variant === 'v4';
     $$('.gt-nd').forEach((el) => {
       const key = el.dataset.key, st = GT.status(lv, E, key);
-      el.className = (el.dataset.base || 'gt-nd') + ' st-' + st.st + (ST.P[key] > 0 ? ' pend' : '') + (TIP.pinned === el ? ' pin' : '');
+      const keep = q4 ? (el.className.match(/anim-\S+/g) || []).join(' ') : '';
+      el.className = (el.dataset.base || 'gt-nd') + ' st-' + st.st + (ST.P[key] > 0 ? ' pend' : '') + (TIP.pinned === el ? ' pin' : '') + (keep ? ' ' + keep : '');
+      if (q4) nodeFx(el, st, ST.P[key] || 0);
       const pp = $('.pp', el);
       if (pp) { const pn = ST.P[key] || 0; pp.innerHTML = '<span class="c">' + '●'.repeat(st.rank - pn) + '</span><span class="p">' + '●'.repeat(pn) + '</span>' + '○'.repeat(st.max - st.rank); }
     });
@@ -133,10 +157,20 @@
         const ra = a === 'C' ? 1 : MC.rk(E, a), raS = a === 'C' ? 1 : MC.rk(S, a);
         cls = ra > 0 && rb > 0 ? (raS > 0 && rbS > 0 ? ' on' : ' pend') : ra > 0 ? ' half' : '';
       }
+      const lvl = cls.trim(), wasFlow = q4 && p.classList.contains('flow');
       const sb = GT.status(lv, E, b).st; if (sb === 'dir') cls += ' dim';
-      p.setAttribute('class', (p.dataset.cls + cls).trim());
+      p.setAttribute('class', (p.dataset.cls + cls + (wasFlow ? ' flow' : '')).trim());
+      if (q4) { /* yeni acilan yol: cizgi bir sonraki dugume dogru akar */
+        if (p._lv !== undefined && !ST.reduced && LVL[lvl] > LVL[p._lv]) {
+          let len = 80; try { if (p.getTotalLength) len = Math.ceil(p.getTotalLength()) || 80; } catch (e) { /* yok say */ }
+          p.style.setProperty('--len', String(len)); p.classList.remove('flow'); void (p.getBoundingClientRect && p.getBoundingClientRect()); p.classList.add('flow');
+          clearTimeout(p._ft); p._ft = setTimeout(() => p.classList.remove('flow'), 1100);
+        }
+        p._lv = lvl;
+      }
     });
-    $$('.gt-ts').forEach((s) => { const t = V.stripState(E, s.dataset.tier); $('small', s).textContent = t.small; $('.pt', s).textContent = t.pt; $('em', s).textContent = t.em; s.classList.toggle('lk', t.lk); });
+    $$('.gt-ts').forEach((s) => { const t = V.stripState(E, s.dataset.tier);
+      if (q4 && s._seen && s.classList.contains('lk') && !t.lk && !ST.reduced) { s.classList.add('opening'); clearTimeout(s._ot); s._ot = setTimeout(() => s.classList.remove('opening'), 1300); } s._seen = true; $('small', s).textContent = t.small; $('.pt', s).textContent = t.pt; $('em', s).textContent = t.em; s.classList.toggle('lk', t.lk); });
     $$('.gt-tb').forEach((b) => b.classList.toggle('lk', V.stripState(E, b.dataset.tier).lk));
     $$('[data-pts],[data-pts2]').forEach((e) => { const i = +(e.dataset.pts !== undefined ? e.dataset.pts : e.dataset.pts2); e.textContent = MC.rowSpent(E, i); e.classList.toggle('pd', MC.rowSpent(E, i) !== MC.rowSpent(S, i)); });
     const uarm = MC.ultArm(E); /* tek kol (Omer 2026-10-22): secilmis kol disindakiler kapali */
@@ -212,7 +246,7 @@
   }
   function setTab(t) {
     if (t === 'hero') { toast('The Hero tab is the normal Gear screen: not part of this mockup'); return; }
-    if (t === 'tree' && ST.variant !== 'v3') return;
+    if (t === 'tree' && ST.variant !== 'v3' && ST.variant !== 'v4') return;
     if (ST.tab === t) return;
     ST.tab = t; writeHash(); render();
   }
@@ -225,13 +259,18 @@
     if (a.indexOf('tab:') === 0) { setTab(a.slice(4)); return; }
     if (a.indexOf('hero:') === 0) { if (a !== 'hero:warrior') toast('Only the Warrior tree is part of this mockup'); return; }
     if (ab.classList.contains('off') && a !== 'respec') return;
-    if (a === 'reset') { GT.resetPending(ST.P); ST.fail = null; refresh(); }
-    else if (a === 'confirm') { const n = GT.pendingCount(ST.P); GT.confirm(ST.S, ST.P); refresh(); toast(n + ' point' + (n === 1 ? '' : 's') + ' confirmed', true); }
+    if (a === 'reset') { GT.resetPending(ST.P); ST.fail = null; refresh(); pulseTree('q4-reset', 700); }
+    else if (a === 'confirm') { const n = GT.pendingCount(ST.P); GT.confirm(ST.S, ST.P); refresh(); pulseTree('q4-confirm', 1100); toast(n + ' point' + (n === 1 ? '' : 's') + ' confirmed', true); }
     else if (a === 'respec') respec();
     else if (a === 'open-tree') { hideTip(); mountWorkspace(); writeHash(); refresh(); }
     else if (a === 'close') toast('In the game this closes Gear');
     else if (a === 'close-ws') closeWorkspace();
     else if (a === 'fs') toggleFs();
+  }
+  /* v4: Confirm / Reset aninda agac kokune kisa sinif (Mastery bar: altin tarama / soluk titresim) */
+  function pulseTree(c, ms) {
+    const g = $('#gt-treehost .gt.q4'); if (!g || ST.reduced) return;
+    g.classList.remove('q4-confirm', 'q4-reset'); void g.offsetWidth; g.classList.add(c); clearTimeout(g._pt); g._pt = setTimeout(() => g.classList.remove(c), ms);
   }
   function applyLevel(lv) {
     ST.lv = lv;
@@ -243,15 +282,16 @@
   const NOTES = {
     v1: 'A · Whole tree on the Sheet\'s right page: small nodes (details on hover or tap), tier band once at the top, ult plus-tree under the rows.',
     v2: 'B · Right page = summary (Mastery bar, points per row, evolve status). "Open skill tree" opens the full-screen working panel.',
+    v4: 'D · Calm rebuild of V3 (default): the same Tree tab and real skill plates, but no side column, no point boxes, no node names, no tier boxes; numbers and locks show on hover. Point, path, lock, evolve and Confirm / Reset moments are animated (calm; Reduced motion = none). Hover an evolve diamond for its small effect.',
     v3: 'C · Third Gear tab "Tree" uses both pages: each row shows the full skill plate of the game (passive first, ult last) with its tree nodes beside it; points and actions on the right. Long page = calm vertical scroll. On a mid-size window the points card moves under the tree so no row is ever covered. The Sheet tab keeps a small door.',
   };
-  const HELP = 'Hover a node (or, in the Tree tab, a skill plate) for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
+  const HELP = 'V4 (default, calm rebuild of V3): no node names, no point boxes; hover a node or plate for numbers. Watch the moments: spend a point (node fills and glows, the path ahead flows), unlock a tier (lock opens), take an Evolve node (diamond spins), choose a direction (other branch dims), Confirm (orange turns gold), Reset (orange fades). Hover an evolve diamond for its small effect. Hover a node (or, in the Tree tab, a skill plate) for its tip. Click = +1 pending point (orange ring); right-click or long-press = −1 pending; Reset clears, Confirm keeps. Touch: first tap pins the tip with − / +, second tap adds. '
     + 'Try: Deep Gash (Double Strike) = other direction chosen (Hamstring is taken); Not Today, Reaping Wind, Herald of Ruin, Dreadful Swing and the Stubborn Heart bonus = not active yet. '
     + 'Respec asks first (placeholder price). Level slider: lowering resets what no longer fits. Reset demo restores the start. '
     + 'Phone 812×375 and 740×360 = the landscape phone (the game\'s short screen, height up to 520, also a real short window): the Mastery bar is one slim strip, the tree scrolls inside its area (tier band and row icons stay in place), the ult plus-tree sits under the rows, Respec / Reset / Confirm stay in one row.';
   function buildStrip() {
-    const v = ST.variant, lab = { v1: 'V1 Right page', v2: 'V2 Summary + panel', v3: 'V3 Tree tab' };
-    strip.innerHTML = '<b>MOCKUP</b><button type="button" class="keep" data-s="more" aria-label="Show mockup controls">…</button>' + ['v1', 'v2', 'v3'].map((x) => '<button type="button" data-s="' + x + '" class="' + (v === x ? 'on' : '') + '">' + lab[x] + '</button>').join('')
+    const v = ST.variant, lab = { v4: 'V4 Calm tree (default)', v1: 'V1 Right page', v2: 'V2 Summary + panel', v3: 'V3 Tree tab' };
+    strip.innerHTML = '<b>MOCKUP</b><button type="button" class="keep" data-s="more" aria-label="Show mockup controls">…</button>' + ['v4', 'v1', 'v2', 'v3'].map((x) => '<button type="button" data-s="' + x + '" class="' + (v === x ? 'on' : '') + '">' + lab[x] + '</button>').join('')
       + '<span class="sep"></span><button type="button" data-s="phone" class="' + (ST.phone === '812' ? 'on' : '') + '">Phone 812×375</button><button type="button" data-s="phone740" class="' + (ST.phone === '740' ? 'on' : '') + '">740×360</button>'
       + '<label>Level <input id="mk-lv" type="range" min="1" max="' + MC.MAXLV + '" value="' + ST.lv + '"><b id="mk-lvv">' + ST.lv + '</b></label>'
       + '<button type="button" data-s="demo">Reset demo</button><button type="button" data-s="help" class="' + (helpOn ? 'on' : '') + '">How to test</button>'
@@ -260,7 +300,7 @@
   strip.addEventListener('click', (e) => {
     const b = e.target.closest('[data-s]'); if (!b) return;
     const s = b.dataset.s;
-    if (s === 'v1' || s === 'v2' || s === 'v3') { ST.variant = s; ST.tab = 'sheet'; ST.open = false; writeHash(); render(); }
+    if (s === 'v1' || s === 'v2' || s === 'v3' || s === 'v4') { ST.variant = s; ST.tab = s === 'v4' ? 'tree' : 'sheet'; ST.open = false; writeHash(); render(); }
     else if (s === 'phone' || s === 'phone740') { const want = s === 'phone' ? '812' : '740'; ST.phone = ST.phone === want ? '' : want; writeHash(); render(); }
     else if (s === 'demo') { V.reset(); writeHash(); refresh(); toast('Demo state restored', true); }
     else if (s === 'more') strip.classList.toggle('open');

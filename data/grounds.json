@@ -1,5 +1,5 @@
 {
-  "_not": "Yerde kalan etkiler (hücrelere bırakılır). Üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok).",
+  "_not": "Yerde kalan etkiler (hücrelere bırakılır). Üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez.",
   "poison": {
     "name": "Poison",
     "color": "#6fcf4b",
@@ -23,5 +23,73 @@
     "color": "#2f6f73",
     "element": "physical",
     "icon": "floodedplanks"
+  },
+  "quaking_ground": {
+    "name": "Quaking Ground",
+    "color": "#a0805a",
+    "element": "physical",
+    "icon": "tremor2",
+    "statuses": [
+      {
+        "status": "slow",
+        "turns": 1
+      }
+    ]
+  },
+  "field_of_shafts": {
+    "name": "Field of Shafts",
+    "color": "#b9a27a",
+    "element": "physical",
+    "icon": "arrows",
+    "statuses": [
+      {
+        "status": "slow",
+        "turns": 1
+      }
+    ]
+  },
+  "root_field": {
+    "name": "Root Field",
+    "color": "#5f8f3a",
+    "element": "nature",
+    "icon": "roots",
+    "statuses": [
+      {
+        "status": "slow",
+        "turns": 1
+      }
+    ]
+  },
+  "storm": {
+    "name": "Storm",
+    "color": "#9fd8ff",
+    "element": "ice",
+    "icon": "blizzard",
+    "statuses": [
+      {
+        "status": "slow",
+        "turns": 1
+      }
+    ]
+  },
+  "hall_of_silence": {
+    "name": "Hall of Silence",
+    "color": "#b36bff",
+    "element": "arcane",
+    "icon": "drainfield",
+    "manaBurnPct": 0.15,
+    "statuses": [
+      {
+        "status": "silence",
+        "turns": 1,
+        "mpZero": true
+      }
+    ]
+  },
+  "lingering_rain": {
+    "name": "Lingering Rain",
+    "color": "#c9b48a",
+    "element": "physical",
+    "icon": "arrows"
   }
 }

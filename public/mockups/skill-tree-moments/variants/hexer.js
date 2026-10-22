@@ -34,7 +34,7 @@
         "0.eb": ["Doom Shrapnel", "When Doom kills, 25% of its damage hits the enemies next to the target."],
         "0.mb": ["Toppling Ruin", "When Doom kills, your next turn comes 50% sooner."],
         "0.fb": ["Final Toll", "Doom deals +40% to targets below 30% HP, but -20% to targets above it."],
-        "0.v":  ["Herald of Ruin", "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.", true],
+        "0.v":  ["Passing Bell", "Ill Omen evolves: when a cursed enemy dies, the nearest enemy suffers a Doom sized by the dead foe's Omens.", true],
         // 1 Evil Eye: a = kritikle yığ, b = aynı hedefe odaklan
         "1.f1": ["Piercing Gaze", "Evil Eye +3% power per rank."],
         "1.f2": ["Unblinking", "Evil Eye +2% critical chance per rank."],
@@ -136,7 +136,7 @@
         "2.r":  ["Thick Miasma", "Withering Curse's Wither +4% damage per rank on enemies with 2 Omens."],
         "2.ea": ["Deep Roots", "Withering Curse's Wither lasts 4 turns instead of 3."],
         "2.ma": ["Layered Blight", "Withering Curse on a Withered enemy adds a second Wither instead of refreshing it.", true],
-        "2.fa": ["Gnawing Rot", "Withering Curse's Wither deals +50%, but lasts 2 turns."],
+        "2.fa": ["Swift Blight", "Withering Curse's Wither deals +50%, but lasts 2 turns."],
         "2.eb": ["Seeping Rot", "When Wither ends on an enemy, the enemies next to it are Withered for 2 turns."],
         "2.mb": ["Rotting Ground", "Withering Curse leaves rot on its cells for 2 turns: enemies standing there are Withered.", true],
         "2.fb": ["Thin Rot", "Withering Curse covers 3x3, but its Wither deals 30% less."],

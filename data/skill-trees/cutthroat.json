@@ -48,35 +48,97 @@
         "name": "Ash Cloak",
         "text": "Shrouded you gain lasts 1 turn longer.",
         "src": "B:V2:bar0",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "sel": "status:shrouded",
+            "when": {
+              "targetIsSelf": true
+            },
+            "mod": {
+              "turns": 1
+            }
+          }
+        ]
       },
       {
         "at": 10,
         "name": "Light Step",
         "text": "Each attack you dodge restores 2 MP.",
         "src": "B:V2:bar1",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "dodge",
+            "do": [
+              {
+                "mp": 2
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 15,
         "name": "Killer Instinct",
         "text": "Your skills +4% critical chance against targets below 50% HP.",
         "src": "B:V3:bar2",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "cond",
+            "when": {
+              "targetHpBelow": 0.5
+            },
+            "mod": {
+              "critBonus": 0.04
+            }
+          }
+        ]
       },
       {
         "at": 20,
-        "name": "Trophy",
+        "name": "Notched Blade",
         "text": "Each kill this battle adds +3% to your critical damage.",
         "src": "B:V3:bar3",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "kill",
+            "do": [
+              {
+                "buff": {
+                  "critDmgMul": 0.03
+                },
+                "uses": 0,
+                "stack": true
+              }
+            ]
+          }
+        ]
       },
       {
         "at": 25,
         "name": "Reaper's Due",
         "text": "Your first kill each battle resets the cooldowns of your other skills.",
         "src": "B:V3:bar4",
-        "fx": null
+        "fx": [
+          {
+            "k": "hook",
+            "h": "trigger",
+            "on": "kill",
+            "once": true,
+            "do": [
+              {
+                "cooldown": "reset",
+                "cd": "others"
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -85,37 +147,111 @@
       "name": "Cold Read",
       "text": "Opportunist bonus +3% per rank against targets below 50% HP.",
       "src": "B:V3:0.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "passiveBonus": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f2": {
       "name": "Vein Finder",
       "text": "Your hits on Opportunist targets +2% critical chance per rank.",
       "src": "B:V3:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetOpportunist": true
+          },
+          "mod": {
+            "critBonus": 0.02
+          },
+          "rank": true
+        }
+      ]
     },
     "0.f3": {
       "name": "Feinting Step",
       "text": "Each attack you dodge adds +2% per rank Opportunist bonus to your next hit.",
       "src": "B:V2:0.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "dodge",
+          "rank": true,
+          "do": [
+            {
+              "buff": {
+                "passiveBonus": 0.02
+              },
+              "stack": true
+            }
+          ]
+        }
+      ]
     },
     "0.n0": {
       "name": "Smell of Blood",
       "text": "Opportunist also counts any enemy below 40% HP, status or not.",
       "src": "B:V3:0.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.4
+          },
+          "mod": {
+            "opportunist": true
+          }
+        }
+      ]
     },
     "0.r": {
       "name": "Missed Chance",
       "text": "Opportunist bonus +4% per rank against an enemy that missed you since your last turn.",
       "src": "B:V2:0.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetMissedMeSinceTurn": true
+          },
+          "mod": {
+            "passiveBonus": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "0.ea": {
       "name": "Killer's Eye",
       "text": "Your critical hits on Opportunist targets deal +20% damage.",
       "src": "B:V3:0.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetOpportunist": true,
+            "hitIsCrit": true
+          },
+          "mod": {
+            "powerMul": 0.2
+          }
+        }
+      ]
     },
     "0.eb": {
       "name": "Counter Cut",
@@ -123,327 +259,1197 @@
       "src": "B:V2:0.ea",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false
+          },
+          "do": [
+            {
+              "damage": 0.4,
+              "stat": "dex",
+              "passive": true,
+              "to": "source"
+            }
+          ]
+        }
+      ]
     },
     "0.ma": {
       "name": "Bloodletter",
       "text": "Your critical hits Wound for 2 turns, so every crit opens an Opportunist target.",
       "src": "B:V3:0.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "unitFx",
+          "fx": {
+            "critStatuses": [
+              {
+                "status": "wound",
+                "turns": 2
+              }
+            ]
+          }
+        }
+      ]
     },
     "0.fa": {
       "name": "Glass Knife",
       "text": "Your critical hits on Opportunist targets deal +40%, but non-critical hits on them deal 15% less.",
       "src": "B:V3:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetOpportunist": true,
+            "hitIsCrit": true
+          },
+          "mod": {
+            "powerMul": 0.4
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetOpportunist": true,
+            "hitIsCrit": false
+          },
+          "mod": {
+            "powerMul": -0.15
+          }
+        }
+      ]
     },
     "0.fb": {
       "name": "Reckless Grace",
       "text": "Counter cuts deal double damage, but each counter ends your Shrouded.",
       "src": "B:V2:0.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "0.eb",
+          "onlyWith": [
+            "0.eb"
+          ],
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false
+          },
+          "do": [
+            {
+              "damage": 0.8,
+              "stat": "dex",
+              "passive": true,
+              "to": "source"
+            },
+            {
+              "removeStatus": "shrouded",
+              "to": "self"
+            }
+          ]
+        }
+      ]
     },
     "0.mb": {
       "name": "Turned Blade",
       "text": "Your counter cuts crit against Blinded attackers and Blind them again for 1 turn.",
       "src": "B:V2:0.ma",
       "syn": "Smoke Bomb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "0.eb",
+          "onlyWith": [
+            "0.eb"
+          ],
+          "unless": [
+            "0.fb"
+          ],
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false,
+            "targetStatus": "blinded"
+          },
+          "do": [
+            {
+              "damage": 0.4,
+              "stat": "dex",
+              "passive": true,
+              "crit": true,
+              "to": "source"
+            },
+            {
+              "status": "blinded",
+              "turns": 1,
+              "to": "source"
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "onlyWith": [
+            "0.eb"
+          ],
+          "unless": [
+            "0.fb"
+          ],
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false,
+            "not": {
+              "targetStatus": "blinded"
+            }
+          },
+          "do": [
+            {
+              "damage": 0.4,
+              "stat": "dex",
+              "passive": true,
+              "to": "source"
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "drop": "0.fb",
+          "onlyWith": [
+            "0.eb",
+            "0.fb"
+          ],
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false,
+            "targetStatus": "blinded"
+          },
+          "do": [
+            {
+              "damage": 0.8,
+              "stat": "dex",
+              "passive": true,
+              "crit": true,
+              "to": "source"
+            },
+            {
+              "status": "blinded",
+              "turns": 1,
+              "to": "source"
+            },
+            {
+              "removeStatus": "shrouded",
+              "to": "self"
+            }
+          ]
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "onlyWith": [
+            "0.eb",
+            "0.fb"
+          ],
+          "on": "enemyMissed",
+          "who": "self",
+          "when": {
+            "incomingRanged": false,
+            "not": {
+              "targetStatus": "blinded"
+            }
+          },
+          "do": [
+            {
+              "damage": 0.8,
+              "stat": "dex",
+              "passive": true,
+              "to": "source"
+            },
+            {
+              "removeStatus": "shrouded",
+              "to": "self"
+            }
+          ]
+        }
+      ]
     },
     "0.v": {
       "name": "Assassin's Instinct",
       "text": "Opportunist also grows with missing HP: +1% per 2% HP the target is missing, used when higher than its normal bonus.",
       "src": "B:V3:0.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "scale": {
+            "targetMissingHp": 0.02
+          },
+          "mod": {
+            "opportunistAlt": 0.01
+          }
+        }
+      ]
     },
     "1.f1": {
       "name": "Balanced Blade",
       "text": "Venom Edge +3% power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetStatus": "wound"
+          },
+          "mod": {
+            "powerMul": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "1.f2": {
       "name": "Seeking Tip",
       "text": "Venom Edge +2% critical chance per rank.",
       "src": "B:V3:1.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "critBonus",
+          "op": "add",
+          "v": 0.02,
+          "rank": true
+        }
+      ]
     },
     "1.f3": {
       "name": "Twist the Knife",
       "text": "Venom Edge's critical hits deal +5% damage per rank.",
       "src": "B:V3:1.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "critDmgMul": 0.05
+          },
+          "rank": true
+        }
+      ]
     },
     "1.n0": {
       "name": "Coup de Grace",
       "text": "Venom Edge always crits against targets below 30% HP.",
       "src": "B:V3:1.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mod": {
+            "guaranteedCrit": true
+          }
+        }
+      ]
     },
     "1.r": {
       "name": "Honed Point",
       "text": "Venom Edge +3% power per rank against targets below 50% HP.",
       "src": "B:V3:1.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "1.ea": {
       "name": "Finishing Cut",
       "text": "Venom Edge +30% damage against targets below 30% HP.",
       "src": "B:V3:1.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.3
+          },
+          "mod": {
+            "powerMul": 0.3
+          }
+        }
+      ]
     },
     "1.eb": {
       "name": "Backhand Cut",
       "text": "Venom Edge's backswing also cuts one enemy beside the target for 50% and Wounds it.",
       "src": "B:V4:1.eb*",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "strike": 0.5,
+              "to": "beside",
+              "count": 1
+            },
+            {
+              "status": "wound",
+              "turns": 2,
+              "to": "beside",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "1.ma": {
       "name": "Clean Kill",
       "text": "If Venom Edge kills, you regain 6 MP and Backstab's cooldown drops by 1.",
       "src": "B:V3:1.ma",
       "syn": "Backstab",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "mp": 6
+            },
+            {
+              "cooldown": -1,
+              "cd": "backstab"
+            }
+          ]
+        }
+      ]
     },
     "1.fa": {
       "name": "Butcher's Haste",
       "text": "Venom Edge +25% against targets below 50% HP, but -25% against targets above it.",
       "src": "B:V3:1.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "not": {
+              "targetHpBelow": 0.5
+            }
+          },
+          "mod": {
+            "powerMul": -0.25
+          }
+        }
+      ]
     },
     "1.fb": {
       "name": "Thirsty Edge",
       "text": "Venom Edge heals you for 25% of its damage on a kill, but no longer Wounds.",
       "src": "B:V3:1.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "killingBlow": true
+          },
+          "mod": {
+            "lifesteal": 0.25
+          }
+        },
+        {
+          "k": "removeEffect",
+          "sel": "status:wound"
+        }
+      ]
     },
     "1.mb": {
       "name": "Carving Arc",
       "text": "Venom Edge's backswing keeps going to each new enemy beside the last one, up to 3 cuts.",
       "src": "B:V4:1.mb*",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "drop": "1.eb",
+          "do": [
+            {
+              "strike": 0.5,
+              "to": "beside",
+              "count": 1,
+              "chain": 3,
+              "cutStatus": {
+                "status": "wound",
+                "turns": 2
+              }
+            }
+          ]
+        }
+      ]
     },
     "1.v": {
       "name": "Red Smile",
       "text": "Venom Edge becomes a throat cut: below 50% HP it deals double and always crits; above 50% it Wounds for 3 turns.",
       "src": "B:V3:1.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 1,
+            "guaranteedCrit": true
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:wound",
+          "when": {
+            "not": {
+              "targetHpBelow": 0.5
+            }
+          },
+          "mod": {
+            "turns": 1
+          }
+        }
+      ]
     },
     "2.f1": {
       "name": "Crossed Crit",
       "text": "Saltire Cut +3% critical chance per rank on its center target.",
       "src": "B:V3:2.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true
+          },
+          "mod": {
+            "critBonus": 0.03
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f2": {
       "name": "Scissor Bite",
       "text": "Saltire Cut's second center hit +5% power per rank.",
       "src": "B:V3:2.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "centerHitIndex": 2
+          },
+          "mod": {
+            "powerMul": 0.05
+          },
+          "rank": true
+        }
+      ]
     },
     "2.f3": {
       "name": "Keen Pair",
       "text": "Saltire Cut +4% power per rank against targets below 50% HP.",
       "src": "B:V3:2.f1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.04
+          },
+          "rank": true
+        }
+      ]
     },
     "2.n0": {
       "name": "Finishing Cross",
       "text": "If Saltire Cut kills any enemy, its cooldown resets.",
       "src": "B:V3:2.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "kill",
+          "do": [
+            {
+              "cooldown": "reset"
+            }
+          ]
+        }
+      ]
     },
     "2.r": {
       "name": "Bloody Saltire",
       "text": "Saltire Cut has a 10% chance per rank to Wound each enemy it crits.",
       "src": "B:V3:2.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "hitIsCrit": true
+          },
+          "procChance": 0.1,
+          "mod": {
+            "addStatus": {
+              "status": "wound",
+              "turns": 2
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "2.ea": {
       "name": "Double Lunge",
       "text": "Saltire Cut's center hits +25% power against targets below 50% HP.",
       "src": "B:V3:2.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true,
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        }
+      ]
     },
     "2.eb": {
       "name": "Extra Knife",
       "text": "Saltire Cut hits its center a third time.",
       "src": "B:V4:2.eb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "hitsAtCenter": 3
+          }
+        }
+      ]
     },
     "2.ma": {
       "name": "X Marks the Throat",
       "text": "If both center hits crit, the center target takes a third hit that ignores Armor.",
       "src": "B:V3:2.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "when": {
+            "centerCritsAtLeast": 2
+          },
+          "perCast": 1,
+          "do": [
+            {
+              "strike": 1,
+              "to": "target",
+              "pierce": true
+            }
+          ]
+        }
+      ]
     },
     "2.fa": {
       "name": "Heavy Cross",
       "text": "Saltire Cut's center hits +40%, but its diagonal hits deal 50% less.",
       "src": "B:V3:2.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": true
+          },
+          "mod": {
+            "powerMul": 0.4
+          }
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetIsCenter": false
+          },
+          "mod": {
+            "powerMul": -0.5
+          }
+        }
+      ]
     },
     "2.fb": {
       "name": "Spent Belt",
       "text": "Saltire Cut hits its center 4 times, but costs 14 MP.",
       "src": "B:V4:2.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "hitsAtCenter": 4
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "cost.amount",
+          "op": "set",
+          "v": 14
+        }
+      ]
     },
     "2.mb": {
       "name": "Endless Knives",
       "text": "Each Saltire Cut hit that crits throws one more knife at the same target, up to 2 extra.",
       "src": "B:V4:2.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "crit",
+          "perCast": 2,
+          "do": [
+            {
+              "strike": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "2.v": {
       "name": "Butcher's Cross",
       "text": "Saltire Cut hits every enemy in the X twice, not just the center; power 0.45 to 0.35.",
       "src": "B:V3:2.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "area": {
+            "hitsEach": 2
+          }
+        },
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "power",
+          "op": "set",
+          "v": 0.35
+        }
+      ]
     },
     "3.f1": {
       "name": "Far Toss",
       "text": "Smoke Bomb's Blinded has a 15% chance per rank to last 1 turn longer on back-row enemies.",
       "src": "A:V4:3.r",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:blinded",
+          "when": {
+            "targetRow": "back"
+          },
+          "procChance": 0.15,
+          "mod": {
+            "turns": 1
+          },
+          "rank": "chance"
+        }
+      ]
     },
     "3.f2": {
       "name": "Lungful of Ash",
       "text": "Smoke Bomb's Blinded lowers accuracy by a further 2% per rank.",
       "src": "A:V2:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:blinded",
+          "mod": {
+            "statusPotency": {
+              "accuracyDelta": -0.02
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "3.f3": {
       "name": "Gritty Ash",
       "text": "Smoke Bomb's Blinded also lowers critical chance by 2% per rank.",
       "src": "A:V5:3.f3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:blinded",
+          "mod": {
+            "statusPotency": {
+              "critDelta": -0.02
+            }
+          },
+          "rank": true
+        }
+      ]
     },
     "3.n0": {
       "name": "Choking Cloud",
       "text": "Smoke Bomb on enemies also Silences them for 1 turn.",
       "src": "A:V5:3.n0",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "silence",
+            "turns": 1,
+            "side": "enemies"
+          }
+        }
+      ]
     },
     "3.r": {
       "name": "Coughing Fit",
       "text": "Smoke Bomb has a 6% chance per rank to Slow each enemy in it for 1 turn.",
       "src": "A:V5:3.f2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "byRank": [
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.06,
+              "side": "enemies"
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.12,
+              "side": "enemies"
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 1,
+              "chance": 0.18,
+              "side": "enemies"
+            }
+          ]
+        }
+      ]
     },
     "3.ea": {
       "name": "Sulfur Cake",
       "text": "Smoke Bomb's Silence lasts 2 turns.",
       "src": "A:V5:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:silence",
+          "mod": {
+            "turns": 1
+          }
+        }
+      ]
     },
     "3.eb": {
       "name": "Exposed in Smoke",
       "text": "Smoke Bomb leaves the lowest-HP enemy in it Overextended: +25% damage taken until its next turn.",
       "src": "A:V3:3.ea",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "overextended",
+              "turns": 1,
+              "to": "lowestHpInCast"
+            }
+          ]
+        }
+      ]
     },
     "3.ma": {
       "name": "Lost in Smoke",
       "text": "A Blinded enemy that misses an attack is Staggered and loses its next action.",
       "src": "A:V2:3.mb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "enemyMissed",
+          "when": {
+            "targetStatus": "blinded"
+          },
+          "do": [
+            {
+              "status": "staggered",
+              "turns": 1,
+              "to": "target"
+            }
+          ]
+        }
+      ]
     },
     "3.fa": {
       "name": "Sulfur Overload",
       "text": "Smoke Bomb's Blinded is -45% accuracy, but it can no longer Shroud allies.",
       "src": "A:V2:3.fb",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "sel": "status:blinded",
+          "mod": {
+            "statusPotency": {
+              "accuracyDelta": -0.15
+            }
+          }
+        },
+        {
+          "k": "removeEffect",
+          "sel": "status:shrouded"
+        }
+      ]
     },
     "3.fb": {
       "name": "Hard Clay",
       "text": "Smoke Bomb Stuns one random enemy in it for 1 turn, but no longer Blinds anyone.",
       "src": "A:V5:3.fa",
-      "fx": null
+      "fx": [
+        {
+          "k": "removeEffect",
+          "sel": "status:blinded"
+        },
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "stun",
+              "turns": 1,
+              "to": "randomInCast",
+              "count": 1
+            }
+          ]
+        }
+      ]
     },
     "3.mb": {
       "name": "Shrapnel Shell",
       "text": "Smoke Bomb bursts into clay shards: 35% DEX damage to every enemy in it, all Wounded for 2 turns.",
       "src": "A:V4:3.ma",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "damage",
+            "damageType": "physical",
+            "scale": "dex",
+            "power": 0.35,
+            "side": "enemies"
+          }
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "wound",
+            "turns": 2,
+            "side": "enemies"
+          }
+        }
+      ]
     },
     "3.v": {
       "name": "Brimstone Jar",
       "text": "Smoke Bomb becomes a brimstone jar: enemies in it are Blinded and Silenced for 2 turns and Slowed for 1.",
       "src": "A:V5:3.v",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "silence",
+            "turns": 2,
+            "side": "enemies"
+          }
+        },
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "slow",
+            "turns": 1,
+            "side": "enemies"
+          }
+        }
+      ]
     },
     "4.u1": {
       "name": "Into the Smoke",
       "text": "After Backstab, you gain Shrouded for 2 turns.",
       "src": "B:V2:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "shrouded",
+            "turns": 2,
+            "self": true
+          }
+        }
+      ]
     },
     "4.u2": {
       "name": "Smoke Trail",
       "text": "After Backstab, its target is Blinded for 2 turns.",
       "src": "B:V2:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "addEffect",
+          "effect": {
+            "type": "status",
+            "status": "blinded",
+            "turns": 2
+          },
+          "after": "damage"
+        }
+      ]
     },
     "4.u3": {
       "name": "Shadow Return",
       "text": "After Backstab, you and every ally beside you are Shrouded for 2 turns and gain Fleet.",
       "src": "B:V2:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "trigger",
+          "on": "skillUse",
+          "do": [
+            {
+              "status": "shrouded",
+              "turns": 2,
+              "to": "selfBeside"
+            },
+            {
+              "status": "fleet",
+              "turns": 2,
+              "to": "selfBeside"
+            }
+          ]
+        }
+      ]
     },
     "4.r1": {
       "name": "Early Knife",
       "text": "Backstab's starting cooldown 3 to 1.",
       "src": "B:V3:4.l1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "self",
+          "f": "initialCooldown",
+          "op": "base",
+          "v": 1
+        }
+      ]
     },
     "4.r2": {
       "name": "First Blood",
       "text": "Backstab +25% power against targets at full HP.",
       "src": "B:V3:4.l2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetFullHp": true
+          },
+          "mod": {
+            "powerMul": 0.25
+          }
+        }
+      ]
     },
     "4.r3": {
       "name": "Opening Act",
       "text": "Your first Backstab each battle triggers no cooldown.",
       "src": "B:V3:4.l3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "firstUseOfSkill": true
+          },
+          "mod": {
+            "cooldownSet": 0
+          }
+        }
+      ]
     },
     "4.d1": {
       "name": "Between the Plates",
       "text": "Backstab ignores 25% of Armor.",
       "src": "B:V3:4.d1",
-      "fx": null
+      "fx": [
+        {
+          "k": "skill",
+          "sel": "damage",
+          "f": "ignoreDefense",
+          "op": "add",
+          "v": 0.25
+        }
+      ]
     },
     "4.d2": {
       "name": "Sure Hand",
       "text": "Backstab cannot miss.",
       "src": "B:V3:4.d2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "mod": {
+            "sureHit": true
+          }
+        }
+      ]
     },
     "4.d3": {
       "name": "Spine Splitter",
       "text": "Backstab ignores all Armor against targets below 50% HP.",
       "src": "B:V3:4.d3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "targetHpBelow": 0.5
+          },
+          "mod": {
+            "ignoreDefense": 1
+          }
+        }
+      ]
     },
     "4.l1": {
       "name": "Thrown Stiletto",
       "text": "Backstab can hit a target with no open cell behind it; such hits deal 30% less.",
       "src": "B:V4:4.u1",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "open": "thrown"
+        },
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "thrown": true
+          },
+          "mod": {
+            "powerMul": -0.3
+          }
+        }
+      ]
     },
     "4.l2": {
       "name": "Weighted Stiletto",
       "text": "A thrown Backstab also Wounds for 3 turns.",
       "src": "B:V4:4.u2",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "cond",
+          "when": {
+            "thrown": true
+          },
+          "mod": {
+            "addStatus": {
+              "status": "wound",
+              "turns": 3
+            }
+          }
+        }
+      ]
     },
     "4.l3": {
       "name": "Death From Afar",
       "text": "Backstab no longer needs an open cell behind its target and always deals full damage.",
       "src": "B:V4:4.u3",
-      "fx": null
+      "fx": [
+        {
+          "k": "hook",
+          "h": "target",
+          "open": "thrown",
+          "drop": "4.l1"
+        }
+      ]
     }
   }
 }

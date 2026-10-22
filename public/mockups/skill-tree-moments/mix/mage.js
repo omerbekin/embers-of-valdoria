@@ -85,7 +85,7 @@
         '4.d1': ['Flung Embers', 'Meteor flings an ember at a random enemy outside its area: 30% INT and Burning for 2 turns.', false, 'V1:4.d1'],
         '4.d2': ['Ember Hail', 'Meteor flings 3 embers instead of 1.', false, 'V1:4.d2'],
         '4.d3': ['Twin Meteors', 'One turn after Meteor lands, a second meteor strikes the same cells for 50% power.', true, 'V1:4.d3'],
-        '4.l1': ['Dead Center', 'Meteor deals +40% damage to the enemy at its center.', false, 'V1:4.l1'],
+        '4.l1': ["Crater's Heart", 'Meteor deals +40% damage to the enemy at its center.', false, 'V1:4.l1'],
         '4.l2': ['Molten Core', 'Meteor\'s Burning ground deals double damage on its center cell.', false, 'V1:4.l2'],
         '4.l3': ['Extinction', 'Meteor\'s center target takes +20% damage for each other enemy the Meteor hits.', false, 'V1:4.l3']
       } },
