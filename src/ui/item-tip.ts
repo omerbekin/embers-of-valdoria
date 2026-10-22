@@ -198,9 +198,9 @@ export function itemTipNodes(inst: Pick<ItemInstance, 'id'> & { uid?: string; ro
   const sub = instanceSubtitle(inst).split(' · ');
   const grip = sub.slice(1, -1).join(' · ');
   const ilvl = sub.length > 1 ? (sub[sub.length - 1] ?? '') : '';
-  const rib = el('div', 'it-rib');
-  rib.append(el('span', '', sub[0] ?? ''));
-  id.append(rib);
+  // başlık (Ömer 2026-10-23, taslak item-tip-head#b): ad, elmaslı ince altın çizgi, net "RARITY · TYPE" satırı, düz "el · Item level"
+  id.append(el('div', 'it-rule'));
+  id.append(el('div', 'it-kind', (sub[0] ?? '').replace(' ', ' · ')));
   const line = [grip, ilvl].filter(Boolean).join(' · ');
   if (line) id.append(el('div', 'it-sub', line));
   const big = bigNode(base);

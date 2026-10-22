@@ -24,6 +24,7 @@
 import { existsSync, mkdirSync, readFileSync, readdirSync, writeFileSync } from 'node:fs';
 import { join } from 'node:path';
 import sharp from 'sharp';
+import { blackToAlpha } from './black-to-alpha.mjs';
 
 const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
@@ -227,6 +228,18 @@ function spans(fracs) {
     .sort((p, q) => p[0] - q[0]);
 }
 
+/** İkon zemini anahtarı: kenar parlaklığının medyanına göre eşik (siyah zemin ~30, kahverengi düz zemin ~60; üst sınır 62: parlak kenarlı konular yenmesin). */
+async function iconKeyOpts(png) {
+  const { data, info } = await sharp(png).removeAlpha().raw().toBuffer({ resolveWithObject: true });
+  const w = info.width;
+  const v = [];
+  for (let y = 0; y < w; y++)
+    for (let x = 0; x < w; x++) if (Math.min(x, y, w - 1 - x, w - 1 - y) < 4) v.push(Math.max(data[(y * w + x) * 3], data[(y * w + x) * 3 + 1], data[(y * w + x) * 3 + 2]));
+  v.sort((a, b) => a - b);
+  const bgMax = Math.max(30, Math.min(62, v[v.length >> 1] + 10));
+  return { bgMax, noise: bgMax - 8, soft: bgMax + 30, depth: 6 };
+}
+
 async function importIcons() {
   mkdirSync(join(ICON_OUT, 'small'), { recursive: true });
   let n = 0;
@@ -267,7 +280,9 @@ async function importIcons() {
       const left = x0 + inset + Math.floor((w - side) / 2);
       const top = y0 + inset + Math.floor((h - side) / 2);
       const cell = sharp(src).removeAlpha().extract({ left, top, width: side, height: side });
-      const buf = await cell.png().toBuffer();
+      // siyah zemin/çerçeve -> saydam (kahraman ikonları gibi); kırpma yok, kare korunur
+      const cellPng = await cell.png().toBuffer();
+      const buf = await blackToAlpha(cellPng, { trim: false, ...(await iconKeyOpts(cellPng)) });
       await sharp(buf).resize(128, 128, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, `${name}.png`));
       await sharp(buf).resize(64, 64, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, 'small', `${name}.png`));
       n++;
@@ -393,7 +408,7 @@ function alphaBox(data, W, x0, y0, w, h) {
  * Figürleri ızgara çizgisini aşan poz sayfaları (Bandit Chief: ayak, balta, kafa komşu hücreye taşar): hücre dikdörtgeni yerine bağlı
  * bileşenler (alfa > 8, 8 komşu) ağırlık merkezinin düştüğü hücreye atanır. Diğer sayfalar düz ızgarayla kesilir (çıktıları aynen kalır).
  */
-const POSE_SPLIT = new Set(['bandit_chief', 'drake_priest', 'lord_morvane', 'bridge_warden']);
+const POSE_SPLIT = new Set(['bandit_chief', 'deserter_captain', 'drake_priest', 'lord_morvane', 'bridge_warden']);
 
 /** Hücre başına tam boy RGBA katman: yalnızca o hücreye atanan bileşenlerin pikselleri. */
 function cellLayers(data, W, H, cols, rows) {

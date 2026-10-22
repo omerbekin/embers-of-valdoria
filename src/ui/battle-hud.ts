@@ -60,6 +60,8 @@ export interface TipContent {
   kind?: string;
   /** Vurgu rengi (yoksa skill'in element rengi, o da yoksa altın). */
   accent?: string;
+  /** Satırların altına eklenen hazır HTML (çağrı hücresi: Formation'daki "Enemy rows hit" çubuğu). */
+  bodyHtml?: string;
 }
 export interface HudStat {
   kind: string;
@@ -289,6 +291,7 @@ export function tipToBand(t: TipContent): BandTipSpec {
     chips,
     lines: t.rows.map((r) => ({ text: r.text, ...(r.color ? { color: r.color } : {}) })),
     ...(t.shape?.note ? { foot: t.shape.note } : {}),
+    ...(t.bodyHtml ? { bodyHtml: t.bodyHtml, noKeywords: true } : {}),
   };
 }
 
@@ -923,7 +926,8 @@ export class BattleHud {
     });
     // Sabit kartta sağ üst X (Ömer 2026-10-19: telefonda Esc yok); kaydırma kabının dışında, dokunma hedefi en az 44 gerçek piksel
     const x = pinned ? `<button type="button" class="bh-card-x" data-unpin="${side}" aria-label="Close card" title="Close">${navSvg('close')}</button>` : '';
-    return `<div class="bh-card-sc">${html}</div>${x}`;
+    // X başlık satırının İÇİNDE (dikey ortalı, kenardan eşit pay); "Lv" için sağda yer ayrılır (battle-hud.css > .bh-card.pin .bt-head)
+    return `<div class="bh-card-sc">${x ? html.replace('<div class="bt-head">', `<div class="bt-head">${x}`) : html}</div>`;
   }
 
   // ------------------------------------------------------------------ bağlam ipucu (hücre: yürü, ceset, diriltme...)

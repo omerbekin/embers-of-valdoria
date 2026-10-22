@@ -22,9 +22,8 @@ const BID = content.DEFAULT_BATTLE;
  * değere döner. data/skill-trees/_rules.json dosyası DEĞİŞMEZ. Quick Battle vekili buna gerek duymaz (derlenmiş ağacı birime kendisi verir).
  */
 export function withTreesInMemory<T>(on: boolean, fn: () => T): T {
-  if (!on) return fn();
   const prev = TREE_RULES.enabled;
-  TREE_RULES.enabled = true;
+  TREE_RULES.enabled = on; // kapalı = ağaçsız referans: gönderilen şalter açık olsa da ağaç savaşa girmez
   try {
     return fn();
   } finally {

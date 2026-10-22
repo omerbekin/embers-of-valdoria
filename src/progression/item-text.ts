@@ -10,7 +10,6 @@ import {
   equipInto,
   gripOf,
   instanceIlvl,
-  offhandWeapon,
   instanceRarity,
   itemDef,
   partMid,
@@ -226,11 +225,11 @@ export function itemLines(d: ItemDef, rarity: RarityId = d.rarity): string[] {
   return fx ? [...out, fx] : out;
 }
 
-/** Tutuş notu (2026-10-12): "One-handed · Off-hand too" / "Two-handed" / kalkanda "Off-hand"; yay ve tılsımda boş (adı zaten söyler). */
+/** Tutuş notu (2026-10-12; "Off-hand too" 2026-10-23'te kaldırıldı): "One-handed" / "Two-handed" / kalkanda "Off-hand"; yay ve tılsımda boş (adı zaten söyler). */
 export function gripNote(d: ItemDef): string {
   if (d.slot === 'offhand') return 'Off-hand';
   const g = gripOf(d);
-  if (g === 'one') return offhandWeapon(d) ? 'One-handed · Off-hand too' : 'One-handed';
+  if (g === 'one') return 'One-handed';
   if (g === 'two') return 'Two-handed';
   return '';
 }

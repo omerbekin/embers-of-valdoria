@@ -1,0 +1,200 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Gear Hero - Skills block rows - mockup</title>
+<!-- TASLAK (ui-dev, 2026-10-23). Oyun kodu DEGIL. Adres: #a | #b | #c  (+ &class=warrior | &u=1 | &u=0.547 (1050x591 compact) | &clean = serit gizli | &bounds = sinir cercevesi).
+     Gercek oyun CSS'inden: gear.css (.gr-pl plaka dili, renkler, olculer --u), band-tip.css (A Band ipucu), ui-motion.json (card: lift 4, hoverMs 170, inMs 260, staggerMs 70, rise 8).
+     Veri: data/skills.json + skill-info.ts ciktisi (gercek sayilar, Level 1 temel statlar). -->
+<link rel="stylesheet" href="css/band-tip.css">
+<style>
+@font-face{font-family:Cinzel;font-weight:400 900;font-display:swap;src:url(fonts/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url(fonts/EBGaramond-normal-latin.woff2) format('woff2')}
+*{box-sizing:border-box}
+:root{--g-text:#d9c8a2;--g-dim:#a8977a;--g-gold:#f3d999;--g-line:rgba(217,178,106,.16);--g-line2:rgba(217,178,106,.3);--g-disp:Cinzel,Georgia,serif;--g-body:'EB Garamond',Georgia,serif;--u:1px;
+  --m-hover:170ms;--m-in:260ms;--m-stagger:70ms;--m-rise:8px;--m-lift:4px;--m-ease:cubic-bezier(.33,1,.68,1)}
+html,body{margin:0;background:#070504;color:var(--g-text);font-family:var(--g-body);font-style:normal}
+body{padding:18px 22px 70px;min-height:100vh}
+#top{display:flex;align-items:center;gap:14px;margin:0 0 14px;flex-wrap:wrap}
+#top h1{font:600 18px var(--g-disp);letter-spacing:.14em;text-transform:uppercase;color:var(--g-gold);margin:0}
+.tabs{display:flex;gap:6px}
+.tabs button{font:600 13px var(--g-disp);letter-spacing:.12em;text-transform:uppercase;color:var(--g-dim);background:transparent;border:1px solid var(--g-line);padding:0 16px;min-height:44px;cursor:pointer;transition:color var(--m-hover),border-color var(--m-hover)}
+.tabs button:hover{color:var(--g-gold);border-color:var(--g-line2)}
+.tabs button.on{color:var(--g-gold);border-color:rgba(217,178,106,.55);background:rgba(217,178,106,.07)}
+.note{font:17px/1.4 var(--g-body);color:var(--g-dim);max-width:1000px;margin:0 0 14px}
+.note b{color:var(--g-gold);font-weight:600}
+#strip{position:fixed;left:8px;bottom:8px;z-index:90;display:flex;flex-wrap:wrap;gap:4px;align-items:center;max-width:calc(100vw - 16px);padding:4px 6px;background:rgba(20,10,4,.94);border:1px dashed #e0702a;font:600 11px system-ui,sans-serif;color:#ffb35a}
+#strip b{color:#e0702a;margin-right:4px}
+#strip button{font:600 11px system-ui,sans-serif;color:#f3d999;background:#1b120a;border:1px solid rgba(224,112,42,.5);padding:3px 7px;cursor:pointer;min-height:26px}
+#strip button.on{background:#e0702a;color:#1a0f06}
+html.clean #strip{display:none}
+#read{font:600 11px system-ui,sans-serif;color:#9a8a70;margin-left:6px}
+#read.ok{color:#8fe39a}#read.bad{color:#ff8a7a}
+
+/* ---- Gear Hero sekmesindeki skill alani (gear.css .gr-lskills): ayni kutu, ayni ust cizgi / dolgu ---- */
+#frame{position:relative;width:calc(1048 * var(--u));background:linear-gradient(180deg,#120d08,#0b0806);border:1px solid var(--g-line)}
+#frame.bounds::after{content:'';position:absolute;left:0;top:0;width:100%;height:calc(420 * var(--u));border:1px dashed rgba(224,112,42,.6);pointer-events:none}
+.lsk{padding:calc(8 * var(--u)) calc(26 * var(--u)) 2px calc(26 * var(--u));border-top:1px solid var(--g-line)}
+.sec{font:600 max(12px,calc(22 * var(--u))) var(--g-disp);letter-spacing:.24em;text-transform:uppercase;color:#cdbd7e;padding-bottom:calc(8 * var(--u));border-bottom:1px solid rgba(217,178,106,.18);margin-bottom:calc(12 * var(--u))}
+.rows{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:calc(16 * var(--u)) calc(16 * var(--u));padding-top:calc(10 * var(--u));padding-bottom:calc(8 * var(--u))}
+.rows>.pas{grid-column:1 / -1}
+
+/* ---- plaka (gear.css .gr-pl'den) ---- */
+.pl{--ac:#d9b26a;--acl:color-mix(in srgb,var(--ac) 55%,#fff);--is:calc(92 * var(--u));
+  position:relative;min-width:0;display:grid;grid-template-columns:var(--is) minmax(0,1fr);column-gap:calc(16 * var(--u));align-items:center;
+  padding:calc(12 * var(--u)) calc(16 * var(--u));cursor:help;container-type:inline-size;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 11%,#1d140c),#0d0906);
+  border:1px solid color-mix(in srgb,var(--ac) 40%,rgba(217,178,106,.2));
+  box-shadow:0 0 0 3px rgba(8,6,4,.75),inset 0 0 calc(24 * var(--u)) color-mix(in srgb,var(--ac) 8%,transparent);
+  translate:0 0;transition:translate var(--m-hover) var(--m-ease),border-color var(--m-hover),box-shadow var(--m-hover)}
+.pl.pas{--ac:#6fb0a8}
+.pl.ult{--ac:#e0702a;border-color:color-mix(in srgb,var(--ac) 75%,#000);box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 calc(26 * var(--u)) color-mix(in srgb,var(--ac) 40%,transparent),inset 0 0 calc(30 * var(--u)) color-mix(in srgb,var(--ac) 14%,transparent)}
+@media (hover:hover){.pl:hover{translate:0 calc(-1 * var(--m-lift));border-color:#e9c985;box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 calc(18 * var(--u)) rgba(233,201,133,.45),inset 0 0 calc(24 * var(--u)) color-mix(in srgb,var(--ac) 12%,transparent)}
+ .pl.ult:hover{border-color:#ffb070}}
+.pl .tag{position:absolute;top:0;left:calc(18 * var(--u));transform:translate(0,-50%);z-index:3;font:700 max(10px,calc(13 * var(--u))) var(--g-disp);letter-spacing:.2em;text-transform:uppercase;color:#fff4d6;background:color-mix(in srgb,var(--ac) 55%,#0c0905);border:1px solid var(--acl);padding:.15em 1.1em;white-space:nowrap;line-height:1.5}
+.pl .ico{position:relative;width:var(--is);aspect-ratio:1;display:grid;place-items:center;
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--ac) 30%,#1a110a) 0%,#0d0806 78%);
+  border:1px solid color-mix(in srgb,var(--ac) 62%,#000);
+  box-shadow:0 0 0 2px rgba(8,6,4,.9),0 0 calc(18 * var(--u)) color-mix(in srgb,var(--ac) 32%,transparent),inset 0 0 calc(18 * var(--u)) color-mix(in srgb,var(--ac) 22%,transparent);transition:box-shadow var(--m-hover)}
+.pl:hover .ico{box-shadow:0 0 0 2px rgba(8,6,4,.9),0 0 calc(30 * var(--u)) color-mix(in srgb,var(--ac) 60%,transparent),inset 0 0 calc(24 * var(--u)) color-mix(in srgb,var(--ac) 34%,transparent)}
+.pl .ico::before,.pl .ico::after{content:'';position:absolute;width:max(7px,calc(10 * var(--u)));height:max(7px,calc(10 * var(--u)));transform:rotate(45deg);background:#130d07;border:1px solid var(--acl);z-index:2}
+.pl .ico::before{left:-6px;top:-6px}.pl .ico::after{right:-6px;bottom:-6px}
+.pl .ico img{width:100%;height:100%;object-fit:contain;display:block}
+.pl .bd{min-width:0;display:flex;flex-direction:column;gap:calc(6 * var(--u))}
+.pl .hd{display:flex;align-items:center;gap:calc(12 * var(--u));min-width:0}
+.pl .nm{flex:1 1 auto;min-width:0;font:600 max(12px,calc(22 * var(--u))) var(--g-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--acl);text-shadow:0 0 max(5px,calc(12 * var(--u))) color-mix(in srgb,var(--ac) 40%,transparent);line-height:1.15;white-space:nowrap}
+.chips{display:flex;flex-wrap:nowrap;justify-content:flex-end;gap:max(4px,calc(6 * var(--u)));font-size:max(11px,calc(15 * var(--u)));flex:none}
+.chip{display:inline-flex;align-items:center;gap:.4em;height:1.75em;padding:0 .6em;font:600 1em var(--g-disp);letter-spacing:.06em;text-transform:uppercase;color:var(--g-gold);background:rgba(255,255,255,.05);border:1px solid var(--g-line);white-space:nowrap}
+.chip img{width:1.35em;height:1.35em;object-fit:contain;image-rendering:pixelated}
+.chip.free{color:#cfe8a8;border-color:rgba(127,191,63,.5);background:rgba(127,191,63,.13)}
+.chip.rage{color:#ffb070;border-color:rgba(224,112,42,.6);background:rgba(224,112,42,.16)}
+.chip.tg{font-family:var(--g-body);text-transform:none;letter-spacing:.02em;color:var(--g-dim);font-weight:500;font-size:1em}
+.dv{position:relative;height:1px;background:linear-gradient(90deg,var(--g-line2),var(--g-line2) 85%,transparent)}
+.dv::after{content:'';position:absolute;left:0;top:50%;width:6px;height:6px;transform:translate(-50%,-50%) rotate(45deg);background:#130d07;border:1px solid var(--acl)}
+.sls{display:flex;flex-direction:column;gap:.15em}
+.sl{display:flex;justify-content:space-between;align-items:baseline;gap:.6em;font:max(12px,calc(19 * var(--u)))/1.3 var(--g-body);white-space:nowrap}
+.sl .k{color:var(--g-dim);min-width:0}
+.sl .n{font:600 .98em var(--g-disp);color:var(--g-gold);text-align:right;flex:none}
+.pl.fly{translate:0 var(--m-rise);opacity:0}
+.pl.in{animation:rise var(--m-in) var(--m-ease) both;animation-delay:calc(var(--i) * var(--m-stagger))}
+@keyframes rise{from{opacity:0;translate:0 var(--m-rise)}to{opacity:1;translate:0 0}}
+@media (prefers-reduced-motion:reduce){.pl,.pl.in{animation:none;transition:none}}
+
+/* ================= A - PLATES: ikon solda, ad + cipler ayni satirda, altin ayirac, alt alta stat satirlari ================= */
+.va .pl{min-height:calc(118 * var(--u))}
+.va .pas .sls{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:.15em calc(40 * var(--u))}
+.va .pas .hd .nm{flex:none}
+.va .pas .hd::after{content:'';flex:1}
+
+/* ================= B - DENSE: kucuk ikon, bedel saga dikey sutunda, stat'lar kapsul, hedef sekli etiketi, pasifte tam aciklama ================= */
+.vb .pl{--is:calc(72 * var(--u));grid-template-columns:var(--is) minmax(0,1fr) auto;min-height:calc(96 * var(--u));padding:calc(10 * var(--u)) calc(14 * var(--u))}
+.vb .pas{grid-template-columns:var(--is) minmax(0,1fr)}
+.vb .pl .rail{display:flex;flex-direction:column;align-items:flex-end;justify-content:center;gap:max(4px,calc(6 * var(--u)));font-size:max(11px,calc(15 * var(--u)))}
+.vb .pl .rail .chip{min-width:100%;justify-content:flex-start}
+.vb .bd{gap:calc(5 * var(--u))}
+.vb .pills{display:flex;flex-wrap:nowrap;gap:calc(8 * var(--u));min-width:0;overflow:hidden}
+.vb .pill{display:inline-flex;align-items:baseline;gap:.5em;padding:0 .65em;height:1.6em;line-height:1.6em;font:max(12px,calc(18 * var(--u))) var(--g-body);color:var(--g-dim);background:rgba(255,255,255,.04);border:1px solid var(--g-line);white-space:nowrap}
+.vb .pill b{font:600 .98em var(--g-disp);color:var(--g-gold)}
+.vb .tgline{font:max(12px,calc(17 * var(--u))) var(--g-body);color:var(--g-dim);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vb .desc{font:max(12px,calc(18 * var(--u)))/1.3 var(--g-body);color:#d3c4a0;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+
+/* ================= C - SHOWCASE: buyuk ikon, ad + ilk aciklama satiri, stat'lar buyuk rakam seridi; pasif satirda rakamlar saga ================= */
+.vc .pl{--is:calc(90 * var(--u));min-height:calc(112 * var(--u))}
+.vc .bd{gap:calc(4 * var(--u))}
+.vc .pl .nm{font-size:max(13px,calc(24 * var(--u)))}
+.vc .blurb{font:max(12px,calc(18 * var(--u)))/1.28 var(--g-body);color:#cdbf9b;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.vc .big{display:flex;gap:calc(30 * var(--u));align-items:flex-end;margin-top:calc(2 * var(--u))}
+.vc .bg{display:flex;flex-direction:column;line-height:1.05}
+.vc .bg b{font:600 max(14px,calc(25 * var(--u))) var(--g-disp);color:var(--g-gold)}
+.vc .bg span{font:max(11px,calc(15 * var(--u))) var(--g-body);color:var(--g-dim);white-space:nowrap}
+.vc .pas{grid-template-columns:var(--is) minmax(0,1fr) auto}
+.vc .pas .big{margin:0;padding-left:calc(26 * var(--u));border-left:1px solid var(--g-line2);align-self:stretch;align-items:center}
+.vc .pas .blurb{white-space:normal;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+.vc .ult::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,#e0702a,transparent)}
+
+/* A Band ipucu (oyundaki yuzen kopya) */
+.fl{position:fixed;z-index:80;pointer-events:none;opacity:0;translate:0 4px;transition:opacity 140ms var(--m-ease),translate 140ms var(--m-ease)}
+.fl.on{opacity:1;translate:0 0}
+.fl .bt{--bu:1px}
+</style></head>
+<body>
+<div id="top"><h1>Gear &middot; Hero &middot; Skills</h1><div class="tabs" id="ctabs"></div><div class="tabs" id="vtabs"></div></div>
+<div class="note" id="note"></div>
+<div id="frame"><div class="lsk"><div class="sec">Skills</div><div class="rows" id="rows"></div></div></div>
+<div id="strip"><b>MOCKUP</b>Skills rows &middot; olcek:
+<button data-u="1">1920</button><button data-u="0.547">1050x591 compact</button><button id="bb">sinir</button><span id="read"></span></div>
+<script src="data.js"></script>
+<script>
+const NOTES={
+ a:'<b>A &middot; Plates:</b> mevcut plaka dilinin yatay hali. Ikon solda (92), ad ile bedel ayni satirda, altin ayirac, altinda tum stat satirlari etiketiyle (kesilmez). Pasif satirinda stat satirlari iki sutuna yayilir.',
+ b:'<b>B &middot; Dense:</b> kucuk ikon (72), bedel / bekleme sagda dikey sutunda, stat\'lar kapsul seklinde tek satir, ad altinda hedef sekli (Single Target, Block 2x3). Pasif satiri tam acıklama cumlesini gosterir; ayrintilar hover\'da.',
+ c:'<b>C &middot; Showcase:</b> buyuk ikon, ad + aciklamanin ilk satiri, stat\'lar buyuk altin rakam seridi (etiket altinda); bedel adin sagında. Pasif satirda rakamlar genis alanin sagında ayri blokta, ulti sol kenarda turuncu seritli.'};
+const q=new URLSearchParams(location.hash.slice(1));
+const S={v:(location.hash.match(/^#([abc])/)||[])[1]||'a',cls:q.get('class')||'cutthroat',u:Number(q.get('u'))||1,clean:q.has('clean'),bounds:q.has('bounds')};
+const $=(s,r=document)=>r.querySelector(s);
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'})[c]);
+const chipMp=n=>`<span class="chip"><img src="ui/mp.webp" alt="">${n}</span>`;
+const chipCd=n=>`<span class="chip"><img src="ui/cooldown.webp" alt="">${n}</span>`;
+const chipRage=n=>`<span class="chip rage"><img src="ui/rage.webp" alt="">RAGE ${n}</span>`;
+const free='<span class="chip free">Free</span>';
+function costs(r){ if(r.kind==='pas')return[];
+  const m=/^(\d+)\s*MP/.exec(r.cost); const rg=/RAGE/i.test(r.cost); const rn=(/min\s*(\d+)/.exec(r.cost)||[])[1];
+  const a=[]; a.push(m?chipMp(m[1]):rg?chipRage(rn||'30'):free); if(r.cd>0)a.push(chipCd(r.cd)); return a; }
+const nums=r=>r.nums.map(n=>`<div class="sl"><span class="k">${esc(n.k)}</span><span class="n">${esc(n.v)}</span></div>`).join('');
+const TAG={pas:'Passive',ult:'Ultimate'};
+const tag=r=>r.kind?`<span class="tag">${TAG[r.kind]}</span>`:'';
+const ico=r=>`<div class="ico"><img src="${r.icon}" alt="" draggable="false"></div>`;
+const cls=r=>`pl ${r.kind}`;
+function vA(r){ return `<div class="${cls(r)}" data-id="${r.id}">${tag(r)}${ico(r)}<div class="bd"><div class="hd"><span class="nm">${esc(r.name)}</span><div class="chips">${costs(r).join('')}</div></div><div class="dv"></div><div class="sls">${nums(r)}</div></div></div>`; }
+function vB(r){ const pas=r.kind==='pas';
+  const pills=r.nums.map(n=>`<span class="pill">${esc(n.k)} <b>${esc(n.v)}</b></span>`).join('');
+  const mid=pas?`<div class="hd"><span class="nm">${esc(r.name)}</span></div><div class="desc">${esc(r.desc)}</div>`:`<div class="hd"><span class="nm">${esc(r.name)}</span></div><div class="tgline">${esc(r.badge)}${r.lines[0]?' &middot; '+esc(r.lines[0].replace(/\s*\(.*?\)/,'')):''}</div><div class="pills">${pills}</div>`;
+  return `<div class="${cls(r)}" data-id="${r.id}">${tag(r)}${ico(r)}<div class="bd">${mid}</div>${pas?'':`<div class="rail">${costs(r).join('')}</div>`}</div>`; }
+function vC(r){ const pas=r.kind==='pas';
+  const big=`<div class="big">${r.nums.map(n=>`<div class="bg"><b>${esc(n.v)}</b><span>${esc(n.k)}</span></div>`).join('')}</div>`;
+  const blurb=pas?r.desc:r.lines[0].replace(/\s*\(.*?\)/,'');
+  if(pas) return `<div class="${cls(r)}" data-id="${r.id}">${tag(r)}${ico(r)}<div class="bd"><div class="hd"><span class="nm">${esc(r.name)}</span></div><div class="blurb">${esc(blurb)}</div></div>${big}</div>`;
+  return `<div class="${cls(r)}" data-id="${r.id}">${tag(r)}${ico(r)}<div class="bd"><div class="hd"><span class="nm">${esc(r.name)}</span><div class="chips">${costs(r).join('')}</div></div><div class="blurb">${esc(blurb)}</div>${big}</div></div>`; }
+const VIEW={a:vA,b:vB,c:vC};
+
+/* ---- A Band skill ipucu (src/ui/band-tip.ts ile ayni isaretleme) ---- */
+const KW=/\b(Wound|Slow|Stun|Wither|Blinded|Shrouded|Rage|critical|Accuracy|Evasion|Healing received)\b/g;
+const rich=t=>esc(t).replace(KW,'<span class="k">$1</span>').replace(/(\+|-)?\d+(\.\d+)?%?/g,m=>`<span class="n">${m}</span>`);
+function tipHtml(c,r){
+  const pas=r.kind==='pas'; const ac=pas?'#6fb0a8':r.kind==='ult'?'#e0702a':(r.fx||'#d9b26a');
+  const chips=pas?'':costs(r).map(h=>h.replace('class="chip','class="bt-chip v'))+'';
+  const meta=pas?'':`<div class="bt-meta">${costs(r).map(h=>h.replace('class="chip','class="bt-chip v').replace(/ rage"/,' warn"')).join('')}<span class="bt-chip ac">${esc(r.badge)}</span></div>`;
+  const lines=(pas?[r.desc]:r.lines).map(l=>`<div class="bt-ln"><span class="dia"></span><div class="tx">${rich(l)}</div></div>`).join('');
+  return `<div class="bt" style="--ac:${ac}"><div class="bt-head"><span class="bt-medal ico frm" style="background-image:url(&quot;${r.icon}&quot;)"></span><div class="bt-ht"><div class="bt-kind">${pas?'Passive':r.kind==='ult'?'Ultimate':'Skill'}</div><div class="bt-title">${esc(r.name)}</div></div></div>${meta}<div class="bt-div"></div><div class="bt-body">${lines}</div></div>`; }
+let fl=null;
+function showTip(cell){ hideTip(); const c=CLASSES[S.cls]; const r=c.rows.find(x=>x.id===cell.dataset.id); if(!r)return;
+  fl=document.createElement('div'); fl.className='fl'; fl.innerHTML=tipHtml(c,r); document.body.append(fl);
+  const cr=cell.getBoundingClientRect(), tr=fl.getBoundingClientRect(), M=6;
+  let x=cr.left+cr.width/2-tr.width/2, y=cr.top-tr.height-14; if(y<M)y=cr.bottom+14;
+  x=Math.max(M,Math.min(innerWidth-tr.width-M,x)); y=Math.max(M,Math.min(innerHeight-tr.height-M,y));
+  fl.style.left=x+'px'; fl.style.top=y+'px'; requestAnimationFrame(()=>fl&&fl.classList.add('on')); }
+function hideTip(){ if(fl){fl.remove();fl=null;} }
+
+function render(first){
+  const c=CLASSES[S.cls];
+  $('#rows').className='rows v'+S.v;
+  $('#rows').innerHTML=c.rows.map((r,i)=>VIEW[S.v](r).replace('class="pl','style="--i:'+i+'" class="'+(first?'in ':'')+'pl')).join('');
+  $('#note').innerHTML=NOTES[S.v];
+  $('#ctabs').innerHTML=Object.keys(CLASSES).map(k=>`<button data-c="${k}" class="${k===S.cls?'on':''}">${CLASSES[k].name}</button>`).join('');
+  $('#vtabs').innerHTML=['a','b','c'].map(k=>`<button data-v="${k}" class="${k===S.v?'on':''}">${k.toUpperCase()}</button>`).join('');
+  const f=$('#frame'); f.style.setProperty('--u',S.u+'px'); f.classList.toggle('bounds',S.bounds);
+  document.documentElement.classList.toggle('compact',S.u<0.6); document.documentElement.classList.toggle('clean',S.clean);
+  document.querySelectorAll('#strip button[data-u]').forEach(b=>b.classList.toggle('on',Number(b.dataset.u)===S.u));
+  $('#bb').classList.toggle('on',S.bounds);
+  history.replaceState(null,'','#'+S.v+'&class='+S.cls+'&u='+S.u+(S.clean?'&clean':'')+(S.bounds?'&bounds':''));
+  const lsk=$('.lsk'); const h=lsk.getBoundingClientRect().height/S.u, lim=420; const rd=$('#read');
+  rd.textContent='blok '+Math.round(lsk.getBoundingClientRect().width/S.u)+' x '+Math.round(h)+' birim (sinir ~'+lim+')'; rd.className=h<=lim?'ok':'bad';
+}
+document.addEventListener('click',e=>{ const b=e.target.closest('button'); if(!b)return;
+  if(b.dataset.c){S.cls=b.dataset.c;render(true);} else if(b.dataset.v){S.v=b.dataset.v;render(true);} else if(b.dataset.u){S.u=Number(b.dataset.u);render(false);} else if(b.id==='bb'){S.bounds=!S.bounds;render(false);} });
+const rowsEl=$('#rows');
+rowsEl.addEventListener('pointerover',e=>{ if(e.pointerType==='touch')return; const c=e.target.closest('.pl'); if(c)showTip(c); });
+rowsEl.addEventListener('pointerout',e=>{ if(e.pointerType==='touch')return; const c=e.target.closest('.pl'); if(c&&!(e.relatedTarget&&c.contains(e.relatedTarget)))hideTip(); });
+rowsEl.addEventListener('click',e=>{ const c=e.target.closest('.pl'); if(c&&(fl?true:false)&&fl._for===c){hideTip();} else if(c){showTip(c);fl&&(fl._for=c);} });
+addEventListener('hashchange',()=>{const m=location.hash.match(/^#([abc])/); if(m){S.v=m[1];render(true);}});
+if(document.fonts&&document.fonts.ready)document.fonts.ready.then(()=>render(false));
+render(true);
+</script></body></html>

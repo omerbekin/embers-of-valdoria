@@ -13,12 +13,15 @@ import { bandTipHtml } from './band-tip';
 import { dismissOnBackdrop } from './backdrop';
 import { closeDom } from './motion';
 import { lockInput, unlockInput } from './input-lock';
+import type { BandTipSpec } from './band-tip';
 import { uiSound } from './ui-sound';
-import { LANES, ROWS, clientToLocal, dropOnCell, fitOfHint, previewMove, reachRows, reachText, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
+import { LANES, ROWS, clientToLocal, dropOnCell, fitAccent, fitOfHint, previewMove, reachBarHtml, reachRows, reachText, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
 
 export type BoardAttr = 'str' | 'dex' | 'int' | 'luck';
 
 export interface BoardSkill {
+  /** Skill kimliği (ipucu için). */
+  id?: string;
   name: string;
   icon: string;
   /** Bedel çipi: free = 'Free'; rage = 'Rage N'; mp / hp = ikon (mp) + sayı. `text` sayı / yüzde. */
@@ -63,6 +66,17 @@ export interface FormationBoardOpts {
   move: (heroId: string, cell: number) => void;
   /** "Hero details" (verilmezse düğme yok). */
   details?: (heroId: string) => void;
+  /**
+   * Kart ipuçları (hover; dokunmatikte tek dokunuş): skill / pasif satırı = oyundaki ortak skill ipucu (Gear skill çubuğuyla aynı), stat kutusu =
+   * ortak stat ipucu (A Band, Gear stat paneliyle aynı). Verilmezse ipucu yok.
+   */
+  tips?: {
+    /** Skill ipucunu `anchor` satırının yanında açar (ekran sınırları içinde); pasifte key = 'passive'. */
+    showSkill: (anchor: HTMLElement, heroId: string, key: string) => void;
+    hideSkill: () => void;
+    /** Stat ipucunun içeriği; yoksa null. */
+    stat: (heroId: string, attr: BoardAttr) => BandTipSpec | null;
+  };
   /** Stat / bedel ikonları. */
   icons: Record<'hp' | 'mp' | BoardAttr, string>;
   /** Izgara altındaki kullanım yazısı (verilmezse varsayılan). */
@@ -179,9 +193,9 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const chips = `<div class="fb-chips"><span class="fb-chip">${esc(f.role)}</span>${o.rangeUi ? `<span class="fb-chip hot">Range <b>${f.range === null ? 'Global' : f.range}</b></span>` : ''}${rowTxt ? `<span class="fb-chip">${esc(rowTxt)}</span>` : ''}</div>`;
     const head = `<div class="fb-chd"><div class="fb-ico" style="--is:84px">${img(f.avatar)}</div><div class="fb-apt"><div class="fb-nmt"><span class="t">${esc(f.name)}</span><span class="lv"><i>Lv</i>${f.level}</span></div>${chips}</div></div>`;
     const bars = `<div class="fb-bars"><div class="fb-bar2">${img(o.icons.hp)}<div class="bb"><i style="width:${Math.round(f.hpRatio * 100)}%;background:${hpCol(f.hpRatio)}"></i></div><span class="v">${Math.round(f.hp * f.hpRatio)}</span></div><div class="fb-bar2">${img(o.icons.mp)}<div class="bb"><i style="width:100%;background:#4a8fd0"></i></div><span class="v">${Math.round(f.mp)}</span></div></div>`;
-    const tiles = ORDER.map((k) => `<div class="fb-tile ${f.primary === k ? 'p' : ''}">${img(o.icons[k])}<div class="tx"><span class="n">${num(f.attr[k])}</span><span class="k">${NAMES[k]}</span></div></div>`).join('');
-    const pas = f.passive ? `<div class="fb-srow pas"><div class="fb-ico sm sk" style="--is:44px">${img(f.passive.icon)}</div><div class="pn">${esc(f.passive.name)}</div><span class="fb-ptag">Passive</span></div>` : '';
-    const sk = f.skills.map((s) => `<div class="fb-srow ${s.cost.kind === 'rage' ? 'rg' : ''}"><div class="fb-ico sm sk" style="--is:44px">${img(s.icon)}</div><div class="pn">${esc(s.name)}</div>${costChip(s.cost)}</div>`).join('');
+    const tiles = ORDER.map((k) => `<div class="fb-tile ${f.primary === k ? 'p' : ''}" data-attr="${k}">${img(o.icons[k])}<div class="tx"><span class="n">${num(f.attr[k])}</span><span class="k">${NAMES[k]}</span></div></div>`).join('');
+    const pas = f.passive ? `<div class="fb-srow pas" data-skill="passive"><div class="fb-ico sm sk" style="--is:44px">${img(f.passive.icon)}</div><div class="pn">${esc(f.passive.name)}</div><span class="fb-ptag">Passive</span></div>` : '';
+    const sk = f.skills.map((s) => `<div class="fb-srow ${s.cost.kind === 'rage' ? 'rg' : ''}" data-skill="${esc(s.id ?? s.name)}"><div class="fb-ico sm sk" style="--is:44px">${img(s.icon)}</div><div class="pn">${esc(s.name)}</div>${costChip(s.cost)}</div>`).join('');
     const foot = o.details ? '<div class="fb-foot"><button type="button" class="el-btn fb-details" data-act="details">Hero details</button></div>' : '<div class="fb-foot"></div>';
     return `${head}${bars}<div class="fb-tiles">${tiles}</div><div class="fb-sl">Skills</div><div class="fb-srows">${pas}${sk}</div>${foot}`;
   };
@@ -206,7 +220,10 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   };
 
   // ---- hover kutusu (Band dili: vurgu kenarı, ad + sıra, menzil cümlesi, 4 sıra çubuğu)
+  let panelTipFor: HTMLElement | null = null;
   const hideTip = (): void => {
+    o.tips?.hideSkill();
+    panelTipFor = null;
     window.clearTimeout(tipTimer);
     tip?.remove();
     tip = null;
@@ -221,13 +238,8 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const here = cells[cell] === who.id;
     const fit = here ? fitOfHint(o.hintsFor(cells.slice())[cell]) : fitAt(who.id, cell);
     const n = reachRows(who.range, rowOfCell(cell));
-    const accent = n <= 0 || fit === 'bad' ? '#e8806a' : fit === 'weak' ? '#e0a43a' : '#8fc65a';
-    const segs = [1, 2, 3, 4].map((i) => `<i class="${i <= n ? 'on' : ''}">${i}</i>`).join('');
-    // Dolu kutuların rengi isabet eden sıra sayısına göre: az = yeşil ... çok = sarı (1 -> 4 sıra, doğrusal; Ömer 2026-10-19). 0 sıra: kutu yanmaz.
-    const t = Math.max(0, Math.min(1, (n - 1) / 3));
-    const mix = (a: number, b: number): number => Math.round(a + (b - a) * t);
-    const reachCol = `rgb(${mix(0x7c, 0xf2)}, ${mix(0xc6, 0xd0)}, ${mix(0x5a, 0x3e)})`;
-    const bars = `<div class="fb-reach"><span class="rl">Enemy rows hit</span><span class="rb" style="--ac:${reachCol}">${segs}</span></div>`;
+    const accent = fitAccent(n, fit);
+    const bars = reachBarHtml(n);
     const lines = [{ text: reachText(n), ...(n <= 0 ? { color: '#ffb7a6' } : {}) }, ...(fit === 'weak' ? [{ text: 'Exposed in front', color: '#f3d08a' }] : [])];
     const el = document.createElement('div');
     el.className = 'fb-tip';
@@ -246,6 +258,39 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   };
 
   // ---- sürükleme
+  const rotated0 = (): boolean => document.documentElement.classList.contains('rotated');
+  // kart ipuçları: skill satırı (ortak skill ipucu) ve stat kutusu (ortak stat ipucu, Band)
+  const showPanelTip = (t: HTMLElement): void => {
+    const f = focus();
+    if (!o.tips || !f || drag) return;
+    if (panelTipFor === t) return;
+    hideTip();
+    if (t.dataset['skill'] !== undefined) {
+      o.tips.showSkill(t, f.id, t.dataset['skill']);
+      panelTipFor = t;
+      return;
+    }
+    const attr = t.dataset['attr'] as BoardAttr | undefined;
+    const spec = attr ? o.tips.stat(f.id, attr) : null;
+    if (!spec) return;
+    const el = document.createElement('div');
+    el.className = 'fb-tip';
+    el.innerHTML = bandTipHtml(spec);
+    root.append(el);
+    const r = t.getBoundingClientRect();
+    const box = root.getBoundingClientRect();
+    const a = clientToLocal(r.left, r.top, box, root.offsetWidth, rotated0());
+    const b = clientToLocal(r.right, r.bottom, box, root.offsetWidth, rotated0());
+    const tw = el.offsetWidth;
+    const th = el.offsetHeight;
+    let y = Math.min(a.y, b.y) - th - 8;
+    if (y < 4) y = Math.max(a.y, b.y) + 8;
+    const x = Math.max(4, Math.min(BOARD_W - tw - 4, (a.x + b.x) / 2 - tw / 2));
+    el.style.left = `${Math.round(x)}px`;
+    el.style.top = `${Math.round(Math.max(4, Math.min(BOARD_H - th - 4, y)))}px`;
+    tip = el;
+    panelTipFor = t;
+  };
   const rotated = (): boolean => document.documentElement.classList.contains('rotated');
   const local = (cx: number, cy: number): { x: number; y: number } => clientToLocal(cx, cy, root.getBoundingClientRect(), root.offsetWidth, rotated());
   const cellAtPoint = (cx: number, cy: number): number => {
@@ -346,6 +391,13 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   };
   const onHover = (e: PointerEvent): void => {
     if (e.pointerType === 'touch' || drag) return;
+    const pt = (e.target as HTMLElement).closest<HTMLElement>('.fb-tile[data-attr], .fb-srow[data-skill]');
+    if (pt) {
+      over = -1;
+      showPanelTip(pt);
+      return;
+    }
+    if (panelTipFor) hideTip();
     const c = (e.target as HTMLElement).closest<HTMLElement>('.fb-cell');
     const slot = c ? Number(c.dataset['slot']) : -1;
     if (slot === over) return;
@@ -358,6 +410,13 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     hideTip();
   };
   const onClick = (e: MouseEvent): void => {
+    // dokunmatik: satıra / kutuya tek dokunuş ipucunu açar (aynısına tekrar dokunmak kapatır)
+    const pt = (e.target as HTMLElement).closest<HTMLElement>('.fb-tile[data-attr], .fb-srow[data-skill]');
+    if (pt && isTouchUi()) {
+      if (panelTipFor === pt) hideTip();
+      else showPanelTip(pt);
+      return;
+    }
     const a = (e.target as HTMLElement).closest<HTMLElement>('[data-act="details"]');
     if (!a) return;
     const f = focus();

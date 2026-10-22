@@ -149,13 +149,13 @@ const plateHtml = (o: MwPlate, chosen = false): string => {
 };
 
 const lighten = (hex: string): string => `color-mix(in srgb, ${hex} 55%, #fff)`;
-function cardHtml(c: MwCard): string {
+function cardHtml(c: MwCard, i = 0): string {
   const logo = miscImage(`class:${c.classId}`)?.url;
   const chips: MwChip[] = [];
   if (c.role) chips.push({ tone: 'info', text: c.role });
   if (c.stat) chips.push({ tone: 'gain', icon: c.stat as MwIcon, text: c.stat.toUpperCase() });
   if (c.tag) chips.push({ tone: 'dim', text: c.tag });
-  return `<button type="button" class="mw-card" data-card="${esc(c.id)}" style="--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}<span class="lead"></span></div>
+  return `<button type="button" class="mw-card" data-card="${esc(c.id)}" style="--i:${i};--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}<span class="lead"></span></div>
     <span class="nm">${esc(c.name)}</span>${chips.length ? chipsHtml(chips) : ''}${c.blurb ? `<p class="ds">${esc(c.blurb)}</p>` : ''}</button>`;
 }
 
@@ -163,7 +163,7 @@ const bodyHtml = (b: MwBody | undefined): string => {
   if (!b) return '';
   if (b.k === 'plates') return `<div class="mw-plates${b.plates.length === 1 ? ' one' : ''}">${b.plates.map((p) => plateHtml(p)).join('')}</div>`;
   if (b.k === 'chosen') return `<div class="mw-plates one solo">${plateHtml(b.plate, true)}</div>`;
-  if (b.k === 'cards') return `<div class="mw-cards">${b.cards.map(cardHtml).join('')}</div>`;
+  if (b.k === 'cards') return `<div class="mw-cards">${b.cards.map((c, i) => cardHtml(c, i)).join('')}</div>`;
   return `<div class="mw-fallen">${b.rows.map((r) => {
     const av = avatarUrlOf(r.spriteId);
     return `<div class="mw-frow">${av ? `<img class="av" src="${av}" alt="" draggable="false">` : ''}<div class="tx"><b>${esc(r.name)}</b><span>${esc(r.note)}</span></div></div>`;

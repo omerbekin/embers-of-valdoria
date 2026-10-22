@@ -4,6 +4,8 @@
  * BattleScene bu modülün döndürdüğü sonuca göre çizer ve (cast aksiyonunda) `useSkill(uid, skill, undefined, slot, undefined, corpseUid)` çağırır.
  */
 
+import { fitOfHint, reachRows, reachText, type Fit } from '../ui/formation-board-rules';
+
 /** Motorun `corpseChoices` satırından UI'ın ihtiyacı olan kısım. */
 export interface CorpseOption {
   uid: string;
@@ -88,7 +90,7 @@ export function corpseHoverTip(c: CorpseOption, preview: { unitName: string; hp:
 }
 
 /** Tooltip: yuvanın üstüne gelince (2. adım): çağrılacak birim ve (varsa) tüketilecek ceset. `reserved` = ölü dosta ayrılmış yuva. */
-export function slotHoverTip(p: { unitName: string; hp: number; empowered: boolean | undefined; corpseName: string | null; row: number; reserved: boolean }): { title: string; rows: Array<{ text: string; tone: 'info' | 'good' | 'muted' | 'bad' }> } {
+export function slotHoverTip(p: { unitName: string; hp: number; empowered: boolean | undefined; corpseName: string | null; row: number; reserved: boolean; reach?: { text: string; n: number; exposed: boolean } }): { title: string; rows: Array<{ text: string; tone: 'info' | 'good' | 'muted' | 'bad' }> } {
   if (p.reserved) return { title: 'Reserved cell', rows: [{ text: 'A fallen ally fell here: the cell is reserved for their resurrection', tone: 'bad' }] };
   const rows: Array<{ text: string; tone: 'info' | 'good' | 'muted' | 'bad' }> = [];
   if (p.empowered === true) rows.push({ text: `Empowered ${p.unitName} HP ${p.hp}`, tone: 'good' });
@@ -96,8 +98,22 @@ export function slotHoverTip(p: { unitName: string; hp: number; empowered: boole
   else rows.push({ text: `${p.unitName} HP ${p.hp}`, tone: 'good' });
   if (p.corpseName) rows.push({ text: `Consumes ${p.corpseName}'s corpse`, tone: 'muted' });
   rows.push({ text: `Row ${p.row + 1}${p.row === 0 ? ' (front)' : ''}`, tone: 'muted' });
+  if (p.reach) {
+    rows.push({ text: p.reach.text, tone: p.reach.n <= 0 ? 'bad' : 'muted' });
+    if (p.reach.exposed) rows.push({ text: 'Exposed in front', tone: 'muted' });
+  }
   rows.push({ text: 'Click to raise it here', tone: 'info' });
   return { title: `Raise ${p.unitName}`, rows };
+}
+
+/**
+ * Çağrının bir hücredeki menzil uygunluğu (Formation hover kutusuyla aynı cümle ve çubuk; ortak parçalar formation-board-rules).
+ * `hint` = motorun dizilim ipucu (content.placementHintsFor), `range` = çağrının ana menzili (null / sonsuz = menzilsiz). Saf.
+ */
+export function summonReach(hint: { kind: 'outOfReach' | 'exposed' } | undefined, range: number | null, row: number): { fit: Fit; n: number; text: string; exposed: boolean } {
+  const fit = fitOfHint(hint);
+  const n = reachRows(range, row);
+  return { fit, n, text: reachText(n), exposed: fit === 'weak' };
 }
 
 // ---------------------------------------------------------------- Resurrection (madde 257): aynı iki adımlı akış

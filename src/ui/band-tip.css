@@ -532,3 +532,53 @@ html.compact .bt {
   box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
   pointer-events: none;
 }
+
+/* "Enemy rows hit" 4 parçalı çubuk (Formation hover kutusu + savaştaki çağrı hücresi ipucu; reachBarHtml, formation-board-rules.ts) */
+.fb-reach {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fb-reach .rl {
+  flex: none;
+  font: 600 12px var(--g-disp, Cinzel, Georgia, serif);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--g-dim, #a8977a);
+}
+
+.fb-reach .rb {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.fb-reach .rb i {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background: rgba(217, 178, 106, 0.12);
+  border: 1px solid rgba(217, 178, 106, 0.2);
+  font: 600 11px/16px var(--g-disp, Cinzel, Georgia, serif);
+  font-style: normal;
+  text-align: center;
+  color: rgba(168, 151, 122, 0.8);
+}
+
+.fb-reach .rb i.on {
+  background: color-mix(in srgb, var(--ac) 78%, #000);
+  border-color: var(--ac);
+  color: #1a0f06;
+}
+
+/* Başlık tek satır (yara ipucu "3 WOUNDS"): kelime ortasından bölünmez, başlık sütunu içeriği kadar genişler */
+.bt.nw .bt-title {
+  white-space: nowrap;
+  overflow-wrap: normal;
+}
+
+.bt.nw .bt-ht {
+  min-width: max-content;
+}

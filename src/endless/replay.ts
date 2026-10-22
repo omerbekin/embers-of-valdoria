@@ -10,7 +10,7 @@ import type { Side } from '../engine/types';
 import { fnv1a, stateHash } from '../net/state-hash';
 
 /** Bir eylem: `use` = useSkill(actor, skill, target, slot, board, corpse) (global skill'ler de bu kapıdan geçer), `skip` = skipTurn(). */
-export type ReplayAction = { k: 'use'; a: string; s: string; t?: string; slot?: number; b?: Side; c?: string } | { k: 'skip' };
+export type ReplayAction = { k: 'use'; a: string; s: string; t?: string; slot?: number; b?: Side; c?: string; /** Faz 8: skill ağacı biçimi. */ m?: string } | { k: 'skip' };
 
 /** Yarım kalan savaş: hangi dalga, hangi seed, eylemler ve son durumun özeti. */
 export interface SuspendedBattle {
@@ -32,7 +32,7 @@ export const planKey = (plan: { seed: number; party: string[]; enemies: string[]
 
 export const battleHash = (battle: Battle): string => stateHash(battle);
 
-const useAction = (a: string, s: string, t?: string, slot?: number, b?: Side, c?: string): ReplayAction => ({
+const useAction = (a: string, s: string, t?: string, slot?: number, b?: Side, c?: string, m?: string): ReplayAction => ({
   k: 'use',
   a,
   s,
@@ -40,6 +40,7 @@ const useAction = (a: string, s: string, t?: string, slot?: number, b?: Side, c?
   ...(slot !== undefined ? { slot } : {}),
   ...(b !== undefined ? { b } : {}),
   ...(c !== undefined ? { c } : {}),
+  ...(m !== undefined ? { m } : {}),
 });
 
 /**
@@ -60,10 +61,10 @@ export function attachRecorder(battle: Battle, onAction: (action: ReplayAction) 
         depth--;
       }
     };
-  battle.useSkill = wrap(orig.useSkill, (a: string, s: string, t?: string, slot?: number, b?: Side, c?: string) => useAction(a, s, t, slot, b, c));
+  battle.useSkill = wrap(orig.useSkill, (a: string, s: string, t?: string, slot?: number, b?: Side, c?: string, m?: string) => useAction(a, s, t, slot, b, c, m));
   battle.useGlobal = wrap(orig.useGlobal, (a: string, s: string, slot?: number, t?: string) => useAction(a, s, t, slot));
   battle.skipTurn = wrap(orig.skipTurn, () => ({ k: 'skip' }));
-  battle.applyChoice = wrap(orig.applyChoice, (a, choice) => (choice ? useAction(a, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid) : { k: 'skip' }));
+  battle.applyChoice = wrap(orig.applyChoice, (a, choice) => (choice ? useAction(a, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid, choice.mode) : { k: 'skip' }));
   return () => {
     // Örnek üzerindeki sarmalar silinir: prototip yöntemleri yeniden görünür
     for (const k of Object.keys(orig) as Array<keyof typeof orig>) delete (battle as unknown as Record<string, unknown>)[k];
@@ -74,7 +75,7 @@ export function attachRecorder(battle: Battle, onAction: (action: ReplayAction) 
 export function replayActions(battle: Battle, actions: ReplayAction[]): { ok: true } | { ok: false; at: number; reason: string } {
   for (let i = 0; i < actions.length; i++) {
     const x = actions[i]!;
-    const res = x.k === 'skip' ? battle.skipTurn() : battle.useSkill(x.a, x.s, x.t, x.slot, x.b, x.c);
+    const res = x.k === 'skip' ? battle.skipTurn() : (x.m !== undefined ? battle.useSkill(x.a, x.s, x.t, x.slot, x.b, x.c, x.m) : battle.useSkill(x.a, x.s, x.t, x.slot, x.b, x.c));
     if (!res.ok) return { ok: false, at: i, reason: res.reason };
   }
   return { ok: true };

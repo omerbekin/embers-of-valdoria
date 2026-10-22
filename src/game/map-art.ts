@@ -54,6 +54,8 @@ export function blurredTexture(scene: Phaser.Scene, key: string, factor = 10): s
  * Görsel görünen alanı kaplamıyorsa iki yandaki boşluğu dolduran kenar uzantısı: görselin aynalanmış, bulanık ve karartılmış kopyaları.
  * `place(img)` ana görsele göre konumlar; görsel boşluk bırakmıyorsa ekran dışında kalır.
  */
+const SEAM_OVERLAP = 2;
+
 export function edgeFillers(scene: Phaser.Scene, key: string, depth: number): { items: Phaser.GameObjects.Image[]; place: (img: Phaser.GameObjects.Image) => void } {
   const blur = blurredTexture(scene, key, 12);
   const items = [-1, 1].map((side) => scene.add.image(0, 0, blur).setFlipX(true).setTint(0x4a4038).setDepth(depth).setData('side', side));
@@ -61,7 +63,8 @@ export function edgeFillers(scene: Phaser.Scene, key: string, depth: number): { 
     for (const f of items) {
       const side = f.getData('side') as number;
       f.setDisplaySize(img.displayWidth, img.displayHeight).setOrigin(img.originX, img.originY);
-      f.setPosition(img.x + side * img.displayWidth, img.y).setVisible(img.visible);
+      // 2 birim görselin altına taşır: tam sayı olmayan ölçekte bitişik kenarda ince koyu dikiş (arka plan sızması) kalmasın
+      f.setPosition(img.x + side * (img.displayWidth - SEAM_OVERLAP), img.y).setVisible(img.visible);
     }
   };
   return { items, place };

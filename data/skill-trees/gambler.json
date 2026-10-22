@@ -1160,7 +1160,14 @@
       "src": "B:V1:3.ea",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "mode",
+          "statusPick": true,
+          "firstOnly": ["stun"],
+          "title": "Pick the status for both cards."
+        }
+      ]
     },
     "3.eb": {
       "name": "Distracting Fan",
@@ -1192,7 +1199,14 @@
       "name": "Double Deal",
       "text": "Each Card Trick card deals two different statuses: your Stacked Deck pick and a random one.",
       "src": "B:V4:3.ma*",
-      "fx": null
+      "fx": [
+        {
+          "k": "mode",
+          "needs": "3.ea",
+          "secondStatus": true,
+          "title": "Pick one. A random second status joins it."
+        }
+      ]
     },
     "3.fa": {
       "name": "Cold Deck",

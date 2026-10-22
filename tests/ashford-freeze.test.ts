@@ -78,6 +78,6 @@ describe('Ashford varışında kaydedilen sefer yüklenince akış sürer', () =
       s = autoResolve(s);
     }
     expect(seen).toEqual(['farewell', 'company', 'story', 'town']);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor', 'hills'] }); // 2026-10-22: Ashford çatalı
   });
 });

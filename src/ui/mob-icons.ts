@@ -14,10 +14,14 @@ export const isMobIconName = (name: string): boolean => name.startsWith(MOB_ICON
  * Bölge I-II mob skill'ine bağlı) boyalı ikonu; o da yoksa verideki ikon. Kendi dosyası gelince kendiliğinden öne geçer.
  */
 export const skillIconName = (skill: { id: string; icon: string; artOf?: string }): string => {
+  if (HERO_SKILL_IDS.has(skill.id)) return skill.icon;
   if (mobImage(skill.id)) return `${MOB_ICON_PREFIX}${skill.id}`;
   if (skill.artOf && mobImage(skill.artOf)) return `${MOB_ICON_PREFIX}${skill.artOf}`;
   return skill.icon;
 };
+
+/** Kahraman skill'i olup bir mob pasifiyle aynı id'yi taşıyanlar (Defender Close Ranks = halberdier/sworn guard pasifi): mob ikonu değil kendi ikonu. */
+const HERO_SKILL_IDS: ReadonlySet<string> = new Set(['close_ranks']);
 
 /**
  * YER TUTUCU pasif ikonları (Bölge III, campaign-dev 2026-10-17; mob-plan.md 10.6): ChatGPT ikonu gelene kadar yeni pasif, temaca yakın bir

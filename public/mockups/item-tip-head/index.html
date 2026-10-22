@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Item Tip Head Mockups</title>
+<!--
+  ITEM IPUCU BASLIGI taslagi (ui-dev, 2026-10-23). Oyun kodu DEGIL; yalniz secim icin.
+  Yalnizca baslik bolgesi (ad + nadirlik/tur + el/iL) yeniden tasarlandi; medalyon, stat satirlari, deger, kahraman satirlari oyundakiyle ayni.
+  Gorunum ve veri kardes taslaktan yeniden kullanilir: ../unified-inventory/css/*, ../item-tooltip/tip.css + data.js (oyunun item-tip ciktisi).
+  Adresler: #a (nadirlik + tur cipleri) #b (renkli ad + altin cizgili alt baslik) #c (Band ipucu basligiyla ayni yapi); &clean = taslak seridini gizle.
+-->
+<link rel="stylesheet" href="../unified-inventory/css/style.css" />
+<link rel="stylesheet" href="../unified-inventory/css/elegant.css" />
+<link rel="stylesheet" href="../unified-inventory/css/gear.css" />
+<link rel="stylesheet" href="../item-tooltip/tip.css" />
+<style>
+html, body { margin: 0; background: #000; }
+body { height: 100vh; overflow: hidden; }
+#stage { position: fixed; inset: 0; background: radial-gradient(ellipse at 50% 38%, #34251a 0%, #1a120c 52%, #0b0705 100%); }
+#stage::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at center, transparent 55%, rgba(0, 0, 0, .55) 100%); }
+#wrap { --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3); --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif; position: relative; padding: 10px 12px 0; height: 100vh; box-sizing: border-box; overflow: hidden; --gu: .64px; --u: .64px; --fs: 14px; --fs-s: 12px; --gap: 6px; font-family: var(--g-body); color: var(--g-text); }
+#wrap h2 { margin: 0 0 2px; font: 600 16px var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+#wrap p.note { margin: 0 0 8px; color: var(--g-dim); font-size: 14px; max-width: 900px; }
+@media (max-height: 520px) { #wrap p.note { display: none; } }
+#row { display: flex; flex-wrap: nowrap; gap: 16px; align-items: flex-start; width: max-content; transform-origin: 0 0; }
+.tt .rq, .tt .hp-x, .tt .tt-fx, .tt .tt-fx *, .tt .tt-same, .tt .tt-req { font-style: normal !important; }
+.tipw { width: 336px; }
+.tipw .tt { width: 100%; box-sizing: border-box; }
+.tipw .lab { margin-bottom: 8px; text-align: center; font: 600 11px system-ui, sans-serif; letter-spacing: .1em; color: #ffb35a; }
+.tabs { position: fixed; right: 8px; top: 6px; z-index: 60; display: flex; gap: 4px; align-items: center; padding: 4px 6px; background: rgba(20, 10, 4, .92); border: 1px dashed #e0702a; font: 600 11px system-ui, sans-serif; color: #ffb35a; }
+.tabs b { color: #e0702a; margin-right: 4px; }
+.tabs button { font: 600 11px system-ui, sans-serif; color: #f3d999; background: #1b120a; border: 1px solid rgba(224, 112, 42, .5); padding: 3px 9px; cursor: pointer; min-height: 26px; }
+.tabs button.on { background: #e0702a; color: #1a0f06; }
+html.clean .tabs, html.clean .tipw .lab { display: none; }
+
+/* ---- ortak ---- */
+.hd-name { display: block; font: 600 max(14px, calc(23 * var(--u))) var(--g-disp); letter-spacing: .05em; text-transform: uppercase; color: var(--rl); text-shadow: 0 0 max(6px, calc(14 * var(--u))) color-mix(in srgb, var(--rc) 45%, transparent); }
+.hd-power { text-align: center; margin-top: 6px; }
+.hd-power b { display: block; font: 600 2.6em/1 var(--g-disp); color: #f8ebc9; text-shadow: 0 0 12px color-mix(in srgb, var(--rc) 50%, transparent); }
+.hd-power span { font: 600 .72em var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: var(--g-dim); }
+.hd-chips { display: flex; flex-wrap: wrap; gap: max(4px, calc(6 * var(--u))); }
+.hd-chip { display: inline-flex; align-items: center; height: 1.7em; padding: 0 .7em; font: 600 .74em var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-text); background: rgba(255, 255, 255, .05); border: 1px solid var(--g-line); white-space: nowrap; }
+.hd-chip.ac { color: var(--rl); border-color: color-mix(in srgb, var(--rc) 55%, transparent); background: color-mix(in srgb, var(--rc) 16%, transparent); }
+.hd-dim { color: var(--g-dim); font: 1em var(--g-body); }
+.hd-div { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent); }
+.hd-div::after { content: ''; position: absolute; left: 50%; top: 50%; width: 7px; height: 7px; transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--rl); }
+
+/* ---- A: nadirlik + tur cipleri ---- */
+.ha .hd-head { text-align: center; padding: max(12px, calc(20 * var(--u))) 10px max(10px, calc(14 * var(--u))); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 34%, transparent), transparent); border-bottom: 2px solid color-mix(in srgb, var(--rc) 70%, transparent); }
+.ha .hd-name { margin-top: max(8px, calc(14 * var(--u))); }
+.ha .hd-chips { justify-content: center; margin-top: 8px; }
+
+/* ---- B: renkli ad + ince altin cizgili alt baslik ---- */
+.hb .hd-head { text-align: center; padding: max(12px, calc(20 * var(--u))) 10px max(8px, calc(12 * var(--u))); background: linear-gradient(180deg, color-mix(in srgb, var(--rc) 34%, transparent), transparent); border-bottom: 2px solid color-mix(in srgb, var(--rc) 70%, transparent); }
+.hb .hd-name { margin-top: max(8px, calc(14 * var(--u))); font-size: max(15px, calc(25 * var(--u))); }
+.hb .hd-div { margin: 9px 14% 8px; }
+.hb .hd-kind { margin: 0 -10px; padding: 4px 10px; font: 600 1.02em/1.2 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; color: color-mix(in srgb, var(--rc) 40%, #fff); text-shadow: 0 1px 2px #000, 0 0 8px color-mix(in srgb, var(--rc) 55%, transparent); background: linear-gradient(90deg, transparent, rgba(0, 0, 0, .34) 20%, rgba(0, 0, 0, .34) 80%, transparent); border-top: 1px solid color-mix(in srgb, var(--rc) 35%, transparent); border-bottom: 1px solid color-mix(in srgb, var(--rc) 35%, transparent); }
+.hb .hd-line { margin-top: 5px; font-size: 1.08em; color: #cdbd9c; }
+
+/* ---- C: Band ipucu basligi: medalyon solda, kind/baslik, deger sagda, alt cipler ---- */
+.hc .hd-head { display: flex; align-items: center; gap: max(8px, calc(14 * var(--u))); padding: max(10px, calc(14 * var(--u))) max(12px, calc(18 * var(--u))) max(8px, calc(11 * var(--u))); background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 30%, transparent), color-mix(in srgb, var(--rc) 6%, transparent) 70%); }
+.hc .hd-ht { min-width: 0; flex: 1; text-align: left; }
+.hc .hd-kind { font: 600 var(--fs-s) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: var(--rl); opacity: .9; line-height: 1.1; }
+.hc .hd-name { font-size: max(15px, calc(24 * var(--u))); line-height: 1.1; margin-top: .12em; letter-spacing: .06em; }
+.hc .hd-aside { flex: none; margin-left: auto; text-align: right; }
+.hc .hd-power { margin: 0; text-align: right; }
+.hc .hd-power b { font-size: 2em; }
+.hc .hd-power span { letter-spacing: .16em; font-size: .62em; }
+.hc .cv-medal.ring { width: 54px; padding: 3px; flex: none; }
+.hc .hd-meta { display: flex; flex-wrap: wrap; gap: max(4px, calc(6 * var(--u))); padding: max(8px, calc(11 * var(--u))) max(12px, calc(18 * var(--u))); border-bottom: 2px solid color-mix(in srgb, var(--rc) 65%, transparent); background: linear-gradient(90deg, color-mix(in srgb, var(--rc) 8%, transparent), transparent); }
+.hc .cv-imp { justify-content: flex-start; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div id="wrap">
+  <h2 id="title"></h2>
+  <p class="note" id="note"></p>
+  <div id="row"></div>
+</div>
+<div class="tabs"><b>MOCKUP</b><button data-v="b">B Rule</button><button data-v="a">A Chips</button><button data-v="c">C Band</button></div>
+<script src="../item-tooltip/data.js"></script>
+<script>
+(function () {
+  const T = window.TIP_DATA;
+  const A = '../unified-inventory/';
+  const esc = (s) => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  const TIERC = { C: '#b9a98a', B: '#8fb8e8', A: '#f0b04a' };
+  const TORD = { A: 0, B: 1, C: 2 };
+  const SHOW = ['u9', 'u6', 'u40', 'u24', 'u30']; // Common, Uncommon (iki elli), Rare, Epic, Legendary
+  const HEROES = ['h1', 'h2'];
+  const NAMES = {
+    a: ['A  Rarity + type chips', 'Name in rarity colour. Under it a row of thin chips like the role chips elsewhere: rarity (tinted), type, hands, item level. No ribbon, no italics.'],
+    b: ['B  Coloured name + gold rule', 'Name in rarity colour, then the thin gold rule with the diamond used in dividers, then a spaced Cinzel line "RARITY - TYPE" in rarity colour and one plain line for hands and item level.'],
+    c: ['C  Band header', 'Same structure as the A Band tooltip: medallion left, small spaced kind line above the name, weapon power right, thin chips for hands and item level below the band.'],
+  };
+  let v = 'b';
+  const read = () => {
+    for (const p of location.hash.slice(1).split('&')) {
+      if (/^[abc]$/.test(p)) v = p;
+      else if (p === 'clean') document.documentElement.classList.add('clean');
+    }
+  };
+  const parts = (it) => {
+    const p = it.sub.split(' · ');
+    const f = p[0].split(' ');
+    return { rarity: f[0], kind: f.slice(1).join(' '), grip: p.slice(1, -1).join(' · '), ilvl: p[p.length - 1].replace('Item level ', '') };
+  };
+  const ico = (url, cls) => (url ? `<img class="${cls}" src="${url}" alt="" draggable="false">` : `<i class="tt-dia"></i>`);
+  const lineIcon = (l) => {
+    if (l.ico) return `${A}stat-icons/${l.ico}.webp`;
+    const e = l.text.match(/(Fire|Ice|Holy|Arcane|Nature|Dark) damage/);
+    return e ? `${A}misc-icons/element/${e[1].toLowerCase()}.webp` : '';
+  };
+  const roll = (l) => {
+    if (!l.range) return null;
+    const [lo, hi] = l.range.split('–').map(Number);
+    const m = l.text.match(/\d+(\.\d+)?/);
+    return m && hi > lo ? { lo, hi, p: Math.max(0, Math.min(1, (Number(m[0]) - lo) / (hi - lo))) } : null;
+  };
+  const rows = (it) => [...it.lines].sort((a, b) => (TORD[a.tier] ?? 9) - (TORD[b.tier] ?? 9)).map((l) => {
+    const r = roll(l);
+    return `<div class="sl"><span class="tt-tier" style="--tc:${TIERC[l.tier]}">${l.tier}</span>${ico(lineIcon(l), 'tt-ico')}<span class="sl-t">${esc(l.text)}</span>${r ? `<span class="gg g-rail" style="--p:${r.p}" title="Roll range ${r.lo}–${r.hi}"><i></i><b></b></span>` : ''}</div>`;
+  }).join('');
+  const fx = (it) => (it.effect ? `<div class="tt-fx"><b>${esc(it.effect.split(':')[0])}</b><span>${esc(it.effect.split(':').slice(1).join(':').trim())}</span></div>` : '');
+  const imp = (it) => (it.implicit ? `<div class="cv-imp">${ico(it.implicit.ico ? `${A}stat-icons/${it.implicit.ico}.webp` : '', 'tt-ico')}<span>${esc(it.implicit.text)}</span></div>` : '');
+  const heroRow = (hid, it) => {
+    const h = T.heroes[hid], p = it.per[hid];
+    const face = `<span class="tt-face${p.no ? ' gray' : ''}" style="background-image:url('../${h.avatar}')"></span>`;
+    if (p.no) return `<div class="hp no">${face}<b>${esc(h.name)}</b><span class="hp-x">${esc(p.no)}</span></div>`;
+    const unmet = h.level < it.req;
+    const d = Object.entries(p.d).map(([k, val]) => {
+      const pn = h.panel[k];
+      const t = `${val > 0 ? '+' : '-'}${pn.f === 'pct' ? Math.round(Math.abs(val) * 1000) / 10 + '%' : Math.round(Math.abs(val))} ${pn.l}`;
+      return `<span class="tt-d ${val > 0 ? 'up' : 'down'}">${esc(t)}</span>`;
+    }).join('');
+    return `<div class="hp">${face}<b>${esc(h.name)}</b><span class="hp-lv${unmet ? ' unmet' : ''}">Lv ${h.level}</span><span class="hp-d">${d}</span></div>`;
+  };
+  const medal = (it) => `<span class="cv-medal ring"><span class="gr-item k${it.k}" style="--rc:${it.color}"><span class="gr-c2"></span><span class="gr-c3"></span>${ico(`${A}${it.icon}`, 'gr-svg gr-px item-art')}</span></span>`;
+  const power = (it) => (it.power ? `<div class="hd-power"><b>${it.power}</b><span>Weapon power</span></div>` : '');
+
+  function head(it, sp) {
+    const il = `Item level ${esc(sp.ilvl)}`;
+    if (v === 'a') {
+      return `<header class="hd-head">${medal(it)}<b class="hd-name">${esc(it.name)}</b>
+        <div class="hd-chips"><span class="hd-chip ac">${esc(sp.rarity)}</span><span class="hd-chip">${esc(sp.kind)}</span>${sp.grip ? `<span class="hd-chip">${esc(sp.grip)}</span>` : ''}<span class="hd-chip">${il}</span></div>${power(it)}</header>`;
+    }
+    if (v === 'b') {
+      return `<header class="hd-head">${medal(it)}<b class="hd-name">${esc(it.name)}</b><div class="hd-div"></div>
+        <div class="hd-kind">${esc(sp.rarity)} · ${esc(sp.kind)}</div><div class="hd-dim hd-line">${sp.grip ? esc(sp.grip) + ' · ' : ''}${il}</div>${power(it)}</header>`;
+    }
+    return `<header class="hd-head">${medal(it)}<div class="hd-ht"><div class="hd-kind">${esc(sp.rarity)} ${esc(sp.kind)}</div><b class="hd-name">${esc(it.name)}</b></div><div class="hd-aside">${power(it)}</div></header>
+      <div class="hd-meta"><span class="hd-chip">${il}</span>${sp.grip ? `<span class="hd-chip">${esc(sp.grip)}</span>` : ''}</div>`;
+  }
+  function tip(u) {
+    const it = T.items[u], sp = parts(it);
+    const unmet = it.req > 1 && T.heroes.h1.level < it.req;
+    return `<div class="tipw"><div class="lab">${esc(sp.rarity.toUpperCase())}</div>
+      <div class="tt c8 h${v}" style="--rc:${it.color}">${head(it, sp)}
+      <div class="tt-main">${fx(it)}${imp(it)}<div class="sl-list">${rows(it)}</div></div>
+      <div class="tt-reqrow"><span class="rq${unmet ? ' unmet' : ''}">${it.req > 1 ? 'Requires Level ' + it.req : ''}</span><span class="vl"><img class="tt-coin" src="${A}ui-icons/gold.webp" alt=""><b>${it.value}</b><em>value</em></span></div>
+      <div class="tt-heroes">${HEROES.map((h) => heroRow(h, it)).join('')}</div></div></div>`;
+  }
+  function render() {
+    document.getElementById('title').textContent = NAMES[v][0];
+    document.getElementById('note').textContent = NAMES[v][1];
+    document.getElementById('row').innerHTML = SHOW.map(tip).join('');
+    document.querySelectorAll('.tabs [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === v));
+    fit();
+    document.fonts?.ready.then(fit);
+    document.querySelectorAll('#row img').forEach((i) => i.addEventListener('load', fit, { once: true }));
+  }
+  document.querySelector('.tabs').addEventListener('click', (e) => {
+    const b = e.target.closest('[data-v]');
+    if (!b) return;
+    v = b.dataset.v;
+    history.replaceState(null, '', '#' + v + (document.documentElement.classList.contains('clean') ? '&clean' : ''));
+    render();
+  });
+  function fit() {
+    const row = document.getElementById('row');
+    row.style.transform = 'none';
+    const top = row.getBoundingClientRect().top;
+    const k = Math.min(1, (innerWidth - 24) / row.offsetWidth, (innerHeight - top - 6) / row.offsetHeight);
+    row.style.transform = `scale(${k})`;
+  }
+  window.addEventListener('resize', fit);
+  window.addEventListener('hashchange', () => { read(); render(); });
+  read();
+  render();
+})();
+</script>
+</body>
+</html>

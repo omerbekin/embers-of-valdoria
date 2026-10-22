@@ -7,6 +7,8 @@ export const VFX_KINDS = [
   'charge',
   'whirlwind',
   'warcry',
+  /** Warrior ultimate Headsman's Blow: kılıcı başın arkasına kaldırıp tek, ağır, dikey cellat inişi; zemin çatlar. */
+  'headsman',
   'resurrect',
   'judgment',
   /** Holy Strike: dev savaş çekici düşer (Judgment'ın eski animasyonu). */

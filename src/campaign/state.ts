@@ -1,5 +1,5 @@
 import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
-import { CONFIG, ENCOUNTERS, EVENTS, STORIES, getMap, type EventChoice } from './data';
+import { CONFIG, ENCOUNTERS, EVENTS, STORIES, TREASURES, getMap, type EventChoice } from './data';
 import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, upstreamOf } from './graph';
 import { rngFor, shuffle } from './seed';
 import { SLOT_IDS } from '../progression/items';
@@ -462,7 +462,12 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 's
   expectStep(s, kind);
   const t = clone(s);
   // Hazine sandığı (saf hazine ya da korunan hazine): loot torbaya (items.md 3.1)
-  if (kind === 'treasure') grantLoot(t, t.at, 'treasure', activeHeroes(t));
+  if (kind === 'treasure') {
+    // Hazinenin kendi içeriği varsa (events.json > treasures[x].loot; Harita 1 cepleri) sandık ona göre, yoksa standart sandık
+    const tl = TREASURES[node(mapOf(t), t.at).treasure ?? '']?.loot;
+    grantLoot(t, t.at, 'treasure', activeHeroes(t), tl && (tl.maxItems !== undefined || tl.itemsDelta !== undefined || tl.gold !== undefined) ? { ...(tl.maxItems !== undefined ? { maxItems: tl.maxItems } : {}), ...(tl.itemsDelta !== undefined ? { itemsDelta: tl.itemsDelta } : {}), ...(tl.gold !== undefined ? { gold: tl.gold } : {}) } : undefined);
+    if (tl?.gift) grantGift(t, t.at, activeHeroes(t), 'treasure', tl.gift);
+  }
   if (kind === 'town') closeShop(t); // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1); yeniden girilirse aynı tezgâh döner
   // Savaşsız olay / hazine düğümü: sabit XP (levels.md, 0,5x)
   if ((kind === 'treasure' || kind === 'event') && fixedXpNode(t)) applyXp(t, fixedXp(t, activeHeroes(t)));

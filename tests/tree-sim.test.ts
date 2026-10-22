@@ -30,6 +30,7 @@ describe('tree-sim: kurulum standart simle aynı', () => {
   });
 });
 
+const shipped = TREE_RULES.enabled;
 describe('tree-sim: build ve ölçüm', () => {
   it('odaklı build: L20 a / b yönü ayrılır, ult kolu dolu, dağılım geçerli', () => {
     const a = compileBuild('warrior', 20, resolveBuild('warrior', TREE_PRESETS.focus!, 'a'))!;
@@ -55,7 +56,7 @@ describe('tree-sim: build ve ölçüm', () => {
     expect(procKind([{ k: 'unitFx', fx: { secondWind: { below: 0.3, heal: 0.1 } } } as never])).toBe('proc');
   });
 
-  it('küçük ağaçlı koşu: referans + a + b, tetiklenme sayılır, ana şalter kapalı kalır', () => {
+  it('küçük ağaçlı koşu: referans + a + b, tetiklenme sayılır, ana şalter değişmez', () => {
     const plan = { ...planFromArgs(['2', '11', '--tree', 'focus', '--level', '20', '--side', 'both']), out: '' };
     const res = runTreeSim(plan);
     const V = res.levels[0]!.variants;
@@ -63,7 +64,7 @@ describe('tree-sim: build ve ölçüm', () => {
     expect(Object.keys(V.off!.procs)).toHaveLength(0);
     expect(Object.values(V.a!.procs).reduce((x, y) => x + y, 0)).toBeGreaterThan(0);
     expect(Object.keys(V.a!.builds).length).toBeGreaterThan(0);
-    expect(TREE_RULES.enabled).toBe(false);
+    expect(TREE_RULES.enabled).toBe(shipped);
     const text = treeReport(res).join('\n');
     expect(text).toContain('SINIF FARKI');
     expect(text).toContain('DÜĞÜM TETİKLENME');
@@ -82,7 +83,7 @@ describe('tree-sim: bayraklar ve sefer / Endless vekili', () => {
     expect(() => planFromArgs(['--tree', 'yok'])).toThrow();
   });
 
-  it('vekil ağacı yalnızca withTreesInMemory içinde savaşa girer', () => {
+  it('withTreesInMemory(false) ağacı kapatır, (true) açar; şalter geri yüklenir', () => {
     const h: LevelHero = { id: 'h1', class: 'warrior' };
     setLevel(h, 20);
     const [t] = autoTreeHeroes([h], 'b');
@@ -90,8 +91,8 @@ describe('tree-sim: bayraklar ve sefer / Endless vekili', () => {
     expect(t!.skillPoints).toBe(0);
     expect(h.tree).toBeUndefined(); // girdi değişmez
     const src = { class: 'warrior', level: 20, tree: t!.tree! };
-    expect(loadoutSetup(src, { mode: 'campaign' }).tree).toBeUndefined();
+    expect(withTreesInMemory(false, () => loadoutSetup(src, { mode: 'campaign' }).tree)).toBeUndefined(); // referans: şalter açık gelse de ağaçsız
     expect(withTreesInMemory(true, () => loadoutSetup(src, { mode: 'campaign' }).tree)).toBeDefined();
-    expect(TREE_RULES.enabled).toBe(false);
+    expect(TREE_RULES.enabled).toBe(shipped);
   });
 });

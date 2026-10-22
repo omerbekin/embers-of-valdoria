@@ -88,6 +88,11 @@ export interface MapNode {
    * gibi rütbe -> çarpan; noTierMods'a bakmaz (bilinçli düğüm ayarı). A1-x: boss'lar 21 duraklık yolda güçlenen takıma göre (madde 305).
    */
   enemyTierMods?: Partial<Record<UnitTier, DifficultyEnemyMods>>;
+  /**
+   * Cep (isteğe bağlı çıkmaz dal; map-1-rework.md 4.1): ana yoldan bir kenarla ayrılır, ileri yolu yoktur. Rota, seçim noktası ve K1 sayımına
+   * girmez (graph.ts > mainOutgoing); oyuncu serbest dolaşımla gider ve geri döner. Haritada yolu kesik çizgi.
+   */
+  optional?: boolean;
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
@@ -115,6 +120,8 @@ export interface MapEdge {
   to: string;
   style: EdgeStyle;
   path?: Array<[number, number]>;
+  /** Elle kavis (map-1-rework.md 4.2b): ikinci derece eğrinin kontrol noktası (görsel oranı x, y); yoksa kimlikten otomatik hafif kavis. */
+  ctrl?: [number, number];
 }
 
 export interface MapRegion {
@@ -161,6 +168,11 @@ export interface EncounterUnit {
   mods?: UnitMods;
   /** true: zorluğun rütbe eki (campaign.json > difficulties[x].enemyTier) bu birime uygulanmaz; genel `enemy` eki uygulanır. */
   noTierMods?: boolean;
+  /**
+   * İleride ayrı çizim anahtarı (ör. Deserter Captain; map-1-rework.md 3). Bugün savaş kurulumuna GİTMEZ: birim kendi class'ının sprite'ıyla
+   * çizilir (yer tutucu). Motor / savaş sahnesi bu alanı okuyunca takılır (engine-dev / ui-dev işi).
+   */
+  sprite?: string;
   /** Bu karşılaşmada kullanamayacağı skill'ler (motor: UnitSetup.lockSkills; ör. tutorial düşmanında ultimate yok). */
   lockSkills?: string[];
   /** Başlangıç cooldown'u eki (motor: UnitSetup.initialCooldownBonus; cooldown'lu her skill'e, maxInitial'ı aşabilir). */
@@ -218,7 +230,7 @@ export interface CampaignConfig {
    * Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı dengesi): her zorlukta aynı, zorluk ekinden ÖNCE (zorluklar arası fark korunur).
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
-  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı bölgeler (eğitim: I). */ skipRegions?: string[] };
+  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
   /**
    * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
    * (base + perChapter x bölüm). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).

@@ -1,0 +1,335 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Story dialog - mockup</title>
+<!--
+  MOCKUP (oyun kodu degil): sefer hikaye / olay diyalogu ("Ash on the Wind", Charcoal Burner). Metinler data/campaign/events.json > stories.ash_on_the_wind (birebir).
+  Gorsel: oyunun gercek fontlari (Cinzel + EB Garamond), Ashford kasaba sahnesi, kahraman pozlari, Charcoal Burner portresi (assets/avatars).
+  Adres: #a | #b   &step=1..3 (diyalog adimi)   &end=liked|disliked (kapanis)   &clean (serit gizli; H tusu)
+  A = soldaki portreli konusmaci, sagda anlati + replik blogu, numarali cumle secenekleri.
+  B = kitap sayfasi (kahramanlar kucuk avatar sirasi): dar sag sutun, konusmaci cipi, buyuk ilk harf, kutusuz yazi secenekleri + hover'da kisa ton ipucu; sahne ve kahramanlar acik.
+  C = alt ucte bir sinematik serit (portre sol, metin orta, secenekler sag). D = ustte karsilikli konusmaci + company portreleri, altta diyalog. E = karartilmis sahne, ortada tek sutun, buyuk portre ustte.
+  Ton ipuclari (B) ONERI metnidir, oyunda yok.
+-->
+<style>
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('assets/Cinzel-normal-latin-ext.woff2') format('woff2');
+  unicode-range: U+0100-02BA, U+02BD-02C5, U+02C7-02CC, U+02CE-02D7, U+02DD-02FF, U+0304, U+0308, U+0329, U+1D00-1DBF, U+1E00-1E9F, U+1EF2-1EFF, U+2020, U+20A0-20AB, U+20AD-20C0, U+2113, U+2C60-2C7F, U+A720-A7FF; }
+@font-face { font-family: 'Cinzel'; font-style: normal; font-weight: 400 900; font-display: swap; src: url('assets/Cinzel-normal-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: normal; font-weight: 400 800; font-display: swap; src: url('assets/EBGaramond-normal-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+@font-face { font-family: 'EB Garamond'; font-style: italic; font-weight: 400 800; font-display: swap; src: url('assets/EBGaramond-italic-latin.woff2') format('woff2');
+  unicode-range: U+0000-00FF, U+0131, U+0152-0153, U+02BB-02BC, U+02C6, U+02DA, U+02DC, U+0304, U+0308, U+0329, U+2000-206F, U+20AC, U+2122, U+2191, U+2193, U+2212, U+2215, U+FEFF, U+FFFD; }
+
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #000; overflow: hidden; }
+:root, #stage { --g-text: #f4ede1; --g-dim: #a8977a; --g-gold: #e8c47e; --g-edge: rgba(217,178,106,.42); --g-line: rgba(217,178,106,.16); --g-line2: rgba(217,178,106,.3);
+  --g-ember: #e0702a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif; }
+#stage { position: fixed; inset: 0; overflow: hidden; background: #000; font-family: var(--g-body); color: var(--g-text); --u: 1px; user-select: none; -webkit-tap-highlight-color: transparent; }
+button { font: inherit; color: inherit; background: none; border: 0; padding: 0; cursor: pointer; text-align: left; }
+
+/* ---------- sahne ---------- */
+.bg { position: absolute; inset: 0; background: url('assets/ashford.webp') center 58% / cover no-repeat; }
+.bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 45%, rgba(8,5,3,.12), rgba(5,3,2,.55) 100%); }
+.v-b .bg::after { background: linear-gradient(90deg, rgba(5,3,2,.1) 0%, rgba(5,3,2,.2) 45%, rgba(5,3,2,.78) 100%); }
+.v-c .bg::after { background: linear-gradient(180deg, rgba(5,3,2,0) 40%, rgba(5,3,2,.6) 100%); }
+.v-d .bg::after { background: radial-gradient(ellipse at 50% 40%, rgba(8,5,3,.1), rgba(5,3,2,.6) 100%); }
+.v-e .bg::after { background: rgba(5,3,2,.78); }
+.v-e .bg { filter: blur(1.5px); transform: scale(1.03); }
+/* kucuk, cerceveli company portreleri (gercek avatar dosyalari) */
+.co { display: flex; gap: max(5px, calc(10 * var(--u))); }
+.co-p { width: max(40px, calc(100 * var(--u))); aspect-ratio: 1; border: 1px solid var(--g-edge); box-shadow: 0 0 0 2px rgba(8,6,4,.8); overflow: hidden; background: #1a130c; }
+.co-p img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.co-cap { font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0 0 max(4px, calc(8 * var(--u))); white-space: nowrap; text-shadow: 0 1px 3px #000; }
+.v-b .co-wrap { position: absolute; left: 3.2%; top: max(10px, 5%); }
+
+/* ---------- ortak pencere ---------- */
+.panel { position: absolute; background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0,0,0,.6); display: flex; flex-direction: column; max-height: 94%; }
+.corner { position: absolute; width: 7px; height: 7px; background: #130d07; border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 2; }
+.corner.tl { left: -4px; top: -4px; } .corner.tr { right: -4px; top: -4px; } .corner.bl { left: -4px; bottom: -4px; } .corner.br { right: -4px; bottom: -4px; }
+.ttl { font: 600 max(16px, calc(38 * var(--u))) / 1.12 var(--g-disp); letter-spacing: .12em; text-transform: uppercase; margin: 0;
+  background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.cap { font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); display: flex; align-items: center; gap: 10px; margin: 0; white-space: nowrap; }
+.cap::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217,178,106,.4), transparent); }
+.rule { display: flex; align-items: center; gap: 8px; height: 7px; flex: none; }
+.rule::before, .rule::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, transparent, var(--g-edge)); }
+.rule::after { background: linear-gradient(270deg, transparent, var(--g-edge)); }
+.rule i { width: 5px; height: 5px; border: 1px solid var(--g-edge); transform: rotate(45deg); }
+.narr { margin: 0; font: 400 max(13px, calc(26 * var(--u))) / 1.36 var(--g-body); color: #bfae8d; }
+.said { margin: 0; font: 400 max(14px, calc(30 * var(--u))) / 1.36 var(--g-body); color: var(--g-text); }
+em.lore { font-style: italic; color: var(--g-gold); }
+.said .nb { display: block; margin-top: .6em; font-size: .86em; color: #bfae8d; }
+.pips { display: flex; gap: 7px; align-items: center; }
+.pips i { width: 6px; height: 6px; transform: rotate(45deg); border: 1px solid var(--g-edge); }
+.pips i.on { background: var(--g-gold); border-color: var(--g-gold); } .pips i.done { background: rgba(217,178,106,.4); }
+
+/* sirali belirme (yalniz acilista / adim degisince); hover yeniden kurmaz */
+.rv { opacity: 0; transform: translateY(6px); animation: rv 220ms ease-out forwards; animation-delay: calc(var(--i, 0) * 70ms); }
+@keyframes rv { to { opacity: 1; transform: none; } }
+.panel.fresh { animation: rise 220ms ease-out both; }
+@keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: none; } }
+@media (prefers-reduced-motion: reduce) { .rv, .panel.fresh { animation: none; opacity: 1; transform: none; } }
+
+/* ================= A : portreli ================= */
+.v-a .panel { left: 50%; top: 50%; transform: translate(-50%, -52%); width: min(94%, max(calc(1180 * var(--u)), 660px)); padding: max(12px, calc(34 * var(--u))) max(16px, calc(42 * var(--u))); }
+@keyframes riseA { from { opacity: 0; transform: translate(-50%, -50%); } to { opacity: 1; transform: translate(-50%, -52%); } }
+.v-a .panel.fresh { animation: riseA 220ms ease-out both; }
+.a-grid { display: grid; grid-template-columns: max(84px, calc(260 * var(--u))) 1fr; gap: max(16px, calc(42 * var(--u))); min-height: 0; }
+.a-who { display: flex; flex-direction: column; gap: max(6px, calc(14 * var(--u))); align-items: center; text-align: center; align-self: start; }
+.a-pic { width: 100%; aspect-ratio: 1; border: 1px solid var(--g-edge); box-shadow: 0 0 0 2px rgba(8,6,4,.8); background: #1a130c; position: relative; }
+.a-pic img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.a-pic .corner { width: 6px; height: 6px; }
+.a-name { font: 600 max(11px, calc(22 * var(--u))) / 1.2 var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--g-gold); }
+.a-place { font: 400 max(11px, calc(21 * var(--u))) var(--g-body); color: var(--g-dim); }
+.a-main { display: flex; flex-direction: column; gap: max(8px, calc(20 * var(--u))); min-width: 0; }
+.a-head { display: flex; align-items: center; justify-content: space-between; gap: 14px; }
+.a-quote { border-left: 2px solid var(--g-gold); padding: .1em 0 .1em max(10px, calc(24 * var(--u))); }
+.a-choices { display: flex; flex-direction: column; }
+.a-ch { display: grid; grid-template-columns: max(22px, calc(40 * var(--u))) 1fr; align-items: baseline; padding: max(6px, calc(13 * var(--u))) max(8px, calc(14 * var(--u))); border-top: 1px solid var(--g-line);
+  font: 400 max(14px, calc(28 * var(--u))) / 1.3 var(--g-body); color: var(--g-text); transition: transform 160ms ease, background 160ms ease, border-color 160ms ease, color 160ms ease; min-height: 44px; align-content: center; }
+.a-ch:last-child { border-bottom: 1px solid var(--g-line); }
+.a-ch .n { font: 600 max(12px, calc(22 * var(--u))) var(--g-disp); color: var(--g-gold); }
+.a-ch:hover, .a-ch:focus-visible { transform: translateY(-2px); background: rgba(232,196,126,.07); border-top-color: var(--g-edge); color: #fff6e2; outline: none; }
+
+/* ================= B : kitap sayfasi ================= */
+.v-b .panel { right: max(10px, 3.2%); top: 50%; transform: translateY(-50%); width: clamp(380px, calc(720 * var(--u)), 56%); padding: max(12px, calc(36 * var(--u))) max(16px, calc(48 * var(--u))) max(10px, calc(24 * var(--u))); gap: max(7px, calc(18 * var(--u))); }
+@keyframes riseB { from { opacity: 0; transform: translateY(-48%); } to { opacity: 1; transform: translateY(-50%); } }
+.v-b .panel.fresh { animation: riseB 220ms ease-out both; }
+.b-top { display: flex; flex-direction: column; gap: max(5px, calc(12 * var(--u))); }
+.b-chip { display: inline-flex; align-self: flex-start; align-items: center; gap: max(7px, calc(12 * var(--u))); padding: 3px max(10px, calc(18 * var(--u))) 3px 3px; border: 1px solid var(--g-line2); border-radius: 99px; background: rgba(12,9,6,.72); white-space: nowrap; }
+.b-chip img { width: max(26px, calc(54 * var(--u))); height: max(26px, calc(54 * var(--u))); border-radius: 50%; object-fit: cover; border: 1px solid var(--g-edge); }
+.b-chip b { font: 600 max(10px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; color: var(--g-gold); }
+.b-page { display: flex; flex-direction: column; gap: max(8px, calc(20 * var(--u))); }
+.b-page .narr::first-letter { font: 600 2.7em / .8 var(--g-disp); color: var(--g-gold); float: left; padding: .06em .12em 0 0; }
+html.short .b-page .narr::first-letter { font: inherit; color: inherit; float: none; padding: 0; }
+.b-said { position: relative; padding-left: max(18px, calc(44 * var(--u))); }
+.b-said::before { content: '\201C'; position: absolute; left: -2px; top: -.18em; font: 600 max(30px, calc(78 * var(--u))) / 1 var(--g-disp); color: rgba(232,196,126,.55); }
+.b-said .said { text-indent: 0; }
+.b-choices { display: flex; flex-direction: column; gap: max(2px, calc(6 * var(--u))); }
+.b-ch { position: relative; padding: max(5px, calc(9 * var(--u))) 0 max(5px, calc(9 * var(--u))) max(18px, calc(36 * var(--u))); min-height: 44px; display: flex; align-items: center;
+  font: 400 max(14px, calc(28 * var(--u))) / 1.28 var(--g-body); color: #d9c8a2; transition: transform 160ms ease, color 160ms ease; }
+.b-ch::before { content: ''; position: absolute; left: max(2px, calc(8 * var(--u))); top: 50%; width: 7px; height: 7px; margin-top: -4px; transform: rotate(45deg) scale(.4); background: var(--g-ember); opacity: 0; transition: opacity 160ms ease, transform 160ms ease; }
+.b-ch:hover, .b-ch:focus-visible { transform: translateY(-2px); color: #fff6e2; outline: none; }
+.b-ch:hover::before, .b-ch:focus-visible::before { opacity: 1; transform: rotate(45deg) scale(1); }
+.b-foot { display: flex; align-items: center; justify-content: space-between; gap: 14px; min-height: max(18px, calc(30 * var(--u))); }
+.b-hint { font: 400 max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); transition: opacity 160ms ease; opacity: 0; }
+.b-hint.on { opacity: 1; }
+.b-num { font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: .2em; color: rgba(217,178,106,.7); white-space: nowrap; }
+
+/* ================= C : alt ucte bir sinematik serit ================= */
+.v-c .panel { left: 0; right: 0; bottom: 0; border-width: 1px 0 0; box-shadow: 0 calc(-12 * var(--u)) calc(40 * var(--u)) rgba(0,0,0,.55); background: linear-gradient(180deg, rgba(22,16,10,.94), rgba(10,7,4,.98)); padding: max(10px, calc(34 * var(--u))) max(14px, 4%) max(10px, calc(40 * var(--u))); max-height: 78%; }
+.c-grid { width: min(100%, max(calc(1700 * var(--u)), 760px)); margin: 0 auto; display: grid; grid-template-columns: max(80px, calc(240 * var(--u))) minmax(0, 1.5fr) minmax(0, 1fr); gap: max(14px, calc(44 * var(--u))); align-items: center; }
+.c-who { display: flex; flex-direction: column; gap: max(5px, calc(12 * var(--u))); align-items: center; text-align: center; }
+.c-who .a-pic { width: 100%; }
+.c-mid { display: flex; flex-direction: column; gap: max(7px, calc(16 * var(--u))); min-width: 0; }
+.c-mid .a-head { justify-content: flex-start; gap: 18px; }
+.c-choices { display: flex; flex-direction: column; border-left: 1px solid var(--g-line2); padding-left: max(10px, calc(30 * var(--u))); }
+.c-ch { display: flex; gap: .6em; align-items: baseline; padding: max(6px, calc(14 * var(--u))) 0; min-height: 44px; align-content: center;
+  font: 400 max(14px, calc(27 * var(--u))) / 1.3 var(--g-body); color: #d9c8a2; transition: transform 160ms ease, color 160ms ease; }
+.c-ch + .c-ch { border-top: 1px solid var(--g-line); }
+.c-ch::before { content: '\203A'; color: var(--g-gold); font-family: var(--g-disp); font-weight: 600; }
+.c-ch:hover, .c-ch:focus-visible { transform: translateY(-2px); color: #fff6e2; outline: none; }
+
+/* ================= D : konusmaci ile company karsilikli ================= */
+.d-wrap { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; gap: max(8px, calc(22 * var(--u))); padding: 0 0 max(10px, calc(40 * var(--u))); }
+.d-cards { width: min(94%, max(calc(1240 * var(--u)), 640px)); display: flex; justify-content: space-between; align-items: flex-end; }
+.d-co .co-p { width: max(44px, calc(150 * var(--u))); opacity: .8; }
+.d-sp { display: flex; flex-direction: column; align-items: flex-end; gap: max(4px, calc(8 * var(--u))); }
+.d-sp .a-pic { width: max(64px, calc(260 * var(--u))); }
+.d-sp .a-name { text-shadow: 0 1px 3px #000; }
+.v-d .panel { position: relative; width: min(94%, max(calc(1240 * var(--u)), 640px)); padding: max(10px, calc(28 * var(--u))) max(14px, calc(40 * var(--u))); gap: max(7px, calc(16 * var(--u))); }
+.d-choices { display: grid; grid-auto-flow: column; grid-auto-columns: 1fr; }
+.d-ch { padding: max(6px, calc(12 * var(--u))) max(8px, calc(22 * var(--u))); min-height: 44px; border-left: 1px solid var(--g-line2); display: flex; align-items: center;
+  font: 400 max(13px, calc(26 * var(--u))) / 1.3 var(--g-body); color: #d9c8a2; transition: transform 160ms ease, color 160ms ease, background 160ms ease; }
+.d-ch:first-child { border-left: 0; padding-left: 0; }
+.d-ch:hover, .d-ch:focus-visible { transform: translateY(-2px); color: #fff6e2; background: rgba(232,196,126,.06); outline: none; }
+
+/* ================= E : tam ekran karartilmis sahne, tek sutun ================= */
+.e-col { position: absolute; inset: 0; margin: auto; width: min(94%, max(calc(900 * var(--u)), 540px)); height: fit-content; max-height: 98%; display: flex; flex-direction: column; align-items: center; text-align: center; gap: max(5px, calc(16 * var(--u))); text-shadow: 0 2px 6px rgba(0,0,0,.85); }
+.e-col .a-pic { width: max(54px, calc(250 * var(--u))); }
+.e-col .a-name { margin-top: max(4px, calc(10 * var(--u))); }
+.e-col .rule { width: 60%; }
+.e-col .narr { max-width: 100%; }
+.e-col .said { color: #fff6e2; font-size: max(14px, calc(32 * var(--u))); }
+.e-choices { display: flex; flex-direction: column; align-items: center; }
+.e-ch { text-align: center; padding: max(5px, calc(10 * var(--u))) max(10px, calc(24 * var(--u))); min-height: 44px; display: flex; align-items: center; justify-content: center;
+  font: 400 max(14px, calc(28 * var(--u))) / 1.3 var(--g-body); color: #d9c8a2; transition: transform 160ms ease, color 160ms ease, background 160ms ease; }
+.e-ch:hover, .e-ch:focus-visible { transform: translateY(-2px); color: #fff6e2; background: rgba(232,196,126,.07); outline: none; }
+
+/* ---------- mockup seridi (oyun disi) ---------- */
+.mk { position: fixed; left: 8px; bottom: 8px; z-index: 99; display: flex; align-items: center; gap: 6px; padding: 3px 8px; font: 600 11px system-ui, sans-serif; letter-spacing: .04em; color: #ddd; background: rgba(20,20,26,.9); border: 1px dashed #777; border-radius: 4px; }
+.mk b { color: #ffcf6b; } .mk a { color: #ddd; text-decoration: none; padding: 2px 7px; border-radius: 3px; border: 1px solid #555; } .mk a.on { background: #ffcf6b; color: #111; border-color: #ffcf6b; }
+html.clean .mk { display: none; }
+</style>
+</head>
+<body>
+<div id="stage"></div>
+<div class="mk"><b>MOCKUP</b><a href="#a" data-v="a">A Portrait</a><a href="#b" data-v="b">B Page</a><a href="#c" data-v="c">C Strip</a><a href="#d" data-v="d">D Facing</a><a href="#e" data-v="e">E Focus</a></div>
+<script>
+(function () {
+  const STORY = {
+    title: 'Ash on the Wind', speaker: 'Charcoal Burner', place: 'Ashford Village', kind: 'Town',
+    text: 'In the village square a charcoal burner sits wrapped in a blanket, his hands still black with soot. He flinches as your company approaches.',
+    dialogue: [
+      { text: "\"No masks. Good... Forgive me. I came out of Charwood two nights ago, and I haven't slept since.\"", choices: [{ l: "\"You're safe here. Tell us what happened.\"", k: 1 }, { l: '"Spare us the sob story. What do you want?"', k: 0 }] },
+      { text: '"Men in ash masks walked into the forest with torches. They set it burning, tree by tree, and they sang while they did it."', choices: [{ l: '"What were they singing?"', k: 1 }, { l: '"Did anyone else get out?"', k: 1 }, { l: '"Forests burn. You of all people should know."', k: 0 }] },
+      { text: "\"'Praise to the Ash Lord. The embers will rise.' Over and over. They're coming this way, past the moor. What will you do?\"", choices: [{ l: "\"Stop them. That's why we're on this road.\"", k: 1 }, { l: '"Not our problem. We have our own war."', k: 0 }] },
+    ],
+    threshold: 2,
+    liked: "\"You listened, and you didn't laugh. Here, take this. I won't need it where I'm going. May it serve you better than it served me.\"",
+    likedNote: 'He presses a small bundle into your hands.',
+    disliked: '"Aye. Well. Mind the smoke on the road." He pulls the blanket tighter and turns away.',
+  };
+  const HINT = { 1: 'A kind word. He may remember it.', 0: 'A hard word. He may not forgive it.' };
+  const ROMAN = ['I', 'II', 'III'];
+  const $ = (s, r = document) => r.querySelector(s), st = $('#stage'), de = document.documentElement;
+
+  // duz tirnak -> kivrik; hikaye unsurlari (yer / kisi adi) italik
+  const esc = (s) => s.replace(/&/g, '&amp;').replace(/</g, '&lt;');
+  const curl = (s) => s.replace(/^"/, '“').replace(/"/g, '”').replace(/(^|[\s“])'/g, '$1‘').replace(/'/g, '’');
+  const lore = (s) => s.replace(/(Charwood|Ash Lord)/g, '<em class="lore">$1</em>');
+  const speech = (s) => lore(esc(curl(s)));
+
+  const S = { v: 'a', step: 0, end: '', likes: 0 };
+  function readHash() {
+    const raw = location.hash.slice(1);
+    const p = new URLSearchParams(raw.replace(/^([a-e])(&|$)/, 'v=$1&'));
+    S.v = 'abcde'.includes(p.get('v') || 'a') ? (p.get('v') || 'a') : 'a';
+    const n = parseInt(p.get('step') || '1', 10);
+    S.step = Math.min(3, Math.max(1, n || 1)) - 1;
+    S.end = p.get('end') === 'liked' || p.get('end') === 'disliked' ? p.get('end') : '';
+    de.classList.toggle('clean', p.has('clean'));
+  }
+  function writeHash() { history.replaceState(null, '', '#' + S.v + (S.end ? '&end=' + S.end : S.step ? '&step=' + (S.step + 1) : '') + (de.classList.contains('clean') ? '&clean' : '')); }
+
+  function fit() {
+    const w = st.clientWidth, h = st.clientHeight;
+    st.style.setProperty('--u', Math.min(h / 1080, w / 1920) + 'px');
+    de.classList.toggle('short', h <= 520);
+  }
+
+  const CORNERS = '<i class="corner tl"></i><i class="corner tr"></i><i class="corner bl"></i><i class="corner br"></i>';
+  const COMPANY = [['warrior', 'Warrior'], ['archer', 'Archer'], ['mage', 'Mage']];
+  const coRow = () => '<div class="co">' + COMPANY.map((c) => '<div class="co-p" title="' + c[1] + '"><img src="assets/av/' + c[0] + '.webp" alt="' + c[1] + '"></div>').join('') + '</div>';
+  const pic = '<div class="a-pic"><img src="assets/charcoal_burner.webp" alt="Charcoal Burner">' + CORNERS + '</div>';
+  const saidHtml = (c) => '<p class="said">' + c.said + (c.note ? '<span class="nb">' + esc(c.note) + '</span>' : '') + '</p>';
+  const pipsHtml = () => '<div class="pips">' + [0, 1, 2].map((i) => '<i class="' + (S.end || i < S.step ? 'done' : i === S.step ? 'on' : '') + '"></i>').join('') + '</div>';
+  const btns = (c, cls, base) => c.choices.map((x, i) => '<button class="' + cls + ' rv" style="--i:' + (base + i) + '" data-i="' + i + '">' + (x.cont ? 'Continue' : speech(x.l)) + '</button>').join('');
+
+  function content() {
+    if (S.end) {
+      const liked = S.end === 'liked';
+      const raw = liked ? STORY.liked : STORY.disliked;
+      const m = raw.match(/^("[\s\S]*?")\s*(.*)$/);
+      const note = liked ? STORY.likedNote : (m && m[2]) || '';
+      return { narr: '', said: speech(m ? m[1] : raw), note: note, choices: [{ l: 'Continue', cont: true }], step: 2 };
+    }
+    const d = STORY.dialogue[S.step];
+    return { narr: S.step === 0 ? esc(STORY.text) : '', said: speech(d.text), note: '', choices: d.choices, step: S.step };
+  }
+  function pick(i) {
+    const c = content();
+    if (c.choices[i].cont) { S.step = 0; S.end = ''; S.likes = 0; render(false); writeHash(); return; }
+    S.likes += c.choices[i].k;
+    if (S.step === 2) S.end = S.likes >= STORY.threshold ? 'liked' : 'disliked'; else S.step++;
+    render(false); writeHash();
+  }
+
+  function viewA(c, fresh) {
+    const pips = [0, 1, 2].map((i) => '<i class="' + (S.end || i < S.step ? 'done' : i === S.step ? 'on' : '') + '"></i>').join('');
+    const base = c.narr ? 3 : 2;
+    const choices = c.choices.map((x, i) => '<button class="a-ch rv" style="--i:' + (base + i) + '" data-i="' + i + '"><span class="n">' + (x.cont ? '›' : i + 1) + '</span><span>' + (x.cont ? 'Continue' : speech(x.l)) + '</span></button>').join('');
+    return '<div class="panel' + (fresh ? ' fresh' : '') + '">' + CORNERS +
+      '<div class="a-grid">' +
+        '<div class="a-who rv" style="--i:0"><div class="a-pic"><img src="assets/charcoal_burner.webp" alt="Charcoal Burner">' + CORNERS + '</div>' +
+          '<div class="a-name">' + STORY.speaker + '</div><div class="a-place">' + STORY.place + '</div></div>' +
+        '<div class="a-main">' +
+          '<div class="a-head rv" style="--i:0"><h1 class="ttl">' + STORY.title + '</h1><div class="pips">' + pips + '</div></div>' +
+          '<div class="rule rv" style="--i:1"><i></i></div>' +
+          (c.narr ? '<p class="narr rv" style="--i:2">' + c.narr + '</p>' : '') +
+          '<div class="a-quote rv" style="--i:' + (c.narr ? 3 : 1) + '"><p class="said">' + c.said + (c.note ? '<span class="nb">' + esc(c.note) + '</span>' : '') + '</p></div>' +
+          '<div class="a-choices">' + choices + '</div>' +
+        '</div>' +
+      '</div></div>';
+  }
+
+  function viewB(c, fresh) {
+    const base = c.narr ? 3 : 2;
+    const choices = c.choices.map((x, i) => '<button class="b-ch rv" style="--i:' + (base + i) + '" data-i="' + i + '" data-h="' + (x.cont ? '' : HINT[x.k]) + '">' + (x.cont ? 'Continue' : speech(x.l)) + '</button>').join('');
+    return '<div class="co-wrap rv" style="--i:0"><p class="co-cap">Your company</p>' + coRow() + '</div><div class="panel' + (fresh ? ' fresh' : '') + '">' + CORNERS +
+      '<div class="b-top">' +
+        '<p class="cap rv" style="--i:0">' + STORY.place + ' · ' + STORY.kind + '</p>' +
+        '<h1 class="ttl rv" style="--i:0">' + STORY.title + '</h1>' +
+        '<div class="b-chip rv" style="--i:1"><img src="assets/charcoal_burner.webp" alt=""><b>' + STORY.speaker + '</b></div>' +
+      '</div>' +
+      '<div class="rule rv" style="--i:1"><i></i></div>' +
+      '<div class="b-page">' +
+        (c.narr ? '<p class="narr rv" style="--i:2">' + c.narr + '</p>' : '') +
+        '<div class="b-said rv" style="--i:' + (c.narr ? 3 : 2) + '"><p class="said">' + c.said + (c.note ? '<span class="nb">' + esc(c.note) + '</span>' : '') + '</p></div>' +
+      '</div>' +
+      '<div class="b-choices">' + choices + '</div>' +
+      '<div class="b-foot"><span class="b-hint" id="hint"></span><span class="b-num">' + (S.end ? 'FIN' : ROMAN[c.step] + ' / III') + '</span></div>' +
+    '</div>';
+  }
+
+  function viewC(c, fresh) {
+    const base = c.narr ? 3 : 2;
+    return '<div class="panel' + (fresh ? ' fresh' : '') + '"><div class="c-grid">' +
+      '<div class="c-who rv" style="--i:0">' + pic + '<div class="a-name">' + STORY.speaker + '</div><div class="a-place">' + STORY.place + '</div></div>' +
+      '<div class="c-mid"><div class="a-head rv" style="--i:0"><h1 class="ttl">' + STORY.title + '</h1>' + pipsHtml() + '</div>' +
+        (c.narr ? '<p class="narr rv" style="--i:1">' + c.narr + '</p>' : '') +
+        '<div class="a-quote rv" style="--i:' + (c.narr ? 2 : 1) + '">' + saidHtml(c) + '</div></div>' +
+      '<div class="c-choices">' + btns(c, 'c-ch', base) + '</div></div></div>';
+  }
+  function viewD(c, fresh) {
+    const base = c.narr ? 3 : 2;
+    return '<div class="d-wrap"><div class="d-cards"><div class="d-co rv" style="--i:0"><p class="co-cap">Your company</p>' + coRow() + '</div>' +
+      '<div class="d-sp rv" style="--i:1">' + pic + '<div class="a-name">' + STORY.speaker + '</div></div></div>' +
+      '<div class="panel' + (fresh ? ' fresh' : '') + '">' + CORNERS +
+        '<div class="a-head rv" style="--i:1"><h1 class="ttl">' + STORY.title + '</h1>' + pipsHtml() + '</div><div class="rule rv" style="--i:1"><i></i></div>' +
+        (c.narr ? '<p class="narr rv" style="--i:2">' + c.narr + '</p>' : '') +
+        '<div class="a-quote rv" style="--i:' + (c.narr ? 3 : 2) + '">' + saidHtml(c) + '</div>' +
+        '<div class="d-choices">' + btns(c, 'd-ch', base) + '</div></div></div>';
+  }
+  function viewE(c) {
+    const base = c.narr ? 4 : 3;
+    return '<div class="e-col"><div class="rv" style="--i:0;display:flex;flex-direction:column;align-items:center">' + pic + '<div class="a-name">' + STORY.speaker + '</div><div class="a-place">' + STORY.place + '</div></div>' +
+      '<h1 class="ttl rv" style="--i:1">' + STORY.title + '</h1><div class="rule rv" style="--i:1"><i></i></div>' +
+      (c.narr ? '<p class="narr rv" style="--i:2">' + c.narr + '</p>' : '') +
+      '<div class="rv" style="--i:' + (c.narr ? 3 : 2) + '">' + saidHtml(c) + '</div>' +
+      '<div class="e-choices">' + btns(c, 'e-ch', base) + '</div></div>';
+  }
+
+  let lastV = '';
+  function render(fresh) {
+    const c = content();
+    const first = fresh || lastV !== S.v || !st.firstChild;
+    st.className = 'v-' + S.v;
+    st.innerHTML = '<div class="bg"></div>' + ({ a: viewA, b: viewB, c: viewC, d: viewD, e: viewE }[S.v](c, first));
+    lastV = S.v;
+    const h = $('#hint');
+    const show = (b) => { if (h) { h.textContent = b.dataset.h || ''; h.classList.toggle('on', !!b.dataset.h); } };
+    st.querySelectorAll('[data-i]').forEach((b) => {
+      b.addEventListener('click', () => pick(+b.dataset.i));
+      b.addEventListener('mouseenter', () => show(b)); b.addEventListener('focus', () => show(b));
+      b.addEventListener('mouseleave', () => h && h.classList.remove('on')); b.addEventListener('blur', () => h && h.classList.remove('on'));
+    });
+    document.querySelectorAll('.mk a').forEach((a) => a.classList.toggle('on', a.dataset.v === S.v));
+  }
+  function load() { readHash(); S.likes = S.end === 'liked' ? 3 : 0; fit(); render(true); }
+  addEventListener('hashchange', load);
+  addEventListener('resize', fit);
+  addEventListener('keydown', (e) => {
+    if (e.key === 'h' || e.key === 'H') { de.classList.toggle('clean'); writeHash(); }
+    if (/^[1-3]$/.test(e.key)) { const b = st.querySelectorAll('[data-i]')[+e.key - 1]; if (b) b.click(); }
+  });
+  load();
+})();
+</script>
+</body>
+</html>

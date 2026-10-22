@@ -760,44 +760,7 @@
   padding-bottom: 12px;
 }
 
-.fb-reach {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-top: 8px;
-}
-
-.fb-reach .rl {
-  flex: none;
-  font: 600 12px var(--g-disp);
-  letter-spacing: 0.18em;
-  text-transform: uppercase;
-  color: var(--g-dim);
-}
-
-.fb-reach .rb {
-  margin-left: auto;
-  display: inline-flex;
-  gap: 4px;
-}
-
-.fb-reach .rb i {
-  display: block;
-  width: 30px;
-  height: 18px;
-  background: rgba(217, 178, 106, 0.12);
-  border: 1px solid rgba(217, 178, 106, 0.2);
-  font: 600 11px/16px var(--g-disp);
-  font-style: normal;
-  text-align: center;
-  color: rgba(168, 151, 122, 0.8);
-}
-
-.fb-reach .rb i.on {
-  background: color-mix(in srgb, var(--ac) 78%, #000);
-  border-color: var(--ac);
-  color: #1a0f06;
-}
+/* .fb-reach (Enemy rows hit çubuğu) band-tip.css içine taşındı: savaştaki çağrı hücresi ipucuyla ortak */
 
 /* ================= telefon yatay (html.short): pencere kısa ekrana göre yeniden düzenlenir =================
    Mantıksal 1360x632; formation-board.ts ekranı dolduracak ölçeği (~0.55-0.58) seçer, böylece yazılar gerçek pikselde ~9-11 px, düğmeler >= 44 px olur.
@@ -997,4 +960,10 @@ html.short .fb-reach .rb i {
   width: 34px;
   height: 22px;
   line-height: 20px;
+}
+
+/* kart satırları: hover'da hafif yükselme + ince altın kenar (4b; data/ui-motion.json > card); ipucu açılır */
+.fb-tile, .fb-srow { transition: transform var(--m-card-hover, 170ms) var(--m-ease, ease-out), border-color var(--m-card-hover, 170ms) var(--m-ease, ease-out), box-shadow var(--m-card-hover, 170ms) var(--m-ease, ease-out); }
+@media (hover: hover) {
+  .fb-tile:hover, .fb-srow:hover { transform: translateY(calc(-1 * var(--m-card-lift, 4px) / 2)); border-color: rgba(243, 217, 153, 0.75); box-shadow: 0 0 10px rgba(243, 217, 153, 0.18); }
 }

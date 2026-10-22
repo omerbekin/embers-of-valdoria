@@ -6,7 +6,7 @@
 import { classes, formulas, grounds as GROUNDS, skills as SKILLS, statuses as STATUSES, summons as SUMMON_DEFS } from '../engine/content';
 import { areaDefProblem } from '../engine/area-shape';
 import { COND, COST_TARGET_CONDS, FX_THRESHOLD_FIELDS, HEAL_POINTS, mergeFxValue, MOD_SPEC, POTENCY_FIELDS, SCALE, SELF_CONDS, SELF_SCALES, SET_MODS, TRIGGER_BASES, TRIGGER_EVENTS, TRIGGER_TARGETS, UNIT_FX_KEYS, whenIsLate, type CondMod, type HealHook, type HookAt, type ModGroup, RULE_KINDS, type RuleHook, type RuleKind, type TreeHook, type TriggerAction, type TriggerEvent, type TriggerHook } from '../engine/tree-hooks';
-import type { ItemEffects, PassiveDef, SkillDef, SkillEffect, TreeSetup } from '../engine/types';
+import type { ItemEffects, PassiveDef, RandomStatusOption, SkillDef, SkillEffect, SkillModeDef, SkillModeSet, TreeSetup } from '../engine/types';
 import { TREE_RULES, treeOf, type TreeData, type TreeFx, type TreeMode, type TreeRules } from './skill-tree-data';
 import { barReached, focusBuild, rankOf, spent, treeNodes, validate, type TreeAlloc } from './skill-tree';
 
@@ -301,6 +301,8 @@ interface Acc {
   armorMult?: number;
   /** Faz 4c: çağrıya geçen yamalar (çağrı id'si; ceset tüketen çağrıda '<id>#fed' beslenmiş kopyası). */
   summons?: Record<string, Acc>;
+  /** Faz 8: skill biçim fx'leri (skill id -> sırayla; biçimler setupOf'ta son yamalı tanımdan kurulur). */
+  modes?: Record<string, Array<{ fx: Extract<TreeFx, { k: 'mode' }>; node: string }>>;
 }
 /** Faz 4c: sınıfın çağırdığı birimler (id -> ceset tüketen çağrı mı: fed / unfed ayrı derlenir). */
 const summonsOf = (clsId: string): Record<string, boolean> => {
@@ -755,7 +757,143 @@ function applyFx(tree: TreeData, acc: Acc, p: Patch, rules: TreeRules, unit?: st
       throw new TreeFxError(`hook family "${String((fx as { h: string }).h)}" is not supported yet`);
     }
   }
+  if (fx.k === 'mode') {
+    // Faz 8: biçim fx'i burada yalnızca doğrulanır ve sıraya girer; biçimler derleme sonunda (setupOf > buildModes) kurulur
+    if (unit) throw new TreeFxError('mode fx does not work on a summon');
+    const id = fx.skill ?? p.skill;
+    ownSkill(id);
+    checkModeFx(fx, node, p.rank);
+    ((acc.modes ??= {})[id!] ??= []).push({ fx, node });
+    return;
+  }
   throw new TreeFxError(`fx kind "${String((fx as { k: string }).k)}" is not supported yet`);
+}
+
+/* ------------------------------------------------------------------ Faz 8: skill biçimleri (Focused Beam, Stacked Deck) ------------------------------------------------------------------ */
+
+const MODE_KEYS = ['k', 'skill', 'mode', 'name', 'text', 'baseText', 'title', 'target', 'removeEffects', 'powerMul', 'addEffect', 'splash', 'statusPick', 'firstOnly', 'secondStatus', 'needs', 'onlyWith', 'unless'];
+const MODE_ID_RE = /^[a-z][a-z0-9_]*$/;
+
+/** Biçim fx'inin biçim denetimi (alanlar, türler); hangi biçime eklendiği buildModes'ta denetlenir. */
+function checkModeFx(fx: Extract<TreeFx, { k: 'mode' }>, node: string, rank: number): void {
+  for (const k of Object.keys(fx)) if (!MODE_KEYS.includes(k)) throw new TreeFxError(`mode: unknown field "${k}"`);
+  const str = (k: 'name' | 'text' | 'baseText' | 'title') => {
+    if (fx[k] !== undefined && (typeof fx[k] !== 'string' || !fx[k]!.trim())) throw new TreeFxError(`mode ${k} must be a non-empty string`);
+  };
+  (['name', 'text', 'baseText', 'title'] as const).forEach(str);
+  const family = fx.statusPick || fx.secondStatus ? 'status' : 'named';
+  if (family === 'status') {
+    if (fx.mode !== undefined || fx.name !== undefined || fx.target !== undefined || fx.removeEffects !== undefined || fx.powerMul !== undefined || fx.addEffect !== undefined || fx.splash !== undefined)
+      throw new TreeFxError('statusPick / secondStatus cannot be mixed with a named mode');
+    if (fx.statusPick !== undefined && fx.statusPick !== true) throw new TreeFxError('statusPick must be true');
+    if (fx.secondStatus !== undefined && fx.secondStatus !== true) throw new TreeFxError('secondStatus must be true');
+    if (fx.firstOnly !== undefined && !(Array.isArray(fx.firstOnly) && fx.firstOnly.every(knownStatus))) throw new TreeFxError('firstOnly must be a list of known statuses');
+    return;
+  }
+  if (typeof fx.mode !== 'string' || !MODE_ID_RE.test(fx.mode)) throw new TreeFxError('mode needs an id ("mode": "focused_beam")');
+  if (fx.firstOnly !== undefined) throw new TreeFxError('firstOnly only fits statusPick');
+  if (fx.target !== undefined && fx.target !== 'single_enemy') throw new TreeFxError('mode target must be "single_enemy"');
+  if (fx.removeEffects !== undefined && !(Array.isArray(fx.removeEffects) && fx.removeEffects.every((t) => typeof t === 'string' && EFFECT_FIELDS[t]))) throw new TreeFxError('removeEffects must be a list of effect types');
+  if (fx.powerMul !== undefined && !(finiteNum(fx.powerMul) && fx.powerMul > 0)) throw new TreeFxError('powerMul must be a positive number');
+  if (fx.splash !== undefined && !(fx.splash && (fx.splash.pattern === 'lane' || fx.splash.pattern === 'behind') && (fx.splash.mult === undefined || (finiteNum(fx.splash.mult) && fx.splash.mult > 0))))
+    throw new TreeFxError('mode splash needs pattern lane / behind and a positive mult');
+  if (fx.addEffect !== undefined) treeEffectOf({ effect: fx.addEffect }, rank, node);
+  const opens = fx.name !== undefined;
+  if (opens && fx.text === undefined) throw new TreeFxError('a new mode needs "text"');
+  if (!opens && (fx.target !== undefined || fx.removeEffects !== undefined || fx.powerMul !== undefined || fx.baseText !== undefined)) throw new TreeFxError('target / removeEffects / powerMul / baseText only fit the fx that opens the mode (with "name")');
+}
+
+/** Hasar etkilerinin gücü x çarpan (yerinde). */
+const mulDamage = (d: SkillDef, m: number): void => {
+  for (const e of d.effects) if (e.type === 'damage') e.power = r6(e.power * m);
+};
+
+/**
+ * Biçimleri kurar (son yamalı skill tanımından). Adlı biçim: kuran fx (name) + sonra gelen eklemeler; kurulmamış biçime ekleme hoşgörülü derlemede
+ * atlanır, katı denetimde hata. Durum seçimi: randomStatus yoksa (Cold Deck onu Stun'a çevirdi) biçim kurulmaz; secondStatus o zaman skill'in KENDİ
+ * tanımına, sınıf skill'inin özgün seçeneklerinden skill'de zaten olmayanlarla rastgele ikinci durum ekler.
+ */
+function buildModes(acc: Acc, lenient: boolean): Record<string, SkillModeSet> | undefined {
+  const out: Record<string, SkillModeSet> = {};
+  for (const [skillId, ops] of Object.entries(acc.modes ?? {})) {
+    const final = acc.skills[skillId] ?? cloneSkill(SKILLS[skillId]!);
+    const named = new Map<string, SkillModeDef>();
+    let baseText: string | undefined;
+    let title: string | undefined;
+    let pick: { node: string; firstOnly: string[] } | undefined;
+    let second: string | undefined;
+    for (const { fx, node } of ops) {
+      if (fx.title) title = fx.title;
+      if (fx.statusPick) pick = { node, firstOnly: fx.firstOnly ?? [] };
+      if (fx.secondStatus) second = node;
+      if (fx.statusPick || fx.secondStatus) continue;
+      let m = named.get(fx.mode!);
+      if (fx.name !== undefined) {
+        const d = cloneSkill(final);
+        if (fx.target) {
+          d.target = fx.target;
+          delete d.area;
+          delete d.areaByPhase;
+          delete d.splash;
+          delete d.count;
+          delete d.skyCenter;
+        }
+        if (fx.removeEffects?.length) d.effects = d.effects.filter((x) => !fx.removeEffects!.includes(x.type));
+        if (fx.powerMul !== undefined) mulDamage(d, fx.powerMul);
+        if (!d.effects.length) throw new TreeFxError(`mode ${fx.mode} leaves ${skillId} with no effect`);
+        m = { id: fx.mode!, name: fx.name, text: fx.text!, node, skill: d };
+        named.set(fx.mode!, m);
+        if (fx.baseText) baseText = fx.baseText;
+      } else if (!m) {
+        if (lenient) continue;
+        throw new TreeFxError(`mode ${fx.mode} of ${skillId} is not opened by an earlier node (use "needs")`);
+      } else if (fx.text) m.text = `${m.text} ${fx.text}`;
+      if (fx.addEffect) m.skill.effects.push(treeEffectOf({ effect: fx.addEffect }, 1, node));
+      if (fx.splash) {
+        if (m.skill.target !== 'single_enemy') throw new TreeFxError(`mode ${fx.mode}: splash needs a single_enemy mode`);
+        m.skill.splash = clone(fx.splash);
+      }
+    }
+    const list: SkillModeDef[] = [...named.values()];
+    const rsIdx = final.effects.findIndex((x) => x.type === 'randomStatus');
+    if (pick && rsIdx >= 0) {
+      const rs = final.effects[rsIdx] as Extract<SkillEffect, { type: 'randomStatus' }>;
+      const tag = (o: RandomStatusOption): RandomStatusOption => ({ ...o, ...(pick!.firstOnly.includes(o.status) ? { firstOnly: true } : {}) });
+      const seen = new Set<string>();
+      for (const o of rs.options) {
+        if (seen.has(o.status)) continue;
+        seen.add(o.status);
+        const d = cloneSkill(final);
+        const only = pick.firstOnly.includes(o.status);
+        const fixed = { type: 'status', status: o.status, turns: o.turns, ...(only ? { firstOnly: true } : {}), treeNode: pick.node } as SkillEffect;
+        const extra = second ? rs.options.filter((x) => x.status !== o.status).map(tag) : [];
+        d.effects.splice(rsIdx, 1, fixed, ...(extra.length ? [{ type: 'randomStatus', options: extra, treeNode: second } as SkillEffect] : []));
+        const st = STATUSES[o.status];
+        list.push({
+          id: o.status,
+          name: st?.name ?? o.status,
+          text: `${o.turns} ${o.turns === 1 ? 'turn' : 'turns'}: ${st?.text ?? ''}`.trim(),
+          ...(only ? { note: 'First target only' } : {}),
+          status: o.status,
+          node: pick.node,
+          skill: d,
+        });
+      }
+    } else if (second && rsIdx < 0) {
+      // Cold Deck + Double Deal: seçim yok (durum sabit); kendi tanıma kalan özgün seçeneklerden rastgele ikinci durum
+      const base = SKILLS[skillId]?.effects.find((x) => x.type === 'randomStatus') as Extract<SkillEffect, { type: 'randomStatus' }> | undefined;
+      const have = new Set(final.effects.flatMap((x) => (x.type === 'status' ? [x.status] : [])));
+      const extra = (base?.options ?? []).filter((o) => !have.has(o.status));
+      if (extra.length) {
+        const own = (acc.skills[skillId] ??= cloneSkill(SKILLS[skillId]!));
+        const at = own.effects.findIndex((x) => x.type === 'status' && have.has(x.status));
+        own.effects.splice(at < 0 ? own.effects.length : at + 1, 0, { type: 'randomStatus', options: extra.map((o) => ({ ...o })), treeNode: second } as SkillEffect);
+      }
+    }
+    if (!list.length) continue;
+    out[skillId] = { keepBase: !pick, ...(baseText ? { baseText } : {}), ...(title ? { title } : {}), list };
+  }
+  return Object.keys(out).length ? out : undefined;
 }
 
 /* ------------------------------------------------------------------ Faz 5a: C5 hedef / alan / aura + C6 kural ------------------------------------------------------------------ */
@@ -1350,6 +1488,8 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
 
 /** Birikim -> TreeSetup (boş kanallar yazılmaz); hiçbir şey yoksa undefined. */
 function setupOf(acc: Acc): TreeSetup | undefined {
+  // Faz 8: biçimler önce (Double Deal + Cold Deck skill'in kendi tanımını da yamalar)
+  const modes = acc.modes ? buildModes(acc, !!acc.lenient) : undefined;
   const skills = Object.keys(acc.skills).length > 0;
   const fx = Object.keys(acc.fx).length > 0;
   const hooks = acc.hooks.length > 0;
@@ -1360,7 +1500,7 @@ function setupOf(acc: Acc): TreeSetup | undefined {
     const s = setupOf(a);
     return s ? [[k, s] as const] : [];
   });
-  if (!skills && !acc.passive && !fx && !hooks && !hp && !armor && !armorMul && !subs.length) return undefined;
+  if (!skills && !acc.passive && !fx && !hooks && !hp && !armor && !armorMul && !subs.length && !modes) return undefined;
   return {
     ...(skills ? { skills: acc.skills } : {}),
     ...(acc.passive ? { passive: acc.passive } : {}),
@@ -1370,6 +1510,7 @@ function setupOf(acc: Acc): TreeSetup | undefined {
     ...(armor ? { armorAdd: acc.armorAdd } : {}),
     ...(armorMul ? { armorMult: acc.armorMult } : {}),
     ...(subs.length ? { summons: Object.fromEntries(subs) } : {}),
+    ...(modes ? { modes } : {}),
   };
 }
 
@@ -1421,6 +1562,7 @@ export function checkTreeFx(tree: TreeData, rules: TreeRules = TREE_RULES): stri
           for (const d of depFx) applyFx(tree, acc, { fx: d, rank: dep.max, ...(depSkill ? { skill: depSkill } : {}), label: dep.key }, rules);
         }
         applyFx(tree, acc, { fx: f, rank: max, ...(skill ? { skill } : {}), label }, rules);
+        if (acc.modes) buildModes(acc, false); // Faz 8: biçim kurulumu da denetlenir (eklemenin açılmış biçimi var mı)
       } catch (e) {
         out.push(`${tree.class} ${label}: ${(e as Error).message}`);
       }

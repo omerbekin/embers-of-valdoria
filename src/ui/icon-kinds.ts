@@ -57,6 +57,7 @@ export const ICON_KINDS = [
   'fistcrush2',
   'taunt2',
   'guard2',
+  'closeranks2',
   'aura',
   'manaburn',
   'drainfield',

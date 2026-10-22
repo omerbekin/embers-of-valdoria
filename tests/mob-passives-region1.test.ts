@@ -177,7 +177,7 @@ describe('D7-D9', () => {
   it('D8 Ember Acolyte Ruined Watchtower\'da (bölge I) sefer ölçeği olmadan, yalnızca karşılaşma x zorluk çarpanıyla kurulur', () => {
     const enc = ENCOUNTERS.watchtower_tutorial!;
     const u = enc.units.find((x) => x.class === 'ember_acolyte')!;
-    expect(CONFIG.enemyScale?.skipRegions).toContain('I');
+    expect(CONFIG.enemyScale?.skipNodes).toContain('3'); // 2026-10-22: skipRegions I -> eğitim düğümleri
     const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty: 'medium' }), '3'));
     // + elit düğümün rütbesiz eşlikçisi: zorluğun eliteEscort'u (open-questions 365)
     const expected = withDifficulty(withDifficulty(withDifficulty(u.mods, chapterEnemyMods('valdoria', '3')), CONFIG.difficulties.medium!.enemy), CONFIG.difficulties.medium!.eliteEscort)!;

@@ -8,7 +8,7 @@
  *  - stat / skill / affix satırlarının açıklaması (`data-stat`, `data-skill`, `data-affix`; savaş HUD'ıyla aynı metin).
  * Kararı çağıran verir (`onDrop`); denetçi yalnızca girdiyi yönetir. Oyun içi metinler İngilizce.
  */
-import { affixTip, itemDef, type AffixLine } from '../progression';
+import { affixTip, itemDef, type AffixLine, type SlotId } from '../progression';
 import type { Stats } from '../engine';
 import { dropAction, isDoubleTap, pressStep, showsTrash, tipClick, type DropAction, type DragSource, type DropTarget } from './gear-drop';
 import { ItemTip, offsetIn, type ItemTipAction } from './item-tip';
@@ -39,6 +39,8 @@ export interface ItemInteractionHost {
   /** `data-drop` değeri -> bırakma hedefi. */
   targetOf(value: string): DropTarget | null;
   classOf(heroId: string): string | undefined;
+  /** Kuşanılmış yuvadaki item kimliği (yuvadan yuvaya sürüklemede uygunluk için; yoksa yuva-yuva taşıma kapalı). */
+  itemAt?(heroId: string, slot: SlotId): string | undefined;
   /** `data-tip` anahtarının ipucu içeriği (boş = ipucu yok). */
   tipNodes(key: string): HTMLElement[];
   /** Dokunmatikte sabitlenen ipucunun eylem düğmeleri (yoksa düğmesiz). */
@@ -57,6 +59,11 @@ export interface ItemInteractionHost {
    * false / verilmemiş = eski davranış (ikinci dokunuş ipucunu kapatır).
    */
   onDoubleTap?(key: string): boolean;
+  /**
+   * Sağ tık (Ömer 2026-10-23): fareyle çift tıkla aynı hızlı eylem (kuşan / çıkar). true = eylem yapıldı (ipucu kapanır).
+   * Verilmemiş = sağ tık hiçbir şey yapmaz (tüccar, demirci, ganimet: çift tık orada sat / al / seç; sağ tık sessiz).
+   */
+  onSecondary?(key: string): boolean;
   /** Dokunmatikte her tek dokunuşta (ipucu yine sabitlenir); demirci takılı item'i hemen seçer. */
   onTap?(key: string): void;
 }
@@ -90,9 +97,17 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   const showTip = (t: HTMLElement): void => {
     const hint = t.dataset['hint'];
     const ctx = h.stats?.();
-    if (!ctx && hint === undefined) return;
+    const band = t.dataset['band'];
+    if (!ctx && hint === undefined && band === undefined) return;
     // Hepsi ortak "A - Band" ipucu (src/ui/band-tip.ts; Ömer 2026-10-18)
-    if (hint !== undefined) {
+    if (band !== undefined) {
+      // hazır A Band belirtimi (JSON; ör. yara ipucu, src/ui/wound-ui.ts)
+      try {
+        tip.innerHTML = bandTipHtml(JSON.parse(band) as BandTipSpec);
+      } catch {
+        return;
+      }
+    } else if (hint !== undefined) {
       // kısa ipucu (ikon düğmesi / kahraman yer imi): ad + isteğe bağlı alt satır
       const sub = t.dataset['hintSub'];
       const tone = t.dataset['hintTone'] ?? 'idle';
@@ -136,7 +151,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
   };
   // skill hücreleri savaş HUD'ının kendi tooltip'ini taşır (src/ui/skill-bar.ts): burada yalnızca stat / affix satırları
   // `data-hint`: kısa ipucu (yalnızca üstüne gelince / dokunmatikte uzun basınca; dokunuş düğmenin kendi eylemidir)
-  const TIP_SEL = '[data-stat],[data-affix],[data-hint]';
+  const TIP_SEL = '[data-stat],[data-affix],[data-hint],[data-band]';
 
   /** Son basışın girdi türü (tıklama sabitlemesi yalnızca dokunmatikte; onClickTip). */
   let lastDownType = '';
@@ -248,7 +263,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       t.classList.remove('drop-ok', 'drop-no', 'drop-off');
       if (!on || !drag) return;
       const tg = h.targetOf(t.dataset['drop'] ?? '');
-      const ok = !!tg && dropAction(drag.src, tg, h.classOf).kind !== 'none';
+      const ok = !!tg && dropAction(drag.src, tg, h.classOf, h.itemAt).kind !== 'none';
       t.classList.add(ok ? 'drop-ok' : 'drop-no');
       // silah ikinci el yuvasına gidiyorsa bant "Off-hand" der (gear.css > .gp-hint)
       if (ok && t.dataset['drop'] === 'slot:offhand' && 'itemId' in drag.src && itemDef(drag.src.itemId)?.slot === 'weapon') t.classList.add('drop-off');
@@ -286,7 +301,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     const tg = drop ? targetAt(document.elementFromPoint(x, y)) : null;
     remark();
     markEnded();
-    h.onDrop(d.src, tg, tg ? dropAction(d.src, tg, h.classOf) : null);
+    h.onDrop(d.src, tg, tg ? dropAction(d.src, tg, h.classOf, h.itemAt) : null);
   };
   /** Dokunmatikte `data-hint` düğmesine uzun basış: kısa ipucu (parmak kalkınca düğmenin tıklaması yutulur). */
   let hintPress: { timer: number; x: number; y: number } | null = null;
@@ -415,7 +430,18 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     }
   };
   const onContext = (e: MouseEvent): void => {
-    if ((e.target as HTMLElement).closest('[data-drag]')) e.preventDefault();
+    const cell = (e.target as HTMLElement).closest<HTMLElement>('[data-drag]');
+    if (!cell) return;
+    e.preventDefault();
+    // dokunmatik uzun basış bağlam menüsü olayı üretebilir: o ipucu/sürükleme hareketidir, hızlı eylem değil
+    if (lastDownType === 'touch' || performance.now() - lastTouchAt < 800) return;
+    const key = cell.dataset['tip'] ?? '';
+    if (!key || drag || !h.onSecondary) return;
+    if (h.onSecondary(key)) {
+      hideTip();
+      itip.hide();
+      setHover('');
+    }
   };
   overlay.addEventListener('pointerdown', onDown);
   document.addEventListener('pointermove', onMove);

@@ -42,10 +42,23 @@ seferde `src/campaign/encounter-waves.ts`): karşılaşmanın düşman takımı 
   Bridge Warden seferde artık 3 dalga: 2 takviye, sonra boss + 2 Iron Mooring. Bölge grubu da yoksa tek dalga.
 - **Veri önceliği:** karşılaşmaya `waves` yazılırsa tam dalga listesi = `units` + `waves` (sırasıyla, olduğu gibi); varsayılan üretici çalışmaz.
 - Güçlendirme / zorluk / level / bölüm çarpanları takviyeye de aynı kuralla uygulanır (elit düğümde takviye elit ölçeğini alır).
-- Örnekler (sefer): Windy Moor: 1) 2 Moor Raider + Ember Acolyte, 2) aynısı. Watchtower: 1) Poacher + Acolyte, 2) Bandit Chief + Poacher + Acolyte.
+- Örnekler (sefer): Windy Moor: 1) 2 Moor Raider + Ember Acolyte, 2) 3 zayıf Moor Raider + Ember Acolyte (elle yazılmış dalga, aşağıda "Dolgu savaşı çeşitliliği"). Watchtower: 1) Poacher + Acolyte, 2) Bandit Chief + Poacher + Acolyte.
   Castle Morvane: 1) 2 Sworn Guard + Hierophant, 2) aynısı, 3) Lord Morvane + 2 Sworn Guard + Hierophant.
 - **Önizleme:** harita düşman önizlemesi ve "Start battle?" kartı tüm dalgaların düşmanlarını dalga sırasıyla gösterir (aynı ad birleşik, "4× Moor Raider";
   düğüm bağlamı haritadan bulunur: `encounterWavesById`). XP yedek sayımı (öldürme kaydı yoksa) da tüm dalgaları sayar.
+
+**Dolgu savaşı çeşitliliği (Ömer 2026-10-21: "2 dalganın aynı olduğu senaryolar var, çeşitlendir"; campaign-dev):** dolgu savaşlarının (normal, hazine, olay
+korumaları; elit / boss / tutorial hariç) 2. dalgası artık `encounters.json > waves` alanında elle yazılı; 1. dalga değişmedi. Kalıplar karışık:
+az güçlü (2-3 birim, çarpan yukarı: Cairn Hill, Misty Marsh, Pilgrim Road, Ashen Plain, Gate of Cinders), çok zayıf (4-5 birim, çarpan aşağı: Windy Moor,
+Grave Field, Siege Line, Riverhead, Witch's Hut), başka tür takviye / rol değişimi (Iron Pass: duvarsız okçu + rün büyücüsü yaylımı; Charcoal Camp: baskıncı
+hücumu; Ember Road: tek atlının arkasında büyücüler; Dwarven Mine: muhafız + arbaletçiler; St. Brann's: büyücü ağırlıklı). Yalnızca bölgenin kendi mobları.
+Bütçe (taban can x hpMult x powerMult toplamı) savaş başına eskisinin %±6'sı içinde: az güçlü dalgalar ~%12 fazla, çok zayıf ~%12 az bütçe alır (sayı
+üstünlüğü / odak ateşi farkını dengelemek için). morwen_duel 2. dalgası Morwen'in kopyası olmasın diye yalnızca bataklık yaratıkları (PROVİZYON).
+**Elit savaşlar (Ömer 2026-10-21 onayı):** Black Cathedral ve Thornwood Hollow da elle yazılı takviye aldı; elit kuralı korunur: takviye `units`
+(1. dalga), liderli asıl takım `waves` (son dalga, doruk). Black Cathedral: 2 Risen Skeleton + 2 Grave Chanter ("koro", çok zayıf); Thornwood Hollow: güçlü
+Grey Wolf + Charcoal Burner (az güçlü). Elit düğüm ölçeği (`enemyScale.elite`) ve zorluk eki `eliteEscort` rütbesiz birimlere eski takviyede olduğu gibi
+yenisinde de aynen uygulanır (bütçe karşılaştırması bu yüzden ham çarpanlarla). Watchtower (tutorial) eski ekleme kuralında kalır.
+Sayılar PROVİZYON: balance-tester sim:campaign ile doğrular.
 
 **Endless:** normal savaş (6+): her dalga ayrı rastgele grup (`enemyCount` kadar; önceki dalgaların class'ları tekrar etmez, 1. dalga bugünküyle
 birebir aynı); bu zaten ekleme kuralıdır, değişmedi. Elit / boss: seferle aynı kural: karşılaşma aynen son dalgada, önce eşlikçilerinin kopyası

@@ -1,6 +1,6 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
-import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
+import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, planMoveEquipped, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
 import { itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
@@ -733,6 +733,24 @@ export function unequipToBag(run: EndlessRun, heroId: string, slot: SlotId, cfg:
   delete eq[slot];
   if (promoteOffhand(eq)) delete eq.offhand; // ana el çıkınca ikinci eldeki hançer ana ele geçer
   h.equipment = eq;
+  return s;
+}
+
+/** Kuşanılmış item'i aynı kahramanın başka yuvasına taşır; hedef doluysa yer değiştirir (sefer `moveEquipped` ile aynı kural). */
+export function moveEquippedRun(run: EndlessRun, heroId: string, from: SlotId, to: SlotId, cfg: EndlessConfig = ENDLESS): EndlessRun {
+  lockCheck(run);
+  const hero = heroOf(run, heroId);
+  if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (runHeroFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
+  const plan = planMoveEquipped(hero.class, hero.equipment, from, to);
+  if ('error' in plan) throw new Error(plan.error);
+  if (bagOf(run).length + plan.toBag.length > endlessBagSize(cfg)) throw new Error('Bag is full');
+  const s = clone(run);
+  const h = heroOf(s, heroId)!;
+  const eq = { ...plan.equipment } as Record<string, ItemInstance | null | undefined>;
+  for (const k of Object.keys(eq)) if (!eq[k]) delete eq[k];
+  h.equipment = eq as typeof h.equipment;
+  s.bag = [...bagOf(s), ...plan.toBag];
   return s;
 }
 

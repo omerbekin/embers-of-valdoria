@@ -22,6 +22,7 @@ export type DropTarget =
 export type DropAction =
   | { kind: 'equip'; heroId: string; uid: string; slot?: SlotId }
   | { kind: 'unequip'; heroId: string; slot: SlotId }
+  | { kind: 'move'; heroId: string; from: SlotId; to: SlotId }
   | { kind: 'discard'; uid: string }
   | { kind: 'buy'; index: number; heroId?: string; slot?: SlotId }
   | { kind: 'buyback'; index: number; heroId?: string; slot?: SlotId }
@@ -30,7 +31,7 @@ export type DropAction =
   | { kind: 'none'; reason?: string };
 
 /** `classOf`: kahramanın sınıfı (yoksa undefined). */
-export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId: string) => string | undefined): DropAction {
+export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId: string) => string | undefined, itemAt?: (heroId: string, slot: SlotId) => string | undefined): DropAction {
   if (src.kind === 'ware' || src.kind === 'bb' || src.kind === 'loot') {
     // Mal / geri alım / ganimet: torbaya bırakılırsa alınır; kahramana ya da yuvaya bırakılırsa alınır ve kuşanılır (silah ailesi uymalı)
     const kind = src.kind === 'ware' ? 'buy' : src.kind === 'bb' ? 'buyback' : 'take';
@@ -48,6 +49,15 @@ export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId
   if (src.kind === 'slot') {
     if (target.kind === 'bag') return { kind: 'unequip', heroId: src.heroId, slot: src.slot };
     if (target.kind === 'trash' || target.kind === 'wares') return { kind: 'none', reason: 'Unequip first' };
+    // Kuşanılmış item başka yuvaya (aynı kahraman): item hedef yuvaya uymalı; hedef doluysa yer değiştirir (uymayan torbaya döner). Ayrıntı: planMoveEquipped
+    if (target.kind === 'slot' && target.heroId === src.heroId && target.slot !== src.slot) {
+      const d = itemDef(itemAt?.(src.heroId, src.slot) ?? '');
+      const cls = classOf(src.heroId);
+      if (!d || !cls) return { kind: 'none' };
+      if (!fitsSlot(d, target.slot)) return { kind: 'none', reason: 'Wrong slot' };
+      if (!canEquip(cls, d)) return { kind: 'none', reason: 'Cannot use' };
+      return { kind: 'move', heroId: src.heroId, from: src.slot, to: target.slot };
+    }
     return { kind: 'none' };
   }
   if (target.kind === 'bag') return { kind: 'none' };

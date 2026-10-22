@@ -29,6 +29,7 @@ import {
   clearedNodes,
   isFallen,
   outgoing,
+  mainOutgoing,
   pickHero,
   recruit,
   moveTo,
@@ -89,7 +90,7 @@ export function nodeCategory(map: CampaignMap, nodeId: string): NodeCategory {
 export function allRoutes(map: CampaignMap): string[][] {
   const out: string[][] = [];
   const walk = (path: string[]) => {
-    const next = outgoing(map, path[path.length - 1]!);
+    const next = mainOutgoing(map, path[path.length - 1]!); // cepler rota değil (sim serbest dolaşım yapmaz)
     if (!next.length) out.push(path);
     for (const n of next) walk([...path, n]);
   };
@@ -99,7 +100,7 @@ export function allRoutes(map: CampaignMap): string[][] {
 
 /** Rotanın kısa adı (seçim noktalarındaki seçimler): ör. "5A·8C·11A". */
 export function routeLabel(map: CampaignMap, route: string[]): string {
-  return route.filter((_, i) => i > 0 && outgoing(map, route[i - 1]!).length > 1).join('·');
+  return route.filter((_, i) => i > 0 && mainOutgoing(map, route[i - 1]!).length > 1).join('·');
 }
 
 export interface CampaignSimOptions {

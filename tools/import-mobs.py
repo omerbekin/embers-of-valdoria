@@ -53,6 +53,7 @@ HEADS = {
     'ravenwood_poacher': (690, 20, 300),
     'raven_seer': (599, 110, 300),
     'bandit_chief': (640, 10, 260),
+    'deserter_captain': (570, 0, 260),
     'grey_wolf': (1270, 190, 400),
     # Bölge III (mob-plan.md 10.6): YER TUTUCU kafa kutuları; çizim yarın gelince `--only <id> --check <klasör>` ile bakıp düzelt.
     # Kaynağı (assets/source/mobs/<id>.png) olmayan id atlanır.

@@ -471,6 +471,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
   if (waves) add(waves);
   if (skill.splash?.pattern === 'chain' && skill.target === 'single_enemy') {
     add(`Then jumps from foe to foe: each jump goes to the nearest foe not yet hit, up to ${skill.splash.jumps ?? 0} jumps (jumps ignore range)`);
+  } else if (skill.splash?.pattern === 'lane' && skill.target === 'single_enemy') {
+    add(`Also pierces every unit behind the target in its lane for ${pct(skill.splash.mult ?? 1)} damage`);
   } else if (skill.splash && skill.target === 'single_enemy') add(`Also hits the units beside the target (the neighbors above and below it on screen) for ${pct(skill.splash.mult ?? 1)} damage`, 'physical');
   if ((skill.target === 'area_enemies' || skill.target === 'area_any') && (skill.area?.hitsAtCenter ?? 1) > 1 && skill.area?.shape !== 'x') add(`The unit on the anchor cell is hit ${skill.area!.hitsAtCenter} times (each hit rolls on its own)`);
   if (skill.area?.shape === 'x' && (skill.area.hitsAtCenter ?? 1) > 1) add(`The blade crosses the center twice: the unit on the anchor cell is hit ${skill.area.hitsAtCenter} times, each hit rolls on its own`);

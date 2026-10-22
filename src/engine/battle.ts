@@ -15,7 +15,7 @@ import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduct
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
 import { condHolds, defaultSel, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
-import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleSetup {
   seed: number;
@@ -91,6 +91,15 @@ export interface ChoiceLike {
   board?: Side;
   /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedinin uid'si. */
   corpseUid?: string;
+  /** Faz 8: skill ağacı biçimi (Focused Beam, Stacked Deck kartı); yoksa skill'in kendi biçimi. */
+  mode?: string;
+}
+
+/** Faz 8: etkin skill biçimi (kullanım ya da arayüz hedef seçimi süresince Battle.skill(id, uid) bu tanımı döndürür). */
+interface ActiveMode {
+  uid: string;
+  skillId: string;
+  def: SkillDef;
 }
 
 /** Hasar olayının kaynak bilgisi (BattleEvent 'damage' > origin/element/damageType/ground/groundId). */
@@ -300,6 +309,10 @@ export class Battle {
   private waveIdx = 0;
   /** Savaşta skill ağaçlı (yamalı skill, unitFx ya da kanca) en az bir birim var mı; yoksa skill() birim aramadan ortak tabloya gider ve ağaç izlemesi çalışmaz. */
   private treeUnits = false;
+  /** Faz 8: biçimli kullanım (act / useSkill `mode`): kullanım süresince (bedava kullanım kuyruğundan önce biter). */
+  private modeCast: ActiveMode | null = null;
+  /** Faz 8: arayüzün hedef seçme önizlemesi (Focused Beam seçildi, düşman bekleniyor): yalnızca o birim + skill; her eylem başında silinir. */
+  private viewMode: ActiveMode | null = null;
   /** Faz 5a: ağaç pasif ekleri işler mi (ağaçlı birim ya da yalnızca pasifi yamalı Drilled Ranks / Endless Spring birimi); yoksa ifadeler aynen. */
   private treeArmorOn = false;
 
@@ -3363,6 +3376,8 @@ export class Battle {
    * Bekçi test (tests/skill-tree-engine.test.ts): bu dosyada uid'siz `this.skill(` yalnızca izin listesindeki yapısal yüklemlerde kalır.
    */
   skill(skillId: string, who?: string | Combatant): SkillDef | undefined {
+    const m = this.modeCast ?? this.viewMode;
+    if (m && who !== undefined && m.skillId === skillId && (typeof who === 'string' ? who : who.uid) === m.uid) return m.def;
     if (who !== undefined && this.treeUnits) {
       const own = (typeof who === 'string' ? this.get(who) : who)?.skillDefs?.[skillId];
       if (own) return own;
@@ -3387,6 +3402,14 @@ export class Battle {
     if (!skill?.splash || skill.target !== 'single_enemy') return [];
     if (skill.splash.pattern === 'chain') return this.chainTargets(chosen, skill.splash.jumps ?? 0);
     // Faz 5a (ağaç; Femur Chain): hedefin hemen ARKASINDAKİ canlı birim (aynı şerit, bir sıra derin; boşsa yok)
+    // Faz 8 (Lance of Dawn): hedefin ŞERİDİNDE ondan daha derindeki tüm canlı birimler (önden arkaya)
+    if (skill.splash.pattern === 'lane') {
+      const lane = this.laneOf(chosen.slot);
+      const row = this.rowOf(chosen.slot);
+      return this.living(chosen.side)
+        .filter((c) => c.uid !== chosen.uid && c.board === chosen.board && !c.inert && this.laneOf(c.slot) === lane && this.rowOf(c.slot) > row)
+        .sort((a, b) => this.rowOf(a.slot) - this.rowOf(b.slot));
+    }
     if (skill.splash.pattern === 'behind') {
       const b = this.behindSlotOf(chosen);
       const u = b === null ? undefined : this.living(chosen.side).find((c) => c.uid !== chosen.uid && c.board === chosen.board && c.slot === b && !c.inert);
@@ -4028,20 +4051,79 @@ export class Battle {
    * `corpseUid`: ceset tüketen çağrıda (Raise Dead) tüketilecek düşman cesedi (corpseChoices'tan); ceset varken ZORUNLU ('Choose a corpse to consume'),
    * hiç ceset yokken verilirse yok sayılır. Çağrıda `slot` summonSlots'tan biri olmalı (verilmezse varsayılan yuva).
    */
-  useSkill(actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string): ActionResult {
-    if (this.globalDef(skillId)) return this.useGlobal(actorUid, skillId, slot ?? slotOfTileUid(targetUid), slotOfTileUid(targetUid) === undefined ? targetUid : undefined);
-    return this.cast(actorUid, skillId, targetUid, slot, false, board, corpseUid);
+  useSkill(actorUid: string, skillId: string, targetUid?: string, slot?: number, board?: Side, corpseUid?: string, mode?: string): ActionResult {
+    if (this.globalDef(skillId)) {
+      this.viewMode = null;
+      return this.useGlobal(actorUid, skillId, slot ?? slotOfTileUid(targetUid), slotOfTileUid(targetUid) === undefined ? targetUid : undefined);
+    }
+    return this.withModeCast(actorUid, skillId, mode, () => this.cast(actorUid, skillId, targetUid, slot, false, board, corpseUid));
   }
 
   /** Tek giriş noktası: class skill'i ya da global skill ({kind:'global', id, slot?}). */
   act(actorUid: string, action: BattleAction): ActionResult {
-    return action.kind === 'global' ? this.useGlobal(actorUid, action.id, action.slot ?? slotOfTileUid(action.targetUid), slotOfTileUid(action.targetUid) === undefined ? action.targetUid : undefined) : this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid);
+    if (action.kind === 'global') {
+      this.viewMode = null;
+      return this.useGlobal(actorUid, action.id, action.slot ?? slotOfTileUid(action.targetUid), slotOfTileUid(action.targetUid) === undefined ? action.targetUid : undefined);
+    }
+    return this.withModeCast(actorUid, action.skillId, action.mode, () => this.cast(actorUid, action.skillId, action.targetUid, action.slot, false, action.board, action.corpseUid));
   }
 
   /** Yapay zeka seçimini uygular; seçim yoksa (null) turu pas geçer (skipTurn). */
   applyChoice(actorUid: string, choice: ChoiceLike | null): ActionResult {
     if (!choice) return this.skipTurn();
-    return this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid);
+    return choice.mode !== undefined ? this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid, choice.mode) : this.useSkill(actorUid, choice.skillId, choice.targetUid, choice.slot, choice.board, choice.corpseUid);
+  }
+
+  // ---------------------------------------------------------------- Skill biçimleri (Faz 8: Focused Beam, Stacked Deck)
+
+  /** Birimin bu skill için biçim kümesi (ağaçta biçim veren düğüm yoksa undefined: arayüz seçim paneli açmaz, YZ biçim denemez). */
+  skillModes(uid: string, skillId: string): SkillModeSet | undefined {
+    return this.get(uid)?.skillModes?.[skillId];
+  }
+
+  /**
+   * Arayüz: hedef seçme sırasında biçimin önizlemesi (Focused Beam seçildi, düşman bekleniyor): `mode` verilince o birim + skill için skill(),
+   * validTargets, önizleme biçimin tanımını görür; null = kapat. Hiçbir eylem bunu kullanmaz (her eylem başında silinir; eylem biçimi `mode` ile taşır).
+   */
+  setViewMode(uid: string, skillId: string, mode: string | null): boolean {
+    if (mode === null) {
+      this.viewMode = null;
+      return true;
+    }
+    const m = this.skillModes(uid, skillId)?.list.find((x) => x.id === mode);
+    this.viewMode = m ? { uid, skillId, def: m.skill } : null;
+    return !!m;
+  }
+
+  /**
+   * YZ / arayüz değerlendirmesi: `fn` süresince bu birim + skill biçimin tanımını görür (önceki önizleme biçimi geri gelir; eylem değil, zar yok).
+   * Biçim yoksa skill'in kendi tanımıyla çalışır.
+   */
+  withMode<T>(uid: string, skillId: string, mode: string, fn: () => T): T {
+    const prev = this.viewMode;
+    const m = this.skillModes(uid, skillId)?.list.find((x) => x.id === mode);
+    this.viewMode = m ? { uid, skillId, def: m.skill } : null;
+    try {
+      return fn();
+    } finally {
+      this.viewMode = prev;
+    }
+  }
+
+  /** Biçimli kullanım: biçim geçerliyse kullanım süresince skill() biçim tanımını döndürür; başarılı kullanım biçim düğümünü ölçüme yazar. */
+  private withModeCast(actorUid: string, skillId: string, mode: string | undefined, run: () => ActionResult): ActionResult {
+    this.viewMode = null;
+    if (mode === undefined) return run();
+    const m = this.skillModes(actorUid, skillId)?.list.find((x) => x.id === mode);
+    if (!m) return { ok: false, reason: 'Unknown mode' };
+    this.modeCast = { uid: actorUid, skillId, def: m.skill };
+    try {
+      const r = run();
+      if (r.ok) this.treeProc(actorUid, m.node);
+      return r;
+    } finally {
+      this.modeCast = null;
+    }
   }
 
   /** Global skill tanımı (data/global-skills.json). */
@@ -4851,7 +4933,9 @@ export class Battle {
           // koşullu etki (when): hedefe gidende alıcı başına, kendine gidende grubun hedeflerinden biri
           if (effect.self && effect.when && !ts.some((t) => this.effWhen(actor, effect, t, skill))) break;
           const recipients0 = effect.self ? [actor] : this.damageBefore(skill, effect) ? ts.filter((c) => hit.has(c.uid)) : ts.filter(gated);
-          const recipients = effect.when && !effect.self ? recipients0.filter((r) => this.effWhen(actor, effect, r, skill)) : recipients0;
+          const recipients1 = effect.when && !effect.self ? recipients0.filter((r) => this.effWhen(actor, effect, r, skill)) : recipients0;
+          // Faz 8 (Stacked Deck: Stun yalnızca ilk karta): yalnızca grubun ilk hedefi
+          const recipients = effect.firstOnly && !effect.self ? recipients1.filter((r) => r === group.targets[0]) : recipients1;
           // `chance`: her (canlı) alıcı için BAĞIMSIZ zar (alıcı başına bir rng sayısı; chance yoksa/1 ise zar atılmaz, akış eskisiyle aynı)
           const chance = effect.chance ?? 1;
           for (const r of recipients) {
@@ -4866,7 +4950,7 @@ export class Battle {
           const total = effect.options.reduce((a, o) => a + o.weight, 0);
           for (const r of recipients) {
             if (r.hp <= 0 || total <= 0) continue;
-            this.rollRandomStatus(actor, r, skill, effect, emit);
+            this.rollRandomStatus(actor, r, skill, effect, emit, r === group.targets[0]);
             if (effect.treeNode) this.treeProc(actor.uid, effect.treeNode);
           }
           break;
@@ -5211,6 +5295,7 @@ export class Battle {
     if (!debug && !fc) {
       // Faz 4c: tetiklerin kuyruğa koyduğu bedava kullanımlar eylem bitmeden (tur ilerlemeden) çalışır
       stage = undefined;
+      this.modeCast = null; // Faz 8: biçim yalnızca bu kullanım; tetiklerin bedava kullanımları skill'in kendi biçimiyle
       this.flushFree(emit);
       this.noteAction(actor.uid, 'skill');
       this.finishAction(actor, emit, turnCost);
@@ -6096,11 +6181,12 @@ export class Battle {
   }
 
   /** randomStatus zarı (ağırlıklı seçim + uygulama); skill etkisi ve Returning Cards'ın (strike rollStatus) yeniden zarı aynı yol. */
-  private rollRandomStatus(actor: Combatant, r: Combatant, skill: SkillDef, effect: Extract<SkillEffect, { type: 'randomStatus' }>, emit: Emit): void {
+  private rollRandomStatus(actor: Combatant, r: Combatant, skill: SkillDef, effect: Extract<SkillEffect, { type: 'randomStatus' }>, emit: Emit, first = true): void {
     const total = effect.options.reduce((a, o) => a + o.weight, 0);
     if (r.hp <= 0 || total <= 0) return;
     let roll = this.rng.next() * total;
     const pick = effect.options.find((o) => (roll -= o.weight) < 0) ?? effect.options[effect.options.length - 1]!;
+    if (pick.firstOnly && !first) return; // Faz 8 (Double Deal): ilk hedefe özel durum (Stun) sonraki karta işlemez
     // Faz 2c: ağaçlı kullanıcıda seçilen durum da durum kancasından geçer (Long Con: Card Trick'in Stun'u)
     if (actor.treeHooks) this.applyTreeStatus(actor, r, skill, { type: 'status', status: pick.status, turns: pick.turns }, pick.status, pick.turns, 1, emit);
     else this.addStatus(r, { kind: pick.status, turns: pick.turns, source: actor.uid }, emit);
@@ -7060,6 +7146,11 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
     if (own.length) c.skillDefs = Object.fromEntries(own);
   }
   if (tr?.passive && c.passive && tr.passive.id === c.passive.id) c.passive = tr.passive;
+  // Faz 8: skill biçim seçimleri (birimin skill listesindekiler)
+  if (tr?.modes) {
+    const own = Object.entries(tr.modes).filter(([id]) => c.skills.includes(id));
+    if (own.length) c.skillModes = Object.fromEntries(own);
+  }
   // Faz 2a: (b) unitFx kanalı (item'lerden ayrı; savaş başı etkileri item'inkiler gibi burada) + (c) kancalar. Verilmezse birim aynı
   const tf = tr?.fx;
   if (tf && Object.keys(tf).length > 0) {
@@ -7091,7 +7182,7 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
 }
 
 /** Birimde skill ağacı izi var mı (yamalı skill, unitFx kanalı ya da kanca). */
-const hasTree = (c: Combatant): boolean => !!(c.skillDefs || c.treeFx || c.treeHooks || c.treeSummons);
+const hasTree = (c: Combatant): boolean => !!(c.skillDefs || c.treeFx || c.treeHooks || c.treeSummons || c.skillModes);
 /** Faz 5a: yalnızca pasifi yamalı (kancasız) ağaçta da aura büyü zırhı (Drilled Ranks) işler. */
 const treeAura = (c: Combatant): boolean => {
   const e = c.passive?.effect;

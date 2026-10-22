@@ -1038,3 +1038,35 @@ export const legendaryIds = (): string[] => ITEMS.items.filter((d) => d.rarity =
 
 /** ?legendary=1 önizlemesi açık mı (Gear / Endless torbasına tüm Legendary'ler; madde 296). Tarayıcı dışında false. */
 export const legendaryPreviewWanted = (search: string = typeof location !== 'undefined' ? location.search : ''): boolean => new URLSearchParams(search).has('legendary');
+
+/**
+ * Kuşanılmış item'i aynı kahramanın başka yuvasına taşır (Gear sürükle-bırak, Ömer 2026-10-23; saf): hedef doluysa yer değiştirir. Taşınan item hedefe
+ * uymalı (fitsSlot, örn. hançer ana el <-> ikinci el); hedefteki item kaynağa uyuyorsa (ve sınıf kullanabiliyorsa) oraya geçer, uymuyorsa
+ * `toBag` ile torbaya döner (çağıran yer ayırır). İkinci el kuralları aynı: ana el boşken ya da çift el silah varken silah ikinci ele girmez.
+ * Hata: mesaj. Seviye / Legendary sayısı değişmez (aynı item'ler).
+ */
+export function planMoveEquipped(classId: string, equipment: EquipMap, from: SlotId, to: SlotId): { equipment: EquipMap; toBag: ItemInstance[] } | { error: string } {
+  const a = equipment[from];
+  const da = a ? itemDef(a.id) : undefined;
+  if (!a || !da) return { error: 'Nothing to move' };
+  if (from === to) return { error: 'Same slot' };
+  if (!fitsSlot(da, to)) return { error: `${da.name} does not go in the ${slotDef(to)?.name ?? to} slot` };
+  const b = equipment[to];
+  const db = b ? itemDef(b.id) : undefined;
+  const eq: EquipMap = { ...equipment, [from]: null, [to]: null };
+  const toBag: ItemInstance[] = [];
+  if (b && db) {
+    if (fitsSlot(db, from) && canEquip(classId, db)) eq[from] = b;
+    else toBag.push(b);
+  }
+  if (to === 'offhand') {
+    if (!eq.weapon) return { error: 'The main hand is empty: a weapon does not go in the off-hand' };
+    const w = offhandBlocker(eq);
+    if (w) return { error: offhandBlockedMsg(w) };
+  }
+  const plan = equipInto(eq, a, to);
+  toBag.push(...plan.displaced);
+  const out = plan.equipment;
+  promoteOffhand(out);
+  return { equipment: out, toBag };
+}

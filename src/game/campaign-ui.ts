@@ -201,3 +201,54 @@ export function classCard(
     setLeader: (on) => crownMark.setVisible(on),
   };
 }
+
+/**
+ * Yara bölümü (Ömer 2026-10-23, V1 "Scar + dots"): HP çubuğunun sağ ucunda koyu kırmızı taralı bölüm (x, y, w, h = bölümün kutusu), sol kenarı çentikli.
+ * Kısa süre solarak belirir (`fadeMs` 0 = anında). DOM eşi: src/ui/wound-ui.css > .wd-scar.
+ */
+export function woundScar(scene: Phaser.Scene, x: number, y: number, w: number, h: number, fadeMs: number): Phaser.GameObjects.Graphics {
+  const g = scene.add.graphics();
+  g.fillStyle(0x1e0a08, 0.95).fillRect(x, y, w, h);
+  g.lineStyle(1.5, 0xbe3c2c, 0.5);
+  const step = 5;
+  const slant = h * 0.5;
+  for (let k = -slant; k < w; k += step) {
+    // çizgi (x+k, y+h) -> (x+k+slant, y), kutuya kırpılmış
+    let ax = k;
+    let ay = h;
+    let bx = k + slant;
+    let by = 0;
+    if (ax < 0) {
+      ay = h - (-ax / slant) * h;
+      ax = 0;
+    }
+    if (bx > w) {
+      by = ((bx - w) / slant) * h;
+      bx = w;
+    }
+    if (bx <= 0 || ax >= w) continue;
+    g.lineBetween(x + ax, y + ay, x + bx, y + by);
+  }
+  g.fillStyle(0xc8503c, 0.75).fillRect(x, y, 2, h);
+  if (fadeMs > 0) {
+    g.setAlpha(0);
+    scene.tweens.add({ targets: g, alpha: 1, duration: fadeMs, ease: EL.EASE });
+  }
+  return g;
+}
+
+/** Elmas noktalar (toplam = ölümcül sınır; dolu = yara); (x, y) = ilk noktanın merkezi; toplam genişliği döndürür. DOM eşi: wound-ui.ts > woundPipsEl. */
+export function woundPips(scene: Phaser.Scene, x: number, y: number, wounds: number, total: number): { g: Phaser.GameObjects.Graphics; width: number } {
+  const g = scene.add.graphics();
+  const r = 6;
+  const gap = 17;
+  for (let i = 0; i < total; i++) {
+    const cx = x + i * gap;
+    const pts = [new Phaser.Math.Vector2(cx, y - r), new Phaser.Math.Vector2(cx + r, y), new Phaser.Math.Vector2(cx, y + r), new Phaser.Math.Vector2(cx - r, y)];
+    if (i < wounds) {
+      g.fillStyle(wounds >= total ? 0xe8806a : 0xb8402c, 1).fillPoints(pts, true).lineStyle(1.5, 0xe8806a, 1).strokePoints(pts, true);
+      g.lineStyle(1.5, 0x1a0705, 1).lineBetween(cx + 1, y - r + 2, cx - 1, y + r - 2);
+    } else g.lineStyle(1.5, EL.GOLD, 0.45).strokePoints(pts, true);
+  }
+  return { g, width: (total - 1) * gap + 2 * r };
+}

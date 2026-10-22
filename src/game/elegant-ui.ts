@@ -120,9 +120,9 @@ export function elText(scene: Phaser.Scene, x: number, y: number, text: string, 
 }
 
 /** EB Garamond (varsayılan italik); hafif koyu gölge. */
-export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, italic = false, wrap?: number): Phaser.GameObjects.Text {
+export function elBody(scene: Phaser.Scene, x: number, y: number, text: string, size: number, color: string = EL.NOTE, _italic = false, wrap?: number): Phaser.GameObjects.Text {
   const t = scene.add
-    .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, fontStyle: italic ? 'italic' : 'normal', color, ...(wrap ? { wordWrap: { width: wrap, useAdvancedWrap: true } } : {}) })
+    .text(x, y, text, { fontFamily: BODY_FONT, fontSize: `${size}px`, fontStyle: 'normal', color, ...(wrap ? { wordWrap: { width: wrap, useAdvancedWrap: true } } : {}) })
     .setResolution(textRes())
     .setShadow(0, 2, EL.SH_DARK, 4, false, true);
   return t;

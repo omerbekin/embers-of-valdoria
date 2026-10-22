@@ -9,8 +9,9 @@ import { closeDom } from './motion';
 import { itemSoundKind, uiSound, WORLD_AUDIO, worldSound } from './ui-sound';
 import './gear.css';
 import './gear-plates.css';
-import { allocateStats, heroTreeBlocked, setHeroTree, activeHeroes, heroWoundsLine, discardItem, discardNeedsConfirm, equipBest, equipItem, unequipItem, type CampaignState, type Hero } from '../campaign';
+import { allocateStats, heroTreeBlocked, setHeroTree, activeHeroes, woundRules, discardItem, discardNeedsConfirm, equipBest, equipItem, moveEquipped, unequipItem, type CampaignState, type Hero } from '../campaign';
 import { woundCount } from '../progression/wounds';
+import type { WoundCfg } from './wound-ui';
 import {
   fitsSlot,
   isPlanError,
@@ -50,6 +51,8 @@ import { itemTipNodes, type ItemTipAction, type ItemTipHero } from './item-tip';
 import type { DragSource, DropAction, DropTarget } from './gear-drop';
 import { attachItemInteractions } from './item-drag';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
+import { respecHeroTree, respecTreeBlocked } from '../campaign';
+import { createTreeTab } from './tree-tab';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -89,10 +92,14 @@ export interface GearHero {
   alloc?: StatAlloc;
   /** Skill ağacı (Faz 1b kayıt alanı; ekranı Faz 3b): onaylı dağılım (yoksa boş ağaç). */
   tree?: TreeAlloc;
+  /** Tree sekmesi: ağaç verisi değişti (bir kez bedava respec) / okumada iade edildi (bildirim). */
+  freeRespec?: boolean;
+  treeReset?: boolean;
   /** Şu anki can oranı (Sheet'te "93 / 150" + çubuk; yoksa dolu). */
   hpRatio?: number;
-  /** Yara satırı (hero ipucunda; Ömer 2026-10-19): "Wounds: 2 (-40% max HP)". */
-  woundsNote?: string;
+  /** Yara sayısı ve kuralı (Sheet HP çubuğu + yer imi noktaları; Ömer 2026-10-23). */
+  wounds?: number;
+  woundCfg?: WoundCfg;
   /** Düşmüş kahraman (can 0 gösterilir). */
   alive?: boolean;
 }
@@ -110,6 +117,8 @@ export interface GearSource {
   /** `slot`: hedef yuva (sürükle-bırak; yoksa varsayılan yuva: progression > defaultEquipSlot). */
   equip(heroId: string, uid: string, slot?: SlotId): void;
   unequip(heroId: string, slot: SlotId): void;
+  /** Kuşanılmış item'i aynı kahramanın başka yuvasına taşır / yer değiştirir (sürükle-bırak; yoksa yuvadan yuvaya sürükleme kapalı). */
+  move?(heroId: string, from: SlotId, to: SlotId): void;
   discard(uid: string): void;
   /** "Equip best": verilen kahramanlar (yoksa tüm takım). */
   equipBest(heroIds?: string[]): void;
@@ -119,6 +128,8 @@ export interface GearSource {
   allocate?(heroId: string, add: StatAlloc): void;
   /** Skill ağacı onayı (Faz 1b kaynak bağlantısı; ekranı Faz 3b): `alloc` = onaylanacak TAM dağılım (onaylı + yeni puanlar). Geçersizse Error. */
   setTree?(heroId: string, alloc: TreeAlloc): void;
+  /** Tree sekmesi > Respec: ağacın tamamı geri, bedel kaynağın altınından. Geçersizse Error. */
+  respecTree?(heroId: string): void;
 }
 
 /** Seferin kaynağı: CampaignState üzerinden (davranış eskisiyle birebir). */
@@ -127,14 +138,16 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
   return {
     heroes: () => {
       const s = get();
-      // Yara satırı (Ömer 2026-10-19): kahraman yer iminin ipucunda (en küçük gösterim; arayüzü mockup'tan seçilecek)
-      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => (woundCount(h) > 0 ? { ...h, woundsNote: heroWoundsLine(h) } : h));
+      // Yara (Ömer 2026-10-23, V1 "Scar + dots"): Sheet HP çubuğunda yara bölümü + noktalar, yer imlerinde küçük noktalar
+      const cfg: WoundCfg = { rules: woundRules(), town: true };
+      return [...activeHeroes(s), ...s.roster.filter((h) => !s.active.includes(h.id))].map((h) => (woundCount(h) > 0 ? { ...h, wounds: woundCount(h), woundCfg: cfg } : h));
     },
     bag: () => get().inventory,
     bagSize: BAG_SIZE,
     gold: () => get().gold,
     equip: (heroId, uid, slot) => apply((x) => equipItem(x, heroId, uid, slot)),
     unequip: (heroId, slot) => apply((x) => unequipItem(x, heroId, slot)),
+    move: (heroId, from, to) => apply((x) => moveEquipped(x, heroId, from, to)),
     discard: (uid) => apply((x) => discardItem(x, uid)),
     equipBest: (ids) => apply((x) => equipBest(x, ids)),
     emptyText: 'The bag is empty. Victories and chests bring new gear.',
@@ -144,6 +157,12 @@ export function campaignGearSource(get: () => CampaignState, set: (s: CampaignSt
         const why = heroTreeBlocked(x, heroId, alloc);
         if (why) throw new Error(why);
         return setHeroTree(x, heroId, alloc);
+      }),
+    respecTree: (heroId) =>
+      apply((x) => {
+        const why = respecTreeBlocked(x, heroId);
+        if (why) throw new Error(why);
+        return respecHeroTree(x, heroId);
       }),
   };
 }
@@ -294,7 +313,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   let dragUid = '';
   let usableOnly = false;
   /** Sekme: Hero (yuvalar + torba) / Sheet (statlar + skill ağacı). Level Up "Spend points" Sheet ile açar. */
-  let tab: 'hero' | 'sheet' = o.view === 'char' ? 'sheet' : 'hero';
+  let tab: 'hero' | 'sheet' | 'tree' = o.view === 'char' ? 'sheet' : 'hero';
   /** Bekleyen stat puanları (Sheet; Confirm kaynağa yazar, kahraman değişince silinir). */
   let pending: StatAlloc = {};
   let shakeUid = '';
@@ -344,6 +363,25 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     else renderFocus();
   };
 
+  /** Hızlı eylem (çift tık / çift dokunuş / sağ tık): torba item'i kuşanır, kuşanılmış item çıkar. true = ele alındı. */
+  const quickAction = (key: string): boolean => {
+    const hero = curHero();
+    if (bagOnly) return key.startsWith('bag:'); // yalnızca torba: kuşandırmaz
+    if (!hero) return false;
+    if (heroFallen(hero) && (key.startsWith('bag:') || key.startsWith('slot:'))) {
+      fallenWarn();
+      return true;
+    }
+    if (key.startsWith('bag:')) {
+      tryEquip(hero.id, key.slice(4), undefined, true);
+      return true;
+    }
+    if (key.startsWith('slot:') && hero.equipment[key.slice(5) as SlotId]) {
+      quickUnequip(hero.id, key.slice(5) as SlotId);
+      return true;
+    }
+    return false;
+  };
   const ix = attachItemInteractions({
     overlay,
     panel: pair ?? panel,
@@ -352,6 +390,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     targetOf: (v) => ext?.targetOf?.(v) ?? (v === 'bag' ? { kind: 'bag' } : v === 'trash' ? { kind: 'trash' } : v.startsWith('slot:') ? { kind: 'slot', heroId, slot: v.slice(5) as SlotId } : v.startsWith('hero:') ? { kind: 'hero', heroId: v.slice(5) } : null),
     // düşmüş kahraman: hedef olarak "kullanamaz" (yuva / yer imi sönük kalır); bırakınca onDrop açıklama toast'ı verir
     classOf: (id) => (fallenId(id) ? undefined : heroOf(id)?.class),
+    itemAt: (hid, slot) => (src.move ? heroSlotItem(hid, slot) : undefined),
     tipNodes: (key) => {
       const hero = curHero();
       const extra = ext?.tipNodes?.(key);
@@ -425,6 +464,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       else if (act?.kind === 'unequip') {
         itemSound(heroSlotItem(act.heroId, act.slot));
         apply(() => src.unequip(act.heroId, act.slot));
+      } else if (act?.kind === 'move') {
+        itemSound(heroSlotItem(act.heroId, act.from));
+        apply(() => src.move?.(act.heroId, act.from, act.to));
       } else if (act?.kind === 'discard') tryDiscard(act.uid);
       else if (act?.kind === 'none' && act.reason === 'Cannot use' && s.kind === 'bag' && tg && (tg.kind === 'slot' || tg.kind === 'hero')) tryEquip(tg.heroId, s.uid);
       else if (hadFocus) renderFocus();
@@ -433,25 +475,12 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     // dokunmatik çift dokunuş (masaüstü çift tıkla aynı): torba item'i kuşanır, kuşanılmış item çıkar; kısa 'snap' sesi
     onTap: (key) => ext?.onTap?.(key),
     onDoubleTap: (key) => {
-      const hero = curHero();
       const extra = ext?.onDoubleTap?.(key);
       if (extra !== undefined) return extra;
-      if (bagOnly) return key.startsWith('bag:'); // yalnızca torba: çift dokunuş kuşandırmaz
-      if (!hero) return false;
-      if (heroFallen(hero) && (key.startsWith('bag:') || key.startsWith('slot:'))) {
-        fallenWarn();
-        return true;
-      }
-      if (key.startsWith('bag:')) {
-        tryEquip(hero.id, key.slice(4), undefined, true);
-        return true;
-      }
-      if (key.startsWith('slot:') && hero.equipment[key.slice(5) as SlotId]) {
-        quickUnequip(hero.id, key.slice(5) as SlotId);
-        return true;
-      }
-      return false;
+      return quickAction(key);
     },
+    // sağ tık = çift tıkla aynı hızlı eylem; tüccar / demirci gibi ekranlarda torba item'inin çift tık eylemi başka (sat / seç) olduğundan sağ tık sessiz
+    onSecondary: (key) => (ext?.onDoubleTap && key.startsWith('bag:') ? false : quickAction(key)),
   });
 
   let closing = false;
@@ -466,6 +495,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     closing = true;
     window.clearTimeout(toastTimer);
     unmountX();
+    treeTab.destroy();
     ext?.destroy?.();
     closeDom(overlay, () => overlay.remove());
     document.removeEventListener('keydown', onKey, true);
@@ -476,7 +506,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     unlockInput('gear');
     o.onClose?.();
   };
-  const setTab = (k: 'hero' | 'sheet'): void => {
+  const setTab = (k: 'hero' | 'sheet' | 'tree'): void => {
     if (k === tab) return;
     tab = k;
     renderAll();
@@ -500,7 +530,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       e.stopPropagation();
       e.preventDefault();
       if (closeAsk && overlay.querySelector('.gr-confirm')) return;
-      setTab(tab === 'hero' ? 'sheet' : 'hero');
+      setTab(tab === 'hero' ? 'sheet' : tab === 'sheet' && treeOn ? 'tree' : 'hero');
     } else if (!bagOnly && (e.key === 'c' || e.key === 'C') && !e.ctrlKey && !e.metaKey && !e.altKey && !e.repeat) {
       // C: Gear'ı kapatır (Ömer 2026-10-18: oyun geneli C = aç / kapat; Hero / Sheet geçişi yalnızca tıklamayla)
       const t = e.target as HTMLElement | null;
@@ -617,6 +647,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   });
   const gold = el('div', 'gr-gold');
   if (bagOnly) tabsBox.hidden = true;
+  // Tree sekmesi (Faz 3b; src/ui/tree-tab.ts): yalnızca ağaç şalteri açıkken, çift pencerede (tüccar / ganimet) yok
+  const treeTab = createTreeTab({ overlay, hero: () => curHero(), gold: () => src.gold(), setTree: (id, a) => src.setTree?.(id, a), respec: (id) => src.respecTree?.(id), toast: (t, ok) => showToast(t, ok), ask: (t, ok, run, danger) => ask(t, ok, run, danger), rerender: () => renderAll() });
+  const treeOn = treeTab.enabled && !ext && !!src.setTree;
+  if (treeOn) {
+    tabsBox.append(treeTab.button);
+    treeTab.button.addEventListener('click', () => setTab('tree'));
+  }
   head.append(title, tabsBox, el('span', 'gr-grow'), gold);
   const body = el('div', 'gr-body gr-lbody');
   const marksBox = el('div', 'gr-marks-col');
@@ -624,10 +661,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   const pageR = el('div', 'gr-page r');
   const leafL = el('div', 'gr-page-in');
   const leafR = el('div', 'gr-page-in');
-  const folioL = el('div', 'gr-folio');
-  const folioR = el('div', 'gr-folio');
-  pageL.append(leafL, folioL);
-  pageR.append(leafR, folioR);
+  pageL.append(leafL);
+  pageR.append(leafR);
   // skill'ler yer imi sütununun altına da uzanır (portrelerin altından sol sayfanın sonuna): sütunlar geniş kalır, adlar bölünmez
   const skillsBox = el('div', 'gr-lskills');
   body.append(marksBox, pageL, el('div', 'gr-spine'), pageR, skillsBox);
@@ -665,7 +700,8 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     });
     const sheetBtn = tabBtns[1]!;
     sheetBtn.querySelector('.gr-pt')?.remove();
-    if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
+    if (treeOn) treeTab.syncButton(tab === 'tree', hero?.skillPoints ?? 0);
+    else if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
     gold.replaceChildren();
     gold.hidden = !!ext?.hideGold;
     if (!ext?.hideGold) {
@@ -690,7 +726,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     );
   }
   function renderLeft(): void {
-    if (bagOnly) return;
+    if (bagOnly || tab === 'tree') return;
     const top = pageL.scrollTop;
     const hero = curHero();
     const r = renderLedgerPage({
@@ -745,7 +781,6 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     leafL.replaceChildren(r.el);
     if (r.skills) skillsBox.replaceChildren(r.skills);
     else skillsBox.replaceChildren();
-    folioL.textContent = `· ${tab === 'hero' ? 1 : 3} ·`;
     pageL.scrollTop = top;
     if (ix.dragging()) ix.remark();
   }
@@ -785,7 +820,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     return out;
   };
   function renderRight(): void {
-    folioR.textContent = `· ${tab === 'hero' ? 2 : 4} ·`;
+    if (tab === 'tree' && treeOn) return treeTab.render(leafR);
     if (tab === 'sheet' && !bagOnly) {
       // skill ağacı (Ömer 2026-10-18): kap aynı, içerik yok
       const hero = curHero();
@@ -841,6 +876,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     ix.hideTips();
     panel.classList.toggle('tab-hero', tab === 'hero');
     panel.classList.toggle('tab-sheet', tab === 'sheet');
+    panel.classList.toggle('tab-tree', tab === 'tree');
+    panel.classList.toggle('q4', tab === 'tree');
+    panel.classList.toggle('gt-fill', tab === 'tree');
     renderHead();
     renderMarks();
     renderLeft();

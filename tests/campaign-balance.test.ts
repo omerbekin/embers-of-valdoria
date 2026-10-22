@@ -41,9 +41,9 @@ describe(`sefer zorluk eğrisi (Medium, ${T.runs} sefer, seed ${T.firstSeed})`, 
     expect(finish, `bitirme %${finish.toFixed(1)}`).toBeLessThanOrEqual(campaignBalance.finish.medium[1]! + T.tolerance);
   });
 
-  it('12 rotanın hepsi oynandı ve her savaşlı düğüm ölçüldü', () => {
+  it('tüm rotalar oynandı ve her savaşlı ana yol düğümü ölçüldü (cepler simde oynanmaz: serbest dolaşım yok)', () => {
     const map = getMap('valdoria');
     expect(Object.keys(result.routes).sort()).toEqual(allRoutes(map).map((r) => routeLabel(map, r)).sort());
-    for (const n of map.nodes.filter((x) => x.encounter)) expect(result.nodes[n.id]?.reached, n.id).toBeGreaterThan(0);
+    for (const n of map.nodes.filter((x) => x.encounter && !x.optional)) expect(result.nodes[n.id]?.reached, n.id).toBeGreaterThan(0);
   });
 });

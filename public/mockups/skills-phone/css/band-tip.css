@@ -1,0 +1,574 @@
+/* TOOLTIP = "A - BAND" (Ömer 2026-10-18; taslak public/mockups/tooltips.html). Oyundaki TÜM yeni ipuçları bu sınıf setini kullanır (src/ui/band-tip.ts).
+   Ölçü birimi `--u` (Gear / ana ekran 1 piksel ölçeği); savaş HUD'ında ve yüzen skill kopyasında 1px (aşağıda). Vurgu rengi `--ac` (element / durum / nadirlik). */
+.bt {
+  --bu: var(--u, 1px);
+  --ac: #d9b26a;
+  --acl: color-mix(in srgb, var(--ac) 52%, #fff);
+  --fs: max(13px, calc(19 * var(--bu)));
+  --fs-s: max(11px, calc(15 * var(--bu)));
+  --bt-line: rgba(217, 178, 106, 0.16);
+  --bt-line2: rgba(217, 178, 106, 0.3);
+  --bt-gold: #f3d999;
+  --bt-dim: #a8977a;
+  --bt-disp: Cinzel, Georgia, serif;
+  --bt-body: 'EB Garamond', Georgia, serif;
+  position: relative;
+  box-sizing: border-box;
+  width: max-content;
+  min-width: max(240px, calc(300 * var(--bu)));
+  max-width: max(300px, calc(560 * var(--bu)));
+  font: var(--fs) / 1.28 var(--bt-body);
+  font-style: normal;
+  text-align: left;
+  color: #e6dcc6;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.985), rgba(11, 8, 5, 0.985));
+  border: 1px solid color-mix(in srgb, var(--ac) 50%, rgba(217, 178, 106, 0.32));
+  box-shadow:
+    0 0 0 3px rgba(8, 6, 4, 0.75),
+    0 18px 40px rgba(0, 0, 0, 0.65),
+    0 0 max(12px, calc(30 * var(--bu))) color-mix(in srgb, var(--ac) 30%, transparent),
+    inset 0 0 max(10px, calc(24 * var(--bu))) color-mix(in srgb, var(--ac) 10%, transparent);
+  pointer-events: none;
+}
+
+/* kutuyu taşıyan eski ipucu kapları çerçeveyi bırakır: çerçeve .bt'nin kendisi */
+.el-tip:has(> .bt),
+.bh-sktip:has(> .bt),
+.bh-ftip:has(> .bt),
+.bh-ctip:has(> .bt) {
+  padding: 0;
+  background: none;
+  border: 0;
+  box-shadow: none;
+  max-width: none;
+}
+
+.bh-sktip:has(> .bt)::before,
+.bh-ftip:has(> .bt)::before,
+.bh-ftip:has(> .bt)::after,
+.bh-ctip:has(> .bt)::before,
+.bh-ctip:has(> .bt)::after {
+  display: none;
+}
+
+.bh-sktip:has(> .bt),
+.bh-ctip:has(> .bt) {
+  width: max-content;
+}
+
+.bh-root .bt,
+.bh-kit .bt,
+.gr-sktip-fl .bt {
+  --bu: 1px;
+}
+
+/* köşe elmasları: sol üst + sağ alt */
+.bt::before,
+.bt::after {
+  content: '';
+  position: absolute;
+  width: max(8px, calc(11 * var(--bu)));
+  height: max(8px, calc(11 * var(--bu)));
+  transform: rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+  z-index: 2;
+}
+
+.bt::before {
+  left: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
+  top: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
+}
+
+.bt::after {
+  right: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
+  bottom: calc(max(8px, calc(11 * var(--bu))) / -2 - 2px);
+}
+
+/* başlık şeridi: ikon solda, değer sağda */
+.bt-head {
+  display: flex;
+  align-items: center;
+  gap: max(8px, calc(14 * var(--bu)));
+  padding: max(10px, calc(14 * var(--bu))) max(12px, calc(18 * var(--bu)));
+  background: linear-gradient(90deg, color-mix(in srgb, var(--ac) 30%, transparent), color-mix(in srgb, var(--ac) 6%, transparent) 70%);
+  border-bottom: 2px solid color-mix(in srgb, var(--ac) 65%, transparent);
+}
+
+.bt-ht {
+  min-width: 0;
+  flex: 1;
+}
+
+.bt-kind {
+  font: 600 var(--fs-s) var(--bt-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--acl);
+  opacity: 0.85;
+  line-height: 1.1;
+}
+
+.bt-title {
+  font: 600 max(16px, calc(26 * var(--bu))) var(--bt-disp);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acl);
+  text-shadow: 0 0 max(6px, calc(14 * var(--bu))) color-mix(in srgb, var(--ac) 45%, transparent);
+  line-height: 1.1;
+  overflow-wrap: anywhere;
+}
+
+.bt-kind + .bt-title {
+  margin-top: 0.12em;
+}
+
+/* Primary stat satırı: başlığın hemen altında tek düz satır (Ömer 2026-10-19, V1); italik değil. */
+.bt-sub {
+  margin-top: 0.3em;
+  font: calc(var(--fs) * 0.95) / 1.25 var(--bt-body);
+  color: #e6dcc6;
+  position: relative;
+  padding-left: 1.1em; /* asılı girinti: sarılan satırlar yazıyla hizalı */
+}
+
+/* karo madde imi: gövde satırlarındaki karoyla aynı (ipucunun vurgu rengi), ilk satırın ortasında */
+.bt-sub::before {
+  content: '';
+  position: absolute;
+  left: 0.3em;
+  top: 0.64em;
+  width: 0.34em;
+  height: 0.34em;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--acl);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
+}
+
+.bt-sub .pl {
+  color: var(--bt-gold);
+}
+
+.bt-sub .n {
+  font: 600 0.98em var(--bt-disp);
+  color: var(--bt-gold);
+}
+
+.bt-medal {
+  flex: none;
+  width: max(40px, calc(64 * var(--bu)));
+  height: max(40px, calc(64 * var(--bu)));
+  background: #120c08 center / cover no-repeat;
+  border: 2px solid color-mix(in srgb, var(--ac) 75%, #000);
+  box-shadow:
+    0 0 0 2px rgba(8, 6, 4, 0.9),
+    0 0 max(8px, calc(16 * var(--bu))) color-mix(in srgb, var(--ac) 45%, transparent);
+  image-rendering: pixelated;
+}
+
+.bt-medal.ico {
+  background-size: 70%;
+}
+
+.bt-medal.round {
+  border-radius: 50%;
+  border-color: var(--acl);
+}
+
+.bt-medal.por {
+  width: max(52px, calc(88 * var(--bu)));
+  height: max(52px, calc(88 * var(--bu)));
+  border-width: 3px;
+  image-rendering: auto;
+}
+
+.bt-medal.frm {
+  border-width: 3px;
+}
+
+.bt-aside {
+  flex: none;
+  margin-left: auto;
+  text-align: right;
+  display: flex;
+  align-items: center;
+  gap: max(8px, calc(12 * var(--bu)));
+}
+
+.bt-big {
+  font: 600 max(22px, calc(36 * var(--bu))) / 1 var(--bt-disp);
+  color: #f8ebc9;
+  text-shadow: 0 0 12px color-mix(in srgb, var(--ac) 50%, transparent);
+}
+
+.bt-big small {
+  display: block;
+  font: 600 max(10px, calc(13 * var(--bu))) var(--bt-disp);
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--bt-dim);
+  margin-top: 0.35em;
+  text-shadow: none;
+}
+
+/* alan ızgarası (skill: oyundaki şekil) */
+.bt-grid {
+  display: inline-grid;
+  gap: max(2px, calc(3 * var(--bu)));
+  padding: max(3px, calc(4 * var(--bu)));
+  background: #0b0806;
+  border: 1px solid color-mix(in srgb, var(--ac) 50%, transparent);
+}
+
+.bt-grid i {
+  display: block;
+  width: max(9px, calc(14 * var(--bu)));
+  height: max(9px, calc(14 * var(--bu)));
+  background: #2a2016;
+  font: 700 max(7px, calc(9 * var(--bu))) / max(9px, calc(14 * var(--bu))) var(--bt-disp);
+  text-align: center;
+  color: #2a1405;
+}
+
+.bt-grid i.on {
+  background: color-mix(in srgb, var(--ac) 55%, #e2b766);
+}
+
+.bt-grid i.an {
+  box-shadow: inset 0 0 0 2px #fff4dc;
+}
+
+/* künye çipleri */
+.bt-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: max(4px, calc(6 * var(--bu))) max(6px, calc(8 * var(--bu)));
+  align-items: center;
+  padding: max(8px, calc(11 * var(--bu))) max(12px, calc(18 * var(--bu))) max(8px, calc(11 * var(--bu)));
+}
+
+.bt-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4em;
+  height: 1.7em;
+  padding: 0 0.7em;
+  font: 600 var(--fs-s) var(--bt-disp);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #d9c8a2;
+  background: rgba(255, 255, 255, 0.05);
+  border: 1px solid var(--bt-line);
+  white-space: nowrap;
+}
+
+.bt-chip img {
+  width: 1.25em;
+  height: 1.25em;
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.bt-chip.ac {
+  color: var(--acl);
+  border-color: color-mix(in srgb, var(--ac) 50%, transparent);
+  background: color-mix(in srgb, var(--ac) 14%, transparent);
+}
+
+.bt-chip.v {
+  font-family: var(--bt-body);
+  font-size: var(--fs);
+  letter-spacing: 0;
+  text-transform: none;
+  color: #f8ebc9;
+}
+
+.bt-chip .n {
+  font: 600 1.05em var(--bt-disp);
+  color: var(--bt-gold);
+}
+
+.bt-chip.ok {
+  color: #8fe39a;
+  border-color: rgba(143, 227, 154, 0.4);
+  background: rgba(90, 190, 110, 0.13);
+}
+
+.bt-chip.warn {
+  color: #ff9a7a;
+  border-color: rgba(255, 138, 122, 0.4);
+  background: rgba(220, 90, 70, 0.13);
+}
+
+.bt-chip.free {
+  color: #cfe8a8;
+  border-color: rgba(127, 191, 63, 0.5);
+  background: rgba(127, 191, 63, 0.13);
+}
+
+/* ayırıcı: altın çizgi + ortada elmas */
+.bt-div {
+  position: relative;
+  height: 1px;
+  margin: 0 max(12px, calc(18 * var(--bu)));
+  background: linear-gradient(90deg, transparent, var(--bt-line2) 12%, var(--bt-line2) 88%, transparent);
+}
+
+.bt-head + .bt-div {
+  margin-top: 0;
+}
+
+.bt-div::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--acl);
+}
+
+/* gövde satırları: elmas madde işareti, anahtar kelime vurgu renginde, rakamlar altın */
+.bt-body {
+  padding: max(8px, calc(12 * var(--bu))) max(12px, calc(18 * var(--bu)));
+  display: flex;
+  flex-direction: column;
+  gap: max(5px, calc(8 * var(--bu)));
+}
+
+.bt-ln {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55em;
+  min-width: 0;
+}
+
+.bt-ln .dia {
+  flex: none;
+  width: max(14px, calc(20 * var(--bu)));
+  height: 1.28em;
+  position: relative;
+}
+
+.bt-ln .dia::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 52%;
+  width: 0.32em;
+  height: 0.32em;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: var(--acl);
+  box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
+}
+
+.bt-ln > img {
+  flex: none;
+  width: max(18px, calc(28 * var(--bu)));
+  height: max(18px, calc(28 * var(--bu)));
+  object-fit: contain;
+  image-rendering: pixelated;
+}
+
+.bt-ln .tx {
+  min-width: 0;
+  flex: 1;
+  overflow-wrap: anywhere;
+}
+
+.bt-ln .k {
+  color: var(--acl);
+  font-weight: 600;
+}
+
+.bt-ln .n {
+  font: 600 0.98em var(--bt-disp);
+  color: var(--bt-gold);
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+}
+
+.bt-ln .up,
+.bt .up {
+  color: #8fe39a;
+}
+
+.bt-ln .down,
+.bt .down {
+  color: #ff8a7a;
+}
+
+.bt-ln.has-now {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.bt-ln.has-now > .main {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.55em;
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.bt-ln.has-now > .main > .tx {
+  flex: 0 1 auto;
+}
+
+.bt-ln .now {
+  flex: none;
+  white-space: nowrap;
+  margin-left: auto;
+  align-self: center;
+}
+
+/* alt bilgi çubuğu */
+.bt-foot {
+  display: flex;
+  align-items: center;
+  gap: 0.5em;
+  padding: max(6px, calc(8 * var(--bu))) max(12px, calc(18 * var(--bu)));
+  border-top: 1px solid var(--bt-line);
+  background: rgba(0, 0, 0, 0.24);
+  font: 0.95em var(--bt-body);
+  color: #ffd99a;
+}
+
+.bt-foot .dia {
+  width: 0.5em;
+  height: 0.5em;
+  transform: rotate(45deg);
+  background: var(--acl);
+  flex: none;
+}
+
+.bt-foot .tx {
+  flex: 1;
+}
+
+/* madde işareti olmayan kısa ikinci satır (kahraman ipucu: "Level 3 · 2/7 items") */
+.bt-pips {
+  display: inline-flex;
+  gap: max(5px, calc(8 * var(--bu)));
+  align-items: center;
+}
+
+.bt-pips i {
+  width: max(9px, calc(13 * var(--bu)));
+  height: max(9px, calc(13 * var(--bu)));
+  transform: rotate(45deg);
+  border: 1px solid rgba(217, 178, 106, 0.6);
+  background: #0d0a06;
+}
+
+.bt-pips i.on {
+  border-color: #e8cf8f;
+  background: radial-gradient(circle at 35% 35%, #fff6d8, var(--acl) 50%, color-mix(in srgb, var(--ac) 70%, #000));
+  box-shadow: 0 0 5px color-mix(in srgb, var(--ac) 70%, transparent);
+}
+
+/* kısa ekran: boşluk azalır */
+html.short .bt,
+html.compact .bt {
+  line-height: 1.2;
+}
+
+/* skill ipucu çipleri V2 (Ömer 2026-10-20): menzil / bedel / bekleme = ikon + sayı, sıkı çip; tam anlam hover / odak / dokunmada küçük balon */
+.bt-meta {
+  --ic: max(18px, calc(24 * var(--bu)));
+  gap: max(3px, calc(4 * var(--bu))) max(4px, calc(5 * var(--bu)));
+}
+
+.bt-meta .bt-chip {
+  padding: 0 0.5em;
+  gap: 0.3em;
+}
+
+.bt-chip.q {
+  padding: 0 0.45em 0 0.3em;
+  gap: 0.25em;
+  height: calc(var(--ic) + 8px);
+  min-height: 1.7em;
+  position: relative;
+}
+
+.bt-chip.q img {
+  width: var(--ic);
+  height: var(--ic);
+  image-rendering: auto;
+}
+
+.bt-chip.q .n {
+  font: 600 1.15em var(--bt-disp);
+}
+
+.bt-chip[data-tip] {
+  outline: none;
+  cursor: help;
+}
+
+.bt-chip.q[data-tip]:focus {
+  border-color: rgba(243, 217, 153, 0.8);
+}
+
+.bt-chip[data-tip]:hover::after,
+.bt-chip[data-tip]:focus::after {
+  content: attr(data-tip);
+  position: absolute;
+  z-index: 40;
+  left: 50%;
+  bottom: calc(100% + 8px);
+  transform: translateX(-50%);
+  white-space: nowrap;
+  padding: 5px 10px;
+  font: 600 12px Cinzel, Georgia, serif;
+  letter-spacing: 0.08em;
+  text-transform: none;
+  color: #f3d999;
+  background: #0b0806;
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.7);
+  pointer-events: none;
+}
+
+/* "Enemy rows hit" 4 parçalı çubuk (Formation hover kutusu + savaştaki çağrı hücresi ipucu; reachBarHtml, formation-board-rules.ts) */
+.fb-reach {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.fb-reach .rl {
+  flex: none;
+  font: 600 12px var(--g-disp, Cinzel, Georgia, serif);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--g-dim, #a8977a);
+}
+
+.fb-reach .rb {
+  margin-left: auto;
+  display: inline-flex;
+  gap: 4px;
+}
+
+.fb-reach .rb i {
+  display: block;
+  width: 30px;
+  height: 18px;
+  background: rgba(217, 178, 106, 0.12);
+  border: 1px solid rgba(217, 178, 106, 0.2);
+  font: 600 11px/16px var(--g-disp, Cinzel, Georgia, serif);
+  font-style: normal;
+  text-align: center;
+  color: rgba(168, 151, 122, 0.8);
+}
+
+.fb-reach .rb i.on {
+  background: color-mix(in srgb, var(--ac) 78%, #000);
+  border-color: var(--ac);
+  color: #1a0f06;
+}

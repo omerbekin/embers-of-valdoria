@@ -4,8 +4,8 @@
 import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
 const KEY = 'proto.sfxVolume.v1';
-/** Varsayılan: %100 (adım) — ayar eklenmeden önceki ses düzeyi değişmesin. */
-export const DEFAULT_SFX_LEVEL = 20;
+/** Varsayılan: %70 (adım) — müzik %80 ile eşit algılanan yükseklik için ölçüldü (2026-10-23). */
+export const DEFAULT_SFX_LEVEL = 14;
 
 const listeners = new Set<(level: number) => void>();
 

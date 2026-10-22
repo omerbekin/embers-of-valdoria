@@ -68,6 +68,14 @@ export function cellStyle(state: CellState, tone: CellTone = 'neutral'): CellSty
   }
 }
 
+/**
+ * Menzil uygunluğu (Formation'daki iyi / zayıf / ulaşamaz) -> mevcut plaka durumu: iyi = dost tonu, zayıf (önde açıkta) = nötr altın, ulaşamaz = soluk kırmızı.
+ * Yeni durum açılmaz; çağrı hücre seçimi bunu kullanır.
+ */
+export function fitPlate(fit: 'good' | 'weak' | 'bad'): { state: 'selectable' | 'invalid'; tone: CellTone } {
+  return fit === 'bad' ? { state: 'invalid', tone: 'neutral' } : { state: 'selectable', tone: fit === 'weak' ? 'neutral' : 'ally' };
+}
+
 export interface Pt {
   x: number;
   y: number;

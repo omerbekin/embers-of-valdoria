@@ -12,7 +12,7 @@ export type MiscGroup = (typeof MISC_GROUPS)[number];
 /** Beklenen tüm ikonlar (kesim aracının hücre haritasıyla aynı; test ve Codex listesi). */
 export const MISC_ICONS: Record<MiscGroup, readonly string[]> = {
   status: ['slow', 'haste', 'wound', 'stun', 'fortify', 'blessed', 'blinded', 'shrouded', 'dark_bond', 'omen', 'wither', 'jinxed', 'abyssal_fury', 'silence', 'overextended', 'staggered', 'ash_brand', 'anchored', 'doom'],
-  fx: ['crit', 'corpse', 'barrier'],
+  fx: ['crit', 'corpse', 'barrier', 'difficulty', 'chapter_strength'],
   element: ['fire', 'ice', 'holy', 'arcane', 'nature', 'dark'],
   ground: ['poison', 'burning', 'holy_fire', 'flooded_planks'],
   relic: ['ember_of_valdren', 'pilgrims_bell', 'whetstone_of_ashford', 'banner_of_the_bridge', 'last_rites', 'iron_oath'],

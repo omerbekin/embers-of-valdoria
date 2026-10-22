@@ -72,7 +72,7 @@
 }
 
 .vf-sub {
-  font: italic 14px var(--el-body);
+  font: 14px var(--el-body);
   color: var(--el-dim);
   text-align: center;
 }
@@ -93,7 +93,7 @@
 }
 
 .vf-lbl {
-  font: italic 14px var(--el-body);
+  font: 14px var(--el-body);
   color: var(--el-dim);
 }
 
@@ -114,7 +114,7 @@
 .vf-info {
   flex: none;
   text-align: center;
-  font: italic 14px var(--el-body);
+  font: 14px var(--el-body);
   color: var(--el-dim);
 }
 

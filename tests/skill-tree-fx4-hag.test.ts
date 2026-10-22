@@ -68,7 +68,7 @@ const WRITTEN: Record<string, string[]> = {
 const LEFT_NULL: Record<string, string[]> = {
   hexer: [],
   antimage: [],
-  gambler: ['3.ea'],
+  gambler: [], // Faz 8: Stacked Deck yazıldı (seçim paneli)
 };
 const nodeOf = (t: TreeData, key: string) => {
   const m = /^bar\[(\d+)\]$/.exec(key);

@@ -324,13 +324,14 @@ describe('respec (Ömer 10a): ağacın tamamı altınla, bedel level\'la artar; 
 });
 
 describe('savaş bağlantısı: kahramanın ağacı loadoutSetup\'a, duraklatılmış savaş / Endless plan anahtarı', () => {
+  const shipped = TREE_RULES.enabled;
   afterEach(() => {
-    TREE_RULES.enabled = false;
+    TREE_RULES.enabled = shipped;
     setDebugTreeFocus(null);
   });
 
-  it('ana şalter kapalı (bugünkü oyun): kayıttaki ağaç savaşa girmez, anahtarlar değişmez', () => {
-    expect(TREE_RULES.enabled).toBe(false);
+  it('ana şalter kapalıyken: kayıttaki ağaç savaşa girmez, anahtarlar değişmez', () => {
+    TREE_RULES.enabled = false;
     const { s, id } = camp(20);
     const t = setHeroTree(s, id, wb(20));
     expect(Object.values(battlePlan(t).units.party).some((u) => u.tree)).toBe(false);

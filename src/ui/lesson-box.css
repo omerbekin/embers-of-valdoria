@@ -75,7 +75,7 @@
 
 .tut-who {
   margin-left: 0.6em;
-  font: italic max(11px, calc(17 * var(--u))) / 1.2 var(--el-body);
+  font: max(11px, calc(17 * var(--u))) / 1.2 var(--el-body);
   letter-spacing: 0;
   text-transform: none;
   color: var(--el-muted);
@@ -83,7 +83,7 @@
 
 .tut-text {
   margin-top: max(2px, calc(5 * var(--u)));
-  font: italic max(13px, calc(23 * var(--u))) / 1.3 var(--el-body);
+  font: max(13px, calc(23 * var(--u))) / 1.3 var(--el-body);
   color: var(--el-txt);
 }
 
@@ -103,7 +103,7 @@
   min-height: 0;
   margin-top: 2px;
   padding: 0;
-  font: italic max(11px, calc(17 * var(--u))) var(--el-body);
+  font: max(11px, calc(17 * var(--u))) var(--el-body);
   white-space: nowrap;
   color: var(--el-dim);
   background: none;
@@ -130,7 +130,7 @@
 .tut-await {
   max-width: max(110px, calc(220 * var(--u)));
   text-align: right;
-  font: italic max(12px, calc(19 * var(--u))) / 1.25 var(--el-body);
+  font: max(12px, calc(19 * var(--u))) / 1.25 var(--el-body);
   color: var(--el-ember2);
   animation: tut-breathe 1.6s ease-in-out infinite;
 }

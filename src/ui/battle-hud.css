@@ -147,7 +147,7 @@
 }
 
 .bh-m {
-  font: italic 17px var(--gar);
+  font: 17px var(--gar);
   color: var(--muted);
   white-space: nowrap;
 }
@@ -987,7 +987,7 @@
 }
 
 .bh-sk .cost .free {
-  font: italic 16px var(--gar);
+  font: 16px var(--gar);
   color: var(--dim);
 }
 
@@ -1449,11 +1449,17 @@
   pointer-events: auto;
 }
 
-/* sabit kartın X düğmesi: sağ üst köşe, en az 44 gerçek piksel dokunma alanı (görünen kare daha küçük) */
+/* sabit kartın X düğmesi: başlık satırının içinde, dikey ortalı, sağda; en az 44 gerçek piksel dokunma alanı (görünen kare daha küçük) */
+.bh-card.pin .bt-head {
+  position: relative;
+  padding-right: calc(max(44px, calc(44px * var(--bh-inv, 1))) + 6px);
+}
+
 .bh-card-x {
   position: absolute;
-  top: 4px;
-  right: 4px;
+  top: 50%;
+  right: 2px;
+  transform: translateY(-50%);
   z-index: 2;
   display: flex;
   align-items: center;
@@ -2069,7 +2075,7 @@
 
 .bh-hd-r {
   margin-left: auto;
-  font: italic 14px var(--gar);
+  font: 14px var(--gar);
   letter-spacing: 0;
   text-transform: none;
   color: var(--dim);
@@ -2122,7 +2128,7 @@
 }
 
 .bh-ln b.sk {
-  font-style: italic;
+  font-style: normal;
   color: var(--on);
 }
 
@@ -2148,13 +2154,13 @@
 }
 
 .bh-ln b.n {
-  font-style: italic;
+  font-style: normal;
   color: var(--muted);
 }
 
 .bh-none {
   padding: 6px 0;
-  font: italic 16px var(--gar);
+  font: 16px var(--gar);
   color: var(--dim);
 }
 

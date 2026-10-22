@@ -452,6 +452,7 @@ export function buildGettingStarted(): WikiArticle[] {
       list(
         'Hover a unit to see its stats; hover a skill to see its description and cost.',
         'Keys 1-4 pick the acting unit\'s skills.',
+        'Right-click (mouse): on a unit, pins its info card; on empty space, cancels the selected skill, or closes pinned cards if nothing is selected. On an item in Gear, equips or unequips it, like a double-click.',
         'Menu (top right, or Esc) opens the Codex and Settings; the battle pauses while the Codex is open. On a phone, the corner-arrows button switches to full screen (on iPhone use Add to Home Screen); held upright, the game turns sideways to fill the screen.',
       ),
     ]),
@@ -825,7 +826,8 @@ export function buildMechanics(): WikiArticle[] {
       article('campaign', 'Campaign', 'Campaign', 'boot', [
         p(`The campaign is a journey across ${m.title.charAt(0)}${m.title.slice(1).toLowerCase()}: ${m.nodes.length} stops on the map, and any road from the start to the final castle passes ${m.stopsPerRun} of them. The map counts your progress as cleared stops (Cleared x/${m.nodes.length}). Start it from the main menu (New Campaign). Quick Battle is the old single-battle mode.`),
         list(
-          'Roads: a solid line is the only way on; a dashed line is a branching route. A choice point (gold ring) is a crossroads: the roads you did not take stay open, and you can come back for them later. Roads meet again further on.',
+          'Roads: every road is a solid line, crossroads included. A choice point is a crossroads: the roads you did not take stay open, and you can come back for them later. Roads meet again further on. A dashed road leads to an optional pocket: a dead end with an Elite or a Guarded treasure off the main road. No route needs it; walk in for the reward and back out the same way.',
+          'Region view: the button beside the zoom buttons zooms the map to the region you are in. Stops of a neighbouring region that a road leads to show faded (hover to see the road); tap one to look at that region. Regions you have not seen yet stay hidden. Press it again for the whole map.',
           `Fog: you see the next stop in full (name, type, enemies) and the stop after it by type and name only; anything further is under fog. The final castle is always visible as your goal.`,
           // Serbest dolaşım ve devriye (campaign-dev, roadmap 2.1-2.3 A; sayılar data/campaign/campaign.json > replay)
           `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays full gold and loot but less XP: ${REPLAY_PCTS.join(', ')} of the first victory's XP, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows the XP its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,

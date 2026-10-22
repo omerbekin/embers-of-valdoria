@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { Battle, content } from '../src/engine';
 import type { BattleEvent } from '../src/engine';
-import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, slotHoverTip, startRaiseFlow } from '../src/game/raise-dead-flow';
+import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, slotHoverTip, startRaiseFlow, summonReach } from '../src/game/raise-dead-flow';
 import type { RaiseFlow, RaiseInputs } from '../src/game/raise-dead-flow';
 
 // Raise Dead iki adımlı seçim durum makinesi (madde 230): adım 1 ceset -> adım 2 yuva -> cast; ceset yok -> tek adım; geri alma; geçersiz girdiler.
@@ -143,5 +143,18 @@ describe('Raise Dead akışı: motor sözleşmesi ve tooltip metinleri', () => {
     expect(slotHoverTip({ unitName: 'Skeleton', hp: 70, empowered: false, corpseName: null, row: 2, reserved: true }).title).toBe('Reserved cell');
     // ceset olmayan çağrı (ör. Treant): ceset adımı yok
     expect(slotHoverTip({ unitName: 'Treant', hp: 90, empowered: undefined, corpseName: null, row: 3, reserved: false }).rows[0]!.text).toBe('Treant HP 90');
+  });
+});
+
+describe('summonReach (Formation ortak parçaları)', () => {
+  it('yakın dövüş çağrısı arka sırada ulaşamaz, ön sırada 1 sıra vurur; ipucu yoksa iyi', () => {
+    expect(summonReach({ kind: 'outOfReach' }, 1, 3)).toMatchObject({ fit: 'bad', n: 0 });
+    expect(summonReach(undefined, 1, 0)).toMatchObject({ fit: 'good', n: 1, exposed: false });
+    expect(summonReach({ kind: 'exposed' }, 6, 0)).toMatchObject({ fit: 'weak', exposed: true });
+    expect(summonReach(undefined, null, 3).n).toBe(4);
+  });
+  it('slotHoverTip menzil satırlarını ekler, mevcut satırları korur', () => {
+    const t = slotHoverTip({ unitName: 'Treant', hp: 105, empowered: undefined, corpseName: null, row: 2, reserved: false, reach: { text: 'x', n: 0, exposed: false } });
+    expect(t.rows.map((r) => r.text)).toEqual(['Treant HP 105', 'Row 3', 'x', 'Click to raise it here']);
   });
 });

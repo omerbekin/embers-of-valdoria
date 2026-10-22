@@ -2,7 +2,7 @@ import Phaser from 'phaser';
 import type { NodeType } from '../campaign';
 import type { Modal } from './campaign-ui';
 import { openFormationWindow } from '../ui/formation-board';
-import { boardHero, boardHints, boardIcons, boardRangeUi, type BoardHeroSource } from '../ui/formation-board-data';
+import { boardHero, boardHints, boardIcons, boardRangeUi, boardTips, type BoardHeroSource } from '../ui/formation-board-data';
 import { ensureIcon } from './icons';
 import { hasMiscImage, miscIconName } from '../ui/misc-icons';
 
@@ -143,6 +143,7 @@ export function openFormation(scene: Phaser.Scene, layer: Phaser.GameObjects.Con
     hintsFor: boardHints(classOf),
     rangeUi: boardRangeUi(),
     icons: boardIcons(),
+    tips: boardTips((id) => on.get().roster.find((h) => h.id === id)),
     move: (id, cell) => on.move(id, cell),
     ...(on.heroPanel ? { details: (id: string) => on.heroPanel?.(id) } : {}),
     auto: () => on.auto(),

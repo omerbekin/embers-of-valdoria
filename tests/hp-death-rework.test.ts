@@ -25,7 +25,7 @@ import {
 } from '../src/campaign';
 import { ENDLESS, applyOutcome, chooseReward, newRun, parseRun, wavePlan, type EndlessRun } from '../src/endless';
 import { Battle, content } from '../src/engine';
-import { applyWounds, fallAfterVictory, valorClearWounds, valorRevivedCounts, woundHpFactor, woundsLine } from '../src/progression/wounds';
+import { applyWounds, fallAfterVictory, valorClearWounds, valorRevivedCounts, woundHpFactor, woundTipData, woundsLine } from '../src/progression/wounds';
 import campaignJson from '../data/campaign/campaign.json';
 import endlessJson from '../data/endless.json';
 import valorJson from '../data/valor.json';
@@ -290,5 +290,32 @@ describe('Endless: aynı kurallar', () => {
     expect(r.suspended).toBeUndefined();
     expect(r.heroes[0]!.wounds).toBe(2);
     expect(r.heroes[1]!.wounds).toBeUndefined();
+  });
+});
+
+describe('wound tooltip content (V1 Scar + dots)', () => {
+  const R = { riseRatio: 0.1, maxHpLoss: 0.2, lethal: 3 };
+  it('rounds percentages and uses real numbers', () => {
+    const d = woundTipData(3, R, { baseHp: 140 })!;
+    expect(d.value).toBe('-60%');
+    expect(d.title).toBe('3 Wounds');
+    expect(d.maxHp).toBe('Max HP 56 of 140');
+    expect(d.maxed).toBe(true);
+    expect(d.lines.join(' ')).toContain('20%');
+    expect(d.lines.some((l) => /corpse/.test(l))).toBe(true);
+    expect(d.foot).toBe('Camp rest does not heal wounds.');
+  });
+  it('one wound is singular, not maxed, and 0 wounds has no tip', () => {
+    const d = woundTipData(1, R, { baseHp: 100 })!;
+    expect(d.title).toBe('1 Wound');
+    expect(d.value).toBe('-20%');
+    expect(d.maxed).toBe(false);
+    expect(d.lines.some((l) => /corpse/.test(l))).toBe(false);
+    expect(woundTipData(0, R)).toBeNull();
+  });
+  it('endless (no town) has no town / camp lines', () => {
+    const d = woundTipData(2, R, { town: false })!;
+    expect(d.foot).toBeUndefined();
+    expect(d.lines.join(' ')).not.toMatch(/town/);
   });
 });

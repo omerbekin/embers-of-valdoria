@@ -1,3 +1,4 @@
+import { setPhaserRightClick } from '../../ui/right-click';
 import Phaser from 'phaser';
 import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wait';
 import { battleSpeed } from '../../ui/battle-speed';
@@ -8,7 +9,7 @@ import { solvePhoneBadges, sortByPriority, type PhoneBadgePlan } from '../badge-
 import { classLogoName, paintedOr } from '../../ui/misc-icons';
 import layout from '../../../data/battle-layout.json';
 import { Battle, MatchLog, chooseAction, isRatioCost, skillCostAmount, skillCostLabel, skillCostPay, content, explainChoice, describeGlobalSkill, describePassive, describeRage, describeSkill, describeStat, primaryBonusInfo, previewSkill, armorReduction, effList } from '../../engine';
-import type { AreaStage, BattleEvent, BattleMode, Combatant, SkillDef, StatKind, Teams, TargetPreview } from '../../engine';
+import type { AreaStage, BattleEvent, BattleMode, Combatant, SkillDef, SkillModeSet, StatKind, Teams, TargetPreview } from '../../engine';
 import { type DamageTags } from '../float-text';
 import { ATTACK_STATS, DEFENSE_STATS, MAIN_STATS, statRowText } from '../stat-columns';
 import { PRIMARY_GOLD, RAGE_COLOR, STAT_COLOR, STAT_LABEL, UI_COLOR, statIconName } from '../../ui/stat-icons';
@@ -62,7 +63,8 @@ import { skillMiniGrid } from '../../ui/shape-diagram';
 import type { MiniShape } from '../../ui/shape-diagram';
 import { drawCellTiles } from '../shape-draw';
 import type { CellTileSpec } from '../shape-draw';
-import { stageMap } from '../cell-style';
+import { fitPlate, stageMap } from '../cell-style';
+import { fitAccent, reachBarHtml } from '../../ui/formation-board-rules';
 import type { CellTone } from '../cell-style';
 import { boardBounds, cellCenter } from '../shape-geometry';
 import { alphaOpaque, pickCellAt, type PickSprite } from '../pick-cell';
@@ -70,7 +72,7 @@ import type { Pt } from '../shape-geometry';
 import { cellKey, corpseMarkPos, corpseTip, empoweredLine, summonPreviewLine, visibleCorpseMarks } from '../corpse-marks';
 import type { CorpseState } from '../corpse-marks';
 import { createCorpseMarker } from '../corpse-marker';
-import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, reviveCorpseTip, reviveFlowHint, reviveSlotTip, slotHoverTip, startRaiseFlow } from '../raise-dead-flow';
+import { backRaiseFlow, corpseHoverTip, pickCorpse, pickSlot, raiseFlowHint, reconcileRaiseFlow, reviveCorpseTip, reviveFlowHint, reviveSlotTip, slotHoverTip, startRaiseFlow, summonReach } from '../raise-dead-flow';
 import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
 import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
@@ -85,6 +87,7 @@ import { playLuckyEscape, prewarmLuckyEscape } from '../lucky-escape-fx';
 import { playRegenTick } from '../regen-fx';
 import { betweenTurnEvents, regenTickEvents } from '../regen-ticks';
 import { BattleTutorial } from '../battle-tutorial';
+import { SkillChoicePanel, SkillChoicePrompt, type SkillChoiceCard } from '../../ui/skill-choice';
 import type { BattleLessonCtx } from '../../tutorial/lessons';
 
 export interface BattleSceneData {
@@ -278,6 +281,12 @@ export class BattleScene extends Phaser.Scene {
   private busy = false;
   /** The pre-selected / chosen skill of the acting player unit (waits for a target tap or confirmation). */
   private selected: { actor: string; skill: string } | null = null;
+  /** Faz 8 (skill ağacı Focused Beam / Stacked Deck): skill düğmesinin üstündeki biçim kartları, hedef bekleyen biçimin şeridi ve seçilen biçim. */
+  private modePanel: SkillChoicePanel | null = null;
+  private modePrompt: SkillChoicePrompt | null = null;
+  private selectedMode: { actor: string; skill: string; mode: string } | null = null;
+  /** Paneli dışarı dokunarak kapatan dokunuş alttaki birime/hücreye gidip skill'i kullanmasın (dokunuş bitene dek perform yok). */
+  private modeGuard = false;
   private eventQueue: Promise<void> = Promise.resolve();
   /**
    * Gösterilen durumlar (rozetler, Omen mühürleri, pus): motor bir eylemi tek seferde çözer, ama durumlar ekranda ancak ilgili olay OYNADIĞINDA
@@ -786,6 +795,19 @@ export class BattleScene extends Phaser.Scene {
 
   /** Keys 1-4 pick the acting unit's skills (the same as clicking the button; pressing it again confirms a no-target skill). */
   private bindSkillHotkeys(): void {
+    // Sahnede boş yere (birim, hücre bölgesi ya da arayüz öğesi olmayan her yer: kenar, arka plan) kısa tık / dokunuş: sabit kartlar kapanır.
+    // Sürükleme / kaydırma (parmak ya da fare 12 px'ten fazla gitti) sayılmaz; DOM arayüzü tuvale ulaşmaz.
+    // Sağ tık Phaser'a yalnızca savaşta ulaşır (src/ui/right-click.ts): sahne kapanınca yeniden kapanır
+    setPhaserRightClick(true);
+    this.events.once('shutdown', () => setPhaserRightClick(false));
+    this.input.on('pointerup', (p: Phaser.Input.Pointer, over: unknown[]) => {
+      // Sağ tık boş yere: seçili skill / hedef seçimi iptal; hiçbiri yoksa sabit kartlar kapanır
+      if (p.button === 2) {
+        if (over.length === 0) this.rightClickCancel();
+        return;
+      }
+      if (over.length === 0 && p.getDistance() < 12 && !this.isSelectGesture(p)) this.hud?.unpinAll();
+    });
     const onKey = (e: KeyboardEvent) => {
       if (e.repeat || e.ctrlKey || e.altKey || e.metaKey) return;
       if (isGameMenuOpen() || isSettingsOpen()) return; // menü / ayarlar açık: kısayollar savaşa gitmez
@@ -796,6 +818,10 @@ export class BattleScene extends Phaser.Scene {
       }
       if (e.key === 'Escape' && this.raiseFlow && this.selected) {
         this.raiseBack();
+        return;
+      }
+      if (e.key === 'Escape' && (this.modePanel || this.modePrompt)) {
+        this.cancelModeChoice();
         return;
       }
       if (e.key === 'Escape' && this.hud?.closePanels()) return;
@@ -817,6 +843,7 @@ export class BattleScene extends Phaser.Scene {
     };
     window.addEventListener('keydown', onKey);
     this.events.once('shutdown', () => window.removeEventListener('keydown', onKey));
+    this.events.once('shutdown', () => this.closeModeUi());
   }
 
   // --- Global unit selection: Ctrl + left click (Mac: Cmd; touch: long press) toggles any unit, friend or foe ---
@@ -835,6 +862,7 @@ export class BattleScene extends Phaser.Scene {
         y,
       );
     this.input.on('pointerdown', (ptr: Phaser.Input.Pointer) => {
+      if (ptr.button === 2) return; // sağ tık seçim hareketi değildir
       this.longPressFired = false;
       cancelPress();
       const p = worldXY(this, ptr); // dünya koordinatı (geniş ekran / gerçek piksel kamerası)
@@ -1187,7 +1215,7 @@ export class BattleScene extends Phaser.Scene {
    */
   private refreshGlows(hit: string[] = []): void {
     const sel = this.selected;
-    const skill = sel ? this.battle.skill(sel.skill) : undefined;
+    const skill = sel ? this.battle.skill(sel.skill, sel.actor) : undefined;
     if (!sel || !skill || !this.playerCanAct) {
       for (const v of this.views.values()) v.setGlow(null);
       return;
@@ -1300,15 +1328,27 @@ export class BattleScene extends Phaser.Scene {
       };
       zone.on('pointermove', (p: Phaser.Input.Pointer) => setHover(board, at(p)));
       zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+        if (p.button === 2) return; // sağ tık: pointerup'ta kart / iptal
         if (isSelectModifier(p.event as MouseEvent | undefined)) return; // Ctrl/Cmd+click selects a unit (bindUnitSelect), it never picks
         const cell = at(p);
         downWasHover = cell !== null && this.cellHover?.board === board && this.cellHover.slot === cell;
         setHover(board, cell);
       });
       zone.on('pointerup', (p: Phaser.Input.Pointer) => {
+        if (p.button === 2) {
+          // Sağ tık: hedefleme sürerken bile birimin kartı sabitlenir (saldırı / hedef seçimi olmaz); boş hücre = iptal
+          const cellR = at(p);
+          const unitR = cellR === null ? undefined : [...this.battle.living('party'), ...this.battle.living('enemy')].find((c) => c.board === board && c.slot === cellR);
+          if (unitR) this.pinCardOf(unitR.uid);
+          else this.rightClickCancel();
+          return;
+        }
         if (this.isSelectGesture(p)) return;
         const cell = at(p);
-        if (cell === null) return;
+        if (cell === null) {
+          this.hud?.unpinAll(); // boş yere tık / dokunuş: sabit birim kartları kapanır (masaüstü + mobil)
+          return;
+        }
         if (p.wasTouch && h.twoTap && !downWasHover) return; // touch: the first tap only previews
         if (!h.canPick(board, cell)) {
           // Hedef olmayan birime tıklamak: kartı kendi tarafında sabitlenir / kaldırılır (hedefleme sürerken de)
@@ -1516,6 +1556,13 @@ export class BattleScene extends Phaser.Scene {
     this.refreshCommands();
   }
 
+  /** Summon range fit of a free cell (same rule + same wording as the Formation screen: engine placement hint + reach rows). Null = range system off / unknown unit. */
+  private summonFitAt(own: 'party' | 'enemy', summonId: string, slot: number): { fit: 'good' | 'weak' | 'bad'; n: number; text: string; exposed: boolean } | null {
+    const mates = this.battle.combatants.filter((c) => c.hp > 0 && !c.removed && c.board === own);
+    const hints = content.placementHintsFor([...mates.map((c) => c.defId), summonId], [...mates.map((c) => c.slot), slot]);
+    return summonReach(hints[mates.length], content.planUnitOf(summonId).range, this.battle.rowOf(slot));
+  }
+
   /** Draws the current step: plates, pointer zones, marks and the hint strip. */
   private renderRaiseFlow(): void {
     const ctx = this.raiseCtx;
@@ -1543,13 +1590,22 @@ export class BattleScene extends Phaser.Scene {
     const reserved = this.battle.fallenSlots(own).filter((s) => this.battle.freeSlots(own).includes(s) && !inp.slots.includes(s));
     const chosen = flow.corpseUid ? inp.choices.find((c) => c.uid === flow.corpseUid) : undefined;
     const consumed = new Set([...this.uiCorpses].filter(([, st]) => st === 'consumed').map(([uid]) => uid));
-    const info = (title: string, rows: Array<{ text: string; tone: 'info' | 'good' | 'muted' | 'bad' }>, icon: string, badge: string): void => {
+    const info = (title: string, rows: Array<{ text: string; tone: 'info' | 'good' | 'muted' | 'bad' }>, icon: string, badge: string, reach?: { fit: 'good' | 'weak' | 'bad'; n: number }): void => {
       const hex = { info: colors.selected, good: '#c58bff', muted: colors.muted, bad: colors.lethal };
       this.hideInfoTip();
-      this.placeInfoTip(this.makeInfo(title, colors.text, icon === 'skill' && skill ? ensureSkillIcon(this, skill) : ensureIcon(this, 'ankh', '#c9a853', true), rows.map((r): [string, string] => [r.text, hex[r.tone]]), badge));
+      const tip = this.makeInfo(title, colors.text, icon === 'skill' && skill ? ensureSkillIcon(this, skill) : ensureIcon(this, 'ankh', '#c9a853', true), rows.map((r): [string, string] => [r.text, hex[r.tone]]), badge);
+      // Formation hover kutusuyla aynı: uygunluk rengi kenarda + "Enemy rows hit" çubuğu
+      if (reach) {
+        tip.accent = fitAccent(reach.n, reach.fit);
+        tip.bodyHtml = reachBarHtml(reach.n);
+      }
+      this.placeInfoTip(tip);
     };
     const previewOf = (corpseUid?: string, slot?: number) => this.battle.summonPreview(ctx.actor, ctx.skill, corpseUid, slot);
     const unitName = previewOf().unit?.name ?? 'Skeleton';
+    // Menzil uygunluğu (Formation'daki ortak parçalar): yalnızca menzil sistemi açıkken; kapalıyken eski görünüm
+    const summonId = previewOf().unit?.id;
+    const fitOf = (slot: number) => (this.battle.rangeOn && summonId ? this.summonFitAt(own, summonId, slot) : null);
     const badge = raiseFlowHint(flow, unitName).step || 'Raise';
 
     if (flow.step === 'corpse') {
@@ -1599,7 +1655,7 @@ export class BattleScene extends Phaser.Scene {
     } else {
       // STEP 2: your free cells are ally-tone plates; the chosen corpse keeps a bright framed plate on the foe board (clicking it undoes the choice)
       const groups: Array<{ board: 'party' | 'enemy'; specs: CellTileSpec[] }> = [
-        { board: own, specs: [...inp.slots.map((slot) => ({ slot, state: 'selectable' as const, tone: ownTone })), ...reserved.map((slot) => ({ slot, state: 'invalid' as const }))] },
+        { board: own, specs: [...inp.slots.map((slot): CellTileSpec => (fitOf(slot) ? { slot, ...fitPlate(fitOf(slot)!.fit) } : { slot, state: 'selectable', tone: ownTone })), ...reserved.map((slot) => ({ slot, state: 'invalid' as const }))] },
       ];
       if (chosen) groups.push({ board: foe, specs: [{ slot: chosen.slot, state: 'anchor', tone: 'enemy' }, ...inp.choices.filter((c) => c.uid !== chosen.uid).map((c) => ({ slot: c.slot, state: 'selectable' as const, tone: 'enemy' as const }))] });
       this.showBasePlates(groups);
@@ -1622,8 +1678,9 @@ export class BattleScene extends Phaser.Scene {
             }
             const sp = previewOf(flow.corpseUid, slot);
             this.showPlates(b, [{ slot, state: free ? 'hover' : 'invalid', tone: ownTone }]);
-            const tip = slotHoverTip({ unitName: sp.unit?.name ?? unitName, hp: sp.unit?.stats.hp ?? 0, empowered: sp.empowered, corpseName: chosen?.name ?? null, row: this.battle.rowOf(slot), reserved: isReserved && !free });
-            info(tip.title, tip.rows, 'skill', badge);
+            const fr = free ? fitOf(slot) : null;
+            const tip = slotHoverTip({ unitName: sp.unit?.name ?? unitName, hp: sp.unit?.stats.hp ?? 0, empowered: sp.empowered, corpseName: chosen?.name ?? null, row: this.battle.rowOf(slot), reserved: isReserved && !free, ...(fr ? { reach: fr } : {}) });
+            info(tip.title, tip.rows, 'skill', badge, fr ?? undefined);
             return;
           }
           const c = inp.choices.find((x) => x.slot === slot);
@@ -1748,7 +1805,7 @@ export class BattleScene extends Phaser.Scene {
     }
     if (back) {
       back.setInteractive({ useHandCursor: true });
-      back.on('pointerdown', () => this.raiseBack());
+      back.on('pointerdown', (p: Phaser.Input.Pointer) => p.button !== 2 && this.raiseBack());
     }
     this.flowStrip = this.add.container(W / 2, 205, items).setDepth(3700);
   }
@@ -1936,6 +1993,7 @@ export class BattleScene extends Phaser.Scene {
   }
 
   private clearSelection(): void {
+    this.closeModeUi();
     this.raiseFlow = null;
     this.raiseCtx = undefined;
     this.clearSlotMarkers();
@@ -1960,6 +2018,18 @@ export class BattleScene extends Phaser.Scene {
     if (!actor || !this.playerCanAct || !this.battle.canUse(actor.uid, skillId).ok) return;
     if (this.tut && !this.tut.allowSkill(skillId)) return this.tut.blocked(); // ilk savaşın zorunlu adımı başka düğme beklemiyor (kutu sallanır)
     this.cancelMoveQuiet();
+    // Faz 8: biçimli skill (Radiance + Focused Beam, Card Trick + Stacked Deck) önce kart paneli açar; aynı düğme paneli kapatır
+    const panelWasOpen = !!this.modePanel && this.selected?.skill === skillId && this.selected.actor === actor.uid;
+    this.closeModeUi();
+    const modes = this.mp ? undefined : this.battle.skillModes(actor.uid, skillId);
+    if (modes) {
+      this.applySelection(actor.uid, skillId);
+      if (!panelWasOpen) this.openModePanel(actor, skillId, modes);
+      if (this.battle.mode === 'test') this.lastSkill.set(actor.uid, skillId);
+      this.refreshCommands();
+      this.tut?.onSkillSelected(skillId);
+      return;
+    }
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && this.battle.needsSlotChoice(skillId)) return;
     if (this.selected?.skill === skillId && this.selected.actor === actor.uid && !this.battle.needsTargetChoice(skillId, actor.uid)) {
       const first = this.battle.validTargets(actor.uid, skillId)[0];
@@ -1972,11 +2042,94 @@ export class BattleScene extends Phaser.Scene {
     this.tut?.onSkillSelected(skillId);
   }
 
+  /**
+   * Faz 8 (mockup tree-choices V2): skill düğmesinin üstünde biçim kartları. Radiance: "Radiance" (kendi biçimi) / "Focused Beam" (tek düşman);
+   * Card Trick: Slow / Wound / Stun. Hedef istemeyen kart hemen kullanılır; Focused Beam düşman seçtirir ("Choose an enemy" şeridi, Cancel / Esc).
+   */
+  private openModePanel(actor: Combatant, skillId: string, modes: SkillModeSet): void {
+    const anchor = this.hud?.root.querySelector<HTMLElement>(`.bp[data-skill="${skillId}"]`);
+    const base = this.battle.skill(skillId, actor);
+    if (!this.hud || !anchor || !base) return; // düğme yoksa panel yok: skill kendi biçimiyle seçili kalır
+    const skillIcon = (d: SkillDef) => this.texUrl(ensureSkillIcon(this, d));
+    const cards: SkillChoiceCard[] = [];
+    if (modes.keepBase) cards.push({ key: '', name: base.name, text: modes.baseText ?? '', iconUrl: skillIcon(base) });
+    for (const m of modes.list) {
+      const st = m.status ? content.statuses[m.status] : undefined;
+      cards.push({
+        key: m.id,
+        name: m.name,
+        text: m.text,
+        ...(m.note ? { note: m.note } : {}),
+        iconUrl: st ? this.texUrl(ensureIcon(this, st.icon, st.color, false)) : skillIcon(m.skill),
+        ...(m.skill.target === 'single_enemy' && !st ? { aim: true } : {}),
+        ...(st ? { accent: st.color } : {}),
+      });
+    }
+    this.modePanel = new SkillChoicePanel({
+      host: this.hud.root,
+      anchor,
+      ...(modes.title ? { title: modes.title } : {}),
+      cards,
+      onPick: (key) => this.pickMode(actor.uid, skillId, key),
+      onCancel: () => {
+        this.armModeGuard();
+        this.cancelModeChoice();
+      },
+    });
+  }
+
+  /** Kart seçildi: hedef istemiyorsa hemen kullanılır; istiyorsa biçimin hedefleri gösterilir ve şerit açılır. */
+  private pickMode(actor: string, skillId: string, key: string): void {
+    this.modePanel?.close();
+    this.modePanel = null;
+    const mode = key || undefined;
+    if (mode && !this.battle.setViewMode(actor, skillId, mode)) return;
+    if (mode) this.selectedMode = { actor, skill: skillId, mode };
+    if (!this.battle.needsTargetChoice(skillId, actor)) {
+      const first = this.battle.validTargets(actor, skillId)[0];
+      this.perform(actor, skillId, first?.uid ?? '', undefined, undefined, undefined, mode);
+      return;
+    }
+    if (!mode) return this.applySelection(actor, skillId);
+    const def = this.battle.skillModes(actor, skillId)?.list.find((m) => m.id === mode);
+    this.applySelection(actor, skillId);
+    if (this.hud) this.modePrompt = new SkillChoicePrompt(this.hud.root, def?.name ?? '', 'Choose an enemy', () => this.cancelModeChoice());
+  }
+
+  /** Panel / şerit vazgeçildi: skill kendi biçimiyle seçili kalır. */
+  private cancelModeChoice(): void {
+    const sel = this.selected;
+    this.closeModeUi();
+    if (sel && this.playerCanAct) this.applySelection(sel.actor, sel.skill);
+  }
+
+  /** Biçim paneli, şeridi ve önizlemesini kapatır (seçimi değiştirmez). */
+  private closeModeUi(): void {
+    this.modePanel?.close();
+    this.modePanel = null;
+    this.modePrompt?.close();
+    this.modePrompt = null;
+    if (this.selectedMode) this.battle.setViewMode(this.selectedMode.actor, this.selectedMode.skill, null);
+    this.selectedMode = null;
+  }
+
+  private armModeGuard(): void {
+    this.modeGuard = true;
+    const off = () => {
+      window.removeEventListener('pointerup', off, true);
+      window.setTimeout(() => (this.modeGuard = false), 120);
+    };
+    window.addEventListener('pointerup', off, true);
+  }
+
   /** Test modu: her karakterin son kullandığı/seçtiği skill (kullanınca seçim sıfırlanmasın). */
   private lastSkill = new Map<string, string>();
 
-  private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string): void {
+  private perform(actor: string, skill: string, target: string, slot?: number, board?: 'party' | 'enemy', corpseUid?: string, mode?: string): void {
+    if (this.modeGuard) return;
     if (this.tut && !this.tut.allowPerform(skill)) return this.tut.blocked(); // ilk savaşın zorunlu adımı
+    // Faz 8: Focused Beam seçildiyse hedef tıklaması o biçimle kullanır
+    const useMode = mode ?? (this.selectedMode && this.selectedMode.actor === actor && this.selectedMode.skill === skill ? this.selectedMode.mode : undefined);
     this.suppressAutoSelect = null;
     if (this.battle.mode === 'test') this.lastSkill.set(actor, skill);
     this.cancelMoveQuiet();
@@ -1986,7 +2139,7 @@ export class BattleScene extends Phaser.Scene {
     if (this.mp) {
       // Multiplayer: hamle lockstep'ten geçer (sınanır, uygulanır, rakibe gider)
       if (!this.mp.submit({ skillId: skill, ...(target ? { targetUid: target } : {}), ...(slot !== undefined ? { slot } : {}), ...(board ? { board } : {}), ...(corpseUid ? { corpseUid } : {}) })) return;
-    } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid).ok) return;
+    } else if (!this.battle.useSkill(actor, skill, target || undefined, slot, board, corpseUid, useMode).ok) return;
     this.tut?.onPerformed(skill);
     this.busy = true;
     this.refreshCommands();
@@ -2250,6 +2403,32 @@ export class BattleScene extends Phaser.Scene {
       g.waiters.push({ stage, go });
       this.time.delayedCall(slow(BattleScene.STAGE_WAIT_MS), go); // vfx aşamayı hiç açmazsa takılma
     });
+  }
+
+  /** Sağ tık: birimin bilgi kartı kendi tarafında sabitlenir (kartı olan birime yeniden sağ tık = kapat). */
+  private pinCardOf(uid: string): void {
+    const card = this.buildCard(uid);
+    if (card) this.hud?.togglePin(card);
+  }
+
+  /**
+   * Sağ tık boş yerde: devam eden seçimi iptal eder (adım iptali Esc ile aynı sırada: taşıma/diriltme/mod paneli, sonra seçili skill);
+   * iptal edilecek bir şey yoksa sabit birim kartları kapanır.
+   */
+  private rightClickCancel(): void {
+    if (this.moveMode) return this.cancelMove();
+    if (this.raiseFlow && this.selected) return this.raiseBack();
+    if (this.modePanel || this.modePrompt) return this.cancelModeChoice();
+    if (this.selected && this.playerCanAct) {
+      const actor = this.selected.actor;
+      this.hideInfoTip();
+      this.hideUnitTip();
+      this.clearSelection();
+      this.suppressAutoSelect = actor;
+      this.refreshCommands();
+      return;
+    }
+    this.hud?.unpinAll();
   }
 
   private onCombatantTap(view: CombatantView): void {
@@ -3265,7 +3444,10 @@ export class BattleScene extends Phaser.Scene {
       const vfxStages = area && stages && stages.length > 1 ? stages.map((s) => ({ slots: s.cells, cells: s.cells.map((slot) => this.cellPos(board, slot)), targets: s.targets.flatMap((uid) => this.views.get(uid) ?? []) })) : undefined;
       // Whirlwind gibi tüm düşmanlara vuran yakın dövüş: hedeflerin ön sırasının orta hücresi
       let rowCenter: { x: number; y: number } | undefined;
-      if (skill.target === 'all_enemies' && skill.motion === 'melee' && targets.length > 0) {
+      if (area && skill.motion === 'melee' && cells.length > 0) {
+        // alan skill'i (Whirlwind 2x3): kapsanan hücrelerin görsel merkezi (iki sıranın ortası, orta sütun)
+        rowCenter = { x: cells.reduce((n, q) => n + q.x, 0) / cells.length, y: cells.reduce((n, q) => n + q.y, 0) / cells.length };
+      } else if (skill.target === 'all_enemies' && skill.motion === 'melee' && targets.length > 0) {
         const row = Math.min(...targets.map((t) => this.battle.rowOf(t.combatant.slot)));
         rowCenter = this.cellPos(board, row * content.GRID.lanes + 1);
       }
@@ -3878,6 +4060,7 @@ export class BattleScene extends Phaser.Scene {
     const view = new CombatantView(this, c, slot.x, slot.y, { weapon: pick, ...(level ? { level } : {}) });
     view.makeTappable(
       (p?: Phaser.Input.Pointer) => {
+        if (p?.button === 2) return this.pinCardOf(view.combatant.uid); // sağ tık: yalnızca bilgi kartı, hedefleme / saldırı yok
         if (!p || !this.isSelectGesture(p)) this.onCombatantTap(view);
       },
       () => this.onUnitOver(view),

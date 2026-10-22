@@ -76,7 +76,7 @@ describe('serbest dolaşım: tutorial tek yön, sonra iki yönlü yollar', () =>
     expect(() => moveTo(s, '1')).toThrow();
     s = afterAshford();
     expect(roamOpen(s)).toBe(true);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor'] }); // Watchtower'a geri dönülmez
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor', 'hills'] }); // Watchtower'a geri dönülmez
     expect(() => moveTo(s, '3')).toThrow();
     for (const id of ['1', '2', '3']) {
       expect(isCleared(s, id)).toBe(true);

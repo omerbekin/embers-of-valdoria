@@ -10,7 +10,7 @@ import { content } from '../src/engine';
 describe('Oyun ikonları: 60 boyalı görsel, eski kodla çizilen yedek korunur', () => {
   it('beklenen her ikonun 128 ve 64 piksellik dosyası var; fazladan dosya yok', () => {
     const ids = MISC_GROUPS.flatMap((g) => MISC_ICONS[g].map((n) => miscIconName(g, n)));
-    expect(ids).toHaveLength(60);
+    expect(ids).toHaveLength(62);
     for (const id of ids) {
       expect(MISC_IMAGE_FILES[id], `${id} yok`).toBeTruthy();
       expect(MISC_IMAGE_FILES[id]!.small, `${id}: small/ yok`).not.toBe(MISC_IMAGE_FILES[id]!.url);

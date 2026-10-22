@@ -5,7 +5,8 @@
  */
 import { content } from '../engine';
 import { heroStats, type LoadoutSource } from '../progression';
-import { avatarUrl } from './character-panel';
+import { avatarUrl, hideHeroSkillTip, showHeroSkillTip } from './character-panel';
+import { statBandSpec, statTip } from './stat-tips';
 import { gearSkillRows } from './gear-skills';
 import { iconUrl } from './dom-icons';
 import { skillIconName } from './mob-icons';
@@ -58,7 +59,7 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
     ...(passiveRow && p ? { passive: { name: p.name, icon: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(h.class)) } } : {}),
     skills: rows
       .filter((r) => !r.passive && r.skill)
-      .map((r) => ({ name: r.skill!.name, icon: iconUrl(skillIconName(r.skill!), r.skill!.fx, ownerOfSkill(r.skill!.id)), cost: costOf(r.skill!) })),
+      .map((r) => ({ id: r.skill!.id, name: r.skill!.name, icon: iconUrl(skillIconName(r.skill!), r.skill!.fx, ownerOfSkill(r.skill!.id)), cost: costOf(r.skill!) })),
   };
 }
 
@@ -74,4 +75,22 @@ export const boardRangeUi = (): boolean => !!content.formulas.range?.enabled;
 /** Hücre listesi (kahraman id'leri) için motor dizilim ipuçları; `classOf` id -> sınıf. */
 export function boardHints(classOf: (id: string) => string): (cells: string[]) => BoardHint[] {
   return (cells) => content.placementHintsForCells(cells.map((id) => (id ? classOf(id) : '')));
+}
+
+/** Kart ipuçları: skill satırı = Gear skill çubuğunun ortak ipucu, stat kutusu = Gear stat panelinin ortak Band ipucu. `sourceOf` id -> kahraman kaynağı. */
+export function boardTips(sourceOf: (id: string) => BoardHeroSource | undefined): NonNullable<FormationBoardOpts['tips']> {
+  return {
+    showSkill: (anchor, heroId, key) => {
+      const h = sourceOf(heroId);
+      const stats = h ? heroStats(h) : null;
+      if (h && stats) showHeroSkillTip(anchor, h.class, stats, key);
+    },
+    hideSkill: () => hideHeroSkillTip(),
+    stat: (heroId, attr) => {
+      const h = sourceOf(heroId);
+      const stats = h ? heroStats(h) : null;
+      const info = stats ? statTip(attr, stats) : null;
+      return info ? statBandSpec(attr, info) : null;
+    },
+  };
 }

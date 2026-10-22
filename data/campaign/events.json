@@ -97,6 +97,27 @@
       "title": "St. Brann's Abbey",
       "text": "Beyond the vault keepers lies the abbey's relic vault, untouched for a hundred years.",
       "reward": "Open the vault to claim its gear and gold."
+    },
+    "raiders_hoard": {
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): altın ağırlıklı = sandık zarından 1 item + 45 altın.",
+      "title": "Raiders' Hoard",
+      "text": "The raiders never spent what they stole. Under a cairn of moor stones lies a chest heavy with coin.",
+      "reward": "Take the hoard: mostly coin, and one piece of gear.",
+      "loot": { "maxItems": 1, "gold": 45 }
+    },
+    "sunken_shrine": {
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): az ama iyi = standart sandıktan 1 eksik item + 1 Uncommon hediye item + 10 altın.",
+      "title": "Sunken Shrine",
+      "text": "Pilgrims left their best at this shrine before the marsh rose. The offerings are few, but well kept.",
+      "reward": "Take the offerings: a few fine pieces of gear.",
+      "loot": { "itemsDelta": -1, "gold": 10, "gift": "uncommon" }
+    },
+    "supply_wagons": {
+      "_not": "Harita 1 cebi (map-1-rework.md 3a, PROVİZYON): item ağırlıklı = standart sandık + 1 Common hediye item, 10 altın.",
+      "title": "Supply Wagons",
+      "text": "Morvane's quartermasters left the wagons to their guards. Crates of arms and armour wait under the tarps.",
+      "reward": "Raid the wagons: plenty of gear, little coin.",
+      "loot": { "gold": 10, "gift": "common" }
     }
   },
   "stories": {

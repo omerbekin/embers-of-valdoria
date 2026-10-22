@@ -28,7 +28,7 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 .mw-txt { font: 400 max(13px, calc(26 * var(--u))) / 1.34 var(--g-body); color: #d9c8a2; }
 .mw-txt p { margin: 0 0 .55em; } .mw-txt p:last-child { margin-bottom: 0; }
 .mw-txt .q { color: #cdb88d; }
-.mw-lore { font: italic max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); margin: 0; }
+.mw-lore { font: max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); margin: 0; }
 .mw-cap { display: flex; align-items: center; gap: 10px; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0; }
 .mw-cap::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217,178,106,.4), transparent); }
 .mw-cap .r { order: 3; letter-spacing: .06em; color: var(--g-dim); font-weight: 400; text-transform: none; font-family: var(--g-body); font-size: max(11px, calc(19 * var(--u))); }
@@ -90,8 +90,13 @@ html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { ani
 /* ---------- kahraman / aday kartlari (karakter karti A + plaka dili) ---------- */
 .mw-cards { display: flex; gap: max(10px, calc(24 * var(--u))); justify-content: center; flex-wrap: nowrap; padding-top: max(6px, calc(10 * var(--u))); }
 .mw-card { --ac: #cdb67f; --acl: #e9d9a8; position: relative; flex: 1 1 0; min-width: 0; max-width: max(150px, calc(380 * var(--u))); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(10 * var(--u))); padding: 0 0 max(8px, calc(18 * var(--u))); cursor: pointer; font: inherit; color: inherit; text-align: center;
-  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 10%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 35%, rgba(217,178,106,.2)); box-shadow: 0 0 0 3px rgba(8,6,4,.75); transition: border-color .15s, box-shadow .15s; min-height: 44px; }
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 10%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 35%, rgba(217,178,106,.2)); box-shadow: 0 0 0 3px rgba(8,6,4,.75); transition: border-color var(--m-card-hover, 170ms) var(--m-ease, ease-out), box-shadow var(--m-card-hover, 170ms) var(--m-ease, ease-out), translate var(--m-card-hover, 170ms) var(--m-ease, ease-out); min-height: 44px; }
 .mw-card:hover, .mw-card:focus-visible { outline: none; border-color: var(--acl); }
+@media (hover: hover) { .mw-card:hover { translate: 0 calc(-1 * var(--m-card-lift, 4px)); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(18 * var(--u)) rgba(243,217,153,.22); } .mw-card.sel:hover { box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(24 * var(--u)) rgba(243,217,153,.34), inset 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); } }
+/* kartlar pencere açılınca kısa sıralı belirir (data/ui-motion.json > card); yalnızca ilk açılışta. Hover yükselmesi ayrı `translate` özelliğinde: giriş animasyonunun `transform`u (fill both) onu ezmesin */
+.mw-in .mw-card { animation: mw-card-in var(--m-card-in, 260ms) var(--m-ease, ease-out) both; animation-delay: calc(var(--m-card-delay, 90ms) + var(--i, 0) * var(--m-card-stagger, 70ms)); }
+@keyframes mw-card-in { from { opacity: 0; transform: translateY(var(--m-card-rise, 8px)); } to { opacity: 1; transform: none; } }
+html.reduced-motion .mw-in .mw-card { animation: none; }
 .mw-card.sel { border-color: var(--g-gold); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(24 * var(--u)) rgba(243,217,153,.3), inset 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); }
 .mw-card .pt { position: relative; width: 100%; aspect-ratio: 1 / .85; overflow: hidden; background: #120c08; border-bottom: 1px solid var(--g-line2); }
 .mw-card .pt img.av { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }

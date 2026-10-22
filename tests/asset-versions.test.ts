@@ -373,7 +373,7 @@ describe('ilerleme ve wiki karşılaştırması', () => {
     });
     // Defender: dört skill + pasif ikonu hazır PNG; class logosu (bulwark) henüz v1
     const defIcons = v2Progress('defender').icon.items;
-    expect(defIcons.filter((i) => i.ready).map((i) => i.name).sort()).toEqual(['aura', 'fistcrush2', 'guard2', 'taunt2', 'tremor2']);
+    expect(defIcons.filter((i) => i.ready).map((i) => i.name).sort()).toEqual(['aura', 'closeranks2', 'fistcrush2', 'taunt2', 'tremor2']);
     expect(defIcons.find((i) => i.name === content.classes.defender!.logo)?.ready).toBe(false);
     expect(v2Progress('defender').vfx.ready).toBe(v2Progress('defender').vfx.total); // dört skill animasyonu hazır
     expect(v2Progress('defender').sfx.total).toBeGreaterThan(0);

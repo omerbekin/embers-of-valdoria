@@ -111,7 +111,7 @@
   min-width: 0;
   height: 100%;
   padding: 0;
-  font: italic max(14px, calc(19 * var(--u))) var(--el-body);
+  font: max(14px, calc(19 * var(--u))) var(--el-body);
   color: var(--el-txt);
   background: none;
   border: 0;
@@ -179,7 +179,7 @@
 
 .cx-navcount {
   flex: none;
-  font: italic max(12px, calc(16 * var(--u))) var(--el-body);
+  font: max(12px, calc(16 * var(--u))) var(--el-body);
   letter-spacing: 0;
   text-transform: none;
   color: var(--el-dim);
@@ -246,7 +246,7 @@
 }
 
 .cx-listcount {
-  font: italic max(12px, calc(16 * var(--u))) var(--el-body);
+  font: max(12px, calc(16 * var(--u))) var(--el-body);
   color: var(--el-dim);
 }
 
@@ -417,7 +417,7 @@
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  font: italic max(11px, calc(16 * var(--u))) var(--el-body);
+  font: max(11px, calc(16 * var(--u))) var(--el-body);
   color: var(--el-dim);
 }
 
@@ -521,7 +521,7 @@
 
 .cx-filterlabel {
   display: block;
-  font: italic max(12px, calc(15 * var(--u))) var(--el-body);
+  font: max(12px, calc(15 * var(--u))) var(--el-body);
   color: var(--el-dim);
 }
 
@@ -588,7 +588,7 @@
   display: flex;
   align-items: center;
   gap: 12px;
-  font-style: italic;
+  font-style: normal;
   color: var(--el-dim);
 }
 
@@ -619,7 +619,7 @@
   align-items: center;
   gap: 0 6px;
   margin-top: 4px;
-  font: italic max(14px, calc(22 * var(--u))) var(--el-body);
+  font: max(14px, calc(22 * var(--u))) var(--el-body);
   color: var(--el-muted);
 }
 
@@ -673,11 +673,11 @@
 
 .cx-dim {
   color: var(--el-dim);
-  font-style: italic;
+  font-style: normal;
 }
 
 .cx-note {
-  font-style: italic;
+  font-style: normal;
   color: var(--el-note);
   line-height: 1.3;
 }
@@ -848,7 +848,7 @@
 .cx-stat span {
   flex: 1;
   min-width: 0;
-  font-style: italic;
+  font-style: normal;
 }
 
 .cx-stat b {
@@ -872,7 +872,7 @@
 }
 
 .cx-stat b.multi small {
-  font: italic max(10px, calc(14 * var(--u))) var(--el-body);
+  font: max(10px, calc(14 * var(--u))) var(--el-body);
   letter-spacing: 0;
   color: var(--el-dim);
 }
@@ -965,7 +965,7 @@
   margin: 4px 0 0;
   padding: 0;
   list-style: none;
-  font: italic max(13px, calc(18 * var(--u))) / 1.32 var(--el-body);
+  font: max(13px, calc(18 * var(--u))) / 1.32 var(--el-body);
   color: var(--el-muted);
 }
 
@@ -1181,7 +1181,7 @@
 }
 
 .wk-shapes figcaption {
-  font: italic max(12px, calc(15 * var(--u))) var(--el-body);
+  font: max(12px, calc(15 * var(--u))) var(--el-body);
   color: var(--el-muted);
 }
 
@@ -1323,7 +1323,7 @@
 }
 
 .lightbox-cap {
-  font: italic 18px var(--el-body);
+  font: 18px var(--el-body);
   color: var(--el-note);
 }
 

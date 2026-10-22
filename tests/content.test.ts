@@ -546,7 +546,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
     const used = new Set(Object.values(content.skills).map((s) => s.vfx));
     // kaldırılan Blood Rite'ın animasyonu (bloodhands) artık hiçbir skill'de yok: Wiki > Legacy'ye 'Unused' olarak düşer
     // (ui-dev/content-designer isterse src/ui/vfx-kinds.ts > BACKUP_VFX'e taşır; o zaman bu istisna gereksizleşir)
-    // warcry: kaldırılan Abyssal Cry'ın animasyonu (2026-10-17; Headsman's Blow şimdilik doublestrike yer tutucusunu kullanır)
+    // warcry: kaldırılan Abyssal Cry'ın animasyonu (2026-10-17; Headsman's Blow 2026-10-23 itibarıyla kendi headsman efektini kullanır)
     const removedSkillVfx = ['bloodhands', 'warcry'];
     for (const k of VFX_KINDS) if (!BACKUP_VFX.includes(k) && !removedSkillVfx.includes(k)) expect(used.has(k), k).toBe(true);
   });

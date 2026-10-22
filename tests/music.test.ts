@@ -60,8 +60,8 @@ describe('Ana menü müziği: veri ve beste (data/audio-music.json, src/game/mus
   it('döngü 100-160 sn sürer (uzun biçim); seviye varsayılanı ~%60', () => {
     expect(cycleSec()).toBeGreaterThanOrEqual(100);
     expect(cycleSec()).toBeLessThanOrEqual(160);
-    expect(DEFAULT_MUSIC_LEVEL).toBe(12); // 20 adımda %60
-    expect(loadMusicLevel()).toBe(12); // node: localStorage yok -> varsayılan
+    expect(DEFAULT_MUSIC_LEVEL).toBe(16); // 20 adımda %80
+    expect(loadMusicLevel()).toBe(16); // node: localStorage yok -> varsayılan
     expect(musicGain(0, 7)).toBe(0); // 0 = tamamen kapalı
     expect(musicGain(12, 0)).toBe(0); // ana ses kapalıysa müzik de
     expect(musicGain(20, 20)).toBe(1);

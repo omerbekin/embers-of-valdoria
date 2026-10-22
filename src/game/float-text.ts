@@ -13,7 +13,7 @@ export const FLOAT_SERIF = '"Palatino Linotype", "Book Antiqua", Palatino, "Time
 export interface FloatStyle {
   fontFamily: string;
   fontSize: string;
-  fontStyle: 'bold' | 'italic' | 'bold italic';
+  fontStyle: 'bold' | 'normal';
   color: string;
   stroke: string;
   strokeThickness: number;
@@ -65,9 +65,9 @@ export function floatStyle(kind: FloatKind, px: number, hex: string): FloatStyle
     case 'shield':
       return base({ stroke: '#0e1a24', topLight: lighten(hex, 0.5) });
     case 'miss':
-      return base({ fontStyle: 'italic', stroke: '#26200f', strokeThickness: Math.max(3, Math.round(size / 7)), topLight: null });
+      return base({ fontStyle: 'normal', stroke: '#26200f', strokeThickness: Math.max(3, Math.round(size / 7)), topLight: null });
     case 'dodge':
-      return base({ fontStyle: 'bold italic', stroke: '#14222f', strokeThickness: Math.max(3, Math.round(size / 6.5)), topLight: lighten(hex, 0.6) });
+      return base({ fontStyle: 'bold', stroke: '#14222f', strokeThickness: Math.max(3, Math.round(size / 6.5)), topLight: lighten(hex, 0.6) });
     case 'resource':
       return base({ stroke: darken(hex, 0.88), topLight: lighten(hex, 0.4) });
     default:

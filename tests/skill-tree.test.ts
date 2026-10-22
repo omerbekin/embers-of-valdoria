@@ -329,7 +329,6 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
       for (const bb of c.mastery.bar) bb.fx = null;
       return c;
     };
-    expect(treeOf('paladin')!.nodes['4.d1']!.fx).toBeNull(); // Focused Beam (mockup bekliyor; Fervent Oath altıncı turda yazıldı)
     expect(compileTree(bare(W), build(W, L, ['1.f1*3']))).toBeUndefined();
     expect(compileTree(bare(treeOf('paladin')!), focusBuild(treeOf('paladin')!, [1, 2], 50))).toBeUndefined();
     const ns = compileTree(W, build(W, L, ['1.f1*3', '1.f2*5']));
@@ -372,14 +371,37 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
   afterEach(() => setDebugTreeFocus(null));
   const alloc = (lv: number) => focusBuild(D, [2, 3], lv, { ult: 'r' });
 
-  it('ana şalter kapalı (Faz 1a): dağılım verilse de hiçbir modda tree yok; mod verilmezse hiç yok', () => {
-    expect(TREE_RULES.enabled).toBe(false);
-    expect(TREE_RULES.modes).toEqual({ campaign: true, endless: true, quick: false, multiplayer: false });
-    for (const mode of ['campaign', 'endless', 'quick', 'multiplayer'] as const) {
-      expect(treeEnabled(mode)).toBe(false);
-      expect(loadoutSetup({ class: 'defender', level: 20, tree: alloc(20) }, { mode }).tree).toBeUndefined();
+  it('ana şalter kapalıyken: dağılım verilse de hiçbir modda tree yok; mod verilmezse hiç yok', () => {
+    const prev = TREE_RULES.enabled;
+    TREE_RULES.enabled = false;
+    try {
+      expect(TREE_RULES.modes).toEqual({ campaign: true, endless: true, quick: false, multiplayer: false });
+      for (const mode of ['campaign', 'endless', 'quick', 'multiplayer'] as const) {
+        expect(treeEnabled(mode)).toBe(false);
+        expect(loadoutSetup({ class: 'defender', level: 20, tree: alloc(20) }, { mode }).tree).toBeUndefined();
+      }
+      expect(loadoutSetup({ class: 'defender', level: 20, tree: alloc(20) }).tree).toBeUndefined();
+    } finally {
+      TREE_RULES.enabled = prev;
     }
-    expect(loadoutSetup({ class: 'defender', level: 20, tree: alloc(20) }).tree).toBeUndefined();
+  });
+
+  it('gönderilen şalter açık: sefer / Endless ağaç alır, QB / MP almaz; harcanmış puanı olmayan kahraman ağaçsızla aynı', () => {
+    expect(TREE_RULES.enabled).toBe(true);
+    const src = { class: 'defender', level: 20, tree: alloc(20) };
+    expect(treeEnabled('campaign') && treeEnabled('endless')).toBe(true);
+    expect(treeEnabled('quick') || treeEnabled('multiplayer')).toBe(false);
+    expect(loadoutSetup(src, { mode: 'campaign' }).tree).toBeDefined();
+    expect(loadoutSetup(src, { mode: 'endless' }).tree).toBeDefined();
+    expect(loadoutSetup(src, { mode: 'quick' }).tree).toBeUndefined();
+    expect(loadoutSetup(src, { mode: 'multiplayer' }).tree).toBeUndefined();
+    expect(loadoutSetup(src).tree).toBeUndefined();
+    const bare = { class: 'defender', level: 20 };
+    const empty = { ...bare, tree: { v: D.version, r: {} } };
+    for (const mode of ['campaign', 'endless'] as const) {
+      expect(loadoutSetup(bare, { mode }).tree).toBeUndefined();
+      expect(loadoutSetup(empty, { mode })).toEqual(loadoutSetup(bare, { mode }));
+    }
   });
 
   it('şalter açıkken: sefer / Endless derlenir, QB / MP derlenmez; geçersiz dağılım ya da ağacı olmayan class -> yok', () => {

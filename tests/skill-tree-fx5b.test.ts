@@ -10,10 +10,8 @@ import type { TreeData } from '../src/progression/skill-tree-data';
 const CLASSES = ['warrior', 'defender', 'paladin', 'archer', 'mage', 'druid', 'cutthroat', 'hexer', 'gambler', 'antimage', 'undead'];
 /** fx'i null kalan düğümler (belge: skill-tree-implementation.md > "Faz 5b: kalan null düğümler"; Faz 5c motor eksiği 4 düğüm, altıncı tur 5 karar düğümü yazıldı). */
 // Altıncı tur (Ömer 2026-10-22): Weakened düğümleri, Fervent Oath, Rot Bomb yazıldı; kalan yalnızca mockup bekleyen 5
-const LEFT_NULL: Record<string, string[]> = {
-  gambler: ['3.ea', '3.ma'],
-  paladin: ['4.d1', '4.d2', '4.d3'],
-};
+// Faz 8 (Ömer 2026-10-23): son 5 düğüm (Focused Beam ailesi, Stacked Deck, Double Deal) seçim paneliyle yazıldı; null düğüm kalmadı
+const LEFT_NULL: Record<string, string[]> = {};
 
 const cells = (u: Record<number, string>): string[] => Array.from({ length: content.CELL_COUNT }, (_, i) => u[i] ?? '');
 const make = (party: Record<number, string>, enemies: Record<number, string>, units: Record<number, UnitSetup> = {}, seed = 11, mode: BattleMode = 'test'): Battle => {

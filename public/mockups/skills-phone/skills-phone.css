@@ -1,0 +1,157 @@
+@font-face{font-family:Cinzel;font-weight:400 900;font-display:swap;src:url(fonts/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url(fonts/EBGaramond-normal-latin.woff2) format('woff2')}
+*{box-sizing:border-box}
+:root{--m-hover:170ms;--m-in:260ms;--m-stagger:70ms;--m-rise:8px;--m-lift:2px;--m-ease:cubic-bezier(.33,1,.68,1);--gu:.361px;
+  --txt:#e6dcc6;--gar:'EB Garamond',Georgia,serif}
+html,body{margin:0;height:100%;overflow:hidden;background:#070504;color:#d9c8a2;font-family:'EB Garamond',Georgia,serif;font-style:normal;-webkit-tap-highlight-color:transparent}
+button{font-family:inherit}
+img{-webkit-user-drag:none;user-select:none}
+
+/* ---- gercek gear.css'in baglam parcalari icin yer imi / plaka ikonlari (oyunda kodla uretilir) ---- */
+.gr-tab-ico{width:16px;height:16px;object-fit:contain;margin-right:5px;vertical-align:-3px}
+.gr-ui-ico{width:16px;height:16px;object-fit:contain;margin-left:4px;vertical-align:-3px}
+.gr-item .gr-svg,.gp-ico>.gr-svg{object-fit:contain}
+.gr-svg.gr-px{image-rendering:auto}
+
+/* =========================================================================================================
+   TELEFON SKILL BLOGU (yalnizca bu taslak). Gercek C plaka dili (skills-rows #c / gear.css .gr-pl): teal pasif, turuncu ULT, altin cipler + buyuk altin rakam.
+   Butce: 844x390'da blok ~420 x 150 px, 740x360'ta ~378 x 125 px (Hero sekmesi kaydirmasiz; yuvalar ~120 px ister).
+   ========================================================================================================= */
+.sp{--ac:#d9b26a;--acl:color-mix(in srgb,var(--ac) 55%,#fff);--g-text:#d9c8a2;--g-dim:#a8977a;--g-gold:#f3d999;--g-line:rgba(217,178,106,.16);--g-line2:rgba(217,178,106,.3);
+  --g-disp:Cinzel,Georgia,serif;--g-body:'EB Garamond',Georgia,serif;padding:2px 0 0}
+.sp .pas{--ac:#6fb0a8}
+.sp .ult{--ac:#e0702a}
+.sp .ico{position:relative;display:grid;place-items:center;flex:none;
+  background:radial-gradient(circle at 50% 42%,color-mix(in srgb,var(--ac) 30%,#1a110a) 0%,#0d0806 78%);
+  border:1px solid color-mix(in srgb,var(--ac) 62%,#000);
+  box-shadow:0 0 0 1px rgba(8,6,4,.9),0 0 7px color-mix(in srgb,var(--ac) 32%,transparent),inset 0 0 7px color-mix(in srgb,var(--ac) 22%,transparent);
+  transition:box-shadow var(--m-hover)}
+.sp .ico::before,.sp .ico::after{content:'';position:absolute;width:5px;height:5px;transform:rotate(45deg);background:#130d07;border:1px solid var(--acl);z-index:2}
+.sp .ico::before{left:-3px;top:-3px}.sp .ico::after{right:-3px;bottom:-3px}
+.sp .ico img{width:100%;height:100%;object-fit:contain;display:block;image-rendering:auto}
+.sp .tag{position:absolute;z-index:3;font:700 7px/1.5 var(--g-disp);letter-spacing:.14em;text-transform:uppercase;color:#fff4d6;background:color-mix(in srgb,var(--ac) 55%,#0c0905);border:1px solid var(--acl);padding:0 .8em;white-space:nowrap}
+.sp .nm{font:600 9px/1.12 var(--g-disp);letter-spacing:.04em;text-transform:uppercase;color:var(--acl);text-shadow:0 0 5px color-mix(in srgb,var(--ac) 40%,transparent);word-break:keep-all;overflow-wrap:normal}
+.sp .chips{display:flex;flex-wrap:nowrap;gap:3px;font-size:9px;align-items:center}
+.sp .chip{display:inline-flex;align-items:center;gap:.3em;height:1.6em;padding:0 .45em;font:600 1em var(--g-disp);letter-spacing:.04em;text-transform:uppercase;color:var(--g-gold);background:rgba(255,255,255,.05);border:1px solid var(--g-line);white-space:nowrap}
+.sp .chip img{width:1.3em;height:1.3em;object-fit:contain;image-rendering:auto}
+.sp .chip.free{color:#cfe8a8;border-color:rgba(127,191,63,.5);background:rgba(127,191,63,.13)}
+.sp .chip.rage{color:#ffb070;border-color:rgba(224,112,42,.6);background:rgba(224,112,42,.16)}
+.sp .bn{font:600 14px/1 var(--g-disp);color:var(--g-gold)}
+.sp .bl{font:10px/1.1 var(--g-body);color:var(--g-dim);white-space:nowrap}
+.sp .cell{--ac:#d9b26a;position:relative;min-width:0;cursor:pointer;color:inherit;text-align:left;font:inherit;touch-action:manipulation;
+  background:linear-gradient(180deg,color-mix(in srgb,var(--ac) 11%,#1d140c),#0d0906);
+  border:1px solid color-mix(in srgb,var(--ac) 40%,rgba(217,178,106,.2));
+  box-shadow:0 0 0 2px rgba(8,6,4,.75),inset 0 0 10px color-mix(in srgb,var(--ac) 8%,transparent);
+  translate:0 0;transition:translate var(--m-hover) var(--m-ease),border-color var(--m-hover),box-shadow var(--m-hover),filter var(--m-hover)}
+.sp .cell.ult{border-color:color-mix(in srgb,var(--ac) 75%,#000);box-shadow:0 0 0 2px rgba(8,6,4,.75),0 0 9px color-mix(in srgb,var(--ac) 40%,transparent),inset 0 0 12px color-mix(in srgb,var(--ac) 14%,transparent)}
+@media (hover:hover){.sp .cell:hover{translate:0 calc(-1 * var(--m-lift));border-color:#e9c985}.sp .cell:hover .ico{box-shadow:0 0 0 1px rgba(8,6,4,.9),0 0 12px color-mix(in srgb,var(--ac) 60%,transparent),inset 0 0 9px color-mix(in srgb,var(--ac) 34%,transparent)}}
+.sp .cell:active{translate:0 1px;filter:brightness(1.12)}
+.sp .cell.open{border-color:#f3d999;box-shadow:0 0 0 2px rgba(8,6,4,.75),0 0 12px rgba(243,217,153,.45),inset 0 0 12px color-mix(in srgb,var(--ac) 14%,transparent)}
+.sp .cell:focus-visible{outline:1px solid #f3d999;outline-offset:2px}
+.sp .in{animation:sp-rise var(--m-in) var(--m-ease) both;animation-delay:calc(var(--i) * var(--m-stagger))}
+@keyframes sp-rise{from{opacity:0;translate:0 var(--m-rise)}to{opacity:1;translate:0 0}}
+@media (prefers-reduced-motion:reduce){.sp .cell,.sp .in{animation:none;transition:none}}
+
+/* ---- Telefonda yerlesim (mockup'a ozgu): skill blogu 4 sutunun tamamina yayilir (genis = alcak), yuvalar 3 sutun x 3 satir, sinif cipleri ve ikinci satir gizli.
+   Oyuna alinirsa: html.short altinda .gr-lskills grid-area 2 / 1 / 3 / 5, .gr-spine ve .gr-page.r 1 / x / 2 / x. ---- */
+html.short .gr-ledger .gr-lbody>.gr-spine{grid-area:1 / 3 / 2 / 4}
+html.short .gr-ledger .gr-lbody>.gr-page.r{grid-area:1 / 4 / 2 / 5}
+html.short .gr-ledger .gr-lskills{grid-area:2 / 1 / 3 / 5;padding:4px 0 0}
+html.short .gr-ledger .gr-leaf-hero>.gr-slots{grid-template-columns:repeat(3,minmax(0,1fr))}
+html.short .gr-ledger .gr-leaf-hero .gr-class-sec{display:none}
+html.short .gr-ledger .gr-leaf-hero .gp-l2{display:none}
+html.short .gr-ledger .gr-leaf-hero .gp-ico{min-height:36px}
+
+/* ================= A - MEDALLIONS: 5 madalyon yan yana, dokununca A Band ipucu ================= */
+.spa{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;padding-top:5px}
+.spa .cell{display:flex;flex-direction:column;align-items:center;gap:3px;padding:6px 3px 4px;text-align:center}
+.spa .ico{width:46px;height:46px}
+.spa .tag{top:0;left:50%;transform:translate(-50%,-50%)}
+.spa .nm{max-width:100%;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8.5px;line-height:1.2}
+.spa .nv{display:flex;align-items:center;gap:6px;justify-content:center;white-space:nowrap}
+.spa .nv .bn{font-size:13px}
+.spa .chips{font-size:8px}
+.spa .cell.ult::before{content:'';position:absolute;left:0;right:0;bottom:0;height:2px;background:linear-gradient(90deg,transparent,#e0702a,transparent)}
+
+/* ================= B - MINI PLAKALAR: solda pasif karti, yaninda 4 mini plaka tek sirada (C dilinin kucultulmusu) ================= */
+.spb{display:grid;grid-template-columns:minmax(0,1.9fr) repeat(4,minmax(0,1fr));gap:6px;padding-top:5px}
+.spb .cell{display:grid;grid-template-columns:38px minmax(0,1fr);column-gap:6px;align-items:center;padding:5px 6px;min-height:64px}
+.spb .ico{width:38px;height:38px}
+.spb .tag{top:0;left:6px;transform:translate(0,-50%)}
+.spb .mb{display:flex;flex-direction:column;gap:3px;min-width:0}
+.spb .nm{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;font-size:8.5px}
+.spb .row2{display:flex;align-items:center;justify-content:space-between;gap:4px;min-width:0}
+.spb .bn{font-size:12.5px}
+.spb .chips{font-size:8px}
+.spb .pcell .bd{font:10.5px/1.18 var(--g-body);color:#cdbf9b;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.spb .pcell .row2{margin-top:1px}
+.spb .cell.ult::before{content:'';position:absolute;left:0;top:0;bottom:0;width:2px;background:linear-gradient(180deg,transparent,#e0702a,transparent)}
+
+/* ================= C - SEKMELER + TEK KART: solda 5 ikon sekmesi, yaninda secili skill'in karti (kaydir / dokun) ================= */
+.spc{display:grid;grid-template-columns:minmax(0,.42fr) minmax(0,1fr);gap:6px;padding-top:5px}
+.spc .tabs{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:4px}
+.spc .tab{display:flex;align-items:center;justify-content:center;min-height:64px;padding:0;background:rgba(10,7,5,.7);border:1px solid color-mix(in srgb,var(--ac) 30%,rgba(217,178,106,.2));cursor:pointer;position:relative;touch-action:manipulation;
+  translate:0 0;transition:translate var(--m-hover) var(--m-ease),border-color var(--m-hover),background var(--m-hover)}
+.spc .tab .ico{width:34px;height:34px}
+.spc .tab:not(.on) .ico{opacity:.75}
+@media (hover:hover){.spc .tab:hover{translate:0 calc(-1 * var(--m-lift));border-color:#e9c985}}
+.spc .tab:active{translate:0 1px}
+.spc .tab.on{border-color:color-mix(in srgb,var(--ac) 80%,#fff);background:color-mix(in srgb,var(--ac) 16%,#0d0906);box-shadow:inset 0 -2px 0 var(--ac)}
+.spc .tab.on .ico{opacity:1}
+.spc .card{display:grid;grid-template-columns:50px minmax(0,1fr);column-gap:10px;align-items:center;padding:5px 10px;min-height:64px;transition:border-color var(--m-hover),box-shadow var(--m-hover)}
+.spc .card.sw{animation:sp-swap 200ms var(--m-ease) both}
+@keyframes sp-swap{from{opacity:.2;translate:var(--dir,10px) 0}to{opacity:1;translate:0 0}}
+.spc .card .ico{width:50px;height:50px}
+.spc .card .tag{top:0;left:10px;transform:translate(0,-50%)}
+.spc .card .hd{display:flex;align-items:center;gap:8px;min-width:0}
+.spc .card .nm{font-size:10.5px;white-space:nowrap}
+.spc .card .chips{font-size:8.5px;margin-left:auto}
+.spc .card .ds{font:10.5px/1.18 var(--g-body);color:#cdbf9b;margin:2px 0 3px;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.spc .card .big{display:flex;gap:16px;align-items:flex-end}
+.spc .card .bg{display:flex;flex-direction:column;gap:1px}
+.spc .card .bn{font-size:13px}
+.spc .card.ult::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;background:linear-gradient(180deg,transparent,#e0702a,transparent)}
+
+/* 740x360: biraz daha sikisik */
+html.s2 .spa .ico{width:40px;height:40px}
+html.s2 .spa .cell{padding-top:5px}
+html.s2 .spb .cell{min-height:58px}
+html.s2 .spb .pcell .bd{-webkit-line-clamp:2}
+html.s2 .spc .tab{min-height:58px}
+html.s2 .spc .card{min-height:58px;grid-template-columns:44px minmax(0,1fr)}
+html.s2 .spc .card .ico{width:44px;height:44px}
+html.s2 .spc .card .ds{-webkit-line-clamp:1}
+
+/* ---- A Band skill ipucu (oyundaki yuzen kopya; telefonda okunur boy icin 0.62 birim) ---- */
+.fl{position:fixed;z-index:80;pointer-events:none;opacity:0;translate:0 4px;transition:opacity 140ms var(--m-ease),translate 140ms var(--m-ease)}
+.fl.on{opacity:1;translate:0 0}
+.fl .bt{--bu:.62px;max-width:min(330px,calc(100vw - 16px))}
+.chip{display:inline-flex;align-items:center;gap:.4em;height:1.7em;padding:0 .6em;font:600 1em Cinzel,serif;letter-spacing:.06em;text-transform:uppercase;color:#f3d999;background:rgba(255,255,255,.05);border:1px solid rgba(217,178,106,.16)}
+.chip img{width:1.3em;height:1.3em;object-fit:contain}
+.chip.free{color:#cfe8a8;border-color:rgba(127,191,63,.5)}
+.chip.rage{color:#ffb070;border-color:rgba(224,112,42,.6)}
+
+/* ---- Telefon yuva plakalari (Omer 2026-10-23): kucuk ikon (34), etiket yazisi yok (yalnizca kucuk simge, kosede), ad 2 satira kadar sarilir ---- */
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate{padding:2px 4px 2px 3px;gap:5px;align-items:center}
+html.short .gr-ledger .gr-leaf-hero .gp-ico{width:34px;height:34px;min-height:34px;max-height:34px;aspect-ratio:auto;align-self:center;flex:none}
+html.short .gr-ledger .gr-leaf-hero .gp-tx{flex:1 1 0;min-width:0;justify-content:center;overflow:hidden}
+html.short .gr-ledger .gr-leaf-hero .gp-lbl{position:absolute;top:2px;right:3px;z-index:2;font-size:0;letter-spacing:0;gap:0;pointer-events:none}
+html.short .gr-ledger .gr-leaf-hero .gp-lbl img{width:9px;height:9px;opacity:.5}
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name{display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;white-space:normal;overflow:hidden;text-overflow:clip;font-size:11px;line-height:1.1;letter-spacing:0;word-break:normal;overflow-wrap:normal;padding-right:6px}
+html.short .gr-ledger .gr-leaf-hero .gr-slot-sub{font-size:9px;line-height:1.1}
+html.s2 .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name{font-size:10px}
+html.s2 .gr-ledger .gr-leaf-hero .gp-ico{width:32px;height:32px;min-height:32px;max-height:32px}
+/* ad daha genis okunsun: karisik harf (Cinzel buyuk harf ~%25 daha genis); simge ikonun sag alt kosesine */
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name{text-transform:none;padding-right:0;letter-spacing:.02em}
+html.short .gr-ledger .gr-leaf-hero .gp-lbl{top:auto;right:auto;left:28px;bottom:3px}
+
+/* ---- yuva adina genislik: kucuk ikon, 2 px yan bosluk, dar sayfa kenari ve sutun araligi (ad >= 10 px, tasma yok) ---- */
+html.short .gr-ledger .gr-page:not(.r){padding-left:4px;padding-right:4px}
+html.short .gr-ledger .gr-leaf-hero>.gr-slots{column-gap:3px}
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate{padding:2px;gap:3px}
+html.short .gr-ledger .gr-leaf-hero .gp-ico{width:30px;height:30px;min-height:30px;max-height:30px}
+html.short .gr-ledger .gr-leaf-hero .gp-lbl{left:21px;bottom:2px}
+html.s2 .gr-ledger .gr-leaf-hero .gp-ico{width:28px;height:28px;min-height:28px;max-height:28px}
+html.s2 .gr-ledger .gr-leaf-hero .gp-lbl{left:19px}
+/* tek kelimesi 10 px'te sığmayan ad (Misericorde @740): heceden böl, kesme yok */
+html.short .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name{hyphens:auto;-webkit-hyphens:auto}

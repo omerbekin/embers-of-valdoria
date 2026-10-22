@@ -13,7 +13,7 @@ const SOFT = 70; // parlaklık alfası: (max kanal - NOISE) / (SOFT - NOISE)
 const DEPTH = 7; // zeminden bu kadar piksel içerisi tam opak
 
 /** Ham görsel yolu (ya da tampon) -> kırpılmış saydam PNG tamponu. `trim: false` = kırpmadan (kareleri ortak kutuya hizalamak için; tools/make-valor-icons.mjs). */
-export async function blackToAlpha(file, { trim = true } = {}) {
+export async function blackToAlpha(file, { trim = true, bgMax = BG_MAX, noise = NOISE, soft: softMax = SOFT, depth = DEPTH } = {}) {
   const { data, info } = await sharp(file).removeAlpha().raw().toBuffer({ resolveWithObject: true });
   const { width: w, height: h } = info;
   const n = w * h;
@@ -27,7 +27,7 @@ export async function blackToAlpha(file, { trim = true } = {}) {
   let qh = 0;
   let qt = 0;
   const seed = (i) => {
-    if (!bg[i] && soft[i] < BG_MAX) {
+    if (!bg[i] && soft[i] < bgMax) {
       bg[i] = 1;
       q[qt++] = i;
     }
@@ -50,7 +50,7 @@ export async function blackToAlpha(file, { trim = true } = {}) {
   while (qh < qt) {
     const i = q[qh++];
     const d = dist[i] + 1;
-    if (d > DEPTH) continue;
+    if (d > depth) continue;
     const x = i % w;
     for (const j of [x > 0 ? i - 1 : -1, x < w - 1 ? i + 1 : -1, i - w, i + w]) {
       if (j < 0 || j >= n || dist[j] <= d) continue;
@@ -62,8 +62,8 @@ export async function blackToAlpha(file, { trim = true } = {}) {
   // 3) Alfa + ön-çarpımsız renk (dış zeminde yalnızca parlaklık alfası; içeride zeminden uzaklaştıkça opak)
   const out = Buffer.alloc(n * 4);
   for (let i = 0; i < n; i++) {
-    const lum = Math.min(1, Math.max(0, mx[i] - NOISE) / (SOFT - NOISE));
-    const deep = Math.min(1, dist[i] / DEPTH);
+    const lum = Math.min(1, Math.max(0, mx[i] - noise) / (softMax - noise));
+    const deep = Math.min(1, dist[i] / depth);
     const a = Math.max(lum, deep * deep * (3 - 2 * deep));
     for (let c = 0; c < 3; c++) out[i * 4 + c] = a > 0 ? Math.min(255, Math.round(data[i * 3 + c] / a)) : 0;
     out[i * 4 + 3] = Math.round(a * 255);

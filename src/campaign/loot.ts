@@ -12,7 +12,7 @@ export const emptyLootState = (): CampaignState['lootState'] => ({ rarePity: 0, 
  * Düğümün loot'unu verir: item'ler torbaya (doluysa sığmayanlar kartta `left`: oyuncu yer açıp alabilir), altın kesesine; `pendingLoot` haritada gösterilecek
  * "Spoils" kartıdır (arayüz onaylayınca `acknowledgeLoot`). Aynı düğümün kaçıncı zaferi olduğu `lootState.clears`'ta sayılır.
  */
-export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; gold?: number }): LootDrop {
+export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, party: Hero[], opts?: { maxItems?: number; itemsDelta?: number; gold?: number }): LootDrop {
   const key = `${nodeId}:${kind === 'treasure' ? 'treasure' : 'battle'}`;
   const replay = t.lootState.clears[key] ?? 0;
   const res = rollLoot({
@@ -25,10 +25,12 @@ export function grantLoot(t: CampaignState, nodeId: string, kind: LootKind, part
     pity: t.lootState.rarePity,
   });
   // Küçük sandık (cadının bedelli seçenekleri, Ömer 2026-10-12): aynı zardan yalnızca ilk N item + sabit altın
-  if (opts?.maxItems !== undefined) {
-    res.items.length = Math.min(res.items.length, opts.maxItems);
-    res.rarities.length = Math.min(res.rarities.length, opts.maxItems);
-    res.forClass.length = Math.min(res.forClass.length, opts.maxItems);
+  // Hazine içeriği (Harita 1 cepleri): itemsDelta standart sayıya göre (yalnız eksiltir; zar aynı, ilk N item kalır)
+  const cap = Math.min(opts?.maxItems ?? Infinity, opts?.itemsDelta !== undefined ? Math.max(0, res.items.length + Math.min(0, opts.itemsDelta)) : Infinity);
+  if (cap !== Infinity) {
+    res.items.length = Math.min(res.items.length, cap);
+    res.rarities.length = Math.min(res.rarities.length, cap);
+    res.forClass.length = Math.min(res.forClass.length, cap);
   }
   if (opts?.gold !== undefined) res.gold = opts.gold;
   t.lootState.rarePity = res.pity;

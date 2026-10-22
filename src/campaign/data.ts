@@ -76,7 +76,23 @@ export interface StoryDef extends EventText {
 
 /** Kasaba hikâye sahneleri (T5; sis açma YOK; düğümün `story` alanı). */
 export const STORIES: Record<string, StoryDef> = (eventsJson as unknown as { stories?: Record<string, StoryDef> }).stories ?? {};
-export const TREASURES: Record<string, EventText> = (eventsJson as unknown as { treasures: Record<string, EventText> }).treasures;
+/**
+ * Hazine sandığının içeriği (isteğe bağlı; Harita 1 cepleri, map-1-rework.md 3a). Yalnız var olan ödül türleri: `maxItems` sandık zarından en çok
+ * bu kadar item, `itemsDelta` standart sandığın item sayısına ek (negatif = eksik), `gold` sabit altın (sandığın altını yerine), `gift`
+ * düğümün item seviyesinde bu nadirlikte bir hediye item'i (kasaba hediyesiyle aynı kural, loot.ts > grantGift). Yoksa standart sandık.
+ */
+export interface TreasureLoot {
+  maxItems?: number;
+  itemsDelta?: number;
+  gold?: number;
+  gift?: RarityId;
+}
+
+export interface TreasureDef extends EventText {
+  loot?: TreasureLoot;
+}
+
+export const TREASURES: Record<string, TreasureDef> = strip<TreasureDef>((eventsJson as unknown as { treasures: Record<string, TreasureDef> }).treasures);
 
 export function getMap(id: string): CampaignMap {
   const m = MAPS[id];

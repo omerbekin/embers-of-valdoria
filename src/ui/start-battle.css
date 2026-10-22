@@ -37,7 +37,7 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
   font: 600 max(15px, calc(26 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; margin: 0; text-align: left;
   background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0, 0, 0, 0.9));
 }
-.sbc-sub { font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: #cdb88d; margin: 0; text-align: left; }
+.sbc-sub { font: max(12px, calc(20 * var(--u))) var(--g-body); color: #cdb88d; margin: 0; text-align: left; }
 .sbc-sub b { font-style: normal; font-weight: 400; color: var(--g-ember2); }
 .sbc-rule { height: 1px; border: 0; margin: 0; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.55), transparent); }
 .sbc-ntile { flex: none; display: grid; place-items: center; width: max(36px, calc(64 * var(--u))); height: max(36px, calc(64 * var(--u))); background: #120c08; border: 1px solid var(--g-line2); position: relative; }
@@ -60,7 +60,7 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-foe.boss .sbc-nm { color: var(--g-gold); }
 
 /* tek bilgi satırı (var olan oyun metni) */
-.sbc-info { margin: 0; font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.sbc-info { margin: 0; font: italic max(12px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); /* lore satırı: hafif italik (Ömer 2026-10-23) */ line-height: 1.25; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 .sbc-info b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); font-style: normal; margin-right: 0.5em; }
 .sbc-info.quote { color: #cdb88d; }
 

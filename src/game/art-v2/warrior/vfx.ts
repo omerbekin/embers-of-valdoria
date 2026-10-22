@@ -13,6 +13,9 @@
  *   abyssal_cry (Abyssal Cry)    -> 'warcry'        ayağının altında zemin çatlar, karanlık kızıl öz yükselir; kükrer, kılıcı ve
  *                                                   kolları kızıl öfkeyle dolar, gövdesinin çevresinde 3 öfke koru (3 saldırı yükü)
  *                                                   belirir; kılıcı öne indirince ucundan ileri kızıl iz uzanır (menzil +1). Bedel/hasar yok.
+ *                                                   (Abyssal Cry 2026-10-17'de kaldırıldı; efekt yedek)
+ *   headsmans_blow (ult)         -> 'headsman'      koşar, kılıcı başın arkasına kaldırır (kor dolumu, hafif kararma), tek dikey cellat
+ *                                                   inişi; parlama + sarsıntı, dikey yarık, zeminde çatlak + kor fışkırması
  *
  * POZ KÜTÜPHANESİ (Ömer 2026-10-11, src/game/poses.ts): aktör pozlu çiziliyorsa (`a.posed`, Warrior denemesi) kılıç zaten gövde pozunun
  * elindeki silah katmanıdır: efektin kendi kılıç sprite'ı çizilmez, gövde skill'in pozlarına geçer (skills.json > pose: Double Strike
@@ -620,4 +623,128 @@ const warcry: V2Vfx = async (c, k) => {
   })();
 };
 
-export const VFX: Record<string, V2Vfx> = { doublestrike, whirlwind, charge, warcry };
+/**
+ * Headsman's Blow (ultimate, 2026-10-23): cellat vuruşu. Zırh şıngırtısıyla hedefin dibine koşar; 1) hazırlık: kılıcı başının arkasına
+ * kaldırır (overhead), geriye yaslanıp çöker, ekran hafifçe kararır, kılıç ağzı kabzadan uca kor kızılı dolar, çevresinden kıvılcım/kor
+ * yükselir, hedefin ayağı altında soluk kızıl "infaz" lekesi belirir; 2) tek, hızlı, dikey iniş (slash): kalın kızıl savuruş izi;
+ * 3) vuruş: beyaz parlama + kızıl ikinci parlama, güçlü sarsıntı, hedefte dikey yarık + gash, hedef çöker, ayağının altında zemin çatlar
+ * ve çatlaklardan kor/kıvılcım fışkırır, toz halkası. Öldürdüyse (c.usage.deaths) sarsıntı ve kor biraz daha güçlü. Kılıç kısa an gömülü
+ * kalır (hit-stop), sonra eve döner. Vuruş ~0,78 sn (x1,2 ~0,94 sn); toplam ~1,5 sn.
+ */
+const headsman: V2Vfx = async (c, k) => {
+  const t = c.targets[0];
+  if (!t) return;
+  const a = c.actor;
+  const stand = standNear(a, t);
+  const dir = stand.dir;
+  const len = bladeLen(a) * 1.05;
+  const EMBER = ['#ffd23f', '#ff9a3c', '#e5463b'];
+  c.sfx('armorRun');
+  footfalls(c, k, 200, dir);
+  await a.approach(stand.x, stand.y, 200);
+
+  // 1) hazırlık: kılıç başın arkasında, gövde geriye yaslanıp çöker; kor dolumu
+  c.sfx('furyCharge');
+  a.skillPose(0); // pozlu: overhead
+  lean(c, k, -dir * 9, 200);
+  const sy0 = a.sprite.scaleY;
+  c.scene.tweens.add({ targets: a.sprite, scaleY: sy0 * 0.95, duration: k.slow(220), ease: 'Quad.easeOut' });
+  const dark = c.scene.add.rectangle(960, 540, FULL_W, 1080, 0x12040a, 0).setDepth(k.DEPTH - 30);
+  c.scene.tweens.add({ targets: dark, alpha: 0.34, duration: k.slow(240), yoyo: true, hold: k.slow(260), onComplete: () => dark.destroy() });
+  const tf = k.feet(t);
+  const mark = c.scene.add.ellipse(tf.x, tf.y, 30, 10, 0xc0203a, 0).setDepth(k.FLOOR_FX + 3).setBlendMode(k.Phaser.BlendModes.ADD);
+  c.scene.tweens.add({ targets: mark, displayWidth: t.w * 1.3, displayHeight: 34, alpha: 0.6, duration: k.slow(360), ease: 'Quad.easeOut' });
+  const RAISED = -2.45; // pozsuz: kılıç başın arkasında
+  const pivot = () => a.weaponLine() ?? hands(a, dir);
+  const angOf = () => a.weaponLine()?.ang ?? RAISED;
+  const lenOf = () => a.weaponLine()?.len ?? len;
+  const held = makeBlade(c, k, dir, len, k.DEPTH + 12);
+  const aura = c.scene.add.graphics().setDepth(k.DEPTH + 11);
+  const vein = c.scene.add.graphics().setDepth(k.DEPTH + 13);
+  held.set(pivot(), RAISED);
+  const embers = c.scene.time.addEvent({
+    delay: 30,
+    repeat: 11,
+    callback: () => {
+      const h = pivot();
+      const d = k.rnd(0.3, 1) * lenOf();
+      const q = angOf();
+      const x = h.x + dir * Math.cos(q) * d + k.rnd(-8, 8);
+      const y = h.y + Math.sin(q) * d + k.rnd(-8, 8);
+      const sz = k.snap(k.rnd(4, 8));
+      const e = c.scene.add.rectangle(x, y, sz, sz, k.color(k.pick(EMBER))).setDepth(k.DEPTH + 14);
+      c.scene.tweens.add({ targets: e, y: y - k.rnd(30, 70), x: x + k.rnd(-12, 12), alpha: 0, duration: k.slow(k.rnd(280, 420)), ease: 'Quad.easeOut', onComplete: () => e.destroy() });
+    },
+  });
+  await k.counter(c.scene, k.slow(360), (u) => {
+    held.set(pivot(), RAISED);
+    drawFuryLance(aura, k, pivot(), dir, angOf(), lenOf(), 0, 0.45 + 0.5 * u, lenOf() * (0.2 + 0.85 * u), vein);
+  });
+  embers.remove();
+  // uçta kısa parıltı: "şimdi"
+  {
+    const h = pivot();
+    const tip = { x: h.x + dir * Math.cos(angOf()) * lenOf(), y: h.y + Math.sin(angOf()) * lenOf() };
+    const glint = k.v2Sprite(c, 'impact', '#ffe9b0', tip.x, tip.y, 46, k.DEPTH + 40);
+    k.grow(c.scene, glint, 0.3, 1, 70);
+    c.scene.tweens.add({ targets: glint, alpha: 0, delay: k.slow(60), duration: k.slow(120), onComplete: () => glint.destroy() });
+  }
+  await k.wait(c.scene, k.slow(60));
+  c.scene.tweens.add({ targets: [aura, vein], alpha: 0, duration: k.slow(90), onComplete: () => { aura.destroy(); vein.destroy(); } });
+  held.img.destroy();
+
+  // 2) iniş: tek, hızlı, dikey; gövde öne atılır
+  c.sfx('axeSwing');
+  c.scene.tweens.add({ targets: a.sprite, scaleY: sy0, duration: k.slow(80), ease: 'Quad.easeIn' });
+  lean(c, k, dir * 12, 110);
+  c.scene.tweens.add({ targets: a.container, x: stand.x + dir * 24, duration: k.slow(110), ease: 'Quad.easeIn' });
+  const killed = c.usage?.deaths.includes(t.combatant.uid) ?? false;
+  await new Promise<void>((resolve) => {
+    void swing(c, k, {
+      pivot: () => hands(a, dir),
+      dir,
+      len,
+      a0: -2.6,
+      a1: 1.3,
+      dur: 130,
+      hitAt: 0.8,
+      cols: FURY_SMEAR,
+      reach: 1.3,
+      onHit: () => {
+        a.skillPose(); // pozlu: slash
+        // 3) vuruş
+        c.sfx('chargeSlam');
+        void k.wait(c.scene, k.slow(40)).then(() => c.sfx('abyssRumble'));
+        const p = k.spot(t);
+        k.flash(c.scene, '#fff3d6', 0.3, 110);
+        void k.wait(c.scene, k.slow(70)).then(() => k.flash(c.scene, '#8e1f2c', 0.2, 260));
+        k.shake(c.scene, killed ? 280 : 230, killed ? 0.011 : 0.0085);
+        cutMark(c, k, { x: p.x, y: p.y + t.h * 0.05 }, dir > 0 ? 1.38 : Math.PI - 1.38, t.h * 1.05, 480);
+        const gash = k.v2Sprite(c, 'gash', '#e5463b', p.x, p.y, Math.round(t.h * 0.7), k.DEPTH + 28).setAlpha(0.95);
+        k.grow(c.scene, gash, 1.3, 1, 110);
+        c.scene.tweens.add({ targets: gash, alpha: 0, delay: k.slow(240), duration: k.slow(320), onComplete: () => gash.destroy() });
+        const star = k.v2Sprite(c, 'impact', '#ffe9b0', p.x, p.y + t.h * 0.15, Math.round(t.h * 0.85), k.DEPTH + 40);
+        k.grow(c.scene, star, 0.4, 1.1, 120);
+        c.scene.tweens.add({ targets: star, alpha: 0, delay: k.slow(70), duration: k.slow(200), onComplete: () => star.destroy() });
+        k.burst(c.scene, p.x, p.y, { colors: SPARK, n: 12, speed: [180, 480], angle: dir > 0 ? [-1.3, 1.1] : [Math.PI - 1.1, Math.PI + 1.3], gravity: 700, life: [200, 420], size: [5, 10] });
+        k.burst(c.scene, p.x, p.y + 10, { colors: k.colors.BLOOD, n: 5, speed: [80, 240], angle: dir > 0 ? [-0.8, 0.6] : [Math.PI - 0.6, Math.PI + 0.8], gravity: 900, life: [300, 520], size: [6, 10] });
+        // zemin: çatlak + çatlaklardan kor fışkırır + toz halkası
+        k.cracks(c.scene, tf.x, tf.y, { len: 170, n: 8, flat: 0.3, dur: 1100 });
+        k.burst(c.scene, tf.x, tf.y - 4, { colors: EMBER, n: killed ? 16 : 11, speed: [140, 380], angle: [Math.PI * 1.15, Math.PI * 1.85], gravity: 520, life: [320, 620], size: [5, 10] });
+        void k.ring(c.scene, tf.x, tf.y - 4, { r: 180, flat: 0.3, n: 24, colors: k.colors.DUST, dur: 440, size: 12, startR: 30 });
+        c.scene.tweens.add({ targets: mark, alpha: 0.85, displayWidth: t.w * 1.7, duration: k.slow(80), yoyo: true, onComplete: () => c.scene.tweens.add({ targets: mark, alpha: 0, duration: k.slow(300), onComplete: () => mark.destroy() }) });
+        // hedef çöker (yalnızca sprite: can çubuğu oynamaz)
+        const tsy = t.sprite.scaleY;
+        c.scene.tweens.add({ targets: t.sprite, scaleY: tsy * 0.9, duration: k.slow(60), yoyo: true, hold: k.slow(60), onComplete: () => t.sprite.setScale(t.sprite.scaleX, tsy) });
+        resolve();
+      },
+    });
+  });
+  // kılıç kısa an gömülü (hit-stop), sonra geri
+  void k.wait(c.scene, k.slow(220)).then(() => {
+    unlean(c, k, 200);
+    void a.returnHome(260);
+  });
+};
+
+export const VFX: Record<string, V2Vfx> = { doublestrike, whirlwind, charge, warcry, headsman };

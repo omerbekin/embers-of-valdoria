@@ -5,7 +5,7 @@
  */
 import bust from '../../data/hero-bust.json';
 import { poseBodyUrl, weaponUrl } from '../game/pose-files';
-import { drawPoseComposite, poseClass, type WeaponPick } from '../game/poses';
+import { drawPoseComposite, poseClass, resolvePose, type WeaponPick } from '../game/poses';
 import { unitWeaponPick } from '../game/pose-weapons';
 
 interface BustRect {
@@ -69,7 +69,8 @@ export async function bustWithWeapon(classId: string, weaponOverride?: WeaponPic
   if (!def || !rect) return null;
   const pick = weaponOverride ?? unitWeaponPick(classId, null);
   if (!pick) return null;
-  const pose = rect.pose;
+  // çift el silah (Warrior Dane Axe) tek el pozunda yüzün önüne biniyordu: tutuşa uyan poz takımının dinlenme karesi (çift el = idle2, eller karında)
+  const pose = rect.pose === 'idle1' ? resolvePose(def, 'idle', pick.grip) : rect.pose;
   const [body, wpn, off, fingerImg] = await Promise.all([
     loadImg(poseBodyUrl(def.dir, pose)),
     loadImg(weaponUrl(pick.family, pick.look)),

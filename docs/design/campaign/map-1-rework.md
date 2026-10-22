@@ -1,6 +1,6 @@
 # Harita 1 (Valdoria) yeniden çizim + genişletme (PLAN; Ömer cevapları 2026-10-22 işlendi)
 
-Durum: **PLAN ONAYLI, uygulama bekliyor (campaign-dev 2026-10-22; Ömer cevapları 7. bölümde).** Oyun koduna ve `data/campaign/valdoria.json`'a dokunulmadı. Görsel taslak: `public/mockups/maps-2-3.html#v0` (Map I sekmesi; yeni düğümlerin rozetinde "NEW" etiketi). **Yeni harita görseli (Ömer onayı 2026-10-22):** `assets/source/maps-1/valdoria-map-v2.png` (mockup kopyası `public/mockups/maps-2-3/valdoria-v2-preview.webp`, 1672x940). Mockup'ta 33 düğümün **hepsi** bu görsele göre yeniden yerleştirildi (bölüm 3b); oyuna geçerken `valdoria.json > pos` bu konumlardan alınır.
+Durum: **OYUNA UYGULANDI (campaign-dev 2026-10-22, ayrı worktree; notlar 8. bölümde, varsayımlar open-questions 384).** Görsel taslak: `public/mockups/maps-2-3.html#v0` (Map I sekmesi; yeni düğümlerin rozetinde "NEW" etiketi). **Yeni harita görseli (Ömer onayı 2026-10-22):** `assets/source/maps-1/valdoria-map-v2.png` (mockup kopyası `public/mockups/maps-2-3/valdoria-v2-preview.webp`, 1672x940). Mockup'ta 33 düğümün **hepsi** bu görsele göre yeniden yerleştirildi (bölüm 3b); oyuna geçerken `valdoria.json > pos` bu konumlardan alınır.
 Ömer'in kararları (2026-10-22): yalnız yeniden çizim değil **genişletme**; yeni düğümler **yalnızca var olan moblardan** (yeni mob / mekanik / stat / kural yok); **1.0'dan önce** yapılır.
 Ortak kurallar `maps-2-3.md` bölüm 2'den: bölge başına 1-2 çatal, en az 1 isteğe bağlı cep (çıkmaz dal: elit ya da korunan hazine), dalga kuralı aynen (normal 2, elit 2, boss 3 Round), elit / boss eşlikçileri her düğümde farklı. Oyun içi adlar İngilizce. Sayılar PROVİZYON (denge balance-tester'ın).
 
@@ -136,3 +136,15 @@ Veri: hazine tanımına isteğe bağlı `loot: { maxItems?, itemsDelta?, gold?, 
 **Mockup çözümü (`public/mockups/maps-2-3/m.js > clampView`):** bölge görünümünde ölçek en az görseli sahneye tam kaplatacak kadar ("cover"), kaydırma görsel kenarında durur; kenara yakın bölgede kamera kendiliğinden içeri kayar. Tekerlek ve sürükleme de aynı kilitten geçer. Uzak görünüm (tüm harita) değişmedi (sahne oranı görselle aynı). Üç harita sekmesinde de geçerli.
 
 Kalan açık soru: yok.
+
+## 8. Uygulama notları (campaign-dev 2026-10-22)
+
+- **Veri:** `valdoria.json` 33 düğüm, konumlar mockup `maps-2-3/data.js` Map I'den (görsel oranı); yeni düğüm `optional: true` = cep; kenar `style`: hepsi `solid`, cep kenarları `dashed`; Iron Pass -> Valdren Keep `ctrl` [0,3469; 0,1809]. Görsel: `assets/source/maps-1/valdoria-map-v2.png` -> `assets/campaign/valdoria-bg.webp` (1672x941, WebP q86). `backgroundWide` kaldırıldı (eski çizime aitti; open-questions 384/5).
+- **Graf:** `graph.ts > mainOutgoing / isPocket / pockets`; rota, seçim noktası ve K1 cepleri saymaz; `validateMap` cebin tek girişli ve ileri yolsuz olduğunu denetler. Sim rotaları da (`src/sim/campaign.ts`) cepsiz: 96 rota.
+- **K1:** tek bilinçli istisna Ember Road -> Shepherd's Fold (test bunu açıkça bekler; open-questions 384/1).
+- **Karşılaşmalar** (`encounters.json`, yeni girdiler sonda): `brackenridge`, `hoard_guards`, `shrine_drowned`, `wagon_guard`, `burnt_hamlet`, `deserters_camp`; hepsi elle yazılmış 2 dalga (`units` + `waves`), elit lider sonda. Deserter Captain: `class: bandit_chief`, `name`, `tier: elite`, `sprite: deserter_captain` (yer tutucu; motor bu alanı henüz okumuyor).
+- **Hazineler** (`events.json > treasures`): `raiders_hoard`, `sunken_shrine`, `supply_wagons`; içerik `loot: { maxItems?, itemsDelta?, gold?, gift? }` (`state.ts > completeSimple`, `loot.ts > grantLoot / grantGift`).
+- **Eğitim ölçeği:** `campaign.json > enemyScale.skipNodes [1, 2, 3, 4]` (eski `skipRegions [I]`).
+- **Harita sahnesi:** yol dili (düz / cep kesik), `ctrl` kavisi, lejant satırı, düğüm şeridinde "optional", Ashen Plain gri tonu kaldırıldı. **Bölge görünümü** (`src/game/region-view.ts`, sahne `setRegionView / setFocus`): sağ alttaki düğme; bölgeye yakınlaşır (görseli kaplar, en çok x2,4, oyuncu yakınlaştırması üstüne), komşu bağlantı düğümü %65, yolu %80, üstüne gelince yol hafif sarı; görülmemiş bölgenin düğümü çizilmez; kafile bölge değiştirince odak izler.
+- **Debug:** Campaign > Map > "Region view" (kapalı -> I -> II -> III -> kapalı); "Teleport to stop" yeni düğümleri listeler (cepler "(pocket)").
+- **Testler:** `tests/campaign-map1-rework.test.ts` (seviyeler, karşılaşmalar, eğitim ölçeği, cep akışı, hazine içerikleri, eski kayıt: Ashford / Valdren Keep / Ember Road / Gate of Cinders, bölge görünümü hesapları) + güncellenen graf / uyum testleri.

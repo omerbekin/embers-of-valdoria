@@ -125,7 +125,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     for (const u of list) {
       const diff = CONFIG.difficulties[s.difficulty];
       // noTierMods: rütbe eki (enemyTier) bu birime uygulanmaz (The Bridge Warden: fazları/telgrafları zaten zor; sim ölçümü, open-questions)
-      const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipRegions?.includes(n.region) ? CONFIG.enemyScale : undefined;
+      const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipNodes?.includes(n.id) ? CONFIG.enemyScale : undefined;
       // seferin genel düşman ölçeği (eğitim bölgesi hariç): boss rütbeli -> boss; elit düğümün diğer birimleri -> elite; kalan -> all
       const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : n.type === 'elite' ? (es?.elite ?? es?.all) : es?.all;
       const own = withDifficulty(withDifficulty(u.mods, scale), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)

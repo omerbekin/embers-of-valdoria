@@ -1,0 +1,385 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="color-scheme" content="dark"><meta name="darkreader-lock">
+<meta name="viewport" content="width=device-width, initial-scale=1"><title>Form your company - mockup v2</title>
+<!-- TASLAK (ui-dev, 2026-10-23). Oyun kodu DEGIL. Adres: #a | #b | #c  (+ &clean = sekme seridi gizli).
+     Gercek oyun CSS'i: css/map-window.css (.mw-card, .mw-chip), css/elegant.css (.el-btn), css/band-tip.css (A Band); pencere cercevesi Phaser openModal (1500x900 @ 210,90). -->
+<link rel="stylesheet" href="css/elegant.css">
+<link rel="stylesheet" href="css/band-tip.css">
+<link rel="stylesheet" href="css/map-window.css">
+<style>
+@font-face{font-family:Cinzel;font-weight:400 900;font-display:swap;src:url(fonts/Cinzel-normal-latin.woff2) format('woff2')}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url(fonts/EBGaramond-normal-latin.woff2) format('woff2')}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#070504;color:#d9c8a2;font-family:'EB Garamond',Georgia,serif;user-select:none;-webkit-user-select:none}
+button{font:inherit;color:inherit}
+#fit{position:fixed;inset:0;overflow:hidden}
+/* sahne 1920x1080; oyundaki gibi --u = 1px; kok sinifta oyunun degiskenleri (font system-ui'ye dusmesin) */
+#stage{--u:1px;--g-text:#d9c8a2;--g-dim:#a8977a;--g-gold:#f3d999;--g-edge:rgba(217,178,106,.42);--g-line:rgba(217,178,106,.16);--g-line2:rgba(217,178,106,.3);--g-ember:#e0702a;--g-ember2:#ffb35a;
+  --g-disp:Cinzel,Georgia,'Palatino Linotype',serif;--g-body:'EB Garamond',Georgia,'Palatino Linotype',serif;
+  position:absolute;left:0;top:0;width:1920px;height:1080px;transform-origin:0 0;background:#0c0806 url(img/bg.webp) center/cover;overflow:hidden;color:var(--g-text);font-family:var(--g-body)}
+#stage .scrim{position:absolute;inset:0;background:rgba(5,3,2,.62)}
+/* ---- pencere (Phaser openModal: elPanel + elHeading + altyazi) ---- */
+.win{position:absolute;left:210px;top:90px;width:1500px;height:900px;background:linear-gradient(180deg,rgba(30,22,14,.97),rgba(12,9,6,.97));border:1px solid var(--g-edge);box-shadow:0 0 0 3px rgba(8,6,4,.7),4px 12px 0 rgba(0,0,0,.3),0 22px 50px rgba(0,0,0,.55)}
+.win>.cn{position:absolute;width:10px;height:10px;background:#140e09;border:1px solid rgba(217,178,106,.7);transform:rotate(45deg)}
+.cn.tl{left:-6px;top:-6px}.cn.tr{right:-6px;top:-6px}.cn.bl{left:-6px;bottom:-6px}.cn.br{right:-6px;bottom:-6px}
+.in .win{animation:mw-rise 220ms ease-out both}.in .scrim{animation:mw-fade 200ms ease-out both}
+.ttl{position:absolute;left:0;right:0;top:30px;height:48px;display:flex;align-items:center;justify-content:center;gap:22px;margin:0;font:600 40px/1 var(--g-disp);letter-spacing:.14em;text-transform:uppercase}
+.ttl span{background:linear-gradient(180deg,#fbe7b0 0%,#c7984f 100%);-webkit-background-clip:text;background-clip:text;color:transparent;filter:drop-shadow(0 2px 3px rgba(0,0,0,.9));padding-left:.14em}
+.ttl i{display:block;width:120px;height:1px;background:linear-gradient(90deg,transparent,rgba(217,178,106,.7));position:relative}
+.ttl i:last-child{transform:scaleX(-1)}
+.ttl i::after{content:'';position:absolute;right:-16px;top:-4px;width:8px;height:8px;border:1px solid rgba(217,178,106,.8);transform:rotate(45deg)}
+.sub{position:absolute;left:70px;right:70px;top:92px;text-align:center;font:400 22px/1.3 var(--g-body);color:var(--g-dim);margin:0}
+.body{position:absolute;left:30px;right:30px;top:150px;bottom:130px;display:flex;flex-direction:column}
+.foot{position:absolute;left:60px;right:60px;bottom:24px;height:72px;display:flex;align-items:center;justify-content:space-between}
+.foot::before{content:'';position:absolute;left:-30px;right:-30px;top:-14px;height:1px;background:linear-gradient(90deg,transparent,var(--g-line2) 12%,var(--g-line2) 88%,transparent)}
+.count{font:400 22px var(--g-body);color:var(--g-gold)}
+.count b{font:600 17px var(--g-disp);letter-spacing:.16em;text-transform:uppercase;color:var(--g-dim);margin-left:16px;font-weight:600}
+.count b em{font-style:normal;color:var(--g-gold)}
+.foot .el-btn.primary{min-height:62px}
+/* ---- ortak: sira etiketi (kartin ustunde; kutu yok, yalniz yazi + ince tac) ---- */
+.ord{position:absolute;left:0;right:0;top:-34px;height:26px;display:flex;align-items:center;justify-content:center;gap:9px;font:600 17px var(--g-disp);letter-spacing:.2em;text-transform:uppercase;color:var(--g-gold);opacity:0;transition:opacity .2s;pointer-events:none;white-space:nowrap}
+.ord svg{width:22px;height:18px;color:var(--g-gold);display:none}
+.ord.on{opacity:1}.ord.lead svg{display:block}
+.ord.empty{opacity:.55;color:var(--g-dim)}
+.ord .lt{display:none;color:var(--g-dim);font-weight:400;letter-spacing:.14em}.ord.lead .lt{display:inline}
+.mw-card .pt .crown{display:none}
+.mw-card .pt img.bust2{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%;display:block}
+.mw-card .tut{display:flex;align-items:center;justify-content:center;gap:8px;font:400 17px/1.2 var(--g-body);color:var(--g-dim);padding:0 10px}
+.mw-card .tut i{flex:none;width:6px;height:6px;border:1px solid rgba(217,178,106,.55);transform:rotate(45deg)}
+.mw-card{touch-action:none;-webkit-tap-highlight-color:transparent}
+.mw-card.dim{opacity:.6}
+.mw-card.dim:hover{opacity:.9}
+.mw-card.dragging,.pc.dragging,.pl.dragging{opacity:.35}
+.mw-card{transition:border-color 170ms ease-out,box-shadow 170ms ease-out,translate 170ms ease-out,opacity 200ms}
+.mw-card.pop{animation:mw-card-in 240ms ease-out both}
+.mw-card.sel::before{content:'';position:absolute;left:50%;top:0;width:10px;height:10px}
+/* birakma hedefi */
+.drop-can{border-color:rgba(243,217,153,.55)!important}
+.drop-over{border-color:var(--g-gold)!important;box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 24px rgba(243,217,153,.32)!important}
+.ghost{position:absolute;z-index:60;width:96px;height:96px;margin:-48px 0 0 -48px;border:1px solid rgba(243,217,153,.9);background:#120c08 center/cover;box-shadow:0 0 0 3px rgba(8,6,4,.75),0 10px 24px rgba(0,0,0,.7);pointer-events:none;opacity:.92}
+
+/* ---- A: Choose your hero kartlari, iki sira ---- */
+.a-grid{flex:1;display:flex;flex-direction:column;justify-content:space-around;padding-top:34px;min-height:0}
+.a-row{display:flex;justify-content:center;gap:12px;flex:1;align-items:flex-start;padding-top:30px}
+.a-row .mw-card{flex:0 0 230px;width:230px;max-width:230px;height:258px;justify-content:flex-start;gap:8px;padding-bottom:0}
+.a-row .mw-card .pt{aspect-ratio:auto;height:148px;flex:none}
+.a-row .mw-card .pt img.bust2{transform:scale(1.28);transform-origin:50% 22%;object-position:50% 14%}
+.a-row .mw-card .nm{height:34px;line-height:34px;flex:none;white-space:nowrap}
+.a-row .mw-card .mw-chips{flex-wrap:nowrap;gap:5px;padding:0;height:30px;flex:none}
+.a-row .mw-card .mw-chip{white-space:nowrap;font-size:13px;letter-spacing:.04em;padding:.1em .55em .1em .4em;min-height:28px}
+.a-row .mw-card .tut{flex:none}
+
+/* ---- B: ustte 3 yuva, altta 11 portre seridi ---- */
+.b-slots{display:flex;justify-content:center;gap:56px;padding-top:36px}
+.b-slot{position:relative;width:270px;height:330px}
+.b-slot .empty{position:absolute;inset:0;border:1px solid var(--g-line2);background:rgba(8,6,4,.38);box-shadow:0 0 0 3px rgba(8,6,4,.75);display:flex;align-items:center;justify-content:center;transition:border-color .17s,box-shadow .17s}
+.b-slot .empty::after{content:'';width:14px;height:14px;border:1px solid rgba(217,178,106,.3);transform:rotate(45deg)}
+.b-slot .mw-card{position:absolute;inset:0;max-width:none;width:100%;height:100%;justify-content:flex-start}
+.b-slot .mw-card .pt{aspect-ratio:1/.7}
+.b-strip{margin-top:auto;margin-bottom:6px;display:flex;justify-content:center;gap:9px;padding-top:0;position:relative}
+.b-strip::before{content:'';position:absolute;left:0;right:0;top:-24px;height:1px;background:linear-gradient(90deg,transparent,var(--g-line2) 12%,var(--g-line2) 88%,transparent)}
+.pc{position:relative;flex:none;width:122px;height:128px;padding:0;overflow:hidden;cursor:pointer;background:rgba(8,6,4,.75);border:1px solid rgba(217,178,106,.45);box-shadow:0 0 0 3px rgba(8,6,4,.75);touch-action:none;transition:border-color .17s,box-shadow .17s,translate .17s,opacity .2s}
+.pc img{position:absolute;left:0;top:0;width:100%;height:100%;object-fit:cover;object-position:50% 12%;transition:opacity .2s,filter .2s}
+.pc::after{content:'';position:absolute;inset:0;background:linear-gradient(180deg,transparent 52%,rgba(8,6,4,.94))}
+.pc .nm{position:absolute;left:0;right:0;bottom:6px;z-index:2;text-align:center;font:600 15px var(--g-disp);letter-spacing:.08em;text-transform:uppercase;color:#cdb88d;white-space:nowrap}
+.pc:hover,.pc:focus-visible{outline:none;border-color:rgba(243,217,153,.9)}
+@media (hover:hover){.pc:hover{translate:0 -4px;box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 18px rgba(243,217,153,.22)}}
+.pc.sel{border-color:var(--g-gold);box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 22px rgba(243,217,153,.28)}
+.pc.sel img{filter:brightness(.6)}.pc.sel .nm{color:var(--g-gold)}
+.pc.sel .dm{display:block}
+.pc .dm{display:none;position:absolute;left:50%;top:0;width:10px;height:10px;transform:translate(-50%,-50%) rotate(45deg);background:var(--g-ember);border:1px solid var(--g-ember2);z-index:3;box-shadow:0 0 8px rgba(240,140,40,.8)}
+.in .a-row .mw-card{animation:mw-card-in 260ms ease-out both;animation-delay:calc(90ms + var(--i)*70ms)}
+.in .pc{animation:mw-card-in 240ms ease-out both;animation-delay:calc(90ms + var(--i)*40ms)}
+
+/* ---- C: solda portre izgarasi, sagda buyuk onizleme, altta yuvalar ---- */
+.c-top{display:flex;gap:44px;justify-content:center;align-items:flex-start;padding-top:4px}
+.c-grid{display:grid;grid-template-columns:repeat(4,180px);grid-auto-rows:146px;gap:14px;padding-top:6px}
+.c-grid .pc{width:180px;height:146px}
+.c-grid .pc .nm{font-size:17px;bottom:8px}
+.c-prev{position:relative;width:520px;flex:none}
+.c-prev .mw-card{--u:1.18px;max-width:none;width:100%;cursor:default;align-items:center}
+.c-prev .mw-card:hover{translate:none}
+.c-prev .mw-card .pt{aspect-ratio:1/.43}
+.c-prev .mw-card .pt img.bust2{object-position:50% 14%}
+.c-prev .mw-card .ds{padding:0 24px;font-size:21px}
+.c-prev .sk{display:flex;gap:10px;justify-content:center;padding:2px 0 0}
+.c-prev .sk span{position:relative;width:50px;height:50px;border:1px solid var(--g-line2);background:#120c08 center/cover;box-shadow:0 0 0 2px rgba(8,6,4,.75);transition:border-color .17s}
+.c-prev .sk span:hover{border-color:var(--g-gold)}
+.c-prev .sk span.ps{border-color:rgba(243,217,153,.55)}
+.c-prev .sk i{display:block;width:1px;height:50px;background:var(--g-line2);margin:0 4px}
+.c-slots{display:flex;gap:30px;justify-content:center;margin-top:auto;margin-bottom:4px;padding-top:6px}
+.pl{position:relative;width:440px;height:104px;display:flex;align-items:center;gap:20px;padding:0 20px 0 0;cursor:pointer;background:linear-gradient(180deg,rgba(30,22,14,.8),rgba(10,7,5,.8));border:1px solid var(--g-line2);box-shadow:0 0 0 3px rgba(8,6,4,.75);touch-action:none;transition:border-color .17s,box-shadow .17s,translate .17s,opacity .2s}
+.pl.empty{cursor:default;background:rgba(8,6,4,.38);justify-content:center;padding:0}
+.pl.empty::after{content:'';width:12px;height:12px;border:1px solid rgba(217,178,106,.3);transform:rotate(45deg)}
+.pl img{width:102px;height:102px;object-fit:cover;object-position:50% 12%;flex:none;border-right:1px solid var(--g-line2)}
+.pl .tx{display:flex;flex-direction:column;gap:4px;min-width:0}
+.pl .tx b{font:600 22px var(--g-disp);letter-spacing:.1em;text-transform:uppercase;color:var(--acl,#f3d999)}
+.pl .tx span{font:400 19px var(--g-body);color:#cdb88d}
+.pl:not(.empty):hover{border-color:rgba(243,217,153,.9)}
+@media (hover:hover){.pl:not(.empty):hover{translate:0 -4px;box-shadow:0 0 0 3px rgba(8,6,4,.75),0 0 18px rgba(243,217,153,.22)}}
+.pl:not(.empty){border-color:var(--g-gold)}
+.pl:not(.empty)::before{content:'';position:absolute;left:50%;top:0;width:10px;height:10px;transform:translate(-50%,-50%) rotate(45deg);background:var(--g-ember);border:1px solid var(--g-ember2);z-index:3;box-shadow:0 0 8px rgba(240,140,40,.8)}
+.pcw .ord{top:50%;transform:translateY(-50%);left:auto;right:22px;width:auto;height:auto}
+.pcw .ord .lt{display:none!important}
+.pl.pop{animation:mw-card-in 240ms ease-out both}
+.pcw{position:relative}
+/* ipucu (A Band) ve bildirim */
+.tipwrap{position:absolute;z-index:55;pointer-events:none;opacity:0;transition:opacity 140ms ease-out}
+.tipwrap.on{opacity:1}
+.toast{position:absolute;left:50%;top:44px;z-index:70;transform:translate(-50%,-8px);padding:12px 34px;background:linear-gradient(180deg,rgba(30,22,14,.97),rgba(12,9,6,.97));border:1px solid var(--g-edge);box-shadow:0 0 0 3px rgba(8,6,4,.7);font:400 22px var(--g-body);color:var(--g-gold);opacity:0;pointer-events:none;transition:opacity .25s,transform .25s}
+.toast.on{opacity:1;transform:translate(-50%,0)}
+html.reduced-motion *{animation:none!important}
+/* ---- mockup seridi (oyun disi; sol alt, kucuk) ---- */
+#mk{position:fixed;left:10px;bottom:8px;z-index:90;display:flex;align-items:center;gap:4px;padding:3px 8px;background:rgba(12,9,6,.85);border:1px solid rgba(217,178,106,.22);font:400 12px 'EB Garamond',serif;color:#a8977a}
+#mk .k{font:600 9px Cinzel,serif;letter-spacing:.24em;color:#7d705a;margin-right:6px}
+#mk button{background:none;border:0;border-bottom:1px solid transparent;padding:2px 9px;cursor:pointer;font:600 12px Cinzel,serif;letter-spacing:.14em;color:#a8977a;transition:color .2s,border-color .2s}
+#mk button:hover{color:#f3d999}#mk button.on{color:#f3d999;border-color:rgba(217,178,106,.55)}
+#mk .n{margin-left:8px;color:#7d705a}
+html.clean #mk{display:none}
+</style></head>
+<body>
+<div id="fit"><div id="stage"></div></div>
+<div id="mk"><span class="k">MOCKUP</span><button data-v="a">A</button><button data-v="b">B</button><button data-v="c">C</button><span class="n" id="mknote"></span></div>
+<script src="data.js"></script>
+<script>
+(()=>{
+const C=window.CLASSES, BY=Object.fromEntries(C.map(c=>[c.id,c]));
+const TUT=new Set(['warrior','druid']), SIZE=3;
+const NOTES={a:'A: Choose your hero kartlari, iki sira',b:'B: 3 buyuk yuva + 11 portre seridi',c:'C: portre izgarasi + buyuk onizleme + 3 yuva'};
+const CROWN='<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"><path d="M3 19V8l5 5 4-8 4 8 5-5v11z"/><circle cx="12" cy="15.5" r="1.3" fill="#e0702a" stroke="none"/></svg>';
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+const stage=document.getElementById('stage');
+let scale=1;
+/* ---- durum ---- */
+const S={slots:[null,null,null],leader:null,focus:'warrior'};
+const picks=()=>S.slots.filter(Boolean);
+function compact(){const p=picks();S.slots=[p[0]||null,p[1]||null,p[2]||null];if(!p.includes(S.leader))S.leader=p[0]||null;}
+function tap(id){
+  const p=picks();
+  if(!p.includes(id)){
+    if(p.length>=SIZE){S.focus=id;sync();return toast('You already have 3 heroes. Tap one to remove it.');}
+    S.slots[S.slots.indexOf(null)]=id; if(!S.leader)S.leader=id;
+  } else if(S.leader!==id) S.leader=id;
+  else {S.slots[S.slots.indexOf(id)]=null;S.leader=null;}
+  compact();S.focus=id;sync();
+}
+function dropTo(id,t){
+  const j=S.slots.indexOf(id);
+  if(t.k==='slot'){
+    const old=S.slots[t.i];
+    if(old===id)return;
+    if(j>=0){S.slots[j]=old;S.slots[t.i]=id;}
+    else{S.slots[t.i]=id;if(old&&old===S.leader)S.leader=id;}
+    if(!S.leader)S.leader=id;
+  } else if(t.k==='pool'){ if(j>=0)S.slots[j]=null; }
+  else if(t.k==='add'){ if(j<0){ if(picks().length>=SIZE)return toast('You already have 3 heroes. Tap one to remove it.'); S.slots[S.slots.indexOf(null)]=id;if(!S.leader)S.leader=id; } }
+  compact();S.focus=id;sync();
+}
+/* ---- kucuk yardimcilar ---- */
+const lighten=h=>`color-mix(in srgb, ${h} 55%, #fff)`;
+const cardStyle=(c,i=0)=>`--i:${i};--ac:${c.color};--acl:${lighten(c.color)}`;
+function chips(c){return `<div class="mw-chips"><span class="mw-chip info">${esc(c.role)}</span><span class="mw-chip gain"><img src="img/stat/${c.primary}.webp" alt="">${c.primary.toUpperCase()}</span></div>`;}
+const tutNote=c=>TUT.has(c.id)?'<span class="tut"><i></i>Played in the tutorial</span>':'';
+function cardHtml(c,o={}){
+  return `<button type="button" class="mw-card" data-id="${c.id}" style="${cardStyle(c,o.i||0)}"><span class="ord"></span><div class="pt"><img class="bust2" src="img/bust/${c.id}.webp" alt="" draggable="false"><img class="em" src="img/cls/${c.id}.webp" alt="" draggable="false"><span class="crown">${CROWN}</span></div><span class="nm">${esc(c.name)}</span>${chips(c)}${o.ds?`<p class="ds">${esc(c.blurb)}</p>`:''}${tutNote(c)}</button>`;
+}
+function ordFill(el,id){
+  if(!el)return;
+  const i=id?S.slots.indexOf(id):-1;
+  el.className='ord'+(i>=0?' on':'')+(id&&S.leader===id?' lead':'');
+  el.innerHTML=i>=0?`${CROWN}<b>${i+1}</b><span class="lt">Leader</span>`:'';
+}
+function applyCardState(el){
+  const id=el.dataset.id, on=picks().includes(id);
+  el.classList.toggle('sel',on);
+  el.classList.toggle('dim',!on&&picks().length>=SIZE);
+  ordFill(el.querySelector('.ord'),id);
+}
+/* ---- ipucu (A Band) ---- */
+let tipEl=null;
+function tipHtml(c){
+  const lines=[`<div class="bt-ln"><span class="dia"></span><div class="tx">${esc(c.blurb)}</div></div>`];
+  if(TUT.has(c.id))lines.push('<div class="bt-ln"><span class="dia"></span><div class="tx">Played in the tutorial</div></div>');
+  return `<div class="bt" style="--ac:${c.color}"><div class="bt-head"><span class="bt-medal por" style="background-image:url(img/av/${c.id}.webp)"></span><div class="bt-ht"><div class="bt-kind">${esc(c.role)}</div><div class="bt-title">${esc(c.name)}</div></div><div class="bt-aside"><div class="bt-big">${c.primary.toUpperCase()}<small>Primary</small></div></div></div><div class="bt-div"></div><div class="bt-body">${lines.join('')}</div></div>`;
+}
+function showTip(target,html){
+  hideTip();
+  tipEl=document.createElement('div');tipEl.className='tipwrap';tipEl.innerHTML=html;stage.append(tipEl);
+  const sr=stage.getBoundingClientRect(),r=target.getBoundingClientRect();
+  const tw=tipEl.offsetWidth,th=tipEl.offsetHeight;
+  const cx=(r.left+r.width/2-sr.left)/scale, top=(r.top-sr.top)/scale, bot=(r.bottom-sr.top)/scale;
+  let x=Math.max(240,Math.min(1680-tw,cx-tw/2)), y=top-th-16; if(y<100)y=bot+16;
+  tipEl.style.left=x+'px';tipEl.style.top=y+'px';
+  requestAnimationFrame(()=>tipEl&&tipEl.classList.add('on'));
+}
+function hideTip(){if(tipEl){tipEl.remove();tipEl=null;}}
+function hoverTip(el,getHtml){
+  el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!drag)showTip(el,getHtml());});
+  el.addEventListener('pointerleave',hideTip);
+  el.addEventListener('focus',()=>showTip(el,getHtml()));el.addEventListener('blur',hideTip);
+}
+/* ---- bildirim ---- */
+let tt;function toast(m){let t=stage.querySelector('.toast');if(!t){t=document.createElement('div');t.className='toast';stage.append(t);}t.textContent=m;void t.offsetWidth;t.classList.add('on');clearTimeout(tt);tt=setTimeout(()=>t.classList.remove('on'),1700);}
+/* ---- surukle-birak (fare + dokunma) / dokunma ile secme ---- */
+let drag=null;
+function bindDrag(el,id,onTap){
+  el.addEventListener('pointerdown',e=>{
+    if(e.button>0)return;
+    const st={id,x:e.clientX,y:e.clientY,moved:false,el,pid:e.pointerId};
+    const move=ev=>{
+      if(ev.pointerId!==st.pid)return;
+      if(!st.moved&&Math.hypot(ev.clientX-st.x,ev.clientY-st.y)>8){st.moved=true;beginDrag(st);}
+      if(st.moved)moveDrag(ev);
+    };
+    const up=ev=>{
+      if(ev.pointerId!==st.pid)return;
+      window.removeEventListener('pointermove',move);window.removeEventListener('pointerup',up);window.removeEventListener('pointercancel',up);
+      if(st.moved)endDrag(ev,ev.type==='pointercancel');
+      else if(ev.type==='pointerup')onTap(id);
+    };
+    window.addEventListener('pointermove',move);window.addEventListener('pointerup',up);window.addEventListener('pointercancel',up);
+  });
+  el.addEventListener('click',e=>{if(e.detail===0)onTap(id);});   // klavye
+}
+function beginDrag(st){
+  hideTip();drag=st;st.el.classList.add('dragging');
+  const g=document.createElement('div');g.className='ghost';g.style.backgroundImage=`url(img/av/${st.id}.webp)`;stage.append(g);st.ghost=g;
+  stage.querySelectorAll('[data-drop]').forEach(d=>d.classList.add('drop-can'));
+}
+function moveDrag(ev){
+  const sr=stage.getBoundingClientRect();
+  drag.ghost.style.left=(ev.clientX-sr.left)/scale+'px';drag.ghost.style.top=(ev.clientY-sr.top)/scale+'px';
+  const t=document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]');
+  stage.querySelectorAll('.drop-over').forEach(d=>d!==t&&d.classList.remove('drop-over'));
+  if(t)t.classList.add('drop-over');
+}
+function endDrag(ev,cancel){
+  const d=drag;drag=null;
+  const t=cancel?null:document.elementFromPoint(ev.clientX,ev.clientY)?.closest('[data-drop]');
+  d.ghost.remove();d.el.classList.remove('dragging');
+  stage.querySelectorAll('[data-drop]').forEach(x=>x.classList.remove('drop-can','drop-over'));
+  if(t){const k=t.dataset.drop;dropTo(d.id,k==='slot'?{k,i:+t.dataset.i}:{k});}
+}
+/* ---- pencere iskeleti ---- */
+let V=null,firstRender=true;
+function shell(inner){
+  stage.innerHTML=`<div class="scrim"></div><div class="win"><i class="cn tl"></i><i class="cn tr"></i><i class="cn bl"></i><i class="cn br"></i>
+  <h1 class="ttl"><i></i><span>Form your company</span><i></i></h1>
+  <p class="sub">Choose 3 heroes. The first one you pick leads the company (tap a chosen hero again to make them the leader).</p>
+  <div class="body">${inner}</div>
+  <div class="foot"><div class="count" id="count"></div><button type="button" class="el-btn primary" id="go">Set out</button></div></div>`;
+  stage.querySelector('#go').addEventListener('click',()=>{if(picks().length===SIZE)toast('Company set out (mockup).');});
+}
+function footSync(){
+  const p=picks(),n=p.length;
+  stage.querySelector('#count').innerHTML=`${n} / ${SIZE} chosen${n?`<b>Leader <em>${esc(BY[S.leader].name)}</em></b>`:''}`;
+  const go=stage.querySelector('#go');go.disabled=n!==SIZE;go.classList.toggle('ready',n===SIZE);
+  go.title=n===SIZE?'':'Pick 3 heroes first.';
+}
+function sync(){footSync();V&&V.sync();}
+
+/* ===== A ===== */
+const VA={
+  build(){
+    const row=ids=>`<div class="a-row">${ids.map((id,k)=>cardHtml(BY[id],{i:k})).join('')}</div>`;
+    shell(`<div class="a-grid" data-drop="add">${row(C.slice(0,6).map(c=>c.id))}${row(C.slice(6).map(c=>c.id))}</div>`);
+    stage.querySelectorAll('.mw-card').forEach((el,k)=>{el.style.setProperty('--i',k);bindDrag(el,el.dataset.id,tap);});
+  },
+  sync(){stage.querySelectorAll('.mw-card').forEach(applyCardState);}
+};
+/* ===== B ===== */
+function stripHtml(c,i){return `<button type="button" class="pc" data-id="${c.id}" data-drop="pool" style="--i:${i}"><img src="img/av/${c.id}.webp" alt="" draggable="false"><span class="dm"></span><span class="nm">${esc(c.name)}</span></button>`;}
+const VB={
+  build(){
+    const slots=[0,1,2].map(i=>`<div class="b-slot" data-slot="${i}" data-drop="slot" data-i="${i}"><span class="ord"></span><div class="empty"></div></div>`).join('');
+    shell(`<div class="b-slots">${slots}</div><div class="b-strip" data-drop="pool">${C.map((c,i)=>stripHtml(c,i)).join('')}</div>`);
+    stage.querySelectorAll('.pc').forEach(el=>{bindDrag(el,el.dataset.id,tap);hoverTip(el,()=>tipHtml(BY[el.dataset.id]));});
+    this.shown=[null,null,null];
+  },
+  sync(){
+    stage.querySelectorAll('.pc').forEach(el=>el.classList.toggle('sel',picks().includes(el.dataset.id)));
+    stage.querySelectorAll('.b-slot').forEach((s,i)=>{
+      const id=S.slots[i];
+      if(this.shown[i]!==id){
+        this.shown[i]=id;
+        s.querySelector('.mw-card')?.remove();
+        s.querySelector('.empty').style.display=id?'none':'';
+        if(id){
+          s.insertAdjacentHTML('beforeend',cardHtml(BY[id]));
+          const el=s.querySelector('.mw-card');el.classList.add('pop','sel');el.style.animation='';
+          bindDrag(el,id,tap);hoverTip(el,()=>tipHtml(BY[id]));
+        }
+      }
+      const o=s.querySelector(':scope > .ord');
+      if(id){ordFill(o,id);const inner=s.querySelector('.mw-card .ord');if(inner)inner.style.display='none';}
+      else{o.className='ord empty';o.innerHTML=`<b>${i+1}</b>`;}
+    });
+  }
+};
+/* ===== C ===== */
+function prevHtml(c){
+  const sk=[c.passive,...c.skills].map((s,k)=>`<span class="${k===0?'ps':''}" data-n="${esc(s.n)}" style="background-image:url(${s.i})"></span>${k===0?'<i></i>':''}`).join('');
+  return cardHtml(c,{ds:true}).replace('</button>',`<div class="sk">${sk}</div></button>`);
+}
+const VC={
+  build(){
+    const cells=C.map((c,i)=>stripHtml(c,i)).join('');
+    const slots=[0,1,2].map(i=>`<div class="pcw" data-drop="slot" data-i="${i}"><div class="pl empty"></div><span class="ord"></span></div>`).join('');
+    shell(`<div class="c-top"><div class="c-grid" data-drop="pool">${cells}</div><div class="c-prev" id="prev"></div></div><div class="c-slots">${slots}</div>`);
+    stage.querySelectorAll('.pc').forEach(el=>{
+      bindDrag(el,el.dataset.id,tap);
+      el.addEventListener('pointerenter',e=>{if(e.pointerType==='mouse'&&!drag)this.prev(el.dataset.id);});
+      el.addEventListener('pointerleave',()=>this.prev(S.focus));
+    });
+    this.shown=[null,null,null];this.pv=null;
+  },
+  prev(id){
+    if(this.pv===id)return;this.pv=id;
+    const box=stage.querySelector('#prev');box.innerHTML=prevHtml(BY[id]);
+    const el=box.querySelector('.mw-card');el.classList.add('pop');el.querySelector('.ord').style.display='none';
+    applyCardState(el);el.querySelector('.ord').style.display='none';
+    box.querySelectorAll('.sk span').forEach(s=>hoverTip(s,()=>`<div class="bt" style="--ac:${BY[id].color}"><div class="bt-head"><span class="bt-medal ico frm" style="background-image:url(${s.style.backgroundImage.slice(5,-2)})"></span><div class="bt-ht"><div class="bt-kind">${s.classList.contains('ps')?'Passive':'Skill'}</div><div class="bt-title">${esc(s.dataset.n)}</div></div></div></div>`));
+  },
+  sync(){
+    stage.querySelectorAll('.pc').forEach(el=>el.classList.toggle('sel',picks().includes(el.dataset.id)));
+    this.pv=null;this.prev(S.focus);
+    stage.querySelectorAll('.pcw').forEach((w,i)=>{
+      const id=S.slots[i],pl=w.querySelector('.pl');
+      if(this.shown[i]!==id){
+        this.shown[i]=id;
+        const c=id&&BY[id];
+        const n=pl.cloneNode(false);n.className='pl'+(id?' pop':' empty');
+        if(id){n.dataset.id=id;n.style.setProperty('--acl',lighten(c.color));n.innerHTML=`<img src="img/av/${id}.webp" alt="" draggable="false"><div class="tx"><b>${esc(c.name)}</b><span>${esc(c.role)}</span></div>`;}
+        pl.replaceWith(n);
+        if(id){bindDrag(n,id,tap);hoverTip(n,()=>tipHtml(c));}
+      }
+      const o=w.querySelector('.ord');
+      if(id)ordFill(o,id);else{o.className='ord empty';o.innerHTML=`<b>${i+1}</b>`;}
+    });
+  }
+};
+/* ---- sekme + sigdirma ---- */
+function fit(){
+  scale=Math.min(innerWidth/1920,innerHeight/1080);
+  stage.style.transform=`translate(${(innerWidth-1920*scale)/2}px,${(innerHeight-1080*scale)/2}px) scale(${scale})`;
+}
+function render(){
+  const h=location.hash.slice(1).split('&'),v=['a','b','c'].includes(h[0])?h[0]:'a';
+  document.documentElement.classList.toggle('clean',h.includes('clean'));
+  document.querySelectorAll('#mk button').forEach(b=>b.classList.toggle('on',b.dataset.v===v));
+  document.getElementById('mknote').textContent=NOTES[v];
+  hideTip();
+  V={a:VA,b:VB,c:VC}[v];
+  stage.classList.add('in');
+  V.build();
+  sync();
+  fit();   // sekme render'indan SONRA
+  setTimeout(()=>stage.classList.remove('in'),1300);
+}
+document.querySelectorAll('#mk button').forEach(b=>b.addEventListener('click',()=>{const c=location.hash.includes('clean')?'&clean':'';location.hash=b.dataset.v+c;}));
+addEventListener('hashchange',render);addEventListener('resize',fit);
+if(matchMedia('(prefers-reduced-motion: reduce)').matches)document.documentElement.classList.add('reduced-motion');
+document.fonts.ready.then(()=>{render();});
+render();
+})();
+</script></body></html>

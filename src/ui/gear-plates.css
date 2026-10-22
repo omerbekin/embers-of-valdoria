@@ -390,3 +390,123 @@ html .gr-shop .gr-bb-row.gr-wplates {
 .gr-shop .gr-sellbox-t i {
   font-style: normal;
 }
+
+/* HERO sekmesi: yuva bölgesi kaydırmasız (Ömer 2026-10-23). Gerçek kap: sol sayfa .gr-page > .gr-page-in > .gr-leaf-hero > .gr-slots.
+   Sayfa kaymaz; yuva ızgarası kalan yüksekliği paylaşır (satırlar en az 44px'e kadar küçülür), plaka içi satır yüksekliğine orantılı ölçeklenir. */
+.gr-ledger.tab-hero .gr-page:not(.r) {
+  overflow: hidden;
+}
+
+.gr-ledger.tab-hero .gr-page:not(.r) > .gr-page-in {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.gr-ledger .gr-leaf-hero {
+  flex: 1 1 0;
+  min-height: 0;
+}
+
+.gr-ledger .gr-leaf-hero > .gr-slots {
+  flex: 1 1 0;
+  min-height: 0;
+  grid-auto-rows: minmax(44px, 1fr);
+  gap: min(calc(12 * var(--u)), 1.2vh) calc(16 * var(--u));
+}
+
+.gr-ledger .gr-leaf-hero .gr-slot.gr-plate {
+  height: 100%;
+  min-height: 44px;
+  box-sizing: border-box;
+  overflow: hidden;
+  gap: clamp(6px, calc(12 * var(--u)), 14px);
+  padding: clamp(2px, calc(5 * var(--u)), 8px) clamp(6px, calc(12 * var(--u)), 14px) clamp(2px, calc(5 * var(--u)), 8px) clamp(3px, calc(6 * var(--u)), 8px);
+}
+
+.gr-ledger .gr-leaf-hero .gp-ico {
+  align-self: stretch;
+  height: auto;
+  width: auto;
+  aspect-ratio: 1;
+  min-height: 38px;
+  max-height: calc(76 * var(--u));
+}
+
+.gr-ledger .gr-leaf-hero .gp-tx {
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  gap: 1px;
+}
+
+.gr-ledger .gr-leaf-hero .gp-l2 {
+  flex-wrap: nowrap;
+  overflow: hidden;
+}
+
+.gr-ledger .gr-leaf-hero .gp-aff {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  min-width: 0;
+}
+
+.gr-ledger .gr-leaf-hero .gp-aff ~ .gp-aff {
+  display: none;
+}
+
+/* kısa / orta ekran (html.compact <= 720px yükseklik): sıkı yapı, yazılar küçük, çipler satırı tek satır */
+html.compact .gr-ledger .gr-leaf-hero {
+  gap: 4px;
+}
+
+html.compact .gr-ledger .gr-leaf-hero > .gr-slots {
+  gap: 4px 8px;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gr-class-sec {
+  flex-wrap: nowrap;
+  overflow: hidden;
+  gap: 4px 6px;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gp-chip {
+  min-height: 22px;
+  flex: none;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gp-lbl {
+  font-size: 8px;
+  letter-spacing: 0.1em;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gr-slot.gr-plate .gr-slot-name {
+  font-size: 11px;
+  letter-spacing: 0;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gp-l2 {
+  font-size: 10px;
+  gap: 0 0.6em;
+}
+
+html.compact .gr-ledger .gr-leaf-hero .gp-ico {
+  min-height: 36px;
+}
+
+/* Torba başlığı (BAG n / 30 + Best + filtre düğmeleri): dar genişlikte başlık tam görünür, düğmeler sağa hizalı alt satıra iner */
+.gr-ledger .gr-bag-head {
+  flex-wrap: wrap;
+  row-gap: 4px;
+}
+
+.gr-ledger .gr-bag-head .gr-sec {
+  flex: 1 0 auto;
+  min-width: max-content;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+.gr-ledger .gr-bag-head .gr-sec + * {
+  margin-left: auto;
+}

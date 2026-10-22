@@ -60,7 +60,7 @@
 
 .pn-date {
   flex: 1;
-  font: italic 18px var(--el-body);
+  font: 18px var(--el-body);
   color: var(--el-muted);
 }
 
@@ -148,7 +148,7 @@
 .pn-count {
   min-width: 6.5em;
   text-align: center;
-  font: italic 17px var(--el-body);
+  font: 17px var(--el-body);
   color: var(--el-muted);
   white-space: nowrap;
 }

@@ -2,6 +2,7 @@
 // Ömer 2026-10-11 (g1): "Usable by" ayrı blok değil; kahraman kartının alt satırı ("Level 1 · 4/6 items") item üstündeyken o kahramanın
 // kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Axes"); item yokken eski satır geri gelir.
 import type { StatAlloc } from '../progression/levels';
+import type { WoundCfg } from './wound-ui';
 import { FALLEN_GEAR_MSG, FALLEN_GEAR_SHORT } from '../progression/equip';
 import {
   ITEMS,
@@ -37,8 +38,9 @@ export interface HoverHero {
   /** Düşmüş kahraman: alive false ya da can oranı 0 (ekipmanı değiştirilemez; Ömer 2026-10-18). */
   alive?: boolean;
   hpRatio?: number;
-  /** Yara satırı (Ömer 2026-10-19; en küçük işlevsel gösterim, yara arayüzü mockup'tan seçilecek): "Wounds: 2 (-40% max HP)"; yoksa yarasız. */
-  woundsNote?: string;
+  /** Yara sayısı ve kuralı (Ömer 2026-10-23, V1 "Scar + dots": src/ui/wound-ui.ts); yoksa yarasız. */
+  wounds?: number;
+  woundCfg?: WoundCfg;
 }
 
 /** Düşmüş mü? (sefer isFallen ile aynı kural: !alive ya da can 0.) */

@@ -1,6 +1,6 @@
 // Sefer ekipmanı (saf; her işlem YENİ durum döndürür): torba, kuşanma, çıkarma, altın ve kahramanın savaş gücü.
 // Aşama 0 temeli (roadmap 1.4); loot / tüccar / ekranlar Aşama 1. Kurallar: docs/design/progression/items.md.
-import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
+import { BAG_SIZE, bestMoves, FALLEN_GEAR_MSG, instanceRarity, isPlanError, itemDef, legendaryIds, planEquip, planMoveEquipped, loadout, promoteOffhand, makeItem, RARITY_IDS, SLOT_IDS, type ItemInstance, type LoadoutResult, type SlotId } from '../progression';
 import { clone, heroById, isFallen } from './state';
 import { rngFor } from './seed';
 import type { CampaignState, Hero } from './types';
@@ -66,6 +66,21 @@ export function unequipItem(s: CampaignState, heroId: string, slot: SlotId): Cam
   t.inventory.push(h.equipment[slot]!);
   h.equipment[slot] = null;
   promoteOffhand(h.equipment); // ana el çıkınca ikinci eldeki hançer ana ele geçer
+  return t;
+}
+
+/** Kuşanılmış item'i aynı kahramanın başka yuvasına taşır; hedef doluysa yer değiştirir (uymayan hedef item'i torbaya döner). Kural: progression > planMoveEquipped. */
+export function moveEquipped(s: CampaignState, heroId: string, from: SlotId, to: SlotId): CampaignState {
+  const hero = heroById(s, heroId);
+  if (!hero) throw new Error(`Unknown hero: ${heroId}`);
+  if (isFallen(hero)) throw new Error(FALLEN_GEAR_MSG);
+  const plan = planMoveEquipped(hero.class, hero.equipment, from, to);
+  if ('error' in plan) throw new Error(plan.error);
+  if (!bagHasRoom(s, plan.toBag.length)) throw new Error('Bag is full');
+  const t = clone(s);
+  const h = heroById(t, heroId)!;
+  h.equipment = { ...h.equipment, ...plan.equipment } as Hero['equipment'];
+  t.inventory.push(...plan.toBag);
   return t;
 }
 

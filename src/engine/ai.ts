@@ -5,7 +5,7 @@ import { betStakeParts } from './gamble';
 import { bestMoveRange, incomingAt, rangedSkills, telegraphDodgeRange } from './ai-range';
 import { previewForTargets } from './preview';
 import { armorReduction, attributePower, hitChance } from './stats';
-import type { Combatant, CorpseChoice, Side, SkillDef } from './types';
+import type { Combatant, CorpseChoice, Side, SkillDef, SkillModeSet } from './types';
 import { DEFAULT_VALUE, ValueContext, pAtLeast, skillRawValue, type AiDifficulty, type AiDifficultyConfig, type AiValueConfig } from './ai-value';
 
 export type { AiDifficulty, AiDifficultyConfig, AiValueConfig } from './ai-value';
@@ -153,6 +153,8 @@ export interface AiChoice {
   board?: Side;
   /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedi (en tehlikeli; battle.corpseChoices). Çağrıda `slot` çağrı yuvasıdır. */
   corpseUid?: string;
+  /** Faz 8: skill ağacı biçimi (Focused Beam / Stacked Deck kartı); yoksa skill'in kendi biçimi. */
+  mode?: string;
   /**
    * Kararın baskın değer terimi (etiket; seçim terazisi verir): kill (öldürme), heal (şifa/diriltme/kurtarma), summon, shield, taunt, guard, burn,
    * tactic (saf self-buff / kontrol), aoe (alan hasarı), damage (tek hedef hasar); 'fallback' kullanılmıyor; rest/skip/move: global skill kuralı.
@@ -202,6 +204,8 @@ export interface GlobalTrace {
 export interface Option {
   skill: SkillDef;
   targetUid?: string;
+  /** Faz 8: skill ağacı biçimi (Battle.skillModes); `skill` o biçimin tanımı. */
+  mode?: string;
   /** Şekil skill'inde seçilen anchor hücre (boş hücre de olabilir) ve şeklin kapsadığı tüm hücreler. */
   anchorSlot?: number;
   cells?: number[];
@@ -409,7 +413,8 @@ export function aiNoise(battle: Battle, actorUid: string): number {
  */
 function pickClassOption(actor: Combatant, profile: AiProfile, options: Option[], ctx: ValueContext, trace: AiTrace | undefined, battle: Battle): { option: Option; reason: AiChoice['reason'] } | null {
   for (const o of options) {
-    scoreOption(ctx, profile, o);
+    if (o.mode !== undefined) battle.withMode(actor.uid, o.skill.id, o.mode, () => scoreOption(ctx, profile, o));
+    else scoreOption(ctx, profile, o);
     // MP ayırma yalnızca ayrılan skill'in değeri bu saldırıdan büyükse erteler (madde 258)
     if (o.blocked && o.score >= (o.reserveValue ?? 0)) o.blocked = false;
   }
@@ -458,6 +463,7 @@ function toChoice(option: Option, reason: AiChoice['reason']): AiChoice {
     ...(option.anchorSlot !== undefined ? { slot: option.anchorSlot } : option.summonSlot !== undefined ? { slot: option.summonSlot } : option.reviveSlot !== undefined ? { slot: option.reviveSlot } : {}),
     ...(option.board ? { board: option.board } : {}),
     ...(option.corpseUid ? { corpseUid: option.corpseUid } : {}),
+    ...(option.mode !== undefined ? { mode: option.mode } : {}),
     reason,
     score: r1(option.score),
   };
@@ -469,7 +475,12 @@ function buildOptions(battle: Battle, actor: Combatant, profile: AiProfile, trac
   const options: Option[] = [];
   for (const skillId of actor.skills) {
     if (!battle.canUse(actor.uid, skillId).ok) continue;
-    options.push(...skillOptions(battle, actor, skillId, profile));
+    const modes = battle.skillModes(actor.uid, skillId);
+    if (!modes) {
+      options.push(...skillOptions(battle, actor, skillId, profile));
+      continue;
+    }
+    options.push(...modeOptions(battle, actor, skillId, modes, profile));
   }
   // İkinci geçiş: saf self-buff'ların net değeri (diğer seçeneklerin değeri bilinmeli) ve skill'in bağlam ipucu
   const attackScore = (o: Option) => value(o) - o.cost;
@@ -549,6 +560,41 @@ function spentReserves(actor: Combatant, o: Option, reserves: Reserve[]): Reserv
   const pureAttack = o.damage > 0 && o.heal === 0 && o.shield === 0 && o.burn === 0 && !o.summon && !o.taunt && !o.guard;
   if (reserves.length === 0 || o.skill.ai?.reserveMp || !pureAttack || o.skill.cost.resource !== 'mp' || o.skill.cost.amount <= 0) return [];
   return reserves.filter((r) => actor.mp - o.skill.cost.amount + actor.stats.mpRegen * r.turns < r.need);
+}
+
+/**
+ * Faz 8: biçimli skill'in seçenekleri. Skill'in kendi biçimi seçenekse (Radiance / Focused Beam) her biçim kendi tanımıyla aynı terazide puanlanır
+ * (Focused Beam tek düşmanı öldürecekse ya da tek düşman kaldıysa kendiliğinden öne geçer). Her kullanımda biçim isteyen durum seçimi (Card Trick /
+ * Stacked Deck) skill'in kendi (rastgele) tanımıyla değerlenir, kart basit kuralla seçilir (statusModePick).
+ */
+function modeOptions(battle: Battle, actor: Combatant, skillId: string, modes: SkillModeSet, profile: AiProfile): Option[] {
+  const base = skillOptions(battle, actor, skillId, profile);
+  if (!modes.keepBase) {
+    const pick = statusModePick(battle, actor, skillId, modes);
+    for (const o of base) o.mode = pick;
+    return base;
+  }
+  const out = [...base];
+  for (const m of modes.list) {
+    const opts = battle.withMode(actor.uid, skillId, m.id, () => skillOptions(battle, actor, skillId, profile));
+    for (const o of opts) o.mode = m.id;
+    out.push(...opts);
+  }
+  return out;
+}
+
+/**
+ * Faz 8 (Stacked Deck): Card Trick'in durum kartı, basit ve belirleyici kural (zar yok): vurulabilecek tek düşman kaldıysa Stun (ilk kart ona gider);
+ * düşmanlarda şifacı varsa Wound (alınan şifa azalır); yoksa Slow (iki kart da yavaşlar). Kart yoksa listedeki ilk biçim.
+ */
+export function statusModePick(battle: Battle, actor: Combatant, skillId: string, modes: SkillModeSet): string {
+  const ids = modes.list.map((m) => m.id);
+  const foes = battle.validTargets(actor.uid, skillId).filter((c) => c.side !== actor.side && c.hp > 0);
+  if (foes.length <= 1 && ids.includes('stun')) return 'stun';
+  const healer = foes.some((c) => c.skills.some((id) => battle.skill(id, c)?.effects.some((e) => (e.type === 'heal' || e.type === 'hot') && !(e as { self?: boolean }).self)));
+  if (healer && ids.includes('wound')) return 'wound';
+  if (ids.includes('slow')) return 'slow';
+  return ids[0]!;
 }
 
 /** Bir skill'in tüm (hedef/alan) seçenekleri. Bekleme ve MP denetimi YAPMAZ (çağıran denetler). */

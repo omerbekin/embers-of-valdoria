@@ -657,7 +657,7 @@
     "_not": "Ömer 2026-10-20: Defender'da Guard'ın yerine. Seçilen dost + onun SIRASINDAKİ dostlar (splash 'row', Tremor Slam'ın row şekli; Defender hariç) 3 tur (her taşıyanın kendi turları, eski Guard sayımı) Guard alır: aldıkları hasarın %50'si Defender'a geçer (Guard makinesi; aktarılan pay Defender zırhıyla yeniden azalmaz; Defender ölünce aktarım durur; bir birimde tek Guard, yenisi eskisinin yerine geçer). Menzil 2 seçilen dosta bakar; yarım turn Guard'la aynı; cooldown 5 (Ömer: %35 değersizse %50 + cooldown 5); bedel 10 MP (Ömer 2026-10-20). İkon/vfx/ses Guard'ınki.",
     "id": "close_ranks",
     "name": "Close Ranks",
-    "icon": "guard2",
+    "icon": "closeranks2",
     "target": "single_ally",
     "range": 2,
     "excludeSelf": true,
@@ -1019,7 +1019,7 @@
   },
 
   "headsmans_blow": {
-    "_not": "Warrior ultimate (Ömer 2026-10-17, wr1 Berserker; Abyssal Cry'ın yerine): yakın dövüş tek hedef, TÜM Rage'i harcar (en az 30; cost.spendAll). Güç = power + powerPerRage x harcanan Rage (30 Rage: 1,1 / 50 Rage: 1,5 STR), x(1 + executeBonus x hedefin eksik can oranı). Sayılar PROVİZYON (balance-tester). İkon/vfx/ses YER TUTUCU: ikon warcry, vfx doublestrike, pozlar overhead -> slash, sesler Warrior'ın balta/zırh sesleri (content-designer gerçeklerini yapacak).",
+    "_not": "Warrior ultimate (Ömer 2026-10-17, wr1 Berserker; Abyssal Cry'ın yerine): yakın dövüş tek hedef, TÜM Rage'i harcar (en az 30; cost.spendAll). Güç = power + powerPerRage x harcanan Rage (30 Rage: 1,1 / 50 Rage: 1,5 STR), x(1 + executeBonus x hedefin eksik can oranı). Sayılar PROVİZYON (balance-tester). İkon YER TUTUCU (warcry). Animasyon 2026-10-23: vfx headsman (v2: art-v2/warrior/vfx.ts; kaldırış + kor dolumu, tek dikey iniş, zemin çatlağı), pozlar overhead -> slash; sesler mevcut Warrior sesleri (v2 furyCharge + abyssRumble ek katman).",
     "id": "headsmans_blow",
     "name": "Headsman's Blow",
     "icon": "warcry",
@@ -1043,11 +1043,12 @@
         "executeBonus": 0.6
       }
     ],
-    "vfx": "doublestrike",
+    "vfx": "headsman",
     "pose": ["overhead", "slash"],
     "sfx": [
       "armorRun",
       "axeSwing",
+      "chargeSlam",
       "axeChop"
     ]
   },
@@ -2094,10 +2095,11 @@
         "executeBonus": 0.6
       }
     ],
-    "vfx": "doublestrike",
+    "vfx": "headsman",
     "sfx": [
       "armorRun",
       "axeSwing",
+      "chargeSlam",
       "axeChop"
     ],
     "pose": [
@@ -3851,7 +3853,7 @@
         "share": 0.6
       }
     ],
-    "icon": "guard2",
+    "icon": "closeranks2",
     "vfx": "guard2",
     "sfx": [
       "shieldBrace",

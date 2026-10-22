@@ -1,0 +1,219 @@
+/* Savaşta skill biçimi seçim paneli (src/ui/skill-choice.ts; skill ağacı Faz 8, mockup tree-choices V2). Ölçüler oyun birimi (HUD kökü 1920 geniş);
+   telefonda (html.short) yazılar gerçek piksel (var(--rp)) cinsinden okunur boyuta çıkar. Düz yazı (italik yok). */
+.sc-pop {
+  z-index: 40;
+  pointer-events: auto;
+  padding: 12px;
+  animation: sc-in var(--m-tooltip, 140ms) var(--m-ease, ease-out);
+  transform-origin: 50% 100%;
+}
+
+.sc-head {
+  margin: 0 0 10px;
+  text-align: center;
+  font: 17px var(--gar);
+  color: var(--txt);
+  white-space: nowrap;
+}
+
+.sc-cards {
+  display: flex;
+  gap: 10px;
+}
+
+.sc-card {
+  --acc: rgb(var(--gold));
+  width: 230px;
+  min-height: 48px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  padding: 12px 10px;
+  text-align: center;
+  cursor: pointer;
+  background: rgba(255, 255, 255, 0.035);
+  border: 1px solid rgba(var(--gold), 0.32);
+  color: var(--txt);
+  font: inherit;
+  transition:
+    transform var(--m-card-hover, 170ms) var(--m-ease, ease-out),
+    border-color var(--m-card-hover, 170ms),
+    background var(--m-card-hover, 170ms),
+    box-shadow var(--m-card-hover, 170ms);
+}
+
+.sc-card:hover,
+.sc-card:focus-visible {
+  outline: none;
+  transform: translateY(calc(-1 * var(--m-card-lift, 3px)));
+  border-color: var(--acc);
+  background: rgba(var(--gold), 0.1);
+  box-shadow: 0 0 14px rgba(var(--gold), 0.28);
+}
+
+.sc-ico {
+  position: relative;
+  width: 64px;
+  height: 64px;
+  border: 1px solid rgba(var(--gold), 0.45);
+  background: #0d0806;
+}
+
+.sc-ico img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+}
+
+/* tek hedef biçimi: ikonun üstünde ince nişangâh */
+.sc-ico.aim::after {
+  content: '';
+  position: absolute;
+  inset: 16%;
+  border: 2px solid var(--ember2);
+  border-radius: 50%;
+  box-shadow: 0 0 6px rgba(255, 179, 90, 0.7);
+}
+
+.sc-nm {
+  font: 600 18px var(--cin);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--acc);
+}
+
+.sc-tx {
+  font: 16px var(--gar);
+  line-height: 1.2;
+  color: var(--txt);
+}
+
+.sc-nt {
+  font: 14px var(--gar);
+  color: var(--muted);
+}
+
+.sc-arrow {
+  position: absolute;
+  left: var(--ax, 50%);
+  bottom: -7px;
+  width: 12px;
+  height: 12px;
+  margin-left: -6px;
+  transform: rotate(45deg);
+  background: rgb(12, 9, 6);
+  border-right: 1px solid rgba(var(--gold), 0.42);
+  border-bottom: 1px solid rgba(var(--gold), 0.42);
+}
+
+@keyframes sc-in {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Hedef seçme şeridi ("Focused Beam · Choose an enemy · Cancel") */
+.sc-prompt {
+  z-index: 40;
+  left: 50%;
+  top: 820px;
+  transform: translateX(-50%);
+  pointer-events: auto;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  padding: 8px 10px 8px 22px;
+  white-space: nowrap;
+  animation: sc-fade var(--m-tooltip, 140ms) var(--m-ease, ease-out);
+}
+
+.sc-pn {
+  font: 600 20px var(--cin);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ember2);
+}
+
+.sc-pt {
+  font: 18px var(--gar);
+  color: var(--txt);
+}
+
+.sc-cancel {
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font: 600 16px var(--cin);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--muted);
+  transition: color var(--m-card-hover, 170ms);
+}
+
+.sc-cancel:hover {
+  color: var(--on);
+}
+
+@keyframes sc-fade {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Telefon (812x375 civarı): yazı ve dokunma hedefleri gerçek piksel cinsinden */
+html.short .sc-pop {
+  padding: calc(6 * var(--rp));
+}
+
+html.short .sc-cards {
+  gap: calc(6 * var(--rp));
+}
+
+html.short .sc-card {
+  width: calc(118 * var(--rp));
+  min-height: calc(44 * var(--rp));
+  gap: calc(3 * var(--rp));
+  padding: calc(6 * var(--rp)) calc(5 * var(--rp));
+}
+
+html.short .sc-ico {
+  width: calc(30 * var(--rp));
+  height: calc(30 * var(--rp));
+}
+
+html.short .sc-nm {
+  font-size: calc(11 * var(--rp));
+}
+
+html.short .sc-tx {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .sc-nt,
+html.short .sc-head {
+  font-size: calc(9 * var(--rp));
+}
+
+html.short .sc-prompt {
+  top: auto;
+  bottom: calc(150 * var(--rp));
+  gap: calc(8 * var(--rp));
+  padding: calc(2 * var(--rp)) calc(4 * var(--rp)) calc(2 * var(--rp)) calc(10 * var(--rp));
+}
+
+html.short .sc-pn {
+  font-size: calc(11 * var(--rp));
+}
+
+html.short .sc-pt {
+  font-size: calc(10 * var(--rp));
+}
+
+html.short .sc-cancel {
+  min-height: calc(44 * var(--rp));
+  font-size: calc(10 * var(--rp));
+}

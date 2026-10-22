@@ -1,0 +1,35 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Wounds UI mockups</title>
+<!-- YARA arayuzu taslagi (ui-dev, 2026-10-23). Oyun kodu DEGIL. Adres: #v1 | #v2 | #v3  &w=0..3 (karakter ekraninda yara sayisi)  &lo=1 (dusuk can)  &phone  &clean. Kurallar: src/progression/wounds.ts + campaign.json rules.wounds. -->
+<link rel="stylesheet" href="../kit-v2/css/style.css" />
+<link rel="stylesheet" href="../kit-v2/css/elegant.css" />
+<link rel="stylesheet" href="../kit-v2/css/band-tip.css" />
+<link rel="stylesheet" href="../kit-v2/mk.css" />
+<link rel="stylesheet" href="wd.css" />
+</head>
+<body>
+<div class="mk-page">
+<div class="mk-intro">
+<h1>Yara (wound) göstergesi</h1>
+<p>Bugün yara yalnızca düz yazı: "Wounds: 1 (-20% max HP)". Üç öneri, her biri iki yerde: sefer haritasındaki <b>Your party</b> listesi ve Gear ekranındaki kahraman başlığı + karakter kartı. Hepsinde ayrıntı üstüne gelince A Band ipucunda; ekranda kalıcı uzun yazı yok.</p>
+<h3>Oyundaki gerçek kurallar</h3>
+<ul>
+<li>Her yara maksimum canı <b>%20</b> düşürür (toplamsal: 2 yara -%40, 3 yara -%60).</li>
+<li>Yara, kazanılan savaşın sonunda <b>düşmüş</b> kalan kahramana eklenir; kahraman %10 canla kalkar ve 1 yara alır.</li>
+<li><b>3 yarası</b> olan kahraman bir kazanılan savaşı daha düşmüş bitirirse ceset olur (Valor kaldırır).</li>
+<li>İyileşme: <b>kasabada dinlenme</b> bütün yaraları siler (ilk kasaba varışı da bedava); <b>Valor</b> ile diriltme 1 yara siler. Kamp dinlenmesi ve zafer şifası yara silmez.</li>
+</ul>
+<p>Örnek takım (tüm durumlar bir arada): Warrior lider ve yarasız, Archer 1 yara, Mage 2 yara ve düşük can, Defender 3 yara (üst sınır). Karakter ekranı için alttaki şeritten yara sayısı (W0-W3) ve düşük can seçilir. Sayılar örnektir.</p>
+</div>
+<div id="sections"></div>
+</div>
+<script src="../kit-v2/mk.js"></script>
+<script src="app.js"></script>
+</body>
+</html>

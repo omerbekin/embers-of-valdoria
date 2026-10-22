@@ -47,7 +47,7 @@
 
 .vb-lbl {
   min-width: 56px;
-  font: italic 14px var(--el-body);
+  font: 14px var(--el-body);
   color: var(--el-dim);
 }
 
@@ -78,7 +78,7 @@
 }
 
 .vb-info {
-  font: italic 14px var(--el-body);
+  font: 14px var(--el-body);
   color: var(--el-dim);
 }
 

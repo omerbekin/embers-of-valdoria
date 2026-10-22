@@ -130,5 +130,34 @@
         "act": 6
       }
     }
+  },
+  "deserter_captain": {
+    "cols": 4,
+    "rows": 3,
+    "density": 0.5,
+    "idle": [
+      0,
+      1
+    ],
+    "idleMs": 900,
+    "windup": 2,
+    "release": 3,
+    "channel": 5,
+    "bless": 6,
+    "strike": 3,
+    "move": 7,
+    "hit": 8,
+    "defend": 9,
+    "dying": 10,
+    "dead": 11,
+    "skills": {
+      "toll_sweep": {
+        "windup": 4,
+        "act": 5
+      },
+      "hold_the_tower": {
+        "act": 6
+      }
+    }
   }
 }

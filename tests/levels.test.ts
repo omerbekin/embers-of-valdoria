@@ -44,6 +44,8 @@ import {
   pickHero,
   readSaves,
   type CampaignState,
+  isPocket,
+  getMap as getCampaignMap,
 } from '../src/campaign';
 import { applyOutcome, newRun, parseRun, waveLevel, waveXp, wavePlan } from '../src/endless';
 
@@ -212,7 +214,9 @@ function journey(seed: number, pick: number): { s: CampaignState; ups: number[] 
     const st = nextStep(s);
     if (st.kind === 'complete') break;
     if (st.kind === 'move') {
-      s = moveTo(s, st.options[Math.min(pick, st.options.length - 1)]!);
+      // farmsız oyuncu ana yolda kalır: cepler (isteğe bağlı çıkmaz dal, 2026-10-22) atlanır
+      const opts = st.options.filter((id) => !isPocket(getCampaignMap(s.mapId), id));
+      s = moveTo(s, opts[Math.min(pick, opts.length - 1)]!);
       continue;
     }
     const lead = s.roster.find((h) => !h.tutorial);

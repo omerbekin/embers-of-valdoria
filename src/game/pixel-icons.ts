@@ -1636,4 +1636,6 @@ export const PIXEL_ICONS: Record<string, Draw> = {
     rustChain(g, 11, 16, 1.4, 22, 1.2);
   },
 };
+// Close Ranks (v2 ikonu closeranks2.png); v1 yedek çizimi Guard ile ortak
+PIXEL_ICONS.closeranks2 = PIXEL_ICONS.guard2!;
 

@@ -14,6 +14,7 @@ export const ICONS: Record<string, V2SpriteEntry> = {
   tremor2: { image: 'defender/tremor2' },
   taunt2: { image: 'defender/taunt2' },
   guard2: { image: 'defender/guard2' },
+  closeranks2: { image: 'defender/closeranks2' },
   fistcrush2: { image: 'defender/fistcrush2' },
   aura: { image: 'defender/aura' },
 };

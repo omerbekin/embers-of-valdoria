@@ -952,7 +952,7 @@
 .wk-assets .small,
 .wk-assets .muted {
   font-family: var(--k-gar);
-  font-style: italic;
+  font-style: normal;
   color: var(--k-muted);
 }
 
@@ -982,7 +982,7 @@
 }
 
 .wk-assets .tag.sfx {
-  font: italic 14px var(--k-gar);
+  font: 14px var(--k-gar);
   letter-spacing: 0;
   text-transform: none;
 }
@@ -1139,7 +1139,7 @@
 
 .wk-assets label.inline {
   gap: 10px;
-  font: italic 15px var(--k-gar);
+  font: 15px var(--k-gar);
   color: var(--k-txt);
   cursor: pointer;
 }

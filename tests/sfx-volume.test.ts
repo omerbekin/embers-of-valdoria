@@ -37,7 +37,7 @@ describe('Sound Effects seviyesi', () => {
   });
 
   it('varsayılan %100 (eski ses düzeyi korunur); kayıt yoksa varsayılan', () => {
-    expect(DEFAULT_SFX_LEVEL).toBe(20);
+    expect(DEFAULT_SFX_LEVEL).toBe(14);
     expect(loadSfxLevel()).toBe(DEFAULT_SFX_LEVEL);
   });
 

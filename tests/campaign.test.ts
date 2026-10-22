@@ -3,6 +3,8 @@ import {
   CONFIG,
   activeHeroes,
   allRoutes,
+  isPocket,
+  pockets,
   applyBattle,
   autoResolve,
   battlePlan,
@@ -56,9 +58,14 @@ function playTo(s: CampaignState, target: string, choose: (opts: string[]) => st
 }
 
 describe('sefer haritası: graf', () => {
-  it('27 düğüm (A1-x + Cairn Hill), geçerli bağlantılar, bölgeler, 1 başlangıç ve 1 final', () => {
-    expect(map.nodes).toHaveLength(27); // 2026-10-19: Cairn Hill (Windy Moor ile çatal arası)
+  it('33 düğüm (Harita 1 yeniden çizim 2026-10-22: 27 eski + 6 yeni), bölgeler 10 / 11 / 12, geçerli bağlantılar, 1 başlangıç ve 1 final', () => {
+    expect(map.nodes).toHaveLength(33);
     expect(validateMap(map)).toEqual([]);
+    const per = (r: string) => map.nodes.filter((n) => n.region === r).length;
+    expect([per('I'), per('II'), per('III')]).toEqual([10, 11, 12]);
+    // bölge kayması: Windy Moor, Cairn Hill, Iron Pass, Charcoal Camp II -> I; Valdren Keep bölge II'nin kapısı
+    for (const id of ['moor', 'cairn', '5B', 'charcoal', 'hills', 'hoard']) expect(node(map, id).region, id).toBe('I');
+    expect(node(map, '7').region).toBe('II');
     expect(map.regions.map((r) => r.id)).toEqual(['I', 'II', 'III']);
     expect(map.start).toBe('1');
     expect(map.nodes.filter((n) => n.final).map((n) => n.id)).toEqual(['12']);
@@ -74,36 +81,50 @@ describe('sefer haritası: graf', () => {
     }
   });
 
-  it('eğitim aynen (Mill Road -> Ravenwood -> Ruined Watchtower -> Ashford), A1-x konumları', () => {
+  it('eğitim aynen (Mill Road -> Ravenwood -> Ruined Watchtower -> Ashford); konumlar yeni görselden (mockup maps-2-3.html#v0)', () => {
     expect(['1', '2', '3', '4'].map((id) => node(map, id).name)).toEqual(['Mill Road', 'Ravenwood', 'Ruined Watchtower', 'Ashford Village']);
-    expect(node(map, '2').pos).toEqual([0.224, 0.639]);
-    expect(node(map, '3').pos).toEqual([0.281, 0.407]);
-    expect(node(map, '4').pos).toEqual([0.229, 0.231]);
+    expect(node(map, '1').pos).toEqual([0.2691, 0.7447]);
+    expect(node(map, '4').pos).toEqual([0.1728, 0.5128]);
+    expect(node(map, '12').pos).toEqual([0.9181, 0.0851]);
   });
 
-  it('seçim noktaları cairn, 7, pilgrim, 10; birleşmeler 7, grave, river, camp; kenar stilleri (tek yol düz, seçimli kesik)', () => {
-    expect(choicePoints(map).sort()).toEqual(['10', '7', 'cairn', 'pilgrim']);
-    expect(mergePoints(map).sort()).toEqual(['7', 'camp', 'grave', 'river']);
-    for (const e of map.edges) {
-      const single = map.edges.filter((x) => x.from === e.from).length === 1 && map.edges.filter((x) => x.to === e.to).length === 1;
-      expect(e.style, `${e.from}->${e.to}`).toBe(single ? 'solid' : 'dashed');
+  it('rozetler arası en az 120 px (1920x1080 dünyası), hiçbir düğüm kenara %5ten yakın değil', () => {
+    for (const a of map.nodes) {
+      expect(Math.min(a.pos[0], 1 - a.pos[0], a.pos[1], 1 - a.pos[1]), a.id).toBeGreaterThanOrEqual(0.05);
+      for (const b of map.nodes) if (a.id < b.id) expect(Math.hypot((a.pos[0] - b.pos[0]) * 1920, (a.pos[1] - b.pos[1]) * 1080), `${a.id}-${b.id}`).toBeGreaterThanOrEqual(120);
     }
   });
 
-  it('24 rota, hepsi 22 durak ve finale ulaşır; her rotada 17 savaşlı durak', () => {
+  it('6 seçim noktası (yeni: Ashford, Ember Road), 4 cep; birleşmeler; kenar stilleri (tüm yollar düz, yalnız cep yolu kesik)', () => {
+    expect(choicePoints(map).sort()).toEqual(['10', '4', '7', 'cairn', 'pilgrim', 'road']);
+    expect(pockets(map).sort()).toEqual(['deserters', 'hoard', 'shrine', 'wagons']);
+    expect(mergePoints(map).sort()).toEqual(['7', 'cairn', 'camp', 'grave', 'head', 'river']);
+    for (const e of map.edges) expect(e.style, `${e.from}->${e.to}`).toBe(isPocket(map, e.to) ? 'dashed' : 'solid');
+    // cep: tek kenarla bağlı, ileri yolu yok; her bölgede en az bir cep
+    for (const r of ['I', 'II', 'III']) expect(pockets(map).some((id) => node(map, id).region === r), r).toBe(true);
+    // eski kenarların hiçbiri silinmedi; yeni kenarlar
+    for (const [a, b] of [['4', 'hills'], ['hills', 'cairn'], ['moor', 'hoard'], ['5A', 'shrine'], ['10', 'wagons'], ['road', 'hamlet'], ['hamlet', 'head'], ['gate', 'deserters']] as const)
+      expect(map.edges.some((e) => e.from === a && e.to === b), `${a}->${b}`).toBe(true);
+    // elle kavis: Iron Pass -> Valdren Keep (Charcoal Camp'in üstünden)
+    expect(map.edges.find((e) => e.from === '5B' && e.to === '7')?.ctrl).toEqual([0.3469, 0.1809]);
+  });
+
+  it('96 rota (cepler rota değil), hepsi 22 durak ve finale ulaşır; her rotada 17 savaşlı durak (Burnt Hamlet kolunda 18)', () => {
     const routes = allRoutes(map);
-    expect(routes).toHaveLength(24);
+    expect(routes).toHaveLength(96);
     for (const r of routes) {
       expect(r).toHaveLength(map.stopsPerRun);
       expect(r[0]).toBe('1');
       expect(r[r.length - 1]).toBe('12');
+      expect(r.some((id) => isPocket(map, id)), r.join('-')).toBe(false);
       const battles = r.filter((id) => isBattleNode(node(map, id))).length;
-      expect(battles, r.join('-')).toBe(17);
+      expect(battles, r.join('-')).toBe(r.includes('hamlet') ? 18 : 17);
     }
   });
 
-  it("K1: her dalda en az bir savaş (Witch's Hut korunan olay, Ömer 2026-10-11); K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
-    expect(k1Violations(map)).toEqual([]);
+  it("K1: her dalda en az bir savaş (Witch's Hut korunan olay, Ömer 2026-10-11) — tek bilinçli istisna Shepherd's Fold kolu; K2: hiçbir rotada 2den fazla savaşsız durak art arda yok", () => {
+    // Ember Road çatalı (Ömer 2026-10-22, map-1-rework.md 7.4): dinlenme (Shepherd's Fold) mi, savaş + XP (Burnt Hamlet) mi; cepler K1'e girmez
+    expect(k1Violations(map)).toEqual(['road -> fold']);
     for (const r of allRoutes(map)) expect(longestPeacefulRun(map, r), r.join('-')).toBeLessThanOrEqual(2);
   });
 });
@@ -128,13 +149,13 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     s = playTo(s, '4');
     // Ashford'u bitir: tutorial düğümleri (Watchtower ve öncesi) geri yol değil
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['moor', 'hills'] }); // Ashford çatalı (2026-10-22): Windy Moor ya da Brackenridge
     s = playTo(s, 'moor');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn'], back: ['4'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn', 'hoard'], back: ['4'] }); // Raiders' Hoard: cep
     s = playTo(s, 'cairn');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['moor'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['moor', 'hills'] });
     s = moveTo(s, 'charcoal');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
     s = moveTo(s, 'cairn'); // geri
@@ -143,7 +164,7 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     expect(nextStep(s).kind).toBe('battle');
     s = playTo(s, '7');
     expect(s.path).toEqual(['1', '2', '3', '4', 'moor', 'cairn', 'charcoal', 'cairn', '5B', '7']);
-    s = playTo(s, 'grave', (o) => o[2]!);
+    s = playTo(s, 'grave', (o) => (o.includes('5A') ? '5A' : o[0]!));
     expect(s.path.slice(-2)).toEqual(['5A', 'grave']);
   });
 

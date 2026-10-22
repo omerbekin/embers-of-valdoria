@@ -87,6 +87,9 @@ export class GameMenu {
     this.overlay.setAttribute('aria-label', 'Menu');
     const box = el('div', 'gm-box el-panel corners el-modal-panel');
     box.append(el('div', 'gm-title el-title', 'Menu'));
+    const rule = el('div', 'gm-rule');
+    rule.append(el('i', ''));
+    box.append(rule);
     this.list = el('div', 'gm-list');
     this.confirmBox = el('div', 'gm-confirm');
     this.confirmBox.hidden = true;
@@ -196,6 +199,7 @@ export class GameMenu {
       icons.push([id, icon]);
       b.append(icon, el('span', '', (id === 'retreat' ? this.hooks.retreatLabel?.() : undefined) ?? spec.labels?.[id] ?? MENU_LABELS[id]));
       b.dataset.item = id;
+      b.style.setProperty('--i', String(this.list.childElementCount));
       b.addEventListener('click', () => this.pick(id, id === 'retreat' && spec.confirm[id] ? this.hooks.retreatConfirm?.() ?? spec.confirm[id] : spec.confirm[id]));
       this.list.append(b);
     }

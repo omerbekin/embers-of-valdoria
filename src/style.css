@@ -351,7 +351,7 @@ body {
 
 .debug-ibtn-badge {
   margin-top: 2px;
-  font: italic 14px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  font: 14px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
 }
 
 .debug-ibtn-badge.on {
@@ -518,7 +518,7 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   padding: calc(64px + var(--et)) calc(16px + var(--er)) calc(16px + var(--eb)) calc(16px + var(--el));
   background: rgba(5, 3, 2, 0.45); /* oyun içi Menu: sahne hafifçe görünsün (Ömer 2026-10-14) */
   color: var(--g-text);
-  z-index: 18;
+  z-index: 20; /* hikâye şeridi, Gear gibi 19 katmanlı pencerelerin üstünde */
 }
 
 .gm-overlay[hidden],
@@ -536,13 +536,43 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   padding: 22px 28px 20px;
   overflow: hidden auto;
   zoom: 1.15; /* oyun içi Menu %15 büyük (Ömer 2026-10-11); telefonda html.short kuralı %10 küçültür */
-  /* Ömer 2026-10-14: Menu paneli hafif saydam (~%85), arkada sahne seçilir; yalnızca bu Menu (ortak .el-panel diğer pencerelerde opak kalır).
-     backdrop-filter yok (telefonda pahalı); yazı okunurluğu için koyu zemin korunur. */
-  background: linear-gradient(180deg, rgba(30, 22, 14, 0.86), rgba(12, 9, 6, 0.84));
+  /* Ömer 2026-10-23: panel artık ortak .el-panel gibi neredeyse opak (~%96); arkadaki şehir çizimi kalabalık yapıyordu. */
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.97), rgba(12, 9, 6, 0.97));
 }
 
+/* Başlık bölgesi (Ömer 2026-10-23): başlık seçeneklerden net ayrılsın: biraz büyük + harf aralıklı, altında boşluk ve elmaslı ince altın çizgi */
 .gm-title {
-  font-size: 30px;
+  font-size: 34px;
+  letter-spacing: 0.2em;
+  padding: 4px 0 0 0.2em; /* son harfin sağ boşluğunu dengeler */
+}
+
+.gm-rule {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 16px 6px 4px;
+}
+
+.gm-rule::before,
+.gm-rule::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.7));
+}
+
+.gm-rule::after {
+  background: linear-gradient(270deg, transparent, rgba(217, 178, 106, 0.7));
+}
+
+.gm-rule i {
+  flex: none;
+  width: 7px;
+  height: 7px;
+  transform: rotate(45deg);
+  background: #140e09;
+  box-shadow: 0 0 0 1px rgba(217, 178, 106, 0.85);
 }
 
 /* Menü maddeleri (Ömer 2026-10-12, ortak ortalı menü): kutusuz satır, ikon + Cinzel yazı birlikte ortada, ince ayırıcı. İkon yazının
@@ -551,7 +581,7 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 .gm-list {
   display: flex;
   flex-direction: column;
-  margin-top: 12px;
+  margin-top: 8px;
 }
 
 .gm-row {
@@ -571,8 +601,30 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
   border-bottom: 1px solid rgba(217, 178, 106, 0.16);
   cursor: pointer;
-  transition: color 0.18s, text-shadow 0.18s;
+  transition: color 0.18s, text-shadow 0.18s, translate var(--m-card-hover, 170ms) var(--m-ease, ease-out), background-color var(--m-card-hover, 170ms) var(--m-ease, ease-out);
   -webkit-tap-highlight-color: transparent;
+  animation: gm-row-in var(--m-card-in, 260ms) var(--m-ease, ease-out) both;
+  animation-delay: calc(var(--m-card-delay, 90ms) + var(--i, 0) * 40ms);
+}
+
+@keyframes gm-row-in {
+  from {
+    opacity: 0;
+    transform: translateY(var(--m-card-rise, 8px));
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+/* Hover: satır birkaç px yükselir + yumuşak altın parıltı (yalnızca fare; ui-motion.json card.lift) */
+@media (hover: hover) {
+  .gm-row:hover {
+    translate: 0 calc(-1 * var(--m-card-lift, 4px) / 2);
+    background-color: rgba(243, 217, 153, 0.06);
+    box-shadow: 0 0 calc(14px) rgba(243, 217, 153, 0.16);
+  }
 }
 
 .gm-row:last-child {
@@ -859,7 +911,7 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
 
 .st-line {
   margin: calc(14 * var(--u)) 0 0 calc(30 * var(--u));
-  font: italic calc(24 * var(--u)) var(--st-body, Georgia, serif);
+  font: calc(24 * var(--u)) var(--st-body, Georgia, serif);
   color: #a8977a;
   text-shadow: 0 1px 0 #0c0805;
 }
@@ -965,7 +1017,7 @@ html.close-btn-on .settings-toggle.fullscreen-toggle {
   align-items: center;
   min-height: 44px;
   margin-top: calc(24 * var(--u));
-  font: italic max(11px, calc(21 * var(--u))) 'EB Garamond', Georgia, serif;
+  font: max(11px, calc(21 * var(--u))) 'EB Garamond', Georgia, serif;
   color: rgba(168, 151, 122, 0.55);
   letter-spacing: 0.02em;
   cursor: pointer;
@@ -1137,7 +1189,12 @@ html.short .gm-box {
 }
 
 html.short .gm-title {
-  font-size: 19px;
+  font-size: 21px;
+  padding-top: 0;
+}
+
+html.short .gm-rule {
+  margin: 8px 6px 2px;
 }
 
 html.short .gm-list {
@@ -1178,7 +1235,7 @@ html.compact:not(.short) .gm-row {
   gap: 8px;
   max-width: calc(var(--stage-w, 100vw) - 32px);
   padding: 2px 2px 2px 18px;
-  font: italic 17px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  font: 17px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
   color: #cdb88d;
   text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
   background: linear-gradient(180deg, rgba(30, 22, 14, 0.96), rgba(12, 9, 6, 0.96)); /* tasarım kiti */
@@ -1349,7 +1406,7 @@ html.compact:not(.short) .gm-row {
 
 .debug-note {
   margin: 6px 0;
-  font: italic 15px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  font: 15px 'EB Garamond', Georgia, 'Palatino Linotype', serif;
   color: #cdb88d;
 }
 
@@ -1575,7 +1632,7 @@ html.compact:not(.short) .gm-row {
   width: 100%;
   min-height: 96px;
   padding: 10px 12px;
-  font: italic 18px 'EB Garamond', Georgia, serif;
+  font: 18px 'EB Garamond', Georgia, serif;
   color: #f3e4c4;
   background: #0c0806;
   border: 2px solid #8a6a32;
@@ -1623,3 +1680,6 @@ img[src$='#smooth'] {
 html.short .st-replay.el-link {
   font-size: max(11px, calc(24 * var(--u)));
 }
+
+/* No italics in UI (design language #5): reset browser default for em/i/cite text. */
+em, i, cite, address, dfn, var { font-style: normal; }

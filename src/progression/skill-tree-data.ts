@@ -265,7 +265,35 @@ export interface HealFx extends Omit<HealHook, 'h' | 'node'> {
  * Faz 2c: her fx `needs: '<düğüm anahtarı>'` taşıyabilir: o düğümün eklediği etkiye bakar (derleme o düğümün yamalarından SONRA uygular; checkTreeFx
  * önce onun fx'ini uygular). Düğüm alınmadıysa seçici uymaz ve yama sessizce atlanır.
  */
-export type TreeFx = (SkillFx | PassiveFx | StatFx | AddEffectFx | ReplaceEffectFx | RemoveEffectFx | UnitFxFx | GroundStatusFx | CondFx | RageFx | RuleFx | TargetFx | TriggerFx | HealFx) & {
+/**
+ * Faz 8: skill BİÇİM seçimi (oyuncu kullanmadan önce seçer; eylem `mode` taşır). Biçimler derlemenin SONUNDA satır skill'inin son (yamalı) hâlinden
+ * kurulur, yani diğer düğümlerin yamaları biçimlere de geçer. İki aile:
+ * - Adlı biçim (Paladin Focused Beam): `mode` + `name` biçimi kurar (`target`, `removeEffects` etki türleri, `powerMul` hasar gücü çarpanı); aynı `mode`
+ *   ile gelen sonraki fx'ler ona ekler (`addEffect`, `splash`). Skill'in kendi biçimi de seçenek kalır (keepBase).
+ * - Durum seçimi (Gambler Stacked Deck): `statusPick` skill'in randomStatus seçeneklerinin her biri için bir biçim kurar (zar yerine o durum;
+ *   `firstOnly` listesindeki durumlar yalnızca ilk hedefe). `secondStatus` (Double Deal) her biçime kalan seçeneklerden rastgele ikinci durum ekler.
+ *   Her kullanım bir biçim ister (keepBase yok).
+ * `text` kartın açıklamasına eklenir, `baseText` skill'in kendi kartı, `title` kartların üstündeki satır.
+ */
+export interface ModeFx {
+  k: 'mode';
+  skill?: string;
+  mode?: string;
+  name?: string;
+  text?: string;
+  baseText?: string;
+  title?: string;
+  target?: 'single_enemy';
+  removeEffects?: string[];
+  powerMul?: number;
+  addEffect?: SkillEffect;
+  splash?: { pattern: 'lane' | 'behind'; mult?: number };
+  statusPick?: boolean;
+  firstOnly?: string[];
+  secondStatus?: boolean;
+}
+
+export type TreeFx = (SkillFx | PassiveFx | StatFx | AddEffectFx | ReplaceEffectFx | RemoveEffectFx | UnitFxFx | GroundStatusFx | CondFx | RageFx | RuleFx | TargetFx | TriggerFx | HealFx | ModeFx) & {
   needs?: string;
   /** Faz 4c: yalnızca bu düğümlerin HEPSİ alınmışsa uygulanır. */
   onlyWith?: string[];

@@ -50,6 +50,8 @@ import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
 import { FALLEN_GEAR_TEXT, FALLEN_MARK, heroFallen, heroItemCount, heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
+import { woundChipEl, woundPipsEl, woundScarEl } from './wound-ui';
+import { woundHpFactor } from '../progression/wounds';
 import { slotIconUrl } from './slot-icons';
 import { escHtml, type SkillCostChip } from './skill-bar';
 import { tipHtml, type TipContent } from './battle-hud';
@@ -132,8 +134,7 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
   const out: HTMLElement[] = [head, bar];
   const pend = lv ? pendingCount(lv.pending) : 0;
   const free = (hero.statPoints ?? 0) - pend;
-  const sp = hero.skillPoints ?? 0;
-  if (sp > 0 || lv) {
+  if (lv) {
     const under = el('div', 'sh-under');
     if (lv) {
       const idle = free <= 0 && pend <= 0;
@@ -144,25 +145,9 @@ function levelBlock(hero: HoverHero, lv: LevelPanel | undefined, primaryLost: st
       medal.title = 'Drag onto a stat, or tap + next to it';
       if (free > 0) medal.dataset['ptdrag'] = '1';
       row.append(medal, el('span', 'sh-tx', free > 0 ? `stat point${free === 1 ? '' : 's'} to spend` : 'All points placed'));
-      if (pend > 0) {
-        const acts = el('span', 'sh-acts');
-        const reset = el('button', 'sh-btn', 'Reset');
-        reset.type = 'button';
-        reset.addEventListener('click', lv.onReset);
-        const ok = el('button', 'sh-btn primary', 'Confirm');
-        ok.type = 'button';
-        ok.addEventListener('click', lv.onConfirm);
-        acts.append(reset, ok);
-        row.append(acts);
-      }
       under.append(row);
     }
-    // skill puanı çipi sağda / arkada (Ömer 2026-10-18: stat puanı satırı ile yer değişti)
-    if (sp > 0) {
-      const chip = el('span', 'sh-chip');
-      chip.append(el('b', '', String(sp)), document.createTextNode(` skill point${sp === 1 ? '' : 's'} saved for the skill trees`));
-      under.append(chip);
-    }
+    // skill puanı çipi kaldırıldı (Ömer 2026-10-22)
     out.push(under);
   }
   if (lv && pend > 0 && primaryLost) out.push(el('div', 'sh-warn', primaryLost));
@@ -296,7 +281,7 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     b.dataset['drop'] = `hero:${h.id}`;
     const line = heroItemLine(h, v.focus);
     b.dataset['hint'] = className(h.class);
-    b.dataset['hintSub'] = dead ? FALLEN_MARK : h.woundsNote ? `${line.text} · ${h.woundsNote}` : line.text;
+    b.dataset['hintSub'] = dead ? FALLEN_MARK : line.text;
     b.dataset['hintTone'] = dead ? 'no' : line.tone;
     // Hero band ipucu (Ömer 2026-10-18): portre madalyonu, Lv büyük değer, Items k/7 elmas sırası
     b.dataset['hintKind'] = 'Hero';
@@ -312,6 +297,7 @@ export function heroMarks(v: Pick<CharacterView, 'heroes' | 'heroId' | 'focus' |
     if (url) face.style.backgroundImage = `url("${url}")`;
     b.append(face);
     if (dead) b.append(el('span', 'gr-fallen-x', '✝'));
+    if (h.wounds && h.woundCfg && !dead) b.append(woundPipsEl(h.wounds, h.woundCfg));
     if ((h.statPoints ?? 0) > 0) b.append(el('span', 'gr-pt', String(h.statPoints)));
     box.append(b);
   }
@@ -424,6 +410,11 @@ export function itemPlate(inst: ItemInstance, heroClass: string | undefined, ext
 function slotsBlock(hero: HoverHero, v: CharacterView): HTMLElement[] {
   const head = el('div', 'gr-sec gr-class-sec');
   head.append(el('span', 'gp-chip cls', className(hero.class)));
+  // Yara: tek gösterge = elmas nokta çipi (Ömer 2026-10-23; 0 yara = yok)
+  if (hero.wounds && hero.woundCfg) {
+    const wc = woundChipEl(hero.wounds, hero.woundCfg, heroPanel(hero).find((x) => x.id === 'hp')?.value);
+    if (wc) head.append(wc);
+  }
   for (const fid of classWeaponFamilies(hero.class)) {
     const f = ITEMS.weaponFamilies.find((x) => x.id === fid);
     if (!f) continue;
@@ -522,20 +513,32 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
     ico.draggable = false;
     if (VITAL_STATS.includes(p.id)) {
       const ratio = p.id === 'hp' ? Math.max(0, Math.min(1, vitals?.hpRatio ?? 1)) : 1;
+      // Yara (V1): maks can = yarasız maks x çarpan; can oranı yaralı maksa göre; çubuğun sağ ucu yara bölümü
+      const wn = p.id === 'hp' && hero.wounds && hero.woundCfg ? hero.wounds : 0;
+      const wf = wn && hero.woundCfg ? woundHpFactor(wn, hero.woundCfg.rules) : 1;
+      const maxNow = wn ? Math.max(1, Math.round(p.value * wf)) : p.value;
       const box = el('div', `sh-bh ${p.id}`);
       box.dataset['stat'] = p.id;
       const top = el('div', 'sh-bh-top');
-      const val = el('span', 'sh-bv', `${Math.round(p.value * ratio)} `);
-      val.append(el('s', '', `/ ${fmtPanel(p)}`));
-      top.append(ico, el('span', 'sh-bn', name), val, dEl);
+      const val = el('span', 'sh-bv', `${Math.round(maxNow * ratio)} `);
+      val.append(el('s', '', wn ? `/ ${maxNow}` : `/ ${fmtPanel(p)}`));
+      const wchip = wn && hero.woundCfg ? woundChipEl(wn, hero.woundCfg, p.value) : null;
+      top.append(ico, el('span', 'sh-bn', name), ...(wchip ? [wchip] : []), val, dEl);
       if (dv) {
         box.dataset['delta'] = dText;
         box.dataset['dir'] = dv > 0 ? 'up' : 'down';
       }
       const bar = el('div', 'sh-bar');
       const fill = el('i', p.id === 'hp' ? 'fhp' : 'fmp');
-      fill.style.width = `${Math.round(ratio * 100)}%`;
+      fill.style.width = `${Math.round(ratio * wf * 100)}%`;
       bar.append(fill);
+      const scar = wn && hero.woundCfg ? woundScarEl(wn, hero.woundCfg) : null;
+      if (scar && hero.woundCfg) {
+        bar.classList.add('has-wounds');
+        bar.append(scar);
+        const spec = wchip?.dataset['band'];
+        if (spec) bar.dataset['band'] = spec;
+      }
       box.append(top, bar);
       rowsById.set(p.id, box);
       continue;
@@ -630,6 +633,23 @@ function statGroups(c: HeroCalc, v: CharacterView, vitals?: { hpRatio: number })
 function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: { hpRatio: number }): HTMLElement[] {
   const sh = el('div', 'sh');
   sh.append(...levelBlock(c.hero, v.level, c.primaryLost), el('div', 'sh-dv'), ...statGroups(c, v, vitals));
+  if (v.level) {
+    // Reset / Confirm panelin sağ altında (Ömer 2026-10-23); puan yokken görünmez yer tutar (sayfa kaymaz)
+    const lvl = v.level;
+    const pend = pendingCount(lvl.pending);
+    const foot = el('div', `sh-foot${pend > 0 ? '' : ' idle'}`);
+    if (pend <= 0) foot.setAttribute('aria-hidden', 'true');
+    const reset = el('button', 'sh-btn', 'Reset');
+    reset.type = 'button';
+    reset.disabled = pend <= 0;
+    reset.addEventListener('click', lvl.onReset);
+    const ok = el('button', 'sh-btn primary', 'Confirm');
+    ok.type = 'button';
+    ok.disabled = pend <= 0;
+    ok.addEventListener('click', lvl.onConfirm);
+    foot.append(reset, ok);
+    sh.append(foot);
+  }
   if (v.level) {
     const lv = v.level;
     const h = c.hero;
@@ -764,11 +784,34 @@ function plateChips(cost: SkillCostChip[]): string {
     .join('');
 }
 
-/** Bir skill / pasif plakası (A Plates). kind: '' | 'pas' | 'ult'. Gizli `.bh-sktip` kopyası üstüne gelince yüzen katmana konur. */
-function plateHtml(kind: '' | 'pas' | 'ult', id: string, name: string, icon: string, chips: string, nums: string, tip: string): string {
+/**
+ * Plakanın büyük sayı bloğu ("C · Showcase", Ömer 2026-10-23): büyük altın rakam, altında küçük etiket. Item takılırsa yeni değer + küçük fark.
+ * Yalnızca Gear defterinde görünür (gear.css `.gr-ledger .gr-skillbar`); tüccar sekmesi eski sütun görünümünü kullanır.
+ */
+function bigNumsHtml(r: GearSkillRow): string {
+  if (!r.numbers.length) return '';
+  return `<div class="pl-big">${r.numbers
+    .map((n) => {
+      const times = n.times ? ` x${n.times}` : '';
+      const val = n.after && n.diff
+        ? `<b class="${n.dir ?? ''}">${escHtml(n.after)}${times}<small>${escHtml(n.diff)}</small></b>`
+        : `<b>${escHtml(n.text)}${times}</b>`;
+      return `<div class="pl-bg">${val}<span>${escHtml(n.label)}</span></div>`;
+    })
+    .join('')}</div>`;
+}
+
+/** Plakadaki tek satır açıklama: skill'de ilk ipucu satırı (parantez içi ayrıntı atılır), pasifte tam cümle. Tam metin hover ipucunda. */
+function blurbOf(tip: { rows: { text: string }[] }, passive: boolean): string {
+  const t = tip.rows[0]?.text ?? '';
+  return passive ? t : t.replace(/\s*\([^)]*\)/g, '').trim();
+}
+
+/** Bir skill / pasif plakası (C Showcase). kind: '' | 'pas' | 'ult'. Gizli `.bh-sktip` kopyası üstüne gelince yüzen katmana konur. */
+function plateHtml(kind: '' | 'pas' | 'ult', id: string, name: string, icon: string, chips: string, nums: string, tip: string, blurb: string, big: string, idx: number, intro: boolean): string {
   const tag = kind ? `<span class="pl-tag">${kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
-  return `<div class="gr-pl ${kind}" data-skill="${escHtml(id)}">${tag}<div class="pl-ico">${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
-    <div class="pl-nm">${escHtml(name)}</div><div class="pl-dv"></div><div class="pl-chips">${chips}</div>${nums || '<div class="pl-sls"></div>'}
+  return `<div class="gr-pl ${kind}${intro ? ' intro' : ''}" style="--i:${idx}" data-skill="${escHtml(id)}">${tag}<div class="pl-ico">${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
+    <div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(name)}</div><div class="pl-chips">${chips}</div></div><div class="pl-ds">${escHtml(blurb)}</div><div class="pl-dv"></div>${nums || '<div class="pl-sls"></div>'}</div>${big}
     <div class="bh-sktip bh-panel bh-corners">${tip}</div></div>`;
 }
 
@@ -805,6 +848,49 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
   floatTipFor = cell;
 }
 
+/** Bir skill / pasifin ortak ipucu içeriği (Gear skill çubuğuyla aynı); `key` = 'passive' ya da skill kimliği; yoksa ''. */
+function skillTipHtmlFor(classId: string, stats: Stats, key: string): string {
+  const def = content.classes[classId];
+  if (key === 'passive') {
+    const p = def?.passive;
+    if (!p || !def) return '';
+    const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId)), badge: 'Passive', rows: passiveTip(p, stats, null).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
+    return colorDiffs(tipHtml(tip));
+  }
+  const skill = gearSkillRows(classId, stats, null).find((r) => r.skill?.id === key)?.skill;
+  return skill ? colorDiffs(tipHtml(skillTipContent(skill, stats, null))) : '';
+}
+
+/** Dizilim kartı gibi Gear dışı yerler için: skill / pasif ipucunu `anchor` satırının üstünde (sığmazsa altında) açar; ekran içinde kalır. */
+export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: Stats, key: string): void {
+  const html = skillTipHtmlFor(classId, stats, key);
+  const host = document.getElementById('ui-root');
+  if (!html || !host) return;
+  hideFloatTip();
+  const wrap = el('div', 'bh-kit gr-sktip-fl');
+  const tip = el('div', 'bh-sktip bh-panel bh-corners');
+  tip.innerHTML = html;
+  (tip.style as CSSStyleDeclaration & { zoom: string }).zoom = String(hudScale());
+  wrap.append(tip);
+  host.append(wrap);
+  const hr = host.getBoundingClientRect();
+  const cr = anchor.getBoundingClientRect();
+  const tr = wrap.getBoundingClientRect();
+  const M = 6;
+  let x = cr.left + cr.width / 2 - tr.width / 2 - hr.left;
+  let y = cr.top - tr.height - 14 - hr.top;
+  if (y < M) y = cr.bottom + 14 - hr.top;
+  x = Math.max(M, Math.min(hr.width - tr.width - M, x));
+  y = Math.max(M, Math.min(hr.height - tr.height - M, y));
+  wrap.style.left = `${Math.round(x)}px`;
+  wrap.style.top = `${Math.round(y)}px`;
+  floatTip = wrap;
+  floatTipFor = anchor;
+}
+export function hideHeroSkillTip(): void {
+  hideFloatTip();
+}
+
 /** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
 export function skillBar(classId: string, stats: Stats, after: Stats | null): HTMLElement {
   const bar = el('div', 'gr-skillbar');
@@ -812,15 +898,17 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null): HT
   const rows = gearSkillRows(classId, stats, after);
   const skillRows = rows.filter((r) => !r.passive);
   // Ulti: veride ayrı bir işaret yok; savaş HUD'ıyla aynı kural: 4. skill yuvası (battle-hud / SkillCellView.ult).
-  const html = rows.map((r) => {
+  // Giriş animasyonu yalnızca ilk açılışta: ekranda zaten bir skill çubuğu varsa (yeniden çizim: item üstüne gelme, kahraman / sekme değişimi) yanıp sönmez.
+  const intro = typeof document !== 'undefined' && !document.querySelector('.gr-skillbar');
+  const html = rows.map((r, idx) => {
     if (r.passive && def?.passive) {
       const p = def.passive;
       const ico = iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(classId));
       const tip: TipContent = { title: p.name, titleColor: '#f3d999', iconUrl: ico, badge: 'Passive', rows: passiveTip(p, stats, after).rows.map((x) => ({ text: x.text, color: COLORS.text })) };
-      return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)));
+      return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)), blurbOf(passiveTip(p, stats, null), true), bigNumsHtml(r), idx, intro);
     }
     const skill = r.skill!;
-    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after))));
+    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after))), blurbOf(skillTip(skill, stats, null), false), bigNumsHtml(r), idx, intro);
   });
   bar.innerHTML = html.join('');
   // Açıklama kabın (kaydırmalı sayfa) içinde değil, ekranın en üst katmanında (Gear örtüsü) açılır: hiçbir kap kırpamaz, ekran içinde kalır.

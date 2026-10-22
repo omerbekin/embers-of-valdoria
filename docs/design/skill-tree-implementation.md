@@ -1274,6 +1274,8 @@ Faz 5a'nın "veriye yazılmayan" 55 düğüm eşlemesi `data/skill-trees/<class>
 
 Özet: motor eksiği 0 (Faz 5c), Ömer kararı bekliyor 0 (10a altıncı tur: Spell Shatter, Pollen Drift, Distracting Fan, Fervent Oath, Rot Bomb yazıldı), mockup bekliyor 5.
 
+**Faz 8 (2026-10-23): bu 5 düğüm de yazıldı; null düğüm kalmadı** (`LEFT_NULL = {}`; ayrıntı aşağıda "Faz 8: son 5 düğüm + seçim panelleri").
+
 ## Faz 5c notları (engine-dev 2026-10-22)
 
 Faz 5b'de motor eksiği yüzünden null kalan 4 düğüm motora + veriye yazıldı. Ağaçsız savaş birebir aynı: yeni alanlar yalnızca yamalı kopyada (`cost.hpFallback`, `bet.hpStake`), yeni eylem bayrağı / kural yalnızca ağaç kancasında; yeni zar yalnızca kural / bayrak varken atılır. Testler `tests/skill-tree-fx5c.test.ts`. Varsayımlar `open-questions.md` madde 397.
@@ -1336,3 +1338,46 @@ Kısa tur (Ömer bütçesi 2 x 300 + 1000 savaş). Kural aynı: yalnızca `data/
 - **Druid (L20 fazla):** 1.ma Third Lash %15 → %10, 1.eb Reaping Vine 6 → 4 MP, 1.mb Endless Lash %20 → %15 erken.
 - **Cutthroat (L25 düşük):** 1.fa Butcher's Haste +%30 → +%35 (bedel -%25 aynı), 1.fb Thirsty Edge can çalma %20 → %30, 2.f1 Crossed Crit +%2 → +%3 / rank, bar[3] Notched Blade +%2 → +%3 / kill.
 - **Sonra ölçüm (2 x 1000, seed 100001 + 110001, ortalama):** genel L15 +22,4, L20 a +24,7 / b +22,4, L25 a +20,0 / b +23,1. Anti-Mage L25 a +21 / b +27 (a-b -13,6 → -5,4); Defender L20 +29 / +27; L15 Warrior +18,8, Undead +20,0, Hexer +20,3. Önemli: seed grubu gürültüsü 2 x 1000 ortalamada bile class satırında ±5-7 puan (hiç dokunulmayan Mage L20 a +24 → +31, Gambler L15 +20 → +26, Paladin L25 a iki grupta +14 / +28). Bu yüzden önce / sonra karşılaştırması eşli değil; tek class kararı için 2 x 3000 gerekir.
+
+
+## Faz 3b: Gear > Tree sekmesi (ui-dev 2026-10-23)
+
+Onaylı mockup `public/mockups/skill-tree-gear.html#v4` gerçek Gear ekranına sekme olarak girdi. Kural koduna dokunulmadı; `skill-tree.ts` / `skill-tree-hero.ts` olduğu gibi çağrılır.
+
+- **Dosyalar:** `src/ui/tree-tab-model.ts` (DOM'suz: bekleyen puan, Confirm / Reset, yön kilidi, kilit bilgisi, respec bedeli), `tree-tab-layout.ts` (yerleşim; `_rules.json > rowShape`'ten), `tree-tab.ts` (çizim, ipuçları, animasyonlar, olaylar), `tree-tab.css` (mockup stilleri), `tests/tree-tab.test.ts`.
+- **Akış:** tık +1 bekleyen; sağ tık / uzun basış (dokunmatik 520 ms) / Delete -1 bekleyen; Reset bekleyenleri siler; Confirm kaynağa yazar (`GearSource.setTree`); onaylı puan yalnızca Respec ile (20 + 5 x level altın; `freeRespec` varsa bedava). `treeReset` bildirimi oturumda kahraman başına bir kez (kayıttaki bayrak silinmez).
+- **Görünürlük:** `_rules.json > enabled` true iken; tüccar / ganimet çift penceresinde (`ext`) ve `src.setTree` yoksa sekme yok. Skill puanı rozeti sekme açıkken Sheet'ten Tree'ye taşınır.
+- **Debug:** Debug > Campaign > Levels > "Skill tree tab in Gear" şalter kapalıyken de sekmeyi gösterir (yalnızca bellek; şalter ve savaş değişmez).
+- **Yapılmadı / bakılacak:** telefon yatay (812x375, 740x360) görsel kontrolü ve reduced-motion elle bakılmadı; ana oturum kontrol etsin.
+
+## Faz 8: son 5 düğüm + seçim panelleri (engine-dev 2026-10-23)
+
+Mockup `public/mockups/tree-choices.html` V2'ye göre. Ağaç kapalıyken (`_rules.json > enabled` değişmedi) hiçbir şey değişmez: biçim yalnızca ağaçlı birimde vardır.
+
+### Düğümler (metinler aynı kaldı)
+- **Paladin 4.d1 Focused Beam:** Radiance'ın ikinci biçimi `focused_beam`: tek düşman (`single_enemy`), şifa etkisi silinir, hasar x2.2. Bekleme / MP / tetikler Radiance'ınkiyle ortak (aynı skill id).
+- **4.d2 Pillar of Wrath:** biçime hedef hücreye 2 turluk holy fire (INT x0.15; Judgment'ın 0.288'inin yarısı kadar).
+- **4.d3 Lance of Dawn:** biçime yeni yayılma `splash.pattern: "lane"`: hedefin şeridinde arkasındaki tüm canlı birimlere %60.
+- **Gambler 3.ea Stacked Deck:** Card Trick her kullanımda durum seçtirir: Slow / Wound / Stun (her biri seçilen durumu kesin verir; Stun yalnızca ilk karta, `firstOnly`). Süreler Card Trick'in kendi seçenekleriyle aynı.
+- **3.ma Double Deal:** seçilen duruma ek, kalan iki durumdan rastgele ikinci durum (ağırlıklar Card Trick'inki; ikinci zar Stun çıkarsa yalnız ilk karta). Cold Deck (3.fa) ile birlikte: seçim yok, Stun sabit + Slow / Wound'dan rastgele ikinci durum.
+
+### Motor
+- Veri: yeni fx `{ "k": "mode", ... }` (`skill-tree-data.ts > ModeFx`). Adlı biçim: `mode`, `name`, `text`, `baseText`, `target`, `removeEffects`, `powerMul`; ek düğüm `needs` + `text` / `addEffect` / `splash`. Durum seçimi: `statusPick` (+`firstOnly`), `secondStatus`. Derleyici (`buildModes`) biçimleri diğer düğümlerin yamaları uygulanmış son skill tanımından kurar -> `TreeSetup.modes` -> `Combatant.skillModes`.
+- Eylem biçimi taşır: `BattleAction` / `ChoiceLike` / `AiChoice` `mode`; `useSkill(..., corpseUid, mode)`. Kullanım süresince `Battle.skill(id, uid)` biçim tanımını döndürür (bedava kullanımlar kendi tanımıyla). Bilinmeyen biçim `Unknown mode` ile reddedilir. Seed'li zar akışı biçimsiz kullanımda aynı.
+- Arayüz önizlemesi: `setViewMode(uid, skill, mode|null)` (her eylem başında silinir), YZ değerlendirmesi `withMode(...)`.
+- Kayıt (Endless replay): `use` eylemi `m` alanı taşır. Multiplayer protokolüne biçim eklenmedi (multiplayer'da ağaç kapalı; BattleScene `mp` varken panel açmaz).
+
+### Yapay zeka
+- Radiance: kendi biçimi ve Focused Beam aynı terazide puanlanır (tek düşman kaldıysa ya da tek hedefi öldürecekse Focused Beam öne geçer).
+- Card Trick (Stacked Deck): basit kural `statusModePick`: vurulabilir tek düşman -> Stun; düşmanlarda şifacı (başkasına heal / hot) -> Wound; yoksa Slow.
+
+### Arayüz (`src/ui/skill-choice.ts` + `.css`, BattleScene)
+- Biçimli skill düğmesine basınca düğmenin üstünde küçük kart paneli: Radiance / Focused Beam (nişangâhlı ikon) ya da Slow / Wound / Stun (durum ikonu ve rengi; Stun'da "First target only"). Hedef istemeyen kart hemen kullanılır; Focused Beam düşman seçtirir: "Focused Beam · Choose an enemy · Cancel" şeridi.
+- Vazgeçme: Esc, panel dışına dokunma (o dokunuş skill kullanmaz), aynı düğmeye yeniden basma, Cancel. Panel yalnızca düğüme sahip kahramanda açılır. Telefonda (`html.short`) yazılar gerçek piksel, dokunma hedefi en az 44px. İtalik yok.
+- Skill kartı açıklaması: `skill-info.ts` "lane" yayılma satırı.
+
+### Testler
+`tests/skill-tree-fx8.test.ts` (derleme, savaşta biçim, YZ, ağaçsız birebir aynılık); `fx4-hag`, `fx5b`, `skill-tree.test.ts` null listeleri güncellendi.
+
+### Yapılmadı / bakılacak
+Panelin telefon yatayda (812x375) görsel kontrolü yapılmadı (ekran görüntüsü alınmadı); ana oturum bakmalı. Varsayımlar: `open-questions.md` madde 399.

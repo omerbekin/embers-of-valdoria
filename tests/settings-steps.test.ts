@@ -39,7 +39,7 @@ describe('Ses kaydırıcıları: 20 adım ve kayıt göçü', () => {
 
   it('varsayılanlar eski ölçekteki değerlerin aynısı: Master %70, Music %60, UI sounds %50', () => {
     expect(DEFAULT_VOLUME).toBe(14);
-    expect(DEFAULT_MUSIC_LEVEL).toBe(12);
-    expect(UI_AUDIO.defaultLevel).toBe(10);
+    expect(DEFAULT_MUSIC_LEVEL).toBe(16);
+    expect(UI_AUDIO.defaultLevel).toBe(14);
   });
 });

@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer karşılaşmaları (docs/design/campaign/campaign.md 7.2; denge: docs/balance.md > Sefer dengesi, 2026-10-08). slot = sıra*3+şerit (0 en ön). mods = birim bazında güçlendirme/zayıflatma (motorun UnitModifiers'ı: hpMult, statMult, powerMult, spriteScale, actionsPerTurn...), name = özel ad (displayName), tier = elite | boss, lockSkills = bu savaşta kullanamayacağı skill'ler, initialCooldownBonus = cooldown'lu skill'lerin başlangıç cooldown'una ek (maxInitial'ı aşabilir). Sayılar MEDIUM zorluğa göredir; Easy/Hard farkı campaign.json > difficulties (YZ + düşman çarpanları) ile gelir. Yeni sayılar 'npm run sim:campaign' ölçümüne dayanır (oyuncu takımı rastgele, Medium YZ ile oynanır, can taşınır). Kalıplar: tutorial (w) = hpMult 0.4 / statMult 0.6 / powerMult 0.5 (Mill Road 0.6, Ravenwood 0.55 güç; 2026-10-08: tutorial normal düşmanlarında ultimate kilitli `lockSkills`, elit Bandit Chief `initialCooldownBonus` 1; güç ultimate'sız ölçümle yeniden ayarlandı; 2026-10-14 Ömer telefonda tutorial'da öldü: Ravenwood hp 0.3 / stat 0.5 / güç 0.4, Watchtower ayrı karşılaşma watchtower_tutorial: şef hp 0.8 / stat 0.75 / güç 0.5 + okçular hp 0.3 / stat 0.5 / güç 0.35; Endless'ın kullandığı watchtower_chief değişmedi; aynı gün Ömer 'tutorial o kadar kolay olmasın, Ashford sonrası geçiş yumuşasın': zayıflatmanın bir kısmı geri alındı, Ravenwood 0.38 / 0.58 / 0.52, watchtower_tutorial şef 1.05 / 0.88 / 0.66 + okçular 0.38 / 0.58 / 0.47; Windy Moor 1.2 -> 1.03, Iron Pass 0.93 -> 0.74, Charcoal Camp 0.95 -> 0.83, ölçüm balance.json > _ramp; Ömer 2026-10-14 seçenek A: Windy Moor 1.03 -> 0.92, Iron Pass 0.74 -> 0.66, Charcoal Camp 0.83 -> 0.75, ölçüm balance.json > _optionA); Bölge II-III sıradan düşman hpMult 0.6-0.85, powerMult 0.75-0.9 (taşınan can arttıkça daha zayıf); elit lider 1.2-1.4 can; boss: The Bridge Warden = kendi boss tanımı (data/bosses/bridge_warden.json: can, faz, telgraf; 2 Iron Mooring, docs/design/bosses/bridge-warden.md), background = karşılaşmanın savaş arka planı (assets/backgrounds/<ad>; yoksa düğüm/bölge), Lord Morvane 2.5 can / 1.2 stat. A1-x haritası (2026-10-11, 21 durak): durak sırası değişti, savaşlar sim:campaign Medium/Medium ölçümüyle yeniden ayarlandı (Windy Moor / Iron Pass / Charcoal Camp / Pilgrim Road / St. Brann's / Ember Road / Riverhead daha zayıf, Dwarven Mine / Misty Marsh / Grave Field daha güçlü; boss karşılaşmaları Endless ile ortak olduğu için değişmedi: sefer boss ayarı valdoria.json > düğüm enemyTierMods, madde 305). 'fallback' = motor güçlendirmeyi desteklemezse oynanacak yedek takım (motor desteği geldi: şu an kullanılmıyor). fallbackOnly = yalnızca yedek olarak kullanılır. partyUndying = oyuncu kahramanları bu savaşta ölemez (Mill Road açılış savaşı kaybedilemez; docs/design/tutorial.md).",
+  "_not": "Sefer karşılaşmaları (docs/design/campaign/campaign.md 7.2; denge: docs/balance.md > Sefer dengesi, 2026-10-08). slot = sıra*3+şerit (0 en ön). mods = birim bazında güçlendirme/zayıflatma (motorun UnitModifiers'ı: hpMult, statMult, powerMult, spriteScale, actionsPerTurn...), name = özel ad (displayName), tier = elite | boss, lockSkills = bu savaşta kullanamayacağı skill'ler, initialCooldownBonus = cooldown'lu skill'lerin başlangıç cooldown'una ek (maxInitial'ı aşabilir). Sayılar MEDIUM zorluğa göredir; Easy/Hard farkı campaign.json > difficulties (YZ + düşman çarpanları) ile gelir. Yeni sayılar 'npm run sim:campaign' ölçümüne dayanır (oyuncu takımı rastgele, Medium YZ ile oynanır, can taşınır). Kalıplar: tutorial (w) = hpMult 0.4 / statMult 0.6 / powerMult 0.5 (Mill Road 0.6, Ravenwood 0.55 güç; 2026-10-08: tutorial normal düşmanlarında ultimate kilitli `lockSkills`, elit Bandit Chief `initialCooldownBonus` 1; güç ultimate'sız ölçümle yeniden ayarlandı; 2026-10-14 Ömer telefonda tutorial'da öldü: Ravenwood hp 0.3 / stat 0.5 / güç 0.4, Watchtower ayrı karşılaşma watchtower_tutorial: şef hp 0.8 / stat 0.75 / güç 0.5 + okçular hp 0.3 / stat 0.5 / güç 0.35; Endless'ın kullandığı watchtower_chief değişmedi; aynı gün Ömer 'tutorial o kadar kolay olmasın, Ashford sonrası geçiş yumuşasın': zayıflatmanın bir kısmı geri alındı, Ravenwood 0.38 / 0.58 / 0.52, watchtower_tutorial şef 1.05 / 0.88 / 0.66 + okçular 0.38 / 0.58 / 0.47; Windy Moor 1.2 -> 1.03, Iron Pass 0.93 -> 0.74, Charcoal Camp 0.95 -> 0.83, ölçüm balance.json > _ramp; Ömer 2026-10-14 seçenek A: Windy Moor 1.03 -> 0.92, Iron Pass 0.74 -> 0.66, Charcoal Camp 0.83 -> 0.75, ölçüm balance.json > _optionA); Bölge II-III sıradan düşman hpMult 0.6-0.85, powerMult 0.75-0.9 (taşınan can arttıkça daha zayıf); elit lider 1.2-1.4 can; boss: The Bridge Warden = kendi boss tanımı (data/bosses/bridge_warden.json: can, faz, telgraf; 2 Iron Mooring, docs/design/bosses/bridge-warden.md), background = karşılaşmanın savaş arka planı (assets/backgrounds/<ad>; yoksa düğüm/bölge), Lord Morvane 2.5 can / 1.2 stat. A1-x haritası (2026-10-11, 21 durak): durak sırası değişti, savaşlar sim:campaign Medium/Medium ölçümüyle yeniden ayarlandı (Windy Moor / Iron Pass / Charcoal Camp / Pilgrim Road / St. Brann's / Ember Road / Riverhead daha zayıf, Dwarven Mine / Misty Marsh / Grave Field daha güçlü; boss karşılaşmaları Endless ile ortak olduğu için değişmedi: sefer boss ayarı valdoria.json > düğüm enemyTierMods, madde 305). 'fallback' = motor güçlendirmeyi desteklemezse oynanacak yedek takım (motor desteği geldi: şu an kullanılmıyor). fallbackOnly = yalnızca yedek olarak kullanılır. partyUndying = oyuncu kahramanları bu savaşta ölemez (Mill Road açılış savaşı kaybedilemez; docs/design/tutorial.md). waves = elle yazılmış 2. dalga (Ömer 2026-10-21 dolgu savaşı çeşitliliği: az güçlü / çok zayıf / başka tür; bütçe savaş başına ±%6; PROVİZYON, docs/design/waves.md > Dolgu savaşı çeşitliliği).",
   "mill_road_thugs": {
     "_not": "Bölge I mobları (mob-plan.md 9.5-9.6, Ömer onayı 2026-10-16): Road Thug (Grudge) + Cutpurse (Head Start: önce oynar, Turn Bar dersi). Zorunlu adımlarda düşman yalnızca temel saldırı yapar (lockSkills). Çarpanlar sim:campaign ile (balance.json > _regionI).",
     "name": "Road Thugs",
@@ -73,6 +73,12 @@
       { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
       { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
       { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.293, "powerMult": 1.091 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.316, "powerMult": 1.201 } },
+        { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.316, "powerMult": 1.201 } }
+      ] }
     ]
   },
   "iron_pass_ambush": {
@@ -82,6 +88,14 @@
       { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.774, "powerMult": 0.774 } },
       { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.774, "powerMult": 0.774 } },
       { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 0.774, "powerMult": 0.774 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "deep_runecaller", "slot": 3, "mods": { "hpMult": 0.72, "powerMult": 0.72 } },
+        { "class": "deep_runecaller", "slot": 5, "mods": { "hpMult": 0.72, "powerMult": 0.72 } },
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 0.72, "powerMult": 0.72 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 0.72, "powerMult": 0.72 } }
+      ] }
     ]
   },
   "mine_wardens": {
@@ -91,6 +105,13 @@
       { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.225, "powerMult": 1.225 } },
       { "class": "deep_runecaller", "slot": 6, "mods": { "hpMult": 1.225, "powerMult": 1.138 } },
       { "class": "deep_runecaller", "slot": 8, "mods": { "hpMult": 1.225, "powerMult": 1.138 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 1.163, "powerMult": 1.163 } },
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 1.163, "powerMult": 1.163 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 1.163, "powerMult": 1.163 } }
+      ] }
     ]
   },
   "vault_keepers": {
@@ -100,6 +121,13 @@
       { "class": "oathsworn_brother", "slot": 0, "mods": { "hpMult": 1.243, "powerMult": 1.243 } },
       { "class": "oathsworn_brother", "slot": 1, "mods": { "hpMult": 1.243, "powerMult": 1.243 } },
       { "class": "censer_monk", "slot": 7, "mods": { "hpMult": 1.243, "powerMult": 1.243 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "oathsworn_brother", "slot": 1, "mods": { "hpMult": 1.31, "powerMult": 1.31 } },
+        { "class": "censer_monk", "slot": 6, "mods": { "hpMult": 1.31, "powerMult": 1.31 } },
+        { "class": "censer_monk", "slot": 8, "mods": { "hpMult": 1.31, "powerMult": 1.31 } }
+      ] }
     ]
   },
   "mercenary_camp": {
@@ -114,10 +142,18 @@
   "black_cathedral": {
     "name": "The Undying Choir",
     "units": [
-      { "class": "high_priest_of_the_undying", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.6, "statMult": 1.25 } },
-      { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 1.1, "powerMult": 1.1 } },
-      { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.1, "powerMult": 1.1 } },
-      { "class": "ghoul", "slot": 1, "mods": { "hpMult": 1.1, "powerMult": 1.1 } }
+      { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.11, "powerMult": 1.11 } },
+      { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.11, "powerMult": 1.11 } },
+      { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 1.11, "powerMult": 1.11 } },
+      { "class": "grave_chanter", "slot": 8, "mods": { "hpMult": 1.11, "powerMult": 1.11 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "high_priest_of_the_undying", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.6, "statMult": 1.25 } },
+        { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 1.1, "powerMult": 1.1 } },
+        { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.1, "powerMult": 1.1 } },
+        { "class": "ghoul", "slot": 1, "mods": { "hpMult": 1.1, "powerMult": 1.1 } }
+      ] }
     ]
   },
   "bridge_warden": {
@@ -148,6 +184,13 @@
       { "class": "ash_hound", "slot": 2, "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
       { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
       { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.079, "powerMult": 1.025 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.364, "powerMult": 1.289 } },
+        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 1.364, "powerMult": 1.289 } },
+        { "class": "grave_chanter", "slot": 8, "mods": { "hpMult": 1.364, "powerMult": 1.289 } }
+      ] }
     ]
   },
   "dragons_spine": {
@@ -168,6 +211,15 @@
       { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.83, "powerMult": 0.83 } },
       { "class": "morvane_halberdier", "slot": 2, "mods": { "hpMult": 0.83, "powerMult": 0.83 } },
       { "class": "bandit_crossbowman", "slot": 7, "name": "Siege Crossbowman", "mods": { "hpMult": 0.83, "powerMult": 0.83 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "morvane_halberdier", "slot": 0, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "morvane_halberdier", "slot": 2, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Siege Crossbowman", "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "bandit_crossbowman", "slot": 7, "name": "Siege Crossbowman", "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Siege Crossbowman", "mods": { "hpMult": 0.788, "powerMult": 0.788 } }
+      ] }
     ]
   },
   "lord_morvane": {
@@ -187,6 +239,14 @@
       { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
       { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.782, "powerMult": 0.782 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.622, "powerMult": 0.622 } },
+        { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 0.622, "powerMult": 0.622 } },
+        { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.622, "powerMult": 0.622 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.622, "powerMult": 0.622 } }
+      ] }
     ]
   },
   "cairn_hill": {
@@ -196,6 +256,12 @@
       { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 0.863, "powerMult": 0.863 } },
       { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.863, "powerMult": 0.863 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.863, "powerMult": 0.863 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 1.066, "powerMult": 1.043 } },
+        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.066, "powerMult": 1.043 } }
+      ] }
     ]
   },
   "witchs_hut_guard": {
@@ -205,6 +271,14 @@
       { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.274, "powerMult": 1.075 } },
       { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.274, "powerMult": 1.075 } },
       { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.274, "powerMult": 1.075 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.122, "powerMult": 1.122 } },
+        { "class": "will_o_wisp", "slot": 6, "mods": { "hpMult": 1.122, "powerMult": 1.122 } },
+        { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.122, "powerMult": 1.122 } },
+        { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.122, "powerMult": 1.122 } }
+      ] }
     ]
   },
   "morwen_duel": {
@@ -215,6 +289,13 @@
       { "class": "drowned", "slot": 1, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
       { "class": "will_o_wisp", "slot": 6, "mods": { "hpMult": 1.2, "powerMult": 1.1 } },
       { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.2, "powerMult": 1.1 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.061, "powerMult": 1.061 } },
+        { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.061, "powerMult": 1.061 } },
+        { "class": "fen_witchling", "slot": 7, "mods": { "hpMult": 1.061, "powerMult": 1.061 } }
+      ] }
     ]
   },
   "charcoal_camp": {
@@ -224,6 +305,13 @@
       { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.902, "powerMult": 0.902 } },
       { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.902, "powerMult": 0.902 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.902, "powerMult": 0.902 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.80, "powerMult": 0.80 } },
+        { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.80, "powerMult": 0.80 } },
+        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.80, "powerMult": 0.80 } }
+      ] }
     ]
   },
   "grave_field": {
@@ -234,6 +322,15 @@
       { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.107, "powerMult": 1.059 } },
       { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.107, "powerMult": 1.059 } },
       { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.107, "powerMult": 1.059 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 0.988, "powerMult": 0.988 } },
+        { "class": "skeleton", "slot": 1, "name": "Risen Skeleton", "mods": { "hpMult": 0.988, "powerMult": 0.988 } },
+        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 0.988, "powerMult": 0.988 } },
+        { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 0.988, "powerMult": 0.988 } },
+        { "class": "grave_chanter", "slot": 8, "mods": { "hpMult": 0.988, "powerMult": 0.988 } }
+      ] }
     ]
   },
   "pilgrim_road": {
@@ -244,6 +341,13 @@
       { "class": "cutthroat", "slot": 2, "name": "Stag Knife", "mods": { "hpMult": 0.565, "powerMult": 0.72 } },
       { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "hpMult": 0.565, "powerMult": 0.72 } },
       { "class": "mage", "slot": 8, "name": "Stag Magus", "mods": { "hpMult": 0.565, "powerMult": 0.72 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "warrior", "slot": 1, "name": "Stag Captain", "mods": { "hpMult": 0.735, "powerMult": 0.877 } },
+        { "class": "archer", "slot": 6, "name": "Stag Bowman", "mods": { "hpMult": 0.735, "powerMult": 0.877 } },
+        { "class": "archer", "slot": 8, "name": "Stag Bowman", "mods": { "hpMult": 0.735, "powerMult": 0.877 } }
+      ] }
     ]
   },
   "ember_road": {
@@ -254,6 +358,14 @@
       { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.896, "powerMult": 0.896 } },
       { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.896, "powerMult": 0.896 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.896, "powerMult": 0.896 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 1, "name": "Ember Outrider", "mods": { "hpMult": 0.93, "powerMult": 0.93 } },
+        { "class": "charcoal_burner", "slot": 6, "mods": { "hpMult": 0.93, "powerMult": 0.93 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.93, "powerMult": 0.93 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.93, "powerMult": 0.93 } }
+      ] }
     ]
   },
   "riverhead": {
@@ -264,6 +376,15 @@
       { "class": "ghoul", "slot": 2, "mods": { "hpMult": 0.997, "powerMult": 0.917 } },
       { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 0.997, "powerMult": 0.917 } },
       { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 0.997, "powerMult": 0.917 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "drowned", "slot": 0, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "ghoul", "slot": 1, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "drowned", "slot": 2, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "will_o_wisp", "slot": 6, "mods": { "hpMult": 0.788, "powerMult": 0.788 } },
+        { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 0.788, "powerMult": 0.788 } }
+      ] }
     ]
   },
   "gate_of_cinders": {
@@ -274,16 +395,29 @@
       { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 1.007, "powerMult": 0.933 } },
       { "class": "cinder_gatewarden", "slot": 2, "mods": { "hpMult": 1.007, "powerMult": 0.933 } },
       { "class": "deep_runecaller", "slot": 7, "name": "Gate Runecaller", "mods": { "hpMult": 1.007, "powerMult": 0.933 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "morvane_halberdier", "slot": 0, "mods": { "hpMult": 1.368, "powerMult": 1.292 } },
+        { "class": "morvane_halberdier", "slot": 2, "mods": { "hpMult": 1.368, "powerMult": 1.292 } },
+        { "class": "deep_runecaller", "slot": 7, "name": "Gate Runecaller", "mods": { "hpMult": 1.368, "powerMult": 1.292 } }
+      ] }
     ]
   },
   "thornwood_hollow": {
-    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Thornwood Hollow elit düğümü: Drake Priest (elit, Molten Shed) + Grey Wolf x2 (Pack Tactics) + Ember Acolyte. Endless'ın dragons_spine'ı (class kopyası) aynen kaldı. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,95 (düğümler aynı zorluğa çekildi).",
+    "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): Thornwood Hollow elit düğümü: Drake Priest (elit, Molten Shed) + Grey Wolf x2 (Pack Tactics) + Ember Acolyte. Endless'ın dragons_spine'ı (class kopyası) aynen kaldı. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,95 (düğümler aynı zorluğa çekildi). Harita 1 yeniden çizimi sonrası (balance-tester 2026-10-23, open-questions): elit sırası bozulmuştu (normal 87,8 < elit 89,2); tüm birimlerin can/güç çarpanı x1,035 (Medium 120 sefer seed 7001: Thornwood ilk deneme 93,3 -> 83,3, elit kategori 89,2 -> 84,2).",
     "name": "Cult of the Drake",
     "units": [
-      { "class": "drake_priest", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.52, "powerMult": 0.95, "statMult": 1.15 } },
-      { "class": "grey_wolf", "slot": 0, "mods": { "hpMult": 1.045, "powerMult": 0.95 } },
-      { "class": "grey_wolf", "slot": 2, "mods": { "hpMult": 1.045, "powerMult": 0.95 } },
-      { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.045, "powerMult": 0.95 } }
+      { "class": "grey_wolf", "slot": 1, "mods": { "hpMult": 1.739, "powerMult": 1.573 } },
+      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.739, "powerMult": 1.573 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "drake_priest", "slot": 7, "tier": "elite", "mods": { "hpMult": 1.573, "powerMult": 0.983, "statMult": 1.15 } },
+        { "class": "grey_wolf", "slot": 0, "mods": { "hpMult": 1.082, "powerMult": 0.983 } },
+        { "class": "grey_wolf", "slot": 2, "mods": { "hpMult": 1.082, "powerMult": 0.983 } },
+        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 1.082, "powerMult": 0.983 } }
+      ] }
     ]
   },
   "castle_morvane": {
@@ -296,5 +430,105 @@
       { "class": "ember_hierophant", "slot": 7, "mods": { "hpMult": 0.55, "powerMult": 0.45 } }
     ],
     "background": "castle-hall"
+  },
+  "brackenridge": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Windy Moor ile aynı (0,782). Denge balance-tester'ın.",
+    "name": "Hill Bandits",
+    "units": [
+      { "class": "road_thug", "slot": 0, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
+      { "class": "road_thug", "slot": 2, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "hpMult": 0.782, "powerMult": 0.782 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "cutpurse", "slot": 0, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
+        { "class": "cutpurse", "slot": 2, "mods": { "hpMult": 0.782, "powerMult": 0.782 } },
+        { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.782, "powerMult": 0.782 } }
+      ] }
+    ]
+  },
+  "hoard_guards": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Cairn Hill + %10 (0,863 x 1,1 = 0,949). Raiders' Hoard korunan hazinesi (cep). Denge balance-tester'ın.",
+    "name": "Hoard Guards",
+    "units": [
+      { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
+      { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
+      { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
+      { "class": "bandit_crossbowman", "slot": 7, "mods": { "hpMult": 0.949, "powerMult": 0.949 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
+        { "class": "ember_acolyte", "slot": 6, "mods": { "hpMult": 0.949, "powerMult": 0.949 } },
+        { "class": "ember_acolyte", "slot": 8, "mods": { "hpMult": 0.949, "powerMult": 0.949 } }
+      ] }
+    ]
+  },
+  "shrine_drowned": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Misty Marsh ile aynı (can 1,293, güç 1,091). Sunken Shrine korunan hazinesi (cep). Denge balance-tester'ın.",
+    "name": "Shrine Drowned",
+    "units": [
+      { "class": "drowned", "slot": 0, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
+      { "class": "drowned", "slot": 2, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
+      { "class": "grave_chanter", "slot": 6, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
+      { "class": "will_o_wisp", "slot": 8, "mods": { "hpMult": 1.293, "powerMult": 1.091 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "ghoul", "slot": 1, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
+        { "class": "fen_witchling", "slot": 6, "mods": { "hpMult": 1.293, "powerMult": 1.091 } },
+        { "class": "fen_witchling", "slot": 8, "mods": { "hpMult": 1.293, "powerMult": 1.091 } }
+      ] }
+    ]
+  },
+  "wagon_guard": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Siege Line + %10 (0,83 x 1,1 = 0,913). Supply Wagons korunan hazinesi (cep). Denge balance-tester'ın.",
+    "name": "Wagon Guard",
+    "units": [
+      { "class": "moor_raider", "slot": 0, "name": "Ember Outrider", "mods": { "hpMult": 0.913, "powerMult": 0.913 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 0.913, "powerMult": 0.913 } },
+      { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 0.913, "powerMult": 0.913 } },
+      { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.913, "powerMult": 0.913 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 0.913, "powerMult": 0.913 } },
+        { "class": "bandit_crossbowman", "slot": 6, "name": "Siege Crossbowman", "mods": { "hpMult": 0.913, "powerMult": 0.913 } },
+        { "class": "bandit_crossbowman", "slot": 8, "name": "Siege Crossbowman", "mods": { "hpMult": 0.913, "powerMult": 0.913 } }
+      ] }
+    ]
+  },
+  "burnt_hamlet": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Ashen Plain ile aynı (can 1,079, güç 1,025). Shepherd's Fold'a paralel kol. Denge balance-tester'ın.",
+    "name": "Ash Ghouls",
+    "units": [
+      { "class": "ghoul", "slot": 0, "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
+      { "class": "ash_hound", "slot": 1, "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
+      { "class": "ghoul", "slot": 2, "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
+      { "class": "grave_chanter", "slot": 7, "mods": { "hpMult": 1.079, "powerMult": 1.025 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "skeleton", "slot": 0, "name": "Risen Skeleton", "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
+        { "class": "skeleton", "slot": 2, "name": "Risen Skeleton", "mods": { "hpMult": 1.079, "powerMult": 1.025 } },
+        { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 1.079, "powerMult": 1.025 } }
+      ] }
+    ]
+  },
+  "deserters_camp": {
+    "_not": "PROVİZYON (campaign-dev 2026-10-22, Harita 1 yeniden çizim, docs/design/campaign/map-1-rework.md 3): yalnız var olan class'lar; 2 dalga elle yazıldı (1. dalga units, 2. dalga waves). Çarpanlar komşu karşılaşmadan: Thornwood Hollow ile aynı (lider can 1,52 / güç 0,95 / stat 1,15; eşlikçi 1,045 / 0,95). Elit lider sonda (2. dalga). Deserter Captain (Ömer kararı): istatistik, skill ve pasif Bandit Chief'ten (class bandit_chief); sprite: 'deserter_captain' ileride ayrı çizim anahtarı (art-pipeline), bugün savaşa gitmez, Bandit Chief çizimi yer tutucu. Denge balance-tester'ın.",
+    "name": "The Deserters",
+    "units": [
+      { "class": "morvane_halberdier", "slot": 0, "mods": { "hpMult": 1.045, "powerMult": 0.95 } },
+      { "class": "morvane_halberdier", "slot": 2, "mods": { "hpMult": 1.045, "powerMult": 0.95 } },
+      { "class": "bandit_crossbowman", "slot": 7, "name": "Siege Crossbowman", "mods": { "hpMult": 1.045, "powerMult": 0.95 } }
+    ],
+    "waves": [
+      { "units": [
+        { "class": "bandit_chief", "slot": 1, "name": "Deserter Captain", "tier": "elite", "sprite": "deserter_captain", "mods": { "hpMult": 1.52, "powerMult": 0.95, "statMult": 1.15 } },
+        { "class": "shieldwarden", "slot": 0, "mods": { "hpMult": 1.045, "powerMult": 0.95 } },
+        { "class": "moor_raider", "slot": 2, "name": "Ember Outrider", "mods": { "hpMult": 1.045, "powerMult": 0.95 } }
+      ] }
+    ]
   }
 }

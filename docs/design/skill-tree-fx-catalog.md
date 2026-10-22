@@ -224,9 +224,9 @@ Amaç: engine-dev'in C1 koşul sözlüğünü ve C3-C6 kapsamını 11 class'a g�
 | 4.r1 | Final Light | C1 | `targetHpBelow:0.3` → `powerMul 0.4` |
 | 4.r2 | Reaping Dawn | C3 | `onKill` (her biri) → +5 MP |
 | 4.r3 | Sunstrike | C3 | `onKill` → cooldown −2 |
-| 4.d1 | Focused Beam [NEW] | C6 | ikinci kullanım biçimi: tek düşman, şifa yok, %220 hasar (seçim arayüzü + YZ: soru 14.27) |
-| 4.d2 | Pillar of Wrath | C6 | d1 biçimine bağlı: hedef hücreye 2 turluk holy fire (b `ground`) |
-| 4.d3 | Lance of Dawn | C6 | d1 biçimine bağlı: hedefin arkasındaki şeride %60 delme (+C5) |
+| 4.d1 | Focused Beam [NEW] | C6 | ikinci kullanım biçimi: tek düşman, şifa yok, %220 hasar (seçim arayüzü + YZ: soru 14.27). **Faz 8 yazıldı:** `k: mode` `focused_beam`, Radiance düğmesinde iki kartlı panel |
+| 4.d2 | Pillar of Wrath | C6 | d1 biçimine bağlı: hedef hücreye 2 turluk holy fire (b `ground`). **Faz 8 yazıldı:** biçime `ground holy_fire` 2 tur, INT x0.15 |
+| 4.d3 | Lance of Dawn | C6 | d1 biçimine bağlı: hedefin arkasındaki şeride %60 delme (+C5). **Faz 8 yazıldı:** biçime `splash lane` %60 |
 | 4.l1 | Hallowed Steps | C3 | `afterSkillUse` → Judgment cooldown sıfır |
 | 4.l2 | Frugal Glory | a | `cost.amount add -6` |
 | 4.l3 | Second Sunrise | C1 | `healedCountBelow:0.5 ≥ 3` → bu kullanımın `cooldownSet 2` |
@@ -782,9 +782,9 @@ Terim: Double or Nothing = `spellEcho` pasifi (echo), Double Hit = `repeatChance
 | 3.f3 | Swift Suit | a\* | `randomStatus` Slow olasılığı +0.05r (ağırlık mı olasılık mı: soru 14.11) |
 | 3.n0 | Crippling Ace | C1 | `targetStatus:slow` → randomStatus yerine Stun |
 | 3.r | Long Con | C1 | Stun `statusTurns +1, chance 0.05r` |
-| 3.ea | Stacked Deck [NEW] | C6 | kullanmadan önce durum seçimi (Slow / Wound / Stun; Stun yalnız ilk hedefe): arayüz + YZ seçimi |
+| 3.ea | Stacked Deck [NEW] | C6 | kullanmadan önce durum seçimi (Slow / Wound / Stun; Stun yalnız ilk hedefe): arayüz + YZ seçimi. **Faz 8 yazıldı:** `k: mode statusPick`, her Card Trick'te üç kartlı panel; YZ `statusModePick` |
 | 3.eb | Distracting Fan | b | `addEffect` YENİ durum "sonraki saldırısında −%15 hasar" |
-| 3.ma | Double Deal | C6 | ea seçimine ek rastgele ikinci durum (ea'ya bağlı) |
+| 3.ma | Double Deal | C6 | ea seçimine ek rastgele ikinci durum (ea'ya bağlı). **Faz 8 yazıldı:** `secondStatus`: seçilen hariç kalanlardan rastgele (Cold Deck ile: Stun + Slow/Wound) |
 | 3.fa | Cold Deck | b | `replaceEffect randomStatus → status stun 1` + a `cooldown set 5` |
 | 3.fb | Smoke Cards | b | `addEffect status blinded 2` + `replaceEffect` hasar kaldırılır (soru 14.10) |
 | 3.mb | Blinding Flurry | b | `addEffect status blinded 1` |

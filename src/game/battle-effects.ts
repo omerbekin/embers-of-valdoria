@@ -40,10 +40,10 @@ export function campaignEffects(s: CampaignState): BattleEffect[] {
         return t ? `${tier === 'boss' ? 'Bosses' : 'Elites'} a further ${t}` : '';
       })
       .filter(Boolean);
-    out.push({ name: `${diff.name} difficulty`, text: [diff.text, enemy ? `Enemies ${enemy}.` : '', ...tiers.map((t) => `${t}.`)].filter(Boolean).join(' '), group: 'Enemy scaling', color: '#ffb0a0', icon: 'skull' });
+    out.push({ name: `${diff.name} difficulty`, text: [diff.text, enemy ? `Enemies ${enemy}.` : '', ...tiers.map((t) => `${t}.`)].filter(Boolean).join(' '), group: 'Enemy scaling', color: '#ffb0a0', icon: paintedOr('fx', 'difficulty', 'skull') });
   }
   const chapter = enemyModsText(chapterEnemyMods(s.mapId, s.at));
-  if (chapter) out.push({ name: 'Chapter strength', text: `Enemies grow stronger deeper into the journey: ${chapter}.`, group: 'Enemy scaling', color: '#ffb0a0', icon: 'muscle' });
+  if (chapter) out.push({ name: 'Chapter strength', text: `Enemies grow stronger deeper into the journey: ${chapter}.`, group: 'Enemy scaling', color: '#ffb0a0', icon: paintedOr('fx', 'chapter_strength', 'muscle') });
   return out;
 }
 

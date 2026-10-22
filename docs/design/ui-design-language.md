@@ -14,11 +14,13 @@ Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR.
    - Boş, ölü alan bırakma. Ama her şeyi birbirinin içine de sıkıştırma: bloklar arasında nefes payı olsun.
    - Göstergeler sakin olsun: ince kenar rengi, küçük nokta. Baskın yeşil tik, kırmızı çarpı ya da dolgu kullanma.
 4. **Bilgi hover'da, ekranda kalıcı değil.** Ayrıntı fareyle üstüne gelince açılır; tıklamak zorunlu değildir. Dokunmatikte tek dokunuş sabitler. Kalıcı cetvel, uyarı şeridi ya da tekrar eden yardım cümlesi koyma. Örnek: Formation'daki "Good spot" şeridi kaldırıldı, menzil cetveli hover kutusuna taşındı.
-5. **Düz yazı.** Açıklamalar düz EB Garamond olur. İtalik yalnızca kısa bir lore / flavor cümlesinde kullanılır.
+4b. **Abartısız animasyon (Ömer 2026-10-22).** Her yeni ya da yenilenen arayüz, şablonu uygularken uygun yerlerde sakin animasyon kullanır: kartta/düğmede hover'da hafif yükselme (birkaç px) + ince altın kenar parlaması, pencere/kart girişinde kısa sıralı belirme, seçimde yumuşak vurgu. Süreler kısa (yaklaşık 120-250 ms), zıplama/sallanma/dönme yok. Değerler `data/ui-motion.json`'dan gelir. Seçim kartları (karakter, companion, ödül gibi) ana menü kart mantığını kullanır.
+5. **Düz yazı, arayüzde italik YOK (Ömer 2026-10-23).** Arayüzdeki her yazı (açıklama, yönerge, ipucu, alt başlık, uyarı, item satırları) düz EB Garamond olur. İtalik YALNIZCA hikâye anlatımında, bir hikâye unsuruna kısaca atıf yaparken kullanılır (ör. hikâye/olay metninde bir yer ya da kişi adına vurgu). Yeni arayüzde italik yazılmaz; eski italikler kaldırılır. İstisna: lore anlatan kısa metin (ör. harita düğümü kartındaki lore/devriye satırı `.sbc-info`) hafif italik olabilir (Ömer 2026-10-23).
 6. **Etiketler tek satırda.** Ad altındaki çipler (rol / Range N / sıra gibi) tek satıra sığar.
 7. **Etkileşim kuralları.**
    - Tıklama seçer.
    - Yer değiştirme yalnızca sürükleyip birinin üstüne bırakınca olur; tık-tık ile yer değişmez.
+   - Yuvalar arası taşıma (Ömer 2026-10-23): dolu bir yuvadaki öğe, onu kabul eden başka bir yuvaya sürüklenebilir (ör. main hand ↔ off hand, ring ↔ ring). Hedef doluysa ikisi yer değiştirir; hedefteki öğe kaynağa uymuyorsa çantaya döner.
    - Çift tık hızlı eylemdir (al / sat).
    - Düğmelerde ikincil eylemler solda, birincil eylem en sağda.
 

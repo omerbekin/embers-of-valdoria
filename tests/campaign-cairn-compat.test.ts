@@ -29,12 +29,12 @@ const oldSave = (s: CampaignState): CampaignState => normalizeState(stripNode(JS
 const afterAshford = () => finish(debugTeleport(fresh(), '4'));
 
 describe('Cairn Hill: harita yeri', () => {
-  it('Windy Moor -> Cairn Hill -> [Iron Pass | Charcoal Camp]; normal savaş, bölge II, mevcut mob havuzundan', () => {
+  it('Windy Moor -> Cairn Hill -> [Iron Pass | Charcoal Camp]; normal savaş, bölge I (2026-10-22 bölge kayması), mevcut mob havuzundan', () => {
     const n = node(map, 'cairn');
-    expect([n.type, n.name, n.region]).toEqual(['battle', 'Cairn Hill', 'II']);
-    expect(map.edges.filter((e) => e.to === 'cairn').map((e) => [e.from, e.style])).toEqual([['moor', 'solid']]);
+    expect([n.type, n.name, n.region]).toEqual(['battle', 'Cairn Hill', 'I']);
+    expect(map.edges.filter((e) => e.to === 'cairn').map((e) => [e.from, e.style])).toEqual([['moor', 'solid'], ['hills', 'solid']]); // 2026-10-22: Brackenridge kolu
     expect(map.edges.filter((e) => e.from === 'cairn').map((e) => e.to).sort()).toEqual(['5B', 'charcoal']);
-    expect(map.edges.some((e) => e.from === 'moor' && e.to !== 'cairn')).toBe(false);
+    expect(map.edges.filter((e) => e.from === 'moor' && e.to !== 'cairn').map((e) => e.to)).toEqual(['hoard']); // yalnız cep (Raiders' Hoard)
     const enc = (encounters as unknown as Record<string, { units: Array<{ class: string; mods?: { hpMult?: number } }> }>)[n.encounter!]!;
     const pool = new Set(['windy_moor', 'charcoal_camp'].flatMap((k) => (encounters as unknown as Record<string, { units: Array<{ class: string }> }>)[k]!.units.map((u) => u.class)));
     for (const u of enc.units) expect(pool.has(u.class), u.class).toBe(true);
@@ -64,9 +64,9 @@ describe('Cairn Hill: harita yeri', () => {
 });
 
 describe('Cairn Hill: eski kayıt uyumluluğu', () => {
-  it('Windy Moor\'da duran eski kayıt: tek ileri seçenek Cairn Hill, orada savaş', () => {
+  it('Windy Moor\'da duran eski kayıt: ileri seçenek Cairn Hill (+ 2026-10-22 Raiders\' Hoard cebi), orada savaş', () => {
     const s = oldSave(walk(afterAshford(), 'moor'));
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn'], back: ['4'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn', 'hoard'], back: ['4'] });
     const t = moveTo(s, 'cairn');
     expect(nextStep(t)).toEqual({ kind: 'battle', node: 'cairn', encounter: 'cairn_hill' });
   });

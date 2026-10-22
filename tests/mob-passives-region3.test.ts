@@ -208,23 +208,24 @@ describe('D13 Lord Morvane: fazlar ve telgraflar (var olan boss altyapısı)', (
 });
 
 describe('Bölge III karşılaşmaları (mob-plan.md 10.4)', () => {
-  const REGION3 = ['ashen_plain', 'siege_line', 'thornwood_hollow', 'ember_road', 'riverhead', 'gate_of_cinders', 'castle_morvane'];
+  const REGION3 = ['ashen_plain', 'siege_line', 'thornwood_hollow', 'ember_road', 'riverhead', 'gate_of_cinders', 'castle_morvane', 'wagon_guard', 'burnt_hamlet', 'deserters_camp']; // son üçü Harita 1 yeniden çizim (2026-10-22)
   it('düğümler yeni karşılaşmalara bağlı; class kopyası yok; birim kümeleri birbirinden ve Bölge I-II\'den farklı; en çok 1 caster\'sız savaş', () => {
     expect(validateEncounters()).toEqual([]);
     const nodes = valdoria.nodes.filter((n) => n.region === 'III' && 'encounter' in n).map((n) => (n as { encounter: string }).encounter);
     expect(nodes.sort()).toEqual([...REGION3].sort());
     const isCaster = (id: string) => unitDef(id).skills.some((s) => content.skills[s]!.cost.amount > 0 && content.skills[s]!.effects.some((e) => e.type === 'damage' && e.damageType === 'magic'));
-    let casterless = 0;
+    const casterless: string[] = [];
     const sets = new Set<string>();
     for (const id of REGION3) {
       const enc = ENCOUNTERS[id]!;
       // dalgalı karşılaşma (waves.md): tüm dalgaların birimleri birlikte sayılır
       const units = [...enc.units, ...(enc.waves ?? []).flatMap((w) => w.units)];
       for (const u of units) expect(content.classes[u.class], `${id} ${u.class}`).toBeUndefined();
-      if (!units.some((u) => isCaster(u.class))) casterless++;
+      if (!units.some((u) => isCaster(u.class))) casterless.push(id);
       sets.add([...new Set(units.map((u) => u.class))].sort().join('+'));
     }
-    expect(casterless).toBeLessThanOrEqual(1);
+    // Siege Line (mob-plan) + Deserters' Camp (Harita 1 yeniden çizim, Ömer onaylı birim listesi: asker kaçakları, büyücüsüz)
+    expect(casterless.sort()).toEqual(['deserters_camp', 'siege_line']);
     expect(sets.size).toBe(REGION3.length);
     // Bölge I-II karşılaşmalarından da farklı
     const other = valdoria.nodes.filter((n) => n.region !== 'III' && 'encounter' in n).map((n) => {

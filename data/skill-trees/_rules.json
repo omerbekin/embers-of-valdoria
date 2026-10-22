@@ -1,7 +1,7 @@
 {
   "_not": "Skill ağacı (Moments) kuralları: şekil ve kilit sayılarının TEK yeri (Ömer 2026-10-21/22; docs/design/skill-tree-moments.md, docs/design/skill-tree-implementation.md bölüm 1-2). Kod: src/progression/skill-tree.ts (saf kural modülü), src/progression/skill-tree-compile.ts (derleyici). Class içeriği aynı klasörde <class>.json (tools/tree-import.mjs ile mockup seçiminden üretilir).",
   "_enabled": "enabled = ANA ŞALTER (false: hiçbir modda ağaç savaşa girmez; oyun bugünküyle birebir aynı). Arayüz gelene kadar false (Faz 1a). modes = şalter açıkken mod başına bayrak (plan bölüm 7: sefer + Endless açık; Quick Battle + multiplayer kapalı). Debug menüsündeki 'Skill tree: focus build' bu şalteri yalnızca o oturumda, bellekte aşar (kayda yazmaz).",
-  "enabled": false,
+  "enabled": true,
   "modes": { "campaign": true, "endless": true, "quick": false, "multiplayer": false },
   "_percentRule": "'+X% power' metinli düğümler fx'te op 'pct' ile yazılır; anlamı TEK yerden: 'mul' = oransal (güç x (1 + X x rank); 0,40 -> 0,416), 'add' = düz ek (güç + X x rank; 0,40 -> 0,44). Açık soru (plan 10.1); öneri oransal. Çevirmek için yalnızca bu değer değişir.",
   "percentRule": "mul",

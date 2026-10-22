@@ -986,19 +986,24 @@ export class MainMenuScene extends Phaser.Scene {
         if (coarse) slideTo(1);
       }
       if (s.buttons) {
-        const gap = 22; // kit düğmelerinin yan elmasları birbirine değmesin
-        const widths = s.buttons.map((b) => (b.id === 'continue' ? 168 : s.buttons!.length > 2 ? 112 : 160));
-        let bx = -(widths.reduce((a, b) => a + b, 0) + gap * (widths.length - 1)) / 2;
+        // Yan elmaslar dahil görsel genişlik: birincil w+30, ikincil w+14. Satır ortalanır; en dıştaki elmas çerçeveden >= 26px içeride,
+        // elmas uçları arası 22px (kart 460 geniş: 3 düğmede 146+80+80 -> sol/sağ boşluk ~26).
+        const gap = 22;
+        const inner = s.buttons.length > 2 ? { continue: 146, other: 80 } : { continue: 140, other: 140 };
+        const widths = s.buttons.map((b) => (b.id === 'continue' ? inner.continue : inner.other) + 8); // bw = w + 8
+        const exts = s.buttons.map((b, k) => widths[k]! - 8 + (b.primary ? 30 : 14)); // elmaslar dahil görsel genişlik
+        let bx = -(exts.reduce((a, b) => a + b, 0) + gap * (exts.length - 1)) / 2;
         s.buttons.forEach((b, k) => {
           const bw = widths[k]!;
+          const ext = exts[k]!;
           // Tasarım kiti düğmesi (primary = Continue / ilk eylem, diğerleri secondary); pasif düğme soluk, dokununca sallanır
           const btn = elButton(this, b.label, () => {
             if (!this.ready()) return;
             if (!b.enabled) return btn.shake();
             runCamp(b.id);
           }, { kind: b.primary ? 'primary' : 'secondary', w: bw - 8, h: b.primary ? 60 : 52, size: b.primary ? 20 : 17, ready: b.enabled, touch: { growY: 'up', maxW: bw + gap - 4, minPx: 48 } }); // kart düğmeleri: telefonda alan yukarı büyür
-          btn.root.setPosition(bx + bw / 2, hh - 58);
-          bx += bw + gap;
+          btn.root.setPosition(bx + ext / 2, hh - 64); // alt boşluk: birincil ~34px, ikincil ~38px
+          bx += ext + gap;
           c.add(btn.root);
         });
       }

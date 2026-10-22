@@ -67,7 +67,7 @@
 }
 
 .gr-hint {
-  font: italic max(14px, calc(23 * var(--u))) var(--g-body);
+  font: max(14px, calc(23 * var(--u))) var(--g-body);
   color: var(--g-gold);
   padding: calc(6 * var(--u)) 0;
   text-shadow: 0 2px 4px rgba(12, 8, 5, 0.95);
@@ -139,7 +139,7 @@
 }
 
 .gr-hero-sub {
-  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  font: max(12px, calc(18 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -195,7 +195,7 @@
 }
 
 .gr-slot-sub {
-  font: italic max(11px, calc(17 * var(--u))) var(--g-body);
+  font: max(11px, calc(17 * var(--u))) var(--g-body);
   color: var(--g-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -261,7 +261,7 @@
 
 .gr-cap-note {
   margin-top: calc(8 * var(--u));
-  font: italic max(11px, calc(16 * var(--u))) var(--g-body);
+  font: max(11px, calc(16 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -377,7 +377,7 @@
 .gr-card-value,
 .gr-card-note,
 .gr-card-empty {
-  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  font: max(12px, calc(19 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -473,7 +473,7 @@
 }
 
 .gr-mini-sub {
-  font: italic max(14px, calc(23 * var(--u))) var(--g-body);
+  font: max(14px, calc(23 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -502,7 +502,7 @@
 }
 
 .gr-mini-lines {
-  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  font: max(12px, calc(18 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -699,7 +699,7 @@ html.short .gr-hero-sub {
 
 .gr-tip-l {
   color: var(--el-note, #cdb88d);
-  font-style: italic;
+  font-style: normal;
 }
 
 /* --- Sabit boyut (Ömer 2026-10-09): item'e / filtreye tıklamak paneli, torba ızgarasını ya da kartı yeniden boyutlandırmaz ---
@@ -1041,7 +1041,7 @@ html.short .gr-slot-sub {
 }
 
 .gr-skill-meta {
-  font: italic max(11px, calc(15 * var(--u))) var(--g-body);
+  font: max(11px, calc(15 * var(--u))) var(--g-body);
   color: var(--g-dim);
   white-space: nowrap;
   overflow: hidden;
@@ -1062,7 +1062,7 @@ html.short .gr-slot-sub {
 }
 
 .gr-skill-num.none {
-  font-style: italic;
+  font-style: normal;
   color: var(--g-dim);
 }
 
@@ -1071,7 +1071,7 @@ html.short .gr-slot-sub {
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
-  font-style: italic;
+  font-style: normal;
   color: var(--g-dim);
 }
 
@@ -1427,26 +1427,42 @@ html.short .gr-slot-sub {
   text-shadow: 0 0 max(6px, calc(14 * var(--u))) color-mix(in srgb, var(--rc, #d9b26a) 45%, transparent);
 }
 
-.it-rib {
-  display: inline-block;
-  margin: 5px 0 3px;
-  padding: 2px 1.6em;
-  background: color-mix(in srgb, var(--rc, #d9b26a) 55%, #0c0905);
-  border-top: 1px solid var(--rl);
-  border-bottom: 1px solid var(--rl);
-  clip-path: polygon(0 0, 100% 0, calc(100% - 0.8em) 50%, 100% 100%, 0 100%, 0.8em 50%);
+.it-rule {
+  position: relative;
+  height: 1px;
+  margin: 9px 14% 8px;
+  background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent);
 }
 
-.it-rib span {
-  font: 600 0.76em var(--g-disp);
-  letter-spacing: 0.2em;
+.it-rule::after {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 7px;
+  height: 7px;
+  transform: translate(-50%, -50%) rotate(45deg);
+  background: #130d07;
+  border: 1px solid var(--rl);
+}
+
+.it-kind {
+  margin: 0 -10px;
+  padding: 4px 10px;
+  font: 600 1.02em / 1.2 var(--g-disp);
+  letter-spacing: 0.14em;
   text-transform: uppercase;
-  color: #fff4d6;
+  color: color-mix(in srgb, var(--rc, #d9b26a) 40%, #fff);
+  text-shadow: 0 1px 2px #000, 0 0 8px color-mix(in srgb, var(--rc, #d9b26a) 55%, transparent);
+  background: linear-gradient(90deg, transparent, rgba(0, 0, 0, 0.34) 20%, rgba(0, 0, 0, 0.34) 80%, transparent);
+  border-top: 1px solid color-mix(in srgb, var(--rc, #d9b26a) 35%, transparent);
+  border-bottom: 1px solid color-mix(in srgb, var(--rc, #d9b26a) 35%, transparent);
 }
 
 .it-sub {
-  color: var(--g-dim);
-  font: italic 0.92em var(--g-body);
+  margin-top: 5px;
+  color: #cdbd9c;
+  font: 1.08em var(--g-body);
 }
 
 .it-big {
@@ -1499,7 +1515,7 @@ html.short .gr-slot-sub {
   border-left: 2px solid rgba(255, 210, 122, 0.65);
   background: linear-gradient(90deg, rgba(255, 210, 122, 0.1), transparent);
   color: #ffd99a;
-  font-style: italic;
+  font-style: normal;
 }
 
 :is(.it-card, .mw-stats) .it-effect strong {
@@ -1602,7 +1618,7 @@ html.short .gr-slot-sub {
 
 :is(.it-card, .mw-stats) .it-off-note {
   margin: -1px 0 2px 2.1em;
-  font: italic 0.86em var(--g-body);
+  font: 0.86em var(--g-body);
   color: var(--g-dim);
 }
 
@@ -1664,7 +1680,7 @@ html.short .gr-slot-sub {
 }
 
 .mw-stats .it-req {
-  font: italic 0.92em var(--g-body);
+  font: 0.92em var(--g-body);
   color: var(--g-dim);
 }
 
@@ -1684,7 +1700,7 @@ html.short .gr-slot-sub {
 }
 
 .it-req {
-  font: italic 0.95em var(--g-body);
+  font: 0.95em var(--g-body);
   color: var(--g-dim);
 }
 
@@ -1869,9 +1885,13 @@ html.short .it-name {
   font-size: 12px;
 }
 
-html.short .it-rib {
-  margin: 2px 0 1px;
-  padding: 1px 1.2em;
+html.short .it-rule {
+  margin: 4px 14% 3px;
+}
+
+html.short .it-kind {
+  padding: 1px 6px;
+  font-size: 0.9em;
 }
 
 html.short .it-big strong {
@@ -1985,7 +2005,7 @@ html.short .it-rail {
 .gr-foot-hint {
   margin-right: auto;
   align-self: center;
-  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  font: max(12px, calc(19 * var(--u))) var(--g-body);
   color: var(--g-dim);
   min-width: 0;
   overflow: hidden;
@@ -2137,7 +2157,7 @@ html.short .it-rail {
 }
 
 .gr-shop-sub {
-  font: italic max(12px, calc(19 * var(--u))) var(--g-body);
+  font: max(12px, calc(19 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -2196,7 +2216,7 @@ html.short .it-rail {
   padding: calc(10 * var(--u)) calc(16 * var(--u));
   background: rgba(8, 6, 4, 0.6);
   border: 1px solid var(--g-line2);
-  font: italic max(13px, calc(22 * var(--u))) var(--g-body);
+  font: max(13px, calc(22 * var(--u))) var(--g-body);
   color: var(--g-text);
 }
 
@@ -2389,7 +2409,7 @@ html.reduced-motion .mw-half {
 }
 
 .mw-greet {
-  font: italic max(14px, calc(27 * var(--u))) var(--g-body);
+  font: max(14px, calc(27 * var(--u))) var(--g-body);
   color: var(--g-text);
 }
 
@@ -2583,7 +2603,7 @@ html.short .rb-medal {
 
 .item-tip .it-no {
   color: #e0907a;
-  font-style: italic;
+  font-style: normal;
 }
 
 html.short .rb-panel.gr-gear,
@@ -2716,7 +2736,7 @@ html.short .gr-shop.gr-gear {
 }
 
 .mw-hl-t .it-sub {
-  font: italic max(12px, calc(18 * var(--u))) var(--g-body);
+  font: max(12px, calc(18 * var(--u))) var(--g-body);
   color: var(--g-dim);
 }
 
@@ -3089,7 +3109,7 @@ html.short .gr-slot {
 }
 
 .gr-lvl-xp {
-  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  font: max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
   color: var(--g-dim);
 }
 
@@ -3140,7 +3160,7 @@ html.short .gr-slot {
 }
 
 .gr-pts-text {
-  font: italic max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  font: max(12px, calc(18 * var(--u))) var(--g-body, 'EB Garamond', serif);
   color: var(--g-dim);
 }
 
@@ -3152,13 +3172,13 @@ html.short .gr-slot {
 
 .gr-pts-warn {
   margin-top: calc(6 * var(--u));
-  font: italic max(12px, calc(17 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  font: max(12px, calc(17 * var(--u))) var(--g-body, 'EB Garamond', serif);
   color: #e0785e;
 }
 
 .gr-pts-skill {
   margin-top: calc(6 * var(--u));
-  font: italic max(11px, calc(16 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  font: max(11px, calc(16 * var(--u))) var(--g-body, 'EB Garamond', serif);
   color: var(--g-dim);
 }
 
@@ -3569,15 +3589,6 @@ html.short .gr-lvl + .gr-sec {
   border-top: 0;
 }
 
-.gr-ledger .gr-folio {
-  flex: none;
-  margin-top: auto;
-  padding-top: calc(6 * var(--u));
-  text-align: center;
-  font: italic max(11px, calc(15 * var(--u))) var(--g-body);
-  color: var(--g-dim);
-}
-
 .gr-ledger .gr-spine {
   background: linear-gradient(180deg, transparent, rgba(217, 178, 106, 0.5) 12%, rgba(217, 178, 106, 0.5) 88%, transparent);
   box-shadow: 0 0 calc(18 * var(--u)) rgba(0, 0, 0, 0.9);
@@ -3686,7 +3697,7 @@ html.short .gr-lvl + .gr-sec {
   padding: 8px 18px;
   background: rgba(12, 9, 6, 0.96);
   border: 1px solid rgba(255, 138, 122, 0.55);
-  font: italic max(13px, calc(20 * var(--u))) var(--g-body);
+  font: max(13px, calc(20 * var(--u))) var(--g-body);
   color: #ffb0a0;
   text-align: center;
   pointer-events: none;
@@ -3804,11 +3815,6 @@ html.short .gr-ledger .gr-pts-skill {
 
 html.short .gr-ledger .gr-btn.sm {
   font-size: 10px;
-}
-
-html.short .gr-ledger .gr-folio {
-  font-size: 9px;
-  padding-top: 2px;
 }
 
 html.short .gr-ledger .gr-soon span {
@@ -4007,7 +4013,7 @@ html.short .gr-ledger .gr-bag-head {
   padding: calc(14 * var(--u)) calc(16 * var(--u));
   border: 1px dashed var(--g-line2);
   background: rgba(8, 6, 4, 0.4);
-  font: italic max(12px, calc(20 * var(--u))) var(--g-body);
+  font: max(12px, calc(20 * var(--u))) var(--g-body);
   color: var(--g-text);
   cursor: pointer;
 }
@@ -4041,7 +4047,7 @@ html.short .gr-ledger .gr-bag-head {
   display: flex;
   flex-wrap: wrap;
   gap: calc(6 * var(--u)) calc(22 * var(--u));
-  font: italic max(13px, calc(21 * var(--u))) var(--g-body);
+  font: max(13px, calc(21 * var(--u))) var(--g-body);
   color: var(--g-text);
   flex: none;
 }
@@ -4447,8 +4453,7 @@ html.short .gr-overlay.gr-pair-ov {
 
 .gr-bagonly .gr-marks-col,
 .gr-bagonly .gr-page:not(.r),
-.gr-bagonly .gr-spine,
-.gr-bagonly .gr-folio {
+.gr-bagonly .gr-spine {
   display: none;
 }
 
@@ -4693,7 +4698,7 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
 
 .gr-fallen-txt {
   color: #c4b8a0;
-  font-style: italic;
+  font-style: normal;
 }
 
 .gr-fallen-banner {
@@ -4714,7 +4719,7 @@ html.short .gr-ledger.gr-bagonly .gr-lbody {
 }
 
 .gr-fallen-b-s {
-  font: italic 400 max(12px, calc(18 * var(--u))) 'EB Garamond', serif;
+  font: 400 max(12px, calc(18 * var(--u))) 'EB Garamond', serif;
   color: var(--g-dim);
 }
 
@@ -5044,6 +5049,301 @@ html.short .gr-pl .pl-tag {
   padding: 0.1em 0.5em;
 }
 
+/* ===================== Skill plakası: "C · Showcase" (Ömer 2026-10-23; taslak public/mockups/skills-rows/index.html#c) =====================
+   YALNIZCA Gear defterinin skill bloğu (.gr-lskills) ve telefon dışı (html:not(.short): telefonda eski dikey 5 plaka kalır, yer yok): pasif tam genişlikte
+   (ikon, ad, tam cümle <= 2 satır, sağda sayı bloğu), altında skill1 + skill2, skill3 + ULTIMATE; plaka = solda ikon, sağda ad + bedel çipleri, tek satır
+   açıklama (taşarsa ... ; tamamı hover ipucunda), büyük altın rakamlar + altında küçük etiket. Tüccar sekmesi (.gr-stall) eski sütun görünümünde kalır:
+   orada .pl-ds / .pl-big gizli (aşağıdaki taban kurallar), .pl-bd / .pl-hd saydam.
+   YÜKSEKLİK BÜTÇESİ (sayfa kaymaz; Hero sekmesi gövdesi = 3 satır: yuva bölgesi 1fr + bu blok auto): tam boy ~423 birim, compact (1050x591) ~238 px.
+   Ayrıntı docs/arch/ui-and-stage.md > Gear skill bloğu. */
+.gr-pl .pl-bd,
+.gr-pl .pl-hd {
+  display: contents;
+}
+
+.gr-pl .pl-ds,
+.gr-pl .pl-big {
+  display: none;
+}
+
+.gr-pl .pl-nm {
+  order: 0;
+}
+
+.gr-pl .pl-dv {
+  order: 1;
+}
+
+.gr-pl .pl-chips {
+  order: 2;
+}
+
+.gr-pl .pl-sls {
+  order: 3;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-skillbar {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: calc(14 * var(--u)) calc(16 * var(--u));
+  padding: calc(8 * var(--u)) 0 calc(4 * var(--u));
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl {
+  --is: calc(80 * var(--u));
+  display: grid;
+  grid-template-columns: var(--is) minmax(0, 1fr);
+  grid-template-areas: 'ico bd' 'ico big';
+  grid-template-rows: auto auto;
+  align-content: center;
+  column-gap: calc(14 * var(--u));
+  row-gap: calc(2 * var(--u));
+  align-items: center;
+  padding: calc(10 * var(--u)) calc(14 * var(--u));
+  translate: 0 0;
+  transition: translate var(--m-card-hover, 170ms) var(--m-ease, ease-out), border-color var(--m-card-hover, 170ms), box-shadow var(--m-card-hover, 170ms);
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas {
+  grid-column: 1 / -1;
+  grid-template-columns: var(--is) minmax(0, 1fr) auto;
+  grid-template-areas: 'ico bd big';
+  grid-template-rows: auto;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-tag {
+  left: calc(18 * var(--u));
+  transform: translate(0, -50%);
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ico {
+  grid-area: ico;
+  width: var(--is);
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bd {
+  grid-area: bd;
+  display: flex;
+  flex-direction: column;
+  gap: calc(2 * var(--u));
+  min-width: 0;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-hd {
+  display: flex;
+  align-items: center;
+  gap: calc(10 * var(--u));
+  min-width: 0;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-nm {
+  display: block;
+  flex: 1 1 auto;
+  min-width: 0;
+  min-height: 0;
+  text-align: left;
+  font-size: max(12px, calc(22 * var(--u)));
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-chips {
+  flex: none;
+  flex-wrap: nowrap;
+  justify-content: flex-end;
+  min-height: 0;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ds {
+  display: block;
+  font: max(12px, calc(18 * var(--u))) / 1.28 var(--g-body);
+  color: #cdbf9b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas .pl-ds {
+  white-space: normal;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-dv,
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-sls {
+  display: none;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-big {
+  grid-area: big;
+  display: flex;
+  align-items: flex-end;
+  gap: calc(28 * var(--u));
+  min-width: 0;
+  overflow: hidden;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas .pl-big {
+  align-self: stretch;
+  align-items: center;
+  max-width: 42cqw;
+  padding-left: calc(24 * var(--u));
+  border-left: 1px solid var(--g-line2);
+}
+
+.gr-pl .pl-bg {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  line-height: 1.05;
+}
+
+.gr-pl .pl-bg b {
+  font: 600 max(14px, calc(23 * var(--u))) var(--g-disp);
+  color: var(--g-gold);
+  white-space: nowrap;
+}
+
+.gr-pl .pl-bg b.up {
+  color: #8fe39a;
+}
+
+.gr-pl .pl-bg b.down {
+  color: #ff8a7a;
+}
+
+.gr-pl .pl-bg b small {
+  margin-left: 0.4em;
+  font-size: 0.55em;
+  letter-spacing: 0;
+}
+
+.gr-pl .pl-bg span {
+  font: max(11px, calc(15 * var(--u))) var(--g-body);
+  color: var(--g-dim);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.ult::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: linear-gradient(180deg, transparent, #e0702a, transparent);
+}
+
+/* hover: hafif yükselme + ince altın parlama (yalnızca fare; değerler data/ui-motion.json > card), giriş: kısa sıralı belirme (yalnızca ilk açılışta) */
+@media (hover: hover) {
+  html:not(.short) .gr-ledger .gr-lskills .gr-pl:hover {
+    translate: 0 calc(-1 * var(--m-card-lift, 4px));
+    border-color: #e9c985;
+    box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.75), 0 0 calc(18 * var(--u)) rgba(233, 201, 133, 0.45), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent);
+  }
+
+  html:not(.short) .gr-ledger .gr-lskills .gr-pl.ult:hover {
+    border-color: #ffb070;
+  }
+}
+
+html:not(.short) .gr-ledger .gr-lskills .gr-pl.intro {
+  animation: gr-pl-in var(--m-card-in, 260ms) var(--m-ease, ease-out) backwards;
+  animation-delay: calc(var(--m-card-delay, 90ms) + var(--i, 0) * var(--m-card-stagger, 70ms));
+}
+
+@keyframes gr-pl-in {
+  from {
+    opacity: 0;
+    translate: 0 var(--m-card-rise, 8px);
+  }
+
+  to {
+    opacity: 1;
+    translate: 0 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html:not(.short) .gr-ledger .gr-lskills .gr-pl.intro {
+    animation: none;
+  }
+}
+
+/* compact (<= 720 px yükseklik, ör. 1050x591; telefon .short hariç): gerçek pikselle sıkı ölçüler, blok ~238 px:
+   border 1 + pad 4 + başlık 19 + çubuk üst 6 + pasif 58 + 9 + plaka 65 + 9 + plaka 65 + alt 2.  Yuva bölgesi en az ~218 px ister (başlık+çip 26 + 4 satır x 44 + 3 aralık). */
+html.compact:not(.short) .gr-ledger .gr-lskills {
+  padding: 4px 8px 0 0;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-skills > .gr-sec {
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  padding-bottom: 2px;
+  margin-bottom: 4px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-skillbar {
+  gap: 9px 8px;
+  padding: 6px 0 2px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl {
+  --is: 50px;
+  column-gap: 8px;
+  row-gap: 1px;
+  padding: 4px 8px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-tag {
+  left: 10px;
+  font-size: 8px;
+  letter-spacing: 0.12em;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bd {
+  gap: 1px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-hd {
+  gap: 6px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-nm {
+  font-size: 12px;
+  letter-spacing: 0.03em;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-chips {
+  font-size: 10px;
+  gap: 3px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ds {
+  font-size: 10.5px;
+  line-height: 1.25;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-big {
+  gap: 14px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl.pas .pl-big {
+  padding-left: 12px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bg b {
+  font-size: 14px;
+}
+
+html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-bg span {
+  font-size: 9px;
+}
+
 /* ===================== Sheet: A · Band (Ömer 2026-10-18, public/mockups/stats-panels.html) =====================
    Karakter kartının dili: "LEVEL N" altın başlık, ince altın çerçeveli çubuklar (değer sağda), yeşil skill puanı çipi, elmas madalyonlu stat puanı,
    altın elmas ayırıcılar, MAIN / ATTACK / DEFENSE sütunları (altın Cinzel rakam, primary turuncu satır, tam adlar). Düz yazı, italik yok.
@@ -5204,9 +5504,26 @@ html.short .gr-pl .pl-tag {
   cursor: default;
 }
 
-.sh-acts {
+/* Reset / Confirm: panelin sağ altı (ikinci solda, birincil en sağda); akışta, stat sütunlarının altında (üstüne binmez) */
+.sh-foot {
   display: flex;
+  justify-content: flex-end;
   gap: calc(10 * var(--u));
+  padding-top: calc(4 * var(--u));
+  transition: opacity 0.2s ease;
+}
+
+.sh-foot.idle {
+  visibility: hidden;
+  opacity: 0;
+}
+
+html.short .sh-foot.idle {
+  display: none;
+}
+
+.sh-btn {
+  transition: border-color 0.17s ease, color 0.17s ease;
 }
 
 .sh-btn {
@@ -5734,3 +6051,7 @@ html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-bag-head {
   flex-wrap: wrap;
   row-gap: 2px;
 }
+
+/* Torba başlığı: filtre düğmesi (All items) Best düğmeleriyle (gr-btn sm) aynı yükseklik ve dikey hizada */
+.gr-bag-head { align-items: center; }
+.gr-bag-head .gr-chip { box-sizing: border-box; min-height: 44px; display: inline-flex; align-items: center; padding: 0 calc(18 * var(--u)); font-size: max(12px, calc(16 * var(--u))) !important; }

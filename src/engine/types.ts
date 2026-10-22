@@ -687,6 +687,35 @@ export interface TreeSetup {
   armorMult?: number;
   /** Faz 4c: çağrıya geçen ağaç (çağrı id'si; ceset tüketen çağrıda '<id>#fed' beslenmiş kopyası): skill yamaları, kancalar, can çarpanı, zırh. */
   summons?: Record<string, TreeSetup>;
+  /** Faz 8: skill biçim seçimleri (skill id -> biçimler; Paladin Focused Beam, Gambler Stacked Deck). Eylem `mode` ile seçer. */
+  modes?: Record<string, SkillModeSet>;
+}
+
+/**
+ * Faz 8 (skill ağacı): bir skill'in oyuncunun kullanmadan önce seçtiği biçimi. `skill` = biçimin TAM tanımı (id aynı: cooldown, kancalar, günlük
+ * aynı skill'e bağlı); eylem `{ kind: 'skill', mode: id }` ile seçilir, kullanım süresince Battle.skill(id, uid) bu tanımı döndürür.
+ */
+export interface SkillModeDef {
+  id: string;
+  /** Arayüz kartı (İngilizce): ad ve kısa açıklama, isteğe bağlı küçük not. */
+  name: string;
+  text: string;
+  note?: string;
+  /** Durum seçen biçim (Stacked Deck): kartın ikonu / rengi bu durumun. */
+  status?: StatusKind;
+  /** Biçimi veren düğüm ('<class>:<anahtar>'; ölçüm). */
+  node: string;
+  skill: SkillDef;
+}
+
+/** Faz 8: skill'in biçim kümesi. `keepBase`: skill'in kendi biçimi de seçenek (Radiance); false = her kullanımda biçimlerden biri seçilir (Card Trick). */
+export interface SkillModeSet {
+  keepBase: boolean;
+  /** keepBase iken skill'in kendi kartının açıklaması. */
+  baseText?: string;
+  /** Kartların üstündeki kısa satır (yoksa yok; ör. Double Deal: "A random second status joins it."). */
+  title?: string;
+  list: SkillModeDef[];
 }
 
 /** Savaş sonu özetinde tek birim (src/engine/battle-summary.ts > battleSummary). */
@@ -818,6 +847,8 @@ export interface RandomStatusOption {
   status: StatusKind;
   turns: number;
   weight: number;
+  /** Skill ağacı Faz 8 (Stacked Deck / Double Deal; yalnızca derleyicinin kurduğu biçim kopyasında): bu durum yalnızca İLK hedefe işler (zar yine atılır). */
+  firstOnly?: boolean;
 }
 
 export type SkillEffectKind =
@@ -1030,6 +1061,8 @@ export type SkillEffect = SkillEffectKind & {
    * etkisinde grubun hedeflerinden biri tutarsa uygulanır. Yalnızca ağaç ekler.
    */
   when?: CondWhen;
+  /** Skill ağacı Faz 8 (Stacked Deck: Stun yalnızca ilk karta): 'status' etkisi yalnızca grubun İLK hedefine uygulanır. Yalnızca ağaç biçim kopyası. */
+  firstOnly?: boolean;
 };
 
 export interface SkillCost {
@@ -1176,7 +1209,7 @@ export interface SkillDef {
    * pattern 'row' (YALNIZCA target 'single_ally'; Close Ranks, Ömer 2026-10-20): seçilen dostun sırasındaki (alan şekli 'row') diğer canlı dostlar
    * (kullanıcı HARİÇ) da hedef olur; menzile yalnızca seçilen dost bakar. Etkiler (ör. guard) hepsine uygulanır.
    */
-  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind'; mult?: number; jumps?: number };
+  splash?: { pattern: 'perpendicular' | 'chain' | 'row' | 'behind' | 'lane'; mult?: number; jumps?: number };
   /**
    * target 'area_enemies' / 'area_any' (zorunlu): oyuncu bir ANCHOR hücre seçer (boş hücre de olabilir); şekil (hücre kümesi, bkz. area-shape.ts) row | column | rect | plus | x.
    * 'area_any': anchor KENDİ ya da KARŞI tahtada olabilir (Smoke Bomb); etkiler `side` ile dost/düşmana ayrılır.
@@ -1560,6 +1593,8 @@ export interface Combatant {
    * önce buraya, yoksa ortak tabloya (setup.skills) bakar. Ağaçsız birimde tanımsız.
    */
   skillDefs?: Record<string, SkillDef>;
+  /** Faz 8: skill biçim seçimleri (UnitSetup.tree.modes; birimin skill listesindekiler). Ağaçsız birimde tanımsız. */
+  skillModes?: Record<string, SkillModeSet>;
   /** Skill ağacı (b) unitFx kanalı (UnitSetup.tree.fx): item'lerden ayrı; motor okuması tree-hooks.ts > effNum / effFlag / effList. */
   treeFx?: ItemEffects;
   /** unitFx anahtarı -> düğümler (ölçüm). */
@@ -1915,7 +1950,7 @@ export interface ValorRules {
 
 /** Bir birimin yapabileceği tek bir eylem (battle.act girdisi; yapay zeka seçimi de bu şekle çevrilir). */
 export type BattleAction =
-  | { kind: 'skill'; skillId: string; targetUid?: string; slot?: number; /** area_any: anchor hücrenin tahtası (yoksa karşı taraf; `targetUid` canlı birimse onun tahtası, `tile:<yuva>` ise kendi tahtası). */ board?: Side; /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedi (ceset varken zorunlu). */ corpseUid?: string }
+  | { kind: 'skill'; skillId: string; targetUid?: string; slot?: number; /** Faz 8: skill ağacı biçimi (Combatant.skillModes; yoksa skill'in kendi biçimi). */ mode?: string; /** area_any: anchor hücrenin tahtası (yoksa karşı taraf; `targetUid` canlı birimse onun tahtası, `tile:<yuva>` ise kendi tahtası). */ board?: Side; /** Ceset tüketen çağrı (Raise Dead): tüketilecek düşman cesedi (ceset varken zorunlu). */ corpseUid?: string }
   | { kind: 'global'; id: string; slot?: number; /** Move Tile: slot yerine `tile:<yuva>` kimliği de kabul edilir. */ targetUid?: string };
 
 /** battle.listActions satırı: bir eylem ve şu an kullanılabilir olup olmadığı. */

@@ -231,7 +231,7 @@
 
 .el-link small {
   margin-left: 4px;
-  font: italic 16px var(--el-body);
+  font: 16px var(--el-body);
   letter-spacing: 0;
   text-transform: none;
   color: var(--el-dim);
@@ -359,7 +359,7 @@
 /* --- Durum satırı --- */
 .el-status {
   min-height: 1.3em;
-  font: italic 19px/1.25 var(--el-body);
+  font: 19px/1.25 var(--el-body);
   color: var(--el-note);
   text-shadow: var(--el-sh);
   transition: color 0.3s;

@@ -490,6 +490,33 @@ const doublestrike = async (c: VfxCtx) => {
   );
 };
 
+/**
+ * Headsman's Blow (Warrior ultimate; v1 yedeği, asıl tasarım art-v2/warrior > headsman): hedefin yanına koşar, geriye çekilip kılıcı
+ * kaldırır (kızıl kor), tek ağır dikey iniş; parlama, sarsıntı, zeminde çatlak ve kor fışkırması.
+ */
+const headsman = async (c: VfxCtx) => {
+  const t = c.targets[0];
+  if (!t) return;
+  const stand = standNear(c.actor, t);
+  c.sfx('armorRun');
+  await c.actor.approach(stand.x, stand.y, 190);
+  c.actor.play('attack');
+  await new Promise<void>((resolve) => c.scene.tweens.add({ targets: c.actor.container, x: stand.x - stand.dir * 26, duration: slow(220), ease: 'Quad.easeOut', onComplete: () => resolve() }));
+  burst(c.scene, c.actor.container.x, c.actor.container.y - c.actor.h, { colors: ['#ffd23f', '#e5463b', '#8e1f2c'], n: 8, speed: [40, 140], gravity: -120, life: [260, 420], size: [5, 9] });
+  c.sfx('axeSwing');
+  c.scene.tweens.add({ targets: c.actor.container, x: stand.x + stand.dir * 26, duration: slow(80), ease: 'Quad.easeIn' });
+  const p = spot(t);
+  await arcSlash(c.scene, p.x - stand.dir * 4, p.y, { dir: stand.dir, from: -1.45, to: 1.45, r: 140, dur: 120, size: 20, colors: ['#ffffff', '#e5463b', '#8e1f2c'] });
+  c.sfx('chargeSlam');
+  hit(c.scene, p.x, p.y, ['#ffffff', '#ffe9b0', '#e5463b'], 1.5);
+  const f = feet(t);
+  cracks(c.scene, f.x, f.y, { len: 160, n: 8, flat: 0.3, dur: 1000 });
+  burst(c.scene, f.x, f.y, { colors: ['#ffd23f', '#ff9a3c', '#e5463b'], n: 10, speed: [140, 360], angle: [Math.PI * 1.15, Math.PI * 1.85], gravity: 520, life: [300, 560], size: [5, 10] });
+  flash(c.scene, '#fff3d6', 0.26, 140);
+  shake(c.scene, 220, 0.008);
+  void wait(c.scene, slow(200)).then(() => void c.actor.returnHome());
+};
+
 /** Charge: hızla hedefin yanına kadar koşar (arkasında hız izi), omuzla çarpar ve sersemletir. */
 const charge = async (c: VfxCtx) => {
   const t = c.targets[0];
@@ -5000,6 +5027,7 @@ export const VFX: Record<VfxKind, (c: VfxCtx) => Promise<void>> = {
   charge,
   whirlwind,
   warcry,
+  headsman,
   holysword,
   resurrect,
   judgment,

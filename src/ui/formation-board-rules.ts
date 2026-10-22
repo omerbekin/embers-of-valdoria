@@ -35,6 +35,20 @@ export function reachText(n: number): string {
   return 'From here: hits the front row only';
 }
 
+/** Uygunluk + isabet edilen sıra sayısı -> vurgu rengi (hover kutusu kenarı; Formation ve savaştaki çağrı hücre seçimi ortak). */
+export function fitAccent(n: number, fit: Fit): string {
+  return n <= 0 || fit === 'bad' ? '#e8806a' : fit === 'weak' ? '#e0a43a' : '#8fc65a';
+}
+
+/** "Enemy rows hit" 4 parçalı çubuğun HTML'i (hover kutusu gövdesi; stil formation-board.css > .fb-reach). Dolu kutu rengi isabet sayısına göre yeşilden sarıya. */
+export function reachBarHtml(n: number): string {
+  const segs = [1, 2, 3, 4].map((i) => `<i class="${i <= n ? 'on' : ''}">${i}</i>`).join('');
+  const t = Math.max(0, Math.min(1, (n - 1) / 3));
+  const mix = (a: number, b: number): number => Math.round(a + (b - a) * t);
+  const reachCol = `rgb(${mix(0x7c, 0xf2)}, ${mix(0xc6, 0xd0)}, ${mix(0x5a, 0x3e)})`;
+  return `<div class="fb-reach"><span class="rl">Enemy rows hit</span><span class="rb" style="--ac:${reachCol}">${segs}</span></div>`;
+}
+
 /** Seçim durumu: `sel` seçili kahraman, `moved` son taşınan (bilgi paneli ikisinden birini gösterir). */
 export interface BoardSel {
   sel: string;

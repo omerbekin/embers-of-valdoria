@@ -30,6 +30,40 @@ export const woundHpLossPct = (wounds: number, r: WoundRules): number => Math.ro
 /** En küçük işlevsel gösterim (yara arayüzü mockup'tan seçilecek): "Wounds: 2 (-40% max HP)"; yarasızsa boş. */
 export const woundsLine = (wounds: number, r: WoundRules): string => (wounds > 0 ? `Wounds: ${wounds} (-${woundHpLossPct(wounds, r)}% max HP)` : '');
 
+/** Yara ipucunun düz içeriği (DOM ve Phaser ipucu aynı metni kurar; Ömer 2026-10-23, V1 "Scar + dots"). Sayılar kuraldan; yüzdeler yuvarlak. */
+export interface WoundTipData {
+  title: string;
+  /** "-60%" (tam sayı yüzde; kayan nokta artığı yok). */
+  value: string;
+  valueLabel: string;
+  /** "Max HP 56 of 140" (taban bilinmiyorsa yok). */
+  maxHp?: string;
+  /** Üst sınırda (lethal) mı: "Maximum" çipi. */
+  maxed: boolean;
+  lines: string[];
+  foot?: string;
+}
+
+/**
+ * Yara ipucu içeriği. `baseHp` yarasız maks can (bilinirse "Max HP x of y"); `town` kasaba dinlenmesi yarayı siler (sefer; Endless'ta yok).
+ * Valor'un sildiği yara sayısı data/valor.json'dan. Yarasızsa null.
+ */
+export function woundTipData(wounds: number, r: WoundRules, opts: { baseHp?: number; town?: boolean } = {}): WoundTipData | null {
+  const n = Math.max(0, Math.floor(wounds));
+  if (n <= 0) return null;
+  const maxed = n >= r.lethal;
+  const town = opts.town !== false;
+  const valor = valorClearWounds();
+  const heal = [town ? 'resting in a town clears all wounds.' : '', valor > 0 ? `A Valor revive clears ${valor}.` : ''].filter(Boolean);
+  const lines = [`Each wound lowers max HP by ${Math.round(r.maxHpLoss * 100)}%.`];
+  if (heal.length) lines.push(`Heal: ${heal.join(' ').replace(/^r/, 'R')}`);
+  if (maxed) lines.push(`Going down again in a won battle leaves a corpse.${valor > 0 ? ' Valor can raise it.' : ''}`);
+  const out: WoundTipData = { title: `${n} ${n === 1 ? 'Wound' : 'Wounds'}`, value: `-${woundHpLossPct(n, r)}%`, valueLabel: 'max HP', maxed, lines };
+  if (opts.baseHp !== undefined && opts.baseHp > 0) out.maxHp = `Max HP ${Math.max(1, Math.round(opts.baseHp * woundHpFactor(n, r)))} of ${Math.round(opts.baseHp)}`;
+  if (town) out.foot = 'Camp rest does not heal wounds.';
+  return out;
+}
+
 /**
  * Yaraları savaş kurulumuna uygular (YERİNDE): maks can = (türetilen x hpMult + hpAdd) x çarpan. Motor saf kalır: yalnızca mevcut
  * UnitModifiers.hpMult / hpAdd alanları kullanılır (item'in düz can eki de aynı oranda düşer). Yarasızsa dokunmaz.

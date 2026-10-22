@@ -1,11 +1,41 @@
+import { existsSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
 import valdoria from '../data/campaign/valdoria.json';
 import { FULL_REGION, coverShift, focusCrop, imageToRegion, placeArt, regionAspect, regionToImage, type Region } from '../src/game/wide-map';
 import layout from '../data/battle-layout.json';
 
-const WIDE = { w: 1916, h: 821 }; // assets/campaign/valdoria-bg-wide.webp
-const OLD = { w: 1672, h: 941 }; // assets/campaign/valdoria-bg.webp
-const region = valdoria.backgroundWide.region as unknown as Region;
+// Eski çizimin geniş görseli (1916x821; 2026-10-22 Harita 1 yeniden çiziminde kaldırıldı) ve SIFT ile ölçülmüş bölgesi:
+// yerleşim hesabı (wide-map.ts) yeni bir geniş görsel geldiğinde aynı kuralla kullanılır, testler bu ölçümle saf hesabı sınar.
+const WIDE = { w: 1916, h: 821 };
+const OLD = { w: 1672, h: 941 }; // assets/campaign/valdoria-bg.webp (yeni çizim de aynı boyda)
+const region: Region = [0.08229, 0.00077, 0.79804, 0.94083];
+
+describe('Harita 1 yeni çizimin geniş (21:9) görseli (Ömer onayı 2026-10-22)', () => {
+  const NEW = { w: 2195, h: 941 }; // assets/campaign/valdoria-bg-wide.webp
+  const wide = (valdoria as unknown as { backgroundWide?: { image: string; region: Region } }).backgroundWide!;
+  it('veride geniş görsel ve bölgesi var, dosya assets/campaign altında', () => {
+    expect(valdoria.background).toBe('valdoria-bg');
+    expect(wide.image).toBe('valdoria-bg-wide');
+    expect(existsSync(`assets/campaign/${wide.image}.webp`)).toBe(true);
+  });
+  it('bölge = 16:9 görselin (1672x941) birebir yeri: x 261..1933 px, tam yükseklik', () => {
+    expect(wide.region[0] * NEW.w).toBeCloseTo(261, 0);
+    expect(wide.region[2] * NEW.w).toBeCloseTo(1933, 0);
+    expect(wide.region[1]).toBe(0);
+    expect(wide.region[3]).toBe(1);
+    expect(regionAspect(NEW.w, NEW.h, wide.region)).toBeCloseTo(OLD.w / OLD.h, 3);
+  });
+  it('16:9 görünüm değişmez (bölge 0-1920 x 0-1080i 16:9 görselle aynı ölçekte kaplar), 21:9 ekranda yanlar da görselden', () => {
+    const p = placeArt(NEW.w, NEW.h, wide.region, { x: 0, y: 0, w: 1920, h: 1080 });
+    const q = placeArt(OLD.w, OLD.h, FULL_REGION, { x: 0, y: 0, w: 1920, h: 1080 });
+    expect(p.scale).toBeCloseTo(q.scale, 3);
+    expect(p.top).toBeCloseTo(0, 6);
+    expect(p.bottom).toBeGreaterThanOrEqual(1080);
+    // 21:9 (1080 x 21/9 = 2520 genişlik): görünen alan -300..2220
+    expect(p.left).toBeLessThanOrEqual(-299);
+    expect(p.right).toBeGreaterThanOrEqual(2220);
+  });
+});
 
 describe('geniş harita görseli: bölge yapılandırması', () => {
   it('bölge 0-1 içinde ve eski haritanın oranını (~16:9, 1672x941) verir', () => {
@@ -25,7 +55,7 @@ describe('geniş harita görseli: bölge yapılandırması', () => {
     }
   });
   it('ölçülen noktalar: Mill Road kıyıda (geniş görselin sol kısmı), eski Castle Morvane noktası kuzeydoğu dağlarda', () => {
-    const mill = regionToImage(valdoria.nodes.find((n) => n.name === 'Mill Road')!.pos as [number, number], region);
+    const mill = regionToImage([0.146, 0.846], region); // eski çizimdeki Mill Road konumu (ölçüm eski görsele göre)
     // kalibrasyon noktası: eski Castle Morvane konumu (A1-x'te düğüm taşındı; ölçüm görsel üstünde sabit)
     const morvane = regionToImage([0.924, 0.17], region);
     expect(mill[0]).toBeGreaterThan(0.15);

@@ -1,0 +1,181 @@
+/* Harita pencereleri (src/ui/map-window.ts; taslak public/mockups/map-events.html: A levha = olay / hazine / dinlenme / kahraman, C = kasaba içi küçük not).
+   Ölçüler oyun birimiyle: calc(N * var(--u)). */
+.mw {
+  --u: var(--gu, 1px);
+  --g-text: #d9c8a2; --g-dim: #a8977a; --g-gold: #f3d999; --g-edge: rgba(217, 178, 106, 0.42); --g-line: rgba(217, 178, 106, 0.16); --g-line2: rgba(217, 178, 106, 0.3);
+  --g-ember: #e0702a; --g-ember2: #ffb35a; --g-disp: Cinzel, Georgia, 'Palatino Linotype', serif; --g-body: 'EB Garamond', Georgia, 'Palatino Linotype', serif;
+  position: fixed; inset: 0; z-index: 19; color: var(--g-text); font-family: var(--g-body);
+}
+.mw-scrim { position: absolute; inset: 0; background: rgba(5, 3, 2, .62); }
+.mw.anch .mw-scrim { background: rgba(5, 3, 2, .42); }
+.mw-win { position: absolute; z-index: 1; color: var(--g-text); }
+.mw-center { inset: 0; display: flex; align-items: center; justify-content: center; padding: max(44px, calc(60 * var(--u))) 12px 12px; pointer-events: none; }
+.mw-center .mw-panel { pointer-events: auto; }
+.mw-panel { position: relative; background: linear-gradient(180deg, rgba(30,22,14,.97), rgba(12,9,6,.97)); border: 1px solid var(--g-edge);
+  box-shadow: 0 0 0 3px rgba(8,6,4,.7), 0 calc(18 * var(--u)) calc(40 * var(--u)) rgba(0,0,0,.6); max-height: 100%; display: flex; flex-direction: column; box-sizing: border-box; }
+.mw-in .mw-panel { animation: mw-rise var(--m-modal-in, 220ms) ease-out both; }
+.mw-in .mw-scrim { animation: mw-fade 200ms ease-out both; }
+@keyframes mw-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
+@keyframes mw-fade { from { opacity: 0; } to { opacity: 1; } }
+html.reduced-motion .mw-in .mw-panel, html.reduced-motion .mw-in .mw-scrim { animation: none; }
+.mw-corner { position: absolute; width: 7px; height: 7px; background: #130d07; border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 2; }
+.mw-corner.tl { left: -4px; top: -4px; } .mw-corner.tr { right: -4px; top: -4px; } .mw-corner.bl { left: -4px; bottom: -4px; } .mw-corner.br { right: -4px; bottom: -4px; }
+.mw-scroll { overflow-y: auto; min-height: 0; scrollbar-width: thin; }
+
+/* ---------- yazilar ---------- */
+.mw-t { font: 600 max(18px, calc(40 * var(--u))) var(--g-disp); letter-spacing: .12em; text-transform: uppercase; margin: 0; line-height: 1.12;
+  background: linear-gradient(180deg, #fbe7b0 0%, #e6c27a 55%, #b88a42 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); }
+.mw-txt { font: 400 max(13px, calc(26 * var(--u))) / 1.34 var(--g-body); color: #d9c8a2; }
+.mw-txt p { margin: 0 0 .55em; } .mw-txt p:last-child { margin-bottom: 0; }
+.mw-txt .q { color: #cdb88d; }
+.mw-lore { font: max(12px, calc(22 * var(--u))) var(--g-body); color: var(--g-dim); margin: 0; }
+.mw-cap { display: flex; align-items: center; gap: 10px; font: 600 max(9px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .24em; text-transform: uppercase; color: rgba(217,178,106,.85); margin: 0; }
+.mw-cap::after { content: ''; flex: 1; height: 1px; background: linear-gradient(90deg, rgba(217,178,106,.4), transparent); }
+.mw-cap .r { order: 3; letter-spacing: .06em; color: var(--g-dim); font-weight: 400; text-transform: none; font-family: var(--g-body); font-size: max(11px, calc(19 * var(--u))); }
+
+/* ---------- cipler ---------- */
+.mw-tags, .mw-chips { display: flex; flex-wrap: wrap; gap: max(4px, calc(8 * var(--u))); align-items: center; }
+.mw-chip { display: inline-flex; align-items: center; gap: .4em; padding: .1em .7em .1em .5em; min-height: max(20px, calc(32 * var(--u))); white-space: nowrap;
+  font: 600 max(10px, calc(17 * var(--u))) var(--g-disp); letter-spacing: .07em; text-transform: uppercase; background: rgba(12,9,6,.72); border: 1px solid var(--g-line2); color: var(--g-text); }
+.mw-chip img { width: 1.5em; height: 1.5em; object-fit: contain; }
+.mw-chip.type { color: #1a1109; border-color: transparent; background: var(--ac, #cdb67f); padding-left: .8em; }
+.mw-chip.dim { color: var(--g-dim); border-color: var(--g-line); background: transparent; }
+.mw-chip.gain { color: #f3d999; border-color: rgba(243,217,153,.5); background: rgba(243,217,153,.08); }
+.mw-chip.heal { color: #a9d894; border-color: rgba(127,191,106,.55); background: rgba(127,191,106,.09); }
+.mw-chip.loss { color: #ffb35a; border-color: rgba(224,112,42,.7); background: rgba(224,112,42,.1); }
+.mw-chip.info { color: #cdb88d; }
+.mw-chip.big { min-height: max(26px, calc(46 * var(--u))); font-size: max(11px, calc(21 * var(--u))); }
+.mw-chip .ck { width: 1em; height: 1em; }
+
+/* ---------- baslik + madalyon + sahne gorseli ---------- */
+.mw-medal { flex: none; display: block; overflow: visible; filter: drop-shadow(0 3px 4px rgba(0,0,0,.7)); }
+.mw-hd { display: flex; align-items: center; gap: max(10px, calc(22 * var(--u))); padding: max(8px, calc(20 * var(--u))) max(14px, calc(34 * var(--u))); position: relative;
+  background: linear-gradient(90deg, rgba(var(--acr), .14), rgba(13,9,6,.5) 55%); border-bottom: 1px solid var(--g-line2); }
+.mw-hd::before { content: ''; position: absolute; left: 0; top: 0; bottom: 0; width: 4px; background: var(--ac); }
+.mw-hd .tx { display: flex; flex-direction: column; gap: max(4px, calc(10 * var(--u))); min-width: 0; }
+.mw-art { position: relative; background-color: #120c08; background-size: cover; background-repeat: no-repeat; }
+.mw-art::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, rgba(12,9,6,.0) 40%, rgba(14,10,7,.94) 100%), linear-gradient(90deg, rgba(12,9,6,.35), transparent 20%, transparent 80%, rgba(12,9,6,.35)); pointer-events: none; }
+.mw-art.noveil::after { background: none; }
+.mw-body { padding: max(10px, calc(24 * var(--u))) max(14px, calc(40 * var(--u))) max(12px, calc(30 * var(--u))); display: flex; flex-direction: column; gap: max(8px, calc(20 * var(--u))); min-height: 0; }
+.mw-acts { display: flex; justify-content: flex-end; align-items: center; gap: max(12px, calc(26 * var(--u))); margin-top: auto; padding-top: max(2px, calc(6 * var(--u))); }
+.mw-acts .el-btn { min-height: 44px; font-size: max(13px, calc(21 * var(--u))); padding-left: max(16px, calc(34 * var(--u))); padding-right: max(16px, calc(34 * var(--u))); }
+.mw-acts .el-btn.primary { font-size: max(14px, calc(23 * var(--u))); min-height: max(46px, calc(62 * var(--u))); padding-left: max(24px, calc(48 * var(--u))); padding-right: max(24px, calc(48 * var(--u))); }
+.mw-acts .el-btn:disabled { opacity: .5; cursor: not-allowed; }
+.mw-acts .el-btn img { width: 1.3em; height: 1.3em; margin-right: .5em; object-fit: contain; }
+.mw-acts.mid { justify-content: center; }
+
+/* ---------- secenek plakalari (A Plates dili) ---------- */
+.mw-plates { display: grid; grid-template-columns: 1fr 1fr; gap: max(10px, calc(24 * var(--u))) max(10px, calc(22 * var(--u))); padding-top: max(6px, calc(12 * var(--u))); }
+.mw-plates.one { grid-template-columns: 1fr; }
+.mw-plate { --ac: #cdb67f; --acl: #e9d9a8; position: relative; display: flex; flex-direction: column; gap: max(4px, calc(10 * var(--u))); padding: max(12px, calc(26 * var(--u))) max(10px, calc(20 * var(--u))) max(8px, calc(16 * var(--u))); text-align: left; cursor: pointer; font: inherit; color: inherit;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 11%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 40%, rgba(217,178,106,.2));
+  box-shadow: 0 0 0 3px rgba(8,6,4,.75), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 8%, transparent); transition: border-color .15s, box-shadow .15s, transform .15s; min-height: 44px; }
+.mw-plate:hover, .mw-plate:focus-visible { outline: none; border-color: var(--acl); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(22 * var(--u)) color-mix(in srgb, var(--ac) 35%, transparent), inset 0 0 calc(24 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); }
+.mw-plate.dim { opacity: .55; cursor: not-allowed; } .mw-plate.chosen { cursor: default; border-color: var(--acl); }
+.mw-ptag { position: absolute; top: 0; left: max(12px, calc(20 * var(--u))); transform: translateY(-50%); z-index: 2; font: 700 max(9px, calc(13 * var(--u))) var(--g-disp); letter-spacing: .2em; text-transform: uppercase; color: #fff4d6;
+  background: color-mix(in srgb, var(--ac) 55%, #0c0905); border: 1px solid var(--acl); padding: .15em 1em; white-space: nowrap; line-height: 1.5; }
+.mw-pnm { font: 600 max(13px, calc(24 * var(--u))) var(--g-disp); letter-spacing: .07em; text-transform: uppercase; color: var(--acl); text-shadow: 0 0 max(5px, calc(12 * var(--u))) color-mix(in srgb, var(--ac) 40%, transparent); line-height: 1.15; }
+.mw-pds { margin: 0; font: 400 max(12px, calc(21 * var(--u))) / 1.28 var(--g-body); color: #cdb88d; }
+.mw-pdv { position: relative; height: 1px; background: linear-gradient(90deg, transparent, var(--g-line2) 12%, var(--g-line2) 88%, transparent); margin: max(2px, calc(4 * var(--u))) 0; }
+.mw-pdv::after { content: ''; position: absolute; left: 50%; top: 50%; width: 6px; height: 6px; transform: translate(-50%, -50%) rotate(45deg); background: #130d07; border: 1px solid var(--acl); }
+.mw-plate .mw-chips { margin-top: auto; }
+.mw-plate .need { font: max(11px, calc(18 * var(--u))) var(--g-body); color: #ffb35a; }
+.mw-plate.chosen::before, .mw-card.sel::before { content: ''; position: absolute; left: 50%; top: 0; width: 10px; height: 10px; transform: translate(-50%, -50%) rotate(45deg); background: var(--g-ember); border: 1px solid var(--g-ember2); z-index: 3; box-shadow: 0 0 8px rgba(240,140,40,.8); }
+.acc-ember { --ac: #e0702a; --acl: #ffb35a; } .acc-gold { --ac: #d9a53a; --acl: #f3d999; } .acc-red { --ac: #b8402f; --acl: #f08a72; }
+.acc-violet { --ac: #8f6fb8; --acl: #cdb4ec; } .acc-green { --ac: #5f9a54; --acl: #b5e0a0; } .acc-dim { --ac: #8d7d5e; --acl: #d9c8a2; }
+.mw-plates.compact .mw-plate { flex-direction: row; flex-wrap: wrap; align-items: center; gap: max(4px, calc(8 * var(--u))) max(10px, calc(18 * var(--u))); padding-top: max(10px, calc(20 * var(--u))); }
+.mw-plates.compact .mw-plate .main { flex: 1 1 40%; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mw-plates.compact .mw-pdv { display: none; } .mw-plates.compact .mw-plate .mw-chips { margin-top: 0; flex: 1 1 100%; }
+
+/* ---------- kahraman / aday kartlari (karakter karti A + plaka dili) ---------- */
+.mw-cards { display: flex; gap: max(10px, calc(24 * var(--u))); justify-content: center; flex-wrap: nowrap; padding-top: max(6px, calc(10 * var(--u))); }
+.mw-card { --ac: #cdb67f; --acl: #e9d9a8; position: relative; flex: 1 1 0; min-width: 0; max-width: max(150px, calc(380 * var(--u))); box-sizing: border-box; display: flex; flex-direction: column; align-items: center; gap: max(4px, calc(10 * var(--u))); padding: 0 0 max(8px, calc(18 * var(--u))); cursor: pointer; font: inherit; color: inherit; text-align: center;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--ac) 10%, #1d140c), #0d0906); border: 1px solid color-mix(in srgb, var(--ac) 35%, rgba(217,178,106,.2)); box-shadow: 0 0 0 3px rgba(8,6,4,.75); transition: border-color var(--m-card-hover, 170ms) var(--m-ease, ease-out), box-shadow var(--m-card-hover, 170ms) var(--m-ease, ease-out), translate var(--m-card-hover, 170ms) var(--m-ease, ease-out); min-height: 44px; }
+.mw-card:hover, .mw-card:focus-visible { outline: none; border-color: var(--acl); }
+@media (hover: hover) { .mw-card:hover { translate: 0 calc(-1 * var(--m-card-lift, 4px)); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(18 * var(--u)) rgba(243,217,153,.22); } .mw-card.sel:hover { box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(24 * var(--u)) rgba(243,217,153,.34), inset 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); } }
+/* kartlar pencere açılınca kısa sıralı belirir (data/ui-motion.json > card); yalnızca ilk açılışta. Hover yükselmesi ayrı `translate` özelliğinde: giriş animasyonunun `transform`u (fill both) onu ezmesin */
+.mw-in .mw-card { animation: mw-card-in var(--m-card-in, 260ms) var(--m-ease, ease-out) both; animation-delay: calc(var(--m-card-delay, 90ms) + var(--i, 0) * var(--m-card-stagger, 70ms)); }
+@keyframes mw-card-in { from { opacity: 0; transform: translateY(var(--m-card-rise, 8px)); } to { opacity: 1; transform: none; } }
+html.reduced-motion .mw-in .mw-card { animation: none; }
+.mw-card.sel { border-color: var(--g-gold); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 0 calc(24 * var(--u)) rgba(243,217,153,.3), inset 0 0 calc(26 * var(--u)) color-mix(in srgb, var(--ac) 12%, transparent); }
+.mw-card .pt { position: relative; width: 100%; aspect-ratio: 1 / .85; overflow: hidden; background: #120c08; border-bottom: 1px solid var(--g-line2); }
+.mw-card .pt img.av { width: 100%; height: 100%; object-fit: cover; object-position: 50% 18%; display: block; }
+.mw-card .pt img.bust, .mw-card .pt canvas.bust { position: absolute; max-width: none; height: auto; display: block; user-select: none; }
+.mw-card .pt::after { content: ''; position: absolute; inset: 0; background: linear-gradient(180deg, transparent 55%, rgba(13,9,6,.85)); }
+.mw-card .em { position: absolute; right: 6%; bottom: 6%; z-index: 2; width: max(22px, calc(54 * var(--u))); height: max(22px, calc(54 * var(--u))); border-radius: 50%; background: #140e09; border: 1px solid var(--ac); padding: 2px; }
+.mw-card .pt img.bust.pend { opacity: 0; }
+.mw-card .pt canvas.bust.arm { animation: mw-bust-in .3s ease-out; }
+@keyframes mw-bust-in { from { opacity: 0; } to { opacity: 1; } }
+.mw-card .crown { position: absolute; right: 6%; top: 6%; z-index: 2; width: max(18px, calc(40 * var(--u))); color: var(--g-gold); filter: drop-shadow(0 1px 2px #000); }
+.mw-card .nm { font: 600 max(13px, calc(26 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--acl); }
+.mw-card .ds { margin: 0; padding: 0 max(8px, calc(16 * var(--u))); font: 400 max(11px, calc(20 * var(--u))) / 1.26 var(--g-body); color: #cdb88d; }
+.mw-card .mw-chips { justify-content: center; padding: 0 6px; max-width: 100%; box-sizing: border-box; }
+.mw-card .mw-chip { white-space: normal; text-align: center; max-width: 100%; box-sizing: border-box; }
+
+/* ---------- dusmus kahraman satiri (Rest) ---------- */
+.mw-fallen { display: flex; flex-direction: column; gap: max(6px, calc(12 * var(--u))); }
+.mw-frow { display: flex; align-items: center; gap: max(10px, calc(18 * var(--u))); padding: max(5px, calc(10 * var(--u))) max(8px, calc(16 * var(--u))); background: rgba(12,9,6,.6); border: 1px solid var(--g-line2); }
+.mw-frow img.av { width: max(40px, calc(76 * var(--u))); height: max(40px, calc(76 * var(--u))); object-fit: cover; object-position: 50% 15%; border: 1px solid var(--g-line2); filter: grayscale(.8) brightness(.8); flex: none; }
+.mw-frow .tx { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 2px; }
+.mw-frow .tx b { font: 600 max(12px, calc(22 * var(--u))) var(--g-disp); letter-spacing: .08em; text-transform: uppercase; color: var(--g-text); }
+.mw-frow .tx span { font: 400 max(11px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mw-frow .el-btn { min-height: 44px; font-size: max(12px, calc(19 * var(--u))); padding-left: max(12px, calc(24 * var(--u))); padding-right: max(12px, calc(24 * var(--u))); }
+.mw-frow .el-btn img { width: 1.3em; height: 1.3em; margin-left: .5em; }
+.mw-frow .el-btn.off { opacity: .5; }
+.mw-state { display: flex; flex-wrap: wrap; gap: 8px 22px; align-items: center; justify-content: space-between; font: 400 max(12px, calc(21 * var(--u))) var(--g-body); color: var(--g-dim); }
+.mw-state b { color: var(--g-gold); font: 600 max(11px, calc(19 * var(--u))) var(--g-disp); letter-spacing: .06em; }
+
+/* ---------- V-A: levha (ortada, baslik seridi + sahne seridi) ---------- */
+.mw-A .mw-panel { width: min(100%, max(calc(1240 * var(--u)), 600px)); }
+.mw-A .mw-art { height: max(70px, calc(230 * var(--u))); }
+.mw-A .mw-art .medalpos { display: none; }
+.mw-A.bd-cards .mw-panel { width: min(100%, max(calc(1340 * var(--u)), 600px)); }
+
+/* ---------- V-C: dugumun yaninda kart (Anchored; onayli Start Battle dili) ---------- */
+.mw-C { left: 0; top: 0; width: max(min(calc(100vw - 20px), 340px), calc(660 * var(--u))); }
+.mw-C.wide { width: max(min(calc(100vw - 20px), 420px), calc(880 * var(--u))); }
+.mw-C .mw-panel { overflow: visible; }
+.mw-C .mw-art { height: max(44px, calc(150 * var(--u))); }
+.mw-C .mw-art::after { background: linear-gradient(180deg, rgba(12,9,6,0) 30%, rgba(14,10,7,.96) 100%); }
+.mw-C .mw-hd2 { display: flex; align-items: flex-end; gap: max(8px, calc(16 * var(--u))); margin-top: calc(max(20px, calc(42 * var(--u))) * -1); padding: 0 max(12px, calc(26 * var(--u))); position: relative; z-index: 2; }
+.mw-C .mw-hd2 .tx { display: flex; flex-direction: column; gap: max(3px, calc(8 * var(--u))); min-width: 0; padding-bottom: 2px; }
+.mw-C .mw-t { font-size: max(15px, calc(30 * var(--u))); letter-spacing: .1em; }
+.mw-C .mw-body { padding: max(8px, calc(16 * var(--u))) max(12px, calc(26 * var(--u))) max(10px, calc(22 * var(--u))); gap: max(6px, calc(14 * var(--u))); }
+.mw-C .mw-txt { font-size: max(12px, calc(22 * var(--u))); }
+.mw-C .mw-notch { position: absolute; width: max(10px, calc(20 * var(--u))); height: max(10px, calc(20 * var(--u))); background: rgb(24,17,11); border: 1px solid var(--g-edge); transform: rotate(45deg); z-index: 4; }
+.mw-C .mw-notch.l { left: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-right: 0; border-top: 0; }
+.mw-C .mw-notch.r { right: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-left: 0; border-bottom: 0; }
+
+/* ---------- kisa ekran (telefon yatay) ---------- */
+html.short .mw-center { padding: 6px; }
+html.short .mw-panel { overflow: hidden; } html.short .mw-corner { display: none; }
+html.short .mw-A .mw-art, html.short .mw-C .mw-art { height: 0; display: none; }
+html.short .mw-C .mw-hd2 { margin-top: 0; padding-top: 8px; }
+html.short .mw-body { padding: 8px 14px 8px; gap: 6px; }
+html.short .mw-hd { padding: 6px 12px; }
+html.short .mw-txt { font-size: 12.5px; line-height: 1.25; }
+html.short .mw-txt p { margin-bottom: .3em; }
+html.short .mw-plate { padding: 12px 8px 6px; gap: 2px; }
+html.short .mw-pds { font-size: 11.5px; line-height: 1.2; }
+html.short .mw-pdv { display: none; }
+html.short .mw-plate .mw-chips { gap: 3px; }
+html.short .mw-chip { font-size: 9px; min-height: 20px; }
+html.short .mw-plates { gap: 12px 8px; }
+html.short .mw-card .ds { display: none; }
+html.short .mw-acts .el-btn.primary { min-height: 44px; padding-left: 22px; padding-right: 22px; }
+html.short .mw-frow img.av { width: 34px; height: 34px; }
+html.short .mw-lore { display: none; }
+html.short .mw-C .mw-chip.reg, html.compact .mw-C .mw-chip.reg { display: none; }
+
+/* secenekli / yogun pencerelerde sahne seridi daha ince */
+.mw-A.bd-plates .mw-art, .mw-A.bd-chosen .mw-art, .mw-A.bd-fallen .mw-art, .mw-A.bd-cards .mw-art { height: max(50px, calc(150 * var(--u))); }
+.mw-A.bd-plates .mw-body { gap: max(6px, calc(14 * var(--u))); padding-top: max(8px, calc(16 * var(--u))); }
+.mw-A .mw-hd { padding-top: max(6px, calc(14 * var(--u))); padding-bottom: max(6px, calc(14 * var(--u))); }
+
+.mw-C { max-height: calc(100vh - 16px); display: flex; } .mw-C .mw-panel { width: 100%; }
+.mw-C.wide .mw-art { height: max(40px, calc(110 * var(--u))); }
+.mw-C .mw-plates.compact .mw-plate { padding-top: max(10px, calc(18 * var(--u))); }
+.mw-plates.solo { grid-template-columns: 1fr !important; }
+
+/* telefon yatay: düğmeler kaydırılan gövdenin altında hep görünür */
+html.short .mw-acts { position: sticky; bottom: -8px; margin-top: 0; padding: 6px 0 8px; background: linear-gradient(180deg, rgba(12, 9, 6, 0), rgba(12, 9, 6, 0.96) 30%); z-index: 3; }

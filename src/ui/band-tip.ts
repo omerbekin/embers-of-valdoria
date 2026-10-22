@@ -64,6 +64,8 @@ export interface BandTipSpec {
   bodyHtml?: string;
   /** Satırlarda anahtar kelime bulunmaz (yalnızca rakam / fark vurgusu). */
   noKeywords?: boolean;
+  /** Başlık tek satır kalır (kelime ortasından bölünmez: "3 WOUNDS"). */
+  nowrapTitle?: boolean;
 }
 
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
@@ -126,7 +128,7 @@ export function bandTipHtml(s: BandTipSpec): string {
   const body = lines || s.bodyHtml ? `<div class="bt-div"></div><div class="bt-body">${lines}${s.bodyHtml ?? ''}</div>` : '';
   const foot = s.foot ? `<div class="bt-foot"><span class="dia"></span><span class="tx">${esc(s.foot)}</span></div>` : '';
   const ac = s.accent ? ` style="--ac:${css(s.accent)}"` : '';
-  return `<div class="bt"${ac}>${head}${chips}${body}${foot}</div>`;
+  return `<div class="bt${s.nowrapTitle ? ' nw' : ''}"${ac}>${head}${chips}${body}${foot}</div>`;
 }
 
 /** Aynı ipucu DOM düğümü olarak. */

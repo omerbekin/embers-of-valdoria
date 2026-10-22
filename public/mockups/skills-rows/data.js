@@ -1,0 +1,222 @@
+window.CLASSES={
+ "cutthroat": {
+  "name": "Cutthroat",
+  "color": "#5b4a6b",
+  "rows": [
+   {
+    "id": "passive",
+    "name": "Opportunist",
+    "icon": "sk/cutthroat-opportunist.webp",
+    "fx": null,
+    "nums": [
+     {
+      "k": "Bonus",
+      "v": "+25%"
+     }
+    ],
+    "kind": "pas",
+    "desc": "Deal +25% damage to targets suffering from Wound, Slow, Stun or Wither (every hit, crits included)."
+   },
+   {
+    "id": "venom_edge",
+    "name": "Venom Edge",
+    "icon": "sk/cutthroat-venomedge.webp",
+    "fx": "#7fbf3f",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "24"
+     },
+     {
+      "k": "Wound",
+      "v": "2 turns"
+     }
+    ],
+    "kind": "",
+    "cost": "Free",
+    "cd": 0,
+    "badge": "Single Target",
+    "lines": [
+     "Damage 100% DEX (24)",
+     "Applies Wound for 2 turns: Healing received -25%"
+    ]
+   },
+   {
+    "id": "x_cut",
+    "name": "Saltire Cut",
+    "icon": "sk/cutthroat-saltire.webp",
+    "fx": "#ff8a1f",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "11"
+     }
+    ],
+    "kind": "",
+    "cost": "7 MP",
+    "cd": 2,
+    "badge": "X",
+    "lines": [
+     "Damage 45% DEX (11)",
+     "The blade crosses the center twice: the unit on the anchor cell is hit 2 times, each hit rolls on its own"
+    ]
+   },
+   {
+    "id": "smoke_bomb",
+    "name": "Smoke Bomb",
+    "icon": "sk/cutthroat-smokebomb.webp",
+    "fx": "#9aa3ad",
+    "nums": [
+     {
+      "k": "Blinded",
+      "v": "2 turns"
+     },
+     {
+      "k": "Shrouded",
+      "v": "2 turns"
+     }
+    ],
+    "kind": "",
+    "cost": "8 MP",
+    "cd": 3,
+    "badge": "Block 2x2",
+    "lines": [
+     "Applies Blinded (on the enemy side: enemies) for 2 turns: Accuracy -30% (smoke in the eyes)",
+     "Applies Shrouded (on your side: allies) for 2 turns: Evasion +20% (hidden in smoke)"
+    ]
+   },
+   {
+    "id": "backstab",
+    "name": "Backstab",
+    "icon": "sk/cutthroat-backstab.webp",
+    "fx": "#c0203a",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "36"
+     }
+    ],
+    "kind": "ult",
+    "cost": "12 MP",
+    "cd": 4,
+    "badge": "Single Target",
+    "lines": [
+     "Damage 153% DEX (36)",
+     "Always a critical hit (x1.5); it can still miss",
+     "Only targets with an empty cell right behind them (a living unit there blocks it; a corpse does not); never a unit in the back row",
+     "Opens on cooldown: 3 turns"
+    ]
+   }
+  ]
+ },
+ "warrior": {
+  "name": "Warrior",
+  "color": "#c8553d",
+  "rows": [
+   {
+    "id": "passive",
+    "name": "Berserker",
+    "icon": "sk/warrior-rage.webp",
+    "fx": null,
+    "nums": [
+     {
+      "k": "Max bonus",
+      "v": "+80%"
+     },
+     {
+      "k": "Rage per 1% HP lost",
+      "v": "0.4"
+     }
+    ],
+    "kind": "pas",
+    "desc": "The lower your HP, the harder you hit: up to +80% damage at the brink of death. Losing HP gives Rage: 0.4 per 1% of your max HP lost (at most 15 per hit; shields absorbing the hit give none)."
+   },
+   {
+    "id": "melee_attack",
+    "name": "Double Strike",
+    "icon": "sk/warrior-sword.webp",
+    "fx": "#ffe9b0",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "9 x2"
+     }
+    ],
+    "kind": "",
+    "cost": "Free",
+    "cd": 0,
+    "badge": "Single Target",
+    "lines": [
+     "Damage 40% STR (9) x2"
+    ]
+   },
+   {
+    "id": "whirlwind",
+    "name": "Whirlwind",
+    "icon": "sk/warrior-whirlwind.webp",
+    "fx": "#ffe9b0",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "11"
+     }
+    ],
+    "kind": "",
+    "cost": "8 MP",
+    "cd": 3,
+    "badge": "Block 2x3",
+    "lines": [
+     "Damage 45% STR (11)",
+     "Heals you for 20% of damage dealt"
+    ]
+   },
+   {
+    "id": "charge",
+    "name": "Charge",
+    "icon": "sk/warrior-charge.webp",
+    "fx": "#ffe9b0",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "16"
+     },
+     {
+      "k": "Stun",
+      "v": "2 turns"
+     }
+    ],
+    "kind": "",
+    "cost": "10 MP",
+    "cd": 4,
+    "badge": "Single Target",
+    "lines": [
+     "Damage 68% STR (16)",
+     "Applies Stun for 2 turns: Skips its next turn",
+     "If you are not in the front row, you then step into the front row: the front cell of your own lane, or the nearest empty front cell if that one is taken (you stay put if the front row is full)"
+    ]
+   },
+   {
+    "id": "headsmans_blow",
+    "name": "Headsman's Blow",
+    "icon": "sk/warrior-warcry.webp",
+    "fx": "#c0203a",
+    "nums": [
+     {
+      "k": "Damage",
+      "v": "12"
+     }
+    ],
+    "kind": "ult",
+    "cost": "All RAGE (min 30)",
+    "cd": 5,
+    "badge": "Single Target",
+    "lines": [
+     "Damage 50% STR (12)",
+     "+2% STR per Rage spent (26 at 30 Rage, 35 at 50 Rage)",
+     "Hits harder the more HP the target is missing: up to +60% against a nearly dead target",
+     "Opens on cooldown: 1 turn"
+    ]
+   }
+  ]
+ }
+};

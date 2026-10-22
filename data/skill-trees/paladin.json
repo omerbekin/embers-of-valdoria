@@ -1215,19 +1215,46 @@
       "src": "A:V2:4.d1",
       "new": true,
       "approved": true,
-      "fx": null
+      "fx": [
+        {
+          "k": "mode",
+          "mode": "focused_beam",
+          "name": "Focused Beam",
+          "text": "220% damage to one enemy. No heal.",
+          "baseText": "Heals all allies. Hits all enemies.",
+          "target": "single_enemy",
+          "removeEffects": ["heal"],
+          "powerMul": 2.2
+        }
+      ]
     },
     "4.d2": {
       "name": "Pillar of Wrath",
       "text": "The focused beam leaves holy fire on the target's cell for 2 turns.",
       "src": "A:V2:4.d2",
-      "fx": null
+      "fx": [
+        {
+          "k": "mode",
+          "mode": "focused_beam",
+          "needs": "4.d1",
+          "text": "Leaves holy fire on its cell for 2 turns.",
+          "addEffect": { "type": "ground", "ground": "holy_fire", "turns": 2, "scale": "int", "power": 0.15 }
+        }
+      ]
     },
     "4.d3": {
       "name": "Lance of Dawn",
       "text": "The focused beam pierces the whole lane behind the target for 60%.",
       "src": "A:V2:4.d3",
-      "fx": null
+      "fx": [
+        {
+          "k": "mode",
+          "mode": "focused_beam",
+          "needs": "4.d1",
+          "text": "Pierces the lane behind for 60%.",
+          "splash": { "pattern": "lane", "mult": 0.6 }
+        }
+      ]
     },
     "4.l1": {
       "name": "Hallowed Steps",

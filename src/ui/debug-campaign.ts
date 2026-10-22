@@ -8,6 +8,7 @@ import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, 
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
 import { menuStyle } from './menu-style';
+import { setTreeTabDebug, treeTabDebug, treeTabEnabled } from './tree-tab-model';
 import { LESSONS, TUTORIAL } from '../tutorial/lessons';
 import { isLessonSeen, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 
@@ -134,6 +135,25 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     run: () => {
       session.revealFog = !session.revealFog;
       if (game.scene.isActive(MAP_SCENE)) reload();
+    },
+  });
+  // Bölge görünümü (Harita 1 yeniden çizim 2026-10-22, src/game/region-view.ts): kapalı -> I -> II -> III -> kapalı
+  let regionDbg: string | null = null;
+  debug.register({
+    id: 'campaign.region',
+    tab: CAMPAIGN_TAB,
+    section: 'Map',
+    icon: 'eye',
+    on: () => regionDbg !== null,
+    label: () => (regionDbg ? `Region view: ${regionDbg}` : 'Region view: off'),
+    hint: 'Cycle the map\'s region view: zoom to region I, II, III, then the whole map. Neighbour stops show faded; stops of unseen regions stay hidden',
+    run: () => {
+      const ids = getMap(current()?.mapId ?? 'valdoria').regions.map((r) => r.id);
+      const i = regionDbg === null ? 0 : ids.indexOf(regionDbg) + 1;
+      regionDbg = ids[i] ?? null;
+      const scene = game.scene.isActive(MAP_SCENE) ? (game.scene.getScene(MAP_SCENE) as unknown as { debugRegionView?: (r: string | null) => void }) : undefined;
+      if (scene?.debugRegionView) scene.debugRegionView(regionDbg);
+      else openMap(game);
     },
   });
   debug.register({
@@ -363,6 +383,17 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       const f = debugTreeFocus();
       setDebugTreeFocus(!f ? { dir: 'a' } : f.dir === 'a' ? { dir: 'b' } : null);
     },
+  });
+  // Skill ağacı Faz 3b: Gear > Tree sekmesi ana şalter kapalıyken de görünsün (yalnızca bellekte; savaşı etkilemez)
+  debug.register({
+    id: 'campaign.tree-tab',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: () => `Skill tree tab in Gear: ${treeTabEnabled() ? 'shown' : 'hidden'}`,
+    hint: 'Show or hide the Tree tab (Gear: Hero, Sheet, Tree) for this session even while the skill tree main switch is off. Battles are not affected. Reopen Gear after toggling.',
+    on: () => treeTabEnabled(),
+    run: () => setTreeTabDebug(!treeTabDebug()),
   });
   // Skill ağacı Faz 1b (kayıt): ağaç ekranı (Faz 3b) gelene kadar kayda ağaç yazmak / respec'i denemek için. Savaşa yalnızca ana şalter açıkken
   // ya da yukarıdaki odaklı kurulum açıkken girer (kayıtta ağacı olan kahraman kendi ağacıyla)
@@ -645,7 +676,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       grid.className = 'debug-grid';
       for (const n of getMap('valdoria').nodes) {
         grid.append(
-          debugButton(`${n.id} ${n.name}`, () => {
+          debugButton(`${n.id} ${n.name}${n.optional ? ' (pocket)' : ''}`, () => {
             setState(debugTeleport(ensureState(), n.id));
             reload();
           }, { title: `${n.subtitle}: the road from Mill Road is rebuilt, earlier stops count as done, missing heroes are picked automatically` }),
@@ -656,7 +687,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       const info = document.createElement('div');
       info.className = 'debug-note';
       info.textContent = s
-        ? `Slot ${s.slot + 1} · campaign seed ${s.seed} · ${s.mode} · ${s.difficulty} · stop ${stopNumber(s)}/12 at ${s.at} · next: ${nextStep(s).kind} · HP: ${s.roster.map((h) => `${h.class} ${Math.round(h.hpRatio * 100)}%`).join(', ') || '-'}`
+        ? `Slot ${s.slot + 1} · campaign seed ${s.seed} · ${s.mode} · ${s.difficulty} · stop ${stopNumber(s)}/${getMap(s.mapId).stopsPerRun} at ${s.at} · next: ${nextStep(s).kind} · HP: ${s.roster.map((h) => `${h.class} ${Math.round(h.hpRatio * 100)}%`).join(', ') || '-'}`
         : 'No campaign loaded.';
       el.append(info);
     },
