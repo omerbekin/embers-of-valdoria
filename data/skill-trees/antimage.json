@@ -99,7 +99,7 @@
       {
         "at": 20,
         "name": "Warded Steps",
-        "text": "Allies under your Spell Ward take 5% less physical damage.",
+        "text": "Allies under your Spell Ward take 3% less physical damage.",
         "src": "B:V4:bar1",
         "fx": [
           {
@@ -111,7 +111,7 @@
             "when": {
               "incomingType": "physical"
             },
-            "mul": -0.05
+            "mul": -0.03
           }
         ]
       },
@@ -434,7 +434,7 @@
     },
     "1.ea": {
       "name": "Siphon Vein",
-      "text": "Mana Steal gains 100% of the MP it burns instead of 50%.",
+      "text": "Mana Steal gains 75% of the MP it burns instead of 50%.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -442,7 +442,7 @@
           "sel": "manaBurn",
           "f": "gainRatio",
           "op": "base",
-          "v": 1
+          "v": 0.75
         }
       ]
     },
@@ -470,7 +470,7 @@
     },
     "1.ma": {
       "name": "Drink Deep",
-      "text": "Mana Steal also heals you for the MP it burns.",
+      "text": "Mana Steal also heals you for half the MP it burns.",
       "src": "B:V4:1.ma",
       "fx": [
         {
@@ -479,7 +479,7 @@
           "on": "manaBurned",
           "do": [
             {
-              "heal": 1,
+              "heal": 0.5,
               "of": "amount"
             }
           ]
@@ -488,7 +488,7 @@
     },
     "1.fa": {
       "name": "Drained Dry",
-      "text": "Mana Steal burns 20 MP instead of 10, but deals no damage.",
+      "text": "Mana Steal burns 16 MP instead of 10, but deals no damage.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -500,13 +500,13 @@
           "sel": "manaBurn",
           "f": "amount",
           "op": "base",
-          "v": 20
+          "v": 16
         }
       ]
     },
     "1.fb": {
       "name": "Hurried Hands",
-      "text": "Mana Steal takes only half a turn, but gains a 2-turn cooldown.",
+      "text": "Mana Steal takes only three quarters of a turn, but gains a 2-turn cooldown.",
       "src": "B:V3:1.fb",
       "fx": [
         {
@@ -514,7 +514,7 @@
           "sel": "self",
           "f": "turnCost",
           "op": "set",
-          "v": 0.5
+          "v": 0.75
         },
         {
           "k": "skill",
@@ -527,7 +527,7 @@
     },
     "1.mb": {
       "name": "Tempo Thief",
-      "text": "If Mana Steal empties its target, your next turn comes faster, as after Skip Turn.",
+      "text": "If Mana Steal empties its target, your next turn comes 30% sooner.",
       "src": "B:V3:1.mb",
       "fx": [
         {
@@ -536,7 +536,7 @@
           "on": "mpEmptied",
           "do": [
             {
-              "sooner": 1
+              "sooner": 0.3
             }
           ]
         }
@@ -569,7 +569,7 @@
     },
     "2.f1": {
       "name": "Wide Siphon",
-      "text": "Drain Field burns +4% of max MP per rank.",
+      "text": "Drain Field burns +2% of max MP per rank.",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -577,7 +577,7 @@
           "sel": "manaBurn",
           "f": "pctMax",
           "op": "add",
-          "v": 0.04,
+          "v": 0.02,
           "rank": true
         }
       ]

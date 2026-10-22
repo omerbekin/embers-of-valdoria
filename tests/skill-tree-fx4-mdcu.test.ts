@@ -208,13 +208,13 @@ describe('Faz 4b: Druid', () => {
     };
     expect(lowMp({ '1.eb': 1 })).toBe(6);
     expect(lowMp({ '1.eb': 1, '1.fb': 1 })).toBe(num('druid', '1.fb', '0.do.0.mp'));
-    expect(trigOf(only('druid', { '1.mb': 1 }), 'druid:1.mb')).toMatchObject({ on: 'kill', skill: 'thorn_whip', do: [{ sooner: 0.5 }] });
+    expect(trigOf(only('druid', { '1.mb': 1 }), 'druid:1.mb')).toMatchObject({ on: 'kill', skill: 'thorn_whip', do: [{ sooner: num('druid', '1.mb', '0.do.0.sooner') }] });
   });
 
   it('Cutting Haste: Thorn Whip %50 üstündeki hedefe %20 az vurur', () => {
     const b = make({ 0: 'druid' }, { 0: 'mage' }, withTree(0, only('druid', { '1.eb': 1, '1.fb': 1 })));
     const tw = content.skills.thorn_whip!;
-    expect(b.dealtDamageMult(P(b), E(b), tw)).toBeCloseTo(0.8, 9);
+    expect(b.dealtDamageMult(P(b), E(b), tw)).toBeCloseTo(1 + num('druid', '1.fb', '1.mod.powerMul'), 9);
     E(b).hp = Math.floor(E(b).maxHp * 0.4);
     expect(b.dealtDamageMult(P(b), E(b), tw)).toBeCloseTo(1, 9);
   });

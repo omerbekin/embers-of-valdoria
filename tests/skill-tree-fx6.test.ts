@@ -63,8 +63,9 @@ describe('Altıncı tur: "A → B" = yeni taban, öteki düğümler üstüne ekl
     expect(bet(only('gambler', { '2.v': 1 })).ratio).toBe(0.08);
     expect(bet(only('gambler', { '2.v': 1, '2.f1': 1 }, plus('2.f1', 'ratio', 0.02))).ratio).toBeCloseTo(0.1, 9);
     const gain = (tree: UnitSetup['tree']) => effs(tree, 'mana_burn').find((e) => e.gainRatio !== undefined)!.gainRatio!;
-    expect(gain(only('antimage', { '1.ea': 1 }))).toBe(1);
-    expect(gain(only('antimage', { '1.ea': 1, '1.f1': 1 }, plus('1.f1', 'gainRatio', 0.1)))).toBeCloseTo(1.1, 9);
+    const ea = (treeOf('antimage')!.nodes['1.ea']!.fx![0] as unknown as { v: number }).v; // Siphon Vein tabanı veriden
+    expect(gain(only('antimage', { '1.ea': 1 }))).toBe(ea);
+    expect(gain(only('antimage', { '1.ea': 1, '1.f1': 1 }, plus('1.f1', 'gainRatio', 0.1)))).toBeCloseTo(ea + 0.1, 9);
   });
 
   it('Feeble Jinx: Jinxed isabet -%40 (tanımın -%20\'si + düğümün -%20\'si), Jinx hasarsız', () => {

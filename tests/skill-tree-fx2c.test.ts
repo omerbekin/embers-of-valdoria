@@ -81,7 +81,9 @@ describe('Faz 2c: veri', () => {
     expect(rj.effects.some((e) => e.type === 'hot')).toBe(false);
     const heals = rj.effects.filter((e) => e.type === 'heal') as { power: number }[];
     expect(heals.length).toBe(2);
-    expect(heals[1]!.power).toBeCloseTo(0.225 * 4 * 1.25, 9);
+    // Deep Spring artık süre değil HoT gücü (%) verir: toplanmadan önce HoT'a uygulanır, ilk şifaya çift sayılmaz.
+    const barHot = (treeOf('druid')!.mastery.bar[3]!.fx![1] as unknown as { v: number }).v;
+    expect(heals[1]!.power).toBeCloseTo(0.225 * 3 * 1.25 * (1 + barHot), 5);
   });
 
   it('Whiteout (needs Driving Snow): Blizzard Blind şansı x2, süre 2', () => {

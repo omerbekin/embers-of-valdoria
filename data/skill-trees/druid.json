@@ -90,15 +90,23 @@
       {
         "at": 20,
         "name": "Deep Spring",
-        "text": "Rejuvenate's regeneration lasts 1 turn longer (3 → 4).",
+        "text": "Rejuvenate heals +15% more (both the first heal and its regeneration).",
         "src": "B:V3:bar4",
         "fx": [
           {
             "k": "skill",
+            "sel": "heal",
+            "f": "power",
+            "op": "pct",
+            "v": 0.15,
+            "skill": "rejuvenate"
+          },
+          {
+            "k": "skill",
             "sel": "hot",
-            "f": "turns",
-            "op": "base",
-            "v": 4,
+            "f": "power",
+            "op": "pct",
+            "v": 0.15,
             "skill": "rejuvenate"
           }
         ]
@@ -461,7 +469,7 @@
     },
     "1.ea": {
       "name": "Forked Thorn",
-      "text": "Thorn Whip chains to 1 more enemy for 20% damage; that enemy is Wounded too.",
+      "text": "Thorn Whip chains to 1 more enemy for 15% damage; that enemy is Wounded too.",
       "src": "B:V1:1.ea",
       "fx": [
         {
@@ -470,7 +478,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.2,
+              "strike": 0.15,
               "to": "adjacentEnemy"
             },
             {
@@ -500,14 +508,15 @@
       ]
     },
     "1.ma": {
-      "name": "Thorn Volley",
-      "text": "When Thorn Whip crits, it lashes another enemy at once for 20% damage.",
+      "name": "Third Lash",
+      "text": "Every third Thorn Whip lashes another enemy at once for 20% damage.",
       "src": "B:V5:1.ma",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
-          "on": "crit",
+          "on": "skillUse",
+          "every": 3,
           "do": [
             {
               "strike": 0.2,
@@ -541,7 +550,7 @@
     },
     "1.fb": {
       "name": "Cutting Haste",
-      "text": "Thorn Whip kills restore 10 MP, but it deals 20% less damage to targets above 50% HP.",
+      "text": "Thorn Whip kills restore 10 MP, but it deals 10% less damage to targets above 50% HP.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -562,14 +571,14 @@
             "targetHpAbove": 0.5
           },
           "mod": {
-            "powerMul": -0.2
+            "powerMul": -0.1
           }
         }
       ]
     },
     "1.mb": {
       "name": "Endless Lash",
-      "text": "If Thorn Whip kills, your next turn comes twice as fast.",
+      "text": "If Thorn Whip kills, your next turn comes 30% sooner.",
       "src": "B:V5:1.mb",
       "fx": [
         {
@@ -578,7 +587,7 @@
           "on": "kill",
           "do": [
             {
-              "sooner": 0.5
+              "sooner": 0.3
             }
           ]
         }

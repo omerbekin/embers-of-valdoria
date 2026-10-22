@@ -51,10 +51,37 @@ describe('Druid ağacı fx (Faz 2b)', () => {
         for (const ult of ['u', 'r', 'd', 'l'] as const) expect(() => compileTree(T, focusBuild(T, rows, 50, { dir, ult }))).not.toThrow();
   });
 
-  it('Hooked Barbs: Thorn Whip gücü rank başına +%3 (oransal); Deep Spring barı HoT süresini 4 yapar', () => {
+  it('Hooked Barbs: Thorn Whip gücü rank başına +%3 (oransal); Deep Spring barı Rejuvenate şifası ve HoT gücünü oransal artırır (süre 3 kalır)', () => {
     const b = make({ 0: 'druid' }, { 0: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*2', '3.f1*3', '3.f2*5', '3.f3*5', '1.f3*2']) } });
-    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * (1 + 3 * (T.nodes['1.f1']!.fx![0] as unknown as { v: number }).v), 6);
-    expect((b.skill('rejuvenate', P(b))!.effects.find((e) => e.type === 'hot') as { turns: number }).turns).toBe(4);
+    const v = (fx: unknown): number => (fx as { v: number }).v;
+    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * (1 + 3 * v(T.nodes['1.f1']!.fx![0])), 6);
+    const bar = T.mastery.bar[3]!;
+    expect(bar.name).toBe('Deep Spring');
+    const rj = b.skill('rejuvenate', P(b))!.effects;
+    const heal = rj.find((e) => e.type === 'heal') as { power: number };
+    const hot = rj.find((e) => e.type === 'hot') as { power: number; turns: number };
+    expect(hot.turns).toBe(3);
+    expect(heal.power).toBeCloseTo(0.675 * (1 + 3 * v(T.nodes['3.f1']!.fx![0])) * (1 + v(bar.fx![0])), 6);
+    expect(hot.power).toBeCloseTo(0.225 * (1 + 5 * v(T.nodes['3.f2']!.fx![0])) * (1 + v(bar.fx![1])), 6);
+    expect(bar.text).toContain(`+${Math.round(v(bar.fx![0]) * 100)}%`);
+  });
+
+  it('Third Lash (1.ma): her 3. Thorn Whip başka bir düşmana %20 kırbaç atar; Wild Thorns (1.fa, kritik yok) ile de çalışır', () => {
+    const fx = T.nodes['1.ma']!.fx![0] as unknown as { on: string; every: number; do: { strike: number }[] };
+    expect(fx.on).toBe('skillUse');
+    expect(T.nodes['1.ma']!.text).toContain(`${Math.round(fx.do[0]!.strike * 100)}% damage`);
+    const b = make({ 0: 'druid' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*5', '1.f3*5', '1.n0', '1.r*3', '1.ea', '1.ma', '1.fa']) } });
+    for (const e of b.combatants) if (e.side === 'enemy') e.hp = e.maxHp = 99999;
+    const me = P(b);
+    const lashes = (): number => b.treeProcs().find((p) => p.node === 'druid:1.ma')?.count ?? 0;
+    for (let i = 1; i <= fx.every * 2; i++) {
+      me.mp = me.maxMp;
+      const evs = cast(b, me.uid, 'thorn_whip', E0(b).uid);
+      expect(evs.some((e) => e.type === 'damage' && e.crit)).toBe(false);
+      expect(lashes()).toBe(Math.floor(i / fx.every));
+      const hitOthers = evs.some((e) => e.type === 'damage' && e.target !== E0(b).uid && b.get(e.target)?.side === 'enemy');
+      if (i % fx.every === 0) expect(hitOthers).toBe(true);
+    }
   });
 
   it('Whip Crack: %30 canın altındaki hedefe Thorn Whip +%50 (önizleme)', () => {

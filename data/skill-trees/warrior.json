@@ -576,7 +576,7 @@
     },
     "1.fb": {
       "name": "Third Cut",
-      "text": "Against a Wounded target Double Strike hits a third time at half power, but it can no longer be a critical hit.",
+      "text": "Against a Wounded target Double Strike hits a third time at 40% power, but it can no longer be a critical hit.",
       "src": "B:V1:1.fa",
       "fx": [
         {
@@ -588,7 +588,7 @@
           },
           "do": [
             {
-              "strike": 0.5,
+              "strike": 0.4,
               "to": "target"
             }
           ]

@@ -102,7 +102,7 @@
       {
         "at": 20,
         "name": "Momentum",
-        "text": "When you kill an enemy, your next spell +10% damage.",
+        "text": "When you kill an enemy, your next spell +6% damage.",
         "src": "B:V5:bar2",
         "fx": [
           {
@@ -112,7 +112,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.1
+                  "powerMul": 0.06
                 }
               }
             ]
@@ -562,7 +562,7 @@
     },
     "1.fb": {
       "name": "Reckless Bolt",
-      "text": "Fire Bolt +25% damage against targets below 50% HP, but 20% less against healthier ones.",
+      "text": "Fire Bolt +20% damage against targets below 50% HP, but 20% less against healthier ones.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -572,7 +572,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.2
           }
         },
         {

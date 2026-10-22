@@ -382,7 +382,7 @@ Amaç: engine-dev'in C1 koşul sözlüğünü ve C3-C6 kapsamını 11 class'a g�
 | bar5 | Deep Rot | a | pasif `turns add 1` (Withering'i yalnız pasif ve ondan türeyen düğümler verir) |
 | bar10 | Heart of the Wild | b | `unitFx.critMp 4` (birim geneli; "nature skills" süzgeci: soru 14.19) |
 | bar15 | Tight Weave | C5 | 2.n0 root field'ı +1 tur (o düğüm yoksa etkisiz: soru 14.17) |
-| bar20 | Deep Spring | a\* | Rejuvenate `hot.turns set 4` |
+| bar20 | Deep Spring | a\* | Rejuvenate `heal.power pct` + `hot.power pct` (2026-10-22: süre yerine güç, HoT 3 tur kalır; Faz 7 ikinci turda +%15) |
 | bar25 | Barkskin | a\* | (çağrı) Treant alınan hasar ×0.85 |
 | 0.f1 | Bitter Sap | a | pasif `power pct 0.1r` |
 | 0.f2 | Spreading Spite | C5 | pasif tetiklenince katilin komşusu her düşmana %8r şansla aynı kök |
@@ -403,7 +403,7 @@ Amaç: engine-dev'in C1 koşul sözlüğünü ve C3-C6 kapsamını 11 class'a g�
 | 1.r | Keen Thorns | C1 | koşulsuz `critDmgMul 0.08r` |
 | 1.ea | Forked Thorn | C5 | 1 düşmana daha %60 zincir + Wound |
 | 1.eb | Reaping Vine | C3 | `onKill` → +6 MP |
-| 1.ma | Thorn Volley | C5 | +C1 `hitIsCrit` → başka düşmana %60 kamçı |
+| 1.ma | Third Lash | C3 | `skillUse` + `every: 3` → alan dışı 1 düşmana %20 kamçı (2026-10-22: eski Thorn Volley kritikte tetikleniyordu, 1.fa ile ölüydü) |
 | 1.fa | Wild Thorns | C1 | +a `power pct 0.35`; koşulsuz `noCrit` |
 | 1.fb | Cutting Haste | C3 | eb kancasını yamalar (15 MP) + C1 `targetHpAbove:0.5` → −0.2 |
 | 1.mb | Endless Lash | C3 | `onKill` → `turnSooner 0.5` (iki kat hızlı) |

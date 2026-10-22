@@ -303,7 +303,7 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
     const roar = compileTree(D, build(D, L, [...toR, '2.eb', '2.fb']));
     const t = skillOf(roar, 'taunt');
     expect((t.effects[0] as unknown as { breakRatio: number }).breakRatio).toBeCloseTo(roarRatio, 9);
-    expect(t.cost.amount).toBe(0);
+    expect(t.cost.amount).toBe(dv('2.fb', 0));
     expect(t.cooldown).toBe(2); // Brief Defiance (eb) 3, sonra Hollow Roar (fb) 2: sütun sırası
     const oath = taunt(build(D, L, [...toR, '2.ea', '2.fa']));
     expect(oath.breakRatio).toBe(0); // falsy = hiç kırılmaz (battle.ts)

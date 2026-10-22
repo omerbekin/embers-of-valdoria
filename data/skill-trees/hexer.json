@@ -522,7 +522,7 @@
     },
     "1.fa": {
       "name": "Strained Eyes",
-      "text": "Evil Eye +15% critical chance, but its power drops by 15%.",
+      "text": "Evil Eye +15% critical chance, but its power drops by 5%.",
       "src": "A:V1:1.fa",
       "fx": [
         {
@@ -537,13 +537,13 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": -0.15
+          "v": -0.05
         }
       ]
     },
     "1.fb": {
       "name": "Burning Stare",
-      "text": "Evil Eye +15% power, but it costs 4 MP.",
+      "text": "Evil Eye +8% power, but it costs 4 MP.",
       "src": "A:V1:1.fb",
       "fx": [
         {
@@ -551,7 +551,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.15
+          "v": 0.08
         },
         {
           "k": "skill",

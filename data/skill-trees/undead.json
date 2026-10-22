@@ -595,7 +595,7 @@
     },
     "1.fb": {
       "name": "Mute Marrow",
-      "text": "Skull Cracker always Silences, but Bone Throw no longer Slows.",
+      "text": "Skull Cracker's chance 20% → 50%, but Bone Throw no longer Slows.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -603,7 +603,7 @@
           "h": "cond",
           "sel": "status:silence",
           "mod": {
-            "chance": 0.8
+            "chance": 0.3
           }
         },
         {

@@ -205,7 +205,7 @@ describe('Faz 4b: Anti-Mage', () => {
       const evs = cast(b, me, 'mana_burn', E(b));
       const burned = evs.reduce((n, e) => n + (e.type === 'manaBurn' && e.source === me.uid ? e.amount : 0), 0);
       if (burned <= 0) return false;
-      expect(healBy(evs, 'antimage:1.ma')).toBe(burned);
+      expect(healBy(evs, 'antimage:1.ma')).toBe(Math.round(burned * num('antimage', '1.ma', '0.do.0.heal')));
       return true;
     });
   });
@@ -251,12 +251,12 @@ describe('Faz 4b: Anti-Mage', () => {
     const ally = P(b, 1);
     expect(b.treeTakenMult(ally, E(b), 'physical')).toBe(1);
     cast(b, me, 'spell_ward', ally);
-    expect(b.treeTakenMult(ally, E(b), 'physical')).toBeCloseTo(0.95, 9);
+    expect(b.treeTakenMult(ally, E(b), 'physical')).toBeCloseTo(1 + num('antimage', 'bar3', '0.mul'), 9);
     expect(b.treeTakenMult(ally, E(b), 'magic')).toBe(1);
     cast(b, me, 'spell_ward', me);
-    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo(0.95, 9); // taunt yok: yalnız Warded Steps
+    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo(1 + num('antimage', 'bar3', '0.mul'), 9); // taunt yok: yalnız Warded Steps
     me.statuses.push({ kind: 'taunt', turns: 2, source: me.uid });
-    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo(0.95 * 0.7, 9);
+    expect(b.treeTakenMult(me, E(b), 'physical')).toBeCloseTo((1 + num('antimage', 'bar3', '0.mul')) * 0.7, 9);
   });
 });
 

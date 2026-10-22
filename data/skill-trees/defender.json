@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Iron Morning",
-        "text": "On your first turn of each battle, gain a shield worth 25% of your armor.",
+        "text": "On your first turn of each battle, gain a shield worth 15% of your armor.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
             "once": true,
             "do": [
               {
-                "shield": 0.25,
+                "shield": 0.15,
                 "of": "armor"
               }
             ]
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Bellow",
-      "text": "Taunt breaks after 2% more of your max HP lost per rank (25% → 31%).",
+      "text": "Taunt breaks after 1% more of your max HP lost per rank (25% → 28%).",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -637,14 +637,14 @@
           "sel": "taunt",
           "f": "breakRatio",
           "op": "add",
-          "v": 0.02,
+          "v": 0.01,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Second Breath",
-      "text": "When your Taunt ends, heal 2% of your max HP per rank.",
+      "text": "When your Taunt ends, heal 1% of your max HP per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -655,7 +655,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.02
+              "heal": 0.01
             }
           ]
         }
@@ -663,7 +663,7 @@
     },
     "2.f3": {
       "name": "Thick Skull",
-      "text": "Taunt gives you a shield worth 2% of your max HP per rank.",
+      "text": "Taunt gives you a shield worth 1% of your max HP per rank.",
       "src": "A:V1:2.f3",
       "fx": [
         {
@@ -673,7 +673,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.02
+              "shield": 0.01
             }
           ]
         }
@@ -785,7 +785,7 @@
     },
     "2.fb": {
       "name": "Hollow Roar",
-      "text": "Taunt costs no MP and has cooldown 2, but it breaks after 15% of your max HP lost.",
+      "text": "Taunt costs 4 MP and has cooldown 2, but it breaks after 10% of your max HP lost.",
       "src": "A:V1:2.fb",
       "fx": [
         {
@@ -793,7 +793,7 @@
           "sel": "self",
           "f": "cost.amount",
           "op": "set",
-          "v": 0
+          "v": 4
         },
         {
           "k": "skill",
@@ -807,13 +807,13 @@
           "sel": "taunt",
           "f": "breakRatio",
           "op": "base",
-          "v": 0.15
+          "v": 0.1
         }
       ]
     },
     "2.mb": {
       "name": "Refused to Fall",
-      "text": "When your Taunt breaks, its cooldown resets and you gain a shield worth 15% of your armor.",
+      "text": "When your Taunt breaks, its cooldown resets and you gain a shield worth 5% of your armor.",
       "src": "A:V1:2.mb",
       "fx": [
         {
@@ -828,7 +828,7 @@
               "cd": "taunt"
             },
             {
-              "shield": 0.15,
+              "shield": 0.05,
               "of": "armor"
             }
           ]
@@ -1173,7 +1173,7 @@
     },
     "4.r3": {
       "name": "Iron Meteor",
-      "text": "Fist Crush's armor scaling rises to 30% of Armor, but it strikes 2 enemies.",
+      "text": "Fist Crush's armor scaling rises to 20% of Armor, but it strikes 2 enemies.",
       "src": "B:V5:4.u3",
       "fx": [
         {
@@ -1181,7 +1181,7 @@
           "sel": "bonusScale:armor",
           "f": "pct",
           "op": "set",
-          "v": 0.3
+          "v": 0.2
         },
         {
           "k": "skill",
