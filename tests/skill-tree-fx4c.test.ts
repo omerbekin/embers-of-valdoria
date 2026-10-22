@@ -459,7 +459,7 @@ describe('Faz 4c: durum / Doom aktarımı', () => {
     });
   });
 
-  it('Leaping Mark + Unending Mark: Doom öldürürse %50 sıçrar; sıçrayan Doom öldürürse yeniden', () => {
+  it('Leaping Mark + Unending Mark: Doom öldürürse (veriden oranla) sıçrar; sıçrayan Doom öldürürse yeniden', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior', 1: 'warrior', 2: 'defender' }, withTree(0, only('hexer', { '4.u1': 1, '4.u3': 1 })));
     const me = P(b);
     const [a, c, d] = [E(b, 0), E(b, 1), E(b, 2)];
@@ -476,17 +476,19 @@ describe('Faz 4c: durum / Doom aktarımı', () => {
     expect(a.hp).toBe(0);
     const leap1 = dooms(evs, c);
     expect(leap1.length).toBe(1);
-    expect(leap1[0]!.omens).toBe(Math.round(4 * 1.65 * 0.5));
+    const leapPct = (treeOf('hexer')!.nodes['4.u1']!.fx![0] as { do: { doom: number }[] }).do[0]!.doom;
+    expect(leap1[0]!.omens).toBe(Math.round(4 * 1.65 * leapPct));
     expect(c.hp).toBe(0);
     const leap2 = dooms(evs, d);
     expect(leap2.length).toBe(1);
-    expect(leap2[0]!.omens).toBe(Math.round(leap1[0]!.omens * 0.5));
+    expect(leap2[0]!.omens).toBe(Math.round(leap1[0]!.omens * leapPct));
   });
 
-  it('Hungry Leap: sıçrama %75 (Leaping Mark yerine; Unending Mark da %75)', () => {
+  it('Hungry Leap: sıçrama Leaping Mark yerine geçer (Unending Mark da aynı oran; veriden)', () => {
     const t = only('hexer', { '4.u1': 1, '4.u2': 1, '4.u3': 1 })!;
     const leaps = t.hooks!.filter((h) => h.h === 'trigger' && h.on === 'kill');
-    expect(leaps.map((h) => h.h === 'trigger' && [h.via, h.do[0]!.doom])).toEqual([['doom', 0.75], ['leap', 0.75]]);
+    const hungry = (treeOf('hexer')!.nodes['4.u2']!.fx![0] as { do: { doom: number }[] }).do[0]!.doom;
+    expect(leaps.map((h) => h.h === 'trigger' && [h.via, h.do[0]!.doom])).toEqual([['doom', hungry], ['leap', hungry]]);
   });
 
   it('Creeping Blight: Withering düşman ölünce Withering kalan süresiyle en yakın düşmana geçer', () => {

@@ -567,7 +567,7 @@
     },
     "1.fb": {
       "name": "Heavy Hammer",
-      "text": "Holy Strike +20% damage, but it now costs 6 MP.",
+      "text": "Holy Strike +15% damage, but it now costs 6 MP.",
       "src": "A:V2:1.fb",
       "fx": [
         {
@@ -575,7 +575,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.2
+          "v": 0.15
         },
         {
           "k": "skill",

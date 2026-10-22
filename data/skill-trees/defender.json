@@ -813,7 +813,7 @@
     },
     "2.mb": {
       "name": "Refused to Fall",
-      "text": "When your Taunt breaks, its cooldown resets and you gain a shield worth 5% of your armor.",
+      "text": "When your Taunt breaks, its cooldown drops by 1 and you gain a shield worth 5% of your armor.",
       "src": "A:V1:2.mb",
       "fx": [
         {
@@ -824,7 +824,7 @@
           "end": "broken",
           "do": [
             {
-              "cooldown": "reset",
+              "cooldown": -1,
               "cd": "taunt"
             },
             {

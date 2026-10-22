@@ -454,14 +454,14 @@
     },
     "1.r": {
       "name": "Keen Thorns",
-      "text": "Thorn Whip's critical hits deal +4% damage per rank.",
+      "text": "Thorn Whip's critical hits deal +3% damage per rank.",
       "src": "B:V5:1.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.04
+            "critDmgMul": 0.03
           },
           "rank": true
         }
@@ -469,7 +469,7 @@
     },
     "1.ea": {
       "name": "Forked Thorn",
-      "text": "Thorn Whip chains to 1 more enemy for 15% damage; that enemy is Wounded too.",
+      "text": "Thorn Whip chains to 1 more enemy for 10% damage; that enemy is Wounded too.",
       "src": "B:V1:1.ea",
       "fx": [
         {
@@ -478,7 +478,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.15,
+              "strike": 0.1,
               "to": "adjacentEnemy"
             },
             {
@@ -509,7 +509,7 @@
     },
     "1.ma": {
       "name": "Third Lash",
-      "text": "Every third Thorn Whip lashes another enemy at once for 20% damage.",
+      "text": "Every third Thorn Whip lashes another enemy at once for 15% damage.",
       "src": "B:V5:1.ma",
       "fx": [
         {
@@ -519,7 +519,7 @@
           "every": 3,
           "do": [
             {
-              "strike": 0.2,
+              "strike": 0.15,
               "to": "outsideArea",
               "count": 1
             }
@@ -550,7 +550,7 @@
     },
     "1.fb": {
       "name": "Cutting Haste",
-      "text": "Thorn Whip kills restore 10 MP, but it deals 10% less damage to targets above 50% HP.",
+      "text": "Thorn Whip kills restore 8 MP, but it deals 15% less damage to targets above 50% HP.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -560,7 +560,7 @@
           "on": "kill",
           "do": [
             {
-              "mp": 10
+              "mp": 8
             }
           ]
         },
@@ -571,14 +571,14 @@
             "targetHpAbove": 0.5
           },
           "mod": {
-            "powerMul": -0.1
+            "powerMul": -0.15
           }
         }
       ]
     },
     "1.mb": {
       "name": "Endless Lash",
-      "text": "If Thorn Whip kills, your next turn comes 30% sooner.",
+      "text": "If Thorn Whip kills, your next turn comes 20% sooner.",
       "src": "B:V5:1.mb",
       "fx": [
         {
@@ -587,7 +587,7 @@
           "on": "kill",
           "do": [
             {
-              "sooner": 0.3
+              "sooner": 0.2
             }
           ]
         }

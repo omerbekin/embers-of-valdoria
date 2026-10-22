@@ -1308,3 +1308,18 @@ Hedef (9.2a, Ömer): ağaç class başına **+20-25 puan**, |a-b| <= 5. Yalnızc
 - **Genel fazlalık:** Anti-Mage 1.ea Siphon Vein %100 → %75, 1.ma Drink Deep yakılan MP'nin tamamı → yarısı, 1.fa Drained Dry 20 → 16 MP, 2.f1 +%4 → +%2, bar[3] -%5 → -%3; Gambler 1.ea Hot Dice %35 → %30 ve +%8 → +%5, 1.f1 +%4 → +%2, 1.r %2 → %1, 4.u1 +0,02x → +0,01x, bar[0] +%10 → +%6; Mage bar[3] +%10 → +%6; Druid 1.ea Forked Thorn %20 → %15.
 - **Hafif güçlendirme:** Druid bar[3] Deep Spring +%6 → +%15 (süre kaldırılınca L25 düşmüştü); Hexer 1.fa Strained Eyes güç bedeli -%15 → -%5.
 - **Sonuç (1000 savaş, seed 60001, yalnızca oyuncu ağaçlı):** genel kazanma ağaçsız %48-50 → L15 %68,9 (+20,7), L20 a %74,2 / b %73,5 (+25,1 / +24,4), L25 a %71,9 / b %73,5 (+22,4 / +24,0). L25 a-b farkı 9 class'ta 5 puan içinde (önce 5; b artık her class'ta a'dan güçlü değil); Defender Taunt b payı hâlâ %42 (kök sebep cooldown düğümleri, süre olduğu için dokunulmadı). Hedef dışı kalanlar madde 398 / 8.
+- **Ömer onayı (2026-10-22, sim yok):** Defender 2.mb Refused to Fall "Taunt kırılınca cooldown sıfırlanır" → "cooldown 1 azalır" (`cooldown: -1`); Anti-Mage 1.fb Hurried Hands 3/4 tur → yarım tur geri alındı (turnCost 0,5; cooldown 2 aynı).
+
+
+## Faz 7 üçüncü tur (balance-tester 2026-10-23)
+
+Kısa tur (Ömer bütçesi 2 x 300 + 1000 savaş). Kural aynı: yalnızca `data/skill-trees/<class>.json` sayıları + metinleri; süre / cooldown / tur bedeli yok (Anti-Mage 1.fb yarım tur kalır). Varsayımlar `open-questions.md` madde 398 / 9.
+
+- **Anti-Mage (fazla):** 1.r Bare Steel +%3 → +%2 / rank; 1.f1 Generous Cut %10 → %5 / rank; 1.ea Siphon Vein %75 → %60; 1.ma Drink Deep yakılan MP'nin yarısı → %30'u; 1.mb Tempo Thief %30 → %15 erken; 1.fa Drained Dry 16 → 13 MP; 2.f1 Wide Siphon +%2 → +%1; bar[3] -%3 → -%2.
+- **Druid (fazla):** 1.r Keen Thorns +%4 → +%3 / rank; 1.ea Forked Thorn %15 → %10; 1.ma Third Lash %20 → %15; 1.mb Endless Lash %30 → %20 erken; 1.fb Cutting Haste 10 → 8 MP ve bedel -%10 → -%15.
+- **Mage / Paladin (hafif fazla):** Mage 1.ea Keen Gaze kritik +%10 → +%7, 1.eb Execution Bolt +%35 → +%25, 1.r +%4 → +%3 / rank; Paladin 1.fb Heavy Hammer +%20 → +%15.
+- **Cutthroat (düşük):** 1.f1 / 1.r +%2 → +%3 / rank, 1.f2 kritik +%2 → +%3 / rank, 1.f3 kritik hasar +%4 → +%6 / rank; 1.ea Finishing Cut +%30 → +%40; 1.ma Clean Kill 6 → 8 MP; 1.eb Backhand Cut %35 → %45 (1.mb Carving Arc aynı %45; 1.eb'yi düşürüp onun değerini kopyalar); 1.fa Butcher's Haste artı tarafı +%25 → +%30 (bedel -%25 aynı); bar[2] kritik +%3 → +%5.
+- **Hexer:** 1.f1 / 1.f3 +%2 → +%3 / rank, 1.fa kritik +%15 → +%20, 4.u1 sıçrama %50 → %60, 4.u2 %75 → %85 (4.u3 aynı oranları kopyalar), bar[1] +%10 → +%15; L20 düğümleri kırpıldı: 1.ea kritik +%5 → +%3, 1.eb +%6 → +%4, 1.mb +%15 → +%10.
+- **Gambler:** 1.f1 +%2 → +%3 / rank, 1.fb Spendthrift +%35 → +%40, bar[0] +%6 → +%8.
+- **Defender:** dokunulmadı (Ömer'in 2.mb "cooldown 1 azalır" değişikliğinin ölçümü).
+- **Sonuç (1000 savaş, seed 70001, yalnızca oyuncu ağaçlı):** genel ağaçsız %48-50 → L15 %69,0 (+18,8), L20 a %72,1 / b %70,9 (+23,8 / +22,6), L25 a %71,3 / b %72,3 (+21,1 / +22,1). L20 a-b 11 class'ta 6,5 puan içinde (Paladin +6,5), L25 a-b 10 class'ta 5 içinde (Anti-Mage -8,6). Önemli ölçüm notu: hiç dokunulmayan Warrior L15'te seed 60001'de +21,6, 70001'de +14,9 çıktı; yani 1000 savaşlık tek seed grubunda class satırı ±5-7 puan oynuyor, tek koşunun class satırı kesin karar için yetmez.

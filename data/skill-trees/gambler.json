@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Warm Hands",
-        "text": "Your first skill with a cooldown each battle has +6% Double or Nothing chance.",
+        "text": "Your first skill with a cooldown each battle has +8% Double or Nothing chance.",
         "src": "A:V3:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
               "firstCooldownSkill": true
             },
             "mod": {
-              "echoChance": 0.06
+              "echoChance": 0.08
             }
           }
         ]
@@ -431,7 +431,7 @@
     },
     "1.f1": {
       "name": "Steady Wrist",
-      "text": "Each repeat throw of Loaded Dice deals +2% damage per rank.",
+      "text": "Each repeat throw of Loaded Dice deals +3% damage per rank.",
       "src": "A:V1:1.r*",
       "fx": [
         {
@@ -441,7 +441,7 @@
             "repeatIndexAtLeast": 1
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -615,7 +615,7 @@
     },
     "1.fb": {
       "name": "Spendthrift",
-      "text": "Loaded Dice costs 6 MP and deals +35% power, but Rest restores half as much MP.",
+      "text": "Loaded Dice costs 6 MP and deals +40% power, but Rest restores half as much MP.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -630,7 +630,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.35
+          "v": 0.4
         },
         {
           "k": "hook",

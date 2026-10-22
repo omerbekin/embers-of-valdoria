@@ -83,7 +83,7 @@
       {
         "at": 15,
         "name": "Killer Instinct",
-        "text": "Your skills +3% critical chance against targets below 50% HP.",
+        "text": "Your skills +5% critical chance against targets below 50% HP.",
         "src": "B:V3:bar2",
         "fx": [
           {
@@ -93,7 +93,7 @@
               "targetHpBelow": 0.5
             },
             "mod": {
-              "critBonus": 0.03
+              "critBonus": 0.05
             }
           }
         ]
@@ -503,7 +503,7 @@
     },
     "1.f1": {
       "name": "Balanced Blade",
-      "text": "Venom Edge +2% power per rank against Wounded targets.",
+      "text": "Venom Edge +3% power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
       "fx": [
         {
@@ -513,7 +513,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -521,7 +521,7 @@
     },
     "1.f2": {
       "name": "Seeking Tip",
-      "text": "Venom Edge +2% critical chance per rank.",
+      "text": "Venom Edge +3% critical chance per rank.",
       "src": "B:V3:1.f2",
       "fx": [
         {
@@ -529,21 +529,21 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Twist the Knife",
-      "text": "Venom Edge's critical hits deal +4% damage per rank.",
+      "text": "Venom Edge's critical hits deal +6% damage per rank.",
       "src": "B:V3:1.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.04
+            "critDmgMul": 0.06
           },
           "rank": true
         }
@@ -568,7 +568,7 @@
     },
     "1.r": {
       "name": "Honed Point",
-      "text": "Venom Edge +2% power per rank against targets below 50% HP.",
+      "text": "Venom Edge +3% power per rank against targets below 50% HP.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -578,7 +578,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -586,7 +586,7 @@
     },
     "1.ea": {
       "name": "Finishing Cut",
-      "text": "Venom Edge +30% damage against targets below 30% HP.",
+      "text": "Venom Edge +40% damage against targets below 30% HP.",
       "src": "B:V3:1.ea",
       "fx": [
         {
@@ -596,14 +596,14 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.4
           }
         }
       ]
     },
     "1.eb": {
       "name": "Backhand Cut",
-      "text": "Venom Edge's backswing also cuts one enemy beside the target for 35% and Wounds it.",
+      "text": "Venom Edge's backswing also cuts one enemy beside the target for 45% and Wounds it.",
       "src": "B:V4:1.eb*",
       "fx": [
         {
@@ -612,7 +612,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.35,
+              "strike": 0.45,
               "to": "beside",
               "count": 1
             },
@@ -628,7 +628,7 @@
     },
     "1.ma": {
       "name": "Clean Kill",
-      "text": "If Venom Edge kills, you regain 6 MP and Backstab's cooldown drops by 1.",
+      "text": "If Venom Edge kills, you regain 8 MP and Backstab's cooldown drops by 1.",
       "src": "B:V3:1.ma",
       "syn": "Backstab",
       "fx": [
@@ -638,7 +638,7 @@
           "on": "kill",
           "do": [
             {
-              "mp": 6
+              "mp": 8
             },
             {
               "cooldown": -1,
@@ -650,7 +650,7 @@
     },
     "1.fa": {
       "name": "Butcher's Haste",
-      "text": "Venom Edge +25% against targets below 50% HP, but -25% against targets above it.",
+      "text": "Venom Edge +30% against targets below 50% HP, but -25% against targets above it.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -660,7 +660,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.3
           }
         },
         {
@@ -710,7 +710,7 @@
           "drop": "1.eb",
           "do": [
             {
-              "strike": 0.35,
+              "strike": 0.45,
               "to": "beside",
               "count": 1,
               "chain": 3,

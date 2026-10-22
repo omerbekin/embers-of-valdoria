@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Grim Herald",
-        "text": "The first Doom you cause each battle deals +10% damage.",
+        "text": "The first Doom you cause each battle deals +15% damage.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -76,7 +76,7 @@
               "firstDoom": true
             },
             "mod": {
-              "powerMul": 0.1
+              "powerMul": 0.15
             }
           }
         ]
@@ -375,7 +375,7 @@
     },
     "1.f1": {
       "name": "Prying Eye",
-      "text": "Evil Eye +2% power per rank against enemies with no Omens.",
+      "text": "Evil Eye +3% power per rank against enemies with no Omens.",
       "src": "A:V4:1.f3",
       "fx": [
         {
@@ -388,7 +388,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Envy's Edge",
-      "text": "Evil Eye +2% power per rank against targets with 2 Omens.",
+      "text": "Evil Eye +3% power per rank against targets with 2 Omens.",
       "src": "A:V1:1.f3",
       "fx": [
         {
@@ -424,7 +424,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -471,7 +471,7 @@
     },
     "1.ea": {
       "name": "Glint of Malice",
-      "text": "Evil Eye +5% critical chance against targets with Omens.",
+      "text": "Evil Eye +3% critical chance against targets with Omens.",
       "src": "A:V1:1.ea",
       "fx": [
         {
@@ -484,14 +484,14 @@
             }
           },
           "mod": {
-            "critBonus": 0.05
+            "critBonus": 0.03
           }
         }
       ]
     },
     "1.eb": {
       "name": "Fixed Stare",
-      "text": "Evil Eye +6% power if it hits the same target as your last skill.",
+      "text": "Evil Eye +4% power if it hits the same target as your last skill.",
       "src": "A:V1:1.eb",
       "fx": [
         {
@@ -501,7 +501,7 @@
             "targetIsMyLastTarget": true
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.04
           }
         }
       ]
@@ -522,7 +522,7 @@
     },
     "1.fa": {
       "name": "Strained Eyes",
-      "text": "Evil Eye +15% critical chance, but its power drops by 5%.",
+      "text": "Evil Eye +20% critical chance, but its power drops by 5%.",
       "src": "A:V1:1.fa",
       "fx": [
         {
@@ -530,7 +530,7 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.15
+          "v": 0.2
         },
         {
           "k": "skill",
@@ -564,7 +564,7 @@
     },
     "1.mb": {
       "name": "Doom Gaze",
-      "text": "When Evil Eye brings Doom, that Doom deals +15% damage.",
+      "text": "When Evil Eye brings Doom, that Doom deals +10% damage.",
       "src": "A:V1:1.mb",
       "fx": [
         {
@@ -575,7 +575,7 @@
             "doomSource": "evil_eye"
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.1
           }
         }
       ]
@@ -1085,7 +1085,7 @@
     },
     "4.u1": {
       "name": "Leaping Mark",
-      "text": "If Doom Mark kills, its Doom leaps to the nearest enemy at 50%.",
+      "text": "If Doom Mark kills, its Doom leaps to the nearest enemy at 60%.",
       "src": "B:V4:4.u1",
       "fx": [
         {
@@ -1095,7 +1095,7 @@
           "via": "doom",
           "do": [
             {
-              "doom": 0.5,
+              "doom": 0.6,
               "of": "amount",
               "to": "nearestEnemy"
             }
@@ -1105,7 +1105,7 @@
     },
     "4.u2": {
       "name": "Hungry Leap",
-      "text": "Doom Mark's leap deals 75% instead of 50%.",
+      "text": "Doom Mark's leap deals 85% instead of 60%.",
       "src": "B:V4:4.u2",
       "fx": [
         {
@@ -1116,7 +1116,7 @@
           "via": "doom",
           "do": [
             {
-              "doom": 0.75,
+              "doom": 0.85,
               "of": "amount",
               "to": "nearestEnemy"
             }
@@ -1139,7 +1139,7 @@
           "via": "leap",
           "do": [
             {
-              "doom": 0.5,
+              "doom": 0.6,
               "of": "amount",
               "to": "nearestEnemy"
             }
@@ -1155,7 +1155,7 @@
           "via": "leap",
           "do": [
             {
-              "doom": 0.75,
+              "doom": 0.85,
               "of": "amount",
               "to": "nearestEnemy"
             }

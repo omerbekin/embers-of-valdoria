@@ -43,7 +43,7 @@ describe('Anti-Mage ağacı (Faz 2b)', () => {
     expect(checkTreeFx(A)).toEqual([]);
   });
 
-  it('Generous Cut: Mana Steal yakılan MP\'nin %80\'ini verir (ağaçsız %50; rank 3)', () => {
+  it('Generous Cut: Mana Steal yakılan MP\'den ek pay verir (ağaçsız %50; rank 3; oran veriden)', () => {
     for (let seed = 1; seed < 40; seed++) {
       const plain = make('mage', {}, seed);
       const tree = make('mage', unit(['1.f1*3']), seed);
@@ -51,7 +51,8 @@ describe('Anti-Mage ağacı (Faz 2b)', () => {
       const tg = mpGain(cast(tree, 'mana_burn'), P0(tree).uid);
       if (!pg) continue;
       expect(pg).toBe(5);
-      expect(tg).toBe(8);
+      const per = (A.nodes['1.f1']!.fx![0] as { v: number }).v;
+      expect(tg).toBe(Math.floor(pg * 2 * (0.5 + 3 * per) + 1e-9));
       return;
     }
     throw new Error('Mana Steal isabet etmedi');

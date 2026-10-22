@@ -300,7 +300,7 @@ describe('Faz 4b: Druid', () => {
 });
 
 describe('Faz 4b: Cutthroat', () => {
-  it('Clean Kill: Venom Edge öldürürse 6 MP ve Backstab cooldown\'u 1 düşer', () => {
+  it('Clean Kill: Venom Edge öldürürse MP (veriden) ve Backstab cooldown\'u 1 düşer', () => {
     seeds('Venom Edge kill', (s) => {
       const b = make({ 0: 'cutthroat' }, { 0: 'mage', 1: 'mage' }, withTree(0, only('cutthroat', { '1.ma': 1 })), s);
       const me = P(b);
@@ -310,7 +310,7 @@ describe('Faz 4b: Cutthroat', () => {
       const from = b.log.length;
       expect(b.useSkill(me.uid, 'venom_edge', E(b).uid).ok).toBe(true);
       if (E(b).hp > 0) return false;
-      expect(mpBy(b.log.slice(from), 'cutthroat:1.ma')).toBe(6);
+      expect(mpBy(b.log.slice(from), 'cutthroat:1.ma')).toBe((treeOf('cutthroat')!.nodes['1.ma']!.fx![0] as { do: { mp: number }[] }).do[0]!.mp);
       expect(me.cooldowns.backstab).toBe(2);
       return true;
     });

@@ -262,7 +262,7 @@ describe('Faz 4a: Defender', () => {
     expect(evs.some((e) => e.type === 'status' && e.target === me.uid && e.status === 'fortify')).toBe(true);
   });
 
-  it('Refused to Fall: Taunt kırılınca cooldown sıfırlanır, zırhın %30\'u kalkan; Weathered tetiklenmez', () => {
+  it('Refused to Fall: Taunt kırılınca cooldown 1 azalır, zırhın %30\'u kalkan; Weathered tetiklenmez', () => {
     const b = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '2.mb': 1, '2.ma': 1 })));
     const me = P(b);
     cast(b, me, 'taunt');
@@ -270,7 +270,7 @@ describe('Faz 4a: Defender', () => {
     const sh0 = me.shield;
     X(b).addStatus(me, { kind: 'stun', turns: 1, source: E(b).uid }, emitOf(b));
     expect(has(me, 'taunt')).toBe(false);
-    expect(me.cooldowns.taunt).toBeUndefined();
+    expect(me.cooldowns.taunt).toBe(4 + num('defender', '2.mb', '0.do.0.cooldown'));
     expect(me.shield - sh0).toBe(Math.round(X(b).effectiveStats(me).armor * num('defender', '2.mb', '0.do.1.shield')));
     expect(procs(b, 'defender:2.ma')).toBe(0);
   });

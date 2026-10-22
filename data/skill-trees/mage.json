@@ -459,7 +459,7 @@
     },
     "1.r": {
       "name": "Finisher",
-      "text": "Fire Bolt +4% damage per rank against targets below 30% HP.",
+      "text": "Fire Bolt +3% damage per rank against targets below 30% HP.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -469,7 +469,7 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -477,7 +477,7 @@
     },
     "1.ea": {
       "name": "Keen Gaze",
-      "text": "Fire Bolt cannot miss and gains +10% critical chance.",
+      "text": "Fire Bolt cannot miss and gains +7% critical chance.",
       "src": "B:V5:1.ea*",
       "fx": [
         {
@@ -492,13 +492,13 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.1
+          "v": 0.07
         }
       ]
     },
     "1.eb": {
       "name": "Execution Bolt",
-      "text": "Fire Bolt deals +35% damage to targets below 25% HP.",
+      "text": "Fire Bolt deals +25% damage to targets below 25% HP.",
       "src": "B:V5:1.eb",
       "fx": [
         {
@@ -508,7 +508,7 @@
             "targetHpBelow": 0.25
           },
           "mod": {
-            "powerMul": 0.35
+            "powerMul": 0.25
           }
         }
       ]
