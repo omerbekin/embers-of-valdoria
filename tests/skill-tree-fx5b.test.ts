@@ -136,6 +136,7 @@ describe('Faz 5b: savaşta tetiklenme (class başına en az bir düğüm)', () =
   it('Paladin Chain of Light: smite öldürünce hemen yeniden smite (yeni en zayıf düşmana)', () => {
     const run = (ranks: Record<string, number>): number => {
       const b = make({ 0: 'paladin' }, { 0: 'warrior', 1: 'warrior', 2: 'warrior' }, withTree(0, only('paladin', ranks)), 11, 'turns');
+      P(b).stats = { ...P(b).stats, int: P(b).stats.int * 4 }; // smite her biri öldürsün (güç denge turunda değişebilir; düşmanlar tur başı yenilenir)
       E(b, 0).hp = 1;
       E(b, 1).hp = 2;
       E(b, 2).hp = 3;
@@ -232,7 +233,7 @@ describe('Faz 5b: savaşta tetiklenme (class başına en az bir düğüm)', () =
     const cw = ward({ '3.fb': 1 });
     expect(plain.allyOk).toBe(true);
     expect(cw.allyOk).toBe(false);
-    expect(cw.shield / plain.shield).toBeCloseTo(1.6, 1);
+    expect(cw.shield / plain.shield).toBeCloseTo(1 + (treeOf('antimage')!.nodes['3.fb']!.fx![1] as unknown as { mul: number }).mul, 1);
   });
 
   it('Undead Banshee\'s Toll: Wail tahtadaki her düşmana, bedel mevcut canın %30\'u', () => {

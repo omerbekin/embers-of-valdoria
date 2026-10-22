@@ -66,7 +66,7 @@ describe('Archer ağacı fx (Faz 2b)', () => {
       const def = b.skill('aimed_shot', P0(b))!;
       return b.dealtDamageMult(P0(b), E0(b), def, def.effects[0] as DamageEffect);
     };
-    expect(run(true, true) / run(false, true)).toBeCloseTo(1.4, 9);
+    expect(run(true, true) / run(false, true)).toBeCloseTo(1 + (D.nodes['4.u1']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
     expect(run(true, false)).toBeCloseTo(run(false, false), 9);
   });
 

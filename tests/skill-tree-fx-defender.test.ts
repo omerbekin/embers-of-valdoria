@@ -48,7 +48,7 @@ describe('Defender ağacı fx (Faz 2b)', () => {
       const def = b.skill('tremor_slam', P0(b))!;
       return b.dealtDamageMult(P0(b), E0(b), def, def.effects[0] as DamageEffect);
     };
-    expect(run(true, true) / run(false, true)).toBeCloseTo(1.25, 9);
+    expect(run(true, true) / run(false, true)).toBeCloseTo(1 + 5 * (D.nodes['1.f2']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
     expect(run(true, false)).toBeCloseTo(run(false, false), 9);
   });
 

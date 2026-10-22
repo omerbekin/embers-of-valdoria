@@ -24,6 +24,12 @@ function only(cls: string, ranks: Record<string, number>, bar?: number): UnitSet
   return compileTree(t, { v: t.version, r });
 }
 const withTree = (slot: number, tree: UnitSetup['tree']): Record<number, UnitSetup> => ({ [slot]: { tree } });
+/** Düğüm / bar fx sayısı veriden ('bar3' = mastery.bar[3]; yol örn. '0.do.0.heal'); denge turunda değişebilir, test mekanizmayı ölçer. */
+const num = (cls: string, key: string, path: string): number => {
+  const t = treeOf(cls)!;
+  const fx = key.startsWith('bar') ? t.mastery.bar[Number(key.slice(3))]!.fx : t.nodes[key]!.fx;
+  return path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], fx) as number;
+};
 const P = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'party' && c.slot === slot)!;
 const E = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant): BattleEvent[] {
@@ -71,10 +77,10 @@ describe('Faz 4a: veri ve derleyici', () => {
   });
 
   it('rank: eylem sayıları ve C4 çarpanı rank ile çarpılır; süre / eşik çarpılmaz', () => {
-    expect(trigOf(only('warrior', { '0.r': 3 }), 'warrior:0.r').do[0]!.heal).toBeCloseTo(0.06, 9);
-    expect(trigOf(only('defender', { '2.f3': 4 }), 'defender:2.f3').do[0]!.shield).toBeCloseTo(0.12, 9);
+    expect(trigOf(only('warrior', { '0.r': 3 }), 'warrior:0.r').do[0]!.heal).toBeCloseTo(3 * num('warrior', '0.r', '0.do.0.heal'), 9);
+    expect(trigOf(only('defender', { '2.f3': 4 }), 'defender:2.f3').do[0]!.shield).toBeCloseTo(4 * num('defender', '2.f3', '0.do.0.shield'), 9);
     expect(trigOf(only('mage', { '0.f3': 5 }), 'mage:0.f3').do[0]!.sooner).toBeCloseTo(0.2, 9);
-    expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo(0.15, 9);
+    expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo(3 * num('warrior', '0.f2', '0.mul'), 9);
     expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo(-0.15, 9);
     const t = trigOf(only('warrior', { '0.n0': 1 }), 'warrior:0.n0');
     expect(t).toMatchObject({ on: 'hpBelow', below: 0.5, once: true, do: [{ status: 'stun', turns: 1, to: 'target' }] });
@@ -129,7 +135,7 @@ describe('Faz 4a: Warrior', () => {
     me.hp = Math.floor(me.maxHp * 0.2);
     untilTurn(b, E(b));
     const evs = untilTurn(b, me);
-    expect(healBy(evs, 'warrior:bar[3]')).toBe(Math.round(me.maxHp * 0.03));
+    expect(healBy(evs, 'warrior:bar[3]')).toBe(Math.round(me.maxHp * num('warrior', 'bar3', '0.do.0.heal')));
     // %25 üstünde iyileştirmez
     me.hp = me.maxHp - 1;
     untilTurn(b, E(b));
@@ -162,7 +168,7 @@ describe('Faz 4a: Warrior', () => {
     me.hp = Math.floor(me.maxHp / 2);
     const from = b.log.length;
     X(b).addStatus(me, { kind: 'fortify', turns: 1, source: me.uid }, emitOf(b));
-    expect(healBy(b.log.slice(from), 'warrior:0.r')).toBe(Math.round(me.maxHp * 0.06));
+    expect(healBy(b.log.slice(from), 'warrior:0.r')).toBe(Math.round(me.maxHp * 3 * num('warrior', '0.r', '0.do.0.heal')));
   });
 
   it('Grave Robber + Terror: Headsman\'s Blow öldürürse %25 şifa + 1 tur Fortified, her düşman Jinxed', () => {
@@ -174,7 +180,7 @@ describe('Faz 4a: Warrior', () => {
       E(b).hp = 1;
       const evs = cast(b, me, 'headsmans_blow', E(b));
       if (E(b).hp > 0) return false;
-      expect(healBy(evs, 'warrior:4.u3')).toBe(Math.round(me.maxHp * 0.25));
+      expect(healBy(evs, 'warrior:4.u3')).toBe(Math.round(me.maxHp * num('warrior', '4.u3', '0.do.0.heal')));
       expect(me.statuses.find((x) => x.kind === 'fortify')?.turns).toBe(1);
       expect(has(E(b, 1), 'jinxed')).toBe(true);
       return true;
@@ -185,9 +191,11 @@ describe('Faz 4a: Warrior', () => {
     const b = make({ 0: 'warrior' }, { 0: 'mage' }, withTree(0, only('warrior', { '0.f2': 3, '0.ea': 1 })));
     const me = P(b);
     me.hp = Math.floor(me.maxHp * 0.2);
-    expect(b.treeHealMult(me, me, null)).toBeCloseTo(1.15 * 1.25, 9);
+    const grit = 1 + 3 * num('warrior', '0.f2', '0.mul');
+    const mend = 1 + num('warrior', '0.ea', '0.mul');
+    expect(b.treeHealMult(me, me, null)).toBeCloseTo(grit * mend, 9);
     me.hp = Math.floor(me.maxHp * 0.4);
-    expect(b.treeHealMult(me, me, null)).toBeCloseTo(1.25, 9);
+    expect(b.treeHealMult(me, me, null)).toBeCloseTo(mend, 9);
     me.hp = Math.ceil(me.maxHp * 0.6);
     expect(b.treeHealMult(me, me, null)).toBeCloseTo(0.5, 9);
   });
@@ -249,7 +257,7 @@ describe('Faz 4a: Defender', () => {
     for (let i = 0; i < 30 && has(me, 'taunt'); i++) b.skipTurn();
     const evs = b.log.slice(from);
     expect(evs.some((e) => e.type === 'statusEnd' && e.target === me.uid && e.status === 'taunt')).toBe(true);
-    expect(healBy(evs, 'defender:2.f2')).toBe(Math.round(me.maxHp * 0.06));
+    expect(healBy(evs, 'defender:2.f2')).toBe(Math.round(me.maxHp * 2 * num('defender', '2.f2', '0.do.0.heal')));
     expect(procs(b, 'defender:2.ma')).toBe(1);
     expect(evs.some((e) => e.type === 'status' && e.target === me.uid && e.status === 'fortify')).toBe(true);
   });
@@ -263,7 +271,7 @@ describe('Faz 4a: Defender', () => {
     X(b).addStatus(me, { kind: 'stun', turns: 1, source: E(b).uid }, emitOf(b));
     expect(has(me, 'taunt')).toBe(false);
     expect(me.cooldowns.taunt).toBeUndefined();
-    expect(me.shield - sh0).toBe(Math.round(X(b).effectiveStats(me).armor * 0.3));
+    expect(me.shield - sh0).toBe(Math.round(X(b).effectiveStats(me).armor * num('defender', '2.mb', '0.do.1.shield')));
     expect(procs(b, 'defender:2.ma')).toBe(0);
   });
 
@@ -272,7 +280,7 @@ describe('Faz 4a: Defender', () => {
     const me = P(b);
     const sh0 = me.shield;
     cast(b, me, 'taunt');
-    expect(me.shield - sh0).toBe(Math.round(me.maxHp * 0.09));
+    expect(me.shield - sh0).toBe(Math.round(me.maxHp * 3 * num('defender', '2.f3', '0.do.0.shield')));
   });
 
   it('Cover Them: bir dost %30 altına düşünce Taunt cooldown\'u sıfırlanır (kendin sayılmaz)', () => {
@@ -361,7 +369,7 @@ describe('Faz 4a: Mage', () => {
       cast(b, P(b), 'fire_bolt', E(b));
       if (E(b).hp > 0) return false;
       const bf = P(b).treeBuffs?.find((x) => x.node === 'mage:bar[3]');
-      expect(bf).toMatchObject({ mod: { powerMul: 0.15 }, uses: 1 });
+      expect(bf).toMatchObject({ mod: { powerMul: num('mage', 'bar3', '0.do.0.buff.powerMul') }, uses: 1 });
       expect(bf?.pending).toBeUndefined();
       cast(b, P(b), 'fire_bolt', E(b, 1));
       expect(P(b).treeBuffs?.some((x) => x.node === 'mage:bar[3]')).toBe(false);
@@ -441,12 +449,12 @@ describe('Faz 4a: öbür sınıflar', () => {
     X(b2).trig([P(b2)], { on: 'bust', resource: 'mp', amount: 5 }, emitOf(b2));
     expect(P(b2).treeBuffs ?? []).toEqual([]);
     X(b2).trig([P(b2)], { on: 'bust', resource: 'hp', amount: 5 }, emitOf(b2));
-    expect(P(b2).treeBuffs?.[0]).toMatchObject({ mod: { powerMul: 0.15 }, uses: 1 });
+    expect(P(b2).treeBuffs?.[0]).toMatchObject({ mod: { powerMul: num('gambler', 'bar2', '0.do.0.buff.powerMul') }, uses: 1 });
     const b3 = make({ 0: 'gambler' }, { 0: 'mage' }, withTree(0, only('gambler', {}, 4)));
     P(b3).hp = 1;
     const from = b3.log.length;
     X(b3).trig([P(b3)], { on: 'luckyEscape', target: P(b3), source: P(b3) }, emitOf(b3));
-    expect(healBy(b3.log.slice(from), 'gambler:bar[4]')).toBe(Math.round(P(b3).maxHp * 0.1));
+    expect(healBy(b3.log.slice(from), 'gambler:bar[4]')).toBe(Math.round(P(b3).maxHp * num('gambler', 'bar4', '0.do.0.heal')));
   });
 
   it('Hex Ward: herhangi bir düşman Jinxed iken rank başına %3 az hasar', () => {
@@ -476,9 +484,10 @@ describe('Faz 4a: öbür sınıflar', () => {
     const ally = P(b, 1);
     const rj = content.skills.rejuvenate!;
     ally.hp = Math.floor(ally.maxHp * 0.4);
-    expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(1.08, 9);
+    const soft = 1 + 2 * num('druid', '3.f3', '0.mul');
+    expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(soft, 9);
     ally.hp = Math.floor(ally.maxHp * 0.2);
-    expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(1.08 * 1.5, 9);
+    expect(b.treeHealMult(P(b), ally, rj)).toBeCloseTo(soft * (1 + num('druid', '3.eb', '0.mul')), 9);
     expect(b.treeHealMult(P(b), ally, null)).toBe(1);
   });
 
@@ -513,7 +522,7 @@ describe('Faz 4a: öbür sınıflar', () => {
       E(b).hp = 1;
       cast(b, P(b), 'aimed_shot', E(b));
       if (E(b).hp > 0) return false;
-      expect(P(b).treeBuffs?.[0]).toMatchObject({ mod: { powerMul: 0.5, sureHit: true }, uses: 1 });
+      expect(P(b).treeBuffs?.[0]).toMatchObject({ mod: { powerMul: num('archer', '4.r3', '0.do.0.buff.powerMul'), sureHit: true }, uses: 1 });
       expect(P(b).treeBuffs?.[0]?.pending).toBeUndefined();
       return true;
     });

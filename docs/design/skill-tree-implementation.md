@@ -375,7 +375,7 @@ Yayın: ağaç `_rules.json > enabled` ile; Pages'te test için açık (ya da de
 - **Genel:** düşmanların ağacı yok; sefer ve Endless zorluk eğrisi kolaylaşır. Ayar tavanla değil karşılaşma ölçekleri ve takaslarla (Ömer kuralı: tavan yok).
 
 ### 9.2a Denge hedefleri (Ömer 2026-10-22, "öneriyle git")
-- **Ağacın güç katkısı:** L15'te tam (odaklı) ağaç, aynı seed'le ağaçsız koşuya göre kazanma oranını **yaklaşık +10-15 puan** artırır (class başına).
+- **Ağacın güç katkısı:** L15'te tam (odaklı) ağaç, aynı seed'le ağaçsız koşuya göre kazanma oranını **yaklaşık +20-25 puan** artırır (class başına). (Ömer 2026-10-22: hedef +10-15'ten +20-25'e çekildi, "orta karar kırpma, sert değil"; Faz 7 denge turu aşağıda.)
 - **Yön dengesi:** aynı class içinde a ve b yönü build'leri arasındaki kazanma farkı **en çok 5 puan**.
 - **Sim'in tutması gerekenler:** girdi = class, level (5 / 10 / 15 / 20), mod, build kimliği (satırlar, yön, evolve, ult kolu), ilvl, zorluk, seed + aynı seed ağaçsız referans. Çıktı = bugünkü tablo + ağaçlı-ağaçsız fark, a-b farkı, düğüm başına tetiklenme sayısı (hiç tetiklenmeyen = ölü düğüm), düşmanın kontrol (Stun / Slow) altında geçirdiği tur payı, skill payı kayması (%40 baskın kuralı), bitmeyen savaş / kaynak tükenmemesi, evolve / ult kolu / Mastery bar katkısı ayrı.
 - **Sıra:** düğüm etkileri motora (Faz 2, 4, 5; 11 class) → sim'e ağaç modu (Faz 6, balance-tester) → scout koşturur (her koşu sayısı Ömer onayıyla) → balansçı ayarlar.
@@ -451,7 +451,7 @@ Yayın: ağaç `_rules.json > enabled` ile; Pages'te test için açık (ya da de
   7. **Warrior Undying Rage:** 10 Rage yoksa kurtarmaz (cheatDeath kuralında eksi `rage` bedeli ödenebilir olmalı).
   8. **Anti-Mage Spillover:** yalnız Mana Overflow'un taşan MP'si (şimdiki yazım doğrulandı; test: Mana Steal fazlası aktarılmaz).
   9. **Split Ward / Verdant Link (ve Stretched Ward):** ikinci alıcı her zaman hedeften başka bir dost; yoksa ikinci kopya yok (yeni alıcı süzgeci `notTarget`). Verdant Link'te Druid'in kendisi yine sayılmaz (`lowestHpOtherAlly`).
-  10. **Paladin 0.fb Fervent Oath yeni metin:** "Anointed Arms' bonus doubles to +30%, but Divine Light heals 25% less." (yeni mekanik yok; 0.fb yalnızca 0.eb Anointed Arms'tan sonra alınabilir). fx: Anointed Arms kancası düşer (`drop 0.eb`), yerine +%30 buff; pasif gücü -%25. Ömer'e gösterilecek.
+  10. **Paladin 0.fb Fervent Oath yeni metin:** "Anointed Arms' bonus doubles to +30%, but Divine Light heals 25% less." (yeni mekanik yok; 0.fb yalnızca 0.eb Anointed Arms'tan sonra alınabilir). fx: Anointed Arms kancası düşer (`drop 0.eb`), yerine +%30 buff; pasif gücü -%25. **Ömer onayladı (2026-10-22).** Faz 7 denge turunda bu metin tutarlı kalsın diye 0.eb Anointed Arms (+%15) ve 0.fb kırpılmadı.
   11. **Druid Thin Sap:** yenilenme (tur başı şifa) dahil bütün şifa yarıya (`skill hot power pct -0.5` eklendi; Spreading Roots aktarımı da yarı yenilenmeden).
   12. **Cutthroat Carving Arc:** zincirdeki HER kesik isabet edince Wound (2 tur) verir (strike eylemine `cutStatus`). Önceden yalnız ilk kesiğin yanındakine, iskada da veriliyordu.
   13. **Paladin Martyr Rising:** kalkınca Resurrection tam bekleme süresine girer, MP harcanmaz (cheatDeath `ready` skill'i, yalnız turns modunda).
@@ -1286,3 +1286,12 @@ Faz 5b'de motor eksiği yüzünden null kalan 4 düğüm motora + veriye yazıld
 | Hexer 3.v Turned Hand | `[{"k":"hook","h":"rule","rule":"turnedHand"}]` | Yeni kural `turnedHand` (yeni durum YOK): Jinxed'i bu kuralı taşıyan Hexer vermişse taşıyanın sıradaki hasar skill'i (hedefleri karşı tarafta, telgrafsız) YZ'nin seçtiği hedef yerine kendi dostlarından seed'li rastgele birine tek hedef olarak iner (alan / aşama / yan vuruş düşer); bir Jinxed tek saldırı çevirir; dost yoksa normal. `treeProc` Hexer'e yazılır. |
 
 Derleyici: `self` seçicisine `cost.hpFallback`, `bet` seçicisine `hpStake` (ikisi de varsayılan 0, MP dışı / oran dışı = derleme hatası); strike'a `rollStatus`; `RULE_KINDS` + `turnedHand` (alansız).
+
+## Faz 7 denge turu (balance-tester 2026-10-22)
+
+Hedef (9.2a, Ömer): ağaç class başına **+20-25 puan**, |a-b| <= 5. Yalnızca `data/skill-trees/<class>.json` düğüm sayıları değişti (`_rules.json > enabled` false; ağaçsız savaş birebir aynı). Görünen sayısı değişen her düğümün `text`'i aynı dosyada güncellendi. Varsayımlar `open-questions.md` madde 398.
+
+- **Genel kırpma:** güç / şans / şifa / kalkan / kritik / zırh delme sayıları (yalnızca artı yöndekiler; metinde aynı yüzde geçen) yaklaşık yarıya, okunur sayıya yuvarlandı (Mage ve Cutthroat / Gambler x0,7, Archer x0,65, diğerleri x0,5). Bedel (eksi) tarafları, süreler, cooldown'lar, eşikler (%50 can altı gibi), stack / sayı tavanları DEĞİŞMEDİ. Metinde sayısı olmayan nitel düğümler (Stun, Wound, cheatDeath, "double"...) değişmedi.
+- **Tutarlılık düzeltmeleri:** başka düğümün değerini kopyalayan `drop` düğümleri tabana göre ayarlandı (Cutthroat 0.fb / 0.mb / 1.mb, Druid 4.u2 / 4.u3 / 4.d2, Mage 4.d2, Undead 4.r2); Paladin 0.eb (Fervent Oath'un "doubles to +30%" metni için) ve Undead 3.ea / 3.fa (Transfusion %15 / %30) kırpılmadı; Undead 1.fb "always Silences" toplamı %100 kalacak şekilde, 1.fa "12% → 40%".
+- **Class ince ayarı:** Defender 2.f1 (Taunt kırılma +%2 / rank, 25 → 31), 2.r (dostlar -%1 / rank, 10 → 13), 4.r1 (Fist Crush zırh %10), 4.r3 (%30); Warrior 1.fb Third Cut yarım güç, 1.n0 +%5, 1.ma +%5, 1.mb +%2 / tur, 4.u1 can çalma %10, bar Crushing Weight +%3; Druid 1.ea / 1.ma %20, 1.fa +%15, 1.fb 10 MP, 4.u1 %20 (4.u3 +%100 korunur); Cutthroat 2.mb ek bıçak %50, 2.ea +%20; Hexer 1.fb +%15 ve 4 MP; Undead 1.eb Silence %20.
+- **Sonuç (1000 savaş, seed 50001, L15 / 20 / 25, yalnızca oyuncu tarafı ağaçlı):** genel ağaçsız %49-50 → a %73-74, b %73-79 (fark +23 / +25 / +23 a, +29 b). L25'te b yönü bütün class'larda a'dan güçlü (genel +6 puan); bu sim bütçesinde kapatılamadı (madde 398).

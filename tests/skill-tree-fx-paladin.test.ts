@@ -48,7 +48,7 @@ describe('Paladin ağacı fx (Faz 2b)', () => {
       const pow = (b.skill('radiance', P0(b))!.effects.find((e) => e.type === 'damage') as DamageEffect).power;
       return { pow, avg: previewSkill(b, P0(b).uid, 'radiance', E0(b).uid).find((x) => x.uid === E0(b).uid)!.damage!.avg };
     };
-    expect(run(true).pow / run(false).pow).toBeCloseTo(1.2, 6);
+    expect(run(true).pow / run(false).pow).toBeCloseTo(1 + (D.nodes['4.u1']!.fx![0] as unknown as { v: number }).v, 6);
     expect(run(true).avg).toBeGreaterThan(run(false).avg);
   });
 
@@ -59,7 +59,7 @@ describe('Paladin ağacı fx (Faz 2b)', () => {
       const def = b.skill('radiance', P0(b))!;
       return b.dealtDamageMult(P0(b), E0(b), def, def.effects.find((e) => e.type === 'damage') as DamageEffect);
     };
-    expect(run(true, true) / run(false, true)).toBeCloseTo(1.4, 9);
+    expect(run(true, true) / run(false, true)).toBeCloseTo(1 + (D.nodes['4.r1']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
     expect(run(true, false)).toBeCloseTo(run(false, false), 9);
   });
 

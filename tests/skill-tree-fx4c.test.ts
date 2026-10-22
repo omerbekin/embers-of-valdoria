@@ -24,6 +24,12 @@ function only(cls: string, ranks: Record<string, number>, bar?: number): UnitSet
   return compileTree(t, { v: t.version, r });
 }
 const withTree = (slot: number, tree: UnitSetup['tree']): Record<number, UnitSetup> => ({ [slot]: { tree } });
+/** Düğüm / bar fx sayısı veriden ('bar3' = mastery.bar[3]; yol örn. '0.do.0.heal'); denge turunda değişebilir, test mekanizmayı ölçer. */
+const num = (cls: string, key: string, path: string): number => {
+  const t = treeOf(cls)!;
+  const fx = key.startsWith('bar') ? t.mastery.bar[Number(key.slice(3))]!.fx : t.nodes[key]!.fx;
+  return path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], fx) as number;
+};
 const P = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'party' && c.slot === slot)!;
 const E = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant, slot?: number): BattleEvent[] {
@@ -215,6 +221,7 @@ describe('Faz 4c: ağaç zeminleri', () => {
     const b = make({ 0: 'archer' }, { 0: 'mage' }, withTree(0, only('archer', { '3.eb': 1, '3.fb': 1 })), 11, 'turns');
     const me = P(b);
     const m = E(b);
+    me.stats = { ...me.stats, dex: me.stats.dex * 4 }; // düşük güçte (denge turu) tik zırhla 0'a yuvarlanmasın
     cast(b, me, 'arrow_rain', m, 0);
     const g = grounds(b, 'lingering_rain')[0]!;
     expect(g.turns).toBe(4);
@@ -419,7 +426,7 @@ describe('Faz 4c: hata düzeltmeleri', () => {
       hook.amount = 1;
       const evs = cast(b, w, 'fire_bolt', tank);
       if (!evs.some((e) => e.type === 'damage' && e.target === tank.uid && e.absorbed > 0)) return false;
-      expect(low.magicShield - ms0).toBe(Math.round(size * 0.5));
+      expect(low.magicShield - ms0).toBe(Math.round(size * num('antimage', '3.ma', '0.do.0.shield')));
       return true;
     });
   });
@@ -580,7 +587,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
     cast(b, me, 'wail_of_the_dead', E(b));
     cast(b, me, 'wail_of_the_dead', E(b));
     const tide = me.treeBuffs!.find((x) => x.node === 'undead:0.v')!;
-    expect(tide.mod).toEqual({ drainAdd: 0.05 });
+    expect(tide.mod).toEqual({ drainAdd: num('undead', '0.v', '0.do.0.buff.drainAdd') });
     expect(tide.s).toBe(2);
   });
 
@@ -677,10 +684,12 @@ describe('Faz 4c: tek tek boşluklar', () => {
       only('cutthroat', r)
         ?.hooks?.filter((h) => h.h === 'trigger' && h.on === 'enemyMissed')
         .map((h) => (h.h === 'trigger' ? `${h.do[0]!.damage}${h.do[0]!.crit ? 'c' : ''}${h.do.some((a) => a.removeStatus) ? 's' : ''}` : '')) ?? [];
-    expect(dmg({ '0.eb': 1 })).toEqual(['0.4']);
-    expect(dmg({ '0.eb': 1, '0.fb': 1 })).toEqual(['0.8s']);
-    expect(dmg({ '0.eb': 1, '0.mb': 1 }).sort()).toEqual(['0.4', '0.4c']);
-    expect(dmg({ '0.eb': 1, '0.fb': 1, '0.mb': 1 }).sort()).toEqual(['0.8cs', '0.8s']);
+    const cut = num('cutthroat', '0.eb', '0.do.0.damage'); // karşı kesik (veriden); Reckless Grace iki katı
+    expect(num('cutthroat', '0.fb', '0.do.0.damage')).toBeCloseTo(2 * cut, 9);
+    expect(dmg({ '0.eb': 1 })).toEqual([`${cut}`]);
+    expect(dmg({ '0.eb': 1, '0.fb': 1 })).toEqual([`${2 * cut}s`]);
+    expect(dmg({ '0.eb': 1, '0.mb': 1 }).sort()).toEqual([`${cut}`, `${cut}c`]);
+    expect(dmg({ '0.eb': 1, '0.fb': 1, '0.mb': 1 }).sort()).toEqual([`${2 * cut}cs`, `${2 * cut}s`]);
     expect(dmg({ '0.mb': 1 })).toEqual([]);
   });
 
@@ -715,7 +724,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
     expect(t.passive?.effect).toMatchObject({ type: 'longshot', extraRows: 2 });
     const b = make({ 0: 'archer' }, { 0: 'archer', 1: 'warrior' }, withTree(0, t));
     const me = P(b);
-    expect(b.treeTakenMult(me, E(b, 0), 'physical', content.skills.quick_shot)).toBeCloseTo(1.2, 9);
+    expect(b.treeTakenMult(me, E(b, 0), 'physical', content.skills.quick_shot)).toBeCloseTo(1 + num('archer', '0.fb', '1.mul'), 9);
     expect(b.treeTakenMult(me, E(b, 1), 'physical', content.skills.melee_attack)).toBe(1);
   });
 
@@ -776,7 +785,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
 
   it('Bedside Watch: Divine Light %50 altındaki dostları rank başına %4 fazla iyileştirir', () => {
     const h = only('paladin', { '0.f3': 3 })!.hooks!.find((x) => x.node === 'paladin:0.f3')!;
-    expect(h).toMatchObject({ h: 'cond', at: 'passiveHeal', when: { targetHpBelow: 0.5 }, mod: { powerMul: 0.12 } });
+    expect(h).toMatchObject({ h: 'cond', at: 'passiveHeal', when: { targetHpBelow: 0.5 }, mod: { powerMul: 3 * num('paladin', '0.f3', '0.mod.powerMul') } });
   });
 });
 
@@ -814,8 +823,8 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
     const b = make({ 3: 'druid' }, { 0: 'warrior' }, withTree(3, only('druid', { '4.r1': 1, '4.r2': 1 })));
     const t = spawn(b, P(b, 3), 'summon_treant');
     const rs = t.skillDefs!.root_smash!.effects.find((e) => e.type === 'damage') as { power: number };
-    expect(rs.power).toBeCloseTo(0.575 * 1.2, 4);
-    expect(t.treeHooks).toEqual([expect.objectContaining({ h: 'cond', skill: 'root_smash', mod: { powerMul: 0.25 } })]);
+    expect(rs.power).toBeCloseTo(0.575 * (1 + num('druid', '4.r1', '0.v')), 4);
+    expect(t.treeHooks).toEqual([expect.objectContaining({ h: 'cond', skill: 'root_smash', mod: { powerMul: num('druid', '4.r2', '0.mod.powerMul') } })]);
   });
 
   it('Barkskin (bar 25): Treant %15 az hasar alır (aynı seed, aynı vuruş)', () => {
@@ -879,7 +888,7 @@ describe('Faz 4c: çağrı aktarımı (Treant / Skeleton)', () => {
   it('Cold Grip: Skeleton yavaşlamış hedefe +%20 (koşullu kanca çağrıda)', () => {
     const b = make({ 3: 'undead' }, { 0: 'warrior' }, withTree(3, only('undead', { '4.u2': 1 })));
     const s = spawn(b, P(b, 3), 'raise_dead');
-    expect(s.treeHooks).toEqual([expect.objectContaining({ h: 'cond', when: { targetStatus: 'slow' }, mod: { powerMul: 0.2 } })]);
+    expect(s.treeHooks).toEqual([expect.objectContaining({ h: 'cond', when: { targetStatus: 'slow' }, mod: { powerMul: num('undead', '4.u2', '0.mod.powerMul') } })]);
   });
 
   it('Pox Bloom: Skeleton ölünce son vurduğu düşmanın altına zehir zemini (2 tur)', () => {

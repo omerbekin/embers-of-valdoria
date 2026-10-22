@@ -93,8 +93,10 @@ describe('birim skill katmanı (aynı id)', () => {
     const foe = b.combatants.find((c) => c.side === 'enemy')!;
     expect(Object.keys(me.skillDefs!).sort()).toEqual(['headsmans_blow', 'melee_attack', 'whirlwind']);
     expect(foe.skillDefs).toBeUndefined();
-    expect(power(b, 'melee_attack', me.uid)).toEqual([0.4, 0.48]);
-    expect(power(b, 'melee_attack', me)).toEqual([0.4, 0.48]); // Combatant da kabul
+    const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // Notched Axe rank başı (veriden)
+    const want = [0.4, 0.4 * (1 + 5 * NA)];
+    power(b, 'melee_attack', me.uid).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9));
+    power(b, 'melee_attack', me).forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); // Combatant da kabul
     expect(power(b, 'melee_attack', foe.uid)).toEqual([0.4, 0.4]);
     expect(power(b, 'melee_attack')).toEqual([0.4, 0.4]);
     expect(content.skills.melee_attack!.effects.map((e) => (e as unknown as { power: number }).power)).toEqual([0.4, 0.4]);
@@ -131,7 +133,9 @@ describe('birim skill katmanı (aynı id)', () => {
     expect(st(d0!.uid).breakAt).toBeUndefined();
     expect(st(d0!.uid).allyMult).toBe(1);
     expect(st(d0!.uid).turns).toBe(3);
-    expect(st(d1!.uid).breakAt).toBe(Math.max(1, Math.round(d1!.maxHp * 0.24)));
+    const roarRatio = (roar.skills!.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio; // Hollow Roar + Bellow 3 (veriden)
+    expect(roarRatio).toBeCloseTo((D.nodes['2.fb']!.fx![2] as unknown as { v: number }).v + 3 * (D.nodes['2.f1']!.fx![0] as unknown as { v: number }).v, 9);
+    expect(st(d1!.uid).breakAt).toBe(Math.max(1, Math.round(d1!.maxHp * roarRatio)));
     expect(st(d2!.uid).breakAt).toBe(Math.max(1, Math.round(d2!.maxHp * 0.25)));
     expect(st(d2!.uid).allyMult).toBe(0.9);
     expect(b.skill('taunt', d1!.uid)!.cost.amount).toBe(0);

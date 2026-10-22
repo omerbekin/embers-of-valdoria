@@ -289,17 +289,20 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
   const L = 50;
   const taunt = (a: TreeAlloc) => skillOf(compileTree(D, a), 'taunt').effects[0] as unknown as { breakRatio: number; allyDamageMult: number; turns: number };
   const toR = ['2.f1*3', '2.f2*5', '2.f3*2', '2.n0', '2.r*3']; // sayaç 14: edge ile 15 (Tier IV)
+  const dv = (id: string, i = 0) => (D.nodes[id]!.fx![i] as unknown as { v: number }).v; // düğüm sayısı veriden (denge turunda değişebilir)
+  const bellow3 = 0.25 + 3 * dv('2.f1'); // temel 0,25 + Bellow 3 rank
+  const roarRatio = dv('2.fb', 2) + 3 * dv('2.f1'); // Hollow Roar tabanı + Bellow 3 rank
 
   it('Bellow 3 rank -> breakRatio 0,34; Rally Cry 3 -> allyDamageMult 0,84; temel tanım değişmez', () => {
-    expect(taunt(build(D, L, ['2.f1*3'])).breakRatio).toBe(0.34);
-    expect(taunt(build(D, L, toR)).allyDamageMult).toBe(0.84);
+    expect(taunt(build(D, L, ['2.f1*3'])).breakRatio).toBeCloseTo(bellow3, 9);
+    expect(taunt(build(D, L, toR)).allyDamageMult).toBeCloseTo(0.9 + 3 * dv('2.r'), 9);
     expect((skills.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.25);
   });
 
   it('Hollow Roar + Bellow -> 0,24 (Ömer 2026-10-22: %15 Bellow\'un üstüne eklenir; op base); Ironbound Oath (set 0) Bellow\'u siler', () => {
     const roar = compileTree(D, build(D, L, [...toR, '2.eb', '2.fb']));
     const t = skillOf(roar, 'taunt');
-    expect((t.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.24);
+    expect((t.effects[0] as unknown as { breakRatio: number }).breakRatio).toBeCloseTo(roarRatio, 9);
     expect(t.cost.amount).toBe(0);
     expect(t.cooldown).toBe(2); // Brief Defiance (eb) 3, sonra Hollow Roar (fb) 2: sütun sırası
     const oath = taunt(build(D, L, [...toR, '2.ea', '2.fa']));
@@ -311,10 +314,10 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
   it('Iron Meteor -> bonusScale armor pct 0,4 + count 2; Plated Gauntlet 0,15', () => {
     const fist = (a: TreeAlloc) => skillOf(compileTree(D, a), 'fist_crush') as SkillDef & { count: number; effects: Array<{ bonusScale: Array<{ pct: number }> }> };
     const g = fist(build(D, 5, ['4.r1']));
-    expect(g.effects[0]!.bonusScale[0]!.pct).toBe(0.15);
+    expect(g.effects[0]!.bonusScale[0]!.pct).toBe(dv('4.r1'));
     expect(g.count).toBe(3);
     const m = fist(build(D, 15, ['4.r1', '4.r2', '4.r3']));
-    expect(m.effects[0]!.bonusScale[0]!.pct).toBe(0.4);
+    expect(m.effects[0]!.bonusScale[0]!.pct).toBe(dv('4.r3'));
     expect(m.count).toBe(2);
   });
 
@@ -337,13 +340,15 @@ describe('derleyici (3.2 madde 12 + pasif yaması)', () => {
   it('Warrior: Notched Axe (+4% power / rank, yalnızca 2. vuruş) oransal; percentRule add\'e çevrilince düz ek; Steady Spin, Headsman\'s Feast', () => {
     const a = build(W, L, ['1.f1*3', '1.f2*5']);
     const hits = (s: SkillDef) => s.effects.filter((e) => e.type === 'damage').map((e) => (e as unknown as { power: number }).power); // Knee Cutter (1.f1) durum etkisi ekler
-    expect(hits(skillOf(compileTree(W, a), 'melee_attack'))).toEqual([0.4, 0.48]);
+    const NA = (W.nodes['1.f2']!.fx![0] as unknown as { v: number }).v; // veriden
+    const close = (got: number[], want: number[]) => { expect(got.length).toBe(want.length); got.forEach((x, i) => expect(x).toBeCloseTo(want[i]!, 9)); };
+    close(hits(skillOf(compileTree(W, a), 'melee_attack')), [0.4, 0.4 * (1 + 5 * NA)]);
     const add: TreeRules = { ...TREE_RULES, percentRule: 'add' };
-    expect(hits(skillOf(compileTree(W, a, add), 'melee_attack'))).toEqual([0.4, 0.6]);
+    close(hits(skillOf(compileTree(W, a, add), 'melee_attack')), [0.4, 0.4 + 5 * NA]);
     const spin = skillOf(compileTree(W, build(W, L, ['2.f1*3'])), 'whirlwind');
-    expect((spin.effects[0] as unknown as { lifesteal: number }).lifesteal).toBe(0.26);
+    expect((spin.effects[0] as unknown as { lifesteal: number }).lifesteal).toBeCloseTo(0.2 + 3 * (W.nodes['2.f1']!.fx![0] as unknown as { v: number }).v, 9);
     const feast = skillOf(compileTree(W, build(W, 5, ['4.u1'])), 'headsmans_blow');
-    expect((feast.effects[0] as unknown as { lifesteal: number }).lifesteal).toBe(0.2);
+    expect((feast.effects[0] as unknown as { lifesteal: number }).lifesteal).toBe((W.nodes['4.u1']!.fx![0] as unknown as { v: number }).v);
   });
 
   it('pasif yaması (sentetik düğüm): pasif kopyası yamalanır, sınıf pasifi değişmez; Mastery bar fx sayaçla açılır', () => {
@@ -402,7 +407,7 @@ describe('loadoutSetup bağlantısı + debug odaklı kurulum', () => {
     expect(loadoutSetup({ class: 'paladin', level: 30 }, { mode: 'endless' }).tree).toBeDefined(); // Faz 2b: Paladin fx'leri yazıldı
     setDebugTreeFocus({ dir: 'b' });
     const b = loadoutSetup({ class: 'defender', level: 30 }, { mode: 'endless' }).tree!;
-    expect((b.skills!.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBe(0.24); // Hollow Roar (fb) + Bellow 3
+    expect((b.skills!.taunt!.effects[0] as unknown as { breakRatio: number }).breakRatio).toBeCloseTo((D.nodes['2.fb']!.fx![2] as unknown as { v: number }).v + 3 * (D.nodes['2.f1']!.fx![0] as unknown as { v: number }).v, 9); // Hollow Roar (fb) + Bellow 3
   });
 
   it('sefer ve Endless savaş planı: debug açıkken Warrior / Defender biriminin kurulumunda tree var, kapalıyken yok', () => {

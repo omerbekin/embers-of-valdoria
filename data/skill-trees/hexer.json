@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Grim Herald",
-        "text": "The first Doom you cause each battle deals +20% damage.",
+        "text": "The first Doom you cause each battle deals +10% damage.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -76,7 +76,7 @@
               "firstDoom": true
             },
             "mod": {
-              "powerMul": 0.2
+              "powerMul": 0.1
             }
           }
         ]
@@ -100,7 +100,7 @@
       {
         "at": 20,
         "name": "Carrion Feast",
-        "text": "Wither on an enemy below 30% HP deals +20% damage.",
+        "text": "Wither on an enemy below 30% HP deals +10% damage.",
         "src": "A:V2:bar2",
         "fx": [
           {
@@ -111,7 +111,7 @@
               "targetHpBelow": 0.3
             },
             "mod": {
-              "powerMul": 0.2
+              "powerMul": 0.1
             }
           }
         ]
@@ -141,7 +141,7 @@
   "nodes": {
     "0.f1": {
       "name": "Fresh Host",
-      "text": "Doom on a host of passed Omens deals +3% damage per rank.",
+      "text": "Doom on a host of passed Omens deals +2% damage per rank.",
       "src": "A:V4:0.f2",
       "fx": [
         {
@@ -152,7 +152,7 @@
             "omenFromTransfer": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Grim Arithmetic",
-      "text": "Doom +4% damage per rank against targets below 50% HP.",
+      "text": "Doom +2% damage per rank against targets below 50% HP.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -171,7 +171,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -179,7 +179,7 @@
     },
     "0.f3": {
       "name": "Crooked Stars",
-      "text": "Doom +3% critical chance per rank.",
+      "text": "Doom +2% critical chance per rank.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -187,7 +187,7 @@
           "h": "cond",
           "at": "doom",
           "mod": {
-            "critBonus": 0.03
+            "critBonus": 0.02
           },
           "rank": true
         }
@@ -217,7 +217,7 @@
     },
     "0.r": {
       "name": "Bitter Interest",
-      "text": "Doom heals you for 4% of its damage per rank.",
+      "text": "Doom heals you for 2% of its damage per rank.",
       "src": "A:V5:0.r",
       "fx": [
         {
@@ -225,7 +225,7 @@
           "h": "cond",
           "at": "doom",
           "mod": {
-            "lifesteal": 0.04
+            "lifesteal": 0.02
           },
           "rank": true
         }
@@ -233,7 +233,7 @@
     },
     "0.ea": {
       "name": "Crushing Doom",
-      "text": "Doom ignores 25% of Magic Armor.",
+      "text": "Doom ignores 12% of Magic Armor.",
       "src": "A:V1:0.ea",
       "fx": [
         {
@@ -241,7 +241,7 @@
           "h": "cond",
           "at": "doom",
           "mod": {
-            "ignoreDefense": 0.25
+            "ignoreDefense": 0.12
           }
         }
       ]
@@ -276,7 +276,7 @@
     },
     "0.fa": {
       "name": "Overcharged Doom",
-      "text": "Doom deals +30% damage, but you take 10% of that damage yourself.",
+      "text": "Doom deals +15% damage, but you take 10% of that damage yourself.",
       "src": "A:V1:0.fa",
       "fx": [
         {
@@ -284,7 +284,7 @@
           "h": "cond",
           "at": "doom",
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.15
           }
         },
         {
@@ -303,7 +303,7 @@
     },
     "0.fb": {
       "name": "Final Toll",
-      "text": "Doom deals +40% to targets below 30% HP, but -20% to targets above it.",
+      "text": "Doom deals +20% to targets below 30% HP, but -20% to targets above it.",
       "src": "A:V1:0.fb",
       "fx": [
         {
@@ -314,7 +314,7 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.4
+            "powerMul": 0.2
           }
         },
         {
@@ -375,7 +375,7 @@
     },
     "1.f1": {
       "name": "Prying Eye",
-      "text": "Evil Eye +4% power per rank against enemies with no Omens.",
+      "text": "Evil Eye +2% power per rank against enemies with no Omens.",
       "src": "A:V4:1.f3",
       "fx": [
         {
@@ -388,7 +388,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Envy's Edge",
-      "text": "Evil Eye +4% power per rank against targets with 2 Omens.",
+      "text": "Evil Eye +2% power per rank against targets with 2 Omens.",
       "src": "A:V1:1.f3",
       "fx": [
         {
@@ -424,7 +424,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -452,7 +452,7 @@
     },
     "1.r": {
       "name": "Rheumy Stare",
-      "text": "Evil Eye +2% critical chance per rank against Withered targets.",
+      "text": "Evil Eye +1% critical chance per rank against Withered targets.",
       "src": "A:V2:1.f3",
       "syn": "Withering Curse",
       "fx": [
@@ -463,7 +463,7 @@
             "targetStatus": "wither"
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.01
           },
           "rank": true
         }
@@ -471,7 +471,7 @@
     },
     "1.ea": {
       "name": "Glint of Malice",
-      "text": "Evil Eye +10% critical chance against targets with Omens.",
+      "text": "Evil Eye +5% critical chance against targets with Omens.",
       "src": "A:V1:1.ea",
       "fx": [
         {
@@ -484,14 +484,14 @@
             }
           },
           "mod": {
-            "critBonus": 0.1
+            "critBonus": 0.05
           }
         }
       ]
     },
     "1.eb": {
       "name": "Fixed Stare",
-      "text": "Evil Eye +12% power if it hits the same target as your last skill.",
+      "text": "Evil Eye +6% power if it hits the same target as your last skill.",
       "src": "A:V1:1.eb",
       "fx": [
         {
@@ -501,7 +501,7 @@
             "targetIsMyLastTarget": true
           },
           "mod": {
-            "powerMul": 0.12
+            "powerMul": 0.06
           }
         }
       ]
@@ -543,7 +543,7 @@
     },
     "1.fb": {
       "name": "Burning Stare",
-      "text": "Evil Eye +25% power, but it costs 6 MP.",
+      "text": "Evil Eye +15% power, but it costs 4 MP.",
       "src": "A:V1:1.fb",
       "fx": [
         {
@@ -551,20 +551,20 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.25
+          "v": 0.15
         },
         {
           "k": "skill",
           "sel": "self",
           "f": "cost.amount",
           "op": "set",
-          "v": 6
+          "v": 4
         }
       ]
     },
     "1.mb": {
       "name": "Doom Gaze",
-      "text": "When Evil Eye brings Doom, that Doom deals +30% damage.",
+      "text": "When Evil Eye brings Doom, that Doom deals +15% damage.",
       "src": "A:V1:1.mb",
       "fx": [
         {
@@ -575,7 +575,7 @@
             "doomSource": "evil_eye"
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.15
           }
         }
       ]
@@ -643,7 +643,7 @@
     },
     "2.f3": {
       "name": "Leeching Rot",
-      "text": "Wither ticks heal you for 2% of their damage per rank.",
+      "text": "Wither ticks heal you for 1% of their damage per rank.",
       "src": "B:V5:2.f2",
       "fx": [
         {
@@ -652,7 +652,7 @@
           "at": "dot",
           "skill": "*",
           "mod": {
-            "lifesteal": 0.02
+            "lifesteal": 0.01
           },
           "rank": true
         }
@@ -677,14 +677,14 @@
     },
     "2.r": {
       "name": "Rot Contagion",
-      "text": "Withering Curse has a 10% chance per rank to also curse an enemy just outside its area.",
+      "text": "Withering Curse has a 5% chance per rank to also curse an enemy just outside its area.",
       "src": "B:V4:2.r",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "skillUse",
-          "procChance": 0.1,
+          "procChance": 0.05,
           "rank": true,
           "do": [
             {
@@ -790,7 +790,7 @@
     },
     "2.fb": {
       "name": "Swift Blight",
-      "text": "Withering Curse's Wither deals +50%, but lasts 2 turns.",
+      "text": "Withering Curse's Wither deals +25%, but lasts 2 turns.",
       "src": "B:V2:2.fa",
       "fx": [
         {
@@ -798,7 +798,7 @@
           "sel": "dot",
           "f": "power",
           "op": "pct",
-          "v": 0.5
+          "v": 0.25
         },
         {
           "k": "skill",
@@ -925,14 +925,14 @@
     },
     "3.r": {
       "name": "Rumour Mill",
-      "text": "Jinx has a 10% chance per rank to also Jinx an enemy next to the target.",
+      "text": "Jinx has a 5% chance per rank to also Jinx an enemy next to the target.",
       "src": "B:V4:3.r",
       "fx": [
         {
           "k": "hook",
           "h": "trigger",
           "on": "skillUse",
-          "procChance": 0.1,
+          "procChance": 0.05,
           "rank": true,
           "do": [
             {
@@ -960,7 +960,7 @@
     },
     "3.eb": {
       "name": "Backlash",
-      "text": "When a Jinxed enemy misses, it takes dark damage equal to 40% of your LUCK.",
+      "text": "When a Jinxed enemy misses, it takes dark damage equal to 20% of your LUCK.",
       "src": "B:V3:3.eb",
       "fx": [
         {
@@ -972,7 +972,7 @@
           },
           "do": [
             {
-              "damage": 0.4,
+              "damage": 0.2,
               "stat": "luck",
               "element": "dark",
               "to": "target"
@@ -1180,7 +1180,7 @@
     },
     "4.r2": {
       "name": "Overflowing Fate",
-      "text": "Each pulled Omen past 3 adds +20% to Doom Mark's Doom.",
+      "text": "Each pulled Omen past 3 adds +10% to Doom Mark's Doom.",
       "src": "B:V4:4.l2",
       "fx": [
         {
@@ -1190,7 +1190,7 @@
             "gathered": 3
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.1
           }
         }
       ]

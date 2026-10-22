@@ -67,7 +67,16 @@ html.short .gt.q4 .gt-pcell { padding: 12px var(--pg) 8px 0; }
 /* 1) puan harcandi: dugum dolar ve parlar, halka disa yayilir */
 .gt.q4 .gt-nd.anim-fill .dm { animation: q4-fill .62s var(--q-ease); }
 .gt.q4 .gt-nd.anim-fill .fx { animation: q4-ring .72s var(--q-ease); border-color: #ffb35a; }
-.gt.q4 .gt-nd.k-b.anim-fill .drop { animation: q4-dropfill .62s var(--q-ease); }
+/* Blood Price (k-b): sakin kan animasyonu; damla koyulasip yavas kirmizi nabiz atar, bir yumusak dalga + tek damla, soluk kirmizi isik solar (~.85s, sarsinti/parlama yok) */
+.gt.q4 .gt-nd.k-b.anim-fill .dm { animation: none; }
+.gt.q4 .gt-nd.k-b.anim-fill .drop { animation: q4-bloodpulse .85s ease-in-out; }
+.gt.q4 .gt-nd.k-b.anim-fill .fx { animation: q4-bloodring .85s var(--q-ease); border-color: rgba(168, 28, 28, .8); }
+.gt.q4 .gt-nd.k-b.anim-fill .fx::after { content: ''; position: absolute; left: 50%; top: 58%; width: 5px; height: 7px; margin-left: -2.5px; border-radius: 50% 50% 60% 60%; background: #9c1c1c; opacity: 0; animation: q4-blooddrip .85s ease-in .1s; }
+.gt.q4 .gt-nd.k-b.anim-reset .drop { animation: q4-bloodfade .5s ease-out; }
+@keyframes q4-bloodpulse { 0% { filter: brightness(.55) saturate(1.4) drop-shadow(0 0 0 rgba(150, 20, 20, 0)); } 45% { filter: brightness(.8) saturate(1.5) drop-shadow(0 0 10px rgba(170, 24, 24, .6)); } 100% { filter: none; } }
+@keyframes q4-bloodring { 0% { opacity: .55; transform: translate(-50%, -50%) scale(.7); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(1.6); border-color: rgba(168, 28, 28, 0); } }
+@keyframes q4-blooddrip { 0% { opacity: 0; translate: 0 0; } 25% { opacity: .85; } 100% { opacity: 0; translate: 0 calc(var(--s) * .4); } }
+@keyframes q4-bloodfade { 0% { filter: brightness(.7) saturate(1.4); } 100% { filter: none; } }
 @keyframes q4-fill { 0% { filter: brightness(2.2) saturate(1.3); box-shadow: 0 0 0 2px #080604, 0 0 0 0 rgba(255, 179, 90, 0); } 40% { box-shadow: 0 0 0 2px #080604, 0 0 22px 6px rgba(255, 179, 90, .85); } 100% { filter: none; } }
 @keyframes q4-dropfill { 0% { filter: brightness(2) drop-shadow(0 0 16px rgba(255, 130, 100, .95)); scale: 1.12; } }
 @keyframes q4-ring { 0% { opacity: .95; transform: translate(-50%, -50%) scale(.6); } 100% { opacity: 0; transform: translate(-50%, -50%) scale(2.1); border-color: rgba(255, 179, 90, 0); } }

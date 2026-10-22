@@ -74,7 +74,7 @@
       {
         "at": 15,
         "name": "Tight Weave",
-        "text": "Nature's Wrath deals +5% damage.",
+        "text": "Nature's Wrath deals +3% damage.",
         "src": "B:V4:bar3",
         "fx": [
           {
@@ -82,7 +82,7 @@
             "sel": "damage",
             "f": "power",
             "op": "pct",
-            "v": 0.05,
+            "v": 0.03,
             "skill": "natures_wrath"
           }
         ]
@@ -137,7 +137,7 @@
     },
     "0.f2": {
       "name": "Spreading Spite",
-      "text": "When Nature's Grudge triggers, each enemy next to the killer has an 8% chance per rank to be gripped too.",
+      "text": "When Nature's Grudge triggers, each enemy next to the killer has a 4% chance per rank to be gripped too.",
       "src": "B:V1:0.f3",
       "fx": [
         {
@@ -149,7 +149,7 @@
             {
               "status": "slow",
               "turns": 3,
-              "chance": 0.08,
+              "chance": 0.04,
               "to": "sourceNeighbors"
             },
             {
@@ -157,7 +157,7 @@
               "turns": 3,
               "power": 0.15,
               "stat": "int",
-              "chance": 0.08,
+              "chance": 0.04,
               "to": "sourceNeighbors"
             }
           ]
@@ -166,7 +166,7 @@
     },
     "0.f3": {
       "name": "Choking Grip",
-      "text": "Withering deals +6% damage per rank on a Slowed enemy.",
+      "text": "Withering deals +3% damage per rank on a Slowed enemy.",
       "src": "B:V1:0.r",
       "fx": [
         {
@@ -177,7 +177,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -208,7 +208,7 @@
     },
     "0.r": {
       "name": "Bitter Balm",
-      "text": "Nature's Grudge Withering heals your lowest-HP ally for 20% of each tick per rank.",
+      "text": "Nature's Grudge Withering heals your lowest-HP ally for 10% of each tick per rank.",
       "src": "B:V3:0.r",
       "fx": [
         {
@@ -219,7 +219,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.2,
+              "heal": 0.1,
               "of": "amount",
               "to": "lowestHpAlly"
             }
@@ -249,7 +249,7 @@
     },
     "0.eb": {
       "name": "Gnawing Rot",
-      "text": "Nature's Grudge Withering grows each turn it ticks: +10%, then +20%, then +30% and so on.",
+      "text": "Nature's Grudge Withering grows each turn it ticks: +5%, then +10%, then +15% and so on.",
       "src": "B:V1:0.eb",
       "fx": [
         {
@@ -260,14 +260,14 @@
             "dotTickNumber": 1
           },
           "mod": {
-            "powerMul": 0.1
+            "powerMul": 0.05
           }
         }
       ]
     },
     "0.ma": {
       "name": "Rot Bloom",
-      "text": "A Withering enemy that dies bursts: 40% INT nature damage to each enemy next to it, and they start Withering for 2 turns.",
+      "text": "A Withering enemy that dies bursts: 20% INT nature damage to each enemy next to it, and they start Withering for 2 turns.",
       "src": "B:V1:0.ma",
       "fx": [
         {
@@ -277,7 +277,7 @@
           "status": "wither",
           "do": [
             {
-              "damage": 0.4,
+              "damage": 0.2,
               "stat": "int",
               "element": "nature",
               "to": "neighbors"
@@ -381,7 +381,7 @@
     },
     "1.f1": {
       "name": "Hooked Barbs",
-      "text": "Thorn Whip deals +3% damage per rank.",
+      "text": "Thorn Whip deals +2% damage per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -389,7 +389,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.03,
+          "v": 0.02,
           "rank": true
         }
       ]
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Charged Lash",
-      "text": "After you cast an MP skill, your next Thorn Whip deals +5% damage per rank.",
+      "text": "After you cast an MP skill, your next Thorn Whip deals +3% damage per rank.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -421,7 +421,7 @@
             "lastSkillCostMp": true
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -429,7 +429,7 @@
     },
     "1.n0": {
       "name": "Whip Crack",
-      "text": "Thorn Whip deals +50% damage to a target below 30% HP.",
+      "text": "Thorn Whip deals +25% damage to a target below 30% HP.",
       "src": "B:V5:1.n0",
       "fx": [
         {
@@ -439,21 +439,21 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.5
+            "powerMul": 0.25
           }
         }
       ]
     },
     "1.r": {
       "name": "Keen Thorns",
-      "text": "Thorn Whip's critical hits deal +8% damage per rank.",
+      "text": "Thorn Whip's critical hits deal +4% damage per rank.",
       "src": "B:V5:1.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.08
+            "critDmgMul": 0.04
           },
           "rank": true
         }
@@ -461,7 +461,7 @@
     },
     "1.ea": {
       "name": "Forked Thorn",
-      "text": "Thorn Whip chains to 1 more enemy for 60% damage; that enemy is Wounded too.",
+      "text": "Thorn Whip chains to 1 more enemy for 20% damage; that enemy is Wounded too.",
       "src": "B:V1:1.ea",
       "fx": [
         {
@@ -470,7 +470,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.6,
+              "strike": 0.2,
               "to": "adjacentEnemy"
             },
             {
@@ -501,7 +501,7 @@
     },
     "1.ma": {
       "name": "Thorn Volley",
-      "text": "When Thorn Whip crits, it lashes another enemy at once for 60% damage.",
+      "text": "When Thorn Whip crits, it lashes another enemy at once for 20% damage.",
       "src": "B:V5:1.ma",
       "fx": [
         {
@@ -510,7 +510,7 @@
           "on": "crit",
           "do": [
             {
-              "strike": 0.6,
+              "strike": 0.2,
               "to": "outsideArea",
               "count": 1
             }
@@ -520,7 +520,7 @@
     },
     "1.fa": {
       "name": "Wild Thorns",
-      "text": "Thorn Whip deals +35% damage, but it can no longer crit.",
+      "text": "Thorn Whip deals +15% damage, but it can no longer crit.",
       "src": "B:V5:1.fa",
       "fx": [
         {
@@ -528,7 +528,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.35
+          "v": 0.15
         },
         {
           "k": "hook",
@@ -541,7 +541,7 @@
     },
     "1.fb": {
       "name": "Cutting Haste",
-      "text": "Thorn Whip kills restore 15 MP, but it deals 20% less damage to targets above 50% HP.",
+      "text": "Thorn Whip kills restore 10 MP, but it deals 20% less damage to targets above 50% HP.",
       "src": "B:V5:1.fb",
       "fx": [
         {
@@ -551,7 +551,7 @@
           "on": "kill",
           "do": [
             {
-              "mp": 15
+              "mp": 10
             }
           ]
         },
@@ -620,7 +620,7 @@
     },
     "2.f1": {
       "name": "Grasping Earth",
-      "text": "Nature's Wrath has an 8% chance per rank to Slow each enemy hit for 2 turns.",
+      "text": "Nature's Wrath has a 4% chance per rank to Slow each enemy hit for 2 turns.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -631,19 +631,19 @@
               "type": "status",
               "status": "slow",
               "turns": 2,
+              "chance": 0.04
+            },
+            {
+              "type": "status",
+              "status": "slow",
+              "turns": 2,
               "chance": 0.08
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.16
-            },
-            {
-              "type": "status",
-              "status": "slow",
-              "turns": 2,
-              "chance": 0.24
+              "chance": 0.12
             }
           ]
         }
@@ -651,7 +651,7 @@
     },
     "2.f2": {
       "name": "Tangleroot",
-      "text": "Nature's Wrath has a 5% chance per rank to Stun each enemy hit for 1 turn.",
+      "text": "Nature's Wrath has a 3% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "B:V4:2.f1",
       "fx": [
         {
@@ -662,31 +662,31 @@
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.05
+              "chance": 0.03
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.06
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.09
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.12
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
               "chance": 0.15
-            },
-            {
-              "type": "status",
-              "status": "stun",
-              "turns": 1,
-              "chance": 0.2
-            },
-            {
-              "type": "status",
-              "status": "stun",
-              "turns": 1,
-              "chance": 0.25
             }
           ]
         }
@@ -748,14 +748,14 @@
     },
     "2.r": {
       "name": "Deep Tangle",
-      "text": "Stuns from Nature's Wrath have a 10% chance per rank to last 1 turn longer.",
+      "text": "Stuns from Nature's Wrath have a 5% chance per rank to last 1 turn longer.",
       "src": "B:V4:2.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:stun",
-          "procChance": 0.1,
+          "procChance": 0.05,
           "mod": {
             "turns": 1
           },
@@ -891,7 +891,7 @@
     },
     "2.v": {
       "name": "Thicket Wave",
-      "text": "Nature's Wrath strikes the same cells again at the start of your next turn: 50% damage and a 1-turn Stun (Rooted).",
+      "text": "Nature's Wrath strikes the same cells again at the start of your next turn: 25% damage and a 1-turn Stun (Rooted).",
       "src": "B:V4:2.v",
       "new": true,
       "approved": true,
@@ -905,7 +905,7 @@
             {
               "cast": "natures_wrath",
               "delay": 1,
-              "power": 0.5,
+              "power": 0.25,
               "noChain": true,
               "mod": {
                 "addStatus": {
@@ -920,7 +920,7 @@
     },
     "3.f1": {
       "name": "Tender Sap",
-      "text": "Rejuvenate heals +4% per rank.",
+      "text": "Rejuvenate heals +2% per rank.",
       "src": "B:V3:3.f1",
       "fx": [
         {
@@ -928,14 +928,14 @@
           "sel": "heal",
           "f": "power",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.02,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Long Bloom",
-      "text": "Rejuvenate's regeneration +6% per rank.",
+      "text": "Rejuvenate's regeneration +3% per rank.",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -943,14 +943,14 @@
           "sel": "hot",
           "f": "power",
           "op": "pct",
-          "v": 0.06,
+          "v": 0.03,
           "rank": true
         }
       ]
     },
     "3.f3": {
       "name": "Soft Hands",
-      "text": "Rejuvenate heals +4% more per rank on an ally below 50% HP.",
+      "text": "Rejuvenate heals +2% more per rank on an ally below 50% HP.",
       "src": "B:V3:3.f3",
       "fx": [
         {
@@ -960,7 +960,7 @@
           "when": {
             "targetHpBelow": 0.5
           },
-          "mul": 0.04,
+          "mul": 0.02,
           "rank": true
         }
       ]
@@ -1016,7 +1016,7 @@
     },
     "3.eb": {
       "name": "Emergency Bloom",
-      "text": "Rejuvenate heals +50% on an ally below 30% HP.",
+      "text": "Rejuvenate heals +25% on an ally below 30% HP.",
       "src": "B:V3:3.eb",
       "fx": [
         {
@@ -1026,7 +1026,7 @@
           "when": {
             "targetHpBelow": 0.3
           },
-          "mul": 0.5
+          "mul": 0.25
         }
       ]
     },
@@ -1146,7 +1146,7 @@
     },
     "4.u1": {
       "name": "Crashing Arrival",
-      "text": "Summon Treant deals 50% INT nature damage to the enemy front row as it lands.",
+      "text": "Summon Treant deals 20% INT nature damage to the enemy front row as it lands.",
       "src": "A:V5:4.u1",
       "fx": [
         {
@@ -1156,7 +1156,7 @@
           "summon": "treant",
           "do": [
             {
-              "damage": 0.5,
+              "damage": 0.2,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",
@@ -1180,7 +1180,7 @@
           "drop": "4.u1",
           "do": [
             {
-              "damage": 0.5,
+              "damage": 0.2,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",
@@ -1205,7 +1205,7 @@
           "drop": "4.u2",
           "do": [
             {
-              "damage": 1,
+              "damage": 0.4,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",
@@ -1224,7 +1224,7 @@
     },
     "4.r1": {
       "name": "Heavy Boughs",
-      "text": "Root Smash deals +20% damage.",
+      "text": "Root Smash deals +10% damage.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1234,13 +1234,13 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.2
+          "v": 0.1
         }
       ]
     },
     "4.r2": {
       "name": "Heavy Smash",
-      "text": "Root Smash deals +25% damage to Slowed or Stunned enemies.",
+      "text": "Root Smash deals +12% damage to Slowed or Stunned enemies.",
       "src": "A:V4:4.l2",
       "fx": [
         {
@@ -1259,7 +1259,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.25
+            "powerMul": 0.12
           }
         }
       ]
@@ -1287,7 +1287,7 @@
     },
     "4.d1": {
       "name": "Splinter Burst",
-      "text": "When the Treant dies or wilts, it bursts: 60% INT nature damage to the 2 nearest enemies.",
+      "text": "When the Treant dies or wilts, it bursts: 30% INT nature damage to the 2 nearest enemies.",
       "src": "A:V5:4.r1",
       "fx": [
         {
@@ -1297,7 +1297,7 @@
           "unit": "treant",
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.3,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",
@@ -1324,7 +1324,7 @@
           "unit": "treant",
           "do": [
             {
-              "damage": 0.9,
+              "damage": 0.45,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",
@@ -1386,7 +1386,7 @@
     },
     "4.l2": {
       "name": "Thornbark",
-      "text": "Enemies that hit the Treant take 15% INT nature damage.",
+      "text": "Enemies that hit the Treant take 8% INT nature damage.",
       "src": "A:V2:4.d2",
       "fx": [
         {
@@ -1396,7 +1396,7 @@
           "on": "hitTaken",
           "do": [
             {
-              "damage": 0.15,
+              "damage": 0.08,
               "stat": "int",
               "damageType": "magic",
               "element": "nature",

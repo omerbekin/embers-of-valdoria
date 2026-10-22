@@ -23,6 +23,12 @@ function only(cls: string, ranks: Record<string, number>, bar?: number): UnitSet
   return compileTree(t, { v: t.version, r });
 }
 const withTree = (slot: number, tree: UnitSetup['tree']): Record<number, UnitSetup> => ({ [slot]: { tree } });
+/** Düğüm / bar fx sayısı veriden ('bar3' = mastery.bar[3]; yol örn. '0.do.0.heal'); denge turunda değişebilir, test mekanizmayı ölçer. */
+const num = (cls: string, key: string, path: string): number => {
+  const t = treeOf(cls)!;
+  const fx = key.startsWith('bar') ? t.mastery.bar[Number(key.slice(3))]!.fx : t.nodes[key]!.fx;
+  return path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], fx) as number;
+};
 const P = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'party' && c.slot === slot)!;
 const E = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant): BattleEvent[] {
@@ -95,7 +101,7 @@ describe('Faz 4b: Defender', () => {
     const me = P(b);
     untilTurn(b, me);
     expect(procs(b, 'defender:bar[0]')).toBe(1);
-    expect(me.shield).toBe(Math.round(X(b).effectiveStats(me).armor * 0.5));
+    expect(me.shield).toBe(Math.round(X(b).effectiveStats(me).armor * num('defender', 'bar0', '0.do.0.shield')));
     b.skipTurn();
     untilTurn(b, me);
     expect(procs(b, 'defender:bar[0]')).toBe(1);
@@ -117,7 +123,7 @@ describe('Faz 4b: Defender', () => {
   it('Shield Brothers: savaş başında auradaki dostlara Defender\'ın maks canının %10\'u kalkan', () => {
     const tree = only('defender', { '0.n0': 1 });
     const b = make({ 0: 'defender', 1: 'warrior' }, { 0: 'mage' }, withTree(0, tree));
-    expect(P(b, 1).shield).toBe(Math.round(P(b).maxHp * 0.1));
+    expect(P(b, 1).shield).toBe(Math.round(P(b).maxHp * num('defender', '0.n0', '0.do.0.shield')));
     expect(procs(b, 'defender:0.n0')).toBe(1);
     expect(make({ 0: 'defender', 1: 'warrior' }, { 0: 'mage' }).combatants.find((c) => c.side === 'party' && c.slot === 1)!.shield).toBe(0);
   });
@@ -175,10 +181,10 @@ describe('Faz 4b: Defender', () => {
     expect(guarded.length).toBeGreaterThan(0);
     const A = X(b).effectiveStats(me).armor;
     allies.forEach((a, i) => {
-      const want = guarded.includes(a) ? Math.round(A * 0.2) + Math.round(A * 0.25) : 0;
+      const want = guarded.includes(a) ? Math.round(A * 5 * num('defender', '3.f2', '0.do.0.shield')) + Math.round(A * num('defender', '3.eb', '0.do.0.shield')) : 0;
       expect(a.shield - sh0[i]!, a.uid).toBe(want);
     });
-    expect(me.shield - me0).toBe(guarded.length * Math.round(A * 0.15));
+    expect(me.shield - me0).toBe(guarded.length * Math.round(A * 3 * num('defender', '3.r', '0.do.0.shield')));
   });
 });
 
@@ -202,9 +208,9 @@ describe('Faz 4b: Paladin', () => {
     expect(plain.lost).toBe(0);
     expect(r.ally.hp - plain.ally.hp).toBeGreaterThan(0);
     expect(r.lost).toBe(Math.round(m * 0.12));
-    expect(r.ally.shield - plain.ally.shield).toBe(Math.round(m * 0.2) + Math.round(m * 0.3));
+    expect(r.ally.shield - plain.ally.shield).toBe(Math.round(m * 5 * num('paladin', '2.f2', '0.do.0.shield')) + Math.round(m * num('paladin', '2.fa', '0.do.0.shield')));
     expect(r.ally.statuses.find((s) => s.kind === 'blessed')?.turns).toBe(2);
-    expect(r.ally.treeBuffs?.find((x) => x.node === 'paladin:2.ma')).toMatchObject({ mod: { powerMul: 0.3 }, uses: 1 });
+    expect(r.ally.treeBuffs?.find((x) => x.node === 'paladin:2.ma')).toMatchObject({ mod: { powerMul: num('paladin', '2.ma', '0.do.1.buff.powerMul') }, uses: 1 });
     expect(r.b.skill('resurrection', r.me.uid)?.cooldown).toBe(7);
     for (const n of ['2.f1', '2.f2', '2.ma', '2.fa']) expect(procs(r.b, `paladin:${n}`), n).toBe(1);
   });
@@ -264,7 +270,7 @@ describe('Faz 4b: Paladin', () => {
     untilTurn(b, me);
     expect(ally.treeBuffs?.find((x) => x.node === 'paladin:0.eb')?.mod?.powerMul).toBeCloseTo(0.15, 9);
     const kr = ally.treeBuffs?.find((x) => x.node === 'paladin:0.f2');
-    expect((kr?.mod?.powerMul ?? 0) * (kr?.s ?? 0)).toBeCloseTo(0.06, 9);
+    expect((kr?.mod?.powerMul ?? 0) * (kr?.s ?? 0)).toBeCloseTo(3 * num('paladin', '0.f2', '0.do.0.buff.powerMul'), 9);
   });
 
   it('Kindled Path: holy fire içinde ölen düşman Judgment cooldown\'unu 1 düşürür', () => {
@@ -293,7 +299,7 @@ describe('Faz 4b: Archer', () => {
     untilTurn(b, me);
     expect(b.useGlobal(me.uid, 'skip_turn').ok).toBe(true);
     expect(procs(b, 'archer:0.ma')).toBe(1);
-    expect(me.treeBuffs?.find((x) => x.node === 'archer:0.ma')).toMatchObject({ mod: { guaranteedCrit: true, ignoreDefense: 0.3 }, uses: 1 });
+    expect(me.treeBuffs?.find((x) => x.node === 'archer:0.ma')).toMatchObject({ mod: { guaranteedCrit: true, ignoreDefense: num('archer', '0.ma', '0.do.0.buff.ignoreDefense') }, uses: 1 });
     expect(me.treeBuffs?.[0]?.pending).toBeUndefined();
   });
 

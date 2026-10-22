@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Warm Hands",
-        "text": "Your first skill with a cooldown each battle has +15% Double or Nothing chance.",
+        "text": "Your first skill with a cooldown each battle has +10% Double or Nothing chance.",
         "src": "A:V3:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
               "firstCooldownSkill": true
             },
             "mod": {
-              "echoChance": 0.15
+              "echoChance": 0.1
             }
           }
         ]
@@ -83,7 +83,7 @@
       {
         "at": 15,
         "name": "Blood Debt",
-        "text": "After a Bust costs you HP, your next skill deals +15% damage.",
+        "text": "After a Bust costs you HP, your next skill deals +10% damage.",
         "src": "A:V2:bar1",
         "fx": [
           {
@@ -94,7 +94,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.15
+                  "powerMul": 0.1
                 }
               }
             ]
@@ -104,7 +104,7 @@
       {
         "at": 20,
         "name": "Winning Run",
-        "text": "Each Double or Nothing trigger gives your skills +5% damage until your next Bust.",
+        "text": "Each Double or Nothing trigger gives your skills +4% damage until your next Bust.",
         "src": "A:V3:bar3",
         "fx": [
           {
@@ -114,7 +114,7 @@
             "do": [
               {
                 "buff": {
-                  "powerMul": 0.05
+                  "powerMul": 0.04
                 },
                 "uses": 0,
                 "stack": true
@@ -136,7 +136,7 @@
       {
         "at": 25,
         "name": "Death Shrug",
-        "text": "When Lucky Escape saves you, heal 10% of your max HP.",
+        "text": "When Lucky Escape saves you, heal 8% of your max HP.",
         "src": "A:V2:bar3",
         "fx": [
           {
@@ -145,7 +145,7 @@
             "on": "luckyEscape",
             "do": [
               {
-                "heal": 0.1
+                "heal": 0.08
               }
             ]
           }
@@ -156,7 +156,7 @@
   "nodes": {
     "0.f1": {
       "name": "Hot Hand",
-      "text": "After a Jackpot, Double or Nothing +2% chance per rank on your next skill.",
+      "text": "After a Jackpot, Double or Nothing +1% chance per rank on your next skill.",
       "src": "A:V3:0.f2",
       "fx": [
         {
@@ -167,7 +167,7 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.02
+                "echoChance": 0.01
               }
             }
           ]
@@ -176,7 +176,7 @@
     },
     "0.f2": {
       "name": "Cornered Dog",
-      "text": "While below 50% HP, Double or Nothing +2% chance per rank.",
+      "text": "While below 50% HP, Double or Nothing +1% chance per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
@@ -186,7 +186,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "echoChance": 0.02
+            "echoChance": 0.01
           },
           "rank": true
         }
@@ -230,7 +230,7 @@
     },
     "0.r": {
       "name": "Scar Gambler",
-      "text": "Each Bust that costs HP gives Double or Nothing +3% chance per rank until your next Jackpot.",
+      "text": "Each Bust that costs HP gives Double or Nothing +2% chance per rank until your next Jackpot.",
       "src": "A:V2:0.r",
       "fx": [
         {
@@ -242,7 +242,7 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.03
+                "echoChance": 0.02
               },
               "uses": 0,
               "stack": true
@@ -263,7 +263,7 @@
     },
     "0.ea": {
       "name": "Streak",
-      "text": "Each Double or Nothing trigger in a row adds +10% to the next roll; a failed roll resets it.",
+      "text": "Each Double or Nothing trigger in a row adds +8% to the next roll; a failed roll resets it.",
       "src": "A:V3:0.ea",
       "new": true,
       "approved": true,
@@ -275,7 +275,7 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.1
+                "echoChance": 0.08
               },
               "uses": 0,
               "stack": true
@@ -411,7 +411,7 @@
     },
     "0.v": {
       "name": "Run It Back",
-      "text": "When Double or Nothing triggers, the skill also fires again at once at 60% power.",
+      "text": "When Double or Nothing triggers, the skill also fires again at once at 40% power.",
       "src": "A:V3:0.v",
       "new": true,
       "approved": true,
@@ -423,7 +423,7 @@
           "do": [
             {
               "cast": "event",
-              "power": 0.6
+              "power": 0.4
             }
           ]
         }
@@ -431,7 +431,7 @@
     },
     "1.f1": {
       "name": "Steady Wrist",
-      "text": "Each repeat throw of Loaded Dice deals +6% damage per rank.",
+      "text": "Each repeat throw of Loaded Dice deals +4% damage per rank.",
       "src": "A:V1:1.r*",
       "fx": [
         {
@@ -441,7 +441,7 @@
             "repeatIndexAtLeast": 1
           },
           "mod": {
-            "powerMul": 0.06
+            "powerMul": 0.04
           },
           "rank": true
         }
@@ -530,7 +530,7 @@
     },
     "1.ea": {
       "name": "Hot Dice",
-      "text": "Loaded Dice Double Hit chance 25% → 35%; each repeat throw deals +10% more than the last.",
+      "text": "Loaded Dice Double Hit chance 25% → 35%; each repeat throw deals +8% more than the last.",
       "src": "A:V3:1.ea",
       "fx": [
         {
@@ -547,7 +547,7 @@
             "repeatIndex": true
           },
           "mod": {
-            "powerMul": 0.1
+            "powerMul": 0.08
           }
         }
       ]
@@ -615,7 +615,7 @@
     },
     "1.fb": {
       "name": "Spendthrift",
-      "text": "Loaded Dice costs 6 MP and deals +80% power, but Rest restores half as much MP.",
+      "text": "Loaded Dice costs 6 MP and deals +60% power, but Rest restores half as much MP.",
       "src": "A:V5:1.fb",
       "fx": [
         {
@@ -630,7 +630,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.8
+          "v": 0.6
         },
         {
           "k": "hook",
@@ -642,7 +642,7 @@
     },
     "1.mb": {
       "name": "Snake Eyes",
-      "text": "When Loaded Dice lands a critical hit, your next wager gets +10% Jackpot chance.",
+      "text": "When Loaded Dice lands a critical hit, your next wager gets +8% Jackpot chance.",
       "src": "A:V1:1.ma",
       "syn": "High Stakes / All In",
       "fx": [
@@ -653,7 +653,7 @@
           "do": [
             {
               "buff": {
-                "winChance": 0.1
+                "winChance": 0.08
               },
               "uses": 0
             }
@@ -728,7 +728,7 @@
     },
     "2.f3": {
       "name": "Read the Room",
-      "text": "High Stakes +2% Jackpot chance per rank against a target below 50% HP.",
+      "text": "High Stakes +1% Jackpot chance per rank against a target below 50% HP.",
       "src": "B:V1:2.f3",
       "fx": [
         {
@@ -738,7 +738,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "winChance": 0.02
+            "winChance": 0.01
           },
           "rank": true
         }
@@ -746,7 +746,7 @@
     },
     "2.n0": {
       "name": "Due for a Win",
-      "text": "Each High Stakes Bust gives the next High Stakes +15% Jackpot chance, stacking until a Jackpot.",
+      "text": "Each High Stakes Bust gives the next High Stakes +10% Jackpot chance, stacking until a Jackpot.",
       "src": "B:V1:2.n0",
       "new": true,
       "approved": true,
@@ -758,7 +758,7 @@
           "do": [
             {
               "buff": {
-                "winChance": 0.15
+                "winChance": 0.1
               },
               "skill": "high_stakes",
               "uses": 0,
@@ -780,7 +780,7 @@
     },
     "2.r": {
       "name": "Let It Ride",
-      "text": "A High Stakes Jackpot has a 15% chance per rank to extend one target status by 1 turn.",
+      "text": "A High Stakes Jackpot has a 10% chance per rank to extend one target status by 1 turn.",
       "src": "B:V4:2.r",
       "fx": [
         {
@@ -789,7 +789,7 @@
           "when": {
             "betWon": true
           },
-          "procChance": 0.15,
+          "procChance": 0.1,
           "mod": {
             "extendStatus": {
               "status": "*",
@@ -969,7 +969,7 @@
     },
     "3.f1": {
       "name": "Sharp Corners",
-      "text": "Card Trick +5% power per rank against Stunned targets.",
+      "text": "Card Trick +4% power per rank against Stunned targets.",
       "src": "B:V4:3.f3",
       "fx": [
         {
@@ -979,7 +979,7 @@
             "targetStatus": "stun"
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.04
           },
           "rank": true
         }
@@ -987,7 +987,7 @@
     },
     "3.f2": {
       "name": "Jack of Clubs",
-      "text": "Card Trick +4% power per rank against targets with a status.",
+      "text": "Card Trick +3% power per rank against targets with a status.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -997,7 +997,7 @@
             "targetHasAnyStatus": true
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -1139,14 +1139,14 @@
     },
     "3.r": {
       "name": "Long Con",
-      "text": "Card Trick's Stun has a 5% chance per rank to last 1 turn longer.",
+      "text": "Card Trick's Stun has a 4% chance per rank to last 1 turn longer.",
       "src": "B:V4:3.r",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:stun",
-          "procChance": 0.05,
+          "procChance": 0.04,
           "mod": {
             "turns": 1
           },
@@ -1253,7 +1253,7 @@
     },
     "3.v": {
       "name": "Returning Cards",
-      "text": "Every Card Trick card flies back for a second hit at 60% power, rolling a new status.",
+      "text": "Every Card Trick card flies back for a second hit at 40% power, rolling a new status.",
       "src": "B:V3:3.v",
       "fx": [
         {
@@ -1262,7 +1262,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.6,
+              "strike": 0.4,
               "to": "castTargets",
               "rollStatus": true
             }
@@ -1300,7 +1300,7 @@
     },
     "4.u3": {
       "name": "High Roller",
-      "text": "An All In that stakes 25+ MP ignores 50% of Armor and cannot miss.",
+      "text": "An All In that stakes 25+ MP ignores 35% of Armor and cannot miss.",
       "src": "A:V5:4.u3",
       "fx": [
         {
@@ -1310,7 +1310,7 @@
             "stakeAtLeast": 25
           },
           "mod": {
-            "ignoreDefense": 0.5,
+            "ignoreDefense": 0.35,
             "sureHit": true
           }
         }
@@ -1354,7 +1354,7 @@
     },
     "4.r3": {
       "name": "Domino",
-      "text": "If All In kills, it strikes a random enemy for 60% of its damage.",
+      "text": "If All In kills, it strikes a random enemy for 40% of its damage.",
       "src": "A:V3:4.l3",
       "fx": [
         {
@@ -1363,7 +1363,7 @@
           "on": "kill",
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.4,
               "of": "dealt",
               "to": "randomEnemy"
             }
@@ -1373,14 +1373,14 @@
     },
     "4.d1": {
       "name": "Ride the Wave",
-      "text": "All In +10% Double or Nothing chance.",
+      "text": "All In +8% Double or Nothing chance.",
       "src": "A:V3:4.u1",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "echoChance": 0.1
+            "echoChance": 0.08
           }
         }
       ]
@@ -1415,7 +1415,7 @@
     },
     "4.l1": {
       "name": "Grudge Ledger",
-      "text": "All In +2% damage for each hit you took since its last use.",
+      "text": "All In +1% damage for each hit you took since its last use.",
       "src": "A:V2:4.l1",
       "fx": [
         {
@@ -1425,7 +1425,7 @@
             "hitsTakenSinceLastUse": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.01
           }
         }
       ]

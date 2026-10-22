@@ -157,9 +157,10 @@ describe('Altıncı tur: düğüm cevapları', () => {
     const tree = only('druid', { '0.eb': 1 })!;
     const h = tree.hooks!.find((x) => x.node === 'druid:0.eb') as { scale: Record<string, unknown>; mod: { powerMul: number } };
     expect(h.scale).toEqual({ dotTickNumber: 1 });
-    expect(h.mod.powerMul).toBe(0.1);
+    const per = (treeOf('druid')!.nodes['0.eb']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul; // veriden (denge turu)
+    expect(h.mod.powerMul).toBe(per);
     const tick = (index: number) => scaleOf(h.scale, { tick: { index } } as unknown as Parameters<typeof scaleOf>[1]) * h.mod.powerMul;
-    expect([tick(0), tick(1), tick(2)].map((v) => Math.round(v * 100))).toEqual([10, 20, 30]);
+    expect([tick(0), tick(1), tick(2)].map((v) => Math.round(v * 100))).toEqual([1, 2, 3].map((k) => Math.round(k * per * 100)));
   });
 
   it('Archer Maiming Shot: Slow ve Blind 1 tur, metinde "for 1 turn"', () => {

@@ -53,7 +53,7 @@ describe('Druid ağacı fx (Faz 2b)', () => {
 
   it('Hooked Barbs: Thorn Whip gücü rank başına +%3 (oransal); Deep Spring barı HoT süresini 4 yapar', () => {
     const b = make({ 0: 'druid' }, { 0: 'warrior' }, { 0: { tree: tree(['1.f1*3', '1.f2*2', '3.f1*3', '3.f2*5', '3.f3*5', '1.f3*2']) } });
-    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * 1.09, 6);
+    expect((b.skill('thorn_whip', P(b))!.effects[0] as { power: number }).power).toBeCloseTo(0.903 * (1 + 3 * (T.nodes['1.f1']!.fx![0] as unknown as { v: number }).v), 6);
     expect((b.skill('rejuvenate', P(b))!.effects.find((e) => e.type === 'hot') as { turns: number }).turns).toBe(4);
   });
 
@@ -64,7 +64,7 @@ describe('Druid ağacı fx (Faz 2b)', () => {
       e.hp = Math.floor(e.maxHp * 0.2);
       return previewSkill(b, P(b).uid, 'thorn_whip', e.uid).find((x) => x.uid === e.uid)!.damage!.max;
     };
-    expect(prev(true) / prev(false)).toBeGreaterThan(1.5);
+    expect(prev(true) / prev(false)).toBeGreaterThan(1 + (T.nodes['1.n0']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul);
   });
 
   it('Strangling Grove: Nature\'s Wrath Slowed düşmanı 1 tur Stun\'lar', () => {

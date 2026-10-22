@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Battle Hymn",
-        "text": "On your first turn of each battle, Holy Strike deals +30% damage.",
+        "text": "On your first turn of each battle, Holy Strike deals +15% damage.",
         "src": "A:V2:bar0",
         "fx": [
           {
@@ -57,7 +57,7 @@
               "firstTurn": true
             },
             "mod": {
-              "powerMul": 0.3
+              "powerMul": 0.15
             }
           }
         ]
@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Holy Soil",
-        "text": "Your skills deal +8% damage to enemies standing in holy fire.",
+        "text": "Your skills deal +4% damage to enemies standing in holy fire.",
         "src": "A:V4:bar1",
         "fx": [
           {
@@ -75,7 +75,7 @@
               "targetOnGround": "holy_fire"
             },
             "mod": {
-              "powerMul": 0.08
+              "powerMul": 0.04
             }
           }
         ]
@@ -145,14 +145,14 @@
   "nodes": {
     "0.f1": {
       "name": "Wrathful Glow",
-      "text": "Divine Light also smites the weakest enemy for 4% INT holy damage per rank.",
+      "text": "Divine Light also smites the weakest enemy for 2% INT holy damage per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "power": 0.04
+            "power": 0.02
           },
           "rank": true
         }
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Kindled Resolve",
-      "text": "Allies healed by Divine Light deal +2% damage per rank on their next skill.",
+      "text": "Allies healed by Divine Light deal +1% damage per rank on their next skill.",
       "src": "A:V2:0.f2",
       "fx": [
         {
@@ -171,7 +171,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.02
+                "powerMul": 0.01
               },
               "to": "target"
             }
@@ -181,7 +181,7 @@
     },
     "0.f3": {
       "name": "Bedside Watch",
-      "text": "Divine Light heals 4% more per rank on allies below 50% HP.",
+      "text": "Divine Light heals 2% more per rank on allies below 50% HP.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -192,7 +192,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -214,7 +214,7 @@
     },
     "0.r": {
       "name": "Sun-Forged Will",
-      "text": "Divine Light's smite +5% per rank against enemies below 50% HP.",
+      "text": "Divine Light's smite +3% per rank against enemies below 50% HP.",
       "src": "A:V2:0.r",
       "fx": [
         {
@@ -225,7 +225,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -233,14 +233,14 @@
     },
     "0.ea": {
       "name": "Twofold Light",
-      "text": "Divine Light always smites too: 20% INT holy damage to the weakest enemy.",
+      "text": "Divine Light always smites too: 10% INT holy damage to the weakest enemy.",
       "src": "A:V2:0.ea",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "power": 0.2
+            "power": 0.1
           }
         }
       ]
@@ -379,7 +379,7 @@
     },
     "1.f1": {
       "name": "Relentless Hammer",
-      "text": "Holy Strike +2% power per rank on the enemy you hit last turn.",
+      "text": "Holy Strike +1% power per rank on the enemy you hit last turn.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -389,7 +389,7 @@
             "targetIsMyLastTarget": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -412,7 +412,7 @@
     },
     "1.f3": {
       "name": "Sparking Hammer",
-      "text": "Holy Strike has a 6% chance per rank to set the target Burning for 2 turns.",
+      "text": "Holy Strike has a 3% chance per rank to set the target Burning for 2 turns.",
       "src": "A:V4:1.f2",
       "fx": [
         {
@@ -423,19 +423,19 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
+              "chance": 0.03
+            },
+            {
+              "type": "status",
+              "status": "burning",
+              "turns": 2,
               "chance": 0.06
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.12
-            },
-            {
-              "type": "status",
-              "status": "burning",
-              "turns": 2,
-              "chance": 0.18
+              "chance": 0.09
             }
           ]
         }
@@ -460,7 +460,7 @@
     },
     "1.r": {
       "name": "Unyielding Swing",
-      "text": "Holy Strike +5% power per rank against front-row enemies.",
+      "text": "Holy Strike +3% power per rank against front-row enemies.",
       "src": "A:V2:1.r",
       "fx": [
         {
@@ -470,7 +470,7 @@
             "targetRow": "front"
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -478,7 +478,7 @@
     },
     "1.ea": {
       "name": "Rising Fervor",
-      "text": "Each Holy Strike in a row deals +10% more than the last; using another skill resets it.",
+      "text": "Each Holy Strike in a row deals +5% more than the last; using another skill resets it.",
       "src": "A:V2:1.ea",
       "fx": [
         {
@@ -488,7 +488,7 @@
             "skillStreak": true
           },
           "mod": {
-            "powerMul": 0.1
+            "powerMul": 0.05
           }
         }
       ]
@@ -534,7 +534,7 @@
     },
     "1.fa": {
       "name": "Blind Zeal",
-      "text": "Rising Fervor grows +20% per strike, but Divine Light is 30% weaker while it is built up.",
+      "text": "Rising Fervor grows +10% per strike, but Divine Light is 30% weaker while it is built up.",
       "src": "A:V2:1.fa",
       "fx": [
         {
@@ -544,7 +544,7 @@
             "skillStreak": true
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.1
           },
           "drop": "1.ea"
         },
@@ -567,7 +567,7 @@
     },
     "1.fb": {
       "name": "Heavy Hammer",
-      "text": "Holy Strike +35% damage, but it now costs 6 MP.",
+      "text": "Holy Strike +20% damage, but it now costs 6 MP.",
       "src": "A:V2:1.fb",
       "fx": [
         {
@@ -575,7 +575,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.35
+          "v": 0.2
         },
         {
           "k": "skill",
@@ -588,7 +588,7 @@
     },
     "1.mb": {
       "name": "Hammerfall Quake",
-      "text": "If Holy Strike kills, the shock hits that enemy's row for 40%.",
+      "text": "If Holy Strike kills, the shock hits that enemy's row for 20%.",
       "src": "A:V2:1.mb",
       "fx": [
         {
@@ -597,7 +597,7 @@
           "on": "kill",
           "do": [
             {
-              "strike": 0.4,
+              "strike": 0.2,
               "to": "rowMates"
             }
           ]
@@ -606,7 +606,7 @@
     },
     "1.v": {
       "name": "Hammer of the Heavens",
-      "text": "Holy Strike calls down two hammers: the second falls on the enemy with the lowest HP for 60%.",
+      "text": "Holy Strike calls down two hammers: the second falls on the enemy with the lowest HP for 30%.",
       "src": "A:V2:1.v",
       "fx": [
         {
@@ -615,7 +615,7 @@
           "on": "skillUse",
           "do": [
             {
-              "strike": 0.6,
+              "strike": 0.3,
               "to": "lowestHpEnemy"
             }
           ]
@@ -651,7 +651,7 @@
     },
     "2.f2": {
       "name": "Shielded Return",
-      "text": "Revived allies rise with a shield worth 4% of their max HP per rank.",
+      "text": "Revived allies rise with a shield worth 2% of their max HP per rank.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -661,7 +661,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.04,
+              "shield": 0.02,
               "to": "target"
             }
           ]
@@ -759,7 +759,7 @@
     },
     "2.ma": {
       "name": "Risen in Glory",
-      "text": "A revived ally gains Blessed for 2 turns and their first skill deals +30%.",
+      "text": "A revived ally gains Blessed for 2 turns and their first skill deals +15%.",
       "src": "B:V1:2.ma",
       "fx": [
         {
@@ -774,7 +774,7 @@
             },
             {
               "buff": {
-                "powerMul": 0.3
+                "powerMul": 0.15
               },
               "to": "target"
             }
@@ -784,7 +784,7 @@
     },
     "2.fa": {
       "name": "Heavy Absolution",
-      "text": "Revived allies rise with a shield of 30% max HP, but Resurrection cooldown 5 → 7.",
+      "text": "Revived allies rise with a shield of 15% max HP, but Resurrection cooldown 5 → 7.",
       "src": "B:V3:2.fa",
       "fx": [
         {
@@ -793,7 +793,7 @@
           "on": "revived",
           "do": [
             {
-              "shield": 0.3,
+              "shield": 0.15,
               "to": "target"
             }
           ]
@@ -864,7 +864,7 @@
     },
     "3.f1": {
       "name": "Deep Coals",
-      "text": "Holy fire deals 3% more per rank on its second turn and later.",
+      "text": "Holy fire deals 2% more per rank on its second turn and later.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -875,7 +875,7 @@
             "groundAgeAtLeast": 2
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -883,7 +883,7 @@
     },
     "3.f2": {
       "name": "Kindling",
-      "text": "Enemies in holy fire take +2% damage per rank from Holy Strike.",
+      "text": "Enemies in holy fire take +1% damage per rank from Holy Strike.",
       "src": "A:V2:3.f2",
       "syn": "Holy Strike",
       "fx": [
@@ -895,7 +895,7 @@
             "targetOnGround": "holy_fire"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.01
           },
           "rank": true
         }
@@ -903,7 +903,7 @@
     },
     "3.f3": {
       "name": "Spark of Wrath",
-      "text": "Judgment has a 6% chance per rank to set each enemy hit Burning for 2 turns.",
+      "text": "Judgment has a 3% chance per rank to set each enemy hit Burning for 2 turns.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -913,7 +913,19 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
+              "chance": 0.03
+            },
+            {
+              "type": "status",
+              "status": "burning",
+              "turns": 2,
               "chance": 0.06
+            },
+            {
+              "type": "status",
+              "status": "burning",
+              "turns": 2,
+              "chance": 0.09
             },
             {
               "type": "status",
@@ -925,19 +937,7 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.18
-            },
-            {
-              "type": "status",
-              "status": "burning",
-              "turns": 2,
-              "chance": 0.24
-            },
-            {
-              "type": "status",
-              "status": "burning",
-              "turns": 2,
-              "chance": 0.3
+              "chance": 0.15
             }
           ]
         }
@@ -959,7 +959,7 @@
     },
     "3.r": {
       "name": "Ash Upon Ash",
-      "text": "Holy fire +5% damage per rank against Burning enemies.",
+      "text": "Holy fire +3% damage per rank against Burning enemies.",
       "src": "A:V2:3.r",
       "fx": [
         {
@@ -970,7 +970,7 @@
             "targetStatus": "burning"
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -1092,7 +1092,7 @@
     },
     "3.v": {
       "name": "Day of Judgment",
-      "text": "When holy fire ends, it erupts: 60% INT holy damage to each enemy still standing in it.",
+      "text": "When holy fire ends, it erupts: 30% INT holy damage to each enemy still standing in it.",
       "src": "A:V2:3.v",
       "fx": [
         {
@@ -1102,7 +1102,7 @@
           "ground": "holy_fire",
           "do": [
             {
-              "damage": 0.6,
+              "damage": 0.3,
               "stat": "int",
               "damageType": "magic",
               "element": "holy",
@@ -1114,7 +1114,7 @@
     },
     "4.u1": {
       "name": "Searing Dawn",
-      "text": "Radiance damage +20%.",
+      "text": "Radiance damage +10%.",
       "src": "A:V2:4.u1",
       "fx": [
         {
@@ -1122,7 +1122,7 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.2
+          "v": 0.1
         }
       ]
     },
@@ -1159,7 +1159,7 @@
     },
     "4.r1": {
       "name": "Final Light",
-      "text": "Radiance deals +40% to enemies below 30% HP.",
+      "text": "Radiance deals +20% to enemies below 30% HP.",
       "src": "A:V2:4.r1",
       "fx": [
         {
@@ -1169,7 +1169,7 @@
             "targetHpBelow": 0.3
           },
           "mod": {
-            "powerMul": 0.4
+            "powerMul": 0.2
           }
         }
       ]

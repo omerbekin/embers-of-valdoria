@@ -65,8 +65,10 @@ describe('Mage ağacı fx (Faz 2b)', () => {
     const plain = prev(false);
     const boosted = prev(true);
     // Finisher x1,15 ve Execution Bolt x1,5 (kancalar çarpılır)
-    expect(boosted / plain).toBeGreaterThan(1.6);
-    expect(boosted / plain).toBeLessThan(1.8);
+    const pm = (id: string) => (T.nodes[id]!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul; // veriden
+    const m = (1 + 3 * pm('1.r')) * (1 + pm('1.eb'));
+    expect(boosted / plain).toBeGreaterThan(m - 0.1);
+    expect(boosted / plain).toBeLessThan(m + 0.1);
   });
 
   it('Ice Block + Frozen Solid: Mana Barrier dostu 2 tur Fortified ve süre boyunca Slowed yapar', () => {

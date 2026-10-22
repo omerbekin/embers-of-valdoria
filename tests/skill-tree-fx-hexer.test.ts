@@ -53,8 +53,9 @@ describe('Hexer ağacı (Faz 2b)', () => {
     };
     const plain = pv({});
     const tree = pv(unit(['1.f1*3']));
-    expect(tree.max / plain.max).toBeGreaterThan(1.08);
-    expect(tree.max / plain.max).toBeLessThan(1.16);
+    const m = 1 + 3 * (H.nodes['1.f1']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul; // veriden
+    expect(tree.max / plain.max).toBeGreaterThan(m - 0.04);
+    expect(tree.max / plain.max).toBeLessThan(m + 0.04);
   });
 
   it('Opening Glare: Omen\'siz hedefe isabet eden Evil Eye 2 Omen ekler (ağaçsız 1-2)', () => {

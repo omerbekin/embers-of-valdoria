@@ -24,6 +24,12 @@ function only(cls: string, ranks: Record<string, number>, bar?: number): UnitSet
   return compileTree(t, { v: t.version, r });
 }
 const withTree = (slot: number, tree: UnitSetup['tree']): Record<number, UnitSetup> => ({ [slot]: { tree } });
+/** Düğüm / bar fx sayısı veriden ('bar3' = mastery.bar[3]; yol örn. '0.do.0.heal'); denge turunda değişebilir, test mekanizmayı ölçer. */
+const num = (cls: string, key: string, path: string): number => {
+  const t = treeOf(cls)!;
+  const fx = key.startsWith('bar') ? t.mastery.bar[Number(key.slice(3))]!.fx : t.nodes[key]!.fx;
+  return path.split('.').reduce<unknown>((o, k) => (o as Record<string, unknown>)[k], fx) as number;
+};
 const P = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'party' && c.slot === slot)!;
 const E = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant, resetCd = true): BattleEvent[] {
@@ -219,7 +225,7 @@ describe('Faz 4b: Anti-Mage', () => {
     const ally = P(b, 1);
     ally.hp = Math.floor(ally.maxHp / 2);
     const evs = cast(b, P(b), 'spell_ward', ally);
-    expect(healBy(evs, 'antimage:3.f2')).toBe(Math.round(ally.maxHp * 0.06));
+    expect(healBy(evs, 'antimage:3.f2')).toBe(Math.round(ally.maxHp * 3 * num('antimage', '3.f2', '0.do.0.heal')));
   });
 
   it('Mirror Ward: Spell Ward\'ın emdiği büyü vuruşunun %50\'si saldırana döner', () => {
@@ -233,7 +239,7 @@ describe('Faz 4b: Anti-Mage', () => {
       if (!landed(evs, ally.uid)) return false;
       const absorbed = evs.reduce((n, e) => n + (e.type === 'damage' && e.target === ally.uid ? e.absorbed : 0), 0);
       if (absorbed <= 0) return false;
-      expect(hp0 - foe.hp).toBe(Math.max(1, Math.round(absorbed * 0.5)));
+      expect(hp0 - foe.hp).toBe(Math.max(1, Math.round(absorbed * num('antimage', '3.v', '0.do.0.damage'))));
       expect(procs(b, 'antimage:3.v')).toBe(1);
       return true;
     });
@@ -290,7 +296,7 @@ describe('Faz 4b: Gambler', () => {
       if (out.passive === 'gamble_lose') {
         busts++;
         expect(buff?.s).toBe(busts);
-        expect(buff?.mod).toMatchObject({ winChance: 0.15 });
+        expect(buff?.mod).toMatchObject({ winChance: num('gambler', '2.n0', '0.do.0.buff.winChance') });
       } else {
         if (busts > 0) cleared = true;
         expect(buff).toBeUndefined();
@@ -324,7 +330,7 @@ describe('Faz 4b: Gambler', () => {
       foe.hp = foe.maxHp = 99999;
       const evs = cast(b, me, 'loaded_dice', foe);
       if (!evs.some((e) => e.type === 'damage' && e.target === foe.uid && e.crit)) return false;
-      expect((me.treeBuffs ?? []).find((x) => x.node === 'gambler:1.mb')?.mod).toMatchObject({ winChance: 0.1 });
+      expect((me.treeBuffs ?? []).find((x) => x.node === 'gambler:1.mb')?.mod).toMatchObject({ winChance: num('gambler', '1.mb', '0.do.0.buff.winChance') });
       // bahissiz skill buff'ı harcamaz
       cast(b, me, 'loaded_dice', foe);
       expect((me.treeBuffs ?? []).some((x) => x.node === 'gambler:1.mb')).toBe(true);

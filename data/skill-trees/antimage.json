@@ -150,14 +150,14 @@
     },
     "0.f2": {
       "name": "Soaking Robes",
-      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
+      "text": "Magic damage you block counts 2% more per rank toward Mana Overflow.",
       "src": "B:V3:0.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "blockedMul": 0.04
+            "blockedMul": 0.02
           },
           "rank": true
         }
@@ -318,7 +318,7 @@
     },
     "0.mb": {
       "name": "Spell Sink",
-      "text": "When Mana Overflow triggers, you Guard the ally with the lowest HP until your next turn, taking 30% of its damage.",
+      "text": "When Mana Overflow triggers, you Guard the ally with the lowest HP until your next turn, taking 15% of its damage.",
       "src": "B:V4:0.n0",
       "fx": [
         {
@@ -327,7 +327,7 @@
           "on": "manaOverflow",
           "do": [
             {
-              "guard": 0.3,
+              "guard": 0.15,
               "to": "lowestHpOtherAlly"
             }
           ]
@@ -416,7 +416,7 @@
     },
     "1.r": {
       "name": "Bare Steel",
-      "text": "Mana Steal +5% damage per rank against enemies with no buffs.",
+      "text": "Mana Steal +3% damage per rank against enemies with no buffs.",
       "src": "B:V5:1.r",
       "fx": [
         {
@@ -426,7 +426,7 @@
             "targetHasBuff": false
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -544,7 +544,7 @@
     },
     "1.v": {
       "name": "Spellsplitter",
-      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals +15% damage per buff removed.",
+      "text": "Mana Steal becomes Spellsplitter: it removes every buff from its target and deals +8% damage per buff removed.",
       "src": "B:V5:1.v",
       "fx": [
         {
@@ -562,7 +562,7 @@
             "buffsRemoved": true
           },
           "mod": {
-            "powerMul": 0.15
+            "powerMul": 0.08
           }
         }
       ]
@@ -599,14 +599,14 @@
     },
     "2.f3": {
       "name": "Long Quiet",
-      "text": "Drain Field's Silence has a 6% chance per rank to last 1 more turn.",
+      "text": "Drain Field's Silence has a 3% chance per rank to last 1 more turn.",
       "src": "A:V1:2.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:silence",
-          "procChance": 0.06,
+          "procChance": 0.03,
           "mod": {
             "turns": 1
           },
@@ -633,7 +633,7 @@
     },
     "2.r": {
       "name": "Settling Dust",
-      "text": "If Drain Field Silences anyone, 10% chance per rank that its cooldown is 1 turn shorter.",
+      "text": "If Drain Field Silences anyone, 5% chance per rank that its cooldown is 1 turn shorter.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -642,7 +642,7 @@
           "when": {
             "silencedAny": true
           },
-          "procChance": 0.1,
+          "procChance": 0.05,
           "mod": {
             "cooldownSet": 2
           },
@@ -782,7 +782,7 @@
     },
     "3.f1": {
       "name": "Layered Ward",
-      "text": "Spell Ward shield +4% per rank.",
+      "text": "Spell Ward shield +2% per rank.",
       "src": "B:V4:3.f1",
       "fx": [
         {
@@ -790,7 +790,7 @@
           "sel": "shield",
           "f": "power",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.02,
           "rank": true
         },
         {
@@ -798,14 +798,14 @@
           "sel": "shield",
           "f": "bonusPerMana",
           "op": "pct",
-          "v": 0.04,
+          "v": 0.02,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Ward Mending",
-      "text": "Spell Ward heals the warded ally for 2% of its max HP per rank when cast.",
+      "text": "Spell Ward heals the warded ally for 1% of its max HP per rank when cast.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -815,7 +815,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.02,
+              "heal": 0.01,
               "to": "target"
             }
           ]
@@ -854,7 +854,7 @@
     },
     "3.r": {
       "name": "Shelter Echo",
-      "text": "When Spell Ward breaks, the warded ally heals 3% of its max HP per rank.",
+      "text": "When Spell Ward breaks, the warded ally heals 2% of its max HP per rank.",
       "src": "B:V4:3.r",
       "fx": [
         {
@@ -864,7 +864,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.03,
+              "heal": 0.02,
               "to": "subject"
             }
           ]
@@ -873,7 +873,7 @@
     },
     "3.ea": {
       "name": "Split Ward",
-      "text": "Spell Ward also wards the ally with the least MP at 50% strength.",
+      "text": "Spell Ward also wards the ally with the least MP at 25% strength.",
       "src": "B:V3:3.eb",
       "fx": [
         {
@@ -883,7 +883,7 @@
           "do": [
             {
               "cast": "event",
-              "power": 0.5,
+              "power": 0.25,
               "to": "lowestMpAlly",
               "noChain": true,
               "notTarget": true
@@ -911,7 +911,7 @@
     },
     "3.ma": {
       "name": "Second Ward",
-      "text": "When Spell Ward breaks, a 50% ward forms on the ally with the lowest HP.",
+      "text": "When Spell Ward breaks, a 25% ward forms on the ally with the lowest HP.",
       "src": "B:V4:3.mb",
       "fx": [
         {
@@ -921,7 +921,7 @@
           "skill": "spell_ward",
           "do": [
             {
-              "shield": 0.5,
+              "shield": 0.25,
               "of": "shieldSize",
               "magic": true,
               "to": "lowestHpAlly"
@@ -961,7 +961,7 @@
     },
     "3.fb": {
       "name": "Cloistered Ward",
-      "text": "Spell Ward on yourself is 60% larger, but it can no longer target allies.",
+      "text": "Spell Ward on yourself is 30% larger, but it can no longer target allies.",
       "src": "B:V4:3.fa",
       "fx": [
         {
@@ -974,7 +974,7 @@
           "h": "heal",
           "on": "shieldDealt",
           "skill": "spell_ward",
-          "mul": 0.6
+          "mul": 0.3
         }
       ]
     },
@@ -999,7 +999,7 @@
     },
     "3.v": {
       "name": "Mirror Ward",
-      "text": "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 50% of their damage.",
+      "text": "Spell Ward becomes Mirror Ward: magic hits it absorbs are thrown back at the attacker for 25% of their damage.",
       "src": "B:V4:3.v",
       "new": true,
       "approved": true,
@@ -1013,7 +1013,7 @@
           },
           "do": [
             {
-              "damage": 0.5,
+              "damage": 0.25,
               "of": "amount",
               "to": "target"
             }

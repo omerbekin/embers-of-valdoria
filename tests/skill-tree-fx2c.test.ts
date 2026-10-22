@@ -25,6 +25,8 @@ function only(cls: string, ranks: Record<string, number>, bar?: number): UnitSet
   return compileTree(t, { v: t.version, r });
 }
 const withTree = (slot: number, tree: UnitSetup['tree']): Record<number, UnitSetup> => ({ [slot]: { tree } });
+/** Düğüm fx sayısı veriden (denge turunda değişebilir; test mekanizmayı ölçer). */
+const fxOf = (cls: string, key: string, i = 0) => treeOf(cls)!.nodes[key]!.fx![i] as unknown as { procChance: number; v: number; mul: number; mod: { powerMul: number; auraPct: number }; byRank: { chance: number }[] };
 const P = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'party' && c.slot === slot)!;
 const E = (b: Battle, slot = 0): Combatant => b.combatants.find((c) => c.side === 'enemy' && c.slot === slot)!;
 function cast(b: Battle, actor: Combatant, skill: string, target?: Combatant): BattleEvent[] {
@@ -54,13 +56,14 @@ describe('Faz 2c: veri', () => {
   });
 
   it('rank "chance": yalnızca zar şansı rank ile çarpılır, +1 tur sabit kalır', () => {
-    const cases: [string, string, number, number][] = [
-      ['druid', '2.r', 3, 0.3],
-      ['cutthroat', '3.f1', 2, 0.3],
-      ['antimage', '2.f3', 5, 0.3],
-      ['gambler', '3.r', 4, 0.2],
+    const cases: [string, string, number][] = [
+      ['druid', '2.r', 3],
+      ['cutthroat', '3.f1', 2],
+      ['antimage', '2.f3', 5],
+      ['gambler', '3.r', 4],
     ];
-    for (const [cls, key, rank, chance] of cases) {
+    for (const [cls, key, rank] of cases) {
+      const chance = rank * fxOf(cls, key).procChance;
       const h = cond(only(cls, { [key]: rank }), `${cls}:${key}`);
       expect(h.procChance, `${cls} ${key}`).toBeCloseTo(chance, 9);
       expect(h.mod.turns, `${cls} ${key}`).toBe(1);
@@ -84,7 +87,7 @@ describe('Faz 2c: veri', () => {
   it('Whiteout (needs Driving Snow): Blizzard Blind şansı x2, süre 2', () => {
     const t = only('mage', { '2.f3': 5, '2.eb': 1 })!;
     const st = t.skills!.blizzard!.effects.find((e) => e.type === 'status' && e.status === 'blinded') as { chance: number; turns: number };
-    expect(st.chance).toBeCloseTo(0.5, 9);
+    expect(st.chance).toBeCloseTo(2 * fxOf('mage', '2.f3').byRank[4]!.chance, 9);
     expect(st.turns).toBe(2);
   });
 
@@ -109,7 +112,7 @@ describe('Faz 2c: veri', () => {
     const t = only('paladin', { '1.ea': 1, '1.fa': 1 });
     expect(hooksOf(t, 'paladin:1.ea')).toEqual([]);
     const hs = hooksOf(t, 'paladin:1.fa') as CondHook[];
-    expect(hs.find((h) => h.mod.powerMul === 0.2)?.skill).toBe('holy_strike');
+    expect(hs.find((h) => h.mod.powerMul === fxOf('paladin', '1.fa').mod.powerMul)?.skill).toBe('holy_strike');
     expect(hs.find((h) => h.at === 'passiveHeal')?.mod.powerMul).toBe(-0.3);
   });
 
@@ -140,7 +143,7 @@ describe('Faz 2c: veri', () => {
 
 describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => {
   it('Long Con: Card Trick\'in rastgele Stun\'u kancadan geçer (zar 1 iken +1 tur)', () => {
-    const t = only('gambler', { '3.r': 20 }); // procChance 0.05 x 20 = 1
+    const t = only('gambler', { '3.r': Math.ceil(1 / fxOf('gambler', '3.r').procChance - 1e-9) }); // procChance x rank >= 1
     seeds('Card Trick Stun', (s) => {
       const b = make({ 0: 'gambler' }, { 0: 'mage' }, withTree(0, t), s);
       E(b).hp = E(b).maxHp = 99999;
@@ -176,7 +179,7 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
   });
 
   it('Deep Tangle: eklenen Stun da (Strangling Grove) kancadan geçer', () => {
-    const t = only('druid', { '2.mb': 1, '2.r': 10 });
+    const t = only('druid', { '2.mb': 1, '2.r': Math.ceil(1 / fxOf('druid', '2.r').procChance - 1e-9) });
     seeds('Strangling Grove Stun', (s) => {
       const b = make({ 0: 'druid' }, { 0: 'mage' }, withTree(0, t), s);
       E(b).hp = E(b).maxHp = 99999;
@@ -265,7 +268,7 @@ describe('Faz 2c: Anti-Mage', () => {
       const two = hit(t, true);
       expect(two.left).toBe(0);
       if (!none.dmg || !two.dmg) return false;
-      expect(two.dmg / none.dmg).toBeCloseTo(1.3, 1);
+      expect(two.dmg / none.dmg).toBeCloseTo(1 + 2 * fxOf('antimage', '1.v', 1).mod.powerMul, 1);
       return true;
     });
   });
@@ -375,13 +378,13 @@ describe('Faz 2c: Defender', () => {
   it('Braced Stance / Tight Formation / Rooted Stance: aura payı kancaları', () => {
     const b = make({ 0: 'defender', 1: 'warrior' }, { 0: 'mage' }, withTree(0, only('defender', { '0.f3': 2 })));
     const base = P(b).stats.armor;
-    expect(armorOf(b, P(b)) - base).toBeCloseTo(base * (0.4 + 0.04), 6);
+    expect(armorOf(b, P(b)) - base).toBeCloseTo(base * (0.4 + 2 * fxOf('defender', '0.f3').mod.auraPct), 6);
     const f1 = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '0.f1': 3 })));
     cast(f1, P(f1), 'taunt');
-    expect(armorOf(f1, P(f1)) - base).toBeCloseTo(base * (0.4 + 0.15), 6);
+    expect(armorOf(f1, P(f1)) - base).toBeCloseTo(base * (0.4 + 3 * fxOf('defender', '0.f1').mod.auraPct), 6);
     const ea = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '0.ea': 1 })));
     for (let i = 0; i < 6; i++) cast(ea, P(ea), 'taunt');
-    expect(armorOf(ea, P(ea)) - base).toBeCloseTo(base * (0.4 + 0.4), 6);
+    expect(armorOf(ea, P(ea)) - base).toBeCloseTo(base * (0.4 + 4 * fxOf('defender', '0.ea').mod.auraPct), 6); // seri en çok 4
   });
 
   it('Weathered: alan skill\'ine karşı aura payı +%5 x rank (tek hedefe değil)', () => {

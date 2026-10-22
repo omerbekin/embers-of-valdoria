@@ -105,7 +105,7 @@
       {
         "at": 20,
         "name": "First Thread",
-        "text": "Your first Dark Bond each battle also heals the ally for 10% of their max HP.",
+        "text": "Your first Dark Bond each battle also heals the ally for 5% of their max HP.",
         "src": "A:V4:bar0",
         "fx": [
           {
@@ -118,7 +118,7 @@
             },
             "do": [
               {
-                "heal": 0.1,
+                "heal": 0.05,
                 "to": "bonded"
               }
             ]
@@ -151,7 +151,7 @@
   "nodes": {
     "0.f1": {
       "name": "Thin Blood",
-      "text": "While below 50% HP, Vampiric Bite heals +4% more of the damage you deal per rank.",
+      "text": "While below 50% HP, Vampiric Bite heals +2% more of the damage you deal per rank.",
       "src": "A:V1:0.f1",
       "fx": [
         {
@@ -161,7 +161,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "drainAdd": 0.04
+            "drainAdd": 0.02
           },
           "rank": true
         }
@@ -169,7 +169,7 @@
     },
     "0.f2": {
       "name": "Tithe Collector",
-      "text": "After you pay HP for a skill, that skill drains +3% more per rank through Vampiric Bite.",
+      "text": "After you pay HP for a skill, that skill drains +2% more per rank through Vampiric Bite.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -179,7 +179,7 @@
             "hpPaidThisCast": true
           },
           "mod": {
-            "drainMul": 0.03
+            "drainMul": 0.02
           },
           "rank": true
         }
@@ -223,7 +223,7 @@
     },
     "0.r": {
       "name": "Last Drop",
-      "text": "The first time you fall below 30% HP in a battle, heal 5% of your max HP per rank.",
+      "text": "The first time you fall below 30% HP in a battle, heal 3% of your max HP per rank.",
       "src": "A:V1:0.r",
       "fx": [
         {
@@ -231,7 +231,7 @@
           "fx": {
             "secondWind": {
               "below": 0.3,
-              "heal": 0.05
+              "heal": 0.03
             }
           },
           "rank": true
@@ -240,7 +240,7 @@
     },
     "0.ea": {
       "name": "Dying Light",
-      "text": "While below 50% HP, your skills ignore 20% of the target's magic armor.",
+      "text": "While below 50% HP, your skills ignore 10% of the target's magic armor.",
       "src": "A:V1:0.ea",
       "fx": [
         {
@@ -250,7 +250,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "ignoreDefense": 0.2
+            "ignoreDefense": 0.1
           }
         }
       ]
@@ -284,7 +284,7 @@
     },
     "0.ma": {
       "name": "Undying Thirst",
-      "text": "Once per battle, a fatal hit leaves you at 1 HP instead, and your next hit drains 100% of its damage.",
+      "text": "Once per battle, a fatal hit leaves you at 1 HP instead, and your next hit drains 50% of its damage.",
       "src": "A:V1:0.ma",
       "new": true,
       "approved": true,
@@ -298,7 +298,7 @@
           "do": [
             {
               "buff": {
-                "drainAdd": 1
+                "drainAdd": 0.5
               },
               "uses": 1
             }
@@ -371,7 +371,7 @@
     },
     "0.v": {
       "name": "Crimson Tide",
-      "text": "Vampiric Bite evolves: each time you pay HP for a skill, it heals +5% more of damage dealt for the rest of the battle.",
+      "text": "Vampiric Bite evolves: each time you pay HP for a skill, it heals +3% more of damage dealt for the rest of the battle.",
       "src": "A:V1:0.v",
       "fx": [
         {
@@ -381,7 +381,7 @@
           "do": [
             {
               "buff": {
-                "drainAdd": 0.05
+                "drainAdd": 0.03
               },
               "stack": true,
               "uses": 0
@@ -392,7 +392,7 @@
     },
     "1.f1": {
       "name": "Knee Breaker",
-      "text": "Bone Throw +4% damage per rank against Slowed targets.",
+      "text": "Bone Throw +2% damage per rank against Slowed targets.",
       "src": "A:V5:1.f1",
       "fx": [
         {
@@ -402,7 +402,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -410,7 +410,7 @@
     },
     "1.f2": {
       "name": "Marrow Leech",
-      "text": "Vampiric Bite heals +3% more per rank from Bone Throw hits on Slowed targets.",
+      "text": "Vampiric Bite heals +2% more per rank from Bone Throw hits on Slowed targets.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -420,7 +420,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "drainMul": 0.03
+            "drainMul": 0.02
           },
           "rank": true
         }
@@ -428,7 +428,7 @@
     },
     "1.f3": {
       "name": "Skull Rattle",
-      "text": "Bone Throw has a 3% chance per rank to Stagger its target (it loses its next action).",
+      "text": "Bone Throw has a 2% chance per rank to Stagger its target (it loses its next action).",
       "src": "A:V5:1.f3",
       "fx": [
         {
@@ -439,7 +439,13 @@
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.03
+              "chance": 0.02
+            },
+            {
+              "type": "status",
+              "status": "staggered",
+              "turns": 1,
+              "chance": 0.04
             },
             {
               "type": "status",
@@ -451,19 +457,13 @@
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.09
+              "chance": 0.08
             },
             {
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.12
-            },
-            {
-              "type": "status",
-              "status": "staggered",
-              "turns": 1,
-              "chance": 0.15
+              "chance": 0.1
             }
           ]
         }
@@ -485,7 +485,7 @@
     },
     "1.r": {
       "name": "Numb Joints",
-      "text": "Bone Throw +5% damage per rank against Staggered, Stunned or Silenced targets.",
+      "text": "Bone Throw +3% damage per rank against Staggered, Stunned or Silenced targets.",
       "src": "A:V5:1.r",
       "fx": [
         {
@@ -499,7 +499,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -507,7 +507,7 @@
     },
     "1.ea": {
       "name": "Shattered Shin",
-      "text": "Bone Throw on an already Slowed target has a 25% chance to Stagger it.",
+      "text": "Bone Throw on an already Slowed target has a 12% chance to Stagger it.",
       "src": "A:V5:1.ea",
       "fx": [
         {
@@ -520,7 +520,7 @@
             "addStatus": {
               "status": "staggered",
               "turns": 1,
-              "chance": 0.25
+              "chance": 0.12
             }
           }
         }
@@ -528,7 +528,7 @@
     },
     "1.eb": {
       "name": "Skull Cracker",
-      "text": "Bone Throw has a 30% chance to Silence its target for 1 turn.",
+      "text": "Bone Throw has a 20% chance to Silence its target for 1 turn.",
       "src": "A:V5:1.eb",
       "fx": [
         {
@@ -537,7 +537,7 @@
             "type": "status",
             "status": "silence",
             "turns": 1,
-            "chance": 0.3
+            "chance": 0.2
           },
           "after": "damage"
         }
@@ -567,7 +567,7 @@
     },
     "1.fa": {
       "name": "Brutal Hurl",
-      "text": "Shattered Shin's chance 25% → 45%, but Bone Throw deals 20% less damage.",
+      "text": "Shattered Shin's chance 12% → 40%, but Bone Throw deals 20% less damage.",
       "src": "A:V5:1.fa",
       "fx": [
         {
@@ -580,7 +580,7 @@
             "addStatus": {
               "status": "staggered",
               "turns": 1,
-              "chance": 0.266667
+              "chance": 0.318182
             }
           }
         },
@@ -603,7 +603,7 @@
           "h": "cond",
           "sel": "status:silence",
           "mod": {
-            "chance": 0.7
+            "chance": 0.8
           }
         },
         {
@@ -674,14 +674,14 @@
     },
     "2.f2": {
       "name": "Lingering Moan",
-      "text": "Vampiric Bite heals +3% more per rank from Wail of the Dead's hits.",
+      "text": "Vampiric Bite heals +2% more per rank from Wail of the Dead's hits.",
       "src": "A:V1:2.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "drainMul": 0.03
+            "drainMul": 0.02
           },
           "rank": true
         }
@@ -689,7 +689,7 @@
     },
     "2.f3": {
       "name": "Fearful Keening",
-      "text": "Wail of the Dead has a 4% chance per rank to Blind each enemy hit for 1 turn.",
+      "text": "Wail of the Dead has a 2% chance per rank to Blind each enemy hit for 1 turn.",
       "src": "A:V5:2.f3",
       "fx": [
         {
@@ -700,7 +700,19 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
+              "chance": 0.02
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
               "chance": 0.04
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.06
             },
             {
               "type": "status",
@@ -712,19 +724,7 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.12
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.16
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.2
+              "chance": 0.1
             }
           ]
         }
@@ -732,7 +732,7 @@
     },
     "2.n0": {
       "name": "Scream of Need",
-      "text": "While you are below 50% HP, Wail of the Dead deals +30% damage.",
+      "text": "While you are below 50% HP, Wail of the Dead deals +15% damage.",
       "src": "A:V1:2.n0",
       "fx": [
         {
@@ -742,14 +742,14 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.15
           }
         }
       ]
     },
     "2.r": {
       "name": "Tithe Refund",
-      "text": "For each enemy Wail of the Dead hits, refund 4% of its HP cost per rank.",
+      "text": "For each enemy Wail of the Dead hits, refund 2% of its HP cost per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -759,7 +759,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.04,
+              "heal": 0.02,
               "of": "hpPaid"
             }
           ]
@@ -809,7 +809,7 @@
     },
     "2.ma": {
       "name": "Blood Banshee",
-      "text": "Wail of the Dead deals bonus dark damage equal to 50% of the HP it cost to every enemy hit.",
+      "text": "Wail of the Dead deals bonus dark damage equal to 25% of the HP it cost to every enemy hit.",
       "src": "A:V1:2.ma",
       "fx": [
         {
@@ -819,7 +819,7 @@
             "hpPaidAmount": 1
           },
           "mod": {
-            "flatDamage": 0.5
+            "flatDamage": 0.25
           }
         }
       ]
@@ -937,7 +937,7 @@
     },
     "3.f2": {
       "name": "Kindred Pulse",
-      "text": "When Dark Bond starts, heal the bonded ally for 2% of your max HP per rank.",
+      "text": "When Dark Bond starts, heal the bonded ally for 1% of your max HP per rank.",
       "src": "A:V1:3.f2",
       "fx": [
         {
@@ -947,7 +947,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.02,
+              "heal": 0.01,
               "of": "ownerMaxHp",
               "to": "bonded"
             }
@@ -997,7 +997,7 @@
     },
     "3.r": {
       "name": "Blood Kin",
-      "text": "While you are below 50% HP, Dark Bond passes +5% more of your healing per rank.",
+      "text": "While you are below 50% HP, Dark Bond passes +3% more of your healing per rank.",
       "src": "A:V1:3.r",
       "fx": [
         {
@@ -1007,7 +1007,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "bondRatio": 0.05
+            "bondRatio": 0.03
           },
           "rank": true
         }
@@ -1038,7 +1038,7 @@
     },
     "3.eb": {
       "name": "Soul Shield",
-      "text": "Dark Bond gives the ally a shield worth 15% of your max HP.",
+      "text": "Dark Bond gives the ally a shield worth 8% of your max HP.",
       "src": "A:V4:3.eb",
       "fx": [
         {
@@ -1047,7 +1047,7 @@
           "on": "skillUse",
           "do": [
             {
-              "shield": 0.15,
+              "shield": 0.08,
               "of": "ownerMaxHp",
               "to": "bonded"
             }
@@ -1123,7 +1123,7 @@
     },
     "3.mb": {
       "name": "Blood Oath",
-      "text": "While bonded, you guard your ally: you take 30% of the damage aimed at them.",
+      "text": "While bonded, you guard your ally: you take 15% of the damage aimed at them.",
       "src": "A:V4:3.mb",
       "fx": [
         {
@@ -1131,7 +1131,7 @@
           "effect": {
             "type": "guard",
             "turns": 3,
-            "share": 0.3,
+            "share": 0.15,
             "bond": true
           }
         }
@@ -1172,7 +1172,7 @@
     },
     "4.u2": {
       "name": "Cold Grip",
-      "text": "Your Skeleton deals +20% damage to Slowed targets.",
+      "text": "Your Skeleton deals +10% damage to Slowed targets.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1183,7 +1183,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.2
+            "powerMul": 0.1
           }
         }
       ]
@@ -1211,7 +1211,7 @@
     },
     "4.r1": {
       "name": "Pox Bloom",
-      "text": "When your Skeleton dies or expires, poison ground (15% INT, 2 turns) spreads under the enemy it last hit.",
+      "text": "When your Skeleton dies or expires, poison ground (8% INT, 2 turns) spreads under the enemy it last hit.",
       "src": "B:V3:4.r1",
       "fx": [
         {
@@ -1222,7 +1222,7 @@
           "do": [
             {
               "ground": "poison",
-              "power": 0.15,
+              "power": 0.08,
               "stat": "int",
               "turns": 2,
               "to": "lastHit"
@@ -1245,7 +1245,7 @@
           "do": [
             {
               "ground": "poison",
-              "power": 0.15,
+              "power": 0.08,
               "stat": "int",
               "turns": 2,
               "to": "lastHit",

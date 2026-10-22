@@ -99,7 +99,7 @@ describe('derleyici: (b) addEffect / replaceEffect / unitFx', () => {
   });
 
   it('kancalar: cond (Red Arc, rank x 3 = %9), bedel koşulu (Pain Into Iron), Rage (War Gallop / Roaring Charge / Into the Fire)', () => {
-    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: 0.09 } });
+    expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul } });
     expect(tree(D, ['4.l1', '4.l2']).skills!.fist_crush!.cost.cond).toEqual([{ node: 'defender:4.l2', add: -1, scale: { missingHp: 0.1 } }]);
     const c = tree(W, CHARGE_PATH);
     expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.f3', skill: 'charge', on: 'hit', gain: 4 });
@@ -139,7 +139,7 @@ describe('motor: C1 koşul kancası (önizleme = gerçek vuruş)', () => {
     };
     const base = mult(RED_ARC.slice(0, -1), true).m;
     const hit = mult(RED_ARC, true);
-    expect(hit.m / base).toBeCloseTo(1.09, 9);
+    expect(hit.m / base).toBeCloseTo(1 + 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 9);
     expect(mult(RED_ARC, false).m).toBeCloseTo(mult(RED_ARC.slice(0, -1), false).m, 9);
     cast(hit.b, P0(hit.b).uid, 'whirlwind', E0(hit.b).uid);
     expect(procs(hit.b, 'warrior:2.r')).toBe(1);

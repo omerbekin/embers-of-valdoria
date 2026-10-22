@@ -137,7 +137,7 @@ export function treeReport(res: ReturnType<typeof runTreeSim>): string[] {
     }
     const ids = content.randomPool;
     p('');
-    p(`SINIF FARKI (ölçülen tarafta class kazanma %; hedef: ağaçlı - ağaçsız +10..+15 puan, |a - b| <= 5 puan)`);
+    p(`SINIF FARKI (ölçülen tarafta class kazanma %; hedef: ağaçlı - ağaçsız +20..+25 puan, |a - b| <= 5 puan)`);
     p(`  sınıf      savaş  ağaçsız${dirs.map((d) => `      ${d}`).join('')}${dirs.map((d) => `   ${d}-ağaçsız`).join('')}${dirs.length === 2 ? '     a-b' : ''}`);
     for (const id of ids) {
       const o = off.classes[id]!;
@@ -145,7 +145,7 @@ export function treeReport(res: ReturnType<typeof runTreeSim>): string[] {
       const ds = ws.map((w) => w - o.win);
       const ab = dirs.length === 2 ? ws[0]! - ws[1]! : NaN;
       const seen = o.games > 0 && dirs.every((d) => V[d]!.classes[id]!.games > 0);
-      const flag = seen ? [...ds.map((x) => (x < 10 || x > 15 ? 'fark' : '')), Number.isFinite(ab) && Math.abs(ab) > 5 ? 'yön' : ''].filter(Boolean) : [];
+      const flag = seen ? [...ds.map((x) => (x < 20 || x > 25 ? 'fark' : '')), Number.isFinite(ab) && Math.abs(ab) > 5 ? 'yön' : ''].filter(Boolean) : [];
       p(`  ${name(id).padEnd(9)} ${String(o.games).padStart(6)}  %${fmt(o.win).padStart(5)}${ws.map((w) => `  %${fmt(w).padStart(5)}`).join('')}${ds.map((x) => `      ${sgn(x).padStart(6)}`).join('')}${Number.isFinite(ab) ? `  ${sgn(ab).padStart(6)}` : ''}${flag.length ? `  <-- hedef dışı (${[...new Set(flag)].join(', ')})` : ''}`);
     }
     if (plan.parts) {
