@@ -1323,3 +1323,16 @@ Kısa tur (Ömer bütçesi 2 x 300 + 1000 savaş). Kural aynı: yalnızca `data/
 - **Gambler:** 1.f1 +%2 → +%3 / rank, 1.fb Spendthrift +%35 → +%40, bar[0] +%6 → +%8.
 - **Defender:** dokunulmadı (Ömer'in 2.mb "cooldown 1 azalır" değişikliğinin ölçümü).
 - **Sonuç (1000 savaş, seed 70001, yalnızca oyuncu ağaçlı):** genel ağaçsız %48-50 → L15 %69,0 (+18,8), L20 a %72,1 / b %70,9 (+23,8 / +22,6), L25 a %71,3 / b %72,3 (+21,1 / +22,1). L20 a-b 11 class'ta 6,5 puan içinde (Paladin +6,5), L25 a-b 10 class'ta 5 içinde (Anti-Mage -8,6). Önemli ölçüm notu: hiç dokunulmayan Warrior L15'te seed 60001'de +21,6, 70001'de +14,9 çıktı; yani 1000 savaşlık tek seed grubunda class satırı ±5-7 puan oynuyor, tek koşunun class satırı kesin karar için yetmez.
+
+
+## Faz 7 dördüncü tur (polish) (balance-tester 2026-10-23)
+
+Ömer: "sim yapalım polish olsun". Bütçe 4 x 1000 savaş (2 x 300 hızlı kontrol hakkı kullanılmadı: class satırında saf gürültü). Kural aynı: yalnızca `data/skill-trees/<class>.json` sayıları + metinleri; süre / cooldown / tur bedeli yok (Anti-Mage 1.fb yarım tur kalır), `_rules.json > enabled` false. Varsayımlar `open-questions.md` madde 398 / 10.
+
+- **Önce ölçüm (2 x 1000, seed 80001 + 90001, ortalama):** genel ağaçsız %49-51 → L15 +20,3, L20 a +24,5 / b +23,9, L25 a +22,1 / b +23,4. İki seed grubunda da tutan sapmalar: Anti-Mage L25 b +33 (a +20, a-b -13,6); Defender L20 +32 / +34; L15 düşük Warrior +16,7, Undead +15,6, Hexer +16,9; Druid L20 +28 / +27; Cutthroat L25 +17-18 ve Archer L25 +13-17 (ikisi de ağaçsız %68-70; tavan etkisi).
+- **L15 güçlendirme (düşük class'lar):** Warrior 1.f2 Notched Axe +%2 → +%3 / rank, 1.n0 Gut Strike +%5 → +%8, 1.r Bone Saw %2 → %3 / rank, bar[1] Second Wind %5 → %8 şifa; Undead 1.f1 Knee Breaker +%2 → +%3 / rank, 1.f2 Marrow Leech +%2 → +%3 / rank, 1.r Numb Joints +%3 → +%4 / rank, 4.u2 Cold Grip +%10 → +%15; Hexer 1.f2 Unblinking kritik +%2 → +%3 / rank, 1.r Rheumy Stare +%1 → +%2 / rank, bar[1] Grim Herald +%15 → +%20.
+- **Anti-Mage (L25 a-b):** 1.fa Drained Dry 13 → 15 MP (a yönü), 1.mb Tempo Thief %15 → %8 erken (b yönü). 1.fb'ye dokunulmadı (yalnızca tur bedeli + cooldown taşıyor).
+- **Defender (L20 fazla; L20 düğümleri süre / cooldown olduğu için L15 sayılarından):** 4.r1 Plated Gauntlet %10 → %8 zırh ölçeği, 4.r3 Iron Meteor %20 → %15, bar[0] Iron Morning kalkan %15 → %10 zırh.
+- **Druid (L20 fazla):** 1.ma Third Lash %15 → %10, 1.eb Reaping Vine 6 → 4 MP, 1.mb Endless Lash %20 → %15 erken.
+- **Cutthroat (L25 düşük):** 1.fa Butcher's Haste +%30 → +%35 (bedel -%25 aynı), 1.fb Thirsty Edge can çalma %20 → %30, 2.f1 Crossed Crit +%2 → +%3 / rank, bar[3] Notched Blade +%2 → +%3 / kill.
+- **Sonra ölçüm (2 x 1000, seed 100001 + 110001, ortalama):** genel L15 +22,4, L20 a +24,7 / b +22,4, L25 a +20,0 / b +23,1. Anti-Mage L25 a +21 / b +27 (a-b -13,6 → -5,4); Defender L20 +29 / +27; L15 Warrior +18,8, Undead +20,0, Hexer +20,3. Önemli: seed grubu gürültüsü 2 x 1000 ortalamada bile class satırında ±5-7 puan (hiç dokunulmayan Mage L20 a +24 → +31, Gambler L15 +20 → +26, Paladin L25 a iki grupta +14 / +28). Bu yüzden önce / sonra karşılaştırması eşli değil; tek class kararı için 2 x 3000 gerekir.

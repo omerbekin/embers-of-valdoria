@@ -64,7 +64,7 @@
       {
         "at": 10,
         "name": "Second Wind",
-        "text": "The first time you drop below 30% HP in a battle, heal 5% of your max HP.",
+        "text": "The first time you drop below 30% HP in a battle, heal 8% of your max HP.",
         "src": "B:V3:bar0",
         "fx": [
           {
@@ -72,7 +72,7 @@
             "fx": {
               "secondWind": {
                 "below": 0.3,
-                "heal": 0.05
+                "heal": 0.08
               }
             }
           }
@@ -413,7 +413,7 @@
     },
     "1.f2": {
       "name": "Notched Axe",
-      "text": "Double Strike's second hit +2% power per rank.",
+      "text": "Double Strike's second hit +3% power per rank.",
       "src": "B:V1:1.f1",
       "fx": [
         {
@@ -421,7 +421,7 @@
           "sel": "damage:1",
           "f": "power",
           "op": "pct",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
@@ -447,7 +447,7 @@
     },
     "1.n0": {
       "name": "Gut Strike",
-      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for +5%.",
+      "text": "Double Strike's first hit Wounds for 2 turns, so its second hit lands on a Wounded target for +8%.",
       "src": "B:V1:1.n0",
       "fx": [
         {
@@ -467,14 +467,14 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.05
+            "powerMul": 0.08
           }
         }
       ]
     },
     "1.r": {
       "name": "Bone Saw",
-      "text": "Double Strike ignores 2% of Armor per rank on Wounded targets.",
+      "text": "Double Strike ignores 3% of Armor per rank on Wounded targets.",
       "src": "B:V1:1.r",
       "fx": [
         {
@@ -484,7 +484,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "ignoreDefense": 0.02
+            "ignoreDefense": 0.03
           },
           "rank": true
         }

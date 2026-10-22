@@ -392,7 +392,7 @@
     },
     "1.f1": {
       "name": "Knee Breaker",
-      "text": "Bone Throw +2% damage per rank against Slowed targets.",
+      "text": "Bone Throw +3% damage per rank against Slowed targets.",
       "src": "A:V5:1.f1",
       "fx": [
         {
@@ -402,7 +402,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.03
           },
           "rank": true
         }
@@ -410,7 +410,7 @@
     },
     "1.f2": {
       "name": "Marrow Leech",
-      "text": "Vampiric Bite heals +2% more per rank from Bone Throw hits on Slowed targets.",
+      "text": "Vampiric Bite heals +3% more per rank from Bone Throw hits on Slowed targets.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -420,7 +420,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "drainMul": 0.02
+            "drainMul": 0.03
           },
           "rank": true
         }
@@ -485,7 +485,7 @@
     },
     "1.r": {
       "name": "Numb Joints",
-      "text": "Bone Throw +3% damage per rank against Staggered, Stunned or Silenced targets.",
+      "text": "Bone Throw +4% damage per rank against Staggered, Stunned or Silenced targets.",
       "src": "A:V5:1.r",
       "fx": [
         {
@@ -499,7 +499,7 @@
             ]
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.04
           },
           "rank": true
         }
@@ -1172,7 +1172,7 @@
     },
     "4.u2": {
       "name": "Cold Grip",
-      "text": "Your Skeleton deals +10% damage to Slowed targets.",
+      "text": "Your Skeleton deals +15% damage to Slowed targets.",
       "src": "B:V5:4.u2",
       "fx": [
         {
@@ -1183,7 +1183,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.1
+            "powerMul": 0.15
           }
         }
       ]

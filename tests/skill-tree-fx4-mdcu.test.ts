@@ -206,7 +206,7 @@ describe('Faz 4b: Druid', () => {
       });
       return got;
     };
-    expect(lowMp({ '1.eb': 1 })).toBe(6);
+    expect(lowMp({ '1.eb': 1 })).toBe(num('druid', '1.eb', '0.do.0.mp'));
     expect(lowMp({ '1.eb': 1, '1.fb': 1 })).toBe(num('druid', '1.fb', '0.do.0.mp'));
     expect(trigOf(only('druid', { '1.mb': 1 }), 'druid:1.mb')).toMatchObject({ on: 'kill', skill: 'thorn_whip', do: [{ sooner: num('druid', '1.mb', '0.do.0.sooner') }] });
   });

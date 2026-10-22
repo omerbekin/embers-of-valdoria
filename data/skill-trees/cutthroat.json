@@ -101,7 +101,7 @@
       {
         "at": 20,
         "name": "Notched Blade",
-        "text": "Each kill this battle adds +2% to your critical damage.",
+        "text": "Each kill this battle adds +3% to your critical damage.",
         "src": "B:V3:bar3",
         "fx": [
           {
@@ -111,7 +111,7 @@
             "do": [
               {
                 "buff": {
-                  "critDmgMul": 0.02
+                  "critDmgMul": 0.03
                 },
                 "uses": 0,
                 "stack": true
@@ -650,7 +650,7 @@
     },
     "1.fa": {
       "name": "Butcher's Haste",
-      "text": "Venom Edge +30% against targets below 50% HP, but -25% against targets above it.",
+      "text": "Venom Edge +35% against targets below 50% HP, but -25% against targets above it.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -660,7 +660,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.3
+            "powerMul": 0.35
           }
         },
         {
@@ -679,7 +679,7 @@
     },
     "1.fb": {
       "name": "Thirsty Edge",
-      "text": "Venom Edge heals you for 20% of its damage on a kill, but no longer Wounds.",
+      "text": "Venom Edge heals you for 30% of its damage on a kill, but no longer Wounds.",
       "src": "B:V3:1.fb",
       "fx": [
         {
@@ -689,7 +689,7 @@
             "killingBlow": true
           },
           "mod": {
-            "lifesteal": 0.2
+            "lifesteal": 0.3
           }
         },
         {
@@ -756,7 +756,7 @@
     },
     "2.f1": {
       "name": "Crossed Crit",
-      "text": "Saltire Cut +2% critical chance per rank on its center target.",
+      "text": "Saltire Cut +3% critical chance per rank on its center target.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -766,7 +766,7 @@
             "targetIsCenter": true
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.03
           },
           "rank": true
         }

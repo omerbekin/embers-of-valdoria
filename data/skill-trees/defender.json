@@ -46,7 +46,7 @@
       {
         "at": 5,
         "name": "Iron Morning",
-        "text": "On your first turn of each battle, gain a shield worth 15% of your armor.",
+        "text": "On your first turn of each battle, gain a shield worth 10% of your armor.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -56,7 +56,7 @@
             "once": true,
             "do": [
               {
-                "shield": 0.15,
+                "shield": 0.1,
                 "of": "armor"
               }
             ]
@@ -1139,7 +1139,7 @@
     },
     "4.r1": {
       "name": "Plated Gauntlet",
-      "text": "Fist Crush's armor scaling 5% → 10% of Armor.",
+      "text": "Fist Crush's armor scaling 5% → 8% of Armor.",
       "src": "B:V5:4.u1",
       "fx": [
         {
@@ -1147,7 +1147,7 @@
           "sel": "bonusScale:armor",
           "f": "pct",
           "op": "set",
-          "v": 0.1
+          "v": 0.08
         }
       ]
     },
@@ -1173,7 +1173,7 @@
     },
     "4.r3": {
       "name": "Iron Meteor",
-      "text": "Fist Crush's armor scaling rises to 20% of Armor, but it strikes 2 enemies.",
+      "text": "Fist Crush's armor scaling rises to 15% of Armor, but it strikes 2 enemies.",
       "src": "B:V5:4.u3",
       "fx": [
         {
@@ -1181,7 +1181,7 @@
           "sel": "bonusScale:armor",
           "f": "pct",
           "op": "set",
-          "v": 0.2
+          "v": 0.15
         },
         {
           "k": "skill",

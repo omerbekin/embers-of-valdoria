@@ -65,7 +65,7 @@
       {
         "at": 10,
         "name": "Grim Herald",
-        "text": "The first Doom you cause each battle deals +15% damage.",
+        "text": "The first Doom you cause each battle deals +20% damage.",
         "src": "A:V1:bar0",
         "fx": [
           {
@@ -76,7 +76,7 @@
               "firstDoom": true
             },
             "mod": {
-              "powerMul": 0.15
+              "powerMul": 0.2
             }
           }
         ]
@@ -396,7 +396,7 @@
     },
     "1.f2": {
       "name": "Unblinking",
-      "text": "Evil Eye +2% critical chance per rank.",
+      "text": "Evil Eye +3% critical chance per rank.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -404,7 +404,7 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
@@ -452,7 +452,7 @@
     },
     "1.r": {
       "name": "Rheumy Stare",
-      "text": "Evil Eye +1% critical chance per rank against Withered targets.",
+      "text": "Evil Eye +2% critical chance per rank against Withered targets.",
       "src": "A:V2:1.f3",
       "syn": "Withering Curse",
       "fx": [
@@ -463,7 +463,7 @@
             "targetStatus": "wither"
           },
           "mod": {
-            "critBonus": 0.01
+            "critBonus": 0.02
           },
           "rank": true
         }

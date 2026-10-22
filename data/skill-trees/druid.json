@@ -492,7 +492,7 @@
     },
     "1.eb": {
       "name": "Reaping Vine",
-      "text": "If Thorn Whip kills, you regain 6 MP.",
+      "text": "If Thorn Whip kills, you regain 4 MP.",
       "src": "B:V5:1.eb",
       "fx": [
         {
@@ -501,7 +501,7 @@
           "on": "kill",
           "do": [
             {
-              "mp": 6
+              "mp": 4
             }
           ]
         }
@@ -509,7 +509,7 @@
     },
     "1.ma": {
       "name": "Third Lash",
-      "text": "Every third Thorn Whip lashes another enemy at once for 15% damage.",
+      "text": "Every third Thorn Whip lashes another enemy at once for 10% damage.",
       "src": "B:V5:1.ma",
       "fx": [
         {
@@ -519,7 +519,7 @@
           "every": 3,
           "do": [
             {
-              "strike": 0.15,
+              "strike": 0.1,
               "to": "outsideArea",
               "count": 1
             }
@@ -578,7 +578,7 @@
     },
     "1.mb": {
       "name": "Endless Lash",
-      "text": "If Thorn Whip kills, your next turn comes 20% sooner.",
+      "text": "If Thorn Whip kills, your next turn comes 15% sooner.",
       "src": "B:V5:1.mb",
       "fx": [
         {
@@ -587,7 +587,7 @@
           "on": "kill",
           "do": [
             {
-              "sooner": 0.2
+              "sooner": 0.15
             }
           ]
         }

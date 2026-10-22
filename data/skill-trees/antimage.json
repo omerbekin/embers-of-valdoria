@@ -488,7 +488,7 @@
     },
     "1.fa": {
       "name": "Drained Dry",
-      "text": "Mana Steal burns 13 MP instead of 10, but deals no damage.",
+      "text": "Mana Steal burns 15 MP instead of 10, but deals no damage.",
       "src": "B:V3:1.fa",
       "fx": [
         {
@@ -500,7 +500,7 @@
           "sel": "manaBurn",
           "f": "amount",
           "op": "base",
-          "v": 13
+          "v": 15
         }
       ]
     },
@@ -527,7 +527,7 @@
     },
     "1.mb": {
       "name": "Tempo Thief",
-      "text": "If Mana Steal empties its target, your next turn comes 15% sooner.",
+      "text": "If Mana Steal empties its target, your next turn comes 8% sooner.",
       "src": "B:V3:1.mb",
       "fx": [
         {
@@ -536,7 +536,7 @@
           "on": "mpEmptied",
           "do": [
             {
-              "sooner": 0.15
+              "sooner": 0.08
             }
           ]
         }
