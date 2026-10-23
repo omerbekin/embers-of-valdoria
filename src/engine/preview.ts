@@ -321,6 +321,12 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
       } else if (effect.type === 'summon') {
         const sp = battle.summonPreview(actor.uid, skill.id, summonPick?.corpseUid, summonPick?.slot);
         if (sp.unit) entry(actor.uid).summon = { unit: sp.unit.id, name: sp.unit.name, hp: sp.unit.stats.hp, slot: sp.slot, ...(sp.empowered !== undefined ? { empowered: sp.empowered, corpse: sp.corpse?.uid ?? null } : {}) };
+      } else if (effect.type === 'ground' && battle.isHealGround(effect.ground)) {
+        // D11 (Holy Ground): şifa zemini dosta tur başı şifa gibi görünür (hot); toplam, anlık şifadan sonra kalan eksik canla sınırlı
+        const e = entry(target.uid);
+        const perTurn = battle.groundTickHeal(Math.round(attributePower(actor.stats, effect.scale, f) * effect.power), target);
+        const room = Math.max(0, target.maxHp - target.hp - (e.heal?.avg ?? 0));
+        e.hot = { perTurn, turns: effect.turns, total: Math.min(perTurn * effect.turns, room) };
       } else if (effect.type === 'ground') {
         const perTick = battle.groundTickDamage(effect.ground, Math.round(attributePower(actor.stats, effect.scale, f) * effect.power), target);
         const e = entry(target.uid);

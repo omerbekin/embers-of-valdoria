@@ -6,6 +6,7 @@ import {
   applyBattle,
   battlePlan,
   campaignWaveTeams,
+  carryCinematics,
   canResume,
   clearPauseSave,
   pauseRecord,
@@ -24,6 +25,8 @@ import {
   newCampaign,
   battleOutcomeOf,
   writeSave,
+  writeCheckpointSave,
+  saveAgo,
   retreatPatrol,
   patrolRetreatConfirm,
   woundRules,
@@ -110,6 +113,25 @@ export function save(kind: SaveKind): boolean {
   return r.ok;
 }
 
+/**
+ * Kasaba kaydı (Ömer 2026-10-23, playtest B1): kasaba işleminden sonra otomatik kayıt (Normal ve Ironman). Aynı düğümdeki önceki otomatik
+ * kaydın yerine yazılır (src/campaign/save.ts > writeCheckpointSave). Duraklatılmış savaş varken yazmaz (onun kaydı ayrı).
+ */
+export function checkpoint(): boolean {
+  const s = session.state;
+  if (!s || s.suspended) return false;
+  return writeCheckpointSave(storage(), s);
+}
+
+/** "Load Last Save"in döneceği yer ve zaman (Defeat ekranı, H4): "Valdren Keep · 12 min ago"; kayıt yoksa sefer başı. */
+export function lastSaveNote(now: number = Date.now()): string {
+  const s = session.state;
+  if (!s) return '';
+  const last = latestSave(storage(), s.slot);
+  if (last && last.campaignId === s.campaignId) return `${last.summary.node} · ${saveAgo(last.savedAt, now)}`;
+  return session.fallback ? 'Start of the journey' : '';
+}
+
 /** Yenilgi: aynı seferin son kaydına (yoksa sefer başına) döner; düğümün deneme sayacı artar. */
 export function loadLastSave(): CampaignState | null {
   const s = session.state;
@@ -121,6 +143,7 @@ export function loadLastSave(): CampaignState | null {
   back.stats.defeats = Math.max(back.stats.defeats, s.stats.defeats) + 1;
   delete back.suspended; // yenilgi duraklatma kaydını siler (kaybedilen savaş yarıdan sürdürülemez; düğümün savaşı baştan)
   delete back.patrol; // kaybedilen devriye kayıttan dönünce başlatılmış kalmaz: takım temizlenmiş düğümde, yola çıkabilir
+  carryCinematics(s, back); // görülen hikâye sinematikleri (ör. Morvane karşılaşması) kayıttan dönünce yeniden oynamaz
   session.attempts.set(s.at, (session.attempts.get(s.at) ?? 0) + 1);
   session.state = back;
   session.notice = entry ? 'Loaded your last save' : 'Back to the start of the journey';
@@ -246,6 +269,8 @@ export function startCampaignBattle(scene: Phaser.Scene): BattlePlan | null {
     enemySize: plan.enemies.filter(Boolean).length,
     // Genel zorluk (yapay zeka): engine-dev AI girdisini hazırlıyor; BattleScene şimdilik yalnızca taşır
     difficulty: plan.difficulty,
+    // Bölge düşman YZ ayarı (valdoria.json regions[].enemyAi; D5)
+    ...(plan.enemyAi ? { enemyAi: plan.enemyAi } : {}),
     // Poz kütüphanesi (yalnızca sunum): kahramanların takılı silahı ekranda çizilen silahı seçer (src/game/poses.ts)
     weapons: { items: partyWeapons(plan.heroOrder, (id) => st.roster.find((h) => h.id === id)?.equipment.weapon, (id) => st.roster.find((h) => h.id === id)?.equipment.offhand) },
     // Level'lar (ad plakasında "Lv N"): düşmanlar düğüm seviyesinde, kahramanlar kendi level'ında
@@ -365,6 +390,7 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
     {
       label: 'Load Last Save',
       primary: true,
+      note: lastSaveNote(), // H4: kaydın yeri ve zamanı düğmenin altında
       run: () => {
         loadLastSave();
         goTo(game, MAP_SCENE);

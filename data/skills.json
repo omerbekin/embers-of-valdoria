@@ -97,11 +97,15 @@
     ]
   },
   "radiance": {
+    "_not": "D11 rework (Ömer 2026-10-23, open-questions 406): tek hücre merkezli artı (plus) alan, İKİ TAHTAYA da atılabilir (area_any). Kendi tarafına: alandaki dostlara anlık şifa (eksik cana göre +%50'ye kadar) + 2 tur Holy Ground (içinde tur başlatan dosta tur başı şifa). Düşman tarafına: alandaki düşmanlara kutsal hasar. Global (menzilsiz). Sayılar eski 'herkese' sürümün toplam gücüne yakın (eski: dost 0,45 + düşman 0,438 herkese).",
     "id": "radiance",
     "name": "Radiance",
     "icon": "radiance",
-    "target": "everyone",
+    "target": "area_any",
     "global": true,
+    "area": {
+      "shape": "plus"
+    },
     "cost": {
       "resource": "mp",
       "amount": 20
@@ -114,19 +118,29 @@
       {
         "type": "heal",
         "scale": "int",
-        "power": 0.45,
-        "missingHpBonus": 0.5
+        "power": 0.4,
+        "missingHpBonus": 0.5,
+        "side": "allies"
+      },
+      {
+        "type": "ground",
+        "ground": "holy_ground",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.15,
+        "side": "allies"
       },
       {
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.438,
-        "element": "holy"
+        "power": 0.6,
+        "element": "holy",
+        "side": "enemies"
       }
     ],
     "skyFx": "light",
-    "skyStagger": 130,
+    "skyCenter": true,
     "sfx": [
       "lightSwell",
       "choirAh"
@@ -2364,8 +2378,11 @@
     "id": "pt_radiance",
     "name": "Radiance",
     "icon": "radiance",
-    "target": "everyone",
+    "target": "area_any",
     "global": true,
+    "area": {
+      "shape": "plus"
+    },
     "cost": {
       "resource": "mp",
       "amount": 0
@@ -2377,18 +2394,28 @@
         "type": "heal",
         "scale": "int",
         "power": 0.02,
-        "missingHpBonus": 0.5
+        "missingHpBonus": 0.5,
+        "side": "allies"
+      },
+      {
+        "type": "ground",
+        "ground": "holy_ground",
+        "turns": 2,
+        "scale": "int",
+        "power": 0.02,
+        "side": "allies"
       },
       {
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
         "power": 0.02,
-        "element": "holy"
+        "element": "holy",
+        "side": "enemies"
       }
     ],
     "skyFx": "light",
-    "skyStagger": 130,
+    "skyCenter": true,
     "sfx": [
       "lightSwell",
       "choirAh"

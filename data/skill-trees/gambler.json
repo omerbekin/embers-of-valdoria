@@ -156,7 +156,7 @@
   "nodes": {
     "0.f1": {
       "name": "Hot Hand",
-      "text": "After a Jackpot, Double or Nothing +1% chance per rank on your next skill.",
+      "text": "After a Jackpot, Double or Nothing +4% chance per rank on your next skill.",
       "src": "A:V3:0.f2",
       "fx": [
         {
@@ -167,7 +167,7 @@
           "do": [
             {
               "buff": {
-                "echoChance": 0.01
+                "echoChance": 0.04
               }
             }
           ]
@@ -176,7 +176,7 @@
     },
     "0.f2": {
       "name": "Cornered Dog",
-      "text": "While below 50% HP, Double or Nothing +1% chance per rank.",
+      "text": "While below 50% HP, Double or Nothing +4% chance per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
@@ -186,7 +186,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "echoChance": 0.01
+            "echoChance": 0.04
           },
           "rank": true
         }
@@ -194,7 +194,7 @@
     },
     "0.f3": {
       "name": "Quick Shuffle",
-      "text": "When Double or Nothing triggers, your next turn comes 3% sooner per rank.",
+      "text": "When Double or Nothing triggers, your next turn comes 4% sooner per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
@@ -204,7 +204,7 @@
           "rank": true,
           "do": [
             {
-              "sooner": 0.03
+              "sooner": 0.04
             }
           ]
         }
@@ -431,7 +431,7 @@
     },
     "1.f1": {
       "name": "Steady Wrist",
-      "text": "Each repeat throw of Loaded Dice deals +3% damage per rank.",
+      "text": "Each repeat throw of Loaded Dice deals +6% damage per rank.",
       "src": "A:V1:1.r*",
       "fx": [
         {
@@ -441,7 +441,7 @@
             "repeatIndexAtLeast": 1
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -449,7 +449,7 @@
     },
     "1.f2": {
       "name": "Red Pips",
-      "text": "Loaded Dice Double Hit chance +1% per rank for every 20% of HP you are missing.",
+      "text": "Loaded Dice Double Hit chance +2% per rank for every 20% of HP you are missing.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -459,7 +459,7 @@
             "missingHp": 0.2
           },
           "mod": {
-            "repeatChance": 0.01
+            "repeatChance": 0.02
           },
           "rank": true
         }
@@ -467,7 +467,7 @@
     },
     "1.f3": {
       "name": "Rolling Dice",
-      "text": "Each Loaded Dice Double Hit adds +1% power per rank to Loaded Dice until one fails to Double Hit.",
+      "text": "Each Loaded Dice Double Hit adds +2% power per rank to Loaded Dice until one fails to Double Hit.",
       "src": "A:V3:1.f2",
       "fx": [
         {
@@ -478,7 +478,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.01
+                "powerMul": 0.02
               },
               "skill": "loaded_dice",
               "stack": true,
@@ -728,7 +728,7 @@
     },
     "2.f3": {
       "name": "Read the Room",
-      "text": "High Stakes +1% Jackpot chance per rank against a target below 50% HP.",
+      "text": "High Stakes +4% Jackpot chance per rank against a target below 50% HP.",
       "src": "B:V1:2.f3",
       "fx": [
         {
@@ -738,7 +738,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "winChance": 0.01
+            "winChance": 0.04
           },
           "rank": true
         }
@@ -969,7 +969,7 @@
     },
     "3.f1": {
       "name": "Sharp Corners",
-      "text": "Card Trick +4% power per rank against Stunned targets.",
+      "text": "Card Trick +6% power per rank against Stunned targets.",
       "src": "B:V4:3.f3",
       "fx": [
         {
@@ -979,7 +979,7 @@
             "targetStatus": "stun"
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -987,7 +987,7 @@
     },
     "3.f2": {
       "name": "Jack of Clubs",
-      "text": "Card Trick +3% power per rank against targets with a status.",
+      "text": "Card Trick +6% power per rank against targets with a status.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -997,7 +997,7 @@
             "targetHasAnyStatus": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }

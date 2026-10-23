@@ -46,7 +46,7 @@ describe('Faz 8: veri ve derleme', () => {
     }
   });
 
-  it('Focused Beam: Radiance kendi biçimini korur + tek düşman biçimi (şifa yok, hasar x2.2)', () => {
+  it('Focused Beam: Radiance kendi biçimini korur + tek düşman biçimi (şifa ve Holy Ground yok, hasar x1.6; D11)', () => {
     const t = only('paladin', PAL_D1)!;
     const set = t.modes!['radiance']!;
     expect(set.keepBase).toBe(true);
@@ -57,13 +57,13 @@ describe('Faz 8: veri ve derleme', () => {
     expect(m.node).toMatch(/4\.d1$/);
     expect(m.skill.id).toBe('radiance');
     expect(m.skill.target).toBe('single_enemy');
-    expect(m.skill.effects.some((e) => e.type === 'heal')).toBe(false);
+    expect(m.skill.effects.some((e) => e.type === 'heal' || e.type === 'ground')).toBe(false);
     const base = content.skills['radiance']!.effects.find((e) => e.type === 'damage') as { power: number };
     const dmg = m.skill.effects.find((e) => e.type === 'damage') as { power: number };
-    expect(dmg.power).toBeCloseTo(base.power * 2.2, 6);
+    expect(dmg.power).toBeCloseTo(base.power * 1.6, 6);
     // kendi skill'i değişmez
     const own = t.skills?.['radiance'] ?? content.skills['radiance']!;
-    expect(own.target).toBe('everyone');
+    expect(own.target).toBe('area_any');
     expect(own.effects.some((e) => e.type === 'heal')).toBe(true);
   });
 
@@ -131,10 +131,10 @@ describe('Faz 8: savaşta biçim', () => {
     const evs = b.log.slice(from);
     expect([...hitBy(evs, me)]).toEqual([E(b, L).uid]);
     expect(ally.hp).toBe(1);
-    expect(b.skill('radiance', me)!.target).toBe('everyone'); // kullanım bitince kendi biçimi
+    expect(b.skill('radiance', me)!.target).toBe('area_any'); // kullanım bitince kendi biçimi
   });
 
-  it('Focused Beam hasarı Radiance tek vuruşunun ~2.2 katı', () => {
+  it('Focused Beam hasarı Radiance tek vuruşunun ~1.6 katı (D11)', () => {
     const run = (mode?: string): number => {
       const b = make({ 0: 'paladin' }, { 0: 'mage' }, withTree(0, only('paladin', PAL_D1)), 5);
       const me = P(b);
@@ -142,14 +142,14 @@ describe('Faz 8: savaşta biçim', () => {
       tough(t);
       ready(me, 'radiance');
       const from = b.log.length;
-      expect(b.useSkill(me.uid, 'radiance', mode ? t.uid : undefined, undefined, undefined, undefined, mode).ok).toBe(true);
+      expect(b.useSkill(me.uid, 'radiance', t.uid, undefined, undefined, undefined, mode).ok).toBe(true);
       return dmgTo(b.log.slice(from), t);
     };
     const base = run();
     const focused = run('focused_beam');
     expect(base).toBeGreaterThan(0);
-    expect(focused / base).toBeGreaterThan(1.9);
-    expect(focused / base).toBeLessThan(2.5);
+    expect(focused / base).toBeGreaterThan(1.4);
+    expect(focused / base).toBeLessThan(1.8);
   });
 
   it('Lance of Dawn: hedefin şeridinde arkadakilere %60, yan şeride değmez; Pillar of Wrath yalnızca hedefin hücresine holy fire', () => {
@@ -189,11 +189,11 @@ describe('Faz 8: savaşta biçim', () => {
     const me = P(b);
     expect(b.setViewMode(me.uid, 'radiance', 'focused_beam')).toBe(true);
     expect(b.skill('radiance', me)!.target).toBe('single_enemy');
-    expect(b.skill('radiance')!.target).toBe('everyone'); // birimsiz sorgu kendi tanımı
+    expect(b.skill('radiance')!.target).toBe('area_any'); // birimsiz sorgu kendi tanımı
     b.setViewMode(me.uid, 'radiance', null);
-    expect(b.skill('radiance', me)!.target).toBe('everyone');
+    expect(b.skill('radiance', me)!.target).toBe('area_any');
     expect(b.withMode(me.uid, 'radiance', 'focused_beam', () => b.skill('radiance', me)!.target)).toBe('single_enemy');
-    expect(b.skill('radiance', me)!.target).toBe('everyone');
+    expect(b.skill('radiance', me)!.target).toBe('area_any');
     expect(b.setViewMode(me.uid, 'radiance', 'bad')).toBe(false);
   });
 

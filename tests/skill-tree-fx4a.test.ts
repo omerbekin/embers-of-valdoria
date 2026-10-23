@@ -81,7 +81,7 @@ describe('Faz 4a: veri ve derleyici', () => {
     expect(trigOf(only('defender', { '2.f3': 4 }), 'defender:2.f3').do[0]!.shield).toBeCloseTo(4 * num('defender', '2.f3', '0.do.0.shield'), 9);
     expect(trigOf(only('mage', { '0.f3': 5 }), 'mage:0.f3').do[0]!.sooner).toBeCloseTo(0.2, 9);
     expect(healOf(only('warrior', { '0.f2': 3 }), 'warrior:0.f2').mul).toBeCloseTo(3 * num('warrior', '0.f2', '0.mul'), 9);
-    expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo(-0.15, 9);
+    expect(healOf(only('defender', { '3.f3': 5 }), 'defender:3.f3').mul).toBeCloseTo(5 * num('defender', '3.f3', '0.mul'), 9);
     const t = trigOf(only('warrior', { '0.n0': 1 }), 'warrior:0.n0');
     expect(t).toMatchObject({ on: 'hpBelow', below: 0.5, once: true, do: [{ status: 'stun', turns: 1, to: 'target' }] });
   });
@@ -242,7 +242,7 @@ describe('Faz 4a: Warrior', () => {
     E(b).hp = E(b).maxHp = 99999;
     P(b).hp = 10;
     const evs = cast(b, P(b), 'whirlwind', E(b));
-    expect(healBy(evs, 'warrior:2.f2')).toBe(procs(b, 'warrior:2.f2') * Math.round(P(b).maxHp * 0.05));
+    expect(healBy(evs, 'warrior:2.f2')).toBe(procs(b, 'warrior:2.f2') * Math.round(P(b).maxHp * 5 * num('warrior', '2.f2', '0.do.0.heal'))); // rank 5 x değer (veriden, D9 2026-10-23)
   });
 });
 
@@ -298,7 +298,7 @@ describe('Faz 4a: Defender', () => {
 
   it('Linked Plates: Close Ranks aktarımı rank başına %3 azalır', () => {
     const b = make({ 0: 'defender' }, { 0: 'mage' }, withTree(0, only('defender', { '3.f3': 4 })));
-    expect(X(b).guardShareCut(P(b), 100, E(b))).toBe(88);
+    expect(X(b).guardShareCut(P(b), 100, E(b))).toBe(Math.round(100 * (1 + 4 * num('defender', '3.f3', '0.mul')))); // değer veriden (D9 2026-10-23)
   });
 
   it('Forge Again: Fist Crush öldürürse cooldown\'u sıfırlanır (turns modu)', () => {
@@ -461,7 +461,7 @@ describe('Faz 4a: öbür sınıflar', () => {
     const b = make({ 0: 'hexer' }, { 0: 'warrior' }, withTree(0, only('hexer', { '3.f3': 3 })));
     expect(b.treeTakenMult(P(b), E(b))).toBe(1);
     E(b).statuses.push({ kind: 'jinxed', turns: 2, source: P(b).uid });
-    expect(b.treeTakenMult(P(b), E(b))).toBeCloseTo(0.91, 9);
+    expect(b.treeTakenMult(P(b), E(b))).toBeCloseTo(1 + 3 * num('hexer', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
   });
 
   it('Woeful Turn: ıskalayan Jinxed düşman sıradaki eylemini kaybeder', () => {
@@ -509,7 +509,8 @@ describe('Faz 4a: öbür sınıflar', () => {
       const b = make({ 0: 'paladin' }, { 0: 'mage', 1: 'mage' }, tree ? withTree(0, tree) : {}, 4);
       E(b).hp = 1;
       E(b, 1).hp = 1;
-      cast(b, P(b), 'radiance');
+      for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0 }); // isabet kesin (D11: zar sırası değişti)
+      cast(b, P(b), 'radiance', E(b)); // D11: artı alan (düşman tarafı) iki düşmanı da kapsar
       expect(E(b).hp + E(b, 1).hp).toBe(0);
       return P(b).mp;
     };
@@ -534,7 +535,7 @@ describe('Faz 4a: öbür sınıflar', () => {
     P(b, 1).mp = 2;
     const before = P(b, 1).mp;
     X(b).trig([P(b)], { on: 'manaOverflow', target: P(b), source: P(b), amount: 1 }, emitOf(b));
-    expect(P(b, 1).mp - before).toBe(3);
+    expect(P(b, 1).mp - before).toBe(3 * num('antimage', '0.f3', '0.do.0.mp')); // değer veriden (D9 2026-10-23)
   });
 
   it('Light Step / Reaper\'s Due: kaçınma 2 MP; ilk öldürme öbür cooldown\'ları sıfırlar (savaşta bir kez)', () => {

@@ -22,4 +22,7 @@
 - **Ultimate - Headsman's Blow (Abyssal Cry'ın yerine):** yakın dövüş tek hedef; bütün Rage'i (en az 30) tek dev balta darbesine harcar. Hasar harcanan Rage ile ve hedefin eksik canıyla büyür: "şimdi 30 Rage ile mi vursam, 50'ye kadar bekleyip kafasını mı alsam?"
 - Görsel/ses şimdilik yer tutucu (Double Strike animasyonu, Warrior'ın balta/zırh sesleri); gerçekleri content-designer yapacak. Sayılar balance-tester'ın.
 
+## Paladin: Radiance (Ömer 2026-10-23, playtest D11; open-questions madde 406)
+- **Ultimate - Radiance:** tek hücre merkezli artı (plus) alan; iki tahtaya da atılır (global, menzilsiz). **Dost tarafına:** alandaki dostlara anlık şifa (eksik cana göre +%50'ye kadar) + o hücrelerde 2 tur **Holy Ground** (içinde tur başlatan dosta tur başı sabit şifa; düşmana etkisi yok). **Düşman tarafına:** aynı alanda kutsal hasar. Sayılar `data/skills.json > radiance`.
+
 Bu dosyadaki tüm sayılar ve rol önerileri Ömer onaylayana kadar **geçicidir**.

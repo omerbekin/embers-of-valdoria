@@ -344,6 +344,8 @@
       "group": "On the Road",
       "title": "Formation",
       "text": "Open Formation to place your heroes. The front row takes the melee blows; keep the frail ones behind.",
+      "focus": ".camp-formation",
+      "place": "bottom",
       "trigger": {
         "screen": "map",
         "after": "4",

@@ -455,7 +455,8 @@ export class CombatantView {
 
   /** Dokunma/tıklama alanı: karakterin tamamı; fare üstüne gelince onOver/onOut çağrılır. */
   makeTappable(onTap: (p?: Phaser.Input.Pointer) => void, onOver?: () => void, onOut?: () => void): void {
-    const zone = this.scene.add.zone(0, -this.h / 2, this.w + 24, this.h + 24).setInteractive();
+    // Vuruş alanı yalnızca gövde (A2, Ömer 2026-10-23): kenar payı yok, yanlardaki boşluk arka sıradaki birime dokunuşu yutmaz
+    const zone = this.scene.add.zone(0, -this.h / 2, this.w * 0.72, this.h).setInteractive();
     zone.on('pointerdown', onTap);
     if (onOver) zone.on('pointerover', onOver);
     if (onOut) zone.on('pointerout', onOut);

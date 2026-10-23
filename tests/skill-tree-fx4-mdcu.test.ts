@@ -87,7 +87,7 @@ describe('Faz 4b (M/D/Cu/U): veri ve derleyici', () => {
     expect(one('undead', { '2.eb': 1, '2.fb': 1 }, '2.eb', '2.fb').do[0]).toMatchObject({ heal: 2, of: 'hpPaid', to: 'bonded' });
     expect(one('undead', { '3.ea': 1, '3.fa': 1 }, '3.ea', '3.fa').do[0]).toMatchObject({ heal: 0.3 });
     // pasif / skill yamaları
-    expect(only('mage', { '0.f1': 3, '0.fb': 1 })!.passive!.effect).toMatchObject({ chance: 0.24 }); // base 0,18 + Resonance 3 x 0,02
+    expect((only('mage', { '0.f1': 3, '0.fb': 1 })!.passive!.effect as { chance: number }).chance).toBeCloseTo(0.18 + 3 * num('mage', '0.f1', '0.v'), 9); // base 0,18 + Resonance 3 x rank değeri (veriden, D9 2026-10-23)
     expect(only('undead', { '3.fa': 1 })!.skills!.dark_bond!.cooldown).toBe(3);
   });
 });
@@ -132,7 +132,7 @@ describe('Faz 4b: Mage', () => {
     cast(b, me, 'mana_barrier', me);
     expect(b.treeTakenMult(me, E(b))).toBe(1); // saldıran Slowed değil
     E(b).statuses.push({ kind: 'slow', turns: 2, source: me.uid });
-    expect(b.treeTakenMult(me, E(b))).toBeCloseTo(0.85, 9);
+    expect(b.treeTakenMult(me, E(b))).toBeCloseTo(1 + 5 * num('mage', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
   });
 
   it('Cauterize: Mana Barrier\'ın sildiği her debuff dosta rank başına maks canın %2\'si şifa', () => {
@@ -445,7 +445,7 @@ describe('Faz 4b: Undead', () => {
     const ally = P(b, 1);
     expect(b.treeTakenMult(ally, E(b))).toBe(1);
     cast(b, P(b), 'dark_bond', ally);
-    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(0.94, 9);
+    expect(b.treeTakenMult(ally, E(b))).toBeCloseTo(1 + 3 * num('undead', '3.f3', '0.mul'), 9); // değer veriden (D9 2026-10-23)
     expect(b.treeTakenMult(P(b), E(b))).toBe(1);
   });
 

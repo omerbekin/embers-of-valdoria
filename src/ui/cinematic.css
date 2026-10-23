@@ -1,0 +1,58 @@
+/* Hikâye sinematiği katmanı (src/ui/cinematic.ts). Şerit = story-dialog (aynı bileşen); burada yalnızca tam ekran sahne görseli, kayma,
+   parçacıklar, kararma ve kapanış kartı. Süreler data/ui-motion.json > cinematic (CSS değişkenleri --cin-*). Arayüzde italik yok. */
+.cin {
+  --u: var(--gu, 1px);
+  position: fixed; inset: 0; z-index: 19; overflow: hidden; background: #050302;
+  opacity: 1; transition: opacity var(--cin-fade, 600ms) ease-in-out;
+}
+.cin.out { opacity: 0; pointer-events: none; }
+.cin-bg { position: absolute; inset: 0; overflow: hidden; }
+.cin-img { position: absolute; inset: 0; background: #050302 center / cover no-repeat; transform: scale(var(--cin-z0, 1.04)); transform-origin: 50% 45%; will-change: transform; }
+.cin-img.pan { animation: cin-pan var(--cin-pan, 22000ms) ease-in-out infinite alternate; }
+@keyframes cin-pan {
+  from { transform: scale(var(--cin-z0, 1.04)) translate(calc(-1 * var(--cin-dx, 1.5%)), 0); }
+  to { transform: scale(var(--cin-z1, 1.12)) translate(var(--cin-dx, 1.5%), calc(-0.5 * var(--cin-dx, 1.5%))); }
+}
+/* hafif kenar kararması: şerit ve yazı her görselde okunur */
+.cin-bg::after { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 40%, transparent 55%, rgba(5, 3, 2, 0.55) 100%); }
+
+/* kül (gri) ve kor (turuncu) parçacıkları: aşağıdan yukarı yavaş süzülür, hafif yalpalar */
+.cin-embers { position: absolute; inset: 0; pointer-events: none; }
+.cin-p { position: absolute; left: var(--x); bottom: -2%; width: var(--s); height: var(--s); border-radius: 50%; background: rgba(196, 186, 170, 0.55); opacity: 0;
+  animation: cin-rise var(--d, 12000ms) linear infinite; animation-delay: var(--dl, 0ms); }
+.cin-p.ember { background: #ffb35a; box-shadow: 0 0 6px rgba(224, 112, 42, 0.85); }
+@keyframes cin-rise {
+  0% { transform: translate(0, 0); opacity: 0; }
+  12% { opacity: 0.8; }
+  70% { opacity: 0.55; }
+  100% { transform: translate(var(--sw, 4vw), -108vh); opacity: 0; }
+}
+
+/* sahne değişimi: siyah perde (açılışta opak) */
+.cin-veil { position: absolute; inset: 0; background: #050302; opacity: 0; pointer-events: none; transition: opacity var(--cin-fade, 600ms) ease-in-out; }
+.cin-veil.on { opacity: 1; }
+
+/* şerit sinematikte: zemin karartması biraz daha yumuşak (görsel görünsün); tıklanabilir alan tüm ekran */
+.sd.sd-cin { cursor: pointer; }
+.sd.sd-cin .sd-scrim { background: linear-gradient(180deg, rgba(5, 3, 2, 0) 45%, rgba(5, 3, 2, 0.55) 100%); }
+
+/* kapanış kartı (morvane_falls endCard): ortada tek cümle, ince altın çizgiler, kutusuz Continue (tek birincil eylem: kor elmas) */
+.cin-end { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; cursor: pointer;
+  background: rgba(5, 3, 2, 0.62); animation: cin-fade var(--cin-end-in, 1000ms) ease-out both; }
+.cin-end-in { display: flex; flex-direction: column; align-items: center; gap: max(12px, calc(28 * var(--u))); width: min(88%, max(560px, calc(1200 * var(--u)))); text-align: center; }
+.cin-end-rule { display: block; width: 60%; height: 1px; background: linear-gradient(90deg, transparent, rgba(217, 178, 106, 0.6), transparent); }
+.cin-end-text { margin: 0; font: 400 max(20px, calc(46 * var(--u))) / 1.3 'EB Garamond', Georgia, 'Palatino Linotype', serif; color: #f4ede1; text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9); }
+.cin-end-go { position: relative; min-height: 44px; padding: 8px 18px 8px max(26px, calc(40 * var(--u))); background: none; border: 0; cursor: pointer;
+  font: 600 max(13px, calc(22 * var(--u))) Cinzel, Georgia, serif; letter-spacing: 0.14em; text-transform: uppercase; color: #e8c47e;
+  transition: color var(--m-card-hover, 170ms) var(--m-ease, ease-out), translate var(--m-card-hover, 170ms) var(--m-ease, ease-out); }
+.cin-end-go::before { content: ''; position: absolute; left: max(8px, calc(12 * var(--u))); top: 50%; width: 9px; height: 9px; margin-top: -5px; transform: rotate(45deg); background: #e0702a; box-shadow: 0 0 6px rgba(224, 112, 42, 0.7); }
+@media (hover: hover) { .cin-end-go:hover { color: #fff6e2; translate: 0 calc(-1 * var(--m-card-lift, 4px)); } }
+@keyframes cin-fade { from { opacity: 0; } to { opacity: 1; } }
+
+/* azaltılmış hareket: kayma ve parçacık yok, geçişler anında */
+.cin.still .cin-img.pan, html.reduced-motion .cin-img.pan { animation: none; }
+.cin.still .cin-veil, .cin.still, html.reduced-motion .cin-veil, html.reduced-motion .cin { transition: none; }
+html.reduced-motion .cin-p, html.reduced-motion .cin-end { animation: none; }
+html.reduced-motion .cin-p { display: none; }
+
+html.short .cin-end-text { font-size: 18px; }

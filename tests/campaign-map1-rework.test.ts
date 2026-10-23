@@ -196,7 +196,7 @@ describe('bölge görünümü (src/game/region-view.ts)', () => {
 
   it('bölgenin düğümleri + komşu bölgenin bağlantı düğümleri (silik); cepler komşu sayılmaz', () => {
     const I = regionSets(map, 'I', all('far'));
-    expect([...I.inside].sort()).toEqual(['1', '2', '3', '4', '5B', 'cairn', 'charcoal', 'hills', 'hoard', 'moor']);
+    expect([...I.inside].sort()).toEqual(['1', '2', '3', '4', '5B', 'cairn', 'charcoal', 'hillcamp', 'hills', 'hoard', 'moor']);
     expect([...I.ghosts]).toEqual(['7']);
     const II = regionSets(map, 'II', all('far'));
     expect([...II.ghosts].sort()).toEqual(['10', '5B', 'charcoal']);

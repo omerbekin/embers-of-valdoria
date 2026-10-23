@@ -251,8 +251,9 @@ describe('skill verisi', () => {
     for (const [key, s] of all) {
       const hurts = s.effects.some((e) => e.type === 'damage' || e.type === 'manaBurn');
       const helps = s.effects.some((e) => e.type === 'heal' || e.type === 'hot' || (e.type === 'shield' && !e.self) || e.type === 'guard' || e.type === 'taunt');
-      if (hurts) expect(['single_enemy', 'all_enemies', 'area_enemies', 'everyone', 'random_enemies'], key).toContain(s.target);
-      if (helps) expect(['single_ally', 'all_allies', 'self', 'everyone'], key).toContain(s.target);
+      // area_any (Smoke Bomb, D11 Radiance): etkiler `side` ile ayrılır (doğrulama: hasar yalnızca enemies, şifa yalnızca allies)
+      if (hurts) expect(['single_enemy', 'all_enemies', 'area_enemies', 'everyone', 'random_enemies', 'area_any'], key).toContain(s.target);
+      if (helps) expect(['single_ally', 'all_allies', 'self', 'everyone', 'area_any'], key).toContain(s.target);
     }
   });
 

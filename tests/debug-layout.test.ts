@@ -139,7 +139,7 @@ describe('debug menüsü: toparlanmış düzen', () => {
     const seen = new Set<string>();
     for (const a of actions.filter((x) => !x.dockOnly)) {
       const key = `${a.tab}|${text(a.label).split(':')[0]}`;
-      if (a.id.startsWith('tweak.speed.') || a.id.startsWith('tweak.damage.') || /^tweak\.(crit|dodge|miss)\./.test(a.id)) continue; // değer düğmeleri
+      if (a.id.startsWith('tweak.speed.') || a.id.startsWith('tweak.damage.') || /^tweak\.(crit|dodge|miss)\./.test(a.id) || a.id.startsWith('campaign.cinematic.')) continue; // değer düğmeleri; "Play cinematic: <id>" ailesi
       expect(seen.has(key), key).toBe(false);
       seen.add(key);
     }

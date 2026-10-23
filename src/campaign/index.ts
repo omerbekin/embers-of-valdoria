@@ -16,3 +16,5 @@ export * from './suspend';
 export * from './xp';
 export * from './tree';
 export * from './smith';
+export * from './cinematics';
+export * from './arrival';

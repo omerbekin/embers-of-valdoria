@@ -145,7 +145,7 @@
     },
     "0.f2": {
       "name": "Spreading Spite",
-      "text": "When Nature's Grudge triggers, each enemy next to the killer has a 4% chance per rank to be gripped too.",
+      "text": "When Nature's Grudge triggers, each enemy next to the killer has a 6% chance per rank to be gripped too.",
       "src": "B:V1:0.f3",
       "fx": [
         {
@@ -157,7 +157,7 @@
             {
               "status": "slow",
               "turns": 3,
-              "chance": 0.04,
+              "chance": 0.06,
               "to": "sourceNeighbors"
             },
             {
@@ -165,7 +165,7 @@
               "turns": 3,
               "power": 0.15,
               "stat": "int",
-              "chance": 0.04,
+              "chance": 0.06,
               "to": "sourceNeighbors"
             }
           ]
@@ -174,7 +174,7 @@
     },
     "0.f3": {
       "name": "Choking Grip",
-      "text": "Withering deals +3% damage per rank on a Slowed enemy.",
+      "text": "Withering deals +6% damage per rank on a Slowed enemy.",
       "src": "B:V1:0.r",
       "fx": [
         {
@@ -185,7 +185,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -389,7 +389,7 @@
     },
     "1.f1": {
       "name": "Hooked Barbs",
-      "text": "Thorn Whip deals +2% damage per rank.",
+      "text": "Thorn Whip deals +4% damage per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -397,14 +397,14 @@
           "sel": "damage",
           "f": "power",
           "op": "pct",
-          "v": 0.02,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "1.f2": {
       "name": "Nettle Sting",
-      "text": "Thorn Whip has +2% critical chance per rank.",
+      "text": "Thorn Whip has +3% critical chance per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
@@ -412,14 +412,14 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Charged Lash",
-      "text": "After you cast an MP skill, your next Thorn Whip deals +3% damage per rank.",
+      "text": "After you cast an MP skill, your next Thorn Whip deals +6% damage per rank.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -429,7 +429,7 @@
             "lastSkillCostMp": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Grasping Earth",
-      "text": "Nature's Wrath has a 4% chance per rank to Slow each enemy hit for 2 turns.",
+      "text": "Nature's Wrath has a 5% chance per rank to Slow each enemy hit for 2 turns.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -640,19 +640,19 @@
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.04
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.08
+              "chance": 0.1
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 2,
-              "chance": 0.12
+              "chance": 0.15
             }
           ]
         }
@@ -703,7 +703,7 @@
     },
     "2.f3": {
       "name": "Pollen Drift",
-      "text": "Enemies hit by Nature's Wrath deal 2% less damage per rank on their next turn.",
+      "text": "Enemies hit by Nature's Wrath deal 3% less damage per rank on their next turn.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -732,7 +732,7 @@
           "rank": true,
           "mod": {
             "statusPotency": {
-              "damageDealtMult": -0.02
+              "damageDealtMult": -0.03
             }
           }
         }
@@ -929,7 +929,7 @@
     },
     "3.f1": {
       "name": "Tender Sap",
-      "text": "Rejuvenate heals +2% per rank.",
+      "text": "Rejuvenate heals +4% per rank.",
       "src": "B:V3:3.f1",
       "fx": [
         {
@@ -937,14 +937,14 @@
           "sel": "heal",
           "f": "power",
           "op": "pct",
-          "v": 0.02,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Long Bloom",
-      "text": "Rejuvenate's regeneration +3% per rank.",
+      "text": "Rejuvenate's regeneration +4% per rank.",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -952,14 +952,14 @@
           "sel": "hot",
           "f": "power",
           "op": "pct",
-          "v": 0.03,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "3.f3": {
       "name": "Soft Hands",
-      "text": "Rejuvenate heals +2% more per rank on an ally below 50% HP.",
+      "text": "Rejuvenate heals +6% more per rank on an ally below 50% HP.",
       "src": "B:V3:3.f3",
       "fx": [
         {
@@ -969,7 +969,7 @@
           "when": {
             "targetHpBelow": 0.5
           },
-          "mul": 0.02,
+          "mul": 0.06,
           "rank": true
         }
       ]

@@ -102,7 +102,7 @@ describe('derleyici: (b) addEffect / replaceEffect / unitFx', () => {
     expect(tree(W, RED_ARC).hooks).toContainEqual({ h: 'cond', node: 'warrior:2.r', skill: 'whirlwind', when: { targetStatus: 'wound' }, mod: { powerMul: 3 * (W.nodes['2.r']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul } });
     expect(tree(D, ['4.l1', '4.l2']).skills!.fist_crush!.cost.cond).toEqual([{ node: 'defender:4.l2', add: -1, scale: { missingHp: 0.1 } }]);
     const c = tree(W, CHARGE_PATH);
-    expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.f3', skill: 'charge', on: 'hit', gain: 4 });
+    expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.f3', skill: 'charge', on: 'hit', gain: 2 * (W.nodes['3.f3']!.fx![0] as unknown as { gain: number }).gain });
     expect(c.hooks).toContainEqual({ h: 'rage', node: 'warrior:3.n0', skill: 'charge', on: 'cast', floor: 30, once: true });
     expect(c.skills!.headsmans_blow!.cost.cond).toEqual([{ node: 'warrior:3.mb', add: -10, after: 'charge' }]);
   });
@@ -236,7 +236,7 @@ describe('motor: bedel koşulları', () => {
 });
 
 describe('motor: C2 Rage kancaları', () => {
-  it('War Gallop: Charge vurunca rank x 2 Rage (ağaçsızdan tam 4 fazla); Roaring Charge: ilk Charge Rage\'i en az 30 yapar, bir kez', () => {
+  it('War Gallop: Charge vurunca rank x değer Rage (aynı ağacın War Gallop\'suz hâlinden tam 2 x değer fazla; değer veriden, D9 2026-10-23); Roaring Charge: ilk Charge Rage\'i en az 30 yapar, bir kez', () => {
     const gallop = tree(W, ['3.f1*3', '3.f2*5', '3.f3*2']);
     const run = (t?: typeof gallop) => {
       const b = make({ 0: 'warrior' }, { 0: 'defender' }, t ? { 0: { tree: t } } : {});
@@ -244,9 +244,9 @@ describe('motor: C2 Rage kancaları', () => {
       cast(b, P0(b).uid, 'charge', E0(b).uid);
       return b;
     };
-    const plain = run();
+    const plain = run(tree(W, ['3.f1*3', '3.f2*5'])); // aynı güç düğümleri: hasardan gelen Rage eşit kalsın
     const g = run(gallop);
-    expect(P0(g).rage! - P0(plain).rage!).toBe(4);
+    expect(P0(g).rage! - P0(plain).rage!).toBe(2 * (W.nodes['3.f3']!.fx![0] as unknown as { gain: number }).gain);
     expect(procs(g, 'warrior:3.f3')).toBe(1);
     const roar = run(tree(W, ['3.f1*3', '3.f2*5', '3.f3*2', '3.n0']));
     expect(P0(roar).rage!).toBeGreaterThanOrEqual(30);

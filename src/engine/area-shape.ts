@@ -206,10 +206,12 @@ export function skillAreaProblem(skill: SkillDef, formation: Pick<ShapeFormation
   const p = areaDefProblem(skill.area, formation);
   if (p) return p;
   if (skill.target === 'area_any') {
-    // İki tahtaya da atılabilen alan: her etki `side` ile hangi tarafa gittiğini söylemeli; hasar/mana yakma yok (dost tahtasına atılınca anlamsız)
+    // İki tahtaya da atılabilen alan: her etki `side` ile hangi tarafa gittiğini söylemeli. Desteklenen: durum (Smoke Bomb), düşmana hasar,
+    // dosta şifa ve zemin (D11 Radiance: zemin yalnızca kendi `side` tarafının tahtasına konur)
     for (const e of skill.effects) {
       if (e.side !== 'allies' && e.side !== 'enemies') return `area_any skill'inde her etkinin side alanı olmalı (allies | enemies): ${e.type}`;
-      if (e.type !== 'status' || e.self) return `area_any skill'inde şimdilik yalnızca status etkisi desteklenir: ${e.type}`;
+      const ok = (e.type === 'status' && !e.self) || (e.type === 'damage' && e.side === 'enemies') || (e.type === 'heal' && e.side === 'allies') || e.type === 'ground';
+      if (!ok) return `area_any skill'inde desteklenmeyen etki: ${e.type} (${e.side})`;
     }
   }
   if (skill.area?.stages) {

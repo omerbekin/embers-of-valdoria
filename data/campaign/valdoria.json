@@ -3,7 +3,7 @@
   "id": "valdoria",
   "title": "VALDORIA",
   "subtitle": "Campaign Map",
-  "blurb": "From Mill Road to Castle Morvane: 33 stops, 6 choice points, 22 stops per run.",
+  "blurb": "From Mill Road to Castle Morvane: 34 stops, 6 choice points, 22 stops per run.",
   "background": "valdoria-bg",
   "backgroundWide": {
     "_not": "Geniş (21:9) harita görseli (Ömer onayı 2026-10-22): kaynak assets/source/maps-1/valdoria-map-v2-wide.png (2193x940; ortası piksel piksel valdoria-map-v2.png, x=260..1931) -> assets/campaign/valdoria-bg-wide.webp (2195x941, valdoria-bg ile aynı dikey ölçek, WebP q86). region = 16:9 haritanın (valdoria-bg, 1672x941) bu görselde kapladığı dikdörtgen [x0, y0, x1, y1] (kesir): x = 261..1933 px, tam yükseklik (piksel karşılaştırmasıyla ölçüldü). Düğüm konumları (pos) değişmez (src/game/wide-map.ts).",
@@ -15,7 +15,7 @@
   "visibility": 2,
   "alwaysVisible": ["12"],
   "regions": [
-    { "id": "I", "title": "I · The Borderlands", "tagline": "From Mill Road over the moors to the Iron Pass", "label": [0.208, 0.449], "battleBackground": "border-road" },
+    { "id": "I", "title": "I · The Borderlands", "tagline": "From Mill Road over the moors to the Iron Pass", "label": [0.208, 0.449], "battleBackground": "border-road", "enemyAi": { "_not": "Playtest 2026-10-23 D5: bölge I düşmanları yaralı / az canlı hedefe daha az yüklenir (ai.json value.pressureShare 0,25 yerine; yalnızca düşman tarafı, zorluğun üstüne). Sayı provizyon, sim ile doğrulanmadı.", "pressureShare": 0.125 } },
     { "id": "II", "title": "II · Valdren Vale", "tagline": "From Valdren Keep through marsh and graves to the bridge", "label": [0.43, 0.352], "battleBackground": "windy-moor" },
     { "id": "III", "title": "III · The Northern Heights", "tagline": "From the Ashen Plain to Morvane's gate", "label": [0.766, 0.327], "battleBackground": "ashen-plain" }
   ],
@@ -35,7 +35,8 @@
     { "id": "hills", "type": "battle", "name": "Brackenridge", "subtitle": "Battle · Hill Bandits", "lore": "Bracken hides the old hill track to Cairn Hill, and the thugs who fled Mill Road wait in it for stragglers.", "region": "I", "pos": [0.2333, 0.4681], "encounter": "brackenridge", "battleBackground": "windy-moor" },
     { "id": "hoard", "type": "treasure", "name": "Raiders' Hoard", "subtitle": "Treasure · Guarded", "lore": "The moor raiders bury their plunder on the western cape and post guards over the cairn that hides it.", "region": "I", "pos": [0.0586, 0.3989], "optional": true, "encounter": "hoard_guards", "treasure": "raiders_hoard", "battleBackground": "windy-moor" },
     { "id": "cairn", "type": "battle", "name": "Cairn Hill", "subtitle": "Battle · Cairn Raiders", "lore": "Old cairns crown this windswept hill, and raiders and ember-priests gather among the stones to watch the roads below.", "region": "I", "pos": [0.1914, 0.3085], "encounter": "cairn_hill", "battleBackground": "windy-moor" },
-    { "id": "5B", "type": "battle", "name": "Iron Pass", "subtitle": "Battle · Ambush", "lore": "A narrow dwarven pass carved through the hills, its old stone guardians still standing watch in the cold.", "region": "I", "label": "above", "pos": [0.2093, 0.1383], "encounter": "iron_pass_ambush", "battleBackground": "iron-pass" },
+    { "id": "hillcamp", "type": "rest", "name": "Hillside Camp", "subtitle": "Rest · Camp", "lore": "A sheltered fold below Cairn Hill where road-weary companies light their fires before the climb north.", "region": "I", "pos": [0.125, 0.29], "optional": true, "rest": true },
+    { "id": "5B", "type": "battle", "name": "Iron Pass", "subtitle": "Battle · Ambush", "lore": "A narrow dwarven pass carved through the hills, its old stone guardians still standing watch in the cold.", "region": "I", "pos": [0.2093, 0.1383], "encounter": "iron_pass_ambush", "battleBackground": "iron-pass" },
     { "id": "charcoal", "type": "battle", "name": "Charcoal Camp", "subtitle": "Battle · Charcoal Burners", "lore": "Smoke never clears over the charcoal camp, where the burners now feed their fires to the Ash Lord's glory.", "region": "I", "pos": [0.2512, 0.2553], "encounter": "charcoal_camp", "battleBackground": "windy-moor" },
     { "id": "7", "type": "town", "name": "Valdren Keep", "subtitle": "City · Rest, Recruits, Trade", "lore": "Valdren Keep still flies the king's banner, though its soldiers stopped waiting for his return long ago.", "region": "II", "label": "above", "pos": [0.2781, 0.367], "recruit": {"offer": 3, "pick": 1, "when": "leave"}, "partyCap": 4, "heal": 1, "city": true, "merchant": true, "merchantSize": 9, "story": "the_wardens_oath",
       "scene": { "background": "town-valdren", "focusY": 0.5, "hotspots": [
@@ -103,6 +104,7 @@
     { "from": "4", "to": "hills", "style": "solid" },
     { "from": "hills", "to": "cairn", "style": "solid" },
     { "from": "moor", "to": "hoard", "style": "dashed" },
+    { "from": "cairn", "to": "hillcamp", "style": "dashed" },
     { "from": "5A", "to": "shrine", "style": "dashed" },
     { "from": "10", "to": "wagons", "style": "dashed" },
     { "from": "road", "to": "hamlet", "style": "solid" },

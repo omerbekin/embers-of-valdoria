@@ -44,7 +44,7 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
   });
 
   it('yer etkileri (zehir, yanan zemin) tanımlı', () => {
-    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
+    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'holy_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
   });
 });
 
@@ -94,7 +94,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
       const c = calm(grid(cells({ 0: 'druid' }), cells({ 0: 'paladin', 2: 'warrior' })));
       if (wounded) c.get('enemy-1')!.statuses.push({ kind: 'wound', turns: 2, source: 'party-0' });
       c.get('enemy-1')!.hp = 10;
-      const ev = act(c, 'enemy-0', 'radiance'); // Paladin Radiance herkesi iyileştirir
+      const ev = act(c, 'enemy-0', 'radiance', 'tile:1'); // Paladin Radiance kendi tahtasına (artı alan 0-1-2-4: iki dost)
       return ofType(ev, 'heal').find((e) => e.target === 'enemy-1')!.amount;
     };
     const normal = heal(false);
@@ -162,14 +162,19 @@ describe('kontrol ve alan skill\'leri', () => {
     expect(hasStatus(b, 'enemy-3', 'slow')).toBe(false);
   });
 
-  it('Radiance herkese etki eder: dostlara şifa, düşmanlara hasar', () => {
-    const b = calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage', 2: 'archer' })));
+  it('Radiance (D11) iki tahtaya atılır: dost tarafı = şifa (hasar yok), düşman tarafı = hasar (şifa yok)', () => {
+    const mk = () => calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage', 2: 'archer' })));
+    const a = mk();
+    a.get('party-1')!.hp = 10;
+    const own = act(a, 'party-0', 'radiance', 'tile:1');
+    expect(ofType(own, 'heal').map((e) => e.target).sort()).toEqual(['party-1']); // yalnızca eksik canı olan dostta şifa olayı
+    expect(ofType(own, 'damage')).toHaveLength(0);
+    const b = mk();
     b.get('party-1')!.hp = 10;
-    const events = act(b, 'party-0', 'radiance');
-    expect(ofType(events, 'heal').map((e) => e.target).sort()).toEqual(['party-1']); // yalnızca eksik canı olan dostta şifa olayı
-    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1']);
-    expect(b.validTargets('party-0', 'radiance')).toHaveLength(4);
-    expect(content.skills.radiance!.target).toBe('everyone');
+    const foe = act(b, 'party-0', 'radiance', undefined, 1); // boş orta hücre: artı alan iki düşmanı da kapsar
+    expect(ofType(foe, 'heal')).toHaveLength(0);
+    expect(ofType(foe, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1']);
+    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'plus' } });
   });
 
   it('Meteor eskisinden çok daha az doğrudan hasar verir ve 2 turluk yanan zemin bırakır', () => {
@@ -342,8 +347,8 @@ describe('sınıf verisi (bu turun düzenlemeleri)', () => {
     expect(b.effectiveStats(b.combatants.find((c) => c.defId === 'archer')!).armor).toBe(content.classes.archer!.stats.armor); // slot 0: çapraz
   });
 
-  it('Radiance ışığı rastgele sırayla, üst üste binerek düşer (skyStagger)', () => {
-    expect(content.skills.radiance).toMatchObject({ motion: 'sky', skyFx: 'light', skyStagger: 130 });
+  it('Radiance ışığı (D11) seçilen alanın merkezine tek sütun olarak iner (skyCenter)', () => {
+    expect(content.skills.radiance).toMatchObject({ motion: 'sky', skyFx: 'light', skyCenter: true });
   });
 });
 

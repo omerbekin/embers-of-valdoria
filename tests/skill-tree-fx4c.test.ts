@@ -774,7 +774,7 @@ describe('Faz 4c: tek tek boşluklar', () => {
         const rep = evs.some((e) => e.type === 'passive' && e.passive === 'gamble_double');
         const buff = me.treeBuffs?.find((x) => x.node === 'gambler:1.f3');
         if (rep && buff) {
-          expect(buff.mod).toEqual({ powerMul: 0.03 });
+          expect(buff.mod!.powerMul).toBeCloseTo(3 * num('gambler', '1.f3', '0.do.0.buff.powerMul'), 9); // değer veriden (D9 2026-10-23)
           grew = true;
         } else if (hit && !rep) {
           expect(buff).toBeUndefined();

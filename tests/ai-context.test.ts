@@ -91,22 +91,24 @@ describe('YZ bağlam: Defender - Fist Crush', () => {
 });
 
 describe('YZ bağlam: Paladin - Radiance / Judgment', () => {
-  it('yaralı bir dost ve düşman varken Radiance seçilir', () => {
+  // D11: Radiance artı alan, iki tahtaya da atılır (dost tarafı = şifa + Holy Ground, düşman tarafı = hasar)
+  it('ağır yaralı dostlar varken Radiance dost tarafına (şifa) atılır', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior', 1: 'mage' });
-    const hurt = b.get('party-1')!;
-    hurt.hp = Math.round(hurt.maxHp * 0.6); // Radiance eşiği (0,7) altında, şifa önceliği (0,55) üstünde: bağlamsal
-    expect(choose(b)).toMatchObject({ skillId: 'radiance' });
+    for (const u of ['party-0', 'party-1']) b.get(u)!.hp = Math.round(b.get(u)!.maxHp * 0.3);
+    expect(choose(b)).toMatchObject({ skillId: 'radiance', board: 'party' });
   });
 
-  it('dostlar sağlamken Radiance seçilmez', () => {
+  it('dostlar sağlamken Radiance dost tarafına atılmaz (atılırsa düşmana)', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior', 1: 'mage' });
-    expect(choose(b)?.skillId).not.toBe('radiance');
+    const c = choose(b);
+    if (c?.skillId === 'radiance') expect(c.board).toBe('enemy');
   });
 
   it('kümelenmiş düşmana (alanda en az 2) Judgment seçilir; tek düşmana seçilmez', () => {
-    const many = mk({ 0: 'paladin', 1: 'warrior' }, ENEMY_FRONT_TRIO);
+    const ult = (b: Battle) => ((b.get('party-0')!.skills = b.get('party-0')!.skills.filter((id) => id !== 'radiance')), b); // ulti yok: Judgment'ı kendi başına sına (test modunda bekleme yok)
+    const many = ult(mk({ 0: 'paladin', 1: 'warrior' }, ENEMY_FRONT_TRIO));
     expect(choose(many)).toMatchObject({ skillId: 'judgment' });
-    const one = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior' });
+    const one = ult(mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior' }));
     expect(choose(one)?.skillId).not.toBe('judgment');
   });
 });

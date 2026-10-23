@@ -53,6 +53,9 @@ import { attachItemInteractions } from './item-drag';
 import { FALLEN_GEAR_SHORT_TEXT, FALLEN_GEAR_TEXT, heroFallen, heroItemLine } from './gear-hover';
 import { respecHeroTree, respecTreeBlocked } from '../campaign';
 import { createTreeTab } from './tree-tab';
+import { treeOf } from '../progression/skill-tree-data';
+import { treePool } from '../progression/skill-tree';
+import { treeSpent } from '../progression/skill-tree-hero';
 
 const el = <K extends keyof HTMLElementTagNameMap>(tag: K, cls = '', text?: string): HTMLElementTagNameMap[K] => {
   const e = document.createElement(tag);
@@ -492,6 +495,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   const finalClose = (): void => {
     if (closing) return;
+    flushPending();
     closing = true;
     window.clearTimeout(toastTimer);
     unmountX();
@@ -508,6 +512,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
   };
   const setTab = (k: 'hero' | 'sheet' | 'tree'): void => {
     if (k === tab) return;
+    flushPending();
     tab = k;
     renderAll();
     swapIn(pageL);
@@ -521,6 +526,9 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       if (closeAsk && overlay.querySelector('.gr-confirm')) {
         closeAsk();
         closeAsk = null;
+      } else if (ix.tipVisible() || treeTab.tipOpen()) {
+        ix.hideTips();
+        treeTab.closeTip(); // Esc önce açık ipucunu kapatır (playtest B4)
       } else if (sel) {
         sel = '';
         renderAll();
@@ -558,6 +566,18 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     }
     renderAll();
   };
+  /** Bekleyen (onaysız) stat puanlarını sessizce onaylar: sekme / kahraman değişince ya da pencere kapanınca puan kaybolmasın (playtest B2). */
+  const flushPending = (): void => {
+    const add = pending;
+    if (!src.allocate || !Object.values(add).some((n) => (n ?? 0) > 0)) return;
+    const h = curHero();
+    pending = {};
+    if (!h) return;
+    apply(() => src.allocate!(h.id, add), () => {
+      uiSound('confirm');
+      showToast('Stat points confirmed.', true);
+    });
+  };
   /** Çift tık / çift dokunuşla çıkarma: kısa toka şakırtısı ('snap'), malzeme sesi yerine (Ömer 2026-10-16). */
   const quickUnequip = (hid: string, slot: SlotId): void => {
     if (fallenId(hid)) return fallenWarn();
@@ -575,7 +595,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const d = inst ? itemDef(inst.id) : undefined;
     if (!h || !inst || !d) return;
     if (heroFallen(h)) return fallenWarn();
-    if (targetHero !== heroId) pending = {};
+    if (targetHero !== heroId) flushPending();
     heroId = targetHero;
     if (!canEquip(h.class, d)) {
       const fam = ITEMS.weaponFamilies.find((f) => f.id === d.family);
@@ -724,7 +744,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
         heroId,
         focus: focusInst(),
         onHero: (id) => {
-          if (id !== heroId) pending = {};
+          if (id !== heroId) flushPending();
           heroId = id;
           renderAll();
         },
@@ -743,6 +763,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       ...(hero && (hero.hpRatio !== undefined || hero.alive === false) ? { hpRatio: hero.alive === false ? 0 : (hero.hpRatio ?? 1) } : {}),
       ...(o.tutorial ? { hint: 'Your escort left their gear for the new company. Drag an item from the bag onto a hero or a slot, or let Equip best choose.' } : {}),
       onHero: (id) => {
+        if (id !== heroId) flushPending();
         heroId = id;
         renderAll();
       },
@@ -825,6 +846,29 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     out.push(all);
     return out;
   };
+  /** Sheet sağ sayfası (ağaç sekmesi kapalıyken): kahramanın mastery özeti, harcanan / toplam puan ve aktif node'lar (playtest B6). */
+  function masterySummary(hero: GearHero | undefined): HTMLElement {
+    const box = el('div', 'gr-tree gr-mastery');
+    if (!hero) return box;
+    const data = treeOf(hero.class);
+    const pool = treePool(hero.level);
+    const used = hero.tree ? treeSpent({ tree: hero.tree }) : 0;
+    box.append(el('div', 'gr-ms-name', data?.mastery.name ?? 'Mastery'));
+    const pts = el('div', 'gr-ms-pts');
+    pts.append(el('b', '', String(used)), document.createTextNode(` / ${pool} points spent`));
+    box.append(pts);
+    const picked = Object.entries(hero.tree?.r ?? {}).filter(([, n]) => n > 0);
+    box.append(el('div', 'gr-ms-cap', `Active nodes · ${picked.length}`));
+    const list = el('div', 'gr-ms-list');
+    if (!picked.length) list.append(el('div', 'gr-ms-none', 'No nodes chosen yet.'));
+    for (const [key, n] of picked) {
+      const row = el('div', 'gr-ms-row');
+      row.append(el('span', '', data?.nodes[key]?.name ?? key), el('i', '', n > 1 ? `x${n}` : ''));
+      list.append(row);
+    }
+    box.append(list);
+    return box;
+  }
   function renderRight(): void {
     if (tab === 'tree' && treeOn) return treeTab.render(leafR);
     if (tab === 'sheet' && !bagOnly) {
@@ -832,9 +876,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       const hero = curHero();
       const hd = el('div', 'gr-sec gr-tree-head', 'Skill tree');
       if ((hero?.skillPoints ?? 0) > 0) hd.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
-      const tree = el('div', 'gr-tree gr-soon');
-      tree.append(el('span', '', 'Coming soon'));
-      leafR.replaceChildren(hd, tree);
+      leafR.replaceChildren(hd, masterySummary(hero));
       return;
     }
     const hero = curHero();
@@ -844,6 +886,7 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
     const inv = renderInventory({
       items: bag,
       size: src.bagSize,
+      ...(bagOnly ? { compactEmpty: { cols: 6, minRows: 2 } } : {}),
       ...(bagOnly ? { usableClasses: src.heroes().map((h) => h.class) } : hero ? { usableClass: hero.class } : {}),
       filter: {
         on: usableOnly,

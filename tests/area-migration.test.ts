@@ -41,7 +41,7 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
-const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
+const ADDED_LATER = ['radiance', 'x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
   for (let R = 1; R <= fm.rows; R++)
@@ -258,12 +258,12 @@ describe('migre edilen alan skill\'leri', () => {
     for (const id of area) expect(id in MIGRATED || content.classes.aoe_tester!.skills.includes(id) || ADDED_LATER.includes(id) || !!content.skills[id]!.artOf, id).toBe(true); // artOf: Pose Tester kopyası
   });
 
-  it('dokunulmayan hedef-seçim türleri: Radiance (everyone), Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu', () => {
+  it('dokunulmayan hedef-seçim türleri: Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu; Radiance 2026-10-23 (D11) iki tahtalı artı', () => {
     expect(content.skills.whirlwind!).toMatchObject({ target: 'area_enemies', area: { shape: 'rect', rows: 2, cols: 3 } });
-    expect(content.skills.radiance!.target).toBe('everyone');
+    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'plus' } });
     expect(content.skills.fist_crush!.target).toBe('random_enemies');
     expect(content.skills.card_trick!.target).toBe('random_enemies');
-    for (const id of ['radiance', 'fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
+    for (const id of ['fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
   });
 
   it('açıklama ve rozet şekilden: Block 2x3 + "Sweeps row by row, front row first" (aşamalı), Cross, Row, Column', () => {

@@ -316,7 +316,7 @@ describe('Faz 4b: Gambler', () => {
       cast(b, me, 'high_stakes', E(b));
       if (me.cooldowns.high_stakes !== undefined) return false; // yankı yok
       expect(me.cooldowns.card_trick).toBe(2);
-      expect(b.speedBoostOf(me.uid)).toBeCloseTo(0.06, 9);
+      expect(b.speedBoostOf(me.uid)).toBeCloseTo(2 * num('gambler', '0.f3', '0.do.0.sooner'), 9); // değer veriden (D9 2026-10-23)
       expect(procs(b, 'gambler:0.n0')).toBe(1);
       return true;
     });

@@ -76,6 +76,8 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-then b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); margin-right: 0.6em; }
 .sbc-then i { font-style: normal; color: rgba(168, 151, 122, 0.7); }
 .sbc-then .k { font: 600 max(9px, calc(13 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-ember2); }
+/* "First" satırı (playtest H3 / H2): varıştaki kadro adımı; Then satırından açık renk, kısa ekranda da görünür */
+.sbc-first { color: var(--g-text); }
 .sbc-note { margin: 0; text-align: right; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim); }
 
 /* üstüne gelince / odakta ipucu: yalnızca CSS */
@@ -88,6 +90,6 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 /* kısa ekran (telefon yatay): sahneye sığsın; bilgi satırı gizlenir */
 html.short .sbc-card { padding: 8px 12px; gap: 5px; }
 html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-spacing: 0.06em; }
-html.short .sbc-card:not(.nofoes) .sbc-info, html.short .sbc-card:not(.nofoes) .sbc-then { display: none; }
+html.short .sbc-card:not(.nofoes) .sbc-info, html.short .sbc-card:not(.nofoes) .sbc-then:not(.sbc-first) { display: none; }
 /* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
 html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }

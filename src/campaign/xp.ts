@@ -48,7 +48,8 @@ export function battleXp(t: CampaignState, outcome: BattleOutcome, encounterId: 
   const heroes = outcome.units.map((u) => t.roster.find((h) => h.id === u.heroId)).filter((h): h is Hero => !!h);
   const kills: KillRecord[] = outcome.kills ?? Array.from({ length: encounterEnemyCount(encounterId) }, () => ({ down: [] }));
   const n = node(getMap(t.mapId), t.at);
-  return splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type), kills });
+  const waves = Math.max(1, encounterWavesById(encounterId).length); // dalga bonusu (D7)
+  return splitXp({ heroes: heroes.map((h) => ({ id: h.id, level: h.level })), nodeLevel: nodeLevel(t.mapId, t.at), mult: nodeXpMult(n.type, LEVELS, true), kills, waves });
 }
 
 /** Savaşsız olay / hazine düğümünün sabit XP'si: fixedEnemies düşmanlık XP x düğüm çarpanı (0,5), aktif takıma bölünür (düşmüşler fallenShare). */

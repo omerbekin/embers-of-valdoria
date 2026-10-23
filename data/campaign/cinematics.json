@@ -1,0 +1,94 @@
+{
+  "_not": "Sefer hikâye sahneleri ve Harita 1 final sinematiği (oyun içi metin İngilizce; Ömer kararları 2026-10-21, form CprM9eeoVef4RYd2VH52Ro; not: docs/design/campaign/cinematics.md). Her anahtar bir sinematik: trigger = nerede tetiklenir (src/campaign/cinematics.ts > dueCinematic okur; görüldü bilgisi kayıtta done listesinde cinematic:<id>, seferde bir kez; oynatıcı src/ui/cinematic.ts), scenes[] = sırayla gösterilen sahneler; her sahnede bg = arka plan anahtarı (border-road / kings-bridge / ember-road / castle-hall var olan savaş arka planları; cin_* = final sinematiğinin yeni görselleri/klipleri, henüz yok), lines[] = oyuncu dokundukça satır satır ilerleyen satırlar. speaker: narrator (anlatıcı), leader (bölük lideri; adı yok, oyunda sınıf adıyla görünür), ya da portre anahtarı (bridge_warden, lord_morvane = boss id + assets/avatars; merchant = Odo, portresi assets/avatars/merchant). Seçenek / likes YOK. endCard = son kapanış kartı (campaign.json > texts.complete ile aynı metin). Hafif ipucu kuralı: Morvane sırrı açmaz; yalnızca tacın kırılmaması ve korlarının parlaması sezdirilir.",
+  "_fallback": { "_not": "Eksik sahne görselinin yedeği (arka plan anahtarı -> başka anahtar). Görsel aranma sırası: assets/cinematics/<bg>.webp, sonra assets/backgrounds/<bg>.webp, ikisi de yoksa buradaki yedek (zincir izlenir). Yeni görsel gelince yalnızca dosya eklenir, kod değişmez.", "cin_lookup": "cin_kneel", "cin_crown": "castle-hall", "cin_plain": "ashen-plain" },
+  "_speakers": { "_not": "Konuşan anahtarı -> görünen ad + portre (assets/avatars/<portrait>.webp). Burada olmayan anahtar: narrator = portresiz, adsız; leader = bölük liderinin sınıf adı + sınıf avatarı; diğerleri boss / mob id (görünen adı ve avatarı oyun verisinden).", "merchant": { "name": "Odo", "portrait": "merchant" } },
+  "prologue": {
+    "trigger": { "on": "campaignStart" },
+    "scenes": [
+      {
+        "bg": "border-road",
+        "lines": [
+          { "speaker": "narrator", "text": "For a year now, grey ash has fallen over Valdoria." },
+          { "speaker": "narrator", "text": "It drifts south from Castle Morvane in the north, and each day the Ash Curse swallows a little more of the land." },
+          { "speaker": "narrator", "text": "Fields wither, the dead stir in their graves, and men in ash masks sing praise to the Ash Lord." },
+          { "speaker": "narrator", "text": "Your road begins on Mill Road, on the western coast. It ends at Morvane's gate." }
+        ]
+      }
+    ]
+  },
+  "bridge_fallen": {
+    "trigger": { "node": "9", "on": "victory" },
+    "scenes": [
+      {
+        "bg": "kings-bridge",
+        "lines": [
+          { "speaker": "narrator", "text": "The last chain snaps. The Bridge Warden sinks to the stones, and the ember in its chest burns low." },
+          { "speaker": "bridge_warden", "text": "None shall cross... until the king returns. Has he come? Has the king come home?" },
+          { "speaker": "leader", "text": "No one is coming. Your watch is over, Warden." },
+          { "speaker": "bridge_warden", "text": "Over... Then go north. The Ember in me always leaned toward the crown." },
+          { "speaker": "narrator", "text": "Its light goes out. What is left of King's Bridge still holds, and the road north lies open." }
+        ]
+      }
+    ]
+  },
+  "forward_camp": {
+    "trigger": { "node": "camp", "on": "firstArrival" },
+    "scenes": [
+      {
+        "bg": "ember-road",
+        "lines": [
+          { "speaker": "narrator", "text": "Below the heights, a few tents huddle around one stubborn fire. A familiar cart stands beside it." },
+          { "speaker": "merchant", "text": "Still breathing, friend? Good. The dead make poor customers." },
+          { "speaker": "merchant", "text": "Deserters came down from the gate last week. They swear the halls are thick with ash, and Morvane's crown never stops burning." },
+          { "speaker": "leader", "text": "Then we will need your best, Odo." },
+          { "speaker": "merchant", "text": "Last stall before the castle, so the prices are honest. Well, honest enough." }
+        ]
+      }
+    ]
+  },
+  "morvane_meets": {
+    "trigger": { "node": "12", "on": "beforeBattle" },
+    "scenes": [
+      {
+        "bg": "castle-hall",
+        "lines": [
+          { "speaker": "narrator", "text": "Ash drifts through the great hall like snow. Beneath a crown of burning iron, Lord Morvane rises from his throne." },
+          { "speaker": "lord_morvane", "text": "You have come a long way through the ash to reach my hall. Few walk so far only to die." },
+          { "speaker": "leader", "text": "We came to end the Ash Curse." },
+          { "speaker": "lord_morvane", "text": "Everything in Valdoria kneels to the ash in the end. So will you." }
+        ]
+      }
+    ]
+  },
+  "morvane_falls": {
+    "trigger": { "node": "12", "on": "victory" },
+    "scenes": [
+      {
+        "bg": "cin_kneel",
+        "lines": [
+          { "speaker": "narrator", "text": "The last blow lands. Lord Morvane sinks to one knee, and the ash in the hall hangs still." }
+        ]
+      },
+      {
+        "bg": "cin_lookup",
+        "lines": [
+          { "speaker": "lord_morvane", "text": "So it ends with strangers. I always thought it would." },
+          { "speaker": "leader", "text": "Your curse ends with you, Morvane." }
+        ]
+      },
+      {
+        "bg": "cin_crown",
+        "lines": [
+          { "speaker": "narrator", "text": "Lord Morvane falls silent. The Crown of Ash rolls across the stones. It does not break. Its embers still glow." }
+        ]
+      },
+      {
+        "bg": "cin_plain",
+        "lines": [
+          { "speaker": "narrator", "text": "Across Valdoria the grey ash stops falling. For the first time in a year, the wind smells of rain." }
+        ]
+      }
+    ],
+    "endCard": "The Ash Curse is broken. Valdoria is free again."
+  }
+}

@@ -65,14 +65,18 @@ function at(target: string, until: string, seed = 4242): CampaignState {
 
 const withLevels = (s: CampaignState, level: number): CampaignState => ({ ...s, roster: s.roster.map((h) => ({ ...h, level, xp: 0, statPoints: 0, alloc: {} })) });
 
-describe('madde 6: sonradan katılan kahraman takım ortalamasının 2 altında', () => {
+// Ömer 2026-10-23 (playtest D12): joinBelow 2 -> 0, yoldaş takımın ortalama level'ında gelir; testler veriden okur
+const JB = LEVELS.joinBelow ?? 2;
+
+describe('madde 6 (+ playtest D12): sonradan katılan kahraman takım ortalamasının joinBelow altında', () => {
   it('joinLevel: aktif takımın ortalaması (aşağı yuvarlanır) - joinBelow, en az L1', () => {
     const s = withLevels(at('7', 'town'), 8);
-    expect(joinLevel(s)).toBe(6);
-    expect(joinLevel(withLevels(s, 2))).toBe(1);
+    expect(LEVELS.joinBelow).toBe(0); // D12: ortalama level
+    expect(joinLevel(s)).toBe(8 - JB);
+    expect(joinLevel(withLevels(s, 2))).toBe(Math.max(1, 2 - JB));
     expect(joinLevel({ roster: [], active: [] })).toBe(1);
     const mixed = { ...s, roster: s.roster.map((h, i) => ({ ...h, level: i === 0 ? 9 : 8 })) };
-    expect(joinLevel(mixed)).toBe(Math.floor(mixed.roster.filter((h) => s.active.includes(h.id)).reduce((a, h) => a + h.level, 0) / mixed.roster.filter((h) => s.active.includes(h.id)).length) - 2);
+    expect(joinLevel(mixed)).toBe(Math.floor(mixed.roster.filter((h) => s.active.includes(h.id)).reduce((a, h) => a + h.level, 0) / mixed.roster.filter((h) => s.active.includes(h.id)).length) - JB);
   });
 
   it('kasabada katılan (recruitInTown): L6, XP 0, stat puanları dağıtılmamış (L6 toplamı), skill puanı level\'dan', () => {
@@ -81,8 +85,8 @@ describe('madde 6: sonradan katılan kahraman takım ortalamasının 2 altında'
     expect(offer.length).toBeGreaterThan(0);
     const t = recruitInTown(s, offer[0]!);
     const h = t.roster.at(-1)!;
-    expect([h.level, h.xp, h.statPoints, h.alloc]).toEqual([6, 0, statPointsAt(6), {}]);
-    expect(h.skillPoints).toBe(5);
+    expect([h.level, h.xp, h.statPoints, h.alloc]).toEqual([8 - JB, 0, statPointsAt(8 - JB), {}]);
+    expect(h.skillPoints).toBe(8 - JB - 1);
     // eski kahramanlar değişmez
     expect(t.roster.slice(0, -1).map((x) => x.level)).toEqual(s.roster.map((x) => x.level));
     // yeni kahraman yoksa durum aynen

@@ -14,6 +14,7 @@ import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 /**
  * Sefer kaydı (campaign.md 5.2-5.3 + madde 256): tarayıcıda tek anahtar, sürümlü JSON. Depolama dışarıdan verilir (tarayıcıda localStorage, testte bellek).
  *  - 3 SEFER YUVASI (`rules.slots`): her yuvada bir sefer (mod + zorluk sabit) ve o seferin KENDİ kayıt listesi.
+ *  - Kasaba işlemlerinden sonra da otomatik (writeCheckpointSave; aynı düğümde tek kayıt, Normal ve Ironman; playtest B1).
  *  - Normal: zafer sonrası otomatik + sefer başında + haritada elle; yuva başına en fazla `maxSaves.normal` (5), yeni gelince en eskisi silinir.
  *  - Ironman: yalnızca zafer sonrası; yuva başına tek kayıt (`maxSaves.ironman` = 1), her kayıt öncekinin üstüne yazar.
  *  - Continue: en son oynanan yuvanın en yeni kaydı.
@@ -451,6 +452,35 @@ export function writePauseSave(kv: KV | null, s: CampaignState, now: string = ne
   slot.lastPlayed = now;
   file.lastSlot = s.slot;
   return write(kv, file);
+}
+
+/**
+ * Kasaba kaydı (Ömer 2026-10-23, playtest B1): kasaba işlemlerinden (alışveriş, katılım, hikâye sonu, Castle Gate) sonra otomatik kayıt;
+ * yenilgide "Load Last Save" kasabadaki ilerlemeyi korur. Yuvanın en yeni kaydı aynı düğümün otomatik kaydıysa (duraklatılmış savaşsız) onun
+ * YERİNE yazılır: kasabadaki her satın alma Normal'in 5 kaydını eritmesin, elle kayıtlar hiç silinmez. Değilse yeni 'auto' kayıt.
+ * Şema değişmez (yeni alan yok).
+ */
+export function writeCheckpointSave(kv: KV | null, s: CampaignState, now: string = new Date().toISOString()): boolean {
+  if (s.slot < 0 || s.slot >= SLOT_COUNT) return false;
+  const { file } = readSaves(kv);
+  const slot = file.slots[s.slot];
+  const last = slot?.campaignId === s.campaignId ? slot.saves.at(-1) : undefined;
+  if (!slot || !last || last.kind !== 'auto' || last.state.suspended || s.suspended || last.state.at !== s.at) return writeSave(kv, s, 'auto', now).ok;
+  slot.saves[slot.saves.length - 1] = { ...last, savedAt: now, summary: summarize(s), state: clone(s) };
+  slot.lastPlayed = now;
+  file.lastSlot = s.slot;
+  return write(kv, file);
+}
+
+/** Kaydın yaşı, oyuncu dili (Defeat ekranı, H4): "just now", "12 min ago", "3 h ago", "2 days ago". */
+export function saveAgo(savedAt: string, now: number = Date.now()): string {
+  const min = Math.floor((now - Date.parse(savedAt)) / 60000);
+  if (!Number.isFinite(min) || min < 1) return 'just now';
+  if (min < 60) return `${min} min ago`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h} h ago`;
+  const d = Math.floor(h / 24);
+  return `${d} ${d === 1 ? 'day' : 'days'} ago`;
 }
 
 /**

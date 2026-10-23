@@ -414,7 +414,9 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       add(`Random effect on each target hit: ${e.options.map((o) => `${defs.statuses?.[o.status]?.name ?? o.status} ${o.turns} turn${o.turns > 1 ? 's' : ''} (${pct(o.weight / total)})`).join(', ')}`);
     } else if (e.type === 'ground') {
       const g = defs.grounds?.[e.ground];
-      add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
+      // D11 (Holy Ground): şifa zemini; area_any'de yalnızca kendi tarafına atılınca kalır
+      if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each ally turn there`);
+      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {
@@ -537,7 +539,7 @@ export function skillNumbers(skill: SkillDef, stats: Stats, formulas: Formulas, 
     else if (e.type === 'hot') num('Heal / turn', raw(e.scale, withMult(e.power, stats.healPowerMult)), 'heal');
     else if (e.type === 'shield') num(e.shieldType === 'magic' ? 'Magic shield' : 'Shield', raw(e.scale, withMult(e.power, stats.shieldPowerMult)), e.shieldType === 'magic' ? 'magicShield' : 'shield');
     else if (e.type === 'manaBurn' && e.onEmpty?.damage) num('Damage at 0 MP', raw(e.onEmpty.damage.scale, withMult(e.onEmpty.damage.power, outgoingDamageMult(stats, e.onEmpty.damage.element))), e.onEmpty.damage.element ?? 'physical');
-    else if (e.type === 'ground') num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.element);
+    else if (e.type === 'ground') num(`${defs.grounds?.[e.ground]?.name ?? 'Ground'} / turn`, raw(e.scale, e.power), defs.grounds?.[e.ground]?.heal ? 'heal' : defs.grounds?.[e.ground]?.element);
     else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
       num(`${def?.name ?? e.status} / turn`, raw(e.scale, withMult(e.power, stats.dotPowerMult)), def?.dot?.element);

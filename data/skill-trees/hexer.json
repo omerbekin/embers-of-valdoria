@@ -141,7 +141,7 @@
   "nodes": {
     "0.f1": {
       "name": "Fresh Host",
-      "text": "Doom on a host of passed Omens deals +2% damage per rank.",
+      "text": "Doom on a host of passed Omens deals +6% damage per rank.",
       "src": "A:V4:0.f2",
       "fx": [
         {
@@ -152,7 +152,7 @@
             "omenFromTransfer": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Grim Arithmetic",
-      "text": "Doom +2% damage per rank against targets below 50% HP.",
+      "text": "Doom +6% damage per rank against targets below 50% HP.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -171,7 +171,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -179,7 +179,7 @@
     },
     "0.f3": {
       "name": "Crooked Stars",
-      "text": "Doom +2% critical chance per rank.",
+      "text": "Doom +3% critical chance per rank.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -187,7 +187,7 @@
           "h": "cond",
           "at": "doom",
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.03
           },
           "rank": true
         }
@@ -375,7 +375,7 @@
     },
     "1.f1": {
       "name": "Prying Eye",
-      "text": "Evil Eye +3% power per rank against enemies with no Omens.",
+      "text": "Evil Eye +6% power per rank against enemies with no Omens.",
       "src": "A:V4:1.f3",
       "fx": [
         {
@@ -388,7 +388,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -411,7 +411,7 @@
     },
     "1.f3": {
       "name": "Envy's Edge",
-      "text": "Evil Eye +3% power per rank against targets with 2 Omens.",
+      "text": "Evil Eye +6% power per rank against targets with 2 Omens.",
       "src": "A:V1:1.f3",
       "fx": [
         {
@@ -424,7 +424,7 @@
             }
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -607,7 +607,7 @@
     },
     "2.f1": {
       "name": "Plague Breath",
-      "text": "Withering Curse +1% power per rank for each enemy it hits.",
+      "text": "Withering Curse +2% power per rank for each enemy it hits.",
       "src": "B:V4:2.f2",
       "fx": [
         {
@@ -617,7 +617,7 @@
             "hitCount": 0
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -625,7 +625,7 @@
     },
     "2.f2": {
       "name": "Fog of Ill Luck",
-      "text": "Withered enemies have -2% accuracy per rank.",
+      "text": "Withered enemies have -3% accuracy per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -634,7 +634,7 @@
           "sel": "status:wither",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.02
+              "accuracyDelta": -0.03
             }
           },
           "rank": true
@@ -643,7 +643,7 @@
     },
     "2.f3": {
       "name": "Leeching Rot",
-      "text": "Wither ticks heal you for 1% of their damage per rank.",
+      "text": "Wither ticks heal you for 4% of their damage per rank.",
       "src": "B:V5:2.f2",
       "fx": [
         {
@@ -652,7 +652,7 @@
           "at": "dot",
           "skill": "*",
           "mod": {
-            "lifesteal": 0.01
+            "lifesteal": 0.04
           },
           "rank": true
         }
@@ -873,7 +873,7 @@
     },
     "3.f2": {
       "name": "Wobbly Aim",
-      "text": "Jinxed lowers accuracy by 2% more per rank (-20% → -30%).",
+      "text": "Jinxed lowers accuracy by 3% more per rank (-20% → -35%).",
       "src": "B:V3:3.f2",
       "fx": [
         {
@@ -882,7 +882,7 @@
           "sel": "status:jinxed",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.02
+              "accuracyDelta": -0.03
             }
           },
           "rank": true
@@ -891,7 +891,7 @@
     },
     "3.f3": {
       "name": "Hex Ward",
-      "text": "While any enemy is Jinxed, you take 3% less damage per rank.",
+      "text": "While any enemy is Jinxed, you take 4% less damage per rank.",
       "src": "B:V5:3.r",
       "fx": [
         {
@@ -901,7 +901,7 @@
           "when": {
             "anyEnemyStatus": "jinxed"
           },
-          "mul": -0.03,
+          "mul": -0.04,
           "rank": true
         }
       ]

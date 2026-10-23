@@ -144,7 +144,7 @@ export class CombatLog {
         return true;
       }
       case 'summon': {
-        const name = e.combatant.name + (e.empowered ? ' (fed)' : e.empowered === false ? ' (unfed)' : '');
+        const name = (e.combatant.displayName ?? e.combatant.name) + (e.empowered ? ' (fed)' : e.empowered === false ? ' (unfed)' : '');
         if (this.cur && this.cur.actor === e.actor) this.cur.notes.push(`${name} rises`);
         else this.line([this.who(e.actor), { t: ` summoned ${name}` }]);
         return true;

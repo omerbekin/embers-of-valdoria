@@ -46,6 +46,11 @@ export function installDebugEntry(game: Phaser.Game, root: HTMLElement): void {
   if (wantsDebugButton(window.location.search)) void loadMenu();
 }
 
+/** Debug etkin mi (menü açıldı ya da adreste ?debug=1)? Yalnızca geliştirici araçlarını (ör. sonuç ekranında Copy match data) göstermek için. */
+export function debugActive(): boolean {
+  return ready || (typeof window !== 'undefined' && wantsDebugButton(window.location.search));
+}
+
 /** Settings > Developer tools ve ana menü: debug menüsünü açar (gerekirse önce indirir). */
 export function openDebugMenu(): void {
   void loadMenu()?.then((m) => m.setOpen(true), () => undefined);

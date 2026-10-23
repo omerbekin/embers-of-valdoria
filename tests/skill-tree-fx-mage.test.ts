@@ -42,9 +42,11 @@ describe('Mage ağacı fx (Faz 2b)', () => {
         for (const ult of ['u', 'r', 'd', 'l'] as const) expect(() => compileTree(T, focusBuild(T, rows, 50, { dir, ult }))).not.toThrow();
   });
 
-  it('Resonance: Spell Echo şansı rank başına +0,02 (pasif yaması)', () => {
+  it('Resonance: Spell Echo şansı rank başına + düğüm değeri (pasif yaması; değer veriden, D9 2026-10-23)', () => {
     const t = tree(['0.f1*3']);
-    expect(t.passive!.effect).toMatchObject({ type: 'spellEcho', chance: 0.31 });
+    const v = (T.nodes['0.f1']!.fx![0] as unknown as { v: number }).v;
+    expect(t.passive!.effect).toMatchObject({ type: 'spellEcho' });
+    expect((t.passive!.effect as { chance: number }).chance).toBeCloseTo(0.25 + 3 * v, 9);
   });
 
   it('First Refrain (bar 5): cooldown\'lu büyünün savaştaki ilk kullanımı kesin yankılanır (cooldown 0 kalır)', () => {

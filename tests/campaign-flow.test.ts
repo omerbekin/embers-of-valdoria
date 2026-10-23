@@ -22,6 +22,6 @@ describe('sefer akışı: ayarlar menüsü ve wiki', () => {
     expect(text).toMatch(/up to 5 saves/);
     expect(text).toMatch(/3 campaign slots/);
     expect(text).toMatch(/Easy, Medium or Hard/);
-    expect(text).toMatch(/33 stops/);
+    expect(text).toMatch(/34 stops/);
   });
 });

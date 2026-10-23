@@ -217,7 +217,7 @@ export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficu
     const actor = battle.currentActor;
     if (!actor) break;
     const late = lateValor && valor ? lateValorChoice(battle, actor.uid, seen) : null;
-    const choice = late ?? chooseAction(battle, actor.uid, content.aiConfig, undefined, { difficulty: actor.side === 'enemy' ? plan.difficulty : player });
+    const choice = late ?? chooseAction(battle, actor.uid, content.aiConfig, undefined, actor.side === 'enemy' ? { difficulty: plan.difficulty, ...(plan.enemyAi ? { value: plan.enemyAi } : {}) } : { difficulty: player });
     if (!battle.applyChoice(actor.uid, choice).ok) break;
   }
   return battle;

@@ -40,11 +40,12 @@ export interface CorpseTip {
  * `blockReason` (reviveBlockReason: 'Corpse was consumed' / 'Cell is taken' ...) yalnızca bir diriltme skill'i seçiliyken (`reviving`) verilir ve
  * hedef seçilemiyorsa nedeni yazar; seçilebiliyorsa 'Click to revive'.
  */
-export function corpseTip(name: string, state: CorpseState, reviving: boolean, blockReason: string | null): CorpseTip {
+export function corpseTip(name: string, state: CorpseState, reviving: boolean, blockReason: string | null, valor?: { cost: number; have: number } | null): CorpseTip {
   const title = `Fallen: ${name} (${state === 'revivable' ? 'can be revived' : 'corpse consumed'})`;
   const rows: CorpseTip['rows'] = [];
   if (reviving) rows.push(blockReason ? { text: blockReason, tone: 'bad' } : { text: 'Click to revive', tone: 'good' });
   else if (state === 'revivable') rows.push({ text: 'A revive skill can bring this unit back; some summons devour it', tone: 'muted' });
+  if (valor && state === 'revivable' && !reviving) rows.push(valor.have >= valor.cost ? { text: `Revive with Valor: ${valor.cost} embers and your turn (you have ${valor.have})`, tone: 'good' } : { text: `Revive with Valor: ${valor.cost} embers (you have ${valor.have})`, tone: 'muted' });
   else rows.push({ text: 'Devoured: it can never be revived', tone: 'muted' });
   return { title, rows };
 }

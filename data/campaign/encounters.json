@@ -99,7 +99,7 @@
     ]
   },
   "mine_wardens": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x0,875 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; 4 kahraman 73 turda ölüm): 2. dalganın iki Pass Crossbowman'i silindi (dalga 2 = yalnız Stonebound Warden; düşman 6 -> 4). 'Elite işaretle + Lv4 hedefle' seçeneği yerine bu: düğüm seviyesi kodda haritadan türüyor (veride düğüm başına level alanı yok) ve düğümü elite türüne çevirmek haritada zorluk işareti olurdu (U6 reddedildi). SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı).",
     "name": "Mine Wardens",
     "units": [
       { "class": "thane_of_the_deep", "slot": 1, "mods": { "hpMult": 1.225, "powerMult": 1.225 } },
@@ -108,9 +108,7 @@
     ],
     "waves": [
       { "units": [
-        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 1.163, "powerMult": 1.163 } },
-        { "class": "bandit_crossbowman", "slot": 6, "name": "Pass Crossbowman", "mods": { "hpMult": 1.163, "powerMult": 1.163 } },
-        { "class": "bandit_crossbowman", "slot": 8, "name": "Pass Crossbowman", "mods": { "hpMult": 1.163, "powerMult": 1.163 } }
+        { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 1.163, "powerMult": 1.163 } }
       ] }
     ]
   },
@@ -299,17 +297,15 @@
     ]
   },
   "charcoal_camp": {
-    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,203 (düğümler aynı zorluğa çekildi).",
+    "_not": "KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): tüm birimlerin can/güç çarpanı x1,203 (düğümler aynı zorluğa çekildi). PLAYTEST 2026-10-23 D2 (Ömer seçti; Lv2 kadro 38 turda tam ölüm, 6 düşman duvar): Shieldwarden (1. dalga, 119 can) kaldırıldı, 2. dalga 3 -> 2 düşman (sol Moor Raider gitti, kalan Raider ortaya, yuva 0 -> 1); düşman 6 -> 4, çarpanlar aynı. SİM ÖLÇÜMÜ BEKLİYOR (Ömer onayı).",
     "name": "Charcoal Burners",
     "units": [
-      { "class": "shieldwarden", "slot": 1, "mods": { "hpMult": 0.902, "powerMult": 0.902 } },
       { "class": "charcoal_burner", "slot": 4, "mods": { "hpMult": 0.902, "powerMult": 0.902 } },
       { "class": "ember_acolyte", "slot": 7, "mods": { "hpMult": 0.902, "powerMult": 0.902 } }
     ],
     "waves": [
       { "units": [
-        { "class": "moor_raider", "slot": 0, "mods": { "hpMult": 0.80, "powerMult": 0.80 } },
-        { "class": "moor_raider", "slot": 2, "mods": { "hpMult": 0.80, "powerMult": 0.80 } },
+        { "class": "moor_raider", "slot": 1, "mods": { "hpMult": 0.80, "powerMult": 0.80 } },
         { "class": "charcoal_burner", "slot": 7, "mods": { "hpMult": 0.80, "powerMult": 0.80 } }
       ] }
     ]

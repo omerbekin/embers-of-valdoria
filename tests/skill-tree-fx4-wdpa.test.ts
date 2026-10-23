@@ -207,7 +207,7 @@ describe('Faz 4b: Paladin', () => {
     const m = r.ally.maxHp;
     expect(plain.lost).toBe(0);
     expect(r.ally.hp - plain.ally.hp).toBeGreaterThan(0);
-    expect(r.lost).toBe(Math.round(m * 0.12));
+    expect(r.lost).toBe(Math.round(m * 3 * num('paladin', '2.f1', '0.v'))); // rank 3 x değer (veriden, D9 2026-10-23)
     expect(r.ally.shield - plain.ally.shield).toBe(Math.round(m * 5 * num('paladin', '2.f2', '0.do.0.shield')) + Math.round(m * num('paladin', '2.fa', '0.do.0.shield')));
     expect(r.ally.statuses.find((s) => s.kind === 'blessed')?.turns).toBe(2);
     expect(r.ally.treeBuffs?.find((x) => x.node === 'paladin:2.ma')).toMatchObject({ mod: { powerMul: num('paladin', '2.ma', '0.do.1.buff.powerMul') }, uses: 1 });
@@ -219,9 +219,9 @@ describe('Faz 4b: Paladin', () => {
     const b = make({ 0: 'paladin' }, { 0: 'mage' }, withTree(0, only('paladin', { '4.l1': 1 })));
     E(b).hp = E(b).maxHp = 99999;
     const me = P(b);
-    cast(b, me, 'radiance');
+    cast(b, me, 'radiance', E(b)); // D11: Radiance alan hedefli (düşman tarafı)
     me.cooldowns.judgment = 3;
-    cast(b, me, 'radiance');
+    cast(b, me, 'radiance', E(b));
     expect(me.cooldowns.judgment).toBeUndefined();
     expect(procs(b, 'paladin:4.l1')).toBe(2);
   });
@@ -237,7 +237,7 @@ describe('Faz 4b: Paladin', () => {
         E(b, 1).hp = 1;
         me.mp = me.maxMp;
         me.cooldowns = {};
-        expect(b.useSkill(me.uid, 'radiance').ok).toBe(true);
+        expect(b.useSkill(me.uid, 'radiance', E(b).uid).ok).toBe(true); // D11: artı alan 0-1-3 iki düşmanı da kapsar
         if (E(b).hp > 0 || E(b, 1).hp > 0) return false;
         out = me.cooldowns.radiance ?? 0;
         return true;

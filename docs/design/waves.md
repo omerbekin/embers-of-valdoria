@@ -51,7 +51,7 @@ seferde `src/campaign/encounter-waves.ts`): karşılaşmanın düşman takımı 
 korumaları; elit / boss / tutorial hariç) 2. dalgası artık `encounters.json > waves` alanında elle yazılı; 1. dalga değişmedi. Kalıplar karışık:
 az güçlü (2-3 birim, çarpan yukarı: Cairn Hill, Misty Marsh, Pilgrim Road, Ashen Plain, Gate of Cinders), çok zayıf (4-5 birim, çarpan aşağı: Windy Moor,
 Grave Field, Siege Line, Riverhead, Witch's Hut), başka tür takviye / rol değişimi (Iron Pass: duvarsız okçu + rün büyücüsü yaylımı; Charcoal Camp: baskıncı
-hücumu; Ember Road: tek atlının arkasında büyücüler; Dwarven Mine: muhafız + arbaletçiler; St. Brann's: büyücü ağırlıklı). Yalnızca bölgenin kendi mobları.
+hücumu (D2 2026-10-23: Shieldwarden kalktı, 2. dalga 2 birim); Ember Road: tek atlının arkasında büyücüler; Dwarven Mine: muhafız + arbaletçiler (playtest 2026-10-23 D2, Ömer seçti: arbaletçiler silindi, 2. dalga tek muhafız; bu kalıbın 2 birim alt sınırına tek istisna); St. Brann's: büyücü ağırlıklı). Yalnızca bölgenin kendi mobları.
 Bütçe (taban can x hpMult x powerMult toplamı) savaş başına eskisinin %±6'sı içinde: az güçlü dalgalar ~%12 fazla, çok zayıf ~%12 az bütçe alır (sayı
 üstünlüğü / odak ateşi farkını dengelemek için). morwen_duel 2. dalgası Morwen'in kopyası olmasın diye yalnızca bataklık yaratıkları (PROVİZYON).
 **Elit savaşlar (Ömer 2026-10-21 onayı):** Black Cathedral ve Thornwood Hollow da elle yazılı takviye aldı; elit kuralı korunur: takviye `units`

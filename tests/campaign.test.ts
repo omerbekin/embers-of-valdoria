@@ -58,18 +58,18 @@ function playTo(s: CampaignState, target: string, choose: (opts: string[]) => st
 }
 
 describe('sefer haritası: graf', () => {
-  it('33 düğüm (Harita 1 yeniden çizim 2026-10-22: 27 eski + 6 yeni), bölgeler 10 / 11 / 12, geçerli bağlantılar, 1 başlangıç ve 1 final', () => {
-    expect(map.nodes).toHaveLength(33);
+  it('34 düğüm (Harita 1 yeniden çizim 2026-10-22: 27 eski + 6 yeni; playtest 2026-10-23 D6: + Hillside Camp cebi), bölgeler 11 / 11 / 12, geçerli bağlantılar, 1 başlangıç ve 1 final', () => {
+    expect(map.nodes).toHaveLength(34);
     expect(validateMap(map)).toEqual([]);
     const per = (r: string) => map.nodes.filter((n) => n.region === r).length;
-    expect([per('I'), per('II'), per('III')]).toEqual([10, 11, 12]);
+    expect([per('I'), per('II'), per('III')]).toEqual([11, 11, 12]);
     // bölge kayması: Windy Moor, Cairn Hill, Iron Pass, Charcoal Camp II -> I; Valdren Keep bölge II'nin kapısı
     for (const id of ['moor', 'cairn', '5B', 'charcoal', 'hills', 'hoard']) expect(node(map, id).region, id).toBe('I');
     expect(node(map, '7').region).toBe('II');
     expect(map.regions.map((r) => r.id)).toEqual(['I', 'II', 'III']);
     expect(map.start).toBe('1');
     expect(map.nodes.filter((n) => n.final).map((n) => n.id)).toEqual(['12']);
-    expect(map.nodes.filter((n) => n.type === 'rest').map((n) => n.name)).toEqual(['Riverside Camp']);
+    expect(map.nodes.filter((n) => n.type === 'rest').map((n) => n.name)).toEqual(['Hillside Camp', 'Riverside Camp']); // D6: Cairn Hill cebi
     expect(map.nodes.filter((n) => n.type === 'merchant').map((n) => n.name)).toEqual(['Forward Camp']);
     expect(node(map, '9').name).toBe("King's Bridge");
     for (const n of map.nodes) {
@@ -95,9 +95,9 @@ describe('sefer haritası: graf', () => {
     }
   });
 
-  it('6 seçim noktası (yeni: Ashford, Ember Road), 4 cep; birleşmeler; kenar stilleri (tüm yollar düz, yalnız cep yolu kesik)', () => {
+  it('6 seçim noktası (yeni: Ashford, Ember Road), 5 cep (D6: Hillside Camp); birleşmeler; kenar stilleri (tüm yollar düz, yalnız cep yolu kesik)', () => {
     expect(choicePoints(map).sort()).toEqual(['10', '4', '7', 'cairn', 'pilgrim', 'road']);
-    expect(pockets(map).sort()).toEqual(['deserters', 'hoard', 'shrine', 'wagons']);
+    expect(pockets(map).sort()).toEqual(['deserters', 'hillcamp', 'hoard', 'shrine', 'wagons']);
     expect(mergePoints(map).sort()).toEqual(['7', 'cairn', 'camp', 'grave', 'head', 'river']);
     for (const e of map.edges) expect(e.style, `${e.from}->${e.to}`).toBe(isPocket(map, e.to) ? 'dashed' : 'solid');
     // cep: tek kenarla bağlı, ileri yolu yok; her bölgede en az bir cep
@@ -155,7 +155,7 @@ describe('ilerleme: seçim noktası, serbest dolaşım, birleşme', () => {
     expect(nextStep(s)).toEqual({ kind: 'move', options: ['cairn', 'hoard'], back: ['4'] }); // Raiders' Hoard: cep
     s = playTo(s, 'cairn');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
-    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal'], back: ['moor', 'hills'] });
+    expect(nextStep(s)).toEqual({ kind: 'move', options: ['5B', 'charcoal', 'hillcamp'], back: ['moor', 'hills'] }); // Hillside Camp: cep (D6)
     s = moveTo(s, 'charcoal');
     while (nextStep(s).kind !== 'move') s = autoResolve(s);
     s = moveTo(s, 'cairn'); // geri

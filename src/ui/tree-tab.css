@@ -3,7 +3,7 @@
 
 /* ---------- ipucu (A Band: band-tip.css .bt) + dokunmatik +/- ---------- */
 .tt-tip { position: absolute; z-index: 60; left: 0; top: 0; pointer-events: none; visibility: hidden; --u: var(--gu, 1px); }
-.tt-tip { max-width: calc(100% - 16px); box-sizing: border-box; overflow-x: hidden; }
+.tt-tip { max-width: calc(100% - 16px); box-sizing: border-box; overflow-x: clip; overflow-y: visible; overflow-clip-margin: 14px; } /* hidden yazınca dikey eksen de auto olup köşe elması yüzünden kaydırma çubuğu çıkarıyordu; clip kaydırma kabı yapmaz */
 .gr-overlay { overflow-x: clip; }
 .tt-tip.show { visibility: visible; }
 .tt-tip.pin { pointer-events: auto; }

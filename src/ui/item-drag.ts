@@ -75,6 +75,8 @@ export interface ItemInteractions {
   /** Yeniden çizimden sonra bırakma hedeflerini yeniden işaretle (sürüklerken). */
   remark(): void;
   hideTips(): void;
+  /** Herhangi bir ipucu (item ya da stat) açık mı; Esc önce ipucunu kapatır (playtest B4). */
+  tipVisible(): boolean;
   /** Kısa süre önce sürükleme / uzun basış / ipucu dokunuşu bitti: o kalkışın tıklaması yok sayılmalı. */
   justEnded(): boolean;
   destroy(): void;
@@ -219,7 +221,16 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       tipFor = null;
     }
   };
-  const tipObserver = new MutationObserver(() => {
+  const tipObserver = new MutationObserver((muts) => {
+    // fareyle gösterilen item ipucunun hücresi yeniden çizimde sökülünce ipucu yapışıp kalmasın (playtest B4)
+    if (itip.shownKey && !itip.pinned && !drag && !muts.every((m) => itip.box.contains(m.target))) {
+      const key = itip.shownKey;
+      const still = Array.from(overlay.querySelectorAll<HTMLElement>('[data-tip]')).some((n) => n.dataset['tip'] === key && n.matches(':hover'));
+      if (!still) {
+        itip.hide();
+        setHover('');
+      }
+    }
     if (!tipSync && tipFor && !tipFor.isConnected) tipSync = requestAnimationFrame(syncTip);
   });
   tipObserver.observe(overlay, { childList: true, subtree: true });
@@ -313,6 +324,15 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
     lastDownType = e.pointerType;
     tap = null;
     clearHintPress();
+    // tıklama = seçim: ipucunun / hücrenin dışına basmak açık ipuçlarını kapatır (playtest B4)
+    if (e.pointerType !== 'touch') {
+      const tg = e.target as HTMLElement;
+      if (itip.shownKey && !itip.box.contains(tg) && !tg.closest('[data-tip]')) {
+        itip.hide();
+        setHover('');
+      }
+      if (tip.classList.contains('on') && !tg.closest(TIP_SEL)) hideTip();
+    }
     if (e.pointerType === 'touch') {
       lastTouchAt = performance.now();
       if (tipFor?.dataset['hint'] !== undefined) hideTip();
@@ -459,6 +479,7 @@ export function attachItemInteractions(h: ItemInteractionHost): ItemInteractions
       hideTip();
       itip.hide();
     },
+    tipVisible: () => !!itip.shownKey || tip.classList.contains('on'),
     justEnded: () => ended || performance.now() < swallowUntil,
     destroy: () => {
       tipObserver.disconnect();

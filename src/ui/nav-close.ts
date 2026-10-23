@@ -4,7 +4,7 @@
  * (src/ui/nav-icons.ts > NAV_BTN, navSvg('close'); CSS style.css > html.close-btn-on). İç içe pencerelerde sayaçla çalışır.
  * Her X'li pencere bunu kullanır (ayrı konum yazılmaz).
  */
-import { navSvg } from './nav-icons';
+import { navSvg, type NavIcon } from './nav-icons';
 
 let open = 0;
 
@@ -26,12 +26,15 @@ const sync = (): void => {
   document.documentElement.classList.toggle('close-btn-on', open > 0);
 };
 
-/** X düğmesini `host` içine ekler; dönen işlev düğmeyi kaldırır (Menu geri gelir). Esc'i pencere kendisi yönetir. */
-export function mountCloseButton(host: HTMLElement, onClose: () => void, label = 'Close'): () => void {
+/**
+ * X düğmesini `host` içine ekler; dönen işlev düğmeyi kaldırır (Menu geri gelir). Esc'i pencere kendisi yönetir. `icon`: aynı yerde başka
+ * yazısız ikon (ör. sinematiğin Skip'i: 'skip').
+ */
+export function mountCloseButton(host: HTMLElement, onClose: () => void, label = 'Close', icon: NavIcon = 'close'): () => void {
   const b = document.createElement('button');
   b.type = 'button';
   b.className = 'nav-btn settings-toggle close-toggle';
-  b.innerHTML = navSvg('close');
+  b.innerHTML = navSvg(icon);
   b.title = label;
   b.setAttribute('aria-label', label);
   b.addEventListener('click', () => onClose());

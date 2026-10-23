@@ -114,7 +114,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
   function cardHtml(c: MwCard): string {
     const logo = miscImage(`class:${c.classId}`)?.url;
     const stat = c.stat ? statImage(c.stat as 'str')?.url : null;
-    const chips = `<div class="cw-chips">${c.role ? `<span class="cw-chip role">${esc(c.role)}</span>` : ''}${c.stat ? `<span class="cw-chip stat">${stat ? `<img src="${stat}" alt="" draggable="false">` : ''}${esc(c.stat.toUpperCase())}</span>` : ''}</div>`;
+    const chips = `<div class="cw-chips">${c.role ? `<span class="cw-chip role" title="${esc(c.role)}">${esc(c.role)}</span>` : ''}${c.stat ? `<span class="cw-chip stat">${stat ? `<img src="${stat}" alt="" draggable="false">` : ''}${esc(c.stat.toUpperCase())}</span>` : ''}</div>`;
     const tut = o.tutorial.has(c.id) ? '<span class="tut"><i></i>Played in the tutorial</span>' : '<span class="tut"></span>';
     return `<button type="button" class="mw-card cw-card" data-id="${esc(c.id)}" style="--i:0;--ac:${c.color};--acl:${lighten(c.color)}"><div class="pt">${bustHtml(c.classId, c.spriteId)}${logo ? `<img class="em" src="${logo}" alt="" draggable="false">` : ''}</div><span class="nm">${esc(c.name)}</span>${chips}${tut}</button>`;
   }

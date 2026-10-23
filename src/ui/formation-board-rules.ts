@@ -61,13 +61,18 @@ export interface BoardMove {
 }
 
 /**
- * Hücreye TIKLAMA / DOKUNMA. Dolu hücre: o kahraman seçilir (aynısına yeniden dokunmak seçimi kaldırır), asla taşıma / takas olmaz.
+ * Hücreye TIKLAMA / DOKUNMA. Dolu hücre: seçili kahraman yokken o kahraman seçilir (aynısına yeniden dokunmak seçimi kaldırır);
+ * seçiliyken BAŞKA kahramanın hücresine dokunmak yer değiştirir (playtest B5; takas motorda moveHero).
  * Boş hücre: seçili kahraman varsa oraya taşınır (seçim kalkar); yoksa hiçbir şey.
  */
 export function tapCell(cells: readonly string[], st: BoardSel, cell: number): { st: BoardSel; move?: BoardMove } {
   if (cell < 0 || cell >= cells.length) return { st };
   const occupant = cells[cell] ?? '';
-  if (occupant) return { st: { ...st, sel: occupant === st.sel ? '' : occupant } };
+  if (occupant) {
+    if (occupant === st.sel) return { st: { ...st, sel: '' } };
+    if (st.sel && cells.includes(st.sel)) return { st: { sel: '', moved: st.sel }, move: { id: st.sel, cell } };
+    return { st: { ...st, sel: occupant } };
+  }
   if (st.sel && cells.includes(st.sel)) return { st: { sel: '', moved: st.sel }, move: { id: st.sel, cell } };
   return { st };
 }

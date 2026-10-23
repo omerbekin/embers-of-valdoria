@@ -150,6 +150,15 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
     timers.push(window.setTimeout(() => !dead && fn(), t));
   };
   let child: (() => void) | null = null;
+  /** "Level up" rozeti yalnızca harcanmamış stat/skill puanı varken yanar (puanlar harcanınca söner; "Lv N" kalır). */
+  const tags: Array<{ heroId: string; tag: HTMLElement; earned: boolean }> = [];
+  const hasFreePoints = (heroId: string): boolean => {
+    const h = o.get().roster.find((x) => x.id === heroId);
+    return !!h && ((h.statPoints ?? 0) > 0 || (h.skillPoints ?? 0) > 0);
+  };
+  const syncTags = (): void => {
+    for (const t of tags) t.tag.classList.toggle('on', t.earned && hasFreePoints(t.heroId));
+  };
   /** Satıra dokunma: o kahramanın karakter (Gear) ekranı üstte açılır; kapanınca ganimet ekranı olduğu gibi kalır. */
   const openHero = (heroId: string): void => {
     if (child || !root) return;
@@ -158,6 +167,7 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       hero: heroId,
       onClose: () => {
         child = null;
+        syncTags();
         api?.rerender();
       },
     });
@@ -197,6 +207,8 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       bar.append(fill);
       const tag = el('span', 'gr-lx-up', 'Level up');
       mid.append(lv, bar, tag);
+      const reg = { heroId: x.heroId ?? '', tag, earned: false };
+      tags.push(reg);
       body.append(top, mid);
       row.append(face, body);
       row.addEventListener('click', () => x.heroId && openHero(x.heroId));
@@ -205,7 +217,10 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       const finish = (): void => {
         lv.textContent = `Lv ${to.level}`;
         fill.style.width = `${Math.round(segs[segs.length - 1]!.to * 100)}%`;
-        if (to.level > from.level) tag.classList.add('on');
+        if (to.level > from.level) {
+          reg.earned = true;
+          syncTags();
+        }
       };
       if (none || ms(mo.fillMs) <= 0 || !fill.animate) return finish();
       let at = ms(mo.startDelayMs) + i * ms(mo.staggerMs);
@@ -219,7 +234,8 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
               lv.textContent = `Lv ${sg.levelAfter}`;
               if (sg.levelAfter > from.level) {
                 row.classList.add('lvup');
-                tag.classList.add('on');
+                reg.earned = true;
+                syncTags();
                 uiSound('confirm');
                 later(() => row.classList.remove('lvup'), ms(mo.levelUpMs));
               }

@@ -178,8 +178,28 @@ function closeCurrent(): void {
   cb?.();
 }
 
+/**
+ * Ders kutusu bekletenler (Ömer 2026-10-23, playtest U3: "ipuçları kuyruğa, aynı anda tek"): ekranda level şeridi ya da tüccar karşılaması
+ * varken sıradaki kutu açılmaz, onlar kapanınca açılır (kısa aralıklarla yeniden bakılır). Zorunlu savaş adımlarını etkilemez (savaşta yoklar).
+ */
+export const LESSON_BLOCKERS = '.lv-banner:not(.out), .mw-welcome:not(.gone)';
+const BLOCK_RETRY_MS = 300;
+let blockTimer = 0;
+
+function blocked(): boolean {
+  return typeof document !== 'undefined' && !!document.querySelector(LESSON_BLOCKERS);
+}
+
 function pump(): void {
   if (current) return;
+  if (queue.length && blocked()) {
+    if (!blockTimer)
+      blockTimer = window.setTimeout(() => {
+        blockTimer = 0;
+        pump();
+      }, BLOCK_RETRY_MS);
+    return;
+  }
   const next = queue.shift();
   if (next) render(next);
 }
@@ -282,6 +302,8 @@ export function lessonBoxOpen(): boolean {
 /** Tüm kutuları kapatır (sahne değişimi, "Don't show again"). Kapanış geri çağrıları çalışmaz. */
 export function closeAllLessons(): void {
   queue.length = 0;
+  if (blockTimer) window.clearTimeout(blockTimer);
+  blockTimer = 0;
   if (current) {
     removeCurrent(current);
     current = null;

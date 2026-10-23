@@ -1356,7 +1356,7 @@ html.short .gr-slot-sub {
   left: 0;
   top: 0;
   z-index: 7;
-  width: max(320px, calc(500 * var(--u)));
+  width: max(288px, calc(450 * var(--u)));
   max-width: none;
   padding: 0;
   background: none;
@@ -1832,7 +1832,7 @@ html.short .gr-slot-sub {
 
 /* kısa ekran (844x390): sol sütun başlık, sağ sütun stat + şart / değer + kahramanlar */
 html.short .item-tip {
-  width: min(660px, 96%);
+  width: min(594px, 96%);
   font-size: 12px;
 }
 
@@ -3673,6 +3673,55 @@ html.short .gr-lvl + .gr-sec {
   font: 600 max(14px, calc(26 * var(--u))) var(--g-disp);
   letter-spacing: 0.3em;
   text-transform: uppercase;
+  color: var(--g-dim);
+}
+
+/* Sheet sağ sayfası: mastery özeti (playtest B6) */
+.gr-mastery {
+  display: flex;
+  flex-direction: column;
+  gap: calc(10 * var(--u));
+  flex: 1 1 auto;
+  min-height: calc(300 * var(--u));
+  padding: calc(20 * var(--u));
+  border: 1px solid rgba(217, 178, 106, 0.16);
+  background: rgba(8, 6, 4, 0.35);
+  overflow: auto;
+}
+.gr-ms-name {
+  font: 600 max(14px, calc(26 * var(--u))) var(--g-disp);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--g-gold);
+}
+.gr-ms-pts {
+  font: 400 max(14px, calc(24 * var(--u))) var(--g-body, 'EB Garamond', serif);
+  color: var(--g-dim);
+}
+.gr-ms-pts b {
+  font-family: var(--g-disp);
+  color: var(--g-text, #f1e4c8);
+}
+.gr-ms-cap {
+  margin-top: calc(8 * var(--u));
+  font: 600 max(11px, calc(16 * var(--u))) var(--g-disp);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--g-dim);
+}
+.gr-ms-row {
+  display: flex;
+  justify-content: space-between;
+  padding: calc(4 * var(--u)) 0;
+  border-bottom: 1px solid rgba(217, 178, 106, 0.1);
+  font: 400 max(14px, calc(22 * var(--u))) var(--g-body, 'EB Garamond', serif);
+}
+.gr-ms-row i {
+  font-style: normal;
+  color: var(--g-gold);
+}
+.gr-ms-none {
+  font: 400 max(14px, calc(22 * var(--u))) var(--g-body, 'EB Garamond', serif);
   color: var(--g-dim);
 }
 

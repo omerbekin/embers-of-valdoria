@@ -196,12 +196,18 @@ describe('önizleme: şifa, kalkan, tur bazlı şifa, mana yakma, durumlar', () 
     expect(previewSkill(testBattle(), PALADIN, 'lay_on_hands', WARRIOR)[0]!.heal!.avg).toBe(0);
   });
 
-  it('Radiance herkese etki eder: her canlı dosta şifa, her canlı düşmana hasar önizlemesi', () => {
-    const p = previewSkill(testBattle(), PALADIN, 'radiance');
-    expect(p.filter((x) => x.heal)).toHaveLength(4);
-    expect(p.filter((x) => x.damage)).toHaveLength(4);
-    expect(p.filter((x) => x.heal).every((x) => x.uid.startsWith('party'))).toBe(true);
-    expect(p.filter((x) => x.damage).every((x) => x.uid.startsWith('enemy'))).toBe(true);
+  it('Radiance (D11): dost alanında şifa + Holy Ground (hot) önizlemesi, düşman alanında yalnızca hasar', () => {
+    const b = testBattle();
+    for (const c of b.living('party')) c.hp = Math.round(c.maxHp / 2);
+    const own = previewSkill(b, PALADIN, 'radiance', WARRIOR);
+    const cells = b.areaCells('radiance', b.get(WARRIOR)!.slot, 'party', PALADIN);
+    const inArea = b.living('party').filter((c) => cells.includes(c.slot)).map((c) => c.uid).sort();
+    expect(own.filter((x) => x.heal).map((x) => x.uid).sort()).toEqual(inArea);
+    expect(own.filter((x) => x.hot && x.hot.perTurn > 0).map((x) => x.uid).sort()).toEqual(inArea); // Holy Ground tur başı şifa
+    expect(own.filter((x) => x.damage)).toHaveLength(0);
+    const foe = previewSkill(b, PALADIN, 'radiance', E_WARRIOR);
+    expect(foe.filter((x) => x.damage).length).toBeGreaterThan(0);
+    expect(foe.every((x) => x.uid.startsWith('enemy') && !x.heal && !x.hot)).toBe(true);
   });
 
   it('kalkan önizlemesi gerçek kalkanla birebir aynı (kritik uygulanmaz); büyü kalkanı işaretlenir', () => {
@@ -276,7 +282,7 @@ describe('skill açıklaması (tooltip)', () => {
     expect(info('power_strike')).toMatchObject({ name: 'Power Strike', target: 'One enemy', cost: '10 MP', cooldown: '2 turns' });
     expect(info('whirlwind').target).toContain('2x3'); // Whirlwind rect 2x3 (Ömer 2026-10-20)
     expect(info('lay_on_hands').target).toBe('One ally');
-    expect(info('radiance').target).toBe('Everyone');
+    expect(info('radiance').target).toContain('cross'); // D11: iki tahtalı artı alan
     expect(info('shield_wall').target).toBe('Self');
     expect(info('melee_attack')).toMatchObject({ cost: 'Free', cooldown: 'None' });
     expect(info('blood_rite').cost).toBe('20 HP');

@@ -56,12 +56,12 @@ describe('Warrior ağacı fx (Faz 2b)', () => {
     expect(procs(b, 'warrior:1.eb')).toBe(1);
   });
 
-  it('Rolling Start: henüz eylem yapmamış hedefe Charge önizlemesi %9 yüksek (rank 3)', () => {
+  it('Rolling Start: henüz eylem yapmamış hedefe Charge önizlemesi rank x değer kadar yüksek (rank 3; değer veriden, D9 2026-10-23)', () => {
     const avg = (withTree: boolean) => {
       const b = make({ 0: 'warrior' }, { 0: 'archer' }, withTree ? { 0: { tree: tree(['3.f1*3']) } } : {});
       return previewSkill(b, P0(b).uid, 'charge', E0(b).uid).find((x) => x.uid === E0(b).uid)!.damage!.avg;
     };
-    expect(avg(true) / avg(false)).toBeCloseTo(1.09, 1);
+    expect(avg(true) / avg(false)).toBeCloseTo(1 + 3 * (W.nodes['3.f1']!.fx![0] as unknown as { mod: { powerMul: number } }).mod.powerMul, 1);
     expect(avg(true)).toBeGreaterThan(avg(false));
   });
 

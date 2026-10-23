@@ -40,10 +40,10 @@
 .cw-slot .cw-card .pt { flex: none; }
 .cw-card .nm { height: calc(36 * var(--u)); line-height: calc(36 * var(--u)); flex: none; white-space: nowrap; font-size: max(13px, calc(26 * var(--u))); }
 /* etiketler HER ZAMAN tek satır; rol çipi yalnız son çare olarak üç noktayla kısalır */
-.cw-card .cw-chips { display: flex; flex-wrap: nowrap; justify-content: center; align-items: center; gap: calc(5 * var(--u)); height: calc(32 * var(--u)); flex: none; max-width: 100%; padding: 0 calc(8 * var(--u)); box-sizing: border-box; }
+.cw-card .cw-chips { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: calc(5 * var(--u)); min-height: calc(32 * var(--u)); flex: none; max-width: 100%; padding: 0 calc(8 * var(--u)); box-sizing: border-box; }
 .cw-chip { display: inline-flex; align-items: center; gap: .35em; min-width: 0; height: calc(30 * var(--u)); padding: 0 .55em; box-sizing: border-box; white-space: nowrap;
   font: 600 max(8px, calc(15 * var(--u))) var(--g-disp); letter-spacing: .03em; text-transform: uppercase; background: rgba(12,9,6,.72); border: 1px solid var(--g-line2); color: var(--g-text); }
-.cw-chip.role { flex: 0 1 auto; color: #cdb88d; overflow: hidden; text-overflow: ellipsis; display: block; line-height: calc(28 * var(--u)); }
+.cw-chip.role { flex: 0 1 auto; color: #cdb88d; display: block; line-height: calc(28 * var(--u)); } /* kesilmez: sığmazsa stat çipi alt satıra iner (playtest N1: "NATURE SU…") */
 .cw-chip.stat { flex: none; color: #f3d999; border-color: rgba(243,217,153,.5); background: rgba(243,217,153,.08); }
 .cw-chip img { width: 1.4em; height: 1.4em; object-fit: contain; }
 .cw-card .tut { display: flex; align-items: center; justify-content: center; gap: 8px; height: calc(24 * var(--u)); flex: none; font: 400 max(10px, calc(17 * var(--u))) / 1.2 var(--g-body); color: var(--g-dim); padding: 0 10px; }

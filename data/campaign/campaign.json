@@ -50,6 +50,7 @@
   "recruitPool": ["warrior", "defender", "archer", "cutthroat", "mage", "druid", "paladin", "undead", "antimage", "gambler", "hexer"],
   "texts": {
     "intro": "The Ash Curse spreading from Castle Morvane in the north swallows a little more of Valdoria each day. Your journey begins on Mill Road, on the western coast, and ends at Morvane's gate. Each stop is an encounter. Until Ashford the road runs one way. After that, you can walk back along any road you have opened.",
+    "introRules": "Each stop is an encounter. Until Ashford the road runs one way. After that, you can walk back along any road you have opened.",
     "farewell": "Your escort has brought word of the Ash Curse to Ashford. They stay behind to hold the village. A new company must carry the fight north.",
     "volunteer": "A volunteer catches up with you at the city gate.",
     "recruitBefore": "A wanderer on the road offers to join you. Choose one companion.",
@@ -57,8 +58,15 @@
     "townRest": "Your first arrival in a town is a free rest: the living are back to full health and their wounds are healed. Later visits pay to rest by the fire. The fallen stay down: only Valor can raise them.",
     "townRested": "Your company has rested: the living are back to full health and their wounds are healed. The fallen stay down: only Valor can raise them.",
     "townRecruit": "Fighters at the barracks offer their swords. Choose one companion, or come back before you leave.",
-    "complete": "The Ash Curse is broken. Valdoria is free again."
+    "complete": "The Ash Curse is broken. Valdoria is free again.",
+    "stepRecruit": "A wanderer offers to join you: choose one companion.",
+    "stepFarewell": "Your escort stays behind here. Their levels and spent points leave with them; their gear goes into your bag.",
+    "stepCompany": "Form your company.",
+    "tutorialCompany": "Temporary company",
+    "victoryRecovery": "After the victory the living recover {pct}% health.",
+    "victoryRecoveryFull": "After the victory the living are fully healed."
   },
+  "_arrivalTexts": "Playtest 2026-10-23 seçimleri (src/campaign/arrival.ts): H3 düğüm kartının 'First' satırı (varışta savaştan / kasabadan önce gelen kadro adımları; kart düğmesi 'Continue'), H2 tutorial kadrosu uyarısı (stepFarewell, Ashford kartı) ve harita sütunu başlığı (tutorialCompany), D6 zafer toparlanması notu ({pct} = rules.victoryHeal / eliteVictoryHeal; tam şifada victoryRecoveryFull).",
   "_tips": "Eski düğüm ipuçları (Tip kartı) 2026-10-13'te mentor derslerine taşındı: data/tutorial.json (turn_bar, rows_reach, roads...). Mekanizma duruyor; boş bırakıldı.",
   "tips": {},
   "replay": {

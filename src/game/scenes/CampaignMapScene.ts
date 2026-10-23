@@ -34,6 +34,9 @@ import {
   hasUnsavedProgress,
   isAreaClass,
   leaderOf,
+  dueCinematic,
+  cinematicSeen,
+  markCinematicSeen,
   markTipSeen,
   moveHero,
   pausedLock,
@@ -48,6 +51,7 @@ import {
   mainOutgoing,
   pendingTip,
   pickHero,
+  skipTutorial,
   recruit,
   recruitHoldsBattle,
   formationGate,
@@ -90,6 +94,11 @@ import {
   valorReviveBlocked,
   rulesFor,
   type Hero,
+  arrivalStepLines,
+  joinLevel,
+  temporaryCompany,
+  victoryRecovery,
+  victoryRecoveryNote,
 } from '../../campaign';
 import { instanceRarity } from '../../progression/items';
 import { dueScreenLessons, type LessonScreen } from '../../tutorial/lessons';
@@ -108,6 +117,7 @@ import { placeArt } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
+import { playCinematic, type CinematicHandle } from '../../ui/cinematic';
 import { openCompanyWindow, type CompanyHandle } from '../../ui/company-window';
 import { choiceStyle, openMapWindow, windowArt, type MwCard, type MwHandle, type MwSpec } from '../../ui/map-window';
 import { choiceChips, nodeTags, paragraphs, resultChips } from '../../ui/map-window-data';
@@ -116,7 +126,7 @@ import { H, W, crown, hpBar, openModal, woundPips, woundScar, type Modal } from 
 import { woundCount, woundHpFactor, woundTipData } from '../../progression/wounds';
 import { heroPanel } from '../../progression/item-text';
 import { motion } from '../../ui/motion';
-import { MAP_SCENE, MENU_SCENE, checkPaused, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
+import { MAP_SCENE, MENU_SCENE, checkPaused, checkpoint, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
 import { classAvatar, classLogoBadge, ensureGlow } from '../menu-ui';
 import { bandTip } from '../band-tip';
 import { sortByPrimary } from '../class-order';
@@ -132,7 +142,7 @@ import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
-import { REGION_VIEW, boundsMid, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionBounds, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
+import { REGION_VIEW, boundsMid, hudFrame, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionBounds, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
@@ -185,6 +195,8 @@ const COL_K = 1.45;
 const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company'];
 
 type Pt = { x: number; y: number };
+/** Zafer toparlanması notu için son görülen zafer sayısı (seferin seed'i ile; oturum belleği, kayda girmez). */
+let recoverySeen: { seed: number; wins: number } | null = null;
 /** Yürüyüşte seçilen düğüm; `action` = varışta yapılacak iş (devriye / kasabaya yeniden giriş), yoksa düğümün adımı. */
 type Arrival = { node: string; requested: boolean; action?: () => void };
 
@@ -246,6 +258,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private caravan: MapTraveller[] = [];
   private walking: { finish: () => void } | null = null;
   private modal: Modal | null = null;
+  /** Bu sahnede Morvane final sinematiğinin kapanış kartı gösterildi: "Valdoria Conquered" penceresi aynı cümleyi (texts.complete) tekrar etmez. */
+  private endCardShown = false;
   /** Menu > Load: bu yuvanın kayıt listesi (src/game/campaign-slots-ui.ts "Column"). */
   private slotBrowser: SlotBrowser | null = null;
   /** Kahraman paneli ya da Formation penceresi açık (Menu düğmesi gizlenir; pencerenin kendi Close / Done'ı yeter). */
@@ -819,7 +833,9 @@ export class CampaignMapScene extends Phaser.Scene {
     // dinlenen lider (ve flaması) hiçbir ad etiketini örtmesin: etiketler onun kutusundan kaçınır
     if (this.s.at && vis[this.s.at] === 'current') {
       const lp = this.P(this.s.at);
-      placed.push({ x0: lp.x + TRAV_REST.x - 46, y0: lp.y + TRAV_REST.y - 100, x1: lp.x + TRAV_REST.x + 40, y1: lp.y + TRAV_REST.y + 8 });
+      // playtest U1 (Ömer 2026-10-23, Ashford etiketi liderin üstüne biniyordu): kutu flamayı da kapsar (direk ~154 birim yukarı, bez elin
+      // önünde ~61 birim; lider dönünce bez öbür yana geçer, iki yan da)
+      placed.push({ x0: lp.x + TRAV_REST.x - 64, y0: lp.y + TRAV_REST.y - 158, x1: lp.x + TRAV_REST.x + 64, y1: lp.y + TRAV_REST.y + 8 });
     }
     const area = (a: Box, b: Box) => Math.max(0, Math.min(a.x1, b.x1) - Math.max(a.x0, b.x0)) * Math.max(0, Math.min(a.y1, b.y1) - Math.max(a.y0, b.y0));
     const at = (side: Side, R: number, w: number, h: number) => ({
@@ -1313,7 +1329,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Kamera ortasını ayarlar (çerçeveye kısılır). */
   private setMid(p: Pt): void {
-    this.mid = clampMid(p, this.frame, this.viewSize());
+    this.mid = clampMid(p, this.panFrame(), this.viewSize());
     this.cameras.main.centerOn(this.mid.x, this.mid.y);
   }
 
@@ -1321,7 +1337,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private panBy(dx: number, dy: number): void {
     const base = this.panTween?.isPlaying() && this.panTarget ? this.panTarget : this.mid;
     const from = { ...this.mid };
-    const to = clampMid({ x: base.x + dx, y: base.y + dy }, this.frame, this.viewSize());
+    const to = clampMid({ x: base.x + dx, y: base.y + dy }, this.panFrame(), this.viewSize());
     this.panTarget = to;
     this.panTween?.stop();
     const o = { t: 0 };
@@ -1349,7 +1365,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const apply = (zz: number) => {
       this.mapZoom = zz;
       cam.setZoom(this.camZoom());
-      this.mid = zoomTowardMid({ x: world.x, y: world.y }, off, this.camZoom(), this.frame, this.viewSize());
+      this.mid = zoomTowardMid({ x: world.x, y: world.y }, off, this.camZoom(), this.panFrame(), this.viewSize());
       cam.centerOn(this.mid.x, this.mid.y);
     };
     this.zoomTween?.stop();
@@ -1377,7 +1393,15 @@ export class CampaignMapScene extends Phaser.Scene {
   private regionTarget(region: string | null): { z: number; mid: Pt | null } {
     if (!region) return { z: regionZoom(this.frame, this.view1(), this.frame, 1), mid: { x: W / 2, y: H / 2 } };
     const b = regionBounds(this.map, region, (id) => this.P(id));
-    return { z: regionZoom(b, this.view1(), this.frame), mid: boundsMid(b) };
+    const z = regionZoom(b, this.view1(), this.frame);
+    // playtest U1: düğümler üst HUD bandının altına otursun (orta, bandın yarısı kadar yukarı; panFrame izin verir)
+    const mid = boundsMid(b);
+    return { z, mid: { x: mid.x, y: mid.y - REGION_VIEW.hudTop / (2 * z * this.regionMapZoom()) } };
+  }
+
+  /** Kaydırma çerçevesi: bölge görünümünde üst kenar HUD bandı kadar uzar (src/game/region-view.ts > hudFrame; playtest U1). */
+  private panFrame(): Bounds {
+    return hudFrame(this.frame, this.focus, this.baseZoom * this.mapZoom);
   }
 
   /** Bölgeye girerken oyuncu yakınlaştırmasının başlangıcı (telefonda biraz yakın; create ile aynı). Uzak görünümde hep MAP_ZOOM.min. */
@@ -1844,7 +1868,10 @@ export class CampaignMapScene extends Phaser.Scene {
     this.hud.add(col);
     const MUTE_LINE = 0.2;
     // başlık + tek not
-    col.add(elText(this, 0, 0, 'Your party', 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5));
+    // Tutorial kadrosu (playtest H2, Ömer 2026-10-23): "Temporary company" (Ashford'da veda edecekler; puan harcamak serbest kalır)
+    const head = elText(this, 0, 0, temporaryCompany(s) ? (CONFIG.texts['tutorialCompany'] ?? 'Your party') : 'Your party', 14, 'rgba(217,178,106,0.85)', { em: 0.22 }).setOrigin(0, 0.5);
+    col.add(head);
+    let headRoom = w;
     const pts = (h: (typeof team)[number]) => (isFallen(h) ? 0 : (h.statPoints ?? 0));
     const unspent = team.map(pts).filter((n) => n > 0);
     if (unspent.length) {
@@ -1857,7 +1884,9 @@ export class CampaignMapScene extends Phaser.Scene {
       chip.fillStyle(EL.EMBER, 1).fillPoints([new Phaser.Math.Vector2(w - cw + 14, -5), new Phaser.Math.Vector2(w - cw + 19, 0), new Phaser.Math.Vector2(w - cw + 14, 5), new Phaser.Math.Vector2(w - cw + 9, 0)], true);
       t.setPosition(w - cw + 28, 0);
       col.add([chip, t]);
+      headRoom = w - cw - 10;
     }
+    fitW(head, headRoom); // uzun başlık ("Temporary company") puan çipiyle çakışmasın
     team.forEach((h, i) => {
       const def = content.classes[h.class];
       if (!def) return;
@@ -2089,6 +2118,7 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
+      ...this.firstSteps(id),
       preview: true,
       ...(unreachable ? { note: 'Not reachable yet' } : {}),
       anchor: () => this.nodeCssPoint(id, root),
@@ -2327,6 +2357,7 @@ export class CampaignMapScene extends Phaser.Scene {
         if (why) return why;
         this.update2(reviveWithValor(this.s, id));
         rememberShown('valor', this.s.valor ?? 0);
+        this.townSave();
         return null;
       },
       onClose: () => this.refresh(false),
@@ -2380,6 +2411,7 @@ export class CampaignMapScene extends Phaser.Scene {
         dismissLesson('gear'); // Gear dersleri Gear ekranıyla kapanır (haritada kalıp Farewell'in Continue düğmesini örtüyordu)
         dismissLesson('item_quality');
         this.renderHud();
+        this.townSave(); // kasabada takılan / satılan eşyalar kayda girsin (B1)
         after?.();
       },
     });
@@ -2417,22 +2449,27 @@ export class CampaignMapScene extends Phaser.Scene {
       return true;
     }
     // Level atlama (Ömer 2026-10-18): açılır pencere yok; kısa şerit + Gear düğmesi / kahraman yer imi parlar (puan harcanana dek)
-    if (s.levelUps?.length) {
-      const ups = s.levelUps;
-      showLevelBanner(
-        root,
-        ups.map((u) => {
-          const hero = s.roster.find((h) => h.id === u.heroId);
-          return {
-            name: content.classes[hero?.class ?? '']?.name ?? 'A hero',
-            to: u.to,
-            gained: u.to - u.from,
-            points: statPointsBetween(u.from, u.to),
-            healed: !!hero && !isFallen(hero),
-          };
-        }),
-      );
-      setState(acknowledgeLevelUps(this.s));
+    // Zafer toparlanması (playtest D6, Ömer 2026-10-23): zafer şifası (rules.victoryHeal / elit / boss) eskiden sessizdi; zafer sayısı arttıysa
+    // haritaya dönüşte şeridin ikinci satırında yazar (oran veriden). Yeni yüklenen / başka seferde yazmaz.
+    const recovery = this.takeRecoveryNote(s);
+    const ups = s.levelUps ?? [];
+    if (ups.length || recovery) {
+      // Tek birleşik şerit (playtest U3): "Company reached Lv 3 · 3 stat points each"; mentor ipuçları şerit sönünce sırayla gelir
+      const lines = ups.map((u) => {
+        const hero = s.roster.find((h) => h.id === u.heroId);
+        return {
+          name: content.classes[hero?.class ?? '']?.name ?? 'A hero',
+          to: u.to,
+          gained: u.to - u.from,
+          points: statPointsBetween(u.from, u.to),
+          healed: !!hero && !isFallen(hero),
+        };
+      });
+      // level atlayan herkes tam şifa aldıysa toparlanma satırı gereksiz (yaşayan herkes atladıysa)
+      const living = activeHeroes(s).filter((h) => !isFallen(h));
+      const allHealed = living.length > 0 && living.every((h) => ups.some((u) => u.heroId === h.id));
+      showLevelBanner(root, lines, undefined, { companySize: activeHeroes(s).length, ...(recovery && !allHealed ? { extra: recovery } : {}) });
+      if (ups.length) setState(acknowledgeLevelUps(this.s));
     }
     if (s.pendingHandover && !FORCED.includes(nextStep(s).kind)) {
       showHandover(root, s, {
@@ -2450,11 +2487,27 @@ export class CampaignMapScene extends Phaser.Scene {
     return false;
   }
 
+  /**
+   * Zafer toparlanması notu (playtest D6): son görülen zafer sayısından fazlaysa (aynı sefer) bulunulan düğümün zafer şifası oranıyla not
+   * döner ve sayaç ilerler; ilk açılışta / başka seferde yalnızca sayacı kurar (kayıt yüklemesi not göstermez). Kayıt şeması değişmez.
+   */
+  private takeRecoveryNote(s: CampaignState): string | null {
+    const wins = s.stats.victories;
+    const seen = recoverySeen;
+    recoverySeen = { seed: s.seed, wins };
+    if (!seen || seen.seed !== s.seed || wins <= seen.wins) return null;
+    return victoryRecoveryNote(victoryRecovery(s));
+  }
+
   /** Sıradaki adıma göre ekranı kurar (pencere ya da sağdaki düğüm kartı). */
   advance(): void {
     this.closeModal();
     this.syncTown();
     if (this.showPendingCards()) return;
+    // Hikâye sinematiği (Ömer 2026-10-23; src/campaign/cinematics.ts): sefer başı (kahraman seçiminden önce), King's Bridge / Castle Morvane
+    // zaferi (ganimetten sonra, haritaya dönüşte), Forward Camp ilk varışı (tüccar açılmadan önce). Her biri seferde bir kez.
+    const cin = dueCinematic(this.s, 'map');
+    if (cin) return this.playStoryCinematic(cin, () => this.advance());
     const s = this.s;
     const step = nextStep(s);
     // İpucu kartı yalnızca pencere açılmayan adımlarda (savaş / yol seçimi); diğerlerinde pencere kapanınca gelir
@@ -2520,7 +2573,7 @@ export class CampaignMapScene extends Phaser.Scene {
         const root = document.getElementById('ui-root');
         if (!root) return;
         setState(openCampaignShop(this.s));
-        const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { onLeave: () => this.commit(leaveMerchant(this.s)) });
+        const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { onLeave: () => this.commit(leaveMerchant(this.s), true) });
         this.lessons('merchant');
         this.events.once('shutdown', closeShop); // sahne kapanırsa (Menu > Main menu) DOM tüccar ekranı da kapanır
         return;
@@ -2568,7 +2621,8 @@ export class CampaignMapScene extends Phaser.Scene {
         this.modal = openModal(this, this.ui, {
           title: 'Valdoria Conquered',
           subtitle: 'Campaign Complete',
-          text: `${CONFIG.texts.complete}\n\n${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
+          // Final sinematiğinin kapanış kartı az önce aynı cümleyi gösterdiyse burada tekrar edilmez
+          text: `${this.endCardShown ? '' : `${CONFIG.texts.complete}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
           height: 520,
           buttons: [
             { label: 'Stay on the map', run: () => this.closeModal() },
@@ -2611,6 +2665,11 @@ export class CampaignMapScene extends Phaser.Scene {
     this.cameras.main.setVisible(!this.town);
     this.hud.setVisible(!this.town);
     sceneMusic(this.town ? 'town' : 'map'); // kasaba ekranı: sıcak kasaba müziği; haritaya dönünce yolculuk müziği (yumuşak geçiş)
+  }
+
+  /** Kasaba ekranı açıkken otomatik kayıt (playtest B1; campaign-session > checkpoint). */
+  private townSave(): void {
+    if (townScreenNode(this.s)) checkpoint();
   }
 
   /** Kasaba ekranında bir yere dokunuldu (valdoria.json > scene.hotspots[].action). */
@@ -2677,6 +2736,11 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Sınıftan kahraman / aday kartı verisi (blurb, rol, ana stat: data/classes). */
+  /** Aday kartının level etiketi (playtest D12, Ömer 2026-10-23): yoldaş takımın ortalama level'ında katılır (src/campaign/xp.ts > joinLevel). */
+  private joinTag(): string {
+    return `Joins at Lv ${joinLevel(this.s)}`;
+  }
+
   private mwCard(id: string, tag?: string): MwCard {
     const d = content.classes[id]!;
     return { id, classId: id, spriteId: d.spriteId, name: d.name, color: d.color, ...(d.role ? { role: d.role } : {}), ...(d.primary ? { stat: d.primary } : {}), ...(d.blurb ? { blurb: d.blurb } : {}), ...(tag ? { tag } : {}) };
@@ -2736,7 +2800,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private townRecruitModal(h: TownHotspot, offer: string[]): void {
     this.townWindow(h, {
       paras: paragraphs(CONFIG.texts.townRecruit ?? CONFIG.texts.volunteer ?? ''),
-      body: { k: 'cards', cards: offer.map((id) => this.mwCard(id)) },
+      body: { k: 'cards', cards: offer.map((id) => this.mwCard(id, this.joinTag())) }, // D12: katılacağı level kartta
       acts: [
         { label: 'Not now', run: () => this.closeModal() },
         {
@@ -2746,6 +2810,7 @@ export class CampaignMapScene extends Phaser.Scene {
           run: (chosen) => {
             if (!chosen) return this.toast('Pick one companion first.');
             setState(recruitInTown(this.s, chosen));
+            this.townSave(); // katılan kahraman kayda girsin (B1)
             this.closeModal();
             this.town?.render();
             this.renderHud();
@@ -2789,7 +2854,14 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!root) return;
     this.closeModal();
     setState(openCampaignShop(this.s));
-    const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), { sub: `Odo's stall · ${n.name}`, leaveLabel: 'Back to town', onLeave: () => this.advance() });
+    const closeShop = openCampaignMerchant(root, () => this.s, (x) => setState(x), {
+      sub: `Odo's stall · ${n.name}`,
+      leaveLabel: 'Back to town',
+      onLeave: () => {
+        this.townSave(); // alışveriş kayda girsin (B1)
+        this.advance();
+      },
+    });
     this.events.once('shutdown', closeShop);
     this.lessons('merchant');
   }
@@ -2921,9 +2993,57 @@ export class CampaignMapScene extends Phaser.Scene {
     show(0);
   }
 
-  /** Yeni durumu kaydeder, haritayı yeniler, sonraki adıma geçer. */
-  private commit(s: CampaignState): void {
+  /**
+   * Sefer savaşını başlatır (haritadaki TEK giriş; src/game/campaign-session.ts > startCampaignBattle). Castle Morvane'de ilk denemeden önce
+   * karşılaşma sinematiği (morvane_meets) oynar; görüldü işareti hemen yazılır ve yenilgide son kayda dönülünce taşınır (tekrar oynamaz).
+   */
+  private launchBattle(): void {
+    const cin = dueCinematic(this.s, 'beforeBattle');
+    if (cin) return this.playStoryCinematic(cin, () => void startCampaignBattle(this));
+    void startCampaignBattle(this);
+  }
+
+  /**
+   * Hikâye sinematiğini oynatır (src/ui/cinematic.ts; görünüm story-dialog şeridi + tam ekran sahne görseli). Görüldü işareti oynamaya
+   * başlarken yazılır (kayda bir sonraki kayıtla geçer); bitince (ya da Skip) `then`. Sahne kapanırsa DOM katmanı da kapanır.
+   */
+  private playStoryCinematic(id: string, then: () => void): void {
+    this.update2(markCinematicSeen(this.s, id));
+    const root = document.getElementById('ui-root');
+    if (!root) return then();
+    this.closeModal();
+    this.hideNodeTip();
+    this.tip?.destroy(true);
+    this.tip = null;
+    let h: CinematicHandle | null = null;
+    const close = (): void => {
+      h?.close();
+      h = null;
+      this.modal = null;
+    };
+    const lead = leaderOf(this.s);
+    h = playCinematic(root, id, {
+      ...(lead ? { leaderClass: lead.class } : {}),
+      map: this.map,
+      onDone: (r) => {
+        h = null;
+        this.modal = null;
+        if (r.endCard) this.endCardShown = true;
+        then();
+      },
+    });
+    if (!h) return then();
+    this.events.once('shutdown', close);
+    this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
+  }
+
+  /**
+   * Yeni durumu kaydeder, haritayı yeniler, sonraki adıma geçer. Kasaba düğümündeki adımlar (veda, bölük, hikâye sonu, Castle Gate) ve
+   * `autoSave` istenenler (Odo'nun tezgâhı) otomatik kayda girer (playtest B1: yenilgide Load Last Save kasabayı korusun).
+   */
+  private commit(s: CampaignState, autoSave = node(this.map, this.s.at).type === 'town'): void {
     this.update2(s);
+    if (autoSave) checkpoint();
     this.closeModal();
     this.placeCaravan(s.at);
     this.refresh(true);
@@ -2978,7 +3098,7 @@ export class CampaignMapScene extends Phaser.Scene {
     // (savaş düğümünde Fight'a basılmadıysa da: kafile temizlenmiş komşular üzerinden ayrılabilir; src/campaign/state.ts > canWithdraw)
     if (id !== this.s.at && this.travelTargets().has(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
-    if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => void startCampaignBattle(this));
+    if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => this.launchBattle());
     if (id === this.s.at && this.actionHere()) return CONFIRM_STEPS.includes(step.kind) ? this.confirmPlace(id, () => this.openHere(id)) : this.advance();
     // Adımları bitmiş kasaba / tüccar / kampa yeniden gir (Ömer 2026-10-13, "Ashford'a giremiyorum"): Leave sonrası da tekrar açılır
     if (id === this.s.at && step.kind === 'move') {
@@ -3009,7 +3129,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private startPatrolBattle(): void {
     if (this.pausedBlocks() || nextStep(this.s).kind !== 'move' || !patrolAvailable(this.s)) return;
     this.update2(startPatrol(this.s));
-    void startCampaignBattle(this);
+    this.launchBattle();
   }
 
   /** "Fight the patrol?" kartı: "Start battle?" kartının aynısı, bilgi satırı devriye ödülünü yazar (sıradaki oynanışın yüzdesi). */
@@ -3040,7 +3160,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const k = nextStep(this.s).kind;
     if (k === 'battle') {
       if (this.formationDue()) return this.advance();
-      return void startCampaignBattle(this);
+      return this.launchBattle();
     }
     if (CONFIRM_STEPS.includes(k)) return this.openHere(id);
     this.advance();
@@ -3109,6 +3229,7 @@ export class CampaignMapScene extends Phaser.Scene {
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
       then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
+      ...this.firstSteps(id),
       ...(o.note ? { note: o.note } : {}),
       ...(instant ? { instant: true } : {}),
       anchor: () => this.nodeCssPoint(id, root),
@@ -3117,6 +3238,7 @@ export class CampaignMapScene extends Phaser.Scene {
         o.onGo();
       },
       onCancel: () => this.closeModal(),
+      onScrimTap: (x, y) => this.travelFromCard(id, root, x, y),
     });
     const handle = card;
     this.cardPlace = () => handle.place();
@@ -3282,6 +3404,11 @@ export class CampaignMapScene extends Phaser.Scene {
 
   /** Düğümün #ui-root içindeki CSS piksel konumu (harita kamerası + tuval -> sahne ölçeği); görünür alan dışındaysa null. */
   private nodeCssPoint(id: string, root: HTMLElement): { x: number; y: number } | null {
+    return this.worldCssPoint(this.P(id), root);
+  }
+
+  /** Dünya noktasının #ui-root içindeki CSS piksel konumu (nodeCssPoint'in genel hâli); görünür alan dışındaysa null. */
+  private worldCssPoint(p: Pt, root: HTMLElement): { x: number; y: number } | null {
     // Tuval sahnede ortalanır (Phaser FIT): pencere 16:9'dan dar / 2580:1080'den genişse kenarda bant kalır; tuvalin #stage içindeki ofseti
     // ve CSS/piksel oranı tuvalin kendisinden ölçülür (sahne genişliğinden değil). Ofsetler dönüşümden etkilenmez (döndürülmüş dikeyde de doğru).
     const c = this.game.canvas;
@@ -3293,7 +3420,42 @@ export class CampaignMapScene extends Phaser.Scene {
       top += e.offsetTop;
     }
     const cam = this.cameras.main;
-    return worldToStageCss(this.P(id), cam, { left, top, cssW: c.offsetWidth, cssH: c.offsetHeight, pxW: c.width, pxH: c.height });
+    return worldToStageCss(p, cam, { left, top, cssW: c.offsetWidth, cssH: c.offsetHeight, pxW: c.width, pxH: c.height });
+  }
+
+  /**
+   * Kart açıkken kararan zemine dokunuş (playtest U8, Ömer 2026-10-23: "temizlenmiş düğümlere tek tıkla hızlı yolculuk"): dokunuş gidilebilir
+   * başka bir düğümün üstündeyse kart kapanır ve kafile hemen oraya yürür (eskiden ilk dokunuş yalnız kartı kapatıyordu, ikinci dokunuş
+   * gerekiyordu). Kural değişmez: hedefler travelRoutes'tan (yalnızca temizlenmiş düğümler üzerinden); yürürken / duraklatılmış savaşta yok.
+   */
+  private travelFromCard(cardId: string, root: HTMLElement, x: number, y: number): boolean {
+    if (this.walking || pausedLock(this.s)) return false;
+    let best: string | null = null;
+    let bestD = Infinity;
+    for (const id of this.travelTargets().keys()) {
+      if (id === cardId) continue;
+      const p = this.P(id);
+      const c = this.worldCssPoint(p, root);
+      const e = this.worldCssPoint({ x: p.x + 52, y: p.y }, root);
+      if (!c || !e) continue;
+      const r = Math.max(22, Math.hypot(e.x - c.x, e.y - c.y));
+      const d = Math.hypot(x - c.x, y - c.y);
+      if (d <= r && d < bestD) {
+        best = id;
+        bestD = d;
+      }
+    }
+    if (!best) return false;
+    this.closeModal();
+    this.chooseRoad(best);
+    return true;
+  }
+
+  /** Kartın "First" satırı (playtest H3 / H2): varışta önce gelen kadro adımları; varsa düğme "Continue" (sürpriz yok). */
+  private firstSteps(id: string): { first?: string[]; actionLabel?: string } {
+    if (this.s.patrol === id) return {};
+    const first = arrivalStepLines(this.s, id);
+    return first.length ? { first, actionLabel: 'Continue' } : {};
   }
 
   /**
@@ -3304,7 +3466,7 @@ export class CampaignMapScene extends Phaser.Scene {
     if (!checkPaused()) {
       this.toast(PAUSED_BROKEN);
       this.renderHud();
-      return this.confirmBattle(id, () => void startCampaignBattle(this));
+      return this.confirmBattle(id, () => this.launchBattle());
     }
     const n = node(this.map, id);
     const turn = (suspendedOf(this.s)?.turn ?? 0) + 1;
@@ -3320,7 +3482,7 @@ export class CampaignMapScene extends Phaser.Scene {
           primary: true,
           run: () => {
             this.closeModal();
-            startCampaignBattle(this);
+            this.launchBattle();
           },
         },
       ],
@@ -3403,7 +3565,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.pendingFight = null;
     this.time.delayedCall(f.delay, () => {
       const ready = this.s.at === f.node && nextStep(this.s).kind === 'battle' && !this.modal && !this.menuOpen && !this.slotBrowser && !isSettingsOpen() && !document.querySelector('#ui-root .gr-overlay');
-      if (ready && !this.formationDue()) startCampaignBattle(this);
+      if (ready && !this.formationDue()) this.launchBattle();
     });
   }
 
@@ -3524,9 +3686,12 @@ export class CampaignMapScene extends Phaser.Scene {
       place: startNode.name,
       ...(region ? { region } : {}),
       title: 'Choose your hero',
-      paras: paragraphs(CONFIG.texts.intro),
+      // Prologue sinematiği hikâyeyi anlattıysa pencerede yalnızca oynanış cümleleri (texts.introRules) kalır
+      paras: paragraphs(cinematicSeen(this.s, 'prologue') ? (CONFIG.texts['introRules'] ?? CONFIG.texts.intro) : CONFIG.texts.intro),
       body: { k: 'cards', leader: true, cards: this.sorted(CONFIG.starterPool).map((id) => this.mwCard(id)) },
       acts: [
+        // Skip tutorial (Ömer 2026-10-23): ikincil, solda; kahraman gerekmez, Ashford'da "Form your company" ile sürer (state.ts > skipTutorial)
+        ...(this.map.nodes.some((n) => n.newCompany) ? [{ label: 'Skip tutorial', run: () => this.skipTutorialNow() }] : []),
         {
           label: 'Begin the journey',
           primary: true,
@@ -3542,6 +3707,16 @@ export class CampaignMapScene extends Phaser.Scene {
     });
   }
 
+  /** Tutorial'ı atla: sefer bölük kurma düğümünde sürer (karavan oraya geçer), "Form your company" açılır. Debug menüsünden de çağrılır. */
+  skipTutorialNow(): boolean {
+    if (nextStep(this.s).kind !== 'hero') return false;
+    session.tutorialClasses = []; // "Played in the tutorial" notu yok
+    this.update2(skipTutorial(this.s));
+    markJourneyStart();
+    this.commit(this.s);
+    return true;
+  }
+
   /** Yeni yoldaş / gönüllü (A levha): aday kartları (büst + kısa açıklama), Join us sağda. */
   private recruitModal(step: Extract<NextStep, { kind: 'recruit' | 'volunteer' }>): void {
     const needArea = isAreaClass;
@@ -3550,7 +3725,7 @@ export class CampaignMapScene extends Phaser.Scene {
       place: node(this.map, step.node).name,
       title: step.kind === 'volunteer' ? 'A Volunteer' : 'A New Companion',
       paras: paragraphs(step.kind === 'volunteer' ? CONFIG.texts.volunteer : CONFIG.texts.recruitBefore),
-      body: { k: 'cards', cards: step.offer.map((id) => this.mwCard(id, needArea(id) && node(this.map, step.node).recruit?.requireArea ? 'Area attacks' : undefined)) },
+      body: { k: 'cards', cards: step.offer.map((id) => this.mwCard(id, [needArea(id) && node(this.map, step.node).recruit?.requireArea ? 'Area attacks' : '', this.joinTag()].filter(Boolean).join(' · '))) },
       acts: [
         {
           label: 'Join us',

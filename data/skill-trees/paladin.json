@@ -145,14 +145,14 @@
   "nodes": {
     "0.f1": {
       "name": "Wrathful Glow",
-      "text": "Divine Light also smites the weakest enemy for 2% INT holy damage per rank.",
+      "text": "Divine Light also smites the weakest enemy for 8% INT holy damage per rank.",
       "src": "A:V2:0.f1",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "power": 0.02
+            "power": 0.08
           },
           "rank": true
         }
@@ -160,7 +160,7 @@
     },
     "0.f2": {
       "name": "Kindled Resolve",
-      "text": "Allies healed by Divine Light deal +1% damage per rank on their next skill.",
+      "text": "Allies healed by Divine Light deal +6% damage per rank on their next skill.",
       "src": "A:V2:0.f2",
       "fx": [
         {
@@ -171,7 +171,7 @@
           "do": [
             {
               "buff": {
-                "powerMul": 0.01
+                "powerMul": 0.06
               },
               "to": "target"
             }
@@ -181,7 +181,7 @@
     },
     "0.f3": {
       "name": "Bedside Watch",
-      "text": "Divine Light heals 2% more per rank on allies below 50% HP.",
+      "text": "Divine Light heals 6% more per rank on allies below 50% HP.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -192,7 +192,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -379,7 +379,7 @@
     },
     "1.f1": {
       "name": "Relentless Hammer",
-      "text": "Holy Strike +1% power per rank on the enemy you hit last turn.",
+      "text": "Holy Strike +6% power per rank on the enemy you hit last turn.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -389,7 +389,7 @@
             "targetIsMyLastTarget": true
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -397,7 +397,7 @@
     },
     "1.f2": {
       "name": "Piercing Light",
-      "text": "Holy Strike ignores 3% of Magic Armor per rank.",
+      "text": "Holy Strike ignores 4% of Magic Armor per rank.",
       "src": "A:V2:1.f3",
       "fx": [
         {
@@ -405,14 +405,14 @@
           "sel": "damage",
           "f": "ignoreDefense",
           "op": "add",
-          "v": 0.03,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Sparking Hammer",
-      "text": "Holy Strike has a 3% chance per rank to set the target Burning for 2 turns.",
+      "text": "Holy Strike has a 5% chance per rank to set the target Burning for 2 turns.",
       "src": "A:V4:1.f2",
       "fx": [
         {
@@ -423,19 +423,19 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.03
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.06
+              "chance": 0.1
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.09
+              "chance": 0.15
             }
           ]
         }
@@ -624,7 +624,7 @@
     },
     "2.f1": {
       "name": "Life for Life",
-      "text": "Resurrection revives with +4% HP per rank, taken from your own HP.",
+      "text": "Resurrection revives with +6% HP per rank, taken from your own HP.",
       "src": "B:V5:2.f1",
       "fx": [
         {
@@ -632,7 +632,7 @@
           "sel": "revive",
           "f": "hpRatio",
           "op": "add",
-          "v": 0.04,
+          "v": 0.06,
           "rank": true
         },
         {
@@ -642,7 +642,7 @@
           "rank": true,
           "do": [
             {
-              "hpLoss": 0.04,
+              "hpLoss": 0.06,
               "of": "targetMaxHp"
             }
           ]
@@ -651,7 +651,7 @@
     },
     "2.f2": {
       "name": "Shielded Return",
-      "text": "Revived allies rise with a shield worth 2% of their max HP per rank.",
+      "text": "Revived allies rise with a shield worth 4% of their max HP per rank.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -661,7 +661,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.02,
+              "shield": 0.04,
               "to": "target"
             }
           ]
@@ -864,7 +864,7 @@
     },
     "3.f1": {
       "name": "Deep Coals",
-      "text": "Holy fire deals 2% more per rank on its second turn and later.",
+      "text": "Holy fire deals 6% more per rank on its second turn and later.",
       "src": "A:V4:3.f1",
       "fx": [
         {
@@ -875,7 +875,7 @@
             "groundAgeAtLeast": 2
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -883,7 +883,7 @@
     },
     "3.f2": {
       "name": "Kindling",
-      "text": "Enemies in holy fire take +1% damage per rank from Holy Strike.",
+      "text": "Enemies in holy fire take +6% damage per rank from Holy Strike.",
       "src": "A:V2:3.f2",
       "syn": "Holy Strike",
       "fx": [
@@ -895,7 +895,7 @@
             "targetOnGround": "holy_fire"
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -903,7 +903,7 @@
     },
     "3.f3": {
       "name": "Spark of Wrath",
-      "text": "Judgment has a 3% chance per rank to set each enemy hit Burning for 2 turns.",
+      "text": "Judgment has a 5% chance per rank to set each enemy hit Burning for 2 turns.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -913,31 +913,31 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.03
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.06
-            },
-            {
-              "type": "status",
-              "status": "burning",
-              "turns": 2,
-              "chance": 0.09
-            },
-            {
-              "type": "status",
-              "status": "burning",
-              "turns": 2,
-              "chance": 0.12
+              "chance": 0.1
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
               "chance": 0.15
+            },
+            {
+              "type": "status",
+              "status": "burning",
+              "turns": 2,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "burning",
+              "turns": 2,
+              "chance": 0.25
             }
           ]
         }
@@ -1128,7 +1128,7 @@
     },
     "4.u2": {
       "name": "Scorching Light",
-      "text": "Radiance sets every enemy Burning for 2 turns.",
+      "text": "Radiance sets every enemy it hits Burning for 2 turns.",
       "src": "A:V2:4.u2",
       "fx": [
         {
@@ -1211,7 +1211,7 @@
     },
     "4.d1": {
       "name": "Focused Beam",
-      "text": "Radiance can target one enemy: it skips the heal and deals 220% damage to that enemy only.",
+      "text": "Radiance can target one enemy: no heal and no Holy Ground, but 160% damage to that enemy only.",
       "src": "A:V2:4.d1",
       "new": true,
       "approved": true,
@@ -1220,11 +1220,11 @@
           "k": "mode",
           "mode": "focused_beam",
           "name": "Focused Beam",
-          "text": "220% damage to one enemy. No heal.",
-          "baseText": "Heals all allies. Hits all enemies.",
+          "text": "160% damage to one enemy. No heal.",
+          "baseText": "Cross area: heals allies and leaves Holy Ground, or hits enemies.",
           "target": "single_enemy",
-          "removeEffects": ["heal"],
-          "powerMul": 2.2
+          "removeEffects": ["heal", "ground"],
+          "powerMul": 1.6
         }
       ]
     },

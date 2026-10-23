@@ -70,8 +70,9 @@ describe('Archer ağacı fx (Faz 2b)', () => {
     expect(run(true, false)).toBeCloseTo(run(false, false), 9);
   });
 
-  it('Long Sight: Sharpshooter perRow 0,05 -> 0,08 (rank 3)', () => {
+  it('Long Sight: Sharpshooter perRow 0,05 + 3 x rank değeri (rank 3; değer veriden, D9 2026-10-23)', () => {
     const t = tree(['0.f1*3']);
-    expect((t.passive!.effect as { perRow: number }).perRow).toBeCloseTo(0.08, 9);
+    const v = (D.nodes['0.f1']!.fx![0] as unknown as { v: number }).v;
+    expect((t.passive!.effect as { perRow: number }).perRow).toBeCloseTo(0.05 + 3 * v, 9);
   });
 });

@@ -16,7 +16,8 @@ describe('sefer dolgu savaşları: dalgalar çeşitli', () => {
       expect(enc.waves?.length, n.id).toBe(1);
       const w2 = enc.waves![0]!.units;
       expect(sig(w2), n.id).not.toBe(sig(enc.units));
-      expect(w2.length, n.id).toBeGreaterThanOrEqual(2);
+      // İstisna: Dwarven Mine 2. dalgası tek Stonebound Warden (playtest 2026-10-23 D2, Ömer seçti: Crossbowman'ler silindi)
+      expect(w2.length, n.id).toBeGreaterThanOrEqual(n.id === '6B' ? 1 : 2);
       expect(w2.length, n.id).toBeLessThanOrEqual(5);
       expect(w2.some((u) => u.tier), n.id).toBe(false);
     }

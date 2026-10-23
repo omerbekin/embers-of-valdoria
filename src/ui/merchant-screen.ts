@@ -281,7 +281,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
             return;
           }
           lastWareTap = { key: `ware:${i}`, at: now };
-          sel = sel?.kind === 'ware' && sel.index === i ? null : { kind: 'ware', index: i };
+          sel = { kind: 'ware', index: i }; // tıklama her zaman seçer (playtest U9)
           line = poor ? 'poor' : 'idle';
           renderSide();
         });
@@ -308,7 +308,7 @@ export function openMerchant(root: HTMLElement, src: MerchantSource, o: { welcom
       list.forEach((e, i) => {
         const b = plateFor(e.inst, e.price, src.gold() < e.price, `bb:${i}`, true, sel?.kind === 'bb' && sel.index === i);
         b.addEventListener('click', () => {
-          sel = sel?.kind === 'bb' && sel.index === i ? null : { kind: 'bb', index: i };
+          sel = { kind: 'bb', index: i };
           line = 'buyback';
           renderSide();
         });

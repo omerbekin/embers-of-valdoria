@@ -59,6 +59,7 @@ export function enemiesEnter(scene: Phaser.Scene, containers: Phaser.GameObjects
     let left = containers.length;
     containers.forEach((c, i) => {
       const x = c.x;
+      const y = c.y;
       c.setX(x + MOTION.wave.enterOffset).setAlpha(0);
       scene.tweens.add({
         targets: c,
@@ -67,8 +68,16 @@ export function enemiesEnter(scene: Phaser.Scene, containers: Phaser.GameObjects
         delay: i * 70,
         duration: m.enterMs,
         ease: MOTION.ease.phaser,
-        onComplete: () => --left === 0 && resolve(),
+        onComplete: () => {
+          c.setY(y);
+          if (--left === 0) resolve();
+        },
       });
+      // koşu: kayarken küçük sıçramalar (A3, Ömer 2026-10-23); bitince birim tam yerine oturur
+      if (!reducedMotion()) {
+        const hop = 120;
+        scene.tweens.add({ targets: c, y: y - 12, delay: i * 70, duration: hop, yoyo: true, repeat: Math.max(0, Math.round(m.enterMs / (hop * 2)) - 1), ease: 'Sine.easeOut' });
+      }
     });
   });
 }

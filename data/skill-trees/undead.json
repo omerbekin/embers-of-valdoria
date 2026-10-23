@@ -151,7 +151,7 @@
   "nodes": {
     "0.f1": {
       "name": "Thin Blood",
-      "text": "While below 50% HP, Vampiric Bite heals +2% more of the damage you deal per rank.",
+      "text": "While below 50% HP, Vampiric Bite heals +6% more of the damage you deal per rank.",
       "src": "A:V1:0.f1",
       "fx": [
         {
@@ -161,7 +161,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "drainAdd": 0.02
+            "drainAdd": 0.06
           },
           "rank": true
         }
@@ -169,7 +169,7 @@
     },
     "0.f2": {
       "name": "Tithe Collector",
-      "text": "After you pay HP for a skill, that skill drains +2% more per rank through Vampiric Bite.",
+      "text": "After you pay HP for a skill, that skill drains +6% more per rank through Vampiric Bite.",
       "src": "A:V1:0.f2",
       "fx": [
         {
@@ -179,7 +179,7 @@
             "hpPaidThisCast": true
           },
           "mod": {
-            "drainMul": 0.02
+            "drainMul": 0.06
           },
           "rank": true
         }
@@ -187,7 +187,7 @@
     },
     "0.f3": {
       "name": "Open Veins",
-      "text": "Your skills deal +1% damage per rank for every 10% of HP you are missing.",
+      "text": "Your skills deal +2% damage per rank for every 10% of HP you are missing.",
       "src": "A:V1:0.f3",
       "fx": [
         {
@@ -197,7 +197,7 @@
             "missingHp": 0.1
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -392,7 +392,7 @@
     },
     "1.f1": {
       "name": "Knee Breaker",
-      "text": "Bone Throw +3% damage per rank against Slowed targets.",
+      "text": "Bone Throw +6% damage per rank against Slowed targets.",
       "src": "A:V5:1.f1",
       "fx": [
         {
@@ -402,7 +402,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -410,7 +410,7 @@
     },
     "1.f2": {
       "name": "Marrow Leech",
-      "text": "Vampiric Bite heals +3% more per rank from Bone Throw hits on Slowed targets.",
+      "text": "Vampiric Bite heals +6% more per rank from Bone Throw hits on Slowed targets.",
       "src": "A:V1:1.f2",
       "fx": [
         {
@@ -420,7 +420,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "drainMul": 0.03
+            "drainMul": 0.06
           },
           "rank": true
         }
@@ -428,7 +428,7 @@
     },
     "1.f3": {
       "name": "Skull Rattle",
-      "text": "Bone Throw has a 2% chance per rank to Stagger its target (it loses its next action).",
+      "text": "Bone Throw has a 3% chance per rank to Stagger its target (it loses its next action).",
       "src": "A:V5:1.f3",
       "fx": [
         {
@@ -439,13 +439,7 @@
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.02
-            },
-            {
-              "type": "status",
-              "status": "staggered",
-              "turns": 1,
-              "chance": 0.04
+              "chance": 0.03
             },
             {
               "type": "status",
@@ -457,13 +451,19 @@
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.08
+              "chance": 0.09
             },
             {
               "type": "status",
               "status": "staggered",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.12
+            },
+            {
+              "type": "status",
+              "status": "staggered",
+              "turns": 1,
+              "chance": 0.15
             }
           ]
         }
@@ -656,7 +656,7 @@
     },
     "2.f1": {
       "name": "Bloody Breath",
-      "text": "Wail of the Dead +1% damage per rank for every 10 HP it costs.",
+      "text": "Wail of the Dead +2% damage per rank for every 10 HP it costs.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -666,7 +666,7 @@
             "hpPaidAmount": 10
           },
           "mod": {
-            "powerMul": 0.01
+            "powerMul": 0.02
           },
           "rank": true
         }
@@ -674,14 +674,14 @@
     },
     "2.f2": {
       "name": "Lingering Moan",
-      "text": "Vampiric Bite heals +2% more per rank from Wail of the Dead's hits.",
+      "text": "Vampiric Bite heals +4% more per rank from Wail of the Dead's hits.",
       "src": "A:V1:2.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "drainMul": 0.02
+            "drainMul": 0.04
           },
           "rank": true
         }
@@ -689,7 +689,7 @@
     },
     "2.f3": {
       "name": "Fearful Keening",
-      "text": "Wail of the Dead has a 2% chance per rank to Blind each enemy hit for 1 turn.",
+      "text": "Wail of the Dead has a 5% chance per rank to Blind each enemy hit for 1 turn.",
       "src": "A:V5:2.f3",
       "fx": [
         {
@@ -700,31 +700,31 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.02
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.04
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.06
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.08
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
               "chance": 0.1
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.15
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.25
             }
           ]
         }
@@ -937,7 +937,7 @@
     },
     "3.f2": {
       "name": "Kindred Pulse",
-      "text": "When Dark Bond starts, heal the bonded ally for 1% of your max HP per rank.",
+      "text": "When Dark Bond starts, heal the bonded ally for 4% of your max HP per rank.",
       "src": "A:V1:3.f2",
       "fx": [
         {
@@ -947,7 +947,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01,
+              "heal": 0.04,
               "of": "ownerMaxHp",
               "to": "bonded"
             }
@@ -957,7 +957,7 @@
     },
     "3.f3": {
       "name": "Kindred Guard",
-      "text": "Your bonded ally takes 2% less damage per rank.",
+      "text": "Your bonded ally takes 4% less damage per rank.",
       "src": "A:V4:3.f3",
       "fx": [
         {
@@ -967,7 +967,7 @@
           "who": "ally",
           "status": "dark_bond",
           "mine": true,
-          "mul": -0.02,
+          "mul": -0.04,
           "rank": true
         }
       ]

@@ -16,6 +16,9 @@
 .sd-grid { width: min(100%, max(calc(1700 * var(--u)), 760px)); margin: 0 auto; display: grid; grid-template-columns: max(80px, calc(240 * var(--u))) minmax(0, 1.5fr) minmax(0, 1fr); gap: max(14px, calc(44 * var(--u))); align-items: center; }
 .sd-grid.nopic { grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr); }
 .sd-grid.nopic .sd-who { display: none; }
+/* sinematik (keepWho): portresiz adımda sol sütun boş ama yerinde (yazı sütunu satırlar arasında kaymaz); ad boşsa gizli */
+.sd-grid.nopic-keep .sd-who { visibility: hidden; }
+.sd-name:empty { display: none; }
 
 .sd-who { display: flex; flex-direction: column; gap: max(5px, calc(12 * var(--u))); align-items: center; text-align: center; }
 .sd-pic { position: relative; width: 100%; aspect-ratio: 1; border: 1px solid var(--g-edge); box-shadow: 0 0 0 2px rgba(8, 6, 4, .8); background: #1a130c; }

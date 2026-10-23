@@ -17,6 +17,11 @@ export interface LevelRules {
   statPerPoint: number;
   xpToNext: { base: number; pow: number };
   enemyXp: { base: number; pow: number };
+  /**
+   * Dalga bonusu (playtest 2026-10-23 D7: XP = toplam düşman level x 4 + dalga bonusu): ilk dalgadan sonraki HER dalga için takım havuzuna
+   * SABİT waveBonus XP (level'dan bağımsız: erken düğümlerde payı büyük; düğüm çarpanıyla; düşmüş kahraman da tam pay). Yoksa 0.
+   */
+  waveBonus?: number;
   nodeMult: Record<string, number>;
   fixedEnemies: number;
   fallenShare: number;
@@ -95,8 +100,17 @@ export function enemyXp(level: number, r: LevelRules = LEVELS): number {
   return Math.max(1, Math.round(r.enemyXp.base * Math.pow(clampLevel(level, r), r.enemyXp.pow)));
 }
 
-/** Düğüm türünün çarpanı (savaş 1, elit 2, boss 4, olay / hazine 0,5; bilinmeyen tür 1). */
-export const nodeXpMult = (type: string, r: LevelRules = LEVELS): number => r.nodeMult[type] ?? 1;
+/** Dalga bonusu havuzu (düğüm çarpanından önce): ilk dalgadan sonraki her dalga için sabit waveBonus (`level` imza uyumu için; kullanılmaz). */
+export function waveBonusXp(_level: number, waves: number, r: LevelRules = LEVELS): number {
+  return Math.max(0, Math.floor(waves) - 1) * (r.waveBonus ?? 0);
+}
+
+/**
+ * Düğüm türünün çarpanı (savaş 1, elit 2, boss 4, olay / hazine 0,5; bilinmeyen tür 1). `battle` = düğümdeki SAVAŞIN XP'si: korumalı hazine /
+ * savaşlı olay için önce `<tür>Battle` anahtarı (D7: zor düğüm az XP vermesin; savaşsız sabit XP 0,5 kalır).
+ */
+export const nodeXpMult = (type: string, r: LevelRules = LEVELS, battle = false): number =>
+  (battle ? r.nodeMult[`${type}Battle`] : undefined) ?? r.nodeMult[type] ?? 1;
 
 /** Bölüm `chapter`'ın level aralığı (tavan maxLevel). */
 export function chapterLevels(chapter: number, r: LevelRules = LEVELS): [number, number] {
@@ -151,6 +165,8 @@ export interface XpSplitInput {
   kills: KillRecord[];
   /** Ek çarpan (Endless xpMult). */
   scale?: number;
+  /** Karşılaşmanın dalga sayısı (dalga bonusu: ilk dalgadan sonraki her dalga; levels.json > waveBonus). Yoksa 1. */
+  waves?: number;
 }
 
 /** Kahraman başına kazanılan XP (tam sayı). Düşman XP'si x çarpan / bölen; düştükten sonraki öldürmeler fallenShare; sonra kahraman çarpanı. */
@@ -159,8 +175,9 @@ export function splitXp(x: XpSplitInput, r: LevelRules = LEVELS): Record<string,
   const out: Record<string, number> = {};
   if (!n) return out;
   const per = (enemyXp(x.nodeLevel, r) * x.mult * (x.scale ?? 1)) / n;
+  const bonus = (waveBonusXp(x.nodeLevel, x.waves ?? 1, r) * x.mult * (x.scale ?? 1)) / n;
   for (const h of x.heroes) {
-    let raw = 0;
+    let raw = bonus;
     for (const k of x.kills) raw += k.down.includes(h.id) ? per * r.fallenShare : per;
     const others = x.heroes.filter((o) => o.id !== h.id).map((o) => o.level);
     out[h.id] = Math.max(0, Math.round(raw * heroXpMult(h.level, others, x.nodeLevel, r)));

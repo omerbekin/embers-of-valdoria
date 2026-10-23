@@ -148,3 +148,7 @@ Kalan açık soru: yok.
 - **Harita sahnesi:** yol dili (düz / cep kesik), `ctrl` kavisi, lejant satırı, düğüm şeridinde "optional", Ashen Plain gri tonu kaldırıldı. **Bölge görünümü** (`src/game/region-view.ts`, sahne `switchFocus / setFocus`; 2026-10-23: sağ alttaki düğme kaldırıldı, uzak görünüm = bölge haritası, campaign.md 2.3): bölgeye yakınlaşır (görseli kaplar, en çok x2,4, oyuncu yakınlaştırması üstüne), komşu bağlantı düğümü %65, yolu %80, üstüne gelince yol hafif sarı; görülmemiş bölgenin düğümü çizilmez; kafile bölge değiştirince odak izler.
 - **Debug:** Campaign > Map > "Region view" (kapalı -> I -> II -> III -> kapalı); "Teleport to stop" yeni düğümleri listeler (cepler "(pocket)").
 - **Testler:** `tests/campaign-map1-rework.test.ts` (seviyeler, karşılaşmalar, eğitim ölçeği, cep akışı, hazine içerikleri, eski kayıt: Ashford / Valdren Keep / Ember Road / Gate of Cinders, bölge görünümü hesapları) + güncellenen graf / uyum testleri.
+
+## 9. Playtest eki (campaign-dev 2026-10-24, playtest D6; open-questions 408)
+- **Hillside Camp** (`hillcamp`, Rest · Camp, bölge I, cep): Cairn Hill'den kesik yol, pos [0,125; 0,29]. Ücretsiz dinlenme (`rest.heal`), bir kez. Rota sayısı / 22 durak / seçim noktaları değişmedi; harita 34 düğüm, bölgeler 11 / 11 / 12, 5 cep.
+- Iron Pass etiketi `label: above` kaldırıldı (üst HUD bandının altında kalıyordu, playtest U1).

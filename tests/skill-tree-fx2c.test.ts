@@ -163,7 +163,7 @@ describe('Faz 2c: durum kancası (DoT, rastgele durum, boşalma durumu)', () => 
       cast(b, P(b), 'withering_curse', E(b));
       const w = E(b).statuses.find((s) => s.kind === 'wither');
       if (!w) return false;
-      expect(w.potency?.accuracyDelta).toBeCloseTo(-0.06, 9);
+      expect(w.potency?.accuracyDelta).toBeCloseTo(3 * (fxOf('hexer', '2.f2') as unknown as { mod: { statusPotency: { accuracyDelta: number } } }).mod.statusPotency.accuracyDelta, 9); // değer veriden (D9 2026-10-23)
       return true;
     }, 10);
   });

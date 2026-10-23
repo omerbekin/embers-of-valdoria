@@ -271,7 +271,7 @@ describe('debug: skill galerisi (debugCast)', () => {
     b.get('party-1')!.mp = 0;
     const summon = allSkills.find((id) => content.skills[id]!.effects.some((e) => e.type === 'summon'))!;
     expect(b.debugCast('party-0', summon).ok).toBe(true);
-    const ground = allSkills.find((id) => content.skills[id]!.effects.some((e) => e.type === 'ground'))!;
+    const ground = allSkills.find((id) => content.skills[id]!.effects.some((e) => e.type === 'ground' && !e.side))!; // side'lı zemin (Radiance Holy Ground) yalnızca kendi tahtasına
     expect(b.debugCast('party-0', ground).ok).toBe(true);
     expect(b.ground.length).toBeGreaterThan(0);
     b.debugResetAll();

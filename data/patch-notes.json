@@ -2,6 +2,60 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.8",
+      "date": "2026-10-24",
+      "groups": [
+        {
+          "heading": "New",
+          "items": [
+            "Paladin's Radiance targets one cell: on allies it heals and leaves healing Holy Ground; on enemies it deals holy damage."
+          ]
+        },
+        {
+          "heading": "New",
+          "items": [
+            "Hillside Camp rest stop near Cairn Hill, and a Skip tutorial button on the first hero pick."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Town actions are now saved; Load Last Save shows where and when."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Taunt pulls enemy area attacks; Charcoal Camp and Dwarven Mine are easier; XP follows enemy levels and waves."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Tier I skill tree nodes are stronger; recruits join at your company's average level."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Enemy details open on press-and-hold or right-click; Victory buttons work at once; waves get a Reinforcements banner."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Stat points are no longer lost before Confirm; Level Up badge and sticky tooltips clear properly."
+          ]
+        },
+        {
+          "heading": "Fixes",
+          "items": [
+            "Formation click-swap works; map labels, banners and hints no longer overlap."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.7.1",
       "date": "2026-10-23",
       "groups": [

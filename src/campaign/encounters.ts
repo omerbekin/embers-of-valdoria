@@ -74,6 +74,8 @@ export interface BattlePlan {
   valor?: number;
   /** Düşmanların level'ı = düğüm seviyesi (levels.md > Düşman level'ı; ad plakasında "Lv N"). */
   enemyLevel: number;
+  /** Düşman yapay zekasının terazi ayarı (bölgenin enemyAi'si, notlar hariç; chooseAction opts.value). Yoksa alan yazılmaz. */
+  enemyAi?: Record<string, number>;
 }
 
 /**
@@ -91,6 +93,13 @@ export function withDifficulty(mods: UnitMods | undefined, diff: DifficultyEnemy
 
 // Dalga listesi (Ömer 2026-10-19 düzeltmesi: dalgalar EKLENİR, bölünmez): src/campaign/encounter-waves.ts
 export { encounterWaves, isInertUnit };
+
+/** Bölgenin düşman YZ ayarı (sayısal anahtarlar; `_` notları atılır): planın enemyAi alanı ya da boş. */
+function regionEnemyAi(region: { enemyAi?: Record<string, number | string> } | undefined): { enemyAi?: Record<string, number> } {
+  const out: Record<string, number> = {};
+  for (const [k, v] of Object.entries(region?.enemyAi ?? {})) if (!k.startsWith('_') && typeof v === 'number' && Number.isFinite(v)) out[k] = v;
+  return Object.keys(out).length ? { enemyAi: out } : {};
+}
 
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
   const map = getMap(s.mapId);
@@ -167,6 +176,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
     ...(s.valor !== undefined ? { valor: s.valor } : {}),
     enemyLevel,
+    ...regionEnemyAi(map.regions.find((r) => r.id === n.region)),
   };
 }
 

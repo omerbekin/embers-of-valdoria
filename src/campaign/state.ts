@@ -1031,6 +1031,39 @@ export function debugTeleport(s: CampaignState, target: string): CampaignState {
   return t;
 }
 
+/**
+ * "Skip tutorial" (Ömer 2026-10-23): kahraman seçiminde tutorial atlanır, sefer bölük kurma düğümünde (Ashford) "Form your company"
+ * adımında başlar. Tutorial'ı bitiren oyuncuyla aynı durum mevcut kurallarla kurulur: tutorial yolu (Mill Road -> Ravenwood -> Watchtower)
+ * seed'li otomatik seçimlerle kazanılmış sayılır (debugTeleport ile aynı yol), Ashford vedası yapılır (tutorial takımı ayrılır, eşyaları
+ * torbaya). Kazanılan altın ve eşyalar kalır (open-questions 407 varsayımı); oyuncunun hiç görmediği şeyler temizlenir: zafer sayacı
+ * değişmez, bekleyen ganimet / level kartı yok, teslim kartı sınıfsız ("Their gear is in your bag"), tutorial düğümlerinin ipuçları görüldü.
+ */
+export function skipTutorial(s: CampaignState): CampaignState {
+  expectStep(s, 'hero');
+  const map = mapOf(s);
+  const target = map.nodes.find((n) => n.newCompany);
+  if (!target) throw new Error('This map has no tutorial to skip');
+  const route = pathTo(map, target.id);
+  let t = clone(s);
+  for (let i = 0; i < route.length; i++) {
+    const last = i === route.length - 1;
+    while (true) {
+      const step = nextStep(t);
+      if (step.kind === 'move' || step.kind === 'complete') break;
+      if (last && step.kind === 'company') break;
+      t = autoResolve(t, step);
+    }
+    if (!last) t = moveTo(t, route[i + 1]!);
+  }
+  t.stats = { ...s.stats };
+  delete t.pendingLoot;
+  delete t.levelUps;
+  delete t.formationDue;
+  if (t.pendingHandover) t.pendingHandover = { ...t.pendingHandover, from: [] };
+  for (const id of route.slice(0, -1)) if (CONFIG.tips[id] && !t.tipsSeen.includes(id)) t.tipsSeen.push(id);
+  return t;
+}
+
 /** Bir adımı oyuncu yerine (seed'li, ilk seçenekle) çözer: debug ve testler. */
 export function autoResolve(s: CampaignState, step: NextStep = nextStep(s)): CampaignState {
   switch (step.kind) {

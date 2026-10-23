@@ -117,8 +117,9 @@ describe('Altıncı tur: Weakened (verilen hasar azalır)', () => {
     cast(b, P(b), 'natures_wrath', foe);
     const st = foe.statuses.find((s) => s.kind === 'weakened')!;
     expect(st.turns).toBe(1);
-    expect(b.weakenedMult(foe)).toBeCloseTo(0.94, 9);
-    expect(b.weakenedMult(foe, 'magic')).toBeCloseTo(0.94, 9);
+    const per = (treeOf('druid')!.nodes['2.f3']!.fx![2] as unknown as { mod: { statusPotency: { damageDealtMult: number } } }).mod.statusPotency.damageDealtMult; // değer veriden (D9 2026-10-23)
+    expect(b.weakenedMult(foe)).toBeCloseTo(1 + 3 * per, 9);
+    expect(b.weakenedMult(foe, 'magic')).toBeCloseTo(1 + 3 * per, 9);
     expect(procs(b, 'druid:2.f3')).toBeGreaterThan(0);
   });
 

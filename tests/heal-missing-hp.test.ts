@@ -12,9 +12,9 @@ const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i)
 const BIG = 100000;
 const NEAR_FULL = BIG - 1000; // eksik can şifadan büyük (tavan devreye girmez), oran 0,01
 
-/** Test modu savaşı: Paladin (0), Warrior (1), Mage (6) vs Archer; kritik kapalı; dostların maks canı büyük (tavan devreye girmesin). */
+/** Test modu savaşı: Paladin (0), Warrior (1), Mage (2) vs Archer (D11: Radiance artı alanı 'tile:1' üçünü de kapsar); kritik kapalı; dostların maks canı büyük (tavan devreye girmesin). */
 function mk(hp: { warrior: number; mage: number }): { b: Battle; uid: (id: string) => string } {
-  const b = new Battle(content.battleSetup('random-battle', 7, 'test', { party: cells({ 0: 'paladin', 1: 'warrior', 6: 'mage' }), enemies: cells({ 0: 'archer' }) }, false));
+  const b = new Battle(content.battleSetup('random-battle', 7, 'test', { party: cells({ 0: 'paladin', 1: 'warrior', 2: 'mage' }), enemies: cells({ 0: 'archer' }) }, false));
   for (const c of b.combatants) {
     Object.assign(c.stats, { critChance: 0, manaEcho: 0 });
     c.mp = c.maxMp;
@@ -46,8 +46,8 @@ describe('heal.missingHpBonus (Radiance: canı düşük dosta daha fazla şifa)'
     // Aynı seed: A'da Warrior neredeyse ölü, Mage neredeyse dolu; B'de tersi. Zarlar aynı olduğundan oranlar karşılaştırılabilir.
     const A = mk({ warrior: 1, mage: NEAR_FULL });
     const B = mk({ warrior: NEAR_FULL, mage: 1 });
-    const ra = A.b.useSkill(A.uid('paladin'), 'radiance');
-    const rb = B.b.useSkill(B.uid('paladin'), 'radiance');
+    const ra = A.b.useSkill(A.uid('paladin'), 'radiance', 'tile:1');
+    const rb = B.b.useSkill(B.uid('paladin'), 'radiance', 'tile:1');
     if (!ra.ok || !rb.ok) throw new Error('Radiance kullanılamadı');
     const ea = ra;
     const eb = rb;
@@ -60,7 +60,7 @@ describe('heal.missingHpBonus (Radiance: canı düşük dosta daha fazla şifa)'
     expect(Math.abs(lowA - fullB * ratio)).toBeLessThanOrEqual(1);
     expect(Math.abs(lowB - fullA * ratio)).toBeLessThanOrEqual(1);
     expect(lowA).toBeGreaterThan(fullB * 1.4);
-    // düşmana giden hasar iki savaşta aynı (RNG sırası korunur)
+    // (D11: dost tarafına atılan Radiance hasar vermez; iki savaşta da boş liste)
     const dmg = (ev: BattleEvent[]) => ev.filter((e) => e.type === 'damage').map((e) => JSON.stringify(e));
     expect(dmg(ea.events)).toEqual(dmg(eb.events));
   });
@@ -69,7 +69,7 @@ describe('heal.missingHpBonus (Radiance: canı düşük dosta daha fazla şifa)'
     const { b, uid } = mk({ warrior: BIG / 2, mage: NEAR_FULL });
     const pal = b.combatants.find((c) => c.uid === uid('paladin'))!;
     const r = healRange(pal.stats, healEffect.scale, healEffect.power, content.formulas);
-    const pv = previewSkill(b, pal.uid, 'radiance');
+    const pv = previewSkill(b, pal.uid, 'radiance', 'tile:1');
     const w = pv.find((p) => p.uid === uid('warrior'))!.heal!;
     expect(w.avg).toBe(Math.round(r.avg * 1.25));
     expect(w.min).toBe(Math.round(r.min * 1.25));

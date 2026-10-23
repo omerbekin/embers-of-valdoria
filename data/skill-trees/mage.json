@@ -145,21 +145,21 @@
   "nodes": {
     "0.f1": {
       "name": "Resonance",
-      "text": "Spell Echo chance +2% per rank.",
+      "text": "Spell Echo chance +3% per rank.",
       "src": "B:V3:0.f1",
       "fx": [
         {
           "k": "passive",
           "f": "chance",
           "op": "add",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
     },
     "0.f2": {
       "name": "Killing Echo",
-      "text": "Spell Echo +2% chance per rank when the spell kills.",
+      "text": "Spell Echo +4% chance per rank when the spell kills.",
       "src": "B:V5:0.f2",
       "fx": [
         {
@@ -169,7 +169,7 @@
             "killedThisCast": true
           },
           "mod": {
-            "echoChance": 0.02
+            "echoChance": 0.04
           },
           "rank": true
         }
@@ -394,7 +394,7 @@
     },
     "1.f1": {
       "name": "Focused Bolt",
-      "text": "Fire Bolt +2% critical chance per rank.",
+      "text": "Fire Bolt +3% critical chance per rank.",
       "src": "B:V5:1.f1",
       "fx": [
         {
@@ -402,21 +402,21 @@
           "sel": "damage",
           "f": "critBonus",
           "op": "add",
-          "v": 0.02,
+          "v": 0.03,
           "rank": true
         }
       ]
     },
     "1.f2": {
       "name": "Searing Crit",
-      "text": "Fire Bolt critical damage +4% per rank.",
+      "text": "Fire Bolt critical damage +6% per rank.",
       "src": "B:V5:1.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "critDmgMul": 0.04
+            "critDmgMul": 0.06
           },
           "rank": true
         }
@@ -424,7 +424,7 @@
     },
     "1.f3": {
       "name": "Clean Shot",
-      "text": "Fire Bolt +4% damage per rank against targets at full HP.",
+      "text": "Fire Bolt +6% damage per rank against targets at full HP.",
       "src": "B:V5:1.f3",
       "fx": [
         {
@@ -434,7 +434,7 @@
             "targetFullHp": true
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -668,7 +668,7 @@
     },
     "2.f2": {
       "name": "Numbing Cold",
-      "text": "Blizzard +3% damage per rank against Slowed enemies.",
+      "text": "Blizzard +6% damage per rank against Slowed enemies.",
       "src": "A:V2:2.f2",
       "fx": [
         {
@@ -678,7 +678,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -686,7 +686,7 @@
     },
     "2.f3": {
       "name": "Driving Snow",
-      "text": "Blizzard has a 4% chance per rank to Blind each enemy hit for 1 turn.",
+      "text": "Blizzard has a 5% chance per rank to Blind each enemy hit for 1 turn.",
       "src": "A:V2:2.f3",
       "fx": [
         {
@@ -697,31 +697,31 @@
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.04
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.08
+              "chance": 0.1
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
-              "chance": 0.12
-            },
-            {
-              "type": "status",
-              "status": "blinded",
-              "turns": 1,
-              "chance": 0.16
+              "chance": 0.15
             },
             {
               "type": "status",
               "status": "blinded",
               "turns": 1,
               "chance": 0.2
+            },
+            {
+              "type": "status",
+              "status": "blinded",
+              "turns": 1,
+              "chance": 0.25
             }
           ]
         }
@@ -916,7 +916,7 @@
     },
     "3.f1": {
       "name": "Rimeguard",
-      "text": "Mana Barrier shield +4% per rank when cast on an ally in the front row.",
+      "text": "Mana Barrier shield +6% per rank when cast on an ally in the front row.",
       "src": "A:V2:3.f1",
       "fx": [
         {
@@ -926,14 +926,14 @@
           "when": {
             "targetRow": "front"
           },
-          "mul": 0.04,
+          "mul": 0.06,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Cauterize",
-      "text": "Each debuff Mana Barrier dispels heals the ally for 1% of max HP per rank.",
+      "text": "Each debuff Mana Barrier dispels heals the ally for 4% of max HP per rank.",
       "src": "A:V1:3.f2",
       "fx": [
         {
@@ -943,7 +943,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01,
+              "heal": 0.04,
               "to": "target"
             }
           ]
@@ -952,7 +952,7 @@
     },
     "3.f3": {
       "name": "Numbing Touch",
-      "text": "While Mana Barrier holds, Slowed attackers deal 3% less damage per rank to the holder.",
+      "text": "While Mana Barrier holds, Slowed attackers deal 6% less damage per rank to the holder.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -964,7 +964,7 @@
           "when": {
             "incomingStatus": "slow"
           },
-          "mul": -0.03,
+          "mul": -0.06,
           "rank": true
         }
       ]

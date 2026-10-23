@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { CINEMATIC_IDS, CONFIG, victoryRecoveryNote, leaderOf, activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, skipTutorial, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -110,6 +110,24 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   mapWindow('hearth', 'Campfire note', 'flame', 'Small anchored card next to the campfire (shows next to the spot when the town screen is open).');
   mapWindow('board', 'Notice board note', 'dice', 'Small anchored card for the notice board.');
   mapWindow('barracks', 'Barracks card', 'shield', 'Small anchored card with recruit cards.');
+  // Hikâye sinematikleri (src/ui/cinematic.ts; Ömer 2026-10-23): sefer durumuna DOKUNMADAN oynatır (görüldü işareti yazılmaz).
+  // Lider satırları yüklü seferin liderinin sınıfıyla, sefer yoksa başlangıç havuzunun ilk sınıfıyla.
+  for (const id of CINEMATIC_IDS)
+    debug.register({
+      id: `campaign.cinematic.${id}`,
+      tab: CAMPAIGN_TAB,
+      section: 'Cinematics',
+      icon: 'book',
+      label: `Play cinematic: ${id}`,
+      hint: `Play the "${id}" story cinematic on top of the current screen (tap / Space / Enter = next line, Skip top right). Does not change the campaign or mark it as seen.`,
+      run: () => {
+        const root = document.getElementById('ui-root');
+        if (!root) return;
+        const s = current();
+        const leaderClass = (s ? leaderOf(s)?.class : undefined) ?? CONFIG.starterPool[0];
+        void import('./cinematic').then((m) => m.playCinematic(root, id, { ...(leaderClass ? { leaderClass } : {}), map: getMap(s?.mapId ?? CONFIG.maps[0]!) }));
+      },
+    });
   debug.register({
     id: 'campaign.stamps',
     tab: CAMPAIGN_TAB,
@@ -248,6 +266,20 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     hint: 'Jump to Ashford Village (the tutorial heroes say farewell, then you form your company of three)',
     run: () => {
       setState(debugTeleport(ensureState(), '4'));
+      reload();
+    },
+  });
+  debug.register({
+    id: 'campaign.skip-tutorial-new',
+    tab: CAMPAIGN_TAB,
+    section: 'Progress',
+    icon: 'next',
+    label: 'New run, Skip tutorial button',
+    hint: 'Start a new Normal campaign as if "Skip tutorial" was pressed on Choose your hero: you start in Ashford Village with the Form your company window (no farewell)',
+    run: () => {
+      const s = newCampaign({ mode: 'normal', seed: Math.floor(Date.now() % 1_000_000_000) });
+      session.tutorialClasses = [];
+      setState(skipTutorial(s));
       reload();
     },
   });
@@ -469,6 +501,26 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     setState(t);
     reload();
   };
+  // Playtest 2026-10-23 U3 / D6: tek birleşik level şeridi + zafer toparlanması satırı (örnek veri; durum değişmez). Şerit açıkken mentor
+  // ipuçları bekler, şerit sönünce sırayla gelir.
+  debug.register({
+    id: 'campaign.level-banner',
+    tab: CAMPAIGN_TAB,
+    section: 'Map',
+    icon: 'burst',
+    label: 'Show level-up banner (sample)',
+    hint: 'Show the single combined banner ("Company reached Lv 3 · 1 stat point each") with the victory recovery line under it. Sample text only; the campaign does not change.',
+    run: () => {
+      const root = document.getElementById('ui-root');
+      if (!root) return;
+      void import('./level-banner').then((m) =>
+        m.showLevelBanner(root, ['Defender', 'Mage', 'Paladin'].map((name) => ({ name, to: 3, gained: 1, points: 1, healed: false })), undefined, {
+          companySize: 3,
+          extra: victoryRecoveryNote(CONFIG.rules.victoryHeal) ?? '',
+        }),
+      );
+    },
+  });
   debug.register({
     id: 'campaign.loot',
     tab: CAMPAIGN_TAB,

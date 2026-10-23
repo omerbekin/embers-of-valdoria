@@ -1467,6 +1467,11 @@ export interface GroundDef {
   statuses?: GroundStatus[];
   /** Faz 4c (Hall of Silence): içinde tur başlatan düşmanın maks MP'sinin bu oranı yanar (durumlardan önce). */
   manaBurnPct?: number;
+  /**
+   * D11 (Radiance Holy Ground, open-questions 406): şifa zemini. Hasar vermez; içinde tur başlatan, bırakanın TARAFINDAKİ birim tik miktarı
+   * kadar iyileşir (kritiksiz, sabit; alınan şifa çarpanları normal). Düşmana hiçbir etkisi yok.
+   */
+  heal?: boolean;
 }
 
 /** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */

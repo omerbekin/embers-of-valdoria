@@ -146,7 +146,7 @@
   "nodes": {
     "0.f1": {
       "name": "Thick Hide",
-      "text": "While below 50% HP, you take 1% less damage per rank.",
+      "text": "While below 50% HP, you take 4% less damage per rank.",
       "src": "B:V3:0.f1",
       "fx": [
         {
@@ -154,7 +154,7 @@
           "fx": {
             "lowHpReduce": {
               "below": 0.5,
-              "reduce": 0.01
+              "reduce": 0.04
             }
           },
           "rank": true
@@ -163,7 +163,7 @@
     },
     "0.f2": {
       "name": "Grit",
-      "text": "While below 25% HP, healing you receive is 5% stronger per rank.",
+      "text": "While below 25% HP, healing you receive is 6% stronger per rank.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -173,14 +173,14 @@
           "when": {
             "selfHpBelow": 0.25
           },
-          "mul": 0.05,
+          "mul": 0.06,
           "rank": true
         }
       ]
     },
     "0.f3": {
       "name": "Shared Scars",
-      "text": "Your Berserker bonus is 1% higher per rank for each ally below 50% HP.",
+      "text": "Your Berserker bonus is 2% higher per rank for each ally below 50% HP.",
       "src": "B:V5:0.f3",
       "fx": [
         {
@@ -190,7 +190,7 @@
             "alliesHpBelow": 0.5
           },
           "mod": {
-            "maxBonus": 0.01
+            "maxBonus": 0.02
           },
           "rank": true
         }
@@ -383,7 +383,7 @@
     },
     "1.f1": {
       "name": "Knee Cutter",
-      "text": "Double Strike has a 3% chance per rank to Slow the target for 1 turn.",
+      "text": "Double Strike has a 5% chance per rank to Slow the target for 1 turn.",
       "src": "B:V4:1.f2",
       "fx": [
         {
@@ -393,19 +393,19 @@
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.03
+              "chance": 0.05
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.06
+              "chance": 0.1
             },
             {
               "type": "status",
               "status": "slow",
               "turns": 1,
-              "chance": 0.09
+              "chance": 0.15
             }
           ]
         }
@@ -413,7 +413,7 @@
     },
     "1.f2": {
       "name": "Notched Axe",
-      "text": "Double Strike's second hit +3% power per rank.",
+      "text": "Double Strike's second hit +4% power per rank.",
       "src": "B:V1:1.f1",
       "fx": [
         {
@@ -421,14 +421,14 @@
           "sel": "damage:1",
           "f": "power",
           "op": "pct",
-          "v": 0.03,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "1.f3": {
       "name": "Hard Knocks",
-      "text": "Double Strike's second hit +2% critical chance per rank against Slowed targets.",
+      "text": "Double Strike's second hit +4% critical chance per rank against Slowed targets.",
       "src": "B:V4:1.f3",
       "fx": [
         {
@@ -439,7 +439,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "critBonus": 0.02
+            "critBonus": 0.04
           },
           "rank": true
         }
@@ -661,7 +661,7 @@
     },
     "2.f1": {
       "name": "Steady Spin",
-      "text": "Whirlwind lifesteal +1% per rank.",
+      "text": "Whirlwind lifesteal +4% per rank.",
       "src": "A:V3:2.r",
       "fx": [
         {
@@ -669,14 +669,14 @@
           "sel": "damage",
           "f": "lifesteal",
           "op": "add",
-          "v": 0.01,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Spin Recovery",
-      "text": "Whirlwind heals you 1% of your max HP per rank for each enemy it hits.",
+      "text": "Whirlwind heals you 3% of your max HP per rank for each enemy it hits.",
       "src": "A:V3:2.f1",
       "fx": [
         {
@@ -686,7 +686,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01
+              "heal": 0.03
             }
           ]
         }
@@ -694,7 +694,7 @@
     },
     "2.f3": {
       "name": "Hungry Arc",
-      "text": "Whirlwind +2% power per rank while you are below 50% HP.",
+      "text": "Whirlwind +6% power per rank while you are below 50% HP.",
       "src": "A:V3:2.f3",
       "fx": [
         {
@@ -704,7 +704,7 @@
             "selfHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -878,7 +878,7 @@
     },
     "3.f1": {
       "name": "Rolling Start",
-      "text": "Charge +2% power per rank against a target that has not acted yet this battle.",
+      "text": "Charge +6% power per rank against a target that has not acted yet this battle.",
       "src": "A:V2:3.f2",
       "fx": [
         {
@@ -888,7 +888,7 @@
             "targetNotActed": true
           },
           "mod": {
-            "powerMul": 0.02
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -896,7 +896,7 @@
     },
     "3.f2": {
       "name": "Vengeful Run",
-      "text": "Charge +3% power per rank against the enemy that hit you last.",
+      "text": "Charge +6% power per rank against the enemy that hit you last.",
       "src": "A:V3:3.r",
       "fx": [
         {
@@ -906,7 +906,7 @@
             "targetLastHitMe": true
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -914,14 +914,14 @@
     },
     "3.f3": {
       "name": "War Gallop",
-      "text": "Charge grants 2 Rage per rank when it hits.",
+      "text": "Charge grants 3 Rage per rank when it hits.",
       "src": "A:V2:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "rage",
           "on": "hit",
-          "gain": 2,
+          "gain": 3,
           "rank": true
         }
       ]

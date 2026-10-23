@@ -618,6 +618,16 @@ export class Battle {
     return this.tickDamage(this.setup.grounds?.[groundId]?.element ?? 'physical', 'magic', amount, target);
   }
 
+  /** D11 (Holy Ground): şifa zemini mi (grounds.json > heal)? Şifa zemini hasar vermez, bırakanın tarafını iyileştirir. */
+  isHealGround(groundId: string): boolean {
+    return this.setup.grounds?.[groundId]?.heal === true;
+  }
+
+  /** Şifa zemininin bir tikte hedefe vereceği şifa (alınan şifa çarpanı dahil, eksik canla sınırlı değil); önizleme ile aynı. */
+  groundTickHeal(amount: number, target: Combatant): number {
+    return Math.round(amount * this.statusMult(target, 'healTakenMult'));
+  }
+
   /**
    * Sabit (sapmasız, kritiksiz, isabet zarsız) tik hasarı: ham miktar x element zayıflığı x (1 - zırh azalması; büyüde büyü zırhı). Yer etkisi tiki ve
    * karakter üstü DoT (Wither) aynı kuralı kullanır; önizleme de bu fonksiyonu kullanır.
@@ -4979,13 +4989,16 @@ export class Battle {
           // Faz 5a (Banshee's Toll; yalnızca ağaçla hedefi değişen skill): alansız çok hedefli kullanımda zemin hedeflerin hücrelerine
           const spread = centerSlot === undefined && !single && this.treeUnits && actor.skillDefs?.[skill.id] && (skill.target === 'all_enemies' || skill.target === 'random_enemies') ? ts.filter((c) => c.board === opposite(actor.side)).map((c) => c.slot).sort((x, y) => x - y) : null;
           if (centerSlot === undefined && !single && !spread?.length) break;
-          const slots0 = single ? [single.slot] : spread?.length ? spread : (group.cells ?? this.areaCells(skillId, centerSlot!, opposite(actor.side), actorUid));
+          // area_any (D11 Radiance): zemin alanın atıldığı tahtaya; `side` o tahtanın tarafına uymuyorsa konmaz (dost zemini yalnızca kendi tahtana)
+          const groundBoard: Side = single ? single.board : skill.target === 'area_any' && areaBoard ? areaBoard : opposite(actor.side);
+          if (skill.target === 'area_any' && effect.side && (effect.side === 'allies') !== (groundBoard === actor.side)) break;
+          const slots0 = single ? [single.slot] : spread?.length ? spread : (group.cells ?? this.areaCells(skillId, centerSlot!, groundBoard, actorUid));
           // Faz 5a (Sea of Fire): alanın dört yönden değdiği hücreler de (aynı tahta)
           const slots = effect.treeWide === 'touch' ? this.touchingSlots(slots0) : slots0;
           const g: GroundEffect = {
             id: `g${this.groundCount++}`,
             ground: effect.ground,
-            board: single ? single.board : opposite(actor.side),
+            board: groundBoard,
             slots,
             turns: effect.turns,
             source: actor.uid,
@@ -5576,6 +5589,11 @@ export class Battle {
     let skipThisTurn = actor.statuses.some((st) => this.statusDef(st.kind)?.skipTurn);
     // Yerdeki etkiler: bu birimin hücresinde duran (düşman) etkiler hasar verir
     for (const g of [...this.ground]) {
+      // D11 (Holy Ground): şifa zemini yalnızca bırakanın tarafındaki birimi iyileştirir (kritiksiz sabit tik), kimseye hasar vermez
+      if (this.isHealGround(g.ground)) {
+        if (g.board === actor.board && g.slots.includes(actor.slot) && g.sourceSide === actor.side && actor.hp > 0 && g.amount > 0) this.applyHeal(this.get(g.source) ?? actor, actor, g.amount, false, emit, g.ground);
+        continue;
+      }
       if (g.board !== actor.board || !g.slots.includes(actor.slot) || g.sourceSide === actor.side || actor.hp <= 0) continue;
       // Faz 4c (ağaç zemini): hasarsız zemin tiklemez; ağacın doğurduğu zemin aynı türden daha güçlü zemin hücredeyse tiklemez (üst üste kuralı)
       if (g.noDamage || (g.yields && this.groundOutranked(g, actor.slot))) continue;

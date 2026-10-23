@@ -34,6 +34,8 @@ import { clampSize } from '../team-select-model';
 import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
 import { MOTION, motion } from '../../ui/motion';
 import { enemiesEnter, showWaveBanner } from '../wave-banner';
+import { debugActive } from '../../ui/debug-entry';
+import { storage } from '../kv-storage';
 import { formatHit } from '../hit-format';
 import { kitTextBand } from '../hud-kit';
 import type { BattleEffect } from '../battle-effects';
@@ -108,6 +110,8 @@ export interface BattleSceneData {
   campaign?: CampaignBattleHooks;
   /** Sefer genel zorluğu (yapay zeka): TODO(engine-dev) AI girdisi gelince motora iletilecek; şimdilik yalnızca saklanır. */
   difficulty?: 'easy' | 'medium' | 'hard';
+  /** Sefer bölgesinin düşman YZ terazi ayarı (BattlePlan.enemyAi; yalnızca düşman tarafı; playtest 2026-10-23 D5). */
+  enemyAi?: Record<string, number>;
   /** Savaş arka planı (assets/backgrounds/<ad>): sefer karşılaşma/düğüm/bölge seçimi; dosya yoksa savaşın varsayılan arka planı. */
   background?: string;
   /** Multiplayer savaşı (src/game/mp-client.ts): savaş lockstep'ten gelir, yalnızca yerel taraf oynanır, YZ yok. */
@@ -208,6 +212,8 @@ export class BattleScene extends Phaser.Scene {
   private tutCtx: BattleLessonCtx | undefined;
   /** Sefer genel zorluğu (yalnızca sefer savaşında; bkz. BattleSceneData.difficulty). */
   difficulty: 'easy' | 'medium' | 'hard' | undefined = undefined;
+  /** Sefer bölgesinin düşman YZ terazi ayarı (BattleSceneData.enemyAi). */
+  enemyAi: Record<string, number> | undefined = undefined;
   /** Sefer savaş arka planı (BattleSceneData.background). */
   background: string | undefined = undefined;
   /** Ekrandaki arka planın kimliği (debug / testler). */
@@ -276,6 +282,8 @@ export class BattleScene extends Phaser.Scene {
   /** Dokunmatik uzun basma sayacı ve 'bu basış seçim jestiydi' bayrağı (bırakınca skill seçmesin). */
   private pressTimer?: Phaser.Time.TimerEvent;
   private longPressFired = false;
+  /** Ultimate kullanan birim: ilk skill vuruşunda ekran titremesi + zemin çatlağı oynar (A1). */
+  private ultHitBy: string | null = null;
   private unitTipKey = '';
   private hint?: Phaser.GameObjects.Text;
   /** test mode: the unit the tester is controlling. */
@@ -332,6 +340,7 @@ export class BattleScene extends Phaser.Scene {
     this.campaign = data.campaign;
     this.tutCtx = data.tutorial;
     this.difficulty = data.difficulty;
+    this.enemyAi = data.enemyAi;
     this.background = data.background;
     this.mp = data.mp;
     this.weapons = data.weapons;
@@ -876,7 +885,7 @@ export class BattleScene extends Phaser.Scene {
         if (uid) this.toggleUnitSelect(uid);
         return;
       }
-      if (ptr.wasTouch) {
+      {
         const sx = p.x;
         const sy = p.y;
         this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
@@ -886,9 +895,10 @@ export class BattleScene extends Phaser.Scene {
           const uid = unitAt(sx, sy);
           if (!uid) return;
           this.longPressFired = true;
-          this.toggleUnitSelect(uid);
+          // Basılı tutma / uzun basma: birimin bilgi paneli sabitlenir (hedefleme olmaz); debug seçimi sürüyorsa eskisi gibi seçim
+          if (this.unitSel.size > 0) this.toggleUnitSelect(uid);
+          else this.pinCardOf(uid);
         });
-        return;
       }
       // Ordinary click on empty ground clears the selection (a click on a unit never does: it may be a skill target)
       if (this.unitSel.size > 0 && !unitAt(p.x, p.y)) this.clearUnitSelection();
@@ -1194,7 +1204,9 @@ export class BattleScene extends Phaser.Scene {
     this.clearSlotMarkers();
     this.clearAreaMarker();
     this.refreshGlows();
-    if (this.battle.needsSlotChoice(skill) || this.battle.isReviveSkill(skill)) this.showSlotMarkers(actor, skill); // Raise Dead / Resurrection: two-step flow
+    if (this.battle.needsSlotChoice(skill) || this.battle.isReviveSkill(skill)) {
+      if (this.battle.canUse(actor, skill).ok) this.showSlotMarkers(actor, skill); // beklemedeki (cooldown) çağrı yerleştirme açmaz
+    } // Raise Dead / Resurrection: two-step flow
     else if (this.battle.needsTargetChoice(skill, actor)) this.showTargetCells(actor, skill);
     // Skills without a target choice (all enemies, self, ...) show their effect on everyone affected right away
     else {
@@ -1358,10 +1370,7 @@ export class BattleScene extends Phaser.Scene {
         // touch: the first tap only previews; a second tap on another cell that gives the exact same area casts
         if (p.wasTouch && h.twoTap && !downWasHover && !(prevHoverSlot !== null && h.sameArea?.(board, prevHoverSlot, cell))) return;
         if (!h.canPick(board, cell)) {
-          // Hedef olmayan birime tıklamak: kartı kendi tarafında sabitlenir / kaldırılır (hedefleme sürerken de)
-          const unit = [...this.battle.living('party'), ...this.battle.living('enemy')].find((c) => c.board === board && c.slot === cell);
-          const card = unit ? this.buildCard(unit.uid) : null;
-          if (card) this.hud?.togglePin(card);
+          // Hedef olmayan birime tek tık: hiçbir şey olmaz (panel yalnızca basılı tutunca / sağ tıkla açılır)
           return;
         }
         h.onPick(board, cell);
@@ -1442,7 +1451,9 @@ export class BattleScene extends Phaser.Scene {
   private showCorpseTip(uid: string, reviveBy?: string): void {
     const c = this.battle.get(uid);
     if (!c) return;
-    const tip = corpseTip(unitName(c), this.uiCorpses.get(uid) ?? 'revivable', !!reviveBy, reviveBy ? this.battle.reviveBlockReason(reviveBy, uid) : null);
+    const valorHave = this.battle.valorOf(this.localSide);
+    const valorCost = this.battle.valorRules?.revive.battleCost;
+    const tip = corpseTip(unitName(c), this.uiCorpses.get(uid) ?? 'revivable', !!reviveBy, reviveBy ? this.battle.reviveBlockReason(reviveBy, uid) : null, c.side === this.localSide && valorHave !== null && valorCost ? { cost: valorCost, have: valorHave } : null);
     const hex = { good: colors.heal, bad: colors.lethal, muted: colors.muted };
     this.hideInfoTip();
     this.unitTipKey = `corpse:${uid}`;
@@ -1662,7 +1673,11 @@ export class BattleScene extends Phaser.Scene {
     } else {
       // STEP 2: your free cells are ally-tone plates; the chosen corpse keeps a bright framed plate on the foe board (clicking it undoes the choice)
       const groups: Array<{ board: 'party' | 'enemy'; specs: CellTileSpec[] }> = [
-        { board: own, specs: [...inp.slots.map((slot): CellTileSpec => (fitOf(slot) ? { slot, ...fitPlate(fitOf(slot)!.fit) } : { slot, state: 'selectable', tone: ownTone })), ...reserved.map((slot) => ({ slot, state: 'invalid' as const }))] },
+        { board: own, specs: [...inp.slots.map((slot): CellTileSpec => {
+          // yerleştirme hücreleri belirgin (N1: zayıf 'selectable' yerine dolgulu 'affected')
+          const p = fitOf(slot) ? fitPlate(fitOf(slot)!.fit) : { state: 'selectable' as const, tone: ownTone };
+          return { slot, ...p, state: p.state === 'selectable' ? 'affected' : p.state };
+        }), ...reserved.map((slot) => ({ slot, state: 'invalid' as const }))] },
       ];
       if (chosen) groups.push({ board: foe, specs: [{ slot: chosen.slot, state: 'anchor', tone: 'enemy' }, ...inp.choices.filter((c) => c.uid !== chosen.uid).map((c) => ({ slot: c.slot, state: 'selectable' as const, tone: 'enemy' as const }))] });
       this.showBasePlates(groups);
@@ -2459,9 +2474,7 @@ export class BattleScene extends Phaser.Scene {
       this.selectActor(view.combatant.uid);
       return;
     }
-    // Hedef değilse: birimin kartı kendi tarafında sabitlenir (aynı birime yeniden dokunmak ya da Esc kaldırır; her tarafta bir kart)
-    const card = this.buildCard(view.combatant.uid);
-    if (card) this.hud?.togglePin(card);
+    // Tek tık / dokunuş hiçbir zaman bilgi paneli açmaz (Ömer 2026-10-23): panel yalnızca basılı tutunca ya da sağ tıkla (bindUnitSelect, pinCardOf)
   }
 
   // --- Hover: unit info, skill/stat info and effect previews ---
@@ -2773,7 +2786,7 @@ export class BattleScene extends Phaser.Scene {
 
   private runAi(actor: Combatant): void {
     // Difficulty (item 258): the campaign passes it in; quick battles default to Medium. Only the enemy side plays by it (an AI-driven party stays Medium).
-    const aiOpts = { difficulty: actor.side === 'enemy' ? (this.difficulty ?? 'medium') : 'medium' } as const;
+    const aiOpts = actor.side === 'enemy' ? { difficulty: this.difficulty ?? 'medium', ...(this.enemyAi ? { value: this.enemyAi } : {}) } : { difficulty: 'medium' as const };
     const choice = chooseAction(this.battle, actor.uid, content.aiConfig, undefined, aiOpts);
     this.matchLog?.noteAi(explainChoice(this.battle, actor.uid, content.aiConfig, aiOpts)); // match record: why this move (does not change the decision)
     const who = `${actor.side === 'enemy' ? 'Enemy ' : 'Player '}${unitName(actor)}`;
@@ -2902,7 +2915,10 @@ export class BattleScene extends Phaser.Scene {
         this.closeStageGate();
         const actor = this.battle.get(e.actor);
         const skill = content.skills[e.skill];
-        if (actor && skill) this.announce(`${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)} uses ${skill.name}`);
+        if (actor && skill) {
+          this.announce(`${actor.side !== this.localSide ? 'Enemy ' : ''}${unitName(actor)} uses ${skill.name}`, ensureSkillIcon(this, skill));
+          this.ultHitBy = actor.skills.indexOf(skill.id) === 3 ? actor.uid : null; // ultimate: ilk vuruşta ekran titremesi + zemin çatlağı (A1)
+        }
         this.currentUsage = this.usageRec.usageOf(e); // efekt bu kullanımda gerçekte ne olduğunu bilsin (VfxCtx.usage)
         // Backstab: the cell behind the target the vfx teleports into (visual only; the formation does not change)
         this.skillBehind = e.behindSlot !== undefined && e.behindBoard ? this.cellPos(e.behindBoard, e.behindSlot) : undefined;
@@ -2923,6 +2939,10 @@ export class BattleScene extends Phaser.Scene {
         await this.passHitGate();
         this.presentStatuses(e);
         const target = this.views.get(e.target);
+        if (this.ultHitBy && e.source === this.ultHitBy && (!e.origin || e.origin === 'skill') && target) {
+          this.ultHitBy = null;
+          this.ultImpactFx(target);
+        }
         // Wither tiki (durum hasarı, taşıyanın tur başı): v2'de Hexer'ın 'withertick' efekti, v1'de ayak dibinde kısa çürük buharı; rakam küçük
         const witherTick = e.origin === 'status' && e.status === 'wither';
         if (target && witherTick) {
@@ -3263,6 +3283,7 @@ export class BattleScene extends Phaser.Scene {
         else if (dead?.summoned) this.uiOccupied.delete(cellKey(dead.board, dead.slot));
         this.refreshCorpseMarks();
         this.refreshCommands();
+        this.valorFirstFallHint(dead);
         return;
       }
       // --- Boss (The Bridge Warden): telgraf göstergeleri, çözülme/faz/Mooring efektleri (src/game/vfx-warden.ts) ---
@@ -3369,7 +3390,8 @@ export class BattleScene extends Phaser.Scene {
     this.syncWaveLabel();
     const names = e.combatants.map((c) => unitName(c)).join(' · ');
     this.hud?.setHidden(true); // V1 Corner: geçiş anında HUD kısa süre gizlenir, tam bant gösterilir
-    await showWaveBanner(this, `ROUND ${e.index + 1}`, names || undefined, MOTION.wave.battleHoldMs);
+    const roundTag = this.battle.waveCount > 1 ? `Round ${e.index + 1}/${this.battle.waveCount}` : `Round ${e.index + 1}`;
+    await showWaveBanner(this, e.index > 0 ? 'Reinforcements!' : `ROUND ${e.index + 1}`, e.index > 0 ? [roundTag, names].filter(Boolean).join(' · ') : names || undefined, MOTION.wave.battleHoldMs);
     if (!this.sys.isActive()) return;
     this.hud?.setHidden(false);
     this.renderTurnBar(e.queue);
@@ -4038,11 +4060,22 @@ export class BattleScene extends Phaser.Scene {
   }
 
   /** A short banner under the turn bar: who used what. */
-  private announce(text: string): void {
+  private announce(text: string, iconKey?: string): void {
     this.announceLayer?.destroy();
     const label = elText(this, W / 2, 168, text, 32, EL.ON, { em: 0.06, upper: false }).setOrigin(0.5);
-    const bg = kitTextBand(this, W / 2, 168, label.width + 260, 66);
-    const layer = this.add.container(0, 0, [bg, label]).setDepth(4100);
+    const parts: Phaser.GameObjects.GameObject[] = [label];
+    let span = label.width;
+    // Skill simgesi 32 px, yazının SOLUNDA (A1, Ömer 2026-10-23); yazı ile birlikte ortalanır
+    if (iconKey && this.textures.exists(iconKey)) {
+      const ICON = 32;
+      const GAP = 12;
+      span += ICON + GAP;
+      const icon = this.add.image(W / 2 - span / 2 + ICON / 2, 168, iconKey).setDisplaySize(ICON, ICON);
+      label.setX(W / 2 - span / 2 + ICON + GAP + label.width / 2);
+      parts.push(icon);
+    }
+    const bg = kitTextBand(this, W / 2, 168, span + 260, 66);
+    const layer = this.add.container(0, 0, [bg, ...parts]).setDepth(4100);
     this.announceLayer = layer;
     this.tweens.add({
       targets: layer,
@@ -4051,6 +4084,33 @@ export class BattleScene extends Phaser.Scene {
       duration: 300,
       onComplete: () => layer.destroy(),
     });
+  }
+
+  /** U7: ilk kez bir kahramanımız düşünce (Valor açıksa) bir kerelik ipucu; kural değişmez, yalnızca görünürlük. */
+  private valorFirstFallHint(dead: Combatant | undefined): void {
+    if (!dead || dead.summoned || dead.side !== this.localSide || this.mp) return;
+    const have = this.battle.valorOf(this.localSide);
+    const cost = this.battle.valorRules?.revive.battleCost;
+    if (have === null || !cost) return;
+    const kv = storage();
+    if (!kv || kv.getItem('proto.hint.valorFall.v1')) return;
+    kv.setItem('proto.hint.valorFall.v1', '1');
+    this.announce(`${unitName(dead)} has fallen. Valor can raise them: ${cost} embers and your turn`);
+  }
+
+  /** Ultimate vuruşu (A1): hafif ekran titremesi + hedefin ayağında 0,3 sn'lik zemin çatlağı. Yalnızca görsel. */
+  private ultImpactFx(target: CombatantView): void {
+    this.cameras.main.shake(slow(220), 0.005);
+    const x = target.container.x;
+    const y = target.container.y;
+    const g = this.add.graphics().setDepth(y - 1);
+    g.lineStyle(4, 0x1a1208, 0.9);
+    for (const [dx, dy] of [[-90, -4], [-52, 10], [-20, -12], [24, 12], [60, -8], [96, 6]] as Array<[number, number]>) {
+      g.lineBetween(x + dx * 0.15, y + dy * 0.2, x + dx * 0.55, y + dy * 0.7);
+      g.lineBetween(x + dx * 0.55, y + dy * 0.7, x + dx, y + dy);
+    }
+    g.lineStyle(2, 0xd9b26a, 0.5).strokeEllipse(x, y, 70, 20);
+    this.tweens.add({ targets: g, alpha: 0, delay: slow(60), duration: slow(240), onComplete: () => g.destroy() });
   }
 
   private drawSlots(): void {
@@ -4302,7 +4362,8 @@ export class BattleScene extends Phaser.Scene {
         tip: this.skillTip(actor, skill),
       });
     });
-    const own = actor.summoned ? [] : this.battle.globalSkillIds(actor.side); // summons never use global actions
+    // summons never use global actions; on the foe's turn Rest / Skip / Move are hidden placeholders too (N1: they were shown on the enemy panel)
+    const own = actor.summoned || (this.battle.mode !== 'test' && actor.side !== this.localSide) ? [] : this.battle.globalSkillIds(actor.side);
     const globals: HudGlobal[] = own.map((id) => {
           const g = this.battle.globalDef(id)!;
           const accent = GLOBAL_ACCENT[g.kind === 'skip' ? 'skip' : g.kind] ?? '#e8c47e';
@@ -4576,7 +4637,7 @@ export class BattleScene extends Phaser.Scene {
       avatar: (unit, cx, cy, size) => this.avatarImage(unit, cx, cy, size),
       onNewGame: () => this.newGame(),
       onTeamSelect: () => this.goToTeamSelect(),
-      matchData: () => this.matchLogData(),
+      ...(debugActive() ? { matchData: () => this.matchLogData() } : {}), // Copy match data yalnızca debug açıkken (oyuncuya görünmez)
       preview,
       onClose: () => this.sys.isActive() && this.setBattleHudHidden(false),
       ...(mp ? {} : { actions: this.campaign && !preview ? this.campaign.resultActions(victory, this.battle) : undefined }),

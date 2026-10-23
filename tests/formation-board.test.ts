@@ -10,13 +10,13 @@ const cells = (): string[] => {
 };
 
 describe('formation board kuralları (Formation A)', () => {
-  it('kahramana dokunmak yalnızca seçer; başka kahramana dokunmak takas ETMEZ', () => {
+  it('kahramana dokunmak seçer; seçiliyken başka kahramana dokunmak yer değiştirir', () => {
     const a = tapCell(cells(), { sel: '', moved: '' }, 1);
     expect(a.st.sel).toBe('warrior');
     expect(a.move).toBeUndefined();
     const b = tapCell(cells(), a.st, 10);
-    expect(b.st.sel).toBe('undead');
-    expect(b.move).toBeUndefined();
+    expect(b.move).toEqual({ id: 'warrior', cell: 10 });
+    expect(b.st).toEqual({ sel: '', moved: 'warrior' });
   });
 
   it('seçili kahramana yeniden dokunmak seçimi kaldırır', () => {

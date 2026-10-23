@@ -36,7 +36,22 @@ export const REGION_VIEW = {
   markerH: 64,
   markerGap: 14,
   hoverR: 150,
+  /**
+   * Üst HUD bandı (sahne birimi; playtest U1, Ömer 2026-10-23): Valor mangalları (sol üst) ve bölge adı (üst orta, y 100) haritanın üst
+   * kenarındaki düğüm etiketlerini örtüyordu (Iron Pass). Bölge görünümünde kamera haritanın üst kenarının bu kadar üstüne kayabilir ve bölgeye
+   * girerken düğümler bu bandın altına oturur (üstte görselin dışı koyu zemin).
+   */
+  hudTop: 140,
 } as const;
+
+/**
+ * Bölge görünümünde kaydırma çerçevesi (saf): harita çerçevesinin üst kenarı HUD bandı kadar (dünya birimi = sahne birimi / yakınlaştırma)
+ * yukarı uzar; böylece üst kenardaki düğümler HUD'ın altına kaydırılabilir. Uzak görünümde (region null) çerçeve aynen.
+ */
+export function hudFrame(frame: Bounds, region: string | null, zoom: number, hudTop: number = REGION_VIEW.hudTop): Bounds {
+  if (region === null || !(zoom > 0)) return frame;
+  return { ...frame, top: frame.top - hudTop / zoom };
+}
 
 export interface RegionSets {
   region: string;

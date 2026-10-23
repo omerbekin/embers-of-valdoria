@@ -136,28 +136,28 @@
   "nodes": {
     "0.f1": {
       "name": "Wide Channels",
-      "text": "Mana Overflow gives your team +1 MP per rank.",
+      "text": "Mana Overflow gives your team +2 MP per rank.",
       "src": "B:V3:0.f1",
       "fx": [
         {
           "k": "passive",
           "f": "mana",
           "op": "add",
-          "v": 1,
+          "v": 2,
           "rank": true
         }
       ]
     },
     "0.f2": {
       "name": "Soaking Robes",
-      "text": "Magic damage you block counts 2% more per rank toward Mana Overflow.",
+      "text": "Magic damage you block counts 4% more per rank toward Mana Overflow.",
       "src": "B:V3:0.f2",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "mod": {
-            "blockedMul": 0.02
+            "blockedMul": 0.04
           },
           "rank": true
         }
@@ -165,7 +165,7 @@
     },
     "0.f3": {
       "name": "Overflow Spill",
-      "text": "Each Mana Overflow trigger gives the ally with the least MP 1 extra MP per rank.",
+      "text": "Each Mana Overflow trigger gives the ally with the least MP 2 extra MP per rank.",
       "src": "B:V3:0.f3",
       "fx": [
         {
@@ -175,7 +175,7 @@
           "rank": true,
           "do": [
             {
-              "mp": 1,
+              "mp": 2,
               "to": "lowestMpAlly"
             }
           ]
@@ -352,7 +352,7 @@
     },
     "1.f1": {
       "name": "Generous Cut",
-      "text": "Mana Steal gives you 5% more of the burned MP per rank.",
+      "text": "Mana Steal gives you 10% more of the burned MP per rank.",
       "src": "B:V3:1.f1",
       "fx": [
         {
@@ -360,14 +360,14 @@
           "sel": "manaBurn",
           "f": "gainRatio",
           "op": "add",
-          "v": 0.05,
+          "v": 0.1,
           "rank": true
         }
       ]
     },
     "1.f2": {
       "name": "Deep Pockets",
-      "text": "Mana Steal burns +2 MP per rank from enemies above half MP.",
+      "text": "Mana Steal burns +3 MP per rank from enemies above half MP.",
       "src": "B:V3:1.f3",
       "fx": [
         {
@@ -377,7 +377,7 @@
             "targetMpAbove": 0.5
           },
           "mod": {
-            "manaBurnAdd": 2
+            "manaBurnAdd": 3
           },
           "rank": true
         }
@@ -569,7 +569,7 @@
     },
     "2.f1": {
       "name": "Wide Siphon",
-      "text": "Drain Field burns +1% of max MP per rank.",
+      "text": "Drain Field burns +2% of max MP per rank.",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -577,14 +577,14 @@
           "sel": "manaBurn",
           "f": "pctMax",
           "op": "add",
-          "v": 0.01,
+          "v": 0.02,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Hushing Mist",
-      "text": "Drain Field Silence chance +4% per rank.",
+      "text": "Drain Field Silence chance +5% per rank.",
       "src": "A:V1:2.f2",
       "fx": [
         {
@@ -592,21 +592,21 @@
           "sel": "manaBurn",
           "f": "onEmpty.chance",
           "op": "add",
-          "v": 0.04,
+          "v": 0.05,
           "rank": true
         }
       ]
     },
     "2.f3": {
       "name": "Long Quiet",
-      "text": "Drain Field's Silence has a 3% chance per rank to last 1 more turn.",
+      "text": "Drain Field's Silence has a 5% chance per rank to last 1 more turn.",
       "src": "A:V1:2.f3",
       "fx": [
         {
           "k": "hook",
           "h": "cond",
           "sel": "status:silence",
-          "procChance": 0.03,
+          "procChance": 0.05,
           "mod": {
             "turns": 1
           },
@@ -782,7 +782,7 @@
     },
     "3.f1": {
       "name": "Layered Ward",
-      "text": "Spell Ward shield +2% per rank.",
+      "text": "Spell Ward shield +4% per rank.",
       "src": "B:V4:3.f1",
       "fx": [
         {
@@ -790,7 +790,7 @@
           "sel": "shield",
           "f": "power",
           "op": "pct",
-          "v": 0.02,
+          "v": 0.04,
           "rank": true
         },
         {
@@ -798,14 +798,14 @@
           "sel": "shield",
           "f": "bonusPerMana",
           "op": "pct",
-          "v": 0.02,
+          "v": 0.04,
           "rank": true
         }
       ]
     },
     "3.f2": {
       "name": "Ward Mending",
-      "text": "Spell Ward heals the warded ally for 1% of its max HP per rank when cast.",
+      "text": "Spell Ward heals the warded ally for 4% of its max HP per rank when cast.",
       "src": "B:V4:3.f2",
       "fx": [
         {
@@ -815,7 +815,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01,
+              "heal": 0.04,
               "to": "target"
             }
           ]

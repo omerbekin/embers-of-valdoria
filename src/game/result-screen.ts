@@ -127,6 +127,8 @@ export interface ResultAction {
   repeatable?: boolean;
   /** Canlı görünüm (~4 kez/sn okunur): yazı ve basılabilirlik. Yoksa sabit `label`, hep etkin. */
   view?: () => { label: string; enabled: boolean };
+  /** Düğmenin altında küçük açıklama satırı (Defeat > Load Last Save: "Valdren Keep · 12 min ago", H4). */
+  note?: string;
 }
 
 export interface ResultScreen {
@@ -212,6 +214,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   const local = o.localSide ?? 'party';
   const accent = victory ? { edge: 0xd9b26a, light: 0xe8c47e, text: '#f3d9a0', value: EL.ON } : { edge: 0x9c4a40, light: 0xb0584c, text: '#d88a7e', value: '#eab0a4' };
   const root = scene.add.container(0, 0).setDepth(DEPTH);
+  const tweensBefore = new Set(scene.tweens.getTweens()); // U5: tıklanınca bu ekranın giriş animasyonları atlanır
 
   // Kısa ekran (telefon yatay): yazılar ve dokunma hedefleri büyür (html.short = ≤520px, html.compact = ≤720px)
   const cls = typeof document !== 'undefined' ? document.documentElement.classList : null;
@@ -322,7 +325,9 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   // ============ Alt çubuk ölçüleri (alan buna göre ayrılır) ============
   const primaryH = short ? 126 : 84;
   const secH = short ? 120 : 62;
-  const barBottom = H - 30;
+  // Düğme altı not satırı (H4) varsa çubuk biraz yukarı kalkar
+  const noteH = !o.preview && o.actions?.some((a) => a.note) ? (short ? 40 : 32) : 0;
+  const barBottom = H - 30 - noteH;
   const barY = barBottom - primaryH / 2; // düğme merkezi
   const areaTop = py + plaqueH + 26;
   const areaBottom = barBottom - primaryH - (short ? 14 : 22);
@@ -584,7 +589,7 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   /** Kit kuralı: birincil eylem EN SAĞDA, ikinciller onun soluna dizilir; "Copy match data" en solda küçük düğme. */
   const right = W - 80;
   const gap = 24;
-  const place = (items: Array<{ label: string; run: () => void; primary: boolean; view?: () => { label: string; enabled: boolean } }>): void => {
+  const place = (items: Array<{ label: string; run: () => void; primary: boolean; view?: () => { label: string; enabled: boolean }; note?: string }>): void => {
     const prim = items.filter((x) => x.primary);
     const secs = items.filter((x) => !x.primary);
     const sw2 = items.length > 3 ? 280 : 320;
@@ -602,9 +607,10 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
       const b = kitButton(it.label, it.run, bx, w, it.primary);
       buttons.add(b.root);
       if (it.view) live.push({ b, view: it.view });
+      if (it.note) buttons.add(fitText(elBody(scene, bx, barY + (it.primary ? primaryH : secH) / 2 + 8, it.note, sz(17), EL.MUTED).setOrigin(0.5, 0), w + gap));
     }
   };
-  if (actions) place(actions.map((a) => ({ label: a.label, run: a.run, primary: !!a.primary, ...(a.view ? { view: a.view } : {}) })));
+  if (actions) place(actions.map((a) => ({ label: a.label, run: a.run, primary: !!a.primary, ...(a.view ? { view: a.view } : {}), ...(a.note ? { note: a.note } : {}) })));
   else if (o.preview) place([{ label: 'Team Select', run: teamSelect, primary: false }, { label: 'Close preview', run: () => destroy(), primary: true }]);
   else place([{ label: 'Team Select', run: teamSelect, primary: false }, { label: 'New Game', run: newGame, primary: true }]);
   // "Copy match data": solda küçük ikincil düğme (kısa ipucu = yazının kendisi)
@@ -635,7 +641,24 @@ export function showResultScreen(scene: Phaser.Scene, o: ResultScreenOptions): R
   refresh();
   const refreshTimer = live.length || statusText ? scene.time.addEvent({ delay: 250, loop: true, callback: refresh }) : null;
   root.add(buttons);
-  scene.tweens.add({ targets: buttons, alpha: 1, duration: d(rm.buttonsMs), delay: rm.buttonsDelayMs });
+  // Düğmeler ilk kareden görünür ve etkin (Continue geç çıkmasın); yalnızca kısa bir belirme
+  scene.tweens.add({ targets: buttons, alpha: 1, duration: Math.min(d(rm.buttonsMs), 160) });
+  // Boş yere tıklama / dokunma: giriş animasyonunu atlar (başlık, tablo, satırlar anında yerine oturur)
+  const inRoot = (t: unknown): boolean => {
+    let o = t as Phaser.GameObjects.GameObject | null | undefined;
+    while (o) {
+      if (o === root) return true;
+      o = (o as { parentContainer?: Phaser.GameObjects.Container }).parentContainer;
+    }
+    return false;
+  };
+  dim.on('pointerdown', () => {
+    for (const tw of scene.tweens.getTweens()) {
+      if (tweensBefore.has(tw)) continue;
+      const targets = (tw as unknown as { targets?: unknown[] }).targets ?? [];
+      if (targets.length && targets.every(inRoot)) tw.setTimeScale(40);
+    }
+  });
 
   // --- Klavye: Enter = ilk eylem / New Game, Esc = Team Select (wiki/debug menüsü açıkken yok sayılır); ipucu yazısı yok ---
   const onKey = (e: KeyboardEvent) => {

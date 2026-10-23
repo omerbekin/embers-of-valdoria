@@ -32,9 +32,11 @@ export const FS_ENTER_PATH = 'M3 9V3h6M15 3h6v6M21 15v6h-6M9 21H3v-6';
 export const FS_EXIT_PATH = 'M9 3v6H3M21 9h-6V3M15 21v-6h6M3 15h6v6';
 /** Kapatma X'i (Ömer 2026-10-18, ortak envanter v3): pencerenin sağ üstteki kapatma düğmesi, Back / Menu / tam ekranla aynı dil. */
 export const CLOSE_PATH = 'M6 6 L18 18 M18 6 L6 18';
+/** Atla (Skip; hikâye sinematiği, Ömer 2026-10-23): çift ok + bitiş çizgisi; X ile aynı yerde (Menu'nün yerine), aynı dil. */
+export const SKIP_PATH = 'M5 6 L11 12 L5 18 M11 6 L17 12 L11 18 M19.5 6 V18';
 export const NAV_STROKE = 1.6;
 
-export type NavIcon = 'back' | 'menu' | 'fs-enter' | 'fs-exit' | 'close';
+export type NavIcon = 'back' | 'menu' | 'fs-enter' | 'fs-exit' | 'close' | 'skip';
 
 const svg = (body: string, cap: 'round' | 'square'): string =>
   `<svg viewBox="0 0 24 24" width="${NAV_BTN.icon}" height="${NAV_BTN.icon}" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="${NAV_STROKE}" stroke-linecap="${cap}" stroke-linejoin="round">${body}</svg>`;
@@ -52,6 +54,8 @@ export function navSvg(kind: NavIcon): string {
       return svg(`<path d="${FS_EXIT_PATH}"/>`, 'square');
     case 'close':
       return svg(`<path d="${CLOSE_PATH}"/>`, 'round');
+    case 'skip':
+      return svg(`<path d="${SKIP_PATH}"/>`, 'round');
   }
 }
 

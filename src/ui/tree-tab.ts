@@ -73,6 +73,9 @@ export interface TreeTab {
   /** Sağ sayfayı çizer (aynı kahraman / ölçü ise yeniden kurmadan günceller). */
   render(host: HTMLElement): void;
   destroy(): void;
+  /** Açık düğüm ipucu var mı / kapat (Esc önce ipucunu kapatır). */
+  tipOpen(): boolean;
+  closeTip(): void;
 }
 
 const KN: Record<string, string> = { filler: 'Filler', edge: 'Edge', notable: 'Notable', blood: 'Blood Price', evolve: 'Evolve' };
@@ -467,6 +470,23 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (x < 8) x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
     let y = rt + r.height / 2 - h / 2;
     if (x < rr && x + w > rl) y = rt - h - 8 < 8 ? rb + 8 : rt - h - 8;
+    // düğüm ipucu ağacın kendisini örtmesin (playtest B4): ağaç alanının sağına, sığmazsa altına kayar
+    if (el.classList.contains('gt-nd') && treeHost?.isConnected) {
+      const hr = treeHost.getBoundingClientRect();
+      const hl = hr.left - sr.left;
+      const hrr = hr.right - sr.left;
+      const hb = hr.bottom - sr.top;
+      if (hrr + 10 + w <= vw - 8) {
+        x = hrr + 10;
+        y = rt + r.height / 2 - h / 2;
+      } else if (hb + 8 + h <= vh - 8) {
+        x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
+        y = hb + 8;
+      } else if (hl - 10 - w >= 8) {
+        x = hl - 10 - w;
+        y = rt + r.height / 2 - h / 2;
+      }
+    }
     y = Math.max(8, Math.min(vh - h - 8, y));
     tip.style.left = `${x}px`;
     tip.style.top = `${y}px`;
@@ -968,5 +988,5 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     tip.remove();
   }
 
-  return { enabled, button, syncButton, render, destroy };
+  return { enabled, button, syncButton, render, destroy, tipOpen: () => tip.classList.contains('show'), closeTip: hideTip };
 }

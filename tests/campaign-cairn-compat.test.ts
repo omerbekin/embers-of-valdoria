@@ -33,7 +33,7 @@ describe('Cairn Hill: harita yeri', () => {
     const n = node(map, 'cairn');
     expect([n.type, n.name, n.region]).toEqual(['battle', 'Cairn Hill', 'I']);
     expect(map.edges.filter((e) => e.to === 'cairn').map((e) => [e.from, e.style])).toEqual([['moor', 'solid'], ['hills', 'solid']]); // 2026-10-22: Brackenridge kolu
-    expect(map.edges.filter((e) => e.from === 'cairn').map((e) => e.to).sort()).toEqual(['5B', 'charcoal']);
+    expect(map.edges.filter((e) => e.from === 'cairn').map((e) => e.to).sort()).toEqual(['5B', 'charcoal', 'hillcamp']); // hillcamp: Hillside Camp cebi (playtest D6)
     expect(map.edges.filter((e) => e.from === 'moor' && e.to !== 'cairn').map((e) => e.to)).toEqual(['hoard']); // yalnız cep (Raiders' Hoard)
     const enc = (encounters as unknown as Record<string, { units: Array<{ class: string; mods?: { hpMult?: number } }> }>)[n.encounter!]!;
     const pool = new Set(['windy_moor', 'charcoal_camp'].flatMap((k) => (encounters as unknown as Record<string, { units: Array<{ class: string }> }>)[k]!.units.map((u) => u.class)));

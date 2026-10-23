@@ -65,6 +65,12 @@ export interface AiValueConfig {
   stallFocus?: number;
   /** advanceToFront: yakın dövüşle gelecek beklenen ek hasar x bu pay x (2 - can oranı) bedeli (madde 271; yoksa 0,5). */
   advanceRiskShare?: number;
+  /**
+   * Taunt çekimi (playtest 2026-10-23 D5): tek hedefli skill'ler taunt'lı düşmana zaten ZORLANIR (battle.validTargets); alan / rastgele / herkese vuran
+   * skill'lerde ise karşı tarafta bu skill'in ulaşabildiği (menzildeki) taunt'lı bir birim varsa, taunt'lı OLMAYAN hedeflere giden hasar / baskı / öldürme
+   * değerinin bu payı silinir (0,7: değerin %30'u kalır). Taunt'a uymayan (boss) birimde ve taunter ulaşılamıyorsa yok. Yoksa 0 (eski davranış).
+   */
+  tauntPull?: number;
 }
 
 /**
@@ -467,7 +473,7 @@ export class ValueContext {
     const b = this.battle;
     let dmg = 0;
     for (const st of f.statuses) if (b.statusDef(st.kind)?.dot) dmg += b.dotTickDamage(st.kind, st.amount ?? 0, f);
-    for (const g of b.ground) if (g.board === f.board && g.slots.includes(f.slot) && g.sourceSide !== f.side) dmg += b.groundTickDamage(g.ground, g.amount, f);
+    for (const g of b.ground) if (g.board === f.board && g.slots.includes(f.slot) && g.sourceSide !== f.side && !b.isHealGround(g.ground)) dmg += b.groundTickDamage(g.ground, g.amount, f);
     if (b.mode === 'turns') {
       const q = b.turnQueue();
       const start = q[0] === this.actor.uid ? 1 : 0;

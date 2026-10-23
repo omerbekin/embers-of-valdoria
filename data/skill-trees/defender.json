@@ -149,7 +149,7 @@
   "nodes": {
     "0.f1": {
       "name": "Braced Stance",
-      "text": "Bulwark Aura on you +3% of your armor per rank if you did not Move last turn.",
+      "text": "Bulwark Aura on you +6% of your armor per rank if you did not Move last turn.",
       "src": "A:V1:0.f1",
       "fx": [
         {
@@ -161,7 +161,7 @@
             "notMovedLastTurn": true
           },
           "mod": {
-            "auraPct": 0.03
+            "auraPct": 0.06
           },
           "rank": true
         }
@@ -169,14 +169,14 @@
     },
     "0.f2": {
       "name": "Drilled Ranks",
-      "text": "Bulwark Aura also gives allies magic armor equal to 2% of your armor per rank.",
+      "text": "Bulwark Aura also gives allies magic armor equal to 5% of your armor per rank.",
       "src": "A:V3:0.f3",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "aura": {
-            "magicPct": 0.02
+            "magicPct": 0.05
           },
           "rank": true
         }
@@ -184,7 +184,7 @@
     },
     "0.f3": {
       "name": "Tight Formation",
-      "text": "Bulwark Aura +1% of your armor per rank for each ally in it.",
+      "text": "Bulwark Aura +2% of your armor per rank for each ally in it.",
       "src": "A:V3:0.r",
       "fx": [
         {
@@ -195,7 +195,7 @@
             "alliesInAura": true
           },
           "mod": {
-            "auraPct": 0.01
+            "auraPct": 0.02
           },
           "rank": true
         }
@@ -394,7 +394,7 @@
     },
     "1.f2": {
       "name": "Shockwave",
-      "text": "Tremor Slam +3% power per rank against enemies already Slowed.",
+      "text": "Tremor Slam +6% power per rank against enemies already Slowed.",
       "src": "A:V2:1.f2",
       "fx": [
         {
@@ -404,7 +404,7 @@
             "targetStatus": "slow"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -412,7 +412,7 @@
     },
     "1.f3": {
       "name": "Ringing Earth",
-      "text": "Tremor Slam has a 2% chance per rank to Stun each enemy hit for 1 turn.",
+      "text": "Tremor Slam has a 3% chance per rank to Stun each enemy hit for 1 turn.",
       "src": "A:V2:1.f3",
       "fx": [
         {
@@ -422,13 +422,7 @@
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.02
-            },
-            {
-              "type": "status",
-              "status": "stun",
-              "turns": 1,
-              "chance": 0.04
+              "chance": 0.03
             },
             {
               "type": "status",
@@ -440,13 +434,19 @@
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.08
+              "chance": 0.09
             },
             {
               "type": "status",
               "status": "stun",
               "turns": 1,
-              "chance": 0.1
+              "chance": 0.12
+            },
+            {
+              "type": "status",
+              "status": "stun",
+              "turns": 1,
+              "chance": 0.15
             }
           ]
         }
@@ -629,7 +629,7 @@
     },
     "2.f1": {
       "name": "Bellow",
-      "text": "Taunt breaks after 1% more of your max HP lost per rank (25% → 28%).",
+      "text": "Taunt breaks after 2% more of your max HP lost per rank (25% → 31%).",
       "src": "A:V1:2.f1",
       "fx": [
         {
@@ -637,14 +637,14 @@
           "sel": "taunt",
           "f": "breakRatio",
           "op": "add",
-          "v": 0.01,
+          "v": 0.02,
           "rank": true
         }
       ]
     },
     "2.f2": {
       "name": "Second Breath",
-      "text": "When your Taunt ends, heal 1% of your max HP per rank.",
+      "text": "When your Taunt ends, heal 4% of your max HP per rank.",
       "src": "A:V1:2.r",
       "fx": [
         {
@@ -655,7 +655,7 @@
           "rank": true,
           "do": [
             {
-              "heal": 0.01
+              "heal": 0.04
             }
           ]
         }
@@ -663,7 +663,7 @@
     },
     "2.f3": {
       "name": "Thick Skull",
-      "text": "Taunt gives you a shield worth 1% of your max HP per rank.",
+      "text": "Taunt gives you a shield worth 4% of your max HP per rank.",
       "src": "A:V1:2.f3",
       "fx": [
         {
@@ -673,7 +673,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.01
+              "shield": 0.04
             }
           ]
         }
@@ -868,14 +868,14 @@
     },
     "3.f1": {
       "name": "Interlocked",
-      "text": "Close Ranks gives guarded allies armor equal to 2% of your armor per rank.",
+      "text": "Close Ranks gives guarded allies armor equal to 6% of your armor per rank.",
       "src": "A:V3:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "guard": {
-            "armorPct": 0.02
+            "armorPct": 0.06
           },
           "rank": true
         }
@@ -883,7 +883,7 @@
     },
     "3.f2": {
       "name": "Shield Chain",
-      "text": "Close Ranks gives guarded allies a shield worth 2% of your armor per rank.",
+      "text": "Close Ranks gives guarded allies a shield worth 10% of your armor per rank.",
       "src": "A:V3:3.f2",
       "fx": [
         {
@@ -894,7 +894,7 @@
           "rank": true,
           "do": [
             {
-              "shield": 0.02,
+              "shield": 0.1,
               "of": "ownerArmor",
               "to": "target"
             }
@@ -904,14 +904,14 @@
     },
     "3.f3": {
       "name": "Linked Plates",
-      "text": "Damage Close Ranks shares to you is 3% lower per rank.",
+      "text": "Damage Close Ranks shares to you is 4% lower per rank.",
       "src": "A:V1:3.f1",
       "fx": [
         {
           "k": "hook",
           "h": "heal",
           "on": "guardShare",
-          "mul": -0.03,
+          "mul": -0.04,
           "rank": true
         }
       ]

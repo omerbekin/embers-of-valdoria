@@ -145,7 +145,7 @@
   "nodes": {
     "0.f1": {
       "name": "Cold Read",
-      "text": "Opportunist bonus +2% per rank against targets below 50% HP.",
+      "text": "Opportunist bonus +6% per rank against targets below 50% HP.",
       "src": "B:V3:0.f1",
       "fx": [
         {
@@ -155,7 +155,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "passiveBonus": 0.02
+            "passiveBonus": 0.06
           },
           "rank": true
         }
@@ -163,7 +163,7 @@
     },
     "0.f2": {
       "name": "Vein Finder",
-      "text": "Your hits on Opportunist targets +1% critical chance per rank.",
+      "text": "Your hits on Opportunist targets +4% critical chance per rank.",
       "src": "B:V3:0.f2",
       "fx": [
         {
@@ -173,7 +173,7 @@
             "targetOpportunist": true
           },
           "mod": {
-            "critBonus": 0.01
+            "critBonus": 0.04
           },
           "rank": true
         }
@@ -181,7 +181,7 @@
     },
     "0.f3": {
       "name": "Feinting Step",
-      "text": "Each attack you dodge adds +1% per rank Opportunist bonus to your next hit.",
+      "text": "Each attack you dodge adds +3% per rank Opportunist bonus to your next hit.",
       "src": "B:V2:0.f2",
       "fx": [
         {
@@ -192,7 +192,7 @@
           "do": [
             {
               "buff": {
-                "passiveBonus": 0.01
+                "passiveBonus": 0.03
               },
               "stack": true
             }
@@ -503,7 +503,7 @@
     },
     "1.f1": {
       "name": "Balanced Blade",
-      "text": "Venom Edge +3% power per rank against Wounded targets.",
+      "text": "Venom Edge +6% power per rank against Wounded targets.",
       "src": "B:V4:1.f1",
       "fx": [
         {
@@ -513,7 +513,7 @@
             "targetStatus": "wound"
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -756,7 +756,7 @@
     },
     "2.f1": {
       "name": "Crossed Crit",
-      "text": "Saltire Cut +3% critical chance per rank on its center target.",
+      "text": "Saltire Cut +4% critical chance per rank on its center target.",
       "src": "B:V3:2.f2",
       "fx": [
         {
@@ -766,7 +766,7 @@
             "targetIsCenter": true
           },
           "mod": {
-            "critBonus": 0.03
+            "critBonus": 0.04
           },
           "rank": true
         }
@@ -774,7 +774,7 @@
     },
     "2.f2": {
       "name": "Scissor Bite",
-      "text": "Saltire Cut's second center hit +4% power per rank.",
+      "text": "Saltire Cut's second center hit +6% power per rank.",
       "src": "B:V3:2.f3",
       "fx": [
         {
@@ -784,7 +784,7 @@
             "centerHitIndex": 2
           },
           "mod": {
-            "powerMul": 0.04
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -792,7 +792,7 @@
     },
     "2.f3": {
       "name": "Keen Pair",
-      "text": "Saltire Cut +3% power per rank against targets below 50% HP.",
+      "text": "Saltire Cut +6% power per rank against targets below 50% HP.",
       "src": "B:V3:2.f1",
       "fx": [
         {
@@ -802,7 +802,7 @@
             "targetHpBelow": 0.5
           },
           "mod": {
-            "powerMul": 0.03
+            "powerMul": 0.06
           },
           "rank": true
         }
@@ -1012,7 +1012,7 @@
     },
     "3.f2": {
       "name": "Lungful of Ash",
-      "text": "Smoke Bomb's Blinded lowers accuracy by a further 2% per rank.",
+      "text": "Smoke Bomb's Blinded lowers accuracy by a further 3% per rank.",
       "src": "A:V2:3.f3",
       "fx": [
         {
@@ -1021,7 +1021,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "accuracyDelta": -0.02
+              "accuracyDelta": -0.03
             }
           },
           "rank": true
@@ -1030,7 +1030,7 @@
     },
     "3.f3": {
       "name": "Gritty Ash",
-      "text": "Smoke Bomb's Blinded also lowers critical chance by 2% per rank.",
+      "text": "Smoke Bomb's Blinded also lowers critical chance by 3% per rank.",
       "src": "A:V5:3.f3",
       "fx": [
         {
@@ -1039,7 +1039,7 @@
           "sel": "status:blinded",
           "mod": {
             "statusPotency": {
-              "critDelta": -0.02
+              "critDelta": -0.03
             }
           },
           "rank": true

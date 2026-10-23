@@ -118,7 +118,7 @@ export class TownScreen {
     const lines = [
       price === 0
         ? 'Rest by the fire: the living are back to full health. The first rest here is free.'
-        : `Your free rest here was your first arrival. Rest by the fire again for ${price} gold: the living are back to full health. You have ${s.gold} gold.`,
+        : `Arriving here gave you one free rest, and it is spent. Rest by the fire again for ${price} gold: the living are back to full health. You have ${s.gold} gold.`,
       ...(fallen ? ['The fallen stay down: only Valor can raise them.'] : []),
     ];
     const short = price - s.gold;
@@ -244,7 +244,7 @@ export class TownScreen {
     const size = this.compactLabel();
     const text = elText(s, 0, 0, h.label, size, EL.TXT, { em: 0.12 }).setOrigin(0.5);
     const tap = elBody(s, 0, 0, 'Tap again', Math.round(size * 0.82), EL.ON).setOrigin(0.5, 0).setAlpha(0);
-    const pw = text.width + size * 1.6;
+    const pw = Math.max(text.width + size * 2.4, size * 6.2); // kısa etiketler ("Road Out") dar kalmasın (playtest N1)
     const ph = size * 1.9;
     const minX = stageView.left + pw / 2 + 12;
     const maxX = stageView.right - pw / 2 - 12;

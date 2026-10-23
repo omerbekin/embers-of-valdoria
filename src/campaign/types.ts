@@ -130,6 +130,11 @@ export interface MapRegion {
   tagline: string;
   label: [number, number];
   battleBackground?: string;
+  /**
+   * Bölge düşmanlarının yapay zeka terazi ayarı (ai.json > value üzerine, zorluktan sonra; yalnızca düşman tarafı). Playtest 2026-10-23 D5: bölge I
+   * pressureShare düşük (yaralı / az canlı hedefe daha az yüklenme). `_` ile başlayan anahtarlar not.
+   */
+  enemyAi?: Record<string, number | string>;
 }
 
 export interface CampaignMap {

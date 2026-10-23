@@ -105,6 +105,8 @@ export interface InventoryView {
   headExtra?: HTMLElement[];
   onTap?: (uid: string) => void;
   onDouble?: (uid: string) => void;
+  /** Boş yuvalar yalnızca birkaç satır gösterilir (ganimet / ödül: 30 boş kare yer kaplamasın). Izgara yine bırakma hedefidir. */
+  compactEmpty?: { cols: number; minRows: number };
 }
 
 /** Inventory'nin DOM'u: başlık (torba ikonu + "Bag 12 / 30" + filtre) ve sabit boyutlu ızgara (`data-drop="bag"`, boş yuvalar dahil). */
@@ -159,7 +161,8 @@ export function renderInventory(v: InventoryView): HTMLElement {
     });
     grid.append(cell);
   }
-  for (let i = v.items.length; i < v.size; i++) {
+  const shown = v.compactEmpty ? Math.min(v.size, Math.max(v.compactEmpty.minRows, Math.ceil(v.items.length / v.compactEmpty.cols) + 1) * v.compactEmpty.cols) : v.size;
+  for (let i = v.items.length; i < shown; i++) {
     const empty = el('div', 'gr-item empty');
     if (v.price) {
       const w = el('div', 'gr-cellw');

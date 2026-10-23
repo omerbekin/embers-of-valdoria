@@ -47,6 +47,16 @@ export interface StartBattleOpts {
   note?: string;
   /** Önizlemeden sabitlenirken giriş animasyonu tekrar oynamaz. */
   instant?: boolean;
+  /**
+   * Varışta önce gelen kadro adımları (Ömer 2026-10-23, playtest H3 / H2): "First" satırı (ör. "Form your company."); verilirse kartın
+   * sürprizi kalmaz. Düğme yazısını sahne seçer (actionLabel "Continue").
+   */
+  first?: string[];
+  /**
+   * Kararan zemine dokunuş (playtest U8, tek tıkla hızlı yolculuk): zeminin yerel CSS pikseli verilir; true dönerse sahne dokunuşu kullandı
+   * (ör. başka bir düğüme yürüdü), kart onCancel çağrılmadan bırakılır. Yoksa / false ise eskisi gibi vazgeç.
+   */
+  onScrimTap?: (x: number, y: number) => boolean;
   anchor: () => { x: number; y: number } | null;
   onFight: () => void;
   onCancel: () => void;
@@ -113,6 +123,7 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     card.append(row);
   }
   if (o.info) card.append(el('p', `sbc-info${o.info.quote ? ' quote' : ''}`, `${o.info.who ? `<b>${esc(o.info.who)}</b> ` : ''}${o.info.quote ? `“${esc(o.info.text)}”` : esc(o.info.text)}`));
+  if (o.first?.length) card.append(el('p', 'sbc-then sbc-first', `<b>First</b> ${o.first.map((t) => esc(t)).join(' ')}`));
   if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
   const preview = !!o.preview;
   const fight = el('button', 'el-btn primary ready', esc(o.actionLabel ?? 'Fight'));
@@ -147,7 +158,11 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     if (done) return;
     o.onFight();
   });
-  scrim.addEventListener('click', cancel);
+  scrim.addEventListener('click', (e) => {
+    if (done) return;
+    if (o.onScrimTap?.(e.offsetX, e.offsetY)) return;
+    cancel();
+  });
 
   const place = (): void => {
     if (done) return;

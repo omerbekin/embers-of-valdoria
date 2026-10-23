@@ -307,13 +307,22 @@ const best = <T>(items: T[], score: (item: T) => number): T | undefined =>
  * Easy: ufuk 1, kurtarma ve kontrol değeri yok, yalnızca kesin öldürme, en iyi 3 adaydan belirleyici seçim (seed + tur + birim), Rest yalnızca boşta.
  * Hard: takım odak ateşi, zaten ölecek hedefe fazla vurmama, yığın patlatmada uygun anı bekleme. Hepsi saf ve belirleyici.
  */
-export function chooseAction(battle: Battle, actorUid: string, config: AiConfig, trace?: AiTrace, opts?: { difficulty?: AiDifficulty }): AiChoice | null {
+/**
+ * chooseAction / explainChoice seçenekleri: zorluk + terazi ayarlarının üzerine yazılanlar (en son uygulanır; sefer bölge kuralı:
+ * data/campaign/valdoria.json > regions[].enemyAi, playtest 2026-10-23 D5). Yoksa ai.json + zorluk.
+ */
+export interface AiOpts {
+  difficulty?: AiDifficulty;
+  value?: Partial<AiValueConfig>;
+}
+
+export function chooseAction(battle: Battle, actorUid: string, config: AiConfig, trace?: AiTrace, opts?: AiOpts): AiChoice | null {
   // hitLoss önbelleği yalnızca bu karar boyunca yaşar (durum değişmez); iç içe çağrıda dıştaki korunur
   const outer = hitLossCache;
   hitLossCache = outer ?? new Map();
   const outerCtx = activeCtx;
   try {
-    return chooseActionInner(battle, actorUid, config, trace, opts?.difficulty ?? 'medium');
+    return chooseActionInner(battle, actorUid, config, trace, opts?.difficulty ?? 'medium', opts?.value);
   } finally {
     hitLossCache = outer;
     activeCtx = outerCtx;
@@ -334,7 +343,7 @@ export function difficultyRules(config: AiConfig, difficulty: AiDifficulty = 'me
   return config.difficulty?.[difficulty] ?? {};
 }
 
-function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, trace: AiTrace | undefined, difficulty: AiDifficulty): AiChoice | null {
+function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, trace: AiTrace | undefined, difficulty: AiDifficulty, valueOverride?: Partial<AiValueConfig>): AiChoice | null {
   const actor = battle.get(actorUid);
   if (!actor || actor.hp <= 0) return null;
   const profile = config.profiles[actor.ai ?? config.defaultProfile] ?? config.profiles[config.defaultProfile];
@@ -342,7 +351,7 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
 
   // Değer bağlamı (düşman tahmini, katkılar) karar boyunca bir kez kurulur; seçenek değerleri (buff dahil) ve global kararlar onu kullanır
   const rules = difficultyRules(config, difficulty);
-  const vc = { ...DEFAULT_VALUE, ...(config.value ?? {}), ...(rules.value ?? {}), ...(rules.horizon !== undefined ? { horizon: rules.horizon } : {}) };
+  const vc = { ...DEFAULT_VALUE, ...(config.value ?? {}), ...(rules.value ?? {}), ...(rules.horizon !== undefined ? { horizon: rules.horizon } : {}), ...(valueOverride ?? {}) };
   const focusOf = (c: Combatant) => (config.profiles[c.ai ?? config.defaultProfile] ?? config.profiles[config.defaultProfile])?.focus ?? 'lowest_ratio';
   activeCtx = new ValueContext(battle, actor, vc, focusOf);
   activeCtx.diff = rules;
@@ -891,7 +900,7 @@ function evaluate(battle: Battle, actor: Combatant, skill: SkillDef, targets: Co
   if (groundCells) {
     const cells = new Set(groundCells);
     for (const e of skill.effects) {
-      if (e.type !== 'ground') continue;
+      if (e.type !== 'ground' || battle.isHealGround(e.ground)) continue; // şifa zemini (Holy Ground) önizlemede dosta hot olarak sayıldı
       const amount = Math.round(attributePower(actor.stats, e.scale, battle.formulas) * e.power);
       const standing = battle.living(foeSide(actor)).filter((c) => c.board === foeSide(actor) && cells.has(c.slot)).length;
       o.damage += amount * e.turns * standing * 0.7;
@@ -1113,6 +1122,25 @@ function summonRawDamage(battle: Battle, stats: Combatant['stats'], skills: stri
 
 // ---------------------------------------------------------------- değer terazisi (madde 254 K1-K10, madde 257)
 
+/** Tek hedefli olmayan saldırı skill'leri (Taunt zorlaması bunlara işlemez; YZ'de tauntPull ile çekilir). */
+const PULLED_TARGETS = new Set(['area_enemies', 'area_any', 'random_enemies', 'all_enemies', 'everyone']);
+
+/**
+ * Taunt çekimi payı (value.tauntPull, playtest 2026-10-23 D5): seçeneğin skill'i tek hedefli değilse, birim taunt'a uyuyorsa ve karşı tarafta bu skill'in
+ * ULAŞABİLDİĞİ (validTargets, menzil kuralı) taunt'lı canlı birim varsa pay; yoksa 0. Tek hedefli skill'de motor zaten zorlar (battle.validTargets).
+ */
+function tauntPullOf(ctx: ValueContext, o: Option): number {
+  const pull = ctx.vc.tauntPull ?? 0;
+  if (pull <= 0 || !PULLED_TARGETS.has(o.skill.target)) return 0;
+  const battle = ctx.battle;
+  const actor = ctx.actor;
+  if (battle.ignoresTaunt(actor)) return 0;
+  const foe = foeSide(actor);
+  if (!battle.living(foe).some((c) => c.statuses.some((s) => s.kind === 'taunt'))) return 0;
+  const reach = battle.validTargets(actor.uid, o.skill.id);
+  return reach.some((c) => c.side === foe && c.statuses.some((s) => s.kind === 'taunt')) ? Math.min(1, pull) : 0;
+}
+
 /**
  * Bir adayın terazi puanı (can-eşdeğer; ai-value.ts). Terimler o.terms'e yazılır (maç kaydı her birini ayrı gösterir). Saf self-buff'ta
  * buff değeri (savunma + hasar artışı - can bedeli) diğer terimlerin yerine geçer.
@@ -1134,6 +1162,15 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
     const rules = ctx.diff;
     // Hard "fazla vurmama" (madde 258 Faz 5): zaten ölecek hedefe (DoT/zemin tiki, ondan önce oynayacak dostlarımız) hasar/öldürme/baskı değerinin yalnızca bir payı
     const keep = (f: Combatant) => (rules.overkillShare !== undefined && f.side !== actor.side && ctx.dyingAnyway(f) ? rules.overkillShare : 1);
+    // Taunt çekimi (D5, value.tauntPull): alan / rastgele / herkese vuran skill'de, ulaşılabilen taunt'lı düşman varken taunt'sız hedeflere giden değerin payı silinir
+    const pull = tauntPullOf(ctx, o);
+    const pulled = (f: Combatant) => (pull > 0 && f.side !== actor.side && !f.statuses.some((s) => s.kind === 'taunt') ? 1 - pull : 1);
+    if (pull > 0) {
+      for (const [uid, d] of Object.entries(o.dmgBy)) {
+        const f = get(uid);
+        if (f && d > 0 && pulled(f) < 1) add('tauntPull', -d * (1 - pulled(f)));
+      }
+    }
     if (rules.overkillShare !== undefined) {
       for (const [uid, d] of Object.entries(o.dmgBy)) {
         const f = get(uid);
@@ -1154,7 +1191,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
       const f = get(uid);
       if (!f || p <= 0) continue;
       if (rules.killMinChance !== undefined && p < rules.killMinChance) continue; // Easy: yalnızca kesin öldürme
-      add('kill', p * vc.killWeight * ctx.contribution(f) * ctx.resummonShare(f) * keep(f));
+      add('kill', p * vc.killWeight * ctx.contribution(f) * ctx.resummonShare(f) * keep(f) * pulled(f));
       for (const i of ctx.hits) {
         if (i.foe !== uid || !i.before) continue;
         const a = get(i.target);
@@ -1168,7 +1205,7 @@ function scoreOption(ctx: ValueContext, profile: AiProfile, o: Option): void {
       if (!f || f.side === actor.side || d <= 0) continue;
       const left = 1 - (o.killP[uid] ?? 0);
       const focus = (1 + (rules.focusFire ?? 0) * (rules.focusFire ? ctx.alliesOn(f) : 0)) * (f.summoned ? 1 : 1 + ctx.stall() * (vc.stallFocus ?? 0));
-      add('pressure', left * vc.pressureShare * ctx.contribution(f) * ctx.resummonShare(f) * Math.min(1, d / Math.max(1, f.hp + f.shield + f.magicShield)) * focus * keep(f));
+      add('pressure', left * vc.pressureShare * ctx.contribution(f) * ctx.resummonShare(f) * Math.min(1, d / Math.max(1, f.hp + f.shield + f.magicShield)) * focus * keep(f) * pulled(f));
     }
     // Şifa (fazla şifa sayılmaz: önizleme eksik canla sınırlar) + tehlikedeki dostu kurtarma
     add('heal', o.heal);
@@ -2166,7 +2203,7 @@ const r1 = (n: number) => Math.round(n * 10) / 10;
  * elenme nedenlerini ve global skill değerlendirmesini verir. Saf ve belirleyici; motora ve RNG'ye dokunmaz, seçimi etkilemez:
  * karar chooseAction ile hesaplanır, açıklama o hesabın izinden (AiTrace) okunur. Yeni karar kuralı/öncelik eklenince burası da güncellenir.
  */
-export function explainChoice(battle: Battle, actorUid: string, config: AiConfig, opts?: { difficulty?: AiDifficulty }): AiExplanation | null {
+export function explainChoice(battle: Battle, actorUid: string, config: AiConfig, opts?: AiOpts): AiExplanation | null {
   const actor = battle.get(actorUid);
   if (!actor || actor.hp <= 0) return null;
   const profileName = config.profiles[actor.ai ?? config.defaultProfile] ? (actor.ai ?? config.defaultProfile) : config.defaultProfile;
@@ -2174,7 +2211,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   if (!profile) return null;
   const trace: AiTrace = { options: [], reserves: [], steps: [] };
   const difficulty = opts?.difficulty ?? 'medium';
-  const choice = chooseAction(battle, actorUid, config, trace, { difficulty });
+  const choice = chooseAction(battle, actorUid, config, trace, { difficulty, ...(opts?.value ? { value: opts.value } : {}) });
   const pick = trace.classPick ?? null;
   const skillName = (id: string) => battle.skill(id)?.name ?? battle.globalDef(id)?.name ?? id;
   const termText = (t: Record<string, number>) => Object.entries(t).map(([k, v]) => `${k} ${r1(v)}`).join(' + ');
@@ -2262,7 +2299,7 @@ export function explainChoice(battle: Battle, actorUid: string, config: AiConfig
   }
   const g = trace.global ?? { enabled: false };
   const rules = difficultyRules(config, difficulty);
-  const vc = { ...DEFAULT_VALUE, ...(config.value ?? {}), ...(rules.value ?? {}), ...(rules.horizon !== undefined ? { horizon: rules.horizon } : {}) };
+  const vc = { ...DEFAULT_VALUE, ...(config.value ?? {}), ...(rules.value ?? {}), ...(rules.horizon !== undefined ? { horizon: rules.horizon } : {}), ...(opts?.value ?? {}) };
   return {
     uid: actor.uid,
     actor: unitLabel(actor),

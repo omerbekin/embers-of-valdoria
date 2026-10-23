@@ -399,7 +399,10 @@ describe('Bölge II mob YZ\'si yeni skill\'leri kullanır', () => {
         const b = new Battle(content.battleSetup('random-battle', seed, 'turns', { party, enemies: cells(enemies) }, false));
         for (let i = 0; i < 400 && !b.winner; i++) {
           const uid = b.currentActor?.uid;
-          if (!uid || !b.applyChoice(uid, chooseAction(b, uid, content.aiConfig)).ok) break;
+          // Taunt çekimi (playtest D5, ai.json value.tauntPull): bazı alan skill'leri (Scatter Quarrels, Kiln Smoke) bu takımlarda yalnızca Defender
+          // taunt'lıyken taunter dışına seçiliyordu; çekim bunu bilerek bastırır (tests/taunt-pull.test.ts). Seçilebilirlik burada çekimsiz denetlenir.
+          const opts = { value: { tauntPull: 0 } };
+          if (!uid || !b.applyChoice(uid, chooseAction(b, uid, content.aiConfig, undefined, opts)).ok) break;
         }
         for (const e of ofType(b.log, 'skillUsed')) if (b.get(e.actor)?.side === 'enemy') used.add(e.skill);
       }
