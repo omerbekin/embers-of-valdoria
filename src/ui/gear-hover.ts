@@ -2,6 +2,7 @@
 // Ömer 2026-10-11 (g1): "Usable by" ayrı blok değil; kahraman kartının alt satırı ("Level 1 · 4/6 items") item üstündeyken o kahramanın
 // kullanabilirlik / fark özetine döner ("+4 ARM · -2 HP", "Can't use Axes"); item yokken eski satır geri gelir.
 import type { StatAlloc } from '../progression/levels';
+import type { TreeAlloc } from '../progression/skill-tree';
 import type { WoundCfg } from './wound-ui';
 import { FALLEN_GEAR_MSG, FALLEN_GEAR_SHORT } from '../progression/equip';
 import {
@@ -35,6 +36,8 @@ export interface HoverHero {
   statPoints?: number;
   skillPoints?: number;
   alloc?: StatAlloc;
+  /** Onaylı skill ağacı (evolve ikonu animasyonu için; src/ui/evolve-icon.ts). */
+  tree?: TreeAlloc;
   /** Düşmüş kahraman: alive false ya da can oranı 0 (ekipmanı değiştirilemez; Ömer 2026-10-18). */
   alive?: boolean;
   hpRatio?: number;

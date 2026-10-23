@@ -1381,3 +1381,15 @@ Mockup `public/mockups/tree-choices.html` V2'ye göre. Ağaç kapalıyken (`_rul
 
 ### Yapılmadı / bakılacak
 Panelin telefon yatayda (812x375) görsel kontrolü yapılmadı (ekran görüntüsü alınmadı); ana oturum bakmalı. Varsayımlar: `open-questions.md` madde 399.
+
+## Evolve ikonu ve animasyonu (ui-dev 2026-10-23)
+
+Ömer'in genel kuralı (tüm class'lar): bir skill'in evolve düğümü **onaylıysa** o skill'in ikonu o kayıtta döngülü animasyonla gösterilir ve aynı animasyon o skill'in ikonunun göründüğü HER yerde devam eder.
+
+- **Kural tek yerde:** `src/progression/skill-tree-evolve.ts` (saf). Hangi satır hangi skill, evolve düğümü hangisi (`_rules.json > rowShape`, tür `evolve`), onaylı mı (kahramanın KAYITLI `tree` alanında rank >= 1; Tree ekranındaki bekleyen puan sayılmaz), mod açık mı (`_rules.json > enabled` + `modes`: sefer / Endless evet, Quick Battle / multiplayer hayır). `resolveEvolveIcon` skill için `{ evolved, art }` döner.
+- **Hangi ikon:** evolve sanatı varsa (`assets/tree-icons/<sınıf>/<satır>_v.png`, ilk dosya `warrior/3_v` = Charge, Herald of Ruin) skill ikonunun YERİNE o gösterilir; yoksa normal skill ikonu animasyonlanır. Sanat eklemek: `python tools/make-tree-icon.py <kaynak.png> <sınıf> <düğüm>` (örn. `... warrior 2_v`), başka kod gerekmez (WebP + manifest otomatik, sanat kendiliğinden bağlanır).
+- **Animasyon tek tanım:** `src/ui/evolve-icon.css`. Mekanizma: evolve onaylı skill'in ikon adresi `#evo` işareti taşır (`markEvolved`; boyalı ikonda `...#evo#smooth`), CSS `img[src*='#evo']` seçicisiyle animasyonu verir. Böylece adresi bir `<img>`'e koyan her ekran (Gear Hero satırı, Tree plakası, ipuçları, formasyon kartı, savaş HUD'ı) kendiliğinden animasyonlu olur. Hareket: yavaş kor titremesi (parlaklık / doygunluk) + yumuşak altın kenar parıltısı, ~2,6 sn, yalnızca `filter` (yerleşim kaymaz; en çok ~3 px yumuşak ışık). `html.reduced-motion` / `prefers-reduced-motion` / Performance Mode (`html.perf-lite`) = animasyon durur, sabit ince altın kenar kalır. JS yok. Bekleme (cooldown) gri süzgecini ezmez.
+- **Nerede görünür:** Gear > Hero skill plakası + ipucu, Gear > Tree (skill plakası, evolve düğümünün kendisi: onaylanınca `.evo-on`; evolve düğümü sanatı varsa onay öncesi de kendi sanatını gösterir, animasyon yalnızca onaylıyken), formasyon kartı skill satırı + ipucu, savaş: alt skill çubuğu, birim kartı skill satırı + seçili skill önizlemesi, skill ipucu, biçim seçim kartları. Savaşa bilgi `UnitSetup.evolved` / `Combatant.evolved` ile gider (YALNIZCA sunum: skill id listesi, hasar / sıra / RNG etkilemez; `loadoutSetup` mod verilince doldurur). Phaser'da çizilen kahraman skill ikonu yok (savaş HUD'ı DOM; Quick Battle takım seçimi sabit).
+- **Sabit kalanlar:** Codex / Wiki (belirli bir kayıt değil), Quick Battle, multiplayer, bekleyen (onaylanmamış) evolve.
+- **Debug:** Debug > Campaign > Levels > "Grant Warrior Charge evolve (saved)" (`src/campaign/tree.ts > debugGrantEvolve`): kadrodaki ilk Warrior'a Charge evolve'unu onaylı verir (gereken level'a çıkarır).
+

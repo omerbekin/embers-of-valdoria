@@ -26,6 +26,7 @@ import {
   smithHotspot,
   temperItem,
   temperPreview,
+  temperGain,
   temperPrice,
   townRecruitOffer,
   townRestCount,
@@ -36,6 +37,7 @@ import {
   ITEMS,
   affixDef,
   instanceIlvl,
+  instanceIP,
   instanceRoll,
   instanceWeaponPower,
   itemDef,
@@ -182,15 +184,53 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
     expect(() => temperItem(s, top.uid)).toThrow();
     const c = weapon('common', 4, 'i901');
     const l = weapon('legendary', 4, 'i902');
-    // karar 364 (pahalı): bir adım = valueRatio (yarı) x yükseltilmiş item'in tüccar fiyatı; Legendary 2 kat
-    const up = (x: ItemInstance): ItemInstance => ({ ...x, rolls: { ...instanceRoll(x), ilvl: instanceIlvl(x) + 1 } });
-    expect(CONFIG_SMITH().temper.valueRatio).toBe(0.5);
-    expect(temperPrice(c)).toBe(Math.round(itemValue(up(c)) * 0.5));
-    expect(temperPrice(l)).toBe(Math.round(itemValue(up(l)) * 0.5 * CONFIG_SMITH().temper.legendaryMult));
+    // Ömer 2026-10-23 (open-questions 404): bir adım = gainRatio x seviye başına ortalama değer artışı (gainSpan) x (1 + perLevelRise x (ilvl - 1)), en az minPrice; Legendary 2 kat
+    const T = CONFIG_SMITH().temper;
+    const [lo, hi] = T.gainSpan;
+    const lv = (x: ItemInstance, n: number): ItemInstance => ({ ...x, rolls: { ...instanceRoll(x), ilvl: n } });
+    const gain = (x: ItemInstance) => (ITEMS.budget.goldPerIP * (instanceIP(lv(x, hi)) - instanceIP(lv(x, lo)))) / (hi - lo);
+    const rise = (x: ItemInstance) => 1 + T.perLevelRise * (instanceIlvl(x) - 1);
+    expect(temperGain(c)).toBeCloseTo(gain(c), 6);
+    expect(temperPrice(c)).toBe(Math.round(Math.max(T.minPrice, T.gainRatio * gain(c) * rise(c))));
+    expect(temperPrice(l)).toBe(Math.round(Math.max(T.minPrice, T.gainRatio * gain(l) * rise(l)) * T.legendaryMult));
     const poor = { ...put(town(), c), gold: temperPrice(c) - 1 };
     expect(temperPreview(poor, c.uid)!.blocked).toMatch(/more gold/);
     expect(() => temperItem(poor, c.uid)).toThrow(/more gold/);
     expect(instanceIlvl(temperItem({ ...poor, gold: temperPrice(c) }, c.uid).inventory.at(-1)!)).toBe(5);
+  });
+
+  it('Temper fiyatı değer artışına bağlı: büyümeyen örtük stat (kalkan bloğu) fiyatı şişirmez; ortalama eski düzeyde', () => {
+    const T = CONFIG_SMITH().temper;
+    expect(T.gainRatio).toBeGreaterThan(0);
+    expect(T.minPrice).toBeGreaterThanOrEqual(1);
+    const mk = (name: string, rarity: 'common' | 'rare', ilvl: number) => makeItem(ITEMS.items.find((x) => x.name === name)!.id, 'u', new Rng(7), { rarity, ilvl });
+    // eski kural: Iron Buckler (Common, iL1) 34 > Work Gloves (Rare, iL1) 17; yeni kural: fiyat yalnız adımın getirdiği değer
+    const buckler = mk('Iron Buckler', 'common', 1);
+    const gloves = mk('Work Gloves', 'rare', 1);
+    expect(temperPrice(buckler)).toBe(Math.round(Math.max(T.minPrice, T.gainRatio * temperGain(buckler))));
+    expect(temperPrice(buckler)).toBeLessThanOrEqual(temperPrice(gloves));
+    // düzgün: aynı item'in fiyatı seviyeyle hiç düşmez ve bir adımda en çok ~%10 artar (yuvarlama sıçraması yok)
+    for (const d of ITEMS.items.filter((x) => x.rarity !== 'legendary'))
+      for (const r of ['common', 'rare', 'epic'] as const) {
+        const base = makeItem(d.id, 'u', new Rng(3), { rarity: r, ilvl: 1 });
+        const ps = Array.from({ length: 9 }, (_, i) => temperPrice({ ...base, rolls: { ...instanceRoll(base), ilvl: i + 1 } }));
+        for (let i = 1; i < ps.length; i++) {
+          expect(ps[i]!).toBeGreaterThanOrEqual(ps[i - 1]!);
+          expect(ps[i]! - ps[i - 1]!).toBeLessThanOrEqual(Math.max(1, Math.ceil(ps[i - 1]! * 0.1)));
+        }
+      }
+    // bölüm 1 (iL 1-9) ortalaması: eski kuralın (0,5 x yükseltilmiş item'in değeri) ±%15'i içinde
+    let now = 0;
+    let old = 0;
+    for (const d of ITEMS.items.filter((x) => x.rarity !== 'legendary'))
+      for (const r of ['common', 'uncommon', 'rare', 'epic'] as const)
+        for (let lv = 1; lv <= 9; lv++) {
+          const it = makeItem(d.id, 'u', new Rng(lv * 31), { rarity: r, ilvl: lv });
+          now += temperPrice(it);
+          old += 0.5 * itemValue({ ...it, rolls: { ...instanceRoll(it), ilvl: lv + 1 } });
+        }
+    expect(now / old).toBeGreaterThan(0.85);
+    expect(now / old).toBeLessThan(1.15);
   });
 
   it('Temper takılı item\'de: takan kahraman yeni seviye şartını (ilvl - 3) karşılamalı', () => {
@@ -238,7 +278,7 @@ describe('madde 7: demirci (Temper / Reforge)', () => {
   });
 });
 
-type SmithCfg = { temper: { valueRatio: number; legendaryMult: number }; reforge: { valueRatio: number; growth: number } };
+type SmithCfg = { temper: { gainRatio: number; gainSpan: [number, number]; perLevelRise: number; minPrice: number; legendaryMult: number }; reforge: { valueRatio: number; growth: number } };
 const CONFIG_SMITH = (): SmithCfg => (CONFIG as unknown as { blacksmith: SmithCfg }).blacksmith;
 
 describe('madde 10: kasabada dinlenme, diriltme yok', () => {

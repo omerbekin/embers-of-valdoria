@@ -2,7 +2,7 @@ import { CONFIG } from './data';
 import { node } from './graph';
 import { chapterOf } from './power';
 import { SMITH } from './smith';
-import { clearWounds, isFallen, mapOf, nextStep } from './state';
+import { clearWounds, isDone, isFallen, mapOf, nextStep } from './state';
 import type { CampaignState, MapNode, NextStep, TownHotspot, TownSceneDef } from './types';
 
 /**
@@ -72,10 +72,19 @@ export function hotspotAt(def: TownSceneDef, c: Cover, px: number, py: number): 
   return hit;
 }
 
-/** Bu kasabada eylemin karşılığı var mı (tezgâh: tüccarlı kasaba; hikâye NPC'si: hikâyesi olan kasaba). Yoksa yer ekranda gösterilmez. */
-export function hotspotOffered(n: MapNode, h: TownHotspot): boolean {
+/**
+ * Kasabanın hikâyesi dinlendi mi (Ömer 2026-10-23: hikâye bir kez; Ashford Charcoal Burner, Valdren Keep Commander)? Kayıttaki `done` listesinden
+ * (`<düğüm>:story`, ya da kasaba adımı bitmişse): yeni alan yok, eski kayıtlarda da doğru okunur. Hikâyesiz kasaba: false.
+ */
+export const storyHeard = (s: Pick<CampaignState, 'done'>, n: MapNode): boolean => !!n.story && isDone(s as CampaignState, n.id, 'story');
+
+/**
+ * Bu kasabada eylemin karşılığı var mı (tezgâh: tüccarlı kasaba; hikâye NPC'si: hikâyesi olan kasaba ve hikâye henüz dinlenmemişse). Yoksa yer
+ * ekranda gösterilmez. `s` verilirse dinlenmiş hikâyenin NPC'si kaldırılır (Ömer 2026-10-23: hikâye tekrar oynamaz).
+ */
+export function hotspotOffered(n: MapNode, h: TownHotspot, s?: Pick<CampaignState, 'done'>): boolean {
   if (h.action === 'trade') return !!n.merchant;
-  if (h.action === 'story') return !!n.story;
+  if (h.action === 'story') return !!n.story && !(s && storyHeard(s, n));
   return true;
 }
 

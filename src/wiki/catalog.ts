@@ -7,6 +7,7 @@
  */
 import { valorClearWounds } from '../progression/wounds';
 import { statName } from '../ui/stat-name';
+import { paintedOr } from '../ui/misc-icons';
 import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
@@ -57,6 +58,11 @@ export interface WikiArticle {
   /** Alt başlık grubu (Mechanics bölümünde). */
   group: string;
   icon: string;
+  /** İkon bir sınıfın skill ikonuysa o sınıf (boyalı sürümü oradan gelir). */
+  owner?: string;
+  /** Boss / düşman ailesi makalesi: portre kimliği (spriteId) ve çözülmüş avatar adresi; yoksa `icon`. */
+  avatarId?: string;
+  avatarUrl?: string | null;
   accent: string;
   blocks: WikiBlock[];
   /** Küçük şekil şemaları (Area shapes makalesi): etiket + mini ızgara. */
@@ -353,9 +359,15 @@ const GOLD = '#e8c47e';
 const ELEMENT_COLOR = layout.colors.element as Record<string, string>;
 const cap = (s: string): string => s.charAt(0).toUpperCase() + s.slice(1);
 
+/** Codex'e özel boyalı ikon (assets/misc-icons/codex); dosya yoksa eski kodla çizilen ikon. */
+const cx = (id: string, fallback: string): string => paintedOr('codex', id, fallback);
+/** Makale ikonu bir sınıfın skill ikonuysa onun boyalı sürümü o sınıftan gelir (Shared'de bu adın boyalısı yok). */
+export const ARTICLE_ICON_OWNER: Readonly<Record<string, string>> = { backstab: 'cutthroat', opportunist: 'cutthroat', eye: 'hexer', echo: 'mage', treant: 'druid', ankh: 'paladin', manabarrier: 'mage', darkbond: 'undead', tremor2: 'defender', radiance: 'paladin', taunt2: 'defender', manaburn: 'antimage' };
+
 function article(id: string, group: string, title: string, icon: string, blocks: WikiBlock[], accent = GOLD, shapes?: WikiArticle['shapes']): WikiArticle {
   const text = blocks.flatMap((b) => (b.kind === 'p' ? [b.text] : b.kind === 'list' ? b.items : [...b.head, ...b.rows.flat()]));
-  return { id, group, title, icon, accent, blocks, ...(shapes?.length ? { shapes } : {}), search: searchText(title, group, ...text) };
+  const owner = ARTICLE_ICON_OWNER[icon];
+  return { id, group, title, icon, accent, blocks, ...(owner ? { owner } : {}), ...(shapes?.length ? { shapes } : {}), search: searchText(title, group, ...text) };
 }
 
 /** Veride kullanılan her şekil için bir örnek şema (aynı rozetli skill'ler tek kez): etiket = rozet (Row, Column, Block 2x3, Cross). */
@@ -373,7 +385,7 @@ function rangeArticle(): WikiArticle {
   const own = allSkills().filter((s) => s.range !== undefined && skillOwner(s.id).kind === 'class' && !content.classes[skillOwner(s.id).id]?.testOnly).map((s) => `${s.name} ${s.range}`);
   // dost skill'leri yalnızca kendi range'i varsa kısıtlanır (range.md: Guard 2); veriden
   const allyRanged = allSkills().filter((s) => s.range !== undefined && (s.target === 'single_ally' || s.target === 'dead_ally') && skillOwner(s.id).kind === 'class' && !content.classes[skillOwner(s.id).id]?.testOnly).map((s) => `${s.name} reaches allies up to ${s.range} rows away`);
-  return article('range', 'Basics', 'Range', 'bow', [
+  return article('range', 'Basics', 'Range', 'ui:range', [
     p(`Every skill has a range. The distance to a target is: how many rows deep you stand on your own side (front row 0, back row ${rows - 1}), plus how deep the target stands behind the first row of its own side that still has someone in it, plus 1. Front row to front row is 1; back row to back row is ${2 * (rows - 1) + 1}.`),
     p('Empty rows on your own side count: standing further back costs range. Empty rows in front of the enemy do not count: an enemy cannot escape melee by leaving its front row empty, the next filled row becomes its front.'),
     p('A skill shows its range on its card ("Range 4"). Skills of the same class share the class range unless the card says otherwise; skills that fall from the sky or hit everyone have no range ("Global").'),
@@ -418,18 +430,18 @@ export function buildGettingStarted(): WikiArticle[] {
   const lanes = f.formation.lanes;
   const pool = content.battles[content.DEFAULT_BATTLE]?.random?.pool.length ?? Object.keys(content.classes).length;
   return [
-    article('goal', 'Basics', 'The goal', 'sword', [
+    article('goal', 'Basics', 'The goal', cx('gs_goal', 'sword'), [
       p(`Pick a team of ${teamSize()} different classes (${pool} classes to choose from) and fight an enemy team that is picked the same way. Teams do not have to be this size: a side can field anywhere from 1 to ${f.formation.rows * f.formation.lanes} units. Defeat every enemy unit to win; if your whole team falls, you lose.`),
       p('You control your own team; the enemy team is played by the computer. Pick a skill, then pick its target (hover a target to preview the expected result).'),
     ]),
-    article('turns', 'Basics', 'Turn order and the SPD counter', 'hourglass', [
+    article('turns', 'Basics', 'Turn order and the SPD counter', cx('gs_turns', 'hourglass'), [
       p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
       p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Slow).`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
       p(turnTimingText()),
     ]),
-    article('formation', 'Basics', 'Formation and rows', 'team', [
+    article('formation', 'Basics', 'Formation and rows', 'ui:formation', [
       p(`Each side stands on a ${rows} x ${lanes} grid: ${rows} rows deep and ${lanes} lanes wide (${rows * lanes} cells). A normal team of ${teamSize()} leaves cells empty; a side of ${rows * lanes} fills the whole grid. Empty cells matter: a unit can step onto one with the Move action (see Actions in the Mechanics section).`),
       ...(f.range?.enabled
         ? [p('Every skill has a range (see Range in the Basics section): melee skills reach only the front, bows and spells reach deeper. Standing further back keeps you safer but costs you range.')]
@@ -448,7 +460,7 @@ export function buildGettingStarted(): WikiArticle[] {
       p('Strong skills also have a cooldown: after you use one, you cannot use it again for that many of your own turns. The skill button shows the turns left.'),
       p(`Some powerful skills (usually the fourth one) start the battle on cooldown: they are not ready until the unit has taken up to ${f.cooldown.maxInitial} turns. The skill description says "Opens on cooldown" for these. Summoned units do not have this delay.`),
     ]),
-    article('screen', 'Basics', 'Reading the screen', 'info', [
+    article('screen', 'Basics', 'Reading the screen', cx('gs_screen', 'info'), [
       list(
         'Hover a unit to see its stats; hover a skill to see its description and cost.',
         'Keys 1-4 pick the acting unit\'s skills.',
@@ -533,7 +545,7 @@ function silenceArticle(): WikiArticle {
 
 /** "Multiplayer" makalesi (multiplayer-dev; docs/design/multiplayer.md): lobi, takım seçimi, sıra, kopma kuralı (60 sn). */
 function multiplayerArticle(): WikiArticle {
-  return article('multiplayer', 'Basics', 'Multiplayer', 'team', [
+  return article('multiplayer', 'Basics', 'Multiplayer', cx('mech_multiplayer', 'team'), [
     p('Main Menu > Multiplayer plays a Quick Battle against a friend online. One player presses Host lobby and gets a 6-letter lobby code; the friend opens the game, presses Join lobby and types the code, or simply opens the invite link (Copy invite link).'),
     p('When both players press Ready, each picks a team of 4 for their own side: the host plays the left side, the guest the right side. The other team stays hidden until both are ready, then the battle starts the same way on both screens.'),
     p("In battle you only control your own units, on their turns; during the other player's turns the panel says Opponent's turn. Both games check every move, so a move that breaks the rules is refused."),
@@ -641,7 +653,7 @@ export function buildMechanics(): WikiArticle[] {
   // Hasar ve isabet
   const wk = Object.entries(f.weaknesses).flatMap(([tag, m]) => Object.entries(m).map(([el, mult]) => `${cap(tag)} units take x${num(mult)} ${el} damage.`));
   out.push(
-    article('damage-formula', 'Damage', 'Damage formula', 'sword', [
+    article('damage-formula', 'Damage', 'Damage formula', cx('mech_damage', 'sword'), [
       p('Damage = skill power x attribute x scaling, plus any extra the skill adds, then reduced by armor, then multiplied by weakness, then by the crit.'),
       list(
         `Power and attribute: every skill names the attribute it scales with (STR, INT, DEX or LUCK). A power of 60% with 40 INT is 24 base damage. Scaling per attribute: ${(['str', 'int', 'dex', 'luck'] as const).map((s) => `${STAT_LABEL[s]} x${num(f.scaling[s])}`).join(', ')}.`,
@@ -676,7 +688,7 @@ export function buildMechanics(): WikiArticle[] {
         ...Object.values(content.statuses).filter((d) => d.accuracyDelta || d.evasionDelta).map((d) => `${d.name} (${d.type}): ${d.accuracyDelta ? `accuracy ${d.accuracyDelta > 0 ? '+' : '-'}${pct(Math.abs(d.accuracyDelta))}` : `evasion ${d.evasionDelta! > 0 ? '+' : '-'}${pct(Math.abs(d.evasionDelta!))}`} while it lasts. The hit chance still stays between 0% and ${pct(f.hit.max)}.`),
       ),
     ]),
-    article('ground', 'Damage', 'Ground effects', 'flame', [
+    article('ground', 'Damage', 'Ground effects', cx('mech_ground', 'flame'), [
       p('Some skills leave an effect on the ground of the target area (see Statuses & Grounds). Enemy units standing there take magic damage at the start of each of their own turns.'),
       p('The damage is fixed when the effect is created, cannot crit and cannot be dodged. The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
       p("Exception: the ember a dying enemy leaves behind (Last Ember) burns under the hero who killed it; its duration counts that hero's turns and it ends if that hero falls."),
@@ -685,22 +697,22 @@ export function buildMechanics(): WikiArticle[] {
   // Özel mekanikler
   const bets = betLines();
   out.push(
-    article('enemy-passives', 'Special rules', 'Enemy passives', 'skull', [
+    article('enemy-passives', 'Special rules', 'Enemy passives', cx('mech_enemy_passives', 'skull'), [
       p('Campaign enemies have passives of their own: each reacts to something in the fight (a hit, a death, low HP, a summon, MP, its lane or its neighbours, its pack or its cover, the start of battle). Hover an enemy in battle to read its passive; the Enemies articles list them by family.'),
       list(...mobPassiveLines()),
     ], '#8a6a4a'),
-    article('gamble', 'Special rules', 'Bets (Gambler)', 'dice', [
+    article('gamble', 'Special rules', 'Bets (Gambler)', cx('mech_gamble', 'dice'), [
       p('A bet skill puts part of the caster\'s HP or MP at stake before the hit, then rolls a die. On a win the hit is multiplied (and may grow with the stake); on a loss the hit is weaker or misses, and the stake is lost. A won bet keeps the stake.'),
       list(...bets.map((b) => b.text)),
     ], '#b8892e'),
-    article('rage', 'Special rules', 'Rage', 'rage', [
+    article('rage', 'Special rules', 'Rage', 'ui:rage', [
       p(`Some classes have a Rage bar next to their HP and MP: ${Object.values(content.classes).filter((c) => c.maxRage !== undefined).map((c) => c.name).join(', ') || 'none yet'}.`),
       list(...describeRage(f)),
       p(`Skills that cost Rage: ${allSkills().filter((s) => s.cost.resource === 'rage').map((s) => `${s.name} (${skillCostLabel(s.cost)})`).join(', ') || 'none yet'}.`),
       ...rageHurtLines(),
       ...rageSpendLines(),
     ], '#c0392b'),
-    article('area-shapes', 'Special rules', 'Area shapes', 'blast', [
+    article('area-shapes', 'Special rules', 'Area shapes', cx('mech_area', 'blast'), [
       p('Some skills hit a shape made of cells instead of one target. You pick an anchor cell (it may be empty); every living enemy standing inside the shape is hit. Row means the same depth (all lanes of one row); column means one lane across all rows.'),
       list(
         'Row: the whole row of the anchor cell.',
@@ -715,7 +727,7 @@ export function buildMechanics(): WikiArticle[] {
       p((f.range?.enabled ? 'Range counts to the cell you aim at: that cell must be in range, but the shape may spill past it and hits every enemy inside. A shape is valid only if it covers at least one enemy.' : 'Melee skills with a shape only hit enemies that melee can reach (the front rows); enemies in the shape but out of reach are not hit. A shape is valid only if it covers at least one enemy that can be hit.') + ' Shape skills ignore taunt. Test classes such as the Geometer carry one skill per shape; they never appear in random teams.'),
       { kind: 'table', ...areaSkillTable() },
     ], '#c9a0ff', shapeExamples()),
-    article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'boot', [
+    article('actions', 'Special rules', 'Actions: Rest, Skip Turn and Move', 'ui:move', [
       p('Besides its four skills, every unit can use three global actions. They cost nothing and each ends the turn. In the campaign and in Endless your heroes have a fourth, Revive, paid with Valor (see Valor).'),
       list(...Object.values(content.globalSkills).filter((d) => d.kind !== 'valor').map((d) => {
         const info = describeGlobalSkill(d, f);
@@ -739,7 +751,7 @@ export function buildMechanics(): WikiArticle[] {
     article('echo', 'Special rules', 'Ready again immediately', 'echo', [
       p('Some passives let a damaging skill with a cooldown be ready again right after it is cast, with a set chance. Classes with such a passive: ' + Object.values(content.classes).filter((c) => c.passive?.effect.type === 'spellEcho').map((c) => `${c.name} (${c.passive!.name})`).join(', ') + '.'),
     ]),
-    article('corpses', 'Special rules', 'Corpses', 'skull', [
+    article('corpses', 'Special rules', 'Corpses', 'fx:corpse', [
       p('When a unit of a team falls, it leaves a corpse on its cell. Summoned units leave no corpse, not even when they fall together with their summoner.'),
       list(
         'Revivable: the corpse can be brought back with a revive skill. Its cell counts as empty: allies can move onto it and a summon (a Skeleton, a Treant) can appear on it. The corpse stays where it is and can still be revived, onto another empty cell.',
@@ -760,7 +772,7 @@ export function buildMechanics(): WikiArticle[] {
       list(...Object.values(content.skills).flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'revive' }> => e.type === 'revive').map((e) => `${s.name}: revives at ${pct(e.hpRatio)} HP and ${pct(e.mpRatio)} MP${e.regen ? `; then regenerates ${pct(e.regen.ratio)} of its max HP at the start of each of its next ${e.regen.turns} turns` : ''}.`))),
       p(`Skills that revive: ${skillsWith((e) => e.type === 'revive').join(', ') || 'none yet'}.`),
     ]),
-    article('shields', 'Special rules', 'Shields', 'shield', [
+    article('shields', 'Special rules', 'Shields', 'fx:barrier', [
       p('A shield soaks damage before HP. A normal shield absorbs any damage; a magic shield only absorbs magic damage. Shield amounts are fixed (no variance, no crit).'),
       p(`Skills that shield: ${skillsWith((e) => e.type === 'shield').join(', ') || 'none yet'}.`),
       p('Some shields do something extra whenever they absorb a hit (only direct hits from an enemy skill; damage from ground effects never triggers them). Their extra part soaks damage before any plain shield on the same unit. Every absorbed hit triggers them again: an attack that hits several times triggers them on every hit.'),
@@ -804,12 +816,12 @@ export function buildMechanics(): WikiArticle[] {
       p('Some heals grow with how much health the ally is missing. The bonus is worked out for each ally on its own, just before the heal lands: an ally at full health gets no bonus, an ally with half its health gets half of the bonus, and an ally close to death gets nearly all of it. The heal is rolled and can crit as usual; the bonus is applied on top.'),
       list(...allSkills().flatMap((s) => s.effects.filter((e): e is Extract<typeof e, { type: 'heal' }> => e.type === 'heal' && !!e.missingHpBonus).map((e) => `${s.name}: up to +${pct(e.missingHpBonus!)} healing on a nearly dead ally.`))),
     ], '#fff0a0'),
-    article('half-turn', 'Special rules', 'Half-turn skills', 'hourglass', [
+    article('half-turn', 'Special rules', 'Half-turn skills', cx('mech_half_turn', 'hourglass'), [
       p(`Using a skill normally takes a whole turn: the unit's action counter drops by ${f.turn.threshold}. A half-turn skill only takes half of that, so the unit's next turn comes in half the usual time (Haste, Slow and the Skip Turn boost still change how fast the counter fills). The turn bar shows this as soon as the skill is used.`),
       p('Cooldown and MP work as usual, and a half-turn skill always has a cooldown, so it cannot be chained. In test mode there is no turn order, so this has no effect there.'),
       p(`Half-turn skills: ${allSkills().filter((s) => s.turnCost !== undefined && s.turnCost < 1).map((s) => s.name).join(', ') || 'none yet'}.`),
     ], '#c9a227'),
-    article('control', 'Special rules', 'Taunt, guard and mana burn', 'guardian', [
+    article('control', 'Special rules', 'Taunt, guard and mana burn', 'taunt2', [
       p(`Taunt forces enemies to target the taunting unit for some turns (it can end early if the unit loses enough HP, or at once if the unit is hit by a control status: ${Object.values(content.statuses).filter((d) => d.breaksTaunt).map((d) => d.name).join(', ') || 'none'}). Guard makes a protector take a share of the damage dealt to another ally (a unit cannot guard itself); a guard that covers a row (Close Ranks) protects every ally in the chosen ally's row (the user excluded). A unit holds one guard at a time (a new one replaces the old), the share passes on as it is (the protector's armor does not cut it again) and it stops while the protector is down. Mana burn removes MP from a target (and may give some of it to the caster) without hurting its HP.`),
       p(`Taunt: ${skillsWith((e) => e.type === 'taunt').join(', ') || 'none'}. Guard: ${skillsWith((e) => e.type === 'guard').join(', ') || 'none'}. Mana burn: ${skillsWith((e) => e.type === 'manaBurn').join(', ') || 'none'}.`),
       p('Some mana burns take a share of the target\'s maximum MP instead of a fixed amount: a big mana pool loses more. See Silence for what happens when a target runs dry.'),
@@ -823,11 +835,11 @@ export function buildMechanics(): WikiArticle[] {
     const r = campaignConfig.rules;
     const m = campaignMap;
     out.push(
-      article('campaign', 'Campaign', 'Campaign', 'boot', [
+      article('campaign', 'Campaign', 'Campaign', cx('mech_campaign', 'boot'), [
         p(`The campaign is a journey across ${m.title.charAt(0)}${m.title.slice(1).toLowerCase()}: ${m.nodes.length} stops on the map, and any road from the start to the final castle passes ${m.stopsPerRun} of them. The map counts your progress as cleared stops (Cleared x/${m.nodes.length}). Start it from the main menu (New Campaign). Quick Battle is the old single-battle mode.`),
         list(
           'Roads: every road is a solid line, crossroads included. A choice point is a crossroads: the roads you did not take stay open, and you can come back for them later. Roads meet again further on. A dashed road leads to an optional pocket: a dead end with an Elite or a Guarded treasure off the main road. No route needs it; walk in for the reward and back out the same way.',
-          'Region view: the button beside the zoom buttons zooms the map to the region you are in. Stops of a neighbouring region that a road leads to show faded (hover to see the road); tap one to look at that region. Regions you have not seen yet stay hidden. Press it again for the whole map.',
+          'Regions: the map opens on the region your party is in. Stops of a neighbouring region that a road leads to show faded (hover to see the road); tap one to look at that region. Regions you have not seen yet stay hidden. Tap the region name at the top, tap an empty spot of the map, or zoom out past the furthest step, for the whole map: it shows only the region names and the road between them; a region you have not discovered yet shows only a lock and cannot be entered. Tap a region (or zoom in) to go back to its stops. Fog stays where it is in every view; only exploring clears it.',
           `Fog: you see the next stop in full (name, type, enemies) and the stop after it by type and name only; anything further is under fog. The final castle is always visible as your goal.`,
           // Serbest dolaşım ve devriye (campaign-dev, roadmap 2.1-2.3 A; sayılar data/campaign/campaign.json > replay)
           `Free roaming: after you form your company in the first village, roads no longer close. Walk back along any road, or tap a far stop to travel there in one go through stops you have cleared (nothing happens on the way). A stop you have seen stays on the map. Patrols return to cleared battlefields: a cleared Battle, Elite or Guarded treasure can be fought again (same foes, new dice). Each repeat pays full gold and loot but less XP: ${REPLAY_PCTS.join(', ')} of the first victory's XP, then ${REPLAY_PCTS.at(-1) ?? '100%'} from then on. A patrol never lights Valor: each stop gives Valor only for its first victory. The chest of a Guarded treasure and an Elite's first-victory item come only once. Bosses, events, plain treasures and the tutorial road are not repeated. The Patrol badge on a stop shows the XP its next fight pays. Retreating from a patrol calls it off and you may move on, but what happened in the fight stays: lost health stays lost and heroes who fell rise wounded (see Health and wounds).`,
@@ -836,7 +848,7 @@ export function buildMechanics(): WikiArticle[] {
           `Health carries over between battles. After a victory the survivors regain ${pct(r.victoryHeal)} of their maximum HP, ${pct(r.eliteVictoryHeal ?? r.victoryHeal)} after an elite, and a boss victory heals them fully. Mana starts full in every battle. If the whole party falls, the battle is lost and you go back to your last save.`,
           `Wounds: a hero who is still down when a battle is won gets back up with ${pct(r.wounds.riseRatio)} of their HP and one wound. A hero raised during the battle (Valor, a revive skill) takes no wound; a Valor revive also heals ${VCW === 1 ? 'one wound' : `${VCW} wounds`} (revive skills do not). Each wound lowers maximum HP by ${pct(r.wounds.maxHpLoss)} (${r.wounds.lethal} wounds: -${pct(r.wounds.maxHpLoss * r.wounds.lethal)}). A hero with ${r.wounds.lethal} wounds who falls again and is still down at the end of a won battle dies: they enter the next battles as a corpse until Valor raises them${VCW ? ` (healing ${VCW === 1 ? 'one wound' : `${VCW} wounds`})` : ''}. Retreating from a patrol follows the same rule.`,
           `Resting: your first arrival in each town is its free rest: the living are back to full health and their wounds are healed. Coming back heals nothing by itself; resting by the town fire again costs gold (${campaignConfig.rest.price.base + campaignConfig.rest.price.perChapter} in the first chapter) and also heals wounds. A camp (such as Riverside Camp) is free and heals ${pct(campaignConfig.rest.heal)} of maximum HP, but does not heal wounds. Boss healing does not heal wounds either. Resting never raises the dead: only Valor, or a revive skill in battle, brings a dead hero back.`,
-          `Blacksmith (in towns, for gold only): Temper raises an item's level by 1, up to the best item level of the current chapter (${SMITH_CFG.ilvlPerChapter} per chapter); its weapon power and every property grow with it, and its level requirement rises too. Any rarity can be tempered; each step costs about half of what a merchant asks for the item, and a Legendary costs ${num(SMITH_CFG.temper.legendaryMult)}x. Reforge works on Epic items only: pick a property other than the first (main) one and it is rerolled into a property of the same tier, which can be the same one with a new value. A reforge costs the item's full merchant price, and each reforge of the same item costs ${num(SMITH_CFG.reforge.growth)}x the one before.`,
+          `Blacksmith (in towns, for gold only): Temper raises an item's level by 1, up to the best item level of the current chapter (${SMITH_CFG.ilvlPerChapter} per chapter); its weapon power and every property grow with it, and its level requirement rises too. Any rarity can be tempered; each step costs gold in line with how much a level adds to the item's worth on average, rising gently with item level (a property that does not grow with item level, like a shield's block, adds nothing to the price), and a Legendary costs ${num(SMITH_CFG.temper.legendaryMult)}x. Reforge works on Epic items only: pick a property other than the first (main) one and it is rerolled into a property of the same tier, which can be the same one with a new value. A reforge costs the item's full merchant price, and each reforge of the same item costs ${num(SMITH_CFG.reforge.growth)}x the one before.`,
           `Saving: there are ${r.slots} campaign slots, one journey each, and every journey keeps its own saves. Normal saves after every victory and whenever you press Save on the map (up to ${r.maxSaves.normal} saves per journey; the oldest is replaced). Ironman keeps a single save, written only after a victory. If you are defeated, you go back to your last save.`,
           'Retreat to Map (battle Menu): the battle is paused, not reset, and the game saves (in Ironman too). Your party stays at that stop; moving on, Gear, Formation and Valor revives are locked until you finish it. Tap the stop and choose Resume Battle to continue on the same turn. Winning or losing ends the pause; a defeat works as usual.',
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
@@ -867,7 +879,7 @@ function legendaryArticle(): WikiArticle {
   };
   const slotName = (id: string) => itemsJson.slots.find((x) => x.id === id)?.name ?? id;
   const legColor = itemsJson.rarities.find((r) => r.id === 'legendary')?.color ?? GOLD;
-  const art = article('legendary-items', 'Campaign', 'Legendary items', 'burst', [
+  const art = article('legendary-items', 'Campaign', 'Legendary items', cx('mech_legendary', 'burst'), [
     p('Legendaries are unique, hand-made items: four fixed affixes (C, C, B, A; their values still roll) and one effect no other item has. A hero can wear only one Legendary at a time. They never come from normal loot: only from the rare-drop roll after a won battle (see Items and gear) and, in Endless, sometimes from Odo\'s cart. Their effects work the same in the campaign and in Endless, and the same effect never adds up from two items.'),
     list(
       ...leg.map((d) => {
@@ -892,7 +904,7 @@ function affixArticle(): WikiArticle {
         return [t, a.name, affixMidText(id, 10), where];
       }),
   );
-  return article('item-affixes', 'Campaign', 'Item affixes', 'rune', [
+  return article('item-affixes', 'Campaign', 'Item affixes', cx('mech_affixes', 'rune'), [
     p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
     list(
       ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
@@ -908,7 +920,7 @@ function valorArticle(): WikiArticle {
   const V = content.valorRules;
   const r = V.revive;
   const intro = (campaignMap.nodes as Array<{ id: string; name: string }>).find((n) => n.id === V.campaign.introNode)?.name ?? 'a town';
-  return article('valor', 'Special rules', 'Valor', 'ankh', [
+  return article('valor', 'Special rules', 'Valor', cx('mech_valor', 'ankh'), [
     p(`Valor is your company's courage, kept as embers in two iron braziers of ${V.perBrazier} embers each (${V.cap} at most). It is spent only to bring a fallen hero back.`),
     list(
       `Earning: every battle you win lights ${V.earn.win} ember; an elite battle ${V.earn.elite} and a boss ${V.earn.boss} instead. If no hero fell during the battle, you light ${V.earn.flawless} more (a hero raised again still counts as fallen). In the campaign each stop gives Valor once: a patrol (fighting a cleared stop again) lights none.`,
@@ -927,7 +939,7 @@ function levelsArticle(): WikiArticle {
   const L = levelsJson;
   const m = L.nodeMult;
   const req = (ITEM_DATA.levelReq?.offset ?? 3);
-  return article('levels', 'Special rules', 'Levels and XP', 'muscle', [
+  return article('levels', 'Special rules', 'Levels and XP', cx('mech_levels', 'muscle'), [
     p(`Heroes grow from Level 1 to Level ${L.campaignMaxLevel} in the campaign and up to Level ${L.maxLevel} in Endless. Each chapter of the campaign spans about ${L.levelsPerChapter} levels; a hero who plays every stop once ends a chapter a level or two below its cap, and the cap is reached by fighting again or in Endless.`),
     list(
       `XP comes from every enemy you defeat and is shared by every hero who entered the battle (a hero who falls still counts). Kills made after a hero has fallen give that hero ${pct(L.fallenShare)} of their share.`,
@@ -949,7 +961,7 @@ function endlessArticle(): WikiArticle {
   const counts = E.enemyCount.map((x, i) => (i === 0 ? `${x.count} enemies` : `${x.count} from wave ${x.fromWave}`)).join(', ');
   const sp = E.special;
   const relics = E.relics.list.map((r) => r.name).join(', ');
-  return article('endless', 'Endless', 'Endless', 'skull', [
+  return article('endless', 'Endless', 'Endless', cx('mech_endless', 'skull'), [
     p(`Endless is a run of waves with a party of ${E.partySize}: fight wave after wave until your party falls. Your score is the wave you reached; the best ${E.highScores} runs are kept. A normal wave has ${counts}; every ${E.eliteEvery}th wave is an elite and every ${E.bossEvery}th a boss, and enemies grow a little stronger with every wave.`),
     list(
       `One long fight: what you have carries into the next wave. After a victory every survivor regains ${pct(c.victoryHeal)} of their maximum HP (${pct(c.eliteHeal ?? c.victoryHeal)} after an elite wave; a boss victory heals them ${c.bossHeal >= 1 ? 'fully' : `for ${pct(c.bossHeal)}`}). ${c.mp === 'full' ? 'Mana starts full in every wave.' : 'Mana carries over by the same share.'} Buffs, Rage, shields, summons and positions carry over; every debuff is removed. Cooldowns ${c.cooldowns === 'carry' ? 'keep running from where they were (they do not reset, and skills do not start on cooldown again)' : 'reset between waves'}. Once-per-battle effects (such as Lucky Escape) are ready again.`,
@@ -1021,10 +1033,15 @@ function weaponPowerText(): string[] {
     return d ? d.text.replace('{0}', String(implicitValues(d, L)[0] ?? 0)) : '';
   };
   const R = ITEM_DATA.levelReq;
+  // Başlangıç ikinci eli (Ömer 2026-10-23; items.json > starterOffhands)
+  const offStarters = Object.entries(ITEM_DATA.starterOffhands?.classes ?? {})
+    .map(([c, id]) => `${content.classes[c]?.name ?? c}: ${item(id).name}`)
+    .join(', ');
   return [
     `Weapon power: every weapon has a base power that grows with its item level (${w.base} + ${w.perIlvl} per item level for a one-handed weapon: ${pw('woodcutters_axe', 1)} at item level 1, ${pw('woodcutters_axe', 10)} at 10, ${pw('woodcutters_axe', 30)} at 30). Skill damage is multiplied by (1 + power / 100), staffs and charms included; healing and shields are not. Two-handed weapons and bows have ${Math.round((w.grip.two - 1) * 100)}% more power than one-handed ones because they block the off-hand; charms ${Math.round((w.grip.charm - 1) * 100)}% more; daggers ${Math.round((1 - (w.family?.['daggers'] ?? 1)) * 100)}% less. A dagger in the off-hand adds ${Math.round(w.offhandShare * 100)}% of its power. Rarity does not change power: it only adds affixes.`,
     `Base stats: daggers also carry ${imp('daggers', 10)}, charms ${imp('charms', 10)} (at item level 10, growing with item level). A shield's base value is its block chance, shown like weapon power (${ITEM_DATA.items.filter((d) => d.slot === 'offhand' && d.implicitBase?.length).map((d) => `${d.name} ${d.implicitBase![0]}%`).join(', ')}; fixed, it does not grow with item level), on top of its affixes (its main affix is Armor). Base stats count toward the gear limits.`,
     `Starter weapons: every hero starts with a Common item level ${st.ilvl} weapon of their class (${starters}). Damage is measured against it: with the starter weapon a hero deals exactly the damage of Quick Battle, a stronger weapon deals more, and a hero with no weapon deals less. Starter weapons are normal items: you can sell or replace them.`,
+    ...(offStarters ? [`Starter off-hands: heroes whose class fights with a one-handed weapon and an off-hand also start with a Common off-hand (${offStarters}). A second dagger adds its off-hand share of power; a shield adds its block chance.`] : []),
     `Level requirement: an item needs hero level item level - ${R.offset} (at least ${R.min}; item level 12 needs level ${levelRequirement(12)}). Below that it cannot be equipped: its card shows "Requires Level X" in red, the comparison is still shown, and Equip best skips it.`,
   ];
 }
@@ -1032,7 +1049,7 @@ function weaponPowerText(): string[] {
 function itemsArticleBody(): WikiArticle {
   const L = itemsJson.loot;
   const fams = itemsJson.weaponFamilies.map((x) => `${x.name} (${x.classes.map((c) => content.classes[c]?.name ?? c).join(', ')})`).join('; ');
-  return article('items', 'Campaign', 'Items and gear', 'helm', [
+  return article('items', 'Campaign', 'Items and gear', 'ui:gear', [
     p(`Heroes in the campaign and in Endless wear gear in ${itemsJson.slots.length} slots: ${itemsJson.slots.map((x) => x.name).join(', ')}. Items carry affixes: stats, damage bonuses and small rules (see Item affixes). They never add flat damage: weapons multiply it through their power. Quick Battle and multiplayer do not use items (every hero counts as holding their class's starter weapon).`),
     list(
       `Rarity sets how many affixes an item has, one more per step: ${itemsJson.rarities.map((x) => `${x.name} ${x.tiers.join(', ')}${x.id === 'legendary' ? ' + its unique effect' : ''}`).join('; ')}. The first affix is the item's main one (a weapon's is its damage type).`,
@@ -1076,8 +1093,8 @@ function bossArticles(): WikiArticle[] {
     });
     const over = b.afterResolve ? content.statuses[b.afterResolve.status] : undefined;
     const accCritNames = content.formulas.ccImmunity?.accuracyCrit ? Object.values(content.statuses).filter((d) => !d.cc && isAccuracyCritDebuff(d)).map((d) => d.name) : [];
-    out.push(
-      article(`boss-${def.id}`, 'Bosses', def.name, def.logo, [
+    out.push({
+      ...article(`boss-${def.id}`, 'Bosses', def.name, def.logo, [
         p(`${def.name}${b.where ? ` ${b.where}` : ''}. It has ${def.stats.hp} HP (before difficulty), ${b.anchor ? 'acts more than once each turn' : `acts more than once each turn from phase ${(b.phases ?? []).findIndex((ph) => (ph.actionsPerTurn ?? 1) > 1) + 2}`} and fights in phases.${anchor ? ` Two ${anchor.name}s (${anchor.stats.hp} HP, ${anchor.stats.armor} armor) stand behind it: they never act and cannot be healed.` : ''}`),
         list(
           // boss'a özel uyarılar (data/bosses > boss.notes: telgraflar ve kaçış yolu)
@@ -1092,7 +1109,8 @@ function bossArticles(): WikiArticle[] {
         ),
         list(...skillLines),
       ]),
-    );
+      avatarId: def.spriteId,
+    });
   }
   return out;
 }
@@ -1121,7 +1139,7 @@ function mobArticles(): WikiArticle[] {
   }
   return [...byFamily].map(([fam, defs]) => {
     const famName = MOB_FAMILY[fam] ?? fam;
-    return article(`enemies-${fam}`, 'Enemies', famName, defs[0]!.logo, [
+    const art = article(`enemies-${fam}`, 'Enemies', famName, defs[0]!.logo, [
       p(`Campaign enemies of the ${famName} family. HP is before campaign and difficulty scaling.`),
       ...defs.map((def) =>
         list(
@@ -1136,6 +1154,7 @@ function mobArticles(): WikiArticle[] {
         ),
       ),
     ]);
+    return { ...art, avatarId: defs[0]!.spriteId };
   });
 }
 
@@ -1216,7 +1235,7 @@ export function buildLessons(): WikiArticle[] {
       id: lessonEntryId(l.id),
       title: l.title,
       group: l.group,
-      icon: 'book',
+      icon: cx('nav_lessons', 'book'),
       accent: '#d9b26a',
       blocks: paras.map((text) => ({ kind: 'p' as const, text })),
       search: `${l.title} ${l.group} ${paras.join(' ')} lesson tutorial`.toLowerCase(),
@@ -1225,13 +1244,14 @@ export function buildLessons(): WikiArticle[] {
 }
 
 export function buildWiki(files: WikiFiles): WikiCatalog {
+  const avatars = avatarMap(files.avatars);
   return {
     gettingStarted: buildGettingStarted(),
     lessons: buildLessons(),
     classes: buildClasses(files),
     summons: buildSummons(files),
     skills: buildSkills(),
-    mechanics: buildMechanics(),
+    mechanics: buildMechanics().map((a) => (a.avatarId ? { ...a, avatarUrl: avatars[a.avatarId] ?? null } : a)),
     statuses: buildWikiStatuses(),
     grounds: buildWikiGrounds(),
     elements: buildElements(),

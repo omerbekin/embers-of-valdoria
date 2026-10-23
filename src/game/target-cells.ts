@@ -98,3 +98,10 @@ export function outOfRangeCells(battle: Battle, actorUid: string, skillId: strin
   if (battle.isAreaSkill(skillId, actorUid)) return battle.living(foe).filter((c) => c.board === foe && !battle.inRange(actor, skill, foe, c.slot)).map((c) => ({ board: c.board, slot: c.slot }));
   return [];
 }
+
+/** Dokunmatik ikinci dokunuş: yeni hücre, önizlenen alanla birebir aynı alanı/hedefleri veriyorsa skill atılır (yeniden önizleme değil). */
+export function sameAreaResult(a: { cells: number[]; targets: string[]; valid: boolean }, b: { cells: number[]; targets: string[]; valid: boolean }): boolean {
+  if (!a.valid || !b.valid) return false;
+  const key = (x: { cells: number[]; targets: string[] }) => JSON.stringify([[...x.cells].sort((p, q) => p - q), [...x.targets].sort()]);
+  return key(a) === key(b);
+}

@@ -23,10 +23,14 @@ import {
   loadout,
   meetsLevel,
   planEquip,
+  starterOffhand,
+  starterOffhandId,
   starterPower,
   starterWeapon,
   starterWeaponId,
   validateItems,
+  classUsesOffhand,
+  offhandWeapon,
   weaponMultFor,
   weaponPowerOf,
   blocksOffhand,
@@ -38,7 +42,7 @@ import {
   type ItemInstance,
   type ItemsData,
 } from '../src/progression';
-import { SAVE_KEY, addItem, debugTeleport, equipItem, memoryKV, newCampaign, pickHero, readSaves, type CampaignState } from '../src/campaign';
+import { SAVE_KEY, addItem, autoResolve, debugTeleport, equipItem, memoryKV, newCampaign, nextStep, pickHero, readSaves, recruit, type CampaignState } from '../src/campaign';
 import { equipFromBag, newRun, parseRun, upgradePairs } from '../src/endless';
 import { heroItemLine } from '../src/ui/gear-hover';
 import { leveledCampaign, leveledRun } from './level-helpers';
@@ -163,7 +167,7 @@ describe('güç katmanı: katlama, tutuş, ikinci el, kalkan', () => {
       expect(starterPower(c)).toBe(weaponPowerOf(d, ITEMS.starterWeapons.ilvl));
       expect(isPlanError(planEquip(c, emptyEquipment(), w, undefined, { level: 1 }))).toBe(false);
     }
-    expect(starterWeapon('warrior', 'u')!.id).toBe('woodcutters_axe');
+    expect(starterWeapon('warrior', 'u')!.id).toBe('greataxe'); // Ömer 2026-10-23: Warrior çift el başlangıç
     expect(starterWeapon('mage', 'u')!.id).toBe('ash_staff');
     expect(starterWeapon('archer', 'u')!.id).toBe('short_bow');
     expect(starterWeapon('gambler', 'u')!.id).toBe('worn_deck');
@@ -258,6 +262,66 @@ describe('seviye şartı (x6): ilvl - 3, en az 1', () => {
   });
 });
 
+describe('başlangıç ikinci eli (Ömer 2026-10-23)', () => {
+  const ALL = Object.keys(ITEMS.starterWeapons.classes);
+
+  it('tek el silahla başlayan ve ikinci el kullanabilen her sınıf sınıfına uygun Common ikinci el alır (Warrior bilerek hariç); çift el / yay / tılsım almaz', () => {
+    expect(starterOffhandId('defender')).toBe('iron_buckler');
+    expect(starterOffhandId('paladin')).toBe('iron_buckler');
+    expect(starterOffhandId('cutthroat')).toBe('rondel_dagger');
+    expect(starterOffhandId('antimage')).toBe('rondel_dagger');
+    for (const c of ALL) {
+      const w = itemDef(starterWeaponId(c)!)!;
+      const id = starterOffhandId(c);
+      if (blocksOffhand(w) || !classUsesOffhand(c)) expect(id, c).toBeUndefined();
+      else if (c !== 'warrior') expect(id, `${c}: ikinci el boş`).toBeDefined();
+      if (!id) continue;
+      const d = itemDef(id)!;
+      expect(d.rarity).toBe('common');
+      expect(canEquip(c, d)).toBe(true);
+      expect(d.slot === 'offhand' || offhandWeapon(d)).toBe(true);
+      const o = starterOffhand(c, 'o')!;
+      expect(levelRequirement(o.rolls?.ilvl ?? d.ilvl)).toBe(1);
+    }
+    expect(starterOffhandId('warrior')).toBeUndefined();
+  });
+
+  it('veri denetimi: Common olmayan / sınıfın takamadığı / çift el başlangıç silahlı sınıfa ikinci el yakalanır', () => {
+    const bad = structuredClone(ITEMS) as ItemsData;
+    bad.starterOffhands = { classes: { defender: 'kite_shield', mage: 'iron_buckler', archer: 'rondel_dagger' } };
+    const errs = validateItems(bad).join('\n');
+    expect(errs).toMatch(/kite_shield \(defender\): must be a Common/);
+    expect(errs).toMatch(/iron_buckler \(mage\): not usable/);
+    expect(errs).toMatch(/rondel_dagger \(archer\)/);
+  });
+
+  it('yeni sefer kahramanı ve yeni Endless koşusu ikinci eliyle başlar; silah çarpanı kalkanla 1, ikinci hançerle biraz üstünde', () => {
+    // sefer: Ravenwood'da (archer liderine) Cutthroat katılır; lider okçunun ikinci eli boş (yay iki eli kapatır)
+    let s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 1 }), 'archer'), '2');
+    for (let i = 0; i < 20 && nextStep(s).kind !== 'recruit'; i++) s = autoResolve(s);
+    s = recruit(s, 'cutthroat');
+    expect(s.roster[0]!.equipment.offhand ?? null).toBeNull();
+    expect(s.roster.find((h) => h.class === 'cutthroat')!.equipment.offhand?.id).toBe('rondel_dagger');
+    const run = newRun(4, ['defender', 'cutthroat', 'mage', 'paladin'], 't');
+    expect(run.heroes.map((h) => h.equipment.offhand?.id ?? null)).toEqual(['iron_buckler', 'rondel_dagger', null, 'iron_buckler']);
+    expect(run.heroes[2]!.equipment).not.toHaveProperty('offhand'); // boş yuva kayda yazılmaz
+    expect(new Set(run.heroes.flatMap((h) => Object.values(h.equipment).map((i) => i!.uid))).size).toBe(7);
+    const d = run.heroes[0]!;
+    expect(loadout({ class: d.class, equipment: d.equipment }).weaponMult).toBe(1);
+    expect(loadout({ class: d.class, equipment: d.equipment }).itemEffects?.blockChance).toBeGreaterThan(0);
+    const c = run.heroes[1]!;
+    const m = loadout({ class: c.class, equipment: c.equipment }).weaponMult;
+    expect(m).toBeGreaterThan(1);
+    expect(m).toBeLessThan(1.05);
+  });
+
+  it('eski kayıt: ikinci eli boş kahramana sonradan ikinci el verilmez (göç yok)', () => {
+    const run = newRun(4, ['defender'], 't');
+    const old = { ...run, heroes: run.heroes.map((h) => ({ ...h, equipment: { weapon: h.equipment.weapon } })) };
+    expect(parseRun(JSON.stringify({ version: 5, run: old }))!.heroes[0]!.equipment.offhand).toBeUndefined();
+  });
+});
+
 describe('kayıt göçü: başlangıç silahı', () => {
   it('yeni sefer ve Endless kahramanları başlangıç silahıyla başlar', () => {
     const s = newCampaign({ mode: 'normal', seed: 1 });
@@ -271,7 +335,8 @@ describe('kayıt göçü: başlangıç silahı', () => {
     const s = debugTeleport(pickHero(newCampaign({ mode: 'normal', seed: 5, campaignId: 'c5' }), 'warrior'), '3');
     const armed = s.roster[0]!;
     const old = JSON.parse(JSON.stringify(s)) as CampaignState;
-    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'bearded_axe' } } } : { ...h, equipment: { ...h.equipment, weapon: null } }));
+    // v7 kaydında başlangıç ikinci eli yoktu (Ömer 2026-10-23'te geldi): silahsız kahramanın ikinci eli de boş
+    old.roster = old.roster.map((h, i) => (i === 0 ? { ...h, equipment: { ...h.equipment, weapon: { uid: 'i50', id: 'bearded_axe' } } } : { ...h, equipment: { ...h.equipment, weapon: null, offhand: null } }));
     (old as unknown as Record<string, unknown>).suspended = { node: old.at, seed: 1, turn: 0, hash: 'x', setup: 'y', actions: [] };
     const file = (version: number, st: CampaignState) => JSON.stringify({ version, counter: 1, lastSlot: 0, slots: [{ campaignId: st.campaignId, mode: 'normal', difficulty: st.difficulty, startedAt: 't', lastPlayed: 't', saves: [{ id: 's1', kind: 'auto', savedAt: 't', mode: 'normal', campaignId: st.campaignId, summary: {}, state: st }] }, null, null] });
     const kv = memoryKV();

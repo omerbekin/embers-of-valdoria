@@ -2,9 +2,12 @@
 // burası sefer durumuna yazar (xp.ts > allocateStats kalıbı: yeni durum döner, girdi değişmez). Geçersiz işlem durumu DEĞİŞTİRMEZ (aynı nesne
 // döner); nedeni `...Blocked` fonksiyonları verir (Gear kaynağı onu Error olarak gösterir). Duraklatılmış savaş varken kilitli (PAUSED_LOCK;
 // Ömer 10a: respec savaş dışında).
-import { applyRespec, applyTree, autoTreeHero, respecBlocked, treeChangeBlocked } from '../progression/skill-tree-hero';
-import type { TreeAlloc } from '../progression/skill-tree';
+import { applyRespec, applyTree, autoTreeHero, normalizeTree, respecBlocked, treeChangeBlocked } from '../progression/skill-tree-hero';
+import { focusBuild, rankOf, type TreeAlloc } from '../progression/skill-tree';
 import { treeOf } from '../progression/skill-tree-data';
+import { evolveKeys } from '../progression/skill-tree-evolve';
+import { campaignMaxLevel } from '../progression/levels';
+import { debugSetLevel } from './xp';
 import { PAUSED_LOCK, pausedLock } from './state';
 import type { CampaignState, Hero } from './types';
 
@@ -52,4 +55,28 @@ export function autoTreeAll(s: CampaignState): CampaignState {
   const t = clone(s);
   for (const h of t.roster) autoTreeHero(h);
   return t;
+}
+
+/**
+ * DEBUG (evolve ikonu denemesi): o class'ın ilk kahramanına, verilen skill'in evolve'una ulaşan geçerli bir ağaç yazar (onaylı: Gear > Tree'de dolu
+ * görünür, evolve ikonu animasyonlanır). Gerekli en küçük level'a çıkarır (sefer tavanına kadar; stat puanları dağıtılmamış kalır, setLevel gibi),
+ * ağaç odaklı kurulumla (satır = o skill, öbür satır 1; yön a) kurulur, kalan puan harcanmamış kalır. Class / skill / kahraman yoksa durum aynen döner.
+ */
+export function debugGrantEvolve(s: CampaignState, classId: string, skillId: string): CampaignState {
+  const tree = treeOf(classId);
+  const hero = s.roster.find((h) => h.class === classId);
+  const row = tree?.rows.findIndex((r) => r.skill === skillId) ?? -1;
+  if (!tree || !hero || row < 0) return s;
+  const key = evolveKeys().get(row);
+  if (!key) return s;
+  for (let lv = 2; lv <= campaignMaxLevel(); lv++) {
+    const alloc = focusBuild(tree, [row, row === 1 ? 2 : 1], lv, { dir: 'a' });
+    if (rankOf(alloc, key) < 1) continue;
+    const t = debugSetLevel(s, Math.max(lv, hero.level ?? 1), hero.id);
+    const h = heroIn(t, hero.id)!;
+    h.tree = alloc;
+    normalizeTree(h);
+    return t;
+  }
+  return s;
 }

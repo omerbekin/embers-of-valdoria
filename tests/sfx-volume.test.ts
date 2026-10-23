@@ -2,6 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import audioData from '../data/audio.json';
 import { audioSettings, playSfxDef, type SfxDef } from '../src/game/audio';
 import { DEFAULT_SFX_LEVEL, loadSfxLevel, onSfxLevelChange, setSfxLevel, sfxGain, sfxLevel } from '../src/ui/sfx-volume';
+import { stepFraction } from '../src/ui/volume-steps';
 
 // Settings > Sounds > Sound Effects (Ömer 2026-10-13): savaş/skill sesleri için ayrı 20 adımlı kaydırıcı; Master hepsini çarpar.
 
@@ -37,7 +38,7 @@ describe('Sound Effects seviyesi', () => {
   });
 
   it('varsayılan %100 (eski ses düzeyi korunur); kayıt yoksa varsayılan', () => {
-    expect(DEFAULT_SFX_LEVEL).toBe(14);
+    expect(DEFAULT_SFX_LEVEL).toBe(19);
     expect(loadSfxLevel()).toBe(DEFAULT_SFX_LEVEL);
   });
 
@@ -55,9 +56,9 @@ describe('Sound Effects seviyesi', () => {
 
   it('toplam oran = Master x Sound Effects', () => {
     expect(sfxGain(20, 20)).toBe(1);
-    expect(sfxGain(10, 20)).toBe(0.5);
-    expect(sfxGain(20, 10)).toBe(0.5);
-    expect(sfxGain(14, 10)).toBeCloseTo(0.35);
+    expect(sfxGain(10, 20)).toBeCloseTo(stepFraction(10));
+    expect(sfxGain(20, 10)).toBeCloseTo(stepFraction(10));
+    expect(sfxGain(14, 10)).toBeCloseTo(stepFraction(14) * stepFraction(10));
     expect(sfxGain(0, 20)).toBe(0);
     expect(sfxGain(20, 0)).toBe(0);
   });

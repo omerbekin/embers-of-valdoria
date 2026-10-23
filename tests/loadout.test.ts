@@ -67,7 +67,10 @@ describe('güç katmanı: boş yükleme', () => {
       const h = s.roster.find((x) => x.id === s.active[Number(cell)])!;
       expect(h.equipment.weapon?.id).toBe(ITEMS.starterWeapons.classes[h.class]);
       expect(u.modifiers).toEqual(heroLoadout(h).modifiers);
-      expect(u.modifiers?.weaponMult).toBeUndefined();
+      // başlangıç ikinci eli (Ömer 2026-10-23): kalkan güç vermez; ikinci hançer (Cutthroat / Anti-Mage) gücünün payı kadar küçük ek
+      const off = h.equipment.offhand ? ITEMS.items.find((d) => d.id === h.equipment.offhand!.id) : undefined;
+      if (off?.slot === 'weapon') expect(u.modifiers?.weaponMult).toBeGreaterThan(1);
+      else expect(u.modifiers?.weaponMult).toBeUndefined();
     }
     expect(fightPlan(plan, 'medium').log).toEqual(fightPlan(plan, 'medium').log);
   });

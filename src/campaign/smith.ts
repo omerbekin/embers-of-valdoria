@@ -3,18 +3,20 @@
 // formüllerinden kendiliğinden yeniden hesaplanır (items.md 1.12 / 1.3b: değer = (base + perIlvl x ilvl) x power; zar yeri `q` aynı kalır).
 // Her nadirlikte; Legendary fiyatı x legendaryMult. Seviye şartı (ilvl - 3) yükseltilmiş item'de de geçerli: takılıysa takan kahraman yeni şartı
 // karşılamalı. Reforge: yalnız Epic; ana affix (ilk) dışındaki bir affix aynı kademeden seed'li yeniden zarlanır (aynı affix yeni değerle de
-// gelebilir: karar 364 "Aynısı da olabilir"); her tekrarda fiyat x growth (sayaç item'in üstünde: ItemInstance.reforges). Fiyatlar item'in tüccar
-// fiyatına (itemValue) bağlı ve PAHALI (karar 364, "pahalı olsun"); PROVİZYON: data/campaign/campaign.json > blacksmith.
+// gelebilir: karar 364 "Aynısı da olabilir"); her tekrarda fiyat x growth (sayaç item'in üstünde: ItemInstance.reforges). Reforge fiyatı item'in
+// tüccar fiyatına (itemValue), Temper fiyatı adımın değer artışına bağlı (Ömer 2026-10-23); PROVİZYON: data/campaign/campaign.json > blacksmith.
 import {
   affixLines,
   baseLineTexts,
   instanceBaseLines,
   affixDef,
   instanceIlvl,
+  instanceIP,
   instanceRarity,
   instanceRoll,
   itemDef,
   itemValue,
+  ITEMS,
   levelRequirement,
   rollFloor,
   SLOT_IDS,
@@ -32,8 +34,11 @@ const clone = <T>(x: T): T => JSON.parse(JSON.stringify(x)) as T;
 export interface BlacksmithConfig {
   /** Bölüm başına item seviyesi tavanı (bölüm n: n x ilvlPerChapter). */
   ilvlPerChapter: number;
-  /** Temper fiyatı = valueRatio x yükseltilmiş item'in tüccar fiyatı (itemValue); Legendary x legendaryMult. */
-  temper: { valueRatio: number; legendaryMult: number };
+  /**
+   * Temper fiyatı = gainRatio x item'in seviye başına ORTALAMA değer artışı (gainSpan aralığında; yuvarlama sıçramaları düzleşir) x
+   * (1 + perLevelRise x (ilvl - 1)), en az minPrice; Legendary x legendaryMult (Ömer 2026-10-23, open-questions 404).
+   */
+  temper: { gainRatio: number; gainSpan: [number, number]; perLevelRise: number; minPrice: number; legendaryMult: number };
   /** Reforge fiyatı = valueRatio x item'in tüccar fiyatı x growth ^ (önceki reforge sayısı). */
   reforge: { valueRatio: number; growth: number };
   /** Kasaba ekranındaki yer (görselin oranıyla; anahtar = kasaba görseli). Yoksa ekran kenarında yazı plakası. */
@@ -80,9 +85,26 @@ export interface SmithPreview {
 /** Temper sonrası item (item seviyesi +1; zar yerleri aynı). */
 const tempered = (inst: ItemInstance): ItemInstance => ({ ...inst, rolls: { ...instanceRoll(inst), ilvl: instanceIlvl(inst) + 1 } });
 
-/** Temper fiyatı: valueRatio x yükseltilmiş item'in tüccar fiyatı (itemValue; karar 364: bir adım ~ tüccar fiyatının yarısı); Legendary x legendaryMult. */
+const atIlvl = (inst: ItemInstance, ilvl: number): ItemInstance => ({ ...inst, rolls: { ...instanceRoll(inst), ilvl } });
+
+/**
+ * Item'in seviye başına ORTALAMA değer artışı (altın): goldPerIP x (IP(hi) - IP(lo)) / (hi - lo), [lo, hi] = temper.gainSpan. Tek adımın artışı
+ * affix yuvarlaması yüzünden 0 / 4 / 0 diye sıçrar; ortalama düzdür (Ömer 2026-10-23: fiyat seviyeden seviyeye sıçramasın). En az 0.
+ */
+export function temperGain(inst: ItemInstance, cfg: BlacksmithConfig = SMITH): number {
+  if (!itemDef(inst.id)) return 0;
+  const [lo, hi] = cfg.temper.gainSpan;
+  if (!(hi > lo)) return 0;
+  return Math.max(0, (ITEMS.budget.goldPerIP * (instanceIP(atIlvl(inst, hi)) - instanceIP(atIlvl(inst, lo)))) / (hi - lo));
+}
+
+/**
+ * Temper fiyatı (Ömer 2026-10-23, open-questions 404): item'in değer artışına bağlı = gainRatio x temperGain x (1 + perLevelRise x (ilvl - 1)),
+ * en az minPrice; Legendary x legendaryMult. Büyümeyen örtük statlar (kalkanın sabit bloğu) fiyata girmez; fiyat seviyeyle düzgün artar.
+ */
 export function temperPrice(inst: ItemInstance, cfg: BlacksmithConfig = SMITH): number {
-  const p = cfg.temper.valueRatio * itemValue(itemDef(inst.id) ? tempered(inst) : inst);
+  const T = cfg.temper;
+  const p = Math.max(T.minPrice, T.gainRatio * temperGain(inst, cfg) * (1 + T.perLevelRise * (instanceIlvl(inst) - 1)));
   return Math.max(1, Math.round(p * (instanceRarity(inst) === 'legendary' ? cfg.temper.legendaryMult : 1)));
 }
 

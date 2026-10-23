@@ -150,7 +150,7 @@ describe('Endless off-hand', () => {
     const hw = after.heroes.find((h) => h.id === w.id)!;
     expect(hw.equipment.weapon?.id).toBe('dane_axe');
     expect(hw.equipment.offhand).toBeUndefined();
-    expect(bagOf(after).map((i) => i.id).sort()).toEqual(['arming_sword', 'oak_shield', 'woodcutters_axe']); // başlangıç baltası ilk takışta torbaya döndü
+    expect(bagOf(after).map((i) => i.id).sort()).toEqual(['arming_sword', 'greataxe', 'oak_shield']); // başlangıç baltası (Greataxe) ilk takışta torbaya döndü
     // dolu torba: kılıç + kalkan torbaya dönmeli (bir fazla) -> açık mesajla engel
     const size = endlessBagSize();
     const full = { ...r, bag: [...bagOf(r), ...Array.from({ length: size - bagOf(r).length }, (_, i) => ({ uid: `f${i}`, id: 'rondel_dagger' }))] };

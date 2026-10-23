@@ -152,8 +152,7 @@ export function openCompanyWindow(root: HTMLElement, o: CompanySpec): CompanyHan
       }
     });
     const n = p.length;
-    const ln = leader ? by.get(leader)?.name : '';
-    countEl.innerHTML = `${n} / ${SIZE} chosen${n && ln ? `<b>Leader <em>${esc(ln)}</em></b>` : ''}`;
+    countEl.innerHTML = `${n} / ${SIZE} chosen`;
     goBtn.disabled = n !== SIZE;
     goBtn.classList.toggle('ready', n === SIZE);
     goBtn.title = n === SIZE ? '' : `Pick ${SIZE} heroes first.`;

@@ -613,6 +613,11 @@ export interface UnitSetup {
    * Motor ağaç biçimini bilmez; yalnızca yamalı tanımları kullanır. Verilmezse birim bugünküyle birebir aynı.
    */
   tree?: TreeSetup;
+  /**
+   * Yalnızca SUNUM (motor kuralı değildir): evolve düğümü onaylı skill'lerin id'leri (src/progression/skill-tree-evolve.ts). Arayüz bu skill'lerin
+   * ikonunu animasyonlu / evolve sanatıyla gösterir; hasar, bedel, sıra, RNG hiçbir şeyden etkilenmez.
+   */
+  evolved?: string[];
   /** Başlangıç MP'si (mutlak; [0, maks MP]). startMpRatio'dan önceliklidir. */
   startMp?: number;
   /** Başlangıç MP oranı (0-1). */
@@ -1593,6 +1598,8 @@ export interface Combatant {
    * önce buraya, yoksa ortak tabloya (setup.skills) bakar. Ağaçsız birimde tanımsız.
    */
   skillDefs?: Record<string, SkillDef>;
+  /** Yalnızca sunum (UnitSetup.evolved): evolve'u onaylı skill id'leri (ikon animasyonu). */
+  evolved?: string[];
   /** Faz 8: skill biçim seçimleri (UnitSetup.tree.modes; birimin skill listesindekiler). Ağaçsız birimde tanımsız. */
   skillModes?: Record<string, SkillModeSet>;
   /** Skill ağacı (b) unitFx kanalı (UnitSetup.tree.fx): item'lerden ayrı; motor okuması tree-hooks.ts > effNum / effFlag / effList. */

@@ -4,8 +4,10 @@
  * çerçeveli, "N×" gruplu, "Lv N"), TEK bilgi satırı (düğümün lore cümlesi; yoksa önder düşmanın pasifi / boss çığlığı), Fight (birincil).
  * Savaşsız düğümler (kasaba, kamp, tüccar, hazine, olay; Ömer 2026-10-18 "tüm nodelar için") AYNI kartı kullanır: `foes` verilmez (portre satırı yok),
  * `actionLabel` düğümün kendi eylemi (Enter / Rest / Trade / Open / Continue); `onFight` o eylemi çalıştırır.
- * Kapatma: Menu yerindeki ortak X (src/ui/nav-close.ts), Esc (sahne), kararan zemine dokunma. "Then" satırı ve "diğer yollar kapanır"
- * notu YOKTUR (Ömer: haritada geri de gidilecek). Oyun kuralı burada yok: sahne `onFight` / `onCancel` verir.
+ * Kapatma: Menu yerindeki ortak X (src/ui/nav-close.ts), Esc (sahne), kararan zemine dokunma. "diğer yollar kapanır" notu YOKTUR
+ * (Ömer: haritada geri de gidilecek). Oyun kuralı burada yok: sahne `onFight` / `onCancel` verir.
+ * Tek kart, iki adım (Ömer 2026-10-23): `preview` = fareyle üstüne gelince açılan ÖNİZLEME (düğme yok, zemin kararmaz, girdi kilitlenmez,
+ * fareyi geçirir, X yok); normal kart = sabitlenmiş (düğme ya da `note`). `then` = alttaki "Then: <sonraki düğüm> TÜR" satırı.
  */
 import './start-battle.css';
 import { content } from '../engine';
@@ -37,6 +39,14 @@ export interface StartBattleOpts {
   /** who yoksa (düğüm lore'u) yalnızca italik cümle. */
   info?: { who?: string; text: string; quote?: boolean };
   /** Düğümün #ui-root içindeki CSS piksel konumu (harita kayarsa / boyut değişirse yeniden sorulur); null = ortala. */
+  /** Alttaki "Then" satırı: sonraki duraklar. */
+  then?: Array<{ name: string; kind: string }>;
+  /** Fare önizlemesi: düğmesiz, girdiyi kilitlemez, zemin kararmaz. */
+  preview?: boolean;
+  /** Verilirse düğmenin yerine düz bu satır (ör. "Not reachable yet"); düğme yok. */
+  note?: string;
+  /** Önizlemeden sabitlenirken giriş animasyonu tekrar oynamaz. */
+  instant?: boolean;
   anchor: () => { x: number; y: number } | null;
   onFight: () => void;
   onCancel: () => void;
@@ -103,23 +113,31 @@ export function openStartBattle(root: HTMLElement, o: StartBattleOpts): StartBat
     card.append(row);
   }
   if (o.info) card.append(el('p', `sbc-info${o.info.quote ? ' quote' : ''}`, `${o.info.who ? `<b>${esc(o.info.who)}</b> ` : ''}${o.info.quote ? `“${esc(o.info.text)}”` : esc(o.info.text)}`));
-  const acts = el('div', 'sbc-acts');
+  if (o.then?.length) card.append(el('p', 'sbc-then', `<b>Then</b> ${o.then.map((t) => `${esc(t.name)} <span class="k">${esc(t.kind)}</span>`).join(' <i>or</i> ')}`));
+  const preview = !!o.preview;
   const fight = el('button', 'el-btn primary ready', esc(o.actionLabel ?? 'Fight'));
   fight.type = 'button';
-  acts.append(fight);
-  card.append(acts);
-  wrap.append(scrim, ring, card);
+  if (o.note && !preview) card.append(el('p', 'sbc-note', esc(o.note)));
+  else if (!preview) {
+    const acts = el('div', 'sbc-acts');
+    acts.append(fight);
+    card.append(acts);
+  } else if (o.note) card.append(el('p', 'sbc-note', esc(o.note)));
+  if (preview) wrap.classList.add('preview');
+  if (o.instant) wrap.classList.add('instant');
+  if (preview) wrap.append(ring, card);
+  else wrap.append(scrim, ring, card);
   root.append(wrap);
-  lockInput('start-battle');
+  if (!preview) lockInput('start-battle');
 
   let done = false;
-  const unmountX = mountCloseButton(root, () => cancel());
+  const unmountX = preview ? () => {} : mountCloseButton(root, () => cancel());
   const close = (): void => {
     if (done) return;
     done = true;
     unmountX();
     wrap.remove();
-    unlockInput('start-battle');
+    if (!preview) unlockInput('start-battle');
   };
   const cancel = (): void => {
     if (done) return;

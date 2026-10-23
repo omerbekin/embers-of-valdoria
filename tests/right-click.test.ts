@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { keepsNativeMenu, phaserAcceptsButton, setPhaserRightClick } from '../src/ui/right-click';
+import { keepsNativeMenu, phaserAcceptsButton, rightClickAction, setPhaserRightClick } from '../src/ui/right-click';
 
 describe('sağ tık', () => {
   it('metin girişlerinde tarayıcı menüsü açık kalır, diğer yerlerde kapanır', () => {
@@ -9,6 +9,20 @@ describe('sağ tık', () => {
     expect(keepsNativeMenu({ tagName: 'INPUT', type: 'checkbox' } as never)).toBe(false);
     expect(keepsNativeMenu({ tagName: 'BUTTON' })).toBe(false);
     expect(keepsNativeMenu(null)).toBe(false);
+  });
+  it('boş yere sağ tık sırası: seçim varsa önce yalnızca seçim iptal, sonraki tık kartı kapatır', () => {
+    let selection = true;
+    let cardOpen = true;
+    const click = () => {
+      if (rightClickAction(selection) === 'cancel-selection') selection = false;
+      else cardOpen = false;
+    };
+    click();
+    expect(selection).toBe(false);
+    expect(cardOpen).toBe(true);
+    click();
+    expect(cardOpen).toBe(false);
+    expect(rightClickAction(false)).toBe('close-cards');
   });
   it('Phaser sağ tuşu yalnızca savaşta alır, orta tuşu hiç', () => {
     setPhaserRightClick(false);

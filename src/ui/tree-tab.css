@@ -3,6 +3,8 @@
 
 /* ---------- ipucu (A Band: band-tip.css .bt) + dokunmatik +/- ---------- */
 .tt-tip { position: absolute; z-index: 60; left: 0; top: 0; pointer-events: none; visibility: hidden; --u: var(--gu, 1px); }
+.tt-tip { max-width: calc(100% - 16px); box-sizing: border-box; overflow-x: hidden; }
+.gr-overlay { overflow-x: clip; }
 .tt-tip.show { visibility: visible; }
 .tt-tip.pin { pointer-events: auto; }
 .tt-tip .gt-ctl { display: none; align-items: stretch; gap: 8px; padding: 8px 12px 10px; border-top: 1px solid rgba(217, 178, 106, .16); background: rgba(0, 0, 0, .24); pointer-events: auto; }
@@ -14,6 +16,7 @@
 .tt-tip .bt-foot.bad { color: #ffb070; border-top-color: rgba(224, 112, 42, .7); background: rgba(224, 112, 42, .12); }
 .tt-tip .bt-foot.pend { color: #ffc98a; }
 html.short .tt-tip { max-height: calc(100% - 12px); overflow: hidden auto; scrollbar-width: thin; }
+html.short .tt-tip .bt::after { display: none; } /* sağ alt köşe elması kutudan taşıp iç dikey kaydırma çıkarıyordu */
 html.short .tt-tip.pin .gt-ctl { position: sticky; bottom: 0; background: #17110a; padding: 6px 10px 8px; }
 html.short .tt-tip .gt-ctl button { min-height: 44px; }
 .gt-none { padding: calc(30 * var(--u)); font: max(14px, calc(20 * var(--u))) var(--g-body); color: var(--g-dim); }

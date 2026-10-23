@@ -5110,9 +5110,10 @@ html:not(.short) .gr-ledger .gr-lskills .gr-pl.pas {
   grid-template-rows: auto;
 }
 
-html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-tag {
-  left: calc(18 * var(--u));
-  transform: translate(0, -50%);
+/* Etiket (PASSIVE / ULTIMATE) ikon karesinin üst kenarında, ikona ortalı kurdele (.pl-ico içinde; taban kural .gr-pl .pl-tag). Sol üst elmas etiketin altında kalmasın diye bu plakalarda gizlenir. */
+.gr-pl.pas .pl-ico::before,
+.gr-pl.ult .pl-ico::before {
+  display: none;
 }
 
 html:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-ico {
@@ -5300,7 +5301,6 @@ html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl {
 }
 
 html.compact:not(.short) .gr-ledger .gr-lskills .gr-pl .pl-tag {
-  left: 10px;
   font-size: 8px;
   letter-spacing: 0.12em;
 }
@@ -5977,12 +5977,46 @@ html.short .sh-dv {
   display: none;
 }
 
-html.short .sh-ptr.idle {
+/* telefon (Ömer 2026-10-23): "N stat points to spend" satırı yok (sayı Sheet sekmesindeki rozette); Reset / Confirm üst satırda
+   (XP çubuğunun yerinde, sağda) belirir, ekstra yükseklik katmaz; Sheet sayfası kaymaz */
+html.short .sh-under {
   display: none;
 }
 
-html.short .sh-under {
-  min-height: 0;
+html.short .sh-foot {
+  grid-column: 2 / 4;
+  grid-row: 1;
+  padding-top: 0;
+  align-self: center;
+  z-index: 2;
+}
+
+html.short .sh:has(.sh-foot:not(.idle)) > .sh-bar,
+html.short .sh:has(.sh-foot:not(.idle)) .sh-xpv {
+  visibility: hidden;
+}
+
+html.short .sh-btn {
+  min-height: 24px;
+}
+
+html.short .sh-row:has(.sh-pm) {
+  min-height: 21px;
+}
+
+html.short .sh-pmb {
+  width: 26px;
+  height: 19px;
+}
+
+/* + / −: görünür kutu küçük, dokunma alanı 44 px geniş (yükseklik satır kadar: komşu satırı örtmez) */
+html.short .sh-pmb::after {
+  width: calc(100% + 18px);
+  height: 21px;
+}
+
+html.short .sh-pm {
+  gap: 4px;
 }
 
 html.short .sh-row {
@@ -5995,7 +6029,7 @@ html.short .sh-chip {
 }
 
 html.short .sh-vit {
-  margin-top: 2px;
+  margin-top: 0;
 }
 
 html.short .sh-d,
@@ -6035,8 +6069,13 @@ html.short .gr-ledger.tab-sheet .gr-lbody {
 
 /* ===== Çift pencerede (Demirci / tüccar / ganimet) telefonda sağdaki Gear paneli (bug-hunter 2026-10-19) =====
    Panel yarım ekran: yuvalar tek sütun (adlar kesilmesin), skill şeridi gizli (bu ekranlarda gerekmez; taşıyordu), torba başlığı satır atlar (BEST düğmeleri taşmasın). */
-html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-lbody {
+html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot):not(.gr-bagonly) .gr-lbody {
   grid-template-columns: 54px minmax(0, 1.2fr) 1px minmax(0, 1fr);
+}
+
+/* yalnızca torba görünümü (ganimet / ödül): tek sütun, torba tüm panel genişliğini kullanır (yukarıdaki 4 sütunlu kural buraya sızıp torbayı 54px'e sıkıştırıyordu) */
+html.short .gr-pair > .gr-ledger.gr-bagonly .gr-lbody {
+  grid-template-columns: minmax(0, 1fr);
 }
 
 html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-lskills {
@@ -6055,3 +6094,31 @@ html.short .gr-pair > .gr-ledger:not(.gr-shop):not(.gr-loot) .gr-bag-head {
 /* Torba başlığı: filtre düğmesi (All items) Best düğmeleriyle (gr-btn sm) aynı yükseklik ve dikey hizada */
 .gr-bag-head { align-items: center; }
 .gr-bag-head .gr-chip { box-sizing: border-box; min-height: 44px; display: inline-flex; align-items: center; padding: 0 calc(18 * var(--u)); font-size: max(12px, calc(16 * var(--u))) !important; }
+
+/* telefon Sheet (Ömer 2026-10-23): 740x360'ta tüm stat satırı kaydırmasız sığsın (hem puansız hem puanlı durum); +/- satırları ve dokunma alanları aynı */
+html.short .sh {
+  row-gap: 2px;
+}
+
+html.short .sh-row {
+  min-height: 16px;
+  line-height: 1.1;
+}
+
+html.short .sh-row:has(.sh-pm) {
+  min-height: 21px;
+}
+
+html.short .sh-ico {
+  width: 14px;
+  height: 14px;
+}
+
+html.short .sh-bh-top {
+  margin-bottom: 0;
+}
+
+html.short .sh-sl {
+  margin-bottom: 0;
+  line-height: 1.1;
+}

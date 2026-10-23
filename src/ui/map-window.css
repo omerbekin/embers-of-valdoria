@@ -109,8 +109,11 @@ html.reduced-motion .mw-in .mw-card { animation: none; }
 .mw-card .crown { position: absolute; right: 6%; top: 6%; z-index: 2; width: max(18px, calc(40 * var(--u))); color: var(--g-gold); filter: drop-shadow(0 1px 2px #000); }
 .mw-card .nm { font: 600 max(13px, calc(26 * var(--u))) var(--g-disp); letter-spacing: .1em; text-transform: uppercase; color: var(--acl); }
 .mw-card .ds { margin: 0; padding: 0 max(8px, calc(16 * var(--u))); font: 400 max(11px, calc(20 * var(--u))) / 1.26 var(--g-body); color: #cdb88d; }
-.mw-card .mw-chips { justify-content: center; padding: 0 6px; max-width: 100%; box-sizing: border-box; }
-.mw-card .mw-chip { white-space: normal; text-align: center; max-width: 100%; box-sizing: border-box; }
+.mw-card .pt { flex: none; }
+/* etiketler HER ZAMAN tek satır (Form Your Company ile aynı kural); sığmazsa rol çipi üç noktayla kısalır */
+.mw-card .mw-chips { justify-content: center; flex-wrap: nowrap; padding: 0 6px; max-width: 100%; box-sizing: border-box; gap: max(3px, calc(6 * var(--u))); }
+.mw-card .mw-chip { white-space: nowrap; max-width: 100%; box-sizing: border-box; min-width: 0; flex: 0 1 auto; overflow: hidden; text-overflow: ellipsis; }
+.mw-card .mw-chip.gain { flex: none; }
 
 /* ---------- dusmus kahraman satiri (Rest) ---------- */
 .mw-fallen { display: flex; flex-direction: column; gap: max(6px, calc(12 * var(--u))); }
@@ -179,3 +182,17 @@ html.short .mw-C .mw-chip.reg, html.compact .mw-C .mw-chip.reg { display: none; 
 
 /* telefon yatay: düğmeler kaydırılan gövdenin altında hep görünür */
 html.short .mw-acts { position: sticky; bottom: -8px; margin-top: 0; padding: 6px 0 8px; background: linear-gradient(180deg, rgba(12, 9, 6, 0), rgba(12, 9, 6, 0.96) 30%); z-index: 3; }
+
+/* telefon yatay: aday kartları kaydırma olmadan sığar. Kart genişliği (= portre yüksekliği) ekran yüksekliğine göre sınırlanır; en önemsiz çip (tag) gizlenir, sınıf rolü + ana stat kalır */
+html.short .mw-A.bd-cards .mw-cards, html.short .mw-C.bd-cards .mw-cards { padding-top: 2px; }
+/* kart yatayda geniş (çipler tek satırda tam yazılsın); portre kutusu eski boyunda (yükseklik ekrana göre) ve ortada kalır, büst yüzdeleri bozulmaz */
+html.short .mw-card { max-width: 215px; gap: 3px; padding-bottom: 6px; }
+html.short .mw-card .pt { width: clamp(100px, calc((100vh - 290px) / .85), 220px); max-width: 100%; }
+html.short .mw-card .nm { font-size: 12px; }
+html.short .mw-card .mw-chips { padding: 0 4px; gap: 3px; }
+html.short .mw-card .mw-chip { font-size: 9px; min-height: 18px; padding: 0 .35em; letter-spacing: 0; }
+html.short .mw-card .mw-chip.dim, html.compact .mw-card .mw-chip.dim { display: none; }
+html.short .mw-A.bd-cards .mw-txt, html.short .mw-C.bd-cards .mw-txt { font-size: 12px; line-height: 1.2; }
+html.short .mw-A.bd-cards .mw-body { gap: 4px; padding-top: 6px; }
+html.short .mw-A.bd-cards .mw-hd { padding-top: 4px; padding-bottom: 4px; }
+html.short .mw-A.bd-cards .mw-acts, html.short .mw-C.bd-cards .mw-acts { position: static; background: none; padding: 2px 0 0; }

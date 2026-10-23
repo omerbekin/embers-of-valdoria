@@ -5,7 +5,7 @@
   "tonic": "D",
   "mode": "dorian",
   "master": 0.85,
-  "defaultLevel": 16,
+  "defaultLevel": 19,
   "fadeInMs": 8000,
   "fadeInFrom": 0.2,
   "fadeOutMs": 1200,

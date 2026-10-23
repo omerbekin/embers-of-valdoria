@@ -23,7 +23,7 @@ import { cooldownChipOf, costChipOf, rangeChipOf } from '../ui/skill-chips';
 import type { MiniShape } from '../ui/shape-diagram';
 import { buildWiki, elementIcon } from './catalog';
 import type { WikiArticle, WikiBlock, WikiCatalog, WikiElement, WikiGround, WikiSkill, WikiSkillRef, WikiStatus, WikiUnit } from './catalog';
-import { CODEX_SECTIONS, WEAKNESS_TABLE_ID, codexEntries, filterEntries, groundEntryId, keepSelection, portraitOf, stepSelection } from './codex';
+import { CODEX_SECTIONS, WEAKNESS_TABLE_ID, articlePortrait, codexEntries, filterEntries, groundEntryId, keepSelection, navIconName, portraitOf, stepSelection, weaknessIconName } from './codex';
 import type { CodexEntry, CodexSectionId, CodexThumb } from './codex';
 import { WIKI_ALIASES } from './assets/nav';
 import { assetSections, setNavigator, skillArt, unitArt } from './assets/sections';
@@ -199,7 +199,7 @@ export class WikiPanel {
       const count = h('small', { class: 'cx-navcount' });
       const row = h('button', { class: `cx-navrow${item.sub ? ' sub' : ''}`, attrs: { type: 'button' }, on: { click: () => (uiSound('tab'), this.show(item.id)) } },
         h('i', { class: 'el-dia' }),
-        pic(item.icon, GOLD, 'cx-navicon', SHARED_KEY),
+        pic(navIconName(item.id, item.icon), GOLD, 'cx-navicon', SHARED_KEY),
         h('span', { class: 'cx-navtitle', text: item.title }),
         count);
       navEl.append(row);
@@ -517,7 +517,7 @@ export class WikiPanel {
     const legend = a.legendaries?.length
       ? h('div', { class: 'cx-slots cx-legend' }, ...a.legendaries.map((d) => h('div', { class: 'cx-rarity cx-legend-item', style: { '--c': d.color }, title: d.name }, h('span', { class: 'cx-slotbox' }, itemDefIcon(d, d.slot, d.color, 'cx-slot-svg')), h('span', { text: d.name }))))
       : null;
-    return h('div', {}, articleHead(pic(a.icon, a.accent, 'cx-ico head', undefined, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
+    return h('div', {}, articleHead(articlePortrait(a) ? portrait(articlePortrait(a)!, 'cx-bigportrait') : pic(a.icon, a.accent, 'cx-ico head', a.owner, true), a.title, a.group), gear, legend, ...this.blocks(a.blocks), shapes);
   }
 
   /** Skill kartı çipleri V2 (src/ui/skill-chips.ts): menzil / bedel / bekleme ikon + sayı, tam anlam balonda; sayıya inmeyenler eski yazılı çip. */
@@ -617,7 +617,7 @@ export class WikiPanel {
 
   private weaknessArticle(): HTMLElement {
     return h('div', {},
-      articleHead(pic('meteor', GOLD, 'cx-ico head', SHARED_KEY), 'Weakness table', 'Elements'),
+      articleHead(pic(weaknessIconName(), GOLD, 'cx-ico head', SHARED_KEY), 'Weakness table', 'Elements'),
       h('p', { text: 'Damage multiplier by target type and element (x1 = no weakness). Armor and crits apply on top.' }),
       this.table(this.cat.elementTable.head, this.cat.elementTable.rows),
       heading('Elements'),

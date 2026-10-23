@@ -11,7 +11,7 @@
 import musicData from '../../data/audio-music.json';
 import { crossfadeMs } from '../../data/audio-music-tracks.json';
 import bossMap from '../../data/audio-music-boss-map.json';
-import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
+import { VOLUME_DEFAULTS, clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
 type MusicModule = typeof import('../game/music');
 type Engine = InstanceType<MusicModule['MusicEngine']>;
@@ -61,7 +61,7 @@ export function loadMusicLevel(): number {
 
 let level = loadMusicLevel();
 /** Ana ses seviyesi 0..20 adım (Settings > Master Volume; src/ui/settings.ts bildirir). */
-let master = 14;
+let master: number = VOLUME_DEFAULTS.master;
 /** Sahnenin istediği parça (null = sessiz). */
 let wanted: MusicTrack | null = null;
 /** Codex önizlemesi: varsa sahnenin parçasının yerine çalar. */

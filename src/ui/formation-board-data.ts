@@ -9,10 +9,10 @@ import { avatarUrl, hideHeroSkillTip, showHeroSkillTip } from './character-panel
 import { statBandSpec, statTip } from './stat-tips';
 import { gearSkillRows } from './gear-skills';
 import { iconUrl } from './dom-icons';
-import { skillIconName } from './mob-icons';
+import { heroSkillIconUrl } from './evolve-icon';
 import { uiIconName } from './ui-icons';
 import { STAT_COLOR, statIconName } from './stat-icons';
-import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
+import { ownerOfUnit } from '../game/asset-versions';
 import type { BoardAttr, BoardHint, BoardSkill, FormationBoardHero, FormationBoardOpts } from './formation-board';
 
 /** Tahtaya girecek kahramanın kaynak biçimi (sefer kahramanı buna uyar). */
@@ -59,7 +59,7 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
     ...(passiveRow && p ? { passive: { name: p.name, icon: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(h.class)) } } : {}),
     skills: rows
       .filter((r) => !r.passive && r.skill)
-      .map((r) => ({ id: r.skill!.id, name: r.skill!.name, icon: iconUrl(skillIconName(r.skill!), r.skill!.fx, ownerOfSkill(r.skill!.id)), cost: costOf(r.skill!) })),
+      .map((r) => ({ id: r.skill!.id, name: r.skill!.name, icon: heroSkillIconUrl(h, r.skill!), cost: costOf(r.skill!) })),
   };
 }
 
@@ -83,7 +83,7 @@ export function boardTips(sourceOf: (id: string) => BoardHeroSource | undefined)
     showSkill: (anchor, heroId, key) => {
       const h = sourceOf(heroId);
       const stats = h ? heroStats(h) : null;
-      if (h && stats) showHeroSkillTip(anchor, h.class, stats, key);
+      if (h && stats) showHeroSkillTip(anchor, h.class, stats, key, h);
     },
     hideSkill: () => hideHeroSkillTip(),
     stat: (heroId, attr) => {

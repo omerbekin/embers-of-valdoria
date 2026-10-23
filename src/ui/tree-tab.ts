@@ -16,6 +16,8 @@ import { bandTipEl, type BandChip, type BandTipSpec } from './band-tip';
 import { gearSkillRows, passiveTip, skillTip, classSkills } from './gear-skills';
 import { escHtml } from './skill-bar';
 import { skillIconName } from './mob-icons';
+import { evolveNodeIconUrl, heroSkillIconUrl, nodeArtUrl, SAVE_TREE_MODE } from './evolve-icon';
+import { evolvedRows, type EvolveSource } from '../progression/skill-tree-evolve';
 import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
 import { iconUrl } from './dom-icons';
 import { uiIconName } from './ui-icons';
@@ -84,13 +86,16 @@ const noticed = new Set<string>();
 
 /** Satır başına ikon / ad (pasif + 3 skill + ult). */
 interface RowInfo {
+  /** Satırın skill ikonu: evolve ONAYLIYSA evolve sanatı + animasyon işareti (src/ui/evolve-icon.ts); plaka, ipucu ve ult göbeğinde bu görünür. */
   icon: string;
+  /** Normal skill ikonu (evolve olmayan düğümler / pasif): notable düğümleri bunu kullanır. */
+  base: string;
   name: string;
   kind: '' | 'pas' | 'ult';
   skill?: SkillDef;
 }
 
-function rowInfos(tree: TreeData): RowInfo[] {
+function rowInfos(tree: TreeData, hero?: EvolveSource): RowInfo[] {
   const def = content.classes[tree.class];
   const { skills } = classSkills(tree.class);
   const byId = (id: string): SkillDef | undefined => skills.find((s) => s.id === id) ?? content.skills[id];
@@ -99,12 +104,17 @@ function rowInfos(tree: TreeData): RowInfo[] {
     return s ? iconUrl(skillIconName(s), s.fx, ownerOfSkill(s.id)) : '';
   };
   const out: RowInfo[] = tree.rows.map((r, i) => {
-    if (i === 0 && def?.passive) return { icon: iconUrl(def.passive.icon || uiIconName('passive'), def.color, ownerOfUnit(tree.class)), name: def.passive.name, kind: 'pas' as const };
+    if (i === 0 && def?.passive) {
+      const pi = iconUrl(def.passive.icon || uiIconName('passive'), def.color, ownerOfUnit(tree.class));
+      return { icon: pi, base: pi, name: def.passive.name, kind: 'pas' as const };
+    }
     const s = byId(r.skill);
-    return { icon: sk(r.skill), name: s?.name ?? r.name, kind: '' as const, ...(s ? { skill: s } : {}) };
+    const base = sk(r.skill);
+    return { icon: s ? heroSkillIconUrl(hero, s) : base, base, name: s?.name ?? r.name, kind: '' as const, ...(s ? { skill: s } : {}) };
   });
   const us = byId(tree.ult.skill);
-  out.push({ icon: sk(tree.ult.skill), name: us?.name ?? tree.ult.name, kind: 'ult', ...(us ? { skill: us } : {}) });
+  const ub = sk(tree.ult.skill);
+  out.push({ icon: ub, base: ub, name: us?.name ?? tree.ult.name, kind: 'ult', ...(us ? { skill: us } : {}) });
   return out;
 }
 
@@ -167,7 +177,14 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
   }
 
   // ------------------------------------------------------------------ HTML üreticileri
-  const nodeIcon = (nd: TreeNode): string => rows[nd.row]?.icon ?? '';
+  /** Düğüm görseli: evolve düğümü kendi sanatını (varsa) gösterir, onaylıysa animasyon işaretiyle (refresh `.evo-on`'u da koyar); diğerleri normal skill ikonu. */
+  const nodeIcon = (nd: TreeNode): string => {
+    const r = rows[nd.row];
+    if (nd.kind === 'notable') return nodeArtUrl(sess?.tree.class ?? '', nd.key) ?? r?.base ?? '';
+    if (nd.kind !== 'evolve') return r?.base ?? '';
+    const art = r?.skill ? evolveNodeIconUrl(sess?.tree.class ?? '', r.skill.id) : null;
+    return art ?? r?.base ?? '';
+  };
 
   function nodeHTML(nd: TreeNode, p: { x: number; y: number }): string {
     const k = nd.kind === 'evolve' ? 'v' : nd.kind === 'blood' ? 'b' : nd.kind === 'notable' ? 'n' : nd.kind === 'edge' ? 'e' : 'f';
@@ -342,11 +359,6 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (st.st === 'dir') chips.push({ text: st.block?.code === 'ultArm' ? 'Other ult path chosen' : 'Other direction chosen', tone: 'warn' });
     if (st.st === 'new') chips.push({ text: 'Awaiting approval', tone: 'warn' });
     const lines: string[] = [info.text];
-    if (nd.req.length) lines.push(`Needs: ${nd.req.map((term) => term.map((q) => s.tree.nodes[q]?.name ?? q).join(' or ')).join(' + ')}`);
-    if (nd.kind === 'evolve') lines.push(`Evolves in place: the skill keeps its slot and gains this behaviour. Evolve I needs ${rules.evolveNeed[0]} points in the passive and skill rows, Evolve II needs ${rules.evolveNeed[1]} (ult points do not count); ${rules.evolveMax} per hero at most.`);
-    if (nd.kind === 'blood') lines.push('Blood Price: a gain with a cost. Dead end: nothing unlocks after it.');
-    if (nd.arm) lines.push(`One ult path: a point in any node of an arm closes the other arms. A pending point can be taken back to choose again; only a respec changes a confirmed arm. ${rules.ult.max} points at most (${ultSpent(effective(s), rules)} / ${rules.ult.max} spent). Locked by level, not by points.`);
-    if (nd.dir && !nd.arm) lines.push('One direction: each skill follows one side (Edge, Notable and Blood Price). Taking this side locks the other; only a respec changes a confirmed choice.');
     if (st.inert) lines.push('Not active yet: you can take it, but the battle engine does not apply it yet.');
     const spec: BandTipSpec = {
       ...(accent ? { accent } : {}),
@@ -516,6 +528,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     else if (shut(old.st) && !shut(st.st)) playFx(el, 'anim-awaken', 900);
   }
 
+  /** Bu satırın evolve'u kahramanın ONAYLI ağacında aktif mi (kural: skill-tree-evolve.ts). */
+  const evoOn = (row: number): boolean => {
+    const h = ctx.hero();
+    return !!h && evolvedRows(h, SAVE_TREE_MODE, rules).includes(row);
+  };
+
   function refresh(): void {
     const h = ctx.hero();
     const s = session();
@@ -546,6 +564,14 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       nodeFx(el, st, pn);
       const pp = el.querySelector('.pp');
       if (pp) pp.innerHTML = `<span class="c">${'●'.repeat(st.rank - pn)}</span><span class="p">${'●'.repeat(pn)}</span>${'○'.repeat(st.max - st.rank)}`;
+      // evolve düğümü: ONAYLI (bekleyen değil) ise sürekli ikon animasyonu (evolve-icon.css .evo-on)
+      if (el.classList.contains('k-v')) el.classList.toggle('evo-on', st.rank - pn > 0 && evoOn(nodeOf(key, rules)!.row));
+    });
+    // plaka ikonları: evolve onaylanınca (ya da respec'te geri dönünce) yeniden kurmadan değişir
+    $$<HTMLElement>('.gr-pl[data-tt^="p:"] .pl-ico img').forEach((img) => {
+      const i = Number(img.closest<HTMLElement>('.gr-pl')?.dataset['tt']?.slice(2));
+      const want = rows[i]?.icon;
+      if (want && img.getAttribute('src') !== want) img.setAttribute('src', want);
     });
     // yollar
     const rk = (a: { r: Record<string, number> }, k: string): number => a.r[k] ?? 0;
@@ -879,12 +905,12 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       wire(page);
       hostEl.replaceChildren(page);
       treeHost = $('.gt-in', page);
-      rows = rowInfos(s.tree);
+      rows = rowInfos(s.tree, h);
       plates = plateData(h, s.tree);
       mountTree(s);
       watchSize();
     } else {
-      rows = rowInfos(s.tree);
+      rows = rowInfos(s.tree, h);
       // ölçü ya da plaka sayıları (stat / item) değiştiyse düğümler dışarıdan yeniden kurulur
       const np = plateData(h, s.tree);
       if (JSON.stringify(np) !== JSON.stringify(plates)) {

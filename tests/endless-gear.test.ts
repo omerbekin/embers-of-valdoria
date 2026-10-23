@@ -91,7 +91,7 @@ describe('endless torbası', () => {
   });
 
   it('Equip best: kullanılabilir en iyi item\'leri takar, silah ailesine uyar', () => {
-    const wW = weaponFor('warrior');
+    const wW = itemDef('bearded_axe')!; // başlangıç Greataxe'ından (iL1) güçlü bir balta (Ömer 2026-10-23: Warrior çift elle başlar)
     const wM = weaponFor('mage');
     let r = withBag(fresh(), [wW.id, wM.id, ...armorItems.slice(0, 2).map((d) => d.id)]);
     r = equipBestRun(r);

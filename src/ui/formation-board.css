@@ -898,8 +898,13 @@ html.short .fb-tile {
   padding: 5px 8px;
 }
 
+html.short .fb-tile {
+  gap: 5px;
+}
+
 html.short .fb-tile img {
-  display: none;
+  width: 24px;
+  height: 24px;
 }
 
 html.short .fb-tile .n {

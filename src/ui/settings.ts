@@ -7,7 +7,7 @@ import { loadUiSoundLevel, onUiSoundLevelChange, previewUiSound, setUiSoundLevel
 import { loadSfxLevel, onSfxLevelChange, setSfxLevel } from './sfx-volume';
 import { loadMusicLevel, onMusicLevelChange, setMusicLevel, setMusicMaster } from './music';
 import { currentSupport, IOS_HINT, isStandalone, onFullscreenChange, toggleFullscreen } from './fullscreen';
-import { VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
+import { VOLUME_DEFAULTS, VOLUME_STEPS, clampStep, readStepLevel, stepRecord, volumeLabel } from './volume-steps';
 import { cyclePerfSetting, onPerfSettingChange, onShowFpsChange, perfSetting, perfSettingLabel, setPerfSetting, setShowFps, showFps } from './perf-mode';
 import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
 import { navSvg } from './nav-icons';
@@ -38,8 +38,8 @@ export interface SettingsHooks {
 }
 
 const KEY = 'proto.settings.v1';
-/** Master Volume varsayılanı: %70 (adım). */
-export const DEFAULT_VOLUME = 14;
+/** Master Volume varsayılanı (adım; data/audio-volume.json). */
+export const DEFAULT_VOLUME: number = VOLUME_DEFAULTS.master;
 
 /** Kayıtlı Master Volume 0..20 adım (eski 0-10 kayıtlar en yakın adıma: x2). */
 export function loadVolume(): number {

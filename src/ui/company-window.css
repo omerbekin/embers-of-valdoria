@@ -6,10 +6,10 @@
   box-shadow: 0 0 0 3px rgba(8,6,4,.7), 4px 12px 0 rgba(0,0,0,.3), 0 22px 50px rgba(0,0,0,.55); }
 .cw-cn { position: absolute; width: 8px; height: 8px; background: #140e09; border: 1px solid rgba(217,178,106,.7); transform: rotate(45deg); }
 .cw-cn.tl { left: -5px; top: -5px; } .cw-cn.tr { right: -5px; top: -5px; } .cw-cn.bl { left: -5px; bottom: -5px; } .cw-cn.br { right: -5px; bottom: -5px; }
-.cw-ttl { position: absolute; left: 0; right: 0; top: calc(30 * var(--u)); height: calc(48 * var(--u)); display: flex; align-items: center; justify-content: center; gap: calc(22 * var(--u)); margin: 0;
+.cw-ttl { position: absolute; left: 0; right: 0; top: calc(30 * var(--u)); height: calc(48 * var(--u)); display: flex; align-items: center; justify-content: center; gap: max(30px, calc(22 * var(--u))); margin: 0;
   font: 600 max(16px, calc(40 * var(--u))) / 1 var(--g-disp); letter-spacing: .14em; text-transform: uppercase; }
 .cw-ttl span { background: linear-gradient(180deg, #fbe7b0 0%, #c7984f 100%); -webkit-background-clip: text; background-clip: text; color: transparent; filter: drop-shadow(0 2px 3px rgba(0,0,0,.9)); padding-left: .14em; }
-.cw-ttl i { display: block; width: calc(120 * var(--u)); height: 1px; background: linear-gradient(90deg, transparent, rgba(217,178,106,.7)); position: relative; }
+.cw-ttl i { display: block; width: max(24px, calc(120 * var(--u))); flex: 0 1 auto; height: 1px; background: linear-gradient(90deg, transparent, rgba(217,178,106,.7)); position: relative; }
 .cw-ttl i:last-child { transform: scaleX(-1); }
 .cw-ttl i::after { content: ''; position: absolute; right: -16px; top: -4px; width: 8px; height: 8px; border: 1px solid rgba(217,178,106,.8); transform: rotate(45deg); }
 .cw-sub { position: absolute; left: calc(70 * var(--u)); right: calc(70 * var(--u)); top: calc(92 * var(--u)); text-align: center; font: 400 max(11px, calc(22 * var(--u))) / 1.3 var(--g-body); color: var(--g-dim); margin: 0; }
@@ -76,3 +76,26 @@ html.reduced-motion .mw-in .cw-pc, html.reduced-motion .cw-card { animation: non
 .cw-ghost { position: fixed; z-index: 60; width: 96px; height: 96px; margin: -48px 0 0 -48px; border: 1px solid rgba(243,217,153,.9); background: #120c08 center / cover; box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 10px 24px rgba(0,0,0,.7); pointer-events: none; opacity: .92; }
 .cw-tip { position: absolute; z-index: 55; pointer-events: none; opacity: 0; transition: opacity 140ms ease-out; }
 .cw-tip.on { opacity: 1; }
+
+/* ---- kısa ekran (telefon yatay): etiketler tek satır ve tam okunur, not etiketlerin altında, sıra etiketi elmastan ayrı ---- */
+html.short .cw-slots { gap: calc(36 * var(--u)); padding-top: calc(60 * var(--u)); }
+html.short .cw-slot { width: calc(410 * var(--u)); height: auto; min-height: calc(320 * var(--u)); }
+html.short .cw-slot .cw-card { position: relative; inset: auto; height: auto; min-height: 100%; padding-bottom: 4px; gap: 3px; }
+html.short .cw-card .pt { aspect-ratio: 1 / .46; }
+/* büst kırpması 1 : .85 kutuya göre; kutu .46 olunca dikey yüzde kayması küçülür (yüz kesilir): üst konum .85/.46 ile büyütülür */
+html.short .cw-card .pt .bust { top: calc(var(--bt) * 1% * 1.848) !important; }
+html.short .cw-ord { top: calc(-40 * var(--u) - 6px); }
+html.short .cw-card .nm { height: auto; line-height: 1.25; }
+html.short .cw-card .cw-chips { height: auto; gap: 2px; padding: 0; flex-wrap: nowrap; }
+html.short .cw-chip { height: auto; min-height: 16px; padding: 0 .25em; gap: .2em; letter-spacing: 0; font-size: max(9px, calc(13 * var(--u))); }
+html.short .cw-chip.role { flex: none; overflow: visible; text-overflow: clip; line-height: 16px; }
+html.short .cw-chip img { display: none; }
+html.short .cw-card .tut { height: auto; min-height: 14px; margin-top: 2px; font-size: max(9px, calc(15 * var(--u))); white-space: nowrap; padding: 0 4px; }
+html.short .cw-card .tut:empty { display: none; }
+html.short .cw-sub { left: calc(20 * var(--u)); right: calc(20 * var(--u)); font-size: 10px; line-height: 1.2; top: calc(86 * var(--u)); }
+html.short .cw-strip { margin-bottom: 24px; }
+html.short .cw-pc { height: calc(100 * var(--u)); overflow: visible; }
+html.short .cw-pc img { object-position: 50% 18%; }
+html.short .cw-pc .nm { left: -50%; right: -50%; bottom: auto; top: calc(100% + 4px); font-size: 9px; line-height: 11px; letter-spacing: 0; color: #cdb88d; }
+html.short .cw-strip .cw-pc:nth-child(even) .nm { top: calc(100% + 15px); }
+html.short .cw-pc::after { overflow: hidden; }

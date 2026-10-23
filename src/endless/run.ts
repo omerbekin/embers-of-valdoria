@@ -6,7 +6,7 @@ import { rollDropRarity } from '../progression/drop';
 import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
 import { emptyEquipment } from '../progression/items';
-import { starterWeapon, starterUid } from '../progression/weapon';
+import { starterEquipment } from '../progression/weapon';
 import { fallAfterVictory, healWounds, valorClearWounds, valorRevivedCounts, woundCount } from '../progression/wounds';
 import { ENDLESS, endlessCorpses, endlessWoundRules, itemOptionCount, type EndlessConfig, type ItemRolls, type EndlessHero, type EndlessRun, type RewardCard, type ScoreEntry, type ShopEntry, type WaveKind } from './data';
 import { rngFor, waveKind, waveLevel, waveSeed, type WavePlan } from './waves';
@@ -28,7 +28,7 @@ const clone = <T>(v: T): T => JSON.parse(JSON.stringify(v)) as T;
 const clamp01 = (v: number) => Math.max(0, Math.min(1, v));
 
 /**
- * Yeni koşu: seçilen class'lar (level 1, yalnızca sınıfın başlangıç silahı, tam can). `slots` = koşu başı dizilimi (class'larla aynı sırada hücre; geçersizse /
+ * Yeni koşu: seçilen class'lar (level 1, sınıfın başlangıç silahı + varsa başlangıç ikinci eli, tam can). `slots` = koşu başı dizilimi (class'larla aynı sırada hücre; geçersizse /
  * verilmezse otomatik dizilim).
  */
 export function newRun(seed: number, classIds: string[], startedAt = new Date().toISOString(), cfg: EndlessConfig = ENDLESS, slots?: number[]): EndlessRun {
@@ -45,8 +45,10 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
     // Item Güçlendirme x5 (Ömer 2026-10-17): her kahraman sınıfının başlangıç silahıyla başlar
     heroes: picked.map((c, i) => {
       const id = `h${i + 1}`;
-      const w = starterWeapon(c, starterUid(id));
-      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment: w ? { weapon: w } : {}, slot: cells[i]! };
+      // + başlangıç ikinci eli (Ömer 2026-10-23: Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer); boş yuvalar kayda yazılmaz (bugünkü biçim)
+      const eq = starterEquipment(c, id);
+      const equipment = Object.fromEntries(Object.entries(eq).filter(([, v]) => v)) as EndlessHero['equipment'];
+      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment, slot: cells[i]! };
     }),
     gold: 0,
     stats: { cleared: 0, turns: 0, kills: 0 },

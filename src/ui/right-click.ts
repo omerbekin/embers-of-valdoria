@@ -25,6 +25,14 @@ export function installContextMenuBlock(doc: Document = document): void {
   });
 }
 
+/**
+ * Savaşta boş yere sağ tık sırası: seçili bir şey (taşıma / mod paneli / skill-hedef seçimi) varsa bu tık YALNIZCA onu iptal eder,
+ * açık kart bir sonraki sağ tıkta kapanır; hiçbir şey seçili değilse kart kapanır.
+ */
+export function rightClickAction(hasSelection: boolean): 'cancel-selection' | 'close-cards' {
+  return hasSelection ? 'cancel-selection' : 'close-cards';
+}
+
 let battleRight = false;
 
 /** Savaş sahnesi sağ tuşu Phaser'a iletmek ister (yalnızca savaşta; diğer sahnelerde sağ/orta tuş Phaser'a hiç ulaşmaz). */

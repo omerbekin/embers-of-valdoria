@@ -1,6 +1,6 @@
 # Codex (wiki) ikonları: envanter ve Codex CLI promptları
 
-content-designer, 2026-10-23. Durum: **Ömer'in örnek set (4 ikon) onayını bekliyor.** Kod ve asset değişmedi; bu belge yalnızca plan + hazır promptlar.
+content-designer, 2026-10-23. Durum: **uygulandı (ui-dev, 2026-10-23)**: 33 ikon `assets/misc-icons/codex/` (grup `codex`, `tools/make-misc-icon.py` ile içe aktarıldı), Codex bağlantıları `src/wiki/codex.ts` (NAV_CODEX_ICON) ve `src/wiki/catalog.ts`. Aşağısı plan + promptlar.
 Stil kaynağı: `docs/design/art/skill-tree-icons-warrior.md` bölüm 3 (ortak blok) ve `docs/design/icon-redraw-plan.md` 3.4. Codex'te boyalı yerde duran arayüz ikonlarıyla (`assets/ui-icons/*.png`: pirinç, koyu deri, meşe, kalın koyu kontur) aynı aile olsun diye stil referansı `assets/ui-icons/codex.png` (Codex düğmesinin kendi kitabı). Kural (Ömer): tek kalın konu, az kırıntı, sade, sıkı ortaçağ.
 Üretim: Codex CLI (`node tools/codex/imagegen.mjs`, `docs/arch/codex-imagegen.md`), en fazla 2 paralel, ~2 dk/görsel.
 

@@ -4,6 +4,7 @@ import { MASTER_GAIN, MOB_SOUND_GROUP, UI_SOUND_GROUP, WORLD_SOUND_GROUP, type C
 import { previewUiSound, previewWorldSound, UI_AUDIO, WORLD_AUDIO, type UiSoundKind, type WorldSoundKind } from '../../ui/ui-sound';
 import { musicPreviewing, previewMusic, type MusicTrack } from '../../ui/music';
 import { applyFilter, chipBar, fmtSec, h, isolateKeys, searchable, type SectionApi } from '../../gallery/dom';
+import { stepFraction } from '../../ui/volume-steps';
 
 /** Galerinin tek AudioContext'i: ilk tıklamada başlar (tarayıcı kilidi). */
 let ctx: AudioContext | null = null;
@@ -42,7 +43,7 @@ async function measurePeak(entry: SoundEntry): Promise<number> {
   const rate = 44100;
   const off = new OfflineAudioContext(1, Math.ceil((entry.duration + 0.4) * rate), rate);
   const master = off.createGain();
-  master.gain.value = isUi(entry) ? UI_AUDIO.master * (UI_AUDIO.defaultLevel / 20) : isWorld(entry) ? WORLD_AUDIO.master : MASTER_GAIN;
+  master.gain.value = isUi(entry) ? UI_AUDIO.master * (stepFraction(UI_AUDIO.defaultLevel)) : isWorld(entry) ? WORLD_AUDIO.master : MASTER_GAIN;
   master.connect(off.destination);
   synthSfx(off, master, entry.def, 0);
   const buf = await off.startRendering();

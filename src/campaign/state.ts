@@ -728,7 +728,7 @@ function healAll(s: CampaignState, ratio: number): void {
  */
 export function moveTo(s: CampaignState, to: string): CampaignState {
   const step = nextStep(s);
-  if (step.kind !== 'move') throw new Error(`Cannot move to ${to} now`);
+  if (step.kind !== 'move' && !canWithdraw(s)) throw new Error(`Cannot move to ${to} now`);
   if (pausedLock(s)) throw new Error(PAUSED_LOCK);
   const route = travelRoute(s, to);
   if (!route) throw new Error(`Cannot move to ${to} now`);
@@ -808,18 +808,20 @@ export function moveOptions(s: CampaignState): { forward: string[]; back: string
 
 /**
  * Yolculuk hedefleri (roadmap 2.1): bulunulan düğümden, yalnızca TEMİZLENMİŞ düğümlerin içinden geçerek ulaşılan her düğüm ve yolu
- * (bulunulan hariç, hedef dahil; en kısa yol, eşitlikte veri sırası). Komşular her zaman (tek hamle). Yalnızca yola çıkılabilirken (move).
+ * (bulunulan hariç, hedef dahil; en kısa yol, eşitlikte veri sırası). Komşular her zaman (tek hamle). Yalnızca yola çıkılabilirken (move) ya da savaşa girmeden ayrılırken (canWithdraw).
  */
 export function travelRoutes(s: CampaignState): Map<string, string[]> {
   const out = new Map<string, string[]>();
-  if (nextStep(s).kind !== 'move') return out;
+  const withdraw = nextStep(s).kind !== 'move';
+  if (withdraw && !canWithdraw(s)) return out;
+  const cleared = new Set(clearedNodes(s));
   const { forward, back } = moveOptions(s);
-  for (const id of [...forward, ...back]) out.set(id, [id]);
+  // Savaşa girmeden ayrılırken yalnızca temizlenmiş komşulara (ve onların üzerinden) gidilir: savaş düğümü atlanıp ileri geçilmez
+  for (const id of [...forward, ...back]) if (!withdraw || cleared.has(id)) out.set(id, [id]);
   if (!roamOpen(s)) return out;
   const map = mapOf(s);
   const locked = tutorialNodes(map);
-  const cleared = new Set(clearedNodes(s));
-  const queue = [...forward, ...back].filter((id) => cleared.has(id));
+  const queue = [...out.keys()].filter((id) => cleared.has(id));
   while (queue.length) {
     const id = queue.shift()!;
     for (const nb of neighbors(map, id)) {
@@ -829,6 +831,16 @@ export function travelRoutes(s: CampaignState): Map<string, string[]> {
     }
   }
   return out;
+}
+
+/**
+ * Savaşa girmeden ayrılma (Ömer 2026-10-23: "Fight çıkıyor ama tıklamadığımda başka node'a gidebilmem gerek"): savaş adımı bekleyen düğümde
+ * Fight'a basılmadıysa kafile yola çıkabilir; düğüm temizlenmemiş kalır, sonra dönüp savaşılır. Yalnızca serbest dolaşım açıkken ve
+ * yalnızca temizlenmiş komşular üzerinden (travelRoutes). Duraklatılmış savaşta (suspended) ve olayda seçilen savaşta kilit sürer.
+ */
+export function canWithdraw(s: CampaignState): boolean {
+  const step = nextStep(s);
+  return step.kind === 'battle' && !s.suspended && !s.eventChoice && roamOpen(s);
 }
 
 /** Hedefe giden yol (bulunulan hariç, hedef dahil) ya da gidilemiyorsa null. */

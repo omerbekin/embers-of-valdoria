@@ -1,0 +1,32 @@
+/* EVOLVE İKONU animasyonu: TEK tanım (Ömer 2026-10-23). Evolve onaylı skill'in ikon adresi `#evo` taşır (src/ui/evolve-icon.ts > markEvolved);
+   adresi bir <img>'e koyan her yer buradan animasyon alır. Tree ekranının evolve düğümü onaylanınca `.evo-on` sınıfı alır (aynı animasyon).
+   Ton: sakin, ortaçağ: yavaş kor titremesi (parlaklık / doygunluk) + yumuşak altın kenar parıltısı, ~2,6 sn döngü. Yalnızca `filter`:
+   yerleşim kaymaz, kutudan taşan yalnız ~3px'lik yumuşak ışık. Hareket yok: hareketsiz modda (html.reduced-motion, prefers-reduced-motion)
+   ve Performance Mode'da (html.perf-lite) animasyon durur, sabit ince altın kenar kalır; bekleme (cooldown) gri süzgecini ezmez. JS yok: yalnızca CSS. */
+img[src*='#evo'],
+.gt-nd.evo-on .dm img {
+  animation: evo-ember 2.6s ease-in-out infinite;
+}
+/* Bekleme (cooldown) ve devre dışı durumlarda skill ikonu zaten soluk / gri süzgeçli: animasyon onu ezmesin (süzgeç kuralları kazanır) */
+.bh-sk.cdn img[src*='#evo'],
+.bp.cdn img[src*='#evo'],
+.bh-cs.cool img[src*='#evo'] { animation: none; }
+@keyframes evo-ember {
+  0%, 100% { filter: brightness(1) saturate(1) drop-shadow(0 0 1.5px rgba(243, 217, 153, 0.55)); }
+  18% { filter: brightness(1.1) saturate(1.12) drop-shadow(0 0 2.5px rgba(243, 205, 130, 0.85)); }
+  34% { filter: brightness(1.02) saturate(1.04) drop-shadow(0 0 1.8px rgba(243, 217, 153, 0.6)); }
+  58% { filter: brightness(1.14) saturate(1.2) drop-shadow(0 0 3px rgba(255, 190, 100, 0.9)); }
+  78% { filter: brightness(1.04) saturate(1.06) drop-shadow(0 0 2px rgba(243, 210, 140, 0.65)); }
+}
+html.reduced-motion img[src*='#evo'],
+html.reduced-motion .gt-nd.evo-on .dm img,
+html.perf-lite img[src*='#evo'],
+html.perf-lite .gt-nd.evo-on .dm img { animation: none; }
+@media (prefers-reduced-motion: reduce) {
+  img[src*='#evo'], .gt-nd.evo-on .dm img { animation: none; }
+}
+/* hareketsiz hâlde sabit ince altın kenar (:where = özgüllük 0: başka süzgeç kuralları, ör. bekleme grisi, kazanır) */
+html.reduced-motion :where(img[src*='#evo']),
+html.reduced-motion :where(.gt-nd.evo-on .dm img),
+html.perf-lite :where(img[src*='#evo']),
+html.perf-lite :where(.gt-nd.evo-on .dm img) { filter: drop-shadow(0 0 2px rgba(243, 217, 153, 0.6)); }

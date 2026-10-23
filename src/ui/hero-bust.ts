@@ -21,6 +21,10 @@ interface BustRect {
 const poses = import.meta.glob('../../assets/poses/*-v2/idle1.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 const avatars = import.meta.glob('../../assets/avatars/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
 
+/** Kısa ekran (alçak portre kutusu): kırpma üstünde boş pay olan (y < 0, uzun asa/kukuletalı) sınıflarda baş ~poz y=66'dan başlar. */
+const SHORT_HEAD_Y = 66;
+const shortBustTop = (r: BustRect, pad = 0): string => (((-pad - (r.y < 0 ? SHORT_HEAD_Y : r.y)) / r.h) * 100).toFixed(3);
+
 const RECTS = (bust as unknown as { classes: Record<string, BustRect> }).classes;
 
 /** Kırpılmış büstün görsel adresi ve kırpma kutusu (yoksa null). */
@@ -44,7 +48,7 @@ export function bustHtml(classId: string, spriteId: string): string {
     const wPct = (r.sw / r.w) * 100;
     const left = -(r.x / r.w) * 100;
     const top = -(r.y / r.h) * 100;
-    return `<img class="bust" data-bust="${classId}" src="${b.url}" alt="" draggable="false" style="width:${wPct.toFixed(3)}%;left:${left.toFixed(3)}%;top:${top.toFixed(3)}%">`;
+    return `<img class="bust" data-bust="${classId}" src="${b.url}" alt="" draggable="false" style="width:${wPct.toFixed(3)}%;left:${left.toFixed(3)}%;top:${top.toFixed(3)}%;--bt:${shortBustTop(r)}">`;
   }
   const av = avatarUrlOf(spriteId);
   return av ? `<img class="av" src="${av}" alt="" draggable="false">` : '';
@@ -108,7 +112,9 @@ export function addBustWeapons(root: HTMLElement): void {
         const pad = Number(c.dataset['pad'] ?? 0);
         c.className = 'bust arm';
         c.setAttribute('style', img.getAttribute('style') ?? '');
-        c.style.top = `${(((-pad - rect.y) / rect.h) * 100).toFixed(3)}%`;
+        const topPct = (((-pad - rect.y) / rect.h) * 100).toFixed(3);
+        c.style.top = `${topPct}%`;
+        c.style.setProperty('--bt', shortBustTop(rect, pad));
         c.draggable = false;
         img.replaceWith(c);
       })

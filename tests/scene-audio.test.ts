@@ -6,6 +6,7 @@ import { sfxDuration } from '../src/gallery/catalog';
 import { MUSIC, MUSIC_CROSSFADE_MS, MUSIC_TRACK_IDS, barSec, chordScale, composeCycle, cycleSec, noteMidi, parseBar, parseChord, trackConfig, type MusicTrackId } from '../src/game/music';
 import { battleTrack, phaseTrack } from '../src/ui/music';
 import { itemSoundKind, WORLD_AUDIO, WORLD_SFX, WORLD_SOUND_KINDS, worldGain, worldSound } from '../src/ui/ui-sound';
+import { stepFraction } from '../src/ui/volume-steps';
 
 const pc = (m: number) => ((m % 12) + 12) % 12;
 
@@ -76,7 +77,7 @@ describe('Dünya / anlatı sesleri (data/audio-world.json)', () => {
     expect(worldGain('ui', 0, 1, 1)).toBe(0);
     expect(worldGain('sfx', 20, 1, 0)).toBe(0);
     expect(worldGain('ui', 20, 0, 1)).toBe(0);
-    expect(worldGain('ui', 10, 1, 0)).toBeCloseTo(WORLD_AUDIO.master * 0.5);
+    expect(worldGain('ui', 10, 1, 0)).toBeCloseTo(WORLD_AUDIO.master * stepFraction(10));
     expect(worldGain('sfx', 0, 0.5, 1)).toBeCloseTo(WORLD_AUDIO.master * 0.5);
     expect(worldGain('sfx', 0, 1, 1, 0.5)).toBeCloseTo(WORLD_AUDIO.master * 0.5);
   });

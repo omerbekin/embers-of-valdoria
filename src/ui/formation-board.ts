@@ -15,6 +15,7 @@ import { closeDom } from './motion';
 import { lockInput, unlockInput } from './input-lock';
 import type { BandTipSpec } from './band-tip';
 import { uiSound } from './ui-sound';
+import { NAV_BTN } from './nav-icons';
 import { LANES, ROWS, clientToLocal, dropOnCell, fitAccent, fitOfHint, previewMove, reachBarHtml, reachRows, reachText, rowName, rowOfCell, tapCell, type BoardSel, type Fit } from './formation-board-rules';
 
 export type BoardAttr = 'str' | 'dex' | 'int' | 'luck';
@@ -497,12 +498,21 @@ export function openFormationWindow(o: FormationWindowOpts): FormationWindow {
     const gu = parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--gu')) || 1;
     if (document.documentElement.classList.contains('short')) {
       // telefon yatay: pencere kısa ekrana göre yeniden düzenlenir (formation-board.css > html.short) ve ekranı doldurur (yazılar okunur kalsın)
-      const sc = Math.min((overlay.clientWidth * 0.98) / SHORT_W, (overlay.clientHeight * 0.97) / SHORT_H) || gu;
+      // Sağ üstteki tam ekran + Menu/X ikon sırası pencerenin köşesine (Done) binmesin: pencere o sütunun SOLUNDA kalır (dar kenar boşluğu solda).
+      const cs = getComputedStyle(document.documentElement);
+      const k = parseFloat(cs.getPropertyValue('--nav-k')) || 1;
+      const er = parseFloat(cs.getPropertyValue('--er')) || 0;
+      const reserve = er + (NAV_BTN.edge * 2 + NAV_BTN.hit * 2 + NAV_BTN.gap) * k;
+      const margin = 6;
+      const availW = Math.max(120, overlay.clientWidth - reserve - margin);
+      const sc = Math.min(availW / SHORT_W, (overlay.clientHeight * 0.97) / SHORT_H) || gu;
       pos.style.transform = `translate(-50%, -50%) scale(${sc})`;
+      pos.style.left = `${margin + (SHORT_W * sc) / 2 + Math.max(0, availW - SHORT_W * sc) / 2}px`;
       pos.style.top = '50%';
       return;
     }
     pos.style.transform = `translate(-50%, -50%) scale(${gu})`;
+    pos.style.left = '50%';
     pos.style.top = `calc(50% - ${10 * gu}px)`; // pencere 120..940: merkezi 530 (sahne ortası 540)
   };
   place();

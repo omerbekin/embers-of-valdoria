@@ -161,7 +161,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
     expect(items).toContain('40% debuff resistance');
     expect(items).not.toMatch(/Might/);
     // Item Güçlendirme (2026-10-17): silah gücü, başlangıç silahı, seviye şartı; sayılar veriden
-    for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', "Woodcutter's Axe", 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is its block chance"]) expect(items, w).toContain(w);
+    for (const w of ['Weapon power', '(1 + power / 100)', 'Starter weapons', 'Greataxe', 'Requires Level X', `item level - ${ITEMS.levelReq.offset}`, "A shield's base value is its block chance"]) expect(items, w).toContain(w);
     expect(items).toContain(`${weaponPowerOf(itemDef('woodcutters_axe')!, 30)} at 30`);
     expect(text('turns')).toContain('Battle speed');
     expect(text('mana')).toContain('"+2 MP"');
@@ -238,5 +238,45 @@ describe('Wiki: test class\'ı ve alan şekilleri', () => {
     for (const id of ['morvane_halberdier', 'sworn_guard', 'ash_hound', 'cinder_gatewarden', 'ember_hierophant', 'drake_priest']) expect(enemies, id).toContain(content.mobs[id]!.name);
     for (const name of ['Close Ranks', 'Blood Scent', 'Molten Shed', 'Searing Rebuke']) expect(text, name).toContain(name);
     for (const name of ['Lord Morvane', 'Crown of Ash', 'Pyre of Morvane', 'Ashfall', 'Iron Decree']) expect(enemies, name).toContain(name);
+  });
+});
+
+describe('Codex boyalı ikonları (assets/misc-icons/codex, docs/design/art/codex-icons.md)', () => {
+  const all = [...wiki.gettingStarted, ...wiki.lessons, ...wiki.mechanics];
+  const byId = (id: string) => all.find((a) => a.id === id)!;
+
+  it('Getting Started / Mechanics / Lessons makaleleri plandaki boyalı ikonu kullanır', () => {
+    const want: Record<string, string> = {
+      goal: 'codex:gs_goal', turns: 'codex:gs_turns', screen: 'codex:gs_screen', formation: 'ui:formation', range: 'ui:range',
+      'damage-formula': 'codex:mech_damage', ground: 'codex:mech_ground', 'enemy-passives': 'codex:mech_enemy_passives', gamble: 'codex:mech_gamble',
+      rage: 'ui:rage', 'area-shapes': 'codex:mech_area', actions: 'ui:move', corpses: 'fx:corpse', shields: 'fx:barrier', 'half-turn': 'codex:mech_half_turn',
+      multiplayer: 'codex:mech_multiplayer', campaign: 'codex:mech_campaign', 'legendary-items': 'codex:mech_legendary', 'item-affixes': 'codex:mech_affixes',
+      levels: 'codex:mech_levels', endless: 'codex:mech_endless', valor: 'codex:mech_valor', items: 'ui:gear', control: 'taunt2',
+    };
+    for (const [id, icon] of Object.entries(want)) {
+      const a = byId(id);
+      if (!a && id === 'range') continue; // range.enabled kapalıysa makale yok
+      expect(a, id).toBeTruthy();
+      expect(a.icon, id).toBe(icon);
+    }
+    for (const l of wiki.lessons) expect(l.icon).toBe('codex:nav_lessons');
+  });
+
+  it('skill ikonu kullanan makaleler sahibini taşır; boss ve düşman makaleleri portre alır', () => {
+    expect(byId('backstab').owner).toBe('cutthroat');
+    expect(byId('revive').owner).toBe('paladin');
+    expect(byId('dark-bond').owner).toBe('undead');
+    const bosses = wiki.mechanics.filter((a) => a.group === 'Bosses' || a.group === 'Enemies');
+    expect(bosses.length).toBeGreaterThan(0);
+    for (const a of bosses) expect(a.avatarUrl, a.id).toBeTruthy();
+  });
+
+  it('sol menü: her bölümün Codex ikonu var; eksik dosyada eski ikon', async () => {
+    const { CODEX_SECTIONS, NAV_CODEX_ICON, navIconName, weaknessIconName } = await import('../src/wiki/codex');
+    const { ASSET_NAV } = await import('../src/wiki/assets/nav');
+    for (const s of [...CODEX_SECTIONS, ...ASSET_NAV]) expect(navIconName(s.id, s.icon), s.id).toBe(`codex:${NAV_CODEX_ICON[s.id]}`);
+    expect(Object.keys(NAV_CODEX_ICON)).toHaveLength(16);
+    expect(navIconName('nope', 'sword')).toBe('sword');
+    expect(weaknessIconName()).toBe('codex:el_weakness');
   });
 });

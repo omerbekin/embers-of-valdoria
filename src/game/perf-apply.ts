@@ -15,6 +15,7 @@ export function installPerfMode(game: Phaser.Game): void {
   guardPostFx();
   const apply = (lite: boolean): void => {
     setLiteRender(lite);
+    document.documentElement.classList.toggle('perf-lite', lite); // DOM süs animasyonları (ör. evolve ikonu, src/ui/evolve-icon.css) durur
     setFpsLimit(game, lite ? layout.stage.liteFps : 0);
   };
   apply(perfLite());

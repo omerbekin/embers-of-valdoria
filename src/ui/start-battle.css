@@ -26,6 +26,10 @@
 }
 @keyframes sbc-rise { from { opacity: 0; transform: translateY(14px); } to { opacity: 1; transform: none; } }
 html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none; }
+/* önizleme: fareyi geçirir (altındaki düğme tıklanır); sabitlenirken animasyon tekrarlanmaz */
+.sbc.preview { pointer-events: none; z-index: 18; }
+.sbc.preview .sbc-ring { box-shadow: 0 0 calc(18 * var(--u)) rgba(240, 140, 40, 0.6); }
+.sbc.instant .sbc-card, .sbc.instant .sbc-scrim { animation: none; }
 
 .sbc-notch { position: absolute; width: max(10px, calc(20 * var(--u))); height: max(10px, calc(20 * var(--u))); background: rgb(26, 19, 12); border: 1px solid rgba(217, 178, 106, 0.75); transform: rotate(45deg); }
 .sbc-notch.l { left: calc(max(10px, calc(20 * var(--u))) / -2 - 1px); border-right: 0; border-top: 0; }
@@ -67,6 +71,13 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 .sbc-acts { display: flex; justify-content: flex-end; align-items: center; }
 .sbc-acts .el-btn { min-height: 44px; font-size: max(14px, calc(22 * var(--u))); padding-left: max(18px, calc(36 * var(--u))); padding-right: max(18px, calc(36 * var(--u))); }
 
+/* alttaki "Then" satırı ve düğmenin yerine geçen düz not (ember elması yok) */
+.sbc-then { margin: 0; font: max(12px, calc(19 * var(--u))) var(--g-body); color: var(--g-dim); line-height: 1.25; }
+.sbc-then b { font: 600 max(9px, calc(14 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: rgba(217, 178, 106, 0.85); margin-right: 0.6em; }
+.sbc-then i { font-style: normal; color: rgba(168, 151, 122, 0.7); }
+.sbc-then .k { font: 600 max(9px, calc(13 * var(--u))) var(--g-disp); letter-spacing: 0.12em; text-transform: uppercase; color: var(--g-ember2); }
+.sbc-note { margin: 0; text-align: right; font: 600 max(11px, calc(16 * var(--u))) var(--g-disp); letter-spacing: 0.14em; text-transform: uppercase; color: var(--g-dim); }
+
 /* üstüne gelince / odakta ipucu: yalnızca CSS */
 .sbc [data-tip]::after { content: attr(data-tip); position: absolute; left: 50%; bottom: calc(100% + 6px); transform: translateX(-50%); z-index: 40; padding: 5px 10px; white-space: nowrap; pointer-events: none; opacity: 0; transition: opacity 0.12s; background: linear-gradient(180deg, rgba(30, 22, 14, 0.98), rgba(12, 9, 6, 0.98)); border: 1px solid var(--g-edge); font: 600 max(11px, calc(15 * var(--u))) var(--g-disp); letter-spacing: 0.1em; text-transform: uppercase; color: var(--g-gold); }
 /* dokunmatikte :hover / :focus dokunduktan sonra takılı kalır (Ömer 2026-10-18 hata: ipucu başlık satırının üstünde asılı kaldı):
@@ -77,6 +88,6 @@ html.reduced-motion .sbc-card, html.reduced-motion .sbc-scrim { animation: none;
 /* kısa ekran (telefon yatay): sahneye sığsın; bilgi satırı gizlenir */
 html.short .sbc-card { padding: 8px 12px; gap: 5px; }
 html.short .sbc-acts .el-btn { padding-left: 16px; padding-right: 16px; letter-spacing: 0.06em; }
-html.short .sbc-card:not(.nofoes) .sbc-info { display: none; }
+html.short .sbc-card:not(.nofoes) .sbc-info, html.short .sbc-card:not(.nofoes) .sbc-then { display: none; }
 /* portresiz kart (savaşsız düğüm): lore satırı kısa ekranda da görünür, iki satırla sınırlı */
 html.short .sbc-card.nofoes .sbc-info { -webkit-line-clamp: 2; font-size: 12px; }

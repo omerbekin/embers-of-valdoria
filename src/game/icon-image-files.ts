@@ -112,3 +112,20 @@ export const MOB_IMAGE_FILES: Readonly<Record<string, { url: string; small: stri
 
 /** Mob ikonunun görseli (dosya yoksa null). */
 export const mobImage = (name: string): { url: string; small: string } | null => MOB_IMAGE_FILES[name] ?? null;
+
+// ---------------------------------------------------------------- SKILL AĞACI ikonları (evolve sanatı, Ömer 2026-10-23)
+
+/**
+ * assets/tree-icons/<sınıf>/<satır>_<düğüm>.png (128) + .webp: ağaç düğümü sanatı. Şimdilik yalnızca evolve düğümleri oyunda kullanılır
+ * (evolve onaylıysa skill ikonunun yerine; src/ui/evolve-icon.ts). Kimlik '<sınıf>/<satır>_<düğüm>' (ör. 'warrior/3_v'); ad 'tree:<kimlik>'
+ * biçiminde ikon adı olur, art-registry bunu dosyaya çözer. İçe aktarma: `python tools/make-tree-icon.py <kaynak.png> <sınıf> <düğüm>`.
+ */
+const treeFiles = import.meta.glob('../../assets/tree-icons/*/*.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
+
+export const TREE_ICON_PREFIX = 'tree:';
+
+/** Kimlik -> URL (128). */
+export const TREE_IMAGE_FILES: Readonly<Record<string, string>> = Object.fromEntries(Object.entries(treeFiles).map(([p, url]) => [idOf(p), url]));
+
+/** Ağaç ikonunun URL'si (dosya yoksa null). */
+export const treeImage = (id: string): string | null => TREE_IMAGE_FILES[id] ?? null;

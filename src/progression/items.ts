@@ -190,6 +190,8 @@ export interface ItemsData {
   levelReq: { offset: number; min: number };
   /** Sınıf başına başlangıç silahı (x5): katalog id'si, örnek seviyesi `ilvl`. */
   starterWeapons: { ilvl: number; classes: Record<string, string> };
+  /** Sınıf başına başlangıç ikinci el item'i (Ömer 2026-10-23): kalkan ya da ikinci el silahı; örnek seviyesi starterWeapons.ilvl. Yoksa boş. */
+  starterOffhands?: { classes: Record<string, string> };
   bag: number;
   items: ItemDef[];
   loot: LootConfig;
@@ -954,6 +956,15 @@ export function validateItems(data: ItemsData = ITEMS): string[] {
     const d = id ? data.items.find((x) => x.id === id) : undefined;
     if (!d) errors.push(`class ${c} has no starter weapon`);
     else if (d.slot !== 'weapon' || d.rarity !== 'common' || !(data.weaponFamilies.find((f) => f.id === d.family)?.classes.includes(c) ?? false)) errors.push(`starter ${id} (${c}): must be a Common weapon of the class's family`);
+  }
+  for (const [c, id] of Object.entries(data.starterOffhands?.classes ?? {})) {
+    const d = data.items.find((x) => x.id === id);
+    const w = data.items.find((x) => x.id === st?.classes?.[c]);
+    const fam = d?.family ? data.weaponFamilies.find((f) => f.id === d.family) : undefined;
+    const offOk = d && (d.slot === 'offhand' || (d.slot === 'weapon' && (d.grip ?? 'one') === 'one' && !!fam?.offhand));
+    if (!d || !offOk || d.rarity !== 'common') errors.push(`starter off-hand ${id} (${c}): must be a Common off-hand item`);
+    else if (d.family && !(fam?.classes.includes(c) ?? false)) errors.push(`starter off-hand ${id} (${c}): not usable by the class`);
+    if (!w || (w.grip ?? 'one') !== 'one') errors.push(`starter off-hand ${id} (${c}): the class's starter weapon must be one-handed`);
   }
   return errors;
 }

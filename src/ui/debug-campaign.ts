@@ -3,7 +3,7 @@
  * kayıt al / son kayda dön / tüm kayıtları sil, Normal-Ironman değiştir. Sahne sınıflarını içe aktarmaz (Node testinde Phaser yok): anahtarla açar.
  */
 import type Phaser from 'phaser';
-import { activeHeroes, autoTreeAll, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
+import { activeHeroes, autoTreeAll, debugGrantEvolve, respecHeroTree, respecTreeBlocked, debugToggleFallen, debugWounds, debugGrantXp, debugSetLevel, grantLoot, withSuspended, addGold, addItem, bagHasRoom, grantAllLegendaries, debugTeleport, debugWinNode, getMap, latestSave, newCampaign, nextStep, nodeIlvl, rngFor, stopNumber, wipeSaves, type CampaignState } from '../campaign';
 import { BAG_SIZE, ITEMS, LEVELS, RARITY_IDS, campaignMaxLevel, debugTreeFocus, heroRespecCost, makeItem, treeOf, treeSpent, setDebugTreeFocus, statPointsAt, xpToNext } from '../progression';
 import { current, loadEntry, startNewCampaign, loadLastSave, save, session, setState, storage, MAP_SCENE } from '../game/campaign-session';
 import { debugButton, debugHeading, type DebugMenu } from './debug-menu';
@@ -137,7 +137,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       if (game.scene.isActive(MAP_SCENE)) reload();
     },
   });
-  // Bölge görünümü (Harita 1 yeniden çizim 2026-10-22, src/game/region-view.ts): kapalı -> I -> II -> III -> kapalı
+  // Bölge görünümü (src/game/region-view.ts; Ömer 2026-10-23): uzak görünüm (bölge haritası) -> I -> II -> III -> uzak görünüm
   let regionDbg: string | null = null;
   debug.register({
     id: 'campaign.region',
@@ -145,8 +145,8 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     section: 'Map',
     icon: 'eye',
     on: () => regionDbg !== null,
-    label: () => (regionDbg ? `Region view: ${regionDbg}` : 'Region view: off'),
-    hint: 'Cycle the map\'s region view: zoom to region I, II, III, then the whole map. Neighbour stops show faded; stops of unseen regions stay hidden',
+    label: () => (regionDbg ? `Region view: ${regionDbg}` : 'Region view: whole map'),
+    hint: 'Cycle the map view: zoom to region I, II, III, then the whole map (region names only, stops hidden). Neighbour stops show faded; stops of unseen regions stay hidden. Fog stays put in every view',
     run: () => {
       const ids = getMap(current()?.mapId ?? 'valdoria').regions.map((r) => r.id);
       const i = regionDbg === null ? 0 : ids.indexOf(regionDbg) + 1;
@@ -412,6 +412,19 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
   // Etiket her çizimde okunur: sefer yoksa yeni sefer AÇMAZ (current; ensureState yalnızca run içinde)
   const respecTarget = (s: CampaignState | null = current()) =>
     s ? (activeHeroes(s).find((h) => treeOf(h.class) && treeSpent(h) > 0) ?? activeHeroes(s).find((h) => treeOf(h.class))) : undefined;
+  // Evolve ikonu (Ömer 2026-10-23): Warrior'a Charge evolve'u (Herald of Ruin) ONAYLI olarak verir; Gear'da ikon animasyonlanır
+  debug.register({
+    id: 'campaign.tree-evolve-charge',
+    tab: CAMPAIGN_TAB,
+    section: 'Levels',
+    icon: 'feather',
+    label: 'Grant Warrior Charge evolve (saved)',
+    hint: 'Gives the first Warrior in your campaign roster a confirmed skill tree that reaches the Charge evolve (Herald of Ruin), raising the Warrior to the level it needs (stat points are left to spend). Then open Gear: the Charge icon shows the evolve art and glows in a slow loop on the Hero tab skill row, the Tree tab (plate and evolve node), skill tooltips, formation cards and the battle skill bar. Needs a Warrior in the roster; use Reset skill tree to undo.',
+    run: () => {
+      setState(debugGrantEvolve(ensureState(), 'warrior', 'charge'));
+      reload();
+    },
+  });
   debug.register({
     id: 'campaign.tree-respec',
     tab: CAMPAIGN_TAB,

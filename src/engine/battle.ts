@@ -7146,6 +7146,7 @@ function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, u
     if (own.length) c.skillDefs = Object.fromEntries(own);
   }
   if (tr?.passive && c.passive && tr.passive.id === c.passive.id) c.passive = tr.passive;
+  if (unit.evolved?.length) c.evolved = unit.evolved.filter((id) => c.skills.includes(id)); // yalnızca sunum (ikon animasyonu)
   // Faz 8: skill biçim seçimleri (birimin skill listesindekiler)
   if (tr?.modes) {
     const own = Object.entries(tr.modes).filter(([id]) => c.skills.includes(id));

@@ -17,6 +17,7 @@ import {
   type MusicEvent,
 } from '../src/game/music';
 import { DEFAULT_MUSIC_LEVEL, loadMusicLevel, musicGain } from '../src/ui/music';
+import { stepFraction } from '../src/ui/volume-steps';
 
 const SR = 44100;
 const pc = (m: number) => ((m % 12) + 12) % 12;
@@ -60,12 +61,12 @@ describe('Ana menü müziği: veri ve beste (data/audio-music.json, src/game/mus
   it('döngü 100-160 sn sürer (uzun biçim); seviye varsayılanı ~%60', () => {
     expect(cycleSec()).toBeGreaterThanOrEqual(100);
     expect(cycleSec()).toBeLessThanOrEqual(160);
-    expect(DEFAULT_MUSIC_LEVEL).toBe(16); // 20 adımda %80
-    expect(loadMusicLevel()).toBe(16); // node: localStorage yok -> varsayılan
+    expect(DEFAULT_MUSIC_LEVEL).toBe(19); // dB eğrisi: -2 dB
+    expect(loadMusicLevel()).toBe(19); // node: localStorage yok -> varsayılan
     expect(musicGain(0, 7)).toBe(0); // 0 = tamamen kapalı
     expect(musicGain(12, 0)).toBe(0); // ana ses kapalıysa müzik de
     expect(musicGain(20, 20)).toBe(1);
-    expect(musicGain(12, 14)).toBeCloseTo(0.6 * 0.7);
+    expect(musicGain(12, 14)).toBeCloseTo(stepFraction(12) * stepFraction(14));
   });
 
   it('beste belirleyici, sıralı, sonlu; flüt notaları akor ölçeğinde ve aralıkta; çalgıların hepsi var', () => {

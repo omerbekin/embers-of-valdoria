@@ -1,11 +1,11 @@
 // Settings > Sounds > Sound Effects (Ömer 2026-10-13): savaş / skill seslerinin (src/game/audio.ts > playSfxDef, WebAudio sentezi) ayrı
 // seviyesi. Diğer ses kaydırıcılarıyla aynı ölçek: 0-20 adım = %0-100 (%5), 0 = kapalı (src/ui/volume-steps.ts). Master Volume yine her şeyi
 // çarpar: skill sesi kazancı = Master x Sound Effects. Varsayılan %100 (eski davranış: yalnızca Master). Saf kısımlar testli (tests/sfx-volume.test.ts).
-import { clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
+import { VOLUME_DEFAULTS, clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
 const KEY = 'proto.sfxVolume.v1';
-/** Varsayılan: %70 (adım) — müzik %80 ile eşit algılanan yükseklik için ölçüldü (2026-10-23). */
-export const DEFAULT_SFX_LEVEL = 14;
+/** Varsayılan adım (data/audio-volume.json; dB eğrisi, 2026-10-23). */
+export const DEFAULT_SFX_LEVEL: number = VOLUME_DEFAULTS.sfx;
 
 const listeners = new Set<(level: number) => void>();
 

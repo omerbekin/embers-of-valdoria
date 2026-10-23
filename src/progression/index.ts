@@ -16,3 +16,4 @@ export type { TreeAlloc, TreeBlock, TreeBlockCode, TreeNode, TreeNodeState, Focu
 export * from './skill-tree-data';
 export * from './skill-tree-compile';
 export * from './skill-tree-hero';
+export * from './skill-tree-evolve';

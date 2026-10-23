@@ -27,8 +27,27 @@ export function starterPower(classId: string): number {
  */
 export function starterWeapon(classId: string, uid: string): ItemInstance | null {
   const id = starterWeaponId(classId);
-  const d = id ? itemDef(id) : undefined;
-  if (!id || !d) return null;
+  return id ? starterInstance(classId, id, uid) : null;
+}
+
+/** Sınıfın başlangıç ikinci el item'inin katalog id'si (items.json > starterOffhands.classes; Ömer 2026-10-23); yoksa undefined. */
+export const starterOffhandId = (classId: string): string | undefined => {
+  const id = ITEMS.starterOffhands?.classes?.[classId];
+  return id && itemDef(id) ? id : undefined;
+};
+
+/** Başlangıç ikinci el örneği (kalkan / ikinci hançer): başlangıç silahıyla aynı kural (Common, starterWeapons.ilvl, tek ana affix, zar ortası). */
+export function starterOffhand(classId: string, uid: string): ItemInstance | null {
+  const id = starterOffhandId(classId);
+  return id ? starterInstance(classId, id, uid) : null;
+}
+
+/** Başlangıç ikinci el item'inin uid'i (kahraman id'sinden; başlangıç silahının uid'inden ayrı). */
+export const starterOffhandUid = (heroId: string): string => `start-off-${heroId}`;
+
+function starterInstance(classId: string, id: string, uid: string): ItemInstance | null {
+  const d = itemDef(id);
+  if (!d) return null;
   let mains = mainCandidates(d).filter((m) => affixDef(m));
   const els = classElements(classId);
   const fit = mains.filter((m) => {
@@ -66,10 +85,12 @@ export function weaponMultFor(classId: string, equipment: Partial<Equipment> | u
   return Math.round(m * 10000) / 10000;
 }
 
-/** Başlangıç silahı takılı yeni ekipman (sefer kahramanı, Endless koşusu). Sınıfın başlangıç silahı yoksa boş ekipman. */
+/** Başlangıç silahı (+ varsa başlangıç ikinci eli) takılı yeni ekipman (sefer kahramanı, Endless koşusu). Sınıfın başlangıç silahı yoksa boş ekipman. */
 export function starterEquipment(classId: string, heroId: string): Equipment {
   const eq = emptyEquipment();
   eq.weapon = starterWeapon(classId, starterUid(heroId));
+  // Başlangıç ikinci eli (Ömer 2026-10-23): ana el tek el silah olan sınıflarda (kalkan / ikinci hançer)
+  if (eq.weapon) eq.offhand = starterOffhand(classId, starterOffhandUid(heroId));
   return eq;
 }
 

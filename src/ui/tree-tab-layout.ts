@@ -29,7 +29,7 @@ type Preset = Omit<LayoutCfg, 'colW'>;
 export const PRESETS: Record<'m' | 'l' | 'p', Preset> = {
   m: { name: 'm', laneH: 66, hdr: 46, padX: 14, padV: 8, sz: { F: 36, E: 30, B: 44, N: 54, V: 70 }, lblH: 28, ultD: 74, coreSz: 78, colMin: 104, colMax: 140, hit: 44 },
   l: { name: 'l', laneH: 30, hdr: 38, padX: 10, padV: 6, sz: { F: 28, E: 26, B: 32, N: 42, V: 56 }, lblH: 14, ultD: 50, coreSz: 62, colMin: 96, colMax: 132, hit: 36 },
-  p: { name: 'p', laneH: 46, hdr: 38, padX: 6, padV: 6, sz: { F: 28, E: 28, B: 32, N: 42, V: 54 }, lblH: 14, ultD: 44, coreSz: 52, colMin: 54, colMax: 54, hit: 44 },
+  p: { name: 'p', laneH: 46, hdr: 38, padX: 17, padV: 6, sz: { F: 28, E: 28, B: 32, N: 42, V: 54 }, lblH: 14, ultD: 44, coreSz: 52, colMin: 54, colMax: 54, hit: 44 },
 };
 
 export interface TplNode {

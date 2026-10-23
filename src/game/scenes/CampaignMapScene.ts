@@ -84,6 +84,7 @@ import {
   townRecruitOffer,
   townScene,
   townScreenNode,
+  storyHeard,
   type TownHotspot,
   reviveWithValor,
   valorReviveBlocked,
@@ -117,8 +118,7 @@ import { heroPanel } from '../../progression/item-text';
 import { motion } from '../../ui/motion';
 import { MAP_SCENE, MENU_SCENE, checkPaused, current, loadEntry, markJourneyStart, save, session, setState, startCampaignBattle, storage } from '../campaign-session';
 import { classAvatar, classLogoBadge, ensureGlow } from '../menu-ui';
-import { avatarTexture } from '../assets';
-import { bandTip, type PhLine, type PhSection } from '../band-tip';
+import { bandTip } from '../band-tip';
 import { sortByPrimary } from '../class-order';
 import { debugState } from '../debug-state';
 import { isSettingsOpen, setSettingsOpen } from '../../ui/settings';
@@ -132,7 +132,7 @@ import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
-import { REGION_VIEW, boundsMid, regionBounds, regionSets, regionZoom, type RegionSets } from '../region-view';
+import { REGION_VIEW, boundsMid, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionBounds, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
@@ -178,27 +178,9 @@ const WALK_SPEED = 320; // px/sn
 /** Liderin dinlenirken düğüme göre yeri (mockup W4: düğümün solunda, biraz aşağıda; ad etiketini örtmez). */
 const TRAV_REST = { x: -76, y: 8 };
 const PAN_STEP = 340;
-/** Bölge görünümü tercihi (oyuncu; Harita 1 yeniden çizim 2026-10-22). Bozuk / erişilemeyen depo = kapalı (bütün harita, bugünkü görünüm). */
-const REGION_PREF_KEY = 'proto.mapRegionView';
-function loadRegionPref(): boolean {
-  try {
-    return globalThis.localStorage?.getItem(REGION_PREF_KEY) === '1';
-  } catch {
-    return false;
-  }
-}
-function saveRegionPref(on: boolean): void {
-  try {
-    globalThis.localStorage?.setItem(REGION_PREF_KEY, on ? '1' : '0');
-  } catch {
-    // depo yok / dolu: tercih yalnız bu oturumda kalır
-  }
-}
 /** Sol sütun (Sakin etiket, Ömer 2026-10-19; mockup map-calm V1): kenardan boşluk, üst boşluk, içerik genişliği. Telefonda içerik COL_K kat büyür. */
 const SIDE = { left: 36, top: 124, partyW: 360 };
 const COL_K = 1.45;
-/** Dokunmatikte düğüm bilgi kartı için uzun basış süresi (ms). */
-const LONG_PRESS_MS = 420;
 /** Zorunlu seçim pencereleri (Esc ile kapanmaz; Party / Formation bunların üstünde açılmaz). */
 const FORCED: ReadonlyArray<NextStep['kind']> = ['hero', 'recruit', 'volunteer', 'farewell', 'company'];
 
@@ -221,9 +203,19 @@ export class CampaignMapScene extends Phaser.Scene {
   private mapZoom = 1;
   /** Bölge görünümünün taban yakınlaştırması (bölge sığar; bütün harita = 1). Kameranın gerçek yakınlaştırması: render ölçeği x bu x mapZoom. */
   private baseZoom = 1;
-  /** Bölge görünümü açık mı (oyuncu tercihi, localStorage) ve odaktaki bölge; null = bütün harita. */
-  private regionOn = false;
+  /** Odaktaki bölge; null = uzak görünüm (bölge haritası: yalnız bölge işaretleri, düğümler gizli; Ömer 2026-10-23). Haritaya girişte kafilenin bölgesi. */
   private focus: string | null = null;
+  /** Uzak görünüm katmanı (bölge işaretleri + ana yol; dünya kapsayıcısı, bulutların üstünde) ve son işaret yerleşimi. */
+  private over: Phaser.GameObjects.Container | null = null;
+  private markers: OverviewMarker[] = [];
+  /** Uzak görünümde üstüne gelinen bölge (işaret vurgusu + bölge parıltısı). */
+  private overHover: string | null = null;
+  private overFx = new Map<string, (on: boolean) => void>();
+  /** Görünüm geçişi (uzak <-> bölge) sürerken tekerlek / sıkıştırma yeni geçiş başlatmaz (bu zamana kadar). */
+  private focusLockUntil = 0;
+  private fadeTweens: Phaser.Tweens.Tween[] = [];
+  /** Sıkıştırma: uzak görünümde / en küçük yakınlaştırmada biriken oran (eşiği geçince görünüm değişir). */
+  private pinchAcc = 1;
   /** Kafilenin son çizimdeki bölgesi (bölge değişince odak kafileyi izler). */
   private partyRegion: string | null = null;
   private regionTween: Phaser.Tweens.Tween | null = null;
@@ -231,7 +223,6 @@ export class CampaignMapScene extends Phaser.Scene {
   private ghostG: Phaser.GameObjects.Graphics | null = null;
   /** dyn içindeki yol katmanı sayısı (vurgu bunların üstüne). */
   private roadLayers = 1;
-  private regionBtn: { root: Phaser.GameObjects.Container; setActive(on: boolean): void } | null = null;
   /** Son çizimdeki telefon düzeni: değişirse (döndürme / pencere) düğüm adları yeniden çizilir (telefonda yalnızca bulunulan + sonraki). */
   private drawnCompact = false;
   /** Harita görselinin dünyadaki kapsamı (21:9 çerçeve; kaydırma sınırı). */
@@ -266,7 +257,10 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Basışın başladığı düğüm (dokunuş = aynı düğümde basıp bırakmak). */
   private tapNode: string | null = null;
   /** Düğüm bilgi kartı (fare hover / dokunmatik uzun basış). */
-  private nodeTip: Phaser.GameObjects.Container | null = null;
+  /** Fare önizlemesi (sabitlenmemiş düğüm kartı; src/ui/start-battle.ts > preview). */
+  private nodeTip: StartBattleHandle | null = null;
+  private previewClosedFor: string | null = null;
+  private previewId: string | null = null;
   /** Dokunmatik uzun basış zamanlayıcısı; `longPressed` = bu basış kart gösterdi (bırakınca yürümez). */
   private pressTimer: Phaser.Time.TimerEvent | null = null;
   private longPressed = false;
@@ -315,12 +309,17 @@ export class CampaignMapScene extends Phaser.Scene {
     this.tip = null;
     this.mapZoom = 1;
     this.baseZoom = 1;
-    this.regionOn = loadRegionPref();
     this.focus = null;
+    this.over = null;
+    this.markers = [];
+    this.overHover = null;
+    this.overFx = new Map();
+    this.focusLockUntil = 0;
+    this.fadeTweens = [];
+    this.pinchAcc = 1;
     this.partyRegion = null;
     this.regionTween = null;
     this.ghostG = null;
-    this.regionBtn = null;
     this.frame = { left: 0, right: W, top: 0, bottom: H };
     this.mid = { x: W / 2, y: H / 2 };
     this.panBtns = {};
@@ -365,6 +364,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.uiCam.ignore(this.world);
 
     this.drawTerrain();
+    this.bindEmptyTap(); // düğüm katmanının ALTINDA: düğümler / etiket dokunuşları önce gelir
     this.dyn = this.add.container(0, 0);
     this.world.add(this.dyn);
     this.renderMap(false);
@@ -507,8 +507,8 @@ export class CampaignMapScene extends Phaser.Scene {
     else if (e.key === 'ArrowRight') this.panBy(PAN_STEP, 0);
     else if (e.key === 'ArrowUp') this.panBy(0, -PAN_STEP * 0.6);
     else if (e.key === 'ArrowDown') this.panBy(0, PAN_STEP * 0.6);
-    else if (e.key === '+' || e.key === '=') this.setMapZoom(this.mapZoom + MAP_ZOOM.step);
-    else if (e.key === '-' || e.key === '_') this.setMapZoom(this.mapZoom - MAP_ZOOM.step);
+    else if (e.key === '+' || e.key === '=') this.zoomStep(1);
+    else if (e.key === '-' || e.key === '_') this.zoomStep(-1);
   }
 
   /**
@@ -593,17 +593,19 @@ export class CampaignMapScene extends Phaser.Scene {
     this.clearZones = [];
     const vis = nodeVisibility(this.map, this.s, session.revealFog);
     const options = this.moves();
-    // Bölge görünümü (Harita 1 yeniden çizim 2026-10-22, src/game/region-view.ts): kafile başka bölgeye geçince odak onu izler
+    // Bölge görünümü (src/game/region-view.ts): kafile başka bölgeye geçince (ve haritaya girişte) odak onun bölgesine geçer
     const pr = node(this.map, this.s.at).region;
     if (pr !== this.partyRegion) {
       const first = this.partyRegion === null;
       this.partyRegion = pr;
-      if (this.regionOn) this.setFocus(pr, !first);
+      this.setFocus(pr, !first);
     }
-    const rv = this.regionOn && this.focus ? regionSets(this.map, this.focus, vis) : null;
-    const shown = (id: string) => !rv || rv.inside.has(id) || rv.ghosts.has(id);
-    // Bölge dışında kalanlar çizilmez (sis bulutları da); planLabels / drawNode için sis gibi sayılır
-    const drawVis: Record<string, NodeVis> = rv ? Object.fromEntries(Object.entries(vis).map(([id, v]) => [id, shown(id) ? v : 'fog'])) : vis;
+    const far = this.focus === null; // uzak görünüm: düğüm / yol yok, bölge işaretleri var
+    const rv = this.focus ? regionSets(this.map, this.focus, vis) : null;
+    const shown = (id: string) => !!rv && (rv.inside.has(id) || rv.ghosts.has(id));
+    // Bölge dışında kalanlar çizilmez; drawNode için sis gibi sayılır. Etiket yerleşimi ve sisin açık alanları ise HER ZAMAN bütün haritadan
+    // (Ömer 2026-10-23: bulutlar görünüm / yakınlaştırma değişince yerinde kalır, yalnız gerçek keşifle kalkar)
+    const drawVis: Record<string, NodeVis> = Object.fromEntries(Object.entries(vis).map(([id, v]) => [id, shown(id) ? v : 'fog']));
     // 1) yollar (altta koyu iz: harita üstünde okunur kalsın), gidilebilenler ayrı katmanda akar; komşu bölgeye giden yol silik katmanda
     this.glowTween?.remove();
     this.glowTween = null;
@@ -620,16 +622,18 @@ export class CampaignMapScene extends Phaser.Scene {
     const ghost = rv && rv.ghostRoads.length ? layer(REGION_VIEW.ghostRoadAlpha) : null;
     const ghostSet = new Set(rv?.ghostRoads ?? []);
     for (const e of this.map.edges) {
-      if (rv && !rv.roads.includes(e) && !ghostSet.has(e)) continue;
-      const L = ghostSet.has(e) && ghost ? ghost : main;
       const ev = edgeVisibility(this.map, this.s, vis, e);
+      const drawn = !!rv && (rv.roads.includes(e) || ghostSet.has(e));
+      if (!drawn && ev !== 'open') continue;
       const pts = this.curve(e.from, e.to).getPoints(48).map((p) => ({ x: p.x, y: p.y }));
+      if (ev === 'open') this.clearZones.push(...roadRects(pts)); // görünümden bağımsız
+      if (!drawn) continue;
+      const L = ghostSet.has(e) && ghost ? ghost : main;
       const pocket = e.style === 'dashed';
       if (ev === 'open') {
         this.drawRoad(L.glow, pts, 'open', 0, 'base', pocket);
         this.drawRoad(L.lines, pts, 'open', 0, 'dash', pocket);
         this.openEdges.push({ g: L.glow, pts });
-        this.clearZones.push(...roadRects(pts));
         continue;
       }
       this.drawRoad(L.lines, pts, ev, 0, 'all', pocket);
@@ -638,17 +642,41 @@ export class CampaignMapScene extends Phaser.Scene {
     // 2) düğümler
     // Üst üste binen etiketlerde bulunulan ve gidilebilir düğüm en üstte kalsın: önce uzaklar, sonra gidilebilirler, en son bulunulan
     const rank = (id: string) => (vis[id] === 'current' ? 2 : options.includes(id) ? 1 : 0);
-    this.planLabels(drawVis, options);
-    for (const n of [...this.map.nodes].sort((a, b) => rank(a.id) - rank(b.id))) this.drawNode(n, drawVis[n.id]!, options.includes(n.id), rv);
-    // 3) sis bulutları (bölge görünümünde yalnız odaktaki bölgenin sisli düğümleri)
-    this.updateClouds(rv ? Object.fromEntries(Object.entries(vis).filter(([id]) => rv.inside.has(id))) : vis, animateFog);
-    this.regionBtn?.setActive(this.regionOn);
+    this.planLabels(vis, options);
+    this.fogClearZones(vis, options);
+    if (!far) for (const n of [...this.map.nodes].sort((a, b) => rank(a.id) - rank(b.id))) this.drawNode(n, drawVis[n.id]!, options.includes(n.id), rv);
+    // 3) sis bulutları: her zaman bütün haritanın sis durumu (görünümden bağımsız)
+    this.updateClouds(vis, animateFog);
+    // 4) uzak görünüm: bölge işaretleri + ana yol (bulutların üstünde)
+    this.renderOverview();
+  }
+
+  /**
+   * Sis kuralı (Ömer 2026-10-14): bulunulan ve sıradaki (gidilebilir) düğüm, adı ve alt yazısı bulutsuz kalır. Bütün haritadan hesaplanır
+   * (Ömer 2026-10-23): uzak görünüm / bölge değişimi bulutları kaydırmaz.
+   */
+  private fogClearZones(vis: Record<string, NodeVis>, options: string[]): void {
+    for (const n of this.map.nodes) {
+      const v = vis[n.id];
+      if (!v || v === 'fog') continue;
+      if (!(v === 'current' || options.includes(n.id) || v === 'near' || this.adjacent(n.id))) continue;
+      const p = this.P(n.id);
+      const R = frameSpec(n.type).R;
+      const slot = this.labelPlan.get(n.id);
+      const place = slot?.hot ? slot.b : null;
+      const x0 = Math.min(-R - 8, place ? place.x0 - 10 : 0);
+      const x1 = Math.max(R + 8, place ? place.x0 + place.w + 10 : 0);
+      const y0 = Math.min(-R - 8, place ? place.y0 - 10 : 0);
+      const y1 = Math.max(R + 8, place ? place.y0 + place.h + 10 : 0);
+      this.clearZones.push({ x0: p.x + x0, x1: p.x + x1, y0: p.y + y0, y1: p.y + y1 });
+    }
   }
 
   /** Tek hamlede gidilebilen komşular (serbest dolaşım: ileri + geri; src/campaign/state.ts > moveOptions). Yola çıkılamıyorsa boş. */
   private moves(): string[] {
     const step = nextStep(this.s);
-    return step.kind === 'move' ? [...step.options, ...(step.back ?? [])] : [];
+    // yola çıkma adımı değilse (ör. savaşılmamış savaş düğümü): geri çekilinebilen komşular (travelRoutes yalnız temizlenmiş komşuları verir)
+    return step.kind === 'move' ? [...step.options, ...(step.back ?? [])] : [...this.travelTargets().keys()].filter((id) => this.adjacent(id));
   }
 
   /** Bulunulan düğüme tek kenarla bağlı mı (iki yönlü)? */
@@ -953,16 +981,7 @@ export class CampaignMapScene extends Phaser.Scene {
         c.add(quiet);
       }
     }
-    // Sis kuralı (Ömer 2026-10-14): bulunulan ve sıradaki (gidilebilir) düğüm, adı ve alt yazısı bulutsuz kalır
-    const next = this.adjacent(n.id);
-    if (here || option || v === 'near' || next) {
-      const place = slot?.hot ? slot.b : null;
-      const x0 = Math.min(-R - 8, place ? place.x0 - 10 : 0);
-      const x1 = Math.max(R + 8, place ? place.x0 + place.w + 10 : 0);
-      const y0 = Math.min(-R - 8, place ? place.y0 - 10 : 0);
-      const y1 = Math.max(R + 8, place ? place.y0 + place.h + 10 : 0);
-      this.clearZones.push({ x0: p.x + x0, x1: p.x + x1, y0: p.y + y0, y1: p.y + y1 });
-    }
+    // (sisin açık alanı renderMap > fogClearZones: bütün haritadan, görünümden bağımsız)
     if (goal) c.setAlpha(0.75);
     if (ghost) c.setAlpha(REGION_VIEW.ghostAlpha);
     if (here && this.actionHere()) this.tweens.add({ targets: shadow, scale: { from: 1, to: 1.12 }, duration: 800, yoyo: true, repeat: -1, ease: 'Sine.easeInOut' });
@@ -998,12 +1017,6 @@ export class CampaignMapScene extends Phaser.Scene {
       this.pressTimer = null;
       if (!p.wasTouch || busy()) return;
       setHover(true);
-      this.pressTimer = this.time.delayedCall(LONG_PRESS_MS, () => {
-        this.pressTimer = null;
-        if (this.tapNode !== n.id || this.drag.moved || busy()) return;
-        this.longPressed = true;
-        this.showNodeTip(n.id, p);
-      });
     });
     zone.on('pointerup', (p: Phaser.Input.Pointer) => {
       const same = this.tapNode === n.id;
@@ -1019,7 +1032,7 @@ export class CampaignMapScene extends Phaser.Scene {
       // komşu bölgenin bağlantı düğümü: gidilebiliyorsa her zamanki gibi yürünür, değilse o bölgeye bakılır
       if (ghost && !option && !this.travelTargets().has(n.id)) {
         this.ghostHint(null, rv!);
-        return this.setFocus(n.region, true);
+        return this.switchFocus(n.region);
       }
       this.onNodeTap(n.id, v);
     });
@@ -1027,9 +1040,6 @@ export class CampaignMapScene extends Phaser.Scene {
       if (p.wasTouch || p.isDown || busy()) return;
       setHover(true);
       this.showNodeTip(n.id, p);
-    });
-    zone.on('pointermove', (p: Phaser.Input.Pointer) => {
-      if (!p.wasTouch && this.nodeTip && !p.isDown) this.placeNodeTip(p);
     });
     zone.on('pointerout', () => {
       setHover(false);
@@ -1213,7 +1223,11 @@ export class CampaignMapScene extends Phaser.Scene {
       this.hideNodeTip();
       const a = wheelAction({ dx, dy, ctrl: !!ev?.ctrlKey });
       // Tekerlek / Ctrl + tekerlek (trackpad sıkıştırması): imlece doğru yakınlaştırma, kısa geçişle (Ömer 2026-10-11)
-      if (a.zoom) this.zoomAt(this.zoomGoal() + a.zoom * (ev?.ctrlKey ? 0.5 : 1), p.x, p.y, true);
+      if (a.zoom) {
+        // uzak görünüm: yakınlaştırma imlecin altındaki bölgeye girer; bölgede en küçükten de uzaklaşmak uzak görünüme döner (zoomStep)
+        if (this.focus === null || (a.zoom < 0 && this.zoomGoal() <= MAP_ZOOM.min + 0.001)) this.zoomStep(a.zoom > 0 ? 1 : -1, { sx: p.x, sy: p.y });
+        else if (this.time.now >= this.focusLockUntil) this.zoomAt(this.zoomGoal() + a.zoom * (ev?.ctrlKey ? 0.5 : 1), p.x, p.y, true);
+      }
       if (a.panX || a.panY) this.setMid({ x: this.mid.x + a.panX / this.camZoom(), y: this.mid.y + a.panY / this.camZoom() });
     });
     // Ctrl + tekerlek (trackpad sıkıştırması) tarayıcıyı yakınlaştırmasın
@@ -1241,7 +1255,26 @@ export class CampaignMapScene extends Phaser.Scene {
       if (a.isDown && b.isDown) {
         const d = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
         // İki parmakla sıkıştırma: iki parmağın ortasına doğru yakınlaştırma (anlık; parmak izler)
-        if (pinch > 0 && !this.modal && !this.town) this.zoomAt(this.mapZoom * (d / pinch), (a.x + b.x) / 2, (a.y + b.y) / 2, false, true);
+        if (pinch > 0 && !this.modal && !this.town) {
+          const r = d / pinch;
+          const mx = (a.x + b.x) / 2;
+          const my = (a.y + b.y) / 2;
+          // uzak görünümde açma = bölgeye gir; bölgede en küçük yakınlaştırmada kapama = uzak görünüm (eşik: birikmiş oran, data değil dokunuş hissi)
+          const atMin = this.focus !== null && this.mapZoom <= MAP_ZOOM.min + 0.001 && r < 1;
+          if (this.focus === null || atMin) {
+            this.pinchAcc *= r;
+            if (this.focus === null && this.pinchAcc > 1.2) {
+              this.pinchAcc = 1;
+              this.zoomStep(1, { sx: mx, sy: my });
+            } else if (atMin && this.pinchAcc < 0.83) {
+              this.pinchAcc = 1;
+              this.zoomStep(-1);
+            }
+          } else {
+            this.pinchAcc = 1;
+            if (this.time.now >= this.focusLockUntil) this.zoomAt(this.mapZoom * r, mx, my, false, true);
+          }
+        } else this.pinchAcc = 1;
         pinch = d;
         if (!this.drag.moved) this.hideNodeTip();
         this.drag.moved = true;
@@ -1340,91 +1373,303 @@ export class CampaignMapScene extends Phaser.Scene {
     return { w: (stageView.canvasW || W) / stageView.zoom, h: (stageView.canvasH || H) / stageView.zoom };
   }
 
-  /** Odaktaki bölgenin taban yakınlaştırması ve ortası (bütün harita: 1 ve bugünkü orta). */
+  /** Odağın taban yakınlaştırması ve ortası. Bölge: bölge sığar, görseli kaplar; uzak görünüm (null): bütün harita (görseli kaplayan en küçük ölçek, en az 1). */
   private regionTarget(region: string | null): { z: number; mid: Pt | null } {
-    if (!region) return { z: 1, mid: null };
+    if (!region) return { z: regionZoom(this.frame, this.view1(), this.frame, 1), mid: { x: W / 2, y: H / 2 } };
     const b = regionBounds(this.map, region, (id) => this.P(id));
     return { z: regionZoom(b, this.view1(), this.frame), mid: boundsMid(b) };
   }
 
+  /** Bölgeye girerken oyuncu yakınlaştırmasının başlangıcı (telefonda biraz yakın; create ile aynı). Uzak görünümde hep MAP_ZOOM.min. */
+  private regionMapZoom(): number {
+    return this.compact() ? 1.2 : MAP_ZOOM.min;
+  }
+
   /**
-   * Odağı bir bölgeye (null = bütün harita) taşır: kamera bölgeye yakınlaşır, görsele kilitli kalır (clampMid). Haritayı yeniden çizmez
-   * (çağıran çizer). Yürürken kamera kafileyi izlediği için yalnız yakınlaştırma değişir.
+   * Odağı bir bölgeye (null = uzak görünüm) taşır: kamera bölgeye yakınlaşır, görsele kilitli kalır (clampMid). Haritayı yeniden çizmez
+   * (çağıran çizer). Yürürken kamera kafileyi izlediği için yalnız yakınlaştırma değişir. Süre data/ui-motion.json > mapRegion.moveMs.
    */
   private setFocus(region: string | null, anim: boolean): void {
+    const was = this.focus;
     this.focus = region;
     const t = this.regionTarget(region);
     const cam = this.cameras.main;
     this.regionTween?.stop();
     this.regionTween = null;
+    this.zoomTween?.stop();
+    this.zoomTarget = null;
     const follow = !!this.walking || !t.mid;
     const to = t.mid ?? this.mid;
-    const apply = (z: number, x: number, y: number) => {
+    // uzak görünüm: oyuncu yakınlaştırması en küçükte; uzaktan bölgeye girerken başlangıç değerine döner (bölgeden bölgeye geçişte korunur)
+    const mz = region === null ? MAP_ZOOM.min : was === null ? this.regionMapZoom() : this.mapZoom;
+    const apply = (z: number, m: number, x: number, y: number) => {
       this.baseZoom = z;
+      this.mapZoom = m;
       cam.setZoom(this.camZoom());
       this.setMid(follow ? this.mid : { x, y });
     };
-    if (!anim || reducedMotion()) return apply(t.z, to.x, to.y);
-    const from = { z: this.baseZoom, x: this.mid.x, y: this.mid.y };
+    const dur = motion('mapRegion').moveMs;
+    if (!anim || dur <= 0) return apply(t.z, mz, to.x, to.y);
+    this.focusLockUntil = this.time.now + dur;
+    const from = { z: this.baseZoom, m: this.mapZoom, x: this.mid.x, y: this.mid.y };
     const o = { k: 0 };
     this.regionTween = this.tweens.add({
       targets: o,
       k: 1,
-      duration: REGION_VIEW.moveMs,
+      duration: dur,
       ease: 'Sine.easeInOut',
-      onUpdate: () => apply(from.z + (t.z - from.z) * o.k, from.x + (to.x - from.x) * o.k, from.y + (to.y - from.y) * o.k),
+      onUpdate: () => apply(from.z + (t.z - from.z) * o.k, from.m + (mz - from.m) * o.k, from.x + (to.x - from.x) * o.k, from.y + (to.y - from.y) * o.k),
     });
   }
 
-  /** Bölge görünümünü aç / kapat (sağ alttaki düğme, debug). Tercih saklanır. `region`: belirli bir bölgeye odaklan (debug). */
-  setRegionView(on: boolean, region?: string): void {
-    this.regionOn = on;
-    saveRegionPref(on);
+  /**
+   * Görünümü değiştirir (bölge ya da null = uzak görünüm; Ömer 2026-10-23, mockup maps-2-3): kamera kayarken düğüm katmanı / bölge işaretleri
+   * kısa sönüp belirir (data/ui-motion.json > mapRegion), sonra harita ve üst ortadaki bölge adı yeniden çizilir. Yürürken uzak görünüme geçilmez.
+   */
+  private switchFocus(region: string | null, anim = true): void {
+    if (region === this.focus || (region === null && this.walking)) return;
+    if (region !== null && !this.map.regions.some((r) => r.id === region)) return;
     this.hideNodeTip();
-    this.setFocus(on ? (region ?? this.partyRegion ?? node(this.map, this.s.at).region) : null, true);
-    this.renderMap(false);
-    this.renderHud(); // düğmenin ipucu (Region view / Whole map)
-  }
-
-  /** Bölge görünümü düğmesinin simgesi: dört köşe çerçevesi (odak); kodla çizilir, bir kez. */
-  private regionIcon(): string {
-    const key = 'cmap-region-icon';
-    if (this.textures.exists(key)) return key;
-    const tex = this.textures.createCanvas(key, 64, 64);
-    if (!tex) return key;
-    const ctx = tex.getContext();
-    ctx.strokeStyle = '#e6d8b4';
-    ctx.lineWidth = 5;
-    ctx.lineCap = 'round';
-    const k = 18;
-    for (const [x, y, dx, dy] of [[8, 8, 1, 1], [56, 8, -1, 1], [8, 56, 1, -1], [56, 56, -1, -1]] as const) {
-      ctx.beginPath();
-      ctx.moveTo(x, y + dy * k);
-      ctx.lineTo(x, y);
-      ctx.lineTo(x + dx * k, y);
-      ctx.stroke();
-    }
-    ctx.fillStyle = '#e6d8b4';
-    ctx.beginPath();
-    ctx.arc(32, 32, 6, 0, Math.PI * 2);
-    ctx.fill();
-    tex.refresh();
-    return key;
-  }
-
-  /** Düğme: başka bölgeye bakılıyorsa önce kafilenin bölgesine döner; yoksa bölge görünümünü açar / kapatır. */
-  private onRegionButton(): void {
-    if (this.regionOn && this.partyRegion && this.focus !== this.partyRegion) {
-      this.setFocus(this.partyRegion, true);
+    this.overHover = null;
+    for (const t of this.fadeTweens) t.stop();
+    this.fadeTweens = [];
+    this.setFocus(region, anim);
+    const m = motion('mapRegion');
+    const layers = [this.dyn, ...(this.over ? [this.over] : [])];
+    const redraw = () => {
       this.renderMap(false);
-      return;
+      this.renderHud();
+    };
+    if (!anim || m.fadeOutMs + m.fadeInMs <= 0) {
+      layers.forEach((l) => l.setAlpha(1));
+      return redraw();
     }
-    this.setRegionView(!this.regionOn);
+    this.fadeTweens.push(
+      this.tweens.add({
+        targets: layers,
+        alpha: 0,
+        duration: m.fadeOutMs,
+        ease: 'Sine.easeIn',
+        onComplete: () => {
+          redraw();
+          const now = [this.dyn, ...(this.over ? [this.over] : [])];
+          now.forEach((l) => l.setAlpha(0));
+          this.fadeTweens.push(this.tweens.add({ targets: now, alpha: 1, duration: m.fadeInMs, ease: 'Sine.easeOut' }));
+        },
+      }),
+    );
   }
 
-  /** Debug: bölge görünümü (null = kapalı, bütün harita). */
+  /** Debug: belirli bir bölgeye bak (null = uzak görünüm, bölge haritası). */
   debugRegionView(region: string | null): void {
-    this.setRegionView(region !== null, region ?? undefined);
+    this.switchFocus(region);
+  }
+
+  /** Yakınlaştırma adımı (− / + düğmesi, klavye, tekerlek): uzak görünümde + bölgeye girer; bölgede en küçük yakınlaştırmada − uzak görünüme döner. */
+  private zoomStep(dir: 1 | -1, at?: { sx: number; sy: number }): void {
+    if (this.time.now < this.focusLockUntil) return;
+    if (this.focus === null) {
+      if (dir < 0) return;
+      const w = at ? this.cameras.main.getWorldPoint(at.sx, at.sy) : null;
+      const hit = w && regionAt(this.map, this.markers, (id) => this.P(id), w.x, w.y);
+      const locked = !!hit && !!this.markers.find((m) => m.id === hit)?.locked; // görülmemiş bölgeye girilmez: kafilenin bölgesi açılır
+      return this.switchFocus((!locked && hit) || this.partyRegion);
+    }
+    if (dir < 0 && this.zoomGoal() <= MAP_ZOOM.min + 0.001) return this.switchFocus(null);
+    if (at) this.zoomAt(this.zoomGoal() + dir * MAP_ZOOM.step, at.sx, at.sy, true);
+    else this.setMapZoom(this.mapZoom + dir * MAP_ZOOM.step);
+  }
+
+  /**
+   * Uzak görünüm katmanı (mockup maps-2-3 > farSvg): her bölge için sade işaret (altın halkalı madalyon + Roma rakamı, büyük harf ad, "N stops ·
+   * 1 boss"), işaretler arası soluk ana yol, bölgenin düğümleri çevresinde hover'da belirginleşen yumuşak parıltı. Bölgeye dokunmak / tıklamak
+   * o bölgeye girer (bütün harita tek dokunma alanı: en yakın bölge açılır). Odak varken katman boş.
+   */
+  private renderOverview(): void {
+    if (!this.over) this.over = this.add.container(0, 0);
+    const L = this.over;
+    if (!this.world.exists(L)) this.world.add(L);
+    L.removeAll(true);
+    this.overFx = new Map();
+    this.markers = [];
+    this.overHover = null;
+    this.world.bringToTop(L);
+    if (this.focus !== null) return;
+    const H0 = REGION_VIEW.markerH;
+    // telefonda işaret büyür (yazı okunur kalsın); asıl dokunma hedefi bölgenin tamamı
+    const scale = Math.min(2, Math.max(1, touchUnits(H0, 30) / H0, this.compact() ? COL_K : 1));
+    const NAME = 22;
+    const SUB = 17;
+    const widthOf = new Map<string, number>();
+    // görülmemiş bölge (Ömer 2026-10-23, open-questions 403): kilitli, adsız işaret; parıltısı yok (düğüm yerleri sızmasın), dokununca girilmez
+    const seenSet = seenRegions(this.map, nodeVisibility(this.map, this.s, session.revealFog), session.revealFog);
+    for (const r of this.map.regions) {
+      if (!seenSet.has(r.id)) continue;
+      const name = elText(this, 0, 0, regionName(r.title).toUpperCase(), NAME, '#fff', { em: 0.1 });
+      const sub = elBody(this, 0, 0, regionSub(this.map, r.id), SUB, '#fff', false);
+      widthOf.set(r.id, 30 * 2 + 16 + Math.max(name.width, sub.width) + 26);
+      name.destroy();
+      sub.destroy();
+    }
+    this.markers = overviewMarkers(this.map, (id) => this.P(id), (id) => widthOf.get(id) ?? 240, this.frame, scale, { W, H }, seenSet);
+    const m = motion('mapRegion');
+    // ana yol (mockup mainRoad: koyu gölge + açık iz + ince koyu çekirdek, ortada yön oku)
+    const road = this.add.graphics();
+    for (const seg of overviewRoad(this.markers)) {
+      const c = new Phaser.Curves.QuadraticBezier(new Phaser.Math.Vector2(seg.a.x, seg.a.y), new Phaser.Math.Vector2(seg.c.x, seg.c.y), new Phaser.Math.Vector2(seg.b.x, seg.b.y));
+      const pts = c.getPoints(40);
+      for (const [w, col, a] of [[15, 0x060302, 0.32], [9, 0xeadcb4, 0.34], [3.4, 0x2a1d10, 0.3]] as const) {
+        road.lineStyle(w * scale, col, a).beginPath();
+        pts.forEach((p, i) => (i === 0 ? road.moveTo(p.x, p.y) : road.lineTo(p.x, p.y)));
+        road.strokePath();
+      }
+      const at = c.getPoint(0.5);
+      const tan = c.getTangent(0.5);
+      const ang = Math.atan2(tan.y, tan.x);
+      const rot = (x: number, y: number) => ({ x: at.x + (x * Math.cos(ang) - y * Math.sin(ang)) * scale, y: at.y + (x * Math.sin(ang) + y * Math.cos(ang)) * scale });
+      const p1 = rot(-7, -8);
+      const p2 = rot(5, 0);
+      const p3 = rot(-7, 8);
+      road.lineStyle(3 * scale, 0xf3d999, 0.6).beginPath().moveTo(p1.x, p1.y).lineTo(p2.x, p2.y).lineTo(p3.x, p3.y).strokePath();
+    }
+    L.add(road);
+    // bölge parıltısı (mockup blob): düğümlerin çevresinde yumuşak altın ışık, hover'da belirginleşir
+    for (const r of this.map.regions) {
+      if (!seenSet.has(r.id)) continue;
+      const glows = this.map.nodes
+        .filter((n) => n.region === r.id)
+        .map((n) => {
+          const p = this.P(n.id);
+          return this.add.image(p.x, p.y, ensureGlow(this)).setTint(0xf3d999).setBlendMode(Phaser.BlendModes.ADD).setDisplaySize(260, 260).setAlpha(0.1);
+        });
+      L.add(glows);
+      this.overFx.set(r.id, (on) => {
+        this.tweens.killTweensOf(glows);
+        this.tweens.add({ targets: glows, alpha: on ? 0.24 : 0.1, duration: m.hoverMs, ease: 'Sine.easeInOut' });
+      });
+    }
+    // bölge işaretleri
+    for (const mk of this.markers) {
+      if (mk.locked) {
+        L.add(this.lockedMarker(mk, scale));
+        continue;
+      }
+      const c = this.add.container(mk.x, mk.y).setScale(scale);
+      const w = mk.w / scale;
+      const h = H0;
+      const xl = -w / 2;
+      const g = this.add.graphics();
+      g.fillStyle(0x0a0704, 0.84).fillRect(xl + 18, -h / 2, w - 18, h);
+      g.lineStyle(1, 0xd9b26a, 0.55).strokeRect(xl + 18.5, -h / 2 + 0.5, w - 19, h - 1);
+      g.lineStyle(1, 0xd9b26a, 0.2).lineBetween(xl + 66, -h / 2 + 5, xl + w - 8, -h / 2 + 5).lineBetween(xl + 66, h / 2 - 5, xl + w - 8, h / 2 - 5);
+      const hl = this.add.graphics().setAlpha(0);
+      hl.lineStyle(1.5, 0xf3d999, 0.95).strokeRect(xl + 18.5, -h / 2 + 0.5, w - 19, h - 1);
+      const mx = xl + 30;
+      const med = this.add.graphics();
+      med.fillStyle(0x1c130b, 1).fillCircle(mx, 0, 30).fillStyle(0x4a3622, 0.55).fillCircle(mx, -3, 22);
+      med.lineStyle(3, 0xf0c25a, 1).strokeCircle(mx, 0, 30).lineStyle(1, 0xf3d999, 0.35).strokeCircle(mx, 0, 25);
+      const num = elText(this, mx, 1, mk.id, mk.id.length > 2 ? 17 : 22, '#f3d999', { em: 0.02, weight: '700' }).setOrigin(0.5, 0.5);
+      const tx = mx + 30 + 16;
+      const name = elText(this, tx, -10, mk.name.toUpperCase(), NAME, '#f3d999', { em: 0.1 }).setOrigin(0, 0.5);
+      const sub = elBody(this, tx, 15, mk.sub, SUB, '#cfbf9a', false).setOrigin(0, 0.5);
+      c.add([g, hl, med, num, name, sub]);
+      L.add(c);
+      const prev = this.overFx.get(mk.id);
+      this.overFx.set(mk.id, (on) => {
+        prev?.(on);
+        this.tweens.killTweensOf([c, hl]);
+        const lift = reducedMotion() ? 0 : m.lift;
+        this.tweens.add({ targets: c, y: mk.y - (on ? lift : 0), duration: m.hoverMs, ease: 'Sine.easeOut' });
+        this.tweens.add({ targets: hl, alpha: on ? 1 : 0, duration: m.hoverMs, ease: 'Sine.easeOut' });
+      });
+    }
+    // dokunma alanı: bütün çerçeve (ölü alan yok); dokunuş = basıp aynı bölgede bırakmak (sürükleme sayılmaz)
+    const f = this.frame;
+    const zone = this.add.zone((f.left + f.right) / 2, (f.top + f.bottom) / 2, f.right - f.left, f.bottom - f.top).setInteractive({ useHandCursor: true });
+    const busy = () => !!this.walking || !!this.modal || this.menuOpen || !!this.town;
+    const pick = (p: Phaser.Input.Pointer, near?: number) => {
+      const w = this.cameras.main.getWorldPoint(p.x, p.y);
+      return regionAt(this.map, this.markers, (id) => this.P(id), w.x, w.y, near);
+    };
+    const hover = (id: string | null) => {
+      if (id === this.overHover) return;
+      if (this.overHover) this.overFx.get(this.overHover)?.(false);
+      this.overHover = id;
+      if (id) this.overFx.get(id)?.(true);
+    };
+    let downAt: string | null = null;
+    zone.on('pointermove', (p: Phaser.Input.Pointer) => {
+      if (p.wasTouch || busy()) return;
+      hover(pick(p, REGION_VIEW.hoverR));
+    });
+    zone.on('pointerout', () => hover(null));
+    zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      downAt = busy() ? null : pick(p);
+      if (p.wasTouch && downAt) hover(downAt);
+    });
+    zone.on('pointerup', (p: Phaser.Input.Pointer) => {
+      const id = downAt;
+      downAt = null;
+      if (p.wasTouch) hover(null);
+      if (!id || this.drag.moved || busy() || pick(p) !== id) return;
+      if (this.markers.find((m) => m.id === id)?.locked) return this.toast('Not yet discovered');
+      this.switchFocus(id);
+    });
+    L.addAt(zone, 0);
+  }
+
+  /**
+   * Bölgedeyken boş harita alanına dokunmak / tıklamak uzak görünüme döner (Ömer 2026-10-23, open-questions 403; üst ortadaki bölge adıyla
+   * aynı geçiş). Boş = düğüm dokunma çemberi, düğüm adı şeridi ve sol sütun dışında. Dokunuş = basış ve bırakış boş alanda, arada sürükleme /
+   * sıkıştırma yok; yürürken, pencere / menü / kasaba açıkken ve bölge geçişi sürerken çalışmaz. Düğüm ipucu açıksa ilk dokunuş yalnız onu kapatır
+   * (sabit düğüm kartının kendi karartması dokunuşu zaten yutar).
+   */
+  private bindEmptyTap(): void {
+    const zone = this.add.zone(W / 2, H / 2, W * 8, H * 8).setInteractive();
+    this.world.add(zone);
+    let armed = false;
+    const busy = () => this.focus === null || this.inputBusy() || isInputLocked() || this.time.now < this.focusLockUntil;
+    const empty = (p: Phaser.Input.Pointer): boolean => {
+      const ui = this.uiPoint(p);
+      if (ui.x < stageView.left + (SIDE.left + SIDE.partyW) * (this.compact() ? COL_K : 1)) return false; // sol sütun (kafile)
+      if (!this.focus) return false;
+      const w = this.cameras.main.getWorldPoint(p.x, p.y);
+      const rv = regionSets(this.map, this.focus, nodeVisibility(this.map, this.s, session.revealFog));
+      const r = Math.max(60, touchUnits(104, MIN_TOUCH_PX / (this.baseZoom * this.mapZoom)) / 2 + 8);
+      const spots = [...rv.inside, ...rv.ghosts].map((id) => {
+        const c = this.P(id);
+        const slot = this.labelPlan.get(id);
+        const boxes = [slot?.b, slot?.q].filter((b): b is LabelPlace => !!b).map((b) => ({ x0: c.x + b.x0, y0: c.y + b.y0, w: b.w, h: b.h }));
+        return boxes.length ? boxes.map((box) => ({ x: c.x, y: c.y, r, box })) : [{ x: c.x, y: c.y, r }];
+      });
+      return isEmptyMapPoint(w.x, w.y, spots.flat());
+    };
+    zone.on('pointerdown', (p: Phaser.Input.Pointer) => {
+      armed = false;
+      if (p.button !== 0 || busy()) return;
+      if (this.nodeTip) return this.hideNodeTip(); // açık ipucu: ilk dokunuş yalnız onu kapatır
+      armed = empty(p);
+    });
+    zone.on('pointerup', (p: Phaser.Input.Pointer) => {
+      const ok = armed;
+      armed = false;
+      if (!ok || this.drag.moved || busy() || !empty(p)) return;
+      this.switchFocus(null);
+    });
+  }
+
+  /** Görülmemiş bölgenin işareti: yalnız soluk madalyon + küçük kilit (ad, Roma rakamı, durak sayısı yok). */
+  private lockedMarker(mk: OverviewMarker, scale: number): Phaser.GameObjects.Container {
+    const c = this.add.container(mk.x, mk.y).setScale(scale).setAlpha(0.62);
+    const g = this.add.graphics();
+    g.fillStyle(0x0a0704, 0.9).fillCircle(0, 0, 30).lineStyle(2, 0x8a7246, 1).strokeCircle(0, 0, 30).lineStyle(1, 0x8a7246, 0.35).strokeCircle(0, 0, 25);
+    // kilit: kemer + gövde + anahtar deliği
+    g.lineStyle(3, 0xbfa477, 1).beginPath().arc(0, -5, 7, Math.PI, 0, false).strokePath();
+    g.lineBetween(-7, -5, -7, -1).lineBetween(7, -5, 7, -1);
+    g.fillStyle(0xbfa477, 1).fillRect(-10, -1, 20, 15);
+    g.fillStyle(0x0a0704, 1).fillCircle(0, 5, 2.5).fillRect(-1, 5, 2, 5);
+    c.add(g);
+    return c;
   }
 
   /** Komşu bağlantı düğümünün üstüne gelince bölgeden ona giden yol(lar) hafif sarı (null = kaldır). */
@@ -1444,12 +1689,13 @@ export class CampaignMapScene extends Phaser.Scene {
     this.ghostG = g;
   }
 
-  /** − + düğmeleri sınırlarda soluk. */
+  /** − + düğmeleri sınırlarda soluk (uzak görünüm / bölge kuralı: zoomStep). */
   private updatePanButtons(): void {
     const b = this.panBtns;
     if (!b.minus) return;
-    b.minus.setAlpha(this.mapZoom > MAP_ZOOM.min + 0.001 ? 1 : 0.3);
-    b.plus?.setAlpha(this.mapZoom < MAP_ZOOM.max - 0.001 ? 1 : 0.3);
+    // uzak görünümde − soluk (zaten en uzak), + bölgeye girer; bölgede − en küçükte de açık (uzak görünüme döner)
+    b.minus.setAlpha(this.focus !== null ? 1 : 0.3);
+    b.plus?.setAlpha(this.focus === null || this.mapZoom < MAP_ZOOM.max - 0.001 ? 1 : 0.3);
   }
 
   /**
@@ -1459,7 +1705,7 @@ export class CampaignMapScene extends Phaser.Scene {
   private layoutCameras(first: boolean): void {
     const cam = this.cameras.main;
     cam.setSize(stageView.canvasW, stageView.canvasH);
-    if (this.focus) this.baseZoom = this.regionTarget(this.focus).z; // bölge görünümü: yeni ekran boyunda da bölge sığar, görsel kaplar
+    this.baseZoom = this.regionTarget(this.focus).z; // yeni ekran boyunda da bölge (uzak görünümde bütün harita) sığar, görsel kaplar
     cam.setZoom(this.camZoom());
     this.setMid(this.mid);
     this.uiCam.setSize(stageView.canvasW, stageView.canvasH);
@@ -1467,6 +1713,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.uiCam.centerOn(W / 2, H / 2);
     if (!first) {
       if (this.compact() !== this.drawnCompact) this.renderMap(false);
+      else if (this.focus === null) this.renderOverview(); // işaret ölçeği ekran boyuna bağlı
       this.renderHud();
       this.town?.render();
     }
@@ -1482,7 +1729,6 @@ export class CampaignMapScene extends Phaser.Scene {
   private renderHud(): void {
     this.hud.removeAll(true);
     this.panBtns = {};
-    this.regionBtn = null;
     const L = this.hud;
     const left = stageView.left;
     const right = stageView.right;
@@ -1504,12 +1750,73 @@ export class CampaignMapScene extends Phaser.Scene {
     L.add(back.root);
     // Üst orta: harita adı (Ömer 2026-10-12; Sakin etiket: biraz küçük ve soluk)
     L.add(elText(this, (left + right) / 2, 52, this.map.title, 30, '#ffffff', { em: 0.16 }).setOrigin(0.5, 0.5).setTint(0xfbe7b0, 0xfbe7b0, 0xc7984f, 0xc7984f).setAlpha(0.72));
+    this.renderRegionCrumb((left + right) / 2, k);
     this.renderColumn(left + SIDE.left, SIDE.top + (this.compact() ? 16 : 0)); // telefonda büyük Back düğmesinin altında kalsın
     this.renderControls();
     if (session.notice) {
       this.toast(session.notice);
       session.notice = '';
     }
+  }
+
+  /**
+   * Bölge adı / uzak görünüm ipucu (Ömer 2026-10-23, mockup maps-2-3 > .crumb / .back / .hint). Bölgedeyken üst ortada, harita adının altında
+   * "‹ (madalyon) BÖLGE ADI": dokununca uzak görünüme döner (sol üst Back ana menünündür; mockup'taki "Back to map" bu yüzden buraya taşındı).
+   * Uzak görünümde alt ortada "Pick a region to zoom in".
+   */
+  private renderRegionCrumb(cx: number, k: number): void {
+    const m = motion('mapRegion');
+    if (this.focus === null) {
+      const t = elText(this, cx, H - 44 * k, 'Pick a region to zoom in', 15 * k, '#f3d999', { em: 0.22 }).setOrigin(0.5, 0.5).setAlpha(0);
+      t.setStroke('#060402', 4);
+      this.hud.add(t);
+      this.tweens.add({ targets: t, alpha: 0.85, duration: m.fadeInMs, ease: 'Sine.easeOut' });
+      return;
+    }
+    const r = this.map.regions.find((x) => x.id === this.focus);
+    if (!r) return;
+    const y = 100 + (this.compact() ? 6 : 0);
+    const c = this.add.container(cx, y).setScale(k);
+    const name = elText(this, 0, 0, regionName(r.title).toUpperCase(), 18, '#f3d999', { em: 0.14 }).setOrigin(0, 0.5);
+    name.setStroke('#060402', 4);
+    const R = 15;
+    const w = 22 + 8 + R * 2 + 10 + name.width;
+    const x0 = -w / 2;
+    const chev = this.add.graphics();
+    const drawChev = (on: boolean) => {
+      chev.clear();
+      chev.lineStyle(2.4, on ? 0xffe2a0 : 0xd9c8a2, 1).beginPath().moveTo(x0 + 14, -8).lineTo(x0 + 6, 0).lineTo(x0 + 14, 8).strokePath();
+    };
+    drawChev(false);
+    const mx = x0 + 22 + 8 + R;
+    const med = this.add.graphics();
+    med.fillStyle(0x1c130b, 0.95).fillCircle(mx, 0, R).lineStyle(2, 0xf0c25a, 1).strokeCircle(mx, 0, R);
+    const num = elText(this, mx, 1, r.id, r.id.length > 2 ? 11 : 14, '#f3d999', { em: 0.02, weight: '700' }).setOrigin(0.5, 0.5);
+    name.setX(mx + R + 10);
+    c.add([chev, med, num, name]);
+    const hitH = Math.max(48, touchUnits(48) / k);
+    const zone = this.add.zone(0, 0, w + 28, hitH).setInteractive({ useHandCursor: true });
+    c.addAt(zone, 0);
+    const lift = reducedMotion() ? 0 : m.lift;
+    const hover = (on: boolean) => {
+      drawChev(on);
+      this.tweens.killTweensOf(c);
+      this.tweens.add({ targets: c, y: y - (on ? lift : 0), duration: m.hoverMs, ease: 'Sine.easeOut' });
+      name.setColor(on ? '#ffe2a0' : '#f3d999');
+      tip.setVisible(on);
+    };
+    const tip = elBody(this, cx, y + 34 * k, 'Back to the whole map', 15 * k, EL.NOTE).setOrigin(0.5, 0.5).setVisible(false);
+    tip.setStroke('#060402', 4);
+    zone.on('pointerover', (p: Phaser.Input.Pointer) => !p.wasTouch && hover(true));
+    zone.on('pointerout', () => hover(false));
+    zone.on('pointerup', () => {
+      if (this.modal || this.menuOpen || this.town || this.walking) return;
+      hover(false);
+      this.switchFocus(null);
+    });
+    c.setAlpha(0);
+    this.tweens.add({ targets: c, alpha: 1, duration: m.fadeInMs, ease: 'Sine.easeOut' });
+    this.hud.add([c, tip]);
   }
 
   /**
@@ -1737,69 +2044,66 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /**
-   * Düğüm bilgi kartı (fare hover / dokunmatik uzun basış): ortak "A - Band" ipucu (src/game/band-tip.ts; Ömer 2026-10-18). Ad + tür · alt başlık,
-   * durum çipi (Cleared...), düşman portre çipleri (Foes), sonraki duraklar (Then). İmlecin yanında.
+   * Düğüm kartı içeriği (önizleme ve ulaşılamayan düğüm): savaş düğümünde düşman portreleri + lore, diğerlerinde düğümün kendi bilgisi
+   * (eski hover kartının blurb'ü); devriyede mevcut devriye metni.
+   */
+  private cardInfoFor(id: string): { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { text: string }; info?: { text: string } } {
+    const n = node(this.map, id);
+    const f = this.nodeFacts(id);
+    const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
+    if (n.encounter && vis !== 'goal') {
+      const g = foeGroups(n.encounter);
+      const patrol = f.state === 'Patrol';
+      return { ...(patrol ? { title: 'Fight the patrol?', info: { text: f.blurb } } : {}), foes: g.groups, ...(g.info ? { fallback: g.info } : {}) };
+    }
+    const t = PLACE_CARD[n.type];
+    return { ...(t ? { title: t.title, actionLabel: t.action } : {}), ...(f.blurb ? { fallback: { text: f.blurb } } : {}) };
+  }
+
+  /** Düğmenin yerine geçen düz not: ulaşılamayan düğümde "Not reachable yet", diğerlerinde durum. */
+  private cardNote(id: string): string {
+    const st = this.nodeFacts(id).state;
+    return st === 'Ahead' || st === 'Your goal' ? 'Not reachable yet' : st;
+  }
+
+  /**
+   * Fare önizlemesi (Ömer 2026-10-23, tek kart iki adım): üstüne gelince AYNI "Start battle?" kartı düğmesiz açılır (src/ui/start-battle.ts
+   * preview); tıklayınca sabitlenir (nodeCard), fare çekilince kapanır. Dokunmatikte açılmaz (ilk dokunuş kartı sabit açar).
    */
   private showNodeTip(id: string, p: Phaser.Input.Pointer): void {
     this.hideNodeTip();
-    if (nodeVisibility(this.map, this.s, session.revealFog)[id] === 'fog') return;
+    if (p.wasTouch || this.modal || nodeVisibility(this.map, this.s, session.revealFog)[id] === 'fog') return;
+    const root = document.getElementById('ui-root');
+    if (!root) return;
     const n = node(this.map, id);
-    const f = this.nodeFacts(id);
-    const c = this.compact();
-    const glyph = (type: NodeType) => (scene: Phaser.Scene, cx: number, cy: number, size: number): Phaser.GameObjects.GameObject[] => {
-      const art = nodeGlyphImage(scene, type, cx, cy, Math.round(size * 0.84));
-      if (art) return [art];
-      const g = scene.add.graphics();
-      drawNodeGlyph(g, type, EL.ON_N, 0.95, cx, cy);
-      return [g];
-    };
-    const sections: PhSection[] = [];
-    const vis = nodeVisibility(this.map, this.s, session.revealFog)[id];
-    if (n.encounter && f.foes && vis !== 'goal') {
-      sections.push({
-        label: 'Foes',
-        faces: foeGroups(n.encounter).groups.slice(0, 6).map((g) => {
-          const def = content.classes[g.cls];
-          return {
-            label: g.name,
-            count: g.n,
-            build: (scene, cx, cy, size) => {
-              const av = avatarTexture(scene, g.sprite);
-              if (av) return [scene.add.image(cx, cy, av).setDisplaySize(size, size).setFlipX(true)];
-              return def ? [classAvatar(scene, def, cx, cy, size, true)] : [];
-            },
-            ...(g.tier ? { chip: { text: g.tier === 'boss' ? 'Boss' : 'Elite', tone: 'warn' as const } } : {}),
-          };
-        }),
-      });
-    }
-    if (f.next.length) {
-      sections.push({
-        label: 'Then',
-        faces: f.next.map((a) => ({ label: a.name, build: glyph(a.type), chip: { text: TYPE_LABEL[a.type], ...(a.type === 'elite' || a.type === 'boss' ? { tone: 'warn' as const } : {}) } })),
-      });
-    }
-    const lines: PhLine[] = [];
-    if (f.blurb) lines.push({ text: f.blurb });
-    if (f.leader) lines.push({ text: `Led by ${f.leader}` });
-    const stateTone = f.state === 'Cleared' || f.state === 'Patrol' ? ('ok' as const) : undefined;
-    const tip = bandTip(this, {
-      accent: '#c9953f',
-      kind: f.kind,
-      title: n.name,
-      round: true,
-      medal: glyph(n.type),
-      asideChip: { text: f.state, ...(stateTone ? { tone: stateTone } : {}) },
-      lines,
-      sections,
-      width: c ? 760 : 580,
-      scale: c ? 1.35 : 1,
+    const o = this.cardInfoFor(id);
+    const info = o.info ?? startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
+    const unreachable = this.nodeFacts(id).state === 'Ahead' || this.nodeFacts(id).state === 'Your goal';
+    this.nodeTip = openStartBattle(root, {
+      ...(o.title ? { title: o.title } : {}),
+      ...(o.actionLabel ? { actionLabel: o.actionLabel } : {}),
+      name: n.name,
+      subtitle: n.subtitle || TYPE_LABEL[n.type],
+      nodeType: n.type,
+      level: nodeLevel(this.s.mapId, id),
+      ...(o.foes ? { foes: o.foes } : {}),
+      ...(info ? { info } : {}),
+      then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
+      preview: true,
+      ...(unreachable ? { note: 'Not reachable yet' } : {}),
+      anchor: () => this.nodeCssPoint(id, root),
+      onFight: () => undefined,
+      onCancel: () => undefined,
     });
-    tip.container.setDepth(1500);
-    this.ui.add(tip.container);
-    tip.container.setData('size', { w: tip.width, h: tip.height });
-    this.nodeTip = tip.container;
-    this.placeNodeTip(p);
+    this.previewId = id;
+  }
+
+  private hideNodeTip(): void {
+    if (!this.nodeTip) return;
+    this.nodeTip.close();
+    this.nodeTip = null;
+    this.previewClosedFor = this.previewId;
+    this.time.delayedCall(80, () => (this.previewClosedFor = null));
   }
 
   /** Yara ipucu (A Band; sayılar kuraldan: src/progression/wounds.ts > woundTipData). Satırın sağında belirir; görünür alandan taşmaz. */
@@ -1827,25 +2131,6 @@ export class CampaignMapScene extends Phaser.Scene {
     tip.container.setPosition(x, y + 6).setAlpha(0);
     this.tweens.add({ targets: tip.container, alpha: 1, y, duration: motion('tooltip').inMs, ease: 'Cubic.easeOut' });
     return tip.container;
-  }
-
-  /** Kartı imlecin sağ altına koyar; görünür alandan taşacaksa sola / yukarı döner. */
-  private placeNodeTip(p: Phaser.Input.Pointer): void {
-    const t = this.nodeTip;
-    if (!t) return;
-    const { w, h } = t.getData('size') as { w: number; h: number };
-    const u = this.uiPoint(p);
-    const off = this.compact() ? 60 : 26;
-    let x = u.x + off;
-    let y = u.y + off;
-    if (x + w > stageView.right - 16) x = u.x - off - w;
-    if (y + h > H - 16) y = u.y - off - h;
-    t.setPosition(Math.round(Math.max(stageView.left + 16, x)), Math.round(Math.max(16, y)));
-  }
-
-  private hideNodeTip(): void {
-    this.nodeTip?.destroy(true);
-    this.nodeTip = null;
   }
 
   /** Sağ alt küme (Sakin etiket): − + yakınlaştırma ve ? (lejant). Dokunma alanı >= 44 gerçek px; üstüne gelince / uzun basınca kısa ipucu. */
@@ -1877,21 +2162,9 @@ export class CampaignMapScene extends Phaser.Scene {
       return b.root;
     };
     const step = size + gap;
-    // Bölge görünümü (Harita 1 yeniden çizim 2026-10-22): bulunulan bölgeye yakınlaş / bütün harita
-    {
-      const x = right - 3 * step - size / 2;
-      const h = hint(x, this.regionOn ? 'Whole map' : 'Region view');
-      const b = elIconButton(this, { icon: this.regionIcon() }, () => !this.modal && !this.menuOpen && !this.town && this.onRegionButton(), {
-        size,
-        onHover: (on) => h.setVisible(on),
-      });
-      b.root.setPosition(x, y);
-      b.setActive(this.regionOn);
-      this.hud.add(b.root);
-      this.regionBtn = b;
-    }
-    this.panBtns.minus = mk('−', right - 2 * step - size / 2, 'Zoom out', () => this.setMapZoom(this.mapZoom - MAP_ZOOM.step));
-    this.panBtns.plus = mk('+', right - step - size / 2, 'Zoom in', () => this.setMapZoom(this.mapZoom + MAP_ZOOM.step));
+    // (Bölge görünümü düğmesi kaldırıldı, Ömer 2026-10-23: uzak görünüm / bölge geçişi − / + ve üst ortadaki bölge adıyla)
+    this.panBtns.minus = mk('−', right - 2 * step - size / 2, 'Zoom out', () => !this.town && this.zoomStep(-1));
+    this.panBtns.plus = mk('+', right - step - size / 2, this.focus === null ? 'Zoom in to your region' : 'Zoom in', () => !this.town && this.zoomStep(1));
     const legend = this.renderLegend(right, y - size / 2 - 12);
     mk(
       '?',
@@ -2357,7 +2630,8 @@ export class CampaignMapScene extends Phaser.Scene {
         return this.townNote(h, h.note ?? 'No one here seeks to join you.');
       }
       case 'story':
-        if (tn.story) this.storyScene(tn.story, tn.id, true);
+        // hikâye bir kez (Ömer 2026-10-23): dinlendiyse yer zaten gösterilmez; eski bir dokunuş gelirse de tekrar oynamaz
+        if (tn.story && !storyHeard(this.s, tn)) this.storyScene(tn.story, tn.id, true);
         return;
       case 'rest':
         return this.townNote(h, CONFIG.texts.townRested ?? CONFIG.texts.townRest ?? '');
@@ -2701,7 +2975,8 @@ export class CampaignMapScene extends Phaser.Scene {
     if (v === 'fog') return;
     const step = nextStep(this.s);
     // Komşu (tek hamle) ya da temizlenmiş düğümler üzerinden uzak hedef (yolculuk): tek dokunuşla yürür
-    if (step.kind === 'move' && id !== this.s.at && this.travelTargets().has(id)) return this.chooseRoad(id);
+    // (savaş düğümünde Fight'a basılmadıysa da: kafile temizlenmiş komşular üzerinden ayrılabilir; src/campaign/state.ts > canWithdraw)
+    if (id !== this.s.at && this.travelTargets().has(id)) return this.chooseRoad(id);
     if (id === this.s.at && step.kind === 'battle' && !this.s.suspended && this.formationDue()) return this.nudgeFormation();
     if (id === this.s.at && step.kind === 'battle') return this.s.suspended ? this.resumeBattle(id) : this.confirmBattle(id, () => void startCampaignBattle(this));
     if (id === this.s.at && this.actionHere()) return CONFIRM_STEPS.includes(step.kind) ? this.confirmPlace(id, () => this.openHere(id)) : this.advance();
@@ -2713,12 +2988,8 @@ export class CampaignMapScene extends Phaser.Scene {
       if (patrolAvailable(this.s)) return this.confirmPatrol(id, () => this.startPatrolBattle());
       if (k) return this.confirmPlace(id, () => this.reenter(id));
     }
-    const p = this.input.activePointer;
-    if (p.wasTouch) {
-      this.showNodeTip(id, p);
-      const tip = this.nodeTip;
-      this.time.delayedCall(2600, () => tip === this.nodeTip && this.hideNodeTip());
-    }
+    // Ulaşılamayan / eylemsiz düğüm (Ömer 2026-10-23, tek kart): aynı kart sabitlenir, düğme yerine düz not; bilgi görünür kalır
+    this.nodeCard(id, { ...this.cardInfoFor(id), note: this.cardNote(id), onGo: () => undefined });
   }
 
   /** Düğümde varışta savaş başlayacak mı (karşılaşması olan, henüz temizlenmemiş düğüm; korumalı hazine dahil). */
@@ -2756,8 +3027,7 @@ export class CampaignMapScene extends Phaser.Scene {
    */
   private chooseRoad(id: string): void {
     if (this.pausedBlocks()) return;
-    const step = nextStep(this.s);
-    if (step.kind !== 'move' || !this.travelTargets().has(id)) return;
+    if (!this.travelTargets().has(id)) return;
     this.march(id);
   }
 
@@ -2814,10 +3084,12 @@ export class CampaignMapScene extends Phaser.Scene {
     return `No free rest this time. Resting by the fire costs ${townRestPrice(this.s, id)} gold.`;
   }
 
-  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string }; onGo: () => void }): void {
+  private nodeCard(id: string, o: { title?: string; actionLabel?: string; foes?: FoeGroup[]; fallback?: { who?: string; text: string; quote?: boolean } | undefined; /** Lore'un yerine geçen bilgi satırı (devriye). */ info?: { text: string }; /** Düğme yerine düz not. */ note?: string; onGo: () => void }): void {
     const root = document.getElementById('ui-root');
     const n = node(this.map, id);
     if (!root) return;
+    this.hideNodeTip();
+    const instant = this.previewClosedFor === id; // önizlemeden sabitlenirken giriş animasyonu tekrar oynamaz
     this.closeModal();
     const info = o.info ?? startCardInfo(n.lore, o.fallback?.text ? o.fallback : undefined);
     let card: StartBattleHandle | null = null;
@@ -2836,6 +3108,9 @@ export class CampaignMapScene extends Phaser.Scene {
       level: nodeLevel(this.s.mapId, id),
       ...(o.foes ? { foes: o.foes } : {}),
       ...(info ? { info } : {}),
+      then: this.nodeFacts(id).next.map((a) => ({ name: a.name, kind: TYPE_LABEL[a.type] })),
+      ...(o.note ? { note: o.note } : {}),
+      ...(instant ? { instant: true } : {}),
       anchor: () => this.nodeCssPoint(id, root),
       onFight: () => {
         this.closeModal();

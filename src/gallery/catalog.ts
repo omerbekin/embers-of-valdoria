@@ -20,7 +20,7 @@ import itemsJson from '../../data/items.json';
 import { ITEM_IMAGE_FILES } from '../game/item-icon-files';
 import { ICON_KINDS } from '../ui/icon-kinds';
 import { MIGHT_COLOR, STAT_COLOR, STAT_ICON, STAT_LABEL, UI_COLOR, UI_ICON, statIconFallback, type StatIconKind } from '../ui/stat-icons';
-import { MISC_IMAGE_FILES, STAT_IMAGE_FILES, UI_IMAGE_FILES } from '../game/icon-image-files';
+import { MISC_IMAGE_FILES, STAT_IMAGE_FILES, TREE_IMAGE_FILES, UI_IMAGE_FILES } from '../game/icon-image-files';
 import { MISC_GROUPS, MISC_ICONS, MISC_UNUSED } from '../ui/misc-icons';
 import { UI_ICON_FALLBACK, UI_ICON_KINDS, UI_ICON_LABEL, type UiIconKind } from '../ui/ui-icons';
 import { UI_ICONS } from '../ui/dom-icons';
@@ -630,6 +630,15 @@ export function buildMiscArt(): MiscArtEntry[] {
   return rows;
 }
 
+/** Skill ağacı düğüm sanatı (assets/tree-icons/<sınıf>/<satır>_<düğüm>; tools/make-tree-icon.py): dosya geldikçe kendiliğinden listelenir. */
+export interface TreeArtEntry {
+  /** '<sınıf>/<satır>_<düğüm>' (ikon adı 'tree:<id>'). */
+  id: string;
+  url: string;
+}
+
+export const buildTreeArt = (): TreeArtEntry[] => Object.entries(TREE_IMAGE_FILES).map(([id, url]) => ({ id, url })).sort((a, b) => a.id.localeCompare(b.id));
+
 // ---------------------------------------------------------------- hepsi
 
 export interface Catalog {
@@ -653,6 +662,8 @@ export interface Catalog {
   uiArt: UiArtEntry[];
   /** Boyalı oyun ikonları (assets/misc-icons). */
   miscArt: MiscArtEntry[];
+  /** Skill ağacı düğüm sanatı (assets/tree-icons). */
+  treeArt: TreeArtEntry[];
   fxSprites: string[];
   statuses: StatusEntry[];
   grounds: GroundEntry[];
@@ -676,6 +687,7 @@ export function buildCatalog(files: AssetFiles): Catalog {
     statArt: buildStatArt(),
     uiArt: buildUiArt(),
     miscArt: buildMiscArt(),
+    treeArt: buildTreeArt(),
     fxSprites: fxSpriteNames(),
     statuses: buildStatuses(),
     grounds: buildGrounds(),

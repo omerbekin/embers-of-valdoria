@@ -699,7 +699,13 @@ export function openGear(root: HTMLElement, src: GearSource, o: { hero?: string;
       b.setAttribute('aria-selected', String(on));
     });
     const sheetBtn = tabBtns[1]!;
-    sheetBtn.querySelector('.gr-pt')?.remove();
+    sheetBtn.querySelectorAll('.gr-pt').forEach((x) => x.remove());
+    // Harcanmamış stat puanı rozeti (Ömer 2026-10-23): bekleyen (henüz onaylanmamış) puanlar düşülür; her render'da (+ / − / Reset / Confirm) tazelenir
+    if (src.allocate && !bagOnly) {
+      const spent = Object.values(pending).reduce((t, n) => t + (n ?? 0), 0);
+      const free = (hero?.statPoints ?? 0) - spent;
+      if (free > 0) sheetBtn.append(badge(free, 'st', 'Stat points to spend'));
+    }
     if (treeOn) treeTab.syncButton(tab === 'tree', hero?.skillPoints ?? 0);
     else if ((hero?.skillPoints ?? 0) > 0) sheetBtn.append(badge(hero!.skillPoints!, 'sk', 'Skill points'));
     gold.replaceChildren();

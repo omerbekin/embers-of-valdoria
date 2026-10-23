@@ -33,6 +33,7 @@ Bu belge, 2026-10-18 günü onaylanan mockup turlarından çıkan ANA MANTIKTIR.
 | Item önizlemesi | **Item ipucu v3**: madalyon ikon, nadirlik kurdelesi, iL, kademe etiketli satırlar, değer, kahraman satırları. Hover ile açılır | `src/ui/item-tip.ts` |
 | Skill listesi | **A Plates**. **Pasif HER ZAMAN 1. sırada** | `skill-bar.ts > skillPlateHtml`, `mockups/skills-block.html` A |
 | Karakter / kahraman kartı | **A**: portre, ad + sağda "Lv X", tek satır çipler, HP/MP çubukları, yalnızca 4 temel stat (STR / DEX / INT / LUCK, ana stat turuncu), skill'ler (pasif önce), pasif ayrı bölüm yok | `mockups/character-card.html` A, `mockups/formation.html` A |
+| Evolve ikonu (skill) | Evolve düğümü ONAYLI skill'in ikonu o kayıtta HER yerde yavaş kor titremesi + altın kenar parıltısı (~2,6 sn döngü); evolve sanatı varsa ikon onunla değişir. Codex / Wiki ve Quick Battle sabit | `src/ui/evolve-icon.ts/.css`, `skill-tree-implementation.md > Evolve ikonu ve animasyonu` |
 | Stat listesi | Gear Sheet A | `mockups/stats-panels.html` |
 | Izgara hücresi uygunluk | Seçili ya da sürüklenen birim için HER hücrede hafif renk (iyi / zayıf / ulaşamaz). Hover kutusu: "X · FRONT ROW", tek cümle, 4 parçalı çubuk | Formation A (ortak bileşen) |
 | Sefer haritası düğümleri | C çerçeveleri, biraz küçük; çift yol | `src/game/map-frames.ts`, `mockups/map-nodes.html` |

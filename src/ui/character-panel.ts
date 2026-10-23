@@ -6,7 +6,8 @@
  * denetçisinde (`data-drop`, `data-drag`, `data-tip`, `data-stat`, `data-skill`). Görünüm: src/ui/gear.css. Oyun içi metinler İngilizce.
  */
 import { content } from '../engine';
-import { skillIconName } from './mob-icons';
+import { heroSkillIconUrl } from './evolve-icon';
+import type { EvolveSource } from '../progression/skill-tree-evolve';
 import type { Stats } from '../engine';
 import {
   ITEMS,
@@ -46,7 +47,7 @@ import { PANEL_GROUPS, VITAL_STATS } from '../game/stat-columns';
 import { uiIconName } from './ui-icons';
 import { gearSkillRows, type GearSkillRow } from './gear-skills';
 import { ELEMENT_COLOR, skillTags } from './skill-tags';
-import { ownerOfSkill, ownerOfUnit } from '../game/asset-versions';
+import { ownerOfUnit } from '../game/asset-versions';
 import layout from '../../data/battle-layout.json';
 import { FALLEN_GEAR_TEXT, FALLEN_MARK, heroFallen, heroItemCount, heroItemLine, type HoverHero } from './gear-hover';
 import { itemIcon } from './inventory';
@@ -666,7 +667,7 @@ function sheetNodes(c: HeroCalc, v: CharacterView, host: HTMLElement, vitals?: {
 function skillsNode(hero: HoverHero, stats: Stats, after: Stats | null): HTMLElement {
   const sk = el('div', 'gr-skills');
   sk.append(el('div', 'gr-sec', 'Skills'));
-  sk.append(skillBar(hero.class, stats, after));
+  sk.append(skillBar(hero.class, stats, after, hero));
   return sk;
 }
 
@@ -737,7 +738,7 @@ function costChips(skill: SkillDef, stats: Stats): SkillCostChip[] {
 }
 
 /** Savaş skill tooltip'inin içeriği (aynı düzen: ikon + ad, bedel / bekleme, etiketler, alan şekli, satırlar) + Gear farkları "a → b (+d)". */
-function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): TipContent {
+function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null, evo?: EvolveSource): TipContent {
   const t = skillTip(skill, stats, after);
   // meta satırı savaşla aynı: bedel (Rage / MP / HP ikonuyla ya da "Free"), cooldown (kum saati)
   const meta: NonNullable<TipContent['meta']> = [];
@@ -753,7 +754,7 @@ function skillTipContent(skill: SkillDef, stats: Stats, after: Stats | null): Ti
     title: t.title,
     titleColor: COLORS.text,
     kind: 'Skill',
-    iconUrl: iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)),
+    iconUrl: heroSkillIconUrl(evo, skill),
     meta,
     tags: skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: iconUrl(g.icon, g.color ?? '#e8e2d0') } : {}) })),
     rows: t.rows.map((r) => ({ text: r.text, ...(tipKindColor(r.kind) ? { color: tipKindColor(r.kind)! } : {}) })),
@@ -810,7 +811,7 @@ function blurbOf(tip: { rows: { text: string }[] }, passive: boolean): string {
 /** Bir skill / pasif plakası (C Showcase). kind: '' | 'pas' | 'ult'. Gizli `.bh-sktip` kopyası üstüne gelince yüzen katmana konur. */
 function plateHtml(kind: '' | 'pas' | 'ult', id: string, name: string, icon: string, chips: string, nums: string, tip: string, blurb: string, big: string, idx: number, intro: boolean): string {
   const tag = kind ? `<span class="pl-tag">${kind === 'pas' ? 'Passive' : 'Ultimate'}</span>` : '';
-  return `<div class="gr-pl ${kind}${intro ? ' intro' : ''}" style="--i:${idx}" data-skill="${escHtml(id)}">${tag}<div class="pl-ico">${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
+  return `<div class="gr-pl ${kind}${intro ? ' intro' : ''}" style="--i:${idx}" data-skill="${escHtml(id)}"><div class="pl-ico">${tag}${icon ? `<img class="bh-ico" src="${escHtml(icon)}" alt="" draggable="false">` : ''}</div>
     <div class="pl-bd"><div class="pl-hd"><div class="pl-nm">${escHtml(name)}</div><div class="pl-chips">${chips}</div></div><div class="pl-ds">${escHtml(blurb)}</div><div class="pl-dv"></div>${nums || '<div class="pl-sls"></div>'}</div>${big}
     <div class="bh-sktip bh-panel bh-corners">${tip}</div></div>`;
 }
@@ -849,7 +850,7 @@ function showFloatTip(bar: HTMLElement, cell: HTMLElement): void {
 }
 
 /** Bir skill / pasifin ortak ipucu içeriği (Gear skill çubuğuyla aynı); `key` = 'passive' ya da skill kimliği; yoksa ''. */
-function skillTipHtmlFor(classId: string, stats: Stats, key: string): string {
+function skillTipHtmlFor(classId: string, stats: Stats, key: string, evo?: EvolveSource): string {
   const def = content.classes[classId];
   if (key === 'passive') {
     const p = def?.passive;
@@ -858,12 +859,12 @@ function skillTipHtmlFor(classId: string, stats: Stats, key: string): string {
     return colorDiffs(tipHtml(tip));
   }
   const skill = gearSkillRows(classId, stats, null).find((r) => r.skill?.id === key)?.skill;
-  return skill ? colorDiffs(tipHtml(skillTipContent(skill, stats, null))) : '';
+  return skill ? colorDiffs(tipHtml(skillTipContent(skill, stats, null, evo))) : '';
 }
 
 /** Dizilim kartı gibi Gear dışı yerler için: skill / pasif ipucunu `anchor` satırının üstünde (sığmazsa altında) açar; ekran içinde kalır. */
-export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: Stats, key: string): void {
-  const html = skillTipHtmlFor(classId, stats, key);
+export function showHeroSkillTip(anchor: HTMLElement, classId: string, stats: Stats, key: string, evo?: EvolveSource): void {
+  const html = skillTipHtmlFor(classId, stats, key, evo);
   const host = document.getElementById('ui-root');
   if (!html || !host) return;
   hideFloatTip();
@@ -892,7 +893,7 @@ export function hideHeroSkillTip(): void {
 }
 
 /** Gear / Character sayfasının skill çubuğu: savaştaki hücreler (seçim / kısayol / devre dışı yok) + pasif madalyonu; tooltip hücrenin üstünde. */
-export function skillBar(classId: string, stats: Stats, after: Stats | null): HTMLElement {
+export function skillBar(classId: string, stats: Stats, after: Stats | null, evo?: EvolveSource): HTMLElement {
   const bar = el('div', 'gr-skillbar');
   const def = content.classes[classId];
   const rows = gearSkillRows(classId, stats, after);
@@ -908,7 +909,7 @@ export function skillBar(classId: string, stats: Stats, after: Stats | null): HT
       return plateHtml('pas', 'passive', p.name, ico, '', numsHtml(r), colorDiffs(tipHtml(tip)), blurbOf(passiveTip(p, stats, null), true), bigNumsHtml(r), idx, intro);
     }
     const skill = r.skill!;
-    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, iconUrl(skillIconName(skill), skill.fx, ownerOfSkill(skill.id)), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after))), blurbOf(skillTip(skill, stats, null), false), bigNumsHtml(r), idx, intro);
+    return plateHtml(skillRows.indexOf(r) === 3 ? 'ult' : '', skill.id, skill.name, heroSkillIconUrl(evo, skill), plateChips(costChips(skill, stats)), numsHtml(r), colorDiffs(tipHtml(skillTipContent(skill, stats, after, evo))), blurbOf(skillTip(skill, stats, null), false), bigNumsHtml(r), idx, intro);
   });
   bar.innerHTML = html.join('');
   // Açıklama kabın (kaydırmalı sayfa) içinde değil, ekranın en üst katmanında (Gear örtüsü) açılır: hiçbir kap kırpamaz, ekran içinde kalır.

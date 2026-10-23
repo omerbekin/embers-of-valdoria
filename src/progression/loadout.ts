@@ -12,6 +12,7 @@ import { equippedWeaponPower, weaponMultFor } from './weapon';
 import { LEVELS, type StatAlloc } from './levels';
 import type { TreeAlloc } from './skill-tree';
 import { treeSetupFor } from './skill-tree-compile';
+import { evolvedSkillIds } from './skill-tree-evolve';
 import type { TreeMode } from './skill-tree-data';
 
 /** Güç katmanının girdisi: sefer kahramanı (campaign Hero) ve endless kahramanı bu şekle uyar. */
@@ -321,7 +322,7 @@ export function summonBaseOf(src: LoadoutSource): Attributes | undefined {
  * `mode`: skill ağacının modu (sefer 'campaign', Endless 'endless'); verilmezse ağaç YOK (arayüz önizlemeleri, golden kayıtlar, QB). Ağaç ancak
  * _rules.json ana şalteri + mod bayrağı açıksa (ya da debug odaklı kurulum açıksa) `tree` olarak eklenir (skill-tree-compile.ts > treeSetupFor).
  */
-export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: TreeMode } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase' | 'tree'> {
+export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: TreeMode } = {}): Pick<UnitSetup, 'modifiers' | 'itemEffects' | 'level' | 'summonBase' | 'tree' | 'evolved'> {
   const l = loadout(src);
   let fx = l.itemEffects;
   if (fx && o.effects === false) {
@@ -338,5 +339,6 @@ export function loadoutSetup(src: LoadoutSource, o: { effects?: boolean; mode?: 
   const differs = !!base && !!final && ATTRS.some((a) => base[a] !== final[a]);
   const level = Math.floor(src.level ?? 1);
   const tree = o.mode ? treeSetupFor(src, o.mode) : undefined;
-  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}), ...(tree ? { tree } : {}) };
+  const evolved = o.mode ? evolvedSkillIds(src, o.mode) : []; // yalnızca sunum: evolve onaylı skill'ler (ikon animasyonu)
+  return { ...(l.modifiers ? { modifiers: l.modifiers } : {}), ...(fx ? { itemEffects: fx } : {}), ...(level > 1 ? { level } : {}), ...(differs ? { summonBase: base } : {}), ...(tree ? { tree } : {}), ...(evolved.length ? { evolved } : {}) };
 }

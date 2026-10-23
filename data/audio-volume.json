@@ -1,0 +1,5 @@
+{
+  "_": "Ses kaydırıcılarının ortak dB eğrisi (Ömer 2026-10-23): adım 20 = 0 dB, her adım aşağı dbPerStep dB kısar, adım 0 = kapalı. Master, Music, SFX ve UI aynı eğriyi kullanır (src/ui/volume-steps.ts). Varsayılanlar: master ve sfx burada; music data/audio-music.json, ui data/audio-ui.json (defaultLevel).",
+  "dbPerStep": 2,
+  "defaults": { "master": 18, "sfx": 19 }
+}

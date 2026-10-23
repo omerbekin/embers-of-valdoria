@@ -9,6 +9,8 @@ export function dismissOnBackdrop(overlay: HTMLElement, panel: HTMLElement | ((t
   const inside = (t: EventTarget | null): boolean => {
     if (!(t instanceof Node)) return false;
     if (t instanceof Element && t.closest('.nav-btn')) return true;
+    // Panelin dışında ama örtünün çocuğu olan açık ipuçları (skill ağacı önizlemesi + / − düğmeleri) zemin sayılmaz
+    if (t instanceof Element && t.closest('.tt-tip')) return true;
     return typeof panel === 'function' ? panel(t) : panel.contains(t);
   };
   let downOutside = false;

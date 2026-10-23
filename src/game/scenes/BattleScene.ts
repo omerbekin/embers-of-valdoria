@@ -1,4 +1,4 @@
-import { setPhaserRightClick } from '../../ui/right-click';
+import { rightClickAction, setPhaserRightClick } from '../../ui/right-click';
 import Phaser from 'phaser';
 import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wait';
 import { battleSpeed } from '../../ui/battle-speed';
@@ -25,6 +25,10 @@ import { preloadPoses, releaseForBattle, releasePoseSources } from '../pose-rig'
 import { unitWeaponPick, type WeaponItem } from '../pose-weapons';
 import type { WeaponPick } from '../poses';
 import { ensureIcon, ensureSkillIcon, iconTextureUrl, onIconImagesLoaded } from '../icons';
+import { TREE_ICON_PREFIX } from '../icon-image-files';
+import { hasTreeArt, markEvolved } from '../../ui/evolve-icon';
+import { resolveEvolveIcon } from '../../progression/skill-tree-evolve';
+import { TREE_RULES } from '../../progression/skill-tree-data';
 import { initialSeed, initialSizes, newSeed } from '../seed';
 import { clampSize } from '../team-select-model';
 import { EL, elGo, elScreenIn, elText } from '../elegant-ui';
@@ -77,7 +81,7 @@ import type { RaiseFlow, RaiseInputs } from '../raise-dead-flow';
 import { brazierIconUrl, rememberShown, valorTip } from '../../ui/valor-braziers';
 import type { CorpseMarker } from '../corpse-marker';
 import { isDeltaStat, previewStatusText, statDir, statSources } from '../stat-delta';
-import { areaBoards, areaHoverSpecs, areaTone, blockedTargets, outOfRangeCells } from '../target-cells';
+import { areaBoards, areaHoverSpecs, areaTone, blockedTargets, outOfRangeCells, sameAreaResult } from '../target-cells';
 import type { MpBattleHooks, MpResultInfo } from '../mp-hooks';
 import { isGameMenuOpen, toggleGameMenu } from '../../ui/game-menu';
 import { isSettingsOpen } from '../../ui/settings';
@@ -1297,10 +1301,11 @@ export class BattleScene extends Phaser.Scene {
    * and unreachable units all behave the same. Mouse: hover previews, click picks. Touch: `twoTap` (area skills) = first tap previews, second tap
    * on the same cell picks; otherwise a tap picks at once.
    */
-  private bindCellZones(boards: Array<'party' | 'enemy'>, h: { twoTap: boolean; canPick: (board: 'party' | 'enemy', slot: number) => boolean; onHover: (board: 'party' | 'enemy', slot: number | null) => void; onPick: (board: 'party' | 'enemy', slot: number) => void }): void {
+  private bindCellZones(boards: Array<'party' | 'enemy'>, h: { twoTap: boolean; canPick: (board: 'party' | 'enemy', slot: number) => boolean; sameArea?: (board: 'party' | 'enemy', prev: number, next: number) => boolean; onHover: (board: 'party' | 'enemy', slot: number | null) => void; onPick: (board: 'party' | 'enemy', slot: number) => void }): void {
     const lanes = content.GRID.lanes;
     const body = { w: layout.spriteBox.width, h: layout.spriteBox.height };
     let downWasHover = false;
+    let prevHoverSlot: number | null = null;
     const setHover = (board: 'party' | 'enemy', slot: number | null): void => {
       if (slot === null) {
         if (this.cellHover) {
@@ -1332,6 +1337,7 @@ export class BattleScene extends Phaser.Scene {
         if (isSelectModifier(p.event as MouseEvent | undefined)) return; // Ctrl/Cmd+click selects a unit (bindUnitSelect), it never picks
         const cell = at(p);
         downWasHover = cell !== null && this.cellHover?.board === board && this.cellHover.slot === cell;
+        prevHoverSlot = this.cellHover?.board === board ? this.cellHover.slot : null;
         setHover(board, cell);
       });
       zone.on('pointerup', (p: Phaser.Input.Pointer) => {
@@ -1349,7 +1355,8 @@ export class BattleScene extends Phaser.Scene {
           this.hud?.unpinAll(); // boş yere tık / dokunuş: sabit birim kartları kapanır (masaüstü + mobil)
           return;
         }
-        if (p.wasTouch && h.twoTap && !downWasHover) return; // touch: the first tap only previews
+        // touch: the first tap only previews; a second tap on another cell that gives the exact same area casts
+        if (p.wasTouch && h.twoTap && !downWasHover && !(prevHoverSlot !== null && h.sameArea?.(board, prevHoverSlot, cell))) return;
         if (!h.canPick(board, cell)) {
           // Hedef olmayan birime tıklamak: kartı kendi tarafında sabitlenir / kaldırılır (hedefleme sürerken de)
           const unit = [...this.battle.living('party'), ...this.battle.living('enemy')].find((c) => c.board === board && c.slot === cell);
@@ -1845,6 +1852,12 @@ export class BattleScene extends Phaser.Scene {
     this.bindCellZones(boards, {
       twoTap: area,
       canPick: (board, slot) => (area ? this.battle.shapePreviewCells(actorUid, skillId, this.battle.cursorAnchor(skillId, slot, board, actorUid), board).valid : !!targetAt(board, slot)),
+      sameArea: (board, prev, next) =>
+        area &&
+        sameAreaResult(
+          this.battle.shapePreviewCells(actorUid, skillId, this.battle.cursorAnchor(skillId, prev, board, actorUid), board),
+          this.battle.shapePreviewCells(actorUid, skillId, this.battle.cursorAnchor(skillId, next, board, actorUid), board),
+        ),
       onHover: (board, slot) => this.onTargetHover(actorUid, skillId, board, slot, targetAt),
       onPick: (board, slot) => {
         if (area) this.perform(actorUid, skillId, '', this.battle.cursorAnchor(skillId, slot, board, actorUid), board);
@@ -2050,7 +2063,7 @@ export class BattleScene extends Phaser.Scene {
     const anchor = this.hud?.root.querySelector<HTMLElement>(`.bp[data-skill="${skillId}"]`);
     const base = this.battle.skill(skillId, actor);
     if (!this.hud || !anchor || !base) return; // düğme yoksa panel yok: skill kendi biçimiyle seçili kalır
-    const skillIcon = (d: SkillDef) => this.texUrl(ensureSkillIcon(this, d));
+    const skillIcon = (d: SkillDef) => this.skillIconUrl(actor, d);
     const cards: SkillChoiceCard[] = [];
     if (modes.keepBase) cards.push({ key: '', name: base.name, text: modes.baseText ?? '', iconUrl: skillIcon(base) });
     for (const m of modes.list) {
@@ -2416,19 +2429,21 @@ export class BattleScene extends Phaser.Scene {
    * iptal edilecek bir şey yoksa sabit birim kartları kapanır.
    */
   private rightClickCancel(): void {
+    const hasSelection = !!this.moveMode || !!(this.raiseFlow && this.selected) || !!(this.modePanel || this.modePrompt) || !!(this.selected && this.playerCanAct);
+    // Seçim varsa bu tık yalnızca onu iptal eder; kart (sabit) ancak sonraki sağ tıkta kapanır
+    if (rightClickAction(hasSelection) === 'close-cards') {
+      this.hud?.unpinAll();
+      return;
+    }
     if (this.moveMode) return this.cancelMove();
     if (this.raiseFlow && this.selected) return this.raiseBack();
     if (this.modePanel || this.modePrompt) return this.cancelModeChoice();
-    if (this.selected && this.playerCanAct) {
-      const actor = this.selected.actor;
-      this.hideInfoTip();
-      this.hideUnitTip();
-      this.clearSelection();
-      this.suppressAutoSelect = actor;
-      this.refreshCommands();
-      return;
-    }
-    this.hud?.unpinAll();
+    const actor = this.selected!.actor;
+    this.hideInfoTip();
+    this.hideUnitTip();
+    this.clearSelection();
+    this.suppressAutoSelect = actor;
+    this.refreshCommands();
   }
 
   private onCombatantTap(view: CombatantView): void {
@@ -2519,7 +2534,8 @@ export class BattleScene extends Phaser.Scene {
     const summonLine = summonPreviewLine(sp, sp.corpse ? (this.battle.get(sp.corpse.uid)?.name ?? null) : null);
     if (this.battle.needsCorpseChoice(actor.uid, skill.id) && sp.unit) rows.push([`You choose the corpse to consume: empowered ${sp.unit.name} (HP ${sp.unit.stats.hp})`, '#c58bff'], ['Step 1: pick a corpse, step 2: pick the cell (Esc goes back)', colors.muted]);
     else if (summonLine) rows.push([summonLine.text, summonLine.tone === 'empowered' ? '#c58bff' : colors.muted]);
-    const tip = this.makeInfo(info.name, colors.text, ensureSkillIcon(this, skill), rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
+    const tip = this.makeInfo(info.name, colors.text, undefined, rows, 'Skill', meta, skillMiniGrid(skill, content.formulas.formation));
+    tip.iconUrl = this.skillIconUrl(actor, skill);
     // Hedef türü · element · Melee / Ranged (ortak kaynak: src/ui/skill-tags.ts; Codex ve takım seçimiyle aynı)
     tip.tags = skillTags(skill).map((g) => ({ text: g.text, kind: g.kind, ...(g.color ? { color: g.color } : {}), ...(g.icon ? { iconUrl: this.texUrl(ensureIcon(this, g.icon, g.color ?? '#e8e2d0', false)) } : {}) }));
     return tip;
@@ -2649,7 +2665,7 @@ export class BattleScene extends Phaser.Scene {
       skills.push({
         id,
         name: sk.name,
-        iconUrl: this.texUrl(ensureSkillIcon(this, sk)),
+        iconUrl: this.skillIconUrl(c, sk),
         target: skillTargetLabel(sk),
         cost: skillCostAmount(sk.cost, c) > 0 ? (chips[0] ?? null) : null,
         cd: turns ? (sk.cooldown ?? 0) : 0,
@@ -2669,7 +2685,7 @@ export class BattleScene extends Phaser.Scene {
           const d = pv.damage;
           const heal = pv.heal;
           preview = {
-            iconUrl: this.texUrl(ensureSkillIcon(this, sk)),
+            iconUrl: this.skillIconUrl(this.battle.get(this.selected.actor), sk),
             skill: sk.name,
             ...(d ? { hit: formatHit(d.hitChance).replace(' hit', ''), amount: d.hpLoss === 0 ? 'blocked' : d.min === d.max ? `${d.min} dmg` : `${d.min}–${d.max} dmg` } : {}),
             ...(heal && heal.avg > 0 ? { amount: `+${heal.avg} HP` } : {}),
@@ -4151,6 +4167,16 @@ export class BattleScene extends Phaser.Scene {
     this.hud.layout(left, top, scale, stageView.right - stageView.left);
   }
 
+  /**
+   * Skill ikonunun DOM adresi (Ömer 2026-10-23 evolve kuralı): birimin evolve'u ONAYLI skill'lerinde (Combatant.evolved) evolve sanatı varsa o,
+   * yoksa normal ikon; ikisi de animasyon işaretiyle (src/ui/evolve-icon.ts). Evolve değilse eskisi gibi. Birim yoksa normal ikon.
+   */
+  private skillIconUrl(actor: Combatant | undefined, skill: SkillDef): string {
+    const r = actor?.evolved?.includes(skill.id) ? resolveEvolveIcon({ class: actor.defId }, skill.id, undefined, hasTreeArt, TREE_RULES, actor.evolved) : null;
+    if (!r?.evolved) return this.texUrl(ensureSkillIcon(this, skill));
+    return markEvolved(this.texUrl(r.art ? ensureIcon(this, `${TREE_ICON_PREFIX}${r.art}`, skill.fx, true) : ensureSkillIcon(this, skill)));
+  }
+
   /** Phaser dokusu -> DOM resmi (data URL; önbellekli, sürüm değişince temizlenir). */
   private texUrl(key: string): string {
     const file = iconTextureUrl(key); // boyalı stat ikonu: tam boy dosya (#smooth), doku kopyası değil
@@ -4265,7 +4291,7 @@ export class BattleScene extends Phaser.Scene {
       skills.push({
         id: skill.id,
         name: skill.name,
-        iconUrl: this.texUrl(ensureSkillIcon(this, skill)),
+        iconUrl: this.skillIconUrl(actor, skill),
         key: idx + 1,
         cost: this.skillCostChips(actor, skill),
         wait,

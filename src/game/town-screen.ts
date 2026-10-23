@@ -194,7 +194,7 @@ export class TownScreen {
     fadeLine(lines, W / 2, W / 2 + 300, 80, EL.GOLD, 0.45, 'out');
     this.root.add(lines);
     this.root.add(elBody(s, W / 2, 104, this.node.subtitle, this.hooks.compact() ? 28 : 21, EL.MUTED).setOrigin(0.5));
-    if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h)) this.addHotspot(h, cover);
+    if (def) for (const h of def.hotspots) if (hotspotOffered(this.node, h, this.hooks.state())) this.addHotspot(h, cover); // dinlenmiş hikâyenin NPC'si yok
     // Demirci (TUR 1 madde 7): yeri campaign.json > blacksmith.hotspots'ta (kasabanın kendi verisi değil)
     const smith = smithHotspot(this.node);
     if (def && smith && smith.rect[2] > smith.rect[0]) this.addHotspot(smith, cover);

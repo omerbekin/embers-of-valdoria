@@ -48,6 +48,15 @@ export const CODEX_SECTIONS: readonly CodexSectionDef[] = [
   { id: 'elements', title: 'Elements', icon: 'meteor', layout: 'list' },
 ];
 
+/** Sol menü satırı kimliği -> boyalı Codex ikonu (assets/misc-icons/codex/nav_*); dosya yoksa satırın eski ikonu. */
+export const NAV_CODEX_ICON: Readonly<Record<string, string>> = {
+  start: 'nav_start', lessons: 'nav_lessons', classes: 'nav_classes', skills: 'nav_skills', mechanics: 'nav_mechanics', statuses: 'nav_statuses', elements: 'nav_elements',
+  assets: 'nav_assets', sounds: 'nav_sounds', animations: 'nav_animations', icons: 'nav_icons', art: 'nav_art', poses: 'nav_poses', palette: 'nav_palette', versions: 'nav_versions', legacy: 'nav_legacy',
+};
+export const navIconName = (id: string, fallback: string): string => (NAV_CODEX_ICON[id] ? paintedOr('codex', NAV_CODEX_ICON[id]!, fallback) : fallback);
+/** Weakness table ikonu. */
+export const weaknessIconName = (): string => paintedOr('codex', 'el_weakness', 'meteor');
+
 /** Zemin maddelerinin kimliği (durum kimlikleriyle çakışmasın). */
 export const groundEntryId = (id: string): string => `ground:${id}`;
 export const WEAKNESS_TABLE_ID = 'weakness-table';
@@ -59,13 +68,17 @@ export function portraitOf(u: Pick<WikiUnit, 'id' | 'avatarUrl' | 'spriteUrl' | 
   return { kind: 'portrait', url: null, from: 'logo', logo: u.logo, color: u.color, unitId: u.id };
 }
 
+/** Boss / düşman ailesi makalesinin portresi (avatar varsa); yoksa null (ikon). */
+export const articlePortrait = (a: WikiArticle): Extract<CodexThumb, { kind: 'portrait' }> | null =>
+  a.avatarUrl ? { kind: 'portrait', url: a.avatarUrl, from: 'avatar', logo: a.icon, color: a.accent, unitId: a.avatarId ?? a.id } : null;
+
 const articleEntry = (section: CodexSectionId, a: WikiArticle): CodexEntry => ({
   section,
   id: a.id,
   title: a.title,
   sub: a.group,
   group: a.group,
-  thumb: { kind: 'icon', icon: a.icon, color: a.accent, owner: null },
+  thumb: articlePortrait(a) ?? { kind: 'icon', icon: a.icon, color: a.accent, owner: a.owner ?? null },
   search: a.search,
 });
 
@@ -106,7 +119,7 @@ export function codexEntries(cat: WikiCatalog): Record<CodexSectionId, CodexEntr
         title: 'Weakness table',
         sub: 'All elements',
         group: 'Overview',
-        thumb: { kind: 'icon', icon: 'meteor', color: '#ffe29a', owner: null },
+        thumb: { kind: 'icon', icon: weaknessIconName(), color: '#ffe29a', owner: null },
         search: `weakness table multiplier ${cat.elementTable.head.join(' ')} ${cat.elementTable.rows.flat().join(' ')}`.toLowerCase(),
       },
       ...cat.elements.map((e): CodexEntry => ({ section: 'elements', id: e.id, title: e.name, sub: e.skills.length ? `${e.skills.length} skills` : 'No skill yet', group: 'Elements', thumb: { kind: 'icon', icon: e.icon, color: e.color, owner: null }, search: e.search })),

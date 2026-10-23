@@ -4,6 +4,7 @@ import {
   CONFIG,
   autoResolve,
   completeSimple,
+  completeStory,
   debugTeleport,
   getMap,
   hotspotAt,
@@ -14,6 +15,8 @@ import {
   partySpots,
   recruitInTown,
   recruitOffer,
+  revisitNode,
+  storyHeard,
   townCover,
   townRecruitOffer,
   townScene,
@@ -83,6 +86,30 @@ describe('town scene data (valdoria.json > scene)', () => {
     expect(CONFIG.texts.townRested).toMatch(/fallen stay down/); // TUR 1 madde 10: dinlenme diriltmez
     expect(CONFIG.texts.townRecruit).toBeTruthy();
     expect(CONFIG.townScreen.heroHeight).toBeGreaterThan(0);
+  });
+
+  it('a town story plays once: after it is heard the NPC (Charcoal Burner, Keep Commander) leaves the town screen, also in old saves', () => {
+    for (const id of ['4', '7']) {
+      const n = map.nodes.find((x) => x.id === id)!;
+      const npc = townScene(n)!.hotspots.find((h) => h.action === 'story')!;
+      const before = at(id, 'story');
+      expect(storyHeard(before, n)).toBe(false);
+      expect(hotspotOffered(n, npc, before)).toBe(true); // hikâye adımı sırasında NPC duruyor
+      const after = completeStory(before);
+      expect(nextStep(after).kind).not.toBe('story');
+      expect(storyHeard(after, n)).toBe(true);
+      expect(hotspotOffered(n, npc, after)).toBe(false);
+      // kasabadan çıkıp yeniden girince (revisit) de dönmez; hikâye adımı yeniden açılmaz (ödül ikinci kez alınamaz)
+      const left = completeSimple(after, 'town');
+      const back = revisitNode(left);
+      expect(nextStep(back).kind).not.toBe('story');
+      expect(hotspotOffered(n, npc, back)).toBe(false);
+      expect(() => completeStory(back)).toThrow();
+      // eski kayıt: hikâye kaydı yok ama kasaba adımı bitmiş -> dinlenmiş sayılır
+      const legacy = { ...left, done: left.done.filter((d) => d !== `${id}:story`) };
+      expect(storyHeard(legacy, n)).toBe(true);
+      expect(hotspotOffered(n, npc, legacy)).toBe(false);
+    }
   });
 });
 
