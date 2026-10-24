@@ -3,8 +3,13 @@
  * (Codex > Lessons bunları listeler). Sefer kaydından bağımsız ve genel: bir ders bir kez görülür (her seferde değil). Depolama yoksa
  * (gizli pencere, Node testi) yalnızca bellekte tutulur, oyun çökmez.
  */
+import { storage } from '../game/kv-storage';
+
 const KEY = 'eov.tutorial.v1';
 const VERSION = 1;
+/** Bulut senkronu (cloud/sync-core.ts) sürüm denetimi için. */
+export const TUTORIAL_KEY = KEY;
+export const TUTORIAL_VERSION = VERSION;
 
 interface TutorialSave {
   v: number;
@@ -23,7 +28,7 @@ function load(): TutorialSave {
   if (mem) return mem;
   let s: TutorialSave = { v: VERSION, on: true, seen: [] };
   try {
-    const raw = globalThis.localStorage?.getItem(KEY);
+    const raw = storage()?.getItem(KEY);
     if (raw) {
       const p = JSON.parse(raw) as Partial<TutorialSave>;
       const strs = (a: unknown): string[] => (Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : []);
@@ -45,7 +50,7 @@ function load(): TutorialSave {
 function save(s: TutorialSave): void {
   mem = s;
   try {
-    globalThis.localStorage?.setItem(KEY, JSON.stringify(s));
+    storage()?.setItem(KEY, JSON.stringify(s));
   } catch {
     /* depolama yok: yalnızca bu oturum */
   }

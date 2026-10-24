@@ -27,10 +27,15 @@ export function shouldReload(now: number, store: Pick<Storage, 'getItem' | 'setI
   }
 }
 
-function reloadOnce(reason: unknown): boolean {
-  if (!shouldReload(Date.now(), sessionStorage)) return false;
+/** Yeni sürümü yüklemek için sayfayı yeniler (kayıt localStorage'da durur). Bulut kaydı "newer version" bildirimi de bunu kullanır. */
+export function reloadForUpdate(reason: unknown): void {
   logEvent('info', `stale build reload: ${reason instanceof Error ? reason.message : String(reason)}`.slice(0, 200));
   location.reload();
+}
+
+function reloadOnce(reason: unknown): boolean {
+  if (!shouldReload(Date.now(), sessionStorage)) return false;
+  reloadForUpdate(reason);
   return true;
 }
 

@@ -34,6 +34,15 @@ export default defineConfig({
     __APP_VERSION__: JSON.stringify(process.env.npm_package_version ?? '0.0.0'),
     __DISPLAY_VERSION__: JSON.stringify(displayVersion()),
   },
+  // Hesap / bulut kaydı (accounts-plan.md): geliştirme sunucusunda /auth, /save, /account yerel Worker'a (`wrangler dev`, 8787) gider;
+  // Host başlığı korunur (changeOrigin yok): çerez ve OAuth dönüş adresi 5173 kökeninde kalır.
+  server: {
+    proxy: {
+      '/auth': { target: 'http://127.0.0.1:8787' },
+      '/save': { target: 'http://127.0.0.1:8787' },
+      '/account': { target: 'http://127.0.0.1:8787' },
+    },
+  },
   build: {
     // Hızlı açılış (kod bölme): Phaser kendi parçasında (~1,2 MB, sürüm değişmedikçe önbellekte kalır); ana menü dışındaki sahneler,
     // Codex, debug menüsü ve gömülü galeri dynamic import ile ayrı parçalarda (src/game/lazy-scenes.ts, src/wiki/open.ts, src/ui/debug-entry.ts).

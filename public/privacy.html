@@ -1,0 +1,115 @@
+<!doctype html>
+<!-- ÜRETİLDİ: tools/gen-privacy-page.mjs (kaynak data/account-notice.json + data/privacy-notice.json). Elle düzenleme. -->
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="color-scheme" content="dark">
+<title>Privacy | Embers of Valdoria</title>
+<meta name="description" content="Privacy notice for Embers of Valdoria: accounts, cloud save and error reports.">
+<style>
+@font-face{font-family:'Cinzel';font-weight:400 900;font-display:swap;src:url('fonts/Cinzel-normal-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'Cinzel';font-weight:400 900;font-display:swap;src:url('fonts/Cinzel-normal-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url('fonts/EBGaramond-normal-latin-ext.woff2') format('woff2');unicode-range:U+0100-02BA,U+02BD-02C5,U+02C7-02CC,U+02CE-02D7,U+02DD-02FF,U+0304,U+0308,U+0329,U+1E00-1E9F,U+2020,U+20A0-20AB,U+20AD-20C0,U+2113,U+2C60-2C7F,U+A720-A7FF}
+@font-face{font-family:'EB Garamond';font-weight:400 800;font-display:swap;src:url('fonts/EBGaramond-normal-latin.woff2') format('woff2');unicode-range:U+0000-00FF,U+0131,U+0152-0153,U+02BB-02BC,U+02C6,U+02DA,U+02DC,U+2000-206F,U+20AC,U+2122,U+2212,U+FEFF,U+FFFD}
+:root{--bg:#120d09;--panel:#1a130d;--txt:#d9c8a2;--on:#f3d999;--muted:#a8977a;--gold:#d9b26a;--ember:#ffb35a;--line1:rgba(217,178,106,.16);--line2:rgba(217,178,106,.3);--line3:rgba(217,178,106,.55);
+--display:Cinzel,Georgia,'Palatino Linotype',serif;--body:'EB Garamond',Georgia,'Palatino Linotype',serif}
+*{box-sizing:border-box;font-style:normal}
+html{background:var(--bg);-webkit-text-size-adjust:100%}
+body{margin:0;background:radial-gradient(ellipse at 50% 0,#2a1c10 0,var(--bg) 60%) no-repeat,var(--bg);color:var(--txt);font:400 19px/1.55 var(--body)}
+main{max-width:760px;margin:0 auto;padding:32px 16px 48px}
+.lang{display:none}
+#en{display:block}
+#tr:target{display:block}
+#tr:target~#en{display:none}
+header{text-align:center;padding-bottom:20px;border-bottom:1px solid var(--line2);margin-bottom:8px}
+.game{font:600 14px/1.2 var(--display);letter-spacing:.22em;text-transform:uppercase;color:var(--muted);margin:0 0 6px}
+h1{font:600 34px/1.15 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--on);margin:0 0 14px;text-shadow:0 2px 4px rgba(12,8,5,.95)}
+h2{font:600 22px/1.25 var(--display);letter-spacing:.08em;text-transform:uppercase;color:var(--on);margin:36px 0 12px;padding-bottom:8px;border-bottom:1px solid var(--line1)}
+.switch a,footer a{display:inline-block;min-height:44px;padding:10px 18px;font:600 15px/24px var(--display);letter-spacing:.12em;text-transform:uppercase;color:var(--gold);text-decoration:none;border:1px solid var(--line2)}
+.switch a:hover,.switch a:focus-visible,footer a:hover,footer a:focus-visible{color:var(--ember);border-color:var(--line3)}
+.updated{font-size:15px;color:var(--muted);margin:14px 0 0}
+.intro{color:var(--on);margin:0 0 10px}
+dl{margin:18px 0 0}
+dt{font:600 15px/1.3 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:20px 0 4px}
+dd{margin:0}
+a{color:var(--ember);overflow-wrap:anywhere}
+footer{text-align:center;margin-top:44px;padding-top:20px;border-top:1px solid var(--line2)}
+@media (max-width:520px){body{font-size:18px}h1{font-size:26px}h2{font-size:18px}main{padding-top:22px}}
+</style>
+</head>
+<body>
+<main>
+<article class="lang" id="tr" lang="tr">
+<header>
+<p class="game">Embers of Valdoria</p>
+<h1>Gizlilik</h1>
+<nav class="switch"><a href="#en" hreflang="en">English</a></nav>
+<p class="updated">Son güncelleme: 2026-10-24</p>
+</header>
+<section class="notice" aria-labelledby="tr-account"><h2 id="tr-account">Hesap ve bulut kaydı</h2>
+<p class="intro">Giriş yapmak isteğe bağlıdır. İlerlemenizi bulutta tutar, başka bir cihazda devam edebilirsiniz. Girmezseniz oyun eskisi gibi çalışır.</p>
+<p class="intro">Yalnızca hesap kimliği, giriş sağlayıcısı kimliği, seçtiğiniz görünen ad ve kayıtlı ilerleme saklanır. E-posta ya da şifre yok.</p>
+<dl>
+<dt>Veri sorumlusu</dt><dd>Bu verilerden Embers of Valdoria (oyunun geliştiricisi) sorumludur. İletişim: <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a>.</dd>
+<dt>Giriş</dt><dd>Google ya da Discord ile giriş yaparsınız. Şifrenizi asla görmeyiz. Sağlayıcıdan yalnızca sizi bize tanıtan bir kullanıcı kimliği isteriz; oyun e-posta adresinizi ya da profil fotoğrafınızı istemez.</dd>
+<dt>Toplananlar</dt><dd>Rastgele bir hesap kimliği; giriş sağlayıcısının adı (Google ya da Discord) ve onun verdiği kullanıcı kimliği; seçtiğiniz görünen ad; oturum anahtarınızın özeti (hash) ve bitiş tarihi; bulut kaydınız (sefer, Endless ve eğitim ilerlemesi gibi oyun ilerlemesi; ayarlar cihazınızda kalır); hesabın oluşturulma, son giriş ve son kayıt zamanları.</dd>
+<dt>Toplanmayanlar</dt><dd>E-posta adresi, profil fotoğrafı, şifre ya da gerçek ad toplanmaz. IP adresleri ve tarayıcı bilgileri (user agent) hesabınızla birlikte saklanmaz. Google ya da Discord erişim anahtarları saklanmaz.</dd>
+<dt>Amaç</dt><dd>İlerlemenizi bulutta tutmak ve herhangi bir cihazda devam etmenizi sağlamak. İleride aynı hesap çok oyunculu mod ve skor tablolarında kullanılabilir; orada görünen adınız diğer oyunculara gösterilebilir. Bu olmadan önce bu metni güncelleriz.</dd>
+<dt>Hukuki dayanak</dt><dd>Giriş yaptığınızda istediğiniz hesap hizmetinin sunulması (sözleşmenin ifası). Giriş isteğe bağlıdır ve hesabınızı istediğiniz an silebilirsiniz.</dd>
+<dt>Nerede ve ne kadar süre</dt><dd>Cloudflare, Inc. altyapısında saklanır (sunucular Türkiye dışında olabilir). Hesabınız ve bulut kaydınız siz silene kadar tutulur; 24 ay boyunca hiç giriş yapılmayan hesaplar kendiliğinden silinir. Giriş oturumları 30 gün sonra sona erer.</dd>
+<dt>Hesabı silme</dt><dd>Oyunun hesap ayarlarındaki Delete account düğmesini kullanın: hesabınız, giriş bağlantılarınız, oturumlarınız ve bulut kaydınız silinir. Bu cihazdaki ilerlemeniz kalır. Hesap sayfasında görünen destek kimliğini ekleyerek <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> adresine de yazabilirsiniz.</dd>
+<dt>Yaş</dt><dd>Hesaplar 13 yaş ve üzeri oyuncular içindir. Daha küçükseniz lütfen giriş yapmadan oynayın.</dd>
+<dt>Haklarınız (KVKK md. 11 / GDPR)</dt><dd>Hangi verilerin işlendiğini sorabilir, bir kopyasını alabilir, düzeltilmesini ya da silinmesini isteyebilir ve itiraz edebilirsiniz. Hesabınızı bulabilmemiz için hesap sayfasında görünen destek kimliğini ekleyerek <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> adresine yazın.</dd>
+</dl></section>
+<section class="notice" aria-labelledby="tr-reports"><h2 id="tr-reports">Hata raporları</h2>
+<p class="intro">Hata raporları çökmeleri bulup düzeltmemize yardım eder. Siz açmadıkça kapalıdır; oyun her iki durumda da aynı çalışır.</p>
+<p class="intro">Açıkken yalnızca bir sorun çıktığında kısa bir rapor gönderilir. Raporlarda ad, hesap, kayıt verisi ya da yazdığınız metin asla yer almaz.</p>
+<dl>
+<dt>Veri sorumlusu</dt><dd>Bu verilerden Embers of Valdoria (oyunun geliştiricisi) sorumludur. İletişim: <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a>.</dd>
+<dt>Ne ve neden</dt><dd>Yalnızca raporları açarsanız, bir sorun çıktığında çökmeleri bulup düzeltebilmemiz için oyun kısa bir teknik rapor gönderir: oyun sürümü, tarayıcı ve cihaz türü, ekran boyutu, bellek bilgileri, o anki ekran ve son oyun olayları (ekran geçişleri, savaş başlangıçları, hata iletileri).</dd>
+<dt>Toplanmayanlar</dt><dd>Hata raporlarında ad, hesap, kayıt verisi ya da yazdığınız metin bulunmaz. IP adresleri saklanmaz. Aynı cihazdan gelen raporlar rastgele bir kimlikle gruplanır; raporları kapatınca bu kimlik sıfırlanır.</dd>
+<dt>Hukuki dayanak</dt><dd>Açık rızanız (aşağıdaki anahtar). Varsayılan olarak kapalıdır; rızanızı istediğiniz an Settings &gt; Privacy bölümünden geri alabilirsiniz.</dd>
+<dt>Nerede ve ne kadar süre</dt><dd>Cloudflare, Inc. altyapısında saklanır (sunucular Türkiye dışında olabilir) ve 30 gün sonra kendiliğinden silinir.</dd>
+<dt>Haklarınız (KVKK md. 11)</dt><dd>Hangi verilerin işlendiğini sorabilir, düzeltilmesini ya da silinmesini isteyebilir ve itiraz edebilirsiniz. Raporlarınızı bulabilmemiz için Settings &gt; Privacy bölümünde görünen rapor kimliğini ekleyerek <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> adresine yazın.</dd>
+</dl></section>
+<footer><a href="./">Oyuna dön</a></footer>
+</article>
+<article class="lang" id="en" lang="en">
+<header>
+<p class="game">Embers of Valdoria</p>
+<h1>Privacy</h1>
+<nav class="switch"><a href="#tr" hreflang="tr">Türkçe</a></nav>
+<p class="updated">Last updated: 2026-10-24</p>
+</header>
+<section class="notice" aria-labelledby="en-account"><h2 id="en-account">Account and cloud save</h2>
+<p class="intro">Signing in is optional. It keeps your progress in the cloud so you can continue on another device. Without it the game works as before.</p>
+<p class="intro">We store only an account ID, your sign-in provider ID, the display name you choose and your saved progress. No email or password.</p>
+<dl>
+<dt>Who is responsible</dt><dd>Embers of Valdoria (the game's developer) is responsible for this data. Contact: <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a>.</dd>
+<dt>Signing in</dt><dd>You sign in with Google or Discord. We never see your password. We ask the provider only for a user ID that identifies you to us; the game does not request your email or profile picture.</dd>
+<dt>What we collect</dt><dd>A random account ID; the sign-in provider's name (Google or Discord) and the user ID it gives us; the display name you choose; a fingerprint (hash) of your session token and its expiry date; your cloud save (game progress such as campaign, Endless and tutorial progress; settings stay on your device); and when the account was created, last signed in and last saved.</dd>
+<dt>Not collected</dt><dd>No email address, profile picture, password or real name is collected. IP addresses and browser details (user agent) are not stored with your account. Access tokens from Google or Discord are not stored.</dd>
+<dt>Why</dt><dd>To keep your progress in the cloud and let you continue on any device. Later the same account may be used for multiplayer and leaderboards, where your display name can be shown to other players; we will update this notice before that happens.</dd>
+<dt>Legal basis</dt><dd>Providing the account service you ask for when you sign in (performance of a contract). Signing in is optional, and you can delete your account at any time.</dd>
+<dt>Where and how long</dt><dd>Stored with Cloudflare, Inc. (servers may be outside Türkiye). Your account and cloud save are kept until you delete them; accounts with no sign-in for 24 months are deleted automatically. Sign-in sessions expire after 30 days.</dd>
+<dt>Deleting your account</dt><dd>Use the Delete account button in the game's account settings: your account, sign-in links, sessions and cloud save are deleted. Your progress on this device stays. You can also write to <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> and include the support ID shown on the account page.</dd>
+<dt>Age</dt><dd>Accounts are for players aged 13 or older. If you are younger, please play without signing in.</dd>
+<dt>Your rights (KVKK Art. 11 / GDPR)</dt><dd>You can ask what is processed, get a copy, request correction or deletion, and object. Write to <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> and include the support ID shown on the account page so we can find your account.</dd>
+</dl></section>
+<section class="notice" aria-labelledby="en-reports"><h2 id="en-reports">Error reports</h2>
+<p class="intro">Error reports help us find and fix crashes. They are off unless you turn them on, and the game works the same either way.</p>
+<p class="intro">When on, a short report is sent only if something goes wrong. Reports never include your name, account, save data or typed text.</p>
+<dl>
+<dt>Who is responsible</dt><dd>Embers of Valdoria (the game's developer) is responsible for this data. Contact: <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a>.</dd>
+<dt>What and why</dt><dd>Only if you turn reports on, the game sends a short technical report when something goes wrong, so we can find and fix crashes: game version, browser and device type, screen size, memory hints, the current screen and recent game events (screen changes, battle starts, error messages).</dd>
+<dt>Not collected</dt><dd>Error reports contain no name, account, save data or typed text. IP addresses are not stored. A random ID groups reports from the same device; it is reset when you turn reports off.</dd>
+<dt>Legal basis</dt><dd>Your explicit consent (the switch below). Off by default; you can withdraw it at any time in Settings &gt; Privacy.</dd>
+<dt>Where and how long</dt><dd>Stored with Cloudflare, Inc. (servers may be outside Türkiye) and deleted automatically after 30 days.</dd>
+<dt>Your rights (KVKK Art. 11)</dt><dd>You can ask what is processed, request correction or deletion, and object. Write to <a href="mailto:privacy@embersofvaldoria.com">privacy@embersofvaldoria.com</a> and include the report ID shown in Settings &gt; Privacy so we can find your reports.</dd>
+</dl></section>
+<footer><a href="./">Play the game</a></footer>
+</article>
+</main>
+</body>
+</html>

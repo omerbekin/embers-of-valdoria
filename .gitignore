@@ -5,3 +5,4 @@ dist/
 assets/_import_new/
 .wrangler/
 cloudflare/worker-configuration.d.ts
+cloudflare/.dev.vars

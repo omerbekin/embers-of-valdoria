@@ -1,0 +1,48 @@
+{
+  "_not": "Hesap / bulut kaydı gizlilik metni (KVKK tarzı aydınlatma; accounts-plan.md Faz 1c, Ömer 2026-10-24 kararları). TEK kaynak: giriş penceresi (Faz 1d) src/cloud/account-notice.ts üzerinden okur; public/privacy.html bu dosya + privacy-notice.json'dan tools/gen-privacy-page.mjs ile üretilir (dosya değişince betiği çalıştır). en = varsayılan, tr = 'Türkçe' anahtarıyla. intro kısa (her zaman görünür), details 'Details / Ayrıntılar' altında. checkbox = girişte zorunlu onay kutusu (karar 7). tests/account-notice-text.test.ts iki dilin aynı yapıda olduğunu denetler.",
+  "contact": "privacy@embersofvaldoria.com",
+  "en": {
+    "title": "Account and cloud save",
+    "intro": [
+      "Signing in is optional. It keeps your progress in the cloud so you can continue on another device. Without it the game works as before.",
+      "We store only an account ID, your sign-in provider ID, the display name you choose and your saved progress. No email or password."
+    ],
+    "detailsLabel": "Details",
+    "details": [
+      { "heading": "Who is responsible", "text": "Embers of Valdoria (the game's developer) is responsible for this data. Contact: {contact}." },
+      { "heading": "Signing in", "text": "You sign in with Google or Discord. We never see your password. We ask the provider only for a user ID that identifies you to us; the game does not request your email or profile picture." },
+      { "heading": "What we collect", "text": "A random account ID; the sign-in provider's name (Google or Discord) and the user ID it gives us; the display name you choose; a fingerprint (hash) of your session token and its expiry date; your cloud save (game progress such as campaign, Endless and tutorial progress; settings stay on your device); and when the account was created, last signed in and last saved." },
+      { "heading": "Not collected", "text": "No email address, profile picture, password or real name is collected. IP addresses and browser details (user agent) are not stored with your account. Access tokens from Google or Discord are not stored." },
+      { "heading": "Why", "text": "To keep your progress in the cloud and let you continue on any device. Later the same account may be used for multiplayer and leaderboards, where your display name can be shown to other players; we will update this notice before that happens." },
+      { "heading": "Legal basis", "text": "Providing the account service you ask for when you sign in (performance of a contract). Signing in is optional, and you can delete your account at any time." },
+      { "heading": "Where and how long", "text": "Stored with Cloudflare, Inc. (servers may be outside Türkiye). Your account and cloud save are kept until you delete them; accounts with no sign-in for 24 months are deleted automatically. Sign-in sessions expire after 30 days." },
+      { "heading": "Deleting your account", "text": "Use the Delete account button in the game's account settings: your account, sign-in links, sessions and cloud save are deleted. Your progress on this device stays. You can also write to {contact} and include the support ID shown on the account page." },
+      { "heading": "Age", "text": "Accounts are for players aged 13 or older. If you are younger, please play without signing in." },
+      { "heading": "Your rights (KVKK Art. 11 / GDPR)", "text": "You can ask what is processed, get a copy, request correction or deletion, and object. Write to {contact} and include the support ID shown on the account page so we can find your account." }
+    ],
+    "checkbox": "I have read the privacy notice",
+    "language": "Türkçe"
+  },
+  "tr": {
+    "title": "Hesap ve bulut kaydı",
+    "intro": [
+      "Giriş yapmak isteğe bağlıdır. İlerlemenizi bulutta tutar, başka bir cihazda devam edebilirsiniz. Girmezseniz oyun eskisi gibi çalışır.",
+      "Yalnızca hesap kimliği, giriş sağlayıcısı kimliği, seçtiğiniz görünen ad ve kayıtlı ilerleme saklanır. E-posta ya da şifre yok."
+    ],
+    "detailsLabel": "Ayrıntılar",
+    "details": [
+      { "heading": "Veri sorumlusu", "text": "Bu verilerden Embers of Valdoria (oyunun geliştiricisi) sorumludur. İletişim: {contact}." },
+      { "heading": "Giriş", "text": "Google ya da Discord ile giriş yaparsınız. Şifrenizi asla görmeyiz. Sağlayıcıdan yalnızca sizi bize tanıtan bir kullanıcı kimliği isteriz; oyun e-posta adresinizi ya da profil fotoğrafınızı istemez." },
+      { "heading": "Toplananlar", "text": "Rastgele bir hesap kimliği; giriş sağlayıcısının adı (Google ya da Discord) ve onun verdiği kullanıcı kimliği; seçtiğiniz görünen ad; oturum anahtarınızın özeti (hash) ve bitiş tarihi; bulut kaydınız (sefer, Endless ve eğitim ilerlemesi gibi oyun ilerlemesi; ayarlar cihazınızda kalır); hesabın oluşturulma, son giriş ve son kayıt zamanları." },
+      { "heading": "Toplanmayanlar", "text": "E-posta adresi, profil fotoğrafı, şifre ya da gerçek ad toplanmaz. IP adresleri ve tarayıcı bilgileri (user agent) hesabınızla birlikte saklanmaz. Google ya da Discord erişim anahtarları saklanmaz." },
+      { "heading": "Amaç", "text": "İlerlemenizi bulutta tutmak ve herhangi bir cihazda devam etmenizi sağlamak. İleride aynı hesap çok oyunculu mod ve skor tablolarında kullanılabilir; orada görünen adınız diğer oyunculara gösterilebilir. Bu olmadan önce bu metni güncelleriz." },
+      { "heading": "Hukuki dayanak", "text": "Giriş yaptığınızda istediğiniz hesap hizmetinin sunulması (sözleşmenin ifası). Giriş isteğe bağlıdır ve hesabınızı istediğiniz an silebilirsiniz." },
+      { "heading": "Nerede ve ne kadar süre", "text": "Cloudflare, Inc. altyapısında saklanır (sunucular Türkiye dışında olabilir). Hesabınız ve bulut kaydınız siz silene kadar tutulur; 24 ay boyunca hiç giriş yapılmayan hesaplar kendiliğinden silinir. Giriş oturumları 30 gün sonra sona erer." },
+      { "heading": "Hesabı silme", "text": "Oyunun hesap ayarlarındaki Delete account düğmesini kullanın: hesabınız, giriş bağlantılarınız, oturumlarınız ve bulut kaydınız silinir. Bu cihazdaki ilerlemeniz kalır. Hesap sayfasında görünen destek kimliğini ekleyerek {contact} adresine de yazabilirsiniz." },
+      { "heading": "Yaş", "text": "Hesaplar 13 yaş ve üzeri oyuncular içindir. Daha küçükseniz lütfen giriş yapmadan oynayın." },
+      { "heading": "Haklarınız (KVKK md. 11 / GDPR)", "text": "Hangi verilerin işlendiğini sorabilir, bir kopyasını alabilir, düzeltilmesini ya da silinmesini isteyebilir ve itiraz edebilirsiniz. Hesabınızı bulabilmemiz için hesap sayfasında görünen destek kimliğini ekleyerek {contact} adresine yazın." }
+    ],
+    "checkbox": "Gizlilik bildirimini okudum",
+    "language": "English"
+  }
+}

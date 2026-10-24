@@ -29,7 +29,6 @@ import { grantLegendariesRun,
   scoreOf,
   wavePlan,
   type EndlessRun,
-  type KV,
   type ScoreEntry,
   type WavePlan,
 } from '../endless';
@@ -39,6 +38,7 @@ import type { BattleScene, BattleSceneData, CampaignBattleHooks } from './scenes
 import { endlessEffects } from './battle-effects';
 import { newSeed } from './seed';
 import { partyWeapons } from './pose-weapons';
+import { storage } from './kv-storage';
 
 /**
  * Endless'ın tarayıcı tarafı (oturum): o anki koşu, localStorage, savaşa geçiş ve savaştan dönüş. Kurallar src/endless/ içinde (saf).
@@ -48,13 +48,8 @@ import { partyWeapons } from './pose-weapons';
 export const ENDLESS_SCENE = 'EndlessScene';
 const BATTLE_SCENE = 'BattleScene';
 
-export function storage(): KV | null {
-  try {
-    return window.localStorage ?? null;
-  } catch {
-    return null;
-  }
-}
+/** Tek depo erişimi (kv-storage.ts: bulut kirli işareti dahil); eski çağıranlar için buradan da verilir. */
+export { storage };
 
 export interface LastScore {
   entry: ScoreEntry;

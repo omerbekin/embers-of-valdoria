@@ -1,0 +1,391 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="color-scheme" content="dark" />
+<meta name="darkreader-lock" />
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+<title>Account Mockups</title>
+<!--
+  Account / login screens mockup (ui-dev). NOT game code. Fonts copied under account/fonts.
+  Address: #v1 | #v2 | #v3 (structure variant), optional screen after "&": out, in, delete, name, conflict, states.
+  Example: account.html#v2&conflict
+  Account page: v1 Settings rows | v2 Profile plaque + side cards | v3 Status strip + tiles, danger tucked away.
+  Conflict dialog: v1 two cards side by side | v2 aligned comparison table | v3 choice tiles, details folded.
+-->
+<style>
+@font-face { font-family: 'Cinzel'; font-weight: 400 900; font-display: block; src: url('account/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: block; src: url('account/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+:root {
+  color-scheme: dark;
+  --gold: 217, 178, 106;
+  --on: #f6dea0; --txt: #efe3c6; --sub: #d6c49c; --muted: #b8a682; --dim: #8f8068;
+  --ember: #e0702a; --ember2: #ffb35a; --down: #ff8f78;
+  --cin: Cinzel, Georgia, serif; --gar: 'EB Garamond', Georgia, serif;
+  --ease: cubic-bezier(.33, 1, .68, 1);
+}
+* { box-sizing: border-box; }
+html, body { margin: 0; height: 100%; background: #050403; color: var(--txt); font-family: var(--gar); font-size: 19px; font-style: normal; }
+button, input { font: inherit; color: inherit; font-style: normal; }
+a { color: var(--on); text-decoration-color: rgba(var(--gold), .5); text-underline-offset: 3px; }
+
+/* mockup switcher (not in game) */
+#bar { position: fixed; left: 0; right: 0; top: 0; height: 52px; z-index: 60; display: flex; align-items: center; gap: 14px; padding: 0 12px; background: #0d0a07; border-bottom: 1px solid rgba(var(--gold), .3); font: 600 12px var(--cin); letter-spacing: .08em; overflow-x: auto; }
+#bar .grp { display: flex; gap: 3px; align-items: center; flex: none; }
+#bar .grp > span { color: var(--muted); margin-right: 5px; letter-spacing: .18em; }
+#bar button { min-height: 36px; background: transparent; border: 1px solid rgba(var(--gold), .25); padding: 0 10px; cursor: pointer; text-transform: uppercase; white-space: nowrap; font: 600 12px var(--cin); letter-spacing: .06em; }
+#bar button.on { border-color: var(--on); color: var(--on); background: rgba(224,112,42,.12); }
+
+#app { position: fixed; left: 0; right: 0; top: 52px; bottom: 0; overflow: auto; display: grid; place-items: center; padding: 16px;
+  background: radial-gradient(ellipse at 50% 0%, rgba(60,40,22,.5), transparent 65%), linear-gradient(180deg, #14100b, #070504); }
+
+/* buttons: text only, gold hairline; primary rightmost with ember diamonds */
+.btn { position: relative; min-height: 48px; padding: 0 26px; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; background: linear-gradient(180deg, rgba(30,22,14,.82), rgba(12,9,6,.86)); border: 1px solid rgba(var(--gold), .38);
+  font: 600 16px var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--txt); white-space: nowrap; transition: color .2s, border-color .2s, transform .25s var(--ease); }
+.btn:hover:not(:disabled) { border-color: var(--on); color: var(--on); transform: translateY(-2px); }
+.btn:disabled { opacity: .4; cursor: default; }
+.btn.primary { border: 2px solid #d9b26a; color: var(--on); }
+.btn.primary::before, .btn.primary::after { content: ''; position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 10px rgba(240,140,40,.8); }
+.btn.primary::before { left: -6px; } .btn.primary::after { right: -6px; }
+.btn.primary:disabled::before, .btn.primary:disabled::after { background: #5a4a38; box-shadow: none; }
+.btn.danger { border-color: rgba(255,143,120,.55); color: var(--down); }
+.btn.sm { min-height: 44px; padding: 0 18px; font-size: 14px; }
+.lnk { background: none; border: 0; min-height: 44px; padding: 0 6px; cursor: pointer; font: 600 14px var(--cin); letter-spacing: .1em; text-transform: uppercase; color: var(--sub); }
+.lnk:hover { color: var(--on); }
+.lnk.danger { color: var(--down); }
+
+/* windows */
+.win { position: relative; width: min(1120px, 100%); background: linear-gradient(180deg, #1c140d, #0c0906); border: 1px solid rgba(var(--gold), .4); box-shadow: 0 0 0 3px rgba(12,8,5,.7), 0 20px 60px #000; }
+.win::before, .win::after { content: ''; position: absolute; width: 22px; height: 22px; pointer-events: none; }
+.win::before { left: -1px; top: -1px; border-left: 2px solid #d9b26a; border-top: 2px solid #d9b26a; }
+.win::after { right: -1px; bottom: -1px; border-right: 2px solid #d9b26a; border-bottom: 2px solid #d9b26a; }
+.wtitle { font: 600 30px var(--cin); letter-spacing: .14em; text-transform: uppercase; background: linear-gradient(180deg, #fff0c4, #e8c47e 55%, #c0924a); -webkit-background-clip: text; background-clip: text; color: transparent; margin: 0; }
+.sec { font: 600 15px var(--cin); letter-spacing: .2em; text-transform: uppercase; color: rgba(236,200,130,.95); padding-bottom: 6px; border-bottom: 1px solid rgba(var(--gold), .22); margin: 22px 0 10px; }
+.sec:first-child { margin-top: 0; }
+.note { color: var(--sub); font-size: 18px; line-height: 1.35; margin: 6px 0; }
+.dim { color: var(--muted); }
+.mono { font-family: var(--cin); letter-spacing: .06em; font-size: 15px; color: var(--sub); }
+.dot { display: inline-block; width: 9px; height: 9px; border: 1px solid rgba(var(--gold), .7); border-radius: 50%; margin-right: 8px; vertical-align: 1px; }
+.dot.ok { background: rgba(var(--gold), .8); } .dot.off { border-color: var(--dim); }
+
+/* settings shell */
+.shell { display: grid; grid-template-columns: 210px 1fr; min-height: 640px; }
+.cats { border-right: 1px solid rgba(var(--gold), .2); padding: 26px 0; display: flex; flex-direction: column; }
+.cat { min-height: 48px; padding: 0 22px 0 40px; display: flex; align-items: center; position: relative; font: 600 16px var(--cin); letter-spacing: .14em; text-transform: uppercase; color: var(--muted); background: none; border: 0; text-align: left; cursor: pointer; }
+.cat.on { color: var(--on); }
+.cat.on::before { content: ''; position: absolute; left: 20px; top: 50%; width: 9px; height: 9px; margin-top: -4.5px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 8px rgba(240,140,40,.7); }
+.page { padding: 26px 34px 28px; display: flex; flex-direction: column; min-width: 0; }
+.page .wtitle { margin-bottom: 20px; }
+.row { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 56px; padding: 6px 0; border-bottom: 1px solid rgba(var(--gold), .1); }
+.row .lbl { font: 600 17px var(--cin); letter-spacing: .1em; text-transform: uppercase; }
+.row .lbl small { display: block; font: 400 17px var(--gar); letter-spacing: 0; text-transform: none; color: var(--muted); margin-top: 2px; }
+.acts { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; justify-content: flex-end; }
+.chk { display: flex; align-items: center; gap: 14px; min-height: 52px; cursor: pointer; }
+.chk input { position: absolute; opacity: 0; width: 1px; height: 1px; }
+.chk .box { width: 28px; height: 28px; flex: none; border: 1px solid rgba(var(--gold), .6); background: rgba(8,6,4,.7); display: grid; place-items: center; }
+.chk input:checked + .box::after { content: ''; width: 11px; height: 11px; transform: rotate(45deg); background: var(--ember); box-shadow: 0 0 0 1px var(--ember2); }
+.chk input:focus-visible + .box { outline: 2px solid var(--on); outline-offset: 2px; }
+.field { width: 100%; min-height: 48px; padding: 0 14px; background: rgba(8,6,4,.75); border: 1px solid rgba(var(--gold), .4); font: 600 19px var(--gar); color: var(--txt); }
+.field:focus { outline: none; border-color: var(--on); }
+.err { color: var(--down); }
+.provider { display: inline-flex; align-items: center; gap: 12px; }
+.pmark { width: 30px; height: 30px; border: 1px solid rgba(var(--gold), .5); display: grid; place-items: center; font: 600 15px var(--cin); color: var(--on); flex: none; }
+.gated { opacity: .45; pointer-events: none; }
+.banner { border: 1px solid rgba(var(--gold), .35); background: rgba(12,9,6,.6); padding: 12px 16px; margin: 8px 0; }
+.banner.bad { border-color: rgba(255,143,120,.5); }
+.banner b { font: 600 15px var(--cin); letter-spacing: .12em; text-transform: uppercase; display: block; margin-bottom: 2px; color: var(--on); }
+.banner.bad b { color: var(--down); }
+
+/* dialogs */
+.dim-bg { position: fixed; inset: 52px 0 0 0; z-index: 40; background: rgba(3,2,1,.78); display: grid; place-items: center; padding: 14px; overflow: auto; animation: fade .2s ease-out; }
+@keyframes fade { from { opacity: 0 } to { opacity: 1 } }
+@keyframes rise { from { transform: translateY(10px); opacity: 0 } to { transform: none; opacity: 1 } }
+.dlg { animation: rise .22s var(--ease); padding: 28px 32px 24px; width: min(560px, 100%); }
+.dlg.wide { width: min(980px, 100%); }
+.dlg .wtitle { font-size: 26px; text-align: center; }
+.dlg .lead { text-align: center; color: var(--sub); margin: 10px 0 16px; }
+.dfoot { display: flex; justify-content: flex-end; gap: 14px; margin-top: 22px; padding-top: 14px; border-top: 1px solid rgba(var(--gold), .2); flex-wrap: wrap; }
+.dfoot .grow { margin-right: auto; }
+.hold { position: relative; overflow: hidden; }
+.hold i { position: absolute; left: 0; bottom: 0; height: 3px; width: 0; background: var(--down); }
+
+/* progress cards */
+.side { border: 1px solid rgba(var(--gold), .3); background: rgba(10,7,5,.55); padding: 14px 16px; min-width: 0; }
+.side h4 { margin: 0 0 8px; font: 600 17px var(--cin); letter-spacing: .16em; text-transform: uppercase; color: var(--on); display: flex; justify-content: space-between; gap: 8px; align-items: baseline; }
+.side h4 small { font: 400 16px var(--gar); letter-spacing: 0; color: var(--muted); text-transform: none; }
+.slot { padding: 8px 0; border-top: 1px solid rgba(var(--gold), .12); font-size: 18px; line-height: 1.3; }
+.slot .n { font: 600 14px var(--cin); letter-spacing: .14em; text-transform: uppercase; color: var(--sub); }
+.tag { font: 600 12px var(--cin); letter-spacing: .14em; text-transform: uppercase; border: 1px solid rgba(var(--gold), .55); color: var(--on); padding: 1px 7px; margin-left: 8px; }
+.locked { opacity: .5; }
+.locked .lk { color: var(--down); font-size: 16px; }
+.grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+.ironnote { color: var(--muted); font-size: 17px; margin: 10px 0 0; text-align: center; }
+table.cmp { width: 100%; border-collapse: collapse; font-size: 18px; }
+table.cmp th { font: 600 15px var(--cin); letter-spacing: .16em; text-transform: uppercase; color: var(--on); text-align: left; padding: 8px 10px; border-bottom: 1px solid rgba(var(--gold), .3); }
+table.cmp td { padding: 9px 10px; border-bottom: 1px solid rgba(var(--gold), .12); vertical-align: top; }
+table.cmp td:first-child { font: 600 14px var(--cin); letter-spacing: .12em; text-transform: uppercase; color: var(--sub); white-space: nowrap; }
+.tile { border: 1px solid rgba(var(--gold), .35); background: rgba(10,7,5,.55); padding: 16px 18px; display: flex; flex-direction: column; gap: 6px; }
+.tile h4 { margin: 0; font: 600 20px var(--cin); letter-spacing: .14em; text-transform: uppercase; color: var(--on); }
+.tile.best { border-color: #d9b26a; }
+details summary { min-height: 44px; display: flex; align-items: center; cursor: pointer; font: 600 14px var(--cin); letter-spacing: .14em; text-transform: uppercase; color: var(--sub); }
+
+/* variant structures for account page */
+.plaque { border: 1px solid rgba(var(--gold), .35); padding: 18px; background: rgba(10,7,5,.55); display: flex; flex-direction: column; gap: 10px; }
+.cols { display: grid; grid-template-columns: 300px 1fr; gap: 28px; }
+.pcards { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+.strip { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 16px; border: 1px solid rgba(var(--gold), .35); background: rgba(10,7,5,.55); flex-wrap: wrap; }
+.tiles { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 14px; }
+
+@media (max-width: 700px) {
+  body { font-size: 17px; }
+  #app { padding: 8px; place-items: start center; }
+  .shell { grid-template-columns: 1fr; min-height: 0; }
+  .cats { flex-direction: row; overflow-x: auto; border-right: 0; border-bottom: 1px solid rgba(var(--gold), .2); padding: 6px 0; }
+  .cat { padding: 0 16px 0 32px; flex: none; }
+  .cat.on::before { left: 14px; }
+  .page { padding: 18px 16px 20px; }
+  .wtitle { font-size: 22px; }
+  .cols, .pcards, .grid2, .tiles { grid-template-columns: 1fr; }
+  .row { flex-direction: column; align-items: flex-start; }
+  .acts { justify-content: flex-start; }
+  .dlg { padding: 20px 16px 16px; }
+  .dfoot { justify-content: stretch; } .dfoot .btn { flex: 1; padding: 0 10px; }
+  .dfoot .grow { margin-right: 0; flex-basis: 100%; }
+  table.cmp { font-size: 15px; table-layout: fixed; } table.cmp td:first-child { white-space: normal; width: 58px; font-size: 11px; letter-spacing: .04em; padding: 9px 4px; word-break: break-word; }
+  table.cmp th { font-size: 12px; letter-spacing: .08em; padding: 8px 4px; } table.cmp td { padding: 9px 4px; overflow-wrap: anywhere; }
+  .btn { padding: 0 16px; }
+}
+</style>
+</head>
+<body>
+<div id="bar">
+  <div class="grp"><span>Variant</span><button data-v="v1">1 Rows</button><button data-v="v2">2 Plaque</button><button data-v="v3">3 Strip</button></div>
+  <div class="grp"><span>Screen</span>
+    <button data-s="out">Signed out</button><button data-s="in">Signed in</button><button data-s="delete">Delete</button><button data-s="name">Name</button><button data-s="conflict">Conflict</button><button data-s="states">States</button>
+  </div>
+</div>
+<div id="app"></div>
+
+<script>
+const $ = (s, r = document) => r.querySelector(s);
+let V = 'v1', S = 'out', confirmSide = null, nameVal = '', agreed = false, openDetails = false;
+const CATS = ['Sound', 'Gameplay', 'Display', 'Privacy', 'Account'];
+
+function readHash() {
+  const p = location.hash.replace('#', '').split('&');
+  if (/^v[123]$/.test(p[0])) V = p[0];
+  if (p[1] && ['out', 'in', 'delete', 'name', 'conflict', 'states'].includes(p[1])) S = p[1];
+}
+function setHash() { location.hash = V + '&' + S; }
+
+/* ---------- Account page: signed out ---------- */
+const GOOGLE = `<span class="provider"><span class="pmark">G</span>Sign in with Google</span>`;
+const DISCORD = `<span class="provider"><span class="pmark">D</span>Sign in with Discord</span>`;
+const GUEST = 'Playing without an account keeps your progress on this device only.';
+const consent = () => `<label class="chk"><input type="checkbox" id="agree" ${agreed ? 'checked' : ''}><span class="box"></span><span>I have read the <a href="/privacy.html" target="_blank" rel="noopener">privacy notice</a></span></label>`;
+
+function outV1() {
+  return `<div class="sec">Sign in</div>
+  <div class="row"><div class="lbl">Google<small>Save progress to the cloud</small></div><div class="acts"><button class="btn sm" data-gate>${GOOGLE}</button></div></div>
+  <div class="row"><div class="lbl">Discord<small>Save progress to the cloud</small></div><div class="acts"><button class="btn sm" data-gate>${DISCORD}</button></div></div>
+  <div style="margin-top:10px">${consent()}</div>
+  <p class="note dim">${GUEST}</p>`;
+}
+function outV2() {
+  return `<div class="cols"><div class="plaque"><div class="wtitle" style="font-size:22px">Guest</div><p class="note" style="margin:0">${GUEST}</p><p class="note dim" style="margin:0">Sign in to keep a copy of your campaign and Endless progress in the cloud.</p></div>
+  <div><div class="pcards">
+    <div class="tile"><h4>Google</h4><span class="dim">Quick, one tap</span><button class="btn" data-gate>${GOOGLE}</button></div>
+    <div class="tile"><h4>Discord</h4><span class="dim">Quick, one tap</span><button class="btn" data-gate>${DISCORD}</button></div>
+  </div><div style="margin-top:12px">${consent()}</div></div></div>`;
+}
+function outV3() {
+  return `<div class="strip"><span><span class="dot off"></span>Guest, progress stays on this device</span></div>
+  <div class="sec" style="margin-top:20px">Step 1 · Privacy</div>${consent()}
+  <div class="sec">Step 2 · Choose a provider</div>
+  <div class="tiles" id="prov" style="margin-top:0"><button class="btn" data-gate>${GOOGLE}</button><button class="btn" data-gate>${DISCORD}</button></div>
+  <p class="note dim">${GUEST}</p>`;
+}
+
+/* ---------- Account page: signed in ---------- */
+const SUPPORT = 'Support ID: EOV-7K2Q-94MD';
+const nameRow = () => `<div class="row"><div class="lbl">Display name</div><div class="acts"><span id="dn" style="font:600 19px var(--gar)">Ashen Wanderer</span><button class="btn sm" id="editName">Edit</button></div></div>`;
+function inV1() {
+  return `<div class="sec">Profile</div>${nameRow()}
+  <div class="row"><div class="lbl">Google</div><div class="acts"><span><span class="dot ok"></span>Connected</span></div></div>
+  <div class="row"><div class="lbl">Discord</div><div class="acts"><span class="dim"><span class="dot off"></span>Not linked</span><button class="btn sm">Link Discord</button></div></div>
+  <div class="sec">Sync</div>
+  <div class="row"><div class="lbl">Cloud save<small>Last synced 3 min ago</small></div><div class="acts"><button class="btn sm">Sync now</button></div></div>
+  <div class="sec">Account</div>
+  <div class="row"><div class="lbl">Support ID<small>${SUPPORT.replace('Support ID: ', '')}</small></div><div class="acts"><button class="btn sm">Copy</button></div></div>
+  <div class="row" style="border:0"><div class="acts" style="margin-left:auto"><button class="btn sm danger" data-del>Delete account</button><button class="btn sm primary">Sign out</button></div></div>`;
+}
+function inV2() {
+  return `<div class="cols"><div class="plaque">
+    <div class="dim" style="font:600 13px var(--cin);letter-spacing:.18em">DISPLAY NAME</div>
+    <div class="wtitle" style="font-size:24px" id="dn">Ashen Wanderer</div>
+    <button class="btn sm" id="editName">Edit name</button>
+    <div class="mono" style="margin-top:8px">${SUPPORT}</div>
+    <div style="margin-top:auto"><button class="lnk danger" data-del>Delete account</button></div></div>
+  <div><div class="sec">Connected</div><div class="pcards">
+    <div class="tile"><h4>Google</h4><span><span class="dot ok"></span>Connected</span></div>
+    <div class="tile"><h4>Discord</h4><span class="dim"><span class="dot off"></span>Not linked</span><button class="btn sm">Link Discord</button></div></div>
+  <div class="sec">Cloud save</div>
+  <div class="strip"><span><span class="dot ok"></span>Last synced 3 min ago</span><span class="acts"><button class="btn sm">Sync now</button><button class="btn sm primary">Sign out</button></span></div></div></div>`;
+}
+function inV3() {
+  return `<div class="strip"><span><span class="dot ok"></span>Last synced 3 min ago</span><button class="btn sm primary">Sync now</button></div>
+  <div class="tiles"><div class="tile"><h4>Ashen Wanderer</h4><span class="dim">Display name</span><button class="btn sm" id="editName">Edit</button><span id="dn" hidden>Ashen Wanderer</span></div>
+  <div class="tile"><h4>Providers</h4><span><span class="dot ok"></span>Google connected</span><span class="dim"><span class="dot off"></span>Discord not linked</span><button class="btn sm">Link Discord</button></div></div>
+  <details style="margin-top:16px" ${openDetails ? 'open' : ''} id="mng"><summary>Manage account</summary>
+    <div class="row"><div class="lbl">Support ID<small>${SUPPORT.replace('Support ID: ', '')}</small></div><div class="acts"><button class="btn sm">Sign out</button></div></div>
+    <div class="row" style="border:0"><div class="lbl">Delete account<small>Removes your cloud save permanently.</small></div><div class="acts"><button class="btn sm danger" data-del>Delete account</button></div></div></details>`;
+}
+
+function accountPage(signedIn) {
+  const body = signedIn ? { v1: inV1, v2: inV2, v3: inV3 }[V]() : { v1: outV1, v2: outV2, v3: outV3 }[V]();
+  return `<div class="win"><div class="shell"><div class="cats">${CATS.map((c) => `<button class="cat${c === 'Account' ? ' on' : ''}">${c}</button>`).join('')}</div>
+  <div class="page"><h2 class="wtitle">Account</h2>${body}</div></div></div>`;
+}
+
+/* ---------- Dialogs ---------- */
+function dlg(inner, wide) { return `<div class="dim-bg" id="bg"><div class="win dlg${wide ? ' wide' : ''}" role="dialog" aria-modal="true">${inner}</div></div>`; }
+
+function deleteDlg() {
+  if (V === 'v2') {
+    return dlg(`<h2 class="wtitle">Delete account</h2><p class="lead">This permanently deletes your cloud save and account. Progress on this device stays.</p>
+      <p class="note" style="text-align:center">Press and hold the button for 2 seconds.</p>
+      <div class="dfoot"><button class="btn" data-close>Cancel</button><button class="btn danger hold" id="hold">Hold to delete<i></i></button></div>`);
+  }
+  return dlg(`<h2 class="wtitle">Delete account</h2><p class="lead">This permanently deletes your cloud save and account. Progress on this device stays.</p>
+    <p class="note" style="text-align:center">Type <b style="font-family:var(--cin);letter-spacing:.1em">DELETE</b> to confirm.</p>
+    <input class="field" id="delTxt" autocomplete="off" aria-label="Type DELETE" placeholder="DELETE">
+    <div class="dfoot"><button class="btn" data-close>Cancel</button><button class="btn danger" id="delGo" disabled>Delete account</button></div>`);
+}
+
+function nameDlg() {
+  const n = nameVal.trim().length, ok = n >= 2 && n <= 24;
+  return dlg(`<h2 class="wtitle">Choose a name</h2><p class="lead">This is how you appear to other players. 2 to 24 characters.</p>
+    <input class="field" id="nameIn" maxlength="30" value="${nameVal}" placeholder="Display name" autocomplete="off">
+    <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="${n && !ok ? 'err' : 'dim'}" id="nmsg">${n && !ok ? (n < 2 ? 'Too short' : 'Too long') : '&nbsp;'}</span><span class="dim" id="ncnt">${n}/24</span></div>
+    <div class="dfoot"><button class="btn" id="suggest">Suggest one</button><button class="btn primary" id="nameOk" ${ok ? '' : 'disabled'}>Confirm</button></div>`);
+}
+
+const DEV = { saved: 'Today, 18:42', endless: ['Wave 41', '128,450'], slots: [
+  { n: 'Slot 1', stop: 'Stop 14', region: 'Ashen Marches', cls: 'Warrior, Druid, Hexer, Cleric', played: 'Today, 18:42' },
+  { n: 'Slot 2', iron: 1, stop: 'Stop 9', region: 'Greywood', cls: 'Rogue, Mage', played: 'Yesterday' },
+  { n: 'Slot 3', stop: 'Stop 3', region: 'Hollow Vale', cls: 'Warrior', played: '5 days ago' }] };
+const CLD = { saved: '3 days ago', endless: ['Wave 52', '150,200'], slots: [
+  { n: 'Slot 1', stop: 'Stop 11', region: 'Ashen Marches', cls: 'Warrior, Druid, Hexer', played: '3 days ago' },
+  { n: 'Slot 2', iron: 1, best: 1, stop: 'Stop 12', region: 'Greywood', cls: 'Rogue, Mage, Cleric', played: '4 days ago' },
+  { n: 'Slot 3', empty: 1 }] };
+const IRONWHY = 'Ironman keeps the further run; the other side cannot overwrite it.';
+
+const slotHtml = (s, lockedSide) => s.empty
+  ? `<div class="slot"><span class="n">${s.n}</span><br><span class="dim">Empty</span></div>`
+  : `<div class="slot ${lockedSide ? 'locked' : ''}"><span class="n">${s.n}</span>${s.iron ? '<span class="tag">Ironman</span>' : ''}<br>${s.stop}, ${s.region}<br><span class="dim">${s.cls} · ${s.played}</span>${lockedSide ? '<br><span class="lk">Not selectable</span>' : ''}</div>`;
+const lockedIdx = (side) => (side === 'dev' ? 1 : -1); // device is the lesser Ironman side
+
+function cardV1(side, d, title) {
+  return `<div class="side"><h4>${title}<small>Saved ${d.saved}</small></h4>${d.slots.map((s, i) => slotHtml(s, lockedIdx(side) === i)).join('')}
+    <div class="slot"><span class="n">Endless</span><br>${d.endless[0]} · Best score ${d.endless[1]}</div></div>`;
+}
+function conflictBody() {
+  if (V === 'v1') {
+    return `<div class="grid2">${cardV1('dev', DEV, 'This device')}${cardV1('cld', CLD, 'Cloud')}</div><p class="ironnote">${IRONWHY}</p>`;
+  }
+  if (V === 'v2') {
+    const rows = DEV.slots.map((s, i) => {
+      const c = CLD.slots[i];
+      const cell = (x, lock) => x.empty ? '<span class="dim">Empty</span>' : `${x.iron ? '<span class="tag" style="margin:0 0 4px;display:inline-block">Ironman</span><br>' : ''}${x.stop}, ${x.region}<br><span class="dim">${x.cls} · ${x.played}</span>${lock ? '<br><span class="err">Not selectable</span>' : ''}`;
+      return `<tr><td>${s.n}</td><td class="${i === 1 ? 'locked' : ''}">${cell(s, i === 1)}</td><td>${cell(c, false)}</td></tr>`;
+    }).join('');
+    return `<table class="cmp"><thead><tr><th></th><th>This device</th><th>Cloud</th></tr></thead><tbody>${rows}
+      <tr><td>Endless</td><td>${DEV.endless[0]}<br><span class="dim">Best ${DEV.endless[1]}</span></td><td>${CLD.endless[0]}<br><span class="dim">Best ${CLD.endless[1]}</span></td></tr>
+      <tr><td>Saved</td><td>${DEV.saved}</td><td>${CLD.saved}</td></tr></tbody></table><p class="ironnote">${IRONWHY}</p>`;
+  }
+  const short = (d, name, tag) => `<div class="tile ${tag ? 'best' : ''}"><h4>${name}</h4><span class="dim">Saved ${d.saved}</span>
+    <span>${d.slots.filter((s) => !s.empty).length} campaign slots · ${d.endless[0]}</span><span class="dim">Best score ${d.endless[1]}</span>${tag ? '<span class="tag" style="align-self:flex-start;margin:4px 0 0">Ironman ahead</span>' : ''}</div>`;
+  return `<div class="grid2">${short(DEV, 'This device', 0)}${short(CLD, 'Cloud', 1)}</div>
+    <p class="ironnote">${IRONWHY}</p>
+    <details id="det" ${openDetails ? 'open' : ''}><summary>Show slot details</summary><div class="grid2">${cardV1('dev', DEV, 'This device')}${cardV1('cld', CLD, 'Cloud')}</div></details>`;
+}
+function conflictDlg() {
+  const head = `<h2 class="wtitle">Progress conflict</h2><p class="lead">${confirmSide ? '' : 'This device and your cloud save both have progress. Choose which to keep.'}</p>`;
+  if (confirmSide) {
+    const use = confirmSide === 'dev' ? 'this device' : 'cloud';
+    const other = confirmSide === 'dev' ? 'The cloud' : 'This device';
+    return dlg(`<h2 class="wtitle">Are you sure?</h2><p class="lead">You chose ${use} progress. ${other} progress will be backed up before it is replaced.</p>
+      <div class="dfoot"><button class="btn" id="cBack">Back</button><button class="btn primary" id="cOk">Confirm</button></div>`);
+  }
+  return dlg(`${head}${conflictBody()}<div class="dfoot"><button class="btn" data-pick="dev">Keep this device</button><button class="btn primary" data-pick="cld">Use cloud progress</button></div>`, true);
+}
+
+/* ---------- Small states ---------- */
+function statesView() {
+  return `<div class="win"><div class="page"><h2 class="wtitle">Small states</h2>
+    <div class="sec">Newer version notice</div>
+    <div class="banner"><b>Newer version</b>Your cloud save was made by a newer version of the game. Reload to update before syncing.<div class="dfoot" style="border:0;margin:8px 0 0;padding:0"><button class="btn sm">Later</button><button class="btn sm primary">Reload</button></div></div>
+    <div class="sec">Sign-in error</div>
+    <div class="banner bad"><b>Sign-in failed</b>We could not finish signing in with Discord. Check your connection and try again.<div class="dfoot" style="border:0;margin:8px 0 0;padding:0"><button class="btn sm">Dismiss</button><button class="btn sm primary">Try again</button></div></div>
+    <div class="sec">Offline</div>
+    <div class="strip"><span><span class="dot off"></span>Offline, will sync when connected</span><button class="btn sm" disabled>Sync now</button></div>
+  </div></div>`;
+}
+
+/* ---------- render ---------- */
+function render() {
+  document.querySelectorAll('#bar [data-v]').forEach((b) => b.classList.toggle('on', b.dataset.v === V));
+  document.querySelectorAll('#bar [data-s]').forEach((b) => b.classList.toggle('on', b.dataset.s === S));
+  const app = $('#app');
+  let html = '';
+  if (S === 'out') html = accountPage(false);
+  else if (S === 'in') html = accountPage(true);
+  else if (S === 'delete') html = accountPage(true) + deleteDlg();
+  else if (S === 'name') html = accountPage(true) + nameDlg();
+  else if (S === 'conflict') html = accountPage(true) + conflictDlg();
+  else html = statesView();
+  app.innerHTML = html;
+  wire();
+}
+
+function wire() {
+  const agree = $('#agree');
+  const gate = () => { agreed = agree.checked; document.querySelectorAll('[data-gate]').forEach((b) => { b.disabled = !agreed; }); const p = $('#prov'); if (p) p.classList.toggle('gated', !agreed); };
+  if (agree) { agree.onchange = gate; gate(); }
+  document.querySelectorAll('[data-del]').forEach((b) => (b.onclick = () => { S = 'delete'; setHash(); }));
+  document.querySelectorAll('#editName').forEach((b) => (b.onclick = () => { nameVal = 'Ashen Wanderer'; S = 'name'; setHash(); }));
+  document.querySelectorAll('[data-close]').forEach((b) => (b.onclick = () => { S = 'in'; setHash(); }));
+  const det = $('#det'); if (det) det.ontoggle = () => { openDetails = det.open; };
+  const mng = $('#mng'); if (mng) mng.ontoggle = () => { openDetails = mng.open; };
+  // Delete dialog: NOT closed by backdrop. Typing / hold.
+  const t = $('#delTxt'); if (t) t.oninput = () => { $('#delGo').disabled = t.value !== 'DELETE'; };
+  const h = $('#hold');
+  if (h) {
+    let raf = 0, t0 = 0;
+    const bar = h.querySelector('i');
+    const stop = () => { cancelAnimationFrame(raf); bar.style.width = '0'; t0 = 0; };
+    const step = (n) => { const f = Math.min(1, (n - t0) / 2000); bar.style.width = f * 100 + '%'; if (f < 1) raf = requestAnimationFrame(step); else h.firstChild.textContent = 'Deleted (mockup)'; };
+    h.onpointerdown = () => { t0 = performance.now(); raf = requestAnimationFrame(step); };
+    ['pointerup', 'pointerleave', 'pointercancel'].forEach((e) => (h['on' + e] = stop));
+  }
+  // Name dialog
+  const ni = $('#nameIn');
+  if (ni) {
+    const upd = () => { nameVal = ni.value; const n = ni.value.trim().length, ok = n >= 2 && n <= 24; $('#nameOk').disabled = !ok; $('#ncnt').textContent = n + '/24'; const m = $('#nmsg'); m.className = n && !ok ? 'err' : 'dim'; m.textContent = n && !ok ? (n < 2 ? 'Too short' : 'Too long') : ' '; };
+    ni.oninput = upd; upd();
+    $('#suggest').onclick = () => { ni.value = 'Grim Wayfarer'; upd(); ni.focus(); };
+    $('#nameOk').onclick = () => { S = 'in'; setHash(); };
+  }
+  // Conflict: not dismissible by backdrop (no handler). Two-step.
+  document.querySelectorAll('[data-pick]').forEach((b) => (b.onclick = () => { confirmSide = b.dataset.pick; render(); }));
+  const cb = $('#cBack'); if (cb) cb.onclick = () => { confirmSide = null; render(); };
+  const co = $('#cOk'); if (co) co.onclick = () => { confirmSide = null; S = 'in'; setHash(); };
+}
+
+document.querySelectorAll('#bar [data-v]').forEach((b) => (b.onclick = () => { V = b.dataset.v; setHash(); }));
+document.querySelectorAll('#bar [data-s]').forEach((b) => (b.onclick = () => { S = b.dataset.s; confirmSide = null; setHash(); }));
+window.addEventListener('hashchange', () => { readHash(); render(); });
+readHash(); render();
+</script>
+</body>
+</html>

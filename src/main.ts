@@ -30,10 +30,19 @@ import { installContextLossNotice } from './ui/context-loss';
 import { attachDiagGame, diagNoticed, installDiag } from './diag/diag';
 import { openDiagNotice } from './diag/diag-notice';
 import { installStaleBuildReload } from './ui/stale-build';
+import { initCloud } from './cloud/cloud';
+import { installCloudUi } from './cloud/ui/cloud-ui';
+
+/** initCloud kapısı oyun kurulmadan önce çağrılır: oyun nesnesi kurulunca buraya yazılır. */
+let gameRef: Phaser.Game | null = null;
 
 // Hata raporu (opt-in, varsayılan kapalı; src/diag/, docs/arch/diagnostics.md): iz halkası + önceki oturumun çökme denetimi en başta
 installDiag();
 installStaleBuildReload();
+// Bulut kaydı (src/cloud/cloud.ts): ?auth= dönüşünü işler ve adresi temizler; girişsiz oyuncuda ağ çağrısı yok. Buluttan yerele yazım yalnızca ana menüde.
+// Pencereleri (giriş hatası, ilk girişte ad, çakışma, yeni sürüm; src/cloud/ui/cloud-ui.ts) init'ten ÖNCE dinlemeye başlar: ?auth= olayı init sırasında yayılır.
+installCloudUi();
+initCloud({ applyGate: () => !!gameRef && gameRef.scene.isActive(MainMenuScene.KEY) });
 
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);
@@ -106,6 +115,7 @@ const game = new Phaser.Game({
   loader: { maxParallelDownloads: 64 },
   scene: sceneList(firstScene, MainMenuScene),
 });
+gameRef = game;
 // Bir karedeki tek bir hata Phaser döngüsünü kalıcı durdurmasın (0.7.7 Ashford donması; src/ui/loop-guard.ts). Döngü başlamadan sarılır.
 installLoopGuard(game.loop as unknown as Parameters<typeof installLoopGuard>[0]);
 

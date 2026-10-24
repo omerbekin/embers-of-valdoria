@@ -1,0 +1,353 @@
+/* Hesap / bulut kaydı ekranları (taslak public/mockups/account.html v1 "Rows"; kit değişkenleri src/ui/elegant.css).
+   .acc-host   ana menü Settings > Account sayfası (Phaser sayfa başlığının altında, aynı oyun birimleriyle konumlu DOM kutusu)
+   .acc-*      satırlar, bölüm başlıkları, sağlayıcı işareti, durum noktası; çakışma kartları; giriş hatası bildirimi */
+
+.acc-host {
+  --u: var(--gu, 1px);
+  position: fixed;
+  /* MainMenuScene SETTINGS_LAYOUT: kategori sütunu 360 + boşluk 40 + satır girintisi 30; sayfa başlığı altı y 312 */
+  left: calc(var(--el, 0px) + var(--menu-x, 140px) + 430 * var(--u));
+  top: calc(var(--et, 0px) + 312 * var(--u));
+  width: calc(790 * var(--u));
+  max-width: calc(var(--stage-w, 100vw) - var(--el, 0px) - var(--er, 0px) - var(--menu-x, 140px) - 430 * var(--u) - 16px);
+  max-height: calc(var(--stage-h, 100dvh) - var(--et, 0px) - var(--eb, 0px) - 340 * var(--u));
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+  z-index: 6;
+  color: var(--el-txt);
+  animation: el-m-fade var(--m-panel, 160ms) var(--m-ease, ease-out) both;
+}
+
+.acc-host::-webkit-scrollbar {
+  display: none;
+}
+
+/* Telefon: kutu kategori sütununun sağında ekranın sağ kenarına kadar; satırlar 44 px */
+html.short .acc-host {
+  width: auto;
+  right: calc(var(--er, 0px) + 12px);
+  top: calc(var(--et, 0px) + 312 * var(--u) + 6px);
+  max-height: calc(var(--stage-h, 100dvh) - var(--et, 0px) - var(--eb, 0px) - 312 * var(--u) - 14px);
+}
+
+.acc-page {
+  font: max(15px, calc(22 * var(--u))) / 1.3 var(--el-body);
+  /* düğmelerin yan elmasları (-6..-8 px) kutunun kaymasında kesilmesin */
+  padding: 0 12px 8px 0;
+}
+
+.acc-sec {
+  margin: calc(22 * var(--u)) 0 4px;
+  padding-bottom: 6px;
+  font: 600 max(12px, calc(17 * var(--u))) var(--el-display);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: rgba(236, 200, 130, 0.95);
+  border-bottom: 1px solid rgba(217, 178, 106, 0.22);
+}
+
+.acc-sec:first-child {
+  margin-top: 0;
+}
+
+.acc-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: max(48px, calc(80 * var(--u)));
+  padding: 6px 0;
+  border-bottom: 1px solid var(--el-line1);
+}
+
+.acc-row.plain {
+  border-bottom: 0;
+}
+
+.acc-lbl {
+  min-width: 0;
+  font: 600 max(13px, calc(21 * var(--u))) var(--el-display);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: #c4b18b;
+}
+
+.acc-lbl small {
+  display: block;
+  margin-top: 2px;
+  font: 400 max(14px, calc(20 * var(--u))) var(--el-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--el-muted);
+  overflow-wrap: anywhere;
+}
+
+.acc-acts {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 10px 14px;
+  margin-left: auto;
+}
+
+.acc-val {
+  font: 600 max(16px, calc(23 * var(--u))) var(--el-body);
+  color: var(--el-on);
+  overflow-wrap: anywhere;
+}
+
+.acc-dim {
+  color: var(--el-muted);
+}
+
+.acc-dot {
+  display: inline-block;
+  width: 9px;
+  height: 9px;
+  margin-right: 8px;
+  vertical-align: 1px;
+  border: 1px solid rgba(217, 178, 106, 0.7);
+  border-radius: 50%;
+}
+
+.acc-dot.ok {
+  background: rgba(217, 178, 106, 0.8);
+}
+
+.acc-dot.off {
+  border-color: var(--el-dim);
+}
+
+.acc-prov {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.acc-pmark {
+  flex: none;
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  font: 600 14px var(--el-display);
+  color: var(--el-on);
+  border: 1px solid rgba(217, 178, 106, 0.5);
+}
+
+.acc-consent {
+  margin-top: 10px;
+  font-size: max(15px, calc(22 * var(--u)));
+}
+
+.acc-note {
+  margin: 8px 0 0;
+  font: max(14px, calc(21 * var(--u))) / 1.35 var(--el-body);
+  color: var(--el-muted);
+}
+
+.acc-note.warn {
+  color: var(--el-bad);
+}
+
+.acc-note.ok {
+  color: var(--el-note);
+}
+
+.acc-note:empty {
+  display: none;
+}
+
+html.short .acc-row {
+  flex-wrap: wrap;
+  gap: 4px 12px;
+  min-height: 44px;
+}
+
+html.short .acc-acts {
+  justify-content: flex-start;
+}
+
+/* --- Diyaloglar (src/cloud/ui/dialogs.ts; çerçeve src/ui/el-dialog.ts) --- */
+.acc-dialog .eld-lead b,
+.acc-word {
+  font: 600 1em var(--el-display);
+  letter-spacing: 0.1em;
+  color: var(--el-on);
+}
+
+.acc-dlg-note {
+  margin: 0 0 8px;
+  text-align: center;
+  font: 19px var(--el-body);
+  color: var(--el-txt);
+}
+
+.acc-name-meta {
+  display: flex;
+  justify-content: space-between;
+  min-height: 1.4em;
+  margin-top: 6px;
+  font: 17px var(--el-body);
+  color: var(--el-muted);
+}
+
+.acc-name-msg.bad {
+  color: var(--el-bad);
+}
+
+.acc-grid2 {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.acc-side {
+  min-width: 0;
+  padding: 14px 16px;
+  background: rgba(10, 7, 5, 0.55);
+  border: 1px solid rgba(217, 178, 106, 0.3);
+  animation: el-m-rise var(--m-card-in, 220ms) var(--m-ease, ease-out) both;
+}
+
+.acc-side + .acc-side {
+  animation-delay: var(--m-card-stagger, 60ms);
+}
+
+.acc-side-h {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 8px;
+  margin: 0 0 8px;
+  font: 600 17px var(--el-display);
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--el-on);
+}
+
+.acc-side-h small {
+  font: 400 16px var(--el-body);
+  letter-spacing: 0;
+  text-transform: none;
+  color: var(--el-muted);
+}
+
+.acc-slot {
+  padding: 8px 0;
+  border-top: 1px solid rgba(217, 178, 106, 0.12);
+  font: 18px/1.3 var(--el-body);
+}
+
+.acc-slot-h {
+  display: flex;
+  align-items: center;
+  font: 600 14px var(--el-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--el-note);
+}
+
+.acc-slot-s,
+.acc-slot.empty .acc-slot-l {
+  color: var(--el-muted);
+}
+
+.acc-tag {
+  margin-left: 8px;
+  padding: 1px 7px;
+  font: 600 12px var(--el-display);
+  letter-spacing: 0.14em;
+  border: 1px solid rgba(217, 178, 106, 0.55);
+  color: var(--el-on);
+}
+
+.acc-slot.locked > :not(.acc-slot-lk) {
+  opacity: 0.5;
+}
+
+.acc-slot-lk {
+  font: 16px var(--el-body);
+  color: var(--el-bad);
+}
+
+.acc-ironnote {
+  margin: 10px 0 0;
+  text-align: center;
+  font: 17px var(--el-body);
+  color: var(--el-muted);
+}
+
+html.short .acc-grid2 {
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+html.short .acc-side {
+  padding: 8px 10px;
+}
+
+html.short .acc-side-h {
+  flex-direction: column;
+  font-size: 13px;
+}
+
+html.short .acc-side-h small,
+html.short .acc-slot,
+html.short .acc-slot-lk,
+html.short .acc-ironnote {
+  font-size: 14px;
+}
+
+html.short .acc-slot {
+  padding: 5px 0;
+}
+
+html.short .acc-slot-h {
+  font-size: 11px;
+}
+
+/* --- Giriş hatası bildirimi --- */
+.acc-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--et, 0px) + 64px);
+  transform: translateX(-50%);
+  z-index: 30;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  width: min(620px, calc(100% - 32px));
+  padding: 12px 12px 12px 18px;
+  box-sizing: border-box;
+  border-color: rgba(232, 128, 106, 0.55);
+  animation: el-m-fade var(--m-modal-in, 200ms) var(--m-ease, ease-out) both;
+}
+
+.acc-toast.out {
+  animation: el-m-fade-out var(--m-modal-out, 140ms) ease-in both;
+}
+
+.acc-toast-text {
+  flex: 1;
+  font: 18px/1.3 var(--el-body);
+}
+
+.acc-toast-text b {
+  display: block;
+  margin-bottom: 2px;
+  font: 600 15px var(--el-display);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--el-bad);
+}
+
+.acc-toast-x {
+  flex: none;
+}
+
+html.short .acc-toast {
+  top: calc(var(--et, 0px) + 52px);
+}

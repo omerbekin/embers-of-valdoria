@@ -1,0 +1,5 @@
+{
+  "_note": "Choose a name > Suggest one (src/cloud/ui/dialogs.ts): first + ' ' + second, at most 24 characters.",
+  "first": ["Ashen", "Grim", "Iron", "Ember", "Hollow", "Silent", "Grey", "Wandering", "Bold", "Oaken", "Stern", "Weary", "Crimson", "Frost", "Stone", "Raven"],
+  "second": ["Wanderer", "Wayfarer", "Squire", "Warden", "Pilgrim", "Herald", "Sellsword", "Hermit", "Ranger", "Smith", "Reaver", "Knight", "Scribe", "Drifter", "Shield", "Torch"]
+}

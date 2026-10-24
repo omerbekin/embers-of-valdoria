@@ -19,6 +19,7 @@ import { growTouchZone } from '../touch-hit';
 import { FULL_W, FULL_X0, MENU_COL_X, menuColumnShift } from '../../ui/viewport';
 import type { Modal } from '../campaign-ui';
 import { storage } from '../kv-storage';
+import { subscribe as onCloudEvent } from '../../cloud/cloud';
 import { ensureGlow, fitText, goldText, serif } from '../menu-text';
 import { GOLD } from '../ui-frame';
 import { mp, MP_SCENE } from '../mp-client';
@@ -41,7 +42,8 @@ import { EL, elBack, elButton, elDiamond, elGlow, elGo, elScreenIn, elText, elBo
 import { trackChunkLoad } from '../../ui/boot-loader';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
 import { openDiagNotice } from '../../diag/diag-notice';
-import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, pageIndex, pageOf, setSettingsPage, settingsPage, stepPage } from '../../ui/settings-pages';
+import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, pageOf, pageVisible, setSettingsPage, settingsPage, stepPage } from '../../ui/settings-pages';
+import { accountApi } from '../../cloud/ui/api';
 import type { LazySceneKey } from '../lazy-scenes';
 import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, initialView, moveSelection, type MenuItemKey, type MenuView } from '../main-menu-flow';
 
@@ -227,6 +229,8 @@ export class MainMenuScene extends Phaser.Scene {
   private panelX = COL_X;
   /** Settings: kategori satırları (SETTINGS_PAGES sırası), açık sayfa, sayfa kabı, klavye odağı (kategori / satır). */
   private catRows: Row[] = [];
+  /** catRows sırasıyla sayfa anahtarları (giriş yokken Account satırı yok). */
+  private catKeys: SettingsPageKey[] = [];
   private settingsKey: SettingsPageKey = 'sound';
   private pageBox: Phaser.GameObjects.Container | null = null;
   private panelZone: 'cat' | 'row' = 'row';
@@ -260,6 +264,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.panel = null;
     this.panelRows = [];
     this.catRows = [];
+    this.catKeys = [];
     this.pageBox = null;
     this.panelOffs = [];
     this.cards = [];
@@ -320,6 +325,8 @@ export class MainMenuScene extends Phaser.Scene {
       if (this.scene.isActive() && (mp.state !== 'idle' || mp.active)) this.scene.start(MP_SCENE);
     });
     this.cleanups.push(offMp);
+    // Bulut kaydı indirildi (src/cloud/cloud.ts; yalnızca ana menüdeyken uygulanır): Campaign kartındaki Continue / Load yenilenir
+    this.cleanups.push(onCloudEvent((e) => e.type === 'applied' && this.coreBuilt && this.sys.isActive() && this.refreshCards()));
     // Ana menü müziği (src/ui/music.ts): ilk kullanıcı hareketinden sonra yükselir. Çıkışta durdurulmaz: sonraki sahne kendi parçasını seçer
     // (sceneMusic: harita / kasaba / kamp / savaş) ve yumuşak geçişle (crossfade) ona geçilir; takım seçimi ve multiplayer menü müziğinde kalır.
     menuMusic(true);
@@ -1076,6 +1083,7 @@ export class MainMenuScene extends Phaser.Scene {
     this.panel = null;
     this.panelRows = [];
     this.catRows = [];
+    this.catKeys = [];
     this.pageBox = null;
     this.flushPanelOffs();
     if (old) {
@@ -1212,7 +1220,11 @@ export class MainMenuScene extends Phaser.Scene {
    *  Son seçilen sayfa oturum boyunca hatırlanır (DOM ekranıyla ortak). Değerler aynı yerde saklanır. */
   private buildSettings(p: Phaser.GameObjects.Container): void {
     const L = SETTINGS_LAYOUT;
-    SETTINGS_PAGES.forEach((pg, i) => {
+    // Account kategorisi yalnızca giriş kullanılabilirken (Pages / sunucu kapalı: yok); sunucu yoklaması sonra gizleyebilir (accountGone)
+    const login = accountApi().isLoginAvailable();
+    for (const pg of SETTINGS_PAGES) {
+      if (!pageVisible(pg.key, login)) continue;
+      const i = this.catRows.length;
       const row = this.makeRow(L.top + L.rowH / 2 + i * L.rowH, pg.label, L.catSize, () => {
         if (this.settingsKey !== pg.key) uiSound('tab');
         this.showSettingsPage(pg.key);
@@ -1220,9 +1232,11 @@ export class MainMenuScene extends Phaser.Scene {
       }, { width: L.catW, h: L.rowH });
       p.add(row.root);
       this.catRows.push(row);
-    });
+      this.catKeys.push(pg.key);
+    }
+    if (login) void accountApi().checkLoginAvailable().then((ok) => !ok && this.accountGone());
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): kategori sütununun altında küçük, soluk "Developer tools"
-    const dev = elBody(this, COL_X, L.top + SETTINGS_PAGES.length * L.rowH + 50, 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
+    const dev = elBody(this, COL_X, L.top + this.catRows.length * L.rowH + 50, 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
     dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -(66 - dev.height) / 2, dev.width + 20, 66), hitAreaCallback: Phaser.Geom.Rectangle.Contains });
     dev.on('pointerover', () => dev.setColor(EL.NOTE));
     dev.on('pointerout', () => dev.setColor('rgba(168,151,122,0.55)'));
@@ -1232,14 +1246,24 @@ export class MainMenuScene extends Phaser.Scene {
     this.showSettingsPage(settingsPage(), true);
   }
 
+  /** Giriş kullanılamaz oldu (sunucu yanıt vermiyor): Account kategorisi gizlenir, açıksa Sound'a dönülür. */
+  private accountGone(): void {
+    if (!this.panel || this.view !== 'settings') return;
+    const i = this.catKeys.indexOf('account');
+    if (i < 0) return;
+    this.catRows[i]!.root.setVisible(false);
+    if (this.settingsKey === 'account') this.showSettingsPage('sound', true);
+  }
+
   /** Settings sayfasını kurar (eski sayfa kısa solmayla gider). */
   private showSettingsPage(key: SettingsPageKey, instant = false): void {
     const p = this.panel;
     if (!p) return;
     const L = SETTINGS_LAYOUT;
+    if (!this.catKeys.includes(key) || (key === 'account' && !this.catRows[this.catKeys.indexOf(key)]!.root.visible)) key = 'sound';
     this.settingsKey = key;
     setSettingsPage(key);
-    this.catRows.forEach((r, i) => r.setOn(i === pageIndex(key)));
+    this.catRows.forEach((r, i) => r.setOn(this.catKeys[i] === key));
     this.flushPanelOffs();
     this.pageBox?.destroy(true);
     this.panelRows = [];
@@ -1354,6 +1378,10 @@ export class MainMenuScene extends Phaser.Scene {
           // Info: gizlilik metni + aynı anahtar (DOM penceresi src/diag/diag-notice.ts)
           this.addPanelRow(box, label, () => openDiagNotice('info'), { right: [val('Open', TXT)] });
           break;
+        case 'account':
+          // Account (Faz 1d, taslak account.html v1): satırlar DOM kutusunda (onay kutusu, bağlantı, düğmeler, kayma), başlık Phaser
+          this.mountAccountPage();
+          break;
       }
     }
     let y = this.panelTop + 30;
@@ -1371,6 +1399,29 @@ export class MainMenuScene extends Phaser.Scene {
     if (instant) return;
     box.setAlpha(0);
     this.tweens.add({ targets: box, alpha: 1, duration: 160, ease: 'Cubic.easeOut' });
+  }
+
+  /** Settings > Account: DOM sayfası (src/cloud/ui/account-page.ts, ayrı kod parçası) sayfa başlığının altına; sayfa / panel kapanınca kalkar. */
+  private mountAccountPage(): void {
+    const host = document.createElement('div');
+    host.className = 'acc-host';
+    host.setAttribute('role', 'region');
+    host.setAttribute('aria-label', 'Account');
+    (document.getElementById('ui-root') ?? document.body).append(host);
+    let page: { destroy(): void } | null = null;
+    let gone = false;
+    this.panelOffs.push(() => {
+      gone = true;
+      page?.destroy();
+      host.remove();
+    });
+    void import('../../cloud/ui/account-page').then(
+      (m) => {
+        if (gone || !this.sys.isActive()) return host.remove();
+        page = m.mountAccountPage(host, { onHidden: () => this.accountGone() });
+      },
+      () => host.remove(),
+    );
   }
 
   /** Satırın sağındaki küçük yazı düğmesi (Replay): satır boyunda dokunma alanı. */
@@ -1451,7 +1502,7 @@ export class MainMenuScene extends Phaser.Scene {
       if (k === 'Tab' || up || down) {
         e.preventDefault();
         uiSound('tab');
-        this.showSettingsPage(stepPage(this.settingsKey, k === 'Tab' ? (e.shiftKey ? -1 : 1) : up ? -1 : 1));
+        this.showSettingsPage(stepPage(this.settingsKey, k === 'Tab' ? (e.shiftKey ? -1 : 1) : up ? -1 : 1, this.catKeys.includes('account') && this.catRows[this.catKeys.indexOf('account')]!.root.visible));
         this.panelZone = 'cat';
       } else if ((right || enter) && this.panelRows.length) this.selectPanel(0);
     } else {

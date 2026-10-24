@@ -523,3 +523,218 @@ html.reduced-motion .el-modal,
 html.reduced-motion .el-modal .el-modal-panel {
   animation: none !important;
 }
+
+/* --- Küçük / tehlikeli düğme, onay kutusu, yazı kutusu, DOM diyalog (src/ui/el-dialog.ts) ---
+     .el-btn.sm      satır içi küçük çerçeveli düğme (44 px dokunma)
+     .el-btn.danger  geri alınamaz eylem (kırmızı yazı, kırmızımsı çerçeve; kor elmas yok)
+     .el-check       onay kutusu: <label class="el-check"><input type="checkbox"><span class="box"></span><span>yazı</span></label>
+     .el-field       tek satır yazı kutusu */
+.el-btn.sm {
+  min-height: 44px;
+  padding: 0 20px 0 calc(20px + 0.1em);
+  font-size: 15px;
+}
+
+.el-btn.sm.primary {
+  min-height: 46px;
+  padding: 0 26px 0 calc(26px + 0.12em);
+  font-size: 16px;
+}
+
+.el-btn.sm.primary::before,
+.el-btn.sm.primary::after {
+  width: 9px;
+  height: 9px;
+  margin-top: -5px;
+}
+
+.el-btn.sm.primary::before {
+  left: -6px;
+}
+
+.el-btn.sm.primary::after {
+  right: -6px;
+}
+
+.el-btn.danger {
+  color: var(--el-bad);
+  border-color: rgba(232, 128, 106, 0.55);
+}
+
+.el-btn.danger:hover:not(:disabled) {
+  color: #ffb3a2;
+  border-color: #ff9a84;
+  text-shadow: 0 0 12px rgba(232, 96, 70, 0.7);
+}
+
+.el-btn.danger:disabled {
+  color: rgba(232, 128, 106, 0.4);
+  border-color: rgba(232, 128, 106, 0.22);
+}
+
+.el-check {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 48px;
+  cursor: pointer;
+  font: 19px/1.3 var(--el-body);
+  color: var(--el-txt);
+}
+
+.el-check input {
+  position: absolute;
+  opacity: 0;
+  width: 1px;
+  height: 1px;
+}
+
+.el-check .box {
+  flex: none;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  background: rgba(8, 6, 4, 0.7);
+  border: 1px solid var(--el-line3);
+  transition: border-color 0.18s;
+}
+
+.el-check:hover .box {
+  border-color: var(--el-on);
+}
+
+.el-check input:checked + .box::after {
+  content: '';
+  width: 11px;
+  height: 11px;
+  transform: rotate(45deg);
+  background: var(--el-ember);
+  box-shadow: 0 0 0 1px var(--el-ember2), 0 0 8px rgba(240, 140, 40, 0.6);
+}
+
+.el-check input:focus-visible + .box {
+  outline: 2px solid var(--el-on);
+  outline-offset: 2px;
+}
+
+.el-check input:disabled + .box,
+.el-check input:disabled ~ span {
+  opacity: 0.45;
+}
+
+.el-check a {
+  color: var(--el-on);
+  text-decoration-color: rgba(217, 178, 106, 0.5);
+  text-underline-offset: 3px;
+}
+
+.el-field {
+  width: 100%;
+  min-height: 48px;
+  padding: 0 14px;
+  font: 600 19px var(--el-body);
+  color: var(--el-txt);
+  background: rgba(8, 6, 4, 0.75);
+  border: 1px solid rgba(217, 178, 106, 0.4);
+  border-radius: 0;
+  box-sizing: border-box;
+}
+
+.el-field:focus {
+  outline: none;
+  border-color: var(--el-on);
+}
+
+.el-field::placeholder {
+  color: var(--el-dim);
+  font-weight: 400;
+}
+
+/* DOM diyalog (openElDialog): başlık ortada, düğmeler altta sağa yaslı (birincil en sağda) */
+.eld-panel {
+  box-sizing: border-box;
+  max-height: 100%;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  text-align: left !important;
+}
+
+.el-dialog > .eld-panel.wide {
+  width: min(980px, 100%);
+}
+
+.eld-title {
+  font-size: 28px;
+  text-align: center;
+}
+
+.eld-title::before,
+.eld-title::after {
+  flex-basis: 60px;
+}
+
+.eld-lead {
+  margin: 12px 0 16px;
+  text-align: center;
+  font: 19px/1.35 var(--el-body);
+  color: var(--el-note);
+}
+
+.eld-status {
+  margin-top: 10px;
+  text-align: center;
+}
+
+.eld-status[hidden] {
+  display: none;
+}
+
+.eld-foot {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 16px;
+  margin-top: 20px;
+  padding: 16px 10px 0;
+  border-top: 1px solid var(--el-line2);
+}
+
+.eld-foot.single {
+  justify-content: center;
+}
+
+.eld-busy .eld-panel {
+  cursor: progress;
+}
+
+html.short .el-dialog > .eld-panel {
+  padding: 16px 16px 14px;
+}
+
+html.short .eld-title {
+  font-size: 20px;
+  white-space: normal;
+}
+
+html.short .eld-lead {
+  margin: 6px 0 10px;
+  font-size: 16px;
+}
+
+/* Telefon: uzun içerikte (çakışma kartları) düğmeler her zaman görünür, içerik üstte kayar */
+html.short .eld-foot {
+  position: sticky;
+  bottom: -14px;
+  margin: 12px -16px -14px;
+  padding: 8px 16px 10px;
+  gap: 12px;
+  background: linear-gradient(180deg, rgba(22, 16, 10, 0.97), rgba(12, 9, 6, 0.99));
+}
+
+html.short .eld-foot .el-btn {
+  flex: 1 1 auto;
+  padding: 0 10px;
+}

@@ -420,7 +420,7 @@
     "_not": "Bölge III mobları (mob-plan.md 10.4, campaign-dev 2026-10-17): FİNAL BOSS: Lord Morvane (data/bosses/lord_morvane.json; Crown of Ash, 3 faz, Ashfall / Pyre telgrafları) + Morvane's Sworn Guard x2 + Ember Hierophant. Endless'ın lord_morvane'ı (Undead class kopyası) aynen kaldı. Düğüm 12'nin eski enemyTierMods'u (Undead kopyasına göreydi) kaldırıldı; boss ayarı burada. KASMA HEDEFİ TURU (balance-tester 2026-10-20, kasma sim'i; ölçüm balance.json > _grind1): Lord Morvane can/güç x1,05 (0,85/0,47 -> 0,893/0,494; eşlikçiler yalnız enemyScale.all ile).",
     "name": "Lord Morvane",
     "units": [
-      { "class": "lord_morvane", "slot": 4, "name": "Lord Morvane", "tier": "boss", "mods": { "hpMult": 1.022, "powerMult": 0.565, "spriteScale": 1.75 } },
+      { "class": "lord_morvane", "slot": 4, "name": "Lord Morvane", "tier": "boss", "mods": { "hpMult": 1.022, "powerMult": 0.565, "spriteScale": 2.4 } },
       { "class": "sworn_guard", "slot": 0, "mods": { "hpMult": 0.624, "powerMult": 0.511 } },
       { "class": "sworn_guard", "slot": 2, "mods": { "hpMult": 0.624, "powerMult": 0.511 } },
       { "class": "ember_hierophant", "slot": 7, "mods": { "hpMult": 0.624, "powerMult": 0.511 } }

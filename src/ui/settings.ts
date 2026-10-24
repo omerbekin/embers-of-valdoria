@@ -13,7 +13,9 @@ import { onTutorialChange, resetTutorials, setTutorialsOn, tutorialsOn } from '.
 import { navSvg } from './nav-icons';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../diag/diag';
 import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
-import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
+import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
+import { accountApi, isOnline } from '../cloud/ui/api';
+import { accountLine } from '../cloud/ui/account-text';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -25,7 +27,8 @@ import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type Setti
  * `src/ui/settings-pages.ts` (ana menü sütunu da aynısını çizer); son seçilen sayfa oturum boyunca hatırlanır.
  * Sound = Master Volume (skill sesleri, arayüz sesleri ve müziğin ortak çarpanı), Music, Sound Effects, UI Sounds; Gameplay = Battle Speed,
  * Reduced Motion, Tutorials (Replay + On/Off); Display = Performance Mode (Auto / On / Off), Show FPS, Fullscreen; Privacy = Error Reports,
- * Copy Log, Privacy Info + kısa gizlilik satırı. TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
+ * Copy Log, Privacy Info + kısa gizlilik satırı; Account (yalnızca giriş kullanılabilirken) = salt okunur "Signed in as X, last synced ..." /
+ * "Sign in from the main menu" satırı (giriş OAuth yönlendirmesi olduğu için yalnızca ana menüde: src/cloud/ui/account-page.ts). TÜM kaydırıcılar 20 adım: sesler %0-100 (%5, 0 = Off; src/ui/volume-steps.ts),
  * Battle speed 0.25x-4x (src/ui/battle-speed.ts). Oyun akışı eylemleri menüdedir (`src/ui/game-menu.ts`).
  * Klavye: kategori sütununda yukarı/aşağı sayfa, sağ / Enter satırlara; satırlarda yukarı/aşağı, sol/sağ ayar, Enter seçer; Tab sonraki
  * sayfa; Esc / Back kapatır; altta açık olan menü yeniden görünür. Açıkken sahne girişi kilitli.
@@ -83,12 +86,14 @@ export class SettingsScreen {
   private open = false;
   private onBack: (() => void) | undefined;
   /** Sayfa başına satırlar (SETTINGS_PAGES sırası). */
-  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], privacy: [] };
+  private readonly rows: Record<SettingsPageKey, SettingsRow[]> = { sound: [], gameplay: [], display: [], privacy: [], account: [] };
   private readonly pages = new Map<SettingsPageKey, HTMLElement>();
   private readonly cats = new Map<SettingsPageKey, HTMLElement>();
   /** Sayfanın altındaki kısa not (Replay onayı, iPhone tam ekran ipucu, Copy log / Error reports onayı). */
   private readonly notes = new Map<SettingsPageKey, HTMLElement>();
   private page: SettingsPageKey = settingsPage();
+  /** Account satırını yeniden yazar (açılışta; "3 min ago" güncel kalsın). */
+  private paintAccount: () => void = () => undefined;
   /** Klavye odağı: kategori sütunu ya da sayfanın satırları. */
   private zone: 'cat' | 'row' = 'cat';
   private sel = -1;
@@ -283,6 +288,19 @@ export class SettingsScreen {
           case 'info':
             add(() => openDiagNotice('info'), [el('span', 'st-value st-action', 'Open')]);
             break;
+          case 'account': {
+            // Salt okunur hesap satırı (bulut olayları ve açılışta yenilenir)
+            const line = el('div', 'st-line st-account');
+            const paint = (): void => {
+              const api = accountApi();
+              line.textContent = accountLine(api.getAccount(), api.getCloudStatus(), Date.now(), isOnline());
+            };
+            this.paintAccount = paint;
+            paint();
+            accountApi().subscribe((e) => (e.type === 'account' || e.type === 'status') && paint());
+            page.append(line);
+            break;
+          }
         }
       }
       if (pg.key === 'privacy') {
@@ -339,13 +357,13 @@ export class SettingsScreen {
     } else if (k === 'Tab') {
       e.preventDefault();
       uiSound('tab');
-      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1));
+      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountApi().isLoginAvailable()));
       this.zone = 'cat';
     } else if (this.zone === 'cat') {
       if (up || down) {
         e.preventDefault();
         uiSound('tab');
-        this.showPage(stepPage(this.page, up ? -1 : 1));
+        this.showPage(stepPage(this.page, up ? -1 : 1, accountApi().isLoginAvailable()));
       } else if (rows.length && (k === 'ArrowRight' || ((k === 'Enter' || k === ' ') && !onButton))) {
         e.preventDefault();
         this.zone = 'row';
@@ -369,10 +387,13 @@ export class SettingsScreen {
 
   /** Kategori sayfasını gösterir (oturum boyunca hatırlanır: settings-pages.ts). */
   private showPage(key: SettingsPageKey): void {
+    const login = accountApi().isLoginAvailable();
+    if (!pageVisible(key, login)) key = 'sound';
     this.page = key;
     setSettingsPage(key);
     for (const [k, page] of this.pages) page.hidden = k !== key;
     for (const [k, cat] of this.cats) {
+      cat.hidden = !pageVisible(k, login);
       cat.classList.toggle('on', k === key);
       cat.setAttribute('aria-selected', String(k === key));
     }
@@ -445,6 +466,7 @@ export class SettingsScreen {
     this.open = open;
     this.overlay.hidden = !open;
     if (open && !was) {
+      this.paintAccount();
       this.showPage(settingsPage()); // ana menü sütununda seçilen sayfa burada da açılır
       this.zone = 'cat';
     }
