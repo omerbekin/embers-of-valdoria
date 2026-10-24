@@ -303,6 +303,21 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(ctx.server.s.save!.rev).toBe(9);
   });
 
+  it('0.9.8.8 hatasından kalan cihaz (meta rev = bulut rev, bulutun anahtarı yerelde yok): açılışta yeniden karar verilir, bulut iner', async () => {
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    raw.setItem(CLOUD_META_KEY, JSON.stringify({ userId: 'u-1', rev: 9, hash: null, dirty: false, lastSyncAt: '2026-10-24T21:00:00.000Z' }));
+    ctx = setup({ raw });
+    seedServer(ctx.server.s, 9, (kv) => progress(kv, 3));
+    const cloudCamp = ctx.server.s.save!.data['eov.campaign.v1'];
+    await ctx.client.init();
+    ctx.clock.advance(DEBOUNCE_MS * 2);
+    await ctx.client.whenIdle();
+    expect(raw.getItem('eov.campaign.v1')).toBe(cloudCamp);
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+    expect(ctx.server.s.save!.rev).toBe(9);
+  });
+
   it('eski üst düzey GET /save biçimi de okunur; data okunamayan yanıtta karar verilmez, yükleme yapılmaz', async () => {
     ctx = setup({ search: '?auth=ok' });
     seedServer(ctx.server.s, 2, (kv) => progress(kv, 4));

@@ -779,6 +779,16 @@ export class CloudClient {
       return this.setStatus('idle');
     }
     if (save.rev === meta.rev) {
+      // Bulutta olup yerelde hiç olmayan anahtar: bu cihaz bulutu indirmeden "senkron" saymış (0.9.8.8 GET /save biçim hatası).
+      // Sürüme bakmadan yeniden karar verilir (boş yerel = indirme; dolu yerel = birleştirme / soru / upload-guard)
+      const local = this.core!.sync.buildBundle(this.kv(), this.d.app, this.nowIso());
+      const missing = SYNC_KEYS.filter((k) => save.versions[k] !== undefined && local.data[k] === null);
+      if (missing.length) {
+        this.dlog(`stale sync: cloud rev ${save.rev} has [${missing.join(',')}] missing locally`);
+        const c = await this.fetchCloud();
+        if (!c.ok) return;
+        return this.decideAndAct(c.cloud);
+      }
       if (this.isDirty()) return this.upload();
       return this.setStatus('idle');
     }
