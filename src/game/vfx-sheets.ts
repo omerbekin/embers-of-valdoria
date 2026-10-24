@@ -12,7 +12,7 @@
 import Phaser from 'phaser';
 import { slow } from './combatant-view';
 import { VFX_SHEET_FILES, vfxSheetFile } from './vfx-sheet-files';
-import { buildInbetween, stabilizeFrames, type StabilizeOpts } from './vfx-inbetween';
+import { buildInbetween, stabilizeFrames, trimFrames, type StabilizeOpts } from './vfx-inbetween';
 
 export const vfxSheetKey = (id: string): string => `vfxsheet:${id}`;
 
@@ -59,9 +59,9 @@ function animFor(scene: Phaser.Scene, id: string, frames: readonly number[] | un
 }
 
 /** Ara kareli dokunun tüm kareleri için animasyon anahtarı. */
-function ibAnim(scene: Phaser.Scene, texKey: string, count: number): string {
-  const key = `${texKey}#all`;
-  if (!scene.anims.exists(key)) scene.anims.create({ key, frames: Array.from({ length: count }, (_, frame) => ({ key: texKey, frame })), frameRate: 12, repeat: 0 });
+function ibAnim(scene: Phaser.Scene, texKey: string, count: number, start = 0): string {
+  const key = start ? `${texKey}#from${start}` : `${texKey}#all`;
+  if (!scene.anims.exists(key)) scene.anims.create({ key, frames: Array.from({ length: count - start }, (_, i) => ({ key: texKey, frame: start + i })), frameRate: 12, repeat: 0 });
   return key;
 }
 
@@ -100,12 +100,19 @@ export interface SheetOpts {
   inbetween?: { method: string; sub: number };
   /** Kare hizalama (src/game/vfx-inbetween.ts > stabilizeFrames; mob efektleri: mob-vfx.ts): kareler vuruş karesinin yerine oturur. Yoksa asıl kareler. */
   stabilize?: StabilizeOpts;
+  /** Animasyon bu (asıl) kareden başlar (varsayılan 0). */
+  from?: number;
+  /** Her karenin kenarından bu kadar piksel silinir (256'lık kare pikseli): sheet'e çizili dikdörtgen çerçeve (Ember Toss). Yoksa kare aynen. */
+  trim?: number;
 }
 
+/** Türev dokunun en geniş kenarı (px): kareler bu genişliği aşınca alt satıra geçer. */
+const DERIVED_MAX_W = 4096;
+
 /** Türev doku (asıl dokudan bir kez üretilir): kare hizalama ve/ya da kodla ara kare; üretilemezse null (asıl kareler oynar). */
-function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: number } | null, st: StabilizeOpts | undefined, tilt?: { shear: number; squash: number }): string | null {
+function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: number } | null, st: StabilizeOpts | undefined, tilt?: { shear: number; squash: number }, trim = 0): string | null {
   const src = vfxSheetKey(id);
-  const key = `${src}#d:${ib ? `${ib.method}:${ib.sub}` : '-'}:${st ? JSON.stringify(st) : '-'}:${tilt ? `t${tilt.shear.toFixed(3)}/${tilt.squash}` : '-'}`;
+  const key = `${src}#d:${ib ? `${ib.method}:${ib.sub}` : '-'}:${st ? JSON.stringify(st) : '-'}:${tilt ? `t${tilt.shear.toFixed(3)}/${tilt.squash}` : '-'}:${trim ? `m${trim}` : '-'}`;
   if (scene.textures.exists(key)) return key;
   try {
     const f = vfxSheetFile(id)!;
@@ -120,6 +127,7 @@ function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: 
       c.getContext('2d')!.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fw, fh);
       frames.push(c);
     }
+    if (trim > 0) frames = trimFrames(frames, trim);
     if (st) frames = stabilizeFrames(frames, st);
     let out = ib ? buildInbetween(frames, ib.method, ib.sub) : frames;
     // zemin eğimi: kare ortasına göre dikey basıklık + yatay kaydırma (x' = x + shear * (y - ortası)); kare genişliği %50 büyür (taşmasın)
@@ -137,11 +145,16 @@ function derivedKey(scene: Phaser.Scene, id: string, ib: { method: string; sub: 
         cx.drawImage(src, 0, 0);
         return c;
       });
-    const ct = scene.textures.createCanvas(key, ow * out.length, fh);
+    // kareler ızgarada (en çok DERIVED_MAX_W px genişlik: 5x ara kareli 40 kare tek satırda 10240 px olurdu; telefon GPU'ları 4096-8192'de keser)
+    const cols = Math.max(1, Math.min(out.length, Math.floor(DERIVED_MAX_W / ow)));
+    const rows = Math.ceil(out.length / cols);
+    const ct = scene.textures.createCanvas(key, ow * cols, fh * rows);
     if (!ct) return null;
     out.forEach((c, i) => {
-      ct.context.drawImage(c, i * ow, 0);
-      ct.add(i, 0, i * ow, 0, ow, fh);
+      const gx = (i % cols) * ow;
+      const gy = Math.floor(i / cols) * fh;
+      ct.context.drawImage(c, gx, gy);
+      ct.add(i, 0, gx, gy, ow, fh);
     });
     ct.refresh();
     ct.setFilter(Phaser.Textures.FilterMode.NEAREST);
@@ -163,10 +176,10 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
   const pivot = f.meta.pivot ?? [fw / 2, f.meta.frame_size[1] / 2];
   const ib = o.inbetween && o.inbetween.sub > 1 ? o.inbetween : null;
   const tilt = o.groundTilt ? { shear: o.flipX ? -o.groundTilt : o.groundTilt, squash: o.squashY ?? 1 } : undefined;
-  const ibKey = ib || o.stabilize || tilt ? derivedKey(scene, id, ib, o.stabilize, tilt) : null;
+  const ibKey = ib || o.stabilize || tilt || o.trim ? derivedKey(scene, id, ib, o.stabilize, tilt, o.trim ?? 0) : null;
   const tilted = !!tilt && !!ibKey; // üretilemezse düz (eğimsiz) çizime döner
   const sub = ibKey && ib ? ib.sub : 1;
-  const spr = scene.add.sprite(x, y, ibKey ?? key, (o.frame ?? o.frames?.[0] ?? 0) * sub);
+  const spr = scene.add.sprite(x, y, ibKey ?? key, (o.frame ?? o.frames?.[0] ?? o.from ?? 0) * sub);
   const k = (o.size ?? fw) / fw;
   if (tilted) spr.setOrigin(0.5, 0.5); // türev karede içerik ortada
   else spr.setOrigin(o.origin?.[0] ?? pivot[0] / fw, o.origin?.[1] ?? pivot[1] / f.meta.frame_size[1]);
@@ -182,7 +195,8 @@ export function vfxSheet(scene: Phaser.Scene, id: string, x: number, y: number, 
     spr.setVisible(true);
     if (o.frame !== undefined) return;
     const fps = ((o.fps ?? f.meta.fps) * sub) / (slow(1000) / 1000);
-    const akey = ibKey ? ibAnim(scene, ibKey, f.meta.frames * sub) : animFor(scene, id, o.frames);
+    const first = o.from ?? 0; // animasyon bu (asıl) kareden başlar: yağan ok gibi uçuş karesi ayrı oynadıysa (mob-vfx.ts > tune.fall)
+    const akey = ibKey ? ibAnim(scene, ibKey, f.meta.frames * sub, first * sub) : animFor(scene, id, o.frames ?? (first ? Array.from({ length: f.meta.frames - first }, (_, i) => first + i) : undefined));
     spr.play({ key: akey, frameRate: fps, repeat: o.loop ? -1 : 0 });
     if (!o.loop && !o.keep) spr.once(Phaser.Animations.Events.ANIMATION_COMPLETE, () => spr.destroy());
   };

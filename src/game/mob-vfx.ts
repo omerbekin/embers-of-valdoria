@@ -17,9 +17,15 @@
  *   'hit' + melee/bolt: karenin AĞIRLIK MERKEZİ hedefin gövde merkezine (k.spot) oturur;
  *   'ground' (cells, self, ally, zemine inen melee/mermi): içeriğin ALT BANDININ merkezi (zemin diski) hücre zeminine / ayağa (k.feet) oturur;
  *   center + 'hit' (Glyph of Breaking): sheet pivotundan (kare ortası), `squashY` ve -40 ayarıyla zemine yatar.
- * DERİNLİK: efekt hedefin (alan efektinde her hücrenin) birim derinliğinin hemen üstünde çizilir; hedeften ÖNDEKİ birimler efektin üstünde kalır.
+ * DERİNLİK: efekt TÜM birimlerin üstünde çizilir (k.DEPTH); yalnızca zemine yatan desen (groundPlane) birim sırasına göre kalır.
+ *
+ * GERÇEK SAVAŞTA NE OYNAR (Ömer 2026-10-20, her skill için karar; veri data/battle-layout.json > animation.mobVfx.skills):
+ *   `hand: true`  el yapımı efekt (src/game/mob-vfx-hand.ts > MOB_HAND_VFX, tamamen kodla çizilir; sheet yalnızca vuruş anı için okunur)
+ *   aksi halde    asıl ChatGPT sheet'i + KODLA ARA KARE (data/vfx-inbetween.json > player: yöntem, kat; skill başına `ib` / `sub` ezer)
+ * El yapımı modül büyük olduğu için tembel yüklenir (yalnızca el yapımı skill'in ilk atışında ya da test panelinde inen ayrı parça).
  * Phaser'ı çalışma zamanında içe aktarmaz (yalnızca tip): node testlerinde de yüklenir.
  */
+import type Phaser from 'phaser';
 import type { CombatantView } from './combatant-view';
 import type { VfxCtx } from './vfx';
 import type { VfxKit } from './vfx-versions';
@@ -31,8 +37,8 @@ import { IB_CFG, type StabilizeOpts } from './vfx-inbetween';
 const IB = IB_CFG.player;
 
 /**
- * Yalnızca Debug > VFX frame test (in battle): bir sonraki mob efekti hangi sheet'le / ara karelerle oynasın. `on` kapalıyken (gerçek savaşlar)
- * hiçbir şey değişmez: asıl sheet (assets/mob-vfx) ve data/vfx-inbetween.json > player ayarı.
+ * Yalnızca Debug > VFX frame test (in battle): bir sonraki mob efekti hangi sheet'le / ara karelerle oynasın. `on` kapalıyken (gerçek savaşlar,
+ * panelde "Real battle" sürümü) hiçbir şey ezilmez: skill'in gerçek ayarı oynar (`hand` / ara kare, yukarıdaki başlık).
  *   tween  16 karelik ChatGPT sheet'i (assets/mob-vfx-tween; test ekranı kaydeder, yoksa asıl sheet)
  *   ib     kodla ara kare (null = kapalı)
  *   hand   sheet YERİNE tamamen kodla çizilen efekt (src/game/mob-vfx-hand.ts; test paneli verir, null = kapalı). `hitMs` = asıl sheet'in
@@ -141,7 +147,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   // King's Bridge boss (Bridge Warden)
   anchor_smash: { mob: 'bridge_warden', mode: 'melee', at: 'hit', impact: 3, size: 260, hex: '#ff8a3a' },
   breaking_span: { mob: 'bridge_warden', mode: 'cells', at: 'ground', impact: 3, size: 230, hex: '#6ad0d8' },
-  chain_hook: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 3, size: 250, hex: '#ff8a3a' },
+  chain_hook: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 2, size: 250, hex: '#ff8a3a' }, // vuruş karesi 2 (çarpma patlaması): 0-1 kancanın gidişi (tune.travel)
   ash_brand: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 4, size: 260, hex: '#ff6a1a' },
   fall_of_kings_bridge: { mob: 'bridge_warden', mode: 'center', at: 'ground', impact: 3, size: 520, hex: '#ff5a1a' },
 };
@@ -156,8 +162,8 @@ const HOLD_MS = layout.animation.mobVfx.impactHoldMs; // vuruş karesinde donma 
 const MOB_SCALE = (layout.animation.mobVfx as { scale?: number }).scale ?? 1; // yalnızca ChatGPT mob sheet'leri (%20 küçük: 0.8); kodla çizilen sınıf efektleri etkilenmez
 const WIND_MULT = layout.animation.mobVfx.windMult; // spec.windMs (hazırlık pozu) çarpanı
 
-/** Skill başına oynatma ayarı (data/battle-layout.json > animation.mobVfx.skills; alanların anlamı oradaki _not2). */
-interface MobTune {
+/** Skill başına oynatma ayarı (data/battle-layout.json > animation.mobVfx.skills; alanların anlamı oradaki _not2 / _not3). */
+export interface MobTune {
   size?: number;
   speed?: number;
   dx?: number;
@@ -166,7 +172,38 @@ interface MobTune {
   alignPre?: boolean;
   travel?: number;
   lane?: boolean;
-  travelWithLunge?: boolean;
+  /** Gerçek savaşta el yapımı (kodla çizilen) efekt oynasın (src/game/mob-vfx-hand.ts). */
+  hand?: boolean;
+  /** Kodla ara kare yöntemi ('crossfade' | 'crossfade+motion') ya da false = bu skill'de ara kare yok. Yoksa data/vfx-inbetween.json > player. */
+  ib?: string | false;
+  /** Ara kare katı (2-5) bu skill için. Yoksa data/vfx-inbetween.json > player.sub. */
+  sub?: number;
+  /** Mermi çıkış noktası kayması (ekran px): srcDx saldıranın baktığı yöne (+ ileri), srcDy dikey (- yukarı). */
+  srcDx?: number;
+  srcDy?: number;
+  /** 'cast': mermi saldıranın büyü/silah ucundan çıkar (CombatantView.castPoint, poz yoksa srcDx/srcDy ile gövde). */
+  from?: 'cast';
+  /** cells: efekt hücrenin bu kadar px üstünden DÜŞER (yağan ok); uçuş karesi `fall` ms boyunca iner, sonra çarpma kareleri oynar. */
+  fromAbove?: number;
+  fall?: number;
+  /** Efekt (ve vuruş anı) bu kadar ms geç başlar: saldıranın vuruş hareketine (swing) uydurma. */
+  lag?: number;
+  /** bolt: hazırlık animasyonu ('attack' = silah savurma; varsayılan 'cast'). */
+  anim?: 'attack';
+  /** false: vuruş anındaki yuvarlak parlama (flash) çizilmez (Shield Wall'daki mavi daire). */
+  flash?: boolean;
+  /** Karenin kenarından bu kadar px silinir: sheet'e çizili dikdörtgen çerçeve (Ember Toss). */
+  trim?: number;
+  /** Sheet'teki mermi eğimi (derece, sağa bakarken aşağı doğru): uçuşta mermi gerçek yola döndürülür (çapraz görünmesin). */
+  art?: number;
+  /** melee: hedefe bu kadar px daha az yaklaş (yalnızca görüntü; mızraklılar). */
+  standOff?: number;
+  /** melee: vuruşu bu skill'in sheet'i oynar (ısırma), skill'in KENDİ sheet'i saldıranın arkasında iz (trail) olur (Run Down). */
+  bite?: string;
+  /** cells (aşamalı): tek bir mermi tüm aşamaları katederek ilerler (parça parça yeni mermi yok); ok gövdesi uzar (`stretch`), dayanak `originX`. */
+  single?: boolean;
+  stretch?: number;
+  originX?: number;
 }
 const TUNE = layout.animation.mobVfx as unknown as { sizeMult?: number; speedMult?: number; stabilize: { minMass: number; maxShift: number }; skills: Record<string, MobTune> };
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -179,6 +216,12 @@ const ADD_BLEND = 1; // Phaser.BlendModes.ADD
 const CELL_DEPTH = 8; // hücre zemin merkezi (ayak y'sinin ~4-6 px üstü) -> o hücredeki birimin derinliğinin hemen üstü
 const SHAKE_MS = 130; // yalnızca melee
 const SHAKE_MAG = 0.004;
+const STEP = 180; // aşamalı alan skill'inde aşamalar arası (ms)
+const TRAIL_MS = 300; // iz (trail) sheet'inin toplam oynama süresi (ms, yavaşlatılmadan)
+const TRAIL_SIZE = 300; // iz sheet'inin ekran boyu (px)
+const TRAIL_ORIGIN: [number, number] = [0.84, 0.5]; // iz sheet'inin başı (alev ucu) sağda: aynalanınca saldıranın önünde
+const CAST_PEAK_MS = 130; // büyü ucunun okunduğu an (windUp'ın tepe noktası; bu anda cast pozu oturmuş)
+const FAST_RAIN_X = 0.55; // yağan okun yatay eğimi (dikey px başına)
 
 /**
  * Zemin eğimi (ekranda yatay / dikey px): hedef tahtanın yuva ızgarasında bir sıra aşağı inince x ne kadar kayar (data/battle-layout.json yuvaları).
@@ -198,24 +241,103 @@ function deferred(): { promise: Promise<void>; resolve: () => void } {
 /** Vuruş karesine kadar geçen süre (ms, yavaşlatılmadan; sheet fps'i meta'dan). */
 const impactMs = (frame: number, fps: number): number => (frame * 1000) / Math.max(1, fps);
 
-function build(skillId: string, s: MobVfxSpec): V2Vfx {
-  const origId = mobSheetId(s.mob, skillId);
+/** Mermi sheet'inin eğimini (art, derece) uçuş yönüne çevirir: dönme açısı (radyan, -PI..PI). flip = sheet yatay aynalı (sola uçan). */
+export function flightRotation(from: Pt, to: Pt, artDeg: number, flip: boolean): number {
+  const th = Math.atan2(to.y - from.y, to.x - from.x);
+  const a = (artDeg * Math.PI) / 180;
+  let r = flip ? th - Math.PI + a : th - a;
+  while (r > Math.PI) r -= 2 * Math.PI;
+  while (r < -Math.PI) r += 2 * Math.PI;
+  return r;
+}
+
+/** Skill'in efektli tune'u (bite: asıl vuruşu yapan skill'in ayarı + kendi ayarı üstüne). */
+function tuneOf(skillId: string): MobTune {
+  const own = TUNE.skills[skillId] ?? {};
+  return own.bite ? { ...(TUNE.skills[own.bite] ?? {}), ...own } : own;
+}
+
+/** Skill'in GERÇEK savaşta oynayan sürümü (debug paneli "Real battle" satırı için): el yapımı mı, ara kare yöntemi / katı. */
+export function mobRealPlay(skillId: string): { hand: boolean; ib: { method: string; sub: number } | null } {
+  const t = TUNE.skills[skillId] ?? {};
+  if (t.hand) return { hand: true, ib: null };
+  const tune = tuneOf(skillId);
+  return { hand: false, ib: realInbetween(tune) };
+}
+
+function realInbetween(tune: MobTune): { method: string; sub: number } | null {
+  if (tune.ib === false || !IB.enabled) return null;
+  return { method: tune.ib ?? IB.method, sub: tune.sub ?? IB.sub };
+}
+
+/** El yapımı efekt modülü tembel yüklenir: yaklaşık 7000 satırlık çizim kodu savaş parçasına girmesin. */
+let handMod: Promise<typeof import('./mob-vfx-hand')> | null = null;
+const loadHand = async (skillId: string): Promise<MobHandVfx | undefined> => (await (handMod ??= import('./mob-vfx-hand'))).MOB_HAND_VFX[skillId];
+
+/**
+ * El yapımı efektler TÜM birimlerin üstünde çizilir (Ömer 2026-10-19: "araya sıkışmaz"); çizim dosyaları birim derinliğine göre derinlik verir
+ * (src/game/mob-vfx-hand/*), o yüzden efekt süresince sahneye eklenen / havuzdan yeniden alınan düşük derinlikli nesneler her karede k.DEPTH
+ * katmanına çıkarılır (göreli sıra korunur). Birim kapsayıcıları (Container), arka plan ve arayüz (derinlik 3000+) dokunulmaz. groundPlane:
+ * zemine yatan desen (Glyph of Breaking) birim sırasında kalır.
+ */
+const FRONT_MAX = 3000;
+const FRONT_WINDOW_MS = 5000;
+const liftedFx = new WeakSet<object>();
+function frontLayer(c: VfxCtx, k: VfxKit): void {
+  const sc = c.scene;
+  type D = Phaser.GameObjects.GameObject & { depth: number; setDepth: (d: number) => unknown };
+  const before = new Set<object>();
+  for (const o of sc.children.list) if (o.type !== 'Container') before.add(o);
+  const lift = (): void => {
+    for (const o of sc.children.list as D[]) {
+      if (o.type === 'Container') continue;
+      const d = o.depth;
+      if (d <= 0 || d >= FRONT_MAX) continue;
+      if (before.has(o) && !liftedFx.has(o)) continue;
+      liftedFx.add(o);
+      o.setDepth(k.DEPTH + d * 0.001);
+    }
+  };
+  sc.events.on('postupdate', lift);
+  const stop = (): void => {
+    sc.events.off('postupdate', lift);
+  };
+  sc.time.delayedCall(k.slow(FRONT_WINDOW_MS), stop);
+  sc.events.once('shutdown', stop);
+}
+
+function build(skillId: string, s0: MobVfxSpec): V2Vfx {
+  const own = TUNE.skills[skillId] ?? {};
+  const tune = tuneOf(skillId);
+  // bite (Run Down): vuruşu başka skill'in sheet'i yapar (spec ve sheet onunki), skill'in kendi sheet'i iz olur
+  const bs = own.bite ? MOB_VFX_SPECS[own.bite] : undefined;
+  const s = bs ?? s0;
+  const ownId = mobSheetId(s0.mob, skillId);
+  const origId = bs ? mobSheetId(bs.mob, own.bite!) : ownId;
   return async (c: VfxCtx, k: VfxKit) => {
-    // test ekranı: tamamen kodla çizilen sürüm (sheet yüklenmez); vuruş anı asıl sheet'inkiyle aynı
-    if (mobVfxTest.on && mobVfxTest.hand) return mobVfxTest.hand(c, k, impactMs(s.impact, (vfxSheetFile(origId)?.meta.fps ?? 12) * FPS_SCALE));
+    // el yapımı sürüm: test panelinin seçimi ya da (gerçek savaşta) skill'in kararı; sheet yüklenmez, vuruş anı asıl sheet'inkiyle aynı
+    const handFn = mobVfxTest.on ? mobVfxTest.hand : own.hand ? ((await loadHand(skillId)) ?? null) : null;
+    if (handFn) {
+      if (!s0.groundPlane) frontLayer(c, k);
+      return handFn(c, k, impactMs(s0.impact, (vfxSheetFile(ownId)?.meta.fps ?? 12) * FPS_SCALE));
+    }
     // test ekranı: 16 karelik sheet (varsa) ve kare sayısı oranı (vuruş karesi ve fps ona göre); gerçek savaşta hep asıl sheet
-    const tweenId = mobVfxTest.on && mobVfxTest.tween ? mobTweenSheetId(s.mob, skillId) : null;
+    const tweenId = mobVfxTest.on && mobVfxTest.tween ? mobTweenSheetId(s.mob, bs ? own.bite! : skillId) : null;
     const id = tweenId && vfxSheetFile(tweenId) ? tweenId : origId;
     const mult = (vfxSheetFile(id)?.meta.frames ?? 8) / (vfxSheetFile(origId)?.meta.frames ?? 8);
     const impactF = Math.round(s.impact * mult);
-    const ib = mobVfxTest.on ? mobVfxTest.ib : IB.enabled ? { method: IB.method, sub: IB.sub } : null;
-    await k.sheetsReady(c.scene, [id]);
+    const ib = mobVfxTest.on ? mobVfxTest.ib : realInbetween(tune);
     const flip = c.actor.combatant.side !== 'party';
-    const tune = TUNE.skills[skillId] ?? {};
+    const fwd = flip ? -1 : 1; // saldıranın baktığı yön (ekran x)
+    await k.sheetsReady(c.scene, bs ? [id, ownId] : [id]);
     const fps = (vfxSheetFile(id)?.meta.fps ?? 12) * FPS_SCALE * (tune.speed ?? TUNE.speedMult ?? 1);
     const size = Math.min(SIZE_MAX, Math.round(s.size * SIZE_MULT * MOB_SCALE * (tune.size ?? TUNE.sizeMult ?? 1)));
     const off: Pt = { x: tune.dx ?? 0, y: tune.dy ?? 0 };
     const travelF = Math.round((tune.travel ?? 0) * mult);
+    const lag = tune.lag ?? 0;
+    const fall = tune.fall ?? 0;
+    const startF = fall ? 1 : 0; // yağan efektte çarpma sheet'i uçuş karesinden sonrasını oynar
+    const hitT = impactMs(impactF - startF, fps); // sheet başlangıcından vuruş karesine (ms, yavaşlatılmadan)
     // kare hizalama: vuruş sonrası kareler vuruş karesinin yerine oturur; uçuş kareleri ağırlık merkezinden vuruş noktasına (yolu sprite yapar)
     const alignMode = tune.align ?? (s.at === 'ground' ? 'base' : 'core');
     const stabilize: StabilizeOpts | undefined =
@@ -242,46 +364,70 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       : s.at === 'ground'
         ? [anchors.baseX / fw, anchors.baseY / fh]
         : [anchors.core[0] / fw, anchors.core[1] / fh];
+    const frameCount = meta?.frames ?? 8;
+    const flashAt = (p: Pt, depth: number): void => {
+      if (tune.flash === false) return;
+      const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
+      c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
+    };
     // DERİNLİK (Ömer 2026-10-19: "önündeki karakterlerin de önüne çıkacak, araya sıkışmaz"): efekt TÜM birimlerin üstünde (k.DEPTH, oyuncu
     // skill efektleriyle aynı katman). Yalnızca zemine yatan desen (groundPlane: Glyph of Breaking) birim sırasına göre kalır: hedefin hemen
     // üstü, öndeki birimlerin altı (birim derinliği = ayak y'si), yoksa öndekinin ayaklarına biner.
     const play = (p0: Pt, delay = 0, unitDepth = k.DEPTH, from0?: Pt): void => {
       const depth = s.groundPlane ? unitDepth : k.DEPTH;
       const p = { x: p0.x + off.x, y: p0.y + off.y };
-      const from = from0 && travelF ? { x: from0.x + off.x, y: from0.y + off.y } : null;
+      const flying = !!from0 && (travelF > 0 || fall > 0);
+      const from = flying ? { x: from0!.x + off.x, y: from0!.y + off.y } : null;
       const base = {
         size,
         flipX: flip,
         fps,
-        delay,
         ...(s.squashY ? { squashY: s.squashY } : {}),
         ...(s.groundPlane ? { groundTilt: groundTilt(flip) } : {}),
         ...(origin ? { origin } : {}),
-        ...(ib ? { inbetween: ib } : {}), // kodla ara kare (varsayılan KAPALI: data/vfx-inbetween.json > player)
+        ...(ib ? { inbetween: ib } : {}), // kodla ara kare (data/vfx-inbetween.json > player, skill başına tune.ib / tune.sub)
         ...(stabilize ? { stabilize } : {}),
+        ...(tune.trim ? { trim: tune.trim } : {}),
       };
-      const at = from ?? p;
-      const main = k.sheet(c.scene, id, at.x, at.y, { ...base, depth: depth + 1 });
-      const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
-      if (!main) return;
-      // uçuş: vuruş karesine kadar saldırandan hedefe düz ilerler; çarpma kareleri hedefte oturur
-      if (from) {
-        const fly = [main, glow].filter((o): o is NonNullable<typeof o> => !!o);
-        c.scene.tweens.add({ targets: fly, x: p.x, y: p.y, delay: k.slow(delay), duration: k.slow(impactMs(impactF, fps)), ease: 'Linear' });
+      const pair = (o: { delay?: number; frame?: number; keep?: boolean; from?: number }, at: Pt): Array<NonNullable<ReturnType<VfxKit['sheet']>>> => {
+        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, depth: depth + 1 });
+        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+        return [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
+      };
+      let objs: Array<NonNullable<ReturnType<VfxKit['sheet']>>>;
+      if (from && fall) {
+        // yağan efekt (Scatter Quarrels): uçuş karesi (0) yukarıdan hücreye iner, sonra çarpma kareleri o hücrede oynar
+        const fl = pair({ frame: 0, keep: true, delay: delay + lag }, from);
+        c.scene.tweens.add({ targets: fl, x: p.x, y: p.y, delay: k.slow(delay + lag), duration: k.slow(fall), ease: 'Quad.easeIn', onComplete: () => fl.forEach((o) => o.destroy()) });
+        objs = pair({ delay: delay + lag + fall, from: startF }, p);
+      } else {
+        objs = pair({ delay: delay + lag }, from ?? p);
+        // uçuş: vuruş karesine kadar saldırandan hedefe düz ilerler; çarpma kareleri hedefte oturur
+        if (from && objs.length)
+          c.scene.tweens.add({ targets: objs, x: p.x, y: p.y, delay: k.slow(delay + lag), duration: k.slow(hitT), ease: 'Linear' });
+        // mermi eğimi: sheet'te mermi aşağı eğik çizili; uçuşta gerçek yola döner, çarpma karesinde düz
+        if (from && tune.art !== undefined) {
+          const r = flightRotation(from, p, tune.art, flip);
+          for (const o of objs) o.setRotation(r);
+        }
       }
+      if (!objs.length) return;
       // vuruş karesi: sheet'i kısa dondur + hedefte parlama
-      c.scene.time.delayedCall(k.slow(delay + impactMs(impactF, fps)), () => {
-        for (const o of [main, glow]) if (o?.active) o.anims.pause();
-        const f = c.scene.add.circle(p.x, p.y, FLASH_SIZE / 2, flashColor, FLASH_ALPHA).setBlendMode(ADD_BLEND).setDepth(depth + 3);
-        c.scene.tweens.add({ targets: f, scale: FLASH_GROW, alpha: 0, duration: k.slow(FLASH_MS), onComplete: () => f.destroy() });
+      c.scene.time.delayedCall(k.slow(delay + lag + fall + hitT), () => {
+        for (const o of objs) {
+          if (!o.active) continue;
+          o.anims.pause();
+          if (tune.art !== undefined) o.setRotation(0);
+        }
+        flashAt(p, depth);
         c.scene.time.delayedCall(k.slow(HOLD_MS), () => {
-          for (const o of [main, glow]) if (o?.active) o.anims.resume();
+          for (const o of objs) if (o?.active) o.anims.resume();
         });
       });
     };
     const land = (): Promise<void> => {
       const d = deferred();
-      c.scene.time.delayedCall(k.slow(impactMs(impactF, fps)), () => {
+      c.scene.time.delayedCall(k.slow(lag + fall + hitT), () => {
         for (const x of sfx.slice(1)) c.sfx(x);
         d.resolve();
       });
@@ -289,32 +435,42 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
     };
     if (sfx[0]) c.sfx(sfx[0]);
 
-    // uçuşun çıkış noktası: saldıranın göğsü (zemin efektinde ayağı)
-    const src = (): Pt => (s.at === 'hit' ? k.spot(c.actor) : k.feet(c.actor));
+    // uçuşun çıkış noktası: saldıranın göğsü (zemin efektinde ayağı) + tune.srcDx / srcDy; tune.from='cast' ise büyü / silah ucu (cast pozunun tepesinde okunur)
+    let tip: Pt | null = null;
+    if (tune.from === 'cast') c.scene.time.delayedCall(k.slow(CAST_PEAK_MS), () => (tip = c.actor.castPoint?.() ?? null));
+    const src = (): Pt => {
+      if (tip) return tip;
+      const b = s.at === 'hit' ? k.spot(c.actor) : k.feet(c.actor);
+      return { x: b.x + fwd * (tune.srcDx ?? 0), y: b.y + (tune.srcDy ?? 0) };
+    };
     if (s.mode === 'melee') {
       if (s.windMs) {
         c.actor.play('cast');
         await new Promise<void>((r) => c.scene.time.delayedCall(k.slow(s.windMs! * WIND_MULT), r));
       }
       const t = c.targets[0];
-      if (tune.travelWithLunge && travelF) {
-        // iz (trail) atılmayla birlikte akar, ısırma hedefte vurur (Run Down)
-        const t0 = c.scene.time.now;
-        const lunged = c.lunge(t ? t.container.x : c.actor.container.x);
-        for (const v of c.targets) play(pos(v), 0, v.container.depth, src());
-        c.scene.time.delayedCall(k.slow(impactMs(impactF, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
-        await lunged;
-        const rest = k.slow(impactMs(impactF, fps)) - (c.scene.time.now - t0);
-        if (rest > 0) await new Promise<void>((r) => c.scene.time.delayedCall(rest, r));
-        for (const x of sfx.slice(1)) c.sfx(x);
-        return;
+      if (bs) {
+        // iz (trail): skill'in kendi sheet'i atılma boyunca saldıranın arkasında akar; ısırma (bs) hedefte vurur
+        const spr = k.sheet(c.scene, ownId, c.actor.container.x, c.actor.container.y, { size: TRAIL_SIZE, flipX: flip, fps: ((vfxSheetFile(ownId)?.meta.frames ?? 8) * 1000) / TRAIL_MS, origin: TRAIL_ORIGIN, depth: k.DEPTH + 1 });
+        if (spr)
+          c.scene.tweens.addCounter({
+            from: 0,
+            to: 1,
+            duration: k.slow(TRAIL_MS),
+            onUpdate: () => {
+              if (!spr.active) return;
+              const q = k.spot(c.actor);
+              spr.setPosition(q.x - fwd * c.actor.w * 0.1, q.y);
+            },
+            onComplete: () => spr.active && spr.destroy(),
+          });
       }
-      await c.lunge(t ? t.container.x : c.actor.container.x);
+      await c.lunge(t ? t.container.x : c.actor.container.x, tune.standOff);
       for (const v of c.targets) play(pos(v), 0, v.container.depth);
-      c.scene.time.delayedCall(k.slow(impactMs(impactF, fps)), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
+      c.scene.time.delayedCall(k.slow(lag + hitT), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
-    await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', 'cast');
+    await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', tune.anim ?? 'cast');
     if (s.mode === 'bolt' || s.mode === 'ally') {
       for (const v of c.targets) play(pos(v), 0, v.container.depth, s.mode === 'bolt' ? src() : undefined);
       return land();
@@ -331,19 +487,86 @@ function build(skillId: string, s: MobVfxSpec): V2Vfx {
       play(mid, 0, Math.max(...cells.map((q) => q.y)) + CELL_DEPTH);
       return land();
     }
+    // yağan efekt: çıkış noktası hücrenin üstü (sheet'teki ok yönüne yakın eğimle), yoksa saldıran
+    const rainFrom = (p: Pt): Pt => (tune.fromAbove ? { x: p.x - fwd * tune.fromAbove * FAST_RAIN_X, y: p.y - tune.fromAbove } : src());
     // cells: aşamalı skill'de aşama aşama (her aşama bir öncekinden ~180 ms sonra), değilse küçük rastgele gecikmeyle hepsi birden
     if (c.stages && c.stages.length > 1) {
-      const STEP = 180;
-      c.stages.forEach((st, i) => {
-        // lane: aşamanın efekti bir önceki aşamanın hücresinden yenisine ilerler (ışınlanma yok, önden arkaya süpürme)
-        const prev = i > 0 ? c.stages![i - 1]!.cells[0] : undefined;
-        for (const p of st.cells) play(p, i * STEP, p.y + CELL_DEPTH, tune.lane ? (prev ?? src()) : src());
-        c.scene.time.delayedCall(k.slow(i * STEP + impactMs(impactF, fps)), () => c.releaseStage(i));
-      });
+      if (tune.single) {
+        playSingle();
+      } else {
+        c.stages.forEach((st, i) => {
+          // lane: aşamanın efekti bir önceki aşamanın hücresinden yenisine ilerler (ışınlanma yok, önden arkaya süpürme)
+          const prev = i > 0 ? c.stages![i - 1]!.cells[0] : undefined;
+          for (const p of st.cells) play(p, i * STEP, p.y + CELL_DEPTH, tune.lane ? (prev ?? src()) : rainFrom(p));
+        });
+      }
+      c.stages.forEach((_, i) => c.scene.time.delayedCall(k.slow(i * STEP + lag + fall + hitT), () => c.releaseStage(i)));
       return land();
     }
-    cells.forEach((p, i) => play(p, i * 50, p.y + CELL_DEPTH, src()));
+    cells.forEach((p, i) => play(p, i * 50, p.y + CELL_DEPTH, rainFrom(p)));
     return land();
+
+    /**
+     * TEK MERMİ (Wall of Pikes; Ömer 2026-10-20: "hücre başına parça parça atma, okun arka kısmı trailer olarak uzasın, aynı ok sürekli gitsin"):
+     * tek sprite saldırandan ilk aşamaya, oradan sırayla sonrakilere ilerler; uçuş kareleri (0..vuruş-1) döngüyle oynar, gövdesi yol boyunca uzar
+     * (`stretch`, baş `originX`'te sabit); her aşamada kısa parlama + hasar, SON aşamada çarpma kareleri oynar. Kareleri elle sürer.
+     */
+    function playSingle(): void {
+      const stages = c.stages!;
+      const pts = stages.map((st) => {
+        const q = st.cells[0] ?? k.feet(c.actor);
+        return { x: q.x + off.x, y: q.y + off.y };
+      });
+      const n = pts.length;
+      const sub = ib && ib.sub > 1 ? ib.sub : 1;
+      const start = { x: src().x + off.x, y: src().y + off.y };
+      const depth = k.DEPTH;
+      const base = {
+        size,
+        flipX: flip,
+        frame: 0,
+        keep: true,
+        ...(origin ? { origin: [tune.originX ?? origin[0], origin[1]] as [number, number] } : tune.originX !== undefined ? { origin: [tune.originX, 0.5] as [number, number] } : {}),
+        ...(ib ? { inbetween: ib } : {}),
+        ...(stabilize ? { stabilize } : {}),
+      };
+      const main = k.sheet(c.scene, id, start.x, start.y, { ...base, depth: depth + 1 });
+      const glow = k.sheet(c.scene, id, start.x, start.y, { ...base, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+      const objs = [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
+      if (!objs.length) return;
+      const fStep = 1000 / (fps * sub); // türev kare süresi (ms)
+      const flightN = Math.max(1, impactF) * sub;
+      const tLast = hitT + (n - 1) * STEP; // son aşamaya varış (ms, yavaşlatılmadan)
+      const total = tLast + ((frameCount - impactF) * 1000) / fps;
+      const sx0 = objs[0]!.scaleX;
+      const at = (t: number): Pt => {
+        if (t < hitT) {
+          const u = t / hitT;
+          return { x: start.x + (pts[0]!.x - start.x) * u, y: start.y + (pts[0]!.y - start.y) * u };
+        }
+        const j = Math.min(n - 2, Math.floor((t - hitT) / STEP));
+        if (j < 0 || t >= tLast) return pts[n - 1]!;
+        const u = (t - hitT - j * STEP) / STEP;
+        return { x: pts[j]!.x + (pts[j + 1]!.x - pts[j]!.x) * u, y: pts[j]!.y + (pts[j + 1]!.y - pts[j]!.y) * u };
+      };
+      for (let i = 0; i < n; i++) c.scene.time.delayedCall(k.slow(hitT + i * STEP), () => flashAt(pts[i]!, depth));
+      c.scene.tweens.addCounter({
+        from: 0,
+        to: 1,
+        duration: k.slow(total + 40),
+        onUpdate: (tw) => {
+          const t = Math.min(total, (tw.getValue() ?? 0) * (total + 40));
+          const q = at(t);
+          const fr = t < tLast ? Math.floor(t / fStep) % flightN : Math.min(frameCount * sub - 1, impactF * sub + Math.floor((t - tLast) / fStep));
+          const sx = t < tLast ? sx0 * (1 + (tune.stretch ?? 0) * (t / Math.max(1, tLast))) : sx0;
+          for (const o of objs) {
+            if (!o.active) continue;
+            o.setPosition(q.x, q.y).setFrame(fr).setScale(sx, o.scaleY);
+          }
+        },
+        onComplete: () => objs.forEach((o) => o.active && o.destroy()),
+      });
+    }
   };
 }
 

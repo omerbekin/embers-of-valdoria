@@ -8,24 +8,25 @@
  *   Burn the Field (Ember Hierophant, 2x3): zemine ateş rün dairesi kazınır; vuruşta çember boyunca alev duvarı + her hücrede alev, ağır duman.
  *   Drakefire (Drake Priest): ejder başı biçiminde alev nefesi (açık çene, boynuz) hedefe uçar ve sarar; gövdede kalan alev dilleri.
  *   Dragon's Breath (Drake Priest, X): çapraz kollar boyunca dışarıdan merkeze akan alev jetleri; her hücrede patlama + yanık zemin.
- *   Kindle the Faithful (Drake Priest, dost): zeminde ateş halkası, dostun üstünde sıcak hava kubbesi, sarmal yükselen kor (Haste).
+ *   Kindle the Faithful (Drake Priest, dost): iki zemin halkası, zemin ısısı, dostun üstünde sıcak hava kubbesi (%30 büyük), yükselen ışık sütunu, doruğa toplanan kor, sarmal kor (Haste).
  *     (Ömer: "son kareler yukarı çıkıyor, olmasın": kubbe yerinde söner.)
  *   Hold the Gate (Cinder Gatewarden): yerden yükselen kızgın demir kapı kemeri; vuruşta parmaklık iner (kıvılcım, kor, toz).
  *   Cinder Lash (Lord Morvane): kızgın zincir kırbaç yay çizerek hedefe şaklar; yanık iz, kor püskürmesi, zincir geri çekilir.
  *   Ashfall (Lord Morvane, 2x2): gökten çapraz düşen yanan kül kayaları (duman izli); hücrede küçük alev patlaması, gri kül sütunu.
- *   Iron Decree (Lord Morvane, tüm dostlar Haste): yerden yükselen demir dikenli taç halkası, uçlarında alev; dışa yayılan buyruk halkası.
+ *   Iron Decree (Lord Morvane, tüm dostlar Haste): Kindle the Faithful ile aynı yapı (iki zemin halkası, kubbe, ışık sütunu, kor sarmalı) Morvane renkleriyle; kısa demir dikenler, dışa yayılan buyruk halkası.
  *   Pyre of Morvane (Lord Morvane, tüm tahta): her hücrede çatılmış kütükler üstünde uzun odun ateşi (taç biçimli çekirdek), ağır duman.
  *   Holy Ember (Censer Monk): tütsü dumanı izi bırakan altın kor; vuruşta altın kıvılcım, kısa güneş çarkı işareti, tütsü bulutu.
  *   Consecrate (Censer Monk, 2x2): zemine haçlı altın kutsama dairesi; çember boyunca kutsal alev, ortadan yükselen tütsü; vuruşta alevler kabarır.
  */
 import type { MobHandVfx } from '../mob-vfx';
 import { C, FLAT, TAU, UP, after, bits, clamp01, eo, layer, layers, lerp, puffs, smoke, spray, wob, type CombatantView, type G, type Pt, type VfxCtx, type VfxKit } from './core';
-import { FIRE, HOLYFIRE, PYRE, blob, blobPts, chain, crackPath, drawCrack, fan, flame, sagLine, taper, tongues, xf, type FirePal } from './draw';
+import { FIRE, HOLYFIRE, PYRE, blob, blobPts, chain, column, crackPath, drawCrack, fan, flame, sagLine, taper, tongues, xf, type FirePal } from './draw';
 import { angTo, fly } from './bolts';
 import { area, areaCenter, aura, bolt, boardCells } from './flow';
 import { columnFx, fumes, motes, rays, ringFx, sigilFx } from './magic';
 import { bedTimeline, flameField, type FlamePal } from './flames';
 import { BURN, EMBERS, STONE, bodyAt, cellDepth, dust, embers, gore, rubble, sparks, wounds } from './phys';
+import { condense, floorGlow, top } from './grand';
 
 const hurt = (c: VfxCtx, v: CombatantView): boolean => !c.usage || c.usage.damages.some((d) => d.target === v.combatant.uid && d.amount > 0);
 const dirTo = (c: VfxCtx, v: CombatantView | Pt): number => (('container' in v ? v.container.x : v.x) >= c.actor.container.x ? 1 : -1);
@@ -273,8 +274,23 @@ function burnGround(c: VfxCtx, k: VfxKit, hitMs: number, big: boolean): Promise<
         spin: 0.8,
       });
     scorch(c, k, a.cells.map((p) => ({ p, rx: 62, at: a.at })), 1500);
+    // derinlik: Burn the Ground tüm birimlerin üstünde; Burn the Field (big) olduğu gibi (hücre derinliği)
+    const dp = (p: Pt, n: number): number => (big ? cellDepth(p, n) : top(k, n));
     for (const p of a.cells) {
-      cellFire(c, k, p, a.at, { n: big ? 8 : 7, rx: 50, h: big ? [70, 130] : [60, 110], hold: 460, fade: 520, pre: 80 });
+      cellFire(c, k, p, a.at, { n: big ? 8 : 7, rx: 50, h: big ? [70, 130] : [60, 110], hold: 460, fade: 520, pre: 80, depth: dp(p, 2) });
+    }
+    if (!big) {
+      // görkem (Ömer 2026-10-20): doruk öncesi merkeze toplanan kor, hücrelerde zemin ısısı, merkezden yükselen ısı sütunu, ikinci halka
+      condense(c, k, { x: C0.x, y: C0.y - 10 }, { hex: ['#ffb04a', '#ff8a2a', '#ffd27a'], at: a.at, r: far * 0.95, depth: top(k, 5), n: 18, life: 480, flash: { hex: '#ff9a3a', w: 260, a: 0.4 } });
+      floorGlow(c, k, a.cells.map((p) => ({ p, at: a.at })), { rx: 74, hex: '#b8441a', core: '#ff9a3a', a: 0.22, pre: 120, hold: 600, fade: 900, pulse: 0.15 });
+      columnFx(c, k, C0, { h: 280, w: 62, col: '#e0601a', core: '#ffd890', at: a.at, dur: 560, depth: top(k, 1), a: 0.3, rise: 120 });
+      after(c, a.at, () => {
+        ringFx(c, k, C0, { r0: 40, r1: far * 1.55, dur: 680, col: '#a8300c', pale: '#ff9a3a', w: 8, flat: FLAT, depth: k.FLOOR_FX + 4 });
+        ringFx(c, k, C0, { r0: 30, r1: far * 1.2, dur: 560, col: '#7a1e08', pale: '#ffc070', w: 4, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 120 });
+        fireBurst(c, k, { x: C0.x, y: C0.y - 14 }, 70, top(k, 3), { n: 9, dur: 340, flat: 0.62 });
+        motes(c, k, { x: C0.x, y: C0.y - 6 }, { n: 16, r: far * 0.8, rise: 210, cols: ['#ffb04a', '#ff8a2a', '#ffd27a'], size: [1.6, 2.8], life: 1100, depth: top(k, 5), delay: 300, orbit: 0.6 });
+        spray(c, k, bits(k, 14, { x: C0.x, y: C0.y - 20 }, { kind: 'leaf', ang: [-Math.PI, 0], sp: [40, 150], size: [3, 5], life: [1000, 1500], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: far * 0.8, jy: 16, drag: 2.2, sway: 8, up: [30, 90], vr: 4 }), top(k, 4), 80);
+      });
     }
     if (big) {
       // çember boyunca alev duvarı (önden arkaya sıralı)
@@ -293,8 +309,8 @@ function burnGround(c: VfxCtx, k: VfxKit, hitMs: number, big: boolean): Promise<
     }
     after(c, a.at, () => {
       for (const p of a.cells) {
-        smokeColumn(c, k, { x: p.x, y: p.y - 40 }, cellDepth(p, 3), { n: big ? 5 : 4, w: 34, vy: [-170, -100], s1: [110, 160], a: 0.42, delay: 120 });
-        embers(c, k, p, 7, cellDepth(p, 4), { sp: [60, 200], jx: 40, jy: 10, grav: -150 });
+        smokeColumn(c, k, { x: p.x, y: p.y - 40 }, dp(p, 3), { n: big ? 5 : 4, w: 34, vy: [-170, -100], s1: [110, 160], a: 0.42, delay: 120 });
+        embers(c, k, p, big ? 7 : 9, dp(p, 4), { sp: [60, 200], jx: 40, jy: 10, grav: -150 });
       }
       k.shake(c.scene, 120, big ? 0.004 : 0.003);
     });
@@ -465,17 +481,63 @@ function dragonsBreath(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// KINDLE THE FAITHFUL: sıcak hava kubbesi + kor sarmalı
+// KINDLE THE FAITHFUL: sıcak hava kubbesi + kor sarmalı (Iron Decree aynı yapıyı Morvane renkleriyle kullanır)
+// Ömer 2026-10-20: Kindle %30 büyük + biraz daha görkemli (ikinci zemin halkası, yükselen ışık sütunu, zemin ısısı, doruğa toplanan
+// kor, daha çok kıvılcım); Iron Decree buna benzesin.
 
-function kindleOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void {
+interface DomePal {
+  sig: { col: string; pale: string; deep: string };
+  /** Kubbe gövdesi, kenarı, çizgileri, vurgu, çekirdek. */
+  body: string;
+  rim: string;
+  line: string;
+  hi: string;
+  core: string;
+  motes: string[];
+  streak: string;
+  beam: { col: string; core: string };
+  glow: { hex: string; core: string };
+}
+const KINDLE_PAL: DomePal = {
+  sig: { col: '#e0802a', pale: '#ffd27a', deep: '#7a3a0c' },
+  body: '#c0601a',
+  rim: '#a84a10',
+  line: '#e0802a',
+  hi: '#ffc070',
+  core: '#ffe2a0',
+  motes: ['#ffb04a', '#ff8a2a', '#ffd27a'],
+  streak: '#ffc070',
+  beam: { col: '#e0801e', core: '#ffe2a0' },
+  glow: { hex: '#b8601a', core: '#ffb04a' },
+};
+/** Lord Morvane: kor kızılı + kararmış demir. */
+const DECREE_PAL: DomePal = {
+  sig: { col: '#b8381a', pale: '#ff9a5a', deep: '#3a0a04' },
+  body: '#8a2a14',
+  rim: '#3a1a14',
+  line: '#c8401a',
+  hi: '#ff9a5a',
+  core: '#ffd8a0',
+  motes: ['#ff7a3a', '#d0401a', '#ffa860'],
+  streak: '#e0601a',
+  beam: { col: '#b8321a', core: '#ffc890' },
+  glow: { hex: '#8a2a10', core: '#e0601a' },
+};
+const DOME_SCALE = 1.3;
+
+function domeOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number, pal: DomePal): { foot: Pt; R: number; H: number; END: number } {
   const foot = k.feet(v);
-  const R = Math.max(80, v.w * 0.75);
-  const H = Math.max(150, v.h * 1.05);
+  const R = Math.max(80, v.w * 0.75) * DOME_SCALE;
+  const H = Math.max(150, v.h * 1.05) * DOME_SCALE;
   const t0 = Math.max(0, at - k.slow(300));
   const END = at + k.slow(900);
-  sigilFx(c, k, foot, R * 1.05, { col: C('#e0802a'), pale: C('#ffd27a'), deep: C('#7a3a0c'), ticks: 10, inner: 'none', arcs: 3, peak: at, end: END });
-  // kubbe: üst yarım elips (önü birimin önünde, ince); içinde titreşen sıcak hava
-  layers(c, END, [{ depth: v.container.depth - 1, add: true }, { depth: v.container.depth + 2, add: true }], ([back, front], tm) => {
+  const sg = pal.sig;
+  sigilFx(c, k, foot, R * 1.05, { col: C(sg.col), pale: C(sg.pale), deep: C(sg.deep), ticks: 10, inner: 'none', arcs: 3, peak: at, end: END });
+  // ikinci, daha geniş halka: ters yöne döner, biraz geç oturur
+  sigilFx(c, k, foot, R * 1.5, { col: C(sg.col), pale: C(sg.pale), deep: C(sg.deep), ticks: 16, inner: 'none', arcs: 2, peak: at + k.slow(140), end: END + k.slow(200), spin: -0.8 });
+  floorGlow(c, k, [{ p: foot, at }], { rx: R * 1.1, hex: pal.glow.hex, core: pal.glow.core, a: 0.2, pre: 200, hold: 520, fade: 800, pulse: 0.12 });
+  // kubbe: üst yarım elips (arkası birimin arkasında, ön yüzü tüm birimlerin üstünde); içinde titreşen sıcak hava
+  layers(c, END, [{ depth: v.container.depth - 1, add: true }, { depth: top(k, 2), add: true }], ([back, front], tm) => {
     if (tm < t0) return;
     const q = clamp01((tm - t0) / (at - t0));
     const post = clamp01((tm - at) / (END - at));
@@ -485,29 +547,39 @@ function kindleOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void {
     const arc = (from: number, to: number) =>
       Array.from({ length: 21 }, (_, i) => {
         const an = lerp(from, to, i / 20);
-        return { x: foot.x + Math.cos(an) * R, y: foot.y - Math.sin(an) * hh + Math.cos(an) * 0 };
+        return { x: foot.x + Math.cos(an) * R, y: foot.y - Math.sin(an) * hh };
       });
-    // arka yüz (soluk), ön yüz (ince kenar)
-    back!.fillStyle(C('#c0601a'), 0.16 * a).fillPoints([...arc(0, Math.PI), { x: foot.x - R, y: foot.y }], true);
-    back!.fillStyle(C('#ffb04a'), 0.08 * a * (1 + flare)).fillPoints([...arc(0.25, Math.PI - 0.25).map((p) => ({ x: foot.x + (p.x - foot.x) * 0.7, y: foot.y + (p.y - foot.y) * 0.75 }))], true);
-    for (let i = 1; i <= 3; i++) back!.lineStyle(1.2, C('#e0802a'), 0.22 * a).strokePoints(Array.from({ length: 13 }, (_, j) => ({ x: foot.x + Math.cos((j / 12) * Math.PI) * R * (i / 3.5), y: foot.y - Math.sin((j / 12) * Math.PI) * hh * Math.sqrt(1 - (i / 3.5) ** 2 * 0.5) })), false);
-    front!.lineStyle(5, C('#a84a10'), 0.35 * a).strokePoints(arc(0, Math.PI), false);
-    front!.lineStyle(2, C('#ffc070'), (0.6 + 0.4 * flare) * a).strokePoints(arc(0, Math.PI), false);
-    front!.lineStyle(1.5, C('#ffe2a0'), 0.5 * a * flare).strokePoints(arc(0.3, Math.PI - 0.3), false);
+    back!.fillStyle(C(pal.body), 0.16 * a).fillPoints([...arc(0, Math.PI), { x: foot.x - R, y: foot.y }], true);
+    back!.fillStyle(C(pal.hi), 0.08 * a * (1 + flare)).fillPoints([...arc(0.25, Math.PI - 0.25).map((p) => ({ x: foot.x + (p.x - foot.x) * 0.7, y: foot.y + (p.y - foot.y) * 0.75 }))], true);
+    for (let i = 1; i <= 3; i++) back!.lineStyle(1.2, C(pal.line), 0.22 * a).strokePoints(Array.from({ length: 13 }, (_, j) => ({ x: foot.x + Math.cos((j / 12) * Math.PI) * R * (i / 3.5), y: foot.y - Math.sin((j / 12) * Math.PI) * hh * Math.sqrt(1 - (i / 3.5) ** 2 * 0.5) })), false);
+    front!.lineStyle(5, C(pal.rim), 0.35 * a).strokePoints(arc(0, Math.PI), false);
+    front!.lineStyle(2, C(pal.hi), (0.6 + 0.4 * flare) * a).strokePoints(arc(0, Math.PI), false);
+    front!.lineStyle(1.5, C(pal.core), 0.5 * a * flare).strokePoints(arc(0.3, Math.PI - 0.3), false);
   });
-  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 16, r: R * 0.8, rise: H * 0.9, cols: ['#ffb04a', '#ff8a2a', '#ffd27a'], size: [1.6, 2.8], life: 900, depth: v.container.depth + 3, delay: 500, orbit: 0.8 });
+  // yükselen ışık sütunu (doruğa doğru çakar, ince ve ölçülü)
+  columnFx(c, k, foot, { h: H * 1.55, w: R * 0.36, col: pal.beam.col, core: pal.beam.core, at, dur: 620, depth: top(k, 1), a: 0.3, rise: 220 });
+  condense(c, k, { x: foot.x, y: foot.y - 20 }, { hex: pal.motes, at, r: R * 1.25, depth: top(k, 4), n: 16, life: 460, flash: { hex: pal.hi, w: R * 1.6, h: R * 1.1, a: 0.35 } });
+  motes(c, k, { x: foot.x, y: foot.y - 10 }, { n: 22, r: R * 0.8, rise: H * 0.95, cols: pal.motes, size: [1.6, 2.8], life: 1000, depth: top(k, 3), delay: 600, orbit: 0.8 });
   // Haste: ayak çevresinde kısa hız çizgileri
-  layer(c, END, v.container.depth + 2, (g, tm) => {
+  layer(c, END, top(k, 2), (g, tm) => {
     if (tm < at) return;
     const q = (tm - at) / (END - at);
-    for (let i = 0; i < 4; i++) {
-      const an = q * TAU * 1.5 + (i * TAU) / 4;
+    for (let i = 0; i < 5; i++) {
+      const an = q * TAU * 1.5 + (i * TAU) / 5;
       const p0 = { x: foot.x + Math.cos(an) * R * 0.9, y: foot.y - 20 + Math.sin(an) * R * 0.3 };
       const p1 = { x: foot.x + Math.cos(an - 0.5) * R * 0.9, y: foot.y - 20 + Math.sin(an - 0.5) * R * 0.3 };
-      g.lineStyle(2, C('#ffc070'), 0.5 * Math.sin(Math.PI * q)).lineBetween(p0.x, p0.y, p1.x, p1.y);
+      g.lineStyle(2, C(pal.streak), 0.5 * Math.sin(Math.PI * q)).lineBetween(p0.x, p0.y, p1.x, p1.y);
     }
   });
-  after(c, at, () => embers(c, k, foot, 10, v.container.depth + 3, { jx: R * 0.7, jy: 10, sp: [60, 180], grav: -140 }));
+  after(c, at, () => {
+    embers(c, k, foot, 18, top(k, 3), { jx: R * 0.7, jy: 10, sp: [60, 200], grav: -140 });
+    spray(c, k, bits(k, 8, { x: foot.x, y: foot.y - 30 }, { kind: 'leaf', ang: [-Math.PI, 0], sp: [30, 110], size: [3, 4.5], life: [900, 1300], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: R * 0.6, jy: 16, drag: 2.2, sway: 8, up: [20, 70], vr: 4 }), top(k, 3), 60);
+  });
+  return { foot, R, H, END };
+}
+
+function kindleOn(c: VfxCtx, k: VfxKit, v: CombatantView, at: number): void {
+  domeOn(c, k, v, at, KINDLE_PAL);
 }
 const kindleTheFaithful: MobHandVfx = (c, k, hitMs) => aura(c, k, hitMs, '#ffb04a', (v, at) => kindleOn(c, k, v, at));
 
@@ -681,7 +753,8 @@ function ashfall(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
 }
 
 // ---------------------------------------------------------------------------------------------------------------------
-// IRON DECREE: demir dikenli taç halkası
+// IRON DECREE: Kindle the Faithful ile aynı yapı (zemin halkaları, sıcak hava kubbesi, ışık sütunu, kor sarmalı, Haste çizgileri)
+// Morvane renkleriyle (kor kızılı + kararmış demir); kimlik: halka çevresinde kısa demir dikenler ve dışa yayılan buyruk halkası.
 
 function ironDecree(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
   return aura(
@@ -690,15 +763,14 @@ function ironDecree(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
     hitMs,
     '#c0392b',
     (v, at) => {
-      const foot = k.feet(v);
-      const R = Math.max(110, v.w * 0.85);
-      const n = 10;
-      const spikes = Array.from({ length: n }, (_, i) => ({ an: (i / n) * TAU + 0.15, h: k.rnd(110, 150) * (i % 2 ? 0.78 : 1), lag: k.rnd(0, 0.25), s: k.rnd(0, 99) }));
+      const { foot, R, END } = domeOn(c, k, v, at, DECREE_PAL);
+      const n = 8;
+      const spikes = Array.from({ length: n }, (_, i) => ({ an: (i / n) * TAU + 0.2, h: k.rnd(52, 70) * (i % 2 ? 0.8 : 1), lag: k.rnd(0, 0.25), s: k.rnd(0, 99) }));
       const t0 = Math.max(0, at - k.slow(320));
-      const END = at + k.slow(900);
       const iron = C('#262022');
       const hot = C('#e0601a');
-      layers(c, END, [{ depth: v.container.depth - 1 }, { depth: v.container.depth + 2 }], ([back, front], tm) => {
+      const RR = R * 1.05;
+      layers(c, END, [{ depth: v.container.depth - 1 }, { depth: top(k, 2) }], ([back, front], tm) => {
         if (tm < t0) return;
         const q = clamp01((tm - t0) / (at - t0));
         const post = clamp01((tm - at) / (END - at));
@@ -708,25 +780,20 @@ function ironDecree(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
           const g = Math.sin(sp.an) < 0 ? back! : front!;
           const u = eo(clamp01((q - sp.lag) / (1 - sp.lag)), 2.4);
           if (u <= 0) continue;
-          const b = { x: foot.x + Math.cos(sp.an) * R, y: foot.y + Math.sin(sp.an) * R * FLAT };
+          const b = { x: foot.x + Math.cos(sp.an) * RR, y: foot.y + Math.sin(sp.an) * RR * FLAT };
           const h = sp.h * u;
-          const w = 19;
+          const w = 13;
           g.fillStyle(iron, 0.95 * a).fillTriangle(b.x - w, b.y, b.x + w, b.y, b.x + 2, b.y - h);
           g.lineStyle(2, hot, (0.5 + 0.4 * flare) * a).lineBetween(b.x - w * 0.6, b.y - 2, b.x + 1, b.y - h * 0.95);
           g.fillStyle(C('#4a3a36'), 0.6 * a).fillTriangle(b.x + 2, b.y, b.x + w, b.y, b.x + 2, b.y - h);
-          if (u > 0.6) flame(g, b.x + 2, b.y - h + 6, 26 + 20 * flare, 13, tm / 1000, sp.s, a * (0.7 + 0.3 * flare), 0, PYRE);
+          if (u > 0.6) flame(g, b.x + 2, b.y - h + 4, 18 + 14 * flare, 9, tm / 1000, sp.s, a * (0.7 + 0.3 * flare), 0, PYRE);
         }
-        // taç tabanı: demir halka
-        back!.lineStyle(8, iron, 0.9 * a * q).strokePoints(Array.from({ length: 21 }, (_, i) => ({ x: foot.x + Math.cos(Math.PI + (i / 20) * Math.PI) * R, y: foot.y + Math.sin(Math.PI + (i / 20) * Math.PI) * R * FLAT })), false);
-        front!.lineStyle(8, iron, 0.9 * a * q).strokePoints(Array.from({ length: 21 }, (_, i) => ({ x: foot.x + Math.cos((i / 20) * Math.PI) * R, y: foot.y + Math.sin((i / 20) * Math.PI) * R * FLAT })), false);
-        front!.lineStyle(2, hot, 0.5 * a * q).strokePoints(Array.from({ length: 21 }, (_, i) => ({ x: foot.x + Math.cos((i / 20) * Math.PI) * R, y: foot.y - 3 + Math.sin((i / 20) * Math.PI) * R * FLAT })), false);
       });
       // buyruk halkası: dışa yayılan kızıl-turuncu halka (tüm dostlara Haste)
       after(c, at, () => {
-        ringFx(c, k, foot, { r0: R, r1: R * 3.2, dur: 620, col: '#a8300c', pale: '#ff9a3a', w: 7, flat: FLAT, depth: k.FLOOR_FX + 4 });
-        ringFx(c, k, foot, { r0: R, r1: R * 2.4, dur: 520, col: '#7a1e08', pale: '#e0601a', w: 4, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 90 });
-        embers(c, k, foot, 18, v.container.depth + 3, { jx: R, jy: 14, sp: [80, 240] });
-        dust(c, k, foot, v.container.depth + 1, { n: 5, w: R * 1.2, a: 0.28, hex: ['#4a3a32', '#5a4a40'] });
+        ringFx(c, k, foot, { r0: RR, r1: RR * 3, dur: 620, col: '#a8300c', pale: '#ff9a3a', w: 7, flat: FLAT, depth: k.FLOOR_FX + 4 });
+        ringFx(c, k, foot, { r0: RR, r1: RR * 2.2, dur: 520, col: '#7a1e08', pale: '#e0601a', w: 4, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 90 });
+        dust(c, k, foot, top(k, 1), { n: 5, w: R * 1.2, a: 0.28, hex: ['#4a3a32', '#5a4a40'] });
         k.shake(c.scene, 110, 0.003);
       });
     },
@@ -772,12 +839,12 @@ function pyreOfMorvane(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
       const list = tongues(k, 4, p, 34, 12, [90, 160], [28, 40]);
       const crown = [-1, 0, 1].map((i) => ({ x: p.x + i * 15, y: p.y - 4 + Math.abs(i), h: 110 + (i === 0 ? 60 : 0), w: 26, seed: pl.s + i * 7, at: 0 }));
       const at = pl.at;
-      flameField(c, k, [...list, ...crown].sort((q1, q2) => q1.y - q2.y), at + HOLD + FADE, cellDepth(p, 3), 'pyre', (tm) => {
+      flameField(c, k, [...list, ...crown].sort((q1, q2) => q1.y - q2.y), at + HOLD + FADE, top(k, 2), 'pyre', (tm) => {
         if (tm < at - pre) return { grow: 0, a: 0 };
         const grow = tm < at ? eo((tm - at + pre) / pre, 2) * 0.8 : tm < at + HOLD ? 0.8 + 0.2 * Math.exp(-(tm - at) / k.slow(150)) : 0.8 * (1 - (tm - at - HOLD) / FADE);
         return { grow: Math.max(0, grow), a: tm < at + HOLD ? 1 : 1 - clamp01((tm - at - HOLD) / FADE) };
       });
-      after(c, at, () => smokeColumn(c, k, { x: p.x, y: p.y - 80 }, cellDepth(p, 3), { n: 3, w: 30, vy: [-200, -130], s1: [120, 170], a: 0.5, delay: 120 }));
+      after(c, at, () => smokeColumn(c, k, { x: p.x, y: p.y - 80 }, top(k, 3), { n: 3, w: 30, vy: [-200, -130], s1: [120, 170], a: 0.5, delay: 120 }));
     }
     // kor: tüm hücreler tek parçacık kümesinde (her hücre kendi anında)
     const f1 = k.slow(1000) / 1000;
@@ -789,11 +856,46 @@ function pyreOfMorvane(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
           const d0 = Math.max(0, (pl.at - a.at) / f1) + 40;
           return bits(k, 6, { x: pl.p.x, y: pl.p.y - 40 }, { kind: 'ember', ang: [-Math.PI + 0.4, -0.4], sp: [80, 240], size: [1.6, 3], life: [420, 760], cols: EMBERS, jx: 30, jy: 10, drag: 1.4, delay: [d0, d0 + 80] });
         }),
-        Math.max(...piles.map((pl) => pl.p.y)) + 20,
+        top(k, 4),
         -180,
         true,
       ),
     );
+    // görkem (Ömer 2026-10-20): zeminde kor ısısı, her odun yığınından yükselen ince ışık sütunu, tüm tahtaya yayılan ikinci halka,
+    // doruk öncesi merkeze toplanan kor, kıvılcım + kül pulları
+    const allP = piles.map((pl) => pl.p);
+    const mid = areaCenter(c, k, allP);
+    const far = Math.max(...allP.map((p) => Math.hypot(p.x - mid.x, (p.y - mid.y) / FLAT)), 200);
+    floorGlow(c, k, piles.map((pl) => ({ p: pl.p, at: pl.at })), { rx: 76, hex: '#7a2410', core: '#e0601a', a: 0.24, pre: 140, hold: 520, fade: 900, pulse: 0.16 });
+    layer(
+      c,
+      end,
+      top(k, 1),
+      (g, tm) => {
+        for (const pl of piles) {
+          const t = tm - pl.at;
+          if (t < -pre || t > HOLD + FADE) continue;
+          const env = t < 0 ? eo((t + pre) / pre, 2) : t < HOLD ? 1 : (1 - (t - HOLD) / FADE) ** 1.3;
+          column(g, pl.p.x, pl.p.y - 20, 230 * env, 34, C('#a8300c'), C('#ffc890'), 0.26 * env);
+        }
+      },
+      true,
+    );
+    condense(c, k, { x: mid.x, y: mid.y - 10 }, { hex: ['#ff7a3a', '#d0401a', '#ffa860'], at: a.at, r: far * 0.9, depth: top(k, 5), n: 28, life: 520, flat: 0.55, size: [1.8, 3], flash: { hex: '#d0501a', w: far * 1.2, h: far * 0.5, a: 0.3 } });
+    after(c, a.at, () => {
+      ringFx(c, k, mid, { r0: 60, r1: far * 1.5, dur: 760, col: '#6a1a08', pale: '#e0601a', w: 9, flat: FLAT, depth: k.FLOOR_FX + 4, a: 0.7 });
+      ringFx(c, k, mid, { r0: 40, r1: far * 1.15, dur: 620, col: '#8e1e08', pale: '#ffa860', w: 4, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 140, a: 0.6 });
+      spray(
+        c,
+        k,
+        piles.flatMap((pl) => {
+          const d0 = Math.max(0, (pl.at - a.at) / f1) + 60;
+          return bits(k, 3, { x: pl.p.x, y: pl.p.y - 50 }, { kind: 'leaf', ang: [-Math.PI, 0], sp: [30, 120], size: [3, 4.5], life: [1000, 1500], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: 30, jy: 10, drag: 2.2, sway: 8, up: [30, 100], vr: 4, delay: [d0, d0 + 100] });
+        }),
+        top(k, 4),
+        60,
+      );
+    });
     after(c, a.at, () => k.shake(c.scene, 160, 0.0045));
   });
 }

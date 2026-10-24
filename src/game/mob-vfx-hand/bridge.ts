@@ -11,11 +11,12 @@
  */
 import type { MobHandVfx } from '../mob-vfx';
 import { C, FLAT, TAU, UP, after, bits, clamp01, ei, eo, layer, layers, lerp, puffs, smoke, spray, type CombatantView, type Pt, type VfxCtx, type VfxKit } from './core';
-import { PYRE, chain, crackPath, drawCrack, sagLine, taper, xf } from './draw';
+import { PYRE, chain, column, crackPath, drawCrack, sagLine, taper, xf } from './draw';
 import { area, areaCenter, bolt, boardCells, melee } from './flow';
 import { rays, ringFx } from './magic';
-import { BURN, IRON, SPLINTER, STONE, anchor, bodyAt, cellDepth, dust, embers, gore, rubble, shockRing, sparks, wounds } from './phys';
+import { BURN, IRON, SPLINTER, STONE, anchor, bodyAt, dust, embers, gore, rubble, shockRing, sparks, wounds } from './phys';
 import { cellFire, fireBurst, scorch, smokeColumn } from './fire';
+import { condense, floorGlow, top } from './grand';
 
 const hurt = (c: VfxCtx, v: CombatantView): boolean => !c.usage || c.usage.damages.some((d) => d.target === v.combatant.uid && d.amount > 0);
 const dirTo = (c: VfxCtx, v: CombatantView | Pt): number => (('container' in v ? v.container.x : v.x) >= c.actor.container.x ? 1 : -1);
@@ -90,7 +91,7 @@ function breakingSpan(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
   return area(c, k, hitMs, '#6ad0d8', (a) => {
     for (const st of a.stages)
       for (const p of st.cells) {
-        const d = cellDepth(p, 3);
+        const d = top(k, 3);
         // hazırlık: hücrede köprü tahtası çizgileri belirir ve çatlar
         const t0 = Math.max(0, st.at - k.slow(260));
         layer(c, st.at + k.slow(1200), k.FLOOR_FX + 3, (g, tm) => {
@@ -107,6 +108,9 @@ function breakingSpan(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
           } else {
             const R = 70 * eo(post / 0.2, 2);
             g.fillStyle(C('#0e3a44'), 0.55 * al).fillEllipse(p.x, p.y, R * 2, R * 0.66);
+            // köpük halkası: hücrede genişleyip sönen ince, açık halka (görkem, Ömer 2026-10-20)
+            const fu = clamp01(post / 0.35);
+            if (fu < 1) g.lineStyle(3 * (1 - fu) + 1, C('#c8f4f6'), 0.7 * (1 - fu)).strokeEllipse(p.x, p.y, 70 + 150 * eo(fu, 2), (70 + 150 * eo(fu, 2)) * FLAT);
             for (let arm = 0; arm < 3; arm++) {
               const pts = Array.from({ length: 12 }, (_, i) => {
                 const s = i / 11;
@@ -131,9 +135,34 @@ function breakingSpan(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
             1500,
           );
           smoke(c, k, puffs(k, { x: p.x, y: p.y - 40 }, 6, { hex: ['#a8d8dc', '#c8e8ea', '#88c0c8'], sx: 30, sy: 30, vy: [-220, -120], s0: [46, 66], s1: [110, 160], life: [650, 950], a: 0.42, drag: 1.6 }), d - 1);
-          for (const v of st.victims) if (hurt(c, v)) gore(c, k, k.spot(v), UP, 6, v.container.depth + 3, { sp: [80, 220] });
+          for (const v of st.victims) if (hurt(c, v)) gore(c, k, k.spot(v), UP, 6, top(k, 4), { sp: [80, 220] });
         });
       }
+    // görkem: her aşamada hücrelerden yükselen ince su sütunu (tek Graphics), zemin ışıltısı, doruğa toplanan nehir zerreleri, ikinci halka
+    for (const st of a.stages) {
+      if (!st.cells.length) continue;
+      const mid = areaCenter(c, k, st.cells);
+      const far = Math.max(...st.cells.map((p) => Math.hypot(p.x - mid.x, (p.y - mid.y) / FLAT)), 90);
+      layer(
+        c,
+        st.at + k.slow(760),
+        top(k, 1),
+        (g, tm) => {
+          const t = tm - st.at;
+          if (t < -k.slow(40) || t > k.slow(640)) return;
+          const q = clamp01(t / k.slow(640));
+          const rise = eo(clamp01((t + k.slow(40)) / k.slow(140)), 2);
+          for (const p of st.cells) column(g, p.x, p.y - 6, 200 * rise * (1 - q * 0.4), 30 * (1 - q * 0.6), C('#3ab8c0'), C('#e0fbff'), 0.32 * (1 - q) ** 1.3);
+        },
+        true,
+      );
+      floorGlow(c, k, st.cells.map((p) => ({ p, at: st.at })), { rx: 74, hex: '#1a6a78', core: '#6ad0d8', a: 0.2, pre: 100, hold: 380, fade: 800 });
+      condense(c, k, { x: mid.x, y: mid.y - 14 }, { hex: ['#a8eef0', '#6ad0d8', '#e0fbff'], at: st.at, r: far * 1.1 + 60, depth: top(k, 5), n: 14, life: 380, flash: { hex: '#6ad0d8', w: far * 1.4 + 100, h: 120, a: 0.25 } });
+      after(c, st.at, () => {
+        ringFx(c, k, mid, { r0: 40, r1: far * 1.5 + 90, dur: 620, col: '#2a8a98', pale: '#a8eef0', w: 7, flat: FLAT, depth: k.FLOOR_FX + 4, a: 0.7 });
+        ringFx(c, k, mid, { r0: 30, r1: far * 1.15 + 70, dur: 520, col: '#1a6a78', pale: '#e0fbff', w: 3.5, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 120, a: 0.6 });
+      });
+    }
     after(c, a.at, () => k.shake(c.scene, 130, 0.0038));
   });
 }
@@ -206,10 +235,14 @@ function ashBrand(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
     const R = Math.max(46, v.w * 0.4);
     const x0 = v.container.x;
     const END = F + k.slow(900);
+    // görkem (Ömer 2026-10-20): zeminde kor ısısı, doruğa toplanan kor, ikinci (dönen, damgalı) dış halka, yükselen kor ve kül
+    const foot = k.feet(v);
+    floorGlow(c, k, [{ p: foot, at: F }], { rx: R * 1.5, hex: '#8a2a10', core: '#e0601a', a: 0.22, pre: 220, hold: 420, fade: 700 });
+    condense(c, k, P, { hex: ['#ff9a3a', '#e0601a', '#ffd890'], at: F, r: R * 2.2, depth: top(k, 5), n: 14, life: 420, flat: 1, flash: { hex: '#e0601a', w: R * 3, h: R * 2.4, a: 0.3 } });
     layer(
       c,
       END,
-      v.container.depth + 3,
+      top(k, 3),
       (g, tm) => {
         const p = { x: P.x + (v.container.x - x0), y: P.y };
         const q = clamp01(tm / F);
@@ -225,12 +258,24 @@ function ashBrand(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
         const cr = R * 0.8 * eo(clamp01((q - 0.4) / 0.6), 2) * (1 + 0.6 * flare);
         for (const an of [0, Math.PI / 2, Math.PI, -Math.PI / 2]) taper(g, [p, { x: p.x + Math.cos(an) * cr * (an === -Math.PI / 2 || an === Math.PI / 2 ? 1.25 : 1), y: p.y + Math.sin(an) * cr * (an === Math.PI / 2 || an === -Math.PI / 2 ? 1.25 : 1) }], 7, 1, PYRE.yellow, a);
         if (flare > 0.02) rays(g, p, 4, R * 2.4 * (0.6 + 0.4 * flare), 10, PYRE.orange, PYRE.core, flare, 0);
+        // dış halka: halkanın ardından dönerek belirir, çevresinde kısa damga çentikleri
+        const q2 = clamp01((tm - F * 0.35) / (F * 0.65 + k.slow(120)));
+        if (q2 > 0) {
+          const R2 = R * 1.6;
+          const a2 = eo(q2, 1.6) * (1 - post ** 1.1);
+          g.lineStyle(2, PYRE.orange, 0.7 * a2).strokeEllipse(p.x, p.y, R2 * 2, R2 * 2);
+          g.lineStyle(1, PYRE.core, 0.5 * a2).strokeEllipse(p.x, p.y, R2 * 1.9, R2 * 1.9);
+          for (let i = 0; i < 12; i++) {
+            const an = (i / 12) * TAU + tm / k.slow(900);
+            g.lineStyle(2, PYRE.yellow, 0.7 * a2).lineBetween(p.x + Math.cos(an) * R2 * 0.9, p.y + Math.sin(an) * R2 * 0.9, p.x + Math.cos(an) * R2 * 1.05, p.y + Math.sin(an) * R2 * 1.05);
+          }
+        }
       },
       true,
     );
     after(c, F, () => {
-      fireBurst(c, k, P, 54, v.container.depth + 3, { n: 8, dur: 320, pal: PYRE });
-      embers(c, k, P, 14, v.container.depth + 4, { jx: 20, jy: 20, sp: [100, 280] });
+      fireBurst(c, k, P, 54, top(k, 3), { n: 8, dur: 320, pal: PYRE });
+      embers(c, k, P, 22, top(k, 4), { jx: 24, jy: 24, sp: [100, 280], grav: -120 });
       if (hurt(c, v))
         wounds(
           c,
@@ -244,8 +289,8 @@ function ashBrand(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
           { pal: BURN, drips: 0, sw: 40, hold: 400 },
         );
       // kül pulları (gri, yavaş süzülür)
-      spray(c, k, bits(k, 12, P, { kind: 'leaf', ang: [-Math.PI, 0], sp: [40, 140], size: [3, 5], life: [900, 1300], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: 30, jy: 30, drag: 2.4, sway: 8, up: [20, 60], vr: 4 }), v.container.depth + 4, 90);
-      smokeColumn(c, k, P, v.container.depth + 2, { n: 4, w: 20, vy: [-100, -50], s1: [80, 120], a: 0.35 });
+      spray(c, k, bits(k, 18, P, { kind: 'leaf', ang: [-Math.PI, 0], sp: [40, 140], size: [3, 5], life: [900, 1300], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: 30, jy: 30, drag: 2.4, sway: 8, up: [20, 60], vr: 4 }), top(k, 4), 90);
+      smokeColumn(c, k, P, top(k, 2), { n: 4, w: 20, vy: [-100, -50], s1: [80, 120], a: 0.35 });
     });
   });
 }
@@ -273,7 +318,7 @@ function fallOfKingsBridge(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
     const cTop = C('#5c5650');
     const cEdge = C('#1a1614');
     const cHot = C('#c8501a');
-    layer(c, a.at + k.slow(700), Math.max(...cells.map((p) => p.y)) + 12, (g, tm) => {
+    layer(c, a.at + k.slow(700), top(k, 2), (g, tm) => {
       if (tm < a.at - k.slow(80)) return;
       const t = tm - a.at + k.slow(80);
       const al = 1 - clamp01((t - k.slow(500)) / k.slow(280));
@@ -292,18 +337,39 @@ function fallOfKingsBridge(c: VfxCtx, k: VfxKit, hitMs: number): Promise<void> {
       }
     });
     scorch(c, k, cells.map((p) => ({ p, rx: 58, at: a.at })), 1600);
-    for (const p of cells) cellFire(c, k, p, a.at + k.slow(40), { n: 4, rx: 40, h: [60, 120], hold: 420, fade: 520, pre: 30, pal: 'pyre' });
+    for (const p of cells) cellFire(c, k, p, a.at + k.slow(40), { n: 4, rx: 40, h: [60, 120], hold: 420, fade: 520, pre: 30, pal: 'pyre', depth: top(k, 2) });
     after(c, a.at, () => {
       // patlama / moloz / toz: çok hücrede yalnızca bir kısmında (her hücrede ayrı Graphics kasmasın); alevler her hücrede
       cells.forEach((p, i) => {
-        if (i % 2 === 0) fireBurst(c, k, { x: p.x, y: p.y - 16 }, 50, cellDepth(p, 4), { n: 8, dur: 320, pal: PYRE, flat: 0.6 });
-        if (i % 3 === 0) rubble(c, k, p, 6, cellDepth(p, 4), { cols: STONE, rim: '#c8501a', sp: [160, 400], size: [4, 10] });
-        dust(c, k, p, cellDepth(p, 3), { n: 2, w: 60, a: 0.32, hex: ['#5a4a40', '#6a5a4e'] });
-        if (i % 2 === 1) smokeColumn(c, k, { x: p.x, y: p.y - 40 }, cellDepth(p, 3), { n: 2, w: 30, vy: [-170, -100], s1: [110, 150], a: 0.42, delay: 180 });
+        if (i % 2 === 0) fireBurst(c, k, { x: p.x, y: p.y - 16 }, 50, top(k, 4), { n: 8, dur: 320, pal: PYRE, flat: 0.6 });
+        if (i % 3 === 0) rubble(c, k, p, 6, top(k, 4), { cols: STONE, rim: '#c8501a', sp: [160, 400], size: [4, 10] });
+        dust(c, k, p, top(k, 3), { n: 2, w: 60, a: 0.32, hex: ['#5a4a40', '#6a5a4e'] });
+        if (i % 2 === 1) smokeColumn(c, k, { x: p.x, y: p.y - 40 }, top(k, 3), { n: 2, w: 30, vy: [-170, -100], s1: [110, 150], a: 0.42, delay: 180 });
       });
       ringFx(c, k, C0, { r0: 60, r1: 700, dur: 700, col: '#7a2a0c', pale: '#f07a24', w: 9, flat: FLAT, depth: k.FLOOR_FX + 4, a: 0.7 });
+      // ikinci, geç gelen halka (daha ince, ardından)
+      ringFx(c, k, C0, { r0: 40, r1: 520, dur: 620, col: '#5a1a08', pale: '#ffa860', w: 4, flat: FLAT, depth: k.FLOOR_FX + 4, delay: 160, a: 0.6 });
+      // kül pulları: tahtanın üstünden yavaşça yağar
+      spray(c, k, cells.flatMap((p, i) => (i % 2 ? bits(k, 3, { x: p.x, y: p.y - 280 }, { kind: 'leaf', ang: [Math.PI * 0.3, Math.PI * 0.7], sp: [10, 60], size: [3, 5], life: [1300, 1900], cols: ['#5a544e', '#6a645e', '#4a4440'], jx: 50, jy: 30, drag: 1.4, sway: 12, vr: 4, delay: [i * 20, i * 20 + 300] }) : [])), top(k, 4), 70);
       k.shake(c.scene, 320, 0.007);
     });
+    // görkem (Ömer 2026-10-20): zeminde kor ısısı, her hücreden yükselen ince ışık sütunu (tek Graphics), doruğa toplanan kor
+    const farB = Math.max(...cells.map((p) => Math.hypot(p.x - C0.x, (p.y - C0.y) / FLAT)), 200);
+    floorGlow(c, k, cells.map((p) => ({ p, at: a.at })), { rx: 72, hex: '#7a2410', core: '#e0601a', a: 0.24, pre: 160, hold: 700, fade: 1000, pulse: 0.15 });
+    layer(
+      c,
+      a.at + k.slow(1500),
+      top(k, 1),
+      (g, tm) => {
+        const t = tm - a.at;
+        if (t < -k.slow(60) || t > k.slow(1300)) return;
+        const rise = eo(clamp01((t + k.slow(60)) / k.slow(200)), 2);
+        const fade = t < k.slow(500) ? 1 : (1 - (t - k.slow(500)) / k.slow(800)) ** 1.3;
+        for (const p of cells) column(g, p.x, p.y - 10, 250 * rise, 32, C('#a8300c'), C('#ffc890'), 0.26 * rise * fade);
+      },
+      true,
+    );
+    condense(c, k, { x: C0.x, y: C0.y - 10 }, { hex: ['#ff7a3a', '#d0401a', '#ffa860'], at: a.at, r: farB * 0.9, depth: top(k, 5), n: 28, life: 560, flat: 0.55, size: [1.8, 3], flash: { hex: '#d0501a', w: farB * 1.2, h: farB * 0.5, a: 0.3 } });
   });
 }
 

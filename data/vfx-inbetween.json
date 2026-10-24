@@ -1,7 +1,7 @@
 {
-  "_not": "Mob skill animasyonlarında (ChatGPT, 8 kare) kodla ara kare üretimi (src/game/vfx-inbetween.ts). 'player': gerçek savaştaki mob efekt oynatıcısı (src/game/mob-vfx.ts); enabled=false iken savaşlar HİÇ değişmez (Ömer 2026-10-18 ara kare testi). 'methods': yöntem parametreleri. crossfade = i. ve i+1. kare arasında şeffaflık karışımı; crossfade+motion = karışırken iki kare de içeriğin ağırlık merkezi / boyutu ara değere kaydırılıp ölçeklenir (hayalet gibi çift görüntü yerine hareket gibi okunur): motion = kayma payı (0-1), scale = ölçek payı (0-1), scaleMin/scaleMax = ölçek sınırı, minSize = bundan küçük içerikte ölçek yok (px), alphaMin = ağırlık merkezi / kutu hesabında sayılan en düşük alfa.",
-  "player": { "enabled": false, "method": "crossfade+motion", "sub": 2 },
-  "subOptions": [2, 3],
+  "_not": "Mob skill animasyonlarında (ChatGPT, 8 kare) kodla ara kare üretimi (src/game/vfx-inbetween.ts). 'player': gerçek savaştaki mob efekt oynatıcısı (src/game/mob-vfx.ts): Ömer 2026-10-20 kararı enabled=true, crossfade+motion, 3x (el yapımı skill'lerde sheet oynamaz, ara kare yok); skill başına yöntem / kat battle-layout.json > animation.mobVfx.skills (ib / sub). enabled=false: ara karesiz asıl kareler. 'methods': yöntem parametreleri. crossfade = i. ve i+1. kare arasında şeffaflık karışımı; crossfade+motion = karışırken iki kare de içeriğin ağırlık merkezi / boyutu ara değere kaydırılıp ölçeklenir (hayalet gibi çift görüntü yerine hareket gibi okunur): motion = kayma payı (0-1), scale = ölçek payı (0-1), scaleMin/scaleMax = ölçek sınırı, minSize = bundan küçük içerikte ölçek yok (px), alphaMin = ağırlık merkezi / kutu hesabında sayılan en düşük alfa.",
+  "player": { "enabled": true, "method": "crossfade+motion", "sub": 3 },
+  "subOptions": [2, 3, 5],
   "methods": {
     "crossfade": { "label": "Crossfade", "motion": 0, "scale": 0 },
     "crossfade+motion": { "label": "Crossfade + motion", "motion": 1, "scale": 1, "scaleMin": 0.75, "scaleMax": 1.35, "minSize": 24, "alphaMin": 24 }
