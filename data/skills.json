@@ -85,7 +85,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.6,
+        "power": 0.63,
         "element": "holy"
       }
     ],
@@ -110,7 +110,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 24
     },
     "cooldown": 4,
     "initialCooldown": 2,
@@ -158,7 +158,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 16
     },
     "cooldown": 3,
     "motion": "sky",
@@ -171,7 +171,7 @@
         "ground": "holy_fire",
         "turns": 2,
         "scale": "int",
-        "power": 0.32
+        "power": 0.34
       }
     ],
     "vfx": "judgment",
@@ -322,7 +322,7 @@
   "dark_bond": {
     "id": "dark_bond",
     "name": "Dark Bond",
-    "_not": "Madde 240 (Ömer): Blood Rite'ın yerine. Kendisi hariç tek dosta 3 tur (Undead'in kendi turları) karanlık bağ: Undead'in her lifesteal kazancının aynısı (ratio 1; madde 241: yalnızca Undead'in GERÇEKTEN iyileştiği miktar, canı doluyken 0) bağlı dosta da şifa olur. Aynı anda tek bağ; biri ölünce kopar. Yarım turn (turnCost 0,5). Hasar yok (damage-scale kuralı dışı değil: ölçekli etki yok). İkon/vfx/ses YER TUTUCU (soul ikon, guardlink vfx, chainTether + darkChant). Sayılar PROVİZYON.",
+    "_not": "Madde 240 (Ömer): Blood Rite'ın yerine. Kendisi hariç tek dosta 4 tur (Undead'in kendi turları; Ömer 2026-10-24: 3 -> 4) karanlık bağ: Undead'in her lifesteal kazancının aynısı (ratio 1; madde 241: yalnızca Undead'in GERÇEKTEN iyileştiği miktar, canı doluyken 0) bağlı dosta da şifa olur. Aynı anda tek bağ; biri ölünce kopar. Yarım turn (turnCost 0,5). Hasar yok (damage-scale kuralı dışı değil: ölçekli etki yok). İkon/vfx/ses YER TUTUCU (soul ikon, guardlink vfx, chainTether + darkChant). Sayılar PROVİZYON.",
     "icon": "darkbond",
     "target": "single_ally",
     "excludeSelf": true,
@@ -337,7 +337,7 @@
     "effects": [
       {
         "type": "bond",
-        "turns": 3,
+        "turns": 4,
         "ratio": 0.96
       }
     ],
@@ -588,7 +588,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 16
+      "amount": 18
     },
     "cooldown": 5,
     "initialCooldown": 1,
@@ -622,7 +622,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 15
+      "amount": 17
     },
     "cooldown": 3,
     "motion": "cast",
@@ -650,7 +650,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 16
     },
     "cooldown": 4,
     "motion": "cast",
@@ -682,7 +682,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 9
+      "amount": 8
     },
     "cooldown": 5,
     "turnCost": 0.5,
@@ -750,7 +750,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 14
     },
     "cooldown": 3,
     "motion": "sky",
@@ -787,7 +787,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 24
+      "amount": 28
     },
     "cooldown": 3,
     "initialCooldown": 3,
@@ -820,7 +820,7 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 16
     },
     "cooldown": 4,
     "motion": "cast",
@@ -919,7 +919,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 20
+      "amount": 24
     },
     "cooldown": 5,
     "initialCooldown": 1,
@@ -1150,7 +1150,7 @@
     "count": 3,
     "cost": {
       "resource": "mp",
-      "amount": 18
+      "amount": 22
     },
     "cooldown": 4,
     "initialCooldown": 3,

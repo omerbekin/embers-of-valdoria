@@ -16,7 +16,7 @@ Görseli tarayıcı açmadan `node tools/codex/imagegen.mjs --out <hedef.png> --
 - Prompt kalitesi kuralları (alfa, yön, VFX, kan yok) aşağıdakiyle aynı.
 
 ## Yedek yol: Tarayıcı (Claude in Chrome, Ömer'in Brave'i)
-- Araçları tek ToolSearch'te yükle (`mcp__claude-in-chrome__*`: tabs_context_mcp, navigate, computer, read_page, find, tabs_create_mcp, tabs_close_mcp). Ekran görüntüsünü küçük ölçekte al; metin için read_page/find.
+- Araçları tek ToolSearch'te yükle (`mcp__claude-in-chrome__*`: tabs_context_mcp, navigate, computer, read_page, find, tabs_create_mcp, tabs_close_mcp). Ekran görüntüsünü küçük ölçekte (`scale: 0.5`) ve yalnızca gerektiğinde al; durum/metin için önce read_page/find/get_page_text.
 - Bağlantı: `tabs_context_mcp` "tab group no longer exists" derse `createIfEmpty: true` ile yeniden çağır. Tıklamayı ekran görüntüsündeki KOORDİNATLA ya da hemen öncesinde alınmış taze ref'le yap (eski ref bayatlar). Kapatma adımını tıklamayla aynı topluya koyma; önce sonucu gör (test 2026-10-17: subagent Brave'i kontrol edebiliyor).
 - ChatGPT tuhaflıkları: prompt yazılınca gönder düğmesine bas (Enter bazen göndermez). Görsel boş kutu dönerse bekle ve kaydır, olmazsa yeniden üret. Sohbet çok görselle ağırlaşır: 5-6 görselde bir YENİ sohbet aç. "Which image do you like more" çıkarsa Skip. Kan/şiddet kelimesi kullanma (koruma). Günlük görsel sınırı dolarsa dur ve raporla.
 - Her prompta ekle: "REAL transparent background with alpha, no checkerboard pattern, no dark shadow, glow or halo around the subject".

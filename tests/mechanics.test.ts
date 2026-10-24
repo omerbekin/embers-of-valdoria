@@ -573,7 +573,8 @@ describe('Anti-Mage: mana yakma, eksik manaya göre hasar, büyü kalkanı', () 
       am.mp = mp;
       return ofType(act(b, am.uid, 'spell_ward', am.uid), 'shield')[0]!.amount; // madde 240: tek dost (kendisi dahil)
     };
-    expect(shield(40)).toBeGreaterThan(shield(15));
+    const wardCost = content.skills.spell_ward!.cost.amount; // bedel veriden (2026-10-24 mana turu: 10 -> 16)
+    expect(shield(wardCost + 34)).toBeGreaterThan(shield(wardCost + 5));
     // Menzil (range.md onaylı tablo): Anti-Mage uzak sınıf, tüm skill'leri sınıf menzili (4); ön sıradan en arka sıraya ulaşır (0+3+1=4)
     const b = make(TA);
     const am = unit(b, 'party', 'antimage');

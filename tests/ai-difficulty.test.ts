@@ -117,7 +117,7 @@ describe('madde 258 Faz 2: mana yakmanın "engellenen hamle" değeri', () => {
       return x;
     };
     const b = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));
-    for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = 16; // Radiance (20 MP) iki kez yerine bir kez
+    for (const e of b.combatants.filter((c) => c.side === 'enemy')) e.mp = content.skills.radiance!.cost.amount - 4; // az MP (eskiden 16 = Radiance 20 - 4; bedel veriden, 2026-10-24 mana turu)
     const df = Math.max(...cand(b, 'party-0', 'drain_field').map((c) => c.terms?.burn ?? 0));
     expect(df).toBeGreaterThan(0);
     const full = ownTurn(mk({ 0: 'antimage' }, { 0: 'mage', 1: 'paladin', 3: 'druid' }, 'turns'));

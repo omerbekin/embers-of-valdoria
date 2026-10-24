@@ -386,7 +386,7 @@ const wail: V2Vfx = (c, k) =>
 // ---------------------------------------------------------------------------------------------------------------- DARK BOND
 
 /**
- * Dark Bond (tek dost, kendisi hariç; 3 tur bağ; YARIM TUR): lich alçak sesle büyü mırıldanır, göğsünden dostunun göğsüne omur
+ * Dark Bond (tek dost, kendisi hariç; 4 tur bağ; YARIM TUR): lich alçak sesle büyü mırıldanır, göğsünden dostunun göğsüne omur
  * boncuklarından bir kemik zincir uzanır (halkalar tek tek takılır), bağ mühürlenince iki göğüste kan-ruh kalbi atar ve zincir boyunca iki
  * kalp atışı akar (lifesteal'ın paylaşılacağı yol). Yarım tur: lich'in başının üstünde kum saati belirir, kumun YARISI akar ve saat söner.
  */

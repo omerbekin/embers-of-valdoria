@@ -1,6 +1,6 @@
 ---
 name: campaign-dev
-description: Sefer (campaign) ve ilerleme sistemi geliştiricisi. Savaşlar arasındaki her şeyi yapar: sefer haritası (düğümler, yollar, seçim noktaları), karakterin harita üstünde yürümesi, sıradaki haritaya geçiş, düğüm türleri (savaş, elit, boss, kasaba, dinlenme, olay, hazine), karşılaşma tanımları (hangi düşman takımı), sefer durumu ve kaydı. Savaş kurallarına KARIŞMAZ. Harita/ilerleme/sefer işlerinde kullan.
+description: "Sefer (campaign) ve ilerleme sistemi geliştiricisi. Savaşlar arasındaki her şeyi yapar: sefer haritası (düğümler, yollar, seçim noktaları), karakterin harita üstünde yürümesi, sıradaki haritaya geçiş, düğüm türleri (savaş, elit, boss, kasaba, dinlenme, olay, hazine), karşılaşma tanımları (hangi düşman takımı), sefer durumu ve kaydı. Savaş kurallarına KARIŞMAZ. Harita/ilerleme/sefer işlerinde kullan."
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: opus
 ---

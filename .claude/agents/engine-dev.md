@@ -1,6 +1,6 @@
 ---
 name: engine-dev
-description: Savaş motoru geliştiricisi. Saf TypeScript savaş motorunu (src/engine) yazar/değiştirir: sıra sistemi, dizilim ve hedefleme, hasar/şifa/kalkan formülleri, durum etkileri, pasifler, çağrılar, yapay zeka, önizleme, seed'li RNG ve olay akışı. Savaş kuralı veya mekanik değişikliklerinde kullan.
+description: "Savaş motoru geliştiricisi. Saf TypeScript savaş motorunu (src/engine) yazar/değiştirir: sıra sistemi, dizilim ve hedefleme, hasar/şifa/kalkan formülleri, durum etkileri, pasifler, çağrılar, yapay zeka, önizleme, seed'li RNG ve olay akışı. Savaş kuralı veya mekanik değişikliklerinde kullan."
 tools: Read, Write, Edit, Glob, Grep, Bash
 model: opus
 ---

@@ -269,7 +269,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     expect(content.classes.undead!.skills[3]).toBe('raise_dead');
     expect(S.blood_rite).toBeUndefined();
     expect(S.dark_bond).toMatchObject({ target: 'single_ally', excludeSelf: true, cost: { resource: 'mp' }, cooldown: 2, turnCost: 0.5 }); // madde 261 bedelsizdi; balance-tester 2026-10-24 mana turu: bedel veriden (0 -> 10)
-    expect(bondEffect).toMatchObject({ type: 'bond', turns: 3 }); // oran veriden (madde 261 denge turu: 1 -> 1,5)
+    expect(bondEffect).toMatchObject({ type: 'bond', turns: 4 }); // Ömer 2026-10-24: 3 -> 4 tur; oran veriden (madde 261 denge turu: 1 -> 1,5)
     expect(bondEffect.ratio).toBeGreaterThan(0);
     // hasar yok: hasar ölçek kuralı dışında değil (ölçekli etki yok)
     expect(S.dark_bond!.effects.some((e) => e.type === 'damage' || 'scale' in e)).toBe(false);
@@ -612,7 +612,7 @@ describe('wiki ve Legacy (madde 240)', () => {
     expect(text('shields')).toContain(`Spell Ward (magic shield): when it absorbs a hit, it burns ${wardHook.burnMana} MP`);
     expect(text('shields')).toContain(`Mana Barrier (shield): when it absorbs a hit, it gives the shielded unit ${barrier.onAbsorb!.giveMana} MP`);
     expect(text('dispel')).toContain('Mana Barrier');
-    expect(text('dark-bond')).toContain('Dark Bond: bond for 3 turns');
+    expect(text('dark-bond')).toContain(`Dark Bond: bond for ${bondEffect.turns} turns`);
     expect(text('dark-bond')).toContain(`Vampiric Bite, ${Math.round(LIFESTEAL * 100)}%`);
     expect(text('half-turn')).toContain('Half-turn skills: Dark Bond');
   });
