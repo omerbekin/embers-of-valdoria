@@ -31,6 +31,8 @@ Senkronlanan anahtarlar: `eov.campaign.v1` (v12), `eov.endless.v1` (v7), `eov.en
 ## İstemci
 Yeni: `src/cloud/{sync-core,cloud,sync-dialog,account-notice}.ts`. Değişen: `kv-storage.ts`, `endless-session.ts`, `tutorial/store.ts`, `campaign/save.ts` + `endless/save.ts` (yalnızca `peekVersion`), `main.ts`, `settings-pages.ts` (Account sayfası), `MainMenuScene.ts`, `settings.ts` (salt okunur), debug bölümü Data > Cloud, `vite.config.ts`.
 
+**Hata raporu bağlantısı (2026-10-25):** `CloudClient` senkron izlerini (`logEvent('cloud', ...)`) ve sessiz sorun raporlarını opt-in hata raporu sistemine yazar; bağımlılık `CloudDeps.diag` (varsayılan no-op, `main.ts > initCloud({ diag })` gerçek `src/diag/diag`'a bağlar; cloud.ts diag'ı içe aktarmaz). **Yükleme koruması:** karar 'upload' iken bulutta ilerleme var, yerelde yoksa PUT yapılmaz, durum `error` / `upload-guard` (bulut boş cihazla asla ezilmez). Kod listesi: `docs/arch/diagnostics.md` > Bulut kaydı.
+
 ## Fazlar
 - 1a Worker auth + D1 (Opus): migration, auth/save modülleri, smoke testi.
 - 1b Senkron çekirdeği (Opus, kayıt şeması hassas): sync-core, kv sarmalayıcı, testler.

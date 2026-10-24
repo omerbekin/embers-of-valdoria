@@ -13,7 +13,7 @@
 //   eod [--dry]                      : gece görevi, hazır olan her şeyi gönderir
 //   drop <oturum>                    : girdiyi siler (gönderilmeden)
 import { execSync, spawn } from 'node:child_process';
-import { existsSync, mkdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, appendFileSync, openSync } from 'node:fs';
+import { cpSync, existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync, appendFileSync, openSync } from 'node:fs';
 import { dirname, isAbsolute, join, relative, resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import net from 'node:net';
@@ -150,11 +150,29 @@ function hookEdit() {
   if (!sid || !p) return;
   const rel = relative(GAME, isAbsolute(p) ? p : resolve(cwd, p)).replace(/\\/g, '/');
   if (!rel || rel.startsWith('..') || isAbsolute(rel) || SKIP(rel)) return;
-  withQueue((q) => {
+  const warn = withQueue((q) => {
     const e = entry(q, sid);
     if (!e.files.includes(rel)) e.files.push(rel);
     e.updated = Date.now();
+    return overlapWarning(q, sid, e, [rel]);
   });
+  if (warn) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: warn } }));
+}
+
+// Ortak dosya uyarısı (Ömer 2026-10-24, 0.9.8.4 olayı: yarım Radiance işi başka sohbetlerin gönderimini kilitledi): dosya başka bir sohbetin
+// kuyruğunda da varsa, dosya başına bir kez uyarı döner (beraber gidecekler; o sohbet yarımsa gönderim onun işini de taşır)
+function overlapWarning(q, sid, e, files) {
+  const hits = [];
+  for (const f of files) {
+    if ((e.warned ??= []).includes(f)) continue;
+    const who = Object.entries(q.sessions).filter(([k, o]) => k !== sid && o.files.includes(f)).map(([k, o]) => `${short(k)} (${o.mode}, ${o.ready ? 'hazır' : 'yarım'}${o.label ? `, "${o.label.slice(0, 30)}"` : ''})`);
+    if (!who.length) continue;
+    e.warned.push(f);
+    hits.push(`${f} -> ${who.join(', ')}`);
+  }
+  return hits.length
+    ? `[gönderim kuyruğu] ORTAK DOSYA: ${hits.join('; ')}. Bu dosyalar o sohbetin işiyle ayrılamaz, gönderimde beraber gider; o sohbet yarımsa onun değişiklikleri de gider ya da testleri kırabilir. Gönderimden önce Ömer'e bunu söyle.`
+    : null;
 }
 
 // Değişmiş yollar (git'in gördüğü) + her birinin boyut/zaman imzası
@@ -186,15 +204,18 @@ function hookBashPost() {
   const after = dirtyMap();
   const touched = Object.keys(after).filter((p) => after[p] !== before[p]);
   if (!touched.length) return;
-  withQueue((q) => {
-    // Başka bir sohbetin zaten sahiplendiği dosya yazılmaz (uzun komut sırasında onun Edit'i olabilir)
+  const warn = withQueue((q) => {
+    // Başka bir sohbetin zaten sahiplendiği dosya yazılmaz (uzun komut sırasında onun Edit'i olabilir); yine de ortak dosya uyarısı verilir
     const others = new Set(Object.entries(q.sessions).filter(([k]) => k !== d.session_id).flatMap(([, e]) => e.files));
     const e = entry(q, d.session_id);
     const add = touched.filter((p) => !others.has(p) && !e.files.includes(p));
-    if (!add.length) return;
-    e.files.push(...add);
-    e.updated = Date.now();
+    if (add.length) {
+      e.files.push(...add);
+      e.updated = Date.now();
+    }
+    return overlapWarning(q, d.session_id, e, touched.filter((p) => others.has(p)));
   });
+  if (warn) console.log(JSON.stringify({ hookSpecificOutput: { hookEventName: 'PostToolUse', additionalContext: warn } }));
 }
 const unclaimed = (q) => { const own = new Set(Object.values(q.sessions).flatMap((e) => e.files)); return Object.keys(dirtyMap()).filter((p) => !own.has(p)); };
 function statusText(q) {
@@ -365,7 +386,7 @@ function addNotes(version, groups) {
 
 // Temiz kopyada gönderim (Ömer 2026-10-24): başka sohbetlerin yarım işi testi kırmasın.
 // Commit geçici index ile kurulur (gerçek index'e ve diğer sohbetlerin stage'ine dokunulmaz),
-// geçici worktree'de 5000 derlemesi + hızlı test + build, yeşilse push ve main ileri alınır.
+// geçici worktree'de 5000 derlemesi + tam test + build, yeşilse push ve main ileri alınır.
 async function shipClean(version, groups, files, dry) {
   const undoNotes = version ? addNotes(version, groups) : () => {};
   const all = [...files, 'data/patch-notes.json', 'package.json', 'package-lock.json'];
@@ -388,15 +409,28 @@ async function shipClean(version, groups, files, dry) {
     made = true;
     ps(`New-Item -ItemType Junction -Path '${join(scratch, 'node_modules')}' -Target '${join(GAME, 'node_modules')}' | Out-Null`);
     const inScratch = (cmd) => execSync(cmd, { cwd: scratch, stdio: 'inherit' });
+    // Önce tip kontrolü (Ömer 2026-10-24): parça parça gelen dosyalar (bir sohbetin yarısı) en hızlı burada yakalanır, 5000'e dokunulmadan
+    log('> Temiz kopyada tip kontrolü');
+    inScratch('npx tsc --noEmit');
     if (dry) log('> (deneme) 5000 derlemesi atlandı');
     else {
+      // Geçici klasöre derlenir, yalnızca başarılıysa play-build ile değişir (0.9.8.4 olayı: kırık build 5000'i boş bırakmıştı)
       log('> 5000: temiz kopyadan play-build derleniyor');
-      inScratch(`npx vite build --outDir ${q_(join(ROOT, 'play-build'))} --emptyOutDir`);
+      const out = join(tmpdir(), `eov-play-${Date.now()}`);
+      try {
+        inScratch(`npx vite build --outDir ${q_(out)} --emptyOutDir`);
+        const pb = join(ROOT, 'play-build');
+        mkdirSync(pb, { recursive: true });
+        for (const f of readdirSync(pb)) rmSync(join(pb, f), { recursive: true, force: true });
+        cpSync(out, pb, { recursive: true });
+      } finally {
+        rmSync(out, { recursive: true, force: true });
+      }
       await start5000();
     }
-    // Yerelde hızlı testler + build (Ömer 2026-10-24); tam npm test GitHub Actions'ta Pages'in kilidi olarak kalır, pages-check sonucu bildirir
-    log('> Temiz kopyada hızlı test + build');
-    inScratch('npm run test:fast');
+    // Tam npm test göndermeden önce yerelde (Ömer 2026-10-25): yalnız hızlı testle 0.9.8.4/0.9.8.5 GitHub'a gidip CI'da kırmızı kalmıştı
+    log('> Temiz kopyada tam test + build');
+    inScratch('npm test');
     inScratch('npm run build');
     if (dry) return;
 

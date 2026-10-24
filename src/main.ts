@@ -27,7 +27,7 @@ import { whenMenuFontsReady } from './ui/menu-fonts';
 import './style.css';
 import { markBootReady, setBootProgress, whenBootReady } from './ui/boot-loader';
 import { installContextLossNotice } from './ui/context-loss';
-import { attachDiagGame, diagNoticed, installDiag } from './diag/diag';
+import { attachDiagGame, diagNoticed, installDiag, logEvent, report } from './diag/diag';
 import { openDiagNotice } from './diag/diag-notice';
 import { installStaleBuildReload } from './ui/stale-build';
 import { initCloud } from './cloud/cloud';
@@ -42,7 +42,11 @@ installStaleBuildReload();
 // Bulut kaydı (src/cloud/cloud.ts): ?auth= dönüşünü işler ve adresi temizler; girişsiz oyuncuda ağ çağrısı yok. Buluttan yerele yazım yalnızca ana menüde.
 // Pencereleri (giriş hatası, ilk girişte ad, çakışma, yeni sürüm; src/cloud/ui/cloud-ui.ts) init'ten ÖNCE dinlemeye başlar: ?auth= olayı init sırasında yayılır.
 installCloudUi();
-initCloud({ applyGate: () => !!gameRef && gameRef.scene.isActive(MainMenuScene.KEY) });
+// Senkron izleri + raporları hata raporu sistemine (yalnızca teknik veri; rapor türü 'error', ileti "cloud <kod>: ..."; Worker tür listesi değişmez)
+initCloud({
+  applyGate: () => !!gameRef && gameRef.scene.isActive(MainMenuScene.KEY),
+  diag: { log: (msg) => logEvent('cloud', msg), report: (code, msg) => void report('error', `cloud ${code}: ${msg}`) },
+});
 
 // Modüller yüklendi: açılış ekranı ilerler (sonraki adımlar: ana menünün dosyaları, fontlar; src/ui/boot-loader.ts)
 setBootProgress(0.12);

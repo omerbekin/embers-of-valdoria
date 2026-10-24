@@ -124,6 +124,23 @@ export interface CloudCore {
   memoryKV: typeof import('../campaign/save').memoryKV;
 }
 
+/**
+ * Hata raporu bağlantısı (docs/arch/diagnostics.md > Bulut). Varsayılan no-op; tarayıcıda main.ts > initCloud gerçek src/diag/diag'a bağlar
+ * (cloud.ts diag'ı içe aktarmaz: Node testleri ve döngüsel içe aktarma). İletiler YALNIZCA teknik: karar türü, rev, http durumu, hata kodu,
+ * anahtar ADLARI ve sürümleri, yuva sayıları. Kayıt içeriği, görünen ad, e-posta, kullanıcı kimliği, çerez ASLA.
+ */
+export interface CloudDiag {
+  /** İz (logEvent 'cloud'); onay kapalıyken de yerelde tutulur. */
+  log(msg: string): void;
+  /** Rapor (onay açıksa gönderilir). code: kısa kod (me-500, save-shape, cloud_apply_mismatch...). */
+  report(code: string, msg: string): void;
+}
+
+const NO_DIAG: CloudDiag = { log: () => undefined, report: () => undefined };
+
+/** Tanılama iletisine giren dışarıdan gelen kod (sunucu hata kodu, ?auth reason) güvenli ve kısa tutulur. */
+const safeCode = (v: unknown): string => String(v ?? '').replace(/[^0-9A-Za-z_.-]/g, '').slice(0, 40) || 'unknown';
+
 export interface CloudDeps {
   /** Ana anahtar (data/cloud.json > enabled). Kapalıyken istemci HİÇ ağ çağrısı yapmaz, dinleyici kurmaz, giriş kullanılamaz (Ömer 2026-10-24: giriş şimdilik 'coming soon'). Testler true verir. */
   enabled: boolean;
@@ -142,6 +159,8 @@ export interface CloudDeps {
   onHidden: (fn: () => void) => void;
   app: string;
   loadCore: () => Promise<CloudCore>;
+  /** Hata raporu izleri / raporları (varsayılan no-op). */
+  diag: CloudDiag;
 }
 
 const defaultLoadCore = async (): Promise<CloudCore> => {
@@ -170,6 +189,7 @@ function browserDeps(): CloudDeps {
     },
     app: typeof __DISPLAY_VERSION__ !== 'undefined' ? __DISPLAY_VERSION__ : '0.0.0',
     loadCore: defaultLoadCore,
+    diag: NO_DIAG,
   };
 }
 
@@ -281,6 +301,8 @@ export class CloudClient {
   private chain: Promise<unknown> = Promise.resolve();
   private readonly listeners = new Set<(e: CloudEvent) => void>();
   private disposed = false;
+  /** Bu oturumda raporlanan kodlar (kod başına bir rapor). */
+  private readonly reported = new Set<string>();
 
   constructor(deps: Partial<CloudDeps> = {}) {
     this.d = { ...browserDeps(), ...deps };
@@ -337,6 +359,11 @@ export class CloudClient {
     return () => void this.listeners.delete(fn);
   }
 
+  /** Tanılama bağlantısı (initCloud: gerçek src/diag/diag). */
+  setDiag(diag: CloudDiag): void {
+    this.d.diag = diag;
+  }
+
   /** Buluttan yerele yazmanın güvenli olup olmadığı (uygulama: yalnızca ana menüde true). */
   setApplyGate(fn: () => boolean): void {
     this.gate = fn;
@@ -356,7 +383,14 @@ export class CloudClient {
   init(): Promise<void> {
     if (!this.d.enabled) return Promise.resolve(); // kapalı: ?auth= dahil hiçbir şey yapılmaz, /auth/me yoklanmaz
     const auth = this.takeAuthParam();
-    if (auth) this.emit({ type: 'auth', ok: auth.ok, ...(auth.reason ? { reason: auth.reason } : {}) });
+    if (auth) {
+      if (auth.ok) this.dlog('sign-in ok');
+      else {
+        this.dlog(`sign-in error ${safeCode(auth.reason)}`);
+        this.dreport('auth-error', `sign-in error ${safeCode(auth.reason)}`);
+      }
+      this.emit({ type: 'auth', ok: auth.ok, ...(auth.reason ? { reason: auth.reason } : {}) });
+    }
     if (!isLoginHost(this.d.hostname)) return Promise.resolve();
     if (!this.readMeta() && !auth?.ok) return Promise.resolve();
     return this.enqueue(() => this.refresh());
@@ -389,7 +423,7 @@ export class CloudClient {
       const r = await this.http('POST', '/auth/logout');
       if (r.status === 0) return { ok: false, reason: 'offline' };
       if (r.status !== 204 && r.status !== 200 && r.status !== 401) return { ok: false, reason: `http-${r.status}` };
-      this.clearSession();
+      this.clearSession(true, 'sign-out');
       return { ok: true };
     });
   }
@@ -400,11 +434,11 @@ export class CloudClient {
       if (!this.user) return { ok: false, reason: 'signed-out' } as ActionResult;
       const r = await this.http('DELETE', '/account', { confirm: 'DELETE' });
       if (r.status === 200) {
-        this.clearSession();
+        this.clearSession(true, 'account-deleted');
         return { ok: true };
       }
       if (r.status === 401) {
-        this.clearSession();
+        this.clearSession(true, 'http-401');
         return { ok: false, reason: 'signed-out' };
       }
       return { ok: false, reason: r.status === 0 ? 'offline' : `http-${r.status}` };
@@ -421,7 +455,7 @@ export class CloudClient {
         this.emitAccount();
         return { ok: true, displayName: r.body.displayName } as const;
       }
-      if (r.status === 401) this.clearSession();
+      if (r.status === 401) this.clearSession(true, 'http-401');
       const reason = r.status === 0 ? 'offline' : isObj(r.body) && typeof r.body.error === 'string' ? r.body.error : `http-${r.status}`;
       return { ok: false, reason } as const;
     });
@@ -525,7 +559,61 @@ export class CloudClient {
     const changed = s !== this.status || error !== this.lastError;
     this.status = s;
     this.lastError = error;
-    if (changed) this.emit({ type: 'status', status: s, ...(error ? { error } : {}) });
+    if (!changed) return;
+    if (s === 'offline' || s === 'error' || s === 'newer-version' || s === 'needs-choice') this.dlog(`status ${s}${error ? ` ${safeCode(error)}` : ''}`);
+    if (s === 'error') this.dreport(safeCode(error), `status error ${safeCode(error)}`);
+    if (s === 'newer-version') this.dreport('newer-version', 'status newer-version (cloud or server has a newer save schema)');
+    this.emit({ type: 'status', status: s, ...(error ? { error } : {}) });
+  }
+
+  // ------------------------------------------------ tanılama (yalnızca teknik veri)
+
+  private dlog(msg: string): void {
+    try {
+      this.d.diag.log(msg);
+    } catch {
+      /* tanılama senkronu bozmaz */
+    }
+  }
+
+  /** Kod başına oturumda bir rapor (diag ayrıca aynı iletiyi ve oturum sınırını denetler). */
+  private dreport(code: string, msg: string): void {
+    if (this.reported.has(code)) return;
+    this.reported.add(code);
+    try {
+      this.d.diag.report(code, msg);
+    } catch {
+      /* yok say */
+    }
+  }
+
+  /** Paketteki dolu anahtarların adı + sürümü (içerik değil): "eov.campaign.v1=3,eov.endless.scores.v1=1". */
+  private keysText(bundle: SyncBundle | null): string {
+    if (!bundle) return 'none';
+    const parts = SYNC_KEYS.filter((k) => bundle.data[k] !== null).map((k) => `${k}=${bundle.versions[k] ?? '?'}`);
+    return parts.length ? parts.join(',') : 'empty';
+  }
+
+  /** Paketteki sefer yuvası sayısı (slotSummaries ile; okunamazsa 0). */
+  private slotCount(bundle: SyncBundle | null): number {
+    const core = this.core;
+    const raw = bundle?.data['eov.campaign.v1'];
+    if (!core || !raw) return 0;
+    try {
+      const kv = core.memoryKV();
+      kv.setItem('eov.campaign.v1', raw);
+      return core.slotSummaries(kv).filter(Boolean).length;
+    } catch {
+      return 0;
+    }
+  }
+
+  private localSlotCount(): number {
+    try {
+      return this.core ? this.core.slotSummaries(this.kv()).filter(Boolean).length : 0;
+    } catch {
+      return 0;
+    }
   }
 
   private kv(): KV | null {
@@ -661,11 +749,12 @@ export class CloudClient {
     if (!isObj(u) || typeof u.id !== 'string') {
       // Oturum yok / süresi doldu: girişsiz oyuncu gibi (meta silinir: sonraki açılışta ağ çağrısı yok)
       const had = !!this.user || !!this.readMeta();
-      this.clearSession(had);
+      this.clearSession(had, had ? 'expired' : '');
       return;
     }
     this.user = { id: u.id, displayName: typeof u.displayName === 'string' ? u.displayName : null, providers: Array.isArray(u.providers) ? u.providers.filter((p): p is string => typeof p === 'string') : [] };
     this.serverSave = parseServerSave(r.body.save);
+    this.dlog(`session ok, cloud ${this.serverSave ? `rev ${this.serverSave.rev}` : 'none'}, local rev ${this.readMeta()?.rev ?? 'none'}`);
     this.installListeners();
     if (this.status === 'offline' || this.status === 'error') this.setStatus('idle');
     this.emitAccount();
@@ -697,6 +786,7 @@ export class CloudClient {
     const c = await this.fetchCloud();
     if (!c.ok) return;
     if (!this.isDirty() && c.cloud) {
+      this.dlog(`decision download (clean device): cloud rev ${c.cloud.save.rev} [${this.keysText(c.cloud.bundle)}] slots ${this.slotCount(c.cloud.bundle)}, local rev ${meta.rev}`);
       this.remote = { kind: 'download', cloud: c.cloud };
       return this.tryApplyRemote();
     }
@@ -708,7 +798,7 @@ export class CloudClient {
     if (!core) return { ok: false };
     const r = await this.http('GET', '/save');
     if (r.status === 401) {
-      this.clearSession(true);
+      this.clearSession(true, 'http-401');
       return { ok: false };
     }
     if (r.status === 0 || r.status >= 500) {
@@ -723,9 +813,16 @@ export class CloudClient {
     const save = parseServerSave(r.body.save);
     this.serverSave = save;
     if (!save) return { ok: true, cloud: null };
-    const raw = isObj(r.body.data) ? r.body.data : {};
+    // Sunucu (auth.ts > saveGet) `data` ve `tombstones`u `save` nesnesinin İÇİNE koyar; eski/test biçimi üst düzeyde. İkisi de okunur.
+    const src = isObj(r.body.data) ? r.body : isObj(r.body.save) && isObj(r.body.save.data) ? r.body.save : null;
+    if (!src) {
+      // Kayıt var ama içeriği okunamadı: boş bulut sanılıp karar verilmez (yerelin bulutu ezmesi / sahte "senkron" önlenir)
+      this.setStatus('error', 'save-shape');
+      return { ok: false };
+    }
+    const raw = src.data as Record<string, unknown>;
     const data = Object.fromEntries(SYNC_KEYS.map((k) => [k, typeof raw[k] === 'string' ? raw[k] : null])) as Record<SyncKey, string | null>;
-    return { ok: true, cloud: { save, bundle: core.sync.bundleFromData(data, save.app, new Date(save.updatedAt).toISOString(), tombstonesFromWire(r.body.tombstones)) } };
+    return { ok: true, cloud: { save, bundle: core.sync.bundleFromData(data, save.app, new Date(save.updatedAt).toISOString(), tombstonesFromWire(src.tombstones)) } };
   }
 
   private async decideAndAct(cloud: CloudSide | null): Promise<void> {
@@ -733,6 +830,7 @@ export class CloudClient {
     const local = core.sync.buildBundle(this.kv(), this.d.app, this.nowIso());
     const d = core.sync.decideSync(local, cloud?.bundle ?? null, this.d.app, this.nowIso());
     const rev = cloud?.save.rev ?? 0;
+    this.dlog(`decision ${d.kind}${d.kind === 'refuse' ? ` ${safeCode(d.reason)}${d.key ? ` key ${d.key}` : ''}` : ''}: cloud ${cloud ? `rev ${rev}` : 'none'} [${this.keysText(cloud?.bundle ?? null)}] slots ${this.slotCount(cloud?.bundle ?? null)}, local [${this.keysText(local)}] slots ${this.slotCount(local)}`);
     switch (d.kind) {
       case 'none':
         clearCloudDirty();
@@ -740,6 +838,11 @@ export class CloudClient {
         this.conflictRounds = 0;
         return this.setStatus('idle');
       case 'upload':
+        // Koruma: bulutta ilerleme varken ilerlemesiz cihaz bulutu ASLA ezmez (decideSync bunu vermemeli; verirse yükleme yok, rapor)
+        if (cloud && core.sync.hasProgress(cloud.bundle.data) && !core.sync.hasProgress(local.data)) {
+          this.dreport('upload-guard', `upload blocked: cloud has progress, local none (cloud rev ${rev} [${this.keysText(cloud.bundle)}] slots ${this.slotCount(cloud.bundle)}, local [${this.keysText(local)}])`);
+          return this.setStatus('error', 'upload-guard');
+        }
         // Yerel bulutu kapsıyor: bulutun rev'i baseRev olur
         this.patchMeta({ rev, dirty: true });
         return this.upload();
@@ -758,6 +861,7 @@ export class CloudClient {
         this.remote = { kind: 'ask', cloud, pins: d.pins };
         return this.tryApplyRemote();
       case 'refuse':
+        this.dreport(d.reason === 'newer-schema' ? 'newer-version' : `cloud-${safeCode(d.reason)}`, `refuse ${safeCode(d.reason)}${d.key ? ` key ${d.key}` : ''} (cloud rev ${rev} [${this.keysText(cloud?.bundle ?? null)}])`);
         if (d.reason === 'newer-schema') {
           this.blocked = true;
           return this.setStatus('newer-version');
@@ -797,6 +901,10 @@ export class CloudClient {
     const bundle = r.kind === 'download' ? r.cloud.bundle : r.bundle;
     if (!this.apply(bundle)) return;
     this.remote = null;
+    // Akıl denetimi: uygulanan pakette sefer yuvası vardı ama yerelde sonrasında daha az / hiç yok -> rapor
+    const want = this.slotCount(bundle);
+    const got = this.localSlotCount();
+    if (want > 0 && got < want) this.dreport('cloud_apply_mismatch', `${r.kind} applied cloud rev ${r.cloud.save.rev}: bundle slots ${want}, cloud slots ${this.slotCount(r.cloud.bundle)}, local slots after ${got}`);
     if (r.kind === 'download') {
       // applyBundle işaretleri biriktirir: yerelde bulutta olmayan işaret kaldıysa (yalnızca işaret farkı) yine yüklenir
       const tombsDiffer = !sameTombstones(readTombstones(this.kv()), r.cloud.bundle.tombstones ?? []);
@@ -822,6 +930,7 @@ export class CloudClient {
     } finally {
       this.applying = false;
     }
+    this.dlog(res.ok ? `apply ok (backup ${res.backedUp ? 'yes' : 'no'}) [${this.keysText(bundle)}] slots ${this.slotCount(bundle)}` : `apply failed ${safeCode(res.reason)}${res.key ? ` key ${res.key}` : ''}`);
     if (!res.ok) {
       if (res.reason === 'newer-schema') {
         this.blocked = true;
@@ -921,6 +1030,7 @@ export class CloudClient {
       this.patchMeta({ rev: r.body.rev, hash: typeof r.body.hash === 'string' ? r.body.hash : null, dirty: !clean, lastSyncAt: this.nowIso() });
       if (this.serverSave && typeof r.body.updatedAt === 'number') this.serverSave = { ...this.serverSave, rev: r.body.rev, updatedAt: r.body.updatedAt, hash: String(r.body.hash ?? ''), size: Number(r.body.size ?? 0) };
       else if (typeof r.body.updatedAt === 'number') this.serverSave = { rev: r.body.rev, updatedAt: r.body.updatedAt, versions: {}, app: this.d.app, size: Number(r.body.size ?? 0), hash: String(r.body.hash ?? '') };
+      this.dlog(`upload ok rev ${r.body.rev}${clean ? '' : ' (changed during upload)'}`);
       this.retryIdx = 0;
       this.conflictRounds = 0;
       this.setStatus('idle');
@@ -928,6 +1038,7 @@ export class CloudClient {
       return;
     }
     const error = isObj(r.body) && typeof r.body.error === 'string' ? r.body.error : '';
+    this.dlog(`upload http ${r.status}${error ? ` ${safeCode(error)}` : ''}${r.status === 409 && error !== 'schema-older' ? ` (conflict round ${this.conflictRounds + 1})` : ''}`);
     if (r.status === 409 && error === 'schema-older') {
       this.blocked = true;
       this.cancelDebounce();
@@ -947,7 +1058,7 @@ export class CloudClient {
       this.setStatus('idle');
       return this.scheduleRetry((r.retryAfter ?? 5) * 1000);
     }
-    if (r.status === 401) return this.clearSession(true);
+    if (r.status === 401) return this.clearSession(true, 'http-401');
     if (r.status === 413) return this.setStatus('error', 'too-large');
     if (r.status === 0 || r.status >= 500) {
       this.setStatus('offline');
@@ -1022,8 +1133,9 @@ export class CloudClient {
   }
 
   /** Oturum bitti (çıkış, silme, süresi dolmuş oturum): meta silinir, zamanlayıcılar durur. Yerel ilerleme kalır. */
-  private clearSession(emit = true): void {
+  private clearSession(emit = true, why = ''): void {
     const had = !!this.user;
+    if (had || why) this.dlog(`session ended${why ? ` (${why})` : ''}`);
     this.user = null;
     this.serverSave = null;
     this.remote = null;
@@ -1055,9 +1167,10 @@ export function cloud(): CloudClient {
 }
 
 /** main.ts: açılışta bir kez. Girişsiz oyuncuda ağ çağrısı yapmaz. */
-export function initCloud(opts: { applyGate?: () => boolean } = {}): CloudClient {
+export function initCloud(opts: { applyGate?: () => boolean; diag?: CloudDiag } = {}): CloudClient {
   const c = cloud();
   if (opts.applyGate) c.setApplyGate(opts.applyGate);
+  if (opts.diag) c.setDiag(opts.diag);
   void c.init();
   return c;
 }

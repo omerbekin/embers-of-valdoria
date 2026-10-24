@@ -6,7 +6,10 @@ import { clearCloudDirty, wrapKV } from '../src/game/kv-storage';
 import { BACKUP_KEY } from '../src/cloud/keys';
 import { readTombstones, TOMB_KEY } from '../src/cloud/tombstones';
 import cloudConfig from '../data/cloud.json';
-import { CLOUD_META_KEY, CloudClient, DEBOUNCE_MS, GATE_POLL_MS, type CloudEvent, type FetchLike } from '../src/cloud/cloud';
+import { CLOUD_META_KEY, CloudClient, DEBOUNCE_MS, GATE_POLL_MS, type CloudCore, type CloudEvent, type FetchLike } from '../src/cloud/cloud';
+import * as syncCore from '../src/cloud/sync-core';
+import * as campaignSave from '../src/campaign/save';
+import * as endlessSave from '../src/endless/save';
 import { decidePut, parseSavePut, serializeBlob, type SaveData, type Tombstone as WireTomb, type Versions } from '../cloudflare/src/save-logic';
 
 const T0 = Date.parse('2026-10-24T12:00:00.000Z');
@@ -54,6 +57,7 @@ function fakeServer(clock: ReturnType<typeof fakeClock>) {
     save: null as null | { rev: number; updatedAt: number; versions: Versions; app: string; data: SaveData; hash: string; size: number; tombstones?: WireTomb[] },
     offline: false,
     unavailable: false,
+    getShape: 'worker' as 'worker' | 'legacy' | 'broken',
     calls: [] as Call[],
   };
   const res = (status: number, body?: unknown, headers: Record<string, string> = {}) => new Response(body === undefined ? null : JSON.stringify(body), { status, headers: { 'content-type': 'application/json', ...headers } });
@@ -70,7 +74,14 @@ function fakeServer(clock: ReturnType<typeof fakeClock>) {
       return new Response(null, { status: 204 });
     }
     if (!s.user) return res(401, { error: 'signed-out' });
-    if (key === 'GET /save') return res(200, s.save ? { save: meta(), data: s.save.data, tombstones: s.save.tombstones ?? [] } : { save: null });
+    if (key === 'GET /save') {
+      if (!s.save) return res(200, { save: null });
+      // Gerçek Worker biçimi (auth.ts > saveGet): data ve tombstones `save` nesnesinin İÇİNDE. 'legacy': üst düzeyde; 'broken': data yok.
+      if (s.getShape === 'legacy') return res(200, { save: meta(), data: s.save.data, tombstones: s.save.tombstones ?? [] });
+      if (s.getShape === 'broken') return res(200, { save: meta() });
+      const m = JSON.stringify(meta());
+      return new Response(`{"save":${m.slice(0, -1)},"tombstones":${JSON.stringify(s.save.tombstones ?? [])},"data":${serializeBlob(s.save.data)!.blob}}}`, { status: 200, headers: { 'content-type': 'application/json' } });
+    }
     if (key === 'PUT /save') {
       const p = parseSavePut(init.body ?? '');
       if (!p.ok) return res(400, { error: p.error });
@@ -100,7 +111,7 @@ function fakeServer(clock: ReturnType<typeof fakeClock>) {
 
 type KVm = ReturnType<typeof memoryKV>;
 
-function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => boolean; enabled?: boolean } = {}) {
+function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => boolean; enabled?: boolean; loadCore?: () => Promise<CloudCore> } = {}) {
   const clock = fakeClock();
   const server = fakeServer(clock);
   const raw = opts.raw ?? memoryKV();
@@ -109,7 +120,11 @@ function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => b
   const nav: string[] = [];
   const urls: string[] = [];
   const events: CloudEvent[] = [];
+  const logs: string[] = [];
+  const reports: Array<{ code: string; msg: string }> = [];
   const client = new CloudClient({
+    diag: { log: (m) => logs.push(m), report: (code, msg) => reports.push({ code, msg }) },
+    ...(opts.loadCore ? { loadCore: opts.loadCore } : {}),
     enabled: opts.enabled ?? true,
     fetch: server.fetch,
     now: clock.now,
@@ -125,7 +140,7 @@ function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => b
   });
   if (opts.gate) client.setApplyGate(opts.gate);
   client.subscribe((e) => events.push(e));
-  return { clock, server, raw, kv, client, hidden, nav, urls, events };
+  return { clock, server, raw, kv, client, hidden, nav, urls, events, logs, reports };
 }
 
 /** Bir depoya sefer ilerlemesi yazar. */
@@ -269,6 +284,46 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     ctx.clock.advance(DEBOUNCE_MS * 2);
     await ctx.client.whenIdle();
     expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('ikinci cihaz (gerçek Worker GET /save biçimi, yerelde yalnızca tutorial): bulut iner, Continue kaydı görünür, bulut ezilmez', async () => {
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    ctx = setup({ raw, search: '?auth=ok' });
+    seedServer(ctx.server.s, 9, (kv) => progress(kv, 3));
+    const cloudCamp = ctx.server.s.save!.data['eov.campaign.v1'];
+    await ctx.client.init();
+    ctx.clock.advance(DEBOUNCE_MS * 2);
+    await ctx.client.whenIdle();
+    expect(raw.getItem('eov.campaign.v1')).toBe(cloudCamp);
+    expect(readSaves(raw).file.slots[0]?.campaignId).toBe('c3');
+    expect(ctx.events).toContainEqual({ type: 'applied', source: 'download' });
+    expect(metaOf(raw)).toMatchObject({ rev: 9, dirty: false });
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+    expect(ctx.server.s.save!.rev).toBe(9);
+  });
+
+  it('eski üst düzey GET /save biçimi de okunur; data okunamayan yanıtta karar verilmez, yükleme yapılmaz', async () => {
+    ctx = setup({ search: '?auth=ok' });
+    seedServer(ctx.server.s, 2, (kv) => progress(kv, 4));
+    ctx.server.s.getShape = 'legacy';
+    await ctx.client.init();
+    expect(readSaves(ctx.raw).file.slots[0]?.campaignId).toBe('c4');
+    ctx.client.dispose();
+
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    ctx = setup({ raw, search: '?auth=ok' });
+    seedServer(ctx.server.s, 5, (kv) => progress(kv, 6));
+    ctx.server.s.getShape = 'broken';
+    await ctx.client.init();
+    ctx.clock.advance(DEBOUNCE_MS * 2);
+    await ctx.client.whenIdle();
+    expect(ctx.client.getStatus()).toBe('error');
+    expect(ctx.client.getLastError()).toBe('save-shape');
+    expect(raw.getItem('eov.campaign.v1')).toBeNull();
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+    expect(metaOf(raw)?.rev).toBe(0);
   });
 
   it('ilk giriş, iki tarafta ilerleme: soru; "cloud" seçimi buluttakini yazar, yereli yedekler', async () => {
@@ -533,6 +588,87 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(puts).toHaveLength(1);
     expect(JSON.parse(puts[0]!.body!).tombstones).toEqual([{ slot: 3, campaignId: 'old', deletedAt: Date.parse('2026-10-01T00:00:00.000Z') }]);
     expect(metaOf(raw)).toMatchObject({ rev: 3, dirty: false });
+  });
+
+  // ------------------------------------------------ tanılama (hata raporu bağlantısı)
+
+  /** Gerçek modüller; sync kısmı tek tek ezilebilir (koruma / uyumsuzluk yollarını zorlamak için). */
+  const coreWith = (sync: Partial<typeof syncCore>) => async (): Promise<CloudCore> => ({ sync: { ...syncCore, ...sync }, slotSummaries: campaignSave.slotSummaries, loadRun: endlessSave.loadRun, loadScores: endlessSave.loadScores, memoryKV: campaignSave.memoryKV });
+
+  /** Rapor / iz metninde kayıt içeriği, ad, kimlik yok. */
+  function expectTechnicalOnly(c: ReturnType<typeof setup>, extra: string[] = []) {
+    const text = [...c.logs, ...c.reports.map((r) => `${r.code} ${r.msg}`)].join('\n');
+    const camp = c.server.s.save?.data['eov.campaign.v1'] ?? c.raw.getItem('eov.campaign.v1') ?? '';
+    for (const bad of ['u-1', 'google', '"slots"', 'campaignId', 'archer', 'c3', ...extra]) expect(text).not.toContain(bad);
+    if (camp) expect(text).not.toContain(camp.slice(0, 40));
+  }
+
+  it('tanılama: karar ve uygulama izleri yazılır (yalnızca teknik veri), hatasız akışta rapor yok', async () => {
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    ctx = setup({ raw, search: '?auth=ok' });
+    ctx.server.s.user!.displayName = 'Sir Omerius';
+    seedServer(ctx.server.s, 9, (kv) => progress(kv, 3));
+    await ctx.client.init();
+    expect(ctx.logs).toContain('sign-in ok');
+    expect(ctx.logs.find((l) => l.startsWith('decision download'))).toMatch(/cloud rev 9 \[eov\.campaign\.v1=\d+\] slots 1, local \[eov\.tutorial\.v1=\d+\] slots 0/);
+    expect(ctx.logs.find((l) => l.startsWith('apply ok'))).toMatch(/slots 1/);
+    expect(ctx.reports).toEqual([]);
+    expect(await ctx.client.signOut()).toEqual({ ok: true });
+    expect(ctx.logs).toContain('session ended (sign-out)');
+    expectTechnicalOnly(ctx, ['Sir Omerius', 'Omerius']);
+  });
+
+  it('tanılama: ?auth=error raporlanır (neden kodu güvenli), hata durumu kodla raporlanır, kod başına bir kez', async () => {
+    ctx = setup({ search: '?auth=error&reason=denied<script>' });
+    await ctx.client.init();
+    expect(ctx.reports).toEqual([{ code: 'auth-error', msg: 'sign-in error deniedscript' }]);
+    ctx.client.dispose();
+
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    ctx = setup({ raw, search: '?auth=ok' });
+    seedServer(ctx.server.s, 5, (kv) => progress(kv, 6));
+    ctx.server.s.getShape = 'broken';
+    await ctx.client.init();
+    await ctx.client.syncNow();
+    expect(ctx.client.getLastError()).toBe('save-shape');
+    expect(ctx.logs).toContain('status error save-shape');
+    expect(ctx.reports).toEqual([{ code: 'save-shape', msg: 'status error save-shape' }]);
+    expectTechnicalOnly(ctx);
+  });
+
+  it('tanılama: indirme sonrası yerelde yuva eksikse cloud_apply_mismatch raporu', async () => {
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    // applyBundle hiçbir şey yazmadan "ok" dönerse (bozuk yazım benzetimi)
+    ctx = setup({ raw, search: '?auth=ok', loadCore: coreWith({ applyBundle: () => ({ ok: true, backedUp: false }) }) });
+    seedServer(ctx.server.s, 4, (kv) => {
+      progress(kv, 3);
+      progress(kv, 7, 1);
+    });
+    await ctx.client.init();
+    const r = ctx.reports.find((x) => x.code === 'cloud_apply_mismatch');
+    expect(r?.msg).toBe('download applied cloud rev 4: bundle slots 2, cloud slots 2, local slots after 0');
+    expectTechnicalOnly(ctx);
+  });
+
+  it('tanılama: bulutta ilerleme varken ilerlemesiz cihazda "upload" kararı PUT yapmaz, upload-guard raporlar', async () => {
+    const raw = memoryKV();
+    raw.setItem('eov.tutorial.v1', JSON.stringify({ v: 1, on: true, seen: [] }));
+    ctx = setup({ raw, search: '?auth=ok', loadCore: coreWith({ decideSync: () => ({ kind: 'upload' }) }) });
+    seedServer(ctx.server.s, 6, (kv) => progress(kv, 3));
+    const before = JSON.stringify(ctx.server.s.save);
+    await ctx.client.init();
+    ctx.clock.advance(DEBOUNCE_MS * 2);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+    expect(JSON.stringify(ctx.server.s.save)).toBe(before);
+    expect(ctx.client.getStatus()).toBe('error');
+    expect(ctx.client.getLastError()).toBe('upload-guard');
+    expect(ctx.reports.map((x) => x.code)).toEqual(['upload-guard']);
+    expect(ctx.reports[0]!.msg).toMatch(/^upload blocked: cloud has progress, local none \(cloud rev 6 \[eov\.campaign\.v1=\d+\] slots 1, local \[eov\.tutorial\.v1=\d+\]\)$/);
+    expectTechnicalOnly(ctx);
   });
 
   it('debug: çakışma benzetimi 409 sonrası yeniden karar verir (aynı içerik -> none)', async () => {

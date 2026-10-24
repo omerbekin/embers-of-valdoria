@@ -3,7 +3,9 @@
 # derler ve `npm run deploy:cf` çalıştırır. Anahtar: ortamdaki CLOUDFLARE_API_TOKEN (dosyaya yazılmaz, ekrana basılmaz).
 # Kullanım (game klasöründe, anahtarı set ettiğin terminalde):  powershell -ExecutionPolicy Bypass -File tools\deploy-clean.ps1
 $ErrorActionPreference = 'Stop'
-if (-not $env:CLOUDFLARE_API_TOKEN) { throw 'CLOUDFLARE_API_TOKEN bu terminalde tanımlı değil (set CLOUDFLARE_API_TOKEN=...).' }
+if (-not $env:CLOUDFLARE_API_TOKEN) { Write-Host 'CLOUDFLARE_API_TOKEN yok: wrangler login oturumu kullanılır (wrangler whoami çalışmalı).' }
+# Bu bilgisayarda Node IPv6'da takılıyor (api.cloudflare.com zaman aşımı); IPv4'e zorla
+$env:NODE_OPTIONS = '--dns-result-order=ipv4first --no-network-family-autoselection'
 $repo = (Resolve-Path "$PSScriptRoot\..").Path
 $wt = Join-Path $env:TEMP ("eov-deploy-" + (Get-Date -Format 'yyyyMMdd-HHmmss'))
 $extra = @('cloudflare/wrangler.toml', 'cloudflare/src/index.ts')
