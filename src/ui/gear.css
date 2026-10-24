@@ -4007,6 +4007,11 @@ html.short .gr-ledger .gr-bag-head {
   min-height: max(64px, calc(120 * var(--u)));
 }
 
+/* Ömer 2026-10-24: pane sabit yükseklikte kalınca 'Wares' başlığı (overflow: hidden, min-height 0) 5 px'e eziliyordu; parçalar küçülmez, liste kayar */
+.gr-shoppane > * {
+  flex-shrink: 0;
+}
+
 .gr-pair .gr-shop .gr-wares {
   grid-template-columns: repeat(5, minmax(0, 1fr));
   gap: calc(8 * var(--u)) calc(12 * var(--u));

@@ -212,23 +212,18 @@ describe('şifa', () => {
     expect(warrior.hp).toBeLessThanOrEqual(warrior.maxHp);
   });
 
-  it('Radiance (D11) dost tarafına atılınca yalnızca seçilen hücredeki dostu iyileştirir', () => {
+  it('Radiance tüm canlı dostları iyileştirir (Ömer 2026-10-24: D11 tek hücre geri alındı)', () => {
     const b = newBattle();
     for (const c of b.living('party')) c.hp -= 5; // tüm parti hasar almış
-    const cells = b.areaCells('radiance', b.get(WARRIOR)!.slot, 'party', PALADIN);
-    const inArea = b.living('party').filter((c) => c.board === 'party' && cells.includes(c.slot)).map((c) => c.uid);
-    const events = act(b, PALADIN, 'radiance', WARRIOR);
-    expect(ofType(events, 'heal').map((e) => e.target).sort()).toEqual(inArea.sort());
-    expect(ofType(events, 'damage')).toHaveLength(0);
+    const events = act(b, PALADIN, 'radiance');
+    expect(ofType(events, 'heal').map((e) => e.target).sort()).toEqual([WARRIOR, PALADIN, MAGE, UNDEAD].sort());
   });
 
   it('ölü dosta şifa gitmez', () => {
     const b = newBattle();
     b.get(MAGE)!.hp = 0; // ölü dost (test durumu doğrudan kuruldu)
     expect(b.useSkill(PALADIN, 'lay_on_hands', MAGE).ok).toBe(false);
-    for (const c of b.living('party')) c.hp -= 5;
-    expect(b.useSkill(PALADIN, 'radiance', `tile:${b.get(MAGE)!.slot}`).ok).toBe(false); // ölünün hücresi: canlı dost yok
-    expect(ofType(act(b, PALADIN, 'radiance', WARRIOR), 'heal').map((e) => e.target)).not.toContain(MAGE);
+    expect(ofType(act(b, PALADIN, 'radiance'), 'heal').map((e) => e.target)).not.toContain(MAGE);
   });
 });
 

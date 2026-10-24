@@ -1,5 +1,5 @@
 {
-  "_not": "Yerde kalan etkiler (hücrelere bırakılır). Üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini (Holy Ground): düşmana değil, bırakanın tarafındaki birime tur başı şifa.",
+  "_not": "Yerde kalan etkiler (hücrelere bırakılır). Üstünde duran düşman birimler kendi turlarının başında hasar alır. Süre, etkiyi bırakanın kendi turlarıyla sayılır (o ölürse etki biter). Hasar, bırakıldığı andaki güce göre sabittir; büyü hasarıdır (kritik/dodge yok). Faz 4c (skill ağacı zeminleri): statuses = içinde tur başlatan düşmana durum (süre durumlarından sonra), manaBurnPct = tur başı maks MP yakma; gücü 0 olan zemin hasar vermez. heal: true = şifa zemini: düşmana değil, bırakanın tarafındaki birime tur başı şifa (Holy Ground: Judgment kendi tarafına atılınca, open-questions 416/8).",
   "poison": {
     "name": "Poison",
     "color": "#6fcf4b",
@@ -19,7 +19,7 @@
     "icon": "holy"
   },
   "holy_ground": {
-    "_not": "D11 Radiance (dost tarafı, open-questions 406): ŞİFA zemini (heal: true). Hasar vermez; içinde tur başlatan DOST (bırakanın tarafı) tik miktarı kadar iyileşir (sabit, kritiksiz). Süre bırakanın turlarıyla.",
+    "_not": "Judgment kendi tarafına atılınca (Ömer 2026-10-24, open-questions 416/8; tanım D11 Radiance'tan geri geldi): ŞİFA zemini (heal: true). Hasar vermez; içinde tur başlatan DOST (bırakanın tarafı) tik miktarı kadar iyileşir (sabit, kritiksiz). Süre bırakanın turlarıyla.",
     "name": "Holy Ground",
     "color": "#fff0a0",
     "element": "holy",

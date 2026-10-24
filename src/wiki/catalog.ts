@@ -435,7 +435,7 @@ export function buildGettingStarted(): WikiArticle[] {
       p('You control your own team; the enemy team is played by the computer. Pick a skill, then pick its target (hover a target to preview the expected result).'),
     ]),
     article('turns', 'Basics', 'Turn order and the SPD counter', cx('gs_turns', 'hourglass'), [
-      p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
+      p(`Every unit has a SPD (speed) stat: ${num(a.spdBase)} + ${num(a.spdPerDex)} per point of Dexterity. On top of that, every unit has its own natural pace: its final speed is up to ${num(Math.round((a.spdVariance ?? 0) * 100))}% faster or slower (a hero keeps the same pace for good; the Speed tooltip shows it). Each tick, every unit's action counter fills by its SPD; the first one to reach ${f.turn.threshold} acts, then its counter restarts.`),
       p(`Faster units therefore act more often, not just first. The bar at the top shows the next ${f.turn.queueLength} units in order, and it updates live when speed changes (for example Haste or Slow).`),
       p('A stunned unit skips its next turn. Status durations count down on the turns of the unit that carries them.'),
       p(debuffStackingText()),
@@ -692,7 +692,8 @@ export function buildMechanics(): WikiArticle[] {
       p('Some skills leave an effect on the ground of the target area (see Statuses & Grounds). Enemy units standing there take magic damage at the start of each of their own turns.'),
       p('The damage is fixed when the effect is created, cannot crit and cannot be dodged. The duration counts the caster\'s turns, and the effect ends if the caster falls.'),
       p("Exception: the ember a dying enemy leaves behind (Last Ember) burns under the hero who killed it; its duration counts that hero's turns and it ends if that hero falls."),
-      p(`Healing ground: ${Object.values(content.grounds).filter((g) => g.heal).map((g) => g.name).join(', ') || 'none'} hurts no one. Instead, allies of the caster standing there heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`),
+      // şifa zemini (grounds.json > heal): yalnızca veride varsa yazılır (Holy Ground: Judgment kendi tarafına, 2026-10-24 open-questions 416/8)
+      ...(Object.values(content.grounds).some((g) => g.heal) ? [p(`Healing ground: ${Object.values(content.grounds).filter((g) => g.heal).map((g) => g.name).join(', ')} hurts no one. Instead, allies of the caster standing there heal a fixed amount at the start of each of their own turns (it cannot crit; Wound and other healing cuts still apply). It only lands on your own side.`)] : []),
     ], '#ff7a1a'),
   );
   // Özel mekanikler
@@ -909,7 +910,7 @@ function affixArticle(): WikiArticle {
     p('Every item carries affixes in three tiers. A Common item has one C affix, Uncommon two C, Rare adds a B, Epic adds an A; a Legendary has C, C, B, A and its own effect. The same affix never appears twice on one item.'),
     list(
       ...TIER_IDS.map((t) => `${tierName[t]}: ${Object.values(ITEM_DATA.affixDefs).filter((a) => a.tier === t).length} affixes.`),
-      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Every slot has its own identity (see the Slots column): weapons roll elemental and physical damage, crit damage, penetration and damage to elites; shields roll armor, shield power and magic armor; helms roll HP, MP and debuff resistance; body armor rolls armor, HP, magic armor and auras; gloves roll accuracy, crit chance and life leech; boots roll speed, evasion and quick start; trinkets roll HP and MP regeneration, healing and shield power, damage over time and summon power. Some general affixes (primary attribute, all attributes, recovery, swift ultimate, immunity, endurance) can appear anywhere. The first affix of an item comes from its base and can be outside the pool of its slot (Studded Gauntlets carry Armor).',
+      'An affix\'s range grows with item level only (the table shows the middle of the range at item level 10); a higher rarity rolls in the upper part of that range (see Items and gear). Every slot has its own identity (see the Slots column): weapons roll elemental and physical damage, crit damage, penetration and damage to elites; shields roll armor, shield power and magic armor; helms roll HP, MP and debuff resistance; body armor rolls armor, HP, magic armor and auras; gloves roll accuracy, crit chance, life leech and mana leech; boots roll speed, evasion and quick start; trinkets roll HP and MP regeneration, healing and shield power, damage over time and summon power. Some general affixes (primary attribute, all attributes, recovery, swift ultimate, immunity, endurance) can appear anywhere. The first affix of an item comes from its base and can be outside the pool of its slot (Studded Gauntlets carry Armor).',
       'Debuff resistance is a small chance that a debuff does not land at all. Immunity names one debuff that cannot land in your first turns of each battle (resistance is not rolled then).',
     ),
     { kind: 'table', head: ['Tier', 'Affix', 'At item level 10', 'Slots'], rows },

@@ -34,9 +34,19 @@ export function screenCellOf(formation: ShapeFormation, board: Side, slot: numbe
 /** Şeklin anchor hücreye göre kapsadığı hücreler (yuva numaraları, artan sırada; boş hücreler dahil). Geçersiz anchor = []. */
 export function shapeCells(area: AreaDef, anchorSlot: number, board: Side, formation: ShapeFormation): number[] {
   const base = baseShapeCells(area, anchorSlot, board, formation);
-  // Faz 5a (ağaç; Scattered Flame): anchor'ın sırası / şeridi de eklenir (birleşim, yuva sırasıyla). Alan yoksa hücreler birebir aynı
-  if (!area.also || !base.length) return base;
-  const extra = baseShapeCells({ shape: area.also }, anchorSlot, board, formation);
+  // Faz 5a (ağaç): anchor'ın sırası / şeridi de eklenir (birleşim, yuva sırasıyla). Alan yoksa hücreler birebir aynı
+  if ((!area.also && !area.flankH && !area.flankV) || !base.length) return base;
+  const extra = area.also ? baseShapeCells({ shape: area.also }, anchorSlot, board, formation) : [];
+  // Ömer 2026-10-24 (Paladin Broad Sentence / Scattered Flame): anchor'ın EKRANDA sol + sağ (flankH) ya da üst + alt (flankV) komşu hücreleri
+  // de eklenir; tahta dışı atlanır. İkisi birlikte = eski artı (plus) şekli.
+  if (area.flankH || area.flankV) {
+    const a = screenCellOf(formation, board, anchorSlot);
+    for (let i = 0; i < formation.rows * formation.lanes; i++) {
+      const c = screenCellOf(formation, board, i);
+      if (area.flankH && c.row === a.row && Math.abs(c.col - a.col) === 1) extra.push(i);
+      if (area.flankV && c.col === a.col && Math.abs(c.row - a.row) === 1) extra.push(i);
+    }
+  }
   return [...new Set([...base, ...extra])].sort((a, b) => a - b);
 }
 
@@ -191,6 +201,7 @@ export function areaDefProblem(area: unknown, formation: Pick<ShapeFormation, 'r
   // Faz 5a (ağaç alanları): plus kolu, sıra / şerit birleşimi, hedef sınırı
   if (a.arm !== undefined && (a.shape !== 'plus' || !(Number.isInteger(a.arm) && (a.arm as number) >= 1 && (a.arm as number) <= MAX_PLUS_ARM))) return `area.arm yalnızca plus şeklinde, 1..${MAX_PLUS_ARM} tam sayı (verilen ${String(a.arm)})`;
   if (a.also !== undefined && a.also !== 'row' && a.also !== 'column') return `geçersiz area.also: ${String(a.also)}`;
+  for (const f of ['flankH', 'flankV', 'emptyOwn'] as const) if (a[f] !== undefined && typeof a[f] !== 'boolean') return `area.${f} true/false olmalı (verilen ${String(a[f])})`;
   if (a.maxTargets !== undefined && !(Number.isInteger(a.maxTargets) && (a.maxTargets as number) >= 1)) return `area.maxTargets en az 1 tam sayı olmalı (verilen ${String(a.maxTargets)})`;
   return null;
 }
@@ -205,6 +216,7 @@ export function skillAreaProblem(skill: SkillDef, formation: Pick<ShapeFormation
   if (!AREA_TARGETS.includes(skill.target)) return skill.area ? `area yalnızca area_enemies / area_any hedefinde kullanılır (${skill.target})` : null;
   const p = areaDefProblem(skill.area, formation);
   if (p) return p;
+  if (skill.area?.emptyOwn && skill.target !== 'area_any') return 'area.emptyOwn yalnızca area_any hedefinde kullanılır';
   if (skill.target === 'area_any') {
     // İki tahtaya da atılabilen alan: her etki `side` ile hangi tarafa gittiğini söylemeli. Desteklenen: durum (Smoke Bomb), düşmana hasar,
     // dosta şifa ve zemin (D11 Radiance: zemin yalnızca kendi `side` tarafının tahtasına konur)
@@ -238,7 +250,14 @@ export function shapeBadge(area: AreaDef): string {
     case 'rowColumn':
       return 'Row + Column';
     case 'rect':
-      return (area.rows ?? 1) === 1 && (area.cols ?? 1) === 1 ? 'Single cell' : `Block ${area.rows ?? 1}x${area.cols ?? 1}`;
+      if ((area.rows ?? 1) === 1 && (area.cols ?? 1) === 1) {
+        // Ömer 2026-10-24: tek hücre + yan / üst-alt komşular (Paladin Judgment ağaç düğümleri)
+        if (area.flankH && area.flankV) return 'Cross';
+        if (area.flankH) return 'Cell + left/right';
+        if (area.flankV) return 'Cell + above/below';
+        return 'Single cell';
+      }
+      return `Block ${area.rows ?? 1}x${area.cols ?? 1}`;
     default:
       return 'Area';
   }
@@ -247,7 +266,8 @@ export function shapeBadge(area: AreaDef): string {
 /** Maç kaydı için: 'rect 2x3', 'row', 'column', 'plus'; aşamalıysa ' staged row' / ' staged row reverse' eki. */
 export function shapeLabel(area: AreaDef): string {
   const shape0 = area.shape === 'rect' ? `rect ${area.rows ?? 1}x${area.cols ?? 1}` : area.shape === 'plus' && (area.arm ?? 1) > 1 ? `plus arm ${area.arm}` : area.shape;
-  const shape = area.also ? `${shape0} + ${area.also}` : shape0;
+  const flank = `${area.flankH ? ' + flank h' : ''}${area.flankV ? ' + flank v' : ''}`;
+  const shape = (area.also ? `${shape0} + ${area.also}` : shape0) + flank;
   const base = (area.hitsAtCenter ?? 1) > 1 ? `${shape} center x${area.hitsAtCenter}` : shape;
   return area.stages ? `${base} staged ${area.stages}${area.reverse ? ' reverse' : ''}` : base;
 }

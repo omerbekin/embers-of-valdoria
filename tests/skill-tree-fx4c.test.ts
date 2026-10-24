@@ -302,8 +302,8 @@ describe('Faz 4c: ağaç zeminleri', () => {
     for (const g of all) if (g !== second) for (const s of shared) expect(g.slots).not.toContain(s);
   });
 
-  it('Undying Flame + Wildfire Verdict: kutsal ateşte ölen düşmanın hücresi süresiz yarım güçle yanar, ateş en yakın düşmana sıçrar', () => {
-    const b = make({ 0: 'paladin' }, { 4: 'warrior', 0: 'warrior' }, withTree(0, only('paladin', { '3.ea': 1, '3.mb': 1 })), 11, 'turns');
+  it('Undying Flame: kutsal ateşte ölen düşmanın hücresi süresiz yarım güçle yanar (Wildfire Verdict sıçraması 2026-10-24 kaldırıldı)', () => {
+    const b = make({ 0: 'paladin' }, { 4: 'warrior', 0: 'warrior' }, withTree(0, only('paladin', { '3.ea': 1 })), 11, 'turns');
     const me = P(b);
     const v = E(b, 4);
     const far = E(b, 0);
@@ -312,17 +312,12 @@ describe('Faz 4c: ağaç zeminleri', () => {
     expect(base.slots).toContain(4);
     expect(base.slots).not.toContain(0);
     v.hp = 1;
-    const from = b.log.length;
     for (let i = 0; i < 20 && v.hp > 0; i++) expect(b.skipTurn().ok).toBe(true);
     expect(v.hp).toBe(0);
     const perm = grounds(b, 'holy_fire').find((g) => g.permanent && g.slots.includes(4));
     expect(perm).toBeDefined();
     expect(perm!.amount).toBe(Math.round(base.amount * 0.5));
-    const jump = grounds(b, 'holy_fire').find((g) => g !== base && !g.permanent && g.slots.includes(far.slot));
-    expect(jump).toBeDefined();
-    const born = b.log.slice(from).find((e) => e.type === 'ground' && e.id === jump!.id);
-    expect(born && born.type === 'ground' && born.turns).toBe(2);
-    expect(jump!.amount).toBe(base.amount);
+    expect(grounds(b, 'holy_fire').some((g) => g.slots.includes(far.slot))).toBe(false);
   });
 
   it('Day of Judgment: kutsal ateş bitince içinde kalan düşmanlara %60 INT kutsal hasar', () => {

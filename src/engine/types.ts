@@ -71,19 +71,27 @@ export interface Stats extends Attributes {
   shieldPowerMult?: number;
   /** Uyguladığı karakter üstü DoT (Wither, Burning) miktarı çarpanı (DoT damage, Potency). */
   dotPowerMult?: number;
+  /**
+   * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): birimin SON hızına (Dex, item, spdAdd/spdMult sonrası) uygulanmış çarpan
+   * [1 - spdVariance, 1 + spdVariance]; `spd` bu zarla çarpılıp yuvarlanmış değerdir. Yalnızca ipucu bilgisi (stat-info.ts); yoksa zar yok.
+   */
+  spdRoll?: number;
 }
 
 /** Pasif skill etkileri (her sınıfın 1 pasifi var; düz stat vermez, bir koşulda tetiklenir). */
 /**
  * Faz 5a (C5 smite, Paladin Divine Light): pasifin tur başı kutsal hasarı. Hedef = canı (mevcut) en düşük düşman (katalog 14.3). `power` her tur
  * (Twofold Light, Wrathful Glow), `idle` yalnızca canı eksik dost yokken, şifa yerine (No Rest for Evil), `mirror` verilen şifa x oran (Crusader's
- * Dawn). Güç = INT gücü x oran x `mul` (Vengeful Light). Bağlantı yeri at 'smite' (C1 kancaları), öldürme yolu (via) 'smite'.
+ * Dawn eski hali). Güç = INT gücü x oran x `mul` (Vengeful Light). Bağlantı yeri at 'smite' (C1 kancaları), öldürme yolu (via) 'smite'.
+ * `dual` (Crusader's Dawn, Ömer 2026-10-24, open-questions 416): Divine Light her tur HEM şifa HEM smite; şifa x dual, smite = INT gücü x pasif
+ * gücü x dual (gerçekleşen şifadan bağımsız, yaralı dost yoksa da), `idle` bunun yerine geçer (üstüne eklenmez); power / mul / 'smite' kancaları işler.
  */
 export interface SmiteSpec {
   power?: number;
   idle?: number;
   mirror?: number;
   mul?: number;
+  dual?: number;
 }
 
 export type PassiveEffect =
@@ -457,6 +465,11 @@ export interface UnitModifiers {
   mpMult?: number;
   /** Hız çarpanı (Speed %; spdAdd'den sonra). */
   spdMult?: number;
+  /**
+   * Kişisel hız zarı (Ömer 2026-10-24): kahramanın kalıcı çarpanı (Hero.spdRoll, güç katmanı verir); SON hıza (spdMult'tan sonra) uygulanır,
+   * roundSpeed ile yuvarlanır. Verilmezse savaş birime hash(seed, uid) zarını kendisi atar (stats.ts > speedRoll).
+   */
+  spdRoll?: number;
   /** Lucky Escape şansına ek (Endurance; primary'den bağımsız: Luck'ı olmayan da kazanır, toplam en çok 1). */
   surviveAdd?: number;
   /** Verilen tüm skill hasarına ek (0,05 = +%5) -> Stats.damageMult. */
@@ -540,6 +553,8 @@ export interface ItemEffects {
   mpCostReduce?: number;
   /** Can çalma: isabet eden skill vuruşunun düşürdüğü canın bu oranı kadar şifa. */
   leech?: number;
+  /** Mana çalma: isabet eden skill vuruşunun düşürdüğü canın bu oranı kadar MP (yalnızca MP havuzu olan; maks MP'de durur). */
+  manaLeech?: number;
   /** Debuff direnci: başkasının uyguladığı debuff bu ihtimalle hiç tutmaz ('Resisted'). */
   debuffAvoid?: number;
   /** Potency: uyguladığı (süreli, sersemletmeyen) debuff'lar bu kadar tur uzun. */
@@ -1267,6 +1282,15 @@ export interface AreaDef {
   arm?: number;
   /** Faz 5a (ağaç; Scattered Flame): şekle anchor'ın SIRASI ('row') ya da ŞERİDİ ('column') da eklenir (birleşim). */
   also?: 'row' | 'column';
+  /** Ömer 2026-10-24 (ağaç; Paladin Broad Sentence): anchor'ın EKRANDA solundaki ve sağındaki hücre de eklenir (aynı şerit, sıra ±1). */
+  flankH?: boolean;
+  /** Ömer 2026-10-24 (ağaç; Paladin Scattered Flame): anchor'ın EKRANDA üstündeki ve altındaki hücre de eklenir (aynı sıra, şerit ±1). */
+  flankV?: boolean;
+  /**
+   * Ömer 2026-10-24 (Paladin Judgment, open-questions 416/9): yalnızca 'area_any'. KENDİ tahtanda alan hiç dost kapsamasa da (boş hücre) atılabilir;
+   * etkiler yalnızca zemin bırakır. Karşı tahtada kural aynı (en az bir düşman gerekir).
+   */
+  emptyOwn?: boolean;
   /** Faz 5a (ağaç; Brittle Point): alan, vuruş sırasıyla (aşamalıda aşama sırası) en çok bu kadar hedefte durur. */
   maxTargets?: number;
 }
@@ -1287,6 +1311,8 @@ export interface Formulas {
     spdPerDex: number;
     /** Hız yuvarlama adımı (yoksa 1; stats.ts > roundSpeed). */
     spdStep?: number;
+    /** Kişisel hız sapması (Ömer 2026-10-24): her birimin hızı [1 - v, 1 + v] çarpanıyla zarlanır (yoksa 0 = zar yok; stats.ts > speedRoll). */
+    spdVariance?: number;
     critChanceBase: number;
     critChancePerLuck: number;
     /** Kritik çarpanı: SABİT (luck artırmaz). */

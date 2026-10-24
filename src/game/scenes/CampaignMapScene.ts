@@ -370,6 +370,7 @@ export class CampaignMapScene extends Phaser.Scene {
     }
     this.map = getMap(this.s.mapId);
     this.events.once('shutdown', () => closeAllLessons()); // mentor kutuları sahneyle kapanır (docs/design/tutorial.md)
+    this.events.once('shutdown', () => { this.nodeTip?.close(); this.nodeTip = null; }); // hover kartı ana menüde asılı kalmasın
     this.cameras.main.setBackgroundColor('#0b0705');
     this.world = this.add.container(0, 0);
     this.ui = this.add.container(0, 0).setDepth(1000);
@@ -784,6 +785,14 @@ export class CampaignMapScene extends Phaser.Scene {
   private labelPlan = new Map<string, LabelSlot>();
 
   /** Koruma savaşı kazanılmış korumalı hazine / olay düğümünde yenilen karşılaşmanın adı (kafatası işareti); yoksa null. */
+  /**
+   * Düğüm "geçildi" görünümünde mi (soluk + devriye döngüsü)? Sis 'current'ı 'cleared'ın önüne koyar; bulunulan düğüm temizlendiyse de
+   * (ör. korumalı hazinenin son adımı bitip haritaya dönülünce) soluk görünüm hemen gelir, altın "buradasın" halkası korunur.
+   */
+  private doneLook(id: string, v: NodeVis): boolean {
+    return v === 'cleared' || (v === 'current' && isCleared(this.s, id));
+  }
+
   private guardDefeated(n: MapNode, v: NodeVis): string | null {
     if (n.encounter && (n.type === 'treasure' || n.type === 'event') && (v === 'cleared' || isDone(this.s, n.id, 'battle'))) return enemyPreview(n.encounter).name;
     return null;
@@ -792,7 +801,7 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Şeridin alt satırı (yalnızca bulunulan / gidilebilir / üstüne gelinen düğümde görünür): tür · alt başlık, devriye yüzdesi, yenilen koruma. */
   private labelSub(n: MapNode, v: NodeVis): string {
     if (v === 'goal') return '';
-    const done = v === 'cleared';
+    const done = this.doneLook(n.id, v);
     // seçim noktası = ana yolda birden çok çıkış (cebe sapan yol seçim sayılmaz); cep düğümü 'optional' yazar
     const choice = mainOutgoing(this.map, n.id).length > 1 && !done ? '  ·  choice' : '';
     const parts = [`${n.subtitle}${n.optional ? '  ·  optional' : ''}${choice}`];
@@ -904,7 +913,7 @@ export class CampaignMapScene extends Phaser.Scene {
     const r = fs.icon / 1.84; // ikon yarıçapı eşdeğeri (bugünkü NODE_R: 24, boss 30)
     const R = fs.R;
     const here = v === 'current';
-    const done = v === 'cleared';
+    const done = this.doneLook(n.id, v);
     const goal = v === 'goal';
     const actionable = option || (here && this.actionHere());
     if (actionable || (fs.boss && !goal)) {

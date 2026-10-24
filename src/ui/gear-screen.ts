@@ -105,6 +105,8 @@ export interface GearHero {
   woundCfg?: WoundCfg;
   /** Düşmüş kahraman (can 0 gösterilir). */
   alive?: boolean;
+  /** Kişisel hız zarı (Ömer 2026-10-24): Sheet'teki Speed savaştakiyle aynı olsun diye (LoadoutSource.spdRoll). */
+  spdRoll?: number;
 }
 
 /**

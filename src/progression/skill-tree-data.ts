@@ -209,7 +209,7 @@ export interface TargetFx {
   gather?: { status: string; from?: number };
   guard?: { armorPct?: number; ownRow?: true };
   aura?: { square?: true; magicPct?: number; pct?: number };
-  smite?: { power?: number; idle?: number; mirror?: number; mul?: number };
+  smite?: { power?: number; idle?: number; mirror?: number; mul?: number; dual?: number };
   noSelf?: true;
   /** Faz 5a: skill'in zeminleri alanın değdiği hücrelere de (Sea of Fire). */
   groundWide?: 'touch';

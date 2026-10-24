@@ -221,7 +221,7 @@ async function pagesCheck(sha, version) {
     sleep(60000);
     let runs = [];
     try {
-      const out = execSync(`powershell -NoProfile -NonInteractive -Command "(Invoke-RestMethod -TimeoutSec 20 -Headers @{'User-Agent'='eov'} '${url}').workflow_runs | Select-Object name,status,conclusion | ConvertTo-Json -Compress"`, { encoding: 'utf8' }).trim();
+      const out = execSync(`powershell -NoProfile -NonInteractive -Command "(Invoke-RestMethod -TimeoutSec 20 -Headers @{'User-Agent'='eov'} '${url}').workflow_runs | Select-Object name,status,conclusion | ConvertTo-Json -Compress"`, { encoding: 'utf8', windowsHide: true }).trim();
       runs = out ? [].concat(JSON.parse(out)) : [];
     } catch { continue; }
     if (!runs.length || runs.some((r) => r.status !== 'completed')) continue;

@@ -49,3 +49,5 @@ Görseli tarayıcı açmadan `node tools/codex/imagegen.mjs --out <hedef.png> --
 
 ## Çıktı
 Üretilen / içe aktarılan dosyalar, önizleme yolları, yeniden üretilmesi gerekenler, kalan liste.
+
+**Tarayıcı testinde SES KAPALI (Ömer 2026-10-24, ZORUNLU):** oyunu tarayıcıda açan herkes (ana oturum + her agent) her yeni porta/sekmeye ilk iş olarak `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()` çalıştırır (Master 0 = müzik + efekt + arayüz sesi kapalı). Eski `proto.settings.v1` anahtarı İŞE YARAMAZ (taşıma bir kez çalışır).

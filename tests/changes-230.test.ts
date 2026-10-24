@@ -76,6 +76,7 @@ describe('Raise Dead: YZ en tehlikeli cesedi seçer', () => {
     b.debugKill('enemy-2', false); // Mage, yuva 4 (önce ölür)
     b.debugKill('enemy-1', false); // Mage, yuva 1
     tough(b);
+    b.get('enemy-2')!.stats.spd = b.get('enemy-1')!.stats.spd; // kişisel hız zarı (Ömer 2026-10-24) danger'a girer: eşitlik için iki Mage aynı hızda
     const [a, c] = b.corpseChoices('party-1', 'raise_dead');
     expect(a!.danger).toBe(c!.danger);
     expect(b.corpseToConsume('party-1')?.slot).toBe(Math.min(a!.slot, c!.slot));

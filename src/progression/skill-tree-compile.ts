@@ -1143,10 +1143,10 @@ function applyTarget(fx: Extract<TreeFx, { h: 'target' }>, acc: Acc, def: SkillD
         if (!fx.smite || typeof fx.smite !== 'object') throw new TreeFxError('smite must be an object');
         const sm = (e.smite ??= {}) as Bag;
         for (const [k, v] of Object.entries(fx.smite)) {
-          if (!['power', 'idle', 'mirror', 'mul'].includes(k)) throw new TreeFxError(`smite: unknown field "${k}"`);
+          if (!['power', 'idle', 'mirror', 'mul', 'dual'].includes(k)) throw new TreeFxError(`smite: unknown field "${k}"`);
           if (!(finiteNum(v) && v > 0)) throw new TreeFxError(`smite ${k} must be a positive number`);
-          // power / idle / mirror toplanır (x rank); mul çarpılır
-          sm[k] = k === 'mul' ? r6(((sm.mul as number | undefined) ?? 1) * v) : r6(((sm[k] as number | undefined) ?? 0) + v * r);
+          // power / idle / mirror toplanır (x rank); mul ve dual (Crusader's Dawn) çarpılır
+          sm[k] = k === 'mul' || k === 'dual' ? r6(((sm[k] as number | undefined) ?? 1) * v) : r6(((sm[k] as number | undefined) ?? 0) + v * r);
         }
       }
     }
@@ -1458,8 +1458,9 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
   if (fx.turns !== undefined && !(Number.isInteger(fx.turns) && fx.turns >= 1)) throw new TreeFxError('turns must be an integer >= 1');
   if (fx.min !== undefined && on !== 'bigHit') throw new TreeFxError('"min" is only for bigHit');
   if (on === 'bigHit' && !(finiteNum(fx.min) && fx.min > 0 && fx.min <= 1)) throw new TreeFxError('bigHit needs "min" in (0, 1]');
-  for (const k of ['who', 'status', 'mine', 'shield', 'marked'] as const) if (fx[k] !== undefined && on !== 'damageTaken') throw new TreeFxError(`"${k}" is only for damageTaken`);
-  if (fx.who !== undefined && !['self', 'ally', 'team'].includes(fx.who)) throw new TreeFxError(`bad "who" "${String(fx.who)}"`);
+  for (const k of ['who', 'status', 'mine', 'shield', 'marked', 'ground'] as const) if (fx[k] !== undefined && on !== 'damageTaken') throw new TreeFxError(`"${k}" is only for damageTaken`);
+  if (fx.who !== undefined && !['self', 'ally', 'team', 'foe'].includes(fx.who)) throw new TreeFxError(`bad "who" "${String(fx.who)}"`);
+  if (fx.ground !== undefined && !GROUNDS[fx.ground]) throw new TreeFxError(`unknown ground "${String(fx.ground)}"`);
   if (fx.status !== undefined && !filterStatus(fx.status)) throw new TreeFxError(`unknown status "${String(fx.status)}"`);
   const skilled = on === 'healDealt' || on === 'overhealDealt' || on === 'shieldDealt' || on === 'overheal';
   if (fx.skill !== undefined && !skilled) throw new TreeFxError(`"skill" does not fit ${on}`);
@@ -1471,6 +1472,7 @@ function compileHeal(fx: Extract<TreeFx, { h: 'heal' }>, node: string, r: number
     on,
     ...(skill ? { skill } : {}),
     ...(fx.who !== undefined ? { who: fx.who } : {}),
+    ...(fx.ground !== undefined ? { ground: fx.ground } : {}),
     ...(fx.status !== undefined ? { status: fx.status } : {}),
     ...(fx.mine ? { mine: true } : {}),
     ...(fx.shield !== undefined ? { shield: fx.shield } : {}),

@@ -30,3 +30,5 @@ Sen bu oyunun savaş motoru geliştiricisisin. Ömer kod okumaz; yaptığını s
 
 ## Çıktı
 Yaptığın değişikliğin sade Türkçe özeti, hangi testlerin eklendiği/güncellendiği, ekranda neyin nasıl görünmesi gerektiği ve Ömer'in neyi test etmesi gerektiği.
+
+**Tarayıcı testinde SES KAPALI (Ömer 2026-10-24, ZORUNLU):** oyunu tarayıcıda açan herkes (ana oturum + her agent) her yeni porta/sekmeye ilk iş olarak `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()` çalıştırır (Master 0 = müzik + efekt + arayüz sesi kapalı). Eski `proto.settings.v1` anahtarı İŞE YARAMAZ (taşıma bir kez çalışır).

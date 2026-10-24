@@ -3,11 +3,11 @@
  * Yalnızca iki tarayıcıyı buluşturur (WebRTC SDP/ICE aktarımı); oyun hamleleri eşler arasında doğrudan akar.
  * Kurallar saf modülde: ./lobby-logic.ts. Kurulum: ../README.md.
  *
- * Tek Worker, tek adres (https://eov.backinn.com.tr): oyunun statik dosyaları Workers Static Assets ile sunulur (wrangler.toml > [assets];
+ * Tek Worker, tek adres (https://embersofvaldoria.com): oyunun statik dosyaları Workers Static Assets ile sunulur (wrangler.toml > [assets];
  * yalnızca /lobby ve /lobby/* bu koda gelir, run_worker_first), geri kalan istekler doğrudan dosyadır.
  * Uç nokta: GET /lobby/<KOD>?role=host|guest&id=<16 karakter> (WebSocket yükseltmesi). GET /lobby, /lobby/health -> sağlık metni.
  * Hata raporu (opt-in, 2026-10-16): POST /diag -> KV `DIAG` (30 gün TTL; kurallar ./diag-logic.ts; IP okunmaz/saklanmaz; okuma: npm run diag:pull).
- * Oyundaki adres: data/multiplayer.json > signalingUrl = wss://eov.backinn.com.tr/lobby (istemci sonuna /<KOD> ekler).
+ * Oyundaki adres: data/multiplayer.json > signalingUrl = wss://embersofvaldoria.com/lobby (istemci sonuna /<KOD> ekler).
  * Sunucu -> istemci: {t:'welcome', role, peer}, {t:'peer', present}, {t:'signal', data}, {t:'relay', d}, {t:'error', code}, {t:'pong'}.
  * İstemci -> sunucu: {t:'signal', data}, {t:'relay', d} (yalnızca WebRTC kurulamazsa), {t:'probe'}, {t:'leave'}, {t:'ping'} (ping'i Cloudflare DO'yu uyandırmadan yanıtlar).
  */

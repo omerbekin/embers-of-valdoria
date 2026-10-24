@@ -29,6 +29,12 @@ const pct = (v: number, digits = 0) => `${(v * 100).toFixed(digits)}%`;
 const num = (v: number) => (Number.isInteger(v) ? String(v) : String(Number(v.toFixed(3))));
 const num1 = (v: number) => (Number.isInteger(v) ? String(v) : v.toFixed(1).replace(/\.0$/, ''));
 
+/** Kişisel hız zarının sapması (+6% / -4% / ±0%; tam yüzdeye yuvarlanır). */
+export function paceText(roll: number): string {
+  const p = Math.round((roll - 1) * 100);
+  return p > 0 ? `+${p}%` : p < 0 ? `-${-p}%` : '±0%';
+}
+
 /** Bir stat'ın ne işe yaradığını ve şu anki etkisini anlatan tooltip metni (İngilizce). */
 export function describeStat(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
   const info = describeStatBase(kind, stats, f);
@@ -117,7 +123,15 @@ function describeStatBase(kind: StatKind, stats: Stats, f: Formulas): StatInfo {
     case 'mp':
       return { title: `Mana ${stats.mp}`, lines: [`Max MP = ${a.mpBase} base (the same for every class) + ${a.mpPerInt} per Intelligence point`, `Regenerates ${stats.mpRegen} at the start of each of its turns (Intelligence x ${num(a.mpRegenPerInt)})`] };
     case 'spd':
-      return { title: `Speed ${stats.spd}`, lines: [`Comes from Dexterity (+${num(a.spdPerDex)} per point)`, 'Decides how soon the unit acts: higher speed means more turns'] };
+      return {
+        title: `Speed ${stats.spd}`,
+        lines: [
+          `Comes from Dexterity (+${num(a.spdPerDex)} per point)`,
+          // Kişisel hız zarı (Ömer 2026-10-24): birimin sapması; zar yoksa (sınıf kartı, wiki örneği) satır yok
+          ...(stats.spdRoll !== undefined ? [`Natural pace: ${paceText(stats.spdRoll)}`] : []),
+          'Decides how soon the unit acts: higher speed means more turns',
+        ],
+      };
     case 'critChance':
       return { title: `Crit chance ${pct(stats.critChance, 1)}`, lines: [`Base ${pct(a.critChanceBase)}, +${pct(a.critChancePerLuck, 1)} per Luck`, `A crit multiplies the final damage or healing by a fixed x${num(a.critMult)}`, 'Applies to damage and healing, not shields'] };
     case 'critMult':

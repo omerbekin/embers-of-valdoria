@@ -249,7 +249,7 @@ export interface CampaignConfig {
    */
   replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
-  merchant: { size: number; rerollCost: number; buybackSize: number };
+  merchant: { size: number; rerollCost: number; buybackSize: number; rotateEvery: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
   townScreen: { heroHeight: number; feetY: number; feetYPhone: number; gap: number; labelSize: number; labelSizePhone: number };
 }
@@ -284,6 +284,11 @@ export interface Hero {
   wounds?: number;
   /** Takılı item'ler: 6 yuva (weapon, helm, armor, gloves, boots, trinket), boş = null. Güce çevrimi: src/progression/loadout.ts. */
   equipment: Equipment;
+  /**
+   * Kişisel hız zarı (Ömer 2026-10-24, Natural pace): kalıcı çarpan [1 - spdVariance, 1 + spdVariance] (loadout.ts > heroSpeedRoll; seed + id).
+   * Eski kayıtta yok: okunurken aynı fonksiyonla tamamlanır (sürüm artmaz).
+   */
+  spdRoll?: number;
 }
 
 /**
@@ -350,6 +355,8 @@ export interface CampaignState {
   townRests?: Record<string, number>;
   /** Tanışma paneli gösterilen tüccarlar (Ömer 2026-10-20: "her merchant instance'ında 1 kere"): '<harita>:<düğüm>' -> 1. Eski kayıtta yok = hiçbiri görülmedi (isteğe bağlı alan; sürüm değişmez). */
   merchantSeen?: Record<string, number>;
+  /** Tüccarda satın alınan raflar (Ömer 2026-10-24, "sonraki ziyaretten önce 2 node geçildiyse çıksın"): '<harita>:<düğüm>' -> raf -> alındığı andaki shopRotations. Aynı sayıdaysa raf "sold" kalır, ilerleme artınca yeni malla dolar. Eski kayıtta yok (isteğe bağlı alan; sürüm değişmez). */
+  merchantSold?: Record<string, Record<number, number>>;
   /** Son düşüş: haritada "Spoils" kartı olarak gösterilir, onaylanınca silinir (`acknowledgeLoot`). */
   pendingLoot?: LootDrop;
   /** Açık tüccar (merchant düğümü; Ömer 2026-10-11): tezgâh, bu ziyaretin geri alım listesi, yenileme sayısı. Düğümden ayrılınca silinir. */

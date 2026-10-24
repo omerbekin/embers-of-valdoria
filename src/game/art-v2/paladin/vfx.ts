@@ -10,9 +10,11 @@
  *   resurrection (Resurrection) -> 'resurrect'   cesedin altında haçlı mühür açılır, yumuşak huzme iner, iki kalp atışında mühür
  *                                                nabız atar, nefes (gasp) ile dost kalkar; ardından yeşil-altın şifa artıları (Regen)
  *   judgment (Judgment)         -> 'judgment'    merkeze geniş huzme iner, zeminde haç kolları boyunca ateş hatları koşar, her
- *                                                kol hücresinde kutsal alevler fışkırır (Holy Fire zemini aynı hücrelerde kalır)
- *   radiance (Radiance)         -> 'radiance'    Paladin'in başı üstünde haçlı güneş doğar; seçilen TEK hücreye ışık sütunu iner (D11):
- *                                                dost hücresinde altın şifa plakası + yeşil artılar, düşman hücresinde sert beyaz-altın huzme
+ *                                                kol hücresinde kutsal alevler fışkırır (Holy Fire zemini aynı hücrelerde kalır);
+ *                                                DOST hücresine atılınca 'judgmentHeal': alevsiz yumuşak ışık sütunu + pırıltılar +
+ *                                                şifa artıları (Holy Ground aynı hücrelerde kalır; Ömer 2026-10-24, 416/9)
+ *   radiance (Radiance)         -> 'radiance'    Paladin'in başı üstünde haçlı güneş doğar; patlar: dostların üstüne yumuşak
+ *                                                şifa ışığı + yükselen yeşil artılar, düşmanlara sert beyaz-altın huzme + kıvılcım
  */
 import type Phaser from 'phaser';
 import type { V2Vfx } from '../types';
@@ -232,6 +234,8 @@ const resurrect: V2Vfx = async (c, k) => {
  * birleşik plakası bir an altın yanar. Hasar zeminden gelir: Promise kollar yandıktan sonra çözülür (Holy Fire aynı hücrelerde doğar).
  */
 const judgment: V2Vfx = async (c, k) => {
+  // Ömer 2026-10-24 (open-questions 416/9): kendi tahtasına atılınca alev yok, şifa görünümü
+  if (c.board === c.actor.combatant.side) return judgmentHeal(c, k);
   await invoke(c, k, 240, 1);
   c.sfx('hammerWhoosh');
   const slots = c.slots?.length ? c.slots : c.targets.map((t) => t.combatant.slot);
@@ -296,19 +300,72 @@ const judgment: V2Vfx = async (c, k) => {
   await k.wait(c.scene, k.slow(80));
 };
 
+/** Kısa yıldız pırıltısı (dört uçlu ince ışık haçı): büyüyüp döner ve söner. */
+function twinkle(c: VfxCtx, k: VfxKit, x: number, y: number, size: number, delay: number): void {
+  const g = c.scene.add.graphics().setPosition(k.snap(x), k.snap(y)).setDepth(k.DEPTH + 32).setBlendMode(k.Phaser.BlendModes.ADD).setScale(0.2).setAlpha(0);
+  const s = size;
+  g.fillStyle(0xfff0a0, 0.55).fillPoints([{ x: 0, y: -s }, { x: s * 0.18, y: 0 }, { x: 0, y: s }, { x: -s * 0.18, y: 0 }], true);
+  g.fillStyle(0xfff0a0, 0.55).fillPoints([{ x: -s * 0.7, y: 0 }, { x: 0, y: s * 0.14 }, { x: s * 0.7, y: 0 }, { x: 0, y: -s * 0.14 }], true);
+  g.fillStyle(0xffffff, 1).fillRect(-2, -2, 4, 4);
+  c.scene.tweens.add({ targets: g, scale: 1, alpha: 1, rotation: 0.4, delay: k.slow(delay), duration: k.slow(200), ease: 'Quad.easeOut' });
+  c.scene.tweens.add({ targets: g, scale: 0.3, alpha: 0, rotation: 0.8, delay: k.slow(delay + 260), duration: k.slow(320), ease: 'Quad.easeIn', onComplete: () => g.destroy() });
+}
+
 /**
- * Radiance (D11: TEK hücre, iki mod): Paladin çekicini göğe kaldırır; başının üstünde haçlı güneş doğar, ışınları
- * dönerek büyür (ışık kabarması). Güneş patlar (koro) ve seçilen hücreye geniş bir ışık sütunu iner; yalnızca o hücre yanar.
- *  - Dost tarafı (şifa): sıcak altın-krem sütun, yumuşak altın plaka (Holy Ground aynı hücrede kalır), oradaki dosta yumuşak
- *    şifa ışığı + yükselen yeşil artılar.
- *  - Düşman tarafı (hasar): beyaz-sıcak sert sütun, kızıl-turuncu kenarlı plaka, sarsıntı; alandaki düşmanlara dar huzme + kıvılcım
- *    ve yanık közleri (oradaki düşmana).
- * Rakamlar huzmeler indiği an.
+ * Judgment DOST hücresine (Ömer 2026-10-24, open-questions 416/9; alev yok): Paladin çekicini kaldırır; hücreye yumuşak, geniş altın-beyaz
+ * ışık sütunu iner (sarsıntı yok, hafif parlama, koro), zeminde krem plaka yeşil kenarla bir an yanar (Holy Ground aynı hücrelerde kalır),
+ * yükselen ışık zerreleri ve hücrede kısa yıldız pırıltıları; alandaki dostların üstünde yeşil şifa artıları. Ek hücrelere (Broad Sentence /
+ * Scattered Flame) ince, yumuşak sütunlar. Promise merkez sütun yere değince çözülür (anlık şifa rakamı o an); boş hücrede de aynı oynar.
+ */
+const judgmentHeal: V2Vfx = async (c, k) => {
+  await invoke(c, k, 240, 1);
+  c.sfx('lightSwell');
+  const slots = c.slots?.length ? c.slots : c.targets.map((t) => t.combatant.slot);
+  const midSlot = c.center !== undefined && slots.includes(c.center) ? c.center : slots[0];
+  const center = midSlot !== undefined ? k.cellMid(c.board, midSlot) : (c.centerPos ?? k.feet(c.actor));
+  const q0 = k.quadOf(c.board, midSlot ?? 0);
+  const cellW = Math.abs(q0[1]!.x - q0[0]!.x) + Math.abs(q0[3]!.x - q0[0]!.x);
+  const SOFT = ['#ffffff', '#fff0a0', '#a8f08a'];
+  // 1) merkez sütun: geniş, yarı saydam, yavaş söner
+  await beam(c, k, center.x, center.y, cellW * 0.8, 320, 0.55, 460);
+  c.sfx('choirAh');
+  k.flash(c.scene, '#fff3c8', 0.14, 380);
+  floorGlow(c, k, center, cellW * 1.25, cellW * 0.44, 1200);
+  void k.ring(c.scene, center.x, center.y, { r: cellW * 0.85, flat: 0.32, n: 28, colors: SOFT, dur: 640, size: 10, startR: 20 });
+  // 2) plaka: krem dolgu, yeşil kenar (şifa zemini dili)
+  const plate = c.scene.add.graphics().setDepth(k.FLOOR_FX + 1).setAlpha(0);
+  if (slots.length) k.fillCells(plate, c.board, slots, { fill: 0xfff0c8, fillA: 0.26, edge: 0xa8f08a, edgeA: 0.85, edgeW: 4, k: 0.98 });
+  c.scene.tweens.add({ targets: plate, alpha: 1, duration: k.slow(160) });
+  c.scene.tweens.add({ targets: plate, alpha: 0, delay: k.slow(800), duration: k.slow(560), onComplete: () => plate.destroy() });
+  // 3) ek hücreler: ince yumuşak sütunlar; her hücrede zerreler + pırıltılar
+  for (const s of slots) {
+    const p = k.cellMid(c.board, s);
+    if (s !== midSlot) {
+      void beam(c, k, p.x, p.y, cellW * 0.4, 160, 0.45, 300).then(() => floorGlow(c, k, p, cellW * 0.95, cellW * 0.36, 900));
+    }
+    motes(c, k, p, cellW * 0.32, s === midSlot ? 10 : 5, SOFT, [60, 170]);
+    for (let i = 0; i < (s === midSlot ? 4 : 2); i++) twinkle(c, k, p.x + k.rnd(-cellW * 0.3, cellW * 0.3), p.y - k.rnd(10, 90), k.rnd(12, 20), 80 + i * 120 + k.rnd(0, 60));
+  }
+  // 4) alandaki dostlar: yeşil şifa artıları
+  for (const t of c.targets) {
+    if (t.combatant.side !== c.actor.combatant.side) continue;
+    const f = { x: t.container.x, y: t.container.y - 4 };
+    for (let i = 0; i < 3; i++) {
+      const pl = k.v2Sprite(c, 'healplus', '#62d04b', f.x + k.rnd(-t.w * 0.4, t.w * 0.4), f.y - k.rnd(t.h * 0.2, t.h * 0.7), 22, k.DEPTH + 40);
+      c.scene.tweens.add({ targets: pl, y: pl.y - k.rnd(60, 110), alpha: 0, delay: k.slow(i * 90), duration: k.slow(760), ease: 'Quad.easeOut', onComplete: () => pl.destroy() });
+    }
+  }
+};
+
+/**
+ * Radiance (herkes: dostlara şifa, düşmanlara kutsal hasar): Paladin çekicini göğe kaldırır; başının üstünde haçlı güneş doğar,
+ * ışınları dönerek büyür (ışık kabarması). Güneş patlar (koro): tüm sahaya yayılan ışık halkası ve AYNI ANDA her karaktere ışık iner:
+ * dostlara yumuşak, yarı saydam şifa ışığı + yükselen yeşil artılar; düşmanlara sert, dar beyaz-altın huzme + kıvılcım ve yanık
+ * közleri. Tüm rakamlar huzmeler indiği an (~0,72 sn; x1,2 ~0,86 sn).
  */
 const radiance: V2Vfx = async (c, k) => {
   const a = c.actor;
   const side = a.combatant.side;
-  const heal = c.board === side; // kendi tahtasına atıldı: şifa modu
   c.sfx('lightSwell');
   const sunP = { x: a.container.x, y: a.container.y - a.h - 70 };
   const halo = c.scene.add.image(sunP.x, sunP.y, haloTex(c, k)).setDisplaySize(20, 20).setDepth(k.DEPTH + 20).setBlendMode(k.Phaser.BlendModes.ADD);
@@ -328,56 +385,44 @@ const radiance: V2Vfx = async (c, k) => {
     rod.lineStyle(10, 0xffd23f, 0.35 * u).lineBetween(head.x, head.y, sunP.x, sunP.y);
     rod.lineStyle(4, 0xffffff, 0.6 * u).lineBetween(head.x, head.y, sunP.x, sunP.y);
   }, 'Quad.easeIn');
-  // patlama: güneş söner, ışık seçilen alana iner
+  // patlama
   c.sfx('choirAh');
-  rod.destroy();
-  c.scene.tweens.add({ targets: [halo], displayWidth: 420, displayHeight: 420, alpha: 0, duration: k.slow(420), ease: 'Quad.easeOut', onComplete: () => halo.destroy() });
-  c.scene.tweens.add({ targets: raysImg, scaleX: rBase * 1.8, scaleY: rBase * 1.8, alpha: 0, rotation: 2, duration: k.slow(420), ease: 'Quad.easeOut', onComplete: () => raysImg.destroy() });
-  c.scene.tweens.add({ targets: crossI, alpha: 0, scaleX: crossI.scaleX * 2, scaleY: crossI.scaleY * 2, duration: k.slow(360), onComplete: () => crossI.destroy() });
-  const slots = c.slots?.length ? c.slots : c.targets.map((t) => t.combatant.slot);
-  const midSlot = c.center !== undefined ? c.center : slots[0];
-  const center = c.centerPos ?? (midSlot !== undefined ? k.cellMid(c.board, midSlot) : k.feet(c.targets[0] ?? a));
-  const q0 = k.quadOf(c.board, midSlot ?? 0);
-  const cellW = Math.abs(q0[1]!.x - q0[0]!.x) + Math.abs(q0[3]!.x - q0[0]!.x);
-  // 1) merkez sütun: şifada yumuşak ve geniş, hasarda sert ve parlak
-  await beam(c, k, center.x, center.y, cellW * (heal ? 0.8 : 0.62), 260, heal ? 0.6 : 0.95, heal ? 360 : 240);
   c.sfx('radianceBurst');
-  k.flash(c.scene, heal ? '#fff3c8' : '#ffffff', heal ? 0.18 : 0.3, heal ? 360 : 300);
-  if (!heal) k.shake(c.scene, 200, 0.006);
-  floorGlow(c, k, center, cellW * 0.95, cellW * 0.4, heal ? 1100 : 760);
-  void k.ring(c.scene, center.x, center.y, { r: cellW * 0.75, flat: 0.32, n: 28, colors: heal ? ['#fff0a0', '#ffd23f', '#a8f08a'] : ['#ffffff', '#fff0a0', '#ff8a1f'], dur: 520, size: 12, startR: 30 });
-  // 2) hücre plakası: dostta altın + yeşil kenar (Holy Ground), düşmanda beyaz-altın + kızıl kenar
-  const plate = c.scene.add.graphics().setDepth(k.FLOOR_FX + 1).setAlpha(0);
-  if (slots.length) k.fillCells(plate, c.board, slots, heal ? { fill: 0xffe08a, fillA: 0.28, edge: 0xa8f08a, edgeA: 0.85, edgeW: 4, k: 0.98 } : { fill: 0xfff0a0, fillA: 0.32, edge: 0xff6a2a, edgeA: 0.95, edgeW: 4, k: 0.98 });
-  c.scene.tweens.add({ targets: plate, alpha: 1, duration: k.slow(140) });
-  c.scene.tweens.add({ targets: plate, alpha: 0, delay: k.slow(heal ? 760 : 520), duration: k.slow(520), onComplete: () => plate.destroy() });
-  if (heal) motes(c, k, center, cellW * 0.45, 8, ['#fff0a0', '#ffd23f', '#a8f08a'], [60, 180]);
-  // 3) hücredeki birime ışık
+  k.flash(c.scene, '#fff7d0', 0.26, 380);
+  k.shake(c.scene, 160, 0.003);
+  rod.destroy();
+  c.scene.tweens.add({ targets: [halo], displayWidth: 900, displayHeight: 900, alpha: 0, duration: k.slow(520), ease: 'Quad.easeOut', onComplete: () => halo.destroy() });
+  c.scene.tweens.add({ targets: raysImg, scaleX: rBase * 2.4, scaleY: rBase * 2.4, alpha: 0, rotation: 2, duration: k.slow(520), ease: 'Quad.easeOut', onComplete: () => raysImg.destroy() });
+  c.scene.tweens.add({ targets: crossI, alpha: 0, scaleX: crossI.scaleX * 2, scaleY: crossI.scaleY * 2, duration: k.slow(360), onComplete: () => crossI.destroy() });
+  void k.ring(c.scene, a.container.x, a.container.y - 6, { r: 1500, flat: 0.3, n: 60, colors: HOLY, dur: 520, size: 12, startR: 60 });
+  // herkese ışık: aynı anda iner
+  const allies = c.targets.filter((t) => t.combatant.side === side);
+  const foes = c.targets.filter((t) => t.combatant.side !== side);
   const lands: Array<Promise<void>> = [];
-  for (const t of c.targets) {
+  for (const t of allies) {
     const f = { x: t.container.x, y: t.container.y - 4 };
-    if (t.combatant.side === side) {
-      lands.push(
-        beam(c, k, f.x, f.y, Math.max(64, t.w * 0.55), 150, 0.32, 260).then(() => {
-          floorGlow(c, k, f, t.w * 1.4, 44, 620);
-          for (let i = 0; i < 3; i++) {
-            const pl = k.v2Sprite(c, 'healplus', '#62d04b', f.x + k.rnd(-t.w * 0.4, t.w * 0.4), f.y - k.rnd(t.h * 0.2, t.h * 0.7), 22, k.DEPTH + 40);
-            c.scene.tweens.add({ targets: pl, y: pl.y - k.rnd(60, 110), alpha: 0, delay: k.slow(i * 80), duration: k.slow(700), ease: 'Quad.easeOut', onComplete: () => pl.destroy() });
-          }
-          motes(c, k, f, t.w * 0.4, 5, HEAL, [60, 160]);
-        }),
-      );
-    } else {
-      lands.push(
-        beam(c, k, f.x, f.y, Math.max(40, t.w * 0.34), 150, 0.85, 160).then(() => {
-          const p = k.spot(t);
-          k.burst(c.scene, p.x, p.y, { colors: ['#ffffff', '#fff0a0', '#ffd23f'], n: 9, speed: [140, 380], gravity: 600, life: [220, 440], size: [5, 9] });
-          k.burst(c.scene, f.x, f.y - 10, { colors: ['#ff8a1f', '#ffd23f', '#5b6579'], n: 6, speed: [40, 140], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: -60, life: [500, 800], size: [4, 7] });
-          const cr = k.v2Sprite(c, 'crossflare', '#fff0a0', p.x, p.y, Math.round(t.h * 0.5), k.DEPTH + 40).setBlendMode(k.Phaser.BlendModes.ADD);
-          c.scene.tweens.add({ targets: cr, alpha: 0, scaleX: cr.scaleX * 0.6, scaleY: cr.scaleY * 0.6, duration: k.slow(360), onComplete: () => cr.destroy() });
-        }),
-      );
-    }
+    lands.push(
+      beam(c, k, f.x, f.y, Math.max(64, t.w * 0.55), 170, 0.32, 260).then(() => {
+        floorGlow(c, k, f, t.w * 1.4, 44, 620);
+        for (let i = 0; i < 3; i++) {
+          const pl = k.v2Sprite(c, 'healplus', '#62d04b', f.x + k.rnd(-t.w * 0.4, t.w * 0.4), f.y - k.rnd(t.h * 0.2, t.h * 0.7), 22, k.DEPTH + 40);
+          c.scene.tweens.add({ targets: pl, y: pl.y - k.rnd(60, 110), alpha: 0, delay: k.slow(i * 80), duration: k.slow(700), ease: 'Quad.easeOut', onComplete: () => pl.destroy() });
+        }
+        motes(c, k, f, t.w * 0.4, 5, HEAL, [60, 160]);
+      }),
+    );
+  }
+  for (const t of foes) {
+    const f = { x: t.container.x, y: t.container.y - 4 };
+    lands.push(
+      beam(c, k, f.x, f.y, Math.max(40, t.w * 0.34), 170, 0.85, 160).then(() => {
+        const p = k.spot(t);
+        k.burst(c.scene, p.x, p.y, { colors: ['#ffffff', '#fff0a0', '#ffd23f'], n: 9, speed: [140, 380], gravity: 600, life: [220, 440], size: [5, 9] });
+        k.burst(c.scene, f.x, f.y - 10, { colors: ['#ff8a1f', '#ffd23f', '#5b6579'], n: 6, speed: [40, 140], angle: [-Math.PI * 0.95, -Math.PI * 0.05], gravity: -60, life: [500, 800], size: [4, 7] });
+        const cr = k.v2Sprite(c, 'crossflare', '#fff0a0', p.x, p.y, Math.round(t.h * 0.5), k.DEPTH + 40).setBlendMode(k.Phaser.BlendModes.ADD);
+        c.scene.tweens.add({ targets: cr, alpha: 0, scaleX: cr.scaleX * 0.6, scaleY: cr.scaleY * 0.6, duration: k.slow(360), onComplete: () => cr.destroy() });
+      }),
+    );
   }
   if (lands.length) await Promise.race(lands);
 };

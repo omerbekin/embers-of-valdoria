@@ -241,6 +241,8 @@ describe('10 etki (motor)', () => {
       const a = unit(b, 'party-0');
       const before = a.turnCounter;
       b.act('party-0', { kind: 'global', id: 'move_tile', slot: 4 });
+      // Okçunun bir sonraki turuna kadar (kişisel hız zarı, Ömer 2026-10-24: arada düşman oynayabilir); süre taşıyanın tur başında düşer
+      for (let i = 0; i < 20 && b.currentActor?.uid !== 'party-0'; i++) b.act(b.currentActor!.uid, { kind: 'global', id: 'skip_turn' });
       return { b, a, spent: before - a.turnCounter };
     };
     const strider = run(fx({ moveStride: value('pilgrims_stride') }));
@@ -249,7 +251,7 @@ describe('10 etki (motor)', () => {
     expect(strider.b.effectiveStats(strider.a).evasion).toBeCloseTo(strider.a.stats.evasion + 0.1, 9);
     expect(passives(strider.b, 'pilgrims_stride')).toBe(1);
     expect((ITEMS.effects.pilgrims_stride!.value as { turns: number }).turns).toBe(3); // Ömer 2026-10-10: 2 -> 3 tur
-    expect(strider.a.statuses.find((s) => s.kind === 'fleet')!.turns).toBe(2); // Move turunun sonunda 1 düşer: Move turu + sonraki 2 tur = 3 tur
+    expect(strider.a.statuses.find((s) => s.kind === 'fleet')!.turns).toBe(2); // sonraki tur başında 1 düşer: Move turu + sonraki 2 tur = 3 tur
     expect(normal.a.statuses.some((s) => s.kind === 'fleet')).toBe(false);
     void strider.spent;
     void normal.spent;

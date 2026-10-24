@@ -874,6 +874,8 @@ const GROUND_LOOK: Record<string, GroundLook> = {
   poison: { base: [0x2f5c2c, 0.42], mid: [0x8cbc66, 0.42], rim: [0x9cc77a, 0.28], edge: [0x8cbc68, 0.7], shadow: [0x0b1609, 0.3] },
   // kutsal ateş: altın-krem, yumuşak sıcak ışık
   holy_fire: { base: [0xbc9142, 0.36], mid: [0xffe49c, 0.56], rim: [0xffe2a0, 0.3], edge: [0xecca70, 0.78], shadow: [0x24180a, 0.28] },
+  // Holy Ground (şifa zemini, Judgment dost hücresine; Ömer 2026-10-24 416/9): krem-beyaz yumuşak ışık, soluk yeşil kenar (alev yok)
+  holy_ground: { base: [0xcfc39a, 0.24], mid: [0xfff6d6, 0.5], rim: [0xc8efa8, 0.32], edge: [0xb4e294, 0.78], shadow: [0x1a1608, 0.2] },
   // yanık toprak: kömür zemin, kızıl-turuncu kor ışığı
   burning: { base: [0x2a140e, 0.5], mid: [0xff6a32, 0.66], rim: [0xff9a50, 0.42], edge: [0xf08a46, 0.9], shadow: [0x0e0605, 0.32] },
   // Flooded Planks (Bridge Warden, Breaking Span): bulanık nehir suyu basmış ıslak köprü kalasları (deniz yeşili, soğuk parıltı)
@@ -921,6 +923,7 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
   const burning = groundId === 'burning';
   const poison = groundId === 'poison';
   const flooded = groundId === 'flooded_planks';
+  const healing = groundId === 'holy_ground';
   const cells = slots.map((s, i) => ({ s, q: quadOf(board, s, 1), m: cellMid(board, s), ph: i * 1.7 + rnd(0, 6) }));
   const first = cells[0]!.m;
   const order = cells.map((k) => Math.hypot(k.m.x - first.x, k.m.y - first.y));
@@ -1085,6 +1088,18 @@ export function groundArea(scene: Phaser.Scene, groundId: string, board: 'party'
             const wob = Math.sin(t * 2.2 + k.ph + b) * 0.03;
             fx.fillStyle(0xfff0c8, 0.07 * env).fillPoints([quadAt(q, 0.08 + wob, v0), quadAt(q, 0.92 + wob, v0), quadAt(q, 0.92 - wob, v1), quadAt(q, 0.08 - wob, v1)], true);
           }
+        }
+      } else if (healing) {
+        // Holy Ground: hücrenin içinden yavaşça yükselen küçük ışık zerreleri (krem / soluk yeşil) + ortada tek, yavaş nabız atan yumuşak ışık
+        const pulse = 0.5 + 0.5 * Math.sin(t * 1.6 + k.ph);
+        const m = quadAt(q, 0.5, 0.5);
+        for (let s = 0; s < 3; s++) fx.fillStyle(0xfff6d6, (0.04 + 0.04 * pulse) * (s + 1) * 0.6).fillEllipse(m.x, m.y, 70 - s * 20, 16 - s * 4.5);
+        for (let j = 0; j < 4; j++) {
+          const life = (t * 0.28 + k.ph * 0.13 + j * 0.25) % 1; // 0 -> 1: zeminden yukarı
+          const base = quadAt(q, 0.22 + ((j * 0.37 + k.ph * 0.11) % 0.56), 0.3 + ((j * 0.29 + k.ph * 0.07) % 0.45));
+          const a = Math.sin(life * Math.PI) * 0.75;
+          const sz = j % 2 ? 3 : 4;
+          fx.fillStyle(j % 3 === 0 ? 0xc8efa8 : 0xfff0c0, a).fillRect(snap(base.x - sz / 2 + Math.sin(t * 2 + j) * 2), snap(base.y - life * 46 - sz / 2), sz, sz);
         }
       } else if (poison) {
         // sıvı yüzeyi: yavaş kayan yumuşak parlama (küçük, karenin içinde)

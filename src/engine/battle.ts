@@ -11,7 +11,7 @@ import { isUnblockableHit } from './unblockable';
 import { mergeRefreshStrongest, statusStackMode } from './status-stack';
 import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
-import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
+import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, rolledSpeed, roundSpeed, speedMin, speedRoll } from './stats';
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
 import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { condHolds, defaultSel, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
@@ -324,8 +324,8 @@ export class Battle {
     this.tieFirst = (Math.imul(setup.seed >>> 0, 2654435761) >>> 16) % 2 === 0 ? 'party' : 'enemy';
     this.laterWaves = (setup.waves ?? []).filter((w) => w.enemies.length > 0);
     this.combatants = [
-      ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas)),
-      ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas)),
+      ...setup.party.map((d, i) => createSetupCombatant(d, 'party', setup.partySlots?.[i] ?? i, `party-${i}`, setup.partyUnits?.[i], setup.formulas, setup.seed)),
+      ...setup.enemies.map((d, i) => createSetupCombatant(d, 'enemy', setup.enemySlots?.[i] ?? i, `enemy-${i}`, setup.enemyUnits?.[i], setup.formulas, setup.seed)),
     ];
     this.treeUnits = this.combatants.some(hasTree);
     this.treeArmorOn = this.treeUnits || this.combatants.some(treeAura);
@@ -340,6 +340,7 @@ export class Battle {
       const unit = units[i];
       const ratio = c.maxHp > 0 ? c.hp / c.maxHp : 1;
       c.stats = { ...def.stats };
+      rollSpeed(c, this.seed, setup.formulas); // statlar yeniden türedi: kişisel hız zarı yeniden (aynı uid = aynı zar)
       c.maxHp = def.stats.hp;
       const finite = (v: number | undefined): v is number => v !== undefined && Number.isFinite(v);
       c.hp = Math.max(1, Math.min(c.maxHp, Math.round(finite(unit?.startHp) ? unit.startHp : c.maxHp * ratio)));
@@ -2431,11 +2432,16 @@ export class Battle {
     let m = 1;
     const inc = attacker ? { actor: attacker, ...(skill !== undefined ? { skill } : {}), ...(type ? { type } : {}) } : undefined;
     for (const u of this.healUnits) {
-      if (u.hp <= 0 || u.side !== target.side) continue;
+      if (u.hp <= 0) continue;
+      // Ömer 2026-10-24 (Wildfire Verdict): who 'foe' kancaları karşı taraftaki hedefte, yalnızca sahibin tarafından gelen vuruşta işler
+      const foe = u.side !== target.side;
+      if (foe && !(attacker && attacker.side === u.side && u.treeHooks?.some((x) => x.h === 'heal' && x.on === 'damageTaken' && x.who === 'foe'))) continue;
       for (const { h, s } of this.healHooks(u, 'damageTaken', target, null, inc)) {
         const who = h.who ?? 'self';
+        if ((who === 'foe') !== foe) continue;
         if (who === 'self' && u !== target) continue;
         if (who === 'ally' && u === target) continue;
+        if (h.ground && !this.ground.some((g) => g.ground === h.ground && g.board === target.board && g.sourceSide === u.side && g.slots.includes(target.slot))) continue;
         if (h.status && !target.statuses.some((st) => st.kind === h.status && (!h.mine || st.source === u.uid))) continue;
         if (h.shield && !target.shieldHooks?.some((x) => x.skill === h.shield && x.caster === u.uid && x.amount > 0)) continue;
         if (h.marked && !this.isMarked(u, h.node, target)) continue;
@@ -3494,6 +3500,14 @@ export class Battle {
     return this.isShapeSkill(skillId, who) && this.skill(skillId, who)!.target === 'area_any';
   }
 
+  /**
+   * Ömer 2026-10-24 (open-questions 416/9): area_any + `area.emptyOwn` skill'i KENDİ tahtasında dost kapsamayan (boş) hücreye de atılabilir mi?
+   * (Judgment: boş dost hücresine yalnızca Holy Ground bırakır.) Karşı tahtada her zaman false (en az bir düşman gerekir).
+   */
+  emptyOwnAnchor(actor: Combatant, skillId: string, board: Side): boolean {
+    return board === actor.side && this.isAnyBoardArea(skillId, actor) && !!this.skill(skillId, actor)!.area!.emptyOwn;
+  }
+
   /** Aşamalı (area.stages) alan skill'i mi? */
   isStagedSkill(skillId: string, who?: string | Combatant): boolean {
     return this.isShapeSkill(skillId, who) && !!this.skill(skillId, who)!.area!.stages;
@@ -3577,7 +3591,8 @@ export class Battle {
     const b = this.areaBoard(actor, skillId, board);
     const total = this.setup.formulas.formation.rows * this.setup.formulas.formation.lanes;
     const skill = this.skill(skillId, actorUid)!;
-    return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && this.areaWindowAt(actorUid, skillId, i, b).length > 0);
+    const emptyOk = this.emptyOwnAnchor(actor, skillId, b);
+    return Array.from({ length: total }, (_, i) => i).filter((i) => this.inRange(actor, skill, b, i) && (emptyOk || this.areaWindowAt(actorUid, skillId, i, b).length > 0));
   }
 
   /** TÜM seçilebilir anchor hücreleri (tahta + yuva): area_enemies'de yalnızca karşı tahta; area_any'de önce karşı, sonra kendi tahtası. */
@@ -3603,7 +3618,7 @@ export class Battle {
     const cells = this.areaCells(skillId, anchorSlot, b, actorUid);
     const targets = this.areaWindowAt(actorUid, skillId, anchorSlot, b).map((c) => c.uid);
     if (!this.inRange(actor, this.skill(skillId, actor)!, b, anchorSlot)) return { cells, targets, valid: false, reason: 'Out of range' };
-    if (targets.length > 0) return { cells, targets, valid: true };
+    if (targets.length > 0 || this.emptyOwnAnchor(actor, skillId, b)) return { cells, targets, valid: true };
     if (this.isAnyBoardArea(skillId, actor)) return { cells, targets, valid: false, reason: b === actor.side ? 'No ally in the area' : 'No enemy in the area' };
     const inShape = this.livingByDepth(opposite(actor.side)).some((c) => c.board === b && cells.includes(c.slot));
     return { cells, targets, valid: false, reason: inShape ? (this.rangeOn ? 'No target in range' : 'No target in reach') : 'No enemy in the area' };
@@ -4500,7 +4515,7 @@ export class Battle {
       if (center === undefined || !Number.isInteger(center) || center < 0 || center >= total) return { ok: false, reason: 'Invalid target' };
       if (!debug && !fc && !this.inRange(actor, skill, board, center)) return { ok: false, reason: 'Out of range' };
       targets = this.areaWindowAt(actorUid, skillId, center, board);
-      if (!debug && targets.length === 0) return { ok: false, reason: anyBoard && board === actor.side ? 'No ally in the area' : 'No target in the area' };
+      if (!debug && targets.length === 0 && !this.emptyOwnAnchor(actor, skillId, board)) return { ok: false, reason: anyBoard && board === actor.side ? 'No ally in the area' : 'No target in the area' };
       centerSlot = center;
       areaBoard = board;
       centerCells = this.areaCells(skillId, center, board, actorUid);
@@ -5122,6 +5137,7 @@ export class Battle {
           // Çağrı çağıranla büyür (Ömer 2026-10-18): statlar çağıranın item hariç temel statından, level = çağıranın level'ı
           const def = this.summonDefFor(actor, baseDef, empowered);
           const summoned = createCombatant(def, actor.side, spot, `${actor.side}-s${this.summonCount++}`);
+          rollSpeed(summoned, this.seed, this.setup.formulas); // kişisel hız zarı (Ömer 2026-10-24): çağrı da birimdir, hash(seed, uid)
           summoned.board = board;
           summoned.owner = actor.uid;
           if (actor.level !== undefined) summoned.level = actor.level;
@@ -5522,7 +5538,7 @@ export class Battle {
         const { startDead: _dead, owner: _owner, ...rest } = given;
         unit = rest;
       }
-      const c = createSetupCombatant(d, 'enemy', slot, `enemy-w${index + 1}-${i}`, unit, this.setup.formulas);
+      const c = createSetupCombatant(d, 'enemy', slot, `enemy-w${index + 1}-${i}`, unit, this.setup.formulas, this.seed);
       if (hasTree(c)) this.treeUnits = true;
       if (hasTree(c) || treeAura(c)) this.treeArmorOn = true;
       c.wave = index;
@@ -5716,7 +5732,8 @@ export class Battle {
         const pm = actor.treeHooks ? this.treeMods(actor, hurt, null, undefined, { at: 'passiveHeal', roll: true }) : null;
         if (pm) this.treeProcAll(actor.uid, pm.nodes);
         const heldProc = actor.treeHooks ? this.heldHooks(actor, hurt, null, { at: 'passiveHeal', groups: ['proc'], roll: true }) : null;
-        const dlHealed = this.applyHeal(actor, hurt, Math.round(attributePower(actor.stats, dl.scale, this.setup.formulas) * dl.power * (pm?.power ?? 1)), false, emit);
+        // Crusader's Dawn (smite.dual): şifa da dual kat güçlü
+        const dlHealed = this.applyHeal(actor, hurt, Math.round(attributePower(actor.stats, dl.scale, this.setup.formulas) * dl.power * (dl.smite?.dual ?? 1) * (pm?.power ?? 1)), false, emit);
         dlHealedAmt = dlHealed;
         if (heldProc?.length) this.applyProcHooks(actor, hurt, null, heldProc, emit);
         if (this.trigOn) this.trig([actor], { on: 'passiveHeal', target: hurt, subject: hurt, amount: dlHealed }, emit);
@@ -5758,7 +5775,7 @@ export class Battle {
   private smiting = false;
 
   /**
-   * Faz 5a C5 smite (Divine Light): canı (mevcut) en düşük düşmana kutsal büyü hasarı: INT gücü x (power + şifa yoksa idle) + şifa x mirror, x mul,
+   * Faz 5a C5 smite (Divine Light): canı (mevcut) en düşük düşmana kutsal büyü hasarı: INT gücü x (power + şifa yoksa idle | dual varsa pasif gücü x dual) + şifa x mirror, x mul,
    * x at 'smite' C1 kancaları. Hasar zırh / büyü zırhıyla (tickDamage) ve applyHit'ten geçer; öldürme yolu 'smite'.
    */
   /** Faz 5a (Chain of Light): birimin son smite parametreleri. */
@@ -5769,7 +5786,9 @@ export class Battle {
     const foes = this.living(opposite(actor.side)).filter((c) => !c.inert);
     const target = [...foes].sort((x, y) => x.hp - y.hp || x.slot - y.slot)[0];
     if (!target) return;
-    const ratio = (sm.power ?? 0) + (healed === null ? (sm.idle ?? 0) : 0);
+    // Crusader's Dawn (dual): pasif gücü x dual her tur (şifadan bağımsız); idle bunun yerine geçer
+    const dlPower = actor.passive?.effect.type === 'divineLight' ? actor.passive.effect.power : 0;
+    const ratio = (sm.power ?? 0) + (sm.dual ? dlPower * sm.dual : healed === null ? (sm.idle ?? 0) : 0);
     let amount = ratio > 0 ? attributePower(actor.stats, scale, this.setup.formulas) * ratio : 0;
     if (sm.mirror && healed) amount += healed * sm.mirror;
     amount *= sm.mul ?? 1;
@@ -6547,7 +6566,7 @@ export class Battle {
   }
 
   /**
-   * İsabet eden skill vuruşundan sonra item kancaları (Ömer 2026-10-11; affix + yeni Legendary'ler): Life leech, Serrated Edge (kritikte durumlar),
+   * İsabet eden skill vuruşundan sonra item kancaları (Ömer 2026-10-11; affix + yeni Legendary'ler): Life leech, Mana leech, Serrated Edge (kritikte durumlar),
    * Battle Rhythm (öldürünce Haste + MP), Marked Quarry (elit / boss'a durum). Etki yoksa hiçbir şey yapmaz (zar da tüketmez).
    */
   private itemHitHooks(actor: Combatant, target: Combatant, effect: DamageEffect, hpLoss: number, crit: boolean, emit: Emit): void {
@@ -6557,6 +6576,15 @@ export class Battle {
     if (leech && actor.hp > 0) {
       const amount = Math.round(hpLoss * leech);
       if (amount > 0) this.applyHeal(actor, actor, amount, false, emit, 'leech');
+    }
+    // Mana leech (Life leech'in MP ikizi): yalnızca MP havuzu olan; maks MP'de durur; Battle Rhythm ile aynı mpRegen olayı
+    const manaLeech = effNum(actor, 'manaLeech');
+    if (manaLeech && actor.hp > 0 && actor.maxMp > 0) {
+      const gain = Math.min(Math.round(hpLoss * manaLeech), actor.maxMp - actor.mp);
+      if (gain > 0) {
+        actor.mp += gain;
+        emit({ type: 'mpRegen', actor: actor.uid, amount: gain, after: actor.mp, cause: 'mana_leech' });
+      }
     }
     for (const [fx, src] of fxBags(actor)) this.hitHooksOf(fx, src, actor, target, effect, crit, emit);
   }
@@ -7123,10 +7151,29 @@ function createCombatant(def: CombatantDef, side: Side, slot: number, uid: strin
 }
 
 /**
+ * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): güç katmanı zar vermediyse (düşman, boss, çağrı, QB / MP birimi) birimin SON hızı
+ * hash(savaş seed'i, uid) zarıyla çarpılıp yuvarlanır (stats.ts > speedRoll); ana Rng akışına dokunmaz. Zar zaten varsa (kahraman: UnitModifiers.spdRoll
+ * -> applyUnitModifiers) dokunulmaz. Durum etkileri (haste / slow) speedOf'ta bunun üstüne çarpar.
+ */
+function rollSpeed(c: Combatant, seed: number, formulas: Formulas, preset?: number): void {
+  if (c.stats.spdRoll !== undefined || preset !== undefined) return;
+  const roll = speedRoll(seed, c.uid, formulas);
+  if (roll === 1) return;
+  c.stats = { ...c.stats, spd: rolledSpeed(c.stats.spd, roll, formulas), spdRoll: roll };
+}
+
+/** Savaş kurulumundaki birim + kişisel hız zarı (bkz. rollSpeed; kahramanın kalıcı zarı UnitSetup.modifiers.spdRoll ile gelir). */
+function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, uid: string, unit: UnitSetup | undefined, formulas: Formulas, seed: number): Combatant {
+  const c = buildSetupCombatant(baseDef, side, slot, uid, unit, formulas);
+  rollSpeed(c, seed, formulas, unit?.modifiers?.spdRoll);
+  return c;
+}
+
+/**
  * Savaş kurulumundaki birim (UnitSetup opsiyonel): güçlendirme tanıma uygulanır (statlar formüllerle yeniden türetilir), sonra özel ad / rütbe /
  * başlangıç canı ve MP'si / hazır çağrı bayrağı yazılır. `unit` yoksa ya da boşsa createCombatant ile birebir aynı birim döner. Rastgelelik kullanmaz.
  */
-function createSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, uid: string, unit: UnitSetup | undefined, formulas: Formulas): Combatant {
+function buildSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, uid: string, unit: UnitSetup | undefined, formulas: Formulas): Combatant {
   if (!unit) return createCombatant(baseDef, side, slot, uid);
   const mods = unit.modifiers;
   // Taşınan ceset tüketen çağrı (Endless): beslenmiş / beslenmemiş varyantı (savaşta çağrıldığı gibi)

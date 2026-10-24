@@ -91,25 +91,28 @@ describe('YZ bağlam: Defender - Fist Crush', () => {
 });
 
 describe('YZ bağlam: Paladin - Radiance / Judgment', () => {
-  // D11: Radiance artı alan, iki tahtaya da atılır (dost tarafı = şifa + Holy Ground, düşman tarafı = hasar)
-  it('ağır yaralı dostlar varken Radiance dost tarafına (şifa) atılır', () => {
+  // Ömer 2026-10-24 (open-questions 416): Radiance yeniden 'herkese' (D11 tek hücre / Holy Ground geri alındı)
+  it('yaralı bir dost ve düşman varken Radiance seçilir', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior', 1: 'mage' });
-    for (const u of ['party-0', 'party-1']) b.get(u)!.hp = Math.round(b.get(u)!.maxHp * 0.3);
-    expect(choose(b)).toMatchObject({ skillId: 'radiance', board: 'party' });
+    const hurt = b.get('party-1')!;
+    hurt.hp = Math.round(hurt.maxHp * 0.6);
+    // Judgment 2026-10-24 (416/8) dost hücresine de şifa atar ve burada Radiance ile yarışır: Radiance bağlamını yalın sınamak için Judgment listeden çıkarılır (test modunda bekleme yok)
+    b.get('party-0')!.skills = b.get('party-0')!.skills.filter((s) => s !== 'judgment');
+    expect(choose(b)).toMatchObject({ skillId: 'radiance' });
   });
 
-  it('dostlar sağlamken Radiance dost tarafına atılmaz (atılırsa düşmana)', () => {
+  it('dostlar sağlamken Radiance seçilmez', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior', 1: 'mage' });
-    const c = choose(b);
-    if (c?.skillId === 'radiance') expect(c.board).toBe('enemy');
+    // (2026-10-24 ikinci karar: Judgment gücü 0,80 -> YZ tek hücre Judgment'ı yine seçebilir; burada yalnız Radiance'a bakılır)
+    expect(choose(b)?.skillId).not.toBe('radiance');
   });
 
-  it('kümelenmiş düşmana (alanda en az 2) Judgment seçilir; tek düşmana seçilmez', () => {
-    const ult = (b: Battle) => ((b.get('party-0')!.skills = b.get('party-0')!.skills.filter((id) => id !== 'radiance')), b); // ulti yok: Judgment'ı kendi başına sına (test modunda bekleme yok)
+  it('Judgment (2026-10-24 tek hücre) seçilirse yalnızca tek hücreye zemin bırakır', () => {
+    const ult = (b: Battle) => ((b.get('party-0')!.skills = ['judgment']), b); // yalnız Judgment: alan seçimini sına
     const many = ult(mk({ 0: 'paladin', 1: 'warrior' }, ENEMY_FRONT_TRIO));
-    expect(choose(many)).toMatchObject({ skillId: 'judgment' });
-    const one = ult(mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'warrior' }));
-    expect(choose(one)?.skillId).not.toBe('judgment');
+    const c = choose(many)!;
+    expect(c.skillId).toBe('judgment');
+    expect(many.areaWindowAt('party-0', 'judgment', c.slot ?? many.get(c.targetUid!)!.slot)).toHaveLength(1);
   });
 });
 

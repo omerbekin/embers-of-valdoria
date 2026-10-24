@@ -14,8 +14,8 @@
     "type": "buff",
     "icon": "boot",
     "color": "#7dff9b",
-    "speedMult": 1.4,
-    "text": "Speed +40%"
+    "speedMult": 1.3,
+    "text": "Speed +30%"
   },
   "wound": {
     "name": "Wound",

@@ -1,15 +1,15 @@
-# Embers of Valdoria: tek Cloudflare Worker, tek adres https://eov.backinn.com.tr (ücretsiz plan). Kurulum: README.md
+# Embers of Valdoria: tek Cloudflare Worker, tek adres https://embersofvaldoria.com (ücretsiz plan). Kurulum: README.md
 # - Oyun:  /           -> ../dist (npm run build çıktısı), Workers Static Assets. Statik dosya istekleri Worker'ı çalıştırmaz, ücretsiz ve sınırsızdır.
-# - Lobi:  /lobby/...   -> src/index.ts (WebSocket signaling) + Durable Object. Oyundaki adres: wss://eov.backinn.com.tr/lobby
+# - Lobi:  /lobby/...   -> src/index.ts (WebSocket signaling) + Durable Object. Oyundaki adres: wss://embersofvaldoria.com/lobby
 name = "embers-of-valdoria"
 main = "src/index.ts"
 compatibility_date = "2026-10-01"
 # Kullanım verisi gönderilmez
 send_metrics = false
-# Custom Domain: eov.backinn.com.tr için DNS kaydı ve SSL sertifikasını Cloudflare deploy sırasında kendisi kurar (panelde elle ekleme yok).
-# Tek seviye alt alan adı: ücretsiz Universal SSL yalnızca *.backinn.com.tr'yi kapsar.
+# Custom Domain: embersofvaldoria.com için DNS kaydı ve SSL sertifikasını Cloudflare deploy sırasında kendisi kurar (panelde elle ekleme yok).
+# Kök alan adı (apex): ücretsiz Universal SSL embersofvaldoria.com ve *.embersofvaldoria.com'u kapsar.
 routes = [
-  { pattern = "eov.backinn.com.tr", custom_domain = true, zone_name = "backinn.com.tr" }
+  { pattern = "embersofvaldoria.com", custom_domain = true, zone_name = "embersofvaldoria.com" }
 ]
 # workers.dev / önizleme adresleri kapalı: tek adres yukarıdaki (ilk deploy'da "workers.dev alt alan adı seç" sorusu da çıkmaz)
 workers_dev = false
@@ -42,4 +42,4 @@ id = "25eccdc0fbe74ff6b266d0050d849f3b"
 
 [vars]
 # Yalnızca bu adreslerden açılan oyun bağlanabilir (virgülle ayrılır; ":*" herhangi bir port)
-ALLOWED_ORIGINS = "https://eov.backinn.com.tr,https://omerbekin.github.io,http://localhost:*,http://127.0.0.1:*"
+ALLOWED_ORIGINS = "https://embersofvaldoria.com,https://eov.backinn.com.tr,https://omerbekin.github.io,http://localhost:*,http://127.0.0.1:*"

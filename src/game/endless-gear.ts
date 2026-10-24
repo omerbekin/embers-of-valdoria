@@ -9,7 +9,7 @@ import { openGear, type GearSource } from '../ui/gear-screen';
 export function endlessGearSource(get: () => EndlessRun, set: (r: EndlessRun) => void): GearSource {
   const apply = (fn: (r: EndlessRun) => EndlessRun): void => set(fn(get()));
   return {
-    heroes: () => get().heroes.map((h) => ({ id: h.id, class: h.class, level: h.level ?? 1, xp: h.xp ?? 0, statPoints: h.statPoints ?? 0, skillPoints: h.skillPoints ?? 0, alloc: h.alloc ?? {}, ...(h.tree ? { tree: h.tree } : {}), ...(h.freeRespec ? { freeRespec: true } : {}), ...(h.treeReset ? { treeReset: true } : {}), hpRatio: h.hpRatio, ...(woundCount(h) > 0 ? { wounds: woundCount(h), woundCfg: { rules: endlessWoundRules(), town: false } } : {}), equipment: fullEquipment(h) })),
+    heroes: () => get().heroes.map((h) => ({ id: h.id, class: h.class, level: h.level ?? 1, xp: h.xp ?? 0, statPoints: h.statPoints ?? 0, skillPoints: h.skillPoints ?? 0, alloc: h.alloc ?? {}, ...(h.spdRoll !== undefined ? { spdRoll: h.spdRoll } : {}), ...(h.tree ? { tree: h.tree } : {}), ...(h.freeRespec ? { freeRespec: true } : {}), ...(h.treeReset ? { treeReset: true } : {}), hpRatio: h.hpRatio, ...(woundCount(h) > 0 ? { wounds: woundCount(h), woundCfg: { rules: endlessWoundRules(), town: false } } : {}), equipment: fullEquipment(h) })),
     bag: () => bagOf(get()),
     bagSize: endlessBagSize(),
     gold: () => get().gold,

@@ -19,13 +19,13 @@ describe('multiplayer yapılandırması (Worker adresi)', () => {
     expect(iceServersFor('wss://x.workers.dev').length).toBeGreaterThan(0);
   });
   it('yayın adresi: oyun ve lobi tek alan adında, lobi /lobby altında', () => {
-    expect(resolveSignalingUrl('eov.backinn.com.tr', '')).toBe('wss://eov.backinn.com.tr/lobby');
-    expect(resolveSignalingUrl('omerbekin.github.io', '')).toBe('wss://eov.backinn.com.tr/lobby');
-    expect(cfg.signalingUrl).toBe('wss://eov.backinn.com.tr/lobby');
+    expect(resolveSignalingUrl('embersofvaldoria.com', '')).toBe('wss://embersofvaldoria.com/lobby');
+    expect(resolveSignalingUrl('omerbekin.github.io', '')).toBe('wss://embersofvaldoria.com/lobby');
+    expect(cfg.signalingUrl).toBe('wss://embersofvaldoria.com/lobby');
   });
   it('lobi WebSocket adresi: /lobby kökü tekrarlanmaz; kökü olmayan (yerel) adrese /lobby eklenir', () => {
-    expect(lobbySocketUrl('wss://eov.backinn.com.tr/lobby', 'ABC123', 'host', 'a'.repeat(16))).toBe(`wss://eov.backinn.com.tr/lobby/ABC123?role=host&id=${'a'.repeat(16)}`);
-    expect(lobbySocketUrl('wss://eov.backinn.com.tr/lobby/', 'ABC123', 'guest', 'b'.repeat(16))).toBe(`wss://eov.backinn.com.tr/lobby/ABC123?role=guest&id=${'b'.repeat(16)}`);
+    expect(lobbySocketUrl('wss://embersofvaldoria.com/lobby', 'ABC123', 'host', 'a'.repeat(16))).toBe(`wss://embersofvaldoria.com/lobby/ABC123?role=host&id=${'a'.repeat(16)}`);
+    expect(lobbySocketUrl('wss://embersofvaldoria.com/lobby/', 'ABC123', 'guest', 'b'.repeat(16))).toBe(`wss://embersofvaldoria.com/lobby/ABC123?role=guest&id=${'b'.repeat(16)}`);
     expect(lobbySocketUrl('ws://127.0.0.1:8787', 'ABC123', 'host', 'c'.repeat(16))).toBe(`ws://127.0.0.1:8787/lobby/ABC123?role=host&id=${'c'.repeat(16)}`);
   });
 });

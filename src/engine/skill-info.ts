@@ -147,8 +147,13 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
   switch (e.type) {
     case 'rage':
       return `The lower your HP, the harder you hit: up to +${pct(e.maxBonus)} damage at the brink of death.${e.rageOnHurt ? ` Losing HP gives Rage: ${Math.round(e.rageOnHurt.perHpPercent * 100) / 100} per 1% of your max HP lost${e.rageOnHurt.perHitCap !== undefined ? ` (at most ${e.rageOnHurt.perHitCap} per hit; shields absorbing the hit give none)` : ''}.` : ''}`;
-    case 'divineLight':
-      return `At the start of your turn, heal the most wounded ally for ${val(e.scale, e.power)} (${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}).`;
+    case 'divineLight': {
+      // Crusader's Dawn (smite.dual): şifa dual kat; aynı miktar her tur en zayıf düşmana smite
+      const p = e.power * (e.smite?.dual ?? 1);
+      return e.smite?.dual
+        ? `At the start of your turn, heal the most wounded ally and smite the weakest enemy, each for ${val(e.scale, p)} (${pct(p)} of ${ATTRIBUTE_NAME[e.scale]}). The smite lands even when no ally is wounded.`
+        : `At the start of your turn, heal the most wounded ally for ${val(e.scale, e.power)} (${pct(e.power)} of ${ATTRIBUTE_NAME[e.scale]}).`;
+    }
     case 'spellEcho':
       return `Damaging spells with a cooldown have a ${pct(e.chance)} chance to be ready again immediately.`;
     case 'longshot':
@@ -417,7 +422,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const g = defs.grounds?.[e.ground];
       // D11 (Holy Ground): şifa zemini; area_any'de yalnızca kendi tarafına atılınca kalır
       if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each ally turn there`);
-      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (damage over time): ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
+      // area_any (Judgment 2026-10-24): hasar zemini yalnızca kendi `side` tarafına atılınca kalır
+      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'}${skill.target === 'area_any' ? (e.side === 'allies' ? ' (your side only)' : ' (enemy side only)') : ''} for ${e.turns} turns (damage over time): ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {
@@ -478,6 +484,8 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
     add(`Also pierces every unit behind the target in its lane for ${pct(skill.splash.mult ?? 1)} damage`);
   } else if (skill.splash && skill.target === 'single_enemy') add(`Also hits the units beside the target (the neighbors above and below it on screen) for ${pct(skill.splash.mult ?? 1)} damage`, 'physical');
   if ((skill.target === 'area_enemies' || skill.target === 'area_any') && (skill.area?.hitsAtCenter ?? 1) > 1 && skill.area?.shape !== 'x') add(`The unit on the anchor cell is hit ${skill.area!.hitsAtCenter} times (each hit rolls on its own)`);
+  // Ömer 2026-10-24 (open-questions 416/9): area_any + emptyOwn (Judgment): kendi tarafında boş hücreye de atılabilir
+  if (skill.target === 'area_any' && skill.area?.emptyOwn) add('Can also be cast on an empty cell on your side: it then only leaves the ground there');
   if (skill.area?.shape === 'x' && (skill.area.hitsAtCenter ?? 1) > 1) add(`The blade crosses the center twice: the unit on the anchor cell is hit ${skill.area.hitsAtCenter} times, each hit rolls on its own`);
   if (skill.effects.some((e) => e.type === 'damage' && e.guaranteedCrit)) add(`Always a critical hit (x${formulas.attributes.critMult}); it can still miss`, 'physical');
   if (skill.requiresOpenBehind) add('Only targets with an empty cell right behind them (a living unit there blocks it; a corpse does not); never a unit in the back row');
@@ -573,8 +581,10 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
   const num = (label: string, value: number, kind?: SkillNumber['kind']): SkillNumber[] => [{ label, text: String(value), value, scaled: true, ...(kind ? { kind } : {}) }];
   const fixed = (label: string, text: string): SkillNumber[] => [{ label, text, scaled: false }];
   switch (e.type) {
-    case 'divineLight':
-      return num('Heal', scaled(stats, e.scale, e.power, formulas), 'heal');
+    case 'divineLight': {
+      const v = scaled(stats, e.scale, e.power * (e.smite?.dual ?? 1), formulas);
+      return e.smite?.dual ? [...num('Heal', v, 'heal'), ...num('Smite', v)] : num('Heal', v, 'heal');
+    }
     case 'naturesGrudge':
       return [...num(`${cap(e.dot)} per tick`, scaled(stats, e.scale, e.power, formulas)), ...fixed('Duration', turnsText(e.turns))];
     case 'armorAura':

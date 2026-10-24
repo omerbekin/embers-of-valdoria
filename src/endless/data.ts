@@ -131,6 +131,8 @@ export interface EndlessHero {
   wounds?: number;
   /** Önceki dalgadan taşınan savaş durumu (sürekli akış, madde 300); eski kayıtta / ilk dalgada yok = tam MP, Rage 0, durum yok. */
   carry?: UnitCarry;
+  /** Kişisel hız zarı (Ömer 2026-10-24; sefer Hero.spdRoll ile aynı): koşu seed'i + id'den; eski kayıtta okunurken tamamlanır. */
+  spdRoll?: number;
 }
 
 /**

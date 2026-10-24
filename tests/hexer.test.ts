@@ -21,6 +21,8 @@ const omenEffect = (id: string) => S[id]!.effects.find((e) => e.type === 'omen')
 
 function arena(party: [string, number][], enemies: [string, number][], mode: 'test' | 'turns' = 'test', seed = 1): Battle {
   const base = content.battleSetup('random-battle', seed, mode, { party: [], enemies: [] }, false);
+  // Kişisel hız zarı (Ömer 2026-10-24) KAPALI: senaryolar (Doom zamanlaması, sıra) eşit hızlı aynı birimlerin sabit sırasına dayanır
+  base.formulas = { ...base.formulas, attributes: { ...base.formulas.attributes, spdVariance: 0 } };
   const b = new Battle({ ...base, party: party.map(([id]) => unitDef(id)), partySlots: party.map(([, s]) => s), enemies: enemies.map(([id]) => unitDef(id)), enemySlots: enemies.map(([, s]) => s) });
   b.freeMp = true;
   return b;

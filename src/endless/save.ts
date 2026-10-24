@@ -10,6 +10,7 @@ import { migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand } from
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
+import { normalizeSpdRoll } from '../progression/loadout';
 
 export interface KV {
   getItem(key: string): string | null;
@@ -49,6 +50,20 @@ export const SCORES_VERSION = 1;
 
 const isNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
+/**
+ * Ham koşu ya da skor dizgisinin `version` alanı (bulut senkronu: daha yeni şemayı reddetmek için; accounts-plan.md Faz 1b).
+ * Yalnızca okur, şemaya dokunmaz. Boş / JSON değil / sürüm sayı değilse null.
+ */
+export function peekVersion(raw: string | null): number | null {
+  if (!raw) return null;
+  try {
+    const v = (JSON.parse(raw) as { version?: unknown } | null)?.version;
+    return isNum(v) ? v : null;
+  } catch {
+    return null;
+  }
+}
+
 /** Kayıttaki koşu geçerli mi (alan alan; eksik / bozuk -> null). */
 export function parseRun(raw: string | null): EndlessRun | null {
   if (!raw) return null;
@@ -85,6 +100,8 @@ export function parseRun(raw: string | null): EndlessRun | null {
     for (const h of r.heroes) normalizeLevelFields(h);
     // Skill ağacı (sürüm 7): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec (sefer ile aynı kural)
     for (const h of r.heroes) normalizeTree(h);
+    // Kişisel hız zarı (Ömer 2026-10-24): eski kayıtta yok = koşu seed'i + id'den (sürüm artmaz, idempotent)
+    for (const h of r.heroes) normalizeSpdRoll(h, r.seed);
     // Yara (sürüm 6): yok / bozuk = 0
     for (const h of r.heroes) {
       const n = woundCount(h);

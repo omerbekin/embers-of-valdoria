@@ -15,7 +15,7 @@ import type { Combatant, ItemEffects, SkillCost, SkillDef, SkillEffect } from '.
 export const UNIT_FX_KEYS = [
   'startShieldRatio', 'critMp', 'secondWind', 'startCharge', 'steadfast', 'debuffShorten', 'tierDamageMult', 'adjacentGuard', 'turnMp',
   'firstSkillFree', 'executeLifesteal', 'onHitDot', 'interceptLethal', 'firstAttackEcho', 'killExtraTurn', 'nthSpellFree', 'rerollMiss',
-  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech',
+  'ignoreFirstDebuff', 'shieldRefresh', 'moveStride', 'critHealAlly', 'blockChance', 'armorPen', 'magicPen', 'mpCostReduce', 'leech', 'manaLeech',
   'debuffAvoid', 'potencyTurns', 'auraDamage', 'damageTakenReduce', 'lowHpReduce', 'ultCdReduce', 'earlyImmunity', 'summonPower', 'rageGain',
   'retortStatus', 'critStatuses', 'killRush', 'lastStand', 'openerStatus', 'restBlessing', 'vengeance', 'tierStatus',
 ] as const satisfies readonly (keyof ItemEffects)[];
@@ -1073,7 +1073,14 @@ export interface HealHook {
   node: string;
   on: HealPoint;
   skill?: string;
-  who?: 'self' | 'ally' | 'team';
+  /**
+   * damageTaken: hasarı alan self / ally / team (sahibin tarafı). Ömer 2026-10-24 (Paladin Wildfire Verdict): 'foe' = sahibin KARŞI tarafındaki
+   * birim; yalnızca sahibin tarafındaki bir saldıranın (sahip, dostları, çağrıları) vuruşunda işler (karşı tarafın kendi / dost hasarı sayılmaz).
+   * Saldıransız hasar (zemin / DoT tikleri, Doom) zaten damageTaken çarpanından geçmez.
+   */
+  who?: 'self' | 'ally' | 'team' | 'foe';
+  /** Ömer 2026-10-24 (damageTaken): alan, sahibin TARAFININ bıraktığı bu zeminin hücresinde duruyor (Wildfire Verdict: holy_fire). */
+  ground?: string;
   status?: string;
   mine?: boolean;
   shield?: string;

@@ -470,10 +470,11 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     if (x < 8) x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
     let y = rt + r.height / 2 - h / 2;
     if (x < rr && x + w > rl) y = rt - h - 8 < 8 ? rb + 8 : rt - h - 8;
-    // düğüm ipucu ağacın kendisini örtmesin (playtest B4): ağaç alanının sağına, sığmazsa altına kayar
+    // düğüm ipucu ağacın kendisini örtmesin (playtest B4): ağaç alanının sağına, sığmazsa altına kayar; ikisi de sığmazsa düğümün yanında kalır.
+    // Ağaç alanının SOLUNA atma yedeği kaldırıldı (Ömer 2026-10-24): orası Gear'ın kahraman listesi / portreleri; orta genişlikte (ör. 1560x780)
+    // ipucu düğümden çok uzakta, listenin üstünde çıkıyordu (Broad Sentence ekran görüntüsü).
     if (el.classList.contains('gt-nd') && treeHost?.isConnected) {
       const hr = treeHost.getBoundingClientRect();
-      const hl = hr.left - sr.left;
       const hrr = hr.right - sr.left;
       const hb = hr.bottom - sr.top;
       if (hrr + 10 + w <= vw - 8) {
@@ -482,9 +483,6 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
       } else if (hb + 8 + h <= vh - 8) {
         x = Math.max(8, Math.min(vw - w - 8, rl + r.width / 2 - w / 2));
         y = hb + 8;
-      } else if (hl - 10 - w >= 8) {
-        x = hl - 10 - w;
-        y = rt + r.height / 2 - h / 2;
       }
     }
     y = Math.max(8, Math.min(vh - h - 8, y));
@@ -571,7 +569,7 @@ export function createTreeTab(ctx: TreeTabCtx, rules: TreeRules = TREE_RULES): T
     const free = freePoints(s);
     $$('[data-badge]').forEach((b) => {
       b.textContent = String(free);
-      b.style.display = free > 0 ? '' : 'none';
+      b.style.visibility = free > 0 ? '' : 'hidden'; // display:none başlığı kısaltıp sayfayı kaydırıyordu (Ömer 2026-10-24)
     });
     // düğümler
     $$<FxEl>('.gt-nd').forEach((el) => {

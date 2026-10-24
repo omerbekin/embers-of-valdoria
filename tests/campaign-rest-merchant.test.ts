@@ -16,6 +16,7 @@ import {
   restAtCamp,
   reviveAtCamp,
   sellToMerchant,
+  shopRotations,
   addItem,
   type CampaignState,
 } from '../src/campaign';
@@ -107,6 +108,37 @@ describe('tüccar (Forward Camp, Odo)', () => {
     let s = full;
     for (const it of [...s.inventory].slice(0, CONFIG.merchant.buybackSize + 2)) s = sellToMerchant(s, it.uid);
     expect(s.shop!.buyback).toHaveLength(CONFIG.merchant.buybackSize);
+  });
+
+  it('yavaş yenilenme: her rotateEvery ilerlemede (temizlenen düğüm + devriye) tek raf sırayla değişir, diğerleri aynı kalır', () => {
+    const base = at('camp');
+    const withProgress = (n: number): CampaignState => ({ ...base, cleared: [...base.cleared, ...Array.from({ length: n }, (_, i) => `x${i}`)] });
+    const s0 = withProgress(0);
+    const p0 = shopRotations(s0);
+    const every = CONFIG.merchant.rotateEvery;
+    const w0 = campaignStock(s0);
+    const sameRot = campaignStock(withProgress(every - 1 - (base.cleared.length % every)));
+    if (shopRotations(withProgress(every - 1 - (base.cleared.length % every))) === p0) expect(sameRot).toEqual(w0);
+    const next = withProgress(every - (base.cleared.length % every));
+    expect(shopRotations(next)).toBe(p0 + 1);
+    const w1 = campaignStock(next);
+    const changed = w1.filter((w, i) => w.itemId !== w0[i]?.itemId || JSON.stringify(w.rolls) !== JSON.stringify(w0[i]?.rolls));
+    expect(changed.length).toBeGreaterThanOrEqual(1);
+    expect(changed.length).toBeLessThanOrEqual(2); // dönen raf + (nadiren) aynı taban yüzünden kayan bir raf
+    const replays = { ...s0, replays: { a: every } };
+    expect(shopRotations(replays)).toBe(p0 + 1);
+  });
+
+  it('alınan mal: ilerleme aynıyken sonraki ziyarette "sold" kalır; rotateEvery ilerleme sonra raf yeni malla dolar', () => {
+    let s = shopAt(10000);
+    const w0 = s.shop!.wares[3]!;
+    s = buyWare(s, 3);
+    const again = campaignStock(s);
+    expect(again[3]).toMatchObject({ itemId: w0.itemId, sold: true });
+    const later: CampaignState = { ...s, cleared: [...s.cleared, ...Array.from({ length: CONFIG.merchant.rotateEvery }, (_, i) => `x${i}`)] };
+    const w1 = campaignStock(later)[3]!;
+    expect(w1.sold).toBeUndefined();
+    expect(JSON.stringify([w1.itemId, w1.rolls])).not.toBe(JSON.stringify([w0.itemId, w0.rolls]));
   });
 
   it('yenileme rerollCost altın; stok değişir; ayrılınca tezgâh kapanır ve adım tamamlanır', () => {

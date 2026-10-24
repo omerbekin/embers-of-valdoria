@@ -99,9 +99,10 @@ describe('Faz 5a: C5 alan / hedef', () => {
     expect(b.skill('blizzard', P(b, 0).uid)!.cost.amount).toBe(20);
   });
 
-  it('Broad Sentence: Judgment artısı her yönde 1 hücre uzar; Earthsplitter satır + sütun, global, Slow 3', () => {
-    const b = make({ 0: 'paladin', 1: 'paladin' }, { 0: 'warrior' }, withTree(0, only('paladin', { '3.eb': 1 })));
-    expect(maxArea(b, 'judgment', P(b, 0).uid).length).toBeGreaterThan(maxArea(b, 'judgment', P(b, 1).uid).length);
+  it('Broad Sentence (2026-10-24: 3.mb, Judgment hedefinin sol + sağ hücresi; open-questions 416/6); Earthsplitter satır + sütun, global, Slow 3', () => {
+    const b = make({ 0: 'paladin', 1: 'paladin' }, { 0: 'warrior' }, withTree(0, only('paladin', { '3.mb': 1 })));
+    expect(maxArea(b, 'judgment', P(b, 1).uid)).toHaveLength(1);
+    expect(maxArea(b, 'judgment', P(b, 0).uid)).toHaveLength(3);
     const d = make({ 0: 'defender' }, { 0: 'mage', 1: 'mage', 2: 'mage', 3: 'mage', 9: 'mage' }, withTree(0, only('defender', { '1.v': 1 })));
     const me = P(d);
     const row = d.areaCells('tremor_slam', 0, 'enemy');

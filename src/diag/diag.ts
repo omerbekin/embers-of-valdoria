@@ -135,7 +135,7 @@ export function onDiagConsentChange(fn: (on: boolean) => void): () => void {
 
 // ------------------------------------------------------------------ ortam / sahne
 
-/** Raporun gideceği adres: multiplayer sunucusunun kökü (wss://eov.backinn.com.tr/lobby -> https://eov.backinn.com.tr) + /diag. */
+/** Raporun gideceği adres: multiplayer sunucusunun kökü (wss://embersofvaldoria.com/lobby -> https://embersofvaldoria.com) + /diag. */
 export function diagEndpoint(): string | null {
   if (typeof window === 'undefined') return null;
   const sig = resolveSignalingUrl(window.location.hostname, window.location.search);

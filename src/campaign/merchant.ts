@@ -10,16 +10,31 @@ import { activeHeroes, clone, closeShop, complete, expectStep, mapOf, nextStep }
 import { node } from './graph';
 import type { CampaignShop, CampaignState } from './types';
 
-/** Tezgâh stoğu (seed'li: aynı sefer + düğüm + yenileme sayısı = aynı mallar). */
+/**
+ * Yavaş yenilenme (Ömer 2026-10-24, "node yaptıkça yavaş yavaş değişsin, 2 node 1 item"): sefer ilerlemesi = temizlenen düğüm + devriye
+ * zaferi sayısı; her merchant.rotateEvery ilerlemede bir raf sırayla (0, 1, 2 ...) yeni mala döner. Rafın kaçıncı kez döndüğü zarın parçası.
+ */
+export function shopRotations(s: CampaignState): number {
+  const progress = s.cleared.length + Object.values(s.replays ?? {}).reduce((a, n) => a + n, 0);
+  return Math.floor(progress / Math.max(1, CONFIG.merchant.rotateEvery));
+}
+
+/** Tezgâh stoğu (seed'li: aynı sefer + düğüm + yenileme sayısı + ilerleme = aynı mallar; ilerledikçe raflar teker teker değişir; alınmış raf ilerleme artana dek "sold"). */
 export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 0): CampaignShop['wares'] {
   const ilvl = Math.max(1, nodeIlvl(s.mapId, nodeId));
-  const rng = rngFor(s.seed, s.mapId, nodeId, 'shop', reroll);
   const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
   const bases = ITEMS.items.filter((d) => d.rarity !== 'legendary' && d.ilvl <= ilvl && (!d.family || team.some((h) => canEquip(h.class, d))));
   const out: CampaignShop['wares'] = [];
   const used = new Set<string>();
   const size = node(mapOf(s), nodeId).merchantSize ?? CONFIG.merchant.size; // kasabalar (T1): Ashford küçük, Valdren Keep büyük stok
+  const turns = shopRotations(s);
+  const sold = reroll ? undefined : s.merchantSold?.[`${s.mapId}:${nodeId}`]; // yalnız ilk (yenilenmemiş) stokta
   for (let i = 0; i < size; i++) {
+    const gen = Math.floor(turns / size) + (i < turns % size ? 1 : 0); // bu raf kaç kez döndü
+    const boughtAt = sold?.[i];
+    const refill = boughtAt !== undefined && turns > boughtAt; // alınmış raf, ilerleme artınca yeni malla dolar
+    const salt: Array<string | number> = refill ? ['refill', boughtAt] : [];
+    const rng = gen ? rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'slot', i, gen, ...salt) : rngFor(s.seed, s.mapId, nodeId, 'shop', reroll, 'slot', i, ...salt);
     const rarity = rollDropRarity(rng, ilvl, 'normal');
     const pool = bases.filter((d) => !used.has(d.id));
     if (!pool.length) break;
@@ -27,8 +42,8 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     used.add(d.id);
     const fits = team.filter((h) => canEquip(h.class, d));
     const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
-    const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, i), { rarity, ...(forClass ? { forClass } : {}) });
-    out.push({ itemId: d.id, rolls, price: itemValue({ id: d.id, rolls }) });
+    const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, i, gen, ...salt), { rarity, ...(forClass ? { forClass } : {}) });
+    out.push({ itemId: d.id, rolls, price: itemValue({ id: d.id, rolls }), ...(boughtAt === turns ? { sold: true } : {}) });
   }
   return out;
 }
@@ -78,6 +93,10 @@ export function buyWare(s: CampaignState, index: number): CampaignState {
   t.gold -= tw.price;
   t.inventory.push({ uid: `i${t.nextItemId++}`, id: tw.itemId, ...(tw.rolls ? { rolls: tw.rolls } : {}) });
   tw.sold = true;
+  if (!t.shop!.rerolls) {
+    const k = `${t.mapId}:${t.at}`;
+    t.merchantSold = { ...(t.merchantSold ?? {}), [k]: { ...(t.merchantSold?.[k] ?? {}), [index]: shopRotations(t) } };
+  }
   return t;
 }
 

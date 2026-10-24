@@ -94,7 +94,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
       const c = calm(grid(cells({ 0: 'druid' }), cells({ 0: 'paladin', 2: 'warrior' })));
       if (wounded) c.get('enemy-1')!.statuses.push({ kind: 'wound', turns: 2, source: 'party-0' });
       c.get('enemy-1')!.hp = 10;
-      const ev = act(c, 'enemy-0', 'radiance', 'enemy-1'); // Paladin Radiance kendi tahtasında yaralı dostun hücresine (D11: tek hücre)
+      const ev = act(c, 'enemy-0', 'radiance'); // Paladin Radiance herkesi iyileştirir
       return ofType(ev, 'heal').find((e) => e.target === 'enemy-1')!.amount;
     };
     const normal = heal(false);
@@ -162,20 +162,15 @@ describe('kontrol ve alan skill\'leri', () => {
     expect(hasStatus(b, 'enemy-3', 'slow')).toBe(false);
   });
 
-  it('Radiance (D11) iki tahtaya atılır: dost tarafı = şifa (hasar yok), düşman tarafı = hasar (şifa yok)', () => {
-    const mk = () => calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage', 2: 'archer' })));
-    const a = mk();
-    a.get('party-1')!.hp = 10;
-    const own = act(a, 'party-0', 'radiance', 'party-1'); // D11: tek hücre (yaralı dostun hücresi)
-    expect(ofType(own, 'heal').map((e) => e.target).sort()).toEqual(['party-1']); // yalnızca eksik canı olan dostta şifa olayı
-    expect(ofType(own, 'damage')).toHaveLength(0);
-    const b = mk();
+  it('Radiance herkese etki eder: dostlara şifa, düşmanlara hasar, zemin yok (Ömer 2026-10-24: D11 geri alındı)', () => {
+    const b = calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage', 2: 'archer' })));
     b.get('party-1')!.hp = 10;
-    const foe = act(b, 'party-0', 'radiance', 'enemy-0');
-    expect(ofType(foe, 'heal')).toHaveLength(0);
-    expect(ofType(foe, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0']); // yalnızca seçilen hücre
-    expect(b.useSkill('party-0', 'radiance', undefined, 1).ok).toBe(false); // boş hücre: hedef yok
-    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 } });
+    const events = act(b, 'party-0', 'radiance');
+    expect(ofType(events, 'heal').map((e) => e.target).sort()).toEqual(['party-1']); // yalnızca eksik canı olan dostta şifa olayı
+    expect(ofType(events, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1']);
+    expect(ofType(events, 'ground')).toHaveLength(0);
+    expect(b.validTargets('party-0', 'radiance')).toHaveLength(4);
+    expect(content.skills.radiance!.target).toBe('everyone');
   });
 
   it('Meteor eskisinden çok daha az doğrudan hasar verir ve 2 turluk yanan zemin bırakır', () => {
@@ -290,26 +285,33 @@ describe('tür hassasiyeti (undead + holy, nature + fire)', () => {
 });
 
 describe('Judgment: holy fire alanı', () => {
-  it('ilk hasar yok; 1 yarıçaplı alana yüksek hasarlı Holy Fire bırakır; undead\'e %50 fazla vurur', () => {
-    expect(content.skills.judgment).toMatchObject({ target: 'area_enemies', area: { shape: 'plus' }, motion: 'sky', skyFx: 'light', skyCenter: true });
-    const b = calm(grid(cells({ 0: 'paladin' }), cells({ 0: 'warrior', 1: 'warrior' }), 'turns', 4));
-    b.get('party-0')!.mp = 100;
-    while (b.currentUid !== 'party-0') b.skipTurn();
-    b.get('enemy-1')!.tags = ['undead'];
-    const events = act(b, 'party-0', 'judgment', 'enemy-0');
-    // ground olayından önce hiç hasar yok (sonrasındaki hasar, sıradaki düşmanın tur başındaki zemin hasarıdır)
-    expect(ofType(events.slice(0, events.findIndex((e) => e.type === 'ground')), 'damage')).toHaveLength(0);
-    const g = ofType(events, 'ground')[0]!;
-    expect(g).toMatchObject({ ground: 'holy_fire', turns: 2 });
-    // sıradaki turlarında alandaki düşmanlar hasar alır; undead olan %50 fazla
-    const lost = new Map<string, number>();
-    for (let i = 0; i < 20 && lost.size < 2; i++) {
-      const r = b.skipTurn();
-      if (!r.ok) break;
-      for (const e of ofType(r.events, 'damage')) if (e.source === 'party-0' && !lost.has(e.target)) lost.set(e.target, e.amount + e.absorbed);
-    }
-    expect(lost.get('enemy-0')).toBeGreaterThan(5);
-    expect(lost.get('enemy-1')! / lost.get('enemy-0')!).toBeGreaterThan(1.3);
+  it("anlık kutsal hasar (yalnız hedefe) + TEK hücreye (Ömer 2026-10-24) Holy Fire bırakır; komşu düşman yanmaz; undead'e %50 fazla vurur", () => {
+    expect(content.skills.judgment).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 }, motion: 'sky', skyFx: 'light', skyCenter: true });
+    const run = (undead: boolean) => {
+      const b = calm(grid(cells({ 0: 'paladin' }), cells({ 0: 'warrior', 1: 'warrior' }), 'turns', 4));
+      b.get('party-0')!.mp = 100;
+      while (b.currentUid !== 'party-0') b.skipTurn();
+      if (undead) b.get('enemy-0')!.tags = ['undead'];
+      const events = act(b, 'party-0', 'judgment', 'enemy-0');
+      // ground olayından önce yalnızca hedefe tek anlık vuruş (Ömer 2026-10-24 burst; sonrasındaki hasar zemin tikidir)
+      const before = ofType(events.slice(0, events.findIndex((e) => e.type === 'ground')), 'damage');
+      expect(before.map((e) => e.target)).toEqual(['enemy-0']);
+      const g = ofType(events, 'ground')[0]!;
+      expect(g).toMatchObject({ ground: 'holy_fire', turns: 2 });
+      expect(g.slots).toEqual([b.get('enemy-0')!.slot]); // yalnızca seçilen hücre
+      const lost = new Map<string, number>();
+      for (const e of ofType(events, 'damage')) if (e.source === 'party-0' && !lost.has(e.target)) lost.set(e.target, e.amount + e.absorbed);
+      for (let i = 0; i < 8; i++) {
+        const r = b.skipTurn();
+        if (!r.ok) break;
+        for (const e of ofType(r.events, 'damage')) if (e.source === 'party-0' && !lost.has(e.target)) lost.set(e.target, e.amount + e.absorbed);
+      }
+      return lost;
+    };
+    const normal = run(false);
+    expect(normal.get('enemy-0')).toBeGreaterThan(5);
+    expect(normal.has('enemy-1')).toBe(false); // komşu hücre yanmaz
+    expect(run(true).get('enemy-0')! / normal.get('enemy-0')!).toBeGreaterThan(1.3);
   });
 });
 
@@ -348,8 +350,8 @@ describe('sınıf verisi (bu turun düzenlemeleri)', () => {
     expect(b.effectiveStats(b.combatants.find((c) => c.defId === 'archer')!).armor).toBe(content.classes.archer!.stats.armor); // slot 0: çapraz
   });
 
-  it('Radiance ışığı (D11) seçilen alanın merkezine tek sütun olarak iner (skyCenter)', () => {
-    expect(content.skills.radiance).toMatchObject({ motion: 'sky', skyFx: 'light', skyCenter: true });
+  it('Radiance ışığı rastgele sırayla, üst üste binerek düşer (skyStagger)', () => {
+    expect(content.skills.radiance).toMatchObject({ motion: 'sky', skyFx: 'light', skyStagger: 130 });
   });
 });
 

@@ -2,6 +2,30 @@
   "_not": "SÜRÜM NOTLARI (Ömer 2026-10-11): ana menüde sağ alttaki sürüm yazısına dokununca açılan Patch Notes penceresi (src/ui/patch-notes.ts). En yeni sürüm en üstte. Her sürüm: version, date (YYYY-MM-DD) ve ya 'items' (düz satırlar) ya da 'groups' ({ heading: New | Changes | Fixes, items }). Satırlar KISA, oyuncuya yönelik, sade İngilizce; dosya adı / iç terim yok. Sürüm kuralı (Ömer 2026-10-11): küçük güncelleme (tek skill ayarı, hata düzeltme, arayüz değişikliği, performans) ALT sürüm alır: 0.6.11 -> 0.6.11.1 -> 0.6.11.2 (package.json 0.6.11 kalır); büyük güncelleme üçüncü sayıyı artırır (0.6.12, package.json da); ara sürümleri (0.7.0) Ömer söyler; yalnızca taslak (mockup) paylaşımı sürüm ve not ALMAZ. Ekranda görünen sürüm EN ÜSTTEKİ girdidir (vite.config.ts > __DISPLAY_VERSION__, src/ui/display-version.ts). tests/patch-notes.test.ts: en üstteki sürüm = package.json sürümü ya da onun '.N' alt sürümü.",
   "releases": [
     {
+      "version": "0.9.8.4",
+      "date": "2026-10-24",
+      "groups": [
+        {
+          "heading": "Fixes",
+          "items": [
+            "Multiplayer and error reports now use the new embersofvaldoria.com address; privacy contact is now privacy@embersofvaldoria.com.",
+            "Patch Notes window keeps a fixed size; long notes scroll inside it.",
+            "Skill tree page no longer jumps when your last skill point is spent.",
+            "Merchants slowly restock as you travel (one item every 2 nodes cleared or patrolled), and items you buy stay sold out for 2 more nodes.",
+            "Map node shows as cleared right after you finish it; merchant Wares header no longer squashed; skill tree tooltips stay next to their node."
+          ]
+        },
+        {
+          "heading": "Changes",
+          "items": [
+            "Every unit now has its own pace: Speed varies up to 10% per hero and enemy (heroes keep theirs; see the Speed tooltip).",
+            "Paladin: Judgment hits one cell on either side (damage + holy fire, or heal + Holy Ground); Radiance hits everyone again.",
+            "Paladin: Divine Light and No Rest for Evil 27%; new Crusader's Dawn; three tree talents reworked. Archer retuned; Haste +30%."
+          ]
+        }
+      ]
+    },
+    {
       "version": "0.9.8.3",
       "date": "2026-10-24",
       "groups": [

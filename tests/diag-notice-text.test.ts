@@ -4,13 +4,13 @@ import { join } from 'node:path';
 import notice from '../data/privacy-notice.json';
 
 // Hata raporu gizlilik metni (KVKK tarzı aydınlatma; Ömer 2026-10-16): TEK kaynak data/privacy-notice.json, EN + TR aynı yapıda,
-// iletişim privacy@backinn.com.tr; kişisel e-posta hiçbir yerde yok.
+// iletişim privacy@embersofvaldoria.com; kişisel e-posta hiçbir yerde yok.
 type Lang = 'en' | 'tr';
 const L = notice as unknown as Record<Lang, { title: string; intro: string[]; detailsLabel: string; details: Array<{ heading: string; text: string }>; toggle: string; language: string }> & { contact: string };
 
 describe('Gizlilik metni (privacy-notice.json)', () => {
   it('iletişim adresi ve iki dil aynı yapıda', () => {
-    expect(L.contact).toBe('privacy@backinn.com.tr');
+    expect(L.contact).toBe('privacy@embersofvaldoria.com');
     for (const k of ['en', 'tr'] as const) {
       const t = L[k];
       expect(t.title.length, k).toBeGreaterThan(3);

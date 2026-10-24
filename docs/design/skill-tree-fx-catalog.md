@@ -212,11 +212,11 @@ Amaç: engine-dev'in C1 koşul sözlüğünü ve C3-C6 kapsamını 11 class'a g�
 | 3.n0 | Sanctified Earth | a | `ground.turns set 3` |
 | 3.r | Ash Upon Ash | C1 | zemin tiki `targetStatus:burning` → `powerMul 0.05r` |
 | 3.ea | Undying Flame | C3 | `enemyDied(onGround)` → o hücrenin ateşi savaş sonuna kadar yarı güçte (süresiz zemin: soru 14.16) |
-| 3.eb | Broad Sentence | C5 | artı şeklinin kolu 1 hücre uzar (yeni alan parametresi) |
+| 3.eb | Wildfire Verdict | C4 | holy fire'daki düşman, Paladin tarafından gelen vuruşlardan %15 fazla hasar alır (`damageTaken` `who: foe` + `ground: holy_fire`, mul 0,15; Ömer 2026-10-24, 3.mb'den taşındı) |
 | 3.ma | Fire on Fire | C5 | zaten yanan hücreye atılırsa o hücrenin ateşi ×2 (zemin üst üste kuralı) |
 | 3.fa | Scorched Earth | a | `ground.turns add 2` + `cooldown set 5` |
-| 3.fb | Scattered Flame | C5 | merkez sırasının tamamını da kaplar + a `ground.power pct -0.3` |
-| 3.mb | Wildfire Verdict | C3 | `enemyDied(onGround)` → en yakın düşmanın hücresine 2 turluk ateş |
+| 3.fb | Scattered Flame | C5 | hedefin ekranda üst + alt hücresi (`area.flankV`) + a `ground.power pct -0.3` (Ömer 2026-10-24) |
+| 3.mb | Broad Sentence | C5 | hedefin ekranda sol + sağ hücresi (`area.flankH`; Ömer 2026-10-24: 3.eb'den buraya taşındı) |
 | 3.v | Day of Judgment | C3 | `groundEnd(holy_fire)` → içindeki her düşmana %60 INT kutsal hasar |
 | 4.u1 | Searing Dawn | a | `damage.power pct 0.2` |
 | 4.u2 | Scorching Light | b | `addEffect dot burning 2` tüm düşmanlara (güç soru 14.4) |

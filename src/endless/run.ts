@@ -1,7 +1,7 @@
 // Endless koşu durumu ve kuralları (saf; her fonksiyon yeni durum döner, girdiyi değiştirmez). Sayılar data/endless.json'dan.
 import { classes } from '../engine/content';
 import { BAG_SIZE, ITEMS, RARITY_IDS, canEquip, levelRequirement, defaultEquipSlot, isPlanError, offhandBlocker, planEquip, planMoveEquipped, promoteOffhand, slotsFor, instanceIP, itemDef, itemIP, itemValue, rollItem, type ItemDef, type ItemInstance, type RarityId, type SlotId } from '../progression/items';
-import { itemRecovery } from '../progression/loadout';
+import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
 import { rollDropRarity } from '../progression/drop';
 import { bestMoves, FALLEN_GEAR_MSG } from '../progression/equip';
 import { RARE, legendaryPool, rollRareDrop } from '../progression/rare';
@@ -48,7 +48,7 @@ export function newRun(seed: number, classIds: string[], startedAt = new Date().
       // + başlangıç ikinci eli (Ömer 2026-10-23: Defender / Paladin kalkan, Cutthroat / Anti-Mage ikinci hançer); boş yuvalar kayda yazılmaz (bugünkü biçim)
       const eq = starterEquipment(c, id);
       const equipment = Object.fromEntries(Object.entries(eq).filter(([, v]) => v)) as EndlessHero['equipment'];
-      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment, slot: cells[i]! };
+      return { id, class: c, hpRatio: 1, level: 1, xp: 0, statPoints: 0, skillPoints: 0, alloc: {}, equipment, slot: cells[i]!, spdRoll: heroSpeedRoll(seed, id) };
     }),
     gold: 0,
     stats: { cleared: 0, turns: 0, kills: 0 },

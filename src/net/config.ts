@@ -24,7 +24,7 @@ export function resolveSignalingUrl(pageHost: string, search: string, configured
 }
 
 /**
- * Lobi WebSocket adresi. Signaling adresi lobi kökünü gösterir (yayında wss://eov.backinn.com.tr/lobby: oyun ve lobi aynı alan
+ * Lobi WebSocket adresi. Signaling adresi lobi kökünü gösterir (yayında wss://embersofvaldoria.com/lobby: oyun ve lobi aynı alan
  * adında, lobi /lobby altında); sonuna /<KOD> eklenir. Adres /lobby ile bitmiyorsa (yerel test: ws://127.0.0.1:8787) /lobby/<KOD>.
  */
 export function lobbySocketUrl(signalingUrl: string, code: string, role: string, peerId: string): string {

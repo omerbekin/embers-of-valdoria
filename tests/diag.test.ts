@@ -185,7 +185,7 @@ describe('tanılama: rapor boyutu ve içerik', () => {
   });
 
   it('adres: multiplayer sunucusunun kökü + /diag (GitHub Pages da aynı Worker\'a gider)', () => {
-    expect(diagUrlFrom('wss://eov.backinn.com.tr/lobby')).toBe('https://eov.backinn.com.tr/diag');
+    expect(diagUrlFrom('wss://embersofvaldoria.com/lobby')).toBe('https://embersofvaldoria.com/diag');
     expect(diagUrlFrom('ws://127.0.0.1:8787')).toBe('http://127.0.0.1:8787/diag');
   });
 });

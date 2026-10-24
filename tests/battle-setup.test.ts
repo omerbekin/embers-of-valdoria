@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { applyUnitModifiers, Battle, battleSummary, chooseAction, content, damageRange, deriveStats, previewSkill, roundSpeed, speedMin, unitLabel } from '../src/engine';
+import { applyUnitModifiers, Battle, battleSummary, chooseAction, content, damageRange, deriveStats, previewSkill, rolledSpeed, roundSpeed, speedMin, speedRoll, unitLabel } from '../src/engine';
 import type { BattleEvent, BattleMode, CombatantData, Teams, UnitSetup } from '../src/engine';
 
 // Savaş kurulum seçenekleri (sefer için; docs/design/combat.md > Savaş kurulum seçenekleri): birim güçlendirmesi, özel ad, başlangıç canı/MP,
@@ -133,7 +133,9 @@ describe('modifiers: güçlendirme / zayıflatma', () => {
       const want = applyUnitModifiers(content.classes.warrior!, teams.units!.enemies![1]!.modifiers, f);
       expect(boss.maxHp).toBe(want.stats.hp);
       expect(boss.hp).toBe(boss.maxHp);
-      expect(boss.stats).toEqual(want.stats);
+      // Kişisel hız zarı (Ömer 2026-10-24): güçlendirilmiş SON hız hash(seed, uid) zarıyla çarpılıp yuvarlanır
+      const roll = speedRoll(3, 'enemy-1', f);
+      expect(boss.stats).toEqual({ ...want.stats, spd: rolledSpeed(want.stats.spd, roll, f), spdRoll: roll });
       expect(boss.maxHp).toBeGreaterThan(plain.maxHp * 2);
       expect(boss.modifiers).toEqual(teams.units!.enemies![1]!.modifiers);
       // önizleme: güçlendirilmiş hedefe hasar daha az (zırh), güçlendirilmiş saldıran daha çok vurur (stat x powerMult)

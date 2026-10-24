@@ -1,17 +1,17 @@
 # Embers of Valdoria Cloudflare Worker (oyun sitesi + lobi sunucusu)
 
-Tek Worker, tek adres: **https://eov.backinn.com.tr** (Cloudflare ücretsiz plan; ücretli hiçbir özellik kullanılmaz).
+Tek Worker, tek adres: **https://embersofvaldoria.com** (Cloudflare ücretsiz plan; ücretli hiçbir özellik kullanılmaz).
 
 - **Oyun** (`/`): oyunun derlenmiş dosyaları (`../dist`, `npm run build` çıktısı) Workers Static Assets ile sunulur. Bu istekler
   Worker kodunu çalıştırmaz; ücretsiz ve sınırsızdır.
 - **Lobi** (`/lobby`): yalnızca iki oyuncuyu **buluşturur**: lobi kodunu tutar ve iki tarayıcının birbirini bulması için gereken
   bağlantı bilgisini (WebRTC "teklif/yanıt" ve adres adayları) aktarır. Oyun hamleleri buradan geçmez; iki tarayıcı arasında doğrudan
-  akar. Oyundaki adres: `wss://eov.backinn.com.tr/lobby` (`../data/multiplayer.json`). Tasarım: `../docs/design/multiplayer.md`.
+  akar. Oyundaki adres: `wss://embersofvaldoria.com/lobby` (`../data/multiplayer.json`). Tasarım: `../docs/design/multiplayer.md`.
 - GitHub Pages (https://omerbekin.github.io/embers-of-valdoria/) aynen sürer ve aynı lobiye bağlanır.
 
 ## Kurulum adım adım (Ömer + koordinatör)
 
-Ön koşul: `backinn.com.tr` Cloudflare hesabında "Active" (ad sunucuları Cloudflare'i gösteriyor).
+Ön koşul: `embersofvaldoria.com` Cloudflare hesabında "Active" (ad sunucuları Cloudflare'i gösteriyor).
 Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\embers-of-valdoria\game`) çalıştırılır.
 
 1. **Paketleri kur (bir kez):** `npm install` ve `npm --prefix cloudflare install` (wrangler sabit sürüm 4.148.0, zaten listede).
@@ -21,14 +21,14 @@ Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\embers-of
    yüklenecek dosyaların ücretsiz plan sınırlarını denetler (önce `npm run build`).
 4. **Yayınla (tek komut):** `npm run deploy:cf`
    - Oyunu derler (`npm run build`), dosya sınırlarını denetler, sonra tek `wrangler deploy` ile oyun dosyalarını + lobi kodunu
-     yükler ve `eov.backinn.com.tr` adresini Worker'a bağlar (**Custom Domain**: DNS kaydı ve SSL sertifikası otomatik kurulur;
+     yükler ve `embersofvaldoria.com` adresini Worker'a bağlar (**Custom Domain**: DNS kaydı ve SSL sertifikası otomatik kurulur;
      panelde elle alan adı ekleme YOK).
    - İlk yayında lobi deposu (Durable Object, SQLite) da kendiliğinden kurulur.
-   - Hata "DNS record already exists" gibi bir şey derse: Cloudflare paneli > backinn.com.tr > DNS > Records'ta `eov` adlı eski
+   - Hata "DNS record already exists" gibi bir şey derse: Cloudflare paneli > embersofvaldoria.com > DNS > Records'ta `@` (kök) için eski
      kaydı sil, komutu tekrarla.
 5. **Kontrol:**
-   - https://eov.backinn.com.tr açılmalı (oyun). İlk yayında sertifika birkaç dakika sürebilir.
-   - https://eov.backinn.com.tr/lobby -> "Embers of Valdoria lobby server OK".
+   - https://embersofvaldoria.com açılmalı (oyun). İlk yayında sertifika birkaç dakika sürebilir.
+   - https://embersofvaldoria.com/lobby -> "Embers of Valdoria lobby server OK".
    - Oyunda Multiplayer > Host lobby: kod çıkmalı; ikinci cihazda/sekmede davet linki ya da kodla katılınca maç başlamalı.
      GitHub Pages sürümü de aynı lobiye bağlanır.
    - Sunucuya ulaşılamazsa oyun "Cannot reach the multiplayer server" der (çökmez).
@@ -83,12 +83,11 @@ boyut sınırı, röle aktarımı, ayrılma) gerçek WebSocket ile dener.
 
 ## Ayarlar (`wrangler.toml`)
 
-- `routes`: `eov.backinn.com.tr` Custom Domain. Tek seviye alt alan adı şart (ücretsiz Universal SSL yalnızca `*.backinn.com.tr`'yi
-  kapsar). `workers_dev = false`: workers.dev adresi kapalı, tek adres bu.
+- `routes`: `embersofvaldoria.com` Custom Domain. Kök alan adı (apex); ücretsiz Universal SSL kapsar. `workers_dev = false`: workers.dev adresi kapalı, tek adres bu.
 - `[assets]`: oyun dosyaları `../dist`; yalnızca `/lobby` ve `/lobby/*` Worker koduna gider (`run_worker_first`). Önbellek kuralı
   `../public/_headers` (içerik özetli `/assets/*` dosyaları 1 yıl önbellekte).
 - Durable Object `new_sqlite_classes`: ücretsiz plan şartı, değiştirme.
-- `ALLOWED_ORIGINS`: lobiye bağlanabilen oyun adresleri (eov.backinn.com.tr, GitHub Pages, localhost). Oyun başka bir adrese
+- `ALLOWED_ORIGINS`: lobiye bağlanabilen oyun adresleri (embersofvaldoria.com, geçiş için eski eov.backinn.com.tr, GitHub Pages, localhost). Oyun başka bir adrese
   taşınırsa buraya eklenir.
 - Kurallar ve sınırlar: `src/lobby-logic.ts` (mesaj boyutu 24 KB / röle yükü 16 KB, eş başına 10 sn'de 100 mesaj, eş 50 sn sessizse
   "yok", lobi ömrü 2 saat).

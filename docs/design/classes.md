@@ -22,7 +22,9 @@
 - **Ultimate - Headsman's Blow (Abyssal Cry'ın yerine):** yakın dövüş tek hedef; bütün Rage'i (en az 30) tek dev balta darbesine harcar. Hasar harcanan Rage ile ve hedefin eksik canıyla büyür: "şimdi 30 Rage ile mi vursam, 50'ye kadar bekleyip kafasını mı alsam?"
 - Görsel/ses şimdilik yer tutucu (Double Strike animasyonu, Warrior'ın balta/zırh sesleri); gerçekleri content-designer yapacak. Sayılar balance-tester'ın.
 
-## Paladin: Radiance (Ömer 2026-10-23, playtest D11; open-questions madde 406)
-- **Ultimate - Radiance:** seçilen TEK hücre (Ömer 2026-10-24 düzeltmesi: artı değil); iki tahtaya da atılır (global, menzilsiz). **Dost tarafına:** o hücredeki dosta anlık şifa (eksik cana göre +%50'ye kadar) + o hücrede 2 tur **Holy Ground** (içinde tur başlatan dosta tur başı sabit şifa; düşmana etkisi yok). **Düşman tarafına:** o hücredeki düşmana kutsal hasar. Sayılar `data/skills.json > radiance`.
+## Paladin (Ömer 2026-10-24; open-questions madde 416)
+- **Ultimate - Radiance:** yeniden 0.9.8 öncesi davranış: TÜM dostlara şifa (eksik cana göre +%50'ye kadar) + TÜM düşmanlara kutsal hasar, zemin yok. D11 tek hücre / Holy Ground sürümü (madde 406) geri alındı. Sayılar `data/skills.json > radiance`.
+- **Judgment:** TEK hücre, iki tahtaya da atılabilir (Ömer 2026-10-24, madde 416/8). Düşman hücresine: anlık kutsal hasar (INT 0,35) + 2 tur Holy Fire (INT 0,45/tur). Dost hücresine: anlık şifa (INT 0,35) + 2 tur Holy Ground şifa zemini (INT 0,45/tur). Sayılar provizyon.
+- **Divine Light:** şifa %35 INT. Evolve **Crusader's Dawn:** her tur hem en yaralı dosta şifa hem en zayıf düşmana smite, ikisi de %25 güçlü (smite gerçekleşen şifadan bağımsız); öldürünce 5 MP.
 
 Bu dosyadaki tüm sayılar ve rol önerileri Ömer onaylayana kadar **geçicidir**.

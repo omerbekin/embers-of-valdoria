@@ -28,3 +28,5 @@ Sen bu oyunun (oyun adı "Embers of Valdoria": sıra tabanlı, yandan görünüm
 
 ## Çıktı
 Eklenen/değişen içeriğin sade Türkçe özeti: ne yapıldı, ekranda nasıl görünmeli/duyulmalı, Ömer neyi test etmeli.
+
+**Tarayıcı testinde SES KAPALI (Ömer 2026-10-24, ZORUNLU):** oyunu tarayıcıda açan herkes (ana oturum + her agent) her yeni porta/sekmeye ilk iş olarak `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()` çalıştırır (Master 0 = müzik + efekt + arayüz sesi kapalı). Eski `proto.settings.v1` anahtarı İŞE YARAMAZ (taşıma bir kez çalışır).

@@ -1,5 +1,6 @@
 import { unitLabel } from './ai';
 import { shapeLabel } from './area-shape';
+import { paceText } from './stat-info';
 import type { AiExplanation } from './ai';
 import type { Battle, BattleObserver, ObservedAction } from './battle';
 import type { BattleEvent, Combatant, SkillDef, SkillEffect } from './types';
@@ -394,7 +395,7 @@ export class MatchLog {
       const s = c.stats;
       const prim = s.primary ? `${s.primary}${s.primaryActive ? ' (active)' : ' (inactive)'}${s.resilience ? ` resilience ${s.resilience}` : ''}${s.hunterMark ? ` hunterMark ${s.hunterMark}` : ''}${s.manaEcho ? ` manaEcho ${s.manaEcho}` : ''}${s.surviveChance ? ` surviveChance ${s.surviveChance}` : ''}` : 'none';
       lines.push(
-        `${unitLabel(c)} [${c.defId}] cell ${c.slot}${c.summoned ? ' (summon)' : ''}${c.tier ? ` (${c.tier})` : ''}${c.modifiers ? ` mods ${JSON.stringify(c.modifiers)}` : ''} | STR ${s.str} INT ${s.int} DEX ${s.dex} LUCK ${s.luck} | maxHP ${c.maxHp} maxMP ${c.maxMp}${c.maxRage !== undefined ? ` maxRage ${c.maxRage}` : ''} spd ${s.spd} armor ${s.armor} marmor ${s.magicArmor} evasion ${r1(s.evasion * 100)}% accuracy ${r1(s.accuracy * 100)}% crit ${r1(s.critChance * 100)}% x${s.critMult} | regen hp ${s.hpRegen} mp ${s.mpRegen} | primary ${prim} | passive ${c.passive ? `${c.passive.name} ${JSON.stringify(c.passive.effect)}` : 'none'} | ai ${c.ai ?? 'default'} tags [${c.tags.join(',')}]`,
+        `${unitLabel(c)} [${c.defId}] cell ${c.slot}${c.summoned ? ' (summon)' : ''}${c.tier ? ` (${c.tier})` : ''}${c.modifiers ? ` mods ${JSON.stringify(c.modifiers)}` : ''} | STR ${s.str} INT ${s.int} DEX ${s.dex} LUCK ${s.luck} | maxHP ${c.maxHp} maxMP ${c.maxMp}${c.maxRage !== undefined ? ` maxRage ${c.maxRage}` : ''} spd ${s.spd}${s.spdRoll !== undefined ? ` (pace ${paceText(s.spdRoll)})` : ''} armor ${s.armor} marmor ${s.magicArmor} evasion ${r1(s.evasion * 100)}% accuracy ${r1(s.accuracy * 100)}% crit ${r1(s.critChance * 100)}% x${s.critMult} | regen hp ${s.hpRegen} mp ${s.mpRegen} | primary ${prim} | passive ${c.passive ? `${c.passive.name} ${JSON.stringify(c.passive.effect)}` : 'none'} | ai ${c.ai ?? 'default'} tags [${c.tags.join(',')}]`,
       );
       for (const id of c.skills) {
         const sk = b.skill(id);

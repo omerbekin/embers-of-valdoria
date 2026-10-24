@@ -9,6 +9,8 @@ import { battlePlan, battleForPlan, debugTeleport, newCampaign } from '../src/ca
 
 const slot = (uid: string, side: 'party' | 'enemy', s: number, spd = 16): TurnSlot => ({ uid, side, slot: s, spd, counter: 0 });
 const sideOf = (uid: string) => (uid.startsWith('party') ? 'p' : 'e');
+// Kişisel hız zarı (Ömer 2026-10-24) KAPALI kurulum: eşit hız kuralı ve veri hız bantları zarsız (taban) hızı denetler
+const flat = (setup: ReturnType<typeof content.battleSetup>): ReturnType<typeof content.battleSetup> => ({ ...setup, formulas: { ...setup.formulas, attributes: { ...setup.formulas.attributes, spdVariance: 0 } } });
 
 describe('karışık sıra (eşit hız)', () => {
   it('tahmin: eşit hızlı 3+3 birim birim birim sıralanır, ilk taraf firstSide', () => {
@@ -27,7 +29,7 @@ describe('karışık sıra (eşit hız)', () => {
   it('savaş: gerçek tur sırası tahminle aynı ve karışık; her tohumda (yazı-tura) taraflar dönüşür', () => {
     const party = ['', 'defender', '', 'mage', '', 'hexer', '', '', '', '', '', ''];
     for (const seed of [1, 2, 3, 4]) {
-      const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, seed, 'turns', { party, enemies: party }, false));
+      const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, seed, 'turns', { party, enemies: party }, false)));
       for (const c of b.combatants) c.mp = 0; // Rest için (MP doluyken kullanılamaz)
       const predicted = b.turnQueue(6);
       const actual: string[] = [];
@@ -61,7 +63,7 @@ describe('bölge I mob hızları (veri)', () => {
       const p = plan(node);
       const lists = [{ enemies: p.enemies, units: p.units.enemies }, ...(p.waves ?? [])];
       for (const w of lists) {
-        const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: p.party, enemies: w.enemies, units: { party: p.units.party, enemies: w.units } }, false));
+        const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: p.party, enemies: w.enemies, units: { party: p.units.party, enemies: w.units } }, false)));
         for (const c of b.combatants.filter((x) => x.side === 'enemy' && LOWERED.includes(x.defId)))
           expect(c.stats.spd, `${node} ${c.defId}`).toBeGreaterThanOrEqual(15), expect(c.stats.spd, `${node} ${c.defId}`).toBeLessThanOrEqual(17);
       }
@@ -76,7 +78,7 @@ describe('bölge I mob hızları (veri)', () => {
       const p = plan(node);
       const lists = [{ enemies: p.enemies, units: p.units.enemies }, ...(p.waves ?? [])];
       for (const w of lists) {
-        const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: p.party, enemies: w.enemies, units: { party: p.units.party, enemies: w.units } }, false));
+        const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: p.party, enemies: w.enemies, units: { party: p.units.party, enemies: w.units } }, false)));
         for (const c of b.combatants.filter((x) => x.side === 'enemy' && !x.tier && !FAST_OK.includes(x.defId)))
           expect(c.stats.spd, `${node} ${c.defId}`).toBeGreaterThanOrEqual(15), expect(c.stats.spd, `${node} ${c.defId}`).toBeLessThanOrEqual(17);
       }
@@ -85,7 +87,7 @@ describe('bölge I mob hızları (veri)', () => {
 
   it('Ravenwood: yalnız lider kurt hızlı (19), diğer kurtlar 15-16; yavaş takım karşısında ilk kahraman turundan önce 1 düşman', () => {
     const p = plan('2');
-    const b = new Battle(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: ['defender', 'mage', 'paladin'], enemies: p.enemies, units: { enemies: p.units.enemies } }, false));
+    const b = new Battle(flat(content.battleSetup(content.DEFAULT_BATTLE, 1, 'turns', { party: ['defender', 'mage', 'paladin'], enemies: p.enemies, units: { enemies: p.units.enemies } }, false)));
     const wolves = b.combatants.filter((x) => x.side === 'enemy' && x.defId === 'grey_wolf').map((x) => x.stats.spd).sort((a, z) => z - a);
     expect(wolves[0]).toBe(19);
     for (const s of wolves.slice(1)) expect(s).toBeLessThanOrEqual(16);

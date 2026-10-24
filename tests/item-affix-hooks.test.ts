@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { Battle, content, previewSkill, skillCostAmount, type BattleEvent, type BattleMode, type ItemEffects, type Teams, type UnitModifiers, type UnitSetup } from '../src/engine';
+import { Battle, content, previewSkill, rolledSpeed, skillCostAmount, type BattleEvent, type BattleMode, type ItemEffects, type Teams, type UnitModifiers, type UnitSetup } from '../src/engine';
 import { skillNumbers } from '../src/engine/skill-info';
 import { damageSpecFor } from '../src/engine/spec';
 
@@ -57,7 +57,10 @@ describe('affix statları: skill sayıları (motor = skill-info = önizleme)', (
   it('Hız % ve maks MP %: türetilmiş değerin üstüne çarpan', () => {
     const plain = make({ 0: 'mage' }, { 0: 'warrior' }).combatants[0]!;
     const fast = make({ 0: 'mage' }, { 0: 'warrior' }, { 0: mod({ spdMult: 1.5, mpMult: 1.5 }) }).combatants[0]!;
-    expect(fast.stats.spd).toBeCloseTo(plain.stats.spd * 1.5, 3);
+    // Kişisel hız zarı (Ömer 2026-10-24): çarpan türetilmiş hıza, zar SON hıza (aynı uid = aynı zar)
+    expect(fast.stats.spdRoll).toBe(plain.stats.spdRoll);
+    expect(fast.stats.spd).toBe(rolledSpeed(content.classes.mage!.stats.spd * 1.5, fast.stats.spdRoll!, f));
+    expect(fast.stats.spd).toBeGreaterThan(plain.stats.spd);
     expect(fast.maxMp).toBe(Math.round(plain.maxMp * 1.5));
   });
 
@@ -104,6 +107,26 @@ describe('affix kancaları (ItemEffects)', () => {
     plain.debug.dodge = 'never';
     plain.useSkill('party-0', warriorAttack, 'enemy-0');
     expect(plain.log.some((e) => e.type === 'heal' && e.cause === 'leech')).toBe(false);
+  });
+
+  it('Mana leech: isabet eden vuruşun düşürdüğü canın oranı MP (mpRegen cause mana_leech); maks MP tavanı; etki yoksa olay yok', () => {
+    const mageAttack = content.classes.mage!.skills[0]!;
+    const run = (ml: number, startMpRatio: number) => {
+      const b = make({ 0: 'mage' }, { 0: 'defender' }, { 0: fx({ manaLeech: ml }, { startMpRatio, modifiers: { spdMult: 3 } }) }); // hızlı: ilk sıra mage'de
+      b.debug.dodge = 'never';
+      b.useSkill('party-0', mageAttack, 'enemy-0');
+      return { b, gains: b.log.filter((e): e is Extract<BattleEvent, { type: 'mpRegen' }> => e.type === 'mpRegen' && e.cause === 'mana_leech' && e.actor === 'party-0') };
+    };
+    const low = run(0.5, 0.2);
+    expect(low.gains.length).toBe(1);
+    expect(low.gains[0]!.amount).toBeGreaterThan(0);
+    // tavan: dev oran bile maks MP'yi aşmaz
+    const cap = run(100, 0.9);
+    const u = unit(cap.b, 'party-0');
+    expect(cap.gains[0]!.after).toBe(u.maxMp);
+    expect(u.mp).toBeLessThanOrEqual(u.maxMp);
+    // etki yoksa olay yok
+    expect(run(0, 0.2).gains.length).toBe(0);
   });
 
   it('Debuff resistance: debuff hiç tutmaz (Resisted); kendi uyguladığı ve buff etkilenmez; etki yoksa zar atılmaz', () => {

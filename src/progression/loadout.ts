@@ -5,7 +5,7 @@
 // sınıfta silahsız kahraman silah çarpanı < 1 alır (Item Güçlendirme 2026-10-17: başlangıç silahı sıfır noktası).
 // Affix eşlemesi veride (items.json > affixDefs[].parts[].to; Ömer onayı 2026-10-11, items.md 1.3b).
 import { classes, formulas } from '../engine/content';
-import { applyUnitModifiers } from '../engine/stats';
+import { applyUnitModifiers, speedRoll } from '../engine/stats';
 import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
@@ -25,6 +25,8 @@ export interface LoadoutSource {
   alloc?: StatAlloc;
   /** Skill ağacı dağılımı (docs/design/skill-tree-implementation.md): sefer Hero / Endless kahramanının kayıttaki `tree` alanı (Faz 1b). Yalnızca `mode` verilip açıksa savaşa girer. */
   tree?: TreeAlloc;
+  /** Kişisel hız zarı (Ömer 2026-10-24): kahramanın kalıcı çarpanı (Hero / EndlessHero.spdRoll; heroSpeedRoll). Verilince her stat gösterimi ve savaş aynı hızı görür. */
+  spdRoll?: number;
 }
 
 export interface LoadoutResult {
@@ -221,6 +223,8 @@ export function loadout(src: LoadoutSource): LoadoutResult {
   if (grow.mp !== 1) mods.mpMult = ((mods.mpMult as number | undefined) ?? 1) * grow.mp;
   tidy(mods);
   tidy(fx);
+  // Kişisel hız zarı (Ömer 2026-10-24): son hıza en sonda uygulanır (applyUnitModifiers); 1 de yazılır ki savaş ayrıca zar atmasın
+  if (typeof src.spdRoll === 'number' && Number.isFinite(src.spdRoll)) mods.spdRoll = src.spdRoll;
   // Legendary etkileri (madde 296)
   const legend = equipmentEffects(src.equipment);
   const effects = { ...fx, ...(legend ?? {}) } as ItemEffects;
@@ -270,6 +274,17 @@ export function inactivePenalty(classId: string, equipment: Partial<Equipment>, 
   const without = { ...equipment, [slot]: null } as Partial<Equipment>;
   if (!inst) return 0;
   return Math.round((sum({ ...without, [slot]: inst }) - sum(without)) * 1000) / 1000;
+}
+
+/**
+ * Kahramanın kalıcı kişisel hız zarı (Ömer 2026-10-24): sefer / Endless seed'i + kahraman id'sinden, deterministik (stats.ts > speedRoll).
+ * Kahraman yaratılırken yazılır; eski kayıtta normalizasyon aynı fonksiyonla tamamlar (aynı kahraman = aynı zar).
+ */
+export const heroSpeedRoll = (seed: number, heroId: string): number => speedRoll(seed, `hero:${heroId}`, formulas);
+
+/** Kayıt onarımı (sürüm artmaz; her okumada, idempotent): zarı olmayan / bozuk kahramana heroSpeedRoll yazılır, geçerli zar korunur. */
+export function normalizeSpdRoll(h: { id: string; spdRoll?: number }, seed: number): void {
+  if (typeof h.spdRoll !== 'number' || !Number.isFinite(h.spdRoll) || h.spdRoll <= 0) h.spdRoll = heroSpeedRoll(seed, h.id);
 }
 
 /** Takılı item'lerin toparlanma oranı (Recovery affix'i; sefer / Endless savaş sonrası, yalnızca takan). */

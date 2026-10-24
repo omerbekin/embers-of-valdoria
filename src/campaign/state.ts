@@ -4,7 +4,7 @@ import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, up
 import { rngFor, shuffle } from './seed';
 import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
-import { itemRecovery } from '../progression/loadout';
+import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
 import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
 import { emptyLootState, grantGift, grantLoot } from './loot';
 import { leaveMerchant } from './merchant';
@@ -200,6 +200,7 @@ function addHero(s: CampaignState, classId: string, o: { leader?: boolean; tutor
     alloc: {},
     // Item Güçlendirme x5 (Ömer 2026-10-17): her kahraman sınıfının Common başlangıç silahıyla gelir
     equipment: starterEquipment(classId, id),
+    spdRoll: heroSpeedRoll(s.seed, id), // kişisel hız zarı (Ömer 2026-10-24): kalıcı
   };
   s.roster.push(hero);
   place(s, hero);

@@ -1,6 +1,6 @@
 {
   "class": "paladin",
-  "version": 1,
+  "version": 2,
   "picked": {
     "rows": [
       "a",
@@ -200,14 +200,14 @@
     },
     "0.n0": {
       "name": "No Rest for Evil",
-      "text": "When no ally is wounded, Divine Light smites the weakest enemy for 30% INT holy damage.",
+      "text": "When no ally is wounded, Divine Light smites the weakest enemy for 27% INT holy damage.",
       "src": "A:V2:0.n0",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "idle": 0.3
+            "idle": 0.27
           }
         }
       ]
@@ -354,14 +354,14 @@
     },
     "0.v": {
       "name": "Crusader's Dawn",
-      "text": "Divine Light heals the most wounded ally and smites the weakest enemy for the same amount; a kill refunds 5 MP.",
+      "text": "Divine Light heals the most wounded ally and smites the weakest enemy every turn, both 25% stronger; a kill refunds 5 MP.",
       "src": "A:V2:0.v",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "smite": {
-            "mirror": 1
+            "dual": 1.25
           }
         },
         {
@@ -913,31 +913,36 @@
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.05
+              "chance": 0.05,
+              "side": "enemies"
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.1
+              "chance": 0.1,
+              "side": "enemies"
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.15
+              "chance": 0.15,
+              "side": "enemies"
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.2
+              "chance": 0.2,
+              "side": "enemies"
             },
             {
               "type": "status",
               "status": "burning",
               "turns": 2,
-              "chance": 0.25
+              "chance": 0.25,
+              "side": "enemies"
             }
           ]
         }
@@ -945,7 +950,7 @@
     },
     "3.n0": {
       "name": "Sanctified Earth",
-      "text": "Judgment's holy fire lasts 3 turns instead of 2.",
+      "text": "Judgment's holy fire and holy ground last 3 turns instead of 2.",
       "src": "A:V4:3.n0",
       "fx": [
         {
@@ -999,16 +1004,17 @@
       ]
     },
     "3.eb": {
-      "name": "Broad Sentence",
-      "text": "Judgment's plus reaches 1 cell further in each direction.",
-      "src": "A:V2:3.eb",
+      "name": "Wildfire Verdict",
+      "text": "Enemies standing in holy fire take 15% more damage from all sources.",
+      "src": "A:V4:3.mb",
       "fx": [
         {
           "k": "hook",
-          "h": "target",
-          "area": {
-            "arm": 2
-          }
+          "h": "heal",
+          "on": "damageTaken",
+          "who": "foe",
+          "ground": "holy_fire",
+          "mul": 0.15
         }
       ]
     },
@@ -1028,7 +1034,7 @@
     },
     "3.fa": {
       "name": "Scorched Earth",
-      "text": "Holy fire lasts 2 more turns, but Judgment's cooldown 3 → 5.",
+      "text": "Holy fire and holy ground last 2 more turns, but Judgment's cooldown 3 → 5.",
       "src": "A:V4:3.fa",
       "fx": [
         {
@@ -1049,19 +1055,33 @@
     },
     "3.fb": {
       "name": "Scattered Flame",
-      "text": "Judgment also covers the center's whole row, but its holy fire deals 30% less.",
+      "text": "Judgment also reaches the cells above and below its target, but all its damage and healing is 30% weaker.",
       "src": "A:V2:3.fb",
       "fx": [
         {
           "k": "hook",
           "h": "target",
           "area": {
-            "also": "row"
+            "flankV": true
           }
         },
         {
           "k": "skill",
-          "sel": "ground:holy_fire",
+          "sel": "damage",
+          "f": "power",
+          "op": "pct",
+          "v": -0.3
+        },
+        {
+          "k": "skill",
+          "sel": "heal",
+          "f": "power",
+          "op": "pct",
+          "v": -0.3
+        },
+        {
+          "k": "skill",
+          "sel": "ground",
           "f": "power",
           "op": "pct",
           "v": -0.3
@@ -1069,24 +1089,16 @@
       ]
     },
     "3.mb": {
-      "name": "Wildfire Verdict",
-      "text": "When an enemy dies in holy fire, the fire jumps to the nearest enemy for 2 turns.",
-      "src": "A:V4:3.mb",
+      "name": "Broad Sentence",
+      "text": "Judgment also reaches the cells to the left and right of its target.",
+      "src": "A:V2:3.eb",
       "fx": [
         {
           "k": "hook",
-          "h": "trigger",
-          "on": "enemyDied",
-          "ground": "holy_fire",
-          "do": [
-            {
-              "ground": "holy_fire",
-              "of": "ground",
-              "power": 1,
-              "turns": 2,
-              "to": "nearestEnemy"
-            }
-          ]
+          "h": "target",
+          "area": {
+            "flankH": true
+          }
         }
       ]
     },
@@ -1128,7 +1140,7 @@
     },
     "4.u2": {
       "name": "Scorching Light",
-      "text": "Radiance sets the enemy it hits Burning for 2 turns.",
+      "text": "Radiance sets every enemy Burning for 2 turns.",
       "src": "A:V2:4.u2",
       "fx": [
         {
@@ -1211,7 +1223,7 @@
     },
     "4.d1": {
       "name": "Focused Beam",
-      "text": "Radiance can strike as a focused beam: no heal and no Holy Ground, but 120% damage to the enemy.",
+      "text": "Radiance can target one enemy: it skips the heal and deals 220% damage to that enemy only.",
       "src": "A:V2:4.d1",
       "new": true,
       "approved": true,
@@ -1220,11 +1232,11 @@
           "k": "mode",
           "mode": "focused_beam",
           "name": "Focused Beam",
-          "text": "120% damage to one enemy. No heal.",
-          "baseText": "One cell: heals an ally and leaves Holy Ground, or hits an enemy.",
+          "text": "220% damage to one enemy. No heal.",
+          "baseText": "Heals all allies. Hits all enemies.",
           "target": "single_enemy",
-          "removeEffects": ["heal", "ground"],
-          "powerMul": 1.2
+          "removeEffects": ["heal"],
+          "powerMul": 2.2
         }
       ]
     },
@@ -1291,7 +1303,7 @@
     },
     "4.l3": {
       "name": "Second Sunrise",
-      "text": "If Radiance heals an ally below 30% HP, its cooldown is 2 instead of 4 this time.",
+      "text": "If Radiance heals 3+ allies below 50% HP, its cooldown is 2 instead of 4 this time.",
       "src": "A:V1:4.d3",
       "fx": [
         {
@@ -1299,8 +1311,8 @@
           "h": "cond",
           "when": {
             "healedCountBelow": {
-              "below": 0.3,
-              "atLeast": 1
+              "below": 0.5,
+              "atLeast": 3
             }
           },
           "mod": {

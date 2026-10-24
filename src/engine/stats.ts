@@ -18,6 +18,36 @@ export function roundSpeed(v: number, formulas: Pick<Formulas, 'attributes'>): n
 /** Hızın alt sınırı: bir hız adımı. */
 export const speedMin = (formulas: Pick<Formulas, 'attributes'>): number => formulas.attributes.spdStep ?? 1;
 
+/**
+ * Kişisel hız zarı (Ömer 2026-10-24, "Natural pace"): `seed` + `key`ten (savaş seed'i + birim uid'i, ya da sefer/Endless seed'i + kahraman id'si)
+ * türeyen çarpan, [1 - spdVariance, 1 + spdVariance] aralığında düzgün dağılımlı, 4 ondalık. Savaşın ana Rng akışını HİÇ tüketmez (diğer zarlar
+ * aynı kalır). spdVariance yoksa / 0 ise 1 (zar yok).
+ */
+export function speedRoll(seed: number, key: string, formulas: Pick<Formulas, 'attributes'>): number {
+  const v = formulas.attributes.spdVariance ?? 0;
+  if (!(v > 0)) return 1;
+  // FNV-1a + murmur3 son karıştırma: saf, platformdan bağımsız
+  let h = 2166136261;
+  const str = `${seed >>> 0}:${key}`;
+  for (let i = 0; i < str.length; i++) {
+    h ^= str.charCodeAt(i);
+    h = Math.imul(h, 16777619);
+  }
+  h ^= h >>> 16;
+  h = Math.imul(h, 0x85ebca6b);
+  h ^= h >>> 13;
+  h = Math.imul(h, 0xc2b2ae35);
+  h ^= h >>> 16;
+  const u = (h >>> 0) / 4294967296;
+  return Math.round((1 - v + 2 * v * u) * 10000) / 10000;
+}
+
+/** Zarlanmış hız: SON hız x zar, spdStep'e yuvarlanır, alt sınır speedMin. Zar 1 ise hız aynen döner. */
+export function rolledSpeed(spd: number, roll: number, formulas: Pick<Formulas, 'attributes'>): number {
+  if (roll === 1) return spd;
+  return Math.max(speedMin(formulas), roundSpeed(spd * roll, formulas));
+}
+
 /** Kaçınma (evasion): tam sayı adımlı (her dexPerEvasionStep Dex = +evasionPerStep), evasionMax üst sınırlı. */
 
 export function evasionOf(dex: number, formulas: Formulas): number {
@@ -140,6 +170,7 @@ export function hasUnitModifiers(mods: UnitModifiers | undefined): boolean {
     ATTRS.some((k) => nonOne(mods.attrMult?.[k]) || nonZero(mods.attrAdd?.[k])) ||
     nonOne(mods.mpMult) ||
     nonOne(mods.spdMult) ||
+    nonOne(mods.spdRoll) ||
     nonOne(mods.weaponMult) ||
     AFFIX_ADD.some((k) => nonZero(mods[k])) ||
     Object.values(mods.elemDamageAdd ?? {}).some((v) => nonZero(v))
@@ -200,6 +231,11 @@ export function applyUnitModifiers(def: CombatantDef, mods: UnitModifiers | unde
   // Affix ekleri (Ömer 2026-10-11): alan verilmezse stat hiç yazılmaz (bugünkü birimler birebir aynı)
   if (mods.mpMult !== undefined && mods.mpMult !== 1) stats.mp = Math.max(0, Math.round(stats.mp * mods.mpMult));
   if (mods.spdMult !== undefined && mods.spdMult !== 1) stats.spd = Math.max(speedMin(formulas), r4(stats.spd * mods.spdMult));
+  // Kişisel hız zarı (Ömer 2026-10-24): SON hıza, en sonda (kahraman sayfası, item önizlemesi ve savaş aynı değeri görür)
+  if (mods.spdRoll !== undefined && mods.spdRoll !== 1) {
+    stats.spd = rolledSpeed(stats.spd, mods.spdRoll, formulas);
+    stats.spdRoll = mods.spdRoll;
+  }
   if (mods.surviveAdd) stats.surviveChance = Math.min(1, r4((stats.surviveChance ?? 0) + mods.surviveAdd));
   if (mods.damageAdd) stats.damageMult = r4(1 + mods.damageAdd);
   if (mods.weaponMult !== undefined && mods.weaponMult !== 1) stats.weaponMult = r4(Math.max(0, mods.weaponMult));

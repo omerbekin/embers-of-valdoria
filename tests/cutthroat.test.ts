@@ -485,8 +485,11 @@ describe('Cutthroat yapay zekası (assassin): bağlam ipuçları, determinizm', 
     expect(ch?.skillId).toBe('smoke_bomb');
     expect(ch?.board ?? 'enemy').toBe('enemy');
     expect(ch?.reason).toBe('tactic');
+    const n0 = b.log.length;
     expect(b.applyChoice(b.currentUid!, ch).ok).toBe(true);
-    expect(b.living('enemy').filter((c) => c.statuses.some((s) => s.kind === 'blinded')).length).toBeGreaterThanOrEqual(2);
+    // Olaydan sayılır (kişisel hız zarı, Ömer 2026-10-24): Resilience 1 tura indirdiği Blinded, o birim hemen sırada oynarsa tur başında biter
+    const blinded = new Set(b.log.slice(n0).filter((e) => e.type === 'status' && e.status === 'blinded').map((e) => (e as { target: string }).target));
+    expect(blinded.size).toBeGreaterThanOrEqual(2);
   });
 
   it('Smoke Bomb: düşmanlar dağınık (hiçbir 2x2 iki düşmanı kapsamaz) ama dostlar kümeli ve tehdit altında -> kendi tarafına (Shrouded)', () => {

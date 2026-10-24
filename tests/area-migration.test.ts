@@ -32,7 +32,7 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
   natures_wrath: { owner: 'druid', area: { shape: 'rect', rows: 2, cols: 3, stages: 'row' } },
   blizzard: { owner: 'mage', area: { shape: 'rect', rows: 3, cols: 2 } },
   meteor: { owner: 'mage', area: { shape: 'plus' } },
-  judgment: { owner: 'paladin', area: { shape: 'plus' } },
+  judgment: { owner: 'paladin', area: { shape: 'rect', rows: 1, cols: 1 } }, // Ömer 2026-10-24: artı -> tek hücre (open-questions 416)
   wail_of_the_dead: { owner: 'undead', area: { shape: 'plus', stages: 'distance' } },
   tremor_slam: { owner: 'defender', area: { shape: 'row' } },
   piercing_arrow: { owner: 'archer', area: { shape: 'column', stages: 'row' } },
@@ -41,7 +41,7 @@ const MIGRATED: Record<string, { owner: string; area: Record<string, unknown> }>
 };
 
 /** Madde 220'den sonra doğrudan şekil modeliyle eklenen alan skill'leri (migrasyon değil): Cutthroat Saltire Cut (x) ve Smoke Bomb (area_any), Druid Vine Snare. */
-const ADDED_LATER = ['radiance', 'x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
+const ADDED_LATER = ['x_cut', 'smoke_bomb', 'vine_snare', 'withering_curse', 'breaking_span', 'whirlwind']; // withering_curse: Hexer (rect 2x3, stages row); whirlwind: Warrior (rect 2x3, Ömer 2026-10-20: ilk 2 sıra; open-questions 376)
 
 describe('rect: tüm boyutlar 1x1 .. 4x3 (rows = sıra, cols = şerit), iki tahta, her anchor', () => {
   for (let R = 1; R <= fm.rows; R++)
@@ -249,7 +249,7 @@ describe('migre edilen alan skill\'leri', () => {
   it('her biri tabloda yazan şekilde; sayılar (güç, MP, cooldown) eski yerinde (yalnızca target/area değişti)', () => {
     for (const [id, m] of Object.entries(MIGRATED)) {
       const s = content.skills[id]!;
-      expect(s.target, id).toBe('area_enemies');
+      expect(s.target, id).toBe(id === 'judgment' ? 'area_any' : 'area_enemies'); // Judgment 2026-10-24: iki tahtaya (open-questions 416/8)
       expect(s.area, id).toMatchObject(m.area);
       expect(content.classes[m.owner]!.skills, id).toContain(id);
     }
@@ -258,12 +258,12 @@ describe('migre edilen alan skill\'leri', () => {
     for (const id of area) expect(id in MIGRATED || content.classes.aoe_tester!.skills.includes(id) || ADDED_LATER.includes(id) || !!content.skills[id]!.artOf, id).toBe(true); // artOf: Pose Tester kopyası
   });
 
-  it('dokunulmayan hedef-seçim türleri: Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu; Radiance (D11, 2026-10-24) iki tahtalı tek hücre', () => {
+  it('dokunulmayan hedef-seçim türleri: Radiance (everyone; D11 2026-10-24 geri alındı), Fist Crush / Card Trick (random_enemies); Whirlwind 2026-10-20 rect 2x3 oldu', () => {
     expect(content.skills.whirlwind!).toMatchObject({ target: 'area_enemies', area: { shape: 'rect', rows: 2, cols: 3 } });
-    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 } });
+    expect(content.skills.radiance!.target).toBe('everyone');
     expect(content.skills.fist_crush!.target).toBe('random_enemies');
     expect(content.skills.card_trick!.target).toBe('random_enemies');
-    for (const id of ['fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
+    for (const id of ['radiance', 'fist_crush', 'card_trick']) expect(content.skills[id]!.area, id).toBeUndefined();
   });
 
   it('açıklama ve rozet şekilden: Block 2x3 + "Sweeps row by row, front row first" (aşamalı), Cross, Row, Column', () => {
@@ -340,12 +340,12 @@ describe('AI: migre şekil skill\'leri', () => {
     expect(best).toBe(4); // sıra 1 + sıra 2 (3,4,5,6)
   });
 
-  it('zemin değeri boş anchor\'da da sayılır (Judgment: yalnız zemin; iki düşmanın ortak boş komşusu)', () => {
+  it('zemin değeri olan tek hücre skill (Judgment, 2026-10-24 tek hücre): bir düşmanın hücresine atılır', () => {
     const b = arena([['paladin', 0]], WAR(0, 4));
     b.combatants[0]!.skills = ['judgment'];
     const choice = chooseAction(b, 'party-0', ai)!;
     expect(choice.skillId).toBe('judgment');
-    expect(b.areaWindowAt('party-0', 'judgment', choice.slot ?? b.get(choice.targetUid!)!.slot)).toHaveLength(2);
+    expect(b.areaWindowAt('party-0', 'judgment', choice.slot ?? b.get(choice.targetUid!)!.slot)).toHaveLength(1);
   });
 
   for (const mode of ['turns', 'test'] as const) {

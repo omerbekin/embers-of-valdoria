@@ -33,3 +33,5 @@ Sen bu oyunun sefer (campaign) ve ilerleme sistemi geliştiricisisin. Ömer kod 
 
 ## Çıktı
 Yaptığın değişikliğin sade Türkçe özeti, ekranda neyin nasıl görünmesi gerektiği, Ömer'in neyi nasıl test edeceği (debug menüsü dahil), diğer ajanlara (engine-dev, ui-dev, content-designer, balance-tester) devredilecek işler ve Ömer'e sorular.
+
+**Tarayıcı testinde SES KAPALI (Ömer 2026-10-24, ZORUNLU):** oyunu tarayıcıda açan herkes (ana oturum + her agent) her yeni porta/sekmeye ilk iş olarak `localStorage.setItem('eov.settings.v1', JSON.stringify({volume:0, steps:20})); location.reload()` çalıştırır (Master 0 = müzik + efekt + arayüz sesi kapalı). Eski `proto.settings.v1` anahtarı İŞE YARAMAZ (taşıma bir kez çalışır).

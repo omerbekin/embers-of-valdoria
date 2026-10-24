@@ -8,6 +8,7 @@ import { valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
+import { normalizeSpdRoll } from '../progression/loadout';
 import { clampValor } from '../engine/valor';
 import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
 
@@ -150,6 +151,7 @@ function upgradeState(s: CampaignState): void {
       promoteOffhand(eq); // 2026-10-14: ana el boşken ikinci eldeki hançer ana ele (eski Equip best hatası)
       const out = { ...h, equipment: eq };
       normalizeLevelFields(out); // level / XP / puanlar (sürüm 9; bozuk değer varsayılana, hiçbir şey geri alınmaz)
+      if (typeof s.seed === 'number') normalizeSpdRoll(out, s.seed); // kişisel hız zarı (Ömer 2026-10-24; sürüm artmaz, idempotent)
       normalizeTree(out); // skill ağacı (sürüm 12): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec
       return out;
     });
@@ -290,6 +292,20 @@ function migrateV1(saves: unknown[], counter: number): { file: SaveFile; dropped
   });
   if (order.length) file.lastSlot = 0;
   return { file, dropped: dropped || order.length > SLOT_COUNT };
+}
+
+/**
+ * Ham kayıt dizgisinin dosya sürümü (bulut senkronu: daha yeni şemadan gelen paketi reddetmek için; accounts-plan.md Faz 1b).
+ * Yalnızca okur, şemaya dokunmaz. Boş / JSON değil / sürüm sayı değilse null.
+ */
+export function peekVersion(raw: string | null): number | null {
+  if (!raw) return null;
+  try {
+    const v = (JSON.parse(raw) as { version?: unknown } | null)?.version;
+    return typeof v === 'number' && Number.isFinite(v) ? v : null;
+  } catch {
+    return null;
+  }
 }
 
 /** Kayıt dosyasını okur. Hiç kayıt yoksa boş; okunamazsa boş + corrupt. Eski sürüm yuvalara taşınır (`migrated`). */

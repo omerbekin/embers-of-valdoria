@@ -1,6 +1,6 @@
 // Yerel lobi sunucusu denemesi: önce `npm run dev` (http://127.0.0.1:8787). Kullanım: node scripts/smoke.mjs [ws://127.0.0.1:8787]
 // (adres /lobby ile de verilebilir: ws://127.0.0.1:8787/lobby). Node 22+ gerekir (yerleşik WebSocket). Yerel adreste internete çıkmaz;
-// yayındaki sunucuya da çalıştırılabilir: node scripts/smoke.mjs wss://eov.backinn.com.tr/lobby (ağ gecikmesi için her denetim
+// yayındaki sunucuya da çalıştırılabilir: node scripts/smoke.mjs wss://embersofvaldoria.com/lobby (ağ gecikmesi için her denetim
 // sabit süre beklemek yerine beklenen yanıt gelene kadar en çok TIMEOUT ms bekler).
 const base = `${(process.argv[2] ?? 'ws://127.0.0.1:8787').replace(/\/+$/, '').replace(/\/lobby$/, '')}/lobby/`;
 const ABC = 'ACDEFGHJKMNPQRTUVWXY34679';

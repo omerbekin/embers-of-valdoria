@@ -123,10 +123,13 @@ describe('motor kancaları (verilmezse birim aynı)', () => {
     const m = unit(b, 'party-0');
     const sk = content.classes.mage!.skills.find((id) => content.skills[id]!.cost.resource === 'mp' && content.skills[id]!.cost.amount > 0 && content.skills[id]!.target === 'single_enemy')!;
     b.debug.dodge = 'never';
+    // Mage'in turuna kadar (kişisel hız zarı, Ömer 2026-10-24: düşman önce oynayabilir)
+    for (let i = 0; i < 20 && b.currentActor?.uid !== 'party-0'; i++) b.act(b.currentActor!.uid, { kind: 'global', id: 'skip_turn' });
     expect(b.thriftyFree(m, 'mp')).toBe(true);
     const before = m.mp;
+    const n0 = b.log.length;
     expect(b.useSkill('party-0', sk, 'enemy-0').ok).toBe(true);
-    const echo = b.log.filter((e): e is Extract<BattleEvent, { type: 'mpRegen' }> => e.type === 'mpRegen' && e.actor === 'party-0').reduce((x, e) => x + e.amount, 0);
+    const echo = b.log.slice(n0).filter((e): e is Extract<BattleEvent, { type: 'mpRegen' }> => e.type === 'mpRegen' && e.actor === 'party-0').reduce((x, e) => x + e.amount, 0);
     expect(m.mp - echo).toBe(before); // bedel ödenmedi (Mana Echo geri dönüşü hariç)
     expect(b.thriftyFree(m, 'mp')).toBe(false);
     expect(b.log.some((e) => e.type === 'resource' && e.actor === 'party-0')).toBe(false);
