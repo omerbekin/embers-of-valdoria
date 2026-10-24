@@ -282,7 +282,7 @@ describe('skill açıklaması (tooltip)', () => {
     expect(info('power_strike')).toMatchObject({ name: 'Power Strike', target: 'One enemy', cost: '10 MP', cooldown: '2 turns' });
     expect(info('whirlwind').target).toContain('2x3'); // Whirlwind rect 2x3 (Ömer 2026-10-20)
     expect(info('lay_on_hands').target).toBe('One ally');
-    expect(info('radiance').target).toContain('cross'); // D11: iki tahtalı artı alan
+    expect(info('radiance').target).toBe('Hits only the cell you aim at'); // D11: iki tahtalı tek hücre
     expect(info('shield_wall').target).toBe('Self');
     expect(info('melee_attack')).toMatchObject({ cost: 'Free', cooldown: 'None' });
     expect(info('blood_rite').cost).toBe('20 HP');
@@ -425,7 +425,7 @@ describe('skill rozeti ve primary bonus adı (UI)', () => {
   const st = content.classes.warrior!.stats;
 
   it('alan rozeti şekli (Row / Column / Block RxC / Cross), Random rozeti sayıyı taşır; açıklama satırlarında tekrarlanmaz', () => {
-    const badge = (a: NonNullable<SkillDef['area']>) => (a.shape === 'rect' ? `Block ${a.rows}x${a.cols}` : { row: 'Row', column: 'Column', plus: 'Cross', x: 'X', rowColumn: 'Row + Column' }[a.shape]);
+    const badge = (a: NonNullable<SkillDef['area']>) => (a.shape === 'rect' ? (a.rows === 1 && a.cols === 1 ? 'Single cell' : `Block ${a.rows}x${a.cols}`) : { row: 'Row', column: 'Column', plus: 'Cross', x: 'X', rowColumn: 'Row + Column' }[a.shape]);
     for (const area of Object.values(content.skills).filter((s) => s.target === 'area_enemies' || s.target === 'area_any')) {
       const info = describeSkill(area, st, f);
       expect(info.targetBadge, area.id).toBe(badge(area.area!));

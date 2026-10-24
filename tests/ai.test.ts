@@ -294,7 +294,9 @@ describe('yapay zeka: yeni sınıflar ve menzil/taunt kuralları', () => {
     const archer = b.get(uid(b, 'enemy', 'archer'))!;
     archer.hp = Math.round(archer.maxHp * 0.12); // ölmek üzere: Guard (hasarın yarısını üstlenir) kurtarır
     const skills = b.get(d)!.skills;
-    b.get(d)!.skills = skills.filter((x) => x !== 'taunt' && x !== 'fist_crush'); // Taunt kurtarabilirdi, Fist Crush (zırh ölçekli, 2026-10-10) daha değerli olabilir: yalnızca Guard sınansın
+    // Taunt kurtarabilirdi, Fist Crush (zırh ölçekli, 2026-10-10) daha değerli olabilir; Tremor Slam: 0.9.8 Radiance tek hücre (güç 0,6 -> 1,3) Paladin'in tehdidini
+    // büyüttü, Slow kontrol değeri Close Ranks'i kıl payı geçiyor (38,2 / 37,9): yalnızca Guard sınansın
+    b.get(d)!.skills = skills.filter((x) => x !== 'taunt' && x !== 'fist_crush' && x !== 'tremor_slam');
     const pick = chooseAction(b, d, ai)!;
     expect(pick).toMatchObject({ skillId: 'close_ranks', reason: 'guard' });
     expect([pick.targetUid, ...b.splashTargets('close_ranks', b.get(pick.targetUid!)!, d).map((c) => c.uid)]).toContain(archer.uid);

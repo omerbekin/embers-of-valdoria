@@ -2,7 +2,7 @@ import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
 import { CONFIG, ENCOUNTERS, EVENTS, STORIES, TREASURES, getMap, type EventChoice } from './data';
 import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, upstreamOf } from './graph';
 import { rngFor, shuffle } from './seed';
-import { SLOT_IDS } from '../progression/items';
+import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { itemRecovery } from '../progression/loadout';
 import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
@@ -443,6 +443,28 @@ export function acknowledgeHandover(s: CampaignState): CampaignState {
   return t;
 }
 
+/**
+ * Atlanan tutorial'ın teslim kartı portreleri: her item grubu (ayrılan bir kahramanın eşyası) için o gruptaki tüm item'leri takabilen
+ * sınıflar (companyPool) arasından seed'le biri; önce yeni bölükte olmayan ve henüz seçilmemiş, yoksa seçilmemiş, yoksa herhangi uyan sınıf.
+ * Hiçbir sınıf uymuyorsa (bozuk veri) o grup portresiz kalır.
+ */
+function skippedHandoverFaces(t: CampaignState, ho: NonNullable<CampaignState['pendingHandover']>, picks: string[]): NonNullable<CampaignState['pendingHandover']> {
+  const rng = rngFor(t.seed, 'skip-faces');
+  const used = new Set<string>();
+  const from: Array<{ heroId: string; class: string }> = [];
+  for (const group of ho.skippedSets ?? []) {
+    const defs = group.map((uid) => itemDef(t.inventory.find((i) => i.uid === uid)?.id ?? '')).filter((d): d is NonNullable<typeof d> => !!d);
+    const fits = CONFIG.companyPool.filter((c) => classes[c] && defs.every((d) => canEquip(c, d)));
+    const tiers = [fits.filter((c) => !used.has(c) && !picks.includes(c)), fits.filter((c) => !used.has(c)), fits];
+    const pool = tiers.find((x) => x.length);
+    if (!pool) continue;
+    const c = pool[rng.int(0, pool.length - 1)]!;
+    used.add(c);
+    from.push({ heroId: '', class: c });
+  }
+  return { node: ho.node, items: ho.items, from };
+}
+
 /** "Form your company": `size` farklı sınıf, companyPool'dan serbest; ilk seçilen (ya da `leaderIndex`) lider. */
 export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0): CampaignState {
   const step = expectStep(s, 'company');
@@ -452,6 +474,8 @@ export function formCompany(s: CampaignState, picks: string[], leaderIndex = 0):
   for (const c of picks) if (!CONFIG.companyPool.includes(c)) throw new Error(`Class not in the company pool: ${c}`);
   const t = clone(s);
   picks.forEach((c, i) => addHero(t, c, { leader: i === leaderIndex }));
+  // Tutorial atlandıysa teslim kartına eşyayla eşleşen portreler (open-questions 407, Ömer 2026-10-24 "Eşleşsin")
+  if (t.pendingHandover?.skippedSets) t.pendingHandover = skippedHandoverFaces(t, t.pendingHandover, picks);
   const arranged = autoFormation(t);
   complete(arranged, 'company');
   return arranged;
@@ -1036,7 +1060,8 @@ export function debugTeleport(s: CampaignState, target: string): CampaignState {
  * adımında başlar. Tutorial'ı bitiren oyuncuyla aynı durum mevcut kurallarla kurulur: tutorial yolu (Mill Road -> Ravenwood -> Watchtower)
  * seed'li otomatik seçimlerle kazanılmış sayılır (debugTeleport ile aynı yol), Ashford vedası yapılır (tutorial takımı ayrılır, eşyaları
  * torbaya). Kazanılan altın ve eşyalar kalır (open-questions 407 varsayımı); oyuncunun hiç görmediği şeyler temizlenir: zafer sayacı
- * değişmez, bekleyen ganimet / level kartı yok, teslim kartı sınıfsız ("Their gear is in your bag"), tutorial düğümlerinin ipuçları görüldü.
+ * değişmez, bekleyen ganimet / level kartı yok, tutorial düğümlerinin ipuçları görüldü. Teslim kartı (Ömer 2026-10-24, madde 407): ayrılan
+ * kahramanlar yerine bölük kurulunca torbadaki eşyayı takabilen sınıflardan seed'li portreler (`skippedSets`, bkz. formCompany).
  */
 export function skipTutorial(s: CampaignState): CampaignState {
   expectStep(s, 'hero');
@@ -1045,12 +1070,15 @@ export function skipTutorial(s: CampaignState): CampaignState {
   if (!target) throw new Error('This map has no tutorial to skip');
   const route = pathTo(map, target.id);
   let t = clone(s);
+  let sets: string[][] = [];
   for (let i = 0; i < route.length; i++) {
     const last = i === route.length - 1;
     while (true) {
       const step = nextStep(t);
       if (step.kind === 'move' || step.kind === 'complete') break;
       if (last && step.kind === 'company') break;
+      if (step.kind === 'farewell')
+        sets = t.roster.filter((h) => h.tutorial).map((h) => SLOT_IDS.map((k) => h.equipment[k]?.uid).filter((u): u is string => !!u)).filter((g) => g.length);
       t = autoResolve(t, step);
     }
     if (!last) t = moveTo(t, route[i + 1]!);
@@ -1059,7 +1087,12 @@ export function skipTutorial(s: CampaignState): CampaignState {
   delete t.pendingLoot;
   delete t.levelUps;
   delete t.formationDue;
-  if (t.pendingHandover) t.pendingHandover = { ...t.pendingHandover, from: [] };
+  if (t.pendingHandover) {
+    const ho = t.pendingHandover;
+    const given = new Set(ho.items);
+    const groups = sets.map((g) => g.filter((u) => given.has(u))).filter((g) => g.length);
+    t.pendingHandover = { node: ho.node, items: ho.items, from: [], ...(groups.length ? { skippedSets: groups } : {}) };
+  }
   for (const id of route.slice(0, -1)) if (CONFIG.tips[id] && !t.tipsSeen.includes(id)) t.tipsSeen.push(id);
   return t;
 }

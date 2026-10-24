@@ -94,7 +94,7 @@ describe('durumlar: hız, alınan hasar, alınan şifa, sersemleme', () => {
       const c = calm(grid(cells({ 0: 'druid' }), cells({ 0: 'paladin', 2: 'warrior' })));
       if (wounded) c.get('enemy-1')!.statuses.push({ kind: 'wound', turns: 2, source: 'party-0' });
       c.get('enemy-1')!.hp = 10;
-      const ev = act(c, 'enemy-0', 'radiance', 'tile:1'); // Paladin Radiance kendi tahtasına (artı alan 0-1-2-4: iki dost)
+      const ev = act(c, 'enemy-0', 'radiance', 'enemy-1'); // Paladin Radiance kendi tahtasında yaralı dostun hücresine (D11: tek hücre)
       return ofType(ev, 'heal').find((e) => e.target === 'enemy-1')!.amount;
     };
     const normal = heal(false);
@@ -166,15 +166,16 @@ describe('kontrol ve alan skill\'leri', () => {
     const mk = () => calm(grid(cells({ 0: 'paladin', 2: 'warrior' }), cells({ 0: 'mage', 2: 'archer' })));
     const a = mk();
     a.get('party-1')!.hp = 10;
-    const own = act(a, 'party-0', 'radiance', 'tile:1');
+    const own = act(a, 'party-0', 'radiance', 'party-1'); // D11: tek hücre (yaralı dostun hücresi)
     expect(ofType(own, 'heal').map((e) => e.target).sort()).toEqual(['party-1']); // yalnızca eksik canı olan dostta şifa olayı
     expect(ofType(own, 'damage')).toHaveLength(0);
     const b = mk();
     b.get('party-1')!.hp = 10;
-    const foe = act(b, 'party-0', 'radiance', undefined, 1); // boş orta hücre: artı alan iki düşmanı da kapsar
+    const foe = act(b, 'party-0', 'radiance', 'enemy-0');
     expect(ofType(foe, 'heal')).toHaveLength(0);
-    expect(ofType(foe, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1']);
-    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'plus' } });
+    expect(ofType(foe, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0']); // yalnızca seçilen hücre
+    expect(b.useSkill('party-0', 'radiance', undefined, 1).ok).toBe(false); // boş hücre: hedef yok
+    expect(content.skills.radiance!).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 } });
   });
 
   it('Meteor eskisinden çok daha az doğrudan hasar verir ve 2 turluk yanan zemin bırakır', () => {

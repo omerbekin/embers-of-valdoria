@@ -13,6 +13,8 @@ export interface LevelRules {
   campaignMaxLevel?: number;
   /** Stat puanı kuralı (Ömer 2026-10-18, TUR 1 madde 2): her level perLevel, atMultiplesOf'un katlarında bonusLevelPoints. */
   statPoints: { perLevel: number; atMultiplesOf: number; bonusLevelPoints: number };
+  /** Kahramanın level başına maks can / MP çarpanı (D1): x (1 + perLevel x (level - 1)). Yoksa 0. Düşmanlara uygulanmaz. */
+  heroGrowth?: { hpPerLevel: number; mpPerLevel: number };
   skillPointsPerLevel: number;
   statPerPoint: number;
   xpToNext: { base: number; pow: number };
@@ -47,6 +49,14 @@ export const LEVELS: LevelRules = RULES;
 
 /** Seferin level tavanı (campaignMaxLevel; yoksa maxLevel). */
 export const campaignMaxLevel = (r: LevelRules = LEVELS): number => Math.min(r.maxLevel, r.campaignMaxLevel ?? r.maxLevel);
+
+/** Kahramanın level büyümesi (D1): maks can ve MP çarpanı, x (1 + perLevel x (level - 1)). L1 ya da kural yoksa 1. */
+export function heroGrowthMult(level: number | undefined, r: LevelRules = LEVELS): { hp: number; mp: number } {
+  const l = clampLevel(level ?? 1, r) - 1;
+  const g = r.heroGrowth;
+  if (!g || l <= 0) return { hp: 1, mp: 1 };
+  return { hp: 1 + g.hpPerLevel * l, mp: 1 + g.mpPerLevel * l };
+}
 
 /** L1'den `level`'a kadar kazanılan TOPLAM stat puanı (saf): her level perLevel, atMultiplesOf'un katlarında bonusLevelPoints. L30 = 35. */
 export function statPointsAt(level: number, r: LevelRules = LEVELS): number {

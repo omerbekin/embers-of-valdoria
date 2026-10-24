@@ -9,7 +9,7 @@ import { applyUnitModifiers } from '../engine/stats';
 import type { Attribute, Attributes, Element, ItemEffects, UnitModifiers, UnitSetup } from '../engine/types';
 import { ITEMS, MAGIC_ELEMENTS, SLOT_IDS, affixIP, canEquip, defaultEquipSlot, equipInto, implicitDefOf, implicitValues, instanceIlvl, itemDef, rolledAffixes, type EffectDef, type Equipment, type ItemInstance, type RolledAffix, type SlotId } from './items';
 import { equippedWeaponPower, weaponMultFor } from './weapon';
-import { LEVELS, type StatAlloc } from './levels';
+import { LEVELS, heroGrowthMult, type StatAlloc } from './levels';
 import type { TreeAlloc } from './skill-tree';
 import { treeSetupFor } from './skill-tree-compile';
 import { evolvedSkillIds } from './skill-tree-evolve';
@@ -18,7 +18,7 @@ import type { TreeMode } from './skill-tree-data';
 /** Güç katmanının girdisi: sefer kahramanı (campaign Hero) ve endless kahramanı bu şekle uyar. */
 export interface LoadoutSource {
   class: string;
-  /** Kahraman level'ı (item seviye şartı; güce doğrudan etkisi yok: güç dağıtılmış puanlardan, `alloc`). */
+  /** Kahraman level'ı (item seviye şartı + D1 level büyümesi: maks can / MP çarpanı, levels.json > heroGrowth; stat gücü dağıtılmış puanlardan, `alloc`). */
   level?: number;
   equipment?: Partial<Equipment>;
   /** Level sistemi (Ömer 2026-10-17): dağıtılmış temel stat puanları (puan x levels.json > statPerPoint temel stata eklenir). */
@@ -215,6 +215,10 @@ export function loadout(src: LoadoutSource): LoadoutResult {
     if ((o[key] as number) >= max - 1e-9) capped.push(k);
     o[key] = Math.min(o[key] as number, max);
   }
+  // Level büyümesi (D1 2026-10-24, levels.json > heroGrowth): maks can / MP çarpanı, item'in can / MP yüzdesiyle çarpılır (yalnız kahraman)
+  const grow = heroGrowthMult(src.level);
+  if (grow.hp !== 1) mods.hpMult = ((mods.hpMult as number | undefined) ?? 1) * grow.hp;
+  if (grow.mp !== 1) mods.mpMult = ((mods.mpMult as number | undefined) ?? 1) * grow.mp;
   tidy(mods);
   tidy(fx);
   // Legendary etkileri (madde 296)

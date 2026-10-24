@@ -22,6 +22,12 @@ describe('drag controller rules', () => {
     expect(dropAction(bagAxe, { kind: 'wares' }, classOf)).toEqual({ kind: 'sell', uid: 'u1' });
     expect(dropAction(slotSrc, { kind: 'wares' }, classOf).kind).toBe('none');
   });
+  it('blacksmith panel: bag item and equipped item both = pick (playtest 2026-10-23 U10); wares / loot cannot be picked', () => {
+    expect(dropAction(bagAxe, { kind: 'smith' }, classOf)).toEqual({ kind: 'pick' });
+    expect(dropAction(slotSrc, { kind: 'smith' }, classOf)).toEqual({ kind: 'pick' });
+    expect(dropAction(ware, { kind: 'smith' }, classOf).kind).toBe('none');
+    expect(dropAction({ kind: 'loot', index: 0, itemId: 'leather_coif' }, { kind: 'smith' }, classOf).kind).toBe('none');
+  });
   it('the trash shows only while a bag item is dragged', () => {
     expect(showsTrash(bagAxe)).toBe(true);
     expect(showsTrash(slotSrc)).toBe(false);

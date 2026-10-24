@@ -4217,6 +4217,14 @@ html.short .gr-ledger .gr-bag-head {
   width: 0;
 }
 
+.gr-lx-hpbar i {
+  background: linear-gradient(90deg, #3f7f45, #7fbf6a);
+}
+
+.gr-lx-hpl {
+  color: #a9d894;
+}
+
 .gr-lx-up {
   flex: none;
   font: 600 max(10px, calc(14 * var(--u))) var(--g-disp);

@@ -508,13 +508,12 @@ describe('Faz 4a: öbür sınıflar', () => {
     const run = (tree?: UnitSetup['tree']) => {
       const b = make({ 0: 'paladin' }, { 0: 'mage', 1: 'mage' }, tree ? withTree(0, tree) : {}, 4);
       E(b).hp = 1;
-      E(b, 1).hp = 1;
-      for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0 }); // isabet kesin (D11: zar sırası değişti)
-      cast(b, P(b), 'radiance', E(b)); // D11: artı alan (düşman tarafı) iki düşmanı da kapsar
-      expect(E(b).hp + E(b, 1).hp).toBe(0);
+      for (const c of b.combatants) Object.assign(c.stats, { accuracy: 10, evasion: 0 }); // isabet kesin
+      cast(b, P(b), 'radiance', E(b)); // D11: tek hücre: yalnızca bu düşman
+      expect(E(b).hp).toBe(0);
       return P(b).mp;
     };
-    expect(run(only('paladin', { '4.r2': 1 })) - run()).toBe(10);
+    expect(run(only('paladin', { '4.r2': 1 })) - run()).toBe(5);
   });
 
   it('Trophy / Next in Line: Aimed Shot öldürürse cooldown sıfırlanır; sonraki skill +%50 ve ıskalamaz', () => {

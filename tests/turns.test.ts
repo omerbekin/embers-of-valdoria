@@ -54,9 +54,9 @@ describe('sıra hesabı (saf fonksiyonlar)', () => {
   });
 
   it('şu anki aktör kuyruğun başında, sayacı eşik kadar düşmüş sayılır', () => {
-    // a her 2 tikte, b her 10 tikte oynar; 10. tikte eşitlikte parti (a) önce
+    // a her 2 tikte, b her 10 tikte oynar; 10. tikte eşitlik: son oynayan a (parti), karışık sıra kuralıyla (D4) önce karşı taraf (b)
     const queue = predictQueue([slot('a', 50, 'party', 0, 100), slot('b', 10, 'enemy')], 100, 7, 'a');
-    expect(queue).toEqual(['a', 'a', 'a', 'a', 'a', 'a', 'b']);
+    expect(queue).toEqual(['a', 'a', 'a', 'a', 'a', 'b', 'a']);
   });
 });
 

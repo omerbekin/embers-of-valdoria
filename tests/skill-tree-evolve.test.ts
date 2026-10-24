@@ -20,7 +20,7 @@ describe('evolve sanatı gerçek dosyalardan', () => {
   it('notable sanatı: dosya yoksa null (eski görünüm)', async () => {
     const { nodeArtUrl } = await import('../src/ui/evolve-icon');
     expect(nodeArtUrl('warrior', '0.n0')).toBeTruthy();
-    expect(nodeArtUrl('archer', '1.n0')).toBeNull();
+    expect(nodeArtUrl('nobody', '1.n0')).toBeNull();
   });
 });
 

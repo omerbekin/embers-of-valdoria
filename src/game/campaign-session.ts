@@ -370,12 +370,14 @@ export function resultActions(game: Phaser.Game, plan: BattlePlan, victory: bool
           if (s && s.at === plan.nodeId) {
             const kills = killsOf(battle);
             const before = new Map(s.roster.map((h) => [h.id, { level: h.level, xp: h.xp }]));
-            session.state = applyBattle(s, { ...battleOutcomeOf(plan, battle, true), ...(kills ? { kills } : {}) });
+            const outcome = battleOutcomeOf(plan, battle, true);
+            const hpEnd = new Map(outcome.units.map((u) => [u.heroId, u.hpRatio]));
+            session.state = applyBattle(s, { ...outcome, ...(kills ? { kills } : {}) });
             const act = session.state.active;
             xp = session.state.roster
               .map((h): LootXp => {
                 const b = before.get(h.id) ?? { level: h.level, xp: h.xp };
-                return { name: content.classes[h.class]?.name ?? h.class, gain: totalXp(h.level, h.xp) - totalXp(b.level, b.xp), heroId: h.id, cls: h.class, from: b, to: { level: h.level, xp: h.xp }, fallen: isFallen(h) };
+                return { name: content.classes[h.class]?.name ?? h.class, gain: totalXp(h.level, h.xp) - totalXp(b.level, b.xp), heroId: h.id, cls: h.class, from: b, to: { level: h.level, xp: h.xp }, fallen: isFallen(h), ...(hpEnd.has(h.id) && !isFallen(h) ? { hpFrom: hpEnd.get(h.id)!, hpTo: h.hpRatio } : {}) };
               })
               .filter((x) => x.gain > 0 || (act.includes(x.heroId!) && x.fallen)); // XP almayan düşmüş kahraman da gri satır
             killTrack?.stop();

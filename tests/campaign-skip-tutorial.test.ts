@@ -22,6 +22,7 @@ import {
   visitedNodes,
   writeSave,
 } from '../src/campaign';
+import { canEquip, itemDef } from '../src/progression/items';
 
 const fresh = (seed = 4242) => newCampaign({ mode: 'normal', seed });
 const companyNode = (s = fresh()) => mapOf(s).nodes.find((n) => n.newCompany)!;
@@ -64,7 +65,10 @@ describe('skipTutorial', () => {
     expect(s.pendingLoot).toBeUndefined();
     expect(s.levelUps).toBeUndefined();
     expect(s.formationDue).toBeUndefined();
-    if (s.pendingHandover) expect(s.pendingHandover.from).toEqual([]);
+    if (s.pendingHandover) {
+      expect(s.pendingHandover.from).toEqual([]);
+      expect(s.pendingHandover.skippedSets!.flat().sort()).toEqual([...s.pendingHandover.items].sort());
+    }
     expect(s.inventory.length).toBeGreaterThan(0); // tutorial takımının başlangıç silahları (normal vedadaki gibi)
     const route = pathTo(mapOf(s), s.at);
     for (const id of route.slice(0, -1)) if (CONFIG.tips[id]) expect(s.tipsSeen).toContain(id);
@@ -100,5 +104,47 @@ describe('skipTutorial', () => {
     expect(loaded.at).toBe(s.at);
     expect(nextStep(loaded).kind).toBe('company');
     expect(loaded.cleared.sort()).toEqual([...s.cleared].sort());
+  });
+
+  it('handover card portraits match the gear in the bag, one per departing gear set (open-questions 407)', () => {
+    for (const seed of [99, 7, 4242, 13]) {
+      const s = skipTutorial(fresh(seed));
+      const sets = s.pendingHandover!.skippedSets!;
+      expect(sets.length).toBeGreaterThan(0);
+      const size = companyNode(s).newCompany!.size;
+      const picks = CONFIG.companyPool.slice(0, size);
+      const t = formCompany(s, picks);
+      const ho = t.pendingHandover!;
+      expect(ho.skippedSets).toBeUndefined();
+      expect(ho.from).toHaveLength(sets.length);
+      const cls = ho.from.map((f) => f.class);
+      expect(new Set(cls).size).toBe(cls.length);
+      sets.forEach((g, i) => {
+        for (const uid of g) {
+          const d = itemDef(t.inventory.find((x) => x.uid === uid)!.id)!;
+          expect(canEquip(cls[i]!, d)).toBe(true);
+        }
+      });
+      // Aynı seed aynı portreler; bölük kurulmadan kaydedilip yüklense bile
+      expect(formCompany(skipTutorial(fresh(seed)), picks).pendingHandover).toEqual(ho);
+      const kv = memoryKV();
+      writeSave(kv, s, 'auto');
+      const loaded = normalizeState(JSON.parse(JSON.stringify(latestSave(kv, s.slot)!.state)), s.slot)!;
+      expect(formCompany(loaded, picks).pendingHandover).toEqual(ho);
+    }
+  });
+
+  it('prefers gear-fitting classes outside the new company', () => {
+    const s = skipTutorial(fresh(99));
+    const sets = s.pendingHandover!.skippedSets!;
+    const size = companyNode(s).newCompany!.size;
+    // Bölük, eşyayı takabilen sınıfları olabildiğince içersin; yine de bölük dışında uyan varsa o seçilir
+    const fitting = (g: string[]) =>
+      CONFIG.companyPool.filter((c) => g.every((u) => canEquip(c, itemDef(s.inventory.find((x) => x.uid === u)!.id)!)));
+    const picks = [...new Set([...fitting(sets[0]!), ...CONFIG.companyPool])].slice(0, size);
+    const ho = formCompany(s, picks).pendingHandover!;
+    const outside = fitting(sets[0]!).filter((c) => !picks.includes(c));
+    if (outside.length) expect(outside).toContain(ho.from[0]!.class);
+    else expect(fitting(sets[0]!)).toContain(ho.from[0]!.class);
   });
 });

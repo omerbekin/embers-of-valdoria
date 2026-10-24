@@ -15,7 +15,7 @@
     "luck": 6
   },
   "primary": "int",
-  "armor": 22,
+  "armor": 28,
   "magicArmor": 0,
   "ai": "healer",
   "skills": [

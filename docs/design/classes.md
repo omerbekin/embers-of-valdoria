@@ -23,6 +23,6 @@
 - Görsel/ses şimdilik yer tutucu (Double Strike animasyonu, Warrior'ın balta/zırh sesleri); gerçekleri content-designer yapacak. Sayılar balance-tester'ın.
 
 ## Paladin: Radiance (Ömer 2026-10-23, playtest D11; open-questions madde 406)
-- **Ultimate - Radiance:** tek hücre merkezli artı (plus) alan; iki tahtaya da atılır (global, menzilsiz). **Dost tarafına:** alandaki dostlara anlık şifa (eksik cana göre +%50'ye kadar) + o hücrelerde 2 tur **Holy Ground** (içinde tur başlatan dosta tur başı sabit şifa; düşmana etkisi yok). **Düşman tarafına:** aynı alanda kutsal hasar. Sayılar `data/skills.json > radiance`.
+- **Ultimate - Radiance:** seçilen TEK hücre (Ömer 2026-10-24 düzeltmesi: artı değil); iki tahtaya da atılır (global, menzilsiz). **Dost tarafına:** o hücredeki dosta anlık şifa (eksik cana göre +%50'ye kadar) + o hücrede 2 tur **Holy Ground** (içinde tur başlatan dosta tur başı sabit şifa; düşmana etkisi yok). **Düşman tarafına:** o hücredeki düşmana kutsal hasar. Sayılar `data/skills.json > radiance`.
 
 Bu dosyadaki tüm sayılar ve rol önerileri Ömer onaylayana kadar **geçicidir**.

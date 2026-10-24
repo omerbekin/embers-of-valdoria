@@ -219,7 +219,9 @@ describe('endless: elit ve boss sonrası daha değerli ödüller', () => {
     expect(fed.blessing).toEqual({ hpMult: 1.15, waves: 2 });
     const ready = { ...fed, phase: 'ready' as const, shop: undefined };
     const plan = wavePlan(ready);
-    for (const h of ready.heroes) expect(plan.units.party[plan.party.indexOf(h.class)]!.modifiers!.hpMult).toBe(1.15);
+    const plain = wavePlan({ ...ready, blessing: undefined });
+    // D1 (2026-10-24): kahramanın level can çarpanı (levels.json > heroGrowth) ziyafet çarpanıyla çarpılır
+    for (const h of ready.heroes) expect(plan.units.party[plan.party.indexOf(h.class)]!.modifiers!.hpMult).toBeCloseTo((plain.units.party[plain.party.indexOf(h.class)]!.modifiers?.hpMult ?? 1) * 1.15, 2);
     const unbuffed = battleFor(wavePlan({ ...ready, blessing: undefined })).combatants.find((c) => c.uid === 'party-0')!;
     const buffed = battleFor(plan).combatants.find((c) => c.uid === 'party-0')!;
     expect(buffed.maxHp).toBeGreaterThan(unbuffed.maxHp);

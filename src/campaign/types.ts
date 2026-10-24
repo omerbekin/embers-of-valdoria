@@ -106,6 +106,8 @@ export interface TownHotspot {
   rect: [number, number, number, number];
   /** Eylem bir şey sunmadığında gösterilen metin (ör. adayı olmayan kasabanın ilan panosu). */
   note?: string;
+  /** true = kasaba ekranında gösterilmez (geri açmak için alanı sil; Notice Board 2026-10-24: görev sistemi gelene dek gizli). */
+  hidden?: boolean;
 }
 
 /** Kasaba ekranı: arka plan (assets/towns/<background>.webp), dikey odak (kırpılırken korunacak satır, 0-1) ve yerler. */
@@ -427,6 +429,11 @@ export interface Handover {
   node: string;
   from: Array<{ heroId: string; class: string }>;
   items: string[];
+  /**
+   * Tutorial atlandı (open-questions 407, Ömer 2026-10-24 "Eşleşsin"): ayrılan her kahramanın bıraktığı item uid'leri (kahraman başına bir
+   * grup). `from` boş kalır; bölük kurulunca (`formCompany`) her grup için o item'leri takabilen bir sınıf seed'le seçilip `from`a yazılır.
+   */
+  skippedSets?: string[][];
 }
 
 /** Bir savaşın sonucu (oyuncu birimleri hero id ile). */

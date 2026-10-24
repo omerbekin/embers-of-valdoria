@@ -85,7 +85,7 @@
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.525,
+        "power": 0.6,
         "element": "holy"
       }
     ],
@@ -97,14 +97,16 @@
     ]
   },
   "radiance": {
-    "_not": "D11 rework (Ömer 2026-10-23, open-questions 406): tek hücre merkezli artı (plus) alan, İKİ TAHTAYA da atılabilir (area_any). Kendi tarafına: alandaki dostlara anlık şifa (eksik cana göre +%50'ye kadar) + 2 tur Holy Ground (içinde tur başlatan dosta tur başı şifa). Düşman tarafına: alandaki düşmanlara kutsal hasar. Global (menzilsiz). Sayılar eski 'herkese' sürümün toplam gücüne yakın (eski: dost 0,45 + düşman 0,438 herkese).",
+    "_not": "D11 rework (Ömer 2026-10-23, düzeltme 2026-10-24: alan TEK HÜCRE, open-questions 406): seçilen tek hücre (rect 1x1), İKİ TAHTAYA da atılabilir (area_any). Kendi tarafına: o hücredeki dosta anlık şifa (eksik cana göre +%50'ye kadar) + o hücrede 2 tur Holy Ground (içinde tur başlatan dosta tur başı şifa). Düşman tarafına: o hücredeki düşmana kutsal hasar. Global (menzilsiz). Sayılar tek hedef ulti gücünde (Rejuvenate / Void Strike seviyesinin biraz üstü).",
     "id": "radiance",
     "name": "Radiance",
     "icon": "radiance",
     "target": "area_any",
     "global": true,
     "area": {
-      "shape": "plus"
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1
     },
     "cost": {
       "resource": "mp",
@@ -118,7 +120,7 @@
       {
         "type": "heal",
         "scale": "int",
-        "power": 0.4,
+        "power": 0.9,
         "missingHpBonus": 0.5,
         "side": "allies"
       },
@@ -127,14 +129,14 @@
         "ground": "holy_ground",
         "turns": 2,
         "scale": "int",
-        "power": 0.15,
+        "power": 0.3,
         "side": "allies"
       },
       {
         "type": "damage",
         "damageType": "magic",
         "scale": "int",
-        "power": 0.6,
+        "power": 1.3,
         "element": "holy",
         "side": "enemies"
       }
@@ -169,7 +171,7 @@
         "ground": "holy_fire",
         "turns": 2,
         "scale": "int",
-        "power": 0.288
+        "power": 0.32
       }
     ],
     "vfx": "judgment",
@@ -326,7 +328,7 @@
     "excludeSelf": true,
     "cost": {
       "resource": "mp",
-      "amount": 0
+      "amount": 10
     },
     "cooldown": 2,
     "turnCost": 0.5,
@@ -555,7 +557,7 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 12
     },
     "cooldown": 3,
     "motion": "cast",
@@ -648,7 +650,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 12
     },
     "cooldown": 4,
     "motion": "cast",
@@ -680,7 +682,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 9
     },
     "cooldown": 5,
     "turnCost": 0.5,
@@ -748,7 +750,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 6
+      "amount": 12
     },
     "cooldown": 3,
     "motion": "sky",
@@ -785,7 +787,7 @@
     "target": "single_enemy",
     "cost": {
       "resource": "mp",
-      "amount": 17
+      "amount": 24
     },
     "cooldown": 3,
     "initialCooldown": 3,
@@ -818,7 +820,7 @@
     "target": "single_ally",
     "cost": {
       "resource": "mp",
-      "amount": 10
+      "amount": 14
     },
     "cooldown": 4,
     "motion": "cast",
@@ -917,7 +919,7 @@
     "target": "self",
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 20
     },
     "cooldown": 5,
     "initialCooldown": 1,
@@ -1148,7 +1150,7 @@
     "count": 3,
     "cost": {
       "resource": "mp",
-      "amount": 14
+      "amount": 18
     },
     "cooldown": 4,
     "initialCooldown": 3,
@@ -1533,7 +1535,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 7
+      "amount": 9
     },
     "cooldown": 2,
     "motion": "ranged",
@@ -1568,7 +1570,7 @@
     },
     "cost": {
       "resource": "mp",
-      "amount": 8
+      "amount": 10
     },
     "cooldown": 3,
     "motion": "ranged",
@@ -1602,7 +1604,7 @@
     "range": 3,
     "cost": {
       "resource": "mp",
-      "amount": 12
+      "amount": 14
     },
     "cooldown": 4,
     "initialCooldown": 3,
@@ -2381,7 +2383,9 @@
     "target": "area_any",
     "global": true,
     "area": {
-      "shape": "plus"
+      "shape": "rect",
+      "rows": 1,
+      "cols": 1
     },
     "cost": {
       "resource": "mp",

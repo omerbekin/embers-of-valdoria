@@ -83,6 +83,7 @@ export const storyHeard = (s: Pick<CampaignState, 'done'>, n: MapNode): boolean 
  * ekranda gösterilmez. `s` verilirse dinlenmiş hikâyenin NPC'si kaldırılır (Ömer 2026-10-23: hikâye tekrar oynamaz).
  */
 export function hotspotOffered(n: MapNode, h: TownHotspot, s?: Pick<CampaignState, 'done'>): boolean {
+  if (h.hidden) return false;
   if (h.action === 'trade') return !!n.merchant;
   if (h.action === 'story') return !!n.story && !(s && storyHeard(s, n));
   return true;

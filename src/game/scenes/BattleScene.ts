@@ -284,6 +284,8 @@ export class BattleScene extends Phaser.Scene {
   private longPressFired = false;
   /** Ultimate kullanan birim: ilk skill vuruşunda ekran titremesi + zemin çatlağı oynar (A1). */
   private ultHitBy: string | null = null;
+  /** U7: düşen kahramanın üstündeki "Revive · N" düğmeleri (uid -> düğme + durum anahtarı). */
+  private reviveChips = new Map<string, { box: Phaser.GameObjects.Container; key: string }>();
   private unitTipKey = '';
   private hint?: Phaser.GameObjects.Text;
   /** test mode: the unit the tester is controlling. */
@@ -372,6 +374,7 @@ export class BattleScene extends Phaser.Scene {
     this.pressTimer = undefined;
     this.longPressFired = false;
     this.slotMarkers = undefined;
+    this.reviveChips = new Map();
     this.areaMarker = undefined;
     this.areaTop = undefined;
     this.cellZones = [];
@@ -2973,6 +2976,7 @@ export class BattleScene extends Phaser.Scene {
             // ağır darbe: ayak dibinde kısa toz (Reduced motion / Performance mode'da yok)
             if (react.dust) VFX_KIT.dustCloud(this, target.container.x, target.container.y, { n: 2, spread: 40, rise: 24, size: [30, 52], life: 600, tint: 0x8a8a84 });
             target.damageText(e.amount, ratio, e.crit, this.damageTags(e));
+            this.tickLabel(target, e.origin === 'ground' ? content.grounds[e.ground ?? '']?.name : e.origin === 'status' ? content.statuses[e.status ?? '']?.name : undefined, colors.targetHighlight);
           }
           if (e.redirected) {
             // Guard payı korumacıya geçti: v2'de korumacının (Defender) 'guardshare' olay efekti (kalkan önünde sapma kıvılcımı), yoksa halka
@@ -3056,6 +3060,7 @@ export class BattleScene extends Phaser.Scene {
         }
         if (e.crit) target?.floatText(`+${e.amount}`, colors.crit, 70, true, { kind: 'crit', leftIcon: 'burst' });
         else target?.floatText(`+${e.amount}`, colors.heal, 64, false, { kind: 'heal' });
+        if (e.cause && target) this.tickLabel(target, content.grounds[e.cause]?.name ?? content.statuses[e.cause]?.name, colors.heal); // Holy Ground / tur başı şifa: kaynağın adı yeşil sayının altında
         target?.ring(colors.heal);
         target?.setHp(e.hpAfter);
         await this.wait(slow(90));
@@ -4086,6 +4091,68 @@ export class BattleScene extends Phaser.Scene {
     });
   }
 
+  /**
+   * U7 (Ömer onayı 2026-10-24): düşen kahramanın ceset hücresinde portre + "Revive · N" düğmesi. Kural değişmez: mevcut global Valor eylemi
+   * (battleCost ember + sıradaki kahramanın turu). Ember ya da sıra yoksa düğme soluk (ipucunda nedeni yazar).
+   */
+  private refreshReviveChips(): void {
+    const valorId = this.battle.globalSkillIds(this.localSide).find((id) => this.battle.globalDef(id)?.kind === 'valor');
+    const cost = this.battle.valorRules?.revive.battleCost;
+    const have = this.battle.valorOf(this.localSide);
+    const actor = this.activeActor;
+    const want = new Map<string, { c: Combatant; can: boolean; why: string }>();
+    if (valorId && cost && have !== null && !this.battle.winner && !this.mp) {
+      for (const c of this.battle.combatants) {
+        if (c.side !== this.localSide || c.hp > 0 || c.summoned || this.uiCorpses.get(c.uid) !== 'revivable') continue;
+        const chk = actor && this.playerCanAct ? this.battle.canUseGlobal(actor.uid, valorId, undefined, c.uid) : { ok: false as const, reason: have < cost ? `Needs ${cost} Valor (you have ${have})` : 'Wait for your turn' };
+        want.set(c.uid, { c, can: chk.ok, why: chk.ok ? '' : chk.reason ?? '' });
+      }
+    }
+    for (const [uid, chip] of this.reviveChips) {
+      const w = want.get(uid);
+      if (w && chip.key === `${w.can}|${cost}|${w.why}`) continue;
+      chip.box.destroy();
+      this.reviveChips.delete(uid);
+    }
+    for (const [uid, w] of want) {
+      if (this.reviveChips.has(uid)) continue;
+      const pos = corpseMarkPos(this.slotsOf(w.c.side), w.c.slot);
+      const label = elText(this, 0, 0, `Revive · ${cost}`, 22, EL.ON, { em: 0.06, upper: false }).setOrigin(0, 0.5);
+      const AV = 44;
+      const pad = 10;
+      const wBox = pad + AV + 10 + label.width + pad;
+      const bg = this.add.graphics();
+      bg.fillStyle(0x0a0705, 0.92).fillRect(-wBox / 2, -AV / 2 - 6, wBox, AV + 12);
+      bg.lineStyle(1.5, w.can ? 0xd9b26a : 0x6b5a3a, 1).strokeRect(-wBox / 2, -AV / 2 - 6, wBox, AV + 12);
+      const av = this.avatarImage(w.c, -wBox / 2 + pad + AV / 2, AV / 2 - 3, AV).setPosition(-wBox / 2 + pad + AV / 2, 0);
+      av.setDisplaySize(AV, AV);
+      label.setPosition(-wBox / 2 + pad + AV + 10, 0);
+      const zone = this.add.zone(0, 0, wBox, AV + 12).setInteractive({ useHandCursor: w.can });
+      const box = this.add.container(pos.x, pos.y - 150, [bg, av, label, zone]).setDepth(3450).setAlpha(w.can ? 1 : 0.5);
+      zone.on('pointerover', () => {
+        const rows: Array<[string, string?]> = w.can ? [[`Spends ${cost} Valor and your turn`, colors.muted], [`Rises with half health`, colors.heal]] : [[w.why, colors.lethal]];
+        this.hideInfoTip();
+        this.placeInfoTip(this.makeInfo(unitName(w.c), colors.text, this.valorIconKey(), rows, 'Revive'));
+      });
+      zone.on('pointerout', () => this.hideInfoTip());
+      zone.on('pointerup', (p: Phaser.Input.Pointer) => {
+        if (p.button === 2 || !w.can || !valorId) return;
+        const a = this.activeActor;
+        if (!a || !this.playerCanAct) return;
+        if (this.tut && !this.tut.allowGlobal()) return this.tut.blocked();
+        this.cancelMoveQuiet();
+        this.hideInfoTip();
+        this.performGlobal(a.uid, valorId, undefined, w.c.uid);
+      });
+      this.reviveChips.set(uid, { box, key: `${w.can}|${cost}|${w.why}` });
+    }
+  }
+
+  /** U4: tur başı DoT / şifa tikinin kaynak adı (ör. "Holy Fire") sayının yanında küçük yazı olarak; ad bilinmiyorsa hiçbir şey. */
+  private tickLabel(view: CombatantView, name: string | undefined, hex: string): void {
+    if (name) view.floatText(name, hex, 30, false, { kind: 'resource' });
+  }
+
   /** U7: ilk kez bir kahramanımız düşünce (Valor açıksa) bir kerelik ipucu; kural değişmez, yalnızca görünürlük. */
   private valorFirstFallHint(dead: Combatant | undefined): void {
     if (!dead || dead.summoned || dead.side !== this.localSide || this.mp) return;
@@ -4167,6 +4234,7 @@ export class BattleScene extends Phaser.Scene {
     for (const v of this.views.values()) v.setActive(v.combatant.uid === actor?.uid && !this.battle.winner);
     this.hud?.setModel(this.buildHudModel(actor));
     this.refreshValor();
+    this.refreshReviveChips();
   }
 
   /** DOM HUD'ı kurar; görünür sahneye hizalar (tuvalin konumu ve ölçeği), sahne kapanınca kaldırır. */

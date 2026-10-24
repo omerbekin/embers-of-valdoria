@@ -18,7 +18,12 @@ export interface TurnSlot {
   baseSpd?: number;
 }
 
-/** Eşit sayaçta: sayacı yüksek olan, sonra `firstSide` tarafı, sonra düşük yuva, sonra uid. */
+/**
+ * Eşit sayaçta: sayacı yüksek olan, sonra `firstSide` tarafı, sonra düşük yuva, sonra uid.
+ * KARIŞIK SIRA (playtest 2026-10-23 D4, Ömer seçenek 3): çağıran `firstSide`'ı SON OYNAYAN birimin karşı tarafı verir (savaşın ilk turunda
+ * seed'li yazı-tura, battle.tieFirst). Böylece eşit hızlı birimler taraf taraf değil birim birim sıralanır: düşman, kahraman, düşman, kahraman...
+ * Saf ve belirleyici: aynı durum = aynı sıra.
+ */
 function compare(a: TurnSlot, b: TurnSlot, firstSide: Side): number {
   if (a.counter !== b.counter) return b.counter - a.counter;
   if (a.side !== b.side) return a.side === firstSide ? -1 : 1;
@@ -38,8 +43,12 @@ export function advanceTurn(slots: TurnSlot[], threshold: number, firstSide: Sid
   return movers.filter((s) => s.counter >= threshold).sort((a, b) => compare(a, b, firstSide))[0] ?? null;
 }
 
+/** Eşitlik kuralında sıradaki tarafın önceliği: son oynayanın karşı tarafı (karışık sıra, D4). */
+export const tieSideAfter = (side: Side): Side => (side === 'party' ? 'enemy' : 'party');
+
 /**
  * Sıra çubuğu için tahmin: şu anki aktör (varsa) + sonraki aktörler. Girdiyi değiştirmez.
+ * Eşitlik önceliği motorla aynı: her tahmini turdan sonra son oynayanın karşı tarafı (`firstSide` yalnızca hiç oynayan yokken).
  * Ölüm/çağrı gibi gelecek olayları bilemez; her olaydan sonra yeniden hesaplanır.
  * `currentCost`: şu anki aktörün bu eyleminin turn bedeli (1 = tam turn; 0,5 = yarım turn skill: sayacından eşiğin yarısı düşer, sonraki
  * sırası yarı sürede gelir). Sonraki tahmini turlar tam turn sayılır.
@@ -55,15 +64,18 @@ export function predictQueue(
   const copy = slots.map((s) => ({ ...s }));
   const queue: string[] = [];
   const current = currentUid ? copy.find((s) => s.uid === currentUid) : undefined;
+  let tieSide = firstSide;
   if (current) {
     queue.push(current.uid);
     current.counter -= threshold * currentCost;
+    tieSide = tieSideAfter(current.side);
   }
   while (queue.length < count) {
-    const next = advanceTurn(copy, threshold, firstSide);
+    const next = advanceTurn(copy, threshold, tieSide);
     if (!next) break;
     queue.push(next.uid);
     next.counter -= threshold;
+    tieSide = tieSideAfter(next.side);
     if (next.baseSpd !== undefined) {
       next.spd = next.baseSpd; // Skip Turn desteği oynadığı turla biter
       next.baseSpd = undefined;

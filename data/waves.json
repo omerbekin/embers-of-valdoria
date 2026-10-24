@@ -23,7 +23,7 @@
     "regionGroups": {
       "II": [
         { "class": "stonebound_warden", "slot": 1, "mods": { "hpMult": 0.45, "powerMult": 0.45 } },
-        { "class": "bandit_crossbowman", "slot": 7, "name": "Pass Crossbowman", "mods": { "hpMult": 0.45, "powerMult": 0.45 } }
+        { "class": "bandit_crossbowman", "slot": 7, "name": "Pass Crossbowman", "mods": { "spdAdd": -8, "hpMult": 0.45, "powerMult": 0.45 } }
       ],
       "III": [
         { "class": "morvane_halberdier", "slot": 1, "mods": { "hpMult": 0.8, "powerMult": 0.8 } },

@@ -200,16 +200,17 @@ describe('motor: C1 koşul kancası (önizleme = gerçek vuruş)', () => {
 });
 
 describe('motor: bedel koşulları', () => {
-  it('Pain Into Iron: eksik canın her %10\'u Fist Crush\'ı 1 MP ucuzlatır (14 -> 11 at %35 eksik)', () => {
+  it('Pain Into Iron: eksik canın her %10\'u Fist Crush\'ı 1 MP ucuzlatır (bedel - 3 at %35 eksik)', () => {
     const b = make({ 0: 'defender' }, { 0: 'warrior' }, { 0: { tree: tree(D, ['4.l1', '4.l2']) } });
     const me = P0(b);
     me.hp = Math.round(me.maxHp * 0.65);
     const def = b.skill('fist_crush', me)!;
-    expect(skillCostAmount(def.cost, me)).toBe(11);
-    expect(skillCostAmount(content.skills.fist_crush!.cost, me)).toBe(14); // temel tanım: koşul yok
+    const base = content.skills.fist_crush!.cost.amount; // veriden (2026-10-24 mana turu: 14 -> 18)
+    expect(skillCostAmount(def.cost, me)).toBe(base - 3);
+    expect(skillCostAmount(content.skills.fist_crush!.cost, me)).toBe(base); // temel tanım: koşul yok
     const mp = me.mp;
     cast(b, me.uid, 'fist_crush', E0(b).uid);
-    expect(mp - me.mp).toBe(11);
+    expect(mp - me.mp).toBe(base - 3);
     expect(procs(b, 'defender:4.l2')).toBe(1);
   });
 

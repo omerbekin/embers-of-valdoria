@@ -2,9 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { Battle, chooseAction, content, describeSkill, previewSkill } from '../src/engine';
 import type { BattleEvent, BattleMode } from '../src/engine';
 
-// D11 (Ömer 2026-10-23, open-questions 406): Radiance tek hücre merkezli artı alan, iki tahtaya da atılır.
+// D11 (Ömer 2026-10-23, düzeltme 2026-10-24; open-questions 406): Radiance yalnızca seçilen TEK hücreyi etkiler, iki tahtaya da atılır.
 // Kendi tarafına: alandaki dostlara anlık şifa + Holy Ground (şifa zemini: içinde tur başlatan DOSTA tur başı şifa, düşmana etkisi yok).
-// Düşman tarafına: aynı alan şekliyle kutsal hasar (şifa ve zemin yok).
+// Düşman tarafına: o hücredeki düşmana kutsal hasar (şifa ve zemin yok).
 
 const cells = (map: Record<number, string>) => Array.from({ length: 12 }, (_, i) => map[i] ?? '');
 const ai = { ...content.aiConfig, global: undefined }; // global skill'siz YZ (ai-context ile aynı)
@@ -21,8 +21,8 @@ const radiance = content.skills.radiance!;
 const groundEff = radiance.effects.find((e) => e.type === 'ground') as Extract<(typeof radiance.effects)[number], { type: 'ground' }>;
 
 describe('Radiance (D11): veri', () => {
-  it('area_any + artı alan + global; etkiler side ile ayrılır; Holy Ground şifa zemini', () => {
-    expect(radiance).toMatchObject({ target: 'area_any', area: { shape: 'plus' }, global: true });
+  it('area_any + tek hücre (rect 1x1) + global; etkiler side ile ayrılır; Holy Ground şifa zemini', () => {
+    expect(radiance).toMatchObject({ target: 'area_any', area: { shape: 'rect', rows: 1, cols: 1 }, global: true });
     expect(radiance.effects.map((e) => [e.type, e.side])).toEqual([
       ['heal', 'allies'],
       ['ground', 'allies'],
@@ -42,27 +42,27 @@ describe('Radiance (D11): veri', () => {
 });
 
 describe('Radiance (D11): motor', () => {
-  it('dost tarafı: alandaki dostlar iyileşir, Holy Ground KENDİ tahtasında artı hücrelerine konur, hasar yok', () => {
+  it('dost tarafı: yalnızca seçilen hücredeki dost iyileşir, Holy Ground KENDİ tahtasında o tek hücreye konur, hasar yok', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior', 2: 'mage' }, { 0: 'archer', 1: 'warrior' });
     for (const c of b.living('party')) c.hp = Math.round(c.maxHp / 2);
     const r = b.useSkill('party-0', 'radiance', 'tile:1');
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(of(r.events, 'heal').map((e) => e.target).sort()).toEqual(['party-0', 'party-1', 'party-2']);
+    expect(of(r.events, 'heal').map((e) => e.target)).toEqual(['party-1']);
     expect(of(r.events, 'damage')).toHaveLength(0);
     const g = of(r.events, 'ground');
     expect(g).toHaveLength(1);
     expect(g[0]).toMatchObject({ ground: 'holy_ground', board: 'party', turns: 2 });
-    expect([...g[0]!.slots].sort((x, y) => x - y)).toEqual([...b.areaCells('radiance', 1, 'party', 'party-0')].sort((x, y) => x - y));
+    expect(g[0]!.slots).toEqual([1]);
   });
 
-  it('düşman tarafı: aynı artı alana hasar; şifa ve zemin yok', () => {
+  it('düşman tarafı: yalnızca o hücredeki düşmana hasar; şifa ve zemin yok', () => {
     const b = mk({ 0: 'paladin', 1: 'warrior' }, { 0: 'archer', 1: 'warrior', 2: 'mage' });
     b.get('party-1')!.hp = 10;
     const r = b.useSkill('party-0', 'radiance', undefined, 1);
     expect(r.ok).toBe(true);
     if (!r.ok) return;
-    expect(of(r.events, 'damage').map((e) => e.target).sort()).toEqual(['enemy-0', 'enemy-1', 'enemy-2']);
+    expect(of(r.events, 'damage').map((e) => e.target)).toEqual(['enemy-1']);
     expect(of(r.events, 'heal')).toHaveLength(0);
     expect(of(r.events, 'ground')).toHaveLength(0);
     expect(b.ground).toHaveLength(0);

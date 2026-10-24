@@ -33,7 +33,9 @@ describe('Close Ranks', () => {
     expect(cr).toMatchObject({ name: 'Close Ranks', target: 'single_ally', excludeSelf: true, splash: { pattern: 'row' } });
     expect(share()).toMatchObject({ share: 0.5, turns: 3 });
     // eski Guard'ın menzil ve yarım turn'ü (tests/legacy-skills.ts > guard); Ömer 2026-10-20: cooldown 4 -> 5, bedel 2 -> 10 MP
-    expect([cr.range, cr.cost, cr.cooldown, cr.turnCost]).toEqual([2, { resource: 'mp', amount: 10 }, 5, 0.5]);
+    // bedel değeri veriden (balance-tester 2026-10-24 mana turu: 10 -> 12)
+    expect([cr.range, cr.cost.resource, cr.cooldown, cr.turnCost]).toEqual([2, 'mp', 5, 0.5]);
+    expect(cr.cost.amount).toBeGreaterThan(0);
     expect(content.skills.guard).toBeUndefined(); // oyundan kalktı (Thane of the Deep'in shield_wall kopyası kendi verisiyle sürer)
     expect(describeSkill(cr, at(grid(PARTY, ENEMY), 'party', 0).stats, content.formulas).lines.join(' ')).toMatch(/allies in the chosen row pass 50%/);
   });

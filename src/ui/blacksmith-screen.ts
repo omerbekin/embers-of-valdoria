@@ -72,7 +72,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   let reforgeAt = -1;
   let line: keyof typeof LINES = 'idle';
   const side = el('div', 'gr-panel gr-gear gr-ledger gr-shop bs-smith');
-  side.dataset['drop'] = 'wares';
+  side.dataset['drop'] = 'smith';
 
   /** Seçili item (torbadan seçim Gear'ın kendi seçimi; takılı item paneldeki satırdan). */
   const current = (): ItemInstance | null => {
@@ -95,6 +95,11 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
   const choose = (uid: string): void => {
     if (pick === uid) return;
     pick = uid;
+    // takılı item seçilince torbadaki seçim vurgusu kalkar (iki item birden seçili görünmesin)
+    if (!get().inventory.some((x) => x.uid === uid)) {
+      api?.clearSel();
+      lastBag = '';
+    }
     reforgeAt = -1;
     uiSound('select');
     api?.rerender();
@@ -176,7 +181,7 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     const pane = el('div', 'gr-shoppane bs-pane');
     if (!inst || !itemDef(inst.id)) {
       const box = el('div', 'gr-sellbox bs-pickbox');
-      box.dataset['drop'] = 'wares';
+      box.dataset['drop'] = 'smith';
       box.append(el('div', 'gr-sellbox-t', 'Tap an item in the bag or an equipped item, or drag one here.'));
       pane.append(box);
     } else {
@@ -235,20 +240,27 @@ export function openBlacksmith(root: HTMLElement, get: () => CampaignState, set:
     attach: (overlay, a) => {
       api = a;
       // sağdaki kahraman panelinde takılı item'e tek tıkla -> demirciye alınır (dokunmatikte ipucundaki "Choose for the smith")
+      // torbadaki item'e tık da her zaman demirciye alır (Gear'ın kendi seçimi aynı item'e ikinci tıkta kalkıyordu: takılı item seçiliyken torbadaki o item'e dönülemiyordu)
       overlay.addEventListener('click', (e) => {
-        const t = (e.target as HTMLElement).closest<HTMLElement>('[data-tip^="slot:"]');
-        const uid = t ? equippedUid(t.dataset['tip']!) : '';
-        if (uid) choose(uid);
+        const t = (e.target as HTMLElement).closest<HTMLElement>('[data-tip^="slot:"], [data-tip^="bag:"]');
+        const key = t?.dataset['tip'] ?? '';
+        const uid = key.startsWith('slot:') ? equippedUid(key) : key.startsWith('bag:') ? key.slice(4) : '';
+        if (uid && findItem(get(), uid)) choose(uid);
       });
       overlay.classList.add('gr-shop-overlay');
       overlay.setAttribute('aria-label', 'Blacksmith');
     },
     render: renderSide,
-    targetOf: (v) => (v === 'wares' ? { kind: 'wares' } : null),
-    onDrop: (s) => {
-      // torbadan panele bırakılan item seçilir (satış yok)
+    targetOf: (v) => (v === 'smith' ? { kind: 'smith' } : null),
+    onDrop: (s, tg) => {
+      // torbadan bırakılan item seçilir (satış yok); kuşanılmış yuvadan panele bırakılan item de seçilir (çıkarılmaz; playtest 2026-10-23 U10)
       if (s.kind === 'bag') {
         choose(s.uid);
+        return true;
+      }
+      if (s.kind === 'slot' && tg?.kind === 'smith') {
+        const uid = get().roster.find((h) => h.id === s.heroId)?.equipment[s.slot]?.uid ?? '';
+        if (uid) choose(uid);
         return true;
       }
       return false;

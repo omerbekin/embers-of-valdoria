@@ -235,6 +235,14 @@ export const HUD_PLATE_W = 132;
 export const HUD_PLATE_W_PHONE = 146;
 export const HUD_PLATE_GAP = 8;
 const esc = (s: string): string => s.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+/**
+ * Sıra çubuğu hücresinin erişilebilir adı (B9, playtest 2026-10-23): hücreler yalnızca portre (alt="") olduğundan çubuk erişilebilirlik
+ * ağacında görünmüyordu; ilk savaşta (rozetsiz) "turn bar yok" sanıldı. Ad = ipucunun başlığı · tarafı · ne zaman ("Warrior, Ally, Acting now").
+ */
+export function queueCellLabel(c: HudQueueCell): string {
+  return [c.tip.title, c.tip.badge, c.tag?.text, ...c.tip.rows.map((r) => r.text)].filter(Boolean).join(', ');
+}
 const pct = (a: number, b: number) => `${b > 0 ? Math.max(0, Math.min(100, (a / b) * 100)) : 0}%`;
 const img = (url: string, cls = 'bh-ico', extra = '') => (url ? `<img class="${cls}" src="${url}" alt="" draggable="false" ${extra}>` : '');
 
@@ -359,6 +367,8 @@ export class BattleHud {
     this.band = el('div', 'bh-band');
     this.band.innerHTML = '<i class="bh-dia bh-band-dia"></i>';
     this.turn = el('div', 'bh-turn');
+    this.turn.setAttribute('role', 'list');
+    this.turn.setAttribute('aria-label', 'Turn order');
     this.turnLbl = el('div', 'bh-turn-lbl');
     this.waveLbl = el('div', 'bh-wave');
     this.waveLbl.hidden = true;
@@ -704,7 +714,7 @@ export class BattleHud {
       this.turn.innerHTML = cells
         .map(
           (c, i) =>
-            `<div class="bh-cell ${c.enemy ? 'enemy' : ''} ${c.state}" ${this.reg(`q:${i}:${c.uid}`, c.tip)}>${img(c.avatarUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}${
+            `<div class="bh-cell ${c.enemy ? 'enemy' : ''} ${c.state}" role="listitem" aria-label="${esc(queueCellLabel(c))}" ${this.reg(`q:${i}:${c.uid}`, c.tip)}>${img(c.avatarUrl, 'bh-portrait', c.flip ? 'style="transform:scaleX(-1)"' : '')}${
               c.tag ? `<span class="bh-ctag" style="color:${c.tag.color};border-color:${c.tag.color}">${esc(c.tag.text)}</span>` : ''
             }</div>`,
         )

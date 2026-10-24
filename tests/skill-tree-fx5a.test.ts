@@ -365,7 +365,7 @@ describe('Faz 5a: çağrı düğümleri (4c kalanları)', () => {
     expect(s).toBeTruthy();
     expect(s.empowered).toBe(true);
 
-    expect(mp0 - me.mp).toBe(8 + 8);
+    expect(mp0 - me.mp).toBe(content.skills.raise_dead!.cost.amount + 8); // bedel veriden (2026-10-24 mana turu: 8 -> 20) + Empty Grave 8
   });
 });
 

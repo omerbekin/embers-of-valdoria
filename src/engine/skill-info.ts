@@ -77,6 +77,7 @@ function shapeText(area: AreaDef): string {
       // Rect anchor kuralı (area-shape.ts > rectAxisStart): boyutu 3+ olan eksende fare hücresi ortada, diğerlerinde sol-alt köşe
       const h = area.rows ?? 1; // ekranda yatay (sıra sayısı)
       const v = area.cols ?? 1; // ekranda dikey (şerit sayısı)
+      if (h === 1 && v === 1) return 'Hits only the cell you aim at'; // 1x1 (D11 Radiance)
       const size = `Hits a ${h}x${v} block`;
       if (h < RECT_CENTER_MIN && v < RECT_CENTER_MIN) return `${size}; your cursor cell is its bottom-left corner`;
       const across = h >= RECT_CENTER_MIN ? 'centered left to right on your cursor cell' : 'starting at your cursor cell on the left';
@@ -416,7 +417,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       const g = defs.grounds?.[e.ground];
       // D11 (Holy Ground): şifa zemini; area_any'de yalnızca kendi tarafına atılınca kalır
       if (g?.heal) add(`Leaves ${g.name} on the area${skill.target === 'area_any' ? (e.side === 'enemies' ? ' (enemy side only)' : ' (your side only)') : ''} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) healing at the start of each ally turn there`);
-      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
+      else add(`Leaves ${g?.name ?? e.ground} on ${skill.target === 'single_enemy' ? "the target's cell" : 'the area'} for ${e.turns} turns (damage over time): ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, e.power)}) damage at the start of each enemy turn there`, g?.element);
     } else if (e.type === 'selfDamage') {
       add(`Costs you ${pct(e.ratio)} of your max HP`);
     } else if (e.type === 'guard') {
@@ -447,7 +448,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.noTransferOnKill) add('Every Omen on the target is spent; if this kills it, nothing passes on (Ill Omen does not trigger)');
     } else if (e.type === 'dot') {
       const def = defs.statuses?.[e.status];
-      add(`${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.dotPowerMult))}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
+      add(`Damage over time: ${def?.name ?? e.status} for ${e.turns} turns: ${pct(e.power)} ${ATTRIBUTE_NAME[e.scale]} (${raw(e.scale, withMult(e.power, stats.dotPowerMult))}) ${def?.dot?.element ?? ''} damage at the start of each of its turns (cannot miss or crit; recasting renews it)`.replace('  ', ' '), def?.dot?.element);
     } else if (e.type === 'bond') {
       const name = defs.statuses?.dark_bond?.name ?? 'Dark Bond';
       add(`${name} for ${e.turns} of your turns: whenever you heal from life steal, the bonded ally heals ${e.ratio === 1 ? 'the same amount' : `${pct(e.ratio)} of it`} (you still heal fully; at full HP you steal nothing, so nothing is shared)`);

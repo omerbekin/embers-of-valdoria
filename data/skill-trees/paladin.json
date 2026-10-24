@@ -1128,7 +1128,7 @@
     },
     "4.u2": {
       "name": "Scorching Light",
-      "text": "Radiance sets every enemy it hits Burning for 2 turns.",
+      "text": "Radiance sets the enemy it hits Burning for 2 turns.",
       "src": "A:V2:4.u2",
       "fx": [
         {
@@ -1211,7 +1211,7 @@
     },
     "4.d1": {
       "name": "Focused Beam",
-      "text": "Radiance can target one enemy: no heal and no Holy Ground, but 160% damage to that enemy only.",
+      "text": "Radiance can strike as a focused beam: no heal and no Holy Ground, but 120% damage to the enemy.",
       "src": "A:V2:4.d1",
       "new": true,
       "approved": true,
@@ -1220,11 +1220,11 @@
           "k": "mode",
           "mode": "focused_beam",
           "name": "Focused Beam",
-          "text": "160% damage to one enemy. No heal.",
-          "baseText": "Cross area: heals allies and leaves Holy Ground, or hits enemies.",
+          "text": "120% damage to one enemy. No heal.",
+          "baseText": "One cell: heals an ally and leaves Holy Ground, or hits an enemy.",
           "target": "single_enemy",
           "removeEffects": ["heal", "ground"],
-          "powerMul": 1.6
+          "powerMul": 1.2
         }
       ]
     },
@@ -1291,7 +1291,7 @@
     },
     "4.l3": {
       "name": "Second Sunrise",
-      "text": "If Radiance heals 3+ allies below 50% HP, its cooldown is 2 instead of 4 this time.",
+      "text": "If Radiance heals an ally below 30% HP, its cooldown is 2 instead of 4 this time.",
       "src": "A:V1:4.d3",
       "fx": [
         {
@@ -1299,8 +1299,8 @@
           "h": "cond",
           "when": {
             "healedCountBelow": {
-              "below": 0.5,
-              "atLeast": 3
+              "below": 0.3,
+              "atLeast": 1
             }
           },
           "mod": {

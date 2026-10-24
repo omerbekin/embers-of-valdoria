@@ -41,6 +41,9 @@ export interface LootXp {
   to?: { level: number; xp: number };
   /** Düşmüş kahraman (gri satır). */
   fallen?: boolean;
+  /** Can oranı (0..1) savaş sonunda ve zafer şifası + level şifasından sonra; ikisi de varsa satırda can barı eski değerden yeniye dolar. */
+  hpFrom?: number;
+  hpTo?: number;
 }
 
 /** Bar dolum parçaları: her parça bir leveldeki 0..1 aralığı; level atlanınca bar dolup taşar, sıfırdan yeni leveldan devam eder. */
@@ -210,6 +213,19 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
       const reg = { heroId: x.heroId ?? '', tag, earned: false };
       tags.push(reg);
       body.append(top, mid);
+      // can barı: savaş sonu canından zafer şifası (ve level şifası) sonrası cana dolar
+      let hpFill: HTMLElement | null = null;
+      let hpTxt: HTMLElement | null = null;
+      if (x.hpFrom !== undefined && x.hpTo !== undefined && !x.fallen) {
+        const hpRow = el('span', 'gr-lx-mid gr-lx-hprow');
+        hpTxt = el('span', 'gr-lx-lv gr-lx-hpl', 'HP');
+        const hpBar = el('span', 'gr-xpbar gr-lx-bar gr-lx-hpbar');
+        hpFill = el('i');
+        hpFill.style.width = `${Math.round(x.hpFrom * 100)}%`;
+        hpBar.append(hpFill);
+        hpRow.append(hpTxt, hpBar);
+        body.append(hpRow);
+      }
       row.append(face, body);
       row.addEventListener('click', () => x.heroId && openHero(x.heroId));
       box.append(row);
@@ -222,6 +238,18 @@ export function openLootScreen(root: HTMLElement, o: LootHooks): LootHandle {
           syncTags();
         }
       };
+      const hpDone = (): void => {
+        if (hpFill && x.hpTo !== undefined) hpFill.style.width = `${Math.round(x.hpTo * 100)}%`;
+      };
+      if (hpFill && x.hpFrom !== undefined && x.hpTo !== undefined && ms(mo.hpFillMs) > 0 && 'animate' in hpFill) {
+        const f = hpFill;
+        const a = `${Math.round(x.hpFrom * 100)}%`;
+        const b = `${Math.round(x.hpTo * 100)}%`;
+        later(() => {
+          f.style.width = b;
+          f.animate([{ width: a }, { width: b }], { duration: ms(mo.hpFillMs), easing: 'cubic-bezier(0.33, 1, 0.68, 1)' });
+        }, ms(mo.startDelayMs) + i * ms(mo.staggerMs));
+      } else hpDone();
       if (none || ms(mo.fillMs) <= 0 || !fill.animate) return finish();
       let at = ms(mo.startDelayMs) + i * ms(mo.staggerMs);
       segs.forEach((sg, k) => {

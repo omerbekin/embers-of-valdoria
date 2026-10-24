@@ -18,7 +18,9 @@ export type DropTarget =
   | { kind: 'hero'; heroId: string }
   | { kind: 'bag' }
   | { kind: 'trash' }
-  | { kind: 'wares' };
+  | { kind: 'wares' }
+  /** Demirci paneli: torbadaki ya da kuşanılmış item bırakılınca demirciye seçilir (satılmaz, çıkarılmaz). */
+  | { kind: 'smith' };
 export type DropAction =
   | { kind: 'equip'; heroId: string; uid: string; slot?: SlotId }
   | { kind: 'unequip'; heroId: string; slot: SlotId }
@@ -28,10 +30,14 @@ export type DropAction =
   | { kind: 'buyback'; index: number; heroId?: string; slot?: SlotId }
   | { kind: 'take'; index: number; heroId?: string; slot?: SlotId }
   | { kind: 'sell'; uid: string }
+  /** Demirciye seçim (kaynak torba ya da yuva; uid'i ekran çözer). */
+  | { kind: 'pick' }
   | { kind: 'none'; reason?: string };
 
 /** `classOf`: kahramanın sınıfı (yoksa undefined). */
 export function dropAction(src: DragSource, target: DropTarget, classOf: (heroId: string) => string | undefined, itemAt?: (heroId: string, slot: SlotId) => string | undefined): DropAction {
+  // demirci: torbadaki ve kuşanılmış item seçilir (playtest 2026-10-23 U10); mal / ganimet değil
+  if (target.kind === 'smith') return src.kind === 'bag' || src.kind === 'slot' ? { kind: 'pick' } : { kind: 'none' };
   if (src.kind === 'ware' || src.kind === 'bb' || src.kind === 'loot') {
     // Mal / geri alım / ganimet: torbaya bırakılırsa alınır; kahramana ya da yuvaya bırakılırsa alınır ve kuşanılır (silah ailesi uymalı)
     const kind = src.kind === 'ware' ? 'buy' : src.kind === 'bb' ? 'buyback' : 'take';

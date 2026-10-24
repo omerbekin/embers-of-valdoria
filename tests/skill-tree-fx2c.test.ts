@@ -428,7 +428,7 @@ describe('Faz 2c: Defender', () => {
       return P(b).maxMp - P(b).mp;
     };
     expect(spend()).toBe(0);
-    expect(spend()).toBe(10);
+    expect(spend()).toBe(content.skills.close_ranks!.cost.amount);
   });
 });
 

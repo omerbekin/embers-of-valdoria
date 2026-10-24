@@ -46,7 +46,7 @@ describe('Faz 8: veri ve derleme', () => {
     }
   });
 
-  it('Focused Beam: Radiance kendi biçimini korur + tek düşman biçimi (şifa ve Holy Ground yok, hasar x1.6; D11)', () => {
+  it('Focused Beam: Radiance kendi biçimini korur + tek düşman biçimi (şifa ve Holy Ground yok, hasar x1.2; D11 tek hücre)', () => {
     const t = only('paladin', PAL_D1)!;
     const set = t.modes!['radiance']!;
     expect(set.keepBase).toBe(true);
@@ -60,7 +60,7 @@ describe('Faz 8: veri ve derleme', () => {
     expect(m.skill.effects.some((e) => e.type === 'heal' || e.type === 'ground')).toBe(false);
     const base = content.skills['radiance']!.effects.find((e) => e.type === 'damage') as { power: number };
     const dmg = m.skill.effects.find((e) => e.type === 'damage') as { power: number };
-    expect(dmg.power).toBeCloseTo(base.power * 1.6, 6);
+    expect(dmg.power).toBeCloseTo(base.power * 1.2, 6);
     // kendi skill'i değişmez
     const own = t.skills?.['radiance'] ?? content.skills['radiance']!;
     expect(own.target).toBe('area_any');
@@ -134,7 +134,7 @@ describe('Faz 8: savaşta biçim', () => {
     expect(b.skill('radiance', me)!.target).toBe('area_any'); // kullanım bitince kendi biçimi
   });
 
-  it('Focused Beam hasarı Radiance tek vuruşunun ~1.6 katı (D11)', () => {
+  it('Focused Beam hasarı Radiance tek vuruşunun ~1.2 katı (D11 tek hücre)', () => {
     const run = (mode?: string): number => {
       const b = make({ 0: 'paladin' }, { 0: 'mage' }, withTree(0, only('paladin', PAL_D1)), 5);
       const me = P(b);
@@ -148,8 +148,8 @@ describe('Faz 8: savaşta biçim', () => {
     const base = run();
     const focused = run('focused_beam');
     expect(base).toBeGreaterThan(0);
-    expect(focused / base).toBeGreaterThan(1.4);
-    expect(focused / base).toBeLessThan(1.8);
+    expect(focused / base).toBeGreaterThan(1.1);
+    expect(focused / base).toBeLessThan(1.3);
   });
 
   it('Lance of Dawn: hedefin şeridinde arkadakilere %60, yan şeride değmez; Pillar of Wrath yalnızca hedefin hücresine holy fire', () => {

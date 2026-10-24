@@ -226,7 +226,7 @@ describe('Faz 4b: Paladin', () => {
     expect(procs(b, 'paladin:4.l1')).toBe(2);
   });
 
-  it('Sunstrike: Radiance öldürürse cooldown\'u 2 düşer (iki öldürmede de bir kez; turns modu)', () => {
+  it('Sunstrike: Radiance öldürürse cooldown\'u 2 düşer (turns modu; D11 tek hücre: bir öldürme)', () => {
     const run = (tree?: UnitSetup['tree']) => {
       let out: number | undefined = -1;
       seeds('Radiance kill', (s) => {
@@ -234,11 +234,10 @@ describe('Faz 4b: Paladin', () => {
         const me = P(b);
         untilTurn(b, me);
         E(b).hp = 1;
-        E(b, 1).hp = 1;
         me.mp = me.maxMp;
         me.cooldowns = {};
-        expect(b.useSkill(me.uid, 'radiance', E(b).uid).ok).toBe(true); // D11: artı alan 0-1-3 iki düşmanı da kapsar
-        if (E(b).hp > 0 || E(b, 1).hp > 0) return false;
+        expect(b.useSkill(me.uid, 'radiance', E(b).uid).ok).toBe(true); // D11: tek hücre: bir öldürme
+        if (E(b).hp > 0) return false;
         out = me.cooldowns.radiance ?? 0;
         return true;
       });

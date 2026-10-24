@@ -268,7 +268,7 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     expect(content.classes.undead!.skills).toEqual(['bone_throw', 'wail_of_the_dead', 'dark_bond', 'raise_dead']);
     expect(content.classes.undead!.skills[3]).toBe('raise_dead');
     expect(S.blood_rite).toBeUndefined();
-    expect(S.dark_bond).toMatchObject({ target: 'single_ally', excludeSelf: true, cost: { resource: 'mp', amount: 0 }, cooldown: 2, turnCost: 0.5 }); // madde 261: Ömer kararı, bedelsiz
+    expect(S.dark_bond).toMatchObject({ target: 'single_ally', excludeSelf: true, cost: { resource: 'mp' }, cooldown: 2, turnCost: 0.5 }); // madde 261 bedelsizdi; balance-tester 2026-10-24 mana turu: bedel veriden (0 -> 10)
     expect(bondEffect).toMatchObject({ type: 'bond', turns: 3 }); // oran veriden (madde 261 denge turu: 1 -> 1,5)
     expect(bondEffect.ratio).toBeGreaterThan(0);
     // hasar yok: hasar ölçek kuralı dışında değil (ölçekli etki yok)
@@ -359,11 +359,14 @@ describe('Undead: lifesteal (veriden), Dark Bond', () => {
     const b = mk({ 0: 'warrior', 1: 'undead' }, { 0: 'defender' }, 'turns', 3);
     const [w, u] = [at(b, 'party', 0), at(b, 'party', 1)];
     until(b, u.uid);
+    const start = b.log.length; // Dark Bond yarım turn: Undead hemen yeniden oynayabilir (karışık sıra, D4); o turStart da sayılır
     act(b, u.uid, 'dark_bond', w.uid);
     const own = () => u.statuses.find((s) => s.kind === 'dark_bond');
     const copy = () => w.statuses.find((s) => s.kind === 'dark_bond');
     let undeadTurns = 0;
-    let from = b.log.length;
+    let from = start;
+    for (const e of b.log.slice(from)) if (e.type === 'turnStart' && e.actor === u.uid) undeadTurns++;
+    from = b.log.length;
     for (let i = 0; i < 200 && undeadTurns < bondEffect.turns; i++) {
       b.skipTurn();
       for (const e of b.log.slice(from)) if (e.type === 'turnStart' && e.actor === u.uid) undeadTurns++;
@@ -452,7 +455,7 @@ describe('yarım turn (turnCost 0,5)', () => {
     // saf fonksiyon: currentCost 0,5 = eşiğin yarısı
     const slots = [
       { uid: 'a', side: 'party' as const, slot: 0, spd: 10, counter: 100 },
-      { uid: 'b', side: 'enemy' as const, slot: 0, spd: 10, counter: 50 },
+      { uid: 'b', side: 'enemy' as const, slot: 0, spd: 10, counter: 40 }, // eşitlik olmasın (karışık sıra kuralı, D4)
     ];
     expect(predictQueue(slots, 100, 4, 'a')).toEqual(['a', 'b', 'a', 'b']);
     expect(predictQueue(slots, 100, 4, 'a', 'party', 0.5)).toEqual(['a', 'a', 'b', 'a']);
@@ -470,8 +473,10 @@ describe('yarım turn (turnCost 0,5)', () => {
     until(b, u.uid);
     const mp = u.mp;
     act(b, u.uid, 'dark_bond', at(b, 'party', 0).uid);
-    expect(u.mp).toBe(mp - S.dark_bond!.cost.amount);
-    expect(u.cooldowns.dark_bond).toBe(S.dark_bond!.cooldown);
+    // yarım turn: Undead hemen yeniden sıradaysa kendi tur başı MP yenilenmesi de gelmiştir (maks MP'de durur)
+    expect(u.mp).toBe(Math.min(u.maxMp, mp - S.dark_bond!.cost.amount + (b.currentUid === u.uid ? u.stats.mpRegen : 0)));
+    // yarım turn: Undead hemen yeniden sıradaysa kendi tur başında bekleme 1 azalmıştır (karışık sıra, D4)
+    expect(u.cooldowns.dark_bond).toBe((S.dark_bond!.cooldown ?? 0) - (b.currentUid === u.uid ? 1 : 0));
   });
 });
 

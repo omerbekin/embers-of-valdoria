@@ -81,7 +81,7 @@ describe('town scene data (valdoria.json > scene)', () => {
     for (const n of towns) for (const h of townScene(n)!.hotspots) {
       if (h.action === 'trade') expect(hotspotOffered(n, h)).toBe(!!n.merchant);
       else if (h.action === 'story') expect(hotspotOffered(n, h)).toBe(!!n.story);
-      else expect(hotspotOffered(n, h)).toBe(true);
+      else expect(hotspotOffered(n, h)).toBe(!h.hidden);
     }
     expect(CONFIG.texts.townRested).toMatch(/fallen stay down/); // TUR 1 madde 10: dinlenme diriltmez
     expect(CONFIG.texts.townRecruit).toBeTruthy();

@@ -238,7 +238,7 @@ export function shapeBadge(area: AreaDef): string {
     case 'rowColumn':
       return 'Row + Column';
     case 'rect':
-      return `Block ${area.rows ?? 1}x${area.cols ?? 1}`;
+      return (area.rows ?? 1) === 1 && (area.cols ?? 1) === 1 ? 'Single cell' : `Block ${area.rows ?? 1}x${area.cols ?? 1}`;
     default:
       return 'Area';
   }

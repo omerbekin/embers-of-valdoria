@@ -158,6 +158,7 @@ function upgradeState(s: CampaignState): void {
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
   if (ho !== undefined && !(ho && typeof ho.node === 'string' && Array.isArray(ho.items) && ho.items.every((u) => typeof u === 'string') && Array.isArray(ho.from)))
     delete (s as { pendingHandover?: unknown }).pendingHandover;
+  else if (ho && ho.skippedSets !== undefined && !(Array.isArray(ho.skippedSets) && ho.skippedSets.length <= 6 && ho.skippedSets.every((g) => Array.isArray(g) && g.length > 0 && g.every((u) => typeof u === 'string')))) delete ho.skippedSets;
   const ls = s.lootState as unknown as Record<string, unknown> | undefined;
   s.lootState = {
     rarePity: ls && typeof ls.rarePity === 'number' && ls.rarePity >= 0 ? ls.rarePity : 0,

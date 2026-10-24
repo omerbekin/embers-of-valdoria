@@ -11,8 +11,8 @@
  *                                                nabız atar, nefes (gasp) ile dost kalkar; ardından yeşil-altın şifa artıları (Regen)
  *   judgment (Judgment)         -> 'judgment'    merkeze geniş huzme iner, zeminde haç kolları boyunca ateş hatları koşar, her
  *                                                kol hücresinde kutsal alevler fışkırır (Holy Fire zemini aynı hücrelerde kalır)
- *   radiance (Radiance)         -> 'radiance'    Paladin'in başı üstünde haçlı güneş doğar; seçilen merkeze ışık sütunu iner (D11):
- *                                                dost alanında altın şifa plakası + yeşil artılar, düşman alanında sert beyaz-altın huzme
+ *   radiance (Radiance)         -> 'radiance'    Paladin'in başı üstünde haçlı güneş doğar; seçilen TEK hücreye ışık sütunu iner (D11):
+ *                                                dost hücresinde altın şifa plakası + yeşil artılar, düşman hücresinde sert beyaz-altın huzme
  */
 import type Phaser from 'phaser';
 import type { V2Vfx } from '../types';
@@ -297,12 +297,12 @@ const judgment: V2Vfx = async (c, k) => {
 };
 
 /**
- * Radiance (D11: tek hücre merkezli artı alan, iki mod): Paladin çekicini göğe kaldırır; başının üstünde haçlı güneş doğar, ışınları
- * dönerek büyür (ışık kabarması). Güneş patlar (koro) ve seçilen MERKEZ hücreye geniş bir ışık sütunu iner; artının hücreleri yanar.
- *  - Dost tarafı (şifa): sıcak altın-krem sütun, yumuşak altın plaka (Holy Ground aynı hücrelerde kalır), alandaki dostlara yumuşak
+ * Radiance (D11: TEK hücre, iki mod): Paladin çekicini göğe kaldırır; başının üstünde haçlı güneş doğar, ışınları
+ * dönerek büyür (ışık kabarması). Güneş patlar (koro) ve seçilen hücreye geniş bir ışık sütunu iner; yalnızca o hücre yanar.
+ *  - Dost tarafı (şifa): sıcak altın-krem sütun, yumuşak altın plaka (Holy Ground aynı hücrede kalır), oradaki dosta yumuşak
  *    şifa ışığı + yükselen yeşil artılar.
  *  - Düşman tarafı (hasar): beyaz-sıcak sert sütun, kızıl-turuncu kenarlı plaka, sarsıntı; alandaki düşmanlara dar huzme + kıvılcım
- *    ve yanık közleri.
+ *    ve yanık közleri (oradaki düşmana).
  * Rakamlar huzmeler indiği an.
  */
 const radiance: V2Vfx = async (c, k) => {
@@ -344,15 +344,15 @@ const radiance: V2Vfx = async (c, k) => {
   c.sfx('radianceBurst');
   k.flash(c.scene, heal ? '#fff3c8' : '#ffffff', heal ? 0.18 : 0.3, heal ? 360 : 300);
   if (!heal) k.shake(c.scene, 200, 0.006);
-  floorGlow(c, k, center, cellW * 1.3, cellW * 0.46, heal ? 1100 : 760);
-  void k.ring(c.scene, center.x, center.y, { r: cellW * 1.4, flat: 0.32, n: 36, colors: heal ? ['#fff0a0', '#ffd23f', '#a8f08a'] : ['#ffffff', '#fff0a0', '#ff8a1f'], dur: 520, size: 12, startR: 30 });
-  // 2) artı plakası: dostta altın + yeşil kenar (Holy Ground), düşmanda beyaz-altın + kızıl kenar
+  floorGlow(c, k, center, cellW * 0.95, cellW * 0.4, heal ? 1100 : 760);
+  void k.ring(c.scene, center.x, center.y, { r: cellW * 0.75, flat: 0.32, n: 28, colors: heal ? ['#fff0a0', '#ffd23f', '#a8f08a'] : ['#ffffff', '#fff0a0', '#ff8a1f'], dur: 520, size: 12, startR: 30 });
+  // 2) hücre plakası: dostta altın + yeşil kenar (Holy Ground), düşmanda beyaz-altın + kızıl kenar
   const plate = c.scene.add.graphics().setDepth(k.FLOOR_FX + 1).setAlpha(0);
   if (slots.length) k.fillCells(plate, c.board, slots, heal ? { fill: 0xffe08a, fillA: 0.28, edge: 0xa8f08a, edgeA: 0.85, edgeW: 4, k: 0.98 } : { fill: 0xfff0a0, fillA: 0.32, edge: 0xff6a2a, edgeA: 0.95, edgeW: 4, k: 0.98 });
   c.scene.tweens.add({ targets: plate, alpha: 1, duration: k.slow(140) });
   c.scene.tweens.add({ targets: plate, alpha: 0, delay: k.slow(heal ? 760 : 520), duration: k.slow(520), onComplete: () => plate.destroy() });
-  if (heal) motes(c, k, center, cellW * 0.9, 10, ['#fff0a0', '#ffd23f', '#a8f08a'], [60, 180]);
-  // 3) alandaki birimlere ışık: aynı anda iner
+  if (heal) motes(c, k, center, cellW * 0.45, 8, ['#fff0a0', '#ffd23f', '#a8f08a'], [60, 180]);
+  // 3) hücredeki birime ışık
   const lands: Array<Promise<void>> = [];
   for (const t of c.targets) {
     const f = { x: t.container.x, y: t.container.y - 4 };

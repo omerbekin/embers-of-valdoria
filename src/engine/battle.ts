@@ -13,7 +13,7 @@ import { bonusScaleRaw, damageSpecFor, type DamageEffect } from './spec';
 import { cellDistance, FOE_TARGETS, rangeEnabled, skillRangeFor } from './range';
 import { applySummonerScale, applySummonVariant, applyUnitModifiers, armorReduction, attributePower, hitOutcome, roundSpeed, speedMin } from './stats';
 import type { Attribute, Attributes, Corpse, CorpseChoice, CorpseState, DamageOrigin, Element, PassiveEffect } from './types';
-import { advanceTurn, predictQueue, turnProgress, type TurnSlot } from './turn-order';
+import { advanceTurn, predictQueue, tieSideAfter, turnProgress, type TurnSlot } from './turn-order';
 import { condHolds, defaultSel, effArr, effFirst, effFlag, effList, fxBags, effMult, effNum, markOnce, modGroups, MOD_SPEC, newModAcc, onceUsed, scaleOf, selMatches, SET_MODS, type CastInfo, type CondCtx, type HitInfo, type TickInfo, type CondHook, type CondHost, type CondMod, type ModGroup, type RageHook, type TreeModAcc, type TreeProcEvent, type TreeQuery, type RuleHook, type TriggerHook, type TriggerAction, type TriggerEvent, type TriggerBase, type HealHook, type HealPoint } from './tree-hooks';
 import type { ActionInfo, ItemEffects, AreaDef, AreaStage, BattleAction, BattleEvent, BattleMode, BetSpec, Combatant, CombatantDef, Formulas, GlobalSkillDef, GroundDef, GroundEffect, ShieldHook, Side, SkillDef, SkillEffect, SkillModeSet, Status, StatusDef, Telegraph, TreeSetup, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
@@ -3334,10 +3334,16 @@ export class Battle {
     return this.currentUid ? this.get(this.currentUid) : undefined;
   }
 
+  /** Karışık sıra (D4): eşit sayaçta öncelikli taraf = şu anki / son oynayanın karşı tarafı; henüz oynayan yoksa seed'li tieFirst. */
+  private tieSideNow(): Side {
+    const last = this.currentUid ? this.get(this.currentUid) : undefined;
+    return last ? tieSideAfter(last.side) : this.tieFirst;
+  }
+
   /** Sıra çubuğu: şu anki aktör + sonrakiler (uid listesi). Ölüm/çağrı sonrası yeniden hesaplanır. */
   turnQueue(count = this.setup.formulas.turn.queueLength): string[] {
     if (this.mode !== 'turns') return [];
-    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieFirst);
+    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieSideNow());
   }
 
   /**
@@ -3346,7 +3352,7 @@ export class Battle {
    */
   turnQueueAfter(skillId: string, count = this.setup.formulas.turn.queueLength): string[] {
     if (this.mode !== 'turns') return [];
-    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieFirst, this.turnCostOf(skillId, this.currentUid ?? undefined));
+    return predictQueue(this.turnSlots(), this.setup.formulas.turn.threshold, count, this.currentUid, this.tieSideNow(), this.turnCostOf(skillId, this.currentUid ?? undefined));
   }
 
   /** Skill'in turn bedeli (0 < x <= 1; yoksa 1). Global skill'ler ve bilinmeyen id'ler 1. `actorUid`: kullanıcının (ağaçla yamalı) tanımı. */
@@ -5533,7 +5539,7 @@ export class Battle {
     }
     return () => {
       // 'keep' (Ömer 2026-10-19): kimsenin sayacı değişmez, sıra kaldığı yerden sürer; yeni düşmanlar savaşa yeni giriyormuş gibi sayaç 0'dan
-      // (createSetupCombatant) başlar ve hızlarına göre mevcut sıraya girer (eşitlikte savaşın tieFirst kuralı). 'reset': herkes 0'dan.
+      // (createSetupCombatant) başlar ve hızlarına göre mevcut sıraya girer (eşitlikte karışık sıra kuralı: son oynayanın karşı tarafı). 'reset': herkes 0'dan.
       if (this.mode === 'turns' && rules.turnOrder === 'reset') for (const c of this.combatants) if (c.hp > 0) c.turnCounter = 0;
       emit({ type: 'waveStart', index, total: this.waveCount, combatants: added.map(cloneCombatant), removed, queue: this.mode === 'turns' ? this.turnQueue() : [] });
       for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
@@ -5554,7 +5560,8 @@ export class Battle {
   /** Sıradaki aktörü belirler; onun turu başlarken bekleme, durum ve MP işlemlerini yapıp turnStart yayınlar. */
   private advance(emit: Emit): void {
     const slots = this.turnSlots();
-    const next = advanceTurn(slots, this.setup.formulas.turn.threshold, this.tieFirst);
+    // Karışık sıra (D4): eşit sayaçta son oynayanın karşı tarafı önce; savaşın ilk turunda seed'li yazı-tura (tieFirst)
+    const next = advanceTurn(slots, this.setup.formulas.turn.threshold, this.tieSideNow());
     for (const s of slots) {
       const c = this.get(s.uid);
       if (c) c.turnCounter = s.counter;
