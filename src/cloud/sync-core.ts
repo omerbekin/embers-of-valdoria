@@ -295,6 +295,37 @@ export type SyncDecision =
   | { kind: 'refuse'; reason: 'format' | 'newer-schema' | 'corrupt'; key?: SyncKey };
 
 /** Giriş / açılış senkron kararı (doğruluk tablosu dosya başında). `cloud` null = bulutta kayıt yok. */
+/**
+ * İki tutorial kaydını birleştirir: görülen / tamamlanan dersler birleşim, gösterim sayısı en büyüğü, dersler bir tarafta kapatıldıysa kapalı.
+ * Biri yoksa diğeri aynen; ayrıştırılamayan / bilinmeyen sürümde undefined (çağıran sorar).
+ */
+export function mergeTutorialRaw(a: string | null, b: string | null): string | null | undefined {
+  if (a === null || b === null) return a ?? b;
+  type T = { v: number; on?: boolean; seen?: unknown; done?: unknown; shows?: unknown };
+  let x: T, y: T;
+  try {
+    x = JSON.parse(a);
+    y = JSON.parse(b);
+  } catch {
+    return undefined;
+  }
+  if (!x || !y || typeof x !== 'object' || typeof y !== 'object' || x.v !== y.v) return undefined;
+  const strs = (v: unknown) => (Array.isArray(v) ? v.filter((s): s is string => typeof s === 'string') : []);
+  const union = (p: unknown, q: unknown) => [...new Set([...strs(p), ...strs(q)])];
+  const out: Record<string, unknown> = { v: x.v, on: x.on !== false && y.on !== false, seen: union(x.seen, y.seen) };
+  if (x.done !== undefined || y.done !== undefined) out.done = union(x.done, y.done);
+  if (x.shows !== undefined || y.shows !== undefined) {
+    const shows: Record<string, number> = {};
+    for (const s of [x.shows, y.shows]) {
+      if (!s || typeof s !== 'object') continue;
+      for (const [k, n] of Object.entries(s as Record<string, unknown>)) if (typeof n === 'number') shows[k] = Math.max(shows[k] ?? 0, n);
+    }
+    out.shows = shows;
+  }
+  const raw = JSON.stringify(out);
+  return raw === a ? a : raw === b ? b : raw;
+}
+
 export function decideSync(local: SyncBundle, cloud: SyncBundle | null, app = '', now: string = new Date().toISOString()): SyncDecision {
   const outcome = (r: SyncBundle, pins: IronmanPin[] = []): SyncDecision => {
     const isL = sameBundle(r, local);
@@ -316,6 +347,12 @@ export function decideSync(local: SyncBundle, cloud: SyncBundle | null, app = ''
   const L = withTombs(local, tombs, app, now);
   const C = withTombs(cloud, tombs, app, now);
   if (sameData(L.data, C.data)) return outcome(L);
+  // Yalnızca tutorial farklıysa sorulmaz, iki taraf birleştirilir (Ömer 2026-10-25: "çakışma sormasın")
+  const T = 'eov.tutorial.v1';
+  if (SYNC_KEYS.every((k) => k === T || L.data[k] === C.data[k])) {
+    const t = mergeTutorialRaw(L.data[T], C.data[T]);
+    if (t !== undefined) return outcome({ ...L, data: { ...L.data, [T]: t } });
+  }
   const lp = hasProgress(L.data);
   const cp = hasProgress(C.data);
   if (lp && !cp) return outcome(L);

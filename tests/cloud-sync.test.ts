@@ -11,6 +11,7 @@ import {
   bundleFromData,
   decideSync,
   fastForward,
+  mergeTutorialRaw,
   readBackup,
   resolveConflict,
   SUPPORTED_VERSIONS,
@@ -151,7 +152,10 @@ describe('sync-core: decideSync doğruluk tablosu', () => {
     expect(decideSync(tutOnly(), prog(1))).toEqual({ kind: 'download' });
     expect(decideSync(prog(1), tutOnly())).toEqual({ kind: 'upload' });
     expect(decideSync(prog(1), prog(1))).toEqual({ kind: 'none' });
-    expect(decideSync(tutOnly(), withData(tutOnly(), { [TUTORIAL_KEY]: JSON.stringify({ v: 1, on: false, seen: [] }) }))).toEqual({ kind: 'upload' });
+    // yalnızca tutorial farklı: birleştirilir (kapalı kazanır, görülenler birleşim), sorulmaz
+    const tm = decideSync(tutOnly(), withData(tutOnly(), { [TUTORIAL_KEY]: JSON.stringify({ v: 1, on: false, seen: [] }) }));
+    expect(tm.kind).toBe('merge');
+    if (tm.kind === 'merge') expect(JSON.parse(tm.bundle.data[TUTORIAL_KEY]!)).toEqual({ v: 1, on: false, seen: ['attack'] });
     expect(decideSync(empty(), tutOnly())).toEqual({ kind: 'download' });
   });
 
@@ -356,5 +360,28 @@ describe('anahtar listesi anlık görüntüsü (yeni eov.* anahtarı bilinçli k
     const known = new Set<string>([...SYNC_KEYS, ...NEVER_SYNC]);
     expect([...found].filter((k) => !known.has(k)).sort()).toEqual([]);
     expect(NEVER_SYNC.filter((k) => (SYNC_KEYS as readonly string[]).includes(k))).toEqual([]);
+  });
+});
+
+describe('tutorial birleştirme (yalnızca tutorial farklıysa sorulmaz)', () => {
+  const tut = (o: object) => JSON.stringify({ v: 1, on: true, seen: [], ...o });
+  it('mergeTutorialRaw: birleşim, en büyük gösterim, kapalı kazanır; bozuk/sürüm farkı undefined', () => {
+    const m = JSON.parse(mergeTutorialRaw(tut({ seen: ['a', 'b'], done: ['x'], shows: { r: 2 } }), tut({ on: false, seen: ['b', 'c'], shows: { r: 1, s: 3 } }))!);
+    expect(m).toEqual({ v: 1, on: false, seen: ['a', 'b', 'c'], done: ['x'], shows: { r: 2, s: 3 } });
+    expect(mergeTutorialRaw(null, tut({}))).toBe(tut({}));
+    expect(mergeTutorialRaw('{', tut({}))).toBeUndefined();
+    expect(mergeTutorialRaw(JSON.stringify({ v: 2, seen: [] }), tut({}))).toBeUndefined();
+  });
+  it('ilerleme aynı, tutorial farklı: ask yerine birleşik paket (merge)', () => {
+    const kv = memoryKV();
+    writeSave(kv, start('normal', 1, 0), 'manual', '2026-10-20T10:00:00Z');
+    const base = bundleOf(kv);
+    const L = withData(base, { [TUTORIAL_KEY]: tut({ seen: ['a'] }) });
+    const C = withData(base, { [TUTORIAL_KEY]: tut({ seen: ['b'] }) });
+    const d = decideSync(L, C);
+    expect(d.kind).toBe('merge');
+    if (d.kind === 'merge') expect(JSON.parse(d.bundle.data[TUTORIAL_KEY]!).seen).toEqual(['a', 'b']);
+    // bir taraf diğerini kapsıyorsa o taraf aynen: yükleme / indirme
+    expect(decideSync(withData(base, { [TUTORIAL_KEY]: tut({ seen: ['a', 'b'] }) }), C).kind).toBe('upload');
   });
 });
