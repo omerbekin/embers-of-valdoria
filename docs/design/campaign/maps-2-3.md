@@ -466,3 +466,36 @@ Form soruları (tema, omurga, bitiş, boyut, boss sayısı, M-A…M-Q, Kindling,
 - Harita geçişinde Valor/yara/ceset durumunun taşınma kuralı (önerim: boss tam şifası zaten uygulanmış olur, yaralar kasaba kuralıyla silinir, cesetler taşınır).
 - Mend bitişinde tacı takan kahramanın seçimi (önerim: lider; metin dışında etkisi yok).
 - Harita 2'nin ilk 3 düğümü L10 (Harita 1 sonu farmsız ~L8,5 ile geçiş yumuşak).
+
+---
+
+## 9. Ek mekanikler turu 2 (Ömer seçimi 2026-10-25, form 4Z6Qr7WCm3gVKKJDLLi4cE, db `mech23/main`)
+
+23 öneriden 9'u seçildi. Hepsi onaylı yeni kural sayılır (form cevabı = onay); sayılar uygulamada sim ile netleşir.
+
+| Id | Ad | Ne yapar | Harita |
+|---|---|---|---|
+| A1 | **Wayshrines** | Her bölgede 1 isteğe bağlı sunak cebi; içinde kurallı küçük sınav savaşı ("yalnız 2 kahramanla", "ilk 3 tur ultimate yok", "arka sıra boş" gibi). Kazanınca takıma seferin geri kalanı için kalıcı küçük nimet (+%3 maks can, +%2 kritik, +%5 şifa gibi). 12 sunak (6 + 6). Nimetler Gear'da tek listede. Sınav kuralları B3 ile aynı karşılaşma katmanında. | 2 + 3 |
+| A4 | **Hero Oaths** | **Ömer notu: yalnızca TEK tapınak, TEK karakter** (ileride artırılabilir ya da başka mekanikler benzer türde bonus verebilir). Tapınakta bir kahraman yemin eder: kalıcı bir artı + kalıcı bir eksi (ör. Oath of the Undertow: +%12 hasar, dinlenmede şifa yarım). Ücretle bozulabilir. | 2 (tapınak yeri uygulamada: Saltspray Shrine önerim) |
+| A5 | **Personal Quests** | Her sınıfın kendi yan düğümü (Paladin: Monk's Isle'da Brann'ın emaneti; Undead: Sunken Court'ta eski adı; Druid: Snowline'da donmuş koru; Archer: Gull Cliffs'te avcı yarışması...). Bitirince o sınıfa küçük imza bonusu + unvan. Kadroda olmayan sınıfın düğümü görünmez. Sınıflar iki haritaya bölünür. | 2 + 3 |
+| B1 | **Salvage Dive** | Batık hazine düğümü: savaş kazanılınca "Dive deeper?"; her derinlik bir dalga daha (arada şifa yok) + daha iyi sandık; çekilirsen o ana kadarkini alırsın, yenilirsen son derinliğin ödülü gider. Harita 3'te aynı kalıp "Deep Shaft" (maden kuyusu). | 2 + 3 |
+| B3 | **Battle Objectives** | Karşılaşma verisinde `objective`: Survive N Rounds (gelgit yükselir, sonunda kaçılır), Break the Totem (nesne kırılana kadar takviye gelir), Hold the Bridge (ön sıra boş kalmasın). Varsayılan "herkesi öldür". Sonraki haritalarda da kullanılır. | 2'den itibaren |
+| B5 | **The Fighting Pit** | Saltmere'de arena (Harita 3'te Kharduin "Proving Grounds"): art arda 5 savaş, arada şifa yok, her kademede ödül; istenen kademede çıkılır. Tekrar girilebilir, ödül yalnızca yeni rekorda. | 2 + 3 |
+| C1 | **Crown Surge** | Bölük Crown of Ash'i taşır. Bölge başına 1 kez savaşta Crown Surge (ör. takıma 2 tur +%30 hasar); kullanan kahraman 1 **Ashen Taint** yığını alır (yığın başına -%3 maks can), kilisede temizlenir. Harita 2 sonunda Salt yarısı gelince ikinci Surge (su: takıma kalkan). Mend/Quench metni Taint sayısına göre değişir. | 2 + 3 |
+| D4 | **Frozen Echoes** | Windwall'da buza gömülü orduda yan cepler: Harita 1 bosslarının buz yankıları (Deserter Captain, Morvane'nin yankısı) yeni kitle + buz paleti. Kazanınca unvan + sandık. | 3 |
+| D5 | **Ember Shards** | Harita 3'e dağılmış 7 Ember Shard; her biri Hearthwarden savaşında bir avantaj (bir fazı zayıflatır ya da 1 tur ek hazırlık). Toplamadan da yenilir ama çok daha zor. | 3 |
+
+Seçilmeyenler (A2, A3, B2, B4, B6, B7, C2-C6, D1-D3) şimdilik yok; Notice Board (B7) future-ideas'taki haliyle bekliyor.
+
+### 9.1 Çalışma kopyası (Ömer 2026-10-25)
+Harita 2-3 oyundan bağımsız ilerler: dal `maps-2-3`, kopya `C:\Users\Omer\Projects\eov-maps` (git worktree, node_modules = oyunun node_modules'üne junction; kopyayı kaldırmadan ÖNCE junction silinir). Ana oyun (`main`) işleri bu dala düzenli olarak birleştirilir (çakışma küçük kalsın); dal `main`'e ve GitHub'a Ömer "yayına al" deyince gider. Haritalar bayrak arkasında yazılır (`campaign.json`'da harita girdisi kapalı), böylece erken birleştirme oyuncuya bir şey göstermez. Yerel test: önizleme `maps` (port 5002, build `C:\Users\Omer\Projects\eov-maps-build`).
+
+### 9.2 Güncel yapım sırası (bölüm 7'nin yerine)
+1. **Harita geçişi (M-Q) + Harita 2 iskeleti**, bayrak kapalı: 83 düğüm, yer tutucu arka plan, var olan moblarla geçici karşılaşmalar, "Continue to..." akışı, kayıt göçü, testler.
+2. **Savaş katmanı:** M-A koşul kancası + **B3 objective** (aynı karşılaşma verisi katmanı) + M-B Flooded/Soaked + M-I kapalı hücre + M-J crossing.
+3. **Harita 2 mobları** + sim:campaign Harita 2.
+4. **Harita 2 yan içerik:** A1 Wayshrines (B3 kurallarını kullanır), B1 Salvage Dive, B5 Fighting Pit, A4 tek tapınak, A5'in Harita 2 görevleri.
+5. **C1 Crown Surge** (bir bölge baştan sona oynanabilir olunca; denge sim ile).
+6. Sanat (art-pipeline, tek tek).
+7. M-K, M-L, M-M, M-N ve olaylar.
+8. Harita 3 aynı sırayla + D4 Frozen Echoes + D5 Ember Shards + A5'in Harita 3 görevleri.
