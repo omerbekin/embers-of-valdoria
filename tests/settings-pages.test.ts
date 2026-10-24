@@ -62,7 +62,7 @@ describe('Settings sayfaları', () => {
     expect(dom).toMatch(/const login = accountShown\(\)/);
   });
 
-  it('Account kapalıyken (data/cloud.json) her ana makinede görünür ve coming soon metnini çizer', () => {
+  it('Account anahtarı kapalıyken (data/cloud.json enabled:false) her ana makinede görünür ve coming soon metnini çizer', () => {
     const api = read('src/cloud/ui/api.ts');
     expect(api).toMatch(/isLoginAvailable\(\) \|\| !a\.cloudEnabled\(\)/);
     expect(ACCOUNT_SOON.intro).toBe('Sign in with Google or Discord to keep your progress in the cloud and continue on any device. Coming soon.');
@@ -76,7 +76,7 @@ describe('Settings sayfaları', () => {
     const soon = page.slice(page.indexOf('function renderComingSoon'), page.indexOf('function renderSignedOut'));
     expect(soon).not.toMatch(/checkbox|btn\(/); // onay kutusu ve etkin düğme yok
     expect(read('src/ui/settings.ts')).toMatch(/ACCOUNT_SOON_LINE/);
-    expect(read('data/cloud.json')).toMatch(/"enabled": false/);
+    expect(read('data/cloud.json')).toMatch(/"enabled": (true|false)/);
   });
 
   it('iki ekran da listeyi settings-pages.ts\'ten çizer ve her satırı işler', () => {

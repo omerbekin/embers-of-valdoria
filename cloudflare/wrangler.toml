@@ -54,7 +54,7 @@ crons = ["17 3 * * *"]
 [vars]
 # OAuth istemci kimlikleri (gizli değil). Boşken ilgili sağlayıcı kapalıdır (503, oyunda giriş gizlenir).
 # Gizli anahtarlar wrangler.toml'a YAZILMAZ: wrangler secret put GOOGLE_CLIENT_SECRET / DISCORD_CLIENT_SECRET / SESSION_HMAC_KEY
-GOOGLE_CLIENT_ID = ""
-DISCORD_CLIENT_ID = ""
+GOOGLE_CLIENT_ID = "472606521236-1qmlt3leieb7n6lcq29r00bkeatt6406.apps.googleusercontent.com"
+DISCORD_CLIENT_ID = "1563658321540677755"
 # Yalnızca bu adreslerden açılan oyun bağlanabilir (virgülle ayrılır; ":*" herhangi bir port)
 ALLOWED_ORIGINS = "https://embersofvaldoria.com,https://eov.backinn.com.tr,https://omerbekin.github.io,http://localhost:*,http://127.0.0.1:*"

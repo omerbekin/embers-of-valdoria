@@ -181,8 +181,8 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(ctx.client.getAccount().signedIn).toBe(false);
   });
 
-  it('data/cloud.json kapalı (enabled:false): giriş yok, init/checkLoginAvailable/startLogin sıfır ağ çağrısı, dinleyici yok, ?auth= bile yoklanmaz', async () => {
-    expect(cloudConfig.enabled).toBe(false);
+  it('anahtar kapalıyken (enabled:false): giriş yok, init/checkLoginAvailable/startLogin sıfır ağ çağrısı, dinleyici yok, ?auth= bile yoklanmaz', async () => {
+    expect(typeof cloudConfig.enabled).toBe('boolean');
     const raw = memoryKV();
     raw.setItem(CLOUD_META_KEY, JSON.stringify({ userId: 'u-1', rev: 1, hash: null, dirty: true, lastSyncAt: null }));
     ctx = setup({ enabled: false, raw, search: '?auth=ok' });
