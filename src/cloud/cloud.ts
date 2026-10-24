@@ -19,6 +19,7 @@ import type { IronmanPin, SyncBundle } from './sync-core';
 import { clearCloudDirty, cloudDirty, onCloudDirty, storage } from '../game/kv-storage';
 import { BACKUP_KEY, SYNC_KEYS, type SyncKey } from './keys';
 import { mergeTombstones, readTombstones, sameTombstones, type Tombstone } from './tombstones';
+import cloudConfig from '../../data/cloud.json';
 
 export const CLOUD_META_KEY = 'eov.cloud.v1';
 export const DEBOUNCE_MS = 15_000;
@@ -124,6 +125,8 @@ export interface CloudCore {
 }
 
 export interface CloudDeps {
+  /** Ana anahtar (data/cloud.json > enabled). Kapalıyken istemci HİÇ ağ çağrısı yapmaz, dinleyici kurmaz, giriş kullanılamaz (Ömer 2026-10-24: giriş şimdilik 'coming soon'). Testler true verir. */
+  enabled: boolean;
   fetch: FetchLike;
   now: () => number;
   setTimeout: (fn: () => void, ms: number) => unknown;
@@ -149,6 +152,7 @@ const defaultLoadCore = async (): Promise<CloudCore> => {
 function browserDeps(): CloudDeps {
   const w = typeof window !== 'undefined' ? window : undefined;
   return {
+    enabled: cloudConfig.enabled === true,
     fetch: (url, init) => fetch(url, init),
     now: () => Date.now(),
     setTimeout: (fn, ms) => globalThis.setTimeout(fn, ms),
@@ -284,13 +288,18 @@ export class CloudClient {
 
   // ------------------------------------------------ genel API
 
+  /** Bulut/giriş özelliği açık mı (data/cloud.json). Kapalıyken arayüz 'coming soon' gösterir. */
+  isEnabled(): boolean {
+    return this.d.enabled;
+  }
+
   isLoginAvailable(): boolean {
-    return isLoginHost(this.d.hostname) && this.availability !== 'down';
+    return this.d.enabled && isLoginHost(this.d.hostname) && this.availability !== 'down';
   }
 
   /** Arayüz (Account sayfası) giriş düğmesini göstermeden önce: bir kez /auth/me yoklar (oturum varsa senkron da başlar). */
   checkLoginAvailable(): Promise<boolean> {
-    if (!isLoginHost(this.d.hostname)) return Promise.resolve(false);
+    if (!this.d.enabled || !isLoginHost(this.d.hostname)) return Promise.resolve(false);
     if (this.availability !== 'unknown') return Promise.resolve(this.isLoginAvailable());
     return this.enqueue(async () => {
       if (this.availability === 'unknown') await this.refresh();
@@ -345,6 +354,7 @@ export class CloudClient {
 
   /** Açılış: ?auth= dönüşünü işler, giriş yapılmışsa senkronu başlatır. Girişsizken ağ çağrısı yok. */
   init(): Promise<void> {
+    if (!this.d.enabled) return Promise.resolve(); // kapalı: ?auth= dahil hiçbir şey yapılmaz, /auth/me yoklanmaz
     const auth = this.takeAuthParam();
     if (auth) this.emit({ type: 'auth', ok: auth.ok, ...(auth.reason ? { reason: auth.reason } : {}) });
     if (!isLoginHost(this.d.hostname)) return Promise.resolve();
@@ -432,6 +442,7 @@ export class CloudClient {
   debugInfo(): Record<string, string> {
     const m = this.readMeta();
     return {
+      enabled: this.d.enabled ? 'on' : 'off (data/cloud.json: accounts show Coming soon; use Sample account to preview)',
       status: this.status + (this.lastError ? ` (${this.lastError})` : ''),
       host: `${this.d.hostname} · login ${this.isLoginAvailable() ? 'available' : 'hidden'} (${this.availability})`,
       account: this.user ? `${this.user.id} · ${this.user.displayName ?? '(no name)'} · ${this.user.providers.join(', ')}` : 'signed out',
@@ -1051,6 +1062,7 @@ export function initCloud(opts: { applyGate?: () => boolean } = {}): CloudClient
   return c;
 }
 
+export const cloudEnabled = (): boolean => cloud().isEnabled();
 export const isLoginAvailable = (): boolean => cloud().isLoginAvailable();
 export const checkLoginAvailable = (): Promise<boolean> => cloud().checkLoginAvailable();
 export const getAccount = (): AccountState => cloud().getAccount();

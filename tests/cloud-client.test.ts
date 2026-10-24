@@ -5,6 +5,7 @@ import { addScore, newRun, saveScores, scoreOf } from '../src/endless';
 import { clearCloudDirty, wrapKV } from '../src/game/kv-storage';
 import { BACKUP_KEY } from '../src/cloud/keys';
 import { readTombstones, TOMB_KEY } from '../src/cloud/tombstones';
+import cloudConfig from '../data/cloud.json';
 import { CLOUD_META_KEY, CloudClient, DEBOUNCE_MS, GATE_POLL_MS, type CloudEvent, type FetchLike } from '../src/cloud/cloud';
 import { decidePut, parseSavePut, serializeBlob, type SaveData, type Tombstone as WireTomb, type Versions } from '../cloudflare/src/save-logic';
 
@@ -99,7 +100,7 @@ function fakeServer(clock: ReturnType<typeof fakeClock>) {
 
 type KVm = ReturnType<typeof memoryKV>;
 
-function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => boolean } = {}) {
+function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => boolean; enabled?: boolean } = {}) {
   const clock = fakeClock();
   const server = fakeServer(clock);
   const raw = opts.raw ?? memoryKV();
@@ -109,6 +110,7 @@ function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => b
   const urls: string[] = [];
   const events: CloudEvent[] = [];
   const client = new CloudClient({
+    enabled: opts.enabled ?? true,
     fetch: server.fetch,
     now: clock.now,
     setTimeout: clock.setTimeout,
@@ -177,6 +179,25 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(ctx.raw.getItem(CLOUD_META_KEY)).toBeNull();
     expect(ctx.client.isLoginAvailable()).toBe(true);
     expect(ctx.client.getAccount().signedIn).toBe(false);
+  });
+
+  it('data/cloud.json kapalı (enabled:false): giriş yok, init/checkLoginAvailable/startLogin sıfır ağ çağrısı, dinleyici yok, ?auth= bile yoklanmaz', async () => {
+    expect(cloudConfig.enabled).toBe(false);
+    const raw = memoryKV();
+    raw.setItem(CLOUD_META_KEY, JSON.stringify({ userId: 'u-1', rev: 1, hash: null, dirty: true, lastSyncAt: null }));
+    ctx = setup({ enabled: false, raw, search: '?auth=ok' });
+    await ctx.client.init();
+    expect(ctx.client.isEnabled()).toBe(false);
+    expect(ctx.client.isLoginAvailable()).toBe(false);
+    expect(await ctx.client.checkLoginAvailable()).toBe(false);
+    expect(ctx.client.startLogin({ provider: 'google', consentAccepted: true })).toEqual({ ok: false, reason: 'unavailable' });
+    progress(ctx.kv);
+    ctx.clock.advance(120_000);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls).toEqual([]);
+    expect(ctx.hidden).toEqual([]);
+    expect(ctx.nav).toEqual([]);
+    expect(ctx.clock.pending()).toBe(0);
   });
 
   it('giriş yalnızca izinli alan adında; Pages adresinde meta olsa da ağ çağrısı yok', async () => {

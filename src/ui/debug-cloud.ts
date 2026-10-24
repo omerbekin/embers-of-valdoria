@@ -84,7 +84,7 @@ export function registerCloudDebug(game: Phaser.Game, debug: Pick<DebugMenu, 're
             if (preview) refresh();
             else go(() => openAccountPage(game));
           });
-        }, { icon: 'swap', on: preview, title: 'Show the account page with sample data (signed in as "Ashen Wanderer"; no network, nothing saved). Sign out / Sign in switch the sample state.' }),
+        }, { icon: 'swap', on: preview, title: 'Preview the ENABLED screens while accounts are off (data/cloud.json): account page with sample data (signed in as "Ashen Wanderer"; no network, nothing saved). Sign out / Sign in switch the sample state.' }),
         debugButton('Conflict dialog (sample)', () => go(() => void screens().then(([d, s]) => d.openConflictDialog(s.samplePending()))), { icon: 'burst', title: 'Progress conflict with sample slots (slot 2 Ironman is further in the cloud). Confirm does nothing to your saves.' }),
         debugButton('Name prompt (sample)', () => go(() => void screens().then(([d, s]) => d.openNamePrompt({ required: true, api: s.sampleAccountApi() }))), { icon: 'info', title: 'First sign-in "Choose a name" (required; Confirm saves nothing)' }),
         debugButton('Delete dialog (sample)', () => go(() => void screens().then(([d, s]) => d.openDeleteDialog({ api: s.sampleAccountApi() }))), { icon: 'skull', title: 'Delete account confirm (type DELETE; deletes nothing)' }),

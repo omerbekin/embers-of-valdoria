@@ -43,7 +43,7 @@ import { trackChunkLoad } from '../../ui/boot-loader';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../../diag/diag';
 import { openDiagNotice } from '../../diag/diag-notice';
 import { PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, pageOf, pageVisible, setSettingsPage, settingsPage, stepPage } from '../../ui/settings-pages';
-import { accountApi } from '../../cloud/ui/api';
+import { accountApi, accountShown } from '../../cloud/ui/api';
 import type { LazySceneKey } from '../lazy-scenes';
 import { MAIN_ITEMS, backTarget, backdropFor, campaignButtons, initialView, moveSelection, type MenuItemKey, type MenuView } from '../main-menu-flow';
 
@@ -1220,8 +1220,8 @@ export class MainMenuScene extends Phaser.Scene {
    *  Son seçilen sayfa oturum boyunca hatırlanır (DOM ekranıyla ortak). Değerler aynı yerde saklanır. */
   private buildSettings(p: Phaser.GameObjects.Container): void {
     const L = SETTINGS_LAYOUT;
-    // Account kategorisi yalnızca giriş kullanılabilirken (Pages / sunucu kapalı: yok); sunucu yoklaması sonra gizleyebilir (accountGone)
-    const login = accountApi().isLoginAvailable();
+    // Account kategorisi giriş kullanılabilirken ya da özellik kapalıyken ('coming soon', her ana makinede); açıkken Pages / sunucu kapalı: yok; sunucu yoklaması sonra gizleyebilir (accountGone)
+    const login = accountShown();
     for (const pg of SETTINGS_PAGES) {
       if (!pageVisible(pg.key, login)) continue;
       const i = this.catRows.length;
@@ -1234,7 +1234,7 @@ export class MainMenuScene extends Phaser.Scene {
       this.catRows.push(row);
       this.catKeys.push(pg.key);
     }
-    if (login) void accountApi().checkLoginAvailable().then((ok) => !ok && this.accountGone());
+    if (login && accountApi().cloudEnabled()) void accountApi().checkLoginAvailable().then((ok) => !ok && this.accountGone());
     // Gizli debug girişinin yedeği (src/ui/debug-gesture.ts): kategori sütununun altında küçük, soluk "Developer tools"
     const dev = elBody(this, COL_X, L.top + this.catRows.length * L.rowH + 50, 'Developer tools', 26, 'rgba(168,151,122,0.55)').setOrigin(0, 0.5);
     dev.setInteractive({ useHandCursor: true, hitArea: new Phaser.Geom.Rectangle(-10, -(66 - dev.height) / 2, dev.width + 20, 66), hitAreaCallback: Phaser.Geom.Rectangle.Contains });

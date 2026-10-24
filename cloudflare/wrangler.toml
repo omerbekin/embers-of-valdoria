@@ -20,7 +20,7 @@ preview_urls = false
 directory = "../dist"
 binding = "ASSETS"
 # Yalnızca /lobby yolları ve /diag (hata raporu POST) Worker koduna gider; geri kalan her şey doğrudan statik dosyadır (Worker isteği sayılmaz)
-run_worker_first = ["/lobby", "/lobby/*", "/diag"]
+run_worker_first = ["/lobby", "/lobby/*", "/diag", "/auth/*", "/save", "/save/*", "/account", "/account/*"]
 # "/" -> index.html; gallery.html?embed=1 (wiki iframe'i) da çalışır
 html_handling = "auto-trailing-slash"
 not_found_handling = "none"
@@ -40,6 +40,21 @@ new_sqlite_classes = ["Lobby"]
 binding = "DIAG"
 id = "25eccdc0fbe74ff6b266d0050d849f3b"
 
+# Hesap ve bulut kaydı (docs/arch/accounts-plan.md): D1 `eov-accounts` (panelden oluşturuldu 2026-10-24; tablolar migrations/0001_accounts.sql ile kuruldu).
+[[d1_databases]]
+binding = "DB"
+database_name = "eov-accounts"
+database_id = "d1261f00-de57-4b6d-bbd2-e158c64d1f69"
+migrations_dir = "migrations"
+
+# 24 aydır girmeyen hesapları siler (auth.ts > deleteInactiveAccounts), günde bir kez
+[triggers]
+crons = ["17 3 * * *"]
+
 [vars]
+# OAuth istemci kimlikleri (gizli değil). Boşken ilgili sağlayıcı kapalıdır (503, oyunda giriş gizlenir).
+# Gizli anahtarlar wrangler.toml'a YAZILMAZ: wrangler secret put GOOGLE_CLIENT_SECRET / DISCORD_CLIENT_SECRET / SESSION_HMAC_KEY
+GOOGLE_CLIENT_ID = ""
+DISCORD_CLIENT_ID = ""
 # Yalnızca bu adreslerden açılan oyun bağlanabilir (virgülle ayrılır; ":*" herhangi bir port)
 ALLOWED_ORIGINS = "https://embersofvaldoria.com,https://eov.backinn.com.tr,https://omerbekin.github.io,http://localhost:*,http://127.0.0.1:*"

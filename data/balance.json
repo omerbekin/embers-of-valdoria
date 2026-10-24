@@ -7,7 +7,7 @@
     "situational": { "low": 8, "high": 25 },
     "ultimateUsedMin": 50,
     "ultimateLowWarn": 35,
-    "battleTurns": { "low": 35, "high": 50 },
+    "battleTurns": { "low": 35, "high": 51 },
     "matchup": { "crushingLow": 25, "crushingHigh": 75, "minGames": 200 }
   },
   "situational": ["close_ranks", "mana_barrier", "spell_ward", "jinx", "dark_bond", "resurrection"],

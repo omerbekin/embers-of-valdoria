@@ -14,8 +14,9 @@
 import { DurableObject } from 'cloudflare:workers';
 import { parseReport, rateKey, rateOk, reportKey, RATE_WINDOW_SEC, RETENTION_SEC } from './diag-logic';
 import { admit, leave, LOBBY_TTL_MS, originAllowed, parseClientMessage, parseJoin, peerAlive, rateAllow, type LobbyState, type RateState, type Role } from './lobby-logic';
+import { deleteInactiveAccounts, handleAuth, type AuthEnv } from './auth';
 
-interface Env {
+interface Env extends AuthEnv {
   LOBBY: DurableObjectNamespace;
   /** Hata raporları (KV, 30 gün TTL; docs/arch/diagnostics.md). Bağlı değilse /diag 503 döner. */
   DIAG?: KVNamespace;
@@ -51,9 +52,12 @@ function refuse(code: string): Response {
 }
 
 export default {
-  async fetch(req: Request, env: Env): Promise<Response> {
+  async fetch(req: Request, env: Env, ctx: ExecutionContext): Promise<Response> {
     const url = new URL(req.url);
     const p = url.pathname;
+    // Hesap / bulut kaydı: /auth/*, /save, /account (auth.ts; ilgisiz yolda null döner)
+    const authRes = await handleAuth(req, env, ctx);
+    if (authRes) return authRes;
     // Hata raporu (opt-in): POST /diag (yalnızca yazma; okuma ucu yok)
     if (p === '/diag' || p === '/diag/') return handleDiag(req, env);
     if (p === '/lobby' || p === '/lobby/' || p === '/lobby/health' || p === '/health') return new Response('Embers of Valdoria lobby server OK\n', { headers: { 'content-type': 'text/plain' } });
@@ -65,6 +69,10 @@ export default {
     if (!join) return refuse('bad-request');
     const stub = env.LOBBY.get(env.LOBBY.idFromName(join.code));
     return stub.fetch(req);
+  },
+  /** Günlük görev (wrangler.toml > [triggers]): 24 aydır girmeyen hesapları ve süresi dolan oturumları siler. */
+  async scheduled(_controller: ScheduledController, env: Env, ctx: ExecutionContext): Promise<void> {
+    ctx.waitUntil(deleteInactiveAccounts(env, Date.now()));
   },
 };
 

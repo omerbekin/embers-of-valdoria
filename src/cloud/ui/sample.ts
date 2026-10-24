@@ -28,6 +28,7 @@ export function sampleAccountApi(): AccountApi {
   const emit = (e: CloudEvent): void => listeners.forEach((fn) => fn(e));
   const later = <T>(v: T, ms = 450): Promise<T> => new Promise((r) => window.setTimeout(() => r(v), ms));
   return {
+    cloudEnabled: () => true,
     isLoginAvailable: () => true,
     checkLoginAvailable: () => Promise.resolve(true),
     getAccount: account,

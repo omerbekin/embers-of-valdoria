@@ -14,8 +14,8 @@ import { navSvg } from './nav-icons';
 import { copyDiagLog, diagConsent, diagReportId, onDiagConsentChange, setDiagConsent } from '../diag/diag';
 import { isDiagNoticeOpen, openDiagNotice } from '../diag/diag-notice';
 import { pageVisible, PRIVACY_LINE, reportIdLine, SETTINGS_LABELS, SETTINGS_PAGES, type SettingsPageKey, setSettingsPage, settingsPage, stepPage } from './settings-pages';
-import { accountApi, isOnline } from '../cloud/ui/api';
-import { accountLine } from '../cloud/ui/account-text';
+import { accountApi, accountShown, isOnline } from '../cloud/ui/api';
+import { ACCOUNT_SOON_LINE, accountLine } from '../cloud/ui/account-text';
 
 /**
  * Oyun içi ayarlar ekranı (sefer > Menu (Esc) > Settings, savaş / takım seçimi > Menu (Esc) > Settings). Ömer 2026-10-08: ana menünün SOL
@@ -293,6 +293,10 @@ export class SettingsScreen {
             const line = el('div', 'st-line st-account');
             const paint = (): void => {
               const api = accountApi();
+              if (!api.cloudEnabled()) {
+                line.textContent = ACCOUNT_SOON_LINE;
+                return;
+              }
               line.textContent = accountLine(api.getAccount(), api.getCloudStatus(), Date.now(), isOnline());
             };
             this.paintAccount = paint;
@@ -357,13 +361,13 @@ export class SettingsScreen {
     } else if (k === 'Tab') {
       e.preventDefault();
       uiSound('tab');
-      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountApi().isLoginAvailable()));
+      this.showPage(stepPage(this.page, e.shiftKey ? -1 : 1, accountShown()));
       this.zone = 'cat';
     } else if (this.zone === 'cat') {
       if (up || down) {
         e.preventDefault();
         uiSound('tab');
-        this.showPage(stepPage(this.page, up ? -1 : 1, accountApi().isLoginAvailable()));
+        this.showPage(stepPage(this.page, up ? -1 : 1, accountShown()));
       } else if (rows.length && (k === 'ArrowRight' || ((k === 'Enter' || k === ' ') && !onButton))) {
         e.preventDefault();
         this.zone = 'row';
@@ -387,7 +391,7 @@ export class SettingsScreen {
 
   /** Kategori sayfasını gösterir (oturum boyunca hatırlanır: settings-pages.ts). */
   private showPage(key: SettingsPageKey): void {
-    const login = accountApi().isLoginAvailable();
+    const login = accountShown();
     if (!pageVisible(key, login)) key = 'sound';
     this.page = key;
     setSettingsPage(key);

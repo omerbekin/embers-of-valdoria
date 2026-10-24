@@ -351,3 +351,22 @@ html.short .acc-slot-h {
 html.short .acc-toast {
   top: calc(var(--et, 0px) + 52px);
 }
+
+/* --- Kapalıyken 'coming soon' görünümü (data/cloud.json enabled:false) --- */
+.acc-intro {
+  margin: 8px 0 6px;
+  color: var(--el-txt);
+}
+
+.acc-row.off .acc-lbl {
+  opacity: 0.55;
+}
+
+.acc-soon {
+  padding: 1px 9px;
+  font: 600 max(12px, calc(15 * var(--u))) var(--el-display);
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--el-muted);
+  border: 1px solid var(--el-line1);
+}

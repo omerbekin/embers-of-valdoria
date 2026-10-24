@@ -26,6 +26,8 @@ export const PENDING_BALANCE: readonly string[] = ['paladin'];
 export const PENDING_SKILLS: Readonly<Record<string, string>> = {
   // 2026-10-18 genel denge turu (open-questions 350): Whirlwind (güç 0,87, pay %16-18) ve Resurrection (MP 16, pay %8,5-9) bantta -> çıkarıldı.
   // 2026-10-20 (open-questions 376): Whirlwind güç 0,65 sonrası pay %11 -> listeye alındı; Ömer kararıyla ilk 2 sıraya vuran rect 2x3 oldu (güç 0,5), pay %22 -> çıkarıldı.
+  // 2026-10-24: Quick Shot güç 0,42 (Ömer isteği) sonrası Piercing Arrow payı %12,6-13 (bant %15) -> listeye alındı.
+  piercing_arrow: 'Quick Shot buff sonrası pay %13 (2026-10-24), Ömer kararı bekliyor',
 };
 
 export function balanceSuite(label: string, firstSeed: number): void {

@@ -7,7 +7,7 @@
  */
 import { accountNoticeText } from '../account-notice';
 import { accountApi, isOnline } from './api';
-import { canSyncNow, cloudStatusLine, PROVIDERS, providerName, type ProviderKey } from './account-text';
+import { ACCOUNT_SOON, canSyncNow, cloudStatusLine, PROVIDERS, providerName, type ProviderKey } from './account-text';
 import { openDeleteDialog, openNamePrompt } from './dialogs';
 import { uiSound } from '../../ui/ui-sound';
 import './account.css';
@@ -94,6 +94,17 @@ export function mountAccountPage(host: HTMLElement, o: { onHidden?: () => void }
     render();
   };
 
+  /** Özellik kapalı: v1 Rows görünümünde devre dışı Google / Discord satırları + misafir notu (onay kutusu ve etkin düğme yok). */
+  function renderComingSoon(): HTMLElement[] {
+    const rows = PROVIDERS.map((p) => {
+      const r = row(providerName(p), null, [el('span', 'acc-soon', ACCOUNT_SOON.tag)]);
+      r.classList.add('off');
+      r.setAttribute('aria-disabled', 'true');
+      return r;
+    });
+    return [el('div', 'acc-sec', 'Sign in'), el('p', 'acc-note acc-intro', ACCOUNT_SOON.intro), ...rows, el('p', 'acc-note', ACCOUNT_SOON.guest)];
+  }
+
   function renderSignedOut(): HTMLElement[] {
     const api = accountApi();
     const online = isOnline();
@@ -179,6 +190,10 @@ export function mountAccountPage(host: HTMLElement, o: { onHidden?: () => void }
   function render(): void {
     if (!alive) return;
     const api = accountApi();
+    if (!api.cloudEnabled()) {
+      root.replaceChildren(...renderComingSoon());
+      return;
+    }
     if (!api.isLoginAvailable()) {
       root.replaceChildren();
       o.onHidden?.();
@@ -200,9 +215,7 @@ export function mountAccountPage(host: HTMLElement, o: { onHidden?: () => void }
   host.addEventListener('mouseup', (e) => e.preventDefault()); // fare bırakması alttaki Phaser sahnesine gitmesin
   render();
   // Sunucu ulaşılmazsa (503 / ağ hatası) giriş gizlenir: sayfa da kalkar (onHidden)
-  void accountApi()
-    .checkLoginAvailable()
-    .then(() => render());
+  if (accountApi().cloudEnabled()) void accountApi().checkLoginAvailable().then(() => render());
 
   return {
     root,

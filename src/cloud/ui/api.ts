@@ -6,6 +6,8 @@ import * as cloud from '../cloud';
 import type { AccountState, ActionResult, CloudEvent, CloudStatus, LoginMode, LoginProvider } from '../cloud';
 
 export interface AccountApi {
+  /** Özellik açık mı (data/cloud.json); kapalıyken Account sayfası 'coming soon' gösterir. */
+  cloudEnabled(): boolean;
   isLoginAvailable(): boolean;
   checkLoginAvailable(): Promise<boolean>;
   getAccount(): AccountState;
@@ -19,6 +21,7 @@ export interface AccountApi {
 }
 
 export const realAccountApi: AccountApi = {
+  cloudEnabled: cloud.cloudEnabled,
   isLoginAvailable: cloud.isLoginAvailable,
   checkLoginAvailable: cloud.checkLoginAvailable,
   getAccount: cloud.getAccount,
@@ -44,3 +47,9 @@ export const accountApi = (): AccountApi => preview ?? realAccountApi;
 
 /** Tarayıcı çevrimiçi mi (giriş satırları çevrimdışıyken kapalı). */
 export const isOnline = (): boolean => typeof navigator === 'undefined' || navigator.onLine !== false;
+
+/** Settings'te Account kategorisi görünür mü: giriş kullanılabilirken VEYA özellik kapalıyken ('coming soon' görünümü, her ana makinede). */
+export const accountShown = (): boolean => {
+  const a = accountApi();
+  return a.isLoginAvailable() || !a.cloudEnabled();
+};

@@ -89,6 +89,14 @@ export function accountLine(account: Pick<AccountState, 'signedIn' | 'displayNam
   return last ? `${who}, last synced ${relativeTime(last, now)}` : `${who}, not synced yet`;
 }
 
+/** Giriş kapalıyken (data/cloud.json enabled:false) Settings > Account 'coming soon' görünümü (Ömer 2026-10-24). */
+export const ACCOUNT_SOON_LINE = 'Accounts: coming soon';
+export const ACCOUNT_SOON = {
+  intro: 'Sign in with Google or Discord to keep your progress in the cloud and continue on any device. Coming soon.',
+  tag: 'Coming soon',
+  guest: 'Your progress is saved on this device.',
+} as const;
+
 export const PROVIDERS = ['google', 'discord'] as const;
 export type ProviderKey = (typeof PROVIDERS)[number];
 export const providerName = (p: ProviderKey): string => (p === 'google' ? 'Google' : 'Discord');

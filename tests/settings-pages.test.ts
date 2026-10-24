@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { readFileSync } from 'node:fs';
 import { PRIVACY_LINE, SETTINGS_LABELS, SETTINGS_PAGES, pageIndex, pageOf, pageVisible, setSettingsPage, settingsPage, stepPage, visiblePages, type SettingsItemKey } from '../src/ui/settings-pages';
+import { ACCOUNT_SOON, ACCOUNT_SOON_LINE } from '../src/cloud/ui/account-text';
 
 const read = (f: string): string => readFileSync(new URL(`../${f}`, import.meta.url), 'utf8');
 
@@ -54,9 +55,28 @@ describe('Settings sayfaları', () => {
     const menu = read('src/game/scenes/MainMenuScene.ts');
     expect(menu).toMatch(/import\('\.\.\/\.\.\/cloud\/ui\/account-page'\)/);
     expect(menu).toMatch(/pageVisible\(pg\.key, login\)/);
+    expect(menu).toMatch(/const login = accountShown\(\)/);
     const dom = read('src/ui/settings.ts');
     expect(dom).toMatch(/accountLine\(/);
     expect(dom).toMatch(/cat\.hidden = !pageVisible\(k, login\)/);
+    expect(dom).toMatch(/const login = accountShown\(\)/);
+  });
+
+  it('Account kapalıyken (data/cloud.json) her ana makinede görünür ve coming soon metnini çizer', () => {
+    const api = read('src/cloud/ui/api.ts');
+    expect(api).toMatch(/isLoginAvailable\(\) \|\| !a\.cloudEnabled\(\)/);
+    expect(ACCOUNT_SOON.intro).toBe('Sign in with Google or Discord to keep your progress in the cloud and continue on any device. Coming soon.');
+    expect(ACCOUNT_SOON.tag).toBe('Coming soon');
+    expect(ACCOUNT_SOON.guest).toBe('Your progress is saved on this device.');
+    expect(ACCOUNT_SOON_LINE).toBe('Accounts: coming soon');
+    const page = read('src/cloud/ui/account-page.ts');
+    expect(page).toMatch(/if \(!api\.cloudEnabled\(\)\) \{\s*root\.replaceChildren\(\.\.\.renderComingSoon\(\)\)/);
+    expect(page).toMatch(/ACCOUNT_SOON\.intro/);
+    expect(page).toMatch(/ACCOUNT_SOON\.guest/);
+    const soon = page.slice(page.indexOf('function renderComingSoon'), page.indexOf('function renderSignedOut'));
+    expect(soon).not.toMatch(/checkbox|btn\(/); // onay kutusu ve etkin düğme yok
+    expect(read('src/ui/settings.ts')).toMatch(/ACCOUNT_SOON_LINE/);
+    expect(read('data/cloud.json')).toMatch(/"enabled": false/);
   });
 
   it('iki ekran da listeyi settings-pages.ts\'ten çizer ve her satırı işler', () => {
