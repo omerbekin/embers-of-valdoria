@@ -5,7 +5,7 @@
  * Ayar: debug menüsü > Characters. Savaş sahnesi, takım seçimi, sıra çubuğu avatarları ve wiki seçili görünümü kullanır.
  */
 
-const STORE_KEY = 'proto.spriteVariants';
+const STORE_KEY = 'eov.spriteVariants';
 
 /** Varyant adlarının ekranda görünen karşılığı (id -> varyant -> yazı); 'default' = varyantsız görünüm. Yoksa adın baş harfi büyütülür. */
 const LABELS: Record<string, Record<string, string>> = {

@@ -3,7 +3,7 @@
 // çarpar: skill sesi kazancı = Master x Sound Effects. Varsayılan %100 (eski davranış: yalnızca Master). Saf kısımlar testli (tests/sfx-volume.test.ts).
 import { VOLUME_DEFAULTS, clampStep, readStepLevel, stepFraction, stepRecord } from './volume-steps';
 
-const KEY = 'proto.sfxVolume.v1';
+const KEY = 'eov.sfxVolume.v1';
 /** Varsayılan adım (data/audio-volume.json; dB eğrisi, 2026-10-23). */
 export const DEFAULT_SFX_LEVEL: number = VOLUME_DEFAULTS.sfx;
 

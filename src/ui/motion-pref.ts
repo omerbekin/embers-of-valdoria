@@ -1,6 +1,6 @@
 // "Reduced motion" ayarı (Ömer 2026-10-10; Settings ekranı ve ana menü Settings sütunu): açıkken ana menü arka planında paralaks ve
 // parçacık yok, yalnızca sabit görüntü. Kayıt yoksa işletim sisteminin `prefers-reduced-motion` tercihi izlenir; seçim kaydedilince o geçerli.
-const KEY = 'proto.reducedMotion';
+const KEY = 'eov.reducedMotion';
 const listeners = new Set<(on: boolean) => void>();
 
 function stored(): boolean | null {

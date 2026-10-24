@@ -3,11 +3,11 @@ import { inviteLink } from '../src/net/lobby-code';
 import { DISCORD_APP_URL, inviteMessage, whatsappShareUrl } from '../src/net/share-invite';
 
 describe('lobi davetini paylaşma (WhatsApp / Discord)', () => {
-  const link = inviteLink('https://omerbekin.github.io/protomedi/?debug=1#x', 'ACDEFG');
+  const link = inviteLink('https://omerbekin.github.io/embers-of-valdoria/?debug=1#x', 'ACDEFG');
 
   it('mesaj: okunur kod + katılma linki', () => {
     expect(inviteMessage('ACDEFG', link)).toBe(
-      'Join my Quick Battle in Embers of Valdoria! Lobby code: ACD EFG\nTap to join: https://omerbekin.github.io/protomedi/?lobby=ACDEFG',
+      'Join my Quick Battle in Embers of Valdoria! Lobby code: ACD EFG\nTap to join: https://omerbekin.github.io/embers-of-valdoria/?lobby=ACDEFG',
     );
   });
 

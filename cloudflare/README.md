@@ -7,12 +7,12 @@ Tek Worker, tek adres: **https://eov.backinn.com.tr** (Cloudflare ücretsiz plan
 - **Lobi** (`/lobby`): yalnızca iki oyuncuyu **buluşturur**: lobi kodunu tutar ve iki tarayıcının birbirini bulması için gereken
   bağlantı bilgisini (WebRTC "teklif/yanıt" ve adres adayları) aktarır. Oyun hamleleri buradan geçmez; iki tarayıcı arasında doğrudan
   akar. Oyundaki adres: `wss://eov.backinn.com.tr/lobby` (`../data/multiplayer.json`). Tasarım: `../docs/design/multiplayer.md`.
-- GitHub Pages (https://omerbekin.github.io/protomedi/) aynen sürer ve aynı lobiye bağlanır.
+- GitHub Pages (https://omerbekin.github.io/embers-of-valdoria/) aynen sürer ve aynı lobiye bağlanır.
 
 ## Kurulum adım adım (Ömer + koordinatör)
 
 Ön koşul: `backinn.com.tr` Cloudflare hesabında "Active" (ad sunucuları Cloudflare'i gösteriyor).
-Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\proto-game-iskelet\game`) çalıştırılır.
+Komutlar komut satırında, oyun klasöründe (`C:\Users\Omer\Projects\embers-of-valdoria\game`) çalıştırılır.
 
 1. **Paketleri kur (bir kez):** `npm install` ve `npm --prefix cloudflare install` (wrangler sabit sürüm 4.148.0, zaten listede).
 2. **Giriş (bir kez):** `npm --prefix cloudflare exec -- wrangler login` -> tarayıcı açılır, Cloudflare hesabıyla **Allow**

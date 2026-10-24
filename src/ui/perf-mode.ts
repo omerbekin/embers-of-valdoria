@@ -7,9 +7,9 @@
 export type PerfSetting = 'auto' | 'on' | 'off';
 export const PERF_SETTINGS: readonly PerfSetting[] = ['auto', 'on', 'off'];
 
-const KEY = 'proto.perfMode';
-const AUTO_KEY = 'proto.perfAuto';
-const FPS_KEY = 'proto.showFps';
+const KEY = 'eov.perfMode';
+const AUTO_KEY = 'eov.perfAuto';
+const FPS_KEY = 'eov.showFps';
 
 const listeners = new Set<(lite: boolean) => void>();
 const fpsListeners = new Set<(on: boolean) => void>();

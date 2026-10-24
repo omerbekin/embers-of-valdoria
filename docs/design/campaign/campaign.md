@@ -394,7 +394,7 @@ Her durağın öğrettiği şey (borderlands-flow referansından, Ashford 4'e ta
 - Haritada `Save` (yalnızca Normal) -> "Game saved (3/5)". 5 doluysa: "Oldest save will be replaced" uyarısı.
 
 ### 5.3 Kayıt şeması (`localStorage`, sürümlü, try/catch)
-Anahtar `protomedi.campaign.v1` (tek JSON: `{ version, saves: [...] }`), her kayıt:
+Anahtar `eov.campaign.v1` (tek JSON: `{ version, saves: [...] }`), her kayıt:
 ```json
 {
   "id": "s-482113907-9",

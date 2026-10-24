@@ -22,7 +22,7 @@ import type { CampaignMode, CampaignState, Difficulty, Hero } from './types';
  * (`corrupt` bayrağı), geçersiz tek kayıtlar atlanır.
  */
 
-export const SAVE_KEY = 'protomedi.campaign.v1';
+export const SAVE_KEY = 'eov.campaign.v1';
 /** Kayıt dosyası sürümü. 3 (madde 278): sefer durumu v2 (kahraman level/XP/ekipman, torba, altın); 2 ve 1 okunurken taşınır. */
 /** 4: x2 stat ölçeği (Ömer 2026-10-10): 2 ve 3 okunurken item zarlarının ölçekli statları x2 (progression > migrateRollsX2). */
 /** 5: affix kademeleri (Ömer 2026-10-11): eski stat zarları en yakın affix biçimine çevrilir (progression > migrateItemRolls; hiçbir durumda çökmez). */

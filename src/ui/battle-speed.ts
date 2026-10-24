@@ -3,7 +3,7 @@
 // tüm kaydırıcılar 20 adım): 0.25x - 4x, 1x çevresinde ince (0.1 adım), uçlarda kaba. Varsayılan 1x. Eski kayıtlar (0.25 / 0.5 / 0.75 /
 // 1 / 2 / 4) en yakın adıma (logaritmik uzaklık) taşınır. Motor ve sıra aynı kalır; yalnızca sunum hızı. Settings ekranı (src/ui/settings.ts)
 // ve ana menü Settings sütunu (MainMenuScene) aynı kaynak.
-const KEY = 'proto.battleSpeed';
+const KEY = 'eov.battleSpeed';
 export const BATTLE_SPEEDS = [0.25, 0.3, 0.35, 0.4, 0.5, 0.6, 0.7, 0.8, 0.9, 1, 1.1, 1.25, 1.4, 1.6, 1.8, 2, 2.25, 2.5, 3, 3.5, 4] as const;
 export type BattleSpeed = (typeof BATTLE_SPEEDS)[number];
 export const DEFAULT_SPEED: BattleSpeed = 1;

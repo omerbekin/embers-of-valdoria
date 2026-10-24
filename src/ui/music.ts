@@ -16,7 +16,7 @@ import { VOLUME_DEFAULTS, clampStep, readStepLevel, stepFraction, stepRecord } f
 type MusicModule = typeof import('../game/music');
 type Engine = InstanceType<MusicModule['MusicEngine']>;
 
-const KEY = 'proto.music.v1';
+const KEY = 'eov.music.v1';
 export const DEFAULT_MUSIC_LEVEL: number = musicData.defaultLevel;
 const FADE_OUT = musicData.fadeOutMs / 1000;
 const XFADE = crossfadeMs / 1000;

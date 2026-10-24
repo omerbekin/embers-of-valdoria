@@ -1,5 +1,5 @@
 // Endless kaydı (saf; depo dışarıdan verilir): tek koşu yuvası (her dalga sonrası otomatik, Ironman gibi; yenilgide yükleme yok) + yerel
-// en iyi skor listesi. Sürümlü; bozuk / tanınmayan kayıt oyunu çökertmez (yok sayılır). Anahtarlar `protomedi.*` kalıbında (CLAUDE.md).
+// en iyi skor listesi. Sürümlü; bozuk / tanınmayan kayıt oyunu çökertmez (yok sayılır). Anahtarlar `eov.*` kalıbında (CLAUDE.md).
 import { woundCount } from '../progression/wounds';
 import { CELL_COUNT, classes, valorRules } from '../engine/content';
 import { clampValor } from '../engine/valor';
@@ -17,8 +17,8 @@ export interface KV {
   removeItem(key: string): void;
 }
 
-export const RUN_KEY = 'protomedi.endless.v1';
-export const SCORES_KEY = 'protomedi.endless.scores.v1';
+export const RUN_KEY = 'eov.endless.v1';
+export const SCORES_KEY = 'eov.endless.scores.v1';
 /**
  * Koşu kaydı sürümü. 2: x2 stat ölçeği (Ömer 2026-10-10): sürüm 1 okunurken item zarlarının ölçekli statları x2 (progression > migrateRollsX2) ve
  * yarım kalmış savaş (suspended) atılır (durum özeti eski ölçekte; dalga baştan başlar, koşunun geri kalanı aynen kalır).

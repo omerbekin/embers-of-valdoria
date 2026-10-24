@@ -6,7 +6,7 @@
  */
 import { logEvent } from '../diag/diag';
 
-const KEY = 'proto.staleReloadAt';
+const KEY = 'eov.staleReloadAt';
 const RELOAD_GAP_MS = 30_000;
 
 /** Tarayıcıların "modül parçası yüklenemedi" mesajları (Chrome, Safari, Firefox). */

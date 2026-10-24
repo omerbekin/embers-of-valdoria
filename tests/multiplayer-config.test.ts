@@ -5,8 +5,8 @@ import { iceServersFor, lobbySocketUrl, resolveSignalingUrl } from '../src/net/c
 describe('multiplayer yapılandırması (Worker adresi)', () => {
   it('adres yoksa null (Server not configured); wss zorunlu', () => {
     expect(resolveSignalingUrl('omerbekin.github.io', '', '')).toBeNull();
-    expect(resolveSignalingUrl('omerbekin.github.io', '', 'wss://protomedi-lobby.x.workers.dev/')).toBe('wss://protomedi-lobby.x.workers.dev');
-    expect(resolveSignalingUrl('omerbekin.github.io', '', 'ws://protomedi-lobby.x.workers.dev')).toBeNull();
+    expect(resolveSignalingUrl('omerbekin.github.io', '', 'wss://embers-of-valdoria-lobby.x.workers.dev/')).toBe('wss://embers-of-valdoria-lobby.x.workers.dev');
+    expect(resolveSignalingUrl('omerbekin.github.io', '', 'ws://embers-of-valdoria-lobby.x.workers.dev')).toBeNull();
     expect(resolveSignalingUrl('omerbekin.github.io', '', 'https://x.workers.dev')).toBeNull();
   });
   it('?mpserver= yalnızca localhost sayfasında geçerli (yayındaki davet linkiyle yabancı sunucu dayatılamaz)', () => {

@@ -134,8 +134,8 @@ export function debugSection(title: string, ...children: HTMLElement[]): HTMLEle
 }
 
 /** Debug düğmesinin sürüklenerek seçilen konumu. */
-const BTN_POS_KEY = 'proto.debugBtnPos';
-const SIDE_KEY = 'proto.debug.side';
+const BTN_POS_KEY = 'eov.debugBtnPos';
+const SIDE_KEY = 'eov.debug.side';
 
 export class DebugMenu {
   private readonly actions = new Map<string, DebugAction>();

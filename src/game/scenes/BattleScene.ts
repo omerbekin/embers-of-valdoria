@@ -4160,8 +4160,8 @@ export class BattleScene extends Phaser.Scene {
     const cost = this.battle.valorRules?.revive.battleCost;
     if (have === null || !cost) return;
     const kv = storage();
-    if (!kv || kv.getItem('proto.hint.valorFall.v1')) return;
-    kv.setItem('proto.hint.valorFall.v1', '1');
+    if (!kv || kv.getItem('eov.hint.valorFall.v1')) return;
+    kv.setItem('eov.hint.valorFall.v1', '1');
     this.announce(`${unitName(dead)} has fallen. Valor can raise them: ${cost} embers and your turn`);
   }
 

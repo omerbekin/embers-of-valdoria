@@ -8,7 +8,7 @@ Varsayımlar ve sorular: `open-questions.md` madde 268.
 
 1. Ana menü > **Multiplayer** > **Host lobby** ya da **Join lobby**.
 2. Kurucu (host) lobi kurar: ekranda büyük **lobi kodu** (6 karakter), **Copy code** ve **Copy invite link** düğmeleri.
-   Davet linki: `https://omerbekin.github.io/protomedi/?lobby=KOD` (oyunun açıldığı adres + `?lobby=KOD`).
+   Davet linki: `https://omerbekin.github.io/embers-of-valdoria/?lobby=KOD` (oyunun açıldığı adres + `?lobby=KOD`).
    Altında paylaşım satırı (Ömer 2026-10-17): **Share** (yalnızca `navigator.share` olan tarayıcıda, çoğu telefon; sistem paylaşım
    menüsü), **WhatsApp** (`https://wa.me/?text=` + hazır mesaj, yeni sekme) ve **Discord** (Discord hazır mesaj linki desteklemez:
    mesaj panoya kopyalanır, `https://discord.com/app` yeni sekmede açılır, "Invite copied — paste it in Discord"; pano yoksa
@@ -147,7 +147,7 @@ Testler: `tests/multiplayer.test.ts > iki taraflı seed`.
 ### 8.2 Oyuncu adı
 
 Lobide "Name: ... [Change name]"; yalnızca harf/rakam/boşluk, en çok 16 karakter (`sanitizeName`), `localStorage`
-(`protomedi.mpName`, erişilemezse yalnızca o oturum). Boşsa kurucu "Player 1", katılan "Player 2". Lobi satırlarında, takım
+(`eov.mpName`, erişilemezse yalnızca o oturum). Boşsa kurucu "Player 1", katılan "Player 2". Lobi satırlarında, takım
 seçiminde ("<ad>'s team is revealed when the battle starts"), savaşta ("<ad>'s turn") ve sonuç ekranının sütun başlıklarında
 görünür. Yalnızca doğrudan WebRTC kanalında gönderilir (`hello.name`, `name` mesajı); röle modunda gönderilmez (Worker'dan geçmesin).
 

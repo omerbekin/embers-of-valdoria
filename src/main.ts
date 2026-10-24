@@ -1,3 +1,4 @@
+import './storage-migrate'; // ilk import: eski proto./protomedi. depo anahtarlarını eov.* altına taşır (her şeyden önce)
 import Phaser from 'phaser';
 import { installLoopGuard } from './ui/loop-guard';
 import layout from '../data/battle-layout.json';

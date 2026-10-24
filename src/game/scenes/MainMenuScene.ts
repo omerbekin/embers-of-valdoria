@@ -145,7 +145,7 @@ const SHADOW_DARK = 'rgba(12,8,5,0.95)';
 /** Play kartları artık kendi görsellerini kullanır (assets/cards, src/game/card-art.ts): menü açılışında arena arka planı yüklenmez. */
 const MENU_BACKGROUNDS: string[] = [];
 /** Quick Battle kartındaki Endless mode anahtarı (localStorage). */
-const ENDLESS_TOGGLE_KEY = 'proto.qbEndless';
+const ENDLESS_TOGGLE_KEY = 'eov.qbEndless';
 const SHADOW_GLOW = 'rgba(240,140,40,0.85)';
 const CARD_W = 460;
 const CARD_H = 640;

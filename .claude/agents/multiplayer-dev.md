@@ -11,7 +11,7 @@ Sen bu oyunun çok oyunculu (multiplayer) geliştiricisisin. Ömer kod okumaz; y
 
 ## Görev alanı
 - **Kapsam (şimdilik):** yalnızca **Quick Battle** iki oyunculu çevrimiçi oynanır. Sefer (campaign) tek oyunculu kalır.
-- **Lobi:** bir oyuncu lobi kurar, ekranda **kopyalanabilir bir lobi kodu** (ve tek tıkla kopyalanan davet linki) görünür. Kodu alan kişi oyunun GitHub Pages linkinden (https://omerbekin.github.io/protomedi/) girer, kodu yazar (ya da davet linkine tıklar) ve lobiye katılır.
+- **Lobi:** bir oyuncu lobi kurar, ekranda **kopyalanabilir bir lobi kodu** (ve tek tıkla kopyalanan davet linki) görünür. Kodu alan kişi oyunun GitHub Pages linkinden (https://omerbekin.github.io/embers-of-valdoria/) girer, kodu yazar (ya da davet linkine tıklar) ve lobiye katılır.
 - **Akış:** lobi → iki oyuncu da hazır → takım seçimi (her oyuncu kendi tarafını seçer; kurucu oyuncu tarafı, katılan düşman tarafı) → savaş → sonuç → rövanş ya da lobiye dönüş.
 - **Senkron:** motor saf ve seed'li olduğu için **lockstep** kullanılır: iki tarafta aynı seed ve aynı takımlarla aynı savaş kurulur, yalnızca oyuncu hamleleri (skill, hedef, hücre seçimi, global eylem) gönderilir. Rastgele sayı ya da durum ağdan gönderilmez. Her hamleden sonra kısa bir durum özeti (hash) karşılaştırılır; uyuşmazlık (desync) olursa tespit edilir ve raporlanır.
 - **Sıra kuralları:** her oyuncu yalnızca kendi tarafının birimlerini, kendi sırasında oynatır; rakibin sırasında giriş kilitlidir ("Opponent's turn"). Yapay zeka multiplayer savaşta kullanılmaz (kopma hariç: bkz. aşağı).

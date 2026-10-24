@@ -7,7 +7,7 @@
  *
  * Seçim class başınadır (anahtar = class id; ortak öğeler için `shared`): o class'ın skill ikonları, pasif/logo ikonu, skill
  * vfx'leri ve sesleri seçili sürüme göre çözülür. Çağrılar sahibinin sürümünü izler (Skeleton -> Undead, Treant -> Druid).
- * v2'de karşılığı henüz olmayan öğe v1'e düşer (karışık sürüm çökmez). Seçim localStorage'da (`proto.assetVersions`), bozuk/erişilemez
+ * v2'de karşılığı henüz olmayan öğe v1'e düşer (karışık sürüm çökmez). Seçim localStorage'da (`eov.assetVersions`), bozuk/erişilemez
  * depolamada varsayılan v1. Phaser'a ve DOM'a bağımlı değildir (window yalnızca varsa kullanılır; testlenebilir).
  */
 import { content } from '../engine';
@@ -41,7 +41,7 @@ export const CODE_SFX: Readonly<Record<string, readonly string[]>> = {
   [SHARED_KEY]: ['gasp', 'fistWhoosh', 'armorRun'],
 };
 
-export const VERSIONS_STORAGE_KEY = 'proto.assetVersions';
+export const VERSIONS_STORAGE_KEY = 'eov.assetVersions';
 
 // ---------------------------------------------------------------- sahiplik (hangi öğe hangi class'ın)
 

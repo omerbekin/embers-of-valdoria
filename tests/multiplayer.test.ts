@@ -72,11 +72,11 @@ describe('lobi kodu', () => {
     expect(codes.size).toBeGreaterThan(495); // çakışma çok nadir
     expect(generateLobbyCode(() => 0.999999)).toBe('999999'.replace(/9/g, LOBBY_ALPHABET.at(-1)!));
     expect(normalizeLobbyCode(' acd-efg ')).toBe('ACDEFG');
-    expect(normalizeLobbyCode('https://omerbekin.github.io/protomedi/?lobby=acdefg')).toBe('ACDEFG');
+    expect(normalizeLobbyCode('https://omerbekin.github.io/embers-of-valdoria/?lobby=acdefg')).toBe('ACDEFG');
     expect(normalizeLobbyCode('ACDEF0')).toBeNull();
     expect(normalizeLobbyCode('ACDEF')).toBeNull();
     expect(normalizeLobbyCode('<script>')).toBeNull();
-    expect(inviteLink('https://omerbekin.github.io/protomedi/?seed=3#x', 'ACDEFG')).toBe('https://omerbekin.github.io/protomedi/?lobby=ACDEFG');
+    expect(inviteLink('https://omerbekin.github.io/embers-of-valdoria/?seed=3#x', 'ACDEFG')).toBe('https://omerbekin.github.io/embers-of-valdoria/?lobby=ACDEFG');
     expect(lobbyFromSearch('?lobby=acdefg&x=1')).toBe('ACDEFG');
     expect(lobbyFromSearch('?lobby=hello')).toBeNull();
     expect(formatLobbyCode('ACDEFG')).toBe('ACD EFG');

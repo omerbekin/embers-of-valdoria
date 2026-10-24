@@ -89,7 +89,7 @@ export function itemSoundKind(d: { slot: string; family?: string | undefined } |
 
 // ---------------------------------------------------------------- seviye (Settings > UI sounds)
 
-const KEY = 'proto.uiSound.v1';
+const KEY = 'eov.uiSound.v1';
 const levelListeners = new Set<(level: number) => void>();
 /** Kayıtlı arayüz ses seviyesi 0..20 adım (kayıt yoksa varsayılan: açık, orta; eski 0-10 kayıtlar x2 göçer: src/ui/volume-steps.ts). */
 export function loadUiSoundLevel(): number {

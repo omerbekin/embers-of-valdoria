@@ -21,11 +21,11 @@ export interface KV {
 
 export const KEYS = {
   /** Onay + bildirim görüldü + rastgele cihaz kimliği. */
-  prefs: 'proto.diag.v1',
+  prefs: 'eov.diag.v1',
   /** İz halkası. */
-  crumbs: 'proto.diag.crumbs.v1',
+  crumbs: 'eov.diag.crumbs.v1',
   /** Açık oturumların (sekmelerin) işaretleri: temiz çıkış + canlılık. */
-  session: 'proto.diag.sessions.v1',
+  session: 'eov.diag.sessions.v1',
 } as const;
 
 /** İz türleri (kısa): boot, scene, ready, battle, campaign, error, rejection, gl, hidden, visible, report, info. */

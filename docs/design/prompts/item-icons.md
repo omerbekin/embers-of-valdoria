@@ -2,7 +2,7 @@
 
 Oyundaki 52 item'in ikonları 7 sayfa halinde üretilecek; her sayfada 8 ikon (4 sütun x 2 satır, her hücre 256x256, toplam 1024x512). Tek sayfada 52 ikon istemek kaliteyi düşürür; 8'lik paketler en iyi sonucu verir.
 
-**Her pakette ChatGPT'ye eklenecek referanslar** (`C:\Users\Omer\Projects\proto-game-iskelet\game\` altında):
+**Her pakette ChatGPT'ye eklenecek referanslar** (`C:\Users\Omer\Projects\embers-of-valdoria\game\` altında):
 - `assets/sprites/warrior/idle.png` ve `assets/sprites/defender/idle.png` (stil ve palet)
 - `assets/vfx/defender/01-gauntlet-fist.png` (aynı üreticiyle yapılmış, oyuna oturan bir nesne örneği)
 - İlk paket bittikten sonra: **ilk paketin sonucu** da referans eklensin (sonraki paketler aynı ışık ve kalınlıkta kalsın)

@@ -127,6 +127,6 @@ describe('harita sahnesi: sis görünümden bağımsız, bölge düğmesi yok', 
   it('sağ alttaki bölge görünümü düğmesi ve tercihi kaldırıldı', () => {
     expect(src).not.toContain('cmap-region-icon');
     expect(src).not.toContain('regionBtn');
-    expect(src).not.toContain('proto.mapRegionView');
+    expect(src).not.toContain('eov.mapRegionView');
   });
 });

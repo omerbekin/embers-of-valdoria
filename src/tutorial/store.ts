@@ -1,9 +1,9 @@
 /**
- * Tutorial kaydı (localStorage `proto.tutorial.v1`, sürümlü şema): dersler açık mı (Settings > Gameplay > Tutorials) ve görülen dersler
+ * Tutorial kaydı (localStorage `eov.tutorial.v1`, sürümlü şema): dersler açık mı (Settings > Gameplay > Tutorials) ve görülen dersler
  * (Codex > Lessons bunları listeler). Sefer kaydından bağımsız ve genel: bir ders bir kez görülür (her seferde değil). Depolama yoksa
  * (gizli pencere, Node testi) yalnızca bellekte tutulur, oyun çökmez.
  */
-const KEY = 'proto.tutorial.v1';
+const KEY = 'eov.tutorial.v1';
 const VERSION = 1;
 
 interface TutorialSave {

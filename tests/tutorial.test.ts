@@ -211,7 +211,7 @@ describe('tutorial kaydı (proto.tutorial.v1)', () => {
     markLessonSeen('turn_bar');
     markLessonSeen('turn_bar');
     setTutorialsOn(false);
-    expect(JSON.parse(mem.get('proto.tutorial.v1')!)).toEqual({ v: 1, on: false, seen: ['turn_bar'] });
+    expect(JSON.parse(mem.get('eov.tutorial.v1')!)).toEqual({ v: 1, on: false, seen: ['turn_bar'] });
     _resetTutorialMemory();
     expect(tutorialsOn()).toBe(false);
     expect(isLessonSeen('turn_bar')).toBe(true);
@@ -226,16 +226,16 @@ describe('tutorial kaydı (proto.tutorial.v1)', () => {
     noteLessonShown('move');
     setTutorialsOn(false);
     resetTutorials();
-    expect(JSON.parse(mem.get('proto.tutorial.v1')!)).toEqual({ v: 1, on: true, seen: [] });
+    expect(JSON.parse(mem.get('eov.tutorial.v1')!)).toEqual({ v: 1, on: true, seen: [] });
     expect(lessonDoneIds().size).toBe(0);
     expect(lessonShows('move')).toBe(0);
   });
 
   it('bozuk ya da başka sürüm kayıt: varsayılan', () => {
-    mem.set('proto.tutorial.v1', '{bad');
+    mem.set('eov.tutorial.v1', '{bad');
     expect(tutorialsOn()).toBe(true);
     _resetTutorialMemory();
-    mem.set('proto.tutorial.v1', JSON.stringify({ v: 99, on: false, seen: ['x'] }));
+    mem.set('eov.tutorial.v1', JSON.stringify({ v: 99, on: false, seen: ['x'] }));
     expect(tutorialsOn()).toBe(true);
     expect(seenLessons().size).toBe(0);
   });

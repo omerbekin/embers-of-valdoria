@@ -538,7 +538,7 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
     label: 'Open Loot screen (with XP)',
     hint: 'Same Loot screen with made-up XP rows: bars fill hero by hero, the first hero levels up; tap a row to open that hero character screen',
     run: () => {
-      sessionStorage.setItem('proto.debugLootXp', '1');
+      sessionStorage.setItem('eov.debugLootXp', '1');
       dropLoot(false);
     },
   });

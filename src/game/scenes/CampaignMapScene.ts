@@ -2431,8 +2431,8 @@ export class CampaignMapScene extends Phaser.Scene {
     if (s.pendingLoot) {
       // Debug (Open Loot screen with XP): uydurma XP satırları, yalnızca gösterim
       let dbgXp: LootXp[] | undefined;
-      if (sessionStorage.getItem('proto.debugLootXp')) {
-        sessionStorage.removeItem('proto.debugLootXp');
+      if (sessionStorage.getItem('eov.debugLootXp')) {
+        sessionStorage.removeItem('eov.debugLootXp');
         dbgXp = sampleLootXp(activeHeroes(s).map((x) => ({ id: x.id, class: x.class, level: x.level, xp: x.xp, fallen: isFallen(x) })), (c) => content.classes[c]?.name ?? c);
       }
       const h = openLootScreen(root, {

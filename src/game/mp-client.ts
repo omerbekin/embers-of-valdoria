@@ -46,7 +46,7 @@ export function loadNet(): Promise<NetModule> {
 /** İki taraf hazır olduktan sonra savaşa geçmeden önceki bekleme (sancak inişi + ışık). */
 const READY_HOLD_MS = 2300;
 const SCENES = ['BattleScene', 'TeamSelectScene', 'CampaignMapScene', 'MainMenuScene', MP_SCENE];
-const STORE_KEY = 'protomedi.mp';
+const STORE_KEY = 'eov.mp';
 /** Yenilenen sekme bu süre içinde aynı lobiye kendiliğinden döner. */
 const REJOIN_WINDOW_MS = 15 * 60 * 1000;
 
@@ -93,7 +93,7 @@ function writeStore(v: Stored | null): void {
   }
 }
 
-const NAME_KEY = 'protomedi.mpName';
+const NAME_KEY = 'eov.mpName';
 
 /** Kayıtlı oyuncu adı (localStorage; erişilemezse boş). */
 export function loadName(): string {

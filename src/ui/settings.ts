@@ -37,7 +37,7 @@ export interface SettingsHooks {
   preview: () => void;
 }
 
-const KEY = 'proto.settings.v1';
+const KEY = 'eov.settings.v1';
 /** Master Volume varsayılanı (adım; data/audio-volume.json). */
 export const DEFAULT_VOLUME: number = VOLUME_DEFAULTS.master;
 

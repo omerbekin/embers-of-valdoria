@@ -5,7 +5,7 @@
  */
 import { realPosesV2, setRealPosesV2 } from './poses';
 
-const KEY = 'proto.poseRender';
+const KEY = 'eov.poseRender';
 
 function load(): void {
   try {

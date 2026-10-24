@@ -58,7 +58,7 @@ class temeli (data/classes)  ->  + level  ->  + ağaç (filler)  ->  + item'ler 
 - Kural önerisi: tek bir item karakter gücünün bütçesinin ~1/4'ünden fazlasını vermez; HIZ (SPD/DEX) ve kritik veren item'lerin ayrı tavanı var (risk: bölüm 5).
 
 ### 1.4 Kayıt ve sürüm geçişi (aşama 0)
-- Sefer durumu (`CampaignState`) `version: 1 -> 2`; kayıt dosyası (`protomedi.campaign.v1` anahtarı aynı) `SAVE_VERSION 2 -> 3`.
+- Sefer durumu (`CampaignState`) `version: 1 -> 2`; kayıt dosyası (`eov.campaign.v1` anahtarı aynı) `SAVE_VERSION 2 -> 3`.
 - Kahramana yeni alanlar: `level` (1), `xp` (0), `equipment` (yuva -> item örneği), `tree` (düğüm -> puan), `skillPoints` (0). Sefere: `inventory` (item örnekleri), `gold` (0). Aşama 5a'da: harita başına ilerleme (bölüm 2.1).
 - Geçiş: eski kayıt okunurken eksik alanlar varsayılanla doldurulur (mevcut `normalizeState` / `migrateV1` kalıbı); bugünkü seferler bozulmadan devam eder. Test: v2 dosyası -> v3, içerik aynı + yeni alanlar boş.
 - Item örneği kayda **id + seed'li zar** olarak yazılır (ör. `{ id: "iron_helm", roll: 37, rarity: "rare" }`); asıl sayılar veriden hesaplanır. Böylece item verisi dengelenince eski kayıtlar da yeni sayıları alır.

@@ -81,7 +81,8 @@
         if (/[?&]rotate=off\b/.test(location.search)) document.documentElement.classList.add('no-rotate'); // ?rotate=off: yükleme ekranı da dönmez
         var rm = false;
         try {
-          var v = localStorage.getItem('proto.reducedMotion');
+          var v = localStorage.getItem('eov.reducedMotion');
+          if (v === null) v = localStorage.getItem('proto.reducedMotion'); // taşıma öncesi ilk açılış
           rm = v === '1' || (v !== '0' && !!window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches);
         } catch (e) {}
         if (rm) b.classList.add('boot-rm');

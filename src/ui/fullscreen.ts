@@ -117,7 +117,7 @@ export function onFullscreenChange(fn: Listener): () => void {
   return () => listeners.delete(fn);
 }
 
-const HINT_KEY = 'proto.hint.fullscreen.v1';
+const HINT_KEY = 'eov.hint.fullscreen.v1';
 
 export function hintSeen(): boolean {
   try {
