@@ -43,7 +43,7 @@ export function campaignStock(s: CampaignState, nodeId: string = s.at, reroll = 
     const fits = team.filter((h) => canEquip(h.class, d));
     const forClass = fits.length ? fits[rng.int(0, fits.length - 1)]!.class : undefined;
     const rolls = rollItem(d, rngFor(s.seed, s.mapId, nodeId, 'ware', reroll, i, gen, ...salt), { rarity, ...(forClass ? { forClass } : {}) });
-    out.push({ itemId: d.id, rolls, price: itemValue({ id: d.id, rolls }), ...(boughtAt === turns ? { sold: true } : {}) });
+    out.push({ itemId: d.id, rolls, price: Math.round(itemValue({ id: d.id, rolls }) * (1 + (CONFIG.merchant.priceGrowth ?? 0) * (ilvl - 1))), ...(boughtAt === turns ? { sold: true } : {}) });
   }
   return out;
 }
@@ -127,12 +127,20 @@ export function buyBackItem(s: CampaignState, index: number): CampaignState {
   return t;
 }
 
-/** Malları yenile (merchant.rerollCost altın; her yenileme farklı stok). */
+/** Yenileme bedeli (Ömer 2026-10-24, "lvl ile scalelensin"): merchant.rerollCost + rerollPerLevel x aktif takımın ortalama level'ı. */
+export function campaignRerollCost(s: CampaignState): number {
+  const team = activeHeroes(s).length ? activeHeroes(s) : s.roster;
+  const lvl = team.length ? team.reduce((a, h) => a + (h.level ?? 1), 0) / team.length : 1;
+  return Math.round(CONFIG.merchant.rerollCost + (CONFIG.merchant.rerollPerLevel ?? 0) * lvl);
+}
+
+/** Malları yenile (campaignRerollCost altın; her yenileme farklı stok). */
 export function rerollCampaignShop(s: CampaignState): CampaignState {
   const shop = shopOf(s);
-  if (s.gold < CONFIG.merchant.rerollCost) throw new Error('Not enough gold');
+  const cost = campaignRerollCost(s);
+  if (s.gold < cost) throw new Error('Not enough gold');
   const t = clone(s);
-  t.gold -= CONFIG.merchant.rerollCost;
+  t.gold -= cost;
   t.shop!.rerolls = shop.rerolls + 1;
   t.shop!.wares = campaignStock(t, t.at, t.shop!.rerolls);
   return t;

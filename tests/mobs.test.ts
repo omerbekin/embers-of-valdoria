@@ -112,7 +112,7 @@ describe('moblar savaşta ve seferde', () => {
     // Windy Moor (bölge II, normal savaş): enemyScale.all x karşılaşma mods; Hard: + difficulties.hard.enemy. Motor canı buna göre kurar.
     // Beklenen = battlePlan'in class kopyalarına uyguladığı zincirin aynısı: mods x enemyScale.all x bölüm ölçeği x zorluk
     const expected = (u: (typeof enc.units)[number], d: 'medium' | 'hard') =>
-      withDifficulty(withDifficulty(withDifficulty(u.mods, CONFIG.enemyScale!.all), chapterEnemyMods('valdoria', 'moor')), CONFIG.difficulties[d]!.enemy)!;
+      withDifficulty(withDifficulty(withDifficulty(u.mods, withDifficulty(CONFIG.enemyScale!.all, { hpMult: CONFIG.enemyScale!.regions?.I ?? 1, powerMult: CONFIG.enemyScale!.regions?.I ?? 1 })), chapterEnemyMods('valdoria', 'moor')), CONFIG.difficulties[d]!.enemy)!;
     const at = (difficulty: 'medium' | 'hard') => {
       const plan = battlePlan(debugTeleport(newCampaign({ mode: 'normal', seed: 5, difficulty }), 'moor'));
       const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units }, false));

@@ -1,0 +1,158 @@
+<title>Yeni Affix Fikirleri</title>
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=EB+Garamond:wght@400;500;600&display=swap">
+<style>
+/* Yerleşim: savaş masası dili, tek koyu görünüm; tier'a göre gruplanmış tek sütun kartlar, üstte seçim sayacı */
+:root{
+  --bg:#0f0c09; --panel:#17120d; --line:rgba(217,178,106,.22); --line-strong:rgba(217,178,106,.55);
+  --fg:#f1e4c6; --muted:#cdbb98; --gold:#e6c27a; --ember:#e0702a; --ember-soft:rgba(224,112,42,.14);
+  --tier-c:#9fb3c8; --tier-b:#8fd0a0; --tier-a:#e6c27a; --new:#c9a6ff; --ok:#8fd0a0;
+  --display:'Cinzel',Georgia,'Times New Roman',serif; --body:'EB Garamond',Georgia,'Times New Roman',serif;
+  color-scheme:dark;
+}
+*{box-sizing:border-box}
+body{background:var(--bg);color:var(--fg);font-family:var(--body);font-size:19px;line-height:1.55;
+  padding-block:0 48px;padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px))}
+.wrap{max-width:900px;margin:0 auto}
+header{padding-block:28px 14px;display:flex;flex-wrap:wrap;gap:12px 24px;align-items:flex-end;justify-content:space-between;border-bottom:1px solid var(--line)}
+h1{font-family:var(--display);font-weight:600;letter-spacing:.12em;text-transform:uppercase;font-size:clamp(20px,4vw,28px);margin:0;color:var(--gold);text-wrap:balance}
+.lede{margin:6px 0 0;color:var(--muted);max-width:62ch}
+.counter{font-family:var(--display);font-size:15px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted)}
+.counter b{color:var(--fg);font-variant-numeric:tabular-nums}
+.status{font-size:17px;color:var(--muted);min-height:1.4em;margin-top:8px}
+.status.err{color:#ff8a7a}
+.legend{display:flex;flex-wrap:wrap;gap:8px 18px;color:var(--muted);font-size:17px;margin:14px 0 0}
+h2{font-family:var(--display);font-weight:600;letter-spacing:.1em;text-transform:uppercase;font-size:18px;margin:30px 0 4px;text-wrap:balance}
+h2.t-C{color:var(--tier-c)} h2.t-B{color:var(--tier-b)} h2.t-A{color:var(--tier-a)}
+.tier-intro{margin:0 0 12px;color:var(--muted)}
+ol.list{list-style:none;margin:0;padding:0;display:grid;gap:8px}
+.item{display:grid;grid-template-columns:auto 1fr;gap:4px 14px;padding:12px 14px;border:1px solid var(--line);background:var(--panel)}
+.item.on{border-color:var(--line-strong);background:linear-gradient(90deg,var(--ember-soft),var(--panel) 60%)}
+.item label.pick{display:contents;cursor:pointer}
+.item input[type=checkbox]{position:absolute;opacity:0;width:1px;height:1px}
+.box{grid-row:1/span 3;width:22px;height:22px;margin-top:4px;border:1px solid var(--line-strong);transform:rotate(45deg) scale(.78);display:inline-block}
+.item.on .box{background:var(--ember);border-color:#ffb35a;box-shadow:0 0 10px rgba(240,140,40,.5)}
+.item input:focus-visible+.box,.note textarea:focus-visible{outline:2px solid var(--ember);outline-offset:2px}
+.head{display:flex;flex-wrap:wrap;gap:6px 10px;align-items:baseline;min-width:0}
+.name{font-weight:600;font-size:21px}
+.t-C .name{color:var(--tier-c)} .t-B .name{color:var(--tier-b)} .t-A .name{color:var(--tier-a)}
+.text{font-family:var(--display);font-size:15px;letter-spacing:.04em;color:var(--fg)}
+.tag{font-family:var(--display);font-size:13px;letter-spacing:.1em;text-transform:uppercase;padding:2px 7px;border:1px solid currentColor}
+.tag.new{color:var(--new)} .tag.ok{color:var(--ok)} .tag.slot{color:var(--muted)}
+.why{grid-column:2;color:var(--muted);margin:0;min-width:0}
+.note{grid-column:2;margin-top:6px}
+.note textarea{width:100%;min-height:38px;resize:vertical;background:var(--bg);color:var(--fg);border:1px solid var(--line);font:inherit;font-size:17px;padding:8px 10px}
+.note textarea::placeholder{color:var(--muted)}
+footer{margin-top:28px;padding-top:14px;border-top:1px solid var(--line);color:var(--muted);font-size:17px}
+@media (max-width:520px){body{font-size:18px}.item{padding:10px 12px}}
+</style>
+
+<div class="wrap">
+  <header>
+    <div>
+      <h1>Yeni Affix Fikirleri</h1>
+      <p class="lede">Mevcut 47 affix'le çakışmayan öneriler. Beğendiklerini işaretle, istersen not düş. Seçimlerin kaydedilir, "seçtim" deyince buradan okurum. Rakamlar örnektir (item level 10 civarı), kesin değerler sim ile belirlenir.</p>
+    </div>
+    <div class="counter" aria-live="polite">Seçilen <b id="count">0</b></div>
+  </header>
+  <div class="status" id="status">Kayıt bağlanıyor…</div>
+  <div class="legend">
+    <span><span class="tag ok">Mevcut parça</span> motorda benzeri var, ucuz</span>
+    <span><span class="tag new">Yeni kural</span> yeni mekanik, onayın gerekir</span>
+  </div>
+  <div id="groups"></div>
+  <footer>Seçim ve notlar otomatik kaydedilir. Bitince sohbette "seçtim" yaz.</footer>
+</div>
+
+<script>
+const IDEAS = [
+  { id:'res_elem', tier:'C', name:'Element direnci', text:'-6% Fire damage taken', slots:'helm, armor, offhand', kind:'new',
+    why:'Element hasarı affix\'lerinin savunma karşılığı; her element için ayrı. Ateş ağırlıklı bir bölgeye girerken eşya değiştirme sebebi olur.' },
+  { id:'healrecv', tier:'C', name:'Gelen şifa', text:'+8% healing received', slots:'helm, armor', kind:'new',
+    why:'Life leech, HP regen ve destek şifacısıyla birlikte çalışır. Tek başına bir şey yapmaz, bu yüzden düşük tier.' },
+  { id:'opener', tier:'C', name:'İlk darbe', text:'+15% damage with your first skill each battle', slots:'weapon, gloves', kind:'new',
+    why:'Quick start ile iyi eşleşir. Kısa savaşlarda güçlü, uzun boss savaşlarında zayıf; organik bir takas.' },
+  { id:'execute', tier:'B', name:'Bitirici', text:'+12% damage to enemies below 30% HP', slots:'weapon, gloves', kind:'ok',
+    why:'Bloodletter\'ın "hedefin canı eşiğin altında" kontrolü zaten var. Düşmanı bitirme rolünü öne çıkarır.' },
+  { id:'startshield', tier:'B', name:'Hazır kalkan', text:'Start battles with a shield of 8% Max HP', slots:'offhand, armor', kind:'ok',
+    why:'Kalkan sistemi var, sadece savaş başında tetiklenir. Shield power ile ölçeklenmesi tartışılabilir.' },
+  { id:'killmp', tier:'B', name:'Ruh hasadı', text:'Gain 4 MP when your skill kills an enemy', slots:'gloves, trinket', kind:'ok',
+    why:'Battle Rhythm legendary\'si zaten öldürünce MP veriyor; bu onun küçük ve düz hali. Mana leech\'in "kalabalık dalga" kardeşi.' },
+  { id:'killheal', tier:'B', name:'Zafer nefesi', text:'Heal 4% Max HP when your skill kills an enemy', slots:'armor, trinket', kind:'ok',
+    why:'Ruh hasadının can versiyonu. Endless dalgalarında değerli, tek boss\'ta işe yaramaz.' },
+  { id:'frontrow', tier:'B', name:'Ön saf', text:'-8% damage taken while in the front row', slots:'armor, offhand', kind:'new',
+    why:'Dizilim kararını eşyaya bağlar. Tank ön sırada kalmak için bir sebep daha bulur.' },
+  { id:'backrow', tier:'B', name:'Arka saf', text:'+8% damage while in the back row', slots:'weapon, trinket', kind:'new',
+    why:'Ön safın simetrisi; büyücü ve okçular için. Ön sıra öldükçe birim öne kayarsa bonus kaybolur, ilginç bir takas.' },
+  { id:'dodgecounter', tier:'B', name:'Fırsatçı', text:'After you dodge, your next skill deals +20% damage', slots:'boots, gloves', kind:'new',
+    why:'Evasion\'a saldırı değeri verir; şu an kaçınma yalnızca savunma.' },
+  { id:'shred', tier:'B', name:'Zırh yırtan', text:'Your hits lower target Armor by 5 for 2 turns (stacks up to 3)', slots:'weapon', kind:'new',
+    why:'Armor penetration\'dan farkı: takımın geri kalanı da faydalanır. Yeni bir debuff gerekir.' },
+  { id:'manashield', tier:'A', name:'Mana kalkanı', text:'15% of damage taken is paid with MP instead of HP', slots:'armor, helm', kind:'new',
+    why:'Yalnız mana kullananlarda çıkar. Mana leech ve MP regen ile sinerji kurar; ama MP biterse büyü yapamazsın, doğal bir takas.' },
+  { id:'glass', tier:'A', name:'Cam top', text:'+18% damage, -10% Max HP', slots:'weapon, trinket', kind:'ok',
+    why:'Sınır koymadan dengeleme örneği: büyük güç, açık bir bedelle. Mevcut hasar ve HP yüzdeleriyle kurulur.' },
+  { id:'cdchance', tier:'A', name:'Akıcı', text:'12% chance a used skill\'s cooldown starts 1 turn shorter', slots:'helm, gloves, trinket', kind:'new',
+    why:'Swift ultimate\'in normal skill\'ler için şanslı versiyonu. Luck build\'leriyle iyi gider.' },
+  { id:'overkill', tier:'A', name:'Taşan hasar', text:'40% of overkill damage hits the nearest enemy', slots:'weapon', kind:'new',
+    why:'Büyük tek vuruşları (Life ve Mana leech\'in sevdiği tarz) dalgalarda değerli kılar.' },
+];
+const TIERS = { C:'Common ve Uncommon eşyalarda açılan sade statlar.', B:'Rare ile açılan, oyun tarzını hafifçe yönlendiren etkiler.', A:'Epic ile açılan, build kuran güçlü etkiler.' };
+
+let state = { picked:[], notes:{} };
+let ref = null, saveTimer = 0;
+const $ = (s) => document.querySelector(s);
+const statusEl = $('#status');
+
+function render(){
+  const g = $('#groups');
+  g.textContent = '';
+  for (const t of Object.keys(TIERS)) {
+    const h = document.createElement('h2'); h.className = 't-' + t; h.textContent = t + ' tier'; g.append(h);
+    const p = document.createElement('p'); p.className = 'tier-intro'; p.textContent = TIERS[t]; g.append(p);
+    const ol = document.createElement('ol'); ol.className = 'list';
+    for (const it of IDEAS.filter((x) => x.tier === t)) {
+      const li = document.createElement('li');
+      li.className = 'item t-' + t + (state.picked.includes(it.id) ? ' on' : '');
+      li.innerHTML = `<label class="pick" for="p_${it.id}"><input type="checkbox" id="p_${it.id}"><span class="box"></span>
+        <span class="head"><span class="name"></span><span class="text"></span><span class="tag ${it.kind === 'new' ? 'new' : 'ok'}">${it.kind === 'new' ? 'Yeni kural' : 'Mevcut parça'}</span><span class="tag slot"></span></span></label>
+        <p class="why"></p><div class="note"><textarea id="n_${it.id}" placeholder="Not (isteğe bağlı)"></textarea></div>`;
+      li.querySelector('.name').textContent = it.name;
+      li.querySelector('.text').textContent = it.text;
+      li.querySelector('.tag.slot').textContent = it.slots;
+      li.querySelector('.why').textContent = it.why;
+      const cb = li.querySelector('input'); cb.checked = state.picked.includes(it.id);
+      cb.addEventListener('change', () => {
+        state.picked = cb.checked ? [...new Set([...state.picked, it.id])] : state.picked.filter((x) => x !== it.id);
+        li.classList.toggle('on', cb.checked); count(); save();
+      });
+      const ta = li.querySelector('textarea'); ta.value = state.notes[it.id] || '';
+      ta.addEventListener('input', () => { state.notes[it.id] = ta.value; save(); });
+      ol.append(li);
+    }
+    g.append(ol);
+  }
+  count();
+}
+function count(){ $('#count').textContent = state.picked.length; }
+function save(){
+  if (!ref) { statusEl.textContent = 'Kayıt bağlı değil; seçimlerini sohbette yazabilirsin.'; return; }
+  clearTimeout(saveTimer);
+  saveTimer = setTimeout(async () => {
+    try { await ref.set({ picked: state.picked, notes: state.notes }); statusEl.className = 'status'; statusEl.textContent = 'Kaydedildi.'; }
+    catch (e) { statusEl.className = 'status err'; statusEl.textContent = 'Kaydedilemedi (' + (e && e.code || 'hata') + '). Sayfayı yenileyip tekrar dene.'; }
+  }, 500);
+}
+render();
+(async () => {
+  const db = await window.claude?.use?.('db');
+  if (!db) { statusEl.textContent = 'Kayıt bu görünümde kullanılamıyor; seçimlerini sohbette yazabilirsin.'; return; }
+  ref = db.doc('affix2/main');
+  try {
+    const snap = await ref.get();
+    if (snap.exists) { const d = snap.data(); state = { picked: Array.isArray(d.picked) ? d.picked : [], notes: d.notes && typeof d.notes === 'object' ? d.notes : {} }; render(); }
+    statusEl.textContent = 'Kayıt bağlı.';
+  } catch (e) { statusEl.className = 'status err'; statusEl.textContent = 'Kayıt okunamadı (' + (e && e.code || 'hata') + ').'; }
+})();
+</script>

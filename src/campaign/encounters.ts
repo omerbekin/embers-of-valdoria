@@ -137,7 +137,9 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       const es = CONFIG.enemyScale && !CONFIG.enemyScale.skipNodes?.includes(n.id) ? CONFIG.enemyScale : undefined;
       // seferin genel düşman ölçeği (eğitim bölgesi hariç): boss rütbeli -> boss; elit düğümün diğer birimleri -> elite; kalan -> all
       const scale = u.tier === 'boss' ? (es?.boss ?? es?.all) : n.type === 'elite' ? (es?.elite ?? es?.all) : es?.all;
-      const own = withDifficulty(withDifficulty(u.mods, scale), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
+      const rk = es?.regions?.[n.region ?? ''];
+      const regional = rk && rk !== 1 ? withDifficulty(scale, { hpMult: rk, powerMult: rk }) : scale; // bölge çarpanı (Ömer 2026-10-24)
+      const own = withDifficulty(withDifficulty(u.mods, regional), u.tier ? n.enemyTierMods?.[u.tier] : undefined); // + düğüme özel rütbe ayarı (seferde)
       // eliteEscort (open-questions 365 seçenek 3): elit düğümde rütbesiz eşlikçilere zorluk eki (rütbeliler enemyTier'dan alır)
       const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : n.type === 'elite' ? diff?.eliteEscort : undefined;
       const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), rank), u.class, enemyLevel);

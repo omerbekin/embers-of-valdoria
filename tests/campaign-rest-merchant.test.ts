@@ -13,6 +13,7 @@ import {
   nodeIlvl,
   openCampaignShop,
   rerollCampaignShop,
+  campaignRerollCost,
   restAtCamp,
   reviveAtCamp,
   sellToMerchant,
@@ -74,7 +75,7 @@ describe('tüccar (Forward Camp, Odo)', () => {
       const d = itemDef(w.itemId)!;
       expect(d.rarity).not.toBe('legendary');
       expect(d.ilvl).toBeLessThanOrEqual(ilvl);
-      expect(w.price).toBe(itemValue({ id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) }));
+      expect(w.price).toBe(Math.round(itemValue({ id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) }) * (1 + (CONFIG.merchant.priceGrowth ?? 0) * (ilvl - 1))));
     }
     expect(openCampaignShop(t)).toBe(t); // açıkken yeniden kurulmaz
     expect(() => openCampaignShop(at('river'))).toThrow();
@@ -144,8 +145,12 @@ describe('tüccar (Forward Camp, Odo)', () => {
   it('yenileme rerollCost altın; stok değişir; ayrılınca tezgâh kapanır ve adım tamamlanır', () => {
     let s = shopAt(100);
     const first = s.shop!.wares;
+    const cost = campaignRerollCost(s);
+    const team = s.active.filter(Boolean).map((id) => s.roster.find((h) => h.id === id)!);
+    const lvl = team.reduce((a, h) => a + h.level, 0) / team.length;
+    expect(cost).toBe(Math.round(CONFIG.merchant.rerollCost + (CONFIG.merchant.rerollPerLevel ?? 0) * lvl)); // taban + level başına ek
     s = rerollCampaignShop(s);
-    expect(s.gold).toBe(100 - CONFIG.merchant.rerollCost);
+    expect(s.gold).toBe(100 - cost);
     expect(s.shop!.rerolls).toBe(1);
     expect(s.shop!.wares).toEqual(campaignStock(s, 'camp', 1));
     expect(s.shop!.wares).not.toEqual(first);

@@ -100,7 +100,7 @@ describe('Harita 1 yeniden çizim: veri', () => {
       try {
         const raw = battlePlan(debugTeleport(fresh(), id));
         const slot = Number(Object.keys(raw.units.enemies)[0]);
-        expect(scaled.units.enemies[slot]!.modifiers!.powerMult! / raw.units.enemies[slot]!.modifiers!.powerMult!, id).toBeCloseTo(es.all!.powerMult!, 2);
+        expect(scaled.units.enemies[slot]!.modifiers!.powerMult! / raw.units.enemies[slot]!.modifiers!.powerMult!, id).toBeCloseTo(es.all!.powerMult! * (es.regions?.I ?? 1), 2);
       } finally {
         es.skipNodes = keep;
       }

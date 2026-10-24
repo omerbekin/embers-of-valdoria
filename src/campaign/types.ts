@@ -237,7 +237,7 @@ export interface CampaignConfig {
    * Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı dengesi): her zorlukta aynı, zorluk ekinden ÖNCE (zorluklar arası fark korunur).
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
-  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
+  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Bölge çarpanı (Ömer 2026-10-24: bölge I biraz kolay, II-III biraz zor): all/elite/boss ölçeğinin can ve gücüyle çarpılır. */ regions?: Record<string, number>; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
   /**
    * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
    * (base + perChapter x bölüm). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
@@ -249,7 +249,7 @@ export interface CampaignConfig {
    */
   replay?: { xp: number[] };
   /** Sefer tüccarı (Odo; Endless'takiyle aynı kurallar): stok boyutu, yenileme bedeli, geri alım listesi. */
-  merchant: { size: number; rerollCost: number; buybackSize: number; rotateEvery: number };
+  merchant: { size: number; /** Yenileme tabanı; bedel = rerollCost + rerollPerLevel x aktif takımın ortalama level'ı (Ömer 2026-10-24). */ rerollCost: number; rerollPerLevel?: number; /** Fiyat çarpanı = 1 + priceGrowth x (item seviyesi - 1) (Ömer 2026-10-24; satış değeri etkilenmez). */ priceGrowth?: number; buybackSize: number; rotateEvery: number };
   /** Kasaba ekranı yerleşimi (1920x1080 birim): kahraman boyu, ayak çizgisi (H oranı; telefonda alt yazıya yer kalsın diye feetYPhone), kahramanlar arası, yer etiketi yazı boyu (masaüstü / telefon). */
   townScreen: { heroHeight: number; feetY: number; feetYPhone: number; gap: number; labelSize: number; labelSizePhone: number };
 }

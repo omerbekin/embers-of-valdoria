@@ -34,3 +34,21 @@
 2. Etkinin gücü Epic bütçesinin içinden mi (statlar küçülür) yoksa ekstra mı (Epic daha güçlü)?
 3. Aynı etkiden iki item takılırsa toplanır mı, en yükseği mi geçerli? (Öneri: en yükseği.)
 4. Etkiler Endless'ta da aynı mı? (Öneri: evet, aynı katalog.)
+
+## Yeni affix turu 2 (Ömer 2026-10-24, form 3orxzN4juCzKVcf5PxtEw1, db affix2/main)
+
+Eklendi: **Mana leech** (B, eldiven, needs mp; skill vuruşunun düşürdüğü canın %'si kadar MP, maks MP tavanı; ilvl 10'da ~%2, geçici).
+
+Seçilenler (yapılacak; "Yeni kural" olanlar seçimle onaylandı, rakamlar örnek, sim ile kesinleşir):
+- C **Element direnci**: -%6 <element> damage taken (helm, armor, offhand); her element ayrı. Yeni kural.
+- C **Gelen şifa**: +%8 healing received (helm, armor). Yeni kural.
+- B **Bitirici**: canı %30 altındaki düşmana +%12 hasar (weapon, gloves).
+- B **Hazır kalkan**: savaşa Max HP'nin %8'i kalkanla başla (offhand, armor).
+- B **Ruh hasadı**: skill ile öldürünce +4 MP (gloves, trinket).
+- B **Zafer nefesi**: skill ile öldürünce Max HP'nin %4'ü şifa (armor, trinket).
+- B **Zırh yırtan**: vuruş hedefin Armor'unu 2 tur 5 düşürür, 3 kez yığılır (weapon). Yeni kural (yeni debuff).
+- A **Mana kalkanı**: alınan hasarın %15'i HP yerine MP'den (armor, helm; needs mp). Yeni kural.
+- A **Akıcı**: kullanılan skill'in cooldown'u %12 ihtimalle 1 tur kısa başlar (helm, gloves, trinket). Yeni kural.
+- A **Taşan hasar**: overkill hasarının %40'ı en yakın düşmana (weapon). Yeni kural.
+
+Seçilmeyenler: İlk darbe, Ön saf, Arka saf, Fırsatçı, Cam top.

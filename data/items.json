@@ -103,7 +103,7 @@
   "_itemfix": "Ömer 2026-10-13 (form itemfix): (1) YUVA KİMLİĞİ: her stat yalnızca 2-3 yuvada rastgele çıkar (affixDefs[].slots). Weapon = element/fiziksel hasar, kritik hasarı, delme, elit/boss hasarı (+ isabet, DoT, Keenness, Elemental, Potency, Summon); Off-hand kalkan = Armor, Shield power, Magic armor (+ HP regen, resist, auralar, Global defense, Max HP %, Support); Helm = HP, MP, debuff direnci (+ Armor, Magic armor, MP cost, Mana/Resource mastery); Armor = Armor, HP, Magic armor, auralar (+ HP regen, resist); Gloves = isabet, kritik şansı, can çalma (+ kaçınma, MP regen, Keenness, hasar, hız %); Boots = hız, kaçınma, Quick start (+ HP, MP, hız %); Trinket = HP/MP regen, şifa ve kalkan gücü, DoT, çağrı gücü (+ MP, MP cost, hız, Quick start, hasar, Elemental, Potency, Mana/Resource). Genel A affix'leri (Primary, All attributes, Recovery, Swift ultimate, Immunity, Endurance) her yuvada. Hançer ikinci elde silah havuzunu kullanır. Ana affix (main) tabanın örtük statıdır, havuzdan muaftır; Legendary'nin sabit affix'leri de muaf. Kalkanların ana affix'i Armor (main), yeni tabanlar Iron Buckler (Common), Kite Shield of the Stag (Rare), Warden's Pavise (Epic). (2) TEK ITEM TAVANI DOLDURMAZ: c_acc 1/0,17 -> 0,6/0,1 (adım 0,25), b_crit 2,4/0,4 -> 1,5/0,25, a_keen kritik 1,92/0,32 -> 1,2/0,2, b_speed 1/0,04 -> 0,7/0,03 (adım 0,25), b_mpcost 4,8/0,8 -> 3/0,5, a_recovery 3,84/0,64 -> 1,6/0,27: tavan artık 2-3 kaynakla dolar. (3) DEĞERLEME (yalnızca ip): c_shield ve c_dot 0,15 -> 0,2, a_allattr 1,25 -> 3, a_support 0,08 -> 0,12 (her parça), a_potency tur 1 -> 3. (7) DENGE: yuva kimliği boşa giden zarları azalttığı için item'ler Endless'ta güçlendi (ilk boss %58 -> %63); telafi için affixRules.power 1,5 -> 1,4 (tüm affix değerleri ~%7 düşük, Endless hedefleri yeniden bantta). (6) Sıfır aralık: adımlar küçüldü (c_mp 5 -> 2, c_hpregen 0,5 -> 0,25, c_mpregen 1 -> 0,25, a_primary 2 -> 1, a_allattr 2 -> 0,5, a_mana / a_resource MP regen 1 -> 0,5). Ayrıntı: docs/design/open-questions.md madde (itemfix).",
   "_affixBalance": "Ömer 2026-10-12 (Endless item dengesi p4): a_primary ip 0,75 -> 2 (1 ana stat puanı gerçekte ~2 IP; Equip best ve fiyat artık doğru tartar), b_speed ip 2,75 -> 4 (hız çok değerli), a_speedpct perIlvl 0,32 -> 0,2 (yüksek seviyede hız % çok hızlı büyüyordu). Güç değişen tek affix a_speedpct; diğer ikisi yalnızca değerleme.",
   "affixRules": {
-    "power": 1.4,
+    "power": 1.6,
     "rollFloorByRarity": {
       "common": 0,
       "uncommon": 0.25,
@@ -646,6 +646,27 @@
           "step": 0.5,
           "ip": 0.5,
           "to": "fx:leech",
+          "scale": 0.01
+        }
+      ]
+    },
+    "b_manaleech": {
+      "tier": "B",
+      "name": "Mana leech",
+      "text": "{0}% Mana leech",
+      "slots": [
+        "gloves"
+      ],
+      "needs": "mp",
+      "desc": "Gain MP equal to this share of the HP your skill hits take away.",
+      "icon": "leech",
+      "parts": [
+        {
+          "base": 0.72,
+          "perIlvl": 0.12,
+          "step": 0.25,
+          "ip": 0.5,
+          "to": "fx:manaLeech",
           "scale": 0.01
         }
       ]
@@ -1223,7 +1244,7 @@
   "_gripTwo": "Ömer 2026-10-19: çift el tutuş gücü 1,35 -> 1,45 (Equip best çift el silahları da seçebilsin); yay 1,35 aynı.",
   "weaponPower": {
     "base": 7.5,
-    "perIlvl": 2.5,
+    "perIlvl": 2.8,
     "step": 1,
     "grip": {
       "one": 1,

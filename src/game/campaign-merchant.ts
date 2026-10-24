@@ -1,4 +1,4 @@
-import { CONFIG, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
+import { campaignRerollCost, markMerchantIntroSeen, merchantIntroSeen, buyBackItem, buyWare, rerollCampaignShop, sellToMerchant, type CampaignState } from '../campaign';
 import { UI_TEXT as T } from '../endless/ui-text';
 import { sellValue } from '../progression';
 import { campaignGearSource } from '../ui/gear-screen';
@@ -17,7 +17,7 @@ export function campaignMerchantSource(get: () => CampaignState, set: (s: Campai
     wares: () => (get().shop?.wares ?? []).map((w, i) => ({ inst: { uid: `ware-${i}`, id: w.itemId, ...(w.rolls ? { rolls: w.rolls } : {}) }, price: w.price, sold: !!w.sold })),
     buyback: () => (get().shop?.buyback ?? []).map((e) => ({ inst: e.item, price: e.price })),
     sellPrice: (inst) => sellValue(inst),
-    rerollCost: CONFIG.merchant.rerollCost,
+    rerollCost: campaignRerollCost(get()),
     buy: (i) => apply((s) => buyWare(s, i)),
     sell: (uid) => apply((s) => sellToMerchant(s, uid)),
     buyBack: (i) => apply((s) => buyBackItem(s, i)),
