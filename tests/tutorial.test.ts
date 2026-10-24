@@ -239,6 +239,15 @@ describe('tutorial kaydı (proto.tutorial.v1)', () => {
     expect(tutorialsOn()).toBe(true);
     expect(seenLessons().size).toBe(0);
   });
+
+  it('depodaki kayıt dışarıdan değişince (bulut indirmesi) önbellek yeniden okunur: sonraki yazım indirileni eski önbellekle ezmez', () => {
+    markLessonSeen('turn_bar');
+    mem.set('eov.tutorial.v1', JSON.stringify({ v: 1, on: false, seen: ['turn_bar', 'rest', 'move'] }));
+    expect(isLessonSeen('rest')).toBe(true);
+    expect(tutorialsOn()).toBe(false);
+    markLessonSeen('attack');
+    expect(JSON.parse(mem.get('eov.tutorial.v1')!)).toEqual({ v: 1, on: false, seen: ['turn_bar', 'rest', 'move', 'attack'] });
+  });
 });
 
 describe('ilk savaş kaybedilemez (UnitSetup.undying)', () => {

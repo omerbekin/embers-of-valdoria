@@ -1,12 +1,12 @@
 import { createHash } from 'node:crypto';
-import { afterEach, beforeEach, describe, expect, it } from 'vitest';
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { autoResolve, deleteSlot, memoryKV, newCampaign, pickHero, readSaves, writeSave, type CampaignMode } from '../src/campaign';
 import { addScore, newRun, saveScores, scoreOf } from '../src/endless';
 import { clearCloudDirty, wrapKV } from '../src/game/kv-storage';
 import { BACKUP_KEY } from '../src/cloud/keys';
 import { readTombstones, TOMB_KEY } from '../src/cloud/tombstones';
 import cloudConfig from '../data/cloud.json';
-import { CLOUD_META_KEY, CloudClient, DEBOUNCE_MS, GATE_POLL_MS, type CloudCore, type CloudEvent, type FetchLike } from '../src/cloud/cloud';
+import { CLOUD_META_KEY, CloudClient, DEBOUNCE_MS, GATE_POLL_MS, PULL_MIN_GAP_MS, PULL_MS, type CloudCore, type CloudEvent, type FetchLike } from '../src/cloud/cloud';
 import * as syncCore from '../src/cloud/sync-core';
 import * as campaignSave from '../src/campaign/save';
 import * as endlessSave from '../src/endless/save';
@@ -117,6 +117,8 @@ function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => b
   const raw = opts.raw ?? memoryKV();
   const kv = wrapKV(raw);
   const hidden: Array<() => void> = [];
+  const visible: Array<() => void> = [];
+  const vis = { on: true };
   const nav: string[] = [];
   const urls: string[] = [];
   const events: CloudEvent[] = [];
@@ -136,11 +138,13 @@ function setup(opts: { search?: string; host?: string; raw?: KVm; gate?: () => b
     replaceUrl: (u) => urls.push(u),
     navigate: (u) => nav.push(u),
     onHidden: (fn) => hidden.push(fn),
+    onVisible: (fn) => visible.push(fn),
+    isVisible: () => vis.on,
     app: '0.9.8.1',
   });
   if (opts.gate) client.setApplyGate(opts.gate);
   client.subscribe((e) => events.push(e));
-  return { clock, server, raw, kv, client, hidden, nav, urls, events, logs, reports };
+  return { clock, server, raw, kv, client, hidden, visible, vis, nav, urls, events, logs, reports };
 }
 
 /** Bir depoya sefer ilerlemesi yazar. */
@@ -692,5 +696,344 @@ describe('bulut istemcisi (src/cloud/cloud.ts)', () => {
     expect(ctx.server.s.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['PUT /save', 'GET /save']);
     expect(ctx.client.getStatus()).toBe('idle');
     expect(metaOf(ctx.raw)).toMatchObject({ rev: 1, dirty: false });
+  });
+});
+
+// ---------------------------------------------------------------- canlı çekme (tek cihaz)
+
+describe('canlı çekme (GET /auth/me yoklaması)', () => {
+  let ctx: ReturnType<typeof setup> | null = null;
+  beforeEach(() => clearCloudDirty());
+  afterEach(() => {
+    ctx?.client.dispose();
+    ctx = null;
+    clearCloudDirty();
+  });
+
+  const meCalls = (c: ReturnType<typeof setup>) => c.server.s.calls.filter((x) => x.path === '/auth/me').length;
+
+  async function synced(gate?: () => boolean) {
+    const raw = memoryKV();
+    progress(raw, 1);
+    const c = setup({ raw, search: '?auth=ok', ...(gate ? { gate } : {}) });
+    await c.client.init();
+    c.server.s.calls.length = 0;
+    return c;
+  }
+
+  it('girişliyken ve görünürken dakikada bir /auth/me; rev aynıysa başka çağrı yok', async () => {
+    ctx = await synced();
+    ctx.clock.advance(PULL_MS - 1);
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(0);
+    ctx.clock.advance(1);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['GET /auth/me']);
+    for (let i = 0; i < 9; i++) {
+      ctx.clock.advance(PULL_MS);
+      await ctx.client.whenIdle();
+    }
+    expect(meCalls(ctx)).toBe(10);
+    expect(ctx.server.s.calls.every((c) => c.path === '/auth/me')).toBe(true);
+  });
+
+  it('başka cihaz yükledi, bu cihaz temiz: yoklama farkı görür, buluttaki yalnızca güvenli anda iner', async () => {
+    let safe = false;
+    ctx = await synced(() => safe);
+    seedServer(ctx.server.s, 4, (kv) => {
+      progress(kv, 1);
+      progress(kv, 8, 1);
+    });
+    ctx.clock.advance(PULL_MS);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['GET /auth/me', 'GET /save']);
+    expect(readSaves(ctx.raw).file.slots[1]).toBeNull(); // ana menü değil: bekler
+    safe = true;
+    ctx.clock.advance(GATE_POLL_MS);
+    await ctx.client.whenIdle();
+    expect(readSaves(ctx.raw).file.slots[1]?.campaignId).toBe('c8');
+    expect(metaOf(ctx.raw)).toMatchObject({ rev: 4, dirty: false });
+    expect(ctx.events).toContainEqual({ type: 'applied', source: 'download' });
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('indirme ana menüyü beklerken yerelde oynandı: eski indirme uygulanmaz, yeniden karar (iki tarafta ilerleme -> soru)', async () => {
+    let safe = false;
+    ctx = await synced(() => safe);
+    seedServer(ctx.server.s, 4, (kv) => {
+      progress(kv, 1);
+      progress(kv, 8, 1);
+    });
+    ctx.clock.advance(PULL_MS);
+    await ctx.client.whenIdle();
+    progress(ctx.kv, 5, 2); // oyuncu haritada oynuyor
+    safe = true;
+    ctx.clock.advance(GATE_POLL_MS);
+    await ctx.client.whenIdle();
+    expect(readSaves(ctx.raw).file.slots[2]?.campaignId).toBe('c5'); // yeni yerel ilerleme ezilmedi
+    expect(ctx.client.getStatus()).toBe('needs-choice');
+    expect(ctx.logs.some((l) => l.startsWith('local changed since download decision'))).toBe(true);
+    expect(ctx.server.s.calls.filter((c) => c.method === 'PUT')).toHaveLength(0);
+  });
+
+  it('kirli cihaz: yoklama farkı görünce buluttakini okuyup karar verir (soru); karar beklerken yoklama yok', async () => {
+    ctx = await synced();
+    ctx.clock.advance(PULL_MS - 5_000);
+    await ctx.client.whenIdle();
+    seedServer(ctx.server.s, 4, (kv) => progress(kv, 9));
+    progress(ctx.kv, 2, 1); // debounce 15 sn: yoklama (5 sn sonra) önce gelir
+    ctx.clock.advance(5_000);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls.map((c) => `${c.method} ${c.path}`)).toEqual(['GET /auth/me', 'GET /save']);
+    expect(ctx.client.getStatus()).toBe('needs-choice');
+    ctx.clock.advance(PULL_MS * 3);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls).toHaveLength(2);
+  });
+
+  it('sekme gizliyken çağrı yok; görünür olunca hemen bir yoklama (son yoklama yeniyse yok); hatada geri çekilme', async () => {
+    ctx = await synced();
+    ctx.vis.on = false;
+    ctx.hidden.forEach((f) => f());
+    ctx.clock.advance(PULL_MS * 10);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls).toEqual([]);
+    ctx.vis.on = true;
+    ctx.visible.forEach((f) => f());
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(1);
+    // son yoklamadan PULL_MIN_GAP_MS geçmeden yeniden görünür: çağrı yok
+    ctx.clock.advance(PULL_MIN_GAP_MS - 1_000);
+    ctx.visible.forEach((f) => f());
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(1);
+    // çevrimdışı: 60 sn, sonra 120 sn, sonra 240 sn aralık; bağlantı gelince normal
+    ctx.server.s.offline = true;
+    ctx.server.s.calls.length = 0;
+    ctx.clock.advance(PULL_MS);
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(1);
+    ctx.clock.advance(PULL_MS * 2 - 1);
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(1);
+    ctx.clock.advance(1);
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(2);
+    ctx.server.s.offline = false;
+    ctx.clock.advance(PULL_MS * 4);
+    await ctx.client.whenIdle();
+    expect(meCalls(ctx)).toBe(3);
+    expect(ctx.client.getStatus()).toBe('idle');
+  });
+
+  it('çıkıştan sonra ve oturum düşünce yoklama yok', async () => {
+    ctx = await synced();
+    await ctx.client.signOut();
+    ctx.server.s.calls.length = 0;
+    ctx.clock.advance(PULL_MS * 5);
+    ctx.visible.forEach((f) => f());
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls).toEqual([]);
+    ctx.client.dispose();
+
+    ctx = await synced();
+    ctx.server.s.user = null; // oturum başka yerde kapandı
+    ctx.clock.advance(PULL_MS);
+    await ctx.client.whenIdle();
+    expect(ctx.client.getAccount().signedIn).toBe(false);
+    expect(ctx.raw.getItem(CLOUD_META_KEY)).toBeNull();
+    ctx.server.s.calls.length = 0;
+    ctx.clock.advance(PULL_MS * 5);
+    await ctx.client.whenIdle();
+    expect(ctx.server.s.calls).toEqual([]);
+  });
+});
+
+// ---------------------------------------------------------------- iki cihaz, tek sunucu
+
+/**
+ * İki cihaz (masaüstü A, telefon B) aynı sahte sunucuyu paylaşır. Her cihazın kendi modül örneği vardır (vi.resetModules): bulut "kirli"
+ * işareti kv-storage'da modül düzeyindedir (tarayıcıda sekme başına), tek örnekte iki cihaz birbirini kirletirdi.
+ */
+async function device(name: string, clock: ReturnType<typeof fakeClock>, server: ReturnType<typeof fakeServer>, raw: KVm, opts: { search?: string } = {}) {
+  vi.resetModules();
+  const C = await import('../src/cloud/cloud');
+  const K = await import('../src/game/kv-storage');
+  const kv = K.wrapKV(raw);
+  const gate = { safe: true };
+  const vis = { on: true };
+  const hidden: Array<() => void> = [];
+  const visible: Array<() => void> = [];
+  const events: CloudEvent[] = [];
+  const logs: string[] = [];
+  const calls: string[] = [];
+  const client = new C.CloudClient({
+    diag: { log: (m) => logs.push(m), report: () => undefined },
+    enabled: true,
+    fetch: (url, init) => {
+      calls.push(`${init?.method ?? 'GET'} ${url}`);
+      return server.fetch(url, init);
+    },
+    now: clock.now,
+    setTimeout: clock.setTimeout,
+    clearTimeout: clock.clearTimeout,
+    kv: () => kv,
+    hostname: 'localhost',
+    location: () => ({ pathname: '/', search: opts.search ?? '', hash: '' }),
+    replaceUrl: () => undefined,
+    navigate: () => undefined,
+    onHidden: (fn) => hidden.push(fn),
+    onVisible: (fn) => visible.push(fn),
+    isVisible: () => vis.on,
+    app: '0.9.8.1',
+  });
+  client.setApplyGate(() => gate.safe);
+  client.subscribe((e) => events.push(e));
+  const asks = () => events.filter((e) => e.type === 'pending' && e.pending).length;
+  const hide = () => {
+    vis.on = false;
+    hidden.forEach((f) => f());
+  };
+  return { name, client, kv, raw, gate, vis, events, logs, calls, asks, hide };
+}
+type Device = Awaited<ReturnType<typeof device>>;
+
+type AnyKV = { getItem(k: string): string | null; setItem(k: string, v: string): void; removeItem(k: string): void };
+/** Aynı seferde bir düğüm daha (yeni kayıt girdisi): yuva 0, c1. */
+const playMore = (kv: AnyKV, at: string) => writeSave(kv, start('normal', 1, 0), 'manual', at);
+const campOf = (raw: string) => {
+  const kv = memoryKV();
+  kv.setItem('eov.campaign.v1', raw);
+  return readSaves(kv).file;
+};
+
+describe('iki cihaz, tek sunucu (çift çakışma penceresi, bayat sekme)', () => {
+  const devs: Device[] = [];
+  afterEach(() => {
+    for (const d of devs.splice(0)) d.client.dispose();
+  });
+  const idle = async () => {
+    for (let i = 0; i < 3; i++) for (const d of devs) await d.client.whenIdle();
+  };
+  const tick = async (clock: ReturnType<typeof fakeClock>, ms: number) => {
+    clock.advance(ms);
+    await idle();
+  };
+  /** Sekme öldü (temizlik yok); aynı depo yeni bir örnekle açılır. */
+  const reopen = async (d: Device, clock: ReturnType<typeof fakeClock>, server: ReturnType<typeof fakeServer>, name: string) => {
+    d.client.dispose();
+    devs.splice(devs.indexOf(d), 1);
+    const n = await device(name, clock, server, d.raw);
+    devs.push(n);
+    return n;
+  };
+
+  /** A (masaüstü) yükler, B (telefon, boş) indirir: ikisi de rev 1. */
+  async function pair() {
+    const clock = fakeClock();
+    const server = fakeServer(clock);
+    const rawA = memoryKV();
+    progress(rawA, 1);
+    const A = await device('A', clock, server, rawA, { search: '?auth=ok' });
+    devs.push(A);
+    await A.client.init();
+    const B = await device('B', clock, server, memoryKV(), { search: '?auth=ok' });
+    devs.push(B);
+    await B.client.init();
+    expect(server.s.save!.rev).toBe(1);
+    expect(B.raw.getItem('eov.campaign.v1')).toBe(rawA.getItem('eov.campaign.v1'));
+    expect(metaOf(B.raw)).toMatchObject({ rev: 1, dirty: false });
+    return { clock, server, A, B };
+  }
+
+  it('bayat masaüstü canlı çekmeyle telefonun ilerlemesini alır; sonraki rastlantısal yazım (Continue) çakışmasız yüklenir', async () => {
+    const { clock, server, A, B } = await pair();
+    await tick(clock, 6_000);
+    playMore(B.kv, '2026-10-24T12:01:00Z');
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(2);
+    const mobile = server.s.save!.data['eov.campaign.v1'];
+    await tick(clock, PULL_MS); // A yoklar, temiz: indirir (ana menü)
+    expect(A.raw.getItem('eov.campaign.v1')).toBe(mobile);
+    campaignSave.markPlayed(A.kv, 0, '2026-10-24T12:03:00Z');
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(3);
+    expect(campOf(server.s.save!.data['eov.campaign.v1']!).slots[0]!.saves).toHaveLength(2); // telefonun düğümü bulutta kaldı
+    expect(A.asks() + B.asks()).toBe(0);
+  });
+
+  it('bayat masaüstü (yoklama kaçtı) rastlantısal yazımla yüklemeye kalkar: 409 -> soru; telefonun ilerlemesi sessizce ezilmez', async () => {
+    const { clock, server, A, B } = await pair();
+    A.hide();
+    await tick(clock, 6_000);
+    playMore(B.kv, '2026-10-24T12:01:00Z');
+    await tick(clock, DEBOUNCE_MS);
+    await tick(clock, 6_000);
+    playMore(B.kv, '2026-10-24T12:02:00Z');
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(3);
+    const mobile = JSON.stringify(server.s.save);
+    A.vis.on = true; // görünür ama olay gelmedi: A hâlâ rev 1 sanıyor
+    A.gate.safe = false; // haritada
+    campaignSave.markPlayed(A.kv, 0, '2026-10-24T12:03:00Z');
+    await tick(clock, DEBOUNCE_MS);
+    expect(A.calls.slice(-2)).toEqual(['PUT /save', 'GET /save']);
+    expect(JSON.stringify(server.s.save)).toBe(mobile); // bulut değişmedi
+    A.gate.safe = true;
+    await tick(clock, GATE_POLL_MS);
+    expect(A.client.getStatus()).toBe('needs-choice');
+    expect(JSON.stringify(server.s.save)).toBe(mobile);
+  });
+
+  it('çift çakışma: telefon kirli açılır, çakışma, "local" seçilir -> arada bulut yalnızca rev/silme işareti değiştiyse İKİNCİ KEZ SORULMAZ', async () => {
+    const { clock, server, A, B } = await pair();
+    // A (masaüstü) kendi ilerlemesini yükledi (rev 2)
+    await tick(clock, 6_000);
+    progress(A.kv, 4, 1);
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(2);
+    // B (telefon) yoklamadan önce oynadı ve sekme öldü (yüklenmemiş ilerleme, meta kirli)
+    playMore(B.kv, '2026-10-24T12:01:00Z');
+    expect(metaOf(B.raw)?.dirty).toBe(true);
+    const B2 = await reopen(B, clock, server, 'B2');
+    // B yeniden açılır: bulut rev 2 (A), yerel kirli -> soru (meşru: iki tarafta farklı ilerleme)
+    await B2.client.init();
+    expect(B2.asks()).toBe(1);
+    const p = B2.client.getPending()!;
+    // Karar beklerken öbür cihaz VERİYİ DEĞİŞTİRMEYEN bir yükleme yaptı (ör. yalnızca silme işareti): rev 3, aynı hash
+    const s = server.s.save!;
+    server.s.save = { ...s, rev: s.rev + 1, updatedAt: clock.now(), tombstones: [{ slot: 5, campaignId: 'old', deletedAt: T0 - 86_400_000 }] };
+    await tick(clock, 6_000);
+    expect(await p.resolve('local')).toEqual({ ok: true });
+    await idle();
+    expect(B2.asks()).toBe(1); // ikinci pencere yok (eski kod: PUT 409 -> yeniden okuma -> yeniden soru)
+    expect(B2.logs.some((l) => l.includes('unchanged since last sync'))).toBe(true);
+    expect(server.s.save!.rev).toBe(4);
+    expect(server.s.save!.data['eov.campaign.v1']).toBe(B2.raw.getItem('eov.campaign.v1'));
+    expect(server.s.save!.tombstones?.map((t) => t.campaignId)).toEqual(['old']); // öbür cihazın işareti korunur
+    expect(metaOf(B2.raw)).toMatchObject({ rev: 4, dirty: false });
+    // A canlı çekmeyle telefonun seçtiğini alır (temiz, soru yok)
+    await tick(clock, PULL_MS);
+    expect(A.raw.getItem('eov.campaign.v1')).toBe(server.s.save!.data['eov.campaign.v1']);
+    expect(A.asks()).toBe(0);
+  });
+
+  it('çift çakışma (meşru): karar beklerken öbür cihaz bulutu GERÇEKTEN yeniden değiştirdiyse yeniden sorulur', async () => {
+    const { clock, server, A, B } = await pair();
+    await tick(clock, 6_000);
+    progress(A.kv, 4, 1);
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(2);
+    playMore(B.kv, '2026-10-24T12:01:00Z');
+    const B2 = await reopen(B, clock, server, 'B2');
+    await B2.client.init();
+    expect(B2.asks()).toBe(1);
+    const p = B2.client.getPending()!;
+    progress(A.kv, 6, 2); // A yine oynar ve yükler (rev 3, farklı veri)
+    await tick(clock, DEBOUNCE_MS);
+    expect(server.s.save!.rev).toBe(3);
+    expect(await p.resolve('local')).toEqual({ ok: true });
+    await idle();
+    expect(B2.asks()).toBe(2);
   });
 });

@@ -22,13 +22,25 @@ interface TutorialSave {
 }
 
 let mem: TutorialSave | null = null;
+/** `mem`in okunduğu / yazıldığı ham dizgi. Depodaki dizgi değiştiyse (bulut indirmesi, başka yazım) önbellek yeniden okunur: eski önbellek
+ * sonraki yazımda indirilen tutorial kaydını geri ezip buluta eski veriyi yüklüyordu (2026-10-25). undefined = depo yok / okunamadı. */
+let memRaw: string | null | undefined;
 const listeners = new Set<() => void>();
 
+function readRaw(): string | null | undefined {
+  try {
+    const kv = storage();
+    return kv ? kv.getItem(KEY) : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 function load(): TutorialSave {
-  if (mem) return mem;
+  const raw = readRaw();
+  if (mem && (raw === undefined || raw === memRaw)) return mem;
   let s: TutorialSave = { v: VERSION, on: true, seen: [] };
   try {
-    const raw = storage()?.getItem(KEY);
     if (raw) {
       const p = JSON.parse(raw) as Partial<TutorialSave>;
       const strs = (a: unknown): string[] => (Array.isArray(a) ? a.filter((x): x is string => typeof x === 'string') : []);
@@ -44,13 +56,16 @@ function load(): TutorialSave {
     /* bozuk / erişilemez kayıt: varsayılan */
   }
   mem = s;
+  memRaw = raw;
   return s;
 }
 
 function save(s: TutorialSave): void {
   mem = s;
   try {
-    storage()?.setItem(KEY, JSON.stringify(s));
+    const raw = JSON.stringify(s);
+    storage()?.setItem(KEY, raw);
+    memRaw = raw;
   } catch {
     /* depolama yok: yalnızca bu oturum */
   }
@@ -117,4 +132,5 @@ export function resetTutorials(): void {
 /** Test: bellek önbelleğini sıfırlar (depoyu yeniden okur). */
 export function _resetTutorialMemory(): void {
   mem = null;
+  memRaw = undefined;
 }

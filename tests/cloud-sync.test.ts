@@ -10,6 +10,7 @@ import {
   buildBundle,
   bundleFromData,
   decideSync,
+  fastForward,
   readBackup,
   resolveConflict,
   SUPPORTED_VERSIONS,
@@ -165,6 +166,22 @@ describe('sync-core: decideSync doğruluk tablosu', () => {
 
   it('bulut paketi geçersizse refuse', () => {
     expect(decideSync(prog(1), withData(prog(2), { [SAVE_KEY]: '{not json' }))).toMatchObject({ kind: 'refuse', reason: 'corrupt' });
+    expect(fastForward(prog(1), withData(prog(2), { [SAVE_KEY]: '{not json' }))).toMatchObject({ kind: 'refuse', reason: 'corrupt' });
+  });
+
+  it('fastForward (bulut verisi son senkrondan beri değişmedi): soru yok, yerel kalır; buluttaki silme işareti birleşir (merge)', () => {
+    const a = prog(1);
+    const b = prog(2);
+    expect(decideSync(a, b).kind).toBe('ask');
+    expect(fastForward(a, b, 'test', NOW)).toEqual({ kind: 'upload' });
+    expect(fastForward(a, a, 'test', NOW)).toEqual({ kind: 'none' });
+    const tomb = { slot: 5, campaignId: 'old', deletedAt: '2026-10-01T00:00:00.000Z' };
+    const r = fastForward(a, { ...b, tombstones: [tomb] }, 'test', NOW);
+    expect(r).toMatchObject({ kind: 'merge', pins: [] });
+    if (r.kind === 'merge') {
+      expect(r.bundle.data).toEqual(a.data);
+      expect(r.bundle.tombstones).toEqual([tomb]);
+    }
   });
 });
 

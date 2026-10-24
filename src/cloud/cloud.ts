@@ -29,6 +29,14 @@ export const KEEPALIVE_MAX_BYTES = 64 * 1024;
 export const RETRY_STEPS_MS = [15_000, 30_000, 60_000, 120_000, 300_000];
 /** Bekleyen indirme varken güvenli anın yoklama aralığı (yalnızca yerel işlev çağrısı, ağ yok). */
 export const GATE_POLL_MS = 3_000;
+/**
+ * Canlı çekme (2026-10-25): girişliyken ve sekme görünürken bulut rev'i ucuz GET /auth/me ile yoklanır (dakikada bir + sekme görünür olunca).
+ * Sekme gizliyken yoklama durur; hatada aralık ikiye katlanır (en çok PULL_MAX_MS). Görünür olunca son yoklama PULL_MIN_GAP_MS'den yeniyse çağrı yok.
+ * Bütçe: açık sekme başına saatte en çok 60 istek (Worker ücretsiz plan 100k/gün).
+ */
+export const PULL_MS = 60_000;
+export const PULL_MAX_MS = 600_000;
+export const PULL_MIN_GAP_MS = 15_000;
 const MAX_CONFLICT_ROUNDS = 3;
 const LOGIN_HOSTS = ['embersofvaldoria.com', 'localhost', '127.0.0.1'];
 
@@ -157,6 +165,10 @@ export interface CloudDeps {
   navigate: (url: string) => void;
   /** Sekme gizlenince çağrılacak işlevi kaydeder. */
   onHidden: (fn: () => void) => void;
+  /** Sekme görünür olunca çağrılacak işlevi kaydeder (canlı çekme). */
+  onVisible: (fn: () => void) => void;
+  /** Sekme şu an görünür mü (gizliyken canlı çekme yapılmaz). */
+  isVisible: () => boolean;
   app: string;
   loadCore: () => Promise<CloudCore>;
   /** Hata raporu izleri / raporları (varsayılan no-op). */
@@ -187,6 +199,13 @@ function browserDeps(): CloudDeps {
         if (document.visibilityState === 'hidden') fn();
       });
     },
+    onVisible: (fn) => {
+      if (typeof document === 'undefined') return;
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') fn();
+      });
+    },
+    isVisible: () => typeof document === 'undefined' || document.visibilityState !== 'hidden',
     app: typeof __DISPLAY_VERSION__ !== 'undefined' ? __DISPLAY_VERSION__ : '0.0.0',
     loadCore: defaultLoadCore,
     diag: NO_DIAG,
@@ -208,7 +227,8 @@ interface CloudSide {
   save: ServerSaveMeta;
 }
 
-type Remote = { kind: 'download'; cloud: CloudSide } | { kind: 'merge'; cloud: CloudSide; bundle: SyncBundle } | { kind: 'ask'; cloud: CloudSide; pins: IronmanPin[] };
+/** Bekleyen uzak iş. gen: kararın verildiği andaki yerel yazım sayacı (uygulamadan önce yerel değiştiyse yeniden karar verilir); from: kararın bulut tarafı. */
+type Remote = ({ kind: 'download'; cloud: CloudSide } | { kind: 'merge'; cloud: CloudSide; bundle: SyncBundle } | { kind: 'ask'; cloud: CloudSide; pins: IronmanPin[] }) & { gen: number; from: CloudSide | null };
 
 const isObj = (v: unknown): v is Record<string, unknown> => typeof v === 'object' && v !== null && !Array.isArray(v);
 const byteLength = (s: string): number => new TextEncoder().encode(s).length;
@@ -292,6 +312,11 @@ export class CloudClient {
   private debounceT: unknown = null;
   private retryT: unknown = null;
   private gateT: unknown = null;
+  private pullT: unknown = null;
+  /** Art arda başarısız canlı çekme sayısı (geri çekilme). */
+  private pullFail = 0;
+  /** Son başarılı /auth/me yanıtının zamanı (görünür olunca gereksiz çağrı yok). */
+  private lastCheckAt = -Infinity;
   private retryIdx = 0;
   private conflictRounds = 0;
   private uploading = false;
@@ -506,7 +531,7 @@ export class CloudClient {
         this.setStatus('error', 'no-cloud-save');
         return this.status;
       }
-      this.remote = { kind: 'download', cloud: c.cloud };
+      this.remote = { kind: 'download', cloud: c.cloud, gen: this.gen, from: c.cloud };
       await this.tryApplyRemote(true);
       return this.status;
     });
@@ -530,6 +555,7 @@ export class CloudClient {
     this.cancelDebounce();
     this.clearTimer('retryT');
     this.clearTimer('gateT');
+    this.clearTimer('pullT');
     this.listeners.clear();
   }
 
@@ -721,14 +747,74 @@ export class CloudClient {
     if (!this.offDirty) this.offDirty = onCloudDirty(() => this.onDirty());
     if (!this.hiddenInstalled) {
       this.hiddenInstalled = true;
-      this.d.onHidden(() => this.flushHidden());
+      this.d.onHidden(() => {
+        this.clearTimer('pullT'); // gizliyken yoklama yok
+        this.flushHidden();
+      });
+      this.d.onVisible(() => this.onVisible());
     }
+  }
+
+  // ------------------------------------------------ canlı çekme
+
+  /** Sekme görünür oldu: son yoklama eskiyse hemen yoklanır, sonra dakikalık zamanlayıcı. */
+  private onVisible(): void {
+    if (!this.user || this.disposed || this.blocked) return;
+    if (this.d.now() - this.lastCheckAt < PULL_MIN_GAP_MS) return this.schedulePull();
+    this.clearTimer('pullT');
+    void this.enqueue(async () => {
+      await this.pull();
+      this.schedulePull();
+    });
+  }
+
+  private schedulePull(): void {
+    this.clearTimer('pullT');
+    if (!this.user || this.disposed || this.blocked || !this.d.isVisible()) return; // gizli: görünür olunca yeniden başlar
+    const delay = Math.min(PULL_MAX_MS, PULL_MS * 2 ** Math.min(this.pullFail, 4));
+    this.pullT = this.d.setTimeout(() => {
+      this.pullT = null;
+      if (!this.d.isVisible()) return;
+      void this.enqueue(async () => {
+        await this.pull();
+        this.schedulePull();
+      });
+    }, delay);
+  }
+
+  /**
+   * Ucuz yoklama: GET /auth/me'deki bulut rev'i bu cihazın bildiğinden farklıysa açılıştaki akış (startSync): temiz cihaz indirir (yalnızca
+   * güvenli anda), kirli cihaz buluttakini okuyup karar verir. Bekleyen uzak iş / süren yükleme varken yoklanmaz. Hata sessizdir (geri çekilme).
+   */
+  private async pull(): Promise<void> {
+    if (!this.user || this.disposed || this.blocked || this.remote || this.uploading) return;
+    const r = await this.http('GET', '/auth/me');
+    if (!this.user || this.disposed) return;
+    if (r.status !== 200 || !isObj(r.body)) {
+      this.pullFail++;
+      return;
+    }
+    this.pullFail = 0;
+    this.lastCheckAt = this.d.now();
+    const u = r.body.user;
+    if (!isObj(u) || u.id !== this.user.id) return this.refresh(); // oturum bitti / başka hesap: tam yenileme
+    const save = parseServerSave(r.body.save);
+    const meta = this.readMeta();
+    if (!meta || (save?.rev ?? 0) === meta.rev || this.remote) {
+      if (save) this.serverSave = save;
+      return;
+    }
+    this.serverSave = save;
+    this.dlog(`pull: cloud rev ${save ? save.rev : 'none'}, local rev ${meta.rev}${this.isDirty() ? ' (dirty)' : ''}`);
+    this.emitAccount();
+    return this.startSync();
   }
 
   /** GET /auth/me + senkron başlangıcı. */
   private async refresh(): Promise<void> {
     if (this.disposed) return;
     const r = await this.http('GET', '/auth/me');
+    if (r.status === 200) this.lastCheckAt = this.d.now();
     if (r.status === 0 || r.status === 503 || r.status === 404 || r.status === 502) {
       // 404/502: Worker yolu yok ya da ulaşılamıyor (ör. yerelde worker kapalı); giriş gizlenir
       this.availability = 'down';
@@ -759,6 +845,7 @@ export class CloudClient {
     if (this.status === 'offline' || this.status === 'error') this.setStatus('idle');
     this.emitAccount();
     await this.startSync();
+    this.schedulePull();
   }
 
   private async startSync(): Promise<void> {
@@ -797,7 +884,7 @@ export class CloudClient {
     if (!c.ok) return;
     if (!this.isDirty() && c.cloud) {
       this.dlog(`decision download (clean device): cloud rev ${c.cloud.save.rev} [${this.keysText(c.cloud.bundle)}] slots ${this.slotCount(c.cloud.bundle)}, local rev ${meta.rev}`);
-      this.remote = { kind: 'download', cloud: c.cloud };
+      this.remote = { kind: 'download', cloud: c.cloud, gen: this.gen, from: c.cloud };
       return this.tryApplyRemote();
     }
     return this.decideAndAct(c.cloud);
@@ -838,8 +925,15 @@ export class CloudClient {
   private async decideAndAct(cloud: CloudSide | null): Promise<void> {
     const core = this.core!;
     const local = core.sync.buildBundle(this.kv(), this.d.app, this.nowIso());
-    const d = core.sync.decideSync(local, cloud?.bundle ?? null, this.d.app, this.nowIso());
+    let d = core.sync.decideSync(local, cloud?.bundle ?? null, this.d.app, this.nowIso());
     const rev = cloud?.save.rev ?? 0;
+    // Buluttaki veri bu cihazın son senkronundan (ya da son çakışma kararından) beri DEĞİŞMEDİ (aynı hash; arada yalnızca rev / silme işareti
+    // değişmiş: ör. öbür cihazın işaret yüklemesi): yerel ondan türedi, gerçek çakışma yok -> sorulmaz, yerel yüklenir (işaretler birleşir).
+    const base = this.readMeta()?.hash;
+    if (d.kind === 'ask' && cloud && base && cloud.save.hash === base) {
+      this.dlog(`cloud rev ${rev} unchanged since last sync (same hash): no conflict, local kept`);
+      d = core.sync.fastForward(local, cloud.bundle, this.d.app, this.nowIso());
+    }
     this.dlog(`decision ${d.kind}${d.kind === 'refuse' ? ` ${safeCode(d.reason)}${d.key ? ` key ${d.key}` : ''}` : ''}: cloud ${cloud ? `rev ${rev}` : 'none'} [${this.keysText(cloud?.bundle ?? null)}] slots ${this.slotCount(cloud?.bundle ?? null)}, local [${this.keysText(local)}] slots ${this.slotCount(local)}`);
     switch (d.kind) {
       case 'none':
@@ -854,21 +948,21 @@ export class CloudClient {
           return this.setStatus('error', 'upload-guard');
         }
         // Yerel bulutu kapsıyor: bulutun rev'i baseRev olur
-        this.patchMeta({ rev, dirty: true });
+        this.patchMeta({ rev, ...(cloud?.save.hash ? { hash: cloud.save.hash } : {}), dirty: true });
         return this.upload();
       case 'download':
         if (!cloud) return this.setStatus('idle');
-        this.remote = { kind: 'download', cloud };
+        this.remote = { kind: 'download', cloud, gen: this.gen, from: cloud };
         return this.tryApplyRemote();
       case 'merge':
         if (!cloud) {
           // Bulut boş, yerel silme işaretleriyle temizlendi: yerelde uygula, yükle
-          this.remote = { kind: 'merge', cloud: { save: { rev: 0, updatedAt: 0, versions: {}, app: '', size: 0, hash: '' }, bundle: d.bundle }, bundle: d.bundle };
-        } else this.remote = { kind: 'merge', cloud, bundle: d.bundle };
+          this.remote = { kind: 'merge', cloud: { save: { rev: 0, updatedAt: 0, versions: {}, app: '', size: 0, hash: '' }, bundle: d.bundle }, bundle: d.bundle, gen: this.gen, from: null };
+        } else this.remote = { kind: 'merge', cloud, bundle: d.bundle, gen: this.gen, from: cloud };
         return this.tryApplyRemote();
       case 'ask':
         if (!cloud) return this.setStatus('idle');
-        this.remote = { kind: 'ask', cloud, pins: d.pins };
+        this.remote = { kind: 'ask', cloud, pins: d.pins, gen: this.gen, from: cloud };
         return this.tryApplyRemote();
       case 'refuse':
         this.dreport(d.reason === 'newer-schema' ? 'newer-version' : `cloud-${safeCode(d.reason)}`, `refuse ${safeCode(d.reason)}${d.key ? ` key ${d.key}` : ''} (cloud rev ${rev} [${this.keysText(cloud?.bundle ?? null)}])`);
@@ -901,6 +995,12 @@ export class CloudClient {
       return;
     }
     this.clearTimer('gateT');
+    if (!force && r.kind !== 'ask' && r.gen !== this.gen) {
+      // Karardan sonra yerel değişti (ör. indirme ana menüyü beklerken oynandı): eski karar uygulanmaz (yeni ilerleme sessizce ezilmez), yeniden karar
+      this.remote = null;
+      this.dlog(`local changed since ${r.kind} decision: deciding again (cloud rev ${r.cloud.save.rev})`);
+      return this.decideAndAct(r.from);
+    }
     if (r.kind === 'ask') {
       if (!this.pending) {
         this.pending = this.makePending(r.cloud, r.pins);
@@ -925,7 +1025,7 @@ export class CloudClient {
       if (tombsDiffer) return this.upload();
       return;
     }
-    this.patchMeta({ rev: r.cloud.save.rev, dirty: true });
+    this.patchMeta({ rev: r.cloud.save.rev, ...(r.cloud.save.hash ? { hash: r.cloud.save.hash } : {}), dirty: true });
     this.emit({ type: 'applied', source: 'merge' });
     return this.upload();
   }
@@ -1006,7 +1106,8 @@ export class CloudClient {
       this.setStatus('idle');
       return { ok: true };
     }
-    this.patchMeta({ rev: cloud.save.rev, dirty: true });
+    // hash = kararın verildiği bulut verisi: araya veri değiştirmeyen bir yükleme girerse (409) yeniden sorulmaz
+    this.patchMeta({ rev: cloud.save.rev, ...(cloud.save.hash ? { hash: cloud.save.hash } : {}), dirty: true });
     await this.upload();
     return { ok: true };
   }
@@ -1120,7 +1221,7 @@ export class CloudClient {
     }, delay);
   }
 
-  private clearTimer(k: 'debounceT' | 'retryT' | 'gateT'): void {
+  private clearTimer(k: 'debounceT' | 'retryT' | 'gateT' | 'pullT'): void {
     if (this[k] !== null) this.d.clearTimeout(this[k]);
     this[k] = null;
   }
@@ -1155,6 +1256,8 @@ export class CloudClient {
     this.cancelDebounce();
     this.clearTimer('retryT');
     this.clearTimer('gateT');
+    this.clearTimer('pullT');
+    this.pullFail = 0;
     this.offDirty?.();
     this.offDirty = null;
     if (this.pending) {

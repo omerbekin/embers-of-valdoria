@@ -33,6 +33,13 @@ Yeni: `src/cloud/{sync-core,cloud,sync-dialog,account-notice}.ts`. Değişen: `k
 
 **Hata raporu bağlantısı (2026-10-25):** `CloudClient` senkron izlerini (`logEvent('cloud', ...)`) ve sessiz sorun raporlarını opt-in hata raporu sistemine yazar; bağımlılık `CloudDeps.diag` (varsayılan no-op, `main.ts > initCloud({ diag })` gerçek `src/diag/diag`'a bağlar; cloud.ts diag'ı içe aktarmaz). **Yükleme koruması:** karar 'upload' iken bulutta ilerleme var, yerelde yoksa PUT yapılmaz, durum `error` / `upload-guard` (bulut boş cihazla asla ezilmez). Kod listesi: `docs/arch/diagnostics.md` > Bulut kaydı.
 
+**Canlı çekme + çift çakışma düzeltmesi (2026-10-25, iki cihazlı gerçek test sonrası):**
+- *Canlı çekme:* girişliyken ve sekme görünürken `GET /auth/me` dakikada bir (`PULL_MS` 60 sn, `cloud.ts` içinde öbür süre sabitlerinin yanında) ve sekme görünür olunca (son yoklama 15 sn'den yeniyse çağrı yok). Gizliyken zamanlayıcı durur; hatada aralık ikiye katlanır (en çok 10 dk); girişsiz / kapalı / newer-version iken çağrı yok; bekleyen karar ya da süren yükleme varken yoklanmaz. Rev farklıysa açılış akışı: temiz cihaz buluttakini indirir (yalnızca güvenli anda = ana menü), kirli cihaz buluttakini okuyup `decideSync` kurallarıyla karar verir. Yüklemeden önce ayrıca yoklanmaz (PUT 409 aynı işi görür). Bütçe: açık sekme başına saatte en çok 60 istek.
+- *Bekleyen indirme/birleştirme karardan sonra yerel değiştiyse* (ör. indirme ana menüyü beklerken haritada oynandı) eski karar uygulanmaz, aynı bulut anlık görüntüsüyle yeniden karar verilir (önceden yeni yerel ilerleme sessizce ezilip yalnızca yedekte kalıyordu).
+- *Değişmeyen bulut = çakışma yok:* meta `hash` (bu cihazın son senkronladığı / son çakışma kararında gördüğü bulut verisinin hash'i; sunucu hash'i yalnızca veriden hesaplar) buluttakiyle aynıysa ve `decideSync` 'ask' derse sorulmaz: bulut verisi o zamandan beri değişmemiş (arada yalnızca rev / silme işareti değişmiş), yerel ondan türemiştir -> yerel yüklenir, silme işaretleri birleşir (`sync-core.ts > fastForward`). Çakışma seçiminden sonra da hash yazılır: karar beklerken öbür cihaz veriyi değiştirmeyen bir yükleme yaptıysa (409) ikinci pencere açılmaz; veriyi gerçekten değiştirdiyse yeniden sorulur (karar 1).
+- *Tutorial önbelleği:* `tutorial/store.ts` bellekteki kopyayı depodaki ham dizgiyle doğrular; önceden bulut indirmesinden sonraki ilk ders yazımı eski önbellekle indirilen tutorial kaydını geri ezip buluta eski veriyi yüklüyordu.
+- Testler: `tests/cloud-client.test.ts` > canlı çekme + iki cihaz tek sunucu (her cihaz kendi modül örneğiyle).
+
 ## Fazlar
 - 1a Worker auth + D1 (Opus): migration, auth/save modülleri, smoke testi.
 - 1b Senkron çekirdeği (Opus, kayıt şeması hassas): sync-core, kv sarmalayıcı, testler.

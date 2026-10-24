@@ -328,6 +328,20 @@ export function decideSync(local: SyncBundle, cloud: SyncBundle | null, app = ''
   return { kind: 'ask', pins };
 }
 
+/**
+ * Bulut verisi bu cihazın son senkronundan beri değişmedi (istemci hash'le bilir; arada yalnızca rev / silme işaretleri değişmiş olabilir):
+ * yerel buluttan türedi, gerçek çakışma yok. Sonuç = yerel, iki tarafın silme işaretleriyle temizlenmiş: yerelle aynıysa 'upload',
+ * değilse 'merge' (işaret temizliği yerelde uygulanır, sonra yüklenir). Ironman sabitlemesi yok (normal yükleme gibi).
+ */
+export function fastForward(local: SyncBundle, cloud: SyncBundle, app = '', now: string = new Date().toISOString()): SyncDecision {
+  const check = validateBundle(cloud);
+  if (!check.ok) return { kind: 'refuse', reason: check.reason, ...(check.key ? { key: check.key } : {}) };
+  const tombs = mergeTombstones(tombsOf(local), tombsOf(cloud));
+  const r = withTombs(local, tombs, app, now);
+  if (!sameBundle(r, local)) return { kind: 'merge', bundle: r, pins: [] };
+  return sameBundle(r, cloud) ? { kind: 'none' } : { kind: 'upload' };
+}
+
 // ---------------------------------------------------------------- uygulama + yedek
 
 export type ApplyResult = { ok: true; backedUp: boolean } | { ok: false; reason: 'format' | 'newer-schema' | 'corrupt' | 'backup-failed' | 'write-failed'; key?: SyncKey };
