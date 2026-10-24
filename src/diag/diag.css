@@ -211,3 +211,12 @@ html.compact .dg-lang.el-link,
 html.short .dg-lang.el-link {
   font-size: 13px;
 }
+
+/* Tam metin bağlantısı (/privacy; yeni sekmede) */
+.dg-full {
+  margin-top: 10px;
+}
+
+.dg-full a {
+  color: var(--el-ember2, #ffb35a);
+}

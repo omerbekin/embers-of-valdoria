@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 /**
- * public/privacy.html üretici (accounts-plan.md Faz 1c). Kaynak: data/account-notice.json + data/privacy-notice.json (TEK kaynak;
+ * public/privacy.html üretici (accounts-plan.md Faz 1c). Kaynak: data/account-notice.json + data/privacy-notice.json + data/privacy-page.json
+ * (yalnızca sayfadaki ortak bölüm; maddede `page` varsa sayfa `text` yerine onu, `list` varsa altında madde listesi yazar) (TEK kaynak;
  * sayfayı elle düzenleme). Bağımsız statik sayfa: dış betik yok, italik yok, oyunun koyu Cinzel / EB Garamond görünümü, telefonda okunur.
  * Dil: #en (varsayılan) / #tr bağlantıları, CSS :target ile (JS yok). Yazı tipleri assets/fonts'tan public/fonts'a kopyalanır.
  * Kullanım: `node tools/gen-privacy-page.mjs` (JSON değişince çalıştır; çıktı commit'lenir). tests/account-notice-text.test.ts
@@ -13,7 +14,7 @@ import { fileURLToPath, pathToFileURL } from 'node:url';
 const ROOT = join(dirname(fileURLToPath(import.meta.url)), '..');
 export const PRIVACY_PAGE_PATH = join(ROOT, 'public', 'privacy.html');
 /** Sayfadaki "Last updated" tarihi: metin değiştikçe elle güncellenir (çıktı deterministik kalsın diye bugünün tarihi kullanılmaz). */
-export const LAST_UPDATED = '2026-10-24';
+export const LAST_UPDATED = '2026-10-25';
 const FONTS = ['Cinzel-normal-latin.woff2', 'Cinzel-normal-latin-ext.woff2', 'EBGaramond-normal-latin.woff2', 'EBGaramond-normal-latin-ext.woff2'];
 
 const UI = {
@@ -32,12 +33,15 @@ function noticeHtml(n, lang, id) {
   const parts = [`<section class="notice" aria-labelledby="${id}"><h2 id="${id}">${esc(t.title)}</h2>`];
   for (const p of t.intro) parts.push(`<p class="intro">${fill(p, n.contact)}</p>`);
   parts.push('<dl>');
-  for (const d of t.details) parts.push(`<dt>${esc(d.heading)}</dt><dd>${fill(d.text, n.contact)}</dd>`);
+  for (const d of t.details) {
+    const list = d.list ? `<ul>${d.list.map((li) => `<li>${fill(li, n.contact)}</li>`).join('')}</ul>` : '';
+    parts.push(`<dt>${esc(d.heading)}</dt><dd>${fill(d.page ?? d.text, n.contact)}${list}</dd>`);
+  }
   parts.push('</dl></section>');
   return parts.join('\n');
 }
 
-function langHtml(account, diag, lang) {
+function langHtml(account, diag, general, lang) {
   const u = UI[lang];
   return `<article class="lang" id="${lang}" lang="${lang}">
 <header>
@@ -48,6 +52,7 @@ function langHtml(account, diag, lang) {
 </header>
 ${noticeHtml(account, lang, `${lang}-account`)}
 ${noticeHtml(diag, lang, `${lang}-reports`)}
+${noticeHtml(general, lang, `${lang}-general`)}
 <footer><a href="./">${esc(u.back)}</a></footer>
 </article>`;
 }
@@ -78,6 +83,7 @@ h2{font:600 22px/1.25 var(--display);letter-spacing:.08em;text-transform:upperca
 dl{margin:18px 0 0}
 dt{font:600 15px/1.3 var(--display);letter-spacing:.1em;text-transform:uppercase;color:var(--gold);margin:20px 0 4px}
 dd{margin:0}
+dd ul{margin:6px 0 0;padding-left:22px}
 a{color:var(--ember);overflow-wrap:anywhere}
 footer{text-align:center;margin-top:44px;padding-top:20px;border-top:1px solid var(--line2)}
 @media (max-width:520px){body{font-size:18px}h1{font-size:26px}h2{font-size:18px}main{padding-top:22px}}
@@ -87,8 +93,9 @@ footer{text-align:center;margin-top:44px;padding-top:20px;border-top:1px solid v
 export function buildPrivacyPage() {
   const account = JSON.parse(readFileSync(join(ROOT, 'data', 'account-notice.json'), 'utf8'));
   const diag = JSON.parse(readFileSync(join(ROOT, 'data', 'privacy-notice.json'), 'utf8'));
+  const general = JSON.parse(readFileSync(join(ROOT, 'data', 'privacy-page.json'), 'utf8'));
   return `<!doctype html>
-<!-- ÜRETİLDİ: tools/gen-privacy-page.mjs (kaynak data/account-notice.json + data/privacy-notice.json). Elle düzenleme. -->
+<!-- ÜRETİLDİ: tools/gen-privacy-page.mjs (kaynak data/account-notice.json + data/privacy-notice.json + data/privacy-page.json). Elle düzenleme. -->
 <html lang="en">
 <head>
 <meta charset="utf-8">
@@ -100,8 +107,8 @@ export function buildPrivacyPage() {
 </head>
 <body>
 <main>
-${langHtml(account, diag, 'tr')}
-${langHtml(account, diag, 'en')}
+${langHtml(account, diag, general, 'tr')}
+${langHtml(account, diag, general, 'en')}
 </main>
 </body>
 </html>

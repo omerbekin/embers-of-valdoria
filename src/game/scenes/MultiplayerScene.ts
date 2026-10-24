@@ -106,6 +106,8 @@ export class MultiplayerScene extends Phaser.Scene {
     this.layer.add(this.kt(W / 2, y0 + 62, 'Create a lobby and share its code', 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
     this.button(W / 2, y0 + 160, 560, 'Join lobby', () => void this.askCode(), false, ok);
     this.layer.add(this.kt(W / 2, y0 + 222, "Enter a friend's lobby code", 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
+    // KVKK aydınlatması toplama anında (2026-10-25): bağlantı doğrudan kurulur, rakip IP adresini görebilir (public/privacy.html > Genel)
+    if (ok) this.layer.add(this.kt(W / 2, y0 + 320, 'The other player can see your IP address while you play.', 19, '#a8977a', { bold: false, stroke: 2 }).setOrigin(0.5));
   }
 
   /** "Name: X  [Change name]" satırı (ad isteğe bağlı; yalnızca rakibe gider). */

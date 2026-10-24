@@ -279,7 +279,7 @@ export class SettingsScreen {
           case 'reports':
             add(() => {
               setDiagConsent(!diagConsent());
-              note('privacy').textContent = diagConsent() ? 'Anonymous crash reports on. Kept 30 days.' : '';
+              note('privacy').textContent = diagConsent() ? 'Crash reports on. Kept 30 days.' : '';
             }, [rep]);
             break;
           case 'copyLog':

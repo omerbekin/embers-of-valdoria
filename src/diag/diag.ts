@@ -110,6 +110,8 @@ export const diagReportId = (): string | null => loadPrefs(kv()).device?.slice(0
 export function setDiagConsent(on: boolean): void {
   const was = diagConsent();
   setConsent(kv(), on, bytes);
+  // Rıza geri alınınca henüz gönderilmemiş çökme raporu atılır (yeniden açılınca eski çökme gönderilmez)
+  if (!on) state.crashed = [];
   logEvent('info', `error reports ${on ? 'on' : 'off'}`);
   if (was !== on) for (const fn of state.listeners) fn(on);
   // Önceki oturum çöktüyse ve şimdi açıldıysa raporu yine de gönder (bildirimde açan oyuncu)

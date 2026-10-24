@@ -1,0 +1,46 @@
+{
+  "_not": "/privacy sayfasının ortak bölümü (KVKK gözden geçirmesi, 2026-10-25): toplama yöntemi, Cloudflare ve IP, cihazda saklananlar, KVKK md. 11 hakları. Yalnızca public/privacy.html'de görünür (tools/gen-privacy-page.mjs); oyun içi pencereler data/privacy-notice.json ve data/account-notice.json kullanır. Bir maddede `list` varsa metnin altında madde listesi olarak çıkar. en ve tr aynı yapıda (tests/account-notice-text.test.ts).",
+  "contact": "privacy@embersofvaldoria.com",
+  "en": {
+    "title": "General",
+    "intro": [],
+    "details": [
+      { "heading": "How data is collected", "text": "Account data comes from the Google or Discord sign-in flow and from what you enter in the game (your display name). While you are signed in, the game sends your cloud save. Error reports are sent automatically by the game, only if you turn them on." },
+      { "heading": "Cloudflare and IP addresses", "text": "The site is served through Cloudflare. To deliver the service and prevent abuse, Cloudflare temporarily processes visitors' IP addresses and technical connection details. When this notice says IP addresses are not stored, it means the data we keep: our account and report storage holds no IP addresses. In multiplayer, the connection between two players is set up through Cloudflare's STUN server and game data then flows directly between the two devices, so the other player's device can see your IP address; the player name you enter is shown to the other player." },
+      { "heading": "Stored on this device", "text": "The game keeps these in your browser's storage: game progress (campaign, Endless, tutorial); settings (sound, display, speed, hints); your error report choice and, only while reports are on, the random device ID; a short log of recent game events and open-tab marks, used to spot crashes and by the Copy Log button (it leaves your device only inside an error report); cloud save sync state and a backup of your progress made before a cloud save is applied; your multiplayer player name; technical notes used to reload the game after an update; and, for the current tab only, the multiplayer lobby you are in. When you sign in, two cookies are set: a session cookie (30 days) and a cookie used only during sign-in (10 minutes). These are used only to run the game and the features you choose; none of them is used for analytics or advertising." },
+      { "heading": "Your rights (KVKK Art. 11)", "text": "You have the right to:", "list": [
+        "learn whether your personal data is processed",
+        "request information about it if it is processed",
+        "learn the purpose of processing and whether it is used for that purpose",
+        "know the third parties your data is transferred to",
+        "request correction",
+        "request deletion or destruction",
+        "request that corrections and deletions are notified to the third parties your data was transferred to",
+        "object to a result against you that arises from automated analysis",
+        "claim compensation for damage caused by unlawful processing"
+      ] },
+      { "heading": "How to apply", "text": "Write to {contact}. For your account, include the support ID shown on the account page; for error reports, the report ID shown in Settings > Privacy. We will answer within 30 days at the latest. You also have the right to complain to the Personal Data Protection Board (Kişisel Verileri Koruma Kurulu)." }
+    ]
+  },
+  "tr": {
+    "title": "Genel",
+    "intro": [],
+    "details": [
+      { "heading": "Veriler nasıl toplanır", "text": "Hesap verileri Google ya da Discord giriş akışından ve oyunda sizin yazdıklarınızdan (görünen adınız) gelir. Giriş yapmışken oyun bulut kaydınızı gönderir. Hata raporlarını oyun otomatik olarak gönderir, yalnızca siz açtıysanız." },
+      { "heading": "Cloudflare ve IP adresleri", "text": "Site Cloudflare üzerinden sunulur. Hizmeti sunmak ve kötüye kullanımı önlemek için Cloudflare ziyaretçilerin IP adreslerini ve teknik bağlantı bilgilerini geçici olarak işler. Bu metinde IP adreslerinin saklanmadığı söylendiğinde kastedilen bizim tuttuğumuz verilerdir: hesap ve rapor kayıtlarımızda IP adresi yoktur. Çok oyunculu modda iki oyuncu arasındaki bağlantı Cloudflare'in STUN sunucusu üzerinden kurulur, ardından oyun verisi iki cihaz arasında doğrudan akar; bu yüzden diğer oyuncunun cihazı IP adresinizi görebilir. Yazdığınız oyuncu adı diğer oyuncuya gösterilir." },
+      { "heading": "Bu cihazda saklananlar", "text": "Oyun tarayıcınızın deposunda şunları tutar: oyun ilerlemesi (sefer, Endless, eğitim); ayarlar (ses, görüntü, hız, ipuçları); hata raporu tercihiniz ve yalnızca raporlar açıkken rastgele cihaz kimliği; çökmeleri fark etmek ve Copy Log düğmesi için son oyun olaylarının kısa bir günlüğü ve açık sekme işaretleri (cihazınızdan yalnızca bir hata raporunun içinde çıkar); bulut kaydı eşitleme durumu ve bulut kaydı uygulanmadan önce alınan ilerleme yedeği; çok oyunculu oyuncu adınız; güncellemeden sonra oyunu yeniden yüklemek için teknik notlar; ve yalnızca açık sekme için, içinde bulunduğunuz çok oyunculu lobi. Giriş yaptığınızda iki çerez kurulur: bir oturum çerezi (30 gün) ve yalnızca giriş sırasında kullanılan bir çerez (10 dakika). Bunlar yalnızca oyunu ve seçtiğiniz özellikleri çalıştırmak için kullanılır; hiçbiri analiz ya da reklam amacıyla kullanılmaz." },
+      { "heading": "Haklarınız (KVKK md. 11)", "text": "Şu haklara sahipsiniz:", "list": [
+        "kişisel verinizin işlenip işlenmediğini öğrenme",
+        "işleniyorsa buna ilişkin bilgi talep etme",
+        "işleme amacını ve amaca uygun kullanılıp kullanılmadığını öğrenme",
+        "verinizin aktarıldığı üçüncü kişileri bilme",
+        "düzeltme isteme",
+        "silme veya yok etme isteme",
+        "düzeltme ve silme işlemlerinin verinizin aktarıldığı üçüncü kişilere bildirilmesini isteme",
+        "otomatik analizle ortaya çıkan aleyhinize bir sonuca itiraz etme",
+        "kanuna aykırı işleme nedeniyle uğradığınız zararın giderilmesini isteme"
+      ] },
+      { "heading": "Nasıl başvurulur", "text": "{contact} adresine yazın. Hesabınız için hesap sayfasında görünen destek kimliğini, hata raporları için Settings > Privacy bölümünde görünen rapor kimliğini ekleyin. Başvurunuza en geç 30 gün içinde cevap veririz. Kişisel Verileri Koruma Kurulu'na şikâyet hakkınız da vardır." }
+    ]
+  }
+}

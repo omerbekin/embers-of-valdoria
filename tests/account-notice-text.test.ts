@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import notice from '../data/account-notice.json';
 import diagNotice from '../data/privacy-notice.json';
+import generalPage from '../data/privacy-page.json';
 import { ACCOUNT_NOTICE_CONTACT, accountNoticeText } from '../src/cloud/account-notice';
 
 // Hesap / bulut kaydı gizlilik metni (accounts-plan.md Faz 1c): TEK kaynak data/account-notice.json, EN + TR aynı yapıda,
@@ -81,6 +82,43 @@ describe('Hesap gizlilik metni (account-notice.json)', () => {
   });
 });
 
+describe('Sayfanın ortak bölümü (privacy-page.json)', () => {
+  type G = { title: string; intro: string[]; details: Array<{ heading: string; text: string; list?: string[] }> };
+  const P = generalPage as unknown as Record<Lang, G> & { contact: string };
+
+  it('iki dil aynı yapıda; KVKK md. 11 hakları tam liste (9 madde), 30 gün, Kurul', () => {
+    expect(P.contact).toBe('privacy@embersofvaldoria.com');
+    expect(P.tr.details.length).toBe(P.en.details.length);
+    P.en.details.forEach((d, i) => {
+      expect(Object.keys(P.tr.details[i]!).sort(), `madde ${i}`).toEqual(Object.keys(d).sort());
+      expect(P.tr.details[i]!.list?.length, `madde ${i}`).toBe(d.list?.length);
+    });
+    const rights = P.en.details.find((d) => d.list)!;
+    expect(rights.heading).toMatch(/KVKK Art\. 11/);
+    expect(rights.list!.length).toBe(9);
+    const en = JSON.stringify(P.en);
+    const tr = JSON.stringify(P.tr);
+    expect(en).toMatch(/within 30 days/);
+    expect(en).toMatch(/Personal Data Protection Board/);
+    expect(tr).toMatch(/en geç 30 gün/);
+    expect(tr).toMatch(/Kişisel Verileri Koruma Kurulu/);
+    expect(en).toMatch(/Google or Discord sign-in flow/);
+    expect(en).toMatch(/Cloudflare temporarily processes/);
+    expect(en).toMatch(/not used for analytics or advertising|none of them is used for analytics or advertising/);
+  });
+
+  it('hesap metni: veri sorumlusu, yurt dışı aktarım, 13-18 yaş', () => {
+    expect(L.en.details[0]!.text).toBe('Data controller: Ömer Bekin (independent developer). Contact: {contact}.');
+    expect(L.tr.details[0]!.text).toBe('Veri sorumlusu: Ömer Bekin (bireysel geliştirici). İletişim: {contact}.');
+    const en = L.en.details.map((d) => d.text).join(' ');
+    expect(en).toMatch(/data processor/);
+    expect(en).toMatch(/between 13 and 18, with your parent's or guardian's permission/);
+    expect(en).toMatch(/backups for up to 30 days/);
+    expect(L.tr.details.map((d) => d.text).join(' ')).toMatch(/yedeklerinde en çok 30 gün/);
+    expect(L.tr.details.map((d) => d.text).join(' ')).toMatch(/13–18 yaş arasındaysanız ebeveyninizin veya vasinizin onayıyla/);
+  });
+});
+
 describe('public/privacy.html', () => {
   it('üretici çıktısıyla aynı (JSON değiştiyse: node tools/gen-privacy-page.mjs)', async () => {
     const { readFileSync } = await import('node:fs');
@@ -94,5 +132,9 @@ describe('public/privacy.html', () => {
     expect(html).toContain('id="en"');
     expect(html).toContain('id="tr"');
     expect(html).toContain('mailto:privacy@embersofvaldoria.com');
+    expect(html).toContain('id="tr-general"');
+    expect(html).toContain('Son güncelleme: 2026-10-25');
+    // Sayfada "aşağıdaki anahtar / the switch below" yok (pencereye özgü)
+    expect(html).not.toMatch(/the switch below|aşağıdaki anahtar/);
   });
 });

@@ -1366,7 +1366,7 @@ export class MainMenuScene extends Phaser.Scene {
           this.panelOffs.push(onDiagConsentChange((on) => rep.active && rep.setText(on ? 'On' : 'Off')));
           this.addPanelRow(box, label, () => {
             setDiagConsent(!diagConsent());
-            note.setText(diagConsent() ? 'Anonymous crash reports on. Kept 30 days.' : '');
+            note.setText(diagConsent() ? 'Crash reports on. Kept 30 days.' : '');
           }, { right: [rep] });
           break;
         }
@@ -1442,6 +1442,8 @@ export class MainMenuScene extends Phaser.Scene {
     this.addPanelRow(p, 'Your name', () => void this.askName(name), { right: [name] });
     this.addPanelRow(p, 'Host a lobby', () => mp.host(), { enabled: ok, right: [this.valueText(PANEL_W - 6, 0, 'Host', ok ? TXT_ON : '#7d705a').setOrigin(1, 0.5)] });
     this.addPanelRow(p, 'Join with code', () => void this.askCode(), { enabled: ok, right: [this.valueText(PANEL_W - 6, 0, 'Join', ok ? TXT_ON : '#7d705a').setOrigin(1, 0.5)] });
+    // KVKK aydınlatması toplama anında (2026-10-25): bağlantı doğrudan kurulur, rakip IP adresini görebilir (public/privacy.html > Genel)
+    if (ok) p.add(this.noteText(COL_X, LOOK.panelY0 + 3 * ROW_H, 'The other player can see your IP address while you play.', 20, '#a8977a').setOrigin(0, 0.5));
     if (!ok) {
       p.add(this.valueText(COL_X, LOOK.panelY0 + 3 * ROW_H, 'Server not configured', '#e08a7a', ELEGANT ? 26 : 30).setOrigin(0, 0.5));
       p.add(this.noteText(COL_X, LOOK.panelY0 + 3 * ROW_H + 44, 'The multiplayer server address has not been set up yet.', 20, '#a8977a').setOrigin(0, 0.5));
