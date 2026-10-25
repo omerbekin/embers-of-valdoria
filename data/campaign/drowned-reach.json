@@ -585,12 +585,7 @@
         0.7476,
         0.3719
       ],
-      "recruit": {
-        "offer": 3,
-        "pick": 1,
-        "when": "leave"
-      },
-      "partyCap": 5,
+      "partyCap": 4,
       "heal": 1,
       "merchant": true,
       "merchantSize": 9,
