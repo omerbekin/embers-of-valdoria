@@ -144,7 +144,7 @@ import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
-import { REGION_VIEW, insetFrame, regionCamera, type HudInsets, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
+import { REGION_VIEW, insetFrame, overviewSafe, regionCamera, type HudInsets, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
@@ -1551,7 +1551,9 @@ export class CampaignMapScene extends Phaser.Scene {
       name.destroy();
       sub.destroy();
     }
-    this.markers = overviewMarkers(this.map, (id) => this.P(id), (id) => widthOf.get(id) ?? 240, this.frame, scale, { W, H }, seenSet);
+    // işaretler HUD'sız güvenli alanda (sol sütun, üst bant, alt düğmeler; region-view.ts > overviewSafe)
+    const safe = overviewSafe(this.frame, this.view1(), this.regionTarget(null).z * MAP_ZOOM.min, this.hudInsets());
+    this.markers = overviewMarkers(this.map, (id) => this.P(id), (id) => widthOf.get(id) ?? 240, safe, scale, { W, H }, seenSet);
     const m = motion('mapRegion');
     // ana yol (mockup mainRoad: koyu gölge + açık iz + ince koyu çekirdek, ortada yön oku)
     const road = this.add.graphics();

@@ -108,6 +108,16 @@ export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; 
   return { z, mid: clampMid(mid, insetFrame(o.frame, 'region', Z, o.ins), { w: o.view1.w / Z, h: o.view1.h / Z }) };
 }
 
+/**
+ * Uzak görünümde (bölge haritası) işaretlerin durabileceği dünya kutusu (saf; Harita 2 playtest 2026-10-25: bölge I işareti Your party
+ * sütununun altında kalıyordu). Kamera bütün haritayı kaplar (`z`, orta çerçeveye kısılmış), kutu = görünen alanın HUD'sız kısmı ∩ çerçeve.
+ */
+export function overviewSafe(frame: Bounds, view1: { w: number; h: number }, z: number, ins: HudInsets): Bounds {
+  const mid = clampMid({ x: (frame.left + frame.right) / 2, y: (frame.top + frame.bottom) / 2 }, frame, { w: view1.w / z, h: view1.h / z });
+  const s = safeRect(mid, z, view1, ins);
+  return { left: Math.max(frame.left, s.left), right: Math.min(frame.right, s.right), top: Math.max(frame.top, s.top), bottom: Math.min(frame.bottom, s.bottom) };
+}
+
 /** regionZoom'un güvenli alanlı hâli: sığdırma `fitView`'a, kaplama `view1`'e göre. */
 function regionZoomIn(b: Bounds, fitView: { w: number; h: number }, view1: { w: number; h: number }, frame: Bounds, maxZoom: number): number {
   const fit = Math.min(fitView.w / Math.max(1, b.right - b.left), fitView.h / Math.max(1, b.bottom - b.top));

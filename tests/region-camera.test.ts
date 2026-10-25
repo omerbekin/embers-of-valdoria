@@ -3,15 +3,17 @@
 import { describe, expect, it } from 'vitest';
 import { getMap } from '../src/campaign';
 import { clampMid } from '../src/game/map-view';
-import { REGION_VIEW, insetFrame, regionCamera, safeRect, type HudInsets } from '../src/game/region-view';
+import { REGION_VIEW, insetFrame, markersOverlap, overviewMarkers, overviewSafe, regionCamera, regionName, regionSub, regionZoom, safeRect, type HudInsets } from '../src/game/region-view';
 
 const W = 1920;
 const H = 1080;
 const frame = { left: 0, right: W, top: 0, bottom: H };
 // CampaignMapScene > hudInsets ile aynı: sol sütun (36 + 360) x COL_K (telefon 1,45), üst bant, alt düğme şeridi (36 + touchUnits(56) + 12)
-const SCREENS: Array<{ name: string; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number }> = [
-  { name: 'phone 800x372', view1: { w: (H * 800) / 372, h: H }, ins: { left: 396 * 1.45, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + 128 + 12 }, mapZoom: 1.2 },
-  { name: 'desktop 16:9', view1: { w: W, h: H }, ins: { left: 396, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + 56 + 12 }, mapZoom: 1 },
+// markerScale: renderOverview ile aynı (telefonda COL_K 1,45)
+const SCREENS: Array<{ name: string; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number; markerScale: number }> = [
+  { name: 'phone 800x372', view1: { w: (H * 800) / 372, h: H }, ins: { left: 396 * 1.45, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + 128 + 12 }, mapZoom: 1.2, markerScale: 1.45 },
+  { name: 'phone 800x491', view1: { w: (H * 800) / 491, h: H }, ins: { left: 396 * 1.45, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + 97 + 12 }, mapZoom: 1.2, markerScale: 1.45 },
+  { name: 'desktop 16:9', view1: { w: W, h: H }, ins: { left: 396, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + 56 + 12 }, mapZoom: 1, markerScale: 1 },
 ];
 const inside = (p: { x: number; y: number }, b: { left: number; right: number; top: number; bottom: number }) => p.x >= b.left && p.x <= b.right && p.y >= b.top && p.y <= b.bottom;
 
@@ -58,4 +60,31 @@ describe('bölge kamerası: duraklar HUD altında kalmaz', () => {
     expect(insetFrame(frame, null, 2, ins)).toEqual(frame);
     expect(insetFrame(frame, 'I', 2, ins)).toEqual({ left: -200, right: W, top: -70, bottom: H + 50 });
   });
+
+  // Uzak görünüm (bölge haritası): her işaret (etiketiyle) HUD'sız güvenli alanda ve işaretler üst üste binmez
+  for (const mapId of ['valdoria', 'drowned-reach']) {
+    const map = getMap(mapId);
+    for (const sc of SCREENS)
+      it(`uzak görünüm ${mapId} · ${sc.name}`, () => {
+        const z = regionZoom(frame, sc.view1, frame, 1);
+        const safe = overviewSafe(frame, sc.view1, z, sc.ins);
+        // renderOverview genişliği: 30x2 + 16 + max(ad, alt satır) + 26; yazı genişliği kabaca (ad 22 px büyük harf, alt satır 17 px)
+        const width = (id: string) => {
+          const r = map.regions.find((x) => x.id === id)!;
+          return 60 + 16 + Math.max(regionName(r.title).length * 16, regionSub(map, id).length * 9) + 26;
+        };
+        const P = (id: string) => {
+          const n = map.nodes.find((x) => x.id === id)!;
+          return { x: n.pos[0] * W, y: n.pos[1] * H };
+        };
+        const ms = overviewMarkers(map, P, width, safe, sc.markerScale, { W, H });
+        for (const m of ms) {
+          expect(m.x - m.w / 2, `${m.id} left`).toBeGreaterThanOrEqual(safe.left);
+          expect(m.x + m.w / 2, `${m.id} right`).toBeLessThanOrEqual(safe.right);
+          expect(m.y - m.h / 2, `${m.id} top`).toBeGreaterThanOrEqual(safe.top);
+          expect(m.y + m.h / 2, `${m.id} bottom`).toBeLessThanOrEqual(safe.bottom);
+        }
+        for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) expect(markersOverlap(ms[i]!, ms[j]!), `${ms[i]!.id}-${ms[j]!.id}`).toBe(false);
+      });
+  }
 });
