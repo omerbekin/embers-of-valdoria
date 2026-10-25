@@ -1,3 +1,4 @@
+import { buryDepth } from '../mob-vfx';
 import { rightClickAction, setPhaserRightClick } from '../../ui/right-click';
 import Phaser from 'phaser';
 import { elapsedTicks, startCounter, waitMs, type CounterSnap } from '../turn-wait';
@@ -606,6 +607,9 @@ export class BattleScene extends Phaser.Scene {
       if (!c || c.hp <= 0) continue;
       const list: BadgeList = [];
       let seals: { stacks: number; max: number; turns: number; color: string } | null = null;
+      // Burrow (tune.bury): Fortified görünürken birim zemine gömülü durur (durum rozetiyle aynı an batar / çıkar)
+      const buried = buryDepth(c.skills, this.statusesShown(c).map((st) => st.kind));
+      if (buried > 0 || !view.buryHeld) view.setBuried(buried);
       for (const st of this.statusesShown(c)) {
         const def = content.statuses[st.kind];
         const fallback = { taunt: ['finger', '#ff9f43'], guard: ['guardian', '#6ec1ff'], regen: ['leaf', '#7dff9b'] }[st.kind as 'taunt' | 'guard' | 'regen'] ?? ['roar', '#ffffff'];

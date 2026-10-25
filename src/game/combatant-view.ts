@@ -773,6 +773,109 @@ export class CombatantView {
    */
   private vineWrap: { back: Phaser.GameObjects.Graphics; front: Phaser.GameObjects.Graphics } | null = null;
 
+  /**
+   * GÖMÜLME (Salt Crab Burrow, Ömer 2026-10-25): sprite `frac` oranında zemine batar; zeminin altı kırpılır (setCrop, maske yok), ayakta küçük kum
+   * yığını belirir. 0 = çıkar. BattleScene her karede durumdan (src/game/mob-vfx.ts > buryDepth) çağırır: aynı değerde etkisiz.
+   */
+  private bury = { v: 0, target: 0 };
+  private buryTween?: Phaser.Tweens.Tween;
+  private buryMound?: Phaser.GameObjects.Graphics;
+
+  private buryHoldUntil = 0;
+
+  /** Efekt gömdükten sonra bu süre durum beklenmeden gömülü kalır (durum rozeti olay kuyruğunda biraz geç görünür; test panelinde hiç görünmez). */
+  get buryHeld(): boolean {
+    return this.scene.time.now < this.buryHoldUntil;
+  }
+
+  setBuried(frac: number, holdMs = 0): void {
+    if (holdMs > 0) this.buryHoldUntil = this.scene.time.now + slow(holdMs);
+    if (frac === this.bury.target) return;
+    this.bury.target = frac;
+    this.buryTween?.stop();
+    const down = frac > this.bury.v;
+    if (down && !this.buryMound) {
+      const g = this.scene.add.graphics();
+      const w = this.w * 0.62;
+      g.fillStyle(0x6b5434, 1).fillEllipse(0, 2, w + 8, 30);
+      g.fillStyle(0xb59a6a, 1).fillEllipse(0, 0, w, 24);
+      g.fillStyle(0xd8c393, 1).fillEllipse(-w * 0.12, -5, w * 0.55, 9);
+      g.setScale(0.2, 0.2).setAlpha(0);
+      this.container.addAt(g, this.container.getIndex(this.sprite) + 1);
+      this.buryMound = g;
+    }
+    const mound = this.buryMound;
+    if (mound) {
+      this.scene.tweens.killTweensOf(mound);
+      this.scene.tweens.add({
+        targets: mound,
+        scaleX: down ? 1 : 0.2,
+        scaleY: down ? 1 : 0.2,
+        alpha: down ? 1 : 0,
+        duration: slow(down ? 260 : 320),
+        ease: down ? 'Back.easeOut' : 'Quad.easeIn',
+        onComplete: () => {
+          if (!down && this.buryMound === mound) {
+            mound.destroy();
+            this.buryMound = undefined;
+          }
+        },
+      });
+    }
+    this.buryTween = this.scene.tweens.add({
+      targets: this.bury,
+      v: frac,
+      duration: slow(down ? 300 : 380),
+      ease: down ? 'Quad.easeIn' : 'Back.easeOut',
+      onUpdate: () => this.applyBury(),
+      onComplete: () => this.applyBury(),
+    });
+  }
+
+  private buryTop: { key: string; top: number } | null = null;
+
+  /** Sprite karesinde ilk opak satır (kare pikseli; önbellekli). Okunamazsa 0. */
+  private contentTop(): number {
+    const fr = this.sprite.frame;
+    const key = `${this.sprite.texture.key}#${fr.name}`;
+    if (this.buryTop?.key === key) return this.buryTop.top;
+    let top = 0;
+    try {
+      const cv = document.createElement('canvas');
+      cv.width = fr.cutWidth;
+      cv.height = fr.cutHeight;
+      const cx = cv.getContext('2d', { willReadFrequently: true });
+      if (cx) {
+        cx.drawImage(fr.source.image as CanvasImageSource, fr.cutX, fr.cutY, fr.cutWidth, fr.cutHeight, 0, 0, fr.cutWidth, fr.cutHeight);
+        const px = cx.getImageData(0, 0, fr.cutWidth, fr.cutHeight).data;
+        outer: for (let y = 0; y < fr.cutHeight; y++)
+          for (let x = 0; x < fr.cutWidth; x += 2)
+            if (px[(y * fr.cutWidth + x) * 4 + 3]! > 24) {
+              top = y;
+              break outer;
+            }
+      }
+    } catch {
+      top = 0;
+    }
+    this.buryTop = { key, top };
+    return top;
+  }
+
+  private applyBury(): void {
+    const v = Math.max(0, this.bury.v);
+    if (v <= 0.001) {
+      this.sprite.setY(0);
+      this.sprite.setCrop();
+      return;
+    }
+    const fh = this.sprite.frame.height;
+    // oran görünür gövdeye göre (karenin üstündeki saydam pay hariç: yengeç karenin alt yarısında)
+    const cut = (fh - this.contentTop()) * v;
+    this.sprite.setY(cut * Math.abs(this.sprite.scaleY));
+    this.sprite.setCrop(0, 0, this.sprite.frame.width, Math.max(1, fh - cut));
+  }
+
   setVineWrap(on: boolean): void {
     if (on === !!this.vineWrap) return;
     if (!on) {

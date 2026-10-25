@@ -217,6 +217,21 @@ export interface MobTune {
   single?: boolean;
   stretch?: number;
   originX?: number;
+  /**
+   * bolt: UÇAN MERMİ (Harita 2, Ömer 2026-10-25): sheet'in `flyFrame` karesi saldırandan hedefe `fly` ms'de uçar (`arc` px yay; `flyArt`: karedeki
+   * mermi eğimi, derece, uçuşta yolun teğetine döner; `grow`: başlangıç ölçeği, varışta 1; `echo`: arkasında sönen kopya sayısı = dalga izi),
+   * varınca sheet hedefte `flyFrom` karesinden oynar. `throw`: hazırlık halkası yerine fırlatma hareketi (geri kaykıl + ileri savur).
+   */
+  fly?: number;
+  flyFrame?: number;
+  flyFrom?: number;
+  arc?: number;
+  flyArt?: number;
+  grow?: number;
+  echo?: number;
+  throw?: boolean;
+  /** Burrow: Fortified görünürken birim bu oranda zemine gömülü durur (sprite aşağı kayar, alt kısmı kırpılır; buryDepth + BattleScene.refreshBadges). */
+  bury?: number;
 }
 const TUNE = layout.animation.mobVfx as unknown as { sizeMult?: number; speedMult?: number; stabilize: { minMass: number; maxShift: number }; skills: Record<string, MobTune> };
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -235,6 +250,7 @@ const TRAIL_SIZE = 300; // iz sheet'inin ekran boyu (px)
 const TRAIL_ORIGIN: [number, number] = [0.84, 0.5]; // iz sheet'inin başı (alev ucu) sağda: aynalanınca saldıranın önünde
 const CAST_PEAK_MS = 130; // büyü ucunun okunduğu an (windUp'ın tepe noktası; bu anda cast pozu oturmuş)
 const FAST_RAIN_X = 0.55; // yağan okun yatay eğimi (dikey px başına)
+const BURY_HOLD_MS = 1500; // gömülen birim durum rozeti görünmeden en az bu kadar gömülü kalır (ms, k.slow ile)
 
 /**
  * Zemin eğimi (ekranda yatay / dikey px): hedef tahtanın yuva ızgarasında bir sıra aşağı inince x ne kadar kayar (data/battle-layout.json yuvaları).
@@ -348,8 +364,10 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
     const off: Pt = { x: tune.dx ?? 0, y: tune.dy ?? 0 };
     const travelF = Math.round((tune.travel ?? 0) * mult);
     const lag = tune.lag ?? 0;
-    const fall = tune.fall ?? 0;
-    const startF = fall ? 1 : 0; // yağan efektte çarpma sheet'i uçuş karesinden sonrasını oynar
+    const flyMs = s.mode === 'bolt' && tune.fly ? tune.fly : 0;
+    // `fall`: zamanlamadaki uçuş payı (yağan ok ya da uçan mermi; ikisi aynı skill'de olmaz)
+    const fall = tune.fall ?? flyMs;
+    const startF = flyMs ? Math.round((tune.flyFrom ?? 1) * mult) : fall ? 1 : 0; // uçuştan sonra çarpma sheet'i bu kareden oynar
     const hitT = impactMs(impactF - startF, fps); // sheet başlangıcından vuruş karesine (ms, yavaşlatılmadan)
     // kare hizalama: vuruş sonrası kareler vuruş karesinin yerine oturur; uçuş kareleri ağırlık merkezinden vuruş noktasına (yolu sprite yapar)
     const alignMode = tune.align ?? (s.at === 'ground' ? 'base' : 'core');
@@ -408,7 +426,10 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
         return [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
       };
       let objs: Array<NonNullable<ReturnType<VfxKit['sheet']>>>;
-      if (from && fall) {
+      if (from && flyMs) {
+        flyShot(from, p, delay + lag);
+        objs = pair({ delay: delay + lag + flyMs, from: startF }, p);
+      } else if (from && fall) {
         // yağan efekt (Scatter Quarrels): uçuş karesi (0) yukarıdan hücreye iner, sonra çarpma kareleri o hücrede oynar
         const fl = pair({ frame: 0, keep: true, delay: delay + lag }, from);
         c.scene.tweens.add({ targets: fl, x: p.x, y: p.y, delay: k.slow(delay + lag), duration: k.slow(fall), ease: 'Quad.easeIn', onComplete: () => fl.forEach((o) => o.destroy()) });
@@ -435,6 +456,77 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
         flashAt(p, depth);
         c.scene.time.delayedCall(k.slow(HOLD_MS), () => {
           for (const o of objs) if (o?.active) o.anims.resume();
+        });
+      });
+    };
+    /**
+     * UÇAN MERMİ (tune.fly): `flyFrame` karesi (ağırlık merkezinden tutulur) saldırandan hedefe yay çizerek uçar, teğete döner; `echo` kopyası
+     * aynı yolda biraz geriden, sönük gelir (dalga izi). Varınca silinir: çarpma kareleri o anda hedefte başlar (play).
+     */
+    function flyShot(from: Pt, to: Pt, delay: number): void {
+      const fr = Math.round((tune.flyFrame ?? 0) * mult);
+      const an = k.sheetAnchors(c.scene, id, fr);
+      const o: [number, number] | undefined = an ? [an.core[0] / fw, an.core[1] / fh] : undefined;
+      const echoes = tune.echo ?? 0;
+      const opts = { size, flipX: flip, frame: fr, keep: true, delay, ...(o ? { origin: o } : {}) };
+      const parts: Array<{ spr: Phaser.GameObjects.Sprite; lagU: number; alpha: number }> = [];
+      for (let i = echoes; i >= 0; i--) {
+        const alpha = i ? 0.5 / i : 1;
+        const main = k.sheet(c.scene, id, from.x, from.y, { ...opts, depth: k.DEPTH + 1 - i * 0.01, alpha });
+        const glow = k.sheet(c.scene, id, from.x, from.y, { ...opts, depth: k.DEPTH + 2 - i * 0.01, alpha: BOOST_ALPHA * alpha, blend: ADD_BLEND });
+        for (const spr of [main, glow]) if (spr) parts.push({ spr, lagU: i * 0.14, alpha: spr.alpha });
+      }
+      if (!parts.length) return;
+      const arc = tune.arc ?? 0;
+      const g0 = tune.grow ?? 1;
+      const sx0 = parts[0]!.spr.scaleX;
+      const sy0 = parts[0]!.spr.scaleY;
+      const place = (u0: number): void => {
+        for (const q of parts) {
+          if (!q.spr.active) continue;
+          const u = u0 - q.lagU;
+          q.spr.setAlpha(u <= 0 ? 0 : q.alpha);
+          const v = Math.max(0, u);
+          const x = from.x + (to.x - from.x) * v;
+          const y = from.y + (to.y - from.y) * v - arc * 4 * v * (1 - v);
+          const g = g0 + (1 - g0) * v;
+          q.spr.setPosition(x, y).setScale(sx0 * g, sy0 * g);
+          if (tune.flyArt !== undefined) q.spr.setRotation(flightRotation({ x: 0, y: 0 }, { x: to.x - from.x, y: to.y - from.y - arc * 4 * (1 - 2 * v) }, tune.flyArt, flip));
+        }
+      };
+      place(0);
+      c.scene.tweens.addCounter({
+        from: 0,
+        to: 1,
+        delay: k.slow(delay),
+        duration: k.slow(flyMs),
+        onUpdate: (tw) => place(tw.getValue() ?? 0),
+        onComplete: () => parts.forEach((q) => q.spr.active && q.spr.destroy()),
+      });
+    }
+    /** Fırlatma hareketi (tek görselli mob: poz yok): geri kaykılır, ileri savurur (bırakış anında çözülür), sonra doğrulur. */
+    const throwMotion = (): Promise<void> => {
+      const spr = c.actor.sprite;
+      c.actor.play('attack');
+      return new Promise<void>((resolve) => {
+        c.scene.tweens.add({
+          targets: spr,
+          angle: -fwd * 11,
+          x: -fwd * 10,
+          duration: k.slow(170),
+          ease: 'Quad.easeOut',
+          onComplete: () =>
+            c.scene.tweens.add({
+              targets: spr,
+              angle: fwd * 9,
+              x: fwd * 14,
+              duration: k.slow(90),
+              ease: 'Quad.easeIn',
+              onComplete: () => {
+                resolve();
+                c.scene.tweens.add({ targets: spr, angle: 0, x: 0, duration: k.slow(200), ease: 'Sine.easeOut', onComplete: () => c.actor.play('idle') });
+              },
+            }),
         });
       });
     };
@@ -483,13 +575,19 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
       c.scene.time.delayedCall(k.slow(lag + hitT), () => k.shake(c.scene, SHAKE_MS, SHAKE_MAG));
       return land();
     }
-    await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', tune.anim ?? 'cast');
+    if (tune.throw) await throwMotion();
+    else await c.windUp(s.hex ?? c.skill.fx ?? '#ffffff', tune.anim ?? 'cast');
     if (s.mode === 'bolt' || s.mode === 'ally') {
       for (const v of c.targets) play(pos(v), 0, v.container.depth, s.mode === 'bolt' ? src() : undefined);
       return land();
     }
     if (s.mode === 'self') {
       play(k.feet(c.actor), 0, c.actor.container.depth);
+      // gömülme (Burrow): kum patlamasının vuruşunda batar; sonra Fortified rozeti görünür kaldıkça gömülü durur (BattleScene.refreshBadges)
+      if (tune.bury) {
+        const actor = c.actor;
+        c.scene.time.delayedCall(k.slow(lag + Math.max(0, hitT - 40)), () => actor.setBuried(tune.bury!, BURY_HOLD_MS));
+      }
       return land();
     }
     const cells = c.cells.length ? c.cells : c.targets.map((v) => k.feet(v));
@@ -581,6 +679,18 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
       });
     }
   };
+}
+
+/**
+ * Gömülme (tune.bury, Burrow): birimin skill'lerinden biri gömülen türdense ve ekranda `status` durumu görünüyorsa sprite'ın gömülü oranı, değilse 0.
+ * BattleScene her karede uygular (durum rozetleriyle aynı an: skill'in kum patlamasının vuruşunda batar, Fortified bitince çıkar).
+ */
+export function buryDepth(skillIds: readonly string[], shownStatuses: readonly string[]): number {
+  for (const id of skillIds) {
+    const b = TUNE.skills[id]?.bury;
+    if (b && shownStatuses.includes('fortify')) return b;
+  }
+  return 0;
 }
 
 /** skill id -> efekt (sheet dosyası olmayan skill burada yok: ödünç efektini oynar). */
