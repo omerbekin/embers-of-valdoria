@@ -199,6 +199,12 @@ function describeEventBody(battle: Battle, e: BattleEvent): string | null {
       return `WAVE ${e.index + 1}/${e.total} CLEARED`;
     case 'waveStart':
       return e.index === 0 ? `WAVE 1/${e.total}` : `WAVE ${e.index + 1}/${e.total} ARRIVES: ${e.combatants.map((c) => unitLabel(c)).join(', ') || 'no units'}`;
+    case 'round':
+      return `ROUND ${e.round} (battle turn)`;
+    case 'objective':
+      return `OBJECTIVE ${e.objective.toUpperCase()} ${e.state.toUpperCase()}${e.current !== undefined ? ` ${e.current}${e.goal !== undefined ? `/${e.goal}` : ''}` : ''}`;
+    case 'reinforce':
+      return `REINFORCEMENTS: ${e.combatants.map((c) => unitLabel(c)).join(', ')}`;
     case 'battleEnd':
       return `BATTLE END: ${e.winner} wins`;
   }

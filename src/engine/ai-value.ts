@@ -473,7 +473,7 @@ export class ValueContext {
     const b = this.battle;
     let dmg = 0;
     for (const st of f.statuses) if (b.statusDef(st.kind)?.dot) dmg += b.dotTickDamage(st.kind, st.amount ?? 0, f);
-    for (const g of b.ground) if (g.board === f.board && g.slots.includes(f.slot) && g.sourceSide !== f.side && !b.isHealGround(g.ground)) dmg += b.groundTickDamage(g.ground, g.amount, f);
+    for (const g of b.ground) if (g.board === f.board && g.slots.includes(f.slot) && g.sourceSide !== f.side && !b.isHealGround(g.ground) && g.envUntilRound === undefined) dmg += b.groundTickDamage(g.ground, g.amount, f);
     if (b.mode === 'turns') {
       const q = b.turnQueue();
       const start = q[0] === this.actor.uid ? 1 : 0;

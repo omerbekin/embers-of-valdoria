@@ -1,0 +1,39 @@
+{
+  "_not": "Karşılaşma kuralları (Harita 2-3 savaş katmanı; docs/design/campaign/maps-2-3.md M-A koşul, B3 hedef, M-B Tide/Flooded/Soaked, M-I kapalı hücre, M-J crossing). Karşılaşma verisinde (data/campaign/*-encounters.json) alanlar: condition (koşul id'si), objective (hedef id'si ya da { type, ...sayılar }; yoksa herkesi öldür), blocked (hücre listesi ya da layouts anahtarı; İKİ tahtada da kapalı). 'Tur' (rounds/every) = savaş turu: her savaşan bir kez oynayınca yeni tur (Battle.round); dalga (Round 2/3) ayrı sayaç. Metinler oyun içi (İngilizce): {n} = hedef sayısı, {every} = takviye aralığı. Sayılar PROVİZYON (sim YOK; open-questions 417).",
+  "conditions": {
+    "tide": {
+      "name": "Tide",
+      "text": "The tide floods both front rows at the start of every Round and again every 4 turns; the water stays for 2 turns. Anyone standing in it is Soaked: fire damage taken -50%, Speed -10%, and Burning is put out. Flooded cells also put out Burning Ground.",
+      "flood": { "ground": "flooded", "onWave": true, "everyRounds": 4, "rows": [0], "boards": ["party", "enemy"], "rounds": 2, "soak": "soaked", "soakTurns": 2 }
+    }
+  },
+  "objectives": {
+    "survive": {
+      "name": "Survive",
+      "goal": "Survive {n} turns",
+      "text": "Hold out for {n} turns. When the last turn ends your party escapes and the battle is won. A turn passes once every fighter has acted. Defeating every enemy also wins.",
+      "rounds": 6
+    },
+    "totem": {
+      "name": "Break the Totem",
+      "goal": "Break the totem",
+      "text": "While the totem stands, more enemies arrive every {every} turns and the battle cannot be won. Break it, then defeat the rest.",
+      "every": 2,
+      "maxEnemies": 5
+    },
+    "hold": {
+      "name": "Hold the Bridge",
+      "goal": "Hold the front row",
+      "text": "Keep at least one fighter in your front row. If it is ever empty, the battle is lost. Defeat every enemy to win.",
+      "row": 0
+    }
+  },
+  "layouts": {
+    "deck": {
+      "_not": "M-I / M-J güverte savaşı: direk (sıra 2 orta) ve küpeşte halatı (sıra 3 üst şerit) hücreleri iki tahtada da kapalı. Yuva = sıra x 3 + şerit (0 = ön sıra).",
+      "name": "Ship's deck",
+      "text": "Masts and rails close some cells on both sides: no one can stand there.",
+      "blocked": [7, 9]
+    }
+  }
+}
