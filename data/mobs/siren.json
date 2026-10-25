@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı raven_seer / fen_witchling tabanından (Hexes ailesi: LUCK büyücüsü, Fen Witchling gibi); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik raven_seer pasifi (Flock Shield). Sayılar PROVİZYON (sim yok).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı raven_seer / fen_witchling tabanından (Hexes ailesi: LUCK büyücüsü, Fen Witchling gibi); seviye ölçeği bölüm 2 rampası. PASİF 3.3'ten: Lure (motor tipi 'lure', content-designer 2026-10-25; önceki yer tutucu flock_shield). Sayılar PROVİZYON (sim yok).",
   "id": "siren",
   "name": "Siren",
   "family": "hexes",
@@ -23,13 +23,14 @@
     "chorus"
   ],
   "passive": {
-    "id": "flock_shield",
-    "name": "Flock Shield",
-    "icon": "shield",
-    "text": "Once per battle, the first enemy skill that hits it deals 50% less damage: the ravens take the blow.",
+    "id": "lure",
+    "name": "Lure",
+    "icon": "eye",
+    "text": "A hero that hits it with a skill gains 1 Omen (summons do not): every blow at the singer has a price.",
     "effect": {
-      "type": "flockShield",
-      "reduce": 0.5
+      "type": "lure",
+      "status": "omen",
+      "stacks": 1
     }
   }
 }

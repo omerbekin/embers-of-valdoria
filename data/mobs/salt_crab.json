@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı shieldwarden tabanından (-2 STR, +4 büyü zırhı: kabuk); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik shieldwarden pasifi. Sayılar PROVİZYON (sim yok).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı shieldwarden tabanından (-2 STR, +4 büyü zırhı: kabuk); seviye ölçeği bölüm 2 rampası. PASİF 3.3'ten: Shell (motor tipi 'shell', content-designer 2026-10-25; önceki yer tutucu rebuke). Sayılar PROVİZYON (sim yok).",
   "id": "salt_crab",
   "name": "Salt Crab",
   "family": "beasts",
@@ -27,13 +27,13 @@
     "burrow"
   ],
   "passive": {
-    "id": "rebuke",
-    "name": "Rebuke",
-    "icon": "bash",
-    "text": "When a melee skill hits this unit with physical damage, 30% of the damage its armor blocked is dealt back to the attacker as physical damage.",
+    "id": "shell",
+    "name": "Shell",
+    "icon": "shield",
+    "text": "Its armor is x1.5 until the first critical hit it takes; that crit cracks the shell for the rest of the battle.",
     "effect": {
-      "type": "rebuke",
-      "ratio": 0.3
+      "type": "shell",
+      "armorMult": 1.5
     }
   }
 }

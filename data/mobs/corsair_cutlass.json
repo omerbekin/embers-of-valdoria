@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı cutpurse tabanından (+2 STR: ön sıra düellocu); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik cutpurse pasifi. Sayılar PROVİZYON (sim yok).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı cutpurse tabanından (+2 STR: ön sıra düellocu); seviye ölçeği bölüm 2 rampası. PASİF 3.3'ten: Boarding (motor tipi 'boarding', content-designer 2026-10-25; önceki yer tutucu head_start). Sayılar PROVİZYON (sim yok).",
   "id": "corsair_cutlass",
   "name": "Corsair Cutlass",
   "family": "corsairs",
@@ -23,13 +23,14 @@
     "rake"
   ],
   "passive": {
-    "id": "head_start",
-    "name": "Head Start",
+    "id": "boarding",
+    "name": "Boarding",
     "icon": "boot",
-    "text": "At the start of battle this unit gains a speed boost until its first turn (like Skip Turn), so it usually acts first.",
+    "text": "When it joins the battle with a later wave or as reinforcements, it gains Haste for 1 turn. Corsairs come over the rail fast.",
     "effect": {
-      "type": "headStart",
-      "speedBoost": 1
+      "type": "boarding",
+      "status": "haste",
+      "turns": 1
     }
   }
 }

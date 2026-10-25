@@ -150,6 +150,19 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   chain_hook: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 2, size: 250, hex: '#ff8a3a' }, // vuruş karesi 2 (çarpma patlaması): 0-1 kancanın gidişi (tune.travel)
   ash_brand: { mob: 'bridge_warden', mode: 'bolt', at: 'hit', impact: 4, size: 260, hex: '#ff6a1a' },
   fall_of_kings_bridge: { mob: 'bridge_warden', mode: 'center', at: 'ground', impact: 3, size: 520, hex: '#ff5a1a' },
+  // Harita 2 (The Drowned Reach; content-designer 2026-10-25, sheet'ler art-pipeline 7b399db). Ömer: yalnız BU efektler yüksek FPS oynar
+  // (data/battle-layout.json > animation.mobVfx.skills: speed 1.35 + 5 kat ara kare); Harita 1 hızları aynı. Drowned Knight, Brine Maiden,
+  // Reaver Archer, Reef Wrecker skill'leri sheet gelene kadar ödünç (artOf) efektte.
+  cutlass: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  rake: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  sling_stone: { mob: 'corsair_slinger', mode: 'bolt', at: 'hit', impact: 3, size: 220, hex: '#d9c9a3' }, // 0-2 taşın uçuşu (tune.travel)
+  pitch_pot: { mob: 'corsair_slinger', mode: 'bolt', at: 'ground', impact: 2, size: 240, hex: '#ff7a1a' }, // 0-1 çömleğin uçuşu; zemine oturur (Burning ground)
+  pincer: { mob: 'salt_crab', mode: 'melee', at: 'hit', impact: 3, size: 230 },
+  burrow: { mob: 'salt_crab', mode: 'self', at: 'ground', impact: 3, size: 250, hex: '#c8b48a' },
+  eel_bite: { mob: 'weir_eel', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  lunge: { mob: 'weir_eel', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  lament: { mob: 'siren', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#7fb8c8' },
+  chorus: { mob: 'siren', mode: 'cells', at: 'ground', impact: 3, size: 220, hex: '#5fa8c8' },
 };
 
 type Pt = { x: number; y: number };

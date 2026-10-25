@@ -32,8 +32,24 @@ import { GUARDIANS } from './mob-vfx-hand/guardians';
 import { MORVANE_MEN } from './mob-vfx-hand/morvane';
 import { BRIDGE } from './mob-vfx-hand/bridge';
 
-/** skill id -> el yapımı efekt (gerçek savaşta yalnızca hand:true skill'ler; hepsi test panelinde). */
-export const MOB_HAND_VFX: Readonly<Record<string, MobHandVfx>> = {
+/**
+ * Harita 2 (The Drowned Reach, content-designer 2026-10-25): bu skill'lerin el yapımı sürümü henüz yok; test panelinde temaca en yakın Bölge I-III
+ * efektini oynar (gerçek savaşta hand:true değiller, asıl sheet oynar). Kendi el yapımı efekti yazılınca satır silinir.
+ */
+const DROWNED_REACH_STANDIN: Readonly<Record<string, string>> = {
+  cutlass: 'halberd_chop',
+  rake: 'toll_sweep',
+  sling_stone: 'crossbow_bolt',
+  pitch_pot: 'ember_toss',
+  pincer: 'shield_bash',
+  burrow: 'oath_of_stone',
+  eel_bite: 'bite',
+  lunge: 'run_down',
+  lament: 'ravens_peck',
+  chorus: 'requiem',
+};
+
+const BASE: Readonly<Record<string, MobHandVfx>> = {
   ...CLASSIC,
   ...BEASTS,
   ...BANDITS,
@@ -43,4 +59,10 @@ export const MOB_HAND_VFX: Readonly<Record<string, MobHandVfx>> = {
   ...GUARDIANS,
   ...MORVANE_MEN,
   ...BRIDGE,
+};
+
+/** skill id -> el yapımı efekt (gerçek savaşta yalnızca hand:true skill'ler; hepsi test panelinde). */
+export const MOB_HAND_VFX: Readonly<Record<string, MobHandVfx>> = {
+  ...BASE,
+  ...Object.fromEntries(Object.entries(DROWNED_REACH_STANDIN).map(([id, from]) => [id, BASE[from]!])),
 };

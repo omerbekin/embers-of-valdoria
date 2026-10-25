@@ -222,6 +222,15 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `Once per battle, the first time an enemy skill drops your HP below ${pct(e.below)}, you shed your burning skin: every enemy takes ${val(e.scale, e.power)} ${e.element} damage (it cannot miss or crit; armor applies) and you gain ${cap(e.status === 'fortify' ? 'fortified' : e.status)} for ${turnsText(e.turns)}.`;
     case 'crownOfAsh':
       return `Whenever an ally dies (not a summon), gain a shield of ${pct(e.ratio)} of your max HP (${Math.round(stats.hp * e.ratio)}) for ${turnsText(e.turns)}; shields stack.`;
+    // Harita 2 mob pasifleri (maps-2-3.md 3.3)
+    case 'boarding':
+      return `When you join the battle with a later wave or as reinforcements, you gain ${cap(e.status)} for ${turnsText(e.turns)}.`;
+    case 'shell':
+      return `Your armor is x${e.armorMult} until the first critical hit you take; that crit cracks the shell for the rest of the battle.`;
+    case 'slick':
+      return `While you stand on ${groundName(e.ground)} ground, your evasion is +${pct(e.evasion)}.`;
+    case 'lure':
+      return `An enemy that hits you with a skill gains ${e.stacks} ${cap(e.status)} (summons do not).`;
   }
 }
 
@@ -623,6 +632,12 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed('Heal per turn', pct(e.ratio));
     case 'choirVessel':
       return fixed('MP per hit', `+${e.mpPerHit}`);
+    case 'shell':
+      return fixed('Armor', `x${e.armorMult}`);
+    case 'slick':
+      return fixed('Evasion', `+${pct(e.evasion)}`);
+    case 'lure':
+      return fixed('Omen to attacker', `+${e.stacks}`);
     default:
       return [];
   }

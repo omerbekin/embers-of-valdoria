@@ -1,5 +1,5 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı grey_wolf tabanından (+2 DEX); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik grey_wolf pasifi. Sayılar PROVİZYON (sim yok).",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı grey_wolf tabanından (+2 DEX); seviye ölçeği bölüm 2 rampası. PASİF 3.3'ten: Slick (motor tipi 'slick', content-designer 2026-10-25; önceki yer tutucu pack_tactics). Sayılar PROVİZYON (sim yok).",
   "id": "weir_eel",
   "name": "Weir Eel",
   "family": "beasts",
@@ -24,13 +24,14 @@
     "lunge"
   ],
   "passive": {
-    "id": "pack_tactics",
-    "name": "Pack Tactics",
-    "icon": "roar",
-    "text": "Deals +15% damage for every other living Weir Eel in the same row. Kill one and the rest grow weaker.",
+    "id": "slick",
+    "name": "Slick",
+    "icon": "boot",
+    "text": "While it stands on Flooded ground, its evasion is +20%. Fight it on dry planks.",
     "effect": {
-      "type": "packTactics",
-      "perAlly": 0.15
+      "type": "slick",
+      "ground": "flooded",
+      "evasion": 0.2
     }
   }
 }

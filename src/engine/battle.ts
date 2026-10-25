@@ -2788,9 +2788,12 @@ export class Battle {
     const magicBonus = anchors * (anchor?.magicArmorAdd ?? 0) + hoard + (tb?.magic ?? 0);
     let acc = 0;
     // Faz 2c (Sunder): durumun zırh çarpanı (statuses.json armorMult + ağaç statusPotency); yoksa 1
-    let armorMult = 1;
+    // Shell (Harita 2 Salt Crab): ilk kritik vuruşu yiyene kadar zırh çarpanı
+    let armorMult = pe?.type === 'shell' && !c.passiveUsed && c.hp > 0 ? pe.armorMult : 1;
     // Hide in the Brush (YM17, mob pasifi): şeridinde önünde canlı dost varken kaçınma eki; yoksa 0
     let eva = pe?.type === 'hideInBrush' && c.hp > 0 && this.coveredInLane(c) ? pe.evasion : 0;
+    // Slick (Harita 2 Weir Eel): Flooded hücredeyken kaçınma eki
+    if (pe?.type === 'slick' && c.hp > 0 && this.ground.some((g) => g.ground === pe.ground && g.board === c.board && g.slots.includes(c.slot))) eva += pe.evasion;
     // extraCrit: vuruşun kendi kritik eki (skill hasarının critBonus'u, Jinx); durum ekleriyle birlikte toplanıp [0, 1]'e kırpılır
     let crit = extraCrit;
     const noMisfortune = this.ignoresMisfortune(c); // boss: Omen'in kritik düşüşü işlemez (madde 272)
@@ -5574,6 +5577,7 @@ export class Battle {
       if (this.mode === 'turns' && rules.turnOrder === 'reset') for (const c of this.combatants) if (c.hp > 0) c.turnCounter = 0;
       emit({ type: 'waveStart', index, total: this.waveCount, combatants: added.map(cloneCombatant), removed, queue: this.mode === 'turns' ? this.turnQueue() : [] });
       for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+      this.boardingEnter(added, emit);
       if (this.setup.rules) this.waveBeganForRules(emit); // Tide: her dalga başında su basar
     };
   }
@@ -6366,6 +6370,11 @@ export class Battle {
     const rolled = treeMods?.noCrit ? { crit: false } : effect.guaranteedCrit ? { crit: true } : rollCrit(this.effectiveStats(actor, effect.critBonus ?? 0), this.rng);
     const crit = this.debug.crit === 'auto' ? rolled.crit : this.debug.crit === 'always';
     if (crit && info?.center && actor.treeHooks) this.centerCritN++; // Faz 5a (X Marks the Throat): bu kullanımda merkez kritikleri
+    // Shell (Harita 2 Salt Crab): bu kritik kabuğu kırar (bu vuruş hâlâ kabuklu zırha çarpar; sonrakiler normal zırha)
+    if (crit && target.passive?.effect.type === 'shell' && !target.passiveUsed && actor.side !== target.side) {
+      target.passiveUsed = true;
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+    }
     // Ağaç: kritik çarpanı (critDmgMul), vuruş sonrası kancalar (hitIsCrit: güç / zırh delme / kritik çarpanı / düz ek) ve düz hasar (flatDamage)
     const late = actor.treeHooks ? this.lateDamage(actor, target, this.castingSkill, baseEffect, spec, crit, tq) : null;
     const mult = crit ? actor.stats.critMult * (treeMods?.critDmg ?? 1) * (late?.critDmg ?? 1) : 1;
@@ -6570,6 +6579,12 @@ export class Battle {
       target.flickered = true;
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
       this.addStatus(target, { kind: fl.status, turns: fl.turns, source: target.uid }, emit, target.passive!.id);
+    }
+    // Lure (Harita 2 Siren): onu skill ile vuran düşman (çağrı değil) Omen yığını alır; yığının kaynağı Siren
+    const lu = target.passive?.effect;
+    if (lu?.type === 'lure' && this.castingSkill && actor === this.castingActor && !actor.owner && actor.hp > 0 && actor.side !== target.side) {
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+      this.addStacks(actor, lu.status, lu.stacks, target, emit, false, true);
     }
     // Rebuke (YM3, mob pasifi): yakın dövüş skill'inin fiziksel vuruşunda zırhın engellediği hasarın bir kısmı saldırana döner (saldıranın zırhı uygulanır)
     const rb = target.passive?.effect;
@@ -7226,6 +7241,16 @@ export class Battle {
     emit({ type: 'status', target: c.uid, status: st.kind, turns: st.turns, source: st.source, cause });
   }
 
+  /** Boarding (Harita 2 Corsairs): dalga ya da takviyeyle giren birim kısa süreli durum (Haste) alır. */
+  private boardingEnter(added: readonly Combatant[], emit: Emit): void {
+    for (const c of added) {
+      const e = c.passive?.effect;
+      if (e?.type !== 'boarding' || c.hp <= 0) continue;
+      emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+      this.addStatus(c, { kind: e.status, turns: e.turns, source: c.uid }, emit, c.passive!.id);
+    }
+  }
+
   /** Break the Totem takviyesi: grup boş düşman hücrelerine (savaşan düşman sayısı maxEnemies'e kadar); olay 'reinforce'. */
   private reinforce(o: Extract<BattleObjective, { type: 'totem' }>, emit: Emit): void {
     const room = o.maxEnemies - this.fighting('enemy').length;
@@ -7235,6 +7260,7 @@ export class Battle {
     if (!added.length) return;
     emit({ type: 'reinforce', combatants: added.map(cloneCombatant), queue: this.mode === 'turns' ? this.turnQueue() : [] });
     for (const c of headStart) emit({ type: 'passive', actor: c.uid, passive: c.passive!.id, name: c.passive!.name });
+    this.boardingEnter(added, emit);
     this.applyEnvironment(emit);
   }
 

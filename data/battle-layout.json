@@ -338,7 +338,17 @@
         "cinder_lash": { "anim": "attack" },
         "ashfall": { "ib": "crossfade" },
         "anchor_smash": { "lag": 90 },
-        "chain_hook": { "travel": 2 }
+        "chain_hook": { "travel": 2 },
+        "cutlass": { "speed": 1.35, "sub": 5 },
+        "rake": { "speed": 1.35, "sub": 5 },
+        "sling_stone": { "travel": 3, "speed": 1.35, "sub": 5 },
+        "pitch_pot": { "travel": 2, "speed": 1.35, "sub": 5 },
+        "pincer": { "speed": 1.35, "sub": 5 },
+        "burrow": { "speed": 1.35, "sub": 5 },
+        "eel_bite": { "speed": 1.35, "sub": 5 },
+        "lunge": { "speed": 1.35, "sub": 5 },
+        "lament": { "speed": 1.35, "sub": 5 },
+        "chorus": { "speed": 1.35, "sub": 5 }
       }
     },
     "hitMaxRatio": 0.35,

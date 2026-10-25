@@ -200,7 +200,18 @@ export type PassiveEffect =
    */
   | { type: 'moltenShed'; below: number; scale: Attribute; power: number; element: Element; status: StatusKind; turns: number }
   /** YM23 Crown of Ash: çağrı olmayan bir dostu her ölünce maks canın `ratio` kadarı kalkan, `turns` tur (taşıyanın turları; katman yığılır). */
-  | { type: 'crownOfAsh'; ratio: number; turns: number };
+  | { type: 'crownOfAsh'; ratio: number; turns: number }
+  /*
+   * Harita 2 mob pasifleri (docs/design/campaign/maps-2-3.md 3.3, content-designer 2026-10-25). Var olan kancaların yeni kullanıcıları.
+   */
+  /** Boarding (Corsairs): dalga ya da takviyeyle tahtaya girince `turns` tur `status` (Haste). Savaş başındaki birimlerde işlemez. */
+  | { type: 'boarding'; status: StatusKind; turns: number }
+  /** Shell (Salt Crab): ilk KRİTİK vuruşu yiyene kadar zırh x`armorMult` (o kritik kabuğu kırar; kullanılınca `passiveUsed`). */
+  | { type: 'shell'; armorMult: number }
+  /** Slick (Weir Eel): `ground` (Flooded) zeminli hücredeyken kaçınma +`evasion` (effectiveStats; durum değil). */
+  | { type: 'slick'; ground: string; evasion: number }
+  /** Lure (Siren): onu bir SKILL vuruşuyla vuran düşman (çağrı değil) `stacks` yığın `status` (Omen) alır (yığının kaynağı Siren). */
+  | { type: 'lure'; status: StatusKind; stacks: number };
 
 export interface PassiveDef {
   id: string;
