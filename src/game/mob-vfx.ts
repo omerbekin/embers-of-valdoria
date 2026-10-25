@@ -152,7 +152,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   fall_of_kings_bridge: { mob: 'bridge_warden', mode: 'center', at: 'ground', impact: 3, size: 520, hex: '#ff5a1a' },
   // Harita 2 (The Drowned Reach; content-designer 2026-10-25, sheet'ler art-pipeline 7b399db). Ömer: yalnız BU efektler yüksek FPS oynar
   // (data/battle-layout.json > animation.mobVfx.skills: speed 1.35 + 5 kat ara kare); Harita 1 hızları aynı. Drowned Knight, Brine Maiden,
-  // Reef Wrecker skill'leri sheet gelene kadar ödünç (artOf) efektte; Reaver Archer Fire Volley kendi sheet'inde (artOf yalnız yedek).
+  // Drowned Knight, Brine Maiden, Reaver Archer, Reef Wrecker skill'leri kendi sheet'lerinde (art-pipeline 8fecb02, 272c464; artOf yalnız yedek).
   cutlass: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   rake: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 240 },
   sling_stone: { mob: 'corsair_slinger', mode: 'bolt', at: 'hit', impact: 3, size: 220, hex: '#d9c9a3' }, // 0-2 taşın uçuşu (tune.travel)
@@ -164,6 +164,13 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   lament: { mob: 'siren', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#7fb8c8' },
   chorus: { mob: 'siren', mode: 'cells', at: 'ground', impact: 3, size: 220, hex: '#5fa8c8' },
   fire_volley: { mob: 'reaver_archer', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#ff7a1a' }, // 0-1 oklar iner, 2 saplanır (vuruş), 3-4 alev, 5-7 kor; her hücreye
+  pitch_arrow: { mob: 'reaver_archer', mode: 'bolt', at: 'hit', impact: 3, size: 220, hex: '#ff7a1a' }, // 0-2 ok uçuşu (tune.fly), 3 zifti patlar
+  rusted_blade: { mob: 'drowned_knight', mode: 'melee', at: 'hit', impact: 3, size: 240 },
+  shield_of_brine: { mob: 'drowned_knight', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#5fd8c0' },
+  lament_of_salt: { mob: 'brine_maiden', mode: 'bolt', at: 'ground', impact: 3, size: 230, hex: '#bfe8f0' }, // tuz kristalleri hedefin üstüne yağar
+  tidal_mend: { mob: 'brine_maiden', mode: 'ally', at: 'ground', impact: 3, size: 240, hex: '#5fd8c0' },
+  hook: { mob: 'reef_wrecker', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#e0b04a' }, // kanca zinciriyle fırlatılır (tune.fly + throw)
+  lantern_flash: { mob: 'reef_wrecker', mode: 'cells', at: 'ground', impact: 3, size: 220, hex: '#fff0b0' }, // sıranın her hücresinde göz alan parlama
 };
 
 type Pt = { x: number; y: number };

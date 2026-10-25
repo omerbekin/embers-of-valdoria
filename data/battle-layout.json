@@ -350,7 +350,14 @@
         "lunge": { "speed": 1.35, "sub": 5 },
         "lament": { "speed": 1.35, "sub": 5, "fly": 300, "flyFrame": 0, "flyFrom": 1, "arc": 24, "grow": 0.6, "echo": 2 },
         "chorus": { "speed": 1.35, "sub": 5 },
-        "fire_volley": { "speed": 1.35, "sub": 5, "align": "none", "ib": "crossfade", "flash": false, "fadeOut": 450 }
+        "fire_volley": { "speed": 1.35, "sub": 5, "align": "none", "ib": "crossfade", "flash": false, "fadeOut": 450 },
+        "pitch_arrow": { "speed": 1.35, "sub": 5, "fly": 220, "flyFrame": 1, "flyFrom": 3, "arc": 30, "flyArt": 0, "srcDy": -45, "flash": false },
+        "rusted_blade": { "speed": 1.35, "sub": 5 },
+        "shield_of_brine": { "speed": 1.35, "sub": 5, "align": "none", "ib": "crossfade", "flash": false },
+        "lament_of_salt": { "speed": 1.35, "sub": 5, "align": "none", "ib": "crossfade", "flash": false },
+        "tidal_mend": { "speed": 1.35, "sub": 5, "align": "none", "ib": "crossfade", "flash": false },
+        "hook": { "speed": 1.35, "sub": 5, "throw": true, "fly": 200, "flyFrame": 1, "flyFrom": 2, "arc": 20, "flash": false },
+        "lantern_flash": { "speed": 1.35, "sub": 5, "dy": -70, "align": "none", "ib": "crossfade", "flash": false }
       }
     },
     "hitMaxRatio": 0.35,

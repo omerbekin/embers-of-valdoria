@@ -48,6 +48,13 @@ const DROWNED_REACH_STANDIN: Readonly<Record<string, string>> = {
   lament: 'ravens_peck',
   chorus: 'requiem',
   fire_volley: 'burn_the_ground',
+  pitch_arrow: 'poachers_shot',
+  rusted_blade: 'penance_flail',
+  shield_of_brine: 'shield_wall',
+  lament_of_salt: 'bone_rite',
+  tidal_mend: 'marsh_glow',
+  hook: 'drag_under',
+  lantern_flash: 'sand_in_the_eyes',
 };
 
 const BASE: Readonly<Record<string, MobHandVfx>> = {
