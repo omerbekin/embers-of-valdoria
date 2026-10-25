@@ -144,7 +144,7 @@ import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
-import { REGION_VIEW, boundsMid, hudFrame, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionBounds, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
+import { REGION_VIEW, insetFrame, regionCamera, type HudInsets, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
@@ -1401,18 +1401,23 @@ export class CampaignMapScene extends Phaser.Scene {
   }
 
   /** Odağın taban yakınlaştırması ve ortası. Bölge: bölge sığar, görseli kaplar; uzak görünüm (null): bütün harita (görseli kaplayan en küçük ölçek, en az 1). */
-  private regionTarget(region: string | null): { z: number; mid: Pt | null } {
+  private regionTarget(region: string | null, mapZoom: number = this.mapZoom || this.regionMapZoom()): { z: number; mid: Pt | null } {
     if (!region) return { z: regionZoom(this.frame, this.view1(), this.frame, 1), mid: { x: W / 2, y: H / 2 } };
-    const b = regionBounds(this.map, region, (id) => this.P(id));
-    const z = regionZoom(b, this.view1(), this.frame);
-    // playtest U1: düğümler üst HUD bandının altına otursun (orta, bandın yarısı kadar yukarı; panFrame izin verir)
-    const mid = boundsMid(b);
-    return { z, mid: { x: mid.x, y: mid.y - REGION_VIEW.hudTop / (2 * z * this.regionMapZoom()) } };
+    // playtest U1 + Harita 2 (2026-10-25): bölge HUD'sız güvenli alana sığar, takımın durağı güvenli alanda (Your party sütununun altında değil)
+    const pts = this.map.nodes.filter((n) => n.region === region).map((n) => this.P(n.id));
+    const here = this.map.nodes.find((n) => n.id === this.s.at);
+    return regionCamera({ pts, frame: this.frame, view1: this.view1(), ins: this.hudInsets(), mapZoom, focus: here?.region === region ? this.P(here.id) : null });
   }
 
-  /** Kaydırma çerçevesi: bölge görünümünde üst kenar HUD bandı kadar uzar (src/game/region-view.ts > hudFrame; playtest U1). */
+  /** HUD payları (sahne birimi): sol sütun (Your party, Gear / Formation), üst bant (Valor, bölge adı), alt sağ düğmeler. */
+  private hudInsets(): HudInsets {
+    const k = this.compact() ? COL_K : 1;
+    return { left: (SIDE.left + SIDE.partyW) * k, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + touchUnits(56) + 12 };
+  }
+
+  /** Kaydırma çerçevesi: bölge görünümünde her kenar HUD payı kadar uzar (src/game/region-view.ts > insetFrame; playtest U1, Harita 2). */
   private panFrame(): Bounds {
-    return hudFrame(this.frame, this.focus, this.baseZoom * this.mapZoom);
+    return insetFrame(this.frame, this.focus, this.baseZoom * this.mapZoom, this.hudInsets());
   }
 
   /** Bölgeye girerken oyuncu yakınlaştırmasının başlangıcı (telefonda biraz yakın; create ile aynı). Uzak görünümde hep MAP_ZOOM.min. */
@@ -1427,7 +1432,9 @@ export class CampaignMapScene extends Phaser.Scene {
   private setFocus(region: string | null, anim: boolean): void {
     const was = this.focus;
     this.focus = region;
-    const t = this.regionTarget(region);
+    // uzak görünüm: oyuncu yakınlaştırması en küçükte; uzaktan bölgeye girerken başlangıç değerine döner (bölgeden bölgeye geçişte korunur)
+    const mz = region === null ? MAP_ZOOM.min : was === null ? this.regionMapZoom() : this.mapZoom;
+    const t = this.regionTarget(region, mz);
     const cam = this.cameras.main;
     this.regionTween?.stop();
     this.regionTween = null;
@@ -1435,8 +1442,6 @@ export class CampaignMapScene extends Phaser.Scene {
     this.zoomTarget = null;
     const follow = !!this.walking || !t.mid;
     const to = t.mid ?? this.mid;
-    // uzak görünüm: oyuncu yakınlaştırması en küçükte; uzaktan bölgeye girerken başlangıç değerine döner (bölgeden bölgeye geçişte korunur)
-    const mz = region === null ? MAP_ZOOM.min : was === null ? this.regionMapZoom() : this.mapZoom;
     const apply = (z: number, m: number, x: number, y: number) => {
       this.baseZoom = z;
       this.mapZoom = m;

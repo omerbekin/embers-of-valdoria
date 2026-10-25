@@ -524,7 +524,7 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 
 **Kasabalar**
 - Reedgate, Eelwick, Fisher's Landing: köy sahnesi (town-ashford görselleri yeniden kullanıldı), Saltmere: şehir sahnesi (town-valdren görselleri) + "Odo's Chandlery", Harbor-Master Rook. Hepsinde tüccar, ateş başı, demirci, hikâye NPC'si (dr_the_ferryman, dr_weir_warden, dr_harbor_master, dr_keepers_daughter; İngilizce, 2 adımlık yer tutucu diyalog).
-- **Takım büyüklüğü:** `partyCap` kodda zorlanmıyor; her kasabada aday alınırsa takım 8'e çıkar. Geçici: yalnız Saltmere ayrılırken gönüllü verir (takım 4 -> 5, campaign.md "5. karakter açık"); köylerin kışla / ilan panosu aday göstermez. **K**
+- **Takım büyüklüğü:** Ömer kuralı: sefer takımı en fazla 4, 5. kahraman yok. Harita 2 kasabaları aday vermez (Saltmere dahil, `partyCap` 4); kışla / ilan panosu aday göstermez.
 - Faction (M-L), Charter (M-J), Lantern Rock (M-M), Monk's Isle: düz lore olayı + küçük ödül yer tutucusu (dr_guild_hall, dr_ferry_office, dr_lantern_rock, dr_monks_isle); kural yok.
 
 **Geçiş (M-Q) ve kayıt**
@@ -537,3 +537,4 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 - `campaign.json > mapFlags["drowned-reach"].enabled = false`. Debug > Campaign > "Maps 2-3 (test)": Enable Map 2 (`eov.debug.maps23`), Jump to The Drowned Reach, Jump to region I-VI, Finish Map 1 → transition. Adreste `?maps=1` açar ve hatırlar, `?maps=0` kapatır. Codex sayfası yalnız bayrak açıkken.
 - `/maps23/` yolunda (GitHub Pages test kopyası) localStorage / sessionStorage `eov.m23.` önekiyle ayrılır (src/storage-scope.ts, main.ts'in ilk import'u; index.html'deki ilk kare betiği de); bulut senkronu orada kapalı. Bilinen küçük etki: sekmeler arası `storage` olayı kopyada önekli anahtarla gelir (asset sürüm seçimi diğer sekmeye anında yansımaz).
 - Bölge savaş arka planları var olan sahnelerden (I kings-bridge, II misty-marsh, III pilgrim-road, IV iron-pass, V windy-moor, VI castle-hall): yer tutucu.
+- **Bölge kamerası HUD payları** (playtest 2026-10-25: dr1 telefonda Your party sütununun altında kalıyordu): bölge görünümünde kamera sol sütun, üst bant ve alt düğme şeridi kadar pay bırakır (`region-view.ts > regionCamera / insetFrame`); bölge güvenli alana sığdırılır, takımın durağı güvenli alanda açılır, kaydırma çerçevesi her yanda pay kadar uzar (her durak HUD dışına kaydırılabilir). Harita 1'de de geçerli (tests/region-camera.test.ts).

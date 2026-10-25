@@ -19,7 +19,7 @@
  */
 import type { CampaignMap, MapEdge } from '../campaign/types';
 import type { NodeVis } from '../campaign/fog';
-import type { Bounds } from './map-view';
+import { clampMid, type Bounds } from './map-view';
 
 export const REGION_VIEW = {
   /** Bölgeye sığdırırken düğüm kümesinin çevresine bırakılan pay (dünya pikseli; etiket şeritleri sığsın). */
@@ -51,6 +51,68 @@ export const REGION_VIEW = {
 export function hudFrame(frame: Bounds, region: string | null, zoom: number, hudTop: number = REGION_VIEW.hudTop): Bounds {
   if (region === null || !(zoom > 0)) return frame;
   return { ...frame, top: frame.top - hudTop / zoom };
+}
+
+/** HUD'un ekran kenarlarından kapladığı pay (sahne birimi): sol sütun (Your party + Gear / Formation), üst bant, sağ alt düğmeler. */
+export interface HudInsets {
+  left: number;
+  top: number;
+  right: number;
+  bottom: number;
+}
+
+/**
+ * Bölge görünümünde kaydırma çerçevesi, HUD payları ile (saf; Harita 2 playtest 2026-10-25: dr1 sol kenarda Your party sütununun altında
+ * kalıyordu). Çerçeve her yanda payın dünya karşılığı kadar uzar: her düğüm kaydırılarak HUD'ın dışına (güvenli alana) getirilebilir.
+ * Uzak görünümde (region null) çerçeve aynen. Yalnız üst pay verilirse hudFrame ile aynı.
+ */
+export function insetFrame(frame: Bounds, region: string | null, zoom: number, ins: HudInsets): Bounds {
+  if (region === null || !(zoom > 0)) return frame;
+  return { left: frame.left - ins.left / zoom, right: frame.right + ins.right / zoom, top: frame.top - ins.top / zoom, bottom: frame.bottom + ins.bottom / zoom };
+}
+
+/** Kamera ortası `mid`, toplam yakınlaştırma `Z` iken HUD'sız güvenli alanın dünyadaki kutusu. `view1` = yakınlaştırma 1'de görünen alan. */
+export function safeRect(mid: Pt, Z: number, view1: { w: number; h: number }, ins: HudInsets): Bounds {
+  return {
+    left: mid.x - view1.w / (2 * Z) + ins.left / Z,
+    right: mid.x + view1.w / (2 * Z) - ins.right / Z,
+    top: mid.y - view1.h / (2 * Z) + ins.top / Z,
+    bottom: mid.y + view1.h / (2 * Z) - ins.bottom / Z,
+  };
+}
+
+/**
+ * Bölgeye girerken kamera (saf). `pts` = bölgenin düğümleri (dünya), `view1` = yakınlaştırma 1'de görünen alan (sahne birimi), `mapZoom` =
+ * oyuncu yakınlaştırması, `focus` = takımın durağı (bölgedeyse). Taban yakınlaştırma regionZoom gibi (görseli kaplar, maxZoom'u aşmaz), ama
+ * sığdırma HUD'sız güvenli alana göre; orta: düğüm kümesi güvenli alanın ortasına, takımın durağı güvenli alanın içine (kenardan `margin`), sonra
+ * insetFrame'e kısılır. Dönen `z` taban yakınlaştırmadır (oyuncu yakınlaştırması hariç).
+ */
+export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number; focus?: Pt | null; pad?: number; margin?: number; maxZoom?: number }): { z: number; mid: Pt } {
+  const pad = o.pad ?? REGION_VIEW.pad;
+  const xs = o.pts.map((p) => p.x);
+  const ys = o.pts.map((p) => p.y);
+  const box: Bounds = { left: Math.min(...xs) - pad, right: Math.max(...xs) + pad, top: Math.min(...ys) - pad, bottom: Math.max(...ys) + pad };
+  const safe1 = { w: Math.max(1, o.view1.w - o.ins.left - o.ins.right), h: Math.max(1, o.view1.h - o.ins.top - o.ins.bottom) };
+  const z = regionZoomIn(box, safe1, o.view1, o.frame, o.maxZoom ?? REGION_VIEW.maxZoom);
+  const Z = z * o.mapZoom;
+  const mid = { x: (box.left + box.right) / 2 - (o.ins.left - o.ins.right) / (2 * Z), y: (box.top + box.bottom) / 2 - (o.ins.top - o.ins.bottom) / (2 * Z) };
+  if (o.focus) {
+    const f = o.focus;
+    const s = safeRect(mid, Z, o.view1, o.ins);
+    const m = Math.min(o.margin ?? 70, (s.right - s.left) / 2, (s.bottom - s.top) / 2);
+    if (f.x < s.left + m) mid.x -= s.left + m - f.x;
+    else if (f.x > s.right - m) mid.x += f.x - (s.right - m);
+    if (f.y < s.top + m) mid.y -= s.top + m - f.y;
+    else if (f.y > s.bottom - m) mid.y += f.y - (s.bottom - m);
+  }
+  return { z, mid: clampMid(mid, insetFrame(o.frame, 'region', Z, o.ins), { w: o.view1.w / Z, h: o.view1.h / Z }) };
+}
+
+/** regionZoom'un güvenli alanlı hâli: sığdırma `fitView`'a, kaplama `view1`'e göre. */
+function regionZoomIn(b: Bounds, fitView: { w: number; h: number }, view1: { w: number; h: number }, frame: Bounds, maxZoom: number): number {
+  const fit = Math.min(fitView.w / Math.max(1, b.right - b.left), fitView.h / Math.max(1, b.bottom - b.top));
+  const cover = Math.max(view1.w / Math.max(1, frame.right - frame.left), view1.h / Math.max(1, frame.bottom - frame.top));
+  return Math.max(1, cover, Math.min(fit, maxZoom));
 }
 
 export interface RegionSets {
