@@ -408,7 +408,8 @@
       "holy": "#fff0a0",
       "dark": "#b36bff",
       "nature": "#7ed957",
-      "arcane": "#e05cff"
+      "arcane": "#e05cff",
+      "lightning": "#c6dbff"
     },
     "crit": "#ffd23f",
     "dodge": "#9ad1ff",

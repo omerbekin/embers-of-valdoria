@@ -6,6 +6,7 @@ import { attributePower, content } from '../src/engine';
 import { areaDefProblem, skillAreaProblem } from '../src/engine/area-shape';
 import type { SkillDef, StatKind } from '../src/engine';
 import { ICON_KINDS, isIconKind } from '../src/ui/icon-kinds';
+import { ELEMENT_ICON } from '../src/game/float-text';
 import { BACKUP_VFX, VFX_KINDS } from '../src/ui/vfx-kinds';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { STAT_COLOR, STAT_ICON, UI_ICON, STAT_LABEL } from '../src/ui/stat-icons';
@@ -511,6 +512,7 @@ describe('görsel veri: skill ikonları, class logoları, stat ikonları, hareke
       ...Object.values(content.classes).map((c) => c.logo),
       ...Object.values(content.summons).map((c) => c.logo),
       ...Object.values(content.bosses).flatMap((c) => [c.logo, ...(c.boss?.passives ?? []).map((x) => x.icon)]), // boss logoları ve pasifleri
+      ...Object.values(ELEMENT_ICON), // hasar yazısı / skill etiketi element ikonları (lightning: bolt)
       'keystone', // Fall of King's Bridge güvenli hücre işareti (BattleScene telgraf göstergesi)
       ...Object.values(content.classes).map((c) => c.passive?.icon ?? ''),
       ...Object.values(STAT_ICON),

@@ -49,6 +49,7 @@ Not: Z2 ve Z6 dört aile karıştırıyor. Sebep rota kapsamı: çatallı yollar
 - Pasifler de yalnızca var olanlar: Berserker (`rage`), Opportunist (`bonusVsStatus`), Vampiric Bite (`soulDrain`), Bulwark Aura (`armorAura`), Unyielding (Warden).
 - "Şablon" = sayıları ve sanatı (`artOf`) ödünç alınacak var olan skill. Sayılar PROVİZYON; denge `sim:campaign` ile. CD = bekleme süresi (tur).
 - Element alanı yalnızca görsel etiket (element/direnç sistemi ertelendi).
+- 2026-10-25: lightning hasar türü oyuna girdi (yalnız hasar; haller hâlâ plan). Yeni mob planlamalarında lightning de kullanılacak.
 - ★ = ailenin ilk tanıtıldığı yer (4. bölümde de işaretli).
 
 ### 2.2 Aileler ve imza hileleri (özet)

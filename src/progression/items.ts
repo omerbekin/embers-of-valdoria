@@ -33,9 +33,9 @@ export interface RarityDef {
   effect?: boolean;
 }
 
-/** Elementler (affix hedefi `elem:<element>`; `elem:*` = fiziksel dışı altısı). */
-export const ELEMENTS: readonly Element[] = ['physical', 'fire', 'ice', 'holy', 'dark', 'nature', 'arcane'];
-export const MAGIC_ELEMENTS: readonly Element[] = ['fire', 'ice', 'holy', 'dark', 'nature', 'arcane'];
+/** Elementler (affix hedefi `elem:<element>`; `elem:*` = fiziksel dışı tümü). */
+export const ELEMENTS: readonly Element[] = ['physical', 'fire', 'ice', 'holy', 'dark', 'nature', 'arcane', 'lightning'];
+export const MAGIC_ELEMENTS: readonly Element[] = ['fire', 'ice', 'holy', 'dark', 'nature', 'arcane', 'lightning'];
 
 /** Affix'in bir sayısı (items.json > affixDefs[].parts). */
 export interface AffixPart {

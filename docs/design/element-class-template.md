@@ -6,6 +6,7 @@
 
 - Sistem, maddenin hallerine ve fiziksel mantığa dayanır; soyut “işaret + bonus” kuralları yok (ilk taslak reddedildi, Ömer 2026-10-10). Örnek: “fiziksel Charge donmuş düşmanın stun’ını uzatır” gibi keyfi kural OLMAZ.
 - Elektrik kesin dahil (Ömer 2026-10-10).
+- **2026-10-25: lightning hasar türü oyuna girdi (yalnız hasar; haller hâlâ plan). Yeni mob planlamalarında lightning de kullanılacak.** Veride `element: "lightning"` (renk soluk mavi-beyaz `#c6dbff`, ikon kodla çizilen şimşek `bolt`); ilk kullanıcılar mob yetenekleri Spark (Will-o'-Wisp) ve Rune Spark (Deep Runecaller). Shocked, zemin/Wet tepkileri, Static Field yok; kahraman yeteneği lightning değil (Ömer 2026-10-25).
 - Druid Su temalı; Rejuvenate → Healing Rain: EVET (Ömer 2026-10-11).
 - Anti-Mage’in Drain Field ve Void Strike skill’leri Elektrik temalı (Ömer 2026-10-11).
 - Kan yalnızca AĞIR KRİTİK FİZİKSEL vuruşlarda çıkar (Ömer 2026-10-11).

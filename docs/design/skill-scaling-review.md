@@ -17,7 +17,7 @@
   - Sonuç: **fizikselden büyüye geçen bir skill, Anti-Mage hariç herkese karşı güçlenir** (ortalama hedefe karşı ~%20-25), büyüden fiziksele geçen skill zayıflar. Yani bu ayar bir "tema" düğmesi gibi görünse de oyunda aslında bir **güç düğmesidir**.
   - Büyü hasarını Anti-Mage'in Spell Ward kalkanı (yalnızca büyü emer) emer ve Anti-Mage'in pasifi Mana Overflow yalnızca büyü hasarından dolar.
   - İsabet/kaçınma iki türde de aynıdır (fark yok).
-- **Element** (fire, ice, holy, dark, nature, arcane, physical) çoğunlukla renk + yüzen yazıdaki ikondur. Mekanik etkisi yalnızca iki zayıflıkta: **undead etiketli birim holy'den x1,5** (bugün yalnızca Skeleton), **nature etiketli birim fire'dan x1,5** (bugün yalnızca Treant).
+- **Element** (fire, ice, holy, dark, nature, arcane, lightning, physical; lightning 2026-10-25) çoğunlukla renk + yüzen yazıdaki ikondur. Mekanik etkisi yalnızca iki zayıflıkta: **undead etiketli birim holy'den x1,5** (bugün yalnızca Skeleton), **nature etiketli birim fire'dan x1,5** (bugün yalnızca Treant).
 - **Önemli gözlem:** skill açıklamasında (tooltip) "physical / magic" yazmaz; oyuncu türü yalnızca elementten anlar. Bugün veride tutarlı bir kural var: **element "physical" olan her skill fiziksel, başka elementi olan her skill büyü.** Bu tutarlılık korunmalı (bir skill'in türü değişirse elementi de değişmeli).
 - **Mevcut kurallar (combat.md > Hasar ölçekleme kuralı):** her hasar skill'in kendi statının yüzdesidir; bir skill'in tüm ölçekli etkileri **aynı statı** kullanır (test zorunlu kılıyor); skill statı class'ın **primary statıyla uyumlu** olmalıdır; çağrılan birimin hasarı birimin **kendi en yüksek statıyla** ölçeklenir.
 

@@ -71,12 +71,13 @@ describe('hasar ikonu (element / kaynak)', () => {
     expect(damageIconKind({ element: 'physical' })).toBeNull();
     expect(damageIconKind({})).toBeNull();
   });
-  it('element ikonları: ateş, buz, kutsal, arcane, doğa', () => {
+  it('element ikonları: ateş, buz, kutsal, arcane, doğa, şimşek', () => {
     expect(damageIconKind({ element: 'fire' })).toBe('flame');
     expect(damageIconKind({ element: 'ice' })).toBe('blizzard');
     expect(damageIconKind({ element: 'holy' })).toBe('holy');
     expect(damageIconKind({ element: 'arcane' })).toBe('rune');
     expect(damageIconKind({ element: 'nature' })).toBe('leaf');
+    expect(damageIconKind({ element: 'lightning' })).toBe('bolt');
   });
   it('zemin tiki: zehir -> zehir damlası, yanma -> alev (element ne olursa olsun)', () => {
     expect(damageIconKind({ origin: 'ground', ground: 'poison', element: 'nature' })).toBe('poison');

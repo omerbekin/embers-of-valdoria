@@ -195,7 +195,7 @@ describe('Wiki kataloğu (sağ üst kitap simgesi)', () => {
   });
 
   it('elementler: her element rengiyle yer alır, zayıflık verisi tabloda', () => {
-    expect(wiki.elements.map((e) => e.id).sort()).toEqual(['arcane', 'dark', 'fire', 'holy', 'ice', 'nature', 'physical']);
+    expect(wiki.elements.map((e) => e.id).sort()).toEqual(['arcane', 'dark', 'fire', 'holy', 'ice', 'lightning', 'nature', 'physical']);
     for (const e of wiki.elements) expect(e.color).toMatch(/^#/);
     expect(wiki.elementTable.rows.length).toBe(Object.keys(content.formulas.weaknesses).length);
   });
