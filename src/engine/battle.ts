@@ -939,6 +939,16 @@ export class Battle {
    * Altıncı tur (Weakened): birimin VERDİĞİ hasar çarpanı. Her durum için (tanımdaki değer ?? 1) + örneğin statusPotency eki (en az 0); `magicDealtMult`
    * yalnızca büyü hasarında. Çarpanlar çarpılır. Durum yoksa 1.
    */
+  /** Birimin VERDİĞİ şifa çarpanı (statuses.json healDealtMult; Spellbound). Durum yoksa 1. */
+  healDealtMult(c: Combatant): number {
+    let m = 1;
+    for (const s of c.statuses) {
+      const h = this.statusDef(s.kind)?.healDealtMult;
+      if (h !== undefined) m *= Math.max(0, h);
+    }
+    return m;
+  }
+
   weakenedMult(c: Combatant, type?: 'physical' | 'magic'): number {
     let m = 1;
     for (const s of c.statuses) {
@@ -4724,7 +4734,9 @@ export class Battle {
       stageTargets && stageGroups ? stageTargets.map((ts, i) => ({ targets: ts, cells: stageGroups![i]!.cells })) : [{ targets, ...(centerCells ? { cells: centerCells } : {}) }];
     let repeatAnnounced = false;
     // endsOnOwnAttack (Jinxed): bu hasar skill'inin TÜM vuruşları durumdan etkilenir, skill bitince durum düşer
-    const ownAttackEnds = skill.effects.some((e) => e.type === 'damage') ? actor.statuses.filter((s) => this.statusDef(s.kind)?.endsOnOwnAttack || (s.potency?.oneAttack ?? 0) > 0) : []; // Altıncı tur: potency oneAttack (Distracting Fan)
+    // endsOnOwnSkill (Spellbound): her skill'de (hasarsız da) düşer
+    const dealsDamage = skill.effects.some((e) => e.type === 'damage');
+    const ownAttackEnds = actor.statuses.filter((s) => this.statusDef(s.kind)?.endsOnOwnSkill || (dealsDamage && (this.statusDef(s.kind)?.endsOnOwnAttack || (s.potency?.oneAttack ?? 0) > 0))); // Altıncı tur: potency oneAttack (Distracting Fan)
     const hitIndex = new Map<SkillEffect, number>(); // etki başına toplam vuruş sırası (falloff ve ilk-hedef ekleri aşamalar boyunca sürer)
     for (const [gi, group] of groups.entries()) {
     stage = stageGroups ? gi : undefined;
@@ -4815,7 +4827,9 @@ export class Battle {
             // missingHpBonus (Radiance): hedef başına eksik can oranıyla artar; alan yoksa ifade birebir eskisi (QB/MP determinizmi)
             const low = effect.missingHpBonus ? missingHpHealMult(effect.missingHpBonus, target.hp, target.maxHp) : 1;
             // Faz 5a: bedava kullanımın gücü (Verdant Link / Twin Ward) şifaya da; normal kullanımda fc yok
-            const healed = this.applyHeal(actor, target, Math.round((low === 1 ? base * mult : base * mult * low) * (fc?.power ?? 1)), crit, emit);
+            // Spellbound (healDealtMult): verilen şifa çarpanı; durum yoksa 1
+            const hd = actor.statuses.length ? this.healDealtMult(actor) : 1;
+            const healed = this.applyHeal(actor, target, Math.round((low === 1 ? base * mult : base * mult * low) * (fc?.power ?? 1) * hd), crit, emit);
             if (this.treeUnits && !this.castHealed.has(target.uid)) this.castHealed.set(target.uid, healed);
           }
           break;
@@ -4855,7 +4869,7 @@ export class Battle {
                 kind: 'regen',
                 turns: effect.turns,
                 source: actor.uid,
-                amount: Math.round(attributePower(actor.stats, effect.scale, f) * (actor.stats.healPowerMult !== undefined && actor.stats.healPowerMult !== 1 ? effect.power * actor.stats.healPowerMult : effect.power)),
+                amount: Math.round(attributePower(actor.stats, effect.scale, f) * (actor.stats.healPowerMult !== undefined && actor.stats.healPowerMult !== 1 ? effect.power * actor.stats.healPowerMult : effect.power) * (actor.statuses.length ? this.healDealtMult(actor) : 1)),
                 critChance: this.effectiveStats(actor).critChance,
                 critMult: actor.stats.critMult,
                 ...(this.treeUnits && this.castHealed.has(target.uid) ? { first: this.castHealed.get(target.uid) } : {}),
@@ -6587,11 +6601,11 @@ export class Battle {
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
       this.addStatus(target, { kind: fl.status, turns: fl.turns, source: target.uid }, emit, target.passive!.id);
     }
-    // Lure (Harita 2 Siren): onu skill ile vuran düşman (çağrı değil) Omen yığını alır; yığının kaynağı Siren
+    // Lure (Harita 2 Siren): onu skill ile vuran düşman (çağrı değil) kısa süreli durum (Spellbound) alır
     const lu = target.passive?.effect;
     if (lu?.type === 'lure' && this.castingSkill && actor === this.castingActor && !actor.owner && actor.hp > 0 && actor.side !== target.side) {
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
-      this.addStacks(actor, lu.status, lu.stacks, target, emit, false, true);
+      this.addStatus(actor, { kind: lu.status, turns: lu.turns, source: target.uid }, emit, target.passive!.id);
     }
     // Undertow (Harita 2 Reef Wrecker): Flooded hücredeki düşmana skill vuruşu Slow bırakır
     const ut = actor.passive?.effect;

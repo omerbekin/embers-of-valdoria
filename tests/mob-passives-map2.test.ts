@@ -93,24 +93,68 @@ describe('Slick (Weir Eel)', () => {
 });
 
 describe('Lure (Siren)', () => {
-  it('Siren\'ı skill ile vuran kahraman Omen yığını alır (kaynak Siren); ıska saymaz', () => {
+  it('Siren hedefini skill ile vuran kahraman Spellbound alır (kaynak Siren); aynı skill onu tüketmez, sonraki skill tüketir; ıska yenisini vermez', () => {
     const e = effectOf('siren', 'lure');
+    expect(e.status).toBe('spellbound');
     const b = sure(make({ party: cells({ 0: 'warrior', 6: 'archer' }), enemies: cells({ 6: 'siren', 0: 'salt_crab' }) }));
     const hero = unit(b, 'party-1');
     const siren = b.combatants.find((c) => c.defId === 'siren')!;
     const n = b.log.length;
     b.useSkill('party-1', 'quick_shot', siren.uid);
     const st = hero.statuses.find((s) => s.kind === e.status);
-    expect(st?.stacks).toBe(e.stacks);
+    expect(st?.turns).toBe(e.turns);
     expect(st?.source).toBe(siren.uid);
+    expect(hero.statuses.some((s) => s.kind === 'omen')).toBe(false);
     expect(ofType(b.log.slice(n), 'passive').some((x) => x.actor === siren.uid && x.passive === 'lure')).toBe(true);
-    // ıska: yığın artmaz
-    hero.stats.accuracy = 0;
-    siren.stats.evasion = 1;
+    // ıska: Spellbound bu skill'de tüketilir, yenisi gelmez
     b.debug.dodge = 'always';
+    const m = b.log.length;
     b.useSkill('party-1', 'quick_shot', siren.uid);
-    expect(hero.statuses.find((s) => s.kind === e.status)?.stacks).toBe(e.stacks);
-    expect(describe2('siren')).toContain('Omen');
+    expect(hero.statuses.some((s) => s.kind === e.status)).toBe(false);
+    expect(ofType(b.log.slice(m), 'statusEnd').some((x) => x.target === 'party-1' && x.status === 'spellbound' && x.consumed)).toBe(true);
+    expect(describe2('siren')).toContain('Spellbound');
+  });
+});
+
+describe('Spellbound (durum; yalnız moblar verir)', () => {
+  it('sonraki skill hasarı ve şifası x0,75; skill sonrası düşer', () => {
+    const def = content.statuses.spellbound!;
+    expect(def.damageDealtMult).toBe(0.75);
+    expect(def.healDealtMult).toBe(0.75);
+    const dmg = (sb: boolean) => {
+      const b = sure(make({ party: cells({ 6: 'archer' }), enemies: cells({ 0: 'salt_crab' }) }));
+      if (sb) unit(b, 'party-0').statuses.push({ kind: 'spellbound', turns: 1, source: 'enemy-0' });
+      const n = b.log.length;
+      b.useSkill('party-0', 'quick_shot', 'enemy-0');
+      expect(unit(b, 'party-0').statuses.some((s) => s.kind === 'spellbound')).toBe(false);
+      return ofType(b.log.slice(n), 'damage').filter((x) => x.target === 'enemy-0').reduce((t, x) => t + x.amount, 0);
+    };
+    expect(Math.abs(dmg(true) - dmg(false) * 0.75)).toBeLessThanOrEqual(1);
+    const heal = (sb: boolean) => {
+      const b = sure(make({ party: cells({ 0: 'druid', 1: 'warrior' }), enemies: cells({ 0: 'salt_crab' }) }));
+      b.debug.crit = 'never';
+      const pal = unit(b, 'party-0');
+      const sk = 'rejuvenate';
+      unit(b, 'party-1').hp = 100;
+      pal.mp = pal.maxMp;
+      if (sb) pal.statuses.push({ kind: 'spellbound', turns: 1, source: 'enemy-0' });
+      const n = b.log.length;
+      b.useSkill('party-0', sk, 'party-1');
+      expect(pal.statuses.some((s) => s.kind === 'spellbound')).toBe(false);
+      return ofType(b.log.slice(n), 'heal').filter((x) => x.target === 'party-1').reduce((t, x) => t + x.amount, 0);
+    };
+    const h1 = heal(false);
+    expect(h1).toBeGreaterThan(0);
+    expect(Math.abs(heal(true) - h1 * 0.75)).toBeLessThanOrEqual(1);
+  });
+
+  it('hiçbir kahraman sınıfı, çağrı ya da eşya skilli Spellbound vermez (yalnız moblar)', () => {
+    const mobSkills = new Set(Object.values(content.mobs).flatMap((m) => m.skills));
+    for (const d of [...Object.values(content.classes), ...Object.values(content.summons)])
+      for (const id of d.skills) {
+        if (mobSkills.has(id)) continue;
+        expect(JSON.stringify(content.skills[id]!.effects), id).not.toContain('spellbound');
+      }
   });
 });
 

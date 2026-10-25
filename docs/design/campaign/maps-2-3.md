@@ -194,18 +194,18 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | **Salt Crab** | Beasts | YENİ | ön, tank | **Shell**: ilk kritik yiyene kadar zırh x1,5 | Pincer (tek + Slow) + Burrow (kendine Fortified) |
 | **Weir Eel** | Beasts | YENİ | ön/sudan | **Slick**: Flooded hücredeyken kaçınma +%20 | Bite (tek, Soaked'a +) + Lunge (arka sıraya, ignoreReach) |
 | **Reef Hound** | Beasts | gelişmiş Ash Hound (palet) | ön | Blood Scent | Scorch Bite → Brine Bite (Soaked) + Run Down |
-| **Salt Hag** | Hexes | gelişmiş Fen Witchling | arka, caster | Mire-Bound | Omen + **Call the Tide** (1 sıra Flooded 2 tur) |
-| **Siren** | Hexes | YENİ | arka, caster | **Lure**: Siren'ı vuran kahraman 1 Omen alır | Lament (tek, Slow) + Chorus (bir sütun, Omen) |
+| **Salt Hag** | Hexes | gelişmiş Fen Witchling | arka, caster | Mire-Bound (cadı yaşarken Saltbound kahramanlar %20 yavaş) | **Saltbound** (1 tur: yer değiştiremez/geri çekilemez/hareketli skill kullanamaz, kaçınma 0) + **Call the Tide** (1 sıra Flooded 2 tur) |
+| **Siren** | Hexes | YENİ | arka, caster | **Lure**: Siren'ı skill ile vuran kahraman 1 tur **Spellbound** alır (çağrılar almaz) | Lament (tek, Slow) + Chorus (bir sütun hasar + Soaked) |
 | **Tide Caller** | Undead | gelişmiş Grave Chanter | arka, çağırıcı | Bone Ward | Call the Buried → **Rise from the Deep** (Flooded hücreye Drowned çağırır) |
 | **Drowned Knight** | Sunken Court | YENİ | ön, zırhlı | **Deathless Tide**: Flooded hücrede ölünce bir kez %30 canla kalkar | Rusted Blade (tek) + Shield of Brine (dosta Guard) |
 | **Brine Maiden** | Sunken Court | YENİ | arka, şifacı | **Salt Tears**: tur başı Flooded hücredeki dostları %5 iyileştirir | Lament of Salt (tek) + Tidal Mend (tek dost şifa) |
 
-**Elitler (pasif + 3 aktif):** Reaver Chief "Hook" (Undertow + Boarding Hook: arka sıradaki kahramanı ön sıraya çeker → **zorla hareket**, yeni mekanik M-N2; alternatifi: Slow + ağır vuruş) · Salt Hag Mother (Call the Tide 2 sıra + Omen seli) · Guild Enforcer "Bastion" / Inquisitor-Captain Vell (faction'a göre biri) · The Wrecker-Captain (Lantern Flash geniş + Undertow) · Corsair Captain "Marrow" (gezici; Boarding + Rake) · The Siren Queen (Chorus tüm tahta, Lure güçlü) · The Salt Bishop (High Priest gelişmiş: Vessel of the Choir yerine Salt Tears geniş) · The Drowned Champion (Deathless Tide x2).
+**Elitler (pasif + 3 aktif):** Reaver Chief "Hook" (Undertow + Boarding Hook: arka sıradaki kahramanı ön sıraya çeker → **zorla hareket**, yeni mekanik M-N2; alternatifi: Slow + ağır vuruş) · Salt Hag Mother (Call the Tide 2 sıra + geniş Saltbound; güçlü sürüm, ayrıntı sonra) · Guild Enforcer "Bastion" / Inquisitor-Captain Vell (faction'a göre biri) · The Wrecker-Captain (Lantern Flash geniş + Undertow) · Corsair Captain "Marrow" (gezici; Boarding + Rake) · The Siren Queen (Chorus tüm tahta + Soaked, Lure güçlü sürüm; ayrıntı sonra) · The Salt Bishop (High Priest gelişmiş: Vessel of the Choir yerine Salt Tears geniş) · The Drowned Champion (Deathless Tide x2).
 
 **Bosslar:**
 - **The Weir-Wyrm** (dev yılan balığı, tek dev boss): pasif *Slick Hide* (Flooded hücredeyken fiziksel -%30); Lash (bir sıra), Swallow (tek, ağır, telgraflı), Surge (2 sıra Flooded); ult *Deluge* (tüm tahta Flooded 3 tur + hasar). Faz 2 (%60) Surge her 2 turda; faz 3 (%30) 2 eylem.
 - **Admiral Vane of the Black Caravel** (lider + eskort, güverte): pasif *Boarding Party* (her takviye dalgası Haste ile girer); Cutlass Flurry, Chain Shot (sütun), Rally (dostlara Haste); yardımcı nesne **Harpoon Ballista** (Iron Mooring gibi: her tur telgraflı hücreye vurur, kırılana kadar). ult *Broadside* (ön sıra + Burning ground).
-- **The Drowned Queen** (Crown of Salt): pasif *Crown of Salt* (Crown of Ash'in aynası: tahtadaki her Flooded hücre ona %2 hasar azaltma); Brine Lash (tek, her sıra), Call the Tide (2 sıra, telgraflı), Lament (tüm kahramanlar Omen + Slow); ult *The Reach Drowns* (tüm tahta Flooded + hasar, Pyre'ın su aynası, kaçış yok, hazırlık turu). Faz 3'te Drowned Champion yeniden kalkar.
+- **The Drowned Queen** (Crown of Salt): pasif *Crown of Salt* (Crown of Ash'in aynası: tahtadaki her Flooded hücre ona %2 hasar azaltma); Brine Lash (tek, her sıra), Call the Tide (2 sıra, telgraflı), Lament (tüm kahramanlar Slow + Spellbound); ult *The Reach Drowns* (tüm tahta Flooded + hasar, Pyre'ın su aynası, kaçış yok, hazırlık turu). Faz 3'te Drowned Champion yeniden kalkar.
 
 ### 3.4 Kasabalar ve olaylar
 - **Reedgate** (köy): NPC "the Ferryman": nehrin aşağısında neyin beklediğini anlatır; Order'ın karantinasını haber verir.
@@ -371,8 +371,8 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | **Cave Crawler** | Beasts | YENİ | ön | **Blind Hunger**: Darkness'ta +%25 hasar; hep en yakın hedef | Mandible (tek) + Skitter (ignoreReach) |
 | **Clan Axeman** | Hillclans (Bandits) | gelişmiş Moor Raider | ön | **Highland Fury**: canı %50 altındayken +%20 hasar, Chill'e bağışık | Axe (tek) + Cleave (ön sıra) |
 | **Clan Slinger** | Hillclans | gelişmiş Crossbowman | arka | Cut and Run | Sling + Ice Shot (Chill) |
-| **Clan Skald** | Hillclans | YENİ | arka, destek | **War-Chant**: tur başı aynı sıradaki dostlara 1 tur Haste | Chant (dostlar Haste) + Mock (tek, Omen) |
-| **Rime Witch** | Hexes | gelişmiş Fen Witchling | arka, caster | **Hoarfrost**: Omen'li kahraman her tur 1 Chill alır | Omen + Ice Shard |
+| **Clan Skald** | Hillclans | YENİ | arka, destek | **War-Chant**: tur başı aynı sıradaki dostlara 1 tur Haste | Chant (dostlar Haste) + Mock (tek, 1 tur Staggered) |
+| **Rime Witch** | Hexes | gelişmiş Fen Witchling | arka, caster | **Hoarfrost**: Soaked kahraman her tur 1 Chill alır | Soaked veren hex (adı sonra) + Ice Shard |
 | **Frozen Halberdier** | Frostbound Legion (Undead) | gelişmiş Morvane Halberdier | ön | **Frozen Ranks**: Close Ranks + Chill bağışık | Halberd Chop + Pike Thrust |
 | **Frozen Crossbowman** | Frostbound Legion | gelişmiş Crossbowman | arka | Frozen Ranks | Bolt + Ice Bolt |
 | **Hollow Warden** | Hollow (Undead cüce) | gelişmiş Stonebound Warden (undead palet) | ön, tank | **Hollow**: Darkness'ta aldığı hasar -%25 | Gatestone Slam + Rockfall |
@@ -410,7 +410,7 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | M-A | **Battle conditions** | Karşılaşma verisinde `condition` alanı: savaş boyunca geçerli tek kural (Tide, Storm, Blizzard, Darkness, Heat). HUD'da sol üstte küçük plaka + Codex metni. | TEK kanca: Round/tur başı olayı + hasar/isabet çarpanı; B-H bunun üstüne | 2, 3 |
 | M-B | **Tide + Flooded ground + Soaked** | Tide: her Round başında (dalga) ve her 4. turda her iki tarafın ön sırası 2 tur Flooded. Flooded: üstündeki birim Soaked (alınan ateş hasarı -%50, Burning kalkar, hız -%10); Flooded, Burning ground'u söndürür. | yeni zemin türü (Burning ground emsali) + Soaked durumu | 2 (+ Urn ile 3) |
 | M-C | **Storm** | Her iki tarafın menzilli isabeti -%15. | M-A parametresi | 2 (Isles) |
-| M-D | **Chill (durum)** | 1-3 yığın; yığın başına hız -%8; 3'te **Numb** (kritik 0, zırh -%20). Alınan ateş hasarı tüm yığınları siler; Burning ground üstünde yığın alınmaz. | yığınlı durum (Omen emsali) | 3 |
+| M-D | **Chill (durum)** | 1-3 yığın; yığın başına hız -%8; 3'te **Numb** (kritik 0, zırh -%20). Alınan ateş hasarı tüm yığınları siler; Burning ground üstünde yığın alınmaz. | yığınlı durum (Chill kendi yığın sistemi) | 3 |
 | M-E | **Blizzard** | Her birim kendi tur başında 1 Chill alır (Burning hücredekiler hariç); menzilli isabet -%15. | M-A + M-D | 3 (Windwall) |
 | M-F | **Darkness + Lantern** | Kahramanlar yalnızca düşman ön sırasını ve 1 arkasını hedefler; herhangi bir ateş skill'i tahtayı 2 Round aydınlatır (kısıt kalkar). **Lantern** yardımcı nesnesi (Keystone gibi, düşman vurabilir) kırılana kadar aydınlatır. Basit alternatif: Darkness = menzilli isabet -%20, nesne yok. | hedefleme kısıtı (range sistemi emsali) + nesne; alternatif yalnız M-A | 3 (Deep Halls) |
 | M-G | **Cave-in** | Telgraflı hücreler sonraki Round'da çöker: üstündeki birim hasar + Slow, hücre savaş boyunca **kapalı** (kimse giremez). | kalıcı kapalı hücre (M-I ile aynı altyapı) + telgraf | 3 |

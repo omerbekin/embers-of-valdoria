@@ -6098,7 +6098,7 @@
     "artOf": "ravens_peck"
   },
   "chorus": {
-    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): siren: bir sütun (şerit), LUCK büyü (dark) + 1 Omen. YER TUTUCU sanat: ikon/vfx/ses artOf 'requiem' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): siren: bir sütun (şerit), LUCK büyü (dark) + 2 tur Soaked (Ömer O2 b 2026-10-25: Omen yerine; süre PROVİZYON). YER TUTUCU sanat: ikon/vfx/ses artOf 'requiem' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
     "id": "chorus",
     "name": "Chorus",
     "target": "area_enemies",
@@ -6122,8 +6122,9 @@
         "power": 0.3
       },
       {
-        "type": "omen",
-        "stacks": 1
+        "type": "status",
+        "status": "soaked",
+        "turns": 2
       }
     ],
     "icon": "drainfield",

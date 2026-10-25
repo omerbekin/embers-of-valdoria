@@ -232,5 +232,17 @@
     ],
     "dispellable": false,
     "text": "Fire damage taken -50%, Speed -10%; Burning is put out"
+  },
+  "spellbound": {
+    "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-statuses). Sayı PROVİZYON.",
+    "name": "Spellbound",
+    "type": "debuff",
+    "icon": "rune",
+    "color": "#7fb8c8",
+    "damageDealtMult": 0.75,
+    "healDealtMult": 0.75,
+    "endsOnOwnSkill": true,
+    "tickAtTurnEnd": true,
+    "text": "Next skill is 25% weaker (damage or healing); wears off once used"
   }
 }

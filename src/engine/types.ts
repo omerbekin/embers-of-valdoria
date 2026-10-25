@@ -210,8 +210,8 @@ export type PassiveEffect =
   | { type: 'shell'; armorMult: number }
   /** Slick (Weir Eel): `ground` (Flooded) zeminli hücredeyken kaçınma +`evasion` (effectiveStats; durum değil). */
   | { type: 'slick'; ground: string; evasion: number }
-  /** Lure (Siren): onu bir SKILL vuruşuyla vuran düşman (çağrı değil) `stacks` yığın `status` (Omen) alır (yığının kaynağı Siren). */
-  | { type: 'lure'; status: StatusKind; stacks: number }
+  /** Lure (Siren): onu bir SKILL vuruşuyla vuran düşman (çağrı değil) `turns` tur `status` (Spellbound; Ömer O1 c 2026-10-25, Omen yerine) alır. */
+  | { type: 'lure'; status: StatusKind; turns: number }
   /** Deathless Tide (Drowned Knight): savaşta bir kez, `ground` (Flooded) hücredeyken ölümcül hasar alınca ölmez; maks canın `hpRatio` kadarıyla kalkar (kullanılınca `passiveUsed`). */
   | { type: 'deathlessTide'; ground: string; hpRatio: number }
   /** Salt Tears (Brine Maiden): kendi turunun başında `ground` (Flooded) hücredeki her canlı yaralı dostu (kendisi dahil) maks canının `ratio` kadarı iyileştirir (Wound uygulanır). */
@@ -1417,7 +1417,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1465,6 +1465,10 @@ export interface StatusDef {
   critDeltaPerStack?: number;
   /** true: taşıyanın bir sonraki HASAR VEREN skill'inin tüm vuruşlarından sonra düşer (statusEnd consumed). Jinxed. */
   endsOnOwnAttack?: boolean;
+  /** true: taşıyanın bir sonraki SKILL'inden (hasar, şifa ya da başka) sonra düşer (statusEnd consumed). Spellbound (Harita 2, yalnız moblar verir). */
+  endsOnOwnSkill?: boolean;
+  /** Taşıyanın VERDİĞİ şifa çarpanı (skill şifası ve HoT; Spellbound 0,75). */
+  healDealtMult?: number;
   /** true: taşıyan MP bedelli (bedeli > 0) skill kullanamaz (canUse 'Silenced'); bedelsiz skill'ler, Rage/can bedelliler ve global eylemler serbest. Silence. */
   blocksMpSkills?: boolean;
   /**

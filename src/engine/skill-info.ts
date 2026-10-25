@@ -230,7 +230,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'slick':
       return `While you stand on ${groundName(e.ground)} ground, your evasion is +${pct(e.evasion)}.`;
     case 'lure':
-      return `An enemy that hits you with a skill gains ${e.stacks} ${cap(e.status)} (summons do not).`;
+      return `An enemy that hits you with a skill becomes ${cap(e.status)} for ${turnsText(e.turns)} (summons do not).`;
     case 'deathlessTide':
       return `Once per battle, a killing blow taken while you stand on ${groundName(e.ground)} ground does not kill you: you rise again with ${pct(e.hpRatio)} of your max HP.`;
     case 'saltTears':
@@ -644,7 +644,7 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
     case 'slick':
       return fixed('Evasion', `+${pct(e.evasion)}`);
     case 'lure':
-      return fixed('Omen to attacker', `+${e.stacks}`);
+      return fixed('Attacker', cap(e.status));
     case 'deathlessTide':
       return fixed('Rises with', pct(e.hpRatio));
     case 'saltTears':
