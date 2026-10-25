@@ -152,7 +152,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   fall_of_kings_bridge: { mob: 'bridge_warden', mode: 'center', at: 'ground', impact: 3, size: 520, hex: '#ff5a1a' },
   // Harita 2 (The Drowned Reach; content-designer 2026-10-25, sheet'ler art-pipeline 7b399db). Ömer: yalnız BU efektler yüksek FPS oynar
   // (data/battle-layout.json > animation.mobVfx.skills: speed 1.35 + 5 kat ara kare); Harita 1 hızları aynı. Drowned Knight, Brine Maiden,
-  // Reaver Archer, Reef Wrecker skill'leri sheet gelene kadar ödünç (artOf) efektte.
+  // Reef Wrecker skill'leri sheet gelene kadar ödünç (artOf) efektte; Reaver Archer Fire Volley kendi sheet'inde (artOf yalnız yedek).
   cutlass: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 230 },
   rake: { mob: 'corsair_cutlass', mode: 'melee', at: 'hit', impact: 3, size: 240 },
   sling_stone: { mob: 'corsair_slinger', mode: 'bolt', at: 'hit', impact: 3, size: 220, hex: '#d9c9a3' }, // 0-2 taşın uçuşu (tune.travel)
@@ -163,6 +163,7 @@ export const MOB_VFX_SPECS: Readonly<Record<string, MobVfxSpec>> = {
   lunge: { mob: 'weir_eel', mode: 'melee', at: 'hit', impact: 3, size: 240 },
   lament: { mob: 'siren', mode: 'bolt', at: 'hit', impact: 3, size: 230, hex: '#7fb8c8' },
   chorus: { mob: 'siren', mode: 'cells', at: 'ground', impact: 3, size: 220, hex: '#5fa8c8' },
+  fire_volley: { mob: 'reaver_archer', mode: 'cells', at: 'ground', impact: 2, size: 220, hex: '#ff7a1a' }, // 0-1 oklar iner, 2 saplanır (vuruş), 3-4 alev, 5-7 kor; her hücreye
 };
 
 type Pt = { x: number; y: number };
@@ -232,6 +233,8 @@ export interface MobTune {
   throw?: boolean;
   /** Burrow: Fortified görünürken birim bu oranda zemine gömülü durur (sprite aşağı kayar, alt kısmı kırpılır; buryDepth + BattleScene.refreshBadges). */
   bury?: number;
+  /** Son kare bitince birden kaybolmasın: son karede durur ve bu kadar ms'de yumuşakça solar (Fire Volley: saplanan oklar). */
+  fadeOut?: number;
 }
 const TUNE = layout.animation.mobVfx as unknown as { sizeMult?: number; speedMult?: number; stabilize: { minMass: number; maxShift: number }; skills: Record<string, MobTune> };
 const BOOST_ALPHA = 0.35; // ikinci ADD kopyanın şeffaflığı (soluk sanatı parlatır; açık zeminde yıkamaz)
@@ -421,9 +424,17 @@ function build(skillId: string, s0: MobVfxSpec): V2Vfx {
         ...(tune.trim ? { trim: tune.trim } : {}),
       };
       const pair = (o: { delay?: number; frame?: number; keep?: boolean; from?: number }, at: Pt): Array<NonNullable<ReturnType<VfxKit['sheet']>>> => {
-        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, depth: depth + 1 });
-        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
-        return [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
+        const fade = !o.keep && !!tune.fadeOut;
+        const main = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 1 });
+        const glow = k.sheet(c.scene, id, at.x, at.y, { ...base, ...o, ...(fade ? { keep: true } : {}), depth: depth + 2, alpha: BOOST_ALPHA, blend: ADD_BLEND });
+        const out = [main, glow].filter((x): x is NonNullable<typeof x> => !!x);
+        // tune.fadeOut: son karede kalır, sonra solup yok olur (efekt bitince birden kaybolmaz)
+        if (fade)
+          for (const spr of out)
+            spr.once('animationcomplete', () => {
+              if (spr.active) c.scene.tweens.add({ targets: spr, alpha: 0, duration: k.slow(tune.fadeOut!), ease: 'Sine.easeIn', onComplete: () => spr.active && spr.destroy() });
+            });
+        return out;
       };
       let objs: Array<NonNullable<ReturnType<VfxKit['sheet']>>>;
       if (from && flyMs) {

@@ -47,6 +47,7 @@ const DROWNED_REACH_STANDIN: Readonly<Record<string, string>> = {
   lunge: 'run_down',
   lament: 'ravens_peck',
   chorus: 'requiem',
+  fire_volley: 'burn_the_ground',
 };
 
 const BASE: Readonly<Record<string, MobHandVfx>> = {
