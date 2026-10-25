@@ -85,6 +85,7 @@ HEADS = {
     'reaver_chief_hook': (553, 0, 300),
     'salt_hag_mother': (580, 20, 360),
     'guild_enforcer_bastion': (578, 0, 310),
+    'wrecker_captain': (538, 165, 300),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
