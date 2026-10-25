@@ -81,6 +81,8 @@ HEADS = {
     'drowned_knight_f': (565, 0, 300),
     'reaver_archer_f': (540, 225, 300),
     'reef_wrecker_f': (635, 10, 285),
+    # Harita 2 elitleri (B1-B8, 2026-10-26)
+    'reaver_chief_hook': (553, 0, 300),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
