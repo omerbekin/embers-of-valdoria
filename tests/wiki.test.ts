@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { buildWiki, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
+import { battleRulesArticle, buildWiki, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
@@ -289,5 +289,12 @@ describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
     expect(a.title).toBe('The Drowned Reach');
     const text = a.blocks.flatMap(blockText).join(' ');
     for (const w of ['83 stops', '6 regions', 'Saltmere', "Fisher's Landing", 'The Long Stair', 'Throne of Brine']) expect(text, w).toContain(w);
+  });
+
+  it('Battle rules sayfası (bayrak arkasında): koşul, üç hedef ve güverte veriden', () => {
+    expect(wiki.mechanics.some((a) => a.id === 'battle-rules')).toBe(false);
+    const text = battleRulesArticle().blocks.flatMap(blockText).join(' ');
+    for (const w of ['Tide', 'Soaked', 'Flooded', 'Hold out for 6 turns', 'Break the Totem', 'every 2 turns', 'Hold the Bridge', "Ship's deck"]) expect(text, w).toContain(w);
+    expect(text).not.toMatch(/\{n\}|\{every\}/);
   });
 });
