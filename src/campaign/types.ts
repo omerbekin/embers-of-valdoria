@@ -93,6 +93,13 @@ export interface MapNode {
    * girmez (graph.ts > mainOutgoing); oyuncu serbest dolaşımla gider ve geri döner. Haritada yolu kesik çizgi.
    */
   optional?: boolean;
+  /**
+   * Hub kolu (Harita 2 Saltmere, maps-2-3.md 3.2 "28 çevresi yıldız"): kasabadan çıkan yan durak; ileri ana yolu yoktur (yalnız cebe
+   * çıkabilir). Cep gibi rota, seçim noktası ve K1 sayımına girmez (graph.ts > isSide); yolu düz çizilir (cep değil, şehrin sokağı).
+   */
+  spoke?: boolean;
+  /** Düğüm seviyesi elle (power.ts > nodeLevel; Harita 2'nin ilk 3 düğümü L10, maps-2-3.md 8). Yoksa bölüm rampası. */
+  level?: number;
 }
 
 /** Kasaba ekranında bir yerin eylemi: tezgâh (Trade), ilan panosu / kışla (aday), hikâye NPC'si (sahne yeniden), ateş (dinlenme notu), çıkış. */
@@ -154,6 +161,15 @@ export interface CampaignMap {
   regions: MapRegion[];
   nodes: MapNode[];
   edges: MapEdge[];
+  /**
+   * Bu harita hangi haritanın devamı (harita geçişi M-Q, maps-2-3.md 5): başlangıç düğümünde kahraman seçimi yok, takım / kadro / item / altın /
+   * level önceki haritadan taşınır (state.ts > continueToMap). Yoksa harita bir seferin ilk haritasıdır.
+   */
+  continues?: string;
+  /** Haritaya geçişte gösterilen giriş metni (oyun içi, İngilizce). */
+  intro?: string;
+  /** Harita bitince gösterilen pencere (yoksa Harita 1'in "Valdoria Conquered" penceresi ve texts.complete). */
+  complete?: { title: string; subtitle: string; text: string };
 }
 
 import type { UnitModifiers, UnitTier } from '../engine/types';
@@ -224,7 +240,13 @@ export interface CampaignRules {
 }
 
 export interface CampaignConfig {
+  /** Haritalar sefer sırasıyla (ilki yeni seferin haritası; sonraki harita "Continue to ..." ile açılır). */
   maps: string[];
+  /**
+   * Harita bayrakları (Harita 2-3 bayrak arkasında yazılır, maps-2-3.md 9.1): `enabled: false` harita oyuncuya görünmez (geçiş yok); debug /
+   * `?maps=1` geçersiz kılabilir (src/campaign/map-flags.ts). Listede olmayan harita açık sayılır.
+   */
+  mapFlags?: Record<string, { enabled: boolean }>;
   rules: CampaignRules;
   starterPool: string[];
   companyPool: string[];
@@ -237,7 +259,7 @@ export interface CampaignConfig {
    * Seferin genel düşman ölçeği (Ömer 2026-10-11, ceset kuralı dengesi): her zorlukta aynı, zorluk ekinden ÖNCE (zorluklar arası fark korunur).
    * `all` = rütbesiz ve elit birimler, `boss` = boss rütbeli birimler (`all` yerine). Endless'ı etkilemez (yalnızca sefer battlePlan'ı).
    */
-  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Bölge çarpanı (Ömer 2026-10-24: bölge I biraz kolay, II-III biraz zor): all/elite/boss ölçeğinin can ve gücüyle çarpılır. */ regions?: Record<string, number>; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
+  enemyScale?: { all?: DifficultyEnemyMods; /** Elit düğümdeki boss olmayan birimler (yoksa all). */ elite?: DifficultyEnemyMods; boss?: DifficultyEnemyMods; /** Bölge çarpanı (Ömer 2026-10-24: bölge I biraz kolay, II-III biraz zor): all/elite/boss ölçeğinin can ve gücüyle çarpılır. */ regions?: Record<string, number>; /** Bölge çarpanının geçtiği harita (bölge id'leri haritalar arasında tekrar eder: I, II, III). Yoksa ilk harita. */ regionsMap?: string; /** Ölçeğin uygulanmadığı düğümler (eğitim: Mill Road .. Ashford; map-1-rework.md 4.3, eski skipRegions ["I"]). */ skipNodes?: string[] };
   /**
    * Dinlenme (Ömer 2026-10-11; 2026-10-18 TUR 1 madde 10): kamp ücretsiz iyileşme oranı; kasabada ilk dinlenme bedava, sonrakiler `price`
    * (base + perChapter x bölüm). Dinlenme DİRİLTMEZ (diriltme yalnızca Valor).
@@ -390,6 +412,11 @@ export interface CampaignState {
   formationDue?: string;
   /** Gösterilmemiş level atlamaları (Ömer 2026-10-17): haritada "Level Up" kartı gösterilip onaylanınca silinir (`acknowledgeLevelUps`). */
   levelUps?: LevelUp[];
+  /**
+   * Bitirilip geçilen haritalar (sırayla; harita geçişi M-Q, maps-2-3.md 5): "Continue to ..." ile sonraki haritaya geçince önceki haritanın id'si
+   * eklenir. Eski kayıtta yok = hiç geçiş yok (isteğe bağlı alan, kayıt sürümü değişmez; bozuksa okunurken atılır).
+   */
+  mapsDone?: string[];
 }
 
 /** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */

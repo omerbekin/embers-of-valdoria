@@ -1,3 +1,4 @@
+import './storage-scope'; // en ilk import: /maps23/ test kopyasinda depo anahtarlarini eov.m23.* altina ayirir (ana oyunun kaydina dokunmaz)
 import './storage-migrate'; // ilk import: eski proto./protomedi. depo anahtarlarını eov.* altına taşır (her şeyden önce)
 import Phaser from 'phaser';
 import { installLoopGuard } from './ui/loop-guard';

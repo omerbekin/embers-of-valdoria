@@ -11,6 +11,7 @@ import { menuStyle } from './menu-style';
 import { setTreeTabDebug, treeTabDebug, treeTabEnabled } from './tree-tab-model';
 import { LESSONS, TUTORIAL } from '../tutorial/lessons';
 import { isLessonSeen, resetTutorials, setTutorialsOn, tutorialsOn } from '../tutorial/store';
+import { registerMaps23Debug } from './maps23-debug';
 
 export const CAMPAIGN_TAB = 'Campaign';
 
@@ -742,7 +743,8 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       for (const n of getMap('valdoria').nodes) {
         grid.append(
           debugButton(`${n.id} ${n.name}${n.optional ? ' (pocket)' : ''}`, () => {
-            setState(debugTeleport(ensureState(), n.id));
+            const b = ensureState(); // Harita 2'deyken Valdoria'ya aynı seed'le dönülür (ışınlama Harita 1 duraklarıdır)
+            setState(debugTeleport(b.mapId === 'valdoria' ? b : newCampaign({ mode: b.mode, seed: b.seed, difficulty: b.difficulty, slot: b.slot }), n.id));
             reload();
           }, { title: `${n.subtitle}: the road from Mill Road is rebuilt, earlier stops count as done, missing heroes are picked automatically` }),
         );
@@ -788,4 +790,5 @@ export function registerCampaignDebug(game: Phaser.Game, debug: DebugMenu): void
       window.location.search = q.toString();
     },
   });
+  registerMaps23Debug(debug, reload, ensureState); // Harita 2-3 test grubu (maps-2-3.md 9.1)
 }

@@ -30,6 +30,8 @@ import {
   retreatPatrol,
   patrolRetreatConfirm,
   woundRules,
+  setMapOverride,
+  DROWNED_REACH,
   type BattlePlan,
   type CampaignMode,
   type CampaignState,
@@ -59,6 +61,10 @@ import { storage } from './kv-storage';
 import { partyWeapons } from './pose-weapons';
 import { logEvent } from '../diag/diag';
 import { totalXpFor, trackKills, type KillRecord } from '../progression/levels';
+import { maps23On } from '../ui/maps23-flag';
+
+// Harita 2 test bayrağı (maps-2-3.md 9.1): debug anahtarı ya da ?maps=1 açıksa bu oturumda Drowned Reach geçişi görünür
+if (maps23On()) setMapOverride(DROWNED_REACH, true);
 
 export const session = {
   state: null as CampaignState | null,

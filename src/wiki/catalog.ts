@@ -11,6 +11,8 @@ import { paintedOr } from '../ui/misc-icons';
 import { sortByPrimary } from '../game/class-order';
 import campaignConfig from '../../data/campaign/campaign.json';
 import campaignMap from '../../data/campaign/valdoria.json';
+import drownedReachMap from '../../data/campaign/drowned-reach.json';
+import { maps23On } from '../ui/maps23-flag';
 import itemsJson from '../../data/items.json';
 import { affixMidText, effectLine } from '../progression/item-text';
 import { ITEMS as ITEM_DATA, TIER_IDS, affixDef, gripOf, GRIP_NAME, implicitValues, levelRequirement, weaponPowerOf, type Grip } from '../progression/items';
@@ -856,6 +858,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
+      ...(drownedReachShown() ? [drownedReachArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -864,6 +867,28 @@ export function buildMechanics(): WikiArticle[] {
   }
   out.push(...bossArticles(), ...mobArticles());
   return out;
+}
+
+/** Harita 2 bayrağı (campaign.json > mapFlags; debug anahtarı / ?maps=1): kapalıyken Codex'te Drowned Reach sayfası yok. */
+export function drownedReachShown(): boolean {
+  const flags = (campaignConfig as unknown as { mapFlags?: Record<string, { enabled: boolean }> }).mapFlags;
+  return flags?.['drowned-reach']?.enabled !== false || maps23On();
+}
+
+/** Harita 2 (maps-2-3.md 3; Adım 1 iskeleti): sayılar harita verisinden. */
+export function drownedReachArticle(): WikiArticle {
+  const m = drownedReachMap as unknown as { title: string; nodes: Array<{ type: string; optional?: boolean; spoke?: boolean; name: string }>; regions: Array<{ id: string; title: string; tagline?: string }>; stopsPerRun: number };
+  const name = m.title.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase());
+  const first = m.nodes[0]?.name ?? 'the start';
+  const boss = m.nodes.find((n) => n.type === 'boss' && /final/i.test((n as { subtitle?: string }).subtitle ?? ''))?.name ?? 'the last throne';
+  const towns = m.nodes.filter((n) => n.type === 'town').map((n) => n.name);
+  const pockets = m.nodes.filter((n) => n.optional).length;
+  const spokes = m.nodes.filter((n) => n.spoke).length;
+  return article('drowned-reach', 'Campaign', name, cx('mech_campaign', 'boot'), [
+    p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions; a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
+    list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
+    p(`Towns: ${towns.join(', ')}. Saltmere is the hub: ${spokes} side streets branch off it; each is a single stop, and you walk back to the square to go on. ${pockets} dashed roads lead to optional pockets, as on the first map.`),
+  ]);
 }
 
 /** Item'ler (madde 280; sayılar data/items.json'dan): yuvalar, nadirlik, silah aileleri, loot, primary uyarısı. */

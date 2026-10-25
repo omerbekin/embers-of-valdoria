@@ -3,6 +3,8 @@ import { basePuffs, placePuffs, roadRects, type Rect } from '../fog-clouds';
 import { content } from '../../engine';
 import {
   CONFIG,
+  continueToMap,
+  nextMapFor,
   EVENTS,
   STORIES,
   chooseEvent,
@@ -2508,6 +2510,33 @@ export class CampaignMapScene extends Phaser.Scene {
     return victoryRecoveryNote(victoryRecovery(s));
   }
 
+  /**
+   * Sıradaki haritanın giriş penceresi (M-Q): başlık / alt başlık / giriş metni haritanın verisinden (drowned-reach.json > intro).
+   * "Set out" geçişi yapar (state.ts > continueToMap), kaydeder (otomatik kayıt; Ironman da) ve sahneyi yeni haritayla yeniden kurar.
+   */
+  private mapIntro(mapId: string): void {
+    const m = getMap(mapId);
+    this.closeModal();
+    this.modal = openModal(this, this.ui, {
+      title: m.title,
+      subtitle: m.subtitle,
+      text: m.intro ?? m.blurb,
+      height: 600,
+      buttons: [
+        { label: 'Not yet', run: () => this.advance() },
+        { label: 'Set out', primary: true, run: () => this.goToMap(mapId) },
+      ],
+    });
+  }
+
+  /** Harita geçişini uygular (kayıt + sahneyi yeniden kur). */
+  private goToMap(mapId: string): void {
+    setState(continueToMap(this.s, mapId));
+    save('auto');
+    this.closeModal();
+    this.scene.restart();
+  }
+
   /** Sıradaki adıma göre ekranı kurar (pencere ya da sağdaki düğüm kartı). */
   advance(): void {
     this.closeModal();
@@ -2626,19 +2655,32 @@ export class CampaignMapScene extends Phaser.Scene {
         });
         return;
       }
-      case 'complete':
+      case 'complete': {
+        // Harita geçişi (M-Q, maps-2-3.md 5): sıradaki harita açıksa (campaign.json > mapFlags; debug / ?maps=1) "Continue to ..." birincil
+        // düğme; Harita 1'in başlığı ve bitiş metni değişmez (alt başlık "Campaign Complete" yerine "Map Complete"). Harita kendi bitiş
+        // penceresini verebilir (Harita 2: "To Be Continued").
+        const next = nextMapFor(s);
+        const nextMap = next ? getMap(next) : null;
+        const end = this.map.complete;
+        const lead = end?.text ?? CONFIG.texts.complete;
         this.modal = openModal(this, this.ui, {
-          title: 'Valdoria Conquered',
-          subtitle: 'Campaign Complete',
+          title: end?.title ?? 'Valdoria Conquered',
+          subtitle: nextMap ? 'Map Complete' : (end?.subtitle ?? 'Campaign Complete'),
           // Final sinematiğinin kapanış kartı az önce aynı cümleyi gösterdiyse burada tekrar edilmez
-          text: `${this.endCardShown ? '' : `${CONFIG.texts.complete}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
+          text: `${this.endCardShown && !end ? '' : `${lead}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
           height: 520,
-          buttons: [
-            { label: 'Stay on the map', run: () => this.closeModal() },
-            { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE) },
-          ],
+          buttons: nextMap
+            ? [
+                { label: 'Stay on the map', run: () => this.closeModal() },
+                { label: `Continue to ${titleCase(nextMap.title)}`, primary: true, run: () => this.mapIntro(nextMap.id) },
+              ]
+            : [
+                { label: 'Stay on the map', run: () => this.closeModal() },
+                { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE) },
+              ],
         });
         return;
+      }
       default:
         // battle / move: sol alttaki düğüm bilgisi (ipucu satırı) ve nabız atan düğüm
         this.renderHud();
@@ -3789,4 +3831,9 @@ export class CampaignMapScene extends Phaser.Scene {
     this.events.once('shutdown', close);
     this.modal = { close, root: undefined, area: { x: 0, y: 0, w: 0, h: 0 } } as unknown as Modal;
   }
+}
+
+/** "THE DROWNED REACH" -> "The Drowned Reach" (düğme yazısı; harita başlığı veride büyük harf). */
+function titleCase(t: string): string {
+  return t.toLowerCase().replace(/(^|[\s-])(\p{L})/gu, (_m, a: string, b: string) => a + b.toUpperCase());
 }

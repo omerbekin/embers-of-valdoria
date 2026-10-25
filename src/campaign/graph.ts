@@ -16,8 +16,13 @@ export const findNode = (map: CampaignMap, id: string): MapNode | undefined => m
 export const outgoing = (map: CampaignMap, id: string): string[] => map.edges.filter((e) => e.from === id).map((e) => e.to);
 /** Cep düğümü mü (isteğe bağlı çıkmaz dal; MapNode.optional). */
 export const isPocket = (map: CampaignMap, id: string): boolean => !!findNode(map, id)?.optional;
-/** Ana yol çıkışları: cepler hariç (rota, seçim noktası, K1 ve sim rotaları bunu kullanır; oyuncunun yürüyebildiği yollar `outgoing`). */
-export const mainOutgoing = (map: CampaignMap, id: string): string[] => outgoing(map, id).filter((o) => !isPocket(map, o));
+/** Yan durak mı: cep ya da hub kolu (MapNode.spoke; Harita 2 Saltmere). İkisi de rota, seçim noktası ve K1 sayımına girmez. */
+export const isSide = (map: CampaignMap, id: string): boolean => {
+  const n = findNode(map, id);
+  return !!(n?.optional || n?.spoke);
+};
+/** Ana yol çıkışları: cepler ve hub kolları hariç (rota, seçim noktası, K1 ve sim rotaları bunu kullanır; oyuncunun yürüyebildiği yollar `outgoing`). */
+export const mainOutgoing = (map: CampaignMap, id: string): string[] => outgoing(map, id).filter((o) => !isSide(map, o));
 /** Haritadaki cepler (veri sırası). */
 export const pockets = (map: CampaignMap): string[] => map.nodes.filter((n) => n.optional).map((n) => n.id);
 export const incoming = (map: CampaignMap, id: string): string[] => map.edges.filter((e) => e.to === id).map((e) => e.from);
@@ -56,7 +61,7 @@ export function upstreamOf(map: CampaignMap, id: string): Set<string> {
 }
 
 /** Seçim noktası: ana yolda birden çok çıkış (cebe sapan yol seçim sayılmaz). */
-export const choicePoints = (map: CampaignMap): string[] => map.nodes.filter((n) => !n.optional && mainOutgoing(map, n.id).length > 1).map((n) => n.id);
+export const choicePoints = (map: CampaignMap): string[] => map.nodes.filter((n) => !n.optional && !n.spoke && mainOutgoing(map, n.id).length > 1).map((n) => n.id);
 export const mergePoints = (map: CampaignMap): string[] => map.nodes.filter((n) => incoming(map, n.id).length > 1).map((n) => n.id);
 
 export const isBattleNode = (n: MapNode): boolean => !!n.encounter;
@@ -144,6 +149,13 @@ export function validateMap(map: CampaignMap): string[] {
     if (outgoing(map, n.id).length) errors.push(`pocket ${n.id} has a road onward`);
     if (incoming(map, n.id).length !== 1) errors.push(`pocket ${n.id} must hang off exactly one stop`);
     if (n.final) errors.push(`pocket ${n.id} cannot be the final`);
+  }
+  // Hub kolu: tek giriş, ileri yolu yalnız cebe / başka kola, final değil
+  for (const n of map.nodes.filter((x) => x.spoke)) {
+    if (n.optional) errors.push(`node ${n.id} cannot be both a pocket and a spoke`);
+    if (outgoing(map, n.id).some((o) => !isSide(map, o))) errors.push(`spoke ${n.id} has a main road onward`);
+    if (incoming(map, n.id).length !== 1) errors.push(`spoke ${n.id} must hang off exactly one stop`);
+    if (n.final) errors.push(`spoke ${n.id} cannot be the final`);
   }
   return errors;
 }

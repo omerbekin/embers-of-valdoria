@@ -1,0 +1,1913 @@
+{
+  "_not": "Harita 2: The Drowned Reach (docs/design/campaign/maps-2-3.md 3; yapım sırası 9.2 adım 1: iskelet, campaign-dev 2026-10-25). 83 düğüm, 6 bölge; konumlar ve kenarlar onaylı mockup public/mockups/maps-2-3/data.js > m2 (görsel 1672x941, assets/source/maps-2-3/drowned-reach-map-v2.png -> assets/campaign/drowned-reach-bg.webp). Düğüm id = \"dr\" + belgedeki numara (Harita 1 id'leriyle ve dalga / ölçek skipNodes listeleriyle çakışmasın). optional = cep (tek girişli çıkmaz dal, kesik yol); spoke = hub kolu (Saltmere'den çıkan yan durak: ileri yolu yok, rota / seçim noktası / K1 sayılmaz, yolu düz). level = düğüm seviyesi elle (ilk 3 düğüm L10, belge 8; diğerleri bölüm 2 rampası L11-20). Crossing (X) düğümleri şimdilik normal savaş (type battle, alt başlık Crossing); deniz yolu kilidi yok. Black Caravel (59) sabit elit cep (Open Water'dan); gezici kural M-K sonraki adım. continues = bu harita hangi haritanın devamı (başlangıçta kahraman seçimi yok; takım taşınır). Karşılaşmalar data/campaign/drowned-reach-encounters.json (yer tutucu: var olan moblar yeni adlarla), olaylar / hikâyeler / hazineler drowned-reach-events.json. Sayılar PROVİZYON.",
+  "id": "drowned-reach",
+  "title": "THE DROWNED REACH",
+  "subtitle": "Campaign Map II",
+  "blurb": "From the Long Stair to the Throne of Brine: 83 stops, 6 regions, 48-53 stops per run.",
+  "intro": "The ash has settled over Valdoria, but the Crown of Ash would not burn and would not break. In the vault beneath Castle Morvane you found a river chart and a single line in Morvane's hand: 'If I fall, carry it to the sea. The Tide must never wear it.' The river runs east, down the Long Stair, to the Drowned Reach.",
+  "complete": {
+    "title": "Two Crowns",
+    "subtitle": "To Be Continued",
+    "text": "The Drowned Queen is fallen and both halves of the Hearthcrown are in your hands. They pull north, toward the mountain. What was split must be mended, or ended."
+  },
+  "continues": "valdoria",
+  "background": "drowned-reach-bg",
+  "start": "dr1",
+  "stopsPerRun": 53,
+  "visibility": 2,
+  "alwaysVisible": [
+    "dr82"
+  ],
+  "regions": [
+    {
+      "id": "I",
+      "title": "I · The Lower Valdren",
+      "tagline": "Down the Long Stair and the river gorge to Reedgate",
+      "label": [
+        0.0359,
+        0.1116
+      ],
+      "battleBackground": "kings-bridge"
+    },
+    {
+      "id": "II",
+      "title": "II · The Saltmarsh",
+      "tagline": "Through reed delta, salt pans and eel weirs to the river mouth",
+      "label": [
+        0.2811,
+        0.4995
+      ],
+      "battleBackground": "misty-marsh"
+    },
+    {
+      "id": "III",
+      "title": "III · Saltmere, the Harbor City",
+      "tagline": "Grey stone, grey sea and a cathedral sinking into the docks",
+      "label": [
+        0.7476,
+        0.2179
+      ],
+      "battleBackground": "pilgrim-road"
+    },
+    {
+      "id": "IV",
+      "title": "IV · The Wrecking Coast",
+      "tagline": "Cliffs, false lights and a graveyard of ships",
+      "label": [
+        0.3828,
+        0.9352
+      ],
+      "battleBackground": "iron-pass"
+    },
+    {
+      "id": "V",
+      "title": "V · The Drowned Isles",
+      "tagline": "Sea lanes, storms and siren rocks among the isles",
+      "label": [
+        0.8553,
+        0.0425
+      ],
+      "battleBackground": "windy-moor"
+    },
+    {
+      "id": "VI",
+      "title": "VI · The Sunken Court",
+      "tagline": "Down the sunken stair to Maredh's drowned palace",
+      "label": [
+        0.8373,
+        0.983
+      ],
+      "battleBackground": "castle-hall"
+    }
+  ],
+  "nodes": [
+    {
+      "id": "dr1",
+      "type": "battle",
+      "name": "The Long Stair",
+      "subtitle": "Start · Battle",
+      "lore": "The old stair road drops from the heights toward the river, and cultists in ash masks still follow the crown that passed this way.",
+      "region": "I",
+      "pos": [
+        0.0371,
+        0.2742
+      ],
+      "encounter": "dr_1",
+      "level": 10,
+      "partyCap": 4
+    },
+    {
+      "id": "dr2",
+      "type": "rest",
+      "name": "Ferrymen's Rest",
+      "subtitle": "Rest · Camp",
+      "lore": "A ferrymen's shelter at the water's edge, its benches worn smooth by a hundred years of waiting.",
+      "region": "I",
+      "pos": [
+        0.0897,
+        0.3719
+      ],
+      "rest": true,
+      "level": 10
+    },
+    {
+      "id": "dr3",
+      "type": "battle",
+      "name": "The Rapids",
+      "subtitle": "Battle · River Reavers",
+      "lore": "White water roars through the gorge, and reavers wait on the rocks for boats that come down too fast.",
+      "region": "I",
+      "pos": [
+        0.1764,
+        0.3082
+      ],
+      "encounter": "dr_3",
+      "level": 10
+    },
+    {
+      "id": "dr4",
+      "type": "battle",
+      "name": "Drowned Mill",
+      "subtitle": "Battle · The Drowned",
+      "lore": "The mill wheel still turns in the flood, and the drowned millers turn with it.",
+      "region": "I",
+      "pos": [
+        0.2123,
+        0.2285
+      ],
+      "encounter": "dr_4"
+    },
+    {
+      "id": "dr5",
+      "type": "treasure",
+      "name": "Barge Wreck",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A grain barge lies broken on the shallows, its hold half full and something long moving under it.",
+      "region": "I",
+      "pos": [
+        0.2362,
+        0.3953
+      ],
+      "encounter": "dr_5",
+      "treasure": "dr_barge_wreck"
+    },
+    {
+      "id": "dr6",
+      "type": "event",
+      "name": "Floodplain Farms",
+      "subtitle": "Event",
+      "lore": "The river has taken the lower fields, and the farmers who stayed are bailing out their homes by hand.",
+      "region": "I",
+      "pos": [
+        0.2871,
+        0.4166
+      ],
+      "event": "dr_floodplain_farms"
+    },
+    {
+      "id": "dr7",
+      "type": "elite",
+      "name": "Tollhouse",
+      "subtitle": "Elite · Reaver Chief",
+      "lore": "Whoever holds the tollhouse holds the river. Today that is a reaver with an iron hook for a hand.",
+      "region": "I",
+      "pos": [
+        0.302,
+        0.271
+      ],
+      "encounter": "dr_7"
+    },
+    {
+      "id": "dr8",
+      "type": "battle",
+      "name": "Hangman's Oak",
+      "subtitle": "Battle · Wreck Ghouls",
+      "lore": "The hanged are long gone from the oak, but the river keeps bringing back the drowned to sit beneath it.",
+      "region": "I",
+      "pos": [
+        0.2572,
+        0.17
+      ],
+      "encounter": "dr_8"
+    },
+    {
+      "id": "dr9",
+      "type": "battle",
+      "name": "Old Weir Road",
+      "subtitle": "Battle · Weir Road Ambush",
+      "lore": "The causeway along the old weir is the dry road east, and every bandit on the river knows it.",
+      "region": "I",
+      "pos": [
+        0.317,
+        0.1254
+      ],
+      "encounter": "dr_9"
+    },
+    {
+      "id": "dr10",
+      "type": "battle",
+      "name": "Widow's Ford",
+      "subtitle": "Battle · Ford Lurkers",
+      "lore": "The ford is waist deep and rising, and the widows say the water here has teeth.",
+      "region": "I",
+      "pos": [
+        0.3319,
+        0.2179
+      ],
+      "encounter": "dr_10"
+    },
+    {
+      "id": "dr11",
+      "type": "treasure",
+      "name": "Chapel of the Ford",
+      "subtitle": "Treasure",
+      "lore": "A little chapel stands above the ford, its door barred from the inside since the waters rose.",
+      "region": "I",
+      "pos": [
+        0.3648,
+        0.2604
+      ],
+      "optional": true,
+      "treasure": "dr_ford_chapel"
+    },
+    {
+      "id": "dr12",
+      "type": "town",
+      "name": "Reedgate",
+      "subtitle": "Town · Rest, Recruits, Trade",
+      "lore": "A reed-thatched village at the head of the marsh, where the river slows and the ferrymen gather.",
+      "region": "I",
+      "pos": [
+        0.3947,
+        0.1328
+      ],
+      "partyCap": 4,
+      "heal": 1,
+      "merchant": true,
+      "merchantSize": 5,
+      "story": "dr_the_ferryman",
+      "scene": {
+        "background": "town-ashford",
+        "focusY": 0.58,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Trading Post",
+            "rect": [
+              0,
+              0.3,
+              0.262,
+              0.62
+            ]
+          },
+          {
+            "id": "burner",
+            "action": "story",
+            "label": "The Ferryman",
+            "rect": [
+              0.29,
+              0.47,
+              0.385,
+              0.63
+            ]
+          },
+          {
+            "id": "campfire",
+            "action": "rest",
+            "label": "Campfire",
+            "rect": [
+              0.385,
+              0.42,
+              0.57,
+              0.63
+            ]
+          },
+          {
+            "id": "board",
+            "action": "recruit",
+            "label": "Notice Board",
+            "rect": [
+              0.585,
+              0.405,
+              0.67,
+              0.58
+            ],
+            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+          },
+          {
+            "id": "road",
+            "action": "leave",
+            "label": "Road Out",
+            "rect": [
+              0.9,
+              0.34,
+              1,
+              0.6
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "dr13",
+      "type": "battle",
+      "name": "Reedway",
+      "subtitle": "Battle · Marsh Hexes",
+      "lore": "A path of bound reeds winds into the marsh, and lights move out there that no one carries.",
+      "region": "II",
+      "pos": [
+        0.4127,
+        0.3029
+      ],
+      "encounter": "dr_13"
+    },
+    {
+      "id": "dr14",
+      "type": "battle",
+      "name": "Salt Pans",
+      "subtitle": "Battle · Salt Hags",
+      "lore": "White crust covers the old salt pans, and the hags who work them call the tide in when strangers come.",
+      "region": "II",
+      "pos": [
+        0.4366,
+        0.2179
+      ],
+      "encounter": "dr_14"
+    },
+    {
+      "id": "dr15",
+      "type": "event",
+      "name": "Stilt Hamlet",
+      "subtitle": "Event",
+      "lore": "Houses stand on stilts above the water, and the eel-wives watch you from the walkways.",
+      "region": "II",
+      "pos": [
+        0.4904,
+        0.1594
+      ],
+      "event": "dr_stilt_hamlet"
+    },
+    {
+      "id": "dr16",
+      "type": "town",
+      "name": "Eelwick",
+      "subtitle": "Town · Rest, Recruits, Trade",
+      "lore": "A town on stilts above the brackish water, smelling of smoke, salt and eel-oil.",
+      "region": "II",
+      "pos": [
+        0.5472,
+        0.2019
+      ],
+      "partyCap": 4,
+      "heal": 1,
+      "merchant": true,
+      "merchantSize": 5,
+      "story": "dr_weir_warden",
+      "scene": {
+        "background": "town-ashford",
+        "focusY": 0.58,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Trading Post",
+            "rect": [
+              0,
+              0.3,
+              0.262,
+              0.62
+            ]
+          },
+          {
+            "id": "burner",
+            "action": "story",
+            "label": "Weir-Warden Ysolt",
+            "rect": [
+              0.29,
+              0.47,
+              0.385,
+              0.63
+            ]
+          },
+          {
+            "id": "campfire",
+            "action": "rest",
+            "label": "Campfire",
+            "rect": [
+              0.385,
+              0.42,
+              0.57,
+              0.63
+            ]
+          },
+          {
+            "id": "board",
+            "action": "recruit",
+            "label": "Notice Board",
+            "rect": [
+              0.585,
+              0.405,
+              0.67,
+              0.58
+            ],
+            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+          },
+          {
+            "id": "road",
+            "action": "leave",
+            "label": "Road Out",
+            "rect": [
+              0.9,
+              0.34,
+              1,
+              0.6
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "dr17",
+      "type": "battle",
+      "name": "The Great Weir",
+      "subtitle": "Battle · Weir Guardians",
+      "lore": "The great weir holds back the marsh, and the things that live in its pools do not like visitors.",
+      "region": "II",
+      "pos": [
+        0.4785,
+        0.3029
+      ],
+      "encounter": "dr_17"
+    },
+    {
+      "id": "dr18",
+      "type": "elite",
+      "name": "Hag's Island",
+      "subtitle": "Elite · Salt Hag Mother",
+      "lore": "An island of black reeds where the eldest of the hags keeps her pots and her daughters.",
+      "region": "II",
+      "pos": [
+        0.4725,
+        0.3911
+      ],
+      "optional": true,
+      "encounter": "dr_18"
+    },
+    {
+      "id": "dr19",
+      "type": "treasure",
+      "name": "Sunken Chapel",
+      "subtitle": "Treasure · Guarded",
+      "lore": "Only the bell tower of the chapel stands above the water. Something in rusted armour still keeps its vigil.",
+      "region": "II",
+      "pos": [
+        0.5173,
+        0.3422
+      ],
+      "encounter": "dr_19",
+      "treasure": "dr_sunken_chapel"
+    },
+    {
+      "id": "dr20",
+      "type": "battle",
+      "name": "Heron Flats",
+      "subtitle": "Battle · Flats Hunters",
+      "lore": "Herons stalk the mud flats at low tide, and so does everything that eats herons.",
+      "region": "II",
+      "pos": [
+        0.5592,
+        0.3401
+      ],
+      "encounter": "dr_20"
+    },
+    {
+      "id": "dr21",
+      "type": "battle",
+      "name": "The Drowned Causeway",
+      "subtitle": "Battle · Causeway Dead",
+      "lore": "An old stone causeway runs under a hand of water. The dead walk it as if it were still dry.",
+      "region": "II",
+      "pos": [
+        0.5413,
+        0.4208
+      ],
+      "encounter": "dr_21"
+    },
+    {
+      "id": "dr22",
+      "type": "event",
+      "name": "Smugglers' Reeds",
+      "subtitle": "Event",
+      "lore": "Narrow channels through tall reeds, where smugglers take a toll from anyone who uses their water.",
+      "region": "II",
+      "pos": [
+        0.4874,
+        0.4591
+      ],
+      "event": "dr_smugglers_reeds"
+    },
+    {
+      "id": "dr23",
+      "type": "rest",
+      "name": "Tidewatch Tower",
+      "subtitle": "Rest · Camp",
+      "lore": "A tower built to watch the tides, abandoned now, with a dry floor and a sound roof.",
+      "region": "II",
+      "pos": [
+        0.4904,
+        0.5367
+      ],
+      "rest": true
+    },
+    {
+      "id": "dr24",
+      "type": "battle",
+      "name": "Brine Pools",
+      "subtitle": "Battle · Brine Hags",
+      "lore": "Pools of thick brine steam in the cold air, and the hags guard them like treasure.",
+      "region": "II",
+      "pos": [
+        0.5413,
+        0.5739
+      ],
+      "encounter": "dr_24"
+    },
+    {
+      "id": "dr25",
+      "type": "treasure",
+      "name": "Eel-Mother's Lair",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The marsh folk will not fish this pool. They say the eel-mother sleeps on the bones of boats.",
+      "region": "II",
+      "pos": [
+        0.4964,
+        0.6079
+      ],
+      "optional": true,
+      "encounter": "dr_25",
+      "treasure": "dr_eel_lair"
+    },
+    {
+      "id": "dr26",
+      "type": "boss",
+      "name": "The Weir Mouth",
+      "subtitle": "Boss · The Weir-Wyrm",
+      "lore": "Where the marsh pours into the sea, the old weir has broken, and something vast has made the gap its home.",
+      "region": "II",
+      "pos": [
+        0.6071,
+        0.5207
+      ],
+      "encounter": "dr_weir_wyrm"
+    },
+    {
+      "id": "dr27",
+      "type": "battle",
+      "name": "Saltmere Gate",
+      "subtitle": "Battle · Order Quarantine",
+      "lore": "The Order of St. Brann has closed the road to the harbour. No one passes the gate without their leave.",
+      "region": "II",
+      "pos": [
+        0.5933,
+        0.3741
+      ],
+      "encounter": "dr_27"
+    },
+    {
+      "id": "dr28",
+      "type": "town",
+      "name": "Saltmere",
+      "subtitle": "City · Rest, Recruits, Trade",
+      "lore": "The harbour city at the river mouth, grey stone and grey sea, its half-sunken cathedral leaning over the docks.",
+      "region": "III",
+      "pos": [
+        0.7476,
+        0.3719
+      ],
+      "recruit": {
+        "offer": 3,
+        "pick": 1,
+        "when": "leave"
+      },
+      "partyCap": 5,
+      "heal": 1,
+      "merchant": true,
+      "merchantSize": 9,
+      "story": "dr_harbor_master",
+      "scene": {
+        "background": "town-valdren",
+        "focusY": 0.5,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Odo's Chandlery",
+            "rect": [
+              0,
+              0.26,
+              0.325,
+              0.6
+            ]
+          },
+          {
+            "id": "commander",
+            "action": "story",
+            "label": "Harbor-Master Rook",
+            "rect": [
+              0.465,
+              0.32,
+              0.545,
+              0.43
+            ]
+          },
+          {
+            "id": "brazier",
+            "action": "rest",
+            "label": "Brazier",
+            "rect": [
+              0.415,
+              0.43,
+              0.545,
+              0.6
+            ]
+          },
+          {
+            "id": "barracks",
+            "action": "recruit",
+            "label": "Barracks",
+            "rect": [
+              0.55,
+              0.27,
+              0.815,
+              0.58
+            ],
+            "note": "The barracks are quiet. Every sword here has already sworn to someone."
+          },
+          {
+            "id": "gate",
+            "action": "leave",
+            "label": "Harbor Gate",
+            "rect": [
+              0.885,
+              0.2,
+              1,
+              0.56
+            ]
+          }
+        ]
+      },
+      "city": true
+    },
+    {
+      "id": "dr29",
+      "type": "event",
+      "name": "Fishmarket",
+      "subtitle": "Event",
+      "lore": "The fishmarket hums with gossip, gulls and the smell of yesterday's catch.",
+      "region": "III",
+      "pos": [
+        0.6077,
+        0.3082
+      ],
+      "spoke": true,
+      "event": "dr_fishmarket"
+    },
+    {
+      "id": "dr30",
+      "type": "battle",
+      "name": "Chandlers' Row",
+      "subtitle": "Battle · Dock Rats",
+      "lore": "Chandlers' Row sells rope, tar and lamp oil by day. By night it sells knives.",
+      "region": "III",
+      "pos": [
+        0.6669,
+        0.2614
+      ],
+      "spoke": true,
+      "encounter": "dr_30"
+    },
+    {
+      "id": "dr31",
+      "type": "event",
+      "name": "Guild Hall / Inquisition House",
+      "subtitle": "Event",
+      "lore": "The Guild Hall and the Inquisition House face each other across the square, and neither looks away.",
+      "region": "III",
+      "pos": [
+        0.7476,
+        0.2444
+      ],
+      "spoke": true,
+      "event": "dr_guild_hall"
+    },
+    {
+      "id": "dr32",
+      "type": "elite",
+      "name": "Harbor Fort",
+      "subtitle": "Elite · Guild Enforcer",
+      "lore": "The harbour fort has changed hands twice this year. Its new masters do not want to give it back.",
+      "region": "III",
+      "pos": [
+        0.8876,
+        0.3082
+      ],
+      "spoke": true,
+      "encounter": "dr_32"
+    },
+    {
+      "id": "dr33",
+      "type": "battle",
+      "name": "Sewer Outfall",
+      "subtitle": "Battle · Sewer Dead",
+      "lore": "The city's filth runs into the sea here, and what the sea sends back is worse.",
+      "region": "III",
+      "pos": [
+        0.8876,
+        0.4357
+      ],
+      "spoke": true,
+      "encounter": "dr_33"
+    },
+    {
+      "id": "dr34",
+      "type": "battle",
+      "name": "The Drowned Cathedral",
+      "subtitle": "Battle · Cathedral Dead",
+      "lore": "The cathedral sank to its knees in a single night. Its congregation still kneels inside.",
+      "region": "III",
+      "pos": [
+        0.8283,
+        0.2614
+      ],
+      "spoke": true,
+      "encounter": "dr_34"
+    },
+    {
+      "id": "dr35",
+      "type": "treasure",
+      "name": "The Crypt Stair",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A stair below the cathedral leads down into flooded crypts where the old bishops lie.",
+      "region": "III",
+      "pos": [
+        0.9151,
+        0.2412
+      ],
+      "optional": true,
+      "encounter": "dr_35",
+      "treasure": "dr_crypt_stair"
+    },
+    {
+      "id": "dr36",
+      "type": "battle",
+      "name": "Chainwalk",
+      "subtitle": "Battle · Corsairs",
+      "lore": "Chains hang between the warehouses, and corsairs swing from them onto the decks below.",
+      "region": "III",
+      "pos": [
+        0.6669,
+        0.4825
+      ],
+      "spoke": true,
+      "encounter": "dr_36"
+    },
+    {
+      "id": "dr37",
+      "type": "battle",
+      "name": "The Old Mole",
+      "subtitle": "Battle · Wreckers",
+      "lore": "The old mole shields the harbour from the sea. Wreckers use it to watch for easy ships.",
+      "region": "III",
+      "pos": [
+        0.8283,
+        0.4825
+      ],
+      "spoke": true,
+      "encounter": "dr_37"
+    },
+    {
+      "id": "dr38",
+      "type": "event",
+      "name": "Ferry Office",
+      "subtitle": "Event",
+      "lore": "The ferry office keeps the harbour's ledgers, and the clerk keeps the harbour's secrets.",
+      "region": "III",
+      "pos": [
+        0.7476,
+        0.4995
+      ],
+      "spoke": true,
+      "event": "dr_ferry_office"
+    },
+    {
+      "id": "dr39",
+      "type": "rest",
+      "name": "Beacon Quay",
+      "subtitle": "Rest · Camp",
+      "lore": "A beacon fire burns at the end of the quay, and the harbour watch lets travellers rest beside it.",
+      "region": "III",
+      "pos": [
+        0.9091,
+        0.3719
+      ],
+      "spoke": true,
+      "rest": true
+    },
+    {
+      "id": "dr40",
+      "type": "battle",
+      "name": "Quarantine Yard",
+      "subtitle": "Battle · Quarantine Dead",
+      "lore": "The sick were sent to the yard by the water, and the water came for them.",
+      "region": "III",
+      "pos": [
+        0.5335,
+        0.4623
+      ],
+      "encounter": "dr_40"
+    },
+    {
+      "id": "dr41",
+      "type": "battle",
+      "name": "Gull Cliffs",
+      "subtitle": "Battle · Cliff Hunters",
+      "lore": "Gulls wheel over the cliffs, and below them the coast road clings to the rock.",
+      "region": "IV",
+      "pos": [
+        0.2632,
+        0.7917
+      ],
+      "encounter": "dr_41"
+    },
+    {
+      "id": "dr42",
+      "type": "battle",
+      "name": "Wreckers' Beacon",
+      "subtitle": "Battle · Beacon Wreckers",
+      "lore": "A false light burns on the headland to lure ships onto the rocks. Its keepers will not give it up.",
+      "region": "IV",
+      "pos": [
+        0.3648,
+        0.7598
+      ],
+      "encounter": "dr_42"
+    },
+    {
+      "id": "dr43",
+      "type": "treasure",
+      "name": "Smugglers' Cave",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A cave under the cliff, reached only at low tide, where smugglers keep what they cannot sell yet.",
+      "region": "IV",
+      "pos": [
+        0.4725,
+        0.6961
+      ],
+      "encounter": "dr_43",
+      "treasure": "dr_smugglers_cave"
+    },
+    {
+      "id": "dr44",
+      "type": "battle",
+      "name": "Bone Beach",
+      "subtitle": "Battle · Bone Beach Dead",
+      "lore": "The beach is white with ribs of ships and men alike.",
+      "region": "IV",
+      "pos": [
+        0.4187,
+        0.8236
+      ],
+      "encounter": "dr_44"
+    },
+    {
+      "id": "dr45",
+      "type": "event",
+      "name": "Lantern Rock",
+      "subtitle": "Event",
+      "lore": "An old lighthouse stands dark on its rock, its lamp room open to the wind.",
+      "region": "IV",
+      "pos": [
+        0.4725,
+        0.8448
+      ],
+      "event": "dr_lantern_rock"
+    },
+    {
+      "id": "dr46",
+      "type": "event",
+      "name": "Widow's Watch",
+      "subtitle": "Event",
+      "lore": "From the widows' walk you can see a ship on the rocks and the wreckers already rowing out to it.",
+      "region": "IV",
+      "pos": [
+        0.5263,
+        0.7843
+      ],
+      "event": "dr_widows_watch"
+    },
+    {
+      "id": "dr47",
+      "type": "battle",
+      "name": "The Hanging Stair",
+      "subtitle": "Battle · Stair Ambush",
+      "lore": "Steps cut into the cliff face, with rope rails and a long drop to the sea.",
+      "region": "IV",
+      "pos": [
+        0.5592,
+        0.712
+      ],
+      "encounter": "dr_47"
+    },
+    {
+      "id": "dr48",
+      "type": "battle",
+      "name": "Wreck of the Valdren Pride",
+      "subtitle": "Battle · Boarders",
+      "lore": "The Valdren Pride ran aground with her cargo still aboard. Corsairs got to her first.",
+      "region": "IV",
+      "pos": [
+        0.613,
+        0.7311
+      ],
+      "encounter": "dr_48"
+    },
+    {
+      "id": "dr49",
+      "type": "rest",
+      "name": "Cliff Chapel",
+      "subtitle": "Rest · Camp",
+      "lore": "A chapel on the cliff top, its bell silent, its keeper glad of company.",
+      "region": "IV",
+      "pos": [
+        0.6041,
+        0.6111
+      ],
+      "rest": true
+    },
+    {
+      "id": "dr50",
+      "type": "elite",
+      "name": "The Wrecker's Hall",
+      "subtitle": "Elite · The Wrecker-Captain",
+      "lore": "The wreckers drink in a hall built from the timbers of the ships they have drowned.",
+      "region": "IV",
+      "pos": [
+        0.6579,
+        0.5792
+      ],
+      "encounter": "dr_50"
+    },
+    {
+      "id": "dr51",
+      "type": "treasure",
+      "name": "Sea Cave Hoard",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A sea cave glitters with things the tide has carried in, and with the shells of what guards them.",
+      "region": "IV",
+      "pos": [
+        0.6579,
+        0.6504
+      ],
+      "optional": true,
+      "encounter": "dr_51",
+      "treasure": "dr_sea_cave"
+    },
+    {
+      "id": "dr52",
+      "type": "event",
+      "name": "Saltspray Shrine",
+      "subtitle": "Event",
+      "lore": "A small shrine to the sea, crusted with salt, its offerings changed by the waves.",
+      "region": "IV",
+      "pos": [
+        0.7057,
+        0.5579
+      ],
+      "event": "dr_saltspray_shrine"
+    },
+    {
+      "id": "dr53",
+      "type": "battle",
+      "name": "Gallows Point",
+      "subtitle": "Battle · Gallows Dead",
+      "lore": "Pirates were hanged on the point in the old days. Their gallows still stand, and so do they.",
+      "region": "IV",
+      "pos": [
+        0.7446,
+        0.5898
+      ],
+      "encounter": "dr_53"
+    },
+    {
+      "id": "dr54",
+      "type": "town",
+      "name": "Fisher's Landing",
+      "subtitle": "Town · Rest, Recruits, Trade",
+      "lore": "A fishing village with a long jetty, where boats leave for the islands when the weather allows.",
+      "region": "IV",
+      "pos": [
+        0.7117,
+        0.6642
+      ],
+      "partyCap": 4,
+      "heal": 1,
+      "merchant": true,
+      "merchantSize": 5,
+      "story": "dr_keepers_daughter",
+      "scene": {
+        "background": "town-ashford",
+        "focusY": 0.58,
+        "hotspots": [
+          {
+            "id": "stall",
+            "action": "trade",
+            "label": "Trading Post",
+            "rect": [
+              0,
+              0.3,
+              0.262,
+              0.62
+            ]
+          },
+          {
+            "id": "burner",
+            "action": "story",
+            "label": "Keeper's Daughter",
+            "rect": [
+              0.29,
+              0.47,
+              0.385,
+              0.63
+            ]
+          },
+          {
+            "id": "campfire",
+            "action": "rest",
+            "label": "Campfire",
+            "rect": [
+              0.385,
+              0.42,
+              0.57,
+              0.63
+            ]
+          },
+          {
+            "id": "board",
+            "action": "recruit",
+            "label": "Notice Board",
+            "rect": [
+              0.585,
+              0.405,
+              0.67,
+              0.58
+            ],
+            "note": "Notices of flooded farms and missing boats. No one else here seeks to join a company."
+          },
+          {
+            "id": "road",
+            "action": "leave",
+            "label": "Road Out",
+            "rect": [
+              0.9,
+              0.34,
+              1,
+              0.6
+            ]
+          }
+        ]
+      }
+    },
+    {
+      "id": "dr55",
+      "type": "battle",
+      "name": "The Sound",
+      "subtitle": "Crossing · Corsair Boarders",
+      "lore": "The sound between the coast and the isles is narrow and busy, and not every ship on it flies honest colours.",
+      "region": "V",
+      "pos": [
+        0.7685,
+        0.6908
+      ],
+      "encounter": "dr_55"
+    },
+    {
+      "id": "dr56",
+      "type": "event",
+      "name": "Monk's Isle",
+      "subtitle": "Event",
+      "lore": "Monks of St. Brann keep a small house on the isle, and their bell carries over the water.",
+      "region": "V",
+      "pos": [
+        0.8403,
+        0.6004
+      ],
+      "event": "dr_monks_isle"
+    },
+    {
+      "id": "dr57",
+      "type": "battle",
+      "name": "Siren Rocks",
+      "subtitle": "Battle · Siren Song",
+      "lore": "Rocks rise from the sea like broken teeth, and voices sing from them in the fog.",
+      "region": "V",
+      "pos": [
+        0.8911,
+        0.5739
+      ],
+      "encounter": "dr_57"
+    },
+    {
+      "id": "dr58",
+      "type": "battle",
+      "name": "Gull Isle",
+      "subtitle": "Battle · Isle Hounds",
+      "lore": "Wild dogs rule the gull isle, and the corsairs who keep them there.",
+      "region": "V",
+      "pos": [
+        0.8941,
+        0.1966
+      ],
+      "encounter": "dr_58"
+    },
+    {
+      "id": "dr59",
+      "type": "elite",
+      "name": "The Black Caravel",
+      "subtitle": "Elite · Corsair Captain",
+      "lore": "A black ship with black sails, and a captain who has never lost a boarding.",
+      "region": "V",
+      "pos": [
+        0.9629,
+        0.5101
+      ],
+      "optional": true,
+      "encounter": "dr_59"
+    },
+    {
+      "id": "dr60",
+      "type": "battle",
+      "name": "The Narrows",
+      "subtitle": "Crossing · Narrows Boarders",
+      "lore": "The narrows run between two isles, and the current pushes every ship toward the rocks.",
+      "region": "V",
+      "pos": [
+        0.8242,
+        0.5313
+      ],
+      "encounter": "dr_60"
+    },
+    {
+      "id": "dr61",
+      "type": "rest",
+      "name": "Hermit's Skerry",
+      "subtitle": "Rest · Camp",
+      "lore": "A hermit's hut on a bare skerry, with a fire, a kettle and no questions.",
+      "region": "V",
+      "pos": [
+        0.8852,
+        0.4782
+      ],
+      "rest": true
+    },
+    {
+      "id": "dr62",
+      "type": "battle",
+      "name": "Open Water",
+      "subtitle": "Crossing · Deep Water",
+      "lore": "Out here the water is black and deep, and the drowned rise to meet passing keels.",
+      "region": "V",
+      "pos": [
+        0.936,
+        0.4198
+      ],
+      "encounter": "dr_62"
+    },
+    {
+      "id": "dr63",
+      "type": "battle",
+      "name": "Pirate Cove",
+      "subtitle": "Battle · Cove Corsairs",
+      "lore": "A hidden cove full of stolen ships, and the corsairs who sail them.",
+      "region": "V",
+      "pos": [
+        0.8433,
+        0.2497
+      ],
+      "encounter": "dr_63"
+    },
+    {
+      "id": "dr64",
+      "type": "battle",
+      "name": "Storm Strait",
+      "subtitle": "Crossing · Storm Sirens",
+      "lore": "The strait is never calm, and the sirens sing loudest in the storm.",
+      "region": "V",
+      "pos": [
+        0.7955,
+        0.2019
+      ],
+      "encounter": "dr_64"
+    },
+    {
+      "id": "dr65",
+      "type": "elite",
+      "name": "Siren Queen's Rock",
+      "subtitle": "Elite · The Siren Queen",
+      "lore": "The tallest rock in the isles, where the siren queen sings ships to their graves.",
+      "region": "V",
+      "pos": [
+        0.8283,
+        0.0797
+      ],
+      "optional": true,
+      "encounter": "dr_65"
+    },
+    {
+      "id": "dr66",
+      "type": "boss",
+      "name": "Gallows Cove",
+      "subtitle": "Boss · Admiral Vane",
+      "lore": "The corsair fleet anchors in Gallows Cove, under the guns of its admiral's flagship.",
+      "region": "V",
+      "pos": [
+        0.7506,
+        0.1328
+      ],
+      "encounter": "dr_admiral_vane"
+    },
+    {
+      "id": "dr67",
+      "type": "treasure",
+      "name": "Salt Monastery Vault",
+      "subtitle": "Treasure",
+      "lore": "Below the monks' house lies a vault where the order kept what the sea gave up.",
+      "region": "V",
+      "pos": [
+        0.8044,
+        0.627
+      ],
+      "optional": true,
+      "treasure": "dr_monastery_vault"
+    },
+    {
+      "id": "dr68",
+      "type": "battle",
+      "name": "Drowned Shoal",
+      "subtitle": "Battle · Shoal Knights",
+      "lore": "The water turns green over the shoal, and knights in rusted mail walk the sea floor.",
+      "region": "V",
+      "pos": [
+        0.9539,
+        0.2869
+      ],
+      "encounter": "dr_68"
+    },
+    {
+      "id": "dr69",
+      "type": "event",
+      "name": "The Sunken Stair",
+      "subtitle": "Event",
+      "lore": "A great stair runs down into the sea, and the sea does not cover it.",
+      "region": "V",
+      "pos": [
+        0.939,
+        0.6217
+      ],
+      "event": "dr_sunken_stair"
+    },
+    {
+      "id": "dr70",
+      "type": "battle",
+      "name": "The Drowned Gate",
+      "subtitle": "Battle · Gate Guard",
+      "lore": "The gate of the sunken court stands open, guarded by knights who swore their oath under water.",
+      "region": "VI",
+      "pos": [
+        0.948,
+        0.6908
+      ],
+      "encounter": "dr_70"
+    },
+    {
+      "id": "dr71",
+      "type": "battle",
+      "name": "Hall of Tides",
+      "subtitle": "Battle · Tide Callers",
+      "lore": "A vaulted hall where the tide rises and falls, and with every tide the dead rise too.",
+      "region": "VI",
+      "pos": [
+        0.9181,
+        0.7598
+      ],
+      "encounter": "dr_71"
+    },
+    {
+      "id": "dr72",
+      "type": "treasure",
+      "name": "The Salt Garden",
+      "subtitle": "Treasure · Guarded",
+      "lore": "A garden of salt flowers and coral, tended by pale maidens who do not breathe.",
+      "region": "VI",
+      "pos": [
+        0.939,
+        0.8289
+      ],
+      "encounter": "dr_72",
+      "treasure": "dr_salt_garden"
+    },
+    {
+      "id": "dr73",
+      "type": "battle",
+      "name": "Courtiers' Walk",
+      "subtitle": "Battle · Courtiers",
+      "lore": "The drowned court still walks its gallery, bowing to a throne it cannot see.",
+      "region": "VI",
+      "pos": [
+        0.9779,
+        0.7651
+      ],
+      "encounter": "dr_73"
+    },
+    {
+      "id": "dr74",
+      "type": "elite",
+      "name": "The Bishop's Chapel",
+      "subtitle": "Elite · The Salt Bishop",
+      "lore": "The court's chapel, where the salt bishop preaches to the drowned.",
+      "region": "VI",
+      "pos": [
+        0.9809,
+        0.8629
+      ],
+      "encounter": "dr_74"
+    },
+    {
+      "id": "dr75",
+      "type": "event",
+      "name": "Flooded Library",
+      "subtitle": "Event · Rest",
+      "lore": "Shelves of swollen books, and among them, dry in a sealed case, the court's own history.",
+      "region": "VI",
+      "pos": [
+        0.9539,
+        0.9192
+      ],
+      "event": "dr_flooded_library",
+      "rest": true
+    },
+    {
+      "id": "dr76",
+      "type": "battle",
+      "name": "Kennels of the Deep",
+      "subtitle": "Battle · Kennel Beasts",
+      "lore": "The court's hounds were drowned with their masters. They are still hungry.",
+      "region": "VI",
+      "pos": [
+        0.9091,
+        0.898
+      ],
+      "encounter": "dr_76"
+    },
+    {
+      "id": "dr77",
+      "type": "treasure",
+      "name": "Armory of Maredh",
+      "subtitle": "Treasure · Guarded",
+      "lore": "The armory of Maredh, where the court's champions left their weapons to rust.",
+      "region": "VI",
+      "pos": [
+        0.8971,
+        0.9617
+      ],
+      "optional": true,
+      "encounter": "dr_77",
+      "treasure": "dr_armory"
+    },
+    {
+      "id": "dr78",
+      "type": "battle",
+      "name": "The Long Gallery",
+      "subtitle": "Battle · Gallery Guard",
+      "lore": "A long gallery of portraits, every face in them drowned.",
+      "region": "VI",
+      "pos": [
+        0.8672,
+        0.8608
+      ],
+      "encounter": "dr_78"
+    },
+    {
+      "id": "dr79",
+      "type": "elite",
+      "name": "The Champion's Stair",
+      "subtitle": "Elite · The Drowned Champion",
+      "lore": "The champion of the court guards the stair to the throne, as he did in life.",
+      "region": "VI",
+      "pos": [
+        0.8283,
+        0.9139
+      ],
+      "encounter": "dr_79"
+    },
+    {
+      "id": "dr80",
+      "type": "rest",
+      "name": "Last Camp",
+      "subtitle": "Rest · Camp",
+      "lore": "A dry chamber in the drowned palace, the last quiet place before the throne.",
+      "region": "VI",
+      "pos": [
+        0.7895,
+        0.8661
+      ],
+      "rest": true
+    },
+    {
+      "id": "dr81",
+      "type": "battle",
+      "name": "Antechamber",
+      "subtitle": "Battle · The Queen's Guard",
+      "lore": "The antechamber of the throne, where the whole court waits for its queen.",
+      "region": "VI",
+      "pos": [
+        0.8074,
+        0.7598
+      ],
+      "encounter": "dr_81"
+    },
+    {
+      "id": "dr82",
+      "type": "boss",
+      "name": "Throne of Brine",
+      "subtitle": "Final Boss · The Drowned Queen",
+      "lore": "On a throne of brine sits the Drowned Queen, and on her head the Crown of Salt.",
+      "region": "VI",
+      "pos": [
+        0.8642,
+        0.7099
+      ],
+      "encounter": "dr_drowned_queen"
+    },
+    {
+      "id": "dr83",
+      "type": "event",
+      "name": "Two Crowns",
+      "subtitle": "Event",
+      "lore": "Two halves of one crown, and the long road north.",
+      "region": "VI",
+      "pos": [
+        0.9031,
+        0.6695
+      ],
+      "event": "dr_two_crowns",
+      "final": true
+    }
+  ],
+  "edges": [
+    {
+      "from": "dr1",
+      "to": "dr2",
+      "style": "solid"
+    },
+    {
+      "from": "dr2",
+      "to": "dr3",
+      "style": "solid"
+    },
+    {
+      "from": "dr3",
+      "to": "dr4",
+      "style": "solid"
+    },
+    {
+      "from": "dr3",
+      "to": "dr5",
+      "style": "solid"
+    },
+    {
+      "from": "dr4",
+      "to": "dr7",
+      "style": "solid"
+    },
+    {
+      "from": "dr5",
+      "to": "dr6",
+      "style": "solid"
+    },
+    {
+      "from": "dr6",
+      "to": "dr7",
+      "style": "solid"
+    },
+    {
+      "from": "dr7",
+      "to": "dr8",
+      "style": "solid"
+    },
+    {
+      "from": "dr8",
+      "to": "dr9",
+      "style": "solid"
+    },
+    {
+      "from": "dr8",
+      "to": "dr10",
+      "style": "solid"
+    },
+    {
+      "from": "dr9",
+      "to": "dr12",
+      "style": "solid"
+    },
+    {
+      "from": "dr10",
+      "to": "dr12",
+      "style": "solid"
+    },
+    {
+      "from": "dr10",
+      "to": "dr11",
+      "style": "dashed"
+    },
+    {
+      "from": "dr12",
+      "to": "dr13",
+      "style": "solid"
+    },
+    {
+      "from": "dr13",
+      "to": "dr14",
+      "style": "solid"
+    },
+    {
+      "from": "dr13",
+      "to": "dr17",
+      "style": "solid"
+    },
+    {
+      "from": "dr14",
+      "to": "dr15",
+      "style": "solid"
+    },
+    {
+      "from": "dr15",
+      "to": "dr16",
+      "style": "solid"
+    },
+    {
+      "from": "dr16",
+      "to": "dr20",
+      "style": "solid"
+    },
+    {
+      "from": "dr17",
+      "to": "dr19",
+      "style": "solid"
+    },
+    {
+      "from": "dr19",
+      "to": "dr20",
+      "style": "solid"
+    },
+    {
+      "from": "dr17",
+      "to": "dr18",
+      "style": "dashed"
+    },
+    {
+      "from": "dr20",
+      "to": "dr21",
+      "style": "solid"
+    },
+    {
+      "from": "dr21",
+      "to": "dr22",
+      "style": "solid"
+    },
+    {
+      "from": "dr22",
+      "to": "dr23",
+      "style": "solid"
+    },
+    {
+      "from": "dr23",
+      "to": "dr24",
+      "style": "solid"
+    },
+    {
+      "from": "dr24",
+      "to": "dr26",
+      "style": "solid"
+    },
+    {
+      "from": "dr24",
+      "to": "dr25",
+      "style": "dashed"
+    },
+    {
+      "from": "dr26",
+      "to": "dr27",
+      "style": "solid"
+    },
+    {
+      "from": "dr27",
+      "to": "dr28",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr29",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr30",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr31",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr32",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr33",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr34",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr36",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr37",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr38",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr39",
+      "style": "solid"
+    },
+    {
+      "from": "dr28",
+      "to": "dr40",
+      "style": "solid"
+    },
+    {
+      "from": "dr34",
+      "to": "dr35",
+      "style": "dashed"
+    },
+    {
+      "from": "dr40",
+      "to": "dr41",
+      "style": "solid",
+      "ctrl": [
+        0.4785,
+        0.6376
+      ]
+    },
+    {
+      "from": "dr41",
+      "to": "dr42",
+      "style": "solid"
+    },
+    {
+      "from": "dr42",
+      "to": "dr43",
+      "style": "solid"
+    },
+    {
+      "from": "dr43",
+      "to": "dr47",
+      "style": "solid"
+    },
+    {
+      "from": "dr41",
+      "to": "dr44",
+      "style": "solid"
+    },
+    {
+      "from": "dr44",
+      "to": "dr45",
+      "style": "solid"
+    },
+    {
+      "from": "dr45",
+      "to": "dr46",
+      "style": "solid"
+    },
+    {
+      "from": "dr46",
+      "to": "dr47",
+      "style": "solid"
+    },
+    {
+      "from": "dr47",
+      "to": "dr48",
+      "style": "solid"
+    },
+    {
+      "from": "dr48",
+      "to": "dr49",
+      "style": "solid"
+    },
+    {
+      "from": "dr49",
+      "to": "dr50",
+      "style": "solid"
+    },
+    {
+      "from": "dr50",
+      "to": "dr52",
+      "style": "solid"
+    },
+    {
+      "from": "dr52",
+      "to": "dr53",
+      "style": "solid"
+    },
+    {
+      "from": "dr53",
+      "to": "dr54",
+      "style": "solid"
+    },
+    {
+      "from": "dr50",
+      "to": "dr51",
+      "style": "dashed"
+    },
+    {
+      "from": "dr54",
+      "to": "dr55",
+      "style": "solid"
+    },
+    {
+      "from": "dr54",
+      "to": "dr60",
+      "style": "solid"
+    },
+    {
+      "from": "dr55",
+      "to": "dr56",
+      "style": "solid"
+    },
+    {
+      "from": "dr56",
+      "to": "dr57",
+      "style": "solid"
+    },
+    {
+      "from": "dr57",
+      "to": "dr58",
+      "style": "solid"
+    },
+    {
+      "from": "dr58",
+      "to": "dr63",
+      "style": "solid"
+    },
+    {
+      "from": "dr60",
+      "to": "dr61",
+      "style": "solid"
+    },
+    {
+      "from": "dr61",
+      "to": "dr62",
+      "style": "solid"
+    },
+    {
+      "from": "dr62",
+      "to": "dr63",
+      "style": "solid"
+    },
+    {
+      "from": "dr56",
+      "to": "dr67",
+      "style": "dashed"
+    },
+    {
+      "from": "dr63",
+      "to": "dr64",
+      "style": "solid"
+    },
+    {
+      "from": "dr64",
+      "to": "dr66",
+      "style": "solid"
+    },
+    {
+      "from": "dr64",
+      "to": "dr65",
+      "style": "dashed"
+    },
+    {
+      "from": "dr66",
+      "to": "dr68",
+      "style": "solid"
+    },
+    {
+      "from": "dr68",
+      "to": "dr69",
+      "style": "solid"
+    },
+    {
+      "from": "dr69",
+      "to": "dr70",
+      "style": "solid"
+    },
+    {
+      "from": "dr70",
+      "to": "dr71",
+      "style": "solid"
+    },
+    {
+      "from": "dr71",
+      "to": "dr72",
+      "style": "solid"
+    },
+    {
+      "from": "dr72",
+      "to": "dr76",
+      "style": "solid"
+    },
+    {
+      "from": "dr70",
+      "to": "dr73",
+      "style": "solid"
+    },
+    {
+      "from": "dr73",
+      "to": "dr74",
+      "style": "solid"
+    },
+    {
+      "from": "dr74",
+      "to": "dr75",
+      "style": "solid"
+    },
+    {
+      "from": "dr75",
+      "to": "dr76",
+      "style": "solid"
+    },
+    {
+      "from": "dr76",
+      "to": "dr77",
+      "style": "dashed"
+    },
+    {
+      "from": "dr76",
+      "to": "dr78",
+      "style": "solid"
+    },
+    {
+      "from": "dr78",
+      "to": "dr79",
+      "style": "solid"
+    },
+    {
+      "from": "dr79",
+      "to": "dr80",
+      "style": "solid"
+    },
+    {
+      "from": "dr80",
+      "to": "dr81",
+      "style": "solid"
+    },
+    {
+      "from": "dr81",
+      "to": "dr82",
+      "style": "solid"
+    },
+    {
+      "from": "dr82",
+      "to": "dr83",
+      "style": "solid"
+    },
+    {
+      "from": "dr62",
+      "to": "dr59",
+      "style": "dashed"
+    }
+  ]
+}

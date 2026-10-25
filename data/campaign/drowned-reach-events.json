@@ -1,0 +1,333 @@
+{
+  "_not": "Harita 2 (The Drowned Reach) olayları, hazineleri ve kasaba hikâyeleri (campaign-dev 2026-10-25, maps-2-3.md 3.2 / 3.4; oyun içi metin İngilizce). Biçim data/campaign/events.json ile aynı (events{} choices[] şablonu, treasures{}, stories{}); src/campaign/data.ts iki dosyayı birleştirir, anahtarlar dr_ önekli (çakışmasın). Faction (M-L: Guild Hall / Inquisition House, Monk's Isle), Charter a ship (M-J: Ferry Office) ve Lighthouse (M-M: Lantern Rock) BU ADIMDA YOK: düz lore / küçük ödül olayı olarak duruyor (maps-2-3.md 9.3). Ödül sayıları PROVİZYON.",
+  "events": {
+    "dr_floodplain_farms": {
+      "title": "The Flooded Fields",
+      "text": "Farmers wade through their drowned fields, carrying what they can to the high ground. \"Reavers came up the river last night,\" one of them calls. \"They took our boats, and they'll be back for the rest.\"",
+      "choices": [
+        {
+          "id": "help",
+          "label": "Help the farmers",
+          "hint": "Fight the river reavers. Win: a chest and some gold.",
+          "battle": ["dr_farm_raiders"],
+          "win": { "gold": 35, "chest": true },
+          "result": "The reavers flee downriver without their plunder. The farmers press what they can spare into your hands."
+        },
+        {
+          "id": "leave",
+          "label": "Move on",
+          "hint": "Keep to the road.",
+          "result": "You leave the farmers to their buckets. The river keeps rising behind you."
+        }
+      ]
+    },
+    "dr_stilt_hamlet": {
+      "title": "The Eel-Wives",
+      "text": "Women in oilskin coats mend nets on the walkways between the stilt houses. They watch you the way they watch the water: patiently.",
+      "choices": [
+        {
+          "id": "barter",
+          "label": "Barter with them",
+          "hint": "Pay 30 gold. They trade you one item from their stores.",
+          "cost": 30,
+          "chest": true,
+          "chestItems": 1,
+          "result": "The eldest weighs your coins in her palm, then fetches a bundle wrapped in eel-skin."
+        },
+        {
+          "id": "listen",
+          "label": "Ask about the weir",
+          "hint": "Hear what the eel-wives know.",
+          "result": "\"The weir-wyrm was small once,\" the eldest says. \"Then the Tide started rising. Now it grows with the water. Fight it where the ground is dry, if you can find any.\""
+        },
+        {
+          "id": "leave",
+          "label": "Move on",
+          "hint": "Walk on through the hamlet.",
+          "result": "You nod to the eel-wives and walk on along the creaking boards."
+        }
+      ]
+    },
+    "dr_smugglers_reeds": {
+      "title": "The Reed Toll",
+      "text": "A boat noses out of the reeds and blocks the channel. Two more slide in behind you. \"This water's ours,\" says the woman at the bow. \"Pay the toll or swim.\"",
+      "choices": [
+        {
+          "id": "pay",
+          "label": "Pay the toll",
+          "hint": "Pay 40 gold. The smugglers let you pass.",
+          "cost": 40,
+          "result": "The smugglers count your coins and pole their boats aside. \"Safe travels,\" one of them grins."
+        },
+        {
+          "id": "fight",
+          "label": "Refuse",
+          "hint": "Fight the smugglers. Win: their chest and their gold.",
+          "battle": ["dr_smugglers"],
+          "win": { "gold": 45, "chest": true },
+          "result": "The smugglers' boats drift empty in the reeds. Their strongbox is yours."
+        }
+      ]
+    },
+    "dr_fishmarket": {
+      "title": "The Fishmarket",
+      "text": "Gulls scream over the stalls. Fishwives shout prices, sailors shout back, and everyone talks about the sea.",
+      "choices": [
+        {
+          "id": "rumours",
+          "label": "Listen to the rumours",
+          "hint": "Hear what the harbour is saying.",
+          "result": "\"Black sails off the isles again,\" a sailor mutters. \"And the bells of the sunken court rang last night. My grandmother says they ring when a queen is crowned.\""
+        },
+        {
+          "id": "barter",
+          "label": "Buy from a stall",
+          "hint": "Pay 25 gold for one item a sailor brought back from the isles.",
+          "cost": 25,
+          "chest": true,
+          "chestItems": 1,
+          "result": "The sailor unwraps a bundle of oilcloth and lets you pick one thing from it."
+        },
+        {
+          "id": "leave",
+          "label": "Move on",
+          "hint": "Leave the market.",
+          "result": "You push your way out of the crowd and back to the street."
+        }
+      ]
+    },
+    "dr_guild_hall": {
+      "title": "Guild Hall and Inquisition House",
+      "text": "On one side of the square stands the Guild Hall, its doors open, its clerks busy with the harbour's trade. On the other stands the Inquisition House of the Order of St. Brann, its doors shut, its windows barred.\n\nThe Harbor-Master's people watch you from one door, the Brother-Provost's from the other. Neither side speaks to you yet. Saltmere is a city of two masters, and sooner or later every newcomer is asked which one they serve."
+    },
+    "dr_ferry_office": {
+      "title": "The Ferry Office",
+      "text": "The ferry clerk turns the pages of a ledger thick with the names of ships that never came back. \"No charters to the isles this season,\" he says without looking up. \"If you must cross, go down the coast to Fisher's Landing. The fishing boats still sail from there, if the weather lets them.\""
+    },
+    "dr_lantern_rock": {
+      "title": "Lantern Rock",
+      "text": "The old lighthouse is dark, its great lamp cracked and dry. Gulls nest in the lamp room. From the gallery you can see the whole coast: the cliffs, the wrecks, and far out in the grey, the drowned isles.\n\nSomeone could light this lamp again, with oil and a little work. Not today."
+    },
+    "dr_widows_watch": {
+      "title": "The Ship on the Rocks",
+      "text": "A merchant ship lies on the rocks below the widows' walk, her crew clinging to the rigging. The wreckers are already rowing out to her. One of them looks up at you and waves a purse. \"There's enough for everyone, friend. Just look the other way.\"",
+      "choices": [
+        {
+          "id": "save",
+          "label": "Save the ship",
+          "hint": "Fight the wreckers. Win: the grateful merchant's chest.",
+          "battle": ["dr_widows_wreckers"],
+          "win": { "chest": true },
+          "result": "The wreckers' boats burn on the beach. The merchant's crew climbs ashore, and the captain opens his chest for you."
+        },
+        {
+          "id": "cut",
+          "label": "Take the wreckers' cut",
+          "hint": "Take 50 gold and look the other way.",
+          "gold": 50,
+          "result": "The purse is heavy. Behind you the sea takes the ship, and the wreckers take the rest."
+        }
+      ]
+    },
+    "dr_saltspray_shrine": {
+      "title": "The Saltspray Shrine",
+      "text": "A small shrine to the sea stands on the cliff, its stones white with salt. Old offerings lie in its niches: shells, fish-hooks, a child's shoe. The spray reaches it even on calm days.",
+      "choices": [
+        {
+          "id": "pray",
+          "label": "Leave an offering",
+          "hint": "The living recover 15% health.",
+          "heal": 0.15,
+          "result": "You leave a coin in the niche. The spray is cold and clean on your faces, and for a moment the wounds sting less."
+        },
+        {
+          "id": "read",
+          "label": "Read the inscription",
+          "hint": "Read what is carved on the shrine.",
+          "result": "The words are worn almost smooth. \"To the Tide that gives and takes. Keep your half, as we keep ours.\" Someone has scratched a crown beneath it, split down the middle."
+        }
+      ]
+    },
+    "dr_monks_isle": {
+      "title": "Monk's Isle",
+      "text": "The monks of St. Brann keep a small house on the isle. Their bell rings for every ship that passes, and for every ship that does not come back.",
+      "choices": [
+        {
+          "id": "bread",
+          "label": "Accept the monks' bread",
+          "hint": "The living recover 20% health.",
+          "heal": 0.2,
+          "result": "The monks share their bread and their fire. They ask no questions, and they pray for you when you leave."
+        },
+        {
+          "id": "leave",
+          "label": "Move on",
+          "hint": "Thank the monks and sail on.",
+          "result": "You thank the monks and push off from their little jetty. The bell rings behind you."
+        }
+      ]
+    },
+    "dr_sunken_stair": {
+      "title": "The Sunken Stair",
+      "text": "A great stair of pale stone runs down from the last isle into the sea. The water stands back from it on both sides like a wall of green glass. At the bottom, far below, lights move in the windows of a drowned palace.\n\nThis is the way into the Sunken Court of Maredh. Whatever rules there, it is waiting."
+    },
+    "dr_flooded_library": {
+      "title": "The Flooded Library",
+      "text": "The court's library is knee deep in seawater, its books swollen past reading. But in a sealed case at its heart lies one dry book: a history of the court.\n\nIt tells how the founders of Valdoria carried the Ember of the First Hearth out of the mountain, and could not put it out. How they caged it in a crown and split the crown in two, one half to the mountain, one half to the sea, so that no single bearer could ever hold the whole fire. How the sea kept its half here, in Maredh, for four hundred years.\n\nYour company makes camp among the shelves, on the one dry floor in the palace."
+    },
+    "dr_two_crowns": {
+      "title": "Two Crowns",
+      "text": "The Drowned Queen is gone. The Crown of Salt lies on the wet stones beside the Crown of Ash, and the two halves stir when you lift them, pulling at each other, pulling at your hands.\n\nThey pull north. Past Valdoria, past Morvane's burnt keep, toward the mountain where the fire was first dug out of the earth.\n\nWhat was split must be mended, or ended."
+    }
+  },
+  "treasures": {
+    "dr_barge_wreck": { "title": "Barge Wreck", "text": "The lurkers are dead. In the barge's flooded hold you find a sealed trader's chest.", "reward": "Open the chest to claim its gear and gold." },
+    "dr_ford_chapel": {
+      "_not": "Cep (PROVİZYON): altın ağırlıklı, Raiders' Hoard gibi.",
+      "title": "Chapel of the Ford",
+      "text": "The villagers hid their savings in the chapel when the waters rose. They never came back for them.",
+      "reward": "Take the savings: mostly coin, and one piece of gear.",
+      "loot": { "maxItems": 1, "gold": 60 }
+    },
+    "dr_sunken_chapel": { "title": "Sunken Chapel", "text": "Beneath the bell tower, above the waterline, the chapel's treasury chest is still dry.", "reward": "Open the chest to claim its gear and gold." },
+    "dr_eel_lair": {
+      "_not": "Cep (PROVİZYON): az ama iyi, Sunken Shrine gibi.",
+      "title": "Eel-Mother's Lair",
+      "text": "The eel-mother's nest is built from the wrecks of boats, and the boats still hold their cargo.",
+      "reward": "Take the cargo: a few fine pieces of gear.",
+      "loot": { "itemsDelta": -1, "gold": 15, "gift": "uncommon" }
+    },
+    "dr_crypt_stair": {
+      "_not": "Cep (PROVİZYON): item ağırlıklı, Supply Wagons gibi.",
+      "title": "The Crypt Stair",
+      "text": "The old bishops were buried with their rings and their croziers. They will not miss them now.",
+      "reward": "Take the grave goods: gear, and a little gold.",
+      "loot": { "gift": "common", "gold": 10 }
+    },
+    "dr_smugglers_cave": { "title": "Smugglers' Cave", "text": "The smugglers' stash is piled at the back of the cave, above the high-tide line.", "reward": "Open the stash to claim its gear and gold." },
+    "dr_sea_cave": {
+      "_not": "Cep (PROVİZYON): az ama iyi.",
+      "title": "Sea Cave Hoard",
+      "text": "The tide has carried the treasures of a hundred wrecks into this cave, and left the best of them high and dry.",
+      "reward": "Take the hoard: a few fine pieces of gear.",
+      "loot": { "itemsDelta": -1, "gold": 15, "gift": "uncommon" }
+    },
+    "dr_monastery_vault": {
+      "_not": "Cep (PROVİZYON): korumasız hazine; item ağırlıklı.",
+      "title": "Salt Monastery Vault",
+      "text": "The monks kept what the sea gave up in a vault beneath their house. They let you take what you need.",
+      "reward": "Take what the monks offer: gear, and a little gold.",
+      "loot": { "gift": "common", "gold": 10 }
+    },
+    "dr_salt_garden": { "title": "The Salt Garden", "text": "Among the salt flowers stands a coral casket, sealed with the court's crest.", "reward": "Open the casket to claim its gear and gold." },
+    "dr_armory": {
+      "_not": "Cep (PROVİZYON): az ama iyi.",
+      "title": "Armory of Maredh",
+      "text": "Most of the court's weapons have rusted to nothing, but a few were made to last.",
+      "reward": "Take the best of the armory: a few fine pieces of gear.",
+      "loot": { "itemsDelta": -1, "gold": 15, "gift": "uncommon" }
+    }
+  },
+  "stories": {
+    "dr_the_ferryman": {
+      "title": "The Ferryman",
+      "speaker": "The Ferryman",
+      "text": "An old ferryman sits on an upturned boat at the water's edge, mending a rope. He looks at the crown wrapped in your pack before he looks at you.",
+      "dialogue": [
+        {
+          "text": "\"Another lot coming down from the north. You're carrying something heavy, I can see it in your shoulders. Where are you taking it?\"",
+          "choices": [
+            { "label": "\"To the sea. Morvane asked it of us.\"", "likes": true },
+            { "label": "\"That's our business, old man.\"" }
+          ]
+        },
+        {
+          "text": "\"The sea. Aye. Then mind the Order. The monks of St. Brann have shut the road to Saltmere. Quarantine, they call it. Nobody passes their gate without a reason they like.\"",
+          "choices": [
+            { "label": "\"What are they afraid of?\"", "likes": true },
+            { "label": "\"We'll give them a reason.\"" }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": { "rarity": "common" },
+      "liked": "\"The water. Same as the rest of us. Here, take this. Someone left it on my boat and never came back for it.\"",
+      "disliked": "\"Suit yourselves. The river doesn't care either way.\" He goes back to his rope."
+    },
+    "dr_weir_warden": {
+      "title": "The Weir-Warden",
+      "speaker": "Weir-Warden Ysolt",
+      "text": "Weir-Warden Ysolt keeps the sluice gates of Eelwick. She is soaked to the knees and has been for as long as anyone remembers.",
+      "dialogue": [
+        {
+          "text": "\"You're going to the weir mouth? Then listen. The wyrm is strong in the water and slow on the mud. When the flood comes in, it is twice the beast it was.\"",
+          "choices": [
+            { "label": "\"Then we fight it before the flood.\"", "likes": true },
+            { "label": "\"We've killed bigger.\"" }
+          ]
+        },
+        {
+          "text": "\"Good. You think. Most who go down there only swing. Do you know why the water's rising?\"",
+          "choices": [
+            { "label": "\"Tell us.\"", "likes": true },
+            { "label": "\"Water rises. That's what it does.\"" }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": { "rarity": "common" },
+      "liked": "\"Because something under the sea wants what you're carrying. Take this eel-oil and whatever else is in the bundle. It keeps the damp out of steel.\"",
+      "disliked": "\"Hm. Then the weir will teach you.\" She turns back to her gates."
+    },
+    "dr_harbor_master": {
+      "title": "The Harbor-Master",
+      "speaker": "Harbor-Master Rook",
+      "text": "Harbor-Master Rook meets you at the gate with two clerks and a ledger. He has heard of the company that killed Lord Morvane, and he has already worked out what you are worth.",
+      "dialogue": [
+        {
+          "text": "\"Welcome to Saltmere. You'll find everything here: Odo's chandlery for supplies, the smithies by the quay, swords for hire at the barracks. Everything has a price. What brings you to the sea?\"",
+          "choices": [
+            { "label": "\"The Tide. We mean to stop it.\"", "likes": true },
+            { "label": "\"Whatever pays.\"" }
+          ]
+        },
+        {
+          "text": "\"The Tide. Hah. The Order says it's a judgement. The Guild says it's bad for trade. I say the cathedral sank a little further this week. Will you hear what the city has to offer, before you choose a side?\"",
+          "choices": [
+            { "label": "\"We'll hear everyone out.\"", "likes": true },
+            { "label": "\"We don't take sides.\"" }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": { "rarity": "common" },
+      "liked": "\"A sensible company. Rare. Take this as a welcome from the Guild. We remember our friends.\"",
+      "disliked": "\"Everyone takes a side in Saltmere, sooner or later.\" He closes his ledger."
+    },
+    "dr_keepers_daughter": {
+      "title": "The Keeper's Daughter",
+      "speaker": "Keeper's Daughter",
+      "text": "The lighthouse keeper's daughter sits at the end of the jetty with a spyglass that is too big for her. She has been watching the isles since her father's light went out.",
+      "dialogue": [
+        {
+          "text": "\"You're crossing to the isles? Then watch for the black ship. Black sails, black hull. The Caravel. It sails the sound and the narrows and the strait, round and round.\"",
+          "choices": [
+            { "label": "\"Thank you. Who sails her?\"", "likes": true },
+            { "label": "\"We're not afraid of pirates.\"" }
+          ]
+        },
+        {
+          "text": "\"Captain Marrow. And behind him, in Gallows Cove, the Admiral. My father said the Admiral would never leave the cove while the Caravel still sails.\"",
+          "choices": [
+            { "label": "\"Then we'll find the Caravel first.\"", "likes": true },
+            { "label": "\"Your father talked a lot.\"" }
+          ]
+        }
+      ],
+      "likeThreshold": 2,
+      "gift": { "rarity": "common" },
+      "liked": "\"Take this. It was his. He'd want it to go to the isles, even if he can't.\"",
+      "disliked": "\"He did. He was right, too.\" She lifts the spyglass again."
+    }
+  }
+}

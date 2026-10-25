@@ -2,6 +2,7 @@ import { classes, defaultSlots, skills, CELL_COUNT } from '../engine/content';
 import { CONFIG, ENCOUNTERS, EVENTS, STORIES, TREASURES, getMap, type EventChoice } from './data';
 import { finalNode, incoming, neighbors, node, outgoing, undirectedDistances, upstreamOf } from './graph';
 import { rngFor, shuffle } from './seed';
+import { nextMapId } from './map-flags';
 import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
@@ -62,7 +63,7 @@ export function newCampaign(o: { mode: CampaignMode; seed: number; mapId?: strin
 /** Bir düğümün adımları (sırayla). Başlangıç düğümünde önce kahraman seçimi. */
 export function nodeSteps(map: CampaignMap, n: MapNode): StepKind[] {
   const steps: StepKind[] = [];
-  if (n.id === map.start) steps.push('hero');
+  if (n.id === map.start && !map.continues) steps.push('hero'); // devam haritasında (Harita 2) takım taşınır: kahraman seçimi yok
   if (n.recruit?.when === 'before') steps.push('recruit');
   if (n.endsTutorial) steps.push('farewell');
   if (n.newCompany) steps.push('company');
@@ -781,6 +782,39 @@ export function moveTo(s: CampaignState, to: string): CampaignState {
     }
   }
   markCleared(t, to); // adımı olmayan düğüm varınca temizlenmiş sayılır
+  return t;
+}
+
+// ---------------------------------------------------------------- harita geçişi (M-Q, maps-2-3.md 5 ve 8)
+
+/** Bitmiş haritadan sonra açılabilecek harita (sefer bitti + sıradaki harita açık; campaign.json > maps / mapFlags). Yoksa null. */
+export function nextMapFor(s: CampaignState): string | null {
+  if (nextStep(s).kind !== 'complete') return null;
+  const next = nextMapId(s.mapId);
+  return next && getMap(next).continues === s.mapId ? next : null;
+}
+
+/**
+ * "Continue to ..." (M-Q): sıradaki haritanın başlangıcına geçer. Taşınan: kadro ve dizilim (level, XP, puanlar, ağaç, ekipman), torba, altın,
+ * Valor, loot sayaçları, zafer / yenilgi sayıları, görülen ipuçları ve `done` (sinematik / hikâye işaretleri; düğüm id'leri haritalar arasında
+ * çakışmaz). Can ve ölüm (maps-2-3.md 8 önerisi): boss zaferinin tam şifası zaten uygulanmıştır, can oranları aynen taşınır; yaralar kalır ve
+ * ilk kasabada var olan kuralla (ilk varış = bedava dinlenme) silinir; cesetler ceset taşınır (yalnız Valor kaldırır). Harita durumu sıfırlanır:
+ * yürüyüş, temizlenen düğümler, devriye sayaçları; düğüme bağlı geçici alanlar (tezgâh, olay seçimi, duraklatma, devriye) atılır.
+ * Kayıt şeması aynı (`mapId` zaten kayıtta); `mapsDone` önceki haritayı listeler.
+ */
+export function continueToMap(s: CampaignState, mapId: string = nextMapFor(s) ?? ''): CampaignState {
+  const map = getMap(mapId);
+  if (map.continues !== s.mapId) throw new Error(`${mapId} does not continue ${s.mapId}`);
+  if (!isComplete(s)) throw new Error('Finish this map first');
+  const t = clone(s);
+  t.mapsDone = [...(t.mapsDone ?? []), s.mapId];
+  t.mapId = map.id;
+  t.at = map.start;
+  t.path = [map.start];
+  t.visited = [map.start];
+  t.cleared = [];
+  t.replays = {};
+  for (const k of ['patrol', 'shop', 'closedShop', 'eventChoice', 'suspended', 'formationDue', 'pendingLoot', 'pendingHandover'] as const) delete t[k];
   return t;
 }
 

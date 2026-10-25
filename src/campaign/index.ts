@@ -1,6 +1,8 @@
 // Sefer (campaign) mantığı: saf TypeScript (Phaser/DOM yok). Tasarım: docs/design/campaign/campaign.md
 export * from './types';
 export * from './data';
+export * from './map-flags';
+export * from './maps23-debug';
 export * from './graph';
 export * from './fog';
 export * from './seed';

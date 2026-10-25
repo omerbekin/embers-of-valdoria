@@ -6,8 +6,8 @@ import { CONFIG, POWER_BUDGET, chapterEnemyMods, chapterOf, enemyScale, enemySca
 const map = getMap('valdoria');
 
 describe('güç bütçesi', () => {
-  it('3 bölüm (Valdoria + The Ashlands + The Ember Throne), ilvl 1-10 / 11-20 / 21-30, item eğrisi +%15/+%30/+%45, telafi 0,8', () => {
-    expect(POWER_BUDGET.chapters.map((c) => c.name)).toEqual(['Valdoria', 'The Ashlands', 'The Ember Throne']);
+  it('3 bölüm (Valdoria + The Drowned Reach + The Ember Throne), ilvl 1-10 / 11-20 / 21-30, item eğrisi +%15/+%30/+%45, telafi 0,8', () => {
+    expect(POWER_BUDGET.chapters.map((c) => c.name)).toEqual(['Valdoria', 'The Drowned Reach', 'The Ember Throne']);
     expect(POWER_BUDGET.chapters.map((c) => c.ilvl)).toEqual([
       [1, 10],
       [11, 20],

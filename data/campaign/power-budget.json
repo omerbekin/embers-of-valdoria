@@ -9,7 +9,7 @@
   "_measured": "Telafi, item'lerin GERÇEKTEN verdiği beklenen güce göre (Ömer, madde 278): bölümde 'measured' varsa beklenen güç olarak o kullanılır, yoksa tasarım hedefi 'end'. Valdoria (bugünkü 12 duraklık kısa harita) ölçümü: sim:campaign --gear=best, 48 sefer, final öncesi ortalama Gear Score ~8 => +%8 (hedef +%15'e harita sıklaşınca (aşama 5a) loot sayısıyla yaklaşılır). Kaynak: madde 280.",
   "chapters": [
     { "chapter": 1, "name": "Valdoria", "map": "valdoria", "ilvl": [1, 10], "end": { "item": 0.15, "level": 0.1, "tree": 0.05 }, "measured": { "item": 0.08 } },
-    { "chapter": 2, "name": "The Ashlands", "map": null, "ilvl": [11, 20], "end": { "item": 0.3, "level": 0.2, "tree": 0.15 } },
+    { "chapter": 2, "name": "The Drowned Reach", "map": "drowned-reach", "ilvl": [11, 20], "end": { "item": 0.3, "level": 0.2, "tree": 0.15 } },
     { "chapter": 3, "name": "The Ember Throne", "map": null, "ilvl": [21, 30], "end": { "item": 0.45, "level": 0.3, "tree": 0.25 } }
   ],
   "_farmMax": "Farm ile beklenen eğrinin en fazla bu kadar üstüne çıkılır (roadmap 1.3 son satır; ölçüm hedefi, kod kuralı değil).",

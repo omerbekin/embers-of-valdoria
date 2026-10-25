@@ -3,7 +3,7 @@ import { existsSync, readdirSync } from 'node:fs';
 import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { content } from '../src/engine';
-import { buildWiki, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
+import { buildWiki, drownedReachArticle, drownedReachShown, stripNow, type WikiBlock, type WikiFiles } from '../src/wiki/catalog';
 import { UI_ICONS } from '../src/ui/dom-icons';
 import { ICON_KINDS } from '../src/ui/icon-kinds';
 import { ITEMS, itemDef, weaponPowerOf } from '../src/progression';
@@ -278,5 +278,16 @@ describe('Codex boyalı ikonları (assets/misc-icons/codex, docs/design/art/code
     expect(Object.keys(NAV_CODEX_ICON)).toHaveLength(16);
     expect(navIconName('nope', 'sword')).toBe('sword');
     expect(weaknessIconName()).toBe('codex:el_weakness');
+  });
+});
+
+describe('Codex: The Drowned Reach (Harita 2, bayrak arkasında)', () => {
+  it('bayrak kapalıyken sayfa yok; sayfa metni harita verisinden', () => {
+    expect(drownedReachShown()).toBe(false);
+    expect(wiki.mechanics.some((a) => a.id === 'drowned-reach')).toBe(false);
+    const a = drownedReachArticle();
+    expect(a.title).toBe('The Drowned Reach');
+    const text = a.blocks.flatMap(blockText).join(' ');
+    for (const w of ['83 stops', '6 regions', 'Saltmere', "Fisher's Landing", 'The Long Stair', 'Throne of Brine']) expect(text, w).toContain(w);
   });
 });

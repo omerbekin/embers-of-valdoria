@@ -3,6 +3,10 @@ import valdoriaJson from '../../data/campaign/valdoria.json';
 import campaignJson from '../../data/campaign/campaign.json';
 import encountersJson from '../../data/campaign/encounters.json';
 import eventsJson from '../../data/campaign/events.json';
+// Harita 2 (The Drowned Reach; maps-2-3.md 3): ayrı dosyalar, anahtarlar dr önekli; aşağıda Harita 1 verisiyle birleşir
+import drownedReachJson from '../../data/campaign/drowned-reach.json';
+import drEncountersJson from '../../data/campaign/drowned-reach-encounters.json';
+import drEventsJson from '../../data/campaign/drowned-reach-events.json';
 import type { CampaignConfig, CampaignMap, EncounterDef } from './types';
 import type { RarityId } from '../progression/items';
 
@@ -11,11 +15,12 @@ const strip = <T>(o: unknown): Record<string, T> =>
 
 export const MAPS: Record<string, CampaignMap> = {
   valdoria: valdoriaJson as unknown as CampaignMap,
+  'drowned-reach': drownedReachJson as unknown as CampaignMap,
 };
 
 export const CONFIG: CampaignConfig = campaignJson as unknown as CampaignConfig;
 
-export const ENCOUNTERS: Record<string, EncounterDef> = strip<EncounterDef>(encountersJson);
+export const ENCOUNTERS: Record<string, EncounterDef> = { ...strip<EncounterDef>(encountersJson), ...strip<EncounterDef>(drEncountersJson) };
 
 export interface EventText {
   title: string;
@@ -49,7 +54,10 @@ export interface EventDef extends EventText {
   choices?: EventChoice[];
 }
 
-export const EVENTS: Record<string, EventDef> = (eventsJson as unknown as { events: Record<string, EventDef> }).events;
+type EventsFile = { events: Record<string, EventDef>; stories?: Record<string, StoryDef>; treasures: Record<string, TreasureDef> };
+const EVENT_FILES = [eventsJson, drEventsJson] as unknown as EventsFile[];
+
+export const EVENTS: Record<string, EventDef> = Object.assign({}, ...EVENT_FILES.map((f) => f.events));
 /** Diyalog sahnesinde bir soru: NPC'nin repliği + 2-3 cevap; `likes` cevaplar NPC'nin hoşuna gider (gizli sayaç). */
 export interface DialogueStep {
   text: string;
@@ -75,7 +83,7 @@ export interface StoryDef extends EventText {
 }
 
 /** Kasaba hikâye sahneleri (T5; sis açma YOK; düğümün `story` alanı). */
-export const STORIES: Record<string, StoryDef> = (eventsJson as unknown as { stories?: Record<string, StoryDef> }).stories ?? {};
+export const STORIES: Record<string, StoryDef> = Object.assign({}, ...EVENT_FILES.map((f) => f.stories ?? {}));
 /**
  * Hazine sandığının içeriği (isteğe bağlı; Harita 1 cepleri, map-1-rework.md 3a). Yalnız var olan ödül türleri: `maxItems` sandık zarından en çok
  * bu kadar item, `itemsDelta` standart sandığın item sayısına ek (negatif = eksik), `gold` sabit altın (sandığın altını yerine), `gift`
@@ -92,7 +100,7 @@ export interface TreasureDef extends EventText {
   loot?: TreasureLoot;
 }
 
-export const TREASURES: Record<string, TreasureDef> = strip<TreasureDef>((eventsJson as unknown as { treasures: Record<string, TreasureDef> }).treasures);
+export const TREASURES: Record<string, TreasureDef> = Object.assign({}, ...EVENT_FILES.map((f) => strip<TreasureDef>(f.treasures)));
 
 export function getMap(id: string): CampaignMap {
   const m = MAPS[id];

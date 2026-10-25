@@ -1,0 +1,2488 @@
+{
+  "_not": "Harita 2 karşılaşmaları (YER TUTUCU, campaign-dev 2026-10-25; maps-2-3.md 3.2 / 3.3). Yeni mob YOK: belgedeki yeni moblar en yakın var olan class ile, görünen ad (name) belgedeki: River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug. Elit önderler: Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying. Bosslar: The Weir-Wyrm ve Admiral Vane = The Bridge Warden kiti (Vane'in Harpoon Ballista'sı = Iron Mooring), The Drowned Queen = Lord Morvane kiti. Çarpanlar: sıradan 1,0 (düşman level'ı bölüm 2 rampasından gelir), elit önder can 1,7 / güç 1,1 / stat 1,15, bosslar Harita 1 karşılaşmalarıyla aynı. Dalgalar var olan ekleme kuralıyla (waves.json; normal 2, elit 2, boss 3). Sim ölçümü YOK (balance-tester).",
+  "dr_weir_wyrm": {
+    "name": "The Weir-Wyrm",
+    "units": [
+      {
+        "class": "bridge_warden",
+        "slot": 1,
+        "name": "The Weir-Wyrm",
+        "tier": "boss",
+        "boss": "giant",
+        "noTierMods": true,
+        "mods": {
+          "spriteScale": 2.2,
+          "actionsPerTurn": 2,
+          "hpMult": 0.88
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 2,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_admiral_vane": {
+    "name": "Admiral Vane",
+    "units": [
+      {
+        "class": "bridge_warden",
+        "slot": 4,
+        "name": "Admiral Vane",
+        "tier": "boss",
+        "boss": "giant",
+        "noTierMods": true,
+        "mods": {
+          "spriteScale": 2.2,
+          "actionsPerTurn": 2,
+          "hpMult": 0.88
+        }
+      },
+      {
+        "class": "iron_mooring",
+        "slot": 3,
+        "name": "Harpoon Ballista",
+        "mods": {
+          "spriteScale": 1.5
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 8,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_drowned_queen": {
+    "name": "The Drowned Queen",
+    "units": [
+      {
+        "class": "lord_morvane",
+        "slot": 4,
+        "name": "The Drowned Queen",
+        "tier": "boss",
+        "mods": {
+          "hpMult": 1.022,
+          "powerMult": 0.565,
+          "spriteScale": 2.4
+        }
+      },
+      {
+        "class": "thane_of_the_deep",
+        "slot": 1,
+        "name": "The Drowned Champion",
+        "mods": {
+          "hpMult": 1.2,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 8,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_farm_raiders": {
+    "name": "River Reavers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Reaver Archer",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_smugglers": {
+    "name": "Smugglers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Reaver Archer",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 6,
+        "name": "Reaver Archer",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_widows_wreckers": {
+    "name": "Wreckers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 2,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_1": {
+    "name": "Ash Pilgrims",
+    "units": [
+      {
+        "class": "ember_acolyte",
+        "slot": 7,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ember_acolyte",
+        "slot": 6,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "charcoal_burner",
+        "slot": 8,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_3": {
+    "name": "River Reavers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Reaver Archer",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_4": {
+    "name": "The Drowned",
+    "units": [
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_5": {
+    "name": "Wreck Lurkers",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "slot": 1,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_7": {
+    "name": "Reaver Chief",
+    "units": [
+      {
+        "class": "bandit_chief",
+        "slot": 1,
+        "name": "Reaver Chief \"Hook\"",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 2,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Reaver Archer",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_8": {
+    "name": "Wreck Ghouls",
+    "units": [
+      {
+        "class": "ghoul",
+        "slot": 1,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_9": {
+    "name": "Weir Road Ambush",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "River Reaver",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 6,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_10": {
+    "name": "Ford Lurkers",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "slot": 1,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 4,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_13": {
+    "name": "Marsh Hexes",
+    "units": [
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 8,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_14": {
+    "name": "Salt Hags",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 0,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_17": {
+    "name": "Weir Guardians",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "slot": 1,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_18": {
+    "name": "Salt Hag Mother",
+    "units": [
+      {
+        "class": "hedge_witch_morwen",
+        "slot": 7,
+        "name": "Salt Hag Mother",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 8,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 4,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_19": {
+    "name": "Chapel Wardens",
+    "units": [
+      {
+        "class": "ghoul",
+        "slot": 1,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 2,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_20": {
+    "name": "Flats Hunters",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 6,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_21": {
+    "name": "Causeway Dead",
+    "units": [
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_24": {
+    "name": "Brine Hags",
+    "units": [
+      {
+        "class": "fen_witchling",
+        "slot": 7,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 0,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_25": {
+    "name": "The Eel-Mother's Brood",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "slot": 1,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 2,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_27": {
+    "name": "Order Quarantine",
+    "units": [
+      {
+        "class": "oathsworn_brother",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "oathsworn_brother",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_30": {
+    "name": "Dock Rats",
+    "units": [
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 4,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_32": {
+    "name": "Guild Enforcer",
+    "units": [
+      {
+        "class": "thane_of_the_deep",
+        "slot": 1,
+        "name": "Guild Enforcer \"Bastion\"",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 0,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 2,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_33": {
+    "name": "Sewer Dead",
+    "units": [
+      {
+        "class": "ghoul",
+        "slot": 1,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 4,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 7,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_34": {
+    "name": "Cathedral Dead",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_35": {
+    "name": "Crypt Guardians",
+    "units": [
+      {
+        "class": "ghoul",
+        "slot": 1,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 2,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 4,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_36": {
+    "name": "Corsairs",
+    "units": [
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 2,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_37": {
+    "name": "Wreckers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 2,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_40": {
+    "name": "Quarantine Dead",
+    "units": [
+      {
+        "class": "ghoul",
+        "slot": 1,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_41": {
+    "name": "Cliff Hunters",
+    "units": [
+      {
+        "class": "ash_hound",
+        "slot": 1,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 6,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_42": {
+    "name": "Beacon Wreckers",
+    "units": [
+      {
+        "class": "moor_raider",
+        "slot": 1,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_43": {
+    "name": "Cave Smugglers",
+    "units": [
+      {
+        "class": "road_thug",
+        "slot": 1,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "road_thug",
+        "slot": 0,
+        "name": "Dock Rat",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 4,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_44": {
+    "name": "Bone Beach Dead",
+    "units": [
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 2,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_47": {
+    "name": "Stair Ambush",
+    "units": [
+      {
+        "class": "ash_hound",
+        "slot": 1,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 2,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "will_o_wisp",
+        "slot": 6,
+        "name": "Marsh Light",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_48": {
+    "name": "Boarders",
+    "units": [
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 6,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_50": {
+    "name": "The Wrecker-Captain",
+    "units": [
+      {
+        "class": "bandit_chief",
+        "slot": 1,
+        "name": "The Wrecker-Captain",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 0,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "moor_raider",
+        "slot": 2,
+        "name": "Reef Wrecker",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "bandit_crossbowman",
+        "slot": 7,
+        "name": "Cliff Crossbowman",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "fen_witchling",
+        "slot": 6,
+        "name": "Salt Hag",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_51": {
+    "name": "Hoard Keepers",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 0,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 2,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 4,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_53": {
+    "name": "Gallows Dead",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 2,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 4,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_55": {
+    "name": "Corsair Boarders",
+    "units": [
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 2,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_57": {
+    "name": "Siren Song",
+    "units": [
+      {
+        "class": "raven_seer",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 6,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_58": {
+    "name": "Isle Hounds",
+    "units": [
+      {
+        "class": "ash_hound",
+        "slot": 1,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 2,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_59": {
+    "name": "Corsair Captain",
+    "units": [
+      {
+        "class": "bandit_chief",
+        "slot": 1,
+        "name": "Corsair Captain \"Marrow\"",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 4,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_60": {
+    "name": "Narrows Boarders",
+    "units": [
+      {
+        "class": "raven_seer",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 6,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_62": {
+    "name": "Deep Water",
+    "units": [
+      {
+        "class": "grey_wolf",
+        "slot": 1,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 0,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_63": {
+    "name": "Cove Corsairs",
+    "units": [
+      {
+        "class": "cutpurse",
+        "slot": 1,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 0,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "cutpurse",
+        "slot": 2,
+        "name": "Corsair Cutlass",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 7,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 6,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_64": {
+    "name": "Storm Sirens",
+    "units": [
+      {
+        "class": "raven_seer",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 6,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 8,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ravenwood_poacher",
+        "slot": 4,
+        "name": "Corsair Slinger",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_65": {
+    "name": "The Siren Queen",
+    "units": [
+      {
+        "class": "hedge_witch_morwen",
+        "slot": 7,
+        "name": "The Siren Queen",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 6,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 8,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_68": {
+    "name": "Shoal Knights",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_70": {
+    "name": "Gate Guard",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 2,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_71": {
+    "name": "Tide Callers",
+    "units": [
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 6,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 1,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "drowned",
+        "slot": 0,
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_72": {
+    "name": "Garden Keepers",
+    "units": [
+      {
+        "class": "shieldwarden",
+        "slot": 1,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "shieldwarden",
+        "slot": 0,
+        "name": "Salt Crab",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_73": {
+    "name": "Courtiers",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ghoul",
+        "slot": 0,
+        "name": "Wreck Ghoul",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_74": {
+    "name": "The Salt Bishop",
+    "units": [
+      {
+        "class": "high_priest_of_the_undying",
+        "slot": 7,
+        "name": "The Salt Bishop",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 8,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_76": {
+    "name": "Kennel Beasts",
+    "units": [
+      {
+        "class": "ash_hound",
+        "slot": 1,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "ash_hound",
+        "slot": 0,
+        "name": "Reef Hound",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 2,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grey_wolf",
+        "slot": 4,
+        "name": "Weir Eel",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_77": {
+    "name": "Armory Guard",
+    "units": [
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 2,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_78": {
+    "name": "Gallery Guard",
+    "units": [
+      {
+        "class": "raven_seer",
+        "slot": 7,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "raven_seer",
+        "slot": 6,
+        "name": "Siren",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 8,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_79": {
+    "name": "The Drowned Champion",
+    "units": [
+      {
+        "class": "thane_of_the_deep",
+        "slot": 1,
+        "name": "The Drowned Champion",
+        "tier": "elite",
+        "mods": {
+          "hpMult": 1.7,
+          "powerMult": 1.1,
+          "statMult": 1.15
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 2,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 7,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  },
+  "dr_81": {
+    "name": "The Queen's Guard",
+    "units": [
+      {
+        "class": "censer_monk",
+        "slot": 7,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "censer_monk",
+        "slot": 6,
+        "name": "Brine Maiden",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "grave_chanter",
+        "slot": 8,
+        "name": "Tide Caller",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 1,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      },
+      {
+        "class": "sworn_guard",
+        "slot": 0,
+        "name": "Drowned Knight",
+        "mods": {
+          "hpMult": 1,
+          "powerMult": 1
+        }
+      }
+    ]
+  }
+}

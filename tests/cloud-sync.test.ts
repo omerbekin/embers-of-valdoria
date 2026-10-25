@@ -325,6 +325,7 @@ describe('anahtar listesi anlık görüntüsü (yeni eov.* anahtarı bilinçli k
     'eov.cloud.backup.v1',
     'eov.cloud.v1', // bulut istemcisinin senkron meta'sı (src/cloud/cloud.ts), yalnızca girişliyken
     'eov.cloud.tombstones.v1', // paketin `tombstones` alanıyla taşınır, anahtar olarak değil
+    'eov.debug.maps23', // Harita 2-3 test bayrağı (src/ui/maps23-flag.ts)
     'eov.debug.side',
     'eov.debugBtnPos',
     'eov.debugLootXp',
@@ -350,7 +351,7 @@ describe('anahtar listesi anlık görüntüsü (yeni eov.* anahtarı bilinçli k
     'eov.uiSound.v1',
   ];
   /** Yorumdaki yer tutucu (storage-migrate.ts: `eov.X`), anahtar değil. */
-  const PLACEHOLDERS = new Set(['eov.X']);
+  const PLACEHOLDERS = new Set(['eov.X', 'eov.m23.X']); // storage-scope.ts yorumu: /maps23/ kopyasının önek örneği
   const files = (dir: string): string[] => readdirSync(dir).flatMap((f) => (statSync(join(dir, f)).isDirectory() ? files(join(dir, f)) : /\.ts$/.test(f) ? [join(dir, f)] : []));
 
   it('SYNC_KEYS tam olarak 4 ilerleme anahtarı; src içindeki her eov.* anahtarı sınıflandırılmış', () => {

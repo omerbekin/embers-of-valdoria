@@ -20,6 +20,7 @@ import { clearCloudDirty, cloudDirty, onCloudDirty, storage } from '../game/kv-s
 import { BACKUP_KEY, SYNC_KEYS, type SyncKey } from './keys';
 import { mergeTombstones, readTombstones, sameTombstones, type Tombstone } from './tombstones';
 import cloudConfig from '../../data/cloud.json';
+import { isIsolatedCopy } from '../storage-scope';
 
 export const CLOUD_META_KEY = 'eov.cloud.v1';
 export const DEBOUNCE_MS = 15_000;
@@ -183,7 +184,7 @@ const defaultLoadCore = async (): Promise<CloudCore> => {
 function browserDeps(): CloudDeps {
   const w = typeof window !== 'undefined' ? window : undefined;
   return {
-    enabled: cloudConfig.enabled === true,
+    enabled: cloudConfig.enabled === true && !isIsolatedCopy(), // /maps23/ test kopyasında bulut kapalı
     fetch: (url, init) => fetch(url, init),
     now: () => Date.now(),
     setTimeout: (fn, ms) => globalThis.setTimeout(fn, ms),

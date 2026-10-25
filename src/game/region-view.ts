@@ -81,7 +81,7 @@ export function regionSets(map: CampaignMap, region: string, vis: Record<string,
     else if (a || b) {
       const inn = byId.get(a ? e.from : e.to);
       const out = byId.get(a ? e.to : e.from);
-      if (!inn || !out || inn.optional || out.optional) continue; // cep komşu sayılmaz
+      if (!inn || !out || inn.optional || out.optional || inn.spoke || out.spoke) continue; // cep / hub kolu komşu sayılmaz
       if (!seen(vis[out.id])) continue; // kilitli (görülmemiş) bölgenin düğümü gösterilmez
       ghosts.add(out.id);
       ghostRoads.push(e);

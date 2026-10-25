@@ -97,6 +97,8 @@ export function nodeLevel(mapId: string, nodeId: string): number {
   const ch = chapterOf(mapId).chapter;
   const k = LEVELS.rampStartSteps;
   const map = getMap(mapId);
+  const own = map.nodes.find((n) => n.id === nodeId)?.level; // elle düğüm seviyesi (Harita 2'nin ilk 3 düğümü L10, maps-2-3.md 8)
+  if (own !== undefined) return own;
   const company = map.nodes.find((n) => n.newCompany);
   if (k === undefined || !company) return levelAt(ch, nodeDepth(mapId, nodeId));
   const dist = forwardDistances(map, company.id);

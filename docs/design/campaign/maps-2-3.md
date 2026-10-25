@@ -499,3 +499,41 @@ Harita 2-3 oyundan bağımsız ilerler: dal `maps-2-3`, kopya `C:\Users\Omer\Pro
 6. Sanat (art-pipeline, tek tek).
 7. M-K, M-L, M-M, M-N ve olaylar.
 8. Harita 3 aynı sırayla + D4 Frozen Echoes + D5 Ember Shards + A5'in Harita 3 görevleri.
+
+### 9.3 Adım 1 varsayımları ve açık sorular (campaign-dev, 2026-10-25; Ömer uyurken)
+
+Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıdakiler geri alınması kolay geçici kararlar. **K** = kritik soru (rapor listesinde).
+
+**Veri ve graf**
+- Düğüm id'leri `dr1..dr83` (mockup numarası + `dr` öneki): global skip listeleri (`waves.json > campaign.skipNodes ["1","2"]`), `done` işaretleri ve ipuçları Harita 1 id'leriyle çakışmasın diye.
+- Konumlar `public/mockups/maps-2-3/data.js` (m2) mockup'ından; arka plan `assets/campaign/drowned-reach-bg.webp` = `assets/source/maps-2-3/drowned-reach-map-v2.png` (yer tutucu, yeni çizim yok). Tam haritada en yakın iki rozet 31 px (dr34-dr63, farklı bölgeler); bölge içinde en az 72 px. Test eşiği bölge içi 70 px (Harita 1'in 120 px kuralı tam harita içindi).
+- **Spoke (Saltmere kolları):** Saltmere'nin yıldız biçimli 10 sokağı (dr29-34, dr36-39) yeni `spoke: true` alanı: tek giriş Saltmere, ileri ana yol yok, düz yol; rota sayımına, seçim noktasına ve K1'e girmez (graph.ts `isSide`). Kural değil veri sınıflandırması: oyuncu için var olan serbest dolaşımla gidip geri döner. dr34 (Drowned Cathedral) kolunun ucunda dr35 cebi var. **K**
+- Black Caravel mockup'ta yolsuzdu: Open Water'dan (dr62) kesik yolla cep (sabit elit).
+- Crossing durakları (dr55, 60, 62, 64): düz savaş, alt başlık "Crossing · ...", deniz kilidi yok.
+- Son durak dr83 "Two Crowns" olayı (`final: true`), önünde dr82 "Throne of Brine" final boss: Two Crowns metni boss'tan sonra oynar, sonra Campaign Complete.
+- Rota: 64 rota, 48-53 durak; `stopsPerRun` 53 (en uzun) yazıldı.
+
+**Seviye ve düşman**
+- dr1-3 elle L10 (yeni düğüm alanı `level`, power.ts `nodeLevel`); geri kalanı var olan bölüm rampası (bölüm 2 = L11-20). dr4 L12'ye atlıyor (L11 hiçbir düğümde yok). **K**
+- `power-budget.json` bölüm 2 adı "The Ashlands" -> "The Drowned Reach", `map: "drowned-reach"` (test güncellendi). Bölüm 3 adı değişmedi.
+- `CONFIG.enemyScale.regions` I/II/III anahtarlıydı; Harita 2'nin bölge id'leri de I-VI olduğu için yanlışlıkla Harita 1 çarpanları uygulanmasın diye `enemyScale.regionsMap: "valdoria"` eklendi (yalnız o haritada uygulanır).
+- Mob eşlemesi (yeni mob yok, var olanlar adlandırıldı): River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug.
+- Elitler (tier elite, hp 1.7 / güç 1.1 / stat 1.15): Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying.
+- Bosslar: Weir Wyrm = bridge_warden (dev, 2 Weir Eel, mooring yok), Admiral Vane = bridge_warden + iron_mooring "Harpoon Ballista" + eskort, Drowned Queen = lord_morvane + thane "The Drowned Champion" + 2 Brine Maiden. Çarpanlar kabaca, sim yok. Harbor Fort = Guild Enforcer "Bastion" (Order tarafı) seçildi.
+- Dalgalar var olan kuralla (waves.json: normal 2, elit 2, boss 3).
+
+**Kasabalar**
+- Reedgate, Eelwick, Fisher's Landing: köy sahnesi (town-ashford görselleri yeniden kullanıldı), Saltmere: şehir sahnesi (town-valdren görselleri) + "Odo's Chandlery", Harbor-Master Rook. Hepsinde tüccar, ateş başı, demirci, hikâye NPC'si (dr_the_ferryman, dr_weir_warden, dr_harbor_master, dr_keepers_daughter; İngilizce, 2 adımlık yer tutucu diyalog).
+- **Takım büyüklüğü:** `partyCap` kodda zorlanmıyor; her kasabada aday alınırsa takım 8'e çıkar. Geçici: yalnız Saltmere ayrılırken gönüllü verir (takım 4 -> 5, campaign.md "5. karakter açık"); köylerin kışla / ilan panosu aday göstermez. **K**
+- Faction (M-L), Charter (M-J), Lantern Rock (M-M), Monk's Isle: düz lore olayı + küçük ödül yer tutucusu (dr_guild_hall, dr_ferry_office, dr_lantern_rock, dr_monks_isle); kural yok.
+
+**Geçiş (M-Q) ve kayıt**
+- Morvane sonrası: Harita 2 açıksa pencere alt başlığı "Map Complete", düğmeler "Stay on the map" / "Continue to The Drowned Reach" -> Harita 2 giriş penceresi ("Not yet" / "Set out"). Kapalıysa Harita 1 sonu birebir aynı. Harita 2 sonu "Two Crowns · To Be Continued".
+- Taşınan: kadro, dizilim, level / XP / puan / ağaç / ekipman, torba, altın, Valor, loot sayaçları, istatistik, görülen ipuçları, `done`. Sıfırlanan: yürüyüş, temizlenenler, devriye sayaçları, düğüme bağlı geçici alanlar. Can oranları aynen (boss zaferi zaten tam şifa); yaralar ilk kasabanın bedava dinlenmesine kadar kalır; ceset ceset kalır (bölüm 8 önerisi).
+- Kayıt sürümü **artırılmadı** (12): `mapId` zaten kayıtta; yeni isteğe bağlı alan `mapsDone` (geçersizse atılır). Main ile birleştirmede sürüm çakışması olmasın diye. **K**
+- Harita 2 başında kahraman seçimi yok (`continues: "valdoria"`); Harita 2'de bölük kurma yok, serbest dolaşım baştan açık.
+
+**Bayrak, debug, kopya**
+- `campaign.json > mapFlags["drowned-reach"].enabled = false`. Debug > Campaign > "Maps 2-3 (test)": Enable Map 2 (`eov.debug.maps23`), Jump to The Drowned Reach, Jump to region I-VI, Finish Map 1 → transition. Adreste `?maps=1` açar ve hatırlar, `?maps=0` kapatır. Codex sayfası yalnız bayrak açıkken.
+- `/maps23/` yolunda (GitHub Pages test kopyası) localStorage / sessionStorage `eov.m23.` önekiyle ayrılır (src/storage-scope.ts, main.ts'in ilk import'u; index.html'deki ilk kare betiği de); bulut senkronu orada kapalı. Bilinen küçük etki: sekmeler arası `storage` olayı kopyada önekli anahtarla gelir (asset sürüm seçimi diğer sekmeye anında yansımaz).
+- Bölge savaş arka planları var olan sahnelerden (I kings-bridge, II misty-marsh, III pilgrim-road, IV iron-pass, V windy-moor, VI castle-hall): yer tutucu.
