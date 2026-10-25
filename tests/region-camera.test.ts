@@ -3,7 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { getMap } from '../src/campaign';
 import { clampMid } from '../src/game/map-view';
-import { REGION_VIEW, insetFrame, markersOverlap, overviewMarkers, overviewSafe, regionCamera, regionName, regionSub, regionZoom, safeRect, type HudInsets } from '../src/game/region-view';
+import { REGION_VIEW, insetFrame, markersOverlap, regionAt, overviewMarkers, overviewSafe, regionCamera, regionName, regionSub, regionZoom, safeRect, type HudInsets } from '../src/game/region-view';
 
 const W = 1920;
 const H = 1080;
@@ -85,6 +85,10 @@ describe('bölge kamerası: duraklar HUD altında kalmaz', () => {
           expect(m.y + m.h / 2, `${m.id} bottom`).toBeLessThanOrEqual(safe.bottom);
         }
         for (let i = 0; i < ms.length; i++) for (let j = i + 1; j < ms.length; j++) expect(markersOverlap(ms[i]!, ms[j]!), `${ms[i]!.id}-${ms[j]!.id}`).toBe(false);
+        // dokunma = çizim: işaretin (madalyon, ad, alt satır) her yerine dokunuş o bölgeyi seçer (sahne: renderOverview > pick = regionAt)
+        for (const m of ms)
+          for (const [fx, fy] of [[0, 0], [-0.45, 0], [0.45, 0], [-0.45, -0.4], [0.3, 0.4]] as const)
+            expect(regionAt(map, ms, P, m.x + fx * m.w, m.y + fy * m.h), `${m.id} @${fx},${fy}`).toBe(m.id);
       });
   }
 });

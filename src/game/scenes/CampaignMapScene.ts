@@ -187,6 +187,8 @@ const TYPE_LABEL: Record<NodeType, string> = { town: 'Town', battle: 'Battle', e
 /** Varışta kartın onayını bekleyen adımlar (Ömer 2026-10-19: kart çıkıp onaysız girmesin; hikaye / askerleme / veda / yeni takım dahil). */
 const CONFIRM_STEPS: readonly string[] = ['town', 'rest', 'merchant', 'event', 'treasure', 'story', 'recruit', 'volunteer', 'farewell', 'company'];
 const WALK_SPEED = 320; // px/sn
+/** İki parmak arası en çok bu kadar ms önce basılmış olmalı (daha eskisi kaybolmuş touchend: takılı parmak). */
+const PINCH_STALE_MS = 8000;
 /** Liderin dinlenirken düğüme göre yeri (mockup W4: düğümün solunda, biraz aşağıda; ad etiketini örtmez). */
 const TRAV_REST = { x: -76, y: 8 };
 const PAN_STEP = 340;
@@ -227,6 +229,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private overFx = new Map<string, (on: boolean) => void>();
   /** Görünüm geçişi (uzak <-> bölge) sürerken tekerlek / sıkıştırma yeni geçiş başlatmaz (bu zamana kadar). */
   private focusLockUntil = 0;
+  /** Harita / bölge yeniden çizildikten sonra kısa süre boş alana dokunuş uzak görünüme atmaz (düğümler belirirken rozete basılır). */
+  private emptyTapAt = 0;
   private fadeTweens: Phaser.Tweens.Tween[] = [];
   /** Sıkıştırma: uzak görünümde / en küçük yakınlaştırmada biriken oran (eşiği geçince görünüm değişir). */
   private pinchAcc = 1;
@@ -331,6 +335,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.overHover = null;
     this.overFx = new Map();
     this.focusLockUntil = 0;
+    this.emptyTapAt = 0;
     this.fadeTweens = [];
     this.pinchAcc = 1;
     this.partyRegion = null;
@@ -605,6 +610,7 @@ export class CampaignMapScene extends Phaser.Scene {
 
   private renderMap(animateFog: boolean): void {
     this.drawnCompact = this.compact();
+    this.emptyTapAt = this.time.now + motion('mapRegion').fadeInMs + 500;
     this.dyn.removeAll(true);
     this.openEdges = [];
     this.clearZones = [];
@@ -1266,7 +1272,9 @@ export class CampaignMapScene extends Phaser.Scene {
     this.events.once('shutdown', () => canvas.removeEventListener('wheel', stopZoom));
     this.input.on('pointerdown', (p: Phaser.Input.Pointer) => {
       // İkinci parmak (sıkıştırma başlangıcı) dokunuş sayılmaz: süren hareketi sıfırlamaz, hareket olarak işaretler
-      const multi = [this.input.pointer1, this.input.pointer2].filter((q) => q.isDown).length > 1;
+      // Kaybolmuş bir touchend ile "basılı" kalmış eski parmak ikinci parmak sayılmaz (Harita 2 playtest 2026-10-25: her dokunuş sürükleme /
+      // sıkıştırma sayılıp harita uzak görünüme düşüyor, sonra hiçbir dokunuş işlemiyordu)
+      const multi = this.livePointers().length > 1;
       if (multi) {
         this.drag.moved = true;
         return;
@@ -1279,7 +1287,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.input.on('pointermove', (p: Phaser.Input.Pointer) => {
       const a = this.input.pointer1;
       const b = this.input.pointer2;
-      if (a.isDown && b.isDown) {
+      if (this.livePointers().length > 1) {
         const d = Phaser.Math.Distance.Between(a.x, a.y, b.x, b.y);
         // İki parmakla sıkıştırma: iki parmağın ortasına doğru yakınlaştırma (anlık; parmak izler)
         if (pinch > 0 && !this.modal && !this.town) {
@@ -1322,10 +1330,17 @@ export class CampaignMapScene extends Phaser.Scene {
     });
     this.input.on('pointerup', () => {
       // Sıkıştırmadan kalkan son parmak da dokunuş sayılmasın: hareket bayrağı tüm parmaklar kalkınca sıfırlanır
-      if (this.input.pointer1.isDown || this.input.pointer2.isDown) return;
+      if (this.livePointers().length) return;
       this.drag.down = false;
       this.time.delayedCall(0, () => (this.drag.moved = false));
     });
+  }
+
+  /** Gerçekten basılı parmaklar (pointer1/2): basışı en yeni basıştan PINCH_STALE_MS'den eski olan "takılı" sayılmaz. */
+  private livePointers(): Phaser.Input.Pointer[] {
+    const down = [this.input.pointer1, this.input.pointer2].filter((q) => q?.isDown);
+    const latest = Math.max(0, ...down.map((q) => q.downTime));
+    return down.filter((q) => latest - q.downTime < PINCH_STALE_MS);
   }
 
   private camZoom(): number {
@@ -1467,8 +1482,10 @@ export class CampaignMapScene extends Phaser.Scene {
    * kısa sönüp belirir (data/ui-motion.json > mapRegion), sonra harita ve üst ortadaki bölge adı yeniden çizilir. Yürürken uzak görünüme geçilmez.
    */
   private switchFocus(region: string | null, anim = true): void {
-    if (region === this.focus || (region === null && this.walking)) return;
+    const stale = region !== null && region === this.focus && this.markers.length > 0; // uzak görünüm çizili ama odak bölgede: onar
+    if ((region === this.focus && !stale) || (region === null && this.walking)) return;
     if (region !== null && !this.map.regions.some((r) => r.id === region)) return;
+    if (stale) this.focus = null;
     this.hideNodeTip();
     this.overHover = null;
     for (const t of this.fadeTweens) t.stop();
@@ -1670,14 +1687,15 @@ export class CampaignMapScene extends Phaser.Scene {
     const zone = this.add.zone(W / 2, H / 2, W * 8, H * 8).setInteractive();
     this.world.add(zone);
     let armed = false;
-    const busy = () => this.focus === null || this.inputBusy() || isInputLocked() || this.time.now < this.focusLockUntil;
+    const busy = () => this.focus === null || this.inputBusy() || isInputLocked() || this.time.now < Math.max(this.focusLockUntil, this.emptyTapAt);
     const empty = (p: Phaser.Input.Pointer): boolean => {
       const ui = this.uiPoint(p);
       if (ui.x < stageView.left + (SIDE.left + SIDE.partyW) * (this.compact() ? COL_K : 1)) return false; // sol sütun (kafile)
       if (!this.focus) return false;
       const w = this.cameras.main.getWorldPoint(p.x, p.y);
       const rv = regionSets(this.map, this.focus, nodeVisibility(this.map, this.s, session.revealFog));
-      const r = Math.max(60, touchUnits(104, MIN_TOUCH_PX / (this.baseZoom * this.mapZoom)) / 2 + 8);
+      // düğüm çevresinde geniş pay: rozete yakın dokunuş hiçbir zaman "boş alan" sayılmaz (uzak görünüme atmaz)
+      const r = 1.6 * Math.max(60, touchUnits(104, MIN_TOUCH_PX / (this.baseZoom * this.mapZoom)) / 2 + 8);
       const spots = [...rv.inside, ...rv.ghosts].map((id) => {
         const c = this.P(id);
         const slot = this.labelPlan.get(id);
