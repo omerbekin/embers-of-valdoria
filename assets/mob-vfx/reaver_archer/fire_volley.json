@@ -1,0 +1,31 @@
+{
+  "slug": "fire_volley",
+  "title": "reaver archer fire volley",
+  "frames": 8,
+  "fps": 12,
+  "duration_ms": 667,
+  "frame_size": [
+    256,
+    256
+  ],
+  "sheet_size": [
+    1024,
+    512
+  ],
+  "grid": [
+    4,
+    2
+  ],
+  "order": "row-major",
+  "padding_px": 6,
+  "anchor": "bottom",
+  "pivot": [
+    128,
+    250
+  ],
+  "content_px": [
+    193,
+    244
+  ],
+  "source": "assets/source/mob-vfx/reaver_archer-fire_volley.png"
+}

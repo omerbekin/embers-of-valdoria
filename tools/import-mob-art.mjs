@@ -28,6 +28,10 @@ import { blackToAlpha } from './black-to-alpha.mjs';
 
 const ICON_SRC = 'assets/source/mob-icons';
 const ICON_OUT = 'assets/mob-icons';
+/** Mob ikonu olmayan sayfalarin cikti klasoru (durum ikonlari oyunda misc-icons/status adiyla bulunur). */
+/** Zemini de saf siyah olan sayfalar: karanlik bant bulma hucre ile ayirgaci ayiramaz; sabit 2x2 izgara (kenar 12, ayirac 20 px). */
+const FIXED_GRID_SHEETS = new Set(['status2-sheet', 'reaver_archer-sheet']);
+const ICON_SHEET_OUT = { 'status2-sheet': 'assets/misc-icons/status' };
 const VFX_SRC = 'assets/source/mob-vfx';
 const VFX_OUT = 'assets/mob-vfx';
 const POSE_SRC = 'assets/source/mob-poses';
@@ -38,6 +42,9 @@ const POSE_DENSITY = 0.5;
 
 /** Sayfa -> [TL, TR, BL, BR] adları (null = kullanılmayan hücre). */
 const ICON_SHEETS = {
+  // Harita 2 (2026-10-25): durum ikonlari (TR spellbound, BL saltbound secildi; TL/BR alternatif) -> assets/misc-icons/status; Reaver Archer Fire Volley (TR alternatif)
+  'status2-sheet': [null, 'spellbound', 'saltbound', null],
+  'reaver_archer-sheet': ['fire_volley', null, null, null],
   'stonebound_warden-sheet-simple': ['gatestone_slam', 'rockfall', 'stone_patience', null],
   'deep_runecaller-sheet': ['rune_spark', 'glyph_of_breaking', 'ward_etcher', null],
   'thane_of_the_deep-sheet': ['pick_of_the_deep', 'oath_of_stone', 'deep_hoard', null],
@@ -119,6 +126,8 @@ const GROUND = new Set([
   // Harita 2 (Drowned Reach)
   'corsair_slinger-pitch_pot',
   'salt_crab-burrow',
+  // Reaver Archer: Fire Volley (zemine sabit alev; kareler ayni taban cizgisine hizalandi)
+  'reaver_archer-fire_volley',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
@@ -253,6 +262,8 @@ async function importIcons() {
   let n = 0;
   for (const [sheet, names] of Object.entries(ICON_SHEETS)) {
     const src = join(ICON_SRC, `${sheet}.png`);
+    const outDir = ICON_SHEET_OUT[sheet] ?? ICON_OUT;
+    mkdirSync(join(outDir, 'small'), { recursive: true });
     if (!existsSync(src)) {
       console.warn(`atlandı (yok): ${src}`);
       continue;
@@ -273,8 +284,9 @@ async function importIcons() {
       for (let x = 0; x < W; x += 2) d += dark(x, y) ? 1 : 0;
       return d / Math.ceil(W / 2);
     });
-    const cols = spans(colF);
-    const rows = spans(rowF);
+    const fixed = (n) => [[12, n / 2 - 10], [n / 2 + 10, n - 13]];
+    const cols = FIXED_GRID_SHEETS.has(sheet) ? fixed(W) : spans(colF);
+    const rows = FIXED_GRID_SHEETS.has(sheet) ? fixed(H) : spans(rowF);
     if (cols.length !== 2 || rows.length !== 2) throw new Error(`${sheet}: 2x2 ızgara bulunamadı`);
     for (let k = 0; k < 4; k++) {
       const name = names[k];
@@ -291,10 +303,10 @@ async function importIcons() {
       // siyah zemin/çerçeve -> saydam (kahraman ikonları gibi); kırpma yok, kare korunur
       const cellPng = await cell.png().toBuffer();
       const buf = await blackToAlpha(cellPng, { trim: false, ...(await iconKeyOpts(cellPng)) });
-      await sharp(buf).resize(128, 128, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, `${name}.png`));
-      await sharp(buf).resize(64, 64, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(ICON_OUT, 'small', `${name}.png`));
+      await sharp(buf).resize(128, 128, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(outDir, `${name}.png`));
+      await sharp(buf).resize(64, 64, { kernel: 'lanczos3' }).png({ compressionLevel: 9 }).toFile(join(outDir, 'small', `${name}.png`));
       n++;
-      console.log(`${sheet} [${['TL', 'TR', 'BL', 'BR'][k]}] ${side}px -> ${ICON_OUT}/${name}.png`);
+      console.log(`${sheet} [${['TL', 'TR', 'BL', 'BR'][k]}] ${side}px -> ${outDir}/${name}.png`);
     }
   }
   console.log(`ikon: ${n}`);
