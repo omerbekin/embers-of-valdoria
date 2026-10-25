@@ -42,6 +42,7 @@ import {
   type Difficulty,
 } from '../campaign';
 import { MAX_TURNS } from './simulate';
+import { campaignWaveTeams } from '../campaign/suspend';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
 import { RARITY_IDS, clampRarity, instanceRarity, itemDef } from '../progression/items';
@@ -211,7 +212,7 @@ export function lateValorChoice(battle: Battle, actorUid: string, seen: Map<stri
  * (lateValorChoice; yalnızca grind sim'in ortalama oyuncusu açar).
  */
 export function fightPlan(plan: ReturnType<typeof battlePlan>, player: AiDifficulty, valor = true, lateValor = false): Battle {
-  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...(plan.waves ? { waves: plan.waves.map((w) => ({ enemies: w.enemies, units: w.units })) } : {}), ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
+  const battle = new Battle(content.battleSetup(content.DEFAULT_BATTLE, plan.seed, 'turns', { party: plan.party, enemies: plan.enemies, units: plan.units, ...campaignWaveTeams(plan), ...(plan.valor !== undefined && valor ? { valor: { party: plan.valor } } : {}) }, false));
   const seen = new Map<string, number>();
   while (!battle.winner && battle.turnsTaken < MAX_TURNS) {
     const actor = battle.currentActor;

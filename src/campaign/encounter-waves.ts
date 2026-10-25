@@ -17,13 +17,18 @@ export const regionReinforcement = (region: string | undefined): EncounterUnit[]
  * Yoksa dalgalar açıkken (data/waves.json > campaign) ve düğüm tutorial'ın dalgasız düğümlerinden değilse karşılaşmaya takviye dalgaları
  * EKLENİR (wave-split.ts > buildWaves; normal 2, elit 2, boss 3 dalga; olay / hazine savaşı normal sayılır). Kapalıyken tek dalga.
  */
-export function encounterWaves(def: Pick<EncounterDef, 'units' | 'waves'>, nodeId: string, nodeType: string, region?: string): EncounterUnit[][] {
+export function encounterWaves(def: Pick<EncounterDef, 'units' | 'waves' | 'objective'>, nodeId: string, nodeType: string, region?: string): EncounterUnit[][] {
+  // Break the Totem (B3): takviye totemden gelir, dalga eklenmez (tek dalga; VARSAYIM, open-questions 417)
+  if (objectiveType(def.objective) === 'totem') return [def.units];
   const later = (def.waves ?? []).filter((w) => w.units.length > 0).map((w) => w.units);
   if (later.length) return [def.units, ...later];
   const o = waveOpening.campaign;
   if (!o.enabled || o.skipNodes.includes(nodeId)) return [def.units];
   return buildWaves(def.units, o.count[nodeType] ?? o.count.battle ?? 1, isInertUnit, regionReinforcement(region));
 }
+
+/** Karşılaşma hedefinin türü (EncounterDef.objective; id ya da nesne). Yoksa undefined (herkesi öldür). */
+export const objectiveType = (o: EncounterDef['objective']): 'survive' | 'totem' | 'hold' | undefined => (typeof o === 'string' ? o : o?.type);
 
 /** Karşılaşmayı kullanan ilk sefer düğümü (önizleme bağlamı: düğüm id'si, türü, bölgesi). Yoksa undefined (ör. yalnızca Endless). */
 export function nodeForEncounter(encounterId: string): { id: string; type: string; region?: string } | undefined {
@@ -35,9 +40,9 @@ export function nodeForEncounter(encounterId: string): { id: string; type: strin
 }
 
 /** Karşılaşmanın seferdeki dalgaları, düğüm bağlamı haritadan bulunarak (önizleme / XP yedeği). Düğümü olmayan karşılaşma: units + `waves`. */
-export function encounterWavesById(encounterId: string, def: Pick<EncounterDef, 'units' | 'waves'> | undefined = ENCOUNTERS[encounterId]): EncounterUnit[][] {
+export function encounterWavesById(encounterId: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective'> | undefined = ENCOUNTERS[encounterId]): EncounterUnit[][] {
   if (!def) return [];
   const n = nodeForEncounter(encounterId);
-  if (!n) return [def.units, ...(def.waves ?? []).map((w) => w.units).filter((u) => u.length)];
+  if (!n) return objectiveType(def.objective) === 'totem' ? [def.units] : [def.units, ...(def.waves ?? []).map((w) => w.units).filter((u) => u.length)];
   return encounterWaves(def, n.id, n.type, n.region);
 }

@@ -200,6 +200,8 @@ export interface EncounterUnit {
   lockSkills?: string[];
   /** Başlangıç cooldown'u eki (motor: UnitSetup.initialCooldownBonus; cooldown'lu her skill'e, maxInitial'ı aşabilir). */
   initialCooldownBonus?: number;
+  /** B3 Break the Totem: bu birim kırılması gereken nesnedir (motor: UnitSetup.objective). Yalnızca `objective` totem olan karşılaşmada anlamlı. */
+  objective?: boolean;
 }
 
 /** Dalgalı savaşın sonraki bir dalgası (EncounterDef.waves; docs/design/waves.md): birimler ilk dalgayla aynı şemada. */
@@ -223,7 +225,24 @@ export interface EncounterDef {
   partyUndying?: boolean;
   fallback?: string;
   fallbackOnly?: boolean;
+  /**
+   * Harita 2-3 savaş katmanı (maps-2-3.md M-A / B3 / M-I / M-J; data/battle-rules.json): `condition` = savaş boyunca tek koşul (ör. 'tide');
+   * `objective` = hedef id'si ya da { type, sayılar } (yoksa herkesi öldür; totem'de `units` = takviye grubu, yoksa ilk dalganın rütbesiz,
+   * nesne olmayan birimleri); `blocked` = iki tahtada kapalı hücreler (liste ya da düzen adı: 'deck' = crossing güvertesi).
+   */
+  condition?: string;
+  objective?: EncounterObjective;
+  blocked?: number[] | string;
 }
+
+/** Karşılaşmanın hedefi (EncounterDef.objective): id ya da sayılarıyla nesne. Sayı verilmezse data/battle-rules.json varsayılanı. */
+export type EncounterObjective =
+  | 'survive'
+  | 'totem'
+  | 'hold'
+  | { type: 'survive'; rounds?: number }
+  | { type: 'totem'; every?: number; maxEnemies?: number; units?: EncounterUnit[] }
+  | { type: 'hold'; row?: number };
 
 export interface CampaignRules {
   carryHp: boolean;

@@ -1,7 +1,7 @@
 import { applyWounds, valorRevivedCounts, woundCount } from '../progression/wounds';
 import { battleSummary, type Battle } from '../engine';
-import { CELL_COUNT, classes, encounterUnit, randomPool, summons } from '../engine/content';
-import { encounterWaves, encounterWavesById, isInertUnit } from './encounter-waves';
+import { battleRulesData, CELL_COUNT, classes, encounterUnit, randomPool, resolveBattleRules, summons, type RulesSpec } from '../engine/content';
+import { encounterWaves, encounterWavesById, isInertUnit, objectiveType } from './encounter-waves';
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
@@ -66,6 +66,11 @@ export interface BattlePlan {
    * gider. Dalgasız karşılaşmada alan yazılmaz.
    */
   waves?: Array<{ enemies: string[]; units: Record<number, UnitSetup> }>;
+  /**
+   * Karşılaşma kuralları (EncounterDef.condition / objective / blocked; data/battle-rules.json): motora teams.rules olarak gider. Totem'de `reinforce` =
+   * takviye grubunun hücre listesi + kurulumları (dalga biçimi). Kuralsız karşılaşmada alan yazılmaz.
+   */
+  rules?: RulesSpec & { reinforce?: { enemies: string[]; units: Record<number, UnitSetup> } };
   /** Genel zorluğun yapay zeka değeri (campaign.json > difficulties[x].ai): savaş kurulumuna iletilir. */
   difficulty: Difficulty;
   /** Region battle background id (content-designer: border-road, valley-field, ashen-heights; yoksa varsayılan arka plan). */
@@ -101,6 +106,36 @@ function regionEnemyAi(region: { enemyAi?: Record<string, number | string> } | u
   return Object.keys(out).length ? { enemyAi: out } : {};
 }
 
+/**
+ * Karşılaşmanın kural girdisi (BattlePlan.rules). Totem takviye grubu: hedefin `units`'i, yoksa ilk dalganın rütbesiz, nesne olmayan, hedef olmayan
+ * birimleri (VARSAYIM, open-questions 417); kurulumlar ilk dalgayla aynı kuraldan (`setups`). Kural yoksa undefined.
+ */
+function encounterRules(
+  def: EncounterDef,
+  first: EncounterUnit[],
+  setups: (list: EncounterUnit[], out: Record<number, UnitSetup>) => void,
+): BattlePlan['rules'] | undefined {
+  if (!def.condition && !def.objective && def.blocked === undefined) return undefined;
+  const o = def.objective;
+  const objective: RulesSpec['objective'] | undefined =
+    o === undefined ? undefined : typeof o === 'string' ? o : o.type === 'totem' ? { type: 'totem', every: o.every, maxEnemies: o.maxEnemies } : { ...o };
+  const out: NonNullable<BattlePlan['rules']> = {
+    ...(def.condition ? { condition: def.condition } : {}),
+    ...(objective ? { objective } : {}),
+    ...(def.blocked !== undefined ? { blocked: Array.isArray(def.blocked) ? [...def.blocked] : def.blocked } : {}),
+  };
+  if (objectiveType(o) === 'totem') {
+    const own = typeof o === 'object' && o.type === 'totem' ? o.units : undefined;
+    const group = own?.length ? own : first.filter((u) => !u.tier && !u.objective && !isInertUnit(u.class));
+    if (group.length) {
+      const units: Record<number, UnitSetup> = {};
+      setups(group, units);
+      out.reinforce = { enemies: enemyCells({ units: group }), units };
+    }
+  }
+  return out;
+}
+
 export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): BattlePlan {
   const map = getMap(s.mapId);
   const n = node(map, s.at);
@@ -130,6 +165,8 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   const enemyLevel = nodeLevel(s.mapId, n.id);
   // Bir dalganın düşman kurulumları (ilk dalga ve dalgalı savaşın sonraki dalgaları aynı kuralla)
   const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>): void => {
+    // B3 Break the Totem: kırılacak nesne işareti güç katmanından bağımsız (kural mekaniği)
+    if (objectiveType(enc.def.objective) === 'totem') for (const u of list) if (u.objective) enemies[u.slot] = { ...enemies[u.slot], objective: true };
     if (!caps.unitMods) return;
     for (const u of list) {
       const diff = CONFIG.difficulties[s.difficulty];
@@ -150,6 +187,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
         ...(u.lockSkills?.length ? { lockSkills: [...u.lockSkills] } : {}),
         ...(u.initialCooldownBonus ? { initialCooldownBonus: u.initialCooldownBonus } : {}),
       };
+      if (u.objective && objectiveType(enc.def.objective) === 'totem') setup.objective = true;
       if (Object.keys(setup).length) enemies[u.slot] = setup;
     }
   };
@@ -161,6 +199,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     enemySetups(list, units);
     return { enemies: enemyCells({ units: list }), units };
   });
+  const rules = encounterRules(enc.def, first!, enemySetups);
   return {
     nodeId: n.id,
     // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
@@ -173,6 +212,7 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
     heroOrder: partyHeroOrder(s),
     units: { party, enemies },
     ...(waves.length ? { waves } : {}),
+    ...(rules ? { rules } : {}),
     difficulty: CONFIG.difficulties[s.difficulty]?.ai ?? CONFIG.defaultDifficulty,
     // Arka plan önceliği: karşılaşma > düğüm > bölge (dosya yoksa sahne varsayılan arka plana düşer)
     background: enc.def.background ?? n.battleBackground ?? map.regions.find((r) => r.id === n.region)?.battleBackground,
@@ -238,6 +278,22 @@ export function validateEncounters(): string[] {
       }
     }
     if (def.fallback && (!ENCOUNTERS[def.fallback] || ENCOUNTERS[def.fallback]!.fallback)) errors.push(`${id}: bad fallback ${def.fallback}`);
+    // Karşılaşma kuralları (data/battle-rules.json): koşul / hedef / düzen id'leri, kapalı hücrede birim yok, totem'de hedef nesne var
+    if (def.condition || def.objective || def.blocked !== undefined) {
+      try {
+        const r = resolveBattleRules(encounterRules(def, def.units, () => {}));
+        const blocked = r?.blocked ?? [];
+        for (const wave of [def.units, ...(def.waves ?? []).map((w) => w.units ?? [])])
+          for (const u of wave) if (blocked.includes(u.slot)) errors.push(`${id}: ${u.class} stands on blocked slot ${u.slot}`);
+        for (const s of blocked) if (!Number.isInteger(s) || s < 0 || s >= CELL_COUNT) errors.push(`${id}: blocked slot ${s} out of range`);
+        if (r?.objective?.type === 'totem' && !def.units.some((u) => u.objective)) errors.push(`${id}: totem objective without an objective unit`);
+        if (r?.objective?.type === 'hold' && (r.objective.row < 0 || r.objective.row * 3 >= CELL_COUNT)) errors.push(`${id}: bad hold row`);
+        if (typeof def.blocked === 'string' && !battleRulesData.layouts[def.blocked]) errors.push(`${id}: unknown layout ${def.blocked}`);
+      } catch (e) {
+        errors.push(`${id}: ${(e as Error).message}`);
+      }
+    }
+    for (const u of def.units) if (u.objective && objectiveType(def.objective) !== 'totem') errors.push(`${id}: objective unit without a totem objective`);
   }
   return errors;
 }
@@ -246,7 +302,7 @@ export function validateEncounters(): string[] {
  * Karşılaşmanın TÜM dalgalarının birimleri, dalga sırasıyla (önizleme ve "Start battle?" kartı eklenen takviye dalgaları dahil tüm düşmanları
  * gösterir; düğüm bağlamı haritadan: encounter-waves.ts > encounterWavesById). Dalga içinde ön sıradan arkaya.
  */
-const allWaveUnits = (id: string, def: Pick<EncounterDef, 'units' | 'waves'>): EncounterUnit[] =>
+const allWaveUnits = (id: string, def: Pick<EncounterDef, 'units' | 'waves' | 'objective'>): EncounterUnit[] =>
   encounterWavesById(id, def).flatMap((w) => [...w].sort((a, b) => a.slot - b.slot));
 
 /** Birimin oyuncuya görünen adı: karşılaşmadaki özel ad > class adı > boss/mob adı > id. */
