@@ -24,6 +24,7 @@ import {
   CONFIG,
   activeHeroes,
   applyBattle,
+  continueToMap,
   autoAllocateAll,
   autoResolve,
   autoValorRevive,
@@ -66,7 +67,7 @@ import { woundCount } from '../progression/wounds';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
 import { ATTRS, LEVELS, addXp, allocate, campaignMaxLevel, canAddPoint, xpToNext } from '../progression/levels';
-import { allRoutes, fightPlan, routeLabel, simTownRest } from './campaign';
+import { addCarry, allRoutes, emptyCarry, fightPlan, routeLabel, simMapChain, simTownRest, type SimCarry } from './campaign';
 import { CAMPAIGN_TARGETS } from './campaign-targets';
 
 export type PlayerType = 'good' | 'average';
@@ -105,6 +106,12 @@ export interface GrindSimOptions {
   restPrice?: number;
   /** Güç kaldıracı ölçümü (yalnızca sim; varsayılan 0 = bugünkü davranış). Bkz. GrindBonus. */
   bonus?: Partial<GrindBonus>;
+  /**
+   * Ölçülen harita (--map; varsayılan Harita 1). Harita 2+: her koşu önce önceki haritaları aynı seed ve aynı oyuncu kurallarıyla oynar
+   * (simMapChain), bitirirse continueToMap ile taşınır; sayaçlar (düğüm, rota, ekonomi, ön kasma) yalnız hedef haritanın. Önceki haritada
+   * duvara vuran koşu hedefe ulaşamaz: sonuçta sayılmaz, carry.prevStopped'a yazılır. Bonuslar (level / altın) bölük kurulunca (Harita 1) verilir.
+   */
+  map?: string;
 }
 
 /**
@@ -306,6 +313,9 @@ export interface GrindSimResult {
   merchant: MerchantMode;
   /** Güç kaldıracı (parçalar birleşince ilkinden; toplanmaz). */
   bonus: GrindBonus;
+  /** Yalnız Harita 1 dışı ölçümde: ölçülen harita ve önceki haritadan taşınan takımın özeti (src/sim/campaign.ts > SimCarry). */
+  map?: string;
+  carry?: SimCarry;
   econ: GrindEcon;
   nodes: Record<string, GrindNodeAgg>;
   routes: Record<string, GrindGroupAgg>;
@@ -406,8 +416,10 @@ export function simulateGrind(o: GrindSimOptions): GrindSimResult {
 }
 
 function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
-  const map = getMap(CONFIG.maps[0]!);
-  const routes = allRoutes(map);
+  // Zincir (--map): hedef Harita 1 değilse önceki haritalar önce oynanır, sayaçları atılan bir kopyaya (scratch) yazılır.
+  const chain = simMapChain(o.map ?? CONFIG.maps[0]!);
+  const chainRoutes = chain.map((id) => allRoutes(getMap(id)));
+  let map = getMap(chain[0]!);
   const wallCap = o.wallCap ?? CAMPAIGN_TARGETS.wallCap[o.difficulty];
   const retries = o.retries ?? 2;
   const grindStep = Math.max(1, o.grindStep ?? 1);
@@ -418,9 +430,16 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
     preGrindBattles: 0, defeats: 0, goldEarned: 0, goldBonus: 0, goldSmith: 0, goldRest: 0, tempers: 0, rests: 0, levelEnd: 0,
     repeat: o.repeat ?? 'today', merchant: o.merchant ?? 'sell', bonus: bonusOf(o.bonus), econ: emptyEcon(), nodes: {}, routes: {}, classes: {},
   };
-  const E = res.econ;
+  if (chain.length > 1) {
+    res.map = chain[chain.length - 1]!;
+    res.carry = emptyCarry();
+  }
   const bonus = res.bonus;
-  const nodeAgg = (id: string) => (res.nodes[id] ??= emptyNode());
+  // Sayaçların yazıldığı sonuç: hedef haritada `res`, önceki haritalarda atılan kopya
+  const scratch: GrindSimResult = JSON.parse(JSON.stringify({ ...res, carry: undefined })) as GrindSimResult;
+  let R = res;
+  let E = R.econ;
+  const nodeAgg = (id: string) => (R.nodes[id] ??= emptyNode());
   // Koşu içi item izleme (her koşuda sıfırlanır): düşen / alınan item uid'leri ve takılmış olanlar
   let dropped = new Set<string>();
   let bought = new Set<string>();
@@ -509,33 +528,31 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
 
   for (let i = 0; i < o.runs; i++) {
     const seed = (o.firstSeed ?? 1) + i;
-    const route = routes[(i + (o.routeOffset ?? 0)) % routes.length]!;
-    const label = routeLabel(map, route);
+    let route: string[] = [];
+    let label = '';
     // Seçimler düğüme bağlı seed'li (son kayda dönüşte yeniden yaşanan adım aynı seçimi yapar)
     const pick = (tag: string) => rngFor(seed, 'campaign-grind', tag);
     let s: CampaignState = newCampaign({ mode: 'normal', seed, difficulty: o.difficulty });
     let base: CampaignState | null = null;
-    const ctx = new Map<string, { tries: number; grinds: number }>();
-    const farmRec = new Map<string, { w: number; n: number }>();
+    let ctx = new Map<string, { tries: number; grinds: number }>();
+    let farmRec = new Map<string, { w: number; n: number }>();
     let grindFor: string | null = null;
     let grindLeft = 0;
-    let preLeft = o.preGrind ?? 0;
+    let preLeft = 0;
     let wall = false;
     let stop = false;
     let runGrind = 0;
     let runBattles = 0;
     let spent = 0;
     let runBonusGold = 0;
+    let goldStart = 0;
     const company = new Set<string>();
-    dropped = new Set();
-    bought = new Set();
-    worn = new Set();
 
     const heal = (t: CampaignState): CampaignState => {
       const r = simTownRest(t, healAt);
       if (!r) return t;
-      res.goldRest += r.price;
-      res.rests++;
+      R.goldRest += r.price;
+      R.rests++;
       spent += r.price;
       return r.state;
     };
@@ -553,8 +570,8 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           const p = temperPreview(t, w.uid);
           if (!p || p.blocked || !p.after || t.gold - p.price < reserve) continue;
           t = temperItem(t, w.uid);
-          res.goldSmith += p.price;
-          res.tempers++;
+          R.goldSmith += p.price;
+          R.tempers++;
           spent += p.price;
           done = true;
           break;
@@ -617,19 +634,19 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       const fa = nodeAgg(f);
       fa.farmBattles++;
       hist(fa, battle.turnsTaken);
-      res.battles++;
+      R.battles++;
       runBattles++;
       if (forNode) {
         ctx.get(forNode)!.grinds++;
-        res.grindBattles++;
+        R.grindBattles++;
         runGrind++;
-      } else res.preGrindBattles++;
+      } else R.preGrindBattles++;
       rec.n++;
       if (battle.winner === 'party') {
         rec.w++;
         fa.farmWins++;
         s = reviveOut(win(t, battleOutcomeOf(plan, battle, true)));
-      } else res.defeats++;
+      } else R.defeats++;
       farmRec.set(f, rec);
       return true;
     };
@@ -642,6 +659,47 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
       if ((o.onWall ?? 'stop') === 'stop') stop = true;
       else s = win(s, { victory: true, units: activeHeroes(s).map((h) => ({ heroId: h.id, hpRatio: h.hpRatio, alive: !isFallen(h) })) });
     };
+
+    let reachedTarget = true;
+    for (let phase = 0; phase < chain.length; phase++) {
+    const last = phase === chain.length - 1;
+    map = getMap(chain[phase]!);
+    R = last ? res : scratch;
+    E = R.econ;
+    const routes = chainRoutes[phase]!;
+    route = routes[(i + (o.routeOffset ?? 0)) % routes.length]!;
+    label = routeLabel(map, route);
+    if (phase > 0) {
+      if (nextStep(s).kind !== 'complete') {
+        // önceki harita bitmedi (duvar): hedefe ulaşılamadı, koşu sayılmaz
+        res.carry!.attempted++;
+        res.carry!.prevStopped++;
+        reachedTarget = false;
+        break;
+      }
+      s = continueToMap(s, chain[phase]!);
+      if (last) {
+        res.carry!.attempted++;
+        addCarry(res.carry!, s);
+      }
+    }
+    // Harita başına sıfırlanan koşu durumu (Harita 1 tek aşamada bugünkü davranışla aynı)
+    base = null;
+    ctx = new Map();
+    farmRec = new Map();
+    grindFor = null;
+    grindLeft = 0;
+    preLeft = last ? (o.preGrind ?? 0) : 0;
+    wall = false;
+    stop = false;
+    runGrind = 0;
+    runBattles = 0;
+    spent = 0;
+    if (phase > 0) runBonusGold = 0;
+    goldStart = phase > 0 ? s.gold : 0;
+    dropped = new Set();
+    bought = new Set();
+    worn = new Set();
 
     for (let guard = 0; guard < 20000 && !stop; guard++) {
       const step = nextStep(s);
@@ -716,7 +774,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
           a.battles++;
           a.turnsSum += battle.turnsTaken;
           hist(a, battle.turnsTaken);
-          res.battles++;
+          R.battles++;
           runBattles++;
           if (battle.winner === 'party') {
             a.wins++;
@@ -731,7 +789,7 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
             s = reviveOut(win(s, out, a));
             break;
           }
-          res.defeats++;
+          R.defeats++;
           if (c.tries < 1 + retries) break; // aynı savaşı yeniden dene (son kayıt = aynı takım)
           const canFarm = !!base && !!pickFarm(base, farmRec);
           if (!canFarm) {
@@ -771,11 +829,13 @@ function simulateGrindRuns(o: GrindSimOptions): GrindSimResult {
         }
       }
     }
+    }
+    if (!reachedTarget) continue;
     const done = !wall && nextStep(s).kind === 'complete';
     res.runs++;
     if (done) res.completed++;
     if (wall) res.walls++;
-    res.goldEarned += s.gold + spent - runBonusGold;
+    res.goldEarned += s.gold + spent - runBonusGold - goldStart;
     res.goldBonus += runBonusGold;
     res.levelEnd += mean(activeHeroes(s).map((h) => h.level ?? 1));
     const groups = [(res.routes[label] ??= emptyGroup()), ...[...company].map((c) => (res.classes[c] ??= emptyGroup()))];

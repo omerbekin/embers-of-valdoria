@@ -6,6 +6,7 @@
 //   Varsayılan: 240 sefer (12 rotanın her biri 20 kez), seed 1, tüm zorluklar, oyuncu vekili Medium ("iyi oyuncu") ve Easy ("ortalama oyuncu"),
 //   iş sayısı = çekirdek sayısı - 1 (en fazla 12). Her (zorluk, vekil) çifti ayrı ölçülür.
 //   [--encounter-id=<id> --encounter-file=<dosya.json>]: bir karşılaşmayı dosyadakiyle değiştirir (dalgalı savaş denemesi).
+//   [--map=valdoria|drowned-reach] (iki modda): ölçülen harita; Harita 2'de her koşu önce Harita 1'i aynı seed'le oynar ve takımı taşır (campaign.ts > simMapChain).
 import { valorMode } from './valor-mode';
 import { spawn } from 'node:child_process';
 import { cpus } from 'node:os';
@@ -15,7 +16,7 @@ import { CONFIG, ENCOUNTERS, getMap, node, type Difficulty } from '../campaign';
 import type { EncounterDef } from '../campaign/types';
 import encountersJson from '../../data/campaign/encounters.json';
 import { content, type AiDifficulty } from '../engine';
-import { allRoutes, categoryFirstWin, mergeCampaignResults, nodeCategory, routeLabel, simulateCampaign, type CampaignSimResult, type NodeCategory } from './campaign';
+import { allRoutes, categoryFirstWin, mergeCampaignResults, nodeCategory, resolveSimMap, routeLabel, simulateCampaign, type CampaignSimResult, type NodeCategory } from './campaign';
 import campaignBalance from '../../data/campaign/balance.json';
 import { grindCli } from './campaign-grind-report';
 import { treeFlag } from './tree-sim';
@@ -45,13 +46,16 @@ const treeOpt = treeDir ? { tree: treeDir } : {};
 if (treeDir && !flag('part')) console.log(`Skill ağacı AÇIK (yalnızca bu süreçte; oyuncu vekili odaklı kurulum, yön ${treeDir}). Ağaçsız referans için aynı komutu --tree olmadan koşun.`);
 const encArgs = encId && encFile ? [`--encounter-id=${encId}`, `--encounter-file=${encFile}`] : [];
 
-const map = getMap(CONFIG.maps[0]!);
+const mapId = resolveSimMap(flag('map')); // --map (varsayılan Harita 1)
+const mapOpt = mapId !== CONFIG.maps[0] ? { map: mapId } : {};
+const mapArgs = mapId !== CONFIG.maps[0] ? [`--map=${mapId}`] : [];
+const map = getMap(mapId);
 const fmt = (n: number, d = 1) => n.toFixed(d).replace('.', ',');
 const pct = (a: number, b: number) => (b ? (a / b) * 100 : 0);
 
 function runPart(start: number, end: number): Promise<CampaignSimResult[]> {
   const script = fileURLToPath(import.meta.url);
-  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, '--mode=flat', ...(treeDir ? [`--tree=${treeDir}`] : []), ...encArgs, `--part=${start}:${end}`];
+  const childArgs = [...process.execArgv, script, String(runs), String(firstSeed), diffs.length === 1 ? diffs[0]! : 'all', players.length === 1 ? players[0]! : 'both', `--attempts=${maxAttempts}`, `--gear=${gear}`, '--mode=flat', ...(treeDir ? [`--tree=${treeDir}`] : []), ...encArgs, ...mapArgs, `--part=${start}:${end}`];
   return new Promise((resolve, reject) => {
     const child = spawn(process.execPath, childArgs, { stdio: ['ignore', 'pipe', 'inherit'] });
     let buf = '';
@@ -64,7 +68,7 @@ async function main() {
   const t0 = Date.now();
   let results: CampaignSimResult[];
   if (jobs <= 1 || runs < 24) {
-    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear, valor: valorMode(), ...treeOpt })));
+    results = diffs.flatMap((difficulty) => players.map((player) => simulateCampaign({ difficulty, player, runs, firstSeed, maxAttempts, gear, valor: valorMode(), ...treeOpt, ...mapOpt })));
   } else {
     const n = Math.min(jobs, runs);
     const bounds = Array.from({ length: n }, (_, k) => [Math.floor((runs * k) / n), Math.floor((runs * (k + 1)) / n)] as const);
@@ -80,9 +84,19 @@ const CAT_NAME: Record<NodeCategory, string> = { tutorial: 'tutorial', normal: '
 const target = campaignBalance.targets as unknown as Record<string, Record<NodeCategory, [number, number]>>;
 
 function report(results: CampaignSimResult[], secs: number) {
-  console.log('Embers of Valdoria sefer simülatörü (Valdoria)');
+  console.log(`Embers of Valdoria sefer simülatörü (${mapOpt.map ? map.title : 'Valdoria'})`);
   console.log('=================================');
-  console.log(`Sefer: ${runs} (12 rota eşit), seed ${firstSeed}.., düğüm başına en fazla ${maxAttempts} deneme, ekipman ${gear}. Süre ${fmt(secs, 0)} sn.`);
+  if (mapOpt.map) {
+    console.log("Her koşu önce Harita 1'i aynı seed'le oynar (takılırsa zorla geçer), takım oyundaki \"Continue\" ile taşınır; sayaçlar yalnız bu haritanın.");
+    console.log('Hedef bantlar Harita 1 için yazıldı (data/campaign/balance.json); bu haritada yalnız karşılaştırma içindir.');
+    for (const r of results) {
+      const c = r.carry;
+      if (!c) continue;
+      const n = Math.max(1, r.runs);
+      console.log(`  Başlangıç ${`${r.difficulty}/${r.player}`.padEnd(14)} gelen ${r.runs}/${c.attempted}  Lv ${fmt(c.levelSum / n)}  altın ${fmt(c.goldSum / n, 0)}  item/kahraman ${fmt(c.gearSum / n)} (ilvl ${fmt(c.ilvlSum / n)})  torba ${fmt(c.bagSum / n)}  yedek ${fmt(c.reserveSum / n)}  ceset ${fmt(c.corpseSum / n, 2)}`);
+    }
+  }
+  console.log(`Sefer: ${runs} (${allRoutes(map).length} rota eşit), seed ${firstSeed}.., düğüm başına en fazla ${maxAttempts} deneme, ekipman ${gear}. Süre ${fmt(secs, 0)} sn.`);
   console.log('Oyuncu vekili: Medium YZ = "iyi oyuncu", Easy YZ = "ortalama oyuncu". Düşman: zorluğun YZ\'si + zorluğun düşman çarpanları.');
   console.log('');
   console.log('KATEGORİ x ZORLUK: ilk denemede kazanma (%; hedef bant Medium vekil için data/campaign/balance.json)');
@@ -90,6 +104,7 @@ function report(results: CampaignSimResult[], secs: number) {
   for (const r of results) {
     const cat = categoryFirstWin(r, map);
     const cells = (['tutorial', 'normal', 'elite', 'boss'] as NodeCategory[]).map((c) => {
+      if (mapOpt.map && c === 'tutorial') return '-'.padStart(16); // Harita 2+: tutorial yok
       const band = r.player === 'medium' ? target[r.difficulty]?.[c] : undefined;
       const bad = band && (cat[c] < band[0] || cat[c] > band[1]);
       return `${fmt(cat[c]).padStart(6)}${band ? ` (${band[0]}-${band[1]})${bad ? '!' : ' '}` : '         '}`.padStart(16);
@@ -145,7 +160,7 @@ if ((flag('mode') ?? 'grind') === 'grind') {
 } else if (part) {
   const [start, end] = part.split(':').map(Number) as [number, number];
   const out = diffs.flatMap((difficulty) =>
-    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode(), ...treeOpt })),
+    players.map((player) => simulateCampaign({ difficulty, player, runs: end - start, firstSeed: firstSeed + start, routeOffset: start, maxAttempts, gear, valor: valorMode(), ...treeOpt, ...mapOpt })),
   );
   process.stdout.write(JSON.stringify(out));
 } else {

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { autoResolve, canReplay, CONFIG, debugSetLevel, debugTeleport, getMap, newCampaign, nextStep, node, pickHero, townRestPrice } from '../src/campaign';
 import { Battle, content } from '../src/engine';
 import { valorRules } from '../src/engine/content';
-import { lateValorChoice, nodeCategory } from '../src/sim/campaign';
+import { lateValorChoice, nodeCategory, resolveSimMap, simMapChain } from '../src/sim/campaign';
 import { ITEMS } from '../src/progression/items';
 import { equalAllocateAll, mergeGrindResults, pickFarm, repeatPreset, simOverrides, simulateGrind, withIlvlBonus, withLevelBonus } from '../src/sim/campaign-grind';
 import { bonusText, bossFirstWins, grindBand, grindReport, parseBonus, parseSimOptions, parseWallCap } from '../src/sim/campaign-grind-report';
@@ -15,6 +15,21 @@ const map = getMap('valdoria');
 const nodeCategoryAfterAshford = (id: string) => nodeCategory(map, id) !== 'tutorial';
 
 describe('sefer kasma simülatörü', () => {
+  it('harita seçimi (--map): varsayılan Harita 1; id, alt çizgili yazım ve sıra numarası; bilinmeyen hata; zincir Harita 1den hedefe', () => {
+    expect(resolveSimMap(undefined)).toBe(CONFIG.maps[0]);
+    expect(resolveSimMap('drowned_reach')).toBe('drowned-reach');
+    expect(resolveSimMap('drowned-reach')).toBe('drowned-reach');
+    expect(resolveSimMap('2')).toBe('drowned-reach');
+    expect(resolveSimMap('1')).toBe('valdoria');
+    expect(() => resolveSimMap('atlantis')).toThrow();
+    expect(simMapChain()).toEqual(['valdoria']);
+    expect(simMapChain('drowned-reach')).toEqual(['valdoria', 'drowned-reach']);
+    // Tutorial yalnız Harita 1'de (Ashford öncesi); Harita 2'nin ilk savaşları normal sayılır
+    expect(nodeCategory(map, map.start)).toBe('tutorial');
+    const dr = getMap('drowned-reach');
+    expect(dr.nodes.filter((n) => n.encounter).every((n) => nodeCategory(dr, n.id) !== 'tutorial')).toBe(true);
+  });
+
   it('duvar sınırı: varsayılan zorluk başına hedef bloğundan, --wall-cap hepsini ya da zorluk başına ezer', () => {
     expect(parseWallCap(undefined)).toEqual(CAMPAIGN_TARGETS.wallCap);
     expect(parseWallCap('7')).toEqual({ easy: 7, medium: 7, hard: 7 });

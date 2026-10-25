@@ -3,6 +3,8 @@
 //   npm run sim:campaign -- [sefer] [ilk seed] [easy|medium|hard|all] [good|average|both (medium|easy da olur)]
 //     [--wall-cap=N | --wall-cap=easy:5,medium:10,hard:20] [--retries=2] [--grind-step=1] [--on-wall=stop|force] [--overgrind=10 (0 = yok)]
 //     [--heal-at=0.5] [--jobs=N] [--json=dosya]
+//     [--map=valdoria|drowned-reach (drowned_reach, 1, 2 da olur)]: ölçülen harita (varsayılan Harita 1). Harita 2: her koşu önce Harita 1'i aynı seed
+//       ve kurallarla oynar, bitirirse takım continueToMap ile taşınır (seviye, ağaç, eşya, torba, altın, Valor, yedek); rapor yalnız Harita 2'nin.
 //     Güç kaldıracı (yalnızca sim; varsayılan 0): [--bonus-level=N] (bölük kurulunca herkes +N level) [--bonus-ilvl=N] (savaşta takılı her item +N
 //       item seviyesi) [--bonus-gold=N] (bölük kurulunca bir kez +N altın). Ayrıntı: campaign-grind.ts > GrindBonus.
 //     Seçenekler (yalnızca sim süreci; veri dosyası değişmez): [--repeat=today|soft|nocap|off] [--merchant=sell|on|off (varsayılan sell)] [--valor-revive=6:4] [--rest-price=19]
@@ -17,7 +19,7 @@ import { cpus } from 'node:os';
 import { writeFileSync } from 'node:fs';
 import { CONFIG, getMap, node, nodeIlvl, nodeLevel, type Difficulty } from '../campaign';
 import { content } from '../engine';
-import { nodeCategory } from './campaign';
+import { nodeCategory, resolveSimMap, type SimCarry } from './campaign';
 import { bonusOf, mergeGrindResults, simulateGrind, type GrindBonus, type GrindGroupAgg, type GrindNodeAgg, type GrindSimResult, type MerchantMode, type PlayerType, type RepeatMode } from './campaign-grind';
 import { CAMPAIGN_TARGETS as T, inBand, type Band, type GrindCategory } from './campaign-targets';
 import { valorMode } from './valor-mode';
@@ -115,6 +117,7 @@ export async function grindCli(args: string[], script: string): Promise<void> {
     ...parseSimOptions(flag),
     bonus: parseBonus(flag),
     ...(treeFlag(args) ? { tree: treeFlag(args)! } : {}),
+    ...(flag('map') && resolveSimMap(flag('map')) !== CONFIG.maps[0] ? { map: resolveSimMap(flag('map')) } : {}),
   };
   const combos: Combo[] = diffs.flatMap((difficulty) =>
     players.flatMap((player) => (overgrind > 0 ? [0, overgrind] : [0]).map((preGrind) => ({ difficulty, player, preGrind }))),
@@ -158,7 +161,8 @@ export async function grindCli(args: string[], script: string): Promise<void> {
 
 // ---------------------------------------------------------------- rapor
 
-const map = () => getMap(CONFIG.maps[0]!);
+/** Sonucun haritası (Harita 1 dışı ölçümde r.map; yoksa Harita 1). */
+const mapOf = (r?: Pick<GrindSimResult, 'map'>) => getMap(r?.map ?? CONFIG.maps[0]!);
 const nodeGrind = (a: GrindNodeAgg) => a.grindSum + a.grindWall;
 
 interface CatRow {
@@ -173,7 +177,7 @@ interface CatRow {
 export function categoryRows(r: GrindSimResult): Record<GrindCategory, CatRow> {
   const out = Object.fromEntries(CATS.map((c) => [c, { reached: 0, firstWins: 0, grind: 0, grindRuns: 0, cleared: 0, wins: 0, hpEnd: 0 }])) as Record<GrindCategory, CatRow>;
   for (const [id, a] of Object.entries(r.nodes)) {
-    const c = nodeCategory(map(), id);
+    const c = nodeCategory(mapOf(r), id);
     if (c === 'tutorial' || !a.reached) continue;
     const o = out[c];
     o.reached += a.reached;
@@ -219,10 +223,11 @@ export function grindReport(
   results: GrindSimResult[],
   meta: { runs: number; firstSeed: number; secs: number; opts: { retries: number; grindStep: number; onWall: string; healAt: number; repeat?: string; merchant?: string; valorRevive?: [number, number]; restPrice?: number; bonus?: Partial<GrindBonus> }; caps: Record<Difficulty, number> },
 ): string {
-  const m = map();
+  const m = mapOf(results[0]);
   const L: string[] = [];
   L.push('Embers of Valdoria sefer KASMA simülatörü (serbest dolaşım + devriye)');
   L.push('=================================');
+  if (results[0]?.map) L.push(...carryLines(results, m.title));
   L.push(
     `Sefer: ${meta.runs} (rotalar eşit), seed ${meta.firstSeed}.., süre ${fmt(meta.secs, 0)} sn. Yenilgide ${meta.opts.retries} tekrar, sonra ${meta.opts.grindStep} kasma -> 1 deneme döngüsü; ` +
       `duvar sınırı Easy ${meta.caps.easy} / Medium ${meta.caps.medium} / Hard ${meta.caps.hard} kasma (duvarda: ${meta.opts.onWall === 'stop' ? 'koşu biter' : 'zorla geçilir'}); dinlenme eşiği can %${fmt(meta.opts.healAt * 100, 0)}.`,
@@ -258,6 +263,7 @@ export function grindReport(
     if (bosses.length) L.push(`  ${''.padEnd(16)} boss ilk deneme: ${bosses.map((b) => `${b.name} %${fmt(b.pct)} (n=${b.reached})`).join(', ')}`);
   }
   L.push(...econLines(base));
+  if (results[0]?.map) L.push(...lossLines(base));
   // ortalama vs iyi
   const pairs = DIFFS.map((d) => [base.find((r) => r.difficulty === d && r.player === 'good'), base.find((r) => r.difficulty === d && r.player === 'average')] as const).filter(
     ([a, b]) => a && b,
@@ -279,7 +285,7 @@ export function grindReport(
   const over = results.filter((r) => r.preGrind > 0);
   if (over.length) {
     L.push('');
-    L.push('AŞIRI KASMA  (Ashford sonrası ilk iki tekrar oynanabilir düğüm temizlenince önceden N kasma savaşı; sonraki kasma ihtiyacı)');
+    L.push(`AŞIRI KASMA  (${results[0]?.map ? 'bu haritada' : 'Ashford sonrası'} ilk iki tekrar oynanabilir düğüm temizlenince önceden N kasma savaşı; sonraki kasma ihtiyacı)`);
     L.push('  VARSAYIM: erken N kasma, sonraki kasmayı N\'den fazla azaltıyorsa XP azalması yetersiz (!).');
     for (const o of over) {
       const b = base.find((r) => r.difficulty === o.difficulty && r.player === o.player);
@@ -353,7 +359,7 @@ export function grindReport(
 
 /** Boss düğümlerinin (King's Bridge, Castle Morvane) ilk deneme kazanma oranı; ulaşılmayan düğüm yazılmaz. */
 export function bossFirstWins(r: GrindSimResult): Array<{ id: string; name: string; reached: number; firstWins: number; pct: number }> {
-  return map()
+  return mapOf(r)
     .nodes.filter((n) => n.type === 'boss' && r.nodes[n.id]?.reached)
     .map((n) => {
       const a = r.nodes[n.id]!;
@@ -414,6 +420,51 @@ export function econLines(results: GrindSimResult[]): string[] {
       `  ${pad} Valor: hediye ${k(e.valorGift)}, kazanç ${k(e.valorEarned)}, tavana vurup boşa giden ${k(e.valorWasted)} (%${fmt(pct(e.valorWasted, e.valorEarned + e.valorWasted), 0)}); ` +
         `harcama savaşta ${k(e.valorSpentBattle)} (${k(e.revivesBattle)} diriltme), savaş dışında ${k(e.valorSpentOut)} (${k(e.revivesOut)} diriltme)`,
     );
+  }
+  return L;
+}
+
+/** Harita 1 dışı ölçümün başlık bölümü: zincir ve hedef haritanın başında takımın durumu (Harita 1 sonundan taşınan). */
+export function carryLines(results: GrindSimResult[], title: string): string[] {
+  const L: string[] = [];
+  L.push(`HARİTA: ${title}. Her koşu önce Harita 1'i aynı seed ve aynı oyuncu kurallarıyla oynar; bitirirse takım oyundaki "Continue" ile taşınır.`);
+  L.push('  Hedef bantlar (+ / !) Harita 1 için yazıldı (campaign-targets.ts); bu haritada yalnız karşılaştırma içindir.');
+  L.push("  Aşağıdaki tüm sayaçlar YALNIZ bu haritanın (Harita 1 savaşları, kasması, altını sayılmaz). Harita 1'de duvara vuran koşu buraya gelmez.");
+  L.push('BAŞLANGIÇ  (Harita 1 sonu = bu haritanın başı; koşu başına ortalama)');
+  for (const r of results.filter((x) => x.carry)) {
+    const c = r.carry as SimCarry;
+    const n = Math.max(1, r.runs);
+    L.push(
+      `  ${`${r.difficulty}/${TYPE_NAME[r.player]}${r.preGrind ? ` ön kasma ${r.preGrind}` : ''}`.padEnd(26)} gelen ${r.runs}/${c.attempted} (Harita 1'de kalan ${c.prevStopped})  Lv ${fmt(c.levelSum / n)}  altın ${fmt(c.goldSum / n, 0)}` +
+        `  item/kahraman ${fmt(c.gearSum / n)} (ilvl ${fmt(c.ilvlSum / n)})  torba ${fmt(c.bagSum / n)}  yedek ${fmt(c.reserveSum / n)}  takım ${fmt(c.partySum / n)}  ceset ${fmt(c.corpseSum / n, 2)}  yara ${fmt(c.woundSum / n, 2)}`,
+    );
+  }
+  L.push('');
+  return L;
+}
+
+/** KAHRAMAN KAYBI: kategori (normal / elit / boss) başına zaferde düşen, alınan yara ve ceset (yeni düğüm zaferleri; ulaşan koşu başına). */
+export function lossLines(results: GrindSimResult[]): string[] {
+  const L: string[] = ['', 'KAHRAMAN KAYBI  (yeni düğüm zaferleri; zafer başına düşen kahraman, ulaşan başına yara / ceset; normal = mob savaşı)'];
+  for (const r of results) {
+    const m = mapOf(r);
+    const cells = CATS.map((c) => {
+      let wins = 0;
+      let died = 0;
+      let reached = 0;
+      let wounds = 0;
+      let corpses = 0;
+      for (const [id, a] of Object.entries(r.nodes)) {
+        if (nodeCategory(m, id) !== c || !a.reached) continue;
+        wins += a.wins;
+        died += a.deathsOnWin;
+        reached += a.reached;
+        wounds += a.woundsTaken;
+        corpses += a.corpses;
+      }
+      return `${CAT_NAME[c]} düşen ${fmt(wins ? died / wins : 0, 2)} yara ${fmt(reached ? wounds / reached : 0, 2)} ceset ${fmt(reached ? corpses / reached : 0, 2)}`;
+    });
+    L.push(`  ${`${r.difficulty}/${TYPE_NAME[r.player]}`.padEnd(16)} ${cells.join('   ')}`);
   }
   return L;
 }

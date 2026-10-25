@@ -22,6 +22,7 @@ import {
   farewell,
   formCompany,
   getMap,
+  continueToMap,
   newCampaign,
   nextStep,
   node,
@@ -45,7 +46,7 @@ import { MAX_TURNS } from './simulate';
 import { campaignWaveTeams } from '../campaign/suspend';
 import { autoTreeHeroes, withTreesInMemory } from './tree-sim';
 import type { TreeDir } from '../progression/skill-tree-data';
-import { RARITY_IDS, clampRarity, instanceRarity, itemDef } from '../progression/items';
+import { RARITY_IDS, clampRarity, instanceIlvl, instanceRarity, itemDef } from '../progression/items';
 import { woundCount } from '../progression/wounds';
 
 /**
@@ -67,15 +68,71 @@ export function simTownRest(s: CampaignState, healAt: number): { state: Campaign
   return { state: restInTown(s, town.id), price: town.price };
 }
 
+/**
+ * Sim harita seçimi (--map=...): harita id'si (campaign.json > maps), alt çizgili yazım (drowned_reach) ya da sıra numarası (1, 2). Yoksa Harita 1.
+ * Bilinmeyen değer hata.
+ */
+export function resolveSimMap(v: string | undefined): string {
+  if (!v) return CONFIG.maps[0]!;
+  const id = /^\d+$/.test(v) ? CONFIG.maps[Number(v) - 1] : CONFIG.maps.find((m) => m === v || m === v.replace(/_/g, '-'));
+  if (!id) throw new Error(`--map=${CONFIG.maps.join('|')} (ya da 1..${CONFIG.maps.length})`);
+  return id;
+}
+
+/**
+ * Hedef haritaya giden zincir (campaign.json > maps sırası; Harita 1'den hedefe kadar). Sim her koşuda zinciri aynı seed'le baştan oynar
+ * (Harita 1 -> continueToMap -> Harita 2): takım hedef haritaya oyundaki gibi taşınmış durumla girer. Hedef Harita 1 ise tek eleman.
+ */
+export function simMapChain(target: string = CONFIG.maps[0]!): string[] {
+  const i = CONFIG.maps.indexOf(target);
+  if (i < 0) throw new Error(`unknown map ${target}`);
+  return CONFIG.maps.slice(0, i + 1);
+}
+
+/** Zincirde önceki haritanın sonundan hedef haritaya taşınan takımın özeti (koşu başına toplam; paralel parçalar toplanır). */
+export interface SimCarry {
+  /** Zinciri başlatan koşu ve önceki haritada biten (duvar / takılma; hedefe ulaşamayan) koşu. */
+  attempted: number;
+  prevStopped: number;
+  /** Hedef haritanın başında (koşu başına toplam): aktif takımın ort. level'ı, altın, kahraman başına takılı item, takılı item'lerin ort. item
+   *  seviyesi, torbadaki item, yedekteki kahraman, aktif takım kişi sayısı, takımdaki ceset, kahraman başına yara. */
+  levelSum: number;
+  goldSum: number;
+  gearSum: number;
+  ilvlSum: number;
+  bagSum: number;
+  reserveSum: number;
+  partySum: number;
+  corpseSum: number;
+  woundSum: number;
+}
+export const emptyCarry = (): SimCarry => ({ attempted: 0, prevStopped: 0, levelSum: 0, goldSum: 0, gearSum: 0, ilvlSum: 0, bagSum: 0, reserveSum: 0, partySum: 0, corpseSum: 0, woundSum: 0 });
+
+/** Hedef haritanın başındaki durumu taşıma özetine ekler. */
+export function addCarry(c: SimCarry, s: CampaignState): void {
+  const party = activeHeroes(s);
+  const n = Math.max(1, party.length);
+  const items = party.flatMap((h) => Object.values(h.equipment ?? {}).filter((x): x is NonNullable<typeof x> => !!x && !!itemDef(x.id)));
+  c.levelSum += party.reduce((a, h) => a + (h.level ?? 1), 0) / n;
+  c.goldSum += s.gold;
+  c.gearSum += items.length / n;
+  c.ilvlSum += items.length ? items.reduce((a, x) => a + instanceIlvl(x), 0) / items.length : 0;
+  c.bagSum += s.inventory.length;
+  c.reserveSum += s.reserve?.length ?? 0;
+  c.partySum += party.length;
+  c.corpseSum += party.filter((h) => isFallen(h)).length;
+  c.woundSum += party.reduce((a, h) => a + woundCount(h), 0) / n;
+}
+
 export type NodeCategory = 'tutorial' | 'normal' | 'elite' | 'boss';
 
 /** Düğümün denge kategorisi: Ashford öncesi savaşlar tutorial; elite / boss türleri; kalan savaşlar (battle, guarded treasure) normal. */
 export function nodeCategory(map: CampaignMap, nodeId: string): NodeCategory {
   const n = node(map, nodeId);
   const tutorialEnd = map.nodes.find((x) => x.endsTutorial)?.id;
-  // Ashford'dan (tutorial sonu) önceki düğümler: başlangıçtan Ashford'a giden tek yoldadır
+  // Ashford'dan (tutorial sonu) önceki düğümler: başlangıçtan Ashford'a giden tek yoldadır. Tutorial sonu olmayan haritada (Harita 2+) tutorial yok.
   const before = new Set<string>();
-  let cur: string | undefined = map.start;
+  let cur: string | undefined = tutorialEnd ? map.start : undefined;
   while (cur && cur !== tutorialEnd) {
     before.add(cur);
     const outs = outgoing(map, cur);
@@ -132,6 +189,8 @@ export interface CampaignSimOptions {
   healAt?: number;
   /** Her düğümün ilk denemesinden önce durum (ayar betikleri için). */
   onBattle?: (nodeId: string, state: CampaignState) => void;
+  /** Ölçülen harita (--map; varsayılan Harita 1). Sonraki haritada önceki haritalar aynı seed'le önce oynanır (simMapChain), sayaçlar yalnız hedefin. */
+  map?: string;
 }
 
 /** Toplanabilir (paralel parçalar birleştirilebilir) sayaçlar. */
@@ -181,6 +240,9 @@ export interface CampaignSimResult {
   classes: Record<string, ClassAgg>;
   /** Düşen item'lerin nadirlik sayıları (Common..Legendary) harita bölgesine göre (Ömer 2026-10-11: nadirlik dağılımı raporu). */
   loot?: Record<string, number[]>;
+  /** Yalnız Harita 1 dışı ölçümde: ölçülen harita ve önceki haritadan taşınan takımın özeti. */
+  map?: string;
+  carry?: SimCarry;
 }
 
 const emptyNode = (): NodeAgg => ({ reached: 0, firstWins: 0, battles: 0, wins: 0, cleared: 0, attemptsToClear: 0, hpEndSum: 0, deathsOnWin: 0, hpStartSum: 0, turnsSum: 0, stuck: 0 });
@@ -229,15 +291,23 @@ export function simulateCampaign(o: CampaignSimOptions): CampaignSimResult {
 }
 
 function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
-  const map = getMap(CONFIG.maps[0]!);
-  const routes = allRoutes(map);
+  // Zincir (--map): hedef Harita 1 değilse önceki haritalar aynı seed'le önce oynanır; onların düğüm / loot sayaçları atılır (scratch).
+  const chain = simMapChain(o.map ?? CONFIG.maps[0]!);
+  const chainRoutes = chain.map((id) => allRoutes(getMap(id)));
+  let map = getMap(chain[0]!);
   const maxAttempts = o.maxAttempts ?? 10;
   const res: CampaignSimResult = { difficulty: o.difficulty, player: o.player, runs: 0, completed: 0, defeats: 0, nodes: {}, routes: {}, classes: {}, loot: {} };
-  const nodeAgg = (id: string) => (res.nodes[id] ??= emptyNode());
+  if (chain.length > 1) {
+    res.map = chain[chain.length - 1]!;
+    res.carry = emptyCarry();
+  }
+  const scratch: Pick<CampaignSimResult, 'nodes' | 'loot'> = { nodes: {}, loot: {} };
+  let sink: Pick<CampaignSimResult, 'nodes' | 'loot'> = res;
+  const nodeAgg = (id: string) => (sink.nodes[id] ??= emptyNode());
   // Loot sayımı: işlemden önceki torba + geride kalanlar; sonra yeni gelenlerin nadirliği düğümün bölgesine
   const lootCount = (before: CampaignState, after: CampaignState, nodeId: string) => {
     const region = map.nodes.find((n) => n.id === nodeId)?.region ?? '?';
-    const row = (res.loot![region] ??= RARITY_IDS.map(() => 0));
+    const row = (sink.loot![region] ??= RARITY_IDS.map(() => 0));
     const had = new Set(before.inventory.map((i) => i.uid));
     for (const it of after.inventory) if (!had.has(it.uid) && itemDef(it.id)) row[RARITY_IDS.indexOf(instanceRarity(it))]!++;
     const prevLeft = before.pendingLoot?.node === nodeId ? (before.pendingLoot.left?.length ?? 0) : 0;
@@ -251,9 +321,6 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
 
   for (let i = 0; i < o.runs; i++) {
     const seed = (o.firstSeed ?? 1) + i;
-    const route = routes[(i + (o.routeOffset ?? 0)) % routes.length]!;
-    const label = routeLabel(map, route);
-    const ra = (res.routes[label] ??= { runs: 0, completed: 0, defeats: 0 });
     const rng = rngFor(seed, 'campaign-sim');
     let s: CampaignState = newCampaign({ mode: 'normal', seed, difficulty: o.difficulty });
     let defeats = 0;
@@ -261,6 +328,31 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
     let hero = '';
     const company: string[] = [];
     let mill: boolean | undefined;
+    let route: string[] = [];
+    let label = '';
+    let skip = false;
+    for (let phase = 0; phase < chain.length && !skip; phase++) {
+    const last = phase === chain.length - 1;
+    map = getMap(chain[phase]!);
+    sink = last ? res : scratch;
+    const routes = chainRoutes[phase]!;
+    route = routes[(i + (o.routeOffset ?? 0)) % routes.length]!;
+    label = routeLabel(map, route);
+    if (phase > 0) {
+      if (stuck && !(o.continueOnStuck ?? true)) {
+        res.carry!.attempted++;
+        res.carry!.prevStopped++;
+        skip = true;
+        break;
+      }
+      s = continueToMap(s, chain[phase]!);
+      defeats = 0;
+      stuck = false;
+      if (last) {
+        res.carry!.attempted++;
+        addCarry(res.carry!, s);
+      }
+    }
     while (true) {
       if (stuck && !(o.continueOnStuck ?? true)) break;
       const step = nextStep(s);
@@ -302,7 +394,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
             const victory = battle.winner === 'party';
             agg.battles++;
             agg.turnsSum += battle.turnsTaken;
-            if (attempt === 0 && step.node === map.start) mill = victory;
+            if (attempt === 0 && step.node === map.start && phase === 0) mill = victory;
             if (victory) {
               won = true;
               agg.wins++;
@@ -350,6 +442,9 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
         }
       }
     }
+    }
+    if (skip) continue;
+    const ra = (res.routes[label] ??= { runs: 0, completed: 0, defeats: 0 });
     res.runs++;
     ra.runs++;
     ra.defeats += defeats;
@@ -364,7 +459,7 @@ function simulateCampaignRuns(o: CampaignSimOptions): CampaignSimResult {
       ca.defeats += defeats;
       if (!stuck) ca.completed++;
     }
-    if (hero) {
+    if (hero && chain.length === 1) {
       const ca = classAgg(hero);
       ca.heroRuns++;
       if (mill) ca.heroFirstWins++;
@@ -382,7 +477,10 @@ export function mergeCampaignResults(parts: CampaignSimResult[]): CampaignSimRes
       for (const [f, n] of Object.entries(v as Record<string, number>)) t[f] = (t[f] ?? 0) + n;
     }
   };
+  if (parts[0]!.map) out.map = parts[0]!.map;
+  if (parts.some((p) => p.carry)) out.carry = emptyCarry();
   for (const p of parts) {
+    if (p.carry) for (const k of Object.keys(p.carry) as Array<keyof SimCarry>) out.carry![k] += p.carry[k];
     out.runs += p.runs;
     out.completed += p.completed;
     out.defeats += p.defeats;

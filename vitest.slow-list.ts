@@ -9,6 +9,7 @@ export const SLOW_TESTS: readonly string[] = [
   'tests/balance-b.test.ts',
   'tests/campaign-balance.test.ts',
   'tests/campaign-difficulty.test.ts',
+  'tests/campaign-map-sim.test.ts',
   'tests/endless-balance.test.ts',
   'tests/golden.test.ts',
 ];
