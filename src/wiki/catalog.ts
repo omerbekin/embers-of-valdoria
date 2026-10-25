@@ -858,7 +858,7 @@ export function buildMechanics(): WikiArticle[] {
           `Difficulty: Easy, Medium or Hard, chosen when the journey starts; it cannot be changed later. ${difficultyText()}`,
         ),
       ]),
-      ...(drownedReachShown() ? [drownedReachArticle()] : []),
+      ...(drownedReachShown() ? [drownedReachArticle(), battleRulesArticle()] : []),
       itemsArticle(),
       affixArticle(),
       legendaryArticle(),
@@ -888,6 +888,27 @@ export function drownedReachArticle(): WikiArticle {
     p(`${name} is the second map of the campaign. When Lord Morvane falls, the company can go on down the Valdren to the sea instead of ending the journey: the heroes, their levels, gear, bag and gold all come along. ${m.nodes.length} stops in ${m.regions.length} regions; a run from ${first} to ${boss} passes about ${m.stopsPerRun} of them.`),
     list(...m.regions.map((r) => `${r.title}${r.tagline ? `: ${r.tagline}` : ''}`)),
     p(`Towns: ${towns.join(', ')}. Saltmere is the hub: ${spokes} side streets branch off it; each is a single stop, and you walk back to the square to go on. ${pockets} dashed roads lead to optional pockets, as on the first map.`),
+  ]);
+}
+
+/** Harita 2-3 savaş kuralları (maps-2-3.md M-A / B3 / M-B / M-I / M-J): metin ve sayılar data/battle-rules.json, statuses.json, grounds.json'dan. */
+export function battleRulesArticle(): WikiArticle {
+  const d = content.battleRulesData;
+  const tide = d.conditions['tide'];
+  const soak = tide?.flood ? content.statuses[tide.flood.soak] : undefined;
+  const flood = tide?.flood ? content.grounds[tide.flood.ground] : undefined;
+  const o = d.objectives;
+  const fill = (s: string, n: number | string) => s.replace(/\{n\}/g, String(n)).replace(/\{every\}/g, String(n));
+  const deck = d.layouts['deck'];
+  return article('battle-rules', 'Campaign', 'Battle rules', cx('mech_battle_rules', 'floodedplanks'), [
+    p('Some battles on The Drowned Reach have a rule of their own: a condition that changes the field, an objective other than defeating every enemy, or closed cells. The rule line under the Round plate shows it during the battle with a counter; hover it for the full text. A turn here means a full turn of the battle: it passes once every fighter has acted.'),
+    list(
+      ...(tide ? [`${tide.name}: ${tide.text}${soak ? ` ${soak.name} lasts while you stand in the water and ${tide.flood!.soakTurns} turns after you leave it.` : ''}${flood ? ` ${flood.name} cells deal no damage.` : ''}`] : []),
+      `${o.survive.name}: ${fill(o.survive.text, o.survive.rounds)}`,
+      `${o.totem.name}: ${fill(o.totem.text, o.totem.every)} At most ${o.totem.maxEnemies} enemies fight at once; the totem itself does not act.`,
+      `${o.hold.name}: ${o.hold.text}`,
+      ...(deck ? [`${deck.name} (crossings): ${deck.text} Anyone placed on a closed cell moves to the nearest open one when the battle starts.`] : []),
+    ),
   ]);
 }
 

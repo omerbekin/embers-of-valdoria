@@ -467,6 +467,61 @@
   display: none;
 }
 
+/* Karşılaşma kuralı satırı (Harita 2-3): dalga plakasının altında (.low), dalgasız savaşta onun yerinde; tek satır, ipucu A Band */
+.bh-goal {
+  position: absolute;
+  left: 28px;
+  top: 22px;
+  max-width: 620px;
+  pointer-events: auto;
+}
+
+.bh-goal.low {
+  top: 114px;
+}
+
+.bh-goal[hidden] {
+  display: none;
+}
+
+.bh-goal .t {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 16px;
+  background: linear-gradient(180deg, rgba(30, 22, 14, 0.92), rgba(11, 8, 5, 0.92));
+  border: 1px solid rgba(217, 178, 106, 0.45);
+  box-shadow: 0 0 0 3px rgba(8, 6, 4, 0.6);
+  font: 600 17px var(--gar);
+  font-style: normal;
+  color: #e9dcc0;
+  white-space: nowrap;
+  cursor: default;
+}
+
+.bh-goal .p:first-child {
+  font: 600 15px var(--cin);
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: rgb(var(--gold));
+}
+
+.bh-goal .c {
+  margin-left: 4px;
+  font: 700 18px var(--num);
+  color: rgb(var(--gold));
+}
+
+.bh-goal.done .c,
+.bh-goal.done .p:first-child {
+  color: #8fd18a;
+}
+
+.bh-goal.failed .c,
+.bh-goal.failed .p:first-child {
+  color: #ff7a6a;
+}
+
 .bh-turn-lbl {
   position: absolute;
   top: 120px;

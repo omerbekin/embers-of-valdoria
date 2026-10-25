@@ -318,6 +318,7 @@
   },
   "dr_4": {
     "name": "The Drowned",
+    "condition": "tide",
     "units": [
       {
         "class": "drowned",
@@ -540,7 +541,9 @@
   },
   "dr_13": {
     "name": "Marsh Hexes",
+    "objective": { "type": "totem", "units": [{ "class": "drowned", "slot": 0 }, { "class": "drowned", "slot": 2 }] },
     "units": [
+      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "objective": true },
       {
         "class": "fen_witchling",
         "slot": 7,
@@ -610,6 +613,7 @@
   },
   "dr_17": {
     "name": "Weir Guardians",
+    "objective": "hold",
     "units": [
       {
         "class": "grey_wolf",
@@ -764,6 +768,7 @@
   },
   "dr_21": {
     "name": "Causeway Dead",
+    "objective": "survive",
     "units": [
       {
         "class": "drowned",
@@ -1622,6 +1627,7 @@
   },
   "dr_55": {
     "name": "Corsair Boarders",
+    "blocked": "deck",
     "units": [
       {
         "class": "cutpurse",
@@ -1643,7 +1649,7 @@
       },
       {
         "class": "ravenwood_poacher",
-        "slot": 7,
+        "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
           "hpMult": 1,
@@ -1795,10 +1801,11 @@
   },
   "dr_60": {
     "name": "Narrows Boarders",
+    "blocked": "deck",
     "units": [
       {
         "class": "raven_seer",
-        "slot": 7,
+        "slot": 8,
         "name": "Siren",
         "mods": {
           "hpMult": 1,

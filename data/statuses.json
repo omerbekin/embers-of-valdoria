@@ -216,5 +216,21 @@
     "damageDealtMult": 0.85,
     "tickAtTurnEnd": true,
     "text": "Deals less damage (strength depends on the source)"
+  },
+  "soaked": {
+    "_not": "Harita 2 (M-B, maps-2-3.md 5): Tide suyunda (Flooded hücre) duran birim Soaked olur; suda kaldıkça tazelenir, sudan çıkınca bir sonraki kendi turunda biter. Alınan ateş hasarı -%50, Burning söner, hız -%10. Çevre etkisi (direnç zarı yok, boss da ıslanır). Sayılar PROVİZYON.",
+    "name": "Soaked",
+    "type": "debuff",
+    "icon": "droplet",
+    "color": "#5fa8c8",
+    "speedMult": 0.9,
+    "elementTakenMult": {
+      "fire": 0.5
+    },
+    "cleanses": [
+      "burning"
+    ],
+    "dispellable": false,
+    "text": "Fire damage taken -50%, Speed -10%; Burning is put out"
   }
 }

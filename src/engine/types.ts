@@ -682,6 +682,8 @@ export interface UnitSetup {
   startCooldowns?: Record<string, number>;
   /** Birim savaşa CESET olarak girer (önceki dalgada düştü): can 0, ceset 'revivable' ya da 'consumed'; sırası yok, Resurrection / Raise Dead kuralları geçerli. */
   startDead?: 'revivable' | 'consumed';
+  /** B3 Break the Totem: bu birim hedef nesnedir (Combatant.objective); kırılana kadar takviye gelir ve savaş kazanılmaz. */
+  objective?: boolean;
 }
 
 /**
@@ -1477,6 +1479,13 @@ export interface StatusDef {
    * - 'replace' (buff varsayılanı, eski davranış): yeni örnek eskisinin yerine geçer (süre ve kaynak yeninin). Ash Brand: damga telgrafına bağlı.
    */
   stack?: StatusStackMode;
+  /**
+   * Harita 2 (M-B Soaked; maps-2-3.md 5): taşıyanın ALDIĞI hasarın element çarpanı (ör. { fire: 0.5 } = ateş hasarı -%50). Skill vuruşu, zemin ve
+   * DoT tiki, Doom aynı yoldan (Battle.statusElementMult). Yoksa çarpan 1.
+   */
+  elementTakenMult?: Partial<Record<Element, number>>;
+  /** Uygulandığı AN taşıyandan silinen durumlar (Soaked: Burning söner). */
+  cleanses?: string[];
 }
 
 /** statuses.json > stack değerleri. */
@@ -1498,6 +1507,8 @@ export interface GroundDef {
    * kadar iyileşir (kritiksiz, sabit; alınan şifa çarpanları normal). Düşmana hiçbir etkisi yok.
    */
   heal?: boolean;
+  /** Harita 2 (M-B Flooded): bu zeminin hücrelerindeki listelenen zeminler söner (Flooded -> Burning ground); sönen hücreye yenisi de tutmaz. */
+  quenches?: string[];
 }
 
 /** Faz 4c: zeminin tur başı durumu (`mpZero`: yalnızca MP'si 0 olan düşmana). */
@@ -1535,6 +1546,11 @@ export interface GroundEffect {
   statuses?: GroundStatus[];
   noDamage?: boolean;
   yields?: boolean;
+  /**
+   * Karşılaşma koşulunun (BattleRules.condition; Tide) bıraktığı ortam zemini: bırakan birim yok (`source` = 'env'), süre birimin turuyla değil savaş
+   * turuyla (Battle.round) sayılır: `envUntilRound` turu başlayınca biter. Dalga geçişinde düşman zemini olarak silinmez.
+   */
+  envUntilRound?: number;
 }
 
 /** Karakter üzerindeki süreli durum. `turns`, taşıyıcının kendi turunun başında azalır. */
@@ -1715,6 +1731,8 @@ export interface Combatant {
   phase?: number;
   /** Sıra almayan yardımcı nesne (Iron Mooring; bkz. CombatantData.inert). */
   inert?: boolean;
+  /** B3 Break the Totem: hedef nesne (UnitSetup.objective). */
+  objective?: boolean;
   /**
    * Dalgalı savaş (docs/design/waves.md): önceki dalganın DÜŞMÜŞ birimi, sonraki dalga gelince savaştan çıktı. Cesedi yok, diriltilemez, hedeflenemez;
    * sahnede gösterilmez (UI `waveStart` olayında görünümünü kaldırır). Savaş özetinde (battleSummary) ölü birim olarak kalır (XP / öldürme sayımı).
@@ -1920,6 +1938,14 @@ type BattleEventBody =
    */
   | { type: 'waveCleared'; index: number; total: number }
   | { type: 'waveStart'; index: number; total: number; combatants: Combatant[]; removed: string[]; queue: string[] }
+  /**
+   * Karşılaşma kuralları (BattleRules; yalnızca kuralı olan savaşta gelir). round: yeni savaş turu başladı (her savaşan bir kez oynayınca; 1'den
+   * başlar, ilk tur olay vermez). objective: hedefin durumu (progress = sayaç; done = hedef tamamlandı, ardından battleEnd; failed = kaybedildi).
+   * reinforce: Break the Totem takviyesi düşman tahtasına geldi (dalga değil: önceki birimler kalır; sahne görünüm kurar).
+   */
+  | { type: 'round'; round: number }
+  | { type: 'objective'; objective: BattleObjective['type']; state: 'progress' | 'done' | 'failed'; current?: number; goal?: number }
+  | { type: 'reinforce'; combatants: Combatant[]; queue: string[] }
   | { type: 'battleEnd'; winner: Side };
 
 /**
@@ -1931,6 +1957,58 @@ export interface WaveSetup {
   enemySlots?: number[];
   enemyUnits?: (UnitSetup | undefined)[];
 }
+
+/**
+ * Karşılaşma kuralları (Harita 2-3 savaş katmanı; maps-2-3.md M-A, B3, M-I, M-J; veri data/battle-rules.json, çözümleme content.resolveBattleRules).
+ * Verilmezse savaş birebir eskisi (olay yok, rastgele sayı aynı).
+ */
+export interface BattleRules {
+  /** M-A: savaş boyunca geçerli tek koşul (Tide). */
+  condition?: BattleCondition;
+  /** B3: savaşın hedefi; yoksa "herkesi öldür" (eski kural). */
+  objective?: BattleObjective;
+  /** M-I: İKİ tahtada da kullanılamaz hücreler (güverte direği / küpeşte): kimse giremez, kimse orada başlamaz. */
+  blocked?: number[];
+  /** Hücre düzeninin adı (data/battle-rules.json > layouts; ör. 'deck'); yalnızca sunum. */
+  layout?: string;
+}
+
+/** M-A koşulu (data/battle-rules.json > conditions). Ad ve metin oyun içi (İngilizce). */
+export interface BattleCondition {
+  id: string;
+  name: string;
+  text: string;
+  /** M-B Tide: ön sıraları su basar. */
+  flood?: FloodRule;
+}
+
+/** M-B Tide (maps-2-3.md 5): `onWave` her dalga başında, `everyRounds` her N savaş turunda bir, `boards` tahtalarının `rows` sıraları `rounds` tur Flooded. */
+export interface FloodRule {
+  /** Zemin türü (data/grounds.json; 'flooded'). */
+  ground: string;
+  onWave: boolean;
+  /** 0 = yalnızca dalga başında. */
+  everyRounds: number;
+  rows: number[];
+  boards: Side[];
+  /** Su kaç savaş turu kalır. */
+  rounds: number;
+  /** Su hücresindeki birime konan durum (data/statuses.json; 'soaked') ve süresi (taşıyanın turu; suda kaldıkça tazelenir). */
+  soak: string;
+  soakTurns: number;
+}
+
+/** B3 hedefleri (data/battle-rules.json > objectives). */
+export type BattleObjective =
+  /** Survive N Rounds: N savaş turu dayan; N. tur bitince bölük kaçar (zafer). Düşmanların hepsi daha önce düşerse de zafer. */
+  | { type: 'survive'; rounds: number }
+  /**
+   * Break the Totem: hedef nesne (UnitSetup.objective) kırılmadan zafer yok; nesne dururken her `every` savaş turunda `reinforce` grubu boş düşman
+   * hücrelerine gelir (savaşan düşman sayısı `maxEnemies`'e kadar).
+   */
+  | { type: 'totem'; every: number; maxEnemies: number; reinforce?: WaveSetup }
+  /** Hold the Bridge: oyuncu tahtasının `row` sırasında savaşan bir birim kalmazsa savaş kaybedilir. Zafer = herkesi öldür. */
+  | { type: 'hold'; row: number };
 
 /**
  * Dalga geçiş kuralları (data/waves.json > rules; Ömer onayı bekliyor, docs/design/waves.md). Motor sayıları buradan okur.

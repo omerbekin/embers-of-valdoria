@@ -151,7 +151,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
     const effect = battle.treeEffect(actor, target, skill, base, tq);
     const tm = actor.treeHooks ? battle.treeMods(actor, target, skill, base, tq) : null;
     const stats = battle.effectiveStats(target);
-    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill) * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined);
+    const specFor = (mult: number) => damageSpecFor(actor, target, effect, f, powerMult * mult, !splash, battle.damageTakenMult(target, actor, effect.damageType, skill, effect.element ?? 'physical') * battle.flockMult(actor, target), battle.dealtDamageMult(actor, target, skill, effect, tq), effect.bonusScale ? battle.effectiveStats(actor) : undefined);
     // Ağaç: düz hasar (flatDamage) ve vuruş sonrası (hitIsCrit) kancaları gerçek vuruşla aynı sırada (çarpan, sonra düz ek); kancasızda aynı aralık
     const adj = (x: number, late: { mult: number; flat: number } | null) => (late || tm?.flat ? Math.round(x * (late?.mult ?? 1) + (tm?.flat ?? 0) + (late?.flat ?? 0)) : x);
     const lateN = actor.treeHooks ? battle.lateDamage(actor, target, skill, base, specFor(1), false, tq) : null;
@@ -338,7 +338,7 @@ export function previewForTargets(battle: Battle, actor: Combatant, skillId: str
         const spec = effect.onEmpty;
         if (spec && emptyProcApplies(effect, target)) {
           const dmg: DamageEffect | undefined = spec.damage ? { type: 'damage', ...spec.damage } : undefined;
-          const r = dmg ? damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target, actor, dmg.damageType, skill), battle.dealtDamageMult(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f) : undefined;
+          const r = dmg ? damageRange(battle.attackStats(actor), battle.effectiveStats(target), damageSpecFor(actor, target, dmg, f, 1, false, battle.damageTakenMult(target, actor, dmg.damageType, skill, dmg.element ?? 'physical'), battle.dealtDamageMult(actor, target, skill), dmg.bonusScale ? battle.effectiveStats(actor) : undefined), f) : undefined;
           if (battle.statusBlocked(target, spec.status)) e.immune = [...(e.immune ?? []), battle.statusDef(spec.status)?.name ?? spec.status];
           e.emptyProc = {
             chance: spec.chance,

@@ -99,5 +99,15 @@
     "color": "#c9b48a",
     "element": "physical",
     "icon": "arrows"
+  },
+  "flooded": {
+    "_not": "Harita 2 (M-B): Tide suyu. Hasar vermez; üstündeki birim Soaked olur; Burning Ground bu hücrelerde söner (quenches). Bırakan birim yok: süre savaş turuyla (data/battle-rules.json > conditions.tide.flood).",
+    "name": "Flooded",
+    "color": "#3d7f9a",
+    "element": "physical",
+    "icon": "floodedplanks",
+    "quenches": [
+      "burning"
+    ]
   }
 }

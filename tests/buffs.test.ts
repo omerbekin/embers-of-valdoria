@@ -44,7 +44,7 @@ describe('buff / debuff tanımları (data/statuses.json)', () => {
   });
 
   it('yer etkileri (zehir, yanan zemin) tanımlı', () => {
-    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'holy_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
+    expect(Object.keys(content.grounds).sort()).toEqual(['burning', 'field_of_shafts', 'flooded', 'flooded_planks', 'hall_of_silence', 'holy_fire', 'holy_ground', 'lingering_rain', 'poison', 'quaking_ground', 'root_field', 'storm']);
   });
 });
 

@@ -67,6 +67,7 @@ import mobCinderGatewarden from '../../data/mobs/cinder_gatewarden.json';
 import mobEmberHierophant from '../../data/mobs/ember_hierophant.json';
 import mobDrakePriest from '../../data/mobs/drake_priest.json';
 import groundsJson from '../../data/grounds.json';
+import battleRulesJson from '../../data/battle-rules.json';
 import statusesJson from '../../data/statuses.json';
 import type { AiConfig } from './ai';
 import type { BattleSetup } from './battle';
@@ -76,7 +77,7 @@ import { placementHints, type HintRules, type PlacementHint } from './formation-
 import { AREA_TARGETS } from './area-shape';
 import { FOE_TARGETS, skillRangeFor } from './range';
 import { buildDef } from './stats';
-import type { AreaDef, BattleMode, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
+import type { AreaDef, BattleCondition, BattleMode, BattleObjective, BattleRules, CombatantData, CombatantDef, Formulas, GlobalSkillDef, GroundDef, Side, SkillDef, StatusDef, UnitSetup, ValorRules, WaveRules, WaveSetup } from './types';
 
 export interface BattleDef {
   id: string;
@@ -208,6 +209,63 @@ export const valorRules = valorJson as unknown as ValorRules;
 /** Dalgalı savaş geçiş kuralları (data/waves.json > rules; docs/design/waves.md). */
 export const waveRules = wavesJson.rules as WaveRules;
 
+// --- Karşılaşma kuralları (data/battle-rules.json; Harita 2-3 savaş katmanı, maps-2-3.md M-A / B3 / M-B / M-I / M-J) ---
+
+/** data/battle-rules.json biçimi (oyun içi metinler İngilizce; `_` notları atılır). */
+export interface BattleRulesData {
+  conditions: Record<string, Omit<BattleCondition, 'id'>>;
+  objectives: {
+    survive: { name: string; goal: string; text: string; rounds: number };
+    totem: { name: string; goal: string; text: string; every: number; maxEnemies: number };
+    hold: { name: string; goal: string; text: string; row: number };
+  };
+  layouts: Record<string, { name: string; text: string; blocked: number[] }>;
+}
+export const battleRulesData = battleRulesJson as unknown as BattleRulesData;
+
+/**
+ * Karşılaşmanın kural girdisi (EncounterDef / debug kurulumu): koşul id'si, hedef (id ya da { type, sayılar }), kapalı hücreler (liste ya da
+ * layouts anahtarı). Totem takviyesi ayrıca Teams.rules.reinforce ile (dalga biçiminde) gelir.
+ */
+export interface RulesSpec {
+  condition?: string;
+  objective?: BattleObjective['type'] | { type: BattleObjective['type']; rounds?: number; every?: number; maxEnemies?: number; row?: number };
+  blocked?: number[] | string;
+}
+
+/** Kural girdisinden motorun BattleRules'u (sayılar verilmezse battle-rules.json varsayılanı). Bilinmeyen koşul / düzen / hedef hata verir. Boş girdi = undefined. */
+export function resolveBattleRules(spec: RulesSpec | undefined): BattleRules | undefined {
+  if (!spec) return undefined;
+  const out: BattleRules = {};
+  if (spec.condition) {
+    const c = battleRulesData.conditions[spec.condition];
+    if (!c || spec.condition.startsWith('_')) throw new Error(`Koşul bulunamadı: ${spec.condition}`);
+    out.condition = { id: spec.condition, ...c, ...(c.flood ? { flood: { ...c.flood, rows: [...c.flood.rows], boards: [...c.flood.boards] } } : {}) };
+  }
+  if (spec.objective) {
+    const o = typeof spec.objective === 'string' ? { type: spec.objective } : spec.objective;
+    const d = battleRulesData.objectives;
+    if (o.type === 'survive') out.objective = { type: 'survive', rounds: o.rounds ?? d.survive.rounds };
+    else if (o.type === 'totem') out.objective = { type: 'totem', every: o.every ?? d.totem.every, maxEnemies: o.maxEnemies ?? d.totem.maxEnemies };
+    else if (o.type === 'hold') out.objective = { type: 'hold', row: o.row ?? d.hold.row };
+    else throw new Error(`Hedef bulunamadı: ${(o as { type: string }).type}`);
+  }
+  if (spec.blocked !== undefined) {
+    const list = typeof spec.blocked === 'string' ? battleRulesData.layouts[spec.blocked]?.blocked : spec.blocked;
+    if (!list) throw new Error(`Hücre düzeni bulunamadı: ${String(spec.blocked)}`);
+    if (list.length) out.blocked = [...list];
+    if (typeof spec.blocked === 'string') out.layout = spec.blocked;
+  }
+  return Object.keys(out).length ? out : undefined;
+}
+
+/** Hedefin oyun içi metni (HUD satırı ve ipucu; {n} / {every} doldurulur). */
+export function objectiveTexts(o: BattleObjective): { name: string; goal: string; text: string } {
+  const d = battleRulesData.objectives[o.type];
+  const fill = (s: string) => s.replace(/\{n\}/g, String(o.type === 'survive' ? o.rounds : '')).replace(/\{every\}/g, String(o.type === 'totem' ? o.every : ''));
+  return { name: d.name, goal: fill(d.goal), text: fill(d.text) };
+}
+
 export const aiConfig = aiJson as unknown as AiConfig;
 
 export const battles: Record<string, BattleDef> = {
@@ -231,6 +289,8 @@ export interface Teams {
    * kural). Yoksa savaş birebir eskisi.
    */
   waves?: TeamWave[];
+  /** Karşılaşma kuralları (koşul / hedef / kapalı hücre; resolveBattleRules) + Break the Totem takviye grubu (dalga biçiminde). Yoksa savaş birebir eskisi. */
+  rules?: RulesSpec & { reinforce?: TeamWave };
 }
 
 /** Sonraki bir dalga (Teams.waves). */
@@ -559,6 +619,14 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
       return { enemies: b.ids.map(unitDef), enemySlots: b.slots, ...(units ? { enemyUnits: units } : {}) };
     })
     .filter((w) => w.enemies.length > 0);
+  // Karşılaşma kuralları: Totem takviyesi dalga yolundan (dizilim karşı takıma bakar)
+  const rules = resolveBattleRules(teams?.rules);
+  if (rules?.objective?.type === 'totem' && teams?.rules?.reinforce) {
+    const r = teams.rules.reinforce;
+    const b = build(r.enemies, undefined, 0x3333, { foes: idsOf(teams?.party, rolled?.party), board: 'enemy' });
+    const units = unitsFor(b, r.units);
+    if (b.ids.length) rules.objective.reinforce = { enemies: b.ids.map(unitDef), enemySlots: b.slots, ...(units ? { enemyUnits: units } : {}) };
+  }
   return {
     seed,
     mode,
@@ -570,6 +638,7 @@ export function battleSetup(battleId: string, seed: number, mode: BattleMode = '
     ...(enemyUnits ? { enemyUnits } : {}),
     ...(teams?.valor ? { valor: { ...teams.valor } } : {}),
     ...(waves.length ? { waves, waveRules: { ...waveRules } } : {}),
+    ...(rules ? { rules } : {}),
     skills,
     globalSkills,
     valorRules,
