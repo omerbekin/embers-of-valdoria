@@ -328,6 +328,9 @@ export class BattleScene extends Phaser.Scene {
   private uiOccupied = new Set<string>();
   /** Dalgalı savaş: ekranda gösterilen dalga (0 tabanlı; olaylar oynatıldıkça ilerler, motorun gerisinde kalabilir). */
   private shownWave = 0;
+  /** Gösterilen savaş turu (karşılaşma kuralları: 'round' olayıyla ilerler; motor oynatmanın önünde olabilir). */
+  private shownRound = 1;
+  private goalState: 'done' | 'failed' | undefined;
 
   constructor() {
     super(BattleScene.KEY);
@@ -488,6 +491,10 @@ export class BattleScene extends Phaser.Scene {
     this.mountHud();
     this.shownWave = this.battle.waveIndex; // yarım savaştan devam edilen dalgalı savaşta doğru dalga yazılır
     this.syncWaveLabel();
+    this.shownRound = this.battle.round;
+    this.goalState = undefined;
+    this.syncGoalLabel();
+    this.drawBlockedCells();
     // Sefer tutorial'ı (docs/design/tutorial.md): ders kutuları DOM'da; sahne kapanınca kapanır
     this.tut?.destroy();
     this.tut = this.tutCtx && !this.mp ? new BattleTutorial(this.tutCtx, () => this.battle) : null;
@@ -3341,6 +3348,22 @@ export class BattleScene extends Phaser.Scene {
         return;
       case 'waveStart':
         await this.playWaveStart(e);
+        this.syncGoalLabel();
+        return;
+      case 'round':
+        this.shownRound = e.round;
+        this.syncGoalLabel();
+        return;
+      case 'objective':
+        if (e.state !== 'progress') {
+          this.goalState = e.state;
+          this.announce(e.objective === 'survive' ? 'You hold out and escape!' : e.objective === 'totem' ? 'The totem is broken!' : 'The front row has fallen');
+        }
+        this.syncGoalLabel();
+        return;
+      case 'reinforce':
+        await this.playReinforce(e);
+        this.syncGoalLabel();
         return;
       case 'battleStart':
         return;
@@ -3353,6 +3376,84 @@ export class BattleScene extends Phaser.Scene {
   private syncWaveLabel(): void {
     const total = this.battle.waveCount;
     this.hud?.setWave(total > 1 ? { n: this.shownWave + 1, total } : null);
+  }
+
+  // --- Karşılaşma kuralları (Harita 2-3; data/battle-rules.json): HUD satırı, kapalı hücreler, totem takviyesi ---
+
+  /** HUD'un kural satırı: koşul · düzen · hedef + sayaç; ipucunda kuralların tam metni (A Band). Kuralsız savaşta gizli. */
+  private syncGoalLabel(): void {
+    const r = this.battle.rules;
+    if (!this.hud) return;
+    if (!r) {
+      this.hud.setGoal(null);
+      return;
+    }
+    const parts: string[] = [];
+    const rows: Array<{ text: string; color?: string }> = [];
+    let counter: string | undefined;
+    let title = '';
+    if (r.condition) {
+      parts.push(r.condition.name);
+      rows.push({ text: `${r.condition.name}: ${r.condition.text}` });
+      title = r.condition.name;
+      const f = r.condition.flood;
+      if (f && f.everyRounds > 0 && !r.objective) {
+        const left = f.everyRounds - ((this.shownRound - 1) % f.everyRounds);
+        counter = left === f.everyRounds ? 'Tide now' : `Tide in ${left}`;
+      }
+    }
+    const layout = r.layout ? content.battleRulesData.layouts[r.layout] : undefined;
+    if (layout) {
+      if (!r.condition && !r.objective) parts.push(layout.name);
+      rows.push({ text: `${layout.name}: ${layout.text}` });
+      title ||= layout.name;
+    }
+    if (r.objective) {
+      const t = content.objectiveTexts(r.objective);
+      parts.push(t.goal);
+      rows.unshift({ text: t.text });
+      title = t.name;
+      const p = this.battle.objectiveProgress();
+      if (r.objective.type === 'survive') counter = `${Math.min(this.shownRound, r.objective.rounds)}/${r.objective.rounds}`;
+      else if (p?.type === 'totem') counter = `${p.current}/${p.target ?? 0}`;
+      else if (p?.type === 'hold') counter = `${p.current} holding`;
+    }
+    if (this.goalState === 'done') counter = 'Done';
+    if (this.goalState === 'failed') counter = 'Failed';
+    this.hud.setGoal({ parts, ...(counter ? { counter } : {}), ...(this.goalState ? { state: this.goalState } : {}), tip: { title, kind: 'Battle rule', rows } });
+  }
+
+  /** M-I kapalı hücreler (direk / küpeşte): iki tahtada da koyu, çapraz tahtalı işaret (zemin katmanının altında). */
+  private drawBlockedCells(): void {
+    const blocked = this.battle.rules?.blocked;
+    if (!blocked?.length) return;
+    const g = this.add.graphics().setDepth(29);
+    for (const board of ['party', 'enemy'] as const)
+      for (const slot of blocked) {
+        const q = this.cellPos(board, slot);
+        g.fillStyle(0x0b0806, 0.55).fillEllipse(q.x, q.y - 4, 118, 42);
+        g.lineStyle(2, 0x8a6a3f, 0.85).strokeEllipse(q.x, q.y - 4, 118, 42);
+        g.lineStyle(6, 0x5a4026, 0.95).lineBetween(q.x - 34, q.y - 14, q.x + 34, q.y + 6).lineBetween(q.x - 34, q.y + 6, q.x + 34, q.y - 14);
+      }
+  }
+
+  /** Break the Totem takviyesi: yeni düşmanlar bant olmadan sağdan girer (kısa duyuru), sıra çubuğu tazelenir. */
+  private async playReinforce(e: BattleEvent & { type: 'reinforce' }): Promise<void> {
+    const boxes: Phaser.GameObjects.Container[] = [];
+    for (const c of e.combatants) {
+      const view = this.addView(c);
+      if (!view) continue;
+      const live = this.battle.get(c.uid);
+      if (live) (view as { combatant: Combatant }).combatant = live;
+      view.container.setAlpha(0);
+      if (c.maxRage !== undefined) this.rageShown.set(c.uid, c.rage ?? 0);
+      boxes.push(view.container);
+    }
+    if (!boxes.length) return;
+    this.announce(`Reinforcements: ${e.combatants.map((c) => unitName(c)).join(' · ')}`);
+    if (e.queue.length) this.renderTurnBar(e.queue);
+    await enemiesEnter(this, boxes);
+    this.refreshCommands();
   }
 
   /** Önceki dalganın düşmüş birimi savaştan çıktı: görünümü yumuşakça solar ve kalkar (ceset işareti de gider). */
@@ -4229,6 +4330,7 @@ export class BattleScene extends Phaser.Scene {
 
   private refreshCommands(): void {
     this.hideInfoTip();
+    if (this.battle.rules) this.syncGoalLabel(); // Hold / Totem sayacı hamle ve ölümle değişir (olayı yok)
     this.ensureSelection();
     const actor = this.activeActor;
     for (const v of this.views.values()) v.setActive(v.combatant.uid === actor?.uid && !this.battle.winner);

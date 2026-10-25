@@ -315,6 +315,8 @@ export class BattleHud {
   private readonly turnLbl: HTMLDivElement;
   /** Dalgalı savaş göstergesi ("Round 2/3"; yalnızca dalga sayısı 1'den büyükse; geçici görünüm: tek yer bu alan + .bh-wave). */
   private readonly waveLbl: HTMLDivElement;
+  /** Karşılaşma kuralı satırı (Harita 2-3: koşul · hedef · sayaç; dalga plakasının altında, yoksa onun yerinde). */
+  private readonly goalLbl: HTMLDivElement;
   private readonly actorBox: HTMLDivElement;
   private readonly skillBox: HTMLDivElement;
   private readonly globBox: HTMLDivElement;
@@ -372,6 +374,8 @@ export class BattleHud {
     this.turnLbl = el('div', 'bh-turn-lbl');
     this.waveLbl = el('div', 'bh-wave');
     this.waveLbl.hidden = true;
+    this.goalLbl = el('div', 'bh-goal');
+    this.goalLbl.hidden = true;
     this.actorBox = el('div', 'bh-actor');
     this.skillBox = el('div', 'bh-skills');
     this.globBox = el('div', 'bh-globs');
@@ -385,7 +389,7 @@ export class BattleHud {
     this.ftip = el('div', 'bh-ftip bh-panel');
     this.ctip = el('div', 'bh-ctip bh-panel bh-corners');
     this.cards = { party: el('div', 'bh-card party'), enemy: el('div', 'bh-card enemy') };
-    this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
+    this.root.append(this.band, this.turn, this.turnLbl, this.waveLbl, this.goalLbl, this.actorBox, this.pasBox, this.skillBox, this.globBox, this.valorBox, this.rightSlot, this.cards.party, this.cards.enemy, this.ctip, this.ftip);
     parent.append(this.root);
 
     // Fare bırakması alttaki Phaser sahnesine gitmesin (Phaser window mouseup'ı dinler, defaultPrevented olanı yok sayar)
@@ -679,8 +683,26 @@ export class BattleHud {
   }
 
   /** Tur göstergesi (savaştaki dalga = "Round", Ömer 2026-10-19 V1 Corner): sol üst plaka "Round 2 / 3" + elmaslar (null = gizli: tek turlu savaş). */
+  /**
+   * Karşılaşma kuralı satırı (maps-2-3.md B3 / M-B / M-I; data/battle-rules.json): tek satır "Tide · Survive 6 turns · 3/6" + A Band ipucu
+   * (kuralların tam metni). `state` 'done' yeşil, 'failed' kırmızı. null = gizli (kuralsız savaş).
+   */
+  setGoal(g: { parts: string[]; counter?: string; state?: 'done' | 'failed'; tip: TipContent } | null): void {
+    this.goalLbl.hidden = !g;
+    this.cardTips.set('goal', g?.tip ?? { title: '', rows: [] });
+    if (!g) {
+      this.put(this.goalLbl, '');
+      return;
+    }
+    this.goalLbl.classList.toggle('done', g.state === 'done');
+    this.goalLbl.classList.toggle('failed', g.state === 'failed');
+    const parts = g.parts.map((p) => `<span class="p">${esc(p)}</span>`).join('<i class="bh-dia s"></i>');
+    this.put(this.goalLbl, `<span class="t" data-tip="goal">${parts}${g.counter ? `<span class="c">${esc(g.counter)}</span>` : ''}</span>`);
+  }
+
   setWave(round: { n: number; total: number } | null): void {
     this.waveLbl.hidden = !round;
+    this.goalLbl.classList.toggle('low', !!round);
     if (!round) {
       this.waveLbl.innerHTML = '';
       return;

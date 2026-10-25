@@ -7147,7 +7147,9 @@ export class Battle {
       emit({ type: 'objective', objective: 'survive', state: 'progress', current: this.round, goal: o.rounds });
     }
     for (const g of [...this.ground]) {
-      if (g.envUntilRound === undefined || g.envUntilRound > this.round) continue;
+      if (g.envUntilRound === undefined) continue;
+      g.turns = Math.max(0, g.envUntilRound - this.round); // rozetteki kalan tur
+      if (g.envUntilRound > this.round) continue;
       this.ground.splice(this.ground.indexOf(g), 1);
       emit({ type: 'groundEnd', id: g.id });
     }
