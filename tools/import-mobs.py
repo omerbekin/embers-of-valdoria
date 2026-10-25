@@ -93,6 +93,7 @@ HEADS = {
     'weir_wyrm': (1270, 100, 400),
     'admiral_vane': (770, 20, 300),
     'drowned_queen': (700, 0, 330),
+    'hex_totem': (313, 290, 240),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
