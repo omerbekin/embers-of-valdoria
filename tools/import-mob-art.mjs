@@ -68,6 +68,11 @@ const ICON_SHEETS = {
   // King's Bridge boss (Bridge Warden): 4 skill + (2. sayfa) fall_of_kings_bridge + 3 pasif
   'bridge_warden-sheet': ['anchor_smash', 'breaking_span', 'chain_hook', 'ash_brand'],
   'bridge_warden2-sheet': ['fall_of_kings_bridge', 'unyielding', 'anchored', 'ember_heart'],
+  // Harita 2 (Drowned Reach) mob paketi: Corsair Cutlass/Slinger (boarding ortak), Salt Crab, Weir Eel, Siren
+  'corsairs-sheet': ['cutlass', 'rake', 'boarding', 'sling_stone'],
+  'corsairs_crab-sheet': ['pitch_pot', 'pincer', 'burrow', 'shell'],
+  'weir_eel-sheet': ['eel_bite', 'lunge', 'slick', null],
+  'siren-sheet': ['lament', 'chorus', 'lure', null],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
@@ -111,6 +116,9 @@ const GROUND = new Set([
   // King's Bridge boss (Bridge Warden)
   'bridge_warden-breaking_span',
   'bridge_warden-fall_of_kings_bridge',
+  // Harita 2 (Drowned Reach)
+  'corsair_slinger-pitch_pot',
+  'salt_crab-burrow',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
