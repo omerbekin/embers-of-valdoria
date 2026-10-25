@@ -193,13 +193,14 @@ describe('YM6 Ward-Etcher (Deep Runecaller)', () => {
 });
 
 describe('YM7 Mire-Bound (Fen Witchling, Morwen)', () => {
-  it('Omen taşıyan düşman yavaşlar; birden çok cadıda tek uygulanır; cadı ölünce kalkar', () => {
+  it('Saltbound taşıyan düşman yavaşlar; birden çok cadıda tek uygulanır; cadı ölünce kalkar', () => {
     const e = effectOf('fen_witchling', 'mireBound');
     expect(content.mobs.hedge_witch_morwen!.passive!.id).toBe('mire_bound');
     const b = arena([['warrior', 1]], [['fen_witchling', 6], ['hedge_witch_morwen', 8]]);
     const w = unit(b, 'party-0');
     const plain = b.baseSpeedOf(w);
-    b.debugAddStatus('party-0', 'omen');
+    expect(e.status).toBe('saltbound');
+    b.debugAddStatus('party-0', e.status);
     expect(b.baseSpeedOf(w)).toBe(Math.max(f.attributes.spdStep ?? 1, roundSpeed(w.stats.spd * e.speedMult, f)));
     b.debugKill('enemy-0', false);
     expect(b.baseSpeedOf(w)).toBeLessThan(plain); // Morwen hâlâ yaşıyor

@@ -66,7 +66,7 @@ MP'ye dayanan pasif: **3 / 13** (P5, P6, P13; MP'nin en açık karşı oyun oldu
 | P4 | **Stone Patience** | Stonebound Warden | Kendi turunun başında, son turundan beri hiç hasar almadıysa +8 zırh kazanır (en çok +24); herhangi bir hasar bu bonusu sıfırlar. | Taş muhafızı görmezden gelirsen kaya olur; arada bir dokun. |
 | P5 | **Deep Hoard** | Thane of the Deep | Mevcut MP'sinin %50'si kadar ek zırh VE büyü zırhı (anlık hesap). Skill kullandıkça (MP harcadıkça) incelir. | MP'sini çal/yak (Anti-Mage, Drain Field) ya da büyüsünü harcatmasını bekle. |
 | P6 | **Ward-Etcher** | Deep Runecaller | MP harcadığı her skill'den sonra, zırhı en düşük dostuna harcanan MP x 2 kadar büyü kalkanı (2 tur) verir. | Runecaller'ın MP'si = dostlarının kalkanı; MP'sini kes. |
-| P7 | **Mire-Bound** | Fen Witchling, Hedge Witch Morwen (aile) | Bu birim yaşadıkça, üstünde en az 1 Omen olan kahramanların hızı %20 düşer (sıra çubuğunda geri kayar; aynı aileden birden çok cadı olsa da bir kez uygulanır). | Omen'li kahraman sıra kaybeder: cadıyı önce öldür ya da Omen'i söndür. |
+| P7 | **Mire-Bound** | Fen Witchling, Hedge Witch Morwen (aile) | Bu birim yaşadıkça, Saltbound kahramanların hızı %20 düşer (Ömer 2026-10-25, Saltbound formu: Omen yerine Saltbound) (sıra çubuğunda geri kayar; aynı aileden birden çok cadı olsa da bir kez uygulanır). | Omen'li kahraman sıra kaybeder: cadıyı önce öldür ya da Omen'i söndür. |
 | P8 | **Flicker** | Will-o'-Wisp | Bir skill vuruşu ona isabet edince 1 tur Shrouded (kaçınma +%20) kazanır; kendi turu başına en çok bir kez. | Wisp'e tek ağır vuruşla git, ufak vuruşlarla değil. |
 | P9 | **Corpse Hunger** | Ghoul, Drowned (aile) | Herhangi bir taraftaki çağrı olmayan bir birim ölünce, en yüksek %15 maks. can iyileşir (Wound şifa azaltmasından etkilenir). | Ölüm, ölüleri doyurur: öldürme sırasını düşün, ghoul'u en sona bırakma. |
 | P10 | **Bone Ward** | Grave Chanter | Kendi tarafında en az bir çağrılmış (summoned) dost yaşadıkça aldığı tüm hasar %30 azalır. | Önce kemikleri kır, sonra Chanter'a yüklen; Call the Buried'ın 5 turluk beklemesini kolla. |
@@ -153,7 +153,7 @@ Statlar mevcut moblara göre (Road Thug STR 28 / zırh 14; Acolyte INT 30 / zır
 |---|---|---|---|---|---|
 | **Cauldron Splash** (temel) | tek düşman | LUCK büyü (karanlık) 0,5 + 2 tur Wither (DoT, LUCK 0,08) | 0 / — | Taşan yeşil kazan kepçesi | Kepçeden fırlayan köpüklü yeşil sıvı, hedefte buharlaşan lekeler |
 | Lure Light (VAR, artık yalnız Morwen'de) | tek düşman | hasar + 2 tur Jinxed | 2 / 2 | var | var |
-| **Hag's Mark** | tek düşman | 2 Omen + 1 tur Silenced | 10 / 4 | Kurumuş el izi ve göz sembolü | Hedefin üstünde beliren mor el izi, ağzını kapatan dumanlı tasma |
+| **Hag's Mark** | tek düşman | 1 tur Saltbound + 1 tur Silenced (eskiden 2 Omen) | 10 / 4 | Kurumuş el izi ve göz sembolü | Hedefin üstünde beliren mor el izi, ağzını kapatan dumanlı tasma |
 
 Çizim (YENİ, Ömer 2026-10-16: kendi çizimi): *"An old hedge witch of the fen, bent but sharp-eyed, wild grey hair woven with reeds and small bird bones, patched moss-green shawl over a mud-dark dress, a wooden ladle dripping glowing green brew in one hand and a crooked rowan staff hung with charms in the other, a small bubbling iron cauldron at her side, sickly marsh-green glow as accent colour."*
 
@@ -207,13 +207,13 @@ Statlar mevcut moblara göre (Road Thug STR 28 / zırh 14; Acolyte INT 30 / zır
 | Iron Pass | Stonebound Warden (1), Pass Crossbowman (6), Deep Runecaller (8) | 1 ön + 2 arka | 1 | Taş muhafız kendini büyütür; rün kalkanı arkadakini korur |
 | Charcoal Camp | Shieldwarden (1), Charcoal Burner (4), Ember Acolyte (7) | tek sütun (ön-orta-arka) | 2 | Rebuke'a melee girme; sütun dumanı + zemin |
 | Dwarven Mine | Thane of the Deep (1), Deep Runecaller (6), Deep Runecaller (8) | 1 ön + 2 arka | 2 | MP'yi kes: Thane'in zırhı ve Runecaller'ların kalkanı MP'den gelir |
-| Witch's Hut (koruma) | Drowned (0), Drowned (2), Fen Witchling (7) | 2 ön + 1 arka | 1 | Silence + Omen (Omen'li yavaşlar); ölüm ölüleri iyileştirir |
-| Witch's Hut "Steal" (`morwen_duel`, yeni) | Hedge Witch Morwen (7), Drowned (1), Will-o'-Wisp (6), Will-o'-Wisp (8) | 1 ön + 3 arka | 3 | Lider düellosu: Omen + sıra kaybı; Wisp'ler tek ağır vuruş ister |
-| Misty Marsh | Drowned (1), Fen Witchling (6), Will-o'-Wisp (8) | 1 ön + 2 arka | 2 | Omen tanıtımı, Wisp'e tek ağır vuruş |
+| Witch's Hut (koruma) | Drowned (0), Drowned (2), Fen Witchling (7) | 2 ön + 1 arka | 1 | Silence + Saltbound (Saltbound'lu yavaşlar); ölüm ölüleri iyileştirir |
+| Witch's Hut "Steal" (`morwen_duel`, yeni) | Hedge Witch Morwen (7), Drowned (1), Will-o'-Wisp (6), Will-o'-Wisp (8) | 1 ön + 3 arka | 3 | Lider düellosu: Saltbound + sıra kaybı; Wisp'ler tek ağır vuruş ister |
+| Misty Marsh | Drowned (1), Fen Witchling (6), Will-o'-Wisp (8) | 1 ön + 2 arka | 2 | Saltbound tanıtımı, Wisp'e tek ağır vuruş |
 | Grave Field | Ghoul (1), Risen Skeleton (0, `summoned`), Risen Skeleton (2, `summoned`), Grave Chanter (7) | 3 ön + 1 arka | 1 | Kemikler Chanter'ı korur (Bone Ward): önce iskeletleri kır, sonra çağırıcıyı |
 | Pilgrim Road (rakip bölük) | Warrior (0), Cutthroat (2), Archer (6), **Mage (8)** (Gambler yerine) | 2 ön + 2 arka | 1 | Hikâye: rakip maceracı bölüğü (6. madde) |
 | St. Brann's Abbey | Oathsworn Brother (0), Oathsworn Brother (1), Censer Monk (7) | 2 ön + 1 arka | 1 | Yemin (iki kardeş bitişik) + kutsama + şerit 1'de şifa dumanı (Brother 1 ve keşiş aynı şeritte) |
-| Black Cathedral (elit) | High Priest of the Undying (7, elit), Grave Chanter (6), Fen Witchling (8), Ghoul (1) | 1 ön + 3 arka | 3 | Çağırıcı + Omen + rahip: rahip doldukça şifa/Requiem gelir; önce rahibe ya da Chanter'ın kemiklerine odaklan |
+| Black Cathedral (elit) | High Priest of the Undying (7, elit), Grave Chanter (6), Fen Witchling (8), Ghoul (1) | 1 ön + 3 arka | 3 | Çağırıcı + Saltbound + rahip: rahip doldukça şifa/Requiem gelir; önce rahibe ya da Chanter'ın kemiklerine odaklan |
 | King's Bridge (boss) | Değişmez: Bridge Warden (1), 2 Iron Mooring (3,5) | | kısmi (Faz 2+) | |
 
 **Aynı kompozisyon yok:** 12 karşılaşmanın birim kümeleri birbirinden farklı (aynı birim kümesini paylaşan iki savaş yok; en yakın ikili Misty Marsh / Witch's Hut koruması bile farklı: Witchling+Wisp+Drowned ile 2 Drowned+Witchling). Aynı dizilişi paylaşanlarda (2 ön + 1 arka: Windy Moor, Witch's Hut, Abbey; 1 ön + 2 arka: Iron Pass, Mine, Marsh) aileler ve dersler farklı.
@@ -250,7 +250,7 @@ Arka, **caster** · INT 32, zırh 12, MZ 16, MP = 30 + INT + 30 (P13) · elit ca
 | YM4 | Stone Patience | Tur başında, son turundan beri hasar almadıysa +8 zırh (en çok +24); hasar alınca bonus sıfırlanır. | tur başı + onDamaged, birikimli zırh |
 | YM5 | Deep Hoard (MP) | Mevcut MP'nin %50'si kadar ek zırh ve büyü zırhı (anlık). | canlı türev stat |
 | YM6 | Ward-Etcher (MP) | MP harcadığı skill'den sonra zırhı en düşük dosta, harcanan MP x 2 büyü kalkanı (2 tur). | MP harcama olayı + var olan `shield` |
-| YM7 | Mire-Bound | Bu birim yaşadıkça Omen'li kahramanların hızı %20 düşer (aile içinde yığılmaz). | aura, hız çarpanı (sıra sayacı) |
+| YM7 | Mire-Bound | Bu birim yaşadıkça Saltbound kahramanların hızı %20 düşer (aile içinde yığılmaz). | aura, hız çarpanı (sıra sayacı) |
 | YM8 | Flicker | Skill vuruşu isabet edince 1 tur Shrouded; kendi turu başına bir kez. | onDamaged + var olan `shrouded` |
 | YM9 | Corpse Hunger | Çağrı olmayan herhangi bir birim ölünce maks. canının %15'i kadar iyileşir. | ölüm olayı (herkes) -> şifa |
 | YM10 | Bone Ward | Kendi tarafında çağrılmış bir dost yaşadıkça aldığı hasar %30 azalır. | koşullu alınan hasar çarpanı |
@@ -656,7 +656,7 @@ Bridge Warden'dan fark: Warden'ın Fall'ında Keystone'a kaçılır; Pyre'dan ka
 | Siege Line | `siege_line` "Morvane's Vanguard" | Morvane Halberdier (0), Stonebound Warden (1), Morvane Halberdier (2), Siege Crossbowman (7) | **0** (bölgenin tek caster'sız savaşı) | Kapalı sıra: bir ucu kır, taş muhafızı arada dürt |
 | Thornwood Hollow (elit) | `thornwood_hollow` "Cult of the Drake" | Drake Priest (7, elit), Grey Wolf (0), Grey Wolf (2), Ember Acolyte (6) | 2 | Molten Shed eşiği; sürü + yanan zemin |
 | Ember Road | `ember_road` "Morvane's Outriders" | Ember Outrider (0), Ash Hound (1), Ember Outrider (2), Ember Acolyte (7) | 1 | Yarı canda kaçan atlılar + dalan tazı |
-| Riverhead | `riverhead` "Spring Ambush" | Drowned (0), Ghoul (2), Fen Witchling (6), Will-o'-Wisp (8) | 2 | Ölüm ölüleri doyurur; Omen'li yavaşlar; Wisp'e tek ağır vuruş |
+| Riverhead | `riverhead` "Spring Ambush" | Drowned (0), Ghoul (2), Fen Witchling (6), Will-o'-Wisp (8) | 2 | Ölüm ölüleri doyurur; Saltbound'lu yavaşlar; Wisp'e tek ağır vuruş |
 | Gate of Cinders | `gate_of_cinders` "Gatewardens" | Cinder Gatewarden (0), Morvane Halberdier (1), Cinder Gatewarden (2), Gate Runecaller (7) | 1 | Melee'yi cezalandıran kapı + sıra kalkanı + rün kalkanı: uzaktan / büyüyle vur |
 | Castle Morvane (boss) | `castle_morvane` "Lord Morvane" | Lord Morvane (4, boss), Sworn Guard (0), Sworn Guard (2), Ember Hierophant (7) | 2 | Taç kalkanı, Ashfall'dan kaç, Pyre'a hazırlan |
 

@@ -939,6 +939,15 @@ export class Battle {
    * Altıncı tur (Weakened): birimin VERDİĞİ hasar çarpanı. Her durum için (tanımdaki değer ?? 1) + örneğin statusPotency eki (en az 0); `magicDealtMult`
    * yalnızca büyü hasarında. Çarpanlar çarpılır. Durum yoksa 1.
    */
+  /** Saltbound (statuses.json rooted): birimi kendini taşımaktan alıkoyan durumun adı; yoksa null. */
+  rootedBy(c: Combatant): string | null {
+    for (const s of c.statuses) {
+      const d = this.statusDef(s.kind);
+      if (d?.rooted) return d.name ?? s.kind;
+    }
+    return null;
+  }
+
   /** Birimin VERDİĞİ şifa çarpanı (statuses.json healDealtMult; Spellbound). Durum yoksa 1. */
   healDealtMult(c: Combatant): number {
     let m = 1;
@@ -2815,13 +2824,15 @@ export class Battle {
       crit += (d?.critDelta ?? 0) + (s.potency?.critDelta ?? 0) + (noMisfortune ? 0 : (d?.critDeltaPerStack ?? 0) * (s.stacks ?? 0));
       if (d?.armorMult !== undefined || s.potency?.armorMult !== undefined) armorMult *= Math.max(0, (d?.armorMult ?? 1) + (s.potency?.armorMult ?? 0));
     }
-    if (bonus <= 0 && magicBonus <= 0 && acc === 0 && eva === 0 && crit === 0 && armorMult === 1) return c.stats;
+    // Saltbound (noEvasion): kaçınma 0 (tüm ekler dahil)
+    const noEva = c.statuses.length > 0 && c.statuses.some((s) => this.statusDef(s.kind)?.noEvasion);
+    if (bonus <= 0 && magicBonus <= 0 && acc === 0 && eva === 0 && crit === 0 && armorMult === 1 && !noEva) return c.stats;
     return {
       ...c.stats,
       armor: armorMult === 1 ? c.stats.armor + bonus : Math.round((c.stats.armor + bonus) * armorMult * 10000) / 10000,
       magicArmor: c.stats.magicArmor + magicBonus,
       accuracy: Math.max(0, Math.round((c.stats.accuracy + acc) * 10000) / 10000),
-      evasion: Math.max(0, Math.round((c.stats.evasion + eva) * 10000) / 10000),
+      evasion: noEva ? 0 : Math.max(0, Math.round((c.stats.evasion + eva) * 10000) / 10000),
       critChance: Math.min(1, Math.max(0, Math.round((c.stats.critChance + crit) * 10000) / 10000)),
     };
   }
@@ -4053,6 +4064,8 @@ export class Battle {
     const skill = this.skill(skillId, actorUid);
     if (!skill) return { ok: false, reason: 'Unknown skill' };
     if (actor.lockedSkills?.includes(skillId)) return { ok: false, reason: 'Locked' };
+    // Saltbound (rooted): kendini taşıyan skill'ler (Charge advanceToFront, Backstab requiresOpenBehind) kullanılamaz
+    if ((skill.advanceToFront || skill.requiresOpenBehind) && this.rootedBy(actor)) return { ok: false, reason: `${this.rootedBy(actor)}: cannot move` };
     // Faz 5a (Chained to Them): ağaç kuralı noTaunt (taunt veren skill)
     if (actor.treeHooks && skill.effects.some((e) => e.type === 'taunt') && this.rulesOf(actor, 'noTaunt').length) return { ok: false, reason: 'Chained: cannot Taunt' };
     // Boss fazı şartı (Ash Brand faz 2, Fall faz 3) ve bağlı yardımcı şartı (Chain Hook: canlı Iron Mooring)
@@ -4356,6 +4369,8 @@ export class Battle {
     } else {
       // Faz 2c (Anchored Stone): ağaç kuralı noMove (Faz 5a: while / when; Chained to Them)
       if (actor.treeHooks && this.rulesOf(actor, 'noMove').length) return { ok: false, reason: 'Anchored: cannot move' };
+      // Saltbound (rooted): yer değiştirme / geri çekilme yok
+      if (this.rootedBy(actor)) return { ok: false, reason: `${this.rootedBy(actor)}: cannot move` };
       if (actor.board !== actor.side) return { ok: false, reason: 'Cannot move here' };
       const free = this.freeTiles(actorUid);
       if (free.length === 0) return { ok: false, reason: 'No empty cell' };

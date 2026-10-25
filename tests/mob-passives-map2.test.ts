@@ -244,3 +244,62 @@ describe('Weir Eel Bite: Soaked hedefe ek hasar', () => {
     expect(Math.abs(dmg(true) - dmg(false) * bonus.multiplier)).toBeLessThanOrEqual(1);
   });
 });
+
+describe('Saltbound (durum; Harita 1 cadıları ve Salt Hag, Omen yerine)', () => {
+  it('Hex Bolt, Hag\u2019s Mark ve Spark 1 tur Saltbound verir, Omen vermez', () => {
+    for (const id of ['hex_bolt', 'hags_mark', 'wisp_spark']) {
+      const fx = content.skills[id]!.effects;
+      expect(fx.some((x) => x.type === 'status' && x.status === 'saltbound' && x.turns === 1), id).toBe(true);
+      expect(fx.some((x) => x.type === 'omen'), id).toBe(false);
+    }
+    const b = sure(make({ party: cells({ 0: 'warrior' }), enemies: cells({ 6: 'fen_witchling' }) }));
+    b.useSkill('enemy-0', 'hex_bolt', 'party-0');
+    const st = unit(b, 'party-0').statuses.find((s) => s.kind === 'saltbound');
+    expect(st?.turns).toBe(1);
+    expect(unit(b, 'party-0').statuses.some((s) => s.kind === 'omen')).toBe(false);
+  });
+
+  it('Saltbound kahraman Move, Charge ve Backstab kullanamaz (neden gösterilir); kaçınması 0', () => {
+    const b = sure(make({ party: cells({ 3: 'warrior', 6: 'cutthroat' }), enemies: cells({ 0: 'salt_crab', 7: 'salt_crab' }) }));
+    const w = unit(b, 'party-0');
+    const ct = unit(b, 'party-1');
+    const why = (r: { ok: boolean }) => (r as { reason?: string }).reason ?? '';
+    expect(b.canUse(w.uid, 'charge').ok, JSON.stringify(b.canUse(w.uid, 'charge'))).toBe(true);
+    expect(b.canUseGlobal(w.uid, 'move_tile').ok, JSON.stringify(b.canUseGlobal(w.uid, 'move_tile'))).toBe(true);
+    w.stats.evasion = 0.3;
+    expect(b.effectiveStats(w).evasion).toBeGreaterThan(0);
+    for (const c of [w, ct]) c.statuses.push({ kind: 'saltbound', turns: 1, source: 'enemy-0' });
+    const mv = b.canUseGlobal(w.uid, 'move_tile');
+    expect(mv.ok).toBe(false);
+    expect(why(mv)).toContain('Saltbound');
+    const ch = b.canUse(w.uid, 'charge');
+    expect(ch.ok).toBe(false);
+    expect(why(ch)).toContain('Saltbound');
+    expect(why(b.canUse(ct.uid, 'backstab'))).toContain('Saltbound');
+    expect(why(b.canUse(ct.uid, 'venom_edge'))).not.toContain('Saltbound'); // taşımayan skill Saltbound'dan etkilenmez
+    expect(b.effectiveStats(w).evasion).toBe(0);
+    // global eylem listesi (UI) Move'u kullanılamaz gösterir
+    const acts = b.listActions(w.uid);
+    expect(acts.find((o) => o.id === 'move_tile')?.ok).toBe(false);
+    expect(acts.find((o) => o.id === 'charge')?.reason).toContain('Saltbound');
+  });
+
+  it('hiçbir mob, elit ya da boss Omen veya Dark Bond vermez (Ömer O7: yalnız kahramanlara özel)', () => {
+    const banned = /"(omen|dark_bond|darkBond)"/;
+    const ids = new Set(Object.keys(content.skills));
+    const refs = (v: unknown, out: Set<string>) => {
+      if (typeof v === 'string') { if (ids.has(v)) out.add(v); }
+      else if (Array.isArray(v)) v.forEach((x) => refs(x, out));
+      else if (v && typeof v === 'object') Object.values(v).forEach((x) => refs(x, out));
+    };
+    const defs = { ...content.mobs, ...content.bosses };
+    expect(Object.keys(content.mobs).length).toBeGreaterThan(10);
+    for (const [id, d] of Object.entries(defs)) {
+      const used = new Set<string>();
+      refs({ skills: d.skills, phases: (d as { phases?: unknown }).phases, boss: (d as { boss?: unknown }).boss }, used);
+      for (const sk of used) expect(JSON.stringify(content.skills[sk]!.effects), `${id} > ${sk}`).not.toMatch(banned);
+      const { text: _t, name: _n, ...pe } = (d.passive ?? {}) as Record<string, unknown>;
+      expect(JSON.stringify(pe), `${id} pasifi`).not.toMatch(banned);
+    }
+  });
+});

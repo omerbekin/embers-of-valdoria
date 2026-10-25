@@ -1417,7 +1417,7 @@ export type Side = 'party' | 'enemy';
  * Durum türleri. 'thorns' (eski Thorn Shield) motorda ve veride KALDIRILDI (madde 222); ad yalnızca src/game/scenes/BattleScene.ts eski bir
  * `e.status === 'thorns'` karşılaştırması yaptığı için tür listesinde duruyor (ui-dev silince buradan da silinecek). Hiçbir skill/durum tanımı onu üretmez.
  */
-export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound';
+export type StatusKind = 'taunt' | 'guard' | 'regen' | 'slow' | 'haste' | 'wound' | 'stun' | 'fortify' | 'blessed' | 'thorns' | 'blinded' | 'shrouded' | 'dark_bond' | 'omen' | 'wither' | 'jinxed' | 'silence' | 'overextended' | 'staggered' | 'ash_brand' | 'anchored' | 'burning' | 'fleet' | 'exposed' | 'sunder' | 'weakened' | 'spellbound' | 'saltbound';
 
 /** Yığılan durumun patlaması (Hexer Doom): hasar = scale statı x powerPerStack x yığın x çarpan; büyü zırhı/kalkan uygulanır, isabet zarı YOK, kritik zarı VAR. */
 export interface DoomDef {
@@ -1467,6 +1467,10 @@ export interface StatusDef {
   endsOnOwnAttack?: boolean;
   /** true: taşıyanın bir sonraki SKILL'inden (hasar, şifa ya da başka) sonra düşer (statusEnd consumed). Spellbound (Harita 2, yalnız moblar verir). */
   endsOnOwnSkill?: boolean;
+  /** true: taşıyan kendini taşıyamaz: Move (yer değiştirme / geri çekilme) ve kendini taşıyan skill'ler (advanceToFront, requiresOpenBehind) kullanılamaz. Saltbound. Zorla taşınma engellenmez. */
+  rooted?: boolean;
+  /** true: taşıyanın kaçınması 0 (tüm kaçınma ekleri dahil). Saltbound. */
+  noEvasion?: boolean;
   /** Taşıyanın VERDİĞİ şifa çarpanı (skill şifası ve HoT; Spellbound 0,75). */
   healDealtMult?: number;
   /** true: taşıyan MP bedelli (bedeli > 0) skill kullanamaz (canUse 'Silenced'); bedelsiz skill'ler, Rage/can bedelliler ve global eylemler serbest. Silence. */

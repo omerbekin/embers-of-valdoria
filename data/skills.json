@@ -3916,7 +3916,7 @@
     "artOf": "close_ranks"
   },
   "hex_bolt": {
-    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Hexes temel saldırısı: LUCK karanlık hasar + 1 Omen (Evil Eye'ın zayıfı). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Hexes temel saldırısı: LUCK karanlık hasar + 1 tur Saltbound (Ömer, Saltbound formu H2 c 2026-10-25: eskiden 1 Omen; Omen yalnız Hexer'e özel). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "hex_bolt",
     "name": "Hex Bolt",
     "target": "single_enemy",
@@ -3935,9 +3935,9 @@
         "power": 0.6
       },
       {
-        "type": "omen",
-        "stacks": 1,
-        "critStacks": 2
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
       }
     ],
     "icon": "eye",
@@ -4026,7 +4026,7 @@
     "artOf": "jinx"
   },
   "wisp_spark": {
-    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Will-o'-Wisp temel saldırısı: büyü hasarı + 1 Omen. LUCK ölçekli (Omen'in Doom'u LUCK; tek stat kuralı, tests/damage-scale-rule). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Sefer mobu skill'i (data/mobs, fill-plan 2.3): Will-o'-Wisp temel saldırısı: büyü hasarı + 1 tur Saltbound (Ömer, Saltbound formu H2 c 2026-10-25: eskiden 1 Omen). LUCK ölçekli (tek stat kuralı, tests/damage-scale-rule). Sanat artOf ile ödünç. Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "wisp_spark",
     "name": "Spark",
     "target": "single_enemy",
@@ -4045,9 +4045,9 @@
         "power": 0.55
       },
       {
-        "type": "omen",
-        "stacks": 1,
-        "critStacks": 2
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
       }
     ],
     "icon": "eye",
@@ -4603,7 +4603,7 @@
     "artOf": "withering_curse"
   },
   "hags_mark": {
-    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Hedge Witch Morwen: tek düşmana 2 Omen + 1 tur Silenced (hasarsız). YER TUTUCU sanat: ikon/vfx/ses artOf 'doom_mark' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
+    "_not": "Sefer mobu skill'i (Bölge II, docs/design/campaign/mob-plan.md 2.3, Ömer onayı 2026-10-16): Hedge Witch Morwen: tek düşmana 1 tur Saltbound + 1 tur Silenced (hasarsız; Ömer, Saltbound formu H2 c 2026-10-25: eskiden 2 Omen). YER TUTUCU sanat: ikon/vfx/ses artOf 'doom_mark' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir, mob-plan.md 6). Sayılar PROVİZYON (npm run sim:campaign).",
     "id": "hags_mark",
     "name": "Hag's Mark",
     "target": "single_enemy",
@@ -4616,8 +4616,9 @@
     "fx": "#8a4fa8",
     "effects": [
       {
-        "type": "omen",
-        "stacks": 2
+        "type": "status",
+        "status": "saltbound",
+        "turns": 1
       },
       {
         "type": "status",

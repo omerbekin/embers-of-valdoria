@@ -187,7 +187,7 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
     case 'wardEtcher':
       return `After each skill that costs MP, the ally with the lowest armor (yourself only if alone) gains a magic shield of ${e.perMp}x the MP spent for ${turnsText(e.turns)}.`;
     case 'mireBound':
-      return `While you live, enemies carrying at least one ${cap(e.status)} are ${pct(1 - e.speedMult)} slower (it does not stack with other such witches).`;
+      return `While you live, ${cap(e.status)} enemies are ${pct(1 - e.speedMult)} slower (it does not stack with other such witches).`;
     case 'flicker':
       return `When an enemy skill hits you, gain ${cap(e.status)} for ${turnsText(e.turns)}; at most once between your turns.`;
     case 'corpseHunger':

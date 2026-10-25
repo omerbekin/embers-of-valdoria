@@ -26,10 +26,10 @@
     "id": "mire_bound",
     "name": "Mire-Bound",
     "icon": "hourglass",
-    "text": "While this witch lives, heroes carrying at least one Omen are 20% slower (several witches do not stack).",
+    "text": "While this witch lives, Saltbound heroes are 20% slower (several witches do not stack).",
     "effect": {
       "type": "mireBound",
-      "status": "omen",
+      "status": "saltbound",
       "speedMult": 0.8
     }
   }

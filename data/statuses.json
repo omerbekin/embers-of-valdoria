@@ -234,7 +234,7 @@
     "text": "Fire damage taken -50%, Speed -10%; Burning is put out"
   },
   "spellbound": {
-    "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-statuses). Sayı PROVİZYON.",
+    "_not": "Harita 2 (Ömer onayı 2026-10-25, Omen formu): mobların Omen yerine verdiği durum (Siren Lure; Drowned Queen Lament). Taşıyan kahramanın bir sonraki skill'i %25 zayıf (hasar ya da şifa); skill'i kullanınca düşer (endsOnOwnSkill), kullanmazsa sıradaki turunun sonunda biter (tickAtTurnEnd). YALNIZ MOBLAR VERİR (kahraman sınıfları değil: tests/mob-passives-map2.test.ts). Sayı PROVİZYON.",
     "name": "Spellbound",
     "type": "debuff",
     "icon": "rune",
@@ -244,5 +244,16 @@
     "endsOnOwnSkill": true,
     "tickAtTurnEnd": true,
     "text": "Next skill is 25% weaker (damage or healing); wears off once used"
+  },
+  "saltbound": {
+    "_not": "Ömer onayı 2026-10-25 (Saltbound formu H1 b / H2 c): mobların (Harita 1 cadıları Fen Witchling, Hedge Witch Morwen, Will-o'-Wisp; Harita 2 Salt Hag) Omen yerine verdiği durum. 1 tur: taşıyan yer değiştiremez / geri çekilemez (Move), kendini taşıyan skill'leri kullanamaz (advanceToFront: Charge; requiresOpenBehind: Backstab) ve kaçınması 0. Mire-Bound: cadı yaşarken Saltbound kahramanlar %20 yavaş. Zorla taşınma (Chain Hook, Undertow) engellenmez. YALNIZ MOBLAR VERİR. Sayı PROVİZYON.",
+    "name": "Saltbound",
+    "type": "debuff",
+    "icon": "anchored",
+    "color": "#d9d2c3",
+    "rooted": true,
+    "noEvasion": true,
+    "tickAtTurnEnd": true,
+    "text": "Cannot move, swap or use moving skills (Charge, Backstab); evasion is 0"
   }
 }
