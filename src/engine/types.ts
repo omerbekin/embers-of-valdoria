@@ -623,6 +623,11 @@ export interface UnitSetup {
   modifiers?: UnitModifiers;
   /** Arayüzde gösterilecek özel ad (İngilizce, ör. 'Bandit Chief'); Combatant.displayName. Combatant.name sınıf adı olarak kalır. */
   displayName?: string;
+  /**
+   * Yalnızca SUNUM: çizim kimliği (assets/sprites/<id>, avatar, poz sayfası); Combatant.spriteId'yi ezer. Kural, stat, RNG hiçbir şeyden etkilenmez
+   * (Harita 2: elit/boss'un ödünç kitle kendi çizimi; kadın varyasyonu, src/campaign/mob-looks.ts).
+   */
+  spriteId?: string;
   /** Rütbe (elite | boss); Combatant.tier. */
   tier?: UnitTier;
   /** Başlangıç canı (mutlak; [1, maks can] aralığına sıkıştırılır: ölü başlanamaz). startHpRatio'dan önceliklidir. */

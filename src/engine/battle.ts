@@ -7557,6 +7557,7 @@ function buildSetupCombatant(baseDef: CombatantDef, side: Side, slot: number, ui
   const tam = unit.tree?.armorMult;
   if (tam !== undefined && tam !== 1) c.stats = { ...c.stats, armor: Math.max(0, Math.round(c.stats.armor * tam * 10000) / 10000) };
   if (unit.displayName) c.displayName = unit.displayName;
+  if (unit.spriteId) c.spriteId = unit.spriteId; // yalnızca sunum (çizim kimliği)
   if (unit.tier) c.tier = unit.tier;
   if (unit.level !== undefined && Number.isFinite(unit.level) && unit.level >= 1) c.level = Math.floor(unit.level);
   if (unit.summonBase) c.stats.summonBase = { ...unit.summonBase };

@@ -1,0 +1,11 @@
+{
+  "_not": "Mob GÖRÜNÜŞ varyasyonları (Ömer onaylı kural 2026-10-26): aynı mob (aynı id, stat, kit, ses), yalnız çizim (sprite + avatar) değişir. Seferde her sıradan birim için seed'li seçim (src/campaign/mob-looks.ts; savaş seed'inden türetilmiş ayrı hash, savaş RNG'sini tüketmez): `ratio` olasılıkla varyasyon çizilir. Elit / boss / hedef nesne / özel çizimli (`sprite`) birimler etkilenmez. Codex'te mob sayfası tek kalır.",
+  "ratio": 0.5,
+  "variants": {
+    "corsair_cutlass": ["corsair_cutlass_f"],
+    "corsair_slinger": ["corsair_slinger_f"],
+    "drowned_knight": ["drowned_knight_f"],
+    "reaver_archer": ["reaver_archer_f"],
+    "reef_wrecker": ["reef_wrecker_f"]
+  }
+}

@@ -5,6 +5,7 @@ import { encounterWaves, encounterWavesById, isInertUnit, objectiveType } from '
 import { CONFIG, ENCOUNTERS, getMap } from './data';
 import { node } from './graph';
 import { battleSeed } from './seed';
+import { mobLook } from './mob-looks';
 import { chapterEnemyMods, nodeLevel } from './power';
 import { withEnemyLevel } from '../progression/levels';
 import { loadoutSetup } from '../progression/loadout';
@@ -164,7 +165,9 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   // Düşman level'ı (Ömer 2026-10-17): düğüm seviyesi; kahramanla aynı temel stat büyümesi (attrAdd), çarpanların üstüne düz ek
   const enemyLevel = nodeLevel(s.mapId, n.id);
   // Bir dalganın düşman kurulumları (ilk dalga ve dalgalı savaşın sonraki dalgaları aynı kuralla)
-  const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>): void => {
+  // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
+  const seed = battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0);
+  const enemySetups = (list: EncounterUnit[], enemies: Record<number, UnitSetup>, wave = 0): void => {
     // B3 Break the Totem: kırılacak nesne işareti güç katmanından bağımsız (kural mekaniği)
     if (objectiveType(enc.def.objective) === 'totem') for (const u of list) if (u.objective) enemies[u.slot] = { ...enemies[u.slot], objective: true };
     if (!caps.unitMods) return;
@@ -180,9 +183,12 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
       // eliteEscort (open-questions 365 seçenek 3): elit düğümde rütbesiz eşlikçilere zorluk eki (rütbeliler enemyTier'dan alır)
       const rank = u.tier ? (u.noTierMods ? undefined : diff?.enemyTier?.[u.tier]) : n.type === 'elite' ? diff?.eliteEscort : undefined;
       const mods = withEnemyLevel(withDifficulty(withDifficulty(withDifficulty(own, chapterMods), diff?.enemy), rank), u.class, enemyLevel);
+      // Görünüş (yalnızca sunum): özel çizim (`sprite`; Harita 2 elit / boss, Hex Totem) ya da seed'li mob varyasyonu (src/campaign/mob-looks.ts)
+      const look = u.sprite ?? mobLook(u, seed, wave);
       const setup: UnitSetup = {
         ...(mods ? { modifiers: mods } : {}),
         ...(u.name ? { displayName: u.name } : {}),
+        ...(look ? { spriteId: look } : {}),
         ...(u.tier ? { tier: u.tier } : {}),
         ...(u.lockSkills?.length ? { lockSkills: [...u.lockSkills] } : {}),
         ...(u.initialCooldownBonus ? { initialCooldownBonus: u.initialCooldownBonus } : {}),
@@ -194,16 +200,15 @@ export function battlePlan(s: CampaignState, attempt = 0, caps = ENGINE_CAPS): B
   // Dalgalar (Ömer 2026-10-19): Watchtower'dan itibaren; ilk dalga motorun `enemies`i, kalanlar teams.waves
   const [first, ...rest] = encounterWaves(enc.def, n.id, n.type, n.region);
   enemySetups(first!, enemies);
-  const waves = rest.map((list) => {
+  const waves = rest.map((list, k) => {
     const units: Record<number, UnitSetup> = {};
-    enemySetups(list, units);
+    enemySetups(list, units, k + 1);
     return { enemies: enemyCells({ units: list }), units };
   });
   const rules = encounterRules(enc.def, first!, enemySetups);
   return {
     nodeId: n.id,
-    // Devriye: seed oynama sayısını içerir (roadmap 2.2: hash(seed, harita, düğüm, oynama sayısı, deneme)); ilk oynayış eskisiyle aynı
-    seed: battleSeed(s.seed, s.mapId, n.id, attempt, s.patrol === n.id ? replayCount(s, n.id) + 1 : 0),
+    seed,
     encounterId: enc.id,
     encounterName: enc.def.name,
     usedFallback: enc.fallback,
@@ -360,7 +365,7 @@ export function foeGroups(encounterId: string, caps = ENGINE_CAPS): { groups: Fo
       continue;
     }
     const def = (classes[u.class] ?? encounterUnit(u.class) ?? summons[u.class]) as { spriteId?: string } | undefined;
-    groups.push({ cls: u.class, sprite: def?.spriteId ?? u.class, name, n: 1, ...(u.tier ? { tier: u.tier } : {}) });
+    groups.push({ cls: u.class, sprite: u.sprite ?? def?.spriteId ?? u.class, name, n: 1, ...(u.tier ? { tier: u.tier } : {}) });
   }
   type Rich = { passive?: { text?: string }; boss?: { firstBanner?: string } };
   const rich = (cls: string): Rich => (encounterUnit(cls) ?? {}) as Rich;

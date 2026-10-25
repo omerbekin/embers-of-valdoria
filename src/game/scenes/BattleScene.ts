@@ -411,7 +411,8 @@ export class BattleScene extends Phaser.Scene {
     // Telefon belleği (0.8.2 Grave Field çökmesi): takım belliyse yalnızca sahnedeki birimlerin (+ çağrıların) sprite / avatarları yüklenir,
     // gerisi (başka moblar, poz sayfaları) bırakılır; harita / menü / item görselleri ve başka savaşların efektleri de savaşta tutulmaz
     // (dönüşte o sahnenin preload'u yeniden yükler). Rastgele takımda (takım preload'da belli değil) eskisi gibi hepsi.
-    const sprites = cells ? battleSpriteIds(cells) : undefined;
+    // + kurulumun görünüş kimlikleri (UnitSetup.spriteId: Harita 2 elit / boss çizimi, mob varyasyonu)
+    const sprites = cells ? battleSpriteIds([...cells, ...(units ?? []).map((u) => u.spriteId)]) : undefined;
     preloadAssets(this, { backgrounds: [this.backgroundChoice()], items: false, ...(sprites ? { sprites, avatars: sprites } : {}) }); // yalnızca bu savaşın arka planı (src/game/assets.ts > arka plan belleği)
     releaseTextures(this, (key) => BATTLE_DROP.some((p) => key.startsWith(p)));
     // poz kütüphanesi: takımda pozlu sınıf varsa onun pozları (rastgele takımda hepsi; şimdilik yalnızca Warrior denemesi)
@@ -429,14 +430,16 @@ export class BattleScene extends Phaser.Scene {
    * Bu savaşta kurulacak birimler (uid, sınıf, taraf), create'teki kurulumun aynısı: multiplayer'da hazır savaş, yoksa aynı seed / takımla
    * `battleSetup` (saf, belirleyici). Kurulamazsa (bozuk veri: create zaten hata verir) undefined: preload eskisi gibi takım listesine düşer.
    */
-  private plannedUnits(): Array<{ uid: string; defId: string; side: 'party' | 'enemy'; summoned: boolean }> | undefined {
+  private plannedUnits(): Array<{ uid: string; defId: string; side: 'party' | 'enemy'; summoned: boolean; spriteId?: string }> | undefined {
     try {
       if (this.mp) return this.mp.battle.combatants.filter((c) => !c.summoned).map((c) => ({ uid: c.uid, defId: c.defId, side: c.side, summoned: false }));
       const setup = content.battleSetup(this.battleId, this.seed, this.mode, this.teams ? { ...this.teams } : { partySize: this.partySize, enemySize: this.enemySize }, false);
-      const side = (list: readonly { id: string }[], units: readonly ({ summoned?: boolean } | undefined)[] | undefined, s: 'party' | 'enemy') =>
-        list.map((d, i) => ({ uid: `${s}-${i}`, defId: d.id, side: s, summoned: !!units?.[i]?.summoned }));
+      const side = (list: readonly { id: string }[], units: readonly ({ summoned?: boolean; spriteId?: string } | undefined)[] | undefined, s: 'party' | 'enemy') =>
+        list.map((d, i) => ({ uid: `${s}-${i}`, defId: d.id, side: s, summoned: !!units?.[i]?.summoned, ...(units?.[i]?.spriteId ? { spriteId: units[i]!.spriteId } : {}) }));
       // sonraki dalgaların düşmanları da önceden yüklenir (uid'ler motordaki gibi enemy-w<dalga>-<sıra>; yalnızca sprite listesi için)
-      const later = (setup.waves ?? []).flatMap((w, k) => w.enemies.map((d, i) => ({ uid: `enemy-w${k + 2}-${i}`, defId: d.id, side: 'enemy' as const, summoned: !!w.enemyUnits?.[i]?.summoned })));
+      const later = (setup.waves ?? []).flatMap((w, k) =>
+        w.enemies.map((d, i) => ({ uid: `enemy-w${k + 2}-${i}`, defId: d.id, side: 'enemy' as const, summoned: !!w.enemyUnits?.[i]?.summoned, ...(w.enemyUnits?.[i]?.spriteId ? { spriteId: w.enemyUnits[i]!.spriteId } : {}) })),
+      );
       return [...side(setup.party, setup.partyUnits, 'party'), ...side(setup.enemies, setup.enemyUnits, 'enemy'), ...later];
     } catch {
       return undefined;

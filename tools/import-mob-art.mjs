@@ -173,7 +173,7 @@ function dropEdgeSlivers(data, W, H, CW, CH) {
             const ny = py + dy;
             if (nx < 0 || ny < 0 || nx >= CW || ny >= CH) continue;
             const j = (oy + ny) * W + ox + nx;
-            if (!seen[j] && data[j * 4 + 3] > 8) {
+            if (!seen[j] && data[j * 4 + 3] > 8 && !(cuts && (cuts[j] || cuts[i]))) {
               seen[j] = 1;
               stack.push(j);
             }
@@ -439,8 +439,39 @@ function alphaBox(data, W, x0, y0, w, h) {
  */
 const POSE_SPLIT = new Set(['bandit_chief', 'deserter_captain', 'drake_priest', 'lord_morvane', 'bridge_warden', 'reaver_chief_hook', 'drowned_queen', 'admiral_vane', 'weir_wyrm', 'drowned_champion', 'salt_bishop', 'siren_queen', 'corsair_captain_marrow', 'wrecker_captain', 'guild_enforcer_bastion', 'salt_hag_mother']);
 
+/**
+ * Bileşen kesme çizgileri (kaynak sayfa pikseli, [x0, y0, x1, y1] doğru parçaları): iki komşu poz birbirine DEĞİYORSA (Admiral Vane: yığılma
+ * pozunun güllesi ölü pozunun pelerinine biniyor, iki poz tek kareye düşüyordu) bağlantı bu çizgiyi geçemez; çizgi pikselleri kendi konumlarının
+ * hücresine gider. Pikseller silinmez. Listede olmayan sayfa eskisi gibi kesilir.
+ */
+const POSE_CUTS = {
+  admiral_vane: [
+    [1012, 945, 1030, 950],
+    [1030, 950, 1042, 965],
+    [1042, 965, 1042, 1010],
+  ],
+};
+
+/** Kesme çizgilerinin piksel maskesi (2 px kalınlık: 8 komşulu bağlantı çapraz sızmasın). */
+function cutMask(W, H, segs) {
+  const m = new Uint8Array(W * H);
+  const mark = (x, y) => {
+    if (x >= 0 && y >= 0 && x < W && y < H) m[y * W + x] = 1;
+  };
+  for (const [x0, y0, x1, y1] of segs) {
+    const n = Math.max(Math.abs(x1 - x0), Math.abs(y1 - y0)) * 2 + 1;
+    for (let k = 0; k < n; k++) {
+      const t = n === 1 ? 0 : k / (n - 1);
+      const x = Math.round(x0 + (x1 - x0) * t);
+      const y = Math.round(y0 + (y1 - y0) * t);
+      mark(x, y), mark(x - 1, y), mark(x, y - 1);
+    }
+  }
+  return m;
+}
+
 /** Hücre başına tam boy RGBA katman: yalnızca o hücreye atanan bileşenlerin pikselleri. */
-function cellLayers(data, W, H, cols, rows) {
+function cellLayers(data, W, H, cols, rows, cuts = null) {
   const CW = Math.floor(W / cols);
   const CH = Math.floor(H / rows);
   const seen = new Uint8Array(W * H);
@@ -465,7 +496,7 @@ function cellLayers(data, W, H, cols, rows) {
           const ny = y + dy;
           if (nx < 0 || ny < 0 || nx >= W || ny >= H) continue;
           const j = ny * W + nx;
-          if (!seen[j] && data[j * 4 + 3] > 8) {
+          if (!seen[j] && data[j * 4 + 3] > 8 && !(cuts && (cuts[j] || cuts[i]))) {
             seen[j] = 1;
             stack.push(j);
           }
@@ -496,7 +527,7 @@ async function importPoses() {
     const { data, info } = await sharp(src).ensureAlpha().raw().toBuffer({ resolveWithObject: true });
     const CW = Math.floor(info.width / POSE_COLS);
     const CH = Math.floor(info.height / POSE_ROWS);
-    const split = POSE_SPLIT.has(mob) ? cellLayers(data, info.width, info.height, POSE_COLS, POSE_ROWS) : null;
+    const split = POSE_SPLIT.has(mob) ? cellLayers(data, info.width, info.height, POSE_COLS, POSE_ROWS, POSE_CUTS[mob] ? cutMask(info.width, info.height, POSE_CUTS[mob]) : null) : null;
     const raw = { raw: { width: info.width, height: info.height, channels: 4 } };
     // origin: kutu koordinatının kaynak sayfadaki başlangıcı (düz ızgarada hücre köşesi, bileşen katmanında 0)
     const origin = (i) => (split ? { x: 0, y: 0 } : { x: (i % POSE_COLS) * CW, y: Math.floor(i / POSE_COLS) * CH });

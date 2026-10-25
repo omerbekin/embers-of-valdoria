@@ -7,6 +7,7 @@
         "class": "bridge_warden",
         "slot": 1,
         "name": "The Weir-Wyrm",
+        "sprite": "weir_wyrm",
         "tier": "boss",
         "boss": "giant",
         "noTierMods": true,
@@ -43,6 +44,7 @@
         "class": "bridge_warden",
         "slot": 4,
         "name": "Admiral Vane",
+        "sprite": "admiral_vane",
         "tier": "boss",
         "boss": "giant",
         "noTierMods": true,
@@ -105,17 +107,19 @@
         "class": "lord_morvane",
         "slot": 4,
         "name": "The Drowned Queen",
+        "sprite": "drowned_queen",
         "tier": "boss",
         "mods": {
           "hpMult": 1.022,
           "powerMult": 0.565,
-          "spriteScale": 2.4
+          "spriteScale": 1.65
         }
       },
       {
         "class": "thane_of_the_deep",
         "slot": 1,
         "name": "The Drowned Champion",
+        "sprite": "drowned_champion",
         "mods": {
           "hpMult": 1.2,
           "powerMult": 1
@@ -392,6 +396,7 @@
         "class": "bandit_chief",
         "slot": 1,
         "name": "Reaver Chief \"Hook\"",
+        "sprite": "reaver_chief_hook",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -543,7 +548,7 @@
     "name": "Marsh Hexes",
     "objective": { "type": "totem", "units": [{ "class": "drowned", "slot": 0 }, { "class": "drowned", "slot": 2 }] },
     "units": [
-      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "objective": true },
+      { "class": "iron_mooring", "slot": 4, "name": "Hex Totem", "sprite": "hex_totem", "objective": true },
       {
         "class": "fen_witchling",
         "slot": 7,
@@ -659,6 +664,7 @@
         "class": "hedge_witch_morwen",
         "slot": 7,
         "name": "Salt Hag Mother",
+        "sprite": "salt_hag_mother",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -951,6 +957,7 @@
         "class": "thane_of_the_deep",
         "slot": 1,
         "name": "Guild Enforcer \"Bastion\"",
+        "sprite": "guild_enforcer_bastion",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -1498,6 +1505,7 @@
         "class": "bandit_chief",
         "slot": 1,
         "name": "The Wrecker-Captain",
+        "sprite": "wrecker_captain",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -1754,6 +1762,7 @@
         "class": "bandit_chief",
         "slot": 1,
         "name": "Corsair Captain \"Marrow\"",
+        "sprite": "corsair_captain_marrow",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -1979,6 +1988,7 @@
         "class": "hedge_witch_morwen",
         "slot": 7,
         "name": "The Siren Queen",
+        "sprite": "siren_queen",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -2231,6 +2241,7 @@
         "class": "high_priest_of_the_undying",
         "slot": 7,
         "name": "The Salt Bishop",
+        "sprite": "salt_bishop",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,
@@ -2406,6 +2417,7 @@
         "class": "thane_of_the_deep",
         "slot": 1,
         "name": "The Drowned Champion",
+        "sprite": "drowned_champion",
         "tier": "elite",
         "mods": {
           "hpMult": 1.7,

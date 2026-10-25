@@ -202,8 +202,8 @@ export interface EncounterUnit {
   /** true: zorluğun rütbe eki (campaign.json > difficulties[x].enemyTier) bu birime uygulanmaz; genel `enemy` eki uygulanır. */
   noTierMods?: boolean;
   /**
-   * İleride ayrı çizim anahtarı (ör. Deserter Captain; map-1-rework.md 3). Bugün savaş kurulumuna GİTMEZ: birim kendi class'ının sprite'ıyla
-   * çizilir (yer tutucu). Motor / savaş sahnesi bu alanı okuyunca takılır (engine-dev / ui-dev işi).
+   * Ayrı çizim anahtarı (assets/sprites/<id>: idle, avatar, varsa poz sayfası; ör. Deserter Captain, Harita 2 elit / boss, Hex Totem). Yalnızca
+   * görünüş: savaş kurulumunda UnitSetup.spriteId olur (encounters.ts > battlePlan), kit / stat class'tan gelir. Dosyası yoksa yer tutucu çizilir.
    */
   sprite?: string;
   /** Bu karşılaşmada kullanamayacağı skill'ler (motor: UnitSetup.lockSkills; ör. tutorial düşmanında ultimate yok). */
