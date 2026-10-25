@@ -913,7 +913,7 @@
         "weapon",
         "trinket"
       ],
-      "desc": "Fire, ice, holy, arcane, nature and dark damage of your skills.",
+      "desc": "Fire, ice, holy, arcane, lightning, nature and dark damage of your skills.",
       "needs": "element:magic",
       "icon": "elements",
       "parts": [

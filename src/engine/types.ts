@@ -840,7 +840,7 @@ export interface CorpseChoice {
   why: string;
 }
 
-export type Element = 'physical' | 'fire' | 'ice' | 'holy' | 'dark' | 'nature' | 'arcane';
+export type Element = 'physical' | 'fire' | 'ice' | 'holy' | 'dark' | 'nature' | 'arcane' | 'lightning';
 
 /**
  * Hedef türleri. Eski `column_enemies` kaldırıldı (şerit = `area_enemies` + `area: { shape: 'column' }`); veride kalırsa veri doğrulaması

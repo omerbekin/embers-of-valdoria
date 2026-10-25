@@ -106,6 +106,8 @@ export const ICON_KINDS = [
   'mpregen',
   'blast',
   'rune',
+  /** Lightning elementi ikonu (2026-10-25): soluk mavi-beyaz zikzak şimşek (hasar yazısı, skill etiketi, Codex Elements). */
+  'bolt',
   'finger',
   'gamblerlogo',
   'doubleornothing',

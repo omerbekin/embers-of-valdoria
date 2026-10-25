@@ -1210,7 +1210,7 @@ const COUNT_TARGETS: ReadonlySet<string> = new Set(['nearestEnemies', 'outsideAr
 /** Faz 5a: her eylemde izinli alıcı alanları. */
 const RECIPIENT_KEYS: ReadonlySet<string> = new Set(['to', 'count', 'rows', 'ifStatus', 'caster', 'ifMpZero', 'notTarget']);
 const ATTRS: ReadonlySet<string> = new Set(['str', 'int', 'dex', 'luck']);
-const ELEMENTS: ReadonlySet<string> = new Set(['physical', 'fire', 'ice', 'holy', 'dark', 'nature', 'arcane']);
+const ELEMENTS: ReadonlySet<string> = new Set(['physical', 'fire', 'ice', 'holy', 'dark', 'nature', 'arcane', 'lightning']);
 const finiteNum = (v: unknown): v is number => typeof v === 'number' && Number.isFinite(v);
 
 /** C3 tetik fx'i -> motor TriggerHook (doğrulama + rank ölçeklemesi: eylem sayıları x r; süre / şans / yığın / eşik çarpılmaz). */

@@ -1451,6 +1451,14 @@ export const PIXEL_ICONS: Record<string, Draw> = {
     g.poly([16, 0, 28, 16, 16, 31, 4, 16], 'p').poly([16, 4, 24, 16, 16, 27, 8, 16], 'P');
     g.line(16, 8, 16, 23, 'c', 2).line(10, 12, 16, 17, 'c', 2).line(22, 12, 16, 17, 'c', 2);
   },
+  /** Lightning elementi (2026-10-25): soluk mavi-beyaz zikzak şimşek, beyaz çekirdek, iki küçük kıvılcım. */
+  bolt: (g) => {
+    g.poly([20, 1, 7, 17, 14, 17, 9, 31, 25, 12, 18, 12, 24, 1], 'u');
+    g.poly([20.5, 3, 9.5, 15.5, 16, 15.5, 12.5, 26, 22.5, 13.5, 15.5, 13.5, 21.5, 3], 'l');
+    g.line(20, 4, 13, 14.5, 'w', 1.4).line(16, 15.5, 13, 24, 'w', 1.4);
+    sparkle(g, 27, 21, 2.4, 'w');
+    sparkle(g, 5, 7, 2, 'l');
+  },
   finger: (g) => {
     // çelik eldiven, orta parmak havada (Taunt)
     g.poly([8, 29, 8, 26, 24, 26, 24, 29], 'd').poly([7, 31, 9, 26, 23, 26, 25, 31], 'd').rect(8, 27, 16, 1.5, 'Y').rect(10, 29, 12, 1, 'k');

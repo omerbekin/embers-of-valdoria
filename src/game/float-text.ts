@@ -163,10 +163,10 @@ export function damageSourceKind(t: DamageTags): DamageSourceKind {
 const GROUND_ICON: Record<string, string> = { poison: 'poison', burning: 'flame', holy_fire: 'holy' };
 /** Durum hasarı -> ikon (kanama/yara = kan damlası). */
 const STATUS_ICON: Record<string, string> = { wound: 'drop', bleed: 'drop', poison: 'poison', burn: 'flame', burning: 'flame' };
-/** Element -> ikon (fiziksel: ikon yok). Mevcut piksel ikonlar yeniden kullanılır (yeni ikon çizilmez). */
-export const ELEMENT_ICON: Record<string, string> = { fire: 'flame', ice: 'blizzard', holy: 'holy', arcane: 'rune', nature: 'leaf', dark: 'skull' };
+/** Element -> ikon (fiziksel: ikon yok). Mevcut piksel ikonlar yeniden kullanılır; lightning için kodla çizilen 'bolt' (2026-10-25). */
+export const ELEMENT_ICON: Record<string, string> = { fire: 'flame', ice: 'blizzard', holy: 'holy', arcane: 'rune', nature: 'leaf', dark: 'skull', lightning: 'bolt' };
 /** Element ikon renkleri (data/battle-layout.json > colors.element ile uyumlu; zehir yeşil, kan kırmızı). */
-export const FLOAT_ICON_TINT: Record<string, string> = { poison: '#6fcf4b', flame: '#ff7a1a', drop: '#c0203a', holy: '#fff0a0', blizzard: '#8fd8ff', rune: '#e05cff', leaf: '#7ed957', skull: '#b36bff', burst: '#ffd23f' };
+export const FLOAT_ICON_TINT: Record<string, string> = { poison: '#6fcf4b', flame: '#ff7a1a', drop: '#c0203a', holy: '#fff0a0', blizzard: '#8fd8ff', rune: '#e05cff', leaf: '#7ed957', skull: '#b36bff', burst: '#ffd23f', bolt: '#c6dbff' };
 
 /**
  * Ekrandaki ikon (boyalı oyun ikonları, assets/misc-icons): zemin / durum / element boyalı görseli varsa '<grup>:<ad>', yoksa damageIconKind'in
