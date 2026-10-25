@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif moor_raider kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "reef_wrecker",
+  "name": "Reef Wrecker",
+  "family": "bandits",
+  "spriteId": "reef_wrecker",
+  "color": "#5f6f8f",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Brute",
+  "attributes": {
+    "str": 26,
+    "int": 4,
+    "dex": 14,
+    "luck": 4
+  },
+  "armor": 12,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "billhook",
+    "peat_smoke"
+  ],
+  "passive": {
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
+    "effect": {
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
+    }
+  }
+}

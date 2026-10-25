@@ -419,7 +419,7 @@ export class BattleScene extends Phaser.Scene {
     preloadPoses(this, units ? units.map((u) => ({ classId: u.defId, pick: this.weaponPickOf(u) })) : cells);
     // efekt sprite sheet'leri: v2 sınıf sheet'leri (assets/vfx; Defender) ve sefer mobu sheet'leri (assets/mob-vfx) yalnızca sahnedeki birimler
     // için; diğerleri bırakılır (eksik kalan efekt başında tembel yüklenir: ensureVfxSheets)
-    const sheets = cells ? [...VFX_SHEET_FILES.filter((f) => cells.includes(f.owner)).map((f) => f.id), ...mobSheetsOf(cells)] : VFX_SHEET_FILES.map((f) => f.id);
+    const sheets = cells ? [...VFX_SHEET_FILES.filter((f) => cells.includes(f.owner)).map((f) => f.id), ...mobSheetsOf(cells, cells.flatMap((id) => content.encounterUnit(id)?.skills ?? []))] : VFX_SHEET_FILES.map((f) => f.id);
     releaseTextures(this, (key) => key.startsWith('vfxsheet:') && !sheets.includes(key.slice('vfxsheet:'.length)));
     preloadVfxSheets(this, sheets);
   }

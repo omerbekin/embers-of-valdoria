@@ -1,0 +1,38 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif bandit_crossbowman kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "reaver_archer",
+  "name": "Reaver Archer",
+  "family": "bandits",
+  "spriteId": "reaver_archer",
+  "color": "#7a6a4a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "range": 6,
+  "role": "Bandit · Ranged",
+  "attributes": {
+    "str": 10,
+    "int": 6,
+    "dex": 26,
+    "luck": 6
+  },
+  "armor": 10,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "crossbow_bolt",
+    "scatter_quarrels"
+  ],
+  "passive": {
+    "id": "cut_and_run",
+    "name": "Cut and Run",
+    "icon": "shrouded",
+    "text": "Once per battle, the first time HP drops below 50%: Shrouded for 1 turn and a speed boost until the next turn (like Skip Turn).",
+    "effect": {
+      "type": "cutAndRun",
+      "below": 0.5,
+      "status": "shrouded",
+      "turns": 1,
+      "speedBoost": 1
+    }
+  }
+}

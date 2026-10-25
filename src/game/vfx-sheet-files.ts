@@ -81,8 +81,13 @@ export function registerExtraVfxSheet(f: VfxSheetFile): void {
 export const vfxSheetFile = (id: string): VfxSheetFile | undefined =>
   VFX_SHEET_FILES.find((f) => f.id === id) ?? MOB_VFX_SHEET_FILES.find((f) => f.id === id) ?? EXTRA_SHEET_FILES.find((f) => f.id === id);
 
-/** Bu birimlerin (mob id'leri) mob sheet kimlikleri: savaş preload'u yalnızca sahnedeki mobların efektlerini yükler. */
-export const mobSheetsOf = (units: readonly string[]): string[] => MOB_VFX_SHEET_FILES.filter((f) => units.includes(f.owner)).map((f) => f.id);
+/**
+ * Bu birimlerin (mob id'leri) mob sheet kimlikleri: savaş preload'u yalnızca sahnedeki mobların efektlerini yükler. `skills`: sahnedeki
+ * birimlerin skill'leri; başka bir mobun skill'ini kullanan mob (Harita 2'nin yer tutucu kitli kendi çizimli mobları: Weir Eel = Grey Wolf'un
+ * Bite / Rend'i) o skill'in sheet'ini sahibinin klasöründen alır, o da önceden yüklenir (yoksa ilk atışta tembel yüklenirdi).
+ */
+export const mobSheetsOf = (units: readonly string[], skills: readonly string[] = []): string[] =>
+  MOB_VFX_SHEET_FILES.filter((f) => units.includes(f.owner) || skills.includes(f.name)).map((f) => f.id);
 
 /** Bir sahibin sheet kimlikleri. */
 export const vfxSheetsOf = (owner: string): string[] => VFX_SHEET_FILES.filter((f) => f.owner === owner).map((f) => f.id);

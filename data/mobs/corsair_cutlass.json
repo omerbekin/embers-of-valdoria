@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif cutpurse kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "corsair_cutlass",
+  "name": "Corsair Cutlass",
+  "family": "bandits",
+  "spriteId": "corsair_cutlass",
+  "color": "#c9a227",
+  "logo": "helm",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Bandit · Skirmisher",
+  "attributes": {
+    "str": 10,
+    "int": 4,
+    "dex": 24,
+    "luck": 6
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "shiv",
+    "sand_in_the_eyes"
+  ],
+  "passive": {
+    "id": "head_start",
+    "name": "Head Start",
+    "icon": "boot",
+    "text": "At the start of battle this unit gains a speed boost until its first turn (like Skip Turn), so it usually acts first.",
+    "effect": {
+      "type": "headStart",
+      "speedBoost": 1
+    }
+  }
+}

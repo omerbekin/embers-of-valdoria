@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif sworn_guard kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "drowned_knight",
+  "name": "Drowned Knight",
+  "family": "morvane_army",
+  "spriteId": "drowned_knight",
+  "spriteScale": 1.12,
+  "color": "#8b1e1e",
+  "logo": "helm",
+  "frontPriority": 0,
+  "range": 2,
+  "role": "Morvane's Army · Royal Guard",
+  "attributes": {
+    "str": 30,
+    "int": 4,
+    "dex": 10,
+    "luck": 4
+  },
+  "armor": 24,
+  "magicArmor": 10,
+  "ai": "aggressive",
+  "skills": [
+    "halberd_chop",
+    "wall_of_pikes"
+  ],
+  "passive": {
+    "id": "close_ranks",
+    "name": "Close Ranks",
+    "icon": "shield",
+    "text": "Takes 12% less damage for every other living ally in its row. Break the line and the rest lose their cover.",
+    "effect": {
+      "type": "closeRanks",
+      "perAlly": 0.12
+    }
+  }
+}

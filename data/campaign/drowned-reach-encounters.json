@@ -1,5 +1,5 @@
 {
-  "_not": "Harita 2 karşılaşmaları (YER TUTUCU, campaign-dev 2026-10-25; maps-2-3.md 3.2 / 3.3). Yeni mob YOK: belgedeki yeni moblar en yakın var olan class ile, görünen ad (name) belgedeki: River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug. Elit önderler: Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying. Bosslar: The Weir-Wyrm ve Admiral Vane = The Bridge Warden kiti (Vane'in Harpoon Ballista'sı = Iron Mooring), The Drowned Queen = Lord Morvane kiti. Çarpanlar: sıradan 1,0 (düşman level'ı bölüm 2 rampasından gelir), elit önder can 1,7 / güç 1,1 / stat 1,15, bosslar Harita 1 karşılaşmalarıyla aynı. Dalgalar var olan ekleme kuralıyla (waves.json; normal 2, elit 2, boss 3). Sim ölçümü YOK (balance-tester).",
+  "_not": "Harita 2 karşılaşmaları (YER TUTUCU, campaign-dev 2026-10-25; maps-2-3.md 3.2 / 3.3). Yeni mob YOK: belgedeki yeni moblar en yakın var olan class ile, görünen ad (name) belgedeki: River Reaver / Reef Wrecker = moor_raider, Reaver Archer / Cliff Crossbowman = bandit_crossbowman, Corsair Cutlass = cutpurse, Corsair Slinger = ravenwood_poacher, Salt Crab = shieldwarden, Weir Eel = grey_wolf, Reef Hound = ash_hound, Salt Hag = fen_witchling, Siren = raven_seer, Tide Caller = grave_chanter, Drowned Knight = sworn_guard, Brine Maiden = censer_monk, Wreck Ghoul = ghoul, Marsh Light = will_o_wisp, Dock Rat = road_thug. Elit önderler: Hook / Wrecker-Captain / Marrow = bandit_chief, Salt Hag Mother / Siren Queen = hedge_witch_morwen, Bastion / Drowned Champion = thane_of_the_deep, Salt Bishop = high_priest_of_the_undying. Bosslar: The Weir-Wyrm ve Admiral Vane = The Bridge Warden kiti (Vane'in Harpoon Ballista'sı = Iron Mooring), The Drowned Queen = Lord Morvane kiti. Çarpanlar: sıradan 1,0 (düşman level'ı bölüm 2 rampasından gelir), elit önder can 1,7 / güç 1,1 / stat 1,15, bosslar Harita 1 karşılaşmalarıyla aynı. Dalgalar var olan ekleme kuralıyla (waves.json; normal 2, elit 2, boss 3). Sim ölçümü YOK (balance-tester). KENDİ ÇİZİMLİ MOBLAR (content-designer 2026-10-25): Corsair Cutlass, Corsair Slinger, Salt Crab, Weir Eel, Siren, Drowned Knight, Brine Maiden, Reaver Archer, Reef Wrecker artık kendi id'leriyle (data/mobs/<id>.json; stat, skill ve pasif yukarıdaki yer tutucunun birebir kopyası, yalnız çizim farklı). River Reaver ve Cliff Crossbowman hâlâ moor_raider / bandit_crossbowman.",
   "dr_weir_wyrm": {
     "name": "The Weir-Wyrm",
     "units": [
@@ -17,7 +17,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -26,7 +26,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
@@ -61,7 +61,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -70,7 +70,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
@@ -79,7 +79,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -88,7 +88,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 8,
         "name": "Siren",
         "mods": {
@@ -122,7 +122,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -131,7 +131,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
@@ -163,7 +163,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "reaver_archer",
         "slot": 7,
         "name": "Reaver Archer",
         "mods": {
@@ -195,7 +195,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "reaver_archer",
         "slot": 7,
         "name": "Reaver Archer",
         "mods": {
@@ -204,7 +204,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "reaver_archer",
         "slot": 6,
         "name": "Reaver Archer",
         "mods": {
@@ -218,7 +218,7 @@
     "name": "Wreckers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 1,
         "name": "Reef Wrecker",
         "mods": {
@@ -227,7 +227,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
@@ -236,7 +236,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 2,
         "name": "Reef Wrecker",
         "mods": {
@@ -306,7 +306,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "reaver_archer",
         "slot": 7,
         "name": "Reaver Archer",
         "mods": {
@@ -358,7 +358,7 @@
     "name": "Wreck Lurkers",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
@@ -367,7 +367,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -418,7 +418,7 @@
         }
       },
       {
-        "class": "bandit_crossbowman",
+        "class": "reaver_archer",
         "slot": 7,
         "name": "Reaver Archer",
         "mods": {
@@ -504,7 +504,7 @@
     "name": "Ford Lurkers",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
@@ -513,7 +513,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -583,7 +583,7 @@
     "name": "Salt Hags",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
@@ -592,7 +592,7 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
@@ -616,7 +616,7 @@
     "objective": "hold",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
@@ -625,7 +625,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -715,7 +715,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
@@ -729,7 +729,7 @@
     "name": "Flats Hunters",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
@@ -738,7 +738,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -827,7 +827,7 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
@@ -836,7 +836,7 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
@@ -850,7 +850,7 @@
     "name": "The Eel-Mother's Brood",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
@@ -859,7 +859,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -868,7 +868,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
@@ -977,7 +977,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1039,7 +1039,7 @@
     "name": "Cathedral Dead",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -1105,7 +1105,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 4,
         "name": "Drowned Knight",
         "mods": {
@@ -1119,7 +1119,7 @@
     "name": "Corsairs",
     "units": [
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1128,7 +1128,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1137,7 +1137,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1160,7 +1160,7 @@
     "name": "Wreckers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 1,
         "name": "Reef Wrecker",
         "mods": {
@@ -1169,7 +1169,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
@@ -1283,7 +1283,7 @@
     "name": "Beacon Wreckers",
     "units": [
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 1,
         "name": "Reef Wrecker",
         "mods": {
@@ -1292,7 +1292,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
@@ -1342,7 +1342,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1351,7 +1351,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 4,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1381,7 +1381,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
@@ -1422,7 +1422,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 2,
         "name": "Reef Wrecker",
         "mods": {
@@ -1454,7 +1454,7 @@
     "name": "Boarders",
     "units": [
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1463,7 +1463,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1472,7 +1472,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1481,7 +1481,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
@@ -1506,7 +1506,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 0,
         "name": "Reef Wrecker",
         "mods": {
@@ -1515,7 +1515,7 @@
         }
       },
       {
-        "class": "moor_raider",
+        "class": "reef_wrecker",
         "slot": 2,
         "name": "Reef Wrecker",
         "mods": {
@@ -1547,7 +1547,7 @@
     "name": "Hoard Keepers",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
@@ -1556,7 +1556,7 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
@@ -1565,7 +1565,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
@@ -1574,7 +1574,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 4,
         "name": "Weir Eel",
         "mods": {
@@ -1588,7 +1588,7 @@
     "name": "Gallows Dead",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -1597,7 +1597,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -1630,7 +1630,7 @@
     "blocked": "deck",
     "units": [
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1639,7 +1639,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1648,7 +1648,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
@@ -1671,7 +1671,7 @@
     "name": "Siren Song",
     "units": [
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 7,
         "name": "Siren",
         "mods": {
@@ -1680,7 +1680,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 6,
         "name": "Siren",
         "mods": {
@@ -1737,7 +1737,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1762,7 +1762,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1771,7 +1771,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1780,7 +1780,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 4,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1789,7 +1789,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1804,7 +1804,7 @@
     "blocked": "deck",
     "units": [
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 8,
         "name": "Siren",
         "mods": {
@@ -1813,7 +1813,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1822,7 +1822,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1831,7 +1831,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
@@ -1845,7 +1845,7 @@
     "name": "Deep Water",
     "units": [
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 1,
         "name": "Weir Eel",
         "mods": {
@@ -1854,7 +1854,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 0,
         "name": "Weir Eel",
         "mods": {
@@ -1885,7 +1885,7 @@
     "name": "Cove Corsairs",
     "units": [
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 1,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1894,7 +1894,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 0,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1903,7 +1903,7 @@
         }
       },
       {
-        "class": "cutpurse",
+        "class": "corsair_cutlass",
         "slot": 2,
         "name": "Corsair Cutlass",
         "mods": {
@@ -1912,7 +1912,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 7,
         "name": "Corsair Slinger",
         "mods": {
@@ -1921,7 +1921,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 6,
         "name": "Corsair Slinger",
         "mods": {
@@ -1935,7 +1935,7 @@
     "name": "Storm Sirens",
     "units": [
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 7,
         "name": "Siren",
         "mods": {
@@ -1944,7 +1944,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 6,
         "name": "Siren",
         "mods": {
@@ -1953,7 +1953,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 8,
         "name": "Corsair Slinger",
         "mods": {
@@ -1962,7 +1962,7 @@
         }
       },
       {
-        "class": "ravenwood_poacher",
+        "class": "corsair_slinger",
         "slot": 4,
         "name": "Corsair Slinger",
         "mods": {
@@ -1987,7 +1987,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 6,
         "name": "Siren",
         "mods": {
@@ -1996,7 +1996,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 8,
         "name": "Siren",
         "mods": {
@@ -2026,7 +2026,7 @@
     "name": "Shoal Knights",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2035,7 +2035,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -2053,7 +2053,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -2067,7 +2067,7 @@
     "name": "Gate Guard",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2076,7 +2076,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -2085,7 +2085,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
@@ -2146,7 +2146,7 @@
     "name": "Garden Keepers",
     "units": [
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 1,
         "name": "Salt Crab",
         "mods": {
@@ -2155,7 +2155,7 @@
         }
       },
       {
-        "class": "shieldwarden",
+        "class": "salt_crab",
         "slot": 0,
         "name": "Salt Crab",
         "mods": {
@@ -2164,7 +2164,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
@@ -2173,7 +2173,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -2187,7 +2187,7 @@
     "name": "Courtiers",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2196,7 +2196,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 7,
         "name": "Siren",
         "mods": {
@@ -2205,7 +2205,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -2239,7 +2239,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -2248,7 +2248,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
@@ -2257,7 +2257,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2289,7 +2289,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 2,
         "name": "Weir Eel",
         "mods": {
@@ -2298,7 +2298,7 @@
         }
       },
       {
-        "class": "grey_wolf",
+        "class": "weir_eel",
         "slot": 4,
         "name": "Weir Eel",
         "mods": {
@@ -2321,7 +2321,7 @@
     "name": "Armory Guard",
     "units": [
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2330,7 +2330,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -2339,7 +2339,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
@@ -2353,7 +2353,7 @@
     "name": "Gallery Guard",
     "units": [
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 7,
         "name": "Siren",
         "mods": {
@@ -2362,7 +2362,7 @@
         }
       },
       {
-        "class": "raven_seer",
+        "class": "siren",
         "slot": 6,
         "name": "Siren",
         "mods": {
@@ -2371,7 +2371,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2380,7 +2380,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -2389,7 +2389,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 8,
         "name": "Brine Maiden",
         "mods": {
@@ -2414,7 +2414,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {
@@ -2423,7 +2423,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 2,
         "name": "Drowned Knight",
         "mods": {
@@ -2446,7 +2446,7 @@
     "name": "The Queen's Guard",
     "units": [
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 7,
         "name": "Brine Maiden",
         "mods": {
@@ -2455,7 +2455,7 @@
         }
       },
       {
-        "class": "censer_monk",
+        "class": "brine_maiden",
         "slot": 6,
         "name": "Brine Maiden",
         "mods": {
@@ -2473,7 +2473,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 1,
         "name": "Drowned Knight",
         "mods": {
@@ -2482,7 +2482,7 @@
         }
       },
       {
-        "class": "sworn_guard",
+        "class": "drowned_knight",
         "slot": 0,
         "name": "Drowned Knight",
         "mods": {

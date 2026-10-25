@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif raven_seer kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "siren",
+  "name": "Siren",
+  "family": "bandits",
+  "spriteId": "siren",
+  "color": "#6a4c93",
+  "logo": "feather",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Bandit · Caster",
+  "attributes": {
+    "str": 6,
+    "int": 26,
+    "dex": 8,
+    "luck": 6
+  },
+  "armor": 4,
+  "magicArmor": 8,
+  "ai": "sniper",
+  "skills": [
+    "ravens_peck",
+    "murder_of_crows"
+  ],
+  "passive": {
+    "id": "flock_shield",
+    "name": "Flock Shield",
+    "icon": "shield",
+    "text": "Once per battle, the first enemy skill that hits it deals 50% less damage: the ravens take the blow.",
+    "effect": {
+      "type": "flockShield",
+      "reduce": 0.5
+    }
+  }
+}

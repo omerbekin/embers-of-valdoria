@@ -118,6 +118,40 @@ describe('The Drowned Reach: harita verisi', () => {
     expect(map.nodes.find((n) => n.name === 'The Black Caravel')).toMatchObject({ type: 'elite', optional: true });
   });
 
+  it('kendi çizimli Harita 2 mobları: adı geçen her birim kendi id\'siyle; kit yer tutucunun birebir kopyası (denge adımı sonra)', () => {
+    const own: Record<string, [string, string]> = {
+      'Corsair Cutlass': ['corsair_cutlass', 'cutpurse'],
+      'Corsair Slinger': ['corsair_slinger', 'ravenwood_poacher'],
+      'Salt Crab': ['salt_crab', 'shieldwarden'],
+      'Weir Eel': ['weir_eel', 'grey_wolf'],
+      Siren: ['siren', 'raven_seer'],
+      'Drowned Knight': ['drowned_knight', 'sworn_guard'],
+      'Brine Maiden': ['brine_maiden', 'censer_monk'],
+      'Reaver Archer': ['reaver_archer', 'bandit_crossbowman'],
+      'Reef Wrecker': ['reef_wrecker', 'moor_raider'],
+    };
+    const seen = new Set<string>();
+    for (const [key, enc] of Object.entries(ENCOUNTERS))
+      if (key.startsWith('dr_'))
+        for (const u of enc.units) {
+          const o = own[u.name ?? ''];
+          if (!o) continue;
+          expect(u.class, `${key} ${u.name}`).toBe(o[0]);
+          seen.add(o[0]);
+        }
+    expect([...seen].sort()).toEqual(Object.values(own).map(([id]) => id).sort());
+    for (const [name, [id, ph]] of Object.entries(own)) {
+      const m = content.mobs[id]!;
+      const p = content.mobs[ph]!;
+      expect(m.name, id).toBe(name);
+      expect(m.spriteId, id).toBe(id);
+      expect(m.skills, id).toEqual(p.skills);
+      expect(m.attributes, id).toEqual(p.attributes);
+      expect(m.stats, id).toEqual(p.stats);
+      expect([m.passive?.id, m.ai, m.range], id).toEqual([p.passive?.id, p.ai, p.range]);
+    }
+  });
+
   it('kasabalar: Reedgate, Eelwick, Saltmere (Odo\'s Chandlery), Fisher\'s Landing; hikâye NPC\'si ve tüccar', () => {
     const towns = map.nodes.filter((n) => n.type === 'town');
     expect(towns.map((n) => n.name)).toEqual(['Reedgate', 'Eelwick', 'Saltmere', "Fisher's Landing"]);

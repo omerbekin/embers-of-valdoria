@@ -1,0 +1,36 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif grey_wolf kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı, yatay çizim spriteScale 1.2). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "weir_eel",
+  "name": "Weir Eel",
+  "family": "beasts",
+  "spriteId": "weir_eel",
+  "spriteScale": 1.2,
+  "color": "#8c8c8c",
+  "logo": "roar",
+  "frontPriority": 1,
+  "range": 1,
+  "role": "Beast · Pack",
+  "attributes": {
+    "str": 20,
+    "int": 2,
+    "dex": 16,
+    "luck": 4
+  },
+  "armor": 6,
+  "magicArmor": 0,
+  "ai": "aggressive",
+  "skills": [
+    "bite",
+    "rend"
+  ],
+  "passive": {
+    "id": "pack_tactics",
+    "name": "Pack Tactics",
+    "icon": "roar",
+    "text": "Deals +15% damage for every other living Weir Eel in the same row. Kill one and the rest grow weaker.",
+    "effect": {
+      "type": "packTactics",
+      "perAlly": 0.15
+    }
+  }
+}

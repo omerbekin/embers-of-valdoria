@@ -64,6 +64,17 @@ HEADS = {
     'ember_hierophant': (470, 0, 480),
     'drake_priest': (540, 20, 370),
     'lord_morvane': (765, 0, 280),
+    # Harita 2 The Drowned Reach (ChatGPT, 2026-10-25; gerçek saydam, sağa bakar; maps-2-3.md 3.3). Kaynaklara her yandan 32 px saydam pay
+    # eklendi (reaver_archer / reef_wrecker sağ kenara 1 px'ti). salt_crab ve weir_eel yatay (1536x1024 + pay): WIDE_MAX ile, boy mob json spriteScale.
+    'corsair_cutlass': (695, 0, 290),
+    'corsair_slinger': (690, 0, 280),
+    'salt_crab': (960, 40, 400),
+    'weir_eel': (1337, 40, 390),
+    'siren': (676, 5, 290),
+    'drowned_knight': (621, 0, 320),
+    'brine_maiden': (690, 15, 300),
+    'reaver_archer': (540, 225, 300),
+    'reef_wrecker': (642, 0, 290),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).

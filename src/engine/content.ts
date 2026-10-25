@@ -66,6 +66,16 @@ import mobAshHound from '../../data/mobs/ash_hound.json';
 import mobCinderGatewarden from '../../data/mobs/cinder_gatewarden.json';
 import mobEmberHierophant from '../../data/mobs/ember_hierophant.json';
 import mobDrakePriest from '../../data/mobs/drake_priest.json';
+// Harita 2 The Drowned Reach (maps-2-3.md 3.3; kendi çizimleri, denge yer tutucularının kopyası)
+import mobCorsairCutlass from '../../data/mobs/corsair_cutlass.json';
+import mobCorsairSlinger from '../../data/mobs/corsair_slinger.json';
+import mobSaltCrab from '../../data/mobs/salt_crab.json';
+import mobWeirEel from '../../data/mobs/weir_eel.json';
+import mobSiren from '../../data/mobs/siren.json';
+import mobDrownedKnight from '../../data/mobs/drowned_knight.json';
+import mobBrineMaiden from '../../data/mobs/brine_maiden.json';
+import mobReaverArcher from '../../data/mobs/reaver_archer.json';
+import mobReefWrecker from '../../data/mobs/reef_wrecker.json';
 import groundsJson from '../../data/grounds.json';
 import battleRulesJson from '../../data/battle-rules.json';
 import statusesJson from '../../data/statuses.json';
@@ -177,6 +187,15 @@ const mobData: CombatantData[] = [
   mobCinderGatewarden,
   mobEmberHierophant,
   mobDrakePriest,
+  mobCorsairCutlass,
+  mobCorsairSlinger,
+  mobSaltCrab,
+  mobWeirEel,
+  mobSiren,
+  mobDrownedKnight,
+  mobBrineMaiden,
+  mobReaverArcher,
+  mobReefWrecker,
 ] as unknown as CombatantData[];
 
 /**

@@ -1,0 +1,39 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif shieldwarden kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı, yatay çizim spriteScale 1.3). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "salt_crab",
+  "name": "Salt Crab",
+  "family": "guardians",
+  "spriteId": "salt_crab",
+  "spriteScale": 1.3,
+  "color": "#7d8796",
+  "logo": "bulwark",
+  "frontPriority": 0,
+  "range": 1,
+  "role": "Guardian · Tank",
+  "attributes": {
+    "str": 26,
+    "int": 8,
+    "dex": 4,
+    "luck": 4
+  },
+  "armor": 30,
+  "magicArmor": 0,
+  "overrides": {
+    "hp": 130
+  },
+  "ai": "mob_tank",
+  "skills": [
+    "shield_bash",
+    "hold_the_line"
+  ],
+  "passive": {
+    "id": "rebuke",
+    "name": "Rebuke",
+    "icon": "bash",
+    "text": "When a melee skill hits this unit with physical damage, 30% of the damage its armor blocked is dealt back to the attacker as physical damage.",
+    "effect": {
+      "type": "rebuke",
+      "ratio": 0.3
+    }
+  }
+}

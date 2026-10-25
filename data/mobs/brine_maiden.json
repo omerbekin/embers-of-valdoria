@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif censer_monk kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "brine_maiden",
+  "name": "Brine Maiden",
+  "family": "branns_order",
+  "spriteId": "brine_maiden",
+  "color": "#c8a26a",
+  "logo": "holy",
+  "frontPriority": 7,
+  "range": 5,
+  "role": "Brann's Order · Support",
+  "attributes": {
+    "str": 8,
+    "int": 28,
+    "dex": 6,
+    "luck": 4
+  },
+  "armor": 8,
+  "magicArmor": 14,
+  "ai": "sniper",
+  "skills": [
+    "holy_ember",
+    "consecrate"
+  ],
+  "passive": {
+    "id": "censer_smoke",
+    "name": "Censer Smoke",
+    "icon": "hpregen",
+    "text": "It and the allies in its lane (same column, every row) heal 4% of their max HP at the start of their turns (Wound reduces it).",
+    "effect": {
+      "type": "censerSmoke",
+      "ratio": 0.04
+    }
+  }
+}

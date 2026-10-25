@@ -1,0 +1,35 @@
+{
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif ravenwood_poacher kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "id": "corsair_slinger",
+  "name": "Corsair Slinger",
+  "family": "bandits",
+  "spriteId": "corsair_slinger",
+  "color": "#5f7a3a",
+  "logo": "bow",
+  "frontPriority": 8,
+  "range": 6,
+  "role": "Bandit · Trapper",
+  "attributes": {
+    "str": 10,
+    "int": 4,
+    "dex": 24,
+    "luck": 6
+  },
+  "armor": 8,
+  "magicArmor": 0,
+  "ai": "sniper",
+  "skills": [
+    "poachers_shot",
+    "tainted_bait"
+  ],
+  "passive": {
+    "id": "hide_in_the_brush",
+    "name": "Hide in the Brush",
+    "icon": "leaves",
+    "text": "While a living ally stands in front of it in its lane, its evasion is +20%. Clear the cover first, or hit it with an area or lane attack.",
+    "effect": {
+      "type": "hideInBrush",
+      "evasion": 0.2
+    }
+  }
+}
