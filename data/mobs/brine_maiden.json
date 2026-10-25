@@ -1,26 +1,26 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif censer_monk kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı censer_monk tabanından; seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik censer_monk pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "brine_maiden",
   "name": "Brine Maiden",
-  "family": "branns_order",
+  "family": "sunken_court",
   "spriteId": "brine_maiden",
-  "color": "#c8a26a",
+  "color": "#9fd4e0",
   "logo": "holy",
   "frontPriority": 7,
   "range": 5,
-  "role": "Brann's Order · Support",
+  "role": "Sunken Court · Mourner",
   "attributes": {
-    "str": 8,
+    "str": 6,
     "int": 28,
     "dex": 6,
     "luck": 4
   },
   "armor": 8,
   "magicArmor": 14,
-  "ai": "sniper",
+  "ai": "healer",
   "skills": [
-    "holy_ember",
-    "consecrate"
+    "lament_of_salt",
+    "tidal_mend"
   ],
   "passive": {
     "id": "censer_smoke",

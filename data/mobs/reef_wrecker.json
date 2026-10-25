@@ -1,26 +1,26 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif moor_raider kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı moor_raider tabanından (gelişmiş: +2 STR, +2 zırh, +4 büyü zırhı); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik moor_raider pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "reef_wrecker",
   "name": "Reef Wrecker",
   "family": "bandits",
   "spriteId": "reef_wrecker",
-  "color": "#5f6f8f",
+  "color": "#7a5a3a",
   "logo": "helm",
   "frontPriority": 1,
   "range": 1,
-  "role": "Bandit · Brute",
+  "role": "Bandit · Wrecker",
   "attributes": {
-    "str": 26,
+    "str": 28,
     "int": 4,
     "dex": 14,
     "luck": 4
   },
-  "armor": 12,
-  "magicArmor": 0,
+  "armor": 14,
+  "magicArmor": 4,
   "ai": "aggressive",
   "skills": [
-    "billhook",
-    "peat_smoke"
+    "hook",
+    "lantern_flash"
   ],
   "passive": {
     "id": "cut_and_run",

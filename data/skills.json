@@ -5815,5 +5815,536 @@
       "fireCrackle"
     ],
     "artOf": "consecrate"
+  },
+  "cutlass": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): corsair_cutlass: temel saldırı, DEX fiziksel tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'halberd_chop' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "cutlass",
+    "name": "Cutlass",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#c9c9c9",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "halberd_chop"
+  },
+  "rake": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): corsair_cutlass: bir sıra (ön sıra), DEX fiziksel 0,5. YER TUTUCU sanat: ikon/vfx/ses artOf 'toll_sweep' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "rake",
+    "name": "Rake",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "fx": "#b8a070",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.5
+      }
+    ],
+    "icon": "whirlwind",
+    "vfx": "whirlwind",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "toll_sweep"
+  },
+  "sling_stone": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): corsair_slinger: temel saldırı, DEX fiziksel tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'dirge' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "sling_stone",
+    "name": "Sling Stone",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#9a9488",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.9
+      }
+    ],
+    "icon": "bonethrow",
+    "vfx": "bonethrow",
+    "sfx": [
+      "boneSpin",
+      "boneImpact"
+    ],
+    "artOf": "dirge"
+  },
+  "pitch_pot": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): corsair_slinger: tek hücre: hafif ateş vuruşu + 2 tur Burning ground (Tide suyunda söner: grounds.json flooded quenches). YER TUTUCU sanat: ikon/vfx/ses artOf 'ember_toss' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "pitch_pot",
+    "name": "Pitch Pot",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "element": "fire",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "dex",
+        "power": 0.3
+      }
+    ],
+    "icon": "fireball",
+    "vfx": "fireball",
+    "sfx": [
+      "flameIgnite",
+      "flameRoar",
+      "fireBlast"
+    ],
+    "artOf": "ember_toss"
+  },
+  "pincer": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): salt_crab: temel saldırı, STR fiziksel tek hedef + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'shield_bash' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "pincer",
+    "name": "Pincer",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#d4705a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.7
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "fistcrush2",
+    "vfx": "fistcrush2",
+    "sfx": [
+      "plateCreak",
+      "heaveGrunt",
+      "gauntletDrop",
+      "gauntletCrush"
+    ],
+    "artOf": "shield_bash"
+  },
+  "burrow": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): salt_crab: kendine 1 tur Fortified (alınan hasar -%50). YER TUTUCU sanat: ikon/vfx/ses artOf 'oath_of_stone' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "burrow",
+    "name": "Burrow",
+    "target": "self",
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#c8b48a",
+    "effects": [
+      {
+        "type": "status",
+        "status": "fortify",
+        "turns": 1,
+        "self": true
+      }
+    ],
+    "icon": "taunt2",
+    "vfx": "taunt2",
+    "sfx": [
+      "shieldBang",
+      "battleRoar"
+    ],
+    "artOf": "oath_of_stone"
+  },
+  "eel_bite": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): weir_eel: temel saldırı, STR fiziksel tek hedef (belgedeki Soaked hedefe ek hasar motorda yok: open-questions). YER TUTUCU sanat: ikon/vfx/ses artOf 'bite' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "eel_bite",
+    "name": "Bite",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#9aa860",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.85
+      }
+    ],
+    "icon": "boneslash",
+    "vfx": "boneslash",
+    "sfx": [
+      "boneSlashWhoosh",
+      "boneSlashHit",
+      "boneSlashCrack"
+    ],
+    "artOf": "bite"
+  },
+  "lunge": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): weir_eel: menzil/ön sıra sınırı yok (ignoreReach), arka sıraya uzanır; STR fiziksel tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'run_down' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "lunge",
+    "name": "Lunge",
+    "target": "single_enemy",
+    "range": 3,
+    "cost": {
+      "resource": "mp",
+      "amount": 5
+    },
+    "cooldown": 3,
+    "motion": "melee",
+    "ignoreReach": true,
+    "fx": "#6f7a3a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.75
+      }
+    ],
+    "icon": "venomedge",
+    "vfx": "venomedge",
+    "sfx": [
+      "daggerDraw",
+      "twinSlice"
+    ],
+    "artOf": "run_down"
+  },
+  "lament": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): siren: temel saldırı, LUCK büyü (dark) tek hedef + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'ravens_peck' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "lament",
+    "name": "Lament",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#7fb8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.6
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "ravens_peck"
+  },
+  "chorus": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): siren: bir sütun (şerit), LUCK büyü (dark) + 1 Omen. YER TUTUCU sanat: ikon/vfx/ses artOf 'requiem' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "chorus",
+    "name": "Chorus",
+    "target": "area_enemies",
+    "area": {
+      "shape": "column",
+      "stages": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "dark",
+        "scale": "luck",
+        "power": 0.3
+      },
+      {
+        "type": "omen",
+        "stacks": 1
+      }
+    ],
+    "icon": "drainfield",
+    "vfx": "wail",
+    "sfx": [
+      "graveMoan",
+      "voidSuction"
+    ],
+    "artOf": "requiem"
+  },
+  "rusted_blade": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): drowned_knight: temel saldırı, STR fiziksel tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'penance_flail' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "rusted_blade",
+    "name": "Rusted Blade",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#8a6a4a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.9
+      }
+    ],
+    "icon": "sword",
+    "vfx": "doublestrike",
+    "sfx": [
+      "armorRun",
+      "axeSwing",
+      "axeChop"
+    ],
+    "artOf": "penance_flail"
+  },
+  "shield_of_brine": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): drowned_knight: bir dosta 2 tur Guard (aldığı hasarın %50si kendisine). YER TUTUCU sanat: ikon/vfx/ses artOf 'shield_wall' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "shield_of_brine",
+    "name": "Shield of Brine",
+    "target": "single_ally",
+    "excludeSelf": true,
+    "cost": {
+      "resource": "mp",
+      "amount": 4
+    },
+    "cooldown": 4,
+    "motion": "cast",
+    "fx": "#5fa8c8",
+    "effects": [
+      {
+        "type": "guard",
+        "turns": 2,
+        "share": 0.5
+      }
+    ],
+    "icon": "closeranks2",
+    "vfx": "guard2",
+    "sfx": [
+      "shieldBrace",
+      "chainTether"
+    ],
+    "artOf": "shield_wall"
+  },
+  "lament_of_salt": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): brine_maiden: temel saldırı, INT büyü (ice) tek hedef. YER TUTUCU sanat: ikon/vfx/ses artOf 'bone_rite' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "lament_of_salt",
+    "name": "Lament of Salt",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "cast",
+    "fx": "#9fd4e0",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "magic",
+        "element": "ice",
+        "scale": "int",
+        "power": 0.65
+      }
+    ],
+    "icon": "eye",
+    "vfx": "voidstrike",
+    "sfx": [
+      "darkChant",
+      "boneImpact"
+    ],
+    "artOf": "bone_rite"
+  },
+  "tidal_mend": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): brine_maiden: tek dosta INT şifa. YER TUTUCU sanat: ikon/vfx/ses artOf 'marsh_glow' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "tidal_mend",
+    "name": "Tidal Mend",
+    "target": "single_ally",
+    "cost": {
+      "resource": "mp",
+      "amount": 8
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#7fd0d8",
+    "effects": [
+      {
+        "type": "heal",
+        "scale": "int",
+        "power": 0.5
+      }
+    ],
+    "icon": "rejuvenate",
+    "vfx": "rejuvenate",
+    "sfx": [
+      "chimeHeal",
+      "leafRustle"
+    ],
+    "artOf": "marsh_glow"
+  },
+  "pitch_arrow": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): reaver_archer: temel saldırı (Bolt yerine), DEX fiziksel tek hedef + 2 tur Burning (Soaked söndürür). YER TUTUCU sanat: ikon/vfx/ses artOf 'poachers_shot' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "pitch_arrow",
+    "name": "Pitch Arrow",
+    "target": "single_enemy",
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "ranged",
+    "fx": "#e0702a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.8
+      },
+      {
+        "type": "dot",
+        "status": "burning",
+        "scale": "dex",
+        "power": 0.12,
+        "turns": 2
+      }
+    ],
+    "icon": "arrow",
+    "vfx": "arrowshot",
+    "sfx": [
+      "bowTwang",
+      "arrowWhoosh",
+      "arrowThunk"
+    ],
+    "artOf": "poachers_shot"
+  },
+  "hook": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): reef_wrecker: temel saldırı, menzil +1 (reach 1, Pike Thrust gibi), STR fiziksel tek hedef + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'drag_under' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "hook",
+    "name": "Hook",
+    "target": "single_enemy",
+    "range": 2,
+    "reach": 1,
+    "cost": {
+      "resource": "mp",
+      "amount": 0
+    },
+    "motion": "melee",
+    "fx": "#6b7682",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "str",
+        "power": 0.8
+      },
+      {
+        "type": "status",
+        "status": "slow",
+        "turns": 1
+      }
+    ],
+    "icon": "chainhook",
+    "vfx": "chainhook",
+    "sfx": [
+      "chainDrag",
+      "ironCreak"
+    ],
+    "artOf": "drag_under"
+  },
+  "lantern_flash": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): reef_wrecker: bir sıra: Shrouded silinir + 1 tur Blinded (isabet -%30), hasar yok. YER TUTUCU sanat: ikon/vfx/ses artOf 'sand_in_the_eyes' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
+    "id": "lantern_flash",
+    "name": "Lantern Flash",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 6
+    },
+    "cooldown": 3,
+    "motion": "cast",
+    "fx": "#ffd27a",
+    "effects": [
+      {
+        "type": "dispel",
+        "status": "buff",
+        "kinds": [
+          "shrouded"
+        ]
+      },
+      {
+        "type": "status",
+        "status": "blinded",
+        "turns": 1
+      }
+    ],
+    "icon": "smokebomb",
+    "vfx": "smokebomb",
+    "sfx": [
+      "fistWhoosh",
+      "smokePuff"
+    ],
+    "artOf": "sand_in_the_eyes"
   }
 }

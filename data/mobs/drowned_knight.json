@@ -1,27 +1,27 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif sworn_guard kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı sworn_guard tabanından (menzil 1: kılıç ve kalkan, teber değil); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik sworn_guard pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "drowned_knight",
   "name": "Drowned Knight",
-  "family": "morvane_army",
+  "family": "sunken_court",
   "spriteId": "drowned_knight",
   "spriteScale": 1.12,
-  "color": "#8b1e1e",
+  "color": "#4f7a6e",
   "logo": "helm",
   "frontPriority": 0,
-  "range": 2,
-  "role": "Morvane's Army · Royal Guard",
+  "range": 1,
+  "role": "Sunken Court · Knight",
   "attributes": {
-    "str": 30,
+    "str": 28,
     "int": 4,
-    "dex": 10,
+    "dex": 8,
     "luck": 4
   },
   "armor": 24,
   "magicArmor": 10,
   "ai": "aggressive",
   "skills": [
-    "halberd_chop",
-    "wall_of_pikes"
+    "rusted_blade",
+    "shield_of_brine"
   ],
   "passive": {
     "id": "close_ranks",

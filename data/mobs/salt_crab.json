@@ -1,30 +1,30 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif shieldwarden kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı, yatay çizim spriteScale 1.3). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı shieldwarden tabanından (-2 STR, +4 büyü zırhı: kabuk); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik shieldwarden pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "salt_crab",
   "name": "Salt Crab",
-  "family": "guardians",
+  "family": "beasts",
   "spriteId": "salt_crab",
   "spriteScale": 1.3,
-  "color": "#7d8796",
+  "color": "#c8604a",
   "logo": "bulwark",
   "frontPriority": 0,
   "range": 1,
-  "role": "Guardian · Tank",
+  "role": "Beast · Shell",
   "attributes": {
-    "str": 26,
-    "int": 8,
+    "str": 24,
+    "int": 2,
     "dex": 4,
     "luck": 4
   },
   "armor": 30,
-  "magicArmor": 0,
+  "magicArmor": 4,
   "overrides": {
     "hp": 130
   },
-  "ai": "mob_tank",
+  "ai": "aggressive",
   "skills": [
-    "shield_bash",
-    "hold_the_line"
+    "pincer",
+    "burrow"
   ],
   "passive": {
     "id": "rebuke",

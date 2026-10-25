@@ -118,17 +118,18 @@ describe('The Drowned Reach: harita verisi', () => {
     expect(map.nodes.find((n) => n.name === 'The Black Caravel')).toMatchObject({ type: 'elite', optional: true });
   });
 
-  it('kendi çizimli Harita 2 mobları: adı geçen her birim kendi id\'siyle; kit yer tutucunun birebir kopyası (denge adımı sonra)', () => {
-    const own: Record<string, [string, string]> = {
-      'Corsair Cutlass': ['corsair_cutlass', 'cutpurse'],
-      'Corsair Slinger': ['corsair_slinger', 'ravenwood_poacher'],
-      'Salt Crab': ['salt_crab', 'shieldwarden'],
-      'Weir Eel': ['weir_eel', 'grey_wolf'],
-      Siren: ['siren', 'raven_seer'],
-      'Drowned Knight': ['drowned_knight', 'sworn_guard'],
-      'Brine Maiden': ['brine_maiden', 'censer_monk'],
-      'Reaver Archer': ['reaver_archer', 'bandit_crossbowman'],
-      'Reef Wrecker': ['reef_wrecker', 'moor_raider'],
+  it('kendi çizimli Harita 2 mobları: adı geçen her birim kendi id\'siyle; 3.3 kiti, ailesi ve rolü', () => {
+    // ad -> [id, aile, skill'ler] (maps-2-3.md 3.3; pasifler motor gelene kadar yer tutucu)
+    const own: Record<string, [string, string, string[]]> = {
+      'Corsair Cutlass': ['corsair_cutlass', 'corsairs', ['cutlass', 'rake']],
+      'Corsair Slinger': ['corsair_slinger', 'corsairs', ['sling_stone', 'pitch_pot']],
+      'Salt Crab': ['salt_crab', 'beasts', ['pincer', 'burrow']],
+      'Weir Eel': ['weir_eel', 'beasts', ['eel_bite', 'lunge']],
+      Siren: ['siren', 'hexes', ['lament', 'chorus']],
+      'Drowned Knight': ['drowned_knight', 'sunken_court', ['rusted_blade', 'shield_of_brine']],
+      'Brine Maiden': ['brine_maiden', 'sunken_court', ['lament_of_salt', 'tidal_mend']],
+      'Reaver Archer': ['reaver_archer', 'bandits', ['pitch_arrow', 'scatter_quarrels']],
+      'Reef Wrecker': ['reef_wrecker', 'bandits', ['hook', 'lantern_flash']],
     };
     const seen = new Set<string>();
     for (const [key, enc] of Object.entries(ENCOUNTERS))
@@ -140,16 +141,18 @@ describe('The Drowned Reach: harita verisi', () => {
           seen.add(o[0]);
         }
     expect([...seen].sort()).toEqual(Object.values(own).map(([id]) => id).sort());
-    for (const [name, [id, ph]] of Object.entries(own)) {
+    for (const [name, [id, family, skills]] of Object.entries(own)) {
       const m = content.mobs[id]!;
-      const p = content.mobs[ph]!;
       expect(m.name, id).toBe(name);
       expect(m.spriteId, id).toBe(id);
-      expect(m.skills, id).toEqual(p.skills);
-      expect(m.attributes, id).toEqual(p.attributes);
-      expect(m.stats, id).toEqual(p.stats);
-      expect([m.passive?.id, m.ai, m.range], id).toEqual([p.passive?.id, p.ai, p.range]);
+      expect(m.family, id).toBe(family);
+      expect(m.skills, id).toEqual(skills);
+      expect(m.role, id).not.toMatch(/Morvane|Brann/);
     }
+    // Pitch Pot / Pitch Arrow ateşi: Burning ground ve Burning (Tide suyu söndürür: M-B)
+    expect(content.skills['pitch_pot']!.effects.some((e) => e.type === 'ground' && e.ground === 'burning')).toBe(true);
+    expect(content.skills['pitch_arrow']!.effects.some((e) => e.type === 'dot' && e.status === 'burning')).toBe(true);
+    expect(content.skills['lunge']!.ignoreReach).toBe(true);
   });
 
   it('kasabalar: Reedgate, Eelwick, Saltmere (Odo\'s Chandlery), Fisher\'s Landing; hikâye NPC\'si ve tüccar', () => {

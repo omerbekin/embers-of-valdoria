@@ -65,8 +65,10 @@ describe('data/mobs yükleyicisi', () => {
   it('yalnızca var olan durum ve zeminler kullanılır', () => {
     for (const m of mobs)
       for (const id of m.skills)
-        for (const e of content.skills[id]!.effects as { type: string; status?: string; ground?: string }[]) {
-          if (e.status) expect(content.statuses[e.status], `${id} ${e.status}`).toBeDefined();
+        for (const e of content.skills[id]!.effects as { type: string; status?: string; ground?: string; kinds?: string[] }[]) {
+          // dispel'in status'u bir tür (buff | debuff); silinen durumlar kinds'te (Lantern Flash: shrouded)
+          if (e.type === 'dispel') for (const k of e.kinds ?? []) expect(content.statuses[k], `${id} ${k}`).toBeDefined();
+          else if (e.status) expect(content.statuses[e.status], `${id} ${e.status}`).toBeDefined();
           if (e.ground) expect(content.grounds[e.ground], `${id} ${e.ground}`).toBeDefined();
         }
   });

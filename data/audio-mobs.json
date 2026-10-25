@@ -65,7 +65,24 @@
     "cinder_lash": { "cast": "mobCinderLashCrack", "travel": "mobCinderLashHiss", "hit": "mobCinderLashSear" },
     "ashfall": { "cast": "mobAshfallCall", "hit": "mobAshfallRain" },
     "iron_decree": { "cast": "mobDecreeSeal", "hit": "mobDecreeCommand" },
-    "pyre_of_morvane": { "cast": "mobPyreRise", "hit": "mobPyreInferno" }
+    "pyre_of_morvane": { "cast": "mobPyreRise", "hit": "mobPyreInferno" },
+    "cutlass": { "cast": "mobCutlassSwing", "hit": "mobCutlassSlash" },
+    "rake": { "cast": "mobRakeSweep", "hit": "mobRakeHits" },
+    "sling_stone": { "cast": "mobSlingWhirl", "hit": "mobSlingCrack" },
+    "pitch_pot": { "cast": "mobPitchPotLight", "travel": "mobPitchPotFlight", "hit": "mobPitchPotShatter" },
+    "pincer": { "cast": "mobPincerClack", "hit": "mobPincerCrush" },
+    "burrow": { "cast": "mobBurrowScrabble", "hit": "mobBurrowSettle" },
+    "eel_bite": { "cast": "mobEelSurge", "hit": "mobEelSnap" },
+    "lunge": { "cast": "mobLungeUncoil", "hit": "mobLungeSlam" },
+    "lament": { "cast": "mobLamentSong", "hit": "mobLamentChill" },
+    "chorus": { "cast": "mobChorusVoices", "hit": "mobChorusUndertow", "roles": { "voidSuction": "hit" }},
+    "rusted_blade": { "cast": "mobRustedBladeSwing", "hit": "mobRustedBladeHit" },
+    "shield_of_brine": { "cast": "mobBrineShieldRaise", "hit": "mobBrineShieldSet", "roles": { "chainTether": "hit" }},
+    "lament_of_salt": { "cast": "mobSaltLamentWeep", "hit": "mobSaltLamentSting" },
+    "tidal_mend": { "cast": "mobTidalMendPour" },
+    "pitch_arrow": { "cast": "mobPitchArrowLoose", "travel": "mobPitchArrowFlight", "hit": "mobPitchArrowHit" },
+    "hook": { "cast": "mobHookSwing", "hit": "mobHookSnag" },
+    "lantern_flash": { "cast": "mobLanternShutter", "hit": "mobLanternFlare" }
   },
   "sfx": {
     "mobShivSlip": {
@@ -1594,6 +1611,375 @@
         { "type": "noise", "filter": "bandpass", "f0": 1942, "f1": 1456, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.252, "at": 0.716 },
         { "type": "noise", "filter": "bandpass", "f0": 1838, "f1": 1379, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.265, "at": 0.812 },
         { "type": "noise", "filter": "lowpass", "f0": 900, "f1": 250, "q": 0.7, "attack": 0.05, "decay": 0.7, "gain": 0.5, "at": 0.05, "tremHz": 10, "tremDepth": 0.6 }
+      ]
+    },
+    "mobCutlassSwing": {
+      "label": "Cutlass: swing",
+      "desc": "A curved sailor's blade whips through the air",
+      "gain": 1.122,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 269.1, "f1": 1046.5, "q": 0.7, "attack": 0.08, "decay": 0.18, "gain": 1 },
+        { "type": "tone", "wave": "sawtooth", "f0": 74.1, "f1": 127.4, "attack": 0.07, "decay": 0.18, "gain": 0.22, "filter": { "type": "lowpass", "f": 220, "q": 0.7 }},
+        { "type": "noise", "filter": "bandpass", "f0": 390, "f1": 208, "q": 1.2, "attack": 0.02, "decay": 0.12, "gain": 0.25, "at": 0.16 }
+      ]
+    },
+    "mobCutlassSlash": {
+      "label": "Cutlass: slash",
+      "desc": "The cutlass slices cloth and skin: a lighter, sharper bite than an axe",
+      "gain": 0.483,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 155, "f1": 51.3, "attack": 0.002, "decay": 0.24, "gain": 1 },
+        { "type": "noise", "filter": "lowpass", "f0": 2970, "f1": 742.5, "q": 0.7, "attack": 0.001, "decay": 0.07, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 810, "f1": 405, "q": 0.8, "attack": 0.001, "decay": 0.16, "gain": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 2295, "f1": 2025, "q": 5, "attack": 0.001, "decay": 0.05, "gain": 0.25, "at": 0.01 },
+        { "type": "noise", "filter": "bandpass", "f0": 567.5, "f1": 351.3, "q": 1.4, "attack": 0.02, "decay": 0.16, "gain": 0.4, "at": 0.06 },
+        { "type": "noise", "filter": "bandpass", "f0": 1500, "f1": 1125, "q": 3, "attack": 0.001, "decay": 0.05, "gain": 0.3, "at": 0.02 }
+      ]
+    },
+    "mobRakeSweep": {
+      "label": "Rake: sweep",
+      "desc": "The cutlass is raked across the whole line in one wide arc",
+      "gain": 1.63,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 230, "f1": 1035, "q": 0.7, "attack": 0.18, "decay": 0.26, "gain": 1 },
+        { "type": "noise", "filter": "bandpass", "f0": 1035, "f1": 460, "q": 0.9, "attack": 0.05, "decay": 0.2, "gain": 0.5, "at": 0.2 },
+        { "type": "noise", "filter": "lowpass", "f0": 575, "f1": 230, "q": 0.7, "attack": 0.05, "decay": 0.3, "gain": 0.3, "at": 0.05, "tremHz": 14, "tremDepth": 0.6 }
+      ]
+    },
+    "mobRakeHits": {
+      "label": "Rake: hits",
+      "desc": "Quick slashing cuts across several bodies",
+      "gain": 0.724,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 144, "f1": 60, "attack": 0.002, "decay": 0.14, "gain": 0.9 },
+        { "type": "noise", "filter": "lowpass", "f0": 1920, "f1": 480, "q": 0.7, "attack": 0.001, "decay": 0.06, "gain": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 2640, "f1": 1680, "q": 1.5, "attack": 0.001, "decay": 0.05, "gain": 0.4 },
+        { "type": "tone", "wave": "sine", "f0": 132, "f1": 57.6, "attack": 0.002, "decay": 0.14, "gain": 0.8, "at": 0.09 },
+        { "type": "noise", "filter": "lowpass", "f0": 1680, "f1": 420, "q": 0.7, "attack": 0.001, "decay": 0.06, "gain": 0.7, "at": 0.09 },
+        { "type": "noise", "filter": "bandpass", "f0": 2400, "f1": 1560, "q": 1.5, "attack": 0.001, "decay": 0.05, "gain": 0.35, "at": 0.09 }
+      ]
+    },
+    "mobSlingWhirl": {
+      "label": "Sling Stone: whirl",
+      "desc": "A leather sling whirls overhead, the cord humming",
+      "gain": 2.419,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 270, "f1": 900, "q": 0.8, "attack": 0.08, "decay": 0.2, "gain": 0.9, "tremHz": 8, "tremDepth": 0.5 },
+        { "type": "noise", "filter": "bandpass", "f0": 2664.9, "f1": 2451.7, "q": 7, "attack": 0.001, "decay": 0.03, "gain": 0.251, "at": 0.02 },
+        { "type": "noise", "filter": "bandpass", "f0": 2474.1, "f1": 2276.2, "q": 7, "attack": 0.001, "decay": 0.03, "gain": 0.27, "at": 0.082 },
+        { "type": "noise", "filter": "bandpass", "f0": 2248.2, "f1": 2068.3, "q": 7, "attack": 0.001, "decay": 0.03, "gain": 0.286, "at": 0.124 },
+        { "type": "noise", "filter": "bandpass", "f0": 2004.3, "f1": 1844, "q": 7, "attack": 0.001, "decay": 0.03, "gain": 0.298, "at": 0.176 },
+        { "type": "noise", "filter": "bandpass", "f0": 2356.2, "f1": 2167.7, "q": 7, "attack": 0.001, "decay": 0.03, "gain": 0.27, "at": 0.229 }
+      ]
+    },
+    "mobSlingCrack": {
+      "label": "Sling Stone: hit",
+      "desc": "A river stone cracks against bone and leather",
+      "gain": 1.047,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 128, "f1": 68, "attack": 0.002, "decay": 0.08, "gain": 0.8 },
+        { "type": "noise", "filter": "lowpass", "f0": 880, "f1": 220, "q": 0.7, "attack": 0.001, "decay": 0.06, "gain": 0.6 },
+        { "type": "noise", "filter": "bandpass", "f0": 520, "f1": 344, "q": 1.6, "attack": 0.001, "decay": 0.08, "gain": 0.5, "at": 0.01 }
+      ]
+    },
+    "mobPitchPotLight": {
+      "label": "Pitch Pot: light",
+      "desc": "A rag fuse catches on a clay pot of pitch",
+      "gain": 1.807,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 540, "f1": 1620, "q": 0.8, "attack": 0.06300000000000001, "decay": 0.07700000000000001, "gain": 0.6 },
+        { "type": "noise", "filter": "lowpass", "f0": 1440, "f1": 540, "q": 0.7, "attack": 0.02, "decay": 0.2, "gain": 0.5, "at": 0.04 },
+        { "type": "noise", "filter": "bandpass", "f0": 1967.4, "f1": 1475.6, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.281, "at": 0.043 },
+        { "type": "noise", "filter": "bandpass", "f0": 1555.2, "f1": 1166.4, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.235, "at": 0.11 },
+        { "type": "noise", "filter": "bandpass", "f0": 2809.8, "f1": 2107.4, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.261, "at": 0.163 }
+      ]
+    },
+    "mobPitchPotFlight": {
+      "label": "Pitch Pot: flight",
+      "desc": "The pot tumbles through the air, fuse sputtering",
+      "gain": 2.857,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 840, "f1": 1440, "q": 2, "attack": 0.03, "decay": 0.14, "gain": 0.6, "tremHz": 60, "tremDepth": 0.5 }
+      ]
+    },
+    "mobPitchPotShatter": {
+      "label": "Pitch Pot: shatter",
+      "desc": "Clay shatters and burning pitch splashes across the ground",
+      "gain": 0.695,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 85, "f1": 38.3, "attack": 0.002, "decay": 0.16, "gain": 0.6 },
+        { "type": "noise", "filter": "lowpass", "f0": 2040, "f1": 340, "q": 0.7, "attack": 0.001, "decay": 0.25, "gain": 0.8 },
+        { "type": "noise", "filter": "highpass", "f0": 2380, "f1": 2380, "q": 0.7, "attack": 0.01, "decay": 0.3, "gain": 0.3, "at": 0.03, "tremHz": 47, "tremDepth": 0.95 },
+        { "type": "noise", "filter": "bandpass", "f0": 2695.4, "f1": 2021.5, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.336, "at": 0.042 },
+        { "type": "noise", "filter": "bandpass", "f0": 1927, "f1": 1445.2, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.294, "at": 0.131 },
+        { "type": "noise", "filter": "bandpass", "f0": 1686.4, "f1": 1264.8, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.293, "at": 0.2 },
+        { "type": "noise", "filter": "bandpass", "f0": 2427.6, "f1": 1820.7, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.322, "at": 0.267 },
+        { "type": "noise", "filter": "bandpass", "f0": 1970.3, "f1": 1477.7, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.301, "at": 0.346 },
+        { "type": "noise", "filter": "bandpass", "f0": 2054.5, "f1": 1540.8, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.326, "at": 0.403 }
+      ]
+    },
+    "mobPincerClack": {
+      "label": "Pincer: open",
+      "desc": "A barnacled claw opens with a dry chitin creak",
+      "gain": 7.258,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 980, "f1": 1260, "q": 6, "attack": 0.04, "decay": 0.2, "gain": 0.6, "tremHz": 26, "tremDepth": 0.85 },
+        { "type": "noise", "filter": "lowpass", "f0": 560, "f1": 280, "q": 0.7, "attack": 0.05, "decay": 0.15, "gain": 0.35 }
+      ]
+    },
+    "mobPincerCrush": {
+      "label": "Pincer: crush",
+      "desc": "The claw snaps shut: a hard shell crack and a wet crunch",
+      "gain": 1.139,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 2465, "f1": 1848.8, "q": 5, "attack": 0.001, "decay": 0.012, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 1955, "f1": 1466.3, "q": 5, "attack": 0.001, "decay": 0.012, "gain": 0.6, "at": 0.012 },
+        { "type": "noise", "filter": "lowpass", "f0": 1020, "f1": 255, "q": 0.7, "attack": 0.001, "decay": 0.07, "gain": 0.8, "at": 0.01 },
+        { "type": "tone", "wave": "sine", "f0": 119, "f1": 51, "attack": 0.002, "decay": 0.1, "gain": 0.6, "at": 0.01 },
+        { "type": "noise", "filter": "bandpass", "f0": 765, "f1": 425, "q": 1.5, "attack": 0.005, "decay": 0.1, "gain": 0.4, "at": 0.04 }
+      ]
+    },
+    "mobBurrowScrabble": {
+      "label": "Burrow: scrabble",
+      "desc": "Hard legs scrabble and dig into wet sand",
+      "gain": 0.528,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 108, "f1": 48, "attack": 0.002, "decay": 0.18, "gain": 1 },
+        { "type": "noise", "filter": "bandpass", "f0": 720, "f1": 456, "q": 1.5, "attack": 0.001, "decay": 0.08, "gain": 0.7 },
+        { "type": "tone", "wave": "sine", "f0": 102, "f1": 45.6, "attack": 0.002, "decay": 0.2, "gain": 1, "at": 0.2 },
+        { "type": "noise", "filter": "bandpass", "f0": 672, "f1": 432, "q": 1.5, "attack": 0.001, "decay": 0.08, "gain": 0.7, "at": 0.2 }
+      ]
+    },
+    "mobBurrowSettle": {
+      "label": "Burrow: settle",
+      "desc": "Wet sand slides over the shell with a soft slosh",
+      "gain": 0.651,
+      "layers": [
+        { "type": "noise", "filter": "lowpass", "f0": 1280, "f1": 320, "q": 0.7, "attack": 0.002, "decay": 0.2, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 720, "f1": 480, "q": 1.2, "attack": 0.005, "decay": 0.16, "gain": 0.5, "at": 0.02 },
+        { "type": "tone", "wave": "sine", "f0": 88, "f1": 44, "attack": 0.002, "decay": 0.12, "gain": 0.5 }
+      ]
+    },
+    "mobEelSurge": {
+      "label": "Bite: surge",
+      "desc": "The eel bursts out of the water with a splash",
+      "gain": 0.651,
+      "layers": [
+        { "type": "noise", "filter": "lowpass", "f0": 1760, "f1": 440, "q": 0.7, "attack": 0.002, "decay": 0.2, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 990, "f1": 660, "q": 1.2, "attack": 0.005, "decay": 0.16, "gain": 0.5, "at": 0.02 },
+        { "type": "tone", "wave": "sine", "f0": 121, "f1": 60.5, "attack": 0.002, "decay": 0.12, "gain": 0.5 }
+      ]
+    },
+    "mobEelSnap": {
+      "label": "Bite: snap",
+      "desc": "Needle teeth clamp down with a slick, wet snap",
+      "gain": 1.139,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 3190, "f1": 2392.5, "q": 5, "attack": 0.001, "decay": 0.012, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 2530, "f1": 1897.5, "q": 5, "attack": 0.001, "decay": 0.012, "gain": 0.6, "at": 0.012 },
+        { "type": "noise", "filter": "lowpass", "f0": 1320, "f1": 330, "q": 0.7, "attack": 0.001, "decay": 0.07, "gain": 0.8, "at": 0.01 },
+        { "type": "tone", "wave": "sine", "f0": 154, "f1": 66, "attack": 0.002, "decay": 0.1, "gain": 0.6, "at": 0.01 },
+        { "type": "noise", "filter": "bandpass", "f0": 990, "f1": 550, "q": 1.5, "attack": 0.005, "decay": 0.1, "gain": 0.4, "at": 0.04 }
+      ]
+    },
+    "mobLungeUncoil": {
+      "label": "Lunge: uncoil",
+      "desc": "A long body uncoils and whips forward through the shallows",
+      "gain": 1.63,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 160, "f1": 720, "q": 0.7, "attack": 0.18, "decay": 0.26, "gain": 1 },
+        { "type": "noise", "filter": "bandpass", "f0": 720, "f1": 320, "q": 0.9, "attack": 0.05, "decay": 0.2, "gain": 0.5, "at": 0.2 },
+        { "type": "noise", "filter": "lowpass", "f0": 400, "f1": 160, "q": 0.7, "attack": 0.05, "decay": 0.3, "gain": 0.3, "at": 0.05, "tremHz": 14, "tremDepth": 0.6 }
+      ]
+    },
+    "mobLungeSlam": {
+      "label": "Lunge: slam",
+      "desc": "The eel slams into its prey: a heavy wet slap",
+      "gain": 0.685,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 114.4, "f1": 44, "attack": 0.002, "decay": 0.18, "gain": 1 },
+        { "type": "noise", "filter": "bandpass", "f0": 422.4, "f1": 264, "q": 1.8, "attack": 0.001, "decay": 0.12, "gain": 0.9 },
+        { "type": "noise", "filter": "lowpass", "f0": 1584, "f1": 396, "q": 0.7, "attack": 0.001, "decay": 0.05, "gain": 0.7 },
+        { "type": "noise", "filter": "bandpass", "f0": 1144, "f1": 1012, "q": 6, "attack": 0.001, "decay": 0.05, "gain": 0.3, "at": 0.004 }
+      ]
+    },
+    "mobLamentSong": {
+      "label": "Lament: song",
+      "desc": "A woman's voice sings a slow, drowning lament",
+      "gain": 1.939,
+      "layers": [
+        { "type": "voice", "duration": 1.1, "attack": 0.15, "release": 0.35, "volume": 0.45, "f0Start": 166, "f0Peak": 176, "f0End": 155, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.01, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 429, "q": 6, "g": 1 }, { "f": 910, "q": 8, "g": 0.6 }, { "f": 3120, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.08, "center": 2400, "q": 0.8 }, "drive": 1.2, "raspHz": 5, "raspDepth": 0.1, "lowpass": 1300, "echo": { "delay": 0.2, "feedback": 0.35, "mix": 0.3 }},
+        { "type": "voice", "duration": 1, "attack": 0.18, "release": 0.35, "volume": 0.3, "f0Start": 123, "f0Peak": 132, "f0End": 117, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.01, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 429, "q": 6, "g": 1 }, { "f": 910, "q": 8, "g": 0.6 }, { "f": 3120, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.05, "center": 2400, "q": 0.8 }, "drive": 1.2, "raspHz": 5, "raspDepth": 0.1, "lowpass": 1100, "echo": { "delay": 0.2, "feedback": 0.35, "mix": 0.3 }, "at": 0.08 }
+      ]
+    },
+    "mobLamentChill": {
+      "label": "Lament: chill",
+      "desc": "A cold, breathy echo settles on the target",
+      "gain": 1.887,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1320, "f1": 660, "q": 1, "attack": 0.08, "decay": 0.45, "gain": 0.7 },
+        { "type": "noise", "filter": "lowpass", "f0": 550, "f1": 220, "q": 0.7, "attack": 0.02, "decay": 0.25, "gain": 0.5 },
+        { "type": "tone", "wave": "sine", "f0": 104.5, "f1": 49.5, "attack": 0.002, "decay": 0.15, "gain": 0.4, "at": 0.02 }
+      ]
+    },
+    "mobChorusVoices": {
+      "label": "Chorus: voices",
+      "desc": "Drowned voices answer the siren in a rising chorus",
+      "gain": 2.099,
+      "layers": [
+        { "type": "voice", "duration": 1.2, "attack": 0.25, "release": 0.4, "volume": 0.3, "f0Start": 166, "f0Peak": 166, "f0End": 155, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.015, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 910, "q": 6, "g": 1 }, { "f": 1495, "q": 8, "g": 0.6 }, { "f": 3380, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.06, "center": 2400, "q": 0.8 }, "drive": 1.1, "raspHz": 6, "raspDepth": 0.08, "lowpass": 2000, "echo": { "delay": 0.22, "feedback": 0.45, "mix": 0.35 }},
+        { "type": "voice", "duration": 1.2, "attack": 0.25, "release": 0.4, "volume": 0.25, "f0Start": 197, "f0Peak": 197, "f0End": 186, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.015, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 910, "q": 6, "g": 1 }, { "f": 1495, "q": 8, "g": 0.6 }, { "f": 3380, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.06, "center": 2400, "q": 0.8 }, "drive": 1.1, "raspHz": 6, "raspDepth": 0.08, "lowpass": 2000, "echo": { "delay": 0.22, "feedback": 0.45, "mix": 0.35 }, "at": 0.04 },
+        { "type": "voice", "duration": 1.2, "attack": 0.25, "release": 0.4, "volume": 0.22, "f0Start": 124, "f0Peak": 124, "f0End": 117, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.015, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 585, "q": 6, "g": 1 }, { "f": 1040, "q": 8, "g": 0.6 }, { "f": 3250, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.06, "center": 2400, "q": 0.8 }, "drive": 1.1, "raspHz": 6, "raspDepth": 0.08, "lowpass": 1600, "echo": { "delay": 0.22, "feedback": 0.45, "mix": 0.35 }, "at": 0.02 }
+      ]
+    },
+    "mobChorusUndertow": {
+      "label": "Chorus: undertow",
+      "desc": "The song sinks into a low, sucking rush of water",
+      "gain": 2.29,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 320, "f1": 880, "q": 1.2, "attack": 0.3, "decay": 0.5, "gain": 0.8, "tremHz": 3, "tremDepth": 0.4 },
+        { "type": "noise", "filter": "highpass", "f0": 2400, "f1": 1920, "q": 0.7, "attack": 0.2, "decay": 0.4, "gain": 0.2, "at": 0.15 }
+      ]
+    },
+    "mobRustedBladeSwing": {
+      "label": "Rusted Blade: swing",
+      "desc": "A heavy, rust-eaten longsword drags through the air",
+      "gain": 1.122,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 227.7, "f1": 885.5, "q": 0.7, "attack": 0.08, "decay": 0.18, "gain": 1 },
+        { "type": "tone", "wave": "sawtooth", "f0": 62.7, "f1": 107.8, "attack": 0.07, "decay": 0.18, "gain": 0.22, "filter": { "type": "lowpass", "f": 220, "q": 0.7 }},
+        { "type": "noise", "filter": "bandpass", "f0": 330, "f1": 176, "q": 1.2, "attack": 0.02, "decay": 0.12, "gain": 0.25, "at": 0.16 }
+      ]
+    },
+    "mobRustedBladeHit": {
+      "label": "Rusted Blade: hit",
+      "desc": "Pitted steel crunches into mail with a dull, grinding bite",
+      "gain": 0.483,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 111.6, "f1": 36.9, "attack": 0.002, "decay": 0.24, "gain": 1 },
+        { "type": "noise", "filter": "lowpass", "f0": 2138.4, "f1": 534.6, "q": 0.7, "attack": 0.001, "decay": 0.07, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 583.2, "f1": 291.6, "q": 0.8, "attack": 0.001, "decay": 0.16, "gain": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 1652.4, "f1": 1458, "q": 5, "attack": 0.001, "decay": 0.05, "gain": 0.25, "at": 0.01 },
+        { "type": "noise", "filter": "bandpass", "f0": 408.6, "f1": 252.9, "q": 1.4, "attack": 0.02, "decay": 0.16, "gain": 0.4, "at": 0.06 },
+        { "type": "noise", "filter": "bandpass", "f0": 1080, "f1": 810, "q": 3, "attack": 0.001, "decay": 0.05, "gain": 0.3, "at": 0.02 }
+      ]
+    },
+    "mobBrineShieldRaise": {
+      "label": "Shield of Brine: raise",
+      "desc": "A barnacled shield is hauled up, water streaming off it",
+      "gain": 7.258,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 560, "f1": 720, "q": 6, "attack": 0.04, "decay": 0.2, "gain": 0.6, "tremHz": 26, "tremDepth": 0.85 },
+        { "type": "noise", "filter": "lowpass", "f0": 320, "f1": 160, "q": 0.7, "attack": 0.05, "decay": 0.15, "gain": 0.35 }
+      ]
+    },
+    "mobBrineShieldSet": {
+      "label": "Shield of Brine: set",
+      "desc": "The shield settles before an ally with a wet, heavy thud",
+      "gain": 0.687,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 72, "f1": 36, "attack": 0.002, "decay": 0.25, "gain": 1 },
+        { "type": "noise", "filter": "lowpass", "f0": 720, "f1": 180, "q": 0.7, "attack": 0.001, "decay": 0.18, "gain": 0.8 },
+        { "type": "noise", "filter": "bandpass", "f0": 342, "f1": 270, "q": 2, "attack": 0.001, "decay": 0.08, "gain": 0.4 }
+      ]
+    },
+    "mobSaltLamentWeep": {
+      "label": "Lament of Salt: weep",
+      "desc": "A veiled woman keens softly, a salt-thick sob",
+      "gain": 1.939,
+      "layers": [
+        { "type": "voice", "duration": 1.1, "attack": 0.15, "release": 0.35, "volume": 0.45, "f0Start": 206, "f0Peak": 219, "f0End": 193, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.01, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 479, "q": 6, "g": 1 }, { "f": 1015, "q": 8, "g": 0.6 }, { "f": 3480, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.08, "center": 2400, "q": 0.8 }, "drive": 1.2, "raspHz": 5, "raspDepth": 0.1, "lowpass": 1300, "echo": { "delay": 0.2, "feedback": 0.35, "mix": 0.3 }},
+        { "type": "voice", "duration": 1, "attack": 0.18, "release": 0.35, "volume": 0.3, "f0Start": 153, "f0Peak": 164, "f0End": 145, "peakAt": 0.35, "vibratoHz": 5, "vibratoDepth": 0.01, "jitterHz": 9, "jitterDepth": 0.01, "formants": [{ "f": 479, "q": 6, "g": 1 }, { "f": 1015, "q": 8, "g": 0.6 }, { "f": 3480, "q": 10, "g": 0.25 }], "formantRise": 0, "growl": { "octave": 1, "gain": 0, "detune": 0 }, "noise": { "gain": 0.05, "center": 2400, "q": 0.8 }, "drive": 1.2, "raspHz": 5, "raspDepth": 0.1, "lowpass": 1100, "echo": { "delay": 0.2, "feedback": 0.35, "mix": 0.3 }, "at": 0.08 }
+      ]
+    },
+    "mobSaltLamentSting": {
+      "label": "Lament of Salt: sting",
+      "desc": "A cold spray of salt water hisses over the target",
+      "gain": 1.887,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1560, "f1": 780, "q": 1, "attack": 0.08, "decay": 0.45, "gain": 0.7 },
+        { "type": "noise", "filter": "lowpass", "f0": 650, "f1": 260, "q": 0.7, "attack": 0.02, "decay": 0.25, "gain": 0.5 },
+        { "type": "tone", "wave": "sine", "f0": 123.5, "f1": 58.5, "attack": 0.002, "decay": 0.15, "gain": 0.4, "at": 0.02 }
+      ]
+    },
+    "mobTidalMendPour": {
+      "label": "Tidal Mend: pour",
+      "desc": "Water pours from a shell jug in a soft, rising trickle",
+      "gain": 1.508,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 400, "f1": 720, "q": 1, "attack": 0.2, "decay": 0.5, "gain": 0.6 },
+        { "type": "noise", "filter": "highpass", "f0": 2000, "f1": 2400, "q": 0.7, "attack": 0.2, "decay": 0.4, "gain": 0.15 },
+        { "type": "noise", "filter": "bandpass", "f0": 320, "f1": 440, "q": 7, "attack": 0.004, "decay": 0.06, "gain": 0.35, "at": 0.15 },
+        { "type": "noise", "filter": "bandpass", "f0": 384, "f1": 504, "q": 7, "attack": 0.004, "decay": 0.06, "gain": 0.35, "at": 0.31 },
+        { "type": "noise", "filter": "bandpass", "f0": 448, "f1": 568, "q": 7, "attack": 0.004, "decay": 0.06, "gain": 0.35, "at": 0.47 }
+      ]
+    },
+    "mobPitchArrowLoose": {
+      "label": "Pitch Arrow: loose",
+      "desc": "A short reed bow snaps; the tarred arrow catches as it leaves",
+      "gain": 1.433,
+      "layers": [
+        { "type": "pluck", "f": 181, "fb": 0.6, "bright": 1500, "duration": 0.09, "gain": 0.6 },
+        { "type": "noise", "filter": "bandpass", "f0": 1425, "f1": 855, "q": 1.2, "attack": 0.001, "decay": 0.04, "gain": 0.45 },
+        { "type": "tone", "wave": "sine", "f0": 123.5, "f1": 76, "attack": 0.002, "decay": 0.05, "gain": 0.35 }
+      ]
+    },
+    "mobPitchArrowFlight": {
+      "label": "Pitch Arrow: flight",
+      "desc": "A burning arrow flutters and crackles past",
+      "gain": 2.857,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 1120, "f1": 1920, "q": 2, "attack": 0.03, "decay": 0.14, "gain": 0.6, "tremHz": 60, "tremDepth": 0.5 }
+      ]
+    },
+    "mobPitchArrowHit": {
+      "label": "Pitch Arrow: hit",
+      "desc": "The arrowhead thocks home and the pitch flares",
+      "gain": 1.047,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 168, "f1": 89.3, "attack": 0.002, "decay": 0.08, "gain": 0.8 },
+        { "type": "noise", "filter": "lowpass", "f0": 1155, "f1": 288.8, "q": 0.7, "attack": 0.001, "decay": 0.06, "gain": 0.6 },
+        { "type": "noise", "filter": "bandpass", "f0": 682.5, "f1": 451.5, "q": 1.6, "attack": 0.001, "decay": 0.08, "gain": 0.5, "at": 0.01 }
+      ]
+    },
+    "mobHookSwing": {
+      "label": "Hook: swing",
+      "desc": "A long boat hook swings out on its pole",
+      "gain": 1.461,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 270, "f1": 1170, "q": 0.8, "attack": 0.08, "decay": 0.14, "gain": 0.9 },
+        { "type": "noise", "filter": "bandpass", "f0": 2160, "f1": 2880, "q": 4, "attack": 0.04, "decay": 0.08, "gain": 0.2, "at": 0.06 }
+      ]
+    },
+    "mobHookSnag": {
+      "label": "Hook: snag",
+      "desc": "The iron hook catches and yanks: wet rope and torn cloth",
+      "gain": 0.927,
+      "layers": [
+        { "type": "tone", "wave": "sine", "f0": 110.5, "f1": 46.8, "attack": 0.002, "decay": 0.12, "gain": 0.8 },
+        { "type": "noise", "filter": "lowpass", "f0": 1275, "f1": 318.8, "q": 0.7, "attack": 0.001, "decay": 0.06, "gain": 0.7 },
+        { "type": "noise", "filter": "bandpass", "f0": 1275, "f1": 765, "q": 1.3, "attack": 0.01, "decay": 0.18, "gain": 0.7, "at": 0.07, "tremHz": 36, "tremDepth": 0.85 }
+      ]
+    },
+    "mobLanternShutter": {
+      "label": "Lantern Flash: shutter",
+      "desc": "A tin lantern shutter is flung open with a clack and a whoosh",
+      "gain": 1.032,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 400, "f1": 1280, "q": 0.8, "attack": 0.07200000000000001, "decay": 0.08800000000000001, "gain": 0.8 },
+        { "type": "noise", "filter": "highpass", "f0": 3360, "f1": 2400, "q": 0.7, "attack": 0.01, "decay": 0.12, "gain": 0.35, "at": 0.08 }
+      ]
+    },
+    "mobLanternFlare": {
+      "label": "Lantern Flash: flare",
+      "desc": "The wick flares bright with a short roar of oil",
+      "gain": 1.807,
+      "layers": [
+        { "type": "noise", "filter": "bandpass", "f0": 720, "f1": 2160, "q": 0.8, "attack": 0.06300000000000001, "decay": 0.07700000000000001, "gain": 0.6 },
+        { "type": "noise", "filter": "lowpass", "f0": 1920, "f1": 720, "q": 0.7, "attack": 0.02, "decay": 0.2, "gain": 0.5, "at": 0.04 },
+        { "type": "noise", "filter": "bandpass", "f0": 2623.2, "f1": 1967.4, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.281, "at": 0.043 },
+        { "type": "noise", "filter": "bandpass", "f0": 2073.6, "f1": 1555.2, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.235, "at": 0.11 },
+        { "type": "noise", "filter": "bandpass", "f0": 3746.4, "f1": 2809.8, "q": 3, "attack": 0.001, "decay": 0.014, "gain": 0.261, "at": 0.163 }
       ]
     }
   }

@@ -1,16 +1,16 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif cutpurse kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı cutpurse tabanından (+2 STR: ön sıra düellocu); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik cutpurse pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "corsair_cutlass",
   "name": "Corsair Cutlass",
-  "family": "bandits",
+  "family": "corsairs",
   "spriteId": "corsair_cutlass",
-  "color": "#c9a227",
+  "color": "#2f5e8c",
   "logo": "helm",
   "frontPriority": 1,
   "range": 1,
-  "role": "Bandit · Skirmisher",
+  "role": "Corsair · Duelist",
   "attributes": {
-    "str": 10,
+    "str": 12,
     "int": 4,
     "dex": 24,
     "luck": 6
@@ -19,8 +19,8 @@
   "magicArmor": 0,
   "ai": "aggressive",
   "skills": [
-    "shiv",
-    "sand_in_the_eyes"
+    "cutlass",
+    "rake"
   ],
   "passive": {
     "id": "head_start",

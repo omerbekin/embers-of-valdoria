@@ -1,26 +1,26 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif raven_seer kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı raven_seer / fen_witchling tabanından (Hexes ailesi: LUCK büyücüsü, Fen Witchling gibi); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik raven_seer pasifi (Flock Shield). Sayılar PROVİZYON (sim yok).",
   "id": "siren",
   "name": "Siren",
-  "family": "bandits",
+  "family": "hexes",
   "spriteId": "siren",
-  "color": "#6a4c93",
+  "color": "#5fa8c8",
   "logo": "feather",
   "frontPriority": 7,
   "range": 5,
-  "role": "Bandit · Caster",
+  "role": "Hex · Singer",
   "attributes": {
     "str": 6,
-    "int": 26,
+    "int": 8,
     "dex": 8,
-    "luck": 6
+    "luck": 26
   },
   "armor": 4,
   "magicArmor": 8,
-  "ai": "sniper",
+  "ai": "hexer",
   "skills": [
-    "ravens_peck",
-    "murder_of_crows"
+    "lament",
+    "chorus"
   ],
   "passive": {
     "id": "flock_shield",

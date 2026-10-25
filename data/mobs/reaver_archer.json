@@ -1,25 +1,25 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif bandit_crossbowman kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı bandit_crossbowman tabanından (gelişmiş: +2 DEX, +4 büyü zırhı; Ash Hound / Grey Wolf farkı kadar); seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik bandit_crossbowman pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "reaver_archer",
   "name": "Reaver Archer",
   "family": "bandits",
   "spriteId": "reaver_archer",
-  "color": "#7a6a4a",
+  "color": "#4a5a6a",
   "logo": "bow",
   "frontPriority": 8,
   "range": 6,
-  "role": "Bandit · Ranged",
+  "role": "Bandit · Archer",
   "attributes": {
     "str": 10,
     "int": 6,
-    "dex": 26,
+    "dex": 28,
     "luck": 6
   },
   "armor": 10,
-  "magicArmor": 0,
+  "magicArmor": 4,
   "ai": "sniper",
   "skills": [
-    "crossbow_bolt",
+    "pitch_arrow",
     "scatter_quarrels"
   ],
   "passive": {

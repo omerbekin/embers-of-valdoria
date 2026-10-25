@@ -1177,7 +1177,7 @@ function mobPassiveLines(): string[] {
 }
 
 /** Mob ailesi görünen adları (docs/design/campaign/fill-plan.md 2.2). */
-const MOB_FAMILY: Record<string, string> = { bandits: 'Bandits', branns_order: "Brann's Order", beasts: 'Beasts', ember_cult: 'Ember Cult', guardians: 'Guardians', hexes: 'Hexes', undead: 'Undead', fanatics: 'Fanatics', morvane_army: "Morvane's Army" };
+const MOB_FAMILY: Record<string, string> = { bandits: 'Bandits', branns_order: "Brann's Order", beasts: 'Beasts', ember_cult: 'Ember Cult', guardians: 'Guardians', hexes: 'Hexes', undead: 'Undead', fanatics: 'Fanatics', morvane_army: "Morvane's Army", corsairs: 'Corsairs', sunken_court: 'Sunken Court' };
 
 /** Sefer mobları (data/mobs; N1): aile başına bir makale (Enemies). Sayılar veriden (zorluk öncesi can; skill açıklamaları skill-info'dan). */
 function mobArticles(): WikiArticle[] {

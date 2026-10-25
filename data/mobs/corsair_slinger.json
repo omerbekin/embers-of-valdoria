@@ -1,14 +1,14 @@
 {
-  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). DENGE YER TUTUCU: stat, skill ve pasif ravenwood_poacher kopyası (maps-2-3.md 9.3 eşlemesi; yalnız id, ad, çizim farklı). Belgedeki kendi kiti ve pasifi (3.3) sonraki denge adımında.",
+  "_not": "Sefer mobu, HARİTA 2 The Drowned Reach (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25). Kendi çizimi (ChatGPT, Ömer onayı 2026-10-25): spriteId = id (tools/import-mobs.py, kaynak assets/source/mobs). KİT 3.3'ten (skill'ler data/skills.json, sanat artOf ile yer tutucu). Statlar Harita 1 karşılığı ravenwood_poacher tabanından; seviye ölçeği bölüm 2 rampası. PASİF YER TUTUCU: belgedeki pasif motorda yok (engine-dev işi, open-questions); şimdilik ravenwood_poacher pasifi. Sayılar PROVİZYON (sim yok).",
   "id": "corsair_slinger",
   "name": "Corsair Slinger",
-  "family": "bandits",
+  "family": "corsairs",
   "spriteId": "corsair_slinger",
-  "color": "#5f7a3a",
+  "color": "#b5562a",
   "logo": "bow",
   "frontPriority": 8,
   "range": 6,
-  "role": "Bandit · Trapper",
+  "role": "Corsair · Slinger",
   "attributes": {
     "str": 10,
     "int": 4,
@@ -19,8 +19,8 @@
   "magicArmor": 0,
   "ai": "sniper",
   "skills": [
-    "poachers_shot",
-    "tainted_bait"
+    "sling_stone",
+    "pitch_pot"
   ],
   "passive": {
     "id": "hide_in_the_brush",
