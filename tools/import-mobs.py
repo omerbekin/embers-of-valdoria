@@ -91,6 +91,7 @@ HEADS = {
     'salt_bishop': (540, 150, 280),
     'drowned_champion': (545, 10, 300),
     'weir_wyrm': (1270, 100, 400),
+    'admiral_vane': (770, 20, 300),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
