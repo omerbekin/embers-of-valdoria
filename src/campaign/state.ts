@@ -6,7 +6,7 @@ import { SLOT_IDS, canEquip, itemDef } from '../progression/items';
 import { starterEquipment } from '../progression/weapon';
 import { heroSpeedRoll, itemRecovery } from '../progression/loadout';
 import { fallAfterVictory, healWounds, valorClearWounds, woundCount, woundsLine, type WoundRules } from '../progression/wounds';
-import { emptyLootState, grantGift, grantLoot } from './loot';
+import { emptyLootState, grantGift, grantLoot, treasureGiftRarity } from './loot';
 import { leaveMerchant } from './merchant';
 import { valorRules } from '../engine/content';
 import { addValor, canReviveOutside, valorEarned } from '../engine/valor';
@@ -491,7 +491,8 @@ export function completeSimple(s: CampaignState, kind: 'event' | 'treasure' | 's
     // Hazinenin kendi içeriği varsa (events.json > treasures[x].loot; Harita 1 cepleri) sandık ona göre, yoksa standart sandık
     const tl = TREASURES[node(mapOf(t), t.at).treasure ?? '']?.loot;
     grantLoot(t, t.at, 'treasure', activeHeroes(t), tl && (tl.maxItems !== undefined || tl.itemsDelta !== undefined || tl.gold !== undefined) ? { ...(tl.maxItems !== undefined ? { maxItems: tl.maxItems } : {}), ...(tl.itemsDelta !== undefined ? { itemsDelta: tl.itemsDelta } : {}), ...(tl.gold !== undefined ? { gold: tl.gold } : {}) } : undefined);
-    if (tl?.gift) grantGift(t, t.at, activeHeroes(t), 'treasure', tl.gift);
+    // Hediye nadirliği: giftUpgrade varsa seed'li tek zarla yükselebilir (Mine / Abbey %35 Rare; Ömer 2026-10-25)
+    if (tl?.gift) grantGift(t, t.at, activeHeroes(t), 'treasure', treasureGiftRarity(t, t.at, tl.gift, tl.giftUpgrade));
   }
   if (kind === 'town') closeShop(t); // kasaba tüccarının tezgâhı kasabadan ayrılınca kapanır (T1); yeniden girilirse aynı tezgâh döner
   // Savaşsız olay / hazine düğümü: sabit XP (levels.md, 0,5x)

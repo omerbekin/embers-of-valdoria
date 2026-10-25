@@ -59,7 +59,8 @@ export function boardHero(h: BoardHeroSource): FormationBoardHero | null {
     ...(passiveRow && p ? { passive: { name: p.name, icon: iconUrl(p.icon || uiIconName('passive'), def.color, ownerOfUnit(h.class)) } } : {}),
     skills: rows
       .filter((r) => !r.passive && r.skill)
-      .map((r) => ({ id: r.skill!.id, name: r.skill!.name, icon: heroSkillIconUrl(h, r.skill!), cost: costOf(r.skill!) })),
+      // Ulti: veride ayrı işaret yok; savaş HUD'ı / karakter paneliyle aynı kural, 4. skill yuvası
+      .map((r, i) => ({ id: r.skill!.id, name: r.skill!.name, icon: heroSkillIconUrl(h, r.skill!), cost: costOf(r.skill!), ...(i === 3 ? { ult: true } : {}) })),
   };
 }
 

@@ -1,0 +1,463 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Chest Opening</title>
+<style>
+/* Sandık açılış taslağı (ui-dev). Sahne 1920x1080, ekrana sığacak şekilde ölçeklenir. Hareket değerleri data/ui-motion.json'dan: ease cubic-bezier(.33,1,.68,1), modal 200/rise 10, card 260/stagger 70/rise 8, screen 320. */
+@font-face { font-family: Cinzel; font-weight: 400 900; font-display: swap; src: url('chest-open/fonts/Cinzel-normal-latin.woff2') format('woff2'); }
+@font-face { font-family: 'EB Garamond'; font-weight: 400 800; font-display: swap; src: url('chest-open/fonts/EBGaramond-normal-latin.woff2') format('woff2'); }
+* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+:root { --txt: #d9c8a2; --dim: #a8977a; --gold: #f3d999; --line: rgba(217,178,106,.42); --line2: rgba(217,178,106,.2); --ember: #e0702a; --ember2: #ffb35a;
+  --disp: Cinzel, Georgia, serif; --body: 'EB Garamond', Georgia, serif; --ease: cubic-bezier(.33,1,.68,1); }
+html, body { margin: 0; height: 100%; background: #070504; color: var(--txt); font-family: var(--body); overflow: hidden; font-style: normal; }
+body { display: flex; flex-direction: column; }
+/* ---------- araç çubuğu (mockup kabuğu, oyun parçası değil) ---------- */
+#bar { flex: none; padding: 8px 12px 6px; border-bottom: 1px solid var(--line2); background: #0c0806; }
+#tabs { display: flex; flex-wrap: wrap; gap: 0 22px; align-items: center; }
+.tab, .tb { font: 600 15px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); background: none; border: 0; border-bottom: 2px solid transparent; padding: 8px 2px; min-height: 44px; cursor: pointer; transition: color .2s, border-color .2s; }
+.tab:hover, .tb:hover { color: var(--gold); }
+.tab.on { color: var(--gold); border-bottom-color: var(--ember); }
+.tb { border: 1px solid var(--line2); padding: 0 14px; font-size: 13px; }
+.sp { flex: 1; }
+.chk { display: inline-flex; align-items: center; gap: 7px; font: 15px var(--body); color: var(--txt); min-height: 44px; cursor: pointer; user-select: none; }
+.chk input { width: 18px; height: 18px; accent-color: var(--ember); }
+#note { font: 17px/1.35 var(--body); color: var(--dim); padding: 0 0 4px; }
+#view { flex: 1; min-height: 0; position: relative; overflow: hidden; }
+#stage { position: absolute; left: 0; top: 0; width: 1920px; height: 1080px; transform-origin: 0 0; overflow: hidden; background: #0a0705; user-select: none; touch-action: manipulation; }
+#stage > * { position: absolute; }
+/* ---------- sahte harita ---------- */
+#map { inset: 0; background: #14100b url('chest-open/img/map.webp') center / cover; transition: filter .45s var(--ease); }
+#map::before { content: ''; position: absolute; inset: 0; background: radial-gradient(ellipse at 50% 50%, rgba(8,5,3,.15), rgba(8,5,3,.62)); }
+#map.dim { filter: brightness(.28) saturate(.7); }
+#path { position: absolute; inset: 0; width: 100%; height: 100%; }
+.mnode { position: absolute; width: 110px; height: 110px; margin: -55px 0 0 -55px; border-radius: 50%; background: #120d09 center / 78% no-repeat; border: 2px solid rgba(217,178,106,.75); box-shadow: 0 0 0 4px rgba(8,6,4,.6), 0 8px 18px rgba(0,0,0,.6); }
+.mnode.o { opacity: .85; width: 92px; height: 92px; margin: -46px 0 0 -46px; }
+#tnode { background-size: 80%; background-image: url('chest-open/img/treasure.webp'); border-color: #efc85a; width: 130px; height: 130px; margin: -65px 0 0 -65px; }
+#party { position: absolute; width: 54px; height: 54px; margin: -27px 0 0 -27px; border-radius: 50%; background: radial-gradient(circle at 50% 40%, #3a2a18, #120c08); border: 2px solid var(--gold); box-shadow: 0 0 16px rgba(224,112,42,.7); display: grid; place-items: center; z-index: 5; }
+#party::after { content: ''; width: 14px; height: 14px; background: var(--ember); transform: rotate(45deg); box-shadow: 0 0 10px var(--ember); }
+.hud { position: absolute; top: 34px; height: 56px; display: flex; align-items: center; gap: 12px; padding: 0 22px 0 14px; background: linear-gradient(180deg, rgba(24,17,10,.9), rgba(9,6,4,.9)); border: 1px solid var(--line); font: 600 26px var(--disp); letter-spacing: .08em; color: var(--gold); z-index: 8; }
+.hud img { width: 36px; height: 36px; object-fit: contain; }
+.hud small { font: 600 18px var(--disp); color: var(--dim); letter-spacing: .1em; }
+.hud.pulse { animation: hudp .35s var(--ease); }
+@keyframes hudp { 40% { transform: scale(1.1); border-color: var(--gold); box-shadow: 0 0 20px rgba(243,217,153,.45); } }
+#maptitle { position: absolute; left: 60px; top: 40px; font: 600 30px var(--disp); letter-spacing: .16em; text-transform: uppercase; color: var(--gold); text-shadow: 0 2px 6px #000; }
+#maptitle small { display: block; font: 20px var(--body); letter-spacing: .04em; text-transform: none; color: var(--dim); margin-top: 2px; }
+/* ---------- fx katmanı ---------- */
+#fx { inset: 0; z-index: 20; }
+#fx > * { position: absolute; }
+.vig { inset: 0; background: radial-gradient(ellipse at 50% 56%, rgba(0,0,0,0) 22%, rgba(0,0,0,.78) 82%), rgba(0,0,0,.35); pointer-events: none; }
+.ground { left: 480px; top: 830px; width: 960px; height: 150px; border-radius: 50%; background: radial-gradient(ellipse, rgba(224,150,60,.28), rgba(224,150,60,0) 68%); animation: gl 3s ease-in-out infinite; pointer-events: none; }
+@keyframes gl { 50% { opacity: .55; } }
+.hint { left: 0; width: 1920px; text-align: center; font: 600 34px var(--disp); letter-spacing: .24em; text-transform: uppercase; color: var(--gold); text-shadow: 0 0 14px rgba(224,112,42,.6), 0 2px 4px #000; animation: hp 1.8s ease-in-out infinite; pointer-events: none; }
+.hint small { display: block; font: 22px var(--body); letter-spacing: .04em; text-transform: none; color: var(--dim); margin-top: 6px; }
+@keyframes hp { 50% { opacity: .55; } }
+.coin { width: 44px; height: 44px; margin: -22px 0 0 -22px; left: 0; top: 0; object-fit: contain; filter: drop-shadow(0 2px 3px rgba(0,0,0,.7)); will-change: transform; pointer-events: none; }
+.fico { left: 0; top: 0; width: 76px; height: 76px; margin: -38px 0 0 -38px; border: 1px solid color-mix(in srgb, var(--rc) 70%, transparent); background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 40%, transparent), rgba(8,6,4,.85) 78%); box-shadow: 0 0 22px color-mix(in srgb, var(--rc) 60%, transparent); display: grid; place-items: center; will-change: transform; pointer-events: none; }
+.fico img { width: 84%; height: 84%; object-fit: contain; image-rendering: pixelated; }
+.burst { width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,170,.95), rgba(255,170,60,.55) 30%, rgba(255,140,40,0) 68%); mix-blend-mode: screen; opacity: 0; pointer-events: none; }
+.beam { top: 0; width: 280px; height: 880px; margin-left: -140px; transform-origin: 50% 100%; mix-blend-mode: screen; opacity: 0; pointer-events: none;
+  background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rc) 78%, #fff 12%) 50%, transparent);
+  -webkit-mask-image: linear-gradient(to top, #000 25%, rgba(0,0,0,.2) 85%, transparent); mask-image: linear-gradient(to top, #000 25%, rgba(0,0,0,.2) 85%, transparent); }
+.beam.epic { width: 340px; margin-left: -170px; }
+.flash { inset: 0; background: var(--fc, #fff); opacity: 0; mix-blend-mode: screen; pointer-events: none; }
+.goldline { left: 0; width: 1920px; text-align: center; font: 600 40px var(--disp); letter-spacing: .1em; color: var(--gold); text-shadow: 0 2px 6px #000; display: flex; justify-content: center; align-items: center; gap: 14px; pointer-events: none; }
+.goldline img { width: 48px; height: 48px; object-fit: contain; }
+.pips { left: 0; width: 1920px; display: flex; justify-content: center; gap: 26px; pointer-events: none; }
+.pip { width: 18px; height: 18px; transform: rotate(45deg); border: 1px solid var(--line); background: #1a130c; transition: background .2s, box-shadow .2s, border-color .2s; }
+.pip.on { background: var(--ember); border-color: var(--ember2); box-shadow: 0 0 14px rgba(240,140,40,.9); }
+/* ---------- sandık ---------- */
+.chest { position: absolute; width: 528px; height: 512px; will-change: transform; transform-origin: 50% 100%; }
+.chest .cs { position: absolute; inset: 0; transform-origin: 50% 100%; }
+.chest img { position: absolute; left: 0; top: 0; width: 528px; height: 512px; display: block; pointer-events: none; }
+.chest .f-lock { transform: scale(.95); transform-origin: 50% 100%; } /* kilitli kare ~%5 büyük çizildi: boyut sıçraması olmasın */
+.chest .f-open { display: none; }
+.c-glow { position: absolute; left: 60px; top: 120px; width: 410px; height: 330px; opacity: 0; border-radius: 50%; background: radial-gradient(ellipse, rgba(255,200,90,.8), rgba(255,150,40,.3) 50%, rgba(255,140,40,0) 72%); mix-blend-mode: screen; pointer-events: none; }
+.c-seam { position: absolute; left: 56px; top: 252px; width: 420px; height: 8px; border-radius: 4px; opacity: var(--lk, 0); background: var(--tint, #ffd27a); filter: blur(3px); box-shadow: 0 0 calc(10px + 36px * var(--lk, 0)) calc(2px + 8px * var(--lk, 0)) var(--tint, #ffd27a); transition: opacity .25s, box-shadow .25s; pointer-events: none; mix-blend-mode: screen; }
+.c-bloom { position: absolute; left: 20px; top: 90px; width: 490px; height: 280px; opacity: calc(var(--lk, 0) * .8); background: radial-gradient(ellipse at 50% 70%, var(--tint, #ffd27a), transparent 68%); mix-blend-mode: screen; pointer-events: none; transition: opacity .3s; }
+.shard { width: 14px; height: 9px; background: #5a5d63; border: 1px solid #25272a; left: 0; top: 0; pointer-events: none; }
+/* ---------- item plakası (Gear item plakası dili: yuva ikonu + rarity adı + altın ana stat + affix, ince rarity kenarı, köşe elmasları) ---------- */
+.pl { --rl: color-mix(in srgb, var(--rc) 52%, #fff); position: relative; width: 540px; height: 200px; display: flex; gap: 20px; align-items: center; padding: 18px 22px; background: linear-gradient(180deg, rgba(24,17,10,.94), rgba(9,6,4,.94)); border: 1px solid color-mix(in srgb, var(--rc) 60%, rgba(217,178,106,.3)); box-shadow: inset 0 0 26px color-mix(in srgb, var(--rc) 16%, transparent), 0 0 0 3px rgba(8,6,4,.65); }
+.pl::before, .pl::after { content: ''; position: absolute; width: 11px; height: 11px; transform: rotate(45deg); background: #130d07; border: 1px solid color-mix(in srgb, var(--rc) 70%, #fff); }
+.pl::before { left: -7px; top: 50%; margin-top: -6px; } .pl::after { right: -7px; top: 50%; margin-top: -6px; }
+.pl .ico { flex: none; width: 128px; height: 128px; display: grid; place-items: center; background: radial-gradient(circle at 50% 55%, color-mix(in srgb, var(--rc) 30%, transparent), rgba(8,6,4,.8) 78%); border: 1px solid color-mix(in srgb, var(--rc) 65%, transparent); }
+.pl .ico img { width: 86%; height: 86%; object-fit: contain; image-rendering: pixelated; }
+.pl .tx { min-width: 0; }
+.pl .nm { font: 600 25px/1.1 var(--disp); letter-spacing: .05em; text-transform: uppercase; color: var(--rl); }
+.pl .sb { font: 19px var(--body); color: var(--dim); margin: 3px 0 7px; }
+.pl .st { font: 600 34px var(--disp); color: var(--gold); line-height: 1; } .pl .st small { font: 600 17px var(--disp); letter-spacing: .1em; text-transform: uppercase; color: var(--dim); margin-left: 8px; }
+.pl .af { font: 20px/1.3 var(--body); color: #cdb88d; margin-top: 6px; }
+.pl.sm { width: 100%; height: 150px; padding: 12px 18px; } .pl.sm .ico { width: 104px; height: 104px; } .pl.sm .nm { font-size: 22px; } .pl.sm .st { font-size: 28px; } .pl.sm .af { font-size: 18px; margin-top: 3px; }
+.card { width: 540px; height: 200px; perspective: 1400px; }
+.card .in { position: relative; width: 100%; height: 100%; transform-style: preserve-3d; }
+.card .f, .card .b { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.card .f { transform: rotateY(180deg); }
+.card .b { border: 1px solid var(--line); background: repeating-linear-gradient(45deg, rgba(217,178,106,.05) 0 10px, rgba(0,0,0,0) 10px 20px), linear-gradient(180deg, #1b130b, #0a0705); box-shadow: inset 0 0 0 8px #0a0705, inset 0 0 0 9px var(--line2), 0 0 0 3px rgba(8,6,4,.65); display: grid; place-items: center; }
+.card .b i { width: 38px; height: 38px; transform: rotate(45deg); border: 1px solid var(--line); background: #130d07; box-shadow: 0 0 12px rgba(224,112,42,.45); position: relative; } .card .b i::after { content: ''; position: absolute; inset: 11px; background: var(--ember); box-shadow: 0 0 10px var(--ember); }
+/* ---------- düğmeler (el-btn dili) ---------- */
+.ebtn { position: relative; display: inline-flex; align-items: center; justify-content: center; min-height: 48px; padding: 0 34px; font: 600 19px var(--disp); letter-spacing: .1em; text-transform: uppercase; white-space: nowrap; color: var(--txt); background: linear-gradient(180deg, rgba(30,22,14,.82), rgba(12,9,6,.86)); border: 1px solid var(--line); box-shadow: 0 0 0 3px rgba(12,8,5,.6); cursor: pointer; transition: color .2s, border-color .2s, transform .25s var(--ease); }
+.ebtn:hover { color: var(--gold); border-color: rgba(243,217,153,.9); transform: translateY(-2px); }
+.ebtn::before, .ebtn::after { content: ''; position: absolute; top: 50%; width: 9px; height: 9px; margin-top: -5px; transform: rotate(45deg); background: #1a130c; box-shadow: 0 0 0 1px rgba(217,178,106,.45); }
+.ebtn::before { left: -6px; } .ebtn::after { right: -6px; }
+.ebtn.pri { min-height: 64px; padding: 0 52px; font-size: 26px; letter-spacing: .12em; color: var(--gold); border: 2px solid #d9b26a; background: linear-gradient(180deg, rgba(38,27,17,.92), rgba(12,9,6,.95)); box-shadow: 0 0 0 3px rgba(12,8,5,.8), 0 14px 30px rgba(0,0,0,.55); }
+.ebtn.pri::before, .ebtn.pri::after { width: 12px; height: 12px; margin-top: -6px; background: var(--ember); box-shadow: 0 0 0 1px var(--ember2), 0 0 12px rgba(240,140,40,.8); }
+.ebtn.pri::before { left: -8px; } .ebtn.pri::after { right: -8px; }
+.ebtn:disabled { color: #7d705a; border-color: rgba(217,178,106,.25); cursor: default; transform: none; }
+.elink { font: 600 22px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--dim); background: none; border: 0; cursor: pointer; padding: 10px 6px; transition: color .2s; } .elink:hover { color: var(--gold); }
+/* ---------- Loot ekranı (sadeleştirilmiş taklit: src/ui/loot-screen.ts) ---------- */
+#spoils { inset: 0; z-index: 40; display: none; opacity: 0; background: rgba(5,3,2,.62); }
+.lp { position: absolute; left: 180px; top: 120px; width: 1560px; height: 840px; background: linear-gradient(180deg, rgba(22,15,9,.97), rgba(9,6,4,.98)); border: 1px solid var(--line); box-shadow: 0 0 0 3px rgba(8,6,4,.75), 0 30px 70px rgba(0,0,0,.7); padding: 34px 44px 30px; }
+.lp h1 { margin: 0; font: 600 40px var(--disp); letter-spacing: .2em; text-transform: uppercase; color: var(--gold); }
+.lp .sub { font: 22px var(--body); color: var(--dim); margin: 2px 0 10px; }
+.lp .cols { display: flex; gap: 48px; margin-top: 8px; }
+.lp .col { flex: 1; } .lp .col.l { flex: 0 0 760px; }
+.lp h3 { margin: 0 0 12px; padding-bottom: 8px; border-bottom: 1px solid var(--line2); font: 600 20px var(--disp); letter-spacing: .16em; text-transform: uppercase; color: var(--dim); display: flex; justify-content: space-between; }
+.lp h3 span { color: var(--txt); }
+.lp .rows { display: flex; flex-direction: column; gap: 16px; }
+.lp .grow { display: flex; align-items: center; gap: 14px; font: 600 30px var(--disp); letter-spacing: .08em; color: var(--gold); padding: 14px 4px; } .lp .grow img { width: 44px; height: 44px; object-fit: contain; }
+.bag { display: grid; grid-template-columns: repeat(7, 78px); gap: 10px; }
+.bag div { width: 78px; height: 78px; border: 1px solid var(--line2); background: rgba(8,6,4,.55); display: grid; place-items: center; }
+.bag div img { width: 80%; height: 80%; object-fit: contain; image-rendering: pixelated; }
+.bag div.new { border-color: color-mix(in srgb, var(--rc) 70%, transparent); background: radial-gradient(circle, color-mix(in srgb, var(--rc) 28%, transparent), rgba(8,6,4,.8)); }
+.lp .foot { position: absolute; left: 44px; right: 44px; bottom: 30px; display: flex; justify-content: space-between; align-items: center; }
+.lp .rows .pl.taken { opacity: .38; transition: opacity .3s; }
+#toast { left: 0; width: 1920px; top: 70px; text-align: center; font: 600 22px var(--disp); letter-spacing: .12em; text-transform: uppercase; color: var(--gold); opacity: 0; z-index: 60; pointer-events: none; }
+@media (max-width: 700px) { #note { font-size: 15px; } .tab { font-size: 13px; } }
+</style>
+</head>
+<body>
+<div id="bar">
+  <div id="tabs">
+    <button class="tab on" data-v="A">A &middot; On the map</button>
+    <button class="tab" data-v="B">B &middot; Full scene</button>
+    <button class="tab" data-v="C">C &middot; Lock and hint</button>
+    <span class="sp"></span>
+    <label class="chk"><input type="checkbox" id="epic"> Epic in chest</label>
+    <label class="chk"><input type="checkbox" id="rm"> Reduced motion</label>
+    <button class="tb" id="replay">Replay</button>
+    <button class="tb" id="skip">Skip</button>
+  </div>
+  <div id="note"></div>
+</div>
+<div id="view"><div id="stage">
+  <div id="map">
+    <svg id="path" viewBox="0 0 1920 1080"><polyline points="420,760 660,640 900,560 1180,620 1440,480" fill="none" stroke="rgba(217,178,106,.55)" stroke-width="4" stroke-dasharray="4 14" stroke-linecap="round"/></svg>
+    <div class="mnode o" style="left:420px;top:760px;background-image:url(chest-open/img/battle.webp)"></div>
+    <div class="mnode o" style="left:660px;top:640px;background-image:url(chest-open/img/rest.webp)"></div>
+    <div class="mnode" id="tnode" style="left:900px;top:560px"></div>
+    <div class="mnode o" style="left:1180px;top:620px;background-image:url(chest-open/img/battle.webp)"></div>
+    <div class="mnode o" style="left:1440px;top:480px;background-image:url(chest-open/img/town.webp)"></div>
+    <div id="party" style="left:660px;top:640px"></div>
+    <div id="maptitle">The Ashen Road<small>Chapter 1 &middot; Map 1</small></div>
+    <div class="hud" id="hgold" style="right:250px"><img src="chest-open/img/gold.webp" alt=""><span id="gv">120</span></div>
+    <div class="hud" id="hbag" style="right:40px"><small>Bag</small><span id="bv">6</span><small>/ 24</small></div>
+  </div>
+  <div id="fx"></div>
+  <div id="spoils"></div>
+  <div id="toast"></div>
+</div></div>
+<script>
+(function () {
+  'use strict';
+  // ---- veri (örnek; görsel gerçek, sayılar taslak). Nadirlik renkleri data/items.json > rarities ----
+  var RC = { uncommon: '#5f8f3e', rare: '#3f6fa8', epic: '#7a3f9a' };
+  var ITEMS = {
+    uncommon: { r: 'uncommon', name: 'Leather Coif', img: 'leather_coif', sub: 'Uncommon Helm', il: 3, stat: '4', lab: 'Armor', af: ['+3% Evasion'] },
+    rare: { r: 'rare', name: 'Iron Buckler', img: 'iron_buckler', sub: 'Rare Shield', il: 3, stat: '8%', lab: 'Block', af: ['+17 Armor', '+6% Shield power'] },
+    epic: { r: 'epic', name: "Oathkeeper's Bulwark", img: 'oathkeepers_bulwark', sub: 'Epic Shield', il: 4, stat: '12%', lab: 'Block', af: ['+22 Armor', '+8% Shield power', '+5% Resistance'] }
+  };
+  var GOLD = 40;
+  var $ = function (s, r) { return (r || document).querySelector(s); };
+  var $$ = function (r, s) { return r.querySelectorAll(s); };
+  var stage = $('#stage'), fx = $('#fx'), spoils = $('#spoils');
+  function drop() { return [ITEMS.uncommon, $('#epic').checked ? ITEMS.epic : ITEMS.rare]; }
+  function best() { return $('#epic').checked ? 'epic' : 'rare'; }
+  function el(cls, html) { var d = document.createElement('div'); if (cls) d.className = cls; if (html) d.innerHTML = html; return d; }
+  function put(node, x, y) { node.style.left = x + 'px'; node.style.top = y + 'px'; return node; }
+  function lit(c) { return 'color-mix(in srgb, ' + c + ' 60%, #fff)'; }
+
+  // ---- hareket: reduced-motion + skip ----
+  var rmOn = function () { return $('#rm').checked || matchMedia('(prefers-reduced-motion: reduce)').matches; };
+  var cur = 0, fast = false, gate = null, pend = [];
+  var CANCEL = {};
+  function wait(ms, my) {
+    return new Promise(function (res, rej) {
+      var rec = { t: 0, f: null };
+      rec.f = function () { clearTimeout(rec.t); pend = pend.filter(function (x) { return x !== rec; }); my === cur ? res() : rej(CANCEL); };
+      rec.t = setTimeout(rec.f, fast ? 0 : rmOn() ? Math.min(ms, 90) : ms);
+      pend.push(rec);
+    });
+  }
+  function setLast(node, last) { Object.keys(last).forEach(function (k) { if (k !== 'offset' && k !== 'easing') node.style[k] = last[k]; }); }
+  // anim: normalde WAAPI; reduced motion'da yalnız solma; fast'ta anında biter
+  function anim(node, frames, o) {
+    o = o || {};
+    var last = frames[frames.length - 1], first = frames[0];
+    if (fast) { setLast(node, last); return; }
+    if (rmOn()) {
+      var a0 = first.opacity != null ? first.opacity : 1, a1 = last.opacity != null ? last.opacity : 1;
+      var l2 = {}; Object.keys(last).forEach(function (k) { if (k !== 'opacity') l2[k] = last[k]; }); setLast(node, l2);
+      node.style.opacity = a1;
+      node.animate([{ opacity: a0 }, { opacity: a1 }], { duration: Math.min(o.duration || 160, 160), delay: Math.min(o.delay || 0, 60), fill: 'backwards' });
+      return;
+    }
+    setLast(node, last);
+    node.animate(frames, { duration: o.duration || 300, delay: o.delay || 0, easing: o.easing || 'cubic-bezier(.33,1,.68,1)', fill: 'backwards' });
+  }
+  function arc(node, x0, y0, x1, y1, h, dur, delay, s0, s1, spin) {
+    var f = [], n = 14, i, t, s;
+    for (i = 0; i <= n; i++) {
+      t = i / n; s = s0 + (s1 - s0) * t;
+      f.push({ transform: 'translate(' + (x0 + (x1 - x0) * t) + 'px,' + (y0 + (y1 - y0) * t - 4 * h * t * (1 - t)) + 'px) scale(' + s + ') rotate(' + (spin ? spin * t : 0) + 'deg)', opacity: i === 0 ? 0 : 1, offset: t });
+    }
+    anim(node, f, { duration: dur, delay: delay, easing: 'linear' });
+  }
+  function countUp(node, to, ms, my) {
+    return new Promise(function (res) {
+      if (fast || rmOn()) { node.textContent = '+' + to; return res(); }
+      var t0 = performance.now();
+      (function step(n) { if (my !== cur) return res(); var p = Math.min(1, (n - t0) / ms); node.textContent = '+' + Math.round(to * (1 - Math.pow(1 - p, 3))); p < 1 ? requestAnimationFrame(step) : res(); })(t0);
+    });
+  }
+  function tapGate() {
+    var my = cur;
+    return new Promise(function (res, rej) { gate = function () { gate = null; my === cur ? res() : rej(CANCEL); }; if (fast) gate(); });
+  }
+
+  // ---- parçalar ----
+  function plate(it, cls) {
+    var d = el('pl ' + (cls || ''), '<div class="ico"><img src="chest-open/img/' + it.img + '.webp" alt=""></div><div class="tx"><div class="nm">' + it.name + '</div><div class="sb">' + it.sub + ' &middot; Item level ' + it.il + '</div><div class="st">' + it.stat + '<small>' + it.lab + '</small></div><div class="af">' + it.af.join('<br>') + '</div></div>');
+    d.style.setProperty('--rc', RC[it.r]); return d;
+  }
+  // sandık: boyalı kareler (chest-closed-locked / chest-closed / chest-open). Animasyon = kare değişimi + hareket; vektör kapak yok.
+  // Ölçek .cs içinde, dış kap (.chest) kayma / sallanma / sıçrama için serbest. (x,y) = sandığın alt orta noktası (sahne koordinatı).
+  function chest(o) {
+    var d = el('chest', '<div class="cs"><div class="c-glow"></div><img class="f-open" src="chest-open/img/chest-open.webp" alt=""><img class="f-closed" src="chest-open/img/chest-closed.webp" alt="">' + (o.lock ? '<img class="f-lock" src="chest-open/img/chest-closed-locked.webp" alt="">' : '') + '<div class="c-bloom"></div><div class="c-seam"></div></div>');
+    d._s = o.s; d._x = o.x; d._y = o.y; $('.cs', d).style.transform = 'scale(' + o.s + ')';
+    d.style.left = (o.x - 264) + 'px'; d.style.top = (o.y - 512) + 'px';
+    if (o.lock) $('.f-closed', d).style.display = 'none';
+    return d;
+  }
+  // kare koordinatı (528x512) -> sahne koordinatı
+  function cpt(ch, px, py) { return [ch._x + (px - 264) * ch._s, ch._y + (py - 512) * ch._s]; }
+  // kapalı kare -> açık kare: tepe anında ışık + hafif ölçek sıçraması
+  function swapOpen(ch, pop) {
+    var s = ch._s;
+    $$(ch, '.f-lock, .f-closed').forEach(function (i) { i.style.display = 'none'; });
+    $('.f-open', ch).style.display = 'block';
+    anim($('.c-glow', ch), [{ opacity: 0 }, { opacity: .9, offset: .3 }, { opacity: .45 }], { duration: 500 });
+    anim($('.cs', ch), [{ transform: 'scale(' + s * .94 + ',' + s * 1.05 + ')' }, { transform: 'scale(' + s * (1 + pop) + ',' + s * (1 - pop * .5) + ')', offset: .4 }, { transform: 'scale(' + s + ')' }], { duration: 340 });
+  }
+  // kilitli kare -> kilidi kırık kapalı kare
+  function swapBroken(ch) { $('.f-lock', ch).style.display = 'none'; $('.f-closed', ch).style.display = 'block'; }
+  function burst(x, y, size, delay, color) {
+    var b = el('burst'); put(b, x, y); if (color) b.style.background = 'radial-gradient(circle,' + color + ',transparent 68%)'; fx.appendChild(b);
+    anim(b, [{ transform: 'scale(.2)', opacity: .95 }, { transform: 'scale(' + size + ')', opacity: 0 }], { duration: 650, delay: delay || 0 });
+  }
+  function shake(node, amp, ms) {
+    anim(node, [{ transform: 'translateX(0) rotate(0deg)' }, { transform: 'translateX(' + -amp + 'px) rotate(' + -amp / 8 + 'deg)', offset: .2 }, { transform: 'translateX(' + amp + 'px) rotate(' + amp / 8 + 'deg)', offset: .45 }, { transform: 'translateX(' + -amp * .6 + 'px) rotate(' + -amp / 14 + 'deg)', offset: .7 }, { transform: 'translateX(0) rotate(0deg)' }], { duration: ms, easing: 'ease-in-out' });
+  }
+  function toast(t) { var n = $('#toast'); n.textContent = t; n.getAnimations().forEach(function (a) { a.cancel(); }); n.animate([{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none', offset: .15 }, { opacity: 1, offset: .8 }, { opacity: 0 }], { duration: 1800 }); }
+
+  // ---- Loot ekranı taklidi ----
+  function buildSpoils() {
+    var its = drop(), i;
+    spoils.innerHTML = '';
+    var p = el('lp', '<h1>Loot</h1><div class="sub">Chest &middot; The Ashen Road</div><div class="cols"><div class="col l"><h3>Spoils <span>2 items</span></h3><div class="rows" id="srows"></div><div class="grow"><img src="chest-open/img/gold.webp" alt="">+' + GOLD + ' Gold</div></div><div class="col"><h3>Bag <span id="bagc">6 / 24</span></h3><div class="bag" id="sbag"></div></div></div><div class="foot"><button class="elink" id="sleave">Leave</button><button class="ebtn pri" id="stake">Take all</button></div>');
+    spoils.appendChild(p);
+    its.forEach(function (it) { $('#srows', p).appendChild(plate(it, 'sm')); });
+    var imgs = ['iron_buckler', 'leather_coif', 'oathkeepers_bulwark', 'leather_coif', 'iron_buckler', 'leather_coif'];
+    for (i = 0; i < 28; i++) { var c = document.createElement('div'); if (i < 6) { c.innerHTML = '<img src="chest-open/img/' + imgs[i] + '.webp" alt="">'; c.style.opacity = .5; } $('#sbag', p).appendChild(c); }
+    $('#stake', p).onclick = function (e) {
+      e.stopPropagation();
+      var cells = $$($('#sbag', p), 'div');
+      its.forEach(function (it, n) { var c = cells[6 + n]; c.classList.add('new'); c.style.setProperty('--rc', RC[it.r]); c.innerHTML = '<img src="chest-open/img/' + it.img + '.webp" alt="">'; });
+      $$($('#srows', p), '.pl').forEach(function (r) { r.classList.add('taken'); });
+      $('#bagc', p).textContent = '8 / 24'; this.disabled = true; toast('Mockup: the real screen closes here');
+    };
+    $('#sleave', p).onclick = function (e) { e.stopPropagation(); toast('Mockup: back to the map'); };
+  }
+  function showSpoils(my) {
+    buildSpoils(); spoils.style.display = 'block';
+    var panel = $('.lp', spoils), rows = $$(spoils, '.pl, .grow');
+    anim(spoils, [{ opacity: 0 }, { opacity: 1 }], { duration: 320 });
+    anim(panel, [{ opacity: 0, transform: 'translateY(10px)' }, { opacity: 1, transform: 'none' }], { duration: 200, delay: 60 });
+    rows.forEach(function (r, i) { anim(r, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 260, delay: 140 + 70 * i }); });
+    return wait(500, my);
+  }
+
+  // ---- sıfırlama ----
+  function reset() {
+    fx.innerHTML = ''; spoils.style.display = 'none'; spoils.style.opacity = 0;
+    document.getAnimations().forEach(function (a) { if (a.effect && a.effect.target && a.effect.target.closest && !a.effect.target.closest('#tabs')) { try { a.cancel(); } catch (e) {} } });
+    $('#map').classList.remove('dim'); gate = null; fast = false;
+    $('#tnode').style.opacity = 1; $('#gv').textContent = 120; $('#bv').textContent = 6;
+    var p = $('#party'); p.style.left = '660px'; p.style.top = '640px'; p.style.opacity = 1;
+    $('#hgold').classList.remove('pulse'); $('#hbag').classList.remove('pulse');
+  }
+
+  // ======== A: haritada açılış (otomatik) ========
+  async function runA(w, my) {
+    var party = $('#party'), tn = $('#tnode'), its = drop(), i;
+    // 1) parti düğüme varır
+    anim(party, [{ left: '660px', top: '640px' }, { left: '840px', top: '610px' }], { duration: 300 });
+    await w(300);
+    // 2) düğümün sandığı: iki sıçrama (düğüm ikonu yerine küçük sandık)
+    var ch = chest({ s: .3, x: 900, y: 612 }); fx.appendChild(ch); tn.style.opacity = 0;
+    var hop = function (h) { return [{ transform: 'translateY(0) scale(1,1)' }, { transform: 'translateY(' + -h + 'px) scale(.95,1.08)', offset: .45 }, { transform: 'translateY(0) scale(1.08,.9)', offset: .8 }, { transform: 'translateY(0) scale(1,1)' }]; };
+    anim(ch, hop(30), { duration: 170 }); await w(170);
+    anim(ch, hop(40), { duration: 170 }); ch.style.setProperty('--lk', .7); await w(170);
+    // 3) kapak patlar, ışık patlaması
+    swapOpen(ch, .08); burst(900, 520, 3.2, 0);
+    await w(120);
+    // 4) altın ve itemler sağ üste uçar
+    var gx = 1665, gy = 62, bx = 1790, by = 62;
+    for (i = 0; i < 8; i++) { var im = document.createElement('img'); im.src = 'chest-open/img/gold.webp'; im.className = 'coin'; fx.appendChild(im); arc(im, 900, 520, gx, gy, 200 + (i % 3) * 40, 520, i * 35, 1, .6, 360); }
+    its.forEach(function (it, n) { var f = el('fico', '<img src="chest-open/img/' + it.img + '.webp" alt="">'); f.style.setProperty('--rc', RC[it.r]); fx.appendChild(f); arc(f, 900, 520, bx, by, 260, 560, 60 + n * 110, 1.1, .5, 0); });
+    await w(460);
+    $('#hgold').classList.add('pulse'); $('#gv').textContent = 120 + GOLD; await w(100);
+    $('#hbag').classList.add('pulse'); $('#bv').textContent = 8; await w(60);
+    anim(ch, [{ opacity: 1 }, { opacity: 0 }], { duration: 200 });
+    // 5) Loot ekranı belirir
+    await showSpoils(my);
+  }
+
+  // ======== sahne kurucu (B ve C ortak) ========
+  function bigScene(lock) {
+    $('#map').classList.add('dim'); $('#party').style.opacity = 0;
+    fx.appendChild(el('vig')); fx.appendChild(el('ground'));
+    var ch = chest({ lock: lock, s: .72, x: 960, y: 920 }); fx.appendChild(ch);
+    return ch;
+  }
+  function coinSpill() {
+    var xs = [-330, -260, -190, -130, 130, 190, 260, 330, -90, 90, -300, 300];
+    xs.forEach(function (dx, k) { var im = document.createElement('img'); im.src = 'chest-open/img/gold.webp'; im.className = 'coin'; fx.appendChild(im);
+      arc(im, 960, 640, 960 + dx, 880 + (k % 3) * 18, 170 + (k % 4) * 30, 520, k * 28, .9, .8, k % 2 ? 300 : -300); });
+  }
+  function risePlate(node, x, y, delay, ms) {
+    put(node, x, y); fx.appendChild(node);
+    anim(node, [{ opacity: 0, transform: 'translate(' + (960 - 270 - x) * .6 + 'px,' + (600 - y) + 'px) scale(.3)' }, { opacity: 1, transform: 'translate(0,-14px) scale(1.03)', offset: .75 }, { opacity: 1, transform: 'none' }], { duration: ms, delay: delay });
+  }
+  function beamAt(cx, it) {
+    var b = el('beam' + (it.r === 'epic' ? ' epic' : '')); b.style.setProperty('--rc', RC[it.r]); b.style.left = cx + 'px'; fx.insertBefore(b, fx.children[2]);
+    anim(b, [{ opacity: 0, transform: 'scaleY(.05)' }, { opacity: 1, transform: 'scaleY(1)', offset: .3 }, { opacity: it.r === 'epic' ? .55 : .34, transform: 'scaleY(1)' }], { duration: 1100 });
+  }
+  function takeAllBtn(my) {
+    var b = document.createElement('button'); b.className = 'ebtn pri'; b.textContent = 'Take all'; b.style.cssText = 'right:90px;bottom:70px;z-index:30';
+    fx.appendChild(b); anim(b, [{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 260 });
+    return new Promise(function (res, rej) { b.onclick = function (e) { e.stopPropagation(); my === cur ? res() : rej(CANCEL); }; });
+  }
+  function goldLine(counting, delay) {
+    var gl = el('goldline', '<img src="chest-open/img/gold.webp" alt=""><span id="cu">' + (counting ? '+0' : '+' + GOLD) + '</span><span style="font-size:26px;color:#a8977a">Gold</span>'); put(gl, 0, 478); fx.appendChild(gl);
+    anim(gl, [{ opacity: 0 }, { opacity: 1 }], { duration: 220, delay: delay || 0 }); return gl;
+  }
+
+  // ======== B: tam ekran sahne, oyuncu açar ========
+  async function runB(w, my) {
+    var its = drop(), ch = bigScene(false);
+    anim(ch, [{ opacity: 0, transform: 'translateY(160px)' }, { opacity: 1, transform: 'none' }], { duration: 420 });
+    var hint = el('hint', 'Tap to open'); put(hint, 0, 960); fx.appendChild(hint);
+    await w(460);
+    await tapGate();
+    hint.remove();
+    ch.style.setProperty("--lk", .6); shake(ch, 7, 200); await w(190);
+    swapOpen(ch, .07); burst(960, 660, 3.4, 0);
+    await w(260);
+    coinSpill();
+    var gl = goldLine(true);
+    await countUp($('#cu', gl), GOLD, 600, my);
+    // item plakaları tek tek, 300 ms arayla, rarity renginde ışık sütunuyla
+    for (var i = 0; i < its.length; i++) {
+      var cx = i === 0 ? 650 : 1270;
+      beamAt(cx, its[i]);
+      risePlate(plate(its[i]), cx - 270, 250, 60, 600);
+      if (its[i].r === 'epic') burst(cx, 350, 3, 380, 'rgba(190,120,255,.7)');
+      await w(300);
+    }
+    await w(400);
+    await takeAllBtn(my);
+    fx.innerHTML = ''; $('#map').classList.remove('dim');
+    await showSpoils(my);
+  }
+
+  // ======== C: kilit ve ipucu ========
+  async function runC(w, my) {
+    var its = drop(), bst = best(), tint = lit(RC[bst]), ch = bigScene(true);
+    ch.style.setProperty('--tint', tint);
+    anim(ch, [{ opacity: 0, transform: 'translateY(160px)' }, { opacity: 1, transform: 'none' }], { duration: 420 });
+    var hint = el('hint', 'Tap to break the lock<small>3 taps</small>'); put(hint, 0, 940); fx.appendChild(hint);
+    var pips = el('pips', '<div class="pip"></div><div class="pip"></div><div class="pip"></div>'); put(pips, 0, 1040); fx.appendChild(pips);
+    await w(460);
+    for (var t = 1; t <= 3; t++) {
+      await tapGate();
+      $$(pips, '.pip')[t - 1].classList.add('on');
+      if (t < 3) {
+        ch.style.setProperty('--lk', t === 1 ? .4 : .75);
+        shake(ch, t === 1 ? 8 : 15, 320); burst(960, 700, t === 1 ? 1 : 1.5, 0, tint);
+        await w(120);
+      }
+    }
+    // üçüncü: kilit patlar, kapak fırlar
+    hint.remove(); pips.remove();
+    ch.style.setProperty("--lk", 0);
+    var lp = cpt(ch, 342, 351);
+    swapBroken(ch);
+    var shards = []; for (var s2 = 0; s2 < 7; s2++) { var sh = el('shard'); shards.push(sh); fx.appendChild(sh); arc(sh, lp[0], lp[1], lp[0] + (s2 - 3) * 55, 930, 90 + s2 * 12, 600, 0, 1, 1, 540 * (s2 % 2 ? 1 : -1)); }
+    var fl = el('flash'); fl.style.setProperty('--fc', RC[bst]); fx.appendChild(fl);
+    anim(fl, [{ opacity: .3 }, { opacity: 0 }], { duration: 420 });
+    shake(ch, 14, 130);
+    await w(110); swapOpen(ch, .09); burst(960, 660, 4, 0, tint);
+    await w(320);
+    // kartlar sandıktan çıkar (yüzü kapalı), altın tek satır
+    var cards = [], cxs = [650, 1270];
+    its.forEach(function (it, n) {
+      var cd = el('card', '<div class="in"><div class="b"><i></i></div><div class="f"></div></div>');
+      var pl = plate(it); pl.style.width = '100%'; pl.style.height = '100%'; $('.f', cd).appendChild(pl);
+      risePlate(cd, cxs[n] - 270, 250, n * 150, 560); cards.push(cd);
+    });
+    goldLine(false, 260);
+    await w(650); shards.forEach(function (x) { x.remove(); }); await w(300);
+    // sırayla çevrilir
+    for (var k = 0; k < cards.length; k++) {
+      anim($('.in', cards[k]), [{ transform: 'rotateY(0deg)' }, { transform: 'rotateY(90deg) translateY(-18px)', offset: .5 }, { transform: 'rotateY(180deg)' }], { duration: 520 });
+      await w(300);
+      beamAt(cxs[k], its[k]);
+      if (its[k].r === 'epic') burst(cxs[k], 350, 3, 0, 'rgba(190,120,255,.7)');
+      await w(300);
+    }
+    await w(300);
+    await takeAllBtn(my);
+    fx.innerHTML = ''; $('#map').classList.remove('dim');
+    await showSpoils(my);
+  }
+
+  // ---- kontrol ----
+  var NOTES = {
+    A: 'Haritanın üstünde, akışı bölmeyen kısa açılış. (~1.2 sn, oyuncu girdisi yok; "Open the chest" penceresinin yerine çalışır.)',
+    B: 'Oyuncunun kendisinin açtığı, ganimeti tek tek gösteren sahne. (~2.5 sn; önce "Tap to open", sonda "Take all".)',
+    C: 'Kilidi kırarken içindeki en iyi eşyanın rengi sızar. (~3 sn, 3 dokunuş; mavi = Rare, mor = Epic.)'
+  };
+  var variant = 'A', runners = { A: runA, B: runB, C: runC };
+  function play() {
+    cur++; var my = cur; pend.slice().forEach(function (r) { clearTimeout(r.t); }); pend = [];
+    reset(); $('#note').textContent = NOTES[variant];
+    $$(document, '.tab').forEach(function (t) { t.classList.toggle('on', t.dataset.v === variant); });
+    runners[variant](function (ms) { return wait(ms, my); }, my).catch(function (e) { if (e !== CANCEL) console.error(e); });
+  }
+  function skip() {
+    fast = true; if (gate) gate();
+    document.getAnimations().forEach(function (a) { try { a.finish(); } catch (e) {} });
+    pend.slice().forEach(function (r) { r.f(); });
+  }
+  stage.addEventListener('click', function () { if (gate) gate(); else skip(); });
+  $$(document, '.tab').forEach(function (t) { t.onclick = function () { variant = t.dataset.v; play(); }; });
+  $('#replay').onclick = play; $('#skip').onclick = skip; $('#epic').onchange = play; $('#rm').onchange = play;
+  // ---- ölçekleme (1920x1080, harfli kutu) ----
+  function fit() { var v = $('#view'), s = Math.min(v.clientWidth / 1920, v.clientHeight / 1080); stage.style.transform = 'translate(' + (v.clientWidth - 1920 * s) / 2 + 'px,' + (v.clientHeight - 1080 * s) / 2 + 'px) scale(' + s + ')'; }
+  addEventListener('resize', fit); fit();
+  if (document.fonts && document.fonts.ready) document.fonts.ready.then(play); else play();
+})();
+</script>
+</body>
+</html>

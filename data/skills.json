@@ -353,7 +353,7 @@
         "ratio": 0.96
       }
     ],
-    "vfx": "guardlink",
+    "vfx": "darkbond",
     "sfx": [
       "darkChant",
       "chainTether"
@@ -3139,7 +3139,7 @@
         "ratio": 0.96
       }
     ],
-    "vfx": "guardlink",
+    "vfx": "darkbond",
     "sfx": [
       "darkChant",
       "chainTether"

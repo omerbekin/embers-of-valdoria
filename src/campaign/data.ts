@@ -4,7 +4,7 @@ import campaignJson from '../../data/campaign/campaign.json';
 import encountersJson from '../../data/campaign/encounters.json';
 import eventsJson from '../../data/campaign/events.json';
 import type { CampaignConfig, CampaignMap, EncounterDef } from './types';
-import type { RarityId } from '../progression/items';
+import { RARITY_IDS, type RarityId } from '../progression/items';
 
 const strip = <T>(o: unknown): Record<string, T> =>
   Object.fromEntries(Object.entries(o as Record<string, unknown>).filter(([k]) => !k.startsWith('_'))) as Record<string, T>;
@@ -86,6 +86,11 @@ export interface TreasureLoot {
   itemsDelta?: number;
   gold?: number;
   gift?: RarityId;
+  /**
+   * Ömer 2026-10-25 (open-questions 417): hediye `chance` olasılıkla `rarity` nadirliğinde gelir, tutmazsa `gift` nadirliğinde kalır; tek seed'li
+   * zar (sefer + harita + düğüm; loot.ts > treasureGiftRarity): yeniden deneme / yükleme sonucu değiştirmez.
+   */
+  giftUpgrade?: { rarity: RarityId; chance: number };
 }
 
 export interface TreasureDef extends EventText {
@@ -93,6 +98,29 @@ export interface TreasureDef extends EventText {
 }
 
 export const TREASURES: Record<string, TreasureDef> = strip<TreasureDef>((eventsJson as unknown as { treasures: Record<string, TreasureDef> }).treasures);
+
+/** Hazine sandığı verisinin şekil denetimi (testlerde): nadirlik adları geçerli, `giftUpgrade` yalnız `gift` ile, ondan yüksek ve 0 < chance < 1. Boş = geçerli. */
+export function validateTreasures(defs: Record<string, TreasureDef> = TREASURES): string[] {
+  const errs: string[] = [];
+  const rarities: readonly string[] = RARITY_IDS;
+  for (const [id, d] of Object.entries(defs)) {
+    const l = d.loot;
+    if (!l) continue;
+    if (l.gift !== undefined && !rarities.includes(l.gift)) errs.push(`${id}: unknown gift rarity ${l.gift}`);
+    for (const k of ['maxItems', 'gold'] as const) {
+      const v = l[k];
+      if (v !== undefined && !(Number.isInteger(v) && v >= 0)) errs.push(`${id}: ${k} must be a non-negative integer`);
+    }
+    const u = l.giftUpgrade;
+    if (u) {
+      if (l.gift === undefined) errs.push(`${id}: giftUpgrade needs gift`);
+      if (!rarities.includes(u.rarity)) errs.push(`${id}: unknown giftUpgrade rarity ${u.rarity}`);
+      else if (l.gift !== undefined && rarities.indexOf(u.rarity) <= rarities.indexOf(l.gift)) errs.push(`${id}: giftUpgrade rarity must be above gift`);
+      if (!(typeof u.chance === 'number' && u.chance > 0 && u.chance < 1)) errs.push(`${id}: giftUpgrade chance must be between 0 and 1`);
+    }
+  }
+  return errs;
+}
 
 export function getMap(id: string): CampaignMap {
   const m = MAPS[id];

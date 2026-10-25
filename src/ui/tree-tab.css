@@ -197,7 +197,7 @@ html.reduced-motion .gt-nd.shake { animation: none; }
 
 /* ================= v3 Tree sekmesi: PLAKALI SATIRLAR (views.js > gpHTML; Omer 2026-10-22: "skiller cok sikismis, tam hali yok") =================
    Her satir = oyunun kendi skill plakasi (gear.css .gr-pl, "A Plates": etiket, ikon, ad, cipler, deger satiri) + yaninda o satirin dugumleri.
-   Pasif 1. sirada, sonra 3 skill, ult en altta kendi satirinda (plaka + ult + agaci). Plaka kutusuna dokunulmaz; yalniz sutun genisligi, plakanin altindaki "Points" satiri ve satir araligi burada.
+   Pasif 1. sirada, sonra 3 skill, ult en altta kendi satirinda (plaka + ult + agaci). Plaka kutusuna dokunulmaz; yalniz sutun genisligi, plakanin altindaki "Points" satiri ve satir araligi burada. */
 .gt-gpw { width: fit-content; max-width: 100%; margin: 0 auto; }
 .gt-sk { position: relative; }
 .gt-ghead { position: sticky; top: 0; z-index: 6; display: flex; background: rgba(10, 7, 5, .97); }

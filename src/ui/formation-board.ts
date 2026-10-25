@@ -27,6 +27,8 @@ export interface BoardSkill {
   icon: string;
   /** Bedel çipi: free = 'Free'; rage = 'Rage N'; mp / hp = ikon (mp) + sayı. `text` sayı / yüzde. */
   cost: { kind: 'free' | 'rage' | 'mp' | 'hp'; text?: string };
+  /** Ulti (4. skill yuvası; savaş HUD'ıyla aynı kural): turuncu çerçeve + ULTIMATE şeridi. */
+  ult?: boolean;
 }
 
 /** Tahtanın bir kahramanı (düz veri; motor / ilerleme türü yok). */
@@ -196,7 +198,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
     const bars = `<div class="fb-bars"><div class="fb-bar2">${img(o.icons.hp)}<div class="bb"><i style="width:${Math.round(f.hpRatio * 100)}%;background:${hpCol(f.hpRatio)}"></i></div><span class="v">${Math.round(f.hp * f.hpRatio)}</span></div><div class="fb-bar2">${img(o.icons.mp)}<div class="bb"><i style="width:100%;background:#4a8fd0"></i></div><span class="v">${Math.round(f.mp)}</span></div></div>`;
     const tiles = ORDER.map((k) => `<div class="fb-tile ${f.primary === k ? 'p' : ''}" data-attr="${k}">${img(o.icons[k])}<div class="tx"><span class="n">${num(f.attr[k])}</span><span class="k">${NAMES[k]}</span></div></div>`).join('');
     const pas = f.passive ? `<div class="fb-srow pas" data-skill="passive"><div class="fb-ico sm sk" style="--is:44px">${img(f.passive.icon)}</div><div class="pn">${esc(f.passive.name)}</div><span class="fb-ptag">Passive</span></div>` : '';
-    const sk = f.skills.map((s) => `<div class="fb-srow ${s.cost.kind === 'rage' ? 'rg' : ''}" data-skill="${esc(s.id ?? s.name)}"><div class="fb-ico sm sk" style="--is:44px">${img(s.icon)}</div><div class="pn">${esc(s.name)}</div>${costChip(s.cost)}</div>`).join('');
+    const sk = f.skills.map((s) => `<div class="fb-srow ${s.cost.kind === 'rage' ? 'rg' : ''}${s.ult ? ' ult' : ''}" data-skill="${esc(s.id ?? s.name)}">${s.ult ? '<span class="fb-utag">Ultimate</span>' : ''}<div class="fb-ico sm sk" style="--is:44px">${img(s.icon)}</div><div class="pn">${esc(s.name)}</div>${costChip(s.cost)}</div>`).join('');
     const foot = o.details ? '<div class="fb-foot"><button type="button" class="el-btn fb-details" data-act="details">Hero details</button></div>' : '<div class="fb-foot"></div>';
     return `${head}${bars}<div class="fb-tiles">${tiles}</div><div class="fb-sl">Skills</div><div class="fb-srows">${pas}${sk}</div>${foot}`;
   };
@@ -204,7 +206,7 @@ export function mountFormationBoard(host: HTMLElement, o: FormationBoardOpts): F
   let gridEl: HTMLElement;
   let panelEl: HTMLElement;
   const build = (): void => {
-    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-lbl front">Front ▸</div><div class="fb-grid"></div><div class="fb-how">${esc(o.howText ?? (isTouchUi() ? (o.rangeUi ? HOW_TOUCH : HOW_PLAIN_TOUCH) : o.rangeUi ? HOW : HOW_PLAIN))}</div><div class="fb-panel"></div>`;
+    root.innerHTML = `<div class="fb-lbl back">Back</div><div class="fb-vlbl front"><span>Front</span></div><div class="fb-grid"></div><div class="fb-how">${esc(o.howText ?? (isTouchUi() ? (o.rangeUi ? HOW_TOUCH : HOW_PLAIN_TOUCH) : o.rangeUi ? HOW : HOW_PLAIN))}</div><div class="fb-panel"></div>`;
     gridEl = root.querySelector('.fb-grid') as HTMLElement;
     panelEl = root.querySelector('.fb-panel') as HTMLElement;
   };

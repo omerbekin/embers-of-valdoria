@@ -161,9 +161,45 @@
   color: var(--g-dim);
 }
 
-.fb-lbl.front {
-  left: 680px;
-  color: #f3d999;
+/* Dikey sıra etiketi (yeniden kullanılabilir): ızgaranın yanında, sütunla paralel akan küçük büyük harf yazı; iki yanda ince altın çizgi.
+   Yerleşim `.fb-vlbl.front` gibi bir değiştiriciyle verilir (şimdilik yalnızca Dizilim tahtası). */
+.fb-vlbl {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  writing-mode: vertical-rl;
+  font: 600 15px var(--g-disp);
+  letter-spacing: 0.4em;
+  text-transform: uppercase;
+  font-style: normal;
+  white-space: nowrap;
+  color: var(--g-gold);
+}
+
+.fb-vlbl::before,
+.fb-vlbl::after {
+  content: '';
+  flex: 1;
+  width: 1px;
+  background: linear-gradient(var(--vl-dir, 180deg), transparent, rgba(217, 178, 106, 0.55));
+}
+
+.fb-vlbl::after {
+  --vl-dir: 0deg;
+}
+
+.fb-vlbl > span {
+  padding: 14px 0 14px 0.4em;
+  text-shadow: 0 0 12px rgba(217, 178, 106, 0.4);
+}
+
+/* Ön sıra: ızgaranın sağında (ızgara 120..662), ızgara yüksekliğince */
+.fb-vlbl.front {
+  left: 676px;
+  top: 16px;
+  height: 404px;
+  width: 22px;
 }
 
 .fb-how {
@@ -688,6 +724,34 @@
   background: linear-gradient(90deg, rgba(111, 176, 168, 0.13), rgba(13, 9, 6, 0.9));
 }
 
+.fb-srow.ult {
+  position: relative;
+  border-color: color-mix(in srgb, #e0702a 75%, #000);
+  background: linear-gradient(90deg, rgba(224, 112, 42, 0.16), rgba(13, 9, 6, 0.9));
+  box-shadow: 0 0 12px rgba(224, 112, 42, 0.3), inset 0 0 14px rgba(224, 112, 42, 0.12);
+}
+
+.fb-srow.ult .fb-ico {
+  --ac: #e0702a;
+}
+
+/* ULTIMATE şeridi: satırın üst kenarında (PASSIVE etiketiyle aynı dil, turuncu) */
+.fb-utag {
+  position: absolute;
+  top: 0;
+  right: 10px;
+  transform: translateY(-50%);
+  z-index: 2;
+  font: 700 11px/1.4 var(--g-disp);
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: #fff4d6;
+  background: color-mix(in srgb, #e0702a 55%, #0c0905);
+  border: 1px solid #e0702a;
+  padding: 0 8px;
+  white-space: nowrap;
+}
+
 .fb-srow.pas .fb-ico {
   --ac: #6fb0a8;
 }
@@ -942,8 +1006,13 @@ html.short .fb-srow .fb-chip {
   font-size: 16px;
 }
 
-html.short .fb-ptag {
+html.short .fb-ptag,
+html.short .fb-utag {
   font-size: 14px;
+}
+
+html.short .fb-vlbl {
+  font-size: 19px;
 }
 
 html.short .fb-details {

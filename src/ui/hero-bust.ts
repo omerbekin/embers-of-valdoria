@@ -16,6 +16,8 @@ interface BustRect {
   h: number;
   sw: number;
   sh: number;
+  /** Yalnız büstte silah yerleşimi ayarı (savaş etkilenmez; `itemPoses` ile aynı alanlar): ör. yay önde yumrukta (hand: 'off'). */
+  item?: { hand?: 'main' | 'off'; dx?: number; dy?: number; angle?: number };
 }
 
 const poses = import.meta.glob('../../assets/poses/*-v2/idle1.webp', { eager: true, query: '?url', import: 'default' }) as Record<string, string>;
@@ -82,6 +84,8 @@ export async function bustWithWeapon(classId: string, weaponOverride?: WeaponPic
     def.poses[pose]?.fingers ? loadImg(poseBodyUrl(def.dir, def.poses[pose]!.fingers!)) : Promise.resolve(null),
   ]);
   if (!body || !wpn) return null;
+  // büste özel silah yerleşimi (veride `item`): poz tanımının kopyasında bu pozun ana el ayarı ezilir, savaştaki tanım değişmez
+  const drawDef = rect.item ? { ...def, itemPoses: { ...def.itemPoses, [pick.family]: { ...def.itemPoses?.[pick.family], [`main:${pose}`]: rect.item } } } : def;
   const c = document.createElement('canvas');
   // kırpma pozun üstünden taşabilir (uzun asa ucu, y < 0): tuval üstten o kadar uzar
   const pad = Math.max(0, Math.ceil(-rect.y));
@@ -92,7 +96,7 @@ export async function bustWithWeapon(classId: string, weaponOverride?: WeaponPic
   if (!ctx) return null;
   ctx.imageSmoothingQuality = 'high';
   ctx.translate(0, pad);
-  drawPoseComposite(ctx, def, pose, body, { img: wpn, pick, offImg: off }, 0, fingerImg);
+  drawPoseComposite(ctx, drawDef, pose, body, { img: wpn, pick, offImg: off }, 0, fingerImg);
   return c;
 }
 
