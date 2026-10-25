@@ -19,7 +19,7 @@ import {
 } from '../src/campaign';
 import { LEVELS } from '../src/progression/levels';
 import { levelBannerSummary } from '../src/ui/level-banner';
-import { REGION_VIEW, hudFrame } from '../src/game/region-view';
+import { REGION_VIEW, hudClear } from '../src/game/region-view';
 
 // Playtest 2026-10-23 seçimleri, sefer tarafı (docs/design/playtest-2026-10-23-picks.md): U1, U3, U8, H2, H3, D6, D12.
 
@@ -97,11 +97,13 @@ describe('U3: tek birleşik level şeridi', () => {
   });
 });
 
-describe('U1: bölge görünümünde üst HUD bandı kaydırılabilir', () => {
-  const frame = { left: 0, right: 1920, top: 0, bottom: 1080 };
-  it('bölgede üst kenar HUD / yakınlaştırma kadar uzar; uzak görünümde aynen', () => {
-    expect(hudFrame(frame, null, 2)).toEqual(frame);
-    expect(hudFrame(frame, 'I', 2)).toEqual({ ...frame, top: -REGION_VIEW.hudTop / 2 });
+describe('U1: bölge görünümünde üst HUD bandı', () => {
+  // Kamera artık görselin üstüne taşmaz (Harita 2 playtest 2026-10-25, siyah şerit); üst bandın ortasındaki durak HUD altında sayılır,
+  // regionCamera / clearMid onu kaydırma ya da yakınlaşmayla dışarı alır (tests/region-camera.test.ts).
+  it('üst orta kutudaki durak HUD altında; yanındaki değil', () => {
+    const ins = { left: 396, top: REGION_VIEW.hudTop, right: 0, bottom: 104, topHalfW: REGION_VIEW.hudTopHalfW, bottomW: 220 };
+    expect(hudClear({ x: 960, y: 80 }, { x: 960, y: 540 }, 1, { w: 1920, h: 1080 }, ins)).toBe(false);
+    expect(hudClear({ x: 1500, y: 80 }, { x: 960, y: 540 }, 1, { w: 1920, h: 1080 }, ins)).toBe(true);
     expect(REGION_VIEW.hudTop).toBeGreaterThan(100);
   });
 });

@@ -4,7 +4,8 @@
  *
  * Kurallar (mockup ile aynı):
  *  - Bölgeye yakınlaşılır: bölgenin düğümleri (+ pay) görünüme sığar; yakınlaştırma görseli her zaman kaplar ("cover", kenarda siyah yok) ve
- *    REGION_VIEW.maxZoom'u aşmaz. Kaydırma / tekerlek / sürükleme haritanın çerçevesine kilitli kalır (map-view.ts > clampMid).
+ *    REGION_VIEW.maxZoom'u aşmaz. Kaydırma / tekerlek / sürükleme haritanın çerçevesine kilitli kalır (map-view.ts > clampMid); HUD payları
+ *    çerçeveyi genişletmez (Harita 2 playtest 2026-10-25), kenar durakları veride HUD'dan kurtarılabilecek kadar içeride (tests/region-camera.test.ts).
  *  - Bölgenin kendi düğümleri ve aralarındaki yollar görünür. Komşu bölgenin, bölgeye BAĞLANAN düğümü silik (REGION_VIEW.ghostAlpha) ve o yol
  *    REGION_VIEW.ghostRoadAlpha saydamlıkla; üstüne gelince yol hafif sarı vurgulanır. Cepler (isteğe bağlı çıkmaz dal) komşu olarak gösterilmez.
  *  - Kilitli (henüz açılmamış) bölgenin düğümü gösterilmez: sis altındaki düğüm (görülmemiş) komşu olarak çizilmez.
@@ -19,7 +20,7 @@
  */
 import type { CampaignMap, MapEdge } from '../campaign/types';
 import type { NodeVis } from '../campaign/fog';
-import { clampMid, type Bounds } from './map-view';
+import { clampMid, midLimits, type Bounds } from './map-view';
 
 export const REGION_VIEW = {
   /** Bölgeye sığdırırken düğüm kümesinin çevresine bırakılan pay (dünya pikseli; etiket şeritleri sığsın). */
@@ -38,37 +39,67 @@ export const REGION_VIEW = {
   hoverR: 150,
   /**
    * Üst HUD bandı (sahne birimi; playtest U1, Ömer 2026-10-23): Valor mangalları (sol üst) ve bölge adı (üst orta, y 100) haritanın üst
-   * kenarındaki düğüm etiketlerini örtüyordu (Iron Pass). Bölge görünümünde kamera haritanın üst kenarının bu kadar üstüne kayabilir ve bölgeye
-   * girerken düğümler bu bandın altına oturur (üstte görselin dışı koyu zemin).
+   * kenarındaki düğüm etiketlerini örtüyordu (Iron Pass). Bölgeye girerken takımın durağı bu bandın dışında açılır (regionCamera). Kamera
+   * harita görselinin DIŞINA ÇIKMAZ (Harita 2 playtest 2026-10-25: pay kadar taşan kamera panellerin arkasında siyah gösteriyordu).
    */
   hudTop: 140,
+  /** Üst bandın ortadaki kutusunun (harita adı + bölge adı) yarı genişliği (sahne birimi, telefonda COL_K ile çarpılır). */
+  hudTopHalfW: 260,
 } as const;
 
 /**
- * Bölge görünümünde kaydırma çerçevesi (saf): harita çerçevesinin üst kenarı HUD bandı kadar (dünya birimi = sahne birimi / yakınlaştırma)
- * yukarı uzar; böylece üst kenardaki düğümler HUD'ın altına kaydırılabilir. Uzak görünümde (region null) çerçeve aynen.
+ * HUD'un ekran kenarlarından kapladığı pay (sahne birimi): sol sütun (Your party + Gear / Formation; tam yükseklik), üst bant, sağ alt düğmeler.
+ * `topHalfW` verilirse üst bant yalnız ekran ortasındaki harita adı + bölge adı kutusudur (yarı genişlik); `bottomW` verilirse alt bant yalnız sağ
+ * alttaki düğme kümesidir (genişlik). Verilmezse bant tam genişlik (uzak görünüm işaretleri, sığdırma).
  */
-export function hudFrame(frame: Bounds, region: string | null, zoom: number, hudTop: number = REGION_VIEW.hudTop): Bounds {
-  if (region === null || !(zoom > 0)) return frame;
-  return { ...frame, top: frame.top - hudTop / zoom };
-}
-
-/** HUD'un ekran kenarlarından kapladığı pay (sahne birimi): sol sütun (Your party + Gear / Formation), üst bant, sağ alt düğmeler. */
 export interface HudInsets {
   left: number;
   top: number;
   right: number;
   bottom: number;
+  topHalfW?: number;
+  bottomW?: number;
+}
+
+/** Durak rozetinin HUD'dan uzaklığı (sahne birimi): rozet yarıçapı + biraz. */
+export const HUD_CLEAR_MARGIN = 40;
+
+/**
+ * Dünya noktası `p`, kamera ortası `mid` ve toplam yakınlaştırma `Z` iken ekranda HUD'un dışında mı (saf): ekranın içinde, sol sütunun sağında,
+ * üst orta kutunun ve sağ alt düğme kümesinin dışında (`margin` sahne birimi pay ile).
+ */
+export function hudClear(p: Pt, mid: Pt, Z: number, view1: { w: number; h: number }, ins: HudInsets, margin: number = HUD_CLEAR_MARGIN): boolean {
+  const sx = (p.x - mid.x) * Z + view1.w / 2;
+  const sy = (p.y - mid.y) * Z + view1.h / 2;
+  if (sx < ins.left + margin || sx > view1.w - ins.right - margin || sy < margin || sy > view1.h - margin) return false;
+  const inTop = sy < ins.top + margin && (ins.topHalfW === undefined || Math.abs(sx - view1.w / 2) < ins.topHalfW + margin);
+  const inBottom = sy > view1.h - ins.bottom - margin && (ins.bottomW === undefined || sx > view1.w - ins.bottomW - margin);
+  return !inTop && !inBottom;
 }
 
 /**
- * Bölge görünümünde kaydırma çerçevesi, HUD payları ile (saf; Harita 2 playtest 2026-10-25: dr1 sol kenarda Your party sütununun altında
- * kalıyordu). Çerçeve her yanda payın dünya karşılığı kadar uzar: her düğüm kaydırılarak HUD'ın dışına (güvenli alana) getirilebilir.
- * Uzak görünümde (region null) çerçeve aynen. Yalnız üst pay verilirse hudFrame ile aynı.
+ * `p`'yi HUD dışında gösteren, `want`'a en yakın kamera ortası (saf; çerçeveye kısılı, ızgara araması). Yoksa null. Kamera hiçbir zaman
+ * çerçevenin (harita görseli) dışını göstermez.
  */
-export function insetFrame(frame: Bounds, region: string | null, zoom: number, ins: HudInsets): Bounds {
-  if (region === null || !(zoom > 0)) return frame;
-  return { left: frame.left - ins.left / zoom, right: frame.right + ins.right / zoom, top: frame.top - ins.top / zoom, bottom: frame.bottom + ins.bottom / zoom };
+export function clearMid(p: Pt, want: Pt, Z: number, frame: Bounds, view1: { w: number; h: number }, ins: HudInsets, margin: number = HUD_CLEAR_MARGIN): Pt | null {
+  const v = { w: view1.w / Z, h: view1.h / Z };
+  const w0 = clampMid(want, frame, v);
+  if (hudClear(p, w0, Z, view1, ins, margin)) return w0;
+  const l = midLimits(frame, v);
+  const N = 24;
+  let best: Pt | null = null;
+  let bd = Infinity;
+  for (let i = 0; i <= N; i++)
+    for (let j = 0; j <= N; j++) {
+      const m = { x: l.minX + ((l.maxX - l.minX) * i) / N, y: l.minY + ((l.maxY - l.minY) * j) / N };
+      if (!hudClear(p, m, Z, view1, ins, margin)) continue;
+      const d = Math.hypot(m.x - w0.x, m.y - w0.y);
+      if (d < bd) {
+        bd = d;
+        best = m;
+      }
+    }
+  return best;
 }
 
 /** Kamera ortası `mid`, toplam yakınlaştırma `Z` iken HUD'sız güvenli alanın dünyadaki kutusu. `view1` = yakınlaştırma 1'de görünen alan. */
@@ -85,7 +116,8 @@ export function safeRect(mid: Pt, Z: number, view1: { w: number; h: number }, in
  * Bölgeye girerken kamera (saf). `pts` = bölgenin düğümleri (dünya), `view1` = yakınlaştırma 1'de görünen alan (sahne birimi), `mapZoom` =
  * oyuncu yakınlaştırması, `focus` = takımın durağı (bölgedeyse). Taban yakınlaştırma regionZoom gibi (görseli kaplar, maxZoom'u aşmaz), ama
  * sığdırma HUD'sız güvenli alana göre; orta: düğüm kümesi güvenli alanın ortasına, takımın durağı güvenli alanın içine (kenardan `margin`), sonra
- * insetFrame'e kısılır. Dönen `z` taban yakınlaştırmadır (oyuncu yakınlaştırması hariç).
+ * harita çerçevesine kısılır (görselin dışı hiç görünmez; HUD görselin üstünde durur) ve durak HUD dışında kalacak şekilde (clearMid) düzeltilir;
+ * kenar durağı için gerekirse taban yakınlaştırma biraz artar. Dönen `z` taban yakınlaştırmadır (oyuncu yakınlaştırması hariç).
  */
 export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number; focus?: Pt | null; pad?: number; margin?: number; maxZoom?: number }): { z: number; mid: Pt } {
   const pad = o.pad ?? REGION_VIEW.pad;
@@ -93,19 +125,26 @@ export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; 
   const ys = o.pts.map((p) => p.y);
   const box: Bounds = { left: Math.min(...xs) - pad, right: Math.max(...xs) + pad, top: Math.min(...ys) - pad, bottom: Math.max(...ys) + pad };
   const safe1 = { w: Math.max(1, o.view1.w - o.ins.left - o.ins.right), h: Math.max(1, o.view1.h - o.ins.top - o.ins.bottom) };
-  const z = regionZoomIn(box, safe1, o.view1, o.frame, o.maxZoom ?? REGION_VIEW.maxZoom);
+  const maxZoom = o.maxZoom ?? REGION_VIEW.maxZoom;
+  const z = regionZoomIn(box, safe1, o.view1, o.frame, maxZoom);
   const Z = z * o.mapZoom;
   const mid = { x: (box.left + box.right) / 2 - (o.ins.left - o.ins.right) / (2 * Z), y: (box.top + box.bottom) / 2 - (o.ins.top - o.ins.bottom) / (2 * Z) };
-  if (o.focus) {
-    const f = o.focus;
-    const s = safeRect(mid, Z, o.view1, o.ins);
-    const m = Math.min(o.margin ?? 70, (s.right - s.left) / 2, (s.bottom - s.top) / 2);
-    if (f.x < s.left + m) mid.x -= s.left + m - f.x;
-    else if (f.x > s.right - m) mid.x += f.x - (s.right - m);
-    if (f.y < s.top + m) mid.y -= s.top + m - f.y;
-    else if (f.y > s.bottom - m) mid.y += f.y - (s.bottom - m);
+  const view = (zz: number) => ({ w: o.view1.w / (zz * o.mapZoom), h: o.view1.h / (zz * o.mapZoom) });
+  if (!o.focus) return { z, mid: clampMid(mid, o.frame, view(z)) };
+  const f = o.focus;
+  const s = safeRect(mid, Z, o.view1, o.ins);
+  const m = Math.min(o.margin ?? 70, (s.right - s.left) / 2, (s.bottom - s.top) / 2);
+  if (f.x < s.left + m) mid.x -= s.left + m - f.x;
+  else if (f.x > s.right - m) mid.x += f.x - (s.right - m);
+  if (f.y < s.top + m) mid.y -= s.top + m - f.y;
+  else if (f.y > s.bottom - m) mid.y += f.y - (s.bottom - m);
+  // takımın durağı HUD dışında: çerçeve içinde en yakın orta; olmazsa (kenar durağı) biraz yakınlaşılır (en çok maxZoom)
+  for (let zz = z; ; zz = Math.min(maxZoom, zz * 1.08)) {
+    const c = clearMid(f, mid, zz * o.mapZoom, o.frame, o.view1, o.ins);
+    if (c) return { z: zz, mid: c };
+    if (zz >= maxZoom) break;
   }
-  return { z, mid: clampMid(mid, insetFrame(o.frame, 'region', Z, o.ins), { w: o.view1.w / Z, h: o.view1.h / Z }) };
+  return { z, mid: clampMid(mid, o.frame, view(z)) };
 }
 
 /**

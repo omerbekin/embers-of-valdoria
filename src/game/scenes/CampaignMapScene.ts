@@ -144,7 +144,7 @@ import { statPointsBetween } from '../../progression/levels';
 import { legendaryPreviewWanted } from '../../progression/items';
 import { EL, elBack, elBody, elGo, elIconButton, elLink, elPanel, elScreenIn, elText, elToast, fadeLine, fitW, hGradient, vGradient } from '../elegant-ui';
 import { MAP_ZOOM, clampMid, clampZoom, wheelAction, worldToStageCss, zoomTowardMid, type Bounds } from '../map-view';
-import { REGION_VIEW, insetFrame, overviewSafe, regionCamera, type HudInsets, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
+import { REGION_VIEW, overviewSafe, regionCamera, type HudInsets, isEmptyMapPoint, overviewMarkers, seenRegions, overviewRoad, regionAt, regionName, regionSub, regionSets, regionZoom, type OverviewMarker, type RegionSets } from '../region-view';
 import { reducedMotion } from '../../ui/motion-pref';
 import { MapTraveller } from '../map-traveller';
 import { drawBadge, drawFrame, drawLoopIcon, frameColor, frameSpec } from '../map-frames';
@@ -1427,12 +1427,14 @@ export class CampaignMapScene extends Phaser.Scene {
   /** HUD payları (sahne birimi): sol sütun (Your party, Gear / Formation), üst bant (Valor, bölge adı), alt sağ düğmeler. */
   private hudInsets(): HudInsets {
     const k = this.compact() ? COL_K : 1;
-    return { left: (SIDE.left + SIDE.partyW) * k, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + touchUnits(56) + 12 };
+    const size = touchUnits(56);
+    // üst: ortadaki harita adı + bölge adı kutusu; alt: sağ alttaki − + ? kümesi (renderControls: 3 düğme, 8 boşluk, kenardan 36)
+    return { left: (SIDE.left + SIDE.partyW) * k, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + size + 12, topHalfW: REGION_VIEW.hudTopHalfW * k, bottomW: 36 + 3 * size + 2 * 8 };
   }
 
-  /** Kaydırma çerçevesi: bölge görünümünde her kenar HUD payı kadar uzar (src/game/region-view.ts > insetFrame; playtest U1, Harita 2). */
+  /** Kaydırma çerçevesi: harita görselinin kapsamı (Harita 2 playtest 2026-10-25: HUD payı kadar taşmak panellerin arkasında siyah gösteriyordu). */
   private panFrame(): Bounds {
-    return insetFrame(this.frame, this.focus, this.baseZoom * this.mapZoom, this.hudInsets());
+    return this.frame;
   }
 
   /** Bölgeye girerken oyuncu yakınlaştırmasının başlangıcı (telefonda biraz yakın; create ile aynı). Uzak görünümde hep MAP_ZOOM.min. */
