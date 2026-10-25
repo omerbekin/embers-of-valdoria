@@ -26,6 +26,20 @@ jobs:
       - run: npm ci
       - run: npm test
       - run: npm run build
+      # Harita 2-3 test kopyası (dal maps-2-3) /maps23/ altına; kırmızıysa yalnızca o kısım yayınlanmaz, ana site etkilenmez.
+      - id: maps_checkout
+        uses: actions/checkout@v4
+        continue-on-error: true
+        with:
+          ref: maps-2-3
+          path: maps-src
+      - id: maps_build
+        if: steps.maps_checkout.outcome == 'success'
+        continue-on-error: true
+        working-directory: maps-src
+        run: npm ci && npm test && npm run build
+      - if: steps.maps_build.outcome == 'success'
+        run: cp -r maps-src/dist dist/maps23
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
