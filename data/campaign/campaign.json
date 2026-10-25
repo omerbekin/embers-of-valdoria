@@ -60,6 +60,8 @@
     "townRest": "Your first arrival in a town is a free rest: the living are back to full health and their wounds are healed. Later visits pay to rest by the fire. The fallen stay down: only Valor can raise them.",
     "townRested": "Your company has rested: the living are back to full health and their wounds are healed. The fallen stay down: only Valor can raise them.",
     "townRecruit": "Fighters at the barracks offer their swords. Choose one companion, or come back before you leave.",
+    "townSwap": "Swords for hire wait at the barracks. Your company stays at four: whoever joins takes someone's place, and the one who steps aside waits here.",
+    "townSwapOut": "Who steps aside? They keep their gear and wait at these barracks until you call them back.",
     "complete": "The Ash Curse is broken. Valdoria is free again.",
     "stepRecruit": "A wanderer offers to join you: choose one companion.",
     "stepFarewell": "Your escort stays behind here. Their levels and spent points leave with them; their gear goes into your bag.",

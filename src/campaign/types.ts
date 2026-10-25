@@ -70,6 +70,11 @@ export interface MapNode {
   endsTutorial?: boolean;
   newCompany?: { size: number; leader: 'firstPick' };
   partyCap?: number;
+  /**
+   * Kışla değişimi (Ömer 2026-10-25, form K1 = b; Saltmere): takım 4'te kalır, kışla `offer` aday önerir; aday bir kahramanın YERİNE geçer,
+   * çıkan kahraman yedeğe (`CampaignState.reserve`) gider ve aynı kışlada geri alınabilir. Kasaba adımındayken kışla yerinden.
+   */
+  barracksSwap?: { offer: number };
   city?: boolean;
   final?: boolean;
   teaches?: string;
@@ -417,6 +422,11 @@ export interface CampaignState {
    * eklenir. Eski kayıtta yok = hiç geçiş yok (isteğe bağlı alan, kayıt sürümü değişmez; bozuksa okunurken atılır).
    */
   mapsDone?: string[];
+  /**
+   * Yedekteki kahramanlar (kışla değişimi, Ömer 2026-10-25 form K1 = b): takımdan çıkan kahraman level / XP / ağaç / ekipmanıyla burada bekler,
+   * değişim kışlasında geri alınabilir. Savaşa girmez, XP almaz. İsteğe bağlı alan (kayıt sürümü değişmez); eski kayıtta yok = boş.
+   */
+  reserve?: Hero[];
 }
 
 /** Sefer savaşının duraklatılmış kaydı: düğüm, savaş seed'i, eylem günlüğü, tur, durum özeti, kurulum parmak izi (src/campaign/suspend.ts). */

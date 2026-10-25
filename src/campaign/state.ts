@@ -406,6 +406,67 @@ export function recruitInTown(s: CampaignState, classId: string): CampaignState 
   return t;
 }
 
+// ---------------------------------------------------------------- kışla değişimi ve yedek (Ömer 2026-10-25, form K1 = b; Saltmere)
+
+export interface SwapOffer {
+  /** Yeni adaylar (class id; seed'li, takımda ya da yedekte olan sınıflar çıkarılır). */
+  recruits: string[];
+  /** Yedekteki kahramanlar (geri alınabilir). */
+  reserve: Hero[];
+}
+
+/**
+ * Kışla değişimi önerisi: kasaba adımında, düğümün `barracksSwap`'ı varsa. Adaylar seed'li karışık havuzun (CONFIG.recruitPool) takımda ya da
+ * yedekte olmayan ilk `offer` sınıfı. Değişim yeri değilse null.
+ */
+export function swapOffer(s: CampaignState): SwapOffer | null {
+  if (nextStep(s).kind !== 'town') return null;
+  const n = node(mapOf(s), s.at);
+  if (!n.barracksSwap) return null;
+  const owned = new Set([...s.roster, ...(s.reserve ?? [])].map((h) => h.class));
+  const pool = shuffle(CONFIG.recruitPool.filter((c) => !!classes[c]), rngFor(s.seed, s.mapId, n.id, 'swap'));
+  return { recruits: pool.filter((c) => !owned.has(c)).slice(0, n.barracksSwap.offer), reserve: [...(s.reserve ?? [])] };
+}
+
+/**
+ * Kışla değişimi: `incoming` (yeni adayın class id'si ya da yedekteki kahramanın id'si) takımda `outgoing` kahramanın yerine geçer (aynı dizilim
+ * hücresi); çıkan yedeğe gider. Takım boyu değişmez (en fazla 4). Yeni aday katılım seviyesinde gelir (joinLevel, çıkan hariç). Lider çıkarsa
+ * liderlik gelen kahramana geçer. Çıkan kahraman düşmüşse de yedeğe gider (ceset olarak kalır).
+ */
+export function swapHero(s: CampaignState, incoming: string, outgoing: string): CampaignState {
+  const offer = swapOffer(s);
+  if (!offer) throw new Error('No barracks swap here');
+  const out = heroById(s, outgoing);
+  if (!out) throw new Error(`${outgoing} is not in the company`);
+  const fromReserve = offer.reserve.find((h) => h.id === incoming);
+  if (!fromReserve && !offer.recruits.includes(incoming)) throw new Error(`${incoming} is not on offer`);
+  const t = clone(s);
+  const cell = t.active.indexOf(out.id);
+  t.roster = t.roster.filter((h) => h.id !== out.id);
+  if (cell >= 0) t.active[cell] = '';
+  const leaving = JSON.parse(JSON.stringify(out)) as Hero;
+  const wasLeader = !!leaving.leader;
+  delete leaving.leader;
+  let hero: Hero;
+  if (fromReserve) {
+    hero = JSON.parse(JSON.stringify(fromReserve)) as Hero;
+    t.reserve = (t.reserve ?? []).filter((h) => h.id !== hero.id);
+    t.roster.push(hero);
+    if (cell >= 0) t.active[cell] = hero.id;
+    else place(t, hero);
+  } else {
+    hero = addHero(t, incoming, { join: true });
+    if (cell >= 0) {
+      const at = t.active.indexOf(hero.id);
+      if (at >= 0) t.active[at] = '';
+      t.active[cell] = hero.id;
+    }
+  }
+  if (wasLeader) hero.leader = true;
+  t.reserve = [...(t.reserve ?? []), leaving];
+  return t;
+}
+
 /**
  * Ashford: tutorial takımı veda eder (kadrodan çıkar). Takılı item'leri torbaya düşer: yeni bölük onları takar, item takma tutorial'ı burada
  * başlar (items.md karar 7). Torba sınırı burada uygulanmaz (hiçbir item kaybolmaz; Ömer, madde 278). Teslim anı için `pendingHandover` yazılır.

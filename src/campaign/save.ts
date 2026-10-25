@@ -4,7 +4,7 @@ import { findNode } from './graph';
 import { activeHeroes, canReplay, clearedProgress, nodeCleared, stopNumber } from './state';
 import { validCampaignSuspended } from './suspend';
 import { emptyEquipment, migrateItemRolls, migrateOffhand, migrateRollsX2, promoteOffhand, SLOT_IDS, type ItemInstance } from '../progression/items';
-import { valorRules } from '../engine/content';
+import { classes, valorRules } from '../engine/content';
 import { giveStarterIfUnarmed } from '../progression/weapon';
 import { normalizeLevelFields } from '../progression/levels';
 import { normalizeTree } from '../progression/skill-tree-hero';
@@ -135,8 +135,7 @@ function upgradeState(s: CampaignState): void {
   const raw = s as unknown as Record<string, unknown>;
   if (raw.version === 1) raw.version = 2;
   const overflow: ItemInstance[] = []; // ikinci el taşıması: ikinci el doluysa oradaki item torbaya
-  if (Array.isArray(s.roster))
-    s.roster = s.roster.map((h) => {
+  const upgradeHero = (h: Hero): Hero => {
       if (!h || typeof h !== 'object') return h;
       const eq = emptyEquipment();
       const old = (h as Partial<Hero>).equipment as Record<string, unknown> | undefined;
@@ -154,7 +153,16 @@ function upgradeState(s: CampaignState): void {
       if (typeof s.seed === 'number') normalizeSpdRoll(out, s.seed); // kişisel hız zarı (Ömer 2026-10-24; sürüm artmaz, idempotent)
       normalizeTree(out); // skill ağacı (sürüm 12): bozuk dağılım bedava iade + treeReset, skillPoints = havuz - harcanan, veri değiştiyse freeRespec
       return out;
-    });
+  };
+  if (Array.isArray(s.roster)) s.roster = s.roster.map(upgradeHero);
+  // Yedek (kışla değişimi, Ömer 2026-10-25; isteğe bağlı alan): kahramanlar kadro gibi yükseltilir, bozuk / kadroyla çakışan girdi atılır
+  if (s.reserve !== undefined) {
+    const ids = new Set(Array.isArray(s.roster) ? s.roster.map((h) => h?.id) : []);
+    const ok = Array.isArray(s.reserve) ? s.reserve.filter((h) => h && typeof h === 'object' && typeof h.id === 'string' && typeof h.class === 'string' && !!classes[h.class] && typeof h.hpRatio === 'number' && !ids.has(h.id)).map(upgradeHero) : [];
+    const valid = ok.filter((h) => typeof h.level === 'number' && typeof h.xp === 'number' && !!h.equipment);
+    if (valid.length) s.reserve = valid;
+    else delete (s as { reserve?: unknown }).reserve;
+  }
   s.inventory = [...(Array.isArray(s.inventory) ? s.inventory.filter(isItem) : []), ...overflow.filter(isItem)];
   // Bekleyen teslim: bozuksa atılır (item'ler zaten torbada; yalnızca gösterilecek an kaybolur)
   const ho = s.pendingHandover as unknown as Record<string, unknown> | undefined;
@@ -181,7 +189,8 @@ function upgradeState(s: CampaignState): void {
   if (s.valor !== undefined) s.valor = clampValor(valorRules, Number(s.valor));
   else if (Array.isArray(s.done) && (s.done.includes(`${intro}:story`) || s.done.includes(`${intro}:town`))) s.valor = clampValor(valorRules, valorRules.campaign.gift);
   // uid çakışmasın: sıradaki numara mevcut en büyük 'i<n>'den büyük
-  const equipped = Array.isArray(s.roster) ? s.roster.flatMap((h) => (h?.equipment ? SLOT_IDS.map((k) => h.equipment[k]) : [])) : [];
+  const heroes = [...(Array.isArray(s.roster) ? s.roster : []), ...(s.reserve ?? [])];
+  const equipped = heroes.flatMap((h) => (h?.equipment ? SLOT_IDS.map((k) => h.equipment[k]) : []));
   const used = [...s.inventory, ...equipped].filter(isItem).map((it) => Number(/^i(\d+)$/.exec(it.uid)?.[1] ?? 0));
   const next = Math.max(0, ...used) + 1;
   s.nextItemId = Number.isInteger(s.nextItemId) && s.nextItemId >= next ? s.nextItemId : next;

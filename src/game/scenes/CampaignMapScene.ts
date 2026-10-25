@@ -87,6 +87,8 @@ import {
   revisitKind,
   revisitNode,
   recruitInTown,
+  swapHero,
+  swapOffer,
   townRecruitOffer,
   townScene,
   townScreenNode,
@@ -2550,7 +2552,7 @@ export class CampaignMapScene extends Phaser.Scene {
       text: m.intro ?? m.blurb,
       height: 600,
       buttons: [
-        { label: 'Not yet', run: () => this.advance() },
+        // Ömer 2026-10-25 (form K6): geri dönüş yok, yalnız ilerleme düğmesi
         { label: 'Set out', primary: true, run: () => this.goToMap(mapId) },
       ],
     });
@@ -2697,10 +2699,8 @@ export class CampaignMapScene extends Phaser.Scene {
           text: `${this.endCardShown && !end ? '' : `${lead}\n\n`}${s.stats.victories} victories, ${s.stats.defeats} defeats.`,
           height: 520,
           buttons: nextMap
-            ? [
-                { label: 'Stay on the map', run: () => this.closeModal() },
-                { label: `Continue to ${titleCase(nextMap.title)}`, primary: true, run: () => this.mapIntro(nextMap.id) },
-              ]
+            ? // Ömer 2026-10-25 (form K6): sıradaki harita açıksa haritada kalınmaz, doğrudan geçilir
+              [{ label: `Continue to ${titleCase(nextMap.title)}`, primary: true, run: () => this.mapIntro(nextMap.id) }]
             : [
                 { label: 'Stay on the map', run: () => this.closeModal() },
                 { label: 'Main Menu', primary: true, run: () => elGo(this, MENU_SCENE) },
@@ -2762,6 +2762,9 @@ export class CampaignMapScene extends Phaser.Scene {
         if (tn.merchant) this.openTownMerchant(tn);
         return;
       case 'recruit': {
+        // kışla değişimi (Saltmere; Ömer 2026-10-25 form K1 = b): takım 4'te kalır, aday birinin yerine geçer
+        const swap = swapOffer(this.s);
+        if (swap && (swap.recruits.length || swap.reserve.length)) return this.townSwapModal(h);
         const offer = townRecruitOffer(this.s);
         if (offer.length) return this.townRecruitModal(h, offer);
         return this.townNote(h, h.note ?? 'No one here seeks to join you.');
@@ -2869,6 +2872,58 @@ export class CampaignMapScene extends Phaser.Scene {
   /** Kasaba ekranında kısa not (ateş, adayı olmayan ilan panosu): C kartı. */
   private townNote(h: TownHotspot, text: string): void {
     this.townWindow(h, { paras: paragraphs(text), acts: [{ label: 'Close', primary: true, run: () => this.closeModal() }] });
+  }
+
+  /**
+   * Kışla değişimi (Ömer 2026-10-25, form K1 = b; state.ts > swapHero): 1) gelen: yeni adaylar + yedektekiler, 2) çıkan: takımdan biri.
+   * Görünüm kasabanın aday kartıyla aynı (C kartı + kahraman kartları).
+   */
+  private townSwapModal(h: TownHotspot): void {
+    const offer = swapOffer(this.s);
+    if (!offer) return;
+    const cards = [
+      ...offer.recruits.map((id) => this.mwCard(id, this.joinTag())),
+      ...offer.reserve.map((r) => ({ ...this.mwCard(r.class, `In reserve · Lv ${r.level}${r.alive ? '' : ' · Fallen'}`), id: r.id })),
+    ];
+    this.townWindow(h, {
+      paras: paragraphs(CONFIG.texts.townSwap ?? ''),
+      body: { k: 'cards', cards },
+      acts: [
+        { label: 'Not now', run: () => this.closeModal() },
+        { label: 'Choose', primary: true, needPick: 'Pick who joins first.', run: (inc) => (inc ? this.townSwapOut(h, inc) : this.toast('Pick who joins first.')) },
+      ],
+    });
+  }
+
+  /** Kışla değişiminin 2. adımı: takımdan çıkacak kahraman. */
+  private townSwapOut(h: TownHotspot, incoming: string): void {
+    const name = (id: string) => {
+      const r = this.s.reserve?.find((x) => x.id === id);
+      return content.classes[r ? r.class : id]?.name ?? id;
+    };
+    const cards = this.s.roster.map((x) => ({ ...this.mwCard(x.class, `Lv ${x.level}${x.alive ? '' : ' · Fallen'}`), id: x.id }));
+    this.townWindow(h, {
+      paras: paragraphs(CONFIG.texts.townSwapOut ?? ''),
+      body: { k: 'cards', cards },
+      acts: [
+        { label: 'Back', run: () => this.townSwapModal(h) },
+        {
+          label: 'Swap',
+          primary: true,
+          needPick: 'Pick who steps aside first.',
+          run: (out) => {
+            if (!out) return this.toast('Pick who steps aside first.');
+            const gone = content.classes[this.s.roster.find((x) => x.id === out)?.class ?? '']?.name ?? out;
+            setState(swapHero(this.s, incoming, out));
+            this.townSave(); // değişim kayda girsin (B1)
+            this.closeModal();
+            this.town?.render();
+            this.renderHud();
+            this.toast(`${name(incoming)} joins your company · ${gone} waits at the barracks`);
+          },
+        },
+      ],
+    });
   }
 
   /**

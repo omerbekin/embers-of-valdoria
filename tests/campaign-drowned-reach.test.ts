@@ -10,6 +10,7 @@ import {
   activeHeroes,
   allRoutes,
   choicePoints,
+  completeSimple,
   continueToMap,
   debugFinishMap1,
   debugJumpDrownedReach,
@@ -30,6 +31,8 @@ import {
   outgoing,
   readSaves,
   setMapOverride,
+  swapHero,
+  swapOffer,
   undirectedDistances,
   validateMap,
   writeSave,
@@ -86,6 +89,8 @@ describe('The Drowned Reach: harita verisi', () => {
 
   it('seviye eğrisi L10-20: ilk 3 durak L10, bölgeler sırayla yükselir, final L20', () => {
     expect(['dr1', 'dr2', 'dr3'].map((id) => nodeLevel(DROWNED_REACH, id))).toEqual([10, 10, 10]);
+    // Ömer 2026-10-25 (form K3 = b): dr4-6 L11, L10 -> L12 sıçraması yumuşar
+    expect(['dr4', 'dr5', 'dr6'].map((id) => nodeLevel(DROWNED_REACH, id))).toEqual([11, 11, 11]);
     const lv = (r: string) => map.nodes.filter((n) => n.region === r).map((n) => nodeLevel(DROWNED_REACH, n.id));
     let prevMax = 0;
     for (const r of map.regions) {
@@ -209,6 +214,47 @@ describe('Maps 2-3 debug kısayolları ve bayrak', () => {
       expect(n.region, r).toBe(r);
       expect(activeHeroes(t)[0]!.level, r).toBe(nodeLevel(DROWNED_REACH, n.id));
     }
+  });
+
+  it('Saltmere kışla değişimi (K1 = b): takım 4 kalır, çıkan yedeğe gider, geri alınır, kayıtta kalır', () => {
+    setMapOverride(DROWNED_REACH, true);
+    let t = debugJumpRegion(debugJumpDrownedReach(newCampaign({ mode: 'normal', seed: 9 })), 'III');
+    expect(t.at).toBe('dr28');
+    if (nextStep(t).kind === 'story') t = completeSimple(t, 'story');
+    expect(nextStep(t).kind).toBe('town');
+    const offer = swapOffer(t)!;
+    expect(offer.recruits).toHaveLength(3);
+    expect(offer.reserve).toEqual([]);
+    const owned = new Set(t.roster.map((h) => h.class));
+    expect(offer.recruits.some((c) => owned.has(c))).toBe(false);
+    const out = t.roster.find((h) => h.leader) ?? t.roster[0]!;
+    const cell = t.active.indexOf(out.id);
+    const a = swapHero(t, offer.recruits[0]!, out.id);
+    expect(a.roster).toHaveLength(4);
+    expect(a.reserve!.map((h) => h.id)).toEqual([out.id]);
+    expect(a.reserve![0]!.leader).toBeUndefined();
+    const inc = a.roster.find((h) => h.class === offer.recruits[0])!;
+    expect(a.active[cell]).toBe(inc.id);
+    expect(inc.leader).toBe(true);
+    expect(inc.level).toBeGreaterThan(1);
+    // aday listesinde yedekteki / takımdaki sınıf yok; yedekteki geri alınabilir
+    const o2 = swapOffer(a)!;
+    expect(o2.recruits).not.toContain(out.class);
+    expect(o2.recruits).not.toContain(inc.class);
+    expect(o2.reserve.map((h) => h.id)).toEqual([out.id]);
+    const b = swapHero(a, out.id, inc.id);
+    expect(b.roster.map((h) => h.id).sort()).toEqual(t.roster.map((h) => h.id).sort());
+    expect(b.active[cell]).toBe(out.id);
+    expect(b.roster.find((h) => h.id === out.id)).toEqual(out);
+    expect(b.reserve!.map((h) => h.id)).toEqual([inc.id]);
+    // kayıt: yedek okunur, bozuk girdi atılır; sürüm aynı
+    const back = normalizeState(JSON.parse(JSON.stringify(b)))!;
+    expect(back.reserve).toEqual(b.reserve);
+    expect(normalizeState({ ...JSON.parse(JSON.stringify(b)), reserve: [{ id: 'x' }] })!.reserve).toBeUndefined();
+    // başka yerde değişim yok; takımda olmayan / önerilmeyen hata
+    expect(swapOffer(debugJumpDrownedReach(newCampaign({ mode: 'normal', seed: 9 })))).toBeNull();
+    expect(() => swapHero(t, 'no_such_class', out.id)).toThrow();
+    expect(() => swapHero(t, offer.recruits[0]!, 'h999')).toThrow();
   });
 
   it('bayrak kapalıyken Jump hata verir', () => {

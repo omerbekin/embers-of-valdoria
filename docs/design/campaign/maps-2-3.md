@@ -524,7 +524,7 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 
 **Kasabalar**
 - Reedgate, Eelwick, Fisher's Landing: köy sahnesi (town-ashford görselleri yeniden kullanıldı), Saltmere: şehir sahnesi (town-valdren görselleri) + "Odo's Chandlery", Harbor-Master Rook. Hepsinde tüccar, ateş başı, demirci, hikâye NPC'si (dr_the_ferryman, dr_weir_warden, dr_harbor_master, dr_keepers_daughter; İngilizce, 2 adımlık yer tutucu diyalog).
-- **Takım büyüklüğü:** Ömer kuralı: sefer takımı en fazla 4, 5. kahraman yok. Harita 2 kasabaları aday vermez (Saltmere dahil, `partyCap` 4); kışla / ilan panosu aday göstermez.
+- **Takım büyüklüğü:** Ömer kuralı: sefer takımı en fazla 4, 5. kahraman yok. Harita 2 kasabaları aday vermez (Saltmere dahil, `partyCap` 4); Saltmere kışlası değişim önerir (aşağıda K1 = b), diğer kışla / ilan panoları aday göstermez.
 - Faction (M-L), Charter (M-J), Lantern Rock (M-M), Monk's Isle: düz lore olayı + küçük ödül yer tutucusu (dr_guild_hall, dr_ferry_office, dr_lantern_rock, dr_monks_isle); kural yok.
 
 **Geçiş (M-Q) ve kayıt**
@@ -538,3 +538,12 @@ Adım 1 = harita geçişi (M-Q) + Harita 2 iskeleti. Yeni mekanik yok; aşağıd
 - `/maps23/` yolunda (GitHub Pages test kopyası) localStorage / sessionStorage `eov.m23.` önekiyle ayrılır (src/storage-scope.ts, main.ts'in ilk import'u; index.html'deki ilk kare betiği de); bulut senkronu orada kapalı. Bilinen küçük etki: sekmeler arası `storage` olayı kopyada önekli anahtarla gelir (asset sürüm seçimi diğer sekmeye anında yansımaz).
 - Bölge savaş arka planları var olan sahnelerden (I kings-bridge, II misty-marsh, III pilgrim-road, IV iron-pass, V windy-moor, VI castle-hall): yer tutucu.
 - **Bölge kamerası HUD payları** (playtest 2026-10-25: dr1 telefonda Your party sütununun altında kalıyordu; ardından geniş pencerede panellerin arkası siyah): kamera HİÇBİR görünümde harita görselinin dışını göstermez, HUD görselin üstünde durur (Harita 1 gibi; `map-view.ts > clampMid`, kaydırma çerçevesi = görselin kapsamı). HUD modeli (`region-view.ts > hudClear`): sol sütun tam yükseklik, üst bantta yalnız ortadaki harita adı + bölge adı kutusu, altta yalnız sağdaki − + ? kümesi. Bölgeye girerken takımın durağı HUD dışında açılır (`regionCamera` + `clearMid`; kenar durağında taban yakınlaşması biraz artar). Masaüstü / geniş pencerede her durak kaydırma (+ en çok MAP_ZOOM.max) ile HUD dışına gelir; bunun için dr1 (0.0371, 0.2742 -> 0.125, 0.2083: şelalenin yanındaki yamaç) ve dr2 (0.0897, 0.3719 -> 0.125, 0.3796: şelalenin dibi) içeri alındı. Telefonda sol sütun ekranın ~%25'i: kenar durakları (Harita 1 hoard, Harita 2 dr1-dr3, dr75-dr77) yalnız takım oradayken tam açık (tests/region-camera.test.ts).
+
+**Ömer kararları (2026-10-25, form K1-K6)**
+- **K1 = b, kışla değişimi:** takım en fazla 4 kalır; Saltmere'de (dr28) kışla bir kahramanı DEĞİŞTİRMEYİ önerir. Veri `barracksSwap: { offer: 3 }` (düğüm alanı), durum `reserve` (isteğe bağlı; kayıt sürümü 12 kaldı). Kasaba ekranında Barracks: 1) gelen seçilir (3 yeni aday, seed'li, takımda ya da yedekte olmayan sınıflar; + yedektekiler "In reserve"), 2) çıkan seçilir ("Who steps aside?"). Gelen aynı dizilim hücresine girer, yeni aday katılım seviyesinde (joinLevel) gelir; çıkan level / XP / ağaç / ekipmanıyla yedekte bekler, aynı kışlada geri alınır (değişim kasabadayken istendiği kadar). Lider çıkarsa liderlik gelene geçer. Düşmüş kahraman da yedeğe çıkabilir (ceset kalır). Yedek savaşa girmez, XP almaz, sonraki haritaya taşınır. `src/campaign/state.ts > swapOffer / swapHero`, sahne `townSwapModal / townSwapOut`. Varsayımlar open-questions 417.
+- **K2 = a:** Saltmere yan sokakları çıkmaz kalır (değişiklik yok).
+- **K3 = b:** dr4, dr5, dr6 elle L11 (`level`); L10 -> L12 sıçraması yumuşadı (dr7'den sonra rampa aynı).
+- **K4 = a:** ceset / yaralar haritalar arası böyle kalır (değişiklik yok).
+- **K5 = a:** Bölüm 2 adı "The Drowned Reach" kalır.
+- **K6 = b:** Harita 2 açıkken Morvane sonrası "Stay on the map" yok: "Map Complete" penceresinde yalnız "Continue to The Drowned Reach", giriş penceresinde yalnız "Set out" ("Not yet" kalktı). Bayrak kapalıyken Harita 1 sonu eskisi gibi ("Stay on the map" / "Main Menu").
+
