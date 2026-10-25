@@ -87,6 +87,7 @@ HEADS = {
     'guild_enforcer_bastion': (578, 0, 310),
     'wrecker_captain': (538, 165, 300),
     'corsair_captain_marrow': (430, 55, 280),
+    'siren_queen': (555, 0, 270),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
