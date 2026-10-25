@@ -912,6 +912,7 @@ Uygulananlar ve varsayımlar (Ömer'e sor):
 4. **Yeni adayın seviyesi:** var olan katılım kuralı (kalan takımın ortalaması - 2). Değişimde ortalama seviyede mi gelsin?
 5. **Yedek XP almaz** ve savaşa girmez; sonraki haritaya yedek olarak taşınır, yalnız Saltmere kışlasında geri alınır. Başka kasabalarda da geri alınabilsin mi?
 6. **Lider:** çıkan kahraman liderse liderlik gelen kahramana geçer. Düşmüş (ceset) kahraman da yedeğe çıkarılabilir (ceset kalır; Valor kuralı aynı).
+**Ömer cevabı (2026-10-25, form S1-S6, artifact DLB7vWbqvuevjubxXpoQQ8):** hepsi şu anki davranış (a): liste yenilenir, sınırsız değişim, eşyalarla yedek, ortalama-2 seviye, yalnız Saltmere, düşmüş kahraman yedeğe çıkabilir. KAPANDI.
 
 ## 418. Harita 2-3 savaş katmanı varsayımları (engine-dev 2026-10-25; maps-2-3.md M-A / B3 / M-B / M-I / M-J; `data/battle-rules.json`, `src/engine/battle.ts > Karşılaşma kuralları`; testler `tests/battle-rules.test.ts`, `tests/campaign-battle-rules.test.ts`; sayılar PROVİZYON, sim YOK, Ömer onayı bekliyor)
 1. **"Tur" tanımı:** Survive'ın "N tur"u ve Tide aralığı SAVAŞ TURU sayılır: her savaşan bir kez oynayınca yeni tur (combat-log'daki tur). Oyunda "turns" diye yazılıyor; dalga sayacı ("Round 2/3") ile karışmasın diye "round" kelimesi kullanılmadı. Doğru mu, yoksa "N tur" oyuncunun kendi tur sayısı mı olmalı?
@@ -922,3 +923,5 @@ Uygulananlar ve varsayımlar (Ömer'e sor):
 6. **Güverte (M-I / M-J):** kapalı hücreler [7, 9] (sıra 3 orta = direk, sıra 4 üst = küpeşte), iki tahtada aynı. Kapalı hücreye yerleştirilmiş birim savaş başında en yakın açık hücreye taşınır; Formation ekranı kapalı hücreleri henüz GÖSTERMİYOR (ui işi). Sea-lane Charter kilidi (sefer katmanı) bu adımda yok; crossing şimdilik = güverte düzeni + var olan devriye / tekrar.
 7. **M-A koşul çarpanları:** koşulun hasar / isabet çarpanı (Storm vb. için) yapılmadı; yalnız Tide koşulu var.
 8. **Geçici bağlantılar (Harita 2, içerik turu bunları değiştirecek):** dr4 Drowned Mill = Tide; dr13 Reedway = Break the Totem (Hex Totem + 2 Drowned takviyesi); dr17 The Great Weir = Hold the Bridge; dr21 The Drowned Causeway = Survive; dr55 The Sound ve dr60 The Narrows = güverte (oradaki yuva 7 birimi yuva 8'e alındı).
+
+**Ömer cevabı (2026-10-25, form R1-R5, artifact Eg7J4arNmi6ucCzWegSw9o):** hepsi şu anki davranış (a): tur = savaş turu; Tide her dalga başı + her 4 tur, 2 tur su, bosslar da ıslanır; Survive normal zafer ödülü; Totem böyle, ama toteme SONRA AYRI ÇİZİM yapılacak (sanat listesine); Hold böyle (son savunan geri çekilebilir, kayıp). Sayılar hâlâ sim ile doğrulanacak. KAPANDI.
