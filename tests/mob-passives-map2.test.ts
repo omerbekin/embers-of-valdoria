@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { Battle, content, describePassive } from '../src/engine';
 import type { BattleEvent, Combatant, PassiveEffect, Teams } from '../src/engine';
 
-// Harita 2 (The Drowned Reach) mob pasifleri: Boarding, Shell, Slick, Lure (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25).
+// Harita 2 (The Drowned Reach) mob pasifleri: Boarding, Shell, Slick, Lure, Deathless Tide, Salt Tears, Undertow (docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25).
 // Sayılar veriden okunur (data/mobs).
 
 type Ev<T extends BattleEvent['type']> = Extract<BattleEvent, { type: T }>;
@@ -111,5 +111,92 @@ describe('Lure (Siren)', () => {
     b.useSkill('party-1', 'quick_shot', siren.uid);
     expect(hero.statuses.find((s) => s.kind === e.status)?.stacks).toBe(e.stacks);
     expect(describe2('siren')).toContain('Omen');
+  });
+});
+
+// Ömer open-questions 419 cevabı (P1 a, P2 a): Deathless Tide, Salt Tears, Undertow ve Weir Eel Bite'ın Soaked eki.
+const flood = (b: Battle, board: 'party' | 'enemy', slots: number[]) =>
+  b.ground.push({ id: `g-flood-${board}-${slots.join('-')}`, ground: 'flooded', board, slots, turns: 3, source: 'env', sourceSide: board === 'party' ? 'enemy' : 'party', amount: 0, envUntilRound: 99 });
+function until(b: Battle, uid: string, max = 60): void {
+  for (let i = 0; i < max && b.currentUid !== uid && !b.winner; i++) b.skipTurn();
+  expect(b.currentUid).toBe(uid);
+}
+
+describe('Deathless Tide (Drowned Knight)', () => {
+  it('Flooded hücrede ölümcül vuruşta bir kez maks canın hpRatio kadarıyla kalkar; ikinci kez ve kuru hücrede ölür', () => {
+    const e = effectOf('drowned_knight', 'deathlessTide');
+    const b = sure(make({ party: cells({ 6: 'archer' }), enemies: cells({ 0: 'drowned_knight', 1: 'drowned_knight' }) }), 1000);
+    flood(b, 'enemy', [0]);
+    const k = unit(b, 'enemy-0');
+    k.hp = 1;
+    let n = b.log.length;
+    b.useSkill('party-0', 'quick_shot', 'enemy-0');
+    expect(k.hp).toBe(Math.round(k.maxHp * e.hpRatio));
+    expect(k.passiveUsed).toBe(true);
+    expect(ofType(b.log.slice(n), 'passive').some((x) => x.actor === 'enemy-0' && x.passive === 'deathless_tide')).toBe(true);
+    k.hp = 1;
+    n = b.log.length;
+    b.useSkill('party-0', 'quick_shot', 'enemy-0');
+    expect(k.hp).toBe(0);
+    // kuru hücredeki şövalye ölür
+    const dry = unit(b, 'enemy-1');
+    dry.hp = 1;
+    b.useSkill('party-0', 'quick_shot', 'enemy-1');
+    expect(dry.hp).toBe(0);
+    expect(dry.passiveUsed).toBeFalsy();
+    expect(describe2('drowned_knight')).toContain('flooded');
+  });
+});
+
+describe('Salt Tears (Brine Maiden)', () => {
+  it('kendi tur başında Flooded hücredeki yaralı dostlar maks canın oranı kadar iyileşir; kuru hücredeki iyileşmez', () => {
+    const e = effectOf('brine_maiden', 'saltTears');
+    const b = sure(make({ party: cells({ 6: 'archer' }), enemies: cells({ 7: 'brine_maiden', 0: 'drowned_knight', 1: 'salt_crab' }) }, 'turns'), 1000);
+    for (const c of b.combatants) if (c.side === 'enemy') c.hp = 500;
+    const maiden = b.combatants.find((c) => c.defId === 'brine_maiden')!;
+    const wet = b.combatants.find((c) => c.defId === 'drowned_knight')!;
+    const dryU = b.combatants.find((c) => c.defId === 'salt_crab')!;
+    flood(b, 'enemy', [wet.slot]);
+    if (b.currentUid === maiden.uid) b.skipTurn();
+    const n = b.log.length;
+    until(b, maiden.uid);
+    const heals = ofType(b.log.slice(n), 'heal').filter((x) => x.cause === 'salt_tears');
+    expect(heals.some((x) => x.target === wet.uid && x.amount === Math.round(1000 * e.ratio))).toBe(true);
+    expect(heals.some((x) => x.target === dryU.uid || x.target === maiden.uid)).toBe(false);
+    expect(describe2('brine_maiden')).toContain('flooded');
+  });
+});
+
+describe('Undertow (Reef Wrecker)', () => {
+  it('Flooded hücredeki kahramana skill vuruşu Slow bırakır (pasif olayı); kuru hücrede pasif işlemez (Hook kendi Slow durumunu yine verir)', () => {
+    const e = effectOf('reef_wrecker', 'undertow');
+    const hit = (wet: boolean) => {
+      const b = sure(make({ party: cells({ 0: 'warrior' }), enemies: cells({ 0: 'reef_wrecker' }) }));
+      if (wet) flood(b, 'party', [0]);
+      const n = b.log.length;
+      b.useSkill('enemy-0', 'hook', 'party-0');
+      return { b, n };
+    };
+    const w = hit(true);
+    expect(ofType(w.b.log.slice(w.n), 'passive').some((x) => x.passive === 'undertow')).toBe(true);
+    expect(unit(w.b, 'party-0').statuses.find((s) => s.kind === e.status)?.turns).toBe(e.turns);
+    const d = hit(false);
+    expect(ofType(d.b.log.slice(d.n), 'passive').some((x) => x.passive === 'undertow')).toBe(false);
+    expect(describe2('reef_wrecker')).toContain('Slow');
+  });
+});
+
+describe('Weir Eel Bite: Soaked hedefe ek hasar', () => {
+  it('hedef Soaked ise hasar x multiplier (aynı seed)', () => {
+    const bonus = (content.skills.eel_bite!.effects[0] as { bonusVsStatus?: { status: string; multiplier: number } }).bonusVsStatus!;
+    expect(bonus.status).toBe('soaked');
+    const dmg = (soaked: boolean) => {
+      const b = sure(make({ party: cells({ 0: 'warrior' }), enemies: cells({ 0: 'weir_eel' }) }));
+      if (soaked) (unit(b, 'party-0').statuses as { kind: string; turns: number; source: string }[]).push({ kind: 'soaked', turns: 2, source: 'env' });
+      const n = b.log.length;
+      b.useSkill('enemy-0', 'eel_bite', 'party-0');
+      return ofType(b.log.slice(n), 'damage').filter((x) => x.target === 'party-0').reduce((t, x) => t + x.amount, 0);
+    };
+    expect(Math.abs(dmg(true) - dmg(false) * bonus.multiplier)).toBeLessThanOrEqual(1);
   });
 });

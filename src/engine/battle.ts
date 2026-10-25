@@ -2793,7 +2793,7 @@ export class Battle {
     // Hide in the Brush (YM17, mob pasifi): şeridinde önünde canlı dost varken kaçınma eki; yoksa 0
     let eva = pe?.type === 'hideInBrush' && c.hp > 0 && this.coveredInLane(c) ? pe.evasion : 0;
     // Slick (Harita 2 Weir Eel): Flooded hücredeyken kaçınma eki
-    if (pe?.type === 'slick' && c.hp > 0 && this.ground.some((g) => g.ground === pe.ground && g.board === c.board && g.slots.includes(c.slot))) eva += pe.evasion;
+    if (pe?.type === 'slick' && c.hp > 0 && this.onGround(c, pe.ground)) eva += pe.evasion;
     // extraCrit: vuruşun kendi kritik eki (skill hasarının critBonus'u, Jinx); durum ekleriyle birlikte toplanıp [0, 1]'e kırpılır
     let crit = extraCrit;
     const noMisfortune = this.ignoresMisfortune(c); // boss: Omen'in kritik düşüşü işlemez (madde 272)
@@ -5770,6 +5770,13 @@ export class Battle {
       const smoke = this.censerSourceOf(actor);
       if (smoke) this.applyHeal(smoke.unit, actor, Math.max(1, Math.round(actor.maxHp * smoke.ratio)), false, emit, 'censer_smoke');
     }
+    // Salt Tears (Harita 2 Brine Maiden): kendi tur başında Flooded hücredeki yaralı dostlar (kendisi dahil) maks canın oranı kadar şifa
+    const st = actor.passive?.effect;
+    if (st?.type === 'saltTears' && actor.hp > 0) {
+      const wet = this.living(actor.side).filter((c) => c.hp < c.maxHp && this.onGround(c, st.ground));
+      if (wet.length) emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+      for (const c of wet) this.applyHeal(actor, c, Math.max(1, Math.round(c.maxHp * st.ratio)), false, emit, actor.passive!.id);
+    }
     // MP yenilenir (Ember Heart: can eşiğin üstündeyse ek MP; item etkisi turnMp)
     let bonusMp = 0;
     for (const { v: th } of effList(actor, 'turnMp')) if (actor.hp > th.above * actor.maxHp) bonusMp += th.mp;
@@ -6586,6 +6593,12 @@ export class Battle {
       emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
       this.addStacks(actor, lu.status, lu.stacks, target, emit, false, true);
     }
+    // Undertow (Harita 2 Reef Wrecker): Flooded hücredeki düşmana skill vuruşu Slow bırakır
+    const ut = actor.passive?.effect;
+    if (ut?.type === 'undertow' && this.castingSkill && actor === this.castingActor && target.hp > 0 && actor.side !== target.side && this.onGround(target, ut.ground)) {
+      emit({ type: 'passive', actor: actor.uid, passive: actor.passive!.id, name: actor.passive!.name });
+      this.addStatus(target, { kind: ut.status, turns: ut.turns, source: actor.uid }, emit, actor.passive!.id);
+    }
     // Rebuke (YM3, mob pasifi): yakın dövüş skill'inin fiziksel vuruşunda zırhın engellediği hasarın bir kısmı saldırana döner (saldıranın zırhı uygulanır)
     const rb = target.passive?.effect;
     if (rb?.type === 'rebuke' && effect.damageType === 'physical' && this.castingSkill?.motion === 'melee' && target.hp > 0 && actor.hp > 0 && actor.side !== target.side) {
@@ -6763,6 +6776,13 @@ export class Battle {
     const saved = this.treeUnits && target.treeHooks && target.hp > 0 && rest >= target.hp ? this.cheatDeathRule(target, crit) : null;
     const keepHp = saved ? (saved.hpRatio !== undefined ? Math.max(1, Math.round(target.maxHp * saved.hpRatio)) : Math.max(1, saved.hp ?? 1)) : 0;
     if (saved) rest = Math.max(0, target.hp - keepHp);
+    // Deathless Tide (Harita 2 Drowned Knight): savaşta bir kez, Flooded hücrede ölümcül hasar canı 1'de bırakır; aşağıda maks canın oranıyla kalkar
+    const dt = target.passive?.effect;
+    const tide = !saved && dt?.type === 'deathlessTide' && !target.passiveUsed && target.hp > 0 && rest >= target.hp && this.onGround(target, dt.ground) ? dt : null;
+    if (tide) {
+      rest = Math.max(0, target.hp - 1);
+      target.passiveUsed = true;
+    }
     target.hp = Math.max(0, target.hp - rest);
     if (this.treeUnits && rest > 0 && actor.side !== target.side) {
       // Faz 5a: hasar defteri (mostHurtMe alıcısı, hurtMe önceliği)
@@ -6806,6 +6826,14 @@ export class Battle {
         emit({ type: 'heal', source: target.uid, target: target.uid, amount: up, hpAfter: target.hp, crit: false, cause: saved.node });
       }
       this.afterCheatDeath(target, actor, saved, emit);
+    }
+    if (tide) {
+      emit({ type: 'passive', actor: target.uid, passive: target.passive!.id, name: target.passive!.name });
+      const up = Math.max(0, Math.round(target.maxHp * tide.hpRatio) - target.hp);
+      if (up > 0) {
+        target.hp += up;
+        emit({ type: 'heal', source: target.uid, target: target.uid, amount: up, hpAfter: target.hp, crit: false, cause: target.passive!.id });
+      }
     }
     if (hurtRage > 0) {
       target.rage = Math.min(target.maxRage!, (target.rage ?? 0) + hurtRage);
@@ -7239,6 +7267,11 @@ export class Battle {
     const st: Status = { kind: flood.soak as Status['kind'], turns: flood.soakTurns, source: c.uid };
     c.statuses.push(st);
     emit({ type: 'status', target: c.uid, status: st.kind, turns: st.turns, source: st.source, cause });
+  }
+
+  /** Birimin hücresinde bu türden zemin (Flooded) var mı (Harita 2 pasifleri: Slick, Deathless Tide, Salt Tears, Undertow). */
+  onGround(c: Combatant, ground: string): boolean {
+    return this.ground.some((g) => g.ground === ground && g.board === c.board && g.slots.includes(c.slot));
   }
 
   /** Boarding (Harita 2 Corsairs): dalga ya da takviyeyle giren birim kısa süreli durum (Haste) alır. */

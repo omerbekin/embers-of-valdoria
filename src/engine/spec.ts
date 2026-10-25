@@ -30,7 +30,8 @@ export function damageSpecFor(
   const element = effect.element ?? 'physical';
   let weak = 1;
   for (const tag of target.tags) weak *= formulas.weaknesses?.[tag]?.[element] ?? 1;
-  const tagBonus = effect.bonusVsTag && target.tags.includes(effect.bonusVsTag.tag) ? effect.bonusVsTag.multiplier : 1;
+  // bonusVsStatus (Weir Eel Bite): hedefte durum varsa ek çarpan
+  const tagBonus = (effect.bonusVsTag && target.tags.includes(effect.bonusVsTag.tag) ? effect.bonusVsTag.multiplier : 1) * (effect.bonusVsStatus && target.statuses.some((s) => s.kind === effect.bonusVsStatus!.status) ? effect.bonusVsStatus.multiplier : 1);
   let extra = 0;
   if (extras && effect.bonusPerMissingMana) extra += Math.max(0, target.maxMp - target.mp) * effect.bonusPerMissingMana;
   if (extras && effect.bonusFromShield) extra += actor.shield * effect.bonusFromShield.ratio;

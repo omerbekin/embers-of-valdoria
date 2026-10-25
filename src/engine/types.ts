@@ -211,7 +211,13 @@ export type PassiveEffect =
   /** Slick (Weir Eel): `ground` (Flooded) zeminli hücredeyken kaçınma +`evasion` (effectiveStats; durum değil). */
   | { type: 'slick'; ground: string; evasion: number }
   /** Lure (Siren): onu bir SKILL vuruşuyla vuran düşman (çağrı değil) `stacks` yığın `status` (Omen) alır (yığının kaynağı Siren). */
-  | { type: 'lure'; status: StatusKind; stacks: number };
+  | { type: 'lure'; status: StatusKind; stacks: number }
+  /** Deathless Tide (Drowned Knight): savaşta bir kez, `ground` (Flooded) hücredeyken ölümcül hasar alınca ölmez; maks canın `hpRatio` kadarıyla kalkar (kullanılınca `passiveUsed`). */
+  | { type: 'deathlessTide'; ground: string; hpRatio: number }
+  /** Salt Tears (Brine Maiden): kendi turunun başında `ground` (Flooded) hücredeki her canlı yaralı dostu (kendisi dahil) maks canının `ratio` kadarı iyileştirir (Wound uygulanır). */
+  | { type: 'saltTears'; ground: string; ratio: number }
+  /** Undertow (Reef Wrecker): SKILL vuruşu `ground` (Flooded) hücredeki düşmana isabet edince `turns` tur `status` (Slow). */
+  | { type: 'undertow'; ground: string; status: StatusKind; turns: number };
 
 export interface PassiveDef {
   id: string;
@@ -898,6 +904,8 @@ export type SkillEffectKind =
       /** 0-1: verilen hasarın bu kadarı kullanıcıya şifa olur. */
       lifesteal?: number;
       bonusVsTag?: { tag: string; multiplier: number };
+      /** Hedefte bu durum varsa hasar x multiplier (Weir Eel Bite: Soaked hedefe ek hasar; Harita 2). */
+      bonusVsStatus?: { status: StatusKind; multiplier: number };
       /** Çok hedefli vuruşta (ör. şerit skill'i) her yeni hedef bir öncekinin bu katı kadar hasar alır (hedef sırası: öndekinden arkadakine). */
       falloff?: number;
       /** Hedefin eksik mana başına eklenen hasar. */

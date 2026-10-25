@@ -231,6 +231,12 @@ export function describePassive(passive: PassiveDef, stats: Stats, formulas: For
       return `While you stand on ${groundName(e.ground)} ground, your evasion is +${pct(e.evasion)}.`;
     case 'lure':
       return `An enemy that hits you with a skill gains ${e.stacks} ${cap(e.status)} (summons do not).`;
+    case 'deathlessTide':
+      return `Once per battle, a killing blow taken while you stand on ${groundName(e.ground)} ground does not kill you: you rise again with ${pct(e.hpRatio)} of your max HP.`;
+    case 'saltTears':
+      return `At the start of your turn, every wounded ally standing on ${groundName(e.ground)} ground (you included) heals ${pct(e.ratio)} of their max HP (Wound reduces it).`;
+    case 'undertow':
+      return `Your skills that hit an enemy standing on ${groundName(e.ground)} ground also inflict ${cap(e.status)} for ${turnsText(e.turns)}.`;
   }
 }
 
@@ -339,6 +345,7 @@ export function describeSkill(skill: SkillDef, stats: Stats, formulas: Formulas,
       if (e.ignoreDefense) add(`Ignores ${pct(e.ignoreDefense)} of armor`);
       if (e.lifesteal) add(`Heals you for ${pct(e.lifesteal)} of damage dealt`);
       if (e.bonusVsTag) add(`x${e.bonusVsTag.multiplier} vs ${e.bonusVsTag.tag}`);
+      if (e.bonusVsStatus) add(`x${e.bonusVsStatus.multiplier} damage against ${cap(e.bonusVsStatus.status)} targets`);
       if (e.falloff) add(`Each target hit takes ${pct(1 - e.falloff)} less damage than the previous one`);
       // Headsman's Blow: harcanan Rage ve hedefin eksik canı (spec.ts > damageSpecFor ile aynı formül)
       if (e.powerPerRage) {
@@ -638,6 +645,10 @@ export function passiveNumbers(passive: PassiveDef, stats: Stats, formulas: Form
       return fixed('Evasion', `+${pct(e.evasion)}`);
     case 'lure':
       return fixed('Omen to attacker', `+${e.stacks}`);
+    case 'deathlessTide':
+      return fixed('Rises with', pct(e.hpRatio));
+    case 'saltTears':
+      return fixed('Heal per turn', pct(e.ratio));
     default:
       return [];
   }
