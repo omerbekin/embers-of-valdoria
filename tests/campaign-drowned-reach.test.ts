@@ -128,7 +128,7 @@ describe('The Drowned Reach: harita verisi', () => {
       Siren: ['siren', 'hexes', ['lament', 'chorus']],
       'Drowned Knight': ['drowned_knight', 'sunken_court', ['rusted_blade', 'shield_of_brine']],
       'Brine Maiden': ['brine_maiden', 'sunken_court', ['lament_of_salt', 'tidal_mend']],
-      'Reaver Archer': ['reaver_archer', 'bandits', ['pitch_arrow', 'scatter_quarrels']],
+      'Reaver Archer': ['reaver_archer', 'bandits', ['pitch_arrow', 'fire_volley']],
       'Reef Wrecker': ['reef_wrecker', 'bandits', ['hook', 'lantern_flash']],
     };
     const seen = new Set<string>();

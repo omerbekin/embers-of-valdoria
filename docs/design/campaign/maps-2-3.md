@@ -187,7 +187,7 @@ Tür: B savaş, E elit, S boss, T kasaba, Tr hazine (g = korunan), Ev olay, R di
 | Bandit Crossbowman ("Cliff Crossbowman") | Bandits | aynen | arka | Cut and Run | |
 | Oathsworn Brother, Censer Monk | Brann's Order | aynen | | Martyr's Vow / Censer Smoke | Inquisition |
 | **River Reaver** | Bandits | gelişmiş Moor Raider | ön | **Undertow**: Flooded hücredeki kahramana vuruşu 1 tur Slow | Raid Cut (aynı) + Boat Hook (tek, menzil +1, Slow) |
-| **Reaver Archer** | Bandits | gelişmiş Crossbowman (yay) | arka | Cut and Run | Bolt → Pitch Arrow (tek + 2 tur Burning; suya düşerse söner) |
+| **Reaver Archer** | Bandits | gelişmiş Crossbowman (yay) | arka | Cut and Run | Bolt → Pitch Arrow (tek + 2 tur Burning; suya düşerse söner) + **Fire Volley** (bir sıra hasar + 2 tur Burning Ground, Flooded hücre tutuşmaz; Ömer formu A1 a 2026-10-25, Scatter Quarrels yerine) |
 | **Reef Wrecker** | Bandits | gelişmiş Reaver (fener + kanca) | ön | Undertow | Hook + Lantern Flash (bir sıra, 1 tur Shrouded kaybı / isabet -) |
 | **Corsair Cutlass** | Corsairs (YENİ aile) | YENİ | ön, DEX | **Boarding**: dalga takviyesiyle girince 1 tur Haste | Cutlass (tek) + Rake (bir sıra, 0,5) |
 | **Corsair Slinger** | Corsairs | YENİ | arka | Boarding | Sling Stone (tek) + Pitch Pot (hücre + 2 tur Burning ground) |
