@@ -80,6 +80,10 @@ const ICON_SHEETS = {
   'corsairs_crab-sheet': ['pitch_pot', 'pincer', 'burrow', 'shell'],
   'weir_eel-sheet': ['eel_bite', 'lunge', 'slick', null],
   'siren-sheet': ['lament', 'chorus', 'lure', null],
+  // Harita 2 paket 2 (2026-10-25): Drowned Knight, Brine Maiden, Reaver Archer + Reef Wrecker (cut_and_run zaten bandits-sheet'te)
+  'drowned_knight-sheet': ['rusted_blade', 'shield_of_brine', 'deathless_tide', null],
+  'brine_maiden-sheet': ['lament_of_salt', 'tidal_mend', 'salt_tears', null],
+  'reaver_reef-sheet': ['pitch_arrow', 'hook', 'lantern_flash', 'undertow'],
 };
 
 /** Zemine oturan (alt hizalı) vfx sheet'leri: '<mob>-<skill>'. Geri kalanı ortalanır (vuruş/mermi). */
@@ -128,6 +132,9 @@ const GROUND = new Set([
   'salt_crab-burrow',
   // Reaver Archer: Fire Volley (zemine sabit alev; kareler ayni taban cizgisine hizalandi)
   'reaver_archer-fire_volley',
+  // Harita 2 paket 2: kalkan kubbesi ve iyilestirme dalgasi zeminden yukselir (kareler ayni taban cizgisine hizalandi)
+  'drowned_knight-shield_of_brine',
+  'brine_maiden-tidal_mend',
 ]);
 
 /** Hücrenin tamamına yayılmış düşük alfalı sis taşıyan sheet'ler: bu eşiğin altındaki alfa silinir (yoksa içerik kutusu tüm hücre olur). */
@@ -190,6 +197,8 @@ const CLEAN_EDGES = new Set([
   'bandit_chief-chiefs_cleaver',
   'bandit_chief-toll_sweep',
   'bandit_chief-hold_the_tower',
+  // Harita 2 paket 2
+  'reaver_archer-pitch_arrow',
   // Bölge III (yarın)
   'sworn_guard-wall_of_pikes',
   'cinder_gatewarden-hold_the_gate',
