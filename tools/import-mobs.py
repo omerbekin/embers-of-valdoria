@@ -78,6 +78,9 @@ HEADS = {
     # Kadın varyasyonları (V1-V5, 2026-10-26)
     'corsair_cutlass_f': (620, 0, 260),
     'corsair_slinger_f': (608, 0, 280),
+    'drowned_knight_f': (565, 0, 300),
+    'reaver_archer_f': (540, 225, 300),
+    'reef_wrecker_f': (635, 10, 285),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
