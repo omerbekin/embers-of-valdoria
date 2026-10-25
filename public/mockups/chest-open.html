@@ -59,7 +59,7 @@ body { display: flex; flex-direction: column; }
 .burst { width: 520px; height: 520px; margin: -260px 0 0 -260px; border-radius: 50%; background: radial-gradient(circle, rgba(255,236,170,.95), rgba(255,170,60,.55) 30%, rgba(255,140,40,0) 68%); mix-blend-mode: screen; opacity: 0; pointer-events: none; }
 .beam { top: 0; width: 280px; height: 880px; margin-left: -140px; transform-origin: 50% 100%; mix-blend-mode: screen; opacity: 0; pointer-events: none;
   background: linear-gradient(90deg, transparent, color-mix(in srgb, var(--rc) 78%, #fff 12%) 50%, transparent);
-  -webkit-mask-image: linear-gradient(to top, #000 25%, rgba(0,0,0,.2) 85%, transparent); mask-image: linear-gradient(to top, #000 25%, rgba(0,0,0,.2) 85%, transparent); }
+  -webkit-mask-image: linear-gradient(to top, transparent, rgba(0,0,0,.55) 9%, #000 22%, #000 32%, rgba(0,0,0,.2) 85%, transparent); mask-image: linear-gradient(to top, transparent, rgba(0,0,0,.55) 9%, #000 22%, #000 32%, rgba(0,0,0,.2) 85%, transparent); }
 .beam.epic { width: 340px; margin-left: -170px; }
 .flash { inset: 0; background: var(--fc, #fff); opacity: 0; mix-blend-mode: screen; pointer-events: none; }
 .goldline { left: 0; width: 1920px; text-align: center; font: 600 40px var(--disp); letter-spacing: .1em; color: var(--gold); text-shadow: 0 2px 6px #000; display: flex; justify-content: center; align-items: center; gap: 14px; pointer-events: none; }
