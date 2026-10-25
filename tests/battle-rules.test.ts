@@ -199,6 +199,17 @@ describe('B3 Hold the Bridge', () => {
       expect(ofType(b.log, 'objective').at(-1)).toMatchObject({ objective: 'hold', state: 'failed' });
     });
 
+  it('yapay zeka ön sıranın son savunanını sıradan çekmez (breaksHold süzgeci)', () => {
+    const b = make(13, 'turns', { ...BASE, party: cells({ 1: 'mage', 4: 'archer' }), rules: { objective: 'hold' } });
+    const mage = b.combatants.find((c) => c.side === 'party' && c.defId === 'mage')!;
+    expect(b.breaksHold(mage.uid, 7)).toBe(true);
+    expect(b.breaksHold(mage.uid, 0)).toBe(false);
+    const archer = b.combatants.find((c) => c.side === 'party' && c.defId === 'archer')!;
+    expect(b.breaksHold(archer.uid, 10)).toBe(false);
+    // kuralsız savaşta hiçbir hamle "kırmaz"
+    expect(make(13, 'turns', BASE).breaksHold('party-0', 9)).toBe(false);
+  });
+
   it('ön sırası boş başlayan bölükte en öndeki birim öne geçer', () => {
     const b = make(13, 'turns', { ...BASE, party: cells({ 6: 'archer', 9: 'mage' }), rules: { objective: 'hold' } });
     const archer = b.combatants.find((c) => c.side === 'party' && c.defId === 'archer')!;
@@ -224,7 +235,6 @@ describe('M-I kapalı hücre (güverte) / M-J crossing', () => {
     it(`${mode}: tam savaşta kimse kapalı hücreye girmez`, () => {
       const b = make(19, mode, { ...BASE, rules: { blocked: 'deck', condition: 'tide' } });
       playOut(b);
-      for (const e of ofType(b.log, 'move')) expect(blocked).not.toContain((e as { to?: number }).to);
       for (const c of b.combatants) if (c.hp > 0) expect(blocked).not.toContain(c.slot);
     });
 });

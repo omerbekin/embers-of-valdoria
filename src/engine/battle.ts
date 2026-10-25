@@ -7057,6 +7057,18 @@ export class Battle {
     return this.combatants.filter((c) => c.side === 'party' && c.board === 'party' && c.hp > 0 && !c.inert && this.rowOf(c.slot) === row);
   }
 
+  /**
+   * Hold the Bridge: `uid` birimi `slot`'a yürürse korunan sıra boşalır mı (sıradaki SON savaşan oyuncu birimi sıradan çıkıyor)? Yapay zeka bu hamleyi
+   * yapmaz (kural değil, YZ süzgeci; oyuncu isterse yürüyebilir ve kaybeder). Hedef başka türse false. Saf.
+   */
+  breaksHold(uid: string, slot: number): boolean {
+    const o = this.setup.rules?.objective;
+    if (o?.type !== 'hold') return false;
+    const c = this.get(uid);
+    if (!c || c.side !== 'party' || this.rowOf(c.slot) !== o.row || this.rowOf(slot) === o.row) return false;
+    return this.holdersOf(o.row).every((h) => h.uid === c.uid);
+  }
+
   /** Hold the Bridge kırıldı mı (korunan sırada savaşan oyuncu birimi yok)? Hedef başka türse false. */
   private holdBroken(): boolean {
     const o = this.setup.rules?.objective;

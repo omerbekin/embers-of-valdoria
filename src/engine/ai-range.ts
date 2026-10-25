@@ -136,7 +136,7 @@ export function telegraphDodgeRange(battle: Battle, actor: Combatant, free: numb
 
 /** Move Tile için en iyi plan (menzil sürümü; yoksa null). Üst üste hareket yok (telgraf kaçışı hariç). */
 export function bestMoveRange(battle: Battle, actor: Combatant, mv: RangeMoveConfig, vNow: number, deps: RangeAiDeps): RangeMovePlan | null {
-  const free = battle.freeTiles(actor.uid);
+  const free = battle.freeTiles(actor.uid).filter((s) => !battle.breaksHold(actor.uid, s)); // Hold the Bridge: son savunan sırayı bırakmaz
   if (free.length === 0) return null;
   const dodge = telegraphDodgeRange(battle, actor, free, vNow, deps);
   if (battle.lastActionOf(actor.uid) === 'move') return dodge;

@@ -372,7 +372,7 @@ function chooseActionInner(battle: Battle, actorUid: string, config: AiConfig, t
       if (gt) gt.gate = `difficulty ${difficulty}: only Rest when there is nothing to do (and Move to dodge a pending warning)`;
       // Bekleyen düşman telgrafı (çöken köprü, kül damgası) açıkça görünür: ortalama oyuncu da ondan kaçar (M12)
       if (battle.telegraphs.length > 0 && battle.canUseGlobal(actor.uid, 'move_tile').ok) {
-        const d = telegraphDodge(battle, actor, battle.freeTiles(actor.uid), optionNet(pick?.option));
+        const d = telegraphDodge(battle, actor, battle.freeTiles(actor.uid).filter((s) => !battle.breaksHold(actor.uid, s)), optionNet(pick?.option));
         if (d) {
           if (gt) gt.outcome = `move_tile: dodge a pending warning (net ${r2(d.net)})`;
           return { skillId: 'move_tile', slot: d.slot, targetUid: tileUid(d.slot), reason: 'move' };
@@ -1842,7 +1842,7 @@ interface MovePlan {
 
 /** ESKİ Move planı (menzil kapalı; yoksa null): geri çekilme (kırılgan/yaralı), öne geçme (yakın dövüşçü), aura komşuluğu. Üst üste hareket yok. */
 function bestMoveLegacy(battle: Battle, actor: Combatant, g: AiGlobalConfig, vNow: number): MovePlan | null {
-  const free = battle.freeTiles(actor.uid);
+  const free = battle.freeTiles(actor.uid).filter((s) => !battle.breaksHold(actor.uid, s)); // Hold the Bridge: son savunan sırayı bırakmaz
   if (free.length === 0) return null;
   // 0) Telgraftan kaçma (M12): bekleyen düşman çökmesi/damgası tarafımıza beklenen hasarı azaltan hücre (üst üste Move kuralı burada yok: amaçlı kaçış)
   const dodge = telegraphDodgeLegacy(battle, actor, free, vNow);
