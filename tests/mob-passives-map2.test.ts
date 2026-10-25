@@ -303,3 +303,25 @@ describe('Saltbound (durum; Harita 1 cadıları ve Salt Hag, Omen yerine)', () =
     }
   });
 });
+
+describe('Fire Volley (Reaver Archer)', () => {
+  it('Reaver Archer kitinde Fire Volley var, Scatter Quarrels yok (Crossbowman\u2019da kalır)', () => {
+    expect(content.mobs.reaver_archer!.skills).toContain('fire_volley');
+    expect(content.mobs.reaver_archer!.skills).not.toContain('scatter_quarrels');
+    expect(content.mobs.bandit_crossbowman!.skills).toContain('scatter_quarrels');
+  });
+
+  it('bir sıranın her hücresine hasar + 2 tur Burning Ground; Flooded hücrede zemin söner', () => {
+    const b = sure(make({ party: cells({ 0: 'warrior', 1: 'defender', 2: 'archer' }), enemies: cells({ 6: 'reaver_archer' }) }));
+    (b as unknown as { setup: { rules?: unknown } }).setup.rules ??= {}; // ortam zemini (Tide) kuralı açık: su ateşi söndürür
+    flood(b, 'party', [2]);
+    const n = b.log.length;
+    expect(b.useSkill('enemy-0', 'fire_volley', 'party-0').ok).toBe(true);
+    const hit = new Set(ofType(b.log.slice(n), 'damage').map((x) => x.target));
+    for (const uid of ['party-0', 'party-1', 'party-2']) expect(hit.has(uid), uid).toBe(true);
+    const fire = b.ground.filter((g) => g.ground === 'burning' && g.board === 'party');
+    const slots = fire.flatMap((g) => g.slots).sort();
+    expect(slots).toEqual([0, 1]);
+    expect(fire.every((g) => g.turns === 2)).toBe(true);
+  });
+});

@@ -6282,6 +6282,45 @@
     ],
     "artOf": "poachers_shot"
   },
+  "fire_volley": {
+    "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach; Ömer formu A1 a 2026-10-25): reaver_archer ikinci skill'i (Scatter Quarrels yerine; o Crossbowman'da kalır). Bir sıranın her hücresine DEX fiziksel + 2 tur Burning Ground; Flooded (Tide suyu) hücrede zemin söner (grounds.json flooded.quenches). YER TUTUCU sanat: ikon/vfx/ses artOf 'burn_the_ground' (Ember Acolyte yanan zemin sheet'i); kendi ikon + VFX'i gelince id ile değişir. Sayılar PROVİZYON (Harita 1 eğrisi: Scatter Quarrels 0,4 tek vuruş; burada 0,3 + zemin 0,15; sim yok).",
+    "id": "fire_volley",
+    "name": "Fire Volley",
+    "target": "area_enemies",
+    "area": {
+      "shape": "row"
+    },
+    "cost": {
+      "resource": "mp",
+      "amount": 7
+    },
+    "cooldown": 3,
+    "motion": "ranged",
+    "fx": "#ff7a1a",
+    "effects": [
+      {
+        "type": "damage",
+        "damageType": "physical",
+        "scale": "dex",
+        "power": 0.3
+      },
+      {
+        "type": "ground",
+        "ground": "burning",
+        "turns": 2,
+        "scale": "dex",
+        "power": 0.15
+      }
+    ],
+    "icon": "meteor",
+    "vfx": "meteor",
+    "sfx": [
+      "meteorWhistle",
+      "bigBoom",
+      "fireCrackle"
+    ],
+    "artOf": "burn_the_ground"
+  },
   "hook": {
     "_not": "Sefer mobu skill'i (HARİTA 2 The Drowned Reach, docs/design/campaign/maps-2-3.md 3.3; content-designer 2026-10-25): reef_wrecker: temel saldırı, menzil +1 (reach 1, Pike Thrust gibi), STR fiziksel tek hedef + 1 tur Slow. YER TUTUCU sanat: ikon/vfx/ses artOf 'drag_under' sahibinden (ChatGPT ikon + 8 karelik VFX gelince id ile değişir). Sayılar PROVİZYON (sim yok).",
     "id": "hook",

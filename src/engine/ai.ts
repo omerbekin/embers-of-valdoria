@@ -1398,7 +1398,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
         if ((def.speedMult < 1) === (t.side !== actor.side)) v += p * delta; // düşmanı yavaşlatmak / dostu hızlandırmak
       }
       // Silenced (düz skill etkisiyle; Clutch, Hag's Mark): engellenen MP'li hamle (Drain Field onEmpty ile aynı ölçü, ValueContext.silenceDenial)
-      if (def.blocksMpSkills && t.side !== actor.side) v += p * ctx.silenceDenial(t, t.mp, turns);
+      if (def.blocksMpSkills && t.side !== actor.side) v += p * (ctx.vc.debuffShare?.silence ?? 1) * ctx.silenceDenial(t, t.mp, turns);
       // Mire-Bound (YM7): durum, yaşayan bir dost cadının mireBound durumuysa hedefi yavaşlatır (Saltbound); değer Slow ile aynı ölçü (en güçlü cadı)
       if (t.side !== actor.side) {
         let mire = 1;
@@ -1406,7 +1406,7 @@ function controlValue(ctx: ValueContext, o: Option): number {
           const pe = a.passive?.effect;
           if (pe?.type === 'mireBound' && pe.status === se.status) mire = Math.min(mire, pe.speedMult);
         }
-        if (mire < 1 && battle.mireSpeedMult(t) === 1) v += p * (1 - mire) * own * tv;
+        if (mire < 1 && battle.mireSpeedMult(t) === 1) v += p * (ctx.vc.debuffShare?.mire ?? 1) * (1 - mire) * own * tv;
       }
       if (def.healTakenMult !== undefined && def.healTakenMult < 1 && t.side !== actor.side) {
         // Wound: düşman takımının bu süre içinde hedefe yapacağı beklenen şifanın azalması (şifacıların tur başı ham şifası / düşman sayısı)

@@ -4,6 +4,7 @@
   "value": {
     "horizon": 3,
     "contributionShare": 0.6,
+    "debuffShare": { "_not": "content-designer 2026-10-25: Silenced (Clutch, Hag's Mark) ve Mire-Bound (Saltbound) değer çarpanı; ölçüm: Hag's Mark seçimi Omen'li eski %27,8 -> %27,5 (5 Harita 1 karşılaşması x 3 takım x 12 seed), Clutch %99,7 -> %99,9", "silence": 1.6, "mire": 1 },
     "killWeight": 1,
     "pressureShare": 0.25,
     "saveWeight": 1,

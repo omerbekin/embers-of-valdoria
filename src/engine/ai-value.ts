@@ -71,6 +71,9 @@ export interface AiValueConfig {
    * değerinin bu payı silinir (0,7: değerin %30'u kalır). Taunt'a uymayan (boss) birimde ve taunter ulaşılamıyorsa yok. Yoksa 0 (eski davranış).
    */
   tauntPull?: number;
+  /** Düz skill debuff'larının değer çarpanları (1 = ham ölçü): silence = Silenced'ın engellenen MP'li hamlesi (Clutch, Hag's Mark), mire = Mire-Bound
+   * yavaşlatması (Saltbound). Ölçüm: Hag's Mark seçimi Omen'li eski davranışa yakın (content-designer 2026-10-25). */
+  debuffShare?: Partial<{ silence: number; mire: number }>;
 }
 
 /**
