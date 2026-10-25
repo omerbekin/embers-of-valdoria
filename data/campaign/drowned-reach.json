@@ -12,6 +12,12 @@
   },
   "continues": "valdoria",
   "background": "drowned-reach-bg",
+  "backgroundExt": {
+    "_not": "Kenar taşmalı harita görseli (Harita 2 playtest 2026-10-25, Ömer seçeneği (a); tools/make-map-ext.mjs ile üretilir): asıl görsel dört kenardan aynalanıp kademeli bulanıklaştırılmış, kenara doğru koyulaşan vinyetli taşma alanıyla genişletildi. Yalnız sefer haritası sahnesi kullanır: kamera bu alana da kayabilir, telefonda HUD yanındaki kenar durakları tam görünür, siyah alan yok. region = 16:9 sefer alanının (düğüm pos) bu görseldeki kesir dikdörtgeni, content = asıl (taşmasız) görselin dikdörtgeni (bölge yakınlaştırması bunu kaplar).",
+    "image": "drowned-reach-bg-ext",
+    "region": [0.13841, 0.11717, 0.86159, 0.88283],
+    "content": [0.13841, 0.11717, 0.86159, 0.88283]
+  },
   "start": "dr1",
   "stopsPerRun": 53,
   "visibility": 2,

@@ -96,3 +96,34 @@ export function focusCrop(imgW: number, imgH: number, boxW: number, boxH: number
   const cropH = boxH / scale;
   return { cropX: fx - cropW / 2, cropY: fy - cropH / 2, cropW, cropH, scale };
 }
+
+export interface ArtFrames {
+  /** Görselin yerleşimi (placeArt). */
+  place: ArtPlacement;
+  /** Asıl (taşmasız) görselin dünyadaki kapsamı, en az sefer alanı (0-W x 0-H): bölge yakınlaştırmasının "kaplama" ölçeği buna göre. */
+  content: { left: number; right: number; top: number; bottom: number };
+  /** Kameranın kayabileceği alan: görselin tamamı (kenar taşması dahil), en az sefer alanı. Bu alanın dışı hiç görünmez. */
+  pan: { left: number; right: number; top: number; bottom: number };
+}
+
+/**
+ * Sefer haritası görselinin dünyadaki çerçeveleri (saf). `region` = sefer alanının (dünya 0-W x 0-H) görseldeki kesri; `content` = taşmalı
+ * görselde (map.backgroundExt, tools/make-map-ext.mjs) asıl görselin kesri; verilmezse görselin tamamı asıl görseldir.
+ */
+export function artFrames(imgW: number, imgH: number, region: Region, target: Rect, content?: Region): ArtFrames {
+  const p = placeArt(imgW, imgH, region, target);
+  const c = content ?? FULL_REGION;
+  const span = (l: number, r: number, t: number, b: number) => ({
+    left: Math.min(target.x, l),
+    right: Math.max(target.x + target.w, r),
+    top: Math.min(target.y, t),
+    bottom: Math.max(target.y + target.h, b),
+  });
+  const sx = imgW * p.scale;
+  const sy = imgH * p.scale;
+  return {
+    place: p,
+    content: span(p.x + c[0] * sx, p.x + c[2] * sx, p.y + c[1] * sy, p.y + c[3] * sy),
+    pan: span(p.left, p.right, p.top, p.bottom),
+  };
+}

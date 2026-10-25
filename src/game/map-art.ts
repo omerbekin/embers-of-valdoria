@@ -1,6 +1,6 @@
 import Phaser from 'phaser';
 import type { CampaignMap } from '../campaign';
-import { campaignArtKey, hasCampaignArt } from './campaign-art';
+import { campaignArtKey, hasCampaignArt, hasCampaignArtFile } from './campaign-art';
 import { FULL_REGION, type Region } from './wide-map';
 
 /**
@@ -19,6 +19,23 @@ export function mapArt(scene: Phaser.Scene, map: Pick<CampaignMap, 'background' 
   if (w && hasCampaignArt(scene, w.image)) return { key: campaignArtKey(w.image), region: w.region, wide: true };
   if (hasCampaignArt(scene, map.background)) return { key: campaignArtKey(map.background), region: FULL_REGION, wide: false };
   return null;
+}
+
+/**
+ * Sefer haritası sahnesinin görseli: önce kenar taşmalı görsel (backgroundExt; kamera taşma alanına da kayar), yoksa mapArt. `content` = asıl
+ * görselin kesri (taşma yoksa yok).
+ */
+export function campaignMapArt(scene: Phaser.Scene, map: Pick<CampaignMap, 'background' | 'backgroundWide' | 'backgroundExt'>): (MapArt & { content?: Region }) | null {
+  const e = map.backgroundExt;
+  if (e && hasCampaignArt(scene, e.image)) return { key: campaignArtKey(e.image), region: e.region, wide: true, content: e.content };
+  return mapArt(scene, map);
+}
+
+/** Sefer haritası sahnesinin yükleyeceği TEK görsel (pakette olan ilk: taşmalı, geniş, eski); telefon belleği için diğer haritalarınki yüklenmez. */
+export function campaignMapImage(map: Pick<CampaignMap, 'background' | 'backgroundWide' | 'backgroundExt'>): string[] {
+  const ids = [map.backgroundExt?.image, map.backgroundWide?.image, map.background].filter((x): x is string => !!x);
+  const first = ids.find(hasCampaignArtFile);
+  return first ? [first] : [];
 }
 
 /**

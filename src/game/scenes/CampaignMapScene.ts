@@ -116,8 +116,8 @@ import { openCampaignMerchant } from '../campaign-merchant';
 import { MENU_ONLY_TEXTURES, preloadAssets, releaseTextures } from '../assets';
 import { classSpriteIds } from '../sprite-needs';
 import { preloadCampaignArt } from '../campaign-art';
-import { edgeFillers, mapArt } from '../map-art';
-import { placeArt } from '../wide-map';
+import { campaignMapArt, campaignMapImage, edgeFillers } from '../map-art';
+import { artFrames } from '../wide-map';
 import { onStageResize, stageView } from '../stage';
 import { openStartBattle, type StartBattleHandle } from '../../ui/start-battle';
 import { openStoryDialog, type StoryDialogHandle } from '../../ui/story-dialog';
@@ -247,6 +247,8 @@ export class CampaignMapScene extends Phaser.Scene {
   private drawnCompact = false;
   /** Harita görselinin dünyadaki kapsamı (21:9 çerçeve; kaydırma sınırı). */
   private frame: Bounds = { left: 0, right: W, top: 0, bottom: H };
+  /** Kameranın kayabileceği alan: görselin tamamı (kenar taşması dahil; drawTerrain). `frame` = asıl görsel (kaplama ölçeği). */
+  private pan: Bounds = { left: 0, right: W, top: 0, bottom: H };
   /** Harita kamerasının baktığı nokta (kısılmadan önce). */
   private mid: Pt = { x: W / 2, y: H / 2 };
 
@@ -344,6 +346,7 @@ export class CampaignMapScene extends Phaser.Scene {
     this.regionTween = null;
     this.ghostG = null;
     this.frame = { left: 0, right: W, top: 0, bottom: H };
+    this.pan = { ...this.frame };
     this.mid = { x: W / 2, y: H / 2 };
     this.panBtns = {};
     this.toastFn = null;
@@ -368,7 +371,9 @@ export class CampaignMapScene extends Phaser.Scene {
     const sprites = classSpriteIds();
     preloadAssets(this, { sprites, avatars: sprites, items: false });
     releaseTextures(this, (key) => MENU_ONLY_TEXTURES.some((p) => key.startsWith(p))); // ana menü kartları / logo haritada gösterilmez
-    preloadCampaignArt(this);
+    // yalnız bu haritanın görseli (taşmalı > geniş > eski; diğer haritalarınki yüklenmez) + Menu > Load yuva kartlarının valdoria-bg'si
+    const st = current();
+    preloadCampaignArt(this, st ? [...campaignMapImage(getMap(st.mapId)), 'valdoria-bg'] : undefined);
   }
 
   create(): void {
@@ -590,13 +595,15 @@ export class CampaignMapScene extends Phaser.Scene {
   // ------------------------------------------------------------ arazi (sabit)
 
   private drawTerrain(): void {
-    const art = mapArt(this, this.map);
+    const art = campaignMapArt(this, this.map);
     if (art) {
       const img = this.add.image(0, 0, art.key).setOrigin(0, 0);
-      // Eski 16:9 haritanın bölgesi dünyada 0-1920 x 0-1080'e oturur (düğüm konumları bu bölgeye göre)
-      const p = placeArt(img.width, img.height, art.region, { x: 0, y: 0, w: W, h: H });
-      img.setPosition(p.x, p.y).setScale(p.scale);
-      this.frame = { left: Math.min(0, p.left), right: Math.max(W, p.right), top: Math.min(0, p.top), bottom: Math.max(H, p.bottom) };
+      // Eski 16:9 haritanın bölgesi dünyada 0-1920 x 0-1080'e oturur (düğüm konumları bu bölgeye göre). Taşmalı görselde (backgroundExt)
+      // kamera taşma alanına da kayar (pan), bölge yakınlaştırması asıl görseli kaplar (frame).
+      const f = artFrames(img.width, img.height, art.region, { x: 0, y: 0, w: W, h: H }, art.content);
+      img.setPosition(f.place.x, f.place.y).setScale(f.place.scale);
+      this.frame = f.content;
+      this.pan = f.pan;
       const fill = edgeFillers(this, art.key, 0);
       fill.place(img);
       this.world.add([...fill.items, img]);
@@ -1423,7 +1430,7 @@ export class CampaignMapScene extends Phaser.Scene {
     // playtest U1 + Harita 2 (2026-10-25): bölge HUD'sız güvenli alana sığar, takımın durağı güvenli alanda (Your party sütununun altında değil)
     const pts = this.map.nodes.filter((n) => n.region === region).map((n) => this.P(n.id));
     const here = this.map.nodes.find((n) => n.id === this.s.at);
-    return regionCamera({ pts, frame: this.frame, view1: this.view1(), ins: this.hudInsets(), mapZoom, focus: here?.region === region ? this.P(here.id) : null });
+    return regionCamera({ pts, frame: this.frame, pan: this.pan, view1: this.view1(), ins: this.hudInsets(), mapZoom, focus: here?.region === region ? this.P(here.id) : null });
   }
 
   /** HUD payları (sahne birimi): sol sütun (Your party, Gear / Formation), üst bant (Valor, bölge adı), alt sağ düğmeler. */
@@ -1434,9 +1441,12 @@ export class CampaignMapScene extends Phaser.Scene {
     return { left: (SIDE.left + SIDE.partyW) * k, top: REGION_VIEW.hudTop, right: 0, bottom: 36 + size + 12, topHalfW: REGION_VIEW.hudTopHalfW * k, bottomW: 36 + 3 * size + 2 * 8 };
   }
 
-  /** Kaydırma çerçevesi: harita görselinin kapsamı (Harita 2 playtest 2026-10-25: HUD payı kadar taşmak panellerin arkasında siyah gösteriyordu). */
+  /**
+   * Kaydırma çerçevesi: harita görselinin kapsamı, kenar taşması dahil (Harita 2 playtest 2026-10-25: HUD payı kadar görsel dışına taşmak
+   * panellerin arkasında siyah gösteriyordu; seçenek (a): görsel kenarlardan genişletildi, tools/make-map-ext.mjs).
+   */
   private panFrame(): Bounds {
-    return this.frame;
+    return this.pan;
   }
 
   /** Bölgeye girerken oyuncu yakınlaştırmasının başlangıcı (telefonda biraz yakın; create ile aynı). Uzak görünümde hep MAP_ZOOM.min. */
@@ -1647,7 +1657,7 @@ export class CampaignMapScene extends Phaser.Scene {
       });
     }
     // dokunma alanı: bütün çerçeve (ölü alan yok); dokunuş = basıp aynı bölgede bırakmak (sürükleme sayılmaz)
-    const f = this.frame;
+    const f = this.pan;
     const zone = this.add.zone((f.left + f.right) / 2, (f.top + f.bottom) / 2, f.right - f.left, f.bottom - f.top).setInteractive({ useHandCursor: true });
     const busy = () => !!this.walking || !!this.modal || this.menuOpen || !!this.town;
     const pick = (p: Phaser.Input.Pointer, near?: number) => {

@@ -15,3 +15,6 @@ export function preloadCampaignArt(scene: Phaser.Scene, only?: string[]): void {
 }
 
 export const hasCampaignArt = (scene: Phaser.Scene, id: string): boolean => scene.textures.exists(campaignArtKey(id));
+
+/** Görsel dosyası pakette var mı (yüklenmeden önce; sefer haritası yalnız kendi görselini yükler). */
+export const hasCampaignArtFile = (id: string): boolean => Object.keys(files).some((p) => (p.split('/').pop() ?? '').replace(/\.[^.]+$/, '') === id);

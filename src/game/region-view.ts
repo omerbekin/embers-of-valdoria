@@ -4,8 +4,9 @@
  *
  * Kurallar (mockup ile aynı):
  *  - Bölgeye yakınlaşılır: bölgenin düğümleri (+ pay) görünüme sığar; yakınlaştırma görseli her zaman kaplar ("cover", kenarda siyah yok) ve
- *    REGION_VIEW.maxZoom'u aşmaz. Kaydırma / tekerlek / sürükleme haritanın çerçevesine kilitli kalır (map-view.ts > clampMid); HUD payları
- *    çerçeveyi genişletmez (Harita 2 playtest 2026-10-25), kenar durakları veride HUD'dan kurtarılabilecek kadar içeride (tests/region-camera.test.ts).
+ *    REGION_VIEW.maxZoom'u aşmaz. Kaydırma / tekerlek / sürükleme harita görselinin çerçevesine kilitli kalır (map-view.ts > clampMid); HUD payları
+ *    çerçeveyi genişletmez (Harita 2 playtest 2026-10-25). Görsel kenarlardan taşmalıdır (map.backgroundExt, tools/make-map-ext.mjs): kamera taşma
+ *    alanına kayabildiği için telefonda da her durak HUD'un yanına getirilebilir (tests/region-camera.test.ts).
  *  - Bölgenin kendi düğümleri ve aralarındaki yollar görünür. Komşu bölgenin, bölgeye BAĞLANAN düğümü silik (REGION_VIEW.ghostAlpha) ve o yol
  *    REGION_VIEW.ghostRoadAlpha saydamlıkla; üstüne gelince yol hafif sarı vurgulanır. Cepler (isteğe bağlı çıkmaz dal) komşu olarak gösterilmez.
  *  - Kilitli (henüz açılmamış) bölgenin düğümü gösterilmez: sis altındaki düğüm (görülmemiş) komşu olarak çizilmez.
@@ -116,11 +117,13 @@ export function safeRect(mid: Pt, Z: number, view1: { w: number; h: number }, in
  * Bölgeye girerken kamera (saf). `pts` = bölgenin düğümleri (dünya), `view1` = yakınlaştırma 1'de görünen alan (sahne birimi), `mapZoom` =
  * oyuncu yakınlaştırması, `focus` = takımın durağı (bölgedeyse). Taban yakınlaştırma regionZoom gibi (görseli kaplar, maxZoom'u aşmaz), ama
  * sığdırma HUD'sız güvenli alana göre; orta: düğüm kümesi güvenli alanın ortasına, takımın durağı güvenli alanın içine (kenardan `margin`), sonra
- * harita çerçevesine kısılır (görselin dışı hiç görünmez; HUD görselin üstünde durur) ve durak HUD dışında kalacak şekilde (clearMid) düzeltilir;
- * kenar durağı için gerekirse taban yakınlaştırma biraz artar. Dönen `z` taban yakınlaştırmadır (oyuncu yakınlaştırması hariç).
+ * kaydırma çerçevesine (`pan`: görselin tamamı, kenar taşması dahil; yoksa `frame`) kısılır (görselin dışı hiç görünmez; HUD görselin üstünde
+ * durur) ve durak HUD dışında kalacak şekilde (clearMid) düzeltilir; kenar durağı için gerekirse taban yakınlaştırma biraz artar. Kaplama ölçeği
+ * `frame`'e (asıl görsel) göredir. Dönen `z` taban yakınlaştırmadır (oyuncu yakınlaştırması hariç).
  */
-export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number; focus?: Pt | null; pad?: number; margin?: number; maxZoom?: number }): { z: number; mid: Pt } {
+export function regionCamera(o: { pts: Pt[]; frame: Bounds; pan?: Bounds; view1: { w: number; h: number }; ins: HudInsets; mapZoom: number; focus?: Pt | null; pad?: number; margin?: number; maxZoom?: number }): { z: number; mid: Pt } {
   const pad = o.pad ?? REGION_VIEW.pad;
+  const pan = o.pan ?? o.frame;
   const xs = o.pts.map((p) => p.x);
   const ys = o.pts.map((p) => p.y);
   const box: Bounds = { left: Math.min(...xs) - pad, right: Math.max(...xs) + pad, top: Math.min(...ys) - pad, bottom: Math.max(...ys) + pad };
@@ -130,7 +133,7 @@ export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; 
   const Z = z * o.mapZoom;
   const mid = { x: (box.left + box.right) / 2 - (o.ins.left - o.ins.right) / (2 * Z), y: (box.top + box.bottom) / 2 - (o.ins.top - o.ins.bottom) / (2 * Z) };
   const view = (zz: number) => ({ w: o.view1.w / (zz * o.mapZoom), h: o.view1.h / (zz * o.mapZoom) });
-  if (!o.focus) return { z, mid: clampMid(mid, o.frame, view(z)) };
+  if (!o.focus) return { z, mid: clampMid(mid, pan, view(z)) };
   const f = o.focus;
   const s = safeRect(mid, Z, o.view1, o.ins);
   const m = Math.min(o.margin ?? 70, (s.right - s.left) / 2, (s.bottom - s.top) / 2);
@@ -140,11 +143,11 @@ export function regionCamera(o: { pts: Pt[]; frame: Bounds; view1: { w: number; 
   else if (f.y > s.bottom - m) mid.y += f.y - (s.bottom - m);
   // takımın durağı HUD dışında: çerçeve içinde en yakın orta; olmazsa (kenar durağı) biraz yakınlaşılır (en çok maxZoom)
   for (let zz = z; ; zz = Math.min(maxZoom, zz * 1.08)) {
-    const c = clearMid(f, mid, zz * o.mapZoom, o.frame, o.view1, o.ins);
+    const c = clearMid(f, mid, zz * o.mapZoom, pan, o.view1, o.ins);
     if (c) return { z: zz, mid: c };
     if (zz >= maxZoom) break;
   }
-  return { z, mid: clampMid(mid, o.frame, view(z)) };
+  return { z, mid: clampMid(mid, pan, view(z)) };
 }
 
 /**

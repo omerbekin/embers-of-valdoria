@@ -159,6 +159,11 @@ export interface CampaignMap {
   background: string;
   /** Geniş (21:9) harita görseli; region = eski 16:9 haritanın bu görseldeki kesir dikdörtgeni [x0, y0, x1, y1] (src/game/wide-map.ts). */
   backgroundWide?: { image: string; region: [number, number, number, number] };
+  /**
+   * Kenar taşmalı harita görseli (yalnız sefer haritası sahnesi; tools/make-map-ext.mjs): region = sefer alanının (düğüm pos) kesri, content = asıl
+   * görselin kesri. Kamera taşma alanına da kayar (telefonda HUD yanındaki kenar durakları), siyah alan görünmez (src/game/wide-map.ts > artFrames).
+   */
+  backgroundExt?: { image: string; region: [number, number, number, number]; content: [number, number, number, number] };
   start: string;
   stopsPerRun: number;
   visibility: number;

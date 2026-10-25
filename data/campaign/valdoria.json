@@ -10,6 +10,12 @@
     "image": "valdoria-bg-wide",
     "region": [0.11891, 0, 0.88064, 1]
   },
+  "backgroundExt": {
+    "_not": "Kenar taşmalı harita görseli (Harita 2 playtest 2026-10-25, Ömer seçeneği (a); tools/make-map-ext.mjs ile üretilir): asıl görsel dört kenardan aynalanıp kademeli bulanıklaştırılmış, kenara doğru koyulaşan vinyetli taşma alanıyla genişletildi. Yalnız sefer haritası sahnesi kullanır: kamera bu alana da kayabilir, telefonda HUD yanındaki kenar durakları tam görünür, siyah alan yok. region = 16:9 sefer alanının (düğüm pos) bu görseldeki kesir dikdörtgeni, content = asıl (taşmasız) görselin dikdörtgeni (bölge yakınlaştırması bunu kaplar).",
+    "image": "valdoria-bg-ext",
+    "region": [0.20494, 0.11717, 0.79471, 0.88283],
+    "content": [0.11287, 0.11717, 0.88713, 0.88283]
+  },
   "start": "1",
   "stopsPerRun": 22,
   "visibility": 2,
