@@ -46,6 +46,7 @@ import { VERSIONS_TAB, registerVersionsPanel } from './debug-versions';
 import { POSE_TESTER_GEAR, registerPosesPanel } from './debug-poses';
 import { weaponFor, type WeaponPick } from '../game/poses';
 import { waveTestBattleData } from '../game/wave-test-battle';
+import { RULES_TESTS, rulesTestBattleData } from '../game/rules-test-battle';
 import { offhandItem, weaponItem } from '../game/pose-weapons';
 
 /** Sekme sırası (menü bu sırayla gösterir). */
@@ -190,6 +191,28 @@ export function registerDebugTools({ game, debug }: Ctx): void {
       },
     });
   }
+  // Objective test (Harita 2-3 savaş katmanı; src/game/rules-test-battle.ts): her koşul / hedef / güverte için düğme, turns ve test modu
+  debug.registerPanel({
+    id: 'panel.rules-test',
+    tab: 'Setup',
+    render: (el) => {
+      el.append(heading('Objective test'), noteLineText('Map 2 battle rules against Drowned Reach mobs. Your campaign save is not touched. The rule line sits under the Round plate; hover it for the full text.'));
+      for (const mode of ['turns', 'test'] as const) {
+        const grid = document.createElement('div');
+        grid.className = 'debug-grid';
+        for (const t of RULES_TESTS)
+          grid.append(
+            debugButton(mode === 'turns' ? t.label : `${t.label} (test)`, () => {
+              const data = rulesTestBattleData(newSeed(), mode, t.kind);
+              const b = battle();
+              if (b) b.scene.restart(data);
+              else game.scene.getScenes(true)[0]?.scene.start(BattleScene.KEY, data);
+            }, { icon: mode === 'turns' ? 'skull' : 'flask', title: t.hint }),
+          );
+        el.append(grid);
+      }
+    },
+  });
   // Cutthroat + Undead + Paladin test battle: Smoke Bomb on both boards, Backstab targets, corpse marks, Raise Dead preview, Resurrection (test mode: no turn order, no cooldowns)
   debug.register({
     id: 'battle.test-cutthroat',
