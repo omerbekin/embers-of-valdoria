@@ -84,6 +84,7 @@ HEADS = {
     # Harita 2 elitleri (B1-B8, 2026-10-26)
     'reaver_chief_hook': (553, 0, 300),
     'salt_hag_mother': (580, 20, 360),
+    'guild_enforcer_bastion': (578, 0, 310),
 }
 
 # Havada süzülen moblar: içerik bu oranda yüksekliğe çıkar, altı boş kalır (ekranda gövde yerden yüksekte durur; gölge yerde kalır).
