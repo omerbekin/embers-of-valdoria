@@ -437,7 +437,7 @@ function alphaBox(data, W, x0, y0, w, h) {
  * Figürleri ızgara çizgisini aşan poz sayfaları (Bandit Chief: ayak, balta, kafa komşu hücreye taşar): hücre dikdörtgeni yerine bağlı
  * bileşenler (alfa > 8, 8 komşu) ağırlık merkezinin düştüğü hücreye atanır. Diğer sayfalar düz ızgarayla kesilir (çıktıları aynen kalır).
  */
-const POSE_SPLIT = new Set(['bandit_chief', 'deserter_captain', 'drake_priest', 'lord_morvane', 'bridge_warden', 'reaver_chief_hook']);
+const POSE_SPLIT = new Set(['bandit_chief', 'deserter_captain', 'drake_priest', 'lord_morvane', 'bridge_warden', 'reaver_chief_hook', 'salt_hag_mother']);
 
 /** Hücre başına tam boy RGBA katman: yalnızca o hücreye atanan bileşenlerin pikselleri. */
 function cellLayers(data, W, H, cols, rows) {
