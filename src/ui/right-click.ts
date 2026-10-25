@@ -48,16 +48,51 @@ export function phaserAcceptsButton(button: number): boolean {
 interface InputManagerLike {
   onMouseDown: (e: MouseEvent) => void;
   onMouseUp: (e: MouseEvent) => void;
+  onTouchStart: (e: TouchEvent) => void;
 }
 
-/** Phaser girişine sarmal: sağ/orta fare düğmesi sol tık eylemlerini tetiklemesin (sağ tık savaşta kendi işine sahiptir). */
-export function installPhaserButtonFilter(game: { input: unknown }): void {
+/**
+ * Tuvalde başlamayan basış Phaser'a ulaşmaz (Harita 2 hata avı 2026-10-25). Phaser fare / dokunma basışını ve bırakmasını window üzerinden de
+ * dinler ve DOM öğesinin (debug menüsü Close, Formation, tam ekran, pencere zemini) üstündeki tıklamayı alttaki Phaser nesnesine de verir: debug
+ * menüsünü kapatan tık sefer haritasında üstteki bölge adına düşüp haritayı habersizce uzak görünüme atıyordu. Kural: basış tuvalde değilse
+ * basış da, eşleşen fare bırakması da atılır; tuvalde başlayıp dışarıda biten sürükleme bırakması geçer. Dokunma: başladığı öğe tuval değilse atılır
+ * (dokunmanın sonraki olayları aynı öğeye gider; Phaser bilinmeyen parmağın bırakmasını yok sayar).
+ */
+export function createPressGate(isCanvas: (t: EventTarget | null) => boolean): { down(t: EventTarget | null): boolean; up(): boolean; touchStart(t: EventTarget | null): boolean } {
+  let outside = false;
+  return {
+    down(t) {
+      outside = !isCanvas(t);
+      return !outside;
+    },
+    up() {
+      const ok = !outside;
+      outside = false;
+      return ok;
+    },
+    touchStart: (t) => isCanvas(t),
+  };
+}
+
+/**
+ * Phaser girişine sarmal: sağ/orta fare düğmesi sol tık eylemlerini tetiklemesin (sağ tık savaşta kendi işine sahiptir); tuvalde başlamayan
+ * basış (DOM öğesi üstünde) Phaser'a geçmesin (createPressGate).
+ */
+export function installPhaserButtonFilter(game: { input: unknown; canvas?: HTMLCanvasElement | null }): void {
   const im = game.input as InputManagerLike;
-  for (const k of ['onMouseDown', 'onMouseUp'] as const) {
-    const orig = im[k].bind(im);
-    im[k] = (e: MouseEvent) => {
-      if (!phaserAcceptsButton(e.button)) return;
-      orig(e);
-    };
-  }
+  const gate = createPressGate((t) => !game.canvas || t === game.canvas);
+  const down = im.onMouseDown.bind(im);
+  im.onMouseDown = (e: MouseEvent) => {
+    if (!phaserAcceptsButton(e.button)) return;
+    if (!gate.down(e.target)) return;
+    down(e);
+  };
+  const up = im.onMouseUp.bind(im);
+  im.onMouseUp = (e: MouseEvent) => {
+    if (!phaserAcceptsButton(e.button)) return;
+    if (!gate.up()) return;
+    up(e);
+  };
+  const touch = im.onTouchStart?.bind(im);
+  if (touch) im.onTouchStart = (e: TouchEvent) => gate.touchStart(e.target) && touch(e);
 }
